@@ -41,6 +41,7 @@ const int      MAXINITMIGFILES      = 2;
 const uint32_t MIGRATEUMASK         = 022;
 const size_t   MSGBUFSIZ            = 1024;
 const uint32_t RECALLUMASK          = 077;
+const char     RECORDFORMAT[2]      = "F";
 const int      RTCPDNETRWTIMEOUT    = 5;
 const int      RTCPDCALLBACKTIMEOUT = 5;
 const int      RTCPDPINGTIMEOUT     = 10;

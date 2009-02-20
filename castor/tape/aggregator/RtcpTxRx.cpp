@@ -539,16 +539,15 @@ void castor::tape::aggregator::RtcpTxRx::receiveRcpJobRqst(
 
 
 //-----------------------------------------------------------------------------
-// giveRequestForMoreWorkToRtcpd
+// offerMoreWorkToRtcpd
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::RtcpTxRx::giveRequestForMoreWorkToRtcpd(
+void castor::tape::aggregator::RtcpTxRx::offerMoreWorkToRtcpd(
   const int socketFd, const int netReadWriteTimeout, const uint32_t volReqId)
   throw(castor::exception::Exception) {
 
   RtcpFileRqstErrMsgBody request;
 
   Utils::setBytes(request, '\0');
-  Utils::copyString(request.recfm, "F");
 
   request.volReqId       = volReqId;
   request.jobId          = -1;
@@ -580,8 +579,9 @@ void castor::tape::aggregator::RtcpTxRx::giveRequestForMoreWorkToRtcpd(
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
   const int socketFd, const int netReadWriteTimeout, const uint32_t volReqId,
-  const char *const filePath, const char *const tapePath, const uint32_t umask) 
-  throw(castor::exception::Exception) {
+  const char *const filePath, const char *const tapePath,
+  const char *const recordFormat, const char *const tapeFileId,
+  const uint32_t umask) throw(castor::exception::Exception) {
 
   RtcpFileRqstErrMsgBody request;
 
@@ -590,7 +590,8 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
   Utils::setBytes(request, '\0');
   Utils::copyString(request.filePath, filePath);
   Utils::copyString(request.tapePath, tapePath);
-  Utils::copyString(request.recfm, "F");
+  Utils::copyString(request.recfm, recordFormat);
+  Utils::copyString(request.fid, tapeFileId);
 
   request.volReqId       = volReqId;
   request.jobId          = -1;

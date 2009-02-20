@@ -115,14 +115,13 @@ public:
     throw(castor::exception::Exception);
 
   /**
-   * Gives a request for more work to RTCPD by sending and receiving the
-   * necessary messages.
+   * Offers RTCPD more work by sending and receiving the necessary messages.
    *
    * A request for more work is infact a file list with one special file
    * request which does not contain any file information, but instead contains
    * a flag indicating a request for more work.
    */ 
-  static void giveRequestForMoreWorkToRtcpd(const int socketFd,
+  static void offerMoreWorkToRtcpd(const int socketFd,
     const int netReadWriteTimeout, const uint32_t volReqId)
     throw(castor::exception::Exception);
 
@@ -134,6 +133,8 @@ public:
    * @param netReadWriteTimeout The timeout to be applied when performing
    * @param filePath The file path.
    * @param tapePath The tape path.
+   * @param recordFormat The record format.
+   * @param tapeFileId The tape file ID.
    * @param umask The umask of the file.
    * @param requestMoreWork Set to true if RTCPD should be told that there is
    * a possibility of more work in the future.
@@ -142,8 +143,8 @@ public:
   static void giveFileToRtcpd(const int socketFd,
     const int netReadWriteTimeout, const uint32_t volReqId,
     const char *const filePath, const char *const tapePath,
-    const uint32_t umask)
-    throw(castor::exception::Exception);
+    const char *const recordFormat, const char *const tapeFileId,
+    const uint32_t umask) throw(castor::exception::Exception);
 
   /**
    * Receives a message header.

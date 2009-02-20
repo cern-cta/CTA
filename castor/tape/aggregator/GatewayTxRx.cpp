@@ -45,9 +45,8 @@
 // getVolumeFromGateway
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
-  const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
-  const unsigned short gatewayPort, const uint32_t volReqId,
-  char (&vid)[CA_MAXVIDLEN+1], uint32_t &mode,
+  const char *gatewayHost, const unsigned short gatewayPort,
+  const uint32_t volReqId, char (&vid)[CA_MAXVIDLEN+1], uint32_t &mode,
   char (&label)[CA_MAXLBLTYPLEN+1], char (&density)[CA_MAXDENLEN+1])
   throw(castor::exception::Exception) {
 
@@ -208,12 +207,11 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
 // getFileToMigrateFromGateway
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
-  const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
-  const unsigned short gatewayPort, const uint32_t transactionId,
-  char (&filePath)[CA_MAXPATHLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN+1],
-  uint64_t &fileId, uint32_t &tapeFileSeq, uint64_t &fileSize,
-  char (&lastKnownFileName)[CA_MAXPATHLEN+1], uint64_t &lastModificationTime)
-  throw(castor::exception::Exception) {
+  const char *gatewayHost, const unsigned short gatewayPort,
+  const uint32_t transactionId, char (&filePath)[CA_MAXPATHLEN+1],
+  char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId, uint32_t &tapeFileSeq,
+  uint64_t &fileSize, char (&lastKnownFileName)[CA_MAXPATHLEN+1],
+  uint64_t &lastModificationTime) throw(castor::exception::Exception) {
 
   bool thereIsAFileToMigrate = false;
 
@@ -375,10 +373,9 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
 // getFileToRecallFromGateway
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
-  const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
-  const unsigned short gatewayPort, const uint32_t transactionId,
-  char (&filePath)[CA_MAXPATHLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN+1],
-  uint64_t &fileId, uint32_t &tapeFileSeq)
+  const char *gatewayHost, const unsigned short gatewayPort,
+  const uint32_t transactionId, char (&filePath)[CA_MAXPATHLEN+1],
+  char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId, uint32_t &tapeFileSeq)
   throw(castor::exception::Exception) {
 
   bool thereIsAFileToRecall = false;
@@ -538,9 +535,8 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
 // notifyGatewayOfFileMigrated
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::GatewayTxRx::notifyGatewayOfFileMigrated(
-  const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
-  const unsigned short gatewayPort, const uint32_t transactionId)
-  throw(castor::exception::Exception) {
+  const char *gatewayHost, const unsigned short gatewayPort,
+  const uint32_t transactionId) throw(castor::exception::Exception) {
 }
 
 
@@ -548,9 +544,8 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayOfFileMigrated(
 // notifyGatewayOfFileRecalled
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::GatewayTxRx::notifyGatewayOfFileRecalled(
-  const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
-  const unsigned short gatewayPort, const uint32_t transactionId)
-  throw(castor::exception::Exception) {
+  const char *gatewayHost, const unsigned short gatewayPort,
+  const uint32_t transactionId) throw(castor::exception::Exception) {
 }
 
 
@@ -558,9 +553,8 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayOfFileRecalled(
 // notifyGatewayOfEnd
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::GatewayTxRx::notifyGatewayOfEnd(
-  const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
-  const unsigned short gatewayPort, const uint32_t transactionId)
-  throw(castor::exception::Exception) {
+  const char *gatewayHost, const unsigned short gatewayPort,
+  const uint32_t transactionId) throw(castor::exception::Exception) {
 
   // Prepare the request
   tapegateway::EndNotification request;

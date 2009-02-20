@@ -133,12 +133,12 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
         castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
           AGGREGATOR_FILE_TO_MIGRATE, params);
 
-        char tapePath[CA_MAXPATHLEN+1];
-        Utils::toHex(fileId, tapePath);
-        RtcpTxRx::giveFileToRtcpd(socketFd, RTCPDNETRWTIMEOUT,
-          volReqId, filePath, tapePath, MIGRATEUMASK);
+        char tapeFileId[CA_MAXPATHLEN+1];
+        Utils::toHex(fileId, tapeFileId);
+        RtcpTxRx::giveFileToRtcpd(socketFd, RTCPDNETRWTIMEOUT, volReqId,
+          filePath, "", RECORDFORMAT, tapeFileId, MIGRATEUMASK);
 
-        RtcpTxRx::giveRequestForMoreWorkToRtcpd(socketFd, RTCPDNETRWTIMEOUT,
+        RtcpTxRx::offerMoreWorkToRtcpd(socketFd, RTCPDNETRWTIMEOUT,
           volReqId);
 
         RtcpTxRx::tellRtcpdEndOfFileList(socketFd, RTCPDNETRWTIMEOUT);

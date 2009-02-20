@@ -56,9 +56,8 @@ public:
    * @return True if there is a volume to mount.
    */
   static bool getVolumeFromGateway(
-    const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
-    const unsigned short gatewayPort, const uint32_t volReqId,
-    char (&vid)[CA_MAXVIDLEN+1], uint32_t &mode,
+    const char *gatewayHost, const unsigned short gatewayPort,
+    const uint32_t volReqId, char (&vid)[CA_MAXVIDLEN+1], uint32_t &mode,
     char (&label)[CA_MAXLBLTYPLEN+1], char (&density)[CA_MAXDENLEN+1])
     throw(castor::exception::Exception);
 
@@ -80,10 +79,10 @@ public:
    * @return True if there is a file to migrate.
    */
   static bool getFileToMigrateFromGateway(
-    const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
-    const unsigned short gatewayPort, const uint32_t transactionId,
-    char (&filePath)[CA_MAXPATHLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN+1],
-    uint64_t &fileId, uint32_t &tapeFileSeq, uint64_t &fileSize,
+    const char *gatewayHost, const unsigned short gatewayPort,
+    const uint32_t transactionId, char (&filePath)[CA_MAXPATHLEN+1],
+    char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId,
+    uint32_t &tapeFileSeq, uint64_t &fileSize,
     char (&lastKnownFileName)[CA_MAXPATHLEN+1], uint64_t &lastModificationTime)
     throw(castor::exception::Exception);
 
@@ -100,11 +99,10 @@ public:
    * @return True if there is a file to recall.
    */
   static bool getFileToRecallFromGateway(
-    const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
-    const unsigned short gatewayPort, const uint32_t transactionId,
-    char (&filePath)[CA_MAXPATHLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN+1],
-    uint64_t &fileId, uint32_t &tapeFileSeq)
-    throw(castor::exception::Exception);
+    const char *gatewayHost, const unsigned short gatewayPort,
+    const uint32_t transactionId, char (&filePath)[CA_MAXPATHLEN+1],
+    char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId,
+    uint32_t &tapeFileSeq) throw(castor::exception::Exception);
 
   /**
    * Notifies the tape gateway of the successful migration of a file to tape.
@@ -114,9 +112,8 @@ public:
    * @param transactionId The transaction ID to be sent to the tape gateway.
    */
   static void notifyGatewayOfFileMigrated(
-    const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
-    const unsigned short gatewayPort, const uint32_t transactionId)
-    throw(castor::exception::Exception);
+    const char *gatewayHost, const unsigned short gatewayPort,
+    const uint32_t transactionId) throw(castor::exception::Exception);
 
   /**
    * Notifies the tape gateway of the successful recall of a file from tape.
@@ -125,8 +122,7 @@ public:
    * @param gatewayPort The tape gateway port number.
    * @param transactionId The transaction ID to be sent to the tape gateway.
    */
-  static void notifyGatewayOfFileRecalled(
-    const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
+  static void notifyGatewayOfFileRecalled(const char *gatewayHost,
     const unsigned short gatewayPort, const uint32_t transactionId)
     throw(castor::exception::Exception);
 
@@ -138,8 +134,7 @@ public:
    * @param gatewayPort The tape gateway port number.
    * @param transactionId The transaction ID to be sent to the tape gateway.
    */
-  static void notifyGatewayOfEnd(
-    const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
+  static void notifyGatewayOfEnd(const char *gatewayHost,
     const unsigned short gatewayPort, const uint32_t transactionId)
     throw(castor::exception::Exception);
 
