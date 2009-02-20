@@ -49,3 +49,4 @@
 48,AGGREGATOR_NO_MORE_FILES_TO_MIGRATE,"No more files to migrate"
 49,AGGREGATOR_NO_MORE_FILES_TO_RECALL,"No more files to recall"
 50,AGGREGATOR_FILE_TO_MIGRATE,"File to migrate"
+51,AGGREGATOR_FILE_TO_RECALL,"File to recall"

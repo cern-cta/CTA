@@ -162,9 +162,52 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
     // Else recalling
     } else {
 
-        // TBD
+      char     filePath[CA_MAXPATHLEN+1];
+      char     nsHost[CA_MAXHOSTNAMELEN+1];
+      uint64_t fileId;
+      uint32_t tapeFseq;
 
-    }
+      // If there is a file to recall 
+      if(GatewayTxRx::getFileToRecallFromGateway(gatewayHost, gatewayPort,
+        volReqId, filePath, nsHost, fileId, tapeFseq)) {
+
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("volReqId"            , volReqId            ),
+          castor::dlf::Param("gatewayHost"         , gatewayHost         ),
+          castor::dlf::Param("gatewayPort"         , gatewayPort         ),
+          castor::dlf::Param("filePath"            , filePath            ),
+          castor::dlf::Param("nsHost"              , nsHost              ),
+          castor::dlf::Param("fileId"              , fileId              ),
+          castor::dlf::Param("tapeFseq"            , tapeFseq            )};
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+          AGGREGATOR_FILE_TO_RECALL, params);
+
+        char tapeFileId[CA_MAXPATHLEN+1];
+        Utils::toHex(fileId, tapeFileId);
+        RtcpTxRx::giveFileToRtcpd(socketFd, RTCPDNETRWTIMEOUT, volReqId,
+          filePath, "", RECORDFORMAT, tapeFileId, RECALLUMASK);
+
+        RtcpTxRx::offerMoreWorkToRtcpd(socketFd, RTCPDNETRWTIMEOUT,
+          volReqId);
+
+	RtcpTxRx::tellRtcpdEndOfFileList(socketFd, RTCPDNETRWTIMEOUT);
+
+      // Else there is no file to recall
+      } else {
+
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("volReqId"   , volReqId   ),
+          castor::dlf::Param("gatewayHost", gatewayHost),
+          castor::dlf::Param("gatewayPort", gatewayPort)};
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+          AGGREGATOR_NO_MORE_FILES_TO_RECALL, params);
+
+        // Tell RTCPD there is no file by sending an empty file list
+        RtcpTxRx::tellRtcpdEndOfFileList(socketFd, RTCPDNETRWTIMEOUT);
+
+        thereIsMoreWork = false;
+      }
+    } // Else recalling
     break;
   case RTCP_POSITIONED:
     {
@@ -190,6 +233,12 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
         castor::dlf::Param("tapePath", body.tapePath)};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
         AGGREGATOR_FILE_TRANSFERED, params);
+
+      // If migrating
+      if(mode == WRITE_ENABLE) {
+      // Else recalling
+      } else {
+      }
 
       RtcpAcknowledgeMsg ackMsg;
       ackMsg.magic   = RTCOPY_MAGIC;

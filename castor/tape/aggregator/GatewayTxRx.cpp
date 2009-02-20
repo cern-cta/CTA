@@ -532,18 +532,18 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
 
 
 //-----------------------------------------------------------------------------
-// notifyGatewayOfFileMigrated
+// notifyGatewayFileMigrated
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::GatewayTxRx::notifyGatewayOfFileMigrated(
+void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
   const char *gatewayHost, const unsigned short gatewayPort,
   const uint32_t transactionId) throw(castor::exception::Exception) {
 }
 
 
 //-----------------------------------------------------------------------------
-// notifyGatewayOfFileRecalled
+// notifyGatewayFileRecalled
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::GatewayTxRx::notifyGatewayOfFileRecalled(
+void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
   const char *gatewayHost, const unsigned short gatewayPort,
   const uint32_t transactionId) throw(castor::exception::Exception) {
 }

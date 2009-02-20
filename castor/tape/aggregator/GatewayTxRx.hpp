@@ -110,8 +110,16 @@ public:
    * @param gatewayHost The tape gateway host name.
    * @param gatewayPort The tape gateway port number.
    * @param transactionId The transaction ID to be sent to the tape gateway.
+   * @param nsHost The name server host.
+   * @param fileId The CASTOR file ID.
+   * @param tapeFileSeq The tape file seuence number.
+   * @param blockId The tape block ID.
+   * @param checksumAlgorithm The name of the checksum algorithm.
+   * @param checksum The file checksum.
+   * @param fileSize The size of the file without compression.
+   * @param compressedFileSize The size of on-tape compressed file.
    */
-  static void notifyGatewayOfFileMigrated(
+  static void notifyGatewayFileMigrated(
     const char *gatewayHost, const unsigned short gatewayPort,
     const uint32_t transactionId) throw(castor::exception::Exception);
 
@@ -121,8 +129,15 @@ public:
    * @param gatewayHost The tape gateway host name.
    * @param gatewayPort The tape gateway port number.
    * @param transactionId The transaction ID to be sent to the tape gateway.
+   * @param filePath The path of the disk file.
+   * @param nsHost The name server host.
+   * @param fileId The CASTOR file ID.
+   * @param tapeFileSeq The tape file seuence number.
+   * @param blockId The tape block ID.
+   * @param checksumAlgorithm The name of the checksum algorithm.
+   * @param checksum The file checksum.
    */
-  static void notifyGatewayOfFileRecalled(const char *gatewayHost,
+  static void notifyGatewayFileRecalled(const char *gatewayHost,
     const unsigned short gatewayPort, const uint32_t transactionId)
     throw(castor::exception::Exception);
 
