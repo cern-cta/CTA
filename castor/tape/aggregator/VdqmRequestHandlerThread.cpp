@@ -533,7 +533,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
     RtcpTxRx::giveFileToRtcpd(rtcpdInitialSocketFd.get(), RTCPDNETRWTIMEOUT,
       volReqId, filePath, "", RECORDFORMAT, tapeFileId, MIGRATEUMASK);
 
-    RtcpTxRx::offerMoreWorkToRtcpd(rtcpdInitialSocketFd.get(),
+    RtcpTxRx::askRtcpdToRequestMoreWork(rtcpdInitialSocketFd.get(),
       RTCPDNETRWTIMEOUT, volReqId);
 
     RtcpTxRx::tellRtcpdEndOfFileList(rtcpdInitialSocketFd.get(),
@@ -544,7 +544,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
     RtcpTxRx::giveVolumeToRtcpd(rtcpdInitialSocketFd.get(), RTCPDNETRWTIMEOUT, 
       rtcpVolume); 
 
-    RtcpTxRx::offerMoreWorkToRtcpd(rtcpdInitialSocketFd.get(),
+    RtcpTxRx::askRtcpdToRequestMoreWork(rtcpdInitialSocketFd.get(),
       RTCPDNETRWTIMEOUT, volReqId);
 
     RtcpTxRx::tellRtcpdEndOfFileList(rtcpdInitialSocketFd.get(),

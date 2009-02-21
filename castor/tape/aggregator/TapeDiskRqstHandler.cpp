@@ -138,7 +138,7 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
         RtcpTxRx::giveFileToRtcpd(socketFd, RTCPDNETRWTIMEOUT, volReqId,
           filePath, "", RECORDFORMAT, tapeFileId, MIGRATEUMASK);
 
-        RtcpTxRx::offerMoreWorkToRtcpd(socketFd, RTCPDNETRWTIMEOUT,
+        RtcpTxRx::askRtcpdToRequestMoreWork(socketFd, RTCPDNETRWTIMEOUT,
           volReqId);
 
         RtcpTxRx::tellRtcpdEndOfFileList(socketFd, RTCPDNETRWTIMEOUT);
@@ -187,7 +187,7 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
         RtcpTxRx::giveFileToRtcpd(socketFd, RTCPDNETRWTIMEOUT, volReqId,
           filePath, "", RECORDFORMAT, tapeFileId, RECALLUMASK);
 
-        RtcpTxRx::offerMoreWorkToRtcpd(socketFd, RTCPDNETRWTIMEOUT,
+        RtcpTxRx::askRtcpdToRequestMoreWork(socketFd, RTCPDNETRWTIMEOUT,
           volReqId);
 
 	RtcpTxRx::tellRtcpdEndOfFileList(socketFd, RTCPDNETRWTIMEOUT);

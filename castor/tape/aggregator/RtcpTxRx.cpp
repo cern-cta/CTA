@@ -539,9 +539,9 @@ void castor::tape::aggregator::RtcpTxRx::receiveRcpJobRqst(
 
 
 //-----------------------------------------------------------------------------
-// offerMoreWorkToRtcpd
+// askRtcpdToRequestMoreWork
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::RtcpTxRx::offerMoreWorkToRtcpd(
+void castor::tape::aggregator::RtcpTxRx::askRtcpdToRequestMoreWork(
   const int socketFd, const int netReadWriteTimeout, const uint32_t volReqId)
   throw(castor::exception::Exception) {
 
