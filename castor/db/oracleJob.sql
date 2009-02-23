@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.676 $ $Date: 2009/02/17 07:47:32 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.677 $ $Date: 2009/02/23 11:53:17 $ $Author: itglp $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -776,10 +776,15 @@ END;
 CREATE OR REPLACE PROCEDURE getUpdateFailedProc
 (srId IN NUMBER) AS
 BEGIN
+  -- Fail the subrequest. The stager will try and answer the client
   UPDATE SubRequest
-     SET parent = 0, status = 1 -- RESTART
+     SET status = 7 -- FAILED
+   WHERE id = srId;
+  -- Wake up other subrequests waiting on it
+  UPDATE SubRequest
+     SET parent = 0, status = 1, -- RESTART
+         lastModificationTime = getTime()
    WHERE parent = srId;
-  archiveSubReq(srId, 9);  -- FAILED_FINISHED
 END;
 /
 
@@ -805,8 +810,10 @@ BEGIN
     -- query that could trigger them! Anyway it's fine to ignore the FS update,
     -- it will be properly updated by the monitoring.
   END IF;
-  -- Fail SubRequest
-  archiveSubReq(srId, 9);  -- FAILED_FINISHED
+  -- Fail the subRequest
+  UPDATE SubRequest
+     SET status = 7 -- FAILED
+   WHERE id = srId;
   -- Determine the context (Put inside PrepareToPut/Update ?)
   BEGIN
     -- Check that there is a PrepareToPut/Update going on. There can be only a single one
@@ -873,35 +880,19 @@ BEGIN
    WHERE SubRequest.subreqid = srSubReqId
      AND SubRequest.request = Id2Type.id
      AND SubRequest.status IN (6, 14); -- READY, BEINGSCHED
+  -- Set the error code
+  UPDATE SubRequest
+     SET errorCode = srErrorCode
+   WHERE id = srId;
   -- Call the relevant cleanup procedures for the job, procedures that they
   -- would have called themselves if the job had failed!
   IF reqType = 40 THEN -- Put
     putFailedProc(srId);
   ELSIF reqType = 133 THEN -- DiskCopyReplica
     disk2DiskCopyFailed(dcId, 0, res);
-    RETURN;
   ELSE -- Get or Update
     getUpdateFailedProc(srId);
   END IF;
-  -- Fail the subrequest
-  UPDATE SubRequest
-     SET status = 7, -- FAILED
-         errorCode = srErrorCode,
-         lastModificationTime = getTime()
-   WHERE id = srId
-     AND answered = 0
-  RETURNING id INTO res;
-  -- In all cases, restart requests waiting on the failed one
-  IF res IS NOT NULL THEN
-    -- Wake up other subrequests waiting on it
-    UPDATE SubRequest SET status = 1, -- RESTART
-                          lastModificationTime = getTime(),
-                          parent = 0
-     WHERE parent = res AND status = 5; -- WAITSUBREQ
-  END IF;
-  -- CAUTION: if you add additional processing here make sure the logic
-  -- is also covered in the disk2DiskCopyFailed procedure as we don't
-  -- get this far in the processing for StageDiskCopyReplicaRequests!!
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- The subrequest may have been removed, nothing to be done
   res := 0;
