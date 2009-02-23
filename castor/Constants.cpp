@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.73 $ $Release$ $Date: 2009/02/18 13:16:42 $ $Author: gtaur $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.74 $ $Release$ $Date: 2009/02/23 15:04:28 $ $Author: gtaur $
  *
  *
  *
@@ -217,7 +217,7 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "EndNotification",
   "NoMoreFiles",
   "NotificationAcknowledge",
-  "TapeFileNsAttribute",
+  "FileErrorReport",
   "BaseFileInfo",
   "ErrorReport", 
   "RmMasterReport",

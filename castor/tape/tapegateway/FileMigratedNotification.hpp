@@ -45,9 +45,6 @@ namespace castor {
 
     namespace tapegateway {
 
-      // Forward declarations
-      class TapeFileNsAttribute;
-
       /**
        * class FileMigratedNotification
        */
@@ -119,62 +116,62 @@ namespace castor {
         }
 
         /**
-         * Get the value of m_errorCode
-         * @return the value of m_errorCode
+         * Get the value of m_checksumName
+         * @return the value of m_checksumName
          */
-        int errorCode() const {
-          return m_errorCode;
+        std::string checksumName() const {
+          return m_checksumName;
         }
 
         /**
-         * Set the value of m_errorCode
-         * @param new_var the new value of m_errorCode
+         * Set the value of m_checksumName
+         * @param new_var the new value of m_checksumName
          */
-        void setErrorCode(int new_var) {
-          m_errorCode = new_var;
+        void setChecksumName(std::string new_var) {
+          m_checksumName = new_var;
         }
 
         /**
-         * Get the value of m_lastModificationTime
-         * @return the value of m_lastModificationTime
+         * Get the value of m_checksum
+         * @return the value of m_checksum
          */
-        u_signed64 lastModificationTime() const {
-          return m_lastModificationTime;
+        u_signed64 checksum() const {
+          return m_checksum;
         }
 
         /**
-         * Set the value of m_lastModificationTime
-         * @param new_var the new value of m_lastModificationTime
+         * Set the value of m_checksum
+         * @param new_var the new value of m_checksum
          */
-        void setLastModificationTime(u_signed64 new_var) {
-          m_lastModificationTime = new_var;
+        void setChecksum(u_signed64 new_var) {
+          m_checksum = new_var;
         }
 
         /**
-         * Get the value of m_tapeFileNsAttribute
-         * @return the value of m_tapeFileNsAttribute
+         * Get the value of m_compressedFileSize
+         * @return the value of m_compressedFileSize
          */
-        TapeFileNsAttribute* tapeFileNsAttribute() const {
-          return m_tapeFileNsAttribute;
+        u_signed64 compressedFileSize() const {
+          return m_compressedFileSize;
         }
 
         /**
-         * Set the value of m_tapeFileNsAttribute
-         * @param new_var the new value of m_tapeFileNsAttribute
+         * Set the value of m_compressedFileSize
+         * @param new_var the new value of m_compressedFileSize
          */
-        void setTapeFileNsAttribute(TapeFileNsAttribute* new_var) {
-          m_tapeFileNsAttribute = new_var;
+        void setCompressedFileSize(u_signed64 new_var) {
+          m_compressedFileSize = new_var;
         }
 
       private:
 
         u_signed64 m_fileSize;
 
-        int m_errorCode;
+        std::string m_checksumName;
 
-        u_signed64 m_lastModificationTime;
+        u_signed64 m_checksum;
 
-        TapeFileNsAttribute* m_tapeFileNsAttribute;
+        u_signed64 m_compressedFileSize;
 
       }; /* end of class FileMigratedNotification */
 

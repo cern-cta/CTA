@@ -90,7 +90,6 @@ void castor::io::StreamFileToMigrateCnv::createRep(castor::IAddress* address,
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
   ad->stream() << obj->transactionId();
-  ad->stream() << obj->path();
   ad->stream() << obj->nshost();
   ad->stream() << obj->fileid();
   ad->stream() << obj->fseq();
@@ -98,6 +97,7 @@ void castor::io::StreamFileToMigrateCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->fileSize();
   ad->stream() << obj->lastKnownFileName();
   ad->stream() << obj->lastModificationTime();
+  ad->stream() << obj->path();
   ad->stream() << obj->positionCommandCode();
 }
 
@@ -114,9 +114,6 @@ castor::IObject* castor::io::StreamFileToMigrateCnv::createObj(castor::IAddress*
   u_signed64 transactionId;
   ad->stream() >> transactionId;
   object->setTransactionId(transactionId);
-  std::string path;
-  ad->stream() >> path;
-  object->setPath(path);
   std::string nshost;
   ad->stream() >> nshost;
   object->setNshost(nshost);
@@ -138,6 +135,9 @@ castor::IObject* castor::io::StreamFileToMigrateCnv::createObj(castor::IAddress*
   u_signed64 lastModificationTime;
   ad->stream() >> lastModificationTime;
   object->setLastModificationTime(lastModificationTime);
+  std::string path;
+  ad->stream() >> path;
+  object->setPath(path);
   int positionCommandCode;
   ad->stream() >> positionCommandCode;
   object->setPositionCommandCode((castor::tape::tapegateway::PositionCommandCode)positionCommandCode);

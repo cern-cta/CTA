@@ -43,7 +43,8 @@ castor::tape::tapegateway::FileToMigrate::FileToMigrate() throw() :
   BaseFileInfo(),
   m_fileSize(0),
   m_lastKnownFileName(""),
-  m_lastModificationTime(0) {
+  m_lastModificationTime(0),
+  m_path("") {
 }
 
 //------------------------------------------------------------------------------
@@ -70,6 +71,7 @@ void castor::tape::tapegateway::FileToMigrate::print(std::ostream& stream,
   stream << indent << "fileSize : " << m_fileSize << std::endl;
   stream << indent << "lastKnownFileName : " << m_lastKnownFileName << std::endl;
   stream << indent << "lastModificationTime : " << m_lastModificationTime << std::endl;
+  stream << indent << "path : " << m_path << std::endl;
   alreadyPrinted.insert(this);
 }
 

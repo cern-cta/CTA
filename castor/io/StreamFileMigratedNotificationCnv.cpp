@@ -41,7 +41,6 @@
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/tape/tapegateway/FileMigratedNotification.hpp"
 #include "castor/tape/tapegateway/PositionCommandCode.hpp"
-#include "castor/tape/tapegateway/TapeFileNsAttribute.hpp"
 #include "osdep.h"
 #include <string>
 
@@ -91,14 +90,14 @@ void castor::io::StreamFileMigratedNotificationCnv::createRep(castor::IAddress* 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
   ad->stream() << obj->transactionId();
-  ad->stream() << obj->path();
   ad->stream() << obj->nshost();
   ad->stream() << obj->fileid();
   ad->stream() << obj->fseq();
   ad->stream() << obj->blockId();
   ad->stream() << obj->fileSize();
-  ad->stream() << obj->errorCode();
-  ad->stream() << obj->lastModificationTime();
+  ad->stream() << obj->checksumName();
+  ad->stream() << obj->checksum();
+  ad->stream() << obj->compressedFileSize();
   ad->stream() << obj->positionCommandCode();
 }
 
@@ -115,9 +114,6 @@ castor::IObject* castor::io::StreamFileMigratedNotificationCnv::createObj(castor
   u_signed64 transactionId;
   ad->stream() >> transactionId;
   object->setTransactionId(transactionId);
-  std::string path;
-  ad->stream() >> path;
-  object->setPath(path);
   std::string nshost;
   ad->stream() >> nshost;
   object->setNshost(nshost);
@@ -133,12 +129,15 @@ castor::IObject* castor::io::StreamFileMigratedNotificationCnv::createObj(castor
   u_signed64 fileSize;
   ad->stream() >> fileSize;
   object->setFileSize(fileSize);
-  int errorCode;
-  ad->stream() >> errorCode;
-  object->setErrorCode(errorCode);
-  u_signed64 lastModificationTime;
-  ad->stream() >> lastModificationTime;
-  object->setLastModificationTime(lastModificationTime);
+  std::string checksumName;
+  ad->stream() >> checksumName;
+  object->setChecksumName(checksumName);
+  u_signed64 checksum;
+  ad->stream() >> checksum;
+  object->setChecksum(checksum);
+  u_signed64 compressedFileSize;
+  ad->stream() >> compressedFileSize;
+  object->setCompressedFileSize(compressedFileSize);
   int positionCommandCode;
   ad->stream() >> positionCommandCode;
   object->setPositionCommandCode((castor::tape::tapegateway::PositionCommandCode)positionCommandCode);
@@ -162,7 +161,6 @@ void castor::io::StreamFileMigratedNotificationCnv::marshalObject(castor::IObjec
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    cnvSvc()->marshalObject(obj->tapeFileNsAttribute(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
     address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
@@ -179,12 +177,6 @@ castor::IObject* castor::io::StreamFileMigratedNotificationCnv::unmarshalObject(
   castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
-  // Fill object with associations
-  castor::tape::tapegateway::FileMigratedNotification* obj = 
-    dynamic_cast<castor::tape::tapegateway::FileMigratedNotification*>(object);
-  ad.setObjType(castor::OBJ_INVALID);
-  castor::IObject* objTapeFileNsAttribute = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setTapeFileNsAttribute(dynamic_cast<castor::tape::tapegateway::TapeFileNsAttribute*>(objTapeFileNsAttribute));
   return object;
 }
 

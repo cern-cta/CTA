@@ -221,7 +221,7 @@ namespace castor {
     OBJ_EndNotification = 172,
     OBJ_NoMoreFiles = 173,
     OBJ_NotificationAcknowledge = 174,
-    OBJ_TapeFileNsAttribute = 175,
+    OBJ_FileErrorReport = 175,
     OBJ_BaseFileInfo = 176,
     OBJ_ErrorReport = 177,
     OBJ_RmMasterReport = 178,

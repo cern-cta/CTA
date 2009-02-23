@@ -32,7 +32,6 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/tape/tapegateway/BaseFileInfo.hpp"
 #include "castor/tape/tapegateway/FileMigratedNotification.hpp"
-#include "castor/tape/tapegateway/TapeFileNsAttribute.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -43,19 +42,15 @@
 castor::tape::tapegateway::FileMigratedNotification::FileMigratedNotification() throw() :
   BaseFileInfo(),
   m_fileSize(0),
-  m_errorCode(0),
-  m_lastModificationTime(0),
-  m_tapeFileNsAttribute(0) {
+  m_checksumName(""),
+  m_checksum(0),
+  m_compressedFileSize(0) {
 }
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::FileMigratedNotification::~FileMigratedNotification() throw() {
-  if (0 != m_tapeFileNsAttribute) {
-    delete m_tapeFileNsAttribute;
-    m_tapeFileNsAttribute = 0;
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -74,15 +69,10 @@ void castor::tape::tapegateway::FileMigratedNotification::print(std::ostream& st
   this->BaseFileInfo::print(stream, indent, alreadyPrinted);
   // Output of all members
   stream << indent << "fileSize : " << m_fileSize << std::endl;
-  stream << indent << "errorCode : " << m_errorCode << std::endl;
-  stream << indent << "lastModificationTime : " << m_lastModificationTime << std::endl;
+  stream << indent << "checksumName : " << m_checksumName << std::endl;
+  stream << indent << "checksum : " << m_checksum << std::endl;
+  stream << indent << "compressedFileSize : " << m_compressedFileSize << std::endl;
   alreadyPrinted.insert(this);
-  stream << indent << "TapeFileNsAttribute : " << std::endl;
-  if (0 != m_tapeFileNsAttribute) {
-    m_tapeFileNsAttribute->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
-  }
 }
 
 //------------------------------------------------------------------------------

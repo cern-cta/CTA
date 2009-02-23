@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: VmgrTapeGatewayHelper.cpp,v $ $Revision: 1.6 $ $Release$ 
- * $Date: 2009/02/18 13:21:18 $ $Author: gtaur $
+ * @(#)$RCSfile: VmgrTapeGatewayHelper.cpp,v $ $Revision: 1.7 $ $Release$ 
+ * $Date: 2009/02/23 15:03:48 $ $Author: gtaur $
  *
  *
  *
@@ -28,7 +28,6 @@
 
 
 #include "castor/tape/tapegateway/VmgrTapeGatewayHelper.hpp"
-#include "castor/tape/tapegateway/TapeFileNsAttribute.hpp"
 #include "vmgr_api.h"
 
 #include <sys/types.h>
@@ -322,13 +321,13 @@ void  castor::tape::tapegateway::VmgrTapeGatewayHelper::resetBusyTape(castor::st
 }
 
 
-void castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(castor::tape::tapegateway::FileMigratedNotification& file ) throw (castor::exception::Exception){
+void castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(castor::tape::tapegateway::FileMigratedNotification& file, std::string vid ) throw (castor::exception::Exception){
 
   int save_serrno=0;
 
   // check input 
 
-  int side=file.tapeFileNsAttribute()->side(); // supposed 1 segment
+  int side=1; // HARDCODED
 
   // get information from vmgr
 
@@ -337,7 +336,7 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(castor::
 
   while(1){
     serrno=0;
-    int rc = vmgr_querytape(file.tapeFileNsAttribute()->vid().c_str(),side,&vmgrTapeInfo,dgnBuffer);
+    int rc = vmgr_querytape(vid.c_str(),side,&vmgrTapeInfo,dgnBuffer);
     save_serrno = serrno;
 
     if ( rc == 0 ) {
@@ -396,7 +395,7 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(castor::
  if (maxFseq <= 0 || fseq >= maxFseq ) { 
    // set as RDONLY
    flags = TAPE_RDONLY;
-   int rc = vmgr_updatetape(file.tapeFileNsAttribute()->vid().c_str(), side, file.fileSize(), 100, 0, flags ); 
+   int rc = vmgr_updatetape(vid.c_str(), side, file.fileSize(), 100, 0, flags ); 
    if (rc<0) {
      castor::exception::Exception ex(serrno);
      ex.getMessage()
@@ -414,14 +413,14 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(castor::
  }
 
 
- // check if the tape is FULL
+ // check if the tape is FULL TO DO 
 
- if (file.errorCode() == ENOSPC){
+ /* if (file.errorCode() == ENOSPC){
 
    if ( (flags & (TAPE_FULL|DISABLED|EXPORTED|TAPE_RDONLY|ARCHIVED)) == 0 ) 
      flags = TAPE_FULL;
    serrno=0;
-   int rc = vmgr_updatetape( file.tapeFileNsAttribute()->vid().c_str(), side, file.fileSize(), 100, 0, flags ); // no files written
+   int rc = vmgr_updatetape(vid.c_str(), side, file.fileSize(), 100, 0, flags ); // no files written
    if (rc <0) {
      castor::exception::Exception ex(serrno);
      ex.getMessage()
@@ -436,12 +435,13 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(castor::
        <<" tape full";
    throw ex;
    
- }
+   } */
 
  // File migrated correctly, update vmgr and continue to migrate from the tape
  
  serrno=0;
- int rc = vmgr_updatetape(file.tapeFileNsAttribute()->vid().c_str(), side, file.fileSize(),file.tapeFileNsAttribute()->compression() , 1, flags ); // number files always one
+ u_signed64 compression; // TODO
+ int rc = vmgr_updatetape(vid.c_str(), side, file.fileSize(),compression, 1, flags ); // number files always one
  if (rc <0) {
    castor::exception::Exception ex(serrno);
    ex.getMessage()

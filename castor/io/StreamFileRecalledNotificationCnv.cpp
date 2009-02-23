@@ -41,7 +41,6 @@
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/tape/tapegateway/FileRecalledNotification.hpp"
 #include "castor/tape/tapegateway/PositionCommandCode.hpp"
-#include "castor/tape/tapegateway/TapeFileNsAttribute.hpp"
 #include "osdep.h"
 #include <string>
 
@@ -91,13 +90,13 @@ void castor::io::StreamFileRecalledNotificationCnv::createRep(castor::IAddress* 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
   ad->stream() << obj->transactionId();
-  ad->stream() << obj->path();
   ad->stream() << obj->nshost();
   ad->stream() << obj->fileid();
   ad->stream() << obj->fseq();
   ad->stream() << obj->blockId();
-  ad->stream() << obj->fileSize();
-  ad->stream() << obj->errorCode();
+  ad->stream() << obj->path();
+  ad->stream() << obj->checksumName();
+  ad->stream() << obj->checksum();
   ad->stream() << obj->positionCommandCode();
 }
 
@@ -114,9 +113,6 @@ castor::IObject* castor::io::StreamFileRecalledNotificationCnv::createObj(castor
   u_signed64 transactionId;
   ad->stream() >> transactionId;
   object->setTransactionId(transactionId);
-  std::string path;
-  ad->stream() >> path;
-  object->setPath(path);
   std::string nshost;
   ad->stream() >> nshost;
   object->setNshost(nshost);
@@ -129,12 +125,15 @@ castor::IObject* castor::io::StreamFileRecalledNotificationCnv::createObj(castor
   u_signed64 blockId;
   ad->stream() >> blockId;
   object->setBlockId(blockId);
-  u_signed64 fileSize;
-  ad->stream() >> fileSize;
-  object->setFileSize(fileSize);
-  int errorCode;
-  ad->stream() >> errorCode;
-  object->setErrorCode(errorCode);
+  std::string path;
+  ad->stream() >> path;
+  object->setPath(path);
+  std::string checksumName;
+  ad->stream() >> checksumName;
+  object->setChecksumName(checksumName);
+  u_signed64 checksum;
+  ad->stream() >> checksum;
+  object->setChecksum(checksum);
   int positionCommandCode;
   ad->stream() >> positionCommandCode;
   object->setPositionCommandCode((castor::tape::tapegateway::PositionCommandCode)positionCommandCode);
@@ -158,7 +157,6 @@ void castor::io::StreamFileRecalledNotificationCnv::marshalObject(castor::IObjec
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    cnvSvc()->marshalObject(obj->tapeFileNsAttribute(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
     address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
@@ -175,12 +173,6 @@ castor::IObject* castor::io::StreamFileRecalledNotificationCnv::unmarshalObject(
   castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
-  // Fill object with associations
-  castor::tape::tapegateway::FileRecalledNotification* obj = 
-    dynamic_cast<castor::tape::tapegateway::FileRecalledNotification*>(object);
-  ad.setObjType(castor::OBJ_INVALID);
-  castor::IObject* objTapeFileNsAttribute = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setTapeFileNsAttribute(dynamic_cast<castor::tape::tapegateway::TapeFileNsAttribute*>(objTapeFileNsAttribute));
   return object;
 }
 

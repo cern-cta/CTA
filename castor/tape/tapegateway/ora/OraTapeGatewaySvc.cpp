@@ -43,7 +43,7 @@
 #include "castor/stager/TapePool.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/stager/Stream.hpp"
-#include "castor/tape/tapegateway/TapeFileNsAttribute.hpp"
+
 #include "castor/tape/tapegateway/PositionCommandCode.hpp"
 #include "castor/tape/tapegateway/RmMasterTapeGatewayHelper.hpp"
 #include "castor/exception/OutOfMemory.hpp"
@@ -911,8 +911,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::fileMigrationUpdate(cast
     m_fileMigrationUpdateStatement->setDouble(1,(double)resp.transactionId()); // transaction id
     m_fileMigrationUpdateStatement->setDouble(2,(double)resp.fileid());
     m_fileMigrationUpdateStatement->setString(3,resp.nshost());
-    m_fileMigrationUpdateStatement->setInt(4,resp.tapeFileNsAttribute()->copyNo());
-    m_fileMigrationUpdateStatement->setInt(5,resp.errorCode()); 
+    //    m_fileMigrationUpdateStatement->setInt(4,resp.tapeFileNsAttribute()->copyNo()); TODO 
     
     m_fileMigrationUpdateStatement->executeUpdate();
 
@@ -1096,10 +1095,10 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::fileRecallUpdate(castor
     m_fileRecallUpdateStatement->setDouble(1,(double)resp.transactionId());
     m_fileRecallUpdateStatement->setDouble(2,(double)resp.fileid());
     m_fileRecallUpdateStatement->setString(3,resp.nshost());
-    m_fileRecallUpdateStatement->setDouble(4,(double)resp.fileSize());
-    m_fileRecallUpdateStatement->setInt(5,resp.tapeFileNsAttribute()->copyNo());
+    // m_fileRecallUpdateStatement->setDouble(4,(double)resp.fileSize()); TODO
+    //m_fileRecallUpdateStatement->setInt(5,resp.tapeFileNsAttribute()->copyNo());
     m_fileRecallUpdateStatement->setInt(6,resp.fseq()); 
-    m_fileRecallUpdateStatement->setInt(7,resp.errorCode());
+
     m_fileRecallUpdateStatement->executeUpdate();
 
     oracle::occi::ResultSet *rs =

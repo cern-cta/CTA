@@ -45,9 +45,6 @@ namespace castor {
 
     namespace tapegateway {
 
-      // Forward declarations
-      class TapeFileNsAttribute;
-
       /**
        * class FileRecalledNotification
        */
@@ -103,60 +100,60 @@ namespace castor {
         /* End of IObject abstract class */
         /*********************************/
         /**
-         * Get the value of m_fileSize
-         * @return the value of m_fileSize
+         * Get the value of m_path
+         * @return the value of m_path
          */
-        u_signed64 fileSize() const {
-          return m_fileSize;
+        std::string path() const {
+          return m_path;
         }
 
         /**
-         * Set the value of m_fileSize
-         * @param new_var the new value of m_fileSize
+         * Set the value of m_path
+         * @param new_var the new value of m_path
          */
-        void setFileSize(u_signed64 new_var) {
-          m_fileSize = new_var;
+        void setPath(std::string new_var) {
+          m_path = new_var;
         }
 
         /**
-         * Get the value of m_errorCode
-         * @return the value of m_errorCode
+         * Get the value of m_checksumName
+         * @return the value of m_checksumName
          */
-        int errorCode() const {
-          return m_errorCode;
+        std::string checksumName() const {
+          return m_checksumName;
         }
 
         /**
-         * Set the value of m_errorCode
-         * @param new_var the new value of m_errorCode
+         * Set the value of m_checksumName
+         * @param new_var the new value of m_checksumName
          */
-        void setErrorCode(int new_var) {
-          m_errorCode = new_var;
+        void setChecksumName(std::string new_var) {
+          m_checksumName = new_var;
         }
 
         /**
-         * Get the value of m_tapeFileNsAttribute
-         * @return the value of m_tapeFileNsAttribute
+         * Get the value of m_checksum
+         * @return the value of m_checksum
          */
-        TapeFileNsAttribute* tapeFileNsAttribute() const {
-          return m_tapeFileNsAttribute;
+        u_signed64 checksum() const {
+          return m_checksum;
         }
 
         /**
-         * Set the value of m_tapeFileNsAttribute
-         * @param new_var the new value of m_tapeFileNsAttribute
+         * Set the value of m_checksum
+         * @param new_var the new value of m_checksum
          */
-        void setTapeFileNsAttribute(TapeFileNsAttribute* new_var) {
-          m_tapeFileNsAttribute = new_var;
+        void setChecksum(u_signed64 new_var) {
+          m_checksum = new_var;
         }
 
       private:
 
-        u_signed64 m_fileSize;
+        std::string m_path;
 
-        int m_errorCode;
+        std::string m_checksumName;
 
-        TapeFileNsAttribute* m_tapeFileNsAttribute;
+        u_signed64 m_checksum;
 
       }; /* end of class FileRecalledNotification */
 

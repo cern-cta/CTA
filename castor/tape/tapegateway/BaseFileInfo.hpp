@@ -116,22 +116,6 @@ namespace castor {
         }
 
         /**
-         * Get the value of m_path
-         * @return the value of m_path
-         */
-        std::string path() const {
-          return m_path;
-        }
-
-        /**
-         * Set the value of m_path
-         * @param new_var the new value of m_path
-         */
-        void setPath(std::string new_var) {
-          m_path = new_var;
-        }
-
-        /**
          * Get the value of m_nshost
          * @return the value of m_nshost
          */
@@ -232,8 +216,6 @@ namespace castor {
       private:
 
         u_signed64 m_transactionId;
-
-        std::string m_path;
 
         std::string m_nshost;
 

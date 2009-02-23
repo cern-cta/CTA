@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NsTapeGatewayHelper.cpp,v $ $Revision: 1.5 $ $Release$ 
- * $Date: 2009/02/18 13:21:18 $ $Author: gtaur $
+ * @(#)$RCSfile: NsTapeGatewayHelper.cpp,v $ $Revision: 1.6 $ $Release$ 
+ * $Date: 2009/02/23 15:03:47 $ $Author: gtaur $
  *
  *
  *
@@ -28,7 +28,6 @@
 
 
 #include "castor/tape/tapegateway/NsTapeGatewayHelper.hpp"
-#include "castor/tape/tapegateway/TapeFileNsAttribute.hpp"
 #include "castor/tape/tapegateway/PositionCommandCode.hpp"
 #include "osdep.h"
 #include "Cns_api.h"
@@ -38,16 +37,7 @@
 
 
 
-void castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile( tape::tapegateway::FileMigratedNotification& file) throw (castor::exception::Exception){
-  // check input
-
-  if (file.tapeFileNsAttribute() == NULL ) {
-    castor::exception::Exception ex(EINVAL);
-    ex.getMessage()
-      << "castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile:"
-      << "invalid input";
-    throw ex;
-  }
+void castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile( tape::tapegateway::FileMigratedNotification& file, int copyNumber, std::string vid, u_signed64 lastModificationTime) throw (castor::exception::Exception){ 
 
   // fill in the castor file id structure
   
@@ -79,13 +69,14 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile( tape::t
   } 
   
 
-  nsSegAttrs->copyno = file.tapeFileNsAttribute()->copyNo();
+  nsSegAttrs->copyno = copyNumber; 
   nsSegAttrs->fsec = 1; // always one
   u_signed64 nsSize=file.fileSize();
   nsSegAttrs->segsize = nsSize;
-  nsSegAttrs->compression =file.tapeFileNsAttribute()->compression();
-  strncpy(nsSegAttrs->vid, file.tapeFileNsAttribute()->vid().c_str(),CA_MAXVIDLEN);
-  nsSegAttrs->side = file.tapeFileNsAttribute()->side();
+  u_signed64 compression = (file.fileSize() * 100 )/ file.compressedFileSize();
+  nsSegAttrs->compression = compression;
+  strncpy(nsSegAttrs->vid, vid.c_str(),CA_MAXVIDLEN);
+  nsSegAttrs->side = 1; //HARDCODED
   
   //  convert the blockid
   
@@ -99,12 +90,11 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile( tape::t
 
   strncpy(
 	  nsSegAttrs->checksum_name,
-	  file.tapeFileNsAttribute()->checksumName().c_str(),
+	  file.checksumName().c_str(),
 	  CA_MAXCKSUMNAMELEN
 	  );
-  nsSegAttrs->checksum = file.tapeFileNsAttribute()->checksum();
+  nsSegAttrs->checksum = file.checksum();
   int save_serrno=0;
-  time_t lastModificationTime = file.lastModificationTime();
 
   // removed the logic of "retry 5 times to update"
   serrno=0;
@@ -153,17 +143,7 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile( tape::t
 }
 
 
-void castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile( tape::tapegateway::FileMigratedNotification& file , std::string repackVid) throw (castor::exception::Exception){
-
-  // check input
-
-  if ( file.tapeFileNsAttribute() == NULL ) {
-    castor::exception::Exception ex(EINVAL);
-    ex.getMessage()
-      << "castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile:"
-      << "invalid input";
-    throw ex;
-  }
+void castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile( tape::tapegateway::FileMigratedNotification& file, std::string repackVid, int copyNumber, std::string vid, u_signed64 lastModificationTime) throw (castor::exception::Exception){
 
   // fill in the castor file id structure
   
@@ -194,13 +174,14 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile( tape::t
 
   } 
 
-  nsSegAttrs->copyno = file.tapeFileNsAttribute()->copyNo();
+  nsSegAttrs->copyno = copyNumber; 
   nsSegAttrs->fsec = 1; // always one
-  nsSegAttrs->compression =file.tapeFileNsAttribute()->compression();
+  u_signed64 compression = (file.fileSize() * 100 )/ file.compressedFileSize();
+  nsSegAttrs->compression =compression;
   nsSegAttrs->segsize = file.fileSize();
   
-  strncpy(nsSegAttrs->vid,file.tapeFileNsAttribute()->vid().c_str(),CA_MAXVIDLEN);
-  nsSegAttrs->side = file.tapeFileNsAttribute()->side();
+  strncpy(nsSegAttrs->vid,vid.c_str(),CA_MAXVIDLEN);
+  nsSegAttrs->side = 1; // HARDCODED side
   
   //  convert the blockid
   
@@ -214,10 +195,10 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile( tape::t
 
   strncpy(
             nsSegAttrs->checksum_name,
-            file.tapeFileNsAttribute()->checksumName().c_str(),
+            file.checksumName().c_str(),
             CA_MAXCKSUMNAMELEN
             );
-  nsSegAttrs->checksum = file.tapeFileNsAttribute()->checksum();
+  nsSegAttrs->checksum = file.checksum();
  
   // we are in repack case so the copy should be replaced
   
@@ -297,8 +278,6 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile( tape::t
   }  
 
   // replace the tapecopy
-  
-  time_t lastModificationTime = file.lastModificationTime();
 
   rc = Cns_replacetapecopy(&castorFileId, repackVid.c_str(),nsSegAttrs->vid,nbSegms,nsSegAttrs,lastModificationTime);
        
@@ -469,17 +448,8 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::getBlockIdToRecall(castor::
 }
 
 
-void  castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile(castor::tape::tapegateway::FileRecalledNotification& file) throw (castor::exception::Exception) {
-  // check input
-
-  if (file.tapeFileNsAttribute() ) {
-    castor::exception::Exception ex(EINVAL);
-    ex.getMessage()
-      << "castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile:"
-      << "invalid input";
-    throw ex;
-  }
-
+void  castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile(castor::tape::tapegateway::FileRecalledNotification& file, std::string vid, int copyNumber, int fsec) throw (castor::exception::Exception) {
+ 
   // get segments for this fileid
 
   struct Cns_fileid castorFileId;
@@ -518,8 +488,8 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile(castor::
 
   for ( int i=0; i<nbSegs; i++ ) {
 
-    if ( strcmp(segattrs[i].vid,file.tapeFileNsAttribute()->vid().c_str()) != 0 ) continue;
-    if ( segattrs[i].side != file.tapeFileNsAttribute()->side()) continue;
+    if ( strcmp(segattrs[i].vid, vid.c_str()) != 0 ) continue;
+    if ( segattrs[i].side != 1 ) continue;
     if ( segattrs[i].fseq != file.fseq() ) continue;
     // check the blockid depending the positioning method
     if ( file.positionCommandCode() == TPPOSIT_BLKID) {
@@ -533,14 +503,14 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile(castor::
       if ( memcmp(segattrs[i].blockid,convertedBlockId, sizeof(convertedBlockId)) != 0)  continue;
     }
 
-    if ( segattrs[i].fsec != file.tapeFileNsAttribute()->fsec() ) continue;
-    if ( segattrs[i].copyno != file.tapeFileNsAttribute()->copyNo() ) continue;
+    if ( segattrs[i].fsec != fsec ) continue; 
+    if ( segattrs[i].copyno != copyNumber ) continue; 
     
     // All the checks were successfull let's check checksum  
 
     // check the checksum (mandatory)
 
-    if (file.tapeFileNsAttribute()->checksumName().empty() && segattrs[i].checksum_name[0] == '\0') {
+    if (file.checksumName().empty() && segattrs[i].checksum_name[0] == '\0') {
       return; //no checksum given
     }
 
@@ -551,10 +521,10 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile(castor::
       memcpy(&newSegattrs,&segattrs[i],sizeof(segattrs));
       strncpy(
               newSegattrs->checksum_name,
-              file.tapeFileNsAttribute()->checksumName().c_str(),
+              file.checksumName().c_str(),
               CA_MAXCKSUMNAMELEN
               );
-      newSegattrs->checksum = file.tapeFileNsAttribute()->checksum(); 
+      newSegattrs->checksum = file.checksum(); 
       serrno=0;
       int rc = Cns_updateseg_checksum(
                                   castorFileId.server,
@@ -578,7 +548,7 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile(castor::
       return;
     }
 
-    if ( strcmp(file.tapeFileNsAttribute()->checksumName().c_str(),segattrs[i].checksum_name) != 0 || file.tapeFileNsAttribute()->checksum() != segattrs[i].checksum ) {
+    if ( strcmp(file.checksumName().c_str(),segattrs[i].checksum_name) != 0 || file.checksum() != segattrs[i].checksum ) {
       // wrong checksum and you cannot change the checksum on the fly
       
       if (segattrs != NULL ) free(segattrs);

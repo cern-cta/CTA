@@ -39,7 +39,8 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::FileToRecall::FileToRecall() throw() :
-  BaseFileInfo() {
+  BaseFileInfo(),
+  m_path("") {
 }
 
 //------------------------------------------------------------------------------
@@ -62,6 +63,8 @@ void castor::tape::tapegateway::FileToRecall::print(std::ostream& stream,
   }
   // Call print on the parent class(es)
   this->BaseFileInfo::print(stream, indent, alreadyPrinted);
+  // Output of all members
+  stream << indent << "path : " << m_path << std::endl;
   alreadyPrinted.insert(this);
 }
 

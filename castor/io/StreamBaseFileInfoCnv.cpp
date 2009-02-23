@@ -90,7 +90,6 @@ void castor::io::StreamBaseFileInfoCnv::createRep(castor::IAddress* address,
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
   ad->stream() << obj->transactionId();
-  ad->stream() << obj->path();
   ad->stream() << obj->nshost();
   ad->stream() << obj->fileid();
   ad->stream() << obj->fseq();
@@ -112,9 +111,6 @@ castor::IObject* castor::io::StreamBaseFileInfoCnv::createObj(castor::IAddress* 
   u_signed64 transactionId;
   ad->stream() >> transactionId;
   object->setTransactionId(transactionId);
-  std::string path;
-  ad->stream() >> path;
-  object->setPath(path);
   std::string nshost;
   ad->stream() >> nshost;
   object->setNshost(nshost);

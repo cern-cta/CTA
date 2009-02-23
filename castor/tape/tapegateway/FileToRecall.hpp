@@ -98,6 +98,26 @@ namespace castor {
         /*********************************/
         /* End of IObject abstract class */
         /*********************************/
+        /**
+         * Get the value of m_path
+         * @return the value of m_path
+         */
+        std::string path() const {
+          return m_path;
+        }
+
+        /**
+         * Set the value of m_path
+         * @param new_var the new value of m_path
+         */
+        void setPath(std::string new_var) {
+          m_path = new_var;
+        }
+
+      private:
+
+        std::string m_path;
+
       }; /* end of class FileToRecall */
 
     } /* end of namespace tapegateway */

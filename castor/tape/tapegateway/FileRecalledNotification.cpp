@@ -32,7 +32,6 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/tape/tapegateway/BaseFileInfo.hpp"
 #include "castor/tape/tapegateway/FileRecalledNotification.hpp"
-#include "castor/tape/tapegateway/TapeFileNsAttribute.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -42,19 +41,15 @@
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::FileRecalledNotification::FileRecalledNotification() throw() :
   BaseFileInfo(),
-  m_fileSize(0),
-  m_errorCode(0),
-  m_tapeFileNsAttribute(0) {
+  m_path(""),
+  m_checksumName(""),
+  m_checksum(0) {
 }
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::FileRecalledNotification::~FileRecalledNotification() throw() {
-  if (0 != m_tapeFileNsAttribute) {
-    delete m_tapeFileNsAttribute;
-    m_tapeFileNsAttribute = 0;
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -72,15 +67,10 @@ void castor::tape::tapegateway::FileRecalledNotification::print(std::ostream& st
   // Call print on the parent class(es)
   this->BaseFileInfo::print(stream, indent, alreadyPrinted);
   // Output of all members
-  stream << indent << "fileSize : " << m_fileSize << std::endl;
-  stream << indent << "errorCode : " << m_errorCode << std::endl;
+  stream << indent << "path : " << m_path << std::endl;
+  stream << indent << "checksumName : " << m_checksumName << std::endl;
+  stream << indent << "checksum : " << m_checksum << std::endl;
   alreadyPrinted.insert(this);
-  stream << indent << "TapeFileNsAttribute : " << std::endl;
-  if (0 != m_tapeFileNsAttribute) {
-    m_tapeFileNsAttribute->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
-  }
 }
 
 //------------------------------------------------------------------------------

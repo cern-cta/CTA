@@ -41,7 +41,6 @@
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::BaseFileInfo::BaseFileInfo() throw() :
   m_transactionId(0),
-  m_path(""),
   m_nshost(""),
   m_fileid(0),
   m_fseq(0),
@@ -70,7 +69,6 @@ void castor::tape::tapegateway::BaseFileInfo::print(std::ostream& stream,
   }
   // Output of all members
   stream << indent << "transactionId : " << m_transactionId << std::endl;
-  stream << indent << "path : " << m_path << std::endl;
   stream << indent << "nshost : " << m_nshost << std::endl;
   stream << indent << "fileid : " << m_fileid << std::endl;
   stream << indent << "fseq : " << m_fseq << std::endl;
