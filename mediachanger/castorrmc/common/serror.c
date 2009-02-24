@@ -466,7 +466,7 @@ char *sys_secerrlist[ESECMAXERR-ESECBASEOFF+2] =
    "Could not load security mechanism",
    "Context not initialized",
    "Security protocol not supported",
-   "Could not set service name",
+   "Service name not set",
    "Service type not set",
    "Could not lookup security protocol",
    "Csec incompatibility",
