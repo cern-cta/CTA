@@ -71,8 +71,8 @@
 #define D400G	0x19
 #define D500G	0x1A
 #define D700G	0x1B
-#define D1000G	0x1C
-#define D800G   0x1D 
+#define D800G   0x1C
+#define D1000G	0x1D
 #define IDRC	0x100
 #define	D38KC	(D38000 | IDRC)
 #define	D38KDC	(D38KD | IDRC)

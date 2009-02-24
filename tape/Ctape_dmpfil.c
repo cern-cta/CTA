@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.30 $ $Date: 2008/11/19 15:58:23 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.31 $ $Date: 2009/02/24 14:44:55 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	Ctape_dmpfil - analyse the content of a tape file */
@@ -85,6 +85,7 @@ int flags;
 	/* Set default values */
 
 	den = cvtden (aden);
+
 	switch (den) {
 	case D800:
 		density = 800;
@@ -145,8 +146,11 @@ int flags;
 	case D400GC:
 	case D500G:
 	case D500GC:
-    case D700G:
+        case D700G:
 	case D700GC:
+        case D800G:
+	case D800GC:
+        case D1000G:
 	case D1000GC:
 	case DDS:
 	case DDSC:
