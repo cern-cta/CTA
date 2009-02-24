@@ -822,6 +822,51 @@ The following error values are returned only by the User Privilege Validation pa
 .B ECUPVNACT
 (2401) UPV not active or service being drained
 
+.SH SECURITY ERRORS
+The following error values are returned in response to security related problems:
+.TP 1.9i
+.B ESEC_SYSTEM
+(2701) System error in the security package
+.TP
+.B ESEC_BAD_CREDENTIALS
+(2702) Bad credentials
+.TP
+.B ESEC_NO_CONTEXT
+(2703) Could not establish context
+.TP
+.B ESEC_BAD_MAGIC
+(2704) Bad magic number
+.TP
+.B ESEC_NO_USER
+(2705) Could not map username to uid/gid
+.TP
+.B ESEC_NO_PRINC
+(2706) Could not map principal to username
+.TP
+.B ESEC_NO_SECMECH
+(2707) Could not load security mechanism
+.TP
+.B ESEC_CTX_NOT_INITIALIZED
+(2708) Context not initialized
+.TP
+.B ESEC_PROTNOTSUPP
+(2709) Security protocol not supported
+.TP
+.B ESEC_NO_SVC_NAME
+(2710) Service name not set
+.TP
+.B ESEC_NO_SVC_TYPE
+(2711) Service type not set
+.TP
+.B ESEC_NO_SECPROT
+(2712) Could not lookup security protocol
+.TP
+.B ESEC_BAD_CSEC_VERSION
+(2713) Csec incompatability
+.TP
+.B ESEC_BAD_PEER_RESP
+(2714) Unexpected response from peer
+
 .SH EXPERT ERRORS
 The following error values are returned only by the Expert Facility package:
 .TP 1.9i
