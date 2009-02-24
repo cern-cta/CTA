@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.38 $ $Release$ $Date: 2009/01/08 09:38:40 $ $Author: itglp $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.39 $ $Release$ $Date: 2009/02/24 17:34:12 $ $Author: riojac3 $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -57,7 +57,6 @@
 //------------------------------------------------------------------------------
 castor::rh::RHThread::RHThread(bool useAccessLists)
 throw (castor::exception::Exception) :
-  BaseDbThread(),
   m_useAccessLists(useAccessLists) {
   m_stagerHost = castor::PortsConfig::getInstance()->
     getHostName(castor::CASTOR_STAGER);
@@ -78,21 +77,6 @@ throw (castor::exception::Exception) :
   m_svcHandler[OBJ_SetFileGCWeight] = "StageReqSvc";
 }
 
-//------------------------------------------------------------------------------
-// Destructor
-//------------------------------------------------------------------------------
-castor::rh::RHThread::~RHThread() throw ()
-{
-/*
-This empty destructor has to be implemented here and NOT inline,
-otherwise the following error will happen at linking time:
-  
-RHThread.o(.text+0x469): In function `castor::rh::RHThread::RHThread(bool)':
-.../castor/rh/RHThread.cpp:61: undefined reference to `VTT for castor::rh::RHThread'
-
-See e.g. http://www.daniweb.com/forums/thread114299.html for more details.
-*/
-}
 
 //------------------------------------------------------------------------------
 // run
@@ -109,7 +93,7 @@ void castor::rh::RHThread::run(void* param) {
   // We know it's a ServerSocket
   castor::io::ServerSocket* sock = (castor::io::ServerSocket*) param;
   castor::stager::Request* fr = 0;
-
+  
   // Retrieve info on the client
   unsigned short port;
   unsigned long ip;
@@ -130,14 +114,28 @@ void castor::rh::RHThread::run(void* param) {
   uuid[CUUID_STRING_LEN] = 0;
   Cuuid2string(uuid, CUUID_STRING_LEN+1, &cuuid);
 
-  // "New Request Arrival"
-  castor::dlf::Param peerParams[] =
-    {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
-     castor::dlf::Param("Port", port)};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 1, 2, peerParams);
+  // If the request comes from a secure connection then establish the context & map the user.
+  bool secure = false;
+  std::string client_mech = "Unsecure";
+  castor::io::AuthServerSocket* authSock;
+
+  try{
+     authSock = dynamic_cast<castor::io::AuthServerSocket*>(sock);
+     if (authSock != 0) {
+       authSock->initContext();
+       authSock->setClientId();
+       client_mech = authSock->getSecMech();
+       secure = true;
+     }
+     // "New Request Arrival"
+     castor::dlf::Param peerParams[] =
+       {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
+        castor::dlf::Param("Port", port),
+        castor::dlf::Param("SecurityMechanism", client_mech)};
+     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 1, 3, peerParams);
 
   // Get the incoming request
-  try {
+
     castor::IObject* obj = sock->readObject();
     fr = dynamic_cast<castor::stager::Request*>(obj);
     if (0 == fr) {
@@ -148,6 +146,17 @@ void castor::rh::RHThread::run(void* param) {
       ack.setErrorCode(EINVAL);
       ack.setErrorMessage("Invalid Request object sent to server.");
     }
+  }  catch (castor::exception::Security e) {
+     castor::dlf::Param params[] =
+       {castor::dlf::Param("Standard Message", sstrerror(e.code())),
+        castor::dlf::Param("Precise Message", e.getMessage().str()),
+        castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
+        castor::dlf::Param("Port", port)};
+     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 17, 4, params);
+     ack.setStatus(false);
+     ack.setErrorCode(e.code());
+     ack.setErrorMessage(e.getMessage().str());
+
   } catch (castor::exception::Exception e) {
     // "Unable to read Request from socket"
     castor::dlf::Param params[] =
@@ -165,18 +174,12 @@ void castor::rh::RHThread::run(void* param) {
 
   // If the request comes from a secure connection then set Client values in
   // the Request object.
-  bool secure = false;
-  std::string client_mech = "Unsecure";
-  castor::io::AuthServerSocket* authSock =
-    dynamic_cast<castor::io::AuthServerSocket*>(sock);
-  if (authSock != 0) {
+
+  if (secure ) {
     fr->setEuid(authSock->getClientEuid());
     fr->setEgid(authSock->getClientEgid());
     fr->setUserName(authSock->getClientMappedName());
-    client_mech = authSock->getSecMech();
-    secure = true;
   }
-
   castor::BaseAddress ad;
 
   ad.setCnvSvcName("DbCnvSvc");
@@ -188,6 +191,7 @@ void castor::rh::RHThread::run(void* param) {
   if (fr != 0) {
     client = dynamic_cast<castor::rh::Client *>(fr->client());
   }
+
   if (ack.status()) {
     try {
       fr->setReqId(uuid);

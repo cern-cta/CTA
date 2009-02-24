@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AuthServerSocket.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/09/02 13:10:23 $ $Author: riojac3 $
+ * @(#)$RCSfile: AuthServerSocket.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2009/02/24 17:34:12 $ $Author: riojac3 $
  *
  * Defines a dedicated socket that handles most of the network calls
  *
@@ -33,6 +33,7 @@
 #include <netinet/in.h>
 #include "castor/BaseObject.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/Security.hpp"
 #include "ServerSocket.hpp"
 
 extern "C" {
@@ -59,7 +60,7 @@ namespace castor {
        * Constructor building a Socket objet around a regular socket
        * @param socket the regular socket used
        */
-      AuthServerSocket(int socket) throw ();
+//      AuthServerSocket(int socket) throw ();
 
       
       /**
@@ -68,7 +69,7 @@ namespace castor {
        * The bind method should be call independently
        * @param reusable whether the socket should be reusable
        */
-      AuthServerSocket(const bool reusable) throw (castor::exception::Exception);
+  //    AuthServerSocket(const bool reusable) throw (castor::exception::Exception);
 
       /**
        * Constructor building a socket on a given local port
@@ -76,7 +77,7 @@ namespace castor {
        * you want the system to allocate a port
        * @param doListen whether to start listening on the socket.
        */
-      AuthServerSocket(const unsigned short port,
+       AuthServerSocket(const unsigned short port,
 		       const bool reusable) throw (castor::exception::Exception);
 
       /**
@@ -85,11 +86,11 @@ namespace castor {
        * remote host
        * @param host the host to connect to, given by its name
        */
-      AuthServerSocket(const unsigned short port,
-		       const std::string host,
-		       const bool reusable,
-		       int service_type = CSEC_SERVICE_TYPE_HOST )
-        throw (castor::exception::Exception);
+  //    AuthServerSocket(const unsigned short port,
+//		       const std::string host,
+//		       const bool reusable,
+//		       int service_type = CSEC_SERVICE_TYPE_HOST )
+ //       throw (castor::exception::Exception);
 
       /**
        * Constructor building a socket on a given port of a given host
@@ -97,11 +98,11 @@ namespace castor {
        * remote host
        * @param host the host to connect to, given as an ip address
        */
-      AuthServerSocket(const unsigned short port,
-		       const unsigned long ip,
-		       const bool reusable,
-		       int service_type = CSEC_SERVICE_TYPE_HOST )
-        throw (castor::exception::Exception);
+   //   AuthServerSocket(const unsigned short port,
+//		       const unsigned long ip,
+//		       const bool reusable,
+//		       int service_type = CSEC_SERVICE_TYPE_HOST )
+  //      throw (castor::exception::Exception);
 
       /**
        *
@@ -118,14 +119,14 @@ namespace castor {
        * The deallocation of the new socket is the responsability
        * of the caller.
        */
-      virtual ServerSocket* accept() throw(castor::exception::Exception);
+      virtual ServerSocket* accept() throw(castor::exception::Security);
 
       /**
        * This method gets the dn or principal of the client from the context and then 
        * map to a local user. If the local user doen't exist it throws and exception
        * THAT METHOD SHOULDN'T BELONG TO THE CLASS SOCKET --TO BE MOVED
        */
-      void setClientId () throw(castor::exception::Exception);      
+      void setClientId () throw(castor::exception::Security);      
 
       /**
        * Returns the value uid in the local machine 
@@ -150,7 +151,8 @@ namespace castor {
        * THAT METHOD SHOULDN'T BELONG TO THE CLASS SOCKET --TO BE MOVED
        */
       std::string getSecMech();
-
+      
+      void initContext() throw (castor::exception::Security);
     private:
       Csec_context_t m_security_context;
       uid_t m_Euid;

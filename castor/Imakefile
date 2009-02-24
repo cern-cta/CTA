@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.206 $ $Release$ $Date: 2009/01/14 17:30:51 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.207 $ $Release$ $Date: 2009/02/24 17:34:12 $ $Author: riojac3 $
 #
 # Make Castor libraries and executables
 #
@@ -370,6 +370,7 @@ STGLIB_SRCS = IAddressCInt.cpp \
               exception/NoSegmentFound.cpp \
               exception/PermissionDenied.cpp \
               exception/RequestCanceled.cpp \
+              exception/Security.cpp \
               exception/SQLError.cpp \
               exception/TimeOut.cpp \
               exception/TooBig.cpp \

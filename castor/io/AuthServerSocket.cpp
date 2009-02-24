@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AuthServerSocket.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/11/24 17:47:25 $ $Author: waldron $
+ * @(#)$RCSfile: AuthServerSocket.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2009/02/24 17:34:12 $ $Author: riojac3 $
  *
  * @author Benjamin Couturier
  *****************************************************************************/
@@ -41,140 +41,60 @@
 #include "castor/io/biniostream.h"
 #include "castor/io/StreamAddress.hpp"
 
+
 // Local Includes
 #include "AuthServerSocket.hpp"
 
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-castor::io::AuthServerSocket::AuthServerSocket(int socket) throw () :
-  ServerSocket(socket) {
-  if (loader() == -1) {
-    castor::exception::Exception ex(serrno);
-    ex.getMessage() << "Dynamic library was not properly loaded";
-    throw ex;
-  }
-
-  if (getServer_initContext(&m_security_context, CSEC_SERVICE_TYPE_HOST, NULL) < 0) {
-    castor::exception::Exception ex(serrno);
-    ex.getMessage() << "The initialization of the security context failed";
-    throw ex;
-  }
-}
-
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-castor::io::AuthServerSocket::AuthServerSocket(const bool reusable)
-  throw (castor::exception::Exception):
-  ServerSocket(reusable) {
-
-  if (loader() == -1) {
-    castor::exception::Exception ex(serrno);
-    ex.getMessage() << "Dynamic library was not properly loaded";
-    throw ex;
-  }
-
-  if (getServer_initContext(&m_security_context, CSEC_SERVICE_TYPE_HOST, NULL) < 0) {
-    castor::exception::Exception ex(serrno);
-    ex.getMessage() << "The initialization of the security context failed";
-    throw ex;
-  }
-}
-
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
 castor::io::AuthServerSocket::AuthServerSocket(const unsigned short port,
-					       const bool reusable)
+                                               const bool reusable)
   throw (castor::exception::Exception) :
   ServerSocket(port, reusable) {
-  if (loader() == -1) {
-    castor::exception::Exception ex(serrno);
-    ex.getMessage() << "Dynamic library was not properly loaded";
-    throw ex;
-  }
-
-  if (getServer_initContext(&m_security_context, CSEC_SERVICE_TYPE_HOST, NULL) < 0) {
-    castor::exception::Exception ex(serrno);
-    ex.getMessage() << "The initialization of the security context failed";
-    throw ex;
-  }
 }
-
 
 //------------------------------------------------------------------------------
 // constructor
-//------------------------------------------------------------------------------
-castor::io::AuthServerSocket::AuthServerSocket(const unsigned short port,
-					       const std::string host,
-					       const bool reusable,
-					       int service_type)
-  throw (castor::exception::Exception) :
-  ServerSocket(port, host, reusable) {
-  if (loader() == -1) {
-    castor::exception::Exception ex(serrno);
-    ex.getMessage() << "Dynamic library was not properly loaded";
-    throw ex;
-  }
-
-  if (getServer_initContext(&m_security_context, CSEC_SERVICE_TYPE_HOST, NULL) < 0) {
-    castor::exception::Exception ex(serrno);
-    ex.getMessage() << "The initialization of the security context failed";
-    throw ex;
-  }
-}
-
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-castor::io::AuthServerSocket::AuthServerSocket(const unsigned short port,
-					       const unsigned long ip,
-					       const bool reusable,
-					       int service_type)
-  throw (castor::exception::Exception) :
-  ServerSocket(port, ip, reusable) {
-  if (loader() == -1) {
-    castor::exception::Exception ex(serrno);
-    ex.getMessage() << "Dynamic library was not properly loaded";
-    throw ex;
-  }
-
-  if (getServer_initContext(&m_security_context, CSEC_SERVICE_TYPE_HOST, NULL) < 0) {
-    castor::exception::Exception ex(serrno);
-    ex.getMessage() << "The initialization of the security context failed";
-    throw ex;
-  }
-}
-
-
-//------------------------------------------------------------------------------
-// constructor
-// Initialize a AuthServerSocket from a ServerSocket. It copies the attributes of
-// the ServerSocket, reuses the security context and establishes the context with
-// the client and maps the user to a local user
+// Initialize a AuthServerSocket from a ServerSocket. It copies the attributes 
+// of the ServerSocket, reuses the security context and establishes the context
+// with the client and maps the user to a local user
 //------------------------------------------------------------------------------
 castor::io::AuthServerSocket::AuthServerSocket(castor::io::ServerSocket* cs,
                                                const Csec_context_t context)
   throw (castor::exception::Exception) :
   ServerSocket(cs->socket()) {
+  unsigned short peerPort  = 0;
+  unsigned long  peerIp    = 0;
+  std::stringstream ipStream;  
+ 
   cs->resetSocket();
   delete cs;
-  m_security_context = context;
 
-  if (getServer_establishContext(&m_security_context, m_socket) < 0) {
-    close();
+  getPeerIp(peerPort, peerIp);
+  ipStream << ((peerIp >> 24) & 0x000000FF) << "."  
+	   << ((peerIp >> 16) & 0x000000FF) << "."
+           << ((peerIp >>  8) & 0x000000FF) << "." 
+	   << (peerIp & 0x000000FF);
+  /* 
+  if (loader() == -1) {
     castor::exception::Exception ex(serrno);
-    ex.getMessage() << "The initialization of the security context failed";
+    ex.getMessage() << "Dynamic library was not properly loaded."
+                    << " Accept from " << ipStream.str() << ":" << peerPort;
+    throw ex;
+  }
+  
+  if (getServer_initContext(&m_security_context, CSEC_SERVICE_TYPE_HOST, NULL) < 0) {
+    castor::exception::Exception ex(ESEC_BAD_CREDENTIALS);
+    ex.getMessage() << "The initialization of the security context failed."
+                    << " Request from " << ipStream.str() << ":" << peerPort;
     throw ex;
   }
 
-  // map user.
-  setClientId();
+  if (getServer_establishContext(&m_security_context, m_socket) < 0) {
+    close();
+    castor::exception::Exception ex(ESEC_NO_CONTEXT);
+    ex.getMessage() << "The security context couldn't be established."
+                    << " Request from " << ipStream.str()  << ":" << peerPort;
+    throw ex;
+  } */
 }
 
 
@@ -191,7 +111,7 @@ castor::io::AuthServerSocket::~AuthServerSocket() throw () {
 // accept
 //------------------------------------------------------------------------------
 castor::io::ServerSocket* castor::io::AuthServerSocket::accept()
-  throw(castor::exception::Exception) {
+  throw(castor::exception::Security) {
 
   castor::io::ServerSocket* as = castor::io::ServerSocket::accept();
   return new AuthServerSocket(as, m_security_context);
@@ -202,20 +122,69 @@ castor::io::ServerSocket* castor::io::AuthServerSocket::accept()
 // setClientId (That method should go out of this class
 //------------------------------------------------------------------------------
 void castor::io::AuthServerSocket::setClientId ()
-  throw(castor::exception::Exception) {
+  throw(castor::exception::Security) {
   char *mech, *name;
   char username[CA_MAXUSRNAMELEN+1];
-  getClientId(&m_security_context, &mech, &name);
-  // In the name you got the principal it in the previous call from the gridmapfile
-  // here you get uid and gid and if you want
-  // the name matching the uid then set buf and BUF_SIZE
-  if (getMapUser (mech, name, username, CA_MAXUSRNAMELEN, &m_Euid, &m_Egid) != 0) {
-    castor::exception::Exception ex(serrno);
+   
+  //initContext(); 
+  //Returns the DN 
+  if (getClientId(&m_security_context, &mech, &name) != 0) {
+    castor::exception::Security ex(ESECMAXERR);
+    ex.getMessage() << "DN/Kerberos token could not be extracted"; 
+    throw ex;
+  }
+  // In the name you got the principal it in the previous call from the
+  // gridmapfile here you get uid and gid and if you want the name matching the
+  // uid then set buf and BUF_SIZE
+  if (getMapUser (mech, name, username, CA_MAXUSRNAMELEN, &m_Euid, &m_Egid) < 0) {
+    castor::exception::Security ex(serrno);
     ex.getMessage() << "User cannot be mapped into local user";
+    throw ex;
   }
   m_secMech = mech;
   m_userName = username;
 }
+
+//----------------------------------------------------------------------------
+//Init the security context and stablish the security context with the client
+//----------------------------------------------------------------------------
+void  castor::io::AuthServerSocket::initContext() throw (castor::exception::Security) {
+  unsigned short peerPort  = 0;
+  unsigned long  peerIp    = 0;
+  std::stringstream ipStream;
+
+  //cs->resetSocket();
+  //delete cs;
+
+  getPeerIp(peerPort, peerIp);
+  ipStream << ((peerIp >> 24) & 0x000000FF) << "."
+           << ((peerIp >> 16) & 0x000000FF) << "."
+           << ((peerIp >>  8) & 0x000000FF) << "."
+           << (peerIp & 0x000000FF);
+
+  if (loader() == -1) {
+    castor::exception::Security ex(serrno);
+    ex.getMessage() << "Dynamic library was not properly loaded."
+                    << " Accept from " << ipStream.str() << ":" << peerPort;
+    throw ex;
+  }
+
+  if (getServer_initContext(&m_security_context, CSEC_SERVICE_TYPE_HOST, NULL) < 0) {
+    castor::exception::Security ex(ESEC_BAD_CREDENTIALS);
+    ex.getMessage() << "The initialization of the security context failed."
+                    << " Request from " << ipStream.str() << ":" << peerPort;
+    throw ex;
+  }
+
+  if (getServer_establishContext(&m_security_context, m_socket) < 0) {
+    //close();
+    castor::exception::Security ex(ESEC_NO_CONTEXT);
+    ex.getMessage() << "The security context couldn't be established."
+                    << " Request from " << ipStream.str()  << ":" << peerPort;
+    throw ex;
+  }
+}
+ 
 
 
 //------------------------------------------------------------------------------
