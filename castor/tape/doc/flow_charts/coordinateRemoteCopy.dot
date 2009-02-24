@@ -1,4 +1,5 @@
 digraph flowchart {
+  size="8,11";
 
   start                        -> "accept rtcpd conn";
   "accept rtcpd conn"          -> "get rqst from rtcpd";
