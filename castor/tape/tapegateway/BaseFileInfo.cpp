@@ -44,7 +44,6 @@ castor::tape::tapegateway::BaseFileInfo::BaseFileInfo() throw() :
   m_nshost(""),
   m_fileid(0),
   m_fseq(0),
-  m_blockId(0),
   m_id(0),
   m_positionCommandCode(PositionCommandCode(0)) {
 }
@@ -72,7 +71,6 @@ void castor::tape::tapegateway::BaseFileInfo::print(std::ostream& stream,
   stream << indent << "nshost : " << m_nshost << std::endl;
   stream << indent << "fileid : " << m_fileid << std::endl;
   stream << indent << "fseq : " << m_fseq << std::endl;
-  stream << indent << "blockId : " << m_blockId << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "positionCommandCode : " << PositionCommandCodeStrings[m_positionCommandCode] << std::endl;

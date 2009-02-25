@@ -47,6 +47,7 @@ castor::tape::tapegateway::TapeRequestState::TapeRequestState() throw() :
   m_lastVdqmPingTime(0),
   m_vdqmVolReqId(0),
   m_nbRetry(0),
+  m_lastFseq(0),
   m_id(0),
   m_streamMigration(0),
   m_tapeRecall(0),
@@ -77,6 +78,7 @@ void castor::tape::tapegateway::TapeRequestState::print(std::ostream& stream,
   stream << indent << "lastVdqmPingTime : " << m_lastVdqmPingTime << std::endl;
   stream << indent << "vdqmVolReqId : " << m_vdqmVolReqId << std::endl;
   stream << indent << "nbRetry : " << m_nbRetry << std::endl;
+  stream << indent << "lastFseq : " << m_lastFseq << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "StreamMigration : " << std::endl;

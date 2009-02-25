@@ -51,7 +51,7 @@ TAPEGATEWAY_MESSAGES_SRCS = \
 	EndNotification.cpp NotificationAcknowledge.cpp EndNotificationErrorReport.cpp\
 	NoMoreFiles.cpp ErrorReport.cpp \
 	BaseFileInfo.cpp PositionCommandCode.cpp FileErrorReport.cpp \
-	TapeRequestState.cpp TapeRequestStateCode.cpp 
+	TapeRequestState.cpp TapeRequestStateCode.cpp MigrationWorkBasket.cpp
 
 TAPEGATEWAY_IO_SRCS = \
 	../../io/StreamVolumeRequestCnv.cpp ../../io/StreamVolumeCnv.cpp \
@@ -62,7 +62,7 @@ TAPEGATEWAY_IO_SRCS = \
 	../../io/StreamNoMoreFilesCnv.cpp ../../io/StreamErrorReportCnv.cpp \
 	../../io/StreamBaseFileInfoCnv.cpp  ../../io/StreamFileErrorReportCnv.cpp 
 
-TAPEGATEWAY_DB_SRCS = ../../db/cnv/DbTapeRequestStateCnv.cpp ora/OraTapeGatewaySvc.cpp
+TAPEGATEWAY_DB_SRCS = ../../db/cnv/DbTapeRequestStateCnv.cpp ora/OraTapeGatewaySvc.cpp ../../db/cnv/DbMigrationWorkBasketCnv.cpp
 
 TAPEGATEWAYBIN_SRCS = $(TAPEGATEWAYDAEMONBIN_SRCS) $(TAPEGATEWAY_MESSAGES_SRCS) $(TAPEGATEWAY_IO_SRCS) $(TAPEGATEWAY_DB_SRCS)
 

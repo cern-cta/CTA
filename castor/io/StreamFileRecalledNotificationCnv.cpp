@@ -93,7 +93,6 @@ void castor::io::StreamFileRecalledNotificationCnv::createRep(castor::IAddress* 
   ad->stream() << obj->nshost();
   ad->stream() << obj->fileid();
   ad->stream() << obj->fseq();
-  ad->stream() << obj->blockId();
   ad->stream() << obj->path();
   ad->stream() << obj->checksumName();
   ad->stream() << obj->checksum();
@@ -122,9 +121,6 @@ castor::IObject* castor::io::StreamFileRecalledNotificationCnv::createObj(castor
   int fseq;
   ad->stream() >> fseq;
   object->setFseq(fseq);
-  u_signed64 blockId;
-  ad->stream() >> blockId;
-  object->setBlockId(blockId);
   std::string path;
   ad->stream() >> path;
   object->setPath(path);

@@ -323,6 +323,10 @@ castor::tape::tapegateway::TapeGatewayDaemon::TapeGatewayDaemon() : castor::serv
    {73, "Worker: no more files for this transaction id"},
    {74,  "VdqmRequestsProducer: vmgr error"},
    {75,  "VdqmRequestsProducer: vdqm error"},
+   {76,  "Worker: impossible to mark the tapecopy as failed because of db error"},
+   {77, "Worker: received a FileErrorReportNotification"},
+   {78, "Worker: updating the db after receiving  FileErrorReportNotification"},
+   {79, "Worker: tape marked as FULL in vmgr"},
    {-1, ""}
   };
   dlfInit(messages);

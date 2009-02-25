@@ -93,7 +93,6 @@ void castor::io::StreamFileToMigrateCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->nshost();
   ad->stream() << obj->fileid();
   ad->stream() << obj->fseq();
-  ad->stream() << obj->blockId();
   ad->stream() << obj->fileSize();
   ad->stream() << obj->lastKnownFileName();
   ad->stream() << obj->lastModificationTime();
@@ -123,9 +122,6 @@ castor::IObject* castor::io::StreamFileToMigrateCnv::createObj(castor::IAddress*
   int fseq;
   ad->stream() >> fseq;
   object->setFseq(fseq);
-  u_signed64 blockId;
-  ad->stream() >> blockId;
-  object->setBlockId(blockId);
   u_signed64 fileSize;
   ad->stream() >> fileSize;
   object->setFileSize(fileSize);

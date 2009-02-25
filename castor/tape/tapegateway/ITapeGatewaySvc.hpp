@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeGatewaySvc.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2009/02/18 17:04:39 $ $Author: gtaur $
+ * @(#)$RCSfile: ITapeGatewaySvc.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2009/02/25 10:33:26 $ $Author: gtaur $
  *
  * This class provides methods related to tape handling
  *
@@ -51,6 +51,7 @@
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/tapegateway/NoMoreFiles.hpp"
+#include "castor/tape/tapegateway/FileErrorReport.hpp"
 #include "castor/stager/TapeCopy.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/tape/tapegateway/TapeRequestState.hpp" 
@@ -80,7 +81,7 @@ namespace castor {
          * Create the link between tape-stream.
          */
 
-        virtual void resolveStreams(std::vector<u_signed64> strIds, std::vector<std::string> vids)
+        virtual void resolveStreams(std::vector<u_signed64> strIds, std::vector<std::string> vids, std::vector<int> fseqs)
           throw (castor::exception::Exception)=0;
 
         /*
@@ -167,10 +168,10 @@ namespace castor {
 
 
 	/**
-	 * Check file for repack returning the repackvid if any
+	 * Check file for repack returning the repackvid if any and other information about the file for vmgr and ns update
 	 */
 	
-	virtual std::string getRepackVid(castor::tape::tapegateway::FileMigratedNotification& file)throw (castor::exception::Exception)=0;
+	virtual std::string getRepackVidAndFileInformation(castor::tape::tapegateway::FileMigratedNotification& file, std::string& vid, int& copyNumber, u_signed64& lastModificationTime )throw (castor::exception::Exception)=0;
 
 	/*
 	 * Update the database when the tape aggregator allows us to serve a request 
@@ -185,6 +186,19 @@ namespace castor {
 
 	virtual castor::stager::Tape* updateDbEndTape(castor::tape::tapegateway::EndNotification& endRequest) throw (castor::exception::Exception)=0; 
 
+	/*
+	 * get information to make cross check in the nameserver after a recall
+	 */
+
+
+	virtual void getSegmentInformation(FileRecalledNotification &fileRecalled, std::string& vid,int& fsec )=0; 
+
+	/*
+	 * update the db after a major failure
+	 */
+
+	virtual castor::stager::Tape updateAfterFailure(FileErrorReport& failure)=0;
+
       private:
 	/*
 	 * Delete a segment which is not anymore in the nameserver 
@@ -197,6 +211,7 @@ namespace castor {
 	 */
 
 	virtual void  invalidateTapeCopy(castor::tape::tapegateway::FileToMigrate& file) throw (castor::exception::Exception)=0;
+
       
       /*
        * Commit transaction

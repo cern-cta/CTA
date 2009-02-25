@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NsTapeGatewayHelper.cpp,v $ $Revision: 1.6 $ $Release$ 
- * $Date: 2009/02/23 15:03:47 $ $Author: gtaur $
+ * @(#)$RCSfile: NsTapeGatewayHelper.cpp,v $ $Revision: 1.7 $ $Release$ 
+ * $Date: 2009/02/25 10:33:26 $ $Author: gtaur $
  *
  *
  *
@@ -80,11 +80,10 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile( tape::t
   
   //  convert the blockid
   
-  unsigned int blockidValue=file.blockId(); 
-  nsSegAttrs->blockid[3]=(unsigned char)((blockidValue/0x1000000)%0x100);
-  nsSegAttrs->blockid[2]=(unsigned char)((blockidValue/0x10000)%0x100);
-  nsSegAttrs->blockid[1]=(unsigned char)((blockidValue/0x100)%0x100); 
-  nsSegAttrs->blockid[0]=(unsigned char)((blockidValue/0x1)%0x100);
+  nsSegAttrs->blockid[3]=file.blockId3(); 
+  nsSegAttrs->blockid[2]=file.blockId2();
+  nsSegAttrs->blockid[1]=file.blockId1();
+  nsSegAttrs->blockid[0]=file.blockId0();
 
   nsSegAttrs->fseq = file.fseq();
 
@@ -185,11 +184,10 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile( tape::t
   
   //  convert the blockid
   
-  unsigned int blockidValue=file.blockId(); 
-  nsSegAttrs->blockid[3]=(unsigned char)((blockidValue/0x1000000)%0x100);
-  nsSegAttrs->blockid[2]=(unsigned char)((blockidValue/0x10000)%0x100);
-  nsSegAttrs->blockid[1]=(unsigned char)((blockidValue/0x100)%0x100); 
-  nsSegAttrs->blockid[0]=(unsigned char)((blockidValue/0x1)%0x100);
+  nsSegAttrs->blockid[3]=file.blockId3(); 
+  nsSegAttrs->blockid[2]=file.blockId2(); 
+  nsSegAttrs->blockid[1]=file.blockId1(); 
+  nsSegAttrs->blockid[0]=file.blockId0(); 
 
   nsSegAttrs->fseq = file.fseq();
 
@@ -428,8 +426,13 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::getBlockIdToRecall(castor::
     if ( segArray[i].fseq == file.fseq() &&  strcmp(segArray[i].vid , vid.c_str()) == 0 ) {
       // here it is the right segment we want to recall
       // impossible to have 2 copies of the same file in the same aggregate   
-      file.setBlockId(segArray[i].blockid[0]+segArray[i].blockid[1]*0x100+ segArray[i].blockid[2]*0x10000 + segArray[i].blockid[3]*0x1000000);
-      if (file.blockId()==0) file.setPositionCommandCode(TPPOSIT_FSEQ); // magic things for the first file
+
+      file.setBlockId0(segArray[i].blockid[0]);
+      file.setBlockId1(segArray[i].blockid[1]);
+      file.setBlockId2(segArray[i].blockid[2]);
+      file.setBlockId3(segArray[i].blockid[3]);
+
+      if (file.blockId0()== file.blockId1()==file.blockId2()== file.blockId3()== 0) file.setPositionCommandCode(TPPOSIT_FSEQ); // magic things for the first file
       if (segArray != NULL )   free(segArray);
       segArray=NULL;
       return;
@@ -448,7 +451,7 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::getBlockIdToRecall(castor::
 }
 
 
-void  castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile(castor::tape::tapegateway::FileRecalledNotification& file, std::string vid, int copyNumber, int fsec) throw (castor::exception::Exception) {
+void  castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile(castor::tape::tapegateway::FileRecalledNotification& file, std::string vid, int fsec) throw (castor::exception::Exception) {
  
   // get segments for this fileid
 
@@ -491,20 +494,9 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile(castor::
     if ( strcmp(segattrs[i].vid, vid.c_str()) != 0 ) continue;
     if ( segattrs[i].side != 1 ) continue;
     if ( segattrs[i].fseq != file.fseq() ) continue;
-    // check the blockid depending the positioning method
-    if ( file.positionCommandCode() == TPPOSIT_BLKID) {
-      // get the block id in the nameserver format
-      unsigned int blockidValue= file.blockId(); 
-      char convertedBlockId[4];
-      convertedBlockId[3]=(unsigned char)((blockidValue/0x1000000)%0x100);
-      convertedBlockId[2]=(unsigned char)((blockidValue/0x10000)%0x100);
-      convertedBlockId[1]=(unsigned char)((blockidValue/0x100)%0x100); 
-      convertedBlockId[0]=(unsigned char)((blockidValue/0x1)%0x100);
-      if ( memcmp(segattrs[i].blockid,convertedBlockId, sizeof(convertedBlockId)) != 0)  continue;
-    }
-
-    if ( segattrs[i].fsec != fsec ) continue; 
-    if ( segattrs[i].copyno != copyNumber ) continue; 
+    // removed the  check of  the blockid 
+   
+    if ( segattrs[i].fsec != fsec ) continue;
     
     // All the checks were successfull let's check checksum  
 

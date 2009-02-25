@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2009/02/18 17:04:39 $ $Author: gtaur $
+ * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2009/02/25 10:33:27 $ $Author: gtaur $
  *
  * Implementation of the ITapeGatewaySvc for Oracle
  *
@@ -91,7 +91,7 @@ namespace castor {
          * Create the link between tape-stream.
          */
 
-        virtual void resolveStreams(std::vector<u_signed64> strIds, std::vector<std::string> vids)
+        virtual void resolveStreams(std::vector<u_signed64> strIds, std::vector<std::string> vids, std::vector<int> fseqs)
           throw (castor::exception::Exception);
 
         /*
@@ -185,7 +185,7 @@ namespace castor {
 	 * Check file for repack returning the repackvid if any
 	 */
 
-	virtual std::string getRepackVid(castor::tape::tapegateway::FileMigratedNotification& file)throw (castor::exception::Exception);
+	virtual std::string getRepackVidAndFileInformation(castor::tape::tapegateway::FileMigratedNotification& file, std::string& vid, int& copyNumber, u_signed64& lastModificationTime)throw (castor::exception::Exception);
 	
 	
 	/*
@@ -201,6 +201,20 @@ namespace castor {
 	virtual castor::stager::Tape*  updateDbEndTape(castor::tape::tapegateway::EndNotification& endRequest) throw (castor::exception::Exception); 
 
 	
+	/*
+	 * get information to make cross check in the nameserver after a recall
+	 */
+
+
+	virtual void getSegmentInformation(FileRecalledNotification &fileRecalled, std::string& vid,int& fsec ) throw (castor::exception::Exception);  
+	
+	/*
+	 * update the db after a major failure
+	 */
+	
+	virtual castor::stager::Tape updateAfterFailure(FileErrorReport& failure) throw (castor::exception::Exception);
+
+
       private:
 	
 	/*
@@ -308,11 +322,11 @@ namespace castor {
         /// SQL statement object for function updateWithRecallRetryPolicyResult  
         oracle::occi::Statement *m_updateWithRecallRetryPolicyResultStatement;
 
-	/// SQL statement for function getRepackVid 
-        static const std::string s_getRepackVidStatementString;
+	/// SQL statement for function getRepackVidAndFileInformation  
+        static const std::string s_getRepackVidAndFileInformationStatementString;
 
-        /// SQL statement object for function getRepackVid   
-        oracle::occi::Statement *m_getRepackVidStatement;
+        /// SQL statement object for function getRepackVidAndFileInformation   
+        oracle::occi::Statement *m_getRepackVidAndFileInformationStatement;
 
 	//SQL statement object for function updateDbStartTape
 	static const std::string s_updateDbStartTapeStatementString;
@@ -343,6 +357,18 @@ namespace castor {
 
 	/// SQL statement object for function commitTransaction
 	oracle::occi::Statement *m_commitTransactionStatement;
+
+	// SQL statement object for function getSegmentInformation
+        static const std::string s_getSegmentInformationStatementString;
+
+        /// SQL statement object for function getSegmentInformation
+        oracle::occi::Statement *m_getSegmentInformationStatement;
+
+	// SQL statement object for function updateAfterFailure
+        static const std::string s_updateAfterFailureStatementString;
+
+        /// SQL statement object for function updateAfterFailure 
+        oracle::occi::Statement *m_updateAfterFailureStatement;
 
       }; // end of class OraTapeGateway
 

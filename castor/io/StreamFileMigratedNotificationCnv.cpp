@@ -93,11 +93,14 @@ void castor::io::StreamFileMigratedNotificationCnv::createRep(castor::IAddress* 
   ad->stream() << obj->nshost();
   ad->stream() << obj->fileid();
   ad->stream() << obj->fseq();
-  ad->stream() << obj->blockId();
   ad->stream() << obj->fileSize();
   ad->stream() << obj->checksumName();
   ad->stream() << obj->checksum();
   ad->stream() << obj->compressedFileSize();
+  ad->stream() << obj->blockId0();
+  ad->stream() << obj->blockId1();
+  ad->stream() << obj->blockId2();
+  ad->stream() << obj->blockId3();
   ad->stream() << obj->positionCommandCode();
 }
 
@@ -123,9 +126,6 @@ castor::IObject* castor::io::StreamFileMigratedNotificationCnv::createObj(castor
   int fseq;
   ad->stream() >> fseq;
   object->setFseq(fseq);
-  u_signed64 blockId;
-  ad->stream() >> blockId;
-  object->setBlockId(blockId);
   u_signed64 fileSize;
   ad->stream() >> fileSize;
   object->setFileSize(fileSize);
@@ -138,6 +138,18 @@ castor::IObject* castor::io::StreamFileMigratedNotificationCnv::createObj(castor
   u_signed64 compressedFileSize;
   ad->stream() >> compressedFileSize;
   object->setCompressedFileSize(compressedFileSize);
+  unsigned char blockId0;
+  ad->stream() >> blockId0;
+  object->setBlockId0(blockId0);
+  unsigned char blockId1;
+  ad->stream() >> blockId1;
+  object->setBlockId1(blockId1);
+  unsigned char blockId2;
+  ad->stream() >> blockId2;
+  object->setBlockId2(blockId2);
+  unsigned char blockId3;
+  ad->stream() >> blockId3;
+  object->setBlockId3(blockId3);
   int positionCommandCode;
   ad->stream() >> positionCommandCode;
   object->setPositionCommandCode((castor::tape::tapegateway::PositionCommandCode)positionCommandCode);

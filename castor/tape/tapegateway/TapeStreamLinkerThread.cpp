@@ -77,6 +77,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
 
   std::vector<u_signed64> strIds; 
   std::vector<std::string> vids;
+  std::vector<int> fseqs;
   std::vector<castor::stager::Tape*> tapesUsed;
   std::vector<castor::stager::Tape*>::iterator tapeItem;
   castor::stager::Tape* tapeToUse=NULL;
@@ -91,9 +92,11 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
     castor::dlf::Param params0[] =
       {castor::dlf::Param("StreamId",(*strItem)->id())
       };
+    int lastFseq=-1;
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 17, 1, params0);
     try {
-      tapeToUse=vmgrHelper.getTapeForStream(**strItem);
+     
+      tapeToUse=vmgrHelper.getTapeForStream(**strItem,lastFseq);
     } catch(castor::exception::Exception e) {
       strItem++;
       continue;
@@ -109,6 +112,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
 
       strIds.push_back((*strItem)->id());
       vids.push_back(tapeToUse->vid());
+      fseqs.push_back(lastFseq);
       tapesUsed.push_back(tapeToUse);
       
     }
@@ -119,7 +123,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
 
   // update the db 
   try {
-    m_dbSvc->resolveStreams(strIds, vids);
+    m_dbSvc->resolveStreams(strIds, vids, fseqs);
   } catch (castor::exception::Exception e){
     
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 19, 0, NULL);
@@ -159,6 +163,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
   streamsToResolve.clear();
   strIds.clear(); 
   vids.clear();
+  fseqs.clear();
   
 }
 

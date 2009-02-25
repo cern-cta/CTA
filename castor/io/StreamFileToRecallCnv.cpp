@@ -93,8 +93,11 @@ void castor::io::StreamFileToRecallCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->nshost();
   ad->stream() << obj->fileid();
   ad->stream() << obj->fseq();
-  ad->stream() << obj->blockId();
   ad->stream() << obj->path();
+  ad->stream() << obj->blockId0();
+  ad->stream() << obj->blockId1();
+  ad->stream() << obj->blockId2();
+  ad->stream() << obj->blockId3();
   ad->stream() << obj->positionCommandCode();
 }
 
@@ -120,12 +123,21 @@ castor::IObject* castor::io::StreamFileToRecallCnv::createObj(castor::IAddress* 
   int fseq;
   ad->stream() >> fseq;
   object->setFseq(fseq);
-  u_signed64 blockId;
-  ad->stream() >> blockId;
-  object->setBlockId(blockId);
   std::string path;
   ad->stream() >> path;
   object->setPath(path);
+  unsigned char blockId0;
+  ad->stream() >> blockId0;
+  object->setBlockId0(blockId0);
+  unsigned char blockId1;
+  ad->stream() >> blockId1;
+  object->setBlockId1(blockId1);
+  unsigned char blockId2;
+  ad->stream() >> blockId2;
+  object->setBlockId2(blockId2);
+  unsigned char blockId3;
+  ad->stream() >> blockId3;
+  object->setBlockId3(blockId3);
   int positionCommandCode;
   ad->stream() >> positionCommandCode;
   object->setPositionCommandCode((castor::tape::tapegateway::PositionCommandCode)positionCommandCode);

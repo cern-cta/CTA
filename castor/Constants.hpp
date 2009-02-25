@@ -225,7 +225,9 @@ namespace castor {
     OBJ_BaseFileInfo = 176,
     OBJ_ErrorReport = 177,
     OBJ_RmMasterReport = 178,
-    OBJ_EndNotificationErrorReport = 179
+    OBJ_EndNotificationErrorReport = 179,
+    OBJ_MigrationWorkBasket = 180
+
   };
 
   /**
@@ -306,7 +308,7 @@ namespace castor {
    * declared outside of any function.
    */
 
-#define OBJECT_IDS_NB 180
+#define OBJECT_IDS_NB 181
 
   static const unsigned int ObjectsIdsNb = OBJECT_IDS_NB;
 

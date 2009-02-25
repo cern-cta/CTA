@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NsTapeGatewayHelper.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2009/02/23 15:03:47 $ $Author: gtaur $
+ * @(#)$RCSfile: NsTapeGatewayHelper.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2009/02/25 10:33:26 $ $Author: gtaur $
  *
  *
  * @author Castor Dev team, castor-dev@cern.ch
@@ -49,7 +49,7 @@ namespace castor {
      
 	void updateRepackedFile( tape::tapegateway::FileMigratedNotification& file, std::string repackVid, int copyNumber, std::string vid, u_signed64 lastModificationTime) throw (castor::exception::Exception);
 
-	void  checkRecalledFile(castor::tape::tapegateway::FileRecalledNotification& file, std::string vid, int copyNumber, int fsec) throw (castor::exception::Exception);
+	void  checkRecalledFile(castor::tape::tapegateway::FileRecalledNotification& file, std::string vid, int fsec) throw (castor::exception::Exception);
       
 	void  checkFileToMigrate(castor::tape::tapegateway::FileToMigrate& file, std::string vid) throw (castor::exception::Exception);
       

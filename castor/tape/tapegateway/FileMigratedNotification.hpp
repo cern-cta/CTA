@@ -163,6 +163,70 @@ namespace castor {
           m_compressedFileSize = new_var;
         }
 
+        /**
+         * Get the value of m_blockId0
+         * @return the value of m_blockId0
+         */
+        unsigned char blockId0() const {
+          return m_blockId0;
+        }
+
+        /**
+         * Set the value of m_blockId0
+         * @param new_var the new value of m_blockId0
+         */
+        void setBlockId0(unsigned char new_var) {
+          m_blockId0 = new_var;
+        }
+
+        /**
+         * Get the value of m_blockId1
+         * @return the value of m_blockId1
+         */
+        unsigned char blockId1() const {
+          return m_blockId1;
+        }
+
+        /**
+         * Set the value of m_blockId1
+         * @param new_var the new value of m_blockId1
+         */
+        void setBlockId1(unsigned char new_var) {
+          m_blockId1 = new_var;
+        }
+
+        /**
+         * Get the value of m_blockId2
+         * @return the value of m_blockId2
+         */
+        unsigned char blockId2() const {
+          return m_blockId2;
+        }
+
+        /**
+         * Set the value of m_blockId2
+         * @param new_var the new value of m_blockId2
+         */
+        void setBlockId2(unsigned char new_var) {
+          m_blockId2 = new_var;
+        }
+
+        /**
+         * Get the value of m_blockId3
+         * @return the value of m_blockId3
+         */
+        unsigned char blockId3() const {
+          return m_blockId3;
+        }
+
+        /**
+         * Set the value of m_blockId3
+         * @param new_var the new value of m_blockId3
+         */
+        void setBlockId3(unsigned char new_var) {
+          m_blockId3 = new_var;
+        }
+
       private:
 
         u_signed64 m_fileSize;
@@ -172,6 +236,14 @@ namespace castor {
         u_signed64 m_checksum;
 
         u_signed64 m_compressedFileSize;
+
+        unsigned char m_blockId0;
+
+        unsigned char m_blockId1;
+
+        unsigned char m_blockId2;
+
+        unsigned char m_blockId3;
 
       }; /* end of class FileMigratedNotification */
 

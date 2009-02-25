@@ -189,6 +189,22 @@ namespace castor {
         }
 
         /**
+         * Get the value of m_lastFseq
+         * @return the value of m_lastFseq
+         */
+        int lastFseq() const {
+          return m_lastFseq;
+        }
+
+        /**
+         * Set the value of m_lastFseq
+         * @param new_var the new value of m_lastFseq
+         */
+        void setLastFseq(int new_var) {
+          m_lastFseq = new_var;
+        }
+
+        /**
          * Get the value of m_id
          * The id of this object
          * @return the value of m_id
@@ -265,6 +281,8 @@ namespace castor {
         int m_vdqmVolReqId;
 
         int m_nbRetry;
+
+        int m_lastFseq;
 
         /// The id of this object
         u_signed64 m_id;

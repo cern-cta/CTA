@@ -44,7 +44,11 @@ castor::tape::tapegateway::FileMigratedNotification::FileMigratedNotification() 
   m_fileSize(0),
   m_checksumName(""),
   m_checksum(0),
-  m_compressedFileSize(0) {
+  m_compressedFileSize(0),
+  m_blockId0(0),
+  m_blockId1(0),
+  m_blockId2(0),
+  m_blockId3(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -72,6 +76,10 @@ void castor::tape::tapegateway::FileMigratedNotification::print(std::ostream& st
   stream << indent << "checksumName : " << m_checksumName << std::endl;
   stream << indent << "checksum : " << m_checksum << std::endl;
   stream << indent << "compressedFileSize : " << m_compressedFileSize << std::endl;
+  stream << indent << "blockId0 : " << m_blockId0 << std::endl;
+  stream << indent << "blockId1 : " << m_blockId1 << std::endl;
+  stream << indent << "blockId2 : " << m_blockId2 << std::endl;
+  stream << indent << "blockId3 : " << m_blockId3 << std::endl;
   alreadyPrinted.insert(this);
 }
 

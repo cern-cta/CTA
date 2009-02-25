@@ -164,22 +164,6 @@ namespace castor {
         }
 
         /**
-         * Get the value of m_blockId
-         * @return the value of m_blockId
-         */
-        u_signed64 blockId() const {
-          return m_blockId;
-        }
-
-        /**
-         * Set the value of m_blockId
-         * @param new_var the new value of m_blockId
-         */
-        void setBlockId(u_signed64 new_var) {
-          m_blockId = new_var;
-        }
-
-        /**
          * Get the value of m_id
          * The id of this object
          * @return the value of m_id
@@ -222,8 +206,6 @@ namespace castor {
         u_signed64 m_fileid;
 
         int m_fseq;
-
-        u_signed64 m_blockId;
 
         /// The id of this object
         u_signed64 m_id;
