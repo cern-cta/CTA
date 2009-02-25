@@ -277,7 +277,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-dlf-web
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, php-oci8
 Description: castor (Cern Advanced STORage system)
  Distributed Logging Facility Web Interface
 
