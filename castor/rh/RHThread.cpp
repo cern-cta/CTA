@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.39 $ $Release$ $Date: 2009/02/24 17:34:12 $ $Author: riojac3 $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.40 $ $Release$ $Date: 2009/02/25 07:10:26 $ $Author: waldron $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -56,7 +56,7 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::rh::RHThread::RHThread(bool useAccessLists)
-throw (castor::exception::Exception) :
+  throw (castor::exception::Exception) :
   m_useAccessLists(useAccessLists) {
   m_stagerHost = castor::PortsConfig::getInstance()->
     getHostName(castor::CASTOR_STAGER);
@@ -114,27 +114,28 @@ void castor::rh::RHThread::run(void* param) {
   uuid[CUUID_STRING_LEN] = 0;
   Cuuid2string(uuid, CUUID_STRING_LEN+1, &cuuid);
 
-  // If the request comes from a secure connection then establish the context & map the user.
+  // If the request comes from a secure connection then establish the context & 
+  // map the user.
   bool secure = false;
   std::string client_mech = "Unsecure";
   castor::io::AuthServerSocket* authSock;
 
-  try{
-     authSock = dynamic_cast<castor::io::AuthServerSocket*>(sock);
-     if (authSock != 0) {
-       authSock->initContext();
-       authSock->setClientId();
-       client_mech = authSock->getSecMech();
-       secure = true;
-     }
-     // "New Request Arrival"
-     castor::dlf::Param peerParams[] =
-       {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
-        castor::dlf::Param("Port", port),
-        castor::dlf::Param("SecurityMechanism", client_mech)};
-     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 1, 3, peerParams);
+  try {
+    authSock = dynamic_cast<castor::io::AuthServerSocket*>(sock);
+    if (authSock != 0) {
+      authSock->initContext();
+      authSock->setClientId();
+      client_mech = authSock->getSecMech();
+      secure = true;
+    }
+    // "New Request Arrival"
+    castor::dlf::Param peerParams[] =
+      {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
+       castor::dlf::Param("Port", port),
+       castor::dlf::Param("SecurityMechanism", client_mech)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 1, 3, peerParams);
 
-  // Get the incoming request
+    // Get the incoming request
 
     castor::IObject* obj = sock->readObject();
     fr = dynamic_cast<castor::stager::Request*>(obj);
@@ -147,15 +148,15 @@ void castor::rh::RHThread::run(void* param) {
       ack.setErrorMessage("Invalid Request object sent to server.");
     }
   }  catch (castor::exception::Security e) {
-     castor::dlf::Param params[] =
-       {castor::dlf::Param("Standard Message", sstrerror(e.code())),
-        castor::dlf::Param("Precise Message", e.getMessage().str()),
-        castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
-        castor::dlf::Param("Port", port)};
-     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 17, 4, params);
-     ack.setStatus(false);
-     ack.setErrorCode(e.code());
-     ack.setErrorMessage(e.getMessage().str());
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Standard Message", sstrerror(e.code())),
+       castor::dlf::Param("Precise Message", e.getMessage().str()),
+       castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
+       castor::dlf::Param("Port", port)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 17, 4, params);
+    ack.setStatus(false);
+    ack.setErrorCode(e.code());
+    ack.setErrorMessage(e.getMessage().str());
 
   } catch (castor::exception::Exception e) {
     // "Unable to read Request from socket"
@@ -174,8 +175,7 @@ void castor::rh::RHThread::run(void* param) {
 
   // If the request comes from a secure connection then set Client values in
   // the Request object.
-
-  if (secure ) {
+  if (secure) {
     fr->setEuid(authSock->getClientEuid());
     fr->setEgid(authSock->getClientEgid());
     fr->setUserName(authSock->getClientMappedName());
@@ -207,7 +207,7 @@ void castor::rh::RHThread::run(void* param) {
         throw e;
       }
       client->setIpAddress(ip);
-      if (secure){
+      if (secure) {
         client->setSecure(1);
       }
 

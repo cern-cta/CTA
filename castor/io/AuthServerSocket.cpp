@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AuthServerSocket.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2009/02/24 17:34:12 $ $Author: riojac3 $
+ * @(#)$RCSfile: AuthServerSocket.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2009/02/25 07:10:26 $ $Author: waldron $
  *
  * @author Benjamin Couturier
  *****************************************************************************/
@@ -51,6 +51,7 @@ castor::io::AuthServerSocket::AuthServerSocket(const unsigned short port,
   ServerSocket(port, reusable) {
 }
 
+
 //------------------------------------------------------------------------------
 // constructor
 // Initialize a AuthServerSocket from a ServerSocket. It copies the attributes 
@@ -73,28 +74,6 @@ castor::io::AuthServerSocket::AuthServerSocket(castor::io::ServerSocket* cs,
 	   << ((peerIp >> 16) & 0x000000FF) << "."
            << ((peerIp >>  8) & 0x000000FF) << "." 
 	   << (peerIp & 0x000000FF);
-  /* 
-  if (loader() == -1) {
-    castor::exception::Exception ex(serrno);
-    ex.getMessage() << "Dynamic library was not properly loaded."
-                    << " Accept from " << ipStream.str() << ":" << peerPort;
-    throw ex;
-  }
-  
-  if (getServer_initContext(&m_security_context, CSEC_SERVICE_TYPE_HOST, NULL) < 0) {
-    castor::exception::Exception ex(ESEC_BAD_CREDENTIALS);
-    ex.getMessage() << "The initialization of the security context failed."
-                    << " Request from " << ipStream.str() << ":" << peerPort;
-    throw ex;
-  }
-
-  if (getServer_establishContext(&m_security_context, m_socket) < 0) {
-    close();
-    castor::exception::Exception ex(ESEC_NO_CONTEXT);
-    ex.getMessage() << "The security context couldn't be established."
-                    << " Request from " << ipStream.str()  << ":" << peerPort;
-    throw ex;
-  } */
 }
 
 
@@ -125,9 +104,8 @@ void castor::io::AuthServerSocket::setClientId ()
   throw(castor::exception::Security) {
   char *mech, *name;
   char username[CA_MAXUSRNAMELEN+1];
-   
-  //initContext(); 
-  //Returns the DN 
+
+  // Returns the DN 
   if (getClientId(&m_security_context, &mech, &name) != 0) {
     castor::exception::Security ex(ESECMAXERR);
     ex.getMessage() << "DN/Kerberos token could not be extracted"; 
@@ -145,16 +123,15 @@ void castor::io::AuthServerSocket::setClientId ()
   m_userName = username;
 }
 
-//----------------------------------------------------------------------------
-//Init the security context and stablish the security context with the client
-//----------------------------------------------------------------------------
-void  castor::io::AuthServerSocket::initContext() throw (castor::exception::Security) {
+
+//-----------------------------------------------------------------------------
+// Init the security context and stablish the security context with the client
+//-----------------------------------------------------------------------------
+void  castor::io::AuthServerSocket::initContext() 
+  throw (castor::exception::Security) {
   unsigned short peerPort  = 0;
   unsigned long  peerIp    = 0;
   std::stringstream ipStream;
-
-  //cs->resetSocket();
-  //delete cs;
 
   getPeerIp(peerPort, peerIp);
   ipStream << ((peerIp >> 24) & 0x000000FF) << "."
@@ -177,14 +154,12 @@ void  castor::io::AuthServerSocket::initContext() throw (castor::exception::Secu
   }
 
   if (getServer_establishContext(&m_security_context, m_socket) < 0) {
-    //close();
     castor::exception::Security ex(ESEC_NO_CONTEXT);
     ex.getMessage() << "The security context couldn't be established."
                     << " Request from " << ipStream.str()  << ":" << peerPort;
     throw ex;
   }
 }
- 
 
 
 //------------------------------------------------------------------------------

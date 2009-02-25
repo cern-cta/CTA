@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AuthServerSocket.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2009/02/24 17:34:12 $ $Author: riojac3 $
+ * @(#)$RCSfile: AuthServerSocket.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2009/02/25 07:10:26 $ $Author: waldron $
  *
  * Defines a dedicated socket that handles most of the network calls
  *
@@ -37,7 +37,7 @@
 #include "ServerSocket.hpp"
 
 extern "C" {
-  #include "Csecloader.h"
+#include "Csecloader.h"
 }
 
 
@@ -57,52 +57,13 @@ namespace castor {
     public:
 
       /**
-       * Constructor building a Socket objet around a regular socket
-       * @param socket the regular socket used
-       */
-//      AuthServerSocket(int socket) throw ();
-
-      
-      /**
-       * Constructor building a socket with no port. As a consequence,
-       * the used port will be 0 and the socket will not be bound.
-       * The bind method should be call independently
-       * @param reusable whether the socket should be reusable
-       */
-  //    AuthServerSocket(const bool reusable) throw (castor::exception::Exception);
-
-      /**
        * Constructor building a socket on a given local port
        * @param port the local port for this socket. Use 0 if
        * you want the system to allocate a port
        * @param doListen whether to start listening on the socket.
        */
-       AuthServerSocket(const unsigned short port,
+      AuthServerSocket(const unsigned short port,
 		       const bool reusable) throw (castor::exception::Exception);
-
-      /**
-       * Constructor building a socket on a given port of a given host
-       * @param port the port on which the socket should be opened on
-       * remote host
-       * @param host the host to connect to, given by its name
-       */
-  //    AuthServerSocket(const unsigned short port,
-//		       const std::string host,
-//		       const bool reusable,
-//		       int service_type = CSEC_SERVICE_TYPE_HOST )
- //       throw (castor::exception::Exception);
-
-      /**
-       * Constructor building a socket on a given port of a given host
-       * @param port the port on which the socket should be opened on
-       * remote host
-       * @param host the host to connect to, given as an ip address
-       */
-   //   AuthServerSocket(const unsigned short port,
-//		       const unsigned long ip,
-//		       const bool reusable,
-//		       int service_type = CSEC_SERVICE_TYPE_HOST )
-  //      throw (castor::exception::Exception);
 
       /**
        *
@@ -146,7 +107,7 @@ namespace castor {
        */
       std::string getClientMappedName();
 
-     /**
+      /**
        * Returns the value of the security mechanims used by the client
        * THAT METHOD SHOULDN'T BELONG TO THE CLASS SOCKET --TO BE MOVED
        */

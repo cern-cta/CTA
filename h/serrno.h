@@ -447,9 +447,9 @@
 #define ESEC_BAD_CREDENTIALS ESECBASEOFF + 2 /* Bad credentials */
 #define ESEC_NO_CONTEXT ESECBASEOFF + 3 /* Could not establish context */
 #define ESEC_BAD_MAGIC ESECBASEOFF + 4 /* Bad magic number */
-#define ESEC_NO_USER   ESECBASEOFF + 5 /* Could not map username to uid/gid*/
-#define ESEC_NO_PRINC   ESECBASEOFF + 6 /*Could not map principal to username */
-#define ESEC_NO_SECMECH   ESECBASEOFF + 7 /*Could not load security mechanism */
+#define ESEC_NO_USER   ESECBASEOFF + 5 /* Could not map username to uid/gid */
+#define ESEC_NO_PRINC   ESECBASEOFF + 6 /* Could not map principal to username */
+#define ESEC_NO_SECMECH   ESECBASEOFF + 7 /* Could not load security mechanism */
 #define ESEC_CTX_NOT_INITIALIZED   ESECBASEOFF + 8 /* Context not initialized */
 #define ESEC_PROTNOTSUPP   ESECBASEOFF + 9 /* Security protocol not supported */
 #define ESEC_NO_SVC_NAME   ESECBASEOFF + 10 /* Service name not set */
@@ -457,7 +457,7 @@
 #define ESEC_NO_SECPROT   ESECBASEOFF + 12 /* Could not lookup security protocol */
 #define ESEC_BAD_CSEC_VERSION ESECBASEOFF + 13 /* Csec incompatability */
 #define ESEC_BAD_PEER_RESP ESECBASEOFF + 14 /* Unexpected response from peer */
-#define ESEC_GEN ESECBASEOFF + 15 /*Security Exception*/       
+#define ESEC_GEN ESECBASEOFF + 15 /* Security Exception */
 #define ESECMAXERR     ESECBASEOFF + 15
 
 
