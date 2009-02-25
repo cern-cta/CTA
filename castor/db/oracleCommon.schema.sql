@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.schema.sql,v $ $Revision: 1.4 $ $Date: 2009/02/25 09:23:21 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleCommon.schema.sql,v $ $Revision: 1.5 $ $Date: 2009/02/25 13:39:43 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically.
  *
@@ -390,7 +390,11 @@ INSERT INTO FileSystemsToCheck SELECT id, 0 FROM FileSystem;
 /**************/
 /* Accounting */
 /**************/
-CREATE TABLE Accounting (euid INTEGER, fileSystem INTEGER, nbBytes INTEGER);
+CREATE TABLE Accounting (euid INTEGER CONSTRAINT NN_Accounting_Euid NOT NULL, 
+                         fileSystem INTEGER CONSTRAINT NN_Accounting_Filesystem NOT NULL,
+                         nbBytes INTEGER);
+ALTER TABLE Accounting 
+ADD CONSTRAINT PK_Accounting_EuidFs PRIMARY KEY (euid, fileSystem);
 
 
 /************************************/
