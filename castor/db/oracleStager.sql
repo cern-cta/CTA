@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.720 $ $Date: 2009/02/13 11:14:27 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.721 $ $Date: 2009/02/25 09:23:21 $ $Author: sponcec3 $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -378,14 +378,14 @@ WHEN ((new.status = 0 OR new.status = 10) AND -- STAGED, CANBEMIGR
 BEGIN
   -- Update accouting figures
   MERGE INTO Accounting
-  USING (SELECT :new.owneruid euid, :new.diskCopySize fileSize, diskPool
-           FROM FileSystem
-          WHERE FileSystem.id = :new.FileSystem) DC
+  USING (SELECT :new.owneruid euid, :new.diskCopySize fileSize,
+                :new.FileSystem fileSystemId
+           FROM dual) DC
      ON (Accounting.euid = DC.euid AND
-         Accounting.diskPool = DC.diskPool)
+         Accounting.fileSystem = DC.fileSystemId)
    WHEN MATCHED THEN UPDATE SET nbBytes = nbBytes + DC.fileSize
-   WHEN NOT MATCHED THEN INSERT (euid, nbBytes, diskPool)
-                         VALUES (DC.euid, DC.fileSize, DC.diskPool);
+   WHEN NOT MATCHED THEN INSERT (euid, nbBytes, fileSystem)
+                         VALUES (DC.euid, DC.fileSize, DC.fileSystemId);
 
   -- Insert the information about the diskcopy being processed into
   -- the TooManyReplicasHelper. This information will be used later
@@ -409,10 +409,7 @@ BEGIN
   UPDATE Accounting
      SET nbBytes = nbBytes - :new.diskCopySize
    WHERE Accounting.euid = :new.owneruid
-     AND Accounting.diskPool =
-         (SELECT diskPool
-            FROM FileSystem
-           WHERE FileSystem.id = :new.FileSystem);
+     AND Accounting.fileSystem = :new.FileSystem;
 END;
 /
 
