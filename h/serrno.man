@@ -866,6 +866,9 @@ The following error values are returned in response to security related problems
 .TP
 .B ESEC_BAD_PEER_RESP
 (2714) Unexpected response from peer
+.TP 
+.B ESEC_GEN
+(2715) Security Exception
 
 .SH EXPERT ERRORS
 The following error values are returned only by the Expert Facility package:
