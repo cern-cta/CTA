@@ -457,8 +457,7 @@
 #define ESEC_NO_SECPROT   ESECBASEOFF + 12 /* Could not lookup security protocol */
 #define ESEC_BAD_CSEC_VERSION ESECBASEOFF + 13 /* Csec incompatability */
 #define ESEC_BAD_PEER_RESP ESECBASEOFF + 14 /* Unexpected response from peer */
-#define ESEC_GEN ESECBASEOFF + 15 /* Security Exception */
-#define ESECMAXERR     ESECBASEOFF + 15
+#define ESECMAXERR     ESECBASEOFF + 14
 
 
 /*
