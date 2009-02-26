@@ -1,4 +1,4 @@
-//         $Id: XrdxCastor2Ofs.hh,v 1.1 2008/09/15 10:04:02 apeters Exp $
+//         $Id: XrdxCastor2Ofs.hh,v 1.2 2009/02/26 16:31:56 apeters Exp $
 
 #ifndef __XCASTOR2OFS_H__
 #define __XCASTOR2OFS_H__
@@ -17,6 +17,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <zlib.h>
 
 
 extern void *ofsRateLimiter(void *parg); // source in XrdxCastor2OfsRateLimiter.cc
@@ -71,7 +72,7 @@ public:
 
   bool                IsAdminStream;   //
   time_t              LastMdsUpdate;   //
-  XrdxCastor2OfsFile(const char* user) : XrdOfsFile(user){ envOpaque=NULL;FileReadBytes = FileWriteBytes = ReadRateLimit = WriteRateLimit = ReadDelay = WriteDelay = 0; IsAdminStream=false; RateMissingCnt = 0;firstWrite=true;hasWrite=false;stagehost="none";serviceclass="none";reqid="0";}
+  XrdxCastor2OfsFile(const char* user) : XrdOfsFile(user){ envOpaque=NULL;FileReadBytes = FileWriteBytes = ReadRateLimit = WriteRateLimit = ReadDelay = WriteDelay = 0; IsAdminStream=false; RateMissingCnt = 0;firstWrite=true;hasWrite=false;stagehost="none";serviceclass="none";reqid="0";hasadler=1; adler = adler32(0L, Z_NULL, 0);adleroffset=0;}
   virtual ~XrdxCastor2OfsFile() {close();if (envOpaque) delete envOpaque;envOpaque=NULL;}
 
 private:
@@ -82,6 +83,9 @@ private:
   XrdOucString          reqid;
   XrdOucString          stagehost;
   XrdOucString          serviceclass;
+  unsigned int          adler;
+  bool                  hasadler;
+  XrdSfsFileOffset      adleroffset;
 
   XrdxCastor2OfsRateLimit* Limiter;   // thread to calculate rate limiting parameters
 };
@@ -145,7 +149,8 @@ public:
   const char*         LocalRoot;       // we need this to write /proc variables directly to the FS
 
   bool                UpdateProc(const char* name);
-
+  bool                doChecksumStreaming;
+  bool                doChecksumUpdates;
 
   // here we mask all illegal operations
   int            chmod(const char             *Name,

@@ -2,7 +2,7 @@
 ## Makefile.am for xCastor2 FS plugin
 ##
 ##
-## Version info: $Id: Makefile.am,v 1.11 2009/02/12 09:11:38 apeters Exp $
+## Version info: $Id: Makefile.am,v 1.12 2009/02/26 16:31:56 apeters Exp $
 ## Checked in by $Author: apeters $
 #######################################################################
 
@@ -61,7 +61,7 @@ libXrdxCastor2Ofs_la_SOURCES = \
 	XrdxCastor2OfsRateLimit.cc  \
 	XrdxCastor2OfsRateLimit.hh 
 
-libXrdxCastor2Ofs_la_LIBADD = -L$(XROOTD_LOCATION)/lib$(MARK64)/  -lXrdSys -lXrdOuc -lXrdOfs -lXrdClient
+libXrdxCastor2Ofs_la_LIBADD = -L$(XROOTD_LOCATION)/lib$(MARK64)/  -lXrdSys -lXrdOuc -lXrdOfs -lXrdClient -lz
 
 libXrdxCastor2Xmi_la_SOURCES = \
 	XrdxCastor2Xmi.cc \

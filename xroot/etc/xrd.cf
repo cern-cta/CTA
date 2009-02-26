@@ -1,6 +1,6 @@
 ###########################################################
 xrootd.fslib /opt/xrootd/lib/libXrdxCastor2Ofs.so
-xrootd.async off
+xrootd.async off nosf
 ###########################################################
 xrootd.seclib /opt/xrootd/lib/libXrdSec.so
 sec.protocol /opt/xrootd/lib unix

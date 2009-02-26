@@ -1,4 +1,4 @@
-//          $Id: XrdxCastor2Ofs.cc,v 1.1 2008/09/15 10:04:02 apeters Exp $
+//          $Id: XrdxCastor2Ofs.cc,v 1.2 2009/02/26 16:31:56 apeters Exp $
 
 #include "XrdOfs/XrdOfsTrace.hh"
 #include "XrdClient/XrdClientAdmin.hh"
@@ -17,6 +17,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <fcntl.h>
+#include <attr/xattr.h>
 
 class XrdxCastor2Ofs;
 
@@ -130,6 +131,9 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
   // extract the manager from the config file
   XrdOucStream Config(&Eroute, getenv("XRDINSTANCE"));
 
+  XrdOfsFS.doChecksumStreaming = true;
+  XrdOfsFS.doChecksumUpdates   = false;
+
   Procfilesystem = "/tmp/xcastor2-ofs/";
   ProcfilesystemSync = false;
 
@@ -155,6 +159,28 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
 	  }
 	}
 
+	if (!strcmp("checksum",var)) {
+	  if ((val = Config.GetWord())) {
+	    XrdOucString sval = val;
+	    if (sval == "always") {
+	      XrdOfsFS.doChecksumStreaming = true;
+	      XrdOfsFS.doChecksumUpdates   = true;
+	    } else {
+	      if (sval == "never") {
+		XrdOfsFS.doChecksumStreaming = false;
+		XrdOfsFS.doChecksumUpdates   = false;
+	      } else {
+		if (sval == "streaming") {
+		  XrdOfsFS.doChecksumStreaming = true;
+		  XrdOfsFS.doChecksumUpdates   = false;
+		} else {
+		  Eroute.Emsg("Config","argument for checksum invalid. Specify xcastor2.checksum [always|never|streaming]");
+		  exit(-1);
+		}
+	      }
+	    }
+	  }
+	}
 	if (!strcmp("proc",var)) 
 	  if (!(val = Config.GetWord())) {
 	    Eroute.Emsg("Config","argument for proc invalid.");exit(-1);
@@ -559,6 +585,56 @@ XrdxCastor2OfsFile::close()
     XrdOfsFS.ReadFromProc("trace");
   }
 
+
+  if (hasWrite) {
+    XrdOucString newpath = envOpaque->Get("castor2fs.pfn1");
+    if (XrdOfsFS.doChecksumUpdates && (!hasadler)) {
+      XrdxCastor2Timing checksumtiming("ofsf::checksum");
+      TIMING(OfsTrace,"START",&checksumtiming);
+      char chcksumbuf[64* 1024];
+      // we just quickly rescan the file and recompute the checksum
+      adler = adler32(0L, Z_NULL, 0);adleroffset=0;
+      XrdSfsFileOffset checkoffset=0;
+      XrdSfsXferSize checksize=0;
+      XrdSfsFileOffset checklength=0;
+      while ((checksize = read(checkoffset,chcksumbuf,sizeof(chcksumbuf)))>0) {
+	adler = adler32(adler,(const Bytef*)chcksumbuf,checksize);
+	checklength+= checksize;
+	checkoffset+= checksize;
+      }
+      TIMING(OfsTrace,"STOP",&checksumtiming);
+      checksumtiming.Print(OfsTrace);
+      ZTRACE(close,"Recalculated Checksum [" << checklength << " bytes] : " << adler);
+      hasadler = true;
+    } else {
+      if ((XrdOfsFS.doChecksumStreaming || XrdOfsFS.doChecksumUpdates) && hasadler) {
+	ZTRACE(close,"Streaming    Checksum [" << FileWriteBytes << " bytes] : " << adler);
+      }
+    }
+    
+    if ((XrdOfsFS.doChecksumStreaming || XrdOfsFS.doChecksumUpdates) && hasadler) {
+      char ckSumbuf[32+1];
+      sprintf(ckSumbuf,"%x",adler);
+      char *ckSumalg="ADLER32";
+      
+      if (setxattr(newpath.c_str(),"user.castor.checksum.type",ckSumalg, strlen(ckSumalg),0)) {
+	XrdOfsFS.Emsg(epname,error, EIO, "set checksum type", "");
+	rc=SFS_ERROR;
+      } else {
+	if (setxattr(newpath.c_str(),"user.castor.checksum.value",ckSumbuf,strlen(ckSumbuf),0)) {
+	  XrdOfsFS.Emsg(epname,error, EIO, "set checksum", "");
+	  rc=SFS_ERROR;
+	}
+      }
+    } else {
+      if ((!XrdOfsFS.doChecksumUpdates) && (!hasadler)) {
+	// remove checksum - we don't check errors here
+	removexattr(newpath.c_str(),"user.castor.checksum.type");
+	removexattr(newpath.c_str(),"user.castor.checksum.value");
+      }
+    }
+  }
+  
   // send the sigusr2 signal to the local x2castorjob script 
   SignalJob(true);
   
@@ -635,6 +711,16 @@ XrdxCastor2OfsFile::write(XrdSfsFileOffset   fileOffset,
   int rc = XrdOfsFile::write(fileOffset,buffer,buffer_size);
 
   if (rc>0) {if (!IsAdminStream)ADDTOTALWRITEBYTES(buffer_size) else ADDTOTALSTREAMWRITEBYTES(buffer_size);FileWriteBytes+= buffer_size;}
+
+  // computation of adler checksum - we disable it if seek happened
+  if (fileOffset != adleroffset) {
+    hasadler=false;
+  }
+
+  if (hasadler && XrdOfsFS.doChecksumStreaming) {
+    adler = adler32(adler, (const Bytef*) buffer, buffer_size);
+    adleroffset += buffer_size;
+  }
 
   if (IsAdminStream) {
     DOWRITEDELAY();

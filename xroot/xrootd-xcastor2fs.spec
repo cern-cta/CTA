@@ -1,7 +1,7 @@
 Summary:     The next generation xrootd@Castor2 interface
 Name: 	     xrootd-xcastor2fs
-Version:     1.0.4
-Release:     2
+Version:     1.0.5
+Release:     1
 License:     none
 Group:       Applications/Castor
 Source0:     %{name}-%{version}.tar.gz
@@ -22,7 +22,7 @@ A complete interface to Castor for xrootd with scheduled writes and scheduled or
 
 %build
 ./configure --with-castor-source-location=/opt/xrootd/src/CASTOR2/ --with-xrootd-location=/opt/xrootd/ --prefix=/opt/xrootd  
-make 
+make -j  8
 
 %install
 make install DESTDIR=$RPM_BUILD_ROOT
@@ -59,6 +59,12 @@ fi
 %attr(-,stage,st) %dir /var/spool/xroot/core
 
 %changelog
+* Thu Feb 26 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.5-1
+- added support for adler32 checksumming
+-- new config tag: x2castor.checksum always|never|streaming
+-- if a file is written sequential the checksum will be computed on the fly for always|streaming
+-- if a file is updated the checksum will be recomputed during the close for always
+
 * Tue Feb 03 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.4-2
 - converted ROLEMAP/GETID/GETALLGROUPS from XCFS prototype with properl hash protections and security context caching
 - added automatic stager settings from open function to stat function & fixed 'CANBEMIRG' typo
