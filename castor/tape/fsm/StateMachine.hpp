@@ -62,6 +62,33 @@ namespace fsm    {
      * of a terminating sentinal Transition element.  A terminating sentinal
      * Transition is a Transition that has a NULL fromState member.
      *
+     * Example code for setting the transitions of a state machine:
+     * <code>
+     * //---------------------------------------------
+     * // Define and set the state machine transitions
+     * //---------------------------------------------
+     * 
+     * typedef fsm::Callback<FsmTest> Callback;
+     * Callback acceptRtcpdConn      (*this, &FsmTest::acceptRtcpdConn      );
+     * Callback getReqFromRtcpd      (*this, &FsmTest::getReqFromRtcpd      );
+     * Callback getVolFromRtcpd      (*this, &FsmTest::getVolFromRtcpd      );
+     * Callback ping                 (*this, &FsmTest::ping                 );
+     * Callback error                (*this, &FsmTest::error                );
+     * Callback closeRtcpdConAndError(*this, &FsmTest::closeRtcpdConAndError);
+     * 
+     * fsm::Transition transitions[] = {
+     * // from state       , to state        , event , action
+     *   {"INIT"           , "WAIT_RTCPD_CON", "INIT", &acceptRtcpdConn      },
+     *   {"WAIT_RTCPD_CON" , "FAILED"        , "ERR" , &error                },
+     *   {"WAIT_RTCPD_CON" , "WAIT_RTCPD_REQ", "CON" , &getReqFromRtcpd      },
+     *   {"WAIT_RTCPD_REQ" , "WAIT_TGATE_VOL", "REQ" , &getVolFromRtcpd      },
+     *   {"WAIT_TGATE_VOL" , "END"           , "VOL" , NULL                  },
+     *   {"RTCPD_CONNECTED", "FAILED"        , "ERR" , &closeRtcpdConAndError},
+     *   {NULL             , NULL            , NULL  , NULL                  }};
+     * 
+     * m_fsm.setTransitions(transitions);
+     * </code>
+     *
      * @param transitions The state machine transitions.
      */
     void setTransitions(const Transition *const transitions);
@@ -74,6 +101,22 @@ namespace fsm    {
      * mandatory presence of a terminating sentinal ChildToParentState element.
      * A terminating sentinal ChildToParentState is a ChildToParentState that
      * has a NULL child member.
+     *
+     * Example code for setting the state hierarchy of a state machine:
+     * <code>
+     * //------------------------
+     * // Set the state hierarchy
+     * //------------------------
+     * 
+     * fsm::ChildToParentState hierarchy[] = {
+     * // child           , parent
+     *   {"WAIT_RTCPD_REQ", "RTCPD_CONNECTED"},
+     *   {"WAIT_TGATE_VOL", "RTCPD_CONNECTED"},
+     *   {NULL            , NULL             }
+     * };
+     * 
+     * m_fsm.setStateHierarchy(hierarchy);
+     * </code>
      *
      * @param stateHierarchy The state machine state hierarchy.
      */
