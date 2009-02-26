@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.schema.sql,v $ $Revision: 1.5 $ $Date: 2009/02/25 13:39:43 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.schema.sql,v $ $Revision: 1.6 $ $Date: 2009/02/26 18:12:03 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically.
  *
@@ -390,11 +390,20 @@ INSERT INTO FileSystemsToCheck SELECT id, 0 FROM FileSystem;
 /**************/
 /* Accounting */
 /**************/
-CREATE TABLE Accounting (euid INTEGER CONSTRAINT NN_Accounting_Euid NOT NULL, 
-                         fileSystem INTEGER CONSTRAINT NN_Accounting_Filesystem NOT NULL,
-                         nbBytes INTEGER);
-ALTER TABLE Accounting 
-ADD CONSTRAINT PK_Accounting_EuidFs PRIMARY KEY (euid, fileSystem);
+CREATE MATERIALIZED VIEW Accounting_MV
+  BUILD IMMEDIATE
+  REFRESH COMPLETE
+  START WITH SYSDATE
+  NEXT SYSDATE + 60/1440
+  DISABLE QUERY REWRITE
+AS
+  SELECT owneruid, fileSystem, sum(diskCopySize) totalSize
+    FROM DiskCopy
+   WHERE DiskCopy.status IN (0, 10)
+     AND DiskCopy.owneruid IS NOT NULL
+     AND DiskCopy.ownergid IS NOT NULL
+   GROUP BY owneruid, fileSystem;
+
 
 
 /************************************/

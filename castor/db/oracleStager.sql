@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.721 $ $Date: 2009/02/25 09:23:21 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.722 $ $Date: 2009/02/26 18:12:03 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -367,26 +367,15 @@ END;
 /
 
 
-/* Trigger used to update the accounting (Quota) information and
- * provide input to the statement level trigger defined above
+/* Trigger used to provide input to the statement level trigger 
+ * defined above.
  */
 CREATE OR REPLACE TRIGGER tr_DiskCopy_Online
 AFTER UPDATE OF status ON DiskCopy
 FOR EACH ROW
 WHEN ((new.status = 0 OR new.status = 10) AND -- STAGED, CANBEMIGR
-       old.status != 10) -- CANBEMIGR (don't double count migrations)
+       old.status != 10) -- CANBEMIGR
 BEGIN
-  -- Update accouting figures
-  MERGE INTO Accounting
-  USING (SELECT :new.owneruid euid, :new.diskCopySize fileSize,
-                :new.FileSystem fileSystemId
-           FROM dual) DC
-     ON (Accounting.euid = DC.euid AND
-         Accounting.fileSystem = DC.fileSystemId)
-   WHEN MATCHED THEN UPDATE SET nbBytes = nbBytes + DC.fileSize
-   WHEN NOT MATCHED THEN INSERT (euid, nbBytes, fileSystem)
-                         VALUES (DC.euid, DC.fileSize, DC.fileSystemId);
-
   -- Insert the information about the diskcopy being processed into
   -- the TooManyReplicasHelper. This information will be used later
   -- on the DiskCopy AFTER UPDATE statement level trigger. We cannot
@@ -394,22 +383,6 @@ BEGIN
   -- `ORA-04091: table is mutating, trigger/function` errors
   INSERT INTO TooManyReplicasHelper
   VALUES (:new.id, :new.filesystem, :new.castorfile);
-END;
-/
-
-
-/* Trigger used to update the accounting (Quota) information */
-CREATE OR REPLACE TRIGGER tr_DiskCopy_Offline
-AFTER UPDATE OF status ON DiskCopy
-FOR EACH ROW
-WHEN ((old.status = 0 OR old.status = 10) AND -- STAGED, CANBEMIGR
-       new.status != 0) -- STAGED (don't double count migrations)
-BEGIN
-  -- Update accounting figures
-  UPDATE Accounting
-     SET nbBytes = nbBytes - :new.diskCopySize
-   WHERE Accounting.euid = :new.owneruid
-     AND Accounting.fileSystem = :new.FileSystem;
 END;
 /
 
