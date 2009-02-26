@@ -130,7 +130,8 @@ const castor::tape::fsm::Transition
   }
 
   // For each transition
-  for(int i=0; strcmp(m_transitions[i].fromState, "") != 0; i++) {
+  // Terminating sentinal Transition has a NULL fromState member
+  for(int i=0; m_transitions[i].fromState != NULL; i++) {
 
     // If the transition has been found, then return a pointer to it
     if(strcmp(m_transitions[i].fromState, state) == 0  &&
@@ -160,7 +161,8 @@ const char *castor::tape::fsm::StateMachine::findParentState(
   }
 
   // For each child/parent maplet
-  for(int i=0; strcmp(m_stateHierarchy[i].child, "") != 0; i++) {
+  // Terminating sentinal maplet has a NULL child member
+  for(int i=0; m_stateHierarchy[i].child != NULL; i++) {
 
     // If the parent has been found, then return a pointer to it
     if(strcmp(m_stateHierarchy[i].child, state) == 0) {

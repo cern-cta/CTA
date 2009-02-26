@@ -49,7 +49,7 @@ namespace fsm    {
      * The operator() function where the callback is implemented.
      */
     const char *operator()() {
-      return (m_obj.*m_memberFunctionPtr)();
+      return (m_object.*m_pointerToMemberFunction)();
     }
 
     /**

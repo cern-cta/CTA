@@ -56,16 +56,33 @@ namespace fsm    {
     /**
      * Sets the transitions that define the dynamic behaviour of the state
      * machine.
+     *
+     * Please note the transitions are represented as an array of Transition,
+     * where the length of the array is determined by the mandatory presence
+     * of a terminating sentinal Transition element.  A terminating sentinal
+     * Transition is a Transition that has a NULL fromState member.
+     *
+     * @param transitions The state machine transitions.
      */
     void setTransitions(const Transition *const transitions);
 
     /**
      * Sets the state heirarchy of the state machine.
+     *
+     * Please note the state hierarchy is represented as an array of
+     * ChildToParentState, where the length of the array is determined by the
+     * mandatory presence of a terminating sentinal ChildToParentState element.
+     * A terminating sentinal ChildToParentState is a ChildToParentState that
+     * has a NULL child member.
+     *
+     * @param stateHierarchy The state machine state hierarchy.
      */
     void setStateHierarchy(const ChildToParentState *const stateHierarchy);
 
     /**
      * Dispatches the specified event.
+     *
+     * @param event The event to be dispatched.
      */
     void dispatch(const char *event) throw(castor::exception::Exception);
 
