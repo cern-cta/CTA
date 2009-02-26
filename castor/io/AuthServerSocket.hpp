@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AuthServerSocket.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2009/02/25 07:10:26 $ $Author: waldron $
+ * @(#)$RCSfile: AuthServerSocket.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2009/02/26 09:32:11 $ $Author: riojac3 $
  *
  * Defines a dedicated socket that handles most of the network calls
  *

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AuthServerSocket.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2009/02/25 07:10:26 $ $Author: waldron $
+ * @(#)$RCSfile: AuthServerSocket.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2009/02/26 09:32:11 $ $Author: riojac3 $
  *
  * @author Benjamin Couturier
  *****************************************************************************/
@@ -58,22 +58,13 @@ castor::io::AuthServerSocket::AuthServerSocket(const unsigned short port,
 // of the ServerSocket, reuses the security context and establishes the context
 // with the client and maps the user to a local user
 //------------------------------------------------------------------------------
+
 castor::io::AuthServerSocket::AuthServerSocket(castor::io::ServerSocket* cs,
                                                const Csec_context_t context)
   throw (castor::exception::Exception) :
   ServerSocket(cs->socket()) {
-  unsigned short peerPort  = 0;
-  unsigned long  peerIp    = 0;
-  std::stringstream ipStream;  
- 
   cs->resetSocket();
   delete cs;
-
-  getPeerIp(peerPort, peerIp);
-  ipStream << ((peerIp >> 24) & 0x000000FF) << "."  
-	   << ((peerIp >> 16) & 0x000000FF) << "."
-           << ((peerIp >>  8) & 0x000000FF) << "." 
-	   << (peerIp & 0x000000FF);
 }
 
 
@@ -106,11 +97,7 @@ void castor::io::AuthServerSocket::setClientId ()
   char username[CA_MAXUSRNAMELEN+1];
 
   // Returns the DN 
-  if (getClientId(&m_security_context, &mech, &name) != 0) {
-    castor::exception::Security ex(ESECMAXERR);
-    ex.getMessage() << "DN/Kerberos token could not be extracted"; 
-    throw ex;
-  }
+  getClientId(&m_security_context, &mech, &name);
   // In the name you got the principal it in the previous call from the
   // gridmapfile here you get uid and gid and if you want the name matching the
   // uid then set buf and BUF_SIZE
@@ -147,11 +134,12 @@ void  castor::io::AuthServerSocket::initContext()
   }
 
   if (getServer_initContext(&m_security_context, CSEC_SERVICE_TYPE_HOST, NULL) < 0) {
-    castor::exception::Security ex(ESEC_BAD_CREDENTIALS);
-    ex.getMessage() << "The initialization of the security context failed."
-                    << " Request from " << ipStream.str() << ":" << peerPort;
-    throw ex;
-  }
+     castor::exception::Security ex(ESEC_BAD_CREDENTIALS);
+     ex.getMessage() << "The initialization of the security context failed."
+                     << " Request from " << ipStream.str() << ":" << peerPort;
+     throw ex;
+   }
+
 
   if (getServer_establishContext(&m_security_context, m_socket) < 0) {
     castor::exception::Security ex(ESEC_NO_CONTEXT);
