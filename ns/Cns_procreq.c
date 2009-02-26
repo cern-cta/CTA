@@ -5387,9 +5387,7 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
 	   csumvalue, csumtype, cwdpath);
   Cns_logreq (func, logbuf);
   if (*csumtype &&
-      strcmp (csumtype, "CS") &&
-      strcmp (csumtype, "AD") &&
-      strcmp (csumtype, "MD"))
+      strcmp (csumtype, "AD"))
     RETURN (EINVAL);
 
   /* start transaction */
@@ -5434,9 +5432,7 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
     RETURN (ENSFILECHG);
   }
 
-  if ((strcmp(filentry.csumtype,"PA") == 0 && strcmp(csumtype,"AD") == 0) ||
-      (strcmp(filentry.csumtype,"PC") == 0 && strcmp(csumtype,"CS") == 0) ||
-      (strcmp(filentry.csumtype,"PM") == 0 && strcmp(csumtype,"MD") == 0)) {
+  if ((strcmp(filentry.csumtype,"PA") == 0 && strcmp(csumtype,"AD") == 0)) {
     /* we have predefined checksums then should check them with new ones */
     if(strcmp(filentry.csumvalue,csumvalue)!=0) {
       sprintf (logbuf, "setfsizecs: predefined checksum error 0x%s != 0x%s", filentry.csumvalue, csumvalue);
@@ -5510,9 +5506,7 @@ int Cns_srv_setfsizeg(magic, req_data, clienthost, thip)
 	   (long long int)last_mod_time, (long long int)new_mod_time);
   Cns_logreq (func, logbuf);
   if (*csumtype &&
-      strcmp (csumtype, "CS") &&
-      strcmp (csumtype, "AD") &&
-      strcmp (csumtype, "MD"))
+      strcmp (csumtype, "AD"))
     RETURN (EINVAL);
 
   /* start transaction */
@@ -5911,19 +5905,17 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
       /* Checking for a checksum in the file metadata table if we have
 	 only one segment for a file. We have different names for
 	 checksum type in Cns_seg_metadata table and Cns_file_metadata.
-	 adler32==AD crc32==CS */
+	 adler32==AD */
       if (((strcmp(smd_entry.checksum_name, "adler32") == 0) &&
-	   (strcmp(filentry.csumtype, "AD") == 0)) ||
-	  ((strcmp(smd_entry.checksum_name, "crc32") == 0) &&
-	   (strcmp(filentry.csumtype, "CS") == 0))) {
-	/* we have adler32 or crc32 checksum type */
-	sprintf(tmpbuf3, "%lx", smd_entry.checksum);  /* convert number to a string */
-	if (strncmp(tmpbuf3, filentry.csumvalue, CA_MAXCKSUMLEN)) {
-	  /* checksum mismatch! error! */
-	  sprintf (logbuf, "setsegattrs: checksum mismatch for the castor file and the segment 0x%s != 0x%lx", filentry.csumvalue, smd_entry.checksum);
-	  Cns_logreq (func, logbuf);
-	  RETURN (SECHECKSUM);
-	}
+           (strcmp(filentry.csumtype, "AD") == 0))) {
+        /* we have adler32 checksum type */
+        sprintf(tmpbuf3, "%lx", smd_entry.checksum);  /* convert number to a string */
+        if (strncmp(tmpbuf3, filentry.csumvalue, CA_MAXCKSUMLEN)) {
+          /* checksum mismatch! error! */
+          sprintf (logbuf, "setsegattrs: checksum mismatch for the castor file and the segment 0x%s != 0x%lx", filentry.csumvalue, smd_entry.checksum);
+          Cns_logreq (func, logbuf);
+          RETURN (SECHECKSUM);
+        }
       }
     }
 
@@ -6754,6 +6746,7 @@ int Cns_srv_updatefile_checksum(magic, req_data, clienthost, thip)
   char *user;
   char csumtype[3];
   char csumvalue[CA_MAXCKSUMLEN+1];
+  int notAdmin = 1;
 
   strcpy (func, "Cns_srv_updatefile_checksum");
   rbp = req_data;
@@ -6774,12 +6767,8 @@ int Cns_srv_updatefile_checksum(magic, req_data, clienthost, thip)
   sprintf (logbuf, "updatefile_checksum %s %s %s %s", path, csumvalue, csumtype, cwdpath);
   Cns_logreq (func, logbuf);
   if (*csumtype &&
-      strcmp (csumtype, "PC") &&
       strcmp (csumtype, "PA") &&
-      strcmp (csumtype, "PM") &&
-      strcmp (csumtype, "CS") &&
-      strcmp (csumtype, "AD") &&
-      strcmp (csumtype, "MD"))
+      strcmp (csumtype, "AD"))
     RETURN (EINVAL);
 
   /* start transaction */
@@ -6798,22 +6787,22 @@ int Cns_srv_updatefile_checksum(magic, req_data, clienthost, thip)
     RETURN (EISDIR);
 
   /* check if the user is authorized to set access/modification checksum for this entry
-     for users we will allow only predefined checksums and for admins any types */
-
-  if (strcmp (csumtype, "CS") == 0 ||
-      strcmp (csumtype, "AD") == 0 ||
-      strcmp (csumtype, "MD") == 0) {
-    if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
-      RETURN (EPERM);
-  } else {
-    if (uid != filentry.uid &&
-        Cns_chkentryperm (&filentry, S_IWRITE, uid, gid, clienthost))
-      RETURN (EACCES);
+     the file must be 0 size or the user must be ADMIN
+     the checksum must be a known one (i.e. adler) or empty (case of a reset, user must be ADMIN then) */
+  notAdmin = Cupv_check (uid, gid, clienthost, localhost, P_ADMIN);
+  if (filentry.filesize > 0 && notAdmin) {
+    RETURN (EPERM);
   }
-
-  /* update entry */
-  filentry.mtime = time (0);
-  filentry.ctime = filentry.mtime;
+  if (notAdmin && uid != filentry.uid &&
+      Cns_chkentryperm (&filentry, S_IWRITE, uid, gid, clienthost)) {
+    RETURN (EACCES);
+  }
+  
+  /* update entry only if not admin */
+  if (notAdmin) {
+    filentry.mtime = time(0);
+    filentry.ctime = filentry.mtime;
+  }
 
   strcpy (filentry.csumtype, csumtype);
   if (*csumtype == '\0') {

@@ -67,40 +67,32 @@ int main(argc, argv)
     switch (c) {
     case 'k':
       if (((checksum = strtoul (Coptarg, &dp, 16)) < 0) || (*dp != '\0')) {
-	fprintf (stderr, "%s: invalid checksum: %s\n", argv[0], Coptarg);
-	errflg++;
+        fprintf (stderr, "%s: invalid checksum: %s\n", argv[0], Coptarg);
+        errflg++;
       }
       if (strlen(Coptarg) > CA_MAXCKSUMLEN) {
-	fprintf (stderr, "%s: checksum value: %s exceeds %d characters in length\n",
-		 argv[0], Coptarg, CA_MAXCKSUMLEN);
-	errflg++;
+        fprintf (stderr, "%s: checksum value: %s exceeds %d characters in length\n",
+                 argv[0], Coptarg, CA_MAXCKSUMLEN);
+        errflg++;
       }
       strncpy(chksumvalue, Coptarg, CA_MAXCKSUMLEN);
       chksumvalue[CA_MAXCKSUMLEN] = '\0';
       break;
     case 'n':
       if (strlen(Coptarg) > CA_MAXCKSUMNAMELEN) {
-	fprintf (stderr, "%s: checksum name: %s exceeds %d characters in length\n",
-		 argv[0], Coptarg, CA_MAXCKSUMNAMELEN);
-	errflg++;
+        fprintf (stderr, "%s: checksum name: %s exceeds %d characters in length\n",
+                 argv[0], Coptarg, CA_MAXCKSUMNAMELEN);
+        errflg++;
       }
       strncpy(chksumname, Coptarg, CA_MAXCKSUMNAMELEN);
       chksumname[CA_MAXCKSUMLEN] = '\0';
-      if (strcmp(chksumname, "CS") == 0 ||
-	  strcmp(chksumname, "MD") == 0 ||
-	  strcmp(chksumname, "MD") == 0 ||
-	  strcmp(chksumname, "adler32") == 0 ||
-	  strcmp(chksumname, "crc32")   == 0 ||
-	  strcmp(chksumname, "md5")     == 0) {
-	if (strcmp(chksumname, "adler32") == 0)
-	  strcpy(chksumname, "PA");
-	else if (strcmp(chksumname, "crc32") == 0)
-	  strcpy(chksumname, "PC");
-	else if (strcmp(chksumname, "md5") == 0)
-	  strcpy(chksumname, "PM");
+      if (strcmp(chksumname, "AD") == 0 ||
+          strcmp(chksumname, "adler32") == 0) {
+        if (strcmp(chksumname, "adler32") == 0)
+          strcpy(chksumname, "PA");
       } else {
-	fprintf (stderr, "%s: invalid checksum name: %s\n", argv[0], Coptarg);
-	errflg++;
+        fprintf (stderr, "%s: invalid checksum name: %s\n", argv[0], Coptarg);
+        errflg++;
       }
       break;
     case '?':
@@ -140,7 +132,7 @@ int main(argc, argv)
   path = argv[Coptind];
   if (*path != '/' && strstr (path, ":/") == NULL) {
     if ((p = getenv (CNS_HOME_ENV)) == NULL ||
-	strlen (p) + strlen (path) + 1 > CA_MAXPATHLEN) {
+        strlen (p) + strlen (path) + 1 > CA_MAXPATHLEN) {
       fprintf (stderr, "%s: %s: invalid path\n", argv[0], path);
       errflg++;
     } else
@@ -148,7 +140,7 @@ int main(argc, argv)
   } else {
     if (strlen (path) > CA_MAXPATHLEN) {
       fprintf (stderr, "%s: %s: %s\n", argv[0], path,
-	       sstrerror(SENAMETOOLONG));
+               sstrerror(SENAMETOOLONG));
       errflg++;
     } else
       strcpy (filepath, path);

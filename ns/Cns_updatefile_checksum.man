@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cns_updatefile_checksum.man,v $ $Revision: 1.1 $ $Date: 2008/11/03 10:10:24 $ CERN IT-DM
+.\" @(#)$RCSfile: Cns_updatefile_checksum.man,v $ $Revision: 1.2 $ $Date: 2009/02/26 14:56:41 $ CERN IT-DM
 .\" Copyright (C) 2002 by CERN/IT/DM
 .\" All rights reserved
 .\"
-.TH CNS_UPDATEFILE_CHECKSUM 3 "$Date: 2008/11/03 10:10:24 $" CASTOR "Cns Library Functions"
+.TH CNS_UPDATEFILE_CHECKSUM 3 "$Date: 2009/02/26 14:56:41 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_updatefile_checksum \- updates the checksum of a regular file
 .SH SYNOPSIS
@@ -15,31 +15,27 @@ Cns_updatefile_checksum \- updates the checksum of a regular file
 .BI "const char *" csumvalue )
 .SH DESCRIPTION
 .B Cns_updatefile_checksum
-updates the checksum for a regular file given the file path.
+updates the checksum for a regular file given the file path. Only files
+with 0 file size can be updated by regular users. Admins can update any
+file. Also the modification time of the file is changed by this command,
+except for admins.
 .TP
 .I csumtype
-specifies the type of checksum. Valid types are:
+specifies the type of checksum. The only valid type is :
 .RS
-.TP
-.B CS
-standard 32 bits checksum
+.RS
 .TP
 .B AD
 Adler 32 bits checksum
+.RE
 .TP
-.B MD
-MD5 128 bits checksum
-.TP
-Extensions available for end-to-end file check summing support
-.TP
-.B PC
-pre CS
+Extensions available for end-to-end file check summing support :
+.RS
 .TP
 .B PA
 pre Adler
-.TP
-.B PM
-pre MD5
+.RE
+.RE
 .TP
 .I csumvalue
 the value of the checksum
@@ -70,6 +66,9 @@ exceeds 2 or
 is an unknown type or the length of the
 .I csumvalue
 exceeds 32.
+.TP
+.B EPERM
+the file is not 0 size and the user has no admin rights
 .TP
 .B ENOTDIR
 A component of
