@@ -1,5 +1,5 @@
 #
-#                      castor/tape/Imakefile
+#                      castor/tape/aggregator/Imakefile
 #
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
@@ -18,8 +18,19 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
 #
-#
-# @author Sebastien Ponce, sebastien.ponce@cern.ch
+# @author Steven Murray, Steven.Murray@cern.ch
 #
 
-SUBDIRS = aggregator fsm tapegateway 
+CPPFLAGS = -pedantic -Wall -Werror -g -O0 -I../../../h -I../../.. $(MTCCFLAGS)
+CFLAGS = -O -I../../../h -I../../.. $(THREADFLAGS)
+LDFLAGS += $(MTLDFLAGS)
+LD = g++
+
+TAPEFSMLIB_SRCS = \
+  StateMachine.cpp
+
+
+#if BuildTapeFsmLibrary
+TAPEFSMLIB_OBJS = $(TAPEFSMLIB_SRCS:.cpp=.Osuf)
+SharedLibraryTarget(tapefsm,$(TAPEFSMLIB_OBJS),$(DEPLIB),$(LIBS))
+#endif
