@@ -25,6 +25,9 @@
 #ifndef CASTOR_TAPE_FSM_CALLBACK
 #define CASTOR_TAPE_FSM_CALLBACK
 
+#include "castor/tape/fsm/AbstractCallback.hpp"
+
+
 namespace castor {
 namespace tape   {
 namespace fsm    {
@@ -33,7 +36,7 @@ namespace fsm    {
    * A concrete callback template functor to be used to invoke the actions of a
    * finite state machine.
    */
-  template<class T> class Callback {
+  template<class T> class Callback : public AbstractCallback {
   public:
 
     typedef const char*(T::*PointerToMemberFunction)();
@@ -48,7 +51,7 @@ namespace fsm    {
     /**
      * The operator() function where the callback is implemented.
      */
-    const char *operator()() {
+    const char *operator()() const {
       return (m_object.*m_pointerToMemberFunction)();
     }
 
