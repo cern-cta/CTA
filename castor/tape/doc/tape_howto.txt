@@ -47,10 +47,8 @@ export MINOR_CASTOR_VERSION=7.20
 
 cvs co -r v2_1_7_20 CASTOR2
 cd CASTOR2
-sed -i 's/BuildHsmTools\s\+NO/BuildHsmTools\t\tYES/;s/BuildStageClient\s\+NO/BuildStageClient\tYES/;s/BuildVDQMCpp\s\+NO/BuildVDQMCpp\t\tYES/' config/site.def
 make -f Makefile.ini Makefiles
-make depend
-make; make
+make
 
 
 How to build the head of the VDQM
@@ -69,9 +67,7 @@ export MINOR_CASTOR_VERSION=9.9
 
 cvs co CASTOR2
 cd CASTOR2
-sed -i 's/BuildHsmTools\s\+NO/BuildHsmTools\t\tYES/;s/BuildVdqmClient\s\+NO/BuildVdqmClient\t\tYES/;s/BuildVDQMCpp\s\+NO/BuildVDQMCpp\t\tYES/' config/site.def
 make -f Makefile.ini Makefiles
-make depend
 make
 
 
@@ -1099,36 +1095,16 @@ How to add a new project to the CASTOR make system
 Assuming the following:
 
   * One wants to build a new project located at CASTOR2/castor/tape/aggregator
+    and CASTOR2/castor/tape exists and has an Imakefile already
   * One doesn't want to build any manual pages
 
-1. Add the following lines to CASTOR2/config/Project.tmpl
+1. Add the new directory to the SUBDIRS macros of
+   CASTOR2/castor/tape/Imakefile: aggregator
 
-#if BuildAggregatorCpp
-AGGREGATORCPPDIR = aggregator
-TAPECPPDIR = tape
-#endif
-
-2. Add the following condition to the rule for deciding whether or not
-   COMMONCPPDIR should be set to castor
-
- || BuildAggregatorCpp
-
-   For example:
-
-#if BuildCastorClientCPPLibrary || BuildRHCpp || BuildVDQMCpp || BuildGCCpp ||
-BuildOraCpp || BuildPgCpp || BuildMyCpp || BuildStageDaemonCpp ||
-BuildRmMasterCpp || BuildRmNodeCpp || BuildAggregatorCpp
-COMMONCPPDIR = castor
-#endif
-
-3. Add the following element to the SUBDIRS and DEPENDDIRS macros of
-   CASTOR2/castor/Imakefile:
-
-$(TAPECPPDIR)
-
-4. Add the following line to CASTOR2/config/site.def:
-
-#define BuildAggregatorCpp      YES
+2. Make sure that the new code is compiled only when needed, that is use
+ClientProgramTarget in case of executables that should be build when only
+the client part is built and TapeProgramTarget for executables that should
+be built when only the tape part is built
 
 
 How to label a tape
