@@ -46,8 +46,8 @@ namespace fsm    {
    */
   struct Transition {
     const char             *const fromState;
-    const char             *const event;
     const char             *const toState;
+    const char             *const event;
     const AbstractCallback *const action;
   };
 

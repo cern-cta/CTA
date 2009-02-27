@@ -138,14 +138,14 @@ const castor::tape::fsm::Transition
   // For each transition
   // Terminating sentinal Transition has a NULL fromState member
   for(int i=0; m_transitions[i].fromState != NULL; i++) {
-
+printf("fromState=%s event=%s\n", m_transitions[i].fromState, m_transitions[i].event);
     // If the transition has been found, then return a pointer to it
     if(strcmp(m_transitions[i].fromState, state) == 0  &&
        strcmp(m_transitions[i].event, event) == 0) {
        return &m_transitions[i];
     }
   }
-
+printf("WHOOPS!\n");
   // Transition not found
   return NULL;
 }
