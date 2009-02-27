@@ -46,6 +46,14 @@ void castor::tape::fsm::StateMachine::setState(const char *const state) {
 
 
 //-----------------------------------------------------------------------------
+// getState
+//-----------------------------------------------------------------------------
+const char *castor::tape::fsm::StateMachine::getState() {
+  return(m_state);
+}
+
+
+//-----------------------------------------------------------------------------
 // setTransitions
 //-----------------------------------------------------------------------------
 void castor::tape::fsm::StateMachine::setTransitions(
@@ -66,7 +74,7 @@ void castor::tape::fsm::StateMachine::setStateHierarchy(
 //-----------------------------------------------------------------------------
 // dispatch
 //-----------------------------------------------------------------------------
-void castor::tape::fsm::StateMachine::dispatch(const char *event)
+const char *castor::tape::fsm::StateMachine::dispatch(const char *event)
   throw(castor::exception::Exception) {
 
   // Check the state has been set
@@ -78,38 +86,36 @@ void castor::tape::fsm::StateMachine::dispatch(const char *event)
     throw ex;
   }
 
-  const Transition *transition = NULL;
+  const Transition *const transition = findTransitionInHierarchy(event);
 
-  // While there is an event to be processed (the action of a transition may
-  // generate an internal event)
-  while(event != NULL) {
-    transition = findTransitionInHierarchy(event);
+  // Throw an exception if there is no transition for the event
+  if(transition == NULL) {
+    castor::exception::Exception ex(EINVAL);
 
-    // Throw an exception if there is no transition for the event
-    if(transition == NULL) {
-      castor::exception::Exception ex(EINVAL);
-
-      ex.getMessage() << __PRETTY_FUNCTION__
-        << ": No transition found "
-           ": State = " << m_state
-        << ": Event = " << event;
-      throw ex;
-    }
-
-    // Move to the next state if not a self transition
-    if(strcmp(transition->fromState, transition->toState) != 0) {
-      m_state = transition->toState;
-    }
-
-    // Get ready to detect an internal event
-    event = NULL;
-
-    // If there is an action
-    if(transition->action != NULL) {
-      // Invoke it which may generate an internal event
-      event = (*transition->action)();
-    }
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": No transition found "
+         ": State = " << m_state
+      << ": Event = " << event;
+    throw ex;
   }
+
+  // Move to the next state if not a self transition
+  if(strcmp(transition->fromState, transition->toState) != 0) {
+    m_state = transition->toState;
+  }
+
+  // Get ready to detect an internally generated event from an automatic
+  // state transition if there is one
+  event = NULL;
+
+  // If there is an action
+  if(transition->action != NULL) {
+
+    // Invoke it which may generate an event
+    event = (*transition->action)();
+  }
+
+  return event;
 }
 
 

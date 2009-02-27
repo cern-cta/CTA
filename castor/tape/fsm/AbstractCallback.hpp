@@ -39,6 +39,10 @@ namespace fsm    {
     /**
      * The operator() function where the callback will be implemented by a
      * sub-class of AbstractCallback.
+     *
+     * Please note the callback should return an event in the case of an
+     * automatic state transition.  If there is not be no automatic state
+     * transition then the callback should return NULL.
      */
     virtual const char *operator()() const = 0;
 
