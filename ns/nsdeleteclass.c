@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include "Cns.h"
 #include "Cns_api.h"
 #include "Cgetopt.h"
 #include "serrno.h"
@@ -40,12 +41,14 @@ int main(argc, argv)
   int errflg = 0;
   int hflg = 0;
   char *server = NULL;
+  char *p = NULL;
 
   memset (&Cns_fileclass, 0, sizeof(struct Cns_fileclass));
 
   Coptions_t longopts[] = {
     { "id",   REQUIRED_ARGUMENT, NULL,  OPT_CLASS_ID   },
     { "name", REQUIRED_ARGUMENT, NULL,  OPT_CLASS_NAME },
+    { "host", REQUIRED_ARGUMENT, NULL,  'h'            },
     { "help", NO_ARGUMENT,       &hflg, 1              },
     { NULL,   0,                 NULL,  0              }
   };
@@ -68,6 +71,14 @@ int main(argc, argv)
       break;
     case 'h':
       server = Coptarg;
+      if ((p = getenv (CNS_HOST_ENV)) ||
+	  (p = getconfent (CNS_SCE, "HOST", 0))) {
+	if (strcmp(p, server) != 0) {
+	  fprintf (stderr,
+		   "--host option is not permitted when CNS/HOST is defined\n");
+	  errflg++;
+	}
+      }
       break;
     case '?':
     case ':':
