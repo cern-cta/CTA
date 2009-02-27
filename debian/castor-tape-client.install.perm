@@ -1,7 +1,6 @@
-%attr(0755,root,bin) usr/bin/dumptape
-%attr(0755,root,bin) usr/bin/tpconfig
-%attr(0755,root,bin) usr/bin/tpread
-%attr(0755,root,bin) usr/bin/tprstat
-%attr(0755,root,bin) usr/bin/tpstat
-%attr(0755,root,bin) usr/bin/tpusage
-%attr(0755,root,bin) usr/bin/tpwrite
+%attr(0755,root,root) usr/bin/dumptape
+%attr(0750,root,root) usr/bin/tpconfig
+%attr(0755,root,root) usr/bin/tpread
+%attr(0755,root,root) usr/bin/tprstat
+%attr(0755,root,root) usr/bin/tpstat
+%attr(0755,root,root) usr/bin/tpwrite
