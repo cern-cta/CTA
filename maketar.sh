@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.81 2009/01/09 14:39:07 sponcec3 Exp $
+# $Id: maketar.sh,v 1.82 2009/02/27 13:16:49 sponcec3 Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -45,7 +45,9 @@ a=`echo ${MAJOR_CASTOR_VERSION} | sed 's/\..*//g'`
 b=`echo ${MAJOR_CASTOR_VERSION} | sed 's/.*\.//g'`
 c=`echo ${MINOR_CASTOR_VERSION} | sed 's/\..*//g'`
 d=`echo ${MINOR_CASTOR_VERSION} | sed 's/.*\.//g'`
-
+version=${a}.${b}.${c}
+fullversion=${version}.${d}
+ 
 echo "### INFO ### Making build directory"
 
 #
@@ -54,27 +56,27 @@ echo "### INFO ### Making build directory"
 PATH=${PATH}:/usr/X11R6/bin
 export PATH
 
-# Go to castor-${a}.${b}.${c} and do the changes in here
+# Go to castor-${version} and do the changes in here
 curdir=`pwd`
 cd ..
-[ -d "castor-${a}.${b}.${c}" ] && rm -rf castor-${a}.${b}.${c}
-cp -Lr $curdir castor-${a}.${b}.${c}
-rm -rf castor-${a}.${b}.${c}/xroot
-cd castor-${a}.${b}.${c}
+[ -d "castor-${version}" ] && rm -rf castor-${version}
+cp -Lr $curdir castor-${version}
+rm -rf castor-${version}/xroot
+cd castor-${version}
 
 echo "### INFO ### Customizing build directory"
 
 #
 ## Force build rules to YES for a lot of things
 #
-for this in BuildCastorClientCPPLibrary BuildCleaning BuildCommands BuildCommon BuildCupvClient BuildCupvDaemon BuildCupvLibrary BuildDlfDaemon BuildDlfLibrary BuildDlfWeb BuildExpertClient BuildExpertDaemon BuildExpertLibrary BuildGCCpp BuildHsmTools BuildJob BuildJobManagerCpp BuildInfoPolicyLibrary BuildMigHunterDaemon BuildRecHandlerDaemon BuildNameServerClient BuildNameServerDaemon BuildNameServerLibrary BuildOraCpp BuildRHCpp BuildRfioClient BuildRfioLibrary BuildRfioServer BuildRmMasterCpp BuildRmNodeCpp BuildRmcLibrary BuildRmcServer BuildRtcopyClient BuildRtcopyLibrary BuildRtcopyServer BuildRtcpclientd BuildRtstat BuildSchedPlugin BuildStageClient BuildStageClientOld BuildStageDaemonCpp BuildStageLibrary BuildTapeClient BuildTapeDaemon BuildTapeLibrary BuildTpusage BuildVdqmClient BuildVdqmLibrary BuildVolumeMgrClient BuildVolumeMgrDaemon BuildVolumeMgrLibrary BuildVDQMCpp BuildRepack BuildGridFTP HasCDK HasNroff UseGSI UseKRB5 UseXFSPrealloc BuildSecurity BuildSecureCns BuildSecureRfio; do
+for this in HasCDK HasNroff UseGSI UseKRB5 UseXFSPrealloc; do
     perl -pi -e "s/$this(?: |\t)+.*(YES|NO)/$this\tYES/g" config/site.def
 done
 
 #
 ## Force build rules to NO for a lot of things
 #
-for this in BuildCppTest BuildExamples BuildGcDaemon BuildTest SecMakeStaticLibrary UseMySQL UseKRB4 UseHeimdalKrb5 BuildSecureCupv BuildSecureRtcopy BuildSecureStage BuildSecureTape BuildSecureVdqm BuildSecureVmgr; do
+for this in UseKRB4 UseHeimdalKrb5 BuildSecureCupv BuildSecureRtcopy BuildSecureTape BuildSecureVdqm BuildSecureVmgr; do
     perl -pi -e "s/$this.*(YES|NO)/$this\tNO/g" config/site.def
 done
 #
@@ -104,57 +106,44 @@ perl -pi -e s/__TIMESTAMP__/\"${timestamp}\"/ h/patchlevel.h
 ## make sure imake is not shipped with object files
 #
 cd imake
-make -f Makefile.ini clobber
+make -s -f Makefile.ini clobber
 cd ..
 
 echo "### INFO ### Customizing spec file"
 
-#
-## Attempt to get debian's Build-Requires - We assume that debian/RedHat compatible stuff is on the first found line
-#
-buildrequires=`grep Build-Depends: debian/control | grep -v debhelper | sed 's/Build-Depends: //g' | head -1`
-if [ -n "${buildrequires}" ]; then
-    #
-    ## We know per construction that lsf-master is called LSF-master in CERN's rpms
-    #
-    buildrequires=`echo ${buildrequires} | sed 's/lsf/LSF/g'`
-    # perl -pi -e "s/#BuildRequires:.*/BuildRequires: ${buildrequires}/g" CASTOR.spec
-fi
-
-
-#
-## Functions to detect %if/%endif dependencies
-#
-function if_has_oracle {
-    egrep -q "^$1\$" debian/if.has_oracle
-    if [ $? -eq 0 ]; then
-	return 1
-    fi
-    return 0
+function copyInstallPermInternal {
+    file=$1
+    for f in `cat debian/conffiles`; do
+        g=`echo $f | sed 's/\\//\\\\\\//g'`
+        sed -i "s/$g\$/%config(noreplace) $g/" $file
+    done
+    cat $file >> CASTOR.spec
 }
 
-function if_has_lsf {
-    egrep -q "^$1\$" debian/if.has_lsf
+function copyInstallPerm {
+    package=$1
+    cp -f debian/$package.install.perm debian/$package.install.perm.tmp
+    # Add a missing '/'
+    perl -pi -e 's/\) /\) \//g' debian/$package.install.perm.tmp
+    # compute 64 bits version :
+    #   - replace usr/lib by usr/lib64
+    #   - except for /usr/lib/perl
+    #   - replace gcc32dbg by gcc64dbg (gridFTP specific)
+    perl -p -e 's/usr\/lib/usr\/lib64/g;s/usr\/lib64\/perl/usr\/lib\/perl/g;s/gcc32dbg/gcc64dbg/g' debian/$package.install.perm.tmp > debian/$package.install.perm.64.tmp
+    # check whether to bother with 64 bits specific code
+    diff -q debian/$package.install.perm.tmp debian/$package.install.perm.64.tmp > /dev/null
     if [ $? -eq 0 ]; then
-	return 1
+      copyInstallPermInternal debian/$package.install.perm.tmp
+    else
+      echo "%ifarch x86_64" >> CASTOR.spec
+      copyInstallPermInternal debian/$package.install.perm.64.tmp
+      echo "%else" >> CASTOR.spec
+      copyInstallPermInternal debian/$package.install.perm.tmp
+      echo "%endif" >> CASTOR.spec
     fi
-    return 0
+    #rm -f debian/$package.install.perm.tmp debian/$package.install.perm.64.tmp
 }
 
-function if_has_stk_ssi {
-    egrep -q "^$1\$" debian/if.has_stk_ssi
-    if [ $? -eq 0 ]; then
-	return 1
-    fi
-    return 0
-}
-function if_has_globus {
-    egrep -q "^$1\$" debian/if.has_globus
-    if [ $? -eq 0 ]; then
-	return 1
-    fi
-    return 0
-}
 #
 ## Append all sub-packages to CASTOR.spec
 #
@@ -168,22 +157,6 @@ for this in `grep Package: debian/control | awk '{print $NF}'` castor-tape-serve
     if [ "$package" = "castor-tape-server-nostk" ]; then
 	echo "%else" >> CASTOR.spec # compiling_notstk if
         package="castor-tape-server"
-    fi
-    if_has_oracle $this
-    if [ $? -eq 1 ]; then
-	echo "%if %has_oracle" >> CASTOR.spec
-    fi
-    if_has_lsf $this
-    if [ $? -eq 1 ]; then
-	echo "%if %has_lsf" >> CASTOR.spec
-    fi
-    if_has_stk_ssi $this
-    if [ $? -eq 1 ]; then
-	echo "%if %has_stk_ssi" >> CASTOR.spec
-    fi
-    if_has_globus $this
-    if [ $? -eq 1 ]; then
-	echo "%if %has_globus" >> CASTOR.spec
     fi
     echo "%package -n $actualPackage" >> CASTOR.spec
     echo "Summary: Cern Advanced mass STORage" >> CASTOR.spec
@@ -281,138 +254,37 @@ for this in `grep Package: debian/control | awk '{print $NF}'` castor-tape-serve
       $this =~ s/\n/ \- /sg;
       $this =~ s/  */ /sg;
       print "$this\n";' $package >> CASTOR.spec
-    #
     ## Get file list
-    #
     echo "%files -n $actualPackage" >> CASTOR.spec
     echo "%defattr(-,root,root)" >> CASTOR.spec
-    if [ -s "debian/$package.init" ]; then
-	echo "%attr(0755,root,bin) /etc/init.d/$package" >> CASTOR.spec
-    fi
-    if [ -s "debian/$package.logrotate" ]; then
-	echo "%config(noreplace) /etc/logrotate.d/$package" >> CASTOR.spec
-    fi
-    if [ "$package" = "castor-gridftp-dsi-ext" ]; then
-	echo "%config(noreplace) /etc/xinetd.d/gsiftp" >> CASTOR.spec
-    fi
+    ## deal with manpages
     if [ -s "debian/$package.manpages" ]; then
 	for man in `cat debian/$package.manpages | sed 's/debian\/castor\///g'`; do
 	    echo "%attr(0644,root,bin) %doc /$man" >> CASTOR.spec
 	done
     fi
+    ## deal with directories
     if [ -s "debian/$package.dirs" ]; then
 	for dir in `cat debian/$package.dirs`; do
 	    echo "%attr(-,root,bin) %dir /$dir" >> CASTOR.spec
 	done
     fi
-    if [ -s "debian/$package.cron.d" ]; then
-	echo "%attr(0755,root,root) /etc/cron.d/$package" >> CASTOR.spec
-    fi
-    if [ -s "debian/$package.cron.daily" ]; then
-	echo "%attr(0755,root,root) /etc/cron.daily/$package" >> CASTOR.spec
-    fi
-    if [ -s "debian/$package.cron.hourly" ]; then
-	echo "%attr(0755,root,root) /etc/cron.hourly/$package" >> CASTOR.spec
-    fi
-    if [ -s "debian/$package.cron.monthly" ]; then
-	echo "%attr(0755,root,root) /etc/cron.monthly/$package" >> CASTOR.spec
-    fi
-    if [ -s "debian/$package.cron.weekly" ]; then
-	echo "%attr(0755,root,root) /etc/cron.weekly/$package" >> CASTOR.spec
-    fi
+    ## deal with files
     if [ -s "debian/$package.install.perm" ]; then
-	cp -f debian/$package.install.perm debian/$package.install.perm.tmp
-	#
-	## Add a missing '/'
-	#
-	perl -pi -e 's/\) /\) \//g' debian/$package.install.perm.tmp
-	lib_or_lib64=0
-	if [ "$package" != "castor-dbtools" ]; then
-	    #
-	    ## Check if we have to play with %ifarch
-	    #
-	    grep -q /lib debian/$package.install.perm
-	    [ $? -eq 0 ] && lib_or_lib64=1
-	fi
-	if [ $lib_or_lib64 -eq 0 ]; then
-	    cat debian/$package.install.perm.tmp >> CASTOR.spec
-	else
-	    echo "%ifarch x86_64" >> CASTOR.spec
-            if [ "$package" != "castor-gridftp-dsi-ext" -a "$package" != "castor-gridftp-dsi-int" ]; then
-                cat debian/$package.install.perm.tmp | sed 's/\/lib\//\/lib64\//g' >> CASTOR.spec
-            else
-                cat debian/$package.install.perm.tmp | sed 's/gcc32dbg/gcc64dbg/g' >> CASTOR.spec
-            fi
-	    echo "%else" >> CASTOR.spec
-	    cat debian/$package.install.perm.tmp >> CASTOR.spec
-	    echo "%endif" >> CASTOR.spec
-	fi
-	rm -f debian/$package.install.perm.tmp
+        copyInstallPerm $package
     fi
-    if [ "$package" != "castor-service" ]; then
-        #
-        ## Get %post section
-        #
-	if [ -s "debian/$package.postinst" ]; then
-	    echo "%post -n $actualPackage" >> CASTOR.spec
-	    cat debian/$package.postinst >> CASTOR.spec
-	    # Force ldconfig for packages with a shared library
-	    [ "$package" = "castor-lib" ] && echo "/sbin/ldconfig" >> CASTOR.spec
-	    [ "$package" = "castor-lib-oracle" ] && echo "/sbin/ldconfig" >> CASTOR.spec
-	    [ "$package" = "castor-lib-mysql" ] && echo "/sbin/ldconfig" >> CASTOR.spec
-	    [ "$package" = "castor-lib-monitor" ] && echo "/sbin/ldconfig" >> CASTOR.spec
-	    [ "$package" = "castor-lib-policy" ] && echo "/sbin/ldconfig" >> CASTOR.spec
-	else
-	    # Force ldconfig for packages with a shared library
-	    [ "$package" = "castor-lib" ] && echo "%post -n $package -p /sbin/ldconfig" >> CASTOR.spec
-	    [ "$package" = "castor-lib-oracle" ] && echo "%post -n $package -p /sbin/ldconfig" >> CASTOR.spec
-	    [ "$package" = "castor-lib-mysql" ] && echo "%post -n $package -p /sbin/ldconfig" >> CASTOR.spec
-	    [ "$package" = "castor-lib-monitor" ] && echo "%post -n $package -p /sbin/ldconfig" >> CASTOR.spec
-	    [ "$package" = "castor-lib-policy" ] && echo "%post -n $package -p /sbin/ldconfig" >> CASTOR.spec
-	fi
-        #
-        ## Get %preun section
-        #
-	if [ -s "debian/$package.preun" ]; then
-	    echo "%preun -n $actualPackage" >> CASTOR.spec
-	    cat debian/$package.preun >> CASTOR.spec
-	fi
-        #
-        ## Get %postun section
-        #
-	if [ -s "debian/$package.postun" ]; then
-	    echo "%postun -n $actualPackage" >> CASTOR.spec
-	    cat debian/$package.postun >> CASTOR.spec
-	    # Force ldconfig for packages with a shared library
-	    [ "$package" = "castor-lib" ] && echo "/sbin/ldconfig" >> CASTOR.spec
-	    [ "$package" = "castor-lib-oracle" ] && echo "/sbin/ldconfig" >> CASTOR.spec
-	    [ "$package" = "castor-lib-mysql" ] && echo "/sbin/ldconfig" >> CASTOR.spec
-	    [ "$package" = "castor-lib-monitor" ] && echo "/sbin/ldconfig" >> CASTOR.spec
-	    [ "$package" = "castor-lib-policy" ] && echo "/sbin/ldconfig" >> CASTOR.spec
-	else
-	    # Force ldconfig for packages with a shared library
-	    [ "$package" = "castor-lib" ] && echo "%postun -n $package -p /sbin/ldconfig" >> CASTOR.spec
-	    [ "$package" = "castor-lib-oracle" ] && echo "%postun -n $package -p /sbin/ldconfig" >> CASTOR.spec
-	    [ "$package" = "castor-lib-mysql" ] && echo "%postun -n $package -p /sbin/ldconfig" >> CASTOR.spec
-	    [ "$package" = "castor-lib-monitor" ] && echo "%postun -n $package -p /sbin/ldconfig" >> CASTOR.spec
-	    [ "$package" = "castor-lib-policy" ] && echo "%postun -n $package -p /sbin/ldconfig" >> CASTOR.spec
-	fi
+    ## deal with scripts
+    if [ -s "debian/$package.postinst" ]; then
+        echo "%post -n $actualPackage" >> CASTOR.spec
+        cat debian/$package.postinst >> CASTOR.spec
     fi
-    if_has_oracle $this
-    if [ $? -eq 1 ]; then
-	echo "%endif" >> CASTOR.spec
+    if [ -s "debian/$package.preun" ]; then
+        echo "%preun -n $actualPackage" >> CASTOR.spec
+        cat debian/$package.preun >> CASTOR.spec
     fi
-    if_has_lsf $this
-    if [ $? -eq 1 ]; then
-	echo "%endif" >> CASTOR.spec
-    fi
-    if_has_stk_ssi $this
-    if [ $? -eq 1 ]; then
-	echo "%endif" >> CASTOR.spec
-    fi
-    if_has_globus $this
-    if [ $? -eq 1 ]; then
-	echo "%endif" >> CASTOR.spec
+    if [ -s "debian/$package.postun" ]; then
+        echo "%postun -n $actualPackage" >> CASTOR.spec
+        cat debian/$package.postun >> CASTOR.spec
     fi
     echo >> CASTOR.spec
 done
@@ -422,6 +294,6 @@ cd ..
 
 echo "### INFO ### Creating tarball"
 
-tar -zcf castor-${a}.${b}.${c}.tar.gz castor-${a}.${b}.${c}
+tar -zcf castor-${fullversion}.tar.gz castor-${version}
 
-cd castor-${a}.${b}.${c}
+cd castor-${version}
