@@ -174,12 +174,6 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-monitor
 Description: castor (Cern Advanced STORage system)
  Resource Monitoring running on each worker node
 
-Package: castor-rtcopy-client
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, castor-rtcopy-messages
-Description: castor (Cern Advanced STORage system)
- Remote Tape Copy clients
-
 Package: castor-rtcopy-messages
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
