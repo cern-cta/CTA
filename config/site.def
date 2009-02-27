@@ -62,7 +62,6 @@
 #define DlfConfigFile   CONFIGPATH(DLFCONFIG)
 #define ExpertConfigFile CONFIGPATH(EXPCONFIG)
 
-#define BuildTapeGatewayCpp     NO
 #define HasCDK                  NO
 #define UseXFSPrealloc	        YES
 
