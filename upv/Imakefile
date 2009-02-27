@@ -58,3 +58,4 @@ LOGROTATE(castor-upv-server,..,install)
 SYSCONFIG(Cupvdaemon,install)
 INITSCRIPT(Cupvdaemon,install)
 CONFIGFILE(CUPV,..,install)
+
