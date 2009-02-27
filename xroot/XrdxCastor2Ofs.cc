@@ -1,4 +1,4 @@
-//          $Id: XrdxCastor2Ofs.cc,v 1.2 2009/02/26 16:31:56 apeters Exp $
+//          $Id: XrdxCastor2Ofs.cc,v 1.3 2009/02/27 12:13:29 apeters Exp $
 
 #include "XrdOfs/XrdOfsTrace.hh"
 #include "XrdClient/XrdClientAdmin.hh"
@@ -397,6 +397,14 @@ XrdxCastor2OfsFile::open(const char                *path,
     newopaque.replace("castor2ofsproc","castor2ofsfake");
   }
 
+  XrdOucString verifytag = envOpaque->Get("verifychecksum");
+  if (  (verifytag == "false" ) ||
+	(verifytag == "0"     ) ||
+	(verifytag == "off") ) {
+    VerifyChecksum=false;
+  }
+
+
   open_mode |= SFS_O_MKPTH;
   create_mode|= SFS_O_MKPTH;
 
@@ -499,13 +507,39 @@ XrdxCastor2OfsFile::open(const char                *path,
 
   newpath = envOpaque->Get("castor2fs.pfn1");
 
-  struct stat buf;
   int retc;
-  if ((retc = XrdOfsOss->Stat(path, &buf))) {
+
+  // take the redirector/user provided one ...
+  DiskChecksum = envOpaque->Get("adler32");
+  if (DiskChecksum.length()) {
+    DiskChecksumAlgorithm = "ADLER32";
+  }
+
+  if ((retc = XrdOfsOss->Stat(newpath.c_str(), &statinfo))) {
     // file does not exist, keep the create lfag
     firstWrite=false;
   } else {
-    open_mode -= SFS_O_CREAT;
+    if (open_mode & SFS_O_CREAT) 
+      open_mode -= SFS_O_CREAT;
+    
+
+    if (0) {
+      // hmm... not this one
+      // try to get a checksum from the filesystem
+      char diskckSumbuf[32+1];
+      char diskckSumalg[32];
+      diskckSumbuf[0]=diskckSumalg[0]=0;
+      
+      // get existing checksum - we don't check errors here
+      int nattr=0;
+      nattr = getxattr(newpath.c_str(),"user.castor.checksum.type",diskckSumalg,sizeof(diskckSumalg));
+      if (nattr) diskckSumalg[nattr] = 0;
+      nattr = getxattr(newpath.c_str(),"user.castor.checksum.value",diskckSumbuf,sizeof(diskckSumbuf));
+      if (nattr) diskckSumbuf[nattr] = 0;
+      DiskChecksum = diskckSumbuf;
+      DiskChecksumAlgorithm = diskckSumalg;
+      ZTRACE(open,"Checksum-Algorithm: " << DiskChecksumAlgorithm.c_str() << " Checksum: " << DiskChecksum.c_str());
+    }
   }
 
   uid_t sec_uid = 0;
@@ -518,7 +552,7 @@ XrdxCastor2OfsFile::open(const char                *path,
   if (envOpaque->Get("castor2fs.client_sec_gid")) {
     sec_gid = atoi(envOpaque->Get("castor2fs.client_sec_gid"));
   }
-
+  
   // extract the stager information
   char* val;
   val = envOpaque->Get("castor2fs.pfn2");
@@ -585,9 +619,14 @@ XrdxCastor2OfsFile::close()
     XrdOfsFS.ReadFromProc("trace");
   }
 
+  char ckSumbuf[32+1];
+  sprintf(ckSumbuf,"%x",adler);
+  char *ckSumalg="ADLER32";
 
+  XrdOucString newpath="";
+  newpath = envOpaque->Get("castor2fs.pfn1");
+  
   if (hasWrite) {
-    XrdOucString newpath = envOpaque->Get("castor2fs.pfn1");
     if (XrdOfsFS.doChecksumUpdates && (!hasadler)) {
       XrdxCastor2Timing checksumtiming("ofsf::checksum");
       TIMING(OfsTrace,"START",&checksumtiming);
@@ -612,18 +651,16 @@ XrdxCastor2OfsFile::close()
       }
     }
     
-    if ((XrdOfsFS.doChecksumStreaming || XrdOfsFS.doChecksumUpdates) && hasadler) {
-      char ckSumbuf[32+1];
-      sprintf(ckSumbuf,"%x",adler);
-      char *ckSumalg="ADLER32";
-      
+    if ((XrdOfsFS.doChecksumStreaming || XrdOfsFS.doChecksumUpdates) && hasadler) {     
       if (setxattr(newpath.c_str(),"user.castor.checksum.type",ckSumalg, strlen(ckSumalg),0)) {
 	XrdOfsFS.Emsg(epname,error, EIO, "set checksum type", "");
 	rc=SFS_ERROR;
+	// anyway this is not returned to the client
       } else {
 	if (setxattr(newpath.c_str(),"user.castor.checksum.value",ckSumbuf,strlen(ckSumbuf),0)) {
 	  XrdOfsFS.Emsg(epname,error, EIO, "set checksum", "");
 	  rc=SFS_ERROR;
+	  // anyway this is not returned to the client
 	}
       }
     } else {
@@ -633,8 +670,8 @@ XrdxCastor2OfsFile::close()
 	removexattr(newpath.c_str(),"user.castor.checksum.value");
       }
     }
-  }
-  
+  } 
+
   // send the sigusr2 signal to the local x2castorjob script 
   SignalJob(true);
   
@@ -643,6 +680,41 @@ XrdxCastor2OfsFile::close()
   return rc;
 }
 
+/******************************************************************************/
+/*                   v e r i f y c h e c k s u m                              */
+/******************************************************************************/
+bool
+XrdxCastor2OfsFile::verifychecksum() {
+  EPNAME("verifychecksum");
+  bool rc = true;
+  
+  XrdOucString CalcChecksum;
+  XrdOucString CalcChecksumAlgorithm;
+  
+  if ( (DiskChecksum!="") && 
+       (DiskChecksumAlgorithm !="") &&
+       VerifyChecksum ) {
+    char ckSumbuf[32+1];
+    sprintf(ckSumbuf,"%x",adler);
+    CalcChecksum = ckSumbuf;
+    CalcChecksumAlgorithm = "ADLER32";
+    if (CalcChecksum != DiskChecksum) {
+      XrdOfsFS.Emsg(epname,error, EIO, "verify checksum - checksum wrong!", "");
+      rc = false;
+    }
+    
+    if (CalcChecksumAlgorithm != DiskChecksumAlgorithm) {
+      XrdOfsFS.Emsg(epname,error, EIO, "verify checksum - checksum type wrong!","");
+      rc = false;
+    }
+    if (!rc) {
+      ZTRACE(read,"Checksum ERROR: " << CalcChecksum.c_str() << " != " << DiskChecksum.c_str() << " [ " << CalcChecksumAlgorithm.c_str() << " <=> " << DiskChecksumAlgorithm.c_str() << " ]");
+    } else {
+      ZTRACE(read,"Checksum OK   : " << CalcChecksum.c_str());
+    }
+  }
+  return rc;
+}
 
 /******************************************************************************/
 /*                         r e a d                                            */
@@ -653,6 +725,8 @@ XrdxCastor2OfsFile::read(XrdSfsFileOffset   fileOffset,   // Preread only
 {
   int rc = XrdOfsFile::read(fileOffset,amount);
   if (rc>0) {if(!IsAdminStream)ADDTOTALREADBYTES(rc) else ADDTOTALSTREAMREADBYTES(rc);FileReadBytes+=rc;}
+
+  hasadler = false;
 
   if (IsAdminStream) {
     DOREADDELAY();
@@ -672,11 +746,29 @@ XrdxCastor2OfsFile::read(XrdSfsFileOffset   fileOffset,
 {
   int rc = XrdOfsFile::read(fileOffset,buffer,buffer_size);
 
+  // computation of adler checksum - we disable it if seeks happen
+  if (fileOffset != adleroffset) {
+    hasadler=false;
+  }
+
+  if (hasadler && XrdOfsFS.doChecksumStreaming) {
+    adler = adler32(adler, (const Bytef*) buffer, buffer_size);
+    adleroffset += buffer_size;
+  }
+
   if (rc>0) {if(!IsAdminStream)ADDTOTALREADBYTES(buffer_size) else ADDTOTALSTREAMREADBYTES(buffer_size);FileReadBytes+=rc;}
+
   if (IsAdminStream) {
     DOREADDELAY();
   } else
     if (XrdOfsFS.ReadDelay) XrdSysTimer::Wait(XrdOfsFS.ReadDelay);
+
+  if (hasadler && (fileOffset+buffer_size >= statinfo.st_size)) {
+    // invoke the checksum verification
+    if (!verifychecksum()) {
+      rc = SFS_ERROR;
+    }
+  }
 
   return rc;
 }
@@ -689,6 +781,8 @@ XrdxCastor2OfsFile::read(XrdSfsAio *aioparm)
 {
   
   int rc = XrdOfsFile::read(aioparm);
+
+  hasadler = false;
 
   if (rc==SFS_OK) {if(!IsAdminStream)ADDTOTALREADBYTES(aioparm->sfsAio.aio_nbytes) else ADDTOTALSTREAMREADBYTES(aioparm->sfsAio.aio_nbytes);FileReadBytes+=aioparm->sfsAio.aio_nbytes;}
   if (IsAdminStream) {

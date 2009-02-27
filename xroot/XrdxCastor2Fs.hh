@@ -1,4 +1,4 @@
-//         $Id: XrdxCastor2Fs.hh,v 1.2 2009/02/12 09:11:38 apeters Exp $
+//         $Id: XrdxCastor2Fs.hh,v 1.3 2009/02/27 12:13:29 apeters Exp $
 
 #ifndef __XCASTOR2_FS_H__
 #define __XCASTOR2_FS_H__
@@ -35,7 +35,7 @@
 
 #define RFIO_NOREDEFINE
 #include <shift.h>
-#include <shift/Cns_api.h>
+#include "Cns_api.h"
 
 
 class XrdSysError;
@@ -73,7 +73,7 @@ static int Rename(const char *ofn, const char *nfn) {return Cns_rename(ofn, nfn)
 
 static int Statfd(int fd, struct stat *buf) {return fstat(fd, buf);}
 
-static int Statfn(const char *fn, struct Cns_filestat *buf) {return Cns_stat(fn, buf);}
+static int Statfn(const char *fn, struct Cns_filestatcs *buf) {return Cns_statcs(fn, buf);}
 
 static int Lstatfn(const char *fn, struct Cns_filestat *buf) {return Cns_lstat(fn, buf);}
 

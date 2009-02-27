@@ -1,6 +1,6 @@
-//          $Id: XrdxCastor2Fs.cc,v 1.4 2009/02/12 09:11:38 apeters Exp $
+//          $Id: XrdxCastor2Fs.cc,v 1.5 2009/02/27 12:13:29 apeters Exp $
 
-const char *XrdxCastor2FsCVSID = "$Id: XrdxCastor2Fs.cc,v 1.4 2009/02/12 09:11:38 apeters Exp $";
+const char *XrdxCastor2FsCVSID = "$Id: XrdxCastor2Fs.cc,v 1.5 2009/02/27 12:13:29 apeters Exp $";
 
 
 #include "XrdVersion.hh"
@@ -28,7 +28,7 @@ const char *XrdxCastor2FsCVSID = "$Id: XrdxCastor2Fs.cc,v 1.4 2009/02/12 09:11:3
 
 #define RFIO_NOREDEFINE
 #include <shift.h>
-#include <shift/Cns_api.h>
+#include "Cns_api.h"
  
 #ifdef AIX
 #include <sys/mode.h>
@@ -963,7 +963,7 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
 
    mode_t acc_mode = Mode & S_IAMB;
    int retc, open_flag = 0;
-   struct Cns_filestat buf;
+   struct Cns_filestatcs buf;
 
    int isRW = 0;
    int isRewrite = 0;
@@ -1157,7 +1157,7 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
 	 while ((rpos = newpath.rfind("/",rpos))!=STR_NPOS) {
 	   rpos--;
 	   struct stat buf;
-	   struct Cns_filestat cstat;
+	   struct Cns_filestatcs cstat;
 	   XrdOucString spath;
 	   spath.assign(newpath,0,rpos);
 	   if (XrdxCastor2FsUFS::Statfn(spath.c_str(),&cstat)) 
@@ -1547,6 +1547,10 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
      redirectionhost+= "?";
      // add the external token opaque tag
      redirectionhost+=accopaque;
+     if (!isRW) {
+       redirectionhost+="adler32="; redirectionhost+=buf.csumvalue; redirectionhost+="&";
+     }
+
      //     if (XrdxCastor2FS->xCastor2FsTargetPort != "1094") {
        ecode = atoi(XrdxCastor2FS->xCastor2FsTargetPort.c_str());
        //     }
@@ -1841,7 +1845,7 @@ int XrdxCastor2FsFile::stat(struct stat     *buf)         // Out
 
 // Execute the function
 //
-   struct Cns_filestat cstat;
+   struct Cns_filestatcs cstat;
 
    if (XrdxCastor2FsUFS::Statfn(fname, &cstat)) {
      return XrdxCastor2Fs::Emsg(epname, error, serrno, "stat", fname);
@@ -2507,7 +2511,7 @@ int XrdxCastor2Fs::_exists(const char                *path,        // In
 */
 {
    static const char *epname = "exists";
-   struct Cns_filestat fstat;
+   struct Cns_filestatcs fstat;
 
 // Now try to find the file or directory
 //
@@ -2600,7 +2604,7 @@ int XrdxCastor2Fs::_mkdir(const char            *path,    // In
    if (Mode & SFS_O_MKPTH) {
      char actual_path[4096], *local_path, *next_path;
      unsigned int plen;
-     struct Cns_filestat buf;
+     struct Cns_filestatcs buf;
      // Extract out the path we should make
      //
      if (!(plen = strlen(path))) return -ENOENT;
@@ -2667,7 +2671,7 @@ int XrdxCastor2Fs::Mkpath(const char *path, mode_t mode, const char *info,XrdSec
 {
     char actual_path[4096], *local_path, *next_path;
     unsigned int plen;
-    struct Cns_filestat buf;
+    struct Cns_filestatcs buf;
     static const char *epname = "Mkpath";
 
 // Extract out the path we should make
@@ -2740,7 +2744,7 @@ int XrdxCastor2Fs::stageprepare( const char* path, XrdOucErrInfo &error, const X
   
   ROLEMAP(client,info,mappedclient,tident);
   
-  struct Cns_filestat cstat;
+  struct Cns_filestatcs cstat;
   
   if (XrdxCastor2FsUFS::Statfn(path, &cstat) ) {
     return XrdxCastor2Fs::Emsg(epname, error, serrno, "stat", path);
@@ -2846,7 +2850,7 @@ int XrdxCastor2Fs::prepare( XrdSfsPrep       &pargs,
     Cns_selectsrvr(path, cds, nds,&acpath);
     ZTRACE(prepare,"nameserver is "<< nds);
 
-    struct Cns_filestat cstat;
+    struct Cns_filestatcs cstat;
     
     TIMING(xCastor2FsTrace,"CNSSTAT",&preparetiming);  
     if (XrdxCastor2FsUFS::Statfn(path, &cstat) ) {
@@ -2873,7 +2877,7 @@ int XrdxCastor2Fs::prepare( XrdSfsPrep       &pargs,
     Cns_selectsrvr(path, cds, nds,&acpath);
     ZTRACE(prepare,"nameserver is "<< nds);
 
-    struct Cns_filestat cstat;
+    struct Cns_filestatcs cstat;
     
     TIMING(xCastor2FsTrace,"CNSSTAT",&preparetiming);  
     if (XrdxCastor2FsUFS::Statfn(path, &cstat) ) {
@@ -2900,7 +2904,7 @@ int XrdxCastor2Fs::prepare( XrdSfsPrep       &pargs,
     Cns_selectsrvr(path, cds, nds,&acpath);
     ZTRACE(prepare,"nameserver is "<< nds);
 
-    struct Cns_filestat cstat;
+    struct Cns_filestatcs cstat;
     
     TIMING(xCastor2FsTrace,"CNSSTAT",&preparetiming);  
     if (XrdxCastor2FsUFS::Statfn(path, &cstat) ) {
@@ -3250,7 +3254,7 @@ int XrdxCastor2Fs::stat(const char              *path,        // In
   TIMING(xCastor2FsTrace,"CNSSTAT",&stattiming);
 
 
-  struct Cns_filestat cstat;
+  struct Cns_filestatcs cstat;
 
   if (XrdxCastor2FsUFS::Statfn(path, &cstat) ) {
     return XrdxCastor2Fs::Emsg(epname, error, serrno, "stat", path);
@@ -3298,7 +3302,7 @@ int XrdxCastor2Fs::stat(const char              *path,        // In
   buf->st_ctime   = cstat.ctime;
 
   if (!S_ISDIR(cstat.filemode)) {
-    if ( (stagestatus != "STAGED") && (stagestatus != "CANBEMIGR") ) {
+    if ( (stagestatus != "STAGED") && (stagestatus != "CANBEMIG") ) {
       // this file is offline
       buf->st_mode = (mode_t) -1;
       buf->st_ino   = 0;
