@@ -32,5 +32,5 @@ TAPEFSMLIB_SRCS = \
 
 #if BuildTapeFsmLibrary
 TAPEFSMLIB_OBJS = $(TAPEFSMLIB_SRCS:.cpp=.Osuf)
-SharedLibraryTarget(tapefsm,$(TAPEFSMLIB_OBJS),$(DEPLIB),$(LIBS))
+SharedLibraryTarget(castortapefsm,$(TAPEFSMLIB_OBJS),$(DEPLIB),$(LIBS))
 #endif
