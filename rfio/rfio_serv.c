@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_serv.c,v 1.34 2009/02/10 13:45:09 waldron Exp $
+ * $Id: rfio_serv.c,v 1.35 2009/02/27 13:02:48 sponcec3 Exp $
  */
 
 /*
@@ -84,13 +84,11 @@ static int have_stagersuperuser = 0; /* Default is no alternate super-user */
 int exit_code_from_last_child = -1;
 int have_a_child = 0;
 
-#ifdef CSEC
 #include <Csec_api.h>
 Csec_context_t ctx;
 uid_t peer_uid;
 gid_t peer_gid;
 int Csec_service_type;
-#endif
 
 extern char     *getconfent();
 
@@ -1011,7 +1009,6 @@ int doit(s, fromp, mode, uid, gid)
   td = (struct thData*)TlsGetValue(tls_i);
 #endif /* WIN32 */
 
-#ifdef CSEC
 #define CLIENT_NAME_SIZE 1000
   char *Csec_mech;
   char *Csec_auth_id;
@@ -1086,8 +1083,6 @@ int doit(s, fromp, mode, uid, gid)
 	peer_gid);
     Csec_service_type = -1;
   }
-
-#endif
 
   /*
    * Initializing the info data structure.

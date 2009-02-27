@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_constants.h,v 1.3 2009/01/09 14:44:36 sponcec3 Exp $
+ * $Id: rfio_constants.h,v 1.4 2009/02/27 13:07:02 sponcec3 Exp $
  */
 
 /*
@@ -20,11 +20,9 @@
 #define RFIO_NAME "rfio"
 #define RFIO_PROTO "tcp"
 #define RFIO_PORT 5001
-#ifdef CSEC
 #define SRFIO_PORT 5501
 #define SRFIO_NAME "srfio"
 #define SRFIO_PROTO "tcp"
-#endif
 
 /*
  * RFIO options.

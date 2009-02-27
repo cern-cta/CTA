@@ -1,5 +1,5 @@
 /*
- * $Id: connect.c,v 1.19 2009/02/10 13:45:09 waldron Exp $
+ * $Id: connect.c,v 1.20 2009/02/27 13:02:47 sponcec3 Exp $
  */
 
 /*
@@ -20,9 +20,7 @@
 #include <Cglobals.h>  /* thread local storage for global variables */
 #include <Cnetdb.h>  /* thread-safe network database routines */
 #include <osdep.h>
-#ifdef CSEC
 #include "Csec_api.h"
-#endif
 #include "Castor_limits.h"
 #include <stdlib.h>
 #include <sys/socket.h>
@@ -108,9 +106,7 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
 #endif
 #endif
   int timeout;
-#ifdef CSEC
   int secure_connection = 0;
-#endif
   char tmphost[CA_MAXHOSTNAMELEN+1];
 
   INIT_TRACE("RFIO_TRACE");
@@ -191,11 +187,8 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
   else {
     timeout=atoi(p);
   }
-#ifdef CSEC
   if (getenv("SECURE_CASTOR") != NULL) secure_connection++;
-#endif
   if (port < 0) {
-#ifdef CSEC
     if (secure_connection) { /* Secure connection should be made to secure port */
       /* Try environment variable */
       TRACE(2, "srfio", "rfio_connect: getenv(%s)","SRFIO_PORT");
@@ -215,7 +208,6 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
         }
       }
     } else {
-#endif
       /* Connection is unsecure */
       /* Try environment variable */
       TRACE(2, "rfio", "rfio_connect: getenv(%s)","RFIO_PORT");
@@ -234,9 +226,7 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
 	  sin.sin_port = htons((u_short) RFIO_PORT);
         }
       }
-#ifdef CSEC
     }
-#endif
   } else {
     TRACE(2, "rfio", "rfio_connect: *** Warning: using forced port %d", port);
     sin.sin_port = htons(port);
@@ -413,7 +403,6 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
   }
 
   TRACE(1, "rfio", "rfio_connect: return socket %d", s);
-#ifdef CSEC
   if (secure_connection) {
     /* Performing authentication */
     {
@@ -438,7 +427,6 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
       TRACE(1, "srfio", "client establish context returned %s", rc);
     }
   }
-#endif
   END_TRACE();
   return(s);
 }

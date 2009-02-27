@@ -95,11 +95,9 @@ extern int forced_umask;
 #define CORRECT_UMASK(this) (forced_umask > 0 ? forced_umask : this)
 extern int ignore_uid_gid;
 
-#ifdef CSEC
 extern int Csec_service_type;
 extern int peer_uid;
 extern int peer_gid;
-#endif
 
 #include <fcntl.h>
 
@@ -4074,12 +4072,10 @@ int chsuser(uid,gid,hostname,ptrcode,permstr)
 
   struct passwd *pw;
 
-#ifdef CSEC
   if (Csec_service_type < 0) {
     uid = peer_uid;
     gid = peer_gid;
   }
-#endif
 
   if ( chksuser(uid,gid,hostname,ptrcode,permstr) < 0 )
     return -2;
@@ -4116,12 +4112,10 @@ int check_user_perm(uid,gid,hostname,ptrcode,permstr)
      int *ptrcode;           /* Return code                       */
      char *permstr;          /* permission string for the request */
 {
-#ifdef CSEC
   if (Csec_service_type < 0) {
     *uid = peer_uid;
     *gid = peer_gid;
   }
-#endif
 
   return(ignore_uid_gid != 0 ? 0 : chsuser(*uid,*gid,hostname,ptrcode,permstr));
 }

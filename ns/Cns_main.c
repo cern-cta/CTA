@@ -24,9 +24,7 @@
 #include "Cns.h"
 #include "Cns_server.h"
 #include "Cpool_api.h"
-#ifdef CSEC
 #include "Csec_api.h"
-#endif
 #include "Cupv_api.h"
 #include "Cdomainname.h"
 #include "marshall.h"
@@ -265,9 +263,7 @@ int Cns_main(main_args)
         }
         if ((Cns_srv_thread_info + i)->db_open_done)
           (void) Cns_closedb (&(Cns_srv_thread_info + i)->dbfd);
-#ifdef CSEC
         (void) Csec_clearContext (&(Cns_srv_thread_info + i)->sec_ctx);
-#endif
       }
       if (nb_active_threads == 0)
         return (0);
@@ -818,7 +814,6 @@ doit(arg)
   int req_type = 0;
   struct Cns_srv_thread_info *thip = (struct Cns_srv_thread_info *) arg;
 
-#ifdef CSEC
   /* There is a field in the Cns_srv_thread to specify if the socket is the secure or not        */
   /* It should be removed once the unsecure mode is not supported anymore, and next "if" as well */
   char username[CA_MAXUSRNAMELEN+1];
@@ -914,7 +909,6 @@ doit(arg)
      #endif
      }
   */
-#endif
   req_data = reqbuf;
   if ((c = getreq (thip, &magic, &req_type, &req_data, &clienthost)) == 0) {
     c = procreq (magic, req_type, req_data, clienthost, thip);

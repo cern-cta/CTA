@@ -19,9 +19,7 @@
 #include "Cns.h"
 #include "Cns_api.h"
 #include "Cns_constants.h"
-#ifdef CSEC
 #include "Csec_api.h"
-#endif
 #include "marshall.h"
 #include "net.h"
 #include "serrno.h"
@@ -42,9 +40,7 @@ int send2nsdx(socketp, host, reqp, reql, user_repbuf, user_repbuf_len, repbuf2, 
   int alloced = 0;
   int c;
   char Cnshost[CA_MAXHOSTNAMELEN+1];
-#ifdef CSEC
   Csec_context_t ctx;
-#endif
   int errflag = 0;
   char func[16];
   char *getconfent();
@@ -208,7 +204,6 @@ int send2nsdx(socketp, host, reqp, reql, user_repbuf, user_repbuf_len, repbuf2, 
         }
         (void) netclose (s);
       } else {
-#ifdef CSEC
         if (securityOpt) {
           Csec_client_initContext (&ctx, CSEC_SERVICE_TYPE_HOST, NULL);
           if (Csec_client_establishContext (&ctx, s) == 0)
@@ -240,18 +235,13 @@ int send2nsdx(socketp, host, reqp, reql, user_repbuf, user_repbuf_len, repbuf2, 
         } else {
           break;
         }
-#else
-        break;
-#endif
       }
       sleep (retryint);
       retrycnt++;
     }
 
-#ifdef CSEC
     if (securityOpt)
       Csec_clearContext (&ctx);
-#endif
     if (socketp)
       *socketp = s;
   }

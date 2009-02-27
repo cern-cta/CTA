@@ -16,7 +16,6 @@
 int DLL_DECL
 Cns_client_getAuthorizationId(uid_t *uid, gid_t *gid, char **mech, char **id)
 {
-#ifdef CSEC
   struct Cns_api_thread_info *thip;
   if (Cns_apiinit (&thip))
     return (-1);
@@ -30,7 +29,6 @@ Cns_client_getAuthorizationId(uid_t *uid, gid_t *gid, char **mech, char **id)
     *mech = thip->Csec_mech;
   if (id)
     *id = thip->Csec_auth_id;
-#endif
   return (0);
 }
 
@@ -40,7 +38,6 @@ int DLL_DECL
 Cns_client_setAuthorizationId(uid_t uid, gid_t gid, const char *mech, char *id)
 {
 
-#ifdef CSEC
   char func[30];
   struct Cns_api_thread_info *thip;
   strcpy (func, "Cns_client_setAuthorizationId");
@@ -61,7 +58,6 @@ Cns_client_setAuthorizationId(uid_t uid, gid_t gid, const char *mech, char *id)
   }
   strcpy (thip->Csec_auth_id, id);
   thip->use_authorization_id = 1;
-#endif
   return (0);
 }
 
