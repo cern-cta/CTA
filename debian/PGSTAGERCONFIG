@@ -1,4 +1,0 @@
-DbCnvSvc	user	username
-DbCnvSvc	passwd	password
-DbCnvSvc	dbHost	dbHostName
-DbCnvSvc	dbName	instanceName
