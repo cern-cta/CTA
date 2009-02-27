@@ -147,10 +147,7 @@ Cns_statx(const char *path, struct Cns_fileid *file_uniqueid, struct Cns_filesta
   }
 
   if (file_uniqueid && *file_uniqueid->server)
-    if (*thip->defserver)
-      strcpy (server, thip->defserver);
-    else
-      strcpy (server, file_uniqueid->server);
+    strcpy (server, file_uniqueid->server);
   else
     if (Cns_selectsrvr (path, thip->server, server, &actual_path))
       return (-1);
@@ -226,7 +223,7 @@ Cns_statcs(const char *path, struct Cns_filestatcs *statbuf)
 
 /*
  * This is the same function as Cns_statx, but has Cns_filestatcs structure as parameter.
- * Cns_filestatcs has additional fields:  csumtype, csumvalue 
+ * Cns_filestatcs has additional fields:  csumtype, csumvalue
  */
 int DLL_DECL
 Cns_statcsx(const char *path, struct Cns_fileid *file_uniqueid, struct Cns_filestatcs *statbuf)
@@ -270,10 +267,7 @@ Cns_statcsx(const char *path, struct Cns_fileid *file_uniqueid, struct Cns_files
   }
 
   if (file_uniqueid && *file_uniqueid->server)
-    if (*thip->defserver)
-      strcpy (server, thip->defserver);
-    else
-      strcpy (server, file_uniqueid->server);
+    strcpy (server, file_uniqueid->server);
   else
     if (Cns_selectsrvr (path, thip->server, server, &actual_path))
       return (-1);
@@ -319,7 +313,7 @@ Cns_statcsx(const char *path, struct Cns_fileid *file_uniqueid, struct Cns_files
     unmarshall_BYTE (rbp, statbuf->status);
     unmarshall_STRING (rbp, statbuf->csumtype);
     unmarshall_STRING (rbp, statbuf->csumvalue);
-    
+
     strcpy (file_uniqueid->server, server);
     file_uniqueid->fileid = statbuf->fileid;
   }

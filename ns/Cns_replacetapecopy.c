@@ -54,14 +54,12 @@ Cns_replacetapecopy(struct Cns_fileid *file_uniqueid, const char* oldvid, const 
   }
 
   /* set the nameserver */
-  if (file_uniqueid && *file_uniqueid->server)
-    if (*thip->defserver)
-      strcpy (server, thip->defserver);
-    else
-      strcpy (server, file_uniqueid->server);
-  else
+  if (file_uniqueid && *file_uniqueid->server) {
+    strcpy (server, file_uniqueid->server);
+  } else {
     if (Cns_selectsrvr (NULL, thip->server, server, &actual_path))
       return (-1);
+  }
 
   /* Build request header */
   sbp = sendbuf;

@@ -29,7 +29,6 @@ Cns_addreplica(const char *guid, struct Cns_fileid *file_uniqueid, const char *s
   char *q;
   char *sbp;
   char sendbuf[REQBUFSZ];
-  char host[CA_MAXHOSTNAMELEN+1];
   struct Cns_api_thread_info *thip;
   uid_t uid;
   u_signed64 zero = 0;
@@ -60,13 +59,6 @@ Cns_addreplica(const char *guid, struct Cns_fileid *file_uniqueid, const char *s
   if (strlen (sfn) > CA_MAXSFNLEN) {
     serrno = ENAMETOOLONG;
     return (-1);
-  }
-
-  if (file_uniqueid && *file_uniqueid->server) {
-    if (*thip->defserver)
-      strcpy (host, thip->defserver);
-    else
-      strcpy (host, file_uniqueid->server);
   }
 
   /* Build request header */
@@ -107,7 +99,8 @@ Cns_addreplica(const char *guid, struct Cns_fileid *file_uniqueid, const char *s
   msglen = sbp - sendbuf;
   marshall_LONG (q, msglen); /* update length field */
 
-  c = send2nsd (NULL, (file_uniqueid && *file_uniqueid->server) ? host : NULL,
+  c = send2nsd (NULL,
+                (file_uniqueid && *file_uniqueid->server) ? file_uniqueid->server : NULL,
                 sendbuf, msglen, NULL, 0);
   if (c && serrno == SENAMETOOLONG) serrno = ENAMETOOLONG;
   return (c);
