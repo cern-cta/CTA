@@ -85,7 +85,7 @@ void castor::job::stagerjob::RootPlugin::postForkHook
                             MOVERNOTEXEC, 3, params, &args.fileId);
   }
   // Call upper level
-  RawMoverPlugin::postForkHook(args, context);
+  RawMoverPlugin::postForkHook(args, context, false);
 }
 
 //------------------------------------------------------------------------------

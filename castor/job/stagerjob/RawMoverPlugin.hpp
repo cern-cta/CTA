@@ -73,9 +73,12 @@ namespace castor {
          * This should be called at the end of any overwritting method
          * @param args the arguments given to the stager job
          * @param context the current context (localhost, port, etc...)
+	 * @param useChkSum flag to indicate whether checksum information
+	 * should be sent in the prepareForMigration call.
          */
         virtual void postForkHook(InputArguments &args,
-                                  PluginContext &context)
+                                  PluginContext &context,
+				  bool useChksSum)
           throw (castor::exception::Exception);
 
       }; // end of class RawMoverPlugin

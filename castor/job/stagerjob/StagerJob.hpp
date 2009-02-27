@@ -103,7 +103,9 @@ namespace castor {
         CHILDEXITED =    41, /* Child exited */
         CHILDSIGNALED =  42, /* Child exited due to uncaught signal */
         CHILDSTOPPED =   43, /* Child was stopped */
-        NOANSWERSENT =   44, /* Could not send answer to client */
+        NOANSWERSENT =   52, /* Could not send answer to client */
+        GETATTRFAILED =  53, /* Failed to get checksum information from extended attributes */
+	CSTYPENOTSOP =   54, /* Unsupported checksum type, ignoring checksum information */
 
         // Protocol specific. Should not be here if the plugins
         // were properly packaged in separate libs

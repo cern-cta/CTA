@@ -127,7 +127,7 @@ void castor::job::stagerjob::XRootPlugin::postForkHook
   sendResponse(args.client, ioResponse);
 
   // And call upper level for the actual work
-  RawMoverPlugin::postForkHook(args, context);
+  RawMoverPlugin::postForkHook(args, context, true);
 }
 
 //------------------------------------------------------------------------------

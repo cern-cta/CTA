@@ -34,6 +34,8 @@
 #include <arpa/inet.h>
 #include <rfio.h>
 #include <common.h>
+#include <map>
+#include <attr/xattr.h>
 #include "castor/dlf/Dlf.hpp"
 #include "castor/rh/IOResponse.hpp"
 #include "castor/stager/IJobSvc.hpp"
@@ -138,7 +140,7 @@ void castor::job::stagerjob::RawMoverPlugin::preForkHook
 // postForkHook
 //------------------------------------------------------------------------------
 void castor::job::stagerjob::RawMoverPlugin::postForkHook
-(InputArguments &args, PluginContext &context)
+(InputArguments &args, PluginContext &context, bool useChkSum)
   throw(castor::exception::Exception) {
   // Wait for children
   bool childFailed = waitForChild(args);
@@ -157,11 +159,59 @@ void castor::job::stagerjob::RawMoverPlugin::postForkHook
     rfio_errno = serrno = 0;
     struct stat64 statbuf;
     if (rfio_stat64((char*)context.fullDestPath.c_str(), &statbuf) == 0) {
+      // Extract checksum information from extended attributes if instructed
+      // to do so by the mover.
+      char csumvalue[CA_MAXCKSUMLEN + 1];
+      char csumtype[CA_MAXCKSUMNAMELEN + 1];
+      // Initialise checksum values
+      memset(csumvalue, 0, CA_MAXCKSUMLEN + 1);
+      memset(csumtype, 0, CA_MAXCKSUMNAMELEN + 1);
+      // A list of supported checksum types
+      std::map<std::string, std::string> supportedTypes;
+      supportedTypes["ADLER32"] = "AD";
+      supportedTypes["CRC32"]   = "CS";
+      supportedTypes["MD5"]     = "MD";
+      if (useChkSum) {
+	if ((getxattr((char*)context.fullDestPath.c_str(),
+		     "user.castor.checksum.value",
+		      csumvalue, CA_MAXCKSUMLEN) == -1) ||
+	    (getxattr((char*)context.fullDestPath.c_str(),
+		      "user.castor.checksum.type",
+		      csumtype, CA_MAXCKSUMNAMELEN) == -1)) {
+	  // Failed to get checksum information from extended attributes
+	  castor::dlf::Param params[] =
+	    {castor::dlf::Param("Path", context.fullDestPath),
+	     castor::dlf::Param("Error", strerror(errno)),
+	     castor::dlf::Param(args.subRequestUuid)};
+	  castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_WARNING,
+				  GETATTRFAILED, 3, params, &args.fileId);
+	  // Reset checksum information
+	  csumvalue[0] = csumtype[0] = '\0';
+	} else {
+	  std::map<std::string, std::string>::const_iterator it =
+	    supportedTypes.find(csumtype);
+	  if (it == supportedTypes.end()) {
+	    // Unsupported checksum type, ignoring checksum information
+	    castor::dlf::Param params[] =
+	      {castor::dlf::Param("Type", csumtype),
+	       castor::dlf::Param(args.subRequestUuid)};
+	    castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_WARNING,
+				    CSTYPENOTSOP, 2, params, &args.fileId);
+	    // Reset checksum information
+	    csumvalue[0] = csumtype[0] = '\0';
+	  }
+	  // Set csumtype to its abbreviated equivalent.
+	  strcpy(csumtype, it->second.c_str());
+	  csumtype[2] = '\0';
+	}
+      }
+      // Call prepareForMigration
       castor::stager::SubRequest subrequest;
       subrequest.setId(args.subRequestId);
       context.jobSvc->prepareForMigration
         (&subrequest, (u_signed64) statbuf.st_size,
-	 time(NULL), args.fileId.fileid, args.fileId.server);
+	 time(NULL), args.fileId.fileid, args.fileId.server,
+	 csumtype, csumvalue);
     } else {
       castor::dlf::Param params[] =
         {castor::dlf::Param("JobId", getenv("LSB_JOBID")),

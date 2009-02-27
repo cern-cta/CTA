@@ -255,12 +255,12 @@ void bindSocketAndListen
   memset(&sin,'\0',sizeof(sin));
   sin.sin_addr.s_addr = htonl(INADDR_ANY);
   sin.sin_family = AF_INET;
- 
+
   // Set the seed for the new sequence of pseudo-random numbers to be returned
   // by subsequent calls to rand()
   timeval tv;
   gettimeofday(&tv, NULL);
-  srand(tv.tv_usec * tv.tv_sec);  
+  srand(tv.tv_usec * tv.tv_sec);
 
   // Loop over all the ports in the specified range starting at a random offset
   int offset = 0;
@@ -289,7 +289,7 @@ void bindSocketAndListen
     e.getMessage() << "Unable to bind socket with range ["
                    << range.first << "," << range.second << "]";
     throw e;
-  } 
+  }
 
   // Listen for the client connection
   if (listen(context.socket,1) < 0) {
@@ -457,7 +457,7 @@ int main(int argc, char** argv) {
     // Initializing logging
     using namespace castor::job::stagerjob;
     castor::dlf::Message messages[] = {
-      // system call errors
+      // System call errors
       { CREATFAILED,   "Failed to create empty file"},
       { FCLOSEFAILED,  "Failed to close file"},
       { SCLOSEFAILED,  "Failed to close socket"},
@@ -495,6 +495,8 @@ int main(int argc, char** argv) {
       { CHILDSIGNALED, "Child exited due to uncaught signal" },
       { CHILDSTOPPED,  "Child was stopped" },
       { NOANSWERSENT,  "Could not send answer to client" },
+      { GETATTRFAILED, "Failed to get checksum information from extended attributes" },
+      { CSTYPENOTSOP,  "Unsupported checksum type, ignoring checksum information" },
 
       // Protocol specific. Should not be here if the plugins
       // were properly packaged in separate libs
