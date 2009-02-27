@@ -134,6 +134,7 @@
 #define BuildRepack	        NO
 #define BuildAggregatorCpp	NO
 #define BuildTapeFormatCpp	NO
+#define BuildTapeFsmLibrary     NO
 #define BuildTapeGatewayCpp     NO
 
 #define BuildMigHunterDaemon	NO
