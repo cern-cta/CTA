@@ -29,8 +29,5 @@ LD = g++
 TAPEFSMLIB_SRCS = \
   StateMachine.cpp
 
-
-#if BuildTapeFsmLibrary
 TAPEFSMLIB_OBJS = $(TAPEFSMLIB_SRCS:.cpp=.Osuf)
 SharedLibraryTarget(castortapefsm,$(TAPEFSMLIB_OBJS),$(DEPLIB),$(LIBS))
-#endif
