@@ -69,6 +69,7 @@ int main(int argc,char **argv)
   int fseq = 0;
   u_signed64 count = 0;
   u_signed64 size = 0;
+  char *p = NULL;
 
 #if defined(_WIN32)
   WSADATA wsadata;
@@ -90,6 +91,14 @@ int main(int argc,char **argv)
     switch (c) {
     case 'h':
       server = Coptarg;
+      if ((p = getenv (CNS_HOST_ENV)) ||
+	  (p = getconfent (CNS_SCE, "HOST", 0))) {
+	if (strcmp(p, server) != 0) {
+	  fprintf (stderr,
+		   "--host option is not permitted when CNS/HOST is defined\n");
+	  errflg++;
+	}
+      }
       break;
     case 'H':
       humanflag++;

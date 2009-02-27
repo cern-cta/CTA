@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "Cns.h"
 #include "Cns_api.h"
 #include "Cgetopt.h"
 #include "serrno.h"
@@ -67,7 +68,7 @@ int main(argc, argv)
   int hflg = 0;
   struct group *gr;
   int nbtppools;
-  char *p;
+  char *p = NULL;
   struct passwd *pwd;
   char *q;
   char *server = NULL;
@@ -255,6 +256,14 @@ int main(argc, argv)
       break;
     case 'h':
       server = Coptarg;
+      if ((p = getenv (CNS_HOST_ENV)) ||
+	  (p = getconfent (CNS_SCE, "HOST", 0))) {
+	if (strcmp(p, server) != 0) {
+	  fprintf (stderr,
+		   "--host option is not permitted when CNS/HOST is defined\n");
+	  errflg++;
+	}
+      }
       break;
     case '?':
     case ':':

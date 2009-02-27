@@ -71,9 +71,13 @@ int send2nsdx(socketp, host, reqp, reql, user_repbuf, user_repbuf_len, repbuf2, 
   int securityOpt=0;
 
   strcpy (func, "send2nsd");
+  if (Cns_apiinit (&thip))
+    return (-1);
+  if (*thip->defserver)
+    host = thip->defserver;
   if (socketp && *socketp >= 0) { /* connection opened by Cns_list... */
     s = *socketp;
-  } else if (socketp == NULL && Cns_apiinit (&thip) == 0 && thip->fd >= 0) {
+  } else if (socketp == NULL && thip->fd >= 0) {
     s = thip->fd;  /* connection opened by Cns_starttrans */
   } else {   /* connection not yet opened */
     sin.sin_family = AF_INET;

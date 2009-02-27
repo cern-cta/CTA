@@ -10,8 +10,8 @@
 #if defined(_WIN32)
 #include <winsock2.h>
 #endif
-#include "Cns_api.h"
 #include "Cns.h"
+#include "Cns_api.h"
 #include "Cgetopt.h"
 #include "serrno.h"
 
@@ -41,6 +41,8 @@ int main(argc, argv)
   char info[256];
   static char retryenv[16];
   char *server = NULL;
+  char *p = NULL;
+
 #if defined(_WIN32)
   WSADATA wsadata;
 #endif
@@ -57,6 +59,14 @@ int main(argc, argv)
     switch (c) {
     case 'h':
       server = Coptarg;
+      if ((p = getenv (CNS_HOST_ENV)) ||
+	  (p = getconfent (CNS_SCE, "HOST", 0))) {
+	if (strcmp(p, server) != 0) {
+	  fprintf (stderr,
+		   "--host option is not permitted when CNS/HOST is defined\n");
+	  errflg++;
+	}
+      }
       break;
     case '?':
     case ':':

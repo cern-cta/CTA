@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <string.h>
 #include "u64subr.h"
+#include "Cns.h"
 #include "Cns_api.h"
 #include "Cgetopt.h"
 #include "serrno.h"
@@ -34,6 +35,7 @@ int main(int argc, char**argv) {
   char *server = NULL;
   char filepath[CA_MAXPATHLEN + 1];
   char tmpbuf[21];
+  char *p = NULL;
 
   Coptind = 1;
   if (argc >= 3) {
@@ -71,7 +73,14 @@ int main(int argc, char**argv) {
   if (errflg || (server == NULL) || (fileid == 0)) {
     usage (USERR, argv[0]);
   }
-
+  if ((p = getenv (CNS_HOST_ENV)) ||
+      (p = getconfent (CNS_SCE, "HOST", 0))) {
+    if (strcmp(p, server) != 0) {
+      fprintf (stderr,
+	       "CNSHOST option is not permitted when CNS/HOST is defined\n");
+      exit (USERR);
+    }
+  }
   if (Cns_getpath(server, fileid, filepath) != 0) {
     fprintf(stderr, "server %s fileid %s: %s\n",
             server, u64tostr (fileid, tmpbuf, 0), sstrerror(serrno));
