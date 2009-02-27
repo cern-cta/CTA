@@ -1,3 +1,4 @@
-%attr(0755,root,bin) etc/init.d/stager
-%attr(0644,root,bin) etc/sysconfig/stager.example
-%attr(0750,root,bin) usr/bin/stagerDaemon
+%attr(0755,root,root) etc/init.d/stager
+%attr(0644,root,root) etc/sysconfig/stager.example
+%attr(0644,root,root) etc/logrotate.d/castor-stager-server
+%attr(0750,root,root) usr/bin/stagerDaemon

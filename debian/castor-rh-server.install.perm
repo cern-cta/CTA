@@ -1,3 +1,4 @@
-%attr(0755,root,bin) etc/init.d/rhserver
-%attr(0644,root,bin) etc/sysconfig/rhserver.example
-%attr(0750,root,bin) usr/bin/rhserver
+%attr(0755,root,root) etc/init.d/rhserver
+%attr(0644,root,root) etc/sysconfig/rhserver.example
+%attr(0644,root,root) etc/logrotate.d/castor-rh-server
+%attr(0750,root,root) usr/bin/rhserver

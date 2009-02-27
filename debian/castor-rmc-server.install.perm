@@ -1,3 +1,4 @@
-%attr(0755,root,bin) etc/init.d/rmcdaemon
-%attr(0644,root,bin) etc/sysconfig/rmcdaemon.example
+%attr(0755,root,root) etc/init.d/rmcdaemon
+%attr(0644,root,root) etc/sysconfig/rmcdaemon.example
+%attr(0644,root,root) etc/logrotate.d/castor-rmc-server
 %attr(0750,root,root) usr/bin/rmcdaemon
