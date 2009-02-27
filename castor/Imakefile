@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.207 $ $Release$ $Date: 2009/02/24 17:34:12 $ $Author: riojac3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.208 $ $Release$ $Date: 2009/02/27 13:15:19 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -36,13 +36,10 @@ STAGERSUPERGROUP0 = st
 STAGERSUPERUSER  = -DSTAGERSUPERUSER=\"$(STAGERSUPERUSER0)\"
 STAGERSUPERGROUP = -DSTAGERSUPERGROUP=\"$(STAGERSUPERGROUP0)\"
 
-SUBDIRS = $(DBCPPDIR) $(RHCPPDIR) $(VDQMCPPDIR) $(GCCPPDIR) $(REPACKDIR) $(MONITORINGDIR) $(STAGERDIR) $(JOBMANAGERDIR) $(JOBDIR) $(INFOPOLICYDIR) $(RTCOPYDIR) $(SCHEDULERDIR) $(TAPECPPDIR)
+SUBDIRS = db rh vdqm gc repack monitoring stager jobmanager job infoPolicy scheduler tape rtcopy
 DEBUG  = -g -O0 -pedantic -Wall -Wno-long-long
 STAGEFLAGS = -DSTAGEMAP=\"StageMapFile\"
-#if BuildSecurity
-SECURITYFLAG=-DCSEC
-#endif
-CFLAGS = $(DEBUG) -I ../h -I .. $(SECURITYFLAG) $(MTCCFLAGS) $(STAGEFLAGS)
+CFLAGS = $(DEBUG) -I ../h -I .. $(MTCCFLAGS) $(STAGEFLAGS)
 CPPFLAGS = $(DEBUG) -I ../h -I .. $(MTCCFLAGS) $(STAGERSUPERUSER) $(STAGERSUPERGROUP)
 
 STGLIB_SRCS = IAddressCInt.cpp \
@@ -388,7 +385,10 @@ STGLIB_SRCS = IAddressCInt.cpp \
               sharedMemory/BlockDict.cpp \
               sharedMemory/DLFInit.cpp \
               server/BaseDaemon.cpp \
-              server/BaseServer.cpp
+              server/BaseServer.cpp \
+              DlfMsgSvc.cpp \
+              dlfbuf.cpp
+
 
 STAGERLIB_OBJS = \
 		../client/src/stager/stager_client_api_common.Osuf \
@@ -408,11 +408,6 @@ STAGERLIB_OBJS = \
 		../client/src/stager/stager_errmsg.Osuf \
 		../client/src/stager/stager_mapper.Osuf
 
-#if BuildDlfLibrary
-STGLIB_SRCS += DlfMsgSvc.cpp \
-               dlfbuf.cpp
-#endif
-
 LDFLAGS += $(DEBUG) $(MTLDFLAGS)
 LD = g++
 
@@ -420,8 +415,8 @@ DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(ns,castorns)
 DependsOnLibrary(dlf,castordlf)
 
-#if BuildCastorClientCPPLibrary
 STGLIB_OBJS = $(STGLIB_SRCS:.cpp=.Osuf)
-SharedLibraryTarget(castorclient,$(STGLIB_OBJS) $(STAGERLIB_OBJS),$(DEPLIB),$(LIBS))
-#endif
+ClientSharedLibraryTarget(castorclient,$(STGLIB_OBJS) $(STAGERLIB_OBJS),$(DEPLIB),$(LIBS))
 
+internalSYSCONFIG(castor.example,../debian/castor.sysconfig,install)
+EXAMPLEFILE(castor.conf,../debian,/etc/castor,install)

@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.7 $ $Release$ $Date: 2008/11/26 14:51:59 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.8 $ $Release$ $Date: 2009/02/27 13:00:50 $ $Author: sponcec3 $
 #
 # Make Castor DB example
 #
@@ -26,13 +26,11 @@
 
 CPPFLAGS = -g -O0 -I../../../h -I../../.. $(MTCCFLAGS)
 LIBS = $(MTCCFLAGS)
-#if BuildSecurity
 LIBS += -ldl
-#endif
 LD = g++
 
 DependsOnLibrary(castor,castorclient)
 
-NormalProgramTarget(testio,testio.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
-NormalProgramTarget(testSocket,testSocket.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
-NormalProgramTarget(testAuthSocket,testAuthSocket.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
+NormalProgramTarget(testio,testio.Osuf,$(DEPLIB),$(LIBS),755)
+NormalProgramTarget(testSocket,testSocket.Osuf,$(DEPLIB),$(LIBS),755)
+NormalProgramTarget(testAuthSocket,testAuthSocket.Osuf,$(DEPLIB),$(LIBS),755)

@@ -17,29 +17,24 @@ COMM  USA.                                                                      
 COMM                                                                                                      #
 COMM -----------------------------------------------------------------------------------------------------#
 
-MakeDir($(DLFWEB)/db,root,bin,755)
-MakeDir($(DLFWEB)/js,root,bin,755)
-MakeDir($(DLFWEB)/images,root,bin,755)
-MakeDir($(DLFCONF),root,bin,755)
-
-InstallNonExecFile(login.conf.example,$(DLFCONF),root,apache,640)
-InstallNonExecFile(config.php,$(DLFWEB),root,root,644)
-InstallNonExecFile(dbview.php,$(DLFWEB),root,root,644)
-InstallNonExecFile(index.php,$(DLFWEB),root,root,644)
-InstallNonExecFile(query.php,$(DLFWEB),root,root,644)
-InstallNonExecFile(results.php,$(DLFWEB),root,root,644)
-InstallNonExecFile(site.css,$(DLFWEB),root,root,644)
-InstallNonExecFile(utils.php,$(DLFWEB),root,root,644)
+InstallNonExecFile(login.conf.example,$(DLFCONF),640)
+InstallNonExecFile(config.php,$(DLFWEB),644)
+InstallNonExecFile(dbview.php,$(DLFWEB),644)
+InstallNonExecFile(index.php,$(DLFWEB),644)
+InstallNonExecFile(query.php,$(DLFWEB),644)
+InstallNonExecFile(results.php,$(DLFWEB),644)
+InstallNonExecFile(site.css,$(DLFWEB),644)
+InstallNonExecFile(utils.php,$(DLFWEB),644)
 
 INSUBDIR=db/
-InstallNonExecFile(oracle.php,$(DLFWEB)/db,root,root,644)
+InstallNonExecFile(oracle.php,$(DLFWEB)/db,644)
 
 INSUBDIR=js/
-InstallNonExecFile(CalendarPopup.js,$(DLFWEB)/js,root,root,644)
-InstallNonExecFile(Date.js,$(DLFWEB)/js,root,root,644)
+InstallNonExecFile(CalendarPopup.js,$(DLFWEB)/js,644)
+InstallNonExecFile(Date.js,$(DLFWEB)/js,644)
 
 INSUBDIR=images/
-InstallNonExecFile(backdrop.png,$(DLFWEB)/images,root,root,644)
-InstallNonExecFile(css.png,$(DLFWEB)/images,root,root,644)
-InstallNonExecFile(php.png,$(DLFWEB)/images,root,root,644)
-InstallNonExecFile(xhtml.png,$(DLFWEB)/images,root,root,644)
+InstallNonExecFile(backdrop.png,$(DLFWEB)/images,644)
+InstallNonExecFile(css.png,$(DLFWEB)/images,644)
+InstallNonExecFile(php.png,$(DLFWEB)/images,644)
+InstallNonExecFile(xhtml.png,$(DLFWEB)/images,644)

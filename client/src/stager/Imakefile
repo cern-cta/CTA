@@ -5,28 +5,25 @@ COMM  Make stager clients.
 
 STAGEFLAGS = -DSTAGEMAP=\"StageMapFile\"
 LDFLAGS += $(MTLDFLAGS)
-#if BuildSecurity
-SECURITYFLAG=-DCSEC
-#endif
-CFLAGS = -g -I../../../h -I../../.. $(SECURITYFLAG) $(MTCCFLAGS) $(STAGEFLAGS)
+CFLAGS = -g -I../../../h -I../../.. $(MTCCFLAGS) $(STAGEFLAGS)
 CPPFLAGS=$(CFLAGS)
 
 DependsOnLibrary(../../common,castorcommon)
 DependsOnLibrary(../../ns,castorns)
 DependsOnLibrary(../../castor,castorclient)
 
-NormalProgramTarget(stager_get,stager_get.Osuf,$(DEPLIB),$(LIBS),root,bin,0755)
-NormalProgramTarget(stager_update,stager_update.Osuf,$(DEPLIB),$(LIBS),root,bin,0755)
-NormalProgramTarget(stager_put,stager_put.Osuf,$(DEPLIB),$(LIBS),root,bin,0755)
-NormalProgramTarget(stager_putdone,stager_putdone.Osuf,$(DEPLIB),$(LIBS),root,bin,0755)
-NormalProgramTarget(stager_qry,stager_qry.Osuf,$(DEPLIB),$(LIBS),root,bin,0755)
-NormalProgramTarget(stager_rm,stager_rm.Osuf,$(DEPLIB),$(LIBS),root,bin,0755)
-NormalProgramTarget(stager_setfilegcweight,stager_setFileGCWeight.Osuf,$(DEPLIB),$(LIBS),root,bin,0755)
-NormalProgramTarget(castor,castor.Osuf,$(DEPLIB),$(LIBS),root,bin,0755)
-NormalProgramTarget(newacct,newacct.Osuf,$(DEPLIB),$(LIBS),root,bin,4755)
-NormalProgramTarget(stager_addprivilege,stager_addPrivilege.Osuf,$(DEPLIB),$(LIBS),root,bin,0755)
-NormalProgramTarget(stager_removeprivilege,stager_removePrivilege.Osuf,$(DEPLIB),$(LIBS),root,bin,0755)
-NormalProgramTarget(stager_listprivileges,stager_listPrivileges.Osuf,$(DEPLIB),$(LIBS),root,bin,0755)
+ClientProgramTarget(stager_get,stager_get.Osuf,$(DEPLIB),$(LIBS),0755)
+ClientProgramTarget(stager_update,stager_update.Osuf,$(DEPLIB),$(LIBS),0755)
+ClientProgramTarget(stager_put,stager_put.Osuf,$(DEPLIB),$(LIBS),0755)
+ClientProgramTarget(stager_putdone,stager_putdone.Osuf,$(DEPLIB),$(LIBS),0755)
+ClientProgramTarget(stager_qry,stager_qry.Osuf,$(DEPLIB),$(LIBS),0755)
+ClientProgramTarget(stager_rm,stager_rm.Osuf,$(DEPLIB),$(LIBS),0755)
+ClientProgramTarget(stager_setfilegcweight,stager_setFileGCWeight.Osuf,$(DEPLIB),$(LIBS),0755)
+ClientProgramTarget(castor,castor.Osuf,$(DEPLIB),$(LIBS),0755)
+ClientProgramTarget(newacct,newacct.Osuf,$(DEPLIB),$(LIBS),4755)
+ClientProgramTarget(stager_addprivilege,stager_addPrivilege.Osuf,$(DEPLIB),$(LIBS),0755)
+ClientProgramTarget(stager_removeprivilege,stager_removePrivilege.Osuf,$(DEPLIB),$(LIBS),0755)
+ClientProgramTarget(stager_listprivileges,stager_listPrivileges.Osuf,$(DEPLIB),$(LIBS),0755)
 
 EXEMANPAGE(stager_get)
 EXEMANPAGE(stager_update)

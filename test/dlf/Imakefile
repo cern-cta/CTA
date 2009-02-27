@@ -23,4 +23,4 @@ LDFLAGS = $(MTLDFLAGS)
 DependsOnLibrary(../common,castorcommon)
 DependsOnLibrary(../dlf,castordlf)
 
-NormalProgramTarget(dlftest,dlftest.Osuf,$(DEPLIBS),$(LIBS) $(MTLDLIBS),root,bin,755)
+NormalProgramTarget(dlftest,dlftest.Osuf,$(DEPLIBS),$(LIBS) $(MTLDLIBS),755)

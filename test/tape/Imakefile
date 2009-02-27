@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.10 $ $Date: 2008/11/26 14:52:00 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.11 $ $Date: 2009/02/27 13:00:52 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -14,5 +14,5 @@ DependsOnLibrary(../dlf, castordlf)
 DependsOnLibrary(../vmgr, castorvmgr)
 DependsOnLibrary(../tape, castortape)
 
-NormalProgramTarget(tplogger_test,tplogger_test.Osuf,$(GLOBLIB),$(LIBS),root,bin,755)
-NormalProgramTarget(Ctape_test1,Ctape_test1.Osuf,$(GLOBLIB),$(LIBS),root,bin,755)
+NormalProgramTarget(tplogger_test,tplogger_test.Osuf,$(GLOBLIB),$(LIBS),755)
+NormalProgramTarget(Ctape_test1,Ctape_test1.Osuf,$(GLOBLIB),$(LIBS),755)

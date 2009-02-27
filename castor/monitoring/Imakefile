@@ -25,8 +25,7 @@
 
 SUBDIRS = rmmaster rmnode admin
 
-INCLUDES = -I ../../h -I ../..
-CPPFLAGS = -g -O0 $(INCLUDES) $(MTCCFLAGS)
+CPPFLAGS = -g -O0 -I ../../h -I ../.. $(MTCCFLAGS)
 LDFLAGS += -g -O0 $(MTLDFLAGS)
 LD = g++
 
@@ -57,11 +56,9 @@ STGLIB_SRCS = ClusterStatus.cpp \
 STGLIB_OBJS = $(STGLIB_SRCS:.cpp=.Osuf)
 SharedLibraryTarget(castormonitor,$(STGLIB_OBJS),$(DEPLIB),$(LIBS))
 
-RMGETNODESDEPLIB = DepSharedLibraryTargetName(monitoring,castormonitor)
-RMGETNODESLIBS = -L. -lcastormonitor
-NormalProgramTarget(rmGetNodes,RmGetNodes.Osuf,$(RMGETNODESDEPLIB) $(DEPLIB),$(RMGETNODESLIBS) $(LIBS),root,bin,750)
+RMGETNODESLIBS = SharedLibraryTargetName(castormonitor)
+NormalProgramTarget(rmGetNodes,RmGetNodes.Osuf,$(RMGETNODESLIBS) $(DEPLIB),$(RMGETNODESLIBS) $(LIBS),750)
 
 
-DUMPSHAREDMEMORYDEPLIB = DepSharedLibraryTargetName(monitoring,castormonitor)
-DUMPSHAREDMEMORYLIBS = -L. -lcastormonitor
-NormalProgramTarget(dumpSharedMemory,DumpSharedMemory.Osuf,$(DUMPSHAREDMEMORYDEPLIB) $(DEPLIB),$(DUMPSHAREDMEMORYLIBS) $(LIBS),root,bin,750)
+DUMPSHAREDMEMORYLIBS = SharedLibraryTargetName(castormonitor)
+NormalProgramTarget(dumpSharedMemory,DumpSharedMemory.Osuf,$(DUMPSHAREDMEMORYLIBS) $(DEPLIB),$(DUMPSHAREDMEMORYLIBS) $(LIBS),750)

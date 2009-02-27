@@ -32,22 +32,9 @@ CFLAGS    = -pedantic -Wno-long-long -g -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS) $(O
 
 DependsOnLibrary(common,castorcommon)
 
-#if BuildDlfDaemon
-DLFSRV_OBJS = queue.Osuf hash.Osuf process.Osuf common.Osuf server.Osuf oracle.Osuf
-oracle.c: oracle.pc
-	proc iname=oracle include=$(INCLUDES) threads=yes char_map=string parse=full
-FilesToClean += oracle.c oracle.lis
-MakeDir($(SPOOL),root,bin,0755)
-ORALIBS= -L$(ORACLE_HOME)/lib -lclntsh
-NormalProgramTarget(dlfserver,$(DLFSRV_OBJS), $(DEPLIB), $(ORALIBS) $(MTLDFLAGS) $(LIBS),root,bin,750)
-#endif
-
-#if BuildDlfLibrary
 DLFLIB_OBJS = queue.Osuf hash.Osuf common.Osuf dlf_lib.Osuf
-SharedLibraryTarget(castordlf,$(DLFLIB_OBJS),$(DEPLIB),-L../common -lcastorcommon)
-#endif
+SharedLibraryTarget(castordlf,$(DLFLIB_OBJS),$(DEPLIB),)
 
-ADMMANPAGE(dlfserver)
 LIBMANPAGE(dlf_child)
 LIBMANPAGE(dlf_create_threads)
 LIBMANPAGE(dlf_init)
@@ -58,3 +45,18 @@ LIBMANPAGE(dlf_regtext)
 LIBMANPAGE(dlf_write)
 LIBMANPAGE(dlf_shutdown)
 
+oracle.c: oracle.pc
+	proc iname=oracle include=$(INCLUDES) threads=yes char_map=string parse=full
+FilesToClean += oracle.c oracle.lis
+ORALIBS= -L$(ORACLE_HOME)/lib -lclntsh
+
+MakeDir($(SPOOL),0755)
+
+DLFSRV_OBJS = queue.Osuf hash.Osuf process.Osuf common.Osuf server.Osuf oracle.Osuf
+NormalProgramTarget(dlfserver,$(DLFSRV_OBJS), $(DEPLIB), $(ORALIBS) $(MTLDFLAGS) $(LIBS),750)
+
+ADMMANPAGE(dlfserver)
+LOGROTATE(castor-dlf-server,..,install)
+SYSCONFIG(dlfserver,install)
+INITSCRIPT(dlfserver,install)
+CONFIGFILE(DLF,..,install)

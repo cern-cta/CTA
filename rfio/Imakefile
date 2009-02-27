@@ -12,14 +12,10 @@ COMM should be issued.
 COMM
 
 NOMORERFIO = OperatorDir/nomorerfio
-SPOOL = RfioSpool
+SPOOL = /var/spool/rfio
 LOGFILE = $(SPOOL)/rfiod.log
-
-#if BuildNameServerLibrary
 CNS_ROOT_DIR = NsRoot
 CNS_ROOT = -DCNS_ROOT=\"$(CNS_ROOT_DIR)\"
-#endif
-
 RFIO_ALRM= RfioSpool/RfioAlarmFile
 
 #ifdef StagerSuperUser
@@ -38,19 +34,13 @@ CTHREAD_FLAGS = $(MTCCFLAGS)
 NFSROOT0 = NfsRoot
 NFSROOT  = -DNFSROOT=\"$(NFSROOT0)\"
 
-#if BuildSecureRfio
-CSEC = -DCSEC
-#endif
-
-CFLAGS = -g -I../h -I.. $(CTHREAD_FLAGS) $(CCOPTFLAGS) $(DEFCFLAGS) $(RFIOFLAGS) $(ACCTFLAG) -DFORTRAN $(SUPPORT_CS2) $(CPPUFL) $(NFSROOT) $(CSEC)
+CFLAGS = -g -I../h -I.. $(CTHREAD_FLAGS) $(CCOPTFLAGS) $(DEFCFLAGS) $(RFIOFLAGS) $(ACCTFLAG) -DFORTRAN $(SUPPORT_CS2) $(CPPUFL) $(NFSROOT)
 
 FIOO=fio.Osuf
 FFLAGS = $(FFOPTFLAGS) $(FPPUFL)
 LIBS = $(MTLDLIBS)
-RFIOLIB = -L. -lcastorrfio
+RFIOLIB = SharedLibraryTargetName(castorrfio)
 
-#if BuildSecurity
-SECURITYFLAG = -DCSEC
 #if UseGSI
 GLOBUS_LOCATION=GlobusLocation
 #if defined(__STDC__)
@@ -63,7 +53,6 @@ LIB_CRYPTO=$(shell if [ -r "$(GLOBUS_LOCATION)/lib/libcrypto_$(GLOBUS_FLAVOUR)" 
 LIBCSEC += $(GLOBUS_LIBS) $(LIB_CRYPTO)
 #endif
 LIBS += -ldl
-#endif
 
 #if UseXFSPrealloc
 CFLAGS += -DUSE_XFSPREALLOC
@@ -78,7 +67,6 @@ DependsOnLibrary(dlf,castordlf)
 DependsOnLibrary(security,castorsecurity)
 DependsOnLibrary(castor,castorclient)
 
-#if BuildRfioLibrary
 RFIOLIB_OBJS = access.Osuf alrm.Osuf chdir.Osuf checkkey.Osuf chmod.Osuf \
 		chown.Osuf close.Osuf closedir.Osuf connect.Osuf error.Osuf \
 		fchmod.Osuf fchown.Osuf fclose.Osuf feof.Osuf ferror.Osuf \
@@ -97,42 +85,23 @@ RFIOLIB_OBJS = access.Osuf alrm.Osuf chdir.Osuf checkkey.Osuf chmod.Osuf \
 		lockf64.Osuf lseek64.Osuf open64.Osuf \
 		preseek64.Osuf read64.Osuf stream64.Osuf write64.Osuf RfioTURL.Osuf
 SharedLibraryTarget(castorrfio,$(RFIOLIB_OBJS),$(DEPLIB),$(LIBS))
-#endif
 
-#if BuildRfioClient
-RFIOTARGETLIB = SharedLibraryTargetName(castorrfio)
-NormalProgramTarget(rfcat,rfcat.Osuf, $(RFIOTARGETLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(rfchmod,rfchmod.Osuf, $(RFIOTARGETLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(rfcp,rfcp.Osuf, $(RFIOTARGETLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(rfstat,rfstat.Osuf, $(RFIOTARGETLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(rfrm,rfrm.Osuf, $(RFIOTARGETLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(rfdir,rfdir.Osuf, $(RFIOTARGETLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(rfmkdir,rfmkdir.Osuf, $(RFIOTARGETLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(rfrename,rfrename.Osuf, $(RFIOTARGETLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),root,bin,755)
-#endif
+ClientProgramTarget(rfcat,rfcat.Osuf, $(RFIOLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),755)
+ClientProgramTarget(rfchmod,rfchmod.Osuf, $(RFIOLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),755)
+ClientProgramTarget(rfcp,rfcp.Osuf, $(RFIOLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),755)
+ClientProgramTarget(rfstat,rfstat.Osuf, $(RFIOLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),755)
+ClientProgramTarget(rfrm,rfrm.Osuf, $(RFIOLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),755)
+ClientProgramTarget(rfdir,rfdir.Osuf, $(RFIOLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),755)
+ClientProgramTarget(rfmkdir,rfmkdir.Osuf, $(RFIOLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),755)
+ClientProgramTarget(rfrename,rfrename.Osuf, $(RFIOLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),755)
 
-#if BuildRfioServer
-MakeDir($(SPOOL),root,bin,0755)
-SRVOBJS = Csemaphore.Osuf rfio_serv.Osuf rfio_calls.Osuf \
-		rfio_call64.Osuf rfio_fcalls.Osuf rfio_callhandlers.Osuf switch_req.Osuf \
-		checkkey.Osuf $(FIOO) rfstatfs.Osuf alrm.Osuf \
-		rfioacct.Osuf RemoteJobSvc.Osuf stager_catalogInterface.Osuf \
-		stager_util.Osuf stager_messages.Osuf stager_extern_globals.Osuf \
-		stager_uuid.Osuf
-#if UseXFSPrealloc
-SRVOBJS += rfio_alignedbuf.Osuf rfio_xfsprealloc.Osuf
-#endif
-NormalProgramTarget(rfiod,$(SRVOBJS),$(RFIOTARGETLIB) $(DEPLIB), $(MTLDFLAGS) $(RTFLAGS) $(RTLIBS) $(LIBCSEC) $(RFIOLIB) $(LIBS) $(XFSLIBS) $(CKSUMLIB),root,bin,755)
-#endif
-
-EXEMANPAGE(rfiod)
 EXEMANPAGE(rfcat)
 EXEMANPAGE(rfchmod)
 EXEMANPAGE(rfcp)
+EXEMANPAGE(rfrm)
 EXEMANPAGE(rfdir)
 EXEMANPAGE(rfmkdir)
 EXEMANPAGE(rfrename)
-EXEMANPAGE(rfrm)
 LIBMANPAGE(rfio_access)
 LIBMANPAGE(rfio_chmod)
 LIBMANPAGE(rfio_chown)
@@ -188,3 +157,22 @@ LIBMANPAGE(rfio_unlink)
 LIBMANPAGE(rfio_write)
 LIBMANPAGE(rfioreadopt)
 LIBMANPAGE(rfiosetopt)
+
+MakeDir($(SPOOL),0755)
+SRVOBJS = Csemaphore.Osuf rfio_serv.Osuf rfio_calls.Osuf \
+		rfio_call64.Osuf rfio_fcalls.Osuf rfio_callhandlers.Osuf switch_req.Osuf \
+		checkkey.Osuf $(FIOO) rfstatfs.Osuf alrm.Osuf \
+		rfioacct.Osuf RemoteJobSvc.Osuf stager_catalogInterface.Osuf \
+		stager_util.Osuf stager_messages.Osuf stager_extern_globals.Osuf \
+		stager_uuid.Osuf
+#if UseXFSPrealloc
+SRVOBJS += rfio_alignedbuf.Osuf rfio_xfsprealloc.Osuf
+#endif
+
+NormalProgramTarget(rfiod,$(SRVOBJS),$(RFIOLIB) $(DEPLIB), $(MTLDFLAGS) $(RTFLAGS) $(RTLIBS) $(LIBCSEC) $(RFIOLIB) $(LIBS) $(XFSLIBS) $(CKSUMLIB),755)
+LOGROTATE(castor-rfio-server,..,install)
+SYSCONFIG(rfiod,install)
+INITSCRIPT(rfiod,install)
+
+EXEMANPAGE(rfiod)
+

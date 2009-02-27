@@ -13,16 +13,14 @@ SCNSHOSTPFX = SNsHostPfx
 
 INCLUDES = ../h
 LIBS = -luuid
-NSLIB = -L. -lcastorns
-SPOOL = NsSpool
+NSLIB = SharedLibraryTargetName(castorns)
+SPOOL = /var/spool/ns
 LOGFILE = $(SPOOL)/log
 LCGDM_MAPFILE = IdMapFile
 NSCONFIG = NsConfigFile
 ORAFLG = -DUSE_ORACLE
 ORAINC = -I$(ORACLE_HOME)/precomp/public
 
-#if BuildSecurity
-SECURITYFLAG = -DCSEC
 #if UseGSI
 GLOBUS_LOCATION=GlobusLocation
 #if defined(__STDC__)
@@ -35,7 +33,6 @@ LIB_CRYPTO=$(shell if [ -r "$(GLOBUS_LOCATION)/lib/libcrypto_$(GLOBUS_FLAVOUR)" 
 LIBCSEC += $(GLOBUS_LIBS) $(LIB_CRYPTO)
 #endif
 LIBCSEC += -ldl
-#endif
 
 DFLAGS = -DBIN=\"$(BIN)\" -DCNS_HOST=\"$(CNS_HOST)\" \
          -DSCNS_HOST=\"$(SCNS_HOST)\" \
@@ -46,7 +43,7 @@ DFLAGS = -DBIN=\"$(BIN)\" -DCNS_HOST=\"$(CNS_HOST)\" \
          -DNSCONFIG=\"$(NSCONFIG)\" \
          $(RDSFLG) $(ORAFLG)
 
-CFLAGS = -g -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS) $(RDSINC) $(ORAINC) $(SECURITYFLAG)
+CFLAGS = -g -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS) $(RDSINC) $(ORAINC) -DCSEC
 
 NSDAEMON_OBJS	=	Cns_main.Osuf \
 			Cns_acl.Osuf \
@@ -131,52 +128,34 @@ NSLIB_OBJS	=	Cns_aborttrans.Osuf \
                         Cns_utime.Osuf \
                         send2nsd.Osuf
 
-DependsOnLibrary(common,castorcommon)
-DependsOnLibrary(dlf,castordlf)
-DependsOnLibrary(upv,castorupv)
-DependsOnLibrary(security,castorsecurity)
+ClientDependsOnLibrary(common,castorcommon)
+ClientDependsOnLibrary(security,castorsecurity)
+SharedLibraryTarget(castorns,$(NSLIB_OBJS),$(CLIENTDEPLIB),$(CLIENTLIBS))
 
-#if BuildNameServerLibrary
-SharedLibraryTarget(castorns,$(NSLIB_OBJS),$(DEPLIB),$(LIBS))
-#endif
-
-#if BuildNameServerDaemon
-Cns_oracle_ifce.c: Cns_oracle_ifce.pc
-	proc iname=Cns_oracle_ifce include=$(INCLUDES) threads=yes char_map=string parse=full
-FilesToClean += Cns_oracle_ifce.c Cns_oracle_ifce.lis
-MakeDir($(SPOOL),root,bin,0755)
-ORALIBS= -L$(ORACLE_HOME)/lib -lclntsh
-NormalProgramTarget(nsdaemon,$(NSDAEMON_OBJS), $(DEPLIB), $(ORALIBS) $(MTLDFLAGS) $(LIBS) $(LIBCSEC),root,bin,750)
-ADMMANPAGE(nsdaemon)
-#endif
-
-#if BuildNameServerClient
-NSDEP = SharedLibraryTargetName(castorns)
-NormalProgramTarget(nschclass,nschclass.Osuf,$(NSDEP) $(DEPLIB),$(NSLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(nschmod,nschmod.Osuf,$(NSDEP) $(DEPLIB),$(NSLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(nschown,nschown.Osuf,$(NSDEP) $(DEPLIB),$(NSLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(nsdelcomment,nsdelcomment.Osuf,$(NSDEP) $(DEPLIB),$(NSLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(nsdeleteclass,nsdeleteclass.Osuf,$(NSDEP) $(DEPLIB),$(NSLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(nsenterclass,nsenterclass.Osuf,$(NSDEP) $(DEPLIB),$(NSLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(nsfind,nsfind.Osuf,$(NSDEP) $(DEPLIB),$(NSLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(nsgetacl,nsgetacl.Osuf,$(NSDEP) $(DEPLIB),$(NSLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(nsgetpath,nsgetpath.Osuf,$(NSDEP) $(DEPLIB),$(NSLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(nslistclass,nslistclass.Osuf,$(NSDEP) $(DEPLIB),$(NSLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(nslisttape,nslisttape.Osuf,$(NSDEP) $(DEPLIB), $(NSLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(nsln,nsln.Osuf,$(NSDEP) $(DEPLIB),$(NSLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(nsls,nsls.Osuf,$(NSDEP) $(DEPLIB),$(NSLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(nsmkdir,nsmkdir.Osuf,$(NSDEP) $(DEPLIB),$(NSLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(nsmodifyclass,nsmodifyclass.Osuf,$(NSDEP) $(DEPLIB),$(NSLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(nsping,nsping.Osuf,$(NSDEP) $(DEPLIB),$(NSLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(nsrename,nsrename.Osuf,$(NSDEP) $(DEPLIB),$(NSLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(nsrm,nsrm.Osuf,$(NSDEP) $(DEPLIB),$(NSLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(nsrmdir,nsrmdir.Osuf,$(NSDEP) $(DEPLIB),$(NSLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(nssetchecksum,nssetchecksum.Osuf,$(NSDEP) $(DEPLIB), $(NSLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(nssetacl,nssetacl.Osuf,$(NSDEP) $(DEPLIB),$(NSLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(nssetcomment,nssetcomment.Osuf,$(NSDEP) $(DEPLIB),$(NSLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(nssetsegment,nssetsegment.Osuf,$(NSDEP) $(DEPLIB),$(NSLIB) $(LIBS),root,bin,755)
-NormalProgramTarget(nstouch,nstouch.Osuf,$(NSDEP) $(DEPLIB),$(NSLIB) $(LIBS),root,bin,755)
-#endif
+ClientProgramTarget(nschclass,nschclass.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
+ClientProgramTarget(nschmod,nschmod.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
+ClientProgramTarget(nschown,nschown.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
+ClientProgramTarget(nsdelcomment,nsdelcomment.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
+ClientProgramTarget(nsdeleteclass,nsdeleteclass.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
+ClientProgramTarget(nsenterclass,nsenterclass.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
+ClientProgramTarget(nsfind,nsfind.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
+ClientProgramTarget(nsgetacl,nsgetacl.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
+ClientProgramTarget(nsgetpath,nsgetpath.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
+ClientProgramTarget(nslistclass,nslistclass.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
+ClientProgramTarget(nslisttape,nslisttape.Osuf,$(NSLIB) $(CLIENTDEPLIB), $(NSLIB) $(CLIENTLIBS),755)
+ClientProgramTarget(nsln,nsln.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
+ClientProgramTarget(nsls,nsls.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
+ClientProgramTarget(nsmkdir,nsmkdir.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
+ClientProgramTarget(nsmodifyclass,nsmodifyclass.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
+ClientProgramTarget(nsping,nsping.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
+ClientProgramTarget(nsrename,nsrename.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
+ClientProgramTarget(nsrm,nsrm.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
+ClientProgramTarget(nsrmdir,nsrmdir.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
+ClientProgramTarget(nssetchecksum,nssetchecksum.Osuf,$(NSLIB) $(CLIENTDEPLIB), $(NSLIB) $(CLIENTLIBS),755)
+ClientProgramTarget(nssetacl,nssetacl.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
+ClientProgramTarget(nssetcomment,nssetcomment.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
+ClientProgramTarget(nssetsegment,nssetsegment.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
+ClientProgramTarget(nstouch,nstouch.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
 
 LIBMANPAGE(Cns_aborttrans)
 LIBMANPAGE(Cns_access)
@@ -266,3 +245,21 @@ EXEMANPAGE(nssetacl)
 EXEMANPAGE(nssetcomment)
 EXEMANPAGE(nssetsegment)
 EXEMANPAGE(nstouch)
+
+DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(upv,castorupv)
+DependsOnLibrary(security,castorsecurity)
+DependsOnLibrary(dlf,castordlf)
+
+Cns_oracle_ifce.c: Cns_oracle_ifce.pc
+	proc iname=Cns_oracle_ifce include=$(INCLUDES) threads=yes char_map=string parse=full
+FilesToClean += Cns_oracle_ifce.c Cns_oracle_ifce.lis
+MakeDir($(SPOOL),0755)
+ORALIBS= -L$(ORACLE_HOME)/lib -lclntsh
+
+NormalProgramTarget(nsdaemon,$(NSDAEMON_OBJS), $(DEPLIB), $(ORALIBS) $(MTLDFLAGS) $(LIBS) $(LIBCSEC),750)
+ADMMANPAGE(nsdaemon)
+LOGROTATE(castor-ns-server,..,install)
+SYSCONFIG(nsdaemon,install)
+INITSCRIPT(nsdaemon,install)
+CONFIGFILE(NS,..,install)

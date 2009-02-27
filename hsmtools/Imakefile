@@ -6,7 +6,6 @@ COMM       @(#)Imakefile,v 1.24 2005/12/06 10:52:56 CERN IT-PDP/DM Jean-Philippe
 
 COMM    Make HSM admin tools.
 
-SPOOL = HsmToolsSpool
 CKSUMLIB = -lz
 DFLAGS = -DORAVDQMCONFIGFILE=\"/etc/castor/ORAVDQMCONFIG\" -g -pthread
 CPPFLAGS = -I../h -I.. $(DFLAGS)
@@ -23,50 +22,46 @@ DependsOnLibrary(castor,castorclient)
 DependsOnLibrary(vmgr,castorvmgr)
 DependsOnLibrary(rfio,castorrfio)
 
-NormalProgramTarget(reclaim,reclaim.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
-NormalProgramTarget(enterFileClass,enterFileClass.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
-NormalProgramTarget(enterSvcClass,enterSvcClass.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
-NormalProgramTarget(modifyFileClass,modifyFileClass.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
-NormalProgramTarget(modifySvcClass,modifySvcClass.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
-NormalProgramTarget(deleteFileClass,deleteFileClass.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
-NormalProgramTarget(deleteSvcClass,deleteSvcClass.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
-NormalProgramTarget(adler32,adler32.Osuf,$(DEPLIB),$(LIBS) $(CKSUMLIB),root,bin,755)
-NormalProgramTarget(c2probe,c2probe.Osuf,$(DEPLIB),-pthread $(LIBS),root,bin,755)
-NormalProgramTarget(listPriority,listPriority.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
-NormalProgramTarget(enterPriority,enterPriority.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
-NormalProgramTarget(deletePriority,deletePriority.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
+NormalProgramTarget(reclaim,reclaim.Osuf,$(DEPLIB),$(LIBS),755)
+NormalProgramTarget(enterFileClass,enterFileClass.Osuf,$(DEPLIB),$(LIBS),755)
+NormalProgramTarget(enterSvcClass,enterSvcClass.Osuf,$(DEPLIB),$(LIBS),755)
+NormalProgramTarget(modifyFileClass,modifyFileClass.Osuf,$(DEPLIB),$(LIBS),755)
+NormalProgramTarget(modifySvcClass,modifySvcClass.Osuf,$(DEPLIB),$(LIBS),755)
+NormalProgramTarget(deleteFileClass,deleteFileClass.Osuf,$(DEPLIB),$(LIBS),755)
+NormalProgramTarget(deleteSvcClass,deleteSvcClass.Osuf,$(DEPLIB),$(LIBS),755)
+NormalProgramTarget(adler32,adler32.Osuf,$(DEPLIB),$(LIBS) $(CKSUMLIB),755)
+NormalProgramTarget(c2probe,c2probe.Osuf,$(DEPLIB),-pthread $(LIBS),755)
+NormalProgramTarget(listPriority,listPriority.Osuf,$(DEPLIB),$(LIBS),755)
+NormalProgramTarget(enterPriority,enterPriority.Osuf,$(DEPLIB),$(LIBS),755)
+NormalProgramTarget(deletePriority,deletePriority.Osuf,$(DEPLIB),$(LIBS),755)
 rfcpupd.c: ../rfio/rfcp.c
 	sed 's/| *O_TRUNC//' $< | sed 's/O_RDONLY/O_RDWR/' | sed 's/O_WRONLY/O_RDWR|O_APPEND/' > $@
 rfcpupd.Osuf: rfcpupd.c
 	$(CC) $(DEBUG) -I../h $(MTCCFLAGS) $(RFIOFLAGS) $(ACCTFLAG) -c -o $@ $<
 FilesToClean += rfcpupd.c
-NormalProgramTarget(rfcpupd,rfcpupd.Osuf,$(DEPLIB), $(LIBS),root,bin,755)
+NormalProgramTarget(rfcpupd,rfcpupd.Osuf,$(DEPLIB), $(LIBS),755)
 
-#if BuildVDQMCpp
-NormalProgramTarget(vdqmDBInit,vdqmDBInit.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
-NormalProgramTarget(vdqmsetpriority,vdqmsetpriority.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
-NormalProgramTarget(vdqmdeletepriority,vdqmdeletepriority.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
-NormalProgramTarget(vdqmlistpriority,vdqmlistpriority.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
-NormalProgramTarget(vdqmlistrequest,vdqmlistrequest.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
-#endif
+NormalProgramTarget(vdqmDBInit,vdqmDBInit.Osuf,$(DEPLIB),$(LIBS),755)
+NormalProgramTarget(vdqmsetpriority,vdqmsetpriority.Osuf,$(DEPLIB),$(LIBS),755)
+NormalProgramTarget(vdqmdeletepriority,vdqmdeletepriority.Osuf,$(DEPLIB),$(LIBS),755)
+NormalProgramTarget(vdqmlistpriority,vdqmlistpriority.Osuf,$(DEPLIB),$(LIBS),755)
+NormalProgramTarget(vdqmlistrequest,vdqmlistrequest.Osuf,$(DEPLIB),$(LIBS),755)
 
-InstallTarget(cleanLostFiles,root,bin,755,$(BIN))
-InstallTarget(diskServer_qry,root,bin,755,$(BIN))
-InstallTarget(listFileClass,root,bin,755,$(BIN))
-InstallTarget(listSvcClass,root,bin,755,$(BIN))
-InstallTarget(printFileClass,root,bin,755,$(BIN))
-InstallTarget(printSvcClass,root,bin,755,$(BIN))
-InstallTarget(moveDiskServer,root,bin,755,$(BIN))
-InstallTarget(dedicateTapeDrive,root,bin,755,$(BIN))
-InstallTarget(listDedications,root,bin,755,$(BIN))
-InstallTarget(checkreplicas,root,bin,755,$(BIN))
-InstallTarget(draindiskserver,root,bin,755,$(BIN))
+InstallTarget(cleanLostFiles,755,$(BIN))
+InstallTarget(diskServer_qry,755,$(BIN))
+InstallTarget(listFileClass,755,$(BIN))
+InstallTarget(listSvcClass,755,$(BIN))
+InstallTarget(printFileClass,755,$(BIN))
+InstallTarget(printSvcClass,755,$(BIN))
+InstallTarget(moveDiskServer,755,$(BIN))
+InstallTarget(dedicateTapeDrive,755,$(BIN))
+InstallTarget(listDedications,755,$(BIN))
+InstallTarget(checkreplicas,755,$(BIN))
+InstallTarget(draindiskserver,755,$(BIN))
 
-MakeDir($(PERLLIBDIR),root,bin,0755)
-MakeDir($(PYTHONLIBDIR),root,bin,0755)
-MakeDir($(SPOOL),root,bin,0755)
-InstallNonExecFile(castor_tools.pm,$(PERLLIBDIR),root,bin,755)
-InstallNonExecFile(castor_tools.py,$(PYTHONLIBDIR),root,bin,755)
+MakeDir(/var/spool/hsmtools,0755)
+InstallNonExecFile(castor_tools.pm,$(PERLLIBDIR),755)
+InstallNonExecFile(castor_tools.py,$(PYTHONLIBDIR),755)
 
 EXEMANPAGE(reclaim)
 EXEMANPAGE(cleanLostFiles)
@@ -90,10 +85,8 @@ EXEMANPAGE(enterPriority)
 EXEMANPAGE(deletePriority)
 EXEMANPAGE(draindiskserver)
 
-#if BuildVDQMCpp
 EXEMANPAGE(vdqmDBInit)
 EXEMANPAGE(vdqmsetpriority)
 EXEMANPAGE(vdqmdeletepriority)
 EXEMANPAGE(vdqmlistpriority)
 EXEMANPAGE(vdqmlistrequest)
-#endif

@@ -82,5 +82,5 @@ AGGREGATORBIN_SRCS = \
   $(TAPEGATEWAY_IO_SRCS)
 AGGREGATORBIN_OBJS = $(AGGREGATORBIN_SRCS:.cpp=.Osuf)
 
-NormalProgramTarget(aggregatord,$(AGGREGATORBIN_OBJS),$(DEPLIB),$(LIBS),root,bin,750)
+NormalProgramTarget(aggregatord,$(AGGREGATORBIN_OBJS),$(DEPLIB),$(LIBS),750)
 EXEMANPAGE(aggregatord)

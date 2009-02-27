@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.7 $ $Release$ $Date: 2008/11/26 14:51:54 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.8 $ $Release$ $Date: 2009/02/27 13:14:17 $ $Author: sponcec3 $
 #
 # Makefile for the CASTOR2 stagerjob
 #
@@ -44,4 +44,6 @@ JOB_SRCS = StagerJob.cpp \
            GridFTPPlugin.cpp \
            ../SharedResourceHelper.cpp
 JOBS_OBJS = $(JOB_SRCS:.cpp=.Osuf)
-NormalProgramTarget(stagerJob,$(JOBS_OBJS),$(DEPLIB),$(LIBS),stage,st,6755)
+NormalProgramTarget(stagerJob,$(JOBS_OBJS),$(DEPLIB),$(LIBS),6755)
+MakeDir(/var/spool/job,0755)
+LOGROTATE(castor-job,../../..,install)

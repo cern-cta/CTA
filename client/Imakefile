@@ -25,3 +25,9 @@ COMM @author castor-dev team
 COMM
 
 SUBDIRS = src/stager
+
+client:
+	GotoSubdirs(src/stager)
+
+installclient:
+	GotoSubdirs(src/stager)

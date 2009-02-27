@@ -27,9 +27,6 @@
 CPPFLAGS = -g -O0 -I ../../h -I ../.. $(MTCCFLAGS)
 LDFLAGS += $(MTLDFLAGS)
 LD = g++
-#if BuildSecurity
-SECURITYFLAG=-DCSEC
-#endif
 
 DependsOnLibrary(../common,castorcommon)
 DependsOnLibrary(../dlf,castordlf)
@@ -38,6 +35,9 @@ DependsOnLibrary(,castorclient)
 
 GCBIN_SRCS = GcDaemon.cpp DeletionThread.cpp SynchronizationThread.cpp
 GCBIN_OBJS = $(GCBIN_SRCS:.cpp=.Osuf)
-NormalProgramTarget(gcDaemon,$(GCBIN_OBJS),$(DEPLIB),$(LIBS),root,bin,0755)
+NormalProgramTarget(gcDaemon,$(GCBIN_OBJS),$(DEPLIB),$(LIBS),0755)
+MakeDir(/var/spool/gc,0755)
 ADMMANPAGE(gcDaemon)
-
+LOGROTATE(castor-gc-server,../..,install)
+SYSCONFIG(gcDaemon,install)
+INITSCRIPT(gcDaemon,install)

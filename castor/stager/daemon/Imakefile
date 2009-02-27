@@ -29,6 +29,7 @@ LDFLAGS += $(MTLDFLAGS)
 LD = g++
 
 DependsOnLibrary(../../common,castorcommon)
+DependsOnLibrary(../../upv,castorupv)
 DependsOnLibrary(../../dlf,castordlf)
 DependsOnLibrary(..,castorclient)
 DependsOnLibrary(../db/cnv,castorcnvs)
@@ -60,6 +61,9 @@ DBSERVICEDAEMONBIN_SRCS = \
         JobSvcThread.cpp \
 	CleaningThread.cpp
 DBSERVICEDAEMONBIN_OBJS = $(DBSERVICEDAEMONBIN_SRCS:.cpp=.Osuf)
-NormalProgramTarget(stagerDaemon,$(DBSERVICEDAEMONBIN_OBJS),$(DEPLIB),$(LIBS),root,bin,750)
+NormalProgramTarget(stagerDaemon,$(DBSERVICEDAEMONBIN_OBJS),$(DEPLIB),$(LIBS),750)
+MakeDir(/var/spool/stager,0755)
 ADMMANPAGE(stagerDaemon)
-
+LOGROTATE(castor-stager-server,../../..,install)
+SYSCONFIG(stager,install)
+INITSCRIPT(stager,install)

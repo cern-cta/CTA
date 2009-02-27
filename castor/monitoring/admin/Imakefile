@@ -33,5 +33,5 @@ DependsOnLibrary(../../dlf,castordlf)
 DependsOnLibrary(..,castorclient)
 DependsOnLibrary(,castormonitor)
 
-NormalProgramTarget(rmAdminNode,RmAdminNode.Osuf,$(DEPLIB),$(LIBS),root,bin,755)
+NormalProgramTarget(rmAdminNode,RmAdminNode.Osuf,$(DEPLIB),$(LIBS),755)
 EXEMANPAGE(rmAdminNode)

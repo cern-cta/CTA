@@ -12,14 +12,14 @@ COMM         Make RTCOPY API library and server
 COMM
 COMM Define the remote tape copy daemon log file.
 COMM
-SPOOL = RtcopySpool
+SPOOL = /var/spool/rtcopy
 LOGFILE = $(SPOOL)/rtcopyd.log
 
 COMM
 COMM Define the working directory of 
 COMM the remote tape copy jobs.
 COMM
-RTCOPYWORKDIR = RtcopyWorkDir
+RTCOPYWORKDIR = /var/lib/castor/rtcopy
 
 COMM
 COMM Define the file indicating that more
@@ -45,18 +45,8 @@ COMM Set this flag to -O for optimization, or -g for debug
 COMM
 CCOPTIM = -g
 
-#if BuildVdqmLibrary
 VDQMFLG = -DVDQM
-#endif
-
-#if BuildTapeLibrary
 CTAPEFLG = -DCTAPE
-#else
-CTAPEFLG = -DCTAPE_DUMMIES
-#endif
-
-OPSGRP = OperatorGid
-
 ACCTON= -DACCTON
 SACCTDIR = SacctDir
 SACCTFILE = $(SACCTDIR)/sacct
@@ -89,9 +79,7 @@ RTCPCLDGROUP = st
 RTCPCLDFLAGS = -DRTCPCLD_NOTIFY_HOST=\"$(RTCPCLDHOST)\" -DRTCPCLD_USER=\"$(RTCPCLDUSER)\" -DRTCPCLD_GROUP=\"$(RTCPCLDGROUP)\"
 THREADFLAGS = $(MTCCFLAGS)
 CKSUMLIB = -lz
-#if BuildRtcopyServer
 RTCPFLAG=-DRTCP_SERVER
-#endif
 
 #if BuildSecureRtcopy
 SECURITYFLAG=-DCSEC
@@ -135,21 +123,17 @@ rtcpc_CheckReq.Osuf:	rtcpc_CheckReq.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtc
 	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I../h rtcpc_CheckReq.c
 FileToClean += rtcpc_log.c rtcpc_SendRecv.c rtcpc_CallVMGR.c rtcpc_CheckReq.c
 
-#if BuildRtcopyLibrary
 RTCPLIB_OBJS =	rtcpc_SendRecv.Osuf rtcp_InitNW.Osuf rtcpc_log.Osuf rtcpc_CallVMGR.Osuf rtcp_Listen.Osuf rtcpapi.Osuf rtcpc_BuildReq.Osuf rtcp_RetvalSHIFT.Osuf rtcpc_CheckReq.Osuf
 SharedLibraryTarget(castorrtcopy,$(RTCPLIB_OBJS),$(DEPLIB),$(LIBS))
-#endif
-RTCPDEPLIB = SharedLibraryTargetName(castorrtcopy)
-RTCPLIBS = -L. -lcastorrtcopy
+RTCPLIBS = SharedLibraryTargetName(castorrtcopy)
 
-#if BuildRtcopyClient
 tpread.Osuf:		tpread.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
 	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I../h tpread.c
 dumptape.Osuf:		dumptape.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
 	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I../h dumptape.c
-NormalProgramTarget(tpread,tpread.Osuf,$(RTCPDEPLIB) $(DEPLIB),$(RTCPLIBS) $(LIBS),root,bin,0755)
-LinkFile(tpwrite,tpread,root,bin,755)
-NormalProgramTarget(dumptape,dumptape.Osuf,$(RTCPDEPLIB) $(DEPLIB),$(RTCPLIBS) $(MTLDFLAGS) $(LIBS),root,bin,0755)
+ClientProgramTarget(tpread,tpread.Osuf,$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(LIBS),0755)
+LinkFile(tpwrite,tpread,755,client)
+NormalProgramTarget(dumptape,dumptape.Osuf,$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(MTLDFLAGS) $(LIBS),0755)
 EXEMANPAGE(tpread)
 EXEMANPAGE(tpwrite)
 EXEMANPAGE(dumptape)
@@ -157,30 +141,24 @@ COMM Because nroff does not like to change hierachy of dir we copy the man page 
 dumptape.man: DepSourceName(tape,dumptape.man)
 	RemoveFiles(dumptape.man)
 	$(CP) $? $@
-#if BuildRtstat
-rtstat.Osuf:		rtstat.c ../h/vdqm.h ../h/osdep.h ../h/net.h
-	$(CC) -c $(CFLAGS) rtstat.c
-NormalProgramTarget(rtstat,rtstat.Osuf,$(DEPLIB),$(MTLDFLAGS) $(LIBS),root,bin,0755)
-EXEMANPAGE(rtstat)
-#endif
-#endif
 
-#if BuildRtcpclientd
 RTCPCLD_MT_OBJS = rtcpcldcommon_mt.Osuf
 RTCPCLD_OBJS =	rtcpcldcommon.Osuf rtcpcldCatalogueInterface.Osuf rtcpcldVmgrInterface.Osuf rtcpcldNsInterface.Osuf
-NormalProgramTarget(rtcpcldCleanupDB,rtcpcldCleanupDB.Osuf $(RTCPCLD_OBJS),$(RTCPDEPLIB) $(DEPLIB),$(RTCPLIBS) $(LIBS),root,bin,0750)
-NormalProgramTarget(rtcpclientd,rtcpclientd.Osuf $(RTCPCLD_OBJS),$(RTCPDEPLIB) $(DEPLIB),$(RTCPLIBS) $(LIBS),root,bin,0750)
-NormalProgramTarget(recaller,recaller.Osuf $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS),$(RTCPDEPLIB) $(DEPLIB),$(RTCPLIBS) $(MTLDFLAGS) $(LIBS),root,bin,0750)
-NormalProgramTarget(migrator,migrator.Osuf $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS),$(RTCPDEPLIB) $(DEPLIB),$(RTCPLIBS) $(MTLDFLAGS) $(LIBS),root,bin,0750)
-NormalProgramTarget(TapeErrorHandler,TapeErrorHandler.Osuf $(RTCPCLD_OBJS),$(RTCPDEPLIB) $(DEPLIB),$(RTCPLIBS) $(LIBS),root,bin,0750)
+NormalProgramTarget(rtcpcldCleanupDB,rtcpcldCleanupDB.Osuf $(RTCPCLD_OBJS),$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(LIBS),0750)
+NormalProgramTarget(rtcpclientd,rtcpclientd.Osuf $(RTCPCLD_OBJS),$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(LIBS),0750)
+NormalProgramTarget(recaller,recaller.Osuf $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS),$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(MTLDFLAGS) $(LIBS),0750)
+NormalProgramTarget(migrator,migrator.Osuf $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS),$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(MTLDFLAGS) $(LIBS),0750)
+NormalProgramTarget(TapeErrorHandler,TapeErrorHandler.Osuf $(RTCPCLD_OBJS),$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(LIBS),0750)
 EXEMANPAGE(rtcpcldCleanupDB)
 EXEMANPAGE(rtcpclientd)
-#endif
+MakeDir(/var/spool/rtcpclientd,0755)
+LOGROTATE(castor-rtcopy-clientserver,..,install)
+SYSCONFIG(rtcpclientd,install)
+INITSCRIPT(rtcpclientd,install)
 
-#if BuildRtcopyServer
-MakeDir($(SPOOL),root,bin,0755)
-MakeDir($(RTCOPYWORKDIR),root,bin,777)
-MakeDir($(SACCTDIR),root,bin,0777)
+MakeDir($(SPOOL),0755)
+MakeDir($(RTCOPYWORKDIR),777)
+MakeDir($(SACCTDIR),0777)
 RTCPD_OBJS =	rtcpd.Osuf rtcp_CallVMGR.Osuf rtcp_CheckReq.Osuf \
 		rtcp_Listen.Osuf rtcp_SendRecv.Osuf rtcp_log.Osuf \
 		rtcpd_ClientListen.Osuf rtcpd_Ctape.Osuf rtcpd_Disk.Osuf \
@@ -189,17 +167,17 @@ RTCPD_OBJS =	rtcpd.Osuf rtcp_CallVMGR.Osuf rtcp_CheckReq.Osuf \
 		rtcpd_ConvertData.Osuf \
 		rtcpc_BuildReq.Osuf rtcpapi.Osuf rtcp_RetvalSHIFT.Osuf \
 		rtcpd_tpdump.Osuf Ctape_dummies.Osuf rtcp_accounting.Osuf		
-NormalProgramTarget(rtcpd,$(RTCPD_OBJS),$(DEPLIB),$(MTLDFLAGS) $(LIBS) $(CKSUMLIB),root,bin,0750) 
-NormalProgramTarget(killjid,killjid.Osuf,$(RTCPDEPLIB) $(DEPLIB),$(RTCPLIBS) $(MTLDFLAGS) $(LIBS),root,$(OPSGRP),0750)
+TapeProgramTarget(rtcpd,$(RTCPD_OBJS),$(DEPLIB),$(MTLDFLAGS) $(LIBS) $(CKSUMLIB),0750) 
+TapeProgramTarget(killjid,killjid.Osuf,$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(MTLDFLAGS) $(LIBS),0750)
 EXEMANPAGE(rtcpd)
 EXEMANPAGE(killjid)
-#endif
+LOGROTATE(castor-rtcopy-server,..,installtape)
+SYSCONFIG(rtcpd,installtape)
+INITSCRIPT(rtcpd,installtape)
 
-MakeDir($(ERRLISTDIR),root,bin,755)
-InstallNonExecFile(err_messages,$(ERRLISTDIR),root,bin,644)
+InstallNonExecFile(err_messages,$(ERRLISTDIR),644)
 
 $(ESTATD): err_messages
 	-mkdir -p $(@D)
 	-mv $(@D)/$? $(@D)/OLD$?
 	cp $? $@
-

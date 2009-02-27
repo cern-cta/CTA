@@ -2,19 +2,17 @@ COMM
 COMM  Copyright (C) 1990-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.18 $ $Date: 2009/02/16 12:52:53 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.19 $ $Date: 2009/02/27 13:01:16 $ CERN IT-PDP/DM Jean-Philippe Baud
 
 COMM 	Make tape daemon programs. 
 
 INCLUDES = ../h
-#if BuildRtcopyClient != YES && BuildTapeDaemon == YES
 MANDUMP = $(MANDIR)/dumptape.$(MANSUFFIX)
-#endif
 TMS = NOTMS
 VMGRFLG = -DVMGR
 VDQMFLG = -DVDQM
 OPSGRP = OperatorGid
-SPOOL = TapeSpool
+SPOOL = /var/spool/tape
 SACCTDIR = SacctDir
 SACCTFILE = SacctDir/sacct
 ACCTFILE = -DACCTFILE=\"$(SACCTFILE)\"
@@ -122,53 +120,10 @@ DependsOnLibrary(vmgr,castorvmgr)
 DependsOnLibrary(dlf,castordlf)
 DependsOnLibrary(rfio,castorrfio)
 DependsOnLibrary(upv,castorupv)
-TAPELIB = -L. -lcastortape
-TAPEDEP = SharedLibraryTargetName(castortape)
 
-#if BuildTapeClient
-NormalProgramTarget(tpconfig,tpconfig.Osuf,$(TAPEDEP) $(DEPLIB),$(LIBS) $(TAPELIB),root,bin,755)
-NormalProgramTarget(tprstat,tprstat.Osuf,$(TAPEDEP) $(DEPLIB),$(LIBS) $(TAPELIB),root,bin,755)
-NormalProgramTarget(tpstat,tpstat.Osuf,$(TAPEDEP) $(DEPLIB),$(LIBS) $(TAPELIB),root,bin,755)
-EXEMANPAGE(tpconfig)
-EXEMANPAGE(tprstat)
-EXEMANPAGE(tpstat)
-#endif
-
-#if BuildTapeDaemon
-MakeDir($(SPOOL),root,bin,0755)
-MakeDir($(SACCTDIR),root,bin,0777)
-TPDAEMON_OBJS = tpdaemon.Osuf checkjobdied.Osuf cvtden.Osuf sendrep.Osuf tplogit.Osuf usrmsg.Osuf
-CONFDRIVE_OBJS = confdrive.Osuf sendrep.Osuf tplogit.Osuf
-MOUNTTAPE_OBJS = mounttape.Osuf asc2ebc.Osuf buildhdrlbl.Osuf buildvollbl.Osuf ebc2asc.Osuf getdrvstatus.Osuf inquiry.Osuf lddisplay.Osuf rbtsubr.Osuf readlbl.Osuf rwndtape.Osuf send2tpd.Osuf sendrep.Osuf sendtmsmount.Osuf sendscsicmd.Osuf setdens.Osuf skiptape.Osuf smcsubr.Osuf tperror.Osuf tplogit.Osuf unldtape.Osuf usrmsg.Osuf writelbl.Osuf wrttpmrk.Osuf mircheck.Osuf
-POSOVL_OBJS = posovl.Osuf buildhdrlbl.Osuf builduhl.Osuf buildvollbl.Osuf ebc2asc.Osuf getdrvstatus.Osuf inquiry.Osuf locate.Osuf posittape.Osuf readlbl.Osuf rwndtape.Osuf send2tpd.Osuf sendrep.Osuf sendscsicmd.Osuf skiptape.Osuf tperror.Osuf tplogit.Osuf usrmsg.Osuf
-RLSTAPE_OBJS = rlstape.Osuf getdrvstatus.Osuf lddisplay.Osuf rbtsubr.Osuf send2tpd.Osuf sendscsicmd.Osuf smcsubr.Osuf sendrep.Osuf sendtmsmount.Osuf tperror.Osuf tplogit.Osuf usrmsg.Osuf unldtape.Osuf tapealertcheck.Osuf 
-NormalProgramTarget(tpdaemon,$(TPDAEMON_OBJS) $(IBMR2_OBJS) $(TAPEACCT), $(TAPEDEP) $(DEPLIB),$(LIBS) $(TAPELIB),root,$(OPSGRP),750)
-NormalProgramTarget(confdrive,$(CONFDRIVE_OBJS) $(TAPEACCT),$(TAPEDEP) $(DEPLIB),$(LIBS) $(TAPELIB),root,$(OPSGRP),750)
-NormalProgramTarget(mounttape,$(MOUNTTAPE_OBJS) $(TAPEACCT),$(TAPEDEP) $(DEPLIB),$(LIBS) $(TAPELIB) $(LIBCDK),root,$(OPSGRP),750)
-NormalProgramTarget(posovl,$(POSOVL_OBJS) $(TAPEACCT),$(TAPEDEP) $(DEPLIB),$(LIBS) $(TAPELIB),root,$(OPSGRP),750)
-NormalProgramTarget(rlstape,$(RLSTAPE_OBJS) $(TAPEACCT), $(TAPEDEP) $(DEPLIB),$(LIBS) $(TAPELIB) $(LIBCDK),root,$(OPSGRP),750)
-NormalProgramTarget(smc,smc.Osuf,$(TAPEDEP) $(DEPLIB),$(LIBS) $(TAPELIB),root,bin,6755)
-NormalProgramTarget(tpdump,tpdump.Osuf,$(TAPEDEP) $(DEPLIB),$(LIBS) $(TAPELIB),root,bin,755)
-NormalProgramTarget(tplabel,tplabel.Osuf,$(TAPEDEP) $(DEPLIB),$(LIBS) $(TAPELIB),root,bin,755)
-LinkFile(dumptape,tpdump,root,bin,755)
-FilesToClobber += dumptape
-ADMMANPAGE(tpdaemon)
-EXEMANPAGE(smc)
-EXEMANPAGE(tplabel)
-EXEMANPAGE(dumptape)
-EXEMANPAGE(tape_oper)
-#endif
-
-#if BuildTpusage
-NormalProgramTarget(tpusage,tpusage.Osuf,$(TAPEDEP) $(DEPLIB),$(LIBS) $(TAPELIB),root,bin,755)
-EXEMANPAGE(tpusage)
-#endif
-
-#if BuildTapeLibrary
-TPLIB_OBJS = Ctape_config.Osuf Ctape_devinfo.Osuf Ctape_dmpfil.Osuf Ctape_drvinfo.Osuf Ctape_errmsg.Osuf Ctape_info.Osuf Ctape_kill.Osuf Ctape_label.Osuf Ctape_mount.Osuf Ctape_position.Osuf Ctape_reserve.Osuf Ctape_rls.Osuf Ctape_rstatus.Osuf Ctape_status.Osuf asc2ebc.Osuf chkdirw.Osuf cvtden.Osuf ebc2asc.Osuf findpgrp.Osuf getcompstat.Osuf initlabel.Osuf send2tpd.Osuf tmscheck.Osuf usrlbl.Osuf usrlocate.Osuf usrreadlbl.Osuf usrrwndtape.Osuf usrskiptape.Osuf usrsmcsubr.Osuf usrsmcsubr2.Osuf usrtperror.Osuf usrusrmsg.Osuf usrwritelbl.Osuf usrwrttpmrk.Osuf tplogger.Osuf tplogger_messages.Osuf 
+TPLIB_OBJS = Ctape_config.Osuf Ctape_devinfo.Osuf Ctape_dmpfil.Osuf Ctape_drvinfo.Osuf Ctape_errmsg.Osuf Ctape_info.Osuf Ctape_kill.Osuf Ctape_label.Osuf Ctape_mount.Osuf Ctape_position.Osuf Ctape_reserve.Osuf Ctape_rls.Osuf Ctape_rstatus.Osuf Ctape_status.Osuf asc2ebc.Osuf chkdirw.Osuf cvtden.Osuf ebc2asc.Osuf findpgrp.Osuf getcompstat.Osuf initlabel.Osuf send2tpd.Osuf tmscheck.Osuf usrlbl.Osuf usrlocate.Osuf usrreadlbl.Osuf usrrwndtape.Osuf usrskiptape.Osuf usrsmcsubr.Osuf usrsmcsubr2.Osuf usrtperror.Osuf usrusrmsg.Osuf usrwritelbl.Osuf usrwrttpmrk.Osuf tplogger.Osuf tplogger_messages.Osuf
 RMCLIB_OBJS = ../rmc/rmc_dismount.Osuf ../rmc/rmc_errmsg.Osuf ../rmc/rmc_export.Osuf ../rmc/rmc_find_cartridge.Osuf ../rmc/rmc_get_geometry.Osuf ../rmc/rmc_import.Osuf ../rmc/rmc_mount.Osuf ../rmc/rmc_read_elem_status.Osuf ../rmc/send2rmc.Osuf
-SharedLibraryTarget(castortape,$(TPLIB_OBJS) $(RMCLIB_OBJS) $(IBMR2_OBJS),$(DEPLIB),$(LIBS))
-#endif
+TapeSharedLibraryTarget(castortape,$(TPLIB_OBJS) $(RMCLIB_OBJS) $(IBMR2_OBJS),$(DEPLIB),$(LIBS))
 
 LIBMANPAGE(Ctape_dmpfil)
 LIBMANPAGE(Ctape_info)
@@ -186,3 +141,40 @@ LIBMANPAGE(rwndtape)
 LIBMANPAGE(skiptape)
 LIBMANPAGE(usrlbl)
 LIBMANPAGE(wrttpmrk)
+
+TAPELIB = SharedLibraryTargetName(castortape)
+
+ClientProgramTarget(tpconfig,tpconfig.Osuf,$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),755)
+ClientProgramTarget(tprstat,tprstat.Osuf,$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),755)
+ClientProgramTarget(tpstat,tpstat.Osuf,$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),755)
+EXEMANPAGE(tpconfig)
+EXEMANPAGE(tprstat)
+EXEMANPAGE(tpstat)
+
+MakeDir($(SPOOL),0755)
+MakeDir($(SACCTDIR),0777)
+TPDAEMON_OBJS = tpdaemon.Osuf checkjobdied.Osuf cvtden.Osuf sendrep.Osuf tplogit.Osuf usrmsg.Osuf
+CONFDRIVE_OBJS = confdrive.Osuf sendrep.Osuf tplogit.Osuf
+MOUNTTAPE_OBJS = mounttape.Osuf asc2ebc.Osuf buildhdrlbl.Osuf buildvollbl.Osuf ebc2asc.Osuf getdrvstatus.Osuf inquiry.Osuf lddisplay.Osuf rbtsubr.Osuf readlbl.Osuf rwndtape.Osuf send2tpd.Osuf sendrep.Osuf sendtmsmount.Osuf sendscsicmd.Osuf setdens.Osuf skiptape.Osuf smcsubr.Osuf tperror.Osuf tplogit.Osuf unldtape.Osuf usrmsg.Osuf writelbl.Osuf wrttpmrk.Osuf mircheck.Osuf
+POSOVL_OBJS = posovl.Osuf buildhdrlbl.Osuf builduhl.Osuf buildvollbl.Osuf ebc2asc.Osuf getdrvstatus.Osuf inquiry.Osuf locate.Osuf posittape.Osuf readlbl.Osuf rwndtape.Osuf send2tpd.Osuf sendrep.Osuf sendscsicmd.Osuf skiptape.Osuf tperror.Osuf tplogit.Osuf usrmsg.Osuf
+RLSTAPE_OBJS = rlstape.Osuf getdrvstatus.Osuf lddisplay.Osuf rbtsubr.Osuf send2tpd.Osuf sendscsicmd.Osuf smcsubr.Osuf sendrep.Osuf sendtmsmount.Osuf tperror.Osuf tplogit.Osuf usrmsg.Osuf unldtape.Osuf tapealertcheck.Osuf 
+TapeProgramTarget(tpdaemon,$(TPDAEMON_OBJS) $(IBMR2_OBJS) $(TAPEACCT), $(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),750)
+TapeProgramTarget(confdrive,$(CONFDRIVE_OBJS) $(TAPEACCT),$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),750)
+TapeProgramTarget(mounttape,$(MOUNTTAPE_OBJS) $(TAPEACCT),$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB) $(LIBCDK),750)
+TapeProgramTarget(posovl,$(POSOVL_OBJS) $(TAPEACCT),$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),750)
+TapeProgramTarget(rlstape,$(RLSTAPE_OBJS) $(TAPEACCT), $(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB) $(LIBCDK),750)
+TapeProgramTarget(smc,smc.Osuf,$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),6755)
+TapeProgramTarget(tpdump,tpdump.Osuf,$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),755)
+TapeProgramTarget(tplabel,tplabel.Osuf,$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),755)
+LinkFile(dumptape,tpdump,755,tape)
+FilesToClobber += dumptape
+ADMMANPAGE(tpdaemon)
+EXEMANPAGE(smc)
+EXEMANPAGE(tplabel)
+EXEMANPAGE(dumptape)
+EXEMANPAGE(tape_oper)
+LOGROTATE(castor-tape-server,..,installtape)
+LOGROTATE(castor-sacct,..,installtape)
+SYSCONFIG(tpdaemon,installtape)
+INITSCRIPT(tpdaemon,installtape)
+CONFIGFILE(TP,..,installtape)

@@ -6,11 +6,9 @@ COMM
 
 COMM		Make CASTOR libraries and executables
 
-SUBDIRS = $(COMMONDIR) $(DLFDIR) $(SECURITYDIR) $(UPVDIR) $(DBDIR) $(NSDIR) $(RFIODIR) \
-	  $(EXPERTDIR) $(RMCDIR) $(SYSREQDIR) $(RTCOPYDIR) $(CLIENTSDIR) \
-	  $(TAPEDIR) $(VDQMDIR) $(VMGRDIR) $(COPYTAPEDIR) \
-	  $(EXAMPLESDIR) $(HSMTOOLSDIR) h $(COMMONCPPDIR) config \
-	  $(RESOURCEMONITORINGDIR) $(GRIDFTPDIR) $(SHLIBDIR)
+SUBDIRS = common dlf security upv ns rfio \
+	  expert rmc rtcopy client tape vdqm vmgr \
+	  hsmtools h castor config gridftp2 shlib clips
 
 clean: imakeclean
 clobber: imakeclobber
@@ -25,13 +23,28 @@ imakeclobber:
 	@(cd imake; $(MAKE) $(MFLAGS) -f Makefile.ini clobber)
 
 tar:
-	sh ./maketar.sh
-
-deb:
-	sh ./makedeb.sh
+	@sh ./maketar.sh
 
 sql:
-	sh ./makesql.sh
+	@sh ./makesql.sh
 
 doxygen: tools/doxyconfig
 	doxygen tools/doxyconfig
+
+.PHONY : client installclient tape installtape
+
+client: checkGLOBUS
+	GotoSubdirs(upv ns client tape rfio vdqm vmgr rtcopy)
+
+installclient: checkDESTDIR client
+	GotoSubdirs(upv ns client tape rfio vdqm vmgr castor common rtcopy)
+
+tape:
+	GotoSubdirs(rmc tape rtcopy)
+
+installtape: installclient tape
+	GotoSubdirs(rmc tape rtcopy)
+
+all: client tape
+
+install: installtape

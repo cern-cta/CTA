@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.23 $ $Release$ $Date: 2009/01/05 15:53:56 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.24 $ $Release$ $Date: 2009/02/27 13:14:44 $ $Author: sponcec3 $
 #
 # Make Castor Oracle library for CDBC API
 #
@@ -46,11 +46,10 @@ ORALIB_SRCS = OraCnvSvc.cpp \
             DLFInit.cpp
 ORALIB_OBJS = $(ORALIB_SRCS:.cpp=.Osuf)
 SharedLibraryTarget(castorcommonora,$(ORALIB_OBJS),$(DEPLIB),$(LIBS))
+CONFIGFILE(ORASTAGER,../../..,install)
 
-#if BuildVDQMCpp
-DEPCOMMONORA = SharedLibraryTargetName(castorcommonora)
-LIBCOMMONORA = -L. -lcastorcommonora
+LIBCOMMONORA = SharedLibraryTargetName(castorcommonora)
 ORAVDQMLIB_SRCS = ../ora/OraVdqmSvc.cpp
 ORAVDQMLIB_OBJS = $(ORAVDQMLIB_SRCS:.cpp=.Osuf)
-SharedLibraryTarget(castorvdqmora,$(ORAVDQMLIB_OBJS),$(DEPCOMMONORA) $(DEPLIB),$(LIBCOMMONORA) $(LIBS))
-#endif
+SharedLibraryTarget(castorvdqmora,$(ORAVDQMLIB_OBJS),$(LIBCOMMONORA) $(DEPLIB),$(LIBCOMMONORA) $(LIBS))
+CONFIGFILE(ORAVDQM,../../..,install)
