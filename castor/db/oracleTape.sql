@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.715 $ $Date: 2009/02/25 10:36:58 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.716 $ $Date: 2009/02/27 09:35:57 $ $Author: itglp $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -349,9 +349,9 @@ BEGIN
            AND NbTapeCopiesInFS.Stream = StreamId
            AND FS.status IN (0, 1)    -- PRODUCTION, DRAINING
            AND FS.diskserver = dsId
-         ORDER BY DiskServer.nbMigratorStreams ASC,
-                  FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams,
-                  FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC, dbms_random.value
+         ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams,
+                                 FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC,
+                  DBMS_Random.value
          ) FN
      WHERE ROWNUM < 2;
     SELECT /*+ FIRST_ROWS(1)  LEADING(D T ST) */
@@ -411,6 +411,9 @@ BEGIN
          SET NbTapeCopies = 0
        WHERE Stream = StreamId
          AND NbTapeCopiesInFS.FS = fileSystemId;
+      -- Commit now previously taken locks before retrying, as we
+      -- are restarting from scratch. This also prevents deadlocks
+      COMMIT;
       bestTapeCopyForStream(streamId,
                             diskServerName,
                             mountPoint,
@@ -548,7 +551,9 @@ BEGIN
            AND NbTapeCopiesInFS.Stream = StreamId
            AND FS.status IN (0, 1)    -- PRODUCTION, DRAINING
            AND FS.diskserver = dsId
-         ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC, dbms_random.value
+         ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams,
+                                 FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC,
+                  DBMS_Random.value
          ) FN
      WHERE ROWNUM < 2;
     SELECT P.path, P.diskcopy_id, P.castorfile,
@@ -611,6 +616,9 @@ BEGIN
          SET NbTapeCopies = 0
        WHERE Stream = StreamId
          AND NbTapeCopiesInFS.FS = fileSystemId;
+      -- Commit now previously taken locks before retrying, as we
+      -- are restarting from scratch. This also prevents deadlocks
+      COMMIT;
       bestTapeCopyForStream(streamId,
                             diskServerName,
                             mountPoint,
@@ -683,12 +691,8 @@ BEGIN
          AND NbTapeCopiesInFS.Stream = StreamId
          AND FS.status IN (0, 1)    -- PRODUCTION, DRAINING
          AND FS.diskserver = dsId
-    ORDER BY -- first prefer diskservers where no migrator runs and filesystems with no recalls
-             DiskServer.nbMigratorStreams ASC, FS.nbRecallerStreams ASC,
-             -- then order by rate as defined by the function
-             fileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams,
+    ORDER BY fileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams,
                             FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC,
-             -- finally use randomness to avoid preferring always the same FS
              DBMS_Random.value
        ) FN
    WHERE ROWNUM < 2;
@@ -742,6 +746,9 @@ BEGIN
          SET NbTapeCopies = 0
        WHERE Stream = StreamId
          AND NbTapeCopiesInFS.FS = fileSystemId;
+      -- Commit now previously taken locks before retrying, as we
+      -- are restarting from scratch. This also prevents deadlocks
+      COMMIT;
       bestTapeCopyForStream(streamId,
                             diskServerName,
                             mountPoint,
