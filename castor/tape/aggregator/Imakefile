@@ -30,6 +30,7 @@ DependsOnLibrary(../../common,castorcommon)
 DependsOnLibrary(../../dlf,castordlf)
 DependsOnLibrary(..,castorclient)
 DependsOnLibrary(../db/cnv,castorcnvs)
+DependsOnLibrary(../tape/fsm,castortapefsm)
 
 TAPEGATEWAY_MESSAGES_SRCS = \
   ../tapegateway/BaseFileInfo.cpp \
@@ -69,6 +70,7 @@ AGGREGATORBIN_SRCS = \
   AggregatorDlfMessageStrings.cpp \
   AggregatorDaemon.cpp \
   AggregatorMain.cpp \
+  DriveAllocationProtocolEngine.cpp \
   GatewayTxRx.cpp \
   Marshaller.cpp \
   Net.cpp \
