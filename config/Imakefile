@@ -1,4 +1,4 @@
-COMM       $Id: Imakefile,v 1.7 2008/11/26 14:51:56 sponcec3 Exp $
+COMM       $Id: Imakefile,v 1.8 2009/02/27 12:57:09 sponcec3 Exp $
 COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC/CA
 COMM  All rights reserved
@@ -6,10 +6,8 @@ COMM
 
 COMM		Make config files
 
-MakeDir($(CONFIGDIR),root,bin,0755)
-
-InstallNonExecFile(castor.example,$(CONFIGDIR),root,bin,0644)
-InstallNonExecFile(castor_compiler.example,$(CONFIGDIR),root,bin,0644)
-InstallNonExecFile(castor_db.example,$(CONFIGDIR),root,bin,0644)
-InstallNonExecFile(castor_paths.example,$(CONFIGDIR),root,bin,0644)
-InstallNonExecFile(castor_env.example,$(CONFIGDIR),root,bin,0644)
+InstallNonExecFile(castor.example,$(CONFIGDIR),0644)
+InstallNonExecFile(castor_compiler.example,$(CONFIGDIR),0644)
+InstallNonExecFile(castor_db.example,$(CONFIGDIR),0644)
+InstallNonExecFile(castor_paths.example,$(CONFIGDIR),0644)
+InstallNonExecFile(castor_env.example,$(CONFIGDIR),0644)

@@ -7,7 +7,6 @@
 #if defined(_WIN32)
 
 #define CONFIGPATH(x)	        %%SystemRoot%%\\system32\\drivers\\etc\\castor\\ ## x
-#define LOGPATH(x)	        %%SystemRoot%%\\system32\\drivers\\var\\spool\\ ## x
 #define InstallConfigDir	\\cern.ch\dfs\Applications\CERN\CASTOR\sysconfig
 #define InstallBinDir	        \\cern.ch\dfs\Applications\CERN\CASTOR\bin
 #define InstallIncludeDir       \\cern.ch\dfs\Applications\CERN\CASTOR\include
@@ -19,7 +18,6 @@
 #else
 
 #define CONFIGPATH(x)	        /etc/castor/x
-#define LOGPATH(x)	        /var/spool/x
 #define InstallConfigDir	/etc/sysconfig
 #define InstallBinDir	        /usr/bin
 #define InstallIncludeDir       /usr/include
@@ -36,15 +34,7 @@
 #define CDKDir	        /usr
 #define CupvConfigFile	CONFIGPATH(CUPVCONFIG)
 #define CupvHost	"castorcupv"
-#define PolicySpool	CONFIGPATH(expert)
-#define CupvSpool	LOGPATH(upv)
-#define JobSpool	LOGPATH(job)
-#define RmMasterSpool	LOGPATH(rmmaster)
-#define RmNodeSpool	LOGPATH(rmnode)
-#define JobManagerSpool LOGPATH(jobmanager)
 #define DbConfigFile	CONFIGPATH(DBCONFIG)
-#define DbSpool         LOGPATH(db)
-#define HsmToolsSpool	LOGPATH(hsmtools)
 #define LocalHostsList  CONFIGPATH(castor.localhosts)
 #define MappingFile	CONFIGPATH(ext.users)
 #define NfsRoot 	/shift
@@ -53,18 +43,13 @@
 #define SNsHost         "scnsdev"
 #define NsHostPfx       cns
 #define SNsHostPfx      scns
-#define NsSpool 	LOGPATH(ns)
 #define NsRoot          "/castor"
 #define OperConfigFile	CONFIGPATH(OPERCONFIG)
 #define OperatorGid	root
 #define RemoteHostsList CONFIGPATH(castor.remhosts)
 #define RfioAlarmFile	rfio_alrm
-#define RfioSpool	LOGPATH(rfio)
-#define RmcSpool	LOGPATH(rmc)
-#define RtcopySpool	LOGPATH(rtcopy)
-#define RtcopyWorkDir	/var/lib/castor/rtcopy
 #define	RtcpclientdHost	"castorrtcpcld"
-#define SacctDir	LOGPATH(sacct)
+#define SacctDir	/var/spool/sacct
 #define ShiftConfigFile	CONFIGPATH(castor.conf)
 #define StageMapFile    CONFIGPATH(stagemap.conf)
 #define OraStagerConfigFile CONFIGPATH(ORASTAGERCONFIG)
@@ -72,77 +57,12 @@
 #define StagerSuperUser	stage
 #define StagerGid	st
 #define TapeConfigFile	CONFIGPATH(TPCONFIG)
-#define TapeSpool	LOGPATH(tape)
 #define VdqmHost        "castorvdqm1 castorvdqm2"
-#define VdqmSpool	LOGPATH(vdqm)
 #define VmgrConfigFile	CONFIGPATH(VMGRCONFIG)
 #define DlfConfigFile   CONFIGPATH(DLFCONFIG)
 #define ExpertConfigFile CONFIGPATH(EXPCONFIG)
 
-#define BuildCommands	        NO
-#define BuildCommon	        NO
-#define BuildCupvClient	        NO
-#define BuildCupvDaemon 	NO
-#define	BuildCupvLibrary	NO
-#define BuildExamples	        NO
-#define BuildHsmTools	        NO
-#define BuildNameServerClient	NO
-#define BuildNameServerDaemon	NO
-#define BuildNameServerLibrary	NO
-#define BuildRfioClient	        NO
-#define BuildRfioServer	        NO
-#define BuildRfioLibrary	NO
-#define BuildRmcServer	        NO
-#define BuildRmcLibrary	        NO
-#define BuildJob	        NO
-#define BuildJobManagerCpp	NO
-#define BuildRtcopyClient	NO
-#define BuildRtcopyServer	NO
-#define BuildRtcopyLibrary	NO
-#define BuildRtstat	        NO
-#define BuildRtcpclientd	NO
-#define BuildStageClient	NO
-#define BuildStageDaemonCpp	NO
-#define BuildStageLibrary	NO
-#define BuildRmMasterCpp	NO
-#define BuildRmNodeCpp	        NO
-#define BuildTapeClient	        NO
-#define BuildTapeDaemon	        NO
-#define BuildTapeLibrary	NO
-#define BuildTest	        NO
-#define BuildTpusage	        NO
-#define BuildVdqmClient	        NO
-#define BuildVdqmLibrary	NO
-#define BuildVolumeMgrClient	NO
-#define BuildVolumeMgrDaemon	NO
-#define BuildVolumeMgrLibrary	NO
-#define BuildDlfDaemon	        NO
-#define BuildDlfLibrary	        NO
-#define BuildDlfWeb	        NO
-#define BuildExpertClient	NO
-#define BuildExpertDaemon	NO
-#define BuildExpertLibrary	NO
-#define BuildSchedPlugin	NO
-#define BuildRHCpp	        NO
-#define BuildVDQMCpp	        NO
-#define BuildGCCpp	        NO
-#define BuildOraCpp	        NO
-#define BuildMyCpp              NO
-#define BuildPgCpp	        NO
-#define BuildCastorClientCPPLibrary	NO
-#define BuildCppTest	        NO
-#define BuildRepack	        NO
-#define BuildAggregatorCpp	NO
-#define BuildTapeFormatCpp	NO
-#define BuildTapeFsmLibrary     NO
 #define BuildTapeGatewayCpp     NO
-
-#define BuildMigHunterDaemon	NO
-#define BuildRecHandlerDaemon	NO
-#define BuildInfoPolicyLibrary	NO
-#define BuildGridFTP	        NO
-
-#define Accounting	        YES
 #define HasCDK                  NO
 #define UseXFSPrealloc	        YES
 
@@ -156,23 +76,15 @@
  * Section specifying the build of the Security packages
  */
 
-#define BuildSecurity	YES
 #define UseGSI	        YES
 #define UseKRB5	        YES
 #define UseHeimdalKrb5	NO
-
-#if BuildSecurity
-
-#define SecMakeStaticLibrary	NO
 
 #define BuildSecureTape	        NO
 #define BuildSecureVmgr	        NO
 #define BuildSecureCupv	        NO
 #define	BuildSecureVdqm	        NO
-#define	BuildSecureRfio	        YES
 #define BuildSecureRtcopy	NO
-#define BuildSecureCns	        YES
-#define BuildSecureStage	NO
 
 #if UseHeimdalKrb5
 #define Krb5Config /usr/heimdal/bin/krb5-config
@@ -194,4 +106,3 @@
 #define GSIMech
 #endif
 
-#endif /* BuildSecurity */
