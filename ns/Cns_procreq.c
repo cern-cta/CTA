@@ -72,7 +72,6 @@ int get_client_actual_id (thip, uid, gid, user)
 {
   struct passwd *pw;
 
-#ifdef CSEC
   if (thip->secure) {
     *uid = thip->Csec_uid;
     *gid = thip->Csec_gid;
@@ -83,12 +82,6 @@ int get_client_actual_id (thip, uid, gid, user)
     else
       *user = pw->pw_name;
   }
-#else
-  if ((pw = Cgetpwuid (*uid)) == NULL)
-    *user = "UNKNOWN";
-  else
-    *user = pw->pw_name;
-#endif
   return (0);
 }
 
