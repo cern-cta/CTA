@@ -15,10 +15,7 @@ digraph flowchart {
   "give mig file to rtcpd"     -> "ask rtcpd to rqst mig work";
   "ask rtcpd to rqst mig work" -> "tell rtcpd end of mig list";
   "tell rtcpd end of mig list" -> "process rtcpd sockets";
-  mode                         -> "get rec file from gateway"   [label=recall];
-  "get rec file from gateway"  -> "rec file?"
-  "rec file?"                  -> end                           [label=no];
-  "rec file?"                  -> "give rec vol to rtcpd"       [label=yes];
+  mode                         -> "give rec vol to rtcpd"       [label=recall];
   "give rec vol to rtcpd"      -> "ask rtcpd to rqst rec work";
   "ask rtcpd to rqst rec work" -> "tell rtcpd end of rec list";
   "tell rtcpd end of rec list" -> "process rtcpd sockets";
@@ -36,8 +33,6 @@ digraph flowchart {
   "ask rtcpd to rqst mig work" [shape=rectangle];
   "tell rtcpd end of mig list" [shape=rectangle];
   "process rtcpd sockets"      [shape=rectangle];
-  "get rec file from gateway"  [shape=rectangle];
-  "rec file?"                  [shape=diamond];
   "give rec vol to rtcpd"      [shape=rectangle];
   "ask rtcpd to rqst rec work" [shape=rectangle];
   "tell rtcpd end of rec list" [shape=rectangle];
