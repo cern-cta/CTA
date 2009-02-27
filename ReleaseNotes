@@ -1,4 +1,43 @@
 -----------
+- 2.1.9-0 -
+-----------
+
+  Bug Fixes
+  ---------
+  #45700: Possible deadlock in nameserver in case of concurrent nschclass
+          Note that the fix implied a change of schema in the nameserver. In practice : 
+          - a constraint has been added 
+          - an index has been added 
+          - we could drop a column that is unused. Although this drop is effective
+            in the DB creation script, it will not be done in running instances until
+            all old nameservers have been updated. This way, the schema change is backward
+            compatible.
+          - the nameserver DB has to be upgraded before any new nameserver daemon can run.
+            Note however that only nschclass would be affected
+
+  - All code related to CASTOR1 support has now been dropped. This includes :
+    + CASTOR1 clients, that is the package stager-clientold
+    + support for RFIO_USE_CASTOR_V2 environment variable, which means that we now default to CASTOR2
+    + several defaults for standard CASTOR machines, namely StageHost, VmgrHost, ExpertHost, RhHost
+      This has an impact on the client configuration, where STAGE_HOST is now mandatory, an error
+      message being displayed if it is not set and on server configurations where the proper entries
+      must be in the castor.conf (e.g. fro VMGR_HOST). Otherwise, the default is to try to use localhost.
+
+  - Imakefiles, spec and config files have been cleaned up and revisited.
+    All dependencies are now properly handled and checks have been added for
+    preventing compilation when missing dependencies are detected.
+    Checked dependencies include oracle, stk, lsf, globus as well as the DESTDIR
+    environment variable in case of make install.
+    Build* targets in site.def are now obsolete. In order to compile a subpart of
+    CASTOR, only regular make targets should be used.
+    New targets "client", "tape", "installclient" and "installtape" have been
+    created to compile/install the client/tape part only. This can be done even
+    if dependencies are missing for the server side, e.g. the client compile and
+    installs without oracle, lsf, stk.
+
+  - rtstat has been dropped together with the package containing it, i.e. rtcopy-client
+
+-----------
 - 2.1.8-3 -
 -----------
 
