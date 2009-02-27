@@ -3,3 +3,5 @@ if [ -e /etc/sysconfig/iptables ]; then
     /bin/sed -i.castor -e '/controlled by CASTOR-client RPM/,/end of CASTOR-client RPM modifications/d' /etc/sysconfig/iptables
     /sbin/service iptables condrestart > /dev/null 2>&1 || :
 fi
+# call to ldconfig after we uninstalled libraries
+/sbin/ldconfig
