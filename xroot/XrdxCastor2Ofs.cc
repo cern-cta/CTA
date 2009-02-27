@@ -1,4 +1,4 @@
-//          $Id: XrdxCastor2Ofs.cc,v 1.3 2009/02/27 12:13:29 apeters Exp $
+//          $Id: XrdxCastor2Ofs.cc,v 1.4 2009/02/27 12:22:02 apeters Exp $
 
 #include "XrdOfs/XrdOfsTrace.hh"
 #include "XrdClient/XrdClientAdmin.hh"
@@ -643,11 +643,13 @@ XrdxCastor2OfsFile::close()
       }
       TIMING(OfsTrace,"STOP",&checksumtiming);
       checksumtiming.Print(OfsTrace);
-      ZTRACE(close,"Recalculated Checksum [" << checklength << " bytes] : " << adler);
+      sprintf(ckSumbuf,"%x",adler);
+      ZTRACE(close,"Recalculated Checksum [" << checklength << " bytes] : " << ckSumbuf);
       hasadler = true;
     } else {
       if ((XrdOfsFS.doChecksumStreaming || XrdOfsFS.doChecksumUpdates) && hasadler) {
-	ZTRACE(close,"Streaming    Checksum [" << FileWriteBytes << " bytes] : " << adler);
+	sprintf(ckSumbuf,"%x",adler);
+	ZTRACE(close,"Streaming    Checksum [" << FileWriteBytes << " bytes] : " << ckSumbuf);
       }
     }
     
