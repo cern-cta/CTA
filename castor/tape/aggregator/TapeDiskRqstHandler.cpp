@@ -166,10 +166,11 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
       char     nsHost[CA_MAXHOSTNAMELEN+1];
       uint64_t fileId;
       uint32_t tapeFseq;
+      unsigned char blockId[4];
 
       // If there is a file to recall 
       if(GatewayTxRx::getFileToRecallFromGateway(gatewayHost, gatewayPort,
-        volReqId, filePath, nsHost, fileId, tapeFseq)) {
+        volReqId, filePath, nsHost, fileId, tapeFseq, blockId)) {
 
         castor::dlf::Param params[] = {
           castor::dlf::Param("volReqId"            , volReqId            ),

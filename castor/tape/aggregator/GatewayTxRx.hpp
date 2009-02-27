@@ -87,7 +87,7 @@ public:
     throw(castor::exception::Exception);
 
   /**
-   * Gets a file to recall from the tape tape gateway.
+   * Gets a file to recall from the tape gateway.
    *
    * @param gatewayHost The tape gateway host name.
    * @param gatewayPort The tape gateway port number.
@@ -96,13 +96,15 @@ public:
    * @param nsHost Out parameter: The name server host.
    * @param fileId Out parmeter: The CASTOR file ID.
    * @param tapeFileSeq Out parameter: The tape file sequence number.
+   * @param blockId Out parameter: The ID of the first block of the file.
    * @return True if there is a file to recall.
    */
   static bool getFileToRecallFromGateway(
     const char *gatewayHost, const unsigned short gatewayPort,
     const uint32_t transactionId, char (&filePath)[CA_MAXPATHLEN+1],
     char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId,
-    uint32_t &tapeFileSeq) throw(castor::exception::Exception);
+    uint32_t &tapeFileSeq, unsigned char (&blockId)[4])
+    throw(castor::exception::Exception);
 
   /**
    * Notifies the tape gateway of the successful migration of a file to tape.
@@ -114,6 +116,7 @@ public:
    * @param fileId The CASTOR file ID.
    * @param tapeFileSeq The tape file seuence number.
    * @param blockId The tape block ID.
+   * @param positionCommandCode The position method uesd by the drive.
    * @param checksumAlgorithm The name of the checksum algorithm.
    * @param checksum The file checksum.
    * @param fileSize The size of the file without compression.
@@ -121,7 +124,12 @@ public:
    */
   static void notifyGatewayFileMigrated(
     const char *gatewayHost, const unsigned short gatewayPort,
-    const uint32_t transactionId) throw(castor::exception::Exception);
+    const uint32_t transactionId,char (&nsHost)[CA_MAXHOSTNAMELEN+1], 
+    uint64_t &fileId, uint32_t &tapeFileSeq, unsigned char (&blockId)[4], 
+    uint32_t positionCommandCode,
+    char (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1], uint32_t checksum,
+    uint32_t fileSize, uint32_t compressedFileSize) 
+    throw(castor::exception::Exception);
 
   /**
    * Notifies the tape gateway of the successful recall of a file from tape.
@@ -134,11 +142,16 @@ public:
    * @param fileId The CASTOR file ID.
    * @param tapeFileSeq The tape file seuence number.
    * @param blockId The tape block ID.
+   * @param positionCommandCode The position method uesd by the drive.
    * @param checksumAlgorithm The name of the checksum algorithm.
    * @param checksum The file checksum.
    */
   static void notifyGatewayFileRecalled(const char *gatewayHost,
-    const unsigned short gatewayPort, const uint32_t transactionId)
+    const unsigned short gatewayPort, const uint32_t transactionId,
+    char (&nsHost)[CA_MAXHOSTNAMELEN+1],uint64_t &fileId,
+    uint32_t &tapeFileSeq, uint32_t positionCommandCode, 
+    char (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1], uint32_t checksum,
+    uint32_t fileSize, uint32_t compressedFileSize)
     throw(castor::exception::Exception);
 
   /**

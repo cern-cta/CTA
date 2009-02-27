@@ -230,6 +230,17 @@ public:
   static void tellRtcpdEndOfFileList(const int socketFd,
     const int netReadWriteTimeout) throw(castor::exception::Exception);
 
+  /**
+   * Send an abort message to RTCPD
+   *
+   *
+   * @param socketFd The socket file descriptor of the connection with RTCPD.
+   * @param netReadWriteTimeout The timeout to be applied when performing
+   * network read and write operations.
+   */
+  static void tellRtcpdToAbort(const int socketFd, const int netReadWriteTimeout)
+    throw(castor::exception::Exception);
+
 
 private:
 

@@ -596,6 +596,36 @@ namespace aggregator {
       return marshallRtcpNoMoreRequestsMsgBody(dst, n);
     }
 
+   /**
+     * Marshalls an "abort" message into the specified destination
+     * buffer.
+     *
+     * Please note that a "abort" message is bodiless with body
+     * length field of the header being set to 0.
+     *
+     * @param dst The destination message buffer.
+     * @return The total length of the message (header + body).
+     **/
+    static size_t marshallRtcpAbortMsg(
+      char *dst, const size_t dstLen) throw(castor::exception::Exception); 
+
+     /**
+     * Marshalls an "abort" message into the specified destination
+     * buffer.
+     *
+     * Please note that a "abort" message is bodiless with body
+     * length field of the header being set to 0.
+     *
+     * @param dst The destination message buffer.
+     * @return The total length of the message (header + body).
+     */
+    template<int n> static size_t marshallRtcpAbortMsg(
+      char (&dst)[n])
+      throw(castor::exception::Exception) {
+      return marshallRtcpAbortMsg(dst, n);
+    }
+
+
   private:
 
     /**

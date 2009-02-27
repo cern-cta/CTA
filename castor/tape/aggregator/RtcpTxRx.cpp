@@ -437,6 +437,70 @@ void castor::tape::aggregator::RtcpTxRx::tellRtcpdEndOfFileList(
 }
 
 //-----------------------------------------------------------------------------
+// tellRtcpdToAbort
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::RtcpTxRx::tellRtcpdToAbort(
+  const int socketFd, const int netReadWriteTimeout)
+  throw(castor::exception::Exception) {
+
+  // Marshall the message
+  char buf[MSGBUFSIZ];
+  size_t totalLen = 0;
+  try {
+    totalLen = Marshaller::marshallRtcpAbortMsg(buf);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Internal ie;
+  
+    ie.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to marshall \"no more requests\" message: "
+      << ex.getMessage().str();
+    
+    throw ie;
+  }
+
+  // Send the message
+  try {
+    Net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Exception ex2(SECOMERR);
+
+    ex2.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to send abort message to RTCPD: "
+      << ex.getMessage().str();
+  }
+  // Receive acknowledge from RTCPD
+  RtcpAcknowledgeMsg ackMsg;
+  try {
+    receiveRtcpAcknowledge(socketFd, netReadWriteTimeout, ackMsg);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Exception ex2(EPROTO);
+
+    ex2.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to receive acknowledge from RTCPD: "
+      << ex.getMessage().str();
+    throw ex2;
+  }
+
+  checkMagic(RTCOPY_MAGIC, ackMsg.magic, __PRETTY_FUNCTION__);
+  checkRtcopyReqType(RTCP_NOMORE_REQ, ackMsg.reqType, __PRETTY_FUNCTION__);
+
+  // If the acknowledge is negative
+  if(ackMsg.status != 0) {
+    castor::exception::Exception ex(ackMsg.status);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Received negative acknowledge from RTCPD"
+         ": Status: " << ackMsg.status;
+    throw ex;
+  }
+
+}
+
+
+
+
+
+//-----------------------------------------------------------------------------
 // receiveRcpJobRqst
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::receiveRcpJobRqst(

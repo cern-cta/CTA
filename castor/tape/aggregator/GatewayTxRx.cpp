@@ -31,6 +31,8 @@
 #include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/ErrorReport.hpp"
+#include "castor/tape/tapegateway/FileMigratedNotification.hpp"
+#include "castor/tape/tapegateway/FileRecalledNotification.hpp"
 #include "castor/tape/tapegateway/FileToMigrate.hpp"
 #include "castor/tape/tapegateway/FileToMigrateRequest.hpp"
 #include "castor/tape/tapegateway/FileToRecall.hpp"
@@ -375,8 +377,8 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
 bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
   const char *gatewayHost, const unsigned short gatewayPort,
   const uint32_t transactionId, char (&filePath)[CA_MAXPATHLEN+1],
-  char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId, uint32_t &tapeFileSeq)
-  throw(castor::exception::Exception) {
+  char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId, uint32_t &tapeFileSeq,
+  unsigned char (&blockId)[4]) throw(castor::exception::Exception) {
 
   bool thereIsAFileToRecall = false;
 
@@ -422,6 +424,10 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
       Utils::copyString(nsHost, file.nshost());            
       fileId = file.fileid();                              
       tapeFileSeq = file.fseq();                           
+      blockId[0] = file.blockId0();
+      blockId[1] = file.blockId1();
+      blockId[2] = file.blockId2();
+      blockId[3] = file.blockId3();
     } catch(std::bad_cast &bc) {                                     
       castor::exception::Internal ex;                                
 
@@ -535,18 +541,193 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
 // notifyGatewayFileMigrated
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
-  const char *gatewayHost, const unsigned short gatewayPort,
-  const uint32_t transactionId) throw(castor::exception::Exception) {
+  const char *gatewayHost, const unsigned short gatewayPort, 
+  const uint32_t transactionId,char (&nsHost)[CA_MAXHOSTNAMELEN+1],
+  uint64_t &fileId, uint32_t &tapeFileSeq, unsigned char (&blockId)[4],
+  uint32_t positionCommandCode,
+  char (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1], 
+  uint32_t checksum, uint32_t fileSize, uint32_t compressedFileSize ) 
+  throw(castor::exception::Exception) {
+
+  // Prepare the request
+  tapegateway::FileMigratedNotification request;
+
+  request.setTransactionId(transactionId);
+  request.setNshost(nsHost);
+  request.setFileid(fileId);
+  request.setBlockId0(blockId[0]); // block ID = 4 integers (little indian order) 
+  request.setBlockId1(blockId[1]); 
+  request.setBlockId2(blockId[2]); 
+  request.setBlockId3(blockId[3]); 
+  request.setPositionCommandCode(
+    (tapegateway::PositionCommandCode)positionCommandCode);
+  request.setChecksumName(checksumAlgorithm);
+  request.setChecksum(checksum);
+
+  // Connect to the tape gateway
+  castor::io::ClientSocket gatewaySocket(gatewayPort, gatewayHost);
+  gatewaySocket.connect();
+
+  // Send the request
+  gatewaySocket.sendObject(request);
+
+  // Receive the reply object wrapping it in an auto pointer so that it is
+  // automatically deallocated when it goes out of scope                  
+  std::auto_ptr<castor::IObject> reply(gatewaySocket.readObject());
+
+  // Close the connection to the tape gateway
+  gatewaySocket.close();
+
+  if(reply.get() == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to get reply object from the tape gateway"
+         ": ClientSocket::readObject() returned null";
+
+    throw ex;
+  }
+
+  // Temporary variable used to check for a transaction ID mistatch
+  uint64_t transactionIdFromGateway = 0;
+
+  switch(reply->type()) {
+  case OBJ_NotificationAcknowledge:
+    // Copy the reply information
+    try {
+      tapegateway::NotificationAcknowledge &notificationAcknowledge =
+        dynamic_cast<tapegateway::NotificationAcknowledge&>(*reply);
+      transactionIdFromGateway = notificationAcknowledge.transactionId();
+    } catch(std::bad_cast &bc) {
+      castor::exception::Internal ex;
+
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << "Failed to down cast reply object to "
+           "tapegateway::NotificationAcknowledge";
+
+      throw ex;
+    }
+
+    // If there is a transaction ID mismatch
+    if(transactionIdFromGateway != transactionId) {
+      castor::exception::Exception ex(EINVAL);
+
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << ": Transaction ID mismatch"
+           ": Expected = " << transactionId
+        << ": Actual = " << transactionIdFromGateway;
+
+      throw ex;
+    }
+    break;
+
+  default:
+    {
+      castor::exception::Exception ex(EINVAL);
+
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << ": Unknown reply type "
+           ": Reply type = " << reply->type();
+
+      throw ex;
+    }
+  } // Switch
 }
+
+
 
 
 //-----------------------------------------------------------------------------
 // notifyGatewayFileRecalled
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
-  const char *gatewayHost, const unsigned short gatewayPort,
-  const uint32_t transactionId) throw(castor::exception::Exception) {
+  const char *gatewayHost, const unsigned short gatewayPort, 
+  const uint32_t transactionId,char (&nsHost)[CA_MAXHOSTNAMELEN+1],
+  uint64_t &fileId, uint32_t &tapeFileSeq, uint32_t positionCommandCode,
+  char (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1], 
+  uint32_t checksum, uint32_t fileSize, uint32_t compressedFileSize ) 
+  throw(castor::exception::Exception) {
+
+  // Prepare the request
+  tapegateway::FileRecalledNotification request;
+  request.setTransactionId(transactionId);
+  request.setNshost(nsHost);
+  request.setFileid(fileId); 
+  request.setPositionCommandCode(
+    (tapegateway::PositionCommandCode)positionCommandCode); 
+  request.setChecksumName(checksumAlgorithm);
+  request.setChecksum(checksum);
+
+  // Connect to the tape gateway
+  castor::io::ClientSocket gatewaySocket(gatewayPort, gatewayHost);
+  gatewaySocket.connect();
+
+  // Send the request
+  gatewaySocket.sendObject(request);
+
+  // Receive the reply object wrapping it in an auto pointer so that it is
+  // automatically deallocated when it goes out of scope                  
+  std::auto_ptr<castor::IObject> reply(gatewaySocket.readObject());
+
+  // Close the connection to the tape gateway
+  gatewaySocket.close();
+
+  if(reply.get() == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Failed to get reply object from the tape gateway"
+         ": ClientSocket::readObject() returned null";
+
+    throw ex;
+  }
+
+  // Temporary variable used to check for a transaction ID mistatch
+  uint64_t transactionIdFromGateway = 0;
+
+  switch(reply->type()) {
+  case OBJ_NotificationAcknowledge:
+    // Copy the reply information
+    try {
+      tapegateway::NotificationAcknowledge &notificationAcknowledge =
+        dynamic_cast<tapegateway::NotificationAcknowledge&>(*reply);
+      transactionIdFromGateway = notificationAcknowledge.transactionId();
+    } catch(std::bad_cast &bc) {
+      castor::exception::Internal ex;
+
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << "Failed to down cast reply object to "
+           "tapegateway::NotificationAcknowledge";
+
+      throw ex;
+    }
+
+    // If there is a transaction ID mismatch
+    if(transactionIdFromGateway != transactionId) {
+      castor::exception::Exception ex(EINVAL);
+
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << ": Transaction ID mismatch"
+           ": Expected = " << transactionId
+        << ": Actual = " << transactionIdFromGateway;
+
+      throw ex;
+    }
+    break;
+
+  default:
+    {
+      castor::exception::Exception ex(EINVAL);
+
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << ": Unknown reply type "
+           ": Reply type = " << reply->type();
+
+      throw ex;
+    }
+  } // Switch
 }
+
 
 
 //-----------------------------------------------------------------------------
@@ -629,3 +810,4 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayOfEnd(
     }
   }
 }
+
