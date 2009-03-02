@@ -28,6 +28,7 @@
 #include "castor/server/TCPListenerThreadPool.hpp"
 #include "castor/tape/aggregator/AggregatorDaemon.hpp"
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
+#include "castor/tape/aggregator/DriveAllocationProtocolEngine.hpp"
 #include "castor/tape/aggregator/VdqmRequestHandlerThread.hpp"
 
 
@@ -35,6 +36,17 @@
 // main
 //------------------------------------------------------------------------------
 int main(int argc, char *argv[]) {
+
+  // TEST OF FSM - DEBUGGING ONLY - TO BE REMOVED ASAP
+//Cuuid_t cuuid = nullCuuid;
+//Cuuid_create(&cuuid);
+//castor::tape::aggregator::DriveAllocationProtocolEngine engine(cuuid, 0, 0);
+//try {
+//  engine.testFsm();
+//} catch(castor::exception::Exception &e) {
+//  std::cout << "testFsm raised an exception: " << e.getMessage().str()
+//    << std::endl;
+//}
 
   try {
     castor::tape::aggregator::AggregatorDaemon daemon;

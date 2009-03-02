@@ -83,13 +83,11 @@ namespace aggregator {
      */
     fsm::StateMachine m_fsm;
 
-    const char *getVolFromRtcpd();
-
     const char *getReqFromRtcpd();
 
-    const char *error();
+    const char *getVolFromTGate();
 
-    const char *closeRtcpdConAndError();
+    const char *error();
   };
 
 } // namespace aggregator

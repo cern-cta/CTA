@@ -59,19 +59,16 @@ void castor::tape::aggregator::DriveAllocationProtocolEngine::testFsm() {
   typedef fsm::Callback<DriveAllocationProtocolEngine> Callback;
   Callback getReqFromRtcpd(*this,
     &DriveAllocationProtocolEngine::getReqFromRtcpd);
-  Callback getVolFromRtcpd(*this,
-    &DriveAllocationProtocolEngine::getVolFromRtcpd);
+  Callback getVolFromTGate(*this,
+    &DriveAllocationProtocolEngine::getVolFromTGate);
   Callback error(*this, &DriveAllocationProtocolEngine::error);
-  Callback closeRtcpdConAndError(*this,
-    &DriveAllocationProtocolEngine::closeRtcpdConAndError);
 
   fsm::Transition transitions[] = {
   // from state       , to state        , event , action
-    {"INIT"           , "WAIT_RTCPD_REQ", "INIT", &getReqFromRtcpd      },
-    {"WAIT_RTCPD_REQ" , "WAIT_TGATE_VOL", "REQ" , &getVolFromRtcpd      },
-    {"WAIT_TGATE_VOL" , "END"           , "VOL" , NULL                  },
-    {"RTCPD_CONNECTED", "FAILED"        , "ERR" , &closeRtcpdConAndError},
-    {NULL             , NULL            , NULL  , NULL                  }};
+    {"INIT"           , "WAIT_RTCPD_REQ", "INIT", &getReqFromRtcpd},
+    {"WAIT_RTCPD_REQ" , "WAIT_TGATE_VOL", "REQ" , &getVolFromTGate},
+    {"WAIT_TGATE_VOL" , "SUCCEEDED"     , "VOL" , NULL            },
+    {NULL             , NULL            , NULL  , NULL            }};
 
   m_fsm.setTransitions(transitions);
 
@@ -122,8 +119,8 @@ void castor::tape::aggregator::DriveAllocationProtocolEngine::testFsm() {
 
 
 const char *castor::tape::aggregator::DriveAllocationProtocolEngine::
-  getVolFromRtcpd() {
-  std::cout << "getVolFromRtcpd()" << std::endl;
+  getVolFromTGate() {
+  std::cout << "getVolFromTGate()" << std::endl;
   sleep(1);                                     
   return "VOL";                                 
 }                                               
@@ -145,11 +142,3 @@ const char *castor::tape::aggregator::DriveAllocationProtocolEngine::
   return NULL;                        
 
 }                                     
-
-
-const char *castor::tape::aggregator::DriveAllocationProtocolEngine::
-  closeRtcpdConAndError() {
-  std::cout << "closeRtcpConAndError()" << std::endl;
-  sleep(1);                                          
-  return NULL;                                       
-}                                                    
