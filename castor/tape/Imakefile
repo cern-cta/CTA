@@ -22,4 +22,4 @@
 # @author Sebastien Ponce, sebastien.ponce@cern.ch
 #
 
-#SUBDIRS = aggregator fsm tapegateway 
+#SUBDIRS = aggregator format fsm tapegateway 
