@@ -54,6 +54,7 @@ TAPEGATEWAY_MESSAGES_SRCS = \
 TAPEGATEWAY_IO_SRCS = \
   ../../io/StreamBaseFileInfoCnv.cpp \
   ../../io/StreamEndNotificationCnv.cpp \
+  ../../io/StreamEndNotificationErrorReportCnv.cpp \
   ../../io/StreamErrorReportCnv.cpp \
   ../../io/StreamFileMigratedNotificationCnv.cpp \
   ../../io/StreamFileRecalledNotificationCnv.cpp \
