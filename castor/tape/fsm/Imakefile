@@ -26,8 +26,9 @@ CFLAGS = -O -I../../../h -I../../.. $(THREADFLAGS)
 LDFLAGS += $(MTLDFLAGS)
 LD = g++
 
-TAPEFSMLIB_SRCS = \
-  StateMachine.cpp
-
+TAPEFSMLIB_SRCS = StateMachine.cpp
 TAPEFSMLIB_OBJS = $(TAPEFSMLIB_SRCS:.cpp=.Osuf)
+
+DependsOnLibrary(../../common,castorcommon)
+
 SharedLibraryTarget(castortapefsm,$(TAPEFSMLIB_OBJS),$(DEPLIB),$(LIBS))
