@@ -21,6 +21,16 @@
 # @author Steven Murray, Steven.Murray@cern.ch
 #
 
-INCLUDES = -I../../../h -I../../..
-CPPFLAGS = -pedantic -Wall -Werror -g -O0 $(INCLUDES) $(MTCCFLAGS)
-CFLAGS = -O -I$(INCLUDES) $(THREADFLAGS)
+CPPFLAGS = -pedantic -Wall -Werror -g -O0 -I../../../h -I../../.. $(MTCCFLAGS)
+CFLAGS = -O -I../../../h -I../../.. $(THREADFLAGS)
+LDFLAGS += $(MTLDFLAGS)
+LD = g++
+
+TAPEFORMAT_SRCS = \
+     ALB0100Marshaller.cpp \ 
+     ALB0100Unmarshaller.cpp \ 
+     Marshaller.cpp \ 
+     Unmarshaller.cpp
+
+TAPEFORMATLIB_OBJS = $(TAPEFORMAT_SRCS:.cpp=.Osuf)
+SharedLibraryTarget(castortapeformat,$(TAPEFORMATLIB_OBJS),$(DEPLIB),$(LIBS))
