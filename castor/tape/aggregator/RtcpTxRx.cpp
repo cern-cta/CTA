@@ -40,6 +40,7 @@
 #include "h/rtcp_constants.h"
 #include "h/vdqm_constants.h"
 
+#include <iostream>
 #include <string.h>
 #include <time.h>
 
@@ -972,16 +973,47 @@ void castor::tape::aggregator::RtcpTxRx::checkRtcopyReqType(
   const uint32_t expected, const uint32_t actual, const char *function)
   throw(castor::exception::Exception) {
 
-  if(expected != actual) {
-    castor::exception::Exception ex(EINVAL);
+  checkRtcopyReqType(&expected, 1, actual, function);
+}
 
-    ex.getMessage() << function
-      << ": Invalid RTCOPY_MAGIC request type"
-         ": Expected: 0x" << std::hex << expected
-      << "(" << Utils::rtcopyReqTypeToStr(expected) << ")"
-         ": Actual: 0x" << std::hex << actual
-      << "(" << Utils::rtcopyReqTypeToStr(actual) << ")";
 
-    throw ex;
+//-----------------------------------------------------------------------------
+// checkRtcopyReqType
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::RtcpTxRx::checkRtcopyReqType(
+  const uint32_t *expected, const size_t nbExpected, const uint32_t actual,
+  const char *function) throw(castor::exception::Exception) {
+
+  size_t i = 0;
+
+
+  // If actual request type equals one of the expected then return
+  for(i=0; i<nbExpected; i++) {
+    if(actual == expected[i]) {
+      return;
+    }
   }
+
+  // This point can only be reached if the actual request type is not expected
+  castor::exception::Exception ex(EBADMSG);
+
+  std::ostream &messageStream = ex.getMessage();
+
+  messageStream << function
+    << ": Invalid RTCOPY_MAGIC request type"
+       ": Expected:";
+
+  for(i=0; i<nbExpected; i++) {
+    if(i != 0) {
+      messageStream << " OR";
+    }
+
+    messageStream << " 0x" << std::hex << expected[i]
+      << "(" << Utils::rtcopyReqTypeToStr(expected[i]) << ")";
+  }
+
+  messageStream << ": Actual: 0x" << std::hex << actual
+    << "(" << Utils::rtcopyReqTypeToStr(actual) << ")";
+
+  throw ex;
 }

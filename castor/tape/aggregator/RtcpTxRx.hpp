@@ -302,6 +302,33 @@ private:
     const uint32_t actual, const char *function)
     throw(castor::exception::Exception);
 
+  /**
+   * Throws an exception if one of the expected RTCOPY_MAGIC request types is
+   * not equal to the actual value.
+   *
+   * @param expected   Array of expected request types.
+   * @param nbExpected The size of the array of expected request types.
+   * @param received   The actual request type.
+   * @param function   The name of the caller function.
+   */
+  static void checkRtcopyReqType(const uint32_t *expected,
+    const size_t nbExpected, const uint32_t actual, const char *function)
+    throw(castor::exception::Exception);
+
+  /**
+   * Throws an exception if one of the expected RTCOPY_MAGIC request types is
+   * not equal to the actual value.
+   *
+   * @param expected   Array of expected request types.
+   * @param received   The actual request type.
+   * @param function   The name of the caller function.
+   */
+  template <size_t n> static void checkRtcopyReqType(
+    const uint32_t (&expected)[n], const uint32_t actual, const char *function)
+    throw(castor::exception::Exception) {
+    checkRtcopyReqType(expected, n, actual, function);
+   }
+
 }; // class RtcpTxRx
 
 } // namespace aggregator
