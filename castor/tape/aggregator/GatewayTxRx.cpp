@@ -58,6 +58,20 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
   tapegateway::VolumeRequest request;
   request.setVdqmVolReqId(volReqId);
 
+//===================================================
+// Hardcoded volume INFO
+#ifdef EMULATE_GATEWAY 
+  
+  //transactionIdFromGateway = volReqId;
+  Utils::copyString(vid,     "I10550");
+  mode = 0;
+  Utils::copyString(label,   "aul");
+  Utils::copyString(density, "700GC");
+  return(true);
+
+#endif
+//===================================================
+
   // Connect to the tape gateway
   castor::io::ClientSocket gatewaySocket(gatewayPort, gatewayHost);
   gatewaySocket.connect();
@@ -385,6 +399,24 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
   // Prepare the request
   tapegateway::FileToRecallRequest request;
   request.setTransactionId(transactionId);  
+
+//===================================================
+// Hardcoded volume INFO
+#ifdef EMULATE_GATEWAY 
+
+  //transactionIdFromGateway = volReqId;
+  Utils::copyString(filePath, "lxc2disk15.cern.ch:/srv/castor/04//71/305892471@castorns.263135");
+  Utils::copyString(nsHost,   "castorns");
+  fileId      = 305892471;
+  tapeFileSeq = 124;
+  blockId[0]  = 0;
+  blockId[1]  = 0;
+  blockId[2]  = 4;
+  blockId[3]  = 207;
+  return(true);
+
+#endif
+//===================================================
 
   // Connect to the tape gateway
   castor::io::ClientSocket gatewaySocket(gatewayPort, gatewayHost);
