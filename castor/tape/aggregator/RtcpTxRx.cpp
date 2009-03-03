@@ -425,6 +425,11 @@ void castor::tape::aggregator::RtcpTxRx::tellRtcpdEndOfFileList(
 
   checkMagic(RTCOPY_MAGIC, ackMsg.magic, __PRETTY_FUNCTION__);
   checkRtcopyReqType(RTCP_NOMORE_REQ, ackMsg.reqType, __PRETTY_FUNCTION__);
+// FOR THE FUTURE
+//{
+//  const uint32_t expected[] = {RTCP_NOMORE_REQ, RTCP_TAPEERR_REQ};
+//  checkRtcopyReqType(expected, ackMsg.reqType, __PRETTY_FUNCTION__);
+//}
 
   // If the acknowledge is negative
   if(ackMsg.status != 0) {
@@ -1005,7 +1010,7 @@ void castor::tape::aggregator::RtcpTxRx::checkRtcopyReqType(
 
   for(i=0; i<nbExpected; i++) {
     if(i != 0) {
-      messageStream << " OR";
+      messageStream << " or";
     }
 
     messageStream << " 0x" << std::hex << expected[i]
