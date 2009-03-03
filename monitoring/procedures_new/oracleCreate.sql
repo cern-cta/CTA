@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/03/03 10:47:22 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/03/03 13:47:23 $ $Author: waldron $
  *
  * This script create a new Monitoring schema
  *
@@ -36,13 +36,13 @@ SET VER OFF
 DECLARE
   unused VARCHAR2(2048);
 BEGIN
-  -- Check that the schema exists
+  -- Check that the user exists
   BEGIN
     SELECT username INTO unused
       FROM all_users
      WHERE lower(username) = '&&dlfschema';
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    raise_application_error(-20000, 'Schema &dlfschema does not exist');
+    raise_application_error(-20000, 'User &dlfschema does not exist');
   END;
   -- Check that the correct grants are present
   BEGIN
@@ -51,7 +51,7 @@ BEGIN
      WHERE lower(owner) = '&&dlfschema'
        AND table_name = 'DLF_VERSION';
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    raise_application_error(-20000, 'Unable to access the &dlfschema..dlf_version table. Check that the correct grants have been issued!');
+    raise_application_error(-20001, 'Unable to access the &dlfschema..dlf_version table. Check that the correct grants have been issued!');
   END;  
 END;
 /
@@ -106,6 +106,10 @@ CREATE GLOBAL TEMPORARY TABLE CacheEfficiencyHelper (reqid CHAR(36))
 /* SQL statement for table TapeMountsHelper */
 CREATE TABLE TapeMountsHelper (timestamp DATE CONSTRAINT NN_TapeMountsHelper_ts NOT NULL, tapevid VARCHAR2(20))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
+
+/* SQL statement for a view on the DLF_Monitoring table */
+CREATE OR REPLACE VIEW DLFStats AS
+  SELECT * FROM &dlfschema..dlf_monitoring;
 
 
 /* PL/SQL method implementing statsLatency
