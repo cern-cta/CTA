@@ -474,6 +474,9 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
   // If there is a volume
   if(thereIsAVolume) {
 
+    // Complete the RTCPD volume message by setting the volume request ID
+    rtcpVolume.volReqId = volReqId;
+
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId"   , volReqId          ),
       castor::dlf::Param("gatewayHost", gatewayHost       ),
