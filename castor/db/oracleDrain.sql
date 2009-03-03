@@ -1,5 +1,5 @@
 /*******************************************************************
- * @(#)$RCSfile: oracleDrain.sql,v $ $Revision: 1.3 $ $Date: 2009/02/12 14:25:36 $ $Author: itglp $
+ * @(#)$RCSfile: oracleDrain.sql,v $ $Revision: 1.4 $ $Date: 2009/03/03 10:52:42 $ $Author: waldron $
  * PL/SQL code for Draining FileSystems Logic
  *
  * Additional procedures modified to support the DrainingFileSystems
@@ -235,7 +235,6 @@ CREATE OR REPLACE PROCEDURE stopDraining(inNodeName   IN VARCHAR,
                                          inMountPoint IN VARCHAR2 DEFAULT NULL)
 AS
   fsIds "numList";
-  reqIds "numList";
 BEGIN
   -- Check that the nodename and mountpoint input options are valid
   SELECT FileSystem.id BULK COLLECT INTO fsIds
@@ -607,9 +606,7 @@ END;
 
 /* Procedure responsible for managing the draining process */
 CREATE OR REPLACE PROCEDURE drainManager AS
-  fsIds  "numList";
-  reqIds "numList";
-  unused NUMBER;
+  fsIds "numList";
 BEGIN
   -- Delete the filesystems which are:
   --  A) in a DELETING state and have no transfers pending in the scheduler.
@@ -620,81 +617,68 @@ BEGIN
                          AND status = 3)  -- WAITD2D
           AND status = 6)  -- DELETING
       OR (status = 5 AND lastUpdateTime < getTime() - (7 * 86400));
-  -- Release locks
-  COMMIT;
   -- Process filesystems which in a CREATED state
   UPDATE DrainingFileSystem
-     SET status = 1   -- INITIALIZING
-   WHERE status = 0;  -- CREATED
-  -- Release locks, this isn't really necessary but its done so that the user
-  -- gets feedback when listing the filesystems which are being drained. If we
-  -- dont do this, filesystems could remain in a CREATED state for a very very
-  -- long time.
+     SET status = 1  -- INITIALIZING
+   WHERE status = 0  -- CREATED
+  RETURNING fileSystem BULK COLLECT INTO fsIds;
+  -- Commit, this isn't really necessary but its done so that the user gets 
+  -- feedback when listing the filesystems which are being drained.
   COMMIT;
-  -- Loop over filesystems in t
-  FOR fs IN (SELECT fileSystem
-               FROM DrainingFileSystem
-              WHERE status = 1) -- INITIALIZAING
+  IF fsIds.COUNT = 0 THEN
+    RETURN;  -- No results
+  END IF;
+  -- Create the DrainingDiskCopy snapshot
+  INSERT /*+ APPEND */ INTO DrainingDiskCopy
+    (fileSystem, diskCopy, creationTime, priority, fileSize)
+      (SELECT /*+ index(DC I_DiskCopy_FileSystem) */
+              DC.fileSystem, DC.id, DC.creationTime, DC.status,
+              DC.diskCopySize
+         FROM DiskCopy DC, DrainingFileSystem DFS
+        WHERE DFS.fileSystem = DC.fileSystem
+          AND DFS.fileSystem IN
+            (SELECT /*+ CARDINALITY(fsIdTable 5) */ *
+               FROM TABLE (fsIds) fsIdTable)
+          AND ((DC.status = 0         AND DFS.fileMask = 0)    -- STAGED
+           OR  (DC.status = decode(DC.status, 10, DC.status, NULL)
+                AND DFS.fileMask = 1)                          -- CANBEMIGR
+           OR  (DC.status IN (0, 10)  AND DFS.fileMask = 2))); -- ALL
+  -- Update the DrainingFileSystem counters
+  FOR a IN (SELECT fileSystem, count(*) files, sum(DDC.fileSize) bytes
+              FROM DrainingDiskCopy DDC
+             WHERE DDC.fileSystem IN
+               (SELECT /*+ CARDINALITY(fsIdTable 5) */ *
+                  FROM TABLE (fsIds) fsIdTable)
+               AND DDC.status = 0  -- CREATED
+             GROUP BY DDC.fileSystem)
   LOOP
-    BEGIN
-      -- Acquire a lock on the DrainingFileSystem entry. We need to this as
-      -- there are commits inside the loop!
-      SELECT fileSystem INTO unused
-        FROM DrainingFileSystem
-       WHERE status = 1  -- INITIALIZING
-         AND fileSystem = fs.fileSystem
-         FOR UPDATE;
-      -- Create the DrainingDiskCopy snapshot
-      INSERT /*+ APPEND */ INTO DrainingDiskCopy
-        (fileSystem, diskCopy, creationTime, priority, fileSize)
-          (SELECT /*+ index(DC I_DiskCopy_FileSystem) */
-                  DC.fileSystem, DC.id, DC.creationTime, DC.status,
-                  DC.diskCopySize
-             FROM DiskCopy DC, DrainingFileSystem DFS
-            WHERE DFS.fileSystem = DC.fileSystem
-              AND DFS.fileSystem = fs.fileSystem
-              AND ((DC.status = 0         AND DFS.fileMask = 0)    -- STAGED
-               OR  (DC.status = decode(DC.status, 10, DC.status, NULL)
-                    AND DFS.fileMask = 1)                          -- CANBEMIGR
-               OR  (DC.status IN (0, 10)  AND DFS.fileMask = 2))); -- ALL
-      -- Update the DrainingFileSystem counters
-      FOR a IN (SELECT fileSystem, count(*) files, sum(DDC.fileSize) bytes
-                  FROM DrainingDiskCopy DDC
-                 WHERE DDC.fileSystem = fs.fileSystem
-                   AND DDC.status = 0  -- CREATED
-                 GROUP BY DDC.fileSystem)
-      LOOP
-        UPDATE DrainingFileSystem
-           SET totalFiles = a.files,
-               totalBytes = a.bytes
-         WHERE fileSystem = a.fileSystem;
-      END LOOP;
-      -- Update the filesystem entry to RUNNING
-      UPDATE DrainingFileSystem
-         SET status = 2,  -- RUNNING
-             startTime = getTime(),
-             lastUpdateTime = getTime()
-       WHERE fileSystem = fs.fileSystem;
-      -- Start the process of draining the filesystems. For an explanation of
-      -- the query refer to: "Creating N Copies of a Row":
-      -- http://forums.oracle.com/forums/message.jspa?messageID=1953433#1953433
-      FOR a IN ( SELECT fileSystem
-                   FROM DrainingFileSystem
-                  WHERE fileSystem = fs.fileSystem
-                CONNECT BY CONNECT_BY_ROOT fileSystem = fileSystem
-                    AND LEVEL <= maxTransfers
-                    AND PRIOR sys_guid() IS NOT NULL
-                  ORDER BY fileSystem)
-      LOOP
-        drainFileSystem(a.fileSystem);
-      END LOOP;
-      -- Release locks
-      COMMIT;
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- Do nothing, by the time we came to process the filesystem it was no
-      -- longer in an INITIALIZING state.
-      NULL;
-    END;
+    UPDATE DrainingFileSystem
+       SET totalFiles = a.files,
+           totalBytes = a.bytes
+     WHERE fileSystem = a.fileSystem;
+  END LOOP;
+  -- Update the filesystem entries to RUNNING
+  UPDATE DrainingFileSystem
+     SET status = 2,  -- RUNNING
+         startTime = getTime(),
+         lastUpdateTime = getTime()
+   WHERE fileSystem IN
+     (SELECT /*+ CARDINALITY(fsIdTable 5) */ *
+        FROM TABLE (fsIds) fsIdTable);
+  -- Start the process of draining the filesystems. For an explanation of the
+  -- query refer to: "Creating N Copies of a Row":
+  -- http://forums.oracle.com/forums/message.jspa?messageID=1953433#1953433
+  FOR a IN ( SELECT fileSystem
+               FROM DrainingFileSystem
+              WHERE fileSystem IN
+                (SELECT /*+ CARDINALITY(fsIdTable 5) */ *
+                   FROM TABLE (fsIds) fsIdTable)
+            CONNECT BY CONNECT_BY_ROOT fileSystem = fileSystem
+                AND LEVEL <= maxTransfers
+                AND PRIOR sys_guid() IS NOT NULL
+              ORDER BY fileSystem)
+  LOOP
+    drainFileSystem(a.fileSystem);
   END LOOP;
 END;
 /
