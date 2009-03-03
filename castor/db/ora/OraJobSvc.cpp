@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.58 $ $Release$ $Date: 2009/02/11 07:50:09 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.59 $ $Release$ $Date: 2009/03/03 10:37:17 $ $Author: itglp $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -578,7 +578,7 @@ void castor::db::ora::OraJobSvc::prepareForMigration
     if (0 == m_prepareForMigrationStatement) {
       m_prepareForMigrationStatement =
         createStatement(s_prepareForMigrationStatementString);
-      m_prepareForMigrationStatement->setAutoCommit(true);
+      m_prepareForMigrationStatement->setAutoCommit(false);
       m_prepareForMigrationStatement->registerOutParam
         (4, oracle::occi::OCCIDOUBLE);
       m_prepareForMigrationStatement->registerOutParam
@@ -615,12 +615,13 @@ void castor::db::ora::OraJobSvc::prepareForMigration
     if (errorCode > 0) {
       // For now, the only situation when errorCode in not 0
       // is when the file got deleted while it was written to
-      // This by itself is not an error, but we should no take
+      // This by itself is not an error, but we should not take
       // any action here. We thus log something and return
       // "File was deleted while it was written to. Giving up with migration."
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
                               DLF_BASE_ORACLELIB, 0, 0, &fileid);
-
+      // also rollback the prepareForMigration
+      cnvSvc()->rollback();
       return;
     }
     // collect rest of output
@@ -644,6 +645,8 @@ void castor::db::ora::OraJobSvc::prepareForMigration
       } else {
         ex.getMessage() << cns_error_buffer;
       }
+      // rollback the prepareForMigration
+      cnvSvc()->rollback();
       throw ex;
     }
 
@@ -684,13 +687,18 @@ void castor::db::ora::OraJobSvc::prepareForMigration
             << (useChkSum == true ? "Cns_setfsizecs" : "Cns_setfsize")
             << " failed : ";
           if (!strcmp(cns_error_buffer, "")) {
-	    ex.getMessage() << sstrerror(serrno);
+            ex.getMessage() << sstrerror(serrno);
           } else {
             ex.getMessage() << cns_error_buffer;
           }
+          // rollback the prepareForMigration
+          cnvSvc()->rollback();
           throw ex;
         }
       }
+      
+      // commit prepareForMigration procedure
+      cnvSvc()->commit();
     }
   } catch (oracle::occi::SQLException e) {
     handleException(e);

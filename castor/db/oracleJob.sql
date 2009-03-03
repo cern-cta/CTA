@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.677 $ $Date: 2009/02/23 11:53:17 $ $Author: itglp $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.678 $ $Date: 2009/03/03 10:37:17 $ $Author: itglp $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -758,7 +758,6 @@ BEGIN
   updateFsFileClosed(fsId);
   -- Archive Subrequest
   archiveSubReq(srId, 8);  -- FINISHED
-  COMMIT;
 END;
 /
 
