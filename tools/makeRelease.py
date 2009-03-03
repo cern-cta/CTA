@@ -33,7 +33,7 @@ def findUpdates(d):
 
 def findGrantAndDropScripts(workDir, dirs):
     res = []
-    dgRegExp = re.compile('\w+_oracle_(grant|schema).sql?')
+    dgRegExp = re.compile('\w+_oracle_(grant|schema|user).sql?')
     for d in (dirs):
         d = workDir + os.sep + d
         for f in os.listdir(d):
