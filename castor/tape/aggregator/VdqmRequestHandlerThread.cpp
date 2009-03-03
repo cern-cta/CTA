@@ -423,14 +423,22 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
       AGGREGATOR_INITIAL_RTCPD_CALLBACK_WITHOUT_INFO);
   }
 
-  // Get request informatiom from RTCPD
+  // Get the request informatiom from RTCPD
+  // The volume request ID is already known, but getting the drive unit is also
+  // returned which is good for logging
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId", volReqId)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_GET_REQUEST_INFO_FROM_RTCPD, params);
+  }
   RtcpTapeRqstErrMsgBody rtcpdRequestInfoReply;
   RtcpTxRx::getRequestInfoFromRtcpd(rtcpdInitialSocketFd.get(),
     RTCPDNETRWTIMEOUT, rtcpdRequestInfoReply);
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", rtcpdRequestInfoReply.volReqId),
-      castor::dlf::Param("unit"    , rtcpdRequestInfoReply.unit)};
+      castor::dlf::Param("volReqIdFromRtcpd", rtcpdRequestInfoReply.volReqId),
+      castor::dlf::Param("unit"             , rtcpdRequestInfoReply.unit)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_GOT_REQUEST_INFO_FROM_RTCPD, params);
   }
@@ -447,14 +455,24 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
 
     throw ex;
   }
- 
+
+  // Get the volume from the tape gateway
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId"   , volReqId   ),
+      castor::dlf::Param("gatewayHost", gatewayHost),
+      castor::dlf::Param("gatewayPort", gatewayPort)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_GET_VOLUME_FROM_GATEWAY, params);
+  }
   RtcpTapeRqstErrMsgBody rtcpVolume;
   Utils::setBytes(rtcpVolume, '\0');
+  const bool thereIsAVolume = GatewayTxRx::getVolumeFromGateway(gatewayHost,
+    gatewayPort, volReqId, rtcpVolume.vid, rtcpVolume.mode, rtcpVolume.label,
+    rtcpVolume.density);
 
   // If there is a volume
-  if(GatewayTxRx::getVolumeFromGateway(gatewayHost, gatewayPort, volReqId, 
-     rtcpVolume.vid, rtcpVolume.mode, rtcpVolume.label,
-     rtcpVolume.density)) {
+  if(thereIsAVolume) {
 
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId"   , volReqId          ),
@@ -464,7 +482,8 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
       castor::dlf::Param("mode"       , rtcpVolume.mode   ),
       castor::dlf::Param("label"      , rtcpVolume.label  ),
       castor::dlf::Param("density"    , rtcpVolume.density)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, AGGREGATOR_VOLUME, params);
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_GOT_VOLUME_FROM_GATEWAY, params);
 
   // Else there is no volume
   } else {
@@ -473,8 +492,8 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
       castor::dlf::Param("volReqId"   , volReqId   ),
       castor::dlf::Param("gatewayHost", gatewayHost),
       castor::dlf::Param("gatewayPort", gatewayPort)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, AGGREGATOR_NO_VOLUME,
-      params);
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_GOT_NO_VOLUME_FROM_GATEWAY, params);
 
     return;
   }
