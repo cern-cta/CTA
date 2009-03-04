@@ -1,12 +1,13 @@
-.\" @(#)$RCSfile: nsgetpath.man,v $ $Revision: 1.2 $ $Date: 2008/11/03 10:37:05 $ CERN Castor Dev team
+.\" @(#)$RCSfile: nsgetpath.man,v $ $Revision: 1.3 $ $Date: 2009/03/04 13:45:24 $ CERN Castor Dev team
 .\" Copyright (C) 2003  CERN
 .\" All rights reserved
 .\"
-.TH NSGETPATH 1 "$Date: 2008/11/03 10:37:05 $" CASTOR "Cns User Commands"
+.TH NSGETPATH 1 "$Date: 2009/03/04 13:45:24 $" CASTOR "Cns User Commands"
 .SH NAME
 nsgetpath \- get file path from fileid
 .SH SYNOPSIS
 .B nsgetpath
+[\fROPTION\fR]
 <\fCNSHOST\fR> [FILEID|-x HEXID\fR]
 .SH DESCRIPTION
 .B nsgetpath
@@ -16,6 +17,9 @@ server where it resides.
 .TP
 .B -x,\ \-\-hex=HEXID
 Fileid expressed in hexadecimal form.
+.TP
+.B -i,\ \-\-ignore
+Ignore error messages related to forced CNS hosts.
 .TP
 .B \-\-help
 display this help and exit
