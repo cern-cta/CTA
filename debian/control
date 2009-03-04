@@ -39,13 +39,6 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
 Description: castor (Cern Advanced STORage system)
  Distributed Logging Facility server
 
-Package: castor-doc
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: castor (Cern Advanced STORage system)
- General documentation.
- Currently provides information on an obsolete feature herited from SHIFT.
-
 Package: castor-expert-server
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
@@ -196,7 +189,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-stager-client
 Architecture: any
-Obsoletes: castor-commands
+Obsoletes: castor-commands, castor-doc
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: castor (Cern Advanced STORage system)
  Stager clients

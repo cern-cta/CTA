@@ -44,7 +44,6 @@ sendscsicmd.o: sendscsicmd.c
 
 ClientSharedLibraryTarget(castorcommon,$(COMMONLIB_OBJS),,-ldl -lpthread)
 
-FILEMANPAGE(account)
 LIBMANPAGE(getacct)
 LIBMANPAGE(getacctent)
 LIBMANPAGE(getconfent)
