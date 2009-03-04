@@ -324,7 +324,7 @@ castor::repack::RepackServer::RepackServer() :
 
   // Number of files
 
-   if ( tmp = getconfent("REPACK", "MAXFILES",0)){
+   if ((tmp = getconfent("REPACK", "MAXFILES",0))) {
      dp=tmp;
      m_maxFiles = strtoul(tmp, &dp, 0);
      if  (*dp != 0 || m_maxFiles<=0) {
@@ -339,7 +339,7 @@ castor::repack::RepackServer::RepackServer() :
 
    // Number of tapes
 
-   if ( tmp = getconfent("REPACK", "MAXTAPES",0)){
+   if ((tmp = getconfent("REPACK", "MAXTAPES",0))) {
      dp=tmp;
      m_maxTapes = strtoul(tmp, &dp, 0);
      if  (*dp != 0 || m_maxTapes<=0) {
