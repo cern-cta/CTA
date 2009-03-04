@@ -31,6 +31,7 @@
 #include "castor/tape/aggregator/RtcpFileRqstErrMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpTapeRqstErrMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpTapeRqstMsgBody.hpp"
+#include "h/Cuuid.h"
 
 #include <iostream>
 #include <stdint.h>
@@ -53,13 +54,15 @@ public:
    * Gets the request information from RTCPD by sending and receiving the
    * necessary messages.
    *
+   * @param cuuid The ccuid to be used for logging.
+   * @param volReqId The volume request ID to be sent to the tape gateway.
    * @param socketFd The socket file descriptor of the connection with RTCPD.
    * @param netReadWriteTimeout The timeout to be applied when performing
    * network read and write operations.
    * @param reply The request structure to be filled with the reply from
    * RTCPD.
    */
-  static void getRequestInfoFromRtcpd(const int socketFd,
+  static void getRequestInfoFromRtcpd(const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
     const int netReadWriteTimeout, RtcpTapeRqstErrMsgBody &reply)
     throw(castor::exception::Exception);
 
@@ -67,6 +70,8 @@ public:
    * Gives information about a volume to RTCPD by sending and receiving the
    * necessary messages.
    *
+   * @param cuuid The ccuid to be used for logging.
+   * @param volReqId The volume request ID to be sent to the tape gateway.
    * @param socketFd The socket file descriptor of the connection with RTCPD.
    * @param netReadWriteTimeout The timeout to be applied when performing
    * network read and write operations.
@@ -74,7 +79,7 @@ public:
    * @param reply The structure to be filled with the reply from
    * RTCPD.
    */
-  static void giveVolumeToRtcpd(const int socketFd,
+  static void giveVolumeToRtcpd(const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
     const int netReadWriteTimeout, RtcpTapeRqstErrMsgBody &request)
     throw(castor::exception::Exception);
 
@@ -82,53 +87,63 @@ public:
    * Sends the specified RTCPD acknowledge message to RTCPD using the
    * specified socket.
    *
+   * @param cuuid The ccuid to be used for logging.
+   * @param volReqId The volume request ID to be sent to the tape gateway.
    * @param socketFd The socket file descriptor of the connection with RTCPD.
    * @param netReadWriteTimeout The timeout to be applied when performing
    * network read and write operations.
    * @param message The message to be sent.
    */
-  static void sendRtcpAcknowledge(const int socketFd,
+  static void sendRtcpAcknowledge(const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
     const int netReadWriteTimeout, const RtcpAcknowledgeMsg &message)
     throw(castor::exception::Exception);
 
   /**
    * Pings RTCPD using the specified socket.
    *
+   * @param cuuid The ccuid to be used for logging.
+   * @param volReqId The volume request ID to be sent to the tape gateway.
    * @param socketFd The socket file descriptor of the connection with RTCPD.
    * @param netReadWriteTimeout The timeout to be applied when performing
    * network read and write operations.
    */
-  static void pingRtcpd(const int socketFd,
+  static void pingRtcpd(const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
     const int netReadWriteTimeout) throw(castor::exception::Exception);
 
   /**
    * Receives an RTCP job submission message.
    *
+   * @param cuuid The ccuid to be used for logging.
+   * @param volReqId The volume request ID to be sent to the tape gateway.
    * @param socketFd The socket file descriptor of the connection with RTCPD.
    * @param netReadWriteTimeout The timeout to be applied when performing
    * network read and write operations.
    * @param request The request which will be filled with the contents of the
    * received message.
    */
-  static void receiveRcpJobRqst(const int socketFd,
+  static void receiveRcpJobRqst(/*const Cuuid_t &cuuid, const uint32_t volReqId,*/ const int socketFd,
     const int netReadWriteTimeout, RcpJobRqstMsgBody &request)
     throw(castor::exception::Exception);
 
   /**
    * Asks RTCPD to request more work in the future.
    *
+   * @param cuuid The ccuid to be used for logging.
+   * @param volReqId The volume request ID to be sent to the tape gateway.
    * A request for more work is infact a file list with one special file
    * request which does not contain any file information, but instead contains
    * a flag indicating a request for more work.
    */ 
-  static void askRtcpdToRequestMoreWork(const int socketFd,
-    const int netReadWriteTimeout, const uint32_t volReqId)
+  static void askRtcpdToRequestMoreWork(const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
+    const int netReadWriteTimeout)
     throw(castor::exception::Exception);
 
   /**
    * Gives the specified file list of one and only one actual file description
    * to RTCPD by sending and receiving the necessary messages.
    *
+   * @param cuuid The ccuid to be used for logging.
+   * @param volReqId The volume request ID to be sent to the tape gateway.
    * @param socketFd The socket file descriptor of the connection with RTCPD.
    * @param netReadWriteTimeout The timeout to be applied when performing
    * @param filePath The file path.
@@ -140,8 +155,8 @@ public:
    * a possibility of more work in the future.
    * network read and write operations.
    */
-  static void giveFileToRtcpd(const int socketFd,
-    const int netReadWriteTimeout, const uint32_t volReqId,
+  static void giveFileToRtcpd(const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
+    const int netReadWriteTimeout,
     const char *const filePath, const char *const tapePath,
     const char *const recordFormat, const char *const tapeFileId,
     const uint32_t umask) throw(castor::exception::Exception);
@@ -149,13 +164,15 @@ public:
   /**
    * Receives a message header.
    *
+   * @param cuuid The ccuid to be used for logging.
+   * @param volReqId The volume request ID to be sent to the tape gateway.
    * @param socketFd The socket file descriptor of the connection with RTCPD.
    * @param netReadWriteTimeout The timeout to be applied when performing
    * network read and write operations.
    * @param request The request which will be filled with the contents of the
    * received message.
    */
-  static void receiveRtcpMsgHeader(const int socketFd,
+  static void receiveRtcpMsgHeader(const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
     const int netReadWriteTimeout, MessageHeader &header)
     throw(castor::exception::Exception);
 
@@ -163,6 +180,8 @@ public:
    * Receives the body of an RTCPD file request with error appendix message
    * from RTCPD.
    *
+   * @param cuuid The ccuid to be used for logging.
+   * @param volReqId The volume request ID to be sent to the tape gateway.
    * @param socketFd The socket file desscriptor of the connection with RTCPD.
    * @param netReadWriteTimeout The timeout to be applied when performing
    * network read and write operations.
@@ -170,7 +189,7 @@ public:
    * @param body The body structure which will be filled with the contents of
    * the received message body.
    */
-  static void receiveRtcpFileRqstErrBody(const int socketFd,
+  static void receiveRtcpFileRqstErrBody(const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
     const int netReadWriteTimeout, const MessageHeader &header,
     RtcpFileRqstErrMsgBody &body) throw(castor::exception::Exception);
 
@@ -178,6 +197,8 @@ public:
    * Receives the body of an RTCPD file request without error appendix message
    * from RTCPD.
    *
+   * @param cuuid The ccuid to be used for logging.
+   * @param volReqId The volume request ID to be sent to the tape gateway.
    * @param socketFd The socket file desscriptor of the connection with RTCPD.
    * @param netReadWriteTimeout The timeout to be applied when performing
    * network read and write operations.
@@ -185,7 +206,7 @@ public:
    * @param body The body structure which will be filled with the contents of
    * the received message body.
    */
-  static void receiveRtcpFileRqstBody(const int socketFd,
+  static void receiveRtcpFileRqstBody(const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
     const int netReadWriteTimeout, const MessageHeader &header,
     RtcpFileRqstMsgBody &body) throw(castor::exception::Exception);
 
@@ -193,6 +214,8 @@ public:
    * Receives the body of an RTCPD tape request with error appendix message
    * from RTCPD.
    *
+   * @param cuuid The ccuid to be used for logging.
+   * @param volReqId The volume request ID to be sent to the tape gateway.
    * @param socketFd The socket file desscriptor of the connection with RTCPD.
    * @param netReadWriteTimeout The timeout to be applied when performing
    * network read and write operations.
@@ -200,7 +223,7 @@ public:
    * @param body The body structure which will be filled with the contents of
    * the received message body.
    */
-  static void receiveRtcpTapeRqstErrBody(const int socketFd,
+  static void receiveRtcpTapeRqstErrBody(const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
     const int netReadWriteTimeout, const MessageHeader &header,
     RtcpTapeRqstErrMsgBody &body) throw(castor::exception::Exception);
 
@@ -208,6 +231,8 @@ public:
    * Receives the body of an RTCPD tape request without error appendix message
    * from RTCPD.
    *
+   * @param cuuid The ccuid to be used for logging.
+   * @param volReqId The volume request ID to be sent to the tape gateway.
    * @param socketFd The socket file desscriptor of the connection with RTCPD.
    * @param netReadWriteTimeout The timeout to be applied when performing
    * network read and write operations.
@@ -215,7 +240,7 @@ public:
    * @param body The body structure which will be filled with the contents of
    * the received message body.
    */
-  static void receiveRtcpTapeRqstBody(const int socketFd,
+  static void receiveRtcpTapeRqstBody(const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
     const int netReadWriteTimeout, const MessageHeader &header,
     RtcpTapeRqstMsgBody &body) throw(castor::exception::Exception);
 
@@ -223,22 +248,25 @@ public:
    * Inidcates the end of the current file list to RTCPD by sending and
    * receiving the necessary messages.
    *
+   * @param cuuid The ccuid to be used for logging.
+   * @param volReqId The volume request ID to be sent to the tape gateway.
    * @param socketFd The socket file descriptor of the connection with RTCPD.
    * @param netReadWriteTimeout The timeout to be applied when performing
    * network read and write operations.
    */
-  static void tellRtcpdEndOfFileList(const int socketFd,
+  static void tellRtcpdEndOfFileList(const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
     const int netReadWriteTimeout) throw(castor::exception::Exception);
 
   /**
    * Send an abort message to RTCPD
    *
-   *
+   * @param cuuid The ccuid to be used for logging.
+   * @param volReqId The volume request ID to be sent to the tape gateway.
    * @param socketFd The socket file descriptor of the connection with RTCPD.
    * @param netReadWriteTimeout The timeout to be applied when performing
    * network read and write operations.
    */
-  static void tellRtcpdToAbort(const int socketFd, const int netReadWriteTimeout)
+  static void tellRtcpdToAbort(const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout)
     throw(castor::exception::Exception);
 
 
@@ -261,7 +289,7 @@ private:
    * @param reply The structure to be filled with the reply from
    * RTCPD.
    */
-  static void giveFileToRtcpd(const int socketFd,
+  static void giveFileToRtcpd(const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
     const int netReadWriteTimeout, RtcpFileRqstErrMsgBody &request)
     throw(castor::exception::Exception);
 

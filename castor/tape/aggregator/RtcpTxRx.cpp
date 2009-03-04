@@ -49,8 +49,15 @@
 // getRequestInfoFromRtcpd
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::getRequestInfoFromRtcpd(
-  const int socketFd, const int netReadWriteTimeout,
+  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout,
   RtcpTapeRqstErrMsgBody &reply) throw(castor::exception::Exception) {
+
+ {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId", volReqId)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_GET_REQUEST_INFO_FROM_RTCPD, params);
+  }
 
   // Prepare logical request for volume request ID
   RtcpTapeRqstErrMsgBody request;
@@ -112,8 +119,8 @@ void castor::tape::aggregator::RtcpTxRx::getRequestInfoFromRtcpd(
   Utils::setBytes(reply, '\0');
   try {
     MessageHeader header;
-    receiveRtcpMsgHeader(socketFd, netReadWriteTimeout, header);
-    receiveRtcpTapeRqstErrBody(socketFd, netReadWriteTimeout, header, reply);
+    receiveRtcpMsgHeader(cuuid, volReqId, socketFd, netReadWriteTimeout, header);
+    receiveRtcpTapeRqstErrBody(cuuid, volReqId, socketFd, netReadWriteTimeout, header, reply);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Exception ex2(EPROTO);
 
@@ -125,7 +132,7 @@ void castor::tape::aggregator::RtcpTxRx::getRequestInfoFromRtcpd(
 
   // Send acknowledge to RTCPD
   try {
-    sendRtcpAcknowledge(socketFd, netReadWriteTimeout, ackMsg);
+    sendRtcpAcknowledge(cuuid, volReqId, socketFd, netReadWriteTimeout, ackMsg);
   } catch(castor::exception::Exception &ex) {
     castor::exception::Exception ex2(EPROTO);
 
@@ -134,6 +141,14 @@ void castor::tape::aggregator::RtcpTxRx::getRequestInfoFromRtcpd(
          ": " << ex.getMessage().str();
     throw ex2;
   }
+ {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId", volReqId),
+      castor::dlf::Param("unit"    , reply.unit)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_GOT_REQUEST_INFO_FROM_RTCPD, params);
+  }
+
 }
 
 
@@ -141,8 +156,19 @@ void castor::tape::aggregator::RtcpTxRx::getRequestInfoFromRtcpd(
 // giveVolumeToRtcpd
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::giveVolumeToRtcpd(
-  const int socketFd, const int netReadWriteTimeout,
+  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout,
   RtcpTapeRqstErrMsgBody &request) throw(castor::exception::Exception) {
+
+ {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", volReqId         ),
+        castor::dlf::Param("vid"    , request.vid    ),
+        castor::dlf::Param("mode"   , request.mode   ),
+        castor::dlf::Param("label"  , request.label  ),
+        castor::dlf::Param("density", request.density)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_GIVE_VOLUME_TO_RTCPD, params);
+  }
 
   // Marshall the message
   char buf[MSGBUFSIZ];
@@ -195,6 +221,17 @@ void castor::tape::aggregator::RtcpTxRx::giveVolumeToRtcpd(
          ": Status: " << ackMsg.status;
     throw ex;
   }
+ {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", volReqId      ),
+        castor::dlf::Param("vid"    , request.vid    ),
+        castor::dlf::Param("mode"   , request.mode   ),
+        castor::dlf::Param("label"  , request.label  ),
+        castor::dlf::Param("density", request.density)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_GAVE_VOLUME_TO_RTCPD, params);
+  }
+
 }
 
 
@@ -202,8 +239,19 @@ void castor::tape::aggregator::RtcpTxRx::giveVolumeToRtcpd(
 // giveFileToRtcpd
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
-  const int socketFd, const int netReadWriteTimeout,
+  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout,
   RtcpFileRqstErrMsgBody &request) throw(castor::exception::Exception) {
+
+  {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId"    , volReqId    ),
+        //castor::dlf::Param("filePath"    , request.filePath    ),
+        castor::dlf::Param("recordFormat", RECORDFORMAT),
+       // castor::dlf::Param("tapeFileId"  , request.tapeFileId  ),
+        castor::dlf::Param("umask"       , MIGRATEUMASK)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_GIVE_FILE_TO_RTCPD, params);
+  }
 
   // Marshall the message
   char buf[MSGBUFSIZ];
@@ -256,6 +304,17 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
          ": Status: " << ackMsg.status;
     throw ex;
   }
+  {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId"    , volReqId    ),
+//        castor::dlf::Param("filePath"    , request.filePath    ),
+        castor::dlf::Param("recordFormat", RECORDFORMAT),
+//        castor::dlf::Param("tapeFileId"  , request.tapeFileId  ),
+        castor::dlf::Param("umask"       , MIGRATEUMASK)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_GAVE_FILE_TO_RTCPD, params);
+  }
+
 }
 
 
@@ -303,7 +362,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpAcknowledge(
 // sendRtcpAcknowledge
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::sendRtcpAcknowledge(
-  const int socketFd, const int netReadWriteTimeout,
+  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout,
   const RtcpAcknowledgeMsg &message) throw(castor::exception::Exception) {
 
   char buf[MSGBUFSIZ];
@@ -339,7 +398,7 @@ void castor::tape::aggregator::RtcpTxRx::sendRtcpAcknowledge(
 // pingRtcpd
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::pingRtcpd(
-  const int socketFd, const int netReadWriteTimeout)
+  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout)
   throw(castor::exception::Exception) {
 
   char buf[MSGBUFSIZ];
@@ -381,8 +440,15 @@ void castor::tape::aggregator::RtcpTxRx::pingRtcpd(
 // tellRtcpdEndOfFileList
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::tellRtcpdEndOfFileList(
-  const int socketFd, const int netReadWriteTimeout)
+  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout)
   throw(castor::exception::Exception) {
+
+  {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", volReqId)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_TELL_RTCPD_END_OF_FILE_LIST, params);
+   }
 
   // Marshall the message
   char buf[MSGBUFSIZ];
@@ -466,13 +532,20 @@ void castor::tape::aggregator::RtcpTxRx::tellRtcpdEndOfFileList(
       throw ex;
     }
   }
+ {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", volReqId)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_TOLD_RTCPD_END_OF_FILE_LIST, params);
+  }
+
 }
 
 //-----------------------------------------------------------------------------
 // tellRtcpdToAbort
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::tellRtcpdToAbort(
-  const int socketFd, const int netReadWriteTimeout)
+  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout)
   throw(castor::exception::Exception) {
 
   // Marshall the message
@@ -536,7 +609,7 @@ void castor::tape::aggregator::RtcpTxRx::tellRtcpdToAbort(
 // receiveRcpJobRqst
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::receiveRcpJobRqst(
-  const int socketFd, const int netReadWriteTimeout,
+  /*const Cuuid_t &cuuid, const uint32_t volReqId,*/ const int socketFd, const int netReadWriteTimeout,
   RcpJobRqstMsgBody &request) throw(castor::exception::Exception) {
 
   // Read in the message header
@@ -638,8 +711,15 @@ void castor::tape::aggregator::RtcpTxRx::receiveRcpJobRqst(
 // askRtcpdToRequestMoreWork
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::askRtcpdToRequestMoreWork(
-  const int socketFd, const int netReadWriteTimeout, const uint32_t volReqId)
+  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout)
   throw(castor::exception::Exception) {
+
+  {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", volReqId)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_ASK_RTCPD_TO_RQST_MORE_WORK, params);
+  }
 
   RtcpFileRqstErrMsgBody request;
 
@@ -664,9 +744,16 @@ void castor::tape::aggregator::RtcpTxRx::askRtcpdToRequestMoreWork(
   request.err.maxTpRetry = -1;
   request.err.maxCpRetry = -1;
 
-  giveFileToRtcpd(socketFd, RTCPDNETRWTIMEOUT, request);
+  giveFileToRtcpd(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT, request);
 
-  tellRtcpdEndOfFileList(socketFd, RTCPDNETRWTIMEOUT);
+  tellRtcpdEndOfFileList(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT);
+  {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", volReqId)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_ASKED_RTCPD_TO_RQST_MORE_WORK, params);
+  }
+
 }
 
 
@@ -674,7 +761,7 @@ void castor::tape::aggregator::RtcpTxRx::askRtcpdToRequestMoreWork(
 // giveFileToRtcpd
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
-  const int socketFd, const int netReadWriteTimeout, const uint32_t volReqId,
+  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout,
   const char *const filePath, const char *const tapePath,
   const char *const recordFormat, const char *const tapeFileId,
   const uint32_t umask) throw(castor::exception::Exception) {
@@ -709,7 +796,7 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
   request.err.maxTpRetry = -1;
   request.err.maxCpRetry = -1;
 
-  giveFileToRtcpd(socketFd, RTCPDNETRWTIMEOUT, request);
+  giveFileToRtcpd(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT, request);
 }
 
 
@@ -717,7 +804,7 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
 // receiveRtcpMsgHeader
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::receiveRtcpMsgHeader(
-  const int socketFd, const int netReadWriteTimeout,
+  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout,
   MessageHeader &header) throw(castor::exception::Exception) {
 
   // Read in the message header
@@ -755,7 +842,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpMsgHeader(
 // receiveRtcpFileRqstErrBody
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::receiveRtcpFileRqstErrBody(
-  const int socketFd, const int netReadWriteTimeout,
+  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout,
   const MessageHeader &header, RtcpFileRqstErrMsgBody &body)
   throw(castor::exception::Exception) {
 
@@ -811,7 +898,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpFileRqstErrBody(
 // receiveRtcpFileRqstBody
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::receiveRtcpFileRqstBody(
-  const int socketFd, const int netReadWriteTimeout,
+  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout,
   const MessageHeader &header, RtcpFileRqstMsgBody &body)
   throw(castor::exception::Exception) {
 
@@ -867,7 +954,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpFileRqstBody(
 // receiveRtcpTapeRqstErrBody
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::receiveRtcpTapeRqstErrBody(
-  const int socketFd, const int netReadWriteTimeout,
+  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout,
   const MessageHeader &header, RtcpTapeRqstErrMsgBody &body)
   throw(castor::exception::Exception) {
 
@@ -923,7 +1010,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpTapeRqstErrBody(
 // receiveRtcpTapeRqstBody
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::receiveRtcpTapeRqstBody(
-  const int socketFd, const int netReadWriteTimeout,
+  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout,
   const MessageHeader &header, RtcpTapeRqstMsgBody &body)
   throw(castor::exception::Exception) {
 
