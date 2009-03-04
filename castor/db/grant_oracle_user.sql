@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: grant_oracle_user.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/03/03 13:49:59 $ $Author: waldron $
+ * @(#)$RCSfile: grant_oracle_user.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/03/04 14:07:19 $ $Author: waldron $
  *
- * This script grants SELECT rights to all tables within a database schema
+ * This script grants SELECT rights on all tables within a database schema
  * to a given user.
  *
  * @author Castor Dev team, castor-dev@cern.ch
@@ -30,7 +30,7 @@ WHENEVER SQLERROR EXIT FAILURE;
 
 /* Determine the user to grant SELECT rights on all tables */
 UNDEF username
-ACCEPT username DEFAULT castor_read PROMPT 'Grant SELECT rights to all tables to user: (castor_read) '
+ACCEPT username DEFAULT castor_read PROMPT 'Grant SELECT rights on all tables to user: (castor_read) '
 SET VER OFF
 
 DECLARE
