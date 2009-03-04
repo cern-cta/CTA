@@ -9,4 +9,3 @@
 %attr(0755,root,root) usr/bin/stager_removeprivilege
 %attr(0755,root,root) usr/bin/stager_listprivileges
 %attr(0755,root,root) usr/bin/castor
-%attr(4755,root,root) usr/bin/newacct
