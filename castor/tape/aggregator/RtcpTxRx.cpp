@@ -424,21 +424,47 @@ void castor::tape::aggregator::RtcpTxRx::tellRtcpdEndOfFileList(
   }
 
   checkMagic(RTCOPY_MAGIC, ackMsg.magic, __PRETTY_FUNCTION__);
-  checkRtcopyReqType(RTCP_NOMORE_REQ, ackMsg.reqType, __PRETTY_FUNCTION__);
-// FOR THE FUTURE
-//{
-//  const uint32_t expected[] = {RTCP_NOMORE_REQ, RTCP_TAPEERR_REQ};
-//  checkRtcopyReqType(expected, ackMsg.reqType, __PRETTY_FUNCTION__);
-//}
+  {
+    const uint32_t expected[] = {RTCP_NOMORE_REQ, RTCP_TAPEERR_REQ};
+    checkRtcopyReqType(expected, ackMsg.reqType, __PRETTY_FUNCTION__);
+  }
 
-  // If the acknowledge is negative
-  if(ackMsg.status != 0) {
-    castor::exception::Exception ex(ackMsg.status);
+  switch(ackMsg.reqType) {
+  case RTCP_NOMORE_REQ:
+    // If the acknowledge is negative
+    if(ackMsg.status != 0) {
+      castor::exception::Exception ex(ackMsg.status);
 
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Received negative acknowledge from RTCPD"
-         ": Status: " << ackMsg.status;
-    throw ex;
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << ": Received negative acknowledge from RTCPD"
+           ": Status: " << ackMsg.status;
+      throw ex;
+    }
+    break;
+  case RTCP_TAPEERR_REQ:
+    {
+//    RtcpTapeRqstErrMsgBody tapeRqstErrMsgBody;
+
+      // TBD
+      castor::exception::Exception ex(EBADMSG);
+
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << ": Got an RTCP_TAPEERR_REQ message when expecting an "
+           "RTCP_NOMORE_REQ acknowledge";
+
+    }
+    break;
+  default:
+    {
+      // Should never reach this point
+      castor::exception::Internal ex;
+
+      ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Unknown RTCOPY_MAGIC request type after successful call to "
+         "checkRtcopyReqType";
+
+      throw ex;
+    }
   }
 }
 
