@@ -474,9 +474,6 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
   // If there is a volume
   if(thereIsAVolume) {
 
-    // Complete the RTCPD volume message by setting the volume request ID
-    rtcpVolume.volReqId = volReqId;
-
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId"   , volReqId          ),
       castor::dlf::Param("gatewayHost", gatewayHost       ),
@@ -487,6 +484,9 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
       castor::dlf::Param("density"    , rtcpVolume.density)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_GOT_VOLUME_FROM_GATEWAY, params);
+
+    // Complete the RTCPD volume message by setting the volume request ID
+    rtcpVolume.volReqId = volReqId;
 
   // Else there is no volume
   } else {
@@ -515,10 +515,22 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
     char     lastKnownFileName[CA_MAXPATHLEN+1];
     uint64_t lastModificationTime;
 
-    // If there is a file to migrate
-    if(GatewayTxRx::getFileToMigrateFromGateway(gatewayHost, gatewayPort,
+    // Get first file to migrate from the tape gateway
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId"   , volReqId   ),
+        castor::dlf::Param("gatewayHost", gatewayHost),
+        castor::dlf::Param("gatewayPort", gatewayPort)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_GET_FIRST_FILE_TO_MIGRATE_FROM_GATEWAY, params);
+    }
+    const bool thereIsAFileToMigrate =
+      GatewayTxRx::getFileToMigrateFromGateway(gatewayHost, gatewayPort,
       volReqId, filePath, nsHost, fileId, tapeFseq, fileSize,
-      lastKnownFileName, lastModificationTime)) {
+      lastKnownFileName, lastModificationTime);
+
+    // If there is a file to migrate
+    if(thereIsAFileToMigrate) {
 
       castor::dlf::Param params[] = {
         castor::dlf::Param("volReqId"            , volReqId            ),
@@ -532,7 +544,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
         castor::dlf::Param("lastKnownFileName"   , lastKnownFileName   ),
         castor::dlf::Param("lastModificationTime", lastModificationTime)};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_FIRST_FILE_TO_MIGRATE, params);
+        AGGREGATOR_GOT_FIRST_FILE_TO_MIGRATE_FROM_GATEWAY, params);
 
     // Else there is no file to migrate
     } else {
@@ -542,35 +554,143 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
         castor::dlf::Param("gatewayHost", gatewayHost),
         castor::dlf::Param("gatewayPort", gatewayPort)};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_NO_FIRST_FILE_TO_MIGRATE, params); 
+        AGGREGATOR_GOT_NO_FIRST_FILE_TO_MIGRATE_FROM_GATEWAY, params); 
 
       return;
     } 
 
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", volReqId         ),
+        castor::dlf::Param("vid"    , rtcpVolume.vid    ),
+        castor::dlf::Param("mode"   , rtcpVolume.mode   ),
+        castor::dlf::Param("label"  , rtcpVolume.label  ),
+        castor::dlf::Param("density", rtcpVolume.density)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_GIVE_VOLUME_TO_RTCPD, params);
+    }
     RtcpTxRx::giveVolumeToRtcpd(rtcpdInitialSocketFd.get(), RTCPDNETRWTIMEOUT, 
       rtcpVolume); 
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", volReqId         ),
+        castor::dlf::Param("vid"    , rtcpVolume.vid    ),
+        castor::dlf::Param("mode"   , rtcpVolume.mode   ),
+        castor::dlf::Param("label"  , rtcpVolume.label  ),
+        castor::dlf::Param("density", rtcpVolume.density)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_GAVE_VOLUME_TO_RTCPD, params);
+    }
  
     char tapeFileId[CA_MAXPATHLEN+1];
     Utils::toHex(fileId, tapeFileId);
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId"    , volReqId    ),
+        castor::dlf::Param("filePath"    , filePath    ),
+        castor::dlf::Param("recordFormat", RECORDFORMAT),
+        castor::dlf::Param("tapeFileId"  , tapeFileId  ),
+        castor::dlf::Param("umask"       , MIGRATEUMASK)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_GIVE_FILE_TO_RTCPD, params);
+    }
     RtcpTxRx::giveFileToRtcpd(rtcpdInitialSocketFd.get(), RTCPDNETRWTIMEOUT,
       volReqId, filePath, "", RECORDFORMAT, tapeFileId, MIGRATEUMASK);
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId"    , volReqId    ),
+        castor::dlf::Param("filePath"    , filePath    ),
+        castor::dlf::Param("recordFormat", RECORDFORMAT),
+        castor::dlf::Param("tapeFileId"  , tapeFileId  ),
+        castor::dlf::Param("umask"       , MIGRATEUMASK)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_GAVE_FILE_TO_RTCPD, params);
+    }
 
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", volReqId)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_ASK_RTCPD_TO_RQST_MORE_WORK, params);
+    }
     RtcpTxRx::askRtcpdToRequestMoreWork(rtcpdInitialSocketFd.get(),
       RTCPDNETRWTIMEOUT, volReqId);
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", volReqId)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_ASKED_RTCPD_TO_RQST_MORE_WORK, params);
+    }
 
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", volReqId)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_TELL_RTCPD_END_OF_FILE_LIST, params);
+    }
     RtcpTxRx::tellRtcpdEndOfFileList(rtcpdInitialSocketFd.get(),
       RTCPDNETRWTIMEOUT);
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", volReqId)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_TOLD_RTCPD_END_OF_FILE_LIST, params);
+    }
 
   // Else recalling
   } else {
-    RtcpTxRx::giveVolumeToRtcpd(rtcpdInitialSocketFd.get(), RTCPDNETRWTIMEOUT, 
-      rtcpVolume); 
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", volReqId         ),
+        castor::dlf::Param("vid"    , rtcpVolume.vid    ),
+        castor::dlf::Param("mode"   , rtcpVolume.mode   ),
+        castor::dlf::Param("label"  , rtcpVolume.label  ),
+        castor::dlf::Param("density", rtcpVolume.density)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_GIVE_VOLUME_TO_RTCPD, params);
+    }
+    RtcpTxRx::giveVolumeToRtcpd(rtcpdInitialSocketFd.get(), RTCPDNETRWTIMEOUT,
+      rtcpVolume);
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", volReqId         ),
+        castor::dlf::Param("vid"    , rtcpVolume.vid    ),
+        castor::dlf::Param("mode"   , rtcpVolume.mode   ),
+        castor::dlf::Param("label"  , rtcpVolume.label  ),
+        castor::dlf::Param("density", rtcpVolume.density)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_GAVE_VOLUME_TO_RTCPD, params);
+    }
 
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", volReqId)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_ASK_RTCPD_TO_RQST_MORE_WORK, params);
+    }
     RtcpTxRx::askRtcpdToRequestMoreWork(rtcpdInitialSocketFd.get(),
       RTCPDNETRWTIMEOUT, volReqId);
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", volReqId)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_ASKED_RTCPD_TO_RQST_MORE_WORK, params);
+    }
 
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", volReqId)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_TELL_RTCPD_END_OF_FILE_LIST, params);
+    }
     RtcpTxRx::tellRtcpdEndOfFileList(rtcpdInitialSocketFd.get(),
       RTCPDNETRWTIMEOUT);
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", volReqId)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_TOLD_RTCPD_END_OF_FILE_LIST, params);
+    }
   }
 
   processRtcpdSockets(cuuid, volReqId, gatewayHost, gatewayPort,
