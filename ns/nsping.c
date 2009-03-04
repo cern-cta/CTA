@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <string.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #endif
@@ -14,6 +15,7 @@
 #include "Cns_api.h"
 #include "Cgetopt.h"
 #include "serrno.h"
+#include "getconfent.h"
 
 void usage(int status, char *name) {
   if (status != 0) {
@@ -63,7 +65,8 @@ int main(argc, argv)
 	  (p = getconfent (CNS_SCE, "HOST", 0))) {
 	if (strcmp(p, server) != 0) {
 	  fprintf (stderr,
-		   "--host option is not permitted when CNS/HOST is defined\n");
+		   "cannot query '%s', all name server commands are forced to "
+		   "query '%s'\n", server, p);
 	  errflg++;
 	}
       }

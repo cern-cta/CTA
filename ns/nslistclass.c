@@ -18,6 +18,8 @@
 #include "Cns_api.h"
 #include "Cgetopt.h"
 #include "serrno.h"
+#include "getconfent.h"
+
 int nohdr = 0;
 int listentry(struct Cns_fileclass *Cns_fileclass);
 
@@ -94,7 +96,8 @@ int main(int argc,char **argv)
 	  (p = getconfent (CNS_SCE, "HOST", 0))) {
 	if (strcmp(p, server) != 0) {
 	  fprintf (stderr,
-		   "--host option is not permitted when CNS/HOST is defined\n");
+		   "cannot query '%s', all name server commands are forced to "
+		   "query '%s'\n", server, p);
 	  errflg++;
 	}
       }

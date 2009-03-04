@@ -17,6 +17,7 @@
 #include "Cgetopt.h"
 #include "serrno.h"
 #include "u64subr.h"
+#include "getconfent.h"
 
 void usage(int status, char *name) {
   if (status != 0) {
@@ -95,7 +96,8 @@ int main(int argc,char **argv)
 	  (p = getconfent (CNS_SCE, "HOST", 0))) {
 	if (strcmp(p, server) != 0) {
 	  fprintf (stderr,
-		   "--host option is not permitted when CNS/HOST is defined\n");
+		   "cannot query '%s', all name server commands are forced to "
+		   "query '%s'\n", server, p);
 	  errflg++;
 	}
       }
