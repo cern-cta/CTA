@@ -471,7 +471,6 @@ char *sys_secerrlist[ESECMAXERR-ESECBASEOFF+2] =
    "Could not lookup security protocol",
    "Csec incompatibility",
    "Unexpected response from peer",
-   "Security exception",
    "BAD ERROR NUMBER"
   };
 
