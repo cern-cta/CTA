@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/03/05 10:48:51 $ $Author: trekas $
+ * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/03/05 14:02:07 $ $Author: waldron $
  *
  * This script create a new Monitoring schema
  *
@@ -1001,7 +1001,7 @@ BEGIN
         AND mes.msg_no = 57   -- Triggering Tape Recall
         AND str.name = 'TapeStatus'
         AND mes.timestamp >= maxTimeStamp
-        AND str.timestamp >= maxTimeStampI_Num_Param_Values_id
+        AND str.timestamp >= maxTimeStamp
         AND mes.timestamp < maxTimeStamp + 5/1440
         AND str.timestamp < maxTimeStamp + 5/1440)
   LOG ERRORS INTO Err_Taperecall REJECT LIMIT 100000;
