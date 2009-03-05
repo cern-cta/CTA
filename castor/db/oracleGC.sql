@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.683 $ $Date: 2009/02/13 11:15:57 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.684 $ $Date: 2009/03/05 11:55:10 $ $Author: itglp $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -534,7 +534,7 @@ END;
 CREATE OR REPLACE Procedure bulkDeleteRequests(reqType IN VARCHAR) AS
 BEGIN
   bulkDelete('SELECT id FROM '|| reqType ||' R WHERE
-    NOT EXISTS (SELECT ''x'' FROM SubRequest WHERE request = R.id);',
+    NOT EXISTS (SELECT 1 FROM SubRequest WHERE request = R.id);',
     reqType);
 END;
 /
@@ -544,6 +544,7 @@ CREATE OR REPLACE PROCEDURE deleteTerminatedRequests AS
   timeOut INTEGER;
   rate INTEGER;
   srIds "numList";
+  ct NUMBER;
 BEGIN
   -- select requested timeout from configuration table
   timeout := 3600*TO_NUMBER(getConfigOption('cleaning', 'terminatedRequestsTimeout', '120'));
@@ -555,42 +556,47 @@ BEGIN
   IF rate > 0 AND (500000 / rate * 1800) < timeOut THEN
     timeOut := 500000 / rate * 1800;  -- keep 500k requests max
   END IF;
+  
+  -- delete castorFiles if nothing is left for them. Here we use
+  -- a temporary table as we need to commit every ~10000 operations
+  -- and keeping a cursor opened on the original select may take
+  -- too long, leading to ORA-01555 'snapshot too old' errors.
+  EXECUTE IMMEDIATE 'TRUNCATE TABLE DeleteTermReqHelper';
+  INSERT INTO DeleteTermReqHelper
+    (SELECT id, castorFile FROM SubRequest
+      WHERE status IN (9, 11)
+        AND lastModificationTime < getTime() - timeOut);
+  ct := 0;
+  FOR cf IN (SELECT UNIQUE cfId FROM DeleteTermReqHelper) LOOP
+    deleteCastorFile(cf.cfId);
+    ct := ct + 1;
+    IF ct = 1000 THEN
+      COMMIT;
+      ct := 0;
+    END IF;
+  END LOOP;
 
-  -- now delete the SubRequests. Here we don't use bulkDelete
-  -- to be able to pass timeout as a bind variable and make it sharable
-  -- original call was:
-  -- bulkDelete('SELECT id FROM SubRequest WHERE status IN (9, 11)
-  --   AND lastModificationTime < getTime() - '|| timeOut ||';',
-  --   'SubRequest');
+  -- now delete all old subRequest. We reuse here the
+  -- temporary table, which serves as a snapshot of the
+  -- entries to be deleted, and we use the FORALL logic
+  -- (cf. bulkDelete) instead of a simple DELETE ...
+  -- WHERE id IN (SELECT srId FROM DeleteTermReqHelper)
+  -- for efficiency reasons.
   DECLARE
-    CURSOR s IS SELECT id FROM SubRequest
-     WHERE status IN (9, 11)
-       AND lastModificationTime < getTime() - timeOut;
-    CURSOR t IS SELECT UNIQUE castorFile FROM SubRequest
-     WHERE status IN (9, 11)
-       AND lastModificationTime < getTime() - timeOut;
+    CURSOR s IS
+      SELECT srId FROM DeleteTermReqHelper;
     ids "numList";
   BEGIN
-    LOOP
-      OPEN t;
-      FETCH t BULK COLLECT INTO ids LIMIT 10000;
-      EXIT WHEN t%NOTFOUND;
-      FOR i IN ids.FIRST..ids.LAST LOOP
-        deleteCastorFile(ids(i));
-      END LOOP;
-      CLOSE t;
-      COMMIT;
-    END LOOP;
-    LOOP
-      OPEN s;
-      FETCH s BULK COLLECT INTO ids LIMIT 100000;
-      EXIT WHEN s%NOTFOUND;
+    OPEN s;
+    FETCH s BULK COLLECT INTO ids;
+    IF ids.COUNT > 0 THEN
       FORALL i IN ids.FIRST..ids.LAST
-        DELETE FROM SubRequest WHERE id = ids(i); 
-      CLOSE s;
-      COMMIT;
-    END LOOP;
+        DELETE FROM SubRequest WHERE id = ids(i);
+    END IF;
+    CLOSE s;
+    COMMIT;
   END;
+  EXECUTE IMMEDIATE 'TRUNCATE TABLE DeleteTermReqHelper';
 
   -- and then related Requests + Clients
     ---- Get ----
@@ -615,7 +621,6 @@ BEGIN
   bulkDeleteRequests('StageDiskCopyReplicaRequest');
 END;
 /
-
 
 /* Search and delete old diskCopies in bad states */
 CREATE OR REPLACE PROCEDURE deleteFailedDiskCopies(timeOut IN NUMBER) AS
@@ -742,8 +747,8 @@ END;
 BEGIN
   -- Remove database jobs before recreating them
   FOR j IN (SELECT job_name FROM user_scheduler_jobs
-             WHERE job_name IN ('HOUSEKEEPINGJOB', 
-                                'CLEANUPJOB', 
+             WHERE job_name IN ('HOUSEKEEPINGJOB',
+                                'CLEANUPJOB',
                                 'BULKCHECKFSBACKINPRODJOB'))
   LOOP
     DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);

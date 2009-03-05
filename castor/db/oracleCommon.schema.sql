@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.schema.sql,v $ $Revision: 1.6 $ $Date: 2009/02/26 18:12:03 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.schema.sql,v $ $Revision: 1.7 $ $Date: 2009/03/05 11:56:40 $ $Author: itglp $
  *
  * This file contains all schema definitions which are not generated automatically.
  *
@@ -60,7 +60,6 @@ PARTITION BY LIST (type)
   PARTITION notlisted VALUES (default) TABLESPACE stager_data
  );
 
-
 /* Redefinition of table SubRequest to make it partitioned by status */
 /* Unfortunately it has already been defined, so we drop and recreate it */
 /* Note that if the schema changes, this part has to be updated manually! */
@@ -95,7 +94,6 @@ CREATE TABLE SubRequest
 /* SQL statements for constraints on the SubRequest table */
 ALTER TABLE SubRequest
   ADD CONSTRAINT PK_SubRequest_Id PRIMARY KEY (ID);
-
 CREATE INDEX I_SubRequest_RT_CT_ID ON SubRequest(svcHandler, creationTime, id) LOCAL
  (PARTITION P_STATUS_0_1_2,
   PARTITION P_STATUS_3_13_14,
@@ -108,7 +106,6 @@ CREATE INDEX I_SubRequest_RT_CT_ID ON SubRequest(svcHandler, creationTime, id) L
   PARTITION P_STATUS_11,
   PARTITION P_STATUS_12,
   PARTITION P_STATUS_OTHER);  
-
 
 /* Indexes related to most used entities */
 CREATE UNIQUE INDEX I_DiskServer_name ON DiskServer (name);
@@ -272,6 +269,13 @@ CREATE GLOBAL TEMPORARY TABLE TooManyReplicasHelper
   (id NUMBER, fileSystem NUMBER, castorFile NUMBER)
   ON COMMIT DELETE ROWS;
 
+/* Global temporary table to store subRequest and castorFile ids for cleanup operations.
+   See the deleteTerminatedRequest procedure for more details.
+ */
+CREATE GLOBAL TEMPORARY TABLE DeleteTermReqHelper
+  (srId NUMBER, cfId NUMBER)
+  ON COMMIT PRESERVE ROWS;
+
 /* SQL statements for table PriorityMap */
 CREATE TABLE PriorityMap (euid INTEGER, egid INTEGER, priority INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 ALTER TABLE PriorityMap ADD CONSTRAINT UN_Priority_euid_egid UNIQUE (euid, egid);
@@ -403,7 +407,6 @@ AS
      AND DiskCopy.owneruid IS NOT NULL
      AND DiskCopy.ownergid IS NOT NULL
    GROUP BY owneruid, fileSystem;
-
 
 
 /************************************/
