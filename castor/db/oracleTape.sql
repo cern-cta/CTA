@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.717 $ $Date: 2009/03/05 14:07:39 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.718 $ $Date: 2009/03/05 15:29:46 $ $Author: waldron $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -910,8 +910,8 @@ CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER) AS
   ouid INTEGER;
   ogid INTEGER;
 BEGIN
-  SELECT SubRequest.id, SubRequest.request, DiskCopy.id, CastorFile.id, DiskCopy.fileSystem, Castorfile.FileSize
-    INTO subRequestId, requestId, dci, cfId, fsId, fs
+  SELECT SubRequest.id, SubRequest.request, DiskCopy.id, CastorFile.id, Castorfile.FileSize
+    INTO subRequestId, requestId, dci, cfId, fs
     FROM TapeCopy, SubRequest, DiskCopy, CastorFile
    WHERE TapeCopy.id = tapecopyId
      AND CastorFile.id = TapeCopy.castorFile
@@ -964,8 +964,6 @@ BEGIN
   UPDATE SubRequest
      SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART
    WHERE parent = subRequestId;
-  -- update filesystem status
-  updateFsFileClosed(fsId);
   -- Trigger the creation of additional copies of the file, if necessary.
   replicateOnClose(cfId, ouid, ogid);
 END;

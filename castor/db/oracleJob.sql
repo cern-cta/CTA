@@ -1,41 +1,11 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.678 $ $Date: 2009/03/03 10:37:17 $ $Author: itglp $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.679 $ $Date: 2009/03/05 15:29:46 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
-
-
-/* PL/SQL method to update FileSystem nb of streams when files are opened */
-CREATE OR REPLACE PROCEDURE updateFsFileOpened
-(ds IN INTEGER, fs IN INTEGER, fileSize IN INTEGER) AS
-BEGIN
-  /* We lock first the diskserver in order to lock all the
-     filesystems of this DiskServer in an atomical way */
-  UPDATE DiskServer SET nbReadWriteStreams = nbReadWriteStreams + 1 WHERE id = ds;
-  UPDATE FileSystem SET nbReadWriteStreams = nbReadWriteStreams + 1,
-                        free = free - fileSize   -- just an evaluation, monitoring will update it
-   WHERE id = fs;
-END;
-/
-
-
-/* PL/SQL method to update FileSystem nb of streams when files are closed */
-CREATE OR REPLACE PROCEDURE updateFsFileClosed(fs IN INTEGER) AS
-  ds INTEGER;
-BEGIN
-  /* We lock first the diskserver in order to lock all the
-     filesystems of this DiskServer in an atomical way */
-  SELECT DiskServer INTO ds FROM FileSystem WHERE id = fs;
-  UPDATE DiskServer SET nbReadWriteStreams = decode(sign(nbReadWriteStreams-1),-1,0,nbReadWriteStreams-1) 
-   WHERE id = ds;
-  /* now we can safely go */
-  UPDATE FileSystem SET nbReadWriteStreams = decode(sign(nbReadWriteStreams-1),-1,0,nbReadWriteStreams-1)
-   WHERE id = fs;
-END;
-/
 
 
 /* This method should be called when the first byte is written to a file
@@ -432,7 +402,6 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
 (dcId IN INTEGER, srcDcId IN INTEGER) AS
   srId       INTEGER;
   cfId       INTEGER;
-  fsId       INTEGER;
   srcStatus  INTEGER;
   srcFsId    NUMBER;
   proto      VARCHAR2(2048);
@@ -465,7 +434,7 @@ BEGIN
     -- trust that the file was not modified mid transfer, we invalidate the
     -- new copy.
     UPDATE DiskCopy SET status = 7 WHERE id = dcId -- INVALID
-    RETURNING CastorFile, FileSystem INTO cfId, fsId;
+    RETURNING CastorFile INTO cfId;
     -- Restart the SubRequests waiting for the copy
     UPDATE SubRequest SET status = 1, -- SUBREQUEST_RESTART
                           lastModificationTime = getTime()
@@ -474,8 +443,6 @@ BEGIN
                           lastModificationTime = getTime(),
                           parent = 0
      WHERE parent = srId; -- SUBREQUEST_RESTART
-    -- Update filesystem status
-    updateFsFileClosed(fsId);
     -- Archive the diskCopy replica request
     archiveSubReq(srId, 8);  -- FINISHED
     -- Restart all entries in the snapshot of files to drain that maybe
@@ -509,15 +476,13 @@ BEGIN
      SET status = srcStatus,
          gcWeight = gcw
    WHERE id = dcId
-  RETURNING castorFile, fileSystem, owneruid, ownergid
-    INTO cfId, fsId, ouid, ogid;
+  RETURNING castorFile, owneruid, ownergid
+    INTO cfId, ouid, ogid;
   -- Wake up waiting subrequests
   UPDATE SubRequest SET status = 1,  -- SUBREQUEST_RESTART
                         lastModificationTime = getTime(),
                         parent = 0
    WHERE parent = srId;
-  -- Update filesystem status
-  updateFsFileClosed(fsId);
   -- Archive the diskCopy replica request
   archiveSubReq(srId, 8);  -- FINISHED
   -- Trigger the creation of additional copies of the file, if necessary.
@@ -611,10 +576,6 @@ BEGIN
     UPDATE SubRequest SET status = 1, -- RESTART
                           parent = 0
      WHERE parent = res;
-    -- Update filesystem status
-    IF fsId > 0 THEN
-      updateFsFileClosed(fsId);
-    END IF;
     -- Fail it
     archiveSubReq(res, 9); -- FAILED_FINISHED
     -- If no filesystem was set on the diskcopy then we can safely delete it
@@ -668,7 +629,6 @@ CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER,
                                                  errorCode OUT INTEGER) AS
   cfId INTEGER;
   dcId INTEGER;
-  fsId INTEGER;
   scId INTEGER;
   realFileSize INTEGER;
   unused INTEGER;
@@ -736,9 +696,6 @@ BEGIN
        SELECT euid, egid, id, svcClass FROM StageUpdateRequest UNION ALL
        SELECT euid, egid, id, svcClass FROM StagePutDoneRequest) Request
    WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
-  -- Get the filesystem of the DiskCopy
-  SELECT fileSystem INTO fsId FROM DiskCopy
-   WHERE castorFile = cfId AND status = 6;
   IF contextPIPP != 0 THEN
     -- If not a put inside a PrepareToPut/Update, create TapeCopies
     -- and update DiskCopy status
@@ -754,8 +711,6 @@ BEGIN
           AND SubRequest.castorFile = cfId
           AND SubRequest.status = 5); -- WAITSUBREQ
   END IF;
-  -- Update filesystem status
-  updateFsFileClosed(fsId);
   -- Archive Subrequest
   archiveSubReq(srId, 8);  -- FINISHED
 END;
@@ -791,24 +746,12 @@ END;
 /* PL/SQL method implementing putFailedProc */
 CREATE OR REPLACE PROCEDURE putFailedProc(srId IN NUMBER) AS
   dcId INTEGER;
-  fsId INTEGER;
   cfId INTEGER;
   unused INTEGER;
 BEGIN
   SELECT diskCopy, castorFile INTO dcId, cfId
     FROM SubRequest
    WHERE id = srId;
-  IF dcId > 0 THEN
-    SELECT fileSystem INTO fsId FROM DiskCopy WHERE id = dcId;
-    -- Take file closing into account
-    IF fsId > 0 THEN
-      updateFsFileClosed(fsId);
-    END IF;
-    -- ELSE the subRequest is not linked to a diskCopy: should never happen,
-    -- but we observed NO DATA FOUND errors and the above SELECT is the only
-    -- query that could trigger them! Anyway it's fine to ignore the FS update,
-    -- it will be properly updated by the monitoring.
-  END IF;
   -- Fail the subRequest
   UPDATE SubRequest
      SET status = 7 -- FAILED
