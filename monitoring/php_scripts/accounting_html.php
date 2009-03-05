@@ -58,7 +58,7 @@ if (!function_exists('ociplogon')) {
 include ("user1.php");
 error_reporting(E_ALL ^ E_NOTICE);  
 //connection
-$conn = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
+$conn = ocilogon(username,pass,serv);
 if(!$conn) {
 	$e = oci_error();
 	print htmlentities($e['message']);
