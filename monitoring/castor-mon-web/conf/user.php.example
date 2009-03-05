@@ -1,0 +1,11 @@
+<?php
+//user account
+$db_instances = array(
+	"castoratlas" => array(
+		"username"=> "castormon",
+		"schema" => "castormon",
+		"pass" => "password",
+		"serv" =>"server")
+);
+
+?>
