@@ -11,10 +11,7 @@ URL:            http://cern.ch/castor
 Source: 	%{name}-%{version}.tar.gz
 BuildRoot: 	%{_tmppath}/%{name}-%{version}
 Buildarch:      noarch
-Requires:       php, httpd	
-
-
-
+Requires:       php, httpd, php-oci8
 
 %description
 This web interface provides visualization of some new statistical metrics for CASTOR.
@@ -51,12 +48,7 @@ install -m 644 conf/* $RPM_BUILD_ROOT/var/www/conf/castor-mon-web/
 install -m 644 jpgraph-1.27/QPL.txt $RPM_BUILD_ROOT/var/www/html/castor-mon-web/jpgraph-1.27/
 install -m 644 jpgraph-1.27/README $RPM_BUILD_ROOT/var/www/html/castor-mon-web/jpgraph-1.27/
 install -m 644 jpgraph-1.27/VERSION $RPM_BUILD_ROOT/var/www/html/castor-mon-web/jpgraph-1.27/
-install -m 644 jpgraph-1.27/docs/*.* $RPM_BUILD_ROOT/var/www/html/castor-mon-web/jpgraph-1.27/docs/
-install -m 644 jpgraph-1.27/docs/html/*.* $RPM_BUILD_ROOT/var/www/html/castor-mon-web/jpgraph-1.27/docs/html/
-install -m 644 jpgraph-1.27/docs/html/exframes/* $RPM_BUILD_ROOT/var/www/html/castor-mon-web/jpgraph-1.27/docs/html/exframes/
-install -m 644 jpgraph-1.27/docs/html/img/* $RPM_BUILD_ROOT/var/www/html/castor-mon-web/jpgraph-1.27/docs/html/img/
 install -m 644 jpgraph-1.27/src/*.* $RPM_BUILD_ROOT/var/www/html/castor-mon-web/jpgraph-1.27/src/
-install -m 644 jpgraph-1.27/src/Examples/* $RPM_BUILD_ROOT/var/www/html/castor-mon-web/jpgraph-1.27/src/Examples/
 install -m 644 jpgraph-1.27/src/lang/* $RPM_BUILD_ROOT/var/www/html/castor-mon-web/jpgraph-1.27/src/lang/
 %clean
 
