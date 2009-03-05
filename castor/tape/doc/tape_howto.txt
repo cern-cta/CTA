@@ -31,6 +31,36 @@ ssh lxservb04
 cd /var/www/html/swrep/x86_64_slc4
 
 
+How to build the castor rpms
+============================
+
+mkdir tmp
+
+cd tmp
+
+export CVSROOT=:gserver:isscvs.cern.ch/local/reps/castor
+
+cvs checkout -r v2_1_8_4 CASTOR2
+
+oracle_setup
+
+cd CASTOR2
+
+export ORACLE_HOME="/afs/cern.ch/project/oracle/@sys/10203"
+export ORACLE_LIB="$ORACLE_HOME/lib"
+export ORACLE_BIN="$ORACLE_HOME/bin"
+# /usr/bin/X11 is in the path for the makedepend command
+export PATH="$ORACLE_BIN:/usr/bin/X11:${PATH}"
+export MAJOR_CASTOR_VERSION=2.1
+export MINOR_CASTOR_VERSION=8.4
+
+./maketar.sh
+
+cd ..
+
+rpmbuild -ta castor-2.1.8.tar.gz
+
+
 How to build the VDQM v2_1_7_20
 ===============================
 
