@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: CleaningThread.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2008/05/30 07:30:42 $ $Author: itglp $
+ * @(#)$RCSfile: CleaningThread.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/03/05 11:45:42 $ $Author: itglp $
  *
  * Thread for logging database cleaning operations
  *
@@ -53,7 +53,10 @@ void castor::stager::daemon::CleaningThread::run(void* param) throw() {
     castor::stager::IGCSvc *gcSvc = dynamic_cast<castor::stager::IGCSvc*>(svc);
 
     // actual work: dump the cleanup logs to DLF (cf. cleaningDaemon)
-    gcSvc->dumpCleanupLogs();    
+    gcSvc->dumpCleanupLogs();
+    
+    // log we're done
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, STAGER_GCSVC_CLEANUPDONE);
 
     // now let's free up the database connection, which otherwise remains idle
     svc = svcs->service("DbCnvSvc", castor::SVC_DBCNV);

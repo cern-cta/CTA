@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.63 $ $Release$ $Date: 2009/01/21 15:28:52 $ $Author: itglp $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.64 $ $Release$ $Date: 2009/03/05 11:45:42 $ $Author: itglp $
  *
  * Main stager daemon
  *
@@ -244,6 +244,7 @@ castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::E
     { STAGER_GCSVC_STGFILDEL, "Invoking stgFilesDeleted"},
     { STAGER_GCSVC_FSTGDEL, "File to be unlinked since it disappeared from the stager"},
     { STAGER_GCSVC_FNSDEL, "File deleted since it disappeared from nameserver"},
+    { STAGER_GCSVC_CLEANUPDONE, "Dump of the cleanup log completed, dropping db connection"},
 
     /************/
     /* ErrorSvc */

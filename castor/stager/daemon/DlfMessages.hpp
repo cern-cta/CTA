@@ -118,6 +118,7 @@ namespace castor{
 	STAGER_GCSVC_FNSDEL = 120, /* "File deleted since it disappeared from nameserver" */
 	STAGER_GCSVC_STGFILDEL = 125, /* "Invoking stgFilesDeleted" */
 	STAGER_GCSVC_FSTGDEL = 126 , /* "File to be unlinked since it dissapeared from the stager" */
+        STAGER_GCSVC_CLEANUPDONE = 127, /* "Dump of the cleanup log completed, dropping db connection" */
 
 	/************/
 	/* ErrorSvc */
