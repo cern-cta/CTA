@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.schema.sql,v $ $Revision: 1.7 $ $Date: 2009/03/05 11:56:40 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.schema.sql,v $ $Revision: 1.8 $ $Date: 2009/03/05 15:33:32 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically.
  *
@@ -394,19 +394,15 @@ INSERT INTO FileSystemsToCheck SELECT id, 0 FROM FileSystem;
 /**************/
 /* Accounting */
 /**************/
-CREATE MATERIALIZED VIEW Accounting_MV
-  BUILD IMMEDIATE
-  REFRESH COMPLETE
-  START WITH SYSDATE
-  NEXT SYSDATE + 60/1440
-  DISABLE QUERY REWRITE
-AS
-  SELECT owneruid, fileSystem, sum(diskCopySize) totalSize
-    FROM DiskCopy
-   WHERE DiskCopy.status IN (0, 10)
-     AND DiskCopy.owneruid IS NOT NULL
-     AND DiskCopy.ownergid IS NOT NULL
-   GROUP BY owneruid, fileSystem;
+
+/* WARNING!!!! Changing this to a materialized view which is refresh at a set
+ * frequency causes problems with the disk server draining tools.
+ */
+CREATE TABLE Accounting (euid INTEGER CONSTRAINT NN_Accounting_Euid NOT NULL, 
+                         fileSystem INTEGER CONSTRAINT NN_Accounting_Filesystem NOT NULL,
+                         nbBytes INTEGER);
+ALTER TABLE Accounting 
+ADD CONSTRAINT PK_Accounting_EuidFs PRIMARY KEY (euid, fileSystem);
 
 
 /************************************/
