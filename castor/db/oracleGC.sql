@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.684 $ $Date: 2009/03/05 11:55:10 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.685 $ $Date: 2009/03/05 14:13:55 $ $Author: itglp $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -558,7 +558,7 @@ BEGIN
   END IF;
   
   -- delete castorFiles if nothing is left for them. Here we use
-  -- a temporary table as we need to commit every ~10000 operations
+  -- a temporary table as we need to commit every ~1000 operations
   -- and keeping a cursor opened on the original select may take
   -- too long, leading to ORA-01555 'snapshot too old' errors.
   EXECUTE IMMEDIATE 'TRUNCATE TABLE DeleteTermReqHelper';
@@ -711,6 +711,20 @@ END;
 /
 
 
+/* Deal with stuck recalls - this workaround should be dropped
+   after rtcpclientd is reviewed */
+CREATE OR REPLACE PROCEDURE restartStuckRecalls AS
+BEGIN
+  UPDATE Segment SET status = 0 WHERE status = 7 and tape IN
+    (SELECT id from Tape WHERE tpmode = 0 AND status IN (0, 6) AND id IN
+      (SELECT tape FROM Segment WHERE status = 7));
+  UPDATE Tape SET status = 1 WHERE tpmode = 0 AND status IN (0, 6) AND id IN
+    (SELECT tape FROM Segment WHERE status in (0, 7));
+  COMMIT;
+END;
+/
+
+
 /* Runs cleanup operations */
 CREATE OR REPLACE PROCEDURE cleanup AS
   t INTEGER;
@@ -749,7 +763,8 @@ BEGIN
   FOR j IN (SELECT job_name FROM user_scheduler_jobs
              WHERE job_name IN ('HOUSEKEEPINGJOB',
                                 'CLEANUPJOB',
-                                'BULKCHECKFSBACKINPRODJOB'))
+                                'BULKCHECKFSBACKINPRODJOB',
+                                'RESTARTSTUCKRECALLSJOB'))
   LOOP
     DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
   END LOOP;
@@ -786,6 +801,17 @@ BEGIN
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
       ENABLED         => TRUE,
       COMMENTS        => 'Bulk operation to processing filesystem state changes');
+
+  -- Create a db job to be run every hour executing the restartStuckRecalls workaround procedure
+  DBMS_SCHEDULER.CREATE_JOB(
+      JOB_NAME        => 'restartStuckRecallsJob',
+      JOB_TYPE        => 'PLSQL_BLOCK',
+      JOB_ACTION      => 'BEGIN restartStuckRecalls(); END;',
+      JOB_CLASS       => 'CASTOR_JOB_CLASS',
+      START_DATE      => SYSDATE + 60/1440,
+      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=60',
+      ENABLED         => TRUE,
+      COMMENTS        => 'Workaround to restart stuck recalls');
 END;
 /
 
