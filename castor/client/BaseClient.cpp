@@ -768,6 +768,7 @@ throw (castor::exception::Exception) {
       // Process the objects data
       try {
         if (obj->type() == OBJ_EndResponse) {
+          delete obj;
           continue; // Ignored since 2.1.7-7+
         }
         
