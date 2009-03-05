@@ -1,5 +1,5 @@
 /*******************************************************************
- * @(#)$RCSfile: oracleDrain.schema.sql,v $ $Revision: 1.2 $ $Date: 2009/02/13 10:37:39 $ $Author: waldron $
+ * @(#)$RCSfile: oracleDrain.schema.sql,v $ $Revision: 1.3 $ $Date: 2009/03/05 14:03:34 $ $Author: waldron $
  * Schema creation code for Draining FileSystems Logic
  *
  * @author Castor Dev team, castor-dev@cern.ch
@@ -160,7 +160,7 @@ CREATE INDEX I_DrainingDCs_Parent
  * Refer too: http://www.sqlsnippets.com/en/topic-12924.html
  */
 CREATE MATERIALIZED VIEW LOG ON DrainingDiskCopy
-WITH ROWID, PRIMARY KEY, SEQUENCE (fileSystem, status, filesize)
+WITH ROWID, PRIMARY KEY (fileSystem, status, filesize)
 INCLUDING NEW VALUES;
 
 CREATE MATERIALIZED VIEW DrainingDiskCopy_MV
