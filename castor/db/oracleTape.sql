@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.716 $ $Date: 2009/02/27 09:35:57 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.717 $ $Date: 2009/03/05 14:07:39 $ $Author: itglp $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -113,28 +113,9 @@ BEGIN
 END;
 /
 
-/* Updates the count of tapecopies in NbTapeCopiesInFS
-   whenever a DiskCopy has been replicated and the new one
-   is put into CANBEMIGR status from the
-   WAITDISK2DISKCOPY status */
-CREATE OR REPLACE TRIGGER tr_DiskCopy_Update
-AFTER UPDATE OF status ON DiskCopy
-FOR EACH ROW
-WHEN (old.status = 1 AND -- WAITDISK2DISKCOPY
-      new.status = 10) -- CANBEMIGR
-BEGIN
-  -- Access to NbTapeCopiesInFS needs to be serialized,
-  -- see tr_Stream_Insert
-  LOCK TABLE NbTapeCopiesInFS IN EXCLUSIVE MODE;
-  UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies + 1
-   WHERE FS = :new.fileSystem
-     AND Stream IN (SELECT Stream2TapeCopy.parent
-                      FROM Stream2TapeCopy, TapeCopy
-                     WHERE TapeCopy.castorFile = :new.castorFile
-                       AND Stream2TapeCopy.child = TapeCopy.id
-                       AND TapeCopy.status = 2); -- WAITINSTREAMS
-END;
-/
+/* Note: one more trigger is defined in oracleStager.sql
+   to update the count of tapecopies in NbTapeCopiesInFS
+   whenever a new DiskCopy goes online. */
 
 
 /* Used to create a row INTO LockTable whenever a new
