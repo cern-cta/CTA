@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/03/03 13:47:23 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/03/05 10:48:51 $ $Author: trekas $
  *
  * This script create a new Monitoring schema
  *
@@ -895,7 +895,7 @@ BEGIN
   INSERT INTO DiskCopy 
     (nsfileid, timestamp, originalPool, targetPool, destHost, srcHost)
     SELECT * FROM (
-     SELECT /*+ index(a i_msg_fac) index(a i_msg_fileid) index(a i_msg_timestamp) */ a.nsfileid nsfileid, a.timestamp,
+     SELECT /*+ index(a I_Messages_Facility) index(a I_Messages_NSFileid)*/ a.nsfileid nsfileid, a.timestamp,
             max(CASE WHEN a.msg_no = 39 AND b.name = 'Direction'  
                 THEN substr(b.value, 0, instr(b.value, '->', 1) - 2)  
                 ELSE NULL END) src, 
@@ -958,7 +958,7 @@ BEGIN
   INSERT INTO GcFiles
     (timestamp, nsfileid, fileSize, fileAge, lastAccessTime, nbAccesses, 
      gcType, svcclass)
-    SELECT /*+ index(mes i_msg_timestamp) index(mes i_msg_fileid) index(num i_num_id) index(str i_str_id) */
+    SELECT /*+ index(mes I_Messages_NSFileid) index(num I_Num_Param_Values_id) index(str I_Str_Param_Values_id) */
            mes.timestamp, 
            mes.nsfileid,
            max(decode(num.name, 'FileSize', num.value, NULL)) fileSize,
@@ -993,7 +993,7 @@ AS
 BEGIN
   -- Info about tape recalls: Tape Volume Id - Tape Status
   INSERT INTO TapeRecall (timestamp, subReqId, tapeId, tapeMountState)
-    (SELECT /*+ index(mes i_msg_timestamp) index(mes i_msg_fac) index(str i_str_id) */
+    (SELECT /*+ index(mes I_Messages_Facility) index(str I_Str_Param_Values_id) */
             mes.timestamp, mes.subreqid, mes.tapevid, str.value 
        FROM &dlfschema..dlf_messages mes, &dlfschema..dlf_str_param_values str
       WHERE mes.id = str.id 
@@ -1001,12 +1001,12 @@ BEGIN
         AND mes.msg_no = 57   -- Triggering Tape Recall
         AND str.name = 'TapeStatus'
         AND mes.timestamp >= maxTimeStamp
-        AND str.timestamp >= maxTimeStamp
+        AND str.timestamp >= maxTimeStampI_Num_Param_Values_id
         AND mes.timestamp < maxTimeStamp + 5/1440
         AND str.timestamp < maxTimeStamp + 5/1440)
   LOG ERRORS INTO Err_Taperecall REJECT LIMIT 100000;
   -- Insert info about size of recalled file
-  FOR a IN (SELECT /*+ index(mes i_msg_timestamp) index(mes i_msg_fac) index(num i_num_id) */
+  FOR a IN (SELECT /*+ index(mes I_Messages_Facility) index(num I_Num_Param_Values_id) */
                    mes.subreqid, num.value 
               FROM &dlfschema..dlf_messages mes, &dlfschema..dlf_num_param_values num
              WHERE mes.id = num.id 
@@ -1032,7 +1032,7 @@ AS
 BEGIN
   INSERT INTO Migration
     (timestamp, reqid, subreqid, nsfileid, type, svcclass, username, filename)
-    SELECT /*+ index(mes i_msg_fileid) index(mes i_msg_timestamp) index(str i_str_id) */
+    SELECT /*+ index(mes I_Messages_NSFileid) index(str I_Str_Param_Values_id) */
            mes.timestamp,mes.reqid, 
            mes.subreqid, mes.nsfileid,
            max(decode(str.name, 'Type',     str.value, NULL)) type,
@@ -1068,7 +1068,7 @@ AS
 BEGIN
   INSERT INTO Requests
     (timestamp, reqId, subReqId, nsfileid, type, svcclass, username, state, filename)
-    SELECT /*+ index(mes i_msg_timestamp) index(mes i_msg_fac) index(str i_str_id) */
+    SELECT /*+ index(mes I_Messages_Facility) index(str I_Str_Param_Values_id) */
            mes.timestamp, mes.reqid, mes.subreqid, mes.nsfileid,
            max(decode(str.name, 'Type', str.value, NULL)) type,
            max(decode(str.name, 'SvcClass', str.value, NULL)) svcclass,
