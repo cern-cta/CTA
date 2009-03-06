@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.686 $ $Date: 2009/03/05 15:33:31 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.687 $ $Date: 2009/03/06 17:21:29 $ $Author: itglp $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -562,10 +562,11 @@ BEGIN
   -- and keeping a cursor opened on the original select may take
   -- too long, leading to ORA-01555 'snapshot too old' errors.
   EXECUTE IMMEDIATE 'TRUNCATE TABLE DeleteTermReqHelper';
-  INSERT INTO DeleteTermReqHelper
+  INSERT /*+ APPEND */ INTO DeleteTermReqHelper
     (SELECT id, castorFile FROM SubRequest
       WHERE status IN (9, 11)
         AND lastModificationTime < getTime() - timeOut);
+  COMMIT;
   ct := 0;
   FOR cf IN (SELECT UNIQUE cfId FROM DeleteTermReqHelper) LOOP
     deleteCastorFile(cf.cfId);
@@ -581,20 +582,24 @@ BEGIN
   -- entries to be deleted, and we use the FORALL logic
   -- (cf. bulkDelete) instead of a simple DELETE ...
   -- WHERE id IN (SELECT srId FROM DeleteTermReqHelper)
-  -- for efficiency reasons.
+  -- for efficiency reasons. Moreover, we don't risk
+  -- here the ORA-01555 error keeping the cursor open
+  -- between commits as we are selecting on our
+  -- temporary table.
   DECLARE
     CURSOR s IS
       SELECT srId FROM DeleteTermReqHelper;
     ids "numList";
   BEGIN
     OPEN s;
-    FETCH s BULK COLLECT INTO ids;
-    IF ids.COUNT > 0 THEN
+    LOOP
+      FETCH s BULK COLLECT INTO ids LIMIT 10000;
+      EXIT WHEN s%NOTFOUND;
       FORALL i IN ids.FIRST..ids.LAST
         DELETE FROM SubRequest WHERE id = ids(i);
-    END IF;
+      COMMIT;
+    END LOOP;
     CLOSE s;
-    COMMIT;
   END;
   EXECUTE IMMEDIATE 'TRUNCATE TABLE DeleteTermReqHelper';
 
