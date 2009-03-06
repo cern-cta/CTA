@@ -17,10 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: grant_oracle_user.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/03/04 14:07:19 $ $Author: waldron $
+ * @(#)$RCSfile: grant_oracle_user.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/03/06 15:05:48 $ $Author: waldron $
  *
- * This script grants SELECT rights on all tables within a database schema
- * to a given user.
+ * This script grants SELECT rights on all tables and views within a database
+ * schema to a given user.
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -28,9 +28,9 @@
 /* Stop on errors - this only works from sqlplus */
 WHENEVER SQLERROR EXIT FAILURE;
 
-/* Determine the user to grant SELECT rights on all tables */
+/* Determine the user to grant SELECT rights on all tables and views */
 UNDEF username
-ACCEPT username DEFAULT castor_read PROMPT 'Grant SELECT rights on all tables to user: (castor_read) '
+ACCEPT username DEFAULT castor_read PROMPT 'Grant SELECT rights on all tables and views to user: (castor_read) '
 SET VER OFF
 
 DECLARE
@@ -40,15 +40,21 @@ BEGIN
   BEGIN
     SELECT username INTO unused
       FROM all_users
-     WHERE lower(username) = '&&username';
+     WHERE username = upper('&&username');
   EXCEPTION WHEN NO_DATA_FOUND THEN
     raise_application_error(-20000, 'User &username does not exist');
   END;
 
-  -- Grant select on all tables excluding temporary ones to username
-  FOR a IN (SELECT table_name FROM user_tables WHERE temporary = 'N')
+  -- Grant select on all tables and views excluding temporary ones to username
+  FOR a IN (SELECT table_name FROM user_tables WHERE temporary = 'N'
+             UNION ALL
+            SELECT view_name FROM user_views)
   LOOP
-    EXECUTE IMMEDIATE 'GRANT SELECT ON '||a.table_name||' TO &username';
+    IF a.table_name IN ('DLF_CONFIG', 'DLF_MONITORING') THEN
+      EXECUTE IMMEDIATE 'GRANT SELECT ON '||a.table_name||' TO &username WITH GRANT OPTION';
+    ELSE
+      EXECUTE IMMEDIATE 'GRANT SELECT ON '||a.table_name||' TO &username';
+    END IF;
   END LOOP;
 END;
 /
