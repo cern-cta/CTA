@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.46 $ $Release$ $Date: 2009/01/26 09:08:17 $ $Author: waldron $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.47 $ $Release$ $Date: 2009/03/06 15:20:21 $ $Author: sponcec3 $
  *
  * the client API to the castor stager
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.46 $
- * @date $Date: 2009/01/26 09:08:17 $
+ * @version $Revision: 1.47 $
+ * @date $Date: 2009/03/06 15:20:21 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.46 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.47 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -1507,7 +1507,7 @@ EXTERN_C char* DLL_DECL stage_fileSystemStatusName _PROTO((int statusCode));
 /**********************************************************
  *    Utility to get the current client timeout           *
  **********************************************************/
-#define STAGER_TIMEOUT_DEFAULT 2592000
+#define STAGER_TIMEOUT_DEFAULT 172800
 
 EXTERN_C int DLL_DECL stage_getClientTimeout _PROTO(());
 
