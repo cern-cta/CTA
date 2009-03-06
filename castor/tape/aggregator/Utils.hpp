@@ -109,16 +109,6 @@ public:
   }
 
   /**
-   * Safely copies source string into destination string.  The destination
-   * will always be null terminated if this function is successful.
-   *
-   * @param dst Destination string.
-   * @param src Source string.
-   */
-  static void copyString(char *const dst, const std::string &src)
-    throw(castor::exception::Exception);
-
-  /**
    * Returns the string representation of the specified magic number.
    *
    * @param magic The magic number.

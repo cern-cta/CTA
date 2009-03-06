@@ -71,8 +71,8 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
 
 //===================================================
 // Hardcoded volume INFO
-#ifdef EMULATE_GATEWAY 
-  
+#ifdef EMULATE_GATEWAY
+
   //transactionIdFromGateway = volReqId;
   Utils::copyString(vid,     "I10550");
   mode = 0;
@@ -116,10 +116,10 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
     try {
       tapegateway::Volume &volume = dynamic_cast<tapegateway::Volume&>(*reply);
       transactionIdFromGateway = volume.transactionId();
-      Utils::copyString(vid, volume.vid());
+      Utils::copyString(vid, volume.vid().c_str());
       mode = volume.mode();
-      Utils::copyString(label, volume.label());
-      Utils::copyString(density, volume.density());
+      Utils::copyString(label, volume.label().c_str());
+      Utils::copyString(density, volume.density().c_str());
     } catch(std::bad_cast &bc) {
       castor::exception::Internal ex;
 
@@ -256,11 +256,11 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
 // getFileToMigrateFromGateway
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost, 
-  const unsigned short gatewayPort, 
-  char (&filePath)[CA_MAXPATHLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN+1], 
-  uint64_t &fileId, uint32_t &tapeFileSeq, uint64_t &fileSize, 
-  char (&lastKnownFileName)[CA_MAXPATHLEN+1], uint64_t &lastModificationTime) 
+  const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost,
+  const unsigned short gatewayPort,
+  char (&filePath)[CA_MAXPATHLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN+1],
+  uint64_t &fileId, uint32_t &tapeFileSeq, uint64_t &fileSize,
+  char (&lastKnownFileName)[CA_MAXPATHLEN+1], uint64_t &lastModificationTime)
   throw(castor::exception::Exception) {
 /*
   {
@@ -312,12 +312,12 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
       tapegateway::FileToMigrate &file =
         dynamic_cast<tapegateway::FileToMigrate&>(*reply);
       transactionIdFromGateway = file.transactionId();
-      Utils::copyString(filePath, file.path());
-      Utils::copyString(nsHost, file.nshost());
+      Utils::copyString(filePath, file.path().c_str());
+      Utils::copyString(nsHost, file.nshost().c_str());
       fileId = file.fileid();
       tapeFileSeq = file.fseq();
       fileSize = file.fileSize();
-      Utils::copyString(lastKnownFileName, file.lastKnownFileName());
+      Utils::copyString(lastKnownFileName, file.lastKnownFileName().c_str());
       lastModificationTime = file.lastModificationTime();
     } catch(std::bad_cast &bc) {
       castor::exception::Internal ex;
@@ -460,21 +460,21 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
 // getFileToRecallFromGateway
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost, 
-  const unsigned short gatewayPort, 
-  char (&filePath)[CA_MAXPATHLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN+1], 
-  uint64_t &fileId, uint32_t &tapeFileSeq, unsigned char (&blockId)[4]) 
+  const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost,
+  const unsigned short gatewayPort,
+  char (&filePath)[CA_MAXPATHLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN+1],
+  uint64_t &fileId, uint32_t &tapeFileSeq, unsigned char (&blockId)[4])
   throw(castor::exception::Exception) {
 
   bool thereIsAFileToRecall = false;
 
   // Prepare the request
   tapegateway::FileToRecallRequest request;
-  request.setTransactionId(volReqId);  
+  request.setTransactionId(volReqId);
 
 //===================================================
 // Hardcoded volume INFO
-#ifdef EMULATE_GATEWAY 
+#ifdef EMULATE_GATEWAY
 
   //transactionIdFromGateway = volReqId;
   Utils::copyString(filePath, "lxc2disk15.cern.ch:/srv/castor/04//71/305892471@castorns.263135");
@@ -492,14 +492,14 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
 
   // Connect to the tape gateway
   castor::io::ClientSocket gatewaySocket(gatewayPort, gatewayHost);
-  gatewaySocket.connect();                                         
+  gatewaySocket.connect();
 
   // Send the request
   gatewaySocket.sendObject(request);
 
   // Receive the reply object wrapping it in an auto pointer so that it is
-  // automatically deallocated when it goes out of scope                  
-  std::auto_ptr<castor::IObject> reply(gatewaySocket.readObject());       
+  // automatically deallocated when it goes out of scope
+  std::auto_ptr<castor::IObject> reply(gatewaySocket.readObject());
 
   // Close the connection to the tape gateway
   gatewaySocket.close();
@@ -509,10 +509,10 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
 
     ex.getMessage() << __PRETTY_FUNCTION__
       << ": Failed to get reply object from the tape gateway"
-         ": ClientSocket::readObject() returned null";       
+         ": ClientSocket::readObject() returned null";
 
     throw ex;
-  }          
+  }
 
   // Temporary variable used to check for a transaction ID mistatch
   uint64_t transactionIdFromGateway = 0;
@@ -520,121 +520,121 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
   switch(reply->type()) {
   case OBJ_FileToRecall:
     // Copy the reply information
-    try {                        
+    try {
       tapegateway::FileToRecall &file =
         dynamic_cast<tapegateway::FileToRecall&>(*reply);
-      transactionIdFromGateway = file.transactionId();    
-      Utils::copyString(filePath, file.path());           
-      Utils::copyString(nsHost, file.nshost());            
-      fileId = file.fileid();                              
-      tapeFileSeq = file.fseq();                           
+      transactionIdFromGateway = file.transactionId();
+      Utils::copyString(filePath, file.path().c_str());
+      Utils::copyString(nsHost, file.nshost().c_str());
+      fileId = file.fileid();
+      tapeFileSeq = file.fseq();
       blockId[0] = file.blockId0();
       blockId[1] = file.blockId1();
       blockId[2] = file.blockId2();
       blockId[3] = file.blockId3();
-    } catch(std::bad_cast &bc) {                                     
-      castor::exception::Internal ex;                                
+    } catch(std::bad_cast &bc) {
+      castor::exception::Internal ex;
 
       ex.getMessage() << __PRETTY_FUNCTION__
         << "Failed to down cast reply object to tapegateway::FileToRecall";
 
       throw ex;
-    }          
+    }
 
     // If there is a transaction ID mismatch
     if(transactionIdFromGateway != volReqId) {
-      castor::exception::Exception ex(EINVAL);     
+      castor::exception::Exception ex(EINVAL);
 
       ex.getMessage() << __PRETTY_FUNCTION__
-        << ": Transaction ID mismatch"      
-           ": Expected = " << volReqId 
+        << ": Transaction ID mismatch"
+           ": Expected = " << volReqId
         << ": Actual = " << transactionIdFromGateway;
 
       throw ex;
-    }          
+    }
 
     thereIsAFileToRecall = true;
-    break;                       
+    break;
 
   case OBJ_NoMoreFiles:
     // Copy the reply information
-    try {                        
+    try {
       tapegateway::NoMoreFiles &noMoreFiles =
         dynamic_cast<tapegateway::NoMoreFiles&>(*reply);
       transactionIdFromGateway = noMoreFiles.transactionId();
-    } catch(std::bad_cast &bc) {                             
-      castor::exception::Internal ex;                        
+    } catch(std::bad_cast &bc) {
+      castor::exception::Internal ex;
 
       ex.getMessage() << __PRETTY_FUNCTION__
         << "Failed to down cast reply object to tapegateway::NoMoreFiles";
 
       throw ex;
-    }          
+    }
 
     // If there is a transaction ID mismatch
     if(transactionIdFromGateway != volReqId) {
-      castor::exception::Exception ex(EINVAL);     
+      castor::exception::Exception ex(EINVAL);
 
       ex.getMessage() << __PRETTY_FUNCTION__
-        << ": Transaction ID mismatch"      
-           ": Expected = " << volReqId 
+        << ": Transaction ID mismatch"
+           ": Expected = " << volReqId
         << ": Actual = " << transactionIdFromGateway;
 
       throw ex;
-    }          
-    break;     
+    }
+    break;
 
   case OBJ_ErrorReport:
-    {                  
-       int errorCode;  
+    {
+       int errorCode;
        std::string errorMessage;
 
       // Copy the reply information
-      try {                        
+      try {
         tapegateway::ErrorReport &errorReport =
           dynamic_cast<tapegateway::ErrorReport&>(*reply);
         transactionIdFromGateway = errorReport.transactionId();
-        errorCode = errorReport.errorCode();                   
-        errorMessage = errorReport.errorMessage();             
-      } catch(std::bad_cast &bc) {                             
-        castor::exception::Internal ex;                        
+        errorCode = errorReport.errorCode();
+        errorMessage = errorReport.errorMessage();
+      } catch(std::bad_cast &bc) {
+        castor::exception::Internal ex;
 
         ex.getMessage() << __PRETTY_FUNCTION__
           << "Failed to down cast reply object to tapegateway::NoMoreFiles";
 
         throw ex;
-      }          
+      }
 
       // If there is a transaction ID mismatch
       if(transactionIdFromGateway != volReqId) {
-        castor::exception::Exception ex(EINVAL);     
+        castor::exception::Exception ex(EINVAL);
 
         ex.getMessage() << __PRETTY_FUNCTION__
-          << ": Transaction ID mismatch"      
-             ": Expected = " << volReqId 
+          << ": Transaction ID mismatch"
+             ": Expected = " << volReqId
           << ": Actual = " << transactionIdFromGateway;
 
         throw ex;
-      }          
+      }
 
       // Translate the reception of the error report into a C++ exception
-      castor::exception::Exception ex(errorCode);                        
+      castor::exception::Exception ex(errorCode);
 
       ex.getMessage() << errorMessage;
 
       throw ex;
-    }          
-    break;     
-  default:     
-    {          
+    }
+    break;
+  default:
+    {
       castor::exception::Exception ex(EINVAL);
 
       ex.getMessage() << __PRETTY_FUNCTION__
-        << ": Unknown reply type "          
+        << ": Unknown reply type "
            ": Reply type = " << reply->type();
 
       throw ex;
-    }          
+    }
   }
 
   return thereIsAFileToRecall;
@@ -645,12 +645,12 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
 // notifyGatewayFileMigrated
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost, 
+  const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost,
   const unsigned short gatewayPort,
   char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId, uint32_t &tapeFileSeq,
   unsigned char (&blockId)[4], uint32_t positionCommandCode,
-  char (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1], uint32_t checksum, 
-  uint32_t fileSize, uint32_t compressedFileSize ) 
+  char (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1], uint32_t checksum,
+  uint32_t fileSize, uint32_t compressedFileSize )
   throw(castor::exception::Exception) {
 
   // Prepare the request
@@ -659,10 +659,10 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
   request.setTransactionId(volReqId);
   request.setNshost(nsHost);
   request.setFileid(fileId);
-  request.setBlockId0(blockId[0]); // block ID = 4 integers (little indian order) 
-  request.setBlockId1(blockId[1]); 
-  request.setBlockId2(blockId[2]); 
-  request.setBlockId3(blockId[3]); 
+  request.setBlockId0(blockId[0]); // block ID = 4 integers (little indian order)
+  request.setBlockId1(blockId[1]);
+  request.setBlockId2(blockId[2]);
+  request.setBlockId3(blockId[3]);
   request.setPositionCommandCode(
     (tapegateway::PositionCommandCode)positionCommandCode);
   request.setChecksumName(checksumAlgorithm);
@@ -676,7 +676,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
   gatewaySocket.sendObject(request);
 
   // Receive the reply object wrapping it in an auto pointer so that it is
-  // automatically deallocated when it goes out of scope                  
+  // automatically deallocated when it goes out of scope
   std::auto_ptr<castor::IObject> reply(gatewaySocket.readObject());
 
   // Close the connection to the tape gateway
@@ -745,20 +745,20 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
 // notifyGatewayFileRecalled
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost, 
+  const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost,
   const unsigned short gatewayPort,
   char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId, uint32_t &tapeFileSeq,
   uint32_t positionCommandCode, char (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1],
-  uint32_t checksum, uint32_t fileSize, uint32_t compressedFileSize ) 
+  uint32_t checksum, uint32_t fileSize, uint32_t compressedFileSize )
   throw(castor::exception::Exception) {
 
   // Prepare the request
   tapegateway::FileRecalledNotification request;
   request.setTransactionId(volReqId);
   request.setNshost(nsHost);
-  request.setFileid(fileId); 
+  request.setFileid(fileId);
   request.setPositionCommandCode(
-    (tapegateway::PositionCommandCode)positionCommandCode); 
+    (tapegateway::PositionCommandCode)positionCommandCode);
   request.setChecksumName(checksumAlgorithm);
   request.setChecksum(checksum);
 
@@ -770,7 +770,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
   gatewaySocket.sendObject(request);
 
   // Receive the reply object wrapping it in an auto pointer so that it is
-  // automatically deallocated when it goes out of scope                  
+  // automatically deallocated when it goes out of scope
   std::auto_ptr<castor::IObject> reply(gatewaySocket.readObject());
 
   // Close the connection to the tape gateway
@@ -838,8 +838,8 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
 // notifyGatewayOfEnd
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::GatewayTxRx::notifyGatewayOfEnd(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost, 
-  const unsigned short gatewayPort) 
+  const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost,
+  const unsigned short gatewayPort)
   throw(castor::exception::Exception) {
 
   // Prepare the request
