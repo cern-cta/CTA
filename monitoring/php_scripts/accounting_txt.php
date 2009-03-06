@@ -6,37 +6,33 @@ if (!function_exists('ociplogon')) {
 		dl('php_oci8.dll');
 	}
 }
-//see user.php.example
+
 include ("user.php");
 error_reporting(E_ALL ^ E_NOTICE);  
 //connection
-//please initialize $sercvice (e.g. castor_atlas_stager (you need a correnct entry in user.php))
-//either by posting a value 
-//$service = $_GET['service'];
-//or by hardcoding one
-//$service = "castor_atlas_stager"
-$conn = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
+$conn = ocilogon($db_instances[$service]['username'],$db_instances[$service]['password'],$db_instances[$service]['server']);
 if(!$conn) {
 	$e = oci_error();
 	print htmlentities($e['message']);
 	exit;
 }
+$servuce = "stagerdb";
 $query1 = "select name,to_char(euid) usern,sum(nbbytes) bsize
            from (
              select a.euid,a.nbbytes,c.child svcclass
-             from castor_stager.accounting a, castor_stager.filesystem b, castor_stager.diskpool2svcclass c 
+             from ".$db_instances[$service]['schema']."accounting a, ".$db_instances[$service]['schema']."filesystem b, ".$db_instances[$service]['schema']."diskpool2svcclass c 
              where a.filesystem = b.id
-               and b.diskpool = c.parent) temp,  castor_stager.svcclass
-           where temp.svcclass =  castor_stager.svcclass.id
+               and b.diskpool = c.parent) temp,  ".$db_instances[$service]['schema']."svcclass
+           where temp.svcclass =  ".$db_instances[$service]['schema']."svcclass.id
            group by euid,name
            UNION
            select name , 'free_space' usern,free bsize
            from (
            select child svcclass,diskpool,sum(free) free
-           from  castor_stager.filesystem a, castor_stager.diskpool2svcclass b
+           from  ".$db_instances[$service]['schema']."filesystem a, ".$db_instances[$service]['schema']."diskpool2svcclass b
            where a.diskpool = b.parent
-           group by child,diskpool ) c ,  castor_stager.svcclass
-           where c.svcclass =  castor_stager.svcclass.id
+           group by child,diskpool ) c ,  ".$db_instances[$service]['schema']."svcclass
+           where c.svcclass =  ".$db_instances[$service]['schema']."svcclass.id
            order by name";
 
 	   
@@ -46,13 +42,9 @@ if (!OCIExecute($parsed1))
 	{ echo "Error Executing Query";exit();}
 $svcclass = "foo";
 $j=0;
-echo "<svcclass>\n<username> <volume in MBs>\n";
+echo "<svcclass><username><userid><volume in MBs>\n";
 while (OCIFetch($parsed1)) {
-	$svcclass_new = OCIResult($parsed1,1);
-	if ($svcclass_new != $svcclass) {
-		echo "\n$svcclass_new \n";
-		$svcclass = $svcclass_new;
-	}
+	$svcclass = OCIResult($parsed1,1);
 	$userid = OCIResult($parsed1,2);
 	$size = OCIResult($parsed1,3);
         $uname = $userid;
@@ -61,7 +53,9 @@ while (OCIFetch($parsed1)) {
 		if(!empty($username))
 	  		$uname = $username['name'];
         }
+        echo "$svcclass ";
 	echo "$uname ";
+        echo "$userid ";
 	$size = round(($size / (1024*1024)),3);
 	echo "$size";
 	echo "\n";
