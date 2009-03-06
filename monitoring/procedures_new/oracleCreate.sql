@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/03/05 14:02:07 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/03/06 15:05:09 $ $Author: waldron $
  *
  * This script create a new Monitoring schema
  *
@@ -40,7 +40,7 @@ BEGIN
   BEGIN
     SELECT username INTO unused
       FROM all_users
-     WHERE lower(username) = '&&dlfschema';
+     WHERE username = upper('&&dlfschema');
   EXCEPTION WHEN NO_DATA_FOUND THEN
     raise_application_error(-20000, 'User &dlfschema does not exist');
   END;
@@ -48,7 +48,7 @@ BEGIN
   BEGIN
     SELECT owner INTO unused
       FROM all_tables
-     WHERE lower(owner) = '&&dlfschema'
+     WHERE owner = upper('&&dlfschema')
        AND table_name = 'DLF_VERSION';
   EXCEPTION WHEN NO_DATA_FOUND THEN
     raise_application_error(-20001, 'Unable to access the &dlfschema..dlf_version table. Check that the correct grants have been issued!');
@@ -110,6 +110,10 @@ CREATE TABLE TapeMountsHelper (timestamp DATE CONSTRAINT NN_TapeMountsHelper_ts 
 /* SQL statement for a view on the DLF_Monitoring table */
 CREATE OR REPLACE VIEW DLFStats AS
   SELECT * FROM &dlfschema..dlf_monitoring;
+
+/* SQL statement for a view on the DLF_Config table */
+CREATE OR REPLACE VIEW DLFConfig AS
+  SELECT * FROM &dlfschema..dlf_config;
 
 
 /* PL/SQL method implementing statsLatency
