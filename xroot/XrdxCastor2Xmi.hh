@@ -1,4 +1,4 @@
-//         $Id: XrdxCastor2Xmi.hh,v 1.1 2008/09/15 10:04:05 apeters Exp $
+//         $Id: XrdxCastor2Xmi.hh,v 1.2 2009/03/06 13:45:04 apeters Exp $
 
 #ifndef __XCASTOR2_XMI_H__
 #define __XCASTRO2_XMI_H__
@@ -25,7 +25,9 @@ public:
   XrdOucHash<XrdOucString> *stagertable;
   XrdOucHash<XrdOucString> *stagerpolicy;
   XrdOucString         LocationCacheDir;
-
+  char*                HostName;
+  char*                HostPref;
+  XrdOucString         ManagerId;
 
   int  Chmod (      XrdCmsReq      *Request,
 		    mode_t          mode,
@@ -94,20 +96,9 @@ public:
 		    const char           *path,
 		    const char           *opaque);
 
-
-  int  State  (      XrdCmsReq      *Request,
-		    const char           *path,
-		    const char           *opaque);
-
   bool Init  (      XrdCmsXmiEnv   *xmienv);
 
   bool SetStageVariables(const char* Path, const char* Opaque, XrdOucString &stagehost, XrdOucString &serviceclass);
-
-  bool GetCacheFile(XrdOucString stagehost, XrdOucString serviceclass, const char* Path, XrdOucString locationfile, XrdOucString locationhost, XrdOucString locationpath);
-
-
-// Called after the plugin is loaded to determine which and how the above
-// methods are to be called.
 
 // Called after the plugin is loaded to determine which and how the above
 // methods are to be called.

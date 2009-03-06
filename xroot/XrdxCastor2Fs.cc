@@ -1,6 +1,6 @@
-//          $Id: XrdxCastor2Fs.cc,v 1.5 2009/02/27 12:13:29 apeters Exp $
+//          $Id: XrdxCastor2Fs.cc,v 1.6 2009/03/06 13:45:04 apeters Exp $
 
-const char *XrdxCastor2FsCVSID = "$Id: XrdxCastor2Fs.cc,v 1.5 2009/02/27 12:13:29 apeters Exp $";
+const char *XrdxCastor2FsCVSID = "$Id: XrdxCastor2Fs.cc,v 1.6 2009/03/06 13:45:04 apeters Exp $";
 
 
 #include "XrdVersion.hh"
@@ -1548,7 +1548,10 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
      // add the external token opaque tag
      redirectionhost+=accopaque;
      if (!isRW) {
-       redirectionhost+="adler32="; redirectionhost+=buf.csumvalue; redirectionhost+="&";
+       // we always assume adler, but we should check the type here ...
+       if (!strcmp(buf.csumtype,"AD")) {
+	 redirectionhost+="adler32="; redirectionhost+=buf.csumvalue; redirectionhost+="&";
+       }
      }
 
      //     if (XrdxCastor2FS->xCastor2FsTargetPort != "1094") {
@@ -3302,7 +3305,7 @@ int XrdxCastor2Fs::stat(const char              *path,        // In
   buf->st_ctime   = cstat.ctime;
 
   if (!S_ISDIR(cstat.filemode)) {
-    if ( (stagestatus != "STAGED") && (stagestatus != "CANBEMIG") ) {
+    if ( (stagestatus != "STAGED") && (stagestatus != "CANBEMIGR") ) {
       // this file is offline
       buf->st_mode = (mode_t) -1;
       buf->st_ino   = 0;
@@ -3797,12 +3800,6 @@ XrdxCastor2Fs::fsctl(const int               cmd,
   static const char *epname = "fsctl";
   const char *tident = error.getErrUser(); 
 
-  ZTRACE(fsctl,args);
-
-  if (cmd!=SFS_FSCTL_PLUGIN) {
-    return SFS_ERROR;
-  }
-
   XrdOucString path = args;
   XrdOucString opaque;
   opaque.assign(path,path.find("?")+1);
@@ -3810,6 +3807,34 @@ XrdxCastor2Fs::fsctl(const int               cmd,
 
   XrdOucEnv env(opaque.c_str());
   const char* scmd;
+
+  ZTRACE(fsctl,args);
+  if ((cmd == SFS_FSCTL_LOCATE) || ( cmd == 16777217 ) ) {
+    // check if this file exists
+    XrdSfsFileExistence file_exists;
+    if ((_exists(path.c_str(),file_exists,error,client,0)) || (file_exists!=XrdSfsFileExistIsFile)) {
+      return SFS_ERROR;
+    }
+    
+    char locResp[4096];
+    int  locRlen = 4096;
+    struct stat fstat;
+    char rType[3], *Resp[] = {rType, locResp};
+    rType[0] = 'S';//(fstat.st_mode & S_IFBLK == S_IFBLK ? 's' : 'S');
+    // we don't want to manage writes via global redirection - therefore we mark the files as 'r'
+    rType[1] = 'r';//(fstat.st_mode & S_IWUSR            ? 'w' : 'r');
+    rType[2] = '\0';
+    sprintf(locResp,"[::%s] ",(char*)XrdxCastor2FS->ManagerId.c_str());
+    error.setErrInfo(strlen(locResp)+3, (const char **)Resp, 2);
+    ZTRACE(fsctl,"located at headnode: " << locResp);
+    return SFS_DATA;
+  }
+  
+
+  if (cmd!=SFS_FSCTL_PLUGIN) {
+    return SFS_ERROR;
+  }
+
 
   if ((scmd = env.Get("pcmd"))) {
     XrdOucString execmd = scmd;

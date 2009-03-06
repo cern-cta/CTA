@@ -8,7 +8,7 @@ Source0:     %{name}-%{version}.tar.gz
 BuildRoot:   %{_builddir}/%{name}-%{version}-root
 
 AutoReqProv: no
-Requires:    castor-lib >= 2.1.8
+Requires:    castor-lib >= 2.1.8-6
 Requires:    xrootd
 
 %define __check_files %{nil}
@@ -45,11 +45,12 @@ fi
 %defattr(-,root,root,-)
 /opt/xrootd/bin/x2castorjob
 /opt/xrootd/lib/lib*.so*
-
 %config(noreplace) /etc/xrd.cf
+%config(noreplace) /etc/xrd.cf.meta
 %config(noreplace) /etc/sysconfig/xrd.example
 %config(noreplace) /etc/logrotate.d/xrd
 %_sysconfdir/rc.d/init.d/xrd
+%_sysconfdir/rc.d/init.d/cmsd
 %_sysconfdir/logrotate.d/xrd
 
 %dir /var/log/xroot/empty
@@ -59,11 +60,14 @@ fi
 %attr(-,stage,st) %dir /var/spool/xroot/core
 
 %changelog
-* Thu Feb 26 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.5-1
+* Fri Mar 06 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.5-1
 - added support for adler32 checksumming
 -- new config tag: x2castor.checksum always|never|streaming
 -- if a file is written sequential the checksum will be computed on the fly for always|streaming
 -- if a file is updated the checksum will be recomputed during the close for always
+- cmsd startup script included and global redirector config file /etc/xrd.cf.meta
+-  fixes in XMI plugin
+-- XMI->Stat true if file exists and staged
 
 * Tue Feb 03 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.4-2
 - converted ROLEMAP/GETID/GETALLGROUPS from XCFS prototype with properl hash protections and security context caching

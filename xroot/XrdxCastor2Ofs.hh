@@ -1,4 +1,4 @@
-//         $Id: XrdxCastor2Ofs.hh,v 1.3 2009/02/27 12:13:29 apeters Exp $
+//         $Id: XrdxCastor2Ofs.hh,v 1.4 2009/03/06 13:45:04 apeters Exp $
 
 #ifndef __XCASTOR2OFS_H__
 #define __XCASTOR2OFS_H__
@@ -74,7 +74,7 @@ public:
 
   bool                IsAdminStream;   //
   time_t              LastMdsUpdate;   //
-  XrdxCastor2OfsFile(const char* user) : XrdOfsFile(user){ envOpaque=NULL;FileReadBytes = FileWriteBytes = ReadRateLimit = WriteRateLimit = ReadDelay = WriteDelay = 0; IsAdminStream=false; RateMissingCnt = 0;firstWrite=true;hasWrite=false;stagehost="none";serviceclass="none";reqid="0";hasadler=1; adler = adler32(0L, Z_NULL, 0);adleroffset=0; DiskChecksum=""; DiskChecksumAlgorithm="";VerifyChecksum=true;}
+  XrdxCastor2OfsFile(const char* user) : XrdOfsFile(user){ envOpaque=NULL;FileReadBytes = FileWriteBytes = ReadRateLimit = WriteRateLimit = ReadDelay = WriteDelay = 0; IsAdminStream=false; RateMissingCnt = 0;firstWrite=true;hasWrite=false;stagehost="none";serviceclass="none";reqid="0";hasadler=1; adler = adler32(0L, Z_NULL, 0);adleroffset=0; DiskChecksum=""; DiskChecksumAlgorithm="";VerifyChecksum=true;hasadlererror=false;}
   virtual ~XrdxCastor2OfsFile() {close();if (envOpaque) delete envOpaque;envOpaque=NULL;}
 
 private:
@@ -87,6 +87,7 @@ private:
   XrdOucString          serviceclass;
   unsigned int          adler;
   bool                  hasadler;
+  bool                  hasadlererror;
   XrdSfsFileOffset      adleroffset;
   struct stat           statinfo;
   XrdOucString          DiskChecksum;

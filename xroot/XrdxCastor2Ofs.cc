@@ -1,4 +1,4 @@
-//          $Id: XrdxCastor2Ofs.cc,v 1.4 2009/02/27 12:22:02 apeters Exp $
+//          $Id: XrdxCastor2Ofs.cc,v 1.5 2009/03/06 13:45:04 apeters Exp $
 
 #include "XrdOfs/XrdOfsTrace.hh"
 #include "XrdClient/XrdClientAdmin.hh"
@@ -510,10 +510,10 @@ XrdxCastor2OfsFile::open(const char                *path,
   int retc;
 
   // take the redirector/user provided one ...
-  DiskChecksum = envOpaque->Get("adler32");
-  if (DiskChecksum.length()) {
-    DiskChecksumAlgorithm = "ADLER32";
-  }
+  //  DiskChecksum = envOpaque->Get("adler32");
+  //  if (DiskChecksum.length()) {
+  //    DiskChecksumAlgorithm = "ADLER32";
+  //  }
 
   if ((retc = XrdOfsOss->Stat(newpath.c_str(), &statinfo))) {
     // file does not exist, keep the create lfag
@@ -523,23 +523,21 @@ XrdxCastor2OfsFile::open(const char                *path,
       open_mode -= SFS_O_CREAT;
     
 
-    if (0) {
-      // hmm... not this one
-      // try to get a checksum from the filesystem
-      char diskckSumbuf[32+1];
-      char diskckSumalg[32];
-      diskckSumbuf[0]=diskckSumalg[0]=0;
-      
-      // get existing checksum - we don't check errors here
-      int nattr=0;
-      nattr = getxattr(newpath.c_str(),"user.castor.checksum.type",diskckSumalg,sizeof(diskckSumalg));
-      if (nattr) diskckSumalg[nattr] = 0;
-      nattr = getxattr(newpath.c_str(),"user.castor.checksum.value",diskckSumbuf,sizeof(diskckSumbuf));
-      if (nattr) diskckSumbuf[nattr] = 0;
-      DiskChecksum = diskckSumbuf;
-      DiskChecksumAlgorithm = diskckSumalg;
-      ZTRACE(open,"Checksum-Algorithm: " << DiskChecksumAlgorithm.c_str() << " Checksum: " << DiskChecksum.c_str());
-    }
+    // hmm... not this one
+    // try to get a checksum from the filesystem
+    char diskckSumbuf[32+1];
+    char diskckSumalg[32];
+    diskckSumbuf[0]=diskckSumalg[0]=0;
+    
+    // get existing checksum - we don't check errors here
+    int nattr=0;
+    nattr = getxattr(newpath.c_str(),"user.castor.checksum.type",diskckSumalg,sizeof(diskckSumalg));
+    if (nattr) diskckSumalg[nattr] = 0;
+    nattr = getxattr(newpath.c_str(),"user.castor.checksum.value",diskckSumbuf,sizeof(diskckSumbuf));
+    if (nattr) diskckSumbuf[nattr] = 0;
+    DiskChecksum = diskckSumbuf;
+    DiskChecksumAlgorithm = diskckSumalg;
+    ZTRACE(open,"Checksum-Algorithm: " << DiskChecksumAlgorithm.c_str() << " Checksum: " << DiskChecksum.c_str());
   }
 
   uid_t sec_uid = 0;
@@ -746,32 +744,39 @@ XrdxCastor2OfsFile::read(XrdSfsFileOffset   fileOffset,
 		      char              *buffer,
 		      XrdSfsXferSize     buffer_size)
 {
+  // if we once got an adler checksum error, we fail all reads.
+  if (hasadlererror) {
+    return SFS_ERROR;
+  }
+
   int rc = XrdOfsFile::read(fileOffset,buffer,buffer_size);
 
   // computation of adler checksum - we disable it if seeks happen
   if (fileOffset != adleroffset) {
     hasadler=false;
   }
-
+  
   if (hasadler && XrdOfsFS.doChecksumStreaming) {
-    adler = adler32(adler, (const Bytef*) buffer, buffer_size);
-    adleroffset += buffer_size;
+    adler = adler32(adler, (const Bytef*) buffer, rc);
+    if (rc>0)
+      adleroffset += rc;
   }
 
   if (rc>0) {if(!IsAdminStream)ADDTOTALREADBYTES(buffer_size) else ADDTOTALSTREAMREADBYTES(buffer_size);FileReadBytes+=rc;}
-
+  
   if (IsAdminStream) {
     DOREADDELAY();
   } else
     if (XrdOfsFS.ReadDelay) XrdSysTimer::Wait(XrdOfsFS.ReadDelay);
-
+  
   if (hasadler && (fileOffset+buffer_size >= statinfo.st_size)) {
     // invoke the checksum verification
     if (!verifychecksum()) {
+      hasadlererror=true;
       rc = SFS_ERROR;
     }
   }
-
+  
   return rc;
 }
   
@@ -815,7 +820,9 @@ XrdxCastor2OfsFile::write(XrdSfsFileOffset   fileOffset,
 
   if (hasadler && XrdOfsFS.doChecksumStreaming) {
     adler = adler32(adler, (const Bytef*) buffer, buffer_size);
-    adleroffset += buffer_size;
+    if (rc>0) {
+      adleroffset += rc;
+    }
   }
 
   if (IsAdminStream) {

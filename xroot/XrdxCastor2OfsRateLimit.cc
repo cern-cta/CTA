@@ -1,4 +1,4 @@
-//          $Id: XrdxCastor2OfsRateLimit.cc,v 1.1 2008/09/15 10:04:02 apeters Exp $
+//          $Id: XrdxCastor2OfsRateLimit.cc,v 1.2 2009/03/06 13:45:04 apeters Exp $
 
 #include "XrdxCastor2Fs/XrdxCastor2Ofs.hh"
 #include "XrdSys/XrdSysTimer.hh"
@@ -77,7 +77,9 @@ XrdxCastor2OfsRateLimit::Limit() {
 	XrdOfsFS.RateMissingCnt++;
 	XrdOfsFS.ReadRateMissing=0;
       }
-    } 
+    } else {
+      //      printf("No missing Read rate\n");
+    }
     
     // we always reserve 10 Mb/s for all default users
     if (readdesiredrate <0) {

@@ -7,7 +7,7 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
-//       $Id: XrdStagerQry.cc,v 1.1 2008/09/15 10:04:02 apeters Exp $
+//       $Id: XrdStagerQry.cc,v 1.2 2009/03/06 13:45:04 apeters Exp $
 
 #include "XrdClient/XrdClientUrlInfo.hh"
 #include "XrdClient/XrdClient.hh"
@@ -66,7 +66,7 @@ extern "C" {
 //////////////////////////////////////////////////////////////////////
 
 
-#define XRDSTAGETOOL_VERSION            "(C) 2004 SLAC INFN $Revision: 1.1 $ - Xrootd version: "XrdVSTRING
+#define XRDSTAGETOOL_VERSION            "(C) 2004 SLAC INFN $Revision: 1.2 $ - Xrootd version: "XrdVSTRING
 
 
 ///////////////////////////////////////////////////////////////////////
@@ -209,11 +209,6 @@ int main(int argc, char**argv) {
      XrdOucString newfile = u.File.c_str();
      vecpath.Push_back(newfile);
      newfile = u.GetUrl().c_str();
-     printf("%s\n",newfile.c_str());
-     if (opaqueinfo.length()) {
-       newfile += "?";
-       newfile += opaqueinfo;
-     }
      vecurl.Push_back(newfile);
    }
    

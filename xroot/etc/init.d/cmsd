@@ -1,7 +1,7 @@
 #! /bin/bash
 #
 #****************************************************************************
-#                      xrd.init
+#                      cmsd.init
 #
 # chkconfig: 345 95 5
 # description: Xrootd Initialisation Script
@@ -11,8 +11,8 @@
 . /etc/rc.d/init.d/functions
 
 # Variables
-prog="xrootd"
-sysconfigfile="xrd"
+prog="cmsd"
+sysconfigfile="cms"
 
 # Defaults
 XRD_LOCATION="/opt/xrootd"
@@ -65,7 +65,7 @@ start() {
 			echo
                 else
 		        # Setup the base xrootd options
-		        _XRD_OPTIONS="-n $i -c ${_XRD_CONFIG} -l ${XRD_LOGDIR}/xrdlog.$i -b ${XRD_USER}"
+		        _XRD_OPTIONS="-n $i -c ${_XRD_CONFIG} -l ${XRD_LOGDIR}/cmslog.$i -b ${XRD_USER}"
 			_XRD_OPTIONS=${_XRD_OPTIONS%' '}
 
 			# Setup xrootd environment
@@ -163,13 +163,11 @@ elif [ -z "${XRD_ROLES}" ]; then
 	        XRD_ROLES="manager"
 		XRD_USER=""
 	fi
-
 	grep `hostname -f` ${XRD_CONFIG} | grep "all.manager meta" > /dev/null
 	if [ $? = "0" ]; then
 	        XRD_ROLES="meta"
 		XRD_USER=""
 	fi
-
 fi
 
 # See how we were called

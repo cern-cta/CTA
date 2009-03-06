@@ -1,4 +1,4 @@
-//          $Id: XrdxCastor2Stager.cc,v 1.3 2009/02/12 09:11:38 apeters Exp $
+//          $Id: XrdxCastor2Stager.cc,v 1.4 2009/03/06 13:45:04 apeters Exp $
 
 #ifndef __XCASTOR2FS__STAGER__HH
 #define __XCASTOR2FS__STAGER__HH
@@ -30,7 +30,9 @@
 
 #include <sys/types.h>
 #include <XrdxCastor2Fs/XrdxCastor2Stager.hh>
+
 #include <XrdxCastor2Fs/XrdxCastor2Trace.hh>
+
 #include <XrdOuc/XrdOucTrace.hh>
 
 
