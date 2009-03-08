@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/03/06 15:05:09 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/03/08 10:37:41 $ $Author: waldron $
  *
  * This script create a new Monitoring schema
  *
@@ -29,7 +29,7 @@ WHENEVER SQLERROR EXIT FAILURE;
 
 /* Determine the DLF schema that the monitoring procedures should run against */
 UNDEF dlfschema
-ACCEPT dlfschema DEFAULT castor_dlf PROMPT 'Enter the DLF schema to run monitoring queries against: ';
+ACCEPT dlfschema DEFAULT castor_dlf PROMPT 'Enter the DLF schema to run monitoring queries against: (castor_dlf) ';
 SET VER OFF
 
 /* Check that the executing accounting can see the DLF base tables */
@@ -743,7 +743,7 @@ CREATE TABLE TapeRecall (subReqId CHAR(36) CONSTRAINT NN_TapeRecall_subReqId NOT
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statement for table DiskCopy */
-CREATE TABLE DiskCopy (nsFileId NUMBER CONSTRAINT NN_DiskCopy_nsFileId NOT NULL, timestamp DATE CONSTRAINT NN_DiskCopy_ts NOT NULL, originalPool VARCHAR2(255), targetPool VARCHAR2(255), readLatency INTEGER, copyLatency INTEGER, numCopiesInPools INTEGER, srcHost VARCHAR2(255), destHost NUMBER)
+CREATE TABLE DiskCopy (nsFileId NUMBER CONSTRAINT NN_DiskCopy_nsFileId NOT NULL, timestamp DATE CONSTRAINT NN_DiskCopy_ts NOT NULL, originalPool VARCHAR2(255), targetPool VARCHAR2(255), readLatency INTEGER, copyLatency INTEGER, numCopiesInPools INTEGER, srcHost VARCHAR2(255), destHost VARCHAR2(255))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statement for table GCFiles */
@@ -897,33 +897,38 @@ AS
 BEGIN
   -- Info about external file replication: source - target SvcClass        
   INSERT INTO DiskCopy 
-    (nsfileid, timestamp, originalPool, targetPool, destHost, srcHost)
+    (nsfileid, timestamp, originalPool, targetPool, srcHost, destHost)
     SELECT * FROM (
-     SELECT /*+ index(a I_Messages_Facility) index(a I_Messages_NSFileid)*/ a.nsfileid nsfileid, a.timestamp,
-            max(CASE WHEN a.msg_no = 39 AND b.name = 'Direction'  
-                THEN substr(b.value, 0, instr(b.value, '->', 1) - 2)  
-                ELSE NULL END) src, 
-            max(CASE WHEN a.msg_no = 39 AND b.name = 'Direction'  
-                THEN substr(b.value, instr(b.value, '->', 1) + 3) 
-                ELSE NULL END) dest,
-            max(CASE WHEN a.msg_no = 28 AND b.name = 'SourcePath' 
-                THEN substr(b.value, 0, instr(b.value, '.', 1) - 1) 
-                ELSE NULL END) src_host,
-            max(CASE WHEN a.msg_no = 28 AND b.name = 'SourcePath' 
-                THEN a.hostid 
-                ELSE NULL END) dest_host
-       FROM &dlfschema..dlf_messages a, &dlfschema..dlf_str_param_values b
-      WHERE a.id = b.id
-        AND a.facility = 23      -- DiskCopy
-        AND a.msg_no IN (39, 28) -- DiskCopy Transfer Successful, Starting Destination end of mover
-        AND a.timestamp >= maxTimeStamp
-        AND b.timestamp >= maxTimeStamp
-        AND a.timestamp < maxTimeStamp + 5/1440
-        AND b.timestamp < maxTimeStamp + 5/1440
-      GROUP BY nsfileid, a.timestamp
+      SELECT /*+ index(a I_Messages_Facility) index(a I_Messages_NSFileid)*/ 
+             a.nsfileid nsfileid, 
+             min(a.timestamp) timestamp,
+             max(decode(b.name, 'Direction', 
+                        substr(b.value, 0, instr(b.value, '->', 1) - 2), 
+                        NULL)) src,
+             max(decode(b.name, 'Direction', 
+                        substr(b.value, instr(b.value, '->', 1) + 3), 
+                        NULL)) dest,
+             max(decode(b.name, 'SourcePath', 
+                        substr(b.value, 0, instr(b.value, ':', 1) - 1), 
+                        NULL)) src_host,
+             max(decode(b.name, 'SourcePath', c.hostname, NULL)) dest_host
+        FROM &dlfschema..dlf_messages a, &dlfschema..dlf_str_param_values b,
+             &dlfschema..dlf_host_map c
+       WHERE a.id = b.id
+         AND a.facility = 23      -- DiskCopy
+         AND a.msg_no IN (39, 28) -- DiskCopy Transfer Successful, Transfer information
+         AND a.hostid = c.hostid
+         AND a.timestamp >= maxTimeStamp
+         AND b.timestamp >= maxTimeStamp
+         AND a.timestamp < maxTimeStamp + 5/1440
+         AND b.timestamp < maxTimeStamp + 5/1440
+       GROUP BY nsfileid
     ) temp
-  WHERE temp.src <> temp.dest
-  ORDER BY timestamp;
+   WHERE temp.src <> temp.dest
+     AND temp.dest IS NOT NULL
+     AND temp.src IS NOT NULL
+     AND temp.dest_host IS NOT NULL
+     AND temp.src_host IS NOT NULL;
 END;
 /
 
@@ -1067,7 +1072,7 @@ END;
 
 
 /* */
-CREATE or replace PROCEDURE statsReqs (maxtimestamp IN DATE)
+CREATE or replace PROCEDURE statsReqs(maxtimestamp IN DATE)
 AS
 BEGIN
   INSERT INTO Requests
@@ -1113,6 +1118,9 @@ AS
   highValue DATE;
   cnt NUMBER;
 BEGIN
+  -- Set the nls_date_format
+  EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = "DD-MON-YYYY"';
+
   -- Extract the name of the current user running the PL/SQL procedure. This
   -- name will be used within the tablespace names.
   SELECT SYS_CONTEXT('USERENV', 'CURRENT_USER')
@@ -1206,6 +1214,9 @@ AS
   username VARCHAR2(2048);
   expiryTime NUMBER;
 BEGIN
+  -- Set the nls_date_format
+  EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = "DD-MON-YYYY"';
+
   -- Extract the name of the current user running the PL/SQL procedure. This
   -- name will be used within the tablespace names.
   SELECT SYS_CONTEXT('USERENV', 'CURRENT_USER')
@@ -1258,17 +1269,14 @@ END;
 /
 
 
-/* Remove scheduler jobs before recreation */
+/* Scheduler jobs */
 BEGIN
+  -- Remove scheduler jobs before recreation
   FOR a IN (SELECT job_name FROM user_scheduler_jobs)
   LOOP
     DBMS_SCHEDULER.DROP_JOB(a.job_name, TRUE);
   END LOOP;
-END;
-/
 
-
-BEGIN
   -- Create a db job to be run every day and create new partitions
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'partitionCreationJob',
@@ -1289,7 +1297,7 @@ BEGIN
                             FOR a IN (SELECT table_name FROM user_tables
                                        WHERE table_name LIKE ''ERR_%'')
                             LOOP
-                              EXECUTE IMMEDIATE ''TRUNCATE TABLE ''||a.table_name'';
+                              EXECUTE IMMEDIATE ''TRUNCATE TABLE ''||a.table_name;
                             END LOOP;
                           END;',
       JOB_CLASS       => 'CASTOR_JOB_CLASS',
@@ -1328,12 +1336,12 @@ BEGIN
       JOB_NAME        => 'populateJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'DECLARE
-                            maxtimestamp DATE;
+                            maxTimeStamp DATE;
                           BEGIN
                             EXECUTE IMMEDIATE ''TRUNCATE TABLE ERR_Requests'';
-                            SELECT runmaxtime INTO maxtimestamp FROM ConfigSchema; 
+                            SELECT runmaxtime INTO maxTimeStamp FROM ConfigSchema; 
                       
-                            statsReqs(maxtimestamp);
+                            statsReqs(maxTimeStamp);
                             statsDiskCopy(maxTimeStamp);
                             statsInternalDiskCopy(maxTimeStamp);
                             statsTapeRecall(maxTimeStamp);
@@ -1343,7 +1351,7 @@ BEGIN
                            
                             UPDATE ConfigSchema
                                SET runmaxtime = runmaxtime + 5/1440;
-                    END;',
+                          END;',
       JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 10/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
