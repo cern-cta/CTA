@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/02/13 10:13:15 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/03/08 10:35:11 $ $Author: waldron $
  *
  * This script create a new DLF schema
  *
@@ -167,6 +167,9 @@ AS
   highValue DATE;
   cnt NUMBER;
 BEGIN
+  -- Set the nls_date_format
+  EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = "DD-MON-YYYY"';
+
   -- Extract the name of the current user running the PL/SQL procedure. This name
   -- will be used within the tablespace names.
   SELECT SYS_CONTEXT('USERENV', 'CURRENT_USER')
@@ -259,6 +262,9 @@ AS
   username VARCHAR2(2048);
   expiryTime NUMBER;
 BEGIN
+  -- Set the nls_date_format
+  EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = "DD-MON-YYYY"';
+
   -- Extract the name of the current user running the PL/SQL procedure. This name
   -- will be used within the tablespace names.
   SELECT SYS_CONTEXT('USERENV', 'CURRENT_USER')
@@ -312,17 +318,14 @@ END;
 /
 
 
-/* Remove scheduler jobs before recreation */
+/* Scheduler jobs */
 BEGIN
+  -- Remove scheduler jobs before recreation
   FOR a IN (SELECT job_name FROM user_scheduler_jobs)
   LOOP
     DBMS_SCHEDULER.DROP_JOB(a.job_name, TRUE);
   END LOOP;
-END;
-/
 
-
-BEGIN
   -- Create a db job to be run every day and create new partitions
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'partitionCreationJob',
