@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
       if(vdqmRequestHandlerThreadPool == NULL) {
         castor::exception::Internal ie;
 
-        ie.getMessage() << __PRETTY_FUNCTION__
+        ie.getMessage() << __FUNCTION__
           << ": Failed to get VdqmRequestHandlerThreadPool";
         throw ie;
       }

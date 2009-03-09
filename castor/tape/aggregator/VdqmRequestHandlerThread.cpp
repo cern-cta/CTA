@@ -210,15 +210,11 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
   ackMsg.magic   = RTCOPY_MAGIC;
   ackMsg.reqType = RTCP_TAPEERR_REQ;
   ackMsg.status  = 0;
-  RtcpTxRx::sendRtcpAcknowledge(cuuid, volReqId, rtcpdInitialSocketFd, RTCPDNETRWTIMEOUT,
-    ackMsg);
+  RtcpTxRx::sendRtcpAcknowledge(cuuid, volReqId, rtcpdInitialSocketFd,
+    RTCPDNETRWTIMEOUT, ackMsg);
 
-  castor::exception::Exception ex(body.err.errorCode);
-
-  ex.getMessage() << __PRETTY_FUNCTION__
-    << ": Received an error from RTCPD:" << body.err.errorMsg;
-
-  throw ex;
+  TAPE_THROW_CODE(body.err.errorCode,
+    ": Received an error from RTCPD:" << body.err.errorMsg);
 }
 
 
@@ -309,7 +305,8 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
       switch(selectRc) {
       case 0: // Select timed out
 
-        RtcpTxRx::pingRtcpd(cuuid, volReqId, rtcpdInitialSocketFd, RTCPDNETRWTIMEOUT);
+        RtcpTxRx::pingRtcpd(cuuid, volReqId, rtcpdInitialSocketFd,
+          RTCPDNETRWTIMEOUT);
         castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, AGGREGATOR_PINGED_RTCPD);
         break;
 
@@ -321,13 +318,9 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
           char *const errorStr = strerror_r(selectErrno, strerrorBuf,
             sizeof(strerrorBuf));
 
-          castor::exception::Exception ex(selectErrno);
-
-          ex.getMessage() << __PRETTY_FUNCTION__
-            << ": Select encountered an error other than an interruption"
-               ": " << errorStr;
-
-          throw ex;
+          TAPE_THROW_CODE(selectErrno,
+            ": Select encountered an error other than an interruption"
+            ": " << errorStr);
         }
         break;
 
@@ -433,22 +426,18 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
   // If the VDQM and RTCPD volume request IDs do not match
   if(rtcpdRequestInfoReply.volReqId != volReqId) {
 
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": VDQM and RTCPD volume request Ids do not match"
+    TAPE_THROW_CODE(EBADMSG,
+         ": VDQM and RTCPD volume request Ids do not match"
          ": VDQM volume request ID: " << volReqId 
-      << ": RTCPD volume request ID: " << rtcpdRequestInfoReply.volReqId;
-
-    throw ex;
+      << ": RTCPD volume request ID: " << rtcpdRequestInfoReply.volReqId);
   }
 
   // Get the volume from the tape gateway
   RtcpTapeRqstErrMsgBody rtcpVolume;
   Utils::setBytes(rtcpVolume, '\0');
-  const bool thereIsAVolume = GatewayTxRx::getVolumeFromGateway(cuuid, volReqId, gatewayHost,
-    gatewayPort, rtcpVolume.vid, rtcpVolume.mode, rtcpVolume.label,
-    rtcpVolume.density);
+  const bool thereIsAVolume = GatewayTxRx::getVolumeFromGateway(cuuid,
+    volReqId, gatewayHost, gatewayPort, rtcpVolume.vid, rtcpVolume.mode,
+    rtcpVolume.label, rtcpVolume.density);
 
   // If there is a volume
   if(thereIsAVolume) {
@@ -477,43 +466,51 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
 
     // Get first file to migrate from the tape gateway
     const bool thereIsAFileToMigrate =
-      GatewayTxRx::getFileToMigrateFromGateway(cuuid, volReqId, gatewayHost, gatewayPort,
-      filePath, nsHost, fileId, tapeFseq, fileSize,
-      lastKnownFileName, lastModificationTime);
+      GatewayTxRx::getFileToMigrateFromGateway(cuuid, volReqId, gatewayHost,
+        gatewayPort, filePath, nsHost, fileId, tapeFseq, fileSize,
+        lastKnownFileName, lastModificationTime);
 
-    // If there is a file to migrate
-    if(thereIsAFileToMigrate) {
-
-    // Else there is no file to migrate
-    } else {
-
+    // Return if there is no file to migrate
+    if(!thereIsAFileToMigrate) {
       return;
     } 
 
-    RtcpTxRx::giveVolumeToRtcpd(cuuid, volReqId, rtcpdInitialSocketFd.get(), RTCPDNETRWTIMEOUT, 
-      rtcpVolume); 
+    // Give volume to RTCPD
+    rtcpVolume.err.maxTpRetry = -1;
+    rtcpVolume.err.maxCpRetry = -1;
+    RtcpTxRx::giveVolumeToRtcpd(cuuid, volReqId, rtcpdInitialSocketFd.get(),
+      RTCPDNETRWTIMEOUT, rtcpVolume); 
  
+    // Give file to migrate to RTCPD
     char tapeFileId[CA_MAXPATHLEN+1];
     Utils::toHex(fileId, tapeFileId);
-    RtcpTxRx::giveFileToRtcpd(cuuid, volReqId, rtcpdInitialSocketFd.get(), RTCPDNETRWTIMEOUT,
-      filePath, "", RECORDFORMAT, tapeFileId, MIGRATEUMASK);
+    RtcpTxRx::giveFileToRtcpd(cuuid, volReqId, rtcpdInitialSocketFd.get(),
+      RTCPDNETRWTIMEOUT, WRITE_ENABLE, filePath, "", RECORDFORMAT, tapeFileId,
+      MIGRATEUMASK);
 
-    RtcpTxRx::askRtcpdToRequestMoreWork(cuuid, volReqId, rtcpdInitialSocketFd.get(),
-      RTCPDNETRWTIMEOUT);
+    // Ask RTCPD to request more work
+    RtcpTxRx::askRtcpdToRequestMoreWork(cuuid, volReqId,
+      rtcpdInitialSocketFd.get(), RTCPDNETRWTIMEOUT, WRITE_ENABLE);
 
-    RtcpTxRx::tellRtcpdEndOfFileList(cuuid, volReqId, rtcpdInitialSocketFd.get(),
-      RTCPDNETRWTIMEOUT);
+    // Tell RTCPD end of file list
+    RtcpTxRx::tellRtcpdEndOfFileList(cuuid, volReqId,
+      rtcpdInitialSocketFd.get(), RTCPDNETRWTIMEOUT);
 
   // Else recalling
   } else {
-    RtcpTxRx::giveVolumeToRtcpd(cuuid, volReqId, rtcpdInitialSocketFd.get(), RTCPDNETRWTIMEOUT,
-      rtcpVolume);
+    // Give volume to RTCPD
+    rtcpVolume.err.maxTpRetry = -1;
+    rtcpVolume.err.maxCpRetry = -1;
+    RtcpTxRx::giveVolumeToRtcpd(cuuid, volReqId, rtcpdInitialSocketFd.get(),
+      RTCPDNETRWTIMEOUT, rtcpVolume);
 
-    RtcpTxRx::askRtcpdToRequestMoreWork(cuuid, volReqId, rtcpdInitialSocketFd.get(),
-      RTCPDNETRWTIMEOUT);
+    // Ask RTCPD to request more work
+    RtcpTxRx::askRtcpdToRequestMoreWork(cuuid, volReqId,
+      rtcpdInitialSocketFd.get(), RTCPDNETRWTIMEOUT, WRITE_DISABLE);
 
-    RtcpTxRx::tellRtcpdEndOfFileList(cuuid, volReqId, rtcpdInitialSocketFd.get(),
-      RTCPDNETRWTIMEOUT);
+    // Tell RTCPD end of file list
+    RtcpTxRx::tellRtcpdEndOfFileList(cuuid, volReqId,
+      rtcpdInitialSocketFd.get(), RTCPDNETRWTIMEOUT);
   }
 
   processRtcpdSockets(cuuid, volReqId, gatewayHost, gatewayPort,
@@ -602,31 +599,19 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
   const int rc = isadminhost(socketFd, peerHost);
 
   if(rc == -1 && serrno != SENOTADMIN) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Failed to lookup connection"
-      << ": Peer Host: " << peerHost;
-
-    throw ex;
+    TAPE_THROW_EX(castor::exception::Internal,
+         ": Failed to lookup connection"
+      << ": Peer Host: " << peerHost);
   }
 
   if(*peerHost == '\0' ) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Peer host name is an empty string";
-
-    throw ex;
+    TAPE_THROW_CODE(EINVAL,
+      ": Peer host name is an empty string");
   }
 
   if(rc != 0) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << "Unauthorized host"
-      << ": Peer Host: " << peerHost;
-
-    throw ex;
+    TAPE_THROW_CODE(SENOTADMIN,
+         ": Unauthorized host"
+      << ": Peer Host: " << peerHost);
   }
 }

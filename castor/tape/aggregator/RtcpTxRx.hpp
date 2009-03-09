@@ -62,9 +62,9 @@ public:
    * @param reply The request structure to be filled with the reply from
    * RTCPD.
    */
-  static void getRequestInfoFromRtcpd(const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
-    const int netReadWriteTimeout, RtcpTapeRqstErrMsgBody &reply)
-    throw(castor::exception::Exception);
+  static void getRequestInfoFromRtcpd(const Cuuid_t &cuuid,
+    const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout,
+    RtcpTapeRqstErrMsgBody &reply) throw(castor::exception::Exception);
 
   /**
    * Gives information about a volume to RTCPD by sending and receiving the
@@ -79,9 +79,9 @@ public:
    * @param reply The structure to be filled with the reply from
    * RTCPD.
    */
-  static void giveVolumeToRtcpd(const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
-    const int netReadWriteTimeout, RtcpTapeRqstErrMsgBody &request)
-    throw(castor::exception::Exception);
+  static void giveVolumeToRtcpd(const Cuuid_t &cuuid, const uint32_t volReqId,
+    const int socketFd, const int netReadWriteTimeout,
+    RtcpTapeRqstErrMsgBody &request) throw(castor::exception::Exception);
 
   /**
    * Sends the specified RTCPD acknowledge message to RTCPD using the
@@ -121,22 +121,27 @@ public:
    * @param request The request which will be filled with the contents of the
    * received message.
    */
-  static void receiveRcpJobRqst(/*const Cuuid_t &cuuid, const uint32_t volReqId,*/ const int socketFd,
+  static void receiveRcpJobRqst(const int socketFd,
     const int netReadWriteTimeout, RcpJobRqstMsgBody &request)
     throw(castor::exception::Exception);
 
   /**
    * Asks RTCPD to request more work in the future.
    *
-   * @param cuuid The ccuid to be used for logging.
-   * @param volReqId The volume request ID to be sent to the tape gateway.
-   * A request for more work is infact a file list with one special file
+   * A request for more work is in fact a file list with one special file
    * request which does not contain any file information, but instead contains
    * a flag indicating a request for more work.
+   *
+   * @param cuuid The ccuid to be used for logging.
+   * @param volReqId The volume request ID to be sent to the tape gateway.
+   * @param socketFd The socket file descriptor of the connection with RTCPD.
+   * @param netReadWriteTimeout The timeout to be applied when performing
+   * network read and write operations.
+   * @param mode The access mode.
    */ 
-  static void askRtcpdToRequestMoreWork(const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
-    const int netReadWriteTimeout)
-    throw(castor::exception::Exception);
+  static void askRtcpdToRequestMoreWork(const Cuuid_t &cuuid,
+    const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout,
+    const uint32_t mode) throw(castor::exception::Exception);
 
   /**
    * Gives the specified file list of one and only one actual file description
@@ -146,6 +151,8 @@ public:
    * @param volReqId The volume request ID to be sent to the tape gateway.
    * @param socketFd The socket file descriptor of the connection with RTCPD.
    * @param netReadWriteTimeout The timeout to be applied when performing
+   * network read and write operations.
+   * @param mode The access mode.
    * @param filePath The file path.
    * @param tapePath The tape path.
    * @param recordFormat The record format.
@@ -153,10 +160,9 @@ public:
    * @param umask The umask of the file.
    * @param requestMoreWork Set to true if RTCPD should be told that there is
    * a possibility of more work in the future.
-   * network read and write operations.
    */
-  static void giveFileToRtcpd(const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
-    const int netReadWriteTimeout,
+  static void giveFileToRtcpd(const Cuuid_t &cuuid, const uint32_t volReqId,
+    const int socketFd, const int netReadWriteTimeout, const uint32_t mode,
     const char *const filePath, const char *const tapePath,
     const char *const recordFormat, const char *const tapeFileId,
     const uint32_t umask) throw(castor::exception::Exception);
@@ -285,13 +291,14 @@ private:
    * @param socketFd The socket file descriptor of the connection with RTCPD.
    * @param netReadWriteTimeout The timeout to be applied when performing
    * network read and write operations.
+   * @param mode The access mode.
    * @param request The request to be sent to RTCPD.
    * @param reply The structure to be filled with the reply from
    * RTCPD.
    */
-  static void giveFileToRtcpd(const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
-    const int netReadWriteTimeout, RtcpFileRqstErrMsgBody &request)
-    throw(castor::exception::Exception);
+  static void giveFileToRtcpd(const Cuuid_t &cuuid, const uint32_t volReqId,
+    const int socketFd, const int netReadWriteTimeout, const uint32_t mode,
+    RtcpFileRqstErrMsgBody &request) throw(castor::exception::Exception);
 
   /**
    * Receives an acknowledge message from RTCPD and returns the status code

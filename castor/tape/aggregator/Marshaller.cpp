@@ -142,7 +142,7 @@ void castor::tape::aggregator::Marshaller::marshallString(const char * src,
   if(dst == NULL) {
     castor::exception::Exception ex(EINVAL);
 
-    ex.getMessage() << __PRETTY_FUNCTION__
+    ex.getMessage() << __FUNCTION__
       << ": Pointer to destination buffer is NULL";
     throw ex;
   }
@@ -162,7 +162,7 @@ void castor::tape::aggregator::Marshaller::marshallString(
   if(dst == NULL) {
     castor::exception::Exception ex(EINVAL);
 
-    ex.getMessage() << __PRETTY_FUNCTION__
+    ex.getMessage() << __FUNCTION__
       << ": Pointer to destination buffer is NULL";
     throw ex;
   }
@@ -183,7 +183,7 @@ void castor::tape::aggregator::Marshaller::unmarshallString(const char * &src,
   if(src == NULL) {
     castor::exception::Exception ex(EINVAL);
 
-    ex.getMessage() << __PRETTY_FUNCTION__
+    ex.getMessage() << __FUNCTION__
       << ": Pointer to source buffer is NULL";
     throw ex;
   }
@@ -191,7 +191,7 @@ void castor::tape::aggregator::Marshaller::unmarshallString(const char * &src,
   if(srcLen == 0) {
     castor::exception::Exception ex(EINVAL);
 
-    ex.getMessage() << __PRETTY_FUNCTION__
+    ex.getMessage() << __FUNCTION__
       << ": Source buffer length is 0";
     throw ex;
   }
@@ -199,7 +199,7 @@ void castor::tape::aggregator::Marshaller::unmarshallString(const char * &src,
   if(dst == NULL) {
     castor::exception::Exception ex(EINVAL);
 
-    ex.getMessage() << __PRETTY_FUNCTION__
+    ex.getMessage() << __FUNCTION__
       << ": Pointer to destination buffer is NULL";
     throw ex;
   }
@@ -207,7 +207,7 @@ void castor::tape::aggregator::Marshaller::unmarshallString(const char * &src,
   if(dstLen == 0) {
     castor::exception::Exception ex(EINVAL);
 
-    ex.getMessage() << __PRETTY_FUNCTION__
+    ex.getMessage() << __FUNCTION__
       << ": Destination buffer length is 0";
     throw ex;
   }
@@ -238,7 +238,7 @@ void castor::tape::aggregator::Marshaller::unmarshallString(const char * &src,
   if(!strTerminatorReached) {
     castor::exception::Exception ex(EINVAL);
 
-    ex.getMessage() << __PRETTY_FUNCTION__
+    ex.getMessage() << __FUNCTION__
       << ": String terminator of source buffer was not reached";
     throw ex;
   }
@@ -255,7 +255,7 @@ size_t castor::tape::aggregator::Marshaller::marshallMessageHeader(
   if(dst == NULL) {
     castor::exception::Exception ex(EINVAL);
 
-    ex.getMessage() << __PRETTY_FUNCTION__
+    ex.getMessage() << __FUNCTION__
       << ": Pointer to destination buffer is NULL";
     throw ex;
   }
@@ -267,7 +267,7 @@ size_t castor::tape::aggregator::Marshaller::marshallMessageHeader(
   if(totalLen > dstLen) {
     castor::exception::Exception ex(EMSGSIZE);
 
-    ex.getMessage() << __PRETTY_FUNCTION__
+    ex.getMessage() << __FUNCTION__
       << ": Buffer too small for message header: "
       "Required size: " << totalLen << " Actual size: " << dstLen;
 
@@ -287,7 +287,7 @@ size_t castor::tape::aggregator::Marshaller::marshallMessageHeader(
   if(totalLen != nbBytesMarshalled) {
     castor::exception::Internal ie;
 
-    ie.getMessage() << __PRETTY_FUNCTION__
+    ie.getMessage() << __FUNCTION__
       << ": Mismatch between the expected total length of the "
          "message header and the actual number of bytes marshalled"
          ": Expected: " << totalLen
@@ -323,7 +323,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRcpJobRqstMsgBody(
   if(dst == NULL) {
     castor::exception::Exception ex(EINVAL);
 
-    ex.getMessage() << __PRETTY_FUNCTION__
+    ex.getMessage() << __FUNCTION__
       << ": Pointer to destination buffer is NULL";
     throw ex;
   }
@@ -345,7 +345,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRcpJobRqstMsgBody(
   if(totalLen > dstLen) {
     castor::exception::Exception ex(EMSGSIZE);
 
-    ex.getMessage() << __PRETTY_FUNCTION__
+    ex.getMessage() << __FUNCTION__
       << ": Buffer too small for job submission request message"
          ": Required size: " << totalLen
       << ": Actual size: " << dstLen;
@@ -374,7 +374,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRcpJobRqstMsgBody(
   if(totalLen != nbBytesMarshalled) {
     castor::exception::Internal ie;
 
-    ie.getMessage() << __PRETTY_FUNCTION__
+    ie.getMessage() << __FUNCTION__
       << ": Mismatch between the expected total length of the "
          "RCP job submission request message and the actual number of bytes "
          "marshalled"
@@ -416,7 +416,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRcpJobReplyMsgBody(
   if(dst == NULL) {
     castor::exception::Exception ex(EINVAL);
 
-    ex.getMessage() << __PRETTY_FUNCTION__
+    ex.getMessage() << __FUNCTION__
       << ": Pointer to destination buffer is NULL";
     throw ex;
   }
@@ -427,7 +427,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRcpJobReplyMsgBody(
   if(dstLen < minimumLen) {
     castor::exception::Exception ex(EINVAL);
 
-    ex.getMessage() << __PRETTY_FUNCTION__
+    ex.getMessage() << __FUNCTION__
       << ": Destination buffer length is too small"
          ": Expected minimum: " << minimumLen
       << ": Actual: " << dstLen;
@@ -467,7 +467,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRcpJobReplyMsgBody(
   if(totalLen != nbBytesMarshalled) {
     castor::exception::Internal ie;
 
-    ie.getMessage() << __PRETTY_FUNCTION__
+    ie.getMessage() << __FUNCTION__
       << ": Mismatch between the expected total length of the "
          "RCP job reply message and the actual number of bytes marshalled"
          ": Expected: " << totalLen
@@ -536,7 +536,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpTapeRqstErrMsgBody(
   if(totalLen > dstLen) {
     castor::exception::Exception ex(EMSGSIZE);
 
-    ex.getMessage() << __PRETTY_FUNCTION__
+    ex.getMessage() << __FUNCTION__
       << ": Buffer too small for tape request message: "
       "Required size: " << totalLen << " Actual size: " << dstLen;
 
@@ -592,7 +592,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpTapeRqstErrMsgBody(
   if(totalLen != nbBytesMarshalled) {
     castor::exception::Internal ie;
 
-    ie.getMessage() << __PRETTY_FUNCTION__
+    ie.getMessage() << __FUNCTION__
       << ": Mismatch between the expected total length of the "
          "RTCP tape request message and the actual number of bytes marshalled"
          ": Expected: " << totalLen
@@ -673,7 +673,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpAcknowledgeMsg(
   if(dst == NULL) {
     castor::exception::Exception ex(EINVAL);
 
-    ex.getMessage() << __PRETTY_FUNCTION__
+    ex.getMessage() << __FUNCTION__
       << ": Pointer to destination buffer is NULL";
     throw ex;
   }
@@ -686,7 +686,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpAcknowledgeMsg(
   if(totalLen > dstLen) {
     castor::exception::Exception ex(EMSGSIZE);
 
-    ex.getMessage() << __PRETTY_FUNCTION__
+    ex.getMessage() << __FUNCTION__
       << ": Buffer too small for RTCP acknowledge message"
          ": Required size: " << totalLen
       << ": Actual size: " << dstLen;
@@ -707,7 +707,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpAcknowledgeMsg(
   if(totalLen != nbBytesMarshalled) {
     castor::exception::Internal ie;
 
-    ie.getMessage() << __PRETTY_FUNCTION__
+    ie.getMessage() << __FUNCTION__
       << ": Mismatch between the expected total length of the "
          "RTCP acknowledge message and the actual number of bytes "
          "marshalled"
@@ -778,7 +778,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpFileRqstErrMsgBody(
   if(totalLen > dstLen) {
     castor::exception::Exception ex(EMSGSIZE);
 
-    ex.getMessage() << __PRETTY_FUNCTION__
+    ex.getMessage() << __FUNCTION__
       << ": Buffer too small for file request message: "
       "Required size: " << totalLen << " Actual size: " << dstLen;
 
@@ -861,7 +861,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpFileRqstErrMsgBody(
   if(totalLen != nbBytesMarshalled) {
     castor::exception::Internal ie;
 
-    ie.getMessage() << __PRETTY_FUNCTION__
+    ie.getMessage() << __FUNCTION__
       << ": Mismatch between the expected total length of the "
          "RTCP file request message and the actual number of bytes marshalled"
          ": Expected: " << totalLen
@@ -974,7 +974,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpNoMoreRequestsMsgBody(
   if(totalLen > dstLen) {
     castor::exception::Exception ex(EMSGSIZE);
 
-    ex.getMessage() << __PRETTY_FUNCTION__
+    ex.getMessage() << __FUNCTION__
       << ": Buffer too small for file request message: "
       "Required size: " << totalLen << " Actual size: " << dstLen;
 
@@ -994,7 +994,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpNoMoreRequestsMsgBody(
   if(totalLen != nbBytesMarshalled) {
     castor::exception::Internal ie;
 
-    ie.getMessage() << __PRETTY_FUNCTION__
+    ie.getMessage() << __FUNCTION__
       << ": Mismatch between the expected total length of the "
          "RTCP no more requests message and the actual number of bytes "
          "marshalled"
@@ -1025,7 +1025,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpAbortMsg(
   if(totalLen > dstLen) {
     castor::exception::Exception ex(EMSGSIZE);
 
-    ex.getMessage() << __PRETTY_FUNCTION__
+    ex.getMessage() << __FUNCTION__
       << ": Buffer too small for file request message: " 
       "Required size: " << totalLen << " Actual size: " << dstLen;
 
@@ -1045,7 +1045,7 @@ size_t castor::tape::aggregator::Marshaller::marshallRtcpAbortMsg(
   if(totalLen != nbBytesMarshalled) {
     castor::exception::Internal ie;
 
-    ie.getMessage() << __PRETTY_FUNCTION__
+    ie.getMessage() << __FUNCTION__
       << ": Mismatch between the expected total length of the "
          "RTCP file request message and the actual number of bytes marshalled"
          ": Expected: " << totalLen

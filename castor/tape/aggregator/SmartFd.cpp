@@ -24,6 +24,7 @@
  *****************************************************************************/
 
 #include "castor/tape/aggregator/SmartFd.hpp"
+#include "castor/tape/aggregator/Utils.hpp"
 
 #include <errno.h>
 #include <unistd.h>
@@ -58,12 +59,8 @@ int castor::tape::aggregator::SmartFd::get()
 
   // If the smart file descriptor does not own a basic file descriptor
   if(m_fileDescriptor < 0) {
-    castor::exception::Exception ex(EPERM);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Smart file descriptor does not own a basic file descriptor";
-
-    throw ex;
+    TAPE_THROW_CODE(EPERM,
+      ": Smart file descriptor does not own a basic file descriptor");
   }
 
   return m_fileDescriptor;
@@ -78,12 +75,8 @@ int castor::tape::aggregator::SmartFd::release()
 
   // If the smart file descriptor does not own a basic file descriptor
   if(m_fileDescriptor < 0) {
-    castor::exception::Exception ex(EPERM);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Smart file descriptor does not own a basic file descriptor";
-
-    throw ex;
+    TAPE_THROW_CODE(EPERM,
+      ": Smart file descriptor does not own a basic file descriptor");
   }
 
 

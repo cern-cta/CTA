@@ -65,17 +65,14 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::processRequest(
 
   MessageHeader header;
 
-  RtcpTxRx::receiveRtcpMsgHeader(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT, header);
+  RtcpTxRx::receiveRtcpMsgHeader(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT,
+    header);
 
   // Find the message type's corresponding handler
   MsgBodyHandlerMap::iterator itor = m_handlers.find(header.reqType);
   if(itor == m_handlers.end()) {
-    castor::exception::Exception ex(EBADMSG);
-
-    ex.getMessage() << __PRETTY_FUNCTION__
-      << ": Unknown request type: 0x" << header.reqType;
-
-    throw ex;
+    TAPE_THROW_CODE(EBADMSG,
+      ": Unknown request type: 0x" << header.reqType);
   }
   const MsgBodyHandler handler = itor->second;
 
@@ -99,7 +96,8 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
 
   RtcpFileRqstMsgBody body;
 
-  RtcpTxRx::receiveRtcpFileRqstBody(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT, header, body);
+  RtcpTxRx::receiveRtcpFileRqstBody(cuuid, volReqId, socketFd,
+    RTCPDNETRWTIMEOUT, header, body);
 
   switch(body.procStatus) {
   case RTCP_REQUEST_MORE_WORK:
@@ -115,8 +113,8 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
       uint64_t lastModificationTime;
 
       // If there is a file to migrate
-      if(GatewayTxRx::getFileToMigrateFromGateway(cuuid, volReqId, gatewayHost, gatewayPort,
-        filePath, nsHost, fileId, tapeFseq, fileSize,
+      if(GatewayTxRx::getFileToMigrateFromGateway(cuuid, volReqId, gatewayHost,
+        gatewayPort, filePath, nsHost, fileId, tapeFseq, fileSize,
         lastKnownFileName, lastModificationTime)) {
 
         castor::dlf::Param params[] = {
@@ -136,12 +134,13 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
         char tapeFileId[CA_MAXPATHLEN+1];
         Utils::toHex(fileId, tapeFileId);
         RtcpTxRx::giveFileToRtcpd(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT,
-          filePath, "", RECORDFORMAT, tapeFileId, MIGRATEUMASK);
+          WRITE_ENABLE, filePath, "", RECORDFORMAT, tapeFileId, MIGRATEUMASK);
 
-        RtcpTxRx::askRtcpdToRequestMoreWork(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT
-          );
+        RtcpTxRx::askRtcpdToRequestMoreWork(cuuid, volReqId, socketFd,
+          RTCPDNETRWTIMEOUT, WRITE_ENABLE);
 
-        RtcpTxRx::tellRtcpdEndOfFileList(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT);
+        RtcpTxRx::tellRtcpdEndOfFileList(cuuid, volReqId, socketFd,
+          RTCPDNETRWTIMEOUT);
 
       // Else there is no file to migrate
       } else {
@@ -154,7 +153,8 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
           AGGREGATOR_NO_MORE_FILES_TO_MIGRATE, params);
 
         // Tell RTCPD there is no file by sending an empty file list
-        RtcpTxRx::tellRtcpdEndOfFileList(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT);
+        RtcpTxRx::tellRtcpdEndOfFileList(cuuid, volReqId, socketFd,
+          RTCPDNETRWTIMEOUT);
 
         thereIsMoreWork = false;
       }
@@ -169,8 +169,8 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
       unsigned char blockId[4];
 
       // If there is a file to recall 
-      if(GatewayTxRx::getFileToRecallFromGateway(cuuid, volReqId, gatewayHost, gatewayPort,
-        filePath, nsHost, fileId, tapeFseq, blockId)) {
+      if(GatewayTxRx::getFileToRecallFromGateway(cuuid, volReqId, gatewayHost,
+        gatewayPort, filePath, nsHost, fileId, tapeFseq, blockId)) {
 
         castor::dlf::Param params[] = {
           castor::dlf::Param("volReqId"            , volReqId            ),
@@ -186,11 +186,13 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
         char tapeFileId[CA_MAXPATHLEN+1];
         Utils::toHex(fileId, tapeFileId);
         RtcpTxRx::giveFileToRtcpd(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT,
-          filePath, "", RECORDFORMAT, tapeFileId, RECALLUMASK);
+          WRITE_DISABLE, filePath, "", RECORDFORMAT, tapeFileId, RECALLUMASK);
 
-        RtcpTxRx::askRtcpdToRequestMoreWork(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT);
+        RtcpTxRx::askRtcpdToRequestMoreWork(cuuid, volReqId, socketFd,
+          RTCPDNETRWTIMEOUT, WRITE_DISABLE);
 
-	RtcpTxRx::tellRtcpdEndOfFileList(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT);
+	RtcpTxRx::tellRtcpdEndOfFileList(cuuid, volReqId, socketFd,
+          RTCPDNETRWTIMEOUT);
 
       // Else there is no file to recall
       } else {
@@ -203,7 +205,8 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
           AGGREGATOR_NO_MORE_FILES_TO_RECALL, params);
 
         // Tell RTCPD there is no file by sending an empty file list
-        RtcpTxRx::tellRtcpdEndOfFileList(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT);
+        RtcpTxRx::tellRtcpdEndOfFileList(cuuid, volReqId, socketFd,
+          RTCPDNETRWTIMEOUT);
 
         thereIsMoreWork = false;
       }
@@ -222,7 +225,8 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
       ackMsg.magic   = RTCOPY_MAGIC;
       ackMsg.reqType = RTCP_FILE_REQ;
       ackMsg.status  = 0;
-      RtcpTxRx::sendRtcpAcknowledge(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT, ackMsg);
+      RtcpTxRx::sendRtcpAcknowledge(cuuid, volReqId, socketFd,
+        RTCPDNETRWTIMEOUT, ackMsg);
     }
     break;
   case RTCP_FINISHED:
@@ -244,19 +248,16 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
       ackMsg.magic   = RTCOPY_MAGIC;
       ackMsg.reqType = RTCP_FILE_REQ;
       ackMsg.status  = 0;
-      RtcpTxRx::sendRtcpAcknowledge(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT, ackMsg);
+      RtcpTxRx::sendRtcpAcknowledge(cuuid, volReqId, socketFd,
+        RTCPDNETRWTIMEOUT, ackMsg);
     }
     break;
   default:
     {
-      castor::exception::Exception ex(EBADMSG);
-
-      ex.getMessage() << __PRETTY_FUNCTION__
-        << ": Received unexpected file request process status 0x"
+      TAPE_THROW_CODE(EBADMSG,
+           ": Received unexpected file request process status 0x"
         << std::hex << body.procStatus
-        << "(" << Utils::procStatusToStr(body.procStatus) << ")";
-
-      throw ex;
+        << "(" << Utils::procStatusToStr(body.procStatus) << ")");
     }
   }
 
@@ -276,21 +277,18 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileErrReqHandler(
 
   RtcpFileRqstErrMsgBody body;
 
-  RtcpTxRx::receiveRtcpFileRqstErrBody(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT,
-    header, body);
+  RtcpTxRx::receiveRtcpFileRqstErrBody(cuuid, volReqId, socketFd,
+    RTCPDNETRWTIMEOUT, header, body);
 
   RtcpAcknowledgeMsg ackMsg;
   ackMsg.magic   = RTCOPY_MAGIC;
   ackMsg.reqType = RTCP_FILEERR_REQ;
   ackMsg.status  = 0;
-  RtcpTxRx::sendRtcpAcknowledge(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT, ackMsg);
+  RtcpTxRx::sendRtcpAcknowledge(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT,
+    ackMsg);
 
-  castor::exception::Exception ex(body.err.errorCode);
-
-  ex.getMessage() << __PRETTY_FUNCTION__
-    << ": Received an error from RTCPD:" << body.err.errorMsg;
-
-  throw ex;
+  TAPE_THROW_CODE(body.err.errorCode,
+    ": Received an error from RTCPD: " << body.err.errorMsg);
 }
 
 
@@ -306,8 +304,8 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpTapeReqHandler(
 
   RtcpTapeRqstMsgBody body;
 
-  RtcpTxRx::receiveRtcpTapeRqstBody(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT,
-    header, body);
+  RtcpTxRx::receiveRtcpTapeRqstBody(cuuid, volReqId, socketFd,
+    RTCPDNETRWTIMEOUT, header, body);
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("volReqId", volReqId)};
@@ -319,7 +317,8 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpTapeReqHandler(
   ackMsg.magic   = RTCOPY_MAGIC;
   ackMsg.reqType = RTCP_TAPE_REQ;
   ackMsg.status  = 0;
-  RtcpTxRx::sendRtcpAcknowledge(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT, ackMsg);
+  RtcpTxRx::sendRtcpAcknowledge(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT,
+    ackMsg);
 
   // There is a possibility of more work
   return true;
@@ -338,21 +337,18 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpTapeErrReqHandler(
 
   RtcpTapeRqstErrMsgBody body;
 
-  RtcpTxRx::receiveRtcpTapeRqstErrBody(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT,
-    header, body);
+  RtcpTxRx::receiveRtcpTapeRqstErrBody(cuuid, volReqId, socketFd,
+    RTCPDNETRWTIMEOUT, header, body);
 
   RtcpAcknowledgeMsg ackMsg;
   ackMsg.magic   = RTCOPY_MAGIC;
   ackMsg.reqType = RTCP_TAPEERR_REQ;
   ackMsg.status  = 0;
-  RtcpTxRx::sendRtcpAcknowledge(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT, ackMsg);
+  RtcpTxRx::sendRtcpAcknowledge(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT,
+    ackMsg);
 
-  castor::exception::Exception ex(body.err.errorCode);
-
-  ex.getMessage() << __PRETTY_FUNCTION__
-    << ": Received an error from RTCPD:" << body.err.errorMsg;
-
-  throw ex;
+  TAPE_THROW_CODE(body.err.errorCode,
+    ": Received an error from RTCPD: " << body.err.errorMsg);
 }
 
 
@@ -375,7 +371,8 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpEndOfReqHandler(
   ackMsg.magic   = RTCOPY_MAGIC;
   ackMsg.reqType = RTCP_ENDOF_REQ;
   ackMsg.status  = 0;
-  RtcpTxRx::sendRtcpAcknowledge(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT, ackMsg);
+  RtcpTxRx::sendRtcpAcknowledge(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT,
+    ackMsg);
 
   // There is no more work
   return false;

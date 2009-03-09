@@ -128,12 +128,12 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
 
           // Log and throw an exception
           castor::dlf::Param params[] = {
-            castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+            castor::dlf::Param("Function", __FUNCTION__),
             castor::dlf::Param("Reason"  , oss.str())};
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USER_ERROR,
             AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, params);
           castor::exception::InvalidArgument ex;
-          ex.getMessage() << __PRETTY_FUNCTION__
+          ex.getMessage() << __FUNCTION__
             << ": " << oss.str();
           throw ex;
         }
@@ -150,12 +150,12 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
 
         // Log and throw an exception
         castor::dlf::Param params[] = {
-          castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+          castor::dlf::Param("Function", __FUNCTION__),
           castor::dlf::Param("Reason"  , oss.str())};
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USER_ERROR,
           AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, params);
         castor::exception::InvalidArgument ex;
-        ex.getMessage() << __PRETTY_FUNCTION__
+        ex.getMessage() << __FUNCTION__
           << ": " << oss.str();
         throw ex;
       }
@@ -166,12 +166,12 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
 
         // Log and throw an exception
         castor::dlf::Param params[] = {
-          castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+          castor::dlf::Param("Function", __FUNCTION__),
           castor::dlf::Param("Reason"  , oss.str())};
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USER_ERROR,
           AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, params);
         castor::exception::InvalidArgument ex;
-        ex.getMessage() << __PRETTY_FUNCTION__
+        ex.getMessage() << __FUNCTION__
           << ": " << oss.str();
         throw ex;
       }
@@ -183,12 +183,12 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
 
         // Log and throw an exception
         castor::dlf::Param params[] = {
-          castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+          castor::dlf::Param("Function", __FUNCTION__),
           castor::dlf::Param("Reason"  , oss.str())};
         CASTOR_DLF_WRITEPC(nullCuuid, DLF_LVL_ERROR,
           AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, params);
         castor::exception::Internal ex;
-        ex.getMessage() << __PRETTY_FUNCTION__
+        ex.getMessage() << __FUNCTION__
           << ": " << oss.str();
         throw ex;
       }
@@ -201,12 +201,12 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
 
     // Log and throw an exception
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+      castor::dlf::Param("Function", __FUNCTION__),
       castor::dlf::Param("Reason", oss.str())};
     CASTOR_DLF_WRITEPC(nullCuuid, DLF_LVL_ERROR,
       AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, params);
     castor::exception::Internal ex;
-    ex.getMessage() << __PRETTY_FUNCTION__
+    ex.getMessage() << __FUNCTION__
       << ": " << oss.str();
     throw ex;
   }
@@ -220,12 +220,12 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
 
     // Log and throw an exception
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Function", __PRETTY_FUNCTION__),
+      castor::dlf::Param("Function", __FUNCTION__),
       castor::dlf::Param("Reason"  , oss.str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USER_ERROR,
       AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, params);
     castor::exception::InvalidArgument ex;
-    ex.getMessage() << __PRETTY_FUNCTION__
+    ex.getMessage() << __FUNCTION__
       << ": " << oss.str();
     throw ex;
   }
@@ -247,7 +247,7 @@ int castor::tape::aggregator::AggregatorDaemon::getVdqmListenPort()
       castor::exception::InvalidConfigEntry ex("TAPEAGGREGATOR", "VDQMPORT",
         configEntry);
 
-      ex.getMessage() << __PRETTY_FUNCTION__
+      ex.getMessage() << __FUNCTION__
         << ": Invalid configuration entry: "
         << ex.getEntryCategory() << " " << ex.getEntryName() << " "
         << ex.getEntryValue();

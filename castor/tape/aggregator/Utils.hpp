@@ -34,6 +34,28 @@
 #include <stdint.h>
 #include <string.h>
 
+#define TAPE_THROW_EX(EXCEPTION, MSG) { \
+  EXCEPTION tapeException;              \
+                                        \
+  tapeException.getMessage()            \
+    <<  "File="     << __FILE__         \
+    << " Line="     << __LINE__         \
+    << " Function=" << __FUNCTION__     \
+    << MSG;                             \
+  throw tapeException;                  \
+}
+
+#define TAPE_THROW_CODE(CODE, MSG) {                \
+  castor::exception::Exception tapeException(CODE); \
+                                                    \
+  tapeException.getMessage()                        \
+    <<  "File="     << __FILE__                     \
+    << " Line="     << __LINE__                     \
+    << " Function=" << __FUNCTION__                 \
+    << MSG       ;                                  \
+  throw tapeException;                              \
+}
+
 namespace castor {
 namespace tape {
 namespace aggregator {

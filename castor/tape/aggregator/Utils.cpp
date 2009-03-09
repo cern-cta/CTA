@@ -48,7 +48,7 @@ void castor::tape::aggregator::Utils::toHex(const uint64_t i, char *dst,
   if(dstLen < minimumDstLen) {
     castor::exception::Exception ex(EINVAL);
 
-    ex.getMessage() << __PRETTY_FUNCTION__
+    ex.getMessage() << __FUNCTION__
       << ": Destination character array is too small"
          ": Minimum = " << minimumDstLen
       << ": Actual = " << dstLen;
@@ -95,7 +95,7 @@ void castor::tape::aggregator::Utils::copyString(char *const dst,
   if(srcLen >= n) {
     castor::exception::Exception ex(EINVAL);
 
-    ex.getMessage() << __PRETTY_FUNCTION__
+    ex.getMessage() << __FUNCTION__
       << ": Source string is longer than destination.  Source length: "
       << srcLen << " Max destination length: " << (n-1);
 
