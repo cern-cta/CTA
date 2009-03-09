@@ -171,7 +171,9 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
       // Translate the reception of the error report into a C++ exception
       castor::exception::Exception ex(errorCode);
 
-      ex.getMessage() << errorMessage;
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << ": Tape gateway error report "
+           ": " << errorMessage;
 
       throw ex;
     }
@@ -382,7 +384,9 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
       // Translate the reception of the error report into a C++ exception
       castor::exception::Exception ex(errorCode);
 
-      ex.getMessage() << errorMessage;
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << ": Tape gateway error report "
+           ": " << errorMessage;
 
       throw ex;
     }
@@ -559,7 +563,9 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
       // Translate the reception of the error report into a C++ exception
       castor::exception::Exception ex(errorCode);
 
-      ex.getMessage() << errorMessage;
+      ex.getMessage() << __PRETTY_FUNCTION__
+        << ": Tape gateway error report "
+           ": " << errorMessage;
 
       throw ex;
     }
