@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.653 $ $Date: 2009/02/09 18:46:33 $ $Author: itglp $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.654 $ $Date: 2009/03/09 15:59:59 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -143,9 +143,7 @@ BEGIN
     -- We have too many rows, we just give up
     raise_application_error(-20102, 'Too many matching files');
   END IF;
-  IF cfIds.COUNT > 0 THEN
-    internalStageQuery(cfIds, svcClassId, result);
-  END IF;
+  internalStageQuery(cfIds, svcClassId, result);
 END;
 /
 
