@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.723 $ $Date: 2009/03/05 14:07:39 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.724 $ $Date: 2009/03/09 13:50:17 $ $Author: gtaur $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -9,7 +9,7 @@
 
 /* PL/SQL declaration for the castor package */
 
-CREATE OR REPLACE PACKAGE castor AS
+create or replace PACKAGE castor AS
   TYPE DiskCopyCore IS RECORD (
     id INTEGER,
     path VARCHAR2(2048),
@@ -125,8 +125,7 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE PriorityMap_Cur IS REF CURSOR RETURN PriorityMap%ROWTYPE;
   TYPE FileToRecallCore IS RECORD (
    fileId NUMBER,
-   NsHost VARCHAR2(2048),
-   copyNo NUMBER,
+   nsHost VARCHAR2(2048),
    diskserver VARCHAR2(2048),
    mountPoint VARCHAR(2048),
    path VARCHAR2(2048)
@@ -134,12 +133,14 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE FileToRecallCore_Cur IS REF CURSOR RETURN  FileToRecallCore;  
   TYPE FileToMigrateCore IS RECORD (
    fileId NUMBER,
-   NsHost VARCHAR2(2048),
-   copyNo NUMBER,
+   nsHost VARCHAR2(2048),
+   lastModificationTime NUMBER,
    diskserver VARCHAR2(2048),
    mountPoint VARCHAR(2048),
    path VARCHAR2(2048),
-   lastUpdateTime NUMBER
+   lastKnownFilename VARCHAR2(2048), 
+   fseq INTEGER,
+   fileSize NUMBER
    );
   TYPE FileToMigrateCore_Cur IS REF CURSOR RETURN  FileToMigrateCore;  
   TYPE StreamReport IS RECORD (
