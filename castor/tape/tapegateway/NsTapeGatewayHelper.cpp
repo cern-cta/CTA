@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NsTapeGatewayHelper.cpp,v $ $Revision: 1.7 $ $Release$ 
- * $Date: 2009/02/25 10:33:26 $ $Author: gtaur $
+ * @(#)$RCSfile: NsTapeGatewayHelper.cpp,v $ $Revision: 1.8 $ $Release$ 
+ * $Date: 2009/03/09 13:51:03 $ $Author: gtaur $
  *
  *
  *
@@ -29,12 +29,15 @@
 
 #include "castor/tape/tapegateway/NsTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/PositionCommandCode.hpp"
-#include "osdep.h"
-#include "Cns_api.h"
+
 #include <common.h>
 #include <time.h>
 #include <sys/time.h>
-
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include "rfio_api.h"
+#include "Cns_api.h"
 
 
 void castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile( tape::tapegateway::FileMigratedNotification& file, int copyNumber, std::string vid, u_signed64 lastModificationTime) throw (castor::exception::Exception){ 
@@ -388,6 +391,44 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate(castor:
   if (segArray != NULL ) free(segArray);
   segArray=NULL;
 
+  // stat to verify that the copy on disk has not zero file size and that it is the same in the nameserver
+
+// get with rfio the filesize of the copy on disk
+
+  struct stat64 st;
+  serrno=0;
+  char* path=NULL;
+  strncpy(
+          path,
+          file.path().c_str(),
+          sizeof(file.path().size())-1
+          ); 
+  rc = rfio_stat64(path,&st);
+  if (path) free(path);
+  if (rc <0 ){
+    castor::exception::Exception ex(serrno);
+    ex.getMessage()
+      << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFileSize:"
+      << "rfio_stat failed";
+    throw ex;
+
+  }
+  
+  if (st.st_size == 0){
+
+    castor::exception::Exception ex(ERTZEROSIZE); // TODO mark it as failed
+    throw ex;
+
+  }
+
+  if ( (u_signed64)st.st_size !=  file.fileSize()){  //TODO new thing added verify it is ok
+    castor::exception::Exception ex(ERTWRONGSIZE);
+    ex.getMessage()
+      << "wrong file size, ns filesize is "<< st.st_size <<"and on the diskcopy has size "<<file.fileSize() ;
+    throw ex;  
+
+  }
+
 }
 
 
@@ -451,7 +492,7 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::getBlockIdToRecall(castor::
 }
 
 
-void  castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile(castor::tape::tapegateway::FileRecalledNotification& file, std::string vid, int fsec) throw (castor::exception::Exception) {
+void  castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile(castor::tape::tapegateway::FileRecalledNotification& file, std::string vid, int copyNb) throw (castor::exception::Exception) {
  
   // get segments for this fileid
 
@@ -496,7 +537,7 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile(castor::
     if ( segattrs[i].fseq != file.fseq() ) continue;
     // removed the  check of  the blockid 
    
-    if ( segattrs[i].fsec != fsec ) continue;
+    if ( segattrs[i].copyno != copyNb ) continue;
     
     // All the checks were successfull let's check checksum  
 
@@ -571,4 +612,64 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile(castor::
     << "segment not found";
   throw ex;
 
+}
+
+
+void  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileSize(castor::tape::tapegateway::FileRecalledNotification& file) throw (castor::exception::Exception) {
+ 
+  // get segments for this fileid
+
+  struct Cns_fileid castorFileId;
+  memset(&castorFileId,'\0',sizeof(castorFileId));
+  strncpy(
+          castorFileId.server,
+          file.nshost().c_str(),
+          sizeof(castorFileId.server)-1
+          );
+  castorFileId.fileid = file.fileid();
+
+  struct Cns_filestat statBuf;
+  
+  serrno=0; 
+  // in rtcpclientd it is using the castorfile.filesize
+  int rc = Cns_statx( NULL, &castorFileId,&statBuf);
+  
+  if ( rc == -1) {
+    castor::exception::Exception ex(serrno);
+    ex.getMessage()
+      << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFileSize:"
+      << "Cns_statx failed";
+    throw ex;
+
+  }
+
+  // get with rfio the filesize of the copy on disk
+
+  struct stat64 st;
+  serrno=0;
+  char* path=NULL;
+  strncpy(
+          path,
+          file.path().c_str(),
+          sizeof(file.path().size())-1
+          ); 
+  rc = rfio_stat64(path,&st);
+  if (path) free(path);
+  if (rc <0 ){
+    castor::exception::Exception ex(serrno);
+    ex.getMessage()
+      << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFileSize:"
+      << "rfio_stat failed";
+    throw ex;
+
+  }
+  
+  if ( (u_signed64)st.st_size !=  statBuf.filesize){ // cast done to follow castor convention 
+    castor::exception::Exception ex(ERTWRONGSIZE);
+    ex.getMessage()
+      << "wrong file size, ns filesize is "<< st.st_size <<"and on the diskcopy has size "<<statBuf.filesize ;
+    throw ex;  
+
+  }
+  
 }

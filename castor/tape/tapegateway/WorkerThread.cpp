@@ -66,13 +66,14 @@
 //------------------------------------------------------------------------------
 
 castor::tape::tapegateway::WorkerThread::WorkerThread(castor::tape::tapegateway::ITapeGatewaySvc* dbSvc):BaseDbThread(){ 
+
   m_dbSvc=dbSvc; 
   // populate the map with the different handlers
   m_handlerMap[OBJ_VolumeRequest] = &WorkerThread::handleStartWorker;
   m_handlerMap[OBJ_FileRecalledNotification] = &WorkerThread::handleRecallUpdate;
   m_handlerMap[OBJ_FileMigratedNotification] = &WorkerThread::handleMigrationUpdate;
-  m_handlerMap[OBJ_FileToMigrateRequest] = &WorkerThread::handleRecallMoreWork;
-  m_handlerMap[OBJ_FileToRecallRequest] = &WorkerThread::handleMigrationMoreWork;
+  m_handlerMap[OBJ_FileToRecallRequest] = &WorkerThread::handleRecallMoreWork;
+  m_handlerMap[OBJ_FileToMigrateRequest] = &WorkerThread::handleMigrationMoreWork;
   m_handlerMap[OBJ_EndNotification] = &WorkerThread::handleEndWorker;
   m_handlerMap[OBJ_FileErrorReport] = &WorkerThread::handleFileErrorReport;
 
@@ -220,11 +221,12 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker( cas
       errorReport->setErrorMessage(e.getMessage().str());
      
       castor::dlf::Param params[] =
-	{castor::dlf::Param("errorCode",sstrerror(e.code())),
+	{castor::dlf::Param("transactionId", startRequest.vdqmVolReqId()),
+	 castor::dlf::Param("errorCode",sstrerror(e.code())),
 	 castor::dlf::Param("errorMessage",e.getMessage().str())
 	};
 
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 44, 2, params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 44, 3, params);
       return errorReport;
     }
      
@@ -236,7 +238,16 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker( cas
       noMore->setTransactionId(startRequest.vdqmVolReqId());
       return noMore;
     }
-    
+    castor::dlf::Param params0[] =      {castor::dlf::Param("transactionId", startRequest.vdqmVolReqId()),
+       castor::dlf::Param("VID",response->vid()),
+       castor::dlf::Param("mode",response->mode()),
+       castor::dlf::Param("label",response->label()),
+       castor::dlf::Param("density",response->density())
+      };
+
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 81, 5, params0);
+      
+
   } catch( std::bad_cast &ex) {
     // "Invalid Request" message
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 36, 0, NULL);
@@ -247,6 +258,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker( cas
   }
 
   return response;
+
 }
 
 
@@ -262,21 +274,27 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
     castor::dlf::Param params[] =
 	    {castor::dlf::Param("transactionId",fileRecalled.transactionId()),
 	     castor::dlf::Param("NSHOST",fileRecalled.nshost()),
-	     castor::dlf::Param("FILEID",fileRecalled.fileid())
+	     castor::dlf::Param("FILEID",fileRecalled.fileid()),
+	     castor::dlf::Param("fseq",fileRecalled.fseq()),
+	     castor::dlf::Param("path",fileRecalled.fileid()),
+	     castor::dlf::Param("checksum name",fileRecalled.fileid()),
+	     castor::dlf::Param("checksum",fileRecalled.fileid())
 	    };
        
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 46, 4, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 82, 7, params);
     try {
       response = new NotificationAcknowledge();
       response->setTransactionId(fileRecalled.transactionId());
 
       try {
 	// check the nameserver if no error was faced already happened
+
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 46, 7, params); 
 	NsTapeGatewayHelper nsHelper;
 	std::string vid;
-	int fsec;
-	m_dbSvc.getSegmentInformation(fileRecalled,vid,fsec);
-	nsHelper.checkRecalledFile(fileRecalled, vid, fsec); 
+	int copyNb;
+	m_dbSvc.getSegmentInformation(fileRecalled,vid,copyNb);
+	nsHelper.checkRecalledFile(fileRecalled, vid, copyNb); 
       
 
       } catch (castor::exception::Exception e){
@@ -288,41 +306,49 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
 	failure.setFseq(fileRecalled.fseq());
 	failure.setErrorCode(e.code());
 	failure.setErrorMessage(e.getMessage().str());
-
+	
 	m_dbSvc.updateAfterFailure(failure);
 
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 47, 4, params); 
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 47, 7, params); 
 	return response;
-    }
-   
-    
-    try {
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 48, 4, params); 
-      m_dbSvc.fileRecallUpdate(fileRecalled);
+      }
       
-    } catch (castor::exception::Exception e) {
-      castor::dlf::Param params[] =
-	{ castor::dlf::Param("transactionId",fileRecalled.transactionId()),
-	  castor::dlf::Param("NSHOST",fileRecalled.nshost()),
-	  castor::dlf::Param("FILEID",fileRecalled.fileid()),
-	  castor::dlf::Param("errorCode",sstrerror(e.code())),
-	  castor::dlf::Param("errorMessage",e.getMessage().str())
-	};
+      bool allSegmentsRecalled= false;
 
-      FileErrorReport failure;
-      failure.setTransactionId(fileRecalled.transactionId());
-      failure.setFileid(fileRecalled.fileid());
-      failure.setNshost(fileRecalled.nshost());
-      failure.setFseq(fileRecalled.fseq());
-      failure.setErrorCode(e.code());
-      failure.setErrorMessage(e.getMessage().str());
+      try {
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 48, 4, params); 
+	allSegmentsRecalled = m_dbSvc.fileRecallUpdate(fileRecalled);
+	
+      } catch (castor::exception::Exception e) {
+	castor::dlf::Param params[] =
+	  { castor::dlf::Param("transactionId",fileRecalled.transactionId()),
+	    castor::dlf::Param("NSHOST",fileRecalled.nshost()),
+	    castor::dlf::Param("FILEID",fileRecalled.fileid()),
+	    castor::dlf::Param("errorCode",sstrerror(e.code())),
+	    castor::dlf::Param("errorMessage",e.getMessage().str())
+	  };
+	
+	FileErrorReport failure;
+	failure.setTransactionId(fileRecalled.transactionId());
+	failure.setFileid(fileRecalled.fileid());
+	failure.setNshost(fileRecalled.nshost());
+	failure.setFseq(fileRecalled.fseq());
+	failure.setErrorCode(e.code());
+	failure.setErrorMessage(e.getMessage().str());
       
-      m_dbSvc.updateAfterFailure(failure);
+	m_dbSvc.updateAfterFailure(failure);
 
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 49, 5, params);
-      return response;
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 49, 5, params);
+	return response;
        
-    }
+      }
+      
+      if (allSegmentsRecalled) {
+	NsTapeGatewayHelper nsHelper;
+	nsHelper.checkFileSize(fileRecalled);
+      }
+
+
     } catch (castor::exception::Exception e) {
       // db failure to mark the recall as failed
       castor::dlf::Param params[] =
@@ -362,6 +388,23 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
   try{
 
     FileMigratedNotification& fileMigrated = dynamic_cast<FileMigratedNotification&>(obj);
+
+    char blockid[5]={fileMigrated.blockId0() , fileMigrated.blockId1() , fileMigrated.blockId2() , fileMigrated.blockId3(), '\0' };
+
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("transactionId",fileMigrated.transactionId()),
+       castor::dlf::Param("NSHOST",fileMigrated.nshost()),
+       castor::dlf::Param("FILEID",fileMigrated.fileid()),
+       castor::dlf::Param("fseq",fileMigrated.fseq()),
+       castor::dlf::Param("path",fileMigrated.fileid()),
+       castor::dlf::Param("checksum name",fileMigrated.fileid()),
+       castor::dlf::Param("checksum",fileMigrated.fileid()),
+       castor::dlf::Param("fileSize",fileMigrated.fileSize()),
+       castor::dlf::Param("compressedFileSize",fileMigrated.compressedFileSize()),
+       castor::dlf::Param("blockid", blockid),
+      };
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 51, 10, params);
+
     try {
       response = new NotificationAcknowledge();
       response->setTransactionId(fileMigrated.transactionId());
@@ -422,8 +465,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
 	    return response;
 	
 	  }
-       
-    
+           
 	} catch (castor::exception::Exception e){
 	
 	  castor::dlf::Param params[] =
@@ -434,7 +476,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
 	      castor::dlf::Param("errorCode",sstrerror(e.code())),
 	      castor::dlf::Param("errorMessage",e.getMessage().str())
 	    };
-
+	  
 	  FileErrorReport failure;
 	  failure.setTransactionId(fileMigrated.transactionId());
 	  failure.setFileid(fileMigrated.fileid());
@@ -454,10 +496,13 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
 	// update the db
     
 	try {
+	  
+
 	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 58, 4, params);
 	  m_dbSvc.fileMigrationUpdate(fileMigrated);
 	}catch (castor::exception::Exception e) {
 	  
+
 	  castor::dlf::Param params[] =
 	    {
 	      castor::dlf::Param("transactionId",fileMigrated.transactionId()),
@@ -566,6 +611,21 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(
       noMore->setTransactionId(fileToRecall.transactionId());
       return noMore;
     }
+
+    char blockid[5]={response->blockId0() , response->blockId1() , response->blockId2() , response->blockId3() , '\0'};
+    
+
+    castor::dlf::Param completeParams[] =
+      {castor::dlf::Param("transactionId",response->transactionId()),
+       castor::dlf::Param("nshost",response->nshost()),
+       castor::dlf::Param("fileid",response->fileid()),
+       castor::dlf::Param("fseq",response->fseq()),
+       castor::dlf::Param("path",response->path()),
+       castor::dlf::Param("blockid", blockid ),
+      };
+ 
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 84, 6, completeParams);
+
   } catch (std::bad_cast &ex) {
     // "Invalid Request" message
 
@@ -576,6 +636,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(
     errorReport->setErrorMessage("invalid object");
     return errorReport;
   }
+
   return response;
 }
 
@@ -625,6 +686,21 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleMigrationMoreWor
        noMore->setTransactionId(fileToMigrate.transactionId());
        return noMore;
      } 
+
+     
+     castor::dlf::Param completeParams[] =
+       {castor::dlf::Param("transactionId",response->transactionId()),
+	castor::dlf::Param("nshost",response->nshost()),
+	castor::dlf::Param("fileid",response->fileid()),
+	castor::dlf::Param("fseq",response->fseq()),
+	castor::dlf::Param("path",response->path()),
+	castor::dlf::Param("fileSize", response->fileSize()),
+	castor::dlf::Param("lastKnownFileName", response->lastKnownFileName()),
+	castor::dlf::Param("lastModificationTime", response->lastModificationTime()),
+       };
+     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 85, 8, completeParams);
+
+
   } catch (std::bad_cast &ex) {
     // "Invalid Request" message
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 36, 0, NULL);
@@ -633,7 +709,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleMigrationMoreWor
     errorReport->setErrorMessage("invalid object");
     return errorReport;
   }
-
+  
   return response; // check went fine
 
 }

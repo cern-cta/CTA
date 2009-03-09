@@ -36,7 +36,7 @@ DependsOnLibrary(..,castorclient)
 DependsOnLibrary(../db/newora,castorcommonora)
 DependsOnLibrary(../db/cnv,castorcnvs)
 DependsOnLibrary(../infoPolicy,castorinfopolicy)
-
+DependsOnLibrary(../../rfio,castorrfio)
 
 TAPEGATEWAYDAEMONBIN_SRCS = TapeGatewayDaemon.cpp WorkerThread.cpp \
 	MigratorErrorHandlerThread.cpp RecallerErrorHandlerThread.cpp \

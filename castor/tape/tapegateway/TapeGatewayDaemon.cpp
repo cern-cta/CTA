@@ -177,16 +177,16 @@ int main(int argc, char* argv[]){
     tgDaemon.runAsStagerSuperuser();
 
      // send request to vdmq
-       
+         
     tgDaemon.addThreadPool(
 			   new castor::server::SignalThreadPool("ProducerOfVdqmRequestsThread", new castor::tape::tapegateway::VdqmRequestsProducerThread(oraSvc,tgDaemon.listenPort()), DEFAULT_SLEEP_INTERVAL)); // port used just to be sent to vdqm
-			   tgDaemon.getThreadPool('P')->setNbThreads(1);
+			   tgDaemon.getThreadPool('P')->setNbThreads(1); 
 			   
      // check requests for vdmq
-    
+			       
      tgDaemon.addThreadPool(
 			    new castor::server::SignalThreadPool("CheckerOfVdqmRequestsThread", new castor::tape::tapegateway::VdqmRequestsCheckerThread(oraSvc, VDQM_TIME_OUT_INTERVAL), DEFAULT_SLEEP_INTERVAL ));
-    tgDaemon.getThreadPool('C')->setNbThreads(1);
+			    tgDaemon.getThreadPool('C')->setNbThreads(1); 
 
     
     // query vmgr for tape and tapepools
@@ -327,6 +327,12 @@ castor::tape::tapegateway::TapeGatewayDaemon::TapeGatewayDaemon() : castor::serv
    {77, "Worker: received a FileErrorReportNotification"},
    {78, "Worker: updating the db after receiving  FileErrorReportNotification"},
    {79, "Worker: tape marked as FULL in vmgr"},
+   {80, "TapeStreamLinker: impossible to get a tape for the stream"},
+   {81, "Worker: found a taperequest"},
+   {82, "Worker: file migrated"},
+   {83, "Worker: file recalled"},
+   {84, "Worker: file to recall"},
+   {85, "Worker: file to migrate"},
    {-1, ""}
   };
   dlfInit(messages);

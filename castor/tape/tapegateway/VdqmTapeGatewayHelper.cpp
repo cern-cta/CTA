@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: VdqmTapeGatewayHelper.cpp,v $ $Revision: 1.2 $ $Release$ 
- * $Date: 2009/01/28 15:42:30 $ $Author: gtaur $
+ * @(#)$RCSfile: VdqmTapeGatewayHelper.cpp,v $ $Revision: 1.3 $ $Release$ 
+ * $Date: 2009/03/09 13:51:03 $ $Author: gtaur $
  *
  *
  *
@@ -41,7 +41,7 @@ int castor::tape::tapegateway::VdqmTapeGatewayHelper::submitTapeToVdqm( castor::
 
   // send vol request
 
-  int reqId=0; // to have it as output TODO
+  int reqId=0; // to have it as output
   char vidForC[CA_MAXVIDLEN+1];
   char dgnForC[CA_MAXDGNLEN+1];
   

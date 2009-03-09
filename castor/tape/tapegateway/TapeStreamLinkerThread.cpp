@@ -95,13 +95,21 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
     int lastFseq=-1;
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 17, 1, params0);
     try {
-     
+      // last Fseq is the value which should be used for the first file
       tapeToUse=vmgrHelper.getTapeForStream(**strItem,lastFseq);
     } catch(castor::exception::Exception e) {
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("StreamId",(*strItem)->id()),
+	 castor::dlf::Param("errorCode",sstrerror(e.code())),
+	 castor::dlf::Param("errorMessage",e.getMessage().str())
+	};
+      
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 80, 3, params);
       strItem++;
       continue;
       // in case of errors we don't change the status from TO_BE_RESOLVED to TO_BE_SENT_TO_VDQM -- NO NEED OF WAITSPACE status
     }
+
     if ( tapeToUse != NULL ){ 
       // got the tape
       castor::dlf::Param params[] =
@@ -125,8 +133,12 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
   try {
     m_dbSvc->resolveStreams(strIds, vids, fseqs);
   } catch (castor::exception::Exception e){
-    
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 19, 0, NULL);
+
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("errorCode",sstrerror(e.code())),
+       castor::dlf::Param("errorMessage",e.getMessage().str())
+      };
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 19, 2, params);
 
     tapeItem=tapesUsed.begin();
     while (tapeItem!=tapesUsed.end()) {
@@ -137,8 +149,13 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
       try {
 	vmgrHelper.resetBusyTape(**tapeItem);
       } catch (castor::exception::Exception e){
-	// log TODO
 	
+	castor::dlf::Param params[] =
+	  {castor::dlf::Param("VID",(*tapeItem)->vid()),
+	   castor::dlf::Param("errorCode",sstrerror(e.code())),
+	   castor::dlf::Param("errorMessage",e.getMessage().str())
+	  };
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 19, 3, params);
       }
       tapeItem++;
     }

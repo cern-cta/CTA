@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: VmgrTapeGatewayHelper.cpp,v $ $Revision: 1.8 $ $Release$ 
- * $Date: 2009/02/25 10:33:27 $ $Author: gtaur $
+ * @(#)$RCSfile: VmgrTapeGatewayHelper.cpp,v $ $Revision: 1.9 $ $Release$ 
+ * $Date: 2009/03/09 13:51:03 $ $Author: gtaur $
  *
  *
  *
@@ -172,6 +172,8 @@ castor::stager::Tape* castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeF
 void castor::tape::tapegateway::VmgrTapeGatewayHelper::getDataFromVmgr(castor::stager::Tape& tape) throw (castor::exception::Exception){
 
   struct vmgr_tape_info vmgrTapeInfo;
+  memset( &vmgrTapeInfo, 0, sizeof(struct vmgr_tape_info));
+  
   int save_serrno=0;
 
   if ( tape.vid().empty()) {
@@ -240,6 +242,7 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::getDataFromVmgr(castor::s
 int castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeStatusInVmgr(castor::stager::Tape& tape) throw (castor::exception::Exception) {
 
   struct vmgr_tape_info vmgrTapeInfo;
+  memset(&vmgrTapeInfo,0,sizeof(vmgr_tape_info));
   int save_serrno = 0;
 
   if ( tape.vid().empty()) return -1; 
@@ -331,6 +334,7 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(castor::
   // get information from vmgr
 
   struct vmgr_tape_info vmgrTapeInfo;
+  memset(&vmgrTapeInfo,0,sizeof(vmgr_tape_info));
 
   char dgnBuffer[8];
 
@@ -435,7 +439,7 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::setTapeAsFull(castor::sta
   if ( (status & (TAPE_FULL|DISABLED|EXPORTED|TAPE_RDONLY|ARCHIVED)) == 0 ) {
     status = TAPE_FULL;
     serrno=0;
-    int rc = vmgr_updatetape(tape.vid().c_str(), 1, 0, 100, 0, status); // no files written TODO
+    int rc = vmgr_updatetape(tape.vid().c_str(), 1, 0, 100, 0, status); 
     if (rc <0) {
       castor::exception::Exception ex(serrno);
       ex.getMessage()

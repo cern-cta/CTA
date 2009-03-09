@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2009/02/25 10:33:27 $ $Author: gtaur $
+ * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2009/03/09 13:51:04 $ $Author: gtaur $
  *
  * Implementation of the ITapeGatewaySvc for Oracle
  *
@@ -152,7 +152,7 @@ namespace castor {
          * Update the db for a file which has been recalled successfully or not
 	 */
 
-        virtual void fileRecallUpdate(castor::tape::tapegateway::FileRecalledNotification& resp) throw (castor::exception::Exception);
+        virtual bool fileRecallUpdate(castor::tape::tapegateway::FileRecalledNotification& resp) throw (castor::exception::Exception);
 
 	/**
 	 * Get Input for migration retries
@@ -206,7 +206,7 @@ namespace castor {
 	 */
 
 
-	virtual void getSegmentInformation(FileRecalledNotification &fileRecalled, std::string& vid,int& fsec ) throw (castor::exception::Exception);  
+	virtual void getSegmentInformation(FileRecalledNotification &fileRecalled, std::string& vid,int& copyNb ) throw (castor::exception::Exception);  
 	
 	/*
 	 * update the db after a major failure

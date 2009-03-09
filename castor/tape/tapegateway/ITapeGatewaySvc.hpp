@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeGatewaySvc.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2009/02/25 10:33:26 $ $Author: gtaur $
+ * @(#)$RCSfile: ITapeGatewaySvc.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2009/03/09 13:51:03 $ $Author: gtaur $
  *
  * This class provides methods related to tape handling
  *
@@ -137,7 +137,7 @@ namespace castor {
          * Update the db for a file which has been recalled successfully or not
          * calling extendedFileRecalled, fileRecalled and fileFailedToRecall
 	 */
-        virtual void  fileRecallUpdate(castor::tape::tapegateway::FileRecalledNotification& resp) throw (castor::exception::Exception)=0;
+        virtual bool  fileRecallUpdate(castor::tape::tapegateway::FileRecalledNotification& resp) throw (castor::exception::Exception)=0;
 
 	/**
 	 * Get Input for migration retries
@@ -191,7 +191,7 @@ namespace castor {
 	 */
 
 
-	virtual void getSegmentInformation(FileRecalledNotification &fileRecalled, std::string& vid,int& fsec )=0; 
+	virtual void getSegmentInformation(FileRecalledNotification &fileRecalled, std::string& vid,int& copyNb )=0; 
 
 	/*
 	 * update the db after a major failure
