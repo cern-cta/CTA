@@ -29,6 +29,7 @@
 #include "castor/tape/aggregator/AggregatorDaemon.hpp"
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/DriveAllocationProtocolEngine.hpp"
+#include "castor/tape/aggregator/Utils.hpp"
 #include "castor/tape/aggregator/VdqmRequestHandlerThread.hpp"
 
 
@@ -95,11 +96,8 @@ int main(int argc, char *argv[]) {
         daemon.getThreadPool('V');
 
       if(vdqmRequestHandlerThreadPool == NULL) {
-        castor::exception::Internal ie;
-
-        ie.getMessage() << __FUNCTION__
-          << ": Failed to get VdqmRequestHandlerThreadPool";
-        throw ie;
+        TAPE_THROW_EX(castor::exception::Internal,
+          ": Failed to get VdqmRequestHandlerThreadPool");
       }
       vdqmRequestHandlerThreadPool->setNbThreads(0);
     }

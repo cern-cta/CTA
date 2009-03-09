@@ -28,6 +28,7 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/AggregatorDaemon.hpp"
+#include "castor/tape/aggregator/Utils.hpp"
 #include "h/Cgetopt.h"
 #include "h/common.h"
 
@@ -132,10 +133,8 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
             castor::dlf::Param("Reason"  , oss.str())};
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USER_ERROR,
             AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, params);
-          castor::exception::InvalidArgument ex;
-          ex.getMessage() << __FUNCTION__
-            << ": " << oss.str();
-          throw ex;
+          TAPE_THROW_EX(castor::exception::InvalidArgument,
+            ": " << oss.str());
         }
       }
       setenv("PATH_CONFIG", Coptarg, 1);
@@ -154,10 +153,8 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
           castor::dlf::Param("Reason"  , oss.str())};
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USER_ERROR,
           AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, params);
-        castor::exception::InvalidArgument ex;
-        ex.getMessage() << __FUNCTION__
-          << ": " << oss.str();
-        throw ex;
+        TAPE_THROW_EX(castor::exception::InvalidArgument,
+          ": " << oss.str());
       }
     case ':':
       {
@@ -170,10 +167,8 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
           castor::dlf::Param("Reason"  , oss.str())};
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USER_ERROR,
           AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, params);
-        castor::exception::InvalidArgument ex;
-        ex.getMessage() << __FUNCTION__
-          << ": " << oss.str();
-        throw ex;
+        TAPE_THROW_EX(castor::exception::InvalidArgument,
+          ": " << oss.str());
       }
     default:
       {
@@ -187,10 +182,8 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
           castor::dlf::Param("Reason"  , oss.str())};
         CASTOR_DLF_WRITEPC(nullCuuid, DLF_LVL_ERROR,
           AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, params);
-        castor::exception::Internal ex;
-        ex.getMessage() << __FUNCTION__
-          << ": " << oss.str();
-        throw ex;
+        TAPE_THROW_EX(castor::exception::Internal,
+          ": " << oss.str());
       }
     }
   }
@@ -205,10 +198,8 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
       castor::dlf::Param("Reason", oss.str())};
     CASTOR_DLF_WRITEPC(nullCuuid, DLF_LVL_ERROR,
       AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, params);
-    castor::exception::Internal ex;
-    ex.getMessage() << __FUNCTION__
-      << ": " << oss.str();
-    throw ex;
+    TAPE_THROW_EX(castor::exception::Internal,
+      ": " << oss.str());
   }
 
   // If there is some extra text on the command-line which has not been parsed
@@ -224,10 +215,8 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
       castor::dlf::Param("Reason"  , oss.str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USER_ERROR,
       AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, params);
-    castor::exception::InvalidArgument ex;
-    ex.getMessage() << __FUNCTION__
-      << ": " << oss.str();
-    throw ex;
+    TAPE_THROW_EX(castor::exception::InvalidArgument,
+      ": " << oss.str());
   }
 }
 

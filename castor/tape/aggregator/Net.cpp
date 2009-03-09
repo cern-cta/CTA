@@ -31,6 +31,7 @@
 
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <sstream>
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <time.h>
@@ -45,12 +46,8 @@ int castor::tape::aggregator::Net::createListenerSocket(
   struct sockaddr_in address;
 
   if ((socketFd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-    castor::exception::Exception ex(errno);
-
-    ex.getMessage() << __FUNCTION__
-      << ": Failed to create a listener socket";
-
-    throw ex;
+    TAPE_THROW_CODE(errno,
+      ": Failed to create a listener socket");
   }
 
   Utils::setBytes(address, '\0');
@@ -59,21 +56,13 @@ int castor::tape::aggregator::Net::createListenerSocket(
   address.sin_port = htons(port);
 
   if(bind(socketFd, (struct sockaddr *) &address, sizeof(address)) < 0) {
-    castor::exception::Exception ex(errno);
-
-    ex.getMessage() << __FUNCTION__
-      << ": Failed to bind listener socket";
-
-    throw ex;
+    TAPE_THROW_CODE(errno,
+      ": Failed to bind listener socket");
   }
 
   if(listen(socketFd, LISTENBACKLOG) < 0) {
-    castor::exception::Exception ex(errno);
-
-    ex.getMessage() << __FUNCTION__
-      << ": Failed to mark listener socket as being a listener socket";
-
-    throw ex;
+    TAPE_THROW_CODE(errno,
+      ": Failed to mark listener socket as being a listener socket");
   }
 
   return socketFd;
@@ -110,13 +99,9 @@ int castor::tape::aggregator::Net::acceptConnection(
     switch(selectRc) {
     case 0: // Select timed out
       {
-        castor::exception::Exception ex(ETIMEDOUT);
-
-        ex.getMessage() << __FUNCTION__
-          << ": Timed out after " << netReadWriteTimeout
-          << " seconds whilst trying to accept a connection";
-
-        throw ex;
+        TAPE_THROW_CODE(ETIMEDOUT,
+             ": Timed out after " << netReadWriteTimeout
+          << " seconds whilst trying to accept a connection");
       }
       break;
     case -1: // Select encountered an error
@@ -136,13 +121,9 @@ int castor::tape::aggregator::Net::acceptConnection(
         char *const errorStr = strerror_r(selectErrno, strerrorBuf,
           sizeof(strerrorBuf));
 
-        castor::exception::Exception ex(selectErrno);
-
-        ex.getMessage() << __FUNCTION__
-          << ": Failed to accept connection"
-             ": Select failed: " << errorStr;
-
-        throw ex;
+        TAPE_THROW_CODE(selectErrno,
+          ": Failed to accept connection"
+          ": Select failed: " << errorStr);
       }
       break;
     default: // Select found a file descriptor awaiting attention
@@ -154,13 +135,9 @@ int castor::tape::aggregator::Net::acceptConnection(
 
       // Else the file descriptor set does not make sense
       } else {
-        castor::exception::Exception ex(selectErrno);
-
-        ex.getMessage() << __FUNCTION__
-          << ": Failed to accept connection "
-             ": Invalid file descriptor set";
-
-        throw ex;
+        TAPE_THROW_CODE(selectErrno,
+          ": Failed to accept connection "
+          ": Invalid file descriptor set");
       }
     }
   }
@@ -176,13 +153,9 @@ int castor::tape::aggregator::Net::acceptConnection(
     char *const errorStr = strerror_r(selectErrno, strerrorBuf,
       sizeof(strerrorBuf));
 
-    castor::exception::Exception ex(selectErrno);
-
-    ex.getMessage() << __FUNCTION__
-      << ": Failed to accept connection"
-         ": Accept failed: " << errorStr;
-
-    throw ex;
+    TAPE_THROW_CODE(selectErrno,
+      ": Failed to accept connection"
+      ": Accept failed: " << errorStr);
   }
 
   return connectedSocketFd;
@@ -206,11 +179,9 @@ void castor::tape::aggregator::Net::getSocketIpAndPort(const int socketFd,
     char *const errorStr = strerror_r(getsocknameErrno, strerrorBuf,
       sizeof(strerrorBuf));
 
-    castor::exception::Exception ex(getsocknameErrno);
-    ex.getMessage() << __FUNCTION__
-      << ": Failed to get socket name"
-         ": " << errorStr;
-    throw ex;
+    TAPE_THROW_CODE(getsocknameErrno,
+      ": Failed to get socket name"
+      ": " << errorStr);
   }
 
   ip   = ntohl(address.sin_addr.s_addr);
@@ -235,12 +206,9 @@ void castor::tape::aggregator::Net::getPeerIpAndPort(const int socketFd,
     char *const errorStr = strerror_r(getpeernameErrno, strerrorBuf,
       sizeof(strerrorBuf));
 
-    castor::exception::Exception ex(getpeernameErrno);
-    ex.getMessage() << __FUNCTION__
-      << ": Failed to get peer name"
-         ": " << errorStr;
-
-    throw ex;
+    TAPE_THROW_CODE(getpeernameErrno,
+      ": Failed to get peer name"
+      ": " << errorStr);
   }
 
   ip   = ntohl(address.sin_addr.s_addr);
@@ -264,12 +232,9 @@ void castor::tape::aggregator::Net::getSocketHostName(const int socketFd,
     char *const errorStr = strerror_r(getsocknameErrno, strerrorBuf,
       sizeof(strerrorBuf));
 
-    castor::exception::Exception ex(getsocknameErrno);
-    ex.getMessage() << __FUNCTION__
-      << ": Failed to get socket name"
-         ": " << errorStr;
-
-    throw ex;
+    TAPE_THROW_CODE(getsocknameErrno,
+      ": Failed to get socket name"
+      ": " << errorStr);
   }
 
   char hostName[HOSTNAMEBUFLEN];
@@ -278,13 +243,9 @@ void castor::tape::aggregator::Net::getSocketHostName(const int socketFd,
     hostName, sizeof(hostName), serviceName, sizeof(serviceName), 0);
 
   if(error != 0) {
-    castor::exception::Exception ex(SENOSHOST);
-
-    ex.getMessage() << __FUNCTION__
-      << ": Failed to get host information by address"
-         ": " << gai_strerror(error);
-
-    throw ex;
+    TAPE_THROW_CODE(SENOSHOST,
+      ": Failed to get host information by address"
+      ": " << gai_strerror(error));
   }
 
   Utils::copyString(buf, hostName, len);
@@ -307,12 +268,9 @@ void castor::tape::aggregator::Net::getPeerHostName(const int socketFd,
     char *const errorStr = strerror_r(getpeernameErrno, strerrorBuf,
       sizeof(strerrorBuf));
 
-    castor::exception::Exception ex(getpeernameErrno);
-    ex.getMessage() << __FUNCTION__
-      << ": Failed to get peer name"
-         ": " << errorStr;
-
-    throw ex;
+    TAPE_THROW_CODE(getpeernameErrno,
+      ": Failed to get peer name"
+      ": " << errorStr);
   }
 
   char hostName[HOSTNAMEBUFLEN];
@@ -321,13 +279,9 @@ void castor::tape::aggregator::Net::getPeerHostName(const int socketFd,
     hostName, sizeof(hostName), serviceName, sizeof(serviceName), 0);
 
   if(error != 0) {
-    castor::exception::Exception ex(SENOSHOST);
-
-    ex.getMessage() << __FUNCTION__
-      << ": Failed to get host information by address"
-         ": " << gai_strerror(error);
-
-    throw ex;
+    TAPE_THROW_CODE(SENOSHOST,
+      ": Failed to get host information by address"
+      ": " << gai_strerror(error));
   }
 
   Utils::copyString(buf, hostName, len);
@@ -397,38 +351,45 @@ void castor::tape::aggregator::Net::readBytes(const int socketFd,
       char *const errorStr = strerror_r(netreadErrno, strerrorBuf,
         sizeof(strerrorBuf));
 
-      castor::exception::Exception ex(serrno);
+      std::stringstream messageStream;
+      messageStream
+        << ": Failed to read " << nbBytes << " bytes from socket"
+           ": ";
+      printSocketDescription(messageStream, socketFd);
+      messageStream
+        << ": " << errorStr;
 
-      ex.getMessage() << __FUNCTION__;
-      std::ostream &os = ex.getMessage();
-      os << ": Failed to read " << nbBytes << " bytes from socket: ";
-      printSocketDescription(os, socketFd);
-      os << ": " << errorStr;
-      throw ex;
+      TAPE_THROW_CODE(serrno,
+        messageStream.str());
     }
   case 0:
     {
-      castor::exception::Exception ex(SECONNDROP);
+      std::stringstream messageStream;
+      messageStream
+        << "Failed to read " << nbBytes << " bytes from socket"
+           ": ";
+      printSocketDescription(messageStream, socketFd);
+      messageStream
+        << ": Connection was closed by the remote end";
 
-      ex.getMessage() << __FUNCTION__;
-      std::ostream &os = ex.getMessage();
-      os << "Failed to read " << nbBytes << " bytes from socket: ";
-      printSocketDescription(os, socketFd);
-      os << ": Connection was closed by the remote end";
-      throw ex;
+      TAPE_THROW_CODE(SECONNDROP,
+        messageStream.str());
     }
   default:
     if (netreadRc != nbBytes) {
-      castor::exception::Exception ex(SECOMERR);
 
-      ex.getMessage() << __FUNCTION__;
-      std::ostream &os = ex.getMessage();
-      os << "Failed to read " << nbBytes << " bytes from socket: ";
-      printSocketDescription(os, socketFd);
-      os << "Read the wrong number of bytes"
+      std::stringstream messageStream;
+      messageStream
+        << "Failed to read " << nbBytes << " bytes from socket"
+           ": ";
+      printSocketDescription(messageStream, socketFd);
+      messageStream
+        << ": Read the wrong number of bytes"
         << ": Expected: " << nbBytes
         << ": Read: " << netreadRc;
-      throw ex;
+
+      TAPE_THROW_CODE(SECOMERR,
+        messageStream.str());
     }
   }
 }
@@ -447,36 +408,43 @@ void castor::tape::aggregator::Net::writeBytes(const int socketFd,
   switch(netwriteRc) {
   case -1:
     {
-      castor::exception::Exception ex(SECOMERR);
-      ex.getMessage() << __FUNCTION__;
-      std::ostream &os = ex.getMessage();
-      os << ": Failed to write " << nbBytes << " bytes to socket: ";
-      printSocketDescription(os, socketFd);
-      os << ": " << neterror();
-      throw ex;
+      std::stringstream messageStream;
+      messageStream
+        << ": Failed to write " << nbBytes << " bytes to socket"
+           ": ";
+      printSocketDescription(messageStream, socketFd);
+      messageStream
+        << ": " << neterror();
+
+      TAPE_THROW_CODE(SECOMERR,
+        messageStream.str());
     }
   case 0:
     {
-      castor::exception::Exception ex(SECONNDROP);
-      ex.getMessage() << __FUNCTION__;
-      std::ostream &os = ex.getMessage();
-      os << ": Failed to write " << nbBytes << " bytes to socket: ";
-      printSocketDescription(os, socketFd);
-      os << ": Connection dropped";
-      throw ex;
+      std::stringstream messageStream;
+      messageStream
+        << ": Failed to write " << nbBytes << " bytes to socket"
+           ": ";
+      printSocketDescription(messageStream, socketFd);
+      messageStream
+        << ": Connection dropped";
+
+      TAPE_THROW_CODE(SECONNDROP,
+        messageStream.str());
     }
   default:
     if(netwriteRc != nbBytes) {
-      castor::exception::Exception ex(SECOMERR);
-
-      ex.getMessage() << __FUNCTION__;
-      std::ostream &os = ex.getMessage();
-      os << "Failed to write " << nbBytes << " bytes to socket: ";
-      printSocketDescription(os, socketFd);
-      os << "Wrote the wrong number of bytes"
+      std::stringstream messageStream;
+      messageStream
+        << ": Failed to write " << nbBytes << " bytes to socket"
+           ": ";
+      printSocketDescription(messageStream, socketFd);
+      messageStream
+        << ": Wrote the wrong number of bytes"
         << ": Expected: " << nbBytes
         << ": Wrote: " << netwriteRc;
-      throw ex;
+      TAPE_THROW_CODE(SECOMERR,
+        messageStream.str());
     }
   }
 }

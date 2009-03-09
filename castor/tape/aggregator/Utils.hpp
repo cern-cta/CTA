@@ -35,25 +35,25 @@
 #include <string.h>
 
 #define TAPE_THROW_EX(EXCEPTION, MSG) { \
-  EXCEPTION tapeException;              \
+  EXCEPTION _ex_;                       \
                                         \
-  tapeException.getMessage()            \
+  _ex_.getMessage()                     \
     <<  "File="     << __FILE__         \
     << " Line="     << __LINE__         \
     << " Function=" << __FUNCTION__     \
     << MSG;                             \
-  throw tapeException;                  \
+  throw _ex_;                           \
 }
 
-#define TAPE_THROW_CODE(CODE, MSG) {                \
-  castor::exception::Exception tapeException(CODE); \
-                                                    \
-  tapeException.getMessage()                        \
-    <<  "File="     << __FILE__                     \
-    << " Line="     << __LINE__                     \
-    << " Function=" << __FUNCTION__                 \
-    << MSG       ;                                  \
-  throw tapeException;                              \
+#define TAPE_THROW_CODE(CODE, MSG) {       \
+  castor::exception::Exception _ex_(CODE); \
+                                           \
+  _ex_.getMessage()                        \
+    <<  "File="     << __FILE__            \
+    << " Line="     << __LINE__            \
+    << " Function=" << __FUNCTION__        \
+    << MSG       ;                         \
+  throw _ex_;                              \
 }
 
 namespace castor {
