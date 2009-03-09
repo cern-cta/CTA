@@ -53,7 +53,6 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
   char (&label)[CA_MAXLBLTYPLEN+1], char (&density)[CA_MAXDENLEN+1])
   throw(castor::exception::Exception) {
 
-/*
   {
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId"   , volReqId   ),
@@ -62,7 +61,7 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_GET_VOLUME_FROM_GATEWAY, params);
   }
-*/
+
   bool thereIsAVolumeToMount = false;
 
   // Prepare the request
@@ -73,7 +72,7 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
 // Hardcoded volume INFO
 #ifdef EMULATE_GATEWAY
 
-  //transactionIdFromGateway = volReqId;
+  //volReqIdFromGateway = volReqId;
   Utils::copyString(vid,     "I10550");
   mode = 0;
   Utils::copyString(label,   "aul");
@@ -108,14 +107,14 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
   }
 
   // Temporary variable used to check for a transaction ID mistatch
-  uint64_t transactionIdFromGateway = 0;
+  uint64_t volReqIdFromGateway = 0;
 
   switch(reply->type()) {
   case OBJ_Volume:
     // Copy the reply information
     try {
       tapegateway::Volume &volume = dynamic_cast<tapegateway::Volume&>(*reply);
-      transactionIdFromGateway = volume.transactionId();
+      volReqIdFromGateway = volume.transactionId();
       Utils::copyString(vid, volume.vid().c_str());
       mode = volume.mode();
       Utils::copyString(label, volume.label().c_str());
@@ -129,18 +128,6 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
       throw ex;
     }
 
-    // If there is a transaction ID mismatch
-    if(transactionIdFromGateway != volReqId) {
-      castor::exception::Exception ex(EINVAL);
-
-      ex.getMessage() << __PRETTY_FUNCTION__
-        << ": Transaction ID mismatch"
-           ": Expected = " << volReqId
-        << ": Actual = " << transactionIdFromGateway;
-
-      throw ex;
-    }
-
     thereIsAVolumeToMount = true;
     break;
 
@@ -149,7 +136,7 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
     try {
       tapegateway::NoMoreFiles &noMoreFiles =
         dynamic_cast<tapegateway::NoMoreFiles&>(*reply);
-      transactionIdFromGateway = noMoreFiles.transactionId();
+      volReqIdFromGateway = noMoreFiles.transactionId();
     } catch(std::bad_cast &bc) {
       castor::exception::Internal ex;
 
@@ -158,19 +145,6 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
 
       throw ex;
     }
-
-    // If there is a transaction ID mismatch
-    if(transactionIdFromGateway != volReqId) {
-      castor::exception::Exception ex(EINVAL);
-
-      ex.getMessage() << __PRETTY_FUNCTION__
-        << ": Transaction ID mismatch"
-           ": Expected = " << volReqId
-        << ": Actual = " << transactionIdFromGateway;
-
-      throw ex;
-    }
-    break;
 
   case OBJ_EndNotificationErrorReport:
     {
@@ -181,7 +155,7 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
       try {
         tapegateway::EndNotificationErrorReport &errorReport =
           dynamic_cast<tapegateway::EndNotificationErrorReport&>(*reply);
-        transactionIdFromGateway = errorReport.transactionId();
+        volReqIdFromGateway = errorReport.transactionId();
         errorCode = errorReport.errorCode();
         errorMessage = errorReport.errorMessage();
       } catch(std::bad_cast &bc) {
@@ -190,18 +164,6 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
         ex.getMessage() << __PRETTY_FUNCTION__
           << "Failed to down cast reply object to "
              "tapegateway::EndNotificationErrorReport";
-
-        throw ex;
-      }
-
-      // If there is a transaction ID mismatch
-      if(transactionIdFromGateway != volReqId) {
-        castor::exception::Exception ex(EINVAL);
-
-        ex.getMessage() << __PRETTY_FUNCTION__
-          << ": Transaction ID mismatch"
-             ": Expected = " << volReqId
-          << ": Actual = " << transactionIdFromGateway;
 
         throw ex;
       }
@@ -226,16 +188,16 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
     }
   }
 
-/*
   if(thereIsAVolumeToMount) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"   , volReqId          ),
-      castor::dlf::Param("gatewayHost", gatewayHost       ),
-      castor::dlf::Param("gatewayPort", gatewayPort       ),
-      castor::dlf::Param("vid"        , rtcpVolume.vid    ),
-      castor::dlf::Param("mode"       , rtcpVolume.mode   ),
-      castor::dlf::Param("label"      , rtcpVolume.label  ),
-      castor::dlf::Param("density"    , rtcpVolume.density)};
+      castor::dlf::Param("volReqId"           , volReqId           ),
+      castor::dlf::Param("volReqIdFromGateway", volReqIdFromGateway),
+      castor::dlf::Param("gatewayHost"        , gatewayHost        ),
+      castor::dlf::Param("gatewayPort"        , gatewayPort        ),
+      castor::dlf::Param("vid"                , vid                ),
+      castor::dlf::Param("mode"               , mode               ),
+      castor::dlf::Param("label"              , label              ),
+      castor::dlf::Param("density"            , density            )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_GOT_VOLUME_FROM_GATEWAY, params);
   } else {
@@ -247,7 +209,20 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_GOT_NO_VOLUME_FROM_GATEWAY, params);
   }
-*/
+
+  // If there is a transaction ID mismatch
+  if(volReqIdFromGateway != volReqId) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Transaction ID mismatch"
+         ": Expected = " << volReqId
+      << ": Actual = " << volReqIdFromGateway;
+
+    throw ex;
+  }
+
+
   return thereIsAVolumeToMount;
 }
 
@@ -262,7 +237,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
   uint64_t &fileId, uint32_t &tapeFileSeq, uint64_t &fileSize,
   char (&lastKnownFileName)[CA_MAXPATHLEN+1], uint64_t &lastModificationTime)
   throw(castor::exception::Exception) {
-/*
+
   {
       castor::dlf::Param params[] = {
         castor::dlf::Param("volReqId"   , volReqId   ),
@@ -271,7 +246,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
         AGGREGATOR_GET_FIRST_FILE_TO_MIGRATE_FROM_GATEWAY, params);
   }
-*/
+
   bool thereIsAFileToMigrate = false;
 
   // Prepare the request
@@ -303,7 +278,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
   }
 
   // Temporary variable used to check for a transaction ID mistatch
-  uint64_t transactionIdFromGateway = 0;
+  uint64_t volReqIdFromGateway = 0;
 
   switch(reply->type()) {
   case OBJ_FileToMigrate:
@@ -311,7 +286,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
     try {
       tapegateway::FileToMigrate &file =
         dynamic_cast<tapegateway::FileToMigrate&>(*reply);
-      transactionIdFromGateway = file.transactionId();
+      volReqIdFromGateway = file.transactionId();
       Utils::copyString(filePath, file.path().c_str());
       Utils::copyString(nsHost, file.nshost().c_str());
       fileId = file.fileid();
@@ -329,13 +304,13 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
     }
 
     // If there is a transaction ID mismatch
-    if(transactionIdFromGateway != volReqId) {
+    if(volReqIdFromGateway != volReqId) {
       castor::exception::Exception ex(EINVAL);
 
       ex.getMessage() << __PRETTY_FUNCTION__
         << ": Transaction ID mismatch"
            ": Expected = " << volReqId
-        << ": Actual = " << transactionIdFromGateway;
+        << ": Actual = " << volReqIdFromGateway;
 
       throw ex;
     }
@@ -348,7 +323,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
     try {
       tapegateway::NoMoreFiles &noMoreFiles =
         dynamic_cast<tapegateway::NoMoreFiles&>(*reply);
-      transactionIdFromGateway = noMoreFiles.transactionId();
+      volReqIdFromGateway = noMoreFiles.transactionId();
     } catch(std::bad_cast &bc) {
       castor::exception::Internal ex;
 
@@ -359,13 +334,13 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
     }
 
     // If there is a transaction ID mismatch
-    if(transactionIdFromGateway != volReqId) {
+    if(volReqIdFromGateway != volReqId) {
       castor::exception::Exception ex(EINVAL);
 
       ex.getMessage() << __PRETTY_FUNCTION__
         << ": Transaction ID mismatch"
            ": Expected = " << volReqId
-        << ": Actual = " << transactionIdFromGateway;
+        << ": Actual = " << volReqIdFromGateway;
 
       throw ex;
     }
@@ -380,7 +355,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
       try {
         tapegateway::ErrorReport &errorReport =
           dynamic_cast<tapegateway::ErrorReport&>(*reply);
-        transactionIdFromGateway = errorReport.transactionId();
+        volReqIdFromGateway = errorReport.transactionId();
         errorCode = errorReport.errorCode();
         errorMessage = errorReport.errorMessage();
       } catch(std::bad_cast &bc) {
@@ -393,13 +368,13 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
       }
 
       // If there is a transaction ID mismatch
-      if(transactionIdFromGateway != volReqId) {
+      if(volReqIdFromGateway != volReqId) {
         castor::exception::Exception ex(EINVAL);
 
         ex.getMessage() << __PRETTY_FUNCTION__
           << ": Transaction ID mismatch"
              ": Expected = " << volReqId
-          << ": Actual = " << transactionIdFromGateway;
+          << ": Actual = " << volReqIdFromGateway;
 
         throw ex;
       }
@@ -424,34 +399,33 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
     }
   }
 
-/*
-   if(thereIsAFileToMigrate) {
+ if(thereIsAFileToMigrate) {
 
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("volReqId"            , volReqId            ),
-        castor::dlf::Param("gatewayHost"         , gatewayHost         ),
-        castor::dlf::Param("gatewayPort"         , gatewayPort         ),
-        castor::dlf::Param("filePath"            , filePath            ),
-        castor::dlf::Param("nsHost"              , nsHost              ),
-        castor::dlf::Param("fileId"              , fileId              ),
-        castor::dlf::Param("tapeFseq"            , tapeFseq            ),
-        castor::dlf::Param("fileSize"            , fileSize            ),
-        castor::dlf::Param("lastKnownFileName"   , lastKnownFileName   ),
-        castor::dlf::Param("lastModificationTime", lastModificationTime)};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_GOT_FIRST_FILE_TO_MIGRATE_FROM_GATEWAY, params);
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId"            , volReqId            ),
+      castor::dlf::Param("gatewayHost"         , gatewayHost         ),
+      castor::dlf::Param("gatewayPort"         , gatewayPort         ),
+      castor::dlf::Param("filePath"            , filePath            ),
+      castor::dlf::Param("nsHost"              , nsHost              ),
+      castor::dlf::Param("fileId"              , fileId              ),
+      castor::dlf::Param("tapeFseq"            , tapeFileSeq         ),
+      castor::dlf::Param("fileSize"            , fileSize            ),
+      castor::dlf::Param("lastKnownFileName"   , lastKnownFileName   ),
+      castor::dlf::Param("lastModificationTime", lastModificationTime)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_GOT_FIRST_FILE_TO_MIGRATE_FROM_GATEWAY, params);
 
-    } else {
+  } else {
 
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("volReqId"   , volReqId   ),
-        castor::dlf::Param("gatewayHost", gatewayHost),
-        castor::dlf::Param("gatewayPort", gatewayPort)};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_GOT_NO_FIRST_FILE_TO_MIGRATE_FROM_GATEWAY, params);
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId"   , volReqId   ),
+      castor::dlf::Param("gatewayHost", gatewayHost),
+      castor::dlf::Param("gatewayPort", gatewayPort)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_GOT_NO_FIRST_FILE_TO_MIGRATE_FROM_GATEWAY, params);
 
-    }
-*/
+  }
+
   return thereIsAFileToMigrate;
 }
 
@@ -476,7 +450,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
 // Hardcoded volume INFO
 #ifdef EMULATE_GATEWAY
 
-  //transactionIdFromGateway = volReqId;
+  //volReqIdFromGateway = volReqId;
   Utils::copyString(filePath, "lxc2disk15.cern.ch:/srv/castor/04//71/305892471@castorns.263135");
   Utils::copyString(nsHost,   "castorns");
   fileId      = 305892471;
@@ -515,7 +489,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
   }
 
   // Temporary variable used to check for a transaction ID mistatch
-  uint64_t transactionIdFromGateway = 0;
+  uint64_t volReqIdFromGateway = 0;
 
   switch(reply->type()) {
   case OBJ_FileToRecall:
@@ -523,7 +497,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
     try {
       tapegateway::FileToRecall &file =
         dynamic_cast<tapegateway::FileToRecall&>(*reply);
-      transactionIdFromGateway = file.transactionId();
+      volReqIdFromGateway = file.transactionId();
       Utils::copyString(filePath, file.path().c_str());
       Utils::copyString(nsHost, file.nshost().c_str());
       fileId = file.fileid();
@@ -541,18 +515,6 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
       throw ex;
     }
 
-    // If there is a transaction ID mismatch
-    if(transactionIdFromGateway != volReqId) {
-      castor::exception::Exception ex(EINVAL);
-
-      ex.getMessage() << __PRETTY_FUNCTION__
-        << ": Transaction ID mismatch"
-           ": Expected = " << volReqId
-        << ": Actual = " << transactionIdFromGateway;
-
-      throw ex;
-    }
-
     thereIsAFileToRecall = true;
     break;
 
@@ -561,7 +523,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
     try {
       tapegateway::NoMoreFiles &noMoreFiles =
         dynamic_cast<tapegateway::NoMoreFiles&>(*reply);
-      transactionIdFromGateway = noMoreFiles.transactionId();
+      volReqIdFromGateway = noMoreFiles.transactionId();
     } catch(std::bad_cast &bc) {
       castor::exception::Internal ex;
 
@@ -571,17 +533,6 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
       throw ex;
     }
 
-    // If there is a transaction ID mismatch
-    if(transactionIdFromGateway != volReqId) {
-      castor::exception::Exception ex(EINVAL);
-
-      ex.getMessage() << __PRETTY_FUNCTION__
-        << ": Transaction ID mismatch"
-           ": Expected = " << volReqId
-        << ": Actual = " << transactionIdFromGateway;
-
-      throw ex;
-    }
     break;
 
   case OBJ_ErrorReport:
@@ -593,7 +544,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
       try {
         tapegateway::ErrorReport &errorReport =
           dynamic_cast<tapegateway::ErrorReport&>(*reply);
-        transactionIdFromGateway = errorReport.transactionId();
+        volReqIdFromGateway = errorReport.transactionId();
         errorCode = errorReport.errorCode();
         errorMessage = errorReport.errorMessage();
       } catch(std::bad_cast &bc) {
@@ -601,18 +552,6 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
 
         ex.getMessage() << __PRETTY_FUNCTION__
           << "Failed to down cast reply object to tapegateway::NoMoreFiles";
-
-        throw ex;
-      }
-
-      // If there is a transaction ID mismatch
-      if(transactionIdFromGateway != volReqId) {
-        castor::exception::Exception ex(EINVAL);
-
-        ex.getMessage() << __PRETTY_FUNCTION__
-          << ": Transaction ID mismatch"
-             ": Expected = " << volReqId
-          << ": Actual = " << transactionIdFromGateway;
 
         throw ex;
       }
@@ -635,6 +574,18 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
 
       throw ex;
     }
+  }
+
+  // If there is a transaction ID mismatch
+  if(volReqIdFromGateway != volReqId) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __PRETTY_FUNCTION__
+      << ": Transaction ID mismatch"
+         ": Expected = " << volReqId
+      << ": Actual = " << volReqIdFromGateway;
+
+    throw ex;
   }
 
   return thereIsAFileToRecall;
@@ -693,7 +644,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
   }
 
   // Temporary variable used to check for a transaction ID mistatch
-  uint64_t transactionIdFromGateway = 0;
+  uint64_t volReqIdFromGateway = 0;
 
   switch(reply->type()) {
   case OBJ_NotificationAcknowledge:
@@ -701,7 +652,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
     try {
       tapegateway::NotificationAcknowledge &notificationAcknowledge =
         dynamic_cast<tapegateway::NotificationAcknowledge&>(*reply);
-      transactionIdFromGateway = notificationAcknowledge.transactionId();
+      volReqIdFromGateway = notificationAcknowledge.transactionId();
     } catch(std::bad_cast &bc) {
       castor::exception::Internal ex;
 
@@ -713,13 +664,13 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
     }
 
     // If there is a transaction ID mismatch
-    if(transactionIdFromGateway != volReqId) {
+    if(volReqIdFromGateway != volReqId) {
       castor::exception::Exception ex(EINVAL);
 
       ex.getMessage() << __PRETTY_FUNCTION__
         << ": Transaction ID mismatch"
            ": Expected = " << volReqId
-        << ": Actual = " << transactionIdFromGateway;
+        << ": Actual = " << volReqIdFromGateway;
 
       throw ex;
     }
@@ -787,7 +738,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
   }
 
   // Temporary variable used to check for a transaction ID mistatch
-  uint64_t transactionIdFromGateway = 0;
+  uint64_t volReqIdFromGateway = 0;
 
   switch(reply->type()) {
   case OBJ_NotificationAcknowledge:
@@ -795,7 +746,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
     try {
       tapegateway::NotificationAcknowledge &notificationAcknowledge =
         dynamic_cast<tapegateway::NotificationAcknowledge&>(*reply);
-      transactionIdFromGateway = notificationAcknowledge.transactionId();
+      volReqIdFromGateway = notificationAcknowledge.transactionId();
     } catch(std::bad_cast &bc) {
       castor::exception::Internal ex;
 
@@ -807,13 +758,13 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
     }
 
     // If there is a transaction ID mismatch
-    if(transactionIdFromGateway != volReqId) {
+    if(volReqIdFromGateway != volReqId) {
       castor::exception::Exception ex(EINVAL);
 
       ex.getMessage() << __PRETTY_FUNCTION__
         << ": Transaction ID mismatch"
            ": Expected = " << volReqId
-        << ": Actual = " << transactionIdFromGateway;
+        << ": Actual = " << volReqIdFromGateway;
 
       throw ex;
     }
@@ -871,7 +822,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayOfEnd(
   }
 
   // Temporary variable used to check for a transaction ID mistatch
-  uint64_t transactionIdFromGateway = 0;
+  uint64_t volReqIdFromGateway = 0;
 
   switch(reply->type()) {
   case OBJ_NotificationAcknowledge:
@@ -879,7 +830,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayOfEnd(
     try {
       tapegateway::NotificationAcknowledge &notificationAcknowledge =
         dynamic_cast<tapegateway::NotificationAcknowledge&>(*reply);
-      transactionIdFromGateway = notificationAcknowledge.transactionId();
+      volReqIdFromGateway = notificationAcknowledge.transactionId();
     } catch(std::bad_cast &bc) {
       castor::exception::Internal ex;
 
@@ -891,13 +842,13 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayOfEnd(
     }
 
     // If there is a transaction ID mismatch
-    if(transactionIdFromGateway != volReqId) {
+    if(volReqIdFromGateway != volReqId) {
       castor::exception::Exception ex(EINVAL);
 
       ex.getMessage() << __PRETTY_FUNCTION__
         << ": Transaction ID mismatch"
            ": Expected = " << volReqId
-        << ": Actual = " << transactionIdFromGateway;
+        << ": Actual = " << volReqIdFromGateway;
 
       throw ex;
     }
