@@ -29,6 +29,7 @@
 #include "castor/server/IThread.hpp"
 #include "castor/tape/aggregator/MessageHeader.hpp"
 #include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
+#include "castor/tape/aggregator/SmartFdList.hpp"
 #include "castor/tape/aggregator/TapeDiskRqstHandler.hpp"
 
 #include <list>
@@ -98,28 +99,23 @@ namespace aggregator {
      *
      * @param cuuid The ccuid to be used for logging.
      * @param volReqId The volume request ID.
-     * @param rtcpdInitialSocketFd The socket file descriptor of initial RTCPD
-     * connection.
+     * @param socketFd The socket file descriptor of initial RTCPD connection.
      */
     void processErrorOnInitialRtcpdConnection(const Cuuid_t &cuuid,
-      const uint32_t volReqId, const int rtcpdInitialSocketFd)
+      const uint32_t volReqId, const int socketFd)
       throw(castor::exception::Exception);
 
     /**
-     * Accepts an RTCPD connection using the specified listener socket and adds
-     * the newly created connected socket to the specified list of connected
-     * sockets.
+     * Accepts an RTCPD connection using the specified listener socket.
      *
      * @param cuuid The ccuid to be used for logging.
      * @param volReqId The volume request ID.
      * @param rtcpdCallbackSocketFd The file descriptor of the listener socket
      * to be used to accept callback connections from RTCPD.
-     * @param connectedSocketFds In/out parameter - The list of connected
-     * socket file descriptors.
+     * @return The file descriptor of the accepted connection.
      */
-    void acceptRtcpdConnection(const Cuuid_t &cuuid, const uint32_t volReqId,
-      const int rtcpdCallbackSocketFd, std::list<int> &connectedSocketFds)
-      throw(castor::exception::Exception);
+    int acceptRtcpdConnection(const Cuuid_t &cuuid, const uint32_t volReqId,
+      const int rtcpdCallbackSocketFd) throw(castor::exception::Exception);
 
     /**
      * Processes the following RTCPD sockets:

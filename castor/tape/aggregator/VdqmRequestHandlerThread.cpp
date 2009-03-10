@@ -35,6 +35,7 @@
 #include "castor/tape/aggregator/RtcpTapeRqstErrMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpFileRqstErrMsgBody.hpp"
 #include "castor/tape/aggregator/SmartFd.hpp"
+#include "castor/tape/aggregator/SmartFdList.hpp"
 #include "castor/tape/aggregator/RtcpTxRx.hpp"
 #include "castor/tape/aggregator/Utils.hpp"
 #include "castor/tape/aggregator/VdqmRequestHandlerThread.hpp"
@@ -69,7 +70,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::init() throw() {
 // processJobSubmissionRequest
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::VdqmRequestHandlerThread::
-  processJobSubmissionRequest(const Cuuid_t &cuuid, const int vdqmSocketFd,
+  processJobSubmissionRequest(const Cuuid_t &cuuid, const int vdqmsocketFd,
   RcpJobRqstMsgBody &jobRequest, const int rtcpdCallbackSocketFd)
   throw(castor::exception::Exception) {
 
@@ -79,8 +80,8 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
     unsigned long  ip   = 0; // Client IP
     char           hostName[HOSTNAMEBUFLEN];
 
-    Net::getPeerIpAndPort(vdqmSocketFd, ip, port);
-    Net::getPeerHostName(vdqmSocketFd, hostName);
+    Net::getPeerIpAndPort(vdqmsocketFd, ip, port);
+    Net::getPeerHostName(vdqmsocketFd, hostName);
 
     castor::dlf::Param params[] = {
       castor::dlf::Param("IP"      , castor::dlf::IPAddress(ip)),
@@ -99,9 +100,9 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
 
   Utils::setBytes(jobRequest, '\0');
 
-  checkRcpJobSubmitterIsAuthorised(vdqmSocketFd);
+  checkRcpJobSubmitterIsAuthorised(vdqmsocketFd);
 
-  RtcpTxRx::receiveRcpJobRqst(vdqmSocketFd, RTCPDNETRWTIMEOUT,
+  RtcpTxRx::receiveRcpJobRqst(vdqmsocketFd, RTCPDNETRWTIMEOUT,
     jobRequest);
   {
     castor::dlf::Param params[] = {
@@ -179,7 +180,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
   vdqmReplyLen = Marshaller::marshallRcpJobReplyMsgBody(vdqmReplyBuf,
     rtcpdReply);
 
-  Net::writeBytes(vdqmSocketFd, RTCPDNETRWTIMEOUT, vdqmReplyLen, vdqmReplyBuf);
+  Net::writeBytes(vdqmsocketFd, RTCPDNETRWTIMEOUT, vdqmReplyLen, vdqmReplyBuf);
 }
 
 
@@ -188,12 +189,13 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::VdqmRequestHandlerThread::
   processErrorOnInitialRtcpdConnection(const Cuuid_t &cuuid,
-  const uint32_t volReqId, const int rtcpdInitialSocketFd)
+  const uint32_t volReqId, const int socketFd)
   throw(castor::exception::Exception) {
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", volReqId)};
+      castor::dlf::Param("volReqId", volReqId),
+      castor::dlf::Param("socketFd", socketFd)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_DATA_ON_INITIAL_RTCPD_CONNECTION, params);
   }
@@ -201,17 +203,17 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
   MessageHeader          header;
   RtcpTapeRqstErrMsgBody body;
 
-  RtcpTxRx::receiveRtcpMsgHeader(cuuid, volReqId, rtcpdInitialSocketFd, RTCPDNETRWTIMEOUT,
-    header);
-  RtcpTxRx::receiveRtcpTapeRqstErrBody(cuuid, volReqId, rtcpdInitialSocketFd,
+  RtcpTxRx::receiveRtcpMsgHeader(cuuid, volReqId, socketFd,
+    RTCPDNETRWTIMEOUT, header);
+  RtcpTxRx::receiveRtcpTapeRqstErrBody(cuuid, volReqId, socketFd,
     RTCPDNETRWTIMEOUT, header, body);
 
   RtcpAcknowledgeMsg ackMsg;
   ackMsg.magic   = RTCOPY_MAGIC;
   ackMsg.reqType = RTCP_TAPEERR_REQ;
   ackMsg.status  = 0;
-  RtcpTxRx::sendRtcpAcknowledge(cuuid, volReqId, rtcpdInitialSocketFd,
-    RTCPDNETRWTIMEOUT, ackMsg);
+  RtcpTxRx::sendRtcpAcknowledge(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT,
+    ackMsg);
 
   TAPE_THROW_CODE(body.err.errorCode,
     ": Received an error from RTCPD:" << body.err.errorMsg);
@@ -221,27 +223,27 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
 //-----------------------------------------------------------------------------
 // acceptRtcpdConnection
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::VdqmRequestHandlerThread::
+int castor::tape::aggregator::VdqmRequestHandlerThread::
   acceptRtcpdConnection(const Cuuid_t &cuuid, const uint32_t volReqId,
-  const int rtcpdCallbackSocketFd, std::list<int> &connectedSocketFds)
-  throw(castor::exception::Exception) {
+  const int rtcpdCallbackSocketFd) throw(castor::exception::Exception) {
 
-  const int connectedSocketFd = Net::acceptConnection(rtcpdCallbackSocketFd,
-    RTCPDCALLBACKTIMEOUT);
+  SmartFd connectedsocketFd(Net::acceptConnection(rtcpdCallbackSocketFd,
+    RTCPDCALLBACKTIMEOUT));
 
   try {
     unsigned short port = 0; // Client port
     unsigned long  ip   = 0; // Client IP
     char           hostName[HOSTNAMEBUFLEN];
 
-    Net::getPeerIpAndPort(connectedSocketFd, ip, port);
-    Net::getPeerHostName(connectedSocketFd, hostName);
+    Net::getPeerIpAndPort(connectedsocketFd.get(), ip, port);
+    Net::getPeerHostName(connectedsocketFd.get(), hostName);
 
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", volReqId),
+      castor::dlf::Param("volReqId", volReqId                  ),
       castor::dlf::Param("IP"      , castor::dlf::IPAddress(ip)),
-      castor::dlf::Param("Port"    , port),
-      castor::dlf::Param("HostName", hostName)};
+      castor::dlf::Param("Port"    , port                      ),
+      castor::dlf::Param("HostName", hostName                  ),
+      castor::dlf::Param("socketFd", connectedsocketFd.get()   )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_RTCPD_CALLBACK_WITH_INFO, params);
   } catch(castor::exception::Exception &ex) {
@@ -251,7 +253,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
       AGGREGATOR_RTCPD_CALLBACK_WITHOUT_INFO, params);
   }
 
-  connectedSocketFds.push_back(connectedSocketFd);
+  return connectedsocketFd.release();
 }
 
 
@@ -265,7 +267,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
   const int rtcpdCallbackSocketFd, const int rtcpdInitialSocketFd)
   throw(castor::exception::Exception) {
 
-  std::list<int> connectedSocketFds;
+  SmartFdList connectedsocketFds;
   int selectRc = 0;
   int selectErrno = 0;
   fd_set readFdSet;
@@ -286,8 +288,8 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
       } else {
         maxFd = rtcpdInitialSocketFd;
       }
-      for(std::list<int>::iterator itor = connectedSocketFds.begin();
-        itor != connectedSocketFds.end(); itor++) {
+      for(std::list<int>::iterator itor = connectedsocketFds.begin();
+        itor != connectedsocketFds.end(); itor++) {
 
         FD_SET(*itor, &readFdSet);
 
@@ -339,15 +341,15 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
           // Else if there is a callback connection request from RTCPD
           } else if(FD_ISSET(rtcpdCallbackSocketFd, &readFdSet)) {
 
-            acceptRtcpdConnection(cuuid, volReqId, rtcpdCallbackSocketFd,
-              connectedSocketFds);
+            connectedsocketFds.push_back(acceptRtcpdConnection(cuuid,
+              volReqId, rtcpdCallbackSocketFd));
 
             FD_CLR(rtcpdInitialSocketFd, &readFdSet);
 
           // Else there are one or more messages from the tape/disk I/O threads
           } else {  
-            for(std::list<int>::iterator itor=connectedSocketFds.begin(); 
-                itor != connectedSocketFds.end(); itor++) {
+            for(std::list<int>::iterator itor=connectedsocketFds.begin(); 
+                itor != connectedsocketFds.end(); itor++) {
 
               if(FD_ISSET(*itor, &readFdSet)) {
 
@@ -368,14 +370,6 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
       castor::dlf::Param("Code"    , ex.code()            )};
     CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR, AGGREGATOR_MAIN_SELECT_FAILED,
       params);
-  }
-
-  // Close all connected sockets
-  for(
-    std::list<int>::iterator itor = connectedSocketFds.begin();
-    itor != connectedSocketFds.end();
-    itor++) {
-    close(*itor);
   }
 }
 
@@ -409,7 +403,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
       castor::dlf::Param("IP"      , castor::dlf::IPAddress(ip)  ),
       castor::dlf::Param("Port"    , port                        ),
       castor::dlf::Param("HostName", hostName                    ),
-      castor::dlf::Param("SocketFd", rtcpdInitialSocketFd.get()  )};
+      castor::dlf::Param("socketFd", rtcpdInitialSocketFd.get()  )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_INITIAL_RTCPD_CALLBACK_WITH_INFO, params);
   } catch(castor::exception::Exception &ex) {

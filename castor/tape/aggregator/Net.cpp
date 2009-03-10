@@ -73,7 +73,7 @@ int castor::tape::aggregator::Net::createListenerSocket(
 // acceptConnection
 //-----------------------------------------------------------------------------
 int castor::tape::aggregator::Net::acceptConnection(
-  const int listenSocketFd, const int netReadWriteTimeout)
+  const int listensocketFd, const int netReadWriteTimeout)
   throw(castor::exception::Exception) {
 
   const time_t startTime     = time(NULL);
@@ -88,12 +88,12 @@ int castor::tape::aggregator::Net::acceptConnection(
   // While a connection request has not arrived and the timeout has not expired
   while(selectAgain) {
     FD_ZERO(&fdSet);
-    FD_SET(listenSocketFd, &fdSet);
+    FD_SET(listensocketFd, &fdSet);
 
     timeout.tv_sec  = remainingTime;
     timeout.tv_usec = 0;
 
-    selectRc = select(listenSocketFd + 1, &fdSet, NULL, NULL, &timeout);
+    selectRc = select(listensocketFd + 1, &fdSet, NULL, NULL, &timeout);
     selectErrno = errno;
 
     switch(selectRc) {
@@ -128,7 +128,7 @@ int castor::tape::aggregator::Net::acceptConnection(
       break;
     default: // Select found a file descriptor awaiting attention
       // If there is a connection request
-      if(FD_ISSET(listenSocketFd, &fdSet)) {
+      if(FD_ISSET(listensocketFd, &fdSet)) {
 
         // The select loop should now finish
         selectAgain = false;
@@ -145,10 +145,10 @@ int castor::tape::aggregator::Net::acceptConnection(
   struct sockaddr_in peerAddress;
   unsigned int       peerAddressLen = sizeof(peerAddress);
 
-  const int connectedSocketFd = accept(listenSocketFd,
+  const int connectedsocketFd = accept(listensocketFd,
     (struct sockaddr *)&peerAddress, &peerAddressLen);
 
-  if(connectedSocketFd < 0) {
+  if(connectedsocketFd < 0) {
     char strerrorBuf[STRERRORBUFLEN];
     char *const errorStr = strerror_r(selectErrno, strerrorBuf,
       sizeof(strerrorBuf));
@@ -158,7 +158,7 @@ int castor::tape::aggregator::Net::acceptConnection(
       ": Accept failed: " << errorStr);
   }
 
-  return connectedSocketFd;
+  return connectedsocketFd;
 }
 
 

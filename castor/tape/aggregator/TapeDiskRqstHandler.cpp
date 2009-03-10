@@ -85,6 +85,7 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::processRequest(
 
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId"   , volReqId   ),
+      castor::dlf::Param("socketFd"   , socketFd   ),
       castor::dlf::Param("magic"      , magicHex   ),
       castor::dlf::Param("magicName"  , magicName  ),
       castor::dlf::Param("reqType"    , reqTypeHex ),
