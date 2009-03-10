@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.720 $ $Date: 2009/03/10 07:15:24 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.721 $ $Date: 2009/03/10 17:34:12 $ $Author: sponcec3 $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1497,7 +1497,7 @@ FOR EACH ROW
 WHEN (new.status = 0 )
 DECLARE reqId NUMBER;
 BEGIN
-  INSERT INTO TapeRequestState (accessMode, pid, startTime, lastVdqmPingTime, vdqmVolReqId, id, streamMigration, TapeRecall, Status) VALUES (1,null,null,null,null,ids_seq.nextval,:new.id,null,0) RETURNING id into reqId;
+  INSERT INTO TapeRequestState (accessMode, startTime, lastVdqmPingTime, vdqmVolReqId, id, streamMigration, TapeRecall, Status) VALUES (1,null,null,null,ids_seq.nextval,:new.id,null,0) RETURNING id into reqId;
   INSERT INTO id2type (id,type) VALUES (reqId,172);
 END;
 
