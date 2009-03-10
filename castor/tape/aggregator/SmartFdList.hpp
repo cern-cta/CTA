@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/SmartFd.hpp
+ *                      castor/tape/aggregator/SmartFdList.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,10 +22,12 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_SMARTFD
-#define CASTOR_TAPE_AGGREGATOR_SMARTFD
+#ifndef CASTOR_TAPE_AGGREGATOR_SMARTFDLIST
+#define CASTOR_TAPE_AGGREGATOR_SMARTFDLIST
 
 #include "castor/exception/Exception.hpp"
+
+#include <list>
 
 
 namespace castor     {
@@ -33,21 +35,13 @@ namespace tape       {
 namespace aggregator {
 
   /**
-   * A smart file descriptor that owns a basic file descriptor.  When the smart
-   * file descriptor goes out of scope, it will close the file descriptor it
-   * owns.
+   * A smart file descriptor list that owns a list of basic file descriptors.
+   * When the smart file descriptor list goes out of scope, it will close all
+   * of the file descriptor it owns.
    */
-  class SmartFd {
+  class SmartFdList: public std::list<int> {
 
   public:
-
-    /**
-     * Constructor.
-     *
-     * @param fileDescriptor The file descriptor to be owned by the smart file
-     * descriptor.
-     */
-    SmartFd(const int fileDescriptor);
 
     /**
      * Destructor.
@@ -55,38 +49,20 @@ namespace aggregator {
      * Closes the owned file descriptor if release() has not been called
      * previously.
      */
-    ~SmartFd();
+    ~SmartFdList();
 
     /**
-     * Returns the owned file descriptor.
-     *
-     * @return The owned file desccriptor.
-     */
-    int get() throw(castor::exception::Exception);
-
-    /**
-     * Releases the owned file descriptor.  After a call to this function, the
-     * descructor of the smart file descriptor will not close the now
-     * previously-owned file descriptor.
+     * Releases the specified file descriptor.  After a call to this function,
+     * the desctructor of the smart file descriptor list will not close the
+     * specified file descriptor.
      *
      * @return The released file descriptor.
      */
-    int release() throw(castor::exception::Exception);
-
-
-  private:
-
-    /**
-     * The owned file descriptor.  A value less than zero indicates release
-     * has been called and the smart file descriptor no longer owns a basic
-     * file descriptor.
-     */ 
-    int m_fileDescriptor;
-
+    int release(const int fd) throw(castor::exception::Exception);
   };
 
 } // namespace aggregator
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_SMARTFD
+#endif // CASTOR_TAPE_AGGREGATOR_SMARTFDLIST

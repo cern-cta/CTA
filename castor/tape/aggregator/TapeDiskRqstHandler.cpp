@@ -109,7 +109,7 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::processRequest(
 
 
 //-----------------------------------------------------------------------------
-// RTCP_FILE_REQ message body handler.
+// rtcpFileReqHandler
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
   const Cuuid_t &cuuid, const uint32_t volReqId,
@@ -292,7 +292,7 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
 
 
 //-----------------------------------------------------------------------------
-// RTCP_FILEERR_REQ message body handler.
+// rtcpFileErrReqHandler
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileErrReqHandler(
   const Cuuid_t &cuuid, const uint32_t volReqId,
@@ -319,7 +319,7 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileErrReqHandler(
 
 
 //-----------------------------------------------------------------------------
-// RTCP_TAPEREQ message body handler.
+// rtcpTapeReqHandler
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpTapeReqHandler(
   const Cuuid_t &cuuid, const uint32_t volReqId,
@@ -352,7 +352,7 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpTapeReqHandler(
 
 
 //-----------------------------------------------------------------------------
-// RTCP_TAPEERR message body handler.
+// rtcpTapeErrReqHandler
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpTapeErrReqHandler(
   const Cuuid_t &cuuid, const uint32_t volReqId,
@@ -379,7 +379,7 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpTapeErrReqHandler(
 
 
 //-----------------------------------------------------------------------------
-// RTCP_ENDOF_REQ message body handler.
+// rtcpEndOfReqHandler
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpEndOfReqHandler(
   const Cuuid_t &cuuid, const uint32_t volReqId,

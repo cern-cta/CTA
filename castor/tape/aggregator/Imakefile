@@ -78,6 +78,7 @@ AGGREGATORBIN_SRCS = \
   RcpJobSubmitter.cpp \
   RtcpTxRx.cpp \
   SmartFd.cpp \
+  SmartFdList.cpp \
   TapeDiskRqstHandler.cpp \
   Utils.cpp \
   VdqmRequestHandlerThread.cpp \

@@ -408,7 +408,8 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
       castor::dlf::Param("volReqId", volReqId),
       castor::dlf::Param("IP"      , castor::dlf::IPAddress(ip)  ),
       castor::dlf::Param("Port"    , port                        ),
-      castor::dlf::Param("HostName", hostName                    )};
+      castor::dlf::Param("HostName", hostName                    ),
+      castor::dlf::Param("SocketFd", rtcpdInitialSocketFd.get()  )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_INITIAL_RTCPD_CALLBACK_WITH_INFO, params);
   } catch(castor::exception::Exception &ex) {
