@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.719 $ $Date: 2009/03/09 13:50:17 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.720 $ $Date: 2009/03/10 07:15:24 $ $Author: waldron $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -902,12 +902,12 @@ CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER) AS
   dci NUMBER;
   reqType NUMBER;
   cfId NUMBER;
-  fsId NUMBER;
   fs NUMBER;
   gcw NUMBER;
   gcwProc VARCHAR(2048);
   ouid INTEGER;
   ogid INTEGER;
+  svcClassId NUMBER;
 BEGIN
   SELECT SubRequest.id, SubRequest.request, DiskCopy.id, CastorFile.id, Castorfile.FileSize
     INTO subRequestId, requestId, dci, cfId, fs
@@ -917,43 +917,32 @@ BEGIN
      AND DiskCopy.castorFile = TapeCopy.castorFile
      AND SubRequest.diskcopy(+) = DiskCopy.id
      AND DiskCopy.status = 2;  -- DISKCOPY_WAITTAPERECALL
-  -- cleanup:
   -- delete any previous failed diskcopy for this castorfile (due to failed recall attempts for instance)
   DELETE FROM Id2Type WHERE id IN (SELECT id FROM DiskCopy WHERE castorFile = cfId AND status = 4);
   DELETE FROM DiskCopy WHERE castorFile = cfId AND status = 4;  -- FAILED
-  -- mark as invalid any previous diskcopy in disabled filesystems, which may have triggered this recall
-  UPDATE DiskCopy SET status = 7  -- INVALID
-   WHERE fileSystem IN (SELECT id FROM FileSystem WHERE status = 2)  -- DISABLED
-     AND castorFile = cfId
-     AND status = 0;  -- STAGED
-
+  -- update diskcopy size and gweight
+  SELECT Request.svcClass, euid, egid INTO svcClassId, ouid, ogid
+    FROM (SELECT id, svcClass, euid, egid FROM StageGetRequest UNION ALL
+          SELECT id, svcClass, euid, egid FROM StagePrepareToGetRequest UNION ALL
+          SELECT id, svcClass, euid, egid FROM StageUpdateRequest UNION ALL
+          SELECT id, svcClass, euid, egid FROM StagePrepareToUpdateRequest UNION ALL
+          SELECT id, svcClass, euid, egid FROM StageRepackRequest) Request
+   WHERE Request.id = requestId;
+  gcwProc := castorGC.getRecallWeight(svcClassId);
+  EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:size); END;'
+    USING OUT gcw, IN fs;
+  UPDATE DiskCopy
+     SET status = 0,  -- DISKCOPY_STAGED
+         lastAccessTime = getTime(),  -- for the GC, effective lifetime of this diskcopy starts now
+         gcWeight = gcw,
+         diskCopySize = fs
+   WHERE id = dci;
+  -- determine the type of the request
   SELECT type INTO reqType FROM Id2Type WHERE id =
     (SELECT request FROM SubRequest WHERE id = subRequestId);
-  -- Repack handling:
-  -- create the tapecopies for waiting subrequests and update diskcopies
   IF reqType = 119 THEN  -- OBJ_StageRepackRequest
     startRepackMigration(subRequestId, cfId, dci, ouid, ogid);
   ELSE
-    DECLARE
-      svcClassId NUMBER;
-      gcw VARCHAR2(2048);
-    BEGIN
-      SELECT Request.svcClass, euid, egid INTO svcClassId, ouid, ogid
-        FROM (SELECT id, svcClass, euid, egid FROM StageGetRequest UNION ALL
-              SELECT id, svcClass, euid, egid FROM StagePrepareToGetRequest UNION ALL
-              SELECT id, svcClass, euid, egid FROM StageUpdateRequest UNION ALL
-              SELECT id, svcClass, euid, egid FROM StagePrepareToUpdateRequest) Request
-       WHERE Request.id = requestId;
-      gcwProc := castorGC.getRecallWeight(svcClassId);
-      EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:size); END;'
-        USING OUT gcw, IN fs;
-      UPDATE DiskCopy
-         SET status = 0,  -- DISKCOPY_STAGED
-             lastAccessTime = getTime(),  -- for the GC, effective lifetime of this diskcopy starts now
-             gcWeight = gcw,
-             diskCopySize = fs
-       WHERE id = dci;
-    END;
     -- restart this subrequest if it's not a repack one
     UPDATE SubRequest
        SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART

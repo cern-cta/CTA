@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.724 $ $Date: 2009/03/09 13:50:17 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.725 $ $Date: 2009/03/10 07:15:23 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1286,11 +1286,11 @@ CREATE OR REPLACE PROCEDURE startRepackMigration
  reuid OUT INTEGER, regid OUT INTEGER) AS
   nbTC NUMBER(2);
   nbTCInFC NUMBER(2);
-  fsId NUMBER;
+  fs NUMBER;
   svcClassId NUMBER;
 BEGIN
   UPDATE DiskCopy SET status = 6  -- DISKCOPY_STAGEOUT
-   WHERE id = dcId RETURNING fileSystem INTO fsId;
+   WHERE id = dcId RETURNING diskCopySize INTO fs;
   -- how many do we have to create ?
   SELECT count(StageRepackRequest.repackVid) INTO nbTC
     FROM SubRequest, StageRepackRequest
@@ -1306,7 +1306,6 @@ BEGIN
   IF nbTCInFC < nbTC THEN
     nbTC := nbTCInFC;
   END IF;
-
   -- update all the Repack subRequests for this file. The status REPACK
   -- stays until the migration to the new tape is over.
   UPDATE SubRequest
@@ -1314,18 +1313,16 @@ BEGIN
    WHERE SubRequest.castorFile = cfId
      AND SubRequest.status IN (3, 4, 5)  -- WAITSCHED, WAITTAPERECALL, WAITSUBREQ
      AND SubRequest.request IN
-       (SELECT id FROM StageRepackRequest);
-   
+       (SELECT id FROM StageRepackRequest);   
   -- get the service class, uid and gid
   SELECT R.svcClass, euid, egid INTO svcClassId, reuid, regid
     FROM StageRepackRequest R, SubRequest
    WHERE SubRequest.request = R.id
      AND SubRequest.id = srId;
   -- create the required number of tapecopies for the files
-  internalPutDoneFunc(cfId, fsId, 0, nbTC, svcClassId);
+  internalPutDoneFunc(cfId, fs, 0, nbTC, svcClassId);
   -- set svcClass in the CastorFile for the migration
   UPDATE CastorFile SET svcClass = svcClassId WHERE id = cfId;
-
   -- update remaining STAGED diskcopies to CANBEMIGR too
   -- we may have them as result of disk2disk copies, and so far
   -- we only dealt with dcId
