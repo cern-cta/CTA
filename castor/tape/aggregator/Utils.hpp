@@ -34,6 +34,14 @@
 #include <stdint.h>
 #include <string.h>
 
+
+/**
+ * The TAPE_THROW_EX macro throws an exception and automatically adds file,
+ * line and function strings to the message of the exception.  Example usage:
+ *
+ * TAPE_THROW_EX(castor::exception::Internal,
+ *   ": Failed to down cast reply object to tapegateway::FileToRecall");
+ */
 #define TAPE_THROW_EX(EXCEPTION, MSG) { \
   EXCEPTION _ex_;                       \
                                         \
@@ -45,6 +53,15 @@
   throw _ex_;                           \
 }
 
+
+/**
+ * The TAPE_THROW_CODE macro throws an exception and automatically adds file,
+ * line and function strings to the message of the exception.  Example usage:
+ *
+ * TAPE_THROW_CODE(EBADMSG,
+ *   ": Unknown reply type "
+ *   ": Reply type = " << reply->type());
+ */
 #define TAPE_THROW_CODE(CODE, MSG) {       \
   castor::exception::Exception _ex_(CODE); \
                                            \
@@ -55,6 +72,7 @@
     << MSG       ;                         \
   throw _ex_;                              \
 }
+
 
 namespace castor {
 namespace tape {

@@ -236,7 +236,10 @@ int castor::tape::aggregator::AggregatorDaemon::getVdqmListenPort()
       castor::exception::InvalidConfigEntry ex("TAPEAGGREGATOR", "VDQMPORT",
         configEntry);
 
-      ex.getMessage() << __FUNCTION__
+      ex.getMessage()
+        <<  "File="     << __FILE__
+        << " Line="     << __LINE__
+        << " Function=" << __FUNCTION__
         << ": Invalid configuration entry: "
         << ex.getEntryCategory() << " " << ex.getEntryName() << " "
         << ex.getEntryValue();

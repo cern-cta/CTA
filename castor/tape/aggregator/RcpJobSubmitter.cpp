@@ -32,6 +32,7 @@
 #include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
 #include "castor/tape/aggregator/RcpJobReplyMsgBody.hpp"
 #include "castor/tape/aggregator/RcpJobSubmitter.hpp"
+#include "castor/tape/aggregator/Utils.hpp"
 #include "h/net.h"
 #include "h/osdep.h"
 #include "h/rtcp_constants.h"
@@ -66,44 +67,30 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
 
   // Check the validity of the parameters of this function
   if(clientHost.length() > sizeof(request.clientHost) - 1) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __FUNCTION__
-      << ": Length of clientHost string is too large: "
-      "Maximum: " << (sizeof(request.clientHost) - 1) << " Actual: "
-      << clientHost.length();
-
-    throw ex;
+    TAPE_THROW_CODE(EINVAL,
+      ": Length of clientHost string is too large"
+      ": Maximum: " << (sizeof(request.clientHost) - 1) << 
+      ": Actual: " << clientHost.length());
   }
   if(deviceGroupName.length() > sizeof(request.deviceGroupName) - 1) {
     castor::exception::Exception ex(EINVAL);
 
-    ex.getMessage() << __FUNCTION__
-      << ": Length of deviceGroupName string is too large: "
-      "Maximum: " << (sizeof(request.deviceGroupName) - 1) << " Actual: "
-      << deviceGroupName.length();
-
-    throw ex;
+    TAPE_THROW_CODE(EINVAL,
+      ": Length of deviceGroupName string is too large"
+      ": Maximum: " << (sizeof(request.deviceGroupName) - 1) <<
+      ": Actual: " << deviceGroupName.length());
   }
   if(driveName.length() > sizeof(request.driveName) - 1) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __FUNCTION__
-      << ": Length of driveName string is too large: "
-      "Maximum: " << (sizeof(request.driveName) - 1) << " Actual: "
-      << driveName.length();
-
-    throw ex;
+    TAPE_THROW_CODE(EINVAL,
+      ": Length of driveName string is too large"
+      ": Maximum: " << (sizeof(request.driveName) - 1) <<
+      ": Actual: " << driveName.length());
   }
   if(clientUserName.length() > sizeof(request.clientUserName) - 1) {
-    castor::exception::Exception ex(EINVAL);
-
-    ex.getMessage() << __FUNCTION__
-      << ": Length of clientUserName string is too large: "
-      "Maximum: " << (sizeof(request.clientUserName) - 1) << " Actual: "
-      << clientUserName.length();
-
-    throw ex;
+    TAPE_THROW_CODE(EINVAL,
+      ": Length of clientUserName string is too large"
+      ": Maximum: " << (sizeof(request.clientUserName) - 1) <<
+      ": Actual: " << clientUserName.length());
   }
 
   // Prepare the job submission request information ready for marshalling
@@ -124,13 +111,9 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
   try {
     totalLen = Marshaller::marshallRcpJobRqstMsgBody(buf, request);
   } catch(castor::exception::Exception &ex) {
-    castor::exception::Internal ie;
-
-    ie.getMessage() << __FUNCTION__
-      << ": Failed to marshall RCP job submission request message"
-      << ": " << ex.getMessage().str();
-
-    throw ie;
+    TAPE_THROW_EX(castor::exception::Internal,
+      ": Failed to marshall RCP job submission request message"
+      ": " << ex.getMessage().str());
   }
 
   // Connect to the RTCPD or tape aggregator daemon
@@ -139,13 +122,11 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
   try {
     socket.connect();
   } catch(castor::exception::Exception &ex) {
-    castor::exception::Exception ex(ECONNABORTED);
-
-    ex.getMessage() << __FUNCTION__
-      << ": Failed to connect to " << remoteCopyType
-      << ": Host: " << host
-      << ": Port: " << port
-      << ": " << ex.getMessage().str();
+    TAPE_THROW_CODE(ECONNABORTED,
+      ": Failed to connect to " << remoteCopyType <<
+      ": Host: " << host <<
+      ": Port: " << port <<
+      ": " << ex.getMessage().str());
   }
 
   // Send the job submission request message to the RTCPD or tape aggregator
@@ -153,14 +134,10 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
   try {
     Net::writeBytes(socket.socket(), netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
-    castor::exception::Exception ex2(SECOMERR);
-
-    ex2.getMessage() << __FUNCTION__
-      << ": Failed to send the job submission request message to "
-      << remoteCopyType
-      << ": " << ex.getMessage().str();
-
-    throw ex2;
+    TAPE_THROW_CODE(SECOMERR,
+      ": Failed to send the job submission request message to " <<
+      remoteCopyType <<
+      ": " << ex.getMessage().str());
   }
 
   // Read the reply from the RTCPD or tape aggregator daemon
@@ -182,13 +159,9 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
     Net::readBytes(socket.socket(), RTCPDNETRWTIMEOUT, sizeof(headerBuf),
       headerBuf);
   } catch (castor::exception::Exception &ex) {
-    castor::exception::Exception ex2(SECOMERR);
-
-    ex2.getMessage() << __FUNCTION__
-      << "Failed to read message header from " << remoteCopyType
-      << ": " << ex.getMessage().str();
-
-    throw ex2;
+    TAPE_THROW_CODE(SECOMERR,
+      ": Failed to read message header from " << remoteCopyType <<
+      ": " << ex.getMessage().str());
   }
 
   // Unmarshall the messager header
@@ -198,40 +171,27 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
     size_t     remainingLen = sizeof(headerBuf);
     Marshaller::unmarshallMessageHeader(p, remainingLen, header);
   } catch(castor::exception::Exception &ex) {
-    castor::exception::Exception ex2(EBADMSG);
-
-    ex2.getMessage() << __FUNCTION__
-      << "Failed to unmarshall message header from " << remoteCopyType
-      << ": " << ex.getMessage().str();
-
-    throw ex2;
+    TAPE_THROW_CODE(EBADMSG,
+      ": Failed to unmarshall message header from " << remoteCopyType <<
+      ": " << ex.getMessage().str());
   }
 
   // If the magic number is invalid
   if(header.magic != RTCOPY_MAGIC && header.magic != RTCOPY_MAGIC_OLD0) {
-    castor::exception::Exception ex(EBADMSG);
-
-     ex.getMessage() << __FUNCTION__
-       << std::hex
-       << ": Invalid magic number from " << remoteCopyType
-       << ": Expected: 0x" << RTCOPY_MAGIC << " or 0x"
-       << RTCOPY_MAGIC_OLD0
-       << ": Received: 0x" << header.magic;
-
-     throw ex;
+    TAPE_THROW_CODE(EBADMSG,
+       std::hex <<
+       ": Invalid magic number from " << remoteCopyType <<
+       ": Expected: 0x" << RTCOPY_MAGIC << " or 0x" << RTCOPY_MAGIC_OLD0 <<
+       ": Received: 0x" << header.magic);
   }
 
   // If the request type is invalid
   if(header.reqType != VDQM_CLIENTINFO) {
-    castor::exception::Exception ex(EBADMSG);
-
-    ex.getMessage() << __FUNCTION__
-      << std::hex
-      << ": Invalid request type from " << remoteCopyType
-      << ": Expected: 0x" << VDQM_CLIENTINFO
-      << ": Received: 0x" << header.reqType;
-
-    throw ex;
+    TAPE_THROW_CODE(EBADMSG,
+      std::hex <<
+      ": Invalid request type from " << remoteCopyType <<
+      ": Expected: 0x" << VDQM_CLIENTINFO <<
+      ": Received: 0x" << header.reqType);
   }
 
   // If the message body is not large enough for a status number and an empty
@@ -239,15 +199,11 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
   {
     const size_t minimumLen = sizeof(uint32_t) + 1;
     if(header.len < minimumLen) {
-      castor::exception::Exception ex(EMSGSIZE);
-
-      ex.getMessage() << __FUNCTION__
-        << ": Invalid header from " << remoteCopyType
-        << ": Message body not large enough for a status number and an empty "
-           "string: Minimum size expected: " << minimumLen
-        << ": Received: " << header.len;
-
-      throw ex;
+      TAPE_THROW_CODE(EMSGSIZE,
+        ": Invalid header from " << remoteCopyType <<
+        ": Message body not large enough for a status number and an empty "
+        "string: Minimum size expected: " << minimumLen <<
+        ": Received: " << header.len);
     }
   }
 
@@ -256,27 +212,19 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
 
   // If the message body is larger than the message body buffer
   if(header.len > sizeof(bodyBuf)) {
-    castor::exception::Exception ex(EMSGSIZE);
-
-    ex.getMessage() << __FUNCTION__
-      << ": Message body from " <<  remoteCopyType << " is too large"
-         ": Maximum: " << sizeof(bodyBuf)
-      << ": Received: " << header.len;
-
-    throw ex;
+    TAPE_THROW_CODE(EMSGSIZE,
+      ": Message body from " <<  remoteCopyType << " is too large" <<
+      ": Maximum: " << sizeof(bodyBuf) <<
+      ": Received: " << header.len);
   }
 
   // Read the message body
   try {
     Net::readBytes(socket.socket(), RTCPDNETRWTIMEOUT, header.len, bodyBuf);
   } catch (castor::exception::Exception &ex) {
-    castor::exception::Exception ex2(SECOMERR);
-
-    ex2.getMessage() << __FUNCTION__
-      << ": Failed to read message body from " << remoteCopyType
-      << ": " << ex.getMessage().str();
-
-    throw ex2;
+    TAPE_THROW_CODE(SECOMERR,
+      ": Failed to read message body from " << remoteCopyType <<
+      ": " << ex.getMessage().str());
   }
 
   // Unmarshall the job submission reply
@@ -285,12 +233,8 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
     size_t     remainingLen = header.len;
     Marshaller::unmarshallRcpJobReplyMsgBody(p, remainingLen, reply);
   } catch(castor::exception::Exception &ex) {
-    castor::exception::Internal ie;
-
-    ie.getMessage() <<  __FUNCTION__
-      << ": Failed to unmarshall job submission reply: "
-      << ex.getMessage().str();
-
-    throw ie;
+    TAPE_THROW_EX(castor::exception::Internal,
+      ": Failed to unmarshall job submission reply"
+      ": " << ex.getMessage().str());
   }
 }
