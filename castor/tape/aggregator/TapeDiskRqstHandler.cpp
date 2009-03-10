@@ -68,6 +68,32 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::processRequest(
   RtcpTxRx::receiveRtcpMsgHeader(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT,
     header);
 
+  {
+    char magicHex[2 + 17]; // 0 + x + FFFFFFFFFFFFFFFF + '\0'
+    magicHex[0] = '0';
+    magicHex[1] = 'x';
+    Utils::toHex(header.magic, &(magicHex[2]), 17);
+
+    const char *magicName = Utils::magicToStr(header.magic);
+
+    char reqTypeHex[2 + 17]; // 0 + x + FFFFFFFFFFFFFFFF + '\0'
+    reqTypeHex[0] = '0';
+    reqTypeHex[1] = 'x';
+    Utils::toHex(header.reqType, &(reqTypeHex[2]), 17);
+
+    const char *reqTypeName = Utils::rtcopyReqTypeToStr(header.reqType);
+
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId"   , volReqId   ),
+      castor::dlf::Param("magic"      , magicHex   ),
+      castor::dlf::Param("magicName"  , magicName  ),
+      castor::dlf::Param("reqType"    , reqTypeHex ),
+      castor::dlf::Param("reqTypeName", reqTypeName),
+      castor::dlf::Param("len"        , header.len )};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_PROCESSING_TAPE_DISK_RQST, params);
+  }
+
   // Find the message type's corresponding handler
   MsgBodyHandlerMap::iterator itor = m_handlers.find(header.reqType);
   if(itor == m_handlers.end()) {

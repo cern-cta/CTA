@@ -92,7 +92,10 @@ public:
    * fill it with 64-bit hexadecimal string.
    *
    * @param i The unsigned 64-bit integer.
-   * @param dst The destination character array.
+   * @param dst The destination character array which should have a minimum
+   * length of 17 characters.  The largest 64-bit hexadecimal string
+   * "FFFFFFFFFFFFFFFF" would ocuppy 17 characters (17 * characters =
+   * 16 x 'F' + 1 x '\0').
    * @param dstLen The length of the destination character string.
    */
   static void toHex(const uint64_t i, char *dst, size_t dstLen)

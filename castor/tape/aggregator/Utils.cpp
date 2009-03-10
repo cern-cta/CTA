@@ -75,8 +75,6 @@ void castor::tape::aggregator::Utils::toHex(const uint64_t i, char *dst,
     }
   }
 
-std::cout << "nbDigits=" << nbDigits << std::endl;
-
   for(int d=0; d<nbDigits;d++) {
     dst[d] = backwardsHexDigits[nbDigits-1-d];
   }

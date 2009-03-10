@@ -61,3 +61,4 @@
 60,AGGREGATOR_NO_MORE_FILES_TO_RECALL,"No more files to recall"
 61,AGGREGATOR_FILE_TO_MIGRATE,"File to migrate"
 62,AGGREGATOR_FILE_TO_RECALL,"File to recall"
+63,AGGREGATOR_PROCESSING_TAPE_DISK_RQST,"Processing a tape/disk IO request from RTCPD"
