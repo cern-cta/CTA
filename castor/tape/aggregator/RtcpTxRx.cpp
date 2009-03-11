@@ -606,9 +606,12 @@ void castor::tape::aggregator::RtcpTxRx::askRtcpdToRequestMoreWork(
 
   Utils::setBytes(request, '\0');
 
+  Utils::copyString(request.recfm, "F");
+
   request.volReqId       =  volReqId;
   request.jobId          = -1;
   request.stageSubReqId  = -1;
+  request.umask          = mode == WRITE_ENABLE ? MIGRATEUMASK : RECALLUMASK;
   request.tapeFseq       =  1;
   request.diskFseq       =  1;
   request.blockSize      = -1;
@@ -617,7 +620,7 @@ void castor::tape::aggregator::RtcpTxRx::askRtcpdToRequestMoreWork(
   request.defAlloc       = -1;
   request.rtcpErrAction  = -1;
   request.tpErrAction    = -1;
-  request.convert        = -1;
+  request.convert        = ASCCONV;
   request.checkFid       = -1;
   request.concat         =  1;
   request.procStatus     =  RTCP_REQUEST_MORE_WORK;

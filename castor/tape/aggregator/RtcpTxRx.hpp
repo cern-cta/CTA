@@ -178,9 +178,9 @@ public:
    * @param request The request which will be filled with the contents of the
    * received message.
    */
-  static void receiveRtcpMsgHeader(const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
-    const int netReadWriteTimeout, MessageHeader &header)
-    throw(castor::exception::Exception);
+  static void receiveRtcpMsgHeader(const Cuuid_t &cuuid,
+    const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout,
+    MessageHeader &header) throw(castor::exception::Exception);
 
   /**
    * Receives the body of an RTCPD file request with error appendix message
@@ -195,9 +195,10 @@ public:
    * @param body The body structure which will be filled with the contents of
    * the received message body.
    */
-  static void receiveRtcpFileRqstErrBody(const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
-    const int netReadWriteTimeout, const MessageHeader &header,
-    RtcpFileRqstErrMsgBody &body) throw(castor::exception::Exception);
+  static void receiveRtcpFileRqstErrBody(const Cuuid_t &cuuid,
+    const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout,
+    const MessageHeader &header, RtcpFileRqstErrMsgBody &body)
+    throw(castor::exception::Exception);
 
   /**
    * Receives the body of an RTCPD file request without error appendix message
@@ -212,9 +213,10 @@ public:
    * @param body The body structure which will be filled with the contents of
    * the received message body.
    */
-  static void receiveRtcpFileRqstBody(const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
-    const int netReadWriteTimeout, const MessageHeader &header,
-    RtcpFileRqstMsgBody &body) throw(castor::exception::Exception);
+  static void receiveRtcpFileRqstBody(const Cuuid_t &cuuid,
+    const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout,
+    const MessageHeader &header, RtcpFileRqstMsgBody &body)
+    throw(castor::exception::Exception);
 
   /**
    * Receives the body of an RTCPD tape request with error appendix message
@@ -229,9 +231,10 @@ public:
    * @param body The body structure which will be filled with the contents of
    * the received message body.
    */
-  static void receiveRtcpTapeRqstErrBody(const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
-    const int netReadWriteTimeout, const MessageHeader &header,
-    RtcpTapeRqstErrMsgBody &body) throw(castor::exception::Exception);
+  static void receiveRtcpTapeRqstErrBody(const Cuuid_t &cuuid,
+    const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout,
+    const MessageHeader &header, RtcpTapeRqstErrMsgBody &body)
+    throw(castor::exception::Exception);
 
   /**
    * Receives the body of an RTCPD tape request without error appendix message
@@ -246,9 +249,10 @@ public:
    * @param body The body structure which will be filled with the contents of
    * the received message body.
    */
-  static void receiveRtcpTapeRqstBody(const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
-    const int netReadWriteTimeout, const MessageHeader &header,
-    RtcpTapeRqstMsgBody &body) throw(castor::exception::Exception);
+  static void receiveRtcpTapeRqstBody(const Cuuid_t &cuuid,
+    const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout,
+    const MessageHeader &header, RtcpTapeRqstMsgBody &body)
+    throw(castor::exception::Exception);
 
   /**
    * Inidcates the end of the current file list to RTCPD by sending and
@@ -260,8 +264,9 @@ public:
    * @param netReadWriteTimeout The timeout to be applied when performing
    * network read and write operations.
    */
-  static void tellRtcpdEndOfFileList(const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
-    const int netReadWriteTimeout) throw(castor::exception::Exception);
+  static void tellRtcpdEndOfFileList(const Cuuid_t &cuuid,
+    const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout)
+    throw(castor::exception::Exception);
 
   /**
    * Send an abort message to RTCPD
@@ -272,7 +277,8 @@ public:
    * @param netReadWriteTimeout The timeout to be applied when performing
    * network read and write operations.
    */
-  static void tellRtcpdToAbort(const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout)
+  static void tellRtcpdToAbort(const Cuuid_t &cuuid, const uint32_t volReqId,
+    const int socketFd, const int netReadWriteTimeout)
     throw(castor::exception::Exception);
 
 
