@@ -23,3 +23,5 @@ How to generate class diagrams from the source in this directory
    diagrams:
 
 X=TapeFsm;UMLGRAPH_JAR=/opt/UMLGraph-5.2/lib/UmlGraph.jar;TOOLS_JAR=/usr/lib/jvm/java-1.6.0-sun-1.6.0.10/lib/tools.jar; java -classpath "$UMLGRAPH_JAR:$TOOLS_JAR" org.umlgraph.doclet.UmlGraph -package $X.java ; dot -Tps graph.dot > $X.ps; gv $X.ps
+
+X=AggregatorDaemon;UMLGRAPH_JAR=/opt/UMLGraph-5.2/lib/UmlGraph.jar;TOOLS_JAR=/usr/lib/jvm/java-1.6.0-sun-1.6.0.10/lib/tools.jar; java -classpath "$UMLGRAPH_JAR:$TOOLS_JAR" org.umlgraph.doclet.UmlGraph -package $X.java ; dot -Tps graph.dot > $X.ps; gv $X.ps
