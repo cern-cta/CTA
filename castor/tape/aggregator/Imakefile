@@ -71,6 +71,7 @@ AGGREGATORBIN_SRCS = \
   AggregatorDlfMessageStrings.cpp \
   AggregatorDaemon.cpp \
   AggregatorMain.cpp \
+  BridgeProtocolEngine.cpp \
   DriveAllocationProtocolEngine.cpp \
   GatewayTxRx.cpp \
   Marshaller.cpp \
