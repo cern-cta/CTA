@@ -162,6 +162,7 @@ files = ['CastorTestSuite.py',
          'RfioTest.py',
          'RootTest.py',
          'TapeTest.py',
+         'XRootTest.py',
          'UtilityForCastorTest.py']
 for f in files:
     cmd = 'cp ../CASTOR2/test/testsuite/' + f + ' .'
