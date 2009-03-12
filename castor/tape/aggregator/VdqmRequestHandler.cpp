@@ -412,8 +412,8 @@ void castor::tape::aggregator::VdqmRequestHandler::coordinateRemoteCopy(
   }
 
   // Get the request informatiom from RTCPD
-  // The volume request ID is already known, but getting the drive unit is also
-  // returned which is good for logging
+  // The volume request ID is already known, but the drive unit is also
+  // returned
   RtcpTapeRqstErrMsgBody rtcpdRequestInfoReply;
   RtcpTxRx::getRequestInfoFromRtcpd(cuuid, volReqId, rtcpdInitialSocketFd.get(),
     RTCPDNETRWTIMEOUT, rtcpdRequestInfoReply);
@@ -448,65 +448,57 @@ void castor::tape::aggregator::VdqmRequestHandler::coordinateRemoteCopy(
   RtcpFileRqstErrMsgBody rtcpFileReply;
   Utils::setBytes(rtcpFileReply, '\0');
 
+  // Allocate some variavles on the stack for information about a possible file
+  // to migrate.  These variables will not be used in the case of a recall
+  char     migrationFilePath[CA_MAXPATHLEN+1];
+  char     migrationFileNsHost[CA_MAXHOSTNAMELEN+1];
+  uint64_t migrationFileId;
+  uint32_t migrationFileTapeFseq;
+  uint64_t migrationFileSize;
+  char     migrationFileLastKnownFileName[CA_MAXPATHLEN+1];
+  uint64_t migrationFileLastModificationTime;
+
   // If migrating
   if(rtcpVolume.mode == WRITE_ENABLE) {
-
-    char     filePath[CA_MAXPATHLEN+1];
-    char     nsHost[CA_MAXHOSTNAMELEN+1];
-    uint64_t fileId;
-    uint32_t tapeFseq;
-    uint64_t fileSize;
-    char     lastKnownFileName[CA_MAXPATHLEN+1];
-    uint64_t lastModificationTime;
 
     // Get first file to migrate from the tape gateway
     const bool thereIsAFileToMigrate =
       GatewayTxRx::getFileToMigrateFromGateway(cuuid, volReqId, gatewayHost,
-        gatewayPort, filePath, nsHost, fileId, tapeFseq, fileSize,
-        lastKnownFileName, lastModificationTime);
+        gatewayPort, migrationFilePath, migrationFileNsHost, migrationFileId,
+        migrationFileTapeFseq, migrationFileSize,
+        migrationFileLastKnownFileName, migrationFileLastModificationTime);
 
     // Return if there is no file to migrate
     if(!thereIsAFileToMigrate) {
       return;
     } 
-
-    // Give volume to RTCPD
-    rtcpVolume.err.maxTpRetry = -1;
-    rtcpVolume.err.maxCpRetry = -1;
-    RtcpTxRx::giveVolumeToRtcpd(cuuid, volReqId, rtcpdInitialSocketFd.get(),
-      RTCPDNETRWTIMEOUT, rtcpVolume); 
- 
-    // Give file to migrate to RTCPD
-    char tapeFileId[CA_MAXPATHLEN+1];
-    Utils::toHex(fileId, tapeFileId);
-    RtcpTxRx::giveFileToRtcpd(cuuid, volReqId, rtcpdInitialSocketFd.get(),
-      RTCPDNETRWTIMEOUT, WRITE_ENABLE, filePath, "", RECORDFORMAT, tapeFileId,
-      MIGRATEUMASK);
-
-    // Ask RTCPD to request more work
-    RtcpTxRx::askRtcpdToRequestMoreWork(cuuid, volReqId,
-      rtcpdInitialSocketFd.get(), RTCPDNETRWTIMEOUT, WRITE_ENABLE);
-
-    // Tell RTCPD end of file list
-    RtcpTxRx::tellRtcpdEndOfFileList(cuuid, volReqId,
-      rtcpdInitialSocketFd.get(), RTCPDNETRWTIMEOUT);
-
-  // Else recalling
-  } else {
-    // Give volume to RTCPD
-    rtcpVolume.err.maxTpRetry = -1;
-    rtcpVolume.err.maxCpRetry = -1;
-    RtcpTxRx::giveVolumeToRtcpd(cuuid, volReqId, rtcpdInitialSocketFd.get(),
-      RTCPDNETRWTIMEOUT, rtcpVolume);
-
-    // Ask RTCPD to request more work
-    RtcpTxRx::askRtcpdToRequestMoreWork(cuuid, volReqId,
-      rtcpdInitialSocketFd.get(), RTCPDNETRWTIMEOUT, WRITE_DISABLE);
-
-    // Tell RTCPD end of file list
-    RtcpTxRx::tellRtcpdEndOfFileList(cuuid, volReqId,
-      rtcpdInitialSocketFd.get(), RTCPDNETRWTIMEOUT);
   }
+
+  // Give volume to RTCPD
+  rtcpVolume.err.maxTpRetry = -1;
+  rtcpVolume.err.maxCpRetry = -1;
+  Utils::copyString(rtcpVolume.unit, rtcpdRequestInfoReply.unit);
+  RtcpTxRx::giveVolumeToRtcpd(cuuid, volReqId, rtcpdInitialSocketFd.get(),
+    RTCPDNETRWTIMEOUT, rtcpVolume);
+
+  // If migrating
+  if(rtcpVolume.mode == WRITE_ENABLE) {
+
+    // Give file to migrate to RTCPD
+    char migrationTapeFileId[CA_MAXPATHLEN+1];
+    Utils::toHex(migrationFileId, migrationTapeFileId);
+    RtcpTxRx::giveFileToRtcpd(cuuid, volReqId, rtcpdInitialSocketFd.get(),
+      RTCPDNETRWTIMEOUT, rtcpVolume.mode, migrationFilePath, "", RECORDFORMAT,
+      migrationTapeFileId, MIGRATEUMASK);
+  }
+
+  // Ask RTCPD to request more work
+  RtcpTxRx::askRtcpdToRequestMoreWork(cuuid, volReqId,
+    rtcpdInitialSocketFd.get(), RTCPDNETRWTIMEOUT, rtcpVolume.mode);
+
+  // Tell RTCPD end of file list
+  RtcpTxRx::tellRtcpdEndOfFileList(cuuid, volReqId,
+    rtcpdInitialSocketFd.get(), RTCPDNETRWTIMEOUT);
 
   processRtcpdSockets(cuuid, volReqId, gatewayHost, gatewayPort,
     rtcpVolume.mode, rtcpdCallbackSocketFd, rtcpdInitialSocketFd.get());
