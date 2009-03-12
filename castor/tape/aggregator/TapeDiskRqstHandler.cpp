@@ -373,9 +373,16 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpTapeErrReqHandler(
   ackMsg.status  = 0;
   RtcpTxRx::sendRtcpAcknowledge(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT,
     ackMsg);
-
+/*
   TAPE_THROW_CODE(body.err.errorCode,
     ": Received an error from RTCPD: " << body.err.errorMsg);
+*/
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("MSG", "RTCPTAPEERRREQHANDLER")};
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+    AGGREGATOR_NULL, params);
+  // There is a possibility of more work
+  return true;
 }
 
 

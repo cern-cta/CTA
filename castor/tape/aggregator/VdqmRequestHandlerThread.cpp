@@ -310,6 +310,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
         RtcpTxRx::pingRtcpd(cuuid, volReqId, rtcpdInitialSocketFd,
           RTCPDNETRWTIMEOUT);
         castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, AGGREGATOR_PINGED_RTCPD);
+
         break;
 
       case -1: // Select encountered an error
@@ -324,6 +325,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::
             ": Select encountered an error other than an interruption"
             ": " << errorStr);
         }
+	
         break;
 
       default: // One or more select file descriptors require attention
@@ -412,7 +414,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
   }
 
   // Get the request informatiom from RTCPD
-  // The volume request ID is already known, but getting the drive unit is also
+  // The volume request ID is already known, but the drive unit is also
   // returned which is good for logging
   RtcpTapeRqstErrMsgBody rtcpdRequestInfoReply;
   RtcpTxRx::getRequestInfoFromRtcpd(cuuid, volReqId, rtcpdInitialSocketFd.get(),
@@ -473,6 +475,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
     // Give volume to RTCPD
     rtcpVolume.err.maxTpRetry = -1;
     rtcpVolume.err.maxCpRetry = -1;
+    Utils::copyString(rtcpVolume.unit, rtcpdRequestInfoReply.unit);
     RtcpTxRx::giveVolumeToRtcpd(cuuid, volReqId, rtcpdInitialSocketFd.get(),
       RTCPDNETRWTIMEOUT, rtcpVolume); 
  
@@ -496,6 +499,7 @@ void castor::tape::aggregator::VdqmRequestHandlerThread::coordinateRemoteCopy(
     // Give volume to RTCPD
     rtcpVolume.err.maxTpRetry = -1;
     rtcpVolume.err.maxCpRetry = -1;
+    Utils::copyString(rtcpVolume.unit, rtcpdRequestInfoReply.unit);
     RtcpTxRx::giveVolumeToRtcpd(cuuid, volReqId, rtcpdInitialSocketFd.get(),
       RTCPDNETRWTIMEOUT, rtcpVolume);
 

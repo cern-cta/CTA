@@ -50,8 +50,9 @@
 // getRequestInfoFromRtcpd
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::getRequestInfoFromRtcpd(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout,
-  RtcpTapeRqstErrMsgBody &reply) throw(castor::exception::Exception) {
+  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, 
+  const int netReadWriteTimeout, RtcpTapeRqstErrMsgBody &reply) 
+  throw(castor::exception::Exception) {
 
  {
     castor::dlf::Param params[] = {
@@ -120,7 +121,8 @@ void castor::tape::aggregator::RtcpTxRx::getRequestInfoFromRtcpd(
 
   // Send acknowledge to RTCPD
   try {
-    sendRtcpAcknowledge(cuuid, volReqId, socketFd, netReadWriteTimeout, ackMsg);
+    sendRtcpAcknowledge(cuuid, volReqId, socketFd, netReadWriteTimeout, 
+      ackMsg);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EPROTO,
       ": Failed to send acknowledge to RTCPD"
@@ -140,16 +142,18 @@ void castor::tape::aggregator::RtcpTxRx::getRequestInfoFromRtcpd(
 // giveVolumeToRtcpd
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::giveVolumeToRtcpd(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout,
-  RtcpTapeRqstErrMsgBody &request) throw(castor::exception::Exception) {
+  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, 
+  const int netReadWriteTimeout, RtcpTapeRqstErrMsgBody &request) 
+  throw(castor::exception::Exception) {
 
  {
       castor::dlf::Param params[] = {
-        castor::dlf::Param("volReqId", volReqId         ),
+        castor::dlf::Param("volReqId", volReqId      ),
         castor::dlf::Param("vid"    , request.vid    ),
         castor::dlf::Param("mode"   , request.mode   ),
         castor::dlf::Param("label"  , request.label  ),
-        castor::dlf::Param("density", request.density)};
+        castor::dlf::Param("density", request.density),
+        castor::dlf::Param("unit"   , request.unit   )};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
         AGGREGATOR_GIVE_VOLUME_TO_RTCPD, params);
   }
@@ -199,7 +203,8 @@ void castor::tape::aggregator::RtcpTxRx::giveVolumeToRtcpd(
       castor::dlf::Param("vid"    , request.vid    ),
       castor::dlf::Param("mode"   , request.mode   ),
       castor::dlf::Param("label"  , request.label  ),
-      castor::dlf::Param("density", request.density)};
+      castor::dlf::Param("density", request.density),
+      castor::dlf::Param("unit"   , request.unit   )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_GAVE_VOLUME_TO_RTCPD, params);
   }
@@ -316,8 +321,9 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpAcknowledge(
 // sendRtcpAcknowledge
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::sendRtcpAcknowledge(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout,
-  const RtcpAcknowledgeMsg &message) throw(castor::exception::Exception) {
+  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, 
+  const int netReadWriteTimeout, const RtcpAcknowledgeMsg &message) 
+  throw(castor::exception::Exception) {
 
   char buf[MSGBUFSIZ];
   size_t totalLen = 0;
@@ -378,8 +384,8 @@ void castor::tape::aggregator::RtcpTxRx::pingRtcpd(const Cuuid_t &cuuid,
 // tellRtcpdEndOfFileList
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::tellRtcpdEndOfFileList(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout)
-  throw(castor::exception::Exception) {
+  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, 
+  const int netReadWriteTimeout) throw(castor::exception::Exception) {
 
   {
       castor::dlf::Param params[] = {
