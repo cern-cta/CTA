@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.22 $ $Release$ $Date: 2009/02/13 13:40:00 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.23 $ $Release$ $Date: 2009/03/12 07:12:54 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -17,6 +17,10 @@ CREATE SEQUENCE ids_seq CACHE 300;
 /* SQL statements for object types */
 CREATE TABLE Id2Type (id INTEGER CONSTRAINT PK_Id2Type_Id PRIMARY KEY, type NUMBER);
 CREATE INDEX I_Id2Type_TypeId ON Id2Type (type, id);
+
+CREATE INDEX I_RepackSegment_FileId ON RepackSegment (fileId);
+CREATE INDEX I_RepackSeg_RepackSubReq ON RepackSegment (repackSubRequest);
+CREATE INDEX I_RepackSubRequest_Status ON RepackSubRequest (status);
 
 /* Get current time as a time_t. Not that easy in ORACLE */
 CREATE OR REPLACE FUNCTION getTime RETURN NUMBER IS
