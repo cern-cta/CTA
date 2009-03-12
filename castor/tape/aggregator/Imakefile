@@ -75,7 +75,9 @@ AGGREGATORBIN_SRCS = \
   GatewayTxRx.cpp \
   Marshaller.cpp \
   Net.cpp \
+  Packer.cpp \
   RcpJobSubmitter.cpp \
+  RecallProtocolEngine.cpp \
   RtcpTxRx.cpp \
   SmartFd.cpp \
   SmartFdList.cpp \
