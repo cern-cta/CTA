@@ -108,7 +108,8 @@ void castor::tape::aggregator::Utils::copyString(char *const dst,
 //-----------------------------------------------------------------------------
 // magicToStr
 //-----------------------------------------------------------------------------
-const char *castor::tape::aggregator::Utils::magicToStr(const uint32_t magic) {
+const char *castor::tape::aggregator::Utils::magicToStr(const uint32_t magic)
+  throw() {
   switch(magic) {
   case RTCOPY_MAGIC_VERYOLD: return "RTCOPY_MAGIC_VERYOLD";
   case RTCOPY_MAGIC_SHIFT  : return "RTCOPY_MAGIC_SHIFT";
@@ -124,7 +125,7 @@ const char *castor::tape::aggregator::Utils::magicToStr(const uint32_t magic) {
 // rtcopyReqTypeToStr
 //-----------------------------------------------------------------------------
 const char *castor::tape::aggregator::Utils::rtcopyReqTypeToStr(
-  const uint32_t reqType) {
+  const uint32_t reqType) throw() {
   switch(reqType) {
   case RTCP_TAPE_REQ     : return "RTCP_TAPE_REQ";
   case RTCP_FILE_REQ     : return "RTCP_FILE_REQ";
@@ -148,7 +149,7 @@ const char *castor::tape::aggregator::Utils::rtcopyReqTypeToStr(
 // procStatusToStr
 //-----------------------------------------------------------------------------
 const char *castor::tape::aggregator::Utils::procStatusToStr(
-  const uint32_t procStatus) {
+  const uint32_t procStatus) throw() {
   switch(procStatus) {
   case RTCP_WAITING           : return "RTCP_WAITING";
   case RTCP_POSITIONED        : return "RTCP_POSITIONED";
@@ -159,4 +160,26 @@ const char *castor::tape::aggregator::Utils::procStatusToStr(
   case RTCP_REQUEST_MORE_WORK : return "RTCP_REQUEST_MORE_WORK";
   default                     : return "UNKNOWN";
   }
+}
+
+
+//------------------------------------------------------------------------------
+// isValidUInt
+//------------------------------------------------------------------------------
+bool castor::tape::aggregator::Utils::isValidUInt(const char *str)
+  throw() {
+  // An empty string is not a valid unsigned integer
+  if(*str == '\0') {
+    return false;
+  }
+
+  // For each character in the string
+  for(;*str != '\0'; str++) {
+    // If the current character is not a valid numerical digit
+    if(*str < '0' || *str > '9') {
+      return false;
+    }
+  }
+
+  return true;
 }

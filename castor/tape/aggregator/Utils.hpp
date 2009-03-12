@@ -122,7 +122,7 @@ public:
    * @param object The object whose bytes are to be set.
    * @param c The value to set each byte of object.
    */
-  template<typename T> static void setBytes(T &object, const int c) {
+  template<typename T> static void setBytes(T &object, const int c) throw() {
     memset(&object, c, sizeof(object));
   }
 
@@ -156,7 +156,7 @@ public:
    *
    * @param magic The magic number.
    */
-  static const char *magicToStr(const uint32_t magic);
+  static const char *magicToStr(const uint32_t magic) throw();
 
   /**
    * Returns the string representation of the specified RTCOPY_MAGIC request
@@ -164,7 +164,7 @@ public:
    *
    * @param reqType The RTCP request type.
    */
-  static const char *rtcopyReqTypeToStr(const uint32_t reqType);
+  static const char *rtcopyReqTypeToStr(const uint32_t reqType) throw();
 
   /**
    * Returns the string representation of the specified file request status
@@ -172,7 +172,15 @@ public:
    *
    * @param reqType The file request status code.
    */
-  static const char *procStatusToStr(const uint32_t procStatus);
+  static const char *procStatusToStr(const uint32_t procStatus) throw();
+
+  /**
+   * Checks if the specified string is a valid unsigned integer.
+   *
+   * @param str The string to be checked.
+   * @returns true if the string is a valid unsigned integer, else false.
+   */
+  static bool isValidUInt(const char *str) throw();
 
 private:
 
