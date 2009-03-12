@@ -37,7 +37,7 @@ public void run();
 /**
  * @opt operations
  */
-class Unpacker {
+class Recaller {
 public void run();
 }
 
@@ -47,7 +47,7 @@ public void run();
  * @composed 1 - 1 DriveAllocationProtocolEngine
  * @composed 1 - 1 BridgeProtocolEngine
  * @composed 1 - 1 Packer
- * @composed 1 - 1 UnPacker
+ * @composed 1 - 1 Recaller
  */
 class AggregatorDaemon extends BaseDaemon {
 }
