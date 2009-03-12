@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.21 $ $Release$ $Date: 2009/02/27 13:13:21 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.22 $ $Release$ $Date: 2009/03/12 16:47:13 $ $Author: szamsu $
 #
 # Make Castor RH library
 #
@@ -32,7 +32,7 @@ GLOBUS_FLAVOUR=GlobusFlavour##pthr
 GLOBUS_FLAVOUR=GlobusFlavour/**/pthr
 #endif
 LOBUS_LIBS=-L$(GLOBUS_LOCATION)/lib
-LIB_CRYPTO=$(shell if [ -r "$(GLOBUS_LOCATION)/lib/libcrypto_$(GLOBUS_FLAVOUR)" ]; then echo -lcrypto_$(GLOBUS_FLAVOUR); else echo -lcrypto; fi)
+LIB_CRYPTO=$(shell if [ -r "$(GLOBUS_LOCATION)/lib/libcrypto_$(GLOBUS_FLAVOUR).so" ]; then echo -lcrypto_$(GLOBUS_FLAVOUR); else echo -lcrypto; fi)
 LIBCSEC += $(GLOBUS_LIBS) $(LIB_CRYPTO)
 #endif
 
