@@ -182,6 +182,7 @@ public:
    */
   static bool isValidUInt(const char *str) throw();
 
+
 private:
 
   /**

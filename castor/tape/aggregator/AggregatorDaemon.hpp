@@ -81,10 +81,10 @@ public:
   static void usage(std::ostream &os) throw();
 
   /**
-   * Returns the port on which the server will listen for connections from the
-   * VDQM.
+   * Creates the VDQM request handler thread pool.
    */
-   int getVdqmListenPort() throw(castor::exception::InvalidConfigEntry);
+  void createVdqmRequestHandlerThreadPool()
+    throw (castor::exception::Exception);
 
 
 private:
@@ -95,12 +95,10 @@ private:
   static castor::dlf::Message s_dlfMessages[];
 
   /**
-   * Checks if the specified string is a valid unsigned integer.
-   *
-   * @param str The string to be checked.
-   * @returns true if the string is a valid unsigned integer, else false.
+   * Returns the port on which the server will listen for connections from the
+   * VDQM.
    */
-  static bool isAValidUInt(const char *str) throw();
+  int getVdqmListenPort() throw(castor::exception::InvalidConfigEntry);
 
 }; // class AggregatorDaemon
 

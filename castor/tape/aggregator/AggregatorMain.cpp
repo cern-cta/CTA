@@ -38,17 +38,6 @@
 //------------------------------------------------------------------------------
 int main(int argc, char *argv[]) {
 
-  // TEST OF FSM - DEBUGGING ONLY - TO BE REMOVED ASAP
-//Cuuid_t cuuid = nullCuuid;
-//Cuuid_create(&cuuid);
-//castor::tape::aggregator::DriveAllocationProtocolEngine engine(cuuid, 0, 0);
-//try {
-//  engine.testFsm();
-//} catch(castor::exception::Exception &e) {
-//  std::cout << "testFsm raised an exception: " << e.getMessage().str()
-//    << std::endl;
-//}
-
   try {
     castor::tape::aggregator::AggregatorDaemon daemon;
 
@@ -84,23 +73,7 @@ int main(int argc, char *argv[]) {
     // Create the VdqmRequestHandlerThreadPool
     //----------------------------------------
 
-    const int vdqmListenPort  = daemon.getVdqmListenPort();
-
-    daemon.addThreadPool(
-    new castor::server::TCPListenerThreadPool("VdqmRequestHandlerThreadPool",
-      new castor::tape::aggregator::VdqmRequestHandlerThread(),
-        vdqmListenPort));
-
-    {
-      castor::server::BaseThreadPool *const vdqmRequestHandlerThreadPool =
-        daemon.getThreadPool('V');
-
-      if(vdqmRequestHandlerThreadPool == NULL) {
-        TAPE_THROW_EX(castor::exception::Internal,
-          ": Failed to get VdqmRequestHandlerThreadPool");
-      }
-      vdqmRequestHandlerThreadPool->setNbThreads(0);
-    }
+    daemon.createVdqmRequestHandlerThreadPool();
 
 
     //------------------

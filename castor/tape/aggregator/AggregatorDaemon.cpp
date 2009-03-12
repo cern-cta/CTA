@@ -26,9 +26,11 @@
 #include "castor/PortNumbers.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
+#include "castor/server/TCPListenerThreadPool.hpp"
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/AggregatorDaemon.hpp"
 #include "castor/tape/aggregator/Utils.hpp"
+#include "castor/tape/aggregator/VdqmRequestHandlerThread.hpp"
 #include "h/Cgetopt.h"
 #include "h/common.h"
 
@@ -230,7 +232,7 @@ int castor::tape::aggregator::AggregatorDaemon::getVdqmListenPort()
   const char *const configEntry = getconfent("TAPEAGGREGATOR", "VDQMPORT", 0);
 
   if(configEntry != NULL) {
-    if(isAValidUInt(configEntry)) {
+    if(Utils::isValidUInt(configEntry)) {
       port = atoi(configEntry);
     } else {
       castor::exception::InvalidConfigEntry ex("TAPEAGGREGATOR", "VDQMPORT",
@@ -253,22 +255,25 @@ int castor::tape::aggregator::AggregatorDaemon::getVdqmListenPort()
 
 
 //------------------------------------------------------------------------------
-// isAValidUInt
+// createVdqmRequestHandlerThreadPool
 //------------------------------------------------------------------------------
-bool castor::tape::aggregator::AggregatorDaemon::isAValidUInt(const char *str)
-  throw() {
-  // An empty string is not a valid unsigned integer
-  if(*str == '\0') {
-    return false;
+void castor::tape::aggregator::AggregatorDaemon::
+  createVdqmRequestHandlerThreadPool() throw(castor::exception::Exception) {
+
+  const int vdqmListenPort = getVdqmListenPort();
+
+  addThreadPool(
+    new castor::server::TCPListenerThreadPool("VdqmRequestHandlerThreadPool",
+      new castor::tape::aggregator::VdqmRequestHandlerThread(),
+        vdqmListenPort));
+
+  castor::server::BaseThreadPool *const vdqmRequestHandlerThreadPool =
+    getThreadPool('V');
+
+  if(vdqmRequestHandlerThreadPool == NULL) {
+    TAPE_THROW_EX(castor::exception::Internal,
+     ": Failed to get VdqmRequestHandlerThreadPool");
   }
 
-  // For each character in the string
-  for(;*str != '\0'; str++) {
-    // If the current character is not a valid numerical digit
-    if(*str < '0' || *str > '9') {
-      return false;
-    }
-  }
-
-  return true;
+  vdqmRequestHandlerThreadPool->setNbThreads(0);
 }
