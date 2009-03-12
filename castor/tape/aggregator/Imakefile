@@ -81,7 +81,7 @@ AGGREGATORBIN_SRCS = \
   SmartFdList.cpp \
   TapeDiskRqstHandler.cpp \
   Utils.cpp \
-  VdqmRequestHandlerThread.cpp \
+  VdqmRequestHandler.cpp \
   $(TAPEGATEWAY_MESSAGES_SRCS) \
   $(TAPEGATEWAY_IO_SRCS)
 AGGREGATORBIN_OBJS = $(AGGREGATORBIN_SRCS:.cpp=.Osuf)

@@ -33,7 +33,7 @@ castor::dlf::Message castor::tape::aggregator::AggregatorDaemon::s_dlfMessages[]
 {AGGREGATOR_STARTED, "aggregatord started"},
 {AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, "Failed to parse the command line"},
 {AGGREGATOR_FAILED_TO_INIT_DB_SERVICE, "Failed to initialise database service"},
-{AGGREGATOR_VDQM_REQUEST_HANDLER_SOCKET_IS_NULL, "The VdqmRequestHandlerThread has been passed a NULL socket pointer"},
+{AGGREGATOR_VDQM_REQUEST_HANDLER_SOCKET_IS_NULL, "The VdqmRequestHandler has been passed a NULL socket pointer"},
 {AGGREGATOR_VDQM_CONNECTION_WITH_INFO, "Received a connection from VDQM"},
 {AGGREGATOR_VDQM_CONNECTION_WITHOUT_INFO, "Received a connection from VDQM without peer information"},
 {AGGREGATOR_HANDLE_VDQM_REQUEST_EXCEPT, "Exception raised when handling a request from the VDQM"},

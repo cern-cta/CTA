@@ -30,7 +30,7 @@
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/AggregatorDaemon.hpp"
 #include "castor/tape/aggregator/Utils.hpp"
-#include "castor/tape/aggregator/VdqmRequestHandlerThread.hpp"
+#include "castor/tape/aggregator/VdqmRequestHandler.hpp"
 #include "h/Cgetopt.h"
 #include "h/common.h"
 
@@ -255,16 +255,16 @@ int castor::tape::aggregator::AggregatorDaemon::getVdqmListenPort()
 
 
 //------------------------------------------------------------------------------
-// createVdqmRequestHandlerThreadPool
+// createVdqmRequestHandlerPool
 //------------------------------------------------------------------------------
 void castor::tape::aggregator::AggregatorDaemon::
-  createVdqmRequestHandlerThreadPool() throw(castor::exception::Exception) {
+  createVdqmRequestHandlerPool() throw(castor::exception::Exception) {
 
   const int vdqmListenPort = getVdqmListenPort();
 
   addThreadPool(
-    new castor::server::TCPListenerThreadPool("VdqmRequestHandlerThreadPool",
-      new castor::tape::aggregator::VdqmRequestHandlerThread(),
+    new castor::server::TCPListenerThreadPool("VdqmRequestHandlerPool",
+      new castor::tape::aggregator::VdqmRequestHandler(),
         vdqmListenPort));
 
   castor::server::BaseThreadPool *const vdqmRequestHandlerThreadPool =
@@ -272,7 +272,7 @@ void castor::tape::aggregator::AggregatorDaemon::
 
   if(vdqmRequestHandlerThreadPool == NULL) {
     TAPE_THROW_EX(castor::exception::Internal,
-     ": Failed to get VdqmRequestHandlerThreadPool");
+     ": Failed to get VdqmRequestHandlerPool");
   }
 
   vdqmRequestHandlerThreadPool->setNbThreads(0);

@@ -30,7 +30,7 @@
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/DriveAllocationProtocolEngine.hpp"
 #include "castor/tape/aggregator/Utils.hpp"
-#include "castor/tape/aggregator/VdqmRequestHandlerThread.hpp"
+#include "castor/tape/aggregator/VdqmRequestHandler.hpp"
 
 
 //------------------------------------------------------------------------------
@@ -41,6 +41,9 @@ int main(int argc, char *argv[]) {
   try {
     castor::tape::aggregator::AggregatorDaemon daemon;
 
+    //-------------------------
+    // Start the daemon logging
+    //-------------------------
 
     daemon.logStart(argc, argv);
 
@@ -70,10 +73,10 @@ int main(int argc, char *argv[]) {
 
 
     //----------------------------------------
-    // Create the VdqmRequestHandlerThreadPool
+    // Create the VdqmRequestHandlerPool
     //----------------------------------------
 
-    daemon.createVdqmRequestHandlerThreadPool();
+    daemon.createVdqmRequestHandlerPool();
 
 
     //------------------

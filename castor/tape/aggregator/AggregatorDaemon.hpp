@@ -83,7 +83,7 @@ public:
   /**
    * Creates the VDQM request handler thread pool.
    */
-  void createVdqmRequestHandlerThreadPool()
+  void createVdqmRequestHandlerPool()
     throw (castor::exception::Exception);
 
 
