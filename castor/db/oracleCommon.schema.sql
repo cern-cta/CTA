@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.schema.sql,v $ $Revision: 1.8 $ $Date: 2009/03/05 15:33:32 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.schema.sql,v $ $Revision: 1.9 $ $Date: 2009/03/12 07:12:25 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically.
  *
@@ -143,7 +143,7 @@ CREATE INDEX I_StagePutRequest_ReqId ON StagePutRequest (reqId);
 CREATE INDEX I_StageRepackRequest_ReqId ON StageRepackRequest (reqId);
 
 /* A primary key index for better scan of Stream2TapeCopy */
-CREATE UNIQUE INDEX I_PK_Stream2TapeCopy ON Stream2TapeCopy (parent, child);
+CREATE UNIQUE INDEX I_Stream2TapeCopy_PC ON Stream2TapeCopy (parent, child);
 
 CREATE INDEX I_GCFile_Request ON GCFile (request);
 
@@ -434,7 +434,7 @@ ADD CONSTRAINT PK_Accounting_EuidFs PRIMARY KEY (euid, fileSystem);
  * Few notes :
  *   diskCopyStatus can be STAGED(0) or CANBEMIGR(10)
  */
-CREATE TABLE GcPolicy (name VARCHAR2(2048) CONSTRAINT PK_GcPolicy_name PRIMARY KEY,
+CREATE TABLE GcPolicy (name VARCHAR2(2048) CONSTRAINT NN_GcPolicy_Name NOT NULL CONSTRAINT PK_GcPolicy_Name PRIMARY KEY,
                        userWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_UserWeight NOT NULL,
                        recallWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_RecallWeight NOT NULL,
                        copyWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_CopyWeight NOT NULL,

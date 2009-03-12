@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.721 $ $Date: 2009/03/10 17:34:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.722 $ $Date: 2009/03/12 07:12:03 $ $Author: waldron $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -447,7 +447,7 @@ BEGIN
         SELECT P.path, P.diskcopy_id, P.castorfile,
              C.fileId, C.nsHost, C.fileSize, P.id, C.lastUpdateTime
         INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
-        FROM (SELECT /*+ ORDERED USE_NL(D T) INDEX(T I_TapeCopy_CF_Status_2) INDEX(ST I_PK_Stream2TapeCopy) */
+        FROM (SELECT /*+ ORDERED USE_NL(D T) INDEX(T I_TapeCopy_CF_Status_2) INDEX(ST I_Stream2TapeCopy_PC) */
               D.path, D.diskcopy_id, D.castorfile, T.id
                 FROM (SELECT /*+ INDEX(DK I_DiskCopy_FS_Status_10) */
                              DK.path path, DK.id diskcopy_id, DK.castorfile
@@ -539,7 +539,7 @@ BEGIN
     SELECT P.path, P.diskcopy_id, P.castorfile,
            C.fileId, C.nsHost, C.fileSize, P.id, C.lastUpdateTime
       INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
-      FROM (SELECT /*+ ORDERED USE_NL(D T) INDEX(T I_TapeCopy_CF_Status_2) INDEX(ST I_PK_Stream2TapeCopy) */
+      FROM (SELECT /*+ ORDERED USE_NL(D T) INDEX(T I_TapeCopy_CF_Status_2) INDEX(ST I_Stream2TapeCopy_PC) */
             D.path, D.diskcopy_id, D.castorfile, T.id
               FROM (SELECT /*+ INDEX(DK I_DiskCopy_FS_Status_10) */
                            DK.path path, DK.id diskcopy_id, DK.castorfile
