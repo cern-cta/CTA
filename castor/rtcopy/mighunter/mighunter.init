@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: mighunter.init,v $ $Revision: 1.11 $ $Release$ $Date: 2009/02/12 11:00:29 $ $Author: waldron $
+# @(#)$RCSfile: mighunter.init,v $ $Revision: 1.12 $ $Release$ $Date: 2009/03/12 07:10:31 $ $Author: waldron $
 #
 # chkconfig: 345 73 32
 # description: MigHunterDaemon Initialisation Script
@@ -81,7 +81,7 @@ start() {
                         unset IFS
                         echo -n $"  For svcclasses: "
                         if [ `echo $i | wc -m` -gt 35 ]; then
-                                echo -n "`$i | cut -c1-35`..."
+                                echo -n "`echo $i | cut -c1-35`..."
                         else
                                 echo -n "$i"
                         fi
