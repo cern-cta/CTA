@@ -23,6 +23,7 @@
  *****************************************************************************/
 
 #include "castor/Constants.hpp"
+#include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
@@ -518,9 +519,12 @@ void castor::tape::aggregator::RtcpTxRx::tellRtcpdToAbort(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 // receiveRcpJobRqst
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::RtcpTxRx::receiveRcpJobRqst(const int socketFd,
-  const int netReadWriteTimeout, RcpJobRqstMsgBody &request)
-  throw(castor::exception::Exception) {
+void castor::tape::aggregator::RtcpTxRx::receiveRcpJobRqst(const Cuuid_t &cuuid,
+  const int socketFd, const int netReadWriteTimeout,
+  RcpJobRqstMsgBody &request) throw(castor::exception::Exception) {
+
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+    AGGREGATOR_RECEIVE_RCP_JOB_RQST);
 
   // Read in the message header
   char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
@@ -589,6 +593,20 @@ void castor::tape::aggregator::RtcpTxRx::receiveRcpJobRqst(const int socketFd,
     TAPE_THROW_EX(castor::exception::Internal,
          ": Failed to unmarshall message body from RCP job submitter"
       << ": "<< ex.getMessage().str());
+  }
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId"       , request.tapeRequestId  ),
+      castor::dlf::Param("clientPort"     , request.clientPort     ),
+      castor::dlf::Param("clientEuid"     , request.clientEuid     ),
+      castor::dlf::Param("clientEgid"     , request.clientEgid     ),
+      castor::dlf::Param("clientHost"     , request.clientHost     ),
+      castor::dlf::Param("deviceGroupName", request.deviceGroupName),
+      castor::dlf::Param("driveName"      , request.driveName      ),
+      castor::dlf::Param("clientUserName" , request.clientUserName )};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_RECEIVED_RCP_JOB_RQST, params);
   }
 }
 

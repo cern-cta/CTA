@@ -33,8 +33,42 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::aggregator::SmartFd::SmartFd(const int fileDescriptor) :
-  m_fileDescriptor(fileDescriptor) {
+castor::tape::aggregator::SmartFd::SmartFd() :
+  m_fd(-1) {
+}
+
+
+//-----------------------------------------------------------------------------
+// constructor
+//-----------------------------------------------------------------------------
+castor::tape::aggregator::SmartFd::SmartFd(const int fd) :
+  m_fd(fd) {
+}
+
+
+//-----------------------------------------------------------------------------
+// reset
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::SmartFd::reset(const int fd = -1) throw() {
+  if(fd != m_fd) {
+    if(m_fd != -1) {
+      close(m_fd);
+    }
+
+    m_fd = fd;
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// SmartFd assignment operator
+//-----------------------------------------------------------------------------
+castor::tape::aggregator::SmartFd
+  &castor::tape::aggregator::SmartFd::operator=(SmartFd& obj) throw() {
+  
+  reset(obj.release());
+
+  return *this;
 }
 
 
@@ -44,10 +78,9 @@ castor::tape::aggregator::SmartFd::SmartFd(const int fileDescriptor) :
 castor::tape::aggregator::SmartFd::~SmartFd() {
 
   // If the smart file descriptor still owns a basic file descriptor
-  if(m_fileDescriptor >= 0) {
-    close(m_fileDescriptor);
+  if(m_fd >= 0) {
+    close(m_fd);
   }
-
 }
 
 
@@ -58,12 +91,12 @@ int castor::tape::aggregator::SmartFd::get()
   throw(castor::exception::Exception) {
 
   // If the smart file descriptor does not own a basic file descriptor
-  if(m_fileDescriptor < 0) {
+  if(m_fd < 0) {
     TAPE_THROW_CODE(EPERM,
       ": Smart file descriptor does not own a basic file descriptor");
   }
 
-  return m_fileDescriptor;
+  return m_fd;
 }
 
 
@@ -74,15 +107,15 @@ int castor::tape::aggregator::SmartFd::release()
   throw(castor::exception::Exception) {
 
   // If the smart file descriptor does not own a basic file descriptor
-  if(m_fileDescriptor < 0) {
+  if(m_fd < 0) {
     TAPE_THROW_CODE(EPERM,
       ": Smart file descriptor does not own a basic file descriptor");
   }
 
 
-  const int tmpFileDescriptor = m_fileDescriptor;
+  const int tmpFileDescriptor = m_fd;
 
-  m_fileDescriptor = -1;
+  m_fd = -1;
 
   return tmpFileDescriptor;
 }

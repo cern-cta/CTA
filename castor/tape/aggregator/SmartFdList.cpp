@@ -43,11 +43,33 @@ castor::tape::aggregator::SmartFdList::~SmartFdList() {
 
 
 //-----------------------------------------------------------------------------
+// push_back
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::SmartFdList::push_back(const int &fd)
+  throw(castor::exception::Exception) {
+
+  // Search the list for the file descriptor
+  SmartFdList::iterator itor = std::find(begin(), end(), fd);
+
+  // If the  file descriptor is already in the list, then throw an exception
+  if(itor != end()) {
+    TAPE_THROW_CODE(EINVAL,
+      ": File descriptor is already in the list"
+      ": fd=" << fd);
+  }
+
+  // Append a copy of the file descriptor to the end of the list
+  std::list<int>::push_back(fd);
+}
+
+
+//-----------------------------------------------------------------------------
 // release
 //-----------------------------------------------------------------------------
 int castor::tape::aggregator::SmartFdList::release(const int fd)
   throw(castor::exception::Exception) {
 
+  // Search the list for the file descriptor
   SmartFdList::iterator itor = std::find(begin(), end(), fd);
 
   // If the smart file descriptor list does not own the file descriptor

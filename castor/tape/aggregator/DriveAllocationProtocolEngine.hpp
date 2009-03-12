@@ -25,8 +25,13 @@
 #ifndef CASTOR_TAPE_AGGREGATOR_DRIVEALLOCARIONPROTOCOLENGINE
 #define CASTOR_TAPE_AGGREGATOR_DRIVEALLOCARIONPROTOCOLENGINE
 
+#include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/io/AbstractTCPSocket.hpp"
+#include "castor/tape/aggregator/SmartFd.hpp"
 #include "castor/tape/fsm/StateMachine.hpp"
+#include "h/Castor_limits.h"
+#include "h/common.h"
 #include "h/Cuuid.h"
 
 
@@ -34,61 +39,69 @@ namespace castor     {
 namespace tape       {
 namespace aggregator {
 
+/**
+ * Class responsible for the vdqm/aggregator/rtpcd/aggregator protocol when
+ * a free drive is allocated to tape mount request.
+ */
+class DriveAllocationProtocolEngine {
+public:
+
   /**
-   * Class responsible for the vdqm/aggregator/rtpcd/aggregator protocol when
-   * a free drive is allocated to tape mount request.
+   * Execute the drive allocation protocol which will result in the volume
+   * information being received from the tape gateway.
+   *
+   * @param cuuid The ccuid to be used for logging.
+   * @param vdqmSocket The socket of the VDQM connection.
+   * @param rtcpdCallbackSocketFd The file descriptor of the listener socket
+   * to be used to accept callback connections from RTCPD.
+   * @param volReqId Out parameter: The volume request ID.
+   * @param gatewayHost Out parameter: The tape gateway host name.
+   * @param gatewayPort Out parameter: The tape gateway port number.
+   * @param rtcpdInitialSocketFd Out parameter: The socket file descriptor of
+   * the initial RTCPD connection.
+   * @param mode Out parameter: The access mode returned by the tape gateway.
+   * @param unit Out parameter: The drive unit returned by RTCPD.
+   * @param vid Out parameter: The volume ID returned by the tape gateway.
+   * @param label Out parameter: The volume label returned by the tape gateway.
+   * @param density Out parameter: The volume density returned by the tape
+   * @return True if there is a volume to mount.
    */
-  class DriveAllocationProtocolEngine {
-  public:
+  bool run(const Cuuid_t &cuuid, castor::io::AbstractTCPSocket &vdqmSocket,
+    const int rtcpdCallbackSocketFd, const uint32_t &volReqId,
+    char (&gatewayHost)[CA_MAXHOSTNAMELEN+1], unsigned short &gatewayPort,
+    SmartFd &rtcpdInitialSocketFd, uint32_t &mode, char (&unit)[CA_MAXUNMLEN+1],
+    char (&vid)[CA_MAXVIDLEN+1], char (&label)[CA_MAXLBLTYPLEN+1],
+    char (&density)[CA_MAXDENLEN+1]) throw(castor::exception::Exception);
 
-    /**
-     * Constructor.
-     * @param cuuid The ccuid to be used for logging.
-     * @param rtcpdCallbackSocketFd The file descriptor of the listener socket
-     * to be used to accept callback connections from RTCPD.
-     * @param rtcpdInitialSocketFd The socket file descriptor of initial RTCPD
-     * connection.
-     */
-    DriveAllocationProtocolEngine(const Cuuid_t &cuuid,
-      const int rtcpdCallbackSocketFd, const int rtcpdInitialSocketFd)
-      throw(castor::exception::Exception);
-
-    /**
-     * Temporary test routine to help determine the FSTN of the state machine.
-     */
-    void testFsm();
+  /**
+   * Temporary test routine to help determine the FSTN of the state machine.
+   */
+  void testFsm();
 
 
-  private:
+private:
 
-    /**
-     * The ccuid to be used for logging.
-     */
-    const Cuuid_t &m_cuuid;
+  /**
+   * State machine responsible for controlling the dynamic behaviour of this
+   * protocol engine.
+   */
+  fsm::StateMachine m_fsm;
 
-    /**
-     * The file descriptor of the listener socket to be used to accept callback
-     * connections from RTCPD.
-     */
-    const int m_rtcpdCallbackSocketFd;
+  /**
+   * Throws an exception if the peer host associated with the specified
+   * socket is not an authorised RCP job submitter.
+   *
+   * @param socketFd The socket file descriptor.
+   */
+  void checkRcpJobSubmitterIsAuthorised(const int socketFd)
+    throw(castor::exception::Exception);
 
-    /**
-     * The socket file descriptor of initial RTCPD connection.
-     */
-    const int m_rtcpdInitialSocketFd;
+  const char *getReqFromRtcpd();
 
-    /**
-     * State machine responsible for controlling the dynamic behaviour of this
-     * protocol engine.
-     */
-    fsm::StateMachine m_fsm;
+  const char *getVolFromTGate();
 
-    const char *getReqFromRtcpd();
-
-    const char *getVolFromTGate();
-
-    const char *error();
-  };
+  const char *error();
+};
 
 } // namespace aggregator
 } // namespace tape

@@ -26,6 +26,8 @@
 #define CASTOR_TAPE_AGGREGATOR_BRIDGEPROTOCOLENGINE
 
 #include "castor/exception/Exception.hpp"
+#include "h/Castor_limits.h"
+#include "h/Cuuid.h"
 
 
 namespace castor     {
@@ -41,8 +43,79 @@ public:
 
   /**
    * Act as a bridge between the tape gatway and RTCPD.
+   *
+   * @param cuuid The ccuid to be used for logging.
+   * @param volReqId The volume request ID.
+   * @param gatewayHost The tape gateway host name.
+   * @param gatewayPort The tape gateway port number.
+   * @param rtcpdCallbackSocketFd The file descriptor of the listener socket
+   * to be used to accept callback connections from RTCPD.
+   * @param rtcpdInitialSocketFd The socket file descriptor of initial RTCPD
+   * connection.
+   * @param mode The access mode.
+   * @param unit The drive unit.
+   * @param vid The volume ID.
+   * @param vsn The volume serial number.
+   * @param label The volume label.
+   * @param density The volume density.
    */
-  void run() throw(castor::exception::Exception);
+  void run(const Cuuid_t &cuuid, const uint32_t volReqId,
+    const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
+    const unsigned short gatewayPort, const int rtcpdCallbackSocketFd,
+    const int rtcpdInitialSocketFd, const uint32_t mode,
+    char (&unit)[CA_MAXUNMLEN+1], const char (&vid)[CA_MAXVIDLEN+1],
+    char (&vsn)[CA_MAXVSNLEN+1], const char (&label)[CA_MAXLBLTYPLEN+1],
+    const char (&density)[CA_MAXDENLEN+1]) throw(castor::exception::Exception);
+
+
+private:
+
+  /**
+   * Processes an incomming error message on the initial RTCPD connection.
+   *
+   * @param cuuid The ccuid to be used for logging.
+   * @param volReqId The volume request ID.
+   * @param socketFd The socket file descriptor of initial RTCPD connection.
+   */
+  void processErrorOnInitialRtcpdConnection(const Cuuid_t &cuuid,
+    const uint32_t volReqId, const int socketFd)
+    throw(castor::exception::Exception);
+
+  /**
+   * Accepts an RTCPD connection using the specified listener socket.
+   *
+   * @param cuuid The ccuid to be used for logging.
+   * @param volReqId The volume request ID.
+   * @param rtcpdCallbackSocketFd The file descriptor of the listener socket
+   * to be used to accept callback connections from RTCPD.
+   * @return The file descriptor of the accepted connection.
+   */
+  int acceptRtcpdConnection(const Cuuid_t &cuuid, const uint32_t volReqId,
+    const int rtcpdCallbackSocketFd) throw(castor::exception::Exception);
+
+  /**
+   * Processes the following RTCPD sockets:
+   * <ul>
+   * <li>The connected socket of the initial RTCPD connection
+   * <li>The RTCPD callback listener socket
+   * <li>The connected sockets of the tape and disk I/O threads
+   * </ul>
+   *
+   * @param cuuid The ccuid to be used for logging.
+   * @param volReqId The volume request ID.
+   * @param gatewayHost The tape gateway host name.
+   * @param gatewayPort The tape gateway port number.
+   * @param mode The tape access mode.
+   * @param rtcpdCallbackSocketFd The file descriptor of the listener socket
+   * to be used to accept callback connections from RTCPD.
+   * @param rtcpdInitialSocketFd The socket file descriptor of initial RTCPD
+   * connection.
+   */
+  void processRtcpdSockets(const Cuuid_t &cuuid, const uint32_t volReqId,
+    const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
+    const unsigned short gatewayPort, const uint32_t mode,
+    const int rtcpdCallbackSocketFd, const int rtcpdInitialSocketFd)
+    throw(castor::exception::Exception);
 };
 
 } // namespace aggregator

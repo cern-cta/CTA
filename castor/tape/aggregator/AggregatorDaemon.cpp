@@ -264,8 +264,7 @@ void castor::tape::aggregator::AggregatorDaemon::
 
   addThreadPool(
     new castor::server::TCPListenerThreadPool("VdqmRequestHandlerPool",
-      new castor::tape::aggregator::VdqmRequestHandler(),
-        vdqmListenPort));
+      new castor::tape::aggregator::VdqmRequestHandler(), vdqmListenPort));
 
   castor::server::BaseThreadPool *const vdqmRequestHandlerThreadPool =
     getThreadPool('V');

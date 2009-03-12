@@ -87,12 +87,12 @@ namespace aggregator {
      * which the request is to be processed.
      * @param jobRequest Out parameter.  The job request message structure
      * which will be filled by this function.
-     * @param rtcpdCallbackSocketFd The file descriptor of the listener socket
-     * to be used to accept callback connections from RTCPD.
+     * @param rtcpdCallbackSocketFd Out parameter: The file descriptor of the
+     * listener socket to be used to accept callback connections from RTCPD.
      */
     void processJobSubmissionRequest(const Cuuid_t &cuuid,
       const int vdqmSocketFd, RcpJobRqstMsgBody &jobRequest,
-      const int rtcpdCallbackSocketFd) throw(castor::exception::Exception);
+      int &rtcpdCallbackSocketFd) throw(castor::exception::Exception);
 
     /**
      * Processes an incomming error message on the initial RTCPD connection.

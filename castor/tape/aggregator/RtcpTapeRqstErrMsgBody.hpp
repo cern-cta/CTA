@@ -64,7 +64,7 @@ namespace aggregator {
     uint32_t tStartUnmount; // Time when unmount request is sent to Ctape
     uint32_t tEndUnmount;   // Time when unmount request returns
     Cuuid_t rtcpReqId;      // Unique request id assigned by RTCOPY
-    RtcpErrorAppendix err;   // Error reporting
+    RtcpErrorAppendix err;  // Error reporting
 
   }; // struct RtcpTapeRqstErrMsgBody
 

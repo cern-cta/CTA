@@ -57,12 +57,11 @@ public:
    * @param density Out parameter: The volume density returned by the tape
    * @return True if there is a volume to mount.
    */
-  static bool getVolumeFromGateway(const Cuuid_t &cuuid, const uint32_t volReqId, 
-    const char *gatewayHost, const unsigned short gatewayPort,
-    char (&vid)[CA_MAXVIDLEN+1], uint32_t &mode,
-    char (&label)[CA_MAXLBLTYPLEN+1], char (&density)[CA_MAXDENLEN+1])
-    throw(castor::exception::Exception);
-
+  static bool getVolumeFromGateway(const Cuuid_t &cuuid,
+    const uint32_t volReqId, const char *gatewayHost,
+    const unsigned short gatewayPort, char (&vid)[CA_MAXVIDLEN+1],
+    uint32_t &mode, char (&label)[CA_MAXLBLTYPLEN+1],
+    char (&density)[CA_MAXDENLEN+1]) throw(castor::exception::Exception);
 
   /**
    * Gets a file to migrate from the tape tape gateway.
@@ -81,9 +80,9 @@ public:
    * modification.
    * @return True if there is a file to migrate.
    */
-  static bool getFileToMigrateFromGateway(const Cuuid_t &cuuid, const uint32_t volReqId, 
-    const char *gatewayHost, const unsigned short gatewayPort,
-    char (&filePath)[CA_MAXPATHLEN+1],
+  static bool getFileToMigrateFromGateway(const Cuuid_t &cuuid,
+    const uint32_t volReqId, const char *gatewayHost,
+    const unsigned short gatewayPort, char (&filePath)[CA_MAXPATHLEN+1],
     char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId,
     uint32_t &tapeFileSeq, uint64_t &fileSize,
     char (&lastKnownFileName)[CA_MAXPATHLEN+1], uint64_t &lastModificationTime)
@@ -103,9 +102,9 @@ public:
    * @param blockId Out parameter: The ID of the first block of the file.
    * @return True if there is a file to recall.
    */
-  static bool getFileToRecallFromGateway(const Cuuid_t &cuuid, const uint32_t volReqId, 
-    const char *gatewayHost, const unsigned short gatewayPort,
-    char (&filePath)[CA_MAXPATHLEN+1],
+  static bool getFileToRecallFromGateway(const Cuuid_t &cuuid,
+    const uint32_t volReqId, const char *gatewayHost,
+    const unsigned short gatewayPort, char (&filePath)[CA_MAXPATHLEN+1],
     char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId,
     uint32_t &tapeFileSeq, unsigned char (&blockId)[4])
     throw(castor::exception::Exception);
@@ -127,9 +126,9 @@ public:
    * @param fileSize The size of the file without compression.
    * @param compressedFileSize The size of on-tape compressed file.
    */
-  static void notifyGatewayFileMigrated(const Cuuid_t &cuuid,const uint32_t volReqId, 
-    const char *gatewayHost, const unsigned short gatewayPort,
-    char (&nsHost)[CA_MAXHOSTNAMELEN+1], 
+  static void notifyGatewayFileMigrated(const Cuuid_t &cuuid,
+    const uint32_t volReqId, const char *gatewayHost,
+    const unsigned short gatewayPort, char (&nsHost)[CA_MAXHOSTNAMELEN+1], 
     uint64_t &fileId, uint32_t &tapeFileSeq, unsigned char (&blockId)[4], 
     uint32_t positionCommandCode,
     char (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1], uint32_t checksum,
@@ -152,9 +151,9 @@ public:
    * @param checksumAlgorithm The name of the checksum algorithm.
    * @param checksum The file checksum.
    */
-  static void notifyGatewayFileRecalled(const Cuuid_t &cuuid,const uint32_t volReqId, 
-    const char *gatewayHost, const unsigned short gatewayPort,
-    char (&nsHost)[CA_MAXHOSTNAMELEN+1],
+  static void notifyGatewayFileRecalled(const Cuuid_t &cuuid,
+    const uint32_t volReqId, const char *gatewayHost, 
+    const unsigned short gatewayPort, char (&nsHost)[CA_MAXHOSTNAMELEN+1],
     uint64_t &fileId, uint32_t &tapeFileSeq, uint32_t positionCommandCode, 
     char (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1], uint32_t checksum,
     uint32_t fileSize, uint32_t compressedFileSize)
@@ -169,8 +168,8 @@ public:
    * @param gatewayHost The tape gateway host name.
    * @param gatewayPort The tape gateway port number.
    */
-  static void notifyGatewayOfEnd(const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost, 
-    const unsigned short gatewayPort)
+  static void notifyGatewayOfEnd(const Cuuid_t &cuuid, const uint32_t volReqId,
+    const char *gatewayHost, const unsigned short gatewayPort)
     throw(castor::exception::Exception);
 
 

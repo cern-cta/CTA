@@ -27,8 +27,11 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/io/ClientSocket.hpp"
+#include "castor/tape/aggregator/MessageHeader.hpp"
+#include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpAcknowledgeMsg.hpp"
 #include "castor/tape/aggregator/RtcpFileRqstErrMsgBody.hpp"
+#include "castor/tape/aggregator/RtcpFileRqstMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpTapeRqstErrMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpTapeRqstMsgBody.hpp"
 #include "h/Cuuid.h"
@@ -121,7 +124,7 @@ public:
    * @param request The request which will be filled with the contents of the
    * received message.
    */
-  static void receiveRcpJobRqst(const int socketFd,
+  static void receiveRcpJobRqst(const Cuuid_t &cuuid, const int socketFd,
     const int netReadWriteTimeout, RcpJobRqstMsgBody &request)
     throw(castor::exception::Exception);
 

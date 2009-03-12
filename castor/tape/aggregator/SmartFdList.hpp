@@ -52,6 +52,13 @@ namespace aggregator {
     ~SmartFdList();
 
     /**
+     * Appends a copy of the specified file descriptor to the end of list.
+     * A file descriptor must not be closed twice, there an exception is thrown
+     * if the file descriptor already exists in the list.
+     */
+    void push_back(const int &fd) throw(castor::exception::Exception);
+
+    /**
      * Releases the specified file descriptor.  After a call to this function,
      * the desctructor of the smart file descriptor list will not close the
      * specified file descriptor.

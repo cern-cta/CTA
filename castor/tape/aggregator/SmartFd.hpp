@@ -44,10 +44,39 @@ namespace aggregator {
     /**
      * Constructor.
      *
-     * @param fileDescriptor The file descriptor to be owned by the smart file
+     */
+    SmartFd();
+
+    /**
+     * Constructor.
+     *
+     * @param fd The file descriptor to be owned by the smart file
      * descriptor.
      */
-    SmartFd(const int fileDescriptor);
+    SmartFd(const int fd);
+
+    /**
+     * Take ownership of the specified file descriptor, closing the previously
+     * owned file descriptor if there is one and it is not the same as the one
+     * specified.
+     *
+     * @param File descriptor to be owned, defaults to -1 if not specified,
+     * where -1 means this SmartFd does not own anything.
+     */
+    void reset(const int fd) throw();
+
+    /**
+     * SmartFd assignment operator.
+     *
+     * This function does the following:
+     * <ul>
+     * <li> Closes the file descriptor of this object if it already owns one.
+     * <li> Calls release on the previous owner (obj);
+     * <li> Makes this object the owner of the file descriptor released from
+     *      the previous owner (obj).
+     * </ul>
+     */
+    SmartFd &operator=(SmartFd& obj) throw();
 
     /**
      * Destructor.
@@ -81,7 +110,7 @@ namespace aggregator {
      * has been called and the smart file descriptor no longer owns a basic
      * file descriptor.
      */ 
-    int m_fileDescriptor;
+    int m_fd;
 
   };
 

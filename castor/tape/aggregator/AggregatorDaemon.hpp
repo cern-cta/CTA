@@ -25,9 +25,9 @@
 #ifndef CASTOR_TAPE_AGGREGATOR_AGGREGATORDAEMON_HPP
 #define CASTOR_TAPE_AGGREAGTOR_AGGREGATORDAEMON_HPP 1
 
-#include "castor/server/BaseDaemon.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidConfigEntry.hpp"
+#include "castor/server/BaseDaemon.hpp"
 
 #include <iostream>
 
