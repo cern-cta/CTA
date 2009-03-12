@@ -29,7 +29,15 @@ public void run();
 /**
  * @opt operations
  */
-class Builder {
+class Packer {
+public void run();
+}
+
+
+/**
+ * @opt operations
+ */
+class Unpacker {
 public void run();
 }
 
@@ -38,7 +46,8 @@ public void run();
  * @composed 1 - 1 TCPListenerThreadPool
  * @composed 1 - 1 DriveAllocationProtocolEngine
  * @composed 1 - 1 BridgeProtocolEngine
- * @composed 1 - 1 Builder
+ * @composed 1 - 1 Packer
+ * @composed 1 - 1 UnPacker
  */
 class AggregatorDaemon extends BaseDaemon {
 }
