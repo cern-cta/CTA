@@ -79,7 +79,7 @@ void castor::tape::aggregator::DriveAllocationProtocolEngine::
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
   const Cuuid_t &cuuid, castor::io::AbstractTCPSocket &vdqmSocket,
-  const int rtcpdCallbackSocketFd, const uint32_t &volReqId,
+  const int rtcpdCallbackSocketFd, uint32_t &volReqId,
   char (&gatewayHost)[CA_MAXHOSTNAMELEN+1], unsigned short &gatewayPort,
   SmartFd &rtcpdInitialSocketFd, uint32_t &mode, char (&unit)[CA_MAXUNMLEN+1],    char (&vid)[CA_MAXVIDLEN+1], char (&label)[CA_MAXLBLTYPLEN+1],
   char (&density)[CA_MAXDENLEN+1]) throw(castor::exception::Exception) {
@@ -92,6 +92,9 @@ bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
 
   RtcpTxRx::receiveRcpJobRqst(cuuid, vdqmSocket.socket(), RTCPDNETRWTIMEOUT,
     jobRequest);
+
+  // Extract the volume request ID
+  volReqId = jobRequest.tapeRequestId;
 
   // Get the IP and port of the RTCPD callback socket
   unsigned long  rtcpdCallbackSocketIp   = 0;

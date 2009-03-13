@@ -67,7 +67,7 @@ public:
    * @return True if there is a volume to mount.
    */
   bool run(const Cuuid_t &cuuid, castor::io::AbstractTCPSocket &vdqmSocket,
-    const int rtcpdCallbackSocketFd, const uint32_t &volReqId,
+    const int rtcpdCallbackSocketFd, uint32_t &volReqId,
     char (&gatewayHost)[CA_MAXHOSTNAMELEN+1], unsigned short &gatewayPort,
     SmartFd &rtcpdInitialSocketFd, uint32_t &mode, char (&unit)[CA_MAXUNMLEN+1],
     char (&vid)[CA_MAXVIDLEN+1], char (&label)[CA_MAXLBLTYPLEN+1],
