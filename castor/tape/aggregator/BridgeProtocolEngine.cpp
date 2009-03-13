@@ -83,23 +83,23 @@ int castor::tape::aggregator::BridgeProtocolEngine::
   acceptRtcpdConnection(const Cuuid_t &cuuid, const uint32_t volReqId,
   const int rtcpdCallbackSocketFd) throw(castor::exception::Exception) {
 
-  SmartFd connectedsocketFd(Net::acceptConnection(rtcpdCallbackSocketFd,
-    RTCPDCALLBACKTIMEOUT));
+  SmartFd connectedSocketFd(Net::acceptConnection(rtcpdCallbackSocketFd,
+    RTCPDPINGTIMEOUT));
 
   try {
     unsigned short port = 0; // Client port
     unsigned long  ip   = 0; // Client IP
     char           hostName[HOSTNAMEBUFLEN];
 
-    Net::getPeerIpAndPort(connectedsocketFd.get(), ip, port);
-    Net::getPeerHostName(connectedsocketFd.get(), hostName);
+    Net::getPeerIpAndPort(connectedSocketFd.get(), ip, port);
+    Net::getPeerHostName(connectedSocketFd.get(), hostName);
 
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId", volReqId                  ),
       castor::dlf::Param("IP"      , castor::dlf::IPAddress(ip)),
       castor::dlf::Param("Port"    , port                      ),
       castor::dlf::Param("HostName", hostName                  ),
-      castor::dlf::Param("socketFd", connectedsocketFd.get()   )};
+      castor::dlf::Param("socketFd", connectedSocketFd.get()   )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_RTCPD_CALLBACK_WITH_INFO, params);
   } catch(castor::exception::Exception &ex) {
@@ -109,7 +109,7 @@ int castor::tape::aggregator::BridgeProtocolEngine::
       AGGREGATOR_RTCPD_CALLBACK_WITHOUT_INFO, params);
   }
 
-  return connectedsocketFd.release();
+  return connectedSocketFd.release();
 }
 
 
@@ -123,7 +123,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::
   const int rtcpdCallbackSocketFd, const int rtcpdInitialSocketFd)
   throw(castor::exception::Exception) {
 
-  SmartFdList connectedsocketFds;
+  SmartFdList connectedSocketFds;
   int selectRc = 0;
   int selectErrno = 0;
   fd_set readFdSet;
@@ -145,8 +145,8 @@ void castor::tape::aggregator::BridgeProtocolEngine::
       } else {
         maxFd = rtcpdInitialSocketFd;
       }
-      for(std::list<int>::iterator itor = connectedsocketFds.begin();
-        itor != connectedsocketFds.end(); itor++) {
+      for(std::list<int>::iterator itor = connectedSocketFds.begin();
+        itor != connectedSocketFds.end(); itor++) {
 
         FD_SET(*itor, &readFdSet);
 
@@ -184,39 +184,55 @@ void castor::tape::aggregator::BridgeProtocolEngine::
         break;
 
       default: // One or more select file descriptors require attention
-        // For each bit that has been set
-        for(int i=0; i<selectRc; i++) {
+
+        int nbProcessed = 0;
+
+        // While all waiting file descriptors have not been processed
+        while(nbProcessed < selectRc) {
+
           // If there is an incoming message on the initial RTCPD connection
           if(FD_ISSET(rtcpdInitialSocketFd, &readFdSet)) {
+            FD_CLR(rtcpdInitialSocketFd, &readFdSet);
 
+            RtcpTxRx::pingRtcpd(cuuid, volReqId, rtcpdInitialSocketFd,
+              RTCPDNETRWTIMEOUT);
             processErrorOnInitialRtcpdConnection(cuuid, volReqId,
               rtcpdInitialSocketFd);
 
-            FD_CLR(rtcpdInitialSocketFd, &readFdSet);
+            nbProcessed++;
+          }
 
-          // Else if there is a callback connection request from RTCPD
-          } else if(FD_ISSET(rtcpdCallbackSocketFd, &readFdSet)) {
+          // if there is a callback connection request from RTCPD
+          if(FD_ISSET(rtcpdCallbackSocketFd, &readFdSet)) {
+            FD_CLR(rtcpdCallbackSocketFd, &readFdSet);
 
-            connectedsocketFds.push_back(acceptRtcpdConnection(cuuid,
+            RtcpTxRx::pingRtcpd(cuuid, volReqId, rtcpdInitialSocketFd,
+              RTCPDNETRWTIMEOUT);
+            connectedSocketFds.push_back(acceptRtcpdConnection(cuuid,
               volReqId, rtcpdCallbackSocketFd));
 
-            FD_CLR(rtcpdInitialSocketFd, &readFdSet);
+            nbProcessed++;
+          }
 
-          // Else there are one or more messages from the tape/disk I/O threads
-          } else {
-            for(std::list<int>::iterator itor=connectedsocketFds.begin();
-                itor != connectedsocketFds.end(); itor++) {
+          // For each connected socket or until all waiting file descriptors
+          // have been processed
+          for(std::list<int>::iterator itor=connectedSocketFds.begin();
+            itor != connectedSocketFds.end() && nbProcessed < selectRc;
+            itor++) {
 
-              if(FD_ISSET(*itor, &readFdSet)) {
+            if(FD_ISSET(*itor, &readFdSet)) {
+              FD_CLR(*itor, &readFdSet);
 
-                continueMainSelectLoop = tapeDiskRqstHandler.processRequest(
-                  cuuid, volReqId, gatewayHost, gatewayPort, mode, *itor);
+              RtcpTxRx::pingRtcpd(cuuid, volReqId, rtcpdInitialSocketFd,
+                RTCPDNETRWTIMEOUT);
 
-                FD_CLR(*itor, &readFdSet);
-              }
+              continueMainSelectLoop = tapeDiskRqstHandler.processRequest(
+                cuuid, volReqId, gatewayHost, gatewayPort, mode, *itor);
+
+              nbProcessed++;
             }
           }
-        } // For each bit that has been set
+        } // While all waiting file descriptors have not been processed
       }
     }
   } catch(castor::exception::Exception &ex) {
@@ -304,7 +320,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::run(const Cuuid_t &cuuid,
   RtcpTxRx::tellRtcpdEndOfFileList(cuuid, volReqId, rtcpdInitialSocketFd,
     RTCPDNETRWTIMEOUT);
 
-  // Spin a slect loop processing the RTCPD sockets
-  processRtcpdSockets(cuuid, volReqId, gatewayHost, gatewayPort,
-    mode, rtcpdCallbackSocketFd, rtcpdInitialSocketFd);
+  // Spin a select loop processing the RTCPD sockets
+  processRtcpdSockets(cuuid, volReqId, gatewayHost, gatewayPort, mode,
+    rtcpdCallbackSocketFd, rtcpdInitialSocketFd);
 }

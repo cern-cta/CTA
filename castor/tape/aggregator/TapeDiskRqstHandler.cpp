@@ -63,6 +63,73 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::processRequest(
   const unsigned short gatewayPort,const uint32_t mode, const int socketFd)
   throw(castor::exception::Exception) {
 
+/*
+{                                                                         
+  const int fd = socketFd;
+  void *ptr = NULL;                                                       
+
+  char buf[280];
+  Utils::setBytes(buf, '\0');
+  ptr = buf;                 
+  read(fd, ptr, sizeof(buf));
+
+  uint32_t magic   = 0;
+  uint32_t reqType = 0;
+  uint32_t len     = 0;
+
+  memcpy(&magic,   buf                                  , sizeof(magic)  );
+  memcpy(&reqType, buf + sizeof(magic)                  , sizeof(reqType));
+  memcpy(&len    , buf + sizeof(magic) + sizeof(reqType), sizeof(len)    );
+
+  char tmp[4];
+  tmp[0] = *(((char*)&magic) + 3);
+  tmp[1] = *(((char*)&magic) + 2);
+  tmp[2] = *(((char*)&magic) + 1);
+  tmp[3] = *(((char*)&magic) + 0);
+  magic = *((uint32_t*)tmp);      
+
+  tmp[0] = *(((char*)&reqType) + 3);
+  tmp[1] = *(((char*)&reqType) + 2);
+  tmp[2] = *(((char*)&reqType) + 1);
+  tmp[3] = *(((char*)&reqType) + 0);
+  reqType = *((uint32_t*)tmp);      
+
+  tmp[0] = *(((char*)&len) + 3);
+  tmp[1] = *(((char*)&len) + 2);
+  tmp[2] = *(((char*)&len) + 1);
+  tmp[3] = *(((char*)&len) + 0);
+  len = *((uint32_t*)tmp);      
+
+  std::cout << "HELLO" << std::endl;
+
+  std::cout << "magic  =0x" << std::hex << magic   << std::endl;
+  std::cout << "reqType=0x" << std::hex << reqType << std::endl;
+  std::cout << "len    ="   << std::dec << len     << std::endl;
+
+  for(size_t i=12; i<sizeof(buf); i++) {
+    char c = buf[i];                    
+
+    if((c >= '0' && c <= '9') || (c >= 'a' && c <='z') || (c >= 'A' && c <='Z'))
+      {                                                                         
+      std::cout << c;                                                           
+    } else {                                                                    
+//    std::cout << "(0x" << std::hex << (int)c << ")";                          
+      std::cout << "#";                                                         
+    }                                                                           
+  }                                                                             
+  std::cout << std::endl;                                                       
+
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("msg"    , "Hardcoded reads"),
+    castor::dlf::Param("fd"     , fd               ),
+    castor::dlf::Param("magic"  , magic            ),
+    castor::dlf::Param("reqType", reqType          ),
+    castor::dlf::Param("len"    , len              )};
+  CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_SYSTEM, AGGREGATOR_NULL, params);
+
+  return true;
+}
+*/
   MessageHeader header;
 
   RtcpTxRx::receiveRtcpMsgHeader(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT,
@@ -367,20 +434,24 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpTapeErrReqHandler(
   RtcpTxRx::receiveRtcpTapeRqstErrBody(cuuid, volReqId, socketFd,
     RTCPDNETRWTIMEOUT, header, body);
 
+  if(body.err.errorCode == 0) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId", volReqId)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
+      AGGREGATOR_TAPE_POSITIONED_TAPE_REQ, params);
+  } else {
+    TAPE_THROW_CODE(body.err.errorCode,
+      ": Received an error from RTCPD"
+      ": " << body.err.errorMsg);
+  }
+
   RtcpAcknowledgeMsg ackMsg;
   ackMsg.magic   = RTCOPY_MAGIC;
   ackMsg.reqType = RTCP_TAPEERR_REQ;
   ackMsg.status  = 0;
   RtcpTxRx::sendRtcpAcknowledge(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT,
     ackMsg);
-/*
-  TAPE_THROW_CODE(body.err.errorCode,
-    ": Received an error from RTCPD: " << body.err.errorMsg);
-*/
-  castor::dlf::Param params[] = {
-    castor::dlf::Param("MSG", "RTCPTAPEERRREQHANDLER")};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-    AGGREGATOR_NULL, params);
+
   // There is a possibility of more work
   return true;
 }

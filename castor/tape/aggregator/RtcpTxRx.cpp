@@ -371,12 +371,28 @@ void castor::tape::aggregator::RtcpTxRx::pingRtcpd(const Cuuid_t &cuuid,
       << ex.getMessage().str());
   }
 
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId", volReqId)};
+
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_PING_RTCPD, params);
+  }
+
   try {
     Net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
       ": Failed to send the RCPD ping message to RTCPD"
       ": " << ex.getMessage().str());
+  }
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId", volReqId)};
+
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_PINGED_RTCPD, params);
   }
 }
 

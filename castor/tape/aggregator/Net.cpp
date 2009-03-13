@@ -72,6 +72,33 @@ int castor::tape::aggregator::Net::createListenerSocket(
 //-----------------------------------------------------------------------------
 // acceptConnection
 //-----------------------------------------------------------------------------
+int castor::tape::aggregator::Net::acceptConnection(const int listensocketFd)
+  throw(castor::exception::Exception) {
+
+  struct sockaddr_in peerAddress;
+  unsigned int       peerAddressLen = sizeof(peerAddress);
+
+  const int connectedsocketFd = accept(listensocketFd,
+    (struct sockaddr *)&peerAddress, &peerAddressLen);
+  const int acceptErrno = errno;
+
+  if(connectedsocketFd < 0) {
+    char strerrorBuf[STRERRORBUFLEN];
+    char *const errorStr = strerror_r(acceptErrno, strerrorBuf,
+      sizeof(strerrorBuf));
+
+    TAPE_THROW_CODE(acceptErrno,
+      ": Failed to accept connection"
+      ": Accept failed: " << errorStr);
+  }
+
+  return connectedsocketFd;
+}
+
+
+//-----------------------------------------------------------------------------
+// acceptConnection
+//-----------------------------------------------------------------------------
 int castor::tape::aggregator::Net::acceptConnection(
   const int listensocketFd, const int netReadWriteTimeout)
   throw(castor::exception::Exception) {
@@ -147,13 +174,14 @@ int castor::tape::aggregator::Net::acceptConnection(
 
   const int connectedsocketFd = accept(listensocketFd,
     (struct sockaddr *)&peerAddress, &peerAddressLen);
+  const int acceptErrno = errno;
 
   if(connectedsocketFd < 0) {
     char strerrorBuf[STRERRORBUFLEN];
-    char *const errorStr = strerror_r(selectErrno, strerrorBuf,
+    char *const errorStr = strerror_r(acceptErrno, strerrorBuf,
       sizeof(strerrorBuf));
 
-    TAPE_THROW_CODE(selectErrno,
+    TAPE_THROW_CODE(acceptErrno,
       ": Failed to accept connection"
       ": Accept failed: " << errorStr);
   }

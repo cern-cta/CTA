@@ -57,6 +57,15 @@ public:
    * socket file descriptor of the newly created connected soket.
    *
    * @param listenSocketFd The file descriptor of the listener socket.
+   */
+  static int acceptConnection(const int listenSocketFd)
+    throw(castor::exception::Exception);
+
+  /**
+   * Accepts a connection on the specified listener socket and returns the
+   * socket file descriptor of the newly created connected soket.
+   *
+   * @param listenSocketFd The file descriptor of the listener socket.
    * @param netReadWriteTimeout The timeout to be used when performing
    * network reads and writes.  Accepting a connection is classed a network
    * read operation in the case of this function.

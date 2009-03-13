@@ -23,14 +23,16 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
+#include "castor/exception/Internal.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/Utils.hpp"
 #include "h/rtcp_constants.h"
 
 #include <arpa/inet.h>
-#include <sys/socket.h>
-
 #include <iostream>
+#include <string.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 
 //-----------------------------------------------------------------------------
@@ -182,4 +184,37 @@ bool castor::tape::aggregator::Utils::isValidUInt(const char *str)
   }
 
   return true;
+}
+
+
+//------------------------------------------------------------------------------
+// drainFile
+//------------------------------------------------------------------------------
+ssize_t castor::tape::aggregator::Utils::drainFile(const int fd)
+  throw(castor::exception::Exception) {
+
+  char buf[1024];
+
+  ssize_t rc    = 0;
+  ssize_t total = 0;
+
+  do {
+    rc = read((int)fd, buf, sizeof(buf));
+
+    if(rc == -1) {
+      char codeStr[1024];
+      strerror_r(errno, codeStr, sizeof(codeStr));
+
+      TAPE_THROW_EX(castor::exception::Internal,
+        ": Failed to drain file"
+        ": fd=" << fd <<
+        ": Error=" << codeStr);
+    } else {
+      total += rc;
+    }
+
+  // while the end of file has not been reached
+  } while(rc != 0);
+
+  return total;
 }

@@ -28,11 +28,11 @@
 
 #include "castor/exception/Exception.hpp"
 
-#include <string>
-
 #include <errno.h>
 #include <stdint.h>
+#include <string>
 #include <string.h>
+#include <unistd.h>
 
 
 /**
@@ -181,6 +181,14 @@ public:
    * @returns true if the string is a valid unsigned integer, else false.
    */
   static bool isValidUInt(const char *str) throw();
+
+  /**
+   * Drains (reads and discards) all data from the specified file until end of
+   * file is reached.
+   *
+   * @param fd The file descriptor of the file to be drained.
+   */
+  static ssize_t drainFile(const int fd) throw(castor::exception::Exception);
 
 
 private:

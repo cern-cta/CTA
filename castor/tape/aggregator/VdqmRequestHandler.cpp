@@ -145,7 +145,7 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
       rtcpdInitialSocketFd, mode, unit, vid, label, density);
 
     // If the volume has the aggregation format
-    if(strcpy(label, "ALB") == 0) {
+    if(strcmp(label, "ALB") == 0) {
 
       // If migrating
       if(mode == WRITE_ENABLE) {
