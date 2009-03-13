@@ -6,6 +6,23 @@ class BaseDaemon {
 
 /**
  */
+class IThread {
+}
+
+
+/**
+ * @assoc 1 - 1 DriveAllocationProtocolEngine
+ * @assoc 1 - 1 Packer
+ * @assoc 1 - 1 Unpacker
+ * @assoc 1 - 1 BridgeProtocolEngine
+ */
+class VdqmRequestHandler extends IThread {
+}
+
+
+/**
+ * @composed 1 - 1 VdqmRequestHandler
+ */
 class TCPListenerThreadPool {
 }
 
@@ -37,16 +54,13 @@ public void run();
 /**
  * @opt operations
  */
-class RecallProtocolEngine {
+class Unpacker {
 public void run();
 }
 
 
 /**
  * @composed 1 - 1 TCPListenerThreadPool
- * @composed 1 - 1 BridgeProtocolEngine
- * @composed 1 - 1 Packer
- * @composed 1 - 1 RecallProtocolEngine
  */
 class AggregatorDaemon extends BaseDaemon {
 }
