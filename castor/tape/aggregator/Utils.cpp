@@ -202,7 +202,7 @@ ssize_t castor::tape::aggregator::Utils::drainFile(const int fd)
     rc = read((int)fd, buf, sizeof(buf));
 
     if(rc == -1) {
-      char codeStr[1024];
+      char codeStr[STRERRORBUFLEN];
       strerror_r(errno, codeStr, sizeof(codeStr));
 
       TAPE_THROW_EX(castor::exception::Internal,

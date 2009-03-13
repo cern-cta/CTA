@@ -163,11 +163,13 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
     // Else the volume does not have the aggregation format
     } else {
 
-      // Note the call to run() makes vid = vsn
+      // Note the call to run() sets the vsn to ""
+      char vsn[CA_MAXVSNLEN+1];
+      Utils::setBytes(vsn, '\0');
       BridgeProtocolEngine bridgeProtocolEngine;
       bridgeProtocolEngine.run(cuuid, volReqId, gatewayHost, gatewayPort,
         rtcpdCallbackSocketFd.get(), rtcpdInitialSocketFd.get(), mode, unit,
-        vid, vid, label, density);
+        vid, vsn, label, density);
     }
   } catch(castor::exception::Exception &ex) {
 

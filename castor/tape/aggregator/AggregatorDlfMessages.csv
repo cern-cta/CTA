@@ -64,3 +64,7 @@
 63,AGGREGATOR_PROCESSING_TAPE_DISK_RQST,"Processing a tape/disk IO request from RTCPD"
 64,AGGREGATOR_PING_RTCPD,"Pinging RTCPD"
 65,AGGREGATOR_PINGED_RTCPD,"Pinged RTCPD"
+66,AGGREGATOR_SEND_ACK_TO_RTCPD,"Sending acknowledge to RTCPD"
+67,AGGREGATOR_SENT_ACK_TO_RTCPD,"Sent acknowledge to RTCPD"
+68,AGGREGATOR_RECEIVE_TAPERQSTERRBODY,"Receiving tape request message body with error appendix"
+69,AGGREGATOR_RECEIVED_TAPERQSTERRBODY,"Received tape request message body witherror appendix"

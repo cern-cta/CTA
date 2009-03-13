@@ -52,7 +52,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId", volReqId),
       castor::dlf::Param("socketFd", socketFd)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_DATA_ON_INITIAL_RTCPD_CONNECTION, params);
   }
 
@@ -166,7 +166,6 @@ void castor::tape::aggregator::BridgeProtocolEngine::
 
         RtcpTxRx::pingRtcpd(cuuid, volReqId, rtcpdInitialSocketFd,
           RTCPDNETRWTIMEOUT);
-        castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, AGGREGATOR_PINGED_RTCPD);
         break;
 
       case -1: // Select encountered an error
@@ -194,8 +193,6 @@ void castor::tape::aggregator::BridgeProtocolEngine::
           if(FD_ISSET(rtcpdInitialSocketFd, &readFdSet)) {
             FD_CLR(rtcpdInitialSocketFd, &readFdSet);
 
-            RtcpTxRx::pingRtcpd(cuuid, volReqId, rtcpdInitialSocketFd,
-              RTCPDNETRWTIMEOUT);
             processErrorOnInitialRtcpdConnection(cuuid, volReqId,
               rtcpdInitialSocketFd);
 
@@ -206,8 +203,6 @@ void castor::tape::aggregator::BridgeProtocolEngine::
           if(FD_ISSET(rtcpdCallbackSocketFd, &readFdSet)) {
             FD_CLR(rtcpdCallbackSocketFd, &readFdSet);
 
-            RtcpTxRx::pingRtcpd(cuuid, volReqId, rtcpdInitialSocketFd,
-              RTCPDNETRWTIMEOUT);
             connectedSocketFds.push_back(acceptRtcpdConnection(cuuid,
               volReqId, rtcpdCallbackSocketFd));
 
@@ -222,9 +217,6 @@ void castor::tape::aggregator::BridgeProtocolEngine::
 
             if(FD_ISSET(*itor, &readFdSet)) {
               FD_CLR(*itor, &readFdSet);
-
-              RtcpTxRx::pingRtcpd(cuuid, volReqId, rtcpdInitialSocketFd,
-                RTCPDNETRWTIMEOUT);
 
               continueMainSelectLoop = tapeDiskRqstHandler.processRequest(
                 cuuid, volReqId, gatewayHost, gatewayPort, mode, *itor);
@@ -296,6 +288,8 @@ void castor::tape::aggregator::BridgeProtocolEngine::run(const Cuuid_t &cuuid,
   Utils::copyString(rtcpVolume.unit   , unit   );
   rtcpVolume.volReqId       = volReqId;
   rtcpVolume.mode           = mode;
+  rtcpVolume.tStartRequest  = time(NULL);
+  rtcpVolume.err.severity   =  1;
   rtcpVolume.err.maxTpRetry = -1;
   rtcpVolume.err.maxCpRetry = -1;
   RtcpTxRx::giveVolumeToRtcpd(cuuid, volReqId, rtcpdInitialSocketFd,

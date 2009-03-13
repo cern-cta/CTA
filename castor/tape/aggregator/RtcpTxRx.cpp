@@ -337,12 +337,28 @@ void castor::tape::aggregator::RtcpTxRx::sendRtcpAcknowledge(
       << ex.getMessage().str());
   }
 
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId", volReqId)};
+
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_SEND_ACK_TO_RTCPD, params);
+  }
+
   try {
     Net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
       ": Failed to send the RCP acknowledge message to RTCPD"
       ": " << ex.getMessage().str());
+  }
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId", volReqId)};
+
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_SENT_ACK_TO_RTCPD, params);
   }
 }
 
@@ -652,8 +668,9 @@ void castor::tape::aggregator::RtcpTxRx::askRtcpdToRequestMoreWork(
   request.jobId          = -1;
   request.stageSubReqId  = -1;
   request.umask          = mode == WRITE_ENABLE ? MIGRATEUMASK : RECALLUMASK;
-  request.tapeFseq       =  1;
-  request.diskFseq       =  1;
+  request.positionMethod = -1;
+  request.tapeFseq       = -1;
+  request.diskFseq       = -1;
   request.blockSize      = -1;
   request.recordLength   = -1;
   request.retention      = -1;
@@ -904,6 +921,14 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpTapeRqstErrBody(
       << ": Received: " << header.len);
   }
 
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId", volReqId)};
+
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_RECEIVE_TAPERQSTERRBODY, params);
+  }
+
   // Read the message body
   try {
     Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.len, bodyBuf);
@@ -922,6 +947,14 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpTapeRqstErrBody(
     TAPE_THROW_EX(castor::exception::Internal,
          ": Failed to unmarshall message body from RTCPD"
       << ": "<< ex.getMessage().str());
+  }
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId", volReqId)};
+
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_RECEIVED_TAPERQSTERRBODY, params);
   }
 }
 
