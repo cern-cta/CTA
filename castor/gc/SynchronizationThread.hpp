@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SynchronizationThread.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/03/10 09:30:08 $ $Author: waldron $
+ * @(#)$RCSfile: SynchronizationThread.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2009/03/13 08:46:53 $ $Author: sponcec3 $
  *
  * Thread going through the files stored on the CASTOR related filesystem and
  * checking their existence in the nameserver and in the stager catalog. In
@@ -78,12 +78,15 @@ namespace castor {
        * @param syncInterval a pointer to the synchronization interval value
        * @param chunkInterval a pointer to the chunk interval value
        * @param chunkSize a pointer to the chunk size value
+       * @param disableStagerSync a pointer to the boolean commanding disabling
+       * of the synchronization with the stager
        * @param firstTime whether this is a first call. used only for logging
        * purposes
        */
       void readConfigFile(unsigned int *syncInterval,
 			  unsigned int *chunkInterval,
                           unsigned int *chunkSize,
+                          bool *disableStagerSync,
                           bool firstTime = false) throw();
 
       /**
@@ -112,10 +115,12 @@ namespace castor {
        * @param nameServer the nameserver to use
        * @param diskCopyIds a vector of diskCopyIds
        * @param paths a map giving the full file name for each diskCopyId
+       * @param disableStagerSync whether to disable the stager synchronization
        */
       void synchronizeFiles(std::string nameServer,
                             const std::vector<u_signed64> &diskCopyIds,
-                            const std::map<u_signed64, std::string> &paths)
+                            const std::map<u_signed64, std::string> &paths,
+                            bool disableStagerSync)
         throw();
 
     private:

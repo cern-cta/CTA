@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2008/11/12 12:49:00 $ $Author: waldron $
+ * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2009/03/13 08:46:53 $ $Author: sponcec3 $
  *
  * Synchronization thread used to check periodically whether files need to be
  * deleted
@@ -46,10 +46,10 @@
 #include <map>
 
 // Definitions
-#define DEFAULT_SYNCINTERVAL  1800
-#define DEFAULT_CHUNKINTERVAL 120
-#define DEFAULT_CHUNKSIZE     2000
-
+#define DEFAULT_SYNCINTERVAL       1800
+#define DEFAULT_CHUNKINTERVAL      120
+#define DEFAULT_CHUNKSIZE          2000
+#define DEFAULT_DISABLESTAGERSYNC  false
 
 //-----------------------------------------------------------------------------
 // Constructor
@@ -71,14 +71,17 @@ void castor::gc::SynchronizationThread::run(void *param) {
   unsigned int syncInterval = DEFAULT_SYNCINTERVAL;
   unsigned int chunkInterval = DEFAULT_CHUNKINTERVAL;
   unsigned int chunkSize = DEFAULT_CHUNKSIZE;
-  readConfigFile(&syncInterval, &chunkInterval, &chunkSize, true);
+  bool disableStagerSync = DEFAULT_DISABLESTAGERSYNC;
+  readConfigFile(&syncInterval, &chunkInterval, &chunkSize,
+                 &disableStagerSync, true);
 
   // Endless loop
   for (;;) {
 
     // Get the synchronization interval and chunk size these may have changed
     // since the last iteration
-    readConfigFile(&syncInterval, &chunkInterval, &chunkSize);
+    readConfigFile(&syncInterval, &chunkInterval,
+                   &chunkSize, &disableStagerSync);
     if (syncInterval <= 0) {
       sleep(300);
       return;
@@ -194,7 +197,8 @@ void castor::gc::SynchronizationThread::run(void *param) {
                  castor::dlf::Param("Nameserver", fid.first)};
 	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 31, 2, params);
 	      
-	      synchronizeFiles(fid.first, diskCopyIds[fid.first], paths[fid.first]);
+	      synchronizeFiles(fid.first, diskCopyIds[fid.first],
+                               paths[fid.first], disableStagerSync);
 	      diskCopyIds[fid.first].clear();
 	      paths[fid.first].clear();
 	      sleep(chunkInterval);
@@ -224,7 +228,8 @@ void castor::gc::SynchronizationThread::run(void *param) {
 	     castor::dlf::Param("Nameserver", it2->first)};
 	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 31, 2, params);
 
-	  synchronizeFiles(it2->first, it2->second, paths[it2->first]);
+	  synchronizeFiles(it2->first, it2->second,
+                           paths[it2->first], disableStagerSync);
 	  sleep(chunkInterval);
 	}
       } catch (castor::exception::Exception e) {
@@ -247,6 +252,7 @@ void castor::gc::SynchronizationThread::readConfigFile
 (unsigned int *syncInterval,
  unsigned int *chunkInterval,
  unsigned int *chunkSize,
+ bool *disableStagerSync,
  bool firstTime)
   throw() {
 
@@ -319,6 +325,20 @@ void castor::gc::SynchronizationThread::readConfigFile
       castor::dlf::Param params[] =
         {castor::dlf::Param("Default", *chunkSize)};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 20, 1, params);
+    }
+  }
+
+  // Disabling of stager synchronization
+  if ((value = getenv("GC_DISABLESTAGERSYNC")) ||
+      (value = getconfent("GC", "DisableStagerSync", 0))) {
+    *disableStagerSync = DEFAULT_DISABLESTAGERSYNC;
+    if (!strcasecmp(value, "yes")) {
+      *disableStagerSync = true;
+    } else if (strcasecmp(value, "no")) {
+      castor::exception::Exception e(EINVAL);
+      e.getMessage() << "Invalid option for DisableStagerSync: " << value
+                     << " - must be 'yes' or 'no'" << std::endl;
+      throw e;
     }
   }
 
@@ -426,7 +446,8 @@ castor::gc::SynchronizationThread::fileIdFromFilePath(std::string filePath)
 void castor::gc::SynchronizationThread::synchronizeFiles
 (std::string nameServer,
  const std::vector<u_signed64> &diskCopyIds,
- const std::map<u_signed64, std::string> &paths) throw() {
+ const std::map<u_signed64, std::string> &paths,
+ bool disableStagerSync) throw() {
 
   // Make a copy of the disk copy id and file path containers so that they can
   // be modified safely
@@ -457,71 +478,75 @@ void castor::gc::SynchronizationThread::synchronizeFiles
     return;
   }
 
-  // Synchronize the diskcopys with the stager catalog
-  std::vector<u_signed64> orphans = gcSvc->stgFilesDeleted(dcIds, nameServer);
-
-  // Remove orphaned files
   Cns_fileid fileId;
   memset(&fileId, 0, sizeof(fileId));
   strncpy(fileId.server, nameServer.c_str(), sizeof(fileId.server));
   u_signed64 nbOrphanFiles = 0;
   u_signed64 spaceFreed = 0;
+  std::vector<u_signed64> orphans;
 
-  for (std::vector<u_signed64>::const_iterator it = orphans.begin();
-       it != orphans.end();
-       it++) {
-    fileId.fileid = fileIdFromFilePath(filePaths.find(*it)->second);
+  // Synchronize the diskcopys with the stager catalog if needed
+  if (!disableStagerSync) {
+    orphans = gcSvc->stgFilesDeleted(dcIds, nameServer);
+
+    // Remove orphaned files
+    for (std::vector<u_signed64>::const_iterator it = orphans.begin();
+         it != orphans.end();
+         it++) {
+      fileId.fileid = fileIdFromFilePath(filePaths.find(*it)->second);
     
-    // Get information about the file before unlinking
-    struct stat64 fileinfo;
-    if (stat64(filePaths.find(*it)->second.c_str(), &fileinfo) < 0) {
-      if (errno != ENOENT) {
-	// "Failed to stat file"
-	castor::dlf::Param params[] =
-	  {castor::dlf::Param("Filename", filePaths.find(*it)->second),
-	   castor::dlf::Param("Error", strerror(errno))};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 41, 2, params, &fileId);
+      // Get information about the file before unlinking
+      struct stat64 fileinfo;
+      if (stat64(filePaths.find(*it)->second.c_str(), &fileinfo) < 0) {
+        if (errno != ENOENT) {
+          // "Failed to stat file"
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("Filename", filePaths.find(*it)->second),
+             castor::dlf::Param("Error", strerror(errno))};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 41, 2, params, &fileId);
+        }
       }
+
+      if (unlink(filePaths.find(*it)->second.c_str()) < 0) {
+        if (errno != ENOENT) {
+          // "Deletion of orphaned local file failed"
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("Filename", filePaths.find(*it)->second),
+             castor::dlf::Param("Error", strerror(errno))};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28, 2, params, &fileId);
+        }
+      } else {
+
+        // "Deleting local file which is no longer in the stager catalog"
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("Filename", filePaths.find(*it)->second),
+           castor::dlf::Param("FileSize", (u_signed64)fileinfo.st_size),
+           castor::dlf::Param("FileAge", time(NULL) - fileinfo.st_ctime)};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 36, 3, params, &fileId);
+        spaceFreed += fileinfo.st_size;
+        nbOrphanFiles++;
+      }
+
+      // Remove the file from the file paths map
+      filePaths.erase(filePaths.find(*it));
     }
 
-    if (unlink(filePaths.find(*it)->second.c_str()) < 0) {
-      if (errno != ENOENT) {
-	// "Deletion of orphaned local file failed"
-	castor::dlf::Param params[] =
-	  {castor::dlf::Param("Filename", filePaths.find(*it)->second),
-	   castor::dlf::Param("Error", strerror(errno))};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28, 2, params, &fileId);
-      }
-    } else {
-
-      // "Deleting local file which is no longer in the stager catalog"
+    // "Summary of files removed by stager synchronization"
+    if (nbOrphanFiles) {
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Filename", filePaths.find(*it)->second),
-	 castor::dlf::Param("FileSize", (u_signed64)fileinfo.st_size),
-	 castor::dlf::Param("FileAge", time(NULL) - fileinfo.st_ctime)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 36, 3, params, &fileId);
-      spaceFreed += fileinfo.st_size;
-      nbOrphanFiles++;
+        {castor::dlf::Param("NbOrphanFiles", nbOrphanFiles),
+         castor::dlf::Param("SpaceFreed", spaceFreed)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_MONITORING, 33, 2, params);
     }
 
-    // Remove the file from the file paths map
-    filePaths.erase(filePaths.find(*it));
-  }
+    // During the unlinking of the files in the diskserver to stager catalog
+    // synchronization we removed the orphaned files from the file path map. As
+    // a result the file path map now only contains those files which need to
+    // be checked against the nameserver
+    if (filePaths.size() == 0) {
+      return;
+    }
 
-  // "Summary of files removed by stager synchronization"
-  if (nbOrphanFiles) {
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("NbOrphanFiles", nbOrphanFiles),
-       castor::dlf::Param("SpaceFreed", spaceFreed)};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_MONITORING, 33, 2, params);
-  }
-
-  // During the unlinking of the files in the diskserver to stager catalog
-  // synchronization we removed the orphaned files from the file path map. As
-  // a result the file path map now only contains those files which need to
-  // be checked against the nameserver
-  if (filePaths.size() == 0) {
-    return;
   }
 
   // Create an array of 64bit unsigned integers to pass to the Cns_bulkexist
