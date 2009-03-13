@@ -1,5 +1,5 @@
 /*
- * $Id: readlbl.c,v 1.18 2008/11/24 13:41:04 wiebalck Exp $
+ * $Id: readlbl.c,v 1.19 2009/03/13 14:20:24 wiebalck Exp $
  */
 
 /*	readlbl - read one possible label record 
@@ -22,12 +22,15 @@
 #include "Ctape_api.h"
 #include "serrno.h"
 
+int skiptprf(int, char *, int, int);
+char *getconfent();
+
 int readlbl(tapefd, path, lblbuf)
 int tapefd;
 char *path;
 char *lblbuf;
 {
-	int errcat;
+	/* int errcat; */
 	char func[16];
 	char *msgaddr;
 	int n;
@@ -54,6 +57,7 @@ char *lblbuf;
                                 /*
                                   The following logic is used to detect a blank tape:
                                   
+                                  . I/O error on read
                                   . rewind (must succeed)
                                   . try to skip 1 record forward (must fail) 
                                   . check if BOT and EOD are set
@@ -65,6 +69,9 @@ char *lblbuf;
                                   skipping to the EOD may take of the order of minutes before the code 
                                   recognizes that the tape is not empty. Skipping one block was chosen
                                   as it should save time. 
+
+                                  Using the RELAX_BLANKTAPE_CHECK the checking can be relaxed (the check
+                                  for BOT and EOD is not done). Use with care!
                                   
                                   Using MTIOCPOS to determine the position before taking any action does
                                   not seem to work on an empty tape. 
@@ -74,16 +81,22 @@ char *lblbuf;
                                 */
 
                                 if ((0 == rwndtape(tapefd, path)) && (0 != skiptprf(tapefd, path, 1, 1))) {
-                                /* if ((0 == rwndtape(tapefd, path)) && (0 == skip2eod(tapefd, path))) { */
-                                        if (ioctl (tapefd, MTIOCGET, &mt_info) >= 0) {
-                                                if (GMT_EOD(mt_info.mt_gstat) && GMT_BOT(mt_info.mt_gstat)) {
-                                                        usrmsg(func, "blank tape detected\n");
-                                                        RETURN (3);
-                                                } else {
-                                                        usrmsg(func, "tape not blank\n");
-                                                }
+                                        char *p = NULL;
+                                        p = getconfent( "TAPE", "RELAX_BLANKTAPE_CHECK", 0 );
+                                        if ((NULL != p) && (0 == strcasecmp(p, "YES"))) {
+                                                usrmsg(func, "IO error on read, rewind OK, skip fsr1 failed ==> tape is blank\n");
+                                                RETURN(3);
                                         } else {
-                                                usrmsg(func, "MTIOCGET failed\n");
+                                                if (ioctl (tapefd, MTIOCGET, &mt_info) >= 0) {
+                                                        if (GMT_EOD(mt_info.mt_gstat) && GMT_BOT(mt_info.mt_gstat)) {
+                                                                usrmsg(func, "blank tape detected (BOT and EOD are set)\n");
+                                                                RETURN (3);
+                                                        } else {
+                                                                usrmsg(func, "tape not blank\n");
+                                                        }
+                                                } else {
+                                                        usrmsg(func, "MTIOCGET failed\n");
+                                                }                                                
                                         }
                                 } else {
                                         usrmsg(func, "rwndtape failed or skiptprf succeeded\n");
