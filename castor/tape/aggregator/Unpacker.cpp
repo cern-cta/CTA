@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/RecallProtocolEngine.hpp
+ *                      Unpacker.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,35 +18,21 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * 
+ *
+ *
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_RECALLPROTOCOLENGINE
-#define CASTOR_TAPE_AGGREGATOR_RECALLPROTOCOLENGINE
-
-#include "castor/exception/Exception.hpp"
+#include "castor/tape/aggregator/Unpacker.hpp"
+#include "castor/tape/aggregator/Utils.hpp"
 
 
-namespace castor     {
-namespace tape       {
-namespace aggregator {
+//-----------------------------------------------------------------------------
+// run
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::Unpacker::run()
+  throw(castor::exception::Exception) {
 
-/**
- * Recalls one or more disk file from tape.
- */
-class RecallProtocolEngine {
-
-public:
-
-  /**
-   * Recalls one or more disk file from tape.
-   */
-  void run() throw(castor::exception::Exception);
-};
-
-} // namespace aggregator
-} // namespace tape
-} // namespace castor
-
-#endif // CASTOR_TAPE_AGGREGATOR_RECALLPROTOCOLENGINE
+  TAPE_THROW_CODE(ECANCELED,
+    ": Not implemeted yet");
+}

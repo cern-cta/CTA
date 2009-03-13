@@ -34,7 +34,7 @@
 #include "castor/tape/aggregator/Net.hpp"
 #include "castor/tape/aggregator/Packer.hpp"
 #include "castor/tape/aggregator/RcpJobSubmitter.hpp"
-#include "castor/tape/aggregator/RecallProtocolEngine.hpp"
+#include "castor/tape/aggregator/Unpacker.hpp"
 #include "castor/tape/aggregator/RtcpAcknowledgeMsg.hpp"
 #include "castor/tape/aggregator/RtcpTapeRqstErrMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpFileRqstErrMsgBody.hpp"
@@ -156,7 +156,7 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
       // Else recalling
       } else {
 
-        RecallProtocolEngine recallProtocolEngine;
+        Unpacker recallProtocolEngine;
         recallProtocolEngine.run();
       }
 
