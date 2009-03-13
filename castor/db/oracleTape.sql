@@ -1,142 +1,30 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.722 $ $Date: 2009/03/12 07:12:03 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.723 $ $Date: 2009/03/13 15:23:48 $ $Author: sponcec3 $
  *
  * PL/SQL code for the interface to the tape system
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
 
-/************************************************/
-/* Triggers to keep NbTapeCopiesInFS consistent */
-/************************************************/
- 
-/* Used to create a row INTO NbTapeCopiesInFS whenever a new
-   Stream is created */
-CREATE OR REPLACE TRIGGER tr_Stream_Insert
-BEFORE INSERT ON Stream
-FOR EACH ROW
-BEGIN
-  -- Access to NbTapeCopiesInFS needs to be serialized
-  -- because several copies on different file systems
-  -- from different streams can cause deadlocks, in particular
-  -- between different migrators running bestTapeCopyForStream
-  -- or between a migrator and rtcpclientd running resetStream
-  LOCK TABLE NbTapeCopiesInFS IN EXCLUSIVE MODE;
-  FOR item in (SELECT id FROM FileSystem) LOOP
-    INSERT INTO NbTapeCopiesInFS (FS, Stream, NbTapeCopies)
-      VALUES (item.id, :new.id, 0);
-  END LOOP;
-END;
-/
-
-
-/* Used to delete rows IN NbTapeCopiesInFS whenever a
-   Stream is deleted */
-CREATE OR REPLACE TRIGGER tr_Stream_Delete
-BEFORE DELETE ON Stream
-FOR EACH ROW
-BEGIN
-  -- Access to NbTapeCopiesInFS needs to be serialized,
-  -- see tr_Stream_Insert
-  LOCK TABLE NbTapeCopiesInFS IN EXCLUSIVE MODE;
-  DELETE FROM NbTapeCopiesInFS WHERE Stream = :old.id;
-END;
-/
-
-
-/* Updates the count of tapecopies in NbTapeCopiesInFS
-   whenever a TapeCopy is linked to a Stream */
-CREATE OR REPLACE TRIGGER tr_Stream2TapeCopy_Insert
-AFTER INSERT ON Stream2TapeCopy
-REFERENCING NEW AS NEW OLD AS OLD
-FOR EACH ROW
-DECLARE
-  cfSize NUMBER;
-BEGIN
-  -- Access to NbTapeCopiesInFS needs to be serialized,
-  -- see tr_Stream_Insert
-  LOCK TABLE NbTapeCopiesInFS IN EXCLUSIVE MODE;
-  UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies + 1
-   WHERE FS IN (SELECT DiskCopy.fileSystem
-                  FROM DiskCopy, TapeCopy
-                 WHERE DiskCopy.castorFile = TapeCopy.castorFile
-                   AND TapeCopy.id = :new.child
-                   AND DiskCopy.status = 10) -- CANBEMIGR
-     AND Stream = :new.parent;
-END;
-/
-
-
-/* Updates the count of tapecopies in NbTapeCopiesInFS
-   whenever a TapeCopy is unlinked from a Stream */
-CREATE OR REPLACE TRIGGER tr_Stream2TapeCopy_Delete
-BEFORE DELETE ON Stream2TapeCopy
-REFERENCING NEW AS NEW OLD AS OLD
-FOR EACH ROW
-DECLARE cfSize NUMBER;
-BEGIN
-  -- Access to NbTapeCopiesInFS needs to be serialized,
-  -- see tr_Stream_Insert
-  LOCK TABLE NbTapeCopiesInFS IN EXCLUSIVE MODE;
-  UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies - 1
-   WHERE FS IN (SELECT DiskCopy.fileSystem
-                  FROM DiskCopy, TapeCopy
-                 WHERE DiskCopy.castorFile = TapeCopy.castorFile
-                   AND TapeCopy.id = :old.child
-                   AND DiskCopy.status = 10) -- CANBEMIGR
-     AND Stream = :old.parent;
-END;
-/
-
-/* Used to create a row in NbTapeCopiesInFS and FileSystemsToCheck
+/* Used to create a row in FileSystemsToCheck
    whenever a new FileSystem is created */
 CREATE OR REPLACE TRIGGER tr_FileSystem_Insert
 BEFORE INSERT ON FileSystem
 FOR EACH ROW
 BEGIN
-  FOR item in (SELECT id FROM Stream) LOOP
-    INSERT INTO NbTapeCopiesInFS (FS, Stream, NbTapeCopies) VALUES (:new.id, item.id, 0);
-  END LOOP;
   INSERT INTO FileSystemsToCheck (FileSystem, ToBeChecked) VALUES (:new.id, 0);
 END;
 /
 
-/* Used to delete rows in NbTapeCopiesInFS and FileSystemsToCheck
+/* Used to delete rows in FileSystemsToCheck
    whenever a FileSystem is deleted */
 CREATE OR REPLACE TRIGGER tr_FileSystem_Delete
 BEFORE DELETE ON FileSystem
 FOR EACH ROW
 BEGIN
-  DELETE FROM NbTapeCopiesInFS WHERE FS = :old.id;
   DELETE FROM FileSystemsToCheck WHERE FileSystem = :old.id;
 END;
 /
-
-/* Note: one more trigger is defined in oracleStager.sql
-   to update the count of tapecopies in NbTapeCopiesInFS
-   whenever a new DiskCopy goes online. */
-
-
-/* Used to create a row INTO LockTable whenever a new
-   DiskServer is created */
-CREATE OR REPLACE TRIGGER tr_DiskServer_Insert
-BEFORE INSERT ON DiskServer
-FOR EACH ROW
-BEGIN
-  INSERT INTO LockTable (DiskServerId, TheLock) VALUES (:new.id, 0);
-END;
-/
-
-/* Used to delete rows IN LockTable whenever a
-   DiskServer is deleted */
-CREATE OR REPLACE TRIGGER tr_DiskServer_Delete
-BEFORE DELETE ON DiskServer
-FOR EACH ROW
-BEGIN
-  DELETE FROM LockTable WHERE DiskServerId = :old.id;
-END;
-/
-
 
 /* PL/SQL methods to update FileSystem weight for new migrator streams */
 CREATE OR REPLACE PROCEDURE updateFsMigratorOpened
@@ -163,37 +51,21 @@ END;
 /
 
 
-/* PL/SQL method implementing anyTapeCopyForStream.
- * This implementation is not the original one. It uses NbTapeCopiesInFS
- * because a join on the tables between DiskServer and Stream2TapeCopy
- * costs too much. It should actually not be the case but ORACLE is unable
- * to optimize correctly queries having a ROWNUM clause. It processes the
- * the query without it (yes !!!) and applies the clause afterwards.
- * Here is the previous select in case ORACLE improves some day :
- * SELECT \/*+ FIRST_ROWS *\/ TapeCopy.id INTO unused
- * FROM DiskServer, FileSystem, DiskCopy, CastorFile, TapeCopy, Stream2TapeCopy
- *  WHERE DiskServer.id = FileSystem.diskserver
- *   AND DiskServer.status IN (0, 1) -- DISKSERVER_PRODUCTION, DISKSERVER_DRAINING
- *   AND FileSystem.id = DiskCopy.filesystem
- *   AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
- *   AND DiskCopy.castorfile = CastorFile.id
- *   AND TapeCopy.castorfile = Castorfile.id
- *   AND Stream2TapeCopy.child = TapeCopy.id
- *   AND Stream2TapeCopy.parent = streamId
- *   AND TapeCopy.status = 2 -- WAITINSTREAMS
- *   AND ROWNUM < 2;  */
+/* PL/SQL method implementing anyTapeCopyForStream.*/
 CREATE OR REPLACE PROCEDURE anyTapeCopyForStream(streamId IN INTEGER, res OUT INTEGER) AS
   unused INTEGER;
 BEGIN
-  SELECT NbTapeCopiesInFS.NbTapeCopies INTO unused
-    FROM NbTapeCopiesInFS, FileSystem, DiskServer
-   WHERE NbTapeCopiesInFS.stream = streamId
-     AND NbTapeCopiesInFS.NbTapeCopies > 0
-     AND FileSystem.id = NbTapeCopiesInFS.FS
-     AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
-     AND DiskServer.id = FileSystem.DiskServer
+  SELECT /*+ FIRST_ROWS */ TapeCopy.id INTO unused
+    FROM DiskServer, FileSystem, DiskCopy, TapeCopy, Stream2TapeCopy
+   WHERE DiskServer.id = FileSystem.diskserver
      AND DiskServer.status IN (0, 1) -- DISKSERVER_PRODUCTION, DISKSERVER_DRAINING
-     AND ROWNUM < 2;
+     AND FileSystem.id = DiskCopy.filesystem
+     AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
+     AND DiskCopy.castorfile = TapeCopy.castorfile
+     AND Stream2TapeCopy.child = TapeCopy.id
+     AND Stream2TapeCopy.parent = streamId
+     AND TapeCopy.status = 2 -- WAITINSTREAMS
+     AND ROWNUM < 2; 
   res := 1;
 EXCEPTION
  WHEN NO_DATA_FOUND THEN
@@ -236,15 +108,15 @@ CREATE OR REPLACE PROCEDURE defaultMigrSelPolicy(streamId IN INTEGER,
                                                  nsHost OUT VARCHAR2, fileSize OUT INTEGER,
                                                  tapeCopyId OUT INTEGER, lastUpdateTime OUT INTEGER) AS
   fileSystemId INTEGER := 0;
-  dsid NUMBER;
-  fsDiskServer NUMBER;
+  diskServerId NUMBER;
   lastFSChange NUMBER;
   lastFSUsed NUMBER;
   lastButOneFSUsed NUMBER;
   findNewFS NUMBER := 1;
   nbMigrators NUMBER := 0;
-  unused "numList";
+  unused NUMBER;
 BEGIN
+  tapeCopyId := 0;
   -- First try to see whether we should resuse the same filesystem as last time
   SELECT lastFileSystemChange, lastFileSystemUsed, lastButOneFileSystemUsed
     INTO lastFSChange, lastFSUsed, lastButOneFSUsed
@@ -288,71 +160,61 @@ BEGIN
     END IF;
   END IF;
   IF findNewFS = 1 THEN
-    -- We lock here a given DiskServer. See the comment for the creation of the LockTable
-    -- table for a full explanation of why we need such a stupid UPDATE statement
-    UPDATE LockTable SET theLock = 1
-     WHERE diskServerId = (
-       SELECT DS.diskserver_id
-         FROM (
-           -- The double level of selects is due to the fact that ORACLE is unable
-           -- to use ROWNUM and ORDER BY at the same time. Thus, we have to first compute
-           -- the maxRate and then select on it.
-           SELECT diskserver.id diskserver_id
-             FROM FileSystem FS, NbTapeCopiesInFS, DiskServer
-            WHERE FS.id = NbTapeCopiesInFS.FS
-              AND NbTapeCopiesInFS.NbTapeCopies > 0
-              AND NbTapeCopiesInFS.Stream = StreamId
-              AND FS.status IN (0, 1)         -- PRODUCTION, DRAINING
-              AND DiskServer.id = FS.diskserver
-              AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
-            ORDER BY -- first prefer diskservers where no migrator runs and filesystems with no recalls
-                     DiskServer.nbMigratorStreams ASC, FS.nbRecallerStreams ASC,
-                     -- then order by rate as defined by the function
-                     fileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams,
-                                    FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC,
-                     -- finally use randomness to avoid preferring always the same FS
-                     DBMS_Random.value
-            ) DS
-        WHERE ROWNUM < 2)
-    RETURNING diskServerId INTO dsid;
-    -- Now we got our Diskserver but we lost all other data (due to the fact we had
-    -- to do an update for the lock and we could not do a join in the update).
-    -- So here we select all we need
-    SELECT FN.name, FN.mountPoint, FN.diskserver, FN.id
-      INTO diskServerName, mountPoint, fsDiskServer, fileSystemId
-      FROM (
-        SELECT DiskServer.name, FS.mountPoint, FS.diskserver, FS.id
-          FROM FileSystem FS, NbTapeCopiesInFS, Diskserver
-         WHERE FS.id = NbTapeCopiesInFS.FS
-           AND DiskServer.id = FS.diskserver
-           AND NbTapeCopiesInFS.NbTapeCopies > 0
-           AND NbTapeCopiesInFS.Stream = StreamId
-           AND FS.status IN (0, 1)    -- PRODUCTION, DRAINING
-           AND FS.diskserver = dsId
-         ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams,
-                                 FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC,
-                  DBMS_Random.value
-         ) FN
-     WHERE ROWNUM < 2;
-    SELECT /*+ FIRST_ROWS(1)  LEADING(D T ST) */
-           D.path, D.id, D.castorfile, T.id
-      INTO path, dci, castorFileId, tapeCopyId
-      FROM DiskCopy D, TapeCopy T, Stream2TapeCopy ST
-     WHERE D.status = 10 -- CANBEMIGR
-       AND D.filesystem = fileSystemId
-       AND ST.parent = streamId
-       AND T.status = 2 -- WAITINSTREAMS
-       AND ST.child = T.id
-       AND T.castorfile = D.castorfile
-       AND ROWNUM < 2;
-    SELECT CastorFile.FileId, CastorFile.NsHost, CastorFile.FileSize, CastorFile.lastUpdateTime
-      INTO fileId, nsHost, fileSize, lastUpdateTime
-      FROM CastorFile
-     WHERE id = castorFileId;
+    FOR f IN (
+    SELECT FileSystem.id AS FileSystemId, DiskServer.id AS DiskServerId, DiskServer.name, FileSystem.mountPoint
+       FROM Stream, SvcClass2TapePool, DiskPool2SvcClass, FileSystem, DiskServer
+      WHERE Stream.id = streamId
+        AND Stream.TapePool = SvcClass2TapePool.child
+        AND SvcClass2TapePool.parent = DiskPool2SvcClass.child
+        AND DiskPool2SvcClass.parent = FileSystem.diskPool
+        AND FileSystem.diskServer = DiskServer.id
+        AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
+        AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
+      ORDER BY -- first prefer diskservers where no migrator runs and filesystems with no recalls
+               DiskServer.nbMigratorStreams ASC, FileSystem.nbRecallerStreams ASC,
+               -- then order by rate as defined by the function
+               fileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams, FileSystem.nbWriteStreams,
+                              FileSystem.nbReadWriteStreams, FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC,
+               -- finally use randomness to avoid preferring always the same FS
+               DBMS_Random.value) LOOP
+       BEGIN
+         -- lock the complete diskServer as we will update all filesystems
+         SELECT id INTO unused FROM DiskServer WHERE id = f.DiskServerId FOR UPDATE NOWAIT;
+         SELECT /*+ FIRST_ROWS(1) LEADING(D T StT C) */
+                f.diskServerId, f.name, f.mountPoint, f.fileSystemId, D.path, D.id, D.castorfile, C.fileId, C.nsHost, C.fileSize, T.id, C.lastUpdateTime
+           INTO diskServerId, diskServerName, mountPoint, fileSystemId, path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
+           FROM DiskCopy D, TapeCopy T, Stream2TapeCopy StT, Castorfile C
+          WHERE decode(D.status,10,D.status,NULL) = 10 -- CANBEMIGR
+            AND D.filesystem = f.fileSystemId
+            AND StT.parent = streamId
+            AND T.status = 2 -- WAITINSTREAMS
+            AND StT.child = T.id
+            AND T.castorfile = D.castorfile
+            AND C.id = D.castorfile
+            AND ROWNUM < 2;
+         -- found something on this filesystem, no need to go on
+         diskServerId := f.DiskServerId;
+         fileSystemId := f.fileSystemId;
+         EXIT;
+       EXCEPTION WHEN NO_DATA_FOUND THEN
+         -- either the filesystem is already locked or we found nothing,
+         -- let's go to the next one
+         NULL;
+       END;
+    END LOOP;
   END IF;
+
+  IF tapeCopyId = 0 THEN
+    -- Nothing found, reset last filesystems used and exit
+    UPDATE Stream
+       SET lastFileSystemUsed = 0, lastButOneFileSystemUsed = 0
+     WHERE id = streamId;
+    RETURN;
+  END IF;
+
+  -- Here we found a tapeCopy and process it
+
   -- detach the tapecopy from the stream now that it is SELECTED;
-  -- the triggers will update NbTapeCopiesInFS accordingly, and
-  -- they will prevent deadlocks by taking a table lock on NbTapeCopiesInFS
   DELETE FROM Stream2TapeCopy
    WHERE child = tapeCopyId;
 
@@ -374,38 +236,7 @@ BEGIN
   END IF;
 
   -- Update Filesystem state
-  updateFSMigratorOpened(fsDiskServer, fileSystemId, 0);
-
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- Reset last filesystems used
-    UPDATE Stream
-       SET lastFileSystemUsed = 0, lastButOneFileSystemUsed = 0
-     WHERE id = streamId;
-    -- No data found means the selected filesystem has no
-    -- tapecopies to be migrated. Thus we go to next one
-    -- However, we reset the NbTapeCopiesInFS row that failed
-    -- This is not 100% safe but is far better than retrying
-    -- in the same conditions
-    IF 0 != fileSystemId THEN
-      UPDATE NbTapeCopiesInFS
-         SET NbTapeCopies = 0
-       WHERE Stream = StreamId
-         AND NbTapeCopiesInFS.FS = fileSystemId;
-      -- Commit now previously taken locks before retrying, as we
-      -- are restarting from scratch. This also prevents deadlocks
-      COMMIT;
-      bestTapeCopyForStream(streamId,
-                            diskServerName,
-                            mountPoint,
-                            path,
-                            dci,
-                            castorFileId,
-                            fileId,
-                            nsHost,
-                            fileSize,
-                            tapeCopyId,
-                            lastUpdateTime);
-    END IF;
+  updateFSMigratorOpened(diskServerId, fileSystemId, 0);
 END;
 /
 
@@ -417,15 +248,16 @@ CREATE OR REPLACE PROCEDURE drainDiskMigrSelPolicy(streamId IN INTEGER,
                                                    nsHost OUT VARCHAR2, fileSize OUT INTEGER,
                                                    tapeCopyId OUT INTEGER, lastUpdateTime OUT INTEGER) AS
   fileSystemId INTEGER := 0;
-  dsid NUMBER;
+  diskServerId NUMBER;
   fsDiskServer NUMBER;
   lastFSChange NUMBER;
   lastFSUsed NUMBER;
   lastButOneFSUsed NUMBER;
   findNewFS NUMBER := 1;
   nbMigrators NUMBER := 0;
-  unused "numList";
+  unused NUMBER;
 BEGIN
+  tapeCopyId := 0;
   -- First try to see whether we should resuse the same filesystem as last time
   SELECT lastFileSystemChange, lastFileSystemUsed, lastButOneFileSystemUsed
     INTO lastFSChange, lastFSUsed, lastButOneFSUsed
@@ -437,7 +269,7 @@ BEGIN
     IF nbMigrators = 1 THEN
       BEGIN
         -- check states of the diskserver and filesystem and get mountpoint and diskserver name
-        SELECT diskserver.id, name, mountPoint, FileSystem.id INTO dsid, diskServerName, mountPoint, fileSystemId
+        SELECT diskserver.id, name, mountPoint, FileSystem.id INTO diskServerId, diskServerName, mountPoint, fileSystemId
           FROM FileSystem, DiskServer
          WHERE FileSystem.diskServer = DiskServer.id
            AND FileSystem.id = lastFSUsed
@@ -470,94 +302,97 @@ BEGIN
     END IF;
   END IF;
   IF findNewFS = 1 THEN
-    -- We lock here a given DiskServer. See the comment for the creation of the LockTable
-    -- table for a full explanation of why we need such a stupid UPDATE statement
-
-    -- The first idea is to reuse the diskserver of the lastFSUsed, even if we change filesystem
-    dsId := -1;
-    UPDATE LockTable SET theLock = 1
-     WHERE diskServerId = (
-             SELECT lastButOneFSUsed
-               FROM FileSystem FS, NbTapeCopiesInFS, DiskServer
-              WHERE FS.id = NbTapeCopiesInFS.FS
-                AND NbTapeCopiesInFS.NbTapeCopies > 0
-                AND NbTapeCopiesInFS.Stream = StreamId
-                AND FS.status IN (0, 1)         -- PRODUCTION, DRAINING
-                AND DiskServer.id = FS.diskserver
-                AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
-                AND DiskServer.id = lastButOneFSUsed
-                AND ROWNUM < 2)
-    RETURNING diskServerId INTO dsid;
-    IF dsId = -1 THEN
-      -- We could not reuse the same diskserver, so we jump to another one,
-      -- We try to find one with no stream on it
-      UPDATE LockTable SET theLock = 1
-       WHERE diskServerId = (
-         SELECT DS.diskserver_id
-           FROM (
-             -- The double level of selects is due to the fact that ORACLE is unable
-             -- to use ROWNUM and ORDER BY at the same time. Thus, we have to first compute
-             -- the maxRate and then select on it.
-             SELECT diskserver.id diskserver_id
-               FROM FileSystem FS, NbTapeCopiesInFS, DiskServer
-              WHERE FS.id = NbTapeCopiesInFS.FS
-                AND NbTapeCopiesInFS.NbTapeCopies > 0
-                AND NbTapeCopiesInFS.Stream = StreamId
-                AND FS.status IN (0, 1)         -- PRODUCTION, DRAINING
-                AND DiskServer.id = FS.diskserver
-                AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
-              ORDER BY -- first prefer diskservers where no migrator runs and filesystems with no recalls
-                       DiskServer.nbMigratorStreams ASC, FS.nbRecallerStreams ASC,
-                       -- then order by rate as defined by the function
-                       fileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams,
-                                      FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC,
-                       -- finally use randomness to avoid preferring always the same FS
-                       DBMS_Random.value
-              ) DS
-          WHERE ROWNUM < 2)
-      RETURNING diskServerId INTO dsid;
-    END IF;
-    -- Now we got our Diskserver but we lost all other data (due to the fact we had
-    -- to do an update for the lock and we could not do a join in the update).
-    -- So here we select all we need
-    SELECT FN.name, FN.mountPoint, FN.diskserver, FN.id
-      INTO diskServerName, mountPoint, fsDiskServer, fileSystemId
-      FROM (
-        SELECT DiskServer.name, FS.mountPoint, FS.diskserver, FS.id
-          FROM FileSystem FS, NbTapeCopiesInFS, Diskserver
-         WHERE FS.id = NbTapeCopiesInFS.FS
-           AND DiskServer.id = FS.diskserver
-           AND NbTapeCopiesInFS.NbTapeCopies > 0
-           AND NbTapeCopiesInFS.Stream = StreamId
-           AND FS.status IN (0, 1)    -- PRODUCTION, DRAINING
-           AND FS.diskserver = dsId
-         ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams,
-                                 FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC,
-                  DBMS_Random.value
-         ) FN
-     WHERE ROWNUM < 2;
-    SELECT P.path, P.diskcopy_id, P.castorfile,
-           C.fileId, C.nsHost, C.fileSize, P.id, C.lastUpdateTime
-      INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
-      FROM (SELECT /*+ ORDERED USE_NL(D T) INDEX(T I_TapeCopy_CF_Status_2) INDEX(ST I_Stream2TapeCopy_PC) */
-            D.path, D.diskcopy_id, D.castorfile, T.id
-              FROM (SELECT /*+ INDEX(DK I_DiskCopy_FS_Status_10) */
-                           DK.path path, DK.id diskcopy_id, DK.castorfile
-                      FROM DiskCopy DK
-                     WHERE decode(DK.status,10,DK.status,null) = 10 -- CANBEMIGR
-                       AND DK.filesystem = fileSystemId) D,
-                    TapeCopy T, Stream2TapeCopy ST
-             WHERE T.castorfile = D.castorfile
-               AND ST.child = T.id
-               AND ST.parent = streamId
-               AND decode(T.status,2,T.status,null) = 2 -- WAITINSTREAMS
-               AND ROWNUM < 2) P, castorfile C
-     WHERE P.castorfile = C.id;
-
+    -- We try first to reuse the diskserver of the lastFSUsed, even if we change filesystem
+    FOR f IN (
+      SELECT FileSystem.id AS FileSystemId, DiskServer.id AS DiskServerId, DiskServer.name, FileSystem.mountPoint
+        FROM FileSystem, DiskServer
+       WHERE FileSystem.diskServer = DiskServer.id
+         AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
+         AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
+         AND DiskServer.id = lastButOneFSUsed) LOOP
+       BEGIN
+         -- lock the complete diskServer as we will update all filesystems
+         SELECT id INTO unused FROM DiskServer WHERE id = f.DiskServerId FOR UPDATE NOWAIT;
+         SELECT /*+ FIRST_ROWS(1) LEADING(D T StT C) */
+                f.diskServerId, f.name, f.mountPoint, f.fileSystemId, D.path, D.id, D.castorfile, C.fileId, C.nsHost, C.fileSize, T.id, C.lastUpdateTime
+           INTO diskServerId, diskServerName, mountPoint, fileSystemId, path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
+           FROM DiskCopy D, TapeCopy T, Stream2TapeCopy StT, Castorfile C
+          WHERE decode(D.status,10,D.status,NULL) = 10 -- CANBEMIGR
+            AND D.filesystem = f.fileSystemId
+            AND StT.parent = streamId
+            AND T.status = 2 -- WAITINSTREAMS
+            AND StT.child = T.id
+            AND T.castorfile = D.castorfile
+            AND C.id = D.castorfile
+            AND ROWNUM < 2;
+         -- found something on this filesystem, no need to go on
+         diskServerId := f.DiskServerId;
+         fileSystemId := f.fileSystemId;
+         EXIT;
+       EXCEPTION WHEN NO_DATA_FOUND THEN
+         -- either the filesystem is already locked or we found nothing,
+         -- let's go to the next one
+         NULL;
+       END;
+    END LOOP;
   END IF;
+  IF tapeCopyId = 0 THEN
+    -- Then we go for all potential filesystems. Note the duplication of code, due to the fact that ORACLE cannot order unions
+    FOR f IN (
+      SELECT FileSystem.id AS FileSystemId, DiskServer.id AS DiskServerId, DiskServer.name, FileSystem.mountPoint
+        FROM Stream, SvcClass2TapePool, DiskPool2SvcClass, FileSystem, DiskServer
+       WHERE Stream.id = streamId
+         AND Stream.TapePool = SvcClass2TapePool.child
+         AND SvcClass2TapePool.parent = DiskPool2SvcClass.child
+         AND DiskPool2SvcClass.parent = FileSystem.diskPool
+         AND FileSystem.diskServer = DiskServer.id
+         AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
+         AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
+       ORDER BY -- first prefer diskservers where no migrator runs and filesystems with no recalls
+                DiskServer.nbMigratorStreams ASC, FileSystem.nbRecallerStreams ASC,
+                -- then order by rate as defined by the function
+                fileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams, FileSystem.nbWriteStreams,
+                               FileSystem.nbReadWriteStreams, FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC,
+                -- finally use randomness to avoid preferring always the same FS
+                DBMS_Random.value) LOOP
+       BEGIN
+         -- lock the complete diskServer as we will update all filesystems
+         SELECT id INTO unused FROM DiskServer WHERE id = f.DiskServerId FOR UPDATE NOWAIT;
+         SELECT /*+ FIRST_ROWS(1) LEADING(D T StT C) */
+                f.diskServerId, f.name, f.mountPoint, f.fileSystemId, D.path, D.id, D.castorfile, C.fileId, C.nsHost, C.fileSize, T.id, C.lastUpdateTime
+           INTO diskServerId, diskServerName, mountPoint, fileSystemId, path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
+           FROM DiskCopy D, TapeCopy T, Stream2TapeCopy StT, Castorfile C
+          WHERE decode(D.status,10,D.status,NULL) = 10 -- CANBEMIGR
+            AND D.filesystem = f.fileSystemId
+            AND StT.parent = streamId
+            AND T.status = 2 -- WAITINSTREAMS
+            AND StT.child = T.id
+            AND T.castorfile = D.castorfile
+            AND C.id = D.castorfile
+            AND ROWNUM < 2;
+         -- found something on this filesystem, no need to go on
+         diskServerId := f.DiskServerId;
+         fileSystemId := f.fileSystemId;
+         EXIT;
+       EXCEPTION WHEN NO_DATA_FOUND THEN
+         -- either the filesystem is already locked or we found nothing,
+         -- let's go to the next one
+         NULL;
+       END;
+    END LOOP;
+  END IF;
+
+  IF tapeCopyId = 0 THEN
+    -- Nothing found, reset last filesystems used and exit
+    UPDATE Stream
+       SET lastFileSystemUsed = 0, lastButOneFileSystemUsed = 0
+     WHERE id = streamId;
+    RETURN;
+  END IF;
+
+  -- Here we found a tapeCopy and process it
+
   -- detach the tapecopy from the stream now that it is SELECTED;
-  -- the triggers will update NbTapeCopiesInFS accordingly, and
-  -- they will prevent deadlocks by taking a table lock on NbTapeCopiesInFS
   DELETE FROM Stream2TapeCopy
    WHERE child = tapeCopyId;
 
@@ -581,36 +416,6 @@ BEGIN
   -- Update Filesystem state
   updateFSMigratorOpened(fsDiskServer, fileSystemId, 0);
 
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- Reset last filesystems used
-    UPDATE Stream
-       SET lastFileSystemUsed = 0, lastButOneFileSystemUsed = 0
-     WHERE id = streamId;
-    -- No data found means the selected filesystem has no
-    -- tapecopies to be migrated. Thus we go to next one
-    -- However, we reset the NbTapeCopiesInFS row that failed
-    -- This is not 100% safe but is far better than retrying
-    -- in the same conditions
-    IF 0 != fileSystemId THEN
-      UPDATE NbTapeCopiesInFS
-         SET NbTapeCopies = 0
-       WHERE Stream = StreamId
-         AND NbTapeCopiesInFS.FS = fileSystemId;
-      -- Commit now previously taken locks before retrying, as we
-      -- are restarting from scratch. This also prevents deadlocks
-      COMMIT;
-      bestTapeCopyForStream(streamId,
-                            diskServerName,
-                            mountPoint,
-                            path,
-                            dci,
-                            castorFileId,
-                            fileId,
-                            nsHost,
-                            fileSize,
-                            tapeCopyId,
-                            lastUpdateTime);
-    END IF;
 END;
 /
 
@@ -622,79 +427,68 @@ CREATE OR REPLACE PROCEDURE repackMigrSelPolicy(streamId IN INTEGER,
                                                 nsHost OUT VARCHAR2, fileSize OUT INTEGER,
                                                 tapeCopyId OUT INTEGER, lastUpdateTime OUT INTEGER) AS
   fileSystemId INTEGER := 0;
-  dsid NUMBER;
-  fsDiskServer NUMBER;
+  diskServerId NUMBER;
   lastFSChange NUMBER;
   lastFSUsed NUMBER;
   lastButOneFSUsed NUMBER;
   nbMigrators NUMBER := 0;
-  streamIds "numList";
+  unused NUMBER;
 BEGIN
-  -- We lock here a given DiskServer. See the comment for the creation of the LockTable
-  -- table for a full explanation of why we need such a stupid UPDATE statement
-  UPDATE LockTable SET theLock = 1
-   WHERE diskServerId = (
-     SELECT DS.diskserver_id
-       FROM (
-         -- The double level of selects is due to the fact that ORACLE is unable
-         -- to use ROWNUM and ORDER BY at the same time. Thus, we have to first compute
-         -- the maxRate and then select on it.
-         SELECT diskserver.id diskserver_id
-           FROM FileSystem FS, NbTapeCopiesInFS, DiskServer
-          WHERE FS.id = NbTapeCopiesInFS.FS
-            AND NbTapeCopiesInFS.NbTapeCopies > 0
-            AND NbTapeCopiesInFS.Stream = StreamId
-            AND FS.status IN (0, 1)         -- PRODUCTION, DRAINING
-            AND DiskServer.id = FS.diskserver
-            AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
-          ORDER BY -- first prefer diskservers where no migrator runs and filesystems with no recalls
-                   DiskServer.nbMigratorStreams ASC, FS.nbRecallerStreams ASC,
-                   -- then order by rate as defined by the function
-                   fileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams,
-                                  FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC,
-                   -- finally use randomness to avoid preferring always the same FS
-                   DBMS_Random.value
-          ) DS
-      WHERE ROWNUM < 2)
-  RETURNING diskServerId INTO dsid;
-  -- Now we got our Diskserver but we lost all other data (due to the fact we had
-  -- to do an update for the lock and we could not do a join in the update).
-  -- So here we select all we need
-  SELECT FN.name, FN.mountPoint, FN.diskserver, FN.id
-    INTO diskServerName, mountPoint, fsDiskServer, fileSystemId
-    FROM (
-      SELECT DiskServer.name, FS.mountPoint, FS.diskserver, FS.id
-        FROM FileSystem FS, NbTapeCopiesInFS, Diskserver
-       WHERE FS.id = NbTapeCopiesInFS.FS
-         AND DiskServer.id = FS.diskserver
-         AND NbTapeCopiesInFS.NbTapeCopies > 0
-         AND NbTapeCopiesInFS.Stream = StreamId
-         AND FS.status IN (0, 1)    -- PRODUCTION, DRAINING
-         AND FS.diskserver = dsId
-    ORDER BY fileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams,
-                            FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC,
-             DBMS_Random.value
-       ) FN
-   WHERE ROWNUM < 2;
-  SELECT /*+ FIRST_ROWS(1)  LEADING(D T ST) */
-         D.path, D.id, D.castorfile, T.id
-    INTO path, dci, castorFileId, tapeCopyId
-    FROM DiskCopy D, TapeCopy T, Stream2TapeCopy ST
-   WHERE D.status = 10 -- CANBEMIGR
-     AND D.filesystem = fileSystemId
-     AND ST.parent = streamId
-     AND T.status = 2 -- WAITINSTREAMS
-     AND ST.child = T.id
-     AND T.castorfile = D.castorfile
-     AND ROWNUM < 2;
-  SELECT CastorFile.FileId, CastorFile.NsHost, CastorFile.FileSize, CastorFile.lastUpdateTime
-    INTO fileId, nsHost, fileSize, lastUpdateTime
-    FROM CastorFile
-   WHERE id = castorFileId;
+  tapeCopyId := 0;
+  FOR f IN (
+    SELECT FileSystem.id AS FileSystemId, DiskServer.id AS DiskServerId, DiskServer.name, FileSystem.mountPoint
+       FROM Stream, SvcClass2TapePool, DiskPool2SvcClass, FileSystem, DiskServer
+      WHERE Stream.id = streamId
+        AND Stream.TapePool = SvcClass2TapePool.child
+        AND SvcClass2TapePool.parent = DiskPool2SvcClass.child
+        AND DiskPool2SvcClass.parent = FileSystem.diskPool
+        AND FileSystem.diskServer = DiskServer.id
+        AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
+        AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
+      ORDER BY -- first prefer diskservers where no migrator runs and filesystems with no recalls
+               DiskServer.nbMigratorStreams ASC, FileSystem.nbRecallerStreams ASC,
+               -- then order by rate as defined by the function
+               fileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams, FileSystem.nbWriteStreams,
+                              FileSystem.nbReadWriteStreams, FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC,
+               -- finally use randomness to avoid preferring always the same FS
+               DBMS_Random.value) LOOP
+    BEGIN
+      -- lock the complete diskServer as we will update all filesystems
+      SELECT id INTO unused FROM DiskServer WHERE id = f.DiskServerId FOR UPDATE NOWAIT;
+      SELECT /*+ FIRST_ROWS(1) LEADING(D T StT C) */
+             f.diskServerId, f.name, f.mountPoint, f.fileSystemId, D.path, D.id, D.castorfile, C.fileId, C.nsHost, C.fileSize, T.id, C.lastUpdateTime
+        INTO diskServerId, diskServerName, mountPoint, fileSystemId, path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
+        FROM DiskCopy D, TapeCopy T, Stream2TapeCopy StT, Castorfile C
+       WHERE decode(D.status,10,D.status,NULL) = 10 -- CANBEMIGR
+         AND D.filesystem = f.fileSystemId
+         AND StT.parent = streamId
+         AND T.status = 2 -- WAITINSTREAMS
+         AND StT.child = T.id
+         AND T.castorfile = D.castorfile
+         AND C.id = D.castorfile
+         AND ROWNUM < 2;
+      -- found something on this filesystem, no need to go on
+      diskServerId := f.DiskServerId;
+      fileSystemId := f.fileSystemId;
+      EXIT;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- either the filesystem is already locked or we found nothing,
+      -- let's go to the next one
+      NULL;
+    END;
+  END LOOP;
+
+  IF tapeCopyId = 0 THEN
+    -- Nothing found, reset last filesystems used and exit
+    UPDATE Stream
+       SET lastFileSystemUsed = 0, lastButOneFileSystemUsed = 0
+     WHERE id = streamId;
+    RETURN;
+  END IF;
+
+  -- Here we found a tapeCopy and process it
 
   -- detach the tapecopy from the stream now that it is SELECTED;
-  -- the triggers will update NbTapeCopiesInFS accordingly, and
-  -- they will prevent deadlocks by taking a table lock on NbTapeCopiesInFS
   DELETE FROM Stream2TapeCopy
    WHERE child = tapeCopyId;
 
@@ -709,38 +503,7 @@ BEGIN
    WHERE id = streamId AND status IN (2,3);
 
   -- Update Filesystem state
-  updateFSMigratorOpened(fsDiskServer, fileSystemId, 0);
-
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- Reset last filesystems used
-    UPDATE Stream
-       SET lastFileSystemUsed = 0, lastButOneFileSystemUsed = 0
-     WHERE id = streamId;
-    -- No data found means the selected filesystem has no
-    -- tapecopies to be migrated. Thus we go to next one
-    -- However, we reset the NbTapeCopiesInFS row that failed
-    -- This is not 100% safe but is far better than retrying
-    -- in the same conditions
-    IF 0 != fileSystemId THEN
-      UPDATE NbTapeCopiesInFS
-         SET NbTapeCopies = 0
-       WHERE Stream = StreamId
-         AND NbTapeCopiesInFS.FS = fileSystemId;
-      -- Commit now previously taken locks before retrying, as we
-      -- are restarting from scratch. This also prevents deadlocks
-      COMMIT;
-      bestTapeCopyForStream(streamId,
-                            diskServerName,
-                            mountPoint,
-                            path,
-                            dci,
-                            castorFileId,
-                            fileId,
-                            nsHost,
-                            fileSize,
-                            tapeCopyId,
-                            lastUpdateTime);
-    END IF;
+  updateFSMigratorOpened(diskServerId, fileSystemId, 0);
 END;
 /
 
@@ -870,21 +633,32 @@ END;
 
 /* PL/SQL method implementing streamsToDo */
 CREATE OR REPLACE PROCEDURE streamsToDo(res OUT castor.Stream_Cur) AS
+  sId NUMBER;
   streams "numList";
 BEGIN
-  SELECT UNIQUE Stream.id BULK COLLECT INTO streams
-    FROM Stream, NbTapeCopiesInFS, FileSystem, DiskServer
-   WHERE Stream.status = 0 -- PENDING
-     AND NbTapeCopiesInFS.stream = Stream.id
-     AND NbTapeCopiesInFS.NbTapeCopies > 0
-     AND FileSystem.id = NbTapeCopiesInFS.FS
-     AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
-     AND DiskServer.id = FileSystem.DiskServer
-     AND DiskServer.status IN (0, 1); -- PRODUCTION, DRAINING
+  FOR s IN (SELECT id FROM Stream WHERE status = 0) LOOP
+    BEGIN
+      SELECT /*+ LEADING(Stream2TapeCopy TapeCopy DiskCopy FileSystem DiskServer) */
+             s.id INTO sId
+        FROM Stream2TapeCopy, TapeCopy, DiskCopy, FileSystem, DiskServer
+       WHERE Stream2TapeCopy.parent = s.id
+         AND Stream2TapeCopy.child = TapeCopy.id
+         AND TapeCopy.castorFile = DiskCopy.CastorFile
+         AND DiskCopy.fileSystem = FileSystem.id
+         AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
+         AND DiskServer.id = FileSystem.DiskServer
+         AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
+         AND ROWNUM < 2;
+      INSERT INTO StreamsToDoHelper VALUES (sId);
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- just ignore as this stream has no available candidate
+      NULL;
+    END;
+  END LOOP;
+  SELECT id BULK COLLECT INTO Streams FROM StreamsToDoHelper;
   FORALL i in streams.FIRST..streams.LAST
     UPDATE Stream SET status = 1 -- WAITDRIVE
-    WHERE id = streams(i);
-
+     WHERE id = streams(i);
   OPEN res FOR
     SELECT Stream.id, Stream.InitialSizeToTransfer, Stream.status,
            TapePool.id, TapePool.name

@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.725 $ $Date: 2009/03/10 07:15:23 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.726 $ $Date: 2009/03/13 15:23:48 $ $Author: sponcec3 $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -369,7 +369,7 @@ END;
 
 
 /* Trigger used to provide input to the statement level trigger 
- * defined above + update NbTapeCopiesInFS
+ * defined above
  */
 CREATE OR REPLACE TRIGGER tr_DiskCopy_Online
 AFTER UPDATE OF status ON DiskCopy
@@ -377,20 +377,6 @@ FOR EACH ROW
 WHEN ((old.status != 10) AND    -- !CANBEMIGR -> {STAGED, CANBEMIGR}
       (new.status = 0 OR new.status = 10))     
 BEGIN
-  IF :old.status = 1 AND :new.status = 10 THEN
-    -- In case of WAITDISK2DISKCOPY -> CANBEMIGR we also need
-    -- to keep NbTapeCopiesInFS in synch.
-    -- Access to NbTapeCopiesInFS needs to be serialized,
-    -- see tr_Stream_Insert
-    LOCK TABLE NbTapeCopiesInFS IN EXCLUSIVE MODE;
-    UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies + 1
-     WHERE FS = :new.fileSystem
-       AND Stream IN (SELECT Stream2TapeCopy.parent
-                        FROM Stream2TapeCopy, TapeCopy
-                       WHERE TapeCopy.castorFile = :new.castorFile
-                         AND Stream2TapeCopy.child = TapeCopy.id
-                         AND TapeCopy.status = 2); -- WAITINSTREAMS
-  END IF;
   -- Insert the information about the diskcopy being processed into
   -- the TooManyReplicasHelper. This information will be used later
   -- on the DiskCopy AFTER UPDATE statement level trigger. We cannot

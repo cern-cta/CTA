@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.schema.sql,v $ $Revision: 1.9 $ $Date: 2009/03/12 07:12:25 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.schema.sql,v $ $Revision: 1.10 $ $Date: 2009/03/13 15:23:48 $ $Author: sponcec3 $
  *
  * This file contains all schema definitions which are not generated automatically.
  *
@@ -276,6 +276,12 @@ CREATE GLOBAL TEMPORARY TABLE DeleteTermReqHelper
   (srId NUMBER, cfId NUMBER)
   ON COMMIT PRESERVE ROWS;
 
+/* Global temporary table used in streamsToDo to temporarily
+ * store interesting streams.
+ */
+CREATE GLOBAL TEMPORARY TABLE StreamsToDoHelper (id NUMBER)
+  ON COMMIT DELETE ROWS;
+
 /* SQL statements for table PriorityMap */
 CREATE TABLE PriorityMap (euid INTEGER, egid INTEGER, priority INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 ALTER TABLE PriorityMap ADD CONSTRAINT UN_Priority_euid_egid UNIQUE (euid, egid);
@@ -340,47 +346,6 @@ INSERT INTO CastorConfig
   VALUES ('stager', 'nsHost', 'undefined', 'The name of the name server host to set in the CastorFile table overriding the CNS/HOST option defined in castor.conf');
 
 COMMIT;
-
-
-/****************************************************************/
-/* NbTapeCopiesInFS to work around ORACLE missing optimizations */
-/****************************************************************/
-
-/* This table keeps track of the number of TapeCopy waiting for migration
- * which have a diskCopy on this fileSystem. This table only exist
- * because Oracle is not able to optimize the following query :
- * SELECT max(A) from A, B where A.pk = B.fk;
- * Such a query is needed in bestTapeCopyForStream in order to
- * select filesystems effectively having tapecopies.
- * As a work around, we keep track of the tapecopies for each
- * filesystem. The cost is an increase of complexity and especially
- * of the number of triggers ensuring consistency of the whole database */
-CREATE TABLE NbTapeCopiesInFS (FS NUMBER, Stream NUMBER, NbTapeCopies NUMBER);
-CREATE UNIQUE INDEX I_NbTapeCopiesInFS_FSStream ON NbTapeCopiesInFS(FS, Stream);
-CREATE INDEX I_NbTapeCopiesInFS_Stream ON NbTapeCopiesInFS(Stream);
-
-
-/*******************************************************************/
-/* LockTable to implement proper locking for bestTapeCopyForStream */
-/*******************************************************************/
-
-/* This table is needed to insure that bestTapeCopyForStream works Ok.
- * It basically serializes the queries ending to the same diskserver.
- * This is only needed because of lack of functionnality in ORACLE.
- * The original goal was to lock the selected filesystem in the first
- * query of bestTapeCopyForStream. But a SELECT FOR UPDATE was not enough
- * because it does not revalidate the inner select and we were thus selecting
- * n times the same filesystem when n queries were processed in parallel.
- * (take care, they were processed sequentially due to the lock, but they
- * were still locking the same filesystem). Thus an UPDATE was needed but
- * UPDATE cannot use joins. Thus it was impossible to lock DiskServer
- * and FileSystem at the same time (we need to avoid the DiskServer to
- * be chosen again (with a different filesystem) before we update the
- * weight of all filesystems). Locking the diskserver only was fine but
- * was introducing a possible deadlock with a place where the FileSystem
- * is locked before the DiskServer. Thus this table..... */
-CREATE TABLE LockTable (DiskServerId NUMBER CONSTRAINT PK_LockTable_DSId PRIMARY KEY, TheLock NUMBER);
-INSERT INTO LockTable SELECT id, id FROM DiskServer;
 
 
 /*********************************************************************/
