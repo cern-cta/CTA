@@ -61,7 +61,7 @@ namespace aggregator {
      * specified.
      *
      * @param File descriptor to be owned, defaults to -1 if not specified,
-     * where -1 means this SmartFd does not own anything.
+     * where  a negative number means this SmartFd does not own anything.
      */
     void reset(const int fd) throw();
 
@@ -70,8 +70,8 @@ namespace aggregator {
      *
      * This function does the following:
      * <ul>
-     * <li> Closes the file descriptor of this object if it already owns one.
      * <li> Calls release on the previous owner (obj);
+     * <li> Closes the file descriptor of this object if it already owns one.
      * <li> Makes this object the owner of the file descriptor released from
      *      the previous owner (obj).
      * </ul>
