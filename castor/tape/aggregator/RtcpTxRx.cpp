@@ -681,7 +681,7 @@ void castor::tape::aggregator::RtcpTxRx::askRtcpdToRequestMoreWork(
   request.checkFid       = -1;
   request.concat         =  1;
   request.procStatus     =  RTCP_REQUEST_MORE_WORK;
-  request.err.severity   =  1;
+  request.err.severity   =  RTCP_OK;
   request.err.maxTpRetry = -1;
   request.err.maxCpRetry = -1;
 
@@ -772,7 +772,7 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
   request.checkFid       = -1;
   request.concat         = 1;
   request.procStatus     = RTCP_WAITING;
-  request.err.severity   = 1;
+  request.err.severity   = RTCP_OK;
   request.err.maxTpRetry = -1;
   request.err.maxCpRetry = -1;
 
