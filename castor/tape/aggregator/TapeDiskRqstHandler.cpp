@@ -294,7 +294,7 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
           AGGREGATOR_FILE_TO_RECALL, params);
 
         char tapeFileId[CA_MAXPATHLEN+1];
-        Utils::toHex(fileId, tapeFileId);
+        Utils::setBytes(tapeFileId, '\0');
         RtcpTxRx::giveFileToRtcpd(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT,
           WRITE_DISABLE, filePath, body.tapePath, RECORDFORMAT, tapeFileId,
           RECALLUMASK, positionCommandCode, nsHost, fileId);

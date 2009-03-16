@@ -402,6 +402,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
   blockId[1]  = 0;
   blockId[2]  = 4;
   blockId[3]  = 207;
+  positionCommandCode = 3; // TPPOSIT_BLKID
   return(true);
 
 #endif
