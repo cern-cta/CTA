@@ -161,14 +161,17 @@ public:
    * @param recordFormat The record format.
    * @param tapeFileId The tape file ID.
    * @param umask The umask of the file.
-   * @param requestMoreWork Set to true if RTCPD should be told that there is
-   * a possibility of more work in the future.
+   * @param positionMethod The position method.
+   * @param nameServerHostName The host name of the name server.
+   * @param castorFileId The CASTOR file ID.
    */
   static void giveFileToRtcpd(const Cuuid_t &cuuid, const uint32_t volReqId,
     const int socketFd, const int netReadWriteTimeout, const uint32_t mode,
     const char *const filePath, const char *const tapePath,
     const char *const recordFormat, const char *const tapeFileId,
-    const uint32_t umask) throw(castor::exception::Exception);
+    const uint32_t umask, const int32_t positionMethod,
+    char (&nameServerHostName)[CA_MAXHOSTNAMELEN+1],
+    const uint64_t castorFileId) throw(castor::exception::Exception);
 
   /**
    * Receives a message header.

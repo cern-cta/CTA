@@ -254,23 +254,28 @@ void castor::tape::aggregator::BridgeProtocolEngine::run(const Cuuid_t &cuuid,
 
   // Allocate some variables on the stack for information about a possible file
   // to migrate.  These variables will not be used in the case of a recall
-  char     migrationFilePath[CA_MAXPATHLEN+1];
-  char     migrationFileNsHost[CA_MAXHOSTNAMELEN+1];
-  uint64_t migrationFileId;
-  uint32_t migrationFileTapeFseq;
-  uint64_t migrationFileSize;
-  char     migrationFileLastKnownFileName[CA_MAXPATHLEN+1];
-  uint64_t migrationFileLastModificationTime;
+  char migrationFilePath[CA_MAXPATHLEN+1];
+  Utils::setBytes(migrationFilePath, '\0');
+  char migrationFileNsHost[CA_MAXHOSTNAMELEN+1];
+  Utils::setBytes(migrationFileNsHost, '\0');
+  uint64_t migrationFileId = 0;
+  uint32_t migrationFileTapeFseq = 0;
+  uint64_t migrationFileSize = 0;
+  char migrationFileLastKnownFileName[CA_MAXPATHLEN+1];
+  Utils::setBytes(migrationFileLastKnownFileName, '\0');
+  uint64_t migrationFileLastModificationTime = 0;
+  int32_t positionCommandCode = 0;
 
   // If migrating
   if(mode == WRITE_ENABLE) {
 
-    // Get first file to migrate from the tape gateway
+    // Get first file to migrate from tape gateway
     const bool thereIsAFileToMigrate =
       GatewayTxRx::getFileToMigrateFromGateway(cuuid, volReqId, gatewayHost,
         gatewayPort, migrationFilePath, migrationFileNsHost, migrationFileId,
         migrationFileTapeFseq, migrationFileSize,
-        migrationFileLastKnownFileName, migrationFileLastModificationTime);
+        migrationFileLastKnownFileName, migrationFileLastModificationTime,
+        positionCommandCode);
 
     // Return if there is no file to migrate
     if(!thereIsAFileToMigrate) {
@@ -303,7 +308,8 @@ void castor::tape::aggregator::BridgeProtocolEngine::run(const Cuuid_t &cuuid,
     Utils::toHex(migrationFileId, migrationTapeFileId);
     RtcpTxRx::giveFileToRtcpd(cuuid, volReqId, rtcpdInitialSocketFd,
       RTCPDNETRWTIMEOUT, rtcpVolume.mode, migrationFilePath, "", RECORDFORMAT,
-      migrationTapeFileId, MIGRATEUMASK);
+      migrationTapeFileId, MIGRATEUMASK, positionCommandCode,
+      migrationFileNsHost, migrationFileId);
   }
 
   // Ask RTCPD to request more work

@@ -78,6 +78,7 @@ public:
    * @param lastKnownFileName Out parameter: The last known name of the file.
    * @param lastModificationTime Out parameter: The time of the last
    * modification.
+   * @param positionCommandCode The position command code.
    * @return True if there is a file to migrate.
    */
   static bool getFileToMigrateFromGateway(const Cuuid_t &cuuid,
@@ -85,7 +86,8 @@ public:
     const unsigned short gatewayPort, char (&filePath)[CA_MAXPATHLEN+1],
     char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId,
     uint32_t &tapeFileSeq, uint64_t &fileSize,
-    char (&lastKnownFileName)[CA_MAXPATHLEN+1], uint64_t &lastModificationTime)
+    char (&lastKnownFileName)[CA_MAXPATHLEN+1], uint64_t &lastModificationTime,
+    int32_t &positionCommandCode)
     throw(castor::exception::Exception);
 
   /**
@@ -100,14 +102,15 @@ public:
    * @param fileId Out parmeter: The CASTOR file ID.
    * @param tapeFileSeq Out parameter: The tape file sequence number.
    * @param blockId Out parameter: The ID of the first block of the file.
+   * @param positionCommandCode The position command code.
    * @return True if there is a file to recall.
    */
   static bool getFileToRecallFromGateway(const Cuuid_t &cuuid,
     const uint32_t volReqId, const char *gatewayHost,
     const unsigned short gatewayPort, char (&filePath)[CA_MAXPATHLEN+1],
     char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId,
-    uint32_t &tapeFileSeq, unsigned char (&blockId)[4])
-    throw(castor::exception::Exception);
+    uint32_t &tapeFileSeq, unsigned char (&blockId)[4],
+    int32_t &positionCommandCode) throw(castor::exception::Exception);
 
   /**
    * Notifies the tape gateway of the successful migration of a file to tape.
@@ -130,7 +133,7 @@ public:
     const uint32_t volReqId, const char *gatewayHost,
     const unsigned short gatewayPort, char (&nsHost)[CA_MAXHOSTNAMELEN+1], 
     uint64_t &fileId, uint32_t &tapeFileSeq, unsigned char (&blockId)[4], 
-    uint32_t positionCommandCode,
+    int32_t positionCommandCode,
     char (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1], uint32_t checksum,
     uint32_t fileSize, uint32_t compressedFileSize) 
     throw(castor::exception::Exception);
@@ -154,7 +157,7 @@ public:
   static void notifyGatewayFileRecalled(const Cuuid_t &cuuid,
     const uint32_t volReqId, const char *gatewayHost, 
     const unsigned short gatewayPort, char (&nsHost)[CA_MAXHOSTNAMELEN+1],
-    uint64_t &fileId, uint32_t &tapeFileSeq, uint32_t positionCommandCode, 
+    uint64_t &fileId, uint32_t &tapeFileSeq, int32_t positionCommandCode, 
     char (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1], uint32_t checksum,
     uint32_t fileSize, uint32_t compressedFileSize)
     throw(castor::exception::Exception);

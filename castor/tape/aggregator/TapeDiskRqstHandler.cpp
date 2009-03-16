@@ -198,18 +198,22 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
     // If migrating
     if(mode == WRITE_ENABLE) {
 
-      char     filePath[CA_MAXPATHLEN+1];
-      char     nsHost[CA_MAXHOSTNAMELEN+1];
-      uint64_t fileId;
-      uint32_t tapeFseq;
-      uint64_t fileSize;
-      char     lastKnownFileName[CA_MAXPATHLEN+1];
-      uint64_t lastModificationTime;
+      char filePath[CA_MAXPATHLEN+1];
+      Utils::setBytes(filePath, '\0');
+      char nsHost[CA_MAXHOSTNAMELEN+1];
+      Utils::setBytes(nsHost, '\0');
+      uint64_t fileId = 0;
+      uint32_t tapeFseq = 0;
+      uint64_t fileSize = 0;
+      char lastKnownFileName[CA_MAXPATHLEN+1];
+      Utils::setBytes(lastKnownFileName, '\0');
+      uint64_t lastModificationTime = 0;
+      int32_t  positionMethod = 0;
 
       // If there is a file to migrate
       if(GatewayTxRx::getFileToMigrateFromGateway(cuuid, volReqId, gatewayHost,
         gatewayPort, filePath, nsHost, fileId, tapeFseq, fileSize,
-        lastKnownFileName, lastModificationTime)) {
+        lastKnownFileName, lastModificationTime, positionMethod)) {
 
         castor::dlf::Param params[] = {
           castor::dlf::Param("volReqId"            , volReqId            ),
@@ -221,14 +225,16 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
           castor::dlf::Param("tapeFseq"            , tapeFseq            ),
           castor::dlf::Param("fileSize"            , fileSize            ),
           castor::dlf::Param("lastKnownFileName"   , lastKnownFileName   ),
-          castor::dlf::Param("lastModificationTime", lastModificationTime)};
+          castor::dlf::Param("lastModificationTime", lastModificationTime),
+          castor::dlf::Param("positionMethod"      , positionMethod      )};
         castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
           AGGREGATOR_FILE_TO_MIGRATE, params);
 
         char tapeFileId[CA_MAXPATHLEN+1];
         Utils::toHex(fileId, tapeFileId);
         RtcpTxRx::giveFileToRtcpd(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT,
-          WRITE_ENABLE, filePath, "", RECORDFORMAT, tapeFileId, MIGRATEUMASK);
+          WRITE_ENABLE, filePath, "", RECORDFORMAT, tapeFileId, MIGRATEUMASK,
+          positionMethod, nsHost, fileId);
 
         RtcpTxRx::askRtcpdToRequestMoreWork(cuuid, volReqId, socketFd,
           RTCPDNETRWTIMEOUT, WRITE_ENABLE);
@@ -256,31 +262,42 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
     // Else recalling
     } else {
 
-      char     filePath[CA_MAXPATHLEN+1];
-      char     nsHost[CA_MAXHOSTNAMELEN+1];
-      uint64_t fileId;
-      uint32_t tapeFseq;
+      char filePath[CA_MAXPATHLEN+1];
+      Utils::setBytes(filePath, '\0');
+      char nsHost[CA_MAXHOSTNAMELEN+1];
+      Utils::setBytes(nsHost, '\0');
+      uint64_t fileId = 0;
+      uint32_t tapeFseq = 0;
       unsigned char blockId[4];
+      Utils::setBytes(blockId, '\0');
+      int32_t  positionCommandCode = 0;
 
       // If there is a file to recall 
       if(GatewayTxRx::getFileToRecallFromGateway(cuuid, volReqId, gatewayHost,
-        gatewayPort, filePath, nsHost, fileId, tapeFseq, blockId)) {
+        gatewayPort, filePath, nsHost, fileId, tapeFseq, blockId,
+        positionCommandCode)) {
 
         castor::dlf::Param params[] = {
-          castor::dlf::Param("volReqId"            , volReqId            ),
-          castor::dlf::Param("gatewayHost"         , gatewayHost         ),
-          castor::dlf::Param("gatewayPort"         , gatewayPort         ),
-          castor::dlf::Param("filePath"            , filePath            ),
-          castor::dlf::Param("nsHost"              , nsHost              ),
-          castor::dlf::Param("fileId"              , fileId              ),
-          castor::dlf::Param("tapeFseq"            , tapeFseq            )};
+          castor::dlf::Param("volReqId"           , volReqId           ),
+          castor::dlf::Param("gatewayHost"        , gatewayHost        ),
+          castor::dlf::Param("gatewayPort"        , gatewayPort        ),
+          castor::dlf::Param("filePath"           , filePath           ),
+          castor::dlf::Param("nsHost"             , nsHost             ),
+          castor::dlf::Param("fileId"             , fileId             ),
+          castor::dlf::Param("tapeFseq"           , tapeFseq           ),
+          castor::dlf::Param("blockId[0]"         , blockId[0]         ),
+          castor::dlf::Param("blockId[1]"         , blockId[1]         ),
+          castor::dlf::Param("blockId[2]"         , blockId[2]         ),
+          castor::dlf::Param("blockId[3]"         , blockId[3]         ),
+          castor::dlf::Param("positionCommandCode", positionCommandCode)};
         castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
           AGGREGATOR_FILE_TO_RECALL, params);
 
         char tapeFileId[CA_MAXPATHLEN+1];
         Utils::toHex(fileId, tapeFileId);
         RtcpTxRx::giveFileToRtcpd(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT,
-          WRITE_DISABLE, filePath, "", RECORDFORMAT, tapeFileId, RECALLUMASK);
+          WRITE_DISABLE, filePath, body.tapePath, RECORDFORMAT, tapeFileId,
+          RECALLUMASK, positionCommandCode, nsHost, fileId);
 
         RtcpTxRx::askRtcpdToRequestMoreWork(cuuid, volReqId, socketFd,
           RTCPDNETRWTIMEOUT, WRITE_DISABLE);

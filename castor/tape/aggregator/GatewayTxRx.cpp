@@ -209,7 +209,8 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
   const unsigned short gatewayPort,
   char (&filePath)[CA_MAXPATHLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN+1],
   uint64_t &fileId, uint32_t &tapeFileSeq, uint64_t &fileSize,
-  char (&lastKnownFileName)[CA_MAXPATHLEN+1], uint64_t &lastModificationTime)
+  char (&lastKnownFileName)[CA_MAXPATHLEN+1], uint64_t &lastModificationTime,
+  int32_t &positionCommandCode)
   throw(castor::exception::Exception) {
 
   {
@@ -264,6 +265,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
       fileSize = file.fileSize();
       Utils::copyString(lastKnownFileName, file.lastKnownFileName().c_str());
       lastModificationTime = file.lastModificationTime();
+      positionCommandCode = file.positionCommandCode();
     } catch(std::bad_cast &bc) {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Failed to down cast reply object to tapegateway::FileToMigrate");
@@ -375,9 +377,9 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
   const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost,
-  const unsigned short gatewayPort,
-  char (&filePath)[CA_MAXPATHLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN+1],
-  uint64_t &fileId, uint32_t &tapeFileSeq, unsigned char (&blockId)[4])
+  const unsigned short gatewayPort, char (&filePath)[CA_MAXPATHLEN+1],
+  char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId, uint32_t &tapeFileSeq,
+  unsigned char (&blockId)[4], int32_t &positionCommandCode)
   throw(castor::exception::Exception) {
 
   bool thereIsAFileToRecall = false;
@@ -443,6 +445,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
       blockId[1] = file.blockId1();
       blockId[2] = file.blockId2();
       blockId[3] = file.blockId3();
+      positionCommandCode = file.positionCommandCode();
     } catch(std::bad_cast &bc) {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Failed to down cast reply object to tapegateway::FileToRecall");
@@ -514,7 +517,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
   const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost,
   const unsigned short gatewayPort,
   char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId, uint32_t &tapeFileSeq,
-  unsigned char (&blockId)[4], uint32_t positionCommandCode,
+  unsigned char (&blockId)[4], int32_t positionCommandCode,
   char (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1], uint32_t checksum,
   uint32_t fileSize, uint32_t compressedFileSize )
   throw(castor::exception::Exception) {
@@ -598,7 +601,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
   const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost,
   const unsigned short gatewayPort,
   char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId, uint32_t &tapeFileSeq,
-  uint32_t positionCommandCode, char (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1],
+  int32_t positionCommandCode, char (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1],
   uint32_t checksum, uint32_t fileSize, uint32_t compressedFileSize )
   throw(castor::exception::Exception) {
 

@@ -744,7 +744,9 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
   const int netReadWriteTimeout, const uint32_t mode,
   const char *const filePath, const char *const tapePath,
   const char *const recordFormat, const char *const tapeFileId,
-  const uint32_t umask) throw(castor::exception::Exception) {
+  const uint32_t umask, const int32_t positionMethod,
+  char (&nameServerHostName)[CA_MAXHOSTNAMELEN+1], const uint64_t castorFileId)
+  throw(castor::exception::Exception) {
 
   RtcpFileRqstErrMsgBody request;
 
@@ -756,25 +758,28 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
   Utils::copyString(request.recfm, recordFormat);
   Utils::copyString(request.fid, tapeFileId);
 
-  request.volReqId       = volReqId;
-  request.jobId          = -1;
-  request.stageSubReqId  = -1;
-  request.umask          = umask;
-  request.tapeFseq       = 1;
-  request.diskFseq       = 1;
-  request.blockSize      = -1;
-  request.recordLength   = -1;
-  request.retention      = -1;
-  request.defAlloc       = -1;
-  request.rtcpErrAction  = -1;
-  request.tpErrAction    = -1;
-  request.convert        = -1;
-  request.checkFid       = -1;
-  request.concat         = 1;
-  request.procStatus     = RTCP_WAITING;
-  request.err.severity   = RTCP_OK;
-  request.err.maxTpRetry = -1;
-  request.err.maxCpRetry = -1;
+  request.volReqId             = volReqId;
+  request.jobId                = -1;
+  request.stageSubReqId        = -1;
+  request.umask                = umask;
+  request.positionMethod       = positionMethod;
+  request.tapeFseq             = 1;
+  request.diskFseq             = 1;
+  request.blockSize            = -1;
+  request.recordLength         = -1;
+  request.retention            = -1;
+  request.defAlloc             = 0;
+  request.rtcpErrAction        = -1;
+  request.tpErrAction          = -1;
+  request.convert              = ASCCONV;
+  request.checkFid             = -1;
+  request.concat               = mode == WRITE_ENABLE ? NOCONCAT : OPEN_NOTRUNC;
+  request.procStatus           = RTCP_WAITING;
+  Utils::copyString(request.segAttr.nameServerHostName, nameServerHostName);
+  request.segAttr.castorFileId = castorFileId;
+  request.err.severity         = RTCP_OK;
+  request.err.maxTpRetry       = -1;
+  request.err.maxCpRetry       = -1;
 
   giveFileToRtcpd(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT, mode, request);
 }
