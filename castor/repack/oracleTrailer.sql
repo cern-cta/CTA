@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.23 $ $Release$ $Date: 2009/03/12 07:12:54 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.24 $ $Release$ $Date: 2009/03/17 14:41:39 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -376,9 +376,10 @@ END IF;
 	IF unused  IS NULL THEN  
          ret:=0;
       	END IF;  	
-	COMMIT;
+       COMMIT;
 EXCEPTION  WHEN NO_DATA_FOUND THEN
   ret := 0;
+  COMMIT;
 END;
 /
 
