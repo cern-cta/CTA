@@ -42,8 +42,6 @@ export CVSROOT=:gserver:isscvs.cern.ch/local/reps/castor
 
 cvs checkout -r v2_1_8_4 CASTOR2
 
-oracle_setup
-
 cd CASTOR2
 
 export ORACLE_HOME="/afs/cern.ch/project/oracle/@sys/10203"
