@@ -18,7 +18,7 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: fixDiskCopiesWithNoCF.py,v $ $Revision: 1.6 $ $Release$ $Date: 2008/11/20 18:51:21 $ $Author: itglp $
+# * @(#)$RCSfile: fixDiskCopiesWithNoCF.py,v $ $Revision: 1.7 $ $Release$ $Date: 2009/03/17 10:36:30 $ $Author: waldron $
 # *
 # * Fixes the DiskCopy.castorFile FK values by reinserting all needed entries in
 # * CastorFile and make the orphaned DiskCopies point to them. The affected
@@ -39,19 +39,21 @@ nsHost = "castorns"          # write your nameserver host alias here
 
 # usage function
 def usage(exitCode):
-  print 'Usage : ' + sys.argv[0] + ' [-h]'
+  print 'Usage : ' + sys.argv[0] + ' [-h] [-n NSHOST]'
   sys.exit(exitCode)
 
 ## main()
 # first parse the options
 try:
-    options, args = getopt.getopt(sys.argv[1:], 'h', ['help'])
+    options, args = getopt.getopt(sys.argv[1:], 'hn:', ['help', 'nshost='])
 except Exception, e:
     print e
     usage(1)
 for f, v in options:
     if f == '-h' or f == '--help':
         usage(0)
+    elif f == '-n' or f == '--nshost':
+        nsHost = v
     else:
         print "unknown option : " + f
         usage(1)
@@ -85,7 +87,7 @@ BEGIN
      and filesystem.diskpool = d2s.parent
      and rownum < 2;  -- take the first one randomly if more than one
   selectCastorFile(fid, nh, scId, fcId, fileSize, fname, cfId, unused);
-  UPDATE DiskCopy set castorFile = cfId, status = 7 WHERE id = dcId;
+  UPDATE DiskCopy SET castorFile = cfId, status = 7 WHERE id = dcId AND status != 10;
   COMMIT;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   DELETE FROM DiskCopy WHERE id = dcId;
