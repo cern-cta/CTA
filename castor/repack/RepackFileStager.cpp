@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.49 $ $Release$ $Date: 2009/02/05 15:51:19 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.50 $ $Release$ $Date: 2009/03/17 14:42:41 $ $Author: gtaur $
  *
  * @author Giulia Taurelli
  *****************************************************************************/
@@ -170,7 +170,7 @@ std::vector<RepackSegment*> RepackFileStager::stageFiles(RepackSubRequest* sreq)
   if ( !sreq->repacksegment().size() ){
     // no file to submit
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 22, 0, 0);
-    sreq->setStatus(RSUBREQUEST_DONE);  
+    sreq->setStatus(RSUBREQUEST_TOBECLEANED);  
     return sreq->repacksegment();
   }
 

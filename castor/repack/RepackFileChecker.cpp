@@ -84,7 +84,7 @@ void RepackFileChecker::run(void* param) throw(){
 	if ( (*sreq)->repacksegment().size() == 0 ){
 	  // no segment for this tape
 	  castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 15, 3, params);
-	  (*sreq)->setStatus(RSUBREQUEST_DONE);
+	  (*sreq)->setStatus(RSUBREQUEST_TOBECLEANED);
 	  ptr_server->repackDbSvc()->updateSubRequest(*sreq);
 	  sreq++;
 	  continue;
