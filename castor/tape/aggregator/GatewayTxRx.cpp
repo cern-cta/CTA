@@ -394,14 +394,14 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
 
   //volReqIdFromGateway = volReqId;
   Utils::copyString(filePath,
-    "lxc2disk15.cern.ch:/srv/castor/04//71/305892471@castorns.263135");
+      "lxc2disk15.cern.ch:/srv/castor/04//84/305892484@castorns.350761");
   Utils::copyString(nsHost, "castorns");
-  fileId      = 305892471;
-  tapeFileSeq = 124;
+  fileId      = 305892484;
+  tapeFileSeq = 123;
   blockId[0]  = 0;
   blockId[1]  = 0;
   blockId[2]  = 4;
-  blockId[3]  = 207;
+  blockId[3]  = 197;
   positionCommandCode = 3; // TPPOSIT_BLKID
   return(true);
 

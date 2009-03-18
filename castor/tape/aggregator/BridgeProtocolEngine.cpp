@@ -265,6 +265,11 @@ void castor::tape::aggregator::BridgeProtocolEngine::run(const Cuuid_t &cuuid,
   Utils::setBytes(migrationFileLastKnownFileName, '\0');
   uint64_t migrationFileLastModificationTime = 0;
   int32_t positionCommandCode = 0;
+  char tapePath[CA_MAXPATHLEN+1];
+  Utils::setBytes(tapePath, '\0');
+  int32_t tapeFseq;		// <-- TEMPORARY
+  unsigned char (blockId)[4];  // <-- TEMPORARY
+  Utils::setBytes(blockId, '\0');
 
   // If migrating
   if(mode == WRITE_ENABLE) {
@@ -308,13 +313,13 @@ void castor::tape::aggregator::BridgeProtocolEngine::run(const Cuuid_t &cuuid,
     Utils::toHex(migrationFileId, migrationTapeFileId);
     RtcpTxRx::giveFileToRtcpd(cuuid, volReqId, rtcpdInitialSocketFd,
       RTCPDNETRWTIMEOUT, rtcpVolume.mode, migrationFilePath, "", RECORDFORMAT,
-      migrationTapeFileId, MIGRATEUMASK, positionCommandCode,
-      migrationFileNsHost, migrationFileId);
+      migrationTapeFileId, MIGRATEUMASK, positionCommandCode, tapeFseq,
+      migrationFileNsHost, migrationFileId, blockId);
   }
 
   // Ask RTCPD to request more work
-  RtcpTxRx::askRtcpdToRequestMoreWork(cuuid, volReqId, rtcpdInitialSocketFd,
-    RTCPDNETRWTIMEOUT, mode);
+  RtcpTxRx::askRtcpdToRequestMoreWork(cuuid, volReqId, tapePath, 
+    rtcpdInitialSocketFd, RTCPDNETRWTIMEOUT, mode);
 
   // Tell RTCPD end of file list
   RtcpTxRx::tellRtcpdEndOfFileList(cuuid, volReqId, rtcpdInitialSocketFd,

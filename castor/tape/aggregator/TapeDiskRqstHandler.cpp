@@ -202,6 +202,8 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
       Utils::setBytes(filePath, '\0');
       char nsHost[CA_MAXHOSTNAMELEN+1];
       Utils::setBytes(nsHost, '\0');
+      char tapePath[CA_MAXPATHLEN+1];
+      Utils::setBytes(tapePath, '\0');
       uint64_t fileId = 0;
       uint32_t tapeFseq = 0;
       uint64_t fileSize = 0;
@@ -209,6 +211,8 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
       Utils::setBytes(lastKnownFileName, '\0');
       uint64_t lastModificationTime = 0;
       int32_t  positionMethod = 0;
+       unsigned char blockId[4];
+      Utils::setBytes(blockId, '\0');
 
       // If there is a file to migrate
       if(GatewayTxRx::getFileToMigrateFromGateway(cuuid, volReqId, gatewayHost,
@@ -234,9 +238,9 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
         Utils::toHex(fileId, tapeFileId);
         RtcpTxRx::giveFileToRtcpd(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT,
           WRITE_ENABLE, filePath, "", RECORDFORMAT, tapeFileId, MIGRATEUMASK,
-          positionMethod, nsHost, fileId);
+          tapeFseq, positionMethod, nsHost, fileId, blockId);
 
-        RtcpTxRx::askRtcpdToRequestMoreWork(cuuid, volReqId, socketFd,
+        RtcpTxRx::askRtcpdToRequestMoreWork(cuuid, volReqId, tapePath, socketFd,
           RTCPDNETRWTIMEOUT, WRITE_ENABLE);
 
         RtcpTxRx::tellRtcpdEndOfFileList(cuuid, volReqId, socketFd,
@@ -297,10 +301,10 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
         Utils::setBytes(tapeFileId, '\0');
         RtcpTxRx::giveFileToRtcpd(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT,
           WRITE_DISABLE, filePath, body.tapePath, RECORDFORMAT, tapeFileId,
-          RECALLUMASK, positionCommandCode, nsHost, fileId);
+          RECALLUMASK, positionCommandCode, tapeFseq, nsHost, fileId, blockId);
 
-        RtcpTxRx::askRtcpdToRequestMoreWork(cuuid, volReqId, socketFd,
-          RTCPDNETRWTIMEOUT, WRITE_DISABLE);
+        RtcpTxRx::askRtcpdToRequestMoreWork(cuuid, volReqId, body.tapePath, 
+          socketFd, RTCPDNETRWTIMEOUT, WRITE_DISABLE);
 
 	RtcpTxRx::tellRtcpdEndOfFileList(cuuid, volReqId, socketFd,
           RTCPDNETRWTIMEOUT);
@@ -361,6 +365,8 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
       ackMsg.status  = 0;
       RtcpTxRx::sendRtcpAcknowledge(cuuid, volReqId, socketFd,
         RTCPDNETRWTIMEOUT, ackMsg);
+
+      // Connest to Gateway and tell "finish"
     }
     break;
   default:

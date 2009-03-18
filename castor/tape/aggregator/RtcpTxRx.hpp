@@ -137,14 +137,16 @@ public:
    *
    * @param cuuid The ccuid to be used for logging.
    * @param volReqId The volume request ID to be sent to the tape gateway.
+   * @param tapePath The tape path.
    * @param socketFd The socket file descriptor of the connection with RTCPD.
    * @param netReadWriteTimeout The timeout to be applied when performing
    * network read and write operations.
    * @param mode The access mode.
    */ 
   static void askRtcpdToRequestMoreWork(const Cuuid_t &cuuid,
-    const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout,
-    const uint32_t mode) throw(castor::exception::Exception);
+    const uint32_t volReqId, char (&tapePath)[CA_MAXPATHLEN+1], 
+    const int socketFd, const int netReadWriteTimeout, const uint32_t mode) 
+    throw(castor::exception::Exception);
 
   /**
    * Gives the specified file list of one and only one actual file description
@@ -162,16 +164,19 @@ public:
    * @param tapeFileId The tape file ID.
    * @param umask The umask of the file.
    * @param positionMethod The position method.
+   * @param tapeFseq The tape file sequence.
    * @param nameServerHostName The host name of the name server.
    * @param castorFileId The CASTOR file ID.
+   * @param blockId The block ID.
    */
   static void giveFileToRtcpd(const Cuuid_t &cuuid, const uint32_t volReqId,
     const int socketFd, const int netReadWriteTimeout, const uint32_t mode,
     const char *const filePath, const char *const tapePath,
     const char *const recordFormat, const char *const tapeFileId,
-    const uint32_t umask, const int32_t positionMethod,
+    const uint32_t umask, const int32_t positionMethod, int32_t tapeFseq,
     char (&nameServerHostName)[CA_MAXHOSTNAMELEN+1],
-    const uint64_t castorFileId) throw(castor::exception::Exception);
+    const uint64_t castorFileId, unsigned char (&blockId)[4]) 
+    throw(castor::exception::Exception);
 
   /**
    * Receives a message header.

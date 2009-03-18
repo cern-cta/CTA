@@ -646,7 +646,8 @@ void castor::tape::aggregator::RtcpTxRx::receiveRcpJobRqst(const Cuuid_t &cuuid,
 // askRtcpdToRequestMoreWork
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::askRtcpdToRequestMoreWork(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
+  const Cuuid_t &cuuid, const uint32_t volReqId, 
+  char (&tapePath)[CA_MAXPATHLEN+1], const int socketFd, 
   const int netReadWriteTimeout, const uint32_t mode)
   throw(castor::exception::Exception) {
 
@@ -664,6 +665,7 @@ void castor::tape::aggregator::RtcpTxRx::askRtcpdToRequestMoreWork(
 
   Utils::copyString(request.recfm, "F");
 
+  Utils ::copyString(request.tapePath, tapePath);
   request.volReqId       =  volReqId;
   request.jobId          = -1;
   request.stageSubReqId  = -1;
@@ -745,9 +747,9 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
   const int netReadWriteTimeout, const uint32_t mode,
   const char *const filePath, const char *const tapePath,
   const char *const recordFormat, const char *const tapeFileId,
-  const uint32_t umask, const int32_t positionMethod,
-  char (&nameServerHostName)[CA_MAXHOSTNAMELEN+1], const uint64_t castorFileId)
-  throw(castor::exception::Exception) {
+  const uint32_t umask, const int32_t positionMethod, int32_t tapeFseq,
+  char (&nameServerHostName)[CA_MAXHOSTNAMELEN+1], const uint64_t castorFileId,
+  unsigned char (&blockId)[4]) throw(castor::exception::Exception) {
 
   RtcpFileRqstErrMsgBody request;
 
@@ -764,8 +766,8 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
   request.stageSubReqId        = -1;
   request.umask                = umask;
   request.positionMethod       = positionMethod;
-  request.tapeFseq             = 1;
-  request.diskFseq             = 1;
+  request.tapeFseq             = tapeFseq;
+  request.diskFseq             = 0;
   request.blockSize            = -1;
   request.recordLength         = -1;
   request.retention            = -1;
@@ -776,6 +778,10 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
   request.checkFid             = -1;
   request.concat               = mode == WRITE_ENABLE ? NOCONCAT : OPEN_NOTRUNC;
   request.procStatus           = RTCP_WAITING;
+  request.blockId[0]           = blockId[0];
+  request.blockId[1]           = blockId[1];
+  request.blockId[2]           = blockId[2];
+  request.blockId[3]           = blockId[3];
   Utils::copyString(request.segAttr.nameServerHostName, nameServerHostName);
   request.segAttr.castorFileId = castorFileId;
   request.err.severity         = RTCP_OK;
