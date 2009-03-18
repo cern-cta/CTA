@@ -1,4 +1,4 @@
-//          $Id: XrdxCastor2Stager.cc,v 1.4 2009/03/06 13:45:04 apeters Exp $
+//          $Id: XrdxCastor2Stager.cc,v 1.5 2009/03/18 14:46:05 sponcec3 Exp $
 
 #ifndef __XCASTOR2FS__STAGER__HH
 #define __XCASTOR2FS__STAGER__HH
@@ -662,7 +662,7 @@ XrdxCastor2Stager::StagerQuery(XrdOucErrInfo &error, uid_t uid, gid_t gid, const
   requests[0].type  = BY_FILENAME;
   requests[0].param = (char *) path;
 
-  stage_seterrbuf(errbuf, sizeof(errbuf));
+  stager_seterrbuf(errbuf, sizeof(errbuf));
 
   if (stage_filequery(requests, 1, &resp, &nbresps, &Opts) < 0) {
     if (serrno != 0) {
