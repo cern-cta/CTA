@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AuthServerSocket.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2009/02/26 09:32:11 $ $Author: riojac3 $
+ * @(#)$RCSfile: AuthServerSocket.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2009/03/20 16:37:32 $ $Author: riojac3 $
  *
  * @author Benjamin Couturier
  *****************************************************************************/
@@ -116,35 +116,23 @@ void castor::io::AuthServerSocket::setClientId ()
 //-----------------------------------------------------------------------------
 void  castor::io::AuthServerSocket::initContext() 
   throw (castor::exception::Security) {
-  unsigned short peerPort  = 0;
-  unsigned long  peerIp    = 0;
-  std::stringstream ipStream;
-
-  getPeerIp(peerPort, peerIp);
-  ipStream << ((peerIp >> 24) & 0x000000FF) << "."
-           << ((peerIp >> 16) & 0x000000FF) << "."
-           << ((peerIp >>  8) & 0x000000FF) << "."
-           << (peerIp & 0x000000FF);
 
   if (loader() == -1) {
     castor::exception::Security ex(serrno);
-    ex.getMessage() << "Dynamic library was not properly loaded."
-                    << " Accept from " << ipStream.str() << ":" << peerPort;
+    ex.getMessage() << "Dynamic library was not properly loaded.";
     throw ex;
   }
 
   if (getServer_initContext(&m_security_context, CSEC_SERVICE_TYPE_HOST, NULL) < 0) {
      castor::exception::Security ex(ESEC_BAD_CREDENTIALS);
-     ex.getMessage() << "The initialization of the security context failed."
-                     << " Request from " << ipStream.str() << ":" << peerPort;
+     ex.getMessage() << "The initialization of the security context failed.";
      throw ex;
    }
 
 
   if (getServer_establishContext(&m_security_context, m_socket) < 0) {
     castor::exception::Security ex(ESEC_NO_CONTEXT);
-    ex.getMessage() << "The security context couldn't be established."
-                    << " Request from " << ipStream.str()  << ":" << peerPort;
+    ex.getMessage() << "The security context couldn't be established.";
     throw ex;
   }
 }
