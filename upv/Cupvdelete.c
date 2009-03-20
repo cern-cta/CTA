@@ -2,7 +2,7 @@
  * Copyright (C) 2000-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
- 
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -33,11 +33,11 @@ int main(int argc,char **argv)
   uid_t uid = -1;
   gid_t gid = -1;
   char src[CA_MAXREGEXPLEN + 1];
-  char tgt[CA_MAXREGEXPLEN + 1]; 
+  char tgt[CA_MAXREGEXPLEN + 1];
   char usr[CA_MAXUSRNAMELEN + 1];
   char grp[MAXGRPNAMELEN + 1];
 #if defined(_WIN32)
-    WSADATA wsadata;
+  WSADATA wsadata;
 #endif
 
   usr[0] = 0;
@@ -99,14 +99,14 @@ int main(int argc,char **argv)
     }
   }
 
-/*    printf("%d/%s  %d/%s\n", uid, usr, gid, grp); */
+  /*    printf("%d/%s  %d/%s\n", uid, usr, gid, grp); */
 
-  if (Coptind < argc  ||  ( uid == -1 && usr[0] == 0) 
+  if (Coptind < argc  ||  ( uid == -1 && usr[0] == 0)
       || (gid == -1 && grp[0] == 0) || src[0] == 0 || tgt[0] == 0) {
     errflg++;
   }
 
- if (errflg) {
+  if (errflg) {
     fprintf (stderr, "usage: %s %s", argv[0],
 	     "(--uid uid | --user username) (--gid gid | --group groupname) --src SourceHost --tgt TargetHost\n");
     exit (USERR);
@@ -134,12 +134,12 @@ int main(int argc,char **argv)
   if (Cupv_delete (uid, gid, src, tgt) < 0) {
     fprintf (stderr, "Cupvdelete: %s\n", sstrerror(serrno));
 #if defined(_WIN32)
-      WSACleanup();
+    WSACleanup();
 #endif
     exit (USERR);
   }
 #if defined(_WIN32)
-    WSACleanup();
+  WSACleanup();
 #endif
   exit (0);
 }

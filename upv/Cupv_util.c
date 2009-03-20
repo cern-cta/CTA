@@ -1,5 +1,5 @@
 /*
- * $Id: Cupv_util.c,v 1.6 2002/10/16 08:04:42 bcouturi Exp $
+ * $Id: Cupv_util.c,v 1.7 2009/03/20 10:38:15 waldron Exp $
  */
 
 #include <sys/types.h>
@@ -46,48 +46,48 @@ static char strftime_format[] = "%b %e %H:%M:%S";
 #define PRINT_VAL(st,member) fprintf(stdout, "%-23s : %20d\n", NAMEOFVAR(member) , (int) st->member)
 #define DUMP_VALHEX(rpfd,st,member) funcrep(rpfd, MSG_OUT, "%-23s : %20lx (hex)\n", NAMEOFVAR(member) , (unsigned long) st->member)
 #define PRINT_VALHEX(st,member) fprintf(stdout, "%-23s : %20lx (hex)\n", NAMEOFVAR(member) , (unsigned long) st->member)
-#define DUMP_VALSTATUS(rpfd,st,member) { \
-	char statusstring[1024]; \
-	funcrep(rpfd, MSG_OUT, "%-23s : %20lx (hex) == %s\n", NAMEOFVAR(member) , (unsigned long) st->member, Cupv_util_status2string((char *) statusstring, (int) 1024, (int) st->member) == 0 ? statusstring : "<?>"); \
-}
-#define PRINT_VALSTATUS(st,member) { \
-	char statusstring[1024]; \
-	fprintf(stdout, "%-23s : %20lx (hex) == %s\n", NAMEOFVAR(member) , (unsigned long) st->member, Cupv_util_status2string((char *) statusstring, (int) 1024, (int) st->member) == 0 ? statusstring : "<?>"); \
-}
-#define DUMP_TIME(rpfd,st,member) {                                         \
-    char tmpbuf[21];                                                        \
-	char timestr[64] ;                                                      \
-    Cupv_util_time((time_t) st->member, timestr);                          \
-	funcrep(rpfd, MSG_OUT, "%-23s : %20s (%s)\n", NAMEOFVAR(member) ,	    \
-				 u64tostr((u_signed64) st->member, tmpbuf,0), timestr);	    \
-}
-#define PRINT_TIME(st,member) {                                             \
-    char tmpbuf[21];                                                        \
-	char timestr[64] ;                                                      \
-    Cupv_util_time((time_t) st->member, timestr);                          \
-	fprintf(stdout, "%-23s : %20s (%s)\n", NAMEOFVAR(member) ,	            \
-				 u64tostr((u_signed64) st->member, tmpbuf,0), timestr);	    \
-}
-#define DUMP_U64(rpfd,st,member) {                                          \
-    char tmpbuf[21];                                                        \
-	funcrep(rpfd, MSG_OUT, "%-23s : %20s\n", NAMEOFVAR(member) ,	        \
-				 u64tostr((u_signed64) st->member, tmpbuf,0));	            \
-}
-#define DUMP_U64_WITH_COMMENT(rpfd,st,member,comment) {                     \
-    char tmpbuf[21];                                                        \
-	funcrep(rpfd, MSG_OUT, "%-23s : %20s (%s)\n", NAMEOFVAR(member) ,	        \
-				 u64tostr((u_signed64) st->member, tmpbuf,0), (comment != NULL) ? comment : ""); \
-}
-#define PRINT_U64(st,member) {                                              \
-    char tmpbuf[21];                                                        \
-	fprintf(stdout, "%-23s : %20s\n", NAMEOFVAR(member) ,	                \
-				 u64tostr((u_signed64) st->member, tmpbuf,0));	            \
-}
-#define PRINT_U64_WITH_COMMENT(st,member,comment) {                         \
-    char tmpbuf[21];                                                        \
-	fprintf(stdout, "%-23s : %20s (%s)\n", NAMEOFVAR(member) ,	            \
-				 u64tostr((u_signed64) st->member, tmpbuf,0), (comment != NULL) ? comment : ""); \
-}
+#define DUMP_VALSTATUS(rpfd,st,member) {				\
+    char statusstring[1024];						\
+    funcrep(rpfd, MSG_OUT, "%-23s : %20lx (hex) == %s\n", NAMEOFVAR(member) , (unsigned long) st->member, Cupv_util_status2string((char *) statusstring, (int) 1024, (int) st->member) == 0 ? statusstring : "<?>"); \
+  }
+#define PRINT_VALSTATUS(st,member) {					\
+    char statusstring[1024];						\
+    fprintf(stdout, "%-23s : %20lx (hex) == %s\n", NAMEOFVAR(member) , (unsigned long) st->member, Cupv_util_status2string((char *) statusstring, (int) 1024, (int) st->member) == 0 ? statusstring : "<?>"); \
+  }
+#define DUMP_TIME(rpfd,st,member) {					\
+    char tmpbuf[21];							\
+    char timestr[64] ;							\
+    Cupv_util_time((time_t) st->member, timestr);			\
+    funcrep(rpfd, MSG_OUT, "%-23s : %20s (%s)\n", NAMEOFVAR(member) ,	\
+	    u64tostr((u_signed64) st->member, tmpbuf,0), timestr);	\
+  }
+#define PRINT_TIME(st,member) {						\
+    char tmpbuf[21];							\
+    char timestr[64] ;							\
+    Cupv_util_time((time_t) st->member, timestr);			\
+    fprintf(stdout, "%-23s : %20s (%s)\n", NAMEOFVAR(member) ,		\
+	    u64tostr((u_signed64) st->member, tmpbuf,0), timestr);	\
+  }
+#define DUMP_U64(rpfd,st,member) {					\
+    char tmpbuf[21];							\
+    funcrep(rpfd, MSG_OUT, "%-23s : %20s\n", NAMEOFVAR(member) ,	\
+	    u64tostr((u_signed64) st->member, tmpbuf,0));		\
+  }
+#define DUMP_U64_WITH_COMMENT(rpfd,st,member,comment) {			\
+    char tmpbuf[21];							\
+    funcrep(rpfd, MSG_OUT, "%-23s : %20s (%s)\n", NAMEOFVAR(member) ,	\
+	    u64tostr((u_signed64) st->member, tmpbuf,0), (comment != NULL) ? comment : ""); \
+  }
+#define PRINT_U64(st,member) {					\
+    char tmpbuf[21];						\
+    fprintf(stdout, "%-23s : %20s\n", NAMEOFVAR(member) ,	\
+	    u64tostr((u_signed64) st->member, tmpbuf,0));	\
+  }
+#define PRINT_U64_WITH_COMMENT(st,member,comment) {			\
+    char tmpbuf[21];							\
+    fprintf(stdout, "%-23s : %20s (%s)\n", NAMEOFVAR(member) ,		\
+	    u64tostr((u_signed64) st->member, tmpbuf,0), (comment != NULL) ? comment : ""); \
+  }
 
 #define DUMP_CHAR(rpfd,st,member) funcrep(rpfd, MSG_OUT, "%-23s : %20c\n", NAMEOFVAR(member) , st->member != '\0' ? st->member : ' ')
 
@@ -102,8 +102,8 @@ extern char *getconfent();     /* To get configuration entries */
 char *Cupv_forced_endptr_error = "Z";
 
 struct flag2name {
-	u_signed64 flag;
-	char *name;
+  u_signed64 flag;
+  char *name;
 };
 
 
@@ -112,52 +112,52 @@ struct flag2name {
 
 /* Idem than strtol() but returns 0 if OK, -1 if error, result in &ouput */
 int DLL_DECL Cupv_strtoi(output,nptr,endptr,base)
-	int *output;
-	char *nptr;
-	char **endptr;
-	int base;
+     int *output;
+     char *nptr;
+     char **endptr;
+     int base;
 {
-	long thislong;
-	int rc = 0;
+  long thislong;
+  int rc = 0;
 
-	errno = 0;
-	thislong = strtol (nptr, endptr, base);
-	if ((**endptr != '\0') || (((thislong == LONG_MIN) || (thislong == LONG_MAX)) && (errno == ERANGE))) {
-		if (thislong <= INT_MIN) {
-			*output = INT_MIN;
-			serrno = errno = ERANGE;
-		} else if (thislong >= INT_MAX) {
-			*output = INT_MAX;
-			serrno = errno = ERANGE;
-		} else {
-			*output = (int) thislong;
-			serrno = errno = EINVAL;
-		}
-		if (**endptr == '\0') {
-			/* We force the caller to have an error anyway, just checking **endptr */
-			*endptr = Cupv_forced_endptr_error;
-		}
-		rc = -1;
-	} else {
-		if ((thislong < INT_MIN) || (thislong > INT_MAX)) {
-			if (thislong < INT_MIN) {
-				*output = INT_MIN;
-			} else if (thislong > INT_MAX) {
-				*output = INT_MAX;
-			} else {
-				*output = (int) thislong;
-            }
-			if (**endptr == '\0') {
-				/* We force the caller to have an error anyway, just checking **endptr */
-				*endptr = Cupv_forced_endptr_error;
-			}
-			serrno = errno = ERANGE;
-			rc = -1;
-		} else {
-			*output = (int) thislong;
-		}
-	}
-	return(rc);
+  errno = 0;
+  thislong = strtol (nptr, endptr, base);
+  if ((**endptr != '\0') || (((thislong == LONG_MIN) || (thislong == LONG_MAX)) && (errno == ERANGE))) {
+    if (thislong <= INT_MIN) {
+      *output = INT_MIN;
+      serrno = errno = ERANGE;
+    } else if (thislong >= INT_MAX) {
+      *output = INT_MAX;
+      serrno = errno = ERANGE;
+    } else {
+      *output = (int) thislong;
+      serrno = errno = EINVAL;
+    }
+    if (**endptr == '\0') {
+      /* We force the caller to have an error anyway, just checking **endptr */
+      *endptr = Cupv_forced_endptr_error;
+    }
+    rc = -1;
+  } else {
+    if ((thislong < INT_MIN) || (thislong > INT_MAX)) {
+      if (thislong < INT_MIN) {
+	*output = INT_MIN;
+      } else if (thislong > INT_MAX) {
+	*output = INT_MAX;
+      } else {
+	*output = (int) thislong;
+      }
+      if (**endptr == '\0') {
+	/* We force the caller to have an error anyway, just checking **endptr */
+	*endptr = Cupv_forced_endptr_error;
+      }
+      serrno = errno = ERANGE;
+      rc = -1;
+    } else {
+      *output = (int) thislong;
+    }
+  }
+  return(rc);
 }
 
 void DLL_DECL Cupv_util_time(this,timestr)
@@ -195,7 +195,7 @@ int DLL_DECL Cupv_parse_privstring(char *privstr) {
   if (strlen (privstr) >= sizeof (buf)) {
     return(-1);
   }
-  
+
   strcpy (buf, privstr);
   p = strtok (buf, STR_SEP);
   while (p) {
@@ -234,21 +234,21 @@ void DLL_DECL Cupv_build_privstring(int priv, char *privstring) {
     strcpy(buf, STR_NONE);
     return;
   } else {
-  
+
     p = buf;
-    
+
     if (priv & P_OPERATOR) {
       WRITE_STR(p, STR_OPERATOR, firstentry);
-    } 
+    }
     if (priv & P_TAPE_OPERATOR) {
       WRITE_STR(p, STR_TAPE_OPERATOR, firstentry);
-    } 
+    }
     if (priv & P_TAPE_SYSTEM) {
       WRITE_STR(p, STR_TAPE_SYSTEM, firstentry);
-    } 
+    }
     if (priv & P_STAGE_SYSTEM) {
       WRITE_STR(p, STR_STAGE_SYSTEM, firstentry);
-    } 
+    }
     if (priv & P_GRP_ADMIN) {
       WRITE_STR(p, STR_GRP_ADMIN, firstentry);
     }
@@ -257,10 +257,10 @@ void DLL_DECL Cupv_build_privstring(int priv, char *privstring) {
     }
     if (priv & P_ADMIN) {
       WRITE_STR(p, STR_ADMIN, firstentry);
-    } 
+    }
     if (firstentry == 1) {
       strcpy(buf, STR_NONE);
-    } 
+    }
   }
 
   *p = '\0';
@@ -272,7 +272,7 @@ void DLL_DECL Cupv_build_privstring(int priv, char *privstring) {
 
 /* Gets the uid given the name */
 int Cupv_getuid(const char *name) {
-  
+
   struct passwd *pwd;
 
   pwd = Cgetpwnam(name);
@@ -285,7 +285,7 @@ int Cupv_getuid(const char *name) {
 
 /* Gets the gid given the name */
 int Cupv_getgid(const char *name) {
-  
+
   struct group *gr;
 
   gr = Cgetgrnam(name);
@@ -299,7 +299,7 @@ int Cupv_getgid(const char *name) {
 
 
 char *Cupv_getuname(uid_t uid) {
-  
+
   struct passwd *pwd;
 
   pwd = Cgetpwuid(uid);
@@ -312,7 +312,7 @@ char *Cupv_getuname(uid_t uid) {
 
 
 char *Cupv_getgname(gid_t gid) {
-  
+
   struct group *gr;
 
   gr = Cgetgrgid(gid);

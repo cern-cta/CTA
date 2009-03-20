@@ -2,7 +2,7 @@
  * Copyright (C) 2000-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
- 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,7 +35,7 @@ int main(int argc,char **argv)
     {"user", REQUIRED_ARGUMENT, 0, OPT_USR},
     {"group", REQUIRED_ARGUMENT, 0, OPT_GRP},
     {0, 0, 0, 0}
-  }; 
+  };
   uid_t uid = -1;
   gid_t gid = -1;
   char src[CA_MAXREGEXPLEN + 1];
@@ -46,9 +46,9 @@ int main(int argc,char **argv)
   char grp[MAXGRPNAMELEN + 1];
   int priv = -1;
 #if defined(_WIN32)
-    WSADATA wsadata;
+  WSADATA wsadata;
 #endif
-  
+
   src[0]=0;
   tgt[0]=0;
   newsrc[0]=0;
@@ -95,14 +95,14 @@ int main(int argc,char **argv)
       if (strlen(Coptarg) > CA_MAXREGEXPLEN) {
 	fprintf(stderr, "%s: TGT too long\n", argv[0]);
 	return(USERR);
-      }      
+      }
       strcpy(tgt, Coptarg);
       break;
     case OPT_NEWTGT:
       if (strlen(Coptarg) > CA_MAXREGEXPLEN) {
 	fprintf(stderr, "%s: New TGT too long\n", argv[0]);
 	return(USERR);
-      }      
+      }
       strcpy(newtgt, Coptarg);
       break;
     case OPT_USR:
@@ -130,17 +130,17 @@ int main(int argc,char **argv)
     }
   }
 
-  if ((Coptind < argc) ||  ( uid == -1 && usr[0] == 0)  || ( gid == -1 && grp[0] == 0)  || 
-      src[0] == 0 || tgt[0] == 0 || ( priv == -1 && newsrc[0]==0 && newtgt[0]==0 ) ) { 
-    errflg++; 
-  } 
+  if ((Coptind < argc) ||  ( uid == -1 && usr[0] == 0)  || ( gid == -1 && grp[0] == 0)  ||
+      src[0] == 0 || tgt[0] == 0 || ( priv == -1 && newsrc[0]==0 && newtgt[0]==0 ) ) {
+    errflg++;
+  }
 
   if (errflg) {
     fprintf (stderr, "usage: %s %s%s%s%s%s%s%s", argv[0],
 	     "(--uid uid | --user username) (--gid gid | --group groupname)\n",
 	     "--src SourceHost --tgt TargetHost (--newsrc NewSourceHost |\n",
 	     "-- newtgt NewTargetHost | --priv privilege)\n",
-	     "Where privilege is one of:", 
+	     "Where privilege is one of:",
 	     STR_PRIV_LIST,
 	     "\n--uid, --gid, --src and --tgt are mandatory\n",
 	     "At least one of --priv, --newsrc and --newtgt must be specified.\n");
@@ -173,13 +173,13 @@ int main(int argc,char **argv)
   if (Cupv_modify(uid, gid, src, tgt, newsrc, newtgt,  priv) < 0) {
     fprintf (stderr, "%s: %s\n", argv[0], sstrerror(serrno));
 #if defined(_WIN32)
-       WSACleanup();
-#endif
-	exit (USERR);
-  }
-  
-#if defined(_WIN32)
     WSACleanup();
+#endif
+    exit (USERR);
+  }
+
+#if defined(_WIN32)
+  WSACleanup();
 #endif
   exit (0);
 }

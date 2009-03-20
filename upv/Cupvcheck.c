@@ -2,7 +2,7 @@
  * Copyright (C) 2000-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
- 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,7 +30,7 @@ int main(int argc,char **argv)
     {"user", REQUIRED_ARGUMENT, 0, OPT_USR},
     {"group", REQUIRED_ARGUMENT, 0, OPT_GRP},
     {0, 0, 0, 0}
-  }; 
+  };
   uid_t uid = -1;
   gid_t gid = -1;
   char src[CA_MAXREGEXPLEN + 1];
@@ -76,7 +76,7 @@ int main(int argc,char **argv)
       if (strlen(Coptarg) > CA_MAXREGEXPLEN) {
 	fprintf(stderr, "%s: TGT too long\n", argv[0]);
 	return(USERR);
-      }      
+      }
       strcpy(tgt, Coptarg);
       break;
     case OPT_PRV:
@@ -103,11 +103,11 @@ int main(int argc,char **argv)
       break;
     }
   }
-  
 
- if ((Coptind < argc) ||  ( uid == -1 && usr[0] == 0)  || ( gid == -1 && grp[0] == 0)  ||  priv == -1) { 
-    errflg++; 
-  } 
+
+  if ((Coptind < argc) ||  ( uid == -1 && usr[0] == 0)  || ( gid == -1 && grp[0] == 0)  ||  priv == -1) {
+    errflg++;
+  }
 
   if (errflg) {
     fprintf (stderr, "usage: %s %s%s%s%s", argv[0],
@@ -140,12 +140,12 @@ int main(int argc,char **argv)
   if (Cupv_check (uid, gid, src, tgt, priv) < 0) {
     fprintf (stderr, "Cupvcheck: %s\n", sstrerror(serrno));
 #if defined(_WIN32)
-      WSACleanup();
+    WSACleanup();
 #endif
     exit (USERR);
   }
 #if defined(_WIN32)
-    WSACleanup();
+  WSACleanup();
 #endif
   exit (0);
 }

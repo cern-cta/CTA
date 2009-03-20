@@ -2,10 +2,10 @@
  * Copyright (C) 2000-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
- 
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h> 
+#include <string.h>
 #include <sys/types.h>
 #if defined(_WIN32)
 #include <winsock2.h>
@@ -43,7 +43,7 @@ int main(int argc,char **argv)
   char grp[MAXGRPNAMELEN + 1];
   int priv = -1;
 #if defined(_WIN32)
-    WSADATA wsadata;
+  WSADATA wsadata;
 #endif
 
   src[0]=0;
@@ -108,10 +108,10 @@ int main(int argc,char **argv)
     }
   }
 
-  if ((Coptind < argc) ||  ( uid == -1 && usr[0] == 0)  || ( gid == -1 && grp[0] == 0)  || 
-      src[0] == 0 || tgt[0] == 0 || priv == -1) { 
-    errflg++; 
-  } 
+  if ((Coptind < argc) ||  ( uid == -1 && usr[0] == 0)  || ( gid == -1 && grp[0] == 0)  ||
+      src[0] == 0 || tgt[0] == 0 || priv == -1) {
+    errflg++;
+  }
 
   if (errflg) {
     fprintf (stderr, "usage: %s %s%s%s%s", argv[0],
@@ -149,7 +149,7 @@ int main(int argc,char **argv)
 #endif
     exit (USERR);
   }
-  
+
 #if defined(_WIN32)
   WSACleanup();
 #endif
