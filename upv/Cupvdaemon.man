@@ -1,12 +1,17 @@
-.\" @(#)$RCSfile: Cupvdaemon.man,v $ $Revision: 1.3 $ $Date: 2008/11/28 12:58:06 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: Cupvdaemon.man,v $ $Revision: 1.4 $ $Date: 2009/03/20 10:36:13 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 2003 by CERN/IT/ADC/CA
 .\" All rights reserved
 .\"
-.TH CUPVDAEMON 8 "$Date: 2008/11/28 12:58:06 $" CASTOR "Cupv Administrator Commands"
+.TH CUPVDAEMON 8 "$Date: 2009/03/20 10:36:13 $" CASTOR "Cupv Administrator Commands"
 .SH NAME
 Cupvdaemon \- start the user privilege validation daemon
 .SH SYNOPSIS
 .B Cupvdaemon
+[
+.BI -c " config_file"
+] [
+.BI -t " nbthreads"
+] 
 .SH DESCRIPTION
 .LP
 The
@@ -21,7 +26,7 @@ database server if necessary.
 When a request has been completed, the thread becomes idle until it is allocated
 to another request.
 The connection to the database server is kept open between 2 requests.
-If the name server is being shutdown or not active, the requests are
+If the Cupvdaemon is being shutdown or not active, the requests are
 automatically retried by the client API.
 .LP
 All error messages and statistical information are kept in a log.
@@ -87,8 +92,16 @@ It contains a single line in the format:
 .HP
 username/password@server
 .RE
+.sp
 where 'username' and 'password' are the credentials to login to the database
 instance identified by 'server'.
+.SH OPTIONS
+.TP
+.BI -c " config_file"
+Specifies a different path for the CUPV configuration file.
+.TP
+.BI -t " nbthreads"
+Specifies the number of threads. Default is 5.
 .SH FILES
 .TP 1.5i
 .B /etc/CUPVCONFIG

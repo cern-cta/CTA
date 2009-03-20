@@ -1,3 +1,7 @@
+# Arguments for the Cupvdaemon
+#   -c <path>      configuration file
+#   -t <nbthreads
+#
 # Options to pass to the Cupvdaemon
 #CUPVDAEMON_OPTIONS=
 

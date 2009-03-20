@@ -50,6 +50,7 @@
 
 #define CHECKI	5	/* max interval to check for work to be done */
 #define CUPV_NBTHREADS	6
+#define CUPV_MAXNBTHREADS 100	/* maximum number of threads */
 
 #define RETURN(x) \
 	{ \
