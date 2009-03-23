@@ -1,8 +1,8 @@
-.\" @(#)@(#)$RCSfile: getconfent.man,v $ $Revision: 1.7 $ $Date: 2007/11/30 14:17:07 $ CERN IT-PDP/DC Frederic Hemmer
+.\" @(#)@(#)$RCSfile: getconfent.man,v $ $Revision: 1.8 $ $Date: 2009/03/23 14:44:18 $ CERN IT-PDP/DC Frederic Hemmer
 .\" Copyright (C) 1990-2000 by CERN/IT/PDP/DC
 .\" All rights reserved
 .\"
-.TH GETCONFENT 3 "$Date: 2007/11/30 14:17:07 $" CASTOR "Common Library Functions"
+.TH GETCONFENT 3 "$Date: 2009/03/23 14:44:18 $" CASTOR "Common Library Functions"
 .SH NAME
 getconfent, getconfent_r \- Get configuration entry
 .SH SYNOPSIS
@@ -15,18 +15,6 @@ getconfent, getconfent_r \- Get configuration entry
 .BI "               const char *" name , 
 .br
 .BI "               int " flags );
-.PP
-.BI "char * getconfent_r ("
-.br
-.BI "               const char *" category ,
-.br
-.BI "               const char *" name ,
-.br
-.BI "               int " flags , 
-.br
-.BI "               char *" buffer ,
-.br
-.BI "               int " bufsiz );
 .PP
 .BI "int getconfent_multi ("
 .br
@@ -70,27 +58,21 @@ getconfent, getconfent_r \- Get configuration entry
 .SH DESCRIPTION
 .LP
 .B getconfent(\|)
-get the
+gets the
 .I name
 entry from the  configuration file.
 Every entry in the configuration file is categorized. The
 .I category
-parameter is its specifier. The
-.B getconfent_r(\|)
-function is a re-entrant version of 
-.B getconfent(\|)
-using the passed
-.I buffer
-parameter instead of an internal static buffer. 
+parameter is its specifier.
 .PP
-If threads are created usint the
-.B Cthread_create(\|)
-interface, it is not mandatory to call 
-.B getconfent_r(\|)
-in order to assure thread-safe code. In that case
 .B getconfent(\|)
-calls the re-entrant version internally using a buffer allocated
-in thread local storage.
+is thread-safe if threads are created using the
+.B Cthread_create(\|)
+interface. In this case
+.B getconfent(\|)
+calls the re-entrant version
+.B getconfent_r(\|)
+internally using a buffer allocated in thread local storage.
 .PP
 .B getconfent_multi(\|)
 returns the
