@@ -62,7 +62,7 @@ You should get the output in:
 
 site.def: /usr/src/redhat/BUILD/castor-2.1.8/config/site.def
 
-binaries: /usr/src/redhar/BUILD/castor-2.1.8-root/
+binaries: /usr/src/redhat/BUILD/castor-2.1.8-root/
 
 
 How to build the VDQM v2_1_7_20
