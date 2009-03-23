@@ -1,5 +1,5 @@
 /*
- * $Id: rtcp_SendRecv.c,v 1.6 2007/02/23 09:30:11 sponcec3 Exp $
+ * $Id: rtcp_SendRecv.c,v 1.7 2009/03/23 13:57:29 murrayc3 Exp $
  *
  * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
@@ -26,6 +26,7 @@ extern char *geterr();
 #include <unistd.h>
 
 #include <Castor_limits.h>
+#include <getconfent.h>
 #include <net.h>
 #include <log.h>
 #include <osdep.h>
@@ -504,7 +505,20 @@ static int rtcp_TransAckn(SOCKET *s,
                           direction_t whereto) {
   char hdrbuf[RTCP_HDRBUFSIZ];
   int magic, recvreqtype, status, rc;
-  char *p;
+  int transAcknTimeOut = RTCP_TRANSACKN_TIMEOUT;
+
+  // Override the value of transAcknTimeOut if there is a castor.conf entry
+  {
+    char *paramValue = NULL;
+
+    if(paramValue = getconfent("TAPE", "TRANSACKN_TIMEOUT", 0)) {
+      int tmpTransAcknTimeOut = atoi(paramValue);
+
+      if(tmpTransAcknTimeOut > 0) {
+        transAcknTimeOut = tmpTransAcknTimeOut;
+      }
+    }
+  }
 
   if ( s == NULL || *s == INVALID_SOCKET ) {
     serrno = EINVAL;
@@ -531,10 +545,13 @@ static int rtcp_TransAckn(SOCKET *s,
       return(-1);
     }
   }
-  p = hdrbuf;
-  DO_MARSHALL(LONG,p,magic,whereto);
-  DO_MARSHALL(LONG,p,recvreqtype,whereto);
-  DO_MARSHALL(LONG,p,status,whereto);
+
+  {
+    char *p = hdrbuf;
+    DO_MARSHALL(LONG,p,magic,whereto);
+    DO_MARSHALL(LONG,p,recvreqtype,whereto);
+    DO_MARSHALL(LONG,p,status,whereto);
+  }
     
   if ( whereto == SendTo ) {
     if ( reqtype == VDQM_CLIENTINFO ) {
@@ -543,7 +560,6 @@ static int rtcp_TransAckn(SOCKET *s,
       *s = INVALID_SOCKET;
       return(rc);
     }
-    p = hdrbuf;
     rc = netwrite_timeout(*s,hdrbuf,RTCP_HDRBUFSIZ,RTCP_NETTIMEOUT);
     switch (rc) {
     case -1: 
