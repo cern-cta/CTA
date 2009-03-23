@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2009/03/13 08:46:53 $ $Author: sponcec3 $
+ * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2009/03/23 16:08:05 $ $Author: sponcec3 $
  *
  * Synchronization thread used to check periodically whether files need to be
  * deleted
@@ -254,7 +254,7 @@ void castor::gc::SynchronizationThread::readConfigFile
  unsigned int *chunkSize,
  bool *disableStagerSync,
  bool firstTime)
-  throw() {
+  throw(castor::exception::Exception) {
 
   // Synchronization interval
   char* value;
@@ -336,8 +336,8 @@ void castor::gc::SynchronizationThread::readConfigFile
       *disableStagerSync = true;
     } else if (strcasecmp(value, "no")) {
       castor::exception::Exception e(EINVAL);
-      e.getMessage() << "Invalid option for DisableStagerSync: " << value
-                     << " - must be 'yes' or 'no'" << std::endl;
+      e.getMessage() << "Invalid option for DisableStagerSync: '" << value
+                     << "' - must be 'yes' or 'no'" << std::endl;
       throw e;
     }
   }

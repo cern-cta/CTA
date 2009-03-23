@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SynchronizationThread.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2009/03/13 08:46:53 $ $Author: sponcec3 $
+ * @(#)$RCSfile: SynchronizationThread.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2009/03/23 16:08:05 $ $Author: sponcec3 $
  *
  * Thread going through the files stored on the CASTOR related filesystem and
  * checking their existence in the nameserver and in the stager catalog. In
@@ -87,7 +87,8 @@ namespace castor {
 			  unsigned int *chunkInterval,
                           unsigned int *chunkSize,
                           bool *disableStagerSync,
-                          bool firstTime = false) throw();
+                          bool firstTime = false)
+	throw(castor::exception::Exception);
 
       /**
        * Parse a fileName and extract the diskCopyId
