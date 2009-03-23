@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.29 $ $Date: 2009/02/27 14:54:32 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.30 $ $Date: 2009/03/23 16:11:55 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #define NullParameter
@@ -70,7 +70,7 @@ FilesToClobber += BareSharedLibraryTargetName(libname)
 
 #define BareSharedLibraryTarget(libname,objects,deplibs,libs,dir,alltgt,installtgt)            \
 SharedLibraryName(libname): objects deplibs                                                  @@\
-	$(LD) -shared -o $@ $(LDFLAGS) -Wl,-soname,SharedLibraryName(libname) objects libs   @@\
+	$(LD) --no-undefined -shared -o $@ $(LDFLAGS) -Wl,-soname,SharedLibraryName(libname) objects libs   @@\
 $(DESTDIR)/dir/BareSharedLibraryTargetName(libname): SharedLibraryName(libname)              @@\
 	@install -d $(DESTDIR)/dir                                                           @@\
 	install $? $(DESTDIR)/dir/SharedLibraryFullName(libname)                             @@\
