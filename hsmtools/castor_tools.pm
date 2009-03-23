@@ -17,7 +17,7 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: castor_tools.pm,v $ $Revision: 1.6 $ $Release$ $Date: 2009/03/23 15:47:41 $ $Author: sponcec3 $
+# * @(#)$RCSfile: castor_tools.pm,v $ $Revision: 1.7 $ $Release$ $Date: 2009/03/23 15:49:20 $ $Author: sponcec3 $
 # *
 # *
 # *
@@ -49,7 +49,9 @@ sub castor_conf_getOraStagerSvc {
 
   open (CONF, $ORASTAGERCONFIG) or return ("", "");
   while (<CONF>) {
-    if ($1[0] == '#') continue;
+    if (/\s*#/) {
+      next;
+    }
     if (/$full_name\s+user\s+(\w+)/) {
       $user = $1;
     }
