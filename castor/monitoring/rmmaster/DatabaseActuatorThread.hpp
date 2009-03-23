@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DatabaseActuatorThread.hpp,v $ $Author: waldron $
+ * @(#)$RCSfile: DatabaseActuatorThread.hpp,v $ $Author: sponcec3 $
  *
  * The DatabaseActuator thread of the RmMaster daemon. It updates the stager
  * database with monitoring data
@@ -64,8 +64,8 @@ namespace castor {
          */
         virtual ~DatabaseActuatorThread() throw();
 
-	/// Not implemented
-        virtual void init() {};
+	/// Initialization of the thread
+        virtual void init();
 
 	/**
 	 * Method called to synchornize the shared memory with the stager

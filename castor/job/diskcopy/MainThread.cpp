@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2009/02/10 09:19:56 $ $Author: itglp $
+ * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2009/03/23 15:26:20 $ $Author: sponcec3 $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -74,7 +74,12 @@ castor::job::diskcopy::MainThread::MainThread(int argc, char *argv[])
     help(argv[0]);
     exit(USERR);
   }
+}
 
+//-----------------------------------------------------------------------------
+// init
+//-----------------------------------------------------------------------------
+void castor::job::diskcopy::MainThread::init() {
   // Drop privileges to the stage superuser.
   try {
     changeUidGid(STAGERSUPERUSER, STAGERSUPERGROUP);

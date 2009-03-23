@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ManagementThread.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/04/21 11:53:01 $ $Author: waldron $
+ * @(#)$RCSfile: ManagementThread.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2009/03/23 15:26:20 $ $Author: sponcec3 $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -68,8 +68,8 @@ namespace castor {
        */
       virtual ~ManagementThread() throw() {};
 
-      /// Not implemented
-      virtual void init() {};
+      /// Initialization of the thread
+      virtual void init();
 
       /**
        * Method called periodically to check if actions need to be taken on

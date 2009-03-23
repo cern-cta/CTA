@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DispatchThread.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/07/29 06:17:39 $ $Author: waldron $
+ * @(#)$RCSfile: DispatchThread.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2009/03/23 15:26:20 $ $Author: sponcec3 $
  *
  * A thread used to dispatch subrequest's in a SUBREQUEST_READYFORSCHED into
  * the scheduler using the forked process pool
@@ -40,8 +40,12 @@
 castor::jobmanager::DispatchThread::DispatchThread
 (castor::server::ForkedProcessPool *processPool)
   throw(castor::exception::Exception) :
-  m_processPool(processPool) {
+  m_processPool(processPool) {}
 
+//-----------------------------------------------------------------------------
+// init
+//-----------------------------------------------------------------------------
+void castor::jobmanager::DispatchThread::init() {
   // Initialize the oracle job manager service.
   castor::IService *orasvc =
     castor::BaseObject::services()->service("OraJobManagerSvc", castor::SVC_ORAJOBMANAGERSVC);

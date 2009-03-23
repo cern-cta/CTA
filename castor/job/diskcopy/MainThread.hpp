@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MainThread.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/07/29 06:28:17 $ $Author: waldron $
+ * @(#)$RCSfile: MainThread.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2009/03/23 15:26:20 $ $Author: sponcec3 $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -69,8 +69,8 @@ namespace castor {
 	 */
 	virtual ~MainThread() throw() {};
 
-	/// Not implemented
-	virtual void init() {};
+	/// Initialization of the thread
+	virtual void init();
 
 	/**
 	 * Executes the transfer between two diskservers. This runs once and

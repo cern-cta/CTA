@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ManagementThread.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2009/02/10 13:23:53 $ $Author: waldron $
+ * @(#)$RCSfile: ManagementThread.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2009/03/23 15:26:20 $ $Author: sponcec3 $
  *
  * Cancellation thread used to cancel jobs in the LSF with have been in a
  * PENDING status for too long
@@ -46,8 +46,12 @@ castor::jobmanager::ManagementThread::ManagementThread(int timeout)
   m_timeout(timeout),
   m_initialized(false),
   m_resReqKill(false),
-  m_diskCopyPendingTimeout(0) {
+  m_diskCopyPendingTimeout(0) {}
 
+//-----------------------------------------------------------------------------
+// init
+//-----------------------------------------------------------------------------
+void castor::jobmanager::ManagementThread::init() {
   // Initialize the oracle job manager service.
   castor::IService *orasvc =
     castor::BaseObject::services()->service("OraJobManagerSvc", castor::SVC_ORAJOBMANAGERSVC);
