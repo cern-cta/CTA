@@ -17,7 +17,7 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: castor_tools.py,v $ $Revision: 1.8 $ $Release$ $Date: 2009/01/28 17:39:02 $ $Author: sponcec3 $
+# * @(#)$RCSfile: castor_tools.py,v $ $Revision: 1.9 $ $Release$ $Date: 2009/03/23 15:47:41 $ $Author: sponcec3 $
 # *
 # * utility functions for castor tools written in python
 # *
@@ -43,6 +43,8 @@ def getStagerDBConnectParams():
     passwd = ""
     dbname = ""
     for l in open ('/etc/castor/ORASTAGERCONFIG').readlines():
+        if l.strip()[0] == '#':
+            continue
         try:
             instance, entry, value = l.split()
             if instance == full_name:
