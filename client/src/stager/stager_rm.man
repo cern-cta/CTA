@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_rm.man,v $ $Revision: 1.8 $ $Date: 2008/10/16 14:41:54 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_rm.man,v $ $Revision: 1.9 $ $Date: 2009/03/24 08:06:01 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_RM 1castor "$Date: 2008/10/16 14:41:54 $" CASTOR "STAGER Commands"
+.TH STAGER_RM 1castor "$Date: 2009/03/24 08:06:01 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_rm \- request for removing a file from the CASTOR stager
 .SH SYNOPSIS
@@ -39,6 +39,18 @@ running recall of the file will be untouched leading to a new
 copy of the file on disk just after the stager_rm has been
 performed.
 
+stager_rm operations can only be performed if the user has proper
+permissions. At the stager level, user needs StageRmRequest permissions
+on the disk pool considered, or on the '*' disk pool if \-a/\-\-all/\-S\ '*'
+is used. At the namespace level, user needs write privileges on the
+parent directory of the file being removed. 
+.B stager_listprivileges
+, 
+.B nsls\ \-l
+and 
+.B nsgetacl
+can be used to check permissions.
+
 .SH OPTIONS
 
 .TP
@@ -74,6 +86,11 @@ $ stager_rm -M /castor/cern.ch/user/t/test/file1
 This program returns 0 if the operation was successful or >0 if the operation
 failed. Note that busy or non-existing files are not considered as
 failures.
+
+.SH SEE ALSO
+.BR stager_listprivileges(1castor)
+.BR nsls(1castor)
+.BR nsgetacl(1castor)
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
