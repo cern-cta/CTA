@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ManagementThread.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2009/03/23 15:26:20 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ManagementThread.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2009/03/25 13:23:30 $ $Author: waldron $
  *
  * Cancellation thread used to cancel jobs in the LSF with have been in a
  * PENDING status for too long
@@ -45,7 +45,7 @@ castor::jobmanager::ManagementThread::ManagementThread(int timeout)
   m_defaultQueue("castor"),
   m_timeout(timeout),
   m_initialized(false),
-  m_resReqKill(false),
+  m_resReqKill(true),
   m_diskCopyPendingTimeout(0) {}
 
 //-----------------------------------------------------------------------------
@@ -194,10 +194,10 @@ void castor::jobmanager::ManagementThread::run(void *param) {
   // all of the requested filesystems are no longer available. This prevents
   // the queues from accumulating jobs that will never run. For example, when
   // a diskserver is removed from production and never returns.
-  m_resReqKill = false;
+  m_resReqKill = true;
   if ((value = getconfent("JobManager", "ResReqKill", 0)) != NULL) {
-    if (!strcasecmp(value, "yes")) {
-      m_resReqKill = true;
+    if (!strcasecmp(value, "no")) {
+      m_resReqKill = false;
     }
   }
 
