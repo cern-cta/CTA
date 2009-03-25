@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.726 $ $Date: 2009/03/13 15:23:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.727 $ $Date: 2009/03/25 13:29:53 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -772,14 +772,14 @@ BEGIN
   -- service class. I.e. check for StagePutRequest access rights
   checkPermission(destSvcClass, reuid, regid, 40, 0, authDest);
   IF authDest != 0 THEN
-      -- Fail the subrequest and notify the client
-      dcId := -1;
-      UPDATE SubRequest
-         SET status = 7, -- FAILED
-             errorCode = 13, -- EACCES
-             errorMessage = 'Insufficient user privileges to trigger a tape recall or file replication to the '''||destSvcClass||''' service class'
-       WHERE id = srId;
-      COMMIT;
+    -- Fail the subrequest and notify the client
+    dcId := -1;
+    UPDATE SubRequest
+       SET status = 7, -- FAILED
+           errorCode = 13, -- EACCES
+           errorMessage = 'Insufficient user privileges to trigger a tape recall or file replication to the '''||destSvcClass||''' service class'
+     WHERE id = srId;
+    COMMIT;
     RETURN;
   END IF;
   -- Try to find a diskcopy to replicate
@@ -788,7 +788,7 @@ BEGIN
   -- copy from the existing diskcopy not available to this svcclass
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- We found no diskcopies at all. We should not schedule
-  -- and make a tape recall... except ... in 2 cases :
+  -- and make a tape recall... except ... in 3 cases :
   --   - if there is some temporarily unavailable diskcopy
   --     that is in CANBEMIGR or STAGEOUT
   -- in such a case, what we have is an existing file, that
