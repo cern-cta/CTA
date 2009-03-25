@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_rm.man,v $ $Revision: 1.9 $ $Date: 2009/03/24 08:06:01 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_rm.man,v $ $Revision: 1.10 $ $Date: 2009/03/25 13:23:36 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_RM 1castor "$Date: 2009/03/24 08:06:01 $" CASTOR "STAGER Commands"
+.TH STAGER_RM 1castor "$Date: 2009/03/25 13:23:36 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_rm \- request for removing a file from the CASTOR stager
 .SH SYNOPSIS
@@ -55,8 +55,7 @@ can be used to check permissions.
 
 .TP
 .BI \-S,\ \-\-svcClass " svcClass"
-specifies the service class where to remove the file replicas.
-If no service class is given a default will be assigned by the stager.
+specifies the service class where to remove the file replicas. If \-S is not specified, the query will be ran accross all service classes. Note that in such a case, the STAGE_SVCCLASS environment variable and the stagemap file will be taken into account, possibly restricting the query to a given service class. In order to force querying accross all service classes, the special value '*' can be used.
 .TP
 .BI \-a,\ \-\-all
 explicitly specifies to remove all available replicas of the files
