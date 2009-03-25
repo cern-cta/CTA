@@ -41,6 +41,7 @@ extern char *geterr();
 #include <rtcp.h>
 #include <rtcp_server.h>
 #include <Ctape_api.h>
+#include "vmgr_api.h"
 #include <serrno.h>
 #include "tplogger_api.h"
 
@@ -49,30 +50,52 @@ extern char *geterr();
 #define EBUSY_RETRIES 10
 #endif /* EBUSY_RETRIES */
 
-static int Ctape_key = -1;
+static int  Ctape_key       = -1;
+static int  vmgr_errbuf_key = -1;
 static char Unkn_errorstr[] = "unknown error";
-extern int AbortFlag;
+extern int  AbortFlag;
 
 extern char *getconfent(char *, char *, int);
 static char tape_path[CA_MAXPATHLEN+1];  /* Needed for Ctape_kill */
 
 int rtcpd_CtapeInit() {
-    char *errbuf;
     int errbufsiz = CA_MAXLINELEN+1;
 
-    Cglobals_get(&Ctape_key,(void **)&errbuf,errbufsiz);
-    if ( errbuf == NULL ) return(-1);
+    // Ensure there is thread-specific storage for tape library error messages
+    {
+      char *Ctape_errbuf = NULL;
+      Cglobals_get(&Ctape_key,(void **)&Ctape_errbuf,errbufsiz);
+      if ( Ctape_errbuf == NULL ) return(-1);
 
-    Ctape_seterrbuf(errbuf,errbufsiz);
+      Ctape_seterrbuf(Ctape_errbuf,errbufsiz);
+    }
+
+    // Ensure there is thread-specific storage for vmgr library error messages
+    {
+      char *vmgr_errbuf = NULL;
+      Cglobals_get(&vmgr_errbuf_key,(void **)&vmgr_errbuf,errbufsiz);
+      if ( vmgr_errbuf == NULL ) return(-1);
+
+      vmgr_seterrbuf(vmgr_errbuf,errbufsiz);
+    }
+
     tape_path[0] = '\0';
     return(0);
 }
 
 char *rtcpd_GetCtapeErrBuf() {
-    char *errbuf;
-    int errbufsiz = CA_MAXLINELEN+1;
+    char *errbuf   = NULL;
+    int  errbufsiz = CA_MAXLINELEN+1;
 
     Cglobals_get(&Ctape_key,(void **)&errbuf,errbufsiz);
+    return(errbuf);
+}
+
+char *rtcpd_GetVmgrErrBuf() {
+    char *errbuf    = NULL;
+    int   errbufsiz = CA_MAXLINELEN+1;
+
+    Cglobals_get(&vmgr_errbuf_key,(void **)&errbuf,errbufsiz);
     return(errbuf);
 }
 
