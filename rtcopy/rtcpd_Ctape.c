@@ -114,9 +114,14 @@ char *rtcpd_CtapeErrMsg() {
 }
 
 void rtcpd_ResetCtapeError() {
-    char *errbuf;
+    char *errbuf = rtcpd_GetCtapeErrBuf();
+    if ( errbuf != NULL ) *errbuf = '\0';
+    serrno = 0;
+    return;
+}
 
-    errbuf = rtcpd_GetCtapeErrBuf();
+void rtcpd_ResetVmgrError() {
+    char *errbuf = rtcpd_GetVmgrErrBuf();
     if ( errbuf != NULL ) *errbuf = '\0';
     serrno = 0;
     return;
@@ -468,6 +473,7 @@ int rtcpd_Mount(tape_list_t *tape) {
          */
         strcpy(tape_path,filereq->tape_path);
         rtcpd_ResetCtapeError();
+        rtcpd_ResetVmgrError();
         tapereq->TStartMount = (int)time(NULL);
         rc = Ctape_mount(filereq->tape_path,
                          (*tapereq->vid != '\0' ? tapereq->vid : NULL),
@@ -479,6 +485,20 @@ int rtcpd_Mount(tape_list_t *tape) {
                          (*tapereq->vsn != '\0' ? tapereq->vsn : NULL),
                          (*tapereq->label != '\0' ? tapereq->label : NULL),
                          tapereq->VolReqID);
+
+        // Log an error message if there has been a VMGR library error
+        {
+          char *errbuf = rtcpd_GetVmgrErrBuf();
+          if(errbuf != NULL && errbuf[0] != '\0') {
+
+            rtcp_log(LOG_ERR,"rtcpd_Mount() Ctape_mount() VMGR lib error %s\n",
+                     errbuf);
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
+                             "func"   , TL_MSG_PARAM_STR, "rtcpd_Mount",
+                             "Message", TL_MSG_PARAM_STR, "Ctape_mount",
+                             "Error"  , TL_MSG_PARAM_STR, errbuf        );
+          }
+        }
     
         tapereq->tprc = rc;
         tape_path[0] = '\0';
