@@ -1,5 +1,5 @@
 /*
- * $Id: rtcp_SendRecv.c,v 1.8 2009/03/23 14:52:54 murrayc3 Exp $
+ * $Id: rtcp_SendRecv.c,v 1.9 2009/03/25 15:08:39 murrayc3 Exp $
  *
  * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
@@ -532,7 +532,7 @@ static int rtcp_TransAckn(SOCKET *s,
   if ( data != NULL ) status = *(int *)data;
 
   if ( whereto == ReceiveFrom ) {
-    rc = netread_timeout(*s,hdrbuf,RTCP_HDRBUFSIZ,RTCP_NETTIMEOUT);
+    rc = netread_timeout(*s,hdrbuf,RTCP_HDRBUFSIZ,transAcknTimeOut);
     switch (rc) {
     case -1: 
       rtcp_log(LOG_ERR,"rtcp_TransAckn() netread(%d,HDR): %s\n",*s,
@@ -560,7 +560,7 @@ static int rtcp_TransAckn(SOCKET *s,
       *s = INVALID_SOCKET;
       return(rc);
     }
-    rc = netwrite_timeout(*s,hdrbuf,RTCP_HDRBUFSIZ,RTCP_NETTIMEOUT);
+    rc = netwrite_timeout(*s,hdrbuf,RTCP_HDRBUFSIZ,transAcknTimeOut);
     switch (rc) {
     case -1: 
       rtcp_log(LOG_ERR,"rtcp_TransAckn() netwrite(%d,HDR): %s\n",*s,
