@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.687 $ $Date: 2009/03/06 17:21:29 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.688 $ $Date: 2009/03/26 14:20:05 $ $Author: itglp $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -624,6 +624,8 @@ BEGIN
   bulkDeleteRequests('StageRepackRequest');
     ---- DiskCopyReplica ----
   bulkDeleteRequests('StageDiskCopyReplicaRequest');
+    ---- SetGCWeight ----
+  bulkDeleteRequests('SetFileGCWeight');
 END;
 /
 
