@@ -284,8 +284,11 @@ namespace castor {
          * The SubRequest and potentially the corresponding
          * Request will thus be removed from the DataBase
          * @param subReqId the id of the SubRequest to archive
+         * @param finalStatus the final status of the SubRequest,
+         * either 8 (FINISHED) or 9 (FAILED_FINISHED)
          */
-        virtual void archiveSubReq(u_signed64 subReqId)
+        virtual void archiveSubReq(u_signed64 subReqId,
+          castor::stager::SubRequestStatusCodes finalStatus)
           throw (castor::exception::Exception);
 
         /**

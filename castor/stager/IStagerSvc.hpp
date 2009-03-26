@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.99 $ $Release$ $Date: 2008/12/08 14:10:09 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.100 $ $Release$ $Date: 2009/03/26 11:05:52 $ $Author: itglp $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -33,6 +33,7 @@
 #include "castor/stager/ICommonSvc.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/stager/DiskCopyStatusCodes.hpp"
+#include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/stager/DiskCopyInfo.hpp"
 #include "castor/stager/PriorityMap.hpp"
 #include <vector>
@@ -284,8 +285,11 @@ namespace castor {
        * The SubRequest and potentially the corresponding
        * Request will thus be removed from the DataBase
        * @param subReqId the id of the SubRequest to archive
+       * @param finalStatus the final status of the SubRequest,
+       * either 8 (FINISHED) or 9 (FAILED_FINISHED)
        */
-      virtual void archiveSubReq(u_signed64 subReqId)
+      virtual void archiveSubReq(u_signed64 subReqId,
+        castor::stager::SubRequestStatusCodes finalStatus)
         throw (castor::exception::Exception) = 0;
 
       /**
