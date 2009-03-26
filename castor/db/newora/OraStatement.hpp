@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStatement.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2008/09/04 10:00:49 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStatement.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2009/03/26 14:30:12 $ $Author: itglp $
  *
  *
  *
@@ -91,6 +91,7 @@ namespace castor {
         virtual void setFloat(int pos, float value);
         virtual void setDouble(int pos, double value);
         virtual void setClob(int pos, std::string value);
+        virtual void setNull(int pos);
 
         virtual void setDataBuffer(int pos, void* buffer, unsigned dbType, unsigned size, void* bufLens)
           throw (castor::exception::SQLError);

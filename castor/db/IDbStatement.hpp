@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IDbStatement.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2008/09/01 17:32:02 $ $Author: waldron $
+ * @(#)$RCSfile: IDbStatement.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2009/03/26 14:30:11 $ $Author: itglp $
  *
  * 
  *
@@ -61,6 +61,7 @@ namespace castor {
       virtual void setFloat(int pos, float value) = 0;
       virtual void setDouble(int pos, double value) = 0;
       virtual void setClob(int pos, std::string value) = 0;
+      virtual void setNull(int pos) = 0;
         
       virtual void setDataBuffer(int pos, void* buffer, unsigned dbType, unsigned size, void* bufLens)
 	throw (castor::exception::SQLError) = 0;

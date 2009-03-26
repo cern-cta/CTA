@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStatement.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2008/09/22 12:02:15 $ $Author: waldron $
+ * @(#)$RCSfile: OraStatement.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2009/03/26 14:30:12 $ $Author: itglp $
  *
  * @author Giuseppe Lo Presti, giuseppe.lopresti@cern.ch
  *****************************************************************************/
@@ -139,6 +139,14 @@ void castor::db::ora::OraStatement::setClob(int pos, std::string value)
   m_clobPos = pos;
 }
 
+// -----------------------------------------------------------------------------
+// setNull
+// -----------------------------------------------------------------------------
+void castor::db::ora::OraStatement::setNull(int pos)
+{
+  m_statement->setNull(pos, oracle::occi::OCCIINT);
+}
+
 //------------------------------------------------------------------------------
 // setDataBuffer
 //------------------------------------------------------------------------------
@@ -171,8 +179,8 @@ void castor::db::ora::OraStatement::setDataBufferArray
     if (NULL == m_arraySize) {
       m_arraySize = (ub4*) malloc(sizeof(ub4));
       if (NULL == m_arraySize) {
-	castor::exception::OutOfMemory e;
-	throw e;
+        castor::exception::OutOfMemory e;
+        throw e;
       }
     }
     *m_arraySize = size;
@@ -351,7 +359,7 @@ std::string castor::db::ora::OraStatement::getClob(int pos)
     clob.close();
     std::string res(buf);
     free(buf);
-    return std::string(res);
+    return res;
   }
   catch(oracle::occi::SQLException e) {
     castor::exception::SQLError ex;
@@ -418,10 +426,10 @@ int castor::db::ora::OraStatement::execute(int count)
     // Free memory buffers
     if (m_arrayPos > 0) {
       if (m_arrayBuf)
-	free(m_arrayBuf);
+        free(m_arrayBuf);
       m_arrayBuf = 0;
       if (m_arrayBufLens)
-	free(m_arrayBufLens);
+        free(m_arrayBufLens);
       m_arrayBufLens = 0;
       m_arrayPos = 0;   // reset for next usage
     }
@@ -483,10 +491,10 @@ int castor::db::ora::OraStatement::execute(int count)
     // Free memory buffers
     if (m_arrayPos > 0) {
       if (m_arrayBuf)
-	free(m_arrayBuf);
+        free(m_arrayBuf);
       m_arrayBuf = 0;
       if (m_arrayBufLens)
-	free(m_arrayBufLens);
+        free(m_arrayBufLens);
       m_arrayBufLens = 0;
       m_arrayPos = 0;   // reset for next usage
     }
