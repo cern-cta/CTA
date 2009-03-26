@@ -1,5 +1,5 @@
 /*
- * $Id: rtcp_SendRecv.c,v 1.9 2009/03/25 15:08:39 murrayc3 Exp $
+ * $Id: rtcp_SendRecv.c,v 1.10 2009/03/26 07:34:21 waldron Exp $
  *
  * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
@@ -511,7 +511,7 @@ static int rtcp_TransAckn(SOCKET *s,
   {
     char *paramValue = NULL;
 
-    if(paramValue = getconfent("TAPE", "RTCP_TRANSACKN_TIMEOUT", 0)) {
+    if((paramValue = getconfent("TAPE", "RTCP_TRANSACKN_TIMEOUT", 0))) {
       int tmpTransAcknTimeOut = atoi(paramValue);
 
       if(tmpTransAcknTimeOut > 0) {
