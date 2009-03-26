@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.hpp,v $ $Revision: 1.17 $ $Release$ $Date: 2009/01/08 09:24:24 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.hpp,v $ $Revision: 1.18 $ $Release$ $Date: 2009/03/26 14:26:20 $ $Author: itglp $
  *
  * Thread pool supporting wakeup on signals and periodical run after timeout
  *
@@ -27,28 +27,21 @@
 #ifndef CASTOR_SERVER_SIGNALTHREADPOOL_HPP
 #define CASTOR_SERVER_SIGNALTHREADPOOL_HPP 1
 
-/* ============== */
-/* System headers */
-/* ============== */
-#include <errno.h>                      /* For EINVAL etc... */
+#include <errno.h>
 #include <sys/types.h>
 #include <iostream>
 #include <string>
 
-/* ============= */
-/* Local headers */
-/* ============= */
 #include "osdep.h"
-#include "serrno.h"                     /* CASTOR error numbers */
-#include "Cnetdb.h"                     /* For Cgetservbyname() */
+#include "serrno.h"
 #include "Cthread_api.h"
 
+#include "castor/BaseObject.hpp"
 #include "castor/server/BaseThreadPool.hpp"
 #include "castor/server/IThread.hpp"
 #include "castor/server/Mutex.hpp"
 #include "castor/server/NotifierThread.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/BaseObject.hpp"
 
 
 namespace castor {
@@ -67,7 +60,7 @@ namespace castor {
 
   /**
    * NotifierThread must be friend as it closely
-   * interacta with the internal mutex for
+   * interacts with the internal mutex for
    * waking up waiting threads or pausing them
    */
   friend class NotifierThread;
@@ -83,9 +76,12 @@ namespace castor {
     /**
      * Constructor
      * @param poolName, thread as in BaseThreadPool
-     * @param timeout
-     * @param nbThreads
-     * @param startingThreads
+     * @param timeout the interval in seconds on which
+     *        threads will wake up independently from
+     *        notifications
+     * @param nbThreads total number of threads in the pool
+     * @param startingThreads number of threads to be
+     *        run immediately at startup, defaults to 1
      */
     SignalThreadPool(const std::string poolName,
                      castor::server::IThread* thread,
@@ -106,7 +102,6 @@ namespace castor {
 
     /**
      * Creates and runs the pool starting the threads in detached mode.
-     * Moreover, it starts the notification thread for this pool.
      */
     virtual void run() throw (castor::exception::Exception);
 

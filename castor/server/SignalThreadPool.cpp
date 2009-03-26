@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2009/01/08 09:24:24 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2009/03/26 14:26:20 $ $Author: itglp $
  *
  * Thread pool supporting wakeup on signals and periodical run after timeout
  *
@@ -202,7 +202,7 @@ void* castor::server::SignalThreadPool::_runner(void* param) {
         errno = 0;
         serrno = 0;
   
-        // do the user job: catch any exception for logging purposes
+        // do the user job and catch any exception for logging purposes
         try {
           // we pass the pool itself as parameter to allow e.g.
           // SelectProcessThreads to call our stopped() method

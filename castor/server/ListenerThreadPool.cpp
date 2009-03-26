@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2009/01/08 09:24:24 $ $Author: itglp $
+ * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2009/03/26 14:26:20 $ $Author: itglp $
  *
  * Abstract class defining a listener thread pool
  *
@@ -99,7 +99,7 @@ bool castor::server::ListenerThreadPool::shutdown(bool wait) throw() {
 }
 
 //------------------------------------------------------------------------------
-// _listenerRun
+// _listener
 //------------------------------------------------------------------------------
 void* castor::server::ListenerThreadPool::_listener(void* param) {
   castor::server::ListenerThreadPool* tp = (castor::server::ListenerThreadPool*)param;
