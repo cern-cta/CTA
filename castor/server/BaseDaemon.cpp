@@ -270,6 +270,7 @@ void* castor::server::BaseDaemon::_signalHandler(void* arg)
         case SIGABRT:
         case SIGTERM:
         case SIGINT:
+        case SIGHUP:
           daemon->m_signalMutex->setValueNoMutex(castor::server::STOP_GRACEFULLY);
           break;
           
