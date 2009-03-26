@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2009/02/10 15:09:17 $ $Author: waldron $
+ * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2009/03/26 14:22:19 $ $Author: itglp $
  *
  * Implementation of the IRmMasterSvc for Oracle
  *
@@ -432,9 +432,9 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::retrieveClusterStatus
       // rmNode will send a full report reenabling it. If the dsDisabled option
       // is enabled then we take the status as seen in the database
       if (dsDisabled == false) {
-	dsReport->setStatus((castor::stager::DiskServerStatusCode)dsRset->getInt(4));
+        dsReport->setStatus((castor::stager::DiskServerStatusCode)dsRset->getInt(4));
       } else {
-	dsReport->setStatus(castor::stager::DISKSERVER_DISABLED);
+        dsReport->setStatus(castor::stager::DISKSERVER_DISABLED);
       }
 
       // Make sure an ADMIN_NONE status in db resets anything found before

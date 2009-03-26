@@ -691,11 +691,11 @@ throw (castor::exception::Exception) {
   char* sport;
   if ((sport = getconfent((char *)castor::client::CLIENT_CONF,
     (char *)castor::client::LOWPORT_CONF,0)) != 0) {
-  lowPort = castor::System::porttoi(sport);
+    lowPort = castor::System::porttoi(sport);
     }
     if ((sport = getconfent((char *)castor::client::CLIENT_CONF,
       (char *)castor::client::HIGHPORT_CONF,0)) != 0) {
-    highPort = castor::System::porttoi(sport);
+      highPort = castor::System::porttoi(sport);
       }
       
       // Bind the socket
