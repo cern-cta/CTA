@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IThread.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2009/01/08 09:25:44 $ $Author: itglp $
+ * @(#)$RCSfile: IThread.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2009/03/26 14:24:02 $ $Author: itglp $
  *
  * Abstract interface for the CASTOR multithread framework
  *
@@ -51,7 +51,7 @@ namespace castor {
 
     /**
      * Initialization of the thread.
-     * This method will be called by each spawned threads at their startup;
+     * This method will be called by each spawned thread at its startup;
      * however for pools attached to a ListenerThreadPool, this method is
      * called only once by the dispatcher thread.
      * @throw any exception thrown here is handled in the BaseThreadPool. 
@@ -61,10 +61,12 @@ namespace castor {
     /**
      * Main work for this thread.
      * This method will run on a dedicated thread, so it may
-     * contain an infinite loop; however, it is advised to let it
+     * contain an infinite loop; however, it is recommended to let it
      * run a chunk of your job and let the pool rerun it when
      * needed (either a new request coming for ListenerThreadPools
-     * or timeout elapsed/notification got for SignalThreadPools).
+     * or timeout elapsed/notification got for SignalThreadPools),
+     * otherwise upon termination (@see stop) the thread may fail
+     * to get notified, thus blocking the whole daemon.
      * @param param any relevant initialization value which
      * will be passed in by the pool.
      * @throw any exception thrown here is handled in the BaseThreadPool. 
