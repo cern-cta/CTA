@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2009/01/08 09:38:40 $ $Author: itglp $
+ * @(#)$RCSfile: RHThread.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2009/03/26 14:04:09 $ $Author: itglp $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -47,9 +47,8 @@ namespace castor {
 
       /**
        * Constructor
-       * @param useAccessLists whether to use access lists
        */
-      RHThread(bool useAccessLists) throw (castor::exception::Exception);
+      RHThread() throw (castor::exception::Exception);
       
       /**
        * Destructor. See the cpp file for details.
@@ -82,22 +81,6 @@ namespace castor {
 				 Cuuid_t cuuid)
         throw (castor::exception::Exception);
       
-      /**
-       * Send a notification to stager to wake up one of its thread pools
-       * to process the request
-       * @param fr the request
-       * @param cuuid the uuid of the request (for logging purposes)
-       * @param nbThreads the number of threads to wake up on the stager
-       */
-      void sendNotification(castor::stager::Request* fr,
-			    Cuuid_t cuuid,
-			    unsigned int nbThreads);
-      
-    private:
-      
-      /// Whether to use access lists
-      bool m_useAccessLists;
-      
       /// Stager host
       std::string m_stagerHost;
       
@@ -106,6 +89,9 @@ namespace castor {
       
       /// hash table for mapping requests to svc handlers
       std::map<int, std::string> m_svcHandler;
+      
+      /// list of trusted SRM hosts
+      std::vector<std::string> m_srmHostList;
       
     }; // class RHThread
     
