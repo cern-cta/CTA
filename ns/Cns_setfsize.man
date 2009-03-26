@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cns_setfsize.man,v $ $Revision: 1.4 $ $Date: 2008/11/10 16:07:59 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Cns_setfsize.man,v $ $Revision: 1.5 $ $Date: 2009/03/26 15:31:48 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_SETFSIZE 3 "$Date: 2008/11/10 16:07:59 $" CASTOR "Cns Library Functions"
+.TH CNS_SETFSIZE 3 "$Date: 2009/03/26 15:31:48 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_setfsize \- set filesize for a regular file; set also last modification time to the current time
 .SH SYNOPSIS
@@ -21,7 +21,8 @@ sets the filesize for a regular file; set also the last modification time to the
 current time. Takes care that the file was not modified by somebody else in the mean time.
 If it was, ignores the request and fail with ENSFILECHG.
 This function should only be called by the stager after the last write
-operation has been performed on the file.
+operation has been performed on the file. The caller must have ADMIN privileges in the
+Cupv database to execute this call.
 The file can be identified by
 .I path
 name or by
@@ -57,7 +58,8 @@ is a null pathname.
 Search permission is denied on a component of the
 .I path
 prefix or the caller effective user ID does not match the owner ID of the file
-or write permission on the file itself is denied.
+or write permission on the file itself is denied or the caller does not have
+ADMIN privileges in the Cupv database.
 .TP
 .B ENSFILECHG
 The file has been changed/overwritten by somebody else since the last_mod_time given. Request was thus ignored.

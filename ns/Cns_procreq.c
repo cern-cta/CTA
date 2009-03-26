@@ -4257,7 +4257,7 @@ int Cns_srv_updateseg_status(magic, req_data, clienthost, thip)
   /* check if the user is authorized to set segment status */
 
   if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
-     RETURN (serrno);
+    RETURN (serrno);
 
   /* check for valid status */
 
@@ -4486,7 +4486,7 @@ int Cns_srv_replaceseg(magic, req_data, clienthost, thip)
   unmarshall_WORD (rbp, copyno);
   unmarshall_WORD (rbp, fsec);
   sprintf (logbuf, "replaceseg %s %lld %d %d",
-           u64tostr (fileid, tmpbuf, 0), 
+           u64tostr (fileid, tmpbuf, 0),
 	   (long long int)last_mod_time, copyno, fsec);
   Cns_logreq (func, logbuf);
 
@@ -4663,7 +4663,7 @@ int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
   /* check if the user is authorized to replacetapecopy */
 
   if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
-     RETURN (serrno);
+    RETURN (serrno);
 
   /* start transaction */
   (void) Cns_start_tr (thip->s, &thip->dbfd);
@@ -5269,6 +5269,9 @@ int Cns_srv_setfsize(magic, req_data, clienthost, thip)
            path, u64tostr (filesize, tmpbuf2, 0), cwdpath);
   Cns_logreq (func, logbuf);
 
+  if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+    RETURN (serrno);
+
   /* start transaction */
 
   (void) Cns_start_tr (thip->s, &thip->dbfd);
@@ -5355,7 +5358,7 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
   char csumvalue[CA_MAXCKSUMLEN+1];
   time_t last_mod_time = 0;
   time_t new_mod_time = 0;
-  
+
   strcpy (func, "Cns_srv_setfsizecs");
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
@@ -5378,14 +5381,17 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
     unmarshall_TIME_T (rbp, last_mod_time);
   }
   get_cwd_path (thip, cwd, cwdpath);
-  sprintf (logbuf, "setfsizecs %s %lld %lld %s %s %s %s %s", 
+  sprintf (logbuf, "setfsizecs %s %lld %lld %s %s %s %s %s",
 	   u64tostr (fileid, tmpbuf, 0), (long long int)last_mod_time,
 	   (long long int)new_mod_time, path, u64tostr (filesize, tmpbuf2, 0),
 	   csumvalue, csumtype, cwdpath);
   Cns_logreq (func, logbuf);
   if (*csumtype &&
-      strcmp (csumtype, "AD"))
+      (strcmp (csumtype, "AD") && strcmp (csumtype, "PA")))
     RETURN (EINVAL);
+
+  if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+    RETURN (serrno);
 
   /* start transaction */
 
@@ -5429,7 +5435,7 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
     RETURN (ENSFILECHG);
   }
 
-  if ((strcmp(filentry.csumtype,"PA") == 0 && strcmp(csumtype,"AD") == 0)) {
+  if ((strcmp(filentry.csumtype, "PA") == 0 && strcmp(csumtype, "AD") == 0)) {
     /* we have predefined checksums then should check them with new ones */
     if(strcmp(filentry.csumvalue,csumvalue)!=0) {
       sprintf (logbuf, "setfsizecs: predefined checksum error 0x%s != 0x%s", filentry.csumvalue, csumvalue);
@@ -5478,7 +5484,7 @@ int Cns_srv_setfsizeg(magic, req_data, clienthost, thip)
   char *user;
   time_t last_mod_time = 0;
   time_t new_mod_time = 0;
-  
+
   strcpy (func, "Cns_srv_setfsizeg");
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
@@ -5498,13 +5504,16 @@ int Cns_srv_setfsizeg(magic, req_data, clienthost, thip)
     unmarshall_TIME_T (rbp, new_mod_time);
     unmarshall_TIME_T (rbp, last_mod_time);
   }
-  sprintf (logbuf, "setfsizeg %s %s %lld %lld", guid, 
+  sprintf (logbuf, "setfsizeg %s %s %lld %lld", guid,
 	   u64tostr (filesize, tmpbuf, 0),
 	   (long long int)last_mod_time, (long long int)new_mod_time);
   Cns_logreq (func, logbuf);
   if (*csumtype &&
       strcmp (csumtype, "AD"))
     RETURN (EINVAL);
+
+  if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+    RETURN (serrno);
 
   /* start transaction */
 
@@ -5802,7 +5811,7 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
   unmarshall_WORD (rbp, nbseg);
   get_cwd_path (thip, cwd, cwdpath);
   sprintf (logbuf, "setsegattrs %s %lld %s %s",
-           u64tostr (fileid, tmpbuf, 0), 
+           u64tostr (fileid, tmpbuf, 0),
 	   (long long int)last_mod_time, path, cwdpath);
   Cns_logreq (func, logbuf);
 
@@ -6794,7 +6803,7 @@ int Cns_srv_updatefile_checksum(magic, req_data, clienthost, thip)
       Cns_chkentryperm (&filentry, S_IWRITE, uid, gid, clienthost)) {
     RETURN (EACCES);
   }
-  
+
   /* update entry only if not admin */
   if (notAdmin) {
     filentry.mtime = time(0);
