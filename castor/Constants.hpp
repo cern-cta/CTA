@@ -42,7 +42,6 @@ namespace castor {
     OBJ_INVALID = 0,
     OBJ_Ptr = 1, /* Only used for streaming for circular dependencies */
     OBJ_CastorFile = 2,
-    OBJ_OldClient = 3,
     OBJ_Cuuid = 4,
     OBJ_DiskCopy = 5,
     OBJ_DiskFile = 6,
@@ -70,7 +69,6 @@ namespace castor {
     OBJ_StagePutDoneRequest = 39,
     OBJ_StagePutRequest = 40,
     OBJ_StageRmRequest = 42,
-    OBJ_StageUpdateFileStatusRequest = 43,
     OBJ_StageUpdateRequest = 44,
     OBJ_FileRequest = 45,
     OBJ_QryRequest = 46,
