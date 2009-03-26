@@ -1,12 +1,12 @@
 /*
- * $Id: Cuuid.h,v 1.9 2006/11/29 13:29:30 waldron Exp $
+ * $Id: Cuuid.h,v 1.10 2009/03/26 11:25:41 itglp Exp $
  *
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
  * Based on: http://www.webdav.org/specs/draft-leach-uuids-guids-01.txt
  *
- * $RCSfile: Cuuid.h,v $ $Revision: 1.9 $ $Date: 2006/11/29 13:29:30 $ CERN IT-PDP/DM Jean-Damien Durand
+ * $RCSfile: Cuuid.h,v $ $Revision: 1.10 $ $Date: 2009/03/26 11:25:41 $ CERN IT-PDP/DM Jean-Damien Durand
  */
 
 
@@ -42,7 +42,7 @@ EXTERN_C void DLL_DECL _marshall_UUID _PROTO((char**, Cuuid_t *));
 EXTERN_C void DLL_DECL _unmarshall_UUID _PROTO((char**, Cuuid_t *));
 
 EXTERN_C int DLL_DECL Cuuid2string _PROTO((char *, size_t, Cuuid_t *));
-EXTERN_C int DLL_DECL string2Cuuid _PROTO((Cuuid_t *, char *));
+EXTERN_C int DLL_DECL string2Cuuid _PROTO((Cuuid_t *, const char *));
 
 #define  unmarshall_UUID(ptr,uuid)  _unmarshall_UUID(&(ptr), &(uuid))
 #define  marshall_UUID(ptr,uuid)  _marshall_UUID(&(ptr), &(uuid))

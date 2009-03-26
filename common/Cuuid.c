@@ -1,5 +1,5 @@
 /*
- * $Id: Cuuid.c,v 1.13 2007/12/07 13:27:11 sponcec3 Exp $
+ * $Id: Cuuid.c,v 1.14 2009/03/26 11:25:41 itglp Exp $
  *
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
@@ -856,7 +856,7 @@ int DLL_DECL Cuuid2string(output,maxlen,uuid)
 
 int string2Cuuid(uuid,input)
      Cuuid_t *uuid;
-     char *input;
+     const char *input;
 {
   int items;
   U_LONG dummy[11];
