@@ -144,12 +144,10 @@ dumptape.man: DepSourceName(tape,dumptape.man)
 
 RTCPCLD_MT_OBJS = rtcpcldcommon_mt.Osuf
 RTCPCLD_OBJS =	rtcpcldcommon.Osuf rtcpcldCatalogueInterface.Osuf rtcpcldVmgrInterface.Osuf rtcpcldNsInterface.Osuf
-NormalProgramTarget(rtcpcldCleanupDB,rtcpcldCleanupDB.Osuf $(RTCPCLD_OBJS),$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(LIBS),0750)
 NormalProgramTarget(rtcpclientd,rtcpclientd.Osuf $(RTCPCLD_OBJS),$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(LIBS),0750)
 NormalProgramTarget(recaller,recaller.Osuf $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS),$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(MTLDFLAGS) $(LIBS),0750)
 NormalProgramTarget(migrator,migrator.Osuf $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS),$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(MTLDFLAGS) $(LIBS),0750)
 NormalProgramTarget(TapeErrorHandler,TapeErrorHandler.Osuf $(RTCPCLD_OBJS),$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(LIBS),0750)
-EXEMANPAGE(rtcpcldCleanupDB)
 EXEMANPAGE(rtcpclientd)
 MakeDir(/var/spool/rtcpclientd,0755)
 LOGROTATE(castor-rtcopy-clientserver,..,install)

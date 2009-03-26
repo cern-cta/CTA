@@ -3,5 +3,4 @@
 %attr(0750,root,root) usr/bin/TapeErrorHandler
 %attr(0750,root,root) usr/bin/migrator
 %attr(0750,root,root) usr/bin/recaller
-%attr(0750,root,root) usr/bin/rtcpcldCleanupDB
 %attr(0750,root,root) usr/bin/rtcpclientd
