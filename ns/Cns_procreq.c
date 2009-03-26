@@ -4545,7 +4545,6 @@ int Cns_srv_replaceseg(magic, req_data, clienthost, thip)
   smd_entry.s_fileid = fileid;
   smd_entry.copyno = copyno;
   smd_entry.fsec = fsec;
-  smd_entry.segsize = old_smd_entry.segsize;
   unmarshall_LONG (rbp, smd_entry.compression);
   smd_entry.s_status = old_smd_entry.s_status;
   if (unmarshall_STRINGN (rbp, smd_entry.vid, CA_MAXVIDLEN+1))
@@ -4560,6 +4559,11 @@ int Cns_srv_replaceseg(magic, req_data, clienthost, thip)
   } else {
     smd_entry.checksum_name[0] = '\0';
     smd_entry.checksum = 0;
+  }
+  if (magic >= CNS_MAGIC6) {
+    unmarshall_HYPER (rbp, smd_entry.segsize);
+  } else {
+    smd_entry.segsize = old_smd_entry.segsize;
   }
 
   if (smd_entry.checksum_name == NULL

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: nssetsegment.man,v $ $Revision: 1.2 $ $Date: 2009/01/26 09:10:59 $ CERN IT/DM
+.\" @(#)$RCSfile: nssetsegment.man,v $ $Revision: 1.3 $ $Date: 2009/03/26 09:57:53 $ CERN IT/DM
 .\" Copyright (C) 2004 by CERN/IT/DM
 .\" All rights reserved
 .\"
-.TH NSSETSEGMENT 1 "$Date: 2009/01/26 09:10:59 $" CASTOR "Cns User Commands"
+.TH NSSETSEGMENT 1 "$Date: 2009/03/26 09:57:53 $" CASTOR "Cns User Commands"
 .SH NAME
 nssetsegment \- utility to change the checksum and status for a tape segment
 .SH SYNOPSIS
@@ -27,10 +27,10 @@ environment variable.
 .SH OPTIONS
 .TP
 .B -c,\ \-\-copyno=COPYNO
-specifies which copy of the file should be modified.
+Specifies which copy of the file should be modified.
 .TP
 .B -s,\ \-\-segmentno=SEGNO
-specifies which tape segment that should be modified.
+Specifies which tape segment that should be modified.
 .TP
 .B -n,\ \-\-name=CKSUMNAME
 Name of the checksum to be stored in the name server.
@@ -39,7 +39,7 @@ Name of the checksum to be stored in the name server.
 Value of the checksum to be stored in the name server.
 .TP
 .B -u,\ \-\-update
-use the Cns_updateseg_checksum call rather than Cns_replaceseg.
+Use the Cns_updateseg_checksum call rather than Cns_replaceseg.
 .TP
 .B --clear
 Resets the checksum to a NULL name, and a 0 value. Cannot be used in conjunction
@@ -50,6 +50,9 @@ Enable the tape segment
 .TP
 .B -d,\ \-\-disable
 Disable the tape segment
+.TP
+.B -x,\ \-\-segsize=SEGSIZE
+The size of the segment in bytes
 .TP
 .B \-\-help
 Display this help and exit

@@ -1,5 +1,5 @@
 /*
- * $Id: Cns.h,v 1.14 2008/11/10 09:35:01 waldron Exp $
+ * $Id: Cns.h,v 1.15 2009/03/26 09:57:53 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns.h,v $ $Revision: 1.14 $ $Date: 2008/11/10 09:35:01 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns.h,v $ $Revision: 1.15 $ $Date: 2009/03/26 09:57:53 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_H
@@ -39,6 +39,7 @@
 #define CNS_MAGIC3	0x030E1303
 #define CNS_MAGIC4	0x030E1304
 #define CNS_MAGIC5	0x030E1305
+#define CNS_MAGIC6	0x030E1306
 #define CNS_DIRTIMEOUT	300	/* timeout while waiting for the next dir sub-req */
 #define CNS_TIMEOUT	5	/* netread timeout while receiving a request */
 #define CNS_TRANSTIMEOUT	60	/* timeout while waiting for the next req in transaction */

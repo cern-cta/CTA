@@ -16,6 +16,7 @@
 #include "Cns_api.h"
 #include "Cgetopt.h"
 #include "serrno.h"
+#include "u64subr.h"
 
 void usage(int status, char *name) {
   if (status != 0) {
@@ -31,6 +32,7 @@ void usage(int status, char *name) {
     printf ("      --clear              reset the checksum value to 0\n");
     printf ("  -e, --enable             enable the tape segment\n");
     printf ("  -d, --disable            disable the tape segment\n");
+    printf ("  -x, --segsize=SEGSIZE    the size of the segment in bytes\n");
     printf ("      --help               display this help and exit\n\n");
     printf ("Report bugs to <castor.support@cern.ch>.\n");
   }
@@ -52,6 +54,7 @@ int main(argc, argv)
   int fsec     = -1;
   int errflg   = 0;
   int hflg     = 0;
+  int xflg     = 0;
   int enable   = 0;
   int disable  = 0;
   int clear    = 0;
@@ -66,6 +69,7 @@ int main(argc, argv)
   struct Cns_segattrs newsegattrs;
 
   unsigned int checksum = 0;
+  u_signed64 segsize = 0;
   char chksumvalue[CA_MAXCKSUMLEN+1];
   char chksumname[CA_MAXCKSUMNAMELEN+1];
 
@@ -81,6 +85,7 @@ int main(argc, argv)
     { "enable",    NO_ARGUMENT,       NULL,   'e' },
     { "segmentno", REQUIRED_ARGUMENT, NULL,   's' },
     { "name",      REQUIRED_ARGUMENT, NULL,   'n' },
+    { "segsize",   REQUIRED_ARGUMENT, NULL,   'x' },
     { "update",    NO_ARGUMENT,       &update, 1  },
     { "verbose",   NO_ARGUMENT,       NULL,   'v' },
     { "help",      NO_ARGUMENT,       &hflg,   1  },
@@ -90,7 +95,7 @@ int main(argc, argv)
   Coptind = 1;
   Copterr = 1;
   chksumvalue[0] = chksumname[0] = '\0';
-  while ((c = Cgetopt_long (argc, argv, "edc:s:k:n:", longopts, NULL)) != EOF && !errflg) {
+  while ((c = Cgetopt_long (argc, argv, "edc:s:k:n:x:", longopts, NULL)) != EOF && !errflg) {
     switch(c) {
     case 'e':
       status = '-';
@@ -134,6 +139,15 @@ int main(argc, argv)
       strncpy(chksumname, Coptarg, CA_MAXCKSUMNAMELEN);
       chksumname[CA_MAXCKSUMLEN] = '\0';
       break;
+
+    case 'x':
+      xflg++;
+      if (((segsize = strtoull (Coptarg, &dp, 10)) <= 0) || (*dp != '\0') ||
+	  (Coptarg[0] == '-') | (errno == ERANGE)) {
+	fprintf (stderr, "%s: invalid segment size: %s\n", argv[0], Coptarg);
+	errflg++;
+      }
+      break;
     case '?':
     case ':':
       errflg++;
@@ -171,14 +185,23 @@ int main(argc, argv)
       } else if (chksumvalue[0] != '\0') {
 	fprintf (stderr, "%s: option -k, --checksum cannot be specified with --clear\n", argv[0]);
 	errflg++;
-      }
+      } 
+    }
+    /* Changes to the segment size */
+    if (clear && xflg && !errflg) {
+      fprintf (stderr, "%s: option -x, --segsize cannot be specified with --clear\n", argv[0]);
+      errflg++;
+    }
+    if (update && xflg && !errflg) {
+      fprintf (stderr, "%s: option -x, --segsize cannot be specified with --update\n", argv[0]);
+      errflg++;
     }
     if (update && clear && !errflg) {
       fprintf (stderr, "%s option -u, --update and --clear are mutually exclusive\n", argv[0]);
       errflg++;
     }
     /* Verify that there is at least some action to perform! */
-    if (!errflg && (!enable && !disable && !clear)) {
+    if (!errflg && (!enable && !disable && !clear && !xflg)) {
       if ((chksumname[0] == '\0') || (chksumvalue[0] == '\0')) {
 	fprintf (stderr, "%s: no actions to perform\n", argv[0]);
 	errflg++;
@@ -246,8 +269,13 @@ int main(argc, argv)
       }
     }
 
-    /* Process checksum changes */
+    /* Process segment size changes */
     newsegattrs = segattrs[i];
+    if (xflg) {
+      newsegattrs.segsize = segsize;
+    }
+
+    /* Process checksum changes */
     if (clear) {
       if ((strcmp(segattrs[i].checksum_name, "") == 0) &&
 	  segattrs[i].checksum == 0) {
@@ -266,7 +294,7 @@ int main(argc, argv)
       /* Set checksum fields */
       strncpy(newsegattrs.checksum_name, chksumname, CA_MAXCKSUMNAMELEN);
       newsegattrs.checksum = checksum;
-    } else {
+    } else if (!xflg) {
       break;
     }
 
