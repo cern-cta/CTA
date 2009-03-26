@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.267 $ $Release$ $Date: 2009/02/11 09:19:37 $ $Author: waldron $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.268 $ $Release$ $Date: 2009/03/26 11:04:32 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -139,7 +139,7 @@ const std::string castor::db::ora::OraStagerSvc::s_recreateCastorFileStatementSt
 
 /// SQL statement for archiveSubReq
 const std::string castor::db::ora::OraStagerSvc::s_archiveSubReqStatementString =
-  "BEGIN archiveSubReq(:1); END;";
+  "BEGIN archiveSubReq(:1, :2); END;";
 
 /// SQL statement for stageRelease
 const std::string castor::db::ora::OraStagerSvc::s_stageReleaseStatementString =
@@ -437,6 +437,7 @@ castor::db::ora::OraStagerSvc::subRequestFailedToDo()
     result->setSubreqId(m_subRequestFailedToDoStatement->getString(10));
     result->setErrorCode(m_subRequestFailedToDoStatement->getInt(11));
     result->setErrorMessage(m_subRequestFailedToDoStatement->getString(12));
+    result->setSvcHandler("ErrorSvc");
     // return
     return result;
   } catch (oracle::occi::SQLException e) {
@@ -967,7 +968,7 @@ castor::db::ora::OraStagerSvc::recreateCastorFile
 // archiveSubReq
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStagerSvc::archiveSubReq
-(u_signed64 subReqId)
+(u_signed64 subReqId, castor::stager::SubRequestStatusCodes finalStatus)
   throw (castor::exception::Exception) {
   // Check whether the statements are ok
   if (0 == m_archiveSubReqStatement) {
@@ -978,6 +979,7 @@ void castor::db::ora::OraStagerSvc::archiveSubReq
   // Execute statement and get result
   try {
     m_archiveSubReqStatement->setDouble(1, subReqId);
+    m_archiveSubReqStatement->setInt(2, finalStatus);
     m_archiveSubReqStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
@@ -1368,34 +1370,30 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
 		    WRITE_DISABLE);
 
     // update priority
-
     std::vector<castor::stager::PriorityMap*> listPriority=selectPriority(euid,egid,-1);
     // never more than one for the same uig-gid
     u_signed64 priority=0;
     if (!listPriority.empty())
       priority=listPriority.at(0)->priority();
-
     segment->setPriority(priority);
 
     //  recaller policy retrieved
     //  in case it is given the tape status won't change into TAPE_PENDING
-
     std::string recallerPolicyStr = svcClass->recallerPolicy();
     switch (tp->status()) {
       case castor::stager::TAPE_UNUSED:
       case castor::stager::TAPE_FINISHED:
       case castor::stager::TAPE_FAILED:
       case castor::stager::TAPE_UNKNOWN:
-      case castor::stager::TAPE_WAITPOLICY:
         if (recallerPolicyStr.empty())
           tp->setStatus(castor::stager::TAPE_PENDING);
         else
           tp->setStatus(castor::stager::TAPE_WAITPOLICY);
+        cnvSvc()->updateRep(&ad, tp, false);
         break;
       default:
         break;
     }
-    cnvSvc()->updateRep(&ad, tp, false);
 
     // In any case with or without recaller policy the following operation are executed
     // Link Tape with Segment
