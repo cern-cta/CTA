@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.67 $ $Release$ $Date: 2008/11/03 07:34:58 $ $Author: waldron $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.68 $ $Release$ $Date: 2009/03/26 14:02:30 $ $Author: itglp $
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
@@ -43,12 +43,11 @@
 //------------------------------------------------------------------------------
 // String constants
 //------------------------------------------------------------------------------
-const char *castor::rh::PORT_ENV = "RH_PORT";
 const char *castor::rh::CATEGORY_CONF = "RH";
+const char *castor::rh::PORT_ENV = "RH_PORT";
 const char *castor::rh::PORT_CONF = "PORT";
 const char *castor::rh::PORT_SEC_ENV = "RH_SEC_PORT";
 const char *castor::rh::PORT_SEC_CONF = "SEC_PORT";
-
 
 //------------------------------------------------------------------------------
 // main method
@@ -63,9 +62,8 @@ int main(int argc, char *argv[]) {
     // "RequestHandler started"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Port", server.m_port),
-       castor::dlf::Param("Secure", server.m_secure ? "yes" : "no"),
-       castor::dlf::Param("ACLs", server.m_bw ? "enabled" : "disabled")};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 16, 3, params);
+      castor::dlf::Param("Secure", server.m_secure ? "yes" : "no")};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 16, 2, params);
 
     // start the server
     server.start();
@@ -88,8 +86,7 @@ int main(int argc, char *argv[]) {
 castor::rh::Server::Server() :
   castor::server::BaseDaemon("RequestHandler"),
   m_port(-1),
-  m_secure(false),
-  m_bw(false) {
+  m_secure(false) {
 
   // Initializes the DLF logging
   castor::dlf::Message messages[] =
@@ -100,15 +97,13 @@ castor::rh::Server::Server() :
      {  5, "Exception caught : ignored" },
      {  6, "Invalid Request" },
      {  7, "Unable to read Request from socket" },
-     {  8, "Processing Request" },
      {  9, "Exception caught" },
      { 10, "Reply sent to client" },
      { 11, "Unable to send Ack to client" },
-     { 12, "Request stored in DB" },
-     { 13, "Waked up all services at once" },
      { 14, "Permission Denied" },
      { 15, "Exception caught : failed to rollback transaction" },
      { 16, "RequestHandler started" },
+     { 17, "Security problem" },
      { -1, "" }};
   dlfInit(messages);
 
@@ -152,7 +147,6 @@ void castor::rh::Server::help(std::string programName)
     "\t--config <config-file>  or -c           \tConfiguration file\n"
     "\t--port                  or -p {integer} \tPort to be used\n"
     "\t--Rthreads              or -R {integer} \tNumber of Request Handler threads\n"
-    "\t--bw                    or -b           \tEnables black and white list support\n"
     "\n"
     "Comments to: Castor.Support@cern.ch\n";
 }
@@ -170,7 +164,6 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
       {"config",     REQUIRED_ARGUMENT, NULL, 'c'},
       {"Rthreads",   REQUIRED_ARGUMENT, NULL, 'R'},
       {"port",       REQUIRED_ARGUMENT, NULL, 'p'},
-      {"bw",         NO_ARGUMENT,       NULL, 'b'},
       {NULL,         0,                 NULL,  0 }
     };
   Coptind = 1;
@@ -209,9 +202,6 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
     case 'p':
       iport = castor::System::porttoi(Coptarg);
       break;
-    case 'b':
-      m_bw = true;
-      break;
     default:
       help(argv[0]);
       exit(0);
@@ -222,7 +212,7 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
     if (iport == -1) {
       if ((sport = getenv (castor::rh::PORT_SEC_ENV)) != 0
           || (sport = getconfent((char *)castor::rh::CATEGORY_CONF,
-				 (char *)castor::rh::PORT_SEC_CONF,0)) != 0) {
+				 (char *)castor::rh::PORT_SEC_CONF, 0)) != 0) {
         m_port = castor::System::porttoi(sport);
       } else { // default port
 	m_port = CSP_RHSERVER_SEC_PORT;
@@ -232,12 +222,12 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
     }
     addThreadPool
       (new castor::server::AuthListenerThreadPool
-       ("RH", new castor::rh::RHThread(m_bw), m_port));
+       ("RH", new castor::rh::RHThread(), m_port, true, 8, 10));
   } else {
     if (iport == -1) {
       if ((sport = getenv (castor::rh::PORT_ENV)) != 0
           || (sport = getconfent((char *)castor::rh::CATEGORY_CONF,
-				 (char *)castor::rh::PORT_CONF,0)) != 0) {
+				 (char *)castor::rh::PORT_CONF, 0)) != 0) {
         m_port = castor::System::porttoi(sport);
       } else { // default port
 	m_port = CSP_RHSERVER_PORT;
@@ -247,7 +237,7 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
     }
     addThreadPool
       (new castor::server::TCPListenerThreadPool
-       ("RH", new castor::rh::RHThread(m_bw), m_port));
+       ("RH", new castor::rh::RHThread(), m_port, true, 10, 20));
   }
 
   if (nbThreads != -1) {

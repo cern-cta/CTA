@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/09/22 13:27:06 $ $Author: waldron $
+ * @(#)$RCSfile: Server.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2009/03/26 14:02:30 $ $Author: itglp $
  *
  *
  *
@@ -47,11 +47,11 @@ namespace castor {
     extern const char* CATEGORY_CONF;
     extern const char* PORT_CONF;
     extern const char* PORT_SEC_CONF;
-
+    
     /**
      * The Request Handler server. This is where client requests
      * arrive. The main task of this component is to store them
-     * for future processing.
+     * for future processing, after checking authc/authz.
      */
     class Server : public castor::server::BaseDaemon {
 
@@ -66,16 +66,13 @@ namespace castor {
        * Overloaded method from BaseDaemon for individual command line parser
        */
       virtual void parseCommandLine(int argc, char *argv[])
-	throw(castor::exception::Exception);
+        throw(castor::exception::Exception);
 
       /// The listening port
       int m_port;
 
       /// Flag to indicate whether strong authentication is enabled or not
       bool m_secure;
-
-      /// Flag to indicate whether black and white list support is enabled or not
-      bool m_bw;
 
     protected:
 

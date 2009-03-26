@@ -3,9 +3,8 @@
 #   -f             keep process in the foreground, do not fork
 #   -p <integer>   port to be used
 #   -R <integer>   the number of request handling threads
-#   -b             specifies whether black and white list support is enabled.
 #
-# Options ot pass to the rmMasterDaemon
+# Options to pass to the rhserver
 #RHSERVER_OPTIONS=
 
 # Should we run with another limit on the core file size other than the default?
