@@ -154,6 +154,7 @@ ClientProgramTarget(nsrmdir,nsrmdir.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLI
 ClientProgramTarget(nssetchecksum,nssetchecksum.Osuf,$(NSLIB) $(CLIENTDEPLIB), $(NSLIB) $(CLIENTLIBS),755)
 ClientProgramTarget(nssetacl,nssetacl.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
 ClientProgramTarget(nssetcomment,nssetcomment.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
+ClientProgramTarget(nssetfsize,nssetfsize.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
 ClientProgramTarget(nssetsegment,nssetsegment.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
 ClientProgramTarget(nstouch,nstouch.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
 
@@ -243,6 +244,7 @@ EXEMANPAGE(nsrmdir)
 EXEMANPAGE(nssetchecksum)
 EXEMANPAGE(nssetacl)
 EXEMANPAGE(nssetcomment)
+EXEMANPAGE(nssetfsize)
 EXEMANPAGE(nssetsegment)
 EXEMANPAGE(nstouch)
 

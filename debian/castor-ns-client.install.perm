@@ -20,5 +20,6 @@
 %attr(0755,root,root) usr/bin/nssetchecksum
 %attr(0755,root,root) usr/bin/nssetacl
 %attr(0755,root,root) usr/bin/nssetcomment
+%attr(0755,root,root) usr/bin/nssetfsize
 %attr(0755,root,root) usr/bin/nssetsegment
 %attr(0755,root,root) usr/bin/nstouch
