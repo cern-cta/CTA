@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.174 $ $Release$ $Date: 2009/01/21 13:42:59 $ $Author: waldron $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.175 $ $Release$ $Date: 2009/03/26 10:59:47 $ $Author: itglp $
  *
  *
  *
@@ -323,12 +323,6 @@ static int updateTapeFromDB(
       serrno = save_serrno;
       return(-1);
     }
-
-    /*
-     * selectTape() locks the Tape in DB. We commit immediately since
-     * we don't intend to update the DB here.
-     */
-    (void)C_Services_commit(*svcs,iAddr);
 
     if ( tp == NULL ) {
       (void)dlf_write(

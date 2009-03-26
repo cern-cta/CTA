@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ICommonSvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/09/22 13:28:27 $ $Author: waldron $
+ * @(#)$RCSfile: ICommonSvc.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2009/03/26 10:59:48 $ $Author: itglp $
  *
  * This class provides common methods useful to the stager to
  * deal with database queries
@@ -94,12 +94,10 @@ namespace castor {
 
       /**
        * Retrieves a tape from the database based on its vid,
-       * side and tpmode. If no tape is found, creates one.
-       * Note that this method creates a lock on the row of the
-       * given tape and does not release it. It is the
-       * responsability of the caller to commit the transaction.
-       * The caller is also responsible for the deletion of the
-       * allocated object
+       * side and tpmode. If no tape is found, creates a new one.
+       * This method holds a lock on the row only on creation
+       * of a new tape. It is the responsability of the caller
+       * to commit the transaction.
        * @param vid the vid of the tape
        * @param side the side of the tape
        * @param tpmode the tpmode of the tape

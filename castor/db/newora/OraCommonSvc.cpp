@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.41 $ $Release$ $Date: 2008/10/17 13:12:30 $ $Author: waldron $
+ * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.42 $ $Release$ $Date: 2009/03/26 10:59:47 $ $Author: itglp $
  *
  * Implementation of the ICommonSvc for Oracle - CDBC version
  *
@@ -75,7 +75,7 @@ const std::string castor::db::ora::OraCommonSvc::s_requestToDoStatementString =
 
 /// SQL statement for selectTape
 const std::string castor::db::ora::OraCommonSvc::s_selectTapeStatementString =
-  "SELECT id FROM Tape WHERE vid = :1 AND side = :2 AND tpmode = :3 FOR UPDATE";
+  "SELECT id FROM Tape WHERE vid = :1 AND side = :2 AND tpmode = :3";
 
 /// SQL statement for selectSvcClass
 const std::string castor::db::ora::OraCommonSvc::s_selectSvcClassStatementString =
@@ -236,9 +236,6 @@ castor::db::ora::OraCommonSvc::selectTape(const std::string vid,
           // if violation of unique constraint, ie means that
           // some other thread was quicker than us on the insertion
           // So let's select what was inserted
-
-          // set again the parameters
-
           rset = m_selectTapeStatement->executeQuery();
           if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
             // Still nothing ! Here it's a real error

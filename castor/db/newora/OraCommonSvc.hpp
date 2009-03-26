@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/09/22 13:32:08 $ $Author: waldron $
+ * @(#)$RCSfile: OraCommonSvc.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2009/03/26 10:59:47 $ $Author: itglp $
  *
  * Implementation of the ICommonSvc for Oracle/CDBC
  *
@@ -91,9 +91,9 @@ namespace castor {
         /**
          * Retrieves a tape from the database based on its vid,
          * side and tpmode. If no tape is found, creates one
-         * Note that this method creates a lock on the row of the
-         * given tape and does not release it. It is the
-         * responsability of the caller to commit the transaction.
+         * This method holds a lock on the row only on creation
+         * of a new tape. It is the* responsability of the caller
+         * to commit the transaction.
          * @param vid the vid of the tape
          * @param side the side of the tape
          * @param tpmode the tpmode of the tape
