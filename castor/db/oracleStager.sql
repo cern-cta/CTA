@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.727 $ $Date: 2009/03/25 13:29:53 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.728 $ $Date: 2009/03/26 14:18:50 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -509,10 +509,9 @@ END;
 CREATE OR REPLACE PROCEDURE requestToDo(service IN VARCHAR2, rId OUT INTEGER) AS
 BEGIN
   DELETE FROM NewRequests
-   WHERE id = (
-     SELECT /*+ INDEX(NewRequests_H_CT_ID) */ id FROM NewRequests
+   WHERE type IN (
+     SELECT type FROM Type2Obj
       WHERE svcHandler = service
-      ORDER BY creationTime ASC
      )
    AND ROWNUM < 2 RETURNING id INTO rId;
 EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -545,12 +544,10 @@ END;
 /
 
 
-
 /* PL/SQL method to archive a SubRequest */
 CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER, finalStatus IN INTEGER) AS
   nb INTEGER;
   rId INTEGER;
-  rtype INTEGER;
   rname VARCHAR2(100);
   srIds "numList";
   clientId INTEGER;
@@ -561,7 +558,10 @@ BEGIN
          status = finalStatus
    WHERE id = srId
   RETURNING request INTO rId;
-
+  -- Lock the access to the Request
+  SELECT Id2Type.id INTO rId
+    FROM Id2Type
+   WHERE id = rId FOR UPDATE;
   -- Try to see whether another subrequest in the same
   -- request is still being processed
   SELECT count(*) INTO nb FROM SubRequest
@@ -569,7 +569,7 @@ BEGIN
 
   IF nb = 0 THEN
     -- all subrequests have finished, we can archive
-    SELECT Type2Obj.type, object INTO rtype, rname
+    SELECT object INTO rname
       FROM Id2Type, Type2Obj
      WHERE id = rId
        AND Type2Obj.type = Id2Type.type;
@@ -584,19 +584,10 @@ BEGIN
      WHERE request = rId;
     FORALL i IN srIds.FIRST .. srIds.LAST
       DELETE FROM Id2Type WHERE id = srIds(i);
-      
-    IF rtype = 95 THEN   -- OBJ_SetFileGCWeight
-      -- we don't care keeping this one
-      DELETE FROM SetFileGCWeight WHERE id = rId;
-      DELETE FROM Id2Type WHERE id = rId;
-      FORALL i IN srIds.FIRST .. srIds.LAST
-        DELETE FROM subRequest WHERE id = srIds(i);
-    ELSE
-      -- for all other types, we keep the subRequest+request for subsequent querying
-      UPDATE SubRequest SET status = 11    -- ARCHIVED
-       WHERE request = rId
-         AND status = 8;  -- FINISHED
-    END IF;
+    -- archive the successful subrequests      
+    UPDATE SubRequest SET status = 11    -- ARCHIVED
+     WHERE request = rId
+       AND status = 8;  -- FINISHED
   END IF;
 END;
 /
@@ -770,8 +761,8 @@ BEGIN
   -- file in the target service class that could be used. So, we check
   -- to see if the user has the rights to create a file in the destination
   -- service class. I.e. check for StagePutRequest access rights
-  checkPermission(destSvcClass, reuid, regid, 40, 0, authDest);
-  IF authDest != 0 THEN
+  checkPermission(destSvcClass, reuid, regid, 40, authDest);
+  IF authDest < 0 THEN
     -- Fail the subrequest and notify the client
     dcId := -1;
     UPDATE SubRequest
@@ -837,8 +828,8 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- Check whether the user has the rights to issue a tape recall to
     -- the destination service class.
-    checkPermission(destSvcClass, reuid, regid, 161, 0, authDest);
-    IF authDest != 0 THEN
+    checkPermission(destSvcClass, reuid, regid, 161, authDest);
+    IF authDest < 0 THEN
       -- Fail the subrequest and notify the client
       dcId := -1;
       UPDATE SubRequest
@@ -2174,6 +2165,41 @@ END;
 /
 
 
+/* PL/SQL method implementing updateAndCheckSubRequest */
+CREATE OR REPLACE PROCEDURE updateAndCheckSubRequest(srId IN INTEGER, newStatus IN INTEGER, result OUT INTEGER) AS
+  reqId INTEGER;
+BEGIN
+  -- Lock the access to the Request
+  SELECT Id2Type.id INTO reqId
+    FROM SubRequest, Id2Type
+   WHERE SubRequest.id = srId
+     AND Id2Type.id = SubRequest.request;
+  SELECT id INTO reqId FROM Id2Type
+   WHERE id = reqId FOR UPDATE;
+  -- Update Status
+  UPDATE SubRequest
+     SET status = newStatus,
+         answered = 1,
+         lastModificationTime = getTime(),
+         getNextStatus = decode(newStatus, 6, 1, 8, 1, 9, 1, 0)  -- READY, FINISHED or FAILED_FINISHED -> GETNEXTSTATUS_FILESTAGED
+   WHERE id = srId;
+  -- Check whether it was the last subrequest in the request
+  result := 1;
+  SELECT id INTO result FROM SubRequest
+   WHERE request = reqId
+     AND status IN (0, 1, 2, 3, 4, 5, 7, 10, 12, 13, 14)   -- all but FINISHED, FAILED_FINISHED, ARCHIVED
+     AND answered = 0
+     AND ROWNUM < 2;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  result := 0;
+  -- No data found means we were last; check whether we have to archive
+  IF newStatus IN (8, 9) THEN
+    archiveSubReq(srId, newStatus);
+  END IF;
+END;
+/
+
+
 /* PL/SQL method implementing storeClusterStatus */
 CREATE OR REPLACE PROCEDURE storeClusterStatus
 (machines IN castor."strList",
@@ -2374,4 +2400,3 @@ BEGIN
      AND (egid = inGid OR inGid = -1);
 END;
 /
-
