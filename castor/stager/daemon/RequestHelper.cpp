@@ -202,31 +202,8 @@ namespace castor{
       
       void RequestHelper::resolveSvcClass() throw(castor::exception::Exception){
         // check if the service class has been resolved
-        // XXX note that this is not fully thread safe, meaning that the resolution
-        // XXX will be performed for a number of requests and only large requests
-        // XXX with many subrequests (e.g. repack) will benefit from this.
         dbSvc->fillObj(baseAddr, fileRequest, castor::OBJ_SvcClass, false);
-        if(fileRequest->svcClass() == 0) {
-          // not yet
-          std::string scName = fileRequest->svcClassName();
-          if(scName.empty()) {  // set the hard coded default
-            scName = "default";
-          }
-          svcClass = stagerService->selectSvcClass(scName);
-          if(svcClass == 0) {
-            logToDlf(DLF_LVL_USER_ERROR, STAGER_SVCCLASS_EXCEPTION);
-          
-            castor::exception::Exception ex(SESVCCLASSNFND);
-            ex.getMessage()<<"Service Class not found";
-            throw ex;
-          }
-
-          fileRequest->setSvcClass(svcClass);
-          dbSvc->fillRep(baseAddr, fileRequest, castor::OBJ_SvcClass, false);
-        }
-        else
-          svcClass = fileRequest->svcClass();
-        
+        svcClass = fileRequest->svcClass();
         // if defined, this is the forced file class
         dbSvc->fillObj(baseAddr, svcClass, castor::OBJ_FileClass, false);
       }

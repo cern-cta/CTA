@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.95 $ $Release$ $Date: 2008/11/12 12:49:02 $ $Author: waldron $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.96 $ $Release$ $Date: 2009/03/26 14:07:53 $ $Author: itglp $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -311,8 +311,9 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByRequest
   throw (castor::exception::Exception) {
   // Processing File Query by Request
   castor::dlf::Param params[] =
-    {castor::dlf::Param("ReqId", val)};
-  castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_RQUERY, 1, params);
+    {castor::dlf::Param("ReqId", val),
+     castor::dlf::Param("QueryType", reqType)};
+  castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_RQUERY, 2, params);
   std::list<castor::stager::DiskCopyInfo*>* result;
   result = qrySvc->diskCopies4Request(reqType, val, svcClassId);
   if (result == 0) {
@@ -457,11 +458,11 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
           pval = cfn;
         }
         // check if the filename is valid (it has to start with /)
-	if (pval.empty() || (pval.at(0) != '/')) {
-	  castor::exception::Exception ex(EINVAL);
-	  ex.getMessage() << "Invalid file path";
-	  throw ex;
-	}
+        if (pval.empty() || (pval.at(0) != '/')) {
+          castor::exception::Exception ex(EINVAL);
+          ex.getMessage() << "Invalid file path";
+          throw ex;
+        }
         // stat the file in the nameserver
         struct Cns_filestat Cnsfilestat;
         struct Cns_fileid Cnsfileid;
@@ -547,7 +548,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
       res.setErrorMessage(e.getMessage().str());
       // Reply To Client
       castor::replier::RequestReplier::getInstance()->
-	sendResponse(client, &res);
+        sendResponse(client, &res);
     } // End catch
   } // End loop on all diskcopies
   castor::replier::RequestReplier::getInstance()->
@@ -902,20 +903,7 @@ void castor::stager::daemon::QueryRequestSvcThread::process
         req->type() == OBJ_DiskPoolQuery) {
       std::string className = req->svcClassName();
       if ("" != className && "*" != className) {
-        castor::stager::SvcClass* svcClass = qrySvc->selectSvcClass(className);
-        if (0 == svcClass) {
-          // "Invalid ServiceClass name"
-          castor::dlf::Param params[] =
-            {castor::dlf::Param("SvcClass", className)};
-          castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_QRYSVC_INVSC, 1, params);
-          castor::exception::NoEntry e;
-          e.getMessage() << "Invalid ServiceClass name : '" << className << "'";
-          failed = true;
-          throw e;
-        }
-        // Filling SvcClass in the DataBase
-        req->setSvcClass(svcClass);
-        svcs->fillRep(&ad, req, castor::OBJ_SvcClass, false);
+        svcs->fillObj(&ad, req, castor::OBJ_SvcClass, false);
       }
     }
   } catch (castor::exception::Exception e) {

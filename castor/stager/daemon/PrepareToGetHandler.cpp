@@ -75,15 +75,13 @@ namespace castor{
           
           case DISKCOPY_STAGED:             // nothing to do, just log it
           case DISKCOPY_WAITDISK2DISKCOPY:
-          stgRequestHelper->subrequest->setStatus(SUBREQUEST_ARCHIVED);
+          stgRequestHelper->subrequest->setStatus(SUBREQUEST_FINISHED);
           stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
           if(result == DISKCOPY_STAGED)
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_ARCHIVE_SUBREQ, &(stgCnsHelper->cnsFileid));
           else
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_PREPARETOGET_DISK2DISKCOPY, &(stgCnsHelper->cnsFileid));
           
-          /* we archive the subrequest */
-          stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
           reply = true;
           break;
           
@@ -154,8 +152,8 @@ namespace castor{
                 delete diskCopy;
             }
             else {
-              // no reply needs to be sent to the client, just commit the transaction
-              stgRequestHelper->dbSvc->commit();
+              // no reply needs to be sent to the client, archive the subrequest
+              stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id(), SUBREQUEST_FINISHED);
             }
           }
         }

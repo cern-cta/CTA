@@ -69,10 +69,10 @@ namespace castor{
                                   7, params, &(stgCnsHelper->cnsFileid));
           // execute it
           int rc = stgRequestHelper->stagerService->setFileGCWeight(stgCnsHelper->cnsFileid.fileid, stgCnsHelper->cnsFileid.server,
-                                                                     stgRequestHelper->svcClass->id(), setGCWeightReq->weight());
+                                                                    stgRequestHelper->svcClass->id(), setGCWeightReq->weight());
           // this method fails only if no diskCopies were found on the given service class. In such a case we answer the client
           // without involving the Error service.
-          stgRequestHelper->subrequest->setStatus(rc ? SUBREQUEST_ARCHIVED : SUBREQUEST_FAILED_FINISHED);
+          stgRequestHelper->subrequest->setStatus(rc ? SUBREQUEST_FINISHED : SUBREQUEST_FAILED_FINISHED);
           
           stgReplyHelper = new ReplyHelper();
           stgReplyHelper->setAndSendIoResponse(stgRequestHelper, &(stgCnsHelper->cnsFileid),
@@ -80,10 +80,6 @@ namespace castor{
           stgReplyHelper->endReplyToClient(stgRequestHelper);
           delete stgReplyHelper;
           stgReplyHelper = 0;
-          
-          if(rc) {
-            stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
-          }
         }
         catch(castor::exception::Exception e) {          
           if(stgReplyHelper != NULL) delete stgReplyHelper;

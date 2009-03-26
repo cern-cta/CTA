@@ -79,7 +79,7 @@ namespace castor{
       {
         // Check the existence of the file. Don't stop if ENOENT
         try {
-          stgCnsHelper->checkFileOnNameServer(stgRequestHelper->subrequest, stgRequestHelper->svcClass);
+          stgCnsHelper->checkFileOnNameServer(stgRequestHelper->subrequest, 0);
 
           // Check if the user (euid,egid) has the right permission for the rm, otherwise throw exception.
           // This check overrides the default one provided in RequestHelper::checkFilePermission because
@@ -101,23 +101,12 @@ namespace castor{
           // the cleanup would anyway need to be done
         }
 
-        // check the service class, and handle the '*' case
-        std::string svcClassName = stgRequestHelper->fileRequest->svcClassName();
+        // check the service class and handle the '*' case;
+        // the existence of the service class is guaranteed by the RH
         u_signed64 svcClassId = 0;
-
-        if(svcClassName != "*") {
-          if(svcClassName.empty()) {
-            svcClassName = "default";
-          }
-          stgRequestHelper->svcClass = stgRequestHelper->stagerService->selectSvcClass(svcClassName);
-          if(stgRequestHelper->svcClass == NULL) {
-            stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_SVCCLASS_EXCEPTION, &(stgCnsHelper->cnsFileid));
-
-            castor::exception::Exception ex(SEINTERNAL);
-            ex.getMessage() << "Service class '" << svcClassName << "' not found";
-            throw(ex);
-          }
-          svcClassId = stgRequestHelper->svcClass->id();
+        if(stgRequestHelper->fileRequest->svcClassName() != "*") {
+          stgRequestHelper->dbSvc->fillObj(stgRequestHelper->baseAddr, stgRequestHelper->fileRequest, castor::OBJ_SvcClass, false);
+          svcClassId = stgRequestHelper->fileRequest->svcClass()->id();
         }
 
         ReplyHelper* stgReplyHelper=NULL;
@@ -126,7 +115,7 @@ namespace castor{
           if(stgRequestHelper->stagerService->stageRm(stgRequestHelper->subrequest,
             stgCnsHelper->cnsFileid.fileid, stgCnsHelper->cnsFileid.server, svcClassId)) {
 
-            stgRequestHelper->subrequest->setStatus(SUBREQUEST_ARCHIVED);
+            stgRequestHelper->subrequest->setStatus(SUBREQUEST_FINISHED);
 
             stgReplyHelper = new ReplyHelper();
             stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0, "No error");
@@ -134,25 +123,25 @@ namespace castor{
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_RMPERFORMED, &(stgCnsHelper->cnsFileid));
             delete stgReplyHelper;
             stgReplyHelper = NULL;
-            stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
+            stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id(), SUBREQUEST_FINISHED);
           }
           else {
-	    // user error, log it, only in case the file existed
-	    // Otherwise, it is an internal double check that failed and this is not really relevant
-	    if (stgCnsHelper->cnsFileid.fileid > 0) {
-	      stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(stgCnsHelper->cnsFileid));
-	    }
+            // user error, log it, only in case the file existed
+            // Otherwise, it is an internal double check that failed and this is not really relevant
+            if (stgCnsHelper->cnsFileid.fileid > 0) {
+              stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(stgCnsHelper->cnsFileid));
+            }
           }
         }
         catch(castor::exception::Exception e){
           if(stgReplyHelper != NULL) {
-	    delete stgReplyHelper;
-	    stgReplyHelper = NULL;
-	  }
+            delete stgReplyHelper;
+            stgReplyHelper = NULL;
+          }
           castor::dlf::Param params[] = {
             castor::dlf::Param("Error Code",sstrerror(e.code())),
             castor::dlf::Param("Error Message",e.getMessage().str())};
-	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_RM, 2, params, &(stgCnsHelper->cnsFileid));
+          castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_RM, 2, params, &(stgCnsHelper->cnsFileid));
           throw(e);
         }
       }
