@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.724 $ $Date: 2009/03/26 10:27:51 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.725 $ $Date: 2009/03/26 10:47:34 $ $Author: sponcec3 $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -177,6 +177,9 @@ BEGIN
                               FileSystem.nbReadWriteStreams, FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC,
                -- finally use randomness to avoid preferring always the same FS
                DBMS_Random.value) LOOP
+       DECLARE
+         lock_detected EXCEPTION;
+         PRAGMA EXCEPTION_INIT(lock_detected, -54);
        BEGIN
          -- lock the complete diskServer as we will update all filesystems
          SELECT id INTO unused FROM DiskServer WHERE id = f.DiskServerId FOR UPDATE NOWAIT;
@@ -196,7 +199,7 @@ BEGIN
          diskServerId := f.DiskServerId;
          fileSystemId := f.fileSystemId;
          EXIT;
-       EXCEPTION WHEN NO_DATA_FOUND THEN
+       EXCEPTION WHEN NO_DATA_FOUND OR lock_detected THEN
          -- either the filesystem is already locked or we found nothing,
          -- let's go to the next one
          NULL;
@@ -310,6 +313,9 @@ BEGIN
          AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
          AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
          AND DiskServer.id = lastButOneFSUsed) LOOP
+       DECLARE
+         lock_detected EXCEPTION;
+         PRAGMA EXCEPTION_INIT(lock_detected, -54);
        BEGIN
          -- lock the complete diskServer as we will update all filesystems
          SELECT id INTO unused FROM DiskServer WHERE id = f.DiskServerId FOR UPDATE NOWAIT;
@@ -329,7 +335,7 @@ BEGIN
          diskServerId := f.DiskServerId;
          fileSystemId := f.fileSystemId;
          EXIT;
-       EXCEPTION WHEN NO_DATA_FOUND THEN
+       EXCEPTION WHEN NO_DATA_FOUND OR lock_detected THEN
          -- either the filesystem is already locked or we found nothing,
          -- let's go to the next one
          NULL;
@@ -355,6 +361,9 @@ BEGIN
                                FileSystem.nbReadWriteStreams, FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC,
                 -- finally use randomness to avoid preferring always the same FS
                 DBMS_Random.value) LOOP
+       DECLARE
+         lock_detected EXCEPTION;
+         PRAGMA EXCEPTION_INIT(lock_detected, -54);
        BEGIN
          -- lock the complete diskServer as we will update all filesystems
          SELECT id INTO unused FROM DiskServer WHERE id = f.DiskServerId FOR UPDATE NOWAIT;
@@ -374,7 +383,7 @@ BEGIN
          diskServerId := f.DiskServerId;
          fileSystemId := f.fileSystemId;
          EXIT;
-       EXCEPTION WHEN NO_DATA_FOUND THEN
+       EXCEPTION WHEN NO_DATA_FOUND OR lock_detected THEN
          -- either the filesystem is already locked or we found nothing,
          -- let's go to the next one
          NULL;
@@ -452,6 +461,9 @@ BEGIN
                               FileSystem.nbReadWriteStreams, FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC,
                -- finally use randomness to avoid preferring always the same FS
                DBMS_Random.value) LOOP
+    DECLARE
+      lock_detected EXCEPTION;
+      PRAGMA EXCEPTION_INIT(lock_detected, -54);
     BEGIN
       -- lock the complete diskServer as we will update all filesystems
       SELECT id INTO unused FROM DiskServer WHERE id = f.DiskServerId FOR UPDATE NOWAIT;
@@ -471,7 +483,7 @@ BEGIN
       diskServerId := f.DiskServerId;
       fileSystemId := f.fileSystemId;
       EXIT;
-    EXCEPTION WHEN NO_DATA_FOUND THEN
+    EXCEPTION WHEN NO_DATA_FOUND OR lock_detected THEN
       -- either the filesystem is already locked or we found nothing,
       -- let's go to the next one
       NULL;
