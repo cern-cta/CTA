@@ -74,7 +74,7 @@
 
 
 //////////////////////////////////////////////////////////////////////////////
-//`
+//
 // Initialization and singleton lookup methods.
 //
 //////////////////////////////////////////////////////////////////////////////
@@ -386,7 +386,7 @@ void castor::replier::RequestReplier::garbageCollect() throw() {
       }
 
     } else if (cc->terminate() == true
-               &&  !(cc->hasMessagesToSend()) ) {
+               && !(cc->hasMessagesToSend()) ) {
 
       // Terminating requestreplier
       toremove.push(cc->fd());
@@ -401,7 +401,7 @@ void castor::replier::RequestReplier::garbageCollect() throw() {
 
       // Terminating requestreplier
       toremove.push(cc->fd());
-      clog() << DEBUG << SETW func  <<  cc->toString()
+      clog() << WARNING << SETW func  <<  cc->toString()
              << " inactive for " << (t - cc->lastEventDate()) << " s >" << TIMEOUT
              << std::endl;
 
@@ -661,7 +661,7 @@ castor::replier::RequestReplier::terminate()
 
   const char *func = "rr::terminate ";
 
-  clog() << IMPORTANT << SETW func  <<  "Requesting RequestReplier termination"
+  clog() << SYSTEM << SETW func  <<  "Requesting RequestReplier termination"
          << std::endl;
 
   // Setting the end processing flag to 1
@@ -756,10 +756,7 @@ castor::replier::RequestReplier::setCallback(void (*callback)(castor::IClient *,
   clog() << VERBOSE << SETW func
          << "Unlocking m_clientQueue" << std::endl;
   Cthread_mutex_unlock(&m_clientQueue);
-
-
 }
-
 
 
 void
@@ -783,15 +780,11 @@ castor::replier::RequestReplier::sendResponse(castor::IClient *client,
   castor::io::StreamAddress ad(*buffer, "StreamCnvSvc", castor::SVC_STREAMCNV);
   svcs()->createRep(&ad, response, true);
 
-  // Adding the client to the queue, taking proper lock
-  clog() << VERBOSE << SETW func  <<  "Locking m_clientQueue" << std::endl;
-  Cthread_mutex_lock(&m_clientQueue);
-
   ClientResponse cr;
   castor::rh::Client* cl = dynamic_cast<castor::rh::Client*>(client);
   if (0 == cl) {
     castor::exception::Internal e;
-    e.getMessage() <<"Could not cast IClient to client";
+    e.getMessage() << "Could not cast IClient to client";
     Cthread_mutex_unlock(&m_clientQueue);
     throw e;
   }
@@ -800,6 +793,9 @@ castor::replier::RequestReplier::sendResponse(castor::IClient *client,
   cr.response = buffer;
   cr.isLast = isLastResponse;
 
+  // Adding the client to the queue, taking proper lock
+  clog() << VERBOSE << SETW func  <<  "Locking m_clientQueue" << std::endl;
+  Cthread_mutex_lock(&m_clientQueue);
 
   clog() << DEBUG << SETW func
          << "Adding Response for ";
@@ -809,8 +805,8 @@ castor::replier::RequestReplier::sendResponse(castor::IClient *client,
          << std::endl;
   m_clientQueue->push(cr);
 
-
-  if (isLastResponse) {
+  if (isLastResponse && cl->version() < 2010707) {
+    // clients >= 2.1.7-7 don't need an EndResponse
     castor::rh::EndResponse endresp;
     castor::io::biniostream* buffer = new castor::io::biniostream();
     castor::io::StreamAddress ad(*buffer, "StreamCnvSvc", castor::SVC_STREAMCNV);
@@ -831,7 +827,6 @@ castor::replier::RequestReplier::sendResponse(castor::IClient *client,
            << " to m_ClientQueue"
            << std::endl;
     m_clientQueue->push(cr);
-
   }
 
   clog() << VERBOSE << SETW func
@@ -839,15 +834,15 @@ castor::replier::RequestReplier::sendResponse(castor::IClient *client,
   Cthread_mutex_unlock(&m_clientQueue); // I release the lock here because it is used only to manage the queue
 
   // Now notifying the replierThread
-
   int val = 1;
   int rc = write(*m_pipeWrite, (void *)&val, sizeof(val));
   if (rc != sizeof(val)) {
-    clog() << ERROR << SETW func  <<  "Error writing to communication pipe with RRThread" << std::endl;
+    clog() << ERROR << SETW func
+           <<  "Error writing to communication pipe with RRThread" << std::endl;
   }
 
-  // In case of the last response, notify that and end response has been added
-  if (isLastResponse) {
+  // In case of the last response, notify that an end response has been added
+  if (isLastResponse && cl->version() < 2010707) {
     int rc = write(*m_pipeWrite, (void *)&val, sizeof(val));
     if (rc != sizeof(val)) {
       clog() << ERROR << SETW func
@@ -866,7 +861,7 @@ castor::replier::RequestReplier::sendEndResponse
 (castor::IClient *client,
  std::string reqId)
   throw(castor::exception::Exception) {
-
+    
   const char *func = "rr::sendEndResponse CLIENT ";
 
   if (0 == client) {
@@ -875,21 +870,32 @@ castor::replier::RequestReplier::sendEndResponse
     throw e;
   }
 
+  castor::rh::Client* cl = dynamic_cast<castor::rh::Client*>(client);
+
+  ClientResponse cr;
+  cr.client = *cl;
+  cr.isLast = true;
+
+  if(cl->version() < 2010707) {
+    castor::rh::EndResponse endresp;
+    endresp.setReqAssociated(reqId);
+    castor::io::biniostream* buffer = new castor::io::biniostream();
+    castor::io::StreamAddress ad(*buffer, "StreamCnvSvc", castor::SVC_STREAMCNV);
+    svcs()->createRep(&ad, &endresp, true);
+    cr.response = buffer;
+  }
+  else {
+    // clients >= 2.1.7-7 don't need an EndResponse, but we nevertheless
+    // create a ClientResponse with an empty buffer and flagged as 'last'
+    // to close the connection with the client.
+    // XXX this logic is to be reviewed, a better option is a bulk processing
+    // XXX of each multi-file request by the stager.
+    cr.response = 0;
+  }
+  
   // Adding the client to the queue, taking proper lock
   clog() << VERBOSE << SETW func  <<  "Locking m_clientQueue" << std::endl;
   Cthread_mutex_lock(&m_clientQueue);
-
-  castor::rh::EndResponse endresp;
-  endresp.setReqAssociated(reqId);
-  castor::io::biniostream* buffer = new castor::io::biniostream();
-  castor::io::StreamAddress ad(*buffer, "StreamCnvSvc", castor::SVC_STREAMCNV);
-  svcs()->createRep(&ad, &endresp, true);
-
-  ClientResponse cr;
-  castor::rh::Client* cl = dynamic_cast<castor::rh::Client*>(client);
-  cr.client = *cl;
-  cr.response = buffer;
-  cr.isLast = true;
 
   clog() << DEBUG << SETW func
          << "Adding EndResponse for ";
@@ -900,7 +906,7 @@ castor::replier::RequestReplier::sendEndResponse
 
   clog() << VERBOSE << SETW func
          << "Unlocking m_clientQueue" << std::endl;
-  Cthread_mutex_unlock(&m_clientQueue);
+  Cthread_mutex_unlock(&m_clientQueue);   // as in sendResponse, the lock is released here
 
   int val = 1;
   int rc = write(*m_pipeWrite, (void *)&val, sizeof(val));

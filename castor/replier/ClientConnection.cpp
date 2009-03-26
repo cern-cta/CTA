@@ -69,23 +69,19 @@ castor::replier::ClientConnection::ClientConnection() throw() :
   BaseObject(), m_client(), m_messages(), m_fd(-1),
   m_lastEventDate(time(0)), m_status(INACTIVE), m_terminate(false),
   m_nextMessageId(1) {
-    const char *func = "cc::ClientConnection ";
-    m_clientStr = buildClientStr(m_client);
-    clog() << VERBOSE << SETW func  << this->toString() << " created" << std::endl;
+
+  const char *func = "cc::ClientConnection ";
+  m_clientStr = buildClientStr(m_client);
+  clog() << VERBOSE << SETW func  << this->toString() << " created" << std::endl;
 }
 
 castor::replier::ClientConnection::ClientConnection(ClientResponse cr) throw() :
   BaseObject(), m_client(cr.client), m_messages(), m_fd(-1),
   m_lastEventDate(time(0)), m_status(INACTIVE), m_terminate(false),
-  m_nextMessageId(1)  {
-    const char *func = "cc::ClientConnection ";
-    m_clientStr = buildClientStr(m_client);
-    cr.messageId = m_nextMessageId;
-    m_nextMessageId++;
-    m_messages.push(cr);
-    clog() << VERBOSE << SETW func  << this->toString() << " created and added msg:" 
-	   << cr.messageId
-	   << std::endl;
+  m_nextMessageId(1) {
+
+  m_clientStr = buildClientStr(m_client);
+  addMessage(cr);
 }
 
 void castor::replier::ClientConnection::addMessage(ClientResponse cr) throw() {
@@ -93,10 +89,10 @@ void castor::replier::ClientConnection::addMessage(ClientResponse cr) throw() {
   cr.messageId = m_nextMessageId;
   m_nextMessageId++;
   m_messages.push(cr);
-  clog() << VERBOSE << SETW func  << this->toString() << " added msg:" 
-	 << cr.messageId << " (terminate:" 
-	 << (cr.isLast?1:0) << ")"
-	 << std::endl;
+  clog() << DEBUG << SETW func << this->toString() << " added msg:" 
+	       << cr.messageId << " (terminate:" 
+         << (cr.isLast ? 1 : 0) << ")"
+         << std::endl;
   if (cr.isLast) {
     m_terminate = true;
   }
@@ -252,7 +248,6 @@ void castor::replier::ClientConnection::createSocket()
 
   // Setting the socket in the ClientConnection object
   m_fd = s;
-
 }
 
 void castor::replier::ClientConnection::connect()
@@ -327,7 +322,6 @@ void castor::replier::ClientConnection::sendNextMessage()  throw(castor::excepti
 
 
 
-
 // Internal send method
 void castor::replier::ClientConnection::send()
   throw(castor::exception::Exception) {
@@ -339,6 +333,14 @@ void castor::replier::ClientConnection::send()
   if (!m_messages.empty()) {
     message = m_messages.front();
     response = message.response;
+    if (0 == response) {
+      // no payload in this response; this can happen
+      // with an EndResponse for clients >= 2.1.7-7, where
+      // we only need to close the connection, so nothing
+      // to be done here.
+      deleteNextMessage();
+      return;
+    }
   } else {
     return;
   }
@@ -400,6 +402,7 @@ void castor::replier::ClientConnection::send()
     }
   } else {
     m_lastEventDate = time(0);
+    deleteNextMessage();
  
     clog() << VERBOSE << SETW func  << this->toString() 
 	   << " msg:" << message.messageId 
@@ -408,12 +411,9 @@ void castor::replier::ClientConnection::send()
 	   << ") written:" << written
 	   <<  " (len:" << buflen << ")"
            << std::endl;   
-    /* XXX Should this be done here ? */
-    this->deleteNextMessage();
   }
 
   delete[] buf;
-
 }
 
 
