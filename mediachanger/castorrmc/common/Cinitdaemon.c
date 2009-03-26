@@ -44,7 +44,12 @@ void (*wait4child) _PROTO((int));
         c = setpgrp();
 #endif
 #endif
-        for (c = 0; c < maxfds; c++)
+        /* Redirect standard files to /dev/null */
+        freopen( "/dev/null", "r", stdin);
+        freopen( "/dev/null", "w", stdout);
+        freopen( "/dev/null", "w", stderr);
+
+        for (c = 3; c < maxfds; c++)
                 close (c);
         if ( wait4child != NULL ) {
                 sa.sa_handler = wait4child;
