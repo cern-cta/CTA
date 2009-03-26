@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.723 $ $Date: 2009/03/13 15:23:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.724 $ $Date: 2009/03/26 10:27:51 $ $Author: sponcec3 $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1236,16 +1236,16 @@ CREATE OR REPLACE PROCEDURE inputForRecallPolicy(dbInfo OUT castor.DbRecallInfo_
   svcId NUMBER;
 BEGIN
   OPEN dbInfo FOR
-    SELECT tape.id, tape.vid, count(distinct segment.id), sum(castorfile.filesize),
-           gettime() - min(segment.creationtime), max(Segment.priority)
+    SELECT /*+ gather_plan_statistics USE_NL(tape segment) LEADING(tape segment tapecopy castorfile) INDEX(Tape I_Tape_Status) INDEX(Segment I_Segment_TapeStatus) INDEX(TapeCopy PK_TAPECOPY_ID) INDEX(Castorfile PK_CASTORFILE_ID) */
+       tape.id, tape.vid, count(distinct segment.id), sum(castorfile.filesize),
+       gettime() - min(segment.creationtime), max(Segment.priority)
       FROM TapeCopy, CastorFile, Segment, Tape
-     WHERE Tape.id = Segment.tape(+)
-       AND TapeCopy.id(+) = Segment.copy
-       AND CastorFile.id(+) = TapeCopy.castorfile
+     WHERE Tape.id = Segment.tape
+       AND TapeCopy.id = Segment.copy
+       AND CastorFile.id = TapeCopy.castorfile
        AND Tape.status IN (1, 2, 8)  -- PENDING, WAITDRIVE, WAITPOLICY
        AND Segment.status = 0  -- SEGMENT_UNPROCESSED
-     GROUP BY Tape.id, Tape.vid
-     HAVING count(distinct segment.id) > 0;
+     GROUP BY Tape.id, Tape.vid;
 END;
 /
 
