@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.654 $ $Date: 2009/02/09 18:53:52 $ $Author: itglp $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.655 $ $Date: 2009/03/26 14:11:58 $ $Author: itglp $
  *
  * PL/SQL code for permission and B/W list handling
  *
@@ -13,7 +13,6 @@ CREATE OR REPLACE PROCEDURE checkPermission(isvcClass IN VARCHAR2,
                                             ieuid IN NUMBER,
                                             iegid IN NUMBER,
                                             ireqType IN NUMBER,
-                                            ireqId IN NUMBER,
                                             res OUT NUMBER) AS
   c NUMBER;
   svcId NUMBER;
@@ -82,7 +81,7 @@ BEGIN
     RETURN 0;
   END IF;
   -- Check the users access rights
-  checkPermission(reqSvcClass, reqEuid, reqEgid, reqType, 0, res);
+  checkPermission(reqSvcClass, reqEuid, reqEgid, reqType, res);
   IF res > 0 THEN
     RETURN 0;
   END IF;
