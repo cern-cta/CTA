@@ -87,7 +87,6 @@ int main(argc, argv)
     { "name",      REQUIRED_ARGUMENT, NULL,   'n' },
     { "segsize",   REQUIRED_ARGUMENT, NULL,   'x' },
     { "update",    NO_ARGUMENT,       &update, 1  },
-    { "verbose",   NO_ARGUMENT,       NULL,   'v' },
     { "help",      NO_ARGUMENT,       &hflg,   1  },
     { NULL,        0,                 NULL,    0  }
   };
@@ -185,7 +184,7 @@ int main(argc, argv)
       } else if (chksumvalue[0] != '\0') {
 	fprintf (stderr, "%s: option -k, --checksum cannot be specified with --clear\n", argv[0]);
 	errflg++;
-      } 
+      }
     }
     /* Changes to the segment size */
     if (clear && xflg && !errflg) {
