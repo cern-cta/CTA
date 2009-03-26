@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IRHSvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/06/03 11:01:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IRHSvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2009/03/26 14:01:12 $ $Author: itglp $
  *
  * This class provides specific request handler methods
  *
@@ -53,19 +53,13 @@ namespace castor {
     public:
 
       /**
-       * checks permission for a given user to make a give request
-       * in a given service class. Just returns nothing in case
-       * permission is granted and throw a permission denied
-       * exception otherwise
-       * @param svcClassName the name of the service class
-       * @param euid the uid of the user
-       * @param egid the gid of the user
-       * @param type the type of request
+       * checks permission for a given request to be processed.
+       * Just returns nothing in case permission is granted 
+       * and throw a permission denied exception otherwise
+       * @param req the user request object
        * @exception throws Exception in case of permission denial
        */
-      virtual void checkPermission
-      (const std::string svcClassName, unsigned long euid,
-       unsigned long egid, int type)
+      virtual void checkPermission(castor::stager::Request* req)
         throw (castor::exception::Exception) = 0;
 
       /**

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRHSvc.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2009/01/05 15:53:56 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraRHSvc.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2009/03/26 14:01:12 $ $Author: itglp $
  *
  * Implementation of the IRHSvc for Oracle
  *
@@ -30,6 +30,7 @@
 // Include Files
 #include "castor/db/newora/OraCommonSvc.hpp"
 #include "castor/rh/IRHSvc.hpp"
+#include "castor/stager/Request.hpp"
 #include <vector>
 #include "occi.h"
 #include "osdep.h"
@@ -83,62 +84,56 @@ namespace castor {
       public:
 
         /**
-         * checks permission for a given user to make a give request
-         * in a given service class. Just returns nothing in case
-         * permission is granted and throw a permission denied
-         * exception otherwise
-         * @param svcClassName the name of the service class
-         * @param euid the uid of the user
-         * @param egid the gid of the user
-         * @param type the type of request
+         * checks permission for a given request to be processed.
+         * Just returns nothing in case permission is granted 
+         * and throw a permission denied exception otherwise
+         * @param req the user request object
          * @exception throws Exception in case of permission denial
          */
-        virtual void checkPermission
-        (const std::string svcClassName, unsigned long euid,
-         unsigned long egid, int type)
+        virtual void checkPermission(castor::stager::Request* req)
           throw (castor::exception::Exception);
 
-	/**
-	 * change privileges for some users
+        /**
+         * change privileges for some users
          * @param svcClassName the service class to be affected.
          * The special value '*' can be used to target all service
          * classes
-	 * @param users the list of affected users. An empty list
-	 * can be used to target all users. Similarly, an entry
-	 * containing a -1 as uid or gid means repectively that
-	 * all uid or all gid are targeted
-	 * @param requestTypes the list of affected request types.
-	 * An empty list can be used to target all types
-	 * @param isAdd do we add (or delete) these privileges ?
-	 * @exception in case of error
-	 */
-	virtual void changePrivilege
-	(const std::string svcClassName,
-	 std::vector<castor::bwlist::BWUser*> users,
-	 std::vector<castor::bwlist::RequestType*> requestTypes,
-	 bool isAdd)
-	  throw (castor::exception::Exception);
+         * @param users the list of affected users. An empty list
+         * can be used to target all users. Similarly, an entry
+         * containing a -1 as uid or gid means repectively that
+         * all uid or all gid are targeted
+         * @param requestTypes the list of affected request types.
+         * An empty list can be used to target all types
+         * @param isAdd do we add (or delete) these privileges ?
+         * @exception in case of error
+         */
+        virtual void changePrivilege
+        (const std::string svcClassName,
+         std::vector<castor::bwlist::BWUser*> users,
+         std::vector<castor::bwlist::RequestType*> requestTypes,
+         bool isAdd)
+          throw (castor::exception::Exception);
 
-	/**
-	 * list privileges
+        /**
+         * list privileges
          * @param svcClassName if not '*', restricts the listing to
          * privileges for this service class
-	 * @param user if not -1, restricts the listing to privileges
+         * @param user if not -1, restricts the listing to privileges
          * concerning this user
-	 * @param group if not -1, restricts the listing to privileges
+         * @param group if not -1, restricts the listing to privileges
          * concerning this group
-	 * @param requestType if not 0, restricts the listing to
+         * @param requestType if not 0, restricts the listing to
          * privileges concerning this request type
          * @return the list of privileges, as a vectors of individual
          * privileges. Note that it is the responsibility of the caller
          * to deallocate all these privileges
-	 * @exception in case of error
-	 */
-	virtual std::vector<castor::bwlist::Privilege*>
-	listPrivileges
-	(const std::string svcClassName, const int user,
+         * @exception in case of error
+         */
+        virtual std::vector<castor::bwlist::Privilege*>
+        listPrivileges
+        (const std::string svcClassName, const int user,
          const int group, const int requestType)
-	  throw (castor::exception::Exception);
+          throw (castor::exception::Exception);
 
       private:
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/09/22 12:17:05 $ $Author: waldron $
+ * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2009/03/26 14:01:12 $ $Author: itglp $
  *
  * Implementation of the IRHSvc for Oracle
  *
@@ -28,6 +28,7 @@
 #include "castor/db/ora/OraRHSvc.hpp"
 #include "castor/Constants.hpp"
 #include "castor/SvcFactory.hpp"
+#include "castor/stager/SvcClass.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/PermissionDenied.hpp"
@@ -52,7 +53,7 @@ static castor::SvcFactory<castor::db::ora::OraRHSvc>* s_factoryOraRHSvc =
 
 /// SQL statement for checkPermission
 const std::string castor::db::ora::OraRHSvc::s_checkPermissionStatementString =
-  "BEGIN checkPermission(:1, :2, :3, :4, :5); END;";
+"BEGIN checkPermission(:1, :2, :3, :4, :5); END;";
 
 /// SQL statement for addPrivilege
 const std::string castor::db::ora::OraRHSvc::s_addPrivilegeStatementString =
@@ -122,8 +123,7 @@ void castor::db::ora::OraRHSvc::reset() throw() {
 // checkPermission
 //------------------------------------------------------------------------------
 void castor::db::ora::OraRHSvc::checkPermission
-(const std::string svcClassName, unsigned long euid,
- unsigned long egid, int type)
+(castor::stager::Request* req)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
@@ -131,13 +131,13 @@ void castor::db::ora::OraRHSvc::checkPermission
       m_checkPermissionStatement =
         createStatement(s_checkPermissionStatementString);
       m_checkPermissionStatement->registerOutParam
-        (5, oracle::occi::OCCIINT);
+        (5, oracle::occi::OCCIDOUBLE);
     }
     // execute the statement and see whether we found something
-    m_checkPermissionStatement->setString(1, svcClassName);
-    m_checkPermissionStatement->setInt(2, euid);
-    m_checkPermissionStatement->setInt(3, egid);
-    m_checkPermissionStatement->setInt(4, type);
+    m_checkPermissionStatement->setString(1, req->svcClassName());
+    m_checkPermissionStatement->setInt(2, req->euid());
+    m_checkPermissionStatement->setInt(3, req->egid());
+    m_checkPermissionStatement->setInt(4, req->type());
     unsigned int nb = m_checkPermissionStatement->executeUpdate();
     if (0 == nb) {
       castor::exception::Internal ex;
@@ -145,29 +145,34 @@ void castor::db::ora::OraRHSvc::checkPermission
         << "checkPermission did not return any result.";
       throw ex;
     }
-    // throw exception if access denied
-    int ret = m_checkPermissionStatement->getInt(5);
-    if (ret != 0) {
-      if (ret == -1) {
-	castor::exception::PermissionDenied ex;
-	ex.getMessage() << "Insufficient user privileges to make a request of type "
-			<< castor::ObjectsIdStrings[type]
-			<< " in service class '";
-	if (0 == svcClassName.size()) {
-	  ex.getMessage() << "default";
-	} else {
-	  ex.getMessage() << svcClassName;
-	}
-	ex.getMessage() << "'\n";
-	throw ex;
-      } else {
-	// ret == -2 : non existent service class
-	castor::exception::InvalidArgument ex;
-	ex.getMessage() << "Invalid service class '"
-			<< svcClassName
-			<< "'\n";
-	throw ex;
-      }
+    // signed because the return value can be negative for errors
+    signed64 ret = (signed64)m_checkPermissionStatement->getDouble(5);
+    if (ret > 0) {
+      // access granted, ret is the svcClass id. We keep it in an object
+      // so to let the RH create the link later on. Note that this has
+      // the side effect of allocating an object in memory, which needs
+      // to be deallocated by the caller.
+      stager::SvcClass* sc = new stager::SvcClass();
+      sc->setId(ret);
+      req->setSvcClass(sc);
+    }
+    else if (ret == -1) {
+      // no access, throw exception
+      castor::exception::PermissionDenied ex;
+      ex.getMessage() << "Insufficient user privileges to make a request of type "
+                      << castor::ObjectsIdStrings[req->type()]
+                      << " in service class '"
+                      << (0 == req->svcClassName().size() ? "default" :
+                          req->svcClassName())
+                      << "'\n";
+      throw ex;
+    } else {
+      // ret == -2 : non existent service class
+      castor::exception::InvalidArgument ex;
+      ex.getMessage() << "Invalid service class '"
+                      << req->svcClassName()
+                      << "'\n";
+      throw ex;
     }
   } catch (oracle::occi::SQLException e) {
     handleException(e);
@@ -189,13 +194,13 @@ void handleChangePrivilegeTypeLoop
   // loop on the request types
   if (requestTypes.size() > 0) {
     for (std::vector<castor::bwlist::RequestType*>::const_iterator typeIt =
-	   requestTypes.begin();
-	 typeIt != requestTypes.end();
-	 typeIt++) {
+           requestTypes.begin();
+         typeIt != requestTypes.end();
+         typeIt++) {
       if ((*typeIt)->reqType() > 0) {
-	stmt->setInt(4, (*typeIt)->reqType());
+        stmt->setInt(4, (*typeIt)->reqType());
       } else {
-	stmt->setNull(4, oracle::occi::OCCINUMBER);
+        stmt->setNull(4, oracle::occi::OCCINUMBER);
       }
       stmt->executeUpdate();
     }
@@ -219,13 +224,13 @@ void castor::db::ora::OraRHSvc::changePrivilege
     // Check whether the statement is ok
     if (isAdd){
       if (0 == m_addPrivilegeStatement) {
-	m_addPrivilegeStatement =
-	  createStatement(s_addPrivilegeStatementString);
+        m_addPrivilegeStatement =
+          createStatement(s_addPrivilegeStatementString);
       }
     } else {
       if (0 == m_removePrivilegeStatement) {
-	m_removePrivilegeStatement =
-	  createStatement(s_removePrivilegeStatementString);
+        m_removePrivilegeStatement =
+          createStatement(s_removePrivilegeStatementString);
       }
     }
     // deal with the type of change
@@ -240,21 +245,21 @@ void castor::db::ora::OraRHSvc::changePrivilege
     // loop over users if any
     if (users.size() > 0) {
       for (std::vector<castor::bwlist::BWUser*>::const_iterator userIt =
-	     users.begin();
-	   userIt != users.end();
-	   userIt++) {
-	if ((*userIt)->euid() >= 0) {
-	  stmt->setInt(2, (*userIt)->euid());
-	} else {
-	  stmt->setNull(2, oracle::occi::OCCINUMBER);
-	}
-	if ((*userIt)->egid() >= 0) {
-	  stmt->setInt(3, (*userIt)->egid());
-	} else {
-	  stmt->setNull(3, oracle::occi::OCCINUMBER);
-	}
-	// loop on the request types if any and call DB
-	handleChangePrivilegeTypeLoop(requestTypes, stmt);
+             users.begin();
+           userIt != users.end();
+           userIt++) {
+        if ((*userIt)->euid() >= 0) {
+          stmt->setInt(2, (*userIt)->euid());
+        } else {
+          stmt->setNull(2, oracle::occi::OCCINUMBER);
+        }
+        if ((*userIt)->egid() >= 0) {
+          stmt->setInt(3, (*userIt)->egid());
+        } else {
+          stmt->setNull(3, oracle::occi::OCCINUMBER);
+        }
+        // loop on the request types if any and call DB
+        handleChangePrivilegeTypeLoop(requestTypes, stmt);
       }
     } else {
       // empty user list, that means all uids and all gids
@@ -269,22 +274,22 @@ void castor::db::ora::OraRHSvc::changePrivilege
     if (e.getErrorCode() == 20108) {
       castor::exception::InvalidArgument ex;
       ex.getMessage() << "The operation you are requesting cannot be expressed "
-		      << "in the privilege table.\nThis means "
-		      << "that you are trying to grant only part of a privilege "
-		      << "that is currently denied.\nConsider granting all of it "
-		      << "and denying the complement afterward";
+                      << "in the privilege table.\nThis means "
+                      << "that you are trying to grant only part of a privilege "
+                      << "that is currently denied.\nConsider granting all of it "
+                      << "and denying the complement afterward";
       throw ex;
     } else if (e.getErrorCode() == 20113) {
       castor::exception::InvalidArgument ex;
       ex.getMessage() << "Invalid service class '"
-		      << svcClassName
-		      << "'\n";
+                      << svcClassName
+                      << "'\n";
       throw ex;
     } else {
       castor::exception::Internal ex;
       ex.getMessage()
-	<< "Error caught in changePrivilege."
-	<< std::endl << e.what();
+        << "Error caught in changePrivilege."
+        << std::endl << e.what();
       throw ex;
     }
   }
