@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.schema.sql,v $ $Revision: 1.10 $ $Date: 2009/03/13 15:23:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleCommon.schema.sql,v $ $Revision: 1.11 $ $Date: 2009/03/27 10:34:31 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically.
  *
@@ -147,8 +147,14 @@ CREATE UNIQUE INDEX I_Stream2TapeCopy_PC ON Stream2TapeCopy (parent, child);
 
 CREATE INDEX I_GCFile_Request ON GCFile (request);
 
+/* Indexing Tape by Status */
+CREATE INDEX I_Tape_Status ON Tape (status);
+
 /* Indexing Segments by Tape */
 CREATE INDEX I_Segment_Tape ON Segment (tape);
+
+/* Indexing Segments by Tape and Status */
+CREATE INDEX I_Segment_TapeStatus ON Segment (tape, status);
 
 /* Indexing Stream by TapePool */
 CREATE INDEX I_Stream_TapePool ON Stream (tapePool); 
