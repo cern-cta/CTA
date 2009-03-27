@@ -53,7 +53,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-hsmtools
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, cx_Oracle
 Description: castor (Cern Advanced STORage system)
  HSM Administration tools e.g. reclaim
 
