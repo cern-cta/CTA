@@ -254,7 +254,7 @@ DependsOnLibrary(security,castorsecurity)
 DependsOnLibrary(dlf,castordlf)
 
 Cns_oracle_ifce.c: Cns_oracle_ifce.pc
-	proc iname=Cns_oracle_ifce include=$(INCLUDES) threads=yes char_map=string parse=full
+	proc iname=Cns_oracle_ifce include=$(INCLUDES) threads=yes char_map=string parse=full prefetch=1000
 FilesToClean += Cns_oracle_ifce.c Cns_oracle_ifce.lis
 MakeDir($(SPOOL),0755)
 ORALIBS= -L$(ORACLE_HOME)/lib -lclntsh

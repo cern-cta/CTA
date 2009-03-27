@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.15 $ $Date: 2009/02/27 12:58:56 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.16 $ $Date: 2009/03/27 07:12:10 $ CERN IT-PDP/DM Jean-Philippe Baud
 
 COMM    Make volume manager programs.
 
@@ -23,7 +23,7 @@ DependsOnLibrary(upv,castorupv)
 
 MakeDir($(SPOOL),0755)
 vmgr_oracle_ifce.c: vmgr_oracle_ifce.pc
-	proc iname=vmgr_oracle_ifce include=../h  threads=yes char_map=string parse=full
+	proc iname=vmgr_oracle_ifce include=../h  threads=yes char_map=string parse=full prefetch=1000
 FilesToClean += vmgr_oracle_ifce.c vmgr_oracle_ifce.lis
 VMGRDAEMON_OBJS = vmgr_main.Osuf vmgr_oracle_ifce.Osuf vmgr_procreq.Osuf sendrep.Osuf vmgrlogit.Osuf
 ORALIBS= -L$(ORACLE_HOME)/lib -lclntsh
