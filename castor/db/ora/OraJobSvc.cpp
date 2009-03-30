@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.59 $ $Release$ $Date: 2009/03/03 10:37:17 $ $Author: itglp $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.60 $ $Release$ $Date: 2009/03/30 13:05:02 $ $Author: waldron $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -115,7 +115,7 @@ const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyFailedStatementStri
 
 /// SQL statement for prepareForMigration
 const std::string castor::db::ora::OraJobSvc::s_prepareForMigrationStatementString =
-  "BEGIN prepareForMigration(:1, :2, :3, :4, :5, :6, :7, :8); END;";
+  "BEGIN prepareForMigration(:1, :2, :3, :4, :5, :6); END;";
 
 /// SQL statement for getUpdateDone
 const std::string castor::db::ora::OraJobSvc::s_getUpdateDoneStatementString =
@@ -585,10 +585,6 @@ void castor::db::ora::OraJobSvc::prepareForMigration
         (5, oracle::occi::OCCISTRING, 2048);
       m_prepareForMigrationStatement->registerOutParam
         (6, oracle::occi::OCCIINT);
-      m_prepareForMigrationStatement->registerOutParam
-        (7, oracle::occi::OCCIINT);
-      m_prepareForMigrationStatement->registerOutParam
-        (8, oracle::occi::OCCIINT);
     }
     // execute the statement and see whether we found something
     m_prepareForMigrationStatement->setDouble(1, subreq->id());
@@ -601,6 +597,7 @@ void castor::db::ora::OraJobSvc::prepareForMigration
         << "prepareForMigration did not return any result.";
       throw ex;
     }
+
     // collect NS related output
     struct Cns_fileid fileid;
     fileid.fileid =
@@ -610,8 +607,9 @@ void castor::db::ora::OraJobSvc::prepareForMigration
     strncpy(fileid.server,
             nsHost.c_str(),
             CA_MAXHOSTNAMELEN);
+
     // Check for errors
-    int errorCode = m_prepareForMigrationStatement->getInt(8);
+    int errorCode = m_prepareForMigrationStatement->getInt(6);
     if (errorCode > 0) {
       // For now, the only situation when errorCode in not 0
       // is when the file got deleted while it was written to
@@ -624,9 +622,7 @@ void castor::db::ora::OraJobSvc::prepareForMigration
       cnvSvc()->rollback();
       return;
     }
-    // collect rest of output
-    unsigned long euid = m_prepareForMigrationStatement->getInt(6);
-    unsigned long egid = m_prepareForMigrationStatement->getInt(7);
+
     // Update name server
     char cns_error_buffer[512];  /* Cns error buffer */
     *cns_error_buffer = 0;
@@ -634,17 +630,6 @@ void castor::db::ora::OraJobSvc::prepareForMigration
       castor::exception::Exception ex(serrno);
       ex.getMessage()
         << "prepareForMigration : Cns_seterrbuf failed.";
-      throw ex;
-    }
-    if (Cns_setid(euid, egid) != 0) {
-      castor::exception::Exception ex(serrno);
-      ex.getMessage()
-        << "prepareForMigration : Cns_setid failed : ";
-      if (!strcmp(cns_error_buffer, "")) {
-        ex.getMessage() << sstrerror(serrno);
-      } else {
-        ex.getMessage() << cns_error_buffer;
-      }
       // rollback the prepareForMigration
       cnvSvc()->rollback();
       throw ex;
