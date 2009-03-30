@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.679 $ $Date: 2009/03/05 15:29:46 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.680 $ $Date: 2009/03/30 12:09:04 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -624,12 +624,10 @@ CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER,
                                                  ts IN NUMBER,
                                                  fId OUT NUMBER,
                                                  nh OUT VARCHAR2,
-                                                 userId OUT INTEGER,
-                                                 groupId OUT INTEGER,
                                                  errorCode OUT INTEGER) AS
   cfId INTEGER;
   dcId INTEGER;
-  scId INTEGER;
+  svcId INTEGER;
   realFileSize INTEGER;
   unused INTEGER;
   contextPIPP INTEGER;
@@ -690,16 +688,16 @@ BEGIN
     WHERE id = cfId
     FOR UPDATE;
   -- Get uid, gid and svcclass from Request
-  SELECT euid, egid, svcClass INTO userId, groupId, scId
+  SELECT svcClass INTO svcId
     FROM SubRequest,
-      (SELECT euid, egid, id, svcClass FROM StagePutRequest UNION ALL
-       SELECT euid, egid, id, svcClass FROM StageUpdateRequest UNION ALL
-       SELECT euid, egid, id, svcClass FROM StagePutDoneRequest) Request
+      (SELECT id, svcClass FROM StagePutRequest UNION ALL
+       SELECT id, svcClass FROM StageUpdateRequest UNION ALL
+       SELECT id, svcClass FROM StagePutDoneRequest) Request
    WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
   IF contextPIPP != 0 THEN
     -- If not a put inside a PrepareToPut/Update, create TapeCopies
     -- and update DiskCopy status
-    putDoneFunc(cfId, realFileSize, contextPIPP, scId);
+    putDoneFunc(cfId, realFileSize, contextPIPP, svcId);
   ELSE
     -- If put inside PrepareToPut/Update, restart any PutDone currently
     -- waiting on this put/update
