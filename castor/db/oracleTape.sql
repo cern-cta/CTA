@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.725 $ $Date: 2009/03/26 10:47:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.726 $ $Date: 2009/03/30 17:52:41 $ $Author: itglp $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -630,6 +630,12 @@ BEGIN
   UPDATE DiskCopy SET status = 4 -- DISKCOPY_FAILED
    WHERE castorFile = cfId
      AND status = 2; -- DISKCOPY_WAITTAPERECALL
+  -- Drop tape copies. Ideally, we should keep some track that
+  -- the recall failed in order to prevent future recalls until some
+  -- sort of manual intervention. For the time being, as we can't
+  -- say whether the failure is fatal or not, we drop everything
+  -- and we won't deny a future request for recall.
+  deleteTapeCopies(cfId);
   UPDATE SubRequest 
      SET status = 7, -- SUBREQUEST_FAILED
          getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED (not strictly correct but the request is over anyway)
