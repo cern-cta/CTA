@@ -148,10 +148,10 @@ void castor::job::stagerjob::RawMoverPlugin::postForkHook
   if (args.accessMode == ReadOnly ||
       args.accessMode == ReadWrite) {
     if (childFailed) {
-      context.jobSvc->getUpdateDone
+      context.jobSvc->getUpdateFailed
         (args.subRequestId, args.fileId.fileid, args.fileId.server);
     } else {
-      context.jobSvc->getUpdateFailed
+      context.jobSvc->getUpdateDone
         (args.subRequestId, args.fileId.fileid, args.fileId.server);
     }
   } else {
