@@ -56,7 +56,7 @@ if ($qn ==1)
 	$query1 = "select username from (
 				select username,count(username) reqs
 				from ".$db_instances[$service]['schema']."requests
-				where NN_Requests_timestamp > sysdate - $period
+				where timestamp > sysdate - $period
 				group by username 
 				order by reqs desc )
 		   where rownum < 11";
@@ -64,8 +64,8 @@ else if ($qn ==2)
 	$query1 = "select username from (
 				select username,count(username) reqs
 				from ".$db_instances[$service]['schema']."requests
-				where NN_Requests_timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-					and NN_Requests_timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
+				where timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
+					and timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
 				group by username 
 				order by reqs desc )
 		   where rownum < 11";
@@ -96,14 +96,14 @@ $unames .= ")";
 if ($qn == 1)
 	$query2 = "select distinct username,state , count(*) over (Partition by username,state)reqs
 			   from ".$db_instances[$service]['schema']."requests
-			   where PK_Requests_timestamp > sysdate - $period
+			   where timestamp > sysdate - $period
 					 and username in $unames
 			   order by username";
 else if ($qn == 2)	   
 	$query2 = "select distinct username,state , count(*) over (Partition by username,state)reqs
 			   from ".$db_instances[$service]['schema']."requests
-			   where PK_Requests_timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-					and PK_Requests_timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
+			   where timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
+					and timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
 					 and username in $unames
 			   order by username";
 if (!($parsed2 = OCIParse($conn, $query2))) 

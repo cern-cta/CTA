@@ -16,7 +16,7 @@ if(!$conn) {
 	exit;
 }
 $query1 = "select svcclass
-	   from ".$db_instances[$service]['schema']."MV_SvcclassMap";
+	   from ".$db_instances[$service]['schema']."SvcclassMap_MV";
 
 if (!($parsed1 = OCIParse($conn, $query1))) 
 	{ echo "Error Parsing Query";exit();}

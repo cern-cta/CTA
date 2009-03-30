@@ -54,14 +54,14 @@ if(!$conn) {
 if ($qn == 1)
 	$query1 = "select svcclass, count(*) migs
 		   from ".$db_instances[$service]['schema']."migration
-		   where NN_Mig_timestamp > sysdate - $period
+		   where timestamp > sysdate - $period
 		   group by svcclass
 		   order by migs desc";
 else if ($qn == 2)
 	$query1 = "select svcclass, count(*) migs
 		   from ".$db_instances[$service]['schema']."migration
-		   where NN_Mig_timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-			and NN_Mig_timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
+		   where timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
+			and timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
 		   group by svcclass
 		   order by migs desc";
 if (!($parsed1 = OCIParse($conn, $query1))) 

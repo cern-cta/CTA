@@ -72,7 +72,7 @@ if ($qn ==1)
 		  else 'binn13' end bin
 		from ".$db_instances[$service]['schema']."gcfiles
 		where fileage is not null
-		and NN_GCF_timestamp > sysdate - $period)
+		and timestamp > sysdate - $period)
 		order by bin ";
 else if ($qn ==2)
 	$query1 = "select distinct bin, count(bin) over (Partition by bin) reqs 
@@ -92,8 +92,8 @@ else if ($qn ==2)
 	  else 'binn13' end bin
 	from ".$db_instances[$service]['schema']."gcfiles
 	where fileage is not null
-	and NN_GCF_timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-	and NN_GCF_timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi'))
+	and timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
+	and timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi'))
 	order by bin ";
 $parsed1 = OCIParse($conn, $query1);
 OCIExecute($parsed1);

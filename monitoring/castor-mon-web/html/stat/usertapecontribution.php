@@ -56,9 +56,9 @@ if($qn == 1)
 	$query1 = "select * from (
 	  select username, count(username) con_mount
 	  from ".$db_instances[$service]['schema']."requests a, ".$db_instances[$service]['schema']."taperecall b
-	  where  a.PK_Requests_subreqid = b.PK_TR_subreqid
-	  and a.NN_Requests_timestamp > sysdate - $period
-	  and b.NN_TR_timestamp > sysdate - $period
+	  where  a.subreqid = b.subreqid
+	  and a.timestamp > sysdate - $period
+	  and b.timestamp > sysdate - $period
 	  and b.tapemountstate in ('TAPE_PENDING','TAPE_WAITDRIVE','TAPE_WAITPOLICY','TAPE_WAITMOUNT') 
 	  group by username
 	  order by con_mount desc )
@@ -69,9 +69,9 @@ else if ($qn ==2)
 	  from ".$db_instances[$service]['schema']."requests a, ".$db_instances[$service]['schema']."taperecall b
 	  where  a.subreqid = b.subreqid
 	  and a.timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-		and a.NN_Requests_timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
-		and b.NN_TR_timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-		and b.NN_TR_timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
+		and a.timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
+		and b.timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
+		and b.timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
 	  and b.tapemountstate in ('TAPE_PENDING','TAPE_WAITDRIVE','TAPE_WAITPOLICY','TAPE_WAITMOUNT') 
 	  group by username
 	  order by con_mount desc )

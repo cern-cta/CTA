@@ -64,7 +64,7 @@ if($qn ==1)
 				when dif >= 4 and dif < 6 then 6
 				when dif >= 6 and dif <= 8 then 7
 					else 8 end bin 
-			  from ".$db_instances[$service]['schema']."MV_ReqDel
+			  from ".$db_instances[$service]['schema']."ReqDel_MV
 			  where timestamp > sysdate - $period)
 			order by bin";
 else if ($qn ==2)
@@ -78,7 +78,7 @@ else if ($qn ==2)
             when dif >= 4 and dif < 6 then 6
             when dif >= 6 and dif <= 8 then 7
                 else 8 end bin 
-          from ".$db_instances[$service]['schema']."MV_ReqDel
+          from ".$db_instances[$service]['schema']."ReqDel_MV
           where timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
 			and timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi'))
   		order by bin";

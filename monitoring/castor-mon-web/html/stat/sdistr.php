@@ -72,7 +72,7 @@ if ($qn ==1)
 		  else 8 end bin
 		from ".$db_instances[$service]['schema']."requests
 		where state = 'TapeRecall'
-		and NN_Requests_timestamp >= sysdate - $period
+		and timestamp >= sysdate - $period
 		and svcclass = '$p'
 		and filesize!=0)
 		order by bin";
@@ -89,8 +89,8 @@ else if ($qn ==2)
 	  else 8 end bin
 	from ".$db_instances[$service]['schema']."requests
 	where state = 'TapeRecall'
-	and NN_Requests_timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-	and NN_Requests_timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
+	and timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
+	and timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
 	and svcclass = '$p'
 	and filesize!=0)
 	order by bin";

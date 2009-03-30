@@ -67,9 +67,9 @@ if ($qn == 1) {
 		  when b.totallatency >= 86400 and b.totallatency < 172800 then 11
 		  else 12 end bin
 		from ".$db_instances[$service]['schema']."requests a, ".$db_instances[$service]['schema']."totallatency b
-		where a.PK_Requests_subreqid = b.PK_TL_subreqid
-		and a.NN_Requests_timestamp > sysdate - $period
-		and b.NN_TL_timestamp > sysdate - $period
+		where a.subreqid = b.subreqid
+		and a.timestamp > sysdate - $period
+		and b.timestamp > sysdate - $period
 		and a.state='DiskHit')
 		order by bin ";
 }
@@ -89,11 +89,11 @@ else if ($qn == 2) {
 		  when b.totallatency >= 86400 and b.totallatency < 172800 then 11
 		  else 12 end bin
 		from ".$db_instances[$service]['schema']."requests a, ".$db_instances[$service]['schema']."totallatency b
-		where a.PK_Requests_subreqid = b.PK_TL_subreqid
-		and a.NN_Requests_timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-		and a.NN_Requests_timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
-		and b.NN_TL_timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-		and b.NN_TL_timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
+		where a.subreqid = b.subreqid
+		and a.timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
+		and a.timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
+		and b.timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
+		and b.timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
 		and a.state='DiskHit')
 		order by bin ";
 }
@@ -123,9 +123,9 @@ if ($qn == 1) {
 		  when b.totallatency >= 86400 and b.totallatency < 172800 then 11
 		  else 12 end bin
 		from ".$db_instances[$service]['schema']."requests a, ".$db_instances[$service]['schema']."totallatency b
-		where a.PK_Requests_subreqid = b.PK_TL_subreqid
-		and a.NN_Requests_timestamp > sysdate - $period
-		and b.NN_TL_timestamp > sysdate - $period
+		where a.subreqid = b.subreqid
+		and a.timestamp > sysdate - $period
+		and b.timestamp > sysdate - $period
 		and a.state='DiskCopy')
 		order by bin";
 }
@@ -145,11 +145,11 @@ else if ($qn == 2) {
 		  when b.totallatency >= 86400 and b.totallatency < 172800 then 11
 		  else 12 end bin
 		from ".$db_instances[$service]['schema']."requests a, ".$db_instances[$service]['schema']."totallatency b
-		where a.PK_Requests_subreqid = b.PK_TL_subreqid
-		and a.NN_Requests_timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-		and a.NN_Requests_timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
-		and b.NN_TL_timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-		and b.NN_TL_timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
+		where a.subreqid = b.subreqid
+		and a.timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
+		and a.timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
+		and b.timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
+		and b.timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
 		and a.state='DiskCopy')
 		order by bin";
 }
@@ -179,9 +179,9 @@ if ($qn == 1) {
 		  when b.totallatency >= 86400 and b.totallatency < 172800 then 11
 		  else 12 end bin
 		from ".$db_instances[$service]['schema']."requests a, ".$db_instances[$service]['schema']."totallatency b
-		where a.PK_Requests_subreqid = b.PK_TL_subreqid
-		and a.NN_Requests_timestamp > sysdate - $period
-		and b.NN_TL_timestamp > sysdate - $period
+		where a.subreqid = b.subreqid
+		and a.timestamp > sysdate - $period
+		and b.timestamp > sysdate - $period
 		and a.state='TapeRecall')
 		order by bin";
 }
@@ -201,11 +201,11 @@ else if ($qn == 2){
 		  when b.totallatency >= 86400 and b.totallatency < 172800 then 11
 		  else 12 end bin
 		from ".$db_instances[$service]['schema']."requests a, ".$db_instances[$service]['schema']."totallatency b
-		where a.PK_Requests_subreqid = b.PK_TL_subreqid
-		and a.NN_Requests_timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-		and a.NN_Requests_timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
-		and b.NN_TL_timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-		and b.NN_TL_timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
+		where a.subreqid = b.subreqid
+		and a.timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
+		and a.timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
+		and b.timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
+		and b.timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
 		and a.state='".$db_instances[$service]['schema']." taperecall')
 		order by bin";
 }

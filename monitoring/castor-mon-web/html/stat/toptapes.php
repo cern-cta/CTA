@@ -56,9 +56,9 @@ if ($qn ==1)
 	$query1 = "select * from (
 				select tapeid,count(tapeid) mounts
 				from ".$db_instances[$service]['schema']."requests a, ".$db_instances[$service]['schema']."taperecall b
-				where a.PK_Requests_subreqid = b.PK_TR_subreqid
-			and a.NN_Requests_timestamp > sysdate - $period
-			and b.NN_TR_timestamp > sysdate - $period
+				where a.subreqid = b.subreqid
+			and a.timestamp > sysdate - $period
+			and b.timestamp > sysdate - $period
 				group by tapeid 
 				order by mounts desc )
 		   where rownum < 11";
@@ -66,11 +66,11 @@ else if ($qn ==2)
 		$query1 = "select * from (
 				select tapeid,count(tapeid) mounts
 				from ".$db_instances[$service]['schema']."requests a, ".$db_instances[$service]['schema']."taperecall b
-				where a.PK_Requests_subreqid = PK_TR_b.subreqid
-				and a.NN_Requeststimestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-				and a.NN_Requeststimestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
-				and b.NN_TR_timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-				and b.NN_TR_timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
+				where a.subreqid = b.subreqid
+				and a.timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
+				and a.timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
+				and b.timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
+				and b.timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
 				group by tapeid 
 				order by mounts desc )
 		   where rownum < 11";

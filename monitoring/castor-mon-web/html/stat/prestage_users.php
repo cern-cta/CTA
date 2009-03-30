@@ -56,14 +56,14 @@ if ($qn ==1 )
 			   from (
 		   select username , count(username) reqs
 		   from ".$db_instances[$service]['schema']."requests 
-		   where NN_Requests_timestamp > sysdate - $period
+		   where timestamp > sysdate - $period
 		   and type = 'StagePrepareToGetRequest'
 		   and state = 'TapeRecall'
 		   group by username
 			   order by reqs desc ) a , 
 		   (select username , count(username) reqs
 		   from ".$db_instances[$service]['schema']."requests 
-		   where NN_Requests_timestamp > sysdate - $period
+		   where timestamp > sysdate - $period
 		   and type = 'StageGetRequest'
 		   and state = 'TapeRecall'
 		   group by username
@@ -75,16 +75,16 @@ else if ($qn ==2 )
 			   from (
 		   select username , count(username) reqs
 		   from ".$db_instances[$service]['schema']."requests 
-		   where NN_Requests_timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-			and NN_Requests_timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
+		   where timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
+			and timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
 		   and type = 'StagePrepareToGetRequest'
 		   and state = 'TapeRecall'
 		   group by username
 			   order by reqs desc ) a , 
 		   (select username , count(username) reqs
 		   from ".$db_instances[$service]['schema']."requests 
-		   where NN_Requests_timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-			and NN_Requests_timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
+		   where timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
+			and timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
 		   and type = 'StageGetRequest'
 		   and state = 'TapeRecall'
 		   group by username

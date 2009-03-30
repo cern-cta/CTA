@@ -84,7 +84,7 @@ else
 		   count(case when state='DiskCopy' then trunc(NN_Requests_timestamp,'$interval') else null end) over (Partition by trunc(NN_Requests_timestamp,'$interval')) number_of_DC_req, 
 		   count(case when state='TapeRecall' then trunc(NN_Requests_timestamp,'$interval') else null end) over (Partition by trunc(NN_Requests_timestamp,'$interval')) number_of_TR_req
          from ".$db_instances[$service]['schema']."requests
-         where NN_Requests_timestamp >= trunc(sysdate - $period,'$interval')
+         where timestamp >= trunc(sysdate - $period,'$interval')
          order by bin";
      } else if ($qn == 2) {
        $time_series =
@@ -93,8 +93,8 @@ else
 		   count(case when state='DiskCopy' then trunc(NN_Requests_timestamp,'$interval') else null end) over (Partition by trunc(NN_Requests_timestamp,'$interval')) number_of_DC_req, 
 		   count(case when state='TapeRecall' then trunc(NN_Requests_timestamp,'$interval') else null end) over (Partition by trunc(NN_Requests_timestamp,'$interval')) number_of_TR_req
          from ".$db_instances[$service]['schema']."requests
-         where NN_Requests_timestamp >= trunc(to_date('$from','dd/mm/yyyy HH24:Mi'),'$interval')
-           and NN_Requests_timestamp <= trunc(to_date('$to','dd/mm/yyyy HH24:Mi'),'$interval')
+         where timestamp >= trunc(to_date('$from','dd/mm/yyyy HH24:Mi'),'$interval')
+           and timestamp <= trunc(to_date('$to','dd/mm/yyyy HH24:Mi'),'$interval')
          order by bin";
      } 
      $parsedqry = oci_parse($con, $time_series);

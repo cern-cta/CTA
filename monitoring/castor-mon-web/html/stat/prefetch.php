@@ -54,14 +54,14 @@ if(!$conn) {
 if ($qn == 1)
 	$query1 = "select distinct svcclass,type, count(type) over (Partition by svcclass,type) number_of_req 
 	   from ".$db_instances[$service]['schema']."requests
-	   where NN_Requests_timestamp > sysdate - $period
+	   where timestamp > sysdate - $period
 	   and state = 'TapeRecall'
 	   order by svcclass,type";
 else if ($qn == 2)
 	$query1 = "select distinct svcclass,type, count(type) over (Partition by svcclass,type) number_of_req 
 	   from ".$db_instances[$service]['schema']."requests
-	   where NN_Requests_timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-			and NN_Requests_timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
+	   where timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
+			and timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
 	   and state ='TapeRecall'
 	   order by svcclass,type";
 

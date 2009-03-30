@@ -73,11 +73,11 @@ $pool =array(-1 => 'foo');
 if ($qn == 1) 
 	$query1 = "select originalpool,targetpool,count(*)
 		   from ".$db_instances[$service]['schema']."diskcopy
-		   where NN_DC_timestamp > sysdate - $period
+		   where timestamp > sysdate - $period
 		   group by originalpool,targetpool
 		   union
 		   select svcclass,svcclass,copies from ".$db_instances[$service]['schema']."internaldiskcopy
-		   where NN_IDC_timestamp > sysdate - $period
+		   where timestamp > sysdate - $period
 		   order by originalpool";
 else if ($qn ==2)
 	$query1 = "select originalpool,targetpool,count(*)
@@ -87,8 +87,8 @@ else if ($qn ==2)
 		   group by originalpool,targetpool
 		   union
 		   select svcclass,svcclass,copies from ".$db_instances[$service]['schema']."internaldiskcopy
-		   where NN_DC_timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-			and NN_IDC_timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
+		   where timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
+			and timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
 		   order by originalpool";
 
 if (!($parsed1 = OCIParse($conn, $query1))) 

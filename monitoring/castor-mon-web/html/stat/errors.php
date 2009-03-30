@@ -37,9 +37,9 @@ if ($period == 10/1440)
 else if ($period == 1/24)
  	$graph = new Graph(800,300,"auto",5);
 else if ($period == 1)
-	$graph = new Graph(800,300,"auto",30);
-else if ($period == 7)
 	$graph = new Graph(800,300,"auto",60);
+else if ($period == 7)
+	$graph = new Graph(800,300,"auto",90);
 else if ($period == 30)
 	$graph = new Graph(800,300,"auto",360);
 else if ($period == 10000) 
@@ -56,28 +56,22 @@ if(!$conn) {
 }
 //query to retrieve top ten CASTOR instance's errors
 if ($qn ==1)
-	$query1 = "select * from (
-		   select fac_name,msg_text,count(*) sum
-			   from ".$db_instances[$service]['schema']."errors a,castor_dlf.dlf_msg_texts b, castor_dlf.dlf_facilities c
-		   where NN_Errors_timestamp > sysdate - $period
-				and b.fac_no = a.facility
-				and a.facility = c.fac_no
-				and a.msg_no = b.msg_no
-		   group by fac_name,msg_text
-		   order by sum desc)
-		   where rownum < 11 ";
+	$query1 = "select fac.fac_name, count(*) errorsum
+	           from castor_dlf.dlf_messages mes, castor_dlf.dlf_facilities fac
+		   where mes.facility = fac.fac_no
+		     and mes.severity = 3
+		     and mes.timestamp > sysdate - $period
+		   group by fac.fac_name 
+		   order by errorsum desc";
 else if ($qn ==2)
-	$query1 = "select * from (
-	   select fac_name,msg_text,count(*) sum
-           from ".$db_instances[$service]['schema']."errors a,castor_dlf.dlf_msg_texts b, castor_dlf.dlf_facilities c
-	   where NN_Errors_timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-			and NN_Errors_timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
-            and b.fac_no = a.facility
-            and a.facility = c.fac_no
-            and a.msg_no = b.msg_no
-	   group by fac_name,msg_text
-	   order by sum desc)
-	   where rownum < 11 ";
+	$query1 = "select fac.fac_name, count(*) errorsum
+	           from castor_dlf.dlf_messages mes, castor_dlf.dlf_facilities fac
+		   where mes.facility = fac.fac_no
+		     and mes.severity = 3
+		     and mes.timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
+		     and mes.timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
+		   group by fac.fac_name 
+		   order by errorsum desc";
 if (!($parsed1 = OCIParse($conn, $query1))) 
 	{ echo "Error Parsing Query";exit();}
 if (!OCIExecute($parsed1))
@@ -86,20 +80,18 @@ if (!OCIExecute($parsed1))
 $i = 0;
 while (OCIFetch($parsed1)) {
 	$fac = OCIResult($parsed1,1);
-	$msg = OCIResult($parsed1,2);
-	$msg_text[$i] = $fac."/".$msg;
 	$error_num[$i] = OCIResult($parsed1,3);
 	$i++;
 }
 //If no data print "No Data Available" image
-if(empty($msg_text)) {
+if(empty($fac)) {
 	No_Data_Image();
 	exit();
 };
 //Create new plot
 $graph->SetShadow();
 $graph->SetScale("textlin");
-$graph->title->Set("Top Ten Errors");
+$graph->title->Set("Number of Error per Facility");
 $graph->title->SetFont(FF_FONT1,FS_BOLD);
 $graph->img->SetMargin(60,80,40,220);
 $graph->yaxis->title->Set("Number of Errors" );

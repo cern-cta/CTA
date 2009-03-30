@@ -66,7 +66,7 @@ if ($qn ==1)
 		  when filesize >= 104857600 and filesize <= 1073741824 then 7
 		  else 8 end bin
 		from ".$db_instances[$service]['schema']."gcfiles
-		where NN_GCF_timestamp > sysdate - $period
+		where timestamp > sysdate - $period
 		and filesize!=0)
 		order by bin";
 else if($qn==2)
@@ -81,8 +81,8 @@ else if($qn==2)
 	  when filesize >= 104857600 and filesize <= 1073741824 then 7
 	  else 8 end bin
 	from ".$db_instances[$service]['schema']."gcfiles
-	where NN_GCF_timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-	and NN_GCF_timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
+	where timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
+	and timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
 	and filesize!=0)
 	order by bin";
 if (!($parsed1 = OCIParse($conn, $query1))) 

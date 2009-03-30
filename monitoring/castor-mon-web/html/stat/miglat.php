@@ -73,9 +73,9 @@ if ($qn == 1)
 		  when b.totallatency >= 1800 and b.totallatency < 3600 then 11
 		  else 12 end bin
 		from ".$db_instances[$service]['schema']."migration a, ".$db_instances[$service]['schema']."totallatency b
-		where a.PK_Mig_subreqid = b.PK_TL_subreqid
-		and a.NN_Mig_timestamp > sysdate - $period
-		and b.NN_TL_timestamp > sysdate - $period)
+		where a.subreqid = b.subreqid
+		and a.timestamp > sysdate - $period
+		and b.timestamp > sysdate - $period)
 		order by bin ";
 else if ($qn == 2)
 	$query1 = "select distinct bin, count(bin) over (Partition by bin) migs 
@@ -93,11 +93,11 @@ else if ($qn == 2)
 		  when b.totallatency >= 1800 and b.totallatency < 3600 then 11
 		  else 12 end bin
 		from ".$db_instances[$service]['schema']."migration a, ".$db_instances[$service]['schema']."totallatency b
-		where a.PK_Mig_subreqid = b.PK_TL_subreqid
-		and a.NN_Mig_timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-		and a.NN_Mig_timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
-		and b.NN_TL_timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-		and b.NN_TL_timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi'))
+		where a.subreqid = b.subreqid
+		and a.timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
+		and a.timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
+		and b.timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
+		and b.timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi'))
 		order by bin ";
 if (!($parsed1 = OCIParse($conn, $query1))) 
 	{ echo "Error Parsing Query";exit();}

@@ -54,14 +54,14 @@ if(!$conn) {
 if ($qn==1) {
 	$query1 = "select distinct svcclass, state, count(*) over (Partition by svcclass,state) reqs
 		   from ".$db_instances[$service]['schema']."requests
-		   where NN_Requests_timestamp > sysdate - $period
+		   where timestamp > sysdate - $period
 		   order by svcclass";
 }
 else if ($qn==2){
 	$query1 = "select distinct svcclass, state, count(*) over (Partition by svcclass,state) reqs
 		   from ".$db_instances[$service]['schema']."requests
-		   where NN_Requests_timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-			and NN_Requests_timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
+		   where timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
+			and timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
 		   order by svcclass";
 }
 

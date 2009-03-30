@@ -82,18 +82,18 @@ if(!$conn) {
 }
 if ($qn ==1)
 	$query1 = "select to_char(bin,'$format') , number_of_mig from (
-		   select distinct trunc(NN_Mig_timestamp,'$interval') bin, count(trunc(NN_Mig_timestamp,'$interval')) 
-		   over (Partition by trunc(NN_Mig_timestamp,'$interval')) number_of_mig  
+		   select distinct trunc(timestamp,'$interval') bin, count(trunc(timestamp,'$interval')) 
+		   over (Partition by trunc(timestamp,'$interval')) number_of_mig  
 			   from ".$db_instances[$service]['schema']."migration
-			   where NN_Mig_timestamp > trunc(sysdate - $period,'$inter')
+			   where timestamp > trunc(sysdate - $period,'$inter')
 			   order by bin )";
 else if ($qn ==2)
 	$query1 = "select to_char(bin,'$format') , number_of_mig from (
-		   select distinct trunc(NN_Mig_timestamp,'$interval') bin, count(trunc(NN_Mig_timestamp,'$interval')) 
-		   over (Partition by trunc(NN_Mig_timestamp,'$interval')) number_of_mig  
+		   select distinct trunc(timestamp,'$interval') bin, count(trunc(timestamp,'$interval')) 
+		   over (Partition by trunc(timestamp,'$interval')) number_of_mig  
 			   from ".$db_instances[$service]['schema']."migration
-			   where NN_Mig_timestamp >= trunc(to_date('$from','dd/mm/yyyy HH24:Mi'),'$inter')
-				and NN_Mig_timestamp <= trunc(to_date('$to','dd/mm/yyyy HH24:Mi'),'$inter')
+			   where timestamp >= trunc(to_date('$from','dd/mm/yyyy HH24:Mi'),'$inter')
+				and timestamp <= trunc(to_date('$to','dd/mm/yyyy HH24:Mi'),'$inter')
 			   order by bin )";
 	   
 if (!($parsed1 = OCIParse($conn, $query1))) 

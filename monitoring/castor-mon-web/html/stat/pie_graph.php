@@ -33,13 +33,13 @@ if($qn == 1)
 	$query = "select count(case when state='DiskHit' then 1 else null end) DiskHits, count(case when state='DiskCopy' then 1 else null end) DiskCopies,
 			count(case when state='TapeRecall' then 1 else null end) taperecalls
 			from ".$db_instances[$service]['schema']."requests 
-			where NN_Requests_timestamp > sysdate - $period";
+			where timestamp > sysdate - $period";
 else if ($qn ==2)
 	$query = "select count(case when state='DiskHit' then 1 else null end) DiskHits, count(case when state='DiskCopy' then 1 else null end) DiskCopies,
 			count(case when state='TapeRecall' then 1 else null end) taperecalls
 			from ".$db_instances[$service]['schema']."requests 
-			where NN_Requests_timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-				and NN_Requests_timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')";
+			where timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
+				and timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')";
 
 //Create new graph, enable image cache by setting countdown period(in minutes) 
 //depending on selected period. If the cached image is valid the script immediately 

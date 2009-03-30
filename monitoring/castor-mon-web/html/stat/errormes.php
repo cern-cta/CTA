@@ -1,6 +1,6 @@
 <?php
 /*Plots Errors Distribution per CASTOR facility
- * fro the given Service Class 
+ * for the given Service Class 
  */ 
 /*inlcude necessary php libs
  *oracle login libs 
@@ -48,9 +48,9 @@ $n = $match_1[0];
  else if ($period == 1/24)
  	$graph = new Graph(800,300,"auto",5);
  else if ($period == 1)
- 	$graph = new Graph(800,300,"auto",30);
- else if ($period == 7)
  	$graph = new Graph(800,300,"auto",60);
+ else if ($period == 7)
+ 	$graph = new Graph(800,300,"auto",90);
  else if ($period == 30)
  	$graph = new Graph(800,300,"auto",360);
  else if ($period == 10000)
@@ -65,24 +65,24 @@ if(!$conn) {
 }
 //Query to retrieve Error Counters for specified Facility (whole CASTOR Instance)
 if ($qn ==1)
-	$query1 = "select msg_text,count(*) sum
-			   from ".$db_instances[$service]['schema']."errors a,castor_dlf.dlf_msg_texts b
-		   where NN_Errors_timestamp > sysdate - $period
-				and b.fac_no = facility
-				and b.fac_no= $f
-				and a.msg_no = b.msg_no 
+	$query1 = "select * from (select msg_text,count(*) sum
+	           from castor_dlf.dlf_messages a,castor_dlf.dlf_msg_texts b
+		   where timestamp > sysdate - $period
+			and b.fac_no= $f
+			and b.fac_no = a.facility
+			and a.msg_no = b.msg_no 
 		   group by msg_text
-		   order by sum desc";
+		   order by sum desc) where rownum < 11";
 else if ($qn ==2)
-	$query1 = "select msg_text,count(*) sum
-     	   from ".$db_instances[$service]['schema']."errors a,castor_dlf.dlf_msg_texts b
-			where NN_Errors_timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-			and NN_Errors_timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
-            and b.fac_no = facility
-            and b.fac_no= $f
-            and a.msg_no = b.msg_no 
-	   group by msg_text
-	   order by sum desc";
+	$query1 = "select * from (select msg_text,count(*) sum
+     	           from castor_dlf.dlf_messages a a,castor_dlf.dlf_msg_texts b
+		   where timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
+			and timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
+            		and b.fac_no= $f
+			and b.fac_no = a.facility
+            		and a.msg_no = b.msg_no 
+	   	   group by msg_text
+	   	   order by sum desc) where rownum < 11";
 if (!($parsed1 = OCIParse($conn, $query1))) 
 	{ echo "Error Parsing Query";exit();}
 if (!OCIExecute($parsed1))
