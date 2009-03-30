@@ -26,13 +26,13 @@ $con = oci_connect($db_instances[$service]['username'],$db_instances[$service]['
      exit;
    } else {// db functionnality
        $time_series =
-         "select distinct to_char(trunc(NN_Requests_timestamp,'$interval'), '$format') bin, 
-		   count(case when state='DiskHit' then trunc(NN_Requests_timestamp,'$interval') else null end) over (Partition by trunc(NN_Requests_timestamp,'$interval')) number_of_DH_req, 
-		   count(case when state='DiskCopy' then trunc(NN_Requests_timestamp,'$interval') else null end) over (Partition by trunc(NN_Requests_timestamp,'$interval')) number_of_DC_req, 
-		   count(case when state='TapeRecall' then trunc(NN_Requests_timestamp,'$interval') else null end) over (Partition by trunc(NN_Requests_timestamp,'$interval')) number_of_TR_req
+         "select distinct to_char(trunc(timestamp,'$interval'), '$format') bin, 
+		   count(case when state='DiskHit' then trunc(timestamp,'$interval') else null end) over (Partition by trunc(timestamp,'$interval')) number_of_DH_req, 
+		   count(case when state='DiskCopy' then trunc(timestamp,'$interval') else null end) over (Partition by trunc(timestamp,'$interval')) number_of_DC_req, 
+		   count(case when state='TapeRecall' then trunc(timestamp,'$interval') else null end) over (Partition by trunc(timestamp,'$interval')) number_of_TR_req
          from ".$db_instances[$service]['schema']." requests
-         where NN_Requests_timestamp >= trunc(sysdate - 15/1440,'$interval')
-	   and NN_Requests_timestamp < trunc(sysdate -5/1440,'$interval') 
+         where timestamp >= trunc(sysdate - 15/1440,'$interval')
+	   and timestamp < trunc(sysdate -5/1440,'$interval') 
            and username = '$username'
          order by bin";
      $parsedqry = oci_parse($con, $time_series);

@@ -25,11 +25,11 @@ if(!$conn) {
 }
 
 $query1 = "select to_char(bin,'$format') , number_of_req from (
-	   select distinct trunc(NN_Requests_timestamp,'$interval') bin, count(trunc(NN_Requests_timestamp,'$interval')) 
-	   over (Partition by trunc(NN_Requests_timestamp,'$interval')) number_of_req  
+	   select distinct trunc(timestamp,'$interval') bin, count(trunc(timestamp,'$interval')) 
+	   over (Partition by trunc(timestamp,'$interval')) number_of_req  
            from ".$db_instances[$service]['schema']."requests
-           where NN_Requests_timestamp >= trunc(sysdate - 15/1440,'$inter')
-		   and NN_Requests_timestamp < trunc(sysdate - 5/1440,'$inter') 
+           where timestamp >= trunc(sysdate - 15/1440,'$inter')
+		   and timestamp < trunc(sysdate - 5/1440,'$inter') 
 		   and state = '$reqkind')
            order by bin";
 if (!($parsed1 = OCIParse($conn, $query1))) 

@@ -23,14 +23,14 @@ $query1 = "select distinct bin, count(bin) over (Partition by bin) reqs
 	  when filesize >= 1048576 and filesize < 10485760 then 2
 	  when filesize >= 10485760 and filesize < 104857600 then 3
 	  when filesize >= 104857600 and filesize <= 1073741824 then 4
-    when filesize >= 1073741824 and filesize <= 1610612736 then 5
-    when filesize >= 1610612736 and filesize <= 2147483648 then 6
-    when filesize >= 2147483648 and filesize <= 2684354560  then 7
+          when filesize >= 1073741824 and filesize <= 1610612736 then 5
+          when filesize >= 1610612736 and filesize <= 2147483648 then 6
+          when filesize >= 2147483648 and filesize <= 2684354560  then 7
 	  else 8 end bin
 	from ".$db_instances[$service]['schema']."requests
 	where state = 'TapeRecall'
-	and NN_Requests_timestamp >= sysdate - 15/1440
-	and NN_Requests_timestamp < sysdate - 5/1440
+	and timestamp >= sysdate - 15/1440
+	and timestamp < sysdate - 5/1440
 	and filesize!=0)
 	order by bin";
 

@@ -19,11 +19,11 @@ if(!$conn) {
 }
 //Timeseries query - gcfiles table
 $query1 = "select to_char(bin,'HH24:MI') , number_of_req from (
-			select trunc(NN_GCF_timestamp,'Mi') bin, round(avg(filesize),4) number_of_req  
+			select trunc(timestamp,'Mi') bin, round(avg(filesize),4) number_of_req  
 			from ".$db_instances[$service]['schema']."gcfiles
-			where NN_GCF_timestamp >= trunc(sysdate - 15/1440,'Mi')
-			and NN_GCF_timestamp < trunc(sysdate - 5/1440 ,'Mi')
-			group by trunc(NN_GCF_timestamp,'Mi'))
+			where timestamp >= trunc(sysdate - 15/1440,'Mi')
+			and timestamp < trunc(sysdate - 5/1440 ,'Mi')
+			group by trunc(timestamp,'Mi'))
 		   order by bin";
 	   
 if (!($parsed1 = OCIParse($conn, $query1))) 

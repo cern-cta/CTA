@@ -65,13 +65,13 @@ if(!$conn) {
 $pool =array(-1 => 'foo');
 $query1 = "select originalpool,targetpool,count(*)
 	   from ".$db_instances[$service]['schema']."diskcopy
-	   where NN_DC_timestamp >= sysdate - 15/1440
-	   and NN_DC_timestamp < sysdate - 5/1440 
+	   where timestamp >= sysdate - 15/1440
+	   and timestamp < sysdate - 5/1440 
 	   group by originalpool,targetpool
 	   union
 	   select svcclass,svcclass,copies from ".$db_instances[$service]['schema']."internaldiskcopy
-	   where NN_IDC_timestamp >= sysdate - 15/1440
-	   and NN_IDC_timestamp < sysdate - 5/1440 
+	   where timestamp >= sysdate - 15/1440
+	   and timestamp < sysdate - 5/1440 
 	   order by originalpool";
 
 if (!($parsed1 = OCIParse($conn, $query1))) 

@@ -44,8 +44,8 @@ $query1 = " select svcclass, count(1) total,count(case when state='DiskHit' then
 			count(case when (state='TapeRecall' and type='StagePrepareToGetRequest') then 1 else null end) pretr,
 			count(case when (state='TapeRecall' and type='StageGetRequest') then 1 else null end) immtr
 			from ".$db_instances[$service]['schema']."requests
-			where NN_Requests_timestamp >= sysdate - 15/1440
-				and NN_Requests_timestamp < sysdate - 5/1440 
+			where timestamp >= sysdate - 15/1440
+				and timestamp < sysdate - 5/1440 
 				and username = '$username'
 			group by svcclass
 			order by total desc";

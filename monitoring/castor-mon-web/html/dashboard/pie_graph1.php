@@ -20,8 +20,8 @@ if(!$conn) {
 $query1 = "select count(case when state='DiskHit' then 1 else null end) DiskHits, count(case when state='DiskCopy' then 1 else null end) DiskCopies,
 			count(case when state='TapeRecall' then 1 else null end) TapeRecalls
 			from ".$db_instances[$service]['schema']."requests 
-			where NN_Requests_timestamp >= sysdate - 15/1440
-			and NN_Requests_timestamp < sysdate - 5/1440";
+			where timestamp >= sysdate - 15/1440
+			and timestamp < sysdate - 5/1440";
 
 if (!($parsed1 = OCIParse($conn, $query1))) 
 	{ echo "Error Parsing Query";exit();}

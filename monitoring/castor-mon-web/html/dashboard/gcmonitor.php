@@ -26,7 +26,7 @@ if(!$conn) {
 	exit;
 }
 $pool = array(-1=>"foo");
-$query1 = "select * from ".$db_instances[$service]['schema']."MV_gcmonitor";
+$query1 = "select * from ".$db_instances[$service]['schema']."GcMonitor_MV";
 if (!($parsed1 = OCIParse($conn, $query1))) 
 	{ echo "Error Parsing Query";exit();}
 if (!OCIExecute($parsed1))

@@ -48,8 +48,8 @@ if(!$conn) {
 $query1 = "select * from (
 			select username , count(*) total
 			from ".$db_instances[$service]['schema']."migration
-			where NN_Mig_timestamp >= sysdate - 15/1440
-				and NN_Mig_timestamp < sysdate - 5/1440 
+			where timestamp >= sysdate - 15/1440
+				and timestamp < sysdate - 5/1440 
 				and svcclass = '$svcclass'
 			group by username
 			order by total desc,username)
