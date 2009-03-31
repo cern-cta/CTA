@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.schema.sql,v $ $Revision: 1.11 $ $Date: 2009/03/27 10:34:31 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.schema.sql,v $ $Revision: 1.12 $ $Date: 2009/03/31 09:49:47 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically.
  *
@@ -374,6 +374,23 @@ CREATE TABLE Accounting (euid INTEGER CONSTRAINT NN_Accounting_Euid NOT NULL,
                          nbBytes INTEGER);
 ALTER TABLE Accounting 
 ADD CONSTRAINT PK_Accounting_EuidFs PRIMARY KEY (euid, fileSystem);
+
+/* SQL statement for the creation of the AccountingSummary view */
+CREATE OR REPLACE VIEW AccountingSummary
+AS
+  SELECT -- Convert the last start date of the job that generated the Accounting
+         -- information from a timestamp with timezone to seconds since epoch.
+         (SELECT ceil((cast((last_start_date AT TIME ZONE 'UTC') AS DATE) 
+            - to_date('01-jan-1970', 'dd-mon-yyyy')) * (24 * 60 * 60)) timestamp
+            FROM user_scheduler_jobs
+           WHERE job_name = 'ACCOUNTINGJOB') timestamp,
+         SvcClass.name SvcClass, Accounting.euid, sum(Accounting.nbbytes) totalBytes
+    FROM Accounting, FileSystem, DiskPool2SvcClass, svcclass
+   WHERE Accounting.filesystem = FileSystem.id
+     AND FileSystem.diskpool = DiskPool2SvcClass.parent
+     AND DiskPool2SvcClass.child = SvcClass.id
+   GROUP BY SvcClass.name, Accounting.euid
+   ORDER BY SvcClass.name, Accounting.euid;
 
 
 /************************************/
