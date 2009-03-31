@@ -1,5 +1,5 @@
 /*
- * $Id: rtcp_Listen.c,v 1.8 2007/02/23 09:30:11 sponcec3 Exp $
+ * $Id: rtcp_Listen.c,v 1.9 2009/03/31 16:08:35 murrayc3 Exp $
  *
  * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
@@ -16,11 +16,12 @@
 #include <winsock2.h>
 #else /* _WIN32 */
 #include <sys/param.h>
-#include <sys/types.h>                  /* Standard data types          */
-#include <netdb.h>                      /* Network "data base"          */
+#include <sys/types.h>      /* Standard data types                */
+#include <netdb.h>          /* Network "data base"                */
 #include <sys/socket.h>
 #include <sys/time.h>
-#include <netinet/in.h>                 /* Internet data types          */
+#include <netinet/in.h>     /* Internet data types                */
+#include <netinet/tcp.h>    /* S. Murray 31/03/09 TCP definitions */
 #endif /* _WIN32 */
 #include <errno.h>
 #include <Castor_limits.h>
@@ -119,6 +120,11 @@ int rtcp_Listen(SOCKET s, SOCKET *ns, int timeout, int wherefrom) {
                            (char *)&keepalive,
                            sizeof(int)
                            );
+          { /* S. Murray 31/03/09 */
+            int tcp_nodelay = 1;
+            setsockopt(*ns, IPPROTO_TCP, TCP_NODELAY,
+              (char *)&tcp_nodelay,sizeof(tcp_nodelay));
+          }
 #ifdef CSEC
           /*
            * Try to establish secure connection.

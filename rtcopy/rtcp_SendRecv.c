@@ -1,5 +1,5 @@
 /*
- * $Id: rtcp_SendRecv.c,v 1.10 2009/03/26 07:34:21 waldron Exp $
+ * $Id: rtcp_SendRecv.c,v 1.11 2009/03/31 16:08:35 murrayc3 Exp $
  *
  * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
@@ -16,10 +16,11 @@
 extern char *geterr();
 #else /* _WIN32 */
 #include <sys/param.h>
-#include <sys/types.h>                  /* Standard data types          */
-#include <netdb.h>                      /* Network "data base"          */
+#include <sys/types.h>      /* Standard data types                */
+#include <netdb.h>          /* Network "data base"                */
 #include <sys/socket.h>
-#include <netinet/in.h>                 /* Internet data types          */
+#include <netinet/in.h>     /* Internet data types                */
+#include <netinet/tcp.h>    /* S. Murray 31/03/09 TCP definitions */
 #include <sys/time.h>
 #endif /* _WIN32 */
 #include <errno.h>
@@ -87,6 +88,21 @@ static int rtcp_Transfer(SOCKET *s,
     return(-1);
   }
 
+  int transferMsgTimeOut = RTCP_TRANSFER_MSG_TIMEOUT;
+
+  // Override the value of transferMsgTimeOut if there is a castor.conf entry
+  {
+    char *paramValue = NULL;
+
+    if((paramValue = getconfent("TAPE", "RTCP_TRANSFER_MSG_TIMEOUT", 0))) {
+      int tmpTransferMsgTimeOut = atoi(paramValue);
+
+      if(tmpTransferMsgTimeOut > 0) {
+        transferMsgTimeOut = tmpTransferMsgTimeOut;
+      }
+    }
+  }
+
   reqtype = -1;
   len = magic = 0;
   if ( hdr != NULL ) magic = hdr->magic;
@@ -100,7 +116,7 @@ static int rtcp_Transfer(SOCKET *s,
   buf = &common_buffer[RTCP_HDRBUFSIZ];
 
   if ( whereto == ReceiveFrom ) {
-    rc = netread_timeout(*s,hdrbuf,RTCP_HDRBUFSIZ,RTCP_NETTIMEOUT);
+    rc = netread_timeout(*s,hdrbuf,RTCP_HDRBUFSIZ,transferMsgTimeOut);
     switch (rc) {
     case -1:
       rtcp_log(LOG_ERR,"rtcp_Transfer() netread(%d,HDR): %s\n",*s,
@@ -143,7 +159,7 @@ static int rtcp_Transfer(SOCKET *s,
     }
   }
   if ( VALID_MSGLEN(len) ) {
-    rc = netread_timeout(*s,buf,len,RTCP_NETTIMEOUT);
+    rc = netread_timeout(*s,buf,len,transferMsgTimeOut);
     switch (rc) {
     case -1:
       rtcp_log(LOG_ERR,"rtcp_Transfer() netread(%d,REQ): %s\n",*s,
@@ -365,7 +381,7 @@ static int rtcp_Transfer(SOCKET *s,
     DO_MARSHALL(LONG,p,reqtype,whereto);
     DO_MARSHALL(LONG,p,len,whereto);
     rtcp_log(LOG_DEBUG,"rtcp_Transfer(): sending hdr magic: 0x%x reqtype: 0x%x length: %d\n",magic,reqtype,len); 
-    rc = netwrite_timeout(*s,hdrbuf,RTCP_HDRBUFSIZ,RTCP_NETTIMEOUT);
+    rc = netwrite_timeout(*s,hdrbuf,RTCP_HDRBUFSIZ,transferMsgTimeOut);
     switch (rc) {
     case -1:
       rtcp_log(LOG_ERR,"rtcp_Transfer() netwrite(%d,HDR): %s\n",*s,
@@ -378,7 +394,7 @@ static int rtcp_Transfer(SOCKET *s,
       return(-1);
     }
     if ( VALID_MSGLEN(len) ) {
-      rc = netwrite_timeout(*s,buf,len,RTCP_NETTIMEOUT);
+      rc = netwrite_timeout(*s,buf,len,transferMsgTimeOut);
       switch (rc) {
       case -1:
         rtcp_log(LOG_ERR,"rtcp_Transfer() netwrite(%d,REQ): %s\n",*s,
@@ -677,6 +693,11 @@ int rtcp_Connect(
                    (char *)&keepalive,
                    sizeof(int)
                    );
+   { /* S. Murray 31/03/09 */
+     int tcp_nodelay = 1;
+     setsockopt(*connect_socket, IPPROTO_TCP, TCP_NODELAY,
+       (char *)&tcp_nodelay,sizeof(tcp_nodelay));
+   }
 
 #ifdef CSEC
   if (whereto == RTCP_CONNECT_TO_CLIENT) { /* We are the server */

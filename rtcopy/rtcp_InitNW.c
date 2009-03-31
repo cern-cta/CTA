@@ -15,10 +15,11 @@
 extern char *geterr();
 WSADATA wsadata;
 #else /* _WIN32 */
-#include <sys/types.h>                  /* Standard data types          */
-#include <netdb.h>                      /* Network "data base"          */
-#include <sys/socket.h>                 /* Socket interface             */
-#include <netinet/in.h>                 /* Internet data types          */
+#include <sys/types.h>      /* Standard data types                */
+#include <netdb.h>          /* Network "data base"                */
+#include <sys/socket.h>     /* Socket interface                   */
+#include <netinet/in.h>     /* Internet data types                */
+#include <netinet/tcp.h>    /* S. Murray 31/03/09 TCP definitions */
 #endif /* _WIN32 */
 #include <errno.h>
 #include <Castor_limits.h>
@@ -145,6 +146,15 @@ int rtcp_InitNW(SOCKET **ListenSocket, int *port, rtcp_type_t type, char *servic
             (char *)&rcode,sizeof(rcode)) == SOCKET_ERROR ) {
             rtcp_log(LOG_ERR,"rtcp_InitNW() setsockopt(SO_REUSEADDR) not fatal: %s\n",
                 neterror());
+        }
+        { /* S. Murray 31/03/09 */
+          int tcp_nodelay = 1;
+          if ( setsockopt(**ListenSocket, IPPROTO_TCP, TCP_NODELAY,
+            (char *)&tcp_nodelay,sizeof(tcp_nodelay)) < 0 ) {
+            rtcp_log(LOG_ERR,
+              "rtcp_InitNW() setsockopt(TCP_NODELAY) not fatal:%s\n",
+              neterror());
+          }
         }
     }
     
