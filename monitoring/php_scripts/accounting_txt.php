@@ -10,13 +10,13 @@ if (!function_exists('ociplogon')) {
 include ("user.php");
 error_reporting(E_ALL ^ E_NOTICE);  
 //connection
+$service = "stagerdb";
 $conn = ocilogon($db_instances[$service]['username'],$db_instances[$service]['password'],$db_instances[$service]['server']);
 if(!$conn) {
 	$e = oci_error();
 	print htmlentities($e['message']);
 	exit;
 }
-$servuce = "stagerdb";
 $query1 = "select name,to_char(euid) usern,sum(nbbytes) bsize
            from (
              select a.euid,a.nbbytes,c.child svcclass
@@ -56,7 +56,7 @@ while (OCIFetch($parsed1)) {
         echo "$svcclass ";
 	echo "$uname ";
         echo "$userid ";
-	$size = round(($size / (1024*1024)),3);
+	$size = round(($size / (1048576)),3);
 	echo "$size";
 	echo "\n";
 };
