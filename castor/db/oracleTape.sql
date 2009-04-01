@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.726 $ $Date: 2009/03/30 17:52:41 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.727 $ $Date: 2009/04/01 08:13:02 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1275,6 +1275,80 @@ BEGIN
   FORALL i IN tapeIds.FIRST .. tapeIds.LAST
     UPDATE Tape SET status = 1 WHERE status = 8 AND id = tapeIds(i);
   COMMIT;
+END;
+/
+
+
+/* clean the db for repack, it is used as workaround because of repack abort limitation */
+ 
+create or replace PROCEDURE removeAllForRepack (inputVid IN VARCHAR2) AS
+ reqId NUMBER;
+ srId NUMBER;
+ cfIds "numList";
+ dcIds "numList";
+ tcIds "numList";
+ segIds "numList";
+ tapeIds "numList";
+BEGIN
+ -- look for the request. If not found, raise NO_DATA_FOUND error;
+ -- note that if the request is over (all in 9,11) or not started (0), nothing is done
+ SELECT id INTO reqId 
+   FROM StageRepackRequest R 
+  WHERE repackVid = inputVid
+    AND EXISTS 
+	 (SELECT 1 FROM SubRequest 
+	   WHERE request = R.id AND status IN (4, 12));  -- WAITTAPERECALL, REPACK
+ -- fail subrequests
+ UPDATE Subrequest SET status = 9
+  WHERE request = reqId AND status NOT IN (9, 11)
+  RETURNING castorFile, diskcopy BULK COLLECT INTO cfIds, dcIds;
+ SELECT id INTO srId 
+   FROM SubRequest 
+  WHERE request = reqId AND ROWNUM = 1;
+ archiveSubReq(srId, 9);
+
+ -- fail related diskcopies
+ FORALL i IN dcIds.FIRST .. dcids.LAST
+   UPDATE DiskCopy
+	  SET status = decode(status, 2, 4, 7) -- WAITTAPERECALL->FAILED, otherwise INVALID
+    WHERE id = dcIds(i);
+
+ -- delete tapecopy from id2type and get the ids
+ DELETE FROM id2type WHERE id in (SELECT id FROM TAPECOPY WHERE
+   castorfile IN (SELECT /*+ CARDINALITY(cfIdsTable 5) */ *
+                   FROM TABLE(cfIds) cfIdsTable))
+   RETURNING id BULK COLLECT INTO tcIds;
+
+ -- detach tapecopies from stream
+ FORALL i IN tcids.FIRST .. tcids.LAST
+           DELETE FROM stream2tapecopy WHERE child=tcIds(i);
+
+ -- delete tapecopies
+ FORALL i IN tcids.FIRST .. tcids.LAST
+           DELETE FROM tapecopy WHERE id = tcIds(i);
+
+ -- delete segments using the tapecopy link
+ DELETE FROM segment WHERE copy IN
+  (SELECT /*+ CARDINALITY(tcIdsTable 5) */ *
+     FROM TABLE(tcids) tcIdsTable)
+ RETURNING id, tape BULK COLLECT INTO segIds, tapeIds;
+
+ FORALL i IN segIds.FIRST .. segIds.LAST
+   DELETE FROM id2type WHERE id = segIds(i);
+
+ -- delete the orphan segments (this should not be necessary)
+ DELETE FROM segment WHERE tape in (SELECT id FROM tape WHERE
+vid=inputVid) returning id BULK COLLECT INTO segIds;
+ FORALL i IN segIds.FIRST .. segIds.LAST
+        DELETE FROM id2type WHERE id = segIds(i);
+
+-- update the tape as not used
+ UPDATE tape set status=0 where vid=inputVid and tpmode=0;
+-- update other tapes which could have been involved
+ FORALL i IN tapeIds.FIRST .. tapeIds.LAST
+    UPDATE tape set status=0 where id= tapeIds(i);
+-- commit the transation
+ COMMIT;
 END;
 /
 
