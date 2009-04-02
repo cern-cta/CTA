@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.42 $ $Release$ $Date: 2009/03/26 14:04:09 $ $Author: itglp $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.43 $ $Release$ $Date: 2009/04/02 16:33:56 $ $Author: riojac3 $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -226,7 +226,7 @@ void castor::rh::RHThread::run(void* param) {
 
   // If the request comes from a secure connection then set Client values in
   // the Request object.
-  if (secure) {
+  if (secure && fr != 0) {
     fr->setEuid(authSock->getClientEuid());
     fr->setEgid(authSock->getClientEgid());
     fr->setUserName(authSock->getClientMappedName());
