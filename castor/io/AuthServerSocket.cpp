@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AuthServerSocket.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2009/03/20 16:37:32 $ $Author: riojac3 $
+ * @(#)$RCSfile: AuthServerSocket.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2009/04/03 15:44:42 $ $Author: riojac3 $
  *
  * @author Benjamin Couturier
  *****************************************************************************/
@@ -73,7 +73,6 @@ castor::io::AuthServerSocket::AuthServerSocket(castor::io::ServerSocket* cs,
 //------------------------------------------------------------------------------
 castor::io::AuthServerSocket::~AuthServerSocket() throw () {
   getClearContext(&m_security_context);
-  ::close(m_socket);
 }
 
 
