@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cupvdaemon.man,v $ $Revision: 1.4 $ $Date: 2009/03/20 10:36:13 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: Cupvdaemon.man,v $ $Revision: 1.5 $ $Date: 2009/04/06 12:30:33 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 2003 by CERN/IT/ADC/CA
 .\" All rights reserved
 .\"
-.TH CUPVDAEMON 8 "$Date: 2009/03/20 10:36:13 $" CASTOR "Cupv Administrator Commands"
+.TH CUPVDAEMON 8 "$Date: 2009/04/06 12:30:33 $" CASTOR "Cupv Administrator Commands"
 .SH NAME
 Cupvdaemon \- start the user privilege validation daemon
 .SH SYNOPSIS
@@ -42,7 +42,7 @@ setenv CUPV_PORT 56013
 .RE
 .LP
 an entry in
-.B /etc/shift.conf
+.B /etc/castor/castor.conf
 like:
 .RS
 .HP
@@ -72,7 +72,7 @@ setenv CUPV_HOST castor5
 .RE
 .LP
 an entry in
-.B /etc/shift.conf
+.B /etc/castor/castor.conf
 for example:
 .RS
 .HP
@@ -101,7 +101,7 @@ instance identified by 'server'.
 Specifies a different path for the CUPV configuration file.
 .TP
 .BI -t " nbthreads"
-Specifies the number of threads. Default is 5.
+Specifies the number of threads. Default is 6.
 .SH FILES
 .TP 1.5i
 .B /etc/CUPVCONFIG
