@@ -1,3 +1,7 @@
+# Arguments for the vmgrdaemon
+#   -c <path>      configuration file
+#   -t <nbthreads
+#
 # Options to pass to the vmgrdaemon
 #VMGRDAEMON_OPTIONS=
 

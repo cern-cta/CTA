@@ -1,12 +1,17 @@
-.\" @(#)$RCSfile: vmgrdaemon.man,v $ $Revision: 1.8 $ $Date: 2009/01/09 14:30:08 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrdaemon.man,v $ $Revision: 1.9 $ $Date: 2009/04/06 12:37:20 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRDAEMON 8 "$Date: 2009/01/09 14:30:08 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRDAEMON 8 "$Date: 2009/04/06 12:37:20 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrdaemon \- start the volume manager
 .SH SYNOPSIS
 .B vmgrdaemon
+[
+.BI -c " config_file"
+] [
+.BI -t " nbthreads"
+] 
 .SH DESCRIPTION
 .LP
 The
@@ -38,7 +43,7 @@ setenv VMGR_PORT 5013
 .RE
 .LP
 an entry in
-.B /etc/shift.conf
+.B /etc/castor/castor.conf
 like:
 .RS
 .HP
@@ -68,7 +73,7 @@ setenv VMGR_HOST castor5
 .RE
 .LP
 an entry in
-.B /etc/shift.conf
+.B /etc/castor/castor.conf
 for example:
 .RS
 .HP
@@ -93,6 +98,7 @@ It contains a single line in the format:
 .HP
 username/password@server
 .RE
+.sp
 where 'username' and 'password' are the credentials to login to the database
 instance identified by 'server'.
 .LP
@@ -102,6 +108,13 @@ For each user command there is one message VMG92 giving information about
 the requestor (hostname, uid, gid) and one message VMG98 giving the command
 itself.
 The completion code of the command is also logged.
+.SH OPTIONS
+.TP
+.BI -c " config_file"
+Specifies a different path for the VMGR configuration file.
+.TP
+.BI -t " nbthreads"
+Specifies the number of threads. Default is 6.
 .SH FILES
 .TP 1.5i
 .B /etc/VMGRCONFIG

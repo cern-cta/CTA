@@ -1,5 +1,5 @@
 /*
- * $Id: vmgr_server.h,v 1.5 2008/01/09 12:32:19 waldron Exp $
+ * $Id: vmgr_server.h,v 1.6 2009/04/06 12:37:19 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 /*
- * @(#)$RCSfile: vmgr_server.h,v $ $Revision: 1.5 $ $Date: 2008/01/09 12:32:19 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: vmgr_server.h,v $ $Revision: 1.6 $ $Date: 2009/04/06 12:37:19 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
  
 #ifndef _VMGR_SERVER_H
@@ -49,6 +49,8 @@
 
 #define CHECKI	5	/* max interval to check for work to be done */
 #define VMGR_NBTHREADS	6
+#define VMGR_MAXNBTHREADS 100	/* maximum number of threads */
+
 #define RETURN(x) { \
 	vmgrlogit (func, "returns %d\n", (x)); \
 	if (thip->dbfd.tr_started) { \
