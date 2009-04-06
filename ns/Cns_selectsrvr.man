@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cns_selectsrvr.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:20 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Cns_selectsrvr.man,v $ $Revision: 1.3 $ $Date: 2009/04/06 12:34:49 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_SELECTSRVR 3 "$Date: 2006/01/26 15:36:20 $" CASTOR "Cns Library Functions"
+.TH CNS_SELECTSRVR 3 "$Date: 2009/04/06 12:34:49 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_selectsrvr \- select the CASTOR Name Server
 .SH SYNOPSIS
@@ -28,7 +28,7 @@ if the environment variable CNS_HOST is set, its value is used as server name
 else
 .LP
 if an entry for CNS HOST exists in the configuration file
-.BR /etc/shift.conf ,
+.BR /etc/castor/castor.conf ,
 the corresponding value is used else
 .LP
 if
@@ -74,7 +74,7 @@ and
 /castor/cern.ch/user/b/baud/test
 .LP
 3) The environment varaible is not set, but there is an entry in
-.B /etc/shift.conf
+.B /etc/castor/castor.conf
 like
 .RS
 CNS	HOST	castor2
@@ -92,7 +92,7 @@ and
 /castor/cern.ch/user/b/baud/test
 .LP
 4) The environment variable is not set, there is no entry in
-.BR /etc/shift.conf,
+.BR /etc/castor/castor.conf,
 NsHostPfx is defined as
 .B cns
 in
@@ -126,7 +126,7 @@ is NULL.
 the server name is too long.
 .SH FILES
 .TP 1.3i
-.B /etc/shift.conf
+.B /etc/castor/castor.conf
 CASTOR global configuration file
 .TP
 .B site.def

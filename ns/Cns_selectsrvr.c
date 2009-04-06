@@ -8,7 +8,7 @@
 /* The following rules apply:
  * if the path is in the form server:pathname, "server" is used else
  * if the environment variable CNS_HOST is set, its value is used else
- * if CNS HOST is defined in /etc/shift.conf, the value is used else
+ * if CNS HOST is defined in /etc/castor/castor.conf, the value is used else
  * the second component of path is the domain name and the third component
  * is prefixed by the value of NsHostPfx to give the host name or its alias
  */
