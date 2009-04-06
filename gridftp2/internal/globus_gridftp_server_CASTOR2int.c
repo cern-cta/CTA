@@ -193,29 +193,32 @@ globus_l_gfs_CASTOR2int_stat(
 {
     globus_gfs_stat_t *                 stat_array;
     int                                 stat_count;
-    globus_l_gfs_CASTOR2int_handle_t *     CASTOR2int_handle;
+    globus_l_gfs_CASTOR2int_handle_t *  CASTOR2int_handle;
     
     char *                              func="globus_l_gfs_CASTOR2int_stat";
     struct stat64                       statbuf;
     int                                 status=0;
     globus_result_t                     result;
     char *                              pathname;
-    char *				uuid_path;
+    char *                              uuid_path;
     
     GlobusGFSName(globus_l_gfs_CASTOR2int_stat);
 
     CASTOR2int_handle = (globus_l_gfs_CASTOR2int_handle_t *) user_arg;
     
     if(CASTOR2int_handle->use_uuid) { /* we will use fullDestPath instead of client "path", and "path" must be in uuid form */
-       uuid_path=stat_info->pathname;
-       if( *uuid_path=='/') {
-	  uuid_path++; /* path like  "/uuid" */
-	  if(strcmp(uuid_path,CASTOR2int_handle->uuid)==0) pathname=strdup(CASTOR2int_handle->fullDestPath);
-	  else pathname=strdup(func); /* we want that stat64 will fail */
+       uuid_path = stat_info->pathname;
+       while(strchr(uuid_path, '/') != NULL) {
+         /* strip any preceding path to isolate only the uuid part; see also CASTOR2int_handle_open */
+         uuid_path = strchr(uuid_path, '/') + 1;
        }
-       else pathname=strdup(func);	  
-    } 
-    else pathname=strdup(func);
+       if(strcmp(uuid_path, CASTOR2int_handle->uuid) == 0)
+         pathname = strdup(CASTOR2int_handle->fullDestPath);
+       else
+         pathname = strdup(func); /* we want that stat64 fails */
+    }
+    else
+      pathname = strdup(func);
         
     globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: pathname: %s\n",func,pathname);
     
@@ -303,13 +306,14 @@ int CASTOR2int_handle_open(char *path, int flags, int mode, globus_l_gfs_CASTOR2
    char *	host;
    int   	rc;
    char *	func="CASTOR2int_handle_open";
-   char *       uuid_path;
+   char * uuid_path;
    
    host=NULL;
    if(CASTOR2int_handle->use_uuid) { /* we will use fullDestPath instead of client "path", and "path" must be in uuid form */
-     uuid_path=path;
+     uuid_path = path;
      while(strchr(uuid_path, '/') != NULL) {
-       uuid_path = strchr(uuid_path, '/') + 1;   /* strip any preceding path to isolate only the uuid part */
+       /* strip any preceding path to isolate only the uuid part; see also globus_l_gfs_CASTOR2int_stat */
+       uuid_path = strchr(uuid_path, '/') + 1;
      }
      if(strcmp(uuid_path,CASTOR2int_handle->uuid) == 0) {
        /* if clients uuid is the same as internal uuid we will access fullDestPath file then */
