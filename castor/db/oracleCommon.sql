@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.694 $ $Date: 2009/02/10 18:36:15 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.695 $ $Date: 2009/04/06 14:29:16 $ $Author: itglp $
  *
  * This file contains some common PL/SQL utilities for the stager database.
  *
@@ -8,7 +8,7 @@
  *******************************************************************/
 
 
-/* get current time as a time_t. Not that easy in ORACLE */
+/* Get current time as a time_t. Not that easy in ORACLE */
 CREATE OR REPLACE FUNCTION getTime RETURN NUMBER IS
   epoch            TIMESTAMP WITH TIME ZONE;
   now              TIMESTAMP WITH TIME ZONE;
@@ -139,7 +139,7 @@ BEGIN
   LOOP
     buf := ret;
     -- a path component is by definition anything between two slashes
-    ret := REGEXP_REPLACE(buf, '/[^/]+/../', '/');
+    ret := REGEXP_REPLACE(buf, '/[^/]+/\.\./', '/');
     EXIT WHEN ret = buf;
   END LOOP;
   RETURN ret;
