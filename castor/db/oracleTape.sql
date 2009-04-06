@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.727 $ $Date: 2009/04/01 08:13:02 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.728 $ $Date: 2009/04/06 16:39:50 $ $Author: itglp $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -215,12 +215,7 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Here we found a tapeCopy and process it
-
-  -- detach the tapecopy from the stream now that it is SELECTED;
-  DELETE FROM Stream2TapeCopy
-   WHERE child = tapeCopyId;
-
+  -- Here we found a tapeCopy and we process it
   -- update status of selected tapecopy and stream
   UPDATE TapeCopy SET status = 3 -- SELECTED
    WHERE id = tapeCopyId;
@@ -237,6 +232,9 @@ BEGIN
        SET status = 3 -- RUNNING
      WHERE id = streamId AND status IN (2,3);
   END IF;
+  -- detach the tapecopy from the stream now that it is SELECTED;
+  DELETE FROM Stream2TapeCopy
+   WHERE child = tapeCopyId;
 
   -- Update Filesystem state
   updateFSMigratorOpened(diskServerId, fileSystemId, 0);
@@ -399,12 +397,7 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Here we found a tapeCopy and process it
-
-  -- detach the tapecopy from the stream now that it is SELECTED;
-  DELETE FROM Stream2TapeCopy
-   WHERE child = tapeCopyId;
-
+  -- Here we found a tapeCopy and we process it
   -- update status of selected tapecopy and stream
   UPDATE TapeCopy SET status = 3 -- SELECTED
    WHERE id = tapeCopyId;
@@ -421,6 +414,9 @@ BEGIN
        SET status = 3 -- RUNNING
      WHERE id = streamId AND status IN (2,3);
   END IF;
+  -- detach the tapecopy from the stream now that it is SELECTED;
+  DELETE FROM Stream2TapeCopy
+   WHERE child = tapeCopyId;
 
   -- Update Filesystem state
   updateFSMigratorOpened(fsDiskServer, fileSystemId, 0);
@@ -498,12 +494,7 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Here we found a tapeCopy and process it
-
-  -- detach the tapecopy from the stream now that it is SELECTED;
-  DELETE FROM Stream2TapeCopy
-   WHERE child = tapeCopyId;
-
+  -- Here we found a tapeCopy and we process it
   -- update status of selected tapecopy and stream
   UPDATE TapeCopy SET status = 3 -- SELECTED
    WHERE id = tapeCopyId;
@@ -513,6 +504,9 @@ BEGIN
          lastButOneFileSystemUsed = lastFileSystemUsed,
          lastFileSystemChange = getTime()
    WHERE id = streamId AND status IN (2,3);
+  -- detach the tapecopy from the stream now that it is SELECTED;
+  DELETE FROM Stream2TapeCopy
+   WHERE child = tapeCopyId;
 
   -- Update Filesystem state
   updateFSMigratorOpened(diskServerId, fileSystemId, 0);
