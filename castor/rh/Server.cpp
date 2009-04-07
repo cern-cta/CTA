@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.68 $ $Release$ $Date: 2009/03/26 14:02:30 $ $Author: itglp $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.69 $ $Release$ $Date: 2009/04/07 17:43:44 $ $Author: riojac3 $
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
@@ -38,7 +38,7 @@
 #include "common.h"   // for getconfent
 
 #include <iostream>
-
+#include <dlfcn.h>
 
 //------------------------------------------------------------------------------
 // String constants
@@ -219,6 +219,12 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
       }
     } else {
       m_port = iport;
+    }
+    //Temporary workaround till we come up with something more clever to fix bug related with the KRB5 and GSI mixed libraries
+    void *handle = dlopen ("libCsec_plugin_KRB5.so", RTLD_LAZY);
+    if (!handle) {
+        fprintf (stderr, "%s\n", dlerror());
+        exit(0);
     }
     addThreadPool
       (new castor::server::AuthListenerThreadPool
