@@ -326,9 +326,20 @@ namespace castor{
         }
         catch(castor::exception::Exception e){
           if ((e.code() == SEINTERNAL) || (e.code() != EACCES)) {
-            logToDlf(DLF_LVL_ERROR, STAGER_QRYSVC_EXCEPT);
+            castor::dlf::Param params[] = {
+              castor::dlf::Param(subrequestUuid),
+              castor::dlf::Param("Type",
+                ((unsigned)fileRequest->type() < castor::ObjectsIdsNb ?
+                castor::ObjectsIdStrings[fileRequest->type()] : "Unknown")),
+              castor::dlf::Param("Filename", subrequest->fileName()),
+              castor::dlf::Param("Username", username),
+              castor::dlf::Param("Groupname", groupname),
+              castor::dlf::Param("Function", "RequestHelper.checkFilePermission"),
+              castor::dlf::Param("Error", sstrerror(e.code()))
+            };
+            castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 7, params, &cnsFileId);
           } else {
-            logToDlf(DLF_LVL_USER_ERROR, STAGER_USER_PERMISSION);
+            logToDlf(DLF_LVL_USER_ERROR, STAGER_USER_PERMISSION, &cnsFileId);
           }
           e.getMessage() << sstrerror(e.code());
           throw e;
