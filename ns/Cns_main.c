@@ -230,6 +230,11 @@ int Cns_main(main_args)
     } else {
       sin.sin_port = htons ((unsigned short)CNS_SEC_PORT);
     }
+    //Temporary workaround till we come up with something more clever to fix bug related with the KRB5 and GSI mixed libraries
+    void *handle = dlopen ("libCsec_plugin_KRB5.so", RTLD_LAZY);
+    if (!handle) {
+        fprintf (stderr, "%s\n", dlerror());
+    }
   } else {
     if ((p = getenv (CNS_PORT_ENV)) || ((p = getconfent (CNS_SCE, "PORT", 0)))) {
       sin.sin_port = htons ((unsigned short)atoi (p));
