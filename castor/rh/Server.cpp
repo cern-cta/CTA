@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.70 $ $Release$ $Date: 2009/04/08 07:05:42 $ $Author: riojac3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.71 $ $Release$ $Date: 2009/04/08 12:45:30 $ $Author: waldron $
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
@@ -67,6 +67,7 @@ int main(int argc, char *argv[]) {
 
     // start the server
     server.start();
+    return 0;
 
   } catch (castor::exception::Exception e) {
     std::cerr << "Caught castor exception : "
@@ -76,7 +77,7 @@ int main(int argc, char *argv[]) {
     std::cerr << "Caught general exception!" << std::endl;
   }
 
-  return 0;
+  return 1;
 }
 
 
@@ -220,10 +221,11 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
     } else {
       m_port = iport;
     }
-    //Temporary workaround till we come up with something more clever to fix bug related with the KRB5 and GSI mixed libraries
+    // Temporary workaround till we come up with something more clever to fix 
+    // bug related with the KRB5 and GSI mixed libraries.
     void *handle = dlopen ("libCsec_plugin_KRB5.so", RTLD_LAZY);
     if (!handle) {
-        fprintf (stderr, "%s\n", dlerror());
+      fprintf (stderr, "%s\n", dlerror());
     }
     addThreadPool
       (new castor::server::AuthListenerThreadPool
