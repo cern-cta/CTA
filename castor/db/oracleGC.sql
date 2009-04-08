@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.688 $ $Date: 2009/03/26 14:20:05 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.689 $ $Date: 2009/04/08 12:44:25 $ $Author: waldron $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -253,12 +253,9 @@ BEGIN
     freed := 0;
     SELECT totalCount + count(*), nvl(sum(DiskCopy.diskCopySize), 0)
       INTO totalCount, freed
-      FROM DiskCopy, FileSystem, DiskServer
-     WHERE DiskCopy.fileSystem = filesystem.id
-       AND decode(DiskCopy.status, 9, DiskCopy.status, NULL) = 9 -- BEINGDELETED
-       AND FileSystem.diskServer = DiskServer.id
-       AND FileSystem.id = fs.id
-       AND DiskServer.name = diskservername;
+      FROM DiskCopy
+     WHERE DiskCopy.fileSystem = fs.id
+       AND decode(DiskCopy.status, 9, DiskCopy.status, NULL) = 9; -- BEINGDELETED
 
     -- Process diskcopies that are in an INVALID state.
     UPDATE DiskCopy
