@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.69 $ $Release$ $Date: 2009/04/07 17:43:44 $ $Author: riojac3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.70 $ $Release$ $Date: 2009/04/08 07:05:42 $ $Author: riojac3 $
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
@@ -224,7 +224,6 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
     void *handle = dlopen ("libCsec_plugin_KRB5.so", RTLD_LAZY);
     if (!handle) {
         fprintf (stderr, "%s\n", dlerror());
-        exit(0);
     }
     addThreadPool
       (new castor::server::AuthListenerThreadPool
