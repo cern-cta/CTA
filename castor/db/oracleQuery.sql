@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.654 $ $Date: 2009/03/09 15:59:59 $ $Author: itglp $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.655 $ $Date: 2009/04/09 06:34:18 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -193,7 +193,9 @@ CREATE OR REPLACE PROCEDURE reqIdStageQuery
   result OUT castor.QueryLine_Cur) AS
   cfs "numList";
 BEGIN
-  SELECT sr.castorfile BULK COLLECT INTO cfs
+  SELECT /*+ NO_USE_HASH(REQLIST SR) USE_NL(REQLIST SR) 
+             INDEX(SR I_SUBREQUEST_REQUEST) */
+         sr.castorfile BULK COLLECT INTO cfs
     FROM SubRequest sr,
          (SELECT id
             FROM StagePreparetogetRequest
