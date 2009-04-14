@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.728 $ $Date: 2009/04/06 16:39:50 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.729 $ $Date: 2009/04/14 14:06:05 $ $Author: waldron $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -886,7 +886,6 @@ BEGIN
   SELECT id INTO svcId FROM SvcClass WHERE name = svcName;
   -- clean up tapecopies , WAITPOLICY reset into TOBEMIGRATED
   UPDATE /*+ BEGIN_OUTLINE_DATA
-             IGNORE_OPTIM_EMBEDDED_HINTS
              ALL_ROWS
              OUTLINE_LEAF(@"SEL$3FF8579E")
              UNNEST(@"SEL$1")
@@ -929,7 +928,6 @@ BEGIN
    WHERE SvcClass.name = svcClassName;
 
   UPDATE /*+ BEGIN_OUTLINE_DATA
-             IGNORE_OPTIM_EMBEDDED_HINTS
              ALL_ROWS
              OUTLINE_LEAF(@"SEL$3FF8579E")
              UNNEST(@"SEL$1")
