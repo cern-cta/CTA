@@ -2,13 +2,8 @@
 ## Makefile.am for xCastor2 FS plugin
 ##
 ##
-<<<<<<< Makefile.am
-## Version info: $Id: Makefile.am,v 1.14 2009/04/14 14:55:12 apeters Exp $
+## Version info: $Id: Makefile.am,v 1.15 2009/04/14 14:59:19 apeters Exp $
 ## Checked in by $Author: apeters $
-=======
-## Version info: $Id: Makefile.am,v 1.14 2009/04/14 14:55:12 apeters Exp $
-## Checked in by $Author: apeters $
->>>>>>> 1.13
 #######################################################################
 
 lib_LTLIBRARIES = libXrdxCastor2Fs.la libXrdxCastor2ServerAcc.la libXrdxCastor2Ofs.la libXrdxCastor2Xmi.la
