@@ -831,7 +831,7 @@ END;
 /
 
 
-/* */
+/* PL/SQL method implementing statsReqs */
 CREATE or replace PROCEDURE statsReqs(maxtimestamp IN DATE)
 AS
 BEGIN
