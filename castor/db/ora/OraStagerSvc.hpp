@@ -161,40 +161,40 @@ namespace castor {
          * Create an internal request to trigger a diskcopy replication.
          * @param subreq the SubRequest which has to wait for the replication
          * @param srcDiskCopy the source diskCopy
-	 * @param srcSc the source service class
+         * @param srcSc the source service class
          * @param destSc the destination service class
-	 * @param internal flag to indicate whether this is an internal
-	 * replication request.
+         * @param internal flag to indicate whether this is an internal
+         * replication request.
          * @exception Exception in case of system error
          */
         virtual void createDiskCopyReplicaRequest
         (const castor::stager::SubRequest* subreq,
          const castor::stager::DiskCopyForRecall* srcDiskCopy,
-	 const castor::stager::SvcClass* srcSc,
+         const castor::stager::SvcClass* srcSc,
          const castor::stager::SvcClass* destSc,
-	 const bool internal = false)
+         const bool internal = false)
           throw (castor::exception::Exception);
 
-	/**
-	 * Retrieves a CastorFile from the database based on its fileId
-	 * and name server. Creates a new one if none if found.
-	 * Caller is in charge of the deletion of the allocated object
-	 * @param fileId the fileId of the CastorFile
-	 * @param nsHost the name server to use
-	 * @param svcClass the service class of the castor file.
-	 * Used only in case of creation of a new castor file.
-	 * @param fileClass the file class of the castor file.
-	 * Used only in case of creation of a new castor file.
-	 * @param fileSize the size fo the castor file.
-	 * Used only in case of creation of a new castor file.
-	 * @param fileName the name of the castor file at the time
-	 * of this call. This will go to the DB as lastKnownFileName.
+        /**
+         * Retrieves a CastorFile from the database based on its fileId
+         * and name server. Creates a new one if none if found.
+         * Caller is in charge of the deletion of the allocated object
+         * @param fileId the fileId of the CastorFile
+         * @param nsHost the name server to use
+         * @param svcClass the service class of the castor file.
+         * Used only in case of creation of a new castor file.
+         * @param fileClass the file class of the castor file.
+         * Used only in case of creation of a new castor file.
+         * @param fileSize the size fo the castor file.
+         * Used only in case of creation of a new castor file.
+         * @param fileName the name of the castor file at the time
+         * of this call. This will go to the DB as lastKnownFileName.
          * @param lastUpdateTime the time of the last modification of
          * this file at the time of this call. This will be used in
          * case a new CastorFile will be created
-	 * @return the CastorFile, or 0 if none found
-	 * @exception Exception in case of error
-	 */
+         * @return the CastorFile, or 0 if none found
+         * @exception Exception in case of error
+         */
         virtual castor::stager::CastorFile* selectCastorFile
         (const u_signed64 fileId, const std::string nsHost,
          u_signed64 svcClass, u_signed64 fileClass,
@@ -202,21 +202,21 @@ namespace castor {
          time_t lastUpdateTime)
           throw (castor::exception::Exception);
 
-	/**
-	 * Retrieves the location of the best diskcopy to read from
-	 * given by the castorfile and service class where the file
-	 * is requested.
-	 * @param castorFile the file to lookup
-	 * @param svcClass the service class where the file is requested
-	 * @return The information about the diskcopy or 0 if none is
-	 * found. Note: not all attributes of the DiskCopyInfo class are
-	 * provided.
-	 * @exception Exception in case of error
-	 */
-	virtual castor::stager::DiskCopyInfo* getBestDiskCopyToRead
-	(const castor::stager::CastorFile *castorFile,
-	 const castor::stager::SvcClass *svcClass)
-	  throw (castor::exception::Exception);
+        /**
+         * Retrieves the location of the best diskcopy to read from
+         * given by the castorfile and service class where the file
+         * is requested.
+         * @param castorFile the file to lookup
+         * @param svcClass the service class where the file is requested
+         * @return The information about the diskcopy or 0 if none is
+         * found. Note: not all attributes of the DiskCopyInfo class are
+         * provided.
+         * @exception Exception in case of error
+         */
+        virtual castor::stager::DiskCopyInfo* getBestDiskCopyToRead
+        (const castor::stager::CastorFile *castorFile,
+         const castor::stager::SvcClass *svcClass)
+          throw (castor::exception::Exception);
 
         /**
          * Updates a SubRequest status in the DB, including
@@ -346,28 +346,28 @@ namespace castor {
          const u_signed64 svcClassId, const float weight)
           throw (castor::exception::Exception);
 
-	/**
-	 * Creates a candidate for a recall. This includes TapeCopy with
-	 * its Segment(s), a DiskCopy and a SubRequest in WAITTAPERECALL.
-	 * @param subreq the subreq of the file to recall
-	 * @param svcClass svc class for recall policy
-	 * @param tape a pointer to a location of where to store the tape
-	 * information associated with the recall. Note: if the file has
-	 * multiple segments spread across multiple tapes only the last
-	 * Tape processed will be returned. We could of course return a
-	 * vector of Tape objects but this is overkill as multi segment,
-	 * multi tape recalls are extremely rare and can only happen when
-	 * recalling a file which was written under Castor1. It is the
-	 * responsibility of the calling function to delete the Tape object
-	 * @return 0: error (e.g. no valid segments)
-	 *         1: success
-	 * @exception Exception in case of error
-	 */
-	virtual int createRecallCandidate
-	(castor::stager::SubRequest* subreq,
-	 castor::stager::SvcClass* svcClass,
-	 castor::stager::Tape* &tape)
-	  throw (castor::exception::Exception);
+        /**
+         * Creates a candidate for a recall. This includes TapeCopy with
+         * its Segment(s), a DiskCopy and a SubRequest in WAITTAPERECALL.
+         * @param subreq the subreq of the file to recall
+         * @param svcClass svc class for recall policy
+         * @param tape a pointer to a location of where to store the tape
+         * information associated with the recall. Note: if the file has
+         * multiple segments spread across multiple tapes only the last
+         * Tape processed will be returned. We could of course return a
+         * vector of Tape objects but this is overkill as multi segment,
+         * multi tape recalls are extremely rare and can only happen when
+         * recalling a file which was written under Castor1. It is the
+         * responsibility of the calling function to delete the Tape object
+         * @return 0: error (e.g. no valid segments)
+         *         1: success
+         * @exception Exception in case of error
+         */
+        virtual int createRecallCandidate
+        (castor::stager::SubRequest* subreq,
+         castor::stager::SvcClass* svcClass,
+         castor::stager::Tape* &tape)
+          throw (castor::exception::Exception);
 
         /**
          * Retrieves a DiskPool from the database based on name.
@@ -393,38 +393,49 @@ namespace castor {
         (const std::string name)
           throw (castor::exception::Exception);
 
-	/**
+        /**
          * Select priority for recall
-	 * @param euid the userid of the user
+         * @param euid the userid of the user
          * @param egid the groupid of the user
          * @return priority value
-	 * @exception in case of an error
+         * @exception in case of an error
          */
-	std::vector<castor::stager::PriorityMap*>
-	selectPriority(int euid, int egid, int priority)
-	  throw (castor::exception::Exception);
+        std::vector<castor::stager::PriorityMap*>
+        selectPriority(int euid, int egid, int priority)
+          throw (castor::exception::Exception);
 
-	/**
+        /**
          * Enter priority for recall
-	 * @param euid the userid of the user
+         * @param euid the userid of the user
          * @param egid the groupid of the user
          * @param priority  rating
-	 * @exception in case of an error
+         * @exception in case of an error
          */
         void enterPriority(u_signed64 euid,
-			   u_signed64 egid,
-			   u_signed64 priority)
-	  throw (castor::exception::Exception);
+                           u_signed64 egid,
+                           u_signed64 priority)
+          throw (castor::exception::Exception);
 
-	/**
+        /**
          * Delete priority for recall
-	 * @param euid the userid of the user
+         * @param euid the userid of the user
          * @param egid the groupid of the user
-	 * @exception in case of an error
+         * @exception in case of an error
          */
         void deletePriority(int euid, int egid)
-	  throw (castor::exception::Exception);
-
+          throw (castor::exception::Exception);
+          
+        /**
+         * Gets a configuration option from the CastorConfig table
+         * @param class a string containing the option class (e.g. stager)
+         * @param key a string containing the option key to be accessed
+         * @return the option value
+         * @exception in case of an error
+         */
+        virtual std::string getConfigOption(std::string confClass,
+                                    std::string confKey)
+          throw (castor::exception::Exception);
+        
       private:
 
         /**
@@ -432,19 +443,19 @@ namespace castor {
          * Stager catalogue. The segment information is fetched from the
          * Nameserver and vmgr with the given uid, gid.
          * @castorFile the Castorfile, from wich the fileid is taken for
-	 * the segments
+         * the segments
          * @param euid the userid from the user
          * @param guid the groupid from the user
          * @param svcClass the id of the used svcclass
-	 * @param tape a pointer to a location of where to store the tape
-	 * information associated with the recall. Note: if the file has
-	 * multiple segments spread across multiple tapes only the last
-	 * Tape processed will be returned. We could of course return a
-	 * vector of Tape objects but this is overkill as multi segment,
-	 * multi tape recalls are extremely rare and can only happen when
-	 * recalling a file which was written under Castor1. It is the
-	 * responsibility of the calling function to delete the Tape object
-	 * if necessary.
+         * @param tape a pointer to a location of where to store the tape
+         * information associated with the recall. Note: if the file has
+         * multiple segments spread across multiple tapes only the last
+         * Tape processed will be returned. We could of course return a
+         * vector of Tape objects but this is overkill as multi segment,
+         * multi tape recalls are extremely rare and can only happen when
+         * recalling a file which was written under Castor1. It is the
+         * responsibility of the calling function to delete the Tape object
+         * if necessary.
          * @exception Exception in case of error
          */
         int createTapeCopySegmentsForRecall
@@ -452,7 +463,7 @@ namespace castor {
          unsigned long euid,
          unsigned long egid,
          castor::stager::SvcClass* svcClass,
-	 castor::stager::Tape* &tape)
+         castor::stager::Tape* &tape)
           throw (castor::exception::Exception);
 
         /// SQL statement for function subRequestToDo
@@ -569,23 +580,29 @@ namespace castor {
         /// SQL statement object for function selectTapePool
         oracle::occi::Statement *m_selectTapePoolStatement;
 
-	/// SQL statement to selectTapePriority
+        /// SQL statement to selectTapePriority
         static const std::string s_selectPriorityStatementString;
 
         /// SQL statement object for function selectPriority
         oracle::occi::Statement *m_selectPriorityStatement;
 
-	/// SQL statement to enterTapePriority
+        /// SQL statement to enterTapePriority
         static const std::string s_enterPriorityStatementString;
 
         /// SQL statement object for function enterPriority
         oracle::occi::Statement *m_enterPriorityStatement;
 
-	/// SQL statement to deleteTapePriority
+        /// SQL statement to deleteTapePriority
         static const std::string s_deletePriorityStatementString;
 
         /// SQL statement object for function deletePriority
         oracle::occi::Statement *m_deletePriorityStatement;
+
+        /// SQL statement for function getConfigOption
+        static const std::string s_getConfigOptionStatementString;
+
+        /// SQL statement object for function getConfigOption
+        oracle::occi::Statement *m_getConfigOptionStatement;
 
       }; // end of class OraStagerSvc
 

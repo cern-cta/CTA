@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.268 $ $Release$ $Date: 2009/03/26 11:04:32 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.269 $ $Release$ $Date: 2009/04/14 11:33:45 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -181,6 +181,10 @@ const std::string castor::db::ora::OraStagerSvc::s_enterPriorityStatementString 
 const std::string castor::db::ora::OraStagerSvc::s_deletePriorityStatementString =
   "BEGIN deletePriority(:1, :2); END;";
 
+/// SQL statement for getConfigOption
+const std::string castor::db::ora::OraStagerSvc::s_getConfigOptionStatementString =
+  "SELECT value FROM CastorConfig WHERE class = :1 AND key = :2";
+
 //------------------------------------------------------------------------------
 // OraStagerSvc
 //------------------------------------------------------------------------------
@@ -206,7 +210,8 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_selectTapePoolStatement(0),
   m_selectPriorityStatement(0),
   m_enterPriorityStatement(0),
-  m_deletePriorityStatement(0) {
+  m_deletePriorityStatement(0),
+  m_getConfigOptionStatement(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -259,6 +264,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     if (m_selectPriorityStatement) deleteStatement(m_selectPriorityStatement);
     if (m_enterPriorityStatement) deleteStatement(m_enterPriorityStatement);
     if (m_deletePriorityStatement) deleteStatement(m_deletePriorityStatement);
+    if (m_getConfigOptionStatement) deleteStatement(m_getConfigOptionStatement);
   } catch (oracle::occi::SQLException e) {};
 
   // Now reset all pointers to 0
@@ -283,6 +289,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_selectPriorityStatement = 0;
   m_enterPriorityStatement = 0;
   m_deletePriorityStatement = 0;
+  m_getConfigOptionStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -1611,6 +1618,39 @@ void  castor::db::ora::OraStagerSvc::deletePriority(int euid, int egid)
     ex.getMessage()
       << "Error caught in deletePriority(): uid ("
       << euid << ")" << " gid (" << egid << ")"
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getConfigOption
+//------------------------------------------------------------------------------
+std::string castor::db::ora::OraStagerSvc::getConfigOption(std::string confClass,
+                                                           std::string confKey)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_getConfigOptionStatement) {
+      m_getConfigOptionStatement =
+        createStatement(s_getConfigOptionStatementString);
+    }
+    // Execute the statement
+    m_getConfigOptionStatement->setString(1, confClass);
+    m_getConfigOptionStatement->setString(2, confKey);
+    std::string res;
+    oracle::occi::ResultSet *rs = m_getConfigOptionStatement->executeQuery();
+    if (oracle::occi::ResultSet::DATA_AVAILABLE == rs->next()) {
+      res = rs->getString(1);
+    }
+    m_getConfigOptionStatement->closeResultSet(rs);
+    return res;
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in getConfigOption(): confClass = "
+      << confClass << ", confKey = " << confKey
       << std::endl << e.what();
     throw ex;
   }

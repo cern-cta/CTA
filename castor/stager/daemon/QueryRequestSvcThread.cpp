@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.96 $ $Release$ $Date: 2009/03/26 14:07:53 $ $Author: itglp $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.97 $ $Release$ $Date: 2009/04/14 11:33:46 $ $Author: itglp $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -64,6 +64,7 @@
 #include "castor/query/IQuerySvc.hpp"
 #include "castor/stager/daemon/QueryRequestSvcThread.hpp"
 #include "castor/stager/daemon/DlfMessages.hpp"
+#include "castor/stager/daemon/NsOverride.hpp"
 #include "castor/bwlist/ChangePrivilege.hpp"
 #include "castor/bwlist/ListPrivileges.hpp"
 #include "castor/bwlist/ListPrivilegesResponse.hpp"
@@ -250,8 +251,6 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileId
  Cuuid_t uuid)
   throw (castor::exception::Exception) {
   // Processing File Query by fileid
-  std::ostringstream sst;
-  sst << fid;
   castor::dlf::Param params[] =
     {castor::dlf::Param("FileId", fid),
      castor::dlf::Param("NsHost", nshost)};
@@ -270,29 +269,19 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileId
   }
   bool foundDiskCopy = false;
   // Preparing the response
+  std::ostringstream sst;
+  castor::stager::DiskCopyInfo* diskcopy = *(result->begin());
+  sst << fid << "@" << diskcopy->nsHost();
   castor::rh::FileQryResponse res;
   res.setReqAssociated(reqId);
-  sst << "@" << nshost;
   res.setFileName(sst.str());
   res.setFileId(fid);
-  // Iterates over the list of disk copies, and computes status
-  for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit
-        = result->begin();
-      dcit != result->end();
-      ++dcit) {
-    setFileResponseStatus(&res, *dcit, foundDiskCopy);
-  }
+  setFileResponseStatus(&res, diskcopy, foundDiskCopy);
   // Sending the response
   castor::replier::RequestReplier::getInstance()->
     sendResponse(client, &res);
   // Cleanup
-  // Cleanup
-  for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit
-        = result->begin();
-      dcit != result->end();
-      ++dcit) {
-    delete *dcit;
-  }
+  delete diskcopy;
   delete result;
 }
 
@@ -449,7 +438,15 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
          (ptype == REQUESTQUERYTYPE_FILENAME && (0 != pval.compare(0, 7, "regexp:")))) {
         // Get PATH for queries by fileId
         if (ptype == REQUESTQUERYTYPE_FILEID) {
+          
           char cfn[CA_MAXPATHLEN+1];     // XXX unchecked string length in Cns_getpath() call
+          std::string nsHostFromConf = NsOverride::getInstance()->getCnsHost();
+          if (nsHostFromConf.length() > 0 && nsHostFromConf != nshost) {
+            castor::exception::Exception e(EINVAL);
+            e.getMessage() << "Cannot query NameServer '" << nshost 
+                           << "', stager configured to only query '" << nsHostFromConf << "'";
+            throw e;
+          }
           if (Cns_getpath((char*)nshost.c_str(), fid, cfn) < 0) {
             castor::exception::Exception e(serrno);
             e.getMessage() << "Fileid " << fid;

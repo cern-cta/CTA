@@ -2,34 +2,6 @@
 /* helper class for the c methods and structures related with the cns_api */
 /*************************************************************************/
 
-#include "castor/stager/daemon/CnsHelper.hpp"
-#include "castor/stager/SubRequest.hpp"
-#include "castor/stager/FileClass.hpp"
-
-
-#include "stager_uuid.h"
-#include "stager_constants.h"
-
-#include "Cns_api.h"
-#include "Cns_struct.h"
-#include "Cglobals.h"
-
-
-#include "Cpwd.h"
-#include "Cgrp.h"
-#include "u64subr.h"
-#include "osdep.h"
-
-#include "dlf_api.h"
-#include "castor/dlf/Dlf.hpp"
-#include "castor/dlf/Param.hpp"
-#include "castor/stager/daemon/DlfMessages.hpp"
-
-#include "castor/exception/Exception.hpp"
-
-#include "castor/Constants.hpp"
-
-
 #include "serrno.h"
 #include <errno.h>
 
@@ -40,6 +12,26 @@
 #include <fcntl.h>
 
 
+#include "stager_uuid.h"
+#include "stager_constants.h"
+#include "Cns_api.h"
+#include "Cns_struct.h"
+#include "Cglobals.h"
+#include "Cpwd.h"
+#include "Cgrp.h"
+#include "u64subr.h"
+#include "osdep.h"
+#include "dlf_api.h"
+#include "castor/Constants.hpp"
+#include "castor/dlf/Dlf.hpp"
+#include "castor/dlf/Param.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/stager/SubRequest.hpp"
+#include "castor/stager/FileClass.hpp"
+
+#include "castor/stager/daemon/DlfMessages.hpp"
+#include "castor/stager/daemon/NsOverride.hpp"
+#include "castor/stager/daemon/CnsHelper.hpp"
 
 
 
@@ -256,6 +248,14 @@ namespace castor{
             }
           }
         }
+        // before returning, replace for logging purposes the CNS host
+        // in case it has been overridden 
+        std::string cnsHost = NsOverride::getInstance()->getTargetCnsHost();
+        clog() << SYSTEM << cnsHost;
+        if(cnsHost.length() > 0) {
+          strncpy(cnsFileid.server, cnsHost.c_str(), CA_MAXHOSTNAMELEN+1);
+        }
+        
         return newFile;
       }
       

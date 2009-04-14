@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.100 $ $Release$ $Date: 2009/03/26 11:05:52 $ $Author: itglp $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.101 $ $Release$ $Date: 2009/04/14 11:33:46 $ $Author: itglp $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -71,7 +71,7 @@ namespace castor {
 
     /**
      * This class provides specific stager methods and includes
-	 * scheduler and error related methods
+         * scheduler and error related methods
      */
     class IStagerSvc : public virtual ICommonSvc {
 
@@ -174,7 +174,7 @@ namespace castor {
        const castor::stager::SvcClass* srcSc,
        const castor::stager::SvcClass* destSc,
        const bool internal = false)
-	throw (castor::exception::Exception) = 0;
+        throw (castor::exception::Exception) = 0;
 
       /**
        * Retrieves a CastorFile from the database based on its fileId
@@ -217,7 +217,7 @@ namespace castor {
       virtual castor::stager::DiskCopyInfo* getBestDiskCopyToRead
       (const castor::stager::CastorFile *castorFile,
        const castor::stager::SvcClass *svcClass)
-	throw (castor::exception::Exception) = 0;
+        throw (castor::exception::Exception) = 0;
 
       /**
        * Updates a SubRequest status in the DB, including
@@ -404,7 +404,7 @@ namespace castor {
        */
       virtual std::vector<castor::stager::PriorityMap*>
       selectPriority(int euid, int egid, int priority)
-	throw (castor::exception::Exception) = 0;
+        throw (castor::exception::Exception) = 0;
 
       /**
        * Enter priority for recall
@@ -414,9 +414,9 @@ namespace castor {
        * @exception in case of an error
        */
       virtual void enterPriority(u_signed64 euid,
-				 u_signed64 egid,
-				 u_signed64 priority)
-	throw (castor::exception::Exception) = 0;
+                                 u_signed64 egid,
+                                 u_signed64 priority)
+        throw (castor::exception::Exception) = 0;
 
       /**
        * Delete priority for recall
@@ -425,7 +425,21 @@ namespace castor {
        * @exception in case of an error
        */
       virtual void deletePriority(int euid, int egid)
-	throw (castor::exception::Exception) = 0;
+        throw (castor::exception::Exception) = 0;
+        
+      /**
+       * Gets a configuration option from the
+       * CastorConfig table
+       * @param class a string containing the
+       * option class (e.g. stager)
+       * @param key a string containing the
+       * option key to be accessed
+       * @return the option value
+       * @exception in case of an error
+       */
+      virtual std::string getConfigOption(std::string confClass,
+                                  std::string confKey)
+        throw (castor::exception::Exception) = 0;
 
     }; // end of class IStagerSvc
 
