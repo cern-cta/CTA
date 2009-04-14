@@ -292,6 +292,7 @@ int send2nsdx(socketp, host, reqp, reql, user_repbuf, user_repbuf_len, repbuf2, 
     }
     if (c > REPBUFSZ) {
       Cns_errmsg (func, "reply too large\n");
+      (void) netclose (s);
       serrno = SEINTERNAL;
       return (-1);
     }
