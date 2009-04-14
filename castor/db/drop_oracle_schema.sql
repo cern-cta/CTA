@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: drop_oracle_schema.sql,v $ $Revision: 1.4 $ $Date: 2009/02/10 16:12:47 $ $Author: waldron $
+ * @(#)$RCSfile: drop_oracle_schema.sql,v $ $Revision: 1.5 $ $Date: 2009/04/14 14:12:45 $ $Author: waldron $
  *
  * This file drops all defined objects from a database schema.
  *
@@ -51,13 +51,14 @@ BEGIN
     END;
   END LOOP;
 
-  -- This is a DLF based schema so we drop its associated tablespaces
+  -- This is a DLF or MON based schema so we drop its associated tablespaces
   username := SYS_CONTEXT('USERENV', 'CURRENT_USER');
  
   -- Drop tablespaces
   FOR rec IN (SELECT tablespace_name, status
                 FROM user_tablespaces
-               WHERE tablespace_name LIKE CONCAT('DLF_%_', username))
+               WHERE (tablespace_name LIKE CONCAT('DLF_%_', username)
+                  OR  tablespace_name LIKE CONCAT('MON_%_', username)))
   LOOP
     IF rec.status = 'ONLINE' THEN
       EXECUTE IMMEDIATE 'ALTER TABLESPACE '||rec.tablespace_name||'
