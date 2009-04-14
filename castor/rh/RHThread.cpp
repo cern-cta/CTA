@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.43 $ $Release$ $Date: 2009/04/02 16:33:56 $ $Author: riojac3 $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.44 $ $Release$ $Date: 2009/04/14 11:30:00 $ $Author: itglp $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -424,7 +424,9 @@ unsigned int castor::rh::RHThread::handleRequest
   // Store request into the DB
   try {
     svcs()->createRep(&ad, fr, false);
-    svcs()->fillRep(&ad, fr, OBJ_SvcClass, false);
+    if(fr->svcClass()) {
+      svcs()->fillRep(&ad, fr, OBJ_SvcClass, false);
+    }
 
     // Store files for file requests
     castor::stager::FileRequest* filreq =

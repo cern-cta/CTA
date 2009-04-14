@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2009/03/26 14:01:12 $ $Author: itglp $
+ * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2009/04/14 11:30:00 $ $Author: itglp $
  *
  * Implementation of the IRHSvc for Oracle
  *
@@ -166,8 +166,9 @@ void castor::db::ora::OraRHSvc::checkPermission
                           req->svcClassName())
                       << "'\n";
       throw ex;
-    } else {
+    } else if("*" != req->svcClassName()) {
       // ret == -2 : non existent service class
+      // accept the special case of '*' and refuse the rest
       castor::exception::InvalidArgument ex;
       ex.getMessage() << "Invalid service class '"
                       << req->svcClassName()
