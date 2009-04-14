@@ -59,7 +59,8 @@ DBSERVICEDAEMONBIN_SRCS = \
 	GcSvcThread.cpp \
 	ErrorSvcThread.cpp \
         JobSvcThread.cpp \
-	CleaningThread.cpp
+	CleaningThread.cpp \
+	NsOverride.cpp
 DBSERVICEDAEMONBIN_OBJS = $(DBSERVICEDAEMONBIN_SRCS:.cpp=.Osuf)
 NormalProgramTarget(stagerDaemon,$(DBSERVICEDAEMONBIN_OBJS),$(DEPLIB),$(LIBS),750)
 MakeDir(/var/spool/stager,0755)
