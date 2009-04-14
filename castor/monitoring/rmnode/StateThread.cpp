@@ -137,8 +137,8 @@ void castor::monitoring::rmnode::StateThread::run(void *param)
 
       // Update the status file
       if (ack != 0) {
-     	char *filename = getconfent("RmNode", "StatusFile", 0);
-	if (filename) {
+     	const char *filename = getconfent("RmNode", "StatusFile", 0);
+	if (filename == NULL) {
 	  filename = DEFAULT_STATUSFILE;
 	}
 	if ((filename) && (ack->ack().size())) {
