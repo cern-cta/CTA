@@ -328,24 +328,38 @@ How to set up VMGR mount permissions
 Cupvadd --uid 0 --gid 0 --src '^tpsrv.*.cern.ch' --tgt lxcastordev04 --priv TP_SYSTEM
 
 
-How to set populate a new VMGR database
-=======================================
+How to populate a new VMGR database
+===================================
 
-vmgrenterpool --group st --name tape_dev --user stage
 vmgrentermodel --mo 3592 --ml J --mc 250
-vmgrenterlibrary --name IBM_LIB1 --capacity 6600
-vmgrenterdgnmap -g 3592B1 --mo 3592 --library IBM_LIB1
-vmgrenterdenmap -d  700GC --ml J --mo 3592 --nc  700G
-vmgrenterdenmap -d 1000GC --ml J --mo 3592 --nc 1000G
 
-vmgrentertape -V I10547 -v I10547 --mo 3592 --ml J --li IBM_LIB1 -d 700GC -l aul --po tape_dev
-vmgrentertape -V I10548 -v I10548 --mo 3592 --ml J --li IBM_LIB1 -d 700GC -l aul --po tape_dev
-vmgrentertape -V I10549 -v I10549 --mo 3592 --ml J --li IBM_LIB1 -d 700GC -l aul --po tape_dev
-vmgrentertape -V I10550 -v I10550 --mo 3592 --ml J --li IBM_LIB1 -d 700GC -l aul --po tape_dev
-vmgrentertape -V I10551 -v I10551 --mo 3592 --ml J --li IBM_LIB1 -d 1000GC -l aul --po tape_dev
-vmgrentertape -V I10552 -v I10552 --mo 3592 --ml J --li IBM_LIB1 -d 1000GC -l aul --po tape_dev
-vmgrentertape -V I10553 -v I10553 --mo 3592 --ml J --li IBM_LIB1 -d 1000GC -l aul --po tape_dev
-vmgrentertape -V I10554 -v I10554 --mo 3592 --ml J --li IBM_LIB1 -d 1000GC -l aul --po tape_dev
+vmgrenterdenmap -d 1000GC --ml J --mo 3592 --nc 931G
+vmgrenterdenmap -d 700GC  --ml J --mo 3592 --nc 651G
+vmgrenterdenmap -d 500GC  --ml J --mo 3592 --nc 465G
+
+vmgrenterlibrary --name IBMLIB1A --capacity 6600
+vmgrenterlibrary --name IBMLIB1B --capacity 6600
+
+vmgrenterdgnmap -g 359B1A --mo 3592 --library IBMLIB1A
+vmgrenterdgnmap -g 359B1B --mo 3592 --library IBMLIB1B
+
+vmgrenterpool --group st --name aggregator_dev --user stage
+vmgrenterpool --group st --name giulia_dev     --user stage
+vmgrenterpool --group st --name nbessone_dev   --user stage
+vmgrenterpool --group st --name spare_dev      --user stage
+vmgrenterpool --group st --name tprw_dev       --user stage
+
+vmgrentertape -V I02000 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po aggregator_dev
+vmgrentertape -V I02001 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po giulia_dev
+vmgrentertape -V I02008 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po giulia_dev
+vmgrentertape -V I02011 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po nbessone_dev
+vmgrentertape -V I05236 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po tprw_dev
+vmgrentertape -V I10551 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po spare_dev
+vmgrentertape -V I10552 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po spare_dev
+vmgrentertape -V I10553 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po spare_dev
+vmgrentertape -V I10554 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po spare_dev
+vmgrentertape -V I12307 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po spare_dev
+vmgrentertape -V I18020 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po spare_dev
 
 
 How to modify the density of a tape
