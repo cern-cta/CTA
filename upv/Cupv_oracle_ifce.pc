@@ -17,7 +17,7 @@
 #include "Cupv.h"
 #include "Cupv_server.h"
 
-static sql_context ctx[CUPV_NBTHREADS];
+static sql_context ctx[CUPV_MAXNBTHREADS];
 
 int Cupv_init_dbpkg()
 {
