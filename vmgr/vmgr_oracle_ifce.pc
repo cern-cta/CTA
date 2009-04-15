@@ -17,7 +17,7 @@
 #include "vmgr.h"
 #include "vmgr_server.h"
 
-static sql_context ctx[VMGR_NBTHREADS];
+static sql_context ctx[VMGR_MAXNBTHREADS];
 
 int vmgr_init_dbpkg()
 {
