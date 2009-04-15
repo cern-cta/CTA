@@ -1,7 +1,5 @@
-//          $Id: XrdxCastor2Fs.cc,v 1.6 2009/03/06 13:45:04 apeters Exp $
-
-const char *XrdxCastor2FsCVSID = "$Id: XrdxCastor2Fs.cc,v 1.6 2009/03/06 13:45:04 apeters Exp $";
-
+//          $Id: XrdxCastor2Fs.cc,v 1.7 2009/04/15 10:20:49 apeters Exp $
+const char *XrdxCastor2FsCVSID = "$Id: XrdxCastor2Fs.cc,v 1.7 2009/04/15 10:20:49 apeters Exp $";
 
 #include "XrdVersion.hh"
 #include "XrdClient/XrdClientAdmin.hh"
@@ -226,7 +224,7 @@ STRINGSTORE(const char* __charptr__) {
      int cnt;                                                           \
      cnt=0;                                                             \
      if (gr->gr_gid == passwdinfo->pw_gid) {                            \
-       __defaultgroup__+= gr->gr_name;                                  \
+       if (!__defaultgroup__.length()) __defaultgroup__+= gr->gr_name;  \
        __allgroups__+= gr->gr_name; __allgroups__+=":";                 \
      }                                                                  \
      while (gr->gr_mem[cnt]) {                                          \
@@ -308,7 +306,7 @@ void ROLEMAP(const XrdSecEntity* _client,const char* _env,XrdSecEntity &_mappedc
       _mappedclient.grps=STRINGSTORE(defaultgroup.c_str());                
       _mappedclient.role=STRINGSTORE(defaultgroup.c_str());                        
       break;
-      }                                                                        
+      }
       if ((_client->prot) && ((!strcmp(_client->prot,"gsi")) || (!strcmp(_client->prot,"ssl")))) {
 	XrdOucString certsubject = _client->name;
 	if ( (XrdxCastor2FS->MapCernCertificates) && (certsubject.beginswith("/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN="))) {
