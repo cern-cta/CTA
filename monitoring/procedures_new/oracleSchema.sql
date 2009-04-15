@@ -180,7 +180,7 @@ CREATE MATERIALIZED VIEW ReqDel_MV
   REFRESH FORCE ON DEMAND
   START WITH SYSDATE NEXT SYSDATE + 10/1440
 AS
-  SELECT req.timestamp, round((req.timestamp - gcFiles.timestamp) * 24, 5) dif
+  SELECT req.timestamp, req.svcclass, round((req.timestamp - gcFiles.timestamp) * 24, 5) dif
     FROM Requests req, GcFiles gcFiles
    WHERE req.nsFileId = gcFiles.nsFileId
      AND req.state = 'TapeRecall'
