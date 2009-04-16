@@ -322,10 +322,39 @@ How to add a tape to a pool
 vmgrmodifytape -V I50068 -P vdqm2_special
 
 
-How to set up VMGR mount permissions
-====================================
+How to setup VDQM permissions
+=============================
 
-Cupvadd --uid 0 --gid 0 --src '^tpsrv.*.cern.ch' --tgt lxcastordev04 --priv TP_SYSTEM
+All stagers, administration PCs and tpread/tpwrite client PCs should have the
+TP_OPER privilege in order for the VDQM to allow them to delete volume
+requests.  Please note that the tpread and tpwrite command-line tools will and
+should delete volume request when they receive Ctrl-C.  This is why
+tpread/tpwrite client PCs should have the TP_OPER privilege.
+
+Example:
+
+    Cupvadd --user murrayc3 --group c3 --src lxcastordev04.cern.ch --tgt lxcastorsrv102.cern.ch --priv TP_OPER
+
+Where:
+
+    lxcastordev04.cern.ch is a stager and a tpread/tpwrite client PC
+    lxcastorsrv102.cern.ch is the VDQM server
+
+
+How to setup VMGR permissions
+=============================
+
+Tape servers require the CUPV TP_SYSTEM privilege in order for the VMGR to
+allowed them to mount tapes:
+
+Example:
+
+    Cupvadd --uid 0 --gid 0 --src '^tpsrv.*.cern.ch' --tgt lxcastorsrv102.cern.ch --priv TP_SYSTEM
+
+Where:
+
+    '^tpsrv.*.cern.ch' identifies the tape servers
+    lxcastorsrv102.cern.ch is the VMGR server
 
 
 How to populate a new VMGR database
