@@ -308,14 +308,6 @@ How to give access rights to create a new tape pool
 Cupvadd --user nbessone --group cs --src lxcastordev08.cern.ch --tgt lxcastordev04.cern.ch --priv ADMIN
 
 
-How to create a new tape pool
-=============================
-
-vmgrenterpool --group st --name vdqm2_special --user stage
-
-vmgrenterpool --group st --name nbessone_dev --user stage
-
-
 How to add a tape to a pool
 ===========================
 
@@ -373,22 +365,31 @@ vmgrenterdgnmap -g 359B1A --mo 3592 --library IBMLIB1A
 vmgrenterdgnmap -g 359B1B --mo 3592 --library IBMLIB1B
 
 vmgrenterpool --group st --name aggregator_dev --user stage
+vmgrenterpool --group st --name bad_dev        --user stage
 vmgrenterpool --group st --name giulia_dev     --user stage
 vmgrenterpool --group st --name nbessone_dev   --user stage
 vmgrenterpool --group st --name spare_dev      --user stage
+vmgrenterpool --group st --name stager_cert1   --user stage
+vmgrenterpool --group st --name stager_cert2   --user stage
+vmgrenterpool --group st --name stager_cert3   --user stage
+vmgrenterpool --group st --name stager_cert4   --user stage
 vmgrenterpool --group st --name tprw_dev       --user stage
 
 vmgrentertape -V I02000 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po aggregator_dev
-vmgrentertape -V I02001 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po giulia_dev
-vmgrentertape -V I02008 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po giulia_dev
+vmgrentertape -V I05236 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po bad_dev
+vmgrentertape -V I12307 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po bad_dev
+vmgrentertape -V I18020 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po bad_dev
+vmgrentertape -V I02001 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po giulia_dev
+vmgrentertape -V I02008 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po giulia_dev
 vmgrentertape -V I02011 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po nbessone_dev
-vmgrentertape -V I05236 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po tprw_dev
 vmgrentertape -V I10551 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po spare_dev
 vmgrentertape -V I10552 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po spare_dev
 vmgrentertape -V I10553 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po spare_dev
-vmgrentertape -V I10554 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po spare_dev
-vmgrentertape -V I12307 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po spare_dev
-vmgrentertape -V I18020 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po spare_dev
+vmgrentertape -V I02017 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po stager_cert1
+vmgrentertape -V I02018 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po stager_cert2
+vmgrentertape -V I02020 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po stager_cert3
+vmgrentertape -V I02021 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po stager_cert4
+vmgrentertape -V I10554 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po tprw_dev
 
 
 How to modify the density of a tape
