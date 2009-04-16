@@ -333,7 +333,7 @@ tpread/tpwrite client PCs should have the TP_OPER privilege.
 
 Example:
 
-    Cupvadd --user murrayc3 --group c3 --src lxcastordev04.cern.ch --tgt lxcastorsrv102.cern.ch --priv TP_OPER
+    Cupvadd --user stage --group st --src lxcastordev04.cern.ch --tgt lxcastorsrv102.cern.ch --priv TP_OPER
 
 Where:
 
