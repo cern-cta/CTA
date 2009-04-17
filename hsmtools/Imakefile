@@ -40,6 +40,8 @@ rfcpupd.Osuf: rfcpupd.c
 	$(CC) $(DEBUG) -I../h $(MTCCFLAGS) $(RFIOFLAGS) $(ACCTFLAG) -c -o $@ $<
 FilesToClean += rfcpupd.c
 NormalProgramTarget(rfcpupd,rfcpupd.Osuf,$(DEPLIB), $(LIBS),755)
+NormalProgramTarget(stager_actualget,stager_actualget.Osuf,$(DEPLIB), $(LIBS),755)
+NormalProgramTarget(stager_actualput,stager_actualput.Osuf,$(DEPLIB), $(LIBS),755)
 
 NormalProgramTarget(vdqmDBInit,vdqmDBInit.Osuf,$(DEPLIB),$(LIBS),755)
 NormalProgramTarget(vdqmsetpriority,vdqmsetpriority.Osuf,$(DEPLIB),$(LIBS),755)
