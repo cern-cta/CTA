@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.729 $ $Date: 2009/04/14 14:06:05 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.730 $ $Date: 2009/04/19 20:49:20 $ $Author: waldron $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -140,7 +140,7 @@ BEGIN
                D.path, D.id, D.castorfile, T.id
           INTO path, dci, castorFileId, tapeCopyId
           FROM DiskCopy D, TapeCopy T, Stream2TapeCopy ST
-         WHERE D.status = 10 -- CANBEMIGR
+         WHERE decode(D.status, 10, D.status, NULL) = 10 -- CANBEMIGR
            AND D.filesystem = lastButOneFSUsed
            AND ST.parent = streamId
            AND T.status = 2 -- WAITINSTREAMS
@@ -187,7 +187,7 @@ BEGIN
                 f.diskServerId, f.name, f.mountPoint, f.fileSystemId, D.path, D.id, D.castorfile, C.fileId, C.nsHost, C.fileSize, T.id, C.lastUpdateTime
            INTO diskServerId, diskServerName, mountPoint, fileSystemId, path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
            FROM DiskCopy D, TapeCopy T, Stream2TapeCopy StT, Castorfile C
-          WHERE decode(D.status,10,D.status,NULL) = 10 -- CANBEMIGR
+          WHERE decode(D.status, 10, D.status, NULL) = 10 -- CANBEMIGR
             AND D.filesystem = f.fileSystemId
             AND StT.parent = streamId
             AND T.status = 2 -- WAITINSTREAMS
@@ -285,13 +285,13 @@ BEGIN
                 FROM (SELECT /*+ INDEX(DK I_DiskCopy_FS_Status_10) */
                              DK.path path, DK.id diskcopy_id, DK.castorfile
                         FROM DiskCopy DK
-                       WHERE decode(DK.status,10,DK.status,null) = 10 -- CANBEMIGR
+                       WHERE decode(DK.status, 10, DK.status, NULL) = 10 -- CANBEMIGR
                          AND DK.filesystem = lastFSUsed) D,
                       TapeCopy T, Stream2TapeCopy ST
                WHERE T.castorfile = D.castorfile
                  AND ST.child = T.id
                  AND ST.parent = streamId
-                 AND decode(T.status,2,T.status,null) = 2 -- WAITINSTREAMS
+                 AND decode(T.status, 2, T.status, NULL) = 2 -- WAITINSTREAMS
                  AND ROWNUM < 2) P, castorfile C
          WHERE P.castorfile = C.id;
         -- we found one, no need to go for new filesystem
@@ -321,7 +321,7 @@ BEGIN
                 f.diskServerId, f.name, f.mountPoint, f.fileSystemId, D.path, D.id, D.castorfile, C.fileId, C.nsHost, C.fileSize, T.id, C.lastUpdateTime
            INTO diskServerId, diskServerName, mountPoint, fileSystemId, path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
            FROM DiskCopy D, TapeCopy T, Stream2TapeCopy StT, Castorfile C
-          WHERE decode(D.status,10,D.status,NULL) = 10 -- CANBEMIGR
+          WHERE decode(D.status, 10, D.status, NULL) = 10 -- CANBEMIGR
             AND D.filesystem = f.fileSystemId
             AND StT.parent = streamId
             AND T.status = 2 -- WAITINSTREAMS
@@ -369,7 +369,7 @@ BEGIN
                 f.diskServerId, f.name, f.mountPoint, f.fileSystemId, D.path, D.id, D.castorfile, C.fileId, C.nsHost, C.fileSize, T.id, C.lastUpdateTime
            INTO diskServerId, diskServerName, mountPoint, fileSystemId, path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
            FROM DiskCopy D, TapeCopy T, Stream2TapeCopy StT, Castorfile C
-          WHERE decode(D.status,10,D.status,NULL) = 10 -- CANBEMIGR
+          WHERE decode(D.status, 10, D.status, NULL) = 10 -- CANBEMIGR
             AND D.filesystem = f.fileSystemId
             AND StT.parent = streamId
             AND T.status = 2 -- WAITINSTREAMS
@@ -467,7 +467,7 @@ BEGIN
              f.diskServerId, f.name, f.mountPoint, f.fileSystemId, D.path, D.id, D.castorfile, C.fileId, C.nsHost, C.fileSize, T.id, C.lastUpdateTime
         INTO diskServerId, diskServerName, mountPoint, fileSystemId, path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
         FROM DiskCopy D, TapeCopy T, Stream2TapeCopy StT, Castorfile C
-       WHERE decode(D.status,10,D.status,NULL) = 10 -- CANBEMIGR
+       WHERE decode(D.status, 10, D.status, NULL) = 10 -- CANBEMIGR
          AND D.filesystem = f.fileSystemId
          AND StT.parent = streamId
          AND T.status = 2 -- WAITINSTREAMS
