@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.695 $ $Date: 2009/04/06 14:29:16 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.696 $ $Date: 2009/04/20 13:13:24 $ $Author: itglp $
  *
  * This file contains some common PL/SQL utilities for the stager database.
  *
@@ -135,11 +135,16 @@ CREATE OR REPLACE FUNCTION normalizePath(path IN VARCHAR2) RETURN VARCHAR2 IS
   buf VARCHAR2(2048);
   ret VARCHAR2(2048);
 BEGIN
-  ret := REGEXP_REPLACE(path, '(/){2,}', '/');
+  -- drop '.'s snd multiple '/'s
+  ret := replace(regexp_replace(path, '[/]+', '/'), '/./', '/');
   LOOP
     buf := ret;
-    -- a path component is by definition anything between two slashes
-    ret := REGEXP_REPLACE(buf, '/[^/]+/\.\./', '/');
+    -- a path component is by definition anything between two slashes, except
+    -- the '..' string itself. This is not taken into account, resulting in incorrect
+    -- parsing when relative paths are used (see bug #49002). We're not concerned by
+    -- those cases; however this code could be fixed and improved by using string
+    -- tokenization as opposed to expensive regexp parsing.
+    ret := regexp_replace(buf, '/[^/]+/\.\./', '/');
     EXIT WHEN ret = buf;
   END LOOP;
   RETURN ret;
