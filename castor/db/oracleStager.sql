@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.729 $ $Date: 2009/04/19 20:50:24 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.730 $ $Date: 2009/04/20 10:01:57 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1640,30 +1640,31 @@ BEGIN
       contextPIPP := 0;
     END;
   END;
+  -- check if there is space in the diskpool in case of
+  -- disk only pool
+  -- First get the svcclass and the user
+  SELECT svcClass, euid, egid INTO sclassId, ouid, ogid
+    FROM Subrequest,
+         (SELECT id, svcClass, euid, egid FROM StagePutRequest UNION ALL
+          SELECT id, svcClass, euid, egid FROM StageUpdateRequest UNION ALL
+          SELECT id, svcClass, euid, egid FROM StagePrepareToPutRequest UNION ALL
+          SELECT id, svcClass, euid, egid FROM StagePrepareToUpdateRequest) Request
+   WHERE SubRequest.id = srId
+     AND Request.id = SubRequest.request;
+  IF checkFailJobsWhenNoSpace(sclassId) = 1 THEN
+    -- The svcClass is declared disk only and has no space
+    -- thus we cannot recreate the file
+    dcId := 0;
+    UPDATE SubRequest
+       SET status = 7, -- FAILED
+           errorCode = 28, -- ENOSPC
+           errorMessage = 'File creation canceled since diskPool is full'
+     WHERE id = srId;
+    COMMIT;
+    RETURN;
+  END IF;
   IF contextPIPP = 0 THEN
-    -- check if there is space in the diskpool in case of
-    -- disk only pool
-    -- get the svcclass and the user
-    SELECT svcClass, euid, egid INTO sclassId, ouid, ogid
-      FROM Subrequest,
-           (SELECT id, svcClass, euid, egid FROM StagePutRequest UNION ALL
-            SELECT id, svcClass, euid, egid FROM StageUpdateRequest UNION ALL
-            SELECT id, svcClass, euid, egid FROM StagePrepareToPutRequest UNION ALL
-            SELECT id, svcClass, euid, egid FROM StagePrepareToUpdateRequest) Request
-     WHERE SubRequest.id = srId
-       AND Request.id = SubRequest.request;
-    IF checkFailJobsWhenNoSpace(sclassId) = 1 THEN
-      -- The svcClass is declared disk only and has no space
-      -- thus we cannot recreate the file
-      dcId := 0;
-      UPDATE SubRequest
-         SET status = 7, -- FAILED
-             errorCode = 28, -- ENOSPC
-             errorMessage = 'File creation canceled since diskPool is full'
-       WHERE id = srId;
-      COMMIT;
-      RETURN;
-    END IF;
+    -- Puts inside PrepareToPuts don't need the following checks
     -- check if the file existed in advance with a fileclass incompatible with this svcClass
     IF checkFailPutWhenTape0(sclassId, fclassId) = 1 THEN
       -- The svcClass is disk only and the file being overwritten asks for tape copy.
