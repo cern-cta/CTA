@@ -28,6 +28,7 @@
 #include "castor/tape/aggregator/BridgeProtocolEngine.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/GatewayTxRx.hpp"
+#include "castor/tape/aggregator/MessageHeader.hpp"
 #include "castor/tape/aggregator/Net.hpp"
 #include "castor/tape/aggregator/RtcpTxRx.hpp"
 #include "castor/tape/aggregator/SmartFd.hpp"
@@ -225,14 +226,18 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocket(
   // Else the file descriptor is that of a tape/disk IO connection
   } else {
 
-    const RtcpdBridgeProtocolEngine::RqstResult rqstResult =
-      m_rtcpdBridgeProtocolEngine.run(socketFd);
+    // Try to receive the message header which may not be possible; The file
+    // descriptor may be ready because RTCPD has closed the connection
+    bool connectionClosed = false;
+    MessageHeader header;
+    utils::setBytes(header, '\0');
+    RtcpTxRx::receiveRtcpMsgHeaderFromCloseable(m_cuuid, connectionClosed,
+      m_volReqId, socketFd, RTCPDNETRWTIMEOUT, header);
 
     // If the connection has been closed by RTCPD, then remove the
     // file descriptor from the list of read file descriptors and
     // close it
-    if(rqstResult == castor::tape::aggregator::
-      RtcpdBridgeProtocolEngine::CONNECTION_CLOSED_BY_PEER) {
+    if(connectionClosed) {
       close(m_readFds.release(socketFd));
 
       m_nbCallbackConnections--;
@@ -244,6 +249,9 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocket(
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
         AGGREGATOR_CONNECTION_CLOSED_BY_RTCPD, params);
     }
+
+    // TBD - SHOULD RETURN SOMETHING!!!!!
+    m_rtcpdBridgeProtocolEngine.run(header, socketFd);
   }
 }
 

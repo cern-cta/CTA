@@ -72,56 +72,47 @@ castor::tape::aggregator::RtcpdBridgeProtocolEngine::RtcpdBridgeProtocolEngine(
 // run
 //-----------------------------------------------------------------------------
 castor::tape::aggregator::RtcpdBridgeProtocolEngine::RqstResult 
-  castor::tape::aggregator::RtcpdBridgeProtocolEngine::run(const int socketFd)
+  castor::tape::aggregator::RtcpdBridgeProtocolEngine::run(
+  const MessageHeader &header, const int socketFd)
   throw(castor::exception::Exception) {
-
-  bool connectionClosed = false;
-
-
-  RtcpTxRx::receiveRtcpMsgHeaderFromCloseable(m_cuuid, connectionClosed,
-    m_volReqId, socketFd, RTCPDNETRWTIMEOUT, m_header);
-
-  if(connectionClosed) {
-    return CONNECTION_CLOSED_BY_PEER;
-  }
 
   {
     char magicHex[2 + 17]; // 0 + x + FFFFFFFFFFFFFFFF + '\0'
     magicHex[0] = '0';
     magicHex[1] = 'x';
-    utils::toHex(m_header.magic, &(magicHex[2]), 17);
+    utils::toHex(header.magic, &(magicHex[2]), 17);
 
-    const char *magicName = utils::magicToStr(m_header.magic);
+    const char *magicName = utils::magicToStr(header.magic);
 
     char reqTypeHex[2 + 17]; // 0 + x + FFFFFFFFFFFFFFFF + '\0'
     reqTypeHex[0] = '0';
     reqTypeHex[1] = 'x';
-    utils::toHex(m_header.reqType, &(reqTypeHex[2]), 17);
+    utils::toHex(header.reqType, &(reqTypeHex[2]), 17);
 
-    const char *reqTypeName = utils::rtcopyReqTypeToStr(m_header.reqType);
+    const char *reqTypeName = utils::rtcopyReqTypeToStr(header.reqType);
 
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"   , m_volReqId  ),
-      castor::dlf::Param("socketFd"   , socketFd    ),
-      castor::dlf::Param("magic"      , magicHex    ),
-      castor::dlf::Param("magicName"  , magicName   ),
-      castor::dlf::Param("reqType"    , reqTypeHex  ),
-      castor::dlf::Param("reqTypeName", reqTypeName ),
-      castor::dlf::Param("len"        , m_header.len)};
+      castor::dlf::Param("volReqId"   , m_volReqId ),
+      castor::dlf::Param("socketFd"   , socketFd   ),
+      castor::dlf::Param("magic"      , magicHex   ),
+      castor::dlf::Param("magicName"  , magicName  ),
+      castor::dlf::Param("reqType"    , reqTypeHex ),
+      castor::dlf::Param("reqTypeName", reqTypeName),
+      castor::dlf::Param("len"        , header.len )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_PROCESSING_TAPE_DISK_RQST, params);
   }
 
   // Find the message type's corresponding handler
-  MsgBodyCallbackMap::iterator itor = m_handlers.find(m_header.reqType);
+  MsgBodyCallbackMap::iterator itor = m_handlers.find(header.reqType);
   if(itor == m_handlers.end()) {
     TAPE_THROW_CODE(EBADMSG,
-      ": Unknown request type: 0x" << m_header.reqType);
+      ": Unknown request type: 0x" << header.reqType);
   }
   const MsgBodyCallback handler = itor->second;
 
   // Invoke the handler
-  return (this->*handler)(socketFd);
+  return (this->*handler)(header, socketFd);
 }
 
 
@@ -130,14 +121,15 @@ castor::tape::aggregator::RtcpdBridgeProtocolEngine::RqstResult
 //-----------------------------------------------------------------------------
 castor::tape::aggregator::RtcpdBridgeProtocolEngine::RqstResult
   castor::tape::aggregator::RtcpdBridgeProtocolEngine::rtcpFileReqCallback(
-  const int socketFd) throw(castor::exception::Exception) {
+  const MessageHeader &header, const int socketFd)
+  throw(castor::exception::Exception) {
 
   RqstResult result = REQUEST_PROCESSED;
 
   RtcpFileRqstMsgBody body;
 
   RtcpTxRx::receiveRtcpFileRqstBody(m_cuuid, m_volReqId, socketFd,
-    RTCPDNETRWTIMEOUT, m_header, body);
+    RTCPDNETRWTIMEOUT, header, body);
 
   switch(body.procStatus) {
   case RTCP_REQUEST_MORE_WORK:
@@ -347,12 +339,13 @@ castor::tape::aggregator::RtcpdBridgeProtocolEngine::RqstResult
 //-----------------------------------------------------------------------------
 castor::tape::aggregator::RtcpdBridgeProtocolEngine::RqstResult 
   castor::tape::aggregator::RtcpdBridgeProtocolEngine::rtcpFileErrReqCallback(
-  const int socketFd) throw(castor::exception::Exception) {
+  const MessageHeader &header, const int socketFd)
+  throw(castor::exception::Exception) {
 
   RtcpFileRqstErrMsgBody body;
 
   RtcpTxRx::receiveRtcpFileRqstErrBody(m_cuuid, m_volReqId, socketFd,
-    RTCPDNETRWTIMEOUT, m_header, body);
+    RTCPDNETRWTIMEOUT, header, body);
 
   RtcpAcknowledgeMsg ackMsg;
   ackMsg.magic   = RTCOPY_MAGIC;
@@ -371,12 +364,13 @@ castor::tape::aggregator::RtcpdBridgeProtocolEngine::RqstResult
 //-----------------------------------------------------------------------------
 castor::tape::aggregator::RtcpdBridgeProtocolEngine::RqstResult 
   castor::tape::aggregator::RtcpdBridgeProtocolEngine::rtcpTapeReqCallback(
-  const int socketFd) throw(castor::exception::Exception) {
+  const MessageHeader &header, const int socketFd)
+  throw(castor::exception::Exception) {
 
   RtcpTapeRqstMsgBody body;
 
   RtcpTxRx::receiveRtcpTapeRqstBody(m_cuuid, m_volReqId, socketFd,
-    RTCPDNETRWTIMEOUT, m_header, body);
+    RTCPDNETRWTIMEOUT, header, body);
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("volReqId", m_volReqId)};
@@ -401,12 +395,13 @@ castor::tape::aggregator::RtcpdBridgeProtocolEngine::RqstResult
 //-----------------------------------------------------------------------------
 castor::tape::aggregator::RtcpdBridgeProtocolEngine::RqstResult 
   castor::tape::aggregator::RtcpdBridgeProtocolEngine::rtcpTapeErrReqCallback(
-  const int socketFd) throw(castor::exception::Exception) {
+  const MessageHeader &header, const int socketFd)
+  throw(castor::exception::Exception) {
 
   RtcpTapeRqstErrMsgBody body;
 
   RtcpTxRx::receiveRtcpTapeRqstErrBody(m_cuuid, m_volReqId, socketFd,
-    RTCPDNETRWTIMEOUT, m_header, body);
+    RTCPDNETRWTIMEOUT, header, body);
 
   if(body.err.errorCode == 0) {
     castor::dlf::Param params[] = {
@@ -441,7 +436,8 @@ castor::tape::aggregator::RtcpdBridgeProtocolEngine::RqstResult
 //-----------------------------------------------------------------------------
 castor::tape::aggregator::RtcpdBridgeProtocolEngine::RqstResult 
   castor::tape::aggregator::RtcpdBridgeProtocolEngine::rtcpEndOfReqCallback(
-  const int socketFd) throw(castor::exception::Exception) {
+  const MessageHeader &header, const int socketFd)
+  throw(castor::exception::Exception) {
 
   // An RTCP_ENDOF_REQ message is bodiless
   castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,

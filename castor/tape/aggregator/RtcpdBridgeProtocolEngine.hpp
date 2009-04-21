@@ -62,19 +62,20 @@ namespace aggregator {
      */
     enum RqstResult {
       REQUEST_PROCESSED,
-      RECEIVED_EOR,
-      CONNECTION_CLOSED_BY_PEER
+      RECEIVED_EOR
     }; // enum 
 
     /**
      * Processes the specified request.
      *
+     * @param header The header of the RTCPD request.
      * @param socketFd The file descriptor of the socket from which the message
      * should be read from.
      * @return The result of processing the request (REQUEST_PROCESSED,
      * RECEIVED_EOR, CONNECTION_CLOSED_BY_PEER).
      */
-    RqstResult run(const int socketFd) throw(castor::exception::Exception);
+    RqstResult run(const MessageHeader &header, const int socketFd)
+      throw(castor::exception::Exception);
 
   private:
 
@@ -104,21 +105,17 @@ namespace aggregator {
     const uint32_t m_mode;
 
     /**
-     * The header of the RTCPD request.
-     */
-    MessageHeader m_header;
-
-    /**
      * Pointer to a message body handler function, where the handler function
      * is a member of this class.
      *
+     * @param header The header of the RTCPD request.
      * @param socketFd The file descriptor of the socket from which the message
      * should be read from.
      * @return True if there is a possibility of more work in the future, else
      * false.
      */
     typedef RqstResult (RtcpdBridgeProtocolEngine::*MsgBodyCallback)(
-      const int socketFd);
+      const MessageHeader &header, const int socketFd);
 
     /**
      * Datatype for the map of message body handlers.
@@ -136,8 +133,8 @@ namespace aggregator {
      * For full documenation please see the documentation of the type
      * RtcpdBridgeProtocolEngine::MsgBodyCallback.
      */
-    RqstResult rtcpFileReqCallback(const int socketFd)
-      throw(castor::exception::Exception);
+    RqstResult rtcpFileReqCallback(const MessageHeader &header,
+      const int socketFd) throw(castor::exception::Exception);
 
     /**
      * RTCP_FILEERR_REQ message body handler.
@@ -145,8 +142,8 @@ namespace aggregator {
      * For full documenation please see the documentation of the type
      * RtcpdBridgeProtocolEngine::MsgBodyCallback.
      */
-    RqstResult rtcpFileErrReqCallback(const int socketFd)
-      throw(castor::exception::Exception);
+    RqstResult rtcpFileErrReqCallback(const MessageHeader &header,
+      const int socketFd) throw(castor::exception::Exception);
 
     /**
      * RTCP_TAPEREQ message body handler.
@@ -154,8 +151,8 @@ namespace aggregator {
      * For full documenation please see the documentation of the type
      * RtcpdBridgeProtocolEngine::MsgBodyCallback.
      */
-    RqstResult rtcpTapeReqCallback(const int socketFd)
-      throw(castor::exception::Exception);
+    RqstResult rtcpTapeReqCallback(const MessageHeader &header,
+      const int socketFd) throw(castor::exception::Exception);
 
     /**
      * RTCP_TAPEERR message body handler.
@@ -163,8 +160,8 @@ namespace aggregator {
      * For full documenation please see the documentation of the type
      * RtcpdBridgeProtocolEngine::MsgBodyCallback.
      */
-    RqstResult rtcpTapeErrReqCallback(const int socketFd)
-      throw(castor::exception::Exception);
+    RqstResult rtcpTapeErrReqCallback(const MessageHeader &header,
+      const int socketFd) throw(castor::exception::Exception);
 
     /**
      * RTCP_ENDOF_REQ message body handler.
@@ -172,8 +169,8 @@ namespace aggregator {
      * For full documenation please see the documentation of the type
      * RtcpdBridgeProtocolEngine::MsgBodyCallback.
      */
-    RqstResult rtcpEndOfReqCallback(const int socketFd)
-      throw(castor::exception::Exception);
+    RqstResult rtcpEndOfReqCallback(const MessageHeader &header,
+      const int socketFd) throw(castor::exception::Exception);
 
   }; // class RtcpdBridgeProtocolEngine
 
