@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
 #
-# @author Steven Murray, Steven.Murray@cern.ch
+# @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
 #
 
 CPPFLAGS = -pedantic -Wall -Werror -g -O0 -I../../../h -I../../.. $(MTCCFLAGS)
@@ -82,6 +82,7 @@ AGGREGATORBIN_SRCS = \
   RtcpTxRx.cpp \
   SmartFd.cpp \
   SmartFdList.cpp \
+  SynchronizedCounter.cpp \
   Unpacker.cpp \
   Utils.cpp \
   VdqmRequestHandler.cpp \
