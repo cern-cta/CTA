@@ -27,6 +27,7 @@
 #include "castor/io/ClientSocket.hpp"
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/GatewayTxRx.hpp"
+#include "castor/tape/aggregator/SynchronizedCounter.hpp"
 #include "castor/tape/aggregator/Utils.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
@@ -44,27 +45,12 @@
 
 #include <pthread.h>
 
-static castor::tape::aggregator::EmulateGiulia emulateRecallCounter;
 
-//-----------------------------------------------------------------------------
-// constructor
-//-----------------------------------------------------------------------------
-castor::tape::aggregator::EmulateGiulia::EmulateGiulia() :
-  m_count(0) {
-  pthread_mutex_init( &m_mutex, NULL );
-}
+/**
+ * An emulated recall counter used for debugging purposes only.
+ */
+static castor::tape::aggregator::SynchronizedCounter emulatedRecallCounter(0);
 
-//-----------------------------------------------------------------------------
-// next
-//-----------------------------------------------------------------------------
-uint32_t castor::tape::aggregator::EmulateGiulia::next() {
-
-  int status = pthread_mutex_lock(&m_mutex);
-  uint32_t result = ++m_count;
-  status = pthread_mutex_unlock(&m_mutex);
-
-  return(result);
-}
 
 //-----------------------------------------------------------------------------
 // getVolumeFromGateway
@@ -415,7 +401,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
 // Hardcoded volume INFO
 #ifdef EMULATE_GATEWAY
 
-  if(emulateRecallCounter.next() <= 1){
+  if(emulatedRecallCounter.next() <= 1){
     //volReqIdFromGateway = volReqId;
     utils::copyString(filePath,
 	"lxc2disk15.cern.ch:/srv/castor/01//86/320723286@c2itdcns.706042");

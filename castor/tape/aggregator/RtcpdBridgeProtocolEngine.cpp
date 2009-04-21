@@ -46,18 +46,23 @@ castor::tape::aggregator::RtcpdBridgeProtocolEngine::RtcpdBridgeProtocolEngine()
   throw() {
 
   // Build the map of message body handlers
-  m_handlers[RTCP_FILE_REQ]    = &RtcpdBridgeProtocolEngine::rtcpFileReqCallback;
-  m_handlers[RTCP_FILEERR_REQ] = &RtcpdBridgeProtocolEngine::rtcpFileErrReqCallback;
-  m_handlers[RTCP_TAPE_REQ]    = &RtcpdBridgeProtocolEngine::rtcpTapeReqCallback;
-  m_handlers[RTCP_TAPEERR_REQ] = &RtcpdBridgeProtocolEngine::rtcpTapeErrReqCallback;
-  m_handlers[RTCP_ENDOF_REQ]   = &RtcpdBridgeProtocolEngine::rtcpEndOfReqCallback;
+  m_handlers[RTCP_FILE_REQ] = 
+    &RtcpdBridgeProtocolEngine::rtcpFileReqCallback;
+  m_handlers[RTCP_FILEERR_REQ] =
+    &RtcpdBridgeProtocolEngine::rtcpFileErrReqCallback;
+  m_handlers[RTCP_TAPE_REQ] =
+    &RtcpdBridgeProtocolEngine::rtcpTapeReqCallback;
+  m_handlers[RTCP_TAPEERR_REQ] =
+    &RtcpdBridgeProtocolEngine::rtcpTapeErrReqCallback;
+  m_handlers[RTCP_ENDOF_REQ] =
+    &RtcpdBridgeProtocolEngine::rtcpEndOfReqCallback;
 }
 
 
 //-----------------------------------------------------------------------------
 // run
 //-----------------------------------------------------------------------------
-castor::tape::aggregator::RtcpdBridgeProtocolEngine::RunResult 
+castor::tape::aggregator::RtcpdBridgeProtocolEngine::RqstResult 
   castor::tape::aggregator::RtcpdBridgeProtocolEngine::run(
   const Cuuid_t &cuuid, const uint32_t volReqId,
   const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
@@ -138,7 +143,7 @@ castor::tape::aggregator::RtcpdBridgeProtocolEngine::RunResult
     socketFd, RTCPDNETRWTIMEOUT, header);
 
   if(connClosed) {
-    return CONNECTION_CLOSED_BYPEER; // PROBABLY WRONG - PROBABLY NEED TO COUNT SOMETHING
+    return CONNECTION_CLOSED_BY_PEER;
   }
 
   {
@@ -185,7 +190,7 @@ castor::tape::aggregator::RtcpdBridgeProtocolEngine::RunResult
 //-----------------------------------------------------------------------------
 // rtcpFileReqCallback
 //-----------------------------------------------------------------------------
-castor::tape::aggregator::RtcpdBridgeProtocolEngine::RunResult
+castor::tape::aggregator::RtcpdBridgeProtocolEngine::RqstResult
   castor::tape::aggregator::RtcpdBridgeProtocolEngine::rtcpFileReqCallback(
   const Cuuid_t &cuuid, const uint32_t volReqId,
   const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
@@ -193,7 +198,7 @@ castor::tape::aggregator::RtcpdBridgeProtocolEngine::RunResult
   const MessageHeader &header, const int socketFd)
   throw(castor::exception::Exception) {
 
-  RunResult result = REQUEST_PROCESSED;          // <<=====
+  RqstResult result = REQUEST_PROCESSED;          // <<=====
 
   RtcpFileRqstMsgBody body;
 
@@ -409,7 +414,7 @@ castor::tape::aggregator::RtcpdBridgeProtocolEngine::RunResult
 //-----------------------------------------------------------------------------
 // rtcpFileErrReqCallback
 //-----------------------------------------------------------------------------
-castor::tape::aggregator::RtcpdBridgeProtocolEngine::RunResult 
+castor::tape::aggregator::RtcpdBridgeProtocolEngine::RqstResult 
   castor::tape::aggregator::RtcpdBridgeProtocolEngine::rtcpFileErrReqCallback(
   const Cuuid_t &cuuid, const uint32_t volReqId,
   const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
@@ -437,7 +442,7 @@ castor::tape::aggregator::RtcpdBridgeProtocolEngine::RunResult
 //-----------------------------------------------------------------------------
 // rtcpTapeReqCallback
 //-----------------------------------------------------------------------------
-castor::tape::aggregator::RtcpdBridgeProtocolEngine::RunResult 
+castor::tape::aggregator::RtcpdBridgeProtocolEngine::RqstResult 
   castor::tape::aggregator::RtcpdBridgeProtocolEngine::rtcpTapeReqCallback(
   const Cuuid_t &cuuid, const uint32_t volReqId,
   const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
@@ -471,7 +476,7 @@ castor::tape::aggregator::RtcpdBridgeProtocolEngine::RunResult
 //-----------------------------------------------------------------------------
 // rtcpTapeErrReqCallback
 //-----------------------------------------------------------------------------
-castor::tape::aggregator::RtcpdBridgeProtocolEngine::RunResult 
+castor::tape::aggregator::RtcpdBridgeProtocolEngine::RqstResult 
   castor::tape::aggregator::RtcpdBridgeProtocolEngine::rtcpTapeErrReqCallback(
   const Cuuid_t &cuuid, const uint32_t volReqId,
   const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
@@ -581,7 +586,7 @@ castor::tape::aggregator::RtcpdBridgeProtocolEngine::RunResult
 //-----------------------------------------------------------------------------
 // rtcpEndOfReqCallback
 //-----------------------------------------------------------------------------
-castor::tape::aggregator::RtcpdBridgeProtocolEngine::RunResult 
+castor::tape::aggregator::RtcpdBridgeProtocolEngine::RqstResult 
   castor::tape::aggregator::RtcpdBridgeProtocolEngine::rtcpEndOfReqCallback(
   const Cuuid_t &cuuid, const uint32_t volReqId,
   const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],

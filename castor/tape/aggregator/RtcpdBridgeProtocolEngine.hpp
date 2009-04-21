@@ -51,12 +51,12 @@ namespace aggregator {
 
 
     /**
-     * Datatype for the map of message body handlers.
+     * Result of processing an RTCPD request.
      */
-    enum RunResult {
-      REQUEST_PROCESSED=0, /* "" */
-      RECEIVED_EOR=1,       /* "" */
-      CONNECTION_CLOSED_BYPEER=2   /* "" */
+    enum RqstResult {
+      REQUEST_PROCESSED,
+      RECEIVED_EOR,
+      CONNECTION_CLOSED_BY_PEER
     }; // enum 
 
     /**
@@ -69,9 +69,10 @@ namespace aggregator {
      * @param mode The tape access mode.
      * @param socketFd The file descriptor of the socket from which the message
      * should be read from.
-     * @return True if there is a possibility of more work to do, else false.
+     * @return The result of processing the request (REQUEST_PROCESSED,
+     * RECEIVED_EOR, CONNECTION_CLOSED_BY_PEER).
      */
-    RunResult run(const Cuuid_t &cuuid, const uint32_t volReqId,
+    RqstResult run(const Cuuid_t &cuuid, const uint32_t volReqId,
       const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
       const unsigned short gatewayPort, const uint32_t mode,
       const int socketFd) throw(castor::exception::Exception);
@@ -90,12 +91,14 @@ namespace aggregator {
      * @param header The already unmarshalled message header structure.
      * @param socketFd The file descriptor of the socket from which the message
      * body should be read from.
-     * @return True if there is a possibility of more work to do, else false.
+     * @return True if there is a possibility of more work in the future, else
+     * false.
      */
-    typedef RunResult (RtcpdBridgeProtocolEngine::*MsgBodyCallback) (const Cuuid_t &cuuid,
-       const uint32_t volReqId, const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
-       const unsigned short gatewayPort, const uint32_t mode,
-       const MessageHeader &header, const int socketFd);
+    typedef RqstResult (RtcpdBridgeProtocolEngine::*MsgBodyCallback)(
+      const Cuuid_t &cuuid, const uint32_t volReqId,
+      const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
+      const unsigned short gatewayPort, const uint32_t mode,
+      const MessageHeader &header, const int socketFd);
 
     /**
      * Datatype for the map of message body handlers.
@@ -118,10 +121,10 @@ namespace aggregator {
      * @param header The already unmarshalled message header structure.
      * @param socketFd The file descriptor of the socket from which the message
      * body should be read from.
-     * @return True if there is a possibility of more work to do, else false.
+     * @return True if there is a possibility of more work in the future, else
      */
-    RunResult rtcpFileReqCallback(const Cuuid_t &cuuid, const uint32_t volReqId,
-      const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
+    RqstResult rtcpFileReqCallback(const Cuuid_t &cuuid,
+      const uint32_t volReqId, const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
       const unsigned short gatewayPort, const uint32_t mode,
       const MessageHeader &header, const int socketFd)
       throw(castor::exception::Exception);
@@ -137,10 +140,10 @@ namespace aggregator {
      * @param header The already unmarshalled message header structure.
      * @param socketFd The file descriptor of the socket from which the message
      * body should be read from.
-     * @return True if there is a possibility of more work to do, else false.
+     * @return True if there is a possibility of more work in the future, else
      */
-    RunResult rtcpFileErrReqCallback(const Cuuid_t &cuuid, const uint32_t volReqId,
-      const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
+    RqstResult rtcpFileErrReqCallback(const Cuuid_t &cuuid,
+      const uint32_t volReqId, const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
       const unsigned short gatewayPort, const uint32_t mode,
       const MessageHeader &header, const int socketFd)
       throw(castor::exception::Exception);
@@ -156,10 +159,10 @@ namespace aggregator {
      * @param header The already unmarshalled message header structure.
      * @param socketFd The file descriptor of the socket from which the message
      * body should be read from.
-     * @return True if there is a possibility of more work to do, else false.
+     * @return True if there is a possibility of more work in the future, else
      */
-    RunResult rtcpTapeReqCallback(const Cuuid_t &cuuid, const uint32_t volReqId,
-      const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
+    RqstResult rtcpTapeReqCallback(const Cuuid_t &cuuid,
+      const uint32_t volReqId, const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
       const unsigned short gatewayPort, const uint32_t mode,
       const MessageHeader &header, const int socketFd)
       throw(castor::exception::Exception);
@@ -175,10 +178,10 @@ namespace aggregator {
      * @param header The already unmarshalled message header structure.
      * @param socketFd The file descriptor of the socket from which the message
      * body should be read from.
-     * @return True if there is a possibility of more work to do, else false.
+     * @return True if there is a possibility of more work in the future, else
      */
-    RunResult rtcpTapeErrReqCallback(const Cuuid_t &cuuid, const uint32_t volReqId,
-      const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
+    RqstResult rtcpTapeErrReqCallback(const Cuuid_t &cuuid,
+      const uint32_t volReqId, const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
       const unsigned short gatewayPort, const uint32_t mode,
       const MessageHeader &header, const int socketFd)
       throw(castor::exception::Exception);
@@ -194,10 +197,10 @@ namespace aggregator {
      * @param header The already unmarshalled message header structure.
      * @param socketFd The file descriptor of the socket from which the message
      * body should be read from.
-     * @return True if there is a possibility of more work to do, else false.
+     * @return True if there is a possibility of more work in the future, else
      */
-    RunResult rtcpEndOfReqCallback(const Cuuid_t &cuuid, const uint32_t volReqId,
-      const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
+    RqstResult rtcpEndOfReqCallback(const Cuuid_t &cuuid,
+      const uint32_t volReqId, const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
       const unsigned short gatewayPort, const uint32_t mode,
       const MessageHeader &header, const int socketFd)
       throw(castor::exception::Exception);

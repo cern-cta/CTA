@@ -41,6 +41,14 @@
 
 
 //-----------------------------------------------------------------------------
+// constructor
+//-----------------------------------------------------------------------------
+castor::tape::aggregator::BridgeProtocolEngine::BridgeProtocolEngine():
+  m_nbCallbackConnections(0) {
+}
+
+
+//-----------------------------------------------------------------------------
 // acceptRtcpdConnection
 //-----------------------------------------------------------------------------
 int castor::tape::aggregator::BridgeProtocolEngine::
@@ -49,6 +57,8 @@ int castor::tape::aggregator::BridgeProtocolEngine::
 
   SmartFd connectedSocketFd(Net::acceptConnection(rtcpdCallbackSocketFd,
     RTCPDPINGTIMEOUT));
+
+  m_nbCallbackConnections++;
 
   try {
     unsigned short port = 0; // Client port
@@ -59,16 +69,18 @@ int castor::tape::aggregator::BridgeProtocolEngine::
     Net::getPeerHostName(connectedSocketFd.get(), hostName);
 
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", volReqId                  ),
-      castor::dlf::Param("IP"      , castor::dlf::IPAddress(ip)),
-      castor::dlf::Param("Port"    , port                      ),
-      castor::dlf::Param("HostName", hostName                  ),
-      castor::dlf::Param("socketFd", connectedSocketFd.get()   )};
+      castor::dlf::Param("volReqId"             , volReqId                  ),
+      castor::dlf::Param("IP"                   , castor::dlf::IPAddress(ip)),
+      castor::dlf::Param("Port"                 , port                      ),
+      castor::dlf::Param("HostName"             , hostName                  ),
+      castor::dlf::Param("socketFd"             , connectedSocketFd.get()   ),
+      castor::dlf::Param("nbCallbackConnections", m_nbCallbackConnections   )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_RTCPD_CALLBACK_WITH_INFO, params);
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", volReqId)};
+      castor::dlf::Param("volReqId", volReqId),
+      castor::dlf::Param("nbCallbackConnections", m_nbCallbackConnections   )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_RTCPD_CALLBACK_WITHOUT_INFO, params);
   }
@@ -92,7 +104,6 @@ void castor::tape::aggregator::BridgeProtocolEngine::
   int selectErrno = 0;
   fd_set readFdSet;
   int maxFd = 0;
-  //int openConnections = 0;
   timeval timeout;
   RtcpdBridgeProtocolEngine rtcpdBridgeProtocolEngine;
 
@@ -108,8 +119,8 @@ void castor::tape::aggregator::BridgeProtocolEngine::
 
   try {
     // Select loop
-    castor::tape::aggregator::RtcpdBridgeProtocolEngine::RunResult continueMainSelectLoop = castor::tape::aggregator::RtcpdBridgeProtocolEngine::REQUEST_PROCESSED;
-    while(true)//continueMainSelectLoop != 2) 
+    bool continueRtcopySession = true;
+    while(continueRtcopySession)
     {
       // Build the file descriptor set ready for the select call
       FD_ZERO(&readFdSet);
@@ -126,29 +137,12 @@ void castor::tape::aggregator::BridgeProtocolEngine::
       timeout.tv_sec  = RTCPDPINGTIMEOUT;
       timeout.tv_usec = 0;
 
+      // See if any of the read file descriptors ready?
       selectRc = select(maxFd + 1, &readFdSet, NULL, NULL, &timeout);
       selectErrno = errno;
 
-
-         {
-           castor::dlf::Param params[] = {
-             castor::dlf::Param("====>SelectRc: ",selectRc )};
-           castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-             AGGREGATOR_NULL, params); 
-         }
-
-
-
       switch(selectRc) {
       case 0: // Select timed out
-
-         {
-           castor::dlf::Param params[] = {
-             castor::dlf::Param("====>PING: ",selectRc )};
-           castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-             AGGREGATOR_NULL, params);
-         }
-
 
         RtcpTxRx::pingRtcpd(cuuid, volReqId, rtcpdInitialSocketFd,
           RTCPDNETRWTIMEOUT);
@@ -170,72 +164,56 @@ void castor::tape::aggregator::BridgeProtocolEngine::
 
       default: // One or more select file descriptors require attention
 
-        int nbProcessed = 0;
+        int nbProcessedFds = 0;
 
-        // While all ready file descriptors have not been processed
-        while(nbProcessed < selectRc) {
+        // For each read file descriptor or until all ready file descriptors
+        // have been processed
+        for(std::list<int>::iterator itor=readFds.begin();
+          itor != readFds.end() && nbProcessedFds < selectRc; itor++) {
 
-          // For each read file descriptor or until all ready file descriptors
-          // have been processed
-          for(std::list<int>::iterator itor=readFds.begin();
-            itor != readFds.end() && nbProcessed < selectRc;
-            itor++) {
+          // If the read file descriptor is ready
+          if(FD_ISSET(*itor, &readFdSet)) {
 
-            // If the read file descriptor is ready
-            if(FD_ISSET(*itor, &readFdSet)) {
+            // If the file descriptor is that of the callback port
+            if(*itor == rtcpdCallbackSocketFd) {
 
-              // If the file descriptor is that of the callback port
-              if(*itor == rtcpdCallbackSocketFd) {
+              // Accept the connection and append its socket descriptor to
+              // the list of read file descriptors
+              readFds.push_back(acceptRtcpdConnection(cuuid, volReqId, 
+                rtcpdCallbackSocketFd));
 
-                // Accept the connection and append its socket descriptor to
-                // the list of read file descriptors
-                readFds.push_back(acceptRtcpdConnection(cuuid, volReqId, 
-                  rtcpdCallbackSocketFd));
-	/*{
-	openConnections++;
-	castor::dlf::Param params[] = {
-      	  castor::dlf::Param("--> Open connections(+1): ", openConnections   )};
-    	castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-     	  AGGREGATOR_NULL, params);
-	}*/
+              nbProcessedFds++;
 
-              // Else the file descriptor is that of a tape or disk IO
-              // connection
-              } else {
+            // Else the file descriptor is that of a tape/disk IO connection
+            } else {
 
-                continueMainSelectLoop = rtcpdBridgeProtocolEngine.run(cuuid,
-                  volReqId, gatewayHost, gatewayPort, mode, *itor);
+              const RtcpdBridgeProtocolEngine::RqstResult rqstResult =
+                rtcpdBridgeProtocolEngine.run(cuuid, volReqId, gatewayHost,
+                gatewayPort, mode, *itor);
 
-                 FD_CLR(*itor, &readFdSet);
+              // If the connection has been closed by RTCPD, then remove the
+              // file descriptor from the list of read file descriptors and
+              // close it
+              if(rqstResult == castor::tape::aggregator::
+                RtcpdBridgeProtocolEngine::CONNECTION_CLOSED_BY_PEER) {
+                close(readFds.release(*itor));
 
-                // If the connection is been closed by peer, remove the FD from 
-                // the list of read file descriptors and close it
-                if(continueMainSelectLoop == castor::tape::aggregator::RtcpdBridgeProtocolEngine::CONNECTION_CLOSED_BYPEER) {
-                  close(readFds.release(*itor));
-        /*{
-	openConnections--;  
-	castor::dlf::Param params[] = {
-          castor::dlf::Param("--> Open connections(-1): ", openConnections   )};
-        castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-          AGGREGATOR_NULL, params);
-	}*/
-                  {
-                    castor::dlf::Param params[] = {
-                      castor::dlf::Param("====>file descriptors that require attention: ", continueMainSelectLoop),
-                      castor::dlf::Param("socketFd"     , *itor )};
-                    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-                      AGGREGATOR_NULL, params);
-                    }
-                  }
-                }// if(continueMainSelectLoop..
+                m_nbCallbackConnections--;
 
-             // FD_CLR(*itor, &readFdSet);
-              nbProcessed++;
-            } // If the read file descriptor is ready
-          } // For each read file descriptor ...
-        } // While all ready file descriptors have not been processed
+                castor::dlf::Param params[] = {
+                  castor::dlf::Param("volReqId", volReqId),
+                  castor::dlf::Param("nbCallbackConnections",
+                    m_nbCallbackConnections)};
+                castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+                  AGGREGATOR_CONNECTION_CLOSED_BY_RTCPD, params);
+              } // If the connection has been closed by RTCPD
+
+              nbProcessedFds++;
+            } // Else the file descriptor is that of a tape/disk IO connection
+          } // If the read file descriptor is ready
+        } // For each read file descriptor ...
       } // switch(selectRc)
-    } // while(continueMainSelectLoop)
+    } // while(continueRtcopySession)
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId", volReqId             ),

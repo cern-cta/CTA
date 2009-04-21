@@ -42,6 +42,11 @@ class BridgeProtocolEngine {
 public:
 
   /**
+   * Constructor.
+   */
+  BridgeProtocolEngine();
+
+  /**
    * Act as a bridge between the tape gatway and RTCPD.
    *
    * @param cuuid The ccuid to be used for logging.
@@ -69,6 +74,11 @@ public:
 
 
 private:
+
+  /**
+   * The number of open callback connections.
+   */
+  uint32_t m_nbCallbackConnections;
 
   /**
    * Accepts an RTCPD connection using the specified listener socket.

@@ -45,7 +45,7 @@ private:
   /**
    * The current value of the counter.
    */
-  int32_t         m_count;
+  int32_t m_count;
 
   /**
    * Mutex used to make the counter thread-safe.
@@ -56,8 +56,17 @@ public:
 
   /**
    * Constructor
+   *
+   * @param count The initial value of the counter.
    */
   SynchronizedCounter(const int32_t count) throw(castor::exception::Exception);
+
+  /**
+   * Resets the counter to the specified value.
+   *
+   * @param count The new value of the counter.
+   */
+  void reset(const int32_t count) throw(castor::exception::Exception);
 
   /**
    * Increments the counter by 1 and returns the new value.
