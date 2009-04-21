@@ -37,7 +37,7 @@ if (!function_exists('ociplogon')) {
 	}
 }
 //include user account
-include("../../../conf/castor-mon-web");
+include("../../../conf/castor-mon-web/user.php");
 //This function matches a number with a colour. The bigger the number the more intense the colour 
 function decode($transactions) {
 	$i = 0;
