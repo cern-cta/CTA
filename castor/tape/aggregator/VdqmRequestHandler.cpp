@@ -182,10 +182,10 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
       // Note the call to run() sets the vsn to ""
       char vsn[CA_MAXVSNLEN+1];
       utils::setBytes(vsn, '\0');
-      BridgeProtocolEngine bridgeProtocolEngine;
-      bridgeProtocolEngine.run(cuuid, volReqId, gatewayHost, gatewayPort,
-        rtcpdCallbackSocketFd.get(), rtcpdInitialSocketFd.get(), mode, unit,
-        vid, vsn, label, density);
+      BridgeProtocolEngine bridgeProtocolEngine(cuuid, volReqId, gatewayHost,
+        gatewayPort, rtcpdCallbackSocketFd.get(), rtcpdInitialSocketFd.get(),
+        mode, unit, vid, vsn, label, density);
+      bridgeProtocolEngine.run();
     }
   } catch(castor::exception::Exception &ex) {
 

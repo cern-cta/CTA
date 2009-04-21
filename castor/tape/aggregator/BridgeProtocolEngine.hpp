@@ -26,6 +26,8 @@
 #define CASTOR_TAPE_AGGREGATOR_BRIDGEPROTOCOLENGINE
 
 #include "castor/exception/Exception.hpp"
+#include "castor/tape/aggregator/RtcpdBridgeProtocolEngine.hpp"
+#include "castor/tape/aggregator/SmartFdList.hpp"
 #include "h/Castor_limits.h"
 #include "h/Cuuid.h"
 
@@ -43,11 +45,6 @@ public:
 
   /**
    * Constructor.
-   */
-  BridgeProtocolEngine();
-
-  /**
-   * Act as a bridge between the tape gatway and RTCPD.
    *
    * @param cuuid The ccuid to be used for logging.
    * @param volReqId The volume request ID.
@@ -64,16 +61,94 @@ public:
    * @param label The volume label.
    * @param density The volume density.
    */
-  void run(const Cuuid_t &cuuid, const uint32_t volReqId,
+  BridgeProtocolEngine(const Cuuid_t &cuuid, const uint32_t volReqId,
     const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
     const unsigned short gatewayPort, const int rtcpdCallbackSocketFd,
     const int rtcpdInitialSocketFd, const uint32_t mode,
     char (&unit)[CA_MAXUNMLEN+1], const char (&vid)[CA_MAXVIDLEN+1],
     char (&vsn)[CA_MAXVSNLEN+1], const char (&label)[CA_MAXLBLTYPLEN+1],
-    const char (&density)[CA_MAXDENLEN+1]) throw(castor::exception::Exception);
+    const char (&density)[CA_MAXDENLEN+1]);
+
+  /**
+   * Process a session of one or more recalls.
+   */
+  void run() throw(castor::exception::Exception);
 
 
 private:
+
+  /**
+   * The ccuid to be used for logging.
+   */
+  const Cuuid_t &m_cuuid;
+
+  /**
+   * The volume request ID.
+   */
+  const uint32_t m_volReqId;
+
+  /**
+   * The tape gateway host name.
+   */
+  const char (&m_gatewayHost)[CA_MAXHOSTNAMELEN+1];
+
+  /**
+   * The tape gateway port number.
+   */
+  const unsigned short m_gatewayPort;
+
+  /**
+   * The file descriptor of the listener socket
+   * to be used to accept callback connections from RTCPD.
+   */
+  const int m_rtcpdCallbackSocketFd;
+
+  /**
+   * The socket file descriptor of initial RTCPD
+   * connection.
+   */
+  const int m_rtcpdInitialSocketFd;
+
+  /**
+   * The access mode.
+   */
+  const uint32_t m_mode;
+
+  /**
+   * The drive unit.
+   */
+  char (&m_unit)[CA_MAXUNMLEN+1];
+
+  /**
+   * The volume ID.
+   */
+  const char (&m_vid)[CA_MAXVIDLEN+1];
+
+  /**
+   * The volume serial number.
+   */
+  const char (&m_vsn)[CA_MAXVSNLEN+1];
+
+  /**
+   * The volume label.
+   */
+  const char (&m_label)[CA_MAXLBLTYPLEN+1];
+
+  /**
+   * The volume density.
+   */
+  const char (&m_density)[CA_MAXDENLEN+1];
+
+  /**
+   * The RTCPD driven component of the gateway/RTCPD bridge protocol engine.
+   */
+  RtcpdBridgeProtocolEngine m_rtcpdBridgeProtocolEngine;
+
+  /**
+   * The set of read RTCPD socket descriptors to be de-multiplexed by
+   * the BridgeProtocolEngine.
+   */
+  SmartFdList m_readFds;
 
   /**
    * The number of open callback connections.
@@ -82,15 +157,8 @@ private:
 
   /**
    * Accepts an RTCPD connection using the specified listener socket.
-   *
-   * @param cuuid The ccuid to be used for logging.
-   * @param volReqId The volume request ID.
-   * @param rtcpdCallbackSocketFd The file descriptor of the listener socket
-   * to be used to accept callback connections from RTCPD.
-   * @return The file descriptor of the accepted connection.
    */
-  int acceptRtcpdConnection(const Cuuid_t &cuuid, const uint32_t volReqId,
-    const int rtcpdCallbackSocketFd) throw(castor::exception::Exception);
+  int acceptRtcpdConnection() throw(castor::exception::Exception);
 
   /**
    * Processes the following RTCPD sockets:
@@ -99,21 +167,15 @@ private:
    * <li>The RTCPD callback listener socket
    * <li>The connected sockets of the tape and disk I/O threads
    * </ul>
-   *
-   * @param cuuid The ccuid to be used for logging.
-   * @param volReqId The volume request ID.
-   * @param gatewayHost The tape gateway host name.
-   * @param gatewayPort The tape gateway port number.
-   * @param mode The tape access mode.
-   * @param rtcpdCallbackSocketFd The file descriptor of the listener socket
-   * to be used to accept callback connections from RTCPD.
-   * @param rtcpdInitialSocketFd The socket file descriptor of initial RTCPD
-   * connection.
    */
-  void processRtcpdSockets(const Cuuid_t &cuuid, const uint32_t volReqId,
-    const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
-    const unsigned short gatewayPort, const uint32_t mode,
-    const int rtcpdCallbackSocketFd, const int rtcpdInitialSocketFd)
+  void processRtcpdSockets() throw(castor::exception::Exception);
+
+  /**
+   * Processes the specified RTCPD socket.
+   *
+   * @param socketFd The file descriptor of the socket to be processed.
+   */
+  void processRtcpdSocket(const int socketFd)
     throw(castor::exception::Exception);
 };
 

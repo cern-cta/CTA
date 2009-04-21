@@ -404,8 +404,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
   if(emulatedRecallCounter.next() <= 1){
     //volReqIdFromGateway = volReqId;
     utils::copyString(filePath,
-	"lxc2disk15.cern.ch:/srv/castor/01//86/320723286@c2itdcns.706042");
-       // "/castor/cern.ch/user/m/murrayc3/test_Thu_Apr_16_15_54_34_CEST_2009.txt");
+      "lxc2disk15.cern.ch:/srv/castor/01//86/320723286@c2itdcns.706042");
     utils::copyString(nsHost, "castorns");
     fileId      = 320723286;
     tapeFileSeq = 5;

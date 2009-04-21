@@ -46,9 +46,16 @@ namespace aggregator {
 
     /**
      * Constructor
+     *
+     * @param cuuid The cuuid of the request.
+     * @param volReqId The volume request ID.
+     * @param gatewayHost The tape gateway host name.
+     * @param gatewayPort The tape gateway port number.
+     * @param mode The tape access mode.
      */
-    RtcpdBridgeProtocolEngine() throw();
-
+    RtcpdBridgeProtocolEngine(const Cuuid_t &cuuid, const uint32_t volReqId,
+      const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
+      const unsigned short gatewayPort, const uint32_t mode) throw();
 
     /**
      * Result of processing an RTCPD request.
@@ -62,43 +69,56 @@ namespace aggregator {
     /**
      * Processes the specified request.
      *
-     * @param cuuid The cuuid of the request.
-     * @param volReqId The volume request ID.
-     * @param gatewayHost The tape gateway host name.
-     * @param gatewayPort The tape gateway port number.
-     * @param mode The tape access mode.
      * @param socketFd The file descriptor of the socket from which the message
      * should be read from.
      * @return The result of processing the request (REQUEST_PROCESSED,
      * RECEIVED_EOR, CONNECTION_CLOSED_BY_PEER).
      */
-    RqstResult run(const Cuuid_t &cuuid, const uint32_t volReqId,
-      const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
-      const unsigned short gatewayPort, const uint32_t mode,
-      const int socketFd) throw(castor::exception::Exception);
+    RqstResult run(const int socketFd) throw(castor::exception::Exception);
 
   private:
+
+    /**
+     * The cuuid of the request.
+     */
+    const Cuuid_t &m_cuuid;
+
+    /**
+     * The volume request ID.
+     */
+    const uint32_t m_volReqId;
+
+    /**
+     * The tape gateway host name.
+     */
+    const char (&m_gatewayHost)[CA_MAXHOSTNAMELEN+1];
+
+    /**
+     * The tape gateway port number.
+     */
+    const unsigned short m_gatewayPort;
+
+    /**
+     * The tape access mode.
+     */
+    const uint32_t m_mode;
+
+    /**
+     * The header of the RTCPD request.
+     */
+    MessageHeader m_header;
 
     /**
      * Pointer to a message body handler function, where the handler function
      * is a member of this class.
      *
-     * @param cuuid The cuuid of the request.
-     * @param volReqId The volume request ID.
-     * @param gatewayHost The tape gateway host name.
-     * @param gatewayPort The tape gateway port number.
-     * @param mode The tape access mode.
-     * @param header The already unmarshalled message header structure.
      * @param socketFd The file descriptor of the socket from which the message
-     * body should be read from.
+     * should be read from.
      * @return True if there is a possibility of more work in the future, else
      * false.
      */
     typedef RqstResult (RtcpdBridgeProtocolEngine::*MsgBodyCallback)(
-      const Cuuid_t &cuuid, const uint32_t volReqId,
-      const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
-      const unsigned short gatewayPort, const uint32_t mode,
-      const MessageHeader &header, const int socketFd);
+      const int socketFd);
 
     /**
      * Datatype for the map of message body handlers.
@@ -113,96 +133,46 @@ namespace aggregator {
     /**
      * RTCP_FILE_REQ message body handler.
      *
-     * @param cuuid The cuuid of the request.
-     * @param volReqId The volume request ID.
-     * @param gatewayHost The tape gateway host name.
-     * @param gatewayPort The tape gateway port number.
-     * @param mode The tape access mode.
-     * @param header The already unmarshalled message header structure.
-     * @param socketFd The file descriptor of the socket from which the message
-     * body should be read from.
-     * @return True if there is a possibility of more work in the future, else
+     * For full documenation please see the documentation of the type
+     * RtcpdBridgeProtocolEngine::MsgBodyCallback.
      */
-    RqstResult rtcpFileReqCallback(const Cuuid_t &cuuid,
-      const uint32_t volReqId, const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
-      const unsigned short gatewayPort, const uint32_t mode,
-      const MessageHeader &header, const int socketFd)
+    RqstResult rtcpFileReqCallback(const int socketFd)
       throw(castor::exception::Exception);
 
     /**
      * RTCP_FILEERR_REQ message body handler.
      *
-     * @param cuuid The cuuid of the request.
-     * @param volReqId The volume request ID.
-     * @param gatewayHost The tape gateway host name.
-     * @param gatewayPort The tape gateway port number.
-     * @param mode The tape access mode.
-     * @param header The already unmarshalled message header structure.
-     * @param socketFd The file descriptor of the socket from which the message
-     * body should be read from.
-     * @return True if there is a possibility of more work in the future, else
+     * For full documenation please see the documentation of the type
+     * RtcpdBridgeProtocolEngine::MsgBodyCallback.
      */
-    RqstResult rtcpFileErrReqCallback(const Cuuid_t &cuuid,
-      const uint32_t volReqId, const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
-      const unsigned short gatewayPort, const uint32_t mode,
-      const MessageHeader &header, const int socketFd)
+    RqstResult rtcpFileErrReqCallback(const int socketFd)
       throw(castor::exception::Exception);
 
     /**
      * RTCP_TAPEREQ message body handler.
      *
-     * @param cuuid The cuuid of the request.
-     * @param volReqId The volume request ID.
-     * @param gatewayHost The tape gateway host name.
-     * @param gatewayPort The tape gateway port number.
-     * @param mode The tape access mode.
-     * @param header The already unmarshalled message header structure.
-     * @param socketFd The file descriptor of the socket from which the message
-     * body should be read from.
-     * @return True if there is a possibility of more work in the future, else
+     * For full documenation please see the documentation of the type
+     * RtcpdBridgeProtocolEngine::MsgBodyCallback.
      */
-    RqstResult rtcpTapeReqCallback(const Cuuid_t &cuuid,
-      const uint32_t volReqId, const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
-      const unsigned short gatewayPort, const uint32_t mode,
-      const MessageHeader &header, const int socketFd)
+    RqstResult rtcpTapeReqCallback(const int socketFd)
       throw(castor::exception::Exception);
 
     /**
      * RTCP_TAPEERR message body handler.
      *
-     * @param cuuid The cuuid of the request.
-     * @param volReqId The volume request ID.
-     * @param gatewayHost The tape gateway host name.
-     * @param gatewayPort The tape gateway port number.
-     * @param mode The tape access mode.
-     * @param header The already unmarshalled message header structure.
-     * @param socketFd The file descriptor of the socket from which the message
-     * body should be read from.
-     * @return True if there is a possibility of more work in the future, else
+     * For full documenation please see the documentation of the type
+     * RtcpdBridgeProtocolEngine::MsgBodyCallback.
      */
-    RqstResult rtcpTapeErrReqCallback(const Cuuid_t &cuuid,
-      const uint32_t volReqId, const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
-      const unsigned short gatewayPort, const uint32_t mode,
-      const MessageHeader &header, const int socketFd)
+    RqstResult rtcpTapeErrReqCallback(const int socketFd)
       throw(castor::exception::Exception);
 
     /**
      * RTCP_ENDOF_REQ message body handler.
      *
-     * @param cuuid The cuuid of the request.
-     * @param volReqId The volume request ID.
-     * @param gatewayHost The tape gateway host name.
-     * @param gatewayPort The tape gateway port number.
-     * @param mode The tape access mode.
-     * @param header The already unmarshalled message header structure.
-     * @param socketFd The file descriptor of the socket from which the message
-     * body should be read from.
-     * @return True if there is a possibility of more work in the future, else
+     * For full documenation please see the documentation of the type
+     * RtcpdBridgeProtocolEngine::MsgBodyCallback.
      */
-    RqstResult rtcpEndOfReqCallback(const Cuuid_t &cuuid,
-      const uint32_t volReqId, const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
-      const unsigned short gatewayPort, const uint32_t mode,
-      const MessageHeader &header, const int socketFd)
+    RqstResult rtcpEndOfReqCallback(const int socketFd)
       throw(castor::exception::Exception);
 
   }; // class RtcpdBridgeProtocolEngine
