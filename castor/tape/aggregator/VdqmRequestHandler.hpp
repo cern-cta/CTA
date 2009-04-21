@@ -30,7 +30,6 @@
 #include "castor/tape/aggregator/MessageHeader.hpp"
 #include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
 #include "castor/tape/aggregator/SmartFdList.hpp"
-#include "castor/tape/aggregator/TapeDiskRqstHandler.hpp"
 #include "h/Cuuid.h"
 
 #include <list>

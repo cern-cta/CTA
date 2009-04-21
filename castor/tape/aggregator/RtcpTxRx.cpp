@@ -824,6 +824,38 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpMsgHeader(
 
 
 //-----------------------------------------------------------------------------
+// receiveRtcpMsgHeaderFromCloseableConn
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::RtcpTxRx::receiveRtcpMsgHeaderFromCloseable(
+  const Cuuid_t &cuuid,  bool &connClosed, const uint32_t volReqId, 
+  const int socketFd, const int netReadWriteTimeout, MessageHeader &header)
+  throw(castor::exception::Exception) {
+
+  // Read in the message header
+  char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
+  try {
+    Net::readBytesFromCloseable(connClosed, socketFd, RTCPDNETRWTIMEOUT, 
+      sizeof(headerBuf), headerBuf);
+  } catch (castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(SECOMERR,
+         ": Failed to read message header from RTCPD"
+      << ": " << ex.getMessage().str());
+  }
+
+  // Unmarshall the messager header
+  try {
+    const char *p           = headerBuf;
+    size_t     remainingLen = sizeof(headerBuf);
+    Marshaller::unmarshallMessageHeader(p, remainingLen, header);
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(EBADMSG,
+       ": Failed to unmarshall message header from RTCPD"
+       ": " << ex.getMessage().str());
+  }
+}
+
+
+//-----------------------------------------------------------------------------
 // receiveRtcpFileRqstErrBody
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::receiveRtcpFileRqstErrBody(

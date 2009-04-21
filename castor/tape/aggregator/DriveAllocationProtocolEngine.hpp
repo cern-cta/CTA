@@ -54,6 +54,10 @@ public:
    * @param vdqmSocket The socket of the VDQM connection.
    * @param rtcpdCallbackSocketFd The file descriptor of the listener socket
    * to be used to accept callback connections from RTCPD.
+   * @param rtcpdCallbackHost The host name of the listener socket to be used
+   * to accept callback connections from RTCPD.
+   * @param rtcpdCallbackPort The port number of the listener socket to be used
+   * to accept callback connections from RTCPD.
    * @param volReqId Out parameter: The volume request ID.
    * @param gatewayHost Out parameter: The tape gateway host name.
    * @param gatewayPort Out parameter: The tape gateway port number.
@@ -67,7 +71,8 @@ public:
    * @return True if there is a volume to mount.
    */
   bool run(const Cuuid_t &cuuid, castor::io::AbstractTCPSocket &vdqmSocket,
-    const int rtcpdCallbackSocketFd, uint32_t &volReqId,
+    const int rtcpdCallbackSocketFd, const char *rtcpdCallbackHost,
+    const unsigned short rtcpdCallbackPort, uint32_t &volReqId,
     char (&gatewayHost)[CA_MAXHOSTNAMELEN+1], unsigned short &gatewayPort,
     SmartFd &rtcpdInitialSocketFd, uint32_t &mode, char (&unit)[CA_MAXUNMLEN+1],
     char (&vid)[CA_MAXVIDLEN+1], char (&label)[CA_MAXLBLTYPLEN+1],

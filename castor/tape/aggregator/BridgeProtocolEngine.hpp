@@ -71,17 +71,6 @@ public:
 private:
 
   /**
-   * Processes an incomming error message on the initial RTCPD connection.
-   *
-   * @param cuuid The ccuid to be used for logging.
-   * @param volReqId The volume request ID.
-   * @param socketFd The socket file descriptor of initial RTCPD connection.
-   */
-  void processErrorOnInitialRtcpdConnection(const Cuuid_t &cuuid,
-    const uint32_t volReqId, const int socketFd)
-    throw(castor::exception::Exception);
-
-  /**
    * Accepts an RTCPD connection using the specified listener socket.
    *
    * @param cuuid The ccuid to be used for logging.

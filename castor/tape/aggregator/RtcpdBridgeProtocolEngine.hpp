@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/aggregator/TapeDiskRqstHandler.hpp
+ *                castor/tape/aggregator/RtcpdBridgeProtocolEngine.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_TAPEDISKRQSTHANDLER_HPP
-#define CASTOR_TAPE_AGGREGATOR_TAPEDISKRQSTHANDLER_HPP 1
+#ifndef CASTOR_TAPE_AGGREGATOR_RTCPDBRIDGEPROTOCOLENGINE_HPP
+#define CASTOR_TAPE_AGGREGATOR_RTCPDBRIDGEPROTOCOLENGINE_HPP 1
 
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/aggregator/MessageHeader.hpp"
@@ -38,16 +38,26 @@ namespace tape {
 namespace aggregator {
 
   /**
-   * Handles requests from the tape and disk IO threads of RTCPD.
+   * The RTCPD driven component of the gateway/RTCPD bridge protocol engine.
    */
-  class TapeDiskRqstHandler {
+  class RtcpdBridgeProtocolEngine {
 
   public:
 
     /**
      * Constructor
      */
-    TapeDiskRqstHandler() throw();
+    RtcpdBridgeProtocolEngine() throw();
+
+
+    /**
+     * Datatype for the map of message body handlers.
+     */
+    enum RunResult {
+      REQUEST_PROCESSED=0, /* "" */
+      RECEIVED_EOR=1,       /* "" */
+      CONNECTION_CLOSED_BYPEER=2   /* "" */
+    }; // enum 
 
     /**
      * Processes the specified request.
@@ -61,11 +71,10 @@ namespace aggregator {
      * should be read from.
      * @return True if there is a possibility of more work to do, else false.
      */
-    bool processRequest(const Cuuid_t &cuuid, const uint32_t volReqId,
+    RunResult run(const Cuuid_t &cuuid, const uint32_t volReqId,
       const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
       const unsigned short gatewayPort, const uint32_t mode,
       const int socketFd) throw(castor::exception::Exception);
-
 
   private:
 
@@ -83,7 +92,7 @@ namespace aggregator {
      * body should be read from.
      * @return True if there is a possibility of more work to do, else false.
      */
-    typedef bool (TapeDiskRqstHandler::*MsgBodyHandler) (const Cuuid_t &cuuid,
+    typedef RunResult (RtcpdBridgeProtocolEngine::*MsgBodyCallback) (const Cuuid_t &cuuid,
        const uint32_t volReqId, const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
        const unsigned short gatewayPort, const uint32_t mode,
        const MessageHeader &header, const int socketFd);
@@ -91,12 +100,12 @@ namespace aggregator {
     /**
      * Datatype for the map of message body handlers.
      */
-    typedef std::map<uint32_t, MsgBodyHandler> MsgBodyHandlerMap;
+    typedef std::map<uint32_t, MsgBodyCallback> MsgBodyCallbackMap;
 
     /**
      * Map of message body handlers.
      */
-    MsgBodyHandlerMap m_handlers;
+    MsgBodyCallbackMap m_handlers;
 
     /**
      * RTCP_FILE_REQ message body handler.
@@ -111,7 +120,7 @@ namespace aggregator {
      * body should be read from.
      * @return True if there is a possibility of more work to do, else false.
      */
-    bool rtcpFileReqHandler(const Cuuid_t &cuuid, const uint32_t volReqId,
+    RunResult rtcpFileReqCallback(const Cuuid_t &cuuid, const uint32_t volReqId,
       const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
       const unsigned short gatewayPort, const uint32_t mode,
       const MessageHeader &header, const int socketFd)
@@ -130,7 +139,7 @@ namespace aggregator {
      * body should be read from.
      * @return True if there is a possibility of more work to do, else false.
      */
-    bool rtcpFileErrReqHandler(const Cuuid_t &cuuid, const uint32_t volReqId,
+    RunResult rtcpFileErrReqCallback(const Cuuid_t &cuuid, const uint32_t volReqId,
       const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
       const unsigned short gatewayPort, const uint32_t mode,
       const MessageHeader &header, const int socketFd)
@@ -149,7 +158,7 @@ namespace aggregator {
      * body should be read from.
      * @return True if there is a possibility of more work to do, else false.
      */
-    bool rtcpTapeReqHandler(const Cuuid_t &cuuid, const uint32_t volReqId,
+    RunResult rtcpTapeReqCallback(const Cuuid_t &cuuid, const uint32_t volReqId,
       const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
       const unsigned short gatewayPort, const uint32_t mode,
       const MessageHeader &header, const int socketFd)
@@ -168,7 +177,7 @@ namespace aggregator {
      * body should be read from.
      * @return True if there is a possibility of more work to do, else false.
      */
-    bool rtcpTapeErrReqHandler(const Cuuid_t &cuuid, const uint32_t volReqId,
+    RunResult rtcpTapeErrReqCallback(const Cuuid_t &cuuid, const uint32_t volReqId,
       const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
       const unsigned short gatewayPort, const uint32_t mode,
       const MessageHeader &header, const int socketFd)
@@ -187,16 +196,16 @@ namespace aggregator {
      * body should be read from.
      * @return True if there is a possibility of more work to do, else false.
      */
-    bool rtcpEndOfReqHandler(const Cuuid_t &cuuid, const uint32_t volReqId,
+    RunResult rtcpEndOfReqCallback(const Cuuid_t &cuuid, const uint32_t volReqId,
       const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
       const unsigned short gatewayPort, const uint32_t mode,
       const MessageHeader &header, const int socketFd)
       throw(castor::exception::Exception);
 
-  }; // class TapeDiskRqstHandler
+  }; // class RtcpdBridgeProtocolEngine
 
 } // namespace aggregator
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_TAPEDISKRQSTHANDLER_HPP
+#endif // CASTOR_TAPE_AGGREGATOR_RTCPDBRIDGEPROTOCOLENGINE_HPP

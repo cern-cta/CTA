@@ -36,6 +36,20 @@ namespace castor     {
 namespace tape       {
 namespace aggregator {
 
+
+class EmulateGiulia {
+
+private:
+  uint32_t        m_count;
+  pthread_mutex_t m_mutex;
+
+public:
+  EmulateGiulia();
+
+  uint32_t next();
+};
+
+
 /**
  * Provides functions for sending and receiving the messages of the tape
  * gateway/aggregator protocol.

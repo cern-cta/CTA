@@ -40,8 +40,9 @@
 //-----------------------------------------------------------------------------
 // createListenerSocket
 //-----------------------------------------------------------------------------
-int castor::tape::aggregator::Net::createListenerSocket(
+int castor::tape::aggregator::Net::createListenerSocket(const char *addr,
   const unsigned short port) throw(castor::exception::Exception) {
+
   int    socketFd = 0;
   struct sockaddr_in address;
 
@@ -52,7 +53,7 @@ int castor::tape::aggregator::Net::createListenerSocket(
 
   Utils::setBytes(address, '\0');
   address.sin_family = AF_INET;
-  address.sin_addr.s_addr = htonl(INADDR_ANY);
+  address.sin_addr.s_addr = inet_addr(addr);
   address.sin_port = htons(port);
 
   if(bind(socketFd, (struct sockaddr *) &address, sizeof(address)) < 0) {
@@ -191,9 +192,9 @@ int castor::tape::aggregator::Net::acceptConnection(
 
 
 //-----------------------------------------------------------------------------
-// getSocketIpAndPort
+// getSocketIpPort
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Net::getSocketIpAndPort(const int socketFd,
+void castor::tape::aggregator::Net::getSocketIpPort(const int socketFd,
   unsigned long& ip, unsigned short& port)
   throw(castor::exception::Exception) {
 
@@ -218,9 +219,9 @@ void castor::tape::aggregator::Net::getSocketIpAndPort(const int socketFd,
 
 
 //-----------------------------------------------------------------------------
-// getPeerIpAndPort
+// getPeerIpPort
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Net::getPeerIpAndPort(const int socketFd,
+void castor::tape::aggregator::Net::getPeerIpPort(const int socketFd,
   unsigned long& ip, unsigned short& port)
   throw(castor::exception::Exception) {
 
@@ -277,6 +278,43 @@ void castor::tape::aggregator::Net::getSocketHostName(const int socketFd,
   }
 
   Utils::copyString(buf, hostName, len);
+}
+
+
+//------------------------------------------------------------------------------
+// getSocketIpHostnamePort
+//------------------------------------------------------------------------------
+void castor::tape::aggregator::Net::getSocketIpHostnamePort(const int socketFd,
+  unsigned long& ip, char *hostName, size_t hostNameLen,
+  unsigned short& port) throw(castor::exception::Exception) {
+
+  struct sockaddr_in address;
+  socklen_t addressLen = sizeof(address);
+
+  if(getsockname(socketFd, (struct sockaddr*)&address, &addressLen) < 0) {
+    const int getsocknameErrno = errno;
+
+    char strerrorBuf[STRERRORBUFLEN];
+    char *const errorStr = strerror_r(getsocknameErrno, strerrorBuf,
+      sizeof(strerrorBuf));
+
+    TAPE_THROW_CODE(getsocknameErrno,
+      ": Failed to get socket name"
+      ": " << errorStr);
+  }
+
+  ip   = ntohl(address.sin_addr.s_addr);
+  port = ntohs(address.sin_port);
+
+  char serviceName[SERVICENAMEBUFLEN];
+  const int error = getnameinfo((const struct sockaddr*)&address, addressLen,
+    hostName, hostNameLen, serviceName, sizeof(serviceName), 0);
+
+  if(error != 0) {
+    TAPE_THROW_CODE(SENOSHOST,
+      ": Failed to get host information by address"
+      ": " << gai_strerror(error));
+  }
 }
 
 
@@ -339,14 +377,14 @@ void castor::tape::aggregator::Net::printSocketDescription(std::ostream &os,
   unsigned short peerPort  = 0;
 
   try {
-    getSocketIpAndPort(socketFd, localIp, localPort);
+    getSocketIpPort(socketFd, localIp, localPort);
   } catch(castor::exception::Exception &e) {
     localIp   = 0;
     localPort = 0;
   }
 
   try {
-    getPeerIpAndPort(socketFd, peerIp, peerPort);
+    getPeerIpPort(socketFd, peerIp, peerPort);
   } catch(castor::exception::Exception &e) {
     peerIp   = 0;
     peerPort = 0;
@@ -368,6 +406,34 @@ void castor::tape::aggregator::Net::readBytes(const int socketFd,
   const int netReadWriteTimeout, const int nbBytes, char *buf)
   throw(castor::exception::Exception) {
 
+  bool connClosed = false;
+
+  readBytesFromCloseable(connClosed, socketFd, netReadWriteTimeout, nbBytes,
+    buf);
+
+  if(connClosed) {
+    std::stringstream messageStream;
+    messageStream
+      << "Failed to read " << nbBytes << " bytes from socket"
+         ": ";
+    printSocketDescription(messageStream, socketFd);
+    messageStream
+      << ": Connection was closed by the remote end";
+
+    TAPE_THROW_CODE(SECONNDROP,
+      messageStream.str());
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// readBytesFromCloseable
+//------------------------------------------------------------------------------
+void castor::tape::aggregator::Net::readBytesFromCloseable(bool &connClosed, 
+  const int socketFd, const int netReadWriteTimeout, const int nbBytes, 
+  char *buf) throw(castor::exception::Exception) {
+
+  connClosed = false;
   const int netreadRc = netread_timeout(socketFd, buf, nbBytes,
     netReadWriteTimeout);
   const int netreadErrno = errno;
@@ -390,19 +456,12 @@ void castor::tape::aggregator::Net::readBytes(const int socketFd,
       TAPE_THROW_CODE(serrno,
         messageStream.str());
     }
+    break;
   case 0:
     {
-      std::stringstream messageStream;
-      messageStream
-        << "Failed to read " << nbBytes << " bytes from socket"
-           ": ";
-      printSocketDescription(messageStream, socketFd);
-      messageStream
-        << ": Connection was closed by the remote end";
-
-      TAPE_THROW_CODE(SECONNDROP,
-        messageStream.str());
+      connClosed = true;
     }
+    break;
   default:
     if (netreadRc != nbBytes) {
 

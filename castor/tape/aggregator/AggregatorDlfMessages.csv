@@ -68,3 +68,4 @@
 67,AGGREGATOR_SENT_ACK_TO_RTCPD,"Sent acknowledge to RTCPD"
 68,AGGREGATOR_RECEIVE_TAPERQSTERRBODY,"Receiving tape request message body with error appendix"
 69,AGGREGATOR_RECEIVED_TAPERQSTERRBODY,"Received tape request message body witherror appendix"
+70,AGGREGATOR_CREATED_RTCPD_CALLBACK_PORT,"Created TCP/IP port for RTCPD callbacks"

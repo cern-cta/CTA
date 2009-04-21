@@ -78,11 +78,11 @@ AGGREGATORBIN_SRCS = \
   Net.cpp \
   Packer.cpp \
   RcpJobSubmitter.cpp \
-  Unpacker.cpp \
+  RtcpdBridgeProtocolEngine.cpp \
   RtcpTxRx.cpp \
   SmartFd.cpp \
   SmartFdList.cpp \
-  TapeDiskRqstHandler.cpp \
+  Unpacker.cpp \
   Utils.cpp \
   VdqmRequestHandler.cpp \
   $(TAPEGATEWAY_MESSAGES_SRCS) \

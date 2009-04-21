@@ -79,37 +79,35 @@ void castor::tape::aggregator::DriveAllocationProtocolEngine::
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
   const Cuuid_t &cuuid, castor::io::AbstractTCPSocket &vdqmSocket,
-  const int rtcpdCallbackSocketFd, uint32_t &volReqId,
+  const int rtcpdCallbackSocketFd, const char *rtcpdCallbackHost,
+  const unsigned short rtcpdCallbackPort, uint32_t &volReqId,
   char (&gatewayHost)[CA_MAXHOSTNAMELEN+1], unsigned short &gatewayPort,
-  SmartFd &rtcpdInitialSocketFd, uint32_t &mode, char (&unit)[CA_MAXUNMLEN+1],    char (&vid)[CA_MAXVIDLEN+1], char (&label)[CA_MAXLBLTYPLEN+1],
+  SmartFd &rtcpdInitialSocketFd, uint32_t &mode, char (&unit)[CA_MAXUNMLEN+1],
+  char (&vid)[CA_MAXVIDLEN+1], char (&label)[CA_MAXLBLTYPLEN+1],
   char (&density)[CA_MAXDENLEN+1]) throw(castor::exception::Exception) {
-
+  
   RcpJobRqstMsgBody jobRequest;
-
+  
   Utils::setBytes(jobRequest, '\0');
-
+  
   checkRcpJobSubmitterIsAuthorised(vdqmSocket.socket());
-
+  
   RtcpTxRx::receiveRcpJobRqst(cuuid, vdqmSocket.socket(), RTCPDNETRWTIMEOUT,
     jobRequest);
-
-  // Extract the volume request ID
+    
+  // Extract the volume request ID, gateway host and gateway port
   volReqId = jobRequest.tapeRequestId;
-
-  // Get the IP and port of the RTCPD callback socket
-  unsigned long  rtcpdCallbackSocketIp   = 0;
-  unsigned short rtcpdCallbackSocketPort = 0;
-  Net::getSocketIpAndPort(rtcpdCallbackSocketFd, rtcpdCallbackSocketIp,
-    rtcpdCallbackSocketPort);
-  char rtcpdCallbackHostName[HOSTNAMEBUFLEN];
-  Net::getSocketHostName(rtcpdCallbackSocketFd, rtcpdCallbackHostName);
-
+  Utils::copyString(gatewayHost, jobRequest.clientHost);
+  gatewayPort = jobRequest.clientPort;
+  
   // Pass a modified version of the job request through to RTCPD, setting the
   // clientHost and clientPort parameters to identify the tape aggregator as
   // being a proxy for RTCPClientD
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", jobRequest.tapeRequestId)};
+      castor::dlf::Param("volReqId", jobRequest.tapeRequestId),
+      castor::dlf::Param("Port"    , rtcpdCallbackPort),
+      castor::dlf::Param("HostName", rtcpdCallbackHost)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_SUBMITTING_JOB_TO_RTCPD, params);
   }
@@ -122,8 +120,8 @@ bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
     "RTCPD",                   // remoteCopyType
     jobRequest.tapeRequestId,
     jobRequest.clientUserName,
-    rtcpdCallbackHostName,
-    rtcpdCallbackSocketPort,
+    rtcpdCallbackHost,
+    rtcpdCallbackPort,
     jobRequest.clientEuid,
     jobRequest.clientEgid,
     jobRequest.deviceGroupName,
@@ -168,7 +166,6 @@ bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
   // If RTCPD returned an error message then it will not make a callback
   // connection and the aggregator should not continue any further
   if(strlen(rtcpdReply.errorMessage) > 0) {
-
     // A volume was not received from the tape gateway
     return false;
   }
@@ -185,7 +182,7 @@ bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
     unsigned long  ip   = 0; // Client IP
     char           hostName[HOSTNAMEBUFLEN];
 
-    Net::getPeerIpAndPort(rtcpdInitialSocketFd.get(), ip, port);
+    Net::getPeerIpPort(rtcpdInitialSocketFd.get(), ip, port);
     Net::getPeerHostName(rtcpdInitialSocketFd.get(), hostName);
 
     castor::dlf::Param params[] = {

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      TapeDiskRqstHandler.cpp
+ *                      RtcpdBridgeProtocolEngine.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -30,7 +30,7 @@
 #include "castor/tape/aggregator/RtcpFileRqstMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpTapeRqstErrMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpTapeRqstMsgBody.hpp"
-#include "castor/tape/aggregator/TapeDiskRqstHandler.hpp"
+#include "castor/tape/aggregator/RtcpdBridgeProtocolEngine.hpp"
 #include "castor/tape/aggregator/RtcpTxRx.hpp"
 #include "castor/tape/aggregator/Utils.hpp"
 #include "h/Ctape_constants.h"
@@ -42,22 +42,23 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::aggregator::TapeDiskRqstHandler::TapeDiskRqstHandler()
+castor::tape::aggregator::RtcpdBridgeProtocolEngine::RtcpdBridgeProtocolEngine()
   throw() {
 
   // Build the map of message body handlers
-  m_handlers[RTCP_FILE_REQ]    = &TapeDiskRqstHandler::rtcpFileReqHandler;
-  m_handlers[RTCP_FILEERR_REQ] = &TapeDiskRqstHandler::rtcpFileErrReqHandler;
-  m_handlers[RTCP_TAPE_REQ]    = &TapeDiskRqstHandler::rtcpTapeReqHandler;
-  m_handlers[RTCP_TAPEERR_REQ] = &TapeDiskRqstHandler::rtcpTapeErrReqHandler;
-  m_handlers[RTCP_ENDOF_REQ]   = &TapeDiskRqstHandler::rtcpEndOfReqHandler;
+  m_handlers[RTCP_FILE_REQ]    = &RtcpdBridgeProtocolEngine::rtcpFileReqCallback;
+  m_handlers[RTCP_FILEERR_REQ] = &RtcpdBridgeProtocolEngine::rtcpFileErrReqCallback;
+  m_handlers[RTCP_TAPE_REQ]    = &RtcpdBridgeProtocolEngine::rtcpTapeReqCallback;
+  m_handlers[RTCP_TAPEERR_REQ] = &RtcpdBridgeProtocolEngine::rtcpTapeErrReqCallback;
+  m_handlers[RTCP_ENDOF_REQ]   = &RtcpdBridgeProtocolEngine::rtcpEndOfReqCallback;
 }
 
 
 //-----------------------------------------------------------------------------
-// processRequest
+// run
 //-----------------------------------------------------------------------------
-bool castor::tape::aggregator::TapeDiskRqstHandler::processRequest(
+castor::tape::aggregator::RtcpdBridgeProtocolEngine::RunResult 
+  castor::tape::aggregator::RtcpdBridgeProtocolEngine::run(
   const Cuuid_t &cuuid, const uint32_t volReqId,
   const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
   const unsigned short gatewayPort,const uint32_t mode, const int socketFd)
@@ -130,10 +131,15 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::processRequest(
   return true;
 }
 */
+  bool          connClosed = false;
   MessageHeader header;
 
-  RtcpTxRx::receiveRtcpMsgHeader(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT,
-    header);
+  RtcpTxRx::receiveRtcpMsgHeaderFromCloseable(cuuid, connClosed, volReqId,
+    socketFd, RTCPDNETRWTIMEOUT, header);
+
+  if(connClosed) {
+    return CONNECTION_CLOSED_BYPEER; // PROBABLY WRONG - PROBABLY NEED TO COUNT SOMETHING
+  }
 
   {
     char magicHex[2 + 17]; // 0 + x + FFFFFFFFFFFFFFFF + '\0'
@@ -163,12 +169,12 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::processRequest(
   }
 
   // Find the message type's corresponding handler
-  MsgBodyHandlerMap::iterator itor = m_handlers.find(header.reqType);
+  MsgBodyCallbackMap::iterator itor = m_handlers.find(header.reqType);
   if(itor == m_handlers.end()) {
     TAPE_THROW_CODE(EBADMSG,
       ": Unknown request type: 0x" << header.reqType);
   }
-  const MsgBodyHandler handler = itor->second;
+  const MsgBodyCallback handler = itor->second;
 
   // Invoke the handler
   return (this->*handler)(cuuid, volReqId, gatewayHost, gatewayPort, mode,
@@ -177,16 +183,17 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::processRequest(
 
 
 //-----------------------------------------------------------------------------
-// rtcpFileReqHandler
+// rtcpFileReqCallback
 //-----------------------------------------------------------------------------
-bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
+castor::tape::aggregator::RtcpdBridgeProtocolEngine::RunResult
+  castor::tape::aggregator::RtcpdBridgeProtocolEngine::rtcpFileReqCallback(
   const Cuuid_t &cuuid, const uint32_t volReqId,
   const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
   const unsigned short gatewayPort, const uint32_t mode,
   const MessageHeader &header, const int socketFd)
   throw(castor::exception::Exception) {
 
-  bool thereIsMoreWork = true;
+  RunResult result = REQUEST_PROCESSED;          // <<=====
 
   RtcpFileRqstMsgBody body;
 
@@ -260,7 +267,7 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
         RtcpTxRx::tellRtcpdEndOfFileList(cuuid, volReqId, socketFd,
           RTCPDNETRWTIMEOUT);
 
-        thereIsMoreWork = false;
+        result = REQUEST_PROCESSED;
       }
 
     // Else recalling
@@ -308,7 +315,15 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
 
 	RtcpTxRx::tellRtcpdEndOfFileList(cuuid, volReqId, socketFd,
           RTCPDNETRWTIMEOUT);
-
+      
+        // Asynchronus Request More Work ACK 
+        RtcpAcknowledgeMsg ackMsg;
+        ackMsg.magic   = RTCOPY_MAGIC;
+        ackMsg.reqType = RTCP_FILE_REQ;
+        ackMsg.status  = 0;
+        RtcpTxRx::sendRtcpAcknowledge(cuuid, volReqId, socketFd, 
+          RTCPDNETRWTIMEOUT,ackMsg);
+        
       // Else there is no file to recall
       } else {
 
@@ -323,7 +338,15 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
         RtcpTxRx::tellRtcpdEndOfFileList(cuuid, volReqId, socketFd,
           RTCPDNETRWTIMEOUT);
 
-        thereIsMoreWork = false;
+        // Asynchronus Request More Work ACK 
+        RtcpAcknowledgeMsg ackMsg;
+        ackMsg.magic   = RTCOPY_MAGIC;
+        ackMsg.reqType = RTCP_FILE_REQ;
+        ackMsg.status  = 0;
+        RtcpTxRx::sendRtcpAcknowledge(cuuid, volReqId, socketFd, 
+          RTCPDNETRWTIMEOUT,ackMsg);
+
+        result = REQUEST_PROCESSED;
       }
     } // Else recalling
     break;
@@ -331,7 +354,7 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
     {
       castor::dlf::Param params[] = {
         castor::dlf::Param("volReqId", volReqId),
-        castor::dlf::Param("filePath", "lxc2disk07:/dev/null"),
+        castor::dlf::Param("filePath", body.filePath),
         castor::dlf::Param("tapePath", body.tapePath)};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
         AGGREGATOR_TAPE_POSITIONED_FILE_REQ, params);
@@ -348,7 +371,7 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
     {
       castor::dlf::Param params[] = {
         castor::dlf::Param("volReqId", volReqId),
-        castor::dlf::Param("filePath", "lxc2disk07:/dev/null"),
+        castor::dlf::Param("filePath", body.filePath),
         castor::dlf::Param("tapePath", body.tapePath)};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
         AGGREGATOR_FILE_TRANSFERED, params);
@@ -378,14 +401,16 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileReqHandler(
     }
   }
 
-  return thereIsMoreWork;
+  //return result;
+  return REQUEST_PROCESSED;
 }
 
 
 //-----------------------------------------------------------------------------
-// rtcpFileErrReqHandler
+// rtcpFileErrReqCallback
 //-----------------------------------------------------------------------------
-bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileErrReqHandler(
+castor::tape::aggregator::RtcpdBridgeProtocolEngine::RunResult 
+  castor::tape::aggregator::RtcpdBridgeProtocolEngine::rtcpFileErrReqCallback(
   const Cuuid_t &cuuid, const uint32_t volReqId,
   const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
   const unsigned short gatewayPort, const uint32_t mode,
@@ -410,9 +435,10 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpFileErrReqHandler(
 
 
 //-----------------------------------------------------------------------------
-// rtcpTapeReqHandler
+// rtcpTapeReqCallback
 //-----------------------------------------------------------------------------
-bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpTapeReqHandler(
+castor::tape::aggregator::RtcpdBridgeProtocolEngine::RunResult 
+  castor::tape::aggregator::RtcpdBridgeProtocolEngine::rtcpTapeReqCallback(
   const Cuuid_t &cuuid, const uint32_t volReqId,
   const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
   const unsigned short gatewayPort, const uint32_t mode,
@@ -438,14 +464,15 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpTapeReqHandler(
     ackMsg);
 
   // There is a possibility of more work
-  return true;
+  return REQUEST_PROCESSED;
 }
 
 
 //-----------------------------------------------------------------------------
-// rtcpTapeErrReqHandler
+// rtcpTapeErrReqCallback
 //-----------------------------------------------------------------------------
-bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpTapeErrReqHandler(
+castor::tape::aggregator::RtcpdBridgeProtocolEngine::RunResult 
+  castor::tape::aggregator::RtcpdBridgeProtocolEngine::rtcpTapeErrReqCallback(
   const Cuuid_t &cuuid, const uint32_t volReqId,
   const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
   const unsigned short gatewayPort, const uint32_t mode,
@@ -547,14 +574,15 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpTapeErrReqHandler(
 }
 */
   // There is a possibility of more work
-  return true;
+  return REQUEST_PROCESSED;
 }
 
 
 //-----------------------------------------------------------------------------
-// rtcpEndOfReqHandler
+// rtcpEndOfReqCallback
 //-----------------------------------------------------------------------------
-bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpEndOfReqHandler(
+castor::tape::aggregator::RtcpdBridgeProtocolEngine::RunResult 
+  castor::tape::aggregator::RtcpdBridgeProtocolEngine::rtcpEndOfReqCallback(
   const Cuuid_t &cuuid, const uint32_t volReqId,
   const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
   const unsigned short gatewayPort, const uint32_t mode,
@@ -574,5 +602,7 @@ bool castor::tape::aggregator::TapeDiskRqstHandler::rtcpEndOfReqHandler(
     ackMsg);
 
   // There is no more work
-  return false;
+  //return false;
+
+  return RECEIVED_EOR;
 }

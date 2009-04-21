@@ -181,6 +181,14 @@ public:
   /**
    * Receives a message header.
    *
+   * This operation assumes that all of the bytes can be read in.  Failure
+   * to read in all the bytes or a closed connection will result in an
+   * exception being thrown.
+   *
+   * If it is normal that the connection can be closed by the peer, for
+   * example you are using select, then please use
+   * receiveRtcpMsgHeaderFromCloseableConn().
+   *
    * @param cuuid The ccuid to be used for logging.
    * @param volReqId The volume request ID to be sent to the tape gateway.
    * @param socketFd The socket file descriptor of the connection with RTCPD.
@@ -192,6 +200,24 @@ public:
   static void receiveRtcpMsgHeader(const Cuuid_t &cuuid,
     const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout,
     MessageHeader &header) throw(castor::exception::Exception);
+
+  /**
+   * Receives a message header or a connection close message.
+   *
+   * @param cuuid The ccuid to be used for logging.
+   * @param connClosed Output parameter: True if the connection was closed by
+   * the peer.
+   * @param volReqId The volume request ID to be sent to the tape gateway.
+   * @param socketFd The socket file descriptor of the connection with RTCPD.
+   * @param netReadWriteTimeout The timeout to be applied when performing
+   * network read and write operations.
+   * @param request The request which will be filled with the contents of the
+   * received message.
+   */
+  static void receiveRtcpMsgHeaderFromCloseable(const Cuuid_t &cuuid,
+    bool &connClosed, const uint32_t volReqId, const int socketFd,
+    const int netReadWriteTimeout, MessageHeader &header) 
+    throw(castor::exception::Exception);
 
   /**
    * Receives the body of an RTCPD file request with error appendix message

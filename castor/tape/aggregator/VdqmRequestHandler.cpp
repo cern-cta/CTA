@@ -99,7 +99,7 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
     unsigned long  ip   = 0; // Client IP
     char           hostName[HOSTNAMEBUFLEN];
 
-    Net::getPeerIpAndPort(vdqmSocket->socket(), ip, port);
+    Net::getPeerIpPort(vdqmSocket->socket(), ip, port);
     Net::getPeerHostName(vdqmSocket->socket(), hostName);
 
     castor::dlf::Param params[] = {
@@ -121,7 +121,22 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
     // Create, bind and mark a listen socket for RTCPD callback connections
     // Wrap the socket file descriptor in a smart file descriptor so that it is
     // guaranteed to be closed when it goes out of scope.
-    SmartFd rtcpdCallbackSocketFd(Net::createListenerSocket(0));
+    SmartFd rtcpdCallbackSocketFd(Net::createListenerSocket("127.0.0.1",0));
+
+    // Get the IP, host name and port of the callback port
+    unsigned long rtcpdCallbackIp = 0;
+    char rtcpdCallbackHost[HOSTNAMEBUFLEN];
+    Utils::setBytes(rtcpdCallbackHost, '\0');
+    unsigned short rtcpdCallbackPort = 0;
+    Net::getSocketIpHostnamePort(rtcpdCallbackSocketFd.get(),
+    rtcpdCallbackIp, rtcpdCallbackHost, rtcpdCallbackPort);
+
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("IP"      , castor::dlf::IPAddress(rtcpdCallbackIp)),
+      castor::dlf::Param("Port"    , rtcpdCallbackPort),
+      castor::dlf::Param("HostName", rtcpdCallbackHost)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_CREATED_RTCPD_CALLBACK_PORT, params);
 
     uint32_t volReqId = 0;
     char gatewayHost[CA_MAXHOSTNAMELEN+1];
@@ -141,8 +156,9 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
     DriveAllocationProtocolEngine driveAllocationProtocolEngine;
 
     driveAllocationProtocolEngine.run(cuuid, *(vdqmSocket.get()),
-      rtcpdCallbackSocketFd.get(), volReqId, gatewayHost, gatewayPort,
-      rtcpdInitialSocketFd, mode, unit, vid, label, density);
+      rtcpdCallbackSocketFd.get(), rtcpdCallbackHost, rtcpdCallbackPort,
+      volReqId, gatewayHost, gatewayPort, rtcpdInitialSocketFd, mode, unit,
+      vid, label, density);
 
     // If the volume has the aggregation format
     if(strcmp(label, "ALB") == 0) {

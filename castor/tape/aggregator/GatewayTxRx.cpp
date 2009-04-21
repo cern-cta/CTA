@@ -42,6 +42,29 @@
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
 
+#include <pthread.h>
+
+static castor::tape::aggregator::EmulateGiulia emulateRecallCounter;
+
+//-----------------------------------------------------------------------------
+// constructor
+//-----------------------------------------------------------------------------
+castor::tape::aggregator::EmulateGiulia::EmulateGiulia() :
+  m_count(0) {
+  pthread_mutex_init( &m_mutex, NULL );
+}
+
+//-----------------------------------------------------------------------------
+// next
+//-----------------------------------------------------------------------------
+uint32_t castor::tape::aggregator::EmulateGiulia::next() {
+
+  int status = pthread_mutex_lock(&m_mutex);
+  uint32_t result = ++m_count;
+  status = pthread_mutex_unlock(&m_mutex);
+
+  return(result);
+}
 
 //-----------------------------------------------------------------------------
 // getVolumeFromGateway
@@ -73,10 +96,10 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
 #ifdef EMULATE_GATEWAY
 
   //volReqIdFromGateway = volReqId;
-  Utils::copyString(vid,     "I10550");
+  Utils::copyString(vid,     "I02000");
   mode = 0;
   Utils::copyString(label,   "aul");
-  Utils::copyString(density, "700GC");
+  Utils::copyString(density, "1000GC");
   return(true);
 
 #endif
@@ -392,18 +415,24 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
 // Hardcoded volume INFO
 #ifdef EMULATE_GATEWAY
 
-  //volReqIdFromGateway = volReqId;
-  Utils::copyString(filePath,
-      "lxc2disk15.cern.ch:/srv/castor/04//84/305892484@castorns.350761");
-  Utils::copyString(nsHost, "castorns");
-  fileId      = 305892484;
-  tapeFileSeq = 123;
-  blockId[0]  = 0;
-  blockId[1]  = 0;
-  blockId[2]  = 4;
-  blockId[3]  = 197;
-  positionCommandCode = 3; // TPPOSIT_BLKID
-  return(true);
+  if(emulateRecallCounter.next() <= 1){
+    //volReqIdFromGateway = volReqId;
+    Utils::copyString(filePath,
+	"lxc2disk15.cern.ch:/srv/castor/01//86/320723286@c2itdcns.706042");
+       // "/castor/cern.ch/user/m/murrayc3/test_Thu_Apr_16_15_54_34_CEST_2009.txt");
+    Utils::copyString(nsHost, "castorns");
+    fileId      = 320723286;
+    tapeFileSeq = 5;
+    blockId[0]  = 0;
+    blockId[1]  = 0;
+    blockId[2]  = 0;
+    blockId[3]  = 41;
+    positionCommandCode = 3; // TPPOSIT_BLKID
+    return(true);
+  }
+  else {
+    return(false);
+  } 
 
 #endif
 //===================================================
