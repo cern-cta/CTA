@@ -36,7 +36,6 @@ namespace castor     {
 namespace tape       {
 namespace aggregator {
 
-
 class EmulateGiulia {
 
 private:
@@ -48,7 +47,6 @@ public:
 
   uint32_t next();
 };
-
 
 /**
  * Provides functions for sending and receiving the messages of the tape

@@ -96,10 +96,10 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
 #ifdef EMULATE_GATEWAY
 
   //volReqIdFromGateway = volReqId;
-  Utils::copyString(vid,     "I02000");
+  utils::copyString(vid,     "I02000");
   mode = 0;
-  Utils::copyString(label,   "aul");
-  Utils::copyString(density, "1000GC");
+  utils::copyString(label,   "aul");
+  utils::copyString(density, "1000GC");
   return(true);
 
 #endif
@@ -134,10 +134,10 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
     try {
       tapegateway::Volume &volume = dynamic_cast<tapegateway::Volume&>(*reply);
       volReqIdFromGateway = volume.transactionId();
-      Utils::copyString(vid, volume.vid().c_str());
+      utils::copyString(vid, volume.vid().c_str());
       mode = volume.mode();
-      Utils::copyString(label, volume.label().c_str());
-      Utils::copyString(density, volume.density().c_str());
+      utils::copyString(label, volume.label().c_str());
+      utils::copyString(density, volume.density().c_str());
     } catch(std::bad_cast &bc) {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Failed to down cast reply object to tapegateway::Volume");
@@ -281,12 +281,12 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
       tapegateway::FileToMigrate &file =
         dynamic_cast<tapegateway::FileToMigrate&>(*reply);
       volReqIdFromGateway = file.transactionId();
-      Utils::copyString(filePath, file.path().c_str());
-      Utils::copyString(nsHost, file.nshost().c_str());
+      utils::copyString(filePath, file.path().c_str());
+      utils::copyString(nsHost, file.nshost().c_str());
       fileId = file.fileid();
       tapeFileSeq = file.fseq();
       fileSize = file.fileSize();
-      Utils::copyString(lastKnownFileName, file.lastKnownFileName().c_str());
+      utils::copyString(lastKnownFileName, file.lastKnownFileName().c_str());
       lastModificationTime = file.lastModificationTime();
       positionCommandCode = file.positionCommandCode();
     } catch(std::bad_cast &bc) {
@@ -417,10 +417,10 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
 
   if(emulateRecallCounter.next() <= 1){
     //volReqIdFromGateway = volReqId;
-    Utils::copyString(filePath,
+    utils::copyString(filePath,
 	"lxc2disk15.cern.ch:/srv/castor/01//86/320723286@c2itdcns.706042");
        // "/castor/cern.ch/user/m/murrayc3/test_Thu_Apr_16_15_54_34_CEST_2009.txt");
-    Utils::copyString(nsHost, "castorns");
+    utils::copyString(nsHost, "castorns");
     fileId      = 320723286;
     tapeFileSeq = 5;
     blockId[0]  = 0;
@@ -467,8 +467,8 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
       tapegateway::FileToRecall &file =
         dynamic_cast<tapegateway::FileToRecall&>(*reply);
       volReqIdFromGateway = file.transactionId();
-      Utils::copyString(filePath, file.path().c_str());
-      Utils::copyString(nsHost, file.nshost().c_str());
+      utils::copyString(filePath, file.path().c_str());
+      utils::copyString(nsHost, file.nshost().c_str());
       fileId = file.fileid();
       tapeFileSeq = file.fseq();
       blockId[0] = file.blockId0();

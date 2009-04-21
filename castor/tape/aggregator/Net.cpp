@@ -51,7 +51,7 @@ int castor::tape::aggregator::Net::createListenerSocket(const char *addr,
       ": Failed to create a listener socket");
   }
 
-  Utils::setBytes(address, '\0');
+  utils::setBytes(address, '\0');
   address.sin_family = AF_INET;
   address.sin_addr.s_addr = inet_addr(addr);
   address.sin_port = htons(port);
@@ -277,7 +277,7 @@ void castor::tape::aggregator::Net::getSocketHostName(const int socketFd,
       ": " << gai_strerror(error));
   }
 
-  Utils::copyString(buf, hostName, len);
+  utils::copyString(buf, hostName, len);
 }
 
 
@@ -350,7 +350,7 @@ void castor::tape::aggregator::Net::getPeerHostName(const int socketFd,
       ": " << gai_strerror(error));
   }
 
-  Utils::copyString(buf, hostName, len);
+  utils::copyString(buf, hostName, len);
 }
 
 

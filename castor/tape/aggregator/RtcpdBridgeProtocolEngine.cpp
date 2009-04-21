@@ -70,7 +70,7 @@ castor::tape::aggregator::RtcpdBridgeProtocolEngine::RunResult
   void *ptr = NULL;                                                       
 
   char buf[280];
-  Utils::setBytes(buf, '\0');
+  utils::setBytes(buf, '\0');
   ptr = buf;                 
   read(fd, ptr, sizeof(buf));
 
@@ -145,16 +145,16 @@ castor::tape::aggregator::RtcpdBridgeProtocolEngine::RunResult
     char magicHex[2 + 17]; // 0 + x + FFFFFFFFFFFFFFFF + '\0'
     magicHex[0] = '0';
     magicHex[1] = 'x';
-    Utils::toHex(header.magic, &(magicHex[2]), 17);
+    utils::toHex(header.magic, &(magicHex[2]), 17);
 
-    const char *magicName = Utils::magicToStr(header.magic);
+    const char *magicName = utils::magicToStr(header.magic);
 
     char reqTypeHex[2 + 17]; // 0 + x + FFFFFFFFFFFFFFFF + '\0'
     reqTypeHex[0] = '0';
     reqTypeHex[1] = 'x';
-    Utils::toHex(header.reqType, &(reqTypeHex[2]), 17);
+    utils::toHex(header.reqType, &(reqTypeHex[2]), 17);
 
-    const char *reqTypeName = Utils::rtcopyReqTypeToStr(header.reqType);
+    const char *reqTypeName = utils::rtcopyReqTypeToStr(header.reqType);
 
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId"   , volReqId   ),
@@ -206,20 +206,20 @@ castor::tape::aggregator::RtcpdBridgeProtocolEngine::RunResult
     if(mode == WRITE_ENABLE) {
 
       char filePath[CA_MAXPATHLEN+1];
-      Utils::setBytes(filePath, '\0');
+      utils::setBytes(filePath, '\0');
       char nsHost[CA_MAXHOSTNAMELEN+1];
-      Utils::setBytes(nsHost, '\0');
+      utils::setBytes(nsHost, '\0');
       char tapePath[CA_MAXPATHLEN+1];
-      Utils::setBytes(tapePath, '\0');
+      utils::setBytes(tapePath, '\0');
       uint64_t fileId = 0;
       uint32_t tapeFseq = 0;
       uint64_t fileSize = 0;
       char lastKnownFileName[CA_MAXPATHLEN+1];
-      Utils::setBytes(lastKnownFileName, '\0');
+      utils::setBytes(lastKnownFileName, '\0');
       uint64_t lastModificationTime = 0;
       int32_t  positionMethod = 0;
        unsigned char blockId[4];
-      Utils::setBytes(blockId, '\0');
+      utils::setBytes(blockId, '\0');
 
       // If there is a file to migrate
       if(GatewayTxRx::getFileToMigrateFromGateway(cuuid, volReqId, gatewayHost,
@@ -242,7 +242,7 @@ castor::tape::aggregator::RtcpdBridgeProtocolEngine::RunResult
           AGGREGATOR_FILE_TO_MIGRATE, params);
 
         char tapeFileId[CA_MAXPATHLEN+1];
-        Utils::toHex(fileId, tapeFileId);
+        utils::toHex(fileId, tapeFileId);
         RtcpTxRx::giveFileToRtcpd(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT,
           WRITE_ENABLE, filePath, "", RECORDFORMAT, tapeFileId, MIGRATEUMASK,
           tapeFseq, positionMethod, nsHost, fileId, blockId);
@@ -274,13 +274,13 @@ castor::tape::aggregator::RtcpdBridgeProtocolEngine::RunResult
     } else {
 
       char filePath[CA_MAXPATHLEN+1];
-      Utils::setBytes(filePath, '\0');
+      utils::setBytes(filePath, '\0');
       char nsHost[CA_MAXHOSTNAMELEN+1];
-      Utils::setBytes(nsHost, '\0');
+      utils::setBytes(nsHost, '\0');
       uint64_t fileId = 0;
       uint32_t tapeFseq = 0;
       unsigned char blockId[4];
-      Utils::setBytes(blockId, '\0');
+      utils::setBytes(blockId, '\0');
       int32_t  positionCommandCode = 0;
 
       // If there is a file to recall 
@@ -305,7 +305,7 @@ castor::tape::aggregator::RtcpdBridgeProtocolEngine::RunResult
           AGGREGATOR_FILE_TO_RECALL, params);
 
         char tapeFileId[CA_MAXPATHLEN+1];
-        Utils::setBytes(tapeFileId, '\0');
+        utils::setBytes(tapeFileId, '\0');
         RtcpTxRx::giveFileToRtcpd(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT,
           WRITE_DISABLE, filePath, body.tapePath, RECORDFORMAT, tapeFileId,
           RECALLUMASK, positionCommandCode, tapeFseq, nsHost, fileId, blockId);
@@ -397,7 +397,7 @@ castor::tape::aggregator::RtcpdBridgeProtocolEngine::RunResult
       TAPE_THROW_CODE(EBADMSG,
            ": Received unexpected file request process status 0x"
         << std::hex << body.procStatus
-        << "(" << Utils::procStatusToStr(body.procStatus) << ")");
+        << "(" << utils::procStatusToStr(body.procStatus) << ")");
     }
   }
 
@@ -512,7 +512,7 @@ castor::tape::aggregator::RtcpdBridgeProtocolEngine::RunResult
   void *ptr = NULL;                                                       
 
   char buf[12];
-  Utils::setBytes(buf, '\0');
+  utils::setBytes(buf, '\0');
   ptr = buf;                 
   read(fd, ptr, sizeof(buf));
 

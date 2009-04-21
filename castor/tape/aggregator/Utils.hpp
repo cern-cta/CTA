@@ -77,13 +77,8 @@
 namespace castor {
 namespace tape {
 namespace aggregator {
+namespace utils {
   	
-/**
- * Class of static utility functions.
- */
-class Utils {
-public:
-
   /**
    * Writes the specified unsigned 64-bit integer into the specified
    * destination character array as a hexadecimal string.
@@ -98,7 +93,7 @@ public:
    * 16 x 'F' + 1 x '\0').
    * @param dstLen The length of the destination character string.
    */
-  static void toHex(const uint64_t i, char *dst, size_t dstLen)
+  void toHex(const uint64_t i, char *dst, size_t dstLen)
     throw(castor::exception::Exception);
 
   /**
@@ -111,7 +106,7 @@ public:
    * @param i The unsigned 64-bit integer.
    * @param dst The destination character array.
    */
-  template<int n> static void toHex(const uint64_t i, char (&dst)[n])
+  template<int n> void toHex(const uint64_t i, char (&dst)[n])
     throw(castor::exception::Exception) {
     toHex(i, dst, n);
   }
@@ -122,7 +117,7 @@ public:
    * @param object The object whose bytes are to be set.
    * @param c The value to set each byte of object.
    */
-  template<typename T> static void setBytes(T &object, const int c) throw() {
+  template<typename T> void setBytes(T &object, const int c) throw() {
     memset(&object, c, sizeof(object));
   }
 
@@ -135,7 +130,7 @@ public:
    * @param n   The maximum number of characters to be copied from source to
    * destination.
    */
-  static void copyString(char *const dst, const char *src, const size_t n)
+  void copyString(char *const dst, const char *src, const size_t n)
     throw(castor::exception::Exception);
 
   /**
@@ -145,7 +140,7 @@ public:
    * @param dst Destination string.
    * @param src Source string.
    */
-  template<int n> static void copyString(char (&dst)[n], const char *src)
+  template<int n> void copyString(char (&dst)[n], const char *src)
     throw(castor::exception::Exception) {
 
     copyString(dst, src, n);
@@ -156,7 +151,7 @@ public:
    *
    * @param magic The magic number.
    */
-  static const char *magicToStr(const uint32_t magic) throw();
+  const char *magicToStr(const uint32_t magic) throw();
 
   /**
    * Returns the string representation of the specified RTCOPY_MAGIC request
@@ -164,7 +159,7 @@ public:
    *
    * @param reqType The RTCP request type.
    */
-  static const char *rtcopyReqTypeToStr(const uint32_t reqType) throw();
+  const char *rtcopyReqTypeToStr(const uint32_t reqType) throw();
 
   /**
    * Returns the string representation of the specified file request status
@@ -172,7 +167,7 @@ public:
    *
    * @param reqType The file request status code.
    */
-  static const char *procStatusToStr(const uint32_t procStatus) throw();
+  const char *procStatusToStr(const uint32_t procStatus) throw();
 
   /**
    * Checks if the specified string is a valid unsigned integer.
@@ -180,7 +175,7 @@ public:
    * @param str The string to be checked.
    * @returns true if the string is a valid unsigned integer, else false.
    */
-  static bool isValidUInt(const char *str) throw();
+  bool isValidUInt(const char *str) throw();
 
   /**
    * Drains (reads and discards) all data from the specified file until end of
@@ -188,19 +183,9 @@ public:
    *
    * @param fd The file descriptor of the file to be drained.
    */
-  static ssize_t drainFile(const int fd) throw(castor::exception::Exception);
+  ssize_t drainFile(const int fd) throw(castor::exception::Exception);
 
-
-private:
-
-  /**
-   * Private constructor to inhibit instances of this class from being
-   * instantiated.
-   */
-  Utils() {}
-
-}; // class Utils
-
+} // namespace utils
 } // namespace aggregator
 } // namespace tape
 } // namespace castor

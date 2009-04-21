@@ -259,26 +259,26 @@ void castor::tape::aggregator::BridgeProtocolEngine::run(const Cuuid_t &cuuid,
   const char (&density)[CA_MAXDENLEN+1]) throw(castor::exception::Exception) {
 
   RtcpFileRqstErrMsgBody rtcpFileReply;
-  Utils::setBytes(rtcpFileReply, '\0');
+  utils::setBytes(rtcpFileReply, '\0');
 
   // Allocate some variables on the stack for information about a possible file
   // to migrate.  These variables will not be used in the case of a recall
   char migrationFilePath[CA_MAXPATHLEN+1];
-  Utils::setBytes(migrationFilePath, '\0');
+  utils::setBytes(migrationFilePath, '\0');
   char migrationFileNsHost[CA_MAXHOSTNAMELEN+1];
-  Utils::setBytes(migrationFileNsHost, '\0');
+  utils::setBytes(migrationFileNsHost, '\0');
   uint64_t migrationFileId = 0;
   uint32_t migrationFileTapeFseq = 0;
   uint64_t migrationFileSize = 0;
   char migrationFileLastKnownFileName[CA_MAXPATHLEN+1];
-  Utils::setBytes(migrationFileLastKnownFileName, '\0');
+  utils::setBytes(migrationFileLastKnownFileName, '\0');
   uint64_t migrationFileLastModificationTime = 0;
   int32_t positionCommandCode = 0;
   char tapePath[CA_MAXPATHLEN+1];
-  Utils::setBytes(tapePath, '\0');
+  utils::setBytes(tapePath, '\0');
   int32_t tapeFseq;		// <-- TEMPORARY
   unsigned char (blockId)[4];  // <-- TEMPORARY
-  Utils::setBytes(blockId, '\0');
+  utils::setBytes(blockId, '\0');
 
   // If migrating
   if(mode == WRITE_ENABLE) {
@@ -299,12 +299,12 @@ void castor::tape::aggregator::BridgeProtocolEngine::run(const Cuuid_t &cuuid,
 
   // Give volume to RTCPD
   RtcpTapeRqstErrMsgBody rtcpVolume;
-  Utils::setBytes(rtcpVolume, '\0');
-  Utils::copyString(rtcpVolume.vid    , vid    );
-  Utils::copyString(rtcpVolume.vsn    , vsn    );
-  Utils::copyString(rtcpVolume.label  , label  );
-  Utils::copyString(rtcpVolume.density, density);
-  Utils::copyString(rtcpVolume.unit   , unit   );
+  utils::setBytes(rtcpVolume, '\0');
+  utils::copyString(rtcpVolume.vid    , vid    );
+  utils::copyString(rtcpVolume.vsn    , vsn    );
+  utils::copyString(rtcpVolume.label  , label  );
+  utils::copyString(rtcpVolume.density, density);
+  utils::copyString(rtcpVolume.unit   , unit   );
   rtcpVolume.volReqId       = volReqId;
   rtcpVolume.mode           = mode;
   rtcpVolume.tStartRequest  = time(NULL);
@@ -319,7 +319,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::run(const Cuuid_t &cuuid,
 
     // Give file to migrate to RTCPD
     char migrationTapeFileId[CA_MAXPATHLEN+1];
-    Utils::toHex(migrationFileId, migrationTapeFileId);
+    utils::toHex(migrationFileId, migrationTapeFileId);
     RtcpTxRx::giveFileToRtcpd(cuuid, volReqId, rtcpdInitialSocketFd,
       RTCPDNETRWTIMEOUT, rtcpVolume.mode, migrationFilePath, "", RECORDFORMAT,
       migrationTapeFileId, MIGRATEUMASK, positionCommandCode, tapeFseq,

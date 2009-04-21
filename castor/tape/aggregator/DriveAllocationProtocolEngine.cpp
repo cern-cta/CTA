@@ -88,7 +88,7 @@ bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
   
   RcpJobRqstMsgBody jobRequest;
   
-  Utils::setBytes(jobRequest, '\0');
+  utils::setBytes(jobRequest, '\0');
   
   checkRcpJobSubmitterIsAuthorised(vdqmSocket.socket());
   
@@ -97,7 +97,7 @@ bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
     
   // Extract the volume request ID, gateway host and gateway port
   volReqId = jobRequest.tapeRequestId;
-  Utils::copyString(gatewayHost, jobRequest.clientHost);
+  utils::copyString(gatewayHost, jobRequest.clientHost);
   gatewayPort = jobRequest.clientPort;
   
   // Pass a modified version of the job request through to RTCPD, setting the
@@ -202,7 +202,7 @@ bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
   RtcpTapeRqstErrMsgBody rtcpdRequestInfoReply;
   RtcpTxRx::getRequestInfoFromRtcpd(cuuid, volReqId, rtcpdInitialSocketFd.get(),
     RTCPDNETRWTIMEOUT, rtcpdRequestInfoReply);
-  Utils::copyString(unit, rtcpdRequestInfoReply.unit);
+  utils::copyString(unit, rtcpdRequestInfoReply.unit);
 
   // If the VDQM and RTCPD volume request IDs do not match
   if(rtcpdRequestInfoReply.volReqId != volReqId) {

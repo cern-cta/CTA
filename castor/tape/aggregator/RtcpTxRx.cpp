@@ -64,7 +64,7 @@ void castor::tape::aggregator::RtcpTxRx::getRequestInfoFromRtcpd(
 
   // Prepare logical request for volume request ID
   RtcpTapeRqstErrMsgBody request;
-  Utils::setBytes(request, '\0');
+  utils::setBytes(request, '\0');
 
   // Marshall the request
   char buf[MSGBUFSIZ];
@@ -107,7 +107,7 @@ void castor::tape::aggregator::RtcpTxRx::getRequestInfoFromRtcpd(
   }
 
   // Receive reply from RTCPD
-  Utils::setBytes(reply, '\0');
+  utils::setBytes(reply, '\0');
   try {
     MessageHeader header;
     receiveRtcpMsgHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
@@ -661,11 +661,11 @@ void castor::tape::aggregator::RtcpTxRx::askRtcpdToRequestMoreWork(
 
   RtcpFileRqstErrMsgBody request;
 
-  Utils::setBytes(request, '\0');
+  utils::setBytes(request, '\0');
 
-  Utils::copyString(request.recfm, "F");
+  utils::copyString(request.recfm, "F");
 
-  Utils ::copyString(request.tapePath, tapePath);
+  utils::copyString(request.tapePath, tapePath);
   request.volReqId       =  volReqId;
   request.jobId          = -1;
   request.stageSubReqId  = -1;
@@ -755,11 +755,11 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
 
 
   // Give file information to RTCPD
-  Utils::setBytes(request, '\0');
-  Utils::copyString(request.filePath, filePath);
-  Utils::copyString(request.tapePath, tapePath);
-  Utils::copyString(request.recfm, recordFormat);
-  Utils::copyString(request.fid, tapeFileId);
+  utils::setBytes(request, '\0');
+  utils::copyString(request.filePath, filePath);
+  utils::copyString(request.tapePath, tapePath);
+  utils::copyString(request.recfm, recordFormat);
+  utils::copyString(request.fid, tapeFileId);
 
   request.volReqId             = volReqId;
   request.jobId                = -1;
@@ -782,7 +782,7 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
   request.blockId[1]           = blockId[1];
   request.blockId[2]           = blockId[2];
   request.blockId[3]           = blockId[3];
-  Utils::copyString(request.segAttr.nameServerHostName, nameServerHostName);
+  utils::copyString(request.segAttr.nameServerHostName, nameServerHostName);
   request.segAttr.castorFileId = castorFileId;
   request.err.severity         = RTCP_OK;
   request.err.maxTpRetry       = -1;
@@ -1058,9 +1058,9 @@ void castor::tape::aggregator::RtcpTxRx::checkMagic(const uint32_t expected,
     TAPE_THROW_CODE(EBADMSG,
          ": Invalid magic number"
          ": Expected: 0x" << std::hex << expected
-      << "(" << Utils::magicToStr(expected) << ")"
+      << "(" << utils::magicToStr(expected) << ")"
          ": Actual: 0x" << std::hex << actual
-      << "(" << Utils::magicToStr(actual) << ")");
+      << "(" << utils::magicToStr(actual) << ")");
   }
 }
 
@@ -1106,11 +1106,11 @@ void castor::tape::aggregator::RtcpTxRx::checkRtcopyReqType(
     }
 
     messageStream << " 0x" << std::hex << expected[i]
-      << "(" << Utils::rtcopyReqTypeToStr(expected[i]) << ")";
+      << "(" << utils::rtcopyReqTypeToStr(expected[i]) << ")";
   }
 
   messageStream << ": Actual: 0x" << std::hex << actual
-    << "(" << Utils::rtcopyReqTypeToStr(actual) << ")";
+    << "(" << utils::rtcopyReqTypeToStr(actual) << ")";
 
   TAPE_THROW_CODE(EBADMSG,
     messageStream.str());

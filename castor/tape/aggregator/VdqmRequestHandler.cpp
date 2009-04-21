@@ -126,7 +126,7 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
     // Get the IP, host name and port of the callback port
     unsigned long rtcpdCallbackIp = 0;
     char rtcpdCallbackHost[HOSTNAMEBUFLEN];
-    Utils::setBytes(rtcpdCallbackHost, '\0');
+    utils::setBytes(rtcpdCallbackHost, '\0');
     unsigned short rtcpdCallbackPort = 0;
     Net::getSocketIpHostnamePort(rtcpdCallbackSocketFd.get(),
     rtcpdCallbackIp, rtcpdCallbackHost, rtcpdCallbackPort);
@@ -140,18 +140,18 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
 
     uint32_t volReqId = 0;
     char gatewayHost[CA_MAXHOSTNAMELEN+1];
-    Utils::setBytes(gatewayHost, '\0');
+    utils::setBytes(gatewayHost, '\0');
     unsigned short gatewayPort = 0;
     SmartFd rtcpdInitialSocketFd;
     uint32_t mode = 0;
     char unit[CA_MAXUNMLEN+1];
-    Utils::setBytes(unit, '\0');
+    utils::setBytes(unit, '\0');
     char vid[CA_MAXVIDLEN+1];
-    Utils::setBytes(vid, '\0');
+    utils::setBytes(vid, '\0');
     char label[CA_MAXLBLTYPLEN+1];
-    Utils::setBytes(label, '\0');
+    utils::setBytes(label, '\0');
     char density[CA_MAXDENLEN+1];
-    Utils::setBytes(density, '\0');
+    utils::setBytes(density, '\0');
 
     DriveAllocationProtocolEngine driveAllocationProtocolEngine;
 
@@ -181,7 +181,7 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
 
       // Note the call to run() sets the vsn to ""
       char vsn[CA_MAXVSNLEN+1];
-      Utils::setBytes(vsn, '\0');
+      utils::setBytes(vsn, '\0');
       BridgeProtocolEngine bridgeProtocolEngine;
       bridgeProtocolEngine.run(cuuid, volReqId, gatewayHost, gatewayPort,
         rtcpdCallbackSocketFd.get(), rtcpdInitialSocketFd.get(), mode, unit,

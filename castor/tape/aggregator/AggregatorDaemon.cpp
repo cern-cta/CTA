@@ -232,7 +232,7 @@ int castor::tape::aggregator::AggregatorDaemon::getVdqmListenPort()
   const char *const configEntry = getconfent("TAPEAGGREGATOR", "VDQMPORT", 0);
 
   if(configEntry != NULL) {
-    if(Utils::isValidUInt(configEntry)) {
+    if(utils::isValidUInt(configEntry)) {
       port = atoi(configEntry);
     } else {
       castor::exception::InvalidConfigEntry ex("TAPEAGGREGATOR", "VDQMPORT",
