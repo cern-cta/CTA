@@ -407,7 +407,7 @@ void castor::tape::aggregator::RtcpTxRx::pingRtcpd(const Cuuid_t &cuuid,
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId", volReqId)};
 
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_PINGED_RTCPD, params);
   }
 }

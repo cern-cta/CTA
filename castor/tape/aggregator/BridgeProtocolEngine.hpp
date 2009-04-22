@@ -148,9 +148,9 @@ private:
   SmartFdList m_readFds;
 
   /**
-   * The number of open disk/tape IO callback connections.
+   * The number of callback connections.
    */
-  uint32_t m_nbDiskTapeIOConnections;
+  uint32_t m_nbCallbackConnections;
 
   /**
    * The number of received RTCP_ENDOF_REQ messages.

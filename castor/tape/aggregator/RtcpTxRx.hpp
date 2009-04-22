@@ -97,9 +97,9 @@ public:
    * network read and write operations.
    * @param message The message to be sent.
    */
-  static void sendRtcpAcknowledge(const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
-    const int netReadWriteTimeout, const RtcpAcknowledgeMsg &message)
-    throw(castor::exception::Exception);
+  static void sendRtcpAcknowledge(const Cuuid_t &cuuid,
+    const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout,
+    const RtcpAcknowledgeMsg &message) throw(castor::exception::Exception);
 
   /**
    * Pings RTCPD using the specified socket.
@@ -110,8 +110,9 @@ public:
    * @param netReadWriteTimeout The timeout to be applied when performing
    * network read and write operations.
    */
-  static void pingRtcpd(const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
-    const int netReadWriteTimeout) throw(castor::exception::Exception);
+  static void pingRtcpd(const Cuuid_t &cuuid, const uint32_t volReqId,
+    const int socketFd, const int netReadWriteTimeout)
+    throw(castor::exception::Exception);
 
   /**
    * Receives an RTCP job submission message.

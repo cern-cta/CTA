@@ -24,6 +24,7 @@
  *****************************************************************************/
 
 #include "castor/dlf/Dlf.hpp"
+#include "castor/exception/Internal.hpp"
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/BridgeProtocolEngine.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
@@ -68,7 +69,7 @@ castor::tape::aggregator::BridgeProtocolEngine::BridgeProtocolEngine(
   m_vsn(vsn),
   m_label(label),
   m_density(density),
-  m_nbDiskTapeIOConnections(0),
+  m_nbCallbackConnections(1), // Initial callback connection has already exists
   m_nbReceivedENDOF_REQs(0) {
 
   // Build the map of message body handlers
@@ -97,20 +98,21 @@ int castor::tape::aggregator::BridgeProtocolEngine::acceptRtcpdConnection()
     Net::getPeerIpPort(connectedSocketFd.get(), ip, port);
     Net::getPeerHostName(connectedSocketFd.get(), hostName);
 
+    m_nbCallbackConnections++;
+
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", m_volReqId                ),
-      castor::dlf::Param("IP"      , castor::dlf::IPAddress(ip)),
-      castor::dlf::Param("Port"    , port                      ),
-      castor::dlf::Param("HostName", hostName                  ),
-      castor::dlf::Param("socketFd", connectedSocketFd.get()   ),
-      castor::dlf::Param("nbDiskTapeIOConnections",
-        m_nbDiskTapeIOConnections)};
+      castor::dlf::Param("volReqId"       , m_volReqId                ),
+      castor::dlf::Param("IP"             , castor::dlf::IPAddress(ip)),
+      castor::dlf::Param("Port"           , port                      ),
+      castor::dlf::Param("HostName"       , hostName                  ),
+      castor::dlf::Param("socketFd"       , connectedSocketFd.get()   ),
+      castor::dlf::Param("nbCallbackConns", m_nbCallbackConnections   )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_RTCPD_CALLBACK_WITH_INFO, params);
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"             , m_volReqId             ),
-      castor::dlf::Param("nbDiskTapeIOConnections", m_nbDiskTapeIOConnections)};
+      castor::dlf::Param("volReqId"       , m_volReqId             ),
+      castor::dlf::Param("nbCallbackConns", m_nbCallbackConnections)};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_RTCPD_CALLBACK_WITHOUT_INFO, params);
   }
@@ -125,7 +127,6 @@ int castor::tape::aggregator::BridgeProtocolEngine::acceptRtcpdConnection()
 void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSockets()
   throw(castor::exception::Exception) {
 
-  SmartFdList readFds;
   int selectRc = 0;
   int selectErrno = 0;
   fd_set readFdSet;
@@ -134,8 +135,8 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSockets()
 
   // Append the socket descriptors of the RTCPD callback port and the initial
   // connection from RTCPD to the list of read file descriptors
-  readFds.push_back(m_rtcpdCallbackSocketFd);
-  readFds.push_back(m_rtcpdInitialSocketFd);
+  m_readFds.push_back(m_rtcpdCallbackSocketFd);
+  m_readFds.push_back(m_rtcpdInitialSocketFd);
   if(m_rtcpdCallbackSocketFd > m_rtcpdInitialSocketFd) {
     maxFd = m_rtcpdCallbackSocketFd;
   } else {
@@ -149,8 +150,8 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSockets()
     {
       // Build the file descriptor set ready for the select call
       FD_ZERO(&readFdSet);
-      for(std::list<int>::iterator itor = readFds.begin();
-        itor != readFds.end(); itor++) {
+      for(std::list<int>::iterator itor = m_readFds.begin();
+        itor != m_readFds.end(); itor++) {
 
         FD_SET(*itor, &readFdSet);
 
@@ -162,7 +163,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSockets()
       timeout.tv_sec  = RTCPDPINGTIMEOUT;
       timeout.tv_usec = 0;
 
-      // See if any of the read file descriptors ready?
+      // See if any of the read file descriptors are ready?
       selectRc = select(maxFd + 1, &readFdSet, NULL, NULL, &timeout);
       selectErrno = errno;
 
@@ -193,8 +194,8 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSockets()
 
         // For each read file descriptor or until all ready file descriptors
         // have been processed
-        for(std::list<int>::iterator itor=readFds.begin();
-          itor != readFds.end() && nbProcessedFds < selectRc; itor++) {
+        for(std::list<int>::iterator itor = m_readFds.begin();
+          itor != m_readFds.end() && nbProcessedFds < selectRc; itor++) {
 
           // If the read file descriptor is ready
           if(FD_ISSET(*itor, &readFdSet)) {
@@ -227,9 +228,9 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocket(
 
     // Accept the connection and append its socket descriptor to
     // the list of read file descriptors
+    //
+    // acceptRtcpdConnection() increments m_nbCallbackConnections
     m_readFds.push_back(acceptRtcpdConnection());
-
-    m_nbDiskTapeIOConnections++;
 
   // Else the file descriptor is that of a tape/disk IO connection
   } else {
@@ -248,15 +249,17 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocket(
     if(connectionClosed) {
       close(m_readFds.release(socketFd));
 
-      m_nbDiskTapeIOConnections--;
+      m_nbCallbackConnections--;
 
       castor::dlf::Param params[] = {
-        castor::dlf::Param("volReqId", m_volReqId),
-        castor::dlf::Param("socketFd", socketFd  ),
-        castor::dlf::Param("nbDiskTapeIOConnections",
-          m_nbDiskTapeIOConnections)};
+        castor::dlf::Param("volReqId"       , m_volReqId             ),
+        castor::dlf::Param("socketFd"       , socketFd               ),
+        castor::dlf::Param("nbCallbackConns", m_nbCallbackConnections)};
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
         AGGREGATOR_CONNECTION_CLOSED_BY_RTCPD, params);
+
+      // Finished processing socket as the connection is closed
+      return;
     }
 
     bool receivedENDOF_REQ = false;
@@ -268,8 +271,8 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocket(
 
       {
         castor::dlf::Param params[] = {
-          castor::dlf::Param("volReqId", m_volReqId),
-          castor::dlf::Param("socketFd", socketFd  ),
+          castor::dlf::Param("volReqId"            , m_volReqId            ),
+          castor::dlf::Param("socketFd"            , socketFd              ),
           castor::dlf::Param("nbReceivedENDOF_REQs", m_nbReceivedENDOF_REQs)};
         castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
           AGGREGATOR_RECEIVED_RTCP_ENDOF_REQ, params);
@@ -279,16 +282,34 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocket(
       // close it
       close(m_readFds.release(socketFd));
 
-      m_nbDiskTapeIOConnections--;
+      m_nbCallbackConnections--;
 
       {
         castor::dlf::Param params[] = {
-          castor::dlf::Param("volReqId", m_volReqId),
-          castor::dlf::Param("socketFd", socketFd  ),
-          castor::dlf::Param("nbDiskTapeIOConnections",
-            m_nbDiskTapeIOConnections)};
+          castor::dlf::Param("volReqId"       , m_volReqId             ),
+          castor::dlf::Param("socketFd"       , socketFd               ),
+          castor::dlf::Param("nbCallbackConns", m_nbCallbackConnections)};
         castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
           AGGREGATOR_CLOSED_CONNECTION, params);
+      }
+
+      // If only the initial callback connection is open, then send an
+      // RTCP_ENDOF_REQ message to RTCPD and close the connection
+      if(m_nbCallbackConnections == 1) {
+
+        // Try to find the socket file descriptor of the initial callback
+        // connection is the list of open connections
+        SmartFdList::iterator itor = std::find(m_readFds.begin(),
+          m_readFds.end(), m_rtcpdInitialSocketFd);
+
+        // If the file descriptor cannot be found
+        if(itor != m_readFds.end()) {
+          TAPE_THROW_EX(castor::exception::Internal,
+            ": The initial callback connection is not the last one open"
+            ": fd=" << m_rtcpdInitialSocketFd);
+        }
+
+        // WE ARE HERE 22/04/09
       }
     }
   }
