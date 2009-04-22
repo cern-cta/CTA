@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.730 $ $Date: 2009/04/19 20:49:20 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.731 $ $Date: 2009/04/22 12:21:29 $ $Author: itglp $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -884,17 +884,11 @@ AS
   svcId NUMBER;
 BEGIN
   SELECT id INTO svcId FROM SvcClass WHERE name = svcName;
-  -- clean up tapecopies , WAITPOLICY reset into TOBEMIGRATED
-  UPDATE /*+ BEGIN_OUTLINE_DATA
-             ALL_ROWS
-             OUTLINE_LEAF(@"SEL$3FF8579E")
-             UNNEST(@"SEL$1")
-             OUTLINE(@"UPD$1")
-             OUTLINE(@"SEL$1")
-             INDEX_RS_ASC(@"SEL$3FF8579E" "TC"@"UPD$1" ("TAPECOPY"."STATUS"))
-             INDEX_RS_ASC(@"SEL$3FF8579E" "CF"@"SEL$1" ("CASTORFILE"."ID"))
-             LEADING(@"SEL$3FF8579E" "TC"@"UPD$1" "CF"@"SEL$1")
-             USE_NL(@"SEL$3FF8579E" "CF"@"SEL$1") */
+  -- clean up tapecopies, WAITPOLICY reset into TOBEMIGRATED
+  UPDATE
+     /*+ LEADING(TC CF)
+         INDEX_RS_ASC(CF PK_CASTORFILE_ID)
+         INDEX_RS_ASC(TC I_TAPECOPY_STATUS) */ 
          TapeCopy TC
      SET status = 1
    WHERE status = 7 
@@ -927,16 +921,10 @@ BEGIN
     FROM SvcClass
    WHERE SvcClass.name = svcClassName;
 
-  UPDATE /*+ BEGIN_OUTLINE_DATA
-             ALL_ROWS
-             OUTLINE_LEAF(@"SEL$3FF8579E")
-             UNNEST(@"SEL$1")
-             OUTLINE(@"UPD$1")
-             OUTLINE(@"SEL$1")
-             INDEX_RS_ASC(@"SEL$3FF8579E" "TC"@"UPD$1" ("TAPECOPY"."STATUS"))
-             INDEX_RS_ASC(@"SEL$3FF8579E" "CF"@"SEL$1" ("CASTORFILE"."ID"))
-             LEADING(@"SEL$3FF8579E" "TC"@"UPD$1" "CF"@"SEL$1")
-             USE_NL(@"SEL$3FF8579E" "CF"@"SEL$1") */
+  UPDATE
+     /*+ LEADING(TC CF)
+         INDEX_RS_ASC(CF PK_CASTORFILE_ID)
+         INDEX_RS_ASC(TC I_TAPECOPY_STATUS) */ 
          TapeCopy TC 
      SET status = 7
    WHERE status IN (0, 1)
@@ -1246,9 +1234,15 @@ CREATE OR REPLACE PROCEDURE inputForRecallPolicy(dbInfo OUT castor.DbRecallInfo_
   svcId NUMBER;
 BEGIN
   OPEN dbInfo FOR
-    SELECT /*+ gather_plan_statistics USE_NL(tape segment) LEADING(tape segment tapecopy castorfile) INDEX(Tape I_Tape_Status) INDEX(Segment I_Segment_TapeStatus) INDEX(TapeCopy PK_TAPECOPY_ID) INDEX(Castorfile PK_CASTORFILE_ID) */
-       tape.id, tape.vid, count(distinct segment.id), sum(castorfile.filesize),
-       gettime() - min(segment.creationtime), max(Segment.priority)
+    SELECT
+       /*+ NO_USE_MERGE(TAPE SEGMENT TAPECOPY CASTORFILE)
+           NO_USE_HASH(TAPE SEGMENT TAPECOPY CASTORFILE)
+           INDEX_RS_ASC(SEGMENT I_SEGMENT_TAPE)
+           INDEX_RS_ASC(TAPE I_TAPE_STATUS)
+           INDEX_RS_ASC(TAPECOPY PK_TAPECOPY_ID)
+           INDEX_RS_ASC(CASTORFILE PK_CASTORFILE_ID) */
+       Tape.id, Tape.vid, count(distinct segment.id), sum(CastorFile.fileSize),
+       getTime() - min(Segment.creationTime), max(Segment.priority)
       FROM TapeCopy, CastorFile, Segment, Tape
      WHERE Tape.id = Segment.tape
        AND TapeCopy.id = Segment.copy
