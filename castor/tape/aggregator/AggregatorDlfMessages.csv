@@ -70,3 +70,4 @@
 69,AGGREGATOR_RECEIVED_TAPERQSTERRBODY,"Received tape request message body with error appendix"
 70,AGGREGATOR_CREATED_RTCPD_CALLBACK_PORT,"Created TCP/IP port for RTCPD callbacks"
 71,AGGREGATOR_CONNECTION_CLOSED_BY_RTCPD,"Connection closed by RTCPD"
+72,AGGREGATOR_CLOSED_CONNECTION,"Connection closed by aggregator"

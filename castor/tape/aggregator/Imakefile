@@ -78,7 +78,6 @@ AGGREGATORBIN_SRCS = \
   Net.cpp \
   Packer.cpp \
   RcpJobSubmitter.cpp \
-  RtcpdBridgeProtocolEngine.cpp \
   RtcpTxRx.cpp \
   SmartFd.cpp \
   SmartFdList.cpp \

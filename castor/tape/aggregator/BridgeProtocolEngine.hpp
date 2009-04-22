@@ -26,10 +26,12 @@
 #define CASTOR_TAPE_AGGREGATOR_BRIDGEPROTOCOLENGINE
 
 #include "castor/exception/Exception.hpp"
-#include "castor/tape/aggregator/RtcpdBridgeProtocolEngine.hpp"
+#include "castor/tape/aggregator/MessageHeader.hpp"
 #include "castor/tape/aggregator/SmartFdList.hpp"
 #include "h/Castor_limits.h"
 #include "h/Cuuid.h"
+
+#include <map>
 
 
 namespace castor     {
@@ -140,20 +142,43 @@ private:
   const char (&m_density)[CA_MAXDENLEN+1];
 
   /**
-   * The RTCPD driven component of the gateway/RTCPD bridge protocol engine.
-   */
-  RtcpdBridgeProtocolEngine m_rtcpdBridgeProtocolEngine;
-
-  /**
    * The set of read RTCPD socket descriptors to be de-multiplexed by
    * the BridgeProtocolEngine.
    */
   SmartFdList m_readFds;
 
   /**
-   * The number of open callback connections.
+   * The number of open disk/tape IO callback connections.
    */
-  uint32_t m_nbCallbackConnections;
+  uint32_t m_nbDiskTapeIOConnections;
+
+  /**
+   * The number of received RTCP_ENDOF_REQ messages.
+   */
+  uint32_t m_nbReceivedENDOF_REQs;
+
+  /**
+   * Pointer to a message body handler function, where the handler function
+   * is a member of this class.
+   *
+   * @param header The header of the RTCPD request.
+   * @param socketFd The file descriptor of the socket from which the message
+   * should be read from.
+   * @param receivedENDOF_REQ Out parameter: Will be set to true by this
+   * function of an RTCP_ENDOF_REQ was received.
+   */
+  typedef void (BridgeProtocolEngine::*MsgBodyCallback)(
+    const MessageHeader &header, const int socketFd, bool &receivedENDOF_REQ);
+
+  /**
+   * Datatype for the map of message body handlers.
+   */
+  typedef std::map<uint32_t, MsgBodyCallback> MsgBodyCallbackMap;
+
+  /**
+   * Map of message body handlers.
+   */
+  MsgBodyCallbackMap m_handlers;
 
   /**
    * Accepts an RTCPD connection using the specified listener socket.
@@ -176,6 +201,68 @@ private:
    * @param socketFd The file descriptor of the socket to be processed.
    */
   void processRtcpdSocket(const int socketFd)
+    throw(castor::exception::Exception);
+
+  /**
+   * Processes the specified RTCPD request.
+   *
+   * @param header The header of the RTCPD request.
+   * @param socketFd The file descriptor of the socket from which the message
+   * should be read from.
+   * @param receivedENDOF_REQ Out parameter: Will be set to true by this
+   * function of an RTCP_ENDOF_REQ was received.
+   */
+  void processRtcpdRequest(const MessageHeader &header, const int socketFd,
+    bool &receivedENDOF_REQ) throw(castor::exception::Exception);
+
+  /**
+   * RTCP_FILE_REQ message body handler.
+   *
+   * For full documenation please see the documentation of the type
+   * RtcpdBridgeProtocolEngine::MsgBodyCallback.
+   */
+  void rtcpFileReqCallback(const MessageHeader &header,
+    const int socketFd, bool &receivedENDOF_REQ)
+    throw(castor::exception::Exception);
+
+  /**
+   * RTCP_FILEERR_REQ message body handler.
+   *
+   * For full documenation please see the documentation of the type
+   * RtcpdBridgeProtocolEngine::MsgBodyCallback.
+   */
+  void rtcpFileErrReqCallback(const MessageHeader &header,
+    const int socketFd, bool &receivedENDOF_REQ)
+    throw(castor::exception::Exception);
+
+  /**
+   * RTCP_TAPEREQ message body handler.
+   *
+   * For full documenation please see the documentation of the type
+   * RtcpdBridgeProtocolEngine::MsgBodyCallback.
+   */
+  void rtcpTapeReqCallback(const MessageHeader &header,
+    const int socketFd, bool &receivedENDOF_REQ)
+    throw(castor::exception::Exception);
+
+  /**
+   * RTCP_TAPEERR message body handler.
+   *
+   * For full documenation please see the documentation of the type
+   * RtcpdBridgeProtocolEngine::MsgBodyCallback.
+   */
+  void rtcpTapeErrReqCallback(const MessageHeader &header,
+    const int socketFd, bool &receivedENDOF_REQ)
+    throw(castor::exception::Exception);
+
+  /**
+   * RTCP_ENDOF_REQ message body handler.
+   *
+   * For full documenation please see the documentation of the type
+   * RtcpdBridgeProtocolEngine::MsgBodyCallback.
+   */
+  void rtcpEndOfReqCallback(const MessageHeader &header,
+    const int socketFd, bool &receivedENDOF_REQ)
     throw(castor::exception::Exception);
 };
 
