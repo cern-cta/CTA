@@ -271,3 +271,111 @@ BEGIN
   DBMS_ERRLOG.CREATE_ERROR_LOG ('TotalLatency', 'Err_Latency');
 END;
 /
+
+/* SQL statement for the creation of the RequestedAfterGC view on the ReqDel_MV materialized view*/
+CREATE OR REPLACE VIEW RequestedAfterGC AS --Unit is hour
+  SELECT nvl(reqs_t.timestamp, sysdate) timestamp, nvl(reqs_t.interval,300) interval, reqs_t.svcclass, 
+       bin_t.bin, nvl(reqs_t.reqs,0) reqs
+    FROM  ( SELECT * FROM ( 
+              SELECT '0 0.1' bin FROM dual
+                UNION SELECT '0.1 0.5' FROM dual
+                UNION SELECT '0.5 1' FROM dual
+		UNION SELECT '1 2' FROM dual
+		UNION SELECT '2 4' FROM dual
+		UNION SELECT '4 6' FROM dual
+		UNION SELECT '6 8' FROM dual
+		UNION SELECT '8 24' FROM dual), (SELECT DISTINCT svcclass FROM Req_Del)) bin_t
+    LEFT OUTER JOIN ( 
+      SELECT DISTINCT sysdate timestamp, 300 interval, svcclass,
+		bin, count(bin) over (Partition by svcclass, bin) reqs
+	FROM ( SELECT
+		CASE WHEN dif >= 0 and dif < 0.1 THEN '0 0.1'
+		WHEN dif >= 0.1 AND dif < 0.5 THEN '0.1 0.5'
+		WHEN dif >= 0.5 AND dif < 1 THEN  '0.5 1'
+		WHEN dif >= 1 AND dif < 2 THEN '1 2'
+		WHEN dif >= 2 AND dif < 4 THEN '2 4'
+		WHEN dif >= 4 AND dif < 6 THEN '4 6'
+		WHEN dif >= 6 AND dif < 8 THEN '6 8'
+		ELSE '8 24' END bin, svcclass 
+	         FROM ReqDel_MV
+	        WHERE timestamp > sysdate - 10/1440
+		  AND timestamp <= sysdate - 5/1440)) reqs_t
+    ON bin_t.bin = reqs_t.bin
+   WHERE reqs_t.svcclass IS NOT NULL
+   ORDER by svcclass, bin_t.bin;
+
+/* SQL statement for the creation of the GCStateByFileSize view on the on the GcFiles table*/
+CREATE OR REPLACE VIEW GCStateByFileSize AS --Unit is byte
+  SELECT nvl(reqs_t.timestamp, sysdate) timestamp, nvl(reqs_t.interval,300) interval, reqs_t.svcclass,
+       bin_t.bin, nvl(reqs_t.reqs,0) reqs 
+    FROM  ( SELECT * FROM (
+              SELECT '0 1024' bin FROM dual
+		UNION SELECT '1024 10240' FROM dual
+		UNION SELECT '10240 102400' FROM dual
+		UNION SELECT '102400 1048576' FROM dual
+		UNION SELECT '1048576 10485760' FROM dual
+		UNION SELECT '10485760 104857600' FROM dual
+		UNION SELECT '104857600 1073741000' FROM dual
+		UNION SELECT '1073741000 -1' FROM dual), (SELECT DISTINCT svcclass FROM GcFiles)) bin_t
+    LEFT OUTER JOIN (
+      SELECT DISTINCT sysdate timestamp, 300 interval, svcclass,
+	        bin, count(bin) over (Partition BY svcclass, bin) reqs 
+	FROM ( SELECT 
+	        CASE WHEN filesize < 1024 THEN '0 1024'
+		WHEN filesize >= 1024 AND filesize < 10240 THEN '1024 10240'
+		WHEN filesize >= 10240 AND filesize < 102400 THEN '10240 102400'
+		WHEN filesize >= 102400 AND filesize < 1048576 THEN '102400 1048576'
+		WHEN filesize >= 1048576 AND filesize < 10485760 THEN '1048576 10485760'
+		WHEN filesize >= 10485760 AND filesize < 104857600 THEN '10485760 104857600'
+		WHEN filesize >= 104857600 AND filesize < 1073741000 THEN '104857600 1073741000'
+		ELSE '1073741000 -1' end bin, svcclass
+	         FROM GcFiles
+	        WHERE filesize!=0
+	          AND timestamp >= sysdate - 10/1440
+	          AND timestamp < sysdate - 5/1440)) reqs_t
+    ON bin_t.bin = reqs_t.bin
+   WHERE reqs_t.svcclass IS NOT NULL
+   ORDER BY reqs_t.svcclass, bin_t.bin;
+
+/* SQL statement for the creation of the GCStatsByFileAge view on the GcFiles table */
+CREATE OR REPLACE VIEW GCStatsByFileAge AS --Unit is second
+  SELECT nvl(reqs_t.timestamp, sysdate) timestamp, nvl(reqs_t.interval,300) interval, reqs_t.svcclass,
+       bin_t.bin, nvl(reqs_t.reqs,0) reqs 
+    FROM  ( SELECT * FROM (
+              SELECT '0 10' bin FROM dual
+		UNION SELECT '10 60' FROM dual
+		UNION SELECT '60 900' FROM dual
+		UNION SELECT '900 1800' FROM dual
+		UNION SELECT '1800 3600' FROM dual
+		UNION SELECT '3600 21600' FROM dual
+		UNION SELECT '21600 43200' FROM dual
+		UNION SELECT '43200 86400' FROM dual
+		UNION SELECT '86400 172800' FROM dual
+		UNION SELECT '172800 345600' FROM dual
+		UNION SELECT '345600 691200' FROM dual
+		UNION SELECT '691200 1382400' FROM dual
+		UNION SELECT '1382400 -1' FROM dual), (SELECT DISTINCT svcclass FROM GcFiles)) bin_t
+    LEFT OUTER JOIN (
+      SELECT DISTINCT sysdate timestamp, 300 INTERVAL, svcclass, 
+                bin, count(bin) over (PARTITION BY svcclass, bin) reqs
+        FROM ( SELECT 
+	        CASE WHEN fileage < 10 THEN '0 10'
+		WHEN fileage >= 10 AND fileage < 60 THEN '10 60'
+		WHEN fileage >= 60 AND fileage < 900 THEN '60 900'
+		WHEN fileage >= 900 AND fileage < 1800 THEN '900 1800'
+		WHEN fileage >= 1800 AND fileage < 3600 THEN '1800 3600'
+		WHEN fileage >= 3600 AND fileage < 21600 THEN '3600 21600'
+		WHEN fileage >= 21600 AND fileage < 43200 THEN '21600 43200'
+		WHEN fileage >= 43200 AND fileage < 86400 THEN '43200 86400'
+		WHEN fileage >= 86400 AND fileage < 172800 THEN '86400 172800'
+		WHEN fileage >= 172800 AND fileage < 345600 THEN '172800 345600'
+		WHEN fileage >= 345600 AND fileage < 691200 THEN '345600 691200'
+		WHEN fileage >= 691200 AND fileage < 1382400 THEN '691200 1382400'
+		ELSE '1382400 -1' END bin, svcclass
+		 FROM GcFiles
+		WHERE fileage IS NOT NULL
+  		  AND timestamp >= sysdate - 10/1440
+  		  AND timestamp < sysdate - 5/1440)) reqs_t
+    ON bin_t.bin = reqs_t.bin
+   WHERE reqs_t.svcclass is NOT null
+   ORDER BY svcclass, bin_t.bin;
