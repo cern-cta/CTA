@@ -65,6 +65,13 @@ site.def: /usr/src/redhat/BUILD/castor-2.1.8/config/site.def
 binaries: /usr/src/redhat/BUILD/castor-2.1.8-root/
 
 
+How to update an installed rpm
+==============================
+
+ssh root@c2itdcsrv102
+rpm -Uvh--force <location to rpm>/castor-rtcopyclient-server-2.1.8-7.x86_64.rpm
+
+
 How to build the VDQM v2_1_7_20
 ===============================
 
