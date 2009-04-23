@@ -408,6 +408,12 @@ private:
     checkRtcopyReqType(expected, n, actual, function);
    }
 
+// sendRtcpEndOfRequest
+  static void sendRtcpEndOfRequest(
+    const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
+    const int netReadWriteTimeout, const RtcpAcknowledgeMsg &message)
+    throw(castor::exception::Exception);
+
 }; // class RtcpTxRx
 
 } // namespace aggregator

@@ -1115,3 +1115,48 @@ void castor::tape::aggregator::RtcpTxRx::checkRtcopyReqType(
   TAPE_THROW_CODE(EBADMSG,
     messageStream.str());
 }
+
+//-----------------------------------------------------------------------------
+// sendRtcpEndOfRequest
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::RtcpTxRx::sendRtcpEndOfRequest(
+  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
+  const int netReadWriteTimeout, const RtcpAcknowledgeMsg &message)
+  throw(castor::exception::Exception) {
+
+  char buf[MSGBUFSIZ];
+  size_t totalLen = 0;
+
+  try {
+    totalLen = Marshaller::marshallRtcpAcknowledgeMsg(buf, message);
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_EX(castor::exception::Internal,
+         ": Failed to marshall End Of Request message to RTCPD: "
+      << ex.getMessage().str());
+  }
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId", volReqId)};
+
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_NULL/*SEND_ENDOF_REQ*/, params);
+  }
+
+  try {
+    Net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(SECOMERR,
+      ": Failed to send the End Of Request message to RTCPD"
+      ": " << ex.getMessage().str());
+  }
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId", volReqId)};
+
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_NULL/*SENT_ENDOF_REQ*/, params);
+  }
+}
+

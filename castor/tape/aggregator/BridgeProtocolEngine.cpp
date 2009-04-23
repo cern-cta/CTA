@@ -303,13 +303,21 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocket(
           m_readFds.end(), m_rtcpdInitialSocketFd);
 
         // If the file descriptor cannot be found
-        if(itor != m_readFds.end()) {
+        if(itor == m_readFds.end()) {
           TAPE_THROW_EX(castor::exception::Internal,
-            ": The initial callback connection is not the last one open"
-            ": fd=" << m_rtcpdInitialSocketFd);
+            ": The initial callback connection (fd=" << m_rtcpdInitialSocketFd
+            <<")is not the last one open. Found fd= " << *itor);
         }
 
         // WE ARE HERE 22/04/09
+
+        RtcpAcknowledgeMsg ackMsg;
+        ackMsg.magic   = RTCOPY_MAGIC;
+        ackMsg.reqType = RTCP_ENDOF_REQ;
+        ackMsg.status  = 0;
+        RtcpTxRx::sendRtcpAcknowledge(m_cuuid, m_volReqId,  m_rtcpdInitialSocketFd,
+          RTCPDNETRWTIMEOUT,ackMsg);
+
       }
     }
   }
