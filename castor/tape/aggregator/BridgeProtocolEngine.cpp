@@ -268,11 +268,10 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocket(
       return;
     }
 
-    bool localReceivedENDOF_REQ = false;
-    processRtcpdRequest(header, socketFd, localReceivedENDOF_REQ);
+    processRtcpdRequest(header, socketFd, receivedENDOF_REQ);
 
     // If an RTCP_ENDOF_REQ message was received
-    if(localReceivedENDOF_REQ) {
+    if(receivedENDOF_REQ) {
       m_nbReceivedENDOF_REQs++;
 
       {
@@ -334,7 +333,6 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocket(
             << ex.getMessage().str());
         }
 
-        receivedENDOF_REQ = true;
         // Close the connection
         close(m_readFds.release(m_rtcpdInitialSocketFd));
       }
