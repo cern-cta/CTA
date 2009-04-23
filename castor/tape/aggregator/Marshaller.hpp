@@ -30,7 +30,6 @@
 #include "castor/tape/aggregator/MessageHeader.hpp"
 #include "castor/tape/aggregator/RcpJobReplyMsgBody.hpp"
 #include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
-#include "castor/tape/aggregator/RtcpAcknowledgeMsg.hpp"
 #include "castor/tape/aggregator/RtcpFileRqstMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpFileRqstErrMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpTapeRqstMsgBody.hpp"
@@ -456,51 +455,6 @@ namespace aggregator {
      */
     static void unmarshallRtcpTapeRqstMsgBody(const char * &src,
       size_t &srcLen, RtcpTapeRqstMsgBody &dst)
-      throw(castor::exception::Exception);
-
-    /**
-     * Marshalls the specified source RTCP acknowledge message structure into
-     * the specified destination buffer.
-     *
-     * @param dst The destination message buffer.
-     * @param dstLen The length of the destination buffer.
-     * @param src The source structure.
-     * @return The total length of the message (header + body).
-     */
-    static size_t marshallRtcpAcknowledgeMsg(char *const dst,
-      const size_t dstLen, const RtcpAcknowledgeMsg &src)
-      throw(castor::exception::Exception);
-
-    /**
-     * Marshalls the specified source RTCP acknowledge message structure into
-     * the specified destination buffer.
-     *
-     * @param dst The destination message buffer.
-     * @param src The source structure.
-     * @return The total length of the message (header + body).
-     */
-    template<int n> static size_t marshallRtcpAcknowledgeMsg(
-      char (&dst)[n], const RtcpAcknowledgeMsg &src)
-      throw(castor::exception::Exception) {
-      return marshallRtcpAcknowledgeMsg(dst, n, src);
-    }
-
-    /**
-     * Unmarshalls the message body of an RTCP acknowledge message from the
-     * specified source buffer into the specified destination message
-     * structure.
-     *
-     * @param src In/out parameter, before invocation points to the source
-     * buffer where the message body should be unmarshalled from and on return
-     * points to the byte in the source buffer immediately after the
-     * unmarshalled message body.
-     * @param srcLen In/our parameter, before invocation is the length of the
-     * source buffer from where the message body should be unmarshalled and on
-     * return is the number of bytes remaining in the source buffer.
-     * @param dst The destination message structure.
-     */
-    static void unmarshallRtcpAcknowledgeMsg(const char * &src,
-      size_t &srcLen, RtcpAcknowledgeMsg &dst)
       throw(castor::exception::Exception);
 
     /**

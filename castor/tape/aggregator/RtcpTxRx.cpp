@@ -87,9 +87,10 @@ void castor::tape::aggregator::RtcpTxRx::getRequestInfoFromRtcpd(
   }
 
   // Receive acknowledge from RTCPD
-  RtcpAcknowledgeMsg ackMsg;
+  MessageHeader ackMsg;
   try {
-    receiveRtcpAcknowledge(socketFd, netReadWriteTimeout, ackMsg);
+    receiveMessageHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
+      ackMsg);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EPROTO,
          ": Failed to receive acknowledge from RTCPD: "
@@ -100,17 +101,17 @@ void castor::tape::aggregator::RtcpTxRx::getRequestInfoFromRtcpd(
   checkRtcopyReqType(RTCP_TAPEERR_REQ, ackMsg.reqType, __FUNCTION__);
 
   // If the acknowledge is negative
-  if(ackMsg.status != 0) {
-    TAPE_THROW_CODE(ackMsg.status,
+  if(ackMsg.lenOrStatus != 0) {
+    TAPE_THROW_CODE(ackMsg.lenOrStatus,
       ": Received negative acknowledge from RTCPD"
-      ": Status: " << ackMsg.status);
+      ": Status: " << ackMsg.lenOrStatus);
   }
 
   // Receive reply from RTCPD
   utils::setBytes(reply, '\0');
   try {
     MessageHeader header;
-    receiveRtcpMsgHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
+    receiveMessageHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
       header);
     receiveRtcpTapeRqstErrBody(cuuid, volReqId, socketFd, netReadWriteTimeout,
       header, reply);
@@ -122,7 +123,7 @@ void castor::tape::aggregator::RtcpTxRx::getRequestInfoFromRtcpd(
 
   // Send acknowledge to RTCPD
   try {
-    sendRtcpAcknowledge(cuuid, volReqId, socketFd, netReadWriteTimeout, 
+    sendMessageHeader(cuuid, volReqId, socketFd, netReadWriteTimeout, 
       ackMsg);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EPROTO,
@@ -180,9 +181,10 @@ void castor::tape::aggregator::RtcpTxRx::giveVolumeToRtcpd(
   }
 
   // Receive acknowledge from RTCPD
-  RtcpAcknowledgeMsg ackMsg;
+  MessageHeader ackMsg;
   try {
-    receiveRtcpAcknowledge(socketFd, netReadWriteTimeout, ackMsg);
+    receiveMessageHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
+      ackMsg);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EPROTO,
          ": Failed to receive acknowledge from RTCPD: "
@@ -193,10 +195,10 @@ void castor::tape::aggregator::RtcpTxRx::giveVolumeToRtcpd(
   checkRtcopyReqType(RTCP_TAPEERR_REQ, ackMsg.reqType, __FUNCTION__);
 
   // If the acknowledge is negative
-  if(ackMsg.status != 0) {
-    TAPE_THROW_CODE(ackMsg.status,
+  if(ackMsg.lenOrStatus != 0) {
+    TAPE_THROW_CODE(ackMsg.lenOrStatus,
       ": Received negative acknowledge from RTCPD"
-      ": Status: " << ackMsg.status);
+      ": Status: " << ackMsg.lenOrStatus);
   }
   {
     castor::dlf::Param params[] = {
@@ -254,9 +256,10 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
   }
 
   // Receive acknowledge from RTCPD
-  RtcpAcknowledgeMsg ackMsg;
+  MessageHeader ackMsg;
   try {
-    receiveRtcpAcknowledge(socketFd, netReadWriteTimeout, ackMsg);
+    receiveMessageHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
+      ackMsg);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EPROTO,
          ": Failed to receive acknowledge from RTCPD: "
@@ -267,10 +270,10 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
   checkRtcopyReqType(RTCP_FILEERR_REQ, ackMsg.reqType, __FUNCTION__);
 
   // If the acknowledge is negative
-  if(ackMsg.status != 0) {
-    TAPE_THROW_CODE(ackMsg.status,
+  if(ackMsg.lenOrStatus != 0) {
+    TAPE_THROW_CODE(ackMsg.lenOrStatus,
       ": Received negative acknowledge from RTCPD"
-      ": Status: " << ackMsg.status);
+      ": Status: " << ackMsg.lenOrStatus);
   }
   {
     castor::dlf::Param params[] = {
@@ -287,50 +290,18 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
 
 
 //-----------------------------------------------------------------------------
-// receiveRtcpAcknowledge
+// sendMessageHeader
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::RtcpTxRx::receiveRtcpAcknowledge(
-  const int socketFd, const int netReadWriteTimeout,
-  RtcpAcknowledgeMsg &message) throw(castor::exception::Exception) {
-
-  // Read in the RTCPD acknowledge message (there is no separate header and
-  // body)
-  char messageBuf[3 * sizeof(uint32_t)]; // magic + request type + status
-  try {
-    Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, sizeof(messageBuf),
-      messageBuf);
-  } catch (castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(SECOMERR,
-      ": Failed to read RTCPD acknowledge message"
-      ": " << ex.getMessage().str());
-  }
-
-  // Unmarshall the RTCPD acknowledge message
-  try {
-    const char *p           = messageBuf;
-    size_t     remainingLen = sizeof(messageBuf);
-    Marshaller::unmarshallRtcpAcknowledgeMsg(p, remainingLen, message);
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(EBADMSG,
-      ": Failed to unmarshall RTCPD acknowledge message"
-      ": " << ex.getMessage().str());
-  }
-}
-
-
-//-----------------------------------------------------------------------------
-// sendRtcpAcknowledge
-//-----------------------------------------------------------------------------
-void castor::tape::aggregator::RtcpTxRx::sendRtcpAcknowledge(
+void castor::tape::aggregator::RtcpTxRx::sendMessageHeader(
   const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, 
-  const int netReadWriteTimeout, const RtcpAcknowledgeMsg &message) 
+  const int netReadWriteTimeout, const MessageHeader &header) 
   throw(castor::exception::Exception) {
 
   char buf[MSGBUFSIZ];
   size_t totalLen = 0;
 
   try {
-    totalLen = Marshaller::marshallRtcpAcknowledgeMsg(buf, message);
+    totalLen = Marshaller::marshallMessageHeader(buf, header);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,
          ": Failed to marshall RCP acknowledge message: "
@@ -374,9 +345,9 @@ void castor::tape::aggregator::RtcpTxRx::pingRtcpd(const Cuuid_t &cuuid,
   size_t totalLen = 0;
 
   MessageHeader header;
-  header.magic   = RTCOPY_MAGIC;
-  header.reqType = RTCP_PING_REQ;
-  header.len     = 0;
+  header.magic       = RTCOPY_MAGIC;
+  header.reqType     = RTCP_PING_REQ;
+  header.lenOrStatus = 0;
 
   try {
     // The RTCPD message is a bodiless RTCP message
@@ -448,9 +419,10 @@ void castor::tape::aggregator::RtcpTxRx::tellRtcpdEndOfFileList(
   }
 
   // Receive acknowledge from RTCPD
-  RtcpAcknowledgeMsg ackMsg;
+  MessageHeader ackMsg;
   try {
-    receiveRtcpAcknowledge(socketFd, netReadWriteTimeout, ackMsg);
+    receiveMessageHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
+      ackMsg);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EPROTO,
          ": Failed to receive acknowledge from RTCPD: "
@@ -466,10 +438,10 @@ void castor::tape::aggregator::RtcpTxRx::tellRtcpdEndOfFileList(
   switch(ackMsg.reqType) {
   case RTCP_NOMORE_REQ:
     // If the acknowledge is negative
-    if(ackMsg.status != 0) {
-      TAPE_THROW_CODE(ackMsg.status,
+    if(ackMsg.lenOrStatus != 0) {
+      TAPE_THROW_CODE(ackMsg.lenOrStatus,
         ": Received negative acknowledge from RTCPD"
-        ": Status: " << ackMsg.status);
+        ": Status: " << ackMsg.lenOrStatus);
     }
     break;
   case RTCP_TAPEERR_REQ:
@@ -524,9 +496,10 @@ void castor::tape::aggregator::RtcpTxRx::tellRtcpdToAbort(const Cuuid_t &cuuid,
   }
 
   // Receive acknowledge from RTCPD
-  RtcpAcknowledgeMsg ackMsg;
+  MessageHeader ackMsg;
   try {
-    receiveRtcpAcknowledge(socketFd, netReadWriteTimeout, ackMsg);
+    receiveMessageHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
+      ackMsg);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EPROTO,
          ": Failed to receive acknowledge from RTCPD: "
@@ -537,10 +510,10 @@ void castor::tape::aggregator::RtcpTxRx::tellRtcpdToAbort(const Cuuid_t &cuuid,
   checkRtcopyReqType(RTCP_NOMORE_REQ, ackMsg.reqType, __FUNCTION__);
 
   // If the acknowledge is negative
-  if(ackMsg.status != 0) {
-    TAPE_THROW_CODE(ackMsg.status,
+  if(ackMsg.lenOrStatus != 0) {
+    TAPE_THROW_CODE(ackMsg.lenOrStatus,
       ": Received negative acknowledge from RTCPD"
-      ": Status: " << ackMsg.status);
+      ": Status: " << ackMsg.lenOrStatus);
   }
 }
 
@@ -587,11 +560,11 @@ void castor::tape::aggregator::RtcpTxRx::receiveRcpJobRqst(const Cuuid_t &cuuid,
   char bodyBuf[MSGBUFSIZ - 3 * sizeof(uint32_t)];
 
   // If the message body is too large
-  if(header.len > sizeof(bodyBuf)) {
+  if(header.lenOrStatus > sizeof(bodyBuf)) {
     TAPE_THROW_CODE(EMSGSIZE,
          ": Message body from RCP job submitter is too large"
          ": Maximum: " << sizeof(bodyBuf)
-      << ": Received: " << header.len);
+      << ": Received: " << header.lenOrStatus);
   }
 
   // If the message body is too small
@@ -599,17 +572,17 @@ void castor::tape::aggregator::RtcpTxRx::receiveRcpJobRqst(const Cuuid_t &cuuid,
     // The minimum size of a RcpJobRqstMsgBody is 4 uint32_t's and the
     // termination characters of 4 strings
     const size_t minimumLen = 4 * sizeof(uint32_t) + 4;
-    if(header.len < minimumLen) {
+    if(header.lenOrStatus < minimumLen) {
       TAPE_THROW_CODE(EMSGSIZE,
            ": Message body from RCP job submitter is too small"
            ": Minimum: " << minimumLen
-        << ": Received: " << header.len);
+        << ": Received: " << header.lenOrStatus);
     }
   }
 
   // Read the message body
   try {
-    Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.len, bodyBuf);
+    Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.lenOrStatus, bodyBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EIO,
          ": Failed to read message body from RCP job submitter"
@@ -619,7 +592,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRcpJobRqst(const Cuuid_t &cuuid,
   // Unmarshall the message body
   try {
     const char *p           = bodyBuf;
-    size_t     remainingLen = header.len;
+    size_t     remainingLen = header.lenOrStatus;
     Marshaller::unmarshallRcpJobRqstMsgBody(p, remainingLen, request);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,
@@ -711,9 +684,10 @@ void castor::tape::aggregator::RtcpTxRx::askRtcpdToRequestMoreWork(
   }
 
   // Receive acknowledge from RTCPD
-  RtcpAcknowledgeMsg ackMsg;
+  MessageHeader ackMsg;
   try {
-    receiveRtcpAcknowledge(socketFd, netReadWriteTimeout, ackMsg);
+    receiveMessageHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
+      ackMsg);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EPROTO,
       ": Failed to receive acknowledge from RTCPD"
@@ -724,10 +698,10 @@ void castor::tape::aggregator::RtcpTxRx::askRtcpdToRequestMoreWork(
   checkRtcopyReqType(RTCP_FILEERR_REQ, ackMsg.reqType, __FUNCTION__);
 
   // If the acknowledge is negative
-  if(ackMsg.status != 0) {
-    TAPE_THROW_CODE(ackMsg.status,
+  if(ackMsg.lenOrStatus != 0) {
+    TAPE_THROW_CODE(ackMsg.lenOrStatus,
       ": Received negative acknowledge from RTCPD"
-      ": Status: " << ackMsg.status);
+      ": Status: " << ackMsg.lenOrStatus);
   }
   {
     castor::dlf::Param params[] = {
@@ -793,9 +767,9 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
 
 
 //-----------------------------------------------------------------------------
-// receiveRtcpMsgHeader
+// receiveMessageHeader
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::RtcpTxRx::receiveRtcpMsgHeader(
+void castor::tape::aggregator::RtcpTxRx::receiveMessageHeader(
   const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
   const int netReadWriteTimeout, MessageHeader &header)
   throw(castor::exception::Exception) {
@@ -824,9 +798,9 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpMsgHeader(
 
 
 //-----------------------------------------------------------------------------
-// receiveRtcpMsgHeaderFromCloseableConn
+// receiveMessageHeaderFromCloseableConn
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::RtcpTxRx::receiveRtcpMsgHeaderFromCloseable(
+void castor::tape::aggregator::RtcpTxRx::receiveMessageHeaderFromCloseable(
   const Cuuid_t &cuuid,  bool &connClosed, const uint32_t volReqId, 
   const int socketFd, const int netReadWriteTimeout, MessageHeader &header)
   throw(castor::exception::Exception) {
@@ -870,16 +844,16 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpFileRqstErrBody(
   char bodyBuf[MSGBUFSIZ - 3 * sizeof(uint32_t)];
 
   // If the message body is too large
-  if(header.len > sizeof(bodyBuf)) {
+  if(header.lenOrStatus > sizeof(bodyBuf)) {
     TAPE_THROW_CODE(EMSGSIZE,
          ": Message body from RTCPD is too large"
          ": Maximum: " << sizeof(bodyBuf)
-      << ": Received: " << header.len);
+      << ": Received: " << header.lenOrStatus);
   }
 
   // Read the message body
   try {
-    Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.len, bodyBuf);
+    Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.lenOrStatus, bodyBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EIO,
          ": Failed to read message body from RTCPD"
@@ -889,7 +863,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpFileRqstErrBody(
   // Unmarshall the message body
   try {
     const char *p           = bodyBuf;
-    size_t     remainingLen = header.len;
+    size_t     remainingLen = header.lenOrStatus;
     Marshaller::unmarshallRtcpFileRqstErrMsgBody(p, remainingLen, body);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,
@@ -914,16 +888,16 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpFileRqstBody(
   char bodyBuf[MSGBUFSIZ - 3 * sizeof(uint32_t)];
 
   // If the message body is too large
-  if(header.len > sizeof(bodyBuf)) {
+  if(header.lenOrStatus > sizeof(bodyBuf)) {
     TAPE_THROW_CODE(EMSGSIZE,
          ": Message body from RTCPD is too large"
          ": Maximum: " << sizeof(bodyBuf)
-      << ": Received: " << header.len);
+      << ": Received: " << header.lenOrStatus);
   }
 
   // Read the message body
   try {
-    Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.len, bodyBuf);
+    Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.lenOrStatus, bodyBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EIO,
          ": Failed to read message body from RTCPD"
@@ -933,7 +907,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpFileRqstBody(
   // Unmarshall the message body
   try {
     const char *p           = bodyBuf;
-    size_t     remainingLen = header.len;
+    size_t     remainingLen = header.lenOrStatus;
     Marshaller::unmarshallRtcpFileRqstMsgBody(p, remainingLen, body);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,
@@ -958,11 +932,11 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpTapeRqstErrBody(
   char bodyBuf[MSGBUFSIZ - 3 * sizeof(uint32_t)];
 
   // If the message body is too large
-  if(header.len > sizeof(bodyBuf)) {
+  if(header.lenOrStatus > sizeof(bodyBuf)) {
     TAPE_THROW_CODE(EMSGSIZE,
          ": Message body from RTCPD is too large"
          ": Maximum: " << sizeof(bodyBuf)
-      << ": Received: " << header.len);
+      << ": Received: " << header.lenOrStatus);
   }
 
   {
@@ -975,7 +949,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpTapeRqstErrBody(
 
   // Read the message body
   try {
-    Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.len, bodyBuf);
+    Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.lenOrStatus, bodyBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EIO,
          ": Failed to read message body from RTCPD"
@@ -985,7 +959,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpTapeRqstErrBody(
   // Unmarshall the message body
   try {
     const char *p           = bodyBuf;
-    size_t     remainingLen = header.len;
+    size_t     remainingLen = header.lenOrStatus;
     Marshaller::unmarshallRtcpTapeRqstErrMsgBody(p, remainingLen, body);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,
@@ -1018,16 +992,16 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpTapeRqstBody(
   char bodyBuf[MSGBUFSIZ - 3 * sizeof(uint32_t)];
 
   // If the message body is too large
-  if(header.len > sizeof(bodyBuf)) {
+  if(header.lenOrStatus > sizeof(bodyBuf)) {
     TAPE_THROW_CODE(EMSGSIZE,
          ": Message body from RTCPD is too large"
          ": Maximum: " << sizeof(bodyBuf)
-      << ": Received: " << header.len);
+      << ": Received: " << header.lenOrStatus);
   }
 
   // Read the message body
   try {
-    Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.len, bodyBuf);
+    Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.lenOrStatus, bodyBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EIO,
          ": Failed to read message body from RTCPD"
@@ -1037,7 +1011,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpTapeRqstBody(
   // Unmarshall the message body
   try {
     const char *p           = bodyBuf;
-    size_t     remainingLen = header.len;
+    size_t     remainingLen = header.lenOrStatus;
     Marshaller::unmarshallRtcpTapeRqstMsgBody(p, remainingLen, body);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,
@@ -1115,48 +1089,3 @@ void castor::tape::aggregator::RtcpTxRx::checkRtcopyReqType(
   TAPE_THROW_CODE(EBADMSG,
     messageStream.str());
 }
-
-//-----------------------------------------------------------------------------
-// sendRtcpEndOfRequest
-//-----------------------------------------------------------------------------
-void castor::tape::aggregator::RtcpTxRx::sendRtcpEndOfRequest(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
-  const int netReadWriteTimeout, const RtcpAcknowledgeMsg &message)
-  throw(castor::exception::Exception) {
-
-  char buf[MSGBUFSIZ];
-  size_t totalLen = 0;
-
-  try {
-    totalLen = Marshaller::marshallRtcpAcknowledgeMsg(buf, message);
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_EX(castor::exception::Internal,
-         ": Failed to marshall End Of Request message to RTCPD: "
-      << ex.getMessage().str());
-  }
-
-  {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", volReqId)};
-
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_NULL/*SEND_ENDOF_REQ*/, params);
-  }
-
-  try {
-    Net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(SECOMERR,
-      ": Failed to send the End Of Request message to RTCPD"
-      ": " << ex.getMessage().str());
-  }
-
-  {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", volReqId)};
-
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_NULL/*SENT_ENDOF_REQ*/, params);
-  }
-}
-

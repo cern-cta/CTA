@@ -198,12 +198,12 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
   // error string
   {
     const size_t minimumLen = sizeof(uint32_t) + 1;
-    if(header.len < minimumLen) {
+    if(header.lenOrStatus < minimumLen) {
       TAPE_THROW_CODE(EMSGSIZE,
         ": Invalid header from " << remoteCopyType <<
         ": Message body not large enough for a status number and an empty "
         "string: Minimum size expected: " << minimumLen <<
-        ": Received: " << header.len);
+        ": Received: " << header.lenOrStatus);
     }
   }
 
@@ -211,16 +211,17 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
   char bodyBuf[MSGBUFSIZ - 3 * sizeof(uint32_t)];
 
   // If the message body is larger than the message body buffer
-  if(header.len > sizeof(bodyBuf)) {
+  if(header.lenOrStatus > sizeof(bodyBuf)) {
     TAPE_THROW_CODE(EMSGSIZE,
       ": Message body from " <<  remoteCopyType << " is too large" <<
       ": Maximum: " << sizeof(bodyBuf) <<
-      ": Received: " << header.len);
+      ": Received: " << header.lenOrStatus);
   }
 
   // Read the message body
   try {
-    Net::readBytes(socket.socket(), RTCPDNETRWTIMEOUT, header.len, bodyBuf);
+    Net::readBytes(socket.socket(), RTCPDNETRWTIMEOUT, header.lenOrStatus,
+      bodyBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
       ": Failed to read message body from " << remoteCopyType <<
@@ -230,7 +231,7 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
   // Unmarshall the job submission reply
   try {
     const char *p           = bodyBuf;
-    size_t     remainingLen = header.len;
+    size_t     remainingLen = header.lenOrStatus;
     Marshaller::unmarshallRcpJobReplyMsgBody(p, remainingLen, reply);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,

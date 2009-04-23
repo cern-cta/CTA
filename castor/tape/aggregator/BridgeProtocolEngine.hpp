@@ -199,8 +199,10 @@ private:
    * Processes the specified RTCPD socket.
    *
    * @param socketFd The file descriptor of the socket to be processed.
+   * @param receivedENDOF_REQ Out parameter: Will be set to true by this
+   * function of an RTCP_ENDOF_REQ was received.
    */
-  void processRtcpdSocket(const int socketFd)
+  void processRtcpdSocket(const int socketFd, bool &receivedENDOF_REQ)
     throw(castor::exception::Exception);
 
   /**

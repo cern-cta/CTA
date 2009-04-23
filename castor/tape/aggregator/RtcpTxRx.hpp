@@ -29,7 +29,6 @@
 #include "castor/io/ClientSocket.hpp"
 #include "castor/tape/aggregator/MessageHeader.hpp"
 #include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
-#include "castor/tape/aggregator/RtcpAcknowledgeMsg.hpp"
 #include "castor/tape/aggregator/RtcpFileRqstErrMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpFileRqstMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpTapeRqstErrMsgBody.hpp"
@@ -87,19 +86,18 @@ public:
     RtcpTapeRqstErrMsgBody &request) throw(castor::exception::Exception);
 
   /**
-   * Sends the specified RTCPD acknowledge message to RTCPD using the
-   * specified socket.
+   * Sends the specified message header to RTCPD using the specified socket.
    *
    * @param cuuid The ccuid to be used for logging.
    * @param volReqId The volume request ID to be sent to the tape gateway.
    * @param socketFd The socket file descriptor of the connection with RTCPD.
    * @param netReadWriteTimeout The timeout to be applied when performing
    * network read and write operations.
-   * @param message The message to be sent.
+   * @param header The message header to be sent.
    */
-  static void sendRtcpAcknowledge(const Cuuid_t &cuuid,
+  static void sendMessageHeader(const Cuuid_t &cuuid,
     const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout,
-    const RtcpAcknowledgeMsg &message) throw(castor::exception::Exception);
+    const MessageHeader &header) throw(castor::exception::Exception);
 
   /**
    * Pings RTCPD using the specified socket.
@@ -188,7 +186,7 @@ public:
    *
    * If it is normal that the connection can be closed by the peer, for
    * example you are using select, then please use
-   * receiveRtcpMsgHeaderFromCloseableConn().
+   * receiveMessageHeaderFromCloseableConn().
    *
    * @param cuuid The ccuid to be used for logging.
    * @param volReqId The volume request ID to be sent to the tape gateway.
@@ -198,7 +196,7 @@ public:
    * @param request The request which will be filled with the contents of the
    * received message.
    */
-  static void receiveRtcpMsgHeader(const Cuuid_t &cuuid,
+  static void receiveMessageHeader(const Cuuid_t &cuuid,
     const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout,
     MessageHeader &header) throw(castor::exception::Exception);
 
@@ -215,7 +213,7 @@ public:
    * @param request The request which will be filled with the contents of the
    * received message.
    */
-  static void receiveRtcpMsgHeaderFromCloseable(const Cuuid_t &cuuid,
+  static void receiveMessageHeaderFromCloseable(const Cuuid_t &cuuid,
     bool &connClosed, const uint32_t volReqId, const int socketFd,
     const int netReadWriteTimeout, MessageHeader &header) 
     throw(castor::exception::Exception);
@@ -345,20 +343,6 @@ private:
     RtcpFileRqstErrMsgBody &request) throw(castor::exception::Exception);
 
   /**
-   * Receives an acknowledge message from RTCPD and returns the status code
-   * embedded within the message.
-   *
-   * @param socketFd The socket file descriptor of the connection with RTCPD.
-   * @param netReadWriteTimeout The timeout to be applied when performing
-   * network read and write operations.
-   * @param message The message structure to be filled with the acknowledge
-   * message.
-   */
-  static void receiveRtcpAcknowledge(const int socketFd,
-    const int netReadWriteTimeout, RtcpAcknowledgeMsg &message)
-    throw(castor::exception::Exception);
-
-  /**
    * Throws an exception if the expected magic number is not equal to the
    * actual value.
    *
@@ -407,12 +391,6 @@ private:
     throw(castor::exception::Exception) {
     checkRtcopyReqType(expected, n, actual, function);
    }
-
-// sendRtcpEndOfRequest
-  static void sendRtcpEndOfRequest(
-    const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
-    const int netReadWriteTimeout, const RtcpAcknowledgeMsg &message)
-    throw(castor::exception::Exception);
 
 }; // class RtcpTxRx
 

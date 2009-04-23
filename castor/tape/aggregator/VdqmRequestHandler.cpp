@@ -35,7 +35,6 @@
 #include "castor/tape/aggregator/Packer.hpp"
 #include "castor/tape/aggregator/RcpJobSubmitter.hpp"
 #include "castor/tape/aggregator/Unpacker.hpp"
-#include "castor/tape/aggregator/RtcpAcknowledgeMsg.hpp"
 #include "castor/tape/aggregator/RtcpTapeRqstErrMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpFileRqstErrMsgBody.hpp"
 #include "castor/tape/aggregator/SmartFd.hpp"

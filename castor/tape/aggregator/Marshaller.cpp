@@ -250,9 +250,9 @@ size_t castor::tape::aggregator::Marshaller::marshallMessageHeader(
 
   // Marshall the message header
   char *p = dst;
-  marshallUint32(src.magic  , p);
-  marshallUint32(src.reqType, p);
-  marshallUint32(src.len    , p);
+  marshallUint32(src.magic      , p);
+  marshallUint32(src.reqType    , p);
+  marshallUint32(src.lenOrStatus, p);
 
   // Calculate the number of bytes actually marshalled
   const size_t nbBytesMarshalled = p - dst;
@@ -279,7 +279,7 @@ void castor::tape::aggregator::Marshaller::unmarshallMessageHeader(
 
   unmarshallUint32(src, srcLen, dst.magic);
   unmarshallUint32(src, srcLen, dst.reqType);
-  unmarshallUint32(src, srcLen, dst.len);
+  unmarshallUint32(src, srcLen, dst.lenOrStatus);
 }
 
 
@@ -601,67 +601,6 @@ void castor::tape::aggregator::Marshaller::unmarshallRtcpTapeRqstMsgBody(
   unmarshallUint8(src, srcLen, dst.rtcpReqId.node[3]);
   unmarshallUint8(src, srcLen, dst.rtcpReqId.node[4]);
   unmarshallUint8(src, srcLen, dst.rtcpReqId.node[5]);
-}
-
-
-//-----------------------------------------------------------------------------
-// marshallRtcpAcknowledgeMsg
-//-----------------------------------------------------------------------------
-size_t castor::tape::aggregator::Marshaller::marshallRtcpAcknowledgeMsg(
-  char *const dst, const size_t dstLen, const RtcpAcknowledgeMsg &src)
-  throw(castor::exception::Exception) {
-  castor::exception::Internal ie;
-
-  if(dst == NULL) {
-    TAPE_THROW_CODE(EINVAL,
-      ": Pointer to destination buffer is NULL");
-  }
-
-  // Calculate the total length of the message (there is no separate header and
-  // body)
-  const uint32_t totalLen = 3 * sizeof(uint32_t); // magic + reqType + status
-
-  // Check that the message buffer is big enough
-  if(totalLen > dstLen) {
-    TAPE_THROW_CODE(EMSGSIZE,
-      ": Buffer too small for RTCP acknowledge message"
-      ": Required size: " << totalLen <<
-      ": Actual size: " << dstLen);
-  }
-
-  // Marshall the message
-  char *p = dst;
-  marshallUint32(src.magic  , p);
-  marshallUint32(src.reqType, p);
-  marshallUint32(src.status , p);
-
-  // Calculate the number of bytes actually marshalled
-  const size_t nbBytesMarshalled = p - dst;
-
-  // Check that the number of bytes marshalled was what was expected
-  if(totalLen != nbBytesMarshalled) {
-    TAPE_THROW_EX(castor::exception::Internal,
-      ": Mismatch between the expected total length of the "
-      "RTCP acknowledge message and the actual number of bytes "
-      "marshalled"
-      ": Expected: " << totalLen <<
-      ": Marshalled: " << nbBytesMarshalled);
-  }
-
-  return totalLen;
-}
-
-
-//-----------------------------------------------------------------------------
-// unmarshallRtcpAcknowledgeMsg
-//-----------------------------------------------------------------------------
-void castor::tape::aggregator::Marshaller::unmarshallRtcpAcknowledgeMsg(
-  const char * &src, size_t &srcLen, RtcpAcknowledgeMsg &dst)
-  throw(castor::exception::Exception) {
-
-  unmarshallUint32(src, srcLen, dst.magic);
-  unmarshallUint32(src, srcLen, dst.reqType);
-  unmarshallUint32(src, srcLen, dst.status);
 }
 
 

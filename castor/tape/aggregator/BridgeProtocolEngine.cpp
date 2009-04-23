@@ -199,9 +199,14 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSockets()
 
           // If the read file descriptor is ready
           if(FD_ISSET(*itor, &readFdSet)) {
+            bool receivedENDOF_REQ = false;
 
-            processRtcpdSocket(*itor);
+            processRtcpdSocket(*itor, receivedENDOF_REQ);
             nbProcessedFds++;
+
+            if(receivedENDOF_REQ) {
+              continueRtcopySession = false;
+            }
           }
         }
       } // switch(selectRc)
@@ -221,7 +226,8 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSockets()
 // processRtcpdSocket
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocket(
-  const int socketFd) throw(castor::exception::Exception) {
+  const int socketFd, bool &receivedENDOF_REQ)
+  throw(castor::exception::Exception) {
 
   // If the file descriptor is that of the callback port
   if(socketFd == m_rtcpdCallbackSocketFd) {
@@ -240,7 +246,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocket(
     bool connectionClosed = false;
     MessageHeader header;
     utils::setBytes(header, '\0');
-    RtcpTxRx::receiveRtcpMsgHeaderFromCloseable(m_cuuid, connectionClosed,
+    RtcpTxRx::receiveMessageHeaderFromCloseable(m_cuuid, connectionClosed,
       m_volReqId, socketFd, RTCPDNETRWTIMEOUT, header);
 
     // If the connection has been closed by RTCPD, then remove the
@@ -309,15 +315,27 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocket(
             <<")is not the last one open. Found fd= " << *itor);
         }
 
-        // WE ARE HERE 22/04/09
+        // Send an RTCP_ENDOF_REQ message to RTCPD
+        MessageHeader endofReqMsg;
+        endofReqMsg.magic       = RTCOPY_MAGIC;
+        endofReqMsg.reqType     = RTCP_ENDOF_REQ;
+        endofReqMsg.lenOrStatus = 0;
+        RtcpTxRx::sendMessageHeader(m_cuuid, m_volReqId,
+          m_rtcpdInitialSocketFd, RTCPDNETRWTIMEOUT, endofReqMsg);
 
-        RtcpAcknowledgeMsg ackMsg;
-        ackMsg.magic   = RTCOPY_MAGIC;
-        ackMsg.reqType = RTCP_ENDOF_REQ;
-        ackMsg.status  = 0;
-        RtcpTxRx::sendRtcpAcknowledge(m_cuuid, m_volReqId,  m_rtcpdInitialSocketFd,
-          RTCPDNETRWTIMEOUT,ackMsg);
+        // Receive the acknowledge of the RTCP_ENDOF_REQ message
+        MessageHeader ackMsg;
+        try {
+          RtcpTxRx::receiveMessageHeader(m_cuuid, m_volReqId,
+            m_rtcpdInitialSocketFd, RTCPDNETRWTIMEOUT, ackMsg);
+        } catch(castor::exception::Exception &ex) {
+          TAPE_THROW_CODE(EPROTO,
+            ": Failed to receive acknowledge of RTCP_ENDOF_REQ from RTCPD: "
+            << ex.getMessage().str());
+        }
 
+        // Close the connection
+        close(m_readFds.release(m_rtcpdInitialSocketFd));
       }
     }
   }
@@ -434,13 +452,13 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdRequest(
     const char *reqTypeName = utils::rtcopyReqTypeToStr(header.reqType);
 
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"   , m_volReqId ),
-      castor::dlf::Param("socketFd"   , socketFd   ),
-      castor::dlf::Param("magic"      , magicHex   ),
-      castor::dlf::Param("magicName"  , magicName  ),
-      castor::dlf::Param("reqType"    , reqTypeHex ),
-      castor::dlf::Param("reqTypeName", reqTypeName),
-      castor::dlf::Param("len"        , header.len )};
+      castor::dlf::Param("volReqId"   , m_volReqId        ),
+      castor::dlf::Param("socketFd"   , socketFd          ),
+      castor::dlf::Param("magic"      , magicHex          ),
+      castor::dlf::Param("magicName"  , magicName         ),
+      castor::dlf::Param("reqType"    , reqTypeHex        ),
+      castor::dlf::Param("reqTypeName", reqTypeName       ),
+      castor::dlf::Param("len"        , header.lenOrStatus)};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_PROCESSING_TAPE_DISK_RQST, params);
   }
@@ -587,11 +605,11 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileReqCallback(
           RTCPDNETRWTIMEOUT);
 
         // Asynchronus Request More Work ACK
-        RtcpAcknowledgeMsg ackMsg;
-        ackMsg.magic   = RTCOPY_MAGIC;
-        ackMsg.reqType = RTCP_FILE_REQ;
-        ackMsg.status  = 0;
-        RtcpTxRx::sendRtcpAcknowledge(m_cuuid, m_volReqId, socketFd,
+        MessageHeader ackMsg;
+        ackMsg.magic       = RTCOPY_MAGIC;
+        ackMsg.reqType     = RTCP_FILE_REQ;
+        ackMsg.lenOrStatus = 0;
+        RtcpTxRx::sendMessageHeader(m_cuuid, m_volReqId, socketFd,
           RTCPDNETRWTIMEOUT,ackMsg);
 
       // Else there is no file to recall
@@ -609,11 +627,11 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileReqCallback(
           RTCPDNETRWTIMEOUT);
 
         // Asynchronus Request More Work ACK
-        RtcpAcknowledgeMsg ackMsg;
-        ackMsg.magic   = RTCOPY_MAGIC;
-        ackMsg.reqType = RTCP_FILE_REQ;
-        ackMsg.status  = 0;
-        RtcpTxRx::sendRtcpAcknowledge(m_cuuid, m_volReqId, socketFd,
+        MessageHeader ackMsg;
+        ackMsg.magic       = RTCOPY_MAGIC;
+        ackMsg.reqType     = RTCP_FILE_REQ;
+        ackMsg.lenOrStatus = 0;
+        RtcpTxRx::sendMessageHeader(m_cuuid, m_volReqId, socketFd,
           RTCPDNETRWTIMEOUT,ackMsg);
       }
     } // Else recalling
@@ -627,11 +645,11 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileReqCallback(
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
         AGGREGATOR_TAPE_POSITIONED_FILE_REQ, params);
 
-      RtcpAcknowledgeMsg ackMsg;
-      ackMsg.magic   = RTCOPY_MAGIC;
-      ackMsg.reqType = RTCP_FILE_REQ;
-      ackMsg.status  = 0;
-      RtcpTxRx::sendRtcpAcknowledge(m_cuuid, m_volReqId, socketFd,
+      MessageHeader ackMsg;
+      ackMsg.magic       = RTCOPY_MAGIC;
+      ackMsg.reqType     = RTCP_FILE_REQ;
+      ackMsg.lenOrStatus = 0;
+      RtcpTxRx::sendMessageHeader(m_cuuid, m_volReqId, socketFd,
         RTCPDNETRWTIMEOUT, ackMsg);
     }
     break;
@@ -644,11 +662,11 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileReqCallback(
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
         AGGREGATOR_FILE_TRANSFERED, params);
 
-      RtcpAcknowledgeMsg ackMsg;
-      ackMsg.magic   = RTCOPY_MAGIC;
-      ackMsg.reqType = RTCP_FILE_REQ;
-      ackMsg.status  = 0;
-      RtcpTxRx::sendRtcpAcknowledge(m_cuuid, m_volReqId, socketFd,
+      MessageHeader ackMsg;
+      ackMsg.magic       = RTCOPY_MAGIC;
+      ackMsg.reqType     = RTCP_FILE_REQ;
+      ackMsg.lenOrStatus = 0;
+      RtcpTxRx::sendMessageHeader(m_cuuid, m_volReqId, socketFd,
         RTCPDNETRWTIMEOUT, ackMsg);
 
       // Connect to Gateway and tell "finish"
@@ -677,11 +695,11 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileErrReqCallback(
   RtcpTxRx::receiveRtcpFileRqstErrBody(m_cuuid, m_volReqId, socketFd,
     RTCPDNETRWTIMEOUT, header, body);
 
-  RtcpAcknowledgeMsg ackMsg;
-  ackMsg.magic   = RTCOPY_MAGIC;
-  ackMsg.reqType = RTCP_FILEERR_REQ;
-  ackMsg.status  = 0;
-  RtcpTxRx::sendRtcpAcknowledge(m_cuuid, m_volReqId, socketFd,
+  MessageHeader ackMsg;
+  ackMsg.magic       = RTCOPY_MAGIC;
+  ackMsg.reqType     = RTCP_FILEERR_REQ;
+  ackMsg.lenOrStatus = 0;
+  RtcpTxRx::sendMessageHeader(m_cuuid, m_volReqId, socketFd,
     RTCPDNETRWTIMEOUT, ackMsg);
 
   TAPE_THROW_CODE(body.err.errorCode,
@@ -707,11 +725,11 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpTapeReqCallback(
     AGGREGATOR_TAPE_POSITIONED_TAPE_REQ, params);
 
   // Acknowledge tape request
-  RtcpAcknowledgeMsg ackMsg;
-  ackMsg.magic   = RTCOPY_MAGIC;
-  ackMsg.reqType = RTCP_TAPE_REQ;
-  ackMsg.status  = 0;
-  RtcpTxRx::sendRtcpAcknowledge(m_cuuid, m_volReqId, socketFd,
+  MessageHeader ackMsg;
+  ackMsg.magic       = RTCOPY_MAGIC;
+  ackMsg.reqType     = RTCP_TAPE_REQ;
+  ackMsg.lenOrStatus = 0;
+  RtcpTxRx::sendMessageHeader(m_cuuid, m_volReqId, socketFd,
     RTCPDNETRWTIMEOUT, ackMsg);
 }
 
@@ -745,11 +763,11 @@ void
       ": sstrerror_r=" << codeStr);
   }
 
-  RtcpAcknowledgeMsg ackMsg;
-  ackMsg.magic   = RTCOPY_MAGIC;
-  ackMsg.reqType = RTCP_TAPEERR_REQ;
-  ackMsg.status  = 0;
-  RtcpTxRx::sendRtcpAcknowledge(m_cuuid, m_volReqId, socketFd,
+  MessageHeader ackMsg;
+  ackMsg.magic       = RTCOPY_MAGIC;
+  ackMsg.reqType     = RTCP_TAPEERR_REQ;
+  ackMsg.lenOrStatus = 0;
+  RtcpTxRx::sendMessageHeader(m_cuuid, m_volReqId, socketFd,
     RTCPDNETRWTIMEOUT, ackMsg);
 }
 
@@ -764,10 +782,10 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpEndOfReqCallback(
   receivedENDOF_REQ = true;
 
   // Acknowledge RTCP_ENDOF_REQ message
-  RtcpAcknowledgeMsg ackMsg;
-  ackMsg.magic   = RTCOPY_MAGIC;
-  ackMsg.reqType = RTCP_ENDOF_REQ;
-  ackMsg.status  = 0;
-  RtcpTxRx::sendRtcpAcknowledge(m_cuuid, m_volReqId, socketFd,
+  MessageHeader ackMsg;
+  ackMsg.magic       = RTCOPY_MAGIC;
+  ackMsg.reqType     = RTCP_ENDOF_REQ;
+  ackMsg.lenOrStatus = 0;
+  RtcpTxRx::sendMessageHeader(m_cuuid, m_volReqId, socketFd,
     RTCPDNETRWTIMEOUT, ackMsg);
 }
