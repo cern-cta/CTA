@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.732 $ $Date: 2009/04/24 12:48:08 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.733 $ $Date: 2009/04/24 16:25:48 $ $Author: itglp $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -841,9 +841,8 @@ BEGIN
      AND diskcopy.castorfile = castorfile.id
      AND castorfile.fileid = fid
      AND ROWNUM < 2;
-  UPDATE SubRequest SET status = 11  -- SUBREQUEST_ARCHIVED XXX this step is to be moved after the operation
-                                     -- has been successful once the migrator is properly rewritten
-   WHERE SubRequest.id = sreqid;
+  archiveSubReq(sreqid, 8); -- XXX this step is to be moved after and if the operation has been
+                            -- XXX successful, once the migrator is properly rewritten
 EXCEPTION WHEN NO_DATA_FOUND THEN
   NULL;
 END;
