@@ -1,9 +1,16 @@
 /* Fill Type2Obj metatable */
-CREATE TABLE Type2Obj (type INTEGER CONSTRAINT I_Type2Obj_Type PRIMARY KEY NOT NULL, object VARCHAR2(100) NOT NULL, svcHandler VARCHAR2(100));
+CREATE TABLE Type2Obj (type INTEGER CONSTRAINT I_Type2Obj_Type PRIMARY KEY, object VARCHAR2(100), svcHandler VARCHAR2(100));
+
+/* Type2Obj constraints */
+ALTER TABLE Type2Obj
+  MODIFY (type CONSTRAINT NN_Type2Obj_Type NOT NULL);
+
+ALTER TABLE Type2Obj
+  MODIFY (object CONSTRAINT NN_Type2Obj_Object NOT NULL);
+
 INSERT INTO Type2Obj (type, object) VALUES (0, 'INVALID');
 INSERT INTO Type2Obj (type, object) VALUES (1, 'Ptr');
 INSERT INTO Type2Obj (type, object) VALUES (2, 'CastorFile');
-INSERT INTO Type2Obj (type, object) VALUES (3, 'OldClient');
 INSERT INTO Type2Obj (type, object) VALUES (4, 'Cuuid');
 INSERT INTO Type2Obj (type, object) VALUES (5, 'DiskCopy');
 INSERT INTO Type2Obj (type, object) VALUES (6, 'DiskFile');
@@ -31,7 +38,6 @@ INSERT INTO Type2Obj (type, object) VALUES (38, 'StagePrepareToUpdateRequest');
 INSERT INTO Type2Obj (type, object) VALUES (39, 'StagePutDoneRequest');
 INSERT INTO Type2Obj (type, object) VALUES (40, 'StagePutRequest');
 INSERT INTO Type2Obj (type, object) VALUES (42, 'StageRmRequest');
-INSERT INTO Type2Obj (type, object) VALUES (43, 'StageUpdateFileStatusRequest');
 INSERT INTO Type2Obj (type, object) VALUES (44, 'StageUpdateRequest');
 INSERT INTO Type2Obj (type, object) VALUES (45, 'FileRequest');
 INSERT INTO Type2Obj (type, object) VALUES (46, 'QryRequest');
@@ -134,4 +140,23 @@ INSERT INTO Type2Obj (type, object) VALUES (158, 'PriorityMap');
 INSERT INTO Type2Obj (type, object) VALUES (159, 'VectorAddress');
 INSERT INTO Type2Obj (type, object) VALUES (160, 'Tape2DriveDedication');
 INSERT INTO Type2Obj (type, object) VALUES (161, 'TapeRecall');
+INSERT INTO Type2Obj (type, object) VALUES (162, 'FileMigratedNotification');
+INSERT INTO Type2Obj (type, object) VALUES (163, 'FileRecalledNotification');
+INSERT INTO Type2Obj (type, object) VALUES (164, 'FileToMigrateRequest');
+INSERT INTO Type2Obj (type, object) VALUES (165, 'FileToMigrate');
+INSERT INTO Type2Obj (type, object) VALUES (166, 'FileToRecallRequest');
+INSERT INTO Type2Obj (type, object) VALUES (167, 'FileToRecall');
+INSERT INTO Type2Obj (type, object) VALUES (168, 'VolumeRequest');
+INSERT INTO Type2Obj (type, object) VALUES (169, 'Volume');
+INSERT INTO Type2Obj (type, object) VALUES (170, 'TapeRequestState');
+INSERT INTO Type2Obj (type, object) VALUES (171, 'DbInfoRetryPolicy');
+INSERT INTO Type2Obj (type, object) VALUES (172, 'EndNotification');
+INSERT INTO Type2Obj (type, object) VALUES (173, 'NoMoreFiles');
+INSERT INTO Type2Obj (type, object) VALUES (174, 'NotificationAcknowledge');
+INSERT INTO Type2Obj (type, object) VALUES (175, 'FileErrorReport');
+INSERT INTO Type2Obj (type, object) VALUES (176, 'BaseFileInfo');
+INSERT INTO Type2Obj (type, object) VALUES (177, 'ErrorReport');
+INSERT INTO Type2Obj (type, object) VALUES (178, 'RmMasterReport');
+INSERT INTO Type2Obj (type, object) VALUES (179, 'EndNotificationErrorReport');
+INSERT INTO Type2Obj (type, object) VALUES (180, 'MigrationWorkBasket');
 
