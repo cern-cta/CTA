@@ -11,14 +11,12 @@ DLFCONF=/var/www/conf/dlf
 all: checkORACLE checkLSF checkGLOBUS checkSTK
 	GotoSubdirs($(SUBDIRS))
 
+EXPORTMAN?=$(DESTDIR)/usr/share
 checkDESTDIR:
 	@if [ -z "${DESTDIR}" ]; then \
 	  echo "Please set DESTDIR environment variable before invoking make install."; \
-	  exit -1; \
-	fi; \
-	if [ -z "${EXPORTMAN}" ]; then \
-          EXPORTMAN=$(DESTDIR)/usr/share/man; \
-        fi
+	  exit 1; \
+	fi;
 
 checkORACLE:
 	@if [ -z "${ORACLE_HOME}" ]; then \
@@ -26,24 +24,24 @@ checkORACLE:
 	fi; \
         if [ -z ${ORACLE_HOME} ]; then \
 	  echo "Please define ORACLE_HOME environment variable before invoking make."; \
-	  exit -1; \
+	  exit 1; \
 	fi; \
 	if [ ! -r ${ORACLE_HOME}/lib/libclntsh.so ]; then \
 	  echo "Could not find libclntsh.so in ${ORACLE_HOME}/lib. Giving up."; \
-	  exit -1; \
+	  exit 1; \
 	fi
 
 checkLSF:
 	@if [ ! -e InstallLibDir/liblsf.so -o ! -d /usr/include/lsf ]; then \
 	  echo "Could not find LSF installation. Giving up."; \
-	  exit -1; \
+	  exit 1; \
 	fi
 
+GLOBUS_LOCATION ?= /opt/globus
 checkGLOBUS:
-	@if [ -z "${GLOBUS_LOCATION}" ]; then GLOBUS_LOCATION="/opt/globus"; fi; \
-	if [ ! -r ${GLOBUS_LOCATION}/lib/libglobus_ftp_control_/**/GlobusFlavour.so -o ! -d ${GLOBUS_LOCATION}/include ]; then \
-	  echo "Could not find Globus installation. Giving up."; \
-	  exit -1; \
+	@if [ ! -r ${GLOBUS_LOCATION}/lib/libglobus_ftp_control_/**/GlobusFlavour.so -o ! -d ${GLOBUS_LOCATION}/include ]; then \
+	  echo "Could not find Globus installation at ${GLOBUS_LOCATION}. Giving up."; \
+	  exit 1; \
 	fi
 
 checkSTK:
@@ -53,8 +51,15 @@ checkSTK:
 	  rpm -q stk-ssi-devel >&/dev/null && rpm -q stk-ssi >& /dev/null; \
 	  if [[ $$? -ne 0 ]]; then \
 	    echo "Could not find STK packages. Giving up."; \
-	    exit -1; \
+	    exit 1; \
           fi; \
+	fi
+
+XROOT_LOCATION ?= /opt/xrootd
+checkXROOT:
+	@if [ ! -r ${XROOT_LOCATION}/lib/libXrdPosix.so -o ! -d ${XROOT_LOCATION}/include ]; then \
+	  echo "Could not find XROOT installation at ${XROOT_LOCATION}. Giving up."; \
+	  exit 1; \
 	fi
 
 install: checkDESTDIR all exportman
