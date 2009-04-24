@@ -83,6 +83,8 @@ for mySuite in newSuites:
     for myCase in newCases:
         if myCase.find("YES") != -1:
             elem=myCase.split()
+            if elem[0][0] == '#':
+                continue
             testToAdd=(listOfTest[elem[0]])[elem[1]]
             if testToAdd != 0:
                 (allCastorSuites[elem[0]]).addTest(testToAdd)
