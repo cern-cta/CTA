@@ -71,3 +71,4 @@
 70,AGGREGATOR_CREATED_RTCPD_CALLBACK_PORT,"Created TCP/IP port for RTCPD callbacks"
 71,AGGREGATOR_CONNECTION_CLOSED_BY_RTCPD,"Connection closed by RTCPD"
 72,AGGREGATOR_CLOSED_CONNECTION,"Connection closed by aggregator"
+73,AGGREGATOR_FINISHED_RTCOPY_SESSION,"Finished remote tape copy session"

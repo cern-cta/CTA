@@ -211,6 +211,12 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSockets()
         }
       } // switch(selectRc)
     } // while(continueRtcopySession)
+
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId", m_volReqId)};
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_FINISHED_RTCOPY_SESSION, params);
+
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId", m_volReqId           ),
