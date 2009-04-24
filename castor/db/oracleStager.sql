@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.730 $ $Date: 2009/04/20 10:01:57 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.731 $ $Date: 2009/04/24 12:48:08 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1951,7 +1951,7 @@ BEGIN
   -- First select involved diskCopies
   scId := svcClassId;
   dcStatus := 0;
-	IF scId > 0 THEN
+  IF scId > 0 THEN
     SELECT id BULK COLLECT INTO dcsToRm FROM (
       -- first physical diskcopies
       SELECT DC.id
