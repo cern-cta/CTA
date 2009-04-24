@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.731 $ $Date: 2009/04/24 12:48:08 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.732 $ $Date: 2009/04/24 16:30:34 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1287,7 +1287,7 @@ BEGIN
   UPDATE SubRequest
      SET diskCopy = dcId, status = 12  -- REPACK
    WHERE SubRequest.castorFile = cfId
-     AND SubRequest.status IN (3, 4, 5)  -- WAITSCHED, WAITTAPERECALL, WAITSUBREQ
+     AND SubRequest.status IN (3, 4)  -- WAITSCHED, WAITTAPERECALL
      AND SubRequest.request IN
        (SELECT id FROM StageRepackRequest);   
   -- get the service class, uid and gid
@@ -1321,6 +1321,7 @@ CREATE OR REPLACE PROCEDURE processPrepareRequest
   srcDcId NUMBER;
   recSvcClass NUMBER;
   recDcId NUMBER;
+  recRepack INTEGER;
   reuid NUMBER;
   regid NUMBER;
 BEGIN
@@ -1441,13 +1442,13 @@ BEGIN
   ELSIF srcDcId = 0 THEN  -- recall
     BEGIN
       -- check whether there's already a recall, and get its svcClass
-      SELECT Request.svcClass, DiskCopy.id
-        INTO recSvcClass, recDcId
-        FROM (SELECT id, svcClass FROM StagePrepareToGetRequest UNION ALL
-              SELECT id, svcClass FROM StageGetRequest UNION ALL
-              SELECT id, svcClass FROM StageRepackRequest UNION ALL
-              SELECT id, svcClass FROM StageUpdateRequest UNION ALL
-              SELECT id, svcClass FROM StagePrepareToUpdateRequest) Request,
+      SELECT Request.svcClass, DiskCopy.id, repack
+        INTO recSvcClass, recDcId, recRepack
+        FROM (SELECT id, svcClass, 0 repack FROM StagePrepareToGetRequest UNION ALL
+              SELECT id, svcClass, 0 repack FROM StageGetRequest UNION ALL
+              SELECT id, svcClass, 1 repack FROM StageRepackRequest UNION ALL
+              SELECT id, svcClass, 0 repack FROM StageUpdateRequest UNION ALL
+              SELECT id, svcClass, 0 repack FROM StagePrepareToUpdateRequest) Request,
              SubRequest, DiskCopy
        WHERE SubRequest.request = Request.id
          AND SubRequest.castorFile = cfId
@@ -1456,8 +1457,19 @@ BEGIN
          AND SubRequest.status = 4;  -- WAITTAPERECALL
       -- we found one: we need to wait if either we are in a different svcClass
       -- so that afterwards a disk-to-disk copy is triggered, or in case of
-      -- Repack so to trigger the repack migration. Note that Repack never
-      -- sends a double repack request on the same file.
+      -- Repack so to trigger the repack migration. We also protect ourselves
+      -- from a double repack request on the same file.
+      IF repack = 1 AND recRepack = 1 THEN
+        -- we are not able to handle a double repack, see the detailed comment above
+        UPDATE SubRequest
+           SET status = 7,  -- FAILED
+               errorCode = 16,  -- EBUSY
+               errorMessage = 'File is currently being repacked'
+         WHERE id = srId;
+        COMMIT;
+        result := -1;  -- user error
+        RETURN;
+      END IF;
       IF svcClassId <> recSvcClass OR repack = 1 THEN
         -- make this request wait on the existing WAITTAPERECALL diskcopy
         makeSubRequestWait(srId, recDcId);
@@ -1925,7 +1937,6 @@ CREATE OR REPLACE PROCEDURE stageRm (srId IN INTEGER,
   scId INTEGER;
   nbRes INTEGER;
   dcsToRm "numList";
-  sr "numList";
   dcStatus INTEGER;
   nsHostName VARCHAR2(2048);
 BEGIN
@@ -2106,17 +2117,13 @@ BEGIN
   -- mark all get/put requests for those diskcopies
   -- and the ones waiting on them as failed
   -- so that clients eventually get an answer
-  SELECT id BULK COLLECT INTO sr
-    FROM SubRequest
-   WHERE diskcopy IN (SELECT /*+ CARDINALITY(dcidTable 5) */ *
-                        FROM TABLE(dcsToRm) dcidTable)
-     AND status IN (0, 1, 2, 5, 6, 13); -- START, WAITSUBREQ, READY, READYFORSCHED
-  FORALL i IN sr.FIRST..sr.LAST
+  FORALL i IN dcsToRm.FIRST .. dcsToRm.LAST
     UPDATE SubRequest
        SET status = 7, parent = 0,  -- FAILED
            errorCode = 4,  -- EINTR
            errorMessage = 'Canceled by another user request'
-     WHERE id = sr(i) OR parent = sr(i);
+     WHERE diskCopy = dcsToRm(i)
+       AND status IN (0, 1, 2, 5, 6, 13);
   -- Set selected DiskCopies to INVALID. In any case keep
   -- WAITTAPERECALL diskcopies so that recalls can continue.
   -- Note that WAITFS and WAITFS_SCHEDULING DiskCopies don't exist on disk
