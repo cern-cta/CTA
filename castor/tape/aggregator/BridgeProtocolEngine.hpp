@@ -164,11 +164,11 @@ private:
    * @param header The header of the RTCPD request.
    * @param socketFd The file descriptor of the socket from which the message
    * should be read from.
-   * @param receivedENDOF_REQ Out parameter: Will be set to true by this
-   * function of an RTCP_ENDOF_REQ was received.
+   * @param endOfSession Out parameter: Will be set to true by this function
+   * if the end of the recall/migration session has been reached.
    */
   typedef void (BridgeProtocolEngine::*MsgBodyCallback)(
-    const MessageHeader &header, const int socketFd, bool &receivedENDOF_REQ);
+    const MessageHeader &header, const int socketFd, bool &endOfSession);
 
   /**
    * Datatype for the map of message body handlers.
@@ -199,10 +199,10 @@ private:
    * Processes the specified RTCPD socket.
    *
    * @param socketFd The file descriptor of the socket to be processed.
-   * @param receivedENDOF_REQ Out parameter: Will be set to true by this
-   * function of an RTCP_ENDOF_REQ was received.
+   * @param endOfSession Out parameter: Will be set to true by this function
+   * if the end of the recall/migration session has been reached.
    */
-  void processRtcpdSocket(const int socketFd, bool &receivedENDOF_REQ)
+  void processRtcpdSocket(const int socketFd, bool &endOfSession)
     throw(castor::exception::Exception);
 
   /**

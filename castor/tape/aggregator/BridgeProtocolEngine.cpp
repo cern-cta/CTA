@@ -198,12 +198,12 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSockets()
 
           // If the read file descriptor is ready
           if(FD_ISSET(*itor, &readFdSet)) {
-            bool receivedENDOF_REQ = false;
+            bool endOfSession = false;
 
-            processRtcpdSocket(*itor, receivedENDOF_REQ);
+            processRtcpdSocket(*itor, endOfSession);
             nbProcessedFds++;
 
-            if(receivedENDOF_REQ) {
+            if(endOfSession) {
               continueRtcopySession = false;
             }
           }
@@ -235,8 +235,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSockets()
 // processRtcpdSocket
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocket(
-  const int socketFd, bool &receivedENDOF_REQ)
-  throw(castor::exception::Exception) {
+  const int socketFd, bool &endOfSession) throw(castor::exception::Exception) {
 
   // If the file descriptor is that of the callback port
   if(socketFd == m_rtcpdCallbackSocketFd) {
@@ -277,6 +276,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocket(
       return;
     }
 
+    bool receivedENDOF_REQ = false;
     processRtcpdRequest(header, socketFd, receivedENDOF_REQ);
 
     // If an RTCP_ENDOF_REQ message was received
@@ -343,7 +343,10 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocket(
         }
 
         // Close the connection
-//      close(m_readFds.release(m_rtcpdInitialSocketFd));
+        close(m_readFds.release(m_rtcpdInitialSocketFd));
+
+        // Mark the end of the recall/migration session
+        endOfSession = true;
       }
     }
   }
