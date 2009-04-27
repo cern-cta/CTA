@@ -150,10 +150,11 @@ public:
    * @param nsHost The name server host.
    * @param fileId The CASTOR file ID.
    * @param tapeFileSeq The tape file seuence number.
-   * @param blockId The tape block ID.
    * @param positionCommandCode The position method uesd by the drive.
    * @param checksumAlgorithm The name of the checksum algorithm.
    * @param checksum The file checksum.
+   * @param fileSize The size of the file without compression.
+   * @param compressedFileSize The size of on-tape compressed file.
    */
   static void notifyGatewayFileRecalled(const Cuuid_t &cuuid,
     const uint32_t volReqId, const char *gatewayHost, 

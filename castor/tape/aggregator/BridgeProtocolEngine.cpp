@@ -146,8 +146,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSockets()
   try {
     // Select loop
     bool continueRtcopySession = true;
-    while(continueRtcopySession)
-    {
+    while(continueRtcopySession) {
       // Build the file descriptor set ready for the select call
       FD_ZERO(&readFdSet);
       for(std::list<int>::iterator itor = m_readFds.begin();
@@ -212,10 +211,14 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSockets()
       } // switch(selectRc)
     } // while(continueRtcopySession)
 
+    // Log the end of the RTCOPY session and notify the tape gateway
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId", m_volReqId)};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_FINISHED_RTCOPY_SESSION, params);
+
+    GatewayTxRx::notifyGatewayOfEnd(m_cuuid, m_volReqId, m_gatewayHost,
+      m_gatewayPort);
 
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
@@ -650,6 +653,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileReqCallback(
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
         AGGREGATOR_TAPE_POSITIONED_FILE_REQ, params);
 
+      // Send an acknowledge to RTCPD
       MessageHeader ackMsg;
       ackMsg.magic       = RTCOPY_MAGIC;
       ackMsg.reqType     = RTCP_FILE_REQ;
@@ -667,6 +671,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileReqCallback(
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
         AGGREGATOR_FILE_TRANSFERED, params);
 
+      // Send an acknowledge to RTCPD
       MessageHeader ackMsg;
       ackMsg.magic       = RTCOPY_MAGIC;
       ackMsg.reqType     = RTCP_FILE_REQ;
@@ -674,7 +679,21 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileReqCallback(
       RtcpTxRx::sendMessageHeader(m_cuuid, m_volReqId, socketFd,
         RTCPDNETRWTIMEOUT, ackMsg);
 
-      // Connect to Gateway and tell "finish"
+      // Notify the tape gateway
+      if(m_mode == WRITE_ENABLE) {
+        GatewayTxRx::notifyGatewayFileMigrated(m_cuuid, m_volReqId,
+          m_gatewayHost, m_gatewayPort, body.segAttr.nameServerHostName,
+          body.segAttr.castorFileId, body.tapeFseq, body.blockId,
+          body.positionMethod, body.segAttr.segmCksumAlgorithm,
+          body.segAttr.segmCksum, body.bytesOut, body.hostBytes);
+      } else {
+        // Recall 
+        GatewayTxRx::notifyGatewayFileRecalled(m_cuuid, m_volReqId,
+          m_gatewayHost, m_gatewayPort, body.segAttr.nameServerHostName,
+          body.segAttr.castorFileId, body.tapeFseq,body.positionMethod, 
+          body.segAttr.segmCksumAlgorithm, body.segAttr.segmCksum, 
+          body.bytesOut, body.hostBytes);
+      }
     }
     break;
   default:
