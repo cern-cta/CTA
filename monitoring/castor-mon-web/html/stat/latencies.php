@@ -48,13 +48,16 @@ if(!$conn) {
 	print htmlentities($e['message']);
 	exit;
 }
-for($i = 0;$i < 12; $i++)
-	$diskhitlat[$i] = 0;
+for($i = 0;$i < 12; $i++) {
+	$lat['DiskHit'][$i] = 0;
+	$lat['DiskCopy'][$i] = 0;
+	$lat['TapeRecall'][$i] = 0;	
+}
 
 if ($qn == 1) {
-	$query1 = "select distinct bin, count(bin) over (Partition by bin) reqs 
+	$query1 = "select state, bin, count(bin) reqs
 		from (
-		select round(b.totallatency), case when b.totallatency < 1 then 1
+		select state, round(b.totallatency), case when b.totallatency < 1 then 1
 		  when b.totallatency >= 1 and b.totallatency < 10 then 2
 		  when b.totallatency >= 10 and b.totallatency < 120 then 3
 		  when b.totallatency >= 120 and b.totallatency < 300 then 4
@@ -69,14 +72,14 @@ if ($qn == 1) {
 		from ".$db_instances[$service]['schema']."requests a, ".$db_instances[$service]['schema']."totallatency b
 		where a.subreqid = b.subreqid
 		and a.timestamp > sysdate - $period
-		and b.timestamp > sysdate - $period
-		and a.state='DiskHit')
-		order by bin ";
+		and b.timestamp > sysdate - $period )
+		group by state,bin
+		order by state,bin ";
 }
 else if ($qn == 2) {
-	$query1 = "select distinct bin, count(bin) over (Partition by bin) reqs 
+	$query1 = "select state, bin, count(bin) reqs 
 		from (
-		select round(b.totallatency), case when b.totallatency < 1 then 1
+		select state, round(b.totallatency), case when b.totallatency < 1 then 1
 		  when b.totallatency >= 1 and b.totallatency < 10 then 2
 		  when b.totallatency >= 10 and b.totallatency < 120 then 3
 		  when b.totallatency >= 120 and b.totallatency < 300 then 4
@@ -93,132 +96,21 @@ else if ($qn == 2) {
 		and a.timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
 		and a.timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
 		and b.timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-		and b.timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
-		and a.state='DiskHit')
-		order by bin ";
+		and b.timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi'))
+		group by state, bin
+		order by state, bin ";
 }
 if (!($parsed1 = OCIParse($conn, $query1))) 
 	{ echo "Error Parsing Query";exit();}
 if (!OCIExecute($parsed1))
 	{ echo "Error Executing Query";exit();}
 while (OCIFetch($parsed1)) {
-	$bin_num = OCIResult($parsed1,1);
-	$diskhitlat[$bin_num - 1] = OCIResult($parsed1,2);
-}
-for($i = 0;$i < 12; $i++)
-	$diskcopylat[$i] = 0;
-if ($qn == 1) {
-	$query2 = "select distinct bin, count(bin) over (Partition by bin) reqs 
-		from (
-		select round(b.totallatency), case when b.totallatency < 1 then 1
-		  when b.totallatency >= 1 and b.totallatency < 10 then 2
-		  when b.totallatency >= 10 and b.totallatency < 120 then 3
-		  when b.totallatency >= 120 and b.totallatency < 300 then 4
-		  when b.totallatency >= 300 and b.totallatency < 600 then 5
-		  when b.totallatency >= 600 and b.totallatency < 1800 then 6
-		  when b.totallatency >= 1800 and b.totallatency < 3600 then 7
-		  when b.totallatency >= 3600 and b.totallatency < 18000 then 8
-		  when b.totallatency >= 18000 and b.totallatency < 43200 then 9
-		  when b.totallatency >= 43200 and b.totallatency < 86400 then 10
-		  when b.totallatency >= 86400 and b.totallatency < 172800 then 11
-		  else 12 end bin
-		from ".$db_instances[$service]['schema']."requests a, ".$db_instances[$service]['schema']."totallatency b
-		where a.subreqid = b.subreqid
-		and a.timestamp > sysdate - $period
-		and b.timestamp > sysdate - $period
-		and a.state='DiskCopy')
-		order by bin";
-}
-else if ($qn == 2) {
-	$query2 = "select distinct bin, count(bin) over (Partition by bin) reqs 
-		from (
-		select round(b.totallatency), case when b.totallatency < 1 then 1
-		  when b.totallatency >= 1 and b.totallatency < 10 then 2
-		  when b.totallatency >= 10 and b.totallatency < 120 then 3
-		  when b.totallatency >= 120 and b.totallatency < 300 then 4
-		  when b.totallatency >= 300 and b.totallatency < 600 then 5
-		  when b.totallatency >= 600 and b.totallatency < 1800 then 6
-		  when b.totallatency >= 1800 and b.totallatency < 3600 then 7
-		  when b.totallatency >= 3600 and b.totallatency < 18000 then 8
-		  when b.totallatency >= 18000 and b.totallatency < 43200 then 9
-		  when b.totallatency >= 43200 and b.totallatency < 86400 then 10
-		  when b.totallatency >= 86400 and b.totallatency < 172800 then 11
-		  else 12 end bin
-		from ".$db_instances[$service]['schema']."requests a, ".$db_instances[$service]['schema']."totallatency b
-		where a.subreqid = b.subreqid
-		and a.timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-		and a.timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
-		and b.timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-		and b.timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
-		and a.state='DiskCopy')
-		order by bin";
-}
-if (!($parsed2 = OCIParse($conn, $query2))) 
-	{ echo "Error Parsing Query";exit();}
-if (!OCIExecute($parsed2))
-	{ echo "Error Executing Query";exit();}
-while (OCIFetch($parsed2)) {
-	$bin_num = OCIResult($parsed1,1);
-	$diskcopylat[$bin_num - 1] = OCIResult($parsed2,2);
-}
-for($i = 0;$i < 12; $i++)
-	$tapelat[$i] = 0;
-if ($qn == 1) {
-	$query3 = "select distinct bin, count(bin) over (Partition by bin) reqs 
-		from (
-		select round(b.totallatency), case when b.totallatency < 1 then 1
-		  when b.totallatency >= 1 and b.totallatency < 10 then 2
-		  when b.totallatency >= 10 and b.totallatency < 120 then 3
-		  when b.totallatency >= 120 and b.totallatency < 300 then 4
-		  when b.totallatency >= 300 and b.totallatency < 600 then 5
-		  when b.totallatency >= 600 and b.totallatency < 1800 then 6
-		  when b.totallatency >= 1800 and b.totallatency < 3600 then 7
-		  when b.totallatency >= 3600 and b.totallatency < 18000 then 8
-		  when b.totallatency >= 18000 and b.totallatency < 43200 then 9
-		  when b.totallatency >= 43200 and b.totallatency < 86400 then 10
-		  when b.totallatency >= 86400 and b.totallatency < 172800 then 11
-		  else 12 end bin
-		from ".$db_instances[$service]['schema']."requests a, ".$db_instances[$service]['schema']."totallatency b
-		where a.subreqid = b.subreqid
-		and a.timestamp > sysdate - $period
-		and b.timestamp > sysdate - $period
-		and a.state='TapeRecall')
-		order by bin";
-}
-else if ($qn == 2){
-	$query3 = "select distinct bin, count(bin) over (Partition by bin) reqs 
-		from (
-		select round(b.totallatency), case when b.totallatency < 1 then 1
-		  when b.totallatency >= 1 and b.totallatency < 10 then 2
-		  when b.totallatency >= 10 and b.totallatency < 120 then 3
-		  when b.totallatency >= 120 and b.totallatency < 300 then 4
-		  when b.totallatency >= 300 and b.totallatency < 600 then 5
-		  when b.totallatency >= 600 and b.totallatency < 1800 then 6
-		  when b.totallatency >= 1800 and b.totallatency < 3600 then 7
-		  when b.totallatency >= 3600 and b.totallatency < 18000 then 8
-		  when b.totallatency >= 18000 and b.totallatency < 43200 then 9
-		  when b.totallatency >= 43200 and b.totallatency < 86400 then 10
-		  when b.totallatency >= 86400 and b.totallatency < 172800 then 11
-		  else 12 end bin
-		from ".$db_instances[$service]['schema']."requests a, ".$db_instances[$service]['schema']."totallatency b
-		where a.subreqid = b.subreqid
-		and a.timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-		and a.timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
-		and b.timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-		and b.timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
-		and a.state='".$db_instances[$service]['schema']." taperecall')
-		order by bin";
-}
-if (!($parsed3 = OCIParse($conn, $query3))) 
-	{ echo "Error Parsing Query";exit();}
-if (!OCIExecute($parsed3))
-	{ echo "Error Executing Query";exit();}
-while (OCIFetch($parsed3)) {
-	$bin_num = OCIResult($parsed3,1);
-	$tapelat[$bin_num - 1] = OCIResult($parsed3,2);	
+	$cat = OCIResult($parsed1,1)
+	$bin_num = OCIResult($parsed1,2);
+	$lat[$cat][$bin_num - 1] = OCIResult($parsed1,3);
 }
 
-if(empty($diskhitlat) && empty($diskcopylat)&&empty($tapelat)) {
+if(empty($lat)) {
 	No_Data_Image();;
 	exit();
 };
@@ -241,7 +133,7 @@ $graph->xaxis->SetFont(FF_FONT1,FS_BOLD);
 $graph->xaxis->title->Set("time");
 $graph->xaxis->SetTitleMargin(80);
 $graph->xaxis->title->SetFont(FF_FONT1,FS_BOLD);
-$b1 = new BarPlot($diskhitlat);
+$b1 = new BarPlot($lat['DiskHit']);
 $b1->SetWidth(0.33);
 $b1->SetFillColor("orangered");
 $b1->value->SetFont(FF_FONT1,FS_BOLD,10);
@@ -250,7 +142,7 @@ $b1->value->SetColor("orangered");
 $b1->value->Show();
 $b1->value->SetFormat('%0.0f');
 $b1 -> SetLegend("Resident Files");
-$b2 = new BarPlot($diskcopylat);
+$b2 = new BarPlot($lat['DiskCopy']);
 $b2->SetWidth(0.33);
 $b2->SetFillColor("darkgoldenrod1");
 $b2->value->SetFont(FF_FONT1,FS_BOLD,10);
@@ -259,7 +151,7 @@ $b2->value->SetAngle(90);
 $b2->value->Show();
 $b2->value->SetFormat('%0.0f');
 $b2 -> SetLegend("Pool Copies");
-$b3 = new BarPlot($tapelat);
+$b3 = new BarPlot($lat['TapeRecall']);
 $b3->SetWidth(0.34);
 $b3->SetFillColor("maroon");
 $b3->value->SetFont(FF_FONT1,FS_BOLD,10);
