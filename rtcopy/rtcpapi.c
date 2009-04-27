@@ -1909,13 +1909,38 @@ void *rtcpc_processReqUpdate(void *arg)
              );
   }
   
-  (void)Cmutex_lock(activeThreads,-1);
+  { /* S. Murray 23/04/09 */
+    int rc = Cmutex_lock(&activeThreads,-1);
+
+    if(rc == -1) {
+      retval = -1;
+
+      if(save_serrno <= 0) {
+        save_serrno = serrno;
+      }
+
+      rtcp_log(LOG_ERR,
+        "rtcpc_processReqUpdate(): Cmutex_lock(activeThreads(%p),-1): %s\n",
+        &activeThreads, sstrerror(serrno));
+    }
+  }
+
   if ( retval == -1 ) {
     thr->th_serrno = save_serrno;
     thr->status = -1;
   }
   thr->finished = 1;
-  (void)Cmutex_unlock(activeThreads);
+
+  { /* S. Murray 23/04/09 */
+    int rc = Cmutex_unlock(&activeThreads);
+
+    if(rc == -1) {
+      rtcp_log(LOG_ERR,
+        "rtcpc_processReqUpdate(): Cmutex_unlock(activeThreads(%p)): %s\n",
+        &activeThreads, sstrerror(serrno));
+    }
+  }
+
   if ( thr->pipe != INVALID_SOCKET ) {
     rtcp_log(LOG_DEBUG,"rtcpc_processReqUpdate(): write to internal pipe %d\n",
              thr->pipe);
@@ -2162,7 +2187,29 @@ int rtcpc_runReq_ext(
        * Internal pipe is only used for synchronisation. No relevant data is passed
        */
       (void)read(internalPipe[0],wakeUpMsg,sizeof(wakeUpMsg));
-      (void)Cmutex_lock(activeThreads,-1);
+
+      { /* S. Murray 23/04/09 */
+        int rc = Cmutex_lock(&activeThreads,-1);
+
+        if(rc == -1) {
+          if(save_serrno <= 0) {
+            save_serrno = serrno;
+          }
+
+          rtcp_log(LOG_ERR,
+            "rtcpc_runReq(): Cmutex_lock(activeThreads(%p),-1): %s\n",
+            &activeThreads, sstrerror(serrno));
+
+          if(retval != -1) {
+            retval = -1;
+            (void)rtcpc_SetLocalErrorStatus(tape, save_serrno,
+              "Cmutex_lock() error", RTCP_FAILED|RTCP_SYERR, retval);
+          }
+
+          break;
+        }
+      }
+
       for (;;) {
         found = 0;
         CLIST_ITERATE_BEGIN(activeThreads,thr) {
@@ -2181,7 +2228,29 @@ int rtcpc_runReq_ext(
         } CLIST_ITERATE_END(activeThreads,thr);
         if ( found == 0 ) break;
       }
-      (void)Cmutex_unlock(activeThreads);
+
+      { /* S. Murray 23/04/09 */
+        int rc = Cmutex_unlock(&activeThreads);
+
+        if(rc == -1) {
+          if(save_serrno <= 0) {
+            save_serrno = serrno;
+          }
+
+          rtcp_log(LOG_ERR,
+            "rtcpc_runReq(): Cmutex_unlock(activeThreads(%p)): %s\n",
+            &activeThreads, sstrerror(serrno));
+
+          if(retval != -1) {
+            retval = -1;
+            (void)rtcpc_SetLocalErrorStatus(tape, save_serrno,
+              "Cmutex_unlock() error", RTCP_FAILED|RTCP_SYERR, retval);
+          }
+
+          break;
+        }
+      }
+
       if ( retval == -1 ) break;
       continue;
     } else {
@@ -2382,9 +2451,53 @@ int rtcpc_runReq_ext(
       thr->index = socketIndex;
       if ( (dispatchRoutine != NULL) && (socketIndex >= 0) )
         *((*socks)->proc_socket[socketIndex]) = INVALID_SOCKET;
-      (void)Cmutex_lock(activeThreads,-1);
+
+      { /* S. Murray 23/04/09 */
+        int rc = Cmutex_lock(&activeThreads,-1);
+
+        if(rc == -1) {
+          if(save_serrno <= 0) {
+            save_serrno = serrno;
+          }
+
+          rtcp_log(LOG_ERR,
+            "rtcpc_runReq(): Cmutex_lock(activeThreads(%p),-1): %s\n",
+            &activeThreads, sstrerror(serrno));
+
+          if(retval != -1) {
+            retval = -1;
+            (void)rtcpc_SetLocalErrorStatus(tape, save_serrno,
+              "Cmutex_lock() error", RTCP_FAILED|RTCP_SYERR, retval);
+          }
+
+          break;
+        }
+      }
+
       CLIST_INSERT(activeThreads,thr);
-      (void)Cmutex_unlock(activeThreads);
+
+      { /* S. Murray 23/04/09 */
+        int rc = Cmutex_unlock(&activeThreads);
+
+        if(rc == -1) {
+          if(save_serrno <= 0) {
+            save_serrno = serrno;
+          }
+
+          rtcp_log(LOG_ERR,
+            "rtcpc_runReq(): Cmutex_unlock(activeThreads(%p)): %s\n",
+            &activeThreads, sstrerror(serrno));
+
+          if(retval != -1) {
+            retval = -1;
+            (void)rtcpc_SetLocalErrorStatus(tape, save_serrno,
+              "Cmutex_unlock() error", RTCP_FAILED|RTCP_SYERR, retval);
+          }
+
+          break;
+        }
+      }
+
       rc = internalDispatchRoutine(rtcpc_processReqUpdate,(void *)thr);
       if ( rc == -1 ) {
         save_serrno = serrno;
