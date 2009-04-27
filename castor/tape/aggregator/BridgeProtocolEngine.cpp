@@ -343,7 +343,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocket(
         }
 
         // Close the connection
-        close(m_readFds.release(m_rtcpdInitialSocketFd));
+//      close(m_readFds.release(m_rtcpdInitialSocketFd));
       }
     }
   }

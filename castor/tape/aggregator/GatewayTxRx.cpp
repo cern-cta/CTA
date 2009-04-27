@@ -81,12 +81,6 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
 // Hardcoded volume INFO
 #ifdef EMULATE_GATEWAY
 
-  castor::dlf::Param params[] = {
-    castor::dlf::Param("EMULATE_GATEWAY ", 
-      "on GatewayTxRx::getVolumeFromGateway")};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-    AGGREGATOR_NULL, params);
-
   //volReqIdFromGateway = volReqId;
   utils::copyString(vid,     "I02000");
   mode = 0;
@@ -407,12 +401,6 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
 // Hardcoded volume INFO
 #ifdef EMULATE_GATEWAY
 
-  castor::dlf::Param params[] = {
-    castor::dlf::Param("EMULATE_GATEWAY ", 
-      "on GatewayTxRx::getFileToRecallFromGateway")};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-    AGGREGATOR_NULL, params);
-
   if(emulatedRecallCounter.next() <= 1){
     //volReqIdFromGateway = volReqId;
     utils::copyString(filePath,
@@ -553,13 +541,9 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
   //===================================================
   // Hardcoded Gateway reply
   #ifdef EMULATE_GATEWAY
-  castor::dlf::Param params[] = {
-    castor::dlf::Param("EMULATE_GATEWAY ", 
-      "on GatewayTxRx::notifyGatewayFileMigrated")};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-    AGGREGATOR_NULL, params);
 
     return;
+
   #endif
   //===================================================
 
@@ -649,13 +633,9 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
  //===================================================
   // Hardcoded Gateway reply
   #ifdef EMULATE_GATEWAY
-  castor::dlf::Param params[] = {
-    castor::dlf::Param("EMULATE_GATEWAY ", 
-      "on GatewayTxRx::notifyGatewayFileRecalled")};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-    AGGREGATOR_NULL, params);
 
     return;
+
   #endif
   //===================================================
 
@@ -736,14 +716,9 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayOfEnd(
   //===================================================
   // Hardcoded Gateway reply
   #ifdef EMULATE_GATEWAY
-  castor::dlf::Param params[] = {
-    castor::dlf::Param("EMULATE_GATEWAY ", 
-      "on GatewayTxRx::notifyGatewayOfEnd")};
-
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-    AGGREGATOR_NULL, params);
 
     return;
+
   #endif
   //===================================================
 
