@@ -81,6 +81,12 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
 // Hardcoded volume INFO
 #ifdef EMULATE_GATEWAY
 
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("EMULATE_GATEWAY ", 
+      "on GatewayTxRx::getVolumeFromGateway")};
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+    AGGREGATOR_NULL, params);
+
   //volReqIdFromGateway = volReqId;
   utils::copyString(vid,     "I02000");
   mode = 0;
@@ -401,10 +407,17 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
 // Hardcoded volume INFO
 #ifdef EMULATE_GATEWAY
 
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("EMULATE_GATEWAY ", 
+      "on GatewayTxRx::getFileToRecallFromGateway")};
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+    AGGREGATOR_NULL, params);
+
   if(emulatedRecallCounter.next() <= 1){
     //volReqIdFromGateway = volReqId;
     utils::copyString(filePath,
-      "lxc2disk15.cern.ch:/srv/castor/01//86/320723286@c2itdcns.706042");
+      "lxc2disk15.cern.ch:/tmp/volume_I02000_file_n5");
+      //"lxc2disk15.cern.ch:/srv/castor/01//86/320723286@c2itdcns.706042");
     utils::copyString(nsHost, "castorns");
     fileId      = 320723286;
     tapeFileSeq = 5;
@@ -537,6 +550,19 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
   uint32_t fileSize, uint32_t compressedFileSize )
   throw(castor::exception::Exception) {
 
+  //===================================================
+  // Hardcoded Gateway reply
+  #ifdef EMULATE_GATEWAY
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("EMULATE_GATEWAY ", 
+      "on GatewayTxRx::notifyGatewayFileMigrated")};
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+    AGGREGATOR_NULL, params);
+
+    return;
+  #endif
+  //===================================================
+
   // Prepare the request
   tapegateway::FileMigratedNotification request;
 
@@ -620,6 +646,19 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
   uint32_t checksum, uint32_t fileSize, uint32_t compressedFileSize )
   throw(castor::exception::Exception) {
 
+ //===================================================
+  // Hardcoded Gateway reply
+  #ifdef EMULATE_GATEWAY
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("EMULATE_GATEWAY ", 
+      "on GatewayTxRx::notifyGatewayFileRecalled")};
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+    AGGREGATOR_NULL, params);
+
+    return;
+  #endif
+  //===================================================
+
   // Prepare the request
   tapegateway::FileRecalledNotification request;
   request.setTransactionId(volReqId);
@@ -693,6 +732,20 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayOfEnd(
   const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost,
   const unsigned short gatewayPort)
   throw(castor::exception::Exception) {
+
+  //===================================================
+  // Hardcoded Gateway reply
+  #ifdef EMULATE_GATEWAY
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("EMULATE_GATEWAY ", 
+      "on GatewayTxRx::notifyGatewayOfEnd")};
+
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+    AGGREGATOR_NULL, params);
+
+    return;
+  #endif
+  //===================================================
 
   // Prepare the request
   tapegateway::EndNotification request;
