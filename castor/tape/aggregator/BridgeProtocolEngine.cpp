@@ -525,21 +525,6 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileReqCallback(
         m_gatewayHost, m_gatewayPort, filePath, nsHost, fileId, tapeFseq,
         fileSize, lastKnownFileName, lastModificationTime, positionMethod)) {
 
-        castor::dlf::Param params[] = {
-          castor::dlf::Param("volReqId"            , m_volReqId          ),
-          castor::dlf::Param("gatewayHost"         , m_gatewayHost       ),
-          castor::dlf::Param("gatewayPort"         , m_gatewayPort       ),
-          castor::dlf::Param("filePath"            , filePath            ),
-          castor::dlf::Param("nsHost"              , nsHost              ),
-          castor::dlf::Param("fileId"              , fileId              ),
-          castor::dlf::Param("tapeFseq"            , tapeFseq            ),
-          castor::dlf::Param("fileSize"            , fileSize            ),
-          castor::dlf::Param("lastKnownFileName"   , lastKnownFileName   ),
-          castor::dlf::Param("lastModificationTime", lastModificationTime),
-          castor::dlf::Param("positionMethod"      , positionMethod      )};
-        castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-          AGGREGATOR_FILE_TO_MIGRATE, params);
-
         char tapeFileId[CA_MAXPATHLEN+1];
         utils::toHex(fileId, tapeFileId);
         RtcpTxRx::giveFileToRtcpd(m_cuuid, m_volReqId, socketFd,
@@ -555,13 +540,6 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileReqCallback(
 
       // Else there is no file to migrate
       } else {
-
-        castor::dlf::Param params[] = {
-          castor::dlf::Param("volReqId"   , m_volReqId   ),
-          castor::dlf::Param("gatewayHost", m_gatewayHost),
-          castor::dlf::Param("gatewayPort", m_gatewayPort)};
-        castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-          AGGREGATOR_NO_MORE_FILES_TO_MIGRATE, params);
 
         // Tell RTCPD there is no file by sending an empty file list
         RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_volReqId, socketFd,
@@ -585,22 +563,6 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileReqCallback(
       if(GatewayTxRx::getFileToRecallFromGateway(m_cuuid, m_volReqId,
         m_gatewayHost, m_gatewayPort, filePath, nsHost, fileId, tapeFseq,
         blockId, positionCommandCode)) {
-
-        castor::dlf::Param params[] = {
-          castor::dlf::Param("volReqId"           , m_volReqId         ),
-          castor::dlf::Param("gatewayHost"        , m_gatewayHost      ),
-          castor::dlf::Param("gatewayPort"        , m_gatewayPort      ),
-          castor::dlf::Param("filePath"           , filePath           ),
-          castor::dlf::Param("nsHost"             , nsHost             ),
-          castor::dlf::Param("fileId"             , fileId             ),
-          castor::dlf::Param("tapeFseq"           , tapeFseq           ),
-          castor::dlf::Param("blockId[0]"         , blockId[0]         ),
-          castor::dlf::Param("blockId[1]"         , blockId[1]         ),
-          castor::dlf::Param("blockId[2]"         , blockId[2]         ),
-          castor::dlf::Param("blockId[3]"         , blockId[3]         ),
-          castor::dlf::Param("positionCommandCode", positionCommandCode)};
-        castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-          AGGREGATOR_FILE_TO_RECALL, params);
 
         char tapeFileId[CA_MAXPATHLEN+1];
         utils::setBytes(tapeFileId, '\0');

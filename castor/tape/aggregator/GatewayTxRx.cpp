@@ -228,7 +228,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
       castor::dlf::Param("gatewayHost", gatewayHost),
       castor::dlf::Param("gatewayPort", gatewayPort)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_GET_FIRST_FILE_TO_MIGRATE_FROM_GATEWAY, params);
+      AGGREGATOR_GET_FILE_TO_MIGRATE_FROM_GATEWAY, params);
   }
 
   bool thereIsAFileToMigrate = false;
@@ -359,12 +359,12 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
       castor::dlf::Param("filePath"            , filePath            ),
       castor::dlf::Param("nsHost"              , nsHost              ),
       castor::dlf::Param("fileId"              , fileId              ),
-      castor::dlf::Param("tapeFseq"            , tapeFileSeq         ),
+      castor::dlf::Param("tapeFileSeq"         , tapeFileSeq         ),
       castor::dlf::Param("fileSize"            , fileSize            ),
       castor::dlf::Param("lastKnownFileName"   , lastKnownFileName   ),
       castor::dlf::Param("lastModificationTime", lastModificationTime)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_GOT_FIRST_FILE_TO_MIGRATE_FROM_GATEWAY, params);
+      AGGREGATOR_GOT_FILE_TO_MIGRATE_FROM_GATEWAY, params);
 
   } else {
 
@@ -373,7 +373,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
       castor::dlf::Param("gatewayHost", gatewayHost),
       castor::dlf::Param("gatewayPort", gatewayPort)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_GOT_NO_FIRST_FILE_TO_MIGRATE_FROM_GATEWAY, params);
+      AGGREGATOR_NO_MORE_FILES_TO_MIGRATE, params);
 
   }
 
@@ -391,11 +391,12 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
   unsigned char (&blockId)[4], int32_t &positionCommandCode)
   throw(castor::exception::Exception) {
 
-  bool thereIsAFileToRecall = false;
-
-  // Prepare the request
-  tapegateway::FileToRecallRequest request;
-  request.setTransactionId(volReqId);
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("volReqId"   , volReqId   ),
+    castor::dlf::Param("gatewayHost", gatewayHost),
+    castor::dlf::Param("gatewayPort", gatewayPort)};
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+    AGGREGATOR_GET_FILE_TO_RECALL_FROM_GATEWAY, params);
 
 //===================================================
 // Hardcoded volume INFO
@@ -422,6 +423,12 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
 
 #endif
 //===================================================
+
+  bool thereIsAFileToRecall = false;
+
+  // Prepare the request
+  tapegateway::FileToRecallRequest request;
+  request.setTransactionId(volReqId);
 
   // Connect to the tape gateway
   castor::io::ClientSocket gatewaySocket(gatewayPort, gatewayHost);
@@ -522,6 +529,30 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
       << ": Actual = " << volReqIdFromGateway);
   }
 
+  if(thereIsAFileToRecall) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId"            , volReqId   ),
+      castor::dlf::Param("gatewayHost"         , gatewayHost),
+      castor::dlf::Param("gatewayPort"         , gatewayPort),
+      castor::dlf::Param("filePath"            , filePath   ),
+      castor::dlf::Param("nsHost"              , nsHost     ),
+      castor::dlf::Param("fileId"              , fileId     ),
+      castor::dlf::Param("tapeFileSeq"         , tapeFileSeq),
+      castor::dlf::Param("blockId[0]"         , blockId[0]  ),
+      castor::dlf::Param("blockId[1]"         , blockId[1]  ),
+      castor::dlf::Param("blockId[2]"         , blockId[2]  ),
+      castor::dlf::Param("blockId[3]"         , blockId[3]  )};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_GOT_FILE_TO_RECALL_FROM_GATEWAY, params);
+  } else {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId"   , volReqId   ),
+      castor::dlf::Param("gatewayHost", gatewayHost),
+      castor::dlf::Param("gatewayPort", gatewayPort)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_NO_MORE_FILES_TO_RECALL, params);
+  }
+
   return thereIsAFileToRecall;
 }
 
@@ -546,6 +577,27 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
 
   #endif
   //===================================================
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId"           , volReqId           ),
+      castor::dlf::Param("gatewayHost"        , gatewayHost        ),
+      castor::dlf::Param("gatewayPort"        , gatewayPort        ),
+      castor::dlf::Param("nsHost"             , nsHost             ),
+      castor::dlf::Param("fileId"             , fileId             ),
+      castor::dlf::Param("tapeFileSeq"        , tapeFileSeq        ),
+      castor::dlf::Param("blockId[0]"         , blockId[0]         ),
+      castor::dlf::Param("blockId[1]"         , blockId[1]         ),
+      castor::dlf::Param("blockId[2]"         , blockId[2]         ),
+      castor::dlf::Param("blockId[3]"         , blockId[3]         ),
+      castor::dlf::Param("positionCommandCode", positionCommandCode),
+      castor::dlf::Param("checksumAlgorithm"  , checksumAlgorithm  ),
+      castor::dlf::Param("checksum"           , checksum           ),
+      castor::dlf::Param("fileSize"           , fileSize           ),
+      castor::dlf::Param("compressedFileSize" , compressedFileSize )};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_NOTIFY_GATEWAY_FILE_MIGRATED, params);
+  }
 
   // Prepare the request
   tapegateway::FileMigratedNotification request;
@@ -638,6 +690,15 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
 
   #endif
   //===================================================
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId"   , volReqId   ),
+      castor::dlf::Param("gatewayHost", gatewayHost),
+      castor::dlf::Param("gatewayPort", gatewayPort)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_NOTIFY_GATEWAY_FILE_RECALLED, params);
+  }
 
   // Prepare the request
   tapegateway::FileRecalledNotification request;
