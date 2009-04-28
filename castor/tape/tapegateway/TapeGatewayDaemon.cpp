@@ -180,13 +180,13 @@ int main(int argc, char* argv[]){
          
     tgDaemon.addThreadPool(
 			   new castor::server::SignalThreadPool("ProducerOfVdqmRequestsThread", new castor::tape::tapegateway::VdqmRequestsProducerThread(oraSvc,tgDaemon.listenPort()), DEFAULT_SLEEP_INTERVAL)); // port used just to be sent to vdqm
-			   tgDaemon.getThreadPool('P')->setNbThreads(1); 
+    tgDaemon.getThreadPool('P')->setNbThreads(1);
 			   
      // check requests for vdmq
 			       
-     tgDaemon.addThreadPool(
+    tgDaemon.addThreadPool(
 			    new castor::server::SignalThreadPool("CheckerOfVdqmRequestsThread", new castor::tape::tapegateway::VdqmRequestsCheckerThread(oraSvc, VDQM_TIME_OUT_INTERVAL), DEFAULT_SLEEP_INTERVAL ));
-			    tgDaemon.getThreadPool('C')->setNbThreads(1); 
+    tgDaemon.getThreadPool('C')->setNbThreads(1); 
 
     
     // query vmgr for tape and tapepools
@@ -215,7 +215,8 @@ int main(int argc, char* argv[]){
     // start the daemon
 
     tgDaemon.start();
-  
+
+
   }// end try block
   catch (castor::exception::Exception e) {
     std::cerr << "Caught castor exception : "
@@ -294,7 +295,7 @@ castor::tape::tapegateway::TapeGatewayDaemon::TapeGatewayDaemon() : castor::serv
    {44, "Worker: impossible to get information for this transaction id"},
    {45, "Worker: received a FileRecalledNotification"},
    {46, "Worker: checking nameserver for recalled file"},
-   {47, "Worker: reported nameserver error"},
+   {47, "Worker: failure in nameserver check for recalled file"},
    {48, "Worker: updating db for recalled file"},
    {49, "Worker: impossible to update db for recalled file"},
    {50, "Worker: received a FileMigratedNotification"},
@@ -333,6 +334,11 @@ castor::tape::tapegateway::TapeGatewayDaemon::TapeGatewayDaemon() : castor::serv
    {83, "Worker: file recalled"},
    {84, "Worker: file to recall"},
    {85, "Worker: file to migrate"},
+   {86, "Worker: retrived bad file to migrate"},
+   {87, "Worker: impossible to invalidate tapecopy"},
+   {88, "Worker: retrived bad file to recall"},
+   {89, "Worker: impossible to invalidate segment"},
+   {90, "Worker: impossible to retrieve the segment"},
    {-1, ""}
   };
   dlfInit(messages);

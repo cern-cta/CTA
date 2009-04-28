@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: VmgrTapeGatewayHelper.cpp,v $ $Revision: 1.9 $ $Release$ 
- * $Date: 2009/03/09 13:51:03 $ $Author: gtaur $
+ * @(#)$RCSfile: VmgrTapeGatewayHelper.cpp,v $ $Revision: 1.10 $ $Release$ 
+ * $Date: 2009/04/28 14:40:07 $ $Author: gtaur $
  *
  *
  *
@@ -124,12 +124,11 @@ castor::stager::Tape* castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeF
    if ((strcmp(label,"nl") == 0) ||  /* No Label */
        (strcmp(label,"blp") == 0))   /* Bypass Label Type */
      maxPossible = INT_MAX;
-
-  // TODO add new type
+ 
   
   if ( maxPossible > 0 && startFseq >  maxPossible ) {
 
-    // success update tape
+    // too big fseq 
 
     serrno=0;
     rc = vmgr_updatetape(
@@ -157,7 +156,7 @@ castor::stager::Tape* castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeF
     delete tape;
     tape=NULL;
     
-    castor::exception::Exception ex(EINVAL);
+    castor::exception::Exception ex(ERTMAXERR);
     ex.getMessage()
       << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream"
       << "too big fseq";

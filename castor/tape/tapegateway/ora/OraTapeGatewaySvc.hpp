@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2009/03/09 13:51:04 $ $Author: gtaur $
+ * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2009/04/28 14:40:18 $ $Author: gtaur $
  *
  * Implementation of the ITapeGatewaySvc for Oracle
  *
@@ -221,14 +221,14 @@ namespace castor {
 	 * Delete a segment which is not anymore in the nameserver 
 	 */
 
-	virtual void  invalidateSegment(castor::tape::tapegateway::FileToRecall& file) throw (castor::exception::Exception); 
+	virtual void  invalidateSegment(castor::tape::tapegateway::FileToRecall& file, int errorCode) throw (castor::exception::Exception); 
 
 
 	/*
 	 * Delete a tapecopy which is not anymore in the nameserver 
 	 */
 
-	virtual void  invalidateTapeCopy(castor::tape::tapegateway::FileToMigrate& file) throw (castor::exception::Exception); 
+	virtual void  invalidateTapeCopy(castor::tape::tapegateway::FileToMigrate& file, int errorCode) throw (castor::exception::Exception); 
 
 	/*
 	 * Commit transaction

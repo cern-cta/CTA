@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NsTapeGatewayHelper.cpp,v $ $Revision: 1.8 $ $Release$ 
- * $Date: 2009/03/09 13:51:03 $ $Author: gtaur $
+ * @(#)$RCSfile: NsTapeGatewayHelper.cpp,v $ $Revision: 1.9 $ $Release$ 
+ * $Date: 2009/04/28 14:40:07 $ $Author: gtaur $
  *
  *
  *
@@ -38,6 +38,7 @@
 #include <unistd.h>
 #include "rfio_api.h"
 #include "Cns_api.h"
+#include "castor/exception/OutOfMemory.hpp"
 
 
 void castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile( tape::tapegateway::FileMigratedNotification& file, int copyNumber, std::string vid, u_signed64 lastModificationTime) throw (castor::exception::Exception){ 
@@ -354,7 +355,7 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate(castor:
   *castorFileName = '\0';
   serrno=0;
   rc = Cns_statx(castorFileName,&castorFileId,&statbuf);
-  
+
   if ( rc == -1 ) {
     if (segArray != NULL ) free(segArray);
     segArray=NULL;
@@ -364,7 +365,7 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate(castor:
       << "Cns_statx failed";
     throw ex;
   } 
-     
+ 
   memset(&fileClass,'\0',sizeof(fileClass));
   serrno=0;
   rc = Cns_queryclass( castorFileId.server,statbuf.fileclass, NULL,&fileClass );
@@ -377,7 +378,7 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate(castor:
       << "Cns_queryclass failed";
     throw ex;
   } 
-    
+
   if ( nbCopies >= fileClass.nbcopies ) {// extra check to avoid exceeded number of tapecopies
       if (segArray != NULL ) free(segArray);
       segArray=NULL;
@@ -397,14 +398,10 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate(castor:
 
   struct stat64 st;
   serrno=0;
-  char* path=NULL;
-  strncpy(
-          path,
-          file.path().c_str(),
-          sizeof(file.path().size())-1
-          ); 
-  rc = rfio_stat64(path,&st);
-  if (path) free(path);
+
+
+  rc = rfio_stat64((char*)file.path().c_str(),&st);
+
   if (rc <0 ){
     castor::exception::Exception ex(serrno);
     ex.getMessage()
@@ -414,9 +411,14 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate(castor:
 
   }
   
+
+  
   if (st.st_size == 0){
 
     castor::exception::Exception ex(ERTZEROSIZE); // TODO mark it as failed
+    ex.getMessage()
+      << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFileSize:"
+      << "zero file size";
     throw ex;
 
   }
@@ -429,6 +431,35 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate(castor:
 
   }
 
+  // check that the fseq of vmgr was consistent with the one of the nameserver
+
+  serrno=0;
+  struct Cns_segattrs startSegment;
+  memset(&startSegment,'\0',sizeof(startSegment));
+  rc = Cns_lastfseq(vid.c_str(),1,&startSegment); //side hardcoded
+  if (rc<0){
+    if (serrno == ENOENT) {
+      // first file
+      startSegment.fseq=0;
+    } else {
+
+      castor::exception::Exception ex(serrno);
+      ex.getMessage()
+	<< "cannot get the last fseq from VMGR for tape "<<vid.c_str();
+      throw ex;  
+    }
+
+  } 
+  
+  if (file.fseq() <=  startSegment.fseq){
+    castor::exception::Exception ex(ERTWRONGFSEQ);
+    ex.getMessage()
+      << "inconsistent fseq the name server was "<<startSegment.fseq
+      <<" and the file one is "<< file.fseq();
+    throw ex;
+  }
+ 
+
 }
 
 
@@ -436,6 +467,7 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::getBlockIdToRecall(castor::
 
  
   // get segments for this fileid 
+ 
 
   struct Cns_fileid castorFileId;
   memset(&castorFileId,'\0',sizeof(castorFileId));
@@ -452,6 +484,7 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::getBlockIdToRecall(castor::
   int rc = Cns_getsegattrs(NULL,&castorFileId,&nbSegs,&segArray);
 
   if ( rc == -1 ) {
+
     if (segArray != NULL )   free(segArray);
     segArray=NULL;
     castor::exception::Exception ex(serrno);
@@ -472,8 +505,13 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::getBlockIdToRecall(castor::
       file.setBlockId1(segArray[i].blockid[1]);
       file.setBlockId2(segArray[i].blockid[2]);
       file.setBlockId3(segArray[i].blockid[3]);
-
-      if (file.blockId0()== file.blockId1()==file.blockId2()== file.blockId3()== 0) file.setPositionCommandCode(TPPOSIT_FSEQ); // magic things for the first file
+ 
+      //if ( memcmp(blockid,nullblkid,sizeof(blockid)) != 0 ) 
+      
+      if ((file.blockId0() == '\0') && (file.blockId1() == '\0') && ( file.blockId2()== '\0' ) && ( file.blockId3() == '\0' )){
+	file.setPositionCommandCode(TPPOSIT_FSEQ); // magic things for the first file
+      }
+	
       if (segArray != NULL )   free(segArray);
       segArray=NULL;
       return;
@@ -647,14 +685,9 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileSize(castor::tape
 
   struct stat64 st;
   serrno=0;
-  char* path=NULL;
-  strncpy(
-          path,
-          file.path().c_str(),
-          sizeof(file.path().size())-1
-          ); 
-  rc = rfio_stat64(path,&st);
-  if (path) free(path);
+
+  rc = rfio_stat64((char*)file.path().c_str(),&st);
+
   if (rc <0 ){
     castor::exception::Exception ex(serrno);
     ex.getMessage()
@@ -663,7 +696,7 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileSize(castor::tape
     throw ex;
 
   }
-  
+
   if ( (u_signed64)st.st_size !=  statBuf.filesize){ // cast done to follow castor convention 
     castor::exception::Exception ex(ERTWRONGSIZE);
     ex.getMessage()
@@ -673,3 +706,5 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileSize(castor::tape
   }
   
 }
+
+
