@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.734 $ $Date: 2009/04/28 14:39:33 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.735 $ $Date: 2009/04/28 14:55:55 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1858,7 +1858,6 @@ END;
 
 /* SQL Function updateDbEndTape */
 
-
 create or replace
 PROCEDURE  updateDbEndTape  
 ( inputVdqmReqId IN INTEGER, outputTape OUT NOCOPY VARCHAR2 ) AS
@@ -1874,9 +1873,11 @@ BEGIN
   IF reqMode = 0 THEN 
      --read    
      -- release tape
-     UPDATE tape set status = 0 WHERE tpmode=0 AND status=4 AND NOT EXISTS(SELECT 'x' FROM Segment WHERE tape=tpId AND status=0)  AND id=tpId;
-     -- still segment around ... last minute candidates
-     UPDATE tape set status=8 WHERE status=4 AND tpmode=0 AND id=tpId; -- still segment in zero ... to be restarted   
+     UPDATE segment set status=0 where status=7 AND tape=tpId; -- lost segments
+     -- still segment in zero ... to be restarted
+     UPDATE tape set status=8 WHERE  tpmode=0 AND id=tpId;
+     -- tape that have no pending recalls
+     UPDATE tape set status = 0 WHERE tpmode=0 AND NOT EXISTS(SELECT 'x' FROM Segment WHERE tape=tpId AND status=0)  AND id=tpId;
   ELSE 
     -- write
     SELECT vid INTO outputTape FROM tape WHERE id IN (SELECT tape FROM stream WHERE id=strId);
