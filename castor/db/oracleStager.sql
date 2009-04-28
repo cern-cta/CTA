@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.732 $ $Date: 2009/04/24 16:30:34 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.733 $ $Date: 2009/04/28 14:39:33 $ $Author: gtaur $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -127,7 +127,8 @@ CREATE OR REPLACE PACKAGE castor AS
    nsHost VARCHAR2(2048),
    diskserver VARCHAR2(2048),
    mountPoint VARCHAR(2048),
-   path VARCHAR2(2048)
+   path VARCHAR2(2048),
+   fseq INTEGER	
    );
   TYPE FileToRecallCore_Cur IS REF CURSOR RETURN  FileToRecallCore;  
   TYPE FileToMigrateCore IS RECORD (
