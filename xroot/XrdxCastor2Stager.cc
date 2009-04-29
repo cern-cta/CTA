@@ -1,4 +1,4 @@
-//          $Id: XrdxCastor2Stager.cc,v 1.5 2009/03/18 14:46:05 sponcec3 Exp $
+//          $Id: XrdxCastor2Stager.cc,v 1.6 2009/04/29 10:15:03 apeters Exp $
 
 #ifndef __XCASTOR2FS__STAGER__HH
 #define __XCASTOR2FS__STAGER__HH
@@ -26,7 +26,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/Communication.hpp"
 #include "stager_client_api_common.hpp"
-#include "stage_api.h"
+#include "stager_api.h"
 
 #include <sys/types.h>
 #include <XrdxCastor2Fs/XrdxCastor2Stager.hh>
@@ -108,7 +108,7 @@ XrdxCastor2Stager::Prepare2Get(XrdOucErrInfo &error, uid_t uid, gid_t gid, const
     error.setErrInfo(fr->errorCode(),emsg.c_str());
     return false;
   }  else {
-    ZTRACE(stager, stage_fileStatusName(fr->status()) <<" rc=" << fr->errorCode()
+    ZTRACE(stager, stage_fileStatusName(fr->status())<< "status=" << fr->status() <<" rc=" << fr->errorCode()
 	   <<" path=" <<fr->server().c_str() <<':' <<fr->fileName().c_str()
 	   <<" (" <<fr->castorFileName().c_str() <<") id=" <<fr->id() );
   }

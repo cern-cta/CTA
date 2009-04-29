@@ -1,7 +1,7 @@
 Summary:     The next generation xrootd@Castor2 interface
 Name: 	     xrootd-xcastor2fs
-Version:     1.0.5
-Release:     1
+Version:     1.0.6
+Release:     3
 License:     none
 Group:       Applications/Castor
 Source0:     %{name}-%{version}.tar.gz
@@ -60,6 +60,17 @@ fi
 %attr(-,stage,st) %dir /var/spool/xroot/core
 
 %changelog
+* Wed Apr 27 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.6-3
+- added support in disk server plugin to set the file size in the nameserver during the close
+  (otherwise the typical delay before the namespace size is updated is 3 s)
+* Mon Apr 27 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.6-2
+- added support for stagemap ordered lists
+- policies can now be defined on client ID + path basis
+- policies allow now also 'nostage' and 'ronly'
+- fixed several errno->serrno typos
+- fixed bug with 'mkdir' (EEXIST was not handled correctly)
+- enabled 'dirlist' etc. via 'xrd' client
+
 * Fri Mar 06 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.5-1
 - added support for adler32 checksumming
 -- new config tag: x2castor.checksum always|never|streaming

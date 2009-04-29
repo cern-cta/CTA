@@ -1,5 +1,5 @@
-//          $Id: XrdxCastor2Fs.cc,v 1.7 2009/04/15 10:20:49 apeters Exp $
-const char *XrdxCastor2FsCVSID = "$Id: XrdxCastor2Fs.cc,v 1.7 2009/04/15 10:20:49 apeters Exp $";
+//          $Id: XrdxCastor2Fs.cc,v 1.8 2009/04/29 10:15:03 apeters Exp $
+const char *XrdxCastor2FsCVSID = "$Id: XrdxCastor2Fs.cc,v 1.8 2009/04/29 10:15:03 apeters Exp $";
 
 #include "XrdVersion.hh"
 #include "XrdClient/XrdClientAdmin.hh"
@@ -562,10 +562,64 @@ XrdxCastor2Fs::VomsMapGroups(const XrdSecEntity* client, XrdSecEntity& mappedcli
 
 /*----------------------------------------------------------------------------*/
 
-bool 
-XrdxCastor2Fs::SetStageVariables( const char* Path, const char* Opaque, XrdOucString &stagehost, XrdOucString &serviceclass, uid_t client_uid, gid_t client_gid, const char* tident) 
+bool           
+XrdxCastor2Fs::SetStageVariables(const char* Path, const char* Opaque, XrdOucString stagevariables, XrdOucString &stagehost, XrdOucString &serviceclass,  int n, const char* tident)
 {
   EPNAME("SetStageVariables");
+  XrdOucEnv Open_Env(Opaque);
+  
+  if (Opaque) {
+    ZTRACE(open,"path=" << Path << " Opaque=" << Opaque << " Stagevariables=" << stagevariables.c_str());
+  } else {
+    ZTRACE(open,"path=" << Path << " Stagevariables=" << stagevariables.c_str());
+  }
+  // the tokenizer likes line feeds
+  stagevariables.replace(',','\n');
+  XrdOucTokenizer stagetokens((char*)stagevariables.c_str());
+  XrdOucString desiredstagehost="";
+  XrdOucString desiredserviceclass="";
+  
+  const char* sh=0;
+  
+  if ((sh = Open_Env.Get("stagerHost"))) {
+    desiredstagehost = sh;
+  }
+  
+  if ((sh = Open_Env.Get("svcClass"))) {
+    desiredserviceclass=sh;
+  }
+  
+  const char* stoken;
+  int ntoken=0;
+  while( (stoken = stagetokens.GetLine())) {
+    XrdOucString mhost = stoken;
+    XrdOucString shost;
+    int offset;
+    if ((offset=mhost.find("::")) != STR_NPOS) {
+      shost.assign(mhost.c_str(),0,offset-1);
+      stagehost = shost.c_str();
+      shost.assign(mhost.c_str(),offset+2);
+      serviceclass = shost;
+    } else {
+      stagehost = mhost;
+      serviceclass = "default";
+    }
+    // we are successfull if we either return the appropriate token or if the token matches the user specified
+    // stager/svc class pair
+    // as a result: if the host/svc class pair is not defined, a user cannot request it!
+    if (( (desiredstagehost == stagehost) && (desiredserviceclass == serviceclass)) || (ntoken == n)) {
+      ZTRACE(open,"path=" << Path << " stagehost=" << stagehost.c_str() << " serviceclass=" << serviceclass.c_str());
+      return true;
+    }
+    ntoken++;
+  }
+  return false;
+}
+
+bool 
+XrdxCastor2Fs::GetStageVariables( const char* Path, const char* Opaque, XrdOucString &stagevariables, uid_t client_uid, gid_t client_gid, const char* tident) 
+{
+  EPNAME("GetStageVariables");
   if (Opaque) {
     ZTRACE(open,"path=" << Path << " Opaque=" << Opaque);
   } else {
@@ -575,7 +629,13 @@ XrdxCastor2Fs::SetStageVariables( const char* Path, const char* Opaque, XrdOucSt
   XrdOucEnv Open_Env(Opaque);
   const char* val;
   if ((val=Open_Env.Get("stagerHost"))){
-    stagehost = val;
+    stagevariables = val;
+    stagevariables += "::";
+    if ((val=Open_Env.Get("serviceClass"))) {
+      stagevariables += val;
+    } else {
+      stagevariables += "default";
+    }
   } else {
     XrdOucString spath = Path;
     XrdOucString *mhost;
@@ -588,18 +648,7 @@ XrdxCastor2Fs::SetStageVariables( const char* Path, const char* Opaque, XrdOucSt
       XrdOucString subpath;
       subpath.assign(Path,0,pos);
       if ( (mhost = stagertable->Find(subpath.c_str()))) {
-	XrdOucString shost;
-	int offset;
-	if ((offset=mhost->find("::")) != STR_NPOS) {
-	  shost.assign(mhost->c_str(),0,offset-1);
-	  stagehost = shost.c_str();
-	  if (!Open_Env.Get("svcClass")) {
-	    shost.assign(mhost->c_str(),offset+2);
-	    serviceclass = shost.c_str();
-	  }
-	} else {
-	  stagehost = mhost->c_str();
-	}
+	stagevariables = mhost->c_str();
 	found=true;
       }
       pos++;
@@ -612,50 +661,53 @@ XrdxCastor2Fs::SetStageVariables( const char* Path, const char* Opaque, XrdOucSt
     gidmap += (int)client_gid;
     
     if ( (mhost = stagertable->Find(uidmap.c_str()))) {
-      XrdOucString shost;
-      int offset;
-      if ((offset=mhost->find("::")) != STR_NPOS) {
-	shost.assign(mhost->c_str(),0,offset-1);
-	stagehost = shost.c_str();
-	if (!Open_Env.Get("svcClass")) {
-	  shost.assign(mhost->c_str(),offset+2);
-	  serviceclass = shost.c_str();
-	}
-      } else {
-	stagehost = mhost->c_str();
-      }
+      stagevariables = mhost->c_str();
       found=true;
     }
     
     if ( (mhost = stagertable->Find(gidmap.c_str()))) {
-      XrdOucString shost;
-      int offset;
-      if ((offset=mhost->find("::")) != STR_NPOS) {
-	shost.assign(mhost->c_str(),0,offset-1);
-	stagehost = shost.c_str();
-	if (!Open_Env.Get("svcClass")) {
-	  shost.assign(mhost->c_str(),offset+2);
-	  serviceclass = shost.c_str();
-	}
-      } else {
-	stagehost = mhost->c_str();
-      }
+      stagevariables = mhost->c_str();
       found=true;
     }
-    
+
+    // uid/gid + path mapping wins!
+    // user mapping superseeds group mapping
+    pos=0;
+    while ( (pos = spath.find("/",pos) ) != STR_NPOS ) {
+      XrdOucString subpath;
+      subpath.assign(Path,0,pos);
+      subpath += "::";
+      subpath += "gid:";
+      subpath += (int) client_gid;
+      if ( (mhost = stagertable->Find(subpath.c_str()))) {
+	stagevariables = mhost->c_str();
+	found=true;
+      }
+      pos++;
+    }
+    pos=0;
+    while ( (pos = spath.find("/",pos) ) != STR_NPOS ) {
+      XrdOucString subpath;
+      subpath.assign(Path,0,pos);
+      subpath += "::";
+      subpath += "uid:";
+      subpath += (int) client_uid;
+      if ( (mhost = stagertable->Find(subpath.c_str()))) {
+	stagevariables = mhost->c_str();
+	found=true;
+      }
+      pos++;
+    }
+
     if (!found) {
       if (mhost = stagertable->Find("default")) {
-	stagehost = mhost->c_str();
+	stagevariables = mhost->c_str();
       } else {
 	return false;
       }
     }
   }   
   
-  if ((val=Open_Env.Get("svcClass"))) {
-    serviceclass = val;
-  }
-
   return true;
 }
 
@@ -1080,7 +1132,7 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
    } else {
      // this is the read/stage case
      if ((retc = XrdxCastor2FsUFS::Statfn(path, &buf))) {
-       return XrdxCastor2Fs::Emsg(epname, error, serrno, "stat file", fname);
+       return XrdxCastor2Fs::Emsg(epname, error, serrno, "stat file", path);
      }
      
      if (buf.filesize == 0) {
@@ -1089,9 +1141,9 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
      
      if (!retc && !(buf.filemode & S_IFREG)) {
        if (buf.filemode &S_IFDIR) 
-	 return XrdxCastor2Fs::Emsg(epname, error, EISDIR, "open directory as file", fname);
+	 return XrdxCastor2Fs::Emsg(epname, error, EISDIR, "open directory as file", path);
        else 
-	 return XrdxCastor2Fs::Emsg(epname, error, ENOTBLK, "open not regular file", fname);
+	 return XrdxCastor2Fs::Emsg(epname, error, ENOTBLK, "open not regular file", path);
      }
    }
 
@@ -1114,11 +1166,92 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
    XrdOucString stagehost="";
    XrdOucString serviceclass="default";
    XrdOucString stagestatus="";
+   XrdOucString stagevariables="";
 
    const char* val;
 
-   if (!XrdxCastor2FS->SetStageVariables(path,info,stagehost,serviceclass,client_uid,client_gid,tident)) {
-     return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "set the stager host - you didn't specify it and I have no stager map for fn = ", path);	   
+   if (!XrdxCastor2FS->GetStageVariables(path,info,stagevariables,client_uid,client_gid,tident)) {
+     return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "set the stager host - you didn't specify a valid one and I have no stager map for fn = ", path);	   
+   }
+
+
+   XrdOucString *policy=NULL;
+
+   if (isRW) {
+     const char* val;;
+     // we try the user specified or the first possible setting
+     if ((val = Open_Env.Get("stagerHost"))) {
+       stagehost = val;
+     }
+     
+     if ((val = Open_Env.Get("svcClass"))) {
+       serviceclass=val;
+     }
+     
+     if (stagehost.length() && serviceclass.length()) {
+       // try the user specified pair
+       if (XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass, 999, tident)) {
+	 // select the policy
+	 
+	 XrdOucString *wildcardpolicy=NULL;
+	 XrdOucString policytag = stagehost; policytag +="::"; policytag += serviceclass;
+	 XrdOucString grouppolicytag = policytag;grouppolicytag+="::gid:";grouppolicytag += (int)client_gid;
+	 XrdOucString userpolicytag  = policytag;userpolicytag +="::uid:"; userpolicytag += (int)client_uid;
+	 
+	 XrdOucString wildcardpolicytag = stagehost; wildcardpolicytag +="::"; wildcardpolicytag += "*"; 
+	 
+	 wildcardpolicy = XrdxCastor2FS->stagerpolicy->Find(wildcardpolicytag.c_str());
+	 
+	 if (! (policy = XrdxCastor2FS->stagerpolicy->Find(userpolicytag.c_str()))) 
+	   if (! (policy = XrdxCastor2FS->stagerpolicy->Find(grouppolicytag.c_str()))) 
+	     policy = XrdxCastor2FS->stagerpolicy->Find(policytag.c_str());
+	 
+	 if ((!policy) && (wildcardpolicy)) {
+	   policy = wildcardpolicy;
+	 }
+	 
+	 if (policy && (strstr(policy->c_str(),"ronly")) && isRW ) {
+	   return XrdxCastor2Fs::Emsg(epname, error, EPERM, "write - path is forced readonly for you : fn = ", path); 
+	 }
+       }else
+	 return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "write - cannot find any valid stager/service class mapping for you for fn = ", path); 
+     } else {
+       int n = 0;
+       // try the list and stop when we find a matching policy tag
+       bool allowed= false;
+       do {
+	 if (XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass,n, tident)) {
+	   // select the policy
+	   policy=NULL;
+	   XrdOucString *wildcardpolicy=NULL;
+	   XrdOucString policytag = stagehost; policytag +="::"; policytag += serviceclass;
+	   XrdOucString grouppolicytag = policytag;grouppolicytag+="::gid:";grouppolicytag += (int)client_gid;
+	   XrdOucString userpolicytag  = policytag;userpolicytag +="::uid:"; userpolicytag += (int)client_uid;
+	   
+	   XrdOucString wildcardpolicytag = stagehost; wildcardpolicytag +="::"; wildcardpolicytag += "*"; 
+	   
+	   wildcardpolicy = XrdxCastor2FS->stagerpolicy->Find(wildcardpolicytag.c_str());
+	   if (! (policy = XrdxCastor2FS->stagerpolicy->Find(userpolicytag.c_str()))) 
+	     if (! (policy = XrdxCastor2FS->stagerpolicy->Find(grouppolicytag.c_str()))) 
+	       policy = XrdxCastor2FS->stagerpolicy->Find(policytag.c_str());
+	   
+	   if ((!policy) && (wildcardpolicy)) {
+	     policy = wildcardpolicy;
+	   }
+	   printf("Policy is %d |%s|\n",policy, policytag.c_str());
+	   if (policy && (!strstr(policy->c_str(),"ronly") ) ) {
+	     allowed = true;
+	     break;
+	   }
+	 } else {
+	   break;
+	 }
+	 n++;
+       } while(n<999);
+       if (!allowed) {
+	 return XrdxCastor2Fs::Emsg(epname, error, EPERM, "write - you are not allowed to do write requests for fn = ", path);	   
+       }
+     }
    }
 
    // initialize rpfn2 for not scheduled access
@@ -1126,21 +1259,10 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
    redirectionpfn2 += ":"; redirectionpfn2 += stagehost;
    redirectionpfn2 += ":"; redirectionpfn2 += serviceclass;
 
-
-   // look for the scheduling policy
-   XrdOucString *policy=NULL;
-   XrdOucString *wildcardpolicy=NULL;
-   XrdOucString policytag = stagehost; policytag +="::"; policytag += serviceclass;
-   XrdOucString wildcardpolicytag = stagehost; policytag +="::"; policytag += "*";
-
-   wildcardpolicy = XrdxCastor2FS->stagerpolicy->Find(wildcardpolicytag.c_str());
-   policy = XrdxCastor2FS->stagerpolicy->Find(policytag.c_str());
-
-   if ((!policy) && (wildcardpolicy)) {
-     wildcardpolicy = policy;
-   }
-
    bool nocachelookup=true;
+
+   XrdOucString delaytag = tident;
+   delaytag += "::"; delaytag += path;
 
    if (isRW) {
      if (isRewrite) {
@@ -1167,7 +1289,7 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
 	       XrdOucString createpath;
 	       createpath.assign(newpath,0,fpos);
 	       ZTRACE(open,"Creating Path as uid:" << client_uid << " gid: " << client_gid);
-	       if (XrdxCastor2FsUFS::Mkdir(createpath.c_str(),S_IRWXU | S_IRGRP | S_IRWXO)) {
+	       if (XrdxCastor2FsUFS::Mkdir(createpath.c_str(),S_IRWXU | S_IRGRP | S_IRWXO) && (serrno != EEXIST)) {
        		 return XrdxCastor2Fs::Emsg(epname, error, serrno , "create path need dir = ", createpath.c_str());
 	       }	   
 	       fpos++;
@@ -1181,8 +1303,6 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
      // for all writes
      TIMING(xCastor2FsTrace,"PUT",&opentiming);
 
-     XrdOucString delaytag = tident;
-     delaytag += "::"; delaytag += path;
      ZTRACE(open, "Doing Put [stagehost="<<stagehost.c_str()<<" serviceclass="<<serviceclass.c_str());
      if (!XrdxCastor2Stager::Put(error, (uid_t) client_uid, (gid_t) client_gid, path, stagehost.c_str(),serviceclass.c_str(),redirectionhost,redirectionpfn1,redirectionpfn2, stagestatus)) {
        // if the file is not yet closed from the last write delay the client
@@ -1216,150 +1336,207 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
      }
      
    } else {
-     // for all reads
-     if ( policy && (strstr(policy->c_str(),"cache") ) ) {
-       XrdOucString locationfile = XrdxCastor2FS->LocationCacheDir;
-       locationfile += "/"; locationfile+= stagehost; locationfile+="/"; locationfile += serviceclass; 
-       locationfile += path;
+     XrdOucString usedpolicytag="";
 
-       TIMING(xCastor2FsTrace,"CACHELOOKUP",&opentiming);
-       ZTRACE(open,"Doing cache lookup: "<< locationfile.c_str());
-       
-       char linklookup[8192];
-       if ((::readlink(locationfile.c_str(),linklookup,sizeof(linklookup)))>0) {
-	 ZTRACE(open,"Cache location: " << linklookup);
-	 XrdOucString slinklookup = linklookup;
-	 XrdOucString slinkpath;
-	 XrdOucString slinkhost;
-	 while(slinklookup.replace("%","/")) {}; 
-	 int pathposition;
-	 if ((slinklookup.length() > 7) && ((pathposition=slinklookup.find("//",7))!=STR_NPOS)) {
-	   slinkpath.assign(slinklookup,pathposition + 1);
-	   slinkhost.assign(slinklookup,7,pathposition-1);
-
-	   TIMING(xCastor2FsTrace,"CACHESTAT",&opentiming);
-	   ZTRACE(open,"Doing file lookup on cached location: " << slinklookup.c_str() << " path: " << slinkpath);
-	   
-	   EnvPutInt(NAME_CONNECTTIMEOUT,1);
-	   EnvPutInt(NAME_REQUESTTIMEOUT,10);
-	   EnvPutInt(NAME_MAXREDIRECTCOUNT,1);
-	   EnvPutInt(NAME_RECONNECTTIMEOUT,1);
-	   EnvPutInt(NAME_FIRSTCONNECTMAXCNT,1);
-	   EnvPutInt(NAME_DATASERVERCONN_TTL,60);
-
-	   // this has to be further investigated ... under load we have seen SEGVs during the XrdClientAdmin creation
-	   XrdxCastor2FS->ClientMutex.Lock();
-	   XrdClientAdmin* newadmin = new XrdClientAdmin(slinklookup.c_str());
-	   if (!newadmin) {
-	     return XrdxCastor2Fs::Emsg(epname, error, errno, "open file: cannot create client admin to check cached location ", fname);	   
-	   }
-
-	   newadmin->Connect();
-	   XrdxCastor2FS->ClientMutex.UnLock();
-
-	   long id; long long size; long flags; long modtime;
-	   if (newadmin->Stat(slinkpath.c_str(),id,size,flags,modtime)) {
-	     redirectionhost = slinkhost;
-	     redirectionpfn1 = slinkpath;
-	     nocachelookup = false;
-	   } else {
-	     // stat failed, remove location from cache
-	     ::unlink(locationfile.c_str());
-	   } 
-	   delete newadmin;
-	 } else {
-	   // illegal location
-	   ::unlink(locationfile.c_str());
-	 }
-       } else {
-	 // no cache location, proceed as usual
-       }
-       TIMING(xCastor2FsTrace,"CACHEDONE",&opentiming);
-     }
      if (nocachelookup) {
-       // for all reads
-       if ( policy && ((strstr(policy->c_str(),"nohsm")))) {
-	 if (0) {
-	   // check the staging status, if not stage return error
-	   TIMING(xCastor2FsTrace,"STAGERQRY",&opentiming);
-	   if (!XrdxCastor2Stager::StagerQuery(error, (uid_t) client_uid, (gid_t) client_gid, path, stagehost.c_str(),serviceclass.c_str(),stagestatus)) {
-	     TIMING(xCastor2FsTrace,"RETURN",&opentiming);
-	     opentiming.Print(xCastor2FsTrace);
-	     return SFS_ERROR;
-	   } 
+       int n = 0;
+       bool possible=false;
+       XrdOucString possiblestagehost="";
+       XrdOucString possibleserviceclass="";
+
+       // loop through the possible stager settings to find the file somewhere staged
+       do {
+	 if (XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass, n, tident)) {
+	   // select the policy
+	   policy=NULL;
+	   XrdOucString *wildcardpolicy=NULL;
+	   XrdOucString policytag = stagehost; policytag +="::"; policytag += serviceclass;
+	   XrdOucString grouppolicytag = policytag;grouppolicytag+="::gid:";grouppolicytag += (int)client_gid;
+	   XrdOucString userpolicytag  = policytag;userpolicytag +="::uid:"; userpolicytag += (int)client_uid;
 	   
-	   if ( (stagestatus == "STAGEIN") ) {
-	     TIMING(xCastor2FsTrace,"RETURN",&opentiming);
-	     opentiming.Print(xCastor2FsTrace);
-	     return XrdxCastor2Fs::Emsg(epname, error, EBUSY, "open file: file is in status=STAGEIN ", fname);
-	   }
+	   XrdOucString wildcardpolicytag = stagehost; wildcardpolicytag +="::"; wildcardpolicytag += "*"; 
 	   
-	   if ( (stagestatus == "NA") ) {
-	     TIMING(xCastor2FsTrace,"RETURN",&opentiming);
-	     opentiming.Print(xCastor2FsTrace);
-	     return XrdxCastor2Fs::Emsg(epname, error, EBUSY, "open file: file is in status=OFFLINE ", fname);
-	   }
-	   
-	   if ( (stagestatus == "STAGEOUT") ) {
-	     XrdOucString delaytag = tident;
-	     delaytag += "::"; delaytag += path;
-	     
-	     if ( (stagestatus == "STAGEIN") ) {
-	       TIMING(xCastor2FsTrace,"RETURN",&opentiming);
-	       opentiming.Print(xCastor2FsTrace);
-	       return XrdxCastor2FS->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()) , "file is being staged out");
+	   wildcardpolicy = XrdxCastor2FS->stagerpolicy->Find(wildcardpolicytag.c_str());
+	   usedpolicytag = userpolicytag.c_str();
+	   if (! (policy = XrdxCastor2FS->stagerpolicy->Find(userpolicytag.c_str()))) {
+	     usedpolicytag = grouppolicytag.c_str();
+	     if (! (policy = XrdxCastor2FS->stagerpolicy->Find(grouppolicytag.c_str()))) {
+	       usedpolicytag = policytag;
+	       policy = XrdxCastor2FS->stagerpolicy->Find(policytag.c_str());
 	     }
 	   }
 	   
-	   if ( (stagestatus == "INVALID") ) {
+	   if ((!policy) && (wildcardpolicy)) {
+	     policy = wildcardpolicy;
+	     usedpolicytag = wildcardpolicytag;
+	   }
+	   if (policy && (!strstr(policy->c_str(),"nostage") ) ) {
+	     // if the policy allows we set this pair for an eventual stagin command
+	     if (!possiblestagehost.length()) {
+	       possiblestagehost = stagehost;
+	       possibleserviceclass = serviceclass;
+	     }
+	   }
+	   if ( policy && (strstr(policy->c_str(),"cache") ) ) {
+	     // we try our cache
+	     XrdOucString locationfile = XrdxCastor2FS->LocationCacheDir;
+	     locationfile += "/"; locationfile+= stagehost; locationfile+="/"; locationfile += serviceclass; 
+	     locationfile += path;
+	     
+	     TIMING(xCastor2FsTrace,"CACHELOOKUP",&opentiming);
+	     ZTRACE(open,"Doing cache lookup: "<< locationfile.c_str());
+	     
+	     char linklookup[8192];
+	     if ((::readlink(locationfile.c_str(),linklookup,sizeof(linklookup)))>0) {
+	       ZTRACE(open,"Cache location: " << linklookup);
+	       XrdOucString slinklookup = linklookup;
+	       XrdOucString slinkpath;
+	       XrdOucString slinkhost;
+	       while(slinklookup.replace("%","/")) {}; 
+	       int pathposition;
+	       if ((slinklookup.length() > 7) && ((pathposition=slinklookup.find("//",7))!=STR_NPOS)) {
+		 slinkpath.assign(slinklookup,pathposition + 1);
+		 slinkhost.assign(slinklookup,7,pathposition-1);
+		 XrdOucString addport =":"; addport += XrdxCastor2FS->xCastor2FsTargetPort.c_str();
+ 		 slinklookup.insert(addport.c_str(),pathposition);
+
+		 TIMING(xCastor2FsTrace,"CACHESTAT",&opentiming);
+		 ZTRACE(open,"Doing file lookup on cached location: " << slinklookup.c_str() << " path: " << slinkpath);
+		 
+		 EnvPutInt(NAME_CONNECTTIMEOUT,1);
+		 EnvPutInt(NAME_REQUESTTIMEOUT,10);
+		 EnvPutInt(NAME_MAXREDIRECTCOUNT,1);
+		 EnvPutInt(NAME_RECONNECTTIMEOUT,1);
+		 EnvPutInt(NAME_FIRSTCONNECTMAXCNT,1);
+		 EnvPutInt(NAME_DATASERVERCONN_TTL,60);
+		 
+		 // this has to be further investigated ... under load we have seen SEGVs during the XrdClientAdmin creation
+		 XrdxCastor2FS->ClientMutex.Lock();
+		 XrdClientAdmin* newadmin = new XrdClientAdmin(slinklookup.c_str());
+		 if (!newadmin) {
+		   XrdxCastor2FS->ClientMutex.UnLock();
+		   return XrdxCastor2Fs::Emsg(epname, error, ENOMEM, "open file: cannot create client admin to check cached location ", path);	   
+		 }
+		 
+		 newadmin->Connect();
+		 XrdxCastor2FS->ClientMutex.UnLock();
+		 
+		 long id; long long size; long flags; long modtime;
+		 if (newadmin->Stat(slinkpath.c_str(),id,size,flags,modtime)) {
+		   redirectionhost = slinkhost;
+		   redirectionpfn1 = slinkpath;
+		   nocachelookup = false;
+		 } else {
+		   // stat failed, remove location from cache
+		   ::unlink(locationfile.c_str());
+		 } 
+		 delete newadmin;
+	       } else {
+		 // illegal location
+		 ::unlink(locationfile.c_str());
+	       }
+	     } else {
+	       // no cache location, proceed as usual
+	     }
+	     TIMING(xCastor2FsTrace,"CACHEDONE",&opentiming);
+	   }
+
+	   if (!nocachelookup) {
+	     possible=true;
+	     break;
+	   }
+	   
+	   TIMING(xCastor2FsTrace,"PREP2GET",&opentiming);
+	   if (!XrdxCastor2Stager::Prepare2Get(error, (uid_t) client_uid, (gid_t) client_gid, path, stagehost.c_str(),serviceclass.c_str(),redirectionhost,redirectionpfn1,stagestatus)) {
 	     TIMING(xCastor2FsTrace,"RETURN",&opentiming);
 	     opentiming.Print(xCastor2FsTrace);
-	     return XrdxCastor2Fs::Emsg(epname, error, ECOMM, "open file: file is in status=INVALID ", fname);
+	     n++;
+	     continue;
 	   }
+	   
+	   if ( (stagestatus == "STAGED") || (stagestatus == "CANBEMIGR") || (stagestatus == "STAGEOUT") || (stagestatus == "BEINGMIGR") )  {
+	     // that is perfect, we can use the setting to read
+	     possible = true;
+	     break;
+	   } else { 
+	     XrdOucString delaytag = tident;
+	     delaytag += "::"; delaytag += path;
+	     // we select this setting and tell the client to wait for the staging in this pool/svc class
+	     if ( (stagestatus == "STAGEIN") || (stagestatus == "SUBREQUEST_READY") ) {
+	       TIMING(xCastor2FsTrace,"RETURN",&opentiming);
+	       opentiming.Print(xCastor2FsTrace);
+	       return XrdxCastor2FS->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()) , "file is being staged in");
+	     }
+	   }
+	   if ( (stagestatus == "INVALID") || (stagestatus == "SUBREQUEST_FAILED") ) {
+	     TIMING(xCastor2FsTrace,"RETURN",&opentiming);
+	     opentiming.Print(xCastor2FsTrace);
+	     n++;
+	     continue;
+	     //return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "access file in stager (status=INVALID)  fn = ", path);	   
+	   }
+	 } else {
+	   break;
+	 }
+	 n++;
+       } while (n<999);
+
+       if (!possible) {
+	 if (!possiblestagehost.length()) {
+	   TIMING(xCastor2FsTrace,"RETURN",&opentiming);
+	   opentiming.Print(xCastor2FsTrace);
+	   return XrdxCastor2Fs::Emsg(epname, error, ENODATA, "access file in stager (no online copy exists)  fn = ", path);	   
+	 }
+
+	 if ( policy && ((strstr(policy->c_str(),"nohsm")) || (strstr(policy->c_str(),"nostage"))) ) {
+	   TIMING(xCastor2FsTrace,"RETURN",&opentiming);
+	   opentiming.Print(xCastor2FsTrace);
+	   return XrdxCastor2Fs::Emsg(epname, error, EPERM, "access file in stager (file is not staged and you are not allowed to stage it anywhere)  fn = ", path);	   
+	 }
+
+	 // here we can try to stage the possible stagerhost/service class
+	 stagehost    = possiblestagehost;
+	 serviceclass = possibleserviceclass;
+
+	 if (!XrdxCastor2Stager::Get(error, (uid_t) client_uid, (gid_t) client_gid, path, stagehost.c_str(),serviceclass.c_str(),redirectionhost,redirectionpfn1,redirectionpfn2, stagestatus)) {
+	   TIMING(xCastor2FsTrace,"RETURN",&opentiming);
+	   opentiming.Print(xCastor2FsTrace);
+	   return SFS_ERROR;
+	 }
+       
+	 if ( (stagestatus == "STAGEIN") ) {
+	   TIMING(xCastor2FsTrace,"RETURN",&opentiming);
+	   opentiming.Print(xCastor2FsTrace);
+	   return XrdxCastor2FS->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()) , "file is being staged in");
+	 }
+
+	 if ( (stagestatus == "INVALID") || ( (stagestatus != "STAGED" ) &&
+					      (stagestatus != "STAGEOUT" ) &&
+					      (stagestatus != "CANBEMIGR") ) ) {
+	   
+	   TIMING(xCastor2FsTrace,"RETURN",&opentiming);
+	   opentiming.Print(xCastor2FsTrace);
+	   return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "access file in stager (illegal status after GET)  fn = ", path);	   
 	 }
        }
-       
-       TIMING(xCastor2FsTrace,"PREP2GET",&opentiming);
-       
-       if (!XrdxCastor2Stager::Prepare2Get(error, (uid_t) client_uid, (gid_t) client_gid, path, stagehost.c_str(),serviceclass.c_str(),redirectionhost,redirectionpfn1,stagestatus)) {
-	 TIMING(xCastor2FsTrace,"RETURN",&opentiming);
-	 opentiming.Print(xCastor2FsTrace);
-	 return SFS_ERROR;
-       }
-       
-       XrdOucString delaytag = tident;
-       delaytag += "::"; delaytag += path;
-       
-       if ( (stagestatus == "STAGEIN") || (stagestatus == "SUBREQUEST_READY") ) {
-	 TIMING(xCastor2FsTrace,"RETURN",&opentiming);
-	 opentiming.Print(xCastor2FsTrace);
-	 return XrdxCastor2FS->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()) , "file is being staged in");
-       }
-       
-       if ( (stagestatus == "STAGEOUT") ) {
-	 TIMING(xCastor2FsTrace,"RETURN",&opentiming);
-	 opentiming.Print(xCastor2FsTrace);
-	 return XrdxCastor2FS->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()), "file is being staged out");
-       }
-       
-       if ( (stagestatus == "INVALID") || (stagestatus == "SUBREQUEST_FAILED") ) {
-	 TIMING(xCastor2FsTrace,"RETURN",&opentiming);
-	 opentiming.Print(xCastor2FsTrace);
-	 return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "access file in stager (status=INVALID)  fn = ", path);	   
-       }
-       
-       // CANBEMIGR or STAGED files can be read ;-)
+
+       redirectionpfn2 = 0; 
+       redirectionpfn2 += ":"; redirectionpfn2 += stagehost;
+       redirectionpfn2 += ":"; redirectionpfn2 += serviceclass;
+
+
+       // CANBEMIGR or STAGED, STAGEOUT files can be read ;-)
        
        if (policy) {
-	 ZTRACE(open,"Policy for "<< policytag.c_str() << " is " << policy->c_str());
+	 ZTRACE(open,"Policy for "<< usedpolicytag.c_str() << " is " << policy->c_str());
        } else {
-	 ZTRACE(open,"Policy for "<< policytag.c_str() << " is default [read not scheduled]");
+	 ZTRACE(open,"Policy for "<< usedpolicytag.c_str() << " is default [read not scheduled]");
        }
 
        if ( policy && ((strstr(policy->c_str(),"schedread")) || (strstr(policy->c_str(),"schedall"))) ) {
 	 // 
 	 TIMING(xCastor2FsTrace,"GET",&opentiming);
-	 
+
 	 if (!XrdxCastor2Stager::Get(error, (uid_t) client_uid, (gid_t) client_gid, path, stagehost.c_str(),serviceclass.c_str(),redirectionhost,redirectionpfn1,redirectionpfn2, stagestatus)) {
 	   TIMING(xCastor2FsTrace,"RETURN",&opentiming);
 	   opentiming.Print(xCastor2FsTrace);
@@ -1390,6 +1567,7 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
    }
    
    // read+ write
+   printf("Cachellokup %d %d\n",nocachelookup,policy); 
    if ( nocachelookup && (policy && (strstr(policy->c_str(),"cache") ) ) ) {
      // update location in cache
      XrdOucString locationfile = XrdxCastor2FS->LocationCacheDir;
@@ -1403,7 +1581,8 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
      ::unlink(locationfile.c_str());
      
      XrdOucString linklocation = "root://";
-     linklocation += redirectionhost; linklocation += "/"; linklocation += redirectionpfn1;
+     linklocation += redirectionhost; 
+     linklocation += "/"; linklocation += redirectionpfn1;
      while(linklocation.replace("/","%")) {}; 
      int rpos=STR_NPOS;
      while ((rpos = locationfile.rfind("/",rpos))!=STR_NPOS) {
@@ -1438,7 +1617,7 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
    }
 
 
-     
+    
    //redirectionhost="pcitsmd01.cern.ch";
    XrdOucString nodomainhost="";
    int pos;
@@ -1603,7 +1782,7 @@ int XrdxCastor2FsFile::close()
 // Release the handle and return
 //
     if (oh >= 0  && XrdxCastor2FsUFS::Close(oh))
-       return XrdxCastor2Fs::Emsg(epname, error, errno, "close", fname);
+       return XrdxCastor2Fs::Emsg(epname, error, serrno, "close", fname);
     oh = -1;
     if (fname) {free(fname); fname = 0;}
     if (ohp != NULL){
@@ -1964,437 +2143,437 @@ int XrdxCastor2FsFile::truncate(XrdSfsFileOffset  flen)  // In
 /*                       F s c m d  I n t e r f a c e                         */
 /******************************************************************************/
 
-int
-XrdxCastor2FsFile::Fscmd(const char* path,  const char* path2, const char* origpath, const XrdSecEntity *client,  XrdOucErrInfo &error, const char* info) {
-  const char* epname = "Fscmd";
-  const char* tident = error.getErrUser();
-  static int fscmd_cnt=0;
+// int
+// XrdxCastor2FsFile::Fscmd(const char* path,  const char* path2, const char* origpath, const XrdSecEntity *client,  XrdOucErrInfo &error, const char* info) {
+//   const char* epname = "Fscmd";
+//   const char* tident = error.getErrUser();
+//   static int fscmd_cnt=0;
 
-  fscmdLock.Lock();
-  fscmd_cnt++;
-  fscmdLock.UnLock();
-  ohperror_cnt = fscmd_cnt;
+//   fscmdLock.Lock();
+//   fscmd_cnt++;
+//   fscmdLock.UnLock();
+//   ohperror_cnt = fscmd_cnt;
 
-  if (XrdxCastor2FS->Proc) {
-    XrdxCastor2FS->Stats.IncCmd();
-  }
+//   if (XrdxCastor2FS->Proc) {
+//     XrdxCastor2FS->Stats.IncCmd();
+//   }
 
-  XrdOucString ohperrorfile = "/tmp/xrdfscmd.";
-  ohperrorfile += (int)ohperror_cnt;
+//   XrdOucString ohperrorfile = "/tmp/xrdfscmd.";
+//   ohperrorfile += (int)ohperror_cnt;
 
-  XrdOucEnv Env(info);
+//   XrdOucEnv Env(info);
   
-  XrdOucString Cmd = Env.Get("fscmd");
-  XrdOucString RCmd;
+//   XrdOucString Cmd = Env.Get("fscmd");
+//   XrdOucString RCmd;
 
-  Cmd.replace("*","\\*");
-  if (Cmd.beginswith("ls ") || (Cmd == "ls") ) {
-    RCmd = "sudo -u ";
-    RCmd += client->name;
-    RCmd += " "; RCmd += Cmd; RCmd += " ";
-    RCmd += path;
-    RCmd += " 2> ";
-    RCmd += ohperrorfile;
-    RCmd += "|| echo __RETC__=$?";
+//   Cmd.replace("*","\\*");
+//   if (Cmd.beginswith("ls ") || (Cmd == "ls") ) {
+//     RCmd = "sudo -u ";
+//     RCmd += client->name;
+//     RCmd += " "; RCmd += Cmd; RCmd += " ";
+//     RCmd += path;
+//     RCmd += " 2> ";
+//     RCmd += ohperrorfile;
+//     RCmd += "|| echo __RETC__=$?";
 
-    XTRACE(open, path,RCmd.c_str());
-    ohp = popen(RCmd.c_str(),"r");
-    if (!ohp) {
-      XrdxCastor2Fs::Emsg(epname, error, errno, "list file/directory", path);
-      return SFS_ERROR;
-    }
+//     XTRACE(open, path,RCmd.c_str());
+//     ohp = popen(RCmd.c_str(),"r");
+//     if (!ohp) {
+//       XrdxCastor2Fs::Emsg(epname, error, errno, "list file/directory", path);
+//       return SFS_ERROR;
+//     }
 
-    // we need a short delay to wait for the stderr file to be visible in the FS
-    usleep(5000);
-    ohperror = fopen(ohperrorfile.c_str(),"r");
-    if (!ohperror) {
-      // try to wait a little bit and open it again
-      usleep(500000);
-      ohperror = fopen(ohperrorfile.c_str(),"r");
-    }
+//     // we need a short delay to wait for the stderr file to be visible in the FS
+//     usleep(5000);
+//     ohperror = fopen(ohperrorfile.c_str(),"r");
+//     if (!ohperror) {
+//       // try to wait a little bit and open it again
+//       usleep(500000);
+//       ohperror = fopen(ohperrorfile.c_str(),"r");
+//     }
 
-    if (!ohperror) {
-      XrdxCastor2Fs::Emsg(epname, error, errno, "open stderr for ls", path);
-      if (ohp) {
-	pclose(ohp);
-	ohp = NULL;
-      }
-      return SFS_ERROR;
-    }
-  }
+//     if (!ohperror) {
+//       XrdxCastor2Fs::Emsg(epname, error, errno, "open stderr for ls", path);
+//       if (ohp) {
+// 	pclose(ohp);
+// 	ohp = NULL;
+//       }
+//       return SFS_ERROR;
+//     }
+//   }
   
-  if (Cmd.beginswith("stat ") || (Cmd == "stat")) {
-    RCmd = "sudo -u ";
-    RCmd += client->name;
-    RCmd += " "; RCmd += Cmd; RCmd += " ";
-    RCmd += path;
+//   if (Cmd.beginswith("stat ") || (Cmd == "stat")) {
+//     RCmd = "sudo -u ";
+//     RCmd += client->name;
+//     RCmd += " "; RCmd += Cmd; RCmd += " ";
+//     RCmd += path;
 
-    RCmd += " 2> ";
-    RCmd += ohperrorfile;
-    RCmd += "|| echo __RETC__=$?";
+//     RCmd += " 2> ";
+//     RCmd += ohperrorfile;
+//     RCmd += "|| echo __RETC__=$?";
 
-    XTRACE(open, path,RCmd.c_str());
-    ohp = popen(RCmd.c_str(),"r");
-    if (!ohp) {
-      XrdxCastor2Fs::Emsg(epname, error, errno, "stat file/directory", path);
-      return SFS_ERROR;
-    }
+//     XTRACE(open, path,RCmd.c_str());
+//     ohp = popen(RCmd.c_str(),"r");
+//     if (!ohp) {
+//       XrdxCastor2Fs::Emsg(epname, error, errno, "stat file/directory", path);
+//       return SFS_ERROR;
+//     }
 
-    // we need a short delay to wait for the stderr file to be visible in the FS
-    usleep(5000);
-    ohperror = fopen(ohperrorfile.c_str(),"r");
-    if (!ohperror) {
-      // try to wait a little bit and open it again
-      usleep(500000);
-      ohperror = fopen(ohperrorfile.c_str(),"r");
-    }
-    if (!ohperror) {
-      XrdxCastor2Fs::Emsg(epname, error, errno, "open stderr for stat", path);
-      if (ohp) {
-	pclose(ohp);
-	ohp = NULL;
-      }
-      return SFS_ERROR;
-    }
-  }
+//     // we need a short delay to wait for the stderr file to be visible in the FS
+//     usleep(5000);
+//     ohperror = fopen(ohperrorfile.c_str(),"r");
+//     if (!ohperror) {
+//       // try to wait a little bit and open it again
+//       usleep(500000);
+//       ohperror = fopen(ohperrorfile.c_str(),"r");
+//     }
+//     if (!ohperror) {
+//       XrdxCastor2Fs::Emsg(epname, error, errno, "open stderr for stat", path);
+//       if (ohp) {
+// 	pclose(ohp);
+// 	ohp = NULL;
+//       }
+//       return SFS_ERROR;
+//     }
+//   }
 
-  if (Cmd.beginswith("mkdir ") || (Cmd == "mkdir")) {
-    RCmd = "sudo -u ";
-    RCmd += client->name;
-    RCmd += " "; RCmd += Cmd; RCmd += " ";
-    RCmd += path;
-    if (path2) {
-      RCmd += " "; RCmd += path2;
-    }
+//   if (Cmd.beginswith("mkdir ") || (Cmd == "mkdir")) {
+//     RCmd = "sudo -u ";
+//     RCmd += client->name;
+//     RCmd += " "; RCmd += Cmd; RCmd += " ";
+//     RCmd += path;
+//     if (path2) {
+//       RCmd += " "; RCmd += path2;
+//     }
 
-    RCmd += " 2> ";
-    RCmd += ohperrorfile;
-    RCmd += "|| echo __RETC__=$?";
-    XTRACE(open, path,RCmd.c_str());
-    ohp = popen(RCmd.c_str(),"r");
-    if (!ohp) {
-      XrdxCastor2Fs::Emsg(epname, error, errno, "mkdir file/directory", path);
-      return SFS_ERROR;
-    }
-    // we need a short delay to wait for the stderr file to be visible in the FS
-    usleep(5000);
-    ohperror = fopen(ohperrorfile.c_str(),"r");
-    if (!ohperror) {
-      // try to wait a little bit and open it again
-      usleep(500000);
-      ohperror = fopen(ohperrorfile.c_str(),"r");
-    }
-    if (!ohperror) {
-      XrdxCastor2Fs::Emsg(epname, error, errno, "open stderr for mkdir", path);
-      if (ohp) {
-	pclose(ohp);
-	ohp = NULL;
-      }
-      return SFS_ERROR;
-    }
-  }
+//     RCmd += " 2> ";
+//     RCmd += ohperrorfile;
+//     RCmd += "|| echo __RETC__=$?";
+//     XTRACE(open, path,RCmd.c_str());
+//     ohp = popen(RCmd.c_str(),"r");
+//     if (!ohp) {
+//       XrdxCastor2Fs::Emsg(epname, error, errno, "mkdir file/directory", path);
+//       return SFS_ERROR;
+//     }
+//     // we need a short delay to wait for the stderr file to be visible in the FS
+//     usleep(5000);
+//     ohperror = fopen(ohperrorfile.c_str(),"r");
+//     if (!ohperror) {
+//       // try to wait a little bit and open it again
+//       usleep(500000);
+//       ohperror = fopen(ohperrorfile.c_str(),"r");
+//     }
+//     if (!ohperror) {
+//       XrdxCastor2Fs::Emsg(epname, error, errno, "open stderr for mkdir", path);
+//       if (ohp) {
+// 	pclose(ohp);
+// 	ohp = NULL;
+//       }
+//       return SFS_ERROR;
+//     }
+//   }
 
-  if (Cmd.beginswith("rmdir ") || (Cmd == "rmdir")) {
-    RCmd = "sudo -u ";
-    RCmd += client->name;
-    RCmd += " "; RCmd += Cmd; RCmd += " ";
-    RCmd += path;
-    if (path2) {
-      RCmd += " "; RCmd += path2;
-    }
+//   if (Cmd.beginswith("rmdir ") || (Cmd == "rmdir")) {
+//     RCmd = "sudo -u ";
+//     RCmd += client->name;
+//     RCmd += " "; RCmd += Cmd; RCmd += " ";
+//     RCmd += path;
+//     if (path2) {
+//       RCmd += " "; RCmd += path2;
+//     }
 
-    RCmd += " 2> ";
-    RCmd += ohperrorfile;
-    RCmd += "|| echo __RETC__=$?";
+//     RCmd += " 2> ";
+//     RCmd += ohperrorfile;
+//     RCmd += "|| echo __RETC__=$?";
 
-    XTRACE(open, path,RCmd.c_str());
-    ohp = popen(RCmd.c_str(),"r");
-    if (!ohp) {
-      XrdxCastor2Fs::Emsg(epname, error, errno, "rmdir file/directory", path);
-      return SFS_ERROR;
-    }
+//     XTRACE(open, path,RCmd.c_str());
+//     ohp = popen(RCmd.c_str(),"r");
+//     if (!ohp) {
+//       XrdxCastor2Fs::Emsg(epname, error, errno, "rmdir file/directory", path);
+//       return SFS_ERROR;
+//     }
 
-    // we need a short delay to wait for the stderr file to be visible in the FS
-    usleep(5000);
-    ohperror = fopen(ohperrorfile.c_str(),"r");
-    if (!ohperror) {
-      // try to wait a little bit and open it again
-      usleep(500000);
-      ohperror = fopen(ohperrorfile.c_str(),"r");
-    }
-    if (!ohperror) {
-      XrdxCastor2Fs::Emsg(epname, error, errno, "open stderr for rmdir", path);
-      if (ohp) {
-	pclose(ohp);
-	ohp = NULL;
-      }
-      return SFS_ERROR;
-    }
-  }
+//     // we need a short delay to wait for the stderr file to be visible in the FS
+//     usleep(5000);
+//     ohperror = fopen(ohperrorfile.c_str(),"r");
+//     if (!ohperror) {
+//       // try to wait a little bit and open it again
+//       usleep(500000);
+//       ohperror = fopen(ohperrorfile.c_str(),"r");
+//     }
+//     if (!ohperror) {
+//       XrdxCastor2Fs::Emsg(epname, error, errno, "open stderr for rmdir", path);
+//       if (ohp) {
+// 	pclose(ohp);
+// 	ohp = NULL;
+//       }
+//       return SFS_ERROR;
+//     }
+//   }
 
-  if (Cmd.beginswith("rm ") || (Cmd == "rm")) {
-    RCmd = "sudo -u ";
-    RCmd += client->name;
-    RCmd += " "; RCmd += Cmd; RCmd += " ";
-    RCmd += path;
-    if (path2) {
-      RCmd += " "; RCmd += path2;
-    }
+//   if (Cmd.beginswith("rm ") || (Cmd == "rm")) {
+//     RCmd = "sudo -u ";
+//     RCmd += client->name;
+//     RCmd += " "; RCmd += Cmd; RCmd += " ";
+//     RCmd += path;
+//     if (path2) {
+//       RCmd += " "; RCmd += path2;
+//     }
 
-    RCmd += " 2> ";
-    RCmd += ohperrorfile;
-    RCmd += "|| echo __RETC__=$?";
+//     RCmd += " 2> ";
+//     RCmd += ohperrorfile;
+//     RCmd += "|| echo __RETC__=$?";
 
-    XTRACE(open, path,RCmd.c_str());
-    ohp = popen(RCmd.c_str(),"r");
-    if (!ohp) {
-      XrdxCastor2Fs::Emsg(epname, error, errno, "rm file/directory", path);
-      return SFS_ERROR;
-    }
+//     XTRACE(open, path,RCmd.c_str());
+//     ohp = popen(RCmd.c_str(),"r");
+//     if (!ohp) {
+//       XrdxCastor2Fs::Emsg(epname, error, errno, "rm file/directory", path);
+//       return SFS_ERROR;
+//     }
 
-    // we need a short delay to wait for the stderr file to be visible in the FS
-    usleep(5000);
-    ohperror = fopen(ohperrorfile.c_str(),"r");
-    if (!ohperror) {
-      // try to wait a little bit and open it again
-      usleep(500000);
-      ohperror = fopen(ohperrorfile.c_str(),"r");
-    }
-    if (!ohperror) {
-      XrdxCastor2Fs::Emsg(epname, error, errno, "open stderr for find rm", path);
-      if (ohp) {
-	pclose(ohp);
-	ohp = NULL;
-      }
-      return SFS_ERROR;
-    }
-  }
+//     // we need a short delay to wait for the stderr file to be visible in the FS
+//     usleep(5000);
+//     ohperror = fopen(ohperrorfile.c_str(),"r");
+//     if (!ohperror) {
+//       // try to wait a little bit and open it again
+//       usleep(500000);
+//       ohperror = fopen(ohperrorfile.c_str(),"r");
+//     }
+//     if (!ohperror) {
+//       XrdxCastor2Fs::Emsg(epname, error, errno, "open stderr for find rm", path);
+//       if (ohp) {
+// 	pclose(ohp);
+// 	ohp = NULL;
+//       }
+//       return SFS_ERROR;
+//     }
+//   }
 
-  if (Cmd.beginswith("chown ") || (Cmd == "chown")) {
-    RCmd = "sudo -u ";
-    RCmd += client->name;
-    RCmd += " "; RCmd += Cmd; RCmd += " ";
-    RCmd += path;
-    if (path2) {
-      RCmd += " "; RCmd += path2;
-    }
+//   if (Cmd.beginswith("chown ") || (Cmd == "chown")) {
+//     RCmd = "sudo -u ";
+//     RCmd += client->name;
+//     RCmd += " "; RCmd += Cmd; RCmd += " ";
+//     RCmd += path;
+//     if (path2) {
+//       RCmd += " "; RCmd += path2;
+//     }
 
-    RCmd += " 2> ";
-    RCmd += ohperrorfile;
-    RCmd += "|| echo __RETC__=$?";
+//     RCmd += " 2> ";
+//     RCmd += ohperrorfile;
+//     RCmd += "|| echo __RETC__=$?";
 
-    XTRACE(open, path,RCmd.c_str());
-    ohp = popen(RCmd.c_str(),"r");
-    if (!ohp) {
-      XrdxCastor2Fs::Emsg(epname, error, errno, "chown file/directory", path);
-      return SFS_ERROR;
-    }
+//     XTRACE(open, path,RCmd.c_str());
+//     ohp = popen(RCmd.c_str(),"r");
+//     if (!ohp) {
+//       XrdxCastor2Fs::Emsg(epname, error, errno, "chown file/directory", path);
+//       return SFS_ERROR;
+//     }
 
-    // we need a short delay to wait for the stderr file to be visible in the FS
-    usleep(5000);
-    ohperror = fopen(ohperrorfile.c_str(),"r");
-    if (!ohperror) {
-      // try to wait a little bit and open it again
-      usleep(500000);
-      ohperror = fopen(ohperrorfile.c_str(),"r");
-    }
-    if (!ohperror) {
-      XrdxCastor2Fs::Emsg(epname, error, errno, "open stderr for chown", path);
-      if (ohp) {
-	pclose(ohp);
-	ohp = NULL;
-      }
-      return SFS_ERROR;
-    }
-  }
+//     // we need a short delay to wait for the stderr file to be visible in the FS
+//     usleep(5000);
+//     ohperror = fopen(ohperrorfile.c_str(),"r");
+//     if (!ohperror) {
+//       // try to wait a little bit and open it again
+//       usleep(500000);
+//       ohperror = fopen(ohperrorfile.c_str(),"r");
+//     }
+//     if (!ohperror) {
+//       XrdxCastor2Fs::Emsg(epname, error, errno, "open stderr for chown", path);
+//       if (ohp) {
+// 	pclose(ohp);
+// 	ohp = NULL;
+//       }
+//       return SFS_ERROR;
+//     }
+//   }
 
-  if (Cmd.beginswith("chmod ") || (Cmd == "chmod")) {
-    RCmd = "sudo -u ";
-    RCmd += client->name;
-    RCmd += " "; RCmd += Cmd; RCmd += " ";
-    RCmd += path;
-    if (path2) {
-      RCmd += " "; RCmd += path2;
-    }
+//   if (Cmd.beginswith("chmod ") || (Cmd == "chmod")) {
+//     RCmd = "sudo -u ";
+//     RCmd += client->name;
+//     RCmd += " "; RCmd += Cmd; RCmd += " ";
+//     RCmd += path;
+//     if (path2) {
+//       RCmd += " "; RCmd += path2;
+//     }
 
-    RCmd += " 2> ";
-    RCmd += ohperrorfile;
-    RCmd += "|| echo __RETC__=$?";
+//     RCmd += " 2> ";
+//     RCmd += ohperrorfile;
+//     RCmd += "|| echo __RETC__=$?";
 
-    XTRACE(open, path,RCmd.c_str());
-    ohp = popen(RCmd.c_str(),"r");
-    if (!ohp) {
-      XrdxCastor2Fs::Emsg(epname, error, errno, "chmod file/directory", path);
-      return SFS_ERROR;
-    }
+//     XTRACE(open, path,RCmd.c_str());
+//     ohp = popen(RCmd.c_str(),"r");
+//     if (!ohp) {
+//       XrdxCastor2Fs::Emsg(epname, error, errno, "chmod file/directory", path);
+//       return SFS_ERROR;
+//     }
 
-    // we need a short delay to wait for the stderr file to be visible in the FS
-    usleep(5000);
-    ohperror = fopen(ohperrorfile.c_str(),"r");
-    if (!ohperror) {
-      // try to wait a little bit and open it again
-      usleep(500000);
-      ohperror = fopen(ohperrorfile.c_str(),"r");
-    }
-    if (!ohperror) {
-      XrdxCastor2Fs::Emsg(epname, error, errno, "open stderr for chmod", path);
-      if (ohp) {
-	pclose(ohp);
-	ohp = NULL;
-      }
-      return SFS_ERROR;
-    }
-  }
+//     // we need a short delay to wait for the stderr file to be visible in the FS
+//     usleep(5000);
+//     ohperror = fopen(ohperrorfile.c_str(),"r");
+//     if (!ohperror) {
+//       // try to wait a little bit and open it again
+//       usleep(500000);
+//       ohperror = fopen(ohperrorfile.c_str(),"r");
+//     }
+//     if (!ohperror) {
+//       XrdxCastor2Fs::Emsg(epname, error, errno, "open stderr for chmod", path);
+//       if (ohp) {
+// 	pclose(ohp);
+// 	ohp = NULL;
+//       }
+//       return SFS_ERROR;
+//     }
+//   }
 
-  if (Cmd.beginswith("getfacl ") || (Cmd == "getfacl") ) {
-    RCmd = "sudo -u ";
-    RCmd += client->name;
-    RCmd += " "; RCmd += Cmd; RCmd += " ";
-    RCmd += path;
+//   if (Cmd.beginswith("getfacl ") || (Cmd == "getfacl") ) {
+//     RCmd = "sudo -u ";
+//     RCmd += client->name;
+//     RCmd += " "; RCmd += Cmd; RCmd += " ";
+//     RCmd += path;
 
-    RCmd += " 2> ";
-    RCmd += ohperrorfile;
-    RCmd += "|| echo __RETC__=$?";
+//     RCmd += " 2> ";
+//     RCmd += ohperrorfile;
+//     RCmd += "|| echo __RETC__=$?";
 
-    XTRACE(open, path,RCmd.c_str());
-    ohp = popen(RCmd.c_str(),"r");
-    if (!ohp) {
-      XrdxCastor2Fs::Emsg(epname, error, errno, "getfacl file/directory", path);
-      return SFS_ERROR;
-    }
+//     XTRACE(open, path,RCmd.c_str());
+//     ohp = popen(RCmd.c_str(),"r");
+//     if (!ohp) {
+//       XrdxCastor2Fs::Emsg(epname, error, errno, "getfacl file/directory", path);
+//       return SFS_ERROR;
+//     }
 
-    // we need a short delay to wait for the stderr file to be visible in the FS
-    usleep(5000);
-    ohperror = fopen(ohperrorfile.c_str(),"r");
-    if (!ohperror) {
-      // try to wait a little bit and open it again
-      usleep(500000);
-      ohperror = fopen(ohperrorfile.c_str(),"r");
-    }
-    if (!ohperror) {
-      XrdxCastor2Fs::Emsg(epname, error, errno, "open stderr for getfacl", path);
-      if (ohp) {
-	pclose(ohp);
-	ohp = NULL;
-      }
-      return SFS_ERROR;
-    }
-  }
+//     // we need a short delay to wait for the stderr file to be visible in the FS
+//     usleep(5000);
+//     ohperror = fopen(ohperrorfile.c_str(),"r");
+//     if (!ohperror) {
+//       // try to wait a little bit and open it again
+//       usleep(500000);
+//       ohperror = fopen(ohperrorfile.c_str(),"r");
+//     }
+//     if (!ohperror) {
+//       XrdxCastor2Fs::Emsg(epname, error, errno, "open stderr for getfacl", path);
+//       if (ohp) {
+// 	pclose(ohp);
+// 	ohp = NULL;
+//       }
+//       return SFS_ERROR;
+//     }
+//   }
 
-  if (Cmd.beginswith("setfacl ") || (Cmd == "setfacl") ) {
-    RCmd = "sudo -u ";
-    RCmd += client->name;
-    RCmd += " "; RCmd += Cmd; RCmd += " ";
-    RCmd += path;
-    if (path2) {
-      RCmd += " "; RCmd += path2;
-    }
+//   if (Cmd.beginswith("setfacl ") || (Cmd == "setfacl") ) {
+//     RCmd = "sudo -u ";
+//     RCmd += client->name;
+//     RCmd += " "; RCmd += Cmd; RCmd += " ";
+//     RCmd += path;
+//     if (path2) {
+//       RCmd += " "; RCmd += path2;
+//     }
 
-    RCmd += " 2> ";
-    RCmd += ohperrorfile;
-    RCmd += "|| echo __RETC__=$?";
+//     RCmd += " 2> ";
+//     RCmd += ohperrorfile;
+//     RCmd += "|| echo __RETC__=$?";
 
-    XTRACE(open, path,RCmd.c_str());
-    ohp = popen(RCmd.c_str(),"r");
-    if (!ohp) {
-      XrdxCastor2Fs::Emsg(epname, error, errno, "setfacl file/directory", path);
-      return SFS_ERROR;
-    }
+//     XTRACE(open, path,RCmd.c_str());
+//     ohp = popen(RCmd.c_str(),"r");
+//     if (!ohp) {
+//       XrdxCastor2Fs::Emsg(epname, error, errno, "setfacl file/directory", path);
+//       return SFS_ERROR;
+//     }
 
-    // we need a short delay to wait for the stderr file to be visible in the FS
-    usleep(5000);
-    ohperror = fopen(ohperrorfile.c_str(),"r");
-    if (!ohperror) {
-      // try to wait a little bit and open it again
-      usleep(500000);
-      ohperror = fopen(ohperrorfile.c_str(),"r");
-    }
-    if (!ohperror) {
-      XrdxCastor2Fs::Emsg(epname, error, errno, "open stderr for setfacl", path);
-      if (ohp) {
-	pclose(ohp);
-	ohp = NULL;
-      }
-      return SFS_ERROR;
-    }
-  }
+//     // we need a short delay to wait for the stderr file to be visible in the FS
+//     usleep(5000);
+//     ohperror = fopen(ohperrorfile.c_str(),"r");
+//     if (!ohperror) {
+//       // try to wait a little bit and open it again
+//       usleep(500000);
+//       ohperror = fopen(ohperrorfile.c_str(),"r");
+//     }
+//     if (!ohperror) {
+//       XrdxCastor2Fs::Emsg(epname, error, errno, "open stderr for setfacl", path);
+//       if (ohp) {
+// 	pclose(ohp);
+// 	ohp = NULL;
+//       }
+//       return SFS_ERROR;
+//     }
+//   }
 
-  if (Cmd.beginswith("find ") || (Cmd == "find")) {
+//   if (Cmd.beginswith("find ") || (Cmd == "find")) {
 
-    RCmd = "sudo -u ";
-    RCmd += client->name;
-    RCmd += " find ";
-    Cmd.erasefromstart(5);
-    RCmd += path;
-    RCmd += " ";
-    RCmd += Cmd;
-    RCmd += " 2> ";
-    RCmd += ohperrorfile;
-    RCmd += "|| echo __RETC__=$?";
+//     RCmd = "sudo -u ";
+//     RCmd += client->name;
+//     RCmd += " find ";
+//     Cmd.erasefromstart(5);
+//     RCmd += path;
+//     RCmd += " ";
+//     RCmd += Cmd;
+//     RCmd += " 2> ";
+//     RCmd += ohperrorfile;
+//     RCmd += "|| echo __RETC__=$?";
     
-    XTRACE(open, path,RCmd.c_str());
-    ohp = popen(RCmd.c_str(),"r");
-    if (!ohp) {
-      XrdxCastor2Fs::Emsg(epname, error, errno, "find file/directory", path);
-      return SFS_ERROR;
-    }
-    // we need a short delay to wait for the stderr file to be visible in the FS
-    usleep(5000);
-    ohperror = fopen(ohperrorfile.c_str(),"r");
-    if (!ohperror) {
-      // try to wait a little bit and open it again
-      usleep(500000);
-      ohperror = fopen(ohperrorfile.c_str(),"r");
-    }
-    if (!ohperror) {
-      XrdxCastor2Fs::Emsg(epname, error, errno, "open stderr for find", path);
-      if (ohp) {
-	pclose(ohp);
-	ohp = NULL;
-      }
-      return SFS_ERROR;
-    }
-  }
+//     XTRACE(open, path,RCmd.c_str());
+//     ohp = popen(RCmd.c_str(),"r");
+//     if (!ohp) {
+//       XrdxCastor2Fs::Emsg(epname, error, errno, "find file/directory", path);
+//       return SFS_ERROR;
+//     }
+//     // we need a short delay to wait for the stderr file to be visible in the FS
+//     usleep(5000);
+//     ohperror = fopen(ohperrorfile.c_str(),"r");
+//     if (!ohperror) {
+//       // try to wait a little bit and open it again
+//       usleep(500000);
+//       ohperror = fopen(ohperrorfile.c_str(),"r");
+//     }
+//     if (!ohperror) {
+//       XrdxCastor2Fs::Emsg(epname, error, errno, "open stderr for find", path);
+//       if (ohp) {
+// 	pclose(ohp);
+// 	ohp = NULL;
+//       }
+//       return SFS_ERROR;
+//     }
+//   }
 
-  if (Cmd.beginswith("whoami ") || (Cmd == "whoami") ) {
-    RCmd = "echo ";
-    RCmd += client->name;
-    RCmd += "/"; 
-    RCmd += client->role;
-    RCmd += " [";
-    RCmd += client->grps;
-    RCmd += "]";
-    RCmd += " 2> ";
-    RCmd += ohperrorfile;
-    RCmd += "|| echo __RETC__=$?";
+//   if (Cmd.beginswith("whoami ") || (Cmd == "whoami") ) {
+//     RCmd = "echo ";
+//     RCmd += client->name;
+//     RCmd += "/"; 
+//     RCmd += client->role;
+//     RCmd += " [";
+//     RCmd += client->grps;
+//     RCmd += "]";
+//     RCmd += " 2> ";
+//     RCmd += ohperrorfile;
+//     RCmd += "|| echo __RETC__=$?";
 
-    XTRACE(open, path,RCmd.c_str());
-    ohp = popen(RCmd.c_str(),"r");
-    if (!ohp) {
-      XrdxCastor2Fs::Emsg(epname, error, errno, "whoami", "");
-      return SFS_ERROR;
-    }
+//     XTRACE(open, path,RCmd.c_str());
+//     ohp = popen(RCmd.c_str(),"r");
+//     if (!ohp) {
+//       XrdxCastor2Fs::Emsg(epname, error, errno, "whoami", "");
+//       return SFS_ERROR;
+//     }
 
-    // we need a short delay to wait for the stderr file to be visible in the FS
-    usleep(5000);
-    ohperror = fopen(ohperrorfile.c_str(),"r");
-    if (!ohperror) {
-      // try to wait a little bit and open it again
-      usleep(500000);
-      ohperror = fopen(ohperrorfile.c_str(),"r");
-    }
-    if (!ohperror) {
-      XrdxCastor2Fs::Emsg(epname, error, errno, "open stderr for find file/directory", path);
-      if (ohp) {
-	pclose(ohp);
-	ohp = NULL;
-      }
-      return SFS_ERROR;
-    }
-  }
+//     // we need a short delay to wait for the stderr file to be visible in the FS
+//     usleep(5000);
+//     ohperror = fopen(ohperrorfile.c_str(),"r");
+//     if (!ohperror) {
+//       // try to wait a little bit and open it again
+//       usleep(500000);
+//       ohperror = fopen(ohperrorfile.c_str(),"r");
+//     }
+//     if (!ohperror) {
+//       XrdxCastor2Fs::Emsg(epname, error, errno, "open stderr for find file/directory", path);
+//       if (ohp) {
+// 	pclose(ohp);
+// 	ohp = NULL;
+//       }
+//       return SFS_ERROR;
+//     }
+//   }
 
-  return SFS_OK;
-}
+//   return SFS_OK;
+// }
 
 
 /******************************************************************************/
@@ -2446,7 +2625,7 @@ int XrdxCastor2Fs::chmod(const char             *path,    // In
   // Perform the actual chmod
   //
   if (XrdxCastor2FsUFS::Chmod(path, acc_mode) )
-    return XrdxCastor2Fs::Emsg(epname,error,errno,"change mode on",path);
+    return XrdxCastor2Fs::Emsg(epname,error,serrno,"change mode on",path);
   
   // All done
   //
@@ -2522,14 +2701,14 @@ int XrdxCastor2Fs::_exists(const char                *path,        // In
        else                             file_exists=XrdSfsFileExistNo;
        return SFS_OK;
       }
-   if (errno == ENOENT)
+   if (serrno == ENOENT)
       {file_exists=XrdSfsFileExistNo;
        return SFS_OK;
       }
 
 // An error occured, return the error info
 //
-   return XrdxCastor2Fs::Emsg(epname, error, errno, "locate", path);
+   return XrdxCastor2Fs::Emsg(epname, error, serrno, "locate", path);
 }
 
   
@@ -2627,8 +2806,8 @@ int XrdxCastor2Fs::_mkdir(const char            *path,    // In
        while((next_path = index(local_path, int('/'))))
 	 { int rc;
 	   *next_path = '\0';
-	   if ((rc=XrdxCastor2FsUFS::Mkdir(actual_path,S_IRWXU)) && errno != EEXIST)
-	     return -errno;
+	   if ((rc=XrdxCastor2FsUFS::Mkdir(actual_path,S_IRWXU)) && serrno != EEXIST)
+	     return -serrno;
 	   // Set acl on directory
 	   if (!rc) {
 	     if (client) SETACL(actual_path,(*client),0);
@@ -2642,7 +2821,7 @@ int XrdxCastor2Fs::_mkdir(const char            *path,    // In
 
 // Perform the actual creation
 //
-   if (XrdxCastor2FsUFS::Mkdir(path, acc_mode) )
+   if (XrdxCastor2FsUFS::Mkdir(path, acc_mode) && (serrno != EEXIST))
       return XrdxCastor2Fs::Emsg(epname,error,serrno,"create directory",path);
 // Set acl on directory
    if (client)SETACL(path,(*client),0); 
@@ -2700,11 +2879,11 @@ int XrdxCastor2Fs::Mkpath(const char *path, mode_t mode, const char *info,XrdSec
      if (XrdxCastor2FsUFS::Statfn(actual_path, &buf)) {
        if (client && error) {
 	 const char *tident = (*error).getErrUser();
-	 if ( (XrdxCastor2FS->_mkdir(actual_path,mode,(*error),client,info)) && errno != EEXIST) 
-	   return -errno;
+	 if ( (XrdxCastor2FS->_mkdir(actual_path,mode,(*error),client,info)) )
+	   return -serrno;
        } else {
-	    if (XrdxCastor2FsUFS::Mkdir(actual_path,mode) && errno != EEXIST)
-	      return -errno;
+	    if (XrdxCastor2FsUFS::Mkdir(actual_path,mode) && (serrno != EEXIST))
+	      return -serrno;
        }
      }
      // Set acl on directory
@@ -2760,11 +2939,87 @@ int XrdxCastor2Fs::stageprepare( const char* path, XrdOucErrInfo &error, const X
   XrdOucString stagehost="";
   XrdOucString serviceclass="default";
   XrdOucString stagestatus="";
-  
-  if (!XrdxCastor2FS->SetStageVariables(path,info,stagehost,serviceclass,client_uid,client_gid,tident)) {
+  XrdOucString stagevariables="";
+
+  if (!XrdxCastor2FS->GetStageVariables(path,info,stagevariables,client_uid,client_gid,tident)) {
     return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "set the stager host - you didn't specify it and I have no stager map for fn = ", path);	   
   }
   
+  int n=0; 
+  const char* val;
+  // try with the stagehost from the environment
+  if ((val = Open_Env.Get("stagerHost"))) {
+    stagehost = val;
+  }
+  
+  if ((val = Open_Env.Get("svcClass"))) {
+    serviceclass=val;
+  }
+
+  if (stagehost.length() && serviceclass.length()) {
+    // try the user specified pair
+    if (XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass, 999, tident)) {
+      // select the policy
+      XrdOucString *policy=NULL;
+      XrdOucString *wildcardpolicy=NULL;
+      XrdOucString policytag = stagehost; policytag +="::"; policytag += serviceclass;
+      XrdOucString grouppolicytag = policytag;grouppolicytag+="::gid:";grouppolicytag += (int)client_gid;
+      XrdOucString userpolicytag  = policytag;userpolicytag +="::uid:"; userpolicytag += (int)client_uid;
+
+      XrdOucString wildcardpolicytag = stagehost; wildcardpolicytag +="::"; wildcardpolicytag += "*"; 
+      
+      wildcardpolicy = XrdxCastor2FS->stagerpolicy->Find(wildcardpolicytag.c_str());
+      if (! (policy = XrdxCastor2FS->stagerpolicy->Find(userpolicytag.c_str()))) 
+	if (! (policy = XrdxCastor2FS->stagerpolicy->Find(grouppolicytag.c_str()))) 
+	  policy = XrdxCastor2FS->stagerpolicy->Find(policytag.c_str());
+      
+      if ((!policy) && (wildcardpolicy)) {
+	policy = wildcardpolicy;
+      }
+      if (policy && (strstr(policy->c_str(),"nostage") ) ) {
+	return XrdxCastor2Fs::Emsg(epname, error, EPERM, "do prepare request - you are not allowed to do stage requests fn = ", path);	   
+      }
+    } else {
+      return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "write - cannot find any valid stager/service class mapping for you for fn = ", path); 
+    }
+  } else {
+    // try the list and stop when we find a matching policy tag
+    bool allowed= false;
+    do {
+      if (XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass,n, tident)) {
+	// select the policy
+	XrdOucString *policy=NULL;
+	XrdOucString *wildcardpolicy=NULL;
+	XrdOucString policytag = stagehost; policytag +="::"; policytag += serviceclass;
+	XrdOucString grouppolicytag = policytag;grouppolicytag+="::gid:";grouppolicytag += (int)client_gid;
+	XrdOucString userpolicytag  = policytag;userpolicytag +="::uid:"; userpolicytag += (int)client_uid;
+	
+	XrdOucString wildcardpolicytag = stagehost; wildcardpolicytag +="::"; wildcardpolicytag += "*"; 
+	
+	wildcardpolicy = XrdxCastor2FS->stagerpolicy->Find(wildcardpolicytag.c_str());
+	if (! (policy = XrdxCastor2FS->stagerpolicy->Find(userpolicytag.c_str()))) 
+	  if (! (policy = XrdxCastor2FS->stagerpolicy->Find(grouppolicytag.c_str()))) 
+	    policy = XrdxCastor2FS->stagerpolicy->Find(policytag.c_str());
+	
+	if ((!policy) && (wildcardpolicy)) {
+	  policy = wildcardpolicy;
+      }
+	if (policy && (!strstr(policy->c_str(),"nostage") ) ) {
+	  allowed = true;
+	  break;
+	}
+      } else {
+	break;
+      }
+      n++;
+    } while(n<999);
+    if (!allowed) {
+      return XrdxCastor2Fs::Emsg(epname, error, EPERM, "do prepare request - you are not allowed to do stage requests fn = ", path);	   
+    }
+  }
+
+  // here we have the allowed stager/service class setting to issue the prepare request
+
   TIMING(xCastor2FsTrace,"STAGERQUERY",&preparetiming);  
   XrdOucString dummy1;
   XrdOucString dummy2;
@@ -2837,7 +3092,7 @@ int XrdxCastor2Fs::prepare( XrdSfsPrep       &pargs,
   XrdOucEnv oenv(pargs.oinfo->text);
   
   const char* path = pargs.paths->text;
-  MAP(path);
+  MAP((path));
 
   TIMING(xCastor2FsTrace,"CNSID",&preparetiming);  
 
@@ -2894,6 +3149,16 @@ int XrdxCastor2Fs::prepare( XrdSfsPrep       &pargs,
       return SFS_ERROR;
     }
   }
+
+  if (oenv.Get("filesize") && oenv.Get("mtime")) {
+    off_t filesize = strtoll(oenv.Get("filesize"),NULL,0);
+    time_t mtime   = (time_t) strtol(oenv.Get("mtime"),NULL,0);
+    XrdxCastor2FsUFS::SetId(0,0);
+    if (XrdxCastor2FsUFS::SetFileSize(path,filesize,mtime)) {
+      return XrdxCastor2Fs::Emsg(epname, error, serrno, "setfilesize",path);
+    }
+  }
+
 
   // this is currently not needed anymore
   if (oenv.Get("getupdatedone")) {
@@ -2963,24 +3228,8 @@ int XrdxCastor2Fs::rem(const char             *path,    // In
    
    AUTHORIZE(client,&env,AOP_Delete,"remove",path,error);
 
-   const char* shrinkreplica;
-   const char* dropreplica;
-   shrinkreplica = env.Get("shrinkreplica");
-   dropreplica = env.Get("dropreplica");
-
-
-   // unfortunately the MAP macro does not work in a seperate context {}
-
-   XrdOucString _inmap = path; XrdOucString _outmap;		        
-   
-   if (shrinkreplica || dropreplica) {
-   } else {
-     
-     if (XrdxCastor2Fs::Map(_inmap,_outmap)) 
-       path = _outmap.c_str();		
-     else path = NULL;							
-   }
-
+   MAP((path));
+   XTRACE(remove, path,"");
 
    ROLEMAP(client,info,mappedclient,tident);
    if (!path) {
@@ -2994,7 +3243,6 @@ int XrdxCastor2Fs::rem(const char             *path,    // In
    
    TIMING(xCastor2FsTrace,"Authorize",&rmtiming);
 
- namespaceremove:
    int retc = 0;
 
    retc = _rem(path,error,&mappedclient,info);
@@ -3028,7 +3276,7 @@ int XrdxCastor2Fs::_rem(   const char             *path,    // In
    XTRACE(remove, path,"");
 
    if (XrdxCastor2FsUFS::Rem(path) )
-       return XrdxCastor2Fs::Emsg(epname, error, errno, "remove", path);
+       return XrdxCastor2Fs::Emsg(epname, error, serrno, "remove", path);
 
 // All done
 //
@@ -3200,7 +3448,7 @@ int XrdxCastor2Fs::rename(const char             *old_name,  // In
   r1 = XrdxCastor2FsUFS::Rename(oldn.c_str(), newn.c_str());
 
   if (r1) 
-    return XrdxCastor2Fs::Emsg(epname, error, errno, "rename", oldn.c_str());
+    return XrdxCastor2Fs::Emsg(epname, error, serrno, "rename", oldn.c_str());
 
   ZTRACE(rename,"namespace rename done: " << oldn.c_str() << " => " << newn.c_str());
 
@@ -3245,6 +3493,7 @@ int XrdxCastor2Fs::stat(const char              *path,        // In
   AUTHORIZE(client,&Open_Env,AOP_Stat,"stat",path,error);
 
   MAP((path));
+
   if (!path) {
     error.setErrInfo(ENOMEDIUM, "No mapping for file name");
     return SFS_ERROR;
@@ -3265,23 +3514,42 @@ int XrdxCastor2Fs::stat(const char              *path,        // In
   uid_t client_gid;
   
   GETID(path,mappedclient,client_uid,client_gid);
-  
+
   int rc;
   XrdOucString stagehost="";
   XrdOucString serviceclass="default";
   XrdOucString stagestatus="";
-
-  if (!S_ISDIR(cstat.filemode)) {
-    if (!XrdxCastor2FS->SetStageVariables(path,info,stagehost,serviceclass,client_uid,client_gid,tident)) {
-      return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "set the stager host - you didn't specify it and I have no stager map for fn = ", path);	   
+  XrdOucString stagevariables="";
+  if (!(Open_Env.Get("nostagerquery"))) {
+    if (!S_ISDIR(cstat.filemode)) {
+      if (!XrdxCastor2FS->GetStageVariables(path,info,stagevariables,client_uid,client_gid,tident)) {
+	return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "set the stager host - you didn't specify it and I have no stager map for fn = ", path);	   
+      }
+      
+      // now loop over all possible stager/svc combinations and to find an online on
+      int n = 0;
+      // try the list and stop when we find a matching policy tag
+      bool allowed= false;
+      do {
+	if (XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass,n, tident)) {
+	  // we don't care about policies for stat's 
+	  XrdOucString qrytag="STAGERQUERY-";qrytag+= n;
+	  TIMING(xCastor2FsTrace,qrytag.c_str(),&stattiming);  
+	  if (!XrdxCastor2Stager::StagerQuery(error, (uid_t) client_uid, (gid_t) client_gid, path, stagehost.c_str(),serviceclass.c_str(),stagestatus)) {
+	    stagestatus = "NA";
+	  } 
+	  
+	  if ( (stagestatus == "STAGED") || (stagestatus == "CANBEMIGR") || (stagestatus == "STAGEOUT" ) ) {
+	    break;
+	  }
+	  n++;
+	} else {
+	  stagestatus = "NA";
+	  break;
+	}
+      } while (n<999);  
     }
-    
-    TIMING(xCastor2FsTrace,"STAGERQUERY",&stattiming);  
-    if (!XrdxCastor2Stager::StagerQuery(error, (uid_t) client_uid, (gid_t) client_gid, path, stagehost.c_str(),serviceclass.c_str(),stagestatus)) {
-      stagestatus = "NA";
-    } 
   }
-  
   if (XrdxCastor2FS->Proc) {
     XrdxCastor2FS->Stats.IncStat();
   }
@@ -3303,12 +3571,13 @@ int XrdxCastor2Fs::stat(const char              *path,        // In
   buf->st_ctime   = cstat.ctime;
 
   if (!S_ISDIR(cstat.filemode)) {
-    if ( (stagestatus != "STAGED") && (stagestatus != "CANBEMIGR") ) {
+    if ( (stagestatus != "STAGED") && (stagestatus != "CANBEMIGR") && (stagestatus != "STAGEOUT" ) ) {
       // this file is offline
       buf->st_mode = (mode_t) -1;
-      buf->st_ino   = 0;
+      //      buf->st_ino   = 0;
       buf->st_dev   = 0;
     }
+    XTRACE(stat, path,stagestatus.c_str());
   } 
 
   TIMING(xCastor2FsTrace,"END",&stattiming);

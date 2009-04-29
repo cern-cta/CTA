@@ -1,4 +1,4 @@
-//         $Id: XrdxCastor2Fs.hh,v 1.3 2009/02/27 12:13:29 apeters Exp $
+//         $Id: XrdxCastor2Fs.hh,v 1.4 2009/04/29 10:15:03 apeters Exp $
 
 #ifndef __XCASTOR2_FS_H__
 #define __XCASTOR2_FS_H__
@@ -70,6 +70,8 @@ static int Rem(const char *fn) {return Cns_unlink(fn);}
 static int Remdir(const char *fn) {return Cns_rmdir(fn);}
 
 static int Rename(const char *ofn, const char *nfn) {return Cns_rename(ofn, nfn);}
+
+static int SetFileSize(const char *fn, unsigned long long size, time_t mtime) { return Cns_setfsize(fn, NULL,size,mtime,0);}
 
 static int Statfd(int fd, struct stat *buf) {return fstat(fd, buf);}
 
@@ -507,7 +509,7 @@ public:
         const char    *FName() {return fname;}
 
 
-        int            Fscmd(const char* path,  const char* path2, const char* orgipath, const XrdSecEntity *client,  XrdOucErrInfo &error, const char* info);
+        int            Fscmd(const char* path,  const char* path2, const char* orgipath, const XrdSecEntity *client,  XrdOucErrInfo &error, const char* info) { return SFS_OK;}
 
         int            getMmap(void **Addr, off_t &Size)
                               {if (Addr) Addr = 0; Size = 0; return SFS_OK;}
@@ -703,7 +705,8 @@ virtual               ~XrdxCastor2Fs() {}
 virtual int            Configure(XrdSysError &);
 virtual bool           Init(XrdSysError &);
         int            Stall(XrdOucErrInfo &error, int stime, const char *msg);
-        bool           SetStageVariables(const char* Path, const char* Opaque, XrdOucString &stagehost, XrdOucString &serviceclass, uid_t client_uid, gid_t client_gid, const char* tident); 
+        bool           GetStageVariables(const char* Path, const char* Opaque, XrdOucString &stagevariables, uid_t client_uid, gid_t client_gid, const char* tident); 
+        bool           SetStageVariables(const char* Path, const char* Opaque, XrdOucString stagevariables, XrdOucString &stagehost, XrdOucString &serviceclass, int n, const char* tident);
 
 
         char          *ConfigFN;       

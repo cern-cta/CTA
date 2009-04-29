@@ -72,7 +72,7 @@ start() {
 			cd ${XRD_COREDIR}
 
                         ulimit -n ${XRD_MAXFD}
-		       	daemon ${XRD_LOCATION}/bin/$prog ${_XRD_OPTIONS}
+		       	daemon env LD_LIBRARY_PATH=${XRD_LOCATION}/lib ${XRD_LOCATION}/bin/$prog ${_XRD_OPTIONS}
 
 			# Write the pid to a file
 			RETVAL=$?

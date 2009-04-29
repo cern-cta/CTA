@@ -1,4 +1,4 @@
-//         $Id: XrdxCastor2Ofs.hh,v 1.4 2009/03/06 13:45:04 apeters Exp $
+//         $Id: XrdxCastor2Ofs.hh,v 1.5 2009/04/29 10:15:03 apeters Exp $
 
 #ifndef __XCASTOR2OFS_H__
 #define __XCASTOR2OFS_H__
@@ -56,7 +56,7 @@ public:
 
   int          truncate(XrdSfsFileOffset   fileOffset);
 
-  int          UpdateMeta();
+  int          UpdateMeta(off_t filesize=0, time_t mtime=0);
 
   bool         verifychecksum();
 
@@ -74,7 +74,7 @@ public:
 
   bool                IsAdminStream;   //
   time_t              LastMdsUpdate;   //
-  XrdxCastor2OfsFile(const char* user) : XrdOfsFile(user){ envOpaque=NULL;FileReadBytes = FileWriteBytes = ReadRateLimit = WriteRateLimit = ReadDelay = WriteDelay = 0; IsAdminStream=false; RateMissingCnt = 0;firstWrite=true;hasWrite=false;stagehost="none";serviceclass="none";reqid="0";hasadler=1; adler = adler32(0L, Z_NULL, 0);adleroffset=0; DiskChecksum=""; DiskChecksumAlgorithm="";VerifyChecksum=true;hasadlererror=false;}
+  XrdxCastor2OfsFile(const char* user) : XrdOfsFile(user){ envOpaque=NULL;FileReadBytes = FileWriteBytes = ReadRateLimit = WriteRateLimit = ReadDelay = WriteDelay = 0; IsAdminStream=false; RateMissingCnt = 0;firstWrite=true;hasWrite=false;stagehost="none";serviceclass="none";reqid="0";hasadler=1; adler = adler32(0L, Z_NULL, 0);adleroffset=0; DiskChecksum=""; DiskChecksumAlgorithm="";VerifyChecksum=true;hasadlererror=false;castorlfn="";}
   virtual ~XrdxCastor2OfsFile() {close();if (envOpaque) delete envOpaque;envOpaque=NULL;}
 
 private:
@@ -85,6 +85,7 @@ private:
   XrdOucString          reqid;
   XrdOucString          stagehost;
   XrdOucString          serviceclass;
+  XrdOucString          castorlfn;
   unsigned int          adler;
   bool                  hasadler;
   bool                  hasadlererror;
@@ -158,6 +159,7 @@ public:
   bool                UpdateProc(const char* name);
   bool                doChecksumStreaming;
   bool                doChecksumUpdates;
+  bool                setFileSize;
 
   // here we mask all illegal operations
   int            chmod(const char             *Name,

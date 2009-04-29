@@ -1,4 +1,4 @@
-//          $Id: XrdxCastor2Config.cc,v 1.1 2008/09/15 10:04:02 apeters Exp $
+//          $Id: XrdxCastor2Config.cc,v 1.2 2009/04/29 10:15:03 apeters Exp $
 
 
 #include <sys/types.h>
@@ -480,7 +480,7 @@ int XrdxCastor2Fs::Configure(XrdSysError &Eroute)
     
     // Authorization comes from the library or we use the default
     //
-    Authorization = XrdAccAuthorizeObject(Eroute.logger(),NULL,NULL);
+    Authorization = XrdAccAuthorizeObject(Eroute.logger(),ConfigFN,NULL);
 
     if (!(myLib = new XrdSysPlugin(&Eroute, AuthLib.c_str()))) {
       Eroute.Emsg("Config","Failed to load authorization library!"); NoGo=1;
@@ -490,7 +490,7 @@ int XrdxCastor2Fs::Configure(XrdSysError &Eroute)
       if (!ep) {
 	Eroute.Emsg("Config","Failed to get authorization library plugin!"); NoGo=1;
       } else {
-	Authorization = ep(Eroute.logger(), NULL,NULL);
+	Authorization = ep(Eroute.logger(), ConfigFN,NULL);
       }
     }
   }

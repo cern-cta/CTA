@@ -1,4 +1,4 @@
-//          $Id: XrdxCastor2Ofs.cc,v 1.5 2009/03/06 13:45:04 apeters Exp $
+//          $Id: XrdxCastor2Ofs.cc,v 1.6 2009/04/29 10:15:03 apeters Exp $
 
 #include "XrdOfs/XrdOfsTrace.hh"
 #include "XrdClient/XrdClientAdmin.hh"
@@ -18,6 +18,8 @@
 #include <grp.h>
 #include <fcntl.h>
 #include <attr/xattr.h>
+#include "Cns_api.h"
+#include <shift/serrno.h>
 
 class XrdxCastor2Ofs;
 
@@ -133,6 +135,7 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
 
   XrdOfsFS.doChecksumStreaming = true;
   XrdOfsFS.doChecksumUpdates   = false;
+  XrdOfsFS.setFileSize = false;
 
   Procfilesystem = "/tmp/xcastor2-ofs/";
   ProcfilesystemSync = false;
@@ -179,6 +182,16 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
 		}
 	      }
 	    }
+	  }
+	}
+
+	if (!strcmp("setfilesizeonclose",var)) {
+	  if ((val = Config.GetWord())) {
+	    XrdOucString sval = val;
+	    if ( (sval == "1") || (sval == "true") || (sval == "yes")) {
+	      XrdOfsFS.setFileSize = true;
+	    }
+	    Eroute.Say("=====> xcastor2.setfilesizeonclose: true");
 	  }
 	}
 	if (!strcmp("proc",var)) 
@@ -287,10 +300,10 @@ XrdxCastor2OfsFile::SignalJob(bool onclose) {
 }
 
 int
-XrdxCastor2OfsFile::UpdateMeta() {
+XrdxCastor2OfsFile::UpdateMeta(off_t filesize, time_t mtime) {
   EPNAME("UpdateMeta");
 
-  ZTRACE(open,"haswrite=" <<hasWrite << " firstWrite="<< firstWrite );
+  ZTRACE(open,"haswrite=" <<hasWrite << " firstWrite="<< firstWrite  << " setFileSize=" << XrdOfsFS.setFileSize);
 
   // don't deal with proc requests
   if (procRequest != kProcNone) 
@@ -327,7 +340,15 @@ XrdxCastor2OfsFile::UpdateMeta() {
     preparename += "&firstbytewritten=true";
   else {
     // in all other case we don't even have to call the MDS
-    return SFS_OK;
+    if (!XrdOfsFS.setFileSize)
+      return SFS_OK;
+    preparename+="&filesize=";
+    char fsize[1024];
+    sprintf(fsize,"%lld",filesize);
+    preparename+=fsize;
+    preparename+="&mtime=";
+    sprintf(fsize,"%u",mtime);
+    preparename+=fsize;
   }
   
   preparename += "&reqid=";
@@ -375,7 +396,8 @@ XrdxCastor2OfsFile::open(const char                *path,
 
   XrdOucString spath = path;
   bool isRW=false;
-  
+  castorlfn = path;
+
   XrdOucString newopaque = opaque;
   // if thereis explicit user opaque information we find two ?, so we just replace it with a seperator.
   
@@ -670,7 +692,16 @@ XrdxCastor2OfsFile::close()
 	removexattr(newpath.c_str(),"user.castor.checksum.value");
       }
     }
-  } 
+    if (XrdOfsFS.setFileSize) {
+      if (!(XrdOfsOss->Stat(newpath.c_str(), &statinfo))) {
+	ZTRACE(close,"Setting Filesize: " << statinfo.st_size << " mtime: " << statinfo.st_mtime);
+	UpdateMeta(statinfo.st_size, statinfo.st_mtime);
+      } else {
+	TRACES("Error: unable to get filesize for fn=" << newpath.c_str());
+      }
+    }
+  }
+
 
   // send the sigusr2 signal to the local x2castorjob script 
   SignalJob(true);
