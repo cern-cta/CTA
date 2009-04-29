@@ -1,5 +1,5 @@
-//          $Id: XrdxCastor2Fs.cc,v 1.8 2009/04/29 10:15:03 apeters Exp $
-const char *XrdxCastor2FsCVSID = "$Id: XrdxCastor2Fs.cc,v 1.8 2009/04/29 10:15:03 apeters Exp $";
+//          $Id: XrdxCastor2Fs.cc,v 1.9 2009/04/29 15:23:42 apeters Exp $
+const char *XrdxCastor2FsCVSID = "$Id: XrdxCastor2Fs.cc,v 1.9 2009/04/29 15:23:42 apeters Exp $";
 
 #include "XrdVersion.hh"
 #include "XrdClient/XrdClientAdmin.hh"
@@ -1289,7 +1289,9 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
 	       XrdOucString createpath;
 	       createpath.assign(newpath,0,fpos);
 	       ZTRACE(open,"Creating Path as uid:" << client_uid << " gid: " << client_gid);
-	       if (XrdxCastor2FsUFS::Mkdir(createpath.c_str(),S_IRWXU | S_IRGRP | S_IRWXO) && (serrno != EEXIST)) {
+	       mode_t cmask = 0;
+	       Cns_umask (cmask);
+	       if (XrdxCastor2FsUFS::Mkdir(createpath.c_str(),S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) && (serrno != EEXIST)) {
        		 return XrdxCastor2Fs::Emsg(epname, error, serrno , "create path need dir = ", createpath.c_str());
 	       }	   
 	       fpos++;
@@ -1752,6 +1754,14 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
        XrdxCastor2FS->Stats.IncWrite();
      }
    }
+
+   // check if a mode was given
+   if (Open_Env.Get("mode")) {
+     mode_t mode = strtol(Open_Env.Get("mode"),NULL,8);
+     if (XrdxCastor2FsUFS::Chmod(path, mode) )
+       return XrdxCastor2Fs::Emsg(epname,error,serrno,"set mode on",path);
+   }
+
    // All done.
    //
    TIMING(xCastor2FsTrace,"PROC/DONE",&opentiming);

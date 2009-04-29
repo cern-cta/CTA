@@ -1,7 +1,7 @@
 Summary:     The next generation xrootd@Castor2 interface
 Name: 	     xrootd-xcastor2fs
 Version:     1.0.6
-Release:     3
+Release:     4
 License:     none
 Group:       Applications/Castor
 Source0:     %{name}-%{version}.tar.gz

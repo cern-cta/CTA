@@ -1,7 +1,7 @@
 Summary:     The next generation xrootd@Castor2 interface utility clients
 Name: 	     xrootd-xcastor2util
-Version:     1.0.5
-Release:     2
+Version:     1.0.6
+Release:     3
 License:     none
 Group:       Applications/Castor
 Source0:     xrootd-xcastor2fs-%{version}.tar.gz
