@@ -56,6 +56,13 @@ public:
   ~AggregatorDaemon() throw();
 
   /**
+   * The main entry function of the aggregator daemon.
+   */
+  int main(const int argc, char **argv);
+
+private:
+
+  /**
    * Logs the start of the daemon.
    */
   void logStart(const int argc, const char *const *const argv) throw();
@@ -85,9 +92,6 @@ public:
    */
   void createVdqmRequestHandlerPool()
     throw (castor::exception::Exception);
-
-
-private:
 
   /**
    * DLF message strings.

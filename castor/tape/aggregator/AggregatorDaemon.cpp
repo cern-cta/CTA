@@ -41,10 +41,6 @@
 castor::tape::aggregator::AggregatorDaemon::AggregatorDaemon()
   throw(castor::exception::Exception) :
   castor::server::BaseDaemon("aggregatord") {
-  // Initializes the DLF logging including the definition of the predefined
-  // messages.  Please not that castor::server::BaseServer::dlfInit can throw a
-  // castor::exception::Exception.
-  castor::server::BaseServer::dlfInit(s_dlfMessages);
 }
 
 
@@ -52,6 +48,57 @@ castor::tape::aggregator::AggregatorDaemon::AggregatorDaemon()
 // destructor
 //------------------------------------------------------------------------------
 castor::tape::aggregator::AggregatorDaemon::~AggregatorDaemon() throw() {
+}
+
+
+//------------------------------------------------------------------------------
+// main
+//------------------------------------------------------------------------------
+int castor::tape::aggregator::AggregatorDaemon::main(const int argc,
+  char **argv) {
+
+  try {
+
+    // Initialize the DLF logging
+    castor::server::BaseServer::dlfInit(s_dlfMessages);
+
+    // Log the start of the daemon
+    logStart(argc, argv);
+
+    // Parse the command line
+    try {
+      bool helpOption = false;  // True if help option found on command-line
+      parseCommandLine(argc, argv, helpOption);
+
+      // Display usage message and exit if help option found on command-line
+      if(helpOption) {
+        std::cout << std::endl;
+        castor::tape::aggregator::AggregatorDaemon::usage(std::cout);
+        std::cout << std::endl;
+        return 0;
+      }
+    } catch (castor::exception::Exception &ex) {
+      std::cerr << std::endl << "Failed to parse the command-line: "
+        << ex.getMessage().str() << std::endl;
+      castor::tape::aggregator::AggregatorDaemon::usage(std::cerr);
+      std::cerr << std::endl;
+      return 1;
+    }
+
+    createVdqmRequestHandlerPool();
+
+    // Start the threads
+    start();
+
+  } catch (castor::exception::Exception &ex) {
+    std::cerr << std::endl << "Failed to start daemon: "
+      << ex.getMessage().str() << std::endl << std::endl;
+    castor::tape::aggregator::AggregatorDaemon::usage(std::cerr);
+    std::cerr << std::endl;
+    return 1;
+  }
+
+  return 0;
 }
 
 

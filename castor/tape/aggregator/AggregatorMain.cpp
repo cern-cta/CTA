@@ -36,62 +36,9 @@
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int main(int argc, char *argv[]) {
+int main(int argc, char **argv) {
 
-  try {
-    castor::tape::aggregator::AggregatorDaemon daemon;
+  castor::tape::aggregator::AggregatorDaemon daemon;
 
-    //-------------------------
-    // Start the daemon logging
-    //-------------------------
-
-    daemon.logStart(argc, argv);
-
-
-    //-----------------------
-    // Parse the command line
-    //-----------------------
-
-    try {
-      bool helpOption = false;  // True if help option found on command-line
-      daemon.parseCommandLine(argc, argv, helpOption);
-
-      // Display usage message and exit if help option found on command-line
-      if(helpOption) {
-        std::cout << std::endl;
-        castor::tape::aggregator::AggregatorDaemon::usage(std::cout);
-        std::cout << std::endl;
-        return 0;
-      }
-    } catch (castor::exception::Exception &ex) {
-      std::cerr << std::endl << "Failed to parse the command-line: "
-        << ex.getMessage().str() << std::endl;
-      castor::tape::aggregator::AggregatorDaemon::usage(std::cerr);
-      std::cerr << std::endl;
-      return 1;
-    }
-
-
-    //----------------------------------------
-    // Create the VdqmRequestHandlerPool
-    //----------------------------------------
-
-    daemon.createVdqmRequestHandlerPool();
-
-
-    //------------------
-    // Start the threads
-    //------------------
-
-    daemon.start();
-
-  } catch (castor::exception::Exception &ex) {
-    std::cerr << std::endl << "Failed to start daemon: "
-      << ex.getMessage().str() << std::endl << std::endl;
-    castor::tape::aggregator::AggregatorDaemon::usage(std::cerr);
-    std::cerr << std::endl;
-    return 1;
-  }
-
-  return 0;
+  return daemon.main(argc, argv);
 }
