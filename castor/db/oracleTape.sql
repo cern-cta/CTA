@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.735 $ $Date: 2009/04/28 14:55:55 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.736 $ $Date: 2009/04/30 14:44:02 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1642,60 +1642,56 @@ END;
 /
 
 
+/* SQL Function segmentRecallUpdate */
 
-
-/* SQL Function fileRecallUpdate */
-
-CREATE OR REPLACE
-PROCEDURE fileRecallUpdate (transactionId IN NUMBER, inputFileId  IN NUMBER,inputNsHost IN VARCHAR2, inputFseq IN NUMBER, streamReport OUT castor.StreamReport_Cur, noMoreSegment OUT INTEGER ) AS
+create or replace
+PROCEDURE segmentRecallUpdate (transactionId IN NUMBER, inputFileId  IN NUMBER,inputNsHost IN VARCHAR2, inputFseq IN NUMBER, streamReport OUT castor.StreamReport_Cur, noMoreSegment OUT INTEGER ) AS
 tcId NUMBER;
 dcId NUMBER;
 cfId NUMBER;
-
-segIds "numList";
+unused NUMBER;
 segId NUMBER;
-numSegs INTEGER; 
 BEGIN
   SELECT id INTO cfId  FROM castorfile WHERE fileid=inputFileId AND nshost=inputNshost FOR UPDATE; 
-  SELECT id BULK COLLECT INTO segIds  FROM Segment WHERE copy IN (SELECT id from TapeCopy where castorfile=cfId);  
   SELECT id INTO tcId FROM tapecopy WHERE castorfile = cfId;
   SELECT id INTO dcId FROM diskcopy WHERE castorfile = cfId AND status=2;
-
-
-  IF segIds.COUNT > 1 THEN
-      nomoresegment:=0;
-        -- multiple segmented file ... this is for sure an old format file so fseq is unique in the tape
-      UPDATE Segment SET status=5 WHERE copy=tcId AND inputFseq=fseq AND tape IN (SELECT taperecall FROM taperequeststate WHERE vdqmvolreqid= transactionId)   RETURNING id INTO segId;
-      SELECT count(id) INTO numSegs FROM segment WHERE status NOT IN (5,8) AND copy=tcId;
-      IF numsegs=0 THEN
-        -- finished delete them all
-          nomoresegment:=1;
-          fileRecalled(tcId);
-          DELETE FROM id2type WHERE id IN (SELECT id FROM Segment WHERE copy=tcId);
-          DELETE FROM segment   WHERE copy=tcId;
-          DELETE FROM tapecopy WHERE  id=tcId;
-          DELETE FROM id2type WHERE id=tcId;
-      END IF;
-      
-  ELSE
-       -- standard case
-          nomoresegment:=1; -- NO MORE you can check the filesize
-          fileRecalled(tcId);
-          DELETE FROM id2type WHERE id IN (SELECT id FROM Segment WHERE copy=tcId);
-          DELETE FROM segment   WHERE copy=tcId;
-          DELETE FROM tapecopy WHERE  id=tcId;
-          DELETE FROM id2type WHERE id=tcId;
-    
-  END IF;
-  
+  UPDATE Segment SET status=5 WHERE copy=tcId AND inputFseq=fseq AND tape IN (SELECT taperecall FROM taperequeststate WHERE vdqmvolreqid= transactionId)   RETURNING id INTO segId;
+  BEGIN 
+    SELECT id  INTO unused  FROM Segment WHERE copy = tcId AND status NOT IN (6,5,8) AND ROWNUM<2;  
+    nomoresegment:=0; --still segment to be recalled
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- standard case
+     nomoresegment:=1; -- NO MORE segment to recall you can check the filesize
+  END;
   OPEN streamReport FOR
   select diskserver.name,filesystem.mountpoint from diskserver,filesystem,diskcopy WHERE diskcopy.id=dcId AND diskcopy.filesystem=filesystem.id AND filesystem.diskserver = diskserver.id;
   COMMIT;
 END;
 /
 
-/* SQL Function inputForRecallRetryPolicy */
+/* SQL Function fileRecallUpdate */
 
+create or replace
+PROCEDURE fileRecallUpdate (inputFileId  IN NUMBER,inputNsHost IN VARCHAR2) AS
+tcId NUMBER;
+dcId NUMBER;
+cfId NUMBER;
+BEGIN
+  SELECT id INTO cfId  FROM castorfile WHERE fileid=inputFileId AND nshost=inputNshost FOR UPDATE; 
+  SELECT id INTO tcId FROM tapecopy WHERE castorfile = cfId;
+  SELECT id INTO dcId FROM diskcopy WHERE castorfile = cfId AND status=2;  
+  -- finished delete them all        
+  fileRecalled(tcId);
+  DELETE FROM id2type WHERE id IN (SELECT id FROM Segment WHERE copy=tcId);
+  DELETE FROM segment   WHERE copy=tcId;
+  DELETE FROM tapecopy WHERE  id=tcId;
+  DELETE FROM id2type WHERE id=tcId;
+  COMMIT;
+END;
+/
+
+
+/* SQL Function inputForRecallRetryPolicy */
 
 
 CREATE OR REPLACE
@@ -1924,8 +1920,8 @@ END;
 
 /* SQL Function updateAfterFailure */
 
-CREATE OR REPLACE
-PROCEDURE updateAfterFailure(transactionId IN NUMBER,inputFileId IN NUMBER, inputNsHost IN VARCHAR2, inputFseq IN INTEGER, inputErrorCode IN INTEGER, outVid OUT VARCHAR2, outMode OUT INTEGER)  AS
+create or replace
+PROCEDURE updateAfterFailure(transactionId IN NUMBER,inputFileId IN NUMBER, inputNsHost IN VARCHAR2, inputFseq IN INTEGER, inputErrorCode IN INTEGER, outVid OUT NOCOPY VARCHAR2, outMode OUT INTEGER)  AS
 trId NUMBER;
 tId NUMBER;
 tcId NUMBER;
@@ -1937,7 +1933,8 @@ BEGIN
  IF outmode = 0 THEN
     -- read
     -- retry REC_RETRY
-    UPDATE segment SET status=6, severity=inputErrorCode, errorCode=-1 WHERE fseq= inputfseq and tape=tId returning copy INTO tcId;  -- failed the segment /segments
+    UPDATE segment SET status=6, severity=inputErrorCode, errorCode=-1 WHERE fseq= inputfseq and tape=tId returning copy INTO tcId;  -- failed the segment on that tape
+    UPDATE segment SET status=6, severity=inputErrorCode, errorCode=-1 WHERE  copy=tcId;  -- failed  all segments for that copy
     UPDATE tapecopy  SET status=8, errorcode=inputErrorCode WHERE castorfile IN (SELECT id  FROM castorfile WHERE fileid=inputFileId and nshost=inputNsHost) and id=tcId;
   ELSE 
     -- WRITE
@@ -1950,14 +1947,23 @@ BEGIN
 END;
 /
 
-
 /* SQL Function getSegmentInformation */
 
 
-CREATE OR REPLACE
-PROCEDURE getSegmentInformation (transactionId IN NUMBER, inFileId IN NUMBER, inHost IN VARCHAR2,inFseq IN INTEGER, outVid OUT VARCHAR2, outCopy OUT VARCHAR2 ) AS
+create or replace
+PROCEDURE getSegmentInformation (transactionId IN NUMBER, inFileId IN NUMBER, inHost IN VARCHAR2,inFseq IN INTEGER, inPath IN VARCHAR2 , outVid OUT NOCOPY VARCHAR2, outCopy OUT INTEGER ) AS
+filePath VARCHAR2(2048);
+fsId NUMBER;
+cfId NUMBER;
+fileDiskserver VARCHAR2(2048);
+fileMountpoint VARCHAR2(2048);
+givenPath VARCHAR2(2048);
 BEGIN
-  select copynb,vid INTO outCopy, outvid FROM tape,segment,tapecopy WHERE tape.id=segment.tape AND fseq=inFseq AND segment.copy = tapecopy.id AND tapecopy.castorfile IN (select id from castorfile where fileid=inFileId and nshost=inHost); 
+  -- check also the path
+  select path,filesystem,castorfile INTO filePath,fsId,cfId from diskcopy,castorfile where castorfile.id IN(select id from castorfile where fileid=inFileId and nshost=inHost) and status=2;
+  select diskserver.name, filesystem.mountpoint into fileDiskserver, fileMountpoint from diskserver,filesystem where diskserver.id= filesystem.diskserver and filesystem.id=fsid;
+  select filediskserver||':'||filemountpoint||filepath INTO givenPath FROM dual;
+  select copynb,vid INTO outCopy, outvid FROM tape,segment,tapecopy WHERE tape.id=segment.tape AND fseq=inFseq AND segment.copy = tapecopy.id AND tapecopy.castorfile=cfId AND inPath = givenPath; 
 END;
 /
 
