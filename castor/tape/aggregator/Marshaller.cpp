@@ -769,9 +769,9 @@ void castor::tape::aggregator::Marshaller::unmarshallRtcpFileRqstMsgBody(
   unmarshallInt32(src, srcLen, dst.jobId);
   unmarshallInt32(src, srcLen, dst.stageSubReqId);
   unmarshallUint32(src, srcLen, dst.umask);
-  unmarshallUint32(src, srcLen, dst.positionMethod);
-  unmarshallUint32(src, srcLen, dst.tapeFseq);
-  unmarshallUint32(src, srcLen, dst.diskFseq);
+  unmarshallInt32(src, srcLen, dst.positionMethod);
+  unmarshallInt32(src, srcLen, dst.tapeFseq);
+  unmarshallInt32(src, srcLen, dst.diskFseq);
   unmarshallInt32(src, srcLen, dst.blockSize);
   unmarshallInt32(src, srcLen, dst.recordLength);
   unmarshallInt32(src, srcLen, dst.retention);

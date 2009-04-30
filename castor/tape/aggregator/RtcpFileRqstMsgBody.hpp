@@ -52,9 +52,9 @@ namespace aggregator {
     int32_t  jobId;          // Local RTCOPY server job ID
     int32_t  stageSubReqId;  // Stage subrequest ID (-1 for SHIFT)
     uint32_t umask;          // Client umask
-    uint32_t positionMethod; // TPPOSIT_FSEQ, TPPOSIT_FID, TPPOSIT_EOI and TPPOSIT_BLKID
-    uint32_t tapeFseq;       // If position_method == TPPOSIT_FSEQ
-    uint32_t diskFseq;       // Disk file sequence number. This is the order number of the
+    int32_t  positionMethod; // TPPOSIT_FSEQ, TPPOSIT_FID, TPPOSIT_EOI and TPPOSIT_BLKID
+    int32_t  tapeFseq;       // If position_method == TPPOSIT_FSEQ
+    int32_t  diskFseq;       // Disk file sequence number. This is the order number of the
                              // current disk file in the request.                    
     int32_t  blockSize;      // Tape blocksize (bytes)
     int32_t  recordLength;   // Tape record length (bytes)

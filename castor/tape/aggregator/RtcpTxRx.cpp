@@ -741,7 +741,9 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
   request.umask                = umask;
   request.positionMethod       = positionMethod;
   request.tapeFseq             = tapeFseq;
-  request.diskFseq             = 0;
+  request.diskFseq             = mode == WRITE_ENABLE ? 1 : 0;
+//  request.diskFseq             = 1;
+//request.diskFseq             = 0;
   request.blockSize            = -1;
   request.recordLength         = -1;
   request.retention            = -1;

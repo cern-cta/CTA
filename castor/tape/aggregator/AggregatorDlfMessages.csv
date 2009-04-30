@@ -73,5 +73,7 @@
 72,AGGREGATOR_FINISHED_RTCOPY_SESSION,"Finished remote tape copy session"
 73,AGGREGATOR_NOTIFY_GATEWAY_FILE_MIGRATED,"Notifying tape gateway file migrated"
 74,AGGREGATOR_NOTIFIED_GATEWAY_FILE_MIGRATED,"Notified tape gateway file migrated"
-75,AGGREGATOR_NOTIFY_GATEWAY_FILE_RECALLED,"Notifying tape gateway file recalled"
+75,AGGREGATOR_NOTIFY_GATEWAY_FILE_RECALLED,"Notify tape gateway file recalled"
 76,AGGREGATOR_NOTIFIED_GATEWAY_FILE_RECALLED,"Notified tape gateway file recalled"
+77,AGGREGATOR_NOTIFY_GATEWAY_END_OF_SESSION,"Notify tape gateway end of session"
+78,AGGREGATOR_NOTIFIED_GATEWAY_END_OF_SESSION,"Notified tape gateway end of session"

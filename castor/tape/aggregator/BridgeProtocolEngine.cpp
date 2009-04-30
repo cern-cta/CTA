@@ -217,7 +217,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSockets()
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_FINISHED_RTCOPY_SESSION, params);
 
-    GatewayTxRx::notifyGatewayOfEnd(m_cuuid, m_volReqId, m_gatewayHost,
+    GatewayTxRx::notifyGatewayEndOfSession(m_cuuid, m_volReqId, m_gatewayHost,
       m_gatewayPort);
 
   } catch(castor::exception::Exception &ex) {
@@ -369,7 +369,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::run()
   char migrationFileNsHost[CA_MAXHOSTNAMELEN+1];
   utils::setBytes(migrationFileNsHost, '\0');
   uint64_t migrationFileId = 0;
-  uint32_t migrationFileTapeFseq = 0;
+  int32_t migrationFileTapeFileSeq = 0;
   uint64_t migrationFileSize = 0;
   char migrationFileLastKnownFileName[CA_MAXPATHLEN+1];
   utils::setBytes(migrationFileLastKnownFileName, '\0');
@@ -377,8 +377,8 @@ void castor::tape::aggregator::BridgeProtocolEngine::run()
   int32_t positionCommandCode = 0;
   char tapePath[CA_MAXPATHLEN+1];
   utils::setBytes(tapePath, '\0');
-  int32_t tapeFseq;		// <-- TEMPORARY
-  unsigned char (blockId)[4];  // <-- TEMPORARY
+  int32_t tapeFseq;
+  unsigned char (blockId)[4]; 
   utils::setBytes(blockId, '\0');
 
   // If migrating
@@ -388,10 +388,11 @@ void castor::tape::aggregator::BridgeProtocolEngine::run()
     const bool thereIsAFileToMigrate =
       GatewayTxRx::getFileToMigrateFromGateway(m_cuuid, m_volReqId,
         m_gatewayHost, m_gatewayPort, migrationFilePath, migrationFileNsHost,
-        migrationFileId, migrationFileTapeFseq, migrationFileSize,
+        migrationFileId, migrationFileTapeFileSeq, migrationFileSize,
         migrationFileLastKnownFileName, migrationFileLastModificationTime,
         positionCommandCode);
 
+    tapeFseq=migrationFileTapeFileSeq; 
     // Return if there is no file to migrate
     if(!thereIsAFileToMigrate) {
       return;
@@ -416,10 +417,10 @@ void castor::tape::aggregator::BridgeProtocolEngine::run()
     RTCPDNETRWTIMEOUT, rtcpVolume);
 
   // If migrating
+  char migrationTapeFileId[CA_MAXPATHLEN+1];
   if(m_mode == WRITE_ENABLE) {
 
     // Give file to migrate to RTCPD
-    char migrationTapeFileId[CA_MAXPATHLEN+1];
     utils::toHex(migrationFileId, migrationTapeFileId);
     RtcpTxRx::giveFileToRtcpd(m_cuuid, m_volReqId, m_rtcpdInitialSocketFd,
       RTCPDNETRWTIMEOUT, rtcpVolume.mode, migrationFilePath, "", RECORDFORMAT,
@@ -499,6 +500,16 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileReqCallback(
   RtcpTxRx::receiveRtcpFileRqstBody(m_cuuid, m_volReqId, socketFd,
     RTCPDNETRWTIMEOUT, header, body);
 
+  rtcpFileReqCallback(header, body, socketFd, receivedENDOF_REQ);
+}
+
+
+//-----------------------------------------------------------------------------
+// rtcpFileReqCallback
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileReqCallback(
+  const MessageHeader &header, RtcpFileRqstMsgBody &body, const int socketFd,
+  bool &receivedENDOF_REQ) throw(castor::exception::Exception) {
   switch(body.procStatus) {
   case RTCP_REQUEST_MORE_WORK:
     // If migrating
@@ -511,13 +522,13 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileReqCallback(
       char tapePath[CA_MAXPATHLEN+1];
       utils::setBytes(tapePath, '\0');
       uint64_t fileId = 0;
-      uint32_t tapeFseq = 0;
+      int32_t tapeFseq = 0;
       uint64_t fileSize = 0;
       char lastKnownFileName[CA_MAXPATHLEN+1];
       utils::setBytes(lastKnownFileName, '\0');
       uint64_t lastModificationTime = 0;
       int32_t  positionMethod = 0;
-       unsigned char blockId[4];
+      unsigned char blockId[4];
       utils::setBytes(blockId, '\0');
 
       // If there is a file to migrate
@@ -554,7 +565,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileReqCallback(
       char nsHost[CA_MAXHOSTNAMELEN+1];
       utils::setBytes(nsHost, '\0');
       uint64_t fileId = 0;
-      uint32_t tapeFseq = 0;
+      int32_t tapeFseq = 0;
       unsigned char blockId[4];
       utils::setBytes(blockId, '\0');
       int32_t  positionCommandCode = 0;
@@ -655,9 +666,9 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileReqCallback(
         // Recall 
         GatewayTxRx::notifyGatewayFileRecalled(m_cuuid, m_volReqId,
           m_gatewayHost, m_gatewayPort, body.segAttr.nameServerHostName,
-          body.segAttr.castorFileId, body.tapeFseq,body.positionMethod, 
-          body.segAttr.segmCksumAlgorithm, body.segAttr.segmCksum, 
-          body.bytesOut, body.hostBytes);
+          body.segAttr.castorFileId, body.tapeFseq, body.filePath, 
+          body.positionMethod, body.segAttr.segmCksumAlgorithm, 
+          body.segAttr.segmCksum, body.bytesOut, body.hostBytes);
       }
     }
     break;
@@ -691,8 +702,13 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileErrReqCallback(
   RtcpTxRx::sendMessageHeader(m_cuuid, m_volReqId, socketFd,
     RTCPDNETRWTIMEOUT, ackMsg);
 
-  TAPE_THROW_CODE(body.err.errorCode,
-    ": Received an error from RTCPD: " << body.err.errorMsg);
+  // Throw an exception if RTCPD is reporting an error
+  if(body.err.errorCode != 0) {
+    TAPE_THROW_CODE(body.err.errorCode,
+      ": Received an error from RTCPD: " << body.err.errorMsg);
+  } else {
+    rtcpFileReqCallback(header, body, socketFd, receivedENDOF_REQ);
+  }
 }
 
 

@@ -77,19 +77,20 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
   tapegateway::VolumeRequest request;
   request.setVdqmVolReqId(volReqId);
 
-//===================================================
-// Hardcoded volume INFO
-#ifdef EMULATE_GATEWAY
+  //===================================================
+  // Hardcoded volume INFO
+  #ifdef EMULATE_GATEWAY
 
-  //volReqIdFromGateway = volReqId;
-  utils::copyString(vid,     "I02000");
-  mode = 0;
-  utils::copyString(label,   "aul");
-  utils::copyString(density, "1000GC");
-  return(true);
+    //volReqIdFromGateway = volReqId;
+    utils::copyString(vid,     "I02011");
+    //mode = 0;  // tpread
+    mode = 1;  // tpwrite
+    utils::copyString(label,   "aul");
+    utils::copyString(density, "1000GC");
+    return(true);
 
-#endif
-//===================================================
+  #endif
+  //===================================================
 
   // Connect to the tape gateway
   castor::io::ClientSocket gatewaySocket(gatewayPort, gatewayHost);
@@ -215,21 +216,62 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
   const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost,
-  const unsigned short gatewayPort,
-  char (&filePath)[CA_MAXPATHLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN+1],
-  uint64_t &fileId, uint32_t &tapeFileSeq, uint64_t &fileSize,
-  char (&lastKnownFileName)[CA_MAXPATHLEN+1], uint64_t &lastModificationTime,
-  int32_t &positionCommandCode)
+  const unsigned short gatewayPort, char (&filePath)[CA_MAXPATHLEN+1], 
+  char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId, int32_t &tapeFileSeq,
+  uint64_t &fileSize, char (&lastKnownFileName)[CA_MAXPATHLEN+1],
+  uint64_t &lastModificationTime, int32_t &positionCommandCode)
   throw(castor::exception::Exception) {
 
   {
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId"   , volReqId   ),
       castor::dlf::Param("gatewayHost", gatewayHost),
-      castor::dlf::Param("gatewayPort", gatewayPort)};
+      castor::dlf::Param("gatewayPort", gatewayPort),
+      castor::dlf::Param("positionCommandCode", positionCommandCode)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_GET_FILE_TO_MIGRATE_FROM_GATEWAY, params);
   }
+  //===================================================
+  // Hardcoded volume INFO
+  #ifdef EMULATE_GATEWAY
+
+   // return(false);
+
+
+    if(emulatedRecallCounter.next() <= 1){
+      utils::copyString(filePath,
+        "lxc2disk15.cern.ch:/tmp/nbessone/file1.txt");
+      utils::copyString(nsHost, "castorns");
+      fileId               = 111111111;
+      tapeFileSeq          = 0;
+      fileSize             = 1451640;
+      utils::copyString(lastKnownFileName, "file1.txt");
+      lastModificationTime = 1234567890;
+      positionCommandCode  = 0; // TPPOSIT_FSEQ: position by file sequence number
+   
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId"            , volReqId            ),
+      castor::dlf::Param("gatewayHost"         , gatewayHost         ),
+      castor::dlf::Param("gatewayPort"         , gatewayPort         ),
+      castor::dlf::Param("filePath"            , filePath            ),
+      castor::dlf::Param("nsHost"              , nsHost              ),
+      castor::dlf::Param("fileId"              , fileId              ),
+      castor::dlf::Param("tapeFileSeq"         , tapeFileSeq         ),
+      castor::dlf::Param("fileSize"            , fileSize            ),
+      castor::dlf::Param("lastKnownFileName"   , lastKnownFileName   ),
+      castor::dlf::Param("lastModificationTime", lastModificationTime)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_GOT_FILE_TO_MIGRATE_FROM_GATEWAY, params);
+  } 
+      return(true);
+    }
+    else {
+      return(false);
+    }
+
+  #endif
+  //===================================================
 
   bool thereIsAFileToMigrate = false;
 
@@ -387,42 +429,42 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
 bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
   const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost,
   const unsigned short gatewayPort, char (&filePath)[CA_MAXPATHLEN+1],
-  char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId, uint32_t &tapeFileSeq,
+  char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId, int32_t &tapeFileSeq,
   unsigned char (&blockId)[4], int32_t &positionCommandCode)
   throw(castor::exception::Exception) {
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("volReqId"   , volReqId   ),
     castor::dlf::Param("gatewayHost", gatewayHost),
-    castor::dlf::Param("gatewayPort", gatewayPort)};
+    castor::dlf::Param("gatewayPort", gatewayPort),
+    castor::dlf::Param("positionCommandCode", positionCommandCode)};
   castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
     AGGREGATOR_GET_FILE_TO_RECALL_FROM_GATEWAY, params);
 
-//===================================================
-// Hardcoded volume INFO
-#ifdef EMULATE_GATEWAY
+  //===================================================
+  // Hardcoded volume INFO
+  #ifdef EMULATE_GATEWAY
 
-  if(emulatedRecallCounter.next() <= 1){
-    //volReqIdFromGateway = volReqId;
-    utils::copyString(filePath,
-      "lxc2disk15.cern.ch:/tmp/volume_I02000_file_n5");
-      //"lxc2disk15.cern.ch:/srv/castor/01//86/320723286@c2itdcns.706042");
-    utils::copyString(nsHost, "castorns");
-    fileId      = 320723286;
-    tapeFileSeq = 5;
-    blockId[0]  = 0;
-    blockId[1]  = 0;
-    blockId[2]  = 0;
-    blockId[3]  = 41;
-    positionCommandCode = 3; // TPPOSIT_BLKID
-    return(true);
-  }
-  else {
-    return(false);
-  } 
+    if(emulatedRecallCounter.next() <= 1){
+      //volReqIdFromGateway = volReqId;
+      utils::copyString(filePath,
+        "lxc2disk15.cern.ch:/tmp/volume_I02000_file_n5");
+      utils::copyString(nsHost, "castorns");
+      fileId      = 320723286;
+      tapeFileSeq = 5;
+      blockId[0]  = 0;
+      blockId[1]  = 0;
+      blockId[2]  = 0;
+      blockId[3]  = 41;
+      positionCommandCode = 3; // TPPOSIT_BLKID: position by block id (locate)
+      return(true);
+    }
+    else {
+      return(false);
+    } 
 
-#endif
-//===================================================
+  #endif
+  //===================================================
 
   bool thereIsAFileToRecall = false;
 
@@ -538,10 +580,10 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
       castor::dlf::Param("nsHost"              , nsHost     ),
       castor::dlf::Param("fileId"              , fileId     ),
       castor::dlf::Param("tapeFileSeq"         , tapeFileSeq),
-      castor::dlf::Param("blockId[0]"         , blockId[0]  ),
-      castor::dlf::Param("blockId[1]"         , blockId[1]  ),
-      castor::dlf::Param("blockId[2]"         , blockId[2]  ),
-      castor::dlf::Param("blockId[3]"         , blockId[3]  )};
+      castor::dlf::Param("blockId[0]"          , blockId[0] ),
+      castor::dlf::Param("blockId[1]"          , blockId[1] ),
+      castor::dlf::Param("blockId[2]"          , blockId[2] ),
+      castor::dlf::Param("blockId[3]"          , blockId[3] )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_GOT_FILE_TO_RECALL_FROM_GATEWAY, params);
   } else {
@@ -563,20 +605,11 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
 void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
   const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost,
   const unsigned short gatewayPort,
-  char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId, uint32_t &tapeFileSeq,
+  char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId, int32_t &tapeFileSeq,
   unsigned char (&blockId)[4], int32_t positionCommandCode,
   char (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1], uint32_t checksum,
   uint32_t fileSize, uint32_t compressedFileSize )
   throw(castor::exception::Exception) {
-
-  //===================================================
-  // Hardcoded Gateway reply
-  #ifdef EMULATE_GATEWAY
-
-    return;
-
-  #endif
-  //===================================================
 
   {
     castor::dlf::Param params[] = {
@@ -598,6 +631,15 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_NOTIFY_GATEWAY_FILE_MIGRATED, params);
   }
+
+  //===================================================
+  // Hardcoded Gateway reply
+  #ifdef EMULATE_GATEWAY
+
+    return;
+
+  #endif
+  //===================================================
 
   // Prepare the request
   tapegateway::FileMigratedNotification request;
@@ -666,6 +708,27 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
         ": Reply type = " << reply->type());
     }
   } // switch(reply->type())
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId"           , volReqId           ),
+      castor::dlf::Param("gatewayHost"        , gatewayHost        ),
+      castor::dlf::Param("gatewayPort"        , gatewayPort        ),
+      castor::dlf::Param("nsHost"             , nsHost             ),
+      castor::dlf::Param("fileId"             , fileId             ),
+      castor::dlf::Param("tapeFileSeq"        , tapeFileSeq        ),
+      castor::dlf::Param("blockId[0]"         , blockId[0]         ),
+      castor::dlf::Param("blockId[1]"         , blockId[1]         ),
+      castor::dlf::Param("blockId[2]"         , blockId[2]         ),
+      castor::dlf::Param("blockId[3]"         , blockId[3]         ),
+      castor::dlf::Param("positionCommandCode", positionCommandCode),
+      castor::dlf::Param("checksumAlgorithm"  , checksumAlgorithm  ),
+      castor::dlf::Param("checksum"           , checksum           ),
+      castor::dlf::Param("fileSize"           , fileSize           ),
+      castor::dlf::Param("compressedFileSize" , compressedFileSize )};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_NOTIFIED_GATEWAY_FILE_MIGRATED, params);
+  }
 }
 
 
@@ -676,11 +739,29 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
   const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost,
-  const unsigned short gatewayPort,
-  char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId, uint32_t &tapeFileSeq,
+  const unsigned short gatewayPort, char (&nsHost)[CA_MAXHOSTNAMELEN+1], 
+  uint64_t &fileId, int32_t &tapeFileSeq,char (&filePath)[CA_MAXPATHLEN+1],
   int32_t positionCommandCode, char (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1],
   uint32_t checksum, uint32_t fileSize, uint32_t compressedFileSize )
   throw(castor::exception::Exception) {
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId"           , volReqId           ),
+      castor::dlf::Param("gatewayHost"        , gatewayHost        ),
+      castor::dlf::Param("gatewayPort"        , gatewayPort        ),
+      castor::dlf::Param("nsHost"             , nsHost             ),
+      castor::dlf::Param("fileId"             , fileId             ),
+      castor::dlf::Param("tapeFileSeq"        , tapeFileSeq        ),
+      castor::dlf::Param("positionCommandCode", positionCommandCode),
+      castor::dlf::Param("checksumAlgorithm"  , checksumAlgorithm  ),
+      castor::dlf::Param("checksum"           , checksum           ),
+      castor::dlf::Param("filePath"           , filePath           ),
+      castor::dlf::Param("fileSize"           , fileSize           ),
+      castor::dlf::Param("compressedFileSize" , compressedFileSize )};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_NOTIFY_GATEWAY_FILE_RECALLED, params);
+  }
 
  //===================================================
   // Hardcoded Gateway reply
@@ -691,20 +772,13 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
   #endif
   //===================================================
 
-  {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"   , volReqId   ),
-      castor::dlf::Param("gatewayHost", gatewayHost),
-      castor::dlf::Param("gatewayPort", gatewayPort)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_NOTIFY_GATEWAY_FILE_RECALLED, params);
-  }
-
   // Prepare the request
   tapegateway::FileRecalledNotification request;
   request.setTransactionId(volReqId);
   request.setNshost(nsHost);
   request.setFileid(fileId);
+  request.setFseq(tapeFileSeq);
+  request.setPath(filePath);
   request.setPositionCommandCode(
     (tapegateway::PositionCommandCode)positionCommandCode);
   request.setChecksumName(checksumAlgorithm);
@@ -762,17 +836,44 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
         ": Reply type = " << reply->type());
     }
   } // switch(reply->type())
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId"           , volReqId           ),
+      castor::dlf::Param("gatewayHost"        , gatewayHost        ),
+      castor::dlf::Param("gatewayPort"        , gatewayPort        ),
+      castor::dlf::Param("nsHost"             , nsHost             ),
+      castor::dlf::Param("fileId"             , fileId             ),
+      castor::dlf::Param("tapeFileSeq"        , tapeFileSeq        ),
+      castor::dlf::Param("positionCommandCode", positionCommandCode),
+      castor::dlf::Param("checksumAlgorithm"  , checksumAlgorithm  ),
+      castor::dlf::Param("checksum"           , checksum           ),
+      castor::dlf::Param("fileSize"           , fileSize           ),
+      castor::dlf::Param("compressedFileSize" , compressedFileSize )};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_NOTIFIED_GATEWAY_FILE_RECALLED, params);
+  }
 }
 
 
 
 //-----------------------------------------------------------------------------
-// notifyGatewayOfEnd
+// notifyGatewayEndOfSession
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::GatewayTxRx::notifyGatewayOfEnd(
+void castor::tape::aggregator::GatewayTxRx::notifyGatewayEndOfSession(
   const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost,
   const unsigned short gatewayPort)
   throw(castor::exception::Exception) {
+
+ {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId"   , volReqId   ),
+      castor::dlf::Param("gatewayHost", gatewayHost),
+      castor::dlf::Param("gatewayPort", gatewayPort)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_NOTIFY_GATEWAY_END_OF_SESSION, params);
+  }
+
 
   //===================================================
   // Hardcoded Gateway reply
@@ -839,4 +940,13 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayOfEnd(
         ": Reply type = " << reply->type());
     }
   } // switch(reply->type())
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId"   , volReqId   ),
+      castor::dlf::Param("gatewayHost", gatewayHost),
+      castor::dlf::Param("gatewayPort", gatewayPort)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_NOTIFIED_GATEWAY_END_OF_SESSION, params);
+  }
 }

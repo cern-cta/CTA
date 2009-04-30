@@ -67,26 +67,27 @@ public:
   /**
    * Gets a file to migrate from the tape tape gateway.
    *
-   * @param cuuid The ccuid to be used for logging.
-   * @param volReqId The volume request ID to be sent to the tape gateway.
-   * @param gatewayHost The tape gateway host name.
-   * @param gatewayPort The tape gateway port number.
-   * @param filePath Out parameter: The path of the disk file.
-   * @param nsHost Out parameter: The name server host.
-   * @param fileId Out parmeter: The CASTOR file ID.
-   * @param tapeFileSeq Out parameter: The tape file sequence number.
-   * @param fileSize Out parameter: The six of the file.
-   * @param lastKnownFileName Out parameter: The last known name of the file.
+   * @param cuuid                The ccuid to be used for logging.
+   * @param volReqId             The volume request ID to be sent to the tape 
+   * gateway.
+   * @param gatewayHost          The tape gateway host name.
+   * @param gatewayPort          The tape gateway port number.
+   * @param filePath             Out parameter: The path of the disk file.
+   * @param nsHost               Out parameter: The name server host.
+   * @param fileId               Out parameter: The CASTOR file ID.
+   * @param tapeFileSeq          Out parameter: The tape file sequence number.
+   * @param fileSize             Out parameter: The six of the file.
+   * @param lastKnownFileName    Out parameter: The last known name of the file
    * @param lastModificationTime Out parameter: The time of the last
    * modification.
-   * @param positionCommandCode The position command code.
+   * @param positionCommandCode  The position command code.
    * @return True if there is a file to migrate.
    */
   static bool getFileToMigrateFromGateway(const Cuuid_t &cuuid,
     const uint32_t volReqId, const char *gatewayHost,
     const unsigned short gatewayPort, char (&filePath)[CA_MAXPATHLEN+1],
     char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId,
-    uint32_t &tapeFileSeq, uint64_t &fileSize,
+    int32_t &tapeFileSeq, uint64_t &fileSize,
     char (&lastKnownFileName)[CA_MAXPATHLEN+1], uint64_t &lastModificationTime,
     int32_t &positionCommandCode)
     throw(castor::exception::Exception);
@@ -94,15 +95,17 @@ public:
   /**
    * Gets a file to recall from the tape gateway.
    *
-   * @param cuuid The ccuid to be used for logging.
-   * @param volReqId The volume request ID to be sent to the tape gateway.
-   * @param gatewayHost The tape gateway host name.
-   * @param gatewayPort The tape gateway port number.
-   * @param filePath Out parameter: The path of the disk file.
-   * @param nsHost Out parameter: The name server host.
-   * @param fileId Out parmeter: The CASTOR file ID.
-   * @param tapeFileSeq Out parameter: The tape file sequence number.
-   * @param blockId Out parameter: The ID of the first block of the file.
+   * @param cuuid               The ccuid to be used for logging.
+   * @param volReqId            The volume request ID to be sent to the tape 
+   * gateway.
+   * @param gatewayHost         The tape gateway host name.
+   * @param gatewayPort         The tape gateway port number.
+   * @param filePath            Out parameter: The path of the disk file.
+   * @param nsHost              Out parameter: The name server host.
+   * @param fileId              Out parameter: The CASTOR file ID.
+   * @param tapeFileSeq         Out parameter: The tape file sequence number.
+   * @param blockId             Out parameter: The ID of the first block of 
+   * the file.
    * @param positionCommandCode The position command code.
    * @return True if there is a file to recall.
    */
@@ -110,7 +113,7 @@ public:
     const uint32_t volReqId, const char *gatewayHost,
     const unsigned short gatewayPort, char (&filePath)[CA_MAXPATHLEN+1],
     char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId,
-    uint32_t &tapeFileSeq, unsigned char (&blockId)[4],
+    int32_t &tapeFileSeq, unsigned char (&blockId)[4],
     int32_t &positionCommandCode) throw(castor::exception::Exception);
 
   /**
@@ -133,7 +136,7 @@ public:
   static void notifyGatewayFileMigrated(const Cuuid_t &cuuid,
     const uint32_t volReqId, const char *gatewayHost,
     const unsigned short gatewayPort, char (&nsHost)[CA_MAXHOSTNAMELEN+1], 
-    uint64_t &fileId, uint32_t &tapeFileSeq, unsigned char (&blockId)[4], 
+    uint64_t &fileId, int32_t &tapeFileSeq, unsigned char (&blockId)[4], 
     int32_t positionCommandCode,
     char (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1], uint32_t checksum,
     uint32_t fileSize, uint32_t compressedFileSize) 
@@ -142,30 +145,32 @@ public:
   /**
    * Notifies the tape gateway of the successful recall of a file from tape.
    *
-   * @param cuuid The ccuid to be used for logging.
-   * @param volReqId The volume request ID to be sent to the tape gateway.
-   * @param gatewayHost The tape gateway host name.
-   * @param gatewayPort The tape gateway port number.
-   * @param filePath The path of the disk file.
-   * @param nsHost The name server host.
-   * @param fileId The CASTOR file ID.
-   * @param tapeFileSeq The tape file seuence number.
+   * @param cuuid               The ccuid to be used for logging.
+   * @param volReqId            The volume request ID to be sent to the tape 
+   * gateway.
+   * @param gatewayHost         The tape gateway host name.
+   * @param gatewayPort         The tape gateway port number.
+   * @param filePath            The path of the disk file.
+   * @param nsHost              The name server host.
+   * @param fileId              The CASTOR file ID.
+   * @param tapeFileSeq         The tape file seuence number.
+   * @param filePath            The path of the disk file.
    * @param positionCommandCode The position method uesd by the drive.
-   * @param checksumAlgorithm The name of the checksum algorithm.
-   * @param checksum The file checksum.
-   * @param fileSize The size of the file without compression.
-   * @param compressedFileSize The size of on-tape compressed file.
+   * @param checksumAlgorithm   The name of the checksum algorithm.
+   * @param checksum            The file checksum.
+   * @param fileSize            The size of the file without compression.
+   * @param compressedFileSize  The size of on-tape compressed file.
    */
   static void notifyGatewayFileRecalled(const Cuuid_t &cuuid,
     const uint32_t volReqId, const char *gatewayHost, 
     const unsigned short gatewayPort, char (&nsHost)[CA_MAXHOSTNAMELEN+1],
-    uint64_t &fileId, uint32_t &tapeFileSeq, int32_t positionCommandCode, 
-    char (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1], uint32_t checksum,
-    uint32_t fileSize, uint32_t compressedFileSize)
+    uint64_t &fileId, int32_t &tapeFileSeq, char (&filePath)[CA_MAXPATHLEN+1], 
+    int32_t positionCommandCode, char(&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1],
+    uint32_t checksum, uint32_t fileSize, uint32_t compressedFileSize)
     throw(castor::exception::Exception);
 
   /**
-   * Notifies the tape gateway of the end of the entire set of
+   * Notifies the tape gateway of the end of the entire session of
    * recalls/migrations.
    *
    * @param cuuid The ccuid to be used for logging.
@@ -173,7 +178,7 @@ public:
    * @param gatewayHost The tape gateway host name.
    * @param gatewayPort The tape gateway port number.
    */
-  static void notifyGatewayOfEnd(const Cuuid_t &cuuid, const uint32_t volReqId,
+  static void notifyGatewayEndOfSession(const Cuuid_t &cuuid, const uint32_t volReqId,
     const char *gatewayHost, const unsigned short gatewayPort)
     throw(castor::exception::Exception);
 

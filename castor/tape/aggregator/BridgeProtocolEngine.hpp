@@ -27,6 +27,7 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/aggregator/MessageHeader.hpp"
+#include "castor/tape/aggregator/RtcpFileRqstMsgBody.hpp"
 #include "castor/tape/aggregator/SmartFdList.hpp"
 #include "h/Castor_limits.h"
 #include "h/Cuuid.h"
@@ -225,6 +226,10 @@ private:
    */
   void rtcpFileReqCallback(const MessageHeader &header,
     const int socketFd, bool &receivedENDOF_REQ)
+    throw(castor::exception::Exception);
+
+  void rtcpFileReqCallback(const MessageHeader &header,
+    RtcpFileRqstMsgBody &body, const int socketFd, bool &receivedENDOF_REQ)
     throw(castor::exception::Exception);
 
   /**
