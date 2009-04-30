@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2009/04/28 14:40:18 $ $Author: gtaur $
+ * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2009/04/30 14:44:27 $ $Author: gtaur $
  *
  * Implementation of the ITapeGatewaySvc for Oracle
  *
@@ -147,12 +147,17 @@ namespace castor {
 	virtual castor::tape::tapegateway::FileToRecall* fileToRecall(castor::tape::tapegateway::FileToRecallRequest& req)
           throw (castor::exception::Exception);
 
+        /**
+         * Update the db for a segment which has been recalled successfully or not
+	 */
+
+        virtual bool segmentRecallUpdate(castor::tape::tapegateway::FileRecalledNotification& resp) throw (castor::exception::Exception);
 
         /**
          * Update the db for a file which has been recalled successfully or not
 	 */
 
-        virtual bool fileRecallUpdate(castor::tape::tapegateway::FileRecalledNotification& resp) throw (castor::exception::Exception);
+        virtual void fileRecallUpdate(castor::tape::tapegateway::FileRecalledNotification& resp) throw (castor::exception::Exception);
 
 	/**
 	 * Get Input for migration retries
@@ -291,6 +296,12 @@ namespace castor {
 
         /// SQL statement object for function fileToRecall
         oracle::occi::Statement *m_fileToRecallStatement;
+
+        /// SQL statement for function segmentRecallUpdate
+        static const std::string s_segmentRecallUpdateStatementString;
+
+        /// SQL statement object for function segmentRecallUpdate
+        oracle::occi::Statement *m_segmentRecallUpdateStatement;
 
         /// SQL statement for function fileRecallUpdate
         static const std::string s_fileRecallUpdateStatementString;

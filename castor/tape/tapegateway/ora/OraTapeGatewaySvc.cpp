@@ -94,8 +94,11 @@ const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_fileMigra
 /// SQL statement for function fileToRecall
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_fileToRecallStatementString="BEGIN fileToRecall(:1,:2,:3,:4);END;";
 
+/// SQL statement for function segmentRecallUpdate
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_segmentRecallUpdateStatementString="BEGIN segmentRecallUpdate(:1,:2,:3,:4,:5,:6);END;";
+
 /// SQL statement for function fileRecallUpdate
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_fileRecallUpdateStatementString="BEGIN fileRecallUpdate(:1,:2,:3,:4,:5,:6);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_fileRecallUpdateStatementString="BEGIN fileRecallUpdate(:1,:2);END;";
 
 /// SQL statement for function inputForMigrationRetryPolicy 
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_inputForMigrationRetryPolicyStatementString="BEGIN inputForMigrationRetryPolicy(:1);END;";
@@ -129,7 +132,7 @@ const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_invalidat
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_commitTransactionStatementString="BEGIN COMMIT;END;";
 
 /// SQL statement for function getSegmentInformation
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getSegmentInformationStatementString="BEGIN getSegmentInformation(:1,:2,:3,:4,:5,:6);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getSegmentInformationStatementString="BEGIN getSegmentInformation(:1,:2,:3,:4,:5,:6,:7);END;";
 
 // SQL statement  for function updateAfterFailure
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_updateAfterFailureStatementString="BEGIN updateAfterFailure(:1,:2,:3,:4,:5,:6,:7);END;";
@@ -150,6 +153,7 @@ castor::tape::tapegateway::ora::OraTapeGatewaySvc::OraTapeGatewaySvc(const std::
   m_fileToMigrateStatement(0),
   m_fileMigrationUpdateStatement(0),
   m_fileToRecallStatement(0),
+  m_segmentRecallUpdateStatement(0),
   m_fileRecallUpdateStatement(0),
   m_inputForMigrationRetryPolicyStatement(0),
   m_updateWithMigrationRetryPolicyResultStatement(0),
@@ -205,6 +209,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
     if ( m_fileToMigrateStatement ) deleteStatement(m_fileToMigrateStatement);
     if ( m_fileMigrationUpdateStatement ) deleteStatement( m_fileMigrationUpdateStatement);
     if ( m_fileToRecallStatement ) deleteStatement( m_fileToRecallStatement);
+    if ( m_segmentRecallUpdateStatement ) deleteStatement( m_segmentRecallUpdateStatement);
     if ( m_fileRecallUpdateStatement ) deleteStatement( m_fileRecallUpdateStatement);
     if ( m_inputForMigrationRetryPolicyStatement ) deleteStatement(m_inputForMigrationRetryPolicyStatement);
     if ( m_updateWithMigrationRetryPolicyResultStatement ) deleteStatement(m_updateWithMigrationRetryPolicyResultStatement);
@@ -231,6 +236,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
   m_fileToMigrateStatement = 0;
   m_fileMigrationUpdateStatement = 0;
   m_fileToRecallStatement = 0;
+  m_segmentRecallUpdateStatement = 0;
   m_fileRecallUpdateStatement = 0;
   m_inputForMigrationRetryPolicyStatement = 0;
   m_updateWithMigrationRetryPolicyResultStatement = 0;
@@ -1168,33 +1174,33 @@ castor::tape::tapegateway::FileToRecall* castor::tape::tapegateway::ora::OraTape
 // fileRecallUpdate  
 //----------------------------------------------------------------------------
    
-bool  castor::tape::tapegateway::ora::OraTapeGatewaySvc::fileRecallUpdate(castor::tape::tapegateway::FileRecalledNotification& resp) throw (castor::exception::Exception){
+bool  castor::tape::tapegateway::ora::OraTapeGatewaySvc::segmentRecallUpdate(castor::tape::tapegateway::FileRecalledNotification& resp) throw (castor::exception::Exception){
  std::string diskserver;
  std::string mountpoint;
 
   try {
     // Check whether the statements are ok
 
-    if (0 == m_fileRecallUpdateStatement) {
-      m_fileRecallUpdateStatement =
-        createStatement(s_fileRecallUpdateStatementString);
-      m_fileRecallUpdateStatement->registerOutParam
+    if (0 == m_segmentRecallUpdateStatement) {
+      m_segmentRecallUpdateStatement =
+        createStatement(s_segmentRecallUpdateStatementString);
+      m_segmentRecallUpdateStatement->registerOutParam
 	(5, oracle::occi::OCCICURSOR); 
-      m_fileRecallUpdateStatement->registerOutParam
+      m_segmentRecallUpdateStatement->registerOutParam
 	(6, oracle::occi::OCCIINT);
     }
 
-    m_fileRecallUpdateStatement->setDouble(1,(double)resp.transactionId());
-    m_fileRecallUpdateStatement->setDouble(2,(double)resp.fileid());
-    m_fileRecallUpdateStatement->setString(3,resp.nshost());
-    m_fileRecallUpdateStatement->setInt(4,resp.fseq());
+    m_segmentRecallUpdateStatement->setDouble(1,(double)resp.transactionId());
+    m_segmentRecallUpdateStatement->setDouble(2,(double)resp.fileid());
+    m_segmentRecallUpdateStatement->setString(3,resp.nshost());
+    m_segmentRecallUpdateStatement->setInt(4,resp.fseq());
 
-    m_fileRecallUpdateStatement->executeUpdate();
+    m_segmentRecallUpdateStatement->executeUpdate();
     
     
     
     oracle::occi::ResultSet *rs =
-      m_fileRecallUpdateStatement->getCursor(5);
+      m_segmentRecallUpdateStatement->getCursor(5);
 
     // Run through the cursor 
 
@@ -1218,9 +1224,9 @@ bool  castor::tape::tapegateway::ora::OraTapeGatewaySvc::fileRecallUpdate(castor
       }
     }
 
-    bool ret=m_fileRecallUpdateStatement->getInt(6);
+    bool ret=m_segmentRecallUpdateStatement->getInt(6);
     
-    m_fileRecallUpdateStatement->closeResultSet(rs);
+    m_segmentRecallUpdateStatement->closeResultSet(rs);
     return ret;
 
   } catch (oracle::occi::SQLException e) {
@@ -1228,13 +1234,49 @@ bool  castor::tape::tapegateway::ora::OraTapeGatewaySvc::fileRecallUpdate(castor
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Error caught in fileToRecall"
+      << "Error caught in segmentRecallUpdate"
       << std::endl << e.what();
     throw ex;
   }
 
 }
   
+
+
+//----------------------------------------------------------------------------
+// fileRecallUpdate  
+//----------------------------------------------------------------------------
+   
+void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::fileRecallUpdate(castor::tape::tapegateway::FileRecalledNotification& resp) throw (castor::exception::Exception){
+ std::string diskserver;
+ std::string mountpoint;
+
+  try {
+    // Check whether the statements are ok
+
+    if (0 == m_fileRecallUpdateStatement) {
+      m_fileRecallUpdateStatement =
+        createStatement(s_fileRecallUpdateStatementString);
+    }
+    m_fileRecallUpdateStatement->setDouble(1,(double)resp.fileid());
+    m_fileRecallUpdateStatement->setString(2,resp.nshost());
+    m_fileRecallUpdateStatement->executeUpdate();
+    
+
+  } catch (oracle::occi::SQLException e) {
+
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in fileRecallUpdate"
+      << std::endl << e.what();
+    throw ex;
+  }
+
+}
+
+
+
 //----------------------------------------------------------------------------
 // inputForMigrationRetryPolicy
 //----------------------------------------------------------------------------
@@ -1681,7 +1723,7 @@ castor::stager::Tape*  castor::tape::tapegateway::ora::OraTapeGatewaySvc::update
     }
     
     m_updateDbEndTapeStatement->setInt(1,endRequest.transactionId());
-
+ 
 
     // Execute the statement
     (void)m_updateDbEndTapeStatement->executeUpdate();
@@ -1828,20 +1870,21 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getSegmentInformation(Fi
       m_getSegmentInformationStatement =
         createStatement(s_getSegmentInformationStatementString);
       m_getSegmentInformationStatement->registerOutParam
-	(5, oracle::occi::OCCISTRING, 2048 ); 
+	(6, oracle::occi::OCCISTRING, 2048 ); 
       m_getSegmentInformationStatement->registerOutParam
-	(6, oracle::occi::OCCIINT); 
+	(7, oracle::occi::OCCIINT); 
     }
 
     m_getSegmentInformationStatement->setDouble(1,(double)fileRecalled.transactionId()); 
     m_getSegmentInformationStatement->setDouble(2,(double)fileRecalled.fileid());
     m_getSegmentInformationStatement->setString(3,fileRecalled.nshost());
     m_getSegmentInformationStatement->setInt(4,fileRecalled.fseq());
+    m_getSegmentInformationStatement->setString(5,fileRecalled.path());
     
     m_getSegmentInformationStatement->executeUpdate();
 
-    vid= m_getSegmentInformationStatement->getString(5);
-    copyNb=m_getSegmentInformationStatement->getInt(6);
+    vid= m_getSegmentInformationStatement->getString(6);
+    copyNb=m_getSegmentInformationStatement->getInt(7);
 
   } catch (oracle::occi::SQLException e) {
    

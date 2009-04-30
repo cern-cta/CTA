@@ -353,7 +353,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
 
     try {
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 48, 4, params); 
-      allSegmentsRecalled = m_dbSvc.fileRecallUpdate(fileRecalled);
+      allSegmentsRecalled = m_dbSvc.segmentRecallUpdate(fileRecalled);
 	
     } catch (castor::exception::Exception e) {
       castor::dlf::Param params[] =
@@ -394,6 +394,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
       if (allSegmentsRecalled) {
 	NsTapeGatewayHelper nsHelper;
 	nsHelper.checkFileSize(fileRecalled);
+	m_dbSvc.fileRecallUpdate(fileRecalled);
       }
     }catch (castor::exception::Exception e) {
 	// db failure to mark the recall as failed
@@ -404,10 +405,32 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
 	    castor::dlf::Param("errorCode",sstrerror(e.code())),
 	    castor::dlf::Param("errorMessage",e.getMessage().str())
 	  };
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 76, 5, params);
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 91, 5, params);
+	
+	FileErrorReport failure;
+	failure.setTransactionId(fileRecalled.transactionId());
+	failure.setFileid(fileRecalled.fileid());
+	failure.setNshost(fileRecalled.nshost());
+	failure.setFseq(fileRecalled.fseq());
+	failure.setErrorCode(e.code());
+	failure.setErrorMessage(e.getMessage().str());
+	try {
+	  m_dbSvc.updateAfterFailure(failure);
+	} catch (castor::exception::Exception e) {
+	  // db failure to mark the recall as failed
+	  castor::dlf::Param params[] =
+	    { castor::dlf::Param("transactionId",fileRecalled.transactionId()),
+	      castor::dlf::Param("NSHOST",fileRecalled.nshost()),
+	      castor::dlf::Param("FILEID",fileRecalled.fileid()),
+	      castor::dlf::Param("errorCode",sstrerror(e.code())),
+	      castor::dlf::Param("errorMessage",e.getMessage().str())
+	    };
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 76, 5, params);
+	  
+	}
       
-      }  
-  
+    }  
+    
   } catch  (std::bad_cast &ex) {
     // "Invalid Request" message
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 36, 0, NULL);

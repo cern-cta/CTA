@@ -1,4 +1,3 @@
-
 /******************************************************************************
  *                      NsTapeGatewayHelper.cpp
  *
@@ -18,8 +17,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NsTapeGatewayHelper.cpp,v $ $Revision: 1.9 $ $Release$ 
- * $Date: 2009/04/28 14:40:07 $ $Author: gtaur $
+ * @(#)$RCSfile: NsTapeGatewayHelper.cpp,v $ $Revision: 1.10 $ $Release$ 
+ * $Date: 2009/04/30 14:44:26 $ $Author: gtaur $
  *
  *
  *
@@ -80,7 +79,7 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile( tape::t
   u_signed64 compression = (file.fileSize() * 100 )/ file.compressedFileSize();
   nsSegAttrs->compression = compression;
   strncpy(nsSegAttrs->vid, vid.c_str(),CA_MAXVIDLEN);
-  nsSegAttrs->side = 1; //HARDCODED
+  nsSegAttrs->side = 0; //HARDCODED
   
   //  convert the blockid
   
@@ -184,7 +183,7 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile( tape::t
   nsSegAttrs->segsize = file.fileSize();
   
   strncpy(nsSegAttrs->vid,vid.c_str(),CA_MAXVIDLEN);
-  nsSegAttrs->side = 1; // HARDCODED side
+  nsSegAttrs->side = 0; // HARDCODED side
   
   //  convert the blockid
   
@@ -532,6 +531,7 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::getBlockIdToRecall(castor::
 
 void  castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile(castor::tape::tapegateway::FileRecalledNotification& file, std::string vid, int copyNb) throw (castor::exception::Exception) {
  
+ 
   // get segments for this fileid
 
   struct Cns_fileid castorFileId;
@@ -571,12 +571,15 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile(castor::
   for ( int i=0; i<nbSegs; i++ ) {
 
     if ( strcmp(segattrs[i].vid, vid.c_str()) != 0 ) continue;
-    if ( segattrs[i].side != 1 ) continue;
+  
+    if ( segattrs[i].side != 0 ) continue;
+
     if ( segattrs[i].fseq != file.fseq() ) continue;
+
     // removed the  check of  the blockid 
    
     if ( segattrs[i].copyno != copyNb ) continue;
-    
+
     // All the checks were successfull let's check checksum  
 
     // check the checksum (mandatory)
@@ -667,36 +670,49 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileSize(castor::tape
   castorFileId.fileid = file.fileid();
 
   struct Cns_filestat statBuf;
-  
-  serrno=0; 
-  // in rtcpclientd it is using the castorfile.filesize
-  int rc = Cns_statx( NULL, &castorFileId,&statBuf);
-  
+
+  char path[CA_MAXPATHLEN+1];
+  int rc = Cns_getpath(castorFileId.server, castorFileId.fileid,(char*)path);
   if ( rc == -1) {
     castor::exception::Exception ex(serrno);
     ex.getMessage()
       << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFileSize:"
-      << "Cns_statx failed";
+      << "Cns_getpath failed for nshost "<<castorFileId.server<<" fileid "<<castorFileId.fileid;
+    throw ex;
+  }
+  
+  serrno=0; 
+  
+  // in rtcpclientd it is using the castorfile.filesize
+  rc = Cns_statx( path, &castorFileId,&statBuf);
+  
+  if ( rc == -1) {
+   
+    castor::exception::Exception ex(serrno);
+    ex.getMessage()
+      << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFileSize:"
+      << "Cns_statx failed for "<<path;
     throw ex;
 
   }
 
   // get with rfio the filesize of the copy on disk
 
+  
   struct stat64 st;
   serrno=0;
 
   rc = rfio_stat64((char*)file.path().c_str(),&st);
-
+ 
   if (rc <0 ){
     castor::exception::Exception ex(serrno);
     ex.getMessage()
       << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFileSize:"
-      << "rfio_stat failed";
+      << "rfio_stat failed for "<<file.path().c_str();
     throw ex;
 
   }
-
+ 
   if ( (u_signed64)st.st_size !=  statBuf.filesize){ // cast done to follow castor convention 
     castor::exception::Exception ex(ERTWRONGSIZE);
     ex.getMessage()

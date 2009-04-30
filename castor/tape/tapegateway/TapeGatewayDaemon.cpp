@@ -339,6 +339,7 @@ castor::tape::tapegateway::TapeGatewayDaemon::TapeGatewayDaemon() : castor::serv
    {88, "Worker: retrived bad file to recall"},
    {89, "Worker: impossible to invalidate segment"},
    {90, "Worker: impossible to retrieve the segment"},
+   {91, "Worker: error while checking the file size of recalled file"},
    {-1, ""}
   };
   dlfInit(messages);

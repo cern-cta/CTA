@@ -93,7 +93,7 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void* par)
     
     try {
 
-      if (m_retryPySvc->applyPolicy(policyObj)) {
+      if (m_retryPySvc == NULL ||  m_retryPySvc->applyPolicy(policyObj)) {
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 23, 1, params); 
 	tcIdsToRetry.push_back( (*tcItem)->id());
       } else {

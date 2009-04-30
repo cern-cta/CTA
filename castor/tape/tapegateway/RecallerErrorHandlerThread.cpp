@@ -91,7 +91,7 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void* par)
       {castor::dlf::Param("tapecopyId",(*tcItem)->id())      
       };
     try {
-      if (m_retryPySvc->applyPolicy(policyObj)) {
+      if (m_retryPySvc==NULL || m_retryPySvc->applyPolicy(policyObj)) {
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 29, 1, params); 
 	tcIdsToRetry.push_back( (*tcItem)->id());
       }    else  {
