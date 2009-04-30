@@ -228,10 +228,6 @@ private:
     const int socketFd, bool &receivedENDOF_REQ)
     throw(castor::exception::Exception);
 
-  void rtcpFileReqCallback(const MessageHeader &header,
-    RtcpFileRqstMsgBody &body, const int socketFd, bool &receivedENDOF_REQ)
-    throw(castor::exception::Exception);
-
   /**
    * RTCP_FILEERR_REQ message body handler.
    *
@@ -240,6 +236,25 @@ private:
    */
   void rtcpFileErrReqCallback(const MessageHeader &header,
     const int socketFd, bool &receivedENDOF_REQ)
+    throw(castor::exception::Exception);
+
+  /**
+   * Processes the specified RTCP file request.
+   *
+   * This function implements the common logic of the rtcpFileReqCallback and
+   * rtcpFileErrReqCallback functions.
+   *
+   * @param header The header of the request.
+   * @param body The body of the request which maybe either of type
+   * RtcpFileRqstMsgBody or RtcpFileRqstErrMsgBody, as RtcpFileRqstErrMsgBody
+   * inherits from RtcpFileRqstMsgBody.
+   * @param socketFd The file descriptor of the socket from which both the
+   * header and the body of the message have already been read from.
+   * @param receivedENDOF_REQ Out parameter: Will be set to true by this
+   * function of an RTCP_ENDOF_REQ was received.
+   */
+  void processRtcpFileReq(const MessageHeader &header,
+    RtcpFileRqstMsgBody &body, const int socketFd, bool &receivedENDOF_REQ)
     throw(castor::exception::Exception);
 
   /**

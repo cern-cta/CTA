@@ -500,14 +500,45 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileReqCallback(
   RtcpTxRx::receiveRtcpFileRqstBody(m_cuuid, m_volReqId, socketFd,
     RTCPDNETRWTIMEOUT, header, body);
 
-  rtcpFileReqCallback(header, body, socketFd, receivedENDOF_REQ);
+  processRtcpFileReq(header, body, socketFd, receivedENDOF_REQ);
 }
 
 
 //-----------------------------------------------------------------------------
-// rtcpFileReqCallback
+// rtcpFileErrReqCallback
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileReqCallback(
+void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileErrReqCallback(
+  const MessageHeader &header, const int socketFd, bool &receivedENDOF_REQ)
+  throw(castor::exception::Exception) {
+
+  RtcpFileRqstErrMsgBody body;
+
+  RtcpTxRx::receiveRtcpFileRqstErrBody(m_cuuid, m_volReqId, socketFd,
+    RTCPDNETRWTIMEOUT, header, body);
+
+  // If RTCPD has reported an error
+  if(body.err.errorCode != 0) {
+
+    // Send an acknowledge to RTCPD and then throw an exception
+    MessageHeader ackMsg;
+    ackMsg.magic       = header.magic;
+    ackMsg.reqType     = header.reqType;
+    ackMsg.lenOrStatus = 0;
+    RtcpTxRx::sendMessageHeader(m_cuuid, m_volReqId, socketFd,
+      RTCPDNETRWTIMEOUT, ackMsg);
+
+    TAPE_THROW_CODE(body.err.errorCode,
+      ": Received an error from RTCPD: " << body.err.errorMsg);
+  }
+
+  processRtcpFileReq(header, body, socketFd, receivedENDOF_REQ);
+}
+
+
+//-----------------------------------------------------------------------------
+// processRtcpFileReq
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
   const MessageHeader &header, RtcpFileRqstMsgBody &body, const int socketFd,
   bool &receivedENDOF_REQ) throw(castor::exception::Exception) {
   switch(body.procStatus) {
@@ -588,14 +619,6 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileReqCallback(
         RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_volReqId, socketFd,
           RTCPDNETRWTIMEOUT);
 
-        // Asynchronus Request More Work ACK
-        MessageHeader ackMsg;
-        ackMsg.magic       = RTCOPY_MAGIC;
-        ackMsg.reqType     = RTCP_FILE_REQ;
-        ackMsg.lenOrStatus = 0;
-        RtcpTxRx::sendMessageHeader(m_cuuid, m_volReqId, socketFd,
-          RTCPDNETRWTIMEOUT,ackMsg);
-
       // Else there is no file to recall
       } else {
 
@@ -609,15 +632,16 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileReqCallback(
         // Tell RTCPD there is no file by sending an empty file list
         RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_volReqId, socketFd,
           RTCPDNETRWTIMEOUT);
-
-        // Asynchronus Request More Work ACK
-        MessageHeader ackMsg;
-        ackMsg.magic       = RTCOPY_MAGIC;
-        ackMsg.reqType     = RTCP_FILE_REQ;
-        ackMsg.lenOrStatus = 0;
-        RtcpTxRx::sendMessageHeader(m_cuuid, m_volReqId, socketFd,
-          RTCPDNETRWTIMEOUT,ackMsg);
       }
+
+      // Acknowledge the request for more work
+      MessageHeader ackMsg;
+      ackMsg.magic       = header.magic;
+      ackMsg.reqType     = header.reqType;
+      ackMsg.lenOrStatus = 0;
+      RtcpTxRx::sendMessageHeader(m_cuuid, m_volReqId, socketFd,
+        RTCPDNETRWTIMEOUT,ackMsg);
+
     } // Else recalling
     break;
   case RTCP_POSITIONED:
@@ -631,8 +655,8 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileReqCallback(
 
       // Send an acknowledge to RTCPD
       MessageHeader ackMsg;
-      ackMsg.magic       = RTCOPY_MAGIC;
-      ackMsg.reqType     = RTCP_FILE_REQ;
+      ackMsg.magic       = header.magic;
+      ackMsg.reqType     = header.reqType;
       ackMsg.lenOrStatus = 0;
       RtcpTxRx::sendMessageHeader(m_cuuid, m_volReqId, socketFd,
         RTCPDNETRWTIMEOUT, ackMsg);
@@ -649,8 +673,8 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileReqCallback(
 
       // Send an acknowledge to RTCPD
       MessageHeader ackMsg;
-      ackMsg.magic       = RTCOPY_MAGIC;
-      ackMsg.reqType     = RTCP_FILE_REQ;
+      ackMsg.magic       = header.magic;
+      ackMsg.reqType     = header.reqType;
       ackMsg.lenOrStatus = 0;
       RtcpTxRx::sendMessageHeader(m_cuuid, m_volReqId, socketFd,
         RTCPDNETRWTIMEOUT, ackMsg);
@@ -679,35 +703,6 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileReqCallback(
         << std::hex << body.procStatus
         << "(" << utils::procStatusToStr(body.procStatus) << ")");
     }
-  }
-}
-
-
-//-----------------------------------------------------------------------------
-// rtcpFileErrReqCallback
-//-----------------------------------------------------------------------------
-void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileErrReqCallback(
-  const MessageHeader &header, const int socketFd, bool &receivedENDOF_REQ)
-  throw(castor::exception::Exception) {
-
-  RtcpFileRqstErrMsgBody body;
-
-  RtcpTxRx::receiveRtcpFileRqstErrBody(m_cuuid, m_volReqId, socketFd,
-    RTCPDNETRWTIMEOUT, header, body);
-
-  MessageHeader ackMsg;
-  ackMsg.magic       = RTCOPY_MAGIC;
-  ackMsg.reqType     = RTCP_FILEERR_REQ;
-  ackMsg.lenOrStatus = 0;
-  RtcpTxRx::sendMessageHeader(m_cuuid, m_volReqId, socketFd,
-    RTCPDNETRWTIMEOUT, ackMsg);
-
-  // Throw an exception if RTCPD is reporting an error
-  if(body.err.errorCode != 0) {
-    TAPE_THROW_CODE(body.err.errorCode,
-      ": Received an error from RTCPD: " << body.err.errorMsg);
-  } else {
-    rtcpFileReqCallback(header, body, socketFd, receivedENDOF_REQ);
   }
 }
 
