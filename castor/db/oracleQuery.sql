@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.655 $ $Date: 2009/04/09 06:34:18 $ $Author: waldron $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.656 $ $Date: 2009/04/30 13:23:17 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -128,7 +128,8 @@ CREATE OR REPLACE PROCEDURE fileNameStageQuery
   cfIds "numList";
 BEGIN
   IF substr(fn, -1, 1) = '/' THEN  -- files in a 'subdirectory'
-    SELECT /*+ INDEX(DiskPool2SvcClass I_DiskPool2SvcClass_C) */ CastorFile.id
+    SELECT /*+ INDEX(CastorFile I_CastorFile_LastKnownFileName) INDEX(DiskCopy I_DiskCopy_CastorFile) */ 
+           CastorFile.id
       BULK COLLECT INTO cfIds
       FROM DiskCopy, FileSystem, DiskPool2SvcClass, CastorFile
      WHERE CastorFile.lastKnownFileName LIKE normalizePath(fn)||'%'
