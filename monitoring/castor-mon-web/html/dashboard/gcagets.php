@@ -21,7 +21,7 @@ if(!$conn) {
 //retrieve timeseries info
 $query1 = "select to_char(bin,'HH24:MI') , number_of_req from (
 			select trunc(timestamp,'Mi') bin, round(avg(fileage),4) number_of_req  
-			from ".$db_instances[$service]['schema']."gcfiles
+			from ".$db_instances[$service]['schema'].".gcfiles
 			where timestamp >= trunc(sysdate - 15/1440,'Mi')
 			and timestamp < trunc(sysdate - 5/1440 ,'Mi')
 			group by trunc(timestamp,'Mi'))

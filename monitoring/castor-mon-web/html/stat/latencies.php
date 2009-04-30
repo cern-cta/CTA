@@ -4,7 +4,7 @@ include ("../lib/_oci_cache.php");
 include ("../jpgraph-1.27/src/jpgraph.php");
 include ("../jpgraph-1.27/src/jpgraph_bar.php");
 include("../lib/no_data.php");
-include ("../../../conf/castor-mon-web");
+include ("../../../conf/castor-mon-web/user.php");
 $period = $_GET['period'];
 $service = $_GET['service'];
 $from = $_GET['from'];
@@ -27,18 +27,26 @@ else {
 }
 //initialization 
 $bins = array( 0 =>"<1sec",1 =>"[1-10)sec",2 =>"[10-120)sec",3 =>"[2-5)min",4 =>"[5-10)min",5 =>"[10-30)min",6 =>"[30 -60)min", 7=> "[1-5)hours", 8=> "[5-12)hours", 9=> "[12-24)hours", 10=> "[1-2]days", 11=> ">2days");
-if ($period == 10/1440) 
+if ($period == '10/1440') {
+	$period = 10/1440;
 	$graph = new Graph(730,300,"auto",1);
-else if ($period == 1/24)
+}
+else if ($period == '1/24') {
+	$period = 1/24;
 	$graph = new Graph(800,300,"auto",5);
-else if ($period == 1)
+}
+else if ($period == '1') {
+	$period = 1; 
 	$graph = new Graph(800,300,"auto",30);
-else if ($period == 7)
+}
+else if ($period == '7') {
+	$period = 7;
 	$graph = new Graph(800,300,"auto",60);
-else if ($period == 30)
+}
+else if ($period == '30') {
+	$period = 30;
 	$graph = new Graph(800,300,"auto",360);
-else if ($period == 10000)
-	$graph = new Graph(800,300,"auto",360);
+}
 else $graph = new Graph(800,300,"auto");
 
 //connection
@@ -69,10 +77,10 @@ if ($qn == 1) {
 		  when b.totallatency >= 43200 and b.totallatency < 86400 then 10
 		  when b.totallatency >= 86400 and b.totallatency < 172800 then 11
 		  else 12 end bin
-		from ".$db_instances[$service]['schema']."requests a, ".$db_instances[$service]['schema']."totallatency b
+		from ".$db_instances[$service]['schema'].".requests a, ".$db_instances[$service]['schema'].".totallatency b
 		where a.subreqid = b.subreqid
-		and a.timestamp > sysdate - $period
-		and b.timestamp > sysdate - $period )
+		and a.timestamp > sysdate - :period
+		and b.timestamp > sysdate - :period )
 		group by state,bin
 		order by state,bin ";
 }
@@ -91,21 +99,28 @@ else if ($qn == 2) {
 		  when b.totallatency >= 43200 and b.totallatency < 86400 then 10
 		  when b.totallatency >= 86400 and b.totallatency < 172800 then 11
 		  else 12 end bin
-		from ".$db_instances[$service]['schema']."requests a, ".$db_instances[$service]['schema']."totallatency b
+		from ".$db_instances[$service]['schema'].".requests a, ".$db_instances[$service]['schema'].".totallatency b
 		where a.subreqid = b.subreqid
-		and a.timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-		and a.timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
-		and b.timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-		and b.timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi'))
+		and a.timestamp >= to_date(:from_date,'dd/mm/yyyy HH24:Mi')
+		and a.timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi')
+		and b.timestamp >= to_date(:from_date,'dd/mm/yyyy HH24:Mi')
+		and b.timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi'))
 		group by state, bin
 		order by state, bin ";
 }
 if (!($parsed1 = OCIParse($conn, $query1))) 
 	{ echo "Error Parsing Query";exit();}
+if ($qn == 1) {
+	ocibindbyname($parsed1,":period",$period);
+}
+else if ($qn == 2) {
+	ocibindbyname($parsed1,":from_date",$from);
+	ocibindbyname($parsed1,":to_date",$to);
+}
 if (!OCIExecute($parsed1))
 	{ echo "Error Executing Query";exit();}
 while (OCIFetch($parsed1)) {
-	$cat = OCIResult($parsed1,1)
+	$cat = OCIResult($parsed1,1);
 	$bin_num = OCIResult($parsed1,2);
 	$lat[$cat][$bin_num - 1] = OCIResult($parsed1,3);
 }

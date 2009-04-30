@@ -5,7 +5,7 @@ include ("../jpgraph-1.27/src/jpgraph.php");
 include ("../jpgraph-1.27/src/jpgraph_line.php");
 include("../lib/no_data.php");
 //User account
-include ("../../../conf/castor-mon-web");
+include ("../../../conf/castor-mon-web/user.php");
 //get posted data
 $period = $_GET['period'];
 $from = (string)$_GET['from'];
@@ -39,38 +39,42 @@ else {
 if($dif <= 1/24) {
 	$interval = 'Mi';
 	$format = 'HH24:MI';
-	$inter = 'Mi';
 }
 else if (($dif > 1/24)&&($dif <= 1)) {
  	$interval = 'HH24';
 	$format = 'HH24:Mi';
-	$inter = 'HH24';
 }
 else if (($dif > 1)&&($dif < 10000)) {
 	$interval = 'DD';
 	$format = 'DD-MON-RR';
-	$inter = 'DD';
 }
 else {
 	$interval = 'WW';
 	$format = 'DD-MON-RR';
-	$inter = 'WW';
 }
 //Create new graph, enable image cache by setting countdown period(in minutes) 
 //depending on selected $period. If the cached image is valid the script immediately 
 //returns the cached image and exits without logining in the DB
-if ($period == 10/1440) 
+if ($period == '10/1440') {
+	$period = 10/1440;  
 	$graph = new Graph(420,200,"auto");
-else if ($period == 1/24)
+}
+else if ($period == '1/24') {
+	$period = 1/24; 
 	$graph = new Graph(420,200,"auto");
-else if ($period == 1)
+}
+else if ($period == '1') {
+	$period = 1;
 	$graph = new Graph(420,200,"auto",10);
-else if ($period == 7)
+}
+else if ($period == '7') {
+	$period = 7;
 	$graph = new Graph(420,200,"auto",30);
-else if ($period == 30)
+}
+else if ($period == '30') {
+	$period = 30;
 	$graph = new Graph(420,200,"auto",360);
-else if ($period == 10000)
-	$graph = new Graph(420,200,"auto",360);
+}
 else
 	$graph = new Graph(420,200,"auto");
 //connection -- DB login
@@ -81,23 +85,34 @@ if(!$conn) {
 	exit;
 }
 if ($qn ==1)
-	$query1 = "select to_char(bin,'$format') , number_of_mig from (
-		   select distinct trunc(timestamp,'$interval') bin, count(trunc(timestamp,'$interval')) 
-		   over (Partition by trunc(timestamp,'$interval')) number_of_mig  
-			   from ".$db_instances[$service]['schema']."migration
-			   where timestamp > trunc(sysdate - $period,'$inter')
+	$query1 = "select to_char(bin,:format) , number_of_mig from (
+		   select distinct trunc(timestamp,:interval) bin, count(trunc(timestamp,:interval)) 
+		   over (Partition by trunc(timestamp,:interval)) number_of_mig  
+			   from ".$db_instances[$service]['schema'].".migration
+			   where timestamp > trunc(sysdate - :period,:interval)
 			   order by bin )";
 else if ($qn ==2)
-	$query1 = "select to_char(bin,'$format') , number_of_mig from (
-		   select distinct trunc(timestamp,'$interval') bin, count(trunc(timestamp,'$interval')) 
-		   over (Partition by trunc(timestamp,'$interval')) number_of_mig  
-			   from ".$db_instances[$service]['schema']."migration
-			   where timestamp >= trunc(to_date('$from','dd/mm/yyyy HH24:Mi'),'$inter')
-				and timestamp <= trunc(to_date('$to','dd/mm/yyyy HH24:Mi'),'$inter')
+	$query1 = "select to_char(bin,:format) , number_of_mig from (
+		   select distinct trunc(timestamp,:interval) bin, count(trunc(timestamp,:interval)) 
+		   over (Partition by trunc(timestamp,:interval)) number_of_mig  
+			   from ".$db_instances[$service]['schema'].".migration
+			   where timestamp >= trunc(to_date(:from_date,'dd/mm/yyyy HH24:Mi'),:interval)
+				and timestamp <= trunc(to_date(:to_date,'dd/mm/yyyy HH24:Mi'),:interval)
 			   order by bin )";
 	   
 if (!($parsed1 = OCIParse($conn, $query1))) 
 	{ echo "Error Parsing Query";exit();}
+if ($qn == 1) {
+	ocibindbyname($parsed1,":period",$period);
+	ocibindbyname($parsed1,":interval",$interval);
+	ocibindbyname($parsed1,":format",$format);
+}
+else if ($qn == 2) {
+	ocibindbyname($parsed1,":from_date",$from);
+	ocibindbyname($parsed1,":to_date",$to);
+	ocibindbyname($parsed1,":interval",$interval);
+	ocibindbyname($parsed1,":format",$format);
+}
 if (!OCIExecute($parsed1))
 	{ echo "Error Executing Query";exit();}
 //Fetch data into local tables

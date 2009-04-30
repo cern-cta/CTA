@@ -48,7 +48,7 @@ echo "<div style='background-color: orangered' align='center'><b> $reqkind - Las
 if ($reqkind == 'TapeRecall') {
 $query1 = "select svcclass,username, count(*) r, count(case when type='StageGetRequest' then 1 else null end) non,
 		   count(case when type='StagePrepareToGetRequest' then 1 else null end) pre
-           from ".$db_instances[$service]['schema']."requests
+           from ".$db_instances[$service]['schema'].".requests
            where timestamp >= sysdate - 15/1440
            and timestamp < sysdate - 5/1440  
            and state = 'TapeRecall'

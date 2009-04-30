@@ -24,7 +24,7 @@
 
 <html>
 	<head>
-		<META HTTP-EQUIV="Refresh" CONTENT="10; URL=http://project-castor-monitoring.web.cern.ch/project-castor-monitoring/dashboard/dashboard.php?service=<?php echo $service;?>"> 
+		<META HTTP-EQUIV="Refresh" CONTENT="10; URL=dashboard.php?service=<?php echo $service;?>"> 
 		<LINK rel="stylesheet" type="text/css" title="compact" href="../lib/hmenu.css">
 		<style>
 			a {
@@ -88,9 +88,9 @@
 						</tr>
 						<tr>
 							<td><div id="menu">
-								<ul><li><a href="http://project-castor-monitoring.web.cern.ch/project-castor-monitoring/dashboard/main.html" >HOME</a></li></ul>
+								<ul><li><a href="main.html" >HOME</a></li></ul>
 								<ul>
-									<li><a href="../stat/tabledet.php?service=<?php echo $service;?>">Statistics</a></li>
+									<li><a href="../stat/tabledet.php?timewindow=7&service=<?php echo $service;?>">Statistics</a></li>
 								</ul>
 								<ul>
 									<li><h2>Links</h2>

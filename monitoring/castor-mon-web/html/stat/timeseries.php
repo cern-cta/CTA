@@ -5,7 +5,7 @@ include ("../jpgraph-1.27/src/jpgraph.php");
 include ("../jpgraph-1.27/src/jpgraph_bar.php");
 include("../lib/no_data.php");
 //include user account
-include ("../../../conf/castor-mon-web");
+include ("../../../conf/castor-mon-web/user.php");
 //get posted values
 $period = $_GET['period'];
 $service = $_GET['service'];
@@ -56,22 +56,30 @@ else {
 //Create new graph, enable image cache by setting countdown period(in minutes) 
 //depending on selected $period. If the cached image is valid the script immediately 
 //returns the cached image and exits without logining in the DB
-if ($period == 10/1440) 
+if ($period == '10/1440') {
+	$period = 10/1440; 
 	$graph = new Graph(420,200,"auto");
-else if ($period == 1/24)
+}
+else if ($period == '1/24') {
+	$period = 1/24; 
 	$graph = new Graph(420,200,"auto");
-else if ($period == 1)
+}
+else if ($period == '1') {
+	$period = 1;
 	$graph = new Graph(420,200,"auto",10);
-else if ($period == 7)
+}
+else if ($period == '7') {
+	$period = 7;
 	$graph = new Graph(420,200,"auto",30);
-else if ($period == 30)
+}
+else if ($period == '30') {
+	$period = 30;
 	$graph = new Graph(420,200,"auto",360);
-else if ($period == 10000)
-	$graph = new Graph(420,200,"auto",360);
+}
 else 
 	$graph = new Graph(420,200,"auto");
 //connect to DB	
- $con = oci_connect($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
+ $con = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
    if (!$con) {
      $e = oci_error();
      print htmlentities($e['message']);
@@ -79,36 +87,45 @@ else
    } else {// db functionnality
      if ($qn == 1) {
        $time_series =
-         "select distinct to_char(trunc(NN_Requests_timestamp,'$interval'), '$format') bin, 
-		   count(case when state='DiskHit' then trunc(NN_Requests_timestamp,'$interval') else null end) over (Partition by trunc(NN_Requests_timestamp,'$interval')) number_of_DH_req, 
-		   count(case when state='DiskCopy' then trunc(NN_Requests_timestamp,'$interval') else null end) over (Partition by trunc(NN_Requests_timestamp,'$interval')) number_of_DC_req, 
-		   count(case when state='TapeRecall' then trunc(NN_Requests_timestamp,'$interval') else null end) over (Partition by trunc(NN_Requests_timestamp,'$interval')) number_of_TR_req
-         from ".$db_instances[$service]['schema']."requests
-         where timestamp >= trunc(sysdate - $period,'$interval')
+         "select distinct to_char(trunc(timestamp,:interval), :format) bin, 
+		   count(case when state='DiskHit' then trunc(timestamp,:interval) else null end) over (Partition by trunc(timestamp,:interval)) number_of_DH_req, 
+		   count(case when state='DiskCopy' then trunc(timestamp,:interval) else null end) over (Partition by trunc(timestamp,:interval)) number_of_DC_req, 
+		   count(case when state='TapeRecall' then trunc(timestamp,:interval) else null end) over (Partition by trunc(timestamp,:interval)) number_of_TR_req
+         from ".$db_instances[$service]['schema'].".requests
+         where timestamp >= trunc(sysdate - :period,:interval)
          order by bin";
      } else if ($qn == 2) {
        $time_series =
-         "select distinct to_char(trunc(NN_Requests_timestamp,'$interval'), '$format') bin, 
-		   count(case when state='DiskHit' then trunc(NN_Requests_timestamp,'$interval') else null end) over (Partition by trunc(NN_Requests_timestamp,'$interval')) number_of_DH_req, 
-		   count(case when state='DiskCopy' then trunc(NN_Requests_timestamp,'$interval') else null end) over (Partition by trunc(NN_Requests_timestamp,'$interval')) number_of_DC_req, 
-		   count(case when state='TapeRecall' then trunc(NN_Requests_timestamp,'$interval') else null end) over (Partition by trunc(NN_Requests_timestamp,'$interval')) number_of_TR_req
-         from ".$db_instances[$service]['schema']."requests
-         where timestamp >= trunc(to_date('$from','dd/mm/yyyy HH24:Mi'),'$interval')
-           and timestamp <= trunc(to_date('$to','dd/mm/yyyy HH24:Mi'),'$interval')
+         "select distinct to_char(trunc(timestamp,:interval), :format) bin, 
+		   count(case when state='DiskHit' then trunc(timestamp,:interval) else null end) over (Partition by trunc(timestamp,:interval)) number_of_DH_req, 
+		   count(case when state='DiskCopy' then trunc(timestamp,:interval) else null end) over (Partition by trunc(timestamp,:interval)) number_of_DC_req, 
+		   count(case when state='TapeRecall' then trunc(timestamp,:interval) else null end) over (Partition by trunc(timestamp,:interval)) number_of_TR_req
+         from ".$db_instances[$service]['schema'].".requests
+         where timestamp >= trunc(to_date(:from_date,'dd/mm/yyyy HH24:Mi'),:interval)
+           and timestamp <= trunc(to_date(:to_date,'dd/mm/yyyy HH24:Mi'),:interval)
          order by bin";
      } 
-     $parsedqry = oci_parse($con, $time_series);
+     $parsedqry = ociparse($con, $time_series);
      if (!$parsedqry) { 
         echo "Error Parsing Query <br>";
         exit();
      } else {
-       $qryexec = oci_execute($parsedqry);
+	ocibindbyname($parsedqry,":interval",$interval); 
+	ocibindbyname($parsedqry,":format",$format);
+	if ($qn == 1) {
+	  ocibindbyname($parsedqry,":period",$period);
+ 	}
+	else if ($qn == 2) {
+	  ocibindbyname($parsedqry,":from_date",$from);
+	  ocibindbyname($parsedqry,":to_date",$to);
+       }
+       $qryexec = ociexecute($parsedqry);
        if (!$qryexec) {
        echo "Error Executing Query <br>";
        exit();
        } else {
          $i = 0;
-	 while ($row = oci_fetch_array($parsedqry, OCI_ASSOC)) {
+	 while ($row = ocifetch($parsedqry)) {
 	   $result['BIN'][$i] = $row['BIN'];
            $result['NUMBER_OF_DH_REQ'][$i] = $row['NUMBER_OF_DH_REQ'];
 	   $result['NUMBER_OF_DC_REQ'][$i] = $row['NUMBER_OF_DC_REQ'];

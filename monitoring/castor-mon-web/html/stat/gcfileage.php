@@ -7,7 +7,7 @@ include ("../jpgraph-1.27/src/jpgraph.php");
 include ("../jpgraph-1.27/src/jpgraph_bar.php"); 
 include ("../lib/no_data.php");
 //Include User Account
-include ("../../../conf/castor-mon-web");
+include ("../../../conf/castor-mon-web/user.php");
 //Define Bins
 $bins = array( 0 =>"<10sec",1 =>"[10-60)sec",2 =>"[1-15)min",3 =>"[15-30)min",4 =>"[30-60)min",5 =>"[1-6)hours",6 =>"[6 -12)hours", 7=> "[12-24)hours", 8=> "[1-2)days", 9=> "[2-4)days", 10=> "[4-8)days",11=> "[8-16)days", 12=> ">=16days");
 $period = $_GET['period'];
@@ -33,18 +33,26 @@ else {
 //Create new graph, enable image cache by setting countdown period(in minutes) 
 //depending on selected $period. If the cached image is valid the script immediately 
 //returns the cached image and exits without logining in the DB
-if ($period == 10/1440) 
+if ($period == '10/1440') {
+	$period = 10/1440; 
 	$graph = new Graph(730,300,"auto",1);
-else if ($period == 1/24)
+}
+else if ($period == '1/24') {
+	$period = 1/24;
 	$graph = new Graph(730,300,"auto",5);
-else if ($period == 1)
+}
+else if ($period == '1') {
+	$period = 1;
 	$graph = new Graph(730,300,"auto",30);
-else if ($period == 7)
+}
+else if ($period == '7') {
+	$period = 7;
 	$graph = new Graph(730,300,"auto",60);
-else if ($period == 30)
+}
+else if ($period == '30') {
+	$period = 30;
 	$graph = new Graph(730,300,"auto",360);
-else if ($period == 10000)
-	$graph = new Graph(730,300,"auto",360);
+}
 else $graph = new Graph(730,300,"auto");
 //Connect - DB Login
 $conn = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
@@ -70,9 +78,9 @@ if ($qn ==1)
 		  when fileage >= 345600 and fileage < 691200 then 'binn11'
 		when fileage >= 691200 and fileage < 1382400 then 'binn12'
 		  else 'binn13' end bin
-		from ".$db_instances[$service]['schema']."gcfiles
+		from ".$db_instances[$service]['schema'].".gcfiles
 		where fileage is not null
-		and timestamp > sysdate - $period)
+		and timestamp > sysdate - :period)
 		order by bin ";
 else if ($qn ==2)
 	$query1 = "select distinct bin, count(bin) over (Partition by bin) reqs 
@@ -90,12 +98,19 @@ else if ($qn ==2)
 	  when fileage >= 345600 and fileage < 691200 then 'binn11'
     when fileage >= 691200 and fileage < 1382400 then 'binn12'
 	  else 'binn13' end bin
-	from ".$db_instances[$service]['schema']."gcfiles
+	from ".$db_instances[$service]['schema'].".gcfiles
 	where fileage is not null
-	and timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-	and timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi'))
+	and timestamp >= to_date(:from_date,'dd/mm/yyyy HH24:Mi')
+	and timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi'))
 	order by bin ";
 $parsed1 = OCIParse($conn, $query1);
+if ($qn == 1) {
+	ocibindbyname($parsed1,":period",$period);
+}
+else if ($qn == 2) {
+	ocibindbyname($parsed1,":from_date",$from);
+	ocibindbyname($parsed1,":to_date",$to);
+}
 OCIExecute($parsed1);
 $j=0;
 //Fetch Data in local tables

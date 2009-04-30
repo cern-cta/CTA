@@ -2,7 +2,7 @@
 /* Plots Top-Ten Errors for the whole CASTOR Instance
  */ 
 //Include user account and necessary libraries
-include ("../../../conf/castor-mon-web");
+include ("../../../conf/castor-mon-web/user.php");
 include ("../lib/_oci_cache.php");
 include ("../jpgraph-1.27/src/jpgraph.php");
 include ("../jpgraph-1.27/src/jpgraph_bar.php");
@@ -32,18 +32,26 @@ else {
 //depending on selected $period. If the cached image is valid the script immediately 
 //returns the cached image and exits without logining in the DB
 
-if ($period == 10/1440) 
+if ($period == '10/1440') {
+	$period = 10/1440;  
  	$graph = new Graph(800,300,"auto",1);
-else if ($period == 1/24)
+}
+else if ($period == '1/24') {
+	$period = 1/24;
  	$graph = new Graph(800,300,"auto",5);
-else if ($period == 1)
+}
+else if ($period == '1') {
+	$period = 1;
 	$graph = new Graph(800,300,"auto",60);
-else if ($period == 7)
+}
+else if ($period == '7') {
+	$period = 7;
 	$graph = new Graph(800,300,"auto",90);
-else if ($period == 30)
+}
+else if ($period == '30') {
+        $period = 30;
 	$graph = new Graph(800,300,"auto",360);
-else if ($period == 10000) 
-	$graph = new Graph(800,400,"auto",360);
+}
 else 
 	$graph = new Graph(800,400,"auto");
 
@@ -60,7 +68,7 @@ if ($qn ==1)
 	           from castor_dlf.dlf_messages mes, castor_dlf.dlf_facilities fac
 		   where mes.facility = fac.fac_no
 		     and mes.severity = 3
-		     and mes.timestamp > sysdate - $period
+		     and mes.timestamp > sysdate - :period
 		   group by fac.fac_name 
 		   order by errorsum desc";
 else if ($qn ==2)
@@ -68,12 +76,19 @@ else if ($qn ==2)
 	           from castor_dlf.dlf_messages mes, castor_dlf.dlf_facilities fac
 		   where mes.facility = fac.fac_no
 		     and mes.severity = 3
-		     and mes.timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-		     and mes.timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
+		     and mes.timestamp >= to_date(:from_date,'dd/mm/yyyy HH24:Mi')
+		     and mes.timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi')
 		   group by fac.fac_name 
 		   order by errorsum desc";
 if (!($parsed1 = OCIParse($conn, $query1))) 
 	{ echo "Error Parsing Query";exit();}
+if ($qn == 1) {
+	ocibindbyname($parsed1,":period",$period);
+}
+else if ($qn == 2) {
+	ocibindbyname($parsed1,":from_date",$from);
+	ocibindbyname($parsed1,":to_date",$to);
+}
 if (!OCIExecute($parsed1))
 	{ echo "Error Executing Query";exit();}
 //Fetch Data in local tables

@@ -25,7 +25,7 @@ if(!$conn) {
 	exit;
 }
 
-$query1 = "select * from ".$db_instances[$service]['schema']." MigMonitor_MV";
+$query1 = "select * from ".$db_instances[$service]['schema'].".MigMonitor_MV";
 if (!($parsed1 = OCIParse($conn, $query1))) 
 	{ echo "Error Parsing Query";exit();}
 if (!OCIExecute($parsed1))

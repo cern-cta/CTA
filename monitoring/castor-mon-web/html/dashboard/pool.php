@@ -48,15 +48,16 @@ $query1 = "select * from (
 			select username , count(*) total,count(case when state='DiskHit' then 1 else null end) dh, 
 			count(case when state='DiskCopy' then 1 else null end) dc,
 			count(case when state='TapeRecall' then 1 else null end) tr
-			from ".$db_instances[$service]['schema']."requests
+			from ".$db_instances[$service]['schema'].".requests
 			where timestamp >= sysdate - 15/1440
 				and timestamp < sysdate - 5/1440 
-				and svcclass = '$svcclass'
+				and svcclass = :svcclass
 			group by username
 			order by total desc,username)
 			where rownum < 11";
 if (!($parsed1 = OCIParse($conn, $query1))) 
 	{ echo "Error Parsing Query";exit();}
+ocibindbyname($parsed1,":svcclass",$svcclass);
 if (!OCIExecute($parsed1))
 	{ echo "Error Executing Query";exit();}
 $i = 0;

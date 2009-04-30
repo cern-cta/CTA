@@ -64,12 +64,12 @@ if(!$conn) {
 }
 $pool =array(-1 => 'foo');
 $query1 = "select originalpool,targetpool,count(*)
-	   from ".$db_instances[$service]['schema']."diskcopy
+	   from ".$db_instances[$service]['schema'].".diskcopy
 	   where timestamp >= sysdate - 15/1440
 	   and timestamp < sysdate - 5/1440 
 	   group by originalpool,targetpool
 	   union
-	   select svcclass,svcclass,copies from ".$db_instances[$service]['schema']."internaldiskcopy
+	   select svcclass,svcclass,copies from ".$db_instances[$service]['schema'].".internaldiskcopy
 	   where timestamp >= sysdate - 15/1440
 	   and timestamp < sysdate - 5/1440 
 	   order by originalpool";

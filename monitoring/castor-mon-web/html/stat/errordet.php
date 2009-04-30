@@ -6,7 +6,7 @@
 /*Deactivate Notices*/
 error_reporting(E_ALL ^ E_NOTICE);
 /*include user account*/
-include("../../../conf/castor-mon-web");
+include("../../../conf/castor-mon-web/user.php");
 //checks if included dynamic library needed for the Oracle db
 if (!function_exists('ociplogon')) {
 	if (strtoupper(substr(PHP_OS, 0, 3) == 'WIN')) {

@@ -5,7 +5,7 @@ include ("../lib/_oci_cache.php");
 include ("../jpgraph-1.27/src/jpgraph.php");
 include ("../jpgraph-1.27/src/jpgraph_bar.php");
 include("../lib/no_data.php");
-include ("../../../conf/castor-mon-web");
+include ("../../../conf/castor-mon-web/user.php");
 $period = $_GET['period'];
 $service = $_GET['service'];
 $from = $_GET['from'];
@@ -33,18 +33,26 @@ $bins = array( 0 =>"<1Kb",1 =>"[1-10)Kb",2 =>"[10-100)Kb",3 =>"[100Kb-1Mb)",4 =>
 //returns the cached image and exits without logining in the DB
 for($i = 0;$i < 8; $i++)
 	$fsize[$i] = 0;
-if ($period == 10/1440) 
+if ($period == '10/1440') {
+	$period = 10/1440;  
 	$graph = new Graph(730,300,"auto",1);
-else if ($period == 1/24)
+}
+else if ($period == '1/24') {
+	$period = 1/24;
 	$graph = new Graph(730,300,"auto",5);
-else if ($period == 1)
+}
+else if ($period == '1') {
+	$period = 1;
 	$graph = new Graph(730,300,"auto",30);
-else if ($period == 7)
+}
+else if ($period == '7') {
+	$period = 7;
 	$graph = new Graph(730,300,"auto",60);
-else if ($period == 30)
+}
+else if ($period == '30') {
+	$period = 30; 
 	$graph = new Graph(730,300,"auto",360);
-else if ($period == 10000)
-	$graph = new Graph(730,300,"auto",360);
+}
 else $graph = new Graph(730,300,"auto");
 //connection
 $conn = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
@@ -65,8 +73,8 @@ if ($qn ==1)
 		  when filesize >= 10485760 and filesize < 104857600 then 6
 		  when filesize >= 104857600 and filesize <= 1073741824 then 7
 		  else 8 end bin
-		from ".$db_instances[$service]['schema']."gcfiles
-		where timestamp > sysdate - $period
+		from ".$db_instances[$service]['schema'].".gcfiles
+		where timestamp > sysdate - :period
 		and filesize!=0)
 		order by bin";
 else if($qn==2)
@@ -80,13 +88,20 @@ else if($qn==2)
 	  when filesize >= 10485760 and filesize < 104857600 then 6
 	  when filesize >= 104857600 and filesize <= 1073741824 then 7
 	  else 8 end bin
-	from ".$db_instances[$service]['schema']."gcfiles
-	where timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-	and timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
+	from ".$db_instances[$service]['schema'].".gcfiles
+	where timestamp >= to_date(:from_date,'dd/mm/yyyy HH24:Mi')
+	and timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi')
 	and filesize!=0)
 	order by bin";
 if (!($parsed1 = OCIParse($conn, $query1))) 
 	{ echo "Error Parsing Query";exit();}
+if ($qn == 1) {
+	ocibindbyname($parsed1,":period",$period);
+}
+else if ($qn == 2) {
+	ocibindbyname($parsed1,":from_date",$from);
+	ocibindbyname($parsed1,":to_date",$to);
+}
 if (!OCIExecute($parsed1))
 	{ echo "Error Executing Query";exit();}
 //Fetch data in local tables

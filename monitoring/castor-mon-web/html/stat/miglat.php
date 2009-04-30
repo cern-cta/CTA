@@ -6,7 +6,7 @@ include ("../jpgraph-1.27/src/jpgraph.php");
 include ("../jpgraph-1.27/src/jpgraph_bar.php");
 include("../lib/no_data.php");
 //Include user account
-include ("../../../conf/castor-mon-web");
+include ("../../../conf/castor-mon-web/user.php");
 //Get posted values
 $period = $_GET['period'];
 $from = $_GET['from'];
@@ -33,18 +33,26 @@ $bins = array( 0 =>"<1sec",1 =>"[1-2)sec",2 =>"[2-4)sec",3 =>"[4-6)sec",4 =>"[6-
 //Create new graph, enable image cache by setting countdown period(in minutes) 
 //depending on selected $period. If the cached image is valid the script immediately 
 //returns the cached image and exits without logining in the DB
-if ($period == 10/1440) 
+if ($period == '10/1440') {
+	$period = 10/1440; 
 	$graph = new Graph(800,300,"auto",1);
-else if ($period == 1/24)
+}
+else if ($period == '1/24') {
+	$period = 1/24;
 	$graph = new Graph(800,300,"auto",5);
-else if ($period == 1)
+}
+else if ($period == '1') {
+	$period = 1;
 	$graph = new Graph(800,300,"auto",30);
-else if ($period == 7)
+}
+else if ($period == '7') {
+	$period = 7; 
 	$graph = new Graph(800,300,"auto",60);
-else if ($period == 30)
+}
+else if ($period == '30') {
+	$period = 30;
 	$graph = new Graph(800,300,"auto",360);
-else if ($period == 10000)
-	$graph = new Graph(800,300,"auto",360);
+}
 else $graph = new Graph(800,300,"auto");
 //connection
 $conn = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
@@ -72,10 +80,10 @@ if ($qn == 1)
 		  when b.totallatency >= 600 and b.totallatency < 1800 then 10
 		  when b.totallatency >= 1800 and b.totallatency < 3600 then 11
 		  else 12 end bin
-		from ".$db_instances[$service]['schema']."migration a, ".$db_instances[$service]['schema']."totallatency b
+		from ".$db_instances[$service]['schema'].".migration a, ".$db_instances[$service]['schema'].".totallatency b
 		where a.subreqid = b.subreqid
-		and a.timestamp > sysdate - $period
-		and b.timestamp > sysdate - $period)
+		and a.timestamp > sysdate - :period
+		and b.timestamp > sysdate - :period)
 		order by bin ";
 else if ($qn == 2)
 	$query1 = "select distinct bin, count(bin) over (Partition by bin) migs 
@@ -92,15 +100,22 @@ else if ($qn == 2)
 		  when b.totallatency >= 600 and b.totallatency < 1800 then 10
 		  when b.totallatency >= 1800 and b.totallatency < 3600 then 11
 		  else 12 end bin
-		from ".$db_instances[$service]['schema']."migration a, ".$db_instances[$service]['schema']."totallatency b
+		from ".$db_instances[$service]['schema'].".migration a, ".$db_instances[$service]['schema'].".totallatency b
 		where a.subreqid = b.subreqid
-		and a.timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-		and a.timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
-		and b.timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-		and b.timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi'))
+		and a.timestamp >= to_date(:from_date,'dd/mm/yyyy HH24:Mi')
+		and a.timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi')
+		and b.timestamp >= to_date(:from_date,'dd/mm/yyyy HH24:Mi')
+		and b.timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi'))
 		order by bin ";
 if (!($parsed1 = OCIParse($conn, $query1))) 
 	{ echo "Error Parsing Query";exit();}
+if ($qn == 1) {
+	ocibindbyname($parsed1,":period",$period);
+}
+else if ($qn == 2) {
+	ocibindbyname($parsed1,":from_date",$from);
+	ocibindbyname($parsed1,":to_date",$to);
+}
 if (!OCIExecute($parsed1))
 	{ echo "Error Executing Query";exit();}
 //fetch data into local tables

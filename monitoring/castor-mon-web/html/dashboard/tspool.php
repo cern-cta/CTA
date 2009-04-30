@@ -16,12 +16,9 @@ if($svcclass == NULL) $svcclass = 'default';
 $reqkind = $_GET['reqkind'];
 preg_match($pattern_1,$reqkind,$match_1);
 $reqkind = $match_1[0];
-//define interval and format
-$interval = 'Mi';
-$format = 'HH24:MI';
 $service = $_GET['service'];
 
-$con = oci_connect($db_instances[$service]['username'],$db_instances[$service]['pass'],
+$con = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],
        $db_instances[$service]['serv']);
    if (!$con) {
      $e = oci_error();
@@ -29,27 +26,28 @@ $con = oci_connect($db_instances[$service]['username'],$db_instances[$service]['
      exit;
    } else {// db functionnality
        $time_series =
-         "select distinct to_char(trunc(timestamp,'$interval'), '$format') bin, 
-		   count(case when state='DiskHit' then trunc(timestamp,'$interval') else null end) over (Partition by trunc(timestamp,'$interval')) number_of_DH_req, 
-		   count(case when state='DiskCopy' then trunc(timestamp,'$interval') else null end) over (Partition by trunc(NN_Requests_timestamp,'$interval')) number_of_DC_req, 
-		   count(case when state='TapeRecall' then trunc(timestamp,'$interval') else null end) over (Partition by trunc(timestamp,'$interval')) number_of_TR_req
-         from ".$db_instances[$service]['schema']."requests
-         where timestamp >= trunc(sysdate -15/1440,'$interval')
-	   and timestamp < trunc(sysdate - 5/1440,'$interval') 
-           and svcclass = '$svcclass'
+         "select distinct to_char(trunc(timestamp,'Mi'), 'HH24:MI') bin, 
+		   count(case when state='DiskHit' then trunc(timestamp,'Mi') else null end) over (Partition by trunc(timestamp,'Mi')) number_of_DH_req, 
+		   count(case when state='DiskCopy' then trunc(timestamp,'Mi') else null end) over (Partition by trunc(NN_Requests_timestamp,'Mi')) number_of_DC_req, 
+		   count(case when state='TapeRecall' then trunc(timestamp,'Mi') else null end) over (Partition by trunc(timestamp,'Mi')) number_of_TR_req
+         from ".$db_instances[$service]['schema'].".requests
+         where timestamp >= trunc(sysdate -15/1440,'Mi')
+	   and timestamp < trunc(sysdate - 5/1440,'Mi') 
+           and svcclass = :svcclass
          order by bin";
-          $parsedqry = oci_parse($con, $time_series);
+          $parsedqry = ociparse($con, $time_series);
      if (!$parsedqry) { 
         echo "Error Parsing Query <br>";
         exit();
      } else {
-       $qryexec = oci_execute($parsedqry);
+       ocibindbyname($parsedqry,":svcclass",$svcclass);
+       $qryexec = ociexecute($parsedqry);
        if (!$qryexec) {
        echo "Error Executing Query <br>";
        exit();
        } else {
          $i = 0;
-	 while ($row = oci_fetch_array($parsedqry, OCI_ASSOC)) {
+	 while ($row = ocifetch($parsedqry)) {
 	   $result['BIN'][$i] = $row['BIN'];
        $result['NUMBER_OF_DH_REQ'][$i] = $row['NUMBER_OF_DH_REQ'];
 	   $result['NUMBER_OF_DC_REQ'][$i] = $row['NUMBER_OF_DC_REQ'];

@@ -63,36 +63,53 @@ if(!$conn) {
 	print htmlentities($e['message']);
 	exit;
 }
-if ($period != NULL) { 
+if ($timewindow != NULL) { 
 	$qn = 1;
 }	
 else { 
 	$qn = 2;
 }
 $pool =array(-1 => 'foo');
+if ($timewindow == "10/1440")
+	$period = 10/1440;
+else if ($timewindow == "1/24")
+	$period = 1/24;
+else if ($timewindow == "1")
+	$period = 1;
+else if ($timewindow == "7")
+	$period = 7;
+else if ($timewindow == "30")
+	$period = 30;
 if ($qn == 1) 
 	$query1 = "select originalpool,targetpool,count(*)
-		   from ".$db_instances[$service]['schema']."diskcopy
-		   where timestamp > sysdate - $period
+		   from ".$db_instances[$service]['schema'].".diskcopy
+		   where timestamp > sysdate - :period
 		   group by originalpool,targetpool
 		   union
-		   select svcclass,svcclass,copies from ".$db_instances[$service]['schema']."internaldiskcopy
-		   where timestamp > sysdate - $period
+		   select svcclass,svcclass,copies from ".$db_instances[$service]['schema'].".internaldiskcopy
+		   where timestamp > sysdate - :period
 		   order by originalpool";
 else if ($qn ==2)
 	$query1 = "select originalpool,targetpool,count(*)
-		   from ".$db_instances[$service]['schema']."diskcopy
-		   where timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-			and timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
+		   from ".$db_instances[$service]['schema'].".diskcopy
+		   where timestamp >= to_date(:from_date,'dd/mm/yyyy HH24:Mi')
+			and timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi')
 		   group by originalpool,targetpool
 		   union
-		   select svcclass,svcclass,copies from ".$db_instances[$service]['schema']."internaldiskcopy
-		   where timestamp >= to_date('$from','dd/mm/yyyy HH24:Mi')
-			and timestamp <= to_date('$to','dd/mm/yyyy HH24:Mi')
+		   select svcclass,svcclass,copies from ".$db_instances[$service]['schema'].".internaldiskcopy
+		   where timestamp >= to_date(:from_date,'dd/mm/yyyy HH24:Mi')
+			and timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi')
 		   order by originalpool";
 
 if (!($parsed1 = OCIParse($conn, $query1))) 
 	{ echo "Error Parsing Query";exit();}
+if ($qn == 1) {
+	ocibindbyname($parsed1,":period",$period);
+}
+else if ($qn == 2) {
+	ocibindbyname($parsed1,":from_date",$from);
+	ocibindbyname($parsed1,":to_date",$to);
+}
 if (!OCIExecute($parsed1))
 	{ echo "Error Executing Query";exit();}
 $i =0;

@@ -47,15 +47,16 @@ if(!$conn) {
 
 $query1 = "select * from (
 			select username , count(*) total
-			from ".$db_instances[$service]['schema']."migration
+			from ".$db_instances[$service]['schema'].".migration
 			where timestamp >= sysdate - 15/1440
 				and timestamp < sysdate - 5/1440 
-				and svcclass = '$svcclass'
+				and svcclass = :svcclass
 			group by username
 			order by total desc,username)
 			where rownum < 11";
 if (!($parsed1 = OCIParse($conn, $query1))) 
 	{ echo "Error Parsing Query";exit();}
+ocibindbyname($parsed1,":svcclass",$svcclass);
 if (!OCIExecute($parsed1))
 	{ echo "Error Executing Query";exit();}
 //fetch data in local tables 

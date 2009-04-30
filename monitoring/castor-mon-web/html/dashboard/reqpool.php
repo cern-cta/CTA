@@ -50,16 +50,18 @@ if(!$conn) {
 
 $query1 = "select * from (
 		   select username, count(*) r
-		   from ".$db_instances[$service]['schema']."requests
+		   from ".$db_instances[$service]['schema'].".requests
 		   where timestamp >= sysdate - 15/1440
 		   and timestamp < sysdate - 5/1440 
-		   and state = '$reqkind'
-		   and svcclass = '$svcclass'
+		   and state = :reqkind
+		   and svcclass = :svcclass
 		   group by username
 		   order by r desc)
 		   where rownum < 11";
 if (!($parsed1 = OCIParse($conn, $query1))) 
 	{ echo "Error Parsing Query";exit();}
+ocibindbyname($parsed1,":reqkind",$reqkind);
+ocibindbyname($parsed1,":svcclass",$svcclass);
 if (!OCIExecute($parsed1))
 	{ echo "Error Executing Query";exit();}
 $i = 0;

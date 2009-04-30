@@ -1,7 +1,7 @@
 <?php
 //this script prints the "Top Tapes" Graph for all service classes
 //user account 
-include ("../../../conf/castor-mon-web");
+include ("../../../conf/castor-mon-web/user.php");
 //checks if included dynamic library needed for the Oracle db
 if (!function_exists('ociplogon')) {
 	if (strtoupper(substr(PHP_OS, 0, 3) == 'WIN')) {
@@ -16,7 +16,7 @@ if(!$conn) {
 	exit;
 }
 $query1 = "select svcclass
-	   from ".$db_instances[$service]['schema']."SvcclassMap_MV";
+	   from ".$db_instances[$service]['schema'].".SvcclassMap_MV";
 
 if (!($parsed1 = OCIParse($conn, $query1))) 
 	{ echo "Error Parsing Query";exit();}

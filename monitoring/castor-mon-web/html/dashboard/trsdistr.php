@@ -27,7 +27,7 @@ $query1 = "select distinct bin, count(bin) over (Partition by bin) reqs
           when filesize >= 1610612736 and filesize <= 2147483648 then 6
           when filesize >= 2147483648 and filesize <= 2684354560  then 7
 	  else 8 end bin
-	from ".$db_instances[$service]['schema']."requests
+	from ".$db_instances[$service]['schema'].".requests
 	where state = 'TapeRecall'
 	and timestamp >= sysdate - 15/1440
 	and timestamp < sysdate - 5/1440

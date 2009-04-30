@@ -30,8 +30,6 @@
 		$stat = "General"; 
 	if ($timewindow == "all")
 		$timewindow = "10000";
-	else if($timewindow == NULL)
-		$timewindow = "7";
 ?>
 <html>
 	<head>
@@ -90,8 +88,6 @@
 								echo "<div id='ora'> $service: File Request Statistics - Last Week </div>";
 							else if($timewindow == "30")
 								echo "<div id='ora'> $service: File Request Statistics - Last Month </div>";
-							else 
-								echo "<div id='ora'> $service: File Request Statistics - Everything </div>";
 						}
 					}
 					else if ($stat == "Latency") {
@@ -109,8 +105,6 @@
 								echo "<div id='ora'> $service: Latency Statistics - Last Week </div>";
 							else if($timewindow == "30")
 								echo "<div id='ora'> $service: Latency Statistics - Last Month </div>";
-							else 
-								echo "<div id='ora'> $service: Latency Statistics - Everything </div>";
 						}
 					}
 					else if ($stat == "File") {
@@ -128,8 +122,6 @@
 								echo "<div id='ora'> $service: File System Statistics - Last Week </div>";
 							else if($timewindow == "30")
 								echo "<div id='ora'> $service: File System Statistics - Last Month </div>";
-							else 
-								echo "<div id='ora'> $service: File System Statistics - Everything </div>";
 						}
 					}	
 					else if ($stat == "Error") {
@@ -147,8 +139,6 @@
 								echo "<div id='ora'> $service: Error Statistics - Last Week </div>";
 							else if($timewindow == "30")
 								echo "<div id='ora'> $service: Error Statistics - Last Month </div>";
-							else 
-								echo "<div id='ora'> $service: Error Statistics - Everything </div>";
 						}
 					}	
 					else if ($stat == "Tape") {
@@ -166,8 +156,6 @@
 								echo "<div id='ora'> $service: Tape Statistics - Last Week </div>";
 							else if($timewindow == "30")
 								echo "<div id='ora'> $service: Tape Statistics - Last Month </div>";
-							else 
-								echo "<div id='ora'> $service: Tape Statistics - Everything </div>";
 						}
 					}
 					else if ($stat == "GC") {
@@ -185,8 +173,6 @@
 								echo "<div id='ora'> $service: Garbage Collection Statistics - Last Week </div>";
 							else if($timewindow == "30")
 								echo "<div id='ora'> $service: Garbage Collection Statistics - Last Month </div>";
-							else 
-								echo "<div id='ora'> $service: Garbage Collection Statistics - Everything </div>";
 						}
 					}
 					else if ($stat == "Migration") {
@@ -204,8 +190,6 @@
 								echo "<div id='ora'> $service: File Migration Statistics - Last Week </div>";
 							else if($timewindow == "30")
 								echo "<div id='ora'> $service: File Migration Statistics - Last Month </div>";
-							else 
-								echo "<div id='ora'> $service: File Migration Statistics - Everything </div>";
 						}
 					}
 					else {
@@ -223,8 +207,6 @@
 								echo "<div id='ora'> $service: General Statistics - Last Week </div>";
 							else if($timewindow == "30")
 								echo "<div id='ora'> $service: General Statistics - Last Month </div>";
-							else 
-								echo "<div id='ora'> $service: General Statistics - Everything </div>";
 						}
 					}
 					
@@ -234,15 +216,26 @@
 					<ul><li><a href="../dashboard/dashboard.php?service=<?php echo $service;?>">HOME</a></li></ul>
 					<ul>
 						<li><h2>Statistics</h2>
-							<ul>
-								<li><a href="tabledet.php?service=<?php echo $service;?>">General Statistics</a></li>
-								<li><a href="tabledet.php?service=<?php echo $service;?>&stat=FileReq">File Request Statistics</a></li>
-								<li><a href="tabledet.php?service=<?php echo $service;?>&stat=Migration">File Migration Statistics</a></li>
-								<li><a href="tabledet.php?service=<?php echo $service;?>&stat=Latency">Latency Statistics</a></li>
-								<li><a href="tabledet.php?service=<?php echo $service;?>&stat=File">File System Statistics</a></li>
-								<li><a href="tabledet.php?service=<?php echo $service;?>&stat=Tape">Tape Statistics</a></li>
-								<li><a href="tabledet.php?service=<?php echo $service;?>&stat=Error">Error Statistics</a></li>
-								<li><a href="tabledet.php?service=<?php echo $service;?>&stat=GC">Garbage Collection Statistics</a></li>
+							<ul> 
+							   <?php if ($custom_date == 0) {?>
+								<li><a href="tabledet.php?timewindow=<?php echo $timewindow;?>&service=<?php echo $service;?>">General Statistics</a></li>
+								<li><a href="tabledet.php?timewindow=<?php echo $timewindow;?>&service=<?php echo $service;?>&stat=FileReq">File Request Statistics</a></li>
+								<li><a href="tabledet.php?timewindow=<?php echo $timewindow;?>&service=<?php echo $service;?>&stat=Migration">File Migration Statistics</a></li>
+								<li><a href="tabledet.php?timewindow=<?php echo $timewindow;?>&service=<?php echo $service;?>&stat=Latency">Latency Statistics</a></li>
+								<li><a href="tabledet.php?timewindow=<?php echo $timewindow;?>&service=<?php echo $service;?>&stat=File">File System Statistics</a></li>
+								<li><a href="tabledet.php?timewindow=<?php echo $timewindow;?>&service=<?php echo $service;?>&stat=Tape">Tape Statistics</a></li>
+								<li><a href="tabledet.php?timewindow=<?php echo $timewindow;?>&service=<?php echo $service;?>&stat=Error">Error Statistics</a></li>
+								<li><a href="tabledet.php?timewindow=<?php echo $timewindow;?>&service=<?php echo $service;?>&stat=GC">Garbage Collection Statistics</a></li>
+							   <?} else { ?>
+							   	<li><a href="tabledet.php?date1=<?php echo $date1;?>&date1hour=<?php echo $date1hour;?>&date2=<?php echo $date2;?>&date2hour=<?php echo $date2hour;?>&service=<?php echo $service;?>">General Statistics</a></li>
+								<li><a href="tabledet.php?date1=<?php echo $date1;?>&date1hour=<?php echo $date1hour;?>&date2=<?php echo $date2;?>&date2hour=<?php echo $date2hour;?>&service=<?php echo $service;?>&stat=FileReq">File Request Statistics</a></li>
+								<li><a href="tabledet.php?date1=<?php echo $date1;?>&date1hour=<?php echo $date1hour;?>&date2=<?php echo $date2;?>&date2hour=<?php echo $date2hour;?>&service=<?php echo $service;?>&stat=Migration">File Migration Statistics</a></li>
+								<li><a href="tabledet.php?date1=<?php echo $date1;?>&date1hour=<?php echo $date1hour;?>&date2=<?php echo $date2;?>&date2hour=<?php echo $date2hour;?>&service=<?php echo $service;?>&stat=Latency">Latency Statistics</a></li>
+								<li><a href="tabledet.php?date1=<?php echo $date1;?>&date1hour=<?php echo $date1hour;?>&date2=<?php echo $date2;?>&date2hour=<?php echo $date2hour;?>&service=<?php echo $service;?>&stat=File">File System Statistics</a></li>
+								<li><a href="tabledet.php?date1=<?php echo $date1;?>&date1hour=<?php echo $date1hour;?>&date2=<?php echo $date2;?>&date2hour=<?php echo $date2hour;?>&service=<?php echo $service;?>&stat=Tape">Tape Statistics</a></li>
+								<li><a href="tabledet.php?date1=<?php echo $date1;?>&date1hour=<?php echo $date1hour;?>&date2=<?php echo $date2;?>&date2hour=<?php echo $date2hour;?>&service=<?php echo $service;?>&stat=Error">Error Statistics</a></li>
+								<li><a href="tabledet.php?date1=<?php echo $date1;?>&date1hour=<?php echo $date1hour;?>&date2=<?php echo $date2;?>&date2hour=<?php echo $date2hour;?>&service=<?php echo $service;?>&stat=GC">Garbage Collection Statistics</a></li>
+							    <? }?>
 							</ul>
 						</li>
 					</ul>
@@ -263,25 +256,30 @@
 						echo "<form action='tabledet.php?service=$service' method='post'>";
 					      else 
 					        echo "<form action='tabledet.php?service=$service&stat=$stat' method='post'>";?>
-					<b> Timewindow: </b>
+					<b> Fixed Timewindow: </b>
 					<select name="timewindow">
-	  				<option value ="10/1440" selected = "selected">Last 10 minutes</option>
-	  				<option value ="1/24">Last Hour</option>
-	  				<option value ="1" >Last Day</option>
-	  				<option value ="7">Last Week</option>
-	  				<option value ="30" >Last Month</option>
-					<option value ="all" > Everything</option>
+	  				<option onclick="javascript:this.form.submit()" value ="10/1440" selected = "selected">Last 10 minutes</option>
+	  				<option onclick="javascript:this.form.submit()" value ="1/24">Last Hour</option>
+	  				<option onclick="javascript:this.form.submit()" value ="1" >Last Day</option>
+	  				<option onclick="javascript:this.form.submit()" value ="7">Last Week</option>
+	  				<option onclick="javascript:this.form.submit()" value ="30" >Last Month</option>
 	  				</select>
-					<b> or </b>
-				</td><td valign = "top">
+					</form>
+				</td></tr>
+				<tr><td valign = "top">
+					<?php if($stat == NULL) 
+						echo "<form action='tabledet.php?service=$service' method='post'>";
+					      else 
+					        echo "<form action='tabledet.php?service=$service&stat=$stat' method='post'>";?>
 					<SCRIPT LANGUAGE="JavaScript" ID="calendar">var cal1 = new CalendarPopup();</SCRIPT>
 					<SCRIPT LANGUAGE="JavaScript">writeSource("calendar");</SCRIPT>
-					<b>From:</b> <INPUT TYPE="text" NAME="date1" VALUE="dd/MM/yyyy" SIZE=8 onClick="cal1.select(document.forms[0].date1,'anchor1','dd/MM/yyyy'); return false;" TITLE="Select Starting Date" NAME="anchor1" ID="anchor1">
-				    <INPUT TYPE="text" NAME="date1hour" VALUE="00:00" SIZE=3>
-					<b>To:</b> <INPUT TYPE="text" NAME="date2" VALUE="dd/MM/yyyy" SIZE=8 onClick="cal1.select(document.forms[0].date2,'anchor2','dd/MM/yyyy',(document.forms[0].date2.value=='')?document.forms[0].date1.value:null); return false;" TITLE="Select Ending Date" NAME="anchor2" ID="anchor2">
-					<INPUT TYPE="text" NAME="date2hour" VALUE="00:00" SIZE=3>
+					<b>From:</b> <INPUT TYPE="text" NAME="date1" VALUE="dd/MM/yyyy" SIZE=9 onClick="cal1.select(document.forms[1].date1,'anchor1','dd/MM/yyyy'); return false;" TITLE="Select Starting Date" NAME="anchor1" ID="anchor1">
+				    <INPUT TYPE="text" NAME="date1hour" VALUE="00:00" SIZE=4>
+					<b>To:</b> <INPUT TYPE="text" NAME="date2" VALUE="dd/MM/yyyy" SIZE=9 onClick="cal1.select(document.forms[1].date2,'anchor2','dd/MM/yyyy',(document.forms[1].date2.value=='')?document.forms[1].date1.value:null); return false;" TITLE="Select Ending Date" NAME="anchor2" ID="anchor2">
+					<INPUT TYPE="text" NAME="date2hour" VALUE="00:00" SIZE=4>
 					<input type="submit" name = "submit" value = "Print">
-				</td>
+					</form>
+				</td></tr>
 				</td></tr></table>
 				<?php
 					if($stat == "FileReq") {
@@ -290,10 +288,10 @@
 								  <table>
 								  <tr>
 									<td>
-								 <img src ='".$db_instances[$service]['schema']." requestsperpool.php?service=$service&period=$timewindow' title='File ".$db_instances[$service]['schema']." requests per SvcClass \n Three Categories of File ".$db_instances[$service]['schema']." requests \n a) File Present on Disk (DiskHit) \n b) File Copied from another ScvClass \n c) File Recalled from Tape'>
+								 <img src ='requestsperpool.php?service=$service&period=$timewindow' title='File requests per SvcClass \n Three Categories of File requests \n a) File Present on Disk (DiskHit) \n b) File Copied from another ScvClass \n c) File Recalled from Tape'>
 								</td>
 								<td>
-								 <img src ='topusers.php?service=$service&period=$timewindow' title = 'Top Users - File ".$db_instances[$service]['schema']." requests \n File ".$db_instances[$service]['schema']." requests are distinguished into three categories diskhits, \ncopies from another svcclass and tape recalls'>
+								 <img src ='topusers.php?service=$service&period=$timewindow' title = 'Top Users - File requests \n File requests are distinguished into three categories diskhits, \ncopies from another svcclass and tape recalls'>
 								</td>
 								  </tr>
 								  </table>
@@ -302,10 +300,10 @@
 								  <table>
 									<tr>
 								<td valign ='top'>
-									<img src ='prefetch.php?service=$service&period=$timewindow' title = 'Direct and Prestaged File ".$db_instances[$service]['schema']." requests per SvcClass. We focus on tape recalled files.'>
+									<img src ='prefetch.php?service=$service&period=$timewindow' title = 'Direct and Prestaged File requests per SvcClass. We focus on tape recalled files.'>
 								</td>
 								<td valign ='top'>
-									<img src ='prestage_users.php?service=$service&period=$timewindow' title = 'Direct and Prestaged File ".$db_instances[$service]['schema']." requests per User. We focus on tape recalled files'>
+									<img src ='prestage_users.php?service=$service&period=$timewindow' title = 'Direct and Prestaged File requests per User. We focus on tape recalled files'>
 								</td>
 									  </tr>
 									  </table>
@@ -316,10 +314,10 @@
 								  <table>
 								  <tr>
 									<td>
-								 <img src ='".$db_instances[$service]['schema']." requestsperpool.php?service=$service&from=$date1 $date1hour&to=$date2 $date2hour' title='File ".$db_instances[$service]['schema']." requests per SvcClass \n Three Categories of File ".$db_instances[$service]['schema']." requests \n a) File Present on Disk (DiskHit) \n b) File Copied from another ScvClass \n c) File Recalled from Tape'>
+								 <img src ='requestsperpool.php?service=$service&from=$date1 $date1hour&to=$date2 $date2hour' title='File requests per SvcClass \n Three Categories of File requests \n a) File Present on Disk (DiskHit) \n b) File Copied from another ScvClass \n c) File Recalled from Tape'>
 								</td>
 								<td>
-								 <img src ='topusers.php?service=$service&from=$date1 $date1hour&to=$date2 $date2hour' title = 'Top Users - File ".$db_instances[$service]['schema']." requests \n File ".$db_instances[$service]['schema']." requests are distinguished into three categories diskhits, \ncopies from another svcclass and tape recalls'>
+								 <img src ='topusers.php?service=$service&from=$date1 $date1hour&to=$date2 $date2hour' title = 'Top Users - File requests \n File requests are distinguished into three categories diskhits, \ncopies from another svcclass and tape recalls'>
 								</td>
 								  </tr>
 								  </table>
@@ -328,10 +326,10 @@
 								  <table>
 									<tr>
 								<td valign ='top'>
-									<img src ='prefetch.php?service=$service&from=$date1 $date1hour&to=$date2 $date2hour' title = 'Direct and Prestaged File ".$db_instances[$service]['schema']." requests per SvcClass. We focus on tape recalled files.'>
+									<img src ='prefetch.php?service=$service&from=$date1 $date1hour&to=$date2 $date2hour' title = 'Direct and Prestaged File requests per SvcClass. We focus on tape recalled files.'>
 								</td>
 								<td valign ='top'>
-									<img src ='prestage_users.php?service=$service&from=$date1 $date1hour&to=$date2 $date2hour' title = 'Direct and Prestaged File ".$db_instances[$service]['schema']." requests per User. We focus on tape recalled files'>
+									<img src ='prestage_users.php?service=$service&from=$date1 $date1hour&to=$date2 $date2hour' title = 'Direct and Prestaged File requests per User. We focus on tape recalled files'>
 								</td>
 									  </tr>
 									  </table>
@@ -463,7 +461,7 @@
 							echo "<div>
 								<table>
 								  <tr><td align = 'center'>
-								<img src='usertapecontribution.php?service=$service&period=$timewindow' title =' File ".$db_instances[$service]['schema']." requests per User, where file was recalled from tape and the tape wasn't already mounted.\n Thus User Tape Mount Contribution'>
+								<img src='usertapecontribution.php?service=$service&period=$timewindow' title =' File requests per User, where file was recalled from tape and the tape wasn't already mounted.\n Thus User Tape Mount Contribution'>
 								  </td></tr>
 								  </table>
 								  </div>
@@ -494,7 +492,7 @@
 							echo "<div>
 								<table>
 								  <tr><td align = 'center'>
-								<img src='usertapecontribution.php?service=$service&from=$date1 $date1hour&to=$date2 $date2hour' title =' File ".$db_instances[$service]['schema']." requests per User, where file was recalled from tape and the tape wasn't already mounted.\n Thus User Tape Mount Contribution'>
+								<img src='usertapecontribution.php?service=$service&from=$date1 $date1hour&to=$date2 $date2hour' title =' File requests per User, where file was recalled from tape and the tape wasn't already mounted.\n Thus User Tape Mount Contribution'>
 								  </td></tr>
 								  </table>
 								  </div>
@@ -603,11 +601,11 @@
 								  <table>
 									<tr>
 								<td valign ='top'>
-									<img src ='".$db_instances[$service]['schema']." requestsperpool.php?service=$service&period=$timewindow'>
+									<img src ='requestsperpool.php?service=$service&period=$timewindow'>
 								</td></tr>
 								<tr><td valign ='top'>
-								<b> Pool Transactions (Files Copied) </b>";
-								$period=$timewindow; include("pool_transaction.php");
+								<b> Pool Transactions (Files Copied) </b>"; 
+								include("pool_transaction.php");
 								echo "</td>
 									  </tr>
 									  </table>
@@ -630,12 +628,13 @@
 								  <table>
 									<tr>
 								<td valign ='top'>
-									<img src ='".$db_instances[$service]['schema']." requestsperpool.php?service=$service&from=$date1 $date1hour&to=$date2 $date2hour'>
+									<img src ='requestsperpool.php?service=$service&from=$date1 $date1hour&to=$date2 $date2hour'>
 								</td></tr>
 								<tr><td valign ='top'>
 								<b> Pool Transactions (Files Copied) </b>";
 								$from=$date1 . " " . $date1hour;
-								$to=$date2 . " " . $date2hour; include("pool_transaction.php");
+								$to=$date2 . " " . $date2hour; 
+								include("pool_transaction.php");
 								echo "</td>
 									  </tr>
 									  </table>

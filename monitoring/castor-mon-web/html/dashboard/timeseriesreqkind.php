@@ -12,9 +12,6 @@ $reqkind = $_GET['reqkind'];
 $pattern_1 = '/[a-zA-Z0-9]{1,15}/';
 preg_match($pattern_1,$reqkind,$match);
 $reqkind = $match[0];
-$interval = 'Mi';
-$format = 'HH24:MI';
-$inter = 'Mi';
 $service = $_GET['service'];
 //connection - DB login
 $conn = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
@@ -24,16 +21,17 @@ if(!$conn) {
 	exit;
 }
 
-$query1 = "select to_char(bin,'$format') , number_of_req from (
-	   select distinct trunc(timestamp,'$interval') bin, count(trunc(timestamp,'$interval')) 
-	   over (Partition by trunc(timestamp,'$interval')) number_of_req  
-           from ".$db_instances[$service]['schema']."requests
-           where timestamp >= trunc(sysdate - 15/1440,'$inter')
-		   and timestamp < trunc(sysdate - 5/1440,'$inter') 
-		   and state = '$reqkind')
+$query1 = "select to_char(bin,'HH24:MI') , number_of_req from (
+	   select distinct trunc(timestamp,'Mi') bin, count(trunc(timestamp,'Mi')) 
+	   over (Partition by trunc(timestamp,'Mi')) number_of_req  
+           from ".$db_instances[$service]['schema'].".requests
+           where timestamp >= trunc(sysdate - 15/1440,'Mi')
+		   and timestamp < trunc(sysdate - 5/1440,'Mi') 
+		   and state = :reqkind)
            order by bin";
 if (!($parsed1 = OCIParse($conn, $query1))) 
 	{ echo "Error Parsing Query";exit();}
+ocibindbyname($parsed1,":reqkind",$reqkind);
 if (!OCIExecute($parsed1))
 	{ echo "Error Executing Query";exit();}
 $i = 0;
