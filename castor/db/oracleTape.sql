@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.736 $ $Date: 2009/04/30 14:44:02 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.737 $ $Date: 2009/04/30 15:38:42 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1960,7 +1960,7 @@ fileMountpoint VARCHAR2(2048);
 givenPath VARCHAR2(2048);
 BEGIN
   -- check also the path
-  select path,filesystem,castorfile INTO filePath,fsId,cfId from diskcopy,castorfile where castorfile.id IN(select id from castorfile where fileid=inFileId and nshost=inHost) and status=2;
+  select path,filesystem,castorfile INTO filePath,fsId,cfId from diskcopy,castorfile where castorfile.id = diskcopy.castorfile AND  castorfile.id IN(select id from castorfile where fileid=inFileId and nshost=inHost) and status=2;
   select diskserver.name, filesystem.mountpoint into fileDiskserver, fileMountpoint from diskserver,filesystem where diskserver.id= filesystem.diskserver and filesystem.id=fsid;
   select filediskserver||':'||filemountpoint||filepath INTO givenPath FROM dual;
   select copynb,vid INTO outCopy, outvid FROM tape,segment,tapecopy WHERE tape.id=segment.tape AND fseq=inFseq AND segment.copy = tapecopy.id AND tapecopy.castorfile=cfId AND inPath = givenPath; 
