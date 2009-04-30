@@ -93,7 +93,7 @@ int castor::tape::aggregator::AggregatorDaemon::main(const int argc,
   } catch (castor::exception::Exception &ex) {
     std::cerr << std::endl << "Failed to start daemon: "
       << ex.getMessage().str() << std::endl << std::endl;
-    castor::tape::aggregator::AggregatorDaemon::usage(std::cerr);
+    usage(std::cerr);
     std::cerr << std::endl;
     return 1;
   }

@@ -85,7 +85,7 @@ private:
    * @param os Output stream to be written to.
    * @param programName The program name of the aggregator daemon.
    */
-  static void usage(std::ostream &os) throw();
+  void usage(std::ostream &os) throw();
 
   /**
    * Creates the VDQM request handler thread pool.
