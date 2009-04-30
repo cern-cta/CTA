@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.8-2_to_2.1.8-3.sql,v $ $Release: 1.2 $ $Release$ $Date: 2008/11/12 19:25:29 $ $Author: waldron $
+ * @(#)$RCSfile: 2.1.8-2_to_2.1.8-3.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/04/30 09:20:51 $ $Author: sponcec3 $
  *
  * This script upgrades a CASTOR v2.1.8-2 STAGER database into v2.1.8-3
  *
@@ -59,6 +59,9 @@ END;
 
 /* Schema changes go here */
 /**************************/
+
+/* Drop unused constraint on DiskPool2SvcClass */
+ALTER TABLE DiskPool2SvcClass DROP CONSTRAINT I_DISKPOOL2SVCCLA_PARENTCHILD;
 
 /* DiskCopy constraints */
 ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_CastorFile
@@ -201,9 +204,6 @@ BEGIN
   END LOOP;
 END;
 /
-
-/* Drop unused constraint on DiskPool2SvcClass */
-ALTER TABLE DiskPool2SvcClass DROP CONSTRAINT I_DISKPOOL2SVCCLA_PARENTCHILD;
 
 /* Drop unneeded tables */
 DROP TABLE StageFindRequestRequest;
