@@ -57,7 +57,7 @@ int main(int argc,char **argv)
   mode_arg = argv[1];
   if (isdigit (*mode_arg)) { /* absolute mode */
     newmode = strtol (mode_arg, &dp, 8);
-    if (*dp != '\0') {
+    if (*dp != '\0' || newmode > 07777) {
       fprintf (stderr, "invalid mode: %s\n", mode_arg);
 #if defined(_WIN32)
       WSACleanup();
