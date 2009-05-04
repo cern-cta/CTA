@@ -651,7 +651,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
         castor::dlf::Param("filePath", body.filePath),
         castor::dlf::Param("tapePath", body.tapePath)};
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_TAPE_POSITIONED_FILE_REQ, params);
+        AGGREGATOR_TAPE_POSITIONED, params);
 
       // Send an acknowledge to RTCPD
       MessageHeader ackMsg;
@@ -719,18 +719,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpTapeReqCallback(
   RtcpTxRx::receiveRtcpTapeRqstBody(m_cuuid, m_volReqId, socketFd,
     RTCPDNETRWTIMEOUT, header, body);
 
-  castor::dlf::Param params[] = {
-    castor::dlf::Param("volReqId", m_volReqId)};
-  castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-    AGGREGATOR_TAPE_POSITIONED_TAPE_REQ, params);
-
-  // Acknowledge tape request
-  MessageHeader ackMsg;
-  ackMsg.magic       = RTCOPY_MAGIC;
-  ackMsg.reqType     = RTCP_TAPE_REQ;
-  ackMsg.lenOrStatus = 0;
-  RtcpTxRx::sendMessageHeader(m_cuuid, m_volReqId, socketFd,
-    RTCPDNETRWTIMEOUT, ackMsg);
+  return(processRtcpTape(header, body, socketFd, receivedENDOF_REQ));
 }
 
 
@@ -747,12 +736,7 @@ void
   RtcpTxRx::receiveRtcpTapeRqstErrBody(m_cuuid, m_volReqId, socketFd,
     RTCPDNETRWTIMEOUT, header, body);
 
-  if(body.err.errorCode == 0) {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", m_volReqId)};
-    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_TAPE_POSITIONED_TAPE_REQ, params);
-  } else {
+  if(body.err.errorCode != 0) {
     char codeStr[STRERRORBUFLEN];
     sstrerror_r(body.err.errorCode, codeStr, sizeof(codeStr));
 
@@ -763,9 +747,21 @@ void
       ": sstrerror_r=" << codeStr);
   }
 
+  return(processRtcpTape(header, body, socketFd, receivedENDOF_REQ));
+}
+
+
+//-----------------------------------------------------------------------------
+// processRtcpTape
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::BridgeProtocolEngine::processRtcpTape(
+  const MessageHeader &header, RtcpTapeRqstMsgBody &body, const int socketFd,
+  bool &receivedENDOF_REQ) throw(castor::exception::Exception) {
+
+  // Acknowledge tape request
   MessageHeader ackMsg;
   ackMsg.magic       = RTCOPY_MAGIC;
-  ackMsg.reqType     = RTCP_TAPEERR_REQ;
+  ackMsg.reqType     = RTCP_TAPE_REQ;
   ackMsg.lenOrStatus = 0;
   RtcpTxRx::sendMessageHeader(m_cuuid, m_volReqId, socketFd,
     RTCPDNETRWTIMEOUT, ackMsg);

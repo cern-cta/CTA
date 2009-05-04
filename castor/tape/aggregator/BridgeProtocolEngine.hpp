@@ -28,6 +28,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/aggregator/MessageHeader.hpp"
 #include "castor/tape/aggregator/RtcpFileRqstMsgBody.hpp"
+#include "castor/tape/aggregator/RtcpTapeRqstMsgBody.hpp"
 #include "castor/tape/aggregator/SmartFdList.hpp"
 #include "h/Castor_limits.h"
 #include "h/Cuuid.h"
@@ -275,6 +276,25 @@ private:
    */
   void rtcpTapeErrReqCallback(const MessageHeader &header,
     const int socketFd, bool &receivedENDOF_REQ)
+    throw(castor::exception::Exception);
+
+  /**
+   * Processes the specified RTCP tape request.
+   *
+   * This function implements the common logic of the rtcpTapeReqCallback and
+   * rtcpTapeErrReqCallback functions.
+   *
+   * @param header The header of the request.
+   * @param body The body of the request which maybe either of type
+   * RtcpTapeRqstMsgBody or RtcpTapeRqstErrMsgBody, as RtcpTapeRqstErrMsgBody
+   * inherits from RtcpTapeRqstMsgBody.
+   * @param socketFd The file descriptor of the socket from which both the
+   * header and the body of the message have already been read from.
+   * @param receivedENDOF_REQ Out parameter: Will be set to true by this
+   * function of an RTCP_ENDOF_REQ was received.
+   */
+  void processRtcpTape(const MessageHeader &header,
+    RtcpTapeRqstMsgBody &body, const int socketFd, bool &receivedENDOF_REQ)
     throw(castor::exception::Exception);
 
   /**
