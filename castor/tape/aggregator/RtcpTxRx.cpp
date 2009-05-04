@@ -226,6 +226,7 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId"    , volReqId        ),
       castor::dlf::Param("filePath"    , request.filePath),
+      castor::dlf::Param("bytesIn"     , request.bytesIn ), // File size
       castor::dlf::Param("tapePath"    , request.tapePath),
       castor::dlf::Param("recordFormat", RECORDFORMAT    ),
       castor::dlf::Param("umask"       , MIGRATEUMASK    )};
@@ -279,6 +280,7 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId"    , volReqId        ),
       castor::dlf::Param("filePath"    , request.filePath),
+      castor::dlf::Param("bytesIn"     , request.bytesIn ), // File size
       castor::dlf::Param("tapePath"    , request.tapePath),
       castor::dlf::Param("recordFormat", RECORDFORMAT    ),
       castor::dlf::Param("umask"       , MIGRATEUMASK    )};
@@ -719,9 +721,10 @@ void castor::tape::aggregator::RtcpTxRx::askRtcpdToRequestMoreWork(
 void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
   const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
   const int netReadWriteTimeout, const uint32_t mode,
-  const char *const filePath, const char *const tapePath,
-  const char *const recordFormat, const char *const tapeFileId,
-  const uint32_t umask, const int32_t positionMethod, int32_t tapeFseq,
+  const char *const filePath, const uint64_t fileSize,
+  const char *const tapePath, const char *const recordFormat,
+  const char *const tapeFileId, const uint32_t umask,
+  const int32_t positionMethod, int32_t tapeFseq,
   char (&nameServerHostName)[CA_MAXHOSTNAMELEN+1], const uint64_t castorFileId,
   unsigned char (&blockId)[4]) throw(castor::exception::Exception) {
 
@@ -758,6 +761,7 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
   request.blockId[1]           = blockId[1];
   request.blockId[2]           = blockId[2];
   request.blockId[3]           = blockId[3];
+  request.bytesIn              = fileSize;
   utils::copyString(request.segAttr.nameServerHostName, nameServerHostName);
   request.segAttr.castorFileId = castorFileId;
   request.err.severity         = RTCP_OK;

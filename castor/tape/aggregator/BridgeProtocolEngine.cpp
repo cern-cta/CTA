@@ -423,9 +423,9 @@ void castor::tape::aggregator::BridgeProtocolEngine::run()
     // Give file to migrate to RTCPD
     utils::toHex(migrationFileId, migrationTapeFileId);
     RtcpTxRx::giveFileToRtcpd(m_cuuid, m_volReqId, m_rtcpdInitialSocketFd,
-      RTCPDNETRWTIMEOUT, rtcpVolume.mode, migrationFilePath, "", RECORDFORMAT,
-      migrationTapeFileId, MIGRATEUMASK, positionCommandCode, tapeFseq,
-      migrationFileNsHost, migrationFileId, blockId);
+      RTCPDNETRWTIMEOUT, rtcpVolume.mode, migrationFilePath, migrationFileSize,
+      "", RECORDFORMAT, migrationTapeFileId, MIGRATEUMASK, positionCommandCode,
+      tapeFseq, migrationFileNsHost, migrationFileId, blockId);
   }
 
   // Ask RTCPD to request more work
@@ -516,6 +516,17 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileErrReqCallback(
   RtcpTxRx::receiveRtcpFileRqstErrBody(m_cuuid, m_volReqId, socketFd,
     RTCPDNETRWTIMEOUT, header, body);
 
+    // Send an acknowledge to RTCPD and then throw an exception
+    MessageHeader ackMsg;
+    ackMsg.magic       = header.magic;
+    ackMsg.reqType     = header.reqType;
+    ackMsg.lenOrStatus = 0;
+    RtcpTxRx::sendMessageHeader(m_cuuid, m_volReqId, socketFd,
+      RTCPDNETRWTIMEOUT, ackMsg);
+
+    TAPE_THROW_CODE(body.err.errorCode,
+      ": Received an error from RTCPD: " << body.err.errorMsg);
+
   // If RTCPD has reported an error
   if(body.err.errorCode != 0) {
 
@@ -570,7 +581,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
         char tapeFileId[CA_MAXPATHLEN+1];
         utils::toHex(fileId, tapeFileId);
         RtcpTxRx::giveFileToRtcpd(m_cuuid, m_volReqId, socketFd,
-          RTCPDNETRWTIMEOUT, WRITE_ENABLE, filePath, "", RECORDFORMAT,
+          RTCPDNETRWTIMEOUT, WRITE_ENABLE, filePath, fileSize, "", RECORDFORMAT,
           tapeFileId, MIGRATEUMASK, tapeFseq, positionMethod, nsHost, fileId,
           blockId);
 
@@ -606,10 +617,13 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
         m_gatewayHost, m_gatewayPort, filePath, nsHost, fileId, tapeFseq,
         blockId, positionCommandCode)) {
 
+        // The file size is not specified when recalling
+        const uint64_t fileSize = 0;
+
         char tapeFileId[CA_MAXPATHLEN+1];
         utils::setBytes(tapeFileId, '\0');
         RtcpTxRx::giveFileToRtcpd(m_cuuid, m_volReqId, socketFd,
-          RTCPDNETRWTIMEOUT, WRITE_DISABLE, filePath, body.tapePath,
+          RTCPDNETRWTIMEOUT, WRITE_DISABLE, filePath, fileSize, body.tapePath,
           RECORDFORMAT, tapeFileId, RECALLUMASK, positionCommandCode, tapeFseq,
           nsHost, fileId, blockId);
 

@@ -158,6 +158,7 @@ public:
    * network read and write operations.
    * @param mode The access mode.
    * @param filePath The file path.
+   * @param fileSize The size of the file in bytes.
    * @param tapePath The tape path.
    * @param recordFormat The record format.
    * @param tapeFileId The tape file ID.
@@ -170,9 +171,10 @@ public:
    */
   static void giveFileToRtcpd(const Cuuid_t &cuuid, const uint32_t volReqId,
     const int socketFd, const int netReadWriteTimeout, const uint32_t mode,
-    const char *const filePath, const char *const tapePath,
-    const char *const recordFormat, const char *const tapeFileId,
-    const uint32_t umask, const int32_t positionMethod, int32_t tapeFseq,
+    const char *const filePath, const uint64_t fileSize,
+    const char *const tapePath, const char *const recordFormat,
+    const char *const tapeFileId, const uint32_t umask,
+    const int32_t positionMethod, int32_t tapeFseq,
     char (&nameServerHostName)[CA_MAXHOSTNAMELEN+1],
     const uint64_t castorFileId, unsigned char (&blockId)[4]) 
     throw(castor::exception::Exception);
