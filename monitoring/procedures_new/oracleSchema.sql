@@ -284,7 +284,7 @@ CREATE OR REPLACE VIEW RequestedAfterGC AS --Unit is hour
 		UNION SELECT '2 4' FROM dual
 		UNION SELECT '4 6' FROM dual
 		UNION SELECT '6 8' FROM dual
-		UNION SELECT '8 24' FROM dual), (SELECT DISTINCT svcclass FROM Req_Del)) bin_t
+		UNION SELECT '8 24' FROM dual), (SELECT DISTINCT svcclass FROM ReqDel_MV)) bin_t
     LEFT OUTER JOIN ( 
       SELECT DISTINCT sysdate timestamp, 300 interval, svcclass,
 		bin, count(bin) over (Partition by svcclass, bin) reqs
