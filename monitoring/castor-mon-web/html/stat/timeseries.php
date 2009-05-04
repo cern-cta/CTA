@@ -125,20 +125,20 @@ else
        exit();
        } else {
          $i = 0;
-	 while ($row = ocifetch($parsedqry)) {
-	   $result['BIN'][$i] = $row['BIN'];
-           $result['NUMBER_OF_DH_REQ'][$i] = $row['NUMBER_OF_DH_REQ'];
-	   $result['NUMBER_OF_DC_REQ'][$i] = $row['NUMBER_OF_DC_REQ'];
-	   $result['NUMBER_OF_TR_REQ'][$i++] = $row['NUMBER_OF_TR_REQ'];
+	 while (ocifetch($parsedqry)) {
+	   $result['BIN'][$i] = ociresult($parsedqry,1);
+           $result['NUMBER_OF_DH_REQ'][$i] = ociresult($parsedqry,2);
+	   $result['NUMBER_OF_DC_REQ'][$i] = ociresult($parsedqry,3);
+	   $result['NUMBER_OF_TR_REQ'][$i++] = ociresult($parsedqry,4);
 	 }
        } 
      }
    }
 //add x-axis tick label at the end
- if ($interval == 'WW') {
-	$intervals[$i] = date("d",strtotime($intervals[$i-1]))+7 ."-" .date("M",strtotime($intervals[$i-1]))."-".date("y",strtotime($intervals[$i-1]));
-	$num = $i;
-}
+ //if ($interval == 'WW') {
+//	$intervals[$i] = date("d",strtotime($intervals[$i-1]))+7 ."-" .date("M",strtotime($intervals[$i-1]))."-".date("y",strtotime($intervals[$i-1]));
+//	$num = $i;
+//}
 //if no data retrieved then print out "no data available" image
 if(empty($result['BIN'])) {
 	No_Data_Image();

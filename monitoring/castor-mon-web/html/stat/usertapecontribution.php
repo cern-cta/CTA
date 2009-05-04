@@ -36,11 +36,11 @@ if ($period == '10/1440') {
 	$graph = new Graph(700,300,"auto",1);
 }
 else if ($period == '1/24') {
-	$period = 1/24
+	$period = 1/24;
 	$graph = new Graph(700,300,"auto",5);
 }
 else if ($period == '1') {
-	$period = 1
+	$period = 1;
 	$graph = new Graph(700,300,"auto",30);
 }
 else if ($period == '7') {
@@ -48,7 +48,7 @@ else if ($period == '7') {
 	$graph = new Graph(700,300,"auto",60);
 }
 else if ($period == '30') {
-	$period = 30
+	$period = 30;
 	$graph = new Graph(700,300,"auto",360);
 }
 else

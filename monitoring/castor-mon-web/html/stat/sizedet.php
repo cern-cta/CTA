@@ -13,7 +13,7 @@ if(!$conn) {
 	print htmlentities($e['message']);
 	exit;
 }
-$query1 = "select svcclass from ".$$db_instances[$service]['schema'].".SvcclassMap_MV";
+$query1 = "select svcclass from ".$db_instances[$service]['schema'].".SvcclassMap_MV";
 
 if (!($parsed1 = OCIParse($conn, $query1))) 
 	{ echo "Error Parsing Query";exit();}
