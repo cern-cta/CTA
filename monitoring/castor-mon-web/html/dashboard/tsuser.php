@@ -19,7 +19,7 @@ $service = $_GET['service'];
 //Connect to the db
 $con = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
    if (!$con) {
-     $e = oci_error();
+     $e = ocierror();
      print htmlentities($e['message']);
      exit;
    } else {// db functionnality

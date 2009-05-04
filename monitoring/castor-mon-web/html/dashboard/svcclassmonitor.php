@@ -22,7 +22,7 @@ include("../../../conf/castor-mon-web/user.php");
 //connection
 $conn = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
 if(!$conn) {
-	$e = oci_error();
+	$e = ocierror();
 	print htmlentities($e['message']);
 	exit;
 }
