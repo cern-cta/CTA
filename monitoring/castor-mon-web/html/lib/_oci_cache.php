@@ -2,7 +2,7 @@
 //activate image caching
  define("USE_CACHE",true);
  define("READ_CACHE",true);
- define("CACHE_DIR","../../tmp/jpgraph_cache/");
+ define("CACHE_DIR","../tmp/jpgraph_cache/");
 error_reporting(E_ALL ^ E_NOTICE);
 //checks if included dynamic library needed for the graphs
 if (strtoupper(substr(PHP_OS, 0, 3) == 'WIN')) {
