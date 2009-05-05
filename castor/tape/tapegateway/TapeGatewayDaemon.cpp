@@ -340,6 +340,7 @@ castor::tape::tapegateway::TapeGatewayDaemon::TapeGatewayDaemon() : castor::serv
    {89, "Worker: impossible to invalidate segment"},
    {90, "Worker: impossible to retrieve the segment"},
    {91, "Worker: error while checking the file size of recalled file"},
+   {92, "VdqmRequestsChecker: releasing unused tape"},
    {-1, ""}
   };
   dlfInit(messages);

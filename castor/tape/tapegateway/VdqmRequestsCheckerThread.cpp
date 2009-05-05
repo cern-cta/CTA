@@ -122,11 +122,10 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
 	vmgrHelper.resetBusyTape(**tapeToReset);
 	castor::dlf::Param params[] =
 	  {castor::dlf::Param("VID", (*tapeToReset)->vid())};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 70, 1, params);
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 92, 1, params);
       } catch (castor::exception::Exception e){
  	castor::dlf::Param params[] =
 	  {castor::dlf::Param("VID", (*tapeToReset)->vid())};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 70, 1, params);
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 69, 1, params);
       } 
       tapeToReset++;

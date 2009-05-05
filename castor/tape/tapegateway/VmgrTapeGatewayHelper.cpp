@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: VmgrTapeGatewayHelper.cpp,v $ $Revision: 1.10 $ $Release$ 
- * $Date: 2009/04/28 14:40:07 $ $Author: gtaur $
+ * @(#)$RCSfile: VmgrTapeGatewayHelper.cpp,v $ $Revision: 1.11 $ $Release$ 
+ * $Date: 2009/05/05 15:51:01 $ $Author: gtaur $
  *
  *
  *
@@ -53,6 +53,7 @@ castor::stager::Tape* castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeF
 
   }
 
+ 
   // call to vmgr
   const char* tpName = streamToResolve.tapePool()->name().c_str();
   u_signed64 estimatedFreeSpace;
@@ -84,6 +85,7 @@ castor::stager::Tape* castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeF
 		    &startFseq,
 		    &estimatedFreeSpace
 		    );
+
 
   if (rc<0) {
     castor::exception::Exception ex(serrno);
