@@ -11,13 +11,12 @@ if (!function_exists('ociplogon')) {
 //connection
 $conn = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
 if(!$conn) {
-	$e = ocierror();
+	$e = oci_error();
 	print htmlentities($e['message']);
 	exit;
 }
 $query1 = "select svcclass
-	   from ".$db_instances[$service]['schema'].".SvcclassMap_MV";
-
+	   from ".$db_instances[$service]['schema'].".SVCCLASSMAP_MV";
 if (!($parsed1 = OCIParse($conn, $query1))) 
 	{ echo "Error Parsing Query";exit();}
 if (!OCIExecute($parsed1))

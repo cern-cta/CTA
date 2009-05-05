@@ -38,19 +38,19 @@ if (!function_exists('ociplogon')) {
 }
 //include user account
 include("../../../conf/castor-mon-web/user.php");
-function decode($transactions) {
-	$i = 0;
-	if ($transactions == 0)
-		$colour = "white";
-	else if($transactions < 10) 
+function decode($total,$max,$min) {
+	$bin = ($max - $min )/ 6;
+	if ($total < $min + $bin)
+		$colour = "azure";
+	else if(($total >= $min + $bin)&&($total < $min + 2*$bin)) 
 		$colour = "lemonchiffon";
-	else if (($transactions >= 10)&&($transactions < 100))
-		$colour = "DarkKhaki";
-	else if (($transactions >= 100)&&($transactions < 1000))
+	else if (($total >=$min + 2*$bin)&&($total < $min + 3*$bin)) 
 		$colour = "yellow";
-	else if (($transactions >= 1000)&&($transactions < 10000))
+	else if (($total >=$min + 3*$bin)&&($total <$min + 4*$bin)) 
+		$colour = "gold";
+	else if (($total >=$min + 4*$bin)&&($total <$min + 5*$bin)) 
 		$colour = "orangered";
-	else if ($transactions >= 10000)
+	else if ($total >$min + 5*$bin)
 		$colour = "red";
 	return $colour;
 }
@@ -79,6 +79,8 @@ if (!($parsed1 = OCIParse($conn, $query1)))
 if (!OCIExecute($parsed1))
 	{ echo "Error Executing Query";exit();}
 $i =0;
+$max = -1;
+$min = NULL;
 while(OCIFetch($parsed1)) {
 	$opool = OCIResult($parsed1,1);
 	$tpool = OCIResult($parsed1,2);
@@ -90,7 +92,11 @@ while(OCIFetch($parsed1)) {
 		$pool[$i] = $tpool;
 		$i++;
 	};
-	$trans[$opool][$tpool] = OCIResult($parsed1,3);
+	$total = OCIResult($parsed1,3);
+	if ($min == NULL) $min = $total;
+	if ($total > $max) $max = $total;
+	if ($total < $min) $min = $total;
+	$trans[$opool][$tpool] = $total;
 }
 $size = $i;
 for($i = 0; $i < $size;$i++) {
@@ -125,7 +131,7 @@ for($i = 0; $i < $size;$i++) {
 		   <tr>
 		   <?php echo "<th id=\"fonts\"  style=\"background-color: #C0C0C0\"><a class ='outer' href='srcsvcclass.php?svcclass=$pool[$i]'>$pool[$i]</a></th>";?>
 		   <?php for($j = 0; $j < $size;$j++) {
-		             $colour = decode($final[$i][$j]);
+		             $colour = decode($final[$i][$j],$max,$min);
 			     $value = $final[$i][$j];
 			     echo "<td id ='fonts' align='center' style='background-color: $colour' ><a class='inner' style='background-color: $colour' href= 'pptran.php?src=$pool[$i]&dest=$pool[$j]'>$value</a></td>";?>
 		   <?php } ?>

@@ -39,19 +39,19 @@ if (!function_exists('ociplogon')) {
 //include user account
 include("../../../conf/castor-mon-web/user.php");
 //This function matches a number with a colour. The bigger the number the more intense the colour 
-function decode($transactions) {
-	$i = 0;
-	if ($transactions == 0)
-		$colour = "white";
-	else if($transactions < 10) 
+function decode($total,$max,$min) {
+	$bin = ($max - $min )/ 6;
+	if ($total < $min + $bin)
+		$colour = "azure";
+	else if(($total >= $min + $bin)&&($total < $min + 2*$bin)) 
 		$colour = "lemonchiffon";
-	else if (($transactions >= 10)&&($transactions < 100))
-		$colour = "DarkKhaki";
-	else if (($transactions >= 100)&&($transactions < 1000))
+	else if (($total >=$min + 2*$bin)&&($total < $min + 3*$bin)) 
 		$colour = "yellow";
-	else if (($transactions >= 1000)&&($transactions < 10000))
+	else if (($total >=$min + 3*$bin)&&($total <$min + 4*$bin)) 
+		$colour = "gold";
+	else if (($total >=$min + 4*$bin)&&($total <$min + 5*$bin)) 
 		$colour = "orangered";
-	else if ($transactions >= 10000)
+	else if ($total >$min + 5*$bin)
 		$colour = "red";
 	return $colour;
 }
@@ -59,7 +59,7 @@ function decode($transactions) {
 //connection - db login
 $conn = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
 if(!$conn) {
-	$e = ocierror();
+	$e = oci_error();
 	print htmlentities($e['message']);
 	exit;
 }
@@ -113,6 +113,8 @@ else if ($qn == 2) {
 if (!OCIExecute($parsed1))
 	{ echo "Error Executing Query";exit();}
 $i =0;
+$max = -1;
+$min = NULL;
 //fetch data into local tables
 while(OCIFetch($parsed1)) {
 	$opool = OCIResult($parsed1,1);
@@ -125,6 +127,10 @@ while(OCIFetch($parsed1)) {
 		$pool[$i] = $tpool;
 		$i++;
 	};
+	$total = OCIResult($parsed1,3);
+	if ($min == NULL) $min = $total;
+	if ($total > $max) $max = $total;
+	if ($total < $min) $min = $total;
 	$trans[$opool][$tpool] = OCIResult($parsed1,3);
 }
 //process retrieved data
@@ -161,7 +167,7 @@ for($i = 0; $i < $size;$i++) {
 		   <tr>
 		    <th id="fonts"  style="background-color: #C0C0C0"><?php echo $pool[$i]?></th>
 		   <?php for($j = 0; $j < $size;$j++) {
-		             $colour = decode($final[$i][$j]);
+		             $colour = decode($final[$i][$j],$max,$min);
 			     $value = $final[$i][$j];
 			     echo "<td id ='fonts' align='center' style='background-color: $colour' >$value</td>";?>
 		   <?php } ?>

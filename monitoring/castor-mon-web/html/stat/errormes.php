@@ -67,14 +67,14 @@ else $graph = new Graph(800,400,"auto");
 //DB login  
 $conn = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
 if(!$conn) {
-	$e = ocierror();
+	$e = oci_error();
 	print htmlentities($e['message']);
 	exit;
 }
 //Query to retrieve Error Counters for specified Facility (whole CASTOR Instance)
 if ($qn ==1)
 	$query1 = "select * from (select msg_text,count(*) sum
-	           from castor_dlf.dlf_messages a, castor_dlf.dlf_msg_texts b
+	           from castor_dlf.dlf_messages a,castor_dlf.dlf_msg_texts b
 		   where timestamp > sysdate - :period
 			and b.fac_no= :f
 			and b.fac_no = a.facility
@@ -83,7 +83,7 @@ if ($qn ==1)
 		   order by sum desc) where rownum < 11";
 else if ($qn ==2)
 	$query1 = "select * from (select msg_text,count(*) sum
-     	           from castor_dlf.dlf_messages a, castor_dlf.dlf_msg_texts b
+     	           from castor_dlf.dlf_messages a,castor_dlf.dlf_msg_texts b
 		   where timestamp >= to_date(:from_date,'dd/mm/yyyy HH24:Mi')
 			and timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi')
             		and b.fac_no= :f

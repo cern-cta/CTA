@@ -57,7 +57,7 @@ else
 //connection
 $conn = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
 if(!$conn) {
-	$e = ocierror();
+	$e = oci_error();
 	print htmlentities($e['message']);
 	exit;
 }
@@ -73,7 +73,7 @@ if ($qn == 1)
 		when filesize >= 2147483648 and filesize <= 2684354560  then 7
 		  else 8 end bin
 		from ".$db_instances[$service]['schema'].".requests
-		where state = 'taperecall'
+		where state = 'TapeRecall'
 		and timestamp >= sysdate - :period
 		and filesize!=0)
 		order by bin";
@@ -89,7 +89,7 @@ else if ($qn ==2)
     when filesize >= 2147483648 and filesize <= 2684354560  then 7
 	  else 8 end bin
 	from ".$db_instances[$service]['schema'].".requests
-	where state = 'taperecall'
+	where state = 'TapeRecall'
 	and timestamp >= to_date(:from_date,'dd/mm/yyyy HH24:Mi')
 	and timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi')
 	and filesize!=0)

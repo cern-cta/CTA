@@ -49,7 +49,7 @@ else if ($qn ==2)
 	$graph = new PieGraph(420,200,"auto",1);
 }
  else if ($period == '1/24') {
- 	$period = '1/24';
+ 	$period = 1/24;
 	$graph = new PieGraph(420,200,"auto",5);
 }
  else if ($period == '1') {
@@ -69,7 +69,7 @@ else if ($qn ==2)
 //connect to db
 $conn = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
 if(!$conn) {
-	$e = ocierror();
+	$e = oci_error();
 	print htmlentities($e['message']);
 	exit;
 }

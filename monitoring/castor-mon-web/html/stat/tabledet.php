@@ -124,23 +124,6 @@
 								echo "<div id='ora'> $service: File System Statistics - Last Month </div>";
 						}
 					}	
-					else if ($stat == "Error") {
-						if ($custom_date == 1) {
-							echo "<div id='ora'> $service: Error Statistics - From: $date1 $date1hour To $date2 $date2hour</div>";
-						}
-						else {
-							if($timewindow == "10/1440")
-								echo "<div id='ora'> $service: Error Statistics - Last Ten Minutes </div>";
-							else if($timewindow == "1/24")
-								echo "<div id='ora'> $service: Error Statistics - Last Hour </div>";
-							else if($timewindow == "1")
-								echo "<div id='ora'> $service: Error Statistics - Last Day </div>";
-							else if($timewindow == "7")
-								echo "<div id='ora'> $service: Error Statistics - Last Week </div>";
-							else if($timewindow == "30")
-								echo "<div id='ora'> $service: Error Statistics - Last Month </div>";
-						}
-					}	
 					else if ($stat == "Tape") {
 						if ($custom_date == 1) {
 							echo "<div id='ora'> $service: Tape Statistics - From: $date1 $date1hour To $date2 $date2hour</div>";
@@ -156,6 +139,23 @@
 								echo "<div id='ora'> $service: Tape Statistics - Last Week </div>";
 							else if($timewindow == "30")
 								echo "<div id='ora'> $service: Tape Statistics - Last Month </div>";
+						}
+					}
+					else if ($stat == "Scheduler") {
+						if ($custom_date == 1) {
+							echo "<div id='ora'> $service: Scheduler Statistics - From: $date1 $date1hour To $date2 $date2hour</div>";
+						}
+						else {
+							if($timewindow == "10/1440")
+								echo "<div id='ora'> $service: Scheduler Statistics - Last Ten Minutes </div>";
+							else if($timewindow == "1/24")
+								echo "<div id='ora'> $service: Scheduler Statistics - Last Hour </div>";
+							else if($timewindow == "1")
+								echo "<div id='ora'> $service: Scheduler Statistics - Last Day </div>";
+							else if($timewindow == "7")
+								echo "<div id='ora'> $service: Scheduler Statistics - Last Week </div>";
+							else if($timewindow == "30")
+								echo "<div id='ora'> $service: Scheduler Statistics - Last Month </div>";
 						}
 					}
 					else if ($stat == "GC") {
@@ -224,7 +224,7 @@
 								<li><a href="tabledet.php?timewindow=<?php echo $timewindow;?>&service=<?php echo $service;?>&stat=Latency">Latency Statistics</a></li>
 								<li><a href="tabledet.php?timewindow=<?php echo $timewindow;?>&service=<?php echo $service;?>&stat=File">File System Statistics</a></li>
 								<li><a href="tabledet.php?timewindow=<?php echo $timewindow;?>&service=<?php echo $service;?>&stat=Tape">Tape Statistics</a></li>
-								<li><a href="tabledet.php?timewindow=<?php echo $timewindow;?>&service=<?php echo $service;?>&stat=Error">Error Statistics</a></li>
+								<li><a href="tabledet.php?timewindow=<?php echo $timewindow;?>&service=<?php echo $service;?>&stat=Scheduler">Scheduler Statistics</a></li>
 								<li><a href="tabledet.php?timewindow=<?php echo $timewindow;?>&service=<?php echo $service;?>&stat=GC">Garbage Collection Statistics</a></li>
 							   <?} else { ?>
 							   	<li><a href="tabledet.php?date1=<?php echo $date1;?>&date1hour=<?php echo $date1hour;?>&date2=<?php echo $date2;?>&date2hour=<?php echo $date2hour;?>&service=<?php echo $service;?>">General Statistics</a></li>
@@ -233,7 +233,7 @@
 								<li><a href="tabledet.php?date1=<?php echo $date1;?>&date1hour=<?php echo $date1hour;?>&date2=<?php echo $date2;?>&date2hour=<?php echo $date2hour;?>&service=<?php echo $service;?>&stat=Latency">Latency Statistics</a></li>
 								<li><a href="tabledet.php?date1=<?php echo $date1;?>&date1hour=<?php echo $date1hour;?>&date2=<?php echo $date2;?>&date2hour=<?php echo $date2hour;?>&service=<?php echo $service;?>&stat=File">File System Statistics</a></li>
 								<li><a href="tabledet.php?date1=<?php echo $date1;?>&date1hour=<?php echo $date1hour;?>&date2=<?php echo $date2;?>&date2hour=<?php echo $date2hour;?>&service=<?php echo $service;?>&stat=Tape">Tape Statistics</a></li>
-								<li><a href="tabledet.php?date1=<?php echo $date1;?>&date1hour=<?php echo $date1hour;?>&date2=<?php echo $date2;?>&date2hour=<?php echo $date2hour;?>&service=<?php echo $service;?>&stat=Error">Error Statistics</a></li>
+								<li><a href="tabledet.php?date1=<?php echo $date1;?>&date1hour=<?php echo $date1hour;?>&date2=<?php echo $date2;?>&date2hour=<?php echo $date2hour;?>&service=<?php echo $service;?>&stat=Scheduler">Scheduler Statistics</a></li>
 								<li><a href="tabledet.php?date1=<?php echo $date1;?>&date1hour=<?php echo $date1hour;?>&date2=<?php echo $date2;?>&date2hour=<?php echo $date2hour;?>&service=<?php echo $service;?>&stat=GC">Garbage Collection Statistics</a></li>
 							    <? }?>
 							</ul>
@@ -349,6 +349,21 @@
 								 <img src ='miglat.php?service=$service&period=$timewindow' title ='Total Latency until the file is migrated to tape.\n (TotalWaitTime summary message from dlf)'>
 								</td>
 								  </tr>
+								    <tr>
+									<td>
+								 <img src ='job_wait_time_min.php?service=$service&period=$timewindow'>
+								</td>
+								  </tr>
+								    <tr>
+									<td>
+								 <img src ='job_wait_time_max.php?service=$service&period=$timewindow'>
+								</td>
+								  </tr>
+								    <tr>
+									<td>
+								 <img src ='job_wait_time_mean.php?service=$service&period=$timewindow'>
+								</td>
+								  </tr>
 								  </table>
 								  </div>
 								";
@@ -364,6 +379,21 @@
 								  <tr>
 									<td>
 								 <img src ='miglat.php?service=$service&from=$date1 $date1hour&to=$date2 $date2hour' title ='Total Latency until the file is migrated to tape.\n (TotalWaitTime summary message from dlf)'>
+								</td>
+								  </tr>
+								  <tr>
+									<td>
+								 <img src ='job_wait_time_min.php?service=$service&from=$date1 $date1hour&to=$date2 $date2hour'>
+								</td>
+								  </tr>
+								  <tr>
+									<td>
+								 <img src ='job_wait_time_max.php?service=$service&from=$date1 $date1hour&to=$date2 $date2hour'>
+								</td>
+								  </tr>
+								  <tr>
+									<td>
+								 <img src ='job_wait_time_mean.php?service=$service&from=$date1 $date1hour&to=$date2 $date2hour'>
 								</td>
 								  </tr>
 								  </table>
@@ -505,10 +535,71 @@
 								  </div>";
 						}
 					}
+					else if($stat == "Scheduler"){
+						if($custom_date == 0) {
+							echo "<div>
+								  <table>
+								  <tr>
+									<td>
+									<img src='scheduler_read_write_ratio.php?service=$service&period=$timewindow' title =' Read/Write Requests Ratio'>
+									</td>
+								  <tr>
+									<td align = 'center'>
+									<b> Total number of requests </b>";
+									include("scheduler_table_total.php");
+							echo	" 	</td>
+									<td align = 'center'>
+									<b> Minimum queuing time of requests </b>";
+									include("scheduler_table_min.php");
+							echo	" 	</td>
+								  </tr>
+								  <tr>
+									<td align = 'center'>
+									<b> Maximum queuing time of requests </b>";
+									include("scheduler_table_max.php");
+							echo	" 	</td>
+									<td align = 'center'>
+									<b> Average queuing time of requests </b>";
+									include("scheduler_table_avg.php");
+							echo	" 	</td>
+								  </tr>
+								  </table>
+								  </div>";
+						}
+						else {
+							$from=$date1 . " " . $date1hour;
+							$to=$date2 . " " . $date2hour; 
+							echo "<div>
+								  <table>
+								  <tr>
+									<td>
+									<img src='scheduler_read_write_ratio.php?service=$service&from=$date1 $date1hour&to=$date2 $date2hour' title =' Read/Write Requests Ratio'>
+									</td>
+								  <tr>
+									<td>
+									</td>
+								  </tr>
+								  <tr>
+									<td>
+									</td>
+								  </tr>
+								  <tr>
+									<td>
+									</td>
+								  </tr>
+								  </table>
+								  </div>";
+						}
+					}
 					else if($stat == "GC"){
 						if($custom_date == 0) {
 							echo "<div>
 								  <table>
+								  <tr>
+									<td>
+								 <img src ='gc_total_number_ts.php?service=$service&period=$timewindow' title =' Total Number of Garbage Collected Files Timeseries'>
+								</td>
+								  </tr>
 								  <tr>
 									<td>
 								 <img src ='gcfileage.php?service=$service&period=$timewindow' title =' File Age Distribution of Garbage Collected Files'>
@@ -530,6 +621,10 @@
 						else {
 							echo "<div>
 								  <table>
+								  <tr>
+									<td>
+								 <img src ='gc_total_number_ts.php?service=$service&from=$date1 $date1hour&to=$date2 $date2hour' title =' Total Number of Garbage Collected Files Timeseries'>
+								</td>
 								  <tr>
 									<td>
 								 <img src ='gcfileage.php?service=$service&from=$date1 $date1hour&to=$date2 $date2hour' title =' File Age Distribution of Garbage Collected Files'>
@@ -601,7 +696,7 @@
 								  <table>
 									<tr>
 								<td valign ='top'>
-									<img src ='requestsperpool.php?service=$service&period=$timewindow'>
+									<img src ='new_requests_ts.php?service=$service&period=$timewindow'>
 								</td></tr>
 								<tr><td valign ='top'>
 								<b> Pool Transactions (Files Copied) </b>"; 
@@ -628,7 +723,7 @@
 								  <table>
 									<tr>
 								<td valign ='top'>
-									<img src ='requestsperpool.php?service=$service&from=$date1 $date1hour&to=$date2 $date2hour'>
+									<img src ='new_requests_ts.php?service=$service&from=$date1 $date1hour&to=$date2 $date2hour'>
 								</td></tr>
 								<tr><td valign ='top'>
 								<b> Pool Transactions (Files Copied) </b>";

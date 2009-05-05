@@ -44,7 +44,7 @@ else if ($period == '1') {
 	$graph = new Graph(700,350,"auto",30);
 }
 else if ($period == '7') {
-	$period = 1;
+	$period = 7;
 	$graph = new Graph(700,350,"auto",60);
 }
 else if ($period == '30') {
@@ -55,7 +55,7 @@ else $graph = new Graph(700,350,"auto");
 //connection -- DB login 
 $conn = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
 if(!$conn) {
-	$e = ocierror();
+	$e = oci_error();
 	print htmlentities($e['message']);
 	exit;
 }
