@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.737 $ $Date: 2009/04/30 15:38:42 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.738 $ $Date: 2009/05/05 15:49:53 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1348,29 +1348,43 @@ END;
 
 /* trigger replacing streamsToDo */
 
-CREATE OR REPLACE
+create or replace
 TRIGGER tr_Stream_Pending
 AFTER UPDATE of status ON Stream
 FOR EACH ROW
 WHEN (new.status = 0 )
-DECLARE reqId NUMBER;
-BEGIN
-  INSERT INTO TapeRequestState (accessMode, startTime, lastVdqmPingTime, vdqmVolReqId, id, streamMigration, TapeRecall, Status) VALUES (1,null,null,null,ids_seq.nextval,:new.id,null,0) RETURNING id into reqId;
-  INSERT INTO id2type (id,type) VALUES (reqId,172);
+DECLARE 
+  reqId NUMBER;
+  unused NUMBER;
+BEGIN 
+  BEGIN
+    SELECT id INTO unused FROM taperequeststate WHERE streammigration=:new.id; 
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    INSERT INTO TapeRequestState (accessMode, pid, startTime, lastVdqmPingTime, vdqmVolReqId, id, streamMigration, TapeRecall, Status) VALUES (1,null,null,null,null,ids_seq.nextval,:new.id,null,0) RETURNING id into reqId;
+    INSERT INTO id2type (id,type) VALUES (reqId,172);
+  END;
 END;
 /
 
+
 /* trigger replacing tapesToDo */
 
-CREATE OR REPLACE
+
+create or replace
 TRIGGER tr_Tape_Pending
 AFTER UPDATE of status ON Tape
 FOR EACH ROW
 WHEN (new.status = 1 and new.tpmode=0)
-DECLARE reqId NUMBER;
+DECLARE 
+  reqId NUMBER;
+  unused NUMBER;
 BEGIN
-  INSERT INTO TapeRequestState (accessMode, pid, startTime, lastVdqmPingTime, vdqmVolReqId, id, streamMigration, TapeRecall, Status) VALUES (0,null,null,null,null,ids_seq.nextval,null,:new.id,1) RETURNING id into reqId;
-  INSERT INTO id2type (id,type) VALUES (reqId,172);
+  BEGIN
+    SELECT id INTO unused FROM taperequeststate WHERE taperecall=:new.id; 
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    INSERT INTO TapeRequestState  (accessMode, pid, startTime, lastVdqmPingTime, vdqmVolReqId, id, streamMigration, TapeRecall, Status) VALUES (0,null,null,null,null,ids_seq.nextval,null,:new.id,1)  RETURNING id into reqId;
+    INSERT INTO id2type (id,type) VALUES (reqId,172); 
+  END; 
 END;
 /
 
@@ -1470,37 +1484,22 @@ END;
 
 /* SQL Function updateCheckedTapes */
 
-
-CREATE OR REPLACE PROCEDURE updateCheckedTapes(trIds IN castor."cnumList") AS
+create or replace
+PROCEDURE updateCheckedTapes(trIds IN castor."cnumList") AS
 trId NUMBER;
-tId  NUMBER;
-strId NUMBER;
-mIds "numList";
+vdqmId NUMBER;
+vidUnused VARCHAR2(2048);
 BEGIN
  FOR i IN trIds.FIRST .. trIds.LAST LOOP
-    UPDATE taperequeststate set lastvdqmpingtime = null, starttime = null, status=1  WHERE id=trIds(i) AND status =2 RETURNING id INTO trId; -- these are the lost ones
-    IF trid IS NULL THEN 
-      -- get the one which were ONGOING and clean up the db 
-      -- clean up ongoing recalls if any
-      DELETE taperequeststate WHERE status = 3 AND accessmode=0 AND id = trIds(i) RETURNING taperecall,id INTO tId,trId;
-      
-      DELETE FROM migrationworkbasket WHERE taperequest=trId returning id BULK COLLECT INTO mIds;
-      FORALL i IN mIds.FIRST .. mIds.LAST 
-        DELETE FROM id2type WHERE id=mIds(i);
-        
-      IF trId IS NOT NULL THEN 
-        DELETE FROM id2type WHERE id= trId;
-        UPDATE tape SET status=0 WHERE tpmode=0 AND status=4  AND id = tId;
-        UPDATE Segment set status=0 WHERE status = 7 AND tape=tId; -- resurrect SELECTED segment 
-        UPDATE tape SET status=8 WHERE id=tId AND EXISTS (SELECT 'x' FROM Segment WHERE tape =tId AND status=0);
-      END IF;
-      -- clean up ongoing migrations if any
-      DELETE taperequeststate WHERE status = 3 AND accessmode=1 AND id = trIds(i) RETURNING streammigration,id INTO strId,trId;
-      IF trId IS NOT NULL THEN 
-        DELETE FROM id2type WHERE id= trId;
-        resetstream(strId);
-      END IF;
-    END IF;    
+    -- these are the lost ones
+    UPDATE taperequeststate set lastvdqmpingtime = null, starttime = null, status=1  WHERE id=trIds(i) AND status =2 RETURNING id INTO trId;
+    BEGIN 
+     -- these are the one which where ongoing ... crash clean up needed
+      SELECT vdqmvolreqid INTO vdqmid  FROM  taperequeststate  WHERE id=trIds(i) AND status = 3 FOR UPDATE; 
+      updateDbEndTape(vdqmid, vidunused);
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+     NULL;
+    END;
   END LOOP;
   COMMIT;
 END;
@@ -1510,7 +1509,8 @@ END;
 /* SQL Fuction fileToMigrate */
 
 
-CREATE OR REPLACE
+
+create or replace
 PROCEDURE fileToMigrate (transactionId IN NUMBER, ret OUT INTEGER, outVid OUT NOCOPY VARCHAR2, outputFile OUT castor.FileToMigrateCore_cur)  AS
 strId NUMBER;
 ds VARCHAR2(2048);
@@ -1533,7 +1533,7 @@ BEGIN
    ret:=0;
    BEGIN 
     -- last fseq is the first fseq value available for this migration
-      UPDATE taperequeststate set lastfseq= lastfseq+1  where vdqmvolreqid=transactionId returning streammigration,lastfseq into strId,newFseq;
+      SELECT streammigration,lastfseq,id into strId,newFseq,trId from taperequeststate  where vdqmvolreqid=transactionId for update;
       IF strId is NULL THEN 
         ret:=-2;
         return;
@@ -1541,7 +1541,6 @@ BEGIN
       SELECT vid INTO outVid FROM tape WHERE id IN (select tape from stream where id=strId);
    
    EXCEPTION WHEN NO_DATA_FOUND THEN
-    UPDATE taperequeststate set lastfseq= lastfseq-1  where vdqmvolreqid=transactionId; -- undo the increase
     ret:=-2;
     return;
    END;  
@@ -1558,12 +1557,14 @@ BEGIN
    DELETE FROM Stream2TapeCopy WHERE child=tcId;
    INSERT INTO migrationworkbasket (fseq, id, tapecopy, tapeRequest) values (newFseq, ids_seq.nextval, tcId,trId) returning id into mId;
    INSERT into id2type (id,type) values (mId,180);  
+   UPDATE taperequeststate set lastfseq=lastfseq+1 where id=trId; --increased when we have the proper value
    SELECT lastknownfilename, filesize into knownName,fSize from castorfile where id=cfId; 
    OPEN outputFile FOR 
     SELECT fileId,nshost,lastTime,ds,mp,path,knownName,fseq,fSize FROM migrationworkbasket where id =mId;
    COMMIT;
 END;
 /
+
 
 /* SQL Function fileMigrationUpdate */
 
@@ -1861,10 +1862,12 @@ tpId NUMBER;
 trId NUMBER;
 strId NUMBER;
 reqMode INTEGER;
+mIds "numList";
+tcIds "numList";
 BEGIN
   outputtape:=null;
   -- delete taperequest
-  DELETE FROM taperequeststate WHERE accessmode=0 AND vdqmvolreqid = inputvdqmreqid RETURNING id,taperecall, streammigration,accessmode INTO trId,tpId, strid, reqMode;
+  DELETE FROM taperequeststate WHERE vdqmvolreqid = inputvdqmreqid RETURNING id,taperecall, streammigration,accessmode INTO trId,tpId, strid, reqMode;
   DELETE FROM id2type WHERE id=trId;
   IF reqMode = 0 THEN 
      --read    
@@ -1877,6 +1880,11 @@ BEGIN
   ELSE 
     -- write
     SELECT vid INTO outputTape FROM tape WHERE id IN (SELECT tape FROM stream WHERE id=strId);
+    DELETE FROM migrationworkbasket WHERE taperequest=trId returning id, tapecopy BULK COLLECT INTO mIds, tcIds;
+    FORALL i IN mIds.FIRST .. mIds.LAST 
+        DELETE FROM id2type WHERE id=mIds(i);
+    FORALL i IN tcIds.FIRST .. tcIds.LAST 
+        update tapecopy set status=1 WHERE id=tcIds(i) AND status=3; 
     resetstream(strId);
     -- return the vid for vmgr
   END IF;
