@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.schema.sql,v $ $Revision: 1.13 $ $Date: 2009/04/14 14:11:54 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.schema.sql,v $ $Revision: 1.14 $ $Date: 2009/05/06 11:36:37 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically.
  *
@@ -198,6 +198,9 @@ ALTER TABLE TapePool MODIFY (migrSelectPolicy DEFAULT 'defaultMigrSelPolicy');
 /* SvcClass constraints */
 ALTER TABLE SvcClass
   MODIFY (name CONSTRAINT NN_SvcClass_Name NOT NULL);
+
+ALTER TABLE SvcClass 
+  MODIFY (forcedFileClass CONSTRAINT NN_SvcClass_ForcedFileClass NOT NULL);
 
 ALTER TABLE SvcClass MODIFY (gcPolicy DEFAULT 'default');
 
