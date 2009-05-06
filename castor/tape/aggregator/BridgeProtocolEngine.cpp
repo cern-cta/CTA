@@ -711,18 +711,24 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
 
       // Notify the tape gateway
       if(m_mode == WRITE_ENABLE) {
+        const uint32_t fileSize           = body.bytesOut;
+        const uint32_t compressedFileSize = body.hostBytes;
+
         GatewayTxRx::notifyGatewayFileMigrated(m_cuuid, m_volReqId,
           m_gatewayHost, m_gatewayPort, body.segAttr.nameServerHostName,
           body.segAttr.castorFileId, body.tapeFseq, body.blockId,
           body.positionMethod, body.segAttr.segmCksumAlgorithm,
-          body.segAttr.segmCksum, body.bytesOut, body.hostBytes);
+          body.segAttr.segmCksum, fileSize, compressedFileSize);
+      // Else recall 
       } else {
-        // Recall 
+        const uint32_t fileSize           = body.bytesOut;
+        const uint32_t compressedFileSize = body.hostBytes;
+
         GatewayTxRx::notifyGatewayFileRecalled(m_cuuid, m_volReqId,
           m_gatewayHost, m_gatewayPort, body.segAttr.nameServerHostName,
           body.segAttr.castorFileId, body.tapeFseq, body.filePath, 
           body.positionMethod, body.segAttr.segmCksumAlgorithm, 
-          body.segAttr.segmCksum, body.bytesOut, body.hostBytes);
+          body.segAttr.segmCksum, fileSize, compressedFileSize);
       }
     }
     break;

@@ -94,23 +94,41 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
 
   // Connect to the tape gateway
   castor::io::ClientSocket gatewaySocket(gatewayPort, gatewayHost);
-  gatewaySocket.connect();
+  try {
+    gatewaySocket.connect();
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ex.code(),
+      ": Failed to connect to gateway to send VolumeRequest"
+      ": " << ex.getMessage().str());
+  }
 
-  // Send the request
-  gatewaySocket.sendObject(request);
+  try {
+    // Send the request
+    gatewaySocket.sendObject(request);
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ex.code(),
+      ": Failed to send VolumeRequest to gateway"
+      ": " << ex.getMessage().str());
+  }
 
-  // Receive the reply object wrapping it in an auto pointer so that it is
-  // automatically deallocated when it goes out of scope
-  std::auto_ptr<castor::IObject> reply(gatewaySocket.readObject());
+  std::auto_ptr<castor::IObject> reply;
+  try {
+    // Receive the reply object wrapping it in an auto pointer so that it is
+    // automatically deallocated when it goes out of scope
+    reply.reset(gatewaySocket.readObject());
+
+    if(reply.get() == NULL) {
+      TAPE_THROW_EX(castor::exception::Internal,
+        ": ClientSocket::readObject() returned null");
+    }
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ex.code(),
+      ": Failed to read VolumeRequest reply from gateway"
+      ": " << ex.getMessage().str());
+  }
 
   // Close the connection to the tape gateway
   gatewaySocket.close();
-
-  if(reply.get() == NULL) {
-    TAPE_THROW_EX(castor::exception::Internal,
-      ": Failed to get reply object from the tape gateway"
-      ": ClientSocket::readObject() returned null");
-  }
 
   // Temporary variable used to check for a transaction ID mistatch
   uint64_t volReqIdFromGateway = 0;
@@ -247,7 +265,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
       fileSize             = 1451640;
       utils::copyString(lastKnownFileName, "file1.txt");
       lastModificationTime = 1234567890;
-      positionCommandCode  = 0; // TPPOSIT_FSEQ: position by file sequence number
+      positionCommandCode  = 0;// TPPOSIT_FSEQ: position by file sequence number
    
   {
     castor::dlf::Param params[] = {
@@ -281,23 +299,41 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
 
   // Connect to the tape gateway
   castor::io::ClientSocket gatewaySocket(gatewayPort, gatewayHost);
-  gatewaySocket.connect();
+  try {
+    gatewaySocket.connect();
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ex.code(),
+      ": Failed to connect to gateway to send FileToMigrateRequest"
+      ": " << ex.getMessage().str());
+  }
 
   // Send the request
-  gatewaySocket.sendObject(request);
+  try {
+    gatewaySocket.sendObject(request);
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ex.code(),
+      ": Failed to send FileToMigrateRequest to gateway"
+      ": " << ex.getMessage().str());
+  }
 
-  // Receive the reply object wrapping it in an auto pointer so that it is
-  // automatically deallocated when it goes out of scope
-  std::auto_ptr<castor::IObject> reply(gatewaySocket.readObject());
+  std::auto_ptr<castor::IObject> reply;
+  try {
+    // Receive the reply object wrapping it in an auto pointer so that it is
+    // automatically deallocated when it goes out of scope
+    reply.reset(gatewaySocket.readObject());
+
+    if(reply.get() == NULL) {
+      TAPE_THROW_EX(castor::exception::Internal,
+        ": ClientSocket::readObject() returned null");
+    }
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ex.code(),
+      ": Failed to read FileToMigrateRequest reply from gateway"
+      ": " << ex.getMessage().str());
+  }
 
   // Close the connection to the tape gateway
   gatewaySocket.close();
-
-  if(reply.get() == NULL) {
-    TAPE_THROW_CODE(EINVAL,
-      ": Failed to get reply object from the tape gateway"
-      ": ClientSocket::readObject() returned null");
-  }
 
   // Temporary variable used to check for a transaction ID mistatch
   uint64_t volReqIdFromGateway = 0;
@@ -474,23 +510,41 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
 
   // Connect to the tape gateway
   castor::io::ClientSocket gatewaySocket(gatewayPort, gatewayHost);
-  gatewaySocket.connect();
+  try {
+    gatewaySocket.connect();
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ex.code(),
+      ": Failed to connect to gateway to send FileToRecallRequest"
+      ": " << ex.getMessage().str());
+  }
 
-  // Send the request
-  gatewaySocket.sendObject(request);
+  try {
+    // Send the request
+    gatewaySocket.sendObject(request);
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ex.code(),
+      ": Failed to send FileToRecallRequest to gateway"
+      ": " << ex.getMessage().str());
+  }
 
-  // Receive the reply object wrapping it in an auto pointer so that it is
-  // automatically deallocated when it goes out of scope
-  std::auto_ptr<castor::IObject> reply(gatewaySocket.readObject());
+  std::auto_ptr<castor::IObject> reply;
+  try {
+    // Receive the reply object wrapping it in an auto pointer so that it is
+    // automatically deallocated when it goes out of scope
+    reply.reset(gatewaySocket.readObject());
+
+    if(reply.get() == NULL) {
+      TAPE_THROW_EX(castor::exception::Internal,
+        ": ClientSocket::readObject() returned null");
+    }
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ex.code(),
+      ": Failed to read FileToRecallRequest reply from gateway"
+      ": " << ex.getMessage().str());
+  }
 
   // Close the connection to the tape gateway
   gatewaySocket.close();
-
-  if(reply.get() == NULL) {
-    TAPE_THROW_EX(castor::exception::Internal,
-      ": Failed to get reply object from the tape gateway"
-      ": ClientSocket::readObject() returned null");
-  }
 
   // Temporary variable used to check for a transaction ID mistatch
   uint64_t volReqIdFromGateway = 0;
@@ -655,26 +709,46 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
     (tapegateway::PositionCommandCode)positionCommandCode);
   request.setChecksumName(checksumAlgorithm);
   request.setChecksum(checksum);
+  request.setFileSize(fileSize);
+  request.setCompressedFileSize( compressedFileSize);
 
   // Connect to the tape gateway
   castor::io::ClientSocket gatewaySocket(gatewayPort, gatewayHost);
-  gatewaySocket.connect();
+  try {
+    gatewaySocket.connect();
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ex.code(),
+      ": Failed to connect to gateway to send FileMigratedNotification"
+      ": " << ex.getMessage().str());
+  }
 
-  // Send the request
-  gatewaySocket.sendObject(request);
+  try {
+    // Send the request
+    gatewaySocket.sendObject(request);
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ex.code(),
+      ": Failed to send FileMigratedNotification to gateway"
+      ": " << ex.getMessage().str());
+  }
 
-  // Receive the reply object wrapping it in an auto pointer so that it is
-  // automatically deallocated when it goes out of scope
-  std::auto_ptr<castor::IObject> reply(gatewaySocket.readObject());
+   std::auto_ptr<castor::IObject> reply;
+  try {
+    // Receive the reply object wrapping it in an auto pointer so that it is
+    // automatically deallocated when it goes out of scope
+    reply.reset(gatewaySocket.readObject());
+
+    if(reply.get() == NULL) {
+      TAPE_THROW_EX(castor::exception::Internal,
+        ": ClientSocket::readObject() returned null");
+    }
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ex.code(),
+      ": Failed to read FileMigratedNotification reply from gateway"
+      ": " << ex.getMessage().str());
+  }
 
   // Close the connection to the tape gateway
   gatewaySocket.close();
-
-  if(reply.get() == NULL) {
-    TAPE_THROW_EX(castor::exception::Internal,
-      ": Failed to get reply object from the tape gateway"
-      ": ClientSocket::readObject() returned null");
-  }
 
   // Temporary variable used to check for a transaction ID mistatch
   uint64_t volReqIdFromGateway = 0;
@@ -786,23 +860,42 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
 
   // Connect to the tape gateway
   castor::io::ClientSocket gatewaySocket(gatewayPort, gatewayHost);
-  gatewaySocket.connect();
+  try {
+    gatewaySocket.connect();
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ex.code(),
+      ": Failed to connect to gateway to send FileRecalledNotification"
+      ": " << ex.getMessage().str());
+  }
 
-  // Send the request
-  gatewaySocket.sendObject(request);
+  try {
+    // Send the request
+    gatewaySocket.sendObject(request);
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ex.code(),
+      ": Failed to send FileRecalledNotification to gateway"
+      ": " << ex.getMessage().str());
+  }
 
-  // Receive the reply object wrapping it in an auto pointer so that it is
-  // automatically deallocated when it goes out of scope
-  std::auto_ptr<castor::IObject> reply(gatewaySocket.readObject());
+  std::auto_ptr<castor::IObject> reply;
+
+  try {
+    // Receive the reply object wrapping it in an auto pointer so that it is
+    // automatically deallocated when it goes out of scope
+    reply.reset(gatewaySocket.readObject());
+
+    if(reply.get() == NULL) {
+      TAPE_THROW_EX(castor::exception::Internal,
+        ": ClientSocket::readObject() returned null");
+    }
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ex.code(),
+      ": Failed to read FileRecalledNotification reply from gateway"
+      ": " << ex.getMessage().str());
+  }
 
   // Close the connection to the tape gateway
   gatewaySocket.close();
-
-  if(reply.get() == NULL) {
-    TAPE_THROW_EX(castor::exception::Internal,
-      ": Failed to get reply object from the tape gateway"
-      ": ClientSocket::readObject() returned null");
-  }
 
   // Temporary variable used to check for a transaction ID mistatch
   uint64_t volReqIdFromGateway = 0;
@@ -865,7 +958,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayEndOfSession(
   const unsigned short gatewayPort)
   throw(castor::exception::Exception) {
 
- {
+  {
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId"   , volReqId   ),
       castor::dlf::Param("gatewayHost", gatewayHost),
@@ -890,23 +983,41 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayEndOfSession(
 
   // Connect to the tape gateway
   castor::io::ClientSocket gatewaySocket(gatewayPort, gatewayHost);
-  gatewaySocket.connect();
+  try {
+    gatewaySocket.connect();
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ex.code(),
+      ": Failed to connect to gateway to send EndNotification"
+      ": " << ex.getMessage().str());
+  }
 
-  // Send the request
-  gatewaySocket.sendObject(request);
+  try {
+    // Send the request
+    gatewaySocket.sendObject(request);
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ex.code(),
+      ": Failed to send EndNotification to gateway"
+      ": " << ex.getMessage().str());
+  }
 
-  // Receive the reply object wrapping it in an auto pointer so that it is
-  // automatically deallocated when it goes out of scope
-  std::auto_ptr<castor::IObject> reply(gatewaySocket.readObject());
+  std::auto_ptr<castor::IObject> reply;
+  try {
+    // Receive the reply object wrapping it in an auto pointer so that it is
+    // automatically deallocated when it goes out of scope
+    reply.reset(gatewaySocket.readObject());
+
+    if(reply.get() == NULL) {
+      TAPE_THROW_EX(castor::exception::Internal,
+        ": ClientSocket::readObject() returned null");
+    }
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ex.code(),
+      ": Failed to read EndNotification reply from gateway"
+      ": " << ex.getMessage().str());
+  }
 
   // Close the connection to the tape gateway
   gatewaySocket.close();
-
-  if(reply.get() == NULL) {
-    TAPE_THROW_EX(castor::exception::Internal,
-      ": Failed to get reply object from the tape gateway"
-      ": ClientSocket::readObject() returned null");
-  }
 
   // Temporary variable used to check for a transaction ID mistatch
   uint64_t volReqIdFromGateway = 0;

@@ -228,13 +228,15 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"    , volReqId        ),
-      castor::dlf::Param("socketFd"    , socketFd        ),
-      castor::dlf::Param("filePath"    , request.filePath),
-      castor::dlf::Param("bytesIn"     , request.bytesIn ), // File size
-      castor::dlf::Param("tapePath"    , request.tapePath),
-      castor::dlf::Param("recordFormat", RECORDFORMAT    ),
-      castor::dlf::Param("umask"       , MIGRATEUMASK    )};
+      castor::dlf::Param("volReqId"    , volReqId         ),
+      castor::dlf::Param("socketFd"    , socketFd         ),
+      castor::dlf::Param("filePath"    , request.filePath ),
+      castor::dlf::Param("bytesIn"     , request.bytesIn  ), // File size
+      castor::dlf::Param("bytesOut"    , request.bytesOut ),
+      castor::dlf::Param("hostBytes"   , request.hostBytes),
+      castor::dlf::Param("tapePath"    , request.tapePath ),
+      castor::dlf::Param("recordFormat", RECORDFORMAT     ),
+      castor::dlf::Param("umask"       , MIGRATEUMASK     )};
    
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       mode == WRITE_ENABLE ? AGGREGATOR_GIVE_MIGRATE_FILE_TO_RTCPD :
@@ -918,8 +920,11 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpFileRqstErrBody(
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", volReqId),
-      castor::dlf::Param("socketFd", socketFd),
+      castor::dlf::Param("volReqId"  , volReqId      ),
+      castor::dlf::Param("socketFd"  , socketFd      ),
+      castor::dlf::Param("bytesIn"   , body.bytesIn  ),
+      castor::dlf::Param("bytesOut"  , body.bytesOut ),
+      castor::dlf::Param("hostBytes" , body.hostBytes),
       castor::dlf::Param("procStatus",
         utils::procStatusToStr(body.procStatus))};
 
@@ -982,8 +987,11 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpFileRqstBody(
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"  , volReqId),
-      castor::dlf::Param("socketFd"  , socketFd),
+      castor::dlf::Param("volReqId"  , volReqId      ),
+      castor::dlf::Param("socketFd"  , socketFd      ),
+      castor::dlf::Param("bytesIn"   , body.bytesIn  ),
+      castor::dlf::Param("bytesOut"  , body.bytesOut ),
+      castor::dlf::Param("hostBytes" , body.hostBytes),
       castor::dlf::Param("procStatus",
         utils::procStatusToStr(body.procStatus))};
 
