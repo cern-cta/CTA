@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.738 $ $Date: 2009/05/05 15:49:53 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.739 $ $Date: 2009/05/06 15:13:18 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1388,6 +1388,32 @@ BEGIN
 END;
 /
 
+/* trigger to avoid accumulation if we run rtcpcld (migration) */
+
+create or replace TRIGGER tr_Stream_Delete
+BEFORE DELETE ON Stream
+FOR EACH ROW
+DECLARE trId NUMBER;
+BEGIN
+  DELETE FROM taperequeststate WHERE streammigration=:old.id returning id into trId;
+  DELETE FROM id2type where id=trId;
+END;
+/
+
+/* trigger to avoid accumulation if we run rtcpcld (recall) */
+
+create or replace TRIGGER tr_Tape_release
+AFTER UPDATE ON Tape
+FOR EACH ROW WHEN (new.status = 0 OR new.status = 6)
+DECLARE trId NUMBER;
+mIds "numList";
+BEGIN
+  -- delete the taperequest if there is still ... to avoid accumulation if rtcpclientd is running
+  DELETE FROM taperequeststate WHERE taperecall = :new.id returning id into trId;
+  DELETE FROM id2type where id=trId;
+END;
+/
+
 /* SQL Function getStreamsToResolve */
 
 CREATE OR REPLACE PROCEDURE getStreamsToResolve
@@ -1784,13 +1810,15 @@ END;
 
 /* SQL Function getRepackVidAndFileInformation */
 
-CREATE OR REPLACE
-PROCEDURE
-getRepackVidAndFileInformation( inputFileId IN NUMBER, inputNsHost IN VARCHAR2, inFseq IN INTEGER, transactionId IN NUMBER, outRepackVid OUT VARCHAR2, strVid OUT VARCHAR, outCopyNb OUT INTEGER,outLastTime OUT NUMBER) AS 
+create or replace PROCEDURE
+getRepackVidAndFileInformation( inputFileId IN NUMBER, inputNsHost IN VARCHAR2, inFseq IN INTEGER, transactionId IN NUMBER, outRepackVid OUT NOCOPY VARCHAR2, strVid OUT NOCOPY VARCHAR, outCopyNb OUT INTEGER,outLastTime OUT NUMBER) AS 
 cfId NUMBER;
 BEGIN
-  -- Get the repackvid field from the existing request (if none, then we are not in a repack process)
-  SELECT StageRepackRequest.repackvid, castorfile.lastupdatetime, castorfile.id
+  outrepackvid:=NULL;
+  BEGIN 
+    -- Get the repackvid field from the existing request (if none, then we are not in a repack process
+     
+     SELECT StageRepackRequest.repackvid, castorfile.lastupdatetime, castorfile.id
     INTO outRepackVid, outlasttime, cfId
     FROM SubRequest, DiskCopy, CastorFile, StageRepackRequest
    WHERE stagerepackrequest.id = subrequest.request
@@ -1800,12 +1828,17 @@ BEGIN
      AND diskcopy.castorfile = castorfile.id
      AND castorfile.fileid = inputFileId AND castorfile.nshost = inputNsHost
      AND ROWNUM < 2;
+      
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- ignore the repack state
+     SELECT  castorfile.lastupdatetime, castorfile.id
+    INTO outlasttime, cfId
+    FROM CastorFile WHERE castorfile.fileid = inputFileId AND castorfile.nshost = inputNsHost AND ROWNUM < 2;
+  END;
   SELECT copynb INTO outcopynb FROM tapecopy WHERE castorfile=cfId AND id IN 
       (SELECT tapecopy FROM migrationworkbasket WHERE migrationworkbasket.fseq= inFseq AND migrationworkbasket.taperequest 
           IN (SELECT id FROM taperequeststate WHERE vdqmVolReqId = transactionId ));
   SELECT vid INTO strVid FROM tape where id IN (SELECT tape from stream WHERE id in (select streammigration from taperequeststate where vdqmVolReqId = transactionId));
-EXCEPTION WHEN NO_DATA_FOUND THEN
-  NULL;
 END;
 /
 
