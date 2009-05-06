@@ -705,6 +705,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
   request.setBlockId1(blockId[1]);
   request.setBlockId2(blockId[2]);
   request.setBlockId3(blockId[3]);
+  request.setFseq(tapeFileSeq);
   request.setPositionCommandCode(
     (tapegateway::PositionCommandCode)positionCommandCode);
   request.setChecksumName(checksumAlgorithm);
