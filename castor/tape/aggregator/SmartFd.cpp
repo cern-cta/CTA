@@ -55,7 +55,7 @@ void castor::tape::aggregator::SmartFd::reset(const int fd = -1) throw() {
 
     // If this SmartFd still owns a file descriptor, then close it
     if(m_fd >= 0) {
-    close(m_fd);
+      close(m_fd);
     }
 
     // Take ownership of the new file descriptor

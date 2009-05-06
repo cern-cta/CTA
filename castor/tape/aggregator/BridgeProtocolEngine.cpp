@@ -647,16 +647,32 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
         RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_volReqId, socketFd,
           RTCPDNETRWTIMEOUT);
       }
-
-      // Acknowledge the request for more work
-      MessageHeader ackMsg;
-      ackMsg.magic       = header.magic;
-      ackMsg.reqType     = header.reqType;
-      ackMsg.lenOrStatus = 0;
-      RtcpTxRx::sendMessageHeader(m_cuuid, m_volReqId, socketFd,
-        RTCPDNETRWTIMEOUT,ackMsg);
-
     } // Else recalling
+
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", m_volReqId),
+        castor::dlf::Param("socketFd", socketFd  )};
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_SEND_DELAYED_REQUEST_MORE_WORK_ACK_TO_RTCPD, params);
+    }
+
+    // Send delayed acknowledge of the request for more work
+    MessageHeader ackMsg;
+    ackMsg.magic       = header.magic;
+    ackMsg.reqType     = header.reqType;
+    ackMsg.lenOrStatus = 0;
+    RtcpTxRx::sendMessageHeader(m_cuuid, m_volReqId, socketFd,
+      RTCPDNETRWTIMEOUT,ackMsg);
+
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", m_volReqId),
+        castor::dlf::Param("socketFd", socketFd  )};
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_SENT_DELAYED_REQUEST_MORE_WORK_ACK_TO_RTCPD, params);
+    }
+
     break;
   case RTCP_POSITIONED:
     {

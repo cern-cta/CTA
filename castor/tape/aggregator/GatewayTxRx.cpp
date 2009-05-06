@@ -243,7 +243,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
         "lxc2disk15.cern.ch:/tmp/nbessone/file1.txt");
       utils::copyString(nsHost, "castorns");
       fileId               = 111111111;
-      tapeFileSeq          = 0;
+      tapeFileSeq          = 1;
       fileSize             = 1451640;
       utils::copyString(lastKnownFileName, "file1.txt");
       lastModificationTime = 1234567890;
