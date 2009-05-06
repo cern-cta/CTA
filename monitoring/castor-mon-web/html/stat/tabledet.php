@@ -576,19 +576,27 @@
 									<img src='scheduler_read_write_ratio.php?service=$service&from=$date1 $date1hour&to=$date2 $date2hour' title =' Read/Write Requests Ratio'>
 									</td>
 								  <tr>
-									<td>
-									</td>
-								  </tr>
-								  <tr>
-									<td>
-									</td>
-								  </tr>
-								  <tr>
-									<td>
-									</td>
-								  </tr>
-								  </table>
-								  </div>";
+                                                                        <td align = 'center'>
+                                                                        <b> Total number of requests </b>";
+                                                                        include("scheduler_table_total.php");
+                                                        echo    "       </td>
+                                                                        <td align = 'center'>
+                                                                        <b> Minimum queuing time of requests </b>";
+                                                                        include("scheduler_table_min.php");
+                                                        echo    "       </td>
+                                                                  </tr>
+                                                                  <tr>
+                                                                        <td align = 'center'>
+                                                                        <b> Maximum queuing time of requests </b>";
+                                                                        include("scheduler_table_max.php");
+                                                        echo    "       </td>
+                                                                        <td align = 'center'>
+                                                                        <b> Average queuing time of requests </b>";
+                                                                        include("scheduler_table_avg.php");
+                                                        echo    "       </td>
+                                                                  </tr>
+                                                                  </table>
+                                                                  </div>";
 						}
 					}
 					else if($stat == "GC"){
