@@ -158,16 +158,13 @@ public:
    * @param positionCommandCode The position method uesd by the drive.
    * @param checksumAlgorithm   The name of the checksum algorithm.
    * @param checksum            The file checksum.
-   * @param fileSize            The size of the file without compression.
-   * @param compressedFileSize  The size of on-tape compressed file.
    */
   static void notifyGatewayFileRecalled(const Cuuid_t &cuuid,
     const uint32_t volReqId, const char *gatewayHost, 
     const unsigned short gatewayPort, char (&nsHost)[CA_MAXHOSTNAMELEN+1],
     uint64_t &fileId, int32_t &tapeFileSeq, char (&filePath)[CA_MAXPATHLEN+1], 
     int32_t positionCommandCode, char(&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1],
-    uint32_t checksum, uint32_t fileSize, uint32_t compressedFileSize)
-    throw(castor::exception::Exception);
+    uint32_t checksum) throw(castor::exception::Exception);
 
   /**
    * Notifies the tape gateway of the end of the entire session of

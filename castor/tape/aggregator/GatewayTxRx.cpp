@@ -817,8 +817,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
   const unsigned short gatewayPort, char (&nsHost)[CA_MAXHOSTNAMELEN+1], 
   uint64_t &fileId, int32_t &tapeFileSeq,char (&filePath)[CA_MAXPATHLEN+1],
   int32_t positionCommandCode, char (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1],
-  uint32_t checksum, uint32_t fileSize, uint32_t compressedFileSize )
-  throw(castor::exception::Exception) {
+  uint32_t checksum ) throw(castor::exception::Exception) {
 
   {
     castor::dlf::Param params[] = {
@@ -831,14 +830,12 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
       castor::dlf::Param("positionCommandCode", positionCommandCode),
       castor::dlf::Param("checksumAlgorithm"  , checksumAlgorithm  ),
       castor::dlf::Param("checksum"           , checksum           ),
-      castor::dlf::Param("filePath"           , filePath           ),
-      castor::dlf::Param("fileSize"           , fileSize           ),
-      castor::dlf::Param("compressedFileSize" , compressedFileSize )};
+      castor::dlf::Param("filePath"           , filePath           )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_NOTIFY_GATEWAY_FILE_RECALLED, params);
   }
 
- //===================================================
+  //===================================================
   // Hardcoded Gateway reply
   #ifdef EMULATE_GATEWAY
 
@@ -941,9 +938,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
       castor::dlf::Param("tapeFileSeq"        , tapeFileSeq        ),
       castor::dlf::Param("positionCommandCode", positionCommandCode),
       castor::dlf::Param("checksumAlgorithm"  , checksumAlgorithm  ),
-      castor::dlf::Param("checksum"           , checksum           ),
-      castor::dlf::Param("fileSize"           , fileSize           ),
-      castor::dlf::Param("compressedFileSize" , compressedFileSize )};
+      castor::dlf::Param("checksum"           , checksum           )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_NOTIFIED_GATEWAY_FILE_RECALLED, params);
   }
