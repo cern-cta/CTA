@@ -466,26 +466,17 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
        castor::dlf::Param("NSHOST",fileMigrated.nshost()),
        castor::dlf::Param("FILEID",fileMigrated.fileid()),
        castor::dlf::Param("fseq",fileMigrated.fseq()),
-       castor::dlf::Param("path",fileMigrated.fileid()),
-       castor::dlf::Param("checksum name",fileMigrated.fileid()),
-       castor::dlf::Param("checksum",fileMigrated.fileid()),
+       castor::dlf::Param("checksum name",fileMigrated.checksumName()),
+       castor::dlf::Param("checksum",fileMigrated.checksum()),
        castor::dlf::Param("fileSize",fileMigrated.fileSize()),
        castor::dlf::Param("compressedFileSize",fileMigrated.compressedFileSize()),
        castor::dlf::Param("blockid", blockid),
       };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 51, 10, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 51, 9, params);
 
     try {
       response = new NotificationAcknowledge();
       response->setTransactionId(fileMigrated.transactionId());
-    
-      castor::dlf::Param params[] =
-	{castor::dlf::Param("transactionId",fileMigrated.transactionId()),
-	 castor::dlf::Param("NSHOST",fileMigrated.nshost()),
-	 castor::dlf::Param("FILEID",fileMigrated.fileid())
-	};
-    
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 51, 4, params);
 
       // check if it is repack case and get information from the database
       std::string repackVid;
@@ -496,11 +487,17 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
 	
 	repackVid=m_dbSvc.getRepackVidAndFileInformation(fileMigrated,vid,copyNumber,lastModificationTime);
 	
+	castor::dlf::Param params[] =
+	  {castor::dlf::Param("transactionId",fileMigrated.transactionId()),
+	   castor::dlf::Param("NSHOST",fileMigrated.nshost()),
+	   castor::dlf::Param("FILEID",fileMigrated.fileid()),
+	   castor::dlf::Param("vid",vid)
+	  };
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 52, 4, params);
 	try {
 	  // update vmgr
 	  vmgrHelper.updateTapeInVmgr(fileMigrated, vid); 
 
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 52, 4, params);
 	  
 	  try {
 	  
@@ -555,7 +552,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
 	  failure.setErrorCode(e.code());
 	  failure.setErrorMessage(e.getMessage().str());
 	  
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 57, 6, params);
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 57, 5, params);
        
 	  m_dbSvc.updateAfterFailure(failure);
 	  return response;
@@ -604,7 +601,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
 	failure.setErrorCode(e.code());
 	failure.setErrorMessage(e.getMessage().str());
     
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 56, 6, params);
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 56, 5, params);
       
 	m_dbSvc.updateAfterFailure(failure);
 	return response;

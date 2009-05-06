@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: VmgrTapeGatewayHelper.cpp,v $ $Revision: 1.11 $ $Release$ 
- * $Date: 2009/05/05 15:51:01 $ $Author: gtaur $
+ * @(#)$RCSfile: VmgrTapeGatewayHelper.cpp,v $ $Revision: 1.12 $ $Release$ 
+ * $Date: 2009/05/06 15:13:39 $ $Author: gtaur $
  *
  *
  *
@@ -48,7 +48,7 @@ castor::stager::Tape* castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeF
     castor::exception::Exception ex(EINVAL);
     ex.getMessage()
     << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream"
-    << "invalid input";
+    << " invalid input";
     throw ex;
 
   }
@@ -91,7 +91,7 @@ castor::stager::Tape* castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeF
     castor::exception::Exception ex(serrno);
     ex.getMessage()
     << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream"
-    << "vmgr_gettape failed";
+    << " vmgr_gettape failed";
     throw ex;
 
   }
@@ -110,7 +110,7 @@ castor::stager::Tape* castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeF
     castor::exception::Exception ex(EINVAL);
     ex.getMessage()
       << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream"
-      << "invalid label";
+      << " invalid label";
     throw ex;
     
   }
@@ -150,7 +150,7 @@ castor::stager::Tape* castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeF
       castor::exception::Exception ex(serrno);
       ex.getMessage()
 	<< "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream"
-	<< "vmgr_updatetape failed";
+	<< " vmgr_updatetape failed";
       throw ex;
 
     }
@@ -161,7 +161,7 @@ castor::stager::Tape* castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeF
     castor::exception::Exception ex(ERTMAXERR);
     ex.getMessage()
       << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream"
-      << "too big fseq";
+      << " too big fseq";
     throw ex;
   }
 
@@ -180,20 +180,19 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::getDataFromVmgr(castor::s
   if ( tape.vid().empty()) {
     castor::exception::Exception ex(EINVAL);
     ex.getMessage()
-    << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getDgnFromVmgr"
-    << "vmgr_gettape failed";
+    << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getDataFromVmgr"
+    << " empty vid";
     throw ex;
   }
 
   // check tape
 
-  const char* vid=tape.vid().c_str();
-  int side=tape.side();
+
   char dgnBuffer[8];
 
   while(1){
     serrno=0;
-    int rc = vmgr_querytape(vid,side,&vmgrTapeInfo,dgnBuffer);
+    int rc = vmgr_querytape((char*)tape.vid().c_str(),tape.side(),&vmgrTapeInfo,dgnBuffer);
     save_serrno = serrno;
 
     // check the status
@@ -212,8 +211,8 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::getDataFromVmgr(castor::s
         }
 	castor::exception::Exception ex(serrno);
 	ex.getMessage()
-	  << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getDgnFromVmgr"
-	  << "vmgr_gettape failed";
+	  << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getDataFromVmgr"
+	  << " invalid status";
 	throw ex;
         
       }
@@ -229,7 +228,7 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::getDataFromVmgr(castor::s
       castor::exception::Exception ex(save_serrno);
       ex.getMessage()
 	<< "castor::tape::tapegateway::VmgrTapeGatewayHelper::getDgnFromVmgr"
-	<< "vmgr_querytape failed";
+	<< " vmgr_querytape failed";
 	throw ex;
     }
   }
@@ -273,7 +272,7 @@ int castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeStatusInVmgr(castor
 	castor::exception::Exception ex(serrno);
 	ex.getMessage()
 	  << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getDgnFromVmgr"
-	  << "vmgr_querytape failed";
+	  << " vmgr_querytape failed";
 	throw ex;
 
       }
@@ -287,7 +286,7 @@ int castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeStatusInVmgr(castor
 	castor::exception::Exception ex(save_serrno);
 	ex.getMessage()
 	  << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getDgnFromVmgr"
-	  << "vmgr_querytape failed";
+	  << " vmgr_querytape failed";
 	throw ex;
       }
    
@@ -300,27 +299,25 @@ int castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeStatusInVmgr(castor
 void  castor::tape::tapegateway::VmgrTapeGatewayHelper::resetBusyTape(castor::stager::Tape& tape) throw (castor::exception::Exception){
   
   // in case of error we free the busy tape to be picked by someone else
- 
-  if ( tape.tpmode() == 1 ) return; // read don't reset it
+
+  if ( tape.tpmode() == 0 ) return; // read don't reset it
 
   // Make sure we don't override some important status already set
-  
+
   int status=getTapeStatusInVmgr(tape);
- 
   if ( (status & TAPE_BUSY) == 0 ) return;
-  
   status = status & ~TAPE_BUSY;
   serrno=0;
   int rc= vmgr_modifytape(tape.vid().c_str(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, status); 
-  if (rc<0){
+  if (rc<0){ 
     castor::exception::Exception ex(serrno);
     ex.getMessage()
       << "castor::tape::tapegateway::VmgrTapeGatewayHelper::resetBusyTape"
-      << "vmgr_modifytape failed";
+      << " vmgr_modifytape failed";
     throw ex;
 
   }
-  
+
 }
 
 
@@ -330,7 +327,7 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(castor::
 
   // check input 
 
-  int side=1; // HARDCODED
+  int side=0; // HARDCODED
 
   // get information from vmgr
 
@@ -341,7 +338,7 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(castor::
 
   while(1){
     serrno=0;
-    int rc = vmgr_querytape(vid.c_str(),side,&vmgrTapeInfo,dgnBuffer);
+    int rc = vmgr_querytape((char*)vid.c_str(),side,&vmgrTapeInfo,dgnBuffer);
     save_serrno = serrno;
 
     if ( rc == 0 ) {
@@ -358,7 +355,7 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(castor::
 	castor::exception::Exception ex(serrno);
 	ex.getMessage()
 	  << "castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr"
-	  <<"vmgr_querytape failed";
+	  <<" vmgr_querytape failed";
 	throw ex;
 
       }
@@ -372,7 +369,7 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(castor::
 	castor::exception::Exception ex(save_serrno);
 	ex.getMessage()
 	  << "castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr"
-	  <<"vmgr_querytape failed";
+	  <<" vmgr_querytape failed";
 	throw ex;
       }
    
@@ -405,14 +402,14 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(castor::
      castor::exception::Exception ex(serrno);
      ex.getMessage()
        << "castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr"
-       <<"vmgr_updatetape failed after invalid fseq";
+       <<" vmgr_updatetape failed after invalid fseq";
      throw ex;
     
    }
    castor::exception::Exception ex(EINVAL);
    ex.getMessage()
      << "castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr"
-     <<"invalid fseq";
+     <<" invalid fseq";
    throw ex;
    
  }

@@ -17,8 +17,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NsTapeGatewayHelper.cpp,v $ $Revision: 1.10 $ $Release$ 
- * $Date: 2009/04/30 14:44:26 $ $Author: gtaur $
+ * @(#)$RCSfile: NsTapeGatewayHelper.cpp,v $ $Revision: 1.11 $ $Release$ 
+ * $Date: 2009/05/06 15:13:39 $ $Author: gtaur $
  *
  *
  *
@@ -80,6 +80,7 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile( tape::t
   nsSegAttrs->compression = compression;
   strncpy(nsSegAttrs->vid, vid.c_str(),CA_MAXVIDLEN);
   nsSegAttrs->side = 0; //HARDCODED
+  nsSegAttrs->s_status = '-';
   
   //  convert the blockid
   
@@ -181,6 +182,7 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile( tape::t
   u_signed64 compression = (file.fileSize() * 100 )/ file.compressedFileSize();
   nsSegAttrs->compression =compression;
   nsSegAttrs->segsize = file.fileSize();
+  nsSegAttrs->s_status = '-';
   
   strncpy(nsSegAttrs->vid,vid.c_str(),CA_MAXVIDLEN);
   nsSegAttrs->side = 0; // HARDCODED side

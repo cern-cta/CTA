@@ -1014,8 +1014,6 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::fileMigrationUpdate(cast
       }
     }
 
-    m_fileMigrationUpdateStatement->closeResultSet(rs);
-
   } catch (oracle::occi::SQLException e) {
    
     handleException(e);
