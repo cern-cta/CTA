@@ -711,8 +711,8 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
 
       // Notify the tape gateway
       if(m_mode == WRITE_ENABLE) {
-        const uint32_t fileSize           = body.bytesOut;
-        const uint32_t compressedFileSize = body.hostBytes;
+        const uint32_t fileSize           = body.bytesIn;
+        const uint32_t compressedFileSize = fileSize; // Ignore compression
 
         GatewayTxRx::notifyGatewayFileMigrated(m_cuuid, m_volReqId,
           m_gatewayHost, m_gatewayPort, body.segAttr.nameServerHostName,
