@@ -348,12 +348,23 @@ allowed them to mount tapes:
 
 Example:
 
-    Cupvadd --uid 0 --gid 0 --src '^tpsrv.*.cern.ch' --tgt lxcastorsrv102.cern.ch --priv TP_SYSTEM
+    Cupvadd --user root --group root --src '^tpsrv.*.cern.ch' --tgt lxcastorsrv102.cern.ch --priv TP_SYSTEM
 
 Where:
 
     '^tpsrv.*.cern.ch' identifies the tape servers
     lxcastorsrv102.cern.ch is the VMGR server
+
+The TP_OPER privilege is required to:
+    * Delete the tag on a volume
+    * Enter a tape
+    * Modify a tape entry
+    * Add/replace the tag on a volume
+
+Example:
+
+    Cupvadd --user developer --group developers --src 'devbox.cern.ch' --tgt lxcastorsrv102.cern.ch --priv TP_OPER
+
 
 
 How to populate a new VMGR database
