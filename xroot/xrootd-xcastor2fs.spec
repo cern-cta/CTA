@@ -1,7 +1,7 @@
 Summary:     The next generation xrootd@Castor2 interface
 Name: 	     xrootd-xcastor2fs
 Version:     1.0.6
-Release:     4
+Release:     5
 License:     none
 Group:       Applications/Castor
 Source0:     %{name}-%{version}.tar.gz
@@ -60,6 +60,10 @@ fi
 %attr(-,stage,st) %dir /var/spool/xroot/core
 
 %changelog
+* Mon May 04 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.6-5
+- added support for multiple capability keys to provide signature to multiple instances with individual public keys
+- fixed bug during file creation for status PUT_FAILED (returns 0 and no serrno)
+
 * Wed Apr 27 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.6-3
 - added support in disk server plugin to set the file size in the nameserver during the close
   (otherwise the typical delay before the namespace size is updated is 3 s)

@@ -1,5 +1,5 @@
-//          $Id: XrdxCastor2Fs.cc,v 1.9 2009/04/29 15:23:42 apeters Exp $
-const char *XrdxCastor2FsCVSID = "$Id: XrdxCastor2Fs.cc,v 1.9 2009/04/29 15:23:42 apeters Exp $";
+//          $Id: XrdxCastor2Fs.cc,v 1.10 2009/05/06 14:37:23 apeters Exp $
+const char *XrdxCastor2FsCVSID = "$Id: XrdxCastor2Fs.cc,v 1.10 2009/05/06 14:37:23 apeters Exp $";
 
 #include "XrdVersion.hh"
 #include "XrdClient/XrdClientAdmin.hh"
@@ -1337,6 +1337,11 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
        return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "access file in stager (status=INVALID)  fn = ", path);	   
      }
      
+     if ( (stagestatus == "PUT_FAILED") ) {
+       TIMING(xCastor2FsTrace,"RETURN",&opentiming);
+       opentiming.Print(xCastor2FsTrace);
+       return XrdxCastor2Fs::Emsg(epname, error, EPERM, "do put in stager (status=PUT_FAILED)  fn = ", path);	   
+     }
    } else {
      XrdOucString usedpolicytag="";
 
@@ -1704,7 +1709,7 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
      if (XrdxCastor2FS->IssueCapability) {
        //       XrdxCastor2FS->encodeLock.Lock();
        int sig64len=0;
-       if(!XrdxCastor2FS->ServerAcc->SignBase64((unsigned char*)authz.token,strlen(authz.token),sb64,sig64len)) {
+       if(!XrdxCastor2FS->ServerAcc->SignBase64((unsigned char*)authz.token,strlen(authz.token),sb64,sig64len,stagehost.c_str())) {
 	 XrdxCastor2Fs::Emsg(epname, error, retc, "sign authorization token for sfn = ", path);	   
 	 //	 XrdxCastor2FS->encodeLock.UnLock();
 	 return SFS_ERROR;

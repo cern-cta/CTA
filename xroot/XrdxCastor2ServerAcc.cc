@@ -1,4 +1,4 @@
-//          $Id: XrdxCastor2ServerAcc.cc,v 1.1 2008/09/15 10:04:02 apeters Exp $
+//          $Id: XrdxCastor2ServerAcc.cc,v 1.2 2009/05/06 14:37:23 apeters Exp $
 
 #include "XrdxCastor2Fs/XrdxCastor2Trace.hh"
 #include "XrdxCastor2Fs/XrdxCastor2ServerAcc.hh"
@@ -31,7 +31,7 @@ XrdOucTrace TkTrace(&TkEroute);
  */
 
 bool
-XrdxCastor2ServerAcc::SignBase64(unsigned char *input, int inputlen, XrdOucString& sb64, int& sig64len)
+XrdxCastor2ServerAcc::SignBase64(unsigned char *input, int inputlen, XrdOucString& sb64, int& sig64len, const char* keyclass)
 {
   int err;
   unsigned int sig_len;
@@ -52,7 +52,7 @@ XrdxCastor2ServerAcc::SignBase64(unsigned char *input, int inputlen, XrdOucStrin
 
   sb64 = "";
   /* use the envelope api to create an encode the hash value */
-//  EVP_SignInit_ex   (&md_ctx, EVP_sha1(),NULL);
+  //  EVP_SignInit_ex   (&md_ctx, EVP_sha1(),NULL);
   EVP_SignInit   (&md_ctx, EVP_sha1());
   EVP_SignUpdate (&md_ctx, input, inputlen);
   sig_len = sizeof(sig_buf);
@@ -60,7 +60,20 @@ XrdxCastor2ServerAcc::SignBase64(unsigned char *input, int inputlen, XrdOucStrin
   TIMING(TkTrace,"EVPINIT/UPDATE",&signtiming);
 
   encodeLock.Lock();
-  err = EVP_SignFinal (&md_ctx, sig_buf, &sig_len, privatekey);
+  EVP_PKEY* usekey = privatekey.Find(keyclass);
+  if (!usekey) {
+    // if not for this keyclass, look for default
+    usekey = privatekey.Find("default");
+  }
+
+  if (!usekey) {
+    TkTrace.Beg("SignBase64");
+    cerr << "Unable to find privave key for key class " << keyclass << endl;
+    TkTrace.End();
+    return false;
+  }
+
+  err = EVP_SignFinal (&md_ctx, sig_buf, &sig_len, usekey);
   encodeLock.UnLock();
   TIMING(TkTrace,"EVPSIGNFINAL",&signtiming);
 
@@ -514,7 +527,6 @@ XrdxCastor2ServerAcc::Configure(const char* ConfigFN) {
   RequireCapability = false;
   StrictCapability = false;
 
-  auth_keyfile  = NULL;
   auth_certfile = NULL;
   if (!ConfigFN || !*ConfigFN) {
     TkEroute.Emsg("Config","Configuration file not specified.");
@@ -526,6 +538,7 @@ XrdxCastor2ServerAcc::Configure(const char* ConfigFN) {
     Config.Attach(cfgFD);
     // Now start reading records until eof.
     //
+    int nprivatekeys=0;
     while ((var = Config.GetMyFirstWord())) {
       if (!strncmp(var, "xcastor2.",9)) {
 	var+= 9;
@@ -541,9 +554,18 @@ XrdxCastor2ServerAcc::Configure(const char* ConfigFN) {
 	if (!strcmp("privatekey",var)) {
 	  if (!(val = Config.GetWord())) {
 	    TkEroute.Emsg("Config","argument for xcastor2.privatekey invalid.");NoGo=1;
-	    auth_keyfile = NULL;
+	  } 
+	  char* val2;
+	  if (!(val2 = Config.GetWord())) {
+	    TkEroute.Say("=====> xcastor2.privatekey file: " ,val , " tag: default");
+	    auth_keyfile.Add("default",new XrdOucString(val));
+	    auth_keylist = new XrdOucTList("default",0, auth_keylist);
 	  } else {
-	    auth_keyfile = strdup(val);
+	    XrdOucString printit="=====> xcastor2.privatekey file: ";
+	    printit+=val; printit+=" tag: "; printit += val2;
+	    TkEroute.Say(printit.c_str());
+	    auth_keyfile.Add(val2, new XrdOucString(val));
+	    auth_keylist = new XrdOucTList(val2, 0, auth_keylist);
 	  }
 	}
 
@@ -587,24 +609,19 @@ XrdxCastor2ServerAcc::Configure(const char* ConfigFN) {
     } else {
       TkEroute.Say("=====> xcastor2.capability : ignored/not needed");
     }
-
+    
     const char* tp;
     int isMan = ((tp = getenv("XRDREDIRECT")) && !strcmp(tp, "R"));
-
+    
     if (RequireCapability) {
       if (isMan) {
 	if (auth_certfile)
 	  free(auth_certfile);
 	auth_certfile = NULL;
-	if (!auth_keyfile) {
-	  TkEroute.Emsg("Config","missing xcastor2.privatekey on manager host.");NoGo=1;
-	} else {
-	  TkEroute.Say("=====> xcastor2.privatekey: ", auth_keyfile,"");
-	}
+	if (!auth_keyfile.Num()) {
+	  TkEroute.Emsg("Config","missing xcastor2.privatekey on manager host. (default)");NoGo=1;
+	} 
       } else {
-	if (auth_keyfile)
-	  auth_keyfile = NULL;
-	auth_keyfile = NULL;
 	if (!auth_certfile) {
 	  TkEroute.Emsg("Config","missing xcastor2.publickey on server host.");NoGo=1;
 	} else {
@@ -613,8 +630,8 @@ XrdxCastor2ServerAcc::Configure(const char* ConfigFN) {
       }
     }
   }
-
-
+  
+    
   if (NoGo)
     return false;
 
@@ -650,21 +667,32 @@ XrdxCastor2ServerAcc::Init() {
     }
   }
 
-  /* get the private key */
-  if (auth_keyfile) {
-    FILE* fpkey = 0;
-    fpkey = fopen (auth_keyfile,"r");
-    if (fpkey == NULL) {
-      TkEroute.Emsg("Init",errno,"open key file ", auth_keyfile);
-      return false;
-    }
-    
-    privatekey = PEM_read_PrivateKey(fpkey, NULL, NULL,NULL);
-    fclose (fpkey);
-    
-    if (privatekey == NULL) {
-      TkEroute.Emsg("Init",EACCES,"access private key in file ", auth_keyfile);
-      return false;
+  /* get the private key(s) */
+  if (auth_keyfile.Num()) {
+    XrdOucTList* NextKey = auth_keylist;
+    while ( NextKey ) {
+      XrdOucString* thiskey = auth_keyfile.Find(NextKey->text);
+      FILE* fpkey = 0;
+      if (!thiskey) {
+	TkEroute.Emsg("Init",EINVAL,"find key file for class", thiskey->c_str());
+	return false;
+      }
+      fpkey = fopen (thiskey->c_str(),"r");
+      if (fpkey == NULL) {
+	TkEroute.Emsg("Init",errno,"open key file ", thiskey->c_str());
+	return false;
+      }
+      
+      EVP_PKEY* lprivatekey;
+      lprivatekey = PEM_read_PrivateKey(fpkey, NULL, NULL,NULL);
+      fclose (fpkey);
+      
+      if (lprivatekey == NULL) {
+	TkEroute.Emsg("Init",EACCES,"access private key in file ", thiskey->c_str());
+	return false;
+      }
+      privatekey.Add(NextKey->text,lprivatekey);
+      NextKey=NextKey->next;
     }
   }
   return true;

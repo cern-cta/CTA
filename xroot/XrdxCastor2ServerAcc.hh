@@ -1,4 +1,4 @@
-//         $Id: XrdxCastor2ServerAcc.hh,v 1.1 2008/09/15 10:04:02 apeters Exp $
+//         $Id: XrdxCastor2ServerAcc.hh,v 1.2 2009/05/06 14:37:23 apeters Exp $
 
 #ifndef __XCASTOR2_SERVER_ACC__
 #define __XCASTOR2_SERVER_ACC__
@@ -6,6 +6,8 @@
 #include "XrdAcc/XrdAccAuthorize.hh"
 #include "XrdAcc/XrdAccPrivs.hh"
 #include "XrdOuc/XrdOucString.hh"
+#include "XrdOuc/XrdOucHash.hh"
+#include "XrdOuc/XrdOucTList.hh"
 #include "XrdSys/XrdSysLogger.hh"
 #include "XrdSys/XrdSysPthread.hh"
 
@@ -52,7 +54,7 @@ public:
 
   static bool BuildToken(XrdxCastor2ServerAcc::AuthzInfo* authz, XrdOucString &token);
   static bool BuildOpaque(XrdxCastor2ServerAcc::AuthzInfo* authz, XrdOucString &opaque);
-  bool        SignBase64(unsigned char *input, int inputlen, XrdOucString& sb64, int& sig64len);
+  bool        SignBase64(unsigned char *input, int inputlen, XrdOucString& sb64, int& sig64len, const char* keyclass="default");
 
   /* Access() indicates whether or not the user/host is permitted access to the
      path for the specified operation. The default implementation that is
@@ -91,15 +93,16 @@ public:
           bool        Init();
           bool        Configure(const char* ConfigFN);
 
-  XrdxCastor2ServerAcc(){}
+  XrdxCastor2ServerAcc(){auth_keylist=0;}
   
   virtual                  ~XrdxCastor2ServerAcc(); 
 
 private:
 
   char *auth_certfile;            /* file name of public key for signature verification */
-  char *auth_keyfile;             /* file name of private key for signature creation */
-  
+  XrdOucHash<XrdOucString> auth_keyfile;             /* file name of private key for signature creation */
+  XrdOucTList* auth_keylist;
+
   bool VerifyUnbase64(const char* data, unsigned char *base64buffer, const char* path);
 
   XrdxCastor2ServerAcc::AuthzInfo* Decode(const char* opaque);
@@ -112,7 +115,7 @@ private:
   
   X509* x509public;
   EVP_PKEY *      publickey;
-  EVP_PKEY *      privatekey;
+  XrdOucHash<EVP_PKEY> privatekey;
   XrdSysMutex     decodeLock;
   XrdSysMutex     encodeLock;
 };
