@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.733 $ $Date: 2009/04/28 14:39:33 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.734 $ $Date: 2009/05/06 10:41:22 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1671,7 +1671,7 @@ BEGIN
     UPDATE SubRequest
        SET status = 7, -- FAILED
            errorCode = 28, -- ENOSPC
-           errorMessage = 'File creation canceled since diskPool is full'
+           errorMessage = 'File creation canceled since disk pool is full'
      WHERE id = srId;
     COMMIT;
     RETURN;
@@ -1969,21 +1969,22 @@ BEGIN
       SELECT DC.id
         FROM DiskCopy DC, FileSystem, DiskPool2SvcClass DP2SC
        WHERE DC.castorFile = cfId
-         AND DC.status IN (0, 1, 2, 6, 10)  -- STAGED, STAGEOUT, CANBEMIGR, WAITDISK2DISKCOPY, WAITTAPERECALL
+         AND DC.status IN (0, 6, 10)  -- STAGED, STAGEOUT, CANBEMIGR
          AND DC.fileSystem = FileSystem.id
          AND FileSystem.diskPool = DP2SC.parent
          AND DP2SC.child = scId)
     UNION ALL (
-      -- and then diskcopies resulting from PrepareToPut|Update requests
+      -- and then diskcopies resulting from previous PrepareToPut|replica requests
       SELECT DC.id
         FROM (SELECT id, svcClass FROM StagePrepareToPutRequest UNION ALL
-              SELECT id, svcClass FROM StagePrepareToUpdateRequest) PrepareRequest,
+              SELECT id, svcClass FROM StagePrepareToUpdateRequest UNION ALL
+              SELECT id, svcClass FROM StageDiskCopyReplicaRequest) PrepareRequest,
              SubRequest, DiskCopy DC
        WHERE SubRequest.diskCopy = DC.id
          AND PrepareRequest.id = SubRequest.request
          AND PrepareRequest.svcClass = scId
          AND DC.castorFile = cfId
-         AND DC.status IN (5, 11)  -- WAITFS, WAITFS_SCHEDULING
+         AND DC.status IN (1, 5, 11)  -- WAITDISK2DISKCOPY, WAITFS, WAITFS_SCHEDULING
       );
     IF dcsToRm.COUNT = 0 THEN
       -- We didn't find anything on this svcClass, fail and return
@@ -1998,14 +1999,14 @@ BEGIN
     -- we are performing a stageRm everywhere.
     -- First select current status of the diskCopies: if CANBEMIGR,
     -- make sure we don't drop the last remaining valid migratable copy,
-    -- i.e. drop the disk only copies from the count.
+    -- i.e. exclude the disk only copies from the count.
     SELECT status INTO dcStatus
       FROM DiskCopy
      WHERE id = dcsToRm(1);
     IF dcStatus = 10 THEN  -- CANBEMIGR
       SELECT count(*) INTO nbRes FROM DiskCopy
        WHERE castorFile = cfId
-         AND status IN (1, 10)  -- WAITDISK2DISKCOPY, CANBEMIGR
+         AND status = 10  -- CANBEMIGR
          AND id NOT IN (
            (SELECT /*+ CARDINALITY(dcidTable 5) */ *
               FROM TABLE(dcsToRm) dcidTable)
@@ -2021,7 +2022,7 @@ BEGIN
     ELSE
       SELECT count(*) INTO nbRes FROM DiskCopy
          WHERE castorFile = cfId
-           AND status IN (0, 1, 2, 5, 6, 10, 11)  -- WAITDISK2DISKCOPY, WAITTAPERECALL, STAGED, STAGEOUT, CANBEMIGR, WAITFS, WAITFS_SCHEDULING
+           AND status IN (0, 2, 5, 6, 10, 11)  -- STAGED, WAITTAPERECALL, STAGEOUT, CANBEMIGR, WAITFS, WAITFS_SCHEDULING
            AND id NOT IN (SELECT /*+ CARDINALITY(dcidTable 5) */ *
                             FROM TABLE(dcsToRm) dcidTable);
     END IF;
@@ -2031,12 +2032,6 @@ BEGIN
       -- allow the removal.
       scId := 0;
     END IF;
-  END IF;
-  IF scId = 0 THEN
-    SELECT id BULK COLLECT INTO dcsToRm
-      FROM DiskCopy
-     WHERE castorFile = cfId
-       AND status IN (0, 1, 2, 5, 6, 10, 11);  -- WAITDISK2DISKCOPY, WAITTAPERECALL, STAGED, WAITFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
   END IF;
 
   IF scId = 0 THEN
@@ -2111,6 +2106,11 @@ BEGIN
              errorCode = 4,  -- EINTR
              errorMessage = 'Recall canceled by another user request'
        WHERE castorFile = cfId and status IN (4, 5);   -- WAITTAPERECALL, WAITSUBREQ
+      -- Reselect what needs to be removed
+      SELECT id BULK COLLECT INTO dcsToRm
+        FROM DiskCopy
+       WHERE castorFile = cfId
+         AND status IN (0, 1, 2, 5, 6, 10, 11);  -- WAITDISK2DISKCOPY, WAITTAPERECALL, STAGED, WAITFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
     END;
   END IF;
 
@@ -2125,12 +2125,10 @@ BEGIN
            errorMessage = 'Canceled by another user request'
      WHERE diskCopy = dcsToRm(i)
        AND status IN (0, 1, 2, 5, 6, 13);
-  -- Set selected DiskCopies to INVALID. In any case keep
-  -- WAITTAPERECALL diskcopies so that recalls can continue.
-  -- Note that WAITFS and WAITFS_SCHEDULING DiskCopies don't exist on disk
-  -- so they will only be taken by the cleaning daemon for the failed DCs.
+  -- Set selected DiskCopies to either INVALID or FAILED
   FORALL i IN dcsToRm.FIRST .. dcsToRm.LAST
-    UPDATE DiskCopy SET status = 7 -- INVALID
+    UPDATE DiskCopy SET status = 
+           decode(status, 1,4, 2,4, 5,4, 11,4, 7) -- WAITDISK2DISKCOPY,WAITTAPERECALL,WAITFS[_SCHED] -> FAILED, others -> INVALID
      WHERE id = dcsToRm(i);
   ret := 1;  -- ok
 END;
