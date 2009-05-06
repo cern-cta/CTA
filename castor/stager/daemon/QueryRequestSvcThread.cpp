@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.97 $ $Release$ $Date: 2009/04/14 11:33:46 $ $Author: itglp $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.98 $ $Release$ $Date: 2009/05/06 11:39:09 $ $Author: waldron $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -251,10 +251,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileId
  Cuuid_t uuid)
   throw (castor::exception::Exception) {
   // Processing File Query by fileid
-  castor::dlf::Param params[] =
-    {castor::dlf::Param("FileId", fid),
-     castor::dlf::Param("NsHost", nshost)};
-  castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_IQUERY, 2, params);
+  castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_IQUERY, fid, nshost);
   std::list<castor::stager::DiskCopyInfo*>* result =
     qrySvc->diskCopies4File(fid, nshost, svcClassId, fileName);
   if(result == 0 || result->size() == 0) {   // sanity check, result.size() must be == 1
