@@ -40,7 +40,7 @@ $service = $_GET['service'];
 //connection - DB login 
 $conn = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
 if(!$conn) {
-	$e = ocierror();
+	$e = oci_error();
 	print htmlentities($e['message']);
 	exit;
 }
@@ -69,14 +69,14 @@ while (OCIFetch($parsed1)) {
 //display table at the same time
 echo "<table><tr><td align ='center' style='background-color: orangered'><b>Last Ten Minutes History (Migrated Files - $svcclass)</b></td></tr>";
 echo "<tr><td align = 'center'><img src ='tsmpool.php?service=$service&svcclass=$svcclass'></td></tr>";
+if (empty($user)) {
+	 echo "<tr><td align = 'center'><b> No Data Available</b></td></tr>";
+}
+else {
 echo "<tr><td align = 'center'><table border = 1><tbody>
 		<tr>
 			<td id = 'fonts' align = 'center' style='background-color: #C0C0C0'> Username </td>
 			<td id = 'fonts' align = 'center' style='background-color: #C0C0C0'> Total Migrated Files </td></tr>";
-if (empty($user)) {
-	 echo "<b> No Data Available</b>";
-}
-else {
 foreach ($user as $u) {
 	echo "</tr><td id = 'fonts' align = 'center'style='background-color: #C0C0C0'><a href='userhistm.php?service=$service&user=$u[0]'> $u[0] </a></td>";
 	echo "<td id = 'fonts' align = 'center'>$u[1]</td></tr>";

@@ -39,7 +39,7 @@ $service = $_GET['service'];
 //connection
 $conn = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
 if(!$conn) {
-	$e = ocierror();
+	$e = oci_error();
 	print htmlentities($e['message']);
 	exit;
 }
@@ -49,8 +49,8 @@ if ($reqkind == 'TapeRecall') {
 $query1 = "select svcclass,username, count(*) r, count(case when type='StageGetRequest' then 1 else null end) non,
 		   count(case when type='StagePrepareToGetRequest' then 1 else null end) pre
            from ".$db_instances[$service]['schema'].".requests
-           where timestamp >= sysdate - 15/1440
-           and timestamp < sysdate - 5/1440  
+           where timestamp >= sysdate -15/1440
+           and timestamp < sysdate -5/1440  
            and state = 'TapeRecall'
            group by svcclass,username
            order by svcclass, r desc";
@@ -92,8 +92,6 @@ else {
 echo "<div><img src ='timeseriesreqkind.php?service=$service&reqkind=$reqkind'></div>";
 echo "<div style='background-color: orange' align = 'center'><b> File Size of recalled files within the last 10 Minutes</b> </div>";
 echo "<div><img src ='trsdistr.php?service=$service'></div>";
-echo "<div style='background-color: orange' align = 'center'><b> File Size of recalled files within the last 10 Minutes</b> </div>";
-echo "<div><img src ='fmountsort.php?service=$service'></div>";
 $span = count($pool_names) + 1;
 echo "<div><table border = 1><tbody>
 		<tr>
@@ -133,9 +131,9 @@ echo "</tbody></table></div>";
 }
 else {
 $query1 = "select svcclass,username, count(*) r
-		   from ".$db_instances[$service]['schema']." requests
-		   where NN_Requests_timestamp >= sysdate - 15/1440
-		   and NN_Requests_timestamp < sysdate - 5/1440 
+		   from ".$db_instances[$service]['schema'].".requests
+		   where timestamp >= sysdate - 15/1440
+		   and timestamp < sysdate -5/1440 
 		   and state = '$reqkind'
 		   group by svcclass,username
 		   order by svcclass, r desc";

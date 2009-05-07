@@ -121,7 +121,7 @@ for($i = 0; $i < $size;$i++) {
 		  for($k=0;$k < $size; $k++) {
 		  $p = $pool[$k];
 		?>
-		<?php echo "<th id=\"fonts\"  align = center><a class ='outer' href='destsvcclass.php?svcclass=$p'> $p </a></th>"; ?>
+		<?php echo "<th id=\"fonts\"  align = center>$p</th>"; ?>
 		<?php }?>
 		</tr>
 		</thead>
@@ -129,11 +129,11 @@ for($i = 0; $i < $size;$i++) {
 		<?php
 		for($i = 0; $i < $size;$i++) {?>
 		   <tr>
-		   <?php echo "<th id=\"fonts\"  style=\"background-color: #C0C0C0\"><a class ='outer' href='srcsvcclass.php?svcclass=$pool[$i]'>$pool[$i]</a></th>";?>
+		   <?php echo "<th id=\"fonts\"  style=\"background-color: #C0C0C0\">$pool[$i]</th>";?>
 		   <?php for($j = 0; $j < $size;$j++) {
 		             $colour = decode($final[$i][$j],$max,$min);
 			     $value = $final[$i][$j];
-			     echo "<td id ='fonts' align='center' style='background-color: $colour' ><a class='inner' style='background-color: $colour' href= 'pptran.php?src=$pool[$i]&dest=$pool[$j]'>$value</a></td>";?>
+			     echo "<td id ='fonts' align='center' style='background-color: $colour' >$value</td>";?>
 		   <?php } ?>
 		   </tr><?php }?>
 		</tbody>

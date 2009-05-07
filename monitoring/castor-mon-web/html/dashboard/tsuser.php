@@ -6,7 +6,7 @@ include ("../jpgraph-1.27/src/jpgraph.php");
 include ("../jpgraph-1.27/src/jpgraph_bar.php");
 include("../lib/no_data.php");
 //include user account
-include ("../../../conf/castor-mon-web");
+include ("../../../conf/castor-mon-web/user.php");
 //get posted values
 $username = $_GET['user'];
 $pattern_1 = '/[a-zA-Z0-9]{1,15}/';
@@ -19,7 +19,7 @@ $service = $_GET['service'];
 //Connect to the db
 $con = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
    if (!$con) {
-     $e = ocierror();
+     $e = oci_error();
      print htmlentities($e['message']);
      exit;
    } else {// db functionnality
@@ -29,8 +29,8 @@ $con = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pas
 		   count(case when state='DiskCopy' then trunc(timestamp,'Mi') else null end) over (Partition by trunc(timestamp,'Mi')) number_of_DC_req, 
 		   count(case when state='TapeRecall' then trunc(timestamp,'Mi') else null end) over (Partition by trunc(timestamp,'Mi')) number_of_TR_req
          from ".$db_instances[$service]['schema'].".requests
-         where timestamp >= trunc(sysdate - 15/1440,'Mi')
-	   and timestamp < trunc(sysdate -5/1440,'Mi') 
+         where timestamp >= trunc(sysdate -15/1440,'Mi')
+	   and timestamp < trunc(sysdate  - 5/1440,'Mi') 
            and username = :username
          order by bin";
      $parsedqry = ociparse($con, $time_series);
@@ -45,11 +45,11 @@ $con = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pas
        exit();
        } else {
          $i = 0;
-	 while ($row = ocifetch($parsedqry)) {
-	   $result['BIN'][$i] = $row['BIN'];
-       $result['NUMBER_OF_DH_REQ'][$i] = $row['NUMBER_OF_DH_REQ'];
-	   $result['NUMBER_OF_DC_REQ'][$i] = $row['NUMBER_OF_DC_REQ'];
-	   $result['NUMBER_OF_TR_REQ'][$i++] = $row['NUMBER_OF_TR_REQ'];
+	 while (ocifetch($parsedqry)) {
+	   $result['BIN'][$i] = OCIResult($parsedqry,1);
+       $result['NUMBER_OF_DH_REQ'][$i] = OCIResult($parsedqry,2);
+	   $result['NUMBER_OF_DC_REQ'][$i] = OCIResult($parsedqry,3);
+	   $result['NUMBER_OF_TR_REQ'][$i++] = OCIResult($parsedqry,4);
 	 }
        } 
      }
