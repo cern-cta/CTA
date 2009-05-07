@@ -81,7 +81,7 @@ f->Write();
 
     def xrootRead(self):
         fileName=RfioTest.myTurl.replace("\\&","&").replace("\\?","?").replace("tmpRfioTest","tmpXRootTest")
-        fileName=self.protocol.lower()+"://"+stagerHost+"/"+fileName+"fileXRoot"+self.protocol+RfioTest.myTag+ticket+"?stagerHost="+stagerHost
+        fileName=self.protocol.lower()+"://"+stagerHost+"/"+fileName+"fileXRoot"+self.protocol+RfioTest.myTag+ticket+"?stagerHost="+stagerHost+"&svcClass="+stagerSvcClass
         
         fileContent = """
 TFile *f = TFile::Open(\""""+fileName+"""\",\"READ\");
