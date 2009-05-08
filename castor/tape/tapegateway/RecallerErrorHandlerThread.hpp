@@ -31,7 +31,6 @@
 
 
 #include "castor/infoPolicy/TapeRetryPySvc.hpp"
-#include "castor/tape/tapegateway/ITapeGatewaySvc.hpp"
 #include "castor/server/BaseDbThread.hpp"
 
 namespace castor {
@@ -44,7 +43,6 @@ namespace castor {
      */
     
       class RecallerErrorHandlerThread :public castor::server::BaseDbThread {
-	castor::tape::tapegateway::ITapeGatewaySvc* m_dbSvc;
 	castor::infoPolicy::TapeRetryPySvc* m_retryPySvc;
         
       public:
@@ -53,7 +51,7 @@ namespace castor {
        * constructor
        */
 
-     RecallerErrorHandlerThread(castor::tape::tapegateway::ITapeGatewaySvc* svc, castor::infoPolicy::TapeRetryPySvc* retryPySvc);
+     RecallerErrorHandlerThread(castor::infoPolicy::TapeRetryPySvc* retryPySvc);
      
       /**
        * destructor

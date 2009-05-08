@@ -41,13 +41,12 @@
 #include  "castor/infoPolicy/PolicyObj.hpp"
 #include  "castor/infoPolicy/DbInfoRetryPolicy.hpp"
 #include  "castor/stager/TapeCopy.hpp"
-
+#include  "castor/tape/tapegateway/ITapeGatewaySvc.hpp"
   
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapegateway::MigratorErrorHandlerThread::MigratorErrorHandlerThread(castor::tape::tapegateway::ITapeGatewaySvc* svc, castor::infoPolicy::TapeRetryPySvc* retryPySvc ){
-  m_dbSvc=svc; 
+castor::tape::tapegateway::MigratorErrorHandlerThread::MigratorErrorHandlerThread( castor::infoPolicy::TapeRetryPySvc* retryPySvc ){
   m_retryPySvc=retryPySvc;
 }
 
@@ -57,12 +56,26 @@ castor::tape::tapegateway::MigratorErrorHandlerThread::MigratorErrorHandlerThrea
 void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void* par)
 {
   // get failed migration tapecopies
+
+  // service to access the database
+  castor::IService* dbSvc = castor::BaseObject::services()->service("OraTapeGatewaySvc", castor::SVC_ORATAPEGATEWAYSVC);
+  castor::tape::tapegateway::ITapeGatewaySvc* oraSvc = dynamic_cast<castor::tape::tapegateway::ITapeGatewaySvc*>(dbSvc);
+  
+
+  if (0 == oraSvc) {
+    // we don't have DLF yet, and this is a major fault, so log to stderr and exit
+    std::cerr << "Couldn't load the oracle tapegateway service, check the castor.conf for DynamicLib entries"
+	      << std::endl;
+    exit(-1);
+  }
+
+  
   
   std::vector<castor::stager::TapeCopy*> tcList;
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 21, 0, NULL); 
 
   try {
-    tcList=  m_dbSvc->inputForMigrationRetryPolicy();
+    tcList=  oraSvc->inputForMigrationRetryPolicy();
   } catch (castor::exception::Exception e){
  
     castor::dlf::Param params[] =
@@ -114,7 +127,7 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void* par)
   // update the db 
 
   try {
-    m_dbSvc->updateWithMigrationRetryPolicyResult(tcIdsToRetry,tcIdsToFail); 
+    oraSvc->updateWithMigrationRetryPolicyResult(tcIdsToRetry,tcIdsToFail); 
   } catch (castor::exception::Exception e) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("errorCode",sstrerror(e.code())),

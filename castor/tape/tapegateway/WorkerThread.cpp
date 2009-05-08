@@ -61,13 +61,15 @@
 #include "castor/tape/tapegateway/NsTapeGatewayHelper.hpp"
 
 
+
+
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
 
-castor::tape::tapegateway::WorkerThread::WorkerThread(castor::tape::tapegateway::ITapeGatewaySvc* dbSvc):BaseDbThread(){ 
+castor::tape::tapegateway::WorkerThread::WorkerThread():BaseDbThread(){ 
 
-  m_dbSvc=dbSvc; 
+  
   // populate the map with the different handlers
   m_handlerMap[OBJ_VolumeRequest] = &WorkerThread::handleStartWorker;
   m_handlerMap[OBJ_FileRecalledNotification] = &WorkerThread::handleRecallUpdate;
@@ -88,6 +90,18 @@ void castor::tape::tapegateway::WorkerThread::run(void* arg)
 {
 
   // to comunicate with the tape aggregator
+  // service to access the database
+  castor::IService* dbSvc = castor::BaseObject::services()->service("OraTapeGatewaySvc", castor::SVC_ORATAPEGATEWAYSVC);
+  castor::tape::tapegateway::ITapeGatewaySvc* oraSvc = dynamic_cast<castor::tape::tapegateway::ITapeGatewaySvc*>(dbSvc);
+  
+
+  if (0 == oraSvc) {
+    // we don't have DLF yet, and this is a major fault, so log to stderr and exit
+    std::cerr << "Couldn't load the oracle tapegateway service, check the castor.conf for DynamicLib entries"
+	      << std::endl;
+    exit(-1);
+  }
+
 
   try{
 
@@ -149,7 +163,7 @@ void castor::tape::tapegateway::WorkerThread::run(void* arg)
       
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 41, 0, NULL);
 
-      std::auto_ptr<castor::IObject> response( (this->*handler)(*obj,*m_dbSvc));
+      std::auto_ptr<castor::IObject> response( (this->*handler)(*obj,*oraSvc));
 
       // send back the proper response
 
@@ -193,7 +207,7 @@ void castor::tape::tapegateway::WorkerThread::run(void* arg)
 }
 
 
-castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker( castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc& m_dbSvc ) throw(){
+castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker( castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw(){
 
   // I received a start worker request
   Volume* response=NULL;
@@ -212,7 +226,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker( cas
 
     try {
     
-      response = m_dbSvc.updateDbStartTape(startRequest); 
+      response = oraSvc.updateDbStartTape(startRequest); 
       
     } catch (castor::exception::Exception e){
     
@@ -262,7 +276,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker( cas
 }
 
 
-castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& m_dbSvc ) throw(){
+castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw(){
       // I received a FileRecalledResponse
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 45, 0, NULL);
   NotificationAcknowledge* response = NULL;
@@ -292,7 +306,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
       std::string vid;
       int copyNb;
       try {
-	m_dbSvc.getSegmentInformation(fileRecalled,vid,copyNb);
+	oraSvc.getSegmentInformation(fileRecalled,vid,copyNb);
 
       } catch (castor::exception::Exception e){
 	castor::dlf::Param params[] = { 
@@ -333,7 +347,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
 	failure.setErrorMessage(e.getMessage().str());
 
 	try {
-	  m_dbSvc.updateAfterFailure(failure); 
+	  oraSvc.updateAfterFailure(failure); 
 	
 	} catch (castor::exception::Exception e) {
 	  // db failure to mark the recall as failed
@@ -353,7 +367,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
 
     try {
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 48, 4, params); 
-      allSegmentsRecalled = m_dbSvc.segmentRecallUpdate(fileRecalled);
+      allSegmentsRecalled = oraSvc.segmentRecallUpdate(fileRecalled);
 	
     } catch (castor::exception::Exception e) {
       castor::dlf::Param params[] =
@@ -373,7 +387,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
       failure.setErrorCode(e.code());
       failure.setErrorMessage(e.getMessage().str());
       try {
-	m_dbSvc.updateAfterFailure(failure);
+	oraSvc.updateAfterFailure(failure);
       } catch (castor::exception::Exception e) {
 	// db failure to mark the recall as failed
 	castor::dlf::Param params[] =
@@ -394,7 +408,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
       if (allSegmentsRecalled) {
 	NsTapeGatewayHelper nsHelper;
 	nsHelper.checkFileSize(fileRecalled);
-	m_dbSvc.fileRecallUpdate(fileRecalled);
+	oraSvc.fileRecallUpdate(fileRecalled);
       }
     }catch (castor::exception::Exception e) {
 	// db failure to mark the recall as failed
@@ -415,7 +429,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
 	failure.setErrorCode(e.code());
 	failure.setErrorMessage(e.getMessage().str());
 	try {
-	  m_dbSvc.updateAfterFailure(failure);
+	  oraSvc.updateAfterFailure(failure);
 	} catch (castor::exception::Exception e) {
 	  // db failure to mark the recall as failed
 	  castor::dlf::Param params[] =
@@ -445,7 +459,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
   return response;
 }
 
-castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate(  castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& m_dbSvc ) throw(){
+castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate(  castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw(){
   
   // I received a FileMigratedResponse
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 50, 0, NULL);
@@ -485,7 +499,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
       u_signed64 lastModificationTime;
       try {
 	
-	repackVid=m_dbSvc.getRepackVidAndFileInformation(fileMigrated,vid,copyNumber,lastModificationTime);
+	repackVid=oraSvc.getRepackVidAndFileInformation(fileMigrated,vid,copyNumber,lastModificationTime);
 	
 	castor::dlf::Param params[] =
 	  {castor::dlf::Param("transactionId",fileMigrated.transactionId()),
@@ -527,7 +541,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
 
 	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 55, 4, params);
 	    
-	    m_dbSvc.updateAfterFailure(failure);
+	    oraSvc.updateAfterFailure(failure);
 
 	    return response;
 	
@@ -554,7 +568,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
 	  
 	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 57, 5, params);
        
-	  m_dbSvc.updateAfterFailure(failure);
+	  oraSvc.updateAfterFailure(failure);
 	  return response;
 
 	}
@@ -566,7 +580,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
 	  
 
 	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 58, 4, params);
-	  m_dbSvc.fileMigrationUpdate(fileMigrated);
+	  oraSvc.fileMigrationUpdate(fileMigrated);
 	}catch (castor::exception::Exception e) {
 	  
 
@@ -603,7 +617,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
     
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 56, 5, params);
       
-	m_dbSvc.updateAfterFailure(failure);
+	oraSvc.updateAfterFailure(failure);
 	return response;
 
       }
@@ -635,7 +649,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
     
 }
 
-castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(castor::IObject& obj,castor::tape::tapegateway::ITapeGatewaySvc& m_dbSvc ) throw(){
+castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(castor::IObject& obj,castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw(){
 
   // I received FileToRecallRequest
   FileToRecall* response=NULL;
@@ -652,7 +666,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(
     
 
     try {
-      response = m_dbSvc.fileToRecall(fileToRecall);
+      response = oraSvc.fileToRecall(fileToRecall);
     } catch (castor::exception::Exception e) {
       castor::dlf::Param params[] =
 	{castor::dlf::Param("transactionId",fileToRecall.transactionId()),
@@ -707,7 +721,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(
   return response;
 }
 
-castor::IObject* castor::tape::tapegateway::WorkerThread::handleMigrationMoreWork( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& m_dbSvc) throw(){
+castor::IObject* castor::tape::tapegateway::WorkerThread::handleMigrationMoreWork( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc) throw(){
        
   // I received FileToMigrateRequest
   // I get a file from the db
@@ -728,7 +742,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleMigrationMoreWor
      
      try {
       
-       response=m_dbSvc.fileToMigrate(fileToMigrate);
+       response=oraSvc.fileToMigrate(fileToMigrate);
 
      } catch (castor::exception::Exception e) {
        castor::dlf::Param params[] =
@@ -782,7 +796,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleMigrationMoreWor
 }
 
 
-castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker( castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc&  m_dbSvc ) throw(){
+castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker( castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc ) throw(){
   	// I received an EndTransferRequest, I send back an EndTransferResponse
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 68, 0, NULL);
 
@@ -800,11 +814,11 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker( cast
 
 	  try {
     
-	    std::auto_ptr<castor::stager::Tape> tape(m_dbSvc.updateDbEndTape(endRequest)); 
+	    std::auto_ptr<castor::stager::Tape> tape(oraSvc.updateDbEndTape(endRequest)); 
 
 	    // release busy tape
 
-	    if (tape.get() != NULL && tape->tpmode() == 1) {
+	    if (tape.get() != NULL && tape->tpmode() == 1) { // just for write
 	      castor::dlf::Param params[] =
 		{castor::dlf::Param("transactionId", endRequest.transactionId()),
 		 castor::dlf::Param("VID", tape->vid())
@@ -857,7 +871,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker( cast
 }
 
 
-castor::IObject* castor::tape::tapegateway::WorkerThread::handleFileErrorReport( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& m_dbSvc ) throw(){
+castor::IObject* castor::tape::tapegateway::WorkerThread::handleFileErrorReport( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw(){
        
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 77, 0, NULL);
   NotificationAcknowledge* response = NULL;
@@ -879,7 +893,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleFileErrorReport(
   
     try {
       
-      castor::stager::Tape tape = m_dbSvc.updateAfterFailure(fileFailure);
+      castor::stager::Tape tape = oraSvc.updateAfterFailure(fileFailure);
 
       if (fileFailure.errorCode() == ENOSPC ) {
 

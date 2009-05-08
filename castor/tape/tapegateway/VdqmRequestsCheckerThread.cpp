@@ -39,13 +39,12 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/Exception.hpp"
 
-
+#include "castor/tape/tapegateway/ITapeGatewaySvc.hpp"
   
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapegateway::VdqmRequestsCheckerThread::VdqmRequestsCheckerThread(castor::tape::tapegateway::ITapeGatewaySvc* svc, u_signed64 timeOut){
-  m_dbSvc=svc; 
+castor::tape::tapegateway::VdqmRequestsCheckerThread::VdqmRequestsCheckerThread(u_signed64 timeOut){
   m_timeOut=timeOut;
 }
 
@@ -58,12 +57,26 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
   std::vector<castor::tape::tapegateway::TapeRequestState*> tapeRequests;
   std::vector<castor::stager::Tape*> tapesToReset;
   std::vector<castor::stager::Tape*>::iterator tapeToReset;
+
+  
+ // service to access the database
+  castor::IService* dbSvc = castor::BaseObject::services()->service("OraTapeGatewaySvc", castor::SVC_ORATAPEGATEWAYSVC);
+  castor::tape::tapegateway::ITapeGatewaySvc* oraSvc = dynamic_cast<castor::tape::tapegateway::ITapeGatewaySvc*>(dbSvc);
+  
+
+  if (0 == oraSvc) {
+    // we don't have DLF yet, and this is a major fault, so log to stderr and exit
+    std::cerr << "Couldn't load the oracle tapegateway service, check the castor.conf for DynamicLib entries"
+	      << std::endl;
+    exit(-1);
+  }
+
   
   try {
      // get tapes to check from the db
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 10, 0, NULL);
 
-    tapeRequests = m_dbSvc->getTapesToCheck(m_timeOut); 
+    tapeRequests = oraSvc->getTapesToCheck(m_timeOut); 
   
   } catch (castor::exception::Exception e) {
      // error in getting new tape to submit
@@ -111,7 +124,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
 
   try {
 
-    m_dbSvc->updateCheckedTapes(tapesToRetry); 
+    oraSvc->updateCheckedTapes(tapesToRetry); 
 
     // if the db update succeeded I update vmgr releasing the busy tapes     
 

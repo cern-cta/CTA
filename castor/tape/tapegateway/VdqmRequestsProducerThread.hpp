@@ -31,7 +31,6 @@
 
 
 #include "castor/server/BaseDbThread.hpp"
-#include "castor/tape/tapegateway/ITapeGatewaySvc.hpp"
 #include "castor/stager/Tape.hpp"
 
 namespace castor {
@@ -44,11 +43,10 @@ namespace castor {
      */
     
       class VdqmRequestsProducerThread : public castor::server::BaseDbThread {
-	castor::tape::tapegateway::ITapeGatewaySvc* m_dbSvc; 
 	int m_port;
       public:
 	
-      VdqmRequestsProducerThread(castor::tape::tapegateway::ITapeGatewaySvc* sv , int port);
+      VdqmRequestsProducerThread(int port);
 
       virtual ~VdqmRequestsProducerThread() throw() {};
 

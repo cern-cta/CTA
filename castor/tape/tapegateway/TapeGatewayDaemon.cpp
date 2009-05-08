@@ -73,16 +73,6 @@ extern "C" {
 
 int main(int argc, char* argv[]){
 
- // service to access the database
-  castor::IService* dbSvc = castor::BaseObject::services()->service("OraTapeGatewaySvc", castor::SVC_ORATAPEGATEWAYSVC);
-  castor::tape::tapegateway::ITapeGatewaySvc* oraSvc = dynamic_cast<castor::tape::tapegateway::ITapeGatewaySvc*>(dbSvc);
-  
-
-  if (0 == oraSvc) {
-    // we don't have DLF yet, and this is a major fault, so log to stderr and exit
-    std::cerr << "Couldn't load the oracle tapegateway service, check the castor.conf for DynamicLib entries" << std::endl;
-    return -1;
-  }
  
   castor::tape::tapegateway::TapeGatewayDaemon tgDaemon;
 
@@ -179,38 +169,38 @@ int main(int argc, char* argv[]){
      // send request to vdmq
          
     tgDaemon.addThreadPool(
-			   new castor::server::SignalThreadPool("ProducerOfVdqmRequestsThread", new castor::tape::tapegateway::VdqmRequestsProducerThread(oraSvc,tgDaemon.listenPort()), DEFAULT_SLEEP_INTERVAL)); // port used just to be sent to vdqm
+			   new castor::server::SignalThreadPool("ProducerOfVdqmRequestsThread", new castor::tape::tapegateway::VdqmRequestsProducerThread(tgDaemon.listenPort()), DEFAULT_SLEEP_INTERVAL)); // port used just to be sent to vdqm
     tgDaemon.getThreadPool('P')->setNbThreads(1);
 			   
      // check requests for vdmq
 			       
     tgDaemon.addThreadPool(
-			    new castor::server::SignalThreadPool("CheckerOfVdqmRequestsThread", new castor::tape::tapegateway::VdqmRequestsCheckerThread(oraSvc, VDQM_TIME_OUT_INTERVAL), DEFAULT_SLEEP_INTERVAL ));
+			    new castor::server::SignalThreadPool("CheckerOfVdqmRequestsThread", new castor::tape::tapegateway::VdqmRequestsCheckerThread( VDQM_TIME_OUT_INTERVAL), DEFAULT_SLEEP_INTERVAL ));
     tgDaemon.getThreadPool('C')->setNbThreads(1); 
 
     
     // query vmgr for tape and tapepools
    
     tgDaemon.addThreadPool(
-      new castor::server::SignalThreadPool("TapeStreamLinkerThread", new castor::tape::tapegateway::TapeStreamLinkerThread(oraSvc), DEFAULT_SLEEP_INTERVAL));
+      new castor::server::SignalThreadPool("TapeStreamLinkerThread", new castor::tape::tapegateway::TapeStreamLinkerThread(), DEFAULT_SLEEP_INTERVAL));
       tgDaemon.getThreadPool('T')->setNbThreads(1);
     
     // migration error handler
 
     tgDaemon.addThreadPool(
-      new castor::server::SignalThreadPool("MigrationErrorHandlerThread", new castor::tape::tapegateway::MigratorErrorHandlerThread(oraSvc,retryMigrationSvc),  DEFAULT_SLEEP_INTERVAL));
+      new castor::server::SignalThreadPool("MigrationErrorHandlerThread", new castor::tape::tapegateway::MigratorErrorHandlerThread(retryMigrationSvc),  DEFAULT_SLEEP_INTERVAL));
     tgDaemon.getThreadPool('M')->setNbThreads(1);
     
     // recaller error handler
 
     tgDaemon.addThreadPool(
-      new castor::server::SignalThreadPool("RecallerErrorHandlerThread", new castor::tape::tapegateway::RecallerErrorHandlerThread(oraSvc,retryRecallSvc), DEFAULT_SLEEP_INTERVAL ));
+      new castor::server::SignalThreadPool("RecallerErrorHandlerThread", new castor::tape::tapegateway::RecallerErrorHandlerThread(retryRecallSvc), DEFAULT_SLEEP_INTERVAL ));
       tgDaemon.getThreadPool('R')->setNbThreads(1); 
     
     // recaller/migration dynamic thread pool
 
     tgDaemon.addThreadPool(
-			   new castor::server::TCPListenerThreadPool("WorkerThread", new castor::tape::tapegateway::WorkerThread(oraSvc),tgDaemon.listenPort(),true, minThreadsNumber, maxThreadsNumber )); 
+			   new castor::server::TCPListenerThreadPool("WorkerThread", new castor::tape::tapegateway::WorkerThread(),tgDaemon.listenPort(),true, minThreadsNumber, maxThreadsNumber )); 
 			   
     // start the daemon
 

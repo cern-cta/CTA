@@ -30,11 +30,11 @@
 
 
 #include "castor/server/BaseDbThread.hpp"
-
+#include "castor/tape/tapegateway/ITapeGatewaySvc.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include "castor/exception/Internal.hpp"
-#include "castor/tape/tapegateway/ITapeGatewaySvc.hpp"
+
 
 namespace castor {
 
@@ -53,7 +53,7 @@ namespace castor {
        * constructor
        */
 
-	WorkerThread(castor::tape::tapegateway::ITapeGatewaySvc* dbSvc);
+	WorkerThread();
 
 	/**
 	 * Not implemented
@@ -78,10 +78,6 @@ namespace castor {
 	virtual ~WorkerThread() throw() {};
 
       private:
-
-	// dbSvc
-	
-	castor::tape::tapegateway::ITapeGatewaySvc*  m_dbSvc;
 	
 	// handlers used with the different message types
 

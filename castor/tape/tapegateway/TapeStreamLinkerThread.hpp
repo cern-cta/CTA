@@ -30,7 +30,6 @@
 
 
 #include "castor/server/BaseDbThread.hpp"
-#include "castor/tape/tapegateway/ITapeGatewaySvc.hpp"
 #include "castor/stager/Stream.hpp"
 
 namespace castor {
@@ -43,10 +42,10 @@ namespace castor {
      */
     
       class  TapeStreamLinkerThread : public castor::server::BaseDbThread {
-	castor::tape::tapegateway::ITapeGatewaySvc* m_dbSvc;        
+      
       public:
 	
-      TapeStreamLinkerThread(castor::tape::tapegateway::ITapeGatewaySvc* svc);
+      TapeStreamLinkerThread();
 
       virtual ~TapeStreamLinkerThread() throw() {};
 

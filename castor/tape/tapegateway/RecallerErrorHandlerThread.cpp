@@ -42,13 +42,13 @@
 #include  "castor/infoPolicy/PolicyObj.hpp"
 #include  "castor/infoPolicy/DbInfoRetryPolicy.hpp"
 #include  "castor/stager/TapeCopy.hpp"
+#include  "castor/tape/tapegateway/ITapeGatewaySvc.hpp"
 
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapegateway::RecallerErrorHandlerThread::RecallerErrorHandlerThread(castor::tape::tapegateway::ITapeGatewaySvc* svc, castor::infoPolicy::TapeRetryPySvc* retryPySvc ){
-  m_dbSvc=svc; 
+castor::tape::tapegateway::RecallerErrorHandlerThread::RecallerErrorHandlerThread(castor::infoPolicy::TapeRetryPySvc* retryPySvc ){ 
   m_retryPySvc=retryPySvc;
 }
 
@@ -59,10 +59,23 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void* par)
 {
   // get failed recall tapecopies
 
+  
+ // service to access the database
+  castor::IService* dbSvc = castor::BaseObject::services()->service("OraTapeGatewaySvc", castor::SVC_ORATAPEGATEWAYSVC);
+  castor::tape::tapegateway::ITapeGatewaySvc* oraSvc = dynamic_cast<castor::tape::tapegateway::ITapeGatewaySvc*>(dbSvc);
+  
+
+  if (0 == oraSvc) {
+    // we don't have DLF yet, and this is a major fault, so log to stderr and exit
+    std::cerr << "Couldn't load the oracle tapegateway service, check the castor.conf for DynamicLib entries"
+	      << std::endl;
+    exit(-1);
+  }
+ 
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 27, 0, NULL); 
   std::vector<castor::stager::TapeCopy*> tcList;
   try {
-    tcList =  m_dbSvc->inputForRecallRetryPolicy();
+    tcList =  oraSvc->inputForRecallRetryPolicy();
   }  catch (castor::exception::Exception e){
  
     castor::dlf::Param params[] =
@@ -109,7 +122,7 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void* par)
 
   // update the db 
  try {
-  m_dbSvc->updateWithRecallRetryPolicyResult(tcIdsToRetry,tcIdsToFail); 
+  oraSvc->updateWithRecallRetryPolicyResult(tcIdsToRetry,tcIdsToFail); 
  } catch (castor::exception::Exception e) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("errorCode",sstrerror(e.code())),

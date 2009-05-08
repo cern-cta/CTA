@@ -37,7 +37,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/stager/TapePool.hpp"
 #include "castor/tape/tapegateway/VmgrTapeGatewayHelper.hpp"
-
+#include "castor/tape/tapegateway/ITapeGatewaySvc.hpp"
 
 #include <u64subr.h>
 
@@ -46,8 +46,8 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapegateway::TapeStreamLinkerThread::TapeStreamLinkerThread(castor::tape::tapegateway::ITapeGatewaySvc* svc){
-  m_dbSvc=svc; 
+castor::tape::tapegateway::TapeStreamLinkerThread::TapeStreamLinkerThread(){
+ 
 }
 
 //------------------------------------------------------------------------------
@@ -58,11 +58,24 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
  
   std::vector<castor::stager::Stream*> streamsToResolve;
   std::vector<castor::stager::Stream*>::iterator stream;
+  
+ // service to access the database
+  castor::IService* dbSvc = castor::BaseObject::services()->service("OraTapeGatewaySvc", castor::SVC_ORATAPEGATEWAYSVC);
+  castor::tape::tapegateway::ITapeGatewaySvc* oraSvc = dynamic_cast<castor::tape::tapegateway::ITapeGatewaySvc*>(dbSvc);
+  
+
+  if (0 == oraSvc) {
+    // we don't have DLF yet, and this is a major fault, so log to stderr and exit
+    std::cerr << "Couldn't load the oracle tapegateway service, check the castor.conf for DynamicLib entries"
+	      << std::endl;
+    exit(-1);
+  }
+
 
   // get streams to check from the db
   try {
      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 15, 0, NULL);
-    streamsToResolve= m_dbSvc->getStreamsToResolve();
+    streamsToResolve= oraSvc->getStreamsToResolve();
   } catch (castor::exception::Exception e) {
     // error in getting new tape to submit
     castor::dlf::Param params[] =
@@ -131,7 +144,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
 
   // update the db 
   try {
-    m_dbSvc->resolveStreams(strIds, vids, fseqs);
+    oraSvc->resolveStreams(strIds, vids, fseqs);
   } catch (castor::exception::Exception e){
 
     castor::dlf::Param params[] =

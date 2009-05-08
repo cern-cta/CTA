@@ -119,7 +119,7 @@ const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getRepack
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_updateDbStartTapeStatementString="BEGIN updateDbStartTape(:1,:2,:3,:4,:5,:6);END;";
 
 /// SQL statement for function updateDbEndTape
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_updateDbEndTapeStatementString="BEGIN updateDbEndTape(:1,:2);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_updateDbEndTapeStatementString="BEGIN updateDbEndTape(:1,:2,:3);END;";
 
 /// SQL statement for function invalidateSegment
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_invalidateSegmentStatementString="BEGIN invalidateSegment(:1,:2,:3,:4,:5);END;";
@@ -1717,7 +1717,9 @@ castor::stager::Tape*  castor::tape::tapegateway::ora::OraTapeGatewaySvc::update
       m_updateDbEndTapeStatement =
 	createStatement(s_updateDbEndTapeStatementString);
       m_updateDbEndTapeStatement->registerOutParam
-	      (2, oracle::occi::OCCISTRING, 2048 );
+	(2, oracle::occi::OCCISTRING, 2048 );
+      m_updateDbEndTapeStatement->registerOutParam
+	(3, oracle::occi::OCCIINT);
     }
     
     m_updateDbEndTapeStatement->setInt(1,endRequest.transactionId());
@@ -1726,14 +1728,10 @@ castor::stager::Tape*  castor::tape::tapegateway::ora::OraTapeGatewaySvc::update
     // Execute the statement
     (void)m_updateDbEndTapeStatement->executeUpdate();
 
-    
-    std::string vid =
-      m_updateDbEndTapeStatement->getString(2);
-
     result= new castor::stager::Tape();
-    result->setVid(vid);
-    result->setTpmode(1); // The function returns just the tape which were busy
 
+    result->setVid( m_updateDbEndTapeStatement->getString(2));
+    result->setTpmode( m_updateDbEndTapeStatement->getInt(3));
 
   } catch (oracle::occi::SQLException e) {
     

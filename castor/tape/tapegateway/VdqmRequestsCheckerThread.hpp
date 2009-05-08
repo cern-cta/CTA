@@ -31,7 +31,6 @@
 
 
 #include "castor/server/BaseDbThread.hpp"
-#include "castor/tape/tapegateway/ITapeGatewaySvc.hpp"
 #include "castor/tape/tapegateway/TapeRequestState.hpp"
 #include <u64subr.h>
 
@@ -44,12 +43,11 @@ namespace castor {
      *  VdqmRequestsChecker tread.
      */
     
-      class VdqmRequestsCheckerThread :public castor::server::BaseDbThread {
-	castor::tape::tapegateway::ITapeGatewaySvc* m_dbSvc; 
+      class VdqmRequestsCheckerThread :public castor::server::BaseDbThread { 
 	u_signed64 m_timeOut;
       public:
 	
-      VdqmRequestsCheckerThread(castor::tape::tapegateway::ITapeGatewaySvc* svc , u_signed64 timeOut);
+      VdqmRequestsCheckerThread(u_signed64 timeOut);
 
       virtual ~VdqmRequestsCheckerThread() throw() {};
 

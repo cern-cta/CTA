@@ -40,13 +40,12 @@
 
 #include <u64subr.h>
 
- 
+#include "castor/tape/tapegateway/ITapeGatewaySvc.hpp"
   
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapegateway::VdqmRequestsProducerThread::VdqmRequestsProducerThread(castor::tape::tapegateway::ITapeGatewaySvc* svc, int port){
-  m_dbSvc=svc;
+castor::tape::tapegateway::VdqmRequestsProducerThread::VdqmRequestsProducerThread(int port){
   m_port=port;
 }
 
@@ -58,12 +57,25 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::run(void* par)
   std::vector<castor::tape::tapegateway::TapeRequestState*> tapesToSubmit;
   std::vector<int>  vdqmReqIds;
 
+  // connect to the db
+   // service to access the database
+  castor::IService* dbSvc = castor::BaseObject::services()->service("OraTapeGatewaySvc", castor::SVC_ORATAPEGATEWAYSVC);
+  castor::tape::tapegateway::ITapeGatewaySvc* oraSvc = dynamic_cast<castor::tape::tapegateway::ITapeGatewaySvc*>(dbSvc);
+  
+
+  if (0 == oraSvc) {    
+    std::cerr << "Couldn't load the oracle tapegateway service, check the castor.conf for DynamicLib entries" 
+	      << std::endl;
+    exit(-1);
+  }
+ 
+
   try {
 
   // get tapes to send from the db
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 5, 0, NULL);
 
-    tapesToSubmit = m_dbSvc->getTapesToSubmit();
+    tapesToSubmit = oraSvc->getTapesToSubmit();
 
   } catch (castor::exception::Exception e){
     // error in getting new tape to submit
@@ -135,7 +147,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::run(void* par)
   try {
       
     // save vdqm ids 
-      m_dbSvc->updateSubmittedTapes(submittedTapes);
+      oraSvc->updateSubmittedTapes(submittedTapes);
     
   } catch (castor::exception::Exception e) {
     // impossible to update the information of submitted tape
