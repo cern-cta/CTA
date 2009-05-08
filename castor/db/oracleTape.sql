@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.740 $ $Date: 2009/05/08 09:44:49 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.741 $ $Date: 2009/05/08 13:48:30 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1578,34 +1578,27 @@ BEGIN
     commit;
     return;
    END IF;
-
-   BEGIN
-    besttapecopyforstream(strId,ds,mp,path,dcid,cfId,fileid,nshost,filesize,tcid,lastTime);
-   EXCEPTION WHEN NO_DATA_FOUND THEN
-      ret:=-1; --NO MORE FILE IN AVAILABLE FILESYSTEM
-      commit;
-      return;
-    END;  
-    UPDATE TapeCopy SET status=3 WHERE id=tcId RETURNING castorfile INTO cfId;
-    DELETE FROM Stream2TapeCopy WHERE child=tcId;
-    INSERT INTO migrationworkbasket (fseq, id, tapecopy, tapeRequest) values (newFseq, ids_seq.nextval, tcId,trId) returning id into mId;
-    INSERT into id2type (id,type) values (mId,180);  
-    UPDATE taperequeststate set lastfseq=lastfseq+1 where id=trId; --increased when we have the proper value
-    
-    BEGIN
-      SELECT lastknownfilename, filesize into knownName,fSize from castorfile where id=cfId; 
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      ret:=-2; -- file disappeared
-      commit;
-      return;
-    END;  
    
+   besttapecopyforstream(strId,ds,mp,path,dcid,cfId,fileid,nshost,filesize,tcid,lastTime);
+   
+   BEGIN
+      SELECT lastknownfilename, filesize into knownName,fSize from castorfile where id=cfId;
+   EXCEPTION WHEN NO_DATA_FOUND THEN
+      ret:=-1; -- besttapecopyforstream cannot find a suitable candidate
+      commit;
+      return;
+   END;  
+   
+   UPDATE TapeCopy SET status=3 WHERE id=tcId RETURNING castorfile INTO cfId;
+   DELETE FROM Stream2TapeCopy WHERE child=tcId;
+   INSERT INTO migrationworkbasket (fseq, id, tapecopy, tapeRequest) values (newFseq, ids_seq.nextval, tcId,trId) returning id into mId;
+   INSERT into id2type (id,type) values (mId,180);    
+   UPDATE taperequeststate set lastfseq=lastfseq+1 where id=trId; --increased when we have the proper value
    OPEN outputFile FOR 
     SELECT fileId,nshost,lastTime,ds,mp,path,knownName,fseq,fSize FROM migrationworkbasket where id =mId;
    COMMIT;
 END;
 /
-
 
 /* SQL Function fileMigrationUpdate */
 
