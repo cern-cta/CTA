@@ -96,10 +96,8 @@ void castor::tape::tapegateway::WorkerThread::run(void* arg)
   
 
   if (0 == oraSvc) {
-    // we don't have DLF yet, and this is a major fault, so log to stderr and exit
-    std::cerr << "Couldn't load the oracle tapegateway service, check the castor.conf for DynamicLib entries"
-	      << std::endl;
-    exit(-1);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 93, 0, NULL);
+    return;
   }
 
 

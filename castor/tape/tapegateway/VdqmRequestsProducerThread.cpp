@@ -64,9 +64,8 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::run(void* par)
   
 
   if (0 == oraSvc) {    
-    std::cerr << "Couldn't load the oracle tapegateway service, check the castor.conf for DynamicLib entries" 
-	      << std::endl;
-    exit(-1);
+   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 93, 0, NULL);
+   return;
   }
  
 

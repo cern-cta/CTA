@@ -72,11 +72,22 @@ extern "C" {
 //------------------------------------------------------------------------------
 
 int main(int argc, char* argv[]){
-
  
   castor::tape::tapegateway::TapeGatewayDaemon tgDaemon;
 
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 0, NULL);
+
+  // load the TapeGateway service to check that everything is fine with it
+
+  castor::IService* dbSvc = castor::BaseObject::services()->service("OraTapeGatewaySvc", castor::SVC_ORATAPEGATEWAYSVC);
+  castor::tape::tapegateway::ITapeGatewaySvc* oraSvc = dynamic_cast<castor::tape::tapegateway::ITapeGatewaySvc*>(dbSvc);
+  if (0 == oraSvc) {
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 93, 0, NULL);
+
+    std::cerr << "Couldn't load the oracle tapegateway service, check the castor.conf for DynamicLib entries"
+	      << std::endl;
+    exit(-1);
+  }
   
   // create the retry policies
   try{
@@ -331,6 +342,7 @@ castor::tape::tapegateway::TapeGatewayDaemon::TapeGatewayDaemon() : castor::serv
    {90, "Worker: impossible to retrieve the segment"},
    {91, "Worker: error while checking the file size of recalled file"},
    {92, "VdqmRequestsChecker: releasing unused tape"},
+   {93, "Fatal error: Couldn't load the oracle tapegateway service"},
    {-1, ""}
   };
   dlfInit(messages);
