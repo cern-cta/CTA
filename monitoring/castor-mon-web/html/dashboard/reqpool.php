@@ -51,7 +51,7 @@ if(!$conn) {
 $query1 = "select * from (
 		   select username, count(*) r
 		   from ".$db_instances[$service]['schema'].".requests
-		   where timestamp >= sysdate - 15/1440
+		   where timestamp >= sysdate -15/1440
 		   and timestamp < sysdate - 5/1440 
 		   and state = :reqkind
 		   and svcclass = :svcclass
@@ -73,7 +73,11 @@ while (OCIFetch($parsed1)) {
 }
 //Display table with counters
 echo "<table><tr><td align ='center' style='background-color: orangered'><b> Last Ten minutes History ($reqkind - $svcclass)</b></td></tr>";
-echo "<tr><td align = 'center'><img src ='tspool.php?service=$service&reqkind=$reqkind&svcclass=$svcclass'></td></tr>";
+if (empty($user)) {
+  echo "<tr><td>No Available Data</td></tr></table>";
+  exit();
+}
+echo "<tr><td align = 'center'><img src ='timeseries_reqkind_svc.php?service=$service&reqkind=$reqkind&svcclass=$svcclass'></td></tr>";
 echo "<tr><td align = 'center'><table border = 1><tbody>
 		<tr>
 			<td id = 'fonts' align = 'center' style='background-color: #C0C0C0'> UserName($svcclass) </td>
