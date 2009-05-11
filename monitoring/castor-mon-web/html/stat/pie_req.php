@@ -7,6 +7,64 @@ include ("../jpgraph-1.27/src/jpgraph_pie.php");
 include ("../lib/no_data.php");
 //include user account
 include ("../../../conf/castor-mon-web/user.php");
+//Define Request Categories
+
+
+function generateData($req_type,$req_number) {
+ //User I/O requests 		              ->   u
+//User query requests 		              ->   q
+//Space query requests  	              ->   s
+//Replication requests (start/done)           ->   d
+//Internal mover requests (start/done/failed) ->   j
+//Garbage collecting + synch requests         ->   g
+
+$requests = array(
+	"ChangePrivilege" => 's',
+	"Disk2DiskCopyDoneRequest" => 'd',
+	"ChangePrivilege"  =>  's',
+	"Disk2DiskCopyDoneRequest" => 'd',
+	"Disk2DiskCopyStartRequest" => 'd',
+	"DiskPoolQuery" => 's',
+	"Files2Delete"	=> 'g',
+	"FilesDeleted"	=> 'g',
+	"FilesDeletionFailed" => 'g',
+	"FirstByteWritten" => 'j',
+	"GetUpdateDone" => 'j',
+	"GetUpdateFailed" => 'j',
+	"GetUpdateStartRequest" => 'j',
+	"ListPrivileges" => 's',
+	"MoverCloseRequest" => 'j',
+	"NsFilesDeleted" => 'g',
+	"PutFailed" => 'j',
+	"PutStartRequest" => 'j',
+	"SetFileGCWeight" => 'u',
+	"StageFileQueryRequest" => 'q',
+	"StageGetRequest" => 'u',
+	"StagePrepareToGetRequest" => 'u',
+	"StagePrepareToPutRequest" => 'u',
+	"StagePrepareToUpdateRequest" => 'u',
+	"StagePutDoneRequest" => 'u',
+	"StagePutRequest" => 'u',
+	"StageRmRequest" => 'u',
+	"StageUpdateRequest" =>	'u',
+	"StgFilesDeleted" => 'g'
+);
+$data = array(
+ 	  'u' => 0,
+	  'q' => 0,
+	  's' => 0,
+	  'd' => 0,
+	  'j' => 0,
+	  'g' => 0
+);
+ 
+for($j = 0;$j < sizeof($req_type);$j++) {
+ 	$category = $requests[$req_type[$j]];
+	$data[$category] += $req_number[$j];
+	}
+ return($data);
+};
+
 //get posted data
 $period = $_GET['period'];
 $service = $_GET['service'];
@@ -29,16 +87,18 @@ else {
 	}
 }
 if($qn == 1)
-	$query = "select count(case when state='DiskHit' then 1 else null end) DiskHits, count(case when state='DiskCopy' then 1 else null end) DiskCopies,
-			count(case when state='TapeRecall' then 1 else null end) taperecalls
-			from ".$db_instances[$service]['schema'].".requests 
-			where timestamp > sysdate -:period";
+	$query = "select type, sum(requests) 
+		  from ".$db_instances[$service]['schema'].".requeststats 
+		  where timestamp > sysdate  -:period
+		    and euid = '-'
+		  group by type";
 else if ($qn ==2)
-	$query = "select count(case when state='DiskHit' then 1 else null end) DiskHits, count(case when state='DiskCopy' then 1 else null end) DiskCopies,
-			count(case when state='TapeRecall' then 1 else null end) taperecalls
-			from ".$db_instances[$service]['schema'].".requests 
-			where timestamp >= to_date(:from_date,'dd/mm/yyyy HH24:Mi')
-				and timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi')";
+	$query = "select type, sum(requests)
+		  from ".$db_instances[$service]['schema'].".requeststats
+		  where timestamp >= to_date(:from_date,'dd/mm/yyyy HH24:Mi')
+		    and timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi')
+		    and euid = '-'
+		  group by type";
 
 //Create new graph, enable image cache by setting countdown period(in minutes) 
 //depending on selected period. If the cached image is valid the script immediately 
@@ -80,26 +140,29 @@ if ($qn == 1) {
 else if ($qn == 2) {
 	ocibindbyname($parsed1,":from_date",$from);
 	ocibindbyname($parsed1,":to_date",$to);
-}
+};
 if (!OCIExecute($parsed1))
 	{ echo "Error Executing Query";exit();}
 //fetch data 
-if (OCIFetch($parsed1)) {
-	$DiskHits = OCIResult($parsed1,1);
-	$DiskCopy = OCIResult($parsed1,2);
-	$Taperecall = OCIResult($parsed1,3);
+$i = 0;
+while (OCIFetch($parsed1)) {
+	$req_type[$i] = OCIResult($parsed1,1);
+	$req_number[$i] = OCIResult($parsed1,2);
+	$i++;
 };
 //if percentages sum equals zero then display no available data image
-if(($DiskHits+$DiskCopy+$Taperecall) == 0) {
+if(empty($req_type)) {
 	No_Data_Image();
 	exit();
 };
+
 //Create new pie graph
-$data = array($DiskHits,$DiskCopy,TapeRecall);
-$leg = array("Resident Files","Pool Copies","Tape Recalls"); 
+$data = generateData($req_type,$req_number);
+//print_r($data);
+$leg = array("User I/O requests","User query requests","Space query requests","Replication requests(start/done)","Internal mover requests (start/dome/failed)","Garbage collecting + synch requests"); 
 $graph->SetShadow();
-$graph->title-> Set( "File Read Request Percentages");
-$p1 = new PiePlot($data);
+$graph->title-> Set( "Request Percentages");
+$p1 = new PiePlot(array_values($data));
 $p1->SetLegends($leg);  
 $p1->SetCenter(0.3,0.5);
 $graph ->legend->Pos( 0.02,0.5,"right" ,"center");

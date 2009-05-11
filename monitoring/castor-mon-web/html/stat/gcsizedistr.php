@@ -74,7 +74,7 @@ if ($qn ==1)
 		  when filesize >= 104857600 and filesize <= 1073741824 then 7
 		  else 8 end bin
 		from ".$db_instances[$service]['schema'].".gcfiles
-		where timestamp > sysdate - :period
+		where timestamp > sysdate -:period
 		and filesize!=0)
 		order by bin";
 else if($qn==2)

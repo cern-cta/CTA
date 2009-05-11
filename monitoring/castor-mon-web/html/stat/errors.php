@@ -68,7 +68,7 @@ if ($qn ==1)
 	           from castor_dlf.dlf_messages mes, castor_dlf.dlf_facilities fac
 		   where mes.facility = fac.fac_no
 		     and mes.severity = 3
-		     and mes.timestamp > sysdate - :period
+		     and mes.timestamp > sysdate -:period
 		   group by fac.fac_name 
 		   order by errorsum desc";
 else if ($qn ==2)

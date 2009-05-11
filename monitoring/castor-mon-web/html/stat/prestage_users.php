@@ -71,7 +71,7 @@ if ($qn ==1 )
 			   order by reqs desc ) a , 
 		   (select username , count(username) reqs
 		   from ".$db_instances[$service]['schema'].".requests 
-		   where timestamp > sysdate - :period
+		   where timestamp > sysdate -:period
 		   and type = 'StageGetRequest'
 		   and state = 'TapeRecall'
 		   group by username

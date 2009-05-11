@@ -58,22 +58,32 @@ else {
 //returns the cached image and exits without logining in the DB
 if ($period == '10/1440') {
 	$period = 10/1440; 
+	$interval = 'Mi';
+	$format = 'HH24:MI';
 	$graph = new Graph(420,200,"auto");
 }
 else if ($period == '1/24') {
 	$period = 1/24; 
+	$interval = 'Mi';
+	$format = 'HH24:MI';
 	$graph = new Graph(420,200,"auto");
 }
 else if ($period == '1') {
 	$period = 1;
+	$interval = 'HH24';
+	$format = 'HH24:MI';
 	$graph = new Graph(420,200,"auto",10);
 }
 else if ($period == '7') {
 	$period = 7;
+	$interval = 'DD';
+	$format = 'DD-MON-RR';
 	$graph = new Graph(420,200,"auto",30);
 }
 else if ($period == '30') {
 	$period = 30;
+	$interval = 'DD';
+	$format = 'DD-MON-RR';
 	$graph = new Graph(420,200,"auto",360);
 }
 else 
@@ -92,7 +102,7 @@ else
 		   count(case when state='DiskCopy' then trunc(timestamp,:interval) else null end) over (Partition by trunc(timestamp,:interval)) number_of_DC_req, 
 		   count(case when state='TapeRecall' then trunc(timestamp,:interval) else null end) over (Partition by trunc(timestamp,:interval)) number_of_TR_req
          from ".$db_instances[$service]['schema'].".requests
-         where timestamp >= trunc(sysdate - :period,:interval)
+         where timestamp >= trunc(sysdate -:period,:interval)
          order by bin";
      } else if ($qn == 2) {
        $time_series =
@@ -147,7 +157,7 @@ if(empty($result['BIN'])) {
 //create new graph
 $graph->SetShadow();
 $graph->SetScale("textlin");
-$graph->title->Set("Requests Timeseries");
+$graph->title->Set("File Read Requests Timeseries");
 $graph->title->SetFont(FF_FONT1,FS_BOLD);
 $graph->img->SetMargin(80,20,20,120);
 $graph->legend->Pos(0.5,0.95,"center","bottom");

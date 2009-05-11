@@ -62,7 +62,7 @@ if(!$conn) {
 if ($qn == 1)
 	$query1 = "select svcclass, count(*) migs
 		   from ".$db_instances[$service]['schema'].".migration
-		   where timestamp > sysdate - :period
+		   where timestamp > sysdate -:period
 		   group by svcclass
 		   order by migs desc";
 else if ($qn == 2)

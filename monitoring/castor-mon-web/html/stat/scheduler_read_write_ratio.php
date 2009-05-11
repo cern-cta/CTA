@@ -58,22 +58,32 @@ else {
 //returns the cached image and exits without logining in the DB
 if ($period == '10/1440') {
 	$period = 10/1440; 
+	$interval = 'Mi';
+	$format = 'HH24:MI';
 	$graph = new Graph(420,250,"auto");
 }
 else if ($period == '1/24') {
 	$period = 1/24; 
+	$interval = 'Mi';
+	$format = 'HH24:MI';
 	$graph = new Graph(420,250,"auto");
 }
 else if ($period == '1') {
 	$period = 1;
+	$interval = 'HH24';
+	$format = 'HH24:MI';
 	$graph = new Graph(420,250,"auto",10);
 }
 else if ($period == '7') {
 	$period = 7;
+	$interval = 'DD';
+	$format = 'DD-MON-RR';
 	$graph = new Graph(420,250,"auto",30);
 }
 else if ($period == '30') {
 	$period = 30;
+	$interval = 'DD';
+	$format = 'DD-MON-RR';
 	$graph = new Graph(420,250,"auto",360);
 }
 else 
@@ -91,7 +101,7 @@ else
 	   sum (case when type = 'StageGetRequest' then dispatched else 0 end ) read,
 	   sum (case when type = 'StagePutRequest' then dispatched else 0 end ) write
          from ".$db_instances[$service]['schema'].".queuetimestats
-         where timestamp >= trunc(sysdate - :period,:interval)
+         where timestamp >= trunc(sysdate -:period,:interval)
 	 group by to_char(trunc(timestamp,:interval), :format)
          order by bin";
      } else if ($qn == 2) {

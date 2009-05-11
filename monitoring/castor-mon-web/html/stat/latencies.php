@@ -29,7 +29,7 @@ else {
 $bins = array( 0 =>"<1sec",1 =>"[1-10)sec",2 =>"[10-120)sec",3 =>"[2-5)min",4 =>"[5-10)min",5 =>"[10-30)min",6 =>"[30 -60)min", 7=> "[1-5)hours", 8=> "[5-12)hours", 9=> "[12-24)hours", 10=> "[1-2]days", 11=> ">2days");
 if ($period == '10/1440') {
 	$period = 10/1440;
-	$graph = new Graph(730,300,"auto",1);
+	$graph = new Graph(800,300,"auto",1);
 }
 else if ($period == '1/24') {
 	$period = 1/24;
@@ -79,8 +79,8 @@ if ($qn == 1) {
 		  else 12 end bin
 		from ".$db_instances[$service]['schema'].".requests a, ".$db_instances[$service]['schema'].".totallatency b
 		where a.subreqid = b.subreqid
-		and a.timestamp > sysdate - :period
-		and b.timestamp > sysdate - :period )
+		and a.timestamp > sysdate -:period
+		and b.timestamp > sysdate -:period )
 		group by state,bin
 		order by state,bin ";
 }

@@ -69,8 +69,8 @@ if ($qn == 1)
 				select tapeid,count(tapeid) mounts
 				from ".$db_instances[$service]['schema'].".requests a, ".$db_instances[$service]['schema'].".taperecall b
 				where a.subreqid = b.subreqid
-			and a.timestamp >= sysdate - :period
-			and b.timestamp >= sysdate - :period
+			and a.timestamp >= sysdate -:period
+			and b.timestamp >= sysdate -:period
 			and a.svcclass = :p
 				group by tapeid 
 				order by mounts desc )

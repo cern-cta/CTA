@@ -152,4 +152,31 @@ $gbplot->value->Show();
 $graph->Add($gbplot);
 $graph->Stroke();
 
+
+
+//create new graph
+$graph->SetShadow();
+$graph->SetScale("textlin");
+$graph->title->Set("Maximum Wait Time");
+$graph->title->SetFont(FF_FONT1,FS_BOLD);
+$graph->img->SetMargin(60,40,40,120);
+$graph->legend->Pos(0.5,0.95,"center","bottom");
+$graph->yaxis->title->Set("Time(sec)");
+$graph->yaxis->title->SetFont(FF_FONT1,FS_BOLD);
+$graph->yaxis->SetTitleMargin(60);
+$graph->xaxis->SetTickLabels($result['TYPE']);
+$graph->xaxis->SetLabelAngle(90);
+$graph->xaxis->SetFont(FF_FONT1,FS_BOLD);
+$graph->xaxis->title->Set("Request Type");
+$graph->xaxis->SetTitleMargin(80);
+$graph->xaxis->title->SetFont(FF_FONT1,FS_BOLD);
+$graph->xgrid->Show();
+$bplot1 = new BarPlot(array_values($result['STAT']));
+$bplot1->SetFillColor("red");
+$graph->legend->SetLayout(LEGEND_HOR);
+$graph->legend->Pos(0.125,0.95,"left","bottom");
+$graph->Add($bplot1);
+$graph->Stroke();
+
+
 ?> 

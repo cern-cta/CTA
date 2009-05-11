@@ -213,7 +213,7 @@
 						?>
 				<table><tr><td colspan = "2" valign = "top">
 				<div id="menu">
-					<ul><li><a href="../dashboard/dashboard.php?service=<?php echo $service;?>">HOME</a></li></ul>
+					<ul><li><a href="../dashboard/dashboard.php?service=<?php echo $service;?>">DASHBOARD</a></li></ul>
 					<ul>
 						<li><h2>Statistics</h2>
 							<ul> 
@@ -236,16 +236,6 @@
 								<li><a href="tabledet.php?date1=<?php echo $date1;?>&date1hour=<?php echo $date1hour;?>&date2=<?php echo $date2;?>&date2hour=<?php echo $date2hour;?>&service=<?php echo $service;?>&stat=Scheduler">Scheduler Statistics</a></li>
 								<li><a href="tabledet.php?date1=<?php echo $date1;?>&date1hour=<?php echo $date1hour;?>&date2=<?php echo $date2;?>&date2hour=<?php echo $date2hour;?>&service=<?php echo $service;?>&stat=GC">Garbage Collection Statistics</a></li>
 							    <? }?>
-							</ul>
-						</li>
-					</ul>
-					<ul>
-						<li><h2>Links</h2>
-							<ul>
-								<li><a href="http://c2adm/" target="_blank">CASTOR Dashboard</a></li>
-								<li><a href="http://castortapelog/tapelog-web/" target="_blank">Tape Statistics</a></li>
-								<li><a href="http://sls.cern.ch/sls/service.php?id=CASTOR" target="_blank">Service Level Status Overview</a></li>
-								<li><a href="http://lemonweb.cern.ch/lemon-web/info.php?entity=castor2&type=host&cluster=1" target="_blank">Lemon Monitoring</a></li>
 							</ul>
 						</li>
 					</ul>
@@ -692,6 +682,14 @@
 								  <table>
 								  <tr>
 									<td>
+								 <img src ='pie_req.php?service=$service&period=$timewindow'>
+								</td>
+								<td>
+								 <img src ='new_requests_ts.php?service=$service&period=$timewindow'>
+								</td>
+								  </tr>
+								  <tr>
+									<td>
 								 <img src ='pie_graph.php?service=$service&period=$timewindow'>
 								</td>
 								<td>
@@ -702,10 +700,6 @@
 								  </div>
 								  <div>
 								  <table>
-									<tr>
-								<td valign ='top'>
-									<img src ='new_requests_ts.php?service=$service&period=$timewindow'>
-								</td></tr>
 								<tr><td valign ='top'>
 								<b> Pool Transactions (Files Copied) </b>"; 
 								include("pool_transaction.php");
@@ -719,6 +713,14 @@
 								  <table>
 								  <tr>
 									<td>
+								 <img src ='pie_req.php?service=$service&from=$date1 $date1hour&to=$date2 $date2hour'>
+								</td>
+								<td>
+								 <img src ='new_requests_ts.php?service=$service&from=$date1 $date1hour&to=$date2 $date2hour'>
+								</td>
+								  </tr>
+								  <tr>
+									<td>
 								 <img src ='pie_graph.php?service=$service&from=$date1 $date1hour&to=$date2 $date2hour'>
 								</td>
 								<td>
@@ -729,10 +731,6 @@
 								  </div>
 								  <div>
 								  <table>
-									<tr>
-								<td valign ='top'>
-									<img src ='new_requests_ts.php?service=$service&from=$date1 $date1hour&to=$date2 $date2hour'>
-								</td></tr>
 								<tr><td valign ='top'>
 								<b> Pool Transactions (Files Copied) </b>";
 								$from=$date1 . " " . $date1hour;

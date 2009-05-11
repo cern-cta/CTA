@@ -62,7 +62,7 @@ if(!$conn) {
 if ($qn == 1)
 	$query1 = "select distinct svcclass,type, count(type) over (Partition by svcclass,type) number_of_req 
 	   from ".$db_instances[$service]['schema'].".requests
-	   where timestamp > sysdate - :period
+	   where timestamp > sysdate -:period
 	   and state = 'TapeRecall'
 	   order by svcclass,type";
 else if ($qn == 2)

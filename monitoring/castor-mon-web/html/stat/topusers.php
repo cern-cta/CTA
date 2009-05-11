@@ -111,7 +111,7 @@ $unames .= ")";
 if ($qn == 1)
 	$query2 = "select distinct username,state , count(*) over (Partition by username,state)reqs
 			   from ".$db_instances[$service]['schema'].".requests
-			   where timestamp > sysdate - :period
+			   where timestamp > sysdate -:period
 					 and username in ".$unames." order by username";
 else if ($qn == 2)	   
 	$query2 = "select distinct username,state , count(*) over (Partition by username,state)reqs

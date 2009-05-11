@@ -57,22 +57,32 @@ else {
 //returns the cached image and exits without logining in the DB
 if ($period == '10/1440') {
 	$period = 10/1440;  
+	$interval = 'Mi';
+	$format = 'HH24:MI';
 	$graph = new Graph(420,200,"auto");
 }
 else if ($period == '1/24') {
 	$period = 1/24; 
+	$interval = 'Mi';
+	$format = 'HH24:MI';
 	$graph = new Graph(420,200,"auto");
 }
 else if ($period == '1') {
 	$period = 1;
+	$interval = 'HH24';
+	$format = 'HH24:MI';
 	$graph = new Graph(420,200,"auto",10);
 }
 else if ($period == '7') {
 	$period = 7;
+	$interval = 'DD';
+	$format = 'DD-MON-RR';
 	$graph = new Graph(420,200,"auto",30);
 }
 else if ($period == '30') {
 	$period = 30;
+	$interval = 'DD';
+	$format = 'DD-MON-RR';
 	$graph = new Graph(420,200,"auto",360);
 }
 else
@@ -89,7 +99,7 @@ if ($qn ==1)
 		   select distinct trunc(timestamp,:interval) bin, count(trunc(timestamp,:interval)) 
 		   over (Partition by trunc(timestamp,:interval)) number_of_mig  
 			   from ".$db_instances[$service]['schema'].".migration
-			   where timestamp > trunc(sysdate - :period,:interval)
+			   where timestamp > trunc(sysdate -:period,:interval)
 			   order by bin )";
 else if ($qn ==2)
 	$query1 = "select to_char(bin,:format) , number_of_mig from (
@@ -141,7 +151,18 @@ $graph->img->SetMargin(80,20,20,120);
 $graph->yaxis->title->Set("Files");
 $graph->yaxis->title->SetFont(FF_FONT1,FS_BOLD);
 $graph->yaxis->SetTitleMargin(60);
-$graph->xaxis->SetTickLabels($intervals);
+if (sizeof($intervals)> 20) {
+	for ($i = 0,$j = 0; $i < sizeof($intervals); $i++) {
+		if ($i % 5 ==  0) {
+			$pos[$j] = $i;
+			$tick[$j++] = $intervals[$i];
+		}
+	}
+	$graph->xaxis->SetTickPositions($pos);
+	$graph->xaxis->SetTickLabels($tick);
+} 
+else
+	$graph->xaxis->SetTickLabels($intervals);
 if ($interval == 'WW') {
 	for($i=0;$i<=$num;$i++)
  		$tickPositions[$i] = $i;

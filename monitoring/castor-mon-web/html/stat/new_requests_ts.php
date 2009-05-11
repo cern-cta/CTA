@@ -17,7 +17,6 @@ if ($period != NULL) {
 	preg_match($pattern,$period,$matches);
 	$period = $matches[0];
 	if($period == NULL) $period = 10/1440;
-	$dif = $period;
 	
 }	
 else { 
@@ -58,22 +57,32 @@ else {
 //returns the cached image and exits without logining in the DB
 if ($period == '10/1440') {
 	$period = 10/1440; 
+	$interval = 'Mi';
+	$format = 'HH24:MI';
 	$graph = new Graph(420,200,"auto");
 }
 else if ($period == '1/24') {
 	$period = 1/24; 
+	$interval = 'Mi';
+	$format = 'HH24:MI';
 	$graph = new Graph(420,200,"auto");
 }
 else if ($period == '1') {
 	$period = 1;
+	$interval = 'HH24';
+	$format = 'HH24:Mi';
 	$graph = new Graph(420,200,"auto",10);
 }
 else if ($period == '7') {
 	$period = 7;
+	$interval = 'DD';
+	$format = 'DD-MON-RR';
 	$graph = new Graph(420,200,"auto",30);
 }
 else if ($period == '30') {
 	$period = 30;
+	$interval = 'DD';
+	$format = 'DD-MON-RR';
 	$graph = new Graph(420,200,"auto",360);
 }
 else 
@@ -87,17 +96,19 @@ else
    } else {// db functionnality
      if ($qn == 1) {
        $time_series =
-         "select distinct to_char(trunc(timestamp,:interval), :format) bin, sum(requests)
+         "select to_char(trunc(timestamp,:interval), :format) bin, sum(requests)
          from ".$db_instances[$service]['schema'].".requeststats
          where timestamp >= trunc(sysdate - :period,:interval)
+	   and euid <> '-'
 	 group by to_char(trunc(timestamp,:interval), :format)
          order by bin";
      } else if ($qn == 2) {
        $time_series =
-         "select distinct to_char(trunc(timestamp,:interval), :format) bin, sum(requests)
+         "select to_char(trunc(timestamp,:interval), :format) bin, sum(requests)
          from ".$db_instances[$service]['schema'].".requeststats
          where timestamp >= trunc(to_date(:from_date,'dd/mm/yyyy HH24:Mi'),:interval)
            and timestamp <= trunc(to_date(:to_date,'dd/mm/yyyy HH24:Mi'),:interval)
+	   and euid <> '-'
          group by to_char(trunc(timestamp,:interval), :format)
 	 order by bin";
      } 
