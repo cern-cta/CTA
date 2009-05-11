@@ -12,7 +12,7 @@
 	$service = $_REQUEST['service'];
 	if ($db_instances[$service]['username']==NULL){
 		echo "<p><b>Unknown Instance: $service</b></p>
-			  <a href='Default.html'>Back</a>";
+			  <a href='../Default.html'>Back</a>";
 		exit;
 	}
 	
@@ -24,7 +24,7 @@
 
 <html>
 	<head>
-		<META HTTP-EQUIV="Refresh" CONTENT="10; URL=dashboard.php?service=<?php echo $service;?>"> 
+		<META HTTP-EQUIV="Refresh" CONTENT="120; URL=dashboard.php?service=<?php echo $service;?>"> 
 		<LINK rel="stylesheet" type="text/css" title="compact" href="../lib/hmenu.css">
 		<style>
 			a {
@@ -84,7 +84,7 @@
 				<td>
 					<table>
 						<tr valign = "top" width = "5%">
-							<td><div id="ora"><?php echo $service?>: STATUS MONITOR </div></td>
+							<td><div id="ora"><?php echo $service?>: STATUS MONITOR (Last 5 Minutes)</div></td>
 						</tr>
 						<tr>
 							<td><div id="menu">
@@ -110,10 +110,10 @@
 								<td valign="top">
 									<table>
 										<tr>
-											<td colspan = 3 align = 'center' style='background-color: orangered'><b> Requests Monitor </b></td>
+											<td colspan = 3 align = 'center' style='background-color: orangered'><b> Requests Monitor</b></td>
 										</tr>
 										<tr>
-											<td align = 'center' style='background-color: orange'> File Read Requests Percentages(Total Instance) </td>
+											<td align = 'center' style='background-color: orange'> File Read Requests Percentages (Total Instance) </td>
 											<td align = 'center' style='background-color: orange'> File Read Requests Counters per SvcClass </td>
 											<td align = 'center' style='background-color: orange'>New Incoming Requests Monitor (Top 5)</td>
 										</tr>
@@ -130,9 +130,9 @@
 										</tr>
 										</tr>
 										<tr>
-											<td align = 'center' style='background-color: orangered'><b> Migration Monitor </b></td>
-											<td align = 'center' style='background-color: orangered'><b> Pool Transactions Monitor </b></td>
-											<td align = 'center' style='background-color: orangered'><b> Garbage Collection Monitor </b></td>
+											<td align = 'center' style='background-color: orangered'><b> Migration Monitor</b></td>
+											<td align = 'center' style='background-color: orangered'><b> Pool Transactions Monitor</b></td>
+											<td align = 'center' style='background-color: orangered'><b> Garbage Collection Monitor</b></td>
 										</tr>
 										<tr>
 											<td  align = 'center' style='background-color: orange'> Migration Counters per SvcClass</td>
@@ -149,6 +149,14 @@
 												<?php include("gcmonitor.php");?>
 											</td>
 											<td></td>
+										</tr>
+										<tr>
+											<td align = 'center' style='background-color: orangered'><b> Error Monitor (Last 10 minutes) </b></td>
+										</tr>
+										<tr>
+											<td align ="center">
+												<?php include("error_monitor.php");?>
+											</td>
 										</tr>
 									</table>
 								</td>

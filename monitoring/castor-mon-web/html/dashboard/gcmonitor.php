@@ -35,7 +35,7 @@ if (!OCIExecute($parsed1))
 echo "<table border = '1'>
 				<tbody>
 					<tr>
-					 <td style='background-color: #C0C0C0' id = 'fonts' align = 'center' ><a class='outer' href='gcts.php?service=$service'> GC Files</a></td>
+					 <td style='background-color: #C0C0C0' id = 'fonts' align = 'center' ><a class='outer' href='gcts.php?service=$service'> # GC Files</a></td>
 					 <td style='background-color: #C0C0C0' id = 'fonts' align = 'center' colspan=2><a class='outer' href='gcagets.php?service=$service'> Average Age </a></td>
 					 <td style='background-color: #C0C0C0' id = 'fonts' align = 'center' colspan=2><a class='outer' href='gcsizets.php?service=$service'>  Average Size </a></td>
 					</tr><tr>";
