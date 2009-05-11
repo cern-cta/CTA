@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeGatewaySvc.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2009/04/30 14:44:26 $ $Author: gtaur $
+ * @(#)$RCSfile: ITapeGatewaySvc.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2009/05/11 10:02:07 $ $Author: gtaur $
  *
  * This class provides methods related to tape handling
  *
@@ -221,13 +221,6 @@ namespace castor {
 
 	virtual void  invalidateTapeCopy(castor::tape::tapegateway::FileToMigrate& file, int errorCode) throw (castor::exception::Exception)=0;
 
-      
-      /*
-       * Commit transaction
-       */
-	
-      
-	virtual void commitTransaction() throw (castor::exception::Exception)=0; 
       }; // end of class ITapeGatewaySvc
     } // end of namespace tapegateway
   } // end of namespace tape

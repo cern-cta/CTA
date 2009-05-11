@@ -127,10 +127,6 @@ const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_invalidat
 /// SQL statement for function invalidateTapeCopy
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_invalidateTapeCopyStatementString="BEGIN invalidateTapeCopy(:1,:2,:3,:4,:5);END;";
 
-
-/// SQL statement for function commitTransaction
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_commitTransactionStatementString="BEGIN COMMIT;END;";
-
 /// SQL statement for function getSegmentInformation
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getSegmentInformationStatementString="BEGIN getSegmentInformation(:1,:2,:3,:4,:5,:6,:7);END;";
 
@@ -164,7 +160,6 @@ castor::tape::tapegateway::ora::OraTapeGatewaySvc::OraTapeGatewaySvc(const std::
   m_updateDbEndTapeStatement(0),
   m_invalidateSegmentStatement(0),
   m_invalidateTapeCopyStatement(0),
-  m_commitTransactionStatement(0),
   m_getSegmentInformationStatement(0),
   m_updateAfterFailureStatement(0)
 {
@@ -220,7 +215,6 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
     if ( m_updateDbEndTapeStatement ) deleteStatement(m_updateDbEndTapeStatement);
     if ( m_invalidateSegmentStatement) deleteStatement(m_invalidateSegmentStatement);
     if ( m_invalidateTapeCopyStatement ) deleteStatement(m_invalidateTapeCopyStatement);
-    if ( m_commitTransactionStatement ) deleteStatement(m_commitTransactionStatement);
     if ( m_getSegmentInformationStatement )  deleteStatement(m_getSegmentInformationStatement);
     if ( m_updateAfterFailureStatement ) deleteStatement(m_updateAfterFailureStatement);
   } catch (oracle::occi::SQLException e) {};
@@ -247,7 +241,6 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
   m_updateDbEndTapeStatement = 0; 
   m_invalidateSegmentStatement = 0;
   m_invalidateTapeCopyStatement = 0;
-  m_commitTransactionStatement = 0;
   m_getSegmentInformationStatement = 0;
   m_updateAfterFailureStatement = 0;
 }
@@ -274,7 +267,7 @@ std::vector<castor::stager::Stream*> castor::tape::tapegateway::ora::OraTapeGate
     unsigned int nb = m_getStreamsToResolveStatement->executeUpdate();
 
     if (0 == nb) {
-      commitTransaction();
+      cnvSvc()->commit(); 
       castor::exception::Internal ex;
       ex.getMessage()
         << "stream to resolve: no stream found";
@@ -322,7 +315,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::resolveStreams(std::vect
 
     if ( !strIds.size() || !vids.size() || !fseqs.size() ) {
       // just release the lock no result
-      commitTransaction();
+      cnvSvc()->commit();
       return;
     }
      
@@ -475,7 +468,7 @@ std::vector<castor::tape::tapegateway::TapeRequestState*> castor::tape::tapegate
     unsigned int nb = m_getTapesToSubmitStatement->executeUpdate();
 
     if (0 == nb) {
-      commitTransaction();
+      cnvSvc()->commit();
       castor::exception::Internal ex;
       ex.getMessage()
         << "stream to submit : no stream found";
@@ -529,7 +522,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::updateSubmittedTapes(std
   try {
 
     if ( !tapeRequests.size() ) {
-      commitTransaction();
+      cnvSvc()->commit();
       return;
     }
      
@@ -712,7 +705,7 @@ std::vector<castor::tape::tapegateway::TapeRequestState*> castor::tape::tapegate
     unsigned int nb = m_getTapesToCheckStatement->executeUpdate();
 
     if (0 == nb) {
-      commitTransaction();
+      cnvSvc()->commit();
       castor::exception::Internal ex;
       ex.getMessage()
         << "tapes to check : no tape found";
@@ -777,7 +770,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::updateCheckedTapes(std::
   try {
 
     if ( !tapes.size()) {
-      commitTransaction();
+      cnvSvc()->commit();
       return;
     }
      
@@ -1820,37 +1813,6 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::invalidateTapeCopy(casto
   }
 
 }
-
-//----------------------------------------------------------------------------
-// commitTransaction
-//----------------------------------------------------------------------------
-
-void castor::tape::tapegateway::ora::OraTapeGatewaySvc::commitTransaction() throw (castor::exception::Exception){
-   try {
-
-    // Check whether the statements are ok
-
-     if (0 == m_commitTransactionStatement) {
-       m_commitTransactionStatement =
-	 createStatement(s_commitTransactionStatementString);
-     }
- 
-     // execute the statement 
-
-     m_commitTransactionStatement->executeUpdate();
-
-     
-   } catch (oracle::occi::SQLException e) {
-     handleException(e);
-     castor::exception::Internal ex;
-     ex.getMessage()
-       << "Error caught in commit transaction"
-       << std::endl << e.what();
-     throw ex;
-   }
-
-}
-
 
 
 //----------------------------------------------------------------------------
