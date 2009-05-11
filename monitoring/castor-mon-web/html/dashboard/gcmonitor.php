@@ -21,7 +21,7 @@ include("../../../conf/castor-mon-web/user.php");
 //connection
 $conn = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
 if(!$conn) {
-	$e = ocierror();
+	$e = oci_error();
 	print htmlentities($e['message']);
 	exit;
 }
@@ -60,7 +60,7 @@ while (OCIFetch($parsed1)) {
 	else echo "<td id ='fonts' align ='center' colspan=2> 0 </td>";
 	if ($size != NULL) {
 		if($size_per > 0)
-			echo "<td><img '../images/greenarrow.jpg' ></td><td id ='fonts' align ='center'> $size ($size_per) </td>";
+			echo "<td><img src='../images/greenarrow.jpg' ></td><td id ='fonts' align ='center'> $size ($size_per) </td>";
 		else if ($size_per < 0)
 		  echo "<td><img src='../images/redarrow.jpg' ></td><td id ='fonts' align ='center'> $size ($size_per) </td>";
 		else

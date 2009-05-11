@@ -12,7 +12,7 @@
 	$service = $_REQUEST['service'];
 	if ($db_instances[$service]['username']==NULL){
 		echo "<p><b>Unknown Instance: $service</b></p>
-			  <a href='main.html'>Back</a>";
+			  <a href='Default.html'>Back</a>";
 		exit;
 	}
 	
@@ -88,18 +88,18 @@
 						</tr>
 						<tr>
 							<td><div id="menu">
-								<ul><li><a href="main.html" >HOME</a></li></ul>
-								<ul>
-									<li><a href="../stat/tabledet.php?timewindow=7&service=<?php echo $service;?>">Statistics</a></li>
-								</ul>
-								<ul>
-									<li><h2>Links</h2>
-										<ul>
-											<li><a href="http://c2adm/" target="_blank">CASTOR Dashboard</a></li>
-											<li><a href="http://castortapelog/tapelog-web/" target="_blank">Tape Statistics</a></li>
-											<li><a href="http://sls.cern.ch/sls/service.php?id=CASTOR" target="_blank">Service Level Status Overview</a></li>
-											<li><a href="http://lemonweb.cern.ch/lemon-web/info.php?entity=castor2&type=host&cluster=1" target="_blank">Lemon Monitoring</a></li>
-										</ul>
+								<ul>	
+									<li><h2>Statistics</h2>
+									<ul>
+									<li><a href="../stat/tabledet.php?timewindow=1&service=<?php echo $service;?>">General Statistics</a></li>
+									<li><a href="../stat/tabledet.php?timewindow=1&service=<?php echo $service;?>&stat=FileReq">File Request Statistics</a></li>
+									<li><a href="../stat/tabledet.php?timewindow=1&service=<?php echo $service;?>&stat=Migration">File Migration Statistics</a></li>
+									<li><a href="../stat/tabledet.php?timewindow=1&service=<?php echo $service;?>&stat=Latency">Latency Statistics</a></li>
+									<li><a href="../stat/tabledet.php?timewindow=1&service=<?php echo $service;?>&stat=File">File System Statistics</a></li>
+									<li><a href="../stat/tabledet.php?timewindow=1&service=<?php echo $service;?>&stat=Tape">Tape Statistics</a></li>
+									<li><a href="../stat/tabledet.php?timewindow=1&service=<?php echo $service;?>&stat=Scheduler">Scheduler Statistics</a></li>
+									<li><a href="../stat/tabledet.php?timewindow=1&service=<?php echo $service;?>&stat=GC">Garbage Collection Statistics</a></li>
+									</ul>
 									</li>
 								</ul>
 							</div></td>
@@ -110,26 +110,34 @@
 								<td valign="top">
 									<table>
 										<tr>
-											<td colspan = 2 align = 'center' style='background-color: orangered'><b> Requests Monitor </b></td>
+											<td colspan = 3 align = 'center' style='background-color: orangered'><b> Requests Monitor </b></td>
 										</tr>
 										<tr>
-											<td align = 'center' style='background-color: orange'> Requests Percentages(Total Instance) </td>
-											<td align = 'center' style='background-color: orange'> Requests Counters per SvcClass </td>
+											<td align = 'center' style='background-color: orange'> File Read Requests Percentages(Total Instance) </td>
+											<td align = 'center' style='background-color: orange'> File Read Requests Counters per SvcClass </td>
+											<td align = 'center' style='background-color: orange'>New Incoming Requests Monitor (Top 5)</td>
+										</tr>
 										<tr>
 											<td align = "center">
 												<img src="pie_graph1.php?service=<?php echo $service?>">
 											</td>
-											<td align ="left">
+											<td align ="center">
 												<?php include("svcclassmonitor.php");?>
 											</td>
+											<td align ="center">
+												<?php include("newreqmonitor.php");?>
+											</td>
+										</tr>
 										</tr>
 										<tr>
 											<td align = 'center' style='background-color: orangered'><b> Migration Monitor </b></td>
 											<td align = 'center' style='background-color: orangered'><b> Pool Transactions Monitor </b></td>
+											<td align = 'center' style='background-color: orangered'><b> Garbage Collection Monitor </b></td>
 										</tr>
 										<tr>
 											<td  align = 'center' style='background-color: orange'> Migration Counters per SvcClass</td>
 											<td  align = 'center' style='background-color: orange'> External/Internal DiskCopy Counters</td>
+											<td align = 'center' style='background-color: orange'>GC Counters </td>	
 										<tr>
 											<td align ="center">
 												<?php include("migsmonitor.php");?>
@@ -137,12 +145,6 @@
 											<td align ="center">
 												<?php include("pool_transaction_special.php");?>
 											</td>
-										</tr>
-										<tr>
-											<td align = 'center' style='background-color: orangered'><b> GC Monitor </b></td>
-											<td></td>
-										</tr>
-										<tr>
 											<td align ="left">
 												<?php include("gcmonitor.php");?>
 											</td>

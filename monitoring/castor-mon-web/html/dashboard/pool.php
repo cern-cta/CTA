@@ -40,7 +40,7 @@ $service = $_GET['service'];
 //DB -Login
 $conn = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
 if(!$conn) {
-	$e = ocierror();
+	$e = oci_error();
 	print htmlentities($e['message']);
 	exit;
 }
@@ -49,8 +49,8 @@ $query1 = "select * from (
 			count(case when state='DiskCopy' then 1 else null end) dc,
 			count(case when state='TapeRecall' then 1 else null end) tr
 			from ".$db_instances[$service]['schema'].".requests
-			where timestamp >= sysdate - 15/1440
-				and timestamp < sysdate - 5/1440 
+			where timestamp >= sysdate -15/1440
+				and timestamp < sysdate -5/1440 
 				and svcclass = :svcclass
 			group by username
 			order by total desc,username)

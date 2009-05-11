@@ -38,19 +38,19 @@ if (!function_exists('ociplogon')) {
 }
 //include user account
 include("../../../conf/castor-mon-web/user.php");
-function decode($total,$max,$min) {
-	$bin = ($max - $min )/ 6;
-	if ($total < $min + $bin)
-		$colour = "azure";
-	else if(($total >= $min + $bin)&&($total < $min + 2*$bin)) 
+function decode($transactions) {
+	$i = 0;
+	if ($transactions == 0)
+		$colour = "white";
+	else if($transactions < 10) 
 		$colour = "lemonchiffon";
-	else if (($total >=$min + 2*$bin)&&($total < $min + 3*$bin)) 
+	else if (($transactions >= 10)&&($transactions < 100))
+		$colour = "DarkKhaki";
+	else if (($transactions >= 100)&&($transactions < 1000))
 		$colour = "yellow";
-	else if (($total >=$min + 3*$bin)&&($total <$min + 4*$bin)) 
-		$colour = "gold";
-	else if (($total >=$min + 4*$bin)&&($total <$min + 5*$bin)) 
+	else if (($transactions >= 1000)&&($transactions < 10000))
 		$colour = "orangered";
-	else if ($total >$min + 5*$bin)
+	else if ($transactions >= 10000)
 		$colour = "red";
 	return $colour;
 }
@@ -58,20 +58,20 @@ function decode($total,$max,$min) {
 //connection
 $conn = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
 if(!$conn) {
-	$e = ocierror();
+	$e = oci_error();
 	print htmlentities($e['message']);
 	exit;
 }
 $pool =array(-1 => 'foo');
 $query1 = "select originalpool,targetpool,count(*)
 	   from ".$db_instances[$service]['schema'].".diskcopy
-	   where timestamp >= sysdate - 15/1440
-	   and timestamp < sysdate - 5/1440 
+	   where timestamp >= sysdate -15/1440
+	   and timestamp < sysdate -5/1440 
 	   group by originalpool,targetpool
 	   union
 	   select svcclass,svcclass,copies from ".$db_instances[$service]['schema'].".internaldiskcopy
-	   where timestamp >= sysdate - 15/1440
-	   and timestamp < sysdate - 5/1440 
+	   where timestamp >= sysdate -15/1440
+	   and timestamp < sysdate -5/1440 
 	   order by originalpool";
 
 if (!($parsed1 = OCIParse($conn, $query1))) 
@@ -79,8 +79,6 @@ if (!($parsed1 = OCIParse($conn, $query1)))
 if (!OCIExecute($parsed1))
 	{ echo "Error Executing Query";exit();}
 $i =0;
-$max = -1;
-$min = NULL;
 while(OCIFetch($parsed1)) {
 	$opool = OCIResult($parsed1,1);
 	$tpool = OCIResult($parsed1,2);
@@ -92,11 +90,7 @@ while(OCIFetch($parsed1)) {
 		$pool[$i] = $tpool;
 		$i++;
 	};
-	$total = OCIResult($parsed1,3);
-	if ($min == NULL) $min = $total;
-	if ($total > $max) $max = $total;
-	if ($total < $min) $min = $total;
-	$trans[$opool][$tpool] = $total;
+	$trans[$opool][$tpool] = OCIResult($parsed1,3);
 }
 $size = $i;
 for($i = 0; $i < $size;$i++) {
@@ -131,7 +125,7 @@ for($i = 0; $i < $size;$i++) {
 		   <tr>
 		   <?php echo "<th id=\"fonts\"  style=\"background-color: #C0C0C0\">$pool[$i]</th>";?>
 		   <?php for($j = 0; $j < $size;$j++) {
-		             $colour = decode($final[$i][$j],$max,$min);
+		             $colour = decode($final[$i][$j]);
 			     $value = $final[$i][$j];
 			     echo "<td id ='fonts' align='center' style='background-color: $colour' >$value</td>";?>
 		   <?php } ?>

@@ -13,7 +13,7 @@ $bins = array( 0 =>"=1",1 =>"[2-5)",2 =>"[5-10)Kb",3 =>"[10-40)",4 =>"[40-80)",5
 //connection
 $conn = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
 if(!$conn) {
-	$e = ocierror();
+	$e = oci_error();
 	print htmlentities($e['message']);
 	exit;
 }

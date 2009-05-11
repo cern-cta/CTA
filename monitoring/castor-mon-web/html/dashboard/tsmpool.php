@@ -20,7 +20,7 @@ $service = $_GET['service'];
 //connection - db login
 $conn = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
 if(!$conn) {
-	$e = ocierror();
+	$e = oci_error();
 	print htmlentities($e['message']);
 	exit;
 }
@@ -30,7 +30,7 @@ $query1 = "select to_char(bin,'HH24:MI') , number_of_req from (
 	   over (Partition by trunc(timestamp,'Mi')) number_of_req  
            from ".$db_instances[$service]['schema'].".migration
            where timestamp >= trunc(sysdate - 15/1440,'Mi')
-		   and timestamp < trunc(sysdate -  5/1440,'Mi') 
+		   and timestamp < trunc(sysdate - 5/1440,'Mi') 
 		   and svcclass = :svcclass)
            order by bin";
 	   
