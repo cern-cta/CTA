@@ -44,7 +44,12 @@ $con = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pas
        } else {
          $i = 0;
 	 while (ocifetch($parsedqry)) {
-	   $result['EUID'][$i] = OCIResult($parsedqry,1);
+	   $userid = OCIResult($parsedqry,1);
+	   $username = posix_getpwuid((int)$userid);
+	   if(!empty($username))
+	      $result['EUID'][$i] = $username['name'];
+	   else
+	      $result['EUID'][$i] = $userid;
            $result['NUMBER_OF_REQ'][$i++] = OCIResult($parsedqry,2);
 	 }
        } 
