@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.741 $ $Date: 2009/05/08 13:48:30 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.742 $ $Date: 2009/05/12 15:13:17 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1853,9 +1853,9 @@ END;
 
 /* SQL Function updateDbStartTape */
 
-CREATE OR REPLACE
+create or replace
 PROCEDURE  updateDbStartTape
-( inputVdqmReqId IN NUMBER, outVid OUT VARCHAR2, outMode OUT INTEGER, ret OUT INTEGER, outDensity OUT VARCHAR2, outLabel OUT VARCHAR2 ) AS
+( inputVdqmReqId IN NUMBER, outVid OUT NOCOPY VARCHAR2, outMode OUT INTEGER, ret OUT INTEGER, outDensity OUT NOCOPY VARCHAR2, outLabel OUT NOCOPY VARCHAR2 ) AS
 reqId NUMBER;
 tpId NUMBER;
 segToDo INTEGER;
@@ -1871,7 +1871,8 @@ BEGIN
       -- read tape mounted
       SELECT count(*) INTO segToDo FROM segment WHERE status=0 AND tape IN (SELECT taperecall FROM taperequeststate WHERE id=reqId); 
       IF segToDo = 0 THEN
-        ret:=-1; --NOMOREFILES
+        UPDATE taperequeststate set lastvdqmpingtime=0 WHERE id=reqId; -- to force the cleanup
+        ret:=-1; --NO MORE FILES
       ELSE
         UPDATE tape set status=4 WHERE id IN ( SELECT taperecall FROM taperequeststate WHERE id=reqId ) and tpmode=0  RETURNING vid, label, density INTO outVid, outLabel, outDensity; 
         ret:=0;
@@ -1880,7 +1881,8 @@ BEGIN
       -- write
       SELECT count(*) INTO tcToDo FROM stream2tapecopy WHERE parent IN ( SELECT streammigration FROM taperequeststate WHERE id=reqId );
       IF tcToDo = 0 THEN
-        ret:=-1;
+        UPDATE taperequeststate set lastvdqmpingtime=0 WHERE id=reqId; -- to force the cleanup
+        ret:=-1; --NO MORE FILES
         outVid:=NULL;
       ELSE
         UPDATE stream set status=3 WHERE id IN ( SELECT streammigration FROM taperequeststate WHERE id=reqId ) returning tape INTO tpId;
@@ -1892,7 +1894,6 @@ BEGIN
   COMMIT;
 END;
 /
-
 
 /* SQL Function updateDbEndTape */
 
