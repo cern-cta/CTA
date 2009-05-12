@@ -41,6 +41,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 
+#include "castor/tape/tapegateway/DlfCodes.hpp"
 
 #include "castor/infoPolicy/TapeRetryPySvc.hpp"
 #include "castor/tape/tapegateway/TapeGatewayDaemon.hpp"
@@ -75,14 +76,14 @@ int main(int argc, char* argv[]){
  
   castor::tape::tapegateway::TapeGatewayDaemon tgDaemon;
 
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 0, NULL);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, castor::tape::tapegateway::DAEMON_START, 0, NULL);
 
   // load the TapeGateway service to check that everything is fine with it
 
   castor::IService* dbSvc = castor::BaseObject::services()->service("OraTapeGatewaySvc", castor::SVC_ORATAPEGATEWAYSVC);
   castor::tape::tapegateway::ITapeGatewaySvc* oraSvc = dynamic_cast<castor::tape::tapegateway::ITapeGatewaySvc*>(dbSvc);
   if (0 == oraSvc) {
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 93, 0, NULL);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, castor::tape::tapegateway::FATAL_ERROR , 0, NULL);
 
     std::cerr << "Couldn't load the oracle tapegateway service, check the castor.conf for DynamicLib entries"
 	      << std::endl;
@@ -105,7 +106,7 @@ int main(int argc, char* argv[]){
     } else {
        castor::dlf::Param params[] =
 	  {castor::dlf::Param("message","No policy for migration retry in castor.conf")};
-       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, 4, 1, params);
+       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, castor::tape::tapegateway::NO_RETRY_POLICY_FOUND, 1, params);
 
     }
     prm=NULL;
@@ -114,7 +115,7 @@ int main(int argc, char* argv[]){
     } else {
         castor::dlf::Param params[] =
 	  {castor::dlf::Param("message","No global function name for migration retry policy  in castor.conf")};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, 4, 1, params);
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT,castor::tape::tapegateway:: NO_RETRY_POLICY_FOUND, 1, params);
     }
 
 
@@ -125,7 +126,7 @@ int main(int argc, char* argv[]){
     } else {
       castor::dlf::Param params[] =
 	  {castor::dlf::Param("message","No policy for recall retry  in castor.conf")};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, 4, 1, params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, castor::tape::tapegateway::NO_RETRY_POLICY_FOUND, 1, params);
 
     }
     prr=NULL;
@@ -134,7 +135,7 @@ int main(int argc, char* argv[]){
     } else {
         castor::dlf::Param params[] =
 	  {castor::dlf::Param("message","No global function name for recall retry policy  in castor.conf")};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, 4, 1, params);
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, castor::tape::tapegateway::NO_RETRY_POLICY_FOUND, 1, params);
     }
 
 
@@ -232,7 +233,7 @@ int main(int argc, char* argv[]){
     
   } 
 
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 2, 0, NULL);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, castor::tape::tapegateway::DAEMON_STOP, 0, NULL);
   return 0;
 }
 
@@ -250,101 +251,97 @@ castor::tape::tapegateway::TapeGatewayDaemon::TapeGatewayDaemon() : castor::serv
   // defining the predefined messages
 
   castor::dlf::Message messages[] =
-  {{1,  "Service startup"},
-   {2,  "Service shutdown"},
-   {3,  "Cleanup could not be performed"},
-   {4,  "Incomplete parameters for retry policies"},
-   {5,  "VdqmRequestsProducer: getting tapes to submit"},
-   {6,  "VdqmRequestsProducer: impossible to get tapes to submit"},
-   {7,  "VdqmRequestsProducer: impossible to update the db with submitted tapes"},
-   {8,  "VdqmRequestsProducer: queried vmgr"},
-   {9,  "VdqmRequestsProducer: request sent to vdqm"},
-   {10, "VdqmRequestsChecker: getting tapes to check"},
-   {11, "VdqmRequestsChecker: impossible to get tapes to check"},
-   {12, "VdqmRequestsChecker: checked vdqm request state"},
-   {13, "VdqmRequestsChecker: vdqm request lost for this tape"},
-   {14, "VdqmRequestsChecker: impossible to update the db with checked tapes"},
-   {15, "TapeStreamLinker: getting streams to resolve"},
-   {16, "TapeStreamLinker: impossible to get streams to resolve"},
-   {17, "TapeStreamLinker: querying vmgr for the stream"},
-   {18, "TapeStreamLinker: tape and stream linked"},
-   {19, "TapeStreamLinker: impossible to update the db with resolved streams"},
-   {20, "TapeStreamLinker: released tape in vmgr because of db error"},
-   {21, "MigratorErrorHandlerThread: getting failed migration candidates"},
-   {22, "MigratorErrorHandlerThread: impossible to get failed migration candidates"},
-   {23, "MigratorErrorHandlerThread: policy allows retry"},
-   {24, "MigratorErrorHandlerThread: policy does not allows retry"},
-   {25, "MigratorErrorHandlerThread: exception in calling the policy, retry allowed as side effect"},
-   {26, "MigratorErrorHandlerThread: impossible to update the db with the result of the retry policy"},
-   {27, "RecallerErrorHandlerThread: getting failed recall candidates"},
-   {28, "RecallerErrorHandlerThread: impossible to get failed recall candidates"},
-   {29, "RecallerErrorHandlerThread: policy allows retry"},
-   {30, "RecallerErrorHandlerThread: policy does not allows retry"},
-   {31, "RecallerErrorHandlerThread: exception in calling the policy, retry allowed as side effect"},
-   {32, "RecallerErrorHandlerThread: impossible to update the db with the result of the retry policy"},
-   {33, "Worker: received a message from the aggregator"},
-   {34, "Worker: impossible to get client information"},
-   {35, "Worker: received a Null pointer"},
-   {36, "Worker: received an invalid request"},
-   {37, "Worker: Impossible to send response to the aggregator"},
-   {38, "Worker: sending a response to the aggregator"},
-   {39, "Worker: impossible to read the aggregator message"},
-   {40, "Worker: generic exception"},
-   {41, "Worker: dispatching request"},
-   {42, "Worker: received a VolumeRequest"},
-   {43, "Worker: getting vid and mode"},
-   {44, "Worker: impossible to get information for this transaction id"},
-   {45, "Worker: received a FileRecalledNotification"},
-   {46, "Worker: checking nameserver for recalled file"},
-   {47, "Worker: failure in nameserver check for recalled file"},
-   {48, "Worker: updating db for recalled file"},
-   {49, "Worker: impossible to update db for recalled file"},
-   {50, "Worker: received a FileMigratedNotification"},
-   {51, "Worker: updating for migrated file"},
-   {52, "Worker: updating vmgr"},
-   {53, "Worker: updated nameserver for migrated file"},
-   {54, "Worker: updated nameserver for repacked file"},
-   {55, "Worker: failure in nameserver update for migrated file"},
-   {56, "Worker: failure in checking if the migration was issued by Repack"},
-   {57, "Worker: failure in vmgr update for migrated file"},
-   {58, "Worker: updating db for migrated file"},
-   {59, "Worker: impossible to update db for migrated file"},
-   {60, "Worker: received a FileToRecallRequest"},
-   {61, "Worker: getting a file to recall from the db"},
-   {62, "Worker: error getting a file to recall from the db"},
-   {63, "Worker: no more files to recall"},
-   {64, "Worker: received a FileToMigrateRequest"},
-   {65, "Worker: getting a file to migrate from the db"},
-   {66, "Worker: error getting a file to migrate from the db"},
-   {67, "Worker: no more files to migrate"},
-   {68, "Worker: received an EndTransactionNotification"},
-   {69, "Worker: updating db after receiving an EndTransactionNotification"},
-   {70, "Worker: releasing busy tape"},
-   {71, "Worker: impossible to release the busy tape"},
-   {72, "Worker: impossible to update the db after an EndNotification"},
-   {73, "Worker: no more files for this transaction id"},
-   {74,  "VdqmRequestsProducer: vmgr error"},
-   {75,  "VdqmRequestsProducer: vdqm error"},
-   {76,  "Worker: impossible to mark the tapecopy as failed because of db error"},
-   {77, "Worker: received a FileErrorReportNotification"},
-   {78, "Worker: updating the db after receiving  FileErrorReportNotification"},
-   {79, "Worker: tape marked as FULL in vmgr"},
-   {80, "TapeStreamLinker: impossible to get a tape for the stream"},
-   {81, "Worker: found a taperequest"},
-   {82, "Worker: file migrated"},
-   {83, "Worker: file recalled"},
-   {84, "Worker: file to recall"},
-   {85, "Worker: file to migrate"},
-   {86, "Worker: retrived bad file to migrate"},
-   {87, "Worker: impossible to invalidate tapecopy"},
-   {88, "Worker: retrived bad file to recall"},
-   {89, "Worker: impossible to invalidate segment"},
-   {90, "Worker: impossible to retrieve the segment"},
-   {91, "Worker: error while checking the file size of recalled file"},
-   {92, "VdqmRequestsChecker: releasing unused tape"},
-   {93, "Fatal error: Couldn't load the oracle tapegateway service"},
-   {-1, ""}
-  };
+    { {DAEMON_START, "Service startup"},
+      {DAEMON_STOP, "Service shoutdown"},
+      {NO_RETRY_POLICY_FOUND, "Incomplete parameters for retry policy"},
+      {FATAL_ERROR, "Fatal error"}, 
+      {PRODUCER_GETTING_TAPES, "VdqmRequestsProducer: getting tapes to submit"},
+      {PRODUCER_NO_TAPE, "VdqmRequestsProducer: no tape to submit"},
+      {PRODUCER_CANNOT_UPDATE_DB,"VdqmRequestsProducer: cannot update db"},
+      {PRODUCER_QUERYING_VMGR,"VdqmRequestsProducer: querying vmgr" },
+      {PRODUCER_VMGR_ERROR,"VdqmRequestsProducer: vmgr error" },
+      {PRODUCER_SUBMITTING_VDQM , "VdqmRequestsProducer: submitting to vdqm"},
+      {PRODUCER_VDQM_ERROR,"VdqmRequestsProducer: vdqm error"},
+      {CHECKER_GETTING_TAPES, "VdqmRequestsChecker: getting tapes to check"},
+      {CHECKER_NO_TAPE, "VdqmRequestsChecker: no tape to check"},
+      {CHECKER_QUERYING_VDQM, "VdqmRequestsChecker: querying vdqm"},
+      {CHECKER_LOST_VDQM_REQUEST, "VdqmRequestsChecker: request was lost or out of date"},
+      {CHECKER_CANNOT_UPDATE_DB, "VdqmRequestsChecker: cannot update db"},
+      {CHECKER_RELEASING_UNUSED_TAPE, "VdqmRequestsChecker: releasing BUSY tape"},
+      {CHECKER_VMGR_ERROR, "VdqmRequestsChecker: vmgr error, impossible to reset BUSY state"},
+      {LINKER_GETTING_STREAMS,"TapeStreamLinker: getting streams to resole"},
+      {LINKER_NO_STREAM, "TapeStreamLinker: no stream to resolve" },
+      {LINKER_QUERYING_VMGR,"TapeStreamLinker: querying vmgr"},
+      {LINKER_LINKING_TAPE_STREAM, "TapeStreamLinker: association tape-stream done"},
+      {LINKER_CANNOT_UPDATE_DB,"TapeStreamLinker: cannot update db"},
+      {LINKER_RELEASED_BUSY_TAPE,"TapeStreamLinker: released BUSY tape"},
+      {LINKER_NO_TAPE_AVAILABLE, "No tape available in such tapepool"},
+      {MIG_ERROR_GETTING_FILES, "MigratorErrorHandlerThread: getting failed tapecopy"},
+      {MIG_ERROR_NO_FILE, "MigratorErrorHandlerThread: no failed tapecopy"},
+      {MIG_ERROR_RETRY,"MigratorErrorHandlerThread: retry this migration"},
+      {MIG_ERROR_FAILED,"MigratorErrorHandlerThread: fail this migration"},
+      {MIG_ERROR_RETRY_BY_DEFAULT, "MigratorErrorHandlerThread: retry this migration without applying the policy"},
+      {MIG_ERROR_CANNOT_UPDATE_DB, "MigratorErrorHandlerThread: cannot update db"},
+      {REC_ERROR_GETTING_FILES,"RecallerErrorHandlerThread: getting failed tapecopy"},
+      {REC_ERROR_NO_FILE,"RecallerErrorHandlerThread: no failed tapecopy" },
+      {REC_ERROR_RETRY,"RecallerErrorHandlerThread: retry this recall"},
+      {REC_ERROR_FAILED,"RecallerErrorHandlerThread: fail this recall"},
+      {REC_ERROR_RETRY_BY_DEFAULT,"RecallerErrorHandlerThread: retry this recall without applying the policy" },
+      {REC_ERROR_CANNOT_UPDATE_DB,"RecallerErrorHandlerThread: cannot update db" },
+      {WORKER_MESSAGE_RECEIVED,"Worker: received a message"},
+      {WORKER_UNKNOWN_CLIENT, "Worker: unknown client"},
+      {WORKER_INVALID_REQUEST, "Worker: invalid request"},
+      {WORKER_INVALID_CAST, "Worker: invalid cast"},
+      {WORKER_DISPATCHING, "Worker: dispatching request"},
+      {WORKER_RESPONDING, "Worker: responding to the aggregator"},
+      {WORKER_CANNOT_RESPOND, "Worker: cannot respond to the aggregator"},
+      {WORKER_CANNOT_RECEIVE, "Worker: cannot receive message"},
+      {WORKER_UNKNOWN_EXCEPTION, "Worker: unexpected exception"},
+      {WORKER_VOLUME_REQUESTED, "Worker: received volume request"},
+      {WORKER_GETTING_VOLUME, "Worker: getting volume from db"},
+      {WORKER_NO_VOLUME, "Worler: no volume found"},
+      {WORKER_NO_FILE, "Worker: no file found for such volume"},
+      {WORKER_VOLUME_FOUND, "Worker: volume found"},
+      {WORKER_RECALL_NOTIFIED,"Worker: received recall notification"},
+      {WORKER_RECALL_GET_DB_INFO,"Worker: getting data from db for recalled file" },
+      {WORKER_RECALL_FILE_NOT_FOUND,"Worker: recalled file not found"},
+      {WORKER_RECALL_NS_CHECK,"Worker: checking nameserver"},
+      {WORKER_RECALL_NS_FAILURE,"Worker: nameserver error for recalled file"},
+      {WORKER_RECALL_DB_UPDATE,"Worker: updating db after recall notification"},
+      {WORKER_RECALL_CANNOT_UPDATE_DB,"Worker: cannot update db for recalled"},
+      {WORKER_RECALL_CHECK_FILE_SIZE,"Worker: checking file size of recalled file"},
+      {WORKER_RECALL_WRONG_FILE_SIZE, "Worker: wrong file size for recalled file"}, 
+      {WORKER_RECALL_COMPLETED_UPDATE_DB, "Worker: update the db after full recall completed"},
+      {WORKER_MIGRATION_NOTIFIED,"Worker: received migration notification"},
+      {WORKER_MIGRATION_GET_DB_INFO, "Worker: getting data from db for migrated file"},
+      {WORKER_MIGRATION_FILE_NOT_FOUND, "Worker: migrated file not found"},
+      {WORKER_MIGRATION_VMGR_UPDATE, "Worker: updating vmgr for migrated file"},
+      {WORKER_MIGRATION_NS_UPDATE, "Worker: updating nameserver for migrated file"},
+      {WORKER_REPACK_NS_UPDATE, "Worker: updating nameserver for repacked file"},
+      {WORKER_MIGRATION_NS_FAILURE, "Worker: nameserver error for migrated/repacked file"},
+      {WORKER_MIGRATION_VMGR_FAILURE, "Worker: vmgr error for migrated/repacked file"},
+      {WORKER_MIGRATION_DB_UPDATE,"Worker: updating db for migrated file"},
+      {WORKER_MIGRATION_CANNOT_UPDATE_DB,"Worker: cannot update db for migrated file"},
+      {WORKER_RECALL_REQUESTED, "Worker: file to recall requested"},
+      {WORKER_RECALL_RETRIEVED , "Worker: file to recall retrieved from db"},
+      {WORKER_RECALL_RETRIEVING_DB_ERROR, "Worker: db error while retrieving file to recall"},
+      {WORKER_NO_FILE_TO_RECALL, "Worker: no more file to recall"},
+      {WORKER_MIGRATION_REQUESTED,"Worker: file to migrate requested"},
+      {WORKER_MIGRATION_RETRIEVED,"Worker: file to migrate retrieved from db"},
+      {WORKER_MIGRATION_RETRIEVING_DB_ERROR,"Worker: db error while retrieving file to migrate"},
+      {WORKER_NO_FILE_TO_MIGRATE,"Worker: no more file to migrate" },
+      {WORKER_END_NOTIFICATION,"Worker: received end transaction notification"},
+      {WORKER_END_DB_UPDATE,"Worker: updating db after end transaction"},
+      {WORKER_END_DB_ERROR, "Worker: db error while updating for end transaction"},
+      {WORKER_END_RELEASE_TAPE,"Worker: releasing BUSY tape after end transaction"},
+      {WORKER_CANNOT_RELEASE_TAPE, "Worker: cannot release BUSY tape after end transaction"},
+      {WORKER_FILE_ERROR_NOTIFIED, "Worker: received file error notification"},
+      {WORKER_FILE_ERROR_DB_UPDATE,"Worker: updating db after file error notification"},
+      {WORKER_FILE_ERROR_CANNOT_UPDATE_DB,"Worker: db error while updating for file error notification"},
+      {WORKER_TAPE_MAKED_FULL,"Worker: set tape as FULL"},
+      {WORKER_CANNOT_MARK_TAPE_FULL,"Worker: cannot set the tape as FULL"},
+      {-1, ""}
+    };
   dlfInit(messages);
 
 

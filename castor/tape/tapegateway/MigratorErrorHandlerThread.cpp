@@ -29,7 +29,7 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <unistd.h>
-
+#include "castor/tape/tapegateway/DlfCodes.hpp"
 #include "castor/Services.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IService.hpp"
@@ -63,14 +63,14 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void* par)
   
 
   if (0 == oraSvc) {
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 93, 0, NULL);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR, 0, NULL);
     return;
   }
 
   
   
   std::vector<castor::stager::TapeCopy*> tcList;
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 21, 0, NULL); 
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,MIG_ERROR_GETTING_FILES, 0, NULL); 
 
   try {
     tcList=  oraSvc->inputForMigrationRetryPolicy();
@@ -80,7 +80,7 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void* par)
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
        castor::dlf::Param("errorMessage",e.getMessage().str())
       };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 22, 2, params); 
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,MIG_ERROR_NO_FILE, 2, params); 
     return;
   }
   
@@ -105,17 +105,17 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void* par)
     try {
 
       if (m_retryPySvc == NULL ||  m_retryPySvc->applyPolicy(policyObj)) {
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 23, 1, params); 
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,MIG_ERROR_RETRY, 1, params); 
 	tcIdsToRetry.push_back( (*tcItem)->id());
       } else {
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 24, 2, params); 
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,MIG_ERROR_FAILED, 2, params); 
 	tcIdsToFail.push_back( (*tcItem)->id());
       }
 
     } catch (castor::exception::Exception e){
       // retry in case of error
       tcIdsToRetry.push_back( (*tcItem)->id());
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 25, 1, params); 
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,MIG_ERROR_RETRY_BY_DEFAULT, 1, params); 
     }
     
     tcItem++;
@@ -131,7 +131,7 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void* par)
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
        castor::dlf::Param("errorMessage",e.getMessage().str())
       };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 26, 2, params); 
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, MIG_ERROR_CANNOT_UPDATE_DB, 2, params); 
   }
 
   //cleanup

@@ -27,7 +27,7 @@
 #include "castor/tape/tapegateway/VdqmRequestsProducerThread.hpp"
 #include "castor/tape/tapegateway/VmgrTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/VdqmTapeGatewayHelper.hpp"
-
+#include "castor/tape/tapegateway/DlfCodes.hpp"
 #include <sys/types.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -64,7 +64,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::run(void* par)
   
 
   if (0 == oraSvc) {    
-   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 93, 0, NULL);
+   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR , 0, NULL);
    return;
   }
  
@@ -72,7 +72,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::run(void* par)
   try {
 
   // get tapes to send from the db
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 5, 0, NULL);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,PRODUCER_GETTING_TAPES, 0, NULL);
 
     tapesToSubmit = oraSvc->getTapesToSubmit();
 
@@ -83,7 +83,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::run(void* par)
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
        castor::dlf::Param("errorMessage",e.getMessage().str())
       };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 6, 2, params); 
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_NO_TAPE, 2, params); 
     return;
   }
 
@@ -109,7 +109,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::run(void* par)
       castor::dlf::Param params[] =
 	{castor::dlf::Param("Standard Message", sstrerror(e.code())),
 	 castor::dlf::Param("Precise Message", e.getMessage().str())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 74, 2, params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_VMGR_ERROR, 2, params);
 
     }
     
@@ -117,7 +117,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::run(void* par)
       
       // tape is fine
 
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 8, 0, NULL);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, PRODUCER_QUERYING_VMGR, 0, NULL);
       
       VdqmTapeGatewayHelper vdqmHelper;
       int vdqmReqId=0;
@@ -128,13 +128,13 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::run(void* par)
 	castor::dlf::Param params[] =
 	{castor::dlf::Param("Standard Message", sstrerror(e.code())),
 	 castor::dlf::Param("Precise Message", e.getMessage().str())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 75, 2, params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_VDQM_ERROR, 2, params);
 	
 
       }
       if ( vdqmReqId  > 0 ){
 	// submition went fine	
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 9, 0, NULL);
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, PRODUCER_SUBMITTING_VDQM, 0, NULL);
 	(*tapeItem)->setVdqmVolReqId(vdqmReqId);
 	submittedTapes.push_back(*tapeItem);
       }
@@ -155,7 +155,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::run(void* par)
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
        castor::dlf::Param("errorMessage",e.getMessage().str())
       };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 7, 2, params); 
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_CANNOT_UPDATE_DB, 2, params); 
   }
 
   // cleanUp

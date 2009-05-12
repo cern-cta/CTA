@@ -25,7 +25,7 @@
  *****************************************************************************/
 #include "castor/tape/tapegateway/RecallerErrorHandlerThread.hpp"
 
-
+#include "castor/tape/tapegateway/DlfCodes.hpp"
 #include <sys/types.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -66,11 +66,11 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void* par)
   
 
   if (0 == oraSvc) {
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 93, 0, NULL);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR, 0, NULL);
     return;
   }
  
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 27, 0, NULL); 
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, REC_ERROR_GETTING_FILES, 0, NULL); 
   std::vector<castor::stager::TapeCopy*> tcList;
   try {
     tcList =  oraSvc->inputForRecallRetryPolicy();
@@ -80,7 +80,7 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void* par)
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
        castor::dlf::Param("errorMessage",e.getMessage().str())
       };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28, 2, params); 
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, REC_ERROR_NO_FILE, 2, params); 
     return;
   }
   
@@ -103,14 +103,14 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void* par)
       };
     try {
       if (m_retryPySvc==NULL || m_retryPySvc->applyPolicy(policyObj)) {
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 29, 1, params); 
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, REC_ERROR_RETRY, 1, params); 
 	tcIdsToRetry.push_back( (*tcItem)->id());
       }    else  {
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 30, 1, params); 
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, REC_ERROR_FAILED, 1, params); 
 	tcIdsToFail.push_back( (*tcItem)->id());
       }
     } catch (castor::exception::Exception e) {
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 31, 1, params); 
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, REC_ERROR_RETRY_BY_DEFAULT, 1, params); 
       tcIdsToRetry.push_back( (*tcItem)->id());
     }
 
@@ -126,7 +126,7 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void* par)
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
        castor::dlf::Param("errorMessage",e.getMessage().str())
       };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 32, 2, params); 
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, REC_ERROR_CANNOT_UPDATE_DB, 2, params); 
   }
 
  //clean up
