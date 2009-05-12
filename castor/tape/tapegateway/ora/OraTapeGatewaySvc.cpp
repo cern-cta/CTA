@@ -561,9 +561,9 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::updateSubmittedTapes(std
      char * bufferDgns=NULL;
      ub2 *lensDgns=NULL;
 
-     unsigned int bufferCellSize = (CA_MAXDGNLEN+1) * sizeof(char);
+     unsigned int cellSizeDgn = (CA_MAXDGNLEN+1) * sizeof(char);
      lensDgns = (ub2*) malloc((CA_MAXDGNLEN+1) * sizeof(ub2));
-     bufferDgns = (char*) malloc(nb * bufferCellSize);
+     bufferDgns = (char*) malloc(nb * cellSizeDgn);
 
      if ( lensDgns  == 0 || bufferDgns == 0 ) {
        if (lensIds != 0 ) free(lensIds);
@@ -579,9 +579,9 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::updateSubmittedTapes(std
      char * bufferDensities=NULL;
      ub2 *lensDensities=NULL;
 
-     bufferCellSize = (CA_MAXDENLEN +1)* sizeof(char);
+     unsigned int cellSizeDen = (CA_MAXDENLEN +1)* sizeof(char);
      lensDensities = (ub2*) malloc((CA_MAXDENLEN+1) * sizeof(ub2));
-     bufferDensities = (char*) malloc(nb * bufferCellSize);
+     bufferDensities = (char*) malloc(nb * cellSizeDen);
 
      if (lensDensities==0 || bufferDensities==0  ){
        if ( lensDgns  != 0 ) free(lensDgns);
@@ -599,9 +599,9 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::updateSubmittedTapes(std
      char * bufferLabels=NULL;
      ub2 *lensLabels=NULL;
 
-     bufferCellSize = (CA_MAXLBLTYPLEN+1) * sizeof(char);
+     unsigned int cellSizeLabel = (CA_MAXLBLTYPLEN+1) * sizeof(char);
      lensLabels = (ub2*) malloc((CA_MAXLBLTYPLEN+1) * sizeof(ub2));
-     bufferLabels = (char*) malloc(nb * bufferCellSize);
+     bufferLabels = (char*) malloc(nb * cellSizeLabel);
 
      if (lensLabels==0 || bufferLabels==0){
        if (lensDensities!=0 ) free (lensDensities);
@@ -644,17 +644,17 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::updateSubmittedTapes(std
        //dgn     
        
        lensDgns[i]= inputTape->dgn().length();
-       strncpy(bufferDgns+(bufferCellSize*i),inputTape->dgn().c_str(),lensDgns[i]);
+       strncpy(bufferDgns+(cellSizeDgn*i),inputTape->dgn().c_str(),lensDgns[i]);
 
        //label
 
        lensLabels[i]= inputTape->label().length();
-       strncpy(bufferLabels+(bufferCellSize*i),inputTape->label().c_str(),lensLabels[i]);
+       strncpy(bufferLabels+(cellSizeLabel*i),inputTape->label().c_str(),lensLabels[i]);
 
        //density
 
        lensDensities[i]= inputTape->density().length();
-       strncpy(bufferDensities+(bufferCellSize*i),inputTape->density().c_str(),lensDensities[i]);
+       strncpy(bufferDensities+(cellSizeDen*i),inputTape->density().c_str(),lensDensities[i]);
 
      }
 
