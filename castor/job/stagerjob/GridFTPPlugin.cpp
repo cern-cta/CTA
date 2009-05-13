@@ -31,6 +31,7 @@
 #include "getconfent.h"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/InvalidArgument.hpp"
 #include "castor/job/stagerjob/InputArguments.hpp"
 #include "castor/job/stagerjob/GridFTPPlugin.hpp"
 
@@ -133,7 +134,8 @@ castor::job::stagerjob::GridFTPPlugin::getPortRange
 // getEnvironment
 //------------------------------------------------------------------------------
 void castor::job::stagerjob::GridFTPPlugin::getEnvironment
-(InputArguments &args, Environment &env) throw () {
+(InputArguments &args, Environment &env)
+  throw(castor::exception::Exception) {
   // Get the location of globus
   char* globus_location = getenv("GLOBUS_LOCATION");
   if (globus_location == NULL) {
@@ -170,17 +172,35 @@ void castor::job::stagerjob::GridFTPPlugin::getEnvironment
     env.globus_loglevel = globus_loglevel;
   }
 
+  // Check whether XROOT should be used to open files (instead of RFIO)
+  bool useXroot = false;
+  const char *useXrootStr = getconfent("GSIFTP", "USEXROOT", 0);
+  if (0 != useXrootStr) {
+    useXroot = (strcasecmp(useXrootStr, "YES") == 0);
+    if (!useXroot && (strcasecmp(useXrootStr, "NO") != 0)) {
+      castor::exception::InvalidArgument e;
+      e.getMessage() << "Invalid option for GSIFTP/USEXROOT: '" << useXrootStr
+                     << "' - must be 'yes' or 'no'" << std::endl;
+      throw e;
+    }
+  }
+  env.dsi_module_extension = (useXroot ? "xroot" : "int");
+
   // Get certificate and key file names
   const char *globus_x509_user_cert = getconfent("GSIFTP", "X509_USER_CERT", 0);
   if (globus_x509_user_cert == NULL) {
-    env.globus_x509_user_cert = "/etc/grid-security/castor-gridftp-dsi-int/castor-gridftp-dsi-int-cert.pem";
+    env.globus_x509_user_cert = "/etc/grid-security/castor-gridftp-dsi-" +
+      env.dsi_module_extension + "/castor-gridftp-dsi-" + 
+      env.dsi_module_extension + "-cert.pem";
   } else {
     env.globus_x509_user_cert = globus_x509_user_cert;
   }
 
   const char *globus_x509_user_key = getconfent("GSIFTP", "X509_USER_KEY", 0);
   if (globus_x509_user_key == NULL) {
-    env.globus_x509_user_key = "/etc/grid-security/castor-gridftp-dsi-int/castor-gridftp-dsi-int-key.pem";
+    env.globus_x509_user_key = "/etc/grid-security/castor-gridftp-dsi-" +
+      env.dsi_module_extension + "/castor-gridftp-dsi-" + 
+      env.dsi_module_extension + "-key.pem";
   } else {
     env.globus_x509_user_key = globus_x509_user_key;
   }
@@ -203,7 +223,9 @@ void castor::job::stagerjob::GridFTPPlugin::postForkHook
           << " -control-idle-timeout 3600 -Z "
           << env.globus_logfile_netlogger
           << " -l " << env.globus_logfile
-          << " -dsi CASTOR2int -allowed-modules CASTOR2int (pid="
+          << " -dsi CASTOR2" << env.dsi_module_extension
+          << " -allowed-modules CASTOR2"
+          << env.dsi_module_extension << " (pid="
           << context.childPid << ")";
   // "Mover fork uses the following command line"
   std::ostringstream tcprange;
@@ -262,7 +284,16 @@ void castor::job::stagerjob::GridFTPPlugin::execMover
   setenv("X509_USER_KEY", env.globus_x509_user_key.c_str(), 1);
   // This variables we will use inside CASTOR2 DSI
   setenv("UUID", args.rawRequestUuid.c_str(), 1);
-  setenv("FULLDESTPATH", context.fullDestPath.c_str(), 1);
+  std::string path = "";
+  if (env.dsi_module_extension == "xroot") {
+    path += "root://localhost:1095//" + args.rawRequestUuid +
+      "?castor2fs.pfn1=";
+  }
+  path += context.fullDestPath;
+  if (env.dsi_module_extension == "xroot") {
+    path += "&castor2fs.pfn2=unused";
+  }
+  setenv("FULLDESTPATH", path.c_str(), 1);
   switch(args.accessMode) {
   case ReadOnly:
     setenv("ACCESS_MODE","r",1);
@@ -292,6 +323,7 @@ void castor::job::stagerjob::GridFTPPlugin::execMover
     dlf_shutdown(5);
     exit(EXIT_FAILURE);
   }
+  std::string moduleName = "CASTOR2" + env.dsi_module_extension;
   execl (progfullpath.c_str(), progname.c_str(),
          "-i",
          "-d", env.globus_loglevel.c_str(),
@@ -301,8 +333,8 @@ void castor::job::stagerjob::GridFTPPlugin::execMover
          "-control-idle-timeout", "3600",
          "-Z", env.globus_logfile_netlogger.c_str(),
          "-l", env.globus_logfile.c_str(),
-         "-dsi","CASTOR2int",
-         "-allowed-modules","CASTOR2int",
+         "-dsi", moduleName.c_str(),
+         "-allowed-modules", moduleName.c_str(),
          NULL);
   // Should never be reached
   dlf_shutdown(5);

@@ -49,6 +49,7 @@ namespace castor {
         std::string globus_loglevel;
         std::string globus_x509_user_cert;
         std::string globus_x509_user_key;
+        std::string dsi_module_extension;
       };
 
       /**
@@ -107,7 +108,7 @@ namespace castor {
          */
         static void getEnvironment(InputArguments &args,
                                    Environment &env)
-          throw();
+          throw(castor::exception::Exception);
 
       }; // end of class GridFTPPlugin
 
