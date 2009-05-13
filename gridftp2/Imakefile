@@ -24,4 +24,4 @@ COMM
 COMM @author castor-dev team
 COMM
 
-SUBDIRS = internal external
+SUBDIRS = internal external xroot
