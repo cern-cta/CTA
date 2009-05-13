@@ -8,7 +8,7 @@ DLFCONF=/var/www/conf/dlf
 
 .PHONY : install clean clobber Makefiles depend checkDESTDIR checkORACLE checkLSF checkGLOBUS checkSTK
 
-all: checkORACLE checkLSF checkGLOBUS checkSTK
+all: checkORACLE checkLSF checkGLOBUS checkSTK checkXROOT
 	GotoSubdirs($(SUBDIRS))
 
 EXPORTMAN?=$(DESTDIR)/usr/share
