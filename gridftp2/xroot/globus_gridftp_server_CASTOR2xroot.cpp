@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: globus_gridftp_server_CASTOR2xroot.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2009/05/13 08:33:59 $ $Author: sponcec3 $
+ * @(#)$RCSfile: globus_gridftp_server_CASTOR2xroot.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/05/13 09:59:57 $ $Author: sponcec3 $
  *
  * Plugin for GridFTP interfacing to CASTOR using the xroot protocol
  *
@@ -148,7 +148,6 @@ extern "C" {
         }
       }
     }
-    XrdPosixXrootd::setDebug(666);
     globus_gridftp_server_operation_finished(op, GLOBUS_SUCCESS, &finished_info);
   }
 
