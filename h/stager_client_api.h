@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.47 $ $Release$ $Date: 2009/03/06 15:20:21 $ $Author: sponcec3 $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.48 $ $Release$ $Date: 2009/05/13 08:37:56 $ $Author: sponcec3 $
  *
  * the client API to the castor stager
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.47 $
- * @date $Date: 2009/03/06 15:20:21 $
+ * @version $Revision: 1.48 $
+ * @date $Date: 2009/05/13 08:37:56 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.47 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.48 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -311,8 +311,7 @@ struct stage_io_fileresp {
   int   port;
 
   /**
-   * The name of the file on the server. Could be the physical if the protocol is local
-   * (e.g. for Storage Tank) or whtever is needed by the protocol.
+   * The name of the file on the server.
    */
   char		*filename;
 
@@ -655,8 +654,8 @@ EXTERN_C int DLL_DECL stage_put _PROTO((const char *userTag,
                                         const char *protocol,
                                         const char *filename,
                                         mode_t mode,
-					u_signed64 size,
-					struct stage_io_fileresp **response,
+                                        u_signed64 size,
+                                        struct stage_io_fileresp **response,
                                         char **requestId,
                                         struct stage_options* opts));
 
