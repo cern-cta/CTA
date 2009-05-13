@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio_api.h,v $ $Revision: 1.46 $ $Date: 2009/01/09 14:44:36 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio_api.h,v $ $Revision: 1.47 $ $Date: 2009/05/13 10:06:27 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -14,6 +14,7 @@
 #ifndef _RFIO_API_H_INCLUDED_
 #define _RFIO_API_H_INCLUDED_
 
+#include <osdep.h>
 #ifndef _RFIO_CONSTANTS_H_INCLUDED_
 #include <rfio_constants.h>
 #endif /* _RFIO_CONSTANTS_H_INCLUDED_ */
@@ -122,7 +123,7 @@ EXTERN_C int DLL_DECL rfstatfs _PROTO((char *, struct rfstatfs *)) ;
 EXTERN_C int DLL_DECL rfio_smstat _PROTO((int, char *, struct stat *, int));
 EXTERN_C int DLL_DECL rfio_lseek_v3 _PROTO((int, int, int));
 
-#if defined(__alpha) && defined(__osf__)
+#if (defined(__alpha) && defined(__osf__)) || defined(__APPLE__)
 #define fseeko64 fseek
 #define fstat64 fstat
 #define ftello64 ftell
