@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.742 $ $Date: 2009/05/12 15:13:17 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.743 $ $Date: 2009/05/15 13:33:20 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -906,9 +906,10 @@ END;
 /
 
 /* Get input for python migration policy */
-CREATE OR REPLACE PROCEDURE inputForMigrationPolicy
+
+create or replace PROCEDURE inputForMigrationPolicy
 (svcclassName IN VARCHAR2,
- policyName OUT VARCHAR2,
+ policyName OUT NOCOPY VARCHAR2,
  svcId OUT NUMBER,
  dbInfo OUT castor.DbMigrationInfo_Cur) AS
  tcIds "numList";
@@ -920,10 +921,17 @@ BEGIN
     FROM SvcClass
    WHERE SvcClass.name = svcClassName;
 
-  UPDATE
-     /*+ LEADING(TC CF)
-         INDEX_RS_ASC(CF PK_CASTORFILE_ID)
-         INDEX_RS_ASC(TC I_TAPECOPY_STATUS) */ 
+  UPDATE /*+ BEGIN_OUTLINE_DATA
+             IGNORE_OPTIM_EMBEDDED_HINTS
+             ALL_ROWS
+             OUTLINE_LEAF(@"SEL$3FF8579E")
+             UNNEST(@"SEL$1")
+             OUTLINE(@"UPD$1")
+             OUTLINE(@"SEL$1")
+             INDEX_RS_ASC(@"SEL$3FF8579E" "TC"@"UPD$1" ("TAPECOPY"."STATUS"))
+             INDEX_RS_ASC(@"SEL$3FF8579E" "CF"@"SEL$1" ("CASTORFILE"."ID"))
+             LEADING(@"SEL$3FF8579E" "TC"@"UPD$1" "CF"@"SEL$1")
+             USE_NL(@"SEL$3FF8579E" "CF"@"SEL$1") */
          TapeCopy TC 
      SET status = 7
    WHERE status IN (0, 1)
@@ -937,7 +945,7 @@ BEGIN
         SELECT 'x'
           FROM CastorFile CF
          WHERE TC.castorFile = CF.id
-           AND CF.svcClass = svcId))
+           AND CF.svcClass = svcId)) AND rownum < 10000
     RETURNING TC.id -- CREATED / TOBEMIGRATED
     BULK COLLECT INTO tcIds;
   COMMIT;
@@ -953,10 +961,10 @@ BEGIN
 END;
 /
 
+
 /* Get input for python Stream Policy */
 
-CREATE OR REPLACE
-PROCEDURE inputForStreamPolicy
+create or replace PROCEDURE inputForStreamPolicy
 (svcClassName IN VARCHAR2,
  policyName OUT NOCOPY VARCHAR2,
  runningStreams OUT INTEGER,
@@ -968,6 +976,7 @@ AS
   streamId NUMBER; -- stream attached to the tapepool
   svcId NUMBER; -- id for the svcclass
   strIds "numList";
+  tcNum NUMBER;
 BEGIN
   -- info for policy
   SELECT streamPolicy, nbDrives, id INTO policyName, maxStream, svcId
@@ -985,8 +994,21 @@ BEGIN
              AND SvcClass2TapePool.parent = svcId)
   RETURNING Stream.id BULK COLLECT INTO strIds;
   COMMIT;
-  --- return for policy
+  
+  -- check for overloaded streams
+  SELECT count(*) INTO tcNum from stream2tapecopy where parent in (SELECT /*+ CARDINALITY(stridTable 5) */ *  FROM TABLE(strIds) stridTable);
+  IF (tcnum > 10000 * maxstream) AND (maxstream>0) THEN
+   -- emergency mode
    OPEN dbInfo FOR
+       SELECT Stream.id, 10000, 10000, gettime
+        FROM  Stream
+         WHERE  Stream.id IN (SELECT /*+ CARDINALITY(stridTable 5) */ *  FROM TABLE(strIds) stridTable)
+          AND Stream.status = 7
+     GROUP BY Stream.id;
+  
+  ELSE
+   --- return for policy
+    OPEN dbInfo FOR
        SELECT Stream.id, count(distinct Stream2TapeCopy.child),  sum(CastorFile.filesize), gettime() - min(CastorFile.lastupdatetime)
         FROM Stream2TapeCopy, TapeCopy, CastorFile, Stream
          WHERE  Stream.id IN (SELECT /*+ CARDINALITY(stridTable 5) */ *  FROM TABLE(strIds) stridTable)
@@ -1000,7 +1022,7 @@ BEGIN
      FROM Stream WHERE  Stream.id IN (SELECT /*+ CARDINALITY(stridTable 5) */ * FROM  TABLE(strIds) stridTable)
           AND Stream.status = 7
           AND NOT EXISTS (SELECT 'x' FROM Stream2TapeCopy ST WHERE  ST.parent = Stream.ID);
-
+ END IF;         
 END;
 /
 
@@ -1644,8 +1666,7 @@ END;
 
 /* SQL Function fileToRecall */
 
-CREATE OR REPLACE
-PROCEDURE fileToRecall (transactionId IN NUMBER, ret OUT INTEGER, vidOut OUT NOCOPY VARCHAR2, outputFile OUT castor.FileToRecallCore_Cur) AS
+create or replace PROCEDURE fileToRecall (transactionId IN NUMBER, ret OUT INTEGER, vidOut OUT NOCOPY VARCHAR2, outputFile OUT castor.FileToRecallCore_Cur) AS
 ds VARCHAR2(2048);
 mp VARCHAR2(2048);
 path VARCHAR2(2048); 
@@ -1667,7 +1688,17 @@ BEGIN
      commit;
      return;
   END;
-  bestFileSystemForSegment(segId,ds,mp,path,dcId);
+  DECLARE
+    application_error EXCEPTION;
+    PRAGMA EXCEPTION_INIT(application_error,-20115);
+  BEGIN
+    bestFileSystemForSegment(segId,ds,mp,path,dcId);
+  EXCEPTION WHEN  application_error THEN 
+    ret:=1;
+    commit;
+    return;
+  END;
+  
   UPDATE Segment set status=7 WHERE id=segId;
   OPEN outputFile FOR 
    SELECT castorfile.fileid, castorfile.nshost, ds, mp, path, segment.fseq FROM tapecopy,castorfile,segment WHERE segment.id=segId AND segment.copy=tapecopy.id 
