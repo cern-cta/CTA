@@ -69,7 +69,7 @@ start() {
 			_XRD_OPTIONS=${_XRD_OPTIONS%' '}
 
 			# Setup xrootd environment
-                        if [ -z ${XRD_USER} ]; then chown root ${XRD_COREDIR}; fi
+                        if [ -z "${XRD_USER}" ]; then chown root ${XRD_COREDIR}; fi
 			cd ${XRD_COREDIR}
 
                         ulimit -n ${XRD_MAXFD}

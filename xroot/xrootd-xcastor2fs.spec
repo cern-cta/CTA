@@ -1,7 +1,7 @@
 Summary:     The next generation xrootd@Castor2 interface
 Name: 	     xrootd-xcastor2fs
 Version:     1.0.6
-Release:     5
+Release:     8
 License:     none
 Group:       Applications/Castor
 Source0:     %{name}-%{version}.tar.gz
@@ -60,6 +60,13 @@ fi
 %attr(-,stage,st) %dir /var/spool/xroot/core
 
 %changelog
+* Mon May 11 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.6-8
+- fixed illegal function to retrieve prepare2get response status
+  using 'stage_requestStatusName' instead of 'stage_fileStatusName'
+
+* Thu May 07 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.6-7
+- rebuild for wrong stager headers used in the build process
+- fixed \0 termination in use of location link cache
 * Mon May 04 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.6-5
 - added support for multiple capability keys to provide signature to multiple instances with individual public keys
 - fixed bug during file creation for status PUT_FAILED (returns 0 and no serrno)

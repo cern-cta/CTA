@@ -1,5 +1,5 @@
-//          $Id: XrdxCastor2Fs.cc,v 1.10 2009/05/06 14:37:23 apeters Exp $
-const char *XrdxCastor2FsCVSID = "$Id: XrdxCastor2Fs.cc,v 1.10 2009/05/06 14:37:23 apeters Exp $";
+//          $Id: XrdxCastor2Fs.cc,v 1.11 2009/05/15 08:40:14 apeters Exp $
+const char *XrdxCastor2FsCVSID = "$Id: XrdxCastor2Fs.cc,v 1.11 2009/05/15 08:40:14 apeters Exp $";
 
 #include "XrdVersion.hh"
 #include "XrdClient/XrdClientAdmin.hh"
@@ -1394,7 +1394,9 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
 	     ZTRACE(open,"Doing cache lookup: "<< locationfile.c_str());
 	     
 	     char linklookup[8192];
-	     if ((::readlink(locationfile.c_str(),linklookup,sizeof(linklookup)))>0) {
+	     int lsize=0;
+	     if ((lsize=::readlink(locationfile.c_str(),linklookup,sizeof(linklookup)))>0) {
+	       linklookup[lsize]=0;
 	       ZTRACE(open,"Cache location: " << linklookup);
 	       XrdOucString slinklookup = linklookup;
 	       XrdOucString slinkpath;
@@ -1460,27 +1462,27 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
 	     n++;
 	     continue;
 	   }
-	   
-	   if ( (stagestatus == "STAGED") || (stagestatus == "CANBEMIGR") || (stagestatus == "STAGEOUT") || (stagestatus == "BEINGMIGR") )  {
+
+	   ZTRACE(open,"Got |" << redirectionpfn1.c_str() << "| " << stagestatus.c_str());
+	   if ( redirectionpfn1.length() && (stagestatus=="READY")) {
 	     // that is perfect, we can use the setting to read
+
 	     possible = true;
 	     break;
 	   } else { 
 	     XrdOucString delaytag = tident;
 	     delaytag += "::"; delaytag += path;
 	     // we select this setting and tell the client to wait for the staging in this pool/svc class
-	     if ( (stagestatus == "STAGEIN") || (stagestatus == "SUBREQUEST_READY") ) {
+	     if ( (stagestatus == "READY") ) {
 	       TIMING(xCastor2FsTrace,"RETURN",&opentiming);
 	       opentiming.Print(xCastor2FsTrace);
 	       return XrdxCastor2FS->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()) , "file is being staged in");
+	     } else {
+	       TIMING(xCastor2FsTrace,"RETURN",&opentiming);
+	       opentiming.Print(xCastor2FsTrace);
+	       n++;
+	       continue;
 	     }
-	   }
-	   if ( (stagestatus == "INVALID") || (stagestatus == "SUBREQUEST_FAILED") ) {
-	     TIMING(xCastor2FsTrace,"RETURN",&opentiming);
-	     opentiming.Print(xCastor2FsTrace);
-	     n++;
-	     continue;
-	     //return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "access file in stager (status=INVALID)  fn = ", path);	   
 	   }
 	 } else {
 	   break;

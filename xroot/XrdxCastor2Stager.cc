@@ -1,4 +1,4 @@
-//          $Id: XrdxCastor2Stager.cc,v 1.6 2009/04/29 10:15:03 apeters Exp $
+//          $Id: XrdxCastor2Stager.cc,v 1.7 2009/05/15 08:40:14 apeters Exp $
 
 #ifndef __XCASTOR2FS__STAGER__HH
 #define __XCASTOR2FS__STAGER__HH
@@ -45,9 +45,6 @@ XrdxCastor2Stager::Prepare2Get(XrdOucErrInfo &error, uid_t uid, gid_t gid, const
   const char* tident = error.getErrUser();
   struct stage_options                  Opts;
   ZTRACE(stager,"uid=" << uid << " gid=" << gid << " path=" << path << " stagehost=" << stagehost << " serviceclass=" << serviceclass);
-  Opts.stage_host    = (char*)stagehost;
-  Opts.service_class = (char*)serviceclass;
-  Opts.stage_port    = 0;
   
   const char* stageTag = "xCastor2P2Get";
   
@@ -67,6 +64,12 @@ XrdxCastor2Stager::Prepare2Get(XrdOucErrInfo &error, uid_t uid, gid_t gid, const
   subreq->setModeBits(0744);
 
   castor::client::BaseClient       cs2client(stage_getClientTimeout(),-1);
+
+  Opts.stage_host    = (char*)stagehost;
+  Opts.service_class = (char*)serviceclass;
+  Opts.stage_version = 2;
+  Opts.stage_port    = 0;
+
   cs2client.setOptions(&Opts);
   cs2client.setAuthorizationId(uid,gid);
   
@@ -108,14 +111,14 @@ XrdxCastor2Stager::Prepare2Get(XrdOucErrInfo &error, uid_t uid, gid_t gid, const
     error.setErrInfo(fr->errorCode(),emsg.c_str());
     return false;
   }  else {
-    ZTRACE(stager, stage_fileStatusName(fr->status())<< "status=" << fr->status() <<" rc=" << fr->errorCode()
+    ZTRACE(stager, stage_requestStatusName(fr->status())<< "status=" << fr->status() <<" rc=" << fr->errorCode()
 	   <<" path=" <<fr->server().c_str() <<':' <<fr->fileName().c_str()
 	   <<" (" <<fr->castorFileName().c_str() <<") id=" <<fr->id() );
   }
   
   redirectionhost = fr->server().c_str();
   redirectionpfn  = fr->fileName().c_str();
-  status          = stage_fileStatusName(fr->status());
+  status          = stage_requestStatusName(fr->status());
   
   delete subreq;
   delete respvec[0];
@@ -133,10 +136,6 @@ XrdxCastor2Stager::Get(XrdOucErrInfo &error, uid_t uid, gid_t gid,const char* pa
 
   ZTRACE(stager,"uid=" << uid << " gid=" << gid << " path=" << path << " stagehost=" << stagehost << " serviceclass=" << serviceclass);
 
-  Opts.stage_host    = (char*)stagehost;
-  Opts.service_class = (char*)serviceclass;
-  Opts.stage_port    = 0;
-  
   const char* stageTag = "xCastor2Get";
   
   castor::stager::StageGetRequest  getReq_ro;
@@ -155,6 +154,10 @@ XrdxCastor2Stager::Get(XrdOucErrInfo &error, uid_t uid, gid_t gid,const char* pa
   subreq->setModeBits(0744);
 
   castor::client::BaseClient       cs2client(stage_getClientTimeout(),-1);
+  Opts.stage_host    = (char*)stagehost;
+  Opts.service_class = (char*)serviceclass;
+  Opts.stage_version = 2;
+  Opts.stage_port    = 0;
   cs2client.setOptions(&Opts);
   cs2client.setAuthorizationId(uid,gid);
   
@@ -219,10 +222,6 @@ XrdxCastor2Stager::Put(XrdOucErrInfo &error, uid_t uid, gid_t gid,const char* pa
   struct stage_options                  Opts;
 
   ZTRACE(stager,"uid=" << uid << " gid=" << gid << " path=" << path << " stagehost=" << stagehost << " serviceclass=" << serviceclass);
-
-  Opts.stage_host    = (char*)stagehost;
-  Opts.service_class = (char*)serviceclass;
-  Opts.stage_port    = 0;
   
   const char* stageTag = "xCastor2Put";
   
@@ -242,6 +241,10 @@ XrdxCastor2Stager::Put(XrdOucErrInfo &error, uid_t uid, gid_t gid,const char* pa
   subreq->setModeBits(0744);
 
   castor::client::BaseClient       cs2client(stage_getClientTimeout(),-1);
+  Opts.stage_host    = (char*)stagehost;
+  Opts.service_class = (char*)serviceclass;
+  Opts.stage_version = 2;
+  Opts.stage_port    = 0;
   cs2client.setOptions(&Opts);
   cs2client.setAuthorizationId(uid,gid);
   
@@ -313,10 +316,6 @@ XrdxCastor2Stager::Update(XrdOucErrInfo &error, uid_t uid, gid_t gid,const char*
   struct stage_options                  Opts;
 
   ZTRACE(stager,"uid=" << uid << " gid=" << gid << " path=" << path << " stagehost=" << stagehost << " serviceclass=" << serviceclass);
-
-  Opts.stage_host    = (char*)stagehost;
-  Opts.service_class = (char*)serviceclass;
-  Opts.stage_port    = 0;
   
   const char* stageTag = "xCastor2Update";
   
@@ -336,6 +335,10 @@ XrdxCastor2Stager::Update(XrdOucErrInfo &error, uid_t uid, gid_t gid,const char*
   subreq->setModeBits(0744);
 
   castor::client::BaseClient       cs2client(stage_getClientTimeout(),-1);
+  Opts.stage_host    = (char*)stagehost;
+  Opts.service_class = (char*)serviceclass;
+  Opts.stage_version = 2;
+  Opts.stage_port    = 0;
   cs2client.setOptions(&Opts);
   cs2client.setAuthorizationId(uid,gid);
   
@@ -654,6 +657,7 @@ XrdxCastor2Stager::StagerQuery(XrdOucErrInfo &error, uid_t uid, gid_t gid, const
 
   Opts.stage_host    = (char*)stagehost;
   Opts.service_class = (char*)serviceclass;
+  Opts.stage_version = 2;
   Opts.stage_port    = 0;
 
   // Initialize objects used for get processing.
