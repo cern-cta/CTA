@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.743 $ $Date: 2009/05/15 13:33:20 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.744 $ $Date: 2009/05/15 15:06:02 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1694,7 +1694,7 @@ BEGIN
   BEGIN
     bestFileSystemForSegment(segId,ds,mp,path,dcId);
   EXCEPTION WHEN  application_error THEN 
-    ret:=1;
+    ret:=-1;
     commit;
     return;
   END;
