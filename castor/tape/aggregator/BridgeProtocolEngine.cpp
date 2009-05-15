@@ -516,32 +516,13 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileErrReqCallback(
   RtcpTxRx::receiveRtcpFileRqstErrBody(m_cuuid, m_volReqId, socketFd,
     RTCPDNETRWTIMEOUT, header, body);
 
-    // Send an acknowledge to RTCPD and then throw an exception
-    MessageHeader ackMsg;
-    ackMsg.magic       = header.magic;
-    ackMsg.reqType     = header.reqType;
-    ackMsg.lenOrStatus = 0;
-    RtcpTxRx::sendMessageHeader(m_cuuid, m_volReqId, socketFd,
-      RTCPDNETRWTIMEOUT, ackMsg);
-
-    TAPE_THROW_CODE(body.err.errorCode,
-      ": Received an error from RTCPD: " << body.err.errorMsg);
-
   // If RTCPD has reported an error
   if(body.err.errorCode != 0) {
-
-    // Send an acknowledge to RTCPD and then throw an exception
-    MessageHeader ackMsg;
-    ackMsg.magic       = header.magic;
-    ackMsg.reqType     = header.reqType;
-    ackMsg.lenOrStatus = 0;
-    RtcpTxRx::sendMessageHeader(m_cuuid, m_volReqId, socketFd,
-      RTCPDNETRWTIMEOUT, ackMsg);
 
     TAPE_THROW_CODE(body.err.errorCode,
       ": Received an error from RTCPD: " << body.err.errorMsg);
   }
-
+  
   processRtcpFileReq(header, body, socketFd, receivedENDOF_REQ);
 }
 
@@ -582,7 +563,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
         utils::toHex(fileId, tapeFileId);
         RtcpTxRx::giveFileToRtcpd(m_cuuid, m_volReqId, socketFd,
           RTCPDNETRWTIMEOUT, WRITE_ENABLE, filePath, fileSize, "", RECORDFORMAT,
-          tapeFileId, MIGRATEUMASK, tapeFseq, positionMethod, nsHost, fileId,
+          tapeFileId, MIGRATEUMASK, positionMethod, tapeFseq, nsHost, fileId,
           blockId);
 
         RtcpTxRx::askRtcpdToRequestMoreWork(m_cuuid, m_volReqId, tapePath,

@@ -252,42 +252,81 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
   //===================================================
   // Hardcoded volume INFO
   #ifdef EMULATE_GATEWAY
+  
+   switch(emulatedRecallCounter.next()) {
+   case 1:
+     {
+       utils::copyString(filePath,
+         "lxc2disk15.cern.ch:/tmp/nbessone/file1.txt");
+       utils::copyString(nsHost, "castorns");
+       fileId               = 111111111;
+       tapeFileSeq          = 1;
+       fileSize             = 1451640;
+       utils::copyString(lastKnownFileName, "file1.txt");
+       lastModificationTime = 1234567890;
+       positionCommandCode  = 0;// TPPOSIT_FSEQ: position by file sequence number
+       {
+         castor::dlf::Param params[] = {
+           castor::dlf::Param("volReqId"            , volReqId            ),
+           castor::dlf::Param("gatewayHost"         , gatewayHost         ),
+           castor::dlf::Param("gatewayPort"         , gatewayPort         ),
+           castor::dlf::Param("filePath"            , filePath            ),
+           castor::dlf::Param("nsHost"              , nsHost              ),
+           castor::dlf::Param("fileId"              , fileId              ),
+           castor::dlf::Param("tapeFileSeq"         , tapeFileSeq         ),
+           castor::dlf::Param("fileSize"            , fileSize            ),
+           castor::dlf::Param("lastKnownFileName"   , lastKnownFileName   ),
+           castor::dlf::Param("lastModificationTime", lastModificationTime)};
+         castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+           AGGREGATOR_GOT_FILE_TO_MIGRATE_FROM_GATEWAY, params);
+       }  
+       return(true);
+     }
+     break;
 
-   // return(false);
+   case 2:
+     {
+       utils::copyString(filePath,
+         "lxc2disk15.cern.ch:/tmp/nbessone/file1.txt");
+       utils::copyString(nsHost, "castorns");
+       fileId               = 222222222;
+       tapeFileSeq          = 2;
+       fileSize             = 1451640;
+       utils::copyString(lastKnownFileName, "file2.txt");
+       lastModificationTime = 9876543210;
+       positionCommandCode  = 0;// TPPOSIT_FSEQ: position by file sequence number
+       {
+         castor::dlf::Param params[] = {
+           castor::dlf::Param("volReqId"            , volReqId            ),
+           castor::dlf::Param("gatewayHost"         , gatewayHost         ),
+           castor::dlf::Param("gatewayPort"         , gatewayPort         ),
+           castor::dlf::Param("filePath"            , filePath            ),
+           castor::dlf::Param("nsHost"              , nsHost              ),
+           castor::dlf::Param("fileId"              , fileId              ),
+           castor::dlf::Param("tapeFileSeq"         , tapeFileSeq         ),
+           castor::dlf::Param("fileSize"            , fileSize            ),
+           castor::dlf::Param("lastKnownFileName"   , lastKnownFileName   ),
+           castor::dlf::Param("lastModificationTime", lastModificationTime)};
+         castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+           AGGREGATOR_GOT_FILE_TO_MIGRATE_FROM_GATEWAY, params);
+       }
+       return(true);
+     }
+     break;
 
+   default:     
+     { // No more files to migrate
+       castor::dlf::Param params[] = {
+         castor::dlf::Param("volReqId"   , volReqId   ),
+         castor::dlf::Param("gatewayHost", gatewayHost),
+         castor::dlf::Param("gatewayPort", gatewayPort)};
+       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+         AGGREGATOR_NO_MORE_FILES_TO_MIGRATE, params);
 
-    if(emulatedRecallCounter.next() <= 1){
-      utils::copyString(filePath,
-        "lxc2disk15.cern.ch:/tmp/nbessone/file1.txt");
-      utils::copyString(nsHost, "castorns");
-      fileId               = 111111111;
-      tapeFileSeq          = 1;
-      fileSize             = 1451640;
-      utils::copyString(lastKnownFileName, "file1.txt");
-      lastModificationTime = 1234567890;
-      positionCommandCode  = 0;// TPPOSIT_FSEQ: position by file sequence number
-   
-  {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"            , volReqId            ),
-      castor::dlf::Param("gatewayHost"         , gatewayHost         ),
-      castor::dlf::Param("gatewayPort"         , gatewayPort         ),
-      castor::dlf::Param("filePath"            , filePath            ),
-      castor::dlf::Param("nsHost"              , nsHost              ),
-      castor::dlf::Param("fileId"              , fileId              ),
-      castor::dlf::Param("tapeFileSeq"         , tapeFileSeq         ),
-      castor::dlf::Param("fileSize"            , fileSize            ),
-      castor::dlf::Param("lastKnownFileName"   , lastKnownFileName   ),
-      castor::dlf::Param("lastModificationTime", lastModificationTime)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_GOT_FILE_TO_MIGRATE_FROM_GATEWAY, params);
-  } 
-      return(true);
-    }
-    else {
-      return(false);
-    }
-
+       return(false);
+     }
+   }// switch
+ 
   #endif
   //===================================================
 
