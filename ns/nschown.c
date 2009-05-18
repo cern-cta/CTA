@@ -46,7 +46,7 @@ void usage(int status, char *name) {
   exit (status);
 }
 
-int main(int argc,char **argv)
+int main(int argc, char **argv)
 {
   int c;
   char *dp;
@@ -110,11 +110,10 @@ int main(int argc,char **argv)
         newuid = pwd->pw_uid;
       else
 #endif
-      {
-
-        fprintf (stderr, "invalid user: %s\n", p);
-        errflg++;
-      }
+	{
+	  fprintf (stderr, "invalid user: %s\n", p);
+	  errflg++;
+	}
   }
   if ((p = strtok (NULL, ":."))) {
     if (isdigit (*p)) {
@@ -133,11 +132,10 @@ int main(int argc,char **argv)
           newgid = gr->gr_gid;
         else
 #endif
-        {
-
-          fprintf (stderr, "invalid group: %s\n", p);
-          errflg++;
-        }
+	  {
+	    fprintf (stderr, "invalid group: %s\n", p);
+	    errflg++;
+	  }
     }
   } else
     newgid = -1;
@@ -145,7 +143,7 @@ int main(int argc,char **argv)
 #if defined(_WIN32)
     WSACleanup();
 #endif
-    exit (USERR);
+  exit (USERR);
 #if defined(_WIN32)
   if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
     fprintf (stderr, NS052);
@@ -199,7 +197,7 @@ int main(int argc,char **argv)
   exit (0);
 }
 
-int chowndir (char *dir,uid_t newuid,gid_t newgid)
+int chowndir (char *dir, uid_t newuid, gid_t newgid)
 {
   char curdir[CA_MAXPATHLEN+1];
   struct dirlist {
@@ -211,6 +209,7 @@ int chowndir (char *dir,uid_t newuid,gid_t newgid)
   struct dirlist *dlf = NULL; /* pointer to first directory in the list */
   struct dirlist *dll;  /* pointer to last directory in the list */
   struct Cns_direnstat *dxp;
+  char fullpath[CA_MAXPATHLEN+1];
   int errflg = 0;
 
   if ((dirp = Cns_opendir (dir)) == NULL) {
@@ -222,7 +221,7 @@ int chowndir (char *dir,uid_t newuid,gid_t newgid)
     return (-1);
   }
   while ((dxp = Cns_readdirx (dirp)) != NULL) {
-    if (Rflag && (dxp->filemode & S_IFDIR)) {
+    if (dxp->filemode & S_IFDIR) {
       if ((dlc = (struct dirlist *)
            malloc (sizeof(struct dirlist))) == NULL ||
           (dlc->d_name = strdup (dxp->d_name)) == NULL) {
@@ -237,21 +236,26 @@ int chowndir (char *dir,uid_t newuid,gid_t newgid)
         dll->next = dlc;
       dll = dlc;
     } else {
-      if (Cns_chown (dxp->d_name, newuid, newgid) < 0) {
-        fprintf (stderr, "%s: %s\n", dxp->d_name,
-                 sstrerror(serrno));
-        errflg++;
+      sprintf (fullpath, "%s/%s", dir, dxp->d_name);
+      if (hflag) {
+        if (Cns_lchown (fullpath, newuid, newgid) < 0) {
+          fprintf (stderr, "%s: %s\n", fullpath,
+                   sstrerror(serrno));
+          errflg++;
+        }
+      } else {
+        if (Cns_chown (fullpath, newuid, newgid) < 0) {
+          fprintf (stderr, "%s: %s\n", fullpath,
+                   sstrerror(serrno));
+          errflg++;
+        }
       }
     }
   }
   (void) Cns_closedir (dirp);
   while (dlf) {
     sprintf (curdir, "%s/%s", dir, dlf->d_name);
-    if (chowndir (curdir, newuid, newgid) < 0)
-      errflg++;
-    if (Cns_chown (dlf->d_name, newuid, newgid) < 0) {
-      fprintf (stderr, "%s: %s\n", dlf->d_name,
-               sstrerror(serrno));
+    if (chowndir (curdir, newuid, newgid) < 0) {
       errflg++;
     }
     free (dlf->d_name);
@@ -261,5 +265,19 @@ int chowndir (char *dir,uid_t newuid,gid_t newgid)
   }
   if (Cns_chdir ("..") < 0)
     return (-1);
-  return (errflg);
+  if (hflag) {
+    if (Cns_lchown (dir, newuid, newgid) < 0) {
+      fprintf (stderr, "%s: %s\n", fullpath,
+               sstrerror(serrno));
+      errflg++;
+    }
+  } else {
+    if (Cns_lchown (dir, newuid, newgid) < 0) {
+      fprintf (stderr, "%s: %s\n", dir, sstrerror(serrno));
+      errflg++;
+    }
+  }
+  if (errflg)
+    return (-1);
+  return (0);
 }
