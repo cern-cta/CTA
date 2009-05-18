@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.50 $ $Release$ $Date: 2009/01/21 16:40:17 $ $Author: waldron $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.51 $ $Release$ $Date: 2009/05/18 13:42:52 $ $Author: waldron $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -168,6 +168,9 @@ castor::db::ora::OraQuerySvc::gatherResults(oracle::occi::ResultSet *rset)
     item->setMountPoint(rset->getString(8));
     item->setNbAccesses(rset->getInt(9));
     item->setLastKnownFileName(rset->getString(10));
+    item->setCreationTime((u_signed64)rset->getDouble(11));
+    item->setSvcClass(rset->getString(12));
+    item->setLastAccessTime((u_signed64)rset->getDouble(13));
     result->push_back(item);
   }
   return result;
@@ -192,7 +195,8 @@ castor::db::ora::OraQuerySvc::diskCopies4FileName
     }
     // get max number of responses for a file name query
     char* p;
-    if ( (p = getenv ("FILEQUERY_MAXNBRESPONSES")) || (p = getconfent ("FILEQUERY", "MAXNBRESPONSES", 0)) ) {
+    if ((p = getenv("FILEQUERY_MAXNBRESPONSES")) ||
+	(p = getconfent("FILEQUERY", "MAXNBRESPONSES", 0))) {
       char* pend = p;
       unsigned long ip = strtoul(p, &pend, 0);
       if (*pend != 0) {
@@ -368,10 +372,10 @@ castor::db::ora::OraQuerySvc::diskCopies4Request
 // describeDiskPools
 //------------------------------------------------------------------------------
 std::vector<castor::query::DiskPoolQueryResponse*>*
-castor::db::ora::OraQuerySvc::describeDiskPools 
-(std::string svcClass, 
- unsigned long euid, 
- unsigned long egid, 
+castor::db::ora::OraQuerySvc::describeDiskPools
+(std::string svcClass,
+ unsigned long euid,
+ unsigned long egid,
  bool detailed)
   throw (castor::exception::Exception) {
   try {
@@ -470,8 +474,8 @@ castor::db::ora::OraQuerySvc::describeDiskPools
 //------------------------------------------------------------------------------
 castor::query::DiskPoolQueryResponse*
 castor::db::ora::OraQuerySvc::describeDiskPool
-(std::string diskPool, 
- std::string svcClass, 
+(std::string diskPool,
+ std::string svcClass,
  bool detailed)
   throw (castor::exception::Exception) {
   try {

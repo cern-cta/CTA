@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.734 $ $Date: 2009/05/06 10:41:22 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.735 $ $Date: 2009/05/18 13:42:53 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -29,7 +29,7 @@ CREATE OR REPLACE PACKAGE castor AS
     status NUMBER,
     vid VARCHAR2(2048));
   TYPE TapeRequestState_Cur IS REF CURSOR RETURN TapeRequestStateExtended;
-   TYPE TapeRequestStateCore IS RECORD (
+  TYPE TapeRequestStateCore IS RECORD (
     tpmode INTEGER,
     side INTEGER,
     vid VARCHAR2(2048),
@@ -42,8 +42,8 @@ CREATE OR REPLACE PACKAGE castor AS
     tapePoolId NUMBER,
     tapePoolName VARCHAR2(2048));
   TYPE Stream_Cur IS REF CURSOR RETURN StreamCore;
-  TYPE "strList" IS TABLE OF VARCHAR2(2048) index by binary_integer;
-  TYPE "cnumList" IS TABLE OF NUMBER index by binary_integer;
+  TYPE "strList" IS TABLE OF VARCHAR2(2048) index BY binary_integer;
+  TYPE "cnumList" IS TABLE OF NUMBER index BY binary_integer;
   TYPE QueryLine IS RECORD (
     fileid INTEGER,
     nshost VARCHAR2(2048),
@@ -54,7 +54,10 @@ CREATE OR REPLACE PACKAGE castor AS
     diskServerName VARCHAR2(2048),
     fileSystemMountPoint VARCHAR2(2048),
     nbaccesses INTEGER,
-    lastKnownFileName VARCHAR2(2048));
+    lastKnownFileName VARCHAR2(2048),
+    creationTime INTEGER,
+    svcClass VARCHAR2(2048),
+    lastAccessTime INTEGER);
   TYPE QueryLine_Cur IS REF CURSOR RETURN QueryLine;
   TYPE FileList_Cur IS REF CURSOR RETURN FilesDeletedProcOutput%ROWTYPE;
   TYPE DiskPoolQueryLine IS RECORD (
@@ -128,8 +131,7 @@ CREATE OR REPLACE PACKAGE castor AS
    diskserver VARCHAR2(2048),
    mountPoint VARCHAR(2048),
    path VARCHAR2(2048),
-   fseq INTEGER	
-   );
+   fseq INTEGER);
   TYPE FileToRecallCore_Cur IS REF CURSOR RETURN  FileToRecallCore;  
   TYPE FileToMigrateCore IS RECORD (
    fileId NUMBER,
@@ -140,13 +142,11 @@ CREATE OR REPLACE PACKAGE castor AS
    path VARCHAR2(2048),
    lastKnownFilename VARCHAR2(2048), 
    fseq INTEGER,
-   fileSize NUMBER
-   );
+   fileSize NUMBER);
   TYPE FileToMigrateCore_Cur IS REF CURSOR RETURN  FileToMigrateCore;  
   TYPE StreamReport IS RECORD (
    diskserver VARCHAR2(2048),
-   mountPoint VARCHAR(2048)
-   );
+   mountPoint VARCHAR(2048));
   TYPE StreamReport_Cur IS REF CURSOR RETURN  StreamReport;  
 END castor;
 /

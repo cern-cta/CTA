@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.98 $ $Release$ $Date: 2009/05/06 11:39:09 $ $Author: waldron $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.99 $ $Release$ $Date: 2009/05/18 13:42:52 $ $Author: waldron $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -135,21 +135,23 @@ void castor::stager::daemon::QueryRequestSvcThread::setFileResponseStatus
     fr->setNbAccesses(dc->nbAccesses());
     foundDiskCopy = true;
   } else {
-    // If there are several diskcopies for the file,
-    // we apply some precedence rules :
-    // STAGED, CANBEMIGR > STAGEOUT, STAGEIN > INVALID
+    // If there are several diskcopies for the file, we apply some precedence
+    // rules : STAGED, CANBEMIGR > STAGEOUT, STAGEIN > INVALID
     if (((FILE_STAGEOUT == st || FILE_STAGEIN == st) &&
          (FILE_INVALID_STATUS == fr->status())) ||
         ((FILE_STAGED == st || FILE_CANBEMIGR == st))) {
       fr->setStatus(st);
       fr->setDiskServer(diskServer);
     }
-    fr->setNbAccesses(fr->nbAccesses()+dc->nbAccesses());
+    fr->setNbAccesses(fr->nbAccesses() + dc->nbAccesses());
   }
 
   // 3. Set other common attributes from the castorFile
   fr->setCastorFileName(dc->lastKnownFileName());
   fr->setSize(dc->size());
+  fr->setCreationTime(dc->creationTime());
+  fr->setAccessTime(dc->lastAccessTime());
+  fr->setPoolName(dc->svcClass());
 }
 
 //-----------------------------------------------------------------------------
@@ -162,7 +164,8 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileName
  std::string& fileName,
  u_signed64 svcClassId,
  std::string reqId,
- Cuuid_t uuid)
+ Cuuid_t uuid,
+ bool all)
   throw (castor::exception::Exception) {
   // "Processing File Query by Filename"
   castor::dlf::Param params[] =
@@ -177,34 +180,39 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileName
   // List diskCopies
   std::list<castor::stager::DiskCopyInfo*>* result =
     qrySvc->diskCopies4FileName(fileName, svcClassId);
-  if(result == 0 || result->size() == 0) {   // sanity check, result always is != 0
+  if (result == 0 || result->size() == 0) { // sanity check, result always is != 0
     castor::exception::Exception e(ENOENT);
-    if(svcClassId > 0)
+    if (svcClassId > 0)
       e.getMessage() << "File " << fileName << " not on this service class";
     else
       e.getMessage() << "File " << fileName << " not on disk cache";
-    if(result != 0)
+    if (result != 0)
       delete result;
     throw e;
   }
   // Iterates over the list of disk copies, and returns one result
-  // per fileid to the client. It needs the SQL statement to return the diskcopies
-  // sorted by fileid/nshost.
+  // per fileid to the client. It needs the SQL statement to return the
+  // diskcopies sorted by fileid/nshost.
   u_signed64 fileid = 0;
   std::string nshost = "";
   castor::rh::FileQryResponse res;
   res.setReqAssociated(reqId);
   bool foundDiskCopy = false;
 
-  for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit
-        = result->begin();
-      dcit != result->end();
-      ++dcit) {
+  for (std::list<castor::stager::DiskCopyInfo*>::iterator dcit
+         = result->begin();
+       dcit != result->end();
+       ++dcit) {
     castor::stager::DiskCopyInfo* diskcopy = *dcit;
-    if (diskcopy->fileId() != fileid
-        || diskcopy->nsHost() != nshost) {
-      // Sending the response for the previous
-      // castor file being processed
+
+    std::ostringstream sst;
+    sst << diskcopy->fileId() << "@" <<  diskcopy->nsHost();
+    res.setFileName(sst.str());
+    res.setFileId(fileid);
+
+    if ((diskcopy->fileId() != fileid) ||
+        (diskcopy->nsHost() != nshost)) {
+      // Send the response for the previous castor file being processed
       if (foundDiskCopy) {
         castor::replier::RequestReplier::getInstance()->
           sendResponse(client, &res);
@@ -213,10 +221,15 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileName
       foundDiskCopy = false;
       fileid = diskcopy->fileId();
       nshost = diskcopy->nsHost();
-      std::ostringstream sst;
-      sst << diskcopy->fileId() << "@" <<  diskcopy->nsHost();
-      res.setFileName(sst.str());
-      res.setFileId(fileid);
+    }
+    // Report for all diskcopies
+    else if (all) {
+      fileid = diskcopy->fileId();
+      nshost = diskcopy->nsHost();
+      // Send the response
+      castor::replier::RequestReplier::getInstance()->
+        sendResponse(client, &res);
+      foundDiskCopy = false;
     }
     // Preparing the response
     setFileResponseStatus(&res, diskcopy, foundDiskCopy);
@@ -227,10 +240,10 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileName
       sendResponse(client, &res);
   }
   // Cleanup
-  for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit
-        = result->begin();
-      dcit != result->end();
-      ++dcit) {
+  for (std::list<castor::stager::DiskCopyInfo*>::iterator dcit
+         = result->begin();
+       dcit != result->end();
+       ++dcit) {
     delete *dcit;
   }
   delete result;
@@ -248,37 +261,59 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileId
  std::string &fileName,
  u_signed64 svcClassId,
  std::string reqId,
- Cuuid_t uuid)
+ Cuuid_t uuid,
+ bool all)
   throw (castor::exception::Exception) {
   // Processing File Query by fileid
   castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_IQUERY, fid, nshost);
   std::list<castor::stager::DiskCopyInfo*>* result =
     qrySvc->diskCopies4File(fid, nshost, svcClassId, fileName);
-  if(result == 0 || result->size() == 0) {   // sanity check, result.size() must be == 1
+  if (result == 0 || result->size() == 0) { // sanity check, result.size() must be == 1
     castor::exception::Exception e(ENOENT);
-    if(svcClassId > 0)
+    if (svcClassId > 0)
       e.getMessage() << "File " << fileName << " (" << fid << "@" << nshost << ") not on this service class";
     else
       e.getMessage() << "File " << fileName << " (" << fid << "@" << nshost << ") not on disk cache";
-    if(result != 0)
+    if (result != 0)
       delete result;
     throw e;
   }
   bool foundDiskCopy = false;
+
   // Preparing the response
-  std::ostringstream sst;
-  castor::stager::DiskCopyInfo* diskcopy = *(result->begin());
-  sst << fid << "@" << diskcopy->nsHost();
   castor::rh::FileQryResponse res;
   res.setReqAssociated(reqId);
+  std::ostringstream sst;
+  sst << fid << "@" << nshost;
   res.setFileName(sst.str());
   res.setFileId(fid);
-  setFileResponseStatus(&res, diskcopy, foundDiskCopy);
+
+  // Iterates over the list of disk copies, and computes status
+  for (std::list<castor::stager::DiskCopyInfo*>::iterator dcit
+         = result->begin();
+       dcit != result->end();
+       ++dcit) {
+    setFileResponseStatus(&res, *dcit, foundDiskCopy);
+    // If we are reporting information for all diskcopies then send the response
+    if (all) {
+      castor::replier::RequestReplier::getInstance()->
+        sendResponse(client, &res);
+      foundDiskCopy = false;
+    }
+  }
+
   // Sending the response
-  castor::replier::RequestReplier::getInstance()->
-    sendResponse(client, &res);
+  if (foundDiskCopy) {
+    castor::replier::RequestReplier::getInstance()->
+      sendResponse(client, &res);
+  }
   // Cleanup
-  delete diskcopy;
+  for (std::list<castor::stager::DiskCopyInfo*>::iterator dcit
+         = result->begin();
+       dcit != result->end();
+       ++dcit) {
+    delete *dcit;
+  }
   delete result;
 }
 
@@ -327,10 +362,10 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByRequest
   castor::rh::FileQryResponse res;
   res.setReqAssociated(reqId);
   bool foundDiskCopy = false;
-  for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit
-        = result->begin();
-      dcit != result->end();
-      ++dcit) {
+  for (std::list<castor::stager::DiskCopyInfo*>::iterator dcit
+         = result->begin();
+       dcit != result->end();
+       ++dcit) {
     castor::stager::DiskCopyInfo* diskcopy = *dcit;
     if (diskcopy->fileId() != fileid
         || diskcopy->nsHost() != nshost) {
@@ -349,8 +384,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByRequest
       res.setFileName(sst.str());
       res.setFileId(diskcopy->fileId());
     }
-    /* Preparing the response */
-    /* ---------------------- */
+    // Preparing the response
     setFileResponseStatus(&res, diskcopy, foundDiskCopy);
   }
   // Send the last response if necessary
@@ -358,12 +392,11 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByRequest
     castor::replier::RequestReplier::getInstance()->
       sendResponse(client, &res);
   }
-  /* Cleanup */
-  /* ------- */
-  for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit
-        = result->begin();
-      dcit != result->end();
-      ++dcit) {
+  // Cleanup
+  for (std::list<castor::stager::DiskCopyInfo*>::iterator dcit
+         = result->begin();
+       dcit != result->end();
+       ++dcit) {
     delete *dcit;
   }
   delete result;
@@ -391,15 +424,16 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
   if (0 ==  uReq->parameters().size()) {
     castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_QRYSVC_FQNOPAR);
   }
-  for(std::vector<QueryParameter*>::iterator it = params.begin();
-      it != params.end();
-      ++it) {
+  for (std::vector<QueryParameter*>::iterator it = params.begin();
+       it != params.end();
+       ++it) {
     castor::stager::RequestQueryType ptype = (*it)->queryType();
     std::string pval = (*it)->value();
     try {
       std::string nshost, reqidtag;
       u_signed64 fid = 0;
       bool queryOk = false;
+      bool pall = false;
       switch(ptype) {
       case REQUESTQUERYTYPE_FILEID:
         {
@@ -430,17 +464,16 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
         throw e;
       }
 
-      // Verify whether we are querying a directory (if not regexp)
-      if (ptype == REQUESTQUERYTYPE_FILEID ||
-         (ptype == REQUESTQUERYTYPE_FILENAME && (0 != pval.compare(0, 7, "regexp:")))) {
+      // Verify whether we are querying a directory
+      if ((ptype == REQUESTQUERYTYPE_FILEID) ||
+          (ptype == REQUESTQUERYTYPE_FILENAME)) {
         // Get PATH for queries by fileId
         if (ptype == REQUESTQUERYTYPE_FILEID) {
-          
-          char cfn[CA_MAXPATHLEN+1];     // XXX unchecked string length in Cns_getpath() call
+          char cfn[CA_MAXPATHLEN + 1];
           std::string nsHostFromConf = NsOverride::getInstance()->getCnsHost();
           if (nsHostFromConf.length() > 0 && nsHostFromConf != nshost) {
             castor::exception::Exception e(EINVAL);
-            e.getMessage() << "Cannot query NameServer '" << nshost 
+            e.getMessage() << "Cannot query NameServer '" << nshost
                            << "', stager configured to only query '" << nsHostFromConf << "'";
             throw e;
           }
@@ -451,13 +484,39 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
           }
           pval = cfn;
         }
-        // check if the filename is valid (it has to start with /)
+        // Check to see if we return information for all copies of the file
+        else if ((ptype == REQUESTQUERYTYPE_FILENAME) &&
+                 (pval.compare(0, 4, "all:") == 0)) {
+          // Get the name of the client hostname to pass into the Cupv interface
+          const castor::rh::Client *c =
+            dynamic_cast<const castor::rh::Client*>(client);
+          std::string srcHostName =
+            castor::System::ipAddressToHostname(c->ipAddress());
+          
+          // Check if the user has ADMIN privileges so that they can perform
+          // this type of query
+          int rc = Cupv_check(req->euid(), req->egid(),
+                              srcHostName.c_str(), "", P_ADMIN);
+          if ((rc < 0) && (serrno != EACCES)) {
+            castor::exception::Exception e(serrno);
+            e.getMessage() << "Failed Cupv_check call for "
+                           << req->euid() << ":" << req->egid() << " (ADMIN)";
+            throw e;
+          } else if (rc < 0) {
+            castor::exception::PermissionDenied e;
+            e.getMessage() << "Not authorized to perform this type of query";
+            throw e;
+          }
+          pval = pval.substr(4);
+          pall = true;
+        }
+        // Check if the filename is valid (it has to start with /)
         if (pval.empty() || (pval.at(0) != '/')) {
           castor::exception::Exception ex(EINVAL);
           ex.getMessage() << "Invalid file path";
           throw ex;
         }
-        // stat the file in the nameserver
+        // Stat the file in the nameserver
         struct Cns_filestat Cnsfilestat;
         struct Cns_fileid Cnsfileid;
         Cnsfileid.server[0] = 0;
@@ -466,14 +525,14 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
           e.getMessage() << "Filename " << pval;
           throw e;
         }
-        // deal with directories and with pure file request
+        // Deal with directories and with pure file request
         if ((Cnsfilestat.filemode & S_IFDIR) == S_IFDIR) {
-          // it is a directory, query for the content (don't perform a query by ID)
+          // It is a directory, query for the content (don't perform a query by ID)
           ptype = REQUESTQUERYTYPE_FILENAME;
-          if (pval[pval.length()-1] != '/')
+          if (pval[pval.length() - 1] != '/')
             pval = pval + "/";
         } else {
-          // prefer the querying by file id for real files
+          // Prefer the querying by file id for real files
           // in order to be immune to file renames
           ptype = REQUESTQUERYTYPE_FILEID;
           if (0 == fid) {
@@ -488,14 +547,15 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
       if (0 != svcClass) {
         svcClassId = svcClass->id();
       }
-      // call the proper handling request
+      // Call the proper handling request
       if (ptype == REQUESTQUERYTYPE_FILENAME) {
         handleFileQueryRequestByFileName(qrySvc,
                                          client,
                                          pval,
                                          svcClassId,
                                          req->reqId(),
-                                         uuid);
+                                         uuid,
+                                         pall);
       } else if (ptype == REQUESTQUERYTYPE_FILEID) {
         handleFileQueryRequestByFileId(qrySvc,
                                        client,
@@ -504,7 +564,8 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
                                        pval,
                                        svcClassId,
                                        req->reqId(),
-                                       uuid);
+                                       uuid,
+                                       pall);
       } else {
         handleFileQueryRequestByRequest(qrySvc,
                                         client,
@@ -522,15 +583,15 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
          castor::dlf::Param("Code", e.code()),
          castor::dlf::Param("Message", e.getMessage().str())};
       switch(e.code()) {
-        case ENOENT:
-          castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_USER_NONFILE, 3, params);
-          break;
-        case EINVAL:
-          castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_QRYSVC_INVARG, 3, params);
-          break;
-        default:
-          castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_EXCEPT, 3, params);
-          break;
+      case ENOENT:
+        castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_USER_NONFILE, 3, params);
+        break;
+      case EINVAL:
+        castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_QRYSVC_INVARG, 3, params);
+        break;
+      default:
+        castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_EXCEPT, 3, params);
+        break;
       }
       // Send the exception to the client
       castor::rh::FileQryResponse res;
@@ -581,11 +642,11 @@ void castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
     // and/or svcclass
     bool detailed = false;
     int rc = Cupv_check(req->euid(), req->egid(),
-			srcHostName.c_str(), "", P_ADMIN);
+                        srcHostName.c_str(), "", P_ADMIN);
     if ((rc < 0) && (serrno != EACCES)) {
       castor::exception::Exception e(serrno);
       e.getMessage() << "Failed Cupv_check call for "
-		     << req->euid() << ":" << req->egid() << " (ADMIN)";
+                     << req->euid() << ":" << req->egid() << " (ADMIN)";
       throw e;
     } else if (rc == 0) {
       detailed = true;
@@ -596,7 +657,7 @@ void castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
 
       // "Processing DiskPoolQuery by SvcClass"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("SvcClass", svcClassName)};
+        {castor::dlf::Param("SvcClass", svcClassName)};
       castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_DSQUERY, 1, params);
 
       // Invoking the method
@@ -623,8 +684,8 @@ void castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
     else {
       // "Processing DiskPoolQuery by DiskPool"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("DiskPool", uReq->diskPoolName()),
-	 castor::dlf::Param("SvcClass", svcClassName)};
+        {castor::dlf::Param("DiskPool", uReq->diskPoolName()),
+         castor::dlf::Param("SvcClass", svcClassName)};
       castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_DDQUERY, 2, params);
 
       // Invoking the method
@@ -644,14 +705,14 @@ void castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
     if (e.code() == EINVAL) {
       // "Failed to process DiskPoolQuery"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Message", e.getMessage().str())};
+        {castor::dlf::Param("Message", e.getMessage().str())};
       castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_QRYSVC_DFAILED, 1, params);
     } else {
       // "Unexpected exception caught"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Function", "QueryRequestSvcThread::handleDiskPoolQuery"),
-	 castor::dlf::Param("Code", e.code()),
-	 castor::dlf::Param("Message", e.getMessage().str())};
+        {castor::dlf::Param("Function", "QueryRequestSvcThread::handleDiskPoolQuery"),
+         castor::dlf::Param("Code", e.code()),
+         castor::dlf::Param("Message", e.getMessage().str())};
       castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_EXCEPT, 3, params);
     }
 
@@ -692,26 +753,26 @@ void castor::stager::daemon::QueryRequestSvcThread::handleChangePrivilege
     // or GROUP_ADMIN for user operations
     int rc = Cupv_check(req->euid(), req->egid(),
                         srcHostName.c_str(),
-			"", P_GRP_ADMIN);
+                        "", P_GRP_ADMIN);
     if ((rc < 0) && (serrno != EACCES)) {
       castor::exception::Exception e(serrno);
       e.getMessage() << "Failed Cupv_check call for "
-		     << req->euid() << ":" << req->egid() << " (GRP_ADMIN)";
+                     << req->euid() << ":" << req->egid() << " (GRP_ADMIN)";
       throw e;
     } else if (rc < 0) {
       // Check for GRP_ADMIN failed so check if the user is an ADMIN
       rc = Cupv_check(req->euid(), req->egid(),
-		      srcHostName.c_str(),
-		      "", P_ADMIN);
-      if ((rc < 0) && (serrno != EACCES)){
-	castor::exception::Exception e(serrno);
-	e.getMessage() << "Failed Cupv_check call for "
-		       << req->euid() << ":" << req->egid() << " (ADMIN)";
-	throw e;
+                      srcHostName.c_str(),
+                      "", P_ADMIN);
+      if ((rc < 0) && (serrno != EACCES)) {
+        castor::exception::Exception e(serrno);
+        e.getMessage() << "Failed Cupv_check call for "
+                       << req->euid() << ":" << req->egid() << " (ADMIN)";
+        throw e;
       } else if (rc < 0) {
-	castor::exception::PermissionDenied e;
-	e.getMessage() << "Not authorized to change permissions. Please ask your group admin";
-	throw e;
+        castor::exception::PermissionDenied e;
+        e.getMessage() << "Not authorized to change permissions. Please ask your group admin";
+        throw e;
       }
     }
     // Get the ChangePrivilege
@@ -719,7 +780,7 @@ void castor::stager::daemon::QueryRequestSvcThread::handleChangePrivilege
     uReq = dynamic_cast<castor::bwlist::ChangePrivilege*> (req);
     // call method
     rhSvc->changePrivilege(uReq->svcClassName(), uReq->users(),
-			   uReq->requestTypes(),uReq->isGranted());
+                           uReq->requestTypes(),uReq->isGranted());
     // Reply To Client
     castor::replier::RequestReplier::getInstance()->
       sendResponse(client, &res, true);
@@ -736,7 +797,7 @@ void castor::stager::daemon::QueryRequestSvcThread::handleChangePrivilege
     // and try to answer the client
     try {
       castor::replier::RequestReplier::getInstance()->
-	sendResponse(client, &res, true);
+        sendResponse(client, &res, true);
     } catch (castor::exception::Exception e) {
       // nothing that can really be done here
     }
@@ -763,12 +824,12 @@ void castor::stager::daemon::QueryRequestSvcThread::handleListPrivileges
     // call method
     std::vector<castor::bwlist::Privilege*> privList =
       rhSvc->listPrivileges(uReq->svcClassName(), uReq->userId(),
-			    uReq->groupId(), uReq->requestType());
+                            uReq->groupId(), uReq->requestType());
     // fill reponse with white list part
     for (std::vector<castor::bwlist::Privilege*>::const_iterator it =
-	   privList.begin();
-	 it != privList.end();
-	 it++) {
+           privList.begin();
+         it != privList.end();
+         it++) {
       res.addPrivileges(*it);
     }
     // Reply To Client
@@ -787,7 +848,7 @@ void castor::stager::daemon::QueryRequestSvcThread::handleListPrivileges
     // and try to answer the client
     try {
       castor::replier::RequestReplier::getInstance()->
-	sendResponse(client, &res, true);
+        sendResponse(client, &res, true);
     } catch (castor::exception::Exception e) {
       // nothing that can really be done here
     }
