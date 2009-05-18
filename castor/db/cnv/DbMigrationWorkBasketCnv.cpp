@@ -91,7 +91,7 @@ const std::string castor::db::cnv::DbMigrationWorkBasketCnv::s_updateStatementSt
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbMigrationWorkBasketCnv::s_storeTypeStatementString =
-"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
+"INSERT /* MigrationWorkBasket class */ INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::cnv::DbMigrationWorkBasketCnv::s_deleteTypeStatementString =
