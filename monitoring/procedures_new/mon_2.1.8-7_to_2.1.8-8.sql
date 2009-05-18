@@ -5,7 +5,7 @@
  * See http://castor.web.cern.ch/castor
  *
  * Copyright (C) 2003  CERN
- * This program is free software; you can redistribute it and/or
+ * This program is free software; you can redistribute it AND/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: mon_2.1.8-7_to_2.1.8-8.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/05/15 15:10:04 $ $Author: brabacal $
+ * @(#)$RCSfile: mon_2.1.8-7_to_2.1.8-8.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/05/18 09:38:03 $ $Author: brabacal $
  *
  * This script upgrades a CASTOR v2.1.8-7 MONITORING database into v2.1.8-8
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-/* Stop on errors - this only works from sqlplus */
+/* Stop on errors - this only works FROM sqlplus */
 WHENEVER SQLERROR EXIT FAILURE;
 
 /* Determine the DLF schema that the monitoring procedures should run against */
@@ -34,7 +34,7 @@ SET VER OFF
 
 
 
-/* Version cross check and update */
+/* Version cross check AND update */
 DECLARE
   unused VARCHAR(100);
 BEGIN
@@ -53,7 +53,7 @@ BEGIN
     IF a.state = 'RUNNING' THEN
       dbms_scheduler.stop_job(a.job_name);
     END IF;
-    -- Schedule the start date of the job to 15 minutes from now. This
+    -- Schedule the start date of the job to 15 minutes FROM now. This
     -- basically pauses the job for 15 minutes so that the upgrade can
     -- go through as quickly as possible.
     dbms_scheduler.set_attribute(a.job_name, 'START_DATE', SYSDATE + 15/1440);
@@ -71,7 +71,7 @@ INSERT INTO CastorVersion VALUES ('2_1_8_7', '2_1_8_8');
 CREATE OR REPLACE PROCEDURE statsTotalLat(maxTimeStamp IN DATE) 
 AS
 BEGIN
-  -- Extract total latency info from job started summary message
+  -- Extract total latency info FROM job started summary message
   INSERT INTO TotalLatency (subReqId, timestamp, nsfileid, totalLatency)
     (SELECT DISTINCT a.subReqId, a.timestamp, a.nsfileid, b.value
        FROM &dlfschema..dlf_messages a, &dlfschema..dlf_num_param_values b
@@ -86,159 +86,158 @@ BEGIN
 END;
 /
 
-
-/* Create the TapemountRecalledFiles view */
-CREATE OR REPLACE VIEW TapemountRecalledFiles AS
-select distinct sysdate timestamp, 300 interval, bin, count(bin) over (Partition by bin) reqs 
-  from (
-    select value, 
-      case when value = 1  then 1
-       when value > 1 and value < 5 then 2
-       when value >= 5 and value < 10 then 3
-       when value >= 10 and value < 40 then 4
-       when value >= 40 and value < 80 then 5
-       when value >= 80 and value < 120 then 6
-       when value >= 120 and value < 160 then 7
-       when value >= 160 and value < 200 then 8
-       when value >= 200 and value < 250 then 9
-       when value >= 250 and value < 300 then 10
-       when value >= 300 and value < 400 then 11
-       when value >= 400 and value < 500 then 12
-       when value >= 500 and value < 1000 then 13
-      else 14 end bin
-    from (
-      select b.value
-	from castor_dlf.dlf_messages a, castor_dlf.dlf_num_param_values b
-       where a.id = b.id
-         and b.name = 'FILESCP'
-	 and facility = 2 and msg_no = 20
-	 and a.timestamp >= sysdate - 10/1440
-	 and a.timestamp < sysdate - 5/1440 
+/* Create the TapeMountRecalledFiles view */
+CREATE OR REPLACE VIEW TapeMountRecalledFiles AS
+SELECT distinct sysdate timestamp, 300 interval, bin, count(bin) over (Partition BY bin) reqs 
+  FROM (
+    SELECT value, 
+      CASE WHEN value = 1  THEN 1
+       WHEN value > 1 AND value < 5 THEN 2
+       WHEN value >= 5 AND value < 10 THEN 3
+       WHEN value >= 10 AND value < 40 THEN 4
+       WHEN value >= 40 AND value < 80 THEN 5
+       WHEN value >= 80 AND value < 120 THEN 6
+       WHEN value >= 120 AND value < 160 THEN 7
+       WHEN value >= 160 AND value < 200 THEN 8
+       WHEN value >= 200 AND value < 250 THEN 9
+       WHEN value >= 250 AND value < 300 THEN 10
+       WHEN value >= 300 AND value < 400 THEN 11
+       WHEN value >= 400 AND value < 500 THEN 12
+       WHEN value >= 500 AND value < 1000 THEN 13
+      ELSE 14 end bin
+    FROM (
+      SELECT b.value
+	FROM castor_dlf.dlf_messages a, castor_dlf.dlf_num_param_values b
+       WHERE a.id = b.id
+         AND b.name = 'FILESCP'
+	 AND facility = 2 AND msg_no = 20
+	 AND a.timestamp >= sysdate - 10/1440
+	 AND a.timestamp < sysdate - 5/1440 
     ) 
   )
-order by bin;
+ORDER BY bin;
 
 /* Create the GCAvgFileAge view */
 CREATE OR REPLACE VIEW GCAvgFileAge AS
-select sysdate timestamp, 300 interval, to_char(bin,'HH24:MI') bin, number_of_req 
-  from (
-    select trunc(timestamp,'Mi') bin, round(avg(fileage),4) number_of_req  
-      from gcfiles
-     where timestamp >= trunc(sysdate - 10/1440,'Mi')
-       and timestamp < trunc(sysdate - 5/1440 ,'Mi')
-       group by trunc(timestamp,'Mi')
+SELECT sysdate timestamp, 300 interval, to_char(bin,'HH24:MI') bin, number_of_req 
+  FROM (
+    SELECT trunc(timestamp,'Mi') bin, round(avg(fileage),4) number_of_req  
+      FROM gcfiles
+     WHERE timestamp >= trunc(sysdate - 10/1440,'Mi')
+       AND timestamp < trunc(sysdate - 5/1440 ,'Mi')
+       GROUP BY trunc(timestamp,'Mi')
   )
-order by bin;
+ORDER BY bin;
 
 /* Create the GCAvgFileSize view */
 CREATE OR REPLACE VIEW GCAvgFileSize AS
-select sysdate timestamp, 300 interval, to_char(bin,'HH24:MI') bin, number_of_req
-  from (
-    select trunc(timestamp,'Mi') bin, round(avg(filesize),4) number_of_req  
-      from gcfiles
-     where timestamp >= trunc(sysdate - 10/1440,'Mi')
-       and timestamp < trunc(sysdate - 5/1440 ,'Mi')
-     group by trunc(timestamp,'Mi')
+SELECT sysdate timestamp, 300 interval, to_char(bin,'HH24:MI') bin, number_of_req
+  FROM (
+    SELECT trunc(timestamp,'Mi') bin, round(avg(filesize),4) number_of_req  
+      FROM gcfiles
+     WHERE timestamp >= trunc(sysdate - 10/1440,'Mi')
+       AND timestamp < trunc(sysdate - 5/1440 ,'Mi')
+     GROUP BY trunc(timestamp,'Mi')
   )
-order by bin;
+ORDER BY bin;
 
 /* Create the SVCClassUserTopTenMigFiles view */
 CREATE OR REPLACE VIEW SVCClassUserTopTenMigFiles AS
-select * 
-  from (
-    select sysdate timestamp, 300 interval, username, count(*) total
-      from migration
-     where timestamp >= sysdate - 10/1440
-       and timestamp < sysdate - 5/1440 
-    group by username, svcclass
-    order by total desc, username, svcclass
+SELECT * 
+  FROM (
+    SELECT sysdate timestamp, 300 interval, username, count(*) total
+      FROM migration
+     WHERE timestamp >= sysdate - 10/1440
+       AND timestamp < sysdate - 5/1440 
+    GROUP BY username, svcclass
+    ORDER BY total desc, username, svcclass
   )
-where rownum < 11;
+WHERE rownum < 11;
 
 /* Create the Requests view for percentage display */
 CREATE OR REPLACE VIEW StateRequests AS
-select sysdate timestamp, 300 interval, count (case when state='DiskHit' then 1 else null end) DiskHits, count(case when state='DiskCopy' then 1 else null end) DiskCopies, count(case when state='TapeRecall' then 1 else null end) TapeRecalls
-  from requests 
- where timestamp >= sysdate - 10/1440
-   and timestamp < sysdate - 5/1440;
+SELECT sysdate timestamp, 300 interval, count (CASE WHEN state = 'DiskHit' THEN 1 ELSE null end) DiskHits, count(CASE WHEN state = 'DiskCopy' THEN 1 ELSE null end) DiskCopies, count(CASE WHEN state = 'TapeRecall' THEN 1 ELSE null end) TapeRecalls
+  FROM requests 
+ WHERE timestamp >= sysdate - 10/1440
+   AND timestamp < sysdate - 5/1440;
 
 /* Create the UserRequests view for percentage display */
 CREATE OR REPLACE VIEW UserRequests  AS
-select sysdate timestamp, 300 interval, count (case when state='DiskHit' then 1 else null end) DiskHits, count(case when state='DiskCopy' then 1 else null end) DiskCopies, count(case when state='TapeRecall' then 1 else null end) TapeRecalls
-  from requests 
- where timestamp >= sysdate - 10/1440
-   and timestamp < sysdate - 5/1440
-group by username;
+SELECT sysdate timestamp, 300 interval, count (CASE WHEN state = 'DiskHit' THEN 1 ELSE null end) DiskHits, count(CASE WHEN state = 'DiskCopy' THEN 1 ELSE null end) DiskCopies, count(CASE WHEN state = 'TapeRecall' THEN 1 ELSE null end) TapeRecalls
+  FROM requests 
+ WHERE timestamp >= sysdate - 10/1440
+   AND timestamp < sysdate - 5/1440
+GROUP BY username;
 
 /* Create the SVCClassTopTenUserRequests view for percentage display */
 CREATE OR REPLACE VIEW SVCClassTopTenUserRequests AS
-select * from (
-  select sysdate timestamp, 300 interval, username, count(*) total, count(case when state='DiskHit' then 1 else null end) dh, 
-count(case when state='DiskCopy' then 1 else null end) dc,
-count(case when state='TapeRecall' then 1 else null end) tr
-    from requests
-   where timestamp >= sysdate - 10/1440
-     and timestamp < sysdate - 5/1440 
-  group by username, svcclass
-  order by total desc, username, svcclass
+SELECT * FROM (
+  SELECT sysdate timestamp, 300 interval, username, count(*) total, count(CASE WHEN state = 'DiskHit' THEN 1 ELSE null end) dh, 
+count(CASE WHEN state = 'DiskCopy' THEN 1 ELSE null end) dc,
+count(CASE WHEN state = 'TapeRecall' THEN 1 ELSE null end) tr
+    FROM requests
+   WHERE timestamp >= sysdate - 10/1440
+     AND timestamp < sysdate - 5/1440 
+  GROUP BY username, svcclass
+  ORDER BY total desc, username, svcclass
 )
-where rownum < 11;
+WHERE rownum < 11;
 
 /* Create the D2DTransactions view */
 CREATE OR REPLACE VIEW D2DTransactions AS
-select sysdate timestamp, 300 interval, originalpool, targetpool, total
-  from ( 
-    select originalpool, targetpool, count(*) total
-      from diskcopy
-     where timestamp >= sysdate - 10/1440
-       and timestamp < sysdate - 5/1440 
-     group by originalpool, targetpool
-     union
-     select svcclass, svcclass, copies
-       from internaldiskcopy
-      where timestamp >= sysdate - 10/1440
-       and timestamp < sysdate - 5/1440
+SELECT sysdate timestamp, 300 interval, originalpool, targetpool, total
+  FROM ( 
+    SELECT originalpool, targetpool, count(*) total
+      FROM diskcopy
+     WHERE timestamp >= sysdate - 10/1440
+       AND timestamp < sysdate - 5/1440 
+     GROUP BY originalpool, targetpool
+     UNION
+     SELECT svcclass, svcclass, copies
+       FROM internaldiskcopy
+      WHERE timestamp >= sysdate - 10/1440
+       AND timestamp < sysdate - 5/1440
   )
-order by originalpool;
+ORDER BY originalpool;
 
 /* Create the RequestKind view */
 CREATE OR REPLACE VIEW RequestKind AS
-select sysdate timestamp, 300 interval, svcclass, username, count(*) r
-  from  requests
- where timestamp >= sysdate - 10/1440
-   and timestamp < sysdate - 5/1440 
-group by svcclass, username, state
-order by svcclass, r desc;
+SELECT sysdate timestamp, 300 interval, svcclass, username, count(*) r
+  FROM  requests
+ WHERE timestamp >= sysdate - 10/1440
+   AND timestamp < sysdate - 5/1440 
+GROUP BY svcclass, username, state
+ORDER BY svcclass, r desc;
 
 /* Create the FacilityTopTenErrorCounter view */
 CREATE OR REPLACE VIEW FacilityTopTenErrorCounter AS
-select * 
-  from (
-    select sysdate timestamp, 300 interval, msg_text, count(*) sum
-      from castor_dlf.dlf_messages a, castor_dlf.dlf_msg_texts b
-     where timestamp >= sysdate - 10/1440
-       and timestamp < sysdate - 5/1440 
-       and b.fac_no = a.facility
-       and a.msg_no = b.msg_no 
-    group by msg_text, fac_no
-    order by sum desc
+SELECT * 
+  FROM (
+    SELECT sysdate timestamp, 300 interval, msg_text, count(*) sum
+      FROM castor_dlf.dlf_messages a, castor_dlf.dlf_msg_texts b
+     WHERE timestamp >= sysdate - 10/1440
+       AND timestamp < sysdate - 5/1440 
+       AND b.fac_no = a.facility
+       AND a.msg_no = b.msg_no 
+    GROUP BY msg_text, fac_no
+    ORDER BY sum desc
 )
-where rownum < 11;
+WHERE rownum < 11;
 
 /* Create the TopTenErrors view */
 CREATE OR REPLACE VIEW TopTenErrors AS
-select sysdate timestamp, 300 interval, fac.fac_name, count(*) errorsum
-  from castor_dlf.dlf_messages mes, castor_dlf.dlf_facilities fac
- where mes.facility = fac.fac_no
-   and mes.severity = 3
-   and mes.timestamp >= sysdate - 10/1440
-   and mes.timestamp < sysdate - 5/1440
-group by fac.fac_name 
-order by errorsum desc;
+SELECT sysdate timestamp, 300 interval, fac.fac_name, count(*) errorsum
+  FROM castor_dlf.dlf_messages mes, castor_dlf.dlf_facilities fac
+ WHERE mes.facility = fac.fac_no
+   AND mes.severity = 3
+   AND mes.timestamp >= sysdate - 10/1440
+   AND mes.timestamp < sysdate - 5/1440
+GROUP BY fac.fac_name 
+ORDER BY errorsum desc;
 
 /* Create the GCStateByFileSize view */
 CREATE OR REPLACE VIEW GCStateByFileSize AS --Unit is byte
-SELECT nvl(reqs_t.timestamp, sysdate) timestamp, nvl(reqs_t.interval,300) interval, reqs_t.svcclass,    bin_t.bin, nvl(reqs_t.reqs,0) reqs 
+SELECT nvl(reqs_t.timestamp, sysdate) timestamp, nvl(reqs_t.interval,300) interval, reqs_t.svcclass, bin_t.bin, nvl(reqs_t.reqs,0) reqs 
   FROM  ( 
     SELECT * 
       FROM (
@@ -335,10 +334,10 @@ SELECT nvl(reqs_t.timestamp, sysdate) timestamp, nvl(reqs_t.interval,300) interv
         UNION SELECT '8 24' FROM dual), (SELECT DISTINCT svcclass FROM ReqDel_MV)
   ) bin_t
   LEFT OUTER JOIN ( 
-    SELECT DISTINCT sysdate timestamp, 300 interval, svcclass, bin, count(bin) over (Partition by svcclass, bin) reqs
+    SELECT DISTINCT sysdate timestamp, 300 interval, svcclass, bin, count(bin) over (Partition BY svcclass, bin) reqs
       FROM ( 
         SELECT
-          CASE WHEN dif >= 0 and dif < 0.1 THEN '0 0.1'
+          CASE WHEN dif >= 0 AND dif < 0.1 THEN '0 0.1'
            WHEN dif >= 0.1 AND dif < 0.5 THEN '0.1 0.5'
            WHEN dif >= 0.5 AND dif < 1 THEN  '0.5 1'
            WHEN dif >= 1 AND dif < 2 THEN '1 2'
@@ -352,334 +351,338 @@ SELECT nvl(reqs_t.timestamp, sysdate) timestamp, nvl(reqs_t.interval,300) interv
   ) reqs_t
 ON bin_t.bin = reqs_t.bin
 WHERE reqs_t.svcclass IS NOT NULL
-ORDER by svcclass, bin_t.bin;
+ORDER BY svcclass, bin_t.bin;
 
 /* Create the BinnedLatencies view */
 CREATE OR REPLACE VIEW BinnedLatencies AS
-select sysdate timestamp, 300 interval, state, bin, count(bin) reqs 
-  from (
-    select state, round(b.totallatency),
-      case when b.totallatency < 1 then 1
-       when b.totallatency >= 1 and b.totallatency < 10 then 2
-       when b.totallatency >= 10 and b.totallatency < 120 then 3
-       when b.totallatency >= 120 and b.totallatency < 300 then 4
-       when b.totallatency >= 300 and b.totallatency < 600 then 5
-       when b.totallatency >= 600 and b.totallatency < 1800 then 6
-       when b.totallatency >= 1800 and b.totallatency < 3600 then 7
-       when b.totallatency >= 3600 and b.totallatency < 18000 then 8
-       when b.totallatency >= 18000 and b.totallatency < 43200 then 9
-       when b.totallatency >= 43200 and b.totallatency < 86400 then 10
-       when b.totallatency >= 86400 and b.totallatency < 172800 then 11
-      else 12 end bin
-      from requests a, totallatency b
-     where a.subreqid = b.subreqid
-       and a.timestamp >= sysdate - 10/1440
-       and a.timestamp < sysdate - 5/1440
-       and b.timestamp >= sysdate - 10/1440
-       and b.timestamp < sysdate - 5/1440
+SELECT sysdate timestamp, 300 interval, state, bin, count(bin) reqs 
+  FROM (
+    SELECT state, round(b.totallatency),
+      CASE WHEN b.totallatency < 1 THEN 1
+       WHEN b.totallatency >= 1 AND b.totallatency < 10 THEN 2
+       WHEN b.totallatency >= 10 AND b.totallatency < 120 THEN 3
+       WHEN b.totallatency >= 120 AND b.totallatency < 300 THEN 4
+       WHEN b.totallatency >= 300 AND b.totallatency < 600 THEN 5
+       WHEN b.totallatency >= 600 AND b.totallatency < 1800 THEN 6
+       WHEN b.totallatency >= 1800 AND b.totallatency < 3600 THEN 7
+       WHEN b.totallatency >= 3600 AND b.totallatency < 18000 THEN 8
+       WHEN b.totallatency >= 18000 AND b.totallatency < 43200 THEN 9
+       WHEN b.totallatency >= 43200 AND b.totallatency < 86400 THEN 10
+       WHEN b.totallatency >= 86400 AND b.totallatency < 172800 THEN 11
+      ELSE 12 end bin
+      FROM requests a, totallatency b
+     WHERE a.subreqid = b.subreqid
+       AND a.timestamp >= sysdate - 10/1440
+       AND a.timestamp < sysdate - 5/1440
+       AND b.timestamp >= sysdate - 10/1440
+       AND b.timestamp < sysdate - 5/1440
   )
-group by state, bin
-order by state, bin;
+GROUP BY state, bin
+ORDER BY state, bin;
 
 /* Create the BinnedMigrationLatencies view */
 CREATE OR REPLACE VIEW BinnedMigrationLatencies AS
-select distinct sysdate timestamp, 300 interval, bin, count(bin) over (Partition by bin) migs 
-  from (
-    select round(b.totallatency),
-      case when b.totallatency < 1 then 1
-       when b.totallatency >= 1 and b.totallatency < 2 then 2
-       when b.totallatency >= 2 and b.totallatency < 4 then 3
-       when b.totallatency >= 4 and b.totallatency < 6 then 4
-       when b.totallatency >= 6 and b.totallatency < 8 then 5
-       when b.totallatency >= 8 and b.totallatency < 10 then 6
-       when b.totallatency >= 10 and b.totallatency < 120 then 7
-       when b.totallatency >= 120 and b.totallatency < 300 then 8
-       when b.totallatency >= 300 and b.totallatency < 600 then 9
-       when b.totallatency >= 600 and b.totallatency < 1800 then 10
-       when b.totallatency >= 1800 and b.totallatency < 3600 then 11
-      else 12 end bin
-      from migration a, totallatency b
-     where a.subreqid = b.subreqid
-       and a.timestamp >= sysdate - 10/1440
-       and a.timestamp < sysdate - 5/1440
-       and b.timestamp >= sysdate - 10/1440
-       and b.timestamp < sysdate - 5/1440
+SELECT distinct sysdate timestamp, 300 interval, bin, count(bin) over (Partition BY bin) migs 
+  FROM (
+    SELECT round(b.totallatency),
+      CASE WHEN b.totallatency < 1 THEN 1
+       WHEN b.totallatency >= 1 AND b.totallatency < 2 THEN 2
+       WHEN b.totallatency >= 2 AND b.totallatency < 4 THEN 3
+       WHEN b.totallatency >= 4 AND b.totallatency < 6 THEN 4
+       WHEN b.totallatency >= 6 AND b.totallatency < 8 THEN 5
+       WHEN b.totallatency >= 8 AND b.totallatency < 10 THEN 6
+       WHEN b.totallatency >= 10 AND b.totallatency < 120 THEN 7
+       WHEN b.totallatency >= 120 AND b.totallatency < 300 THEN 8
+       WHEN b.totallatency >= 300 AND b.totallatency < 600 THEN 9
+       WHEN b.totallatency >= 600 AND b.totallatency < 1800 THEN 10
+       WHEN b.totallatency >= 1800 AND b.totallatency < 3600 THEN 11
+      ELSE 12 end bin
+      FROM migration a, totallatency b
+     WHERE a.subreqid = b.subreqid
+       AND a.timestamp >= sysdate - 10/1440
+       AND a.timestamp < sysdate - 5/1440
+       AND b.timestamp >= sysdate - 10/1440
+       AND b.timestamp < sysdate - 5/1440
   )
-order by bin;
+ORDER BY bin;
 
 /* Create the PoolMigrations view */
 CREATE OR REPLACE VIEW PoolMigrations AS
-select sysdate timestamp, 300 interval, svcclass, count(*) migs
-  from migration
- where timestamp >= sysdate - 10/1440
-   and timestamp < sysdate - 5/1440
-group by svcclass
-order by migs desc;
+SELECT sysdate timestamp, 300 interval, svcclass, count(*) migs
+  FROM migration
+ WHERE timestamp >= sysdate - 10/1440
+   AND timestamp < sysdate - 5/1440
+GROUP BY svcclass
+ORDER BY migs desc;
 
 /* Create the MigrationsCounter view */
 CREATE OR REPLACE VIEW MigrationsCounter AS
-select sysdate timestamp, 300 interval, bin, number_of_mig
-  from (
-    select distinct trunc(timestamp,'Mi') bin, count(trunc(timestamp,'Mi')) over (Partition by trunc(timestamp,'Mi')) number_of_mig  
-      from migration
-     where timestamp >= sysdate - 10/1440
-       and timestamp < sysdate - 5/1440
-    order by bin
+SELECT sysdate timestamp, 300 interval, bin, number_of_mig
+  FROM (
+    SELECT distinct trunc(timestamp,'Mi') bin, count(trunc(timestamp,'Mi')) over (Partition BY trunc(timestamp,'Mi')) number_of_mig  
+      FROM migration
+     WHERE timestamp >= sysdate - 10/1440
+       AND timestamp < sysdate - 5/1440
+    ORDER BY bin
   );
 
 /* Create the SVCClassMigrationsCounter view */
 CREATE OR REPLACE VIEW SVCClassMigrationsCounter AS
-select sysdate timestamp, 300 interval, bin, svcclass, number_of_mig
-  from (
-    select distinct trunc(timestamp,'Mi') bin, count(trunc(timestamp,'Mi')) over (Partition by trunc(timestamp,'Mi'), svcclass) number_of_mig, svcclass  
-      from migration
-     where timestamp >= sysdate - 10/1440
-       and timestamp < sysdate - 5/1440
-    order by bin
+SELECT sysdate timestamp, 300 interval, bin, svcclass, number_of_mig
+  FROM (
+    SELECT distinct trunc(timestamp,'Mi') bin, count(trunc(timestamp,'Mi')) over (Partition BY trunc(timestamp,'Mi'), svcclass) number_of_mig, svcclass  
+      FROM migration
+     WHERE timestamp >= sysdate - 10/1440
+       AND timestamp < sysdate - 5/1440
+    ORDER BY bin
   );
   
 /* Create the UserMigrationsCounter view */
 CREATE OR REPLACE VIEW UserMigrationsCounter AS
-select sysdate timestamp, 300 interval, bin, username, number_of_mig
-  from (
-    select distinct trunc(timestamp,'Mi') bin, count(trunc(timestamp,'Mi')) over (Partition by trunc(timestamp,'Mi'), username) number_of_mig, username
-      from migration
-     where timestamp >= sysdate - 10/1440
-       and timestamp < sysdate - 5/1440
-    order by bin
+SELECT sysdate timestamp, 300 interval, bin, username, number_of_mig
+  FROM (
+    SELECT distinct trunc(timestamp,'Mi') bin, count(trunc(timestamp,'Mi')) over (Partition BY trunc(timestamp,'Mi'), username) number_of_mig, username
+      FROM migration
+     WHERE timestamp >= sysdate - 10/1440
+       AND timestamp < sysdate - 5/1440
+    ORDER BY bin
   );
   
 /* Create the NewRequests view */  
 CREATE OR REPLACE VIEW NewRequests AS
-select sysdate timestamp, 300 interval, gctype, svcclass, count(*) total_deleted
-  from gcfiles
- where timestamp >= sysdate - 10/1440
-   and timestamp < sysdate - 5/1440
-group by gctype, svcclass
-order by gctype, svcclass;
+SELECT sysdate timestamp, 300 interval, gctype, svcclass, count(*) total_deleted
+  FROM gcfiles
+ WHERE timestamp >= sysdate - 10/1440
+   AND timestamp < sysdate - 5/1440
+GROUP BY gctype, svcclass
+ORDER BY gctype, svcclass;
 
 
 /* Create the SVCClassStateRecalledFiles view */  
 CREATE OR REPLACE VIEW SVCClassStateRecalledFiles AS
-select distinct sysdate timestamp, 300 interval, svcclass, type, count(type) over (Partition by svcclass,type) number_of_req 
-  from requests
- where timestamp >= sysdate - 10/1440
-   and timestamp < sysdate - 5/1440
-   and state ='TapeRecall'
-order by svcclass, type;
+SELECT distinct sysdate timestamp, 300 interval, svcclass, type, count(type) over (Partition BY svcclass,type) number_of_req 
+  FROM requests
+ WHERE timestamp >= sysdate - 10/1440
+   AND timestamp < sysdate - 5/1440
+   AND state = 'TapeRecall'
+ORDER BY svcclass, type;
 
 /* Create the UserTypeRecalledFiles view */  
 CREATE OR REPLACE VIEW UserTypeRecalledFiles AS
-select sysdate timestamp, 300 interval, a.username, a.reqs prestage , b.reqs stage
-  from (
-    select username, count(username) reqs
-      from requests 
-     where timestamp >= sysdate - 10/1440
-       and timestamp < sysdate - 5/1440
-       and type = 'StagePrepareToGetRequest'
-       and state = 'TapeRecall'
-    group by username
-    order by reqs desc 
+SELECT sysdate timestamp, 300 interval, a.username, a.reqs prestage , b.reqs stage
+  FROM (
+    SELECT username, count(username) reqs
+      FROM requests 
+     WHERE timestamp >= sysdate - 10/1440
+       AND timestamp < sysdate - 5/1440
+       AND type = 'StagePrepareToGetRequest'
+       AND state = 'TapeRecall'
+    GROUP BY username
+    ORDER BY reqs desc 
   ) a, 
-    (select username, count(username) reqs
-       from requests 
-      where timestamp >= sysdate - 10/1440
-        and timestamp < sysdate - 5/1440
-        and type = 'StageGetRequest'
-        and state = 'TapeRecall'
-     group by username
-     order by reqs desc
+    (SELECT username, count(username) reqs
+       FROM requests 
+      WHERE timestamp >= sysdate - 10/1440
+        AND timestamp < sysdate - 5/1440
+        AND type = 'StageGetRequest'
+        AND state = 'TapeRecall'
+     GROUP BY username
+     ORDER BY reqs desc
     ) b 
-where a.username = b.username
-order by prestage desc;
+WHERE a.username = b.username
+ORDER BY prestage desc;
 
 /* Create the SVCClassRequests view */  
 CREATE OR REPLACE VIEW SVCClassRequests AS
-select distinct sysdate timestamp, 300 interval, svcclass, state, count(*) over (Partition by svcclass,state) reqs
-  from requests
- where timestamp >= sysdate - 10/1440
-   and timestamp < sysdate - 5/1440
-order by svcclass;
+SELECT distinct sysdate timestamp, 300 interval, svcclass, state, count(*) over (Partition BY svcclass,state) reqs
+  FROM requests
+ WHERE timestamp >= sysdate - 10/1440
+   AND timestamp < sysdate - 5/1440
+ORDER BY svcclass;
 
 /* Create the SchedulerReadWrite view */  
 CREATE OR REPLACE VIEW SchedulerReadWrite AS
-select distinct sysdate timestamp, 300 interval, to_char(trunc(timestamp,'Mi'), 'HH24:MI') bin, sum (case when type = 'StageGetRequest' then dispatched else 0 end ) read, sum (case when type = 'StagePutRequest' then dispatched else 0 end ) write
-  from queuetimestats
- where timestamp >= sysdate - 10/1440
-   and timestamp < sysdate - 5/1440
-group by to_char(trunc(timestamp,'Mi'), 'HH24:MI')
-order by bin;
+SELECT distinct sysdate timestamp, 300 interval, to_char(trunc(timestamp,'Mi'), 'HH24:MI') bin, sum (CASE WHEN type = 'StageGetRequest' THEN dispatched ELSE 0 end ) read, sum (CASE WHEN type = 'StagePutRequest' THEN dispatched ELSE 0 end ) write
+  FROM queuetimestats
+ WHERE timestamp >= sysdate - 10/1440
+   AND timestamp < sysdate - 5/1440
+GROUP BY to_char(trunc(timestamp,'Mi'), 'HH24:MI')
+ORDER BY bin;
 
 /* Create the SVCClassTopTenTapes view */  
 CREATE OR REPLACE VIEW TopTenTapes AS
-select * 
-  from (
-    select sysdate timestamp, 300 interval, tapeid, count(tapeid) mounts
-      from requests a, taperecall b
-     where a.subreqid = b.subreqid
-       and a.timestamp >= sysdate - 10/1440
-       and a.timestamp < sysdate - 5/1440
-       and b.timestamp >= sysdate - 10/1440
-       and b.timestamp < sysdate - 5/1440
-    group by tapeid, svcclass 
-    order by mounts desc
+SELECT * 
+  FROM (
+    SELECT sysdate timestamp, 300 interval, tapeid, count(tapeid) mounts
+      FROM requests a, taperecall b
+     WHERE a.subreqid = b.subreqid
+       AND a.timestamp >= sysdate - 10/1440
+       AND a.timestamp < sysdate - 5/1440
+       AND b.timestamp >= sysdate - 10/1440
+       AND b.timestamp < sysdate - 5/1440
+    GROUP BY tapeid, svcclass 
+    ORDER BY mounts desc
   )
-where rownum < 11;
+WHERE rownum < 11;
 
 
 /* Create the StateRequestCounter view */  
 CREATE OR REPLACE VIEW StateRequestCounter AS
-select distinct sysdate timestamp, 300 interval, to_char(trunc(timestamp,'Mi'), 'HH24:MI') bin, count(case when state='DiskHit' then trunc(timestamp,'Mi') else null end) over (Partition by trunc(timestamp,'Mi')) number_of_DH_req, count(case when state='DiskCopy' then trunc(timestamp,'Mi') else null end) over (Partition by trunc(timestamp,'Mi')) number_of_DC_req, count(case when state='TapeRecall' then trunc(timestamp,'Mi') else null end) over (Partition by trunc(timestamp,'Mi')) number_of_TR_req
-  from requests
- where timestamp >= sysdate - 10/1440
-   and timestamp < sysdate - 5/1440
-order by bin;
+SELECT distinct sysdate timestamp, 300 interval, to_char(trunc(timestamp,'Mi'), 'HH24:MI') bin, count(CASE WHEN state = 'DiskHit' THEN trunc(timestamp,'Mi') ELSE null end) over (Partition BY trunc(timestamp,'Mi')) number_of_DH_req, count(CASE WHEN state = 'DiskCopy' THEN trunc(timestamp,'Mi') ELSE null end) over (Partition BY trunc(timestamp,'Mi')) number_of_DC_req, count(CASE WHEN state = 'TapeRecall' THEN trunc(timestamp,'Mi') ELSE null end) over (Partition BY trunc(timestamp,'Mi')) number_of_TR_req
+  FROM requests
+ WHERE timestamp >= sysdate - 10/1440
+   AND timestamp < sysdate - 5/1440
+ORDER BY bin;
 
 /* Create the SVCClassStateRequestCounter view */  
 CREATE OR REPLACE VIEW SVCClassStateRequestCounter AS
-select distinct sysdate timestamp, 300 interval, svcclass, to_char(trunc(timestamp,'Mi'), 'HH24:MI') bin, count(case when state='DiskHit' then trunc(timestamp,'Mi') else null end) over (Partition by trunc(timestamp,'Mi'), svcclass) number_of_DH_req, count(case when state='DiskCopy' then trunc(timestamp,'Mi') else null end) over (Partition by trunc(timestamp,'Mi'), svcclass) number_of_DC_req, count(case when state='TapeRecall' then trunc(timestamp,'Mi') else null end) over (Partition by trunc(timestamp,'Mi'), svcclass) number_of_TR_req
-  from requests
- where timestamp >= sysdate - 10/1440
-   and timestamp < sysdate - 5/1440
-order by bin;
+SELECT distinct sysdate timestamp, 300 interval, svcclass, to_char(trunc(timestamp,'Mi'), 'HH24:MI') bin, count(CASE WHEN state = 'DiskHit' THEN trunc(timestamp,'Mi') ELSE null end) over (Partition BY trunc(timestamp,'Mi'), svcclass) number_of_DH_req, count(CASE WHEN state = 'DiskCopy' THEN trunc(timestamp,'Mi') ELSE null end) over (Partition BY trunc(timestamp,'Mi'), svcclass) number_of_DC_req, count(CASE WHEN state = 'TapeRecall' THEN trunc(timestamp,'Mi') ELSE null end) over (Partition BY trunc(timestamp,'Mi'), svcclass) number_of_TR_req
+  FROM requests
+ WHERE timestamp >= sysdate - 10/1440
+   AND timestamp < sysdate - 5/1440
+ORDER BY bin;
 
 /* Create the UserStateRequestCounter view */  
 CREATE OR REPLACE VIEW SVCClassStateRequestCounter AS
-select distinct sysdate timestamp, 300 interval, username, to_char(trunc(timestamp,'Mi'), 'HH24:MI') bin, count(case when state='DiskHit' then trunc(timestamp,'Mi') else null end) over (Partition by trunc(timestamp,'Mi'), username) number_of_DH_req, count(case when state='DiskCopy' then trunc(timestamp,'Mi') else null end) over (Partition by trunc(timestamp,'Mi'), username) number_of_DC_req, count(case when state='TapeRecall' then trunc(timestamp,'Mi') else null end) over (Partition by trunc(timestamp,'Mi'), username) number_of_TR_req
-  from requests
- where timestamp >= sysdate - 10/1440
-   and timestamp < sysdate - 5/1440
-order by bin;
+SELECT distinct sysdate timestamp, 300 interval, username, to_char(trunc(timestamp,'Mi'), 'HH24:MI') bin, count(CASE WHEN state = 'DiskHit' THEN trunc(timestamp,'Mi') ELSE null end) over (Partition BY trunc(timestamp,'Mi'), username) number_of_DH_req, count(CASE WHEN state = 'DiskCopy' THEN trunc(timestamp,'Mi') ELSE null end) over (Partition BY trunc(timestamp,'Mi'), username) number_of_DC_req, count(CASE WHEN state = 'TapeRecall' THEN trunc(timestamp,'Mi') ELSE null end) over (Partition BY trunc(timestamp,'Mi'), username) number_of_TR_req
+  FROM requests
+ WHERE timestamp >= sysdate - 10/1440
+   AND timestamp < sysdate - 5/1440
+ORDER BY bin;
 
 /* Create the TopTenTapes view */  
 CREATE OR REPLACE VIEW TopTenTapes AS
-select * 
-  from (
-    select sysdate timestamp, 300 interval, tapeid, count(tapeid) mounts
-      from requests a, taperecall b
-     where a.subreqid = b.subreqid
-       and a.timestamp >= sysdate - 10/1440
-       and a.timestamp < sysdate - 5/1440
-       and b.timestamp >= sysdate - 10/1440
-       and b.timestamp < sysdate - 5/1440group by tapeid 
-    order by mounts desc
+SELECT * 
+  FROM (
+    SELECT sysdate timestamp, 300 interval, tapeid, count(tapeid) mounts
+      FROM requests a, taperecall b
+     WHERE a.subreqid = b.subreqid
+       AND a.timestamp >= sysdate - 10/1440
+       AND a.timestamp < sysdate - 5/1440
+       AND b.timestamp >= sysdate - 10/1440
+       AND b.timestamp < sysdate - 5/1440GROUP BY tapeid 
+    ORDER BY mounts desc
   )
-where rownum < 11;
+WHERE rownum < 11;
 
 /* Create the TopTenUsers view */  
 CREATE OR REPLACE VIEW TopTenUsers AS
-select sysdate timestamp, 300 interval, username 
-  from (
-    select username, count(username) reqs
-      from requests
-     where timestamp >= sysdate - 10/1440
-       and timestamp < sysdate - 5/1440
-    group by username 
-    order by reqs desc
+SELECT sysdate timestamp, 300 interval, username 
+  FROM (
+    SELECT username, count(username) reqs
+      FROM requests
+     WHERE timestamp >= sysdate - 10/1440
+       AND timestamp < sysdate - 5/1440
+    GROUP BY username 
+    ORDER BY reqs desc
   )
-where rownum < 11;
+WHERE rownum < 11;
 
 /* Create the UserTopTenTapeMounts view */  
 CREATE OR REPLACE VIEW UserTopTenTapes AS
-select *
-  from (
-    select sysdate timestamp, 300 interval, username, count(username) con_mount
-      from requests a, taperecall b
-     where  a.subreqid = b.subreqid
-       and a.timestamp >= sysdate - 10/1440
-       and a.timestamp < sysdate - 5/1440
-       and b.timestamp >= sysdate - 10/1440
-       and b.timestamp < sysdate - 5/1440
-       and b.tapemountstate in ('TAPE_PENDING','TAPE_WAITDRIVE','TAPE_WAITPOLICY','TAPE_WAITMOUNT') 
-    group by username
-    order by con_mount desc
+SELECT *
+  FROM (
+    SELECT sysdate timestamp, 300 interval, username, count(username) con_mount
+      FROM requests a, taperecall b
+     WHERE  a.subreqid = b.subreqid
+       AND a.timestamp >= sysdate - 10/1440
+       AND a.timestamp < sysdate - 5/1440
+       AND b.timestamp >= sysdate - 10/1440
+       AND b.timestamp < sysdate - 5/1440
+       AND b.tapemountstate in ('TAPE_PENDING', 'TAPE_WAITDRIVE', 'TAPE_WAITPOLICY', 'TAPE_WAITMOUNT') 
+    GROUP BY username
+    ORDER BY con_mount desc
   )
-where rownum < 11;
+WHERE rownum < 11;
 
 /* Create the SVCClassGCTypeFiles view */  
 CREATE OR REPLACE VIEW SVCClassGCTypeFiles AS
-select sysdate timestamp, 300 interval, gctype, svcclass, count(*) total_deleted
-  from gcfiles
- where timestamp >= sysdate - 10/1440
-   and timestamp < sysdate - 5/1440
-group by gctype, svcclass
-order by gctype, svcclass;
+SELECT sysdate timestamp, 300 interval, gctype, svcclass, count(*) total_deleted
+  FROM gcfiles
+ WHERE timestamp >= sysdate - 10/1440
+   AND timestamp < sysdate - 5/1440
+GROUP BY gctype, svcclass
+ORDER BY gctype, svcclass;
 
 /* Create the SVCClassStateUserTopTen view */  
 CREATE OR REPLACE VIEW SVCClassStateUserTopTen AS
-select *
-  from (
-    select sysdate timestamp, 300 interval, username, svcclass, state, count(*) r
-      from requests
-     where timestamp >= sysdate -10/1440
-       and timestamp < sysdate - 5/1440 
-    group by username, svcclass, state
-    order by r desc
+SELECT *
+  FROM (
+    SELECT sysdate timestamp, 300 interval, username, svcclass, state, count(*) r
+      FROM requests
+     WHERE timestamp >= sysdate -10/1440
+       AND timestamp < sysdate - 5/1440 
+    GROUP BY username, svcclass, state
+    ORDER BY r desc
   )
-where rownum < 11;
+WHERE rownum < 11;
 
 /* Create the UserRecalledFileSize view */  
 CREATE OR REPLACE VIEW UserRecalledFileSize AS
-select distinct sysdate timestamp, 300 interval, username, bin, count(bin) over (Partition by bin, username) reqs 
-  from (
-    select username, round(filesize/1024,4),
-      case when filesize < 1048576 then 1
-       when filesize >= 1048576 and filesize < 10485760 then 2
-       when filesize >= 10485760 and filesize < 104857600 then 3
-       when filesize >= 104857600 and filesize <= 1073741824 then 4
-       when filesize >= 1073741824 and filesize <= 1610612736 then 5
-       when filesize >= 1610612736 and filesize <= 2147483648 then 6
-       when filesize >= 2147483648 and filesize <= 2684354560  then 7
-      else 8 end bin
-      from requests
-     where state = 'TapeRecall'
-       and timestamp >= sysdate - 10/1440
-       and timestamp < sysdate - 5/1440 
-       and filesize != 0
+SELECT distinct sysdate timestamp, 300 interval, username, bin, count(bin) over (Partition BY bin, username) reqs 
+  FROM (
+    SELECT username, round(filesize/1024,4),
+      CASE WHEN filesize < 1048576 THEN 1
+       WHEN filesize >= 1048576 AND filesize < 10485760 THEN 2
+       WHEN filesize >= 10485760 AND filesize < 104857600 THEN 3
+       WHEN filesize >= 104857600 AND filesize <= 1073741824 THEN 4
+       WHEN filesize >= 1073741824 AND filesize <= 1610612736 THEN 5
+       WHEN filesize >= 1610612736 AND filesize <= 2147483648 THEN 6
+       WHEN filesize >= 2147483648 AND filesize <= 2684354560  THEN 7
+      ELSE 8 end bin
+      FROM requests
+     WHERE state = 'TapeRecall'
+       AND timestamp >= sysdate - 10/1440
+       AND timestamp < sysdate - 5/1440 
+       AND filesize != 0
   )
-order by bin;
+ORDER BY bin;
 
 /* Create the SVCClassStateBinRequestCounter view */  
 CREATE OR REPLACE VIEW SVCClassStateBinRequestCounter AS
-select sysdate timestamp, 300 interval, state, svcclass, to_char(bin,'HH24:MI') bin, number_of_req 
-  from (
-    select distinct trunc(timestamp,'Mi') bin, count(trunc(timestamp,'Mi')) over (Partition by trunc(timestamp,'Mi'), state, svcclass) number_of_req, state, svcclass
-      from requests
-     where timestamp >= sysdate - 10/1440
-       and timestamp < sysdate - 5/1440 
+SELECT sysdate timestamp, 300 interval, state, svcclass, to_char(bin,'HH24:MI') bin, number_of_req 
+  FROM (
+    SELECT distinct trunc(timestamp,'Mi') bin, count(trunc(timestamp,'Mi')) over (Partition BY trunc(timestamp,'Mi'), state, svcclass) number_of_req, state, svcclass
+      FROM requests
+     WHERE timestamp >= sysdate - 10/1440
+       AND timestamp < sysdate - 5/1440 
   )
-order by bin;
+ORDER BY bin;
 
 /* Create the StateBinnedRequestCounter view */  
 CREATE OR REPLACE VIEW StateBinnedRequestCounter AS
-select sysdate timestamp, 300 interval, state, to_char(bin,'HH24:MI') bin, number_of_req 
-  from (
-    select distinct trunc(timestamp,'Mi') bin, count(trunc(timestamp,'Mi')) over (Partition by trunc(timestamp,'Mi'), state) number_of_req, state
-      from requests
-     where timestamp >= sysdate - 10/1440
-       and timestamp < sysdate - 5/1440 
+SELECT sysdate timestamp, 300 interval, state, to_char(bin,'HH24:MI') bin, number_of_req 
+  FROM (
+    SELECT distinct trunc(timestamp,'Mi') bin, count(trunc(timestamp,'Mi')) over (Partition BY trunc(timestamp,'Mi'), state) number_of_req, state
+      FROM requests
+     WHERE timestamp >= sysdate - 10/1440
+       AND timestamp < sysdate - 5/1440 
   )
-order by bin;
+ORDER BY bin;
 
 /* Create the UserSVCClassStateHistogram view */  
 CREATE OR REPLACE VIEW UserSVCClassStateHistogram AS
-select sysdate timestamp, 300 interval, svcclass, username, count(1) total,count(case when state='DiskHit' then 1 else null end) dh, count(case when state='DiskCopy' then 1 else null end) dc, count(case when state='TapeRecall' then 1 else null end) tr, count(case when (state='TapeRecall' and type='StagePrepareToGetRequest') then 1 else null end) pretr, count(case when (state='TapeRecall' and type='StageGetRequest') then 1 else null end) immtr
-  from requests
- where timestamp >= sysdate - 10/1440
-   and timestamp < sysdate - 5/1440 
-group by svcclass, username
-order by total desc;
+SELECT sysdate timestamp, 300 interval, svcclass, username, count(1) total, count(CASE WHEN state = 'DiskHit' THEN 1 ELSE null end) dh, count(CASE WHEN state = 'DiskCopy' THEN 1 ELSE null end) dc, count(CASE WHEN state = 'TapeRecall' THEN 1 ELSE null end) tr, count(CASE WHEN (state = 'TapeRecall' AND type = 'StagePrepareToGetRequest') THEN 1 ELSE null end) pretr, count(CASE WHEN (state = 'TapeRecall' AND type = 'StageGetRequest') THEN 1 ELSE null end) immtr
+  FROM requests
+ WHERE timestamp >= sysdate - 10/1440
+   AND timestamp < sysdate - 5/1440 
+GROUP BY svcclass, username
+ORDER BY total desc;
 
 /* Create the UserSVCClassMigFilesCounter view */  
 CREATE OR REPLACE VIEW UserSVCClassMigFilesCounter AS
-select sysdate timestamp, 300 interval, svcclass, username, count(1) total
-  from migration
- where timestamp >= sysdate - 10/1440
-   and timestamp < sysdate - 5/1440 
-group by svcclass, username
-order by total desc;
+SELECT sysdate timestamp, 300 interval, svcclass, username, count(1) total
+  FROM migration
+ WHERE timestamp >= sysdate - 10/1440
+   AND timestamp < sysdate - 5/1440 
+GROUP BY svcclass, username
+ORDER BY total desc;
 
-/* Update and revalidation of PL-SQL code */
+/* Update runmaxtime in ConfigSchema */
+UPDATE ConfigSchema
+ SET runmaxtime = SYSDATE;
+
+/* Update AND revalidation of PL-SQL code */
 /******************************************/
 
 /* Scheduler jobs */
@@ -690,7 +693,7 @@ BEGIN
     DBMS_SCHEDULER.DROP_JOB(a.job_name, TRUE);
   END LOOP;
 
-  -- Create a db job to be run every day and create new partitions
+  -- Create a db job to be run every day AND create new partitions
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'partitionCreationJob',
       JOB_TYPE        => 'STORED_PROCEDURE',
@@ -701,7 +704,7 @@ BEGIN
       ENABLED         => TRUE,
       COMMENTS        => 'Daily partitioning creation');
 
-  -- Create a db job to be run every day and drop old data from the database
+  -- Create a db job to be run every day AND drop old data FROM the database
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'archiveDataJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
@@ -775,7 +778,7 @@ END;
 /
 
 
-/* Recompile all invalid procedures, triggers and functions */
+/* Recompile all invalid procedures, triggers AND functions */
 /************************************************************/
 BEGIN
   FOR a IN (SELECT object_name, object_type
