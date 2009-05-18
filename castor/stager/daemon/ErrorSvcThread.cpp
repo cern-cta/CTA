@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2008/03/25 14:28:25 $ $Author: itglp $
+ * @(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2009/05/18 16:47:48 $ $Author: itglp $
  *
  * Service thread for dealing with requests that failed
  *
@@ -187,14 +187,19 @@ void castor::stager::daemon::ErrorSvcThread::process
       try {
         rr = castor::replier::RequestReplier::getInstance();
         rr->sendResponse(client, &res);
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("ErrorMessage", res.errorMessage()),
+           castor::dlf::Param(suuid)};
+        castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, 2, params);
       } catch (castor::exception::Exception e) {
         // "Unexpected exception caught"
         castor::dlf::Param params[] =
           {castor::dlf::Param("Function", "ErrorSvcThread::process.2"),
            castor::dlf::Param("Message", e.getMessage().str()),
            castor::dlf::Param("Code", e.code()),
+           castor::dlf::Param("OriginalErrorMessage", res.errorMessage()),
            castor::dlf::Param(suuid)};
-        castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_ERRSVC_EXCEPT, 4, params);
+        castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_ERRSVC_EXCEPT, 5, params);
         rr = 0;
       }
       // We both update the DB and check whether this was
