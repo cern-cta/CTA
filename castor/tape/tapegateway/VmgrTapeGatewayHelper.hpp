@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: VmgrTapeGatewayHelper.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2009/02/25 10:33:27 $ $Author: gtaur $
+ * @(#)$RCSfile: VmgrTapeGatewayHelper.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2009/05/18 13:52:38 $ $Author: gtaur $
  *
  *
  * @author Castor Dev team, castor-dev@cern.ch
@@ -27,14 +27,13 @@
 #define TAPEGATEWAY_VMGRTAPEGATEWAYHELPER_HPP 
 
 // Include Files
-
 #include "osdep.h"
 
+#include "castor/exception/Exception.hpp"
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/Tape.hpp"
 
 #include "castor/tape/tapegateway/FileMigratedNotification.hpp"
-#include "castor/exception/Exception.hpp"
 
 
 namespace castor {

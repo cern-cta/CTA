@@ -28,12 +28,13 @@
 #ifndef WORKER_THREAD_HPP
 #define WORKER_THREAD_HPP 1
 
-
+#include "castor/exception/Internal.hpp"
+#include "castor/io/ServerSocket.hpp"
 #include "castor/server/BaseDbThread.hpp"
+
 #include "castor/tape/tapegateway/ITapeGatewaySvc.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
-#include "castor/io/ServerSocket.hpp"
-#include "castor/exception/Internal.hpp"
+
 
 
 namespace castor {

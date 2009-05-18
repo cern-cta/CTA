@@ -24,24 +24,25 @@
  * @author Giulia Taurelli
  *****************************************************************************/
 
-#include "castor/tape/tapegateway/VdqmRequestsCheckerThread.hpp"
-#include "castor/tape/tapegateway/VdqmTapeGatewayHelper.hpp"
-#include "castor/tape/tapegateway/VmgrTapeGatewayHelper.hpp"
-#include "castor/stager/Stream.hpp"
-#include "castor/tape/tapegateway/DlfCodes.hpp"
-
 #include <sys/types.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "castor/Services.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IService.hpp"
-#include "castor/exception/Internal.hpp"
-#include "castor/exception/Exception.hpp"
+#include "castor/Services.hpp"
 
+#include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
+#include "castor/stager/Stream.hpp"
+
+#include "castor/tape/tapegateway/DlfCodes.hpp"
 #include "castor/tape/tapegateway/ITapeGatewaySvc.hpp"
-  
+#include "castor/tape/tapegateway/VdqmRequestsCheckerThread.hpp"
+#include "castor/tape/tapegateway/VdqmTapeGatewayHelper.hpp"
+#include "castor/tape/tapegateway/VmgrTapeGatewayHelper.hpp"
+
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------

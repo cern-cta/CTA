@@ -17,20 +17,25 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RmMasterTapeGatewayHelper.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2009/01/19 17:20:33 $ $Author: gtaur $
+ * @(#)$RCSfile: RmMasterTapeGatewayHelper.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/05/18 13:52:38 $ $Author: gtaur $
  *
  * @author castor-dev team
  *****************************************************************************/
 
 // Include Files
-#include "castor/tape/tapegateway/RmMasterTapeGatewayHelper.hpp"
-#include "castor/monitoring/StreamDirection.hpp"
-#include "castor/io/UDPSocket.hpp"
-#include "castor/monitoring/StreamReport.hpp"
+
+#include <string>
+
+#include "getconfent.h"
+
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/NoEntry.hpp"
-#include "getconfent.h"
-#include <string>
+#include "castor/io/UDPSocket.hpp"
+#include "castor/monitoring/StreamDirection.hpp"
+#include "castor/monitoring/StreamReport.hpp"
+
+#include "castor/tape/tapegateway/RmMasterTapeGatewayHelper.hpp"
+
 
 #define RMMASTER_PORT 15003
 

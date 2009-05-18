@@ -28,11 +28,11 @@
 #ifndef VDQMREQUESTSCHECKER_THREAD_HPP
 #define VDQMREQUESTSCHECKER_THREAD_HPP 1
 
-
+#include <u64subr.h>
 
 #include "castor/server/BaseDbThread.hpp"
 #include "castor/tape/tapegateway/TapeRequestState.hpp"
-#include <u64subr.h>
+
 
 namespace castor {
 

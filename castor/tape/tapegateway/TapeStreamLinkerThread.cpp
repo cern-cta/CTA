@@ -24,24 +24,23 @@
  * @author Giulia Taurelli
  *****************************************************************************/
 
-#include "castor/tape/tapegateway/TapeStreamLinkerThread.hpp"
-#include "castor/tape/tapegateway/DlfCodes.hpp"
 #include <sys/types.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <u64subr.h>
 
-#include "castor/Services.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IService.hpp"
+#include "castor/Services.hpp"
+
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/stager/TapePool.hpp"
-#include "castor/tape/tapegateway/VmgrTapeGatewayHelper.hpp"
+
+#include "castor/tape/tapegateway/DlfCodes.hpp"
 #include "castor/tape/tapegateway/ITapeGatewaySvc.hpp"
-
-#include <u64subr.h>
-
-
+#include "castor/tape/tapegateway/TapeStreamLinkerThread.hpp"
+#include "castor/tape/tapegateway/VmgrTapeGatewayHelper.hpp"
   
 //------------------------------------------------------------------------------
 // constructor
@@ -125,9 +124,9 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
       // got the tape
       castor::dlf::Param params[] =
 	{castor::dlf::Param("StreamId",(*strItem)->id()),
-	 castor::dlf::Param("VID",tapeToUse->vid())
+	 castor::dlf::Param("TPVID",tapeToUse->vid())
 	};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, LINKER_LINKING_TAPE_STREAM, 1, params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, LINKER_LINKING_TAPE_STREAM, 2, params);
 
       strIds.push_back((*strItem)->id());
       vids.push_back(tapeToUse->vid());
@@ -155,14 +154,14 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
     while (tapeItem!=tapesUsed.end()) {
       // release the tape
       castor::dlf::Param params[] =
-	{castor::dlf::Param("VID",(*tapeItem)->vid())};
+	{castor::dlf::Param("TPVID",(*tapeItem)->vid())};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, LINKER_RELEASED_BUSY_TAPE, 1, params);
       try {
 	vmgrHelper.resetBusyTape(**tapeItem);
       } catch (castor::exception::Exception e){
 	
 	castor::dlf::Param params[] =
-	  {castor::dlf::Param("VID",(*tapeItem)->vid()),
+	  {castor::dlf::Param("TPVID",(*tapeItem)->vid()),
 	   castor::dlf::Param("errorCode",sstrerror(e.code())),
 	   castor::dlf::Param("errorMessage",e.getMessage().str())
 	  };

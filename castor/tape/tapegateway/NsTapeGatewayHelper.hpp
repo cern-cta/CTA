@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NsTapeGatewayHelper.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2009/03/09 13:51:03 $ $Author: gtaur $
+ * @(#)$RCSfile: NsTapeGatewayHelper.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2009/05/18 13:52:38 $ $Author: gtaur $
  *
  *
  * @author Castor Dev team, castor-dev@cern.ch
@@ -28,13 +28,13 @@
 
 // Include Files
 
-
+#include "castor/exception/Exception.hpp"
 
 #include "castor/tape/tapegateway/FileMigratedNotification.hpp"
 #include "castor/tape/tapegateway/FileRecalledNotification.hpp"
-#include "castor/tape/tapegateway/FileToRecall.hpp"
 #include "castor/tape/tapegateway/FileToMigrate.hpp"
-#include "castor/exception/Exception.hpp"
+#include "castor/tape/tapegateway/FileToRecall.hpp"
+
 
 namespace castor {
 

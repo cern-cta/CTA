@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2009/05/11 10:02:07 $ $Author: gtaur $
+ * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2009/05/18 13:52:38 $ $Author: gtaur $
  *
  * Implementation of the ITapeGatewaySvc for Oracle
  *
@@ -28,14 +28,18 @@
 #define ORA_ORATAPEGATEWAYSVC_HPP 1
 
 // Include Files
+
+#include <u64subr.h>
+#include <vector>
+
+#include "occi.h"
+
 #include "castor/BaseSvc.hpp"
+
 #include "castor/db/newora/OraCommonSvc.hpp"
 
 #include "castor/tape/tapegateway/ITapeGatewaySvc.hpp"
-#include "occi.h"
-#include <vector>
 
-#include <u64subr.h>
 
 namespace castor {
 

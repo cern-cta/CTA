@@ -18,27 +18,27 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: VmgrTapeGatewayHelper.cpp,v $ $Revision: 1.12 $ $Release$ 
- * $Date: 2009/05/06 15:13:39 $ $Author: gtaur $
+ * @(#)$RCSfile: VmgrTapeGatewayHelper.cpp,v $ $Revision: 1.13 $ $Release$ 
+ * $Date: 2009/05/18 13:52:38 $ $Author: gtaur $
  *
  *
  *
  * @author Giulia Taurelli
  *****************************************************************************/
 
-
-#include "castor/tape/tapegateway/VmgrTapeGatewayHelper.hpp"
-#include "vmgr_api.h"
-
+#include <errno.h>
 #include <sys/types.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <errno.h>
-
-#include "castor/Services.hpp"
 #include <u64subr.h>
 
+#include "vmgr_api.h"
+
+#include "castor/Services.hpp"
+
 #include "castor/stager/TapePool.hpp"
+
+#include "castor/tape/tapegateway/VmgrTapeGatewayHelper.hpp"
 
 
 castor::stager::Tape* castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream(castor::stager::Stream& streamToResolve, int& startFseq) throw (castor::exception::Exception){

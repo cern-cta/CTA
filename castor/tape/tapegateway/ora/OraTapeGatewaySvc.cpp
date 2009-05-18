@@ -26,36 +26,35 @@
 
 // Include Files
 
+#include <serrno.h>
+#include <string>
+#include <vector>
 
+#include "errno.h"
+#include "occi.h"
+
+#include "castor/BaseAddress.hpp"
+#include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/IObject.hpp"
 #include "castor/IFactory.hpp"
 #include "castor/SvcFactory.hpp"
-#include "castor/Constants.hpp"
 
-#include "castor/BaseAddress.hpp"
+
 #include "castor/exception/Internal.hpp"
-#include "castor/tape/tapegateway/ora/OraTapeGatewaySvc.hpp"
+#include "castor/exception/OutOfMemory.hpp"
 
+#include "castor/stager/Stream.hpp"
 #include "castor/stager/StreamStatusCodes.hpp"
-#include "castor/stager/TapeStatusCodes.hpp"
+#include "castor/stager/Tape.hpp"
 #include "castor/stager/TapeCopyStatusCodes.hpp"
 #include "castor/stager/TapePool.hpp"
-#include "castor/stager/Tape.hpp"
-#include "castor/stager/Stream.hpp"
+#include "castor/stager/TapeStatusCodes.hpp"
 
+#include "castor/tape/tapegateway/NsTapeGatewayHelper.hpp"
+#include "castor/tape/tapegateway/ora/OraTapeGatewaySvc.hpp"
 #include "castor/tape/tapegateway/PositionCommandCode.hpp"
 #include "castor/tape/tapegateway/RmMasterTapeGatewayHelper.hpp"
-#include "castor/exception/OutOfMemory.hpp"
-#include "castor/tape/tapegateway/NsTapeGatewayHelper.hpp"
-
-#include "occi.h"
-#include <string>
-#include <sstream>
-#include <vector>
-#include <serrno.h>
-#include "errno.h"
-
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RmMasterTapeGatewayHelper.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2009/01/19 17:20:33 $ $Author: gtaur $
+ * @(#)$RCSfile: RmMasterTapeGatewayHelper.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/05/18 13:52:38 $ $Author: gtaur $
  *
  *
  * @author castor-dev team
@@ -30,7 +30,7 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/monitoring/StreamDirection.hpp"
-#include <string>
+
 
 namespace castor {
 

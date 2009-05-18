@@ -23,26 +23,27 @@
  *
  * @author Giulia Taurelli
  *****************************************************************************/
-#include "castor/tape/tapegateway/MigratorErrorHandlerThread.hpp"
-
 
 #include <sys/types.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "castor/tape/tapegateway/DlfCodes.hpp"
+#include <u64subr.h>
+
+
 #include "castor/Services.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IService.hpp"
 
 #include "castor/exception/Internal.hpp"
+#include "castor/infoPolicy/PolicyObj.hpp"
+#include "castor/infoPolicy/DbInfoRetryPolicy.hpp"
+#include "castor/stager/TapeCopy.hpp"
 
-#include <u64subr.h>
+#include "castor/tape/tapegateway/DlfCodes.hpp"
+#include "castor/tape/tapegateway/ITapeGatewaySvc.hpp"
+#include "castor/tape/tapegateway/MigratorErrorHandlerThread.hpp"
 
-#include  "castor/infoPolicy/PolicyObj.hpp"
-#include  "castor/infoPolicy/DbInfoRetryPolicy.hpp"
-#include  "castor/stager/TapeCopy.hpp"
-#include  "castor/tape/tapegateway/ITapeGatewaySvc.hpp"
-  
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------

@@ -26,37 +26,37 @@
 
 // Include Files
 
-
+#include <Cgetopt.h>
 #include <iostream>
 #include <string>
+#include <u64subr.h>
+
+#include "castor/Constants.hpp"
+#include "castor/PortNumbers.hpp"
+#include "castor/Services.hpp"
+
+#include "castor/dlf/Dlf.hpp"
+
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
-#include "castor/dlf/Dlf.hpp"
-#include "castor/Constants.hpp"
-#include "castor/Services.hpp"
-#include <Cgetopt.h>
-#include <u64subr.h>
-#include "castor/Constants.hpp"
-#include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
-
-#include "castor/tape/tapegateway/DlfCodes.hpp"
 
 #include "castor/infoPolicy/TapeRetryPySvc.hpp"
-#include "castor/tape/tapegateway/TapeGatewayDaemon.hpp"
-#include "castor/tape/tapegateway/ITapeGatewaySvc.hpp"
+
 #include "castor/server/SignalThreadPool.hpp"
 #include "castor/server/TCPListenerThreadPool.hpp"
 
-#include "castor/tape/tapegateway/VdqmRequestsProducerThread.hpp"
-#include "castor/tape/tapegateway/VdqmRequestsCheckerThread.hpp"
-#include "castor/tape/tapegateway/TapeStreamLinkerThread.hpp"
+#include "castor/tape/tapegateway/DlfCodes.hpp"
+#include "castor/tape/tapegateway/ITapeGatewaySvc.hpp"
 #include "castor/tape/tapegateway/MigratorErrorHandlerThread.hpp"
 #include "castor/tape/tapegateway/RecallerErrorHandlerThread.hpp"
+#include "castor/tape/tapegateway/TapeGatewayDaemon.hpp"
+#include "castor/tape/tapegateway/TapeStreamLinkerThread.hpp"
+#include "castor/tape/tapegateway/VdqmRequestsCheckerThread.hpp"
+#include "castor/tape/tapegateway/VdqmRequestsProducerThread.hpp"
 #include "castor/tape/tapegateway/WorkerThread.hpp"
-#include "castor/tape/tapegateway/VmgrTapeGatewayHelper.hpp"
-#include "castor/PortNumbers.hpp"
+
+
 
 #define  DEFAULT_SLEEP_INTERVAL   10
 #define  VDQM_TIME_OUT_INTERVAL 600 // Timeout between two polls on a VDQM request 

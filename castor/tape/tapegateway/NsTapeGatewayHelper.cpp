@@ -17,28 +17,28 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NsTapeGatewayHelper.cpp,v $ $Revision: 1.11 $ $Release$ 
- * $Date: 2009/05/06 15:13:39 $ $Author: gtaur $
+ * @(#)$RCSfile: NsTapeGatewayHelper.cpp,v $ $Revision: 1.12 $ $Release$ 
+ * $Date: 2009/05/18 13:52:38 $ $Author: gtaur $
  *
  *
  *
  * @author Giulia Taurelli
  *****************************************************************************/
 
-
-#include "castor/tape/tapegateway/NsTapeGatewayHelper.hpp"
-#include "castor/tape/tapegateway/PositionCommandCode.hpp"
-
 #include <common.h>
-#include <time.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <time.h>
 #include <unistd.h>
-#include "rfio_api.h"
+
 #include "Cns_api.h"
+#include "rfio_api.h"
+
 #include "castor/exception/OutOfMemory.hpp"
 
+#include "castor/tape/tapegateway/NsTapeGatewayHelper.hpp"
+#include "castor/tape/tapegateway/PositionCommandCode.hpp"
 
 void castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile( tape::tapegateway::FileMigratedNotification& file, int copyNumber, std::string vid, u_signed64 lastModificationTime) throw (castor::exception::Exception){ 
 
