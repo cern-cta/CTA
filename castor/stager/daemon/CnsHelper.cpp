@@ -261,7 +261,6 @@ namespace castor{
         // before returning, replace for logging purposes the CNS host
         // in case it has been overridden
         std::string cnsHost = NsOverride::getInstance()->getTargetCnsHost();
-        clog() << SYSTEM << cnsHost;
         if(cnsHost.length() > 0) {
           strncpy(cnsFileid.server, cnsHost.c_str(), CA_MAXHOSTNAMELEN+1);
         }
