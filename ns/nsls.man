@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: nsls.man,v $ $Revision: 1.6 $ $Date: 2009/02/27 13:03:48 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: nsls.man,v $ $Revision: 1.7 $ $Date: 2009/05/18 13:40:45 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH NSLS 1 "$Date: 2009/02/27 13:03:48 $" CASTOR "Cns User Commands"
+.TH NSLS 1 "$Date: 2009/05/18 13:40:45 $" CASTOR "Cns User Commands"
 .SH NAME
 nsls \- list CASTOR name server directory/file entries
 .SH SYNOPSIS
@@ -75,11 +75,7 @@ file else as a decimal number,
 the group in alphabetic form if the group ID is defined in the
 .B group
 file else as a decimal number, the file size, the last modification date and
-the file name. If either the
-.B passwd
-or
-.B group
-fields exceed 15 characters in length the value will be truncated.
+the file name.
 .LP
 The mode is printed as 10 characters, the first one is
 .B d

@@ -58,8 +58,6 @@ int Rflag;
 int Tflag;
 int uflag;
 int checksumflag;
-int group_width = -1;
-int user_width  = -1;
 
 void usage(int status, char *name) {
   if (status != 0) {
@@ -448,9 +446,9 @@ int listentry(path, statbuf, slink, comment)
       strftime (timestr, 13, "%b %d  %Y", tm);
     else
       strftime (timestr, 13, "%b %d %H:%M", tm);
-    printf ("%s %3d %-*.15s %-*.15s %s %s ",
-            modestr, statbuf->nlink, user_width, decode_user (statbuf->uid),
-            group_width, decode_group (statbuf->gid),
+    printf ("%s %3d %-8s %-8s %s %s ",
+            modestr, statbuf->nlink, decode_user (statbuf->uid),
+            decode_group (statbuf->gid),
             u64tostr (statbuf->filesize, tmpbuf, 18), timestr);
   }
   if (checksumflag) {
@@ -471,17 +469,7 @@ decode_group(gid_t gid)
   struct group *gr;
   static gid_t sav_gid = -1;
   static char sav_gidstr[256];
-  int len;
 
-  if (group_width == -1) {
-    group_width = 8;
-    while ((gr = getgrent ()) != NULL) {
-      len = strlen (gr->gr_name);
-      if ((len > group_width) && (len < 15))
-	group_width = len;
-    }
-    endgrent();
-  }
   if (gid != sav_gid) {
 #ifdef VIRTUAL_ID
     if (gid == 0)
@@ -505,17 +493,7 @@ decode_user(uid_t uid)
   struct passwd *pw;
   static uid_t sav_uid = -1;
   static char sav_uidstr[256];
-  int len;
 
-  if (user_width == -1) {
-    user_width = 8;
-    while ((pw = getpwent ()) != NULL) {
-      len = strlen (pw->pw_name);
-      if ((len > user_width) && (len < 15))
-      	user_width = len;
-    }
-    endpwent();
-  }
   if (uid != sav_uid) {
 #ifdef VIRTUAL_ID
     if (uid == 0)
