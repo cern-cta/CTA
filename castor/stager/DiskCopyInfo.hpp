@@ -334,7 +334,7 @@ namespace castor {
 
       /**
        * Get the value of m_csumType
-       * The checksum type of the castor file
+       * The checksum type of the diskcopy
        * @return the value of m_csumType
        */
       std::string csumType() const {
@@ -343,7 +343,7 @@ namespace castor {
 
       /**
        * Set the value of m_csumType
-       * The checksum type of the castor file
+       * The checksum type of the diskcopy
        * @param new_var the new value of m_csumType
        */
       void setCsumType(std::string new_var) {
@@ -352,7 +352,7 @@ namespace castor {
 
       /**
        * Get the value of m_csumValue
-       * The checksum value of the castor file
+       * The checksum value of the diskcopy
        * @return the value of m_csumValue
        */
       std::string csumValue() const {
@@ -361,11 +361,47 @@ namespace castor {
 
       /**
        * Set the value of m_csumValue
-       * The checksum value of the castor file
+       * The checksum value of the diskcopy
        * @param new_var the new value of m_csumValue
        */
       void setCsumValue(std::string new_var) {
         m_csumValue = new_var;
+      }
+
+      /**
+       * Get the value of m_creationTime
+       * The creation time of the diskcopy
+       * @return the value of m_creationTime
+       */
+      u_signed64 creationTime() const {
+        return m_creationTime;
+      }
+
+      /**
+       * Set the value of m_creationTime
+       * The creation time of the diskcopy
+       * @param new_var the new value of m_creationTime
+       */
+      void setCreationTime(u_signed64 new_var) {
+        m_creationTime = new_var;
+      }
+
+      /**
+       * Get the value of m_lastAccessTime
+       * The last access time of the diskcopy
+       * @return the value of m_lastAccessTime
+       */
+      u_signed64 lastAccessTime() const {
+        return m_lastAccessTime;
+      }
+
+      /**
+       * Set the value of m_lastAccessTime
+       * The last access time of the diskcopy
+       * @param new_var the new value of m_lastAccessTime
+       */
+      void setLastAccessTime(u_signed64 new_var) {
+        m_lastAccessTime = new_var;
       }
 
       /**
@@ -427,11 +463,17 @@ namespace castor {
       /// The service class that the diskcopy is in
       std::string m_svcClass;
 
-      /// The checksum type of the castor file
+      /// The checksum type of the diskcopy
       std::string m_csumType;
 
-      /// The checksum value of the castor file
+      /// The checksum value of the diskcopy
       std::string m_csumValue;
+
+      /// The creation time of the diskcopy
+      u_signed64 m_creationTime;
+
+      /// The last access time of the diskcopy
+      u_signed64 m_lastAccessTime;
 
       /// The id of this object
       u_signed64 m_id;

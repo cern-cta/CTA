@@ -103,6 +103,8 @@ void castor::io::StreamDiskCopyInfoCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->svcClass();
   ad->stream() << obj->csumType();
   ad->stream() << obj->csumValue();
+  ad->stream() << obj->creationTime();
+  ad->stream() << obj->lastAccessTime();
   ad->stream() << obj->id();
 }
 
@@ -161,6 +163,12 @@ castor::IObject* castor::io::StreamDiskCopyInfoCnv::createObj(castor::IAddress* 
   std::string csumValue;
   ad->stream() >> csumValue;
   object->setCsumValue(csumValue);
+  u_signed64 creationTime;
+  ad->stream() >> creationTime;
+  object->setCreationTime(creationTime);
+  u_signed64 lastAccessTime;
+  ad->stream() >> lastAccessTime;
+  object->setLastAccessTime(lastAccessTime);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

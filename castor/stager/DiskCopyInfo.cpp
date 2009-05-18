@@ -54,6 +54,8 @@ castor::stager::DiskCopyInfo::DiskCopyInfo() throw() :
   m_svcClass(""),
   m_csumType(""),
   m_csumValue(""),
+  m_creationTime(0),
+  m_lastAccessTime(0),
   m_id(0) {
 }
 
@@ -91,6 +93,8 @@ void castor::stager::DiskCopyInfo::print(std::ostream& stream,
   stream << indent << "svcClass : " << m_svcClass << std::endl;
   stream << indent << "csumType : " << m_csumType << std::endl;
   stream << indent << "csumValue : " << m_csumValue << std::endl;
+  stream << indent << "creationTime : " << m_creationTime << std::endl;
+  stream << indent << "lastAccessTime : " << m_lastAccessTime << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }
