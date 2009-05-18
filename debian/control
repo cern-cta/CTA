@@ -294,7 +294,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-gridftp-dsi-xroot
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib, xinetd, edg-mkgridmap, vdt_globus_data_server, vdt_globus_essentials, castor-gridftp-dsi-common, xrootd
+Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib, castor-gridftp-dsi-common, xrootd
 Description: castor (Cern Advanced STORage system)
  External CASTOR2 gridftp2 DSI module with xroot support
 

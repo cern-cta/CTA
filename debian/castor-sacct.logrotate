@@ -4,9 +4,3 @@
     missingok
     rotate 90
 }
-/var/spool/vmgr/log {
-    nocompress
-    weekly
-    missingok
-    rotate 90
-}
