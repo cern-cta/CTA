@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.64 $ $Release$ $Date: 2009/03/05 11:45:42 $ $Author: itglp $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.65 $ $Release$ $Date: 2009/05/19 16:25:27 $ $Author: itglp $
  *
  * Main stager daemon
  *
@@ -38,6 +38,7 @@
 #include "castor/PortsConfig.hpp"
 #include "castor/server/SignalThreadPool.hpp"
 #include "castor/replier/RequestReplier.hpp"
+#include "castor/db/DbCnvSvc.hpp"
 
 #include "castor/stager/daemon/StagerDaemon.hpp"
 #include "castor/stager/daemon/JobRequestSvcThread.hpp"
@@ -48,13 +49,12 @@
 #include "castor/stager/daemon/JobSvcThread.hpp"
 #include "castor/stager/daemon/GcSvcThread.hpp"
 #include "castor/stager/daemon/CleaningThread.hpp"
-
+#include "castor/stager/daemon/NsOverride.hpp"
 #include "castor/stager/daemon/DlfMessages.hpp"
 
 
 int main(int argc, char* argv[]){
   try{
-
     castor::stager::daemon::StagerDaemon stagerDaemon;
 
     castor::stager::IStagerSvc* stgService =
@@ -65,6 +65,23 @@ int main(int argc, char* argv[]){
       e.getMessage() << "Failed to load DbStagerSvc, check for shared libraries configuration" << std::endl;
       throw e;
     }
+
+    // check for the NS override configuration
+    castor::stager::daemon::NsOverride* nso = castor::stager::daemon::NsOverride::getInstance();
+    if(nso->getTargetCnsHost() != nso->getCnsHost()) {
+      castor::exception::Exception e(EINVAL);
+      e.getMessage() << "Incorrect configuration found for the NS override. CNS/HOST in castor.conf is '"
+        << nso->getCnsHost() << "' while stager/nsHost in the database is '"
+        << nso->getTargetCnsHost() << "'" << std::endl;
+      throw e;
+    }
+
+    // drop the db connection that has been used by the NsOverride class. This connection
+    // won't be reused by any thread afterwards.
+    castor::db::DbCnvSvc* dbSvc = dynamic_cast<castor::db::DbCnvSvc*>(
+        castor::BaseObject::services()->service("DbCnvSvc", castor::SVC_DBCNV));
+    dbSvc->dropConnection();
+ 
 
     /*******************************/
     /* thread pools for the stager */
