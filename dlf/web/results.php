@@ -25,7 +25,7 @@ include("config.php");
 include("/var/www/conf/dlf/login.conf");
 include("db/oracle.php");
 
-$dbh         = db_connect($_GET['instance'], 1, 0);
+$dbh         = db_connect($_GET['instance'], 0, 0);
 $gen_start   = getmicrotime();
 $query_count = 0;
 

@@ -20,7 +20,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: oracle.php,v 1.10 2008/06/16 08:00:19 waldron Exp $
+ * $Id: oracle.php,v 1.11 2009/05/19 13:50:25 waldron Exp $
  */
 
 /* definitions */
@@ -65,9 +65,9 @@ function db_connect($instance, $persistency, $stager) {
 
   /* open connection to a oracle database */
   if ($persistency == true) {
-    $conn = ocilogon($user, $pass, $server);
-  } else {
     $conn = ociplogon($user, $pass, $server);
+  } else {
+    $conn = ocilogon($user, $pass, $server);
   }
 
   /* connection successful ? */

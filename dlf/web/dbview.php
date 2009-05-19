@@ -20,7 +20,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dbview.php,v 1.8 2008/06/16 08:00:19 waldron Exp $
+ * $Id: dbview.php,v 1.9 2009/05/19 13:50:25 waldron Exp $
  */
 
 require("utils.php");
@@ -30,7 +30,7 @@ include("/var/www/conf/dlf/login.conf");
 include("db/oracle.php");
 
 $gen_start   = getmicrotime();
-$dbh         = db_connect($_GET['instance'], 1, 1);
+$dbh         = db_connect($_GET['instance'], 0, 1);
 $query_count = 0;
 
 /* check that the necesary parameters are specified */
