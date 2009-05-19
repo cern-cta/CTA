@@ -196,7 +196,7 @@ CREATE MATERIALIZED VIEW GcMonitor_MV
 AS
   SELECT a.tot total, round(a.avgage / 3600, 2) avg_age,
          round((a.avgage - b.avgage) / b.avgage, 4) age_per,
-         round(a.avgsize / 102400, 4) avg_size,
+         round(a.avgsize / 1048576, 4) avg_size,
          round((a.avgsize - b.avgsize) / b.avgsize, 4) size_per
     FROM (SELECT count(*) tot, avg(fileAge) avgage, avg(fileSize) avgsize
             FROM GcFiles
