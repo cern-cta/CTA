@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbBaseObj.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/09/10 06:46:46 $ $Author: waldron $
+ * @(#)$RCSfile: DbBaseObj.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2009/05/19 16:27:37 $ $Author: itglp $
  *
  * Base class for all database oriented objects
  *
@@ -105,6 +105,8 @@ namespace castor {
          * helper method to rollback
          */
         virtual void rollback();
+
+      private:
         
         /// The corresponding conversion service
         castor::db::DbCnvSvc* m_cnvSvc;
