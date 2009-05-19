@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.64 $ $Release$ $Date: 2009/02/10 09:19:57 $ $Author: itglp $
+ * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.65 $ $Release$ $Date: 2009/05/19 16:24:30 $ $Author: itglp $
  *
  * Service thread for job related requests
  *
@@ -106,11 +106,13 @@ void castor::stager::daemon::JobSvcThread::handleStartRequest
     ad.setTarget(sReq->subreqId());
     castor::IObject *obj = svcs->createObj(&ad);
     if (0 == obj) {
+      // Possibly the request has been canceled via stager_rm,
+      // still log a warning message
       // "Could not find subrequest associated to Request"
       castor::dlf::Param params[] =
         {castor::dlf::Param("SubReqId", sReq->subreqId()),
          castor::dlf::Param("Type", "StartRequest")};
-      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_NOSREQ,
+      castor::dlf::dlf_writep(uuid, DLF_LVL_WARNING, STAGER_JOBSVC_NOSREQ,
                               fileId, nsHost, 2, params);
       return;
     }
@@ -391,11 +393,12 @@ void castor::stager::daemon::JobSvcThread::handleMoverCloseRequest
     ad.setTarget(mcReq->subReqId());
     obj = svcs->createObj(&ad);
     if (0 == obj) {
+      // As for the StartRequest, log a warning
       // "Could not find subrequest associated to Request"
       castor::dlf::Param params[] =
         {castor::dlf::Param("SubReqId", mcReq->subReqId()),
          castor::dlf::Param("Type", "MoverCloseRequest")};
-      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_NOSREQ,
+      castor::dlf::dlf_writep(uuid, DLF_LVL_WARNING, STAGER_JOBSVC_NOSREQ,
                               fileId, nsHost, 2, params);
       return;
     }
