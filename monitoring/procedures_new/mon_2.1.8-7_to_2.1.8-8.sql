@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: mon_2.1.8-7_to_2.1.8-8.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/05/19 10:45:31 $ $Author: brabacal $
+ * @(#)$RCSfile: mon_2.1.8-7_to_2.1.8-8.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/05/19 13:07:31 $ $Author: brabacal $
  *
  * This script upgrades a CASTOR v2.1.8-7 MONITORING database into v2.1.8-8
  *
@@ -153,21 +153,6 @@ SELECT sysdate timestamp, 300 interval, originalpool, targetpool, total
   )
 ORDER BY originalpool;
 
-/* Create the FacilityTopTenErrorCounter view */
-CREATE OR REPLACE VIEW FacilityTopTenErrorCounter AS
-SELECT * 
-  FROM (
-    SELECT sysdate timestamp, 300 interval, msg_text, count(*) sum
-      FROM castor_dlf.dlf_messages a, castor_dlf.dlf_msg_texts b
-     WHERE timestamp >= sysdate - 10/1440
-       AND timestamp < sysdate - 5/1440 
-       AND b.fac_no = a.facility
-       AND a.msg_no = b.msg_no 
-    GROUP BY msg_text, fac_no
-    ORDER BY sum desc
-)
-WHERE rownum < 11;
-
 /* Create the TopTenErrors view */
 CREATE OR REPLACE VIEW TopTenErrors AS
 SELECT sysdate timestamp, 300 interval, fac.fac_name, count(*) errorsum
@@ -181,7 +166,7 @@ ORDER BY errorsum desc;
 
 /* Create the GCStatsByFileSize view */
 CREATE OR REPLACE VIEW GCStatsByFileSize AS
-SELECT DISTINCT sysdate timestamp, 300 interval, bin, count(bin) over (Partition BY bin) reqs 
+SELECT DISTINCT sysdate timestamp, 300 interval, svcclass, bin, count(*) over (Partition BY svcclass, bin) reqs 
   FROM (
     SELECT round(filesize/1024,4),
       CASE
@@ -192,17 +177,17 @@ SELECT DISTINCT sysdate timestamp, 300 interval, bin, count(bin) over (Partition
        WHEN filesize >= 1048576 AND filesize < 10485760 then '[1-10)Mb'
        WHEN filesize >= 10485760 AND filesize < 104857600 then '[10-100)Mb'
        WHEN filesize >= 104857600 AND filesize <= 1073741824 then '[100Mb-1Gb]'
-      ELSE '>1Gb' END bin
+      ELSE '>1Gb' END bin, svcclass
       FROM gcfiles
      WHERE timestamp >= sysdate - 10/1440
        AND timestamp < sysdate - 5/1440
        AND filesize != 0
   )
-ORDER BY bin;
+ORDER BY svcclass, bin;
 
 /* Create the GCStatsByFileAge view */
 CREATE OR REPLACE VIEW GCStatsByFileAge AS 
-SELECT DISTINCT sysdate timestamp, 300 interval, bin, count(bin) over (Partition BY bin) reqs 
+SELECT DISTINCT sysdate timestamp, 300 interval, svcclass, bin, count(*) over (Partition BY svcclass, bin) reqs 
   FROM (
     SELECT round(fileage), 
       CASE
@@ -218,17 +203,17 @@ SELECT DISTINCT sysdate timestamp, 300 interval, bin, count(bin) over (Partition
        WHEN fileage >= 172800 AND fileage < 345600 then '[2-4)days'
        WHEN fileage >= 345600 AND fileage < 691200 then '[4-8)days'
        WHEN fileage >= 691200 AND fileage < 1382400 then '[8-16)days'
-      ELSE '>=16days' END bin
+      ELSE '>=16days' END bin, svcclass
       FROM gcfiles
      WHERE fileage IS NOT NULL
       AND timestamp >= sysdate - 10/1440
       AND timestamp < sysdate - 5/1440
   )
-ORDER BY bin;
+ORDER BY svcclass, bin;
 
 /* Create the RequestedAfterGC view */
 CREATE OR REPLACE VIEW RequestedAfterGC AS --Unit is hour
-SELECT DISTINCT sysdate timestamp, 300 interval, bin, count(bin) over (Partition BY bin) reqs
+SELECT DISTINCT sysdate timestamp, 300 interval, svcclass, bin, count(*) over (Partition BY svcclass, bin) reqs
   FROM (
     SELECT dif,
       CASE 
@@ -239,12 +224,12 @@ SELECT DISTINCT sysdate timestamp, 300 interval, bin, count(bin) over (Partition
        WHEN dif >= 2 AND dif < 4 then '[2-4) h'
        WHEN dif >= 4 AND dif < 6 then '[4-6) h'
        WHEN dif >= 6 AND dif <= 8 then '[6-8] h'
-      ELSE '(8-24) h' END bin 
+      ELSE '(8-24) h' END bin, svcclass
       FROM ReqDel_MV
      WHERE timestamp >= sysdate - 10/1440
        AND timestamp < sysdate -5/1440
   )
-ORDER BY bin;
+ORDER BY svcclass, bin;
 
 /* Create the BinnedRequestsLatencies view */
 CREATE OR REPLACE VIEW BinnedRequestsLatencies AS
@@ -437,14 +422,6 @@ SELECT DISTINCT sysdate timestamp, 300 interval, username, svcclass, bin, count(
        AND filesize != 0
   )
 ORDER BY bin, username, svcclass;
-
-/* Create the SVCClassStateUserRequests view */  
-CREATE OR REPLACE VIEW SVCClassStateUserRequests AS
-SELECT DISTINCT  sysdate timestamp, 300 interval, username, state, svcclass, count(1) over (Partition BY username, state, svcclass) number_of_req
-  FROM requests
- WHERE timestamp >= sysdate - 10/1440
-   AND timestamp < sysdate - 5/1440 
-ORDER BY number_of_req DESC, username, state, svcclass;
 
 /* Create the SVCClassUserMigFilesCounter view */  
 CREATE OR REPLACE VIEW SVCClassUserMigFilesCounter AS
