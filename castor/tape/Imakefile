@@ -23,5 +23,5 @@
 #
 
 
-SUBDIRS = aggregator format fsm tapegateway  
+#SUBDIRS = aggregator format fsm tapegateway  
 
