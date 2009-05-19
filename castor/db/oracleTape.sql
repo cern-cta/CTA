@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.744 $ $Date: 2009/05/15 15:06:02 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.745 $ $Date: 2009/05/19 13:05:56 $ $Author: itglp $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -731,12 +731,14 @@ BEGIN
   ELSE
     -- restart this subrequest if it's not a repack one
     UPDATE SubRequest
-       SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART
+       SET status = 1, getNextStatus = 1  -- SUBREQUEST_RESTART, GETNEXTSTATUS_FILESTAGED
+           lastModificationTime = getTime(), parent = 0
      WHERE id = subRequestId;
   END IF;
   -- restart other requests waiting on this recall
   UPDATE SubRequest
-     SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART
+       SET status = 1, getNextStatus = 1  -- SUBREQUEST_RESTART, GETNEXTSTATUS_FILESTAGED
+           lastModificationTime = getTime(), parent = 0
    WHERE parent = subRequestId;
   -- Trigger the creation of additional copies of the file, if necessary.
   replicateOnClose(cfId, ouid, ogid);
