@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.746 $ $Date: 2009/05/19 14:00:51 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.747 $ $Date: 2009/05/19 15:43:42 $ $Author: waldron $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -908,8 +908,7 @@ END;
 /
 
 /* Get input for python migration policy */
-
-create or replace PROCEDURE inputForMigrationPolicy
+CREATE OR REPLACE PROCEDURE inputForMigrationPolicy
 (svcclassName IN VARCHAR2,
  policyName OUT NOCOPY VARCHAR2,
  svcId OUT NUMBER,
@@ -923,17 +922,10 @@ BEGIN
     FROM SvcClass
    WHERE SvcClass.name = svcClassName;
 
-  UPDATE /*+ BEGIN_OUTLINE_DATA
-             IGNORE_OPTIM_EMBEDDED_HINTS
-             ALL_ROWS
-             OUTLINE_LEAF(@"SEL$3FF8579E")
-             UNNEST(@"SEL$1")
-             OUTLINE(@"UPD$1")
-             OUTLINE(@"SEL$1")
-             INDEX_RS_ASC(@"SEL$3FF8579E" "TC"@"UPD$1" ("TAPECOPY"."STATUS"))
-             INDEX_RS_ASC(@"SEL$3FF8579E" "CF"@"SEL$1" ("CASTORFILE"."ID"))
-             LEADING(@"SEL$3FF8579E" "TC"@"UPD$1" "CF"@"SEL$1")
-             USE_NL(@"SEL$3FF8579E" "CF"@"SEL$1") */
+  UPDATE
+     /*+ LEADING(TC CF)
+         INDEX_RS_ASC(CF PK_CASTORFILE_ID)
+         INDEX_RS_ASC(TC I_TAPECOPY_STATUS) */ 
          TapeCopy TC 
      SET status = 7
    WHERE status IN (0, 1)
@@ -963,10 +955,8 @@ BEGIN
 END;
 /
 
-
 /* Get input for python Stream Policy */
-
-create or replace PROCEDURE inputForStreamPolicy
+CREATE OR REPLACE PROCEDURE inputForStreamPolicy
 (svcClassName IN VARCHAR2,
  policyName OUT NOCOPY VARCHAR2,
  runningStreams OUT INTEGER,
@@ -998,36 +988,36 @@ BEGIN
   COMMIT;
   
   -- check for overloaded streams
-  SELECT count(*) INTO tcNum from stream2tapecopy where parent in (SELECT /*+ CARDINALITY(stridTable 5) */ *  FROM TABLE(strIds) stridTable);
-  IF (tcnum > 10000 * maxstream) AND (maxstream>0) THEN
-   -- emergency mode
-   OPEN dbInfo FOR
-       SELECT Stream.id, 10000, 10000, gettime
-        FROM  Stream
-         WHERE  Stream.id IN (SELECT /*+ CARDINALITY(stridTable 5) */ *  FROM TABLE(strIds) stridTable)
-          AND Stream.status = 7
-     GROUP BY Stream.id;
-  
-  ELSE
-   --- return for policy
+  SELECT count(*) INTO tcNum FROM stream2tapecopy 
+   WHERE parent IN (SELECT /*+ CARDINALITY(stridTable 5) */ * FROM TABLE(strIds) stridTable);
+  IF (tcnum > 10000 * maxstream) AND (maxstream > 0) THEN
+    -- emergency mode
     OPEN dbInfo FOR
-       SELECT Stream.id, count(distinct Stream2TapeCopy.child),  sum(CastorFile.filesize), gettime() - min(CastorFile.lastupdatetime)
-        FROM Stream2TapeCopy, TapeCopy, CastorFile, Stream
-         WHERE  Stream.id IN (SELECT /*+ CARDINALITY(stridTable 5) */ *  FROM TABLE(strIds) stridTable)
-          AND Stream2TapeCopy.child = TapeCopy.id
-          AND TapeCopy.castorfile = CastorFile.id
-          AND Stream.id = Stream2TapeCopy.parent
-          AND Stream.status = 7
+      SELECT Stream.id, 10000, 10000, gettime
+        FROM Stream
+       WHERE Stream.id IN (SELECT /*+ CARDINALITY(stridTable 5) */ * FROM TABLE(strIds) stridTable)
+         AND Stream.status = 7
+       GROUP BY Stream.id;
+  ELSE
+  -- return for policy
+  OPEN dbInfo FOR
+    SELECT Stream.id, count(distinct Stream2TapeCopy.child), sum(CastorFile.filesize), gettime() - min(CastorFile.lastupdatetime)
+      FROM Stream2TapeCopy, TapeCopy, CastorFile, Stream
+     WHERE Stream.id IN (SELECT /*+ CARDINALITY(stridTable 5) */ * FROM TABLE(strIds) stridTable)
+       AND Stream2TapeCopy.child = TapeCopy.id
+       AND TapeCopy.castorfile = CastorFile.id
+       AND Stream.id = Stream2TapeCopy.parent
+       AND Stream.status = 7
      GROUP BY Stream.id
      UNION ALL
      SELECT Stream.id, 0, 0, 0
-     FROM Stream WHERE  Stream.id IN (SELECT /*+ CARDINALITY(stridTable 5) */ * FROM  TABLE(strIds) stridTable)
-          AND Stream.status = 7
-          AND NOT EXISTS (SELECT 'x' FROM Stream2TapeCopy ST WHERE  ST.parent = Stream.ID);
+       FROM Stream WHERE  Stream.id IN (SELECT /*+ CARDINALITY(stridTable 5) */ * FROM TABLE(strIds) stridTable)
+        AND Stream.status = 7
+        AND NOT EXISTS 
+          (SELECT 'x' FROM Stream2TapeCopy ST WHERE ST.parent = Stream.ID);
  END IF;         
 END;
 /
-
 
 /* createOrUpdateStream */
 CREATE OR REPLACE PROCEDURE createOrUpdateStream
