@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.269 $ $Release$ $Date: 2009/04/14 11:33:45 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.270 $ $Release$ $Date: 2009/05/19 16:17:10 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -183,7 +183,7 @@ const std::string castor::db::ora::OraStagerSvc::s_deletePriorityStatementString
 
 /// SQL statement for getConfigOption
 const std::string castor::db::ora::OraStagerSvc::s_getConfigOptionStatementString =
-  "SELECT value FROM CastorConfig WHERE class = :1 AND key = :2";
+  "SELECT getConfigOption(:1, :2, :3) FROM Dual";
 
 //------------------------------------------------------------------------------
 // OraStagerSvc
@@ -1627,7 +1627,8 @@ void  castor::db::ora::OraStagerSvc::deletePriority(int euid, int egid)
 // getConfigOption
 //------------------------------------------------------------------------------
 std::string castor::db::ora::OraStagerSvc::getConfigOption(std::string confClass,
-                                                           std::string confKey)
+                                                           std::string confKey,
+                                                           std::string defaultValue)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
@@ -1638,6 +1639,7 @@ std::string castor::db::ora::OraStagerSvc::getConfigOption(std::string confClass
     // Execute the statement
     m_getConfigOptionStatement->setString(1, confClass);
     m_getConfigOptionStatement->setString(2, confKey);
+    m_getConfigOptionStatement->setString(3, defaultValue);
     std::string res;
     oracle::occi::ResultSet *rs = m_getConfigOptionStatement->executeQuery();
     if (oracle::occi::ResultSet::DATA_AVAILABLE == rs->next()) {

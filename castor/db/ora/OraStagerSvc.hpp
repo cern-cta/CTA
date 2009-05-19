@@ -429,11 +429,14 @@ namespace castor {
          * Gets a configuration option from the CastorConfig table
          * @param class a string containing the option class (e.g. stager)
          * @param key a string containing the option key to be accessed
+         * @param defaultValue a default return value when the key
+         * is not found in the db
          * @return the option value
          * @exception in case of an error
          */
         virtual std::string getConfigOption(std::string confClass,
-                                    std::string confKey)
+                                            std::string confKey,
+                                            std::string defaultValue)
           throw (castor::exception::Exception);
         
       private:

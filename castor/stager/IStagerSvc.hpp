@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.101 $ $Release$ $Date: 2009/04/14 11:33:46 $ $Author: itglp $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.102 $ $Release$ $Date: 2009/05/19 16:17:09 $ $Author: itglp $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -434,11 +434,14 @@ namespace castor {
        * option class (e.g. stager)
        * @param key a string containing the
        * option key to be accessed
+       * @param defaultValue a default return
+       * value when the key is not found
        * @return the option value
        * @exception in case of an error
        */
       virtual std::string getConfigOption(std::string confClass,
-                                  std::string confKey)
+                                          std::string confKey,
+                                          std::string defaultValue)
         throw (castor::exception::Exception) = 0;
 
     }; // end of class IStagerSvc
