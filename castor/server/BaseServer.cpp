@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.35 $ $Release$ $Date: 2009/02/17 16:39:25 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.36 $ $Release$ $Date: 2009/05/19 16:21:14 $ $Author: itglp $
  *
  * A base multithreaded server for simple listening servers
  *
@@ -70,12 +70,6 @@ castor::server::BaseServer::~BaseServer() throw()
   std::map<const char, castor::server::BaseThreadPool*>::iterator tp;
   for (tp = m_threadPools.begin(); tp != m_threadPools.end(); tp++) {
     delete tp->second;
-  }
-
-  // hack to release thread specific allocated memory
-  castor::Services* svcs = services();
-  if (0 != svcs) {
-    delete svcs;
   }
 }
 
