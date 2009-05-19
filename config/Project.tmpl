@@ -6,7 +6,7 @@
 DLFWEB=/var/www/html/dlf
 DLFCONF=/var/www/conf/dlf
 
-.PHONY : install clean clobber Makefiles depend checkDESTDIR checkORACLE checkLSF checkGLOBUS checkSTK
+.PHONY : install clean clobber Makefiles depend checkDESTDIR checkORACLE checkLSF checkGLOBUS checkSTK checkXROOT
 
 all: checkORACLE checkLSF checkGLOBUS checkSTK checkXROOT
 	GotoSubdirs($(SUBDIRS))
