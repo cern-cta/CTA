@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)RCSfile: oracleCreate.sql,v  Release: 1.2  Release Date: 2009/03/26 13:14:27  Author: waldron 
+ * @(#)RCSfile: oracleCreate.sql,v  Release: 1.2  Release Date: 2009/03/26 13:14:27  Author: waldron
  *
  * This script create a new Monitoring schema
  *
@@ -52,7 +52,7 @@ BEGIN
        AND table_name = 'DLF_VERSION';
   EXCEPTION WHEN NO_DATA_FOUND THEN
     raise_application_error(-20001, 'Unable to access the &dlfschema..dlf_version table. Check that the correct grants have been issued!');
-  END;  
+  END;
 END;
 /
 
@@ -123,7 +123,7 @@ CREATE TABLE ConfigSchema (expiry NUMBER, runMaxTime DATE);
 INSERT INTO ConfigSchema VALUES (90, SYSDATE);
 
 /* SQL statement for table Requests */
-CREATE TABLE Requests (subReqId CHAR(36) CONSTRAINT NN_Requests_subReqId NOT NULL CONSTRAINT PK_Requests_subReqId PRIMARY KEY, timestamp DATE CONSTRAINT NN_Requests_timestamp NOT NULL, reqId CHAR(36) CONSTRAINT NN_Requests_reqId NOT NULL, nsFileId NUMBER CONSTRAINT NN_Requests_nsFileId NOT NULL, type VARCHAR2(255), svcclass VARCHAR2(255), username VARCHAR2(255), state VARCHAR2(255), filename VARCHAR2(2048), filesize NUMBER) 
+CREATE TABLE Requests (subReqId CHAR(36) CONSTRAINT NN_Requests_subReqId NOT NULL CONSTRAINT PK_Requests_subReqId PRIMARY KEY, timestamp DATE CONSTRAINT NN_Requests_timestamp NOT NULL, reqId CHAR(36) CONSTRAINT NN_Requests_reqId NOT NULL, nsFileId NUMBER CONSTRAINT NN_Requests_nsFileId NOT NULL, type VARCHAR2(255), svcclass VARCHAR2(255), username VARCHAR2(255), state VARCHAR2(255), filename VARCHAR2(2048), filesize NUMBER)
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statements for indexes on the Requests table */
@@ -134,7 +134,7 @@ CREATE TABLE InternalDiskCopy (timestamp DATE CONSTRAINT NN_InternalDiskCopy_ts 
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statement for table TotalLatency */
-CREATE TABLE TotalLatency (subReqId CHAR(36) CONSTRAINT NN_TotalLatency_subReqId NOT NULL CONSTRAINT PK_TotalLatency_subReqId PRIMARY KEY, timestamp DATE CONSTRAINT NN_TotalLatency_ts NOT NULL, nsFileId NUMBER CONSTRAINT NN_TotalLatency_nsFileId NOT NULL, totalLatency NUMBER) 
+CREATE TABLE TotalLatency (subReqId CHAR(36) CONSTRAINT NN_TotalLatency_subReqId NOT NULL CONSTRAINT PK_TotalLatency_subReqId PRIMARY KEY, timestamp DATE CONSTRAINT NN_TotalLatency_ts NOT NULL, nsFileId NUMBER CONSTRAINT NN_TotalLatency_nsFileId NOT NULL, totalLatency NUMBER)
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statements for indexes on the TotalLatency table */
@@ -161,17 +161,17 @@ CREATE INDEX I_Migration_reqId ON Migration (reqId) LOCAL;
 
 /* SQL statement for creation of the Errors materialized view */
 CREATE MATERIALIZED VIEW Errors_MV
-  REFRESH FORCE ON DEMAND 
+  REFRESH FORCE ON DEMAND
   START WITH SYSDATE NEXT SYSDATE + 5/1440
 AS
   SELECT fac.fac_name, txt.msg_text, count(*) errorsum
-    FROM &dlfschema..dlf_messages mes, &dlfschema..dlf_msg_texts txt, 
+    FROM &dlfschema..dlf_messages mes, &dlfschema..dlf_msg_texts txt,
          &dlfschema..dlf_facilities fac
    WHERE mes.msg_no = txt.msg_no
      AND fac.fac_no = mes.facility
      AND mes.facility = txt.fac_no
      AND mes.severity = 3  -- Errors
-     AND mes.timestamp >= sysdate - 15/1440 
+     AND mes.timestamp >= sysdate - 15/1440
      AND mes.timestamp < sysdate - 5/1440
    GROUP BY fac.fac_name, txt.msg_text;
 
@@ -193,10 +193,10 @@ CREATE INDEX I_ReqDel_MV_dif ON ReqDel_MV (dif);
 CREATE MATERIALIZED VIEW GcMonitor_MV
  REFRESH COMPLETE ON DEMAND
  START WITH SYSDATE NEXT SYSDATE + 5/1440
-AS 
-  SELECT a.tot total, round(a.avgage / 3600, 2) avg_age, 
-         round((a.avgage - b.avgage) / b.avgage, 4) age_per, 
-         round(a.avgsize / 102400, 4) avg_size, 
+AS
+  SELECT a.tot total, round(a.avgage / 3600, 2) avg_age,
+         round((a.avgage - b.avgage) / b.avgage, 4) age_per,
+         round(a.avgsize / 102400, 4) avg_size,
          round((a.avgsize - b.avgsize) / b.avgsize, 4) size_per
     FROM (SELECT count(*) tot, avg(fileAge) avgage, avg(fileSize) avgsize
             FROM GcFiles
@@ -208,21 +208,21 @@ AS
              AND timestamp <= sysdate - 10/1140) b;
 
 /* SQL statement for creation of the MainTableCounters materialized view */
-CREATE MATERIALIZED VIEW MainTableCounters_MV 
-  REFRESH COMPLETE ON DEMAND 
+CREATE MATERIALIZED VIEW MainTableCounters_MV
+  REFRESH COMPLETE ON DEMAND
   START WITH SYSDATE NEXT SYSDATE + 5/1140
-AS 
-  SELECT a.svcclass, a.state state, a.num num, 
+AS
+  SELECT a.svcclass, a.state state, a.num num,
          round((a.num - b.num) / b.num, 2) per
     FROM (SELECT svcclass, state, count(*) num
-              FROM Requests 
-           WHERE timestamp > sysdate - 10/1440 
-             AND timestamp <= sysdate -5/1440 
+              FROM Requests
+           WHERE timestamp > sysdate - 10/1440
+             AND timestamp <= sysdate -5/1440
              GROUP BY svcclass,state) a ,
          (SELECT svcclass, state, count(*) num
-            FROM Requests 
+            FROM Requests
            WHERE timestamp > sysdate - 15/1440
-             AND timestamp <= sysdate - 10/1440 
+             AND timestamp <= sysdate - 10/1440
            GROUP BY svcclass, state) b
    WHERE a.svcclass = b.svcclass
      AND a.state = b.state
@@ -233,20 +233,20 @@ CREATE MATERIALIZED VIEW MigMonitor_MV
   REFRESH COMPLETE ON DEMAND
   START WITH SYSDATE NEXT SYSDATE + 5/1140
 AS
-  SELECT svcclass, count(*) migs 
+  SELECT svcclass, count(*) migs
     FROM Migration
-   WHERE timestamp > sysdate - 10/1440 
+   WHERE timestamp > sysdate - 10/1440
      AND timestamp <= sysdate - 5/1440
    GROUP BY svcclass;
 
 /* SQL statement for creation of the SvcClassMap_MV materialized view */
 CREATE MATERIALIZED VIEW SvcClassMap_MV
-  REFRESH FORCE ON DEMAND 
+  REFRESH FORCE ON DEMAND
   START WITH SYSDATE + 10/1440 NEXT SYSDATE + 1
-AS 
+AS
   SELECT DISTINCT(svcclass) FROM Requests;
 
-/* SQL statement to rename the NOT NULL constraints of the materialized view 
+/* SQL statement to rename the NOT NULL constraints of the materialized view
  * created above.
  */
 BEGIN
@@ -255,7 +255,7 @@ BEGIN
              WHERE table_name LIKE '%_MV'
                AND constraint_name LIKE 'SYS_%')
   LOOP
-    EXECUTE IMMEDIATE 'ALTER MATERIALIZED VIEW '||a.table_name||' RENAME 
+    EXECUTE IMMEDIATE 'ALTER MATERIALIZED VIEW '||a.table_name||' RENAME
                       CONSTRAINT '||a.constraint_name||
                       ' TO NN_'||a.table_name||'_'|| a.column_name;
   END LOOP;
@@ -273,109 +273,115 @@ END;
 /
 
 /* SQL statement for the creation of the RequestedAfterGC view on the ReqDel_MV materialized view*/
-CREATE OR REPLACE VIEW RequestedAfterGC AS --Unit is hour
-  SELECT nvl(reqs_t.timestamp, sysdate) timestamp, nvl(reqs_t.interval,300) interval, reqs_t.svcclass, 
-       bin_t.bin, nvl(reqs_t.reqs,0) reqs
-    FROM  ( SELECT * FROM ( 
-              SELECT '0 0.1' bin FROM dual
-                UNION SELECT '0.1 0.5' FROM dual
-                UNION SELECT '0.5 1' FROM dual
-		UNION SELECT '1 2' FROM dual
-		UNION SELECT '2 4' FROM dual
-		UNION SELECT '4 6' FROM dual
-		UNION SELECT '6 8' FROM dual
-		UNION SELECT '8 24' FROM dual), (SELECT DISTINCT svcclass FROM ReqDel_MV)) bin_t
-    LEFT OUTER JOIN ( 
-      SELECT DISTINCT sysdate timestamp, 300 interval, svcclass,
-		bin, count(bin) over (Partition by svcclass, bin) reqs
-	FROM ( SELECT
-		CASE WHEN dif >= 0 and dif < 0.1 THEN '0 0.1'
-		WHEN dif >= 0.1 AND dif < 0.5 THEN '0.1 0.5'
-		WHEN dif >= 0.5 AND dif < 1 THEN  '0.5 1'
-		WHEN dif >= 1 AND dif < 2 THEN '1 2'
-		WHEN dif >= 2 AND dif < 4 THEN '2 4'
-		WHEN dif >= 4 AND dif < 6 THEN '4 6'
-		WHEN dif >= 6 AND dif < 8 THEN '6 8'
-		ELSE '8 24' END bin, svcclass 
-	         FROM ReqDel_MV
-	        WHERE timestamp > sysdate - 10/1440
-		  AND timestamp <= sysdate - 5/1440)) reqs_t
-    ON bin_t.bin = reqs_t.bin
-   WHERE reqs_t.svcclass IS NOT NULL
-   ORDER by svcclass, bin_t.bin;
-
-/* SQL statement for the creation of the GCStateByFileSize view on the on the GcFiles table*/
-CREATE OR REPLACE VIEW GCStateByFileSize AS --Unit is byte
-  SELECT nvl(reqs_t.timestamp, sysdate) timestamp, nvl(reqs_t.interval,300) interval, reqs_t.svcclass,
-       bin_t.bin, nvl(reqs_t.reqs,0) reqs 
-    FROM  ( SELECT * FROM (
-              SELECT '0 1024' bin FROM dual
-		UNION SELECT '1024 10240' FROM dual
-		UNION SELECT '10240 102400' FROM dual
-		UNION SELECT '102400 1048576' FROM dual
-		UNION SELECT '1048576 10485760' FROM dual
-		UNION SELECT '10485760 104857600' FROM dual
-		UNION SELECT '104857600 1073741000' FROM dual
-		UNION SELECT '1073741000 -1' FROM dual), (SELECT DISTINCT svcclass FROM GcFiles)) bin_t
+CREATE OR REPLACE VIEW RequestedAfterGC
+AS
+  SELECT nvl(reqs_t.timestamp, sysdate) timestamp, nvl(reqs_t.interval,300) interval,
+         reqs_t.svcclass, bin_t.bin, nvl(reqs_t.reqs,0) reqs
+    FROM (SELECT * FROM (
+            SELECT '0 0.1' bin       FROM dual
+              UNION SELECT '0.1 0.5' FROM dual
+              UNION SELECT '0.5 1'   FROM dual
+              UNION SELECT '1 2'     FROM dual
+              UNION SELECT '2 4'     FROM dual
+              UNION SELECT '4 6'     FROM dual
+              UNION SELECT '6 8'     FROM dual
+              UNION SELECT '8 24'    FROM dual),
+         (SELECT DISTINCT svcclass FROM ReqDel_MV)) bin_t
     LEFT OUTER JOIN (
       SELECT DISTINCT sysdate timestamp, 300 interval, svcclass,
-	        bin, count(bin) over (Partition BY svcclass, bin) reqs 
-	FROM ( SELECT 
-	        CASE WHEN filesize < 1024 THEN '0 1024'
-		WHEN filesize >= 1024 AND filesize < 10240 THEN '1024 10240'
-		WHEN filesize >= 10240 AND filesize < 102400 THEN '10240 102400'
-		WHEN filesize >= 102400 AND filesize < 1048576 THEN '102400 1048576'
-		WHEN filesize >= 1048576 AND filesize < 10485760 THEN '1048576 10485760'
-		WHEN filesize >= 10485760 AND filesize < 104857600 THEN '10485760 104857600'
-		WHEN filesize >= 104857600 AND filesize < 1073741000 THEN '104857600 1073741000'
-		ELSE '1073741000 -1' end bin, svcclass
-	         FROM GcFiles
-	        WHERE filesize!=0
-	          AND timestamp >= sysdate - 10/1440
-	          AND timestamp < sysdate - 5/1440)) reqs_t
+                bin, count(bin) over (Partition BY svcclass, bin) reqs
+        FROM (SELECT
+                CASE WHEN dif >= 0   AND dif < 0.1 THEN '0 0.1'
+                     WHEN dif >= 0.1 AND dif < 0.5 THEN '0.1 0.5'
+                     WHEN dif >= 0.5 AND dif < 1   THEN  '0.5 1'
+                     WHEN dif >= 1   AND dif < 2   THEN '1 2'
+                     WHEN dif >= 2   AND dif < 4   THEN '2 4'
+                     WHEN dif >= 4   AND dif < 6   THEN '4 6'
+                     WHEN dif >= 6   AND dif < 8   THEN '6 8'
+                     ELSE '8 24' END bin, svcclass
+                FROM ReqDel_MV
+               WHERE timestamp >  sysdate - 10/1440
+                 AND timestamp <= sysdate - 5/1440)) reqs_t
+    ON bin_t.bin = reqs_t.bin
+   WHERE reqs_t.svcclass IS NOT NULL
+   ORDER BY svcclass, bin_t.bin;
+
+/* SQL statement for the creation of the GCStateByFileSize view on the on the GcFiles table*/
+CREATE OR REPLACE VIEW GCStateByFileSize
+AS
+  SELECT nvl(reqs_t.timestamp, sysdate) timestamp, nvl(reqs_t.interval,300) interval,
+         reqs_t.svcclass, bin_t.bin, nvl(reqs_t.reqs,0) reqs
+    FROM (SELECT * FROM (
+            SELECT '0 1024' bin                   FROM dual
+              UNION SELECT '1024 10240'           FROM dual
+              UNION SELECT '10240 102400'         FROM dual
+              UNION SELECT '102400 1048576'       FROM dual
+              UNION SELECT '1048576 10485760'     FROM dual
+              UNION SELECT '10485760 104857600'   FROM dual
+              UNION SELECT '104857600 1073741000' FROM dual
+              UNION SELECT '1073741000 -1'        FROM dual),
+         (SELECT DISTINCT svcclass FROM GcFiles)) bin_t
+    LEFT OUTER JOIN (
+      SELECT DISTINCT sysdate timestamp, 300 interval, svcclass,
+                bin, count(bin) over (Partition BY svcclass, bin) reqs
+        FROM (SELECT
+                CASE WHEN filesize < 1024                                 THEN '0 1024'
+                     WHEN filesize >= 1024      AND filesize < 10240      THEN '1024 10240'
+                     WHEN filesize >= 10240     AND filesize < 102400     THEN '10240 102400'
+                     WHEN filesize >= 102400    AND filesize < 1048576    THEN '102400 1048576'
+                     WHEN filesize >= 1048576   AND filesize < 10485760   THEN '1048576 10485760'
+                     WHEN filesize >= 10485760  AND filesize < 104857600  THEN '10485760 104857600'
+                     WHEN filesize >= 104857600 AND filesize < 1073741000 THEN '104857600 1073741000'
+                     ELSE '1073741000 -1' END bin, svcclass
+                FROM GcFiles
+               WHERE filesize != 0
+                 AND timestamp >= sysdate - 10/1440
+                 AND timestamp <  sysdate - 5/1440)) reqs_t
     ON bin_t.bin = reqs_t.bin
    WHERE reqs_t.svcclass IS NOT NULL
    ORDER BY reqs_t.svcclass, bin_t.bin;
 
 /* SQL statement for the creation of the GCStatsByFileAge view on the GcFiles table */
-CREATE OR REPLACE VIEW GCStatsByFileAge AS --Unit is second
-  SELECT nvl(reqs_t.timestamp, sysdate) timestamp, nvl(reqs_t.interval,300) interval, reqs_t.svcclass,
-       bin_t.bin, nvl(reqs_t.reqs,0) reqs 
-    FROM  ( SELECT * FROM (
-              SELECT '0 10' bin FROM dual
-		UNION SELECT '10 60' FROM dual
-		UNION SELECT '60 900' FROM dual
-		UNION SELECT '900 1800' FROM dual
-		UNION SELECT '1800 3600' FROM dual
-		UNION SELECT '3600 21600' FROM dual
-		UNION SELECT '21600 43200' FROM dual
-		UNION SELECT '43200 86400' FROM dual
-		UNION SELECT '86400 172800' FROM dual
-		UNION SELECT '172800 345600' FROM dual
-		UNION SELECT '345600 691200' FROM dual
-		UNION SELECT '691200 1382400' FROM dual
-		UNION SELECT '1382400 -1' FROM dual), (SELECT DISTINCT svcclass FROM GcFiles)) bin_t
+CREATE OR REPLACE VIEW GCStatsByFileAge
+AS
+  SELECT nvl(reqs_t.timestamp, sysdate) timestamp, nvl(reqs_t.interval,300) interval,
+         reqs_t.svcclass, bin_t.bin, nvl(reqs_t.reqs,0) reqs
+    FROM (SELECT * FROM (
+            SELECT '0 10' bin               FROM dual
+              UNION SELECT '10 60'          FROM dual
+              UNION SELECT '60 900'         FROM dual
+              UNION SELECT '900 1800'       FROM dual
+              UNION SELECT '1800 3600'      FROM dual
+              UNION SELECT '3600 21600'     FROM dual
+              UNION SELECT '21600 43200'    FROM dual
+              UNION SELECT '43200 86400'    FROM dual
+              UNION SELECT '86400 172800'   FROM dual
+              UNION SELECT '172800 345600'  FROM dual
+              UNION SELECT '345600 691200'  FROM dual
+              UNION SELECT '691200 1382400' FROM dual
+              UNION SELECT '1382400 -1'     FROM dual),
+         (SELECT DISTINCT svcclass FROM GcFiles)) bin_t
     LEFT OUTER JOIN (
-      SELECT DISTINCT sysdate timestamp, 300 INTERVAL, svcclass, 
+      SELECT DISTINCT sysdate timestamp, 300 INTERVAL, svcclass,
                 bin, count(bin) over (PARTITION BY svcclass, bin) reqs
-        FROM ( SELECT 
-	        CASE WHEN fileage < 10 THEN '0 10'
-		WHEN fileage >= 10 AND fileage < 60 THEN '10 60'
-		WHEN fileage >= 60 AND fileage < 900 THEN '60 900'
-		WHEN fileage >= 900 AND fileage < 1800 THEN '900 1800'
-		WHEN fileage >= 1800 AND fileage < 3600 THEN '1800 3600'
-		WHEN fileage >= 3600 AND fileage < 21600 THEN '3600 21600'
-		WHEN fileage >= 21600 AND fileage < 43200 THEN '21600 43200'
-		WHEN fileage >= 43200 AND fileage < 86400 THEN '43200 86400'
-		WHEN fileage >= 86400 AND fileage < 172800 THEN '86400 172800'
-		WHEN fileage >= 172800 AND fileage < 345600 THEN '172800 345600'
-		WHEN fileage >= 345600 AND fileage < 691200 THEN '345600 691200'
-		WHEN fileage >= 691200 AND fileage < 1382400 THEN '691200 1382400'
-		ELSE '1382400 -1' END bin, svcclass
-		 FROM GcFiles
-		WHERE fileage IS NOT NULL
-  		  AND timestamp >= sysdate - 10/1440
-  		  AND timestamp < sysdate - 5/1440)) reqs_t
+        FROM (SELECT
+                CASE WHEN fileage < 10                            THEN '0 10'
+                     WHEN fileage >= 10     AND fileage < 60      THEN '10 60'
+                     WHEN fileage >= 60     AND fileage < 900     THEN '60 900'
+                     WHEN fileage >= 900    AND fileage < 1800    THEN '900 1800'
+                     WHEN fileage >= 1800   AND fileage < 3600    THEN '1800 3600'
+                     WHEN fileage >= 3600   AND fileage < 21600   THEN '3600 21600'
+                     WHEN fileage >= 21600  AND fileage < 43200   THEN '21600 43200'
+                     WHEN fileage >= 43200  AND fileage < 86400   THEN '43200 86400'
+                     WHEN fileage >= 86400  AND fileage < 172800  THEN '86400 172800'
+                     WHEN fileage >= 172800 AND fileage < 345600  THEN '172800 345600'
+                     WHEN fileage >= 345600 AND fileage < 691200  THEN '345600 691200'
+                     WHEN fileage >= 691200 AND fileage < 1382400 THEN '691200 1382400'
+                     ELSE '1382400 -1' END bin, svcclass
+                FROM GcFiles
+               WHERE fileage IS NOT NULL
+                 AND timestamp >= sysdate - 10/1440
+                 AND timestamp <  sysdate - 5/1440)) reqs_t
     ON bin_t.bin = reqs_t.bin
-   WHERE reqs_t.svcclass is NOT null
+   WHERE reqs_t.svcclass IS NOT NULL
    ORDER BY svcclass, bin_t.bin;
