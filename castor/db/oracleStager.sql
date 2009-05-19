@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.735 $ $Date: 2009/05/18 13:42:53 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.736 $ $Date: 2009/05/19 13:08:23 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -2071,12 +2071,17 @@ BEGIN
       -- drop the SubRequest waiting for recall but keep the recall if somebody
       -- else is doing it, and taking care of other WAITSUBREQ requests as well...
       -- but it's fair enough, provided that the last stageRm will cleanup everything.
-      -- First lock all segments for the file
-      SELECT segment.id BULK COLLECT INTO unusedIds
+      -- XXX First lock all segments for the file. Note that
+      -- XXX this step should be dropped once the tapeGateway
+      -- XXX is deployed. The current recaller does not take
+      -- XXX the proper lock on the castorFiles, hence we
+      -- XXX need this here
+      SELECT Segment.id BULK COLLECT INTO unusedIds
         FROM Segment, TapeCopy
        WHERE TapeCopy.castorfile = cfId
          AND TapeCopy.id = Segment.copy
-      FOR UPDATE;
+       ORDER BY Segment.id
+      FOR UPDATE OF Segment.id;
       -- Check whether we have any segment in SELECTED
       SELECT segment.id INTO segId
         FROM Segment, TapeCopy
