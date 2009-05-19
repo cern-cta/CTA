@@ -1,4 +1,4 @@
-//         $Id: XrdxCastor2Fs.hh,v 1.4 2009/04/29 10:15:03 apeters Exp $
+//         $Id: XrdxCastor2Fs.hh,v 1.5 2009/05/19 19:52:21 apeters Exp $
 
 #ifndef __XCASTOR2_FS_H__
 #define __XCASTOR2_FS_H__
@@ -706,7 +706,7 @@ virtual int            Configure(XrdSysError &);
 virtual bool           Init(XrdSysError &);
         int            Stall(XrdOucErrInfo &error, int stime, const char *msg);
         bool           GetStageVariables(const char* Path, const char* Opaque, XrdOucString &stagevariables, uid_t client_uid, gid_t client_gid, const char* tident); 
-        bool           SetStageVariables(const char* Path, const char* Opaque, XrdOucString stagevariables, XrdOucString &stagehost, XrdOucString &serviceclass, int n, const char* tident);
+        int           SetStageVariables(const char* Path, const char* Opaque, XrdOucString stagevariables, XrdOucString &stagehost, XrdOucString &serviceclass, int n, const char* tident);
 
 
         char          *ConfigFN;       

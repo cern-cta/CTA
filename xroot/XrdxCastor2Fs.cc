@@ -1,5 +1,5 @@
-//          $Id: XrdxCastor2Fs.cc,v 1.11 2009/05/15 08:40:14 apeters Exp $
-const char *XrdxCastor2FsCVSID = "$Id: XrdxCastor2Fs.cc,v 1.11 2009/05/15 08:40:14 apeters Exp $";
+//          $Id: XrdxCastor2Fs.cc,v 1.12 2009/05/19 19:52:21 apeters Exp $
+const char *XrdxCastor2FsCVSID = "$Id: XrdxCastor2Fs.cc,v 1.12 2009/05/19 19:52:21 apeters Exp $";
 
 #include "XrdVersion.hh"
 #include "XrdClient/XrdClientAdmin.hh"
@@ -69,6 +69,7 @@ int XrdxCastor2Fs::TokenLockTime=5;
 XrdxCastor2Fs* XrdxCastor2FS=0;
 
 
+#define XCASTOR2FS_EXACT_MATCH 1000
 /******************************************************************************/
 
 /*                        C o n v i n i e n c e                               */
@@ -562,7 +563,7 @@ XrdxCastor2Fs::VomsMapGroups(const XrdSecEntity* client, XrdSecEntity& mappedcli
 
 /*----------------------------------------------------------------------------*/
 
-bool           
+int
 XrdxCastor2Fs::SetStageVariables(const char* Path, const char* Opaque, XrdOucString stagevariables, XrdOucString &stagehost, XrdOucString &serviceclass,  int n, const char* tident)
 {
   EPNAME("SetStageVariables");
@@ -581,17 +582,22 @@ XrdxCastor2Fs::SetStageVariables(const char* Path, const char* Opaque, XrdOucStr
   
   const char* sh=0;
   
-  if ((sh = Open_Env.Get("stagerHost"))) {
-    desiredstagehost = sh;
-  }
-  
-  if ((sh = Open_Env.Get("svcClass"))) {
-    desiredserviceclass=sh;
-  }
-  
   const char* stoken;
   int ntoken=0;
   while( (stoken = stagetokens.GetLine())) {
+    if ((sh = Open_Env.Get("stagerHost"))) {
+      desiredstagehost = sh;
+    } else {
+      desiredstagehost = "";
+    }
+    
+    if ((sh = Open_Env.Get("svcClass"))) {
+      desiredserviceclass=sh;
+    } else {
+      desiredserviceclass = "";
+    }
+  
+
     XrdOucString mhost = stoken;
     XrdOucString shost;
     int offset;
@@ -604,16 +610,65 @@ XrdxCastor2Fs::SetStageVariables(const char* Path, const char* Opaque, XrdOucStr
       stagehost = mhost;
       serviceclass = "default";
     }
+
+    ZTRACE(open,"0 path=" << Path << " dstagehost=" << desiredstagehost.c_str() << " dserviceclass=" << desiredserviceclass.c_str() << " stagehost=" << stagehost.c_str() << " serviceclass=" << serviceclass.c_str() << " n="<<n << " ntoken=" << ntoken);
+    if (!desiredstagehost.length()) {
+      if (stagehost == "*") {
+	XrdOucString* dh=0;
+	// use the default one
+	if ( (dh = stagertable->Find("default"))) {
+	  XrdOucString defhost = dh->c_str();
+	  int spos=0;
+	  // remove the service class if defined
+	  if ((spos = defhost.find("::")) != STR_NPOS) {
+	    defhost.assign(defhost.c_str(),0,spos-1);
+	  }
+	  // set the default one now!
+	  desiredstagehost = defhost;
+	} 
+      } else {
+	desiredstagehost = stagehost;
+      }
+    }
+
+
+    if ((stagehost == "*"))  {
+      if ( desiredstagehost.length()) {
+	stagehost = desiredstagehost;
+	if (!desiredserviceclass.length()) {
+	  if (serviceclass != "*") {
+	    desiredserviceclass = serviceclass;
+	  }
+	}
+      }
+    } 
+
+    if ((serviceclass == "*") && desiredserviceclass.length()) {
+      serviceclass = desiredserviceclass;
+    }
+    ZTRACE(open,"1 path=" << Path << " dstagehost=" << desiredstagehost.c_str() << " dserviceclass=" << desiredserviceclass.c_str() << " stagehost=" << stagehost.c_str() << " serviceclass=" << serviceclass.c_str() << " n="<<n << " ntoken=" << ntoken);
+    // this handles the case, where  only the stager is set
+    if ((desiredstagehost == stagehost) && (!desiredserviceclass.length())) {
+      if (serviceclass != "*") {
+	desiredserviceclass = serviceclass;
+      }
+    }
+
+    ZTRACE(open,"2 path=" << Path << " dstagehost=" << desiredstagehost.c_str() << " dserviceclass=" << desiredserviceclass.c_str() << " stagehost=" << stagehost.c_str() << " serviceclass=" << serviceclass.c_str() << " n="<<n << " ntoken=" << ntoken);
     // we are successfull if we either return the appropriate token or if the token matches the user specified
     // stager/svc class pair
     // as a result: if the host/svc class pair is not defined, a user cannot request it!
-    if (( (desiredstagehost == stagehost) && (desiredserviceclass == serviceclass)) || (ntoken == n)) {
+    // this now also supports to allow any service class or host via *::default or stager::* to be user selected
+    if (((desiredstagehost == stagehost) && (desiredserviceclass == serviceclass)) && ((n==ntoken)||(n==XCASTOR2FS_EXACT_MATCH))) {
       ZTRACE(open,"path=" << Path << " stagehost=" << stagehost.c_str() << " serviceclass=" << serviceclass.c_str());
-      return true;
+      return 1;
+    } else {
+      if ( (n!=XCASTOR2FS_EXACT_MATCH) && (ntoken==n) )
+	return 0;
     }
     ntoken++;
   }
-  return false;
+  return -1;
 }
 
 bool 
@@ -628,15 +683,16 @@ XrdxCastor2Fs::GetStageVariables( const char* Path, const char* Opaque, XrdOucSt
   
   XrdOucEnv Open_Env(Opaque);
   const char* val;
-  if ((val=Open_Env.Get("stagerHost"))){
-    stagevariables = val;
-    stagevariables += "::";
-    if ((val=Open_Env.Get("serviceClass"))) {
-      stagevariables += val;
-    } else {
-      stagevariables += "default";
-    }
-  } else {
+  //  if ((val=Open_Env.Get("stagerHost"))){
+  //    stagevariables = val;
+  //    stagevariables += "::";
+  //    if ((val=Open_Env.Get("svcClass"))) {
+  //      stagevariables += val;
+  //    } else {
+  //      stagevariables += "default";
+  //    }
+  //  } else {
+  if (1) {
     XrdOucString spath = Path;
     XrdOucString *mhost;
     // try the stagertable
@@ -1190,7 +1246,7 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
      
      if (stagehost.length() && serviceclass.length()) {
        // try the user specified pair
-       if (XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass, 999, tident)) {
+       if ((XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass, XCASTOR2FS_EXACT_MATCH, tident))==1) {
 	 // select the policy
 	 
 	 XrdOucString *wildcardpolicy=NULL;
@@ -1219,8 +1275,9 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
        int n = 0;
        // try the list and stop when we find a matching policy tag
        bool allowed= false;
+       int hasmore=0;
        do {
-	 if (XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass,n, tident)) {
+	 if ((hasmore=XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass,n, tident))==1) {
 	   // select the policy
 	   policy=NULL;
 	   XrdOucString *wildcardpolicy=NULL;
@@ -1243,11 +1300,9 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
 	     allowed = true;
 	     break;
 	   }
-	 } else {
-	   break;
 	 }
 	 n++;
-       } while(n<999);
+       } while((n<999) && (hasmore>=0));
        if (!allowed) {
 	 return XrdxCastor2Fs::Emsg(epname, error, EPERM, "write - you are not allowed to do write requests for fn = ", path);	   
        }
@@ -1351,9 +1406,10 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
        XrdOucString possiblestagehost="";
        XrdOucString possibleserviceclass="";
 
+       int hasmore=0;
        // loop through the possible stager settings to find the file somewhere staged
        do {
-	 if (XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass, n, tident)) {
+	 if ((hasmore=XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass, n, tident))==1) {
 	   // select the policy
 	   policy=NULL;
 	   XrdOucString *wildcardpolicy=NULL;
@@ -1454,7 +1510,23 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
 	     possible=true;
 	     break;
 	   }
+
+	   // query the staging status
+	   TIMING(xCastor2FsTrace,"STAGERQUERY",&opentiming);
+	   if (!XrdxCastor2Stager::StagerQuery(error, (uid_t) client_uid, (gid_t) client_gid, path, stagehost.c_str(),serviceclass.c_str(),stagestatus)) {
+	     stagestatus = "NA";
+	   } 
 	   
+	   if ( (stagestatus == "STAGED") || (stagestatus == "CANBEMIGR") || (stagestatus == "STAGEOUT" ) ) {
+	   } else {
+	     // check if we want transparent staging
+	     if ( policy && ((strstr(policy->c_str(),"nohsm")))) {
+	       opentiming.Print(xCastor2FsTrace);
+	       n++;
+	       continue;
+	     }
+	   }
+
 	   TIMING(xCastor2FsTrace,"PREP2GET",&opentiming);
 	   if (!XrdxCastor2Stager::Prepare2Get(error, (uid_t) client_uid, (gid_t) client_gid, path, stagehost.c_str(),serviceclass.c_str(),redirectionhost,redirectionpfn1,stagestatus)) {
 	     TIMING(xCastor2FsTrace,"RETURN",&opentiming);
@@ -1462,39 +1534,37 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
 	     n++;
 	     continue;
 	   }
-
+	   
 	   ZTRACE(open,"Got |" << redirectionpfn1.c_str() << "| " << stagestatus.c_str());
 	   if ( redirectionpfn1.length() && (stagestatus=="READY")) {
 	     // that is perfect, we can use the setting to read
-
+	     
 	     possible = true;
 	     break;
-	   } else { 
-	     XrdOucString delaytag = tident;
-	     delaytag += "::"; delaytag += path;
-	     // we select this setting and tell the client to wait for the staging in this pool/svc class
-	     if ( (stagestatus == "READY") ) {
-	       TIMING(xCastor2FsTrace,"RETURN",&opentiming);
-	       opentiming.Print(xCastor2FsTrace);
-	       return XrdxCastor2FS->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()) , "file is being staged in");
-	     } else {
-	       TIMING(xCastor2FsTrace,"RETURN",&opentiming);
-	       opentiming.Print(xCastor2FsTrace);
-	       n++;
-	       continue;
-	     }
+	   } 
+	   
+	   XrdOucString delaytag = tident;
+	   delaytag += "::"; delaytag += path;
+	   // we select this setting and tell the client to wait for the staging in this pool/svc class
+	   if ( (stagestatus == "READY") ) {
+	     TIMING(xCastor2FsTrace,"RETURN",&opentiming);
+	     opentiming.Print(xCastor2FsTrace);
+	     return XrdxCastor2FS->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()) , "file is being staged in");
+	   } else {
+	     TIMING(xCastor2FsTrace,"RETURN",&opentiming);
+	     opentiming.Print(xCastor2FsTrace);
+	     n++;
+	     continue;
 	   }
-	 } else {
-	   break;
 	 }
 	 n++;
-       } while (n<999);
+       } while ((n<999) && (hasmore>=0));
 
        if (!possible) {
 	 if (!possiblestagehost.length()) {
 	   TIMING(xCastor2FsTrace,"RETURN",&opentiming);
 	   opentiming.Print(xCastor2FsTrace);
-	   return XrdxCastor2Fs::Emsg(epname, error, ENODATA, "access file in stager (no online copy exists)  fn = ", path);	   
+	   return XrdxCastor2Fs::Emsg(epname, error, ENODATA, "access file in stager (no online copy exists or your stager/svc settings are not allowed by the rules)  fn = ", path);	   
 	 }
 
 	 if ( policy && ((strstr(policy->c_str(),"nohsm")) || (strstr(policy->c_str(),"nostage"))) ) {
@@ -2975,7 +3045,7 @@ int XrdxCastor2Fs::stageprepare( const char* path, XrdOucErrInfo &error, const X
 
   if (stagehost.length() && serviceclass.length()) {
     // try the user specified pair
-    if (XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass, 999, tident)) {
+    if ((XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass, XCASTOR2FS_EXACT_MATCH, tident))==1) {
       // select the policy
       XrdOucString *policy=NULL;
       XrdOucString *wildcardpolicy=NULL;
@@ -3002,8 +3072,10 @@ int XrdxCastor2Fs::stageprepare( const char* path, XrdOucErrInfo &error, const X
   } else {
     // try the list and stop when we find a matching policy tag
     bool allowed= false;
+    int hasmore=0;
+
     do {
-      if (XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass,n, tident)) {
+      if ((hasmore=XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass,n, tident))==1) {
 	// select the policy
 	XrdOucString *policy=NULL;
 	XrdOucString *wildcardpolicy=NULL;
@@ -3020,16 +3092,14 @@ int XrdxCastor2Fs::stageprepare( const char* path, XrdOucErrInfo &error, const X
 	
 	if ((!policy) && (wildcardpolicy)) {
 	  policy = wildcardpolicy;
-      }
+	}
 	if (policy && (!strstr(policy->c_str(),"nostage") ) ) {
 	  allowed = true;
 	  break;
 	}
-      } else {
-	break;
       }
       n++;
-    } while(n<999);
+    } while((n<999) && (hasmore>=0));
     if (!allowed) {
       return XrdxCastor2Fs::Emsg(epname, error, EPERM, "do prepare request - you are not allowed to do stage requests fn = ", path);	   
     }
@@ -3547,8 +3617,11 @@ int XrdxCastor2Fs::stat(const char              *path,        // In
       int n = 0;
       // try the list and stop when we find a matching policy tag
       bool allowed= false;
+      int hasmore=0;
+	  
       do {
-	if (XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass,n, tident)) {
+	stagestatus = "NA";
+	if ((hasmore=XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass,n, tident))==1) {
 	  // we don't care about policies for stat's 
 	  XrdOucString qrytag="STAGERQUERY-";qrytag+= n;
 	  TIMING(xCastor2FsTrace,qrytag.c_str(),&stattiming);  
@@ -3560,11 +3633,8 @@ int XrdxCastor2Fs::stat(const char              *path,        // In
 	    break;
 	  }
 	  n++;
-	} else {
-	  stagestatus = "NA";
-	  break;
-	}
-      } while (n<999);  
+	} 
+      } while ((n<999)&&(hasmore>=0));  
     }
   }
   if (XrdxCastor2FS->Proc) {
