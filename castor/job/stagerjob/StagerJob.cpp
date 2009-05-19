@@ -292,7 +292,7 @@ void bindSocketAndListen
   }
 
   // Listen for the client connection
-  if (listen(context.socket,1) < 0) {
+  if (listen(context.socket, 1) < 0) {
     // If the error is "Address already in use" we try and bind again after 5
     // seconds
     if ((errno == EADDRINUSE) && (attempts < 10)) {
@@ -304,7 +304,7 @@ void bindSocketAndListen
     throw e;
   }
   socklen_t len = sizeof(sin);
-  if (getsockname(context.socket,(struct sockaddr *)&sin,&len) < 0) {
+  if (getsockname(context.socket, (struct sockaddr *)&sin, &len) < 0) {
     castor::exception::Exception e(errno);
     e.getMessage() << "Error caught in call to getsockname";
     throw e;
@@ -457,58 +457,64 @@ int main(int argc, char** argv) {
     // Initializing logging
     using namespace castor::job::stagerjob;
     castor::dlf::Message messages[] = {
+
       // System call errors
-      { CREATFAILED,   "Failed to create empty file"},
-      { FCLOSEFAILED,  "Failed to close file"},
-      { SCLOSEFAILED,  "Failed to close socket"},
-      { CHDIRFAILED,   "Failed to change directory to tmp"},
-      { DUP2FAILED,    "Failed to duplicate socket"},
-      { MOVERNOTEXEC,  "Mover program cannot be executed. Check permissions"},
-      { EXECFAILED,    "Failed to exec mover"},
+      { CREATFAILED,     "Failed to create empty file"},
+      { FCLOSEFAILED,    "Failed to close file"},
+      { SCLOSEFAILED,    "Failed to close socket"},
+      { CHDIRFAILED,     "Failed to change directory to tmp"},
+      { DUP2FAILED,      "Failed to duplicate socket"},
+      { MOVERNOTEXEC,    "Mover program cannot be executed. Check permissions"},
+      { EXECFAILED,      "Failed to exec mover"},
 
       // Invalid configurations or parameters
-      { INVRETRYINT,   "Invalid Job/RetryInterval option, using default" },
-      { INVRETRYNBAT,  "Invalid Job/RetryAttempts option, using default" },
-      { DOWNRESFILE,   "Downloading resource file" },
-      { INVALIDURI,    "Invalid Uniform Resource Indicator, cannot download resource file" },
-      { MAXATTEMPTS,   "Exceeded maximum number of attempts trying to download resource file" },
-      { DOWNEXCEPT,    "Exception caught trying to download resource file" },
-      { INVALRESCONT,  "The content of the resource file is invalid" },
+      { INVRETRYINT,     "Invalid Job/RetryInterval option, using default" },
+      { INVRETRYNBAT,    "Invalid Job/RetryAttempts option, using default" },
+      { DOWNRESFILE,     "Downloading resource file" },
+      { INVALIDURI,      "Invalid Uniform Resource Indicator, cannot download resource file" },
+      { MAXATTEMPTS,     "Exceeded maximum number of attempts trying to download resource file" },
+      { DOWNEXCEPT,      "Exception caught trying to download resource file" },
+      { INVALRESCONT,    "The content of the resource file is invalid" },
 
       // Informative logs
-      { JOBSTARTED,    "Job Started" },
-      { JOBENDED,      "Job finished successfully" },
-      { JOBFAILED,     "Job failed" },
-      { JOBORIGCRED,   "Credentials at start time" },
-      { JOBACTCRED,    "Actual credentials used" },
-      { JOBNOOP,       "No operation performed" },
-      { FORKMOVER,     "Forking mover" },
-      { REQCANCELED,   "Request canceled" },
-      { MOVERPORT,     "Mover will use the following port" },
-      { MOVERFORK,     "Mover fork uses the following command line" },
-      { ACCEPTCONN,    "Client connected" },
-      { JOBFAILEDNOANS,"Job failed before it could send an answer to client" },
+      { JOBSTARTED,      "Job Started" },
+      { JOBENDED,        "Job finished successfully" },
+      { JOBFAILED,       "Job failed" },
+      { JOBORIGCRED,     "Credentials at start time" },
+      { JOBACTCRED,      "Actual credentials used" },
+      { JOBNOOP,         "No operation performed" },
+      { FORKMOVER,       "Forking mover" },
+      { REQCANCELED,     "Request canceled" },
+      { MOVERPORT,       "Mover will use the following port" },
+      { MOVERFORK,       "Mover fork uses the following command line" },
+      { ACCEPTCONN,      "Client connected" },
+      { JOBFAILEDNOANS,  "Job failed before it could send an answer to client" },
 
       // Errors
-      { STAT64FAIL,    "rfio_stat64 error" },
-      { CHILDEXITED,   "Child exited" },
-      { CHILDSIGNALED, "Child exited due to uncaught signal" },
-      { CHILDSTOPPED,  "Child was stopped" },
-      { NOANSWERSENT,  "Could not send answer to client" },
-      { GETATTRFAILED, "Failed to get checksum information from extended attributes" },
-      { CSTYPENOTSOP,  "Unsupported checksum type, ignoring checksum information" },
+      { STAT64FAIL,      "rfio_stat64 error" },
+      { CHILDEXITED,     "Child exited" },
+      { CHILDSIGNALED,   "Child exited due to uncaught signal" },
+      { CHILDSTOPPED,    "Child was stopped" },
+      { NOANSWERSENT,    "Could not send answer to client" },
+      { GETATTRFAILED,   "Failed to get checksum information from extended attributes" },
+      { CSTYPENOTSOP,    "Unsupported checksum type, ignoring checksum information" },
 
       // Protocol specific. Should not be here if the plugins
       // were properly packaged in separate libs
-      { GSIBADPORT,    "Invalid port range for GridFTP in config file. using default" },
-      { GSIBADMINPORT, "Invalid lower bound for GridFTP port range in config file. Using default" },
-      { GSIBADMAXPORT, "Invalid upper bound for GridFTP port range in config file. Using default" },
-      { GSIBADMINVAL,  "Lower bound for GridFTP port range not in valid range. Using default" },
-      { GSIBADMAXVAL,  "Upper bound for GridFTP port range not in valid range. Using default" },
-      { GSIPORTRANGE,  "GridFTP Port range" },
-      { GSIPORTUSED,   "GridFTP Socket bound" },
+      { GSIBADPORT,      "Invalid port range for GridFTP in config file. using default" },
+      { GSIBADMINPORT,   "Invalid lower bound for GridFTP port range in config file. Using default" },
+      { GSIBADMAXPORT,   "Invalid upper bound for GridFTP port range in config file. Using default" },
+      { GSIBADMINVAL,    "Lower bound for GridFTP port range not in valid range. Using default" },
+      { GSIBADMAXVAL,    "Upper bound for GridFTP port range not in valid range. Using default" },
 
-      { XROOTENOENT,   "Xrootd is not installed" },
+      { XROOTENOENT,     "Xrootd is not installed" },
+
+      { RFIODBADPORT,    "Invalid port range for RFIOD in config file. using default" },
+      { RFIODBADMINPORT, "Invalid lower bound for RFIOD port range in config file. Using default" },
+      { RFIODBADMAXPORT, "Invalid upper bound for RFIOD port range in config file. Using default" },
+      { RFIODBADMINVAL,  "Lower bound for RFIOD port range not in valid range. Using default" },
+      { RFIODBADMAXVAL,  "Upper bound for RFIOD port range not in valid range. Using default" },
+
       { -1, "" }};
     castor::dlf::dlf_init("Job", messages);
 

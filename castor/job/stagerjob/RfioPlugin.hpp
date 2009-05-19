@@ -64,6 +64,12 @@ namespace castor {
         RfioPlugin() throw();
 
         /**
+         * Returns the port range for rfio
+         */
+        virtual std::pair<int, int> getPortRange
+        (castor::job::stagerjob::InputArguments &args) throw();
+
+        /**
          * Hook for the code to be executed just after the mover fork,
          * in the parent process. Only logging and calling the method
          * of InstrumentedPlugin.
@@ -89,6 +95,14 @@ namespace castor {
          * Get the log level and the log file name
          */
         static void getLogLevel(std::string &logFile, bool &debug) throw();
+
+        /**
+         * Get a given port range from the config file and checks it
+         * @param name the config file entry
+         */
+        static std::pair<int, int> getPortRange
+        (InputArguments &args, std::string name)
+          throw();
 
         /**
          * Gather all environment values

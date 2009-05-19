@@ -33,6 +33,10 @@
 #include "castor/job/stagerjob/InputArguments.hpp"
 #include "castor/job/stagerjob/RfioPlugin.hpp"
 
+// Default port range
+#define RFIODMINPORT 50000
+#define RFIODMAXPORT 52000
+
 // Static instance of the RfioPlugin
 castor::job::stagerjob::RfioPlugin rfioPlugin;
 
@@ -43,6 +47,82 @@ castor::job::stagerjob::RfioPlugin::RfioPlugin() throw():
   InstrumentedMoverPlugin("rfio") {
   // Also register for rfio3 (rfio registration is done by the parent)
   castor::job::stagerjob::registerPlugin("rfio3", this);
+}
+
+//------------------------------------------------------------------------------
+// getPortRange
+//------------------------------------------------------------------------------
+std::pair<int, int> castor::job::stagerjob::RfioPlugin::getPortRange
+(InputArguments &args, std::string name)
+  throw() {
+  // Look at the config file
+  char* entry = getconfent("RFIOD", name.c_str(), 0);
+  if (NULL == entry) {
+    return std::pair<int, int>(RFIODMINPORT, RFIODMAXPORT);
+  }
+  // Parse min port
+  std::istringstream iss(entry);
+  std::string value;
+  std::getline(iss, value, ',');
+  if (iss.fail() || value.empty()) {
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("RequiredFormat", "min,max"),
+       castor::dlf::Param("Found", entry),
+       castor::dlf::Param(args.subRequestUuid)};
+    castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
+                            RFIODBADPORT, 3, params, &args.fileId);
+    return std::pair<int, int>(RFIODMINPORT, RFIODMAXPORT);
+  }
+  int min = RFIODMINPORT;
+  if (value.find_first_not_of("0123456789") != value.npos) {
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Found", value),
+       castor::dlf::Param(args.subRequestUuid)};
+    castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
+                            RFIODBADMINPORT, 2, params, &args.fileId);
+  } else {
+    // Check min port value
+    min = atoi(value.c_str());
+    if (min < 1024 || min > 65535) {
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Value", min),
+         castor::dlf::Param(args.subRequestUuid)};
+      castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
+                              RFIODBADMINVAL, 2, params, &args.fileId);
+      min = RFIODMINPORT;
+    }
+  }
+  // Parse max port
+  int max = RFIODMAXPORT;
+  std::getline(iss, value);
+  if (value.find_first_not_of("0123456789") != value.npos) {
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Found", value),
+       castor::dlf::Param(args.subRequestUuid)};
+    castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
+                            RFIODBADMAXPORT, 2, params, &args.fileId);
+  } else {
+    max = atoi(value.c_str());
+    if (max < 1024 || max > 65535 || max < min) {
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Value", max),
+         castor::dlf::Param("Min value", min),
+         castor::dlf::Param(args.subRequestUuid)};
+      castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
+                              RFIODBADMAXVAL, 3, params, &args.fileId);
+      max = RFIODMAXPORT;
+    }
+  }
+  return std::pair<int, int>(min, max);
+}
+
+//------------------------------------------------------------------------------
+// getPortRange
+//------------------------------------------------------------------------------
+std::pair<int, int>
+castor::job::stagerjob::RfioPlugin::getPortRange
+(InputArguments &args) throw() {
+  return getPortRange(args, "PORT_RANGE");
 }
 
 //------------------------------------------------------------------------------
@@ -253,21 +333,21 @@ void castor::job::stagerjob::RfioPlugin::execMover
   } else {
     if (args.isSecure) {
       execl (progfullpath.c_str(), progname.c_str(),
-	     "-1", "-d", "-s", "-l", "-n", "-f", logFile.c_str(),
-	     "-T", arg_T.str().c_str(), "-S", arg_S.str().c_str(),
-	     "-P", arg_P.str().c_str(), "-M", arg_M.str().c_str(),
-	     "-U", "-Z", arg_Z.str().c_str(), "-u", arg_U.str().c_str(),
-	     "-g", arg_G.str().c_str(),
-	     context.fullDestPath.c_str(),NULL);
+             "-1", "-d", "-s", "-l", "-n", "-f", logFile.c_str(),
+             "-T", arg_T.str().c_str(), "-S", arg_S.str().c_str(),
+             "-P", arg_P.str().c_str(), "-M", arg_M.str().c_str(),
+             "-U", "-Z", arg_Z.str().c_str(), "-u", arg_U.str().c_str(),
+             "-g", arg_G.str().c_str(),
+             context.fullDestPath.c_str(),NULL);
     } else {
       // The flags are the same as in unsecure mode so the stagerJob
       // can work with rfiod unsecure (provisional)
       execl (progfullpath.c_str(), progname.c_str(),
-	     "-1", "-s", "-l", "-n", "-f", logFile.c_str(),
-	     "-T", arg_T.str().c_str(), "-S", arg_S.str().c_str(),
-	     "-P", arg_P.str().c_str(), "-M", arg_M.str().c_str(),
-	     "-U", "-Z", arg_Z.str().c_str(),
-	     context.fullDestPath.c_str(), NULL);
+             "-1", "-s", "-l", "-n", "-f", logFile.c_str(),
+             "-T", arg_T.str().c_str(), "-S", arg_S.str().c_str(),
+             "-P", arg_P.str().c_str(), "-M", arg_M.str().c_str(),
+             "-U", "-Z", arg_Z.str().c_str(),
+             context.fullDestPath.c_str(), NULL);
     }
   }
   // Should never be reached

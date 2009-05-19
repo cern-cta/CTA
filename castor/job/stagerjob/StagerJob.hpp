@@ -66,58 +66,63 @@ namespace castor {
        * DLF messages defined for the stager job
        */
       enum StagerJobDlfMessages {
+
         // System call errors
-        CREATFAILED =    1, /* Failed to create empty file */
-        FCLOSEFAILED =   2, /* Failed to close file */
-        SCLOSEFAILED =   3, /* Failed to close socket */
-        CHDIRFAILED =    4, /* Failed to change directory to tmp */
-        DUP2FAILED =     5, /* Failed to duplicate socket */
-        MOVERNOTEXEC =   6, /* Mover program cannot be executed. Check permissions */
-        EXECFAILED =     7, /* Failed to exec mover */
+        CREATFAILED =     1, /* Failed to create empty file */
+        FCLOSEFAILED =    2, /* Failed to close file */
+        SCLOSEFAILED =    3, /* Failed to close socket */
+        CHDIRFAILED =     4, /* Failed to change directory to tmp */
+        DUP2FAILED =      5, /* Failed to duplicate socket */
+        MOVERNOTEXEC =    6, /* Mover program cannot be executed. Check permissions */
+        EXECFAILED =      7, /* Failed to exec mover */
 
         // Invalid configurations or parameters
-        INVRETRYINT =    13, /* Invalid Job/RetryInterval option, using default */
-        INVRETRYNBAT =   14, /* Invalid Job/RetryAttempts option, using default */
-        DOWNRESFILE =    15, /* Downloading resource file */
-        INVALIDURI =     16, /* Invalid Uniform Resource Indicator, cannot download resource file */
-        MAXATTEMPTS =    17, /* Exceeded maximum number of attempts trying to download resource file */
-        DOWNEXCEPT =     18, /* Exception caught trying to download resource file */
-        INVALRESCONT =   19, /* The content of the resource file is invalid */
+        INVRETRYINT =     13, /* Invalid Job/RetryInterval option, using default */
+        INVRETRYNBAT =    14, /* Invalid Job/RetryAttempts option, using default */
+        DOWNRESFILE =     15, /* Downloading resource file */
+        INVALIDURI =      16, /* Invalid Uniform Resource Indicator, cannot download resource file */
+        MAXATTEMPTS =     17, /* Exceeded maximum number of attempts trying to download resource file */
+        DOWNEXCEPT =      18, /* Exception caught trying to download resource file */
+        INVALRESCONT =    19, /* The content of the resource file is invalid */
 
         // Informative logs
-        JOBSTARTED =     20, /* Job Started */
-        JOBENDED =       21, /* Job finished successfully */
-        JOBFAILED =      22, /* Job failed */
-        JOBORIGCRED =    23, /* Credentials at start time */
-        JOBACTCRED =     24, /* Actual credentials used */
-        JOBNOOP =        25, /* No operation performed */
-        FORKMOVER =      26, /* Forking mover */
-        REQCANCELED =    27, /* Request canceled */
-        MOVERPORT =      28, /* Mover will use the following port */
-        MOVERFORK =      29, /* Mover fork uses the following command line */
-        ACCEPTCONN =     30, /* Client connected */
-        JOBFAILEDNOANS = 31, /* Job failed before it could send an answer to client */
+        JOBSTARTED =      20, /* Job Started */
+        JOBENDED =        21, /* Job finished successfully */
+        JOBFAILED =       22, /* Job failed */
+        JOBORIGCRED =     23, /* Credentials at start time */
+        JOBACTCRED =      24, /* Actual credentials used */
+        JOBNOOP =         25, /* No operation performed */
+        FORKMOVER =       26, /* Forking mover */
+        REQCANCELED =     27, /* Request canceled */
+        MOVERPORT =       28, /* Mover will use the following port */
+        MOVERFORK =       29, /* Mover fork uses the following command line */
+        ACCEPTCONN =      30, /* Client connected */
+        JOBFAILEDNOANS =  31, /* Job failed before it could send an answer to client */
 
         // Errors
-        STAT64FAIL =     40, /* rfio_stat64 error */
-        CHILDEXITED =    41, /* Child exited */
-        CHILDSIGNALED =  42, /* Child exited due to uncaught signal */
-        CHILDSTOPPED =   43, /* Child was stopped */
-        NOANSWERSENT =   52, /* Could not send answer to client */
-        GETATTRFAILED =  53, /* Failed to get checksum information from extended attributes */
-	CSTYPENOTSOP =   54, /* Unsupported checksum type, ignoring checksum information */
+        STAT64FAIL =      40, /* rfio_stat64 error */
+        CHILDEXITED =     41, /* Child exited */
+        CHILDSIGNALED =   42, /* Child exited due to uncaught signal */
+        CHILDSTOPPED =    43, /* Child was stopped */
+        NOANSWERSENT =    52, /* Could not send answer to client */
+        GETATTRFAILED =   53, /* Failed to get checksum information from extended attributes */
+	CSTYPENOTSOP =    54, /* Unsupported checksum type, ignoring checksum information */
 
         // Protocol specific. Should not be here if the plugins
         // were properly packaged in separate libs
-        GSIBADPORT =     44, /* Invalid port range for GridFTP in config file. using default */
-        GSIBADMINPORT =  45, /* Invalid lower bound for GridFTP port range in config file. Using default */
-        GSIBADMAXPORT =  46, /* Invalid upper bound for GridFTP port range in config file. Using default */
-        GSIBADMINVAL =   47, /* Lower bound for GridFTP port range not in valid range. Using default */
-        GSIBADMAXVAL =   48, /* Upper bound for GridFTP port range not in valid range. Using default */
-        GSIPORTRANGE =   49, /* GridFTP Port range */
-        GSIPORTUSED =    50, /* GridFTP Socket bound */
+        GSIBADPORT =      44, /* Invalid port range for GridFTP in config file. using default */
+        GSIBADMINPORT =   45, /* Invalid lower bound for GridFTP port range in config file. Using default */
+        GSIBADMAXPORT =   46, /* Invalid upper bound for GridFTP port range in config file. Using default */
+        GSIBADMINVAL =    47, /* Lower bound for GridFTP port range not in valid range. Using default */
+        GSIBADMAXVAL =    48, /* Upper bound for GridFTP port range not in valid range. Using default */
 
-	XROOTENOENT =    51  /* Xrootd is not installed */
+	XROOTENOENT =     51, /* Xrootd is not installed */
+
+        RFIODBADPORT =    55, /* Invalid port range for RFIOD in config file. using default */
+        RFIODBADMINPORT = 56, /* Invalid lower bound for RFIOD port range in config file. Using default */
+        RFIODBADMAXPORT = 57, /* Invalid upper bound for RFIOD port range in config file. Using default */
+        RFIODBADMINVAL =  58, /* Lower bound for RFIOD port range not in valid range. Using default */
+        RFIODBADMAXVAL =  59, /* Upper bound for RFIOD port range not in valid range. Using default */
       };
 
       /**

@@ -110,7 +110,7 @@ void castor::job::stagerjob::RawMoverPlugin::preForkHook
     e.getMessage() << "In call to getpeername";
     throw e;
   }
-  hp = Cgethostbyaddr((char *)(&from.sin_addr),sizeof(struct in_addr),from.sin_family);
+  hp = Cgethostbyaddr((char *)(&from.sin_addr), sizeof(struct in_addr), from.sin_family);
   if (hp == NULL) {
     clienthostptr = inet_ntoa(from.sin_addr);
   } else {
