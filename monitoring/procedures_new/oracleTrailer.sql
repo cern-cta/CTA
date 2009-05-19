@@ -636,7 +636,7 @@ BEGIN
        FROM &dlfschema..dlf_messages a, &dlfschema..dlf_num_param_values b
       WHERE a.id = b.id
         AND a.facility = 26 -- Job 
-        AND a.msg_no = 12   -- Job Started
+        AND a.msg_no = 20   -- Job Started
         AND a.timestamp >= maxTimeStamp
         AND b.timestamp >= maxTimeStamp
         AND a.timestamp < maxTimeStamp + 5/1440
