@@ -34,7 +34,11 @@
 #include "castor/job/stagerjob/InputArguments.hpp"
 #include "castor/job/stagerjob/RootPlugin.hpp"
 
-// static instance of the RootPlugin
+// Default port range
+#define ROOTDMINPORT 45000
+#define ROOTDMAXPORT 46000
+
+// Static instance of the RootPlugin
 castor::job::stagerjob::RootPlugin rootPlugin;
 
 //------------------------------------------------------------------------------
@@ -42,6 +46,82 @@ castor::job::stagerjob::RootPlugin rootPlugin;
 //------------------------------------------------------------------------------
 castor::job::stagerjob::RootPlugin::RootPlugin() throw():
   RawMoverPlugin("root") {
+}
+
+//------------------------------------------------------------------------------
+// getPortRange
+//------------------------------------------------------------------------------
+std::pair<int, int> castor::job::stagerjob::RootPlugin::getPortRange
+(InputArguments &args, std::string name)
+  throw() {
+  // Look at the config file
+  char* entry = getconfent("ROOT", name.c_str(), 0);
+  if (NULL == entry) {
+    return std::pair<int, int>(ROOTDMINPORT, ROOTDMAXPORT);
+  }
+  // Parse min port
+  std::istringstream iss(entry);
+  std::string value;
+  std::getline(iss, value, ',');
+  if (iss.fail() || value.empty()) {
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("RequiredFormat", "min,max"),
+       castor::dlf::Param("Found", entry),
+       castor::dlf::Param(args.subRequestUuid)};
+    castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
+                            ROOTDBADPORT, 3, params, &args.fileId);
+    return std::pair<int, int>(ROOTDMINPORT, ROOTDMAXPORT);
+  }
+  int min = ROOTDMINPORT;
+  if (value.find_first_not_of("0123456789") != value.npos) {
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Found", value),
+       castor::dlf::Param(args.subRequestUuid)};
+    castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
+                            ROOTDBADMINPORT, 2, params, &args.fileId);
+  } else {
+    // Check min port value
+    min = atoi(value.c_str());
+    if (min < 1024 || min > 65535) {
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Value", min),
+         castor::dlf::Param(args.subRequestUuid)};
+      castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
+                              ROOTDBADMINVAL, 2, params, &args.fileId);
+      min = ROOTDMINPORT;
+    }
+  }
+  // Parse max port
+  int max = ROOTDMAXPORT;
+  std::getline(iss, value);
+  if (value.find_first_not_of("0123456789") != value.npos) {
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Found", value),
+       castor::dlf::Param(args.subRequestUuid)};
+    castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
+                            ROOTDBADMAXPORT, 2, params, &args.fileId);
+  } else {
+    max = atoi(value.c_str());
+    if (max < 1024 || max > 65535 || max < min) {
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Value", max),
+         castor::dlf::Param("Min value", min),
+         castor::dlf::Param(args.subRequestUuid)};
+      castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
+                              ROOTDBADMAXVAL, 3, params, &args.fileId);
+      max = ROOTDMAXPORT;
+    }
+  }
+  return std::pair<int, int>(min, max);
+}
+
+//------------------------------------------------------------------------------
+// getPortRange
+//------------------------------------------------------------------------------
+std::pair<int, int>
+castor::job::stagerjob::RootPlugin::getPortRange
+(InputArguments &args) throw() {
+  return getPortRange(args, "PORT_RANGE");
 }
 
 //------------------------------------------------------------------------------
@@ -63,7 +143,7 @@ void castor::job::stagerjob::RootPlugin::postForkHook
   std::string progfullpath = rootsys;
   progfullpath += "/rootd";
   std::ostringstream cmdLine;
-  cmdLine << progfullpath << " -i -d 0 "
+  cmdLine << progfullpath << " -i -d 0"
           << " -F " << context.fullDestPath
           << " -H " << args.rawRequestUuid
           << " (pid=" << context.childPid << ")";
@@ -113,7 +193,9 @@ void castor::job::stagerjob::RootPlugin::execMover
     exit(EXIT_FAILURE);
   }
   // Duplicate socket on stdin/stdout/stderr and close the others
-  if (dup2(context.socket, 0) < 0 || dup2(context.socket, 1) < 0 || dup2(context.socket, 2) < 0) {
+  if ((dup2(context.socket, 0) < 0) || 
+      (dup2(context.socket, 1) < 0) || 
+      (dup2(context.socket, 2) < 0)) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("Error Code", errno),
        castor::dlf::Param("Error Message", strerror(errno)),
@@ -133,9 +215,8 @@ void castor::job::stagerjob::RootPlugin::execMover
     {castor::dlf::Param("Error Code", errno),
      castor::dlf::Param("Error Message", strerror(errno)),
      castor::dlf::Param(args.subRequestUuid)};
-  castor::dlf::dlf_writep
-    (args.requestUuid, DLF_LVL_ERROR,
-     castor::job::stagerjob::EXECFAILED, 3, params, &args.fileId);
+  castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR, 
+                          EXECFAILED, 3, params, &args.fileId);
   dlf_shutdown(5);
   exit(EXIT_FAILURE);
 }

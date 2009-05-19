@@ -35,7 +35,7 @@
 
 // Default port range
 #define RFIODMINPORT 50000
-#define RFIODMAXPORT 52000
+#define RFIODMAXPORT 51000
 
 // Static instance of the RfioPlugin
 castor::job::stagerjob::RfioPlugin rfioPlugin;

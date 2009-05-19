@@ -50,6 +50,12 @@ namespace castor {
         RootPlugin() throw();
 
         /**
+         * Returns the port range for root
+         */
+        virtual std::pair<int, int> getPortRange
+        (castor::job::stagerjob::InputArguments &args) throw();
+
+        /**
          * hook for the code to be executed just after the mover fork,
          * in the parent process. Only logging and calling the method
          * of InstrumentedPlugin.
@@ -68,6 +74,16 @@ namespace castor {
         virtual void execMover(InputArguments &args,
                                PluginContext &context)
           throw (castor::exception::Exception);
+
+      private:
+
+        /**
+         * Get a given port range from the config file and checks it
+         * @param name the config file entry
+         */
+        static std::pair<int, int> getPortRange
+        (InputArguments &args, std::string name)
+          throw();
 
       }; // end of class RootPlugin
 

@@ -459,13 +459,13 @@ int main(int argc, char** argv) {
     castor::dlf::Message messages[] = {
 
       // System call errors
-      { CREATFAILED,     "Failed to create empty file"},
-      { FCLOSEFAILED,    "Failed to close file"},
-      { SCLOSEFAILED,    "Failed to close socket"},
-      { CHDIRFAILED,     "Failed to change directory to tmp"},
-      { DUP2FAILED,      "Failed to duplicate socket"},
-      { MOVERNOTEXEC,    "Mover program cannot be executed. Check permissions"},
-      { EXECFAILED,      "Failed to exec mover"},
+      { CREATFAILED,     "Failed to create empty file" },
+      { FCLOSEFAILED,    "Failed to close file" },
+      { SCLOSEFAILED,    "Failed to close socket" },
+      { CHDIRFAILED,     "Failed to change directory to tmp" },
+      { DUP2FAILED,      "Failed to duplicate socket" },
+      { MOVERNOTEXEC,    "Mover program cannot be executed. Check permissions" },
+      { EXECFAILED,      "Failed to exec mover" },
 
       // Invalid configurations or parameters
       { INVRETRYINT,     "Invalid Job/RetryInterval option, using default" },
@@ -514,6 +514,12 @@ int main(int argc, char** argv) {
       { RFIODBADMAXPORT, "Invalid upper bound for RFIOD port range in config file. Using default" },
       { RFIODBADMINVAL,  "Lower bound for RFIOD port range not in valid range. Using default" },
       { RFIODBADMAXVAL,  "Upper bound for RFIOD port range not in valid range. Using default" },
+
+      { ROOTDBADPORT,    "Invalid port range for ROOT in config file. using default" },
+      { ROOTDBADMINPORT, "Invalid lower bound for ROOT port range in config file. Using default" },
+      { ROOTDBADMAXPORT, "Invalid upper bound for ROOT port range in config file. Using default" },
+      { ROOTDBADMINVAL,  "Lower bound for ROOT port range not in valid range. Using default" },
+      { ROOTDBADMAXVAL,  "Upper bound for ROOT port range not in valid range. Using default" },
 
       { -1, "" }};
     castor::dlf::dlf_init("Job", messages);

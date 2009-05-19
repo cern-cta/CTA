@@ -123,6 +123,12 @@ namespace castor {
         RFIODBADMAXPORT = 57, /* Invalid upper bound for RFIOD port range in config file. Using default */
         RFIODBADMINVAL =  58, /* Lower bound for RFIOD port range not in valid range. Using default */
         RFIODBADMAXVAL =  59, /* Upper bound for RFIOD port range not in valid range. Using default */
+
+        ROOTDBADPORT =    60, /* Invalid port range for ROOT in config file. using default */
+        ROOTDBADMINPORT = 61, /* Invalid lower bound for ROOT port range in config file. Using default */
+        ROOTDBADMAXPORT = 62, /* Invalid upper bound for ROOT port range in config file. Using default */
+        ROOTDBADMINVAL =  63, /* Lower bound for ROOT port range not in valid range. Using default */
+        ROOTDBADMAXVAL =  64  /* Upper bound for ROOT port range not in valid range. Using default */
       };
 
       /**
