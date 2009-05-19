@@ -26,7 +26,7 @@
 
 
 /* Update the schema version */
-UPDATE CastorVersion SET schemaVersion = '2_1_8_6';
+UPDATE CastorVersion SET schemaVersion = '2_1_8_8';
 
 
 /***** EXISTING/OLD MONITORING *****/
@@ -272,19 +272,7 @@ END;
 
 /* PL/SQL method implementing statsDiskCachEfficiency
  *
- * Provides an overview of how effectively the disk cache is performing. For 
- * example, the greater the number of recalls the less effective the cache is.
- *
- * Example output:
- *   Type            SvcClass      Wait D2D  Recall Staged Total
- *   StageGetRequest dteam         0    0    0      3      3
- *   StageGetRequest compasschunks 0    0    0      1      1
- *   StageGetRequest na48          0    0    0      71     71
- *   StageGetRequest compassmdst   0    0    0      1      1
- *   StageGetRequest compass004d   0    0    0      55     55
- *   StageGetRequest compasscdr    0    0    1      1      2
- *   StageGetRequest na48goldcmp   0    0    0      154    154
- *   StageGetRequest default       0    0    0      100    100
+ * Provides an overview of how effectively the disk cache is performing.
  */
 CREATE OR REPLACE PROCEDURE statsDiskCacheEfficiency (now IN DATE) AS
 BEGIN
@@ -305,50 +293,57 @@ BEGIN
 
   -- Record results
   FOR a IN (
-    SELECT type, svcclass,
-           nvl(sum(decode(msg_no, 53, requests, 0)), 0) Wait,
-           nvl(sum(decode(msg_no, 56, requests, 0)), 0) D2D,
-           nvl(sum(decode(msg_no, 57, requests, 0)), 0) Recall,
-           nvl(sum(decode(msg_no, 60, requests, 0)), 0) Staged,
-           nvl(sum(requests), 0) total
-      FROM (
-        SELECT type, svcclass, msg_no, count(*) requests FROM (
-          SELECT * FROM (
-            -- Get the first message issued for all subrequests of interest. 
-            -- This will indicate to us whether the request was a hit or a miss
-            SELECT msg_no, type, svcclass,
-                   RANK() OVER (PARTITION BY subreqid
-                          ORDER BY timestamp ASC, timeusec ASC) rank
-              FROM (
-                -- Extract all subrequests processed by the stager that resulted
-                -- in read type access
-                SELECT messages.reqid, messages.subreqid, messages.timestamp,
-                       messages.timeusec, messages.msg_no,
-                       max(decode(params.name, 'Type',     params.value, NULL)) type,
-                       max(decode(params.name, 'SvcClass', params.value, 'default')) svcclass
-                  FROM &dlfschema..dlf_messages messages, &dlfschema..dlf_str_param_values params
-                 WHERE messages.id = params.id
-                   AND messages.severity = 8  -- System
-                   AND messages.facility = 22 -- Stager
-                   AND messages.msg_no IN (53, 56, 57, 60)
-                   AND messages.timestamp >  now - 10/1440
-                   AND messages.timestamp <= now - 3/1440
-                   AND params.name IN ('Type', 'SvcClass')
-                   AND params.timestamp >  now - 10/1440
-                   AND params.timestamp <= now - 3/1440
-                 GROUP BY messages.reqid, messages.subreqid, messages.timestamp,
-                          messages.timeusec, messages.msg_no
-              ) results
-             -- Filter the subrequests so that we only process requests which 
-             -- entered the system through the request handler in the last
-             -- sampling interval. This stops us from recounting subrequests
-             -- that were restarted
-             WHERE results.reqid IN 
-               (SELECT /*+ CARDINALITY(helper 1000) */ * 
-                  FROM CacheEfficiencyHelper helper))
-         ) WHERE rank = 1
-       GROUP BY type, svcclass, msg_no)
-     GROUP BY type, svcclass
+    SELECT results.*,
+           -- Percentages
+           round((results.Wait   / results.Total) * 100, 2) WaitPerc,
+           round((results.D2D    / results.Total) * 100, 2) D2DPerc,
+           round((results.Recall / results.Total) * 100, 2) RecallPerc,
+           round((results.Staged / results.Total) * 100, 2) StagedPerc
+        FROM (
+        SELECT type, svcclass,
+               nvl(sum(decode(msg_no, 53, requests, 0)), 0) Wait,
+               nvl(sum(decode(msg_no, 56, requests, 0)), 0) D2D,
+               nvl(sum(decode(msg_no, 57, requests, 0)), 0) Recall,
+               nvl(sum(decode(msg_no, 60, requests, 0)), 0) Staged,
+               nvl(sum(requests), 0) Total
+          FROM (
+            SELECT type, svcclass, msg_no, count(*) requests FROM (
+              SELECT * FROM (
+                -- Get the first message issued for all subrequests of interest. 
+                -- This will indicate to us whether the request was a hit or a miss
+                SELECT msg_no, type, svcclass,
+                       RANK() OVER (PARTITION BY subreqid
+                              ORDER BY timestamp ASC, timeusec ASC) rank
+                  FROM (
+                    -- Extract all subrequests processed by the stager that resulted
+                    -- in read type access
+                    SELECT messages.reqid, messages.subreqid, messages.timestamp,
+                           messages.timeusec, messages.msg_no,
+                           max(decode(params.name, 'Type',     params.value, NULL)) type,
+                           max(decode(params.name, 'SvcClass', params.value, 'default')) svcclass
+                      FROM &dlfschema..dlf_messages messages, &dlfschema..dlf_str_param_values params
+                     WHERE messages.id = params.id
+                       AND messages.severity = 8  -- System
+                       AND messages.facility = 22 -- Stager
+                       AND messages.msg_no IN (53, 56, 57, 60)
+                       AND messages.timestamp >  now - 10/1440
+                       AND messages.timestamp <= now - 3/1440
+                       AND params.name IN ('Type', 'SvcClass')
+                       AND params.timestamp >  now - 10/1440
+                       AND params.timestamp <= now - 3/1440
+                     GROUP BY messages.reqid, messages.subreqid, messages.timestamp,
+                              messages.timeusec, messages.msg_no
+                  ) results
+                 -- Filter the subrequests so that we only process requests which 
+                 -- entered the system through the request handler in the last
+                 -- sampling interval. This stops us from recounting subrequests
+                 -- that were restarted
+                 WHERE results.reqid IN 
+                   (SELECT /*+ CARDINALITY(helper 1000) */ * 
+                      FROM CacheEfficiencyHelper helper))
+             ) WHERE rank = 1
+           GROUP BY type, svcclass, msg_no)
+         GROUP BY type, svcclass) results
   )
   LOOP
     INSERT INTO DiskCacheEfficiencyStats
