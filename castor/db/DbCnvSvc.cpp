@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbCnvSvc.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/07/09 16:16:30 $ $Author: sponcec3 $
+ * @(#)$RCSfile: DbCnvSvc.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2009/05/19 16:23:00 $ $Author: itglp $
  *
  *
  *
@@ -66,7 +66,14 @@ castor::db::DbCnvSvc::DbCnvSvc(const std::string name) :
 // -----------------------------------------------------------------------
 // ~DbCnvSvc
 // -----------------------------------------------------------------------
-castor::db::DbCnvSvc::~DbCnvSvc() throw() {}
+castor::db::DbCnvSvc::~DbCnvSvc() throw() {
+  // we're going away, so we notify all db oriented objects
+  // that their statements are not valid any longer.
+  // XXX TODO: we should invalidate their pointer to this instance!
+  // XXX deleting a db oriented service AFTER having deleted this
+  // XXX object results in dereferencing a dangling pointer!
+  dropConnection();
+}
 
 // -----------------------------------------------------------------------
 // repType
@@ -108,9 +115,14 @@ castor::IObject* castor::db::DbCnvSvc::createObj(castor::IAddress* address)
   if (OBJ_INVALID == address->objType()) {
     castor::BaseAddress* ad =
       dynamic_cast<castor::BaseAddress*>(address);
-    unsigned int type = getTypeFromId(ad->target());
-    if (0 == type) return 0;
-    ad->setObjType(type);
+    try {
+      unsigned int type = getTypeFromId(ad->target());
+      if (0 == type) return 0;
+      ad->setObjType(type);
+    } catch (castor::exception::NoEntry e) {
+      // no type found, assume this object does not exist
+      return 0;
+    }
   }
   // call method of parent object
   return this->BaseCnvSvc::createObj(address);
