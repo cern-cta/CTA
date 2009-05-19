@@ -35,8 +35,9 @@
 #include "castor/job/stagerjob/InputArguments.hpp"
 #include "castor/job/stagerjob/GridFTPPlugin.hpp"
 
-// Timeout on select
-#define SELECT_TIMEOUT_GSIFTP 900
+// Timeout on select. This is the time we'll wait on a GridFTP
+// client to connect (see also castor.conf)
+#define SELECT_TIMEOUT_GSIFTP 180
 
 // default port range
 #define GRIDFTPMINPORT 20000
@@ -50,8 +51,18 @@ castor::job::stagerjob::GridFTPPlugin gridFTPPlugin;
 //------------------------------------------------------------------------------
 castor::job::stagerjob::GridFTPPlugin::GridFTPPlugin() throw() :
   RawMoverPlugin("gsiftp") {
-  // Change the default time out for select
-  setSelectTimeOut(SELECT_TIMEOUT_GSIFTP);
+  // Set the default time out for select
+  char *value = getconfent("GSIFTP", "TIMEOUT", 0);
+  int t = SELECT_TIMEOUT_GSIFTP;
+  if (value) {
+    t = std::strtol(value, 0, 10);
+    if (t < 1) {
+      // silently override invalid values
+      // valid range is explained in castor.conf
+      t = SELECT_TIMEOUT_GSIFTP;
+    }
+  }
+  setSelectTimeOut(t);
 }
 
 //------------------------------------------------------------------------------
