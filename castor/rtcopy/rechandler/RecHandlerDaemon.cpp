@@ -33,7 +33,7 @@
 
 #include "castor/server/SignalThreadPool.hpp"
 
-
+#include "castor/rtcopy/rechandler/IRecHandlerSvc.hpp"
 #include "castor/Services.hpp"
 
 #include <Cgetopt.h>
@@ -59,6 +59,7 @@ extern "C" {
 int main(int argc, char* argv[]) {
   
   // service to access the database
+  // just to check that the configuration is correct
 
   castor::IService* orasvc = castor::BaseObject::services()->service("OraRecHandlerSvc", castor::SVC_ORARECHANDLERSVC);
   castor::rtcopy::rechandler::IRecHandlerSvc* myService = dynamic_cast<castor::rtcopy::rechandler::IRecHandlerSvc*>(orasvc);
@@ -110,7 +111,7 @@ int main(int argc, char* argv[]) {
     }
     
     newRecHandler->addThreadPool(
-      new castor::server::SignalThreadPool("RecHandlerThread", new castor::rtcopy::rechandler::RecHandlerThread(myService,recallPySvc), sleepTime));
+      new castor::server::SignalThreadPool("RecHandlerThread", new castor::rtcopy::rechandler::RecHandlerThread(recallPySvc), sleepTime));
     
     newRecHandler->getThreadPool('R')->setNbThreads(1);
     newRecHandler->start();

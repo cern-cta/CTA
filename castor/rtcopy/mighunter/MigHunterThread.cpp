@@ -43,7 +43,7 @@
 #include "castor/stager/TapePool.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "castor/exception/Internal.hpp"
-
+#include "castor/rtcopy/mighunter/IMigHunterSvc.hpp"
 #include <Cns_api.h>
 #include <getconfent.h>
 #include <u64subr.h>
@@ -55,8 +55,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::rtcopy::mighunter::MigHunterThread::MigHunterThread(castor::rtcopy::mighunter::IMigHunterSvc* svc, std::vector<std::string> svcClassArray, u_signed64 minByte, bool doClone,castor::infoPolicy::MigrationPySvc* migrPy,castor::infoPolicy::StreamPySvc* strPy ){
-  m_dbSvc=svc; 
+castor::rtcopy::mighunter::MigHunterThread::MigHunterThread(std::vector<std::string> svcClassArray, u_signed64 minByte, bool doClone,castor::infoPolicy::MigrationPySvc* migrPy,castor::infoPolicy::StreamPySvc* strPy ){
   m_listSvcClass=svcClassArray;
   m_byteVolume=minByte;
   m_doClone=doClone;
@@ -69,6 +68,20 @@ castor::rtcopy::mighunter::MigHunterThread::MigHunterThread(castor::rtcopy::migh
 //------------------------------------------------------------------------------
 void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 {
+
+  // create service 
+
+  // service to access the database
+  castor::IService* dbSvc = castor::BaseObject::services()->service("OraMigHunterSvc", castor::SVC_ORAMIGHUNTERSVC); 
+  castor::rtcopy::mighunter::IMigHunterSvc* oraSvc = dynamic_cast<castor::rtcopy::mighunter::IMigHunterSvc*>(dbSvc);
+
+
+  if (0 == oraSvc) {
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 14, 0, NULL);
+    return;
+  }
+  
+
   std::vector<castor::infoPolicy::PolicyObj*> infoCandidateTapeCopies;
   std::vector<castor::infoPolicy::PolicyObj*> infoCandidateStreams;
   std::vector<castor::infoPolicy::PolicyObj*> eligibleCandidates;
@@ -95,7 +108,7 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
       
 	// tapecopy id and extra information retrieved from the db for the python policy       
    
-	infoCandidateTapeCopies=m_dbSvc->inputForMigrationPolicy(*svcClassName,&initialSizeToTransfer);
+	infoCandidateTapeCopies=oraSvc->inputForMigrationPolicy(*svcClassName,&initialSizeToTransfer);
 
 
 	if (infoCandidateTapeCopies.empty()){	
@@ -111,12 +124,12 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	}
       
           
-	int ret=m_dbSvc->createOrUpdateStream((*svcClassName),initialSizeToTransfer,m_byteVolume,initialSizeCeiling,m_doClone,infoCandidateTapeCopies); 
+	int ret=oraSvc->createOrUpdateStream((*svcClassName),initialSizeToTransfer,m_byteVolume,initialSizeCeiling,m_doClone,infoCandidateTapeCopies); 
      // log error on DLF for the stream
 
 	if (ret<0){
 	 // resurrect candidates
-	  m_dbSvc->resurrectTapeCopies(infoCandidateTapeCopies);
+	  oraSvc->resurrectTapeCopies(infoCandidateTapeCopies);
           if(ret==-1){
 	    castor::dlf::Param params1[]= {castor::dlf::Param("message", "No tapepools Candidate")};
             castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 4, 1, params1);
@@ -210,7 +223,7 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 
 	try {
 	//attach the eligible tape copies
-	  m_dbSvc->attachTapeCopiesToStreams(eligibleCandidates);
+	  oraSvc->attachTapeCopiesToStreams(eligibleCandidates);
 	}catch(castor::exception::Exception e){
 	  castor::dlf::Param params[] =
 	    {
@@ -219,8 +232,8 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	     castor::dlf::Param("message", e.getMessage().str())};
 	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 8, 3, params);
 
-	  m_dbSvc->resurrectTapeCopies(eligibleCandidates);
-	  m_dbSvc->resurrectTapeCopies(candidatesToRestore);
+	  oraSvc->resurrectTapeCopies(eligibleCandidates);
+	  oraSvc->resurrectTapeCopies(candidatesToRestore);
 	  castor::exception::Internal ex;
 	  ex.getMessage()
 	    << "Error in attaching tapecopies";
@@ -229,17 +242,17 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 
 	// resurrect tape copies not eligible
 
-	m_dbSvc->resurrectTapeCopies(candidatesToRestore);
+	oraSvc->resurrectTapeCopies(candidatesToRestore);
       
 	// delete tapecopies which refers to files which are not in the nameserver
 
-	m_dbSvc->invalidateTapeCopies(invalidTapeCopies);
+	oraSvc->invalidateTapeCopies(invalidTapeCopies);
 
 
 	// retrieve information from the db to know which stream should be started and attach the eligible tapecopy
       
        
-	infoCandidateStreams=m_dbSvc->inputForStreamPolicy((*svcClassName));
+	infoCandidateStreams=oraSvc->inputForStreamPolicy((*svcClassName));
       
 	if  (infoCandidateStreams.empty()) {
 	  // log error and continue with the next svc class
@@ -342,9 +355,9 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	initialSizeForStream= (initialSizeCeiling > 0 && initialSizeForStream>initialSizeCeiling)?initialSizeCeiling:initialSizeForStream;
 
 
-	m_dbSvc->startChosenStreams(eligibleStreams,initialSizeForStream);
+	oraSvc->startChosenStreams(eligibleStreams,initialSizeForStream);
 
-	m_dbSvc->stopChosenStreams(streamsToRestore);
+	oraSvc->stopChosenStreams(streamsToRestore);
 
       } catch (castor::exception::Exception e){
 	// exception due to problems specific to the service class

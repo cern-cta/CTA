@@ -34,7 +34,7 @@
 #include "castor/infoPolicy/CnsInfoMigrationPolicy.hpp"
 #include "castor/infoPolicy/StreamPySvc.hpp"
 #include "castor/server/BaseDbThread.hpp"
-#include "castor/rtcopy/mighunter/IMigHunterSvc.hpp"
+
 namespace castor {
 
   namespace rtcopy{
@@ -45,7 +45,6 @@ namespace castor {
      */
     
       class MigHunterThread :public castor::server::BaseDbThread {
-	castor::rtcopy::mighunter::IMigHunterSvc* m_dbSvc;
 	u_signed64 m_byteVolume;
 	std::vector<std::string> m_listSvcClass;
         bool m_doClone;
@@ -58,7 +57,7 @@ namespace castor {
        * constructor
        * @param maximum numbers of hours that an archived  request can stay in the datebase before being deleted.
        */
-      MigHunterThread(castor::rtcopy::mighunter::IMigHunterSvc* svc, std::vector<std::string> svcClassArray, u_signed64 minByte, bool doClone,	castor::infoPolicy::MigrationPySvc* migrPy, castor::infoPolicy::StreamPySvc* StrPy);
+      MigHunterThread(std::vector<std::string> svcClassArray, u_signed64 minByte, bool doClone,	castor::infoPolicy::MigrationPySvc* migrPy, castor::infoPolicy::StreamPySvc* StrPy);
       
       castor::infoPolicy::CnsInfoMigrationPolicy* getInfoFromNs
       (std::string nsHost,u_signed64 fileId,std::string &svcClassName);

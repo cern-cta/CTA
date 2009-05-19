@@ -49,6 +49,7 @@
 #include "castor/infoPolicy/DbInfoRecallPolicy.hpp"
 #include "castor/infoPolicy/DbInfoPolicy.hpp"
 #include "castor/infoPolicy/PolicyObj.hpp"
+#include "castor/rtcopy/rechandler/IRecHandlerSvc.hpp"
 
 // to implement the priority hack
 
@@ -65,8 +66,7 @@ namespace castor {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RecHandlerThread::RecHandlerThread(castor::rtcopy::rechandler::IRecHandlerSvc* svc, castor::infoPolicy::RecallPySvc* recallPolicy) { 
-   m_dbSvc=svc;
+RecHandlerThread::RecHandlerThread(castor::infoPolicy::RecallPySvc* recallPolicy) { 
    m_recallPolicy=recallPolicy;
 
 }
@@ -77,6 +77,16 @@ RecHandlerThread::RecHandlerThread(castor::rtcopy::rechandler::IRecHandlerSvc* s
 //------------------------------------------------------------------------------
 void RecHandlerThread::run(void* par)
 {
+
+  //get  the db svc
+
+  castor::IService* dbSvc = castor::BaseObject::services()->service("OraRecHandlerSvc", castor::SVC_ORARECHANDLERSVC);
+  castor::rtcopy::rechandler::IRecHandlerSvc* oraSvc = dynamic_cast<castor::rtcopy::rechandler::IRecHandlerSvc*>(dbSvc);
+  if (0 == oraSvc) {
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,7, 0, NULL);
+    return;
+  }
+
   std::vector<castor::infoPolicy::PolicyObj*>::iterator infoCandidate;
   std::vector<u_signed64> eligibleTapeIds; // output with Id to resurrect
   std::vector<castor::infoPolicy::PolicyObj*> infoCandidateTape;
@@ -85,7 +95,7 @@ void RecHandlerThread::run(void* par)
   try{
 
       // get information from the db    
-      infoCandidateTape = m_dbSvc->inputForRecallPolicy();
+      infoCandidateTape = oraSvc->inputForRecallPolicy();
       
       if (infoCandidateTape.empty()) {
 	 castor::dlf::Param params[] =
@@ -175,7 +185,7 @@ void RecHandlerThread::run(void* par)
 
       // call the db to put the tape as pending for that svcclass
       if (!eligibleTapeIds.empty()){
-	 m_dbSvc->resurrectTapes(eligibleTapeIds);
+	 oraSvc->resurrectTapes(eligibleTapeIds);
       }
 
   }

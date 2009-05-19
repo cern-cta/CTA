@@ -42,7 +42,7 @@
 #include "castor/Constants.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/server/SignalThreadPool.hpp"
-
+#include "castor/rtcopy/mighunter/IMigHunterSvc.hpp"
 
 extern "C" {
   char* getconfent(const char *, const char *, int);
@@ -61,7 +61,9 @@ extern "C" {
 
 int main(int argc, char* argv[]){
 
- // service to access the database
+ // service to access the database 
+ // now I just check that everything is ok
+
   castor::IService* orasvc = castor::BaseObject::services()->service("OraMigHunterSvc", castor::SVC_ORAMIGHUNTERSVC);
   castor::rtcopy::mighunter::IMigHunterSvc* mySvc = dynamic_cast<castor::rtcopy::mighunter::IMigHunterSvc*>(orasvc);
   
@@ -137,7 +139,7 @@ int main(int argc, char* argv[]){
     }
 
     newMigHunter.addThreadPool(
-      new castor::server::SignalThreadPool("MigHunterThread", new castor::rtcopy::mighunter::MigHunterThread(mySvc,listSvcClass,minByteVolume,doClone,migrSvc,strSvc), sleepTime));
+      new castor::server::SignalThreadPool("MigHunterThread", new castor::rtcopy::mighunter::MigHunterThread(listSvcClass,minByteVolume,doClone,migrSvc,strSvc), sleepTime));
     newMigHunter.getThreadPool('M')->setNbThreads(1);
     newMigHunter.start();
   

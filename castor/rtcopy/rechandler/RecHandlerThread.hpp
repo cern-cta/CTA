@@ -29,7 +29,6 @@
 
 // Include files
 #include "castor/infoPolicy/RecallPySvc.hpp"
-#include "castor/rtcopy/rechandler/IRecHandlerSvc.hpp"
 #include "castor/server/BaseDbThread.hpp"
 
 namespace castor {
@@ -43,7 +42,6 @@ namespace castor {
      */
     
     class RecHandlerThread : public castor::server::BaseDbThread {
-      castor::rtcopy::rechandler::IRecHandlerSvc* m_dbSvc; 
       castor::infoPolicy::RecallPySvc* m_recallPolicy;
     
     public:
@@ -53,7 +51,7 @@ namespace castor {
        * @param maximum numbers of days that a request can stay in the datebase before being deleted.
        */    
 
-      RecHandlerThread(castor::rtcopy::rechandler::IRecHandlerSvc* svc, castor::infoPolicy::RecallPySvc* recallPolicy);
+      RecHandlerThread(castor::infoPolicy::RecallPySvc* recallPolicy);
 
 
       /**
