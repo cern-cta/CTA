@@ -242,7 +242,7 @@ AS
 /* SQL statement for creation of the SvcClassMap_MV materialized view */
 CREATE MATERIALIZED VIEW SvcClassMap_MV
   REFRESH FORCE ON DEMAND
-  START WITH SYSDATE + 10/1440 NEXT SYSDATE + 1
+  START WITH SYSDATE + 30/1440 NEXT SYSDATE + 1
 AS
   SELECT DISTINCT(svcclass) FROM Requests;
 
