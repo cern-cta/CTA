@@ -306,8 +306,8 @@ AS
    WHERE reqs_t.svcclass IS NOT NULL
    ORDER BY svcclass, bin_t.bin;
 
-/* SQL statement for the creation of the GCStateByFileSize view on the on the GcFiles table*/
-CREATE OR REPLACE VIEW GCStateByFileSize
+/* SQL statement for the creation of the GCStatsByFileSize view on the on the GcFiles table */
+CREATE OR REPLACE VIEW GCStatsByFileSize
 AS
   SELECT nvl(reqs_t.timestamp, sysdate) timestamp, nvl(reqs_t.interval,300) interval,
          reqs_t.svcclass, bin_t.bin, nvl(reqs_t.reqs,0) reqs
