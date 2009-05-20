@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NsOverride.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/05/19 16:25:27 $ $Author: itglp $
+ * @(#)$RCSfile: NsOverride.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2009/05/20 09:07:45 $ $Author: itglp $
  *
  * Singleton class for the NameServer override feature
  *
@@ -69,9 +69,8 @@ castor::stager::daemon::NsOverride::NsOverride() throw () {
     castor::IService* svc = svcs->service("DbStagerSvc", castor::SVC_DBSTAGERSVC);
     castor::stager::IStagerSvc *stgSvc = dynamic_cast<castor::stager::IStagerSvc*>(svc);
     // and now get the target NS host from the CastorConfig table;
-    // ignore any failure, we assume no override is configured and the
-    // main will deal with the error.
-    m_targetCnsHost = stgSvc->getConfigOption("stager", "nsHost", "");
+    // ignore any failure, we assume no override is configured
+    m_targetCnsHost = stgSvc->getConfigOption("stager", "nsHost", m_cnsHost);
   }
   catch (castor::exception::Exception ignored) {}
 }

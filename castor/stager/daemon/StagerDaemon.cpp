@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.65 $ $Release$ $Date: 2009/05/19 16:25:27 $ $Author: itglp $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.66 $ $Release$ $Date: 2009/05/20 09:07:45 $ $Author: itglp $
  *
  * Main stager daemon
  *
@@ -65,23 +65,6 @@ int main(int argc, char* argv[]){
       e.getMessage() << "Failed to load DbStagerSvc, check for shared libraries configuration" << std::endl;
       throw e;
     }
-
-    // check for the NS override configuration
-    castor::stager::daemon::NsOverride* nso = castor::stager::daemon::NsOverride::getInstance();
-    if(nso->getTargetCnsHost() != nso->getCnsHost()) {
-      castor::exception::Exception e(EINVAL);
-      e.getMessage() << "Incorrect configuration found for the NS override. CNS/HOST in castor.conf is '"
-        << nso->getCnsHost() << "' while stager/nsHost in the database is '"
-        << nso->getTargetCnsHost() << "'" << std::endl;
-      throw e;
-    }
-
-    // drop the db connection that has been used by the NsOverride class. This connection
-    // won't be reused by any thread afterwards.
-    castor::db::DbCnvSvc* dbSvc = dynamic_cast<castor::db::DbCnvSvc*>(
-        castor::BaseObject::services()->service("DbCnvSvc", castor::SVC_DBCNV));
-    dbSvc->dropConnection();
- 
 
     /*******************************/
     /* thread pools for the stager */
