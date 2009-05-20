@@ -9,6 +9,7 @@ include ("../../../conf/castor-mon-web/user.php");
 //get posted values
 $period = $_GET['period'];
 $service = $_GET['service'];
+$svcclass = $_GET['svcclass'];
 $from = $_GET['from'];
 $to = $_GET['to'];
 if ($period != NULL) { 
@@ -27,31 +28,40 @@ else {
 		echo "<h2>Wrong Arguments</h2>";
 	}
 }
+
+$pattern_1 = '/[a-zA-Z0-9]{1,15}/';
+preg_match($pattern_1,$svcclass,$match);
+$svcclass = $match[0];
+if ($svcclass == NULL) 
+  $query_svc = 0;
+else
+  $query_svc = 1;
+
 //Create new graph, enable image cache by setting countdown period(in minutes) 
 //depending on selected $period. If the cached image is valid the script immediately 
 //returns the cached image and exits without logining in the DB
 if ($period == "10/1440") {
 	$period = 10/1440; 
-	$graph = new Graph(700,350,"auto",1);
+	$graph = new Graph(700,300,"auto",1);
 }
 else if ($period == "1/24") {
 	$period = 1/24; 
-	$graph = new Graph(700,350,"auto",5);
+	$graph = new Graph(700,300,"auto",5);
 }
 else if ($period == '1') {
 	$period = 1;
-	$graph = new Graph(700,350,"auto",30);
+	$graph = new Graph(700,300,"auto",30);
 }
 else if ($period == '7') {
 	$period = 7;
-	$graph = new Graph(700,350,"auto",60);
+	$graph = new Graph(700,300,"auto",60);
 }
 else if ($period == '30') {
 	$period = 30;
-	$graph = new Graph(700,350,"auto",360);
+	$graph = new Graph(700,300,"auto",360);
 }
 else 
-	$graph = new Graph(700,350,"auto");
+	$graph = new Graph(700,300,"auto");
 //connection - db login
 $conn = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
 if(!$conn) {
@@ -60,7 +70,8 @@ if(!$conn) {
 	exit;
 }
 //find top ten active users
-if ($qn ==1)
+if ($qn ==1) {
+  if ($query_svc == 0)
 	$query1 = "select username from (
 				select username,count(username) reqs
 				from ".$db_instances[$service]['schema'].".requests
@@ -68,17 +79,38 @@ if ($qn ==1)
 				group by username 
 				order by reqs desc )
 		   where rownum < 11";
-else if ($qn ==2)
+  else 
+	$query1 = "select username from (
+				select username,count(username) reqs
+				from ".$db_instances[$service]['schema'].".requests
+				where timestamp > sysdate - :period
+				and svcclass = :svcclass 
+				group by username 
+				order by reqs desc)
+		   where rownum < 11";
+} else if ($qn ==2)  {
+  if ($query_svc == 0)
 	$query1 = "select username from (
 				select username,count(username) reqs
 				from ".$db_instances[$service]['schema'].".requests
 				where timestamp >= to_date(:from_date,'dd/mm/yyyy HH24:Mi')
-					and timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi')
+				and timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi')
+				group by username 
+				order by reqs desc )
+		   where rownum < 11";
+   else
+        $query1 = "select username from (
+				select username,count(username) reqs
+				from ".$db_instances[$service]['schema'].".requests
+				where timestamp >= to_date(:from_date,'dd/mm/yyyy HH24:Mi')
+				and timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi')
+				and svcclass = :svcclass 
 				group by username 
 				order by reqs desc )
 		   where rownum < 11";
 	
-	   
+	
+}
 if (!($parsed1 = OCIParse($conn, $query1))) 
 	{ echo "Error Parsing Query";exit();}
 if ($qn == 1) {
@@ -87,6 +119,9 @@ if ($qn == 1) {
 else if ($qn == 2) {
 	ocibindbyname($parsed1,":from_date",$from);
 	ocibindbyname($parsed1,":to_date",$to);
+}
+if ($query_svc == 1) {
+       	  ocibindbyname($parsed1,":svcclass",$svcclass);
 }
 if (!OCIExecute($parsed1))
 	{ echo "Error Executing Query";exit();}
@@ -108,17 +143,35 @@ foreach ($username as $un) {
 $unames = substr($unames, 0, -1);
 $unames .= ")";
 //Request Counters for Top Ten users
-if ($qn == 1)
+if ($qn == 1)  {
+  if ($query_svc == 0)
 	$query2 = "select distinct username,state , count(*) over (Partition by username,state)reqs
 			   from ".$db_instances[$service]['schema'].".requests
-			   where timestamp > sysdate -:period
+			   where timestamp > sysdate - :period
 					 and username in ".$unames." order by username";
-else if ($qn == 2)	   
+					 
+  else $query2 = "select distinct username,state , count(*) over (Partition by username,state)reqs
+			   from ".$db_instances[$service]['schema'].".requests
+			   where timestamp > sysdate - :period
+			   and username in ".$unames."
+			   and svcclass = :svcclass 
+			   order by username";
+}else if ($qn == 2)	{
+  if ($query_svc == 0)   
 	$query2 = "select distinct username,state , count(*) over (Partition by username,state)reqs
 			   from ".$db_instances[$service]['schema'].".requests
 			   where timestamp >= to_date(:from_date,'dd/mm/yyyy HH24:Mi')
 					and timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi')
 					 and username in ".$unames." order by username";
+					 
+  else $query2 = "select distinct username,state , count(*) over (Partition by username,state)reqs
+			   from ".$db_instances[$service]['schema'].".requests
+			   where timestamp >= to_date(:from_date,'dd/mm/yyyy HH24:Mi')
+			     and timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi')
+			     and username in ".$unames." 
+			     and svcclass = :svcclass
+			   order by username";
+}
 if (!($parsed2 = OCIParse($conn, $query2))) 
 	{ echo "Error Parsing Query";exit();}
 if ($qn == 1) {
@@ -127,6 +180,9 @@ if ($qn == 1) {
 else if ($qn == 2) {
 	ocibindbyname($parsed2,":from_date",$from);
 	ocibindbyname($parsed2,":to_date",$to);
+}
+if ($query_svc == 1) {
+       	  ocibindbyname($parsed2,":svcclass",$svcclass);
 }
 if (!OCIExecute($parsed2))
 	{ echo "Error Executing Query";exit();}
@@ -158,7 +214,7 @@ foreach ($username as $un) {
 //create graph
 $graph->SetShadow();
 $graph->SetScale("textlin");
-$graph->title->Set("Top Ten Users(Requests - User)");
+$graph->title->Set("Top Ten Users(Read File Requests - User)");
 $graph->title->SetFont(FF_FONT1,FS_BOLD);
 $graph->img->SetMargin(60,40,40,120);
 // $graph->yaxis->title->Set("Number of ".$db_instances[$service]['schema']." requests" );
@@ -176,13 +232,15 @@ $b1->SetFillColor("green");
 $b1 -> SetLegend("Resident Files");
 $b2 = new BarPlot($dc);
 $b2->SetFillColor("yellow");
-$b2 -> SetLegend("Pool Copies");
+$b2 -> SetLegend("D2D Copies");
 $b3 = new BarPlot($tr);
 $b3->SetFillColor("red");
 $b3 -> SetLegend("Tape Recalls");
 $gbplot = new AccBarPlot(array($b1,$b2,$b3));
 $gbplot->value->Show(); 
 $b1->value->SetFormat('%0.0f');
+$graph->legend->SetLayout(LEGEND_HOR);
+$graph->legend->Pos(0.125,0.95,"left","bottom");
 $graph->Add($gbplot);
 $graph->Stroke();
 ?> 

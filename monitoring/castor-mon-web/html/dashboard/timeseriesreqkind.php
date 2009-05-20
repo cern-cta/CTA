@@ -8,6 +8,7 @@ include("../lib/no_data.php");
 //user account
 include ("../../../conf/castor-mon-web/user.php");
 //get posted values
+
 $reqkind = $_GET['reqkind'];
 $pattern_1 = '/[a-zA-Z0-9]{1,15}/';
 preg_match($pattern_1,$reqkind,$match);

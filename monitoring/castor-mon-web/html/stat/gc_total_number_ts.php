@@ -58,22 +58,32 @@ else {
 //returns the cached image and exits without logining in the DB
 if ($period == '10/1440') {
 	$period = 10/1440; 
+	$interval = 'Mi';
+	$format = 'HH24:MI';
 	$graph = new Graph(420,200,"auto");
 }
 else if ($period == '1/24') {
 	$period = 1/24; 
+	$interval = 'Mi';
+	$format = 'HH24:MI';
 	$graph = new Graph(420,200,"auto");
 }
 else if ($period == '1') {
 	$period = 1;
+	$interval = 'HH24';
+	$format = 'HH24:MI';
 	$graph = new Graph(420,200,"auto",10);
 }
 else if ($period == '7') {
 	$period = 7;
+	$interval = 'DD';
+	$format = 'DD-MON-RR';
 	$graph = new Graph(420,200,"auto",30);
 }
 else if ($period == '30') {
 	$period = 30;
+	$interval = 'DD';
+	$format = 'DD-MON-RR';
 	$graph = new Graph(420,200,"auto",360);
 }
 else 

@@ -9,6 +9,7 @@ include ("../../../conf/castor-mon-web/user.php");
 //get posted values
 $period = $_GET['period'];
 $service = $_GET['service'];
+$svcclass = $_GET['svcclass'];
 $from = (string)$_GET['from'];
 $to = (string)$_GET['to'];
 if ($period != NULL) { 
@@ -36,6 +37,14 @@ else {
 	$t2 = strtotime($to_final);
 	$dif = ($t2-$t1)/86400;
 }
+
+$pattern_1 = '/[a-zA-Z0-9]{1,15}/';
+preg_match($pattern_1,$svcclass,$match);
+$svcclass = $match[0];
+if ($svcclass == NULL) 
+  $query_svc = 0;
+else
+  $query_svc = 1;
 //selecte appropriate interval and format according to given period
 if($dif <= 1/24) {
 	$interval = 'Mi';
@@ -58,36 +67,26 @@ else {
 //returns the cached image and exits without logining in the DB
 if ($period == '10/1440') {
 	$period = 10/1440; 
-	$interval = 'Mi';
-	$format = 'HH24:MI';
-	$graph = new Graph(420,250,"auto");
+	$graph = new Graph(420,200,"auto");
 }
 else if ($period == '1/24') {
 	$period = 1/24; 
-	$interval = 'Mi';
-	$format = 'HH24:MI';
-	$graph = new Graph(420,250,"auto");
+	$graph = new Graph(420,200,"auto");
 }
 else if ($period == '1') {
 	$period = 1;
-	$interval = 'HH24';
-	$format = 'HH24:MI';
-	$graph = new Graph(420,250,"auto",10);
+	$graph = new Graph(420,200,"auto",10);
 }
 else if ($period == '7') {
 	$period = 7;
-	$interval = 'DD';
-	$format = 'DD-MON-RR';
-	$graph = new Graph(420,250,"auto",30);
+	$graph = new Graph(420,200,"auto",30);
 }
 else if ($period == '30') {
 	$period = 30;
-	$interval = 'DD';
-	$format = 'DD-MON-RR';
-	$graph = new Graph(420,250,"auto",360);
+	$graph = new Graph(420,200,"auto",360);
 }
 else 
-	$graph = new Graph(420,250,"auto");
+	$graph = new Graph(420,200,"auto");
 //connect to DB	
  $con = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
    if (!$con) {
@@ -95,17 +94,29 @@ else
      print htmlentities($e['message']);
      exit;
    } else {// db functionnality
-     if ($qn == 1) {
-       $time_series =
+     if ($qn == 1)  {
+       if ($query_svc == 0)
+         $time_series =
          "select distinct to_char(trunc(timestamp,:interval), :format) bin,
 	   sum (case when type = 'StageGetRequest' then dispatched else 0 end ) read,
 	   sum (case when type = 'StagePutRequest' then dispatched else 0 end ) write
          from ".$db_instances[$service]['schema'].".queuetimestats
-         where timestamp >= trunc(sysdate -:period,:interval)
+         where timestamp >= trunc(sysdate - :period,:interval)
+	 group by to_char(trunc(timestamp,:interval), :format)
+         order by bin";
+	else
+	$time_series =
+         "select distinct to_char(trunc(timestamp,:interval), :format) bin,
+	   sum (case when type = 'StageGetRequest' then dispatched else 0 end ) read,
+	   sum (case when type = 'StagePutRequest' then dispatched else 0 end ) write
+         from ".$db_instances[$service]['schema'].".queuetimestats
+         where timestamp >= trunc(sysdate - :period,:interval)
+	 and svcclass = :svcclass
 	 group by to_char(trunc(timestamp,:interval), :format)
          order by bin";
      } else if ($qn == 2) {
-       $time_series =
+        if ($query_svc == 0) 
+	  $time_series =
          "select distinct to_char(trunc(timestamp,:interval), :format) bin, 
 	   sum (case when type = 'StageGetRequest' then dispatched else 0 end ) read,
 	   sum (case when type = 'StagePutRequest' then dispatched else 0 end ) write
@@ -114,7 +125,18 @@ else
            and timestamp <= trunc(to_date(:to_date,'dd/mm/yyyy HH24:Mi'),:interval)
          group by to_char(trunc(timestamp,:interval), :format)
 	 order by bin";
-     } 
+       else
+	 $time_series =
+         "select distinct to_char(trunc(timestamp,:interval), :format) bin, 
+	   sum (case when type = 'StageGetRequest' then dispatched else 0 end ) read,
+	   sum (case when type = 'StagePutRequest' then dispatched else 0 end ) write
+         from ".$db_instances[$service]['schema'].".queuetimestats
+         where timestamp >= trunc(to_date(:from_date,'dd/mm/yyyy HH24:Mi'),:interval)
+         and timestamp <= trunc(to_date(:to_date,'dd/mm/yyyy HH24:Mi'),:interval)
+	 and svcclass = :svcclass
+         group by to_char(trunc(timestamp,:interval), :format)
+	 order by bin";
+}
      $parsedqry = ociparse($con, $time_series);
      if (!$parsedqry) { 
         echo "Error Parsing Query <br>";
@@ -128,6 +150,9 @@ else
 	else if ($qn == 2) {
 	  ocibindbyname($parsedqry,":from_date",$from);
 	  ocibindbyname($parsedqry,":to_date",$to);
+       }
+       if ($query_svc == 1) {
+       	  ocibindbyname($parsedqry,":svcclass",$svcclass);
        }
        $qryexec = ociexecute($parsedqry);
        if (!$qryexec) {

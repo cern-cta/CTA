@@ -69,7 +69,7 @@ if(empty($hist)) {
 	echo "<b> No Data Available for $username</b>";
 	exit();
 }
-echo "<table><tr><td colspan =2 align = 'center' style='background-color: orangered'> $username last 10 minutes request history </td></tr>";
+echo "<table><tr><td colspan =2 align = 'center' style='background-color: orangered'> $username last 10 minutes read request history </td></tr>";
 echo "<tr><td align = 'center'><img src ='pie_user.php?service=$service&user=$username'></td>";
 echo "<td align = 'center'><img src ='tsuser.php?service=$service&user=$username'></td></tr>";
 echo "<tr><td colspan = 2 align = 'center' style='background-color: orange'> File Size Distribution - Files Requested By $username</td></tr>";

@@ -49,8 +49,8 @@ if ($reqkind == 'TapeRecall') {
 $query1 = "select svcclass,username, count(*) r, count(case when type='StageGetRequest' then 1 else null end) non,
 		   count(case when type='StagePrepareToGetRequest' then 1 else null end) pre
            from ".$db_instances[$service]['schema'].".requests
-           where timestamp >= sysdate -15/1440
-           and timestamp < sysdate -5/1440  
+           where timestamp >= sysdate - 15/1440
+           and timestamp < sysdate - 5/1440  
            and state = 'TapeRecall'
            group by svcclass,username
            order by svcclass, r desc";
@@ -132,8 +132,8 @@ echo "</tbody></table></div>";
 else {
 $query1 = "select svcclass,username, count(*) r
 		   from ".$db_instances[$service]['schema'].".requests
-		   where timestamp >= sysdate -3- 15/1440
-		   and timestamp < sysdate - 3 -5/1440 
+		   where timestamp >= sysdate - 15/1440
+		   and timestamp < sysdate - 5/1440 
 		   and state = '$reqkind'
 		   group by svcclass,username
 		   order by svcclass, r desc";

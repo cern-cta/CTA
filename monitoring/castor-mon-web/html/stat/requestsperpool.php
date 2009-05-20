@@ -32,26 +32,26 @@ else {
 //returns the cached image and exits without logining in the DB
 if ($period == "10/1440") {
 	$period = 10/1440; 
-	$graph = new Graph(700,350,"auto",1);
+	$graph = new Graph(700,250,"auto",1);
 }
 else if ($period == "1/24") {
 	$period = 1/24; 
-	$graph = new Graph(700,350,"auto",5);
+	$graph = new Graph(700,250,"auto",5);
 }
 else if ($period == '1') {
 	$period = 1;
-	$graph = new Graph(700,350,"auto",30);
+	$graph = new Graph(700,250,"auto",30);
 }
 else if ($period == '7') {
 	$period = 7;
-	$graph = new Graph(700,350,"auto",60);
+	$graph = new Graph(700,250,"auto",60);
 }
 else if ($period == '30') {
 	$period = 30;
-	$graph = new Graph(700,350,"auto",360);
+	$graph = new Graph(700,250,"auto",360);
 }
 else 
-	$graph = new Graph(700,350,"auto");
+	$graph = new Graph(700,250,"auto");
 //connection
 $conn = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
 if(!$conn) {
@@ -125,7 +125,7 @@ foreach ($pool_names as $pn) {
 //create bar graph
 $graph->SetShadow();
 $graph->SetScale("textlin");
-$graph->title->Set("Requests per POOL");
+$graph->title->Set("File Read Requests per SvcClass");
 $graph->title->SetFont(FF_FONT1,FS_BOLD);
 $graph->img->SetMargin(60,40,40,120);
 // $graph->yaxis->title->Set("Number of ".$db_instances[$service]['schema']." requests" );
@@ -143,40 +143,15 @@ $b1->SetFillColor("orangered");
 $b1 -> SetLegend("Resident Files");
 $b2 = new BarPlot($dc);
 $b2->SetFillColor("maroon");
-$b2 -> SetLegend("Pool Copies");
+$b2 -> SetLegend("D2D Copies");
 $b3 = new BarPlot($tr);
 $b3->SetFillColor("darkgoldenrod1");
 $b3 -> SetLegend("Tape Recalls");
 $gbplot = new AccBarPlot(array($b1,$b2,$b3));
 $gbplot->value->Show(); 
+$graph->legend->SetLayout(LEGEND_HOR);
+$graph->legend->Pos(0.5,0.95,"left","bottom");
 $graph->Add($gbplot);
 $graph->Stroke();
-
-
-
-//create new graph
-$graph->SetShadow();
-$graph->SetScale("textlin");
-$graph->title->Set("Maximum Wait Time");
-$graph->title->SetFont(FF_FONT1,FS_BOLD);
-$graph->img->SetMargin(60,40,40,120);
-$graph->legend->Pos(0.5,0.95,"center","bottom");
-$graph->yaxis->title->Set("Time(sec)");
-$graph->yaxis->title->SetFont(FF_FONT1,FS_BOLD);
-$graph->yaxis->SetTitleMargin(60);
-$graph->xaxis->SetTickLabels($result['TYPE']);
-$graph->xaxis->SetLabelAngle(90);
-$graph->xaxis->SetFont(FF_FONT1,FS_BOLD);
-$graph->xaxis->title->Set("Request Type");
-$graph->xaxis->SetTitleMargin(80);
-$graph->xaxis->title->SetFont(FF_FONT1,FS_BOLD);
-$graph->xgrid->Show();
-$bplot1 = new BarPlot(array_values($result['STAT']));
-$bplot1->SetFillColor("red");
-$graph->legend->SetLayout(LEGEND_HOR);
-$graph->legend->Pos(0.125,0.95,"left","bottom");
-$graph->Add($bplot1);
-$graph->Stroke();
-
 
 ?> 

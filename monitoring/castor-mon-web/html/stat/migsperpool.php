@@ -33,25 +33,25 @@ else {
 //returns the cached image and exits without logining in the DB
 if ($period == '10/1440') {
 	$period = 10/1440;
-	$graph = new Graph(700,350,"auto",1);
+	$graph = new Graph(700,300,"auto",1);
 }
 else if ($period == '1/24') {
 	$period = 1/24;
-	$graph = new Graph(700,350,"auto",5);
+	$graph = new Graph(700,300,"auto",5);
 }
 else if ($period == '1') {
 	$period = 1;
-	$graph = new Graph(700,350,"auto",30);
+	$graph = new Graph(700,300,"auto",30);
 }
 else if ($period == '7') {
 	$period = 7;
-	$graph = new Graph(700,350,"auto",60);
+	$graph = new Graph(700,300,"auto",60);
 }
 else if ($period == '30') {
 	$period = 30;
-	$graph = new Graph(700,350,"auto",360);
+	$graph = new Graph(700,300,"auto",360);
 }
-else $graph = new Graph(700,350,"auto");
+else $graph = new Graph(700,300,"auto");
 //connection -- DB login 
 $conn = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
 if(!$conn) {
@@ -62,7 +62,7 @@ if(!$conn) {
 if ($qn == 1)
 	$query1 = "select svcclass, count(*) migs
 		   from ".$db_instances[$service]['schema'].".migration
-		   where timestamp > sysdate -:period
+		   where timestamp > sysdate - :period
 		   group by svcclass
 		   order by migs desc";
 else if ($qn == 2)
@@ -98,7 +98,7 @@ if(empty($pool_names)) {
 //Create new plot
 $graph->SetShadow();
 $graph->SetScale("textlin");
-$graph->title->Set("Files Migrated per POOL");
+$graph->title->Set("Files Migrated per SvcClass");
 $graph->title->SetFont(FF_FONT1,FS_BOLD);
 $graph->img->SetMargin(60,40,40,120);
 $graph->yaxis->title->SetFont(FF_FONT1,FS_BOLD);

@@ -30,8 +30,8 @@ $query1 = "select to_char(bin,'HH24:MI') , number_of_req from (
 	   select distinct trunc(timestamp,'Mi') bin, count(trunc(timestamp,'Mi')) 
 	   over (Partition by trunc(timestamp,'Mi')) number_of_req  
            from ".$db_instances[$service]['schema'].".requests
-           where timestamp >= trunc(sysdate - 3-15/1440,'Mi')
-		   and timestamp < trunc(sysdate - 3-5/1440,'Mi') 
+           where timestamp >= trunc(sysdate - 15/1440,'Mi')
+		   and timestamp < trunc(sysdate - 5/1440,'Mi') 
 		   and state = :reqkind
 		   and svcclass = :svcclass)
            order by bin";

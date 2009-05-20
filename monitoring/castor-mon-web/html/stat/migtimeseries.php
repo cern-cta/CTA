@@ -9,6 +9,7 @@ include ("../../../conf/castor-mon-web/user.php");
 //get posted data
 $period = $_GET['period'];
 $from = (string)$_GET['from'];
+$svcclass = $_GET['svcclass'];
 $service = $_GET['service'];
 $to = (string)$_GET['to'];
 if ($period != NULL) { 
@@ -35,6 +36,14 @@ else {
 	$t2 = strtotime($to_final);
 	$dif = ($t2-$t1)/86400;
 }
+$pattern_1 = '/[a-zA-Z0-9]{1,15}/';
+preg_match($pattern_1,$svcclass,$match);
+$svcclass = $match[0];
+if ($svcclass == NULL) 
+  $query_svc = 0;
+else
+  $query_svc = 1;
+
 //Define the correct interval and format in accordance with the selected period
 if($dif <= 1/24) {
 	$interval = 'Mi';
@@ -57,32 +66,22 @@ else {
 //returns the cached image and exits without logining in the DB
 if ($period == '10/1440') {
 	$period = 10/1440;  
-	$interval = 'Mi';
-	$format = 'HH24:MI';
 	$graph = new Graph(420,200,"auto");
 }
 else if ($period == '1/24') {
 	$period = 1/24; 
-	$interval = 'Mi';
-	$format = 'HH24:MI';
 	$graph = new Graph(420,200,"auto");
 }
 else if ($period == '1') {
 	$period = 1;
-	$interval = 'HH24';
-	$format = 'HH24:MI';
 	$graph = new Graph(420,200,"auto",10);
 }
 else if ($period == '7') {
 	$period = 7;
-	$interval = 'DD';
-	$format = 'DD-MON-RR';
 	$graph = new Graph(420,200,"auto",30);
 }
 else if ($period == '30') {
 	$period = 30;
-	$interval = 'DD';
-	$format = 'DD-MON-RR';
 	$graph = new Graph(420,200,"auto",360);
 }
 else
@@ -94,14 +93,24 @@ if(!$conn) {
 	print htmlentities($e['message']);
 	exit;
 }
-if ($qn ==1)
+if ($qn ==1)  {
+       if ($query_svc == 0)
 	$query1 = "select to_char(bin,:format) , number_of_mig from (
 		   select distinct trunc(timestamp,:interval) bin, count(trunc(timestamp,:interval)) 
 		   over (Partition by trunc(timestamp,:interval)) number_of_mig  
 			   from ".$db_instances[$service]['schema'].".migration
-			   where timestamp > trunc(sysdate -:period,:interval)
+			   where timestamp > trunc(sysdate - :period,:interval)
 			   order by bin )";
-else if ($qn ==2)
+       else
+	$query1 = "select to_char(bin,:format) , number_of_mig from (
+		   select distinct trunc(timestamp,:interval) bin, count(trunc(timestamp,:interval)) 
+		   over (Partition by trunc(timestamp,:interval)) number_of_mig  
+			   from ".$db_instances[$service]['schema'].".migration
+			   where timestamp > trunc(sysdate - :period,:interval)
+			   and svcclass = :svcclass
+			   order by bin )";			   
+} else if ($qn ==2)  {
+       if ($query_svc == 0)
 	$query1 = "select to_char(bin,:format) , number_of_mig from (
 		   select distinct trunc(timestamp,:interval) bin, count(trunc(timestamp,:interval)) 
 		   over (Partition by trunc(timestamp,:interval)) number_of_mig  
@@ -109,7 +118,16 @@ else if ($qn ==2)
 			   where timestamp >= trunc(to_date(:from_date,'dd/mm/yyyy HH24:Mi'),:interval)
 				and timestamp <= trunc(to_date(:to_date,'dd/mm/yyyy HH24:Mi'),:interval)
 			   order by bin )";
-	   
+       else
+       $query1 = "select to_char(bin,:format) , number_of_mig from (
+		   select distinct trunc(timestamp,:interval) bin, count(trunc(timestamp,:interval)) 
+		   over (Partition by trunc(timestamp,:interval)) number_of_mig  
+			   from ".$db_instances[$service]['schema'].".migration
+			   where timestamp >= trunc(to_date(:from_date,'dd/mm/yyyy HH24:Mi'),:interval)
+			   and timestamp <= trunc(to_date(:to_date,'dd/mm/yyyy HH24:Mi'),:interval)
+			   and svcclass = :svcclass
+			   order by bin )";
+}
 if (!($parsed1 = OCIParse($conn, $query1))) 
 	{ echo "Error Parsing Query";exit();}
 if ($qn == 1) {
@@ -123,6 +141,9 @@ else if ($qn == 2) {
 	ocibindbyname($parsed1,":interval",$interval);
 	ocibindbyname($parsed1,":format",$format);
 }
+if ($query_svc == 1) {
+       	  ocibindbyname($parsed1,":svcclass",$svcclass);
+       }
 if (!OCIExecute($parsed1))
 	{ echo "Error Executing Query";exit();}
 //Fetch data into local tables
@@ -151,18 +172,7 @@ $graph->img->SetMargin(80,20,20,120);
 $graph->yaxis->title->Set("Files");
 $graph->yaxis->title->SetFont(FF_FONT1,FS_BOLD);
 $graph->yaxis->SetTitleMargin(60);
-if (sizeof($intervals)> 20) {
-	for ($i = 0,$j = 0; $i < sizeof($intervals); $i++) {
-		if ($i % 5 ==  0) {
-			$pos[$j] = $i;
-			$tick[$j++] = $intervals[$i];
-		}
-	}
-	$graph->xaxis->SetTickPositions($pos);
-	$graph->xaxis->SetTickLabels($tick);
-} 
-else
-	$graph->xaxis->SetTickLabels($intervals);
+$graph->xaxis->SetTickLabels($intervals);
 if ($interval == 'WW') {
 	for($i=0;$i<=$num;$i++)
  		$tickPositions[$i] = $i;

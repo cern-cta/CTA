@@ -32,26 +32,26 @@ else {
 //returns the cached image and exits without logining in the DB
 if ($period == '10/1440') {
 	$period = 10/1440; 
-	$graph = new Graph(700,350,"auto",1);
+	$graph = new Graph(700,300,"auto",1);
 }
 else if ($period == '1/24') {
 	$period = 1/24;
-	$graph = new Graph(700,350,"auto",5);
+	$graph = new Graph(700,300,"auto",5);
 }
 else if ($period == '1') {
 	$period = 1;
-	$graph = new Graph(700,350,"auto",30);
+	$graph = new Graph(700,300,"auto",30);
 }
 else if ($period == '7') {
 	$period = 7;
-	$graph = new Graph(700,350,"auto",60);
+	$graph = new Graph(700,300,"auto",60);
 }
 else if ($period == '30') {
 	$period = 30; 
-	$graph = new Graph(700,350,"auto",360);
+	$graph = new Graph(700,300,"auto",360);
 }
 else 
-	$graph = new Graph(700,350,"auto");
+	$graph = new Graph(700,300,"auto");
 //connection - db login
 $conn = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
 if(!$conn) {
@@ -62,7 +62,7 @@ if(!$conn) {
 if ($qn == 1)
 	$query1 = "select distinct svcclass,type, count(type) over (Partition by svcclass,type) number_of_req 
 	   from ".$db_instances[$service]['schema'].".requests
-	   where timestamp > sysdate -:period
+	   where timestamp > sysdate - :period
 	   and state = 'TapeRecall'
 	   order by svcclass,type";
 else if ($qn == 2)
@@ -132,10 +132,9 @@ $graph->SetScale("textlin");
 $graph->title->Set("Prestaged / Non - Prestaged taperecalled Files");
 $graph->title->SetFont(FF_FONT1,FS_BOLD);
 $graph->img->SetMargin(80,80,80,120);
-$graph->yaxis->title->Set("Requests per POOL" );
+$graph->yaxis->title->Set("Requests per SvcClass" );
 $graph->yaxis->title->SetFont(FF_FONT1,FS_BOLD);
 $graph->yaxis->SetTitleMargin(40);
-$graph->legend->Pos(0.5,0.95,"center","bottom");
 $graph->xaxis->SetTickLabels($pool_names);
 $graph->xaxis->SetLabelAngle(90);
 $graph->xaxis->SetFont(FF_FONT1,FS_BOLD);
@@ -161,6 +160,8 @@ $b2->value->Show();
 $b2->value->SetFormat('%0.0f');
 $b2 -> SetLegend("Non Prestaged Requests");
 $gbplot = new GroupBarPlot(array($b2,$b1));
+$graph->legend->SetLayout(LEGEND_HOR);
+$graph->legend->Pos(0.5,0.95,"left","bottom");
 $graph->Add($gbplot);
 $graph->Stroke();
 

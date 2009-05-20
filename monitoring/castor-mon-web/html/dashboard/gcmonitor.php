@@ -36,8 +36,8 @@ echo "<table border = '1'>
 				<tbody>
 					<tr>
 					 <td style='background-color: #C0C0C0' id = 'fonts' align = 'center' ><a class='outer' href='gcts.php?service=$service'> # GC Files</a></td>
-					 <td style='background-color: #C0C0C0' id = 'fonts' align = 'center' colspan=2><a class='outer' href='gcagets.php?service=$service'> Average Age </a></td>
-					 <td style='background-color: #C0C0C0' id = 'fonts' align = 'center' colspan=2><a class='outer' href='gcsizets.php?service=$service'>  Average Size </a></td>
+					 <td style='background-color: #C0C0C0' id = 'fonts' align = 'center' colspan=2><a class='outer' href='gcagets.php?service=$service'> Average Age (sec) </a></td>
+					 <td style='background-color: #C0C0C0' id = 'fonts' align = 'center' colspan=2><a class='outer' href='gcsizets.php?service=$service'>  Average Size (MB) </a></td>
 					</tr><tr>";
 while (OCIFetch($parsed1)) {
 	$gcfiles = OCIResult($parsed1,1);
@@ -51,20 +51,20 @@ while (OCIFetch($parsed1)) {
 	else "<td id ='fonts' align ='center'> 0 </td>";
 	if ($age != NULL) {
 		if($age_per > 0)
-			echo "<td><img src='../images/greenarrow.jpg' ></td><td id ='fonts' align ='center'> $age ($age_per) </td>";
+			echo "<td><img src='../images/greenarrow.jpg' ></td><td id ='fonts' align ='center'> $age</td>";
 		else if ($age_per < 0)
-		  echo "<td><img src='../images/redarrow.jpg' ></td><td id ='fonts' align ='center'> $age ($age_per) </td>";
+		  echo "<td><img src='../images/redarrow.jpg' ></td><td id ='fonts' align ='center'> $age</td>";
 		else
-			echo "<td><b>-</b></td><td id ='fonts' align ='center'> $age ($age_per) </td>";
+			echo "<td><b>-</b></td><td id ='fonts' align ='center'> $age</td>";
 	}
 	else echo "<td id ='fonts' align ='center' colspan=2> 0 </td>";
 	if ($size != NULL) {
 		if($size_per > 0)
-			echo "<td><img src='../images/greenarrow.jpg' ></td><td id ='fonts' align ='center'> $size ($size_per) </td>";
+			echo "<td><img src='../images/greenarrow.jpg' ></td><td id ='fonts' align ='center'> $size</td>";
 		else if ($size_per < 0)
-		  echo "<td><img src='../images/redarrow.jpg' ></td><td id ='fonts' align ='center'> $size ($size_per) </td>";
+		  echo "<td><img src='../images/redarrow.jpg' ></td><td id ='fonts' align ='center'> $size</td>";
 		else
-			echo "<td><b>-</b></td><td id ='fonts' align ='center'> $size ($size_per) </td>";
+			echo "<td><b>-</b></td><td id ='fonts' align ='center'> $size</td>";
 	}
 	else echo "<td id ='fonts' align ='center'colspan=2> 0 </td>";
 }

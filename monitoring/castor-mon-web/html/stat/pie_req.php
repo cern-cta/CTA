@@ -89,7 +89,7 @@ else {
 if($qn == 1)
 	$query = "select type, sum(requests) 
 		  from ".$db_instances[$service]['schema'].".requeststats 
-		  where timestamp > sysdate  -:period
+		  where timestamp > sysdate - :period
 		    and euid = '-'
 		  group by type";
 else if ($qn ==2)

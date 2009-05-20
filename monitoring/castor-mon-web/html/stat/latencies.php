@@ -7,6 +7,7 @@ include("../lib/no_data.php");
 include ("../../../conf/castor-mon-web/user.php");
 $period = $_GET['period'];
 $service = $_GET['service'];
+$svcclass = $_GET['svcclass'];
 $from = $_GET['from'];
 $to = $_GET['to'];
 if ($period != NULL) { 
@@ -25,29 +26,39 @@ else {
 		echo "<h2>Wrong Arguments</h2>";
 	}
 }
+
+$pattern_1 = '/[a-zA-Z0-9]{1,15}/';
+preg_match($pattern_1,$svcclass,$match);
+$svcclass = $match[0];
+if ($svcclass == NULL) 
+  $query_svc = 0;
+else
+  $query_svc = 1;
+
+
 //initialization 
 $bins = array( 0 =>"<1sec",1 =>"[1-10)sec",2 =>"[10-120)sec",3 =>"[2-5)min",4 =>"[5-10)min",5 =>"[10-30)min",6 =>"[30 -60)min", 7=> "[1-5)hours", 8=> "[5-12)hours", 9=> "[12-24)hours", 10=> "[1-2]days", 11=> ">2days");
 if ($period == '10/1440') {
 	$period = 10/1440;
-	$graph = new Graph(800,300,"auto",1);
+	$graph = new Graph(700,300,"auto",1);
 }
 else if ($period == '1/24') {
 	$period = 1/24;
-	$graph = new Graph(800,300,"auto",5);
+	$graph = new Graph(700,300,"auto",5);
 }
 else if ($period == '1') {
 	$period = 1; 
-	$graph = new Graph(800,300,"auto",30);
+	$graph = new Graph(700,300,"auto",30);
 }
 else if ($period == '7') {
 	$period = 7;
-	$graph = new Graph(800,300,"auto",60);
+	$graph = new Graph(700,300,"auto",60);
 }
 else if ($period == '30') {
 	$period = 30;
-	$graph = new Graph(800,300,"auto",360);
+	$graph = new Graph(700,300,"auto",360);
 }
-else $graph = new Graph(800,300,"auto");
+else $graph = new Graph(700,300,"auto");
 
 //connection
 $conn = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
@@ -63,6 +74,7 @@ for($i = 0;$i < 12; $i++) {
 }
 
 if ($qn == 1) {
+  if ($query_svc == 0)
 	$query1 = "select state, bin, count(bin) reqs
 		from (
 		select state, round(b.totallatency), case when b.totallatency < 1 then 1
@@ -79,12 +91,35 @@ if ($qn == 1) {
 		  else 12 end bin
 		from ".$db_instances[$service]['schema'].".requests a, ".$db_instances[$service]['schema'].".totallatency b
 		where a.subreqid = b.subreqid
-		and a.timestamp > sysdate -:period
-		and b.timestamp > sysdate -:period )
+		and a.timestamp > sysdate - :period
+		and b.timestamp > sysdate - :period )
+		group by state,bin
+		order by state,bin ";
+  else
+        $query1 = "select state, bin, count(bin) reqs
+		from (
+		select state, round(b.totallatency), case when b.totallatency < 1 then 1
+		  when b.totallatency >= 1 and b.totallatency < 10 then 2
+		  when b.totallatency >= 10 and b.totallatency < 120 then 3
+		  when b.totallatency >= 120 and b.totallatency < 300 then 4
+		  when b.totallatency >= 300 and b.totallatency < 600 then 5
+		  when b.totallatency >= 600 and b.totallatency < 1800 then 6
+		  when b.totallatency >= 1800 and b.totallatency < 3600 then 7
+		  when b.totallatency >= 3600 and b.totallatency < 18000 then 8
+		  when b.totallatency >= 18000 and b.totallatency < 43200 then 9
+		  when b.totallatency >= 43200 and b.totallatency < 86400 then 10
+		  when b.totallatency >= 86400 and b.totallatency < 172800 then 11
+		  else 12 end bin
+		from ".$db_instances[$service]['schema'].".requests a, ".$db_instances[$service]['schema'].".totallatency b
+		where a.subreqid = b.subreqid
+		and a.timestamp > sysdate - :period
+		and b.timestamp > sysdate - :period 
+		and svcclass = :svcclass )
 		group by state,bin
 		order by state,bin ";
 }
 else if ($qn == 2) {
+  if ($query_svc == 0)
 	$query1 = "select state, bin, count(bin) reqs 
 		from (
 		select state, round(b.totallatency), case when b.totallatency < 1 then 1
@@ -107,6 +142,30 @@ else if ($qn == 2) {
 		and b.timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi'))
 		group by state, bin
 		order by state, bin ";
+  else
+        $query1 = "select state, bin, count(bin) reqs 
+		from (
+		select state, round(b.totallatency), case when b.totallatency < 1 then 1
+		  when b.totallatency >= 1 and b.totallatency < 10 then 2
+		  when b.totallatency >= 10 and b.totallatency < 120 then 3
+		  when b.totallatency >= 120 and b.totallatency < 300 then 4
+		  when b.totallatency >= 300 and b.totallatency < 600 then 5
+		  when b.totallatency >= 600 and b.totallatency < 1800 then 6
+		  when b.totallatency >= 1800 and b.totallatency < 3600 then 7
+		  when b.totallatency >= 3600 and b.totallatency < 18000 then 8
+		  when b.totallatency >= 18000 and b.totallatency < 43200 then 9
+		  when b.totallatency >= 43200 and b.totallatency < 86400 then 10
+		  when b.totallatency >= 86400 and b.totallatency < 172800 then 11
+		  else 12 end bin
+		from ".$db_instances[$service]['schema'].".requests a, ".$db_instances[$service]['schema'].".totallatency b
+		where a.subreqid = b.subreqid
+		and a.timestamp >= to_date(:from_date,'dd/mm/yyyy HH24:Mi')
+		and a.timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi')
+		and b.timestamp >= to_date(:from_date,'dd/mm/yyyy HH24:Mi')
+		and b.timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi')
+		and svcclass = :svcclass)
+		group by state, bin
+		order by state, bin ";
 }
 if (!($parsed1 = OCIParse($conn, $query1))) 
 	{ echo "Error Parsing Query";exit();}
@@ -117,6 +176,11 @@ else if ($qn == 2) {
 	ocibindbyname($parsed1,":from_date",$from);
 	ocibindbyname($parsed1,":to_date",$to);
 }
+
+if ($query_svc == 1) {
+       	  ocibindbyname($parsed1,":svcclass",$svcclass);
+}
+
 if (!OCIExecute($parsed1))
 	{ echo "Error Executing Query";exit();}
 while (OCIFetch($parsed1)) {
@@ -135,7 +199,7 @@ if(empty($lat)) {
 //plot
 $graph->SetShadow();
 $graph->SetScale("textlin");
-$graph->title->Set("Request Latency Distribution");
+$graph->title->Set("Read File Request Latency Distribution");
 $graph->title->SetFont(FF_FONT1,FS_BOLD);
 $graph->img->SetMargin(60,40,40,120);
 $graph->yaxis->title->Set("Number of Requests" );
@@ -165,7 +229,7 @@ $b2->value->SetColor("darkgoldenrod1");
 $b2->value->SetAngle(90);
 $b2->value->Show();
 $b2->value->SetFormat('%0.0f');
-$b2 -> SetLegend("Pool Copies");
+$b2 -> SetLegend("D2D Copies");
 $b3 = new BarPlot($lat['TapeRecall']);
 $b3->SetWidth(0.34);
 $b3->SetFillColor("maroon");
@@ -177,5 +241,7 @@ $b3->value->SetFormat('%0.0f');
 $b3 -> SetLegend("Tape Recalls");
 $gbplot  = new GroupBarPlot (array($b1,$b2,$b3)); 
 $graph->Add($gbplot);
+$graph->legend->SetLayout(LEGEND_HOR);
+$graph->legend->Pos(0.125,0.95,"left","bottom");
 $graph->Stroke();
 ?> 

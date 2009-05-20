@@ -28,8 +28,8 @@ if(!$conn) {
 $query1 = "select type request, sum(requests) total
 	     from ".$db_instances[$service]['schema'].".requeststats
 	    where timestamp >= sysdate - 15/1440
-	    and timestamp < sysdate  - 5/1440
-	    and euid <> '-'
+	    and timestamp < sysdate - 5/1440
+	    and euid = '-'
             group by type
 	    order by total desc";
 

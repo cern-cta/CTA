@@ -61,26 +61,26 @@ else {
 //returns the cached image and exits without logining in the DB
 if ($period == '10/1440') {
 	$period = 10/1440; 
-	$graph = new Graph(800,300,"auto");
+	$graph = new Graph(700,200,"auto");
 }
 else if ($period == '1/24') {
 	$period = 1/24; 
-	$graph = new Graph(800,300,"auto");
+	$graph = new Graph(700,200,"auto");
 }
 else if ($period == '1') {
 	$period = 1;
-	$graph = new Graph(800,300,"auto",10);
+	$graph = new Graph(700,200,"auto",10);
 }
 else if ($period == '7') {
 	$period = 7;
-	$graph = new Graph(800,300,"auto",30);
+	$graph = new Graph(700,200,"auto",30);
 }
 else if ($period == '30') {
 	$period = 30;
-	$graph = new Graph(800,300,"auto",360);
+	$graph = new Graph(700,200,"auto",360);
 }
 else 
-	$graph = new Graph(800,300,"auto");
+	$graph = new Graph(700,200,"auto");
 //connect to DB	
  $con = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
    if (!$con) {
@@ -91,7 +91,7 @@ else
      if ($qn == 1) {
        $time_series ="select type, max(maxtime)
 		        from ".$db_instances[$service]['schema'].".latencystats
-		       where timestamp > sysdate -:period
+		       where timestamp > sysdate - :period
 		      group by type";
      } else if ($qn == 2) {
        $time_series ="select type, max(maxtime)

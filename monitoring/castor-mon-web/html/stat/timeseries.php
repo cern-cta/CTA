@@ -9,6 +9,7 @@ include ("../../../conf/castor-mon-web/user.php");
 //get posted values
 $period = $_GET['period'];
 $service = $_GET['service'];
+$svcclass = $_GET['svcclass'];
 $from = (string)$_GET['from'];
 $to = (string)$_GET['to'];
 if ($period != NULL) { 
@@ -36,6 +37,13 @@ else {
 	$t2 = strtotime($to_final);
 	$dif = ($t2-$t1)/86400;
 }
+$pattern_1 = '/[a-zA-Z0-9]{1,15}/';
+preg_match($pattern_1,$svcclass,$match);
+$svcclass = $match[0];
+if($svcclass == NULL) 
+	$query_svc = 0;
+else
+	$query_svc = 1;
 //selecte appropriate interval and format according to given period
 if($dif <= 1/24) {
 	$interval = 'Mi';
@@ -60,34 +68,34 @@ if ($period == '10/1440') {
 	$period = 10/1440; 
 	$interval = 'Mi';
 	$format = 'HH24:MI';
-	$graph = new Graph(420,200,"auto");
+	$graph = new Graph(700,200,"auto");
 }
 else if ($period == '1/24') {
 	$period = 1/24; 
 	$interval = 'Mi';
 	$format = 'HH24:MI';
-	$graph = new Graph(420,200,"auto");
+	$graph = new Graph(700,200,"auto");
 }
 else if ($period == '1') {
 	$period = 1;
 	$interval = 'HH24';
 	$format = 'HH24:MI';
-	$graph = new Graph(420,200,"auto",10);
+	$graph = new Graph(700,200,"auto",10);
 }
 else if ($period == '7') {
 	$period = 7;
 	$interval = 'DD';
 	$format = 'DD-MON-RR';
-	$graph = new Graph(420,200,"auto",30);
+	$graph = new Graph(700,200,"auto",30);
 }
 else if ($period == '30') {
 	$period = 30;
 	$interval = 'DD';
 	$format = 'DD-MON-RR';
-	$graph = new Graph(420,200,"auto",360);
+	$graph = new Graph(700,200,"auto",360);
 }
 else 
-	$graph = new Graph(420,200,"auto");
+	$graph = new Graph(700,200,"auto");
 //connect to DB	
  $con = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
    if (!$con) {
@@ -96,24 +104,47 @@ else
      exit;
    } else {// db functionnality
      if ($qn == 1) {
-       $time_series =
-         "select distinct to_char(trunc(timestamp,:interval), :format) bin, 
-		   count(case when state='DiskHit' then trunc(timestamp,:interval) else null end) over (Partition by trunc(timestamp,:interval)) number_of_DH_req, 
-		   count(case when state='DiskCopy' then trunc(timestamp,:interval) else null end) over (Partition by trunc(timestamp,:interval)) number_of_DC_req, 
-		   count(case when state='TapeRecall' then trunc(timestamp,:interval) else null end) over (Partition by trunc(timestamp,:interval)) number_of_TR_req
-         from ".$db_instances[$service]['schema'].".requests
-         where timestamp >= trunc(sysdate -:period,:interval)
-         order by bin";
+       if ($query_svc == 0)
+		$time_series =
+		"select distinct to_char(trunc(timestamp,:interval), :format) bin, 
+			count(case when state='DiskHit' then trunc(timestamp,:interval) else null end) over (Partition by trunc(timestamp,:interval)) number_of_DH_req, 
+			count(case when state='DiskCopy' then trunc(timestamp,:interval) else null end) over (Partition by trunc(timestamp,:interval)) number_of_DC_req, 
+			count(case when state='TapeRecall' then trunc(timestamp,:interval) else null end) over (Partition by trunc(timestamp,:interval)) number_of_TR_req
+		from ".$db_instances[$service]['schema'].".requests
+		where timestamp >= trunc(sysdate - :period,:interval)
+		order by bin";
+	else
+		$time_series =
+		"select distinct to_char(trunc(timestamp,:interval), :format) bin, 
+			count(case when state='DiskHit' then trunc(timestamp,:interval) else null end) over (Partition by trunc(timestamp,:interval)) number_of_DH_req, 
+			count(case when state='DiskCopy' then trunc(timestamp,:interval) else null end) over (Partition by trunc(timestamp,:interval)) number_of_DC_req, 
+			count(case when state='TapeRecall' then trunc(timestamp,:interval) else null end) over (Partition by trunc(timestamp,:interval)) number_of_TR_req
+		from ".$db_instances[$service]['schema'].".requests
+		where timestamp >= trunc(sysdate - :period,:interval)
+		and svcclass = :svcclass
+		order by bin";
      } else if ($qn == 2) {
-       $time_series =
-         "select distinct to_char(trunc(timestamp,:interval), :format) bin, 
-		   count(case when state='DiskHit' then trunc(timestamp,:interval) else null end) over (Partition by trunc(timestamp,:interval)) number_of_DH_req, 
-		   count(case when state='DiskCopy' then trunc(timestamp,:interval) else null end) over (Partition by trunc(timestamp,:interval)) number_of_DC_req, 
-		   count(case when state='TapeRecall' then trunc(timestamp,:interval) else null end) over (Partition by trunc(timestamp,:interval)) number_of_TR_req
-         from ".$db_instances[$service]['schema'].".requests
-         where timestamp >= trunc(to_date(:from_date,'dd/mm/yyyy HH24:Mi'),:interval)
-           and timestamp <= trunc(to_date(:to_date,'dd/mm/yyyy HH24:Mi'),:interval)
-         order by bin";
+     	if ($query_svc == 0)
+		$time_series =
+		"select distinct to_char(trunc(timestamp,:interval), :format) bin, 
+			count(case when state='DiskHit' then trunc(timestamp,:interval) else null end) over (Partition by trunc(timestamp,:interval)) number_of_DH_req, 
+			count(case when state='DiskCopy' then trunc(timestamp,:interval) else null end) over (Partition by trunc(timestamp,:interval)) number_of_DC_req, 
+			count(case when state='TapeRecall' then trunc(timestamp,:interval) else null end) over (Partition by trunc(timestamp,:interval)) number_of_TR_req
+		from ".$db_instances[$service]['schema'].".requests
+		where timestamp >= trunc(to_date(:from_date,'dd/mm/yyyy HH24:Mi'),:interval)
+		and timestamp <= trunc(to_date(:to_date,'dd/mm/yyyy HH24:Mi'),:interval)
+		order by bin";
+	else
+		$time_series =
+		"select distinct to_char(trunc(timestamp,:interval), :format) bin, 
+			count(case when state='DiskHit' then trunc(timestamp,:interval) else null end) over (Partition by trunc(timestamp,:interval)) number_of_DH_req, 
+			count(case when state='DiskCopy' then trunc(timestamp,:interval) else null end) over (Partition by trunc(timestamp,:interval)) number_of_DC_req, 
+			count(case when state='TapeRecall' then trunc(timestamp,:interval) else null end) over (Partition by trunc(timestamp,:interval)) number_of_TR_req
+		from ".$db_instances[$service]['schema'].".requests
+		where timestamp >= trunc(to_date(:from_date,'dd/mm/yyyy HH24:Mi'),:interval)
+		and timestamp <= trunc(to_date(:to_date,'dd/mm/yyyy HH24:Mi'),:interval)
+		and svcclass = :svcclass
+		order by bin";
      } 
      $parsedqry = ociparse($con, $time_series);
      if (!$parsedqry) { 
@@ -128,6 +159,9 @@ else
 	else if ($qn == 2) {
 	  ocibindbyname($parsedqry,":from_date",$from);
 	  ocibindbyname($parsedqry,":to_date",$to);
+       }
+       if ($query_svc == 1) {
+       	  ocibindbyname($parsedqry,":svcclass",$svcclass);
        }
        $qryexec = ociexecute($parsedqry);
        if (!$qryexec) {
@@ -193,7 +227,7 @@ $bplot3 = new BarPlot(array_values($result['NUMBER_OF_TR_REQ']));
 $bplot1->SetFillColor("green");
 $bplot1 -> SetLegend("DiskHits");
 $bplot2->SetFillColor("orange");
-$bplot2 -> SetLegend("DiskCopies");
+$bplot2 -> SetLegend("D2D Copies");
 $bplot3->SetFillColor("red");
 $bplot3 -> SetLegend("TapeRecall");
 $abplot = new AccBarPlot(array($bplot1,$bplot2,$bplot3));

@@ -49,8 +49,8 @@ $query1 = "select * from (
 			count(case when state='DiskCopy' then 1 else null end) dc,
 			count(case when state='TapeRecall' then 1 else null end) tr
 			from ".$db_instances[$service]['schema'].".requests
-			where timestamp >= sysdate -15/1440
-				and timestamp < sysdate -5/1440 
+			where timestamp >= sysdate - 15/1440
+				and timestamp < sysdate - 5/1440 
 				and svcclass = :svcclass
 			group by username
 			order by total desc,username)
@@ -71,12 +71,12 @@ while (OCIFetch($parsed1)) {
 	$i++;
 }
 //Display Tables-Results
-echo "<table><tr><td colspan =2 align = 'center' style='background-color: orangered'><b> General Requests History of last 10 min in $svcclass</b></td></tr>";
+echo "<table><tr><td colspan =2 align = 'center' style='background-color: orangered'><b> Read File Requests History of last 10 min in $svcclass</b></td></tr>";
 echo "<tr><td align = 'center'><img src ='pie_pool.php?service=$service&svcclass=$svcclass'></td>";
 echo "<td align = 'center'><img src ='tspool.php?service=$service&svcclass=$svcclass'></td></tr>";
 echo "<tr><td colspan =2 align = 'center' style='background-color: orange'> File Size Distribution of tape recalled files(last 10 minutes)</td></tr>"; 
 echo "<tr><td colspan =2 align = 'center'><img src ='sizedistr_svc.php?service=$service&svcclass=$svcclass'></td></tr>";
-echo "<tr><td colspan =2 align = 'center' style='background-color: orange'>File Requests Counter per User</td></tr>"; 
+echo "<tr><td colspan =2 align = 'center' style='background-color: orange'>Read File Requests Counter per User</td></tr>"; 
 echo "<tr><td colspan =2 align ='center'><table border = 1><tbody>
 		<tr>
 			<td id = 'fonts' align = 'center' style='background-color: #C0C0C0'> Username </td>

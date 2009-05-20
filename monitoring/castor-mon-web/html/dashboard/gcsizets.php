@@ -34,7 +34,7 @@ $i = 0;
 //Fetch Data in local tables
 while (OCIFetch($parsed1)) {
 	$intervals[$i] =  OCIResult($parsed1,1);
-	$number[$i] = ((float)OCIResult($parsed1,2)/1048576);
+	$number[$i] = ((float)OCIResult($parsed1,2))/1048576;
 	$i++;		
 }
 //If no data retrieved display "No Data Available Image"
@@ -46,7 +46,7 @@ if(empty($intervals)) {
 $graph = new Graph(420,200,"auto");
 $graph->SetShadow();
 $graph->SetScale("textlin");
-$graph->title->Set("Avg Size of GC Files Timeseries");
+$graph->title->Set("AvgSize of GC Files Timeseries");
 $graph->title->SetFont(FF_FONT1,FS_BOLD);
 $graph->img->SetMargin(80,20,20,120);
 $graph->yaxis->title->Set("Size (MB)");

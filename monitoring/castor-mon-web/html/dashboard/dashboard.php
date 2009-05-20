@@ -15,6 +15,25 @@
 			  <a href='../Default.html'>Back</a>";
 		exit;
 	}
+	$conn = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
+	if(!$conn) {
+		$e = oci_error();
+		print htmlentities($e['message']);
+		exit;
+	}
+	$query1 = "select svcclass from ".$db_instances[$service]['schema'].".SVCCLASSMAP_MV order by svcclass";
+	if (!($parsed1 = OCIParse($conn, $query1))) 
+		{ echo "Error Parsing Query";exit();}
+	if (!OCIExecute($parsed1))
+		{ echo "Error Executing Query";exit();}
+	$i = 0;
+	//fetch data(different service classes)
+	while (OCIFetch($parsed1)) {
+		$svc[$i] = OCIResult($parsed1,1);
+		$i++;		
+	}
+	if (empty($svc))
+		$no_svc = 1; 
 	
 ?>
 <?php 
@@ -24,7 +43,7 @@
 
 <html>
 	<head>
-		<META HTTP-EQUIV="Refresh" CONTENT="120; URL=dashboard.php?service=<?php echo $service;?>"> 
+		<META HTTP-EQUIV="Refresh" CONTENT="300; URL=dashboard.php?service=<?php echo $service;?>"> 
 		<LINK rel="stylesheet" type="text/css" title="compact" href="../lib/hmenu.css">
 		<style>
 			a {
@@ -84,24 +103,81 @@
 				<td>
 					<table>
 						<tr valign = "top" width = "5%">
-							<td><div id="ora"><?php echo $service?>: STATUS MONITOR (Last 5 Minutes)</div></td>
+							<td><div id="ora"><?php echo $service?>: STATUS MONITOR</div></td>
 						</tr>
 						<tr>
 							<td><div id="menu">
-								<ul>	
-									<li><h2>Statistics</h2>
+								<ul>
+						<li><h2>Statistics (CASTOR Instance)</h2>
+							<ul> 
+								<li><a href="../stat/tabledet.php?timewindow=1&service=<?php echo $service;?>">General Request Statistics</a></li>
+								<li><a href="../stat/tabledet.php?timewindow=1&service=<?php echo $service;?>&stat=GenLat">General Latency Statistics</a></li>
+								<li><a href="../stat/tabledet.php?timewindow=1&service=<?php echo $service;?>&stat=GenScheduler">General Scheduler Statistics</a></li>
+								<li><a href="../stat/tabledet.php?timewindow=1&service=<?php echo $service;?>&stat=GenOther">Other General Statistics</a></li>
+								<li><a href="../stat/tabledet.php?timewindow=1&service=<?php echo $service;?>&stat=File">File Read Requests Statistics</a>
 									<ul>
-									<li><a href="../stat/tabledet.php?timewindow=1&service=<?php echo $service;?>">General Statistics</a></li>
-									<li><a href="../stat/tabledet.php?timewindow=1&service=<?php echo $service;?>&stat=FileReq">File Request Statistics</a></li>
-									<li><a href="../stat/tabledet.php?timewindow=1&service=<?php echo $service;?>&stat=Migration">File Migration Statistics</a></li>
-									<li><a href="../stat/tabledet.php?timewindow=1&service=<?php echo $service;?>&stat=Latency">Latency Statistics</a></li>
-									<li><a href="../stat/tabledet.php?timewindow=1&service=<?php echo $service;?>&stat=File">File System Statistics</a></li>
-									<li><a href="../stat/tabledet.php?timewindow=1&service=<?php echo $service;?>&stat=Tape">Tape Statistics</a></li>
-									<li><a href="../stat/tabledet.php?timewindow=1&service=<?php echo $service;?>&stat=Scheduler">Scheduler Statistics</a></li>
-									<li><a href="../stat/tabledet.php?timewindow=1&service=<?php echo $service;?>&stat=GC">Garbage Collection Statistics</a></li>
-									</ul>
-									</li>
-								</ul>
+									<li><h3>SvcClass</h3></li>
+									<?php
+									if($no_svc == 0) {
+										foreach($svc as $dpool) {
+											echo "<li><a href='../stat/tabledet.php?timewindow=1&service=$service&stat=File&svcclass=$dpool'>$dpool</a></li>";
+										}
+									}
+									else	{
+										echo "<li><h2>No SvcClass Map Available</h2></li>";}
+									?></ul>
+								</li>
+								<li><a href="../stat/tabledet.php?timewindow=1&service=<?php echo $service;?>&stat=Lat">Latency Statistics</a>
+									<ul><li><h3>SvcClass</h3></li>
+									<?php
+									if($no_svc == 0) {
+										foreach($svc as $dpool) {
+											echo "<li><a href='../stat/tabledet.php?timewindow=1&service=$service&stat=Lat&svcclass=$dpool'>$dpool</a></li>";
+										}
+									}
+									else	{
+										echo "<li><h2>No SvcClass Map Available</h2></li>";}
+									?></ul>
+								</li>
+								<li><a href="../stat/tabledet.php?timewindow=1&service=<?php echo $service;?>&stat=Tape">Tape Statistics</a>
+									<ul><li><h3>SvcClass</h3></li>
+									<?php
+									if($no_svc == 0) {
+										foreach($svc as $dpool) {
+											echo "<li><a href='../stat/tabledet.php?timewindow=1&service=$service&stat=Tape&svcclass=$dpool'>$dpool</a></li>";
+										}
+									}
+									else	{
+										echo "<li><h2>No SvcClass Map Available</h2></li>";}
+									?></ul>
+								</li>
+								<li><a href="../stat/tabledet.php?timewindow=1&service=<?php echo $service;?>&stat=GC">Garbage Collection Statistics</a>
+									<ul><li><h3>SvcClass</h3></li>
+									<?php
+									if($no_svc == 0) {
+										foreach($svc as $dpool) {
+											echo "<li><a href='../stat/tabledet.php?timewindow=1&service=$service&stat=GC&svcclass=$dpool'>$dpool</a></li>";
+										}
+									}
+									else	{
+										echo "<li><h2>No SvcClass Map Available</h2></li>";}
+									?></ul>
+								</li>
+								<li><a href="../stat/tabledet.php?timewindow=1&service=<?php echo $service;?>&stat=Other">Other Statistics</a>
+									<ul><li><h3>SvcClass</h3></li>
+									<?php
+									if($no_svc == 0) {
+										foreach($svc as $dpool) {
+											echo "<li><a href='../stat/tabledet.php?timewindow=1&service=$service&stat=Other&svcclass=$dpool'>$dpool</a></li>";
+										}
+									}
+									else	{
+										echo "<li><h2>No SvcClass Map Available</h2></li>";}
+									?></ul>
+								</li>
+							</ul>
+						</li>
+					</ul>
 							</div></td>
 						</tr>
 						<tr><td>
@@ -157,6 +233,12 @@
 											<td align ="center">
 												<?php include("error_monitor.php");?>
 											</td>
+										</tr>
+										<tr>
+											<td colspan = 3><hr size='1'/></td>
+										</tr>
+										<tr>
+											<td colspan = 3><font color = red size = 2>All graphs and tables contain data referring to a 5 min interval. There is a latency of 5 min between monitoring data and incoming log messages. The page gets refreshed every 5 minutes</td>
 										</tr>
 									</table>
 								</td>

@@ -51,7 +51,7 @@ if(!$conn) {
 $query1 = "select * from (
 		   select username, count(*) r
 		   from ".$db_instances[$service]['schema'].".requests
-		   where timestamp >= sysdate -15/1440
+		   where timestamp >= sysdate - 15/1440
 		   and timestamp < sysdate - 5/1440 
 		   and state = :reqkind
 		   and svcclass = :svcclass

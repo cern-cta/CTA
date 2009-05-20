@@ -10,6 +10,7 @@ include ("../../../conf/castor-mon-web/user.php");
 //get posted data
 $period = $_GET['period'];
 $service = $_GET['service'];
+$svcclass = $_GET['svcclass'];
 $from = $_GET['from'];
 $to = $_GET['to'];
 if ($period != NULL) { 
@@ -28,31 +29,41 @@ else {
 		echo "<h2>Wrong Arguments</h2>";
 	}
 }
+
+$pattern_1 = '/[a-zA-Z0-9]{1,15}/';
+preg_match($pattern_1,$svcclass,$match);
+$svcclass = $match[0];
+if ($svcclass == NULL) 
+  $query_svc = 0;
+else
+  $query_svc = 1;
+
+
 //Create new graph, enable image cache by setting countdown period(in minutes) 
 //depending on selected $period. If the cached image is valid the script immediately 
 //returns the cached image and exits without logining in the DB
 if ($period == '10/1440') {
 	$period = 10/1440; 
-	$graph = new Graph(700,300,"auto",1);
+	$graph = new Graph(700,250,"auto",1);
 }
 else if ($period == '1/24') {
 	$period = 1/24;
-	$graph = new Graph(700,300,"auto",5);
+	$graph = new Graph(700,250,"auto",5);
 }
 else if ($period == '1') {
 	$period = 1;
-	$graph = new Graph(700,300,"auto",30);
+	$graph = new Graph(700,250,"auto",30);
 }
 else if ($period == '7') {
 	$period = 7;
-	$graph = new Graph(700,300,"auto",60);
+	$graph = new Graph(700,250,"auto",60);
 }
 else if ($period == '30') {
 	$period = 30; 
-	$graph = new Graph(700,300,"auto",360);
+	$graph = new Graph(700,250,"auto",360);
 }
 else 
-	$graph = new Graph(700,300,"auto");
+	$graph = new Graph(700,250,"auto");
 //connection login
 $conn = ocilogon($db_instances[$service]['username'],$db_instances[$service]['pass'],$db_instances[$service]['serv']);
 if(!$conn) {
@@ -60,7 +71,8 @@ if(!$conn) {
 	print htmlentities($e['message']);
 	exit;
 }
-if ($qn ==1)
+if ($qn ==1) {
+  if ($query_svc == 0)
 	$query1 = "select * from (
 				select tapeid,count(tapeid) mounts
 				from ".$db_instances[$service]['schema'].".requests a, ".$db_instances[$service]['schema'].".taperecall b
@@ -70,8 +82,19 @@ if ($qn ==1)
 				group by tapeid 
 				order by mounts desc )
 		   where rownum < 11";
-else if ($qn ==2)
-		$query1 = "select * from (
+  else	$query1 = "select * from (
+				select tapeid,count(tapeid) mounts
+				from ".$db_instances[$service]['schema'].".requests a, ".$db_instances[$service]['schema'].".taperecall b
+				where a.subreqid = b.subreqid
+			and a.timestamp > sysdate - :period
+			and b.timestamp > sysdate - :period
+			and svcclass = :svcclass 
+				group by tapeid 
+				order by mounts desc )
+		   where rownum < 11";
+} else if ($qn ==2) {
+  if ($query_svc == 0)
+  	$query1 = "select * from (
 				select tapeid,count(tapeid) mounts
 				from ".$db_instances[$service]['schema'].".requests a, ".$db_instances[$service]['schema'].".taperecall b
 				where a.subreqid = b.subreqid
@@ -82,7 +105,19 @@ else if ($qn ==2)
 				group by tapeid 
 				order by mounts desc )
 		   where rownum < 11";
-
+  else	$query1 = "select * from (
+				select tapeid,count(tapeid) mounts
+				from ".$db_instances[$service]['schema'].".requests a, ".$db_instances[$service]['schema'].".taperecall b
+				where a.subreqid = b.subreqid
+				and a.timestamp >= to_date(:from_date,'dd/mm/yyyy HH24:Mi')
+				and a.timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi')
+				and b.timestamp >= to_date(:from_date,'dd/mm/yyyy HH24:Mi')
+				and b.timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi')
+				and svcclass = :svcclass 
+				group by tapeid 
+				order by mounts desc )
+		   where rownum < 11";	   
+}
 if (!($parsed1 = OCIParse($conn, $query1))) 
 	{ echo "Error Parsing Query";exit();}
 if ($qn == 1) {
@@ -92,6 +127,10 @@ else if ($qn == 2) {
 	ocibindbyname($parsed1,":from_date",$from);
 	ocibindbyname($parsed1,":to_date",$to);
 }
+if ($query_svc == 1) {
+       	  ocibindbyname($parsed1,":svcclass",$svcclass);
+}
+
 if (!OCIExecute($parsed1))
 	{ echo "Error Executing Query";exit();}
 $i = 0;

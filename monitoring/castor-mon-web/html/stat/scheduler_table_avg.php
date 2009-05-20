@@ -60,7 +60,7 @@ else if ($timewindow == "30")
 if ($qn == 1) 
 	$query1 = "select svcclass, type, avg(avgtime)
 		   from ".$db_instances[$service]['schema'].".queuetimestats
-		   where timestamp > sysdate -:period
+		   where timestamp > sysdate - :period
 		   group by svcclass, type";
 else if ($qn ==2)
 	$query1 = "select svcclass, type, avg(avgtime)

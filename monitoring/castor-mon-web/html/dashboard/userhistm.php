@@ -49,6 +49,7 @@ $query1 = " select svcclass, count(1) total
 			order by total desc";
 if (!($parsed1 = OCIParse($conn, $query1))) 
 	{ echo "Error Parsing Query";exit();}
+ocibindbyname($parsed1,":username",$username);
 if (!OCIExecute($parsed1))
 	{ echo "Error Executing Query";exit();}
 $i = 0;

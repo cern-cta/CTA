@@ -10,6 +10,7 @@ include ("../../../conf/castor-mon-web/user.php");
 //get posted data
 $period = $_GET['period'];
 $service = $_GET['service'];
+$svcclass = $_GET['svcclass'];
 $from = $_GET['from'];
 $to = $_GET['to'];
 if ($period != NULL) { 
@@ -28,18 +29,41 @@ else {
 		echo "<h2>Wrong Arguments</h2>";
 	}
 }
-if($qn == 1)
+$pattern_1 = '/[a-zA-Z0-9]{1,15}/';
+preg_match($pattern_1,$svcclass,$match);
+$svcclass = $match[0];
+if ($svcclass == NULL) 
+  $query_svc = 0;
+else
+  $query_svc = 1;
+
+if($qn == 1) {
+  if ($query_svc == 0)
 	$query = "select count(case when state='DiskHit' then 1 else null end) DiskHits, count(case when state='DiskCopy' then 1 else null end) DiskCopies,
 			count(case when state='TapeRecall' then 1 else null end) taperecalls
 			from ".$db_instances[$service]['schema'].".requests 
-			where timestamp > sysdate -:period";
-else if ($qn ==2)
+			where timestamp > sysdate - :period";
+  else 
+        $query = "select count(case when state='DiskHit' then 1 else null end) DiskHits, count(case when state='DiskCopy' then 1 else null end) DiskCopies,
+			count(case when state='TapeRecall' then 1 else null end) taperecalls
+			from ".$db_instances[$service]['schema'].".requests 
+			where timestamp > sysdate - :period
+			and svcclass = :svcclass";
+} else if ($qn ==2) {
+  if ($query_svc == 0)
 	$query = "select count(case when state='DiskHit' then 1 else null end) DiskHits, count(case when state='DiskCopy' then 1 else null end) DiskCopies,
 			count(case when state='TapeRecall' then 1 else null end) taperecalls
 			from ".$db_instances[$service]['schema'].".requests 
 			where timestamp >= to_date(:from_date,'dd/mm/yyyy HH24:Mi')
-				and timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi')";
-
+			and timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi')";
+  else
+        $query = "select count(case when state='DiskHit' then 1 else null end) DiskHits, count(case when state='DiskCopy' then 1 else null end) DiskCopies,
+			count(case when state='TapeRecall' then 1 else null end) taperecalls
+			from ".$db_instances[$service]['schema'].".requests 
+			where timestamp >= to_date(:from_date,'dd/mm/yyyy HH24:Mi')
+			and timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi')
+			and svcclass = :svcclass";  
+}
 //Create new graph, enable image cache by setting countdown period(in minutes) 
 //depending on selected period. If the cached image is valid the script immediately 
 //returns the cached image and exits without logining in the DB
@@ -81,6 +105,9 @@ else if ($qn == 2) {
 	ocibindbyname($parsed1,":from_date",$from);
 	ocibindbyname($parsed1,":to_date",$to);
 }
+if ($query_svc == 1) {
+       	  ocibindbyname($parsed1,":svcclass",$svcclass);
+}
 if (!OCIExecute($parsed1))
 	{ echo "Error Executing Query";exit();}
 //fetch data 
@@ -96,13 +123,13 @@ if(($DiskHits+$DiskCopy+$Taperecall) == 0) {
 };
 //Create new pie graph
 $data = array($DiskHits,$DiskCopy,TapeRecall);
-$leg = array("Resident Files","Pool Copies","Tape Recalls"); 
+$leg = array("Resident Files","D2D Copies","Tape Recalls"); 
 $graph->SetShadow();
-$graph->title-> Set( "File Read Request Percentages");
+$graph->title-> Set( "Read File Request Percentages");
 $p1 = new PiePlot($data);
 $p1->SetLegends($leg);  
+$graph->Add( $p1); 
 $p1->SetCenter(0.3,0.5);
 $graph ->legend->Pos( 0.02,0.5,"right" ,"center");
-$graph->Add( $p1); 
 $graph->Stroke(); 
 ?>

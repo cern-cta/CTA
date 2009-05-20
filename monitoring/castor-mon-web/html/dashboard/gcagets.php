@@ -34,7 +34,7 @@ if (!OCIExecute($parsed1))
 $i = 0;
 while (OCIFetch($parsed1)) {
 	$intervals[$i] =  OCIResult($parsed1,1);
-	$number[$i] = ((float)OCIResult($parsed1,2))/3600;
+	$number[$i] = ((float)OCIResult($parsed1,2)/3600);
 	$i++;		
 }
 //If no data retrieved display "No Data Available Image"
@@ -46,10 +46,10 @@ if(empty($intervals)) {
 $graph = new Graph(420,200,"auto");
 $graph->SetShadow();
 $graph->SetScale("textlin");
-$graph->title->Set("Avg Age of GC Files Timeseries");
+$graph->title->Set("AvgAge of GC Files Timeseries");
 $graph->title->SetFont(FF_FONT1,FS_BOLD);
 $graph->img->SetMargin(80,20,20,120);
-$graph->yaxis->title->Set("Age (Hours)");
+$graph->yaxis->title->Set("Age (hours)");
 $graph->yaxis->title->SetFont(FF_FONT1,FS_BOLD);
 $graph->yaxis->SetTitleMargin(60);
 $graph->xaxis->SetTickLabels($intervals);

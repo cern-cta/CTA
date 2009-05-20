@@ -46,10 +46,10 @@ if(($DiskHits+$DiskCopy+$Taperecall) == 0) {
 };
 //Create new pie graph
 $data = array($DiskHits,$DiskCopy,$Taperecall);
-$leg = array("Resident Files","Pool Copies","Tape Recalls"); 
+$leg = array("Resident Files","D2D Copies","Tape Recalls"); 
 $graph = new PieGraph(420,200,"auto");
 $graph->SetShadow();
-$graph->title-> Set( "File Requests Percentages($username)");
+$graph->title-> Set( "Read File Requests Percentages($username)");
 $p1 = new PiePlot3D($data);
 $p1->SetLegends($leg);  
 $p1->SetTheme("sand");

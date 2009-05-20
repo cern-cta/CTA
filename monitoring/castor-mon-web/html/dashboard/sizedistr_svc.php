@@ -33,7 +33,7 @@ $query1 = "select distinct bin, count(bin) over (Partition by bin) reqs
 	from ".$db_instances[$service]['schema'].".requests
 	where state = 'TapeRecall'
 	and timestamp >= sysdate - 15/1440
-	and timestamp < sysdate -5/1440 
+	and timestamp < sysdate - 5/1440 
 	and svcclass = :svcclass
 	and filesize!=0)
 	order by bin";

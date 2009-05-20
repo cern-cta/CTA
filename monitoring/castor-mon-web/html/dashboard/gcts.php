@@ -49,7 +49,7 @@ $graph->SetScale("textlin");
 $graph->title->Set("Number of GC Files Timeseries");
 $graph->title->SetFont(FF_FONT1,FS_BOLD);
 $graph->img->SetMargin(80,20,20,120);
-$graph->yaxis->title->Set("Number of files");
+$graph->yaxis->title->Set("Files");
 $graph->yaxis->title->SetFont(FF_FONT1,FS_BOLD);
 $graph->yaxis->SetTitleMargin(60);
 $graph->xaxis->SetTickLabels($intervals);
