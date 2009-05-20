@@ -10,7 +10,7 @@ width: 12em;
 float: left;
 }
 
-#menu a, #menu h2 {
+#menu a, #menu h2, #menu h3 {
 font: bold 11px/16px arial, helvetica, sans-serif;
 display: block;
 border-width: 1px;
@@ -33,24 +33,53 @@ background: #fff;
 text-decoration: none;
 }
 
+#menu li h3 {
+color: #fff;
+background: #000;
+text-transform: uppercase;
+}
+
 #menu a:hover {
 color: #a00;
 background: #fff;
 }
 #menu li {position: relative;}
 
-#menu ul ul ul {
-position: absolute;
-top: 0;
-left: 100%;
-}
 #menu ul ul {
 position: absolute;
 z-index: 500;
 }
 
+#menu ul ul ul {
+position: absolute;
+top: 0;
+left: 100%;
+width: 100%;
+}
+
+
 div#menu ul ul {
 display: none;
 }
-div#menu ul li:hover ul
-{display: block;}
+
+div#menu ul ul ul {
+display: none;
+}
+
+div#menu ul li:hover ul  {
+display: block;
+}
+
+div#menu ul li:hover ul ul {
+display: none;
+}
+
+div#menu ul ul li:hover ul{
+display: block;
+}
+
+
+
+
+
+
