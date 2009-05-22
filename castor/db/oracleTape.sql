@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.747 $ $Date: 2009/05/19 15:43:42 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.748 $ $Date: 2009/05/22 19:00:58 $ $Author: waldron $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1001,7 +1001,15 @@ BEGIN
   ELSE
   -- return for policy
   OPEN dbInfo FOR
-    SELECT Stream.id, count(distinct Stream2TapeCopy.child), sum(CastorFile.filesize), gettime() - min(CastorFile.lastupdatetime)
+    SELECT /*+ opt_param('hash_join_enabled', 'false')
+               no_use_merge(STREAM STREAM2TAPECOPY TAPECOPY CASTORFILE)
+               USE_NL(STREAM STREAM2TAPECOPY TAPECOPY CASTORFILE)
+               LEADING(STREAM STREAM2TAPECOPY TAPECOPY CASTORFILE)
+               INDEX_RS_ASC(CASTORFILE PK_CASTORFILE_ID)
+               INDEX_RS_ASC(TAPECOPY PK_TAPECOPY_ID)
+               INDEX(STREAM2TAPECOPY I_STREAM2TAPECOPY_PC)
+               INDEX_RS_ASC(STREAM PK_STREAM_ID) */
+           Stream.id, count(distinct Stream2TapeCopy.child), sum(CastorFile.filesize), gettime() - min(CastorFile.lastupdatetime)
       FROM Stream2TapeCopy, TapeCopy, CastorFile, Stream
      WHERE Stream.id IN (SELECT /*+ CARDINALITY(stridTable 5) */ * FROM TABLE(strIds) stridTable)
        AND Stream2TapeCopy.child = TapeCopy.id
