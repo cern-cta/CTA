@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.99 $ $Release$ $Date: 2009/05/18 13:42:52 $ $Author: waldron $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.100 $ $Release$ $Date: 2009/05/25 06:19:39 $ $Author: waldron $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -470,12 +470,26 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
         // Get PATH for queries by fileId
         if (ptype == REQUESTQUERYTYPE_FILEID) {
           char cfn[CA_MAXPATHLEN + 1];
-          std::string nsHostFromConf = NsOverride::getInstance()->getCnsHost();
-          if (nsHostFromConf.length() > 0 && nsHostFromConf != nshost) {
-            castor::exception::Exception e(EINVAL);
-            e.getMessage() << "Cannot query NameServer '" << nshost
-                           << "', stager configured to only query '" << nsHostFromConf << "'";
-            throw e;
+
+          // If NS Override is active check to make sure the user is not trying
+          // to query a name server daemon that the stager cannot communicate
+          // with.
+          std::string cnsHost = NsOverride::getInstance()->getTargetCnsHost();  
+          if (cnsHost.length() > 0) {
+            if (cnsHost != nshost) {
+              castor::exception::Exception e(EINVAL);
+              e.getMessage() << "Cannot query NameServer '" << nshost
+                             << "', stager configured to only query '" << cnsHost << "'";
+              throw e;
+            }
+          } else {
+            std::string nsHostFromConf = NsOverride::getInstance()->getCnsHost();
+            if ((nsHostFromConf.length() > 0) && (nsHostFromConf != nshost)) {
+              castor::exception::Exception e(EINVAL);
+              e.getMessage() << "Cannot query NameServer '" << nshost
+                             << "', stager configured to only query '" << nsHostFromConf << "'";
+              throw e;
+            }
           }
           if (Cns_getpath((char*)nshost.c_str(), fid, cfn) < 0) {
             castor::exception::Exception e(serrno);
@@ -537,7 +551,12 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
           ptype = REQUESTQUERYTYPE_FILEID;
           if (0 == fid) {
             fid = Cnsfileid.fileid;
-            nshost = Cnsfileid.server;
+	    std::string cnsHost = NsOverride::getInstance()->getTargetCnsHost();
+	    if (cnsHost.length() > 0) {
+	      nshost = cnsHost;
+	    } else {
+	      nshost = Cnsfileid.server;
+	    }
           }
         }
       }
