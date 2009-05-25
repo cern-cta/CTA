@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_serv.c,v 1.35 2009/02/27 13:02:48 sponcec3 Exp $
+ * $Id: rfio_serv.c,v 1.36 2009/05/25 15:41:31 murrayc3 Exp $
  */
 
 /*
@@ -531,6 +531,12 @@ rfiod()
         ioctl(i, TIOCNOTTY, 0);
         close(i);
       }
+#else
+      /* Redirect standard files to /dev/null */
+      freopen( "/dev/null", "r", stdin);
+      freopen( "/dev/null", "w", stdout);
+      freopen( "/dev/null", "w", stderr);
+      for (i=3; i< maxfds; i++) (void) close(i);
 #endif /* sun || ultrix || _AIX || sgi */
 
       /*
