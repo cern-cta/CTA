@@ -114,11 +114,11 @@ namespace castor {
          * -2,-3: no scheduling, subrequest put on WAITSUBREQ status.
          * -1: no scheduling because of user error.
          * DISKCOPY_STAGED (0): schedule + list of avail sources,
-           a DiskCopy was found and the SubRequest can be scheduled.
+         * a DiskCopy was found and the SubRequest can be scheduled.
          * DISKCOPY_WAITDISK2DISKCOPY (1): like above, plus the
          * stager is allowed to replicate according to policies.
          * DISKCOPY_WAITTAPERECALL (2): no scheduling, no DiskCopy
-           found anywhere, a tape recall is needed.
+         * found anywhere, a tape recall is needed.
          * DISKCOPY_WAITFS (5): the only available DiskCopy is in
          * WAITFS, i.e. this is an Update inside PrepareToPut:
          * recreateCastorFile is to be called in such a case.
