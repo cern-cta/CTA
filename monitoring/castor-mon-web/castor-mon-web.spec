@@ -38,7 +38,7 @@ mkdir -p $RPM_BUILD_ROOT/var/www/html/castor-mon-web/jpgraph-1.27/src/Examples
 mkdir -p $RPM_BUILD_ROOT/var/www/html/castor-mon-web/jpgraph-1.27/src/lang
 mkdir -p $RPM_BUILD_ROOT/var/www/html/castor-mon-web/tmp/jpgraph_cache
 mkdir -p $RPM_BUILD_ROOT/var/www/conf/castor-mon-web
-install -m 644 html/Default.html $RPM_BUILD_ROOT/var/www/html/castor-mon-web/
+install -m 644 html/index.php $RPM_BUILD_ROOT/var/www/html/castor-mon-web/
 install -m 644 html/calendar/*.js $RPM_BUILD_ROOT/var/www/html/castor-mon-web/calendar/
 install -m 644 html/dashboard/* $RPM_BUILD_ROOT/var/www/html/castor-mon-web/dashboard/
 install -m 644 html/images/* $RPM_BUILD_ROOT/var/www/html/castor-mon-web/images/
