@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.31 $ $Date: 2009/04/24 15:05:50 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.32 $ $Date: 2009/05/26 15:33:08 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #define NullParameter
@@ -27,26 +27,26 @@ exportman: ManPageTargetName(name,suffix)
 
 #define RemoveFiles(files) rm -f files
 
-#define InternalInstallTarget(file,mode,dest,insttarget) \
-$(DESTDIR)dest/file: $(INSUBDIR)file	   @@\
-	install -d $(DESTDIR)dest -m 0755  @@\
-	install -m mode $? $(DESTDIR)dest  @@\
-insttarget: $(DESTDIR)dest/file            @@\
+#define InternalInstallTarget(file,mode,dest,insttarget,deps) \
+$(DESTDIR)/dest/file: $(INSUBDIR)file deps  @@\
+	install -d $(DESTDIR)/dest -m 0755  @@\
+	install -m mode $< $(DESTDIR)/dest  @@\
+insttarget: $(DESTDIR)/dest/file            @@\
 
 #define InstallTarget(file,mode,dest) \
-InternalInstallTarget(file,mode,dest,install)
+InternalInstallTarget(file,mode,dest,install,)
 
 #define InstallLink(tofile,fromfile,mode,dest,component) \
-$(DESTDIR)dest/tofile: fromfile	          @@\
-	install -d $(DESTDIR)dest -m 0755 @@\
-	RemoveFiles($@)                   @@\
-	ln -s $? $@                       @@\
-install/**/component: $(DESTDIR)dest/tofile
+$(DESTDIR)/dest/tofile: fromfile           @@\
+	install -d $(DESTDIR)/dest -m 0755 @@\
+	RemoveFiles($@)                    @@\
+	ln -s $< $@                        @@\
+install/**/component: $(DESTDIR)/dest/tofile
 
 #define LinkFile(tofile,fromfile,mode,component) \
 tofile: fromfile                @@\
 	RemoveFiles($@)         @@\
-	ln -s $? $@             @@\
+	ln -s $< $@             @@\
 component: tofile               @@\
 FilesToClobber += tofile        @@ \
 InstallLink(tofile,fromfile,mode,$(BIN),component)
@@ -57,6 +57,7 @@ InstallLink(tofile,fromfile,mode,$(BIN),component)
 #define SharedLibraryFullName(libname)SharedLibraryName(libname).$(MINOR_CASTOR_VERSION)
 #define SharedLibraryTargetName(libname)SharedLibraryName(lib/**/libname)
 #define DepSharedLibraryTargetName(dir,libname)../dir/SharedLibraryName(lib/**/libname)
+#define InstallLibraryTargetNames(deplibs)$(if deplibs,$(addprefix $(DESTDIR)/$(LIBDIR)/,$(subst .$(MAJOR_CASTOR_VERSION),,$(notdir deplibs))))
 
 #define SchModTarget(libname,src,deplibs,libs,dir)                                                                \
 BareSharedLibraryTargetName(libname): src deplibs                                                               @@\
@@ -71,10 +72,10 @@ FilesToClobber += BareSharedLibraryTargetName(libname)
 
 #define BareSharedLibraryTarget(libname,objects,deplibs,libs,dir,alltgt,installtgt)            \
 SharedLibraryName(libname): objects deplibs                                                  @@\
-	$(LD) --no-undefined -shared -o $@ $(LDFLAGS) -Wl,-soname,SharedLibraryName(libname) objects libs   @@\
-$(DESTDIR)/dir/BareSharedLibraryTargetName(libname): SharedLibraryName(libname)              @@\
+	$(LD) --no-undefined -shared -o $@ $(LDFLAGS) -Wl,-soname,SharedLibraryName(libname) objects libs          @@\
+$(DESTDIR)/dir/BareSharedLibraryTargetName(libname): SharedLibraryName(libname) InstallLibraryTargetNames(deplibs) @@\
 	@install -d $(DESTDIR)/dir                                                           @@\
-	install $? $(DESTDIR)/dir/SharedLibraryFullName(libname)                             @@\
+	install $< $(DESTDIR)/dir/SharedLibraryFullName(libname)                             @@\
 	rm -f $(DESTDIR)/dir/SharedLibraryName(libname) $@                                   @@\
 	ln -s SharedLibraryFullName(libname) $(DESTDIR)/dir/SharedLibraryName(libname)       @@\
 	ln -s SharedLibraryName(libname) $@                                                  @@\
@@ -88,9 +89,11 @@ FilesToClobber += SharedLibraryName(libname)
 #define ClientSharedLibraryTarget(libname,objects,deplibs,libs) BareSharedLibraryTarget(lib/**/libname,objects,deplibs,libs,$(LIBDIR),client,installclient)
 #define TapeSharedLibraryTarget(libname,objects,deplibs,libs) BareSharedLibraryTarget(lib/**/libname,objects,deplibs,libs,$(LIBDIR),tape,installtape)
 
-#define MakeDepSharedLibrary(dir,libname) \
-../dir/SharedLibraryName(libname):		@@\
-	cd ../dir ; $(MAKE) SharedLibraryName(libname)
+#define MakeDepSharedLibrary(dir,libname)                    \
+../dir/SharedLibraryName(libname):		           @@\
+	cd ../dir ; $(MAKE) SharedLibraryName(libname)     @@\
+$(DESTDIR)/$(LIBDIR)/BareSharedLibraryTargetName(libname): @@\
+	cd ../dir ; $(MAKE) $@
 
 #define DealWithSubdirs(cmd,dir)             \
 	if [ -d dir ] ;                      \
@@ -108,18 +111,18 @@ FilesToClobber += SharedLibraryName(libname)
 	done;
 
 #define InstallNonExecFile(file,dest,mode) \
-InternalInstallTarget(file,mode,dest,install)
+InternalInstallTarget(file,mode,dest,install,)
 
 #define MakeDir(dirname,mode)   \
-$(DESTDIR)dirname:			     @@\
-	install -d $(DESTDIR)dirname -m mode @@\
-install: $(DESTDIR)dirname
+$(DESTDIR)/dirname:                           @@\
+	install -d $(DESTDIR)/dirname -m mode @@\
+install: $(DESTDIR)/dirname
 
 #define ProgramTarget(program,objects,deplibs,libs,mode,alltarget,installtarget) \
 program: objects deplibs		      @@\
 	$(LD) -o $@ $(LDFLAGS) objects libs   @@\
 alltarget: program                            @@\
-InternalInstallTarget(program,mode,$(BIN),install/**/installtarget) @@\
+InternalInstallTarget(program,mode,$(BIN),install/**/installtarget,InstallLibraryTargetNames(deplibs)) @@\
 FilesToClean += objects                       @@\
 FilesToClobber += program
 
@@ -163,25 +166,25 @@ ProgramTarget(program,objects,deplibs,libs,mode,tape,tape)
 #define BuildRPathcastorinfopolicy commonRPath castorRPath oraRPath cnvRPath
 #define BuildRPathcastortapefsm
 
-#define DependsOnLibrary(dir,libname)                 \
-DEPLIB += DepSharedLibraryTargetName(dir,libname)   @@\
-LIBS += DepSharedLibraryTargetName(dir,libname) BuildRPath/**/libname  @@\
+#define DependsOnLibrary(dir,libname)                                   \
+DEPLIB += DepSharedLibraryTargetName(dir,libname)                     @@\
+LIBS += DepSharedLibraryTargetName(dir,libname) BuildRPath/**/libname @@\
 MakeDepSharedLibrary(dir,lib/**/libname)
 
-#define ClientDependsOnLibrary(dir,libname)               \
-CLIENTDEPLIB += DepSharedLibraryTargetName(dir,libname) @@\
+#define ClientDependsOnLibrary(dir,libname)                                   \
+CLIENTDEPLIB += DepSharedLibraryTargetName(dir,libname)                     @@\
 CLIENTLIBS += DepSharedLibraryTargetName(dir,libname) BuildRPath/**/libname
 
-#define LOGROTATE(file,rootdir,tgt)                                 \
+#define LOGROTATE(file,rootdir,tgt)                              \
 $(DESTDIR)/etc/logrotate.d/file: rootdir/debian/file.logrotate @@\
-	install -d $(DESTDIR)/etc/logrotate.d -m 0755     @@\
-	install $? $@                                     @@\
+	install -d $(DESTDIR)/etc/logrotate.d -m 0755          @@\
+	install $< $@                                          @@\
 tgt: $(DESTDIR)/etc/logrotate.d/file
 
 #define internalSYSCONFIG(destfile,origfile,tgt)      \
 $(DESTDIR)/etc/sysconfig/destfile: origfile         @@\
 	install -d $(DESTDIR)/etc/sysconfig -m 0755 @@\
-	install -m 644 $? $@                        @@\
+	install -m 644 $< $@                        @@\
 tgt: $(DESTDIR)/etc/sysconfig/destfile
 
 #define SYSCONFIG(file,tgt) \
@@ -190,17 +193,17 @@ internalSYSCONFIG(file.example,file.sysconfig,tgt)
 #define INITSCRIPT(file,tgt)                           \
 $(DESTDIR)/etc/init.d/file: file.init                @@\
 	install -d $(DESTDIR)/etc/init.d -m 0755     @@\
-	install -m 644 $? $@                         @@\
+	install -m 644 $< $@                         @@\
 tgt: $(DESTDIR)/etc/init.d/file
 
 #define CONFIGFILE(file,rootdir,tgt)                                \
 $(DESTDIR)/etc/castor/file/**/CONFIG.example: rootdir/debian/file/**/CONFIG @@\
 	install -d $(DESTDIR)/etc/castor -m 0755                  @@\
-	install -m 640 $? $@                                      @@\
+	install -m 640 $< $@                                      @@\
 tgt: $(DESTDIR)/etc/castor/file/**/CONFIG.example
 
 #define EXAMPLEFILE(file,orig,dest,tgt)        \
 $(DESTDIR)/dest/file.example: orig/file      @@\
 	install -d $(DESTDIR)/dest -m 0755   @@\
-	install -m 644 $? $@                 @@\
+	install -m 644 $< $@                 @@\
 tgt: $(DESTDIR)/dest/file.example
