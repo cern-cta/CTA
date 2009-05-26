@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_serv.c,v 1.36 2009/05/25 15:41:31 murrayc3 Exp $
+ * $Id: rfio_serv.c,v 1.37 2009/05/26 14:50:12 murrayc3 Exp $
  */
 
 /*
@@ -536,7 +536,11 @@ rfiod()
       freopen( "/dev/null", "r", stdin);
       freopen( "/dev/null", "w", stdout);
       freopen( "/dev/null", "w", stderr);
-      for (i=3; i< maxfds; i++) (void) close(i);
+      for (i=3; i< maxfds; i++) {
+        if (i != Socket_parent) {
+          (void) close(i);
+        }
+      }
 #endif /* sun || ultrix || _AIX || sgi */
 
       /*
