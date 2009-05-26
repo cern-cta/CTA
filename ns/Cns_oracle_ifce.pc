@@ -1367,16 +1367,18 @@ int Cns_check_files_exist(dbfd, fileIds, nbFileIds)
   return(0);
 }
 
-int Cns_get_tapesum_by_vid(dbfd, vid, filter, count, size)
+int Cns_get_tapesum_by_vid(dbfd, vid, filter, count, size, maxfileid)
      struct Cns_dbfd *dbfd;
      char *vid;
      int filter;
      u_signed64 *count;
      u_signed64 *size;
+     u_signed64 *maxfileid;
 {
   char func[23];
   char count_str[21];
   char size_str[21];
+  char maxfileid_str[21];
   int exists = 0;
   struct sqlca sqlca;
 
@@ -1398,19 +1400,25 @@ int Cns_get_tapesum_by_vid(dbfd, vid, filter, count, size)
   }
 
   if (filter == 1) {
-    EXEC SQL SELECT TO_CHAR(COUNT(*)), TO_CHAR(NVL(SUM(segsize),0))
-      INTO :count_str, :size_str
+    EXEC SQL SELECT TO_CHAR(COUNT(*)), 
+                    TO_CHAR(NVL(SUM(segsize), 0)),
+                    TO_CHAR(NVL(MAX(s_fileid), 0))
+      INTO :count_str, :size_str, :maxfileid_str
       FROM Cns_seg_metadata
       WHERE vid = :vid;
   } else if (filter == 2) {
-    EXEC SQL SELECT TO_CHAR(COUNT(*)), TO_CHAR(NVL(SUM(segsize),0))
-      INTO :count_str, :size_str
+    EXEC SQL SELECT TO_CHAR(COUNT(*)),
+                    TO_CHAR(NVL(SUM(segsize), 0)),
+                    TO_CHAR(NVL(MAX(s_fileid), 0))
+      INTO :count_str, :size_str, :maxfileid_str
       FROM Cns_seg_metadata
       WHERE vid = :vid
       AND s_status = '-';
   } else if (filter == 3) {
-    EXEC SQL SELECT TO_CHAR(COUNT(*)), TO_CHAR(NVL(SUM(segsize),0))
-      INTO :count_str, :size_str
+    EXEC SQL SELECT TO_CHAR(COUNT(*)),
+                    TO_CHAR(NVL(SUM(segsize), 0)),
+                    TO_CHAR(NVL(MAX(s_fileid), 0))
+      INTO :count_str, :size_str, :maxfileid_str
       FROM Cns_seg_metadata
       WHERE vid = :vid
       AND s_status = 'D';
@@ -1422,6 +1430,7 @@ int Cns_get_tapesum_by_vid(dbfd, vid, filter, count, size)
   case 0:
     *count = strtou64 (count_str);
     *size = strtou64 (size_str);
+    *maxfileid = strtou64 (maxfileid_str);
     return(0);
   case 1403:
     serrno = ENOENT;

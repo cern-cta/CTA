@@ -2856,6 +2856,7 @@ int Cns_srv_tapesum(magic, req_data, clienthost, thip)
   char  repbuf[REPBUFSZ];
   u_signed64 count = 0;
   u_signed64 size = 0;
+  u_signed64 maxfileid = 0;
   char  *rbp;
   char  *sbp;
   char  *user;
@@ -2882,7 +2883,7 @@ int Cns_srv_tapesum(magic, req_data, clienthost, thip)
   Cns_logreq(func, logbuf);
 
   /* Get tape summary information */
-  c = Cns_get_tapesum_by_vid(&thip->dbfd, vid, filter, &count, &size);
+  c = Cns_get_tapesum_by_vid(&thip->dbfd, vid, filter, &count, &size, &maxfileid);
   if (c < 0) {
     RETURN (serrno);
   }
@@ -2891,6 +2892,9 @@ int Cns_srv_tapesum(magic, req_data, clienthost, thip)
   sbp = repbuf;
   marshall_HYPER(sbp, count);
   marshall_HYPER(sbp, size);
+  if (magic >= CNS_MAGIC5) {
+    marshall_HYPER(sbp, maxfileid);
+  }
 
   /* Send response */
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);

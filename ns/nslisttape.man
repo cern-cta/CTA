@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: nslisttape.man,v $ $Revision: 1.5 $ $Date: 2008/11/03 10:37:05 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: nslisttape.man,v $ $Revision: 1.6 $ $Date: 2009/05/26 13:07:21 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH NSLISTTAPE 1 "$Date: 2008/11/03 10:37:05 $" CASTOR "Cns User Commands"
+.TH NSLISTTAPE 1 "$Date: 2009/05/26 13:07:21 $" CASTOR "Cns User Commands"
 .SH NAME
 nslisttape \- list the file segments residing on a volume
 .SH SYNOPSIS
@@ -35,7 +35,7 @@ print the file uniqueid in front of each entry.
 print sizes in human readable format (e.g., 1K 234M 2G) using powers of 1024
 .TP
 .BI -s,\ \-\-summarize
-display only the total number of files and the total size of all files on the volume.
+display only the total number of files, total size and largest fileid of all files on the volume.
 .TP
 .BI -D
 only display/count logical deleted segments.

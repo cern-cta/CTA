@@ -22,7 +22,7 @@
 #include "serrno.h"
 
 int DLL_DECL
-Cns_tapesum(const char *vid, u_signed64 *count, u_signed64 *size, int filter)
+Cns_tapesum(const char *vid, u_signed64 *count, u_signed64 *size, u_signed64 *maxfileid, int filter)
 {
   /* variables */
   char  func[16];
@@ -69,7 +69,7 @@ Cns_tapesum(const char *vid, u_signed64 *count, u_signed64 *size, int filter)
 
   /* Build the request header */
   sbp = sendbuf;
-  marshall_LONG(sbp, CNS_MAGIC4);
+  marshall_LONG(sbp, CNS_MAGIC5);
   marshall_LONG(sbp, CNS_TAPESUM);
   q = sbp;                   /* Save the pointer, for field updates */
   msglen = 3 * LONGSIZE;
@@ -90,6 +90,7 @@ Cns_tapesum(const char *vid, u_signed64 *count, u_signed64 *size, int filter)
     rbp = repbuf;
     unmarshall_HYPER (rbp, *count);
     unmarshall_HYPER (rbp, *size);
+    unmarshall_HYPER (rbp, *maxfileid);
   }
   if (c && serrno == SENAMETOOLONG) {
     serrno = ENAMETOOLONG;

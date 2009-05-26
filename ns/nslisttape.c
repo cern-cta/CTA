@@ -31,8 +31,8 @@ void usage(int status, char *name) {
     printf ("                       powers of 1024\n");
     printf ("  -D                   only display/count logical deleted segments\n");
     printf ("  -f=FSEQ              restrict the output to the given file sequence number\n");
-    printf ("  -s, --summarize      display only the total number of files and the total size of all\n");
-    printf ("                       files on the volume\n");
+    printf ("  -s, --summarize      display only the total number of files, total size and largest fileid\n");
+    printf ("                       of all files on the volume\n");
     printf ("  -h, --host=HOSTNAME  the name server to query\n");
     printf ("      --ds             print the vid followed by a slash followed by the media side\n");
     printf ("                       number. This option is useful for multi-sided media like DVD.\n");
@@ -66,10 +66,12 @@ int main(int argc,char **argv)
   char *server = NULL;
   char tmpbuf[21];
   char tmpbuf2[21];
+  char tmpbuf3[21];
   char *vid = NULL;
   int fseq = 0;
   u_signed64 count = 0;
   u_signed64 size = 0;
+  u_signed64 maxfileid = 0;
   char *p = NULL;
 
 #if defined(_WIN32)
@@ -154,7 +156,7 @@ int main(int argc,char **argv)
 #endif
 
   if (sumflag) {
-    c = Cns_tapesum(vid, &count, &size, dflag == 0 ? 1 : 3);
+    c = Cns_tapesum(vid, &count, &size, &maxfileid, dflag == 0 ? 1 : 3);
     if (c < 0) {
       fprintf (stderr, "%s: %s\n", vid, (serrno == ENOENT) ? "No such volume or no files found" : sstrerror(serrno));
 #if defined(_WIN32)
@@ -162,10 +164,11 @@ int main(int argc,char **argv)
 #endif
       exit (USERR);
     }
+    u64tostr (maxfileid, tmpbuf3, 0);
     if (humanflag) {
-      printf("%s %s\n", u64tostr (count, tmpbuf, 0), u64tostru (size, tmpbuf2, 0));
+      printf("%s %s %s\n", u64tostr (count, tmpbuf, 0), u64tostru (size, tmpbuf2, 0), tmpbuf3);
     } else {
-      printf("%s %s\n", u64tostr (count, tmpbuf, 0), u64tostr (size, tmpbuf2, 0));
+      printf("%s %s %s\n", u64tostr (count, tmpbuf, 0), u64tostr (size, tmpbuf2, 0), tmpbuf3);
     }
 #if defined(_WIN32)
     WSACleanup();

@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_api.h,v 1.21 2009/02/11 16:44:41 waldron Exp $
+ * $Id: Cns_api.h,v 1.22 2009/05/26 13:07:21 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.21 $ $Date: 2009/02/11 16:44:41 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.22 $ $Date: 2009/05/26 13:07:21 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_API_H
@@ -362,7 +362,7 @@ EXTERN_C int DLL_DECL Cns_statx _PROTO((const char *, struct Cns_fileid *, struc
 EXTERN_C int DLL_DECL Cns_statcsx _PROTO((const char *, struct Cns_fileid *, struct Cns_filestatcs *));
 EXTERN_C int DLL_DECL Cns_statcs _PROTO((const char *, struct Cns_filestatcs *));
 EXTERN_C int DLL_DECL Cns_symlink _PROTO((const char *, const char *));
-EXTERN_C int DLL_DECL Cns_tapesum _PROTO((const char *, u_signed64 *, u_signed64 *, int));
+EXTERN_C int DLL_DECL Cns_tapesum _PROTO((const char *, u_signed64 *, u_signed64 *, u_signed64 *, int));
 EXTERN_C mode_t DLL_DECL Cns_umask _PROTO((mode_t));
 EXTERN_C int DLL_DECL Cns_undelete _PROTO((const char *));
 EXTERN_C int DLL_DECL Cns_unlink _PROTO((const char *));
