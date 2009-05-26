@@ -11,7 +11,7 @@ URL:            http://cern.ch/castor
 Source: 	%{name}-%{version}.tar.gz
 BuildRoot: 	%{_tmppath}/%{name}-%{version}
 Buildarch:      noarch
-Requires:       php, httpd, php-oci8
+Requires:       php4, httpd, php-oci8, php-gd
 
 %description
 This web interface provides visualization of some new statistical metrics for CASTOR.
