@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.102 $ $Release$ $Date: 2009/05/19 16:17:09 $ $Author: itglp $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.103 $ $Release$ $Date: 2009/05/26 07:10:48 $ $Author: sponcec3 $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -345,6 +345,21 @@ namespace castor {
       virtual int setFileGCWeight
       (const u_signed64 fileId, const std::string nsHost,
        const u_signed64 svcClassId, const float weight)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Creates an empty (i.e. 0 size) file in the DB.
+       * A proper diskcopy in status STAGED will be created
+       * and the subrequest will be updated to schedule an
+       * access to the file if requested
+       * @param subreq the subreq of the file to recall
+       * @param schedule whether to update the subrequest to
+       * schedule an access to the file
+       * @exception Exception in case of error
+       */
+      virtual void createEmptyFile
+      (castor::stager::SubRequest* subreq,
+       bool schedule)
         throw (castor::exception::Exception) = 0;
 
       /**

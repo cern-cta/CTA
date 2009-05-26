@@ -154,32 +154,37 @@ std::string startAndGetPath
     }
     std::string fullDestPath = args->fileSystem + diskCopy->path();
     // Deal with recalls of empty files
+    // the file may have been declared recalled without being created on disk
+    // so let's check and create when needed
     if (emptyFile) {
-      int thisfd = creat(fullDestPath.c_str(), (S_IRUSR|S_IWUSR));
-      if (thisfd < 0) {
-        // "Failed to create empty file"
-        castor::dlf::Param params[] =
-          {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-           castor::dlf::Param("Path", fullDestPath),
-           castor::dlf::Param("Error", strerror(errno)),
-           castor::dlf::Param(args->subRequestUuid)};
-        castor::dlf::dlf_writep
-          (args->requestUuid, DLF_LVL_ERROR,
-           castor::job::stagerjob::CREATFAILED, 4, params, &args->fileId);
-        delete diskCopy;
-        castor::exception::Exception e(errno);
-        e.getMessage() << "Failed to create empty file";
-        throw e;
-      }
-      if (close(thisfd) != 0) {
-        castor::dlf::Param params[] =
-          {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-           castor::dlf::Param("Path", fullDestPath),
-           castor::dlf::Param("Error", strerror(errno)),
-           castor::dlf::Param(args->subRequestUuid)};
-        castor::dlf::dlf_writep
-          (args->requestUuid, DLF_LVL_ERROR,
-           castor::job::stagerjob::FCLOSEFAILED, 4, params, &args->fileId);
+      struct stat s;
+      if (-1 == stat(fullDestPath.c_str(), &s) && errno == ENOENT) {
+        int thisfd = creat(fullDestPath.c_str(), (S_IRUSR|S_IWUSR));
+        if (thisfd < 0) {
+          // "Failed to create empty file"
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
+             castor::dlf::Param("Path", fullDestPath),
+             castor::dlf::Param("Error", strerror(errno)),
+             castor::dlf::Param(args->subRequestUuid)};
+          castor::dlf::dlf_writep
+            (args->requestUuid, DLF_LVL_ERROR,
+             castor::job::stagerjob::CREATFAILED, 4, params, &args->fileId);
+          delete diskCopy;
+          castor::exception::Exception e(errno);
+          e.getMessage() << "Failed to create empty file";
+          throw e;
+        }
+        if (close(thisfd) != 0) {
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
+             castor::dlf::Param("Path", fullDestPath),
+             castor::dlf::Param("Error", strerror(errno)),
+             castor::dlf::Param(args->subRequestUuid)};
+          castor::dlf::dlf_writep
+            (args->requestUuid, DLF_LVL_ERROR,
+             castor::job::stagerjob::FCLOSEFAILED, 4, params, &args->fileId);
+        }
       }
     }
 

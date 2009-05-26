@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.270 $ $Release$ $Date: 2009/05/19 16:17:10 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.271 $ $Release$ $Date: 2009/05/26 07:10:48 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -121,6 +121,10 @@ const std::string castor::db::ora::OraStagerSvc::s_processPutDoneRequestStatemen
 const std::string castor::db::ora::OraStagerSvc::s_createDiskCopyReplicaRequestStatementString =
   "BEGIN createDiskCopyReplicaRequest(:1, :2, :3, :4, :5, :6); END;";
 
+/// SQL statement for createEmptyFile
+const std::string castor::db::ora::OraStagerSvc::s_createEmptyFileStatementString =
+  "BEGIN createEmptyFile(:1, :2, :3, :4, :5); END;";
+
 /// SQL statement for selectCastorFile
 const std::string castor::db::ora::OraStagerSvc::s_selectCastorFileStatementString =
   "BEGIN selectCastorFile(:1, :2, :3, :4, :5, :6, :7, :8, :9); END;";
@@ -196,6 +200,7 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_processPrepareRequestStatement(0),
   m_processPutDoneRequestStatement(0),
   m_createDiskCopyReplicaRequestStatement(0),
+  m_createEmptyFileStatement(0),
   m_selectCastorFileStatement(0),
   m_getBestDiskCopyToReadStatement(0),
   m_updateAndCheckSubRequestStatement(0),
@@ -249,6 +254,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     if (m_processPrepareRequestStatement) deleteStatement(m_processPrepareRequestStatement);
     if (m_processPutDoneRequestStatement) deleteStatement(m_processPutDoneRequestStatement);
     if (m_createDiskCopyReplicaRequestStatement) deleteStatement(m_createDiskCopyReplicaRequestStatement);
+    if (m_createEmptyFileStatement) deleteStatement(m_createEmptyFileStatement);
     if (m_selectCastorFileStatement) deleteStatement(m_selectCastorFileStatement);
     if (m_getBestDiskCopyToReadStatement) deleteStatement(m_getBestDiskCopyToReadStatement);
     if (m_updateAndCheckSubRequestStatement) deleteStatement(m_updateAndCheckSubRequestStatement);
@@ -274,6 +280,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_processPrepareRequestStatement = 0;
   m_processPutDoneRequestStatement = 0;
   m_createDiskCopyReplicaRequestStatement = 0;
+  m_createEmptyFileStatement = 0;
   m_selectCastorFileStatement = 0;
   m_getBestDiskCopyToReadStatement = 0;
   m_updateAndCheckSubRequestStatement = 0;
@@ -649,6 +656,44 @@ void castor::db::ora::OraStagerSvc::createDiskCopyReplicaRequest
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in createDiskCopyReplicaRequest."
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// createEmptyFile
+//------------------------------------------------------------------------------
+void castor::db::ora::OraStagerSvc::createEmptyFile
+(castor::stager::SubRequest* subreq,
+ bool schedule)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statement is ok
+    if (0 == m_createEmptyFileStatement) {
+      m_createEmptyFileStatement =
+        createStatement(s_createEmptyFileStatementString);
+      m_createEmptyFileStatement->setAutoCommit(true);
+    }
+    // Execute the statement
+    m_createEmptyFileStatement->setDouble(1, subreq->castorFile()->id());
+    m_createEmptyFileStatement->setDouble(2, subreq->castorFile()->fileId());
+    m_createEmptyFileStatement->setString(3, subreq->castorFile()->nsHost());
+    m_createEmptyFileStatement->setDouble(4, subreq->id());
+    m_createEmptyFileStatement->setInt(5, (int)schedule);
+    unsigned int rc =
+      m_createEmptyFileStatement->executeUpdate();
+    if (0 == rc) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "createEmptyFile : unable to create the empty file.";
+      throw ex;
+    }
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in createEmptyFile."
       << std::endl << e.what();
     throw ex;
   }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.60 $ $Release$ $Date: 2009/03/30 13:05:02 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.61 $ $Release$ $Date: 2009/05/26 07:10:48 $ $Author: sponcec3 $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -95,7 +95,7 @@ static castor::SvcFactory<castor::db::ora::OraJobSvc>* s_factoryOraJobSvc =
 
 /// SQL statement for getUpdateStart
 const std::string castor::db::ora::OraJobSvc::s_getUpdateStartStatementString =
-  "BEGIN getUpdateStart(:1, :2, :3, :4, :5, :6, :7, :8); END;";
+  "BEGIN getUpdateStart(:1, :2, :3, :4, :5, :6, :7, :8, :9); END;";
 
 /// SQL statement for putStart
 const std::string castor::db::ora::OraJobSvc::s_putStartStatementString =
@@ -230,6 +230,8 @@ castor::db::ora::OraJobSvc::getUpdateStart
         (7, oracle::occi::OCCIINT);
       m_getUpdateStartStatement->registerOutParam
         (8, oracle::occi::OCCIINT);
+      m_getUpdateStartStatement->registerOutParam
+        (9, oracle::occi::OCCIDOUBLE);
       m_getUpdateStartStatement->setAutoCommit(true);
     }
     // execute the statement and see whether we found something
@@ -259,7 +261,10 @@ castor::db::ora::OraJobSvc::getUpdateStart
     result->setStatus
       ((enum castor::stager::DiskCopyStatusCodes)
        m_getUpdateStartStatement->getInt(6));
-    if(result->status() == castor::stager::DISKCOPY_WAITDISK2DISKCOPY) {
+    // Deal with recalls of empty files
+    // the file may have been declared recalled without being created on disk
+    if (result->status() == castor::stager::DISKCOPY_STAGED &&
+        0 == (u_signed64)m_getUpdateStartStatement->getDouble(9)) {
       *emptyFile = true;
     }
 

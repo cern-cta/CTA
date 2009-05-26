@@ -347,6 +347,21 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Creates an empty (i.e. 0 size) file in the DB.
+         * A proper diskcopy in status STAGED will be created
+	 * and the subrequest will be updated to schedule an
+	 * access to the file if requested
+         * @param subreq the subreq of the file to recall
+         * @param schedule whether to update the subrequest to
+	 * schedule an access to the file
+         * @exception Exception in case of error
+         */
+        virtual void createEmptyFile
+        (castor::stager::SubRequest* subreq,
+	 bool schedule)
+          throw (castor::exception::Exception);
+
+        /**
          * Creates a candidate for a recall. This includes TapeCopy with
          * its Segment(s), a DiskCopy and a SubRequest in WAITTAPERECALL.
          * @param subreq the subreq of the file to recall
@@ -510,6 +525,12 @@ namespace castor {
 
         /// SQL statement object for function createDiskCopyReplicaRequest
         oracle::occi::Statement *m_createDiskCopyReplicaRequestStatement;
+
+        /// SQL statement for function createEmptyFile
+        static const std::string s_createEmptyFileStatementString;
+
+        /// SQL statement object for function createEmptyFile
+        oracle::occi::Statement *m_createEmptyFileStatement;
 
         /// SQL statement for function selectCastorFile
         static const std::string s_selectCastorFileStatementString;

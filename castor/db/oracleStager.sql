@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.736 $ $Date: 2009/05/19 13:08:23 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.737 $ $Date: 2009/05/26 07:10:48 $ $Author: sponcec3 $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -932,6 +932,76 @@ BEGIN
 END;
 /
 
+/* PL/SQL method implementing createEmptyFile */
+CREATE OR REPLACE PROCEDURE createEmptyFile
+(cfId IN NUMBER, fileId IN NUMBER, nsHost IN VARCHAR2,
+ srId IN INTEGER, schedule IN INTEGER) AS
+  dcPath VARCHAR2(2048);
+  gcw NUMBER;
+  gcwProc VARCHAR(2048);
+  fsId NUMBER;
+  dcId NUMBER;
+  svcClassId NUMBER;
+  ouid INTEGER;
+  ogid INTEGER;
+  fsPath VARCHAR2(2048);
+BEGIN
+  -- get an id for our new DiskCopy
+  SELECT ids_seq.nextval INTO dcId FROM DUAL;
+  -- compute the DiskCopy Path
+  buildPathFromFileId(fileId, nsHost, dcId, dcPath);
+  -- find a fileSystem for this empty file
+  SELECT id, svcClass, euid, egid, name || ':' || mountpoint
+    INTO fsId, svcClassId, ouid, ogid, fsPath
+    FROM (SELECT FileSystem.id, Request.svcClass, Request.euid, Request.egid, DiskServer.name, FileSystem.mountpoint
+            FROM DiskServer, FileSystem, DiskPool2SvcClass,
+                 (SELECT id, svcClass, euid, egid from StageGetRequest UNION ALL
+                  SELECT id, svcClass, euid, egid from StagePrepareToGetRequest UNION ALL
+                  SELECT id, svcClass, euid, egid from StageUpdateRequest UNION ALL
+                  SELECT id, svcClass, euid, egid from StagePrepareToUpdateRequest) Request,
+                  SubRequest
+           WHERE SubRequest.id = srId
+             AND Request.id = SubRequest.request
+             AND Request.svcclass = DiskPool2SvcClass.child
+             AND FileSystem.diskpool = DiskPool2SvcClass.parent
+             AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
+             AND DiskServer.id = FileSystem.diskServer
+             AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
+        ORDER BY -- first prefer DSs without concurrent migrators/recallers
+                 DiskServer.nbRecallerStreams ASC, FileSystem.nbMigratorStreams ASC,
+                 -- then order by rate as defined by the function
+                 fileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
+                                FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, FileSystem.nbMigratorStreams,
+                                FileSystem.nbRecallerStreams) DESC,
+                 -- finally use randomness to avoid preferring always the same FS
+                 DBMS_Random.value)
+   WHERE ROWNUM < 2;
+  -- compute it's gcWeight
+  gcwProc := castorGC.getRecallWeight(svcClassId);
+  EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(0); END;'
+    USING OUT gcw;
+  -- then create the DiskCopy
+  INSERT INTO DiskCopy
+    (path, id, filesystem, castorfile, status,
+     creationTime, lastAccessTime, gcWeight, diskCopySize, nbCopyAccesses, owneruid, ownergid)
+  VALUES (dcPath, dcId, fsId, cfId, 0,   -- STAGED
+          getTime(), getTime(), GCw, 0, 0, ouid, ogid);
+  INSERT INTO Id2Type (id, type) VALUES (dcId, 5);  -- OBJ_DiskCopy
+  -- link to the SubRequest and schedule an access if requested
+  IF schedule = 0 THEN
+    UPDATE SubRequest SET diskCopy = dcId WHERE id = srId;
+  ELSE
+    UPDATE SubRequest
+       SET diskCopy = dcId,
+           requestedFileSystems = fsPath,
+           xsize = 0, status = 13, -- READYFORSCHED
+           getNextStatus = 1 -- FILESTAGED
+     WHERE id = srId;    
+  END IF;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  raise_application_error(-20115, 'No suitable filesystem found for this empty file');
+END;
+/
 
 /* PL/SQL method implementing replicateOnClose */
 CREATE OR REPLACE PROCEDURE replicateOnClose(cfId IN NUMBER, ouid IN INTEGER, ogid IN INTEGER) AS

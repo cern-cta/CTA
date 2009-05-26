@@ -87,6 +87,12 @@ namespace castor{
           
           case DISKCOPY_WAITTAPERECALL:   // trigger a recall
           {
+            // first check the special case of 0 bytes files
+            if (0 == stgRequestHelper->subrequest->castorFile()->fileSize()) {
+              stgRequestHelper->stagerService->createEmptyFile(stgRequestHelper->subrequest, false);
+              reply = true;
+              break;
+            }
             // answer client only if success
             castor::stager::Tape *tape = 0;
             reply = stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest, stgRequestHelper->svcClass, tape);

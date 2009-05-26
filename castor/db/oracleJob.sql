@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.680 $ $Date: 2009/03/30 12:09:04 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.681 $ $Date: 2009/05/26 07:10:47 $ $Author: sponcec3 $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -186,7 +186,7 @@ END;
 CREATE OR REPLACE PROCEDURE getUpdateStart
         (srId IN INTEGER, selectedDiskServer IN VARCHAR2, selectedMountPoint IN VARCHAR2,
          dci OUT INTEGER, rpath OUT VARCHAR2, rstatus OUT NUMBER, reuid OUT INTEGER,
-         regid OUT INTEGER) AS
+         regid OUT INTEGER, diskCopySize OUT NUMBER) AS
   cfid INTEGER;
   fid INTEGER;
   dcId INTEGER;
@@ -263,7 +263,7 @@ BEGIN
          lastAccessTime = getTime(),
          nbCopyAccesses = nbCopyAccesses + 1
    WHERE id = dcId
-  RETURNING id, path, status INTO dci, rpath, rstatus;
+  RETURNING id, path, status, diskCopySize INTO dci, rpath, rstatus, diskCopySize;
   -- Let's update the SubRequest and set the link with the DiskCopy
   UPDATE SubRequest SET DiskCopy = dci WHERE id = srId RETURNING protocol INTO proto;
   -- In case of an update, if the protocol used does not support
