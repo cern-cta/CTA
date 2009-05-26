@@ -6547,6 +6547,8 @@ int Cns_srv_unlink(magic, req_data, clienthost, thip)
   Cns_dbrec_addr rec_addru; /* comment record address */
   struct Cns_file_replica rep_entry;
   struct Cns_seg_metadata smd_entry;
+  char tmpbuf[21];
+  char tmpbuf2[21];
   uid_t uid;
   struct Cns_user_metadata umd_entry;
   char *user;
@@ -6615,8 +6617,17 @@ int Cns_srv_unlink(magic, req_data, clienthost, thip)
         RETURN (serrno);
     } else {
       /* delete file segments if any */
+
       while ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry.fileid,
                                        &smd_entry, 1, &rec_addrs, 0, &dblistptr)) == 0) {
+        sprintf (logbuf, "unlinking segment: %s %d %d %s %d %c %s %d %d %02x%02x%02x%02x \"%s\" %lx",
+                 u64tostr (smd_entry.s_fileid, tmpbuf, 0), smd_entry.copyno,
+                 smd_entry.fsec, u64tostr (smd_entry.segsize, tmpbuf2, 0),
+                 smd_entry.compression, smd_entry.s_status, smd_entry.vid,
+                 smd_entry.side, smd_entry.fseq, smd_entry.blockid[0],
+                 smd_entry.blockid[1], smd_entry.blockid[2], smd_entry.blockid[3],
+                 smd_entry.checksum_name, smd_entry.checksum);
+        Cns_logreq (func, logbuf);
         if (Cns_delete_smd_entry (&thip->dbfd, &rec_addrs))
           RETURN (serrno);
         bof = 0;
