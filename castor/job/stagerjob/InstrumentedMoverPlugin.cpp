@@ -27,7 +27,11 @@
  *****************************************************************************/
 
 // Include Files
-#include <rfio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
 #include <string>
 #include "castor/dlf/Dlf.hpp"
 #include "castor/rh/IOResponse.hpp"
@@ -85,27 +89,58 @@ void castor::job::stagerjob::InstrumentedMoverPlugin::waitChildAndInformStager
     context.jobSvc->getUpdateFailed
       (args.subRequestId, args.fileId.fileid, args.fileId.server);
   } else {
-    // Do a stat of the output file
-    rfio_errno = serrno = 0;
+    // Do a stat of the output file to see whether there are data to keep
+    errno = 0;
     struct stat64 statbuf;
-    if (rfio_stat64((char*)context.fullDestPath.c_str(), &statbuf) == 0) {
-      castor::stager::SubRequest subrequest;
-      subrequest.setId(args.subRequestId);
-      context.jobSvc->prepareForMigration
-        (&subrequest, (u_signed64) statbuf.st_size,
-         time(NULL), args.fileId.fileid, args.fileId.server);
+    int rc = stat64((char*)context.fullDestPath.c_str(), &statbuf);
+    if (rc == 0) {
+      if (0 != statbuf.st_size) {
+        // some file found, call prepareForMigration to save the data we have
+        castor::stager::SubRequest subrequest;
+        subrequest.setId(args.subRequestId);
+        context.jobSvc->prepareForMigration
+          (&subrequest, (u_signed64) statbuf.st_size,
+           time(NULL), args.fileId.fileid, args.fileId.server);
+      } else {
+        // empty file on disk, log an error and drop it
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
+           castor::dlf::Param("Path", context.fullDestPath),
+           castor::dlf::Param(args.subRequestUuid)};
+        castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
+                                NODATAWRITTEN, 3, params, &args.fileId);
+        // try to drop the file
+        errno = 0;
+        if (unlink((char*)context.fullDestPath.c_str()) != 0) {
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
+             castor::dlf::Param("Path", context.fullDestPath),
+             castor::dlf::Param("Error", strerror(errno)),
+             castor::dlf::Param(args.subRequestUuid)};
+          castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
+                                  UNLINKFAIL, 4, params, &args.fileId);
+        }
+        // and call putFailed
+        context.jobSvc->putFailed
+          (args.subRequestId, args.fileId.fileid, args.fileId.server);
+        castor::exception::Internal e;
+        e.getMessage() << "No data transfered";
+        throw e;
+      }
     } else {
+      // No file found on disk, log an error
       castor::dlf::Param params[] =
         {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
          castor::dlf::Param("Path", context.fullDestPath),
-         castor::dlf::Param("Error", rfio_serror()),
+         castor::dlf::Param("Error", strerror(errno)),
          castor::dlf::Param(args.subRequestUuid)};
       castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
                               STAT64FAIL, 4, params, &args.fileId);
+      // and call putFailed
       context.jobSvc->putFailed
         (args.subRequestId, args.fileId.fileid, args.fileId.server);
       castor::exception::Internal e;
-      e.getMessage() << "rfio_stat64 error";
+      e.getMessage() << "stat64 error";
       throw e;
     }
   }

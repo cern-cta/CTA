@@ -496,7 +496,9 @@ int main(int argc, char** argv) {
       { JOBFAILEDNOANS,  "Job failed before it could send an answer to client" },
 
       // Errors
-      { STAT64FAIL,      "rfio_stat64 error" },
+      { STAT64FAIL,      "stat64 error" },
+      { NODATAWRITTEN,   "No data transfered" },
+      { UNLINKFAIL,      "unlink error" },
       { CHILDEXITED,     "Child exited" },
       { CHILDSIGNALED,   "Child exited due to uncaught signal" },
       { CHILDSTOPPED,    "Child was stopped" },

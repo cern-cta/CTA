@@ -29,11 +29,13 @@
 // Include Files
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/socket.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <rfio.h>
 #include <common.h>
+#include <errno.h>
+#include <string.h>
 #include <map>
 #include <attr/xattr.h>
 #include "castor/dlf/Dlf.hpp"
@@ -156,9 +158,36 @@ void castor::job::stagerjob::RawMoverPlugin::postForkHook
     }
   } else {
     // Do a stat of the output file
-    rfio_errno = serrno = 0;
+    errno = 0;
     struct stat64 statbuf;
-    if (rfio_stat64((char*)context.fullDestPath.c_str(), &statbuf) == 0) {
+    if (stat64((char*)context.fullDestPath.c_str(), &statbuf) == 0) {
+      // deal with the case of an empty file when the child failed
+      if (childFailed && 0 == statbuf.st_size) {
+        // log an error
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
+           castor::dlf::Param("Path", context.fullDestPath),
+           castor::dlf::Param(args.subRequestUuid)};
+        castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
+                                NODATAWRITTEN, 3, params, &args.fileId);
+        // try to drop the file
+        errno = 0;
+        if (unlink((char*)context.fullDestPath.c_str()) != 0) {
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
+             castor::dlf::Param("Path", context.fullDestPath),
+             castor::dlf::Param("Error", strerror(errno)),
+             castor::dlf::Param(args.subRequestUuid)};
+          castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
+                                  UNLINKFAIL, 4, params, &args.fileId);
+        }
+        // and call putFailed
+        context.jobSvc->putFailed
+          (args.subRequestId, args.fileId.fileid, args.fileId.server);
+        castor::exception::Internal e;
+        e.getMessage() << "No data transfered";
+        throw e;
+      }
       // Extract checksum information from extended attributes if instructed
       // to do so by the mover.
       char csumvalue[CA_MAXCKSUMLEN + 1];
@@ -213,17 +242,19 @@ void castor::job::stagerjob::RawMoverPlugin::postForkHook
 	 time(NULL), args.fileId.fileid, args.fileId.server,
 	 csumtype, csumvalue);
     } else {
+      // No file found on disk, log an error
       castor::dlf::Param params[] =
         {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
          castor::dlf::Param("Path", context.fullDestPath),
-         castor::dlf::Param("Error", rfio_serror()),
+         castor::dlf::Param("Error", strerror(errno)),
          castor::dlf::Param(args.subRequestUuid)};
       castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
                               STAT64FAIL, 4, params, &args.fileId);
+      // and call putFailed
       context.jobSvc->putFailed
         (args.subRequestId, args.fileId.fileid, args.fileId.server);
       castor::exception::Internal e;
-      e.getMessage() << "rfio_stat64 error";
+      e.getMessage() << "stat64 error";
       throw e;
     }
   }

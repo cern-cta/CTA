@@ -100,7 +100,9 @@ namespace castor {
         JOBFAILEDNOANS =  31, /* Job failed before it could send an answer to client */
 
         // Errors
-        STAT64FAIL =      40, /* rfio_stat64 error */
+        STAT64FAIL =      40, /* stat64 error */
+        NODATAWRITTEN =   49, /* No data transfered */
+        UNLINKFAIL =      50, /* unlink error */
         CHILDEXITED =     41, /* Child exited */
         CHILDSIGNALED =   42, /* Child exited due to uncaught signal */
         CHILDSTOPPED =    43, /* Child was stopped */
