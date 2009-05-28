@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.737 $ $Date: 2009/05/26 07:10:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.738 $ $Date: 2009/05/28 13:31:05 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -2111,8 +2111,8 @@ BEGIN
       unusedIds "numList";
     BEGIN
       -- check if removal is possible for migration
-      SELECT count(*) INTO nbRes FROM TapeCopy
-       WHERE status IN (0, 1, 2, 3) -- CREATED, TOBEMIGRATED, WAITINSTREAMS, SELECTED
+      SELECT count(*) INTO nbRes FROM DiskCopy
+       WHERE status = 10 -- DISKCOPY_CANBEMIGR
          AND castorFile = cfId;
       IF nbRes > 0 THEN
         -- We found something, thus we cannot remove
