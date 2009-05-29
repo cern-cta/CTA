@@ -213,7 +213,8 @@
 #define	ENSNACT    ENSBASEOFF+1	/* Name server not active */
 #define	ENSFILECHG ENSBASEOFF+2	/* File has been overwritten, request ignored */
 #define ENSNOSEG   ENSBASEOFF+3	/* Segment had been deleted */
-#define ENSMAXERR  ENSBASEOFF+3
+#define ENSISLINK  ENSBASEOFF+4	/* Is a link */
+#define ENSMAXERR  ENSBASEOFF+4
 
 /*
  *------------------------------------------------------------------------

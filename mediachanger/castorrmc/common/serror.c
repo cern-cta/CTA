@@ -201,6 +201,7 @@ char *sys_nserrlist[ENSMAXERR-ENSBASEOFF+2] =
    "Name server not active",
    "File has been overwritten, request ignored",
    "Segment had been deleted",
+   "Is a link",
    "BAD ERROR NUMBER"
   };
 

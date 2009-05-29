@@ -454,6 +454,9 @@ The following error values are returned only by the name server package:
 .TP
 .B ENSNOSEG
 (1403) Segment had been deleted
+.TP
+.B ENSISLINK
+(1404) Is a link
 
 .SH RFIO ERRORS
 The following error values are returned only by the remote file I/O package:
