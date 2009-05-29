@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.schema.sql,v $ $Revision: 1.14 $ $Date: 2009/05/06 11:36:37 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.schema.sql,v $ $Revision: 1.15 $ $Date: 2009/05/29 06:07:50 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically.
  *
@@ -107,6 +107,24 @@ CREATE INDEX I_SubRequest_RT_CT_ID ON SubRequest(svcHandler, creationTime, id) L
   PARTITION P_STATUS_12,
   PARTITION P_STATUS_OTHER);  
 
+/* Redefinition of table TapeCopy to make it partitioned by status */
+ALTER TABLE Stream2TapeCopy DROP CONSTRAINT FK_Stream2TapeCopy_C;
+DROP TABLE TapeCopy;
+CREATE TABLE TapeCopy
+  (copyNb NUMBER, errorCode NUMBER, nbRetry NUMBER, id INTEGER CONSTRAINT
+   PK_TapeCopy_Id PRIMARY KEY CONSTRAINT NN_TapeCopy_Id NOT NULL, 
+   castorFile INTEGER, status INTEGER)
+  PCTFREE 50 PCTUSED 40 INITRANS 50
+  ENABLE ROW MOVEMENT
+  PARTITION BY LIST (STATUS)
+   (PARTITION P_STATUS_0_1   VALUES (0, 1),
+    PARTITION P_STATUS_OTHER VALUES (DEFAULT)
+  );
+
+/* Recreate foreign key constraint between Stream2TapeCopy and TapeCopy */
+ALTER TABLE Stream2TapeCopy
+  ADD CONSTRAINT FK_Stream2TapeCopy_C FOREIGN KEY (Child) REFERENCES TapeCopy (id);
+
 /* Indexes related to most used entities */
 CREATE UNIQUE INDEX I_DiskServer_name ON DiskServer (name);
 
@@ -121,9 +139,9 @@ CREATE INDEX I_DiskCopy_GCWeight ON DiskCopy (gcWeight);
 CREATE INDEX I_DiskCopy_FS_Status_10 ON DiskCopy (fileSystem,decode(status,10,status,NULL));
 CREATE INDEX I_DiskCopy_Status_9 ON DiskCopy (decode(status,9,status,NULL));
 
-CREATE INDEX I_TapeCopy_Castorfile ON TapeCopy (castorFile);
-CREATE INDEX I_TapeCopy_Status ON TapeCopy (status);
-CREATE INDEX I_TapeCopy_CF_Status_2 ON TapeCopy (castorFile,decode(status,2,status,null));
+CREATE INDEX I_TapeCopy_Castorfile ON TapeCopy (castorFile) LOCAL;
+CREATE INDEX I_TapeCopy_Status ON TapeCopy (status) LOCAL;
+CREATE INDEX I_TapeCopy_CF_Status_2 ON TapeCopy (castorFile,decode(status,2,status,null)) LOCAL;
 
 CREATE INDEX I_FileSystem_DiskPool ON FileSystem (diskPool);
 CREATE INDEX I_FileSystem_DiskServer ON FileSystem (diskServer);
