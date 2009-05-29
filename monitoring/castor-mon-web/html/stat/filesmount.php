@@ -69,52 +69,44 @@ if(!$conn) {
 if ($qn ==1)
 	$query1 = "select distinct bin, count(bin) over (Partition by bin) reqs 
 		from (
-		select value, case when value = 1  then 1
-		  when value > 1 and value < 5 then 2
-		  when value >= 5 and value < 10 then 3
-		  when value >= 10 and value < 40 then 4
-		  when value >= 40 and value < 80 then 5
-		  when value >= 80 and value < 120 then 6
-		  when value >= 120 and value < 160 then 7
-		  when value >= 160 and value < 200 then 8
-		  when value >= 200 and value < 250 then 9
-		  when value >= 250 and value < 300 then 10
-		  when value >= 300 and value < 400 then 11
-		  when value >= 400 and value < 500 then 12
-		  when value >= 500 and value < 1000 then 13
+		select files, case when files = 1  then 1
+		  when files > 1 and files < 5 then 2
+		  when files >= 5 and files < 10 then 3
+		  when files >= 10 and files < 40 then 4
+		  when files >= 40 and files < 80 then 5
+		  when files >= 80 and files < 120 then 6
+		  when files >= 120 and files < 160 then 7
+		  when files >= 160 and files < 200 then 8
+		  when files >= 200 and files < 250 then 9
+		  when files >= 250 and files < 300 then 10
+		  when files >= 300 and files < 400 then 11
+		  when files >= 400 and files < 500 then 12
+		  when files >= 500 and files < 1000 then 13
 		  else 14 end bin
-			from (select b.value
-		from castor_dlf.dlf_messages a, castor_dlf.dlf_num_param_values b
-		where a.id = b.id
-		  and b.name = 'FILESCP'
-		  and facility = 2 and msg_no = 20
-		  and a.timestamp > sysdate - :period
+			from (select files from ".$db_instances[$service]['schema'].".taperecalledstats
+		  	      where timestamp > sysdate - :period
 		  ) )
 		order by bin";
 else if ($qn == 2)
 	$query1 = "select distinct bin, count(bin) over (Partition by bin) reqs 
 	from (
-	select value, case when value = 1  then 1
-	  when value > 1 and value < 5 then 2
-	  when value >= 5 and value < 10 then 3
-	  when value >= 10 and value < 40 then 4
-	  when value >= 40 and value < 80 then 5
-	  when value >= 80 and value < 120 then 6
-	  when value >= 120 and value < 160 then 7
-	  when value >= 160 and value < 200 then 8
-	  when value >= 200 and value < 250 then 9
-	  when value >= 250 and value < 300 then 10
-	  when value >= 300 and value < 400 then 11
-	  when value >= 400 and value < 500 then 12
-	  when value >= 500 and value < 1000 then 13
+	select files, case when files = 1  then 1
+	  when files > 1 and files < 5 then 2
+	  when files >= 5 and files < 10 then 3
+	  when files >= 10 and files < 40 then 4
+	  when files >= 40 and files < 80 then 5
+	  when files >= 80 and files < 120 then 6
+	  when files >= 120 and files < 160 then 7
+	  when files >= 160 and files < 200 then 8
+	  when files >= 200 and files < 250 then 9
+	  when files >= 250 and files < 300 then 10
+	  when files >= 300 and files < 400 then 11
+	  when files >= 400 and files < 500 then 12
+	  when files >= 500 and files < 1000 then 13
 	  else 14 end bin
-		from (select b.value
-	from castor_dlf.dlf_messages a, castor_dlf.dlf_num_param_values b
-	where a.id = b.id
-	  and b.name = 'FILESCP'
-	  and facility = 2 and msg_no = 20
-	  and a.timestamp >= to_date(:from_date,'dd/mm/yyyy HH24:Mi')
-	  and a.timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi')
+		from (select files from ".$db_instances[$service]['schema'].".taperecalledstats
+	  	      where timestamp >= to_date(:from_date,'dd/mm/yyyy HH24:Mi')
+	                and timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi')
 	  ) )
 	order by bin";
 if (!($parsed1 = OCIParse($conn, $query1))) 
