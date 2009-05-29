@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cns_setsegattrs.man,v $ $Revision: 1.4 $ $Date: 2008/11/10 09:56:28 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Cns_setsegattrs.man,v $ $Revision: 1.5 $ $Date: 2009/05/29 08:40:44 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_SETSEGATTRS 3 "$Date: 2008/11/10 09:56:28 $" CASTOR "Cns Library Functions"
+.TH CNS_SETSEGATTRS 3 "$Date: 2009/05/29 08:40:44 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_setsegattrs \- set file segment attributes
 .SH SYNOPSIS
@@ -18,7 +18,7 @@ Cns_setsegattrs \- set file segment attributes
 .SH DESCRIPTION
 .B Cns_setsegattrs
 sets the file segment(s) attributes. Takes care that the file was not modified by somebody else in the mean time.
-If it was, ignores the request and fail with ENSFILECHG.
+If it was, ignores the request and fails with ENSFILECHG.
 This function should be called by the stager to set segment size, tape
 visual identifier and file sequence number or blockid when all segments
 which belong to a file have been written to tape.
@@ -33,6 +33,9 @@ is used.
 .I path
 specifies the logical pathname relative to the current CASTOR directory or
 the full CASTOR pathname.
+.TP
+.I nbseg
+the number of segments in the segattrs array.
 .TP
 .I segattrs
 is a pointer to an array of Cns_segattrs structures provided by the application.
