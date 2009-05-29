@@ -1,5 +1,5 @@
 /*
- * $Id: Cns.h,v 1.16 2009/05/26 13:07:21 waldron Exp $
+ * $Id: Cns.h,v 1.17 2009/05/29 13:43:06 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns.h,v $ $Revision: 1.16 $ $Date: 2009/05/26 13:07:21 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns.h,v $ $Revision: 1.17 $ $Date: 2009/05/29 13:43:06 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_H
@@ -74,6 +74,7 @@
 #define CNS_SHUTDOWN        	17 /* deprecated */
 #define CNS_GETSEGAT        	18
 #define CNS_SETSEGAT        	19
+#define CNS_DROPSEGS        	87
 #define CNS_LISTTAPE        	20
 #define CNS_ENDLIST        	21
 #define CNS_GETPATH        	22

@@ -1,0 +1,82 @@
+.\" @(#)$RCSfile: Cns_dropsegs.man,v $ $Revision: 1.1 $ $Date: 2009/05/29 13:43:06 $
+.\" Copyright (C) 1999-2009 by CERN/IT/DM
+.\" All rights reserved
+.\"
+.TH CNS_DROPSEGS 3 "$Date: 2009/05/29 13:43:06 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_dropsegs \- drop all segments of a file
+.SH SYNOPSIS
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_dropsegs (const char *" path ,
+.BI "struct Cns_fileid *" file_uniqueid )
+.SH DESCRIPTION
+.B Cns_dropsegs
+drop all segments of a given file.
+The file can be identified by
+.I path
+name or by
+.IR file_uniqueid .
+If both are specified,
+.I file_uniqueid
+is used.
+.TP 1.4i
+.I path
+specifies the logical pathname relative to the current CASTOR directory or
+the full CASTOR pathname.
+.TP
+.I file_uniqueid
+specifies the fileid of the CASTOR file
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The referenced file does not exist anymore.
+.TP
+.B EACCES
+Search permission is denied on a component of the
+.I path
+prefix or the caller effective user ID does not match the owner ID of the file
+or write permission on the file itself is denied.
+.TP
+.B EFAULT
+.I path
+and
+.I file_uniqueid
+are NULL pointers.
+.TP
+.B EISDIR
+The file is not a regular file but a directory.
+.TP
+.B ENSISLINK
+The file is not a regular file but a link.
+.TP
+.B ENAMETOOLONG
+The length of
+.I path
+exceeds
+.B CA_MAXPATHLEN
+or the length of a
+.I path
+component exceeds
+.BR CA_MAXNAMELEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4)
+.SH AUTHOR
+\fBCASTOR\fP Team http://cern.ch/castor

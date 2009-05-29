@@ -652,6 +652,9 @@ int procreq(magic, req_type, req_data, clienthost, thip)
   case CNS_SETSEGAT:
     c = Cns_srv_setsegattrs (magic, req_data, clienthost, thip);
     break;
+  case CNS_DROPSEGS:
+    c = Cns_srv_dropsegs (magic, req_data, clienthost, thip);
+    break;
   case CNS_STAT:
     c = Cns_srv_stat (magic, req_data, clienthost, thip);
     break;

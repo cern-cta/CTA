@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_server.h,v 1.27 2009/05/26 13:07:21 waldron Exp $
+ * $Id: Cns_server.h,v 1.28 2009/05/29 13:43:06 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.27 $ $Date: 2009/05/26 13:07:21 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.28 $ $Date: 2009/05/29 13:43:06 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_SERVER_H
@@ -321,6 +321,7 @@ EXTERN_C int Cns_srv_setptime _PROTO((int, char *, const char *, struct Cns_srv_
 EXTERN_C int Cns_srv_setratime _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_setrstatus _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_setsegattrs _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
+EXTERN_C int Cns_srv_dropsegs _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_shutdown _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_stat _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_statcs _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));

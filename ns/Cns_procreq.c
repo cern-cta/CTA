@@ -5960,6 +5960,114 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
   RETURN (0);
 }
 
+/* internal method dropping all segments from a given file */
+int Cns_internal_dropsegs(func, thip, filentry)
+     char* func;
+     struct Cns_srv_thread_info *thip;
+     struct Cns_file_metadata *filentry;
+{
+  int bof = 1;
+  int c;
+  DBLISTPTR dblistptr;
+  struct Cns_seg_metadata smd_entry;
+  Cns_dbrec_addr rec_addrs; /* segment record address */
+  char logbuf[CA_MAXPATHLEN+8];
+  char tmpbuf[21];
+  char tmpbuf2[21];
+
+  while ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry->fileid,
+                                   &smd_entry, 1, &rec_addrs, 0, &dblistptr)) == 0) {
+    sprintf (logbuf, "unlinking segment: %s %d %d %s %d %c %s %d %d %02x%02x%02x%02x \"%s\" %lx",
+             u64tostr (smd_entry.s_fileid, tmpbuf, 0), smd_entry.copyno,
+             smd_entry.fsec, u64tostr (smd_entry.segsize, tmpbuf2, 0),
+             smd_entry.compression, smd_entry.s_status, smd_entry.vid,
+             smd_entry.side, smd_entry.fseq, smd_entry.blockid[0],
+             smd_entry.blockid[1], smd_entry.blockid[2], smd_entry.blockid[3],
+             smd_entry.checksum_name, smd_entry.checksum);
+    Cns_logreq (func, logbuf);
+    if (Cns_delete_smd_entry (&thip->dbfd, &rec_addrs))
+      RETURN (serrno);
+    bof = 0;
+  }
+  (void) Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry->fileid,
+                              &smd_entry, 1, &rec_addrs, 1, &dblistptr); /* free res */
+  if (c < 0)
+    RETURN (serrno);
+  RETURN (0);
+}
+
+
+/*      Cns_srv_dropsegs - drops all segments of a file */
+
+int Cns_srv_dropsegs(magic, req_data, clienthost, thip)
+     int magic;
+     char *req_data;
+     const char *clienthost;
+     struct Cns_srv_thread_info *thip;
+{
+  u_signed64 cwd;
+  struct Cns_file_metadata filentry;
+  char func[17];
+  uid_t uid;
+  gid_t gid;
+  u_signed64 fileid;
+  struct Cns_file_metadata parent_dir;
+  char path[CA_MAXPATHLEN+1];
+  char *rbp;
+  Cns_dbrec_addr rec_addr; /* file record address */
+  char *user;
+
+  strcpy (func, "Cns_srv_dropsegs");
+  rbp = req_data;
+  unmarshall_LONG (rbp, uid);
+  unmarshall_LONG (rbp, gid);
+  get_client_actual_id (thip, &uid, &gid, &user);
+  nslogit (func, NS092, "setsegattrs", user, uid, gid, clienthost);
+  unmarshall_HYPER (rbp, cwd);
+  unmarshall_HYPER (rbp, fileid);
+  if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
+    RETURN (SENAMETOOLONG);
+
+  /* start transaction */
+  (void) Cns_start_tr (thip->s, &thip->dbfd);
+
+  if (fileid) {
+    /* get/lock basename entry */
+    if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid,
+                               &filentry, 1, &rec_addr))
+      RETURN (serrno);
+    /* check parent directory components for search permission */
+    if (Cns_chkbackperm (&thip->dbfd, filentry.parent_fileid,
+                         S_IEXEC, uid, gid, clienthost))
+      RETURN (serrno);
+  } else {
+    /* check parent directory components for search permission and
+       get/lock basename entry */
+    if (Cns_parsepath (&thip->dbfd, cwd, path, uid, gid, clienthost,
+                       NULL, NULL, &filentry, &rec_addr, CNS_MUST_EXIST))
+      RETURN (serrno);
+  }
+  /* check if the entry is a regular file */
+  if (filentry.filemode & S_IFDIR)
+    RETURN (EISDIR);
+  if ((filentry.filemode & S_IFLNK) == S_IFLNK) {
+    RETURN (ENSISLINK);
+  /* if the parent has the sticky bit set,
+     the user must own the file or the parent or
+     the basename entry must have write permission */
+  if (parent_dir.filemode & S_ISVTX &&
+      uid != parent_dir.uid && uid != filentry.uid &&
+      Cns_chkentryperm (&filentry, S_IWRITE, uid, gid, clienthost))
+    RETURN (EACCES);
+  }
+
+  /* delete file segments if any */
+  if (Cns_internal_dropsegs(func, thip, &filentry) != 0)
+    RETURN (serrno);
+  
+  RETURN (0);
+}
+
 /* Cns_srv_startsess - start session */
 
 int Cns_srv_startsess(magic, req_data, clienthost, thip)
@@ -6527,7 +6635,6 @@ int Cns_srv_unlink(magic, req_data, clienthost, thip)
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
 {
-  int bof = 1;
   int c;
   u_signed64 cwd;
   DBLISTPTR dblistptr;
@@ -6543,12 +6650,8 @@ int Cns_srv_unlink(magic, req_data, clienthost, thip)
   Cns_dbrec_addr rec_addr; /* file record address */
   Cns_dbrec_addr rec_addrl; /* link record address */
   Cns_dbrec_addr rec_addrp; /* parent record address */
-  Cns_dbrec_addr rec_addrs; /* segment record address */
   Cns_dbrec_addr rec_addru; /* comment record address */
   struct Cns_file_replica rep_entry;
-  struct Cns_seg_metadata smd_entry;
-  char tmpbuf[21];
-  char tmpbuf2[21];
   uid_t uid;
   struct Cns_user_metadata umd_entry;
   char *user;
@@ -6617,24 +6720,7 @@ int Cns_srv_unlink(magic, req_data, clienthost, thip)
         RETURN (serrno);
     } else {
       /* delete file segments if any */
-
-      while ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry.fileid,
-                                       &smd_entry, 1, &rec_addrs, 0, &dblistptr)) == 0) {
-        sprintf (logbuf, "unlinking segment: %s %d %d %s %d %c %s %d %d %02x%02x%02x%02x \"%s\" %lx",
-                 u64tostr (smd_entry.s_fileid, tmpbuf, 0), smd_entry.copyno,
-                 smd_entry.fsec, u64tostr (smd_entry.segsize, tmpbuf2, 0),
-                 smd_entry.compression, smd_entry.s_status, smd_entry.vid,
-                 smd_entry.side, smd_entry.fseq, smd_entry.blockid[0],
-                 smd_entry.blockid[1], smd_entry.blockid[2], smd_entry.blockid[3],
-                 smd_entry.checksum_name, smd_entry.checksum);
-        Cns_logreq (func, logbuf);
-        if (Cns_delete_smd_entry (&thip->dbfd, &rec_addrs))
-          RETURN (serrno);
-        bof = 0;
-      }
-      (void) Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry.fileid,
-                                  &smd_entry, 1, &rec_addrs, 1, &dblistptr); /* free res */
-      if (c < 0)
+      if (Cns_internal_dropsegs(func, thip, &filentry) != 0)
         RETURN (serrno);
     }
 

@@ -68,6 +68,7 @@ NSLIB_OBJS	=	Cns_aborttrans.Osuf \
                         Cns_delete.Osuf \
                         Cns_deleteclass.Osuf \
                         Cns_delreplica.Osuf \
+                        Cns_dropsegs.Osuf \
                         Cns_du.Osuf \
                         Cns_endsess.Osuf \
                         Cns_endtrans.Osuf \
@@ -172,6 +173,7 @@ LIBMANPAGE(Cns_delcomment)
 LIBMANPAGE(Cns_delete)
 LIBMANPAGE(Cns_deleteclass)
 LIBMANPAGE(Cns_delreplica)
+LIBMANPAGE(Cns_dropsegs)
 LIBMANPAGE(Cns_endsess)
 LIBMANPAGE(Cns_endtrans)
 LIBMANPAGE(Cns_enterclass)
