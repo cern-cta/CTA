@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.681 $ $Date: 2009/05/26 07:10:47 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.682 $ $Date: 2009/05/29 13:45:16 $ $Author: sponcec3 $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -618,13 +618,19 @@ END;
 /
 
 
-/* PL/SQL method implementing prepareForMigration */
+/* PL/SQL method implementing prepareForMigration
+   returnCode can take 3 values :
+    - 0 : nothing special
+    - 1 : the file got deleted while it was written to
+    - 2 : the file is 0 bytes and was thus "migrated" by only
+          changing the diskCopy status.
+*/
 CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER,
                                                  fs IN INTEGER,
                                                  ts IN NUMBER,
                                                  fId OUT NUMBER,
                                                  nh OUT VARCHAR2,
-                                                 errorCode OUT INTEGER) AS
+                                                 returnCode OUT INTEGER) AS
   cfId INTEGER;
   dcId INTEGER;
   svcId INTEGER;
@@ -632,7 +638,7 @@ CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER,
   unused INTEGER;
   contextPIPP INTEGER;
 BEGIN
-  errorCode := 0;
+  returnCode := 0;
   -- Get CastorFile
   SELECT castorFile, diskCopy INTO cfId, dcId FROM SubRequest WHERE id = srId;
   -- Lock the CastorFile
@@ -669,7 +675,7 @@ BEGIN
       FROM DiskCopy WHERE id = dcId AND status = 6; -- STAGEOUT
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- So we are in the case, we give up
-    errorCode := 1;
+    returnCode := 1;
     -- But we still would like to have the fileId and nameserver
     -- host for logging reasons
     SELECT fileId, nsHost INTO fId, nh
@@ -698,6 +704,11 @@ BEGIN
     -- If not a put inside a PrepareToPut/Update, create TapeCopies
     -- and update DiskCopy status
     putDoneFunc(cfId, realFileSize, contextPIPP, svcId);
+    -- identify the cases where a file is 0 bytes and has thus been
+    -- "migrated" by only updating the DiskCopy status
+    -- this case will then be handled by the OraJobSvc in order
+    -- to drop any potential existing segment in the nameserver
+    returnCode := 2;
   ELSE
     -- If put inside PrepareToPut/Update, restart any PutDone currently
     -- waiting on this put/update

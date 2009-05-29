@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.61 $ $Release$ $Date: 2009/05/26 07:10:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.62 $ $Release$ $Date: 2009/05/29 13:45:15 $ $Author: sponcec3 $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -614,10 +614,13 @@ void castor::db::ora::OraJobSvc::prepareForMigration
             CA_MAXHOSTNAMELEN);
 
     // Check for errors
-    int errorCode = m_prepareForMigrationStatement->getInt(6);
-    if (errorCode > 0) {
-      // For now, the only situation when errorCode in not 0
-      // is when the file got deleted while it was written to
+    int returnCode = m_prepareForMigrationStatement->getInt(6);
+    // only 2 values (other than 0) need to ba handled for the returnCode :
+    //   - 1 : the file got deleted while it was written to
+    //   - 2 : the file is 0 bytes and was thus "migrated" by only
+    //         changing the diskCopy status.
+    if (returnCode == 1) {
+      // The file got deleted while it was written to
       // This by itself is not an error, but we should not take
       // any action here. We thus log something and return
       // "File was deleted while it was written to. Giving up with migration."
@@ -626,6 +629,13 @@ void castor::db::ora::OraJobSvc::prepareForMigration
       // also rollback the prepareForMigration
       cnvSvc()->rollback();
       return;
+    }
+    bool dropSegments = false;
+    if (returnCode == 2) {
+      // the file is 0 bytes and was thus "migrated" by only
+      // changing the diskCopy status. We still need to drop all
+      // associated segments in the nameserver DB
+      dropSegments = true;
     }
 
     // Update name server
@@ -638,6 +648,21 @@ void castor::db::ora::OraJobSvc::prepareForMigration
       // rollback the prepareForMigration
       cnvSvc()->rollback();
       throw ex;
+    }
+
+    // drop segments if needed
+    if (dropSegments) {
+      int rc = Cns_dropsegs(0, &fileid);
+      if (rc != 0) {
+        // raise an error
+        castor::exception::Exception ex(serrno);
+        ex.getMessage()
+          << "prepareForMigration : Cns_dropsegs failed : "
+          << sstrerror(serrno);
+        // rollback the prepareForMigration
+        cnvSvc()->rollback();
+        throw ex;
+      }
     }
 
     // timeStamp is zero only if this function is used by putDone
