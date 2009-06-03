@@ -93,11 +93,15 @@ namespace castor {
       /**
        * constructor
        * @param acceptTimeout The amount of time in seconds that the client
-       * will wait for a callback
+       * will wait for a callback. By default 12h. Note that any value
+       * greater than 2147483 or negative is equivalent to -1, i.e. infinity.
+       * This number is trunc(2^31/1000) so that the number of milliseconds
+       * fits into a signed int, as the poll api requests.
        * @param transferTimeout The amount of time in seconds that the
-       * client will allow to transfer data between the recipient and itself
+       * client will allow to transfer data between the recipient and itself.
+       * By default infinity
        */
-      BaseClient(int acceptTimeout = 2592000, int transferTimeout = -1) 
+      BaseClient(int acceptTimeout = 43200, int transferTimeout = -1) 
 	throw();
 
       /**
