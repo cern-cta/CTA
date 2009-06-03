@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.682 $ $Date: 2009/05/29 13:45:16 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.683 $ $Date: 2009/06/03 10:11:58 $ $Author: itglp $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -981,5 +981,3 @@ BEGIN
   END IF;
 END;
 /
-
-

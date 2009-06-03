@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStatement.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2009/03/26 14:30:12 $ $Author: itglp $
+ * @(#)$RCSfile: OraStatement.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2009/06/03 10:11:59 $ $Author: itglp $
  *
  *
  *
@@ -48,7 +48,7 @@ namespace castor {
         oracle::occi::OCCIDOUBLE,
         oracle::occi::OCCISTRING,
         oracle::occi::OCCICLOB,
-	oracle::occi::OCCICURSOR
+        oracle::occi::OCCICURSOR
       };
 
       static const oracle::occi::Type oraBulkTypeMap[] = {
@@ -60,7 +60,7 @@ namespace castor {
         oracle::occi::OCCIBDOUBLE,
         oracle::occi::OCCI_SQLT_STR,
         oracle::occi::OCCI_SQLT_CLOB,  // but this one is not yet supported
-	oracle::occi::OCCICURSOR       // and this is never used for bulk operations
+        oracle::occi::OCCICURSOR       // and this is never used for bulk operations
       };
 
       /**

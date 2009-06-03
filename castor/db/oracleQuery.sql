@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.659 $ $Date: 2009/06/03 10:07:23 $ $Author: itglp $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.660 $ $Date: 2009/06/03 10:11:59 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -371,7 +371,7 @@ BEGIN
              grouping(fs.mountPoint) AS IsFSGrouped,
              dp.name, ds.name, ds.status, fs.mountPoint,
              sum(getAvailFreeSpace(fs.status + ds.status,
-                   fs.free - fs.minAllowedFreeSpace * fs.totalSize)) AS freeSpace,
+                 fs.free - fs.minAllowedFreeSpace * fs.totalSize)) AS freeSpace,
              sum(fs.totalSize),
              fs.minFreeSpace, fs.maxFreeSpace, fs.status
         FROM FileSystem fs, DiskServer ds, DiskPool dp
@@ -380,7 +380,7 @@ BEGIN
          GROUP BY grouping sets(
              (dp.name, ds.name, ds.status, fs.mountPoint,
                getAvailFreeSpace(fs.status + ds.status,
-                 fs.free - fs.minAllowedFreeSpace * fs.totalSize),
+                                 fs.free - fs.minAllowedFreeSpace * fs.totalSize),
                fs.totalSize,
                fs.minFreeSpace, fs.maxFreeSpace, fs.status),
              (dp.name, ds.name, ds.status),
