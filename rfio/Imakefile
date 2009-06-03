@@ -84,7 +84,7 @@ RFIOLIB_OBJS = access.Osuf alrm.Osuf chdir.Osuf checkkey.Osuf chmod.Osuf \
 		fopen64.Osuf fseeko64.Osuf fstat64.Osuf ftello64.Osuf \
 		lockf64.Osuf lseek64.Osuf open64.Osuf \
 		preseek64.Osuf read64.Osuf stream64.Osuf write64.Osuf RfioTURL.Osuf
-SharedLibraryTarget(castorrfio,$(RFIOLIB_OBJS),$(DEPLIB),$(LIBS))
+ClientSharedLibraryTarget(castorrfio,$(RFIOLIB_OBJS),$(DEPLIB),$(LIBS))
 
 ClientProgramTarget(rfcat,rfcat.Osuf, $(RFIOLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),755)
 ClientProgramTarget(rfchmod,rfchmod.Osuf, $(RFIOLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),755)
