@@ -131,7 +131,7 @@ NSLIB_OBJS	=	Cns_aborttrans.Osuf \
 
 ClientDependsOnLibrary(common,castorcommon)
 ClientDependsOnLibrary(security,castorsecurity)
-SharedLibraryTarget(castorns,$(NSLIB_OBJS),$(CLIENTDEPLIB),$(CLIENTLIBS))
+ClientSharedLibraryTarget(castorns,$(NSLIB_OBJS),$(CLIENTDEPLIB),$(CLIENTLIBS))
 
 ClientProgramTarget(nschclass,nschclass.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
 ClientProgramTarget(nschmod,nschmod.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
