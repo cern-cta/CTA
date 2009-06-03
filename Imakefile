@@ -33,11 +33,11 @@ doxygen: tools/doxyconfig
 
 .PHONY : client installclient tape installtape
 
-client: checkGLOBUS
-	GotoSubdirs(upv ns client tape rfio vdqm vmgr rtcopy)
+client: 
+	GotoSubdirs(upv ns client rfio vdqm vmgr security)
 
 installclient: checkDESTDIR client
-	GotoSubdirs(upv ns client tape rfio vdqm vmgr castor common rtcopy)
+	GotoSubdirs(upv ns client rfio vdqm vmgr castor common)
 
 tape:
 	GotoSubdirs(rmc tape rtcopy)
