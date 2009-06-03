@@ -24,7 +24,7 @@ void (*wait4child) _PROTO((int));
         int maxfds;
         struct sigaction sa;
 
-#if defined(SOLARIS) || (defined(__osf__) && defined(__alpha)) || defined(linux) || defined(sgi)
+#if defined(linux) || defined(__APPLE__)
         maxfds = getdtablesize();
 #else
         maxfds = _NFILE;
@@ -35,14 +35,10 @@ void (*wait4child) _PROTO((int));
                 exit(1);
         } else
                 if (c > 0) exit (0);
-#if (defined(__osf__) && defined(__alpha)) || defined(linux)
+#if defined(linux) || defined(__APPLE__)
         c = setsid();
 #else
-#if hpux
-        c = setpgrp3();
-#else
         c = setpgrp();
-#endif
 #endif
         /* Redirect standard files to /dev/null */
         freopen( "/dev/null", "r", stdin);
