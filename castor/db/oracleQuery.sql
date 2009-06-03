@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.658 $ $Date: 2009/05/18 13:49:22 $ $Author: waldron $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.659 $ $Date: 2009/06/03 10:07:23 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -26,19 +26,7 @@ BEGIN
              lastKnownFileName, creationTime, svcClass, lastAccessTime
          FROM (SELECT
               UNIQUE CastorFile.id, CastorFile.fileId, CastorFile.nsHost, DC.id AS dcId,
-              DC.path, CastorFile.fileSize,
-              CASE WHEN DC.id IS NULL THEN
-                   nvl((SELECT UNIQUE decode(SubRequest.status, 0, 2, 3, 2, -1)
-                          FROM SubRequest,
-                           (SELECT id FROM StagePrepareToGetRequest    UNION ALL
-                            SELECT id FROM StagePrepareToPutRequest    UNION ALL
-                            SELECT id FROM StagePrepareToUpdateRequest UNION ALL
-                            SELECT id FROM StageRepackRequest          UNION ALL
-                            SELECT id FROM StageGetRequest) Req
-                             WHERE SubRequest.CastorFile = CastorFile.id
-                               AND Subrequest.status IN (0, 3)
-                               AND request = Req.id), -1)
-                   ELSE DC.status END AS status,
+              DC.path, CastorFile.fileSize, DC.status,
               CASE WHEN DC.svcClass IS NULL THEN
                    (SELECT UNIQUE Req.svcClassName
                       FROM SubRequest,
@@ -71,20 +59,19 @@ BEGIN
                  AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool
                  AND SvcClass.id(+) = DiskPool2SvcClass.child) DC
        WHERE CastorFile.id IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
-         AND CastorFile.id = DC.castorFile(+))  -- search for valid diskcopy
-    WHERE status != -1 -- when no diskcopy and no subrequest available, ignore garbage
+         AND CastorFile.id = DC.castorFile)  -- search for valid diskcopy
     ORDER BY fileid, nshost;
   ELSE
     OPEN result FOR
       -- Here we get the status for each cf as follows: if a valid diskCopy is found,
       -- its status is returned, else if a (prepareTo)Get request is found and no diskCopy is there,
       -- WAITTAPERECALL is returned, else -1 (INVALID) is returned
-      SELECT fileId, nsHost, dcId, path, fileSize, srStatus, machine, mountPoint, nbCopyAccesses,
+      SELECT fileId, nsHost, dcId, path, fileSize, status, machine, mountPoint, nbCopyAccesses,
              lastKnownFileName, creationTime, (SELECT name FROM svcClass WHERE id = svcClassId),
              lastAccessTime
         FROM (SELECT
              UNIQUE CastorFile.id, CastorFile.fileId, CastorFile.nsHost, DC.id AS dcId,
-             DC.path, CastorFile.fileSize, DC.status,
+             DC.path, CastorFile.fileSize,
              CASE WHEN DC.dcSvcClass = svcClassId THEN DC.status
                   WHEN DC.fileSystem = 0 THEN
                     (SELECT UNIQUE decode(nvl(SubRequest.status, -1), -1, -1, DC.status)
@@ -97,17 +84,7 @@ BEGIN
                           WHERE SubRequest.CastorFile = CastorFile.id
                             AND request = Req.id
                             AND svcClass = svcClassId)
-                  WHEN DC.id IS NULL THEN
-                    (SELECT UNIQUE decode(SubRequest.status, 0, 2, 3, 2, -1)
-                       FROM SubRequest,
-                        (SELECT id, svcClass FROM StagePrepareToGetRequest    UNION ALL
-                         SELECT id, svcClass FROM StagePrepareToPutRequest    UNION ALL
-                         SELECT id, svcClass FROM StagePrepareToUpdateRequest UNION ALL
-                         SELECT id, svcClass FROM StageRepackRequest          UNION ALL
-                         SELECT id, svcClass FROM StageGetRequest) Req
-                          WHERE SubRequest.CastorFile = CastorFile.id
-                            AND request = Req.id
-                            AND svcClass = svcClassId) END AS srStatus,
+                  END AS status,
             DC.machine, DC.mountPoint, DC.nbCopyAccesses, CastorFile.lastKnownFileName, DC.creationTime,
             DC.lastAccessTime
        FROM CastorFile,
@@ -127,8 +104,7 @@ BEGIN
                 AND nvl(DiskServer.status, 0) = 0 -- PRODUCTION
                 AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool) DC
       WHERE CastorFile.id IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
-        AND CastorFile.id = DC.castorFile(+))  -- search for valid diskcopy
-      WHERE srStatus != -1
+        AND CastorFile.id = DC.castorFile)  -- search for valid diskcopy
       ORDER BY fileid, nshost;
    END IF;
 END;
