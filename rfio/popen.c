@@ -1,5 +1,5 @@
 /*
- * $Id: popen.c,v 1.14 2008/11/25 09:53:34 dhsmith Exp $
+ * $Id: popen.c,v 1.15 2009/06/03 13:47:56 sponcec3 Exp $
  */
 
 /*
@@ -24,10 +24,10 @@
 #include <string.h>
 #include "rfio.h"
 #include "rfio_rfilefdt.h"
+#include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
 extern RFILE *rfilefdt[MAXRFD] ;
-#if (defined(_AIX) && defined(_IBMESA)) || (defined(__osf__) && defined(__alpha)) || defined(_WIN32) || defined(linux)
-extern char *cuserid();
-#endif
 
 RFILE DLL_DECL *rfio_popen( rcom , type )
      char * rcom  ;
@@ -39,7 +39,7 @@ RFILE DLL_DECL *rfio_popen( rcom , type )
   int rfp_index;
   char *p , *cp, *cp2    ;
   char command[MAXCOMSIZ]; /* command with remote syntax */
-  char *uname  ;
+  struct passwd *pwuid ;
   char *pcom  ;
   int rt   ; /* daemon is in the site or remote ? */
   int rcode, status = 0 ;
@@ -149,7 +149,7 @@ RFILE DLL_DECL *rfio_popen( rcom , type )
 
 
   p= buf ;
-  if ( (uname=cuserid(NULL)) == NULL) {
+  if ( (pwuid=getpwuid(geteuid())) == NULL) {
     TRACE(2, "rfio" ,"rfio_popen: cuserid error %s",strerror(errno));
     (void) free((char *)rfp);
     END_TRACE();
@@ -157,7 +157,7 @@ RFILE DLL_DECL *rfio_popen( rcom , type )
   }
 
 
-  len = 2*WORDSIZE+strlen(type)+strlen(pcom)+strlen(uname)+3 ;
+  len = 2*WORDSIZE+strlen(type)+strlen(pcom)+strlen(pwuid->pw_name)+3 ;
   marshall_WORD(p,B_RFIO_MAGIC)  ;
   marshall_WORD(p,RQST_POPEN)  ;
   marshall_LONG(p,len)   ;
@@ -172,7 +172,7 @@ RFILE DLL_DECL *rfio_popen( rcom , type )
   marshall_WORD(p,rfp->gid)  ;
   marshall_STRING(p,type)  ;
   marshall_STRING(p,pcom)  ;
-  marshall_STRING(p,uname)  ;
+  marshall_STRING(p,pwuid->pw_name) ;
   if (netwrite_timeout(rfp->s,buf, len, RFIO_CTRL_TIMEOUT) != len ) {
     TRACE(2,"rfio","rfio_popen: write(): ERROR occured (errno=%d)",errno);
     free((char *)rfp) ;
