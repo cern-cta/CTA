@@ -21,7 +21,7 @@
  * @file  server.h
  * @brief definitions and structures associated with the server core
  *
- * $Id: server.h,v 1.6 2007/06/28 15:34:17 waldron Exp $
+ * $Id: server.h,v 1.7 2009/06/03 13:27:10 sponcec3 Exp $
  */
 
 #ifndef _SERVER_H
@@ -29,6 +29,7 @@
 
 /* headers */
 #include "osdep.h"
+#include <time.h>
 
 /* definitions */
 #define MAX_THREADS              100        /**< maximum number of threads with a given thread pool  */

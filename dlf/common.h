@@ -21,7 +21,7 @@
  * @file  dlf/common.h
  * @brief defines common definitions, prototypes and structures for use between all DLF applications
  *
- * $Id: common.h,v 1.6 2007/05/29 08:47:05 waldron Exp $
+ * $Id: common.h,v 1.7 2009/06/03 13:27:10 sponcec3 Exp $
  */
 
 #ifndef _COMMON_H
@@ -29,6 +29,7 @@
 
 /* headers */
 #include "osdep.h"
+#include <pwd.h>
 #include "common.h"
 #include "server.h"
 
