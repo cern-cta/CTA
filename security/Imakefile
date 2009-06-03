@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2003-2005 by CERN/IT/ADC/CA
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.21 $ $Date: 2008/11/26 14:51:58 $ CERN IT/ADC/CA  Ben Couturier
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.22 $ $Date: 2009/06/03 09:26:02 $ CERN IT/ADC/CA  Ben Couturier
  
 COMM    Make CASTOR Security package
 
@@ -22,7 +22,7 @@ CFLAGS = $(DFLAGS) $(MTCCFLAGS) -g -DCSEC_DEFAULT_MECHS="\"$(CSEC_MECHLIST)\"" -
 
 SECLIB_OBJS = Csec_api_loader.Osuf Csec_protocol_policy.Osuf Csec_api.Osuf Csec_errmsg.Osuf Csec_apiinit.Osuf Csec_common.Osuf
 DependsOnLibrary(common,castorcommon)
-SharedLibraryTarget(castorsecurity,$(SECLIB_OBJS),$(GLOBLIB),$(LIBS))
+ClientSharedLibraryTarget(castorsecurity,$(SECLIB_OBJS),$(GLOBLIB),$(LIBS))
 
 #if UseGSI
 GLOBUS_LOCATION=GlobusLocation
