@@ -13,7 +13,7 @@
 #include <Cglobals.h>
 #include <string.h>
 
-#ifndef linux
+#if !defined(linux) && !defined(__APPLE__) 
 extern int      sys_nerr;       /* number of system error messages      */
 #endif
 
@@ -48,10 +48,10 @@ char    *sys_serrlist[SEMAXERR-SEBASEOFF+2]=
    "Cthread initialization error",
    "Thread interface call error",
    "System error",
-   "adns_init() error",
-   "adns_submit() error",
-   "adns resolving error",
-   "adns returned more than one entry",
+   "deprecated error",
+   "deprecated error",
+   "deprecated error",
+   "deprecated error",
    "requestor is not administrator",
    "User unknown",
    "Duplicate key value",
