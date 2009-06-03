@@ -33,7 +33,7 @@ CFLAGS    = -pedantic -Wno-long-long -g -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS) $(O
 DependsOnLibrary(common,castorcommon)
 
 DLFLIB_OBJS = queue.Osuf hash.Osuf common.Osuf dlf_lib.Osuf
-SharedLibraryTarget(castordlf,$(DLFLIB_OBJS),$(DEPLIB),$(LIBS))
+ClientSharedLibraryTarget(castordlf,$(DLFLIB_OBJS),$(DEPLIB),$(LIBS))
 
 LIBMANPAGE(dlf_child)
 LIBMANPAGE(dlf_create_threads)
