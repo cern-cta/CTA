@@ -1,5 +1,5 @@
 /*
- * $Id: Cuuid.c,v 1.14 2009/03/26 11:25:41 itglp Exp $
+ * $Id: Cuuid.c,v 1.15 2009/06/03 13:25:22 sponcec3 Exp $
  *
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
@@ -32,31 +32,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__APPLE__)
 #include <sys/sysinfo.h>
-#endif
-#if (defined(aix) || defined(hpux))
-#ifdef KMEM
-#undef KMEM
-#endif
-#define KMEM "/dev/kmem"
-#ifdef aix
-#include <sys/nlist.h>
-#else
-#include <nlist.h>
-static char *hp_unix = "/stand/vmunix";
-#endif
-#ifdef aix
-struct nlist nl[] = {
-	{"sysinfo"},
-	{ "" } /* null name marks end of namelist */
-};
-#else
-struct nlist nl[] = {
-	{"sysinfo",0,0,0,0,0},
-	{"",0,0,0,0,0}
-};
-#endif
 #endif
 #if defined(_WIN32)
 #include <winsock2.h>
@@ -190,13 +167,6 @@ typedef struct {
 static int _Cuuid_st_key = -1;
 #define _Cuuid_st (*C_Cuuid_st())
 static Cuuid_state_t _Cuuid_st_static;
-
-#if (defined(hpux) || defined(sgi))
-#ifdef _PROTO
-#undef _PROTO
-#endif
-#define _PROTO(a) ()
-#endif
 
 /* Static MD5 prototypes */
 static int     _Cuuid_MD5Init                  _PROTO((MD5_CTX *));
@@ -761,7 +731,43 @@ static void _Cuuid_get_system_time(uuid_time)
   *uuid_time = time.QuadPart;
 }
 
-#else /* _WIN32 */
+#elif defined(__APPLE__)
+
+static void _Cuuid_get_random_info(seed)
+      char seed[16];
+{
+    MD5_CTX c;
+    typedef struct {
+        struct timeval t;
+        char hostname[257];
+    } randomness;
+    randomness r;
+      
+    memset(&r,'\0',sizeof(r));
+    _Cuuid_MD5Init(&c);
+     gettimeofday(&r.t, (struct timezone *)0);
+    //gethostname(r.hostname, 256);
+    _Cuuid_MD5Update(&c, (unsigned char *) &r, sizeof(randomness));
+    _Cuuid_MD5Final(&c);
+      memcpy(seed,c.digest,sizeof(seed));
+}
+
+static void _Cuuid_get_system_time(uuid_time)
+      Cuuid_time_t *uuid_time;
+{
+      struct timeval tp;
+      
+      gettimeofday(&tp, (struct timezone *)0);
+      
+      /* Offset between UUID formatted times and Unix formatted times.
+         UUID UTC base time is October 15, 1582.
+         Unix base time is January 1, 1970.
+      */
+      *uuid_time = (tp.tv_sec * 10000000) + (tp.tv_usec * 10) +
+        CONSTLL(0x01B21DD213814000);
+}
+
+#else /* _WIN32, __APPLE__ */
 
 static void _Cuuid_get_random_info(seed)
      char seed[16];
@@ -772,35 +778,11 @@ static void _Cuuid_get_random_info(seed)
     struct timeval t;
     char hostname[257];
   } randomness;
-#if (defined(aix) || defined(hpux))
-  long sysinfoOffset;
-  int fdk;
-#endif
   randomness r;
   
   memset(&r,'\0',sizeof(r));
   _Cuuid_MD5Init(&c);
-#if (defined(aix) || defined(hpux))
-#ifdef aix
-  knlist(nl,1,sizeof(struct nlist));
-#else
-  if (nlist(hp_unix, nl) >= 0) {
-#endif
-    /* offset within /dev/kmem */
-    sysinfoOffset = nl[0].n_value;
-    /* read special file */
-    if ((fdk = open(KMEM, O_RDONLY)) >= 0) {
-      if (lseek(fdk, sysinfoOffset, SEEK_SET) == sysinfoOffset) {
-	read(fdk, &r.s, sizeof(struct sysinfo));
-      }
-      close(fdk);
-    }
-#ifndef aix
-  }
-#endif
-#else /* aix || hpux */
   sysinfo(&r.s);
-#endif
   gettimeofday(&r.t, (struct timezone *)0);
   gethostname(r.hostname, 256);
   _Cuuid_MD5Update(&c, (unsigned char *) &r, sizeof(randomness));
@@ -822,7 +804,7 @@ static void _Cuuid_get_system_time(uuid_time)
   *uuid_time = (tp.tv_sec * 10000000) + (tp.tv_usec * 10) +
     CONSTLL(0x01B21DD213814000);
 }
-#endif /* _WIN32 */
+#endif /* _WIN32, __APPLE__ */
 
 /* Conversion from/to Cuuid/string */
 int DLL_DECL Cuuid2string(output,maxlen,uuid)
