@@ -149,18 +149,6 @@ The following error values might be returned by any package:
 .B SESYSERR
 (1027) System error
 .TP
-.B SEADNSINIT
-(1028) adns_init() error
-.TP
-.B SEADNSSUBMIT
-(1029) adns_submit() error
-.TP
-.B SEADNS
-(1030) adns resolving error
-.TP
-.B SEADNSTOOMANY
-(1031) adns returned more than one entry
-.TP
 .B SENOTADMIN
 (1032) requestor is not administrator
 .TP

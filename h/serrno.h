@@ -65,10 +65,6 @@
 #define SECTHREADINIT   SEBASEOFF+25    /* Cthread initialization error */
 #define SECTHREADERR    SEBASEOFF+26    /* Thread interface call error  */
 #define SESYSERR        SEBASEOFF+27    /* System error                 */
-#define SEADNSINIT      SEBASEOFF+28    /* adns_init() error            */
-#define SEADNSSUBMIT    SEBASEOFF+29    /* adns_submit() error          */
-#define SEADNS          SEBASEOFF+30    /* adns resolving error         */
-#define SEADNSTOOMANY   SEBASEOFF+31    /* adns returned more than one entry */
 #define SENOTADMIN      SEBASEOFF+32    /* requestor is not administrator */
 #define SEUSERUNKN      SEBASEOFF+33    /* User unknown                 */
 #define SEDUPKEY        SEBASEOFF+34    /* Duplicate key value          */
