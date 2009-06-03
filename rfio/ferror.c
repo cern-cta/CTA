@@ -1,5 +1,5 @@
 /*
- * $Id: ferror.c,v 1.6 2008/07/31 07:09:13 sponcec3 Exp $
+ * $Id: ferror.c,v 1.7 2009/06/03 13:57:05 sponcec3 Exp $
  */
 
 /*
@@ -58,8 +58,8 @@ int rfio_ferror(fp)
 #ifdef linux
   if ( ((RFILE *)fp)->eof & _IO_ERR_SEEN )
 #else
-#ifdef __Lynx__
-    if ( ((RFILE *)fp)->eof & _ERR )
+#ifdef __APPLE__
+    if ( ((RFILE *)fp)->eof & __SERR)
 #else
       if ( ((RFILE *)fp)->eof & _IOERR )
 #endif

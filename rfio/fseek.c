@@ -1,5 +1,5 @@
 /*
- * $Id: fseek.c,v 1.11 2008/07/31 07:09:13 sponcec3 Exp $
+ * $Id: fseek.c,v 1.12 2009/06/03 13:57:05 sponcec3 Exp $
  */
 
 /*
@@ -74,8 +74,8 @@ int DLL_DECL rfio_fseek(fp, offset, whence)
 #ifdef linux
     ((RFILE *)fp)->eof |= _IO_ERR_SEEN;
 #else
-#ifdef __Lynx__
-    ((RFILE *)fp)->eof |= _ERR;
+#ifdef __APPLE__
+    ((RFILE *)fp)->eof |= __SERR;
 #else
     ((RFILE *)fp)->eof |= _IOERR;
 #endif

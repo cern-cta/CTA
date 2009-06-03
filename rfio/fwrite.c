@@ -1,5 +1,5 @@
 /*
- * $Id: fwrite.c,v 1.12 2008/07/31 07:09:13 sponcec3 Exp $
+ * $Id: fwrite.c,v 1.13 2009/06/03 13:57:06 sponcec3 Exp $
  */
 
 /*
@@ -65,8 +65,8 @@ int DLL_DECL rfio_fwrite(ptr, size, items, fp)
 #ifdef linux
     ((RFILE *)fp)->eof |= _IO_ERR_SEEN ;
 #else
-#ifdef __Lynx__
-    ((RFILE *)fp)->eof |= _ERR ;
+#ifdef __APPLE__
+    ((RFILE *)fp)->eof |= __SERR ;
 #else
     ((RFILE *)fp)->eof |= _IOERR ;
 #endif
@@ -77,8 +77,8 @@ int DLL_DECL rfio_fwrite(ptr, size, items, fp)
 #ifdef linux
     ((RFILE *)fp)->eof |= _IO_EOF_SEEN ;
 #else
-#ifdef __Lynx__
-    ((RFILE *)fp)->eof |= _EOF ;
+#ifdef __APPLE__
+    ((RFILE *)fp)->eof |= __SEOF ;
 #else
     ((RFILE *)fp)->eof |= _IOEOF ;
 #endif

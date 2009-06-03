@@ -1,5 +1,5 @@
 /*
- * $Id: feof.c,v 1.8 2008/07/31 07:09:13 sponcec3 Exp $
+ * $Id: feof.c,v 1.9 2009/06/03 13:57:05 sponcec3 Exp $
  */
 
 /*
@@ -61,8 +61,8 @@ int rfio_feof(fp)
 #ifdef linux
   if ( ((RFILE *)fp)->eof & _IO_EOF_SEEN )
 #else
-#ifdef __Lynx__
-    if ( ((RFILE *)fp)->eof & _EOF )
+#ifdef __APPLE__
+    if ( ((RFILE *)fp)->eof & __SEOF )
 #else
       if ( ((RFILE *)fp)->eof & _IOEOF )
 #endif

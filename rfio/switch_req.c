@@ -1,5 +1,5 @@
 /*
- * $Id: switch_req.c,v 1.7 2008/07/31 07:09:14 sponcec3 Exp $
+ * $Id: switch_req.c,v 1.8 2009/06/03 13:57:06 sponcec3 Exp $
  */
 
 /*
@@ -48,12 +48,7 @@ int DLL_DECL switch_open(access, lun, filename, filen, lrecl,append,trunc,mod)
     else
       TRACE(2, "rfio",  "rfio_xyopen(%s) SEQUENTIAL (local)",filename);
 
-#if defined(sun) || defined(apollo) || defined(sgi) || defined(hpux) || defined(_AIX) || (defined(ultrix) && defined(mips) ) || ( defined(__osf__) && defined(__alpha) ) || defined(linux) || defined(_WIN32) || defined(__Lynx__)
-
     status=usf_open(lun, filename, append,trunc);
-#else
-    (void) fopn_us_(lun, filename, filen, append, &status);
-#endif
     break;
   case FFFACC_D:
     if (mod == LLTM)
@@ -62,11 +57,7 @@ int DLL_DECL switch_open(access, lun, filename, filen, lrecl,append,trunc,mod)
       TRACE(2, "rfio",  "rfio_xyopen(%s) DIRECT (local)",filename);
     }
 
-#if defined(sun) || defined(apollo) || defined(sgi) || defined(hpux) || defined(_AIX) || (defined(ultrix) && defined(mips) ) || ( defined(__osf__) && defined(__alpha) ) || defined(linux) || defined(_WIN32) || defined(__Lynx__)
     status=udf_open(lun, filename, lrecl,trunc);
-#else
-    (void) fopn_ud_(lun, filename, filen, lrecl, &status);
-#endif
     break;
   default:
     if (mod == LLTM)
@@ -97,11 +88,7 @@ int DLL_DECL switch_write(access,lun,ptr,nwrit,nrec,mod)
       TRACE(2, "rfio",  "rfio_xywrit(%d) SEQUENTIAL",*lun);
     }
 
-#if defined(sun) || defined(apollo) || defined(sgi) || defined(hpux) || defined(_AIX) || (defined(ultrix) && defined(mips) ) || ( defined(__osf__) && defined(__alpha) ) || defined(linux) || defined(_WIN32) || defined(__Lynx__)
     status=usf_write(lun, ptr, nwrit);
-#else
-    (void) fwr_us_(lun, ptr, nwrit, &status);
-#endif
     break;
   case FFFACC_D:
     if (mod == LLTM)
@@ -109,11 +96,7 @@ int DLL_DECL switch_write(access,lun,ptr,nwrit,nrec,mod)
     else
       TRACE(2, "rfio",  "rfio_xywrit(%d) DIRECT",*lun);
 
-#if defined(sun) || defined(apollo) || defined(sgi) || defined(hpux) || defined(_AIX) || (defined(ultrix) && defined(mips) )|| ( defined(__osf__) && defined(__alpha) ) || defined(linux) || defined(_WIN32) || defined(__Lynx__)
     status=udf_write(lun, ptr, nrec, nwrit);
-#else
-    (void) fwr_ud_(lun, ptr, nrec, nwrit, &status);
-#endif
     break;
   default:
     if (mod == LLTM)
@@ -146,11 +129,7 @@ int DLL_DECL switch_read(access,ptlun,buffer1,nwant,nrec,readopt,ngot,mod)
       TRACE(2, "rfio", "rfio_xyread(%d) SPECIAL",*ptlun);
     }
 
-#if defined(sun) || defined(apollo) || defined(sgi) || defined(hpux) || defined(_AIX) || (defined(ultrix) && defined(mips) ) || ( defined(__osf__) && defined(__alpha) ) || defined(linux) || defined(_WIN32) || defined(__Lynx__)
     (void) uf_cread(ptlun, buffer1, nrec, nwant, ngot, &status);
-#else
-    (void) frdc_(ptlun, buffer1, nwant, ngot, &status);
-#endif
 
   }
   else    {
@@ -160,11 +139,7 @@ int DLL_DECL switch_read(access,ptlun,buffer1,nwant,nrec,readopt,ngot,mod)
         log(LOG_DEBUG, "rxyread(%d) SEQUENTIAL\n",*ptlun);
       else
         TRACE(2, "rfio", "rfio_xyread(%d) SEQUENTIAL",*ptlun);
-#if defined(sun) || defined(apollo) || defined(sgi) || defined(hpux) || defined(_AIX) || (defined(ultrix) && defined(mips) ) || ( defined(__osf__) && defined(__alpha) ) || defined(linux) || defined(_WIN32) || defined(__Lynx__)
       status=usf_read(ptlun, buffer1, nwant);
-#else
-      (void) frd_us_(ptlun, buffer1, nwant, &status);
-#endif
 
       *ngot = *nwant;
       break;
@@ -173,11 +148,7 @@ int DLL_DECL switch_read(access,ptlun,buffer1,nwant,nrec,readopt,ngot,mod)
         log(LOG_DEBUG, "rxyread(%d) DIRECT\n",*ptlun);
       else
         TRACE(2, "rfio", "rfio_xyread(%d) DIRECT",*ptlun);
-#if defined(sun) || defined(apollo) || defined(sgi) || defined(hpux) || defined(_AIX) || (defined(ultrix) && defined(mips) ) || ( defined(__osf__) && defined(__alpha) ) || defined(linux) || defined(_WIN32) || defined(__Lynx__)
       status =udf_read(ptlun, buffer1, nrec, nwant);
-#else
-      (void) frd_ud_(ptlun, buffer1, nrec, nwant, &status);
-#endif
 
       *ngot = *nwant;
       break;
@@ -198,10 +169,6 @@ int DLL_DECL switch_close(lun)
      int *lun;
 {
   int irc;
-#if defined(sun) || defined(apollo) || defined(sgi) || defined(hpux) || defined(_AIX) || (defined(ultrix) && defined(mips) ) || ( defined(__osf__) && defined(__alpha) ) || defined(linux) || defined(_WIN32) || defined(__Lynx__)
   irc=uf_close(lun);
-#else
-  (void) fcls_f_ (lun , &irc) ;
-#endif
   return(irc);
 }
