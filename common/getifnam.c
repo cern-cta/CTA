@@ -13,15 +13,9 @@
 #else
 #include <winsock2.h>
 #endif
-#if defined(SOLARIS)
-#include <sys/sockio.h>
-#endif
 #include <errno.h>                      /* Error numbers                */
 #include <serrno.h>                     /* Special error numbers        */
 #include <log.h>                        /* Generalized error logger     */
-#if defined(_AIX)
-#include <sys/time.h>                   /* needed for if.h              */
-#endif /* AIX */
 #if !defined(_WIN32)
 #include <net/if.h>                     /* Network interfaces           */
 #include <sys/ioctl.h>                  /* ioctl() definitions          */
@@ -59,10 +53,10 @@ size_t  ifnamelen;
     int     n;                      /* # of interfaces              */
     int     found=0;                /* Found the interface ?        */
     SOCKET  s_s;                    /* A socket to get interfaces   */
-#if defined(_AIX) || defined(__Lynx__)
+#if defined(__APPLE__)
     struct  sockaddr_in *sp;    /* Ptr to sockaddr in ifreq buf */  
     char    *endp;          /* End of ifreq buffer      */  
-#endif /* _AIX || __Lynx__ */
+#endif /* __APPLE__ */
 
     if ( ifname == NULL || ifnamelen <= 0) return(NULL);
     INIT_TRACE("COMMON_TRACE");
@@ -92,7 +86,7 @@ size_t  ifnamelen;
         return(NULL);
     }
     else    {
-#if defined(_AIX) || defined(__Lynx__)
+#if defined(__APPLE__)
         endp = (char *) ifr + ifc.ifc_len;
         sp = (struct sockaddr_in *) &ifr->ifr_addr;
         while ((char *) sp < endp) {
@@ -108,7 +102,7 @@ size_t  ifnamelen;
             ifr = (struct ifreq *)((char *) sp + sp->sin_len);
             sp = (struct sockaddr_in *) &ifr->ifr_addr;
         }
-#else /* _AIX || __Lynx__ */
+#else /* __APPLE__ */
         for (n = ifc.ifc_len/sizeof(struct ifreq); --n >= 0; ifr++){
             memcpy (&addr, &ifr->ifr_addr, sizeof(struct sockaddr_in));
             TRACE(2, "getifnam_r", "interface # %d, comparing 0X%X to 0X%X", n, binaddr, addr.sin_addr.s_addr);
@@ -121,7 +115,7 @@ size_t  ifnamelen;
                 break;
             }
         }
-#endif /* _AIX || __Lynx__ */
+#endif /* __APPLE__ */
     }
     (void) netclose(s_s);
     if (found) {

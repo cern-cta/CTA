@@ -38,11 +38,6 @@ static char strftime_format[] = "%b %e %H:%M:%S";
 
 static int pid;                 /* process identifier                   */
 static int logfd ;              /* logging file descriptor              */
-#if !defined(SOLARIS) && !defined(IRIX5) && !defined(hpux) && \
-    !defined(linux) && !defined(AIX42) && !defined(__Lynx__) && \
-    !defined(_WIN32)
-extern int syslog();
-#endif /* !SOLARIS && !IRIX5 && ... */
 
 #if !defined(_WIN32)
 extern char *getenv();
@@ -74,9 +69,6 @@ char    *output;                /* output specifier                     */
      * Opening syslog path.
      */
     strcpy(logname,name);
-#if defined(sun) || defined(sgi) || defined(hpux) || defined(_AIX)
-    openlog(logname, LOG_PID, LOG_USER);
-#endif  /* sun || sgi || hpux || _AIX */
 
     /*
      * Opening log file and setting logfunc
@@ -143,11 +135,11 @@ void DLL_DECL logit(int level, char *format, ...)
             pid = getpid();
             (void) sprintf(line,"%s %s[%d]: ",timestr,logname,pid) ;
         } else {
-#if defined(linux)
+#if defined(linux) || defined(__APPLE__)
             pid = getpgrp();
-#else /* linux */
+#else
             pid = getpid();
-#endif /* linux */
+#endif
             (void) sprintf(line,"%s %s[%d,%d]: ",timestr,logname,pid,Tid) ;
         }
         (void) vsprintf(line+strlen(line),format,args);
