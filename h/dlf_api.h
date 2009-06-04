@@ -243,7 +243,7 @@ EXTERN_C int DLL_DECL dlf_regtext _PROTO((unsigned short msg_no, const char *msg
 
 
 EXTERN_C int DLL_DECL dlf_writep _PROTO((Cuuid_t reqid,
-					 int sevetity,
+					 int severity,
 					 int msg_no,
 					 struct Cns_fileid *ns,
 					 int numparams,
