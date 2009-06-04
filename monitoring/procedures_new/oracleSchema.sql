@@ -127,7 +127,11 @@ CREATE TABLE Requests (subReqId CHAR(36) CONSTRAINT NN_Requests_subReqId NOT NUL
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statements for indexes on the Requests table */
+CREATE INDEX I_Requests_timestamp ON Requests (timestamp) LOCAL;
 CREATE INDEX I_Requests_reqId ON Requests (reqId) LOCAL;
+CREATE INDEX I_Requests_svcclass ON Requests (svcclass) LOCAL;
+CREATE INDEX I_Requests_filesize ON Requests (filesize) LOCAL;
+
 
 /* SQL statement for table InternalDiskCopy */
 CREATE TABLE InternalDiskCopy (timestamp DATE CONSTRAINT NN_InternalDiskCopy_ts NOT NULL, svcclass VARCHAR2(255), copies NUMBER)
@@ -138,12 +142,16 @@ CREATE TABLE TotalLatency (subReqId CHAR(36) CONSTRAINT NN_TotalLatency_subReqId
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statements for indexes on the TotalLatency table */
+CREATE INDEX I_TotalLatency_timestamp ON TotalLatency (timestamp) LOCAL;
 CREATE INDEX I_TotalLatency_totalLatency ON TotalLatency (totalLatency) LOCAL;
 
 /* SQL statement for table TapeRecall */
 CREATE TABLE TapeRecall (subReqId CHAR(36) CONSTRAINT NN_TapeRecall_subReqId NOT NULL CONSTRAINT PK_TapeRecall_subReqId PRIMARY KEY, timestamp DATE CONSTRAINT NN_TapeRecall_ts NOT NULL, tapeId VARCHAR2(255 BYTE), tapeMountState VARCHAR2(255 BYTE), readLatency INTEGER, copyLatency INTEGER, CONSTRAINT FK_TapeRecall_subReqId FOREIGN KEY (subReqId) REFERENCES Requests (subReqid) ON DELETE CASCADE)
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
+/* SQL statements for indexes on the TapeRecall table */
+CREATE INDEX I_TapeRecall_timestamp ON TapeRecall (timestamp) LOCAL;
 
+  
 /* SQL statement for table DiskCopy */
 CREATE TABLE DiskCopy (nsFileId NUMBER CONSTRAINT NN_DiskCopy_nsFileId NOT NULL, timestamp DATE CONSTRAINT NN_DiskCopy_ts NOT NULL, originalPool VARCHAR2(255), targetPool VARCHAR2(255), readLatency INTEGER, copyLatency INTEGER, numCopiesInPools INTEGER, srcHost VARCHAR2(255), destHost VARCHAR2(255))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
@@ -152,11 +160,17 @@ CREATE TABLE DiskCopy (nsFileId NUMBER CONSTRAINT NN_DiskCopy_nsFileId NOT NULL,
 CREATE TABLE GcFiles (timestamp DATE CONSTRAINT NN_GCFiles_ts NOT NULL, nsFileId NUMBER CONSTRAINT NN_GCFiles_nsFileId NOT NULL, fileSize NUMBER, fileAge NUMBER, lastAccessTime NUMBER, nbAccesses NUMBER, gcType VARCHAR2(255), svcClass VARCHAR2(255))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
+/* SQL statements for indexes on the GcFiles table */
+CREATE INDEX I_GcFiles_timestamp ON GcFiles (timestamp) LOCAL;
+CREATE INDEX I_GcFiles_filesize ON GcFiles (filesize) LOCAL;
+CREATE INDEX I_GcFiles_fileage ON GcFiles (fileage) LOCAL;
+
 /* SQL statement for table Migration */
 CREATE TABLE Migration (subReqId CHAR(36) CONSTRAINT NN_Migration_subReqId NOT NULL CONSTRAINT PK_Migration_subReqId PRIMARY KEY, timestamp DATE CONSTRAINT NN_Migration_ts NOT NULL, reqId CHAR(36) CONSTRAINT NN_Migration_reqId NOT NULL, nsfileid NUMBER CONSTRAINT NN_Migration_nsFileId NOT NULL, type VARCHAR2(255), svcclass VARCHAR2(255), username VARCHAR2(255), state VARCHAR2(255), filename VARCHAR2(2048), totalLatency NUMBER, filesize NUMBER)
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statements for indexes on the Migration table */
+CREATE INDEX I_Migration_timestamp ON Migration (timestamp) LOCAL;
 CREATE INDEX I_Migration_reqId ON Migration (reqId) LOCAL;
 
 /* SQL statement for creation of the Errors materialized view */
