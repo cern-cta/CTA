@@ -19,7 +19,6 @@ LN = copy
 MAKE = nmake /nologo
 RM = del
 SHLIBLDFLAGS = /dll /noentry
-#define HasRanlib	NO
 
 #define CurDir $(MAKEDIR)
 #define FilesToClean *.obj *.lib
