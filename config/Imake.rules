@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.32 $ $Date: 2009/05/26 15:33:08 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.33 $ $Date: 2009/06/05 08:11:27 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #define NullParameter
@@ -61,7 +61,7 @@ InstallLink(tofile,fromfile,mode,$(BIN),component)
 
 #define SchModTarget(libname,src,deplibs,libs,dir)                                                                \
 BareSharedLibraryTargetName(libname): src deplibs                                                               @@\
-	$(LD) -shared -fPIC -o $@ $(CPPFLAGS) src libs                                                          @@\
+	$(LD) DYLIBLINKEROPTION -fPIC -o $@ $(CPPFLAGS) src libs                                                          @@\
 $(DESTDIR)/dir/BareSharedLibraryTargetName(libname): BareSharedLibraryTargetName(libname)                       @@\
 	@install -d $(DESTDIR)/dir                                                                              @@\
 	install -m 644 BareSharedLibraryTargetName(libname) $(DESTDIR)/dir/BareSharedLibraryTargetName(libname) @@\
@@ -72,8 +72,8 @@ FilesToClobber += BareSharedLibraryTargetName(libname)
 
 #define BareSharedLibraryTarget(libname,objects,deplibs,libs,dir,alltgt,installtgt)            \
 SharedLibraryName(libname): objects deplibs                                                  @@\
-	$(LD) --no-undefined -shared -o $@ $(LDFLAGS) -Wl,-soname,SharedLibraryName(libname) objects libs          @@\
-$(DESTDIR)/dir/BareSharedLibraryTargetName(libname): SharedLibraryName(libname) InstallLibraryTargetNames(deplibs) @@\
+	$(LD) DYLIBLINKEROPTION --no-undefined -o $@ $(LDFLAGS) -Wl,SONAMELINKEROPTION,SharedLibraryName(libname) objects libs @@\
+$(DESTDIR)/dir/BareSharedLibraryTargetName(libname): SharedLibraryName(libname) InstallLibraryTargetNames(deplibs)             @@\
 	@install -d $(DESTDIR)/dir                                                           @@\
 	install $< $(DESTDIR)/dir/SharedLibraryFullName(libname)                             @@\
 	rm -f $(DESTDIR)/dir/SharedLibraryName(libname) $@                                   @@\
@@ -137,17 +137,17 @@ ProgramTarget(program,objects,deplibs,libs,mode,tape,tape)
 
 
 /* manual list of dependencies to solve the -rpath issue. Not very nice */
-#define commonRPath -Wl,-rpath-link,$(CASTOR_ROOT)/common
-#define upvRPath -Wl,-rpath-link,$(CASTOR_ROOT)/upv
-#define securityRPath -Wl,-rpath-link,$(CASTOR_ROOT)/security
-#define dlfRPath -Wl,-rpath-link,$(CASTOR_ROOT)/dlf
-#define rfioRPath -Wl,-rpath-link,$(CASTOR_ROOT)/rfio
-#define nsRPath -Wl,-rpath-link,$(CASTOR_ROOT)/ns
-#define vmgrRPath -Wl,-rpath-link,$(CASTOR_ROOT)/vmgr
-#define vdqmRPath -Wl,-rpath-link,$(CASTOR_ROOT)/vdqm
-#define castorRPath -Wl,-rpath-link,$(CASTOR_ROOT)/castor
-#define cnvRPath -Wl,-rpath-link,$(CASTOR_ROOT)/castor/db/cnv
-#define oraRPath -Wl,-rpath-link,$(CASTOR_ROOT)/castor/db/newora
+#define commonRPath -Wl,RPATHLINKEROPTION,$(CASTOR_ROOT)/common
+#define upvRPath -Wl,RPATHLINKEROPTION,$(CASTOR_ROOT)/upv
+#define securityRPath -Wl,RPATHLINKEROPTION,$(CASTOR_ROOT)/security
+#define dlfRPath -Wl,RPATHLINKEROPTION,$(CASTOR_ROOT)/dlf
+#define rfioRPath -Wl,RPATHLINKEROPTION,$(CASTOR_ROOT)/rfio
+#define nsRPath -Wl,RPATHLINKEROPTION,$(CASTOR_ROOT)/ns
+#define vmgrRPath -Wl,RPATHLINKEROPTION,$(CASTOR_ROOT)/vmgr
+#define vdqmRPath -Wl,RPATHLINKEROPTION,$(CASTOR_ROOT)/vdqm
+#define castorRPath -Wl,RPATHLINKEROPTION,$(CASTOR_ROOT)/castor
+#define cnvRPath -Wl,RPATHLINKEROPTION,$(CASTOR_ROOT)/castor/db/cnv
+#define oraRPath -Wl,RPATHLINKEROPTION,$(CASTOR_ROOT)/castor/db/newora
 #define BuildRPathcastorcommon 
 #define BuildRPathcastorupv commonRPath
 #define BuildRPathcastorsecurity commonRPath
