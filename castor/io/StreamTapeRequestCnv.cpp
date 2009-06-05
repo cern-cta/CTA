@@ -100,6 +100,7 @@ void castor::io::StreamTapeRequestCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->creationTime();
   ad->stream() << obj->errorCode();
   ad->stream() << obj->errorMessage();
+  ad->stream() << obj->remoteCopyType();
   ad->stream() << obj->id();
   ad->stream() << obj->status();
 }
@@ -129,6 +130,9 @@ castor::IObject* castor::io::StreamTapeRequestCnv::createObj(castor::IAddress* a
   std::string errorMessage;
   ad->stream() >> errorMessage;
   object->setErrorMessage(errorMessage);
+  std::string remoteCopyType;
+  ad->stream() >> remoteCopyType;
+  object->setRemoteCopyType(remoteCopyType);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

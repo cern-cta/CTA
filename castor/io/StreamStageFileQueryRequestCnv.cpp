@@ -44,6 +44,7 @@
 #include "castor/stager/StageFileQueryRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
+#include <rfcntl.h>
 #include <string>
 #include <vector>
 
@@ -92,7 +93,7 @@ void castor::io::StreamStageFileQueryRequestCnv::createRep(castor::IAddress* add
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
-  ad->stream() << obj->flags();
+  ad->stream() << htolopnflg(obj->flags());
   ad->stream() << obj->userName();
   ad->stream() << obj->euid();
   ad->stream() << obj->egid();
@@ -120,6 +121,7 @@ castor::IObject* castor::io::StreamStageFileQueryRequestCnv::createObj(castor::I
   // Now retrieve and set members
   u_signed64 flags;
   ad->stream() >> flags;
+  flags = ltohopnflg(flags);
   object->setFlags(flags);
   std::string userName;
   ad->stream() >> userName;

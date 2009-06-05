@@ -127,7 +127,14 @@ void CppCppStreamCnvWriter::writeCreateRepContent() {
         *m_stream << " << obj->" << mem->name << "()[" << i << "]";
       }
     } else {
-      *m_stream << " << obj->" << mem->name << "()";
+      if (mem->name == "flags") {
+        // Special case of the "flags" member that should be mapped to "network"
+        // (actually linux) bit maps
+        addInclude("<rfcntl.h>");
+        *m_stream << " << htolopnflg(obj->" << mem->name << "())";
+      } else {
+        *m_stream << " << obj->" << mem->name << "()";
+      }
     }
     *m_stream << ";" << endl;
   }
@@ -199,7 +206,16 @@ void CppCppStreamCnvWriter::writeCreateObjContent() {
         *m_stream << " >> " << mem->name << "[" << i << "]";
       }
     } else {
-      *m_stream << " >> " << mem->name;
+      if (mem->name == "flags") {
+        // Special case of the "flags" member that should be mapped to "network"
+        // (actually linux) bit maps
+        addInclude("<rfcntl.h>");
+        *m_stream << " >> " << mem->name << ";" << endl
+                  << getIndent() << mem->name << " = ltohopnflg("
+                  << mem->name << ")";
+      } else {
+        *m_stream << " >> " << mem->name;
+      }
     }
     *m_stream << ";" << endl
               << getIndent() << "object->set"
