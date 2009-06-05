@@ -1,0 +1,12 @@
+COMM       @(#)apple.cf,v 1.10 2002/11/19 10:24:12 CERN IT-PDP/DM Jean-Philippe Baud
+COMM
+COMM  Copyright (C) 1997-2002 by CERN/IT/PDP/DM
+COMM  All rights reserved
+COMM
+
+COMM  Default rules for Make          APPLE
+
+#define RPATHLINKEROPTION -rpath
+#define SONAMELINKEROPTION -install_name
+#define DYLIBLINKEROPTION -dynamiclib
+LDFLAGS += -Wl,-current_version,$(subst .,,$(MAJOR_CASTOR_VERSION)).$(MINOR_CASTOR_VERSION)
