@@ -1,4 +1,4 @@
-//         $Id: XrdxCastor2Ofs.hh,v 1.5 2009/04/29 10:15:03 apeters Exp $
+//         $Id: XrdxCastor2Ofs.hh,v 1.6 2009/06/08 19:15:41 apeters Exp $
 
 #ifndef __XCASTOR2OFS_H__
 #define __XCASTOR2OFS_H__
@@ -56,7 +56,7 @@ public:
 
   int          truncate(XrdSfsFileOffset   fileOffset);
 
-  int          UpdateMeta(off_t filesize=0, time_t mtime=0);
+  int          UpdateMeta();
 
   bool         verifychecksum();
 
@@ -159,7 +159,8 @@ public:
   bool                UpdateProc(const char* name);
   bool                doChecksumStreaming;
   bool                doChecksumUpdates;
-  bool                setFileSize;
+
+  XrdOucString        WriteStateDirectory;         // default from Configure
 
   // here we mask all illegal operations
   int            chmod(const char             *Name,

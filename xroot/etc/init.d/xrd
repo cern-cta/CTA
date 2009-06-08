@@ -31,6 +31,14 @@ if [ -f /etc/sysconfig/$sysconfigfile ]; then
         . /etc/sysconfig/$sysconfigfile
 fi
 
+
+cleanup() {
+        if [ "${XRD_ROLES}" = "server" ]; then
+	    pkill -f x2castorjob;
+	fi
+}
+
+
 start() {
         # Run daemon
         echo -n $"Starting $prog: "
@@ -70,6 +78,9 @@ start() {
 
 			# Setup xrootd environment
                         if [ -z "${XRD_USER}" ]; then chown root ${XRD_COREDIR}; fi
+			
+			# Cleanup state directories
+			if [ -d ${XRD_LOGDIR}/$i/openrw ]; then rm -rf ${XRD_LOGDIR}/$i/openrw/ >& /dev/null ; fi
 
 			cd ${XRD_COREDIR}
 
@@ -104,6 +115,7 @@ start() {
 }
 
 stop() {
+        cleanup
         echo -n $"Stopping $prog: $1 "
         if [ -n "$1" ]; then
                 killproc $prog.$1

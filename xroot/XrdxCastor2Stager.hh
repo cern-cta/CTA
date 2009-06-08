@@ -1,4 +1,4 @@
-//          $Id: XrdxCastor2Stager.hh,v 1.1 2008/09/15 10:04:02 apeters Exp $
+//          $Id: XrdxCastor2Stager.hh,v 1.2 2009/06/08 19:15:41 apeters Exp $
 
 #ifndef __XCASTOR2_STAGER_H__
 #define __XCASTOR2_STAGER_H__
@@ -24,6 +24,8 @@ public:
   static bool Prepare2Get(XrdOucErrInfo &error, uid_t uid, gid_t gid,const char* path, const char* stagehost, const char* serviceclass, XrdOucString &redirectionhost, XrdOucString &redirectionpfn, XrdOucString &stagestatus) ;
   static bool Get(XrdOucErrInfo &error, uid_t uid, gid_t gid,const char* path, const char* stagehost, const char* serviceclass, XrdOucString &redirectionhost, XrdOucString &redirectionpfn, XrdOucString &redirectionpfn2, XrdOucString &stagestatus); 
   static bool Put(XrdOucErrInfo & error, uid_t uid, gid_t gid,const char* path, const char* stagehost, const char* serviceclass, XrdOucString &redirectionhost, XrdOucString &redirectionpfn, XrdOucString &redirectionpfn2, XrdOucString &stagestatus); 
+
+  static bool Rm(XrdOucErrInfo & error, uid_t uid, gid_t gid, const char* path, const char* stagehost, const char* serviceclass );
 
   static bool Update(XrdOucErrInfo & error, uid_t uid, gid_t gid,const char* path, const char* stagehost, const char* serviceclass, XrdOucString &redirectionhost, XrdOucString &redirectionpfn, XrdOucString &redirectionpfn2, XrdOucString &stagestatus); 
 

@@ -1,4 +1,4 @@
-//          $Id: XrdxCastor2Stager.cc,v 1.7 2009/05/15 08:40:14 apeters Exp $
+//          $Id: XrdxCastor2Stager.cc,v 1.8 2009/06/08 19:15:41 apeters Exp $
 
 #ifndef __XCASTOR2FS__STAGER__HH
 #define __XCASTOR2FS__STAGER__HH
@@ -207,6 +207,12 @@ XrdxCastor2Stager::Get(XrdOucErrInfo &error, uid_t uid, gid_t gid,const char* pa
   redirectionhost = fr->server().c_str();
   redirectionpfn  = fr->fileName().c_str();
   status          = stage_fileStatusName(fr->status());
+
+  char sid[4096];
+  sprintf(sid,"%ld",fr->id());
+  redirectionpfn2 = sid;  // request id
+  redirectionpfn2 += ":"; redirectionpfn2 += stagehost;
+  redirectionpfn2 += ":"; redirectionpfn2 += serviceclass;
   
   delete subreq;
   delete respvec[0];
@@ -305,6 +311,61 @@ XrdxCastor2Stager::Put(XrdOucErrInfo &error, uid_t uid, gid_t gid,const char* pa
   delete subreq;
   delete respvec[0];
   
+  return true;
+}
+
+
+bool 
+XrdxCastor2Stager::Rm(XrdOucErrInfo & error, uid_t uid, gid_t gid, const char* path, const char* stagehost, const char* serviceclass )
+{
+  EPNAME("Rm");
+  const char* tident = error.getErrUser();
+
+  struct stage_filereq requests[1];
+  struct stage_fileresp *resp;
+  struct stage_options                  Opts;
+
+  int i;
+  int nbresps;
+  char *reqid;
+  char errbuf[1024];
+  int errflg, rc, ret;
+  struct stage_options opts;
+
+  Opts.stage_host    = (char*)stagehost;
+  Opts.service_class = (char*)serviceclass;
+  Opts.stage_version = 2;
+  Opts.stage_port    = 0;
+
+
+  requests[0].filename = (char *) path;
+
+  stager_seterrbuf(errbuf, sizeof(errbuf));
+
+  if (stage_rm(requests, 1, &resp, &nbresps, &reqid, &Opts) < 0) {
+    if (serrno != 0) {
+      TRACES(sstrerror(serrno));
+      error.setErrInfo(ECOMM,sstrerror(serrno));
+    }
+    if (*errbuf) {
+      TRACES(errbuf);
+      error.setErrInfo(ECOMM,errbuf);
+    }
+    return false;
+  } else {
+    ZTRACE(stager,"Received " <<nbresps <<" stage_rm() responses");
+    for (i = 0; i < nbresps; i++) {
+      ZTRACE(stager,"reqid = " << reqid << " rc=" << resp[i].errorCode <<" msg=" <<resp[i].errorMessage);
+      if (resp[i].errorCode) {
+	TRACES("Error: path=" << path << " reqid = " << reqid << " rc=" << resp[i].errorCode <<" msg=" <<resp[i].errorMessage);
+	error.setErrInfo(EINVAL,resp[i].errorMessage);
+	free_fileresp(resp, nbresps);
+	return false;
+      } 
+    }
+    free_fileresp(resp, nbresps);
+  }
+
   return true;
 }
 

@@ -1,5 +1,5 @@
-//          $Id: XrdxCastor2Fs.cc,v 1.12 2009/05/19 19:52:21 apeters Exp $
-const char *XrdxCastor2FsCVSID = "$Id: XrdxCastor2Fs.cc,v 1.12 2009/05/19 19:52:21 apeters Exp $";
+//          $Id: XrdxCastor2Fs.cc,v 1.13 2009/06/08 19:15:41 apeters Exp $
+const char *XrdxCastor2FsCVSID = "$Id: XrdxCastor2Fs.cc,v 1.13 2009/06/08 19:15:41 apeters Exp $";
 
 #include "XrdVersion.hh"
 #include "XrdClient/XrdClientAdmin.hh"
@@ -1599,10 +1599,11 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
 	 }
        }
 
-       redirectionpfn2 = 0; 
-       redirectionpfn2 += ":"; redirectionpfn2 += stagehost;
-       redirectionpfn2 += ":"; redirectionpfn2 += serviceclass;
-
+       // if there was no stager get we fill request id 0
+       if (!redirectionpfn2.length()) {
+	 redirectionpfn2 += ":"; redirectionpfn2 += stagehost;
+	 redirectionpfn2 += ":"; redirectionpfn2 += serviceclass;
+       }
 
        // CANBEMIGR or STAGED, STAGEOUT files can be read ;-)
        
@@ -1803,6 +1804,7 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
      redirectionhost+= "?";
      // add the external token opaque tag
      redirectionhost+=accopaque;
+
      if (!isRW) {
        // we always assume adler, but we should check the type here ...
        if (!strcmp(buf.csumtype,"AD")) {
@@ -3319,10 +3321,16 @@ int XrdxCastor2Fs::rem(const char             *path,    // In
    XTRACE(remove, path,"");
 
    ROLEMAP(client,info,mappedclient,tident);
+
    if (!path) {
      error.setErrInfo(ENOMEDIUM, "No mapping for file name");
      return SFS_ERROR;
    }
+
+   uid_t client_uid;
+   gid_t client_gid;
+
+   GETID(path,mappedclient,client_uid,client_gid);
 
    if (XrdxCastor2FS->Proc) {
      XrdxCastor2FS->Stats.IncRm();
@@ -3330,8 +3338,101 @@ int XrdxCastor2Fs::rem(const char             *path,    // In
    
    TIMING(xCastor2FsTrace,"Authorize",&rmtiming);
 
-   int retc = 0;
+   if (env.Get("stagerm")) {
+     XrdOucString stagevariables="";
+     XrdOucString stagehost="";
+     XrdOucString serviceclass="";
+     if (!XrdxCastor2FS->GetStageVariables(path,info,stagevariables,client_uid,client_gid,tident)) {
+       return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "set the stager host - add remove opaque tag stagerm=<..> or specify a valid one because I have no stager map for fn = ", path);	   
+     }
+     
+     int n=0;
+     char* val = 0;
+     
+     // try with the stagehost from the environment
+     if ((val = env.Get("stagerHost"))) {
+       stagehost = val;
+     }
+     
+     if ((val = env.Get("svcClass"))) {
+       serviceclass=val;
+     }
+     
+     if (stagehost.length() && serviceclass.length()) {
+       // try the user specified pair
+       if ((XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass, XCASTOR2FS_EXACT_MATCH, tident))==1) {
+	 // select the policy
+	 XrdOucString *policy=NULL;
+	 XrdOucString *wildcardpolicy=NULL;
+	 XrdOucString policytag = stagehost; policytag +="::"; policytag += serviceclass;
+	 XrdOucString grouppolicytag = policytag;grouppolicytag+="::gid:";grouppolicytag += (int)client_gid;
+	 XrdOucString userpolicytag  = policytag;userpolicytag +="::uid:"; userpolicytag += (int)client_uid;
+	 
+	 XrdOucString wildcardpolicytag = stagehost; wildcardpolicytag +="::"; wildcardpolicytag += "*"; 
+	 
+	 wildcardpolicy = XrdxCastor2FS->stagerpolicy->Find(wildcardpolicytag.c_str());
+	 if (! (policy = XrdxCastor2FS->stagerpolicy->Find(userpolicytag.c_str()))) 
+	   if (! (policy = XrdxCastor2FS->stagerpolicy->Find(grouppolicytag.c_str()))) 
+	     policy = XrdxCastor2FS->stagerpolicy->Find(policytag.c_str());
+	 
+	 if ((!policy) && (wildcardpolicy)) {
+	   policy = wildcardpolicy;
+	 }
+	 if (policy && (strstr(policy->c_str(),"nodelete") ) ) {
+	   return XrdxCastor2Fs::Emsg(epname, error, EPERM, "do stage_rm request - you are not allowed to do stage_rm requests fn = ", path);	   
+	 }
+       } else {
+	 return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "write - cannot find any valid stager/service class mapping for you for fn = ", path); 
+       }
+     } else {
+       // try the list and stop when we find a matching policy tag
+       bool allowed= false;
+       int hasmore=0;
+       
+       do {
+	 if ((hasmore=XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass,n, tident))==1) {
+	   // select the policy
+	   XrdOucString *policy=NULL;
+	   XrdOucString *wildcardpolicy=NULL;
+	   XrdOucString policytag = stagehost; policytag +="::"; policytag += serviceclass;
+	   XrdOucString grouppolicytag = policytag;grouppolicytag+="::gid:";grouppolicytag += (int)client_gid;
+	   XrdOucString userpolicytag  = policytag;userpolicytag +="::uid:"; userpolicytag += (int)client_uid;
+	   
+	   XrdOucString wildcardpolicytag = stagehost; wildcardpolicytag +="::"; wildcardpolicytag += "*"; 
+	   
+	   wildcardpolicy = XrdxCastor2FS->stagerpolicy->Find(wildcardpolicytag.c_str());
+	   if (! (policy = XrdxCastor2FS->stagerpolicy->Find(userpolicytag.c_str()))) 
+	     if (! (policy = XrdxCastor2FS->stagerpolicy->Find(grouppolicytag.c_str()))) 
+	       policy = XrdxCastor2FS->stagerpolicy->Find(policytag.c_str());
+	   
+	   if ((!policy) && (wildcardpolicy)) {
+	     policy = wildcardpolicy;
+	   }
+	   if (policy && (!strstr(policy->c_str(),"nodelete") ) ) {
+	     allowed = true;
+	     break;
+	   }
+	 }
+	 n++;
+       } while((n<999) && (hasmore>=0));
+       if (!allowed) {
+	 return XrdxCastor2Fs::Emsg(epname, error, EPERM, "do stage_rm request - you are not allowed to do stage_rm requests for fn = ", path);	   
+       }
+     }
 
+     // here we have the allowed stager/service class setting to issue the stage_rm request
+     
+     TIMING(xCastor2FsTrace,"STAGERRM",&rmtiming);  
+
+     if (!XrdxCastor2Stager::Rm(error, (uid_t) client_uid, (gid_t) client_gid, path, stagehost.c_str(),serviceclass.c_str())) {
+       TIMING(xCastor2FsTrace,"END",&rmtiming);  
+       rmtiming.Print(xCastor2FsTrace);
+       return SFS_ERROR;
+     } 
+     // the stage_rm worked, let's proceed with the namespace
+   }
+   
+   int retc = 0;
    retc = _rem(path,error,&mappedclient,info);
    
    TIMING(xCastor2FsTrace,"RemoveNamespace",&rmtiming);

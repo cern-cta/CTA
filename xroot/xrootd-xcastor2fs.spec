@@ -1,7 +1,7 @@
 Summary:     The next generation xrootd@Castor2 interface
 Name: 	     xrootd-xcastor2fs
 Version:     1.0.6
-Release:     9
+Release:     11
 License:     none
 Group:       Applications/Castor
 Source0:     %{name}-%{version}.tar.gz
@@ -60,6 +60,13 @@ fi
 %attr(-,stage,st) %dir /var/spool/xroot/core
 
 %changelog
+* Tue Jun 02 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.6-11
+- reimplemented inter-process communication between xroot and x2castorjob for 'write'
+  via files - no SIGNALs anymore to avoid race conditions under load
+
+* Fri May 29 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.6-10
+- allow now full arbitrary name space mapping, not only first subdirectory
+
 * Tue May 19 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.6-9
 - fixed typo in service class environment variable (serviceClass->svcClass)
   used in sequential rules

@@ -1,4 +1,4 @@
-//          $Id: XrdxCastor2Ofs.cc,v 1.6 2009/04/29 10:15:03 apeters Exp $
+//          $Id: XrdxCastor2Ofs.cc,v 1.7 2009/06/08 19:15:41 apeters Exp $
 
 #include "XrdOfs/XrdOfsTrace.hh"
 #include "XrdClient/XrdClientAdmin.hh"
@@ -135,7 +135,7 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
 
   XrdOfsFS.doChecksumStreaming = true;
   XrdOfsFS.doChecksumUpdates   = false;
-  XrdOfsFS.setFileSize = false;
+  XrdOfsFS.WriteStateDirectory = "/var/log/xroot/server/openrw";
 
   Procfilesystem = "/tmp/xcastor2-ofs/";
   ProcfilesystemSync = false;
@@ -185,15 +185,6 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
 	  }
 	}
 
-	if (!strcmp("setfilesizeonclose",var)) {
-	  if ((val = Config.GetWord())) {
-	    XrdOucString sval = val;
-	    if ( (sval == "1") || (sval == "true") || (sval == "yes")) {
-	      XrdOfsFS.setFileSize = true;
-	    }
-	    Eroute.Say("=====> xcastor2.setfilesizeonclose: true");
-	  }
-	}
 	if (!strcmp("proc",var)) 
 	  if (!(val = Config.GetWord())) {
 	    Eroute.Emsg("Config","argument for proc invalid.");exit(-1);
@@ -225,6 +216,12 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
 	    }
 	  }
 	}
+	
+	if (!strcmp("openstatedirectory", var)) {
+	  if (( val = Config.GetWord())) {
+	    WriteStateDirectory = val;
+	  }
+	}
       }
     }
     
@@ -238,8 +235,21 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
 #ifdef XFS_SUPPORT
   makeProc+="/xfs";
 #endif
+  makeProc+= "; chown stage.st "; makeProc+=Procfilesystem;
+
   system(makeProc.c_str());
 
+if ( access(Procfilesystem.c_str(),R_OK | W_OK )) {
+    Eroute.Emsg("Config","Cannot use given third proc directory ",Procfilesystem.c_str());
+    exit(-1);
+    
+  }
+
+  XrdOucString makeWriteState;
+  makeWriteState="mkdir -p ";
+  makeWriteState+=WriteStateDirectory;
+  makeWriteState+= "; chown stage.st "; makeWriteState+=WriteStateDirectory.c_str();;
+  system(makeWriteState.c_str());
 
   for (int i=0; i< procUsers.GetSize(); i++) {
     Eroute.Say("=====> xcastor2.procuser: ", procUsers[i].c_str());
@@ -268,7 +278,9 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
   }
 
   int rc = XrdOfs::Configure(Eroute);
-
+  
+  // we need to set the effective user for all the XrdClient's used to issue 'prepares' to redirectors or third-party transfers
+  setenv("XrdClientEUSER","stage",1);
   return rc;
 }
 
@@ -281,29 +293,91 @@ XrdxCastor2OfsFile::SignalJob(bool onclose) {
     return;
 
   const char *tident = error.getErrUser();
+  XrdOucString writestate = XrdOfsFS.WriteStateDirectory.c_str(); writestate += "/";
+  writestate += reqid;
+  
   if (reqid != "0") {
     ZTRACE(open,"Signalling x2castorjob with reqid " << reqid);
-    // we have to send a signal
-    XrdOucString killcmd;
+    int fd=0;
     if (!onclose) {
-      killcmd = "pkill -USR1 -f \"x2castorjob ";
+      if ( (fd = ::creat(writestate.c_str(), S_IRWXU)) >0) {
+	// good, we put a state file
+	::close(fd);
+      }  else {
+	ZTRACE(open,"error: SignalJob => couldn't create write state file");
+      }
     } else {
-      killcmd = "pkill -USR2 -f \"x2castorjob ";
+      XrdOucString writestatedone=writestate;
+      writestatedone += ".done";
+      // rename the request file to '.done'
+      if (!rename(writestate.c_str(),writestatedone.c_str())) {
+	// wait that the .done state file disappears
+	struct stat buf;
+	int ntry=0;
+	while (!(::stat(writestatedone.c_str(),&buf))) {
+	  ntry++;
+	  if (ntry> 150) {
+	    // after 30 seconds give up
+	    break;
+	  } 
+	  usleep(200000);
+	}
+	// try to read the pid file
+	XrdOucString writestatepid=writestate;
+	writestatepid += ".pid";
+	int pfd=0;
+	int sjpid = 0;
+	if ( (pfd = ::open(writestatepid.c_str(),O_RDONLY) ) ) {
+	  char contents[1024];
+	  memset(contents,0,sizeof(contents));
+	  int nb = ::read(pfd,contents,sizeof(contents));
+	  ::close(pfd);
+	  unlink(writestatepid.c_str());
+	  int ncycles=0;
+	  if (nb>=0) {
+	    sjpid = atoi(contents);
+	    if (sjpid >0) {
+	      // now hang until this stagerJob guy disappears
+	      while (!(kill(sjpid,0))) {
+		// still there
+		usleep(100000);
+		ncycles++;
+	      }
+	      // now the guy is gone ;-) ... let's return
+	      ZTRACE(open,"info: SignalJob => we waited " << (ncycles * 100) << " ms for stagerJob to terminate");
+	    } else {
+	      ZTRACE(open,"error: SignalJob => stagerJob pid file contained PID 0!");
+	      unlink(writestatedone.c_str());
+	    }
+	  } else {
+	    ZTRACE(open,"error: SignalJob => stagerJob pid file couldn't be read - the x2castorjob script took to long or crashed");
+	    unlink(writestatedone.c_str());
+	  }
+
+	} else {
+	  ZTRACE(open,"error: SignalJob => stagerJob pid didn't appear - the x2castorjob script took to long or crashed");
+	  unlink(writestatedone.c_str());
+	}
+	
+	if (ntry>150) {
+	  ZTRACE(open,"error: SignalJob => open write state file didn't get removed within 30s - the x2castorjob script took to long or crashed");
+	  unlink(writestatedone.c_str());
+	}
+      } else {
+	ZTRACE(open,"error: SignalJob => open write state file didn't exist (rename failed)");
+	unlink(writestate.c_str());
+      }
     }
-    killcmd += reqid;
-    killcmd += "\"";
-    system(killcmd.c_str());
-  } else {
-    // nothing to do for unscheduled access
-    return;
   }
 }
 
 int
-XrdxCastor2OfsFile::UpdateMeta(off_t filesize, time_t mtime) {
+XrdxCastor2OfsFile::UpdateMeta() {
   EPNAME("UpdateMeta");
 
-  ZTRACE(open,"haswrite=" <<hasWrite << " firstWrite="<< firstWrite  << " setFileSize=" << XrdOfsFS.setFileSize);
+  ZTRACE(open,"haswrite=" <<hasWrite << " firstWrite="<< firstWrite );
+
+  XrdOucString preparename = envOpaque->Get("castor2fs.sfn");
 
   // don't deal with proc requests
   if (procRequest != kProcNone) 
@@ -333,22 +407,13 @@ XrdxCastor2OfsFile::UpdateMeta(off_t filesize, time_t mtime) {
     return XrdOfsFS.Emsg(epname,error, EHOSTUNREACH, "connect to the mds host (normally the manager) ", "");
   }
 
-  XrdOucString preparename = envOpaque->Get("castor2fs.sfn");
   preparename += "?";
 
   if (firstWrite && hasWrite) 
     preparename += "&firstbytewritten=true";
   else {
-    // in all other case we don't even have to call the MDS
-    if (!XrdOfsFS.setFileSize)
-      return SFS_OK;
-    preparename+="&filesize=";
-    char fsize[1024];
-    sprintf(fsize,"%lld",filesize);
-    preparename+=fsize;
-    preparename+="&mtime=";
-    sprintf(fsize,"%u",mtime);
-    preparename+=fsize;
+    XrdOfsFS.MetaMutex.UnLock();
+    return SFS_OK;
   }
   
   preparename += "&reqid=";
@@ -531,12 +596,6 @@ XrdxCastor2OfsFile::open(const char                *path,
 
   int retc;
 
-  // take the redirector/user provided one ...
-  //  DiskChecksum = envOpaque->Get("adler32");
-  //  if (DiskChecksum.length()) {
-  //    DiskChecksumAlgorithm = "ADLER32";
-  //  }
-
   if ((retc = XrdOfsOss->Stat(newpath.c_str(), &statinfo))) {
     // file does not exist, keep the create lfag
     firstWrite=false;
@@ -690,14 +749,6 @@ XrdxCastor2OfsFile::close()
 	// remove checksum - we don't check errors here
 	removexattr(newpath.c_str(),"user.castor.checksum.type");
 	removexattr(newpath.c_str(),"user.castor.checksum.value");
-      }
-    }
-    if (XrdOfsFS.setFileSize) {
-      if (!(XrdOfsOss->Stat(newpath.c_str(), &statinfo))) {
-	ZTRACE(close,"Setting Filesize: " << statinfo.st_size << " mtime: " << statinfo.st_mtime);
-	UpdateMeta(statinfo.st_size, statinfo.st_mtime);
-      } else {
-	TRACES("Error: unable to get filesize for fn=" << newpath.c_str());
       }
     }
   }
