@@ -80,7 +80,7 @@ fi
 * Thu May 07 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.6-7
 - rebuild for wrong stager headers used in the build process
 - fixed \0 termination in use of location link cache
->>>>>>> 1.13
+
 * Mon May 04 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.6-5
 - added support for multiple capability keys to provide signature to multiple instances with individual public keys
 - fixed bug during file creation for status PUT_FAILED (returns 0 and no serrno)
