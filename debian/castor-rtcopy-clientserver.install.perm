@@ -1,6 +1,6 @@
 %attr(0755,root,root) etc/init.d/rtcpclientd
 %attr(0644,root,root) etc/logrotate.d/castor-rtcopy-clientserver
-%attr(0750,root,root) usr/bin/TapeErrorHandler
-%attr(0750,root,root) usr/bin/migrator
-%attr(0750,root,root) usr/bin/recaller
+%attr(0755,root,root) usr/bin/TapeErrorHandler
+%attr(0755,root,root) usr/bin/migrator
+%attr(0755,root,root) usr/bin/recaller
 %attr(0750,root,root) usr/bin/rtcpclientd
