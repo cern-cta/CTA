@@ -23,7 +23,7 @@ FFLAGS = $(FFOPTFLAGS)
 COMMONLIB_OBJS = $(SYSDEP_OBJS) \
 		 compat.Osuf getacct.Osuf getacctent.Osuf getconfent.Osuf \
 		 getfilep.Osuf getifnam.Osuf getuser.Osuf log.Osuf marshall.Osuf \
-		 readc.Osuf remote.Osuf segment.Osuf sendscsicmd.Osuf \
+		 readc.Osuf remote.Osuf segment.Osuf \
 		 serror.Osuf setnetio.Osuf socket.Osuf solveln.Osuf trace.Osuf \
 		 $(WSACCTO) ypgetacct.Osuf ypgetacctent.Osuf \
 		 Cdlopen.Osuf Cthread.Osuf Csched.Osuf Cglobals.Osuf Cgrp.Osuf Cmutex.Osuf Cuuid.Osuf \
