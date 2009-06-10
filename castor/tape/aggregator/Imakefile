@@ -83,7 +83,7 @@ AGGREGATORBIN_SRCS = \
   SmartFdList.cpp \
   SynchronizedCounter.cpp \
   Unpacker.cpp \
-  Utils.cpp \
+  ../utils/utils.cpp \
   VdqmRequestHandler.cpp \
   $(TAPEGATEWAY_MESSAGES_SRCS) \
   $(TAPEGATEWAY_IO_SRCS)

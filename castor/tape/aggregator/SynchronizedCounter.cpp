@@ -25,7 +25,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/SynchronizedCounter.hpp"
-#include "castor/tape/aggregator/Utils.hpp"
+#include "castor/tape/utils/utils.hpp"
 
 #include <sstream>
 #include <string.h>

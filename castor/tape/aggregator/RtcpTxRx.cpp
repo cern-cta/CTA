@@ -31,7 +31,7 @@
 #include "castor/tape/aggregator/Net.hpp"
 #include "castor/tape/aggregator/RtcpTxRx.hpp"
 #include "castor/tape/aggregator/RcpJobSubmitter.hpp"
-#include "castor/tape/aggregator/Utils.hpp"
+#include "castor/tape/utils/utils.hpp"
 #include "castor/tape/tapegateway/ErrorReport.hpp"
 #include "castor/tape/tapegateway/FileToMigrate.hpp"
 #include "castor/tape/tapegateway/FileToMigrateRequest.hpp"

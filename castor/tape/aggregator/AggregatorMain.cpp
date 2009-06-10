@@ -29,7 +29,7 @@
 #include "castor/tape/aggregator/AggregatorDaemon.hpp"
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/DriveAllocationProtocolEngine.hpp"
-#include "castor/tape/aggregator/Utils.hpp"
+#include "castor/tape/utils/utils.hpp"
 #include "castor/tape/aggregator/VdqmRequestHandler.hpp"
 
 

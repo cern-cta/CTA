@@ -32,7 +32,7 @@
 #include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
 #include "castor/tape/aggregator/RcpJobReplyMsgBody.hpp"
 #include "castor/tape/aggregator/RcpJobSubmitter.hpp"
-#include "castor/tape/aggregator/Utils.hpp"
+#include "castor/tape/utils/utils.hpp"
 #include "h/net.h"
 #include "h/osdep.h"
 #include "h/rtcp_constants.h"

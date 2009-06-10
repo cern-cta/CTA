@@ -24,7 +24,7 @@
  *****************************************************************************/
 
 #include "castor/tape/aggregator/SmartFd.hpp"
-#include "castor/tape/aggregator/Utils.hpp"
+#include "castor/tape/utils/utils.hpp"
 
 #include <errno.h>
 #include <unistd.h>

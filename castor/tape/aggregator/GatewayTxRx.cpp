@@ -28,7 +28,6 @@
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/GatewayTxRx.hpp"
 #include "castor/tape/aggregator/SynchronizedCounter.hpp"
-#include "castor/tape/aggregator/Utils.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/ErrorReport.hpp"
@@ -42,6 +41,7 @@
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
+#include "castor/tape/utils/utils.hpp"
 
 #include <pthread.h>
 

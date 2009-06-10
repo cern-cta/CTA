@@ -24,7 +24,7 @@
  *****************************************************************************/
 
 #include "castor/tape/aggregator/Packer.hpp"
-#include "castor/tape/aggregator/Utils.hpp"
+#include "castor/tape/utils/utils.hpp"
 
 
 //-----------------------------------------------------------------------------

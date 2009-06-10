@@ -34,7 +34,7 @@
 #include "castor/tape/aggregator/RtcpTxRx.hpp"
 #include "castor/tape/aggregator/SmartFd.hpp"
 #include "castor/tape/aggregator/SmartFdList.hpp"
-#include "castor/tape/aggregator/Utils.hpp"
+#include "castor/tape/utils/utils.hpp"
 #include "h/Ctape_constants.h"
 #include "h/rtcp_constants.h"
 
