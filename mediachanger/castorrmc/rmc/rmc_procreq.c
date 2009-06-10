@@ -130,7 +130,7 @@ char *clienthost;
 		sendrep (rpfd, MSG_ERR, RMC06, "vid");
 		RETURN (ERMCUNREC);
 	}
-	sprintf (logbuf, "export %s", vid);
+	snprintf (logbuf, CA_MAXVIDLEN+8, "export %s", vid);
 	rmc_logreq (func, logbuf);
 
 	if (Cupv_check (uid, gid, clienthost, localhost, P_TAPE_OPERATOR)) {
@@ -191,7 +191,7 @@ char *clienthost;
 	unmarshall_LONG (rbp, type);
 	unmarshall_LONG (rbp, startaddr);
 	unmarshall_LONG (rbp, nbelem);
-	sprintf (logbuf, "findcart %s %d", template, nbelem);
+	snprintf (logbuf, CA_MAXVIDLEN+15, "findcart %s %d", template, nbelem);
 	rmc_logreq (func, logbuf);
 
 	if (nbelem < 1) {
@@ -262,7 +262,7 @@ char *clienthost;
 		sendrep (rpfd, MSG_ERR, RMC06, "loader");
 		RETURN (ERMCUNREC);
 	}
-	sprintf (logbuf, "getgeom");
+	snprintf (logbuf, 8, "getgeom");
 	rmc_logreq (func, logbuf);
 
 	sbp = repbuf;
@@ -314,7 +314,7 @@ char *clienthost;
 		sendrep (rpfd, MSG_ERR, RMC06, "vid");
 		RETURN (ERMCUNREC);
 	}
-	sprintf (logbuf, "import %s", vid);
+	snprintf (logbuf, CA_MAXVIDLEN+8, "import %s", vid);
 	rmc_logreq (func, logbuf);
 
 	if (Cupv_check (uid, gid, clienthost, localhost, P_TAPE_OPERATOR)) {
@@ -338,7 +338,7 @@ char *clienthost;
 	char func[16];
 	gid_t gid;
 	int invert;
-	char logbuf[CA_MAXVIDLEN+18];
+	char logbuf[CA_MAXVIDLEN+64];
 	char *rbp;
 	char smc_ldr[CA_MAXRBTNAMELEN+1];
 	uid_t uid;
@@ -366,7 +366,7 @@ char *clienthost;
 	}
 	unmarshall_WORD (rbp, invert);
 	unmarshall_WORD (rbp, drvord);
-	sprintf (logbuf, "mount %s/%d on drive %d", vid, invert, drvord);
+	snprintf (logbuf, CA_MAXVIDLEN+64, "mount %s/%d on drive %d", vid, invert, drvord);
 	rmc_logreq (func, logbuf);
 
 	if (Cupv_check (uid, gid, clienthost, localhost, P_TAPE_SYSTEM)) {
@@ -422,7 +422,7 @@ char *clienthost;
 	unmarshall_LONG (rbp, type);
 	unmarshall_LONG (rbp, startaddr);
 	unmarshall_LONG (rbp, nbelem);
-	sprintf (logbuf, "readelem %d %d", startaddr, nbelem);
+	snprintf (logbuf, 21, "readelem %d %d", startaddr, nbelem);
 	rmc_logreq (func, logbuf);
 
 	if (type < 0 || type > 4) {
@@ -471,7 +471,7 @@ char *clienthost;
 	int force;
 	char func[16];
 	gid_t gid;
-	char logbuf[CA_MAXVIDLEN+30];
+	char logbuf[CA_MAXVIDLEN+64];
 	char *rbp;
 	char smc_ldr[CA_MAXRBTNAMELEN+1];
 	uid_t uid;
@@ -499,7 +499,7 @@ char *clienthost;
 	}
 	unmarshall_WORD (rbp, drvord);
 	unmarshall_WORD (rbp, force);
-	sprintf (logbuf, "unmount %s %d %d", vid, drvord, force);
+	snprintf (logbuf, CA_MAXVIDLEN+64, "unmount %s %d %d", vid, drvord, force);
 	rmc_logreq (func, logbuf);
 
 	if (Cupv_check (uid, gid, clienthost, localhost, P_TAPE_SYSTEM)) {
