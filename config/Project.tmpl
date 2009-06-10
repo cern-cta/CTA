@@ -6,7 +6,7 @@
 DLFWEB=/var/www/html/dlf
 DLFCONF=/var/www/conf/dlf
 
-.PHONY : install clean clobber Makefiles depend checkDESTDIR checkORACLE checkLSF checkGLOBUS checkSTK checkXROOT
+.PHONY : install clean clobber Makefiles depend checkDESTDIR checkORACLE checkLSF checkGLOBUS checkSTK checkXROOT checkVERSION
 
 all: checkORACLE checkLSF checkGLOBUS checkSTK checkXROOT
 	GotoSubdirs($(SUBDIRS))
@@ -62,7 +62,13 @@ checkXROOT:
 	  exit 1; \
 	fi
 
-install: checkDESTDIR all exportman
+checkVERSION:
+	@if [ -z "${MAJOR_CASTOR_VERSION}" -o -z "${MINOR_CASTOR_VERSION}" ]; then \
+	  echo "Please define MAJOR/MINOR_CASTOR_VERSION before installing."; \
+	  exit 1; \
+	fi
+
+install: checkDESTDIR checkVERSION all exportman
 	GotoSubdirs($(SUBDIRS))
 
 clean:

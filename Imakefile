@@ -36,7 +36,7 @@ doxygen: tools/doxyconfig
 client: 
 	GotoSubdirs(upv ns client rfio vdqm vmgr security)
 
-installclient: checkDESTDIR client
+installclient: checkDESTDIR checkVERSION client
 	GotoSubdirs(upv ns client rfio vdqm vmgr castor common)
 
 tape:
