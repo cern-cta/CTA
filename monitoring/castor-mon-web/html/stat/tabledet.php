@@ -440,7 +440,6 @@
 							echo "<form action='tabledet.php?service=$service&svcclass=$svcclass&stat=$stat' method='post'>";
 					      };?>
 					<SCRIPT LANGUAGE="JavaScript" ID="calendar">var cal1 = new CalendarPopup();</SCRIPT>
-					<SCRIPT LANGUAGE="JavaScript">writeSource("calendar");</SCRIPT>
 					<b>From:</b> <INPUT TYPE="text" NAME="date1" VALUE="dd/MM/yyyy" SIZE=9 onClick="cal1.select(document.forms[1].date1,'anchor1','dd/MM/yyyy'); return false;" TITLE="Select Starting Date" NAME="anchor1" ID="anchor1">
 				    <INPUT TYPE="text" NAME="date1hour" VALUE="00:00" SIZE=4>
 					<b>To:</b> <INPUT TYPE="text" NAME="date2" VALUE="dd/MM/yyyy" SIZE=9 onClick="cal1.select(document.forms[1].date2,'anchor2','dd/MM/yyyy',(document.forms[1].date2.value=='')?document.forms[1].date1.value:null); return false;" TITLE="Select Ending Date" NAME="anchor2" ID="anchor2">
