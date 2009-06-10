@@ -25,6 +25,7 @@
 
 #include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/tape/Constants.hpp"
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/BridgeProtocolEngine.hpp"
 #include "castor/tape/aggregator/Constants.hpp"

@@ -27,6 +27,7 @@
 #define CASTOR_TAPE_AGGREGATOR_UTILS_UTILS_HPP 1
 
 #include "castor/exception/Exception.hpp"
+#include "castor/tape/Constants.hpp"
 
 #include <errno.h>
 #include <stdint.h>
@@ -75,9 +76,8 @@
 
 
 namespace castor {
-namespace tape {
-namespace aggregator {
-namespace utils {
+namespace tape   {
+namespace utils  {
   	
   /**
    * Writes the specified unsigned 64-bit integer into the specified
@@ -178,6 +178,11 @@ namespace utils {
   bool isValidUInt(const char *str) throw();
 
   /**
+   * Converts the specified string to uppercase.
+   */
+  void toUpper(char *str);
+
+  /**
    * Drains (reads and discards) all data from the specified file until end of
    * file is reached.
    *
@@ -186,7 +191,6 @@ namespace utils {
   ssize_t drainFile(const int fd) throw(castor::exception::Exception);
 
 } // namespace utils
-} // namespace aggregator
 } // namespace tape
 } // namespace castor
 

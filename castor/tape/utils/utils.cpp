@@ -24,7 +24,7 @@
  *****************************************************************************/
 
 #include "castor/exception/Internal.hpp"
-#include "castor/tape/aggregator/Constants.hpp"
+#include "castor/tape/Constants.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/rtcp_constants.h"
 
@@ -38,7 +38,7 @@
 //-----------------------------------------------------------------------------
 // toHex
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::utils::toHex(const uint64_t i, char *dst,
+void castor::tape::utils::toHex(const uint64_t i, char *dst,
   size_t dstLen) throw(castor::exception::Exception) {
 
   // The largest 64-bit hexadecimal string "FFFFFFFFFFFFFFFF" would ocuppy 17
@@ -87,7 +87,7 @@ void castor::tape::aggregator::utils::toHex(const uint64_t i, char *dst,
 //-----------------------------------------------------------------------------
 // copyString
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::utils::copyString(char *const dst,
+void castor::tape::utils::copyString(char *const dst,
   const char *src, const size_t n) throw(castor::exception::Exception) {
 
   const size_t srcLen = strlen(src);
@@ -110,7 +110,7 @@ void castor::tape::aggregator::utils::copyString(char *const dst,
 //-----------------------------------------------------------------------------
 // magicToStr
 //-----------------------------------------------------------------------------
-const char *castor::tape::aggregator::utils::magicToStr(const uint32_t magic)
+const char *castor::tape::utils::magicToStr(const uint32_t magic)
   throw() {
   switch(magic) {
   case RTCOPY_MAGIC_VERYOLD: return "RTCOPY_MAGIC_VERYOLD";
@@ -126,7 +126,7 @@ const char *castor::tape::aggregator::utils::magicToStr(const uint32_t magic)
 //-----------------------------------------------------------------------------
 // rtcopyReqTypeToStr
 //-----------------------------------------------------------------------------
-const char *castor::tape::aggregator::utils::rtcopyReqTypeToStr(
+const char *castor::tape::utils::rtcopyReqTypeToStr(
   const uint32_t reqType) throw() {
   switch(reqType) {
   case RTCP_TAPE_REQ     : return "RTCP_TAPE_REQ";
@@ -150,7 +150,7 @@ const char *castor::tape::aggregator::utils::rtcopyReqTypeToStr(
 //-----------------------------------------------------------------------------
 // procStatusToStr
 //-----------------------------------------------------------------------------
-const char *castor::tape::aggregator::utils::procStatusToStr(
+const char *castor::tape::utils::procStatusToStr(
   const uint32_t procStatus) throw() {
   switch(procStatus) {
   case RTCP_WAITING           : return "RTCP_WAITING";
@@ -168,7 +168,7 @@ const char *castor::tape::aggregator::utils::procStatusToStr(
 //------------------------------------------------------------------------------
 // isValidUInt
 //------------------------------------------------------------------------------
-bool castor::tape::aggregator::utils::isValidUInt(const char *str)
+bool castor::tape::utils::isValidUInt(const char *str)
   throw() {
   // An empty string is not a valid unsigned integer
   if(*str == '\0') {
@@ -188,9 +188,19 @@ bool castor::tape::aggregator::utils::isValidUInt(const char *str)
 
 
 //------------------------------------------------------------------------------
+// toUpper
+//------------------------------------------------------------------------------
+void castor::tape::utils::toUpper(char *str) {
+  for(;*str != '\0'; str++) {
+    *str = toupper(*str);
+  }
+}
+
+
+//------------------------------------------------------------------------------
 // drainFile
 //------------------------------------------------------------------------------
-ssize_t castor::tape::aggregator::utils::drainFile(const int fd)
+ssize_t castor::tape::utils::drainFile(const int fd)
   throw(castor::exception::Exception) {
 
   char buf[1024];
