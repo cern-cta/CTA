@@ -1,12 +1,12 @@
 /*
- * $Id: rtcp_constants.h,v 1.5 2009/03/31 16:08:35 murrayc3 Exp $
+ * $Id: rtcp_constants.h,v 1.6 2009/06/11 09:39:13 murrayc3 Exp $
  *
  * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
  */
 
 /*
- * @(#)$RCSfile: rtcp_constants.h,v $ $Revision: 1.5 $ $Date: 2009/03/31 16:08:35 $ CERN IT/ADC Olof Barring
+ * @(#)$RCSfile: rtcp_constants.h,v $ $Revision: 1.6 $ $Date: 2009/06/11 09:39:13 $ CERN IT/ADC Olof Barring
  */
 
 /*
@@ -187,22 +187,10 @@
 #define RTCOPY_BACKLOG (5)
 #endif /* FD_SETSIZE */
 #endif /* RTCOPY_BACKLOG */
-
 /*
  * netread/netwrite timeouts
  */
 #define RTCP_NETTIMEOUT (60)
-
-/*
- * Timeout to be used when net reading/writing RTCP acknowledge messages.
- * Overridden by getconfent("TAPE", "RTCP_TRANSACKN_TIMEOUT")
- */
-#define RTCP_TRANSACKN_TIMEOUT (60)
-
-/*
- * Timeout to be used when transfer RTCP messages over the network.
- */
-#define RTCP_TRANSFER_MSG_TIMEOUT (60)
 
 /*
  * Some general constants

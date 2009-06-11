@@ -1,5 +1,5 @@
 /*
- * $Id: rtcp_SendRecv.c,v 1.11 2009/03/31 16:08:35 murrayc3 Exp $
+ * $Id: rtcp_SendRecv.c,v 1.12 2009/06/11 09:39:13 murrayc3 Exp $
  *
  * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
@@ -27,7 +27,6 @@ extern char *geterr();
 #include <unistd.h>
 
 #include <Castor_limits.h>
-#include <getconfent.h>
 #include <net.h>
 #include <log.h>
 #include <osdep.h>
@@ -88,21 +87,6 @@ static int rtcp_Transfer(SOCKET *s,
     return(-1);
   }
 
-  int transferMsgTimeOut = RTCP_TRANSFER_MSG_TIMEOUT;
-
-  // Override the value of transferMsgTimeOut if there is a castor.conf entry
-  {
-    char *paramValue = NULL;
-
-    if((paramValue = getconfent("TAPE", "RTCP_TRANSFER_MSG_TIMEOUT", 0))) {
-      int tmpTransferMsgTimeOut = atoi(paramValue);
-
-      if(tmpTransferMsgTimeOut > 0) {
-        transferMsgTimeOut = tmpTransferMsgTimeOut;
-      }
-    }
-  }
-
   reqtype = -1;
   len = magic = 0;
   if ( hdr != NULL ) magic = hdr->magic;
@@ -116,7 +100,7 @@ static int rtcp_Transfer(SOCKET *s,
   buf = &common_buffer[RTCP_HDRBUFSIZ];
 
   if ( whereto == ReceiveFrom ) {
-    rc = netread_timeout(*s,hdrbuf,RTCP_HDRBUFSIZ,transferMsgTimeOut);
+    rc = netread_timeout(*s,hdrbuf,RTCP_HDRBUFSIZ,RTCP_NETTIMEOUT);
     switch (rc) {
     case -1:
       rtcp_log(LOG_ERR,"rtcp_Transfer() netread(%d,HDR): %s\n",*s,
@@ -159,7 +143,7 @@ static int rtcp_Transfer(SOCKET *s,
     }
   }
   if ( VALID_MSGLEN(len) ) {
-    rc = netread_timeout(*s,buf,len,transferMsgTimeOut);
+    rc = netread_timeout(*s,buf,len,RTCP_NETTIMEOUT);
     switch (rc) {
     case -1:
       rtcp_log(LOG_ERR,"rtcp_Transfer() netread(%d,REQ): %s\n",*s,
@@ -381,7 +365,7 @@ static int rtcp_Transfer(SOCKET *s,
     DO_MARSHALL(LONG,p,reqtype,whereto);
     DO_MARSHALL(LONG,p,len,whereto);
     rtcp_log(LOG_DEBUG,"rtcp_Transfer(): sending hdr magic: 0x%x reqtype: 0x%x length: %d\n",magic,reqtype,len); 
-    rc = netwrite_timeout(*s,hdrbuf,RTCP_HDRBUFSIZ,transferMsgTimeOut);
+    rc = netwrite_timeout(*s,hdrbuf,RTCP_HDRBUFSIZ,RTCP_NETTIMEOUT);
     switch (rc) {
     case -1:
       rtcp_log(LOG_ERR,"rtcp_Transfer() netwrite(%d,HDR): %s\n",*s,
@@ -394,7 +378,7 @@ static int rtcp_Transfer(SOCKET *s,
       return(-1);
     }
     if ( VALID_MSGLEN(len) ) {
-      rc = netwrite_timeout(*s,buf,len,transferMsgTimeOut);
+      rc = netwrite_timeout(*s,buf,len,RTCP_NETTIMEOUT);
       switch (rc) {
       case -1:
         rtcp_log(LOG_ERR,"rtcp_Transfer() netwrite(%d,REQ): %s\n",*s,
@@ -521,20 +505,6 @@ static int rtcp_TransAckn(SOCKET *s,
                           direction_t whereto) {
   char hdrbuf[RTCP_HDRBUFSIZ];
   int magic, recvreqtype, status, rc;
-  int transAcknTimeOut = RTCP_TRANSACKN_TIMEOUT;
-
-  // Override the value of transAcknTimeOut if there is a castor.conf entry
-  {
-    char *paramValue = NULL;
-
-    if((paramValue = getconfent("TAPE", "RTCP_TRANSACKN_TIMEOUT", 0))) {
-      int tmpTransAcknTimeOut = atoi(paramValue);
-
-      if(tmpTransAcknTimeOut > 0) {
-        transAcknTimeOut = tmpTransAcknTimeOut;
-      }
-    }
-  }
 
   if ( s == NULL || *s == INVALID_SOCKET ) {
     serrno = EINVAL;
@@ -548,7 +518,7 @@ static int rtcp_TransAckn(SOCKET *s,
   if ( data != NULL ) status = *(int *)data;
 
   if ( whereto == ReceiveFrom ) {
-    rc = netread_timeout(*s,hdrbuf,RTCP_HDRBUFSIZ,transAcknTimeOut);
+    rc = netread_timeout(*s,hdrbuf,RTCP_HDRBUFSIZ,RTCP_NETTIMEOUT);
     switch (rc) {
     case -1: 
       rtcp_log(LOG_ERR,"rtcp_TransAckn() netread(%d,HDR): %s\n",*s,
@@ -576,7 +546,7 @@ static int rtcp_TransAckn(SOCKET *s,
       *s = INVALID_SOCKET;
       return(rc);
     }
-    rc = netwrite_timeout(*s,hdrbuf,RTCP_HDRBUFSIZ,transAcknTimeOut);
+    rc = netwrite_timeout(*s,hdrbuf,RTCP_HDRBUFSIZ,RTCP_NETTIMEOUT);
     switch (rc) {
     case -1: 
       rtcp_log(LOG_ERR,"rtcp_TransAckn() netwrite(%d,HDR): %s\n",*s,
