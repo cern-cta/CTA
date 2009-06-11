@@ -68,24 +68,40 @@ private:
   void logStart(const int argc, const char *const *const argv) throw();
 
   /**
+   * Data type used to store the results of parsing the command-line.
+   */
+  struct ParsedCommandLine {
+    bool foregroundOptionSet;
+    bool helpOptionSet;
+
+    ParsedCommandLine() :
+      foregroundOptionSet(false),
+      helpOptionSet(false) {
+    }
+  };
+
+  /**
+   * The results of parsing the command-line.
+   */
+  ParsedCommandLine m_parsedCommandLine;
+
+  /**
    * Parses the command-line arguments and sets the daemon options accordingly.
    *
    * @param argc Argument count from the executable's entry function: main().
    * @param argv Argument vector from the executable's entry function: main().
-   * @param helpOption This method sets this parameter to true if the help
-   * option was found on the command-line, else this method sets it to false.
    */
-  void parseCommandLine(const int argc, char **argv, bool &helpRequested)
+  void parseCommandLine(const int argc, char **argv)
     throw(castor::exception::Exception);
 
   /**
-   * Writes the command-line usage message of the daemon onto the specified
-   * output stream.
+   * Writes the command-line usage message of the aggregator daemon onto the
+   * specified output stream.
    *
    * @param os Output stream to be written to.
-   * @param programName The program name of the aggregator daemon.
+   * @param programName The program name to be used in the message.
    */
-  void usage(std::ostream &os) throw();
+  void usage(std::ostream &os, const char *const programName) throw();
 
   /**
    * Creates the VDQM request handler thread pool.

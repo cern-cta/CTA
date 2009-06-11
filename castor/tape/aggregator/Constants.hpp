@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      Constants.hpp
+ *                      castor/tape/aggregator/Constants.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -34,18 +34,19 @@ namespace castor     {
 namespace tape       {
 namespace aggregator {
   	
-  const size_t   HDRBUFSIZ            = 3 * sizeof(uint32_t);
-  const size_t   HOSTNAMEBUFLEN       = 256;
-  const int      LISTENBACKLOG        = 2;
-  const int      MAXINITMIGFILES      = 2;
-  const uint32_t MIGRATEUMASK         = 022;
-  const size_t   MSGBUFSIZ            = 1024;
-  const uint32_t RECALLUMASK          = 077;
-  const char     RECORDFORMAT[2]      = "F";
-  const int      RTCPDNETRWTIMEOUT    = 5;
-  const int      RTCPDCALLBACKTIMEOUT = 5;
-  const int      RTCPDPINGTIMEOUT     = 10;
-  const size_t   SERVICENAMEBUFLEN    = 256;
+  const size_t      HDRBUFSIZ                 = 3 * sizeof(uint32_t);
+  const size_t      HOSTNAMEBUFLEN            = 256;
+  const int         LISTENBACKLOG             = 2;
+  const int         MAXINITMIGFILES           = 2;
+  const uint32_t    MIGRATEUMASK              = 022;
+  const size_t      MSGBUFSIZ                 = 1024;
+  const char *const AGGREGATORPROGRAMNAME     = "aggregatord";
+  const uint32_t    RECALLUMASK               = 077;
+  const char *const RECORDFORMAT              = "F";
+  const int         RTCPDNETRWTIMEOUT         = 5;
+  const int         RTCPDCALLBACKTIMEOUT      = 5;
+  const int         RTCPDPINGTIMEOUT          = 10;
+  const size_t      SERVICENAMEBUFLEN         = 256;
 
 } // namespace aggregator
 } // namespace tape

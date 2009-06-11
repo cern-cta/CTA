@@ -29,6 +29,7 @@
 #include "castor/server/TCPListenerThreadPool.hpp"
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/AggregatorDaemon.hpp"
+#include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/tape/aggregator/VdqmRequestHandler.hpp"
 #include "h/Cgetopt.h"
@@ -67,20 +68,24 @@ int castor::tape::aggregator::AggregatorDaemon::main(const int argc,
 
     // Parse the command line
     try {
-      bool helpOption = false;  // True if help option found on command-line
-      parseCommandLine(argc, argv, helpOption);
+      parseCommandLine(argc, argv);
+
+      // Pass the foreground option to the super class BaseDaemon
+      m_foreground = m_parsedCommandLine.foregroundOptionSet;
 
       // Display usage message and exit if help option found on command-line
-      if(helpOption) {
+      if(m_parsedCommandLine.helpOptionSet) {
         std::cout << std::endl;
-        castor::tape::aggregator::AggregatorDaemon::usage(std::cout);
+        castor::tape::aggregator::AggregatorDaemon::usage(std::cout,
+          AGGREGATORPROGRAMNAME);
         std::cout << std::endl;
         return 0;
       }
     } catch (castor::exception::Exception &ex) {
       std::cerr << std::endl << "Failed to parse the command-line: "
         << ex.getMessage().str() << std::endl;
-      castor::tape::aggregator::AggregatorDaemon::usage(std::cerr);
+      castor::tape::aggregator::AggregatorDaemon::usage(std::cerr,
+        AGGREGATORPROGRAMNAME);
       std::cerr << std::endl;
       return 1;
     }
@@ -93,7 +98,7 @@ int castor::tape::aggregator::AggregatorDaemon::main(const int argc,
   } catch (castor::exception::Exception &ex) {
     std::cerr << std::endl << "Failed to start daemon: "
       << ex.getMessage().str() << std::endl << std::endl;
-    usage(std::cerr);
+    usage(std::cerr, AGGREGATORPROGRAMNAME);
     std::cerr << std::endl;
     return 1;
   }
@@ -105,9 +110,9 @@ int castor::tape::aggregator::AggregatorDaemon::main(const int argc,
 //------------------------------------------------------------------------------
 // usage
 //------------------------------------------------------------------------------
-void castor::tape::aggregator::AggregatorDaemon::usage(std::ostream &os)
-  throw() {
-  os << "\nUsage: aggregatord [options]\n"
+void castor::tape::aggregator::AggregatorDaemon::usage(std::ostream &os,
+  const char *const programName) throw() {
+  os << "\nUsage: "<< programName << " [options]\n"
     "\n"
     "where options can be:\n"
     "\n"
@@ -153,14 +158,12 @@ void castor::tape::aggregator::AggregatorDaemon::logStart(const int argc,
 // parseCommandLine
 //------------------------------------------------------------------------------
 void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
-  const int argc, char **argv, bool &helpOption)
-  throw(castor::exception::Exception) {
+  const int argc, char **argv) throw(castor::exception::Exception) {
 
   static struct Coptions longopts[] = {
-    {"foreground", NO_ARGUMENT      , NULL, 'f'},
-    {"config"    , REQUIRED_ARGUMENT, NULL, 'c'},
-    {"help"      , NO_ARGUMENT      , NULL, 'h'},
-    {NULL        , 0                , NULL,  0 }
+    {"foreground", NO_ARGUMENT, NULL, 'f'},
+    {"help"      , NO_ARGUMENT, NULL, 'h'},
+    {NULL        , 0          , NULL,  0 }
   };
 
   Coptind = 1;
@@ -170,33 +173,10 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
   while ((c = Cgetopt_long(argc, argv, "fc:p:h", longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
-      m_foreground = true;
-      break;
-    case 'c':
-      {
-        FILE *fp = fopen(Coptarg, "r");
-        if(fp) {
-          // The file exists
-          fclose(fp);
-        } else {
-          // The file does not exist
-          std::stringstream oss;
-          oss << "Configuration file '" << Coptarg << "' does not exist";
-
-          // Log and throw an exception
-          castor::dlf::Param params[] = {
-            castor::dlf::Param("Function", __FUNCTION__),
-            castor::dlf::Param("Reason"  , oss.str())};
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USER_ERROR,
-            AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, params);
-          TAPE_THROW_EX(castor::exception::InvalidArgument,
-            ": " << oss.str());
-        }
-      }
-      setenv("PATH_CONFIG", Coptarg, 1);
+      m_parsedCommandLine.foregroundOptionSet = true;
       break;
     case 'h':
-      helpOption = true;
+      m_parsedCommandLine.helpOptionSet = true;
       break;
     case '?':
       {
@@ -212,6 +192,7 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
         TAPE_THROW_EX(castor::exception::InvalidArgument,
           ": " << oss.str());
       }
+      break;
     case ':':
       {
         std::stringstream oss;
@@ -226,6 +207,7 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
         TAPE_THROW_EX(castor::exception::InvalidArgument,
           ": " << oss.str());
       }
+      break;
     default:
       {
         std::stringstream oss;
