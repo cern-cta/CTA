@@ -1945,3 +1945,15 @@ Make sure the following file exists with one line giving the Oracle conenction
 string:
 
 /etc/castor/VMGRCONFIG
+
+
+How to compile GNU plotutils on SLC4
+====================================
+
+mkdir plotutils
+cd plotutils
+wget ftp://sunsite.cnlab-switch.ch/mirror/gnu/plotutils/plotutils-2.5.tar.gz
+tar -xvzf plotutils-2.5.tar.gz
+cd plotutils-2.5
+./configure --enable-libplotter
+make
