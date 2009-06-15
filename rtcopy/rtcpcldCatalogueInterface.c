@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.175 $ $Release$ $Date: 2009/03/26 10:59:47 $ $Author: itglp $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.176 $ $Release$ $Date: 2009/06/15 12:01:26 $ $Author: murrayc3 $
  *
  *
  *
@@ -2129,6 +2129,32 @@ int rtcpcld_anyReqsForTape(
     LOG_CALL_TRACE((rc = Cstager_ITapeSvc_anySegmentsForTape(*stgsvc,tp)));
   } else {
     Cstager_Tape_stream(tp,&stream);
+
+    // If the tape has no stream
+    if(stream == NULL) {
+      // Log an error and return
+      const char *vid = "";
+
+      if(tape->tapereq.vid != NULL) {
+        vid = tape->tapereq.vid;
+      }
+
+      (void)dlf_write(
+        (inChild == 0 ? mainUuid : childUuid),
+        RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
+        (struct Cns_fileid *)NULL,
+        RTCPCLD_NB_PARAMS+2,
+        "REASON",
+        DLF_MSG_PARAM_STR,
+        "Tape has no stream",
+        "",
+        DLF_MSG_PARAM_TPVID,
+        vid,
+        RTCPCLD_LOG_WHERE);
+      serrno = SEINTERNAL;
+      return(-1);
+    }
+
     Cstager_Stream_id(stream,&key);
     LOG_CALL_TRACE((rc = Cstager_ITapeSvc_anyTapeCopyForStream(*stgsvc,stream)));
   }
