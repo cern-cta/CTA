@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.683 $ $Date: 2009/06/03 10:11:58 $ $Author: itglp $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.684 $ $Date: 2009/06/15 12:47:22 $ $Author: sponcec3 $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -708,7 +708,9 @@ BEGIN
     -- "migrated" by only updating the DiskCopy status
     -- this case will then be handled by the OraJobSvc in order
     -- to drop any potential existing segment in the nameserver
-    returnCode := 2;
+    IF realFileSize = 0 THEN
+      returnCode := 2;
+    END IF;
   ELSE
     -- If put inside PrepareToPut/Update, restart any PutDone currently
     -- waiting on this put/update
