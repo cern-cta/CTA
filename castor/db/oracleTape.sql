@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.749 $ $Date: 2009/05/25 06:18:47 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.750 $ $Date: 2009/06/15 16:13:38 $ $Author: sponcec3 $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -736,7 +736,7 @@ BEGIN
      WHERE id = subRequestId;
   END IF;
   -- restart other requests waiting on this recall
-  UPDATE SubRequest
+  UPDATE /*+ INDEX(ST I_SUBREQUEST_PARENT) */ SubRequest ST
        SET status = 1, getNextStatus = 1,  -- SUBREQUEST_RESTART, GETNEXTSTATUS_FILESTAGED
            lastModificationTime = getTime(), parent = 0
    WHERE parent = subRequestId;
