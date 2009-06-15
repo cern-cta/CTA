@@ -147,6 +147,28 @@ namespace utils  {
   }
 
   /**
+   * Writes to the specified output stream the specified array of strings as a
+   * list of strings separated by the specified separator.
+   *
+   * @param os The output stream to be written to.
+   * @param strings The array of strings to be written to the output stream.
+   * @param separator The separator to be written between the strings.
+   */
+  template<int n> void writeStrings(std::ostream &os,
+    const char *(&strings)[n], const char *const separator) {
+    // For each string
+    for(int i=0; i<n; i++) {
+      // Add a separator if this is not the first string
+      if(i > 0) {
+        os << separator;
+      }
+
+      // Write the string to the output stream
+      os << strings[i];
+    }
+  }
+
+  /**
    * Returns the string representation of the specified magic number.
    *
    * @param magic The magic number.
