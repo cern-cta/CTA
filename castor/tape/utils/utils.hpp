@@ -34,6 +34,7 @@
 #include <string>
 #include <string.h>
 #include <unistd.h>
+#include <vector>
 
 
 /**
@@ -85,6 +86,20 @@ namespace utils  {
    * @param value The boolean value.
    */
   const char *boolToString(const bool value);
+
+  /**
+   * Splits the specified string into a vector of strings using the specified
+   * separator.
+   *
+   * Please note that the string to be split is NOT modified.
+   *
+   * @param str The string to be split.
+   * @param separator The separator to be used to split the specified string.
+   * @param result The vector when the result of spliting the string will be
+   * stored.
+   */
+  void splitString(const std::string &str, const char separator,
+    std::vector<std::string> &result) throw();
   	
   /**
    * Writes the specified unsigned 64-bit integer into the specified

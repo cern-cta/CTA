@@ -46,6 +46,27 @@ const char *castor::tape::utils::boolToString(const bool value) {
 
 
 //-----------------------------------------------------------------------------
+// splitString
+//-----------------------------------------------------------------------------
+void castor::tape::utils::splitString(const std::string &str,
+  const char separator, std::vector<std::string> &result) throw() {
+
+  std::string::size_type beginIndex = 0;
+  std::string::size_type endIndex   = str.find(separator);
+
+  while(endIndex != std::string::npos) {
+    result.push_back(str.substr(beginIndex, endIndex - beginIndex));
+    beginIndex = ++endIndex;
+    endIndex = str.find(separator, endIndex);
+
+    if(endIndex == std::string::npos) {
+      result.push_back(str.substr(beginIndex, str.length()));
+    }
+  }
+}
+
+
+//-----------------------------------------------------------------------------
 // toHex
 //-----------------------------------------------------------------------------
 void castor::tape::utils::toHex(const uint64_t i, char *dst,
