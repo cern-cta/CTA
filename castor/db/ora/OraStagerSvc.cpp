@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.271 $ $Release$ $Date: 2009/05/26 07:10:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.272 $ $Release$ $Date: 2009/06/16 14:02:34 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -73,11 +73,14 @@
 #include "castor/stager/DiskCopyStatusCodes.hpp"
 #include "castor/stager/PriorityMap.hpp"
 #include "castor/BaseAddress.hpp"
+#include "castor/dlf/Dlf.hpp"
 #include "OraStagerSvc.hpp"
 #include "occi.h"
 #include <Cuuid.h>
 #include <string>
 #include <sstream>
+#include <map>
+#include <set>
 #include <vector>
 #include <Cns_api.h>
 #include <vmgr_api.h>
@@ -724,8 +727,11 @@ int castor::db::ora::OraStagerSvc::createRecallCandidate
       if (!subreq->request()) {
         cnvSvc()->fillObj(&ad, subreq, OBJ_FileRequest, false);
       }
-      createTapeCopySegmentsForRecall(cf, subreq->request()->euid(),
-				      subreq->request()->egid(), svcClass, tape);
+      int nbCopies = cf->fileClass()->nbCopies();
+      createTapeCopySegmentsForRecall
+        (cf, subreq->request()->euid(),
+         subreq->request()->egid(), svcClass, tape,
+         &nbCopies);
 
       // If we are here, we do have segments to recall;
       // create DiskCopy and store in the DB so we have the id for
@@ -1237,70 +1243,109 @@ int castor::db::ora::OraStagerSvc::setFileGCWeight
 //------------------------------------------------------------------------------
 // validateNsSegments
 //------------------------------------------------------------------------------
-int validateNsSegments(struct Cns_segattrs *nsSegments, int nbNsSegments)
+int validateNsSegments(struct Cns_segattrs *nsSegments,
+                       int nbNsSegments, struct Cns_fileid *fileid,
+                       const char* vid, int *nbTapeCopies)
   throw (castor::exception::Exception) {
-  int currCopyNb = nsSegments[0].copyno;
-  int myErrno = 0;
-
+  // list of temporarily and permanently invalid copies
+  std::set<int> tmpInvalidCopies;
+  std::set<int> permInvalidCopies;
+  // list of valid and the tape there are on
+  // Note that the case of multi segmented tapes is not well supported
+  // and only the last tape found will be kept.
+  // Multi segmented files are anyway disappearing
+  std::map<int,char*> validCopies;
+  // Loop through the segments for this file
   for(short i = 0; i < nbNsSegments; i++) {
-    if(nsSegments[i].copyno != currCopyNb) {
-      // moving out of the current copy: check whether it was a valid one and exit
-      if(!myErrno) break;
-      // if not, let's restart with the new copy
-      currCopyNb = nsSegments[i].copyno;
-      myErrno = 0;
-    }
-
     // consistency checks for this segment
-    if((nsSegments[i].vid == '\0') || (nsSegments[i].s_status != '-')) {
-      // The segment is not valid. We may have lost a file on tape!
-      myErrno = ESTSEGNOACC;
-      continue;
+    int errmsg = 0;
+    // Checks that the segment is associated to a tape
+    if (nsSegments[i].vid == '\0') {
+      // "Segment has no tape associated"
+      permInvalidCopies.insert(nsSegments[i].copyno);
+      errmsg = 19;
     }
-    struct vmgr_tape_info vmgrTapeInfo;
-    int rc = vmgr_querytape(nsSegments[i].vid, nsSegments[i].side, &vmgrTapeInfo, 0);
-    if(-1 == rc) {
-      myErrno = serrno;
-      continue;
+    // Check segment status
+    if (0 == errmsg && nsSegments[i].s_status != '-') {
+      // "Segment is in bad status, could not be used for recall"
+      permInvalidCopies.insert(nsSegments[i].copyno);
+      errmsg = 20;
     }
-    // check tape status; when STANDBY tapes will be supported, they will
-    // be let through, while we consider any of the following as permanent errors
-    if(((vmgrTapeInfo.status & DISABLED) == DISABLED) ||
-       ((vmgrTapeInfo.status & ARCHIVED) == ARCHIVED) ||
-       ((vmgrTapeInfo.status & EXPORTED) == EXPORTED)) {
-      // The tape is not accessible at all (e.g. out of the robot or in maintenance)
-      myErrno = ESTTAPEOFFLINE;
+    // Check Tape status
+    if (0 == errmsg) {
+      struct vmgr_tape_info vmgrTapeInfo;
+      if (-1 == vmgr_querytape(nsSegments[i].vid, nsSegments[i].side, &vmgrTapeInfo, 0)) {
+        // "Error while contacting VMGR"
+        tmpInvalidCopies.insert(nsSegments[i].copyno);
+        errmsg = 21;
+      } else {
+        // when STANDBY tapes will be supported, they will
+        // be let through, while we consider any of the following as permanent errors
+        if(((vmgrTapeInfo.status & DISABLED) == DISABLED) ||
+           ((vmgrTapeInfo.status & ARCHIVED) == ARCHIVED) ||
+           ((vmgrTapeInfo.status & EXPORTED) == EXPORTED)) {
+          // "Tape disabled, could not be used for recall"
+          tmpInvalidCopies.insert(nsSegments[i].copyno);
+          errmsg = 22;
+        }
+      }
+    }
+    if (0 != errmsg) {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("TPVID", nsSegments[i].vid),
+        castor::dlf::Param("copyNb", nsSegments[i].copyno),
+        castor::dlf::Param("fsec", nsSegments[i].fsec),
+        castor::dlf::Param("segStatus", nsSegments[i].s_status)
+      };
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING,
+                              DLF_BASE_ORACLELIB + errmsg,
+                              4, params, fileid);
+    } else {
+      validCopies[nsSegments[i].copyno] = nsSegments[i].vid;
     }
   }
-  if(!myErrno)   // all segments for this copy were valid, let's use it
-    return currCopyNb;
-  else {
-    // Otherwise we didn't find a valid copy, raise appropriate exception.
-    // Note that we may have had more than a reason==exception to raise, so
-    // we arbitrarily raise the last one.
+  // Reduce the list of valid copies by droping permanently invalid ones
+  // Note that this can be dropped when multi segment files are gone
+  for (std::set<int>::const_iterator it = permInvalidCopies.begin();
+       it != permInvalidCopies.end();
+       it++) {
+    std::map<int,char*>::iterator it2 = validCopies.find(*it);
+    if (it2 != validCopies.end()) {
+      validCopies.erase(it2);
+    }
+  }
+  // update the number of missing copies
+  *nbTapeCopies -= validCopies.size();
+  // Reduce the list of valid copies by droping temporarily invalid ones
+  // Note that this can be dropped when multi segment files are gone
+  // Actually, the whole tmpInvalidCopies vector can be dropped !
+  for (std::set<int>::const_iterator it = tmpInvalidCopies.begin();
+       it != tmpInvalidCopies.end();
+       it++) {
+    std::map<int,char*>::iterator it2 = validCopies.find(*it);
+    if (it2 != validCopies.end()) {
+      validCopies.erase(it2);
+    }
+  }
+  // deal with the case where no segment was found
+  if (validCopies.begin() == validCopies.end()) {
     free(nsSegments);
-    castor::exception::Exception e(myErrno);
-    e.getMessage() << (myErrno != ESTTAPEOFFLINE && myErrno != ESTSEGNOACC ?
-                       "Failed to query the tape on VMGR: " : "")
-                   << sstrerror(e.code());
+    castor::exception::Exception e(ESTNOSEGFOUND);
+    e.getMessage() << sstrerror(ESTNOSEGFOUND);
     throw e;
   }
-}
-
-//------------------------------------------------------------------------------
-// compareSegments
-//------------------------------------------------------------------------------
-// Helper method to compare segments
-extern "C" {
-  int compareSegments
-  (const void* arg1, const void* arg2) {
-    struct Cns_segattrs *segAttr1 = (struct Cns_segattrs *)arg1;
-    struct Cns_segattrs *segAttr2 = (struct Cns_segattrs *)arg2;
-    int rc = 0;
-    if ( segAttr1->fsec < segAttr2->fsec ) rc = -1;
-    if ( segAttr1->fsec > segAttr2->fsec ) rc = 1;
-    return rc;
+  // Choose the best copy in those available, that is
+  // the one matching the hint, if any, or the first one
+  if (0 != vid ) {
+    for (std::map<int,char*>::const_iterator it = validCopies.begin();
+         it != validCopies.end();
+         it++) {
+      if (0 == strcmp(vid, it->second)) {
+        return it->first;
+      }
+    }
   }
+  return validCopies.begin()->first;
 }
 
 //------------------------------------------------------------------------------
@@ -1311,7 +1356,8 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
  unsigned long euid,
  unsigned long egid,
  castor::stager::SvcClass* svcClass,
- castor::stager::Tape* &tape)
+ castor::stager::Tape* &tape,
+ int *nbTapeCopies)
   throw (castor::exception::Exception) {
 
   // Check argument
@@ -1369,17 +1415,21 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
     throw e;
   }
 
-  // Sort segments
-  if (nbNsSegments > 1) {
-    qsort((void *)nsSegmentAttrs,
-          (size_t)nbNsSegments,
-          sizeof(struct Cns_segattrs),
-          compareSegments);
-  }
-
   // Validate all segments and get the copy to be used for recall;
   // this may throw an exception, in such a case nsSegmentAttrs is freed
-  int useCopyNb = validateNsSegments(nsSegmentAttrs, nbNsSegments);
+  int useCopyNb = validateNsSegments(nsSegmentAttrs, nbNsSegments,
+                                     &fileid, tape ? tape->vid().c_str() : 0,
+                                     nbTapeCopies);
+
+  // Log something in case we will trigger extra migrations after the recall
+  if (*nbTapeCopies > 0) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("nbNewCopies", *nbTapeCopies)
+    };
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+                            DLF_BASE_ORACLELIB + 23,
+                            1, params, &fileid);
+  }
 
   // Store info on DB
   castor::BaseAddress ad;
@@ -1390,6 +1440,7 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
   castor::stager::TapeCopy tapeCopy;
   tapeCopy.setCopyNb(useCopyNb);
   tapeCopy.setStatus(castor::stager::TAPECOPY_TOBERECALLED);
+  tapeCopy.setMissingCopies(*nbTapeCopies);
   tapeCopy.setCastorFile(castorFile);
   castorFile->addTapeCopies(&tapeCopy);
   cnvSvc()->fillRep(&ad, castorFile,
@@ -1459,7 +1510,9 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
 
   // Set the tape VID and status of the tape to be returned to the calling
   // function
-  tape = new castor::stager::Tape();
+  if (0 == tape) {
+    tape = new castor::stager::Tape();
+  }
   tape->setVid(tp->vid());
   tape->setStatus(tp->status());
 

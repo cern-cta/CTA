@@ -367,7 +367,9 @@ namespace castor {
          * @param subreq the subreq of the file to recall
          * @param svcClass svc class for recall policy
          * @param tape a pointer to a location of where to store the tape
-         * information associated with the recall. Note: if the file has
+         * information associated with the recall. In case the pointer is
+         * not empty, this should be considered as an hint of the tape that
+         * should be used for the recall, if possible. Note: if the file has
          * multiple segments spread across multiple tapes only the last
          * Tape processed will be returned. We could of course return a
          * vector of Tape objects but this is overkill as multi segment,
@@ -474,6 +476,9 @@ namespace castor {
          * recalling a file which was written under Castor1. It is the
          * responsibility of the calling function to delete the Tape object
          * if necessary.
+         * @param nbTapeCopies nb of tape copies that should exist in
+         * theory on tape. Returns the number of missing copies on tape
+         * that should be recreated
          * @exception Exception in case of error
          */
         int createTapeCopySegmentsForRecall
@@ -481,7 +486,8 @@ namespace castor {
          unsigned long euid,
          unsigned long egid,
          castor::stager::SvcClass* svcClass,
-         castor::stager::Tape* &tape)
+         castor::stager::Tape* &tape,
+         int *nbTapeCopies)
           throw (castor::exception::Exception);
 
         /// SQL statement for function subRequestToDo
