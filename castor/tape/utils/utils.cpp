@@ -24,8 +24,10 @@
  *****************************************************************************/
 
 #include "castor/exception/Internal.hpp"
+#include "castor/exception/InvalidArgument.hpp"
 #include "castor/tape/Constants.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "h/Castor_limits.h"
 #include "h/rtcp_constants.h"
 
 #include <arpa/inet.h>
@@ -33,6 +35,14 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
+
+
+//-----------------------------------------------------------------------------
+// boolToString
+//-----------------------------------------------------------------------------
+const char *castor::tape::utils::boolToString(const bool value) {
+  return value ? "TRUE" : "FALSE";
+}
 
 
 //-----------------------------------------------------------------------------
@@ -245,4 +255,68 @@ ssize_t castor::tape::utils::drainFile(const int fd)
   } while(rc != 0);
 
   return total;
+}
+
+
+//------------------------------------------------------------------------------
+// checkIdSyntax
+//------------------------------------------------------------------------------
+void castor::tape::utils::checkIdSyntax(const char *idString)
+  throw(castor::exception::InvalidArgument) {
+
+  const size_t len   = strlen(idString);
+  char         c     = '\0';
+  bool         valid = false;
+
+  // For each character
+  for(size_t i=0; i<len; i++) {
+    valid = (c >= '0' && c <='9') || (c >= 'a' && c <= 'z') ||
+      (c >= 'A' && c <= 'Z') || c == '_';
+
+    if(!valid) {
+      castor::exception::InvalidArgument ex;
+      ex.getMessage() << "Invalid character: " << c;
+      throw ex;
+    }
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// checkVidSyntax
+//------------------------------------------------------------------------------
+void castor::tape::utils::checkVidSyntax(const char *vid)
+  throw(castor::exception::InvalidArgument) {
+
+  const size_t len = strlen(vid);
+
+  if(len > CA_MAXVIDLEN) {
+    castor::exception::InvalidArgument ex;
+
+    ex.getMessage() << "VID is too long: Actual=" << len
+      << "Expected maximum=" << CA_MAXVIDLEN;
+    throw ex;
+  }
+
+  checkIdSyntax(vid);
+}
+
+
+//------------------------------------------------------------------------------
+// checkDgnSyntax
+//------------------------------------------------------------------------------
+void castor::tape::utils::checkDgnSyntax(const char *dgn)
+  throw(castor::exception::InvalidArgument) {
+
+  const size_t len = strlen(dgn);
+
+  if(len > CA_MAXVIDLEN) {
+    castor::exception::InvalidArgument ex;
+
+    ex.getMessage() << "DGN is too long: Actual=" << len
+      << "Expected maximum=" << CA_MAXVIDLEN;
+    throw ex;
+  }
+
+  checkIdSyntax(dgn);
 }

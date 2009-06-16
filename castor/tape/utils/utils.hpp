@@ -78,6 +78,13 @@
 namespace castor {
 namespace tape   {
 namespace utils  {
+
+  /**
+   * Returns the string representation of the specified boolean value.
+   *
+   * @param value The boolean value.
+   */
+  const char *boolToString(const bool value);
   	
   /**
    * Writes the specified unsigned 64-bit integer into the specified
@@ -216,6 +223,35 @@ namespace utils  {
    * @param fd The file descriptor of the file to be drained.
    */
   ssize_t drainFile(const int fd) throw(castor::exception::Exception);
+
+  /**
+   * Throws an InvalidArgument exception if the specified identifier string is
+   * syntactically incorrect.
+   *
+   * The indentifier string is valid if each character is either a number (0-9),   * a letter (a-z, A-Z) or an underscore.
+   *
+   * @param idString The  to be checked.
+   */
+  void checkIdSyntax(const char *idString)
+    throw(castor::exception::InvalidArgument);
+
+  /**
+   * Throws an InvalidArgument exception if the specified VID is syntactically
+   * invalid.
+   *
+   * @param vid The VID to be checked.
+   */
+  void checkVidSyntax(const char *vid)
+    throw(castor::exception::InvalidArgument);
+
+  /**
+   * Throws an InvalidArgument exception if the specified DGN is syntactically
+   * invalid.
+   *
+   * @param vid The DGN to be checked.
+   */
+  void checkDgnSyntax(const char *dgn)
+    throw(castor::exception::InvalidArgument);
 
 } // namespace utils
 } // namespace tape
