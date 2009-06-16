@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DLFInit.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/11/07 16:43:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: DLFInit.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2009/06/16 14:00:10 $ $Author: sponcec3 $
  *
  * Initialization of the DLF messages for the ORACLE part
  *
@@ -60,6 +60,11 @@ castor::db::ora::DLFInit::DLFInit() {
      { 16, "Error caught in stgFilesDeleted"},
      { 17, "rollback called"},
      { 18, "setfsize ignored by nameserver because of concurrent file modification in another stager"},
+     { 19, "Segment has no tape associated" },
+     { 20, "Segment is in bad status, could not be used for recall" },
+     { 21, "Error while contacting VMGR" },
+     { 22, "Tape disabled, could not be used for recall" },
+     { 23, "Missing tape copies detected, this recall will trigger new migration(s)" },
      { -1, ""} };
   try {
     castor::dlf::dlf_addMessages(DLF_BASE_ORACLELIB, messages);
