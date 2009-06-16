@@ -385,6 +385,14 @@ vmgrenterdgnmap -g 359B1B --mo 3592 --library IBMLIB1B
 vmgrenterpool --group st --name aggregator_dev --user stage
 vmgrenterpool --group st --name bad_dev        --user stage
 vmgrenterpool --group st --name giulia_dev     --user stage
+vmgrenterpool --group st --name stager_dev01   --user stage
+vmgrenterpool --group st --name stager_dev02   --user stage
+vmgrenterpool --group st --name stager_dev03   --user stage
+vmgrenterpool --group st --name stager_dev04   --user stage
+vmgrenterpool --group st --name stager_dev05   --user stage
+vmgrenterpool --group st --name stager_dev06   --user stage
+vmgrenterpool --group st --name stager_dev07   --user stage
+vmgrenterpool --group st --name stager_dev08   --user stage
 vmgrenterpool --group st --name nbessone_dev   --user stage
 vmgrenterpool --group st --name spare_dev      --user stage
 vmgrenterpool --group st --name stager_cert1   --user stage
@@ -400,14 +408,28 @@ vmgrentertape -V I18020 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po bad
 vmgrentertape -V I02001 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po giulia_dev
 vmgrentertape -V I02008 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po giulia_dev
 vmgrentertape -V I02011 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po nbessone_dev
-vmgrentertape -V I10551 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po spare_dev
-vmgrentertape -V I10552 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po spare_dev
+vmgrentertape -V I10551 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po stager_dev01
+vmgrentertape -V I10552 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po stager_dev01
 vmgrentertape -V I10553 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po spare_dev
 vmgrentertape -V I02017 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po stager_cert1
 vmgrentertape -V I02018 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po stager_cert2
 vmgrentertape -V I02020 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po stager_cert3
 vmgrentertape -V I02021 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po stager_cert4
 vmgrentertape -V I10554 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po tprw_dev
+vmgrentertape -V I00075 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po stager_dev02
+vmgrentertape -V I02005 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po stager_dev02
+vmgrentertape -V I02022 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po stager_dev03
+vmgrentertape -V I02023 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po stager_dev03
+vmgrentertape -V I02024 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po stager_dev04
+vmgrentertape -V I02025 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po stager_dev04
+vmgrentertape -V I02026 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po stager_dev05
+vmgrentertape -V I02034 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po stager_dev05
+vmgrentertape -V I02036 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po stager_dev06
+vmgrentertape -V I02039 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po stager_dev06
+vmgrentertape -V I02040 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po stager_dev07
+vmgrentertape -V I02043 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po stager_dev07
+vmgrentertape -V I02053 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po stager_dev08
+vmgrentertape -V I02056 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po stager_dev08
 
 
 How to modify the density of a tape
