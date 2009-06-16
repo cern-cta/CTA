@@ -157,6 +157,26 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_missingCopies
+       * Only used in recall case. Gives the number of copies missing on tape that should
+       * be recreated via migrations in case the recall is successful.
+       * @return the value of m_missingCopies
+       */
+      int missingCopies() const {
+        return m_missingCopies;
+      }
+
+      /**
+       * Set the value of m_missingCopies
+       * Only used in recall case. Gives the number of copies missing on tape that should
+       * be recreated via migrations in case the recall is successful.
+       * @param new_var the new value of m_missingCopies
+       */
+      void setMissingCopies(int new_var) {
+        m_missingCopies = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -272,6 +292,9 @@ namespace castor {
       int m_errorCode;
 
       int m_nbRetry;
+
+      /// Only used in recall case. Gives the number of copies missing on tape that should be recreated via migrations in case the recall is successful.
+      int m_missingCopies;
 
       /// The id of this object
       u_signed64 m_id;

@@ -125,6 +125,20 @@ int Cstager_TapeCopy_nbRetry(struct Cstager_TapeCopy_t* instance, int* var);
 int Cstager_TapeCopy_setNbRetry(struct Cstager_TapeCopy_t* instance, int new_var);
 
 /**
+ * Get the value of missingCopies
+ * Only used in recall case. Gives the number of copies missing on tape that should
+ * be recreated via migrations in case the recall is successful.
+ */
+int Cstager_TapeCopy_missingCopies(struct Cstager_TapeCopy_t* instance, int* var);
+
+/**
+ * Set the value of missingCopies
+ * Only used in recall case. Gives the number of copies missing on tape that should
+ * be recreated via migrations in case the recall is successful.
+ */
+int Cstager_TapeCopy_setMissingCopies(struct Cstager_TapeCopy_t* instance, int new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

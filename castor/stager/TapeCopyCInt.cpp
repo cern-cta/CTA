@@ -150,6 +150,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_TapeCopy_missingCopies
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopy_missingCopies(castor::stager::TapeCopy* instance, int* var) {
+    *var = instance->missingCopies();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopy_setMissingCopies
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopy_setMissingCopies(castor::stager::TapeCopy* instance, int new_var) {
+    instance->setMissingCopies(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_TapeCopy_id
   //----------------------------------------------------------------------------
   int Cstager_TapeCopy_id(castor::stager::TapeCopy* instance, u_signed64* var) {
