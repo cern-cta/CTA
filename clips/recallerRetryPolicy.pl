@@ -208,7 +208,8 @@ for ( my $i=0; $i<$#ARGV; $i+=3 ) {
              ($ARGV[$i] != $SETIMEDOUT) &&
              ($ARGV[$i] != $SESYSERR) &&
              ($ARGV[$i] != $ERTWRONGSIZE) &&
-             ($ARGV[$i] != $SECOMERR) ) {
+             ($ARGV[$i] != $SECOMERR)  &&
+ 	     ($ARGV[$i] != $SECHECKSUM )) {
             $doRetry = 0;
         }
     }
