@@ -81,6 +81,15 @@ namespace tape   {
 namespace utils  {
 
   /**
+   * Returns the size of the specified array.
+   *
+   * @param array The array whose size is to be determined.
+   */
+  template<class T, int n> static int arraySize(T (&array)[n]) {
+    return n;
+  }
+
+  /**
    * Returns the string representation of the specified boolean value.
    *
    * @param value The boolean value.
