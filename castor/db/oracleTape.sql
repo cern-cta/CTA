@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.750 $ $Date: 2009/06/15 16:13:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.751 $ $Date: 2009/06/16 13:32:25 $ $Author: sponcec3 $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -694,9 +694,11 @@ CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER) AS
   ouid INTEGER;
   ogid INTEGER;
   svcClassId NUMBER;
+  missingTCs INTEGER;
 BEGIN
-  SELECT SubRequest.id, SubRequest.request, DiskCopy.id, CastorFile.id, Castorfile.FileSize
-    INTO subRequestId, requestId, dci, cfId, fs
+  SELECT SubRequest.id, SubRequest.request, DiskCopy.id,
+         CastorFile.id, Castorfile.FileSize, TapeCopy.missingCopies
+    INTO subRequestId, requestId, dci, cfId, fs, missingTCs
     FROM TapeCopy, SubRequest, DiskCopy, CastorFile
    WHERE TapeCopy.id = tapecopyId
      AND CastorFile.id = TapeCopy.castorFile
@@ -734,6 +736,22 @@ BEGIN
        SET status = 1, getNextStatus = 1,  -- SUBREQUEST_RESTART, GETNEXTSTATUS_FILESTAGED
            lastModificationTime = getTime(), parent = 0
      WHERE id = subRequestId;
+    -- And trigger new migrations if missing tape copies were detected
+    IF missingTCs > 0 THEN
+      DECLARE
+        tcId INTEGER;
+      BEGIN
+        UPDATE DiskCopy
+           SET status = 10  -- DISKCOPY_CANBEMIGR
+         WHERE id = dci;
+        FOR i IN 1..missingTCs LOOP
+          INSERT INTO TapeCopy (id, copyNb, castorFile, status)
+          VALUES (ids_seq.nextval, 0, cfId, 0) -- TAPECOPY_CREATED
+          RETURNING id INTO tcId;
+          INSERT INTO Id2Type (id, type) VALUES (tcId, 30); -- OBJ_TapeCopy
+        END LOOP;
+      END;
+    END IF;
   END IF;
   -- restart other requests waiting on this recall
   UPDATE /*+ INDEX(ST I_SUBREQUEST_PARENT) */ SubRequest ST
