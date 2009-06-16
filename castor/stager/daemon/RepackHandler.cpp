@@ -4,6 +4,7 @@
 /*******************************************************************************************/
 
 #include "castor/stager/daemon/RepackHandler.hpp"
+#include "castor/stager/StageRepackRequest.hpp"
 
 namespace castor{
   namespace stager{
@@ -39,8 +40,10 @@ namespace castor{
           case DISKCOPY_WAITTAPERECALL:
           {
             // trigger recall, the repack migration will be started at the end of it; answer client only if success
-            castor::stager::Tape *tape = 0;
-            result = stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest, stgRequestHelper->svcClass, tape);
+            castor::stager::Tape *tape = new Tape();
+            tape->setVid(dynamic_cast<castor::stager::StageRepackRequest*>(stgRequestHelper->fileRequest)->repackVid());
+            result = stgRequestHelper->stagerService->createRecallCandidate
+              (stgRequestHelper->subrequest, stgRequestHelper->svcClass, tape);
             if (result) {
               // "Triggering Tape Recall"
               castor::dlf::Param params[] = {
