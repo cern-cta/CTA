@@ -147,7 +147,20 @@ namespace utils  {
   }
 
   /**
-   * Writes to the specified output stream the specified array of strings as a
+   * Writes the specified array of strings to the specified output stream as a
+   * list of strings separated by the specified separator.
+   *
+   * @param os The output stream to be written to.
+   * @param strings The array of strings to be written to the output stream.
+   * @param stringsLen The length of the array of strings, in other words the
+   * number of strings.
+   * @param separator The separator to be written between the strings.
+   */
+  void writeStrings(std::ostream &os, const char **strings,
+    const int stringsLen, const char *const separator);
+
+  /**
+   * Writes the specified array of strings to the specified output stream as a
    * list of strings separated by the specified separator.
    *
    * @param os The output stream to be written to.
@@ -156,16 +169,8 @@ namespace utils  {
    */
   template<int n> void writeStrings(std::ostream &os,
     const char *(&strings)[n], const char *const separator) {
-    // For each string
-    for(int i=0; i<n; i++) {
-      // Add a separator if this is not the first string
-      if(i > 0) {
-        os << separator;
-      }
 
-      // Write the string to the output stream
-      os << strings[i];
-    }
+    writeStrings(os, strings, n, separator);
   }
 
   /**

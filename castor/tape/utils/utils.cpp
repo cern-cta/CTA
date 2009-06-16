@@ -108,6 +108,24 @@ void castor::tape::utils::copyString(char *const dst,
 
 
 //-----------------------------------------------------------------------------
+// writeStrings
+//-----------------------------------------------------------------------------
+void castor::tape::utils::writeStrings(std::ostream &os,
+  const char **strings, const int stringsLen, const char *const separator) {
+  // For each string
+  for(int i=0; i<stringsLen; i++) {
+    // Add a separator if this is not the first string
+    if(i > 0) {
+      os << separator;
+    }
+
+    // Write the string to the output stream
+    os << strings[i];
+  }
+}
+
+
+//-----------------------------------------------------------------------------
 // magicToStr
 //-----------------------------------------------------------------------------
 const char *castor::tape::utils::magicToStr(const uint32_t magic)
