@@ -270,6 +270,7 @@ void castor::tape::utils::checkIdSyntax(const char *idString)
 
   // For each character
   for(size_t i=0; i<len; i++) {
+    c = idString[i];
     valid = (c >= '0' && c <='9') || (c >= 'a' && c <= 'z') ||
       (c >= 'A' && c <= 'Z') || c == '_';
 
@@ -294,7 +295,7 @@ void castor::tape::utils::checkVidSyntax(const char *vid)
     castor::exception::InvalidArgument ex;
 
     ex.getMessage() << "VID is too long: Actual=" << len
-      << "Expected maximum=" << CA_MAXVIDLEN;
+      << " Expected maximum=" << CA_MAXVIDLEN;
     throw ex;
   }
 
@@ -310,11 +311,11 @@ void castor::tape::utils::checkDgnSyntax(const char *dgn)
 
   const size_t len = strlen(dgn);
 
-  if(len > CA_MAXVIDLEN) {
+  if(len > CA_MAXDGNLEN) {
     castor::exception::InvalidArgument ex;
 
     ex.getMessage() << "DGN is too long: Actual=" << len
-      << "Expected maximum=" << CA_MAXVIDLEN;
+      << " Expected maximum=" << CA_MAXVIDLEN;
     throw ex;
   }
 
