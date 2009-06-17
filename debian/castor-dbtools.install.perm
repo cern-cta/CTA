@@ -23,3 +23,4 @@
 %attr(0755,root,root) usr/bin/deletePriority
 %attr(0755,root,root) usr/bin/enterPriority
 %attr(0755,root,root) usr/bin/listPriority
+%attr(0755,root,root) usr/bin/migrateNewCopy

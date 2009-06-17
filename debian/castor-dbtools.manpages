@@ -21,3 +21,4 @@ debian/castor/usr/share/man/man1/adminMultiInstance.1castor
 debian/castor/usr/share/man/man1/deletePriority.1castor
 debian/castor/usr/share/man/man1/enterPriority.1castor
 debian/castor/usr/share/man/man1/listPriority.1castor
+debian/castor/usr/share/man/man1/migrateNewCopy.1castor

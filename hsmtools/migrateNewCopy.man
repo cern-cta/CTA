@@ -1,0 +1,62 @@
+.\" @(#)$RCSfile: migrateNewCopy.man,v $ $Revision: 1.1 $ $Date: 2009/06/17 15:07:40 $ CERN IT/DM
+.TH MIGRATENEWCOPY 1 "$Date: 2009/06/17 15:07:40 $" CASTOR "creates an extra copy of a file on tape"
+.SH NAME
+migrateNewCopy
+.SH SYNOPSIS
+.B migrateNewCopy
+[
+.BI -h, 
+.BI --help
+]
+fileId
+[...]
+.SH DESCRIPTION
+.B migrateNewCopy
+creates an extra copy of a file on tape for files that are already on disk
+.LP
+.BI \-h,\ \-\-help
+Get usage information
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or 1 if the operation failed.
+.SH ERRORS
+This command will fail in case there is at least one of the files that is not on disk,
+in status STAGED. E.g. it will not trigger new migrations if one is already ongoing
+and it will not recall the file for you.
+.SH EXAMPLES
+.fi
+# nsls -T /castor/cern.ch/dev/s/sponcec3/tape/testtape2
+.fi
+- 1   1 I10552       3 00000015                 2443 200 /castor/cern.ch/dev/s/sponcec3/tape/testtape2
+.fi
+# nsls -i /castor/cern.ch/dev/s/sponcec3/tape/testtape2
+.fi
+      460776 /castor/cern.ch/dev/s/sponcec3/tape/testtape2
+.fi
+# migrateNewCopy.py 460776
+.fi
+All files have been found on disk, triggering migrations
+.fi
+Done
+.fi
+
+.fi
+<wait a bit>
+.fi
+
+.fi
+# nsls -T /castor/cern.ch/dev/s/sponcec3/tape/testtape2
+.fi
+- 1   1 I10552       3 00000015                 2443 200 /castor/cern.ch/dev/s/sponcec3/tape/testtape2
+.fi
+- 2   1 I10552       4 0000001f                 2443 200 /castor/cern.ch/dev/s/sponcec3/tape/testtape2
+.ft
+.fi
+.SH NOTES
+This command requires database client access to the stager catalogue.
+Configuration for the database access is taken from castor.conf.
+
+.SH SEE ALSO
+.BR adminMultiInstance(1castor)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
