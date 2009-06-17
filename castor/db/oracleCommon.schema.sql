@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.schema.sql,v $ $Revision: 1.15 $ $Date: 2009/05/29 06:07:50 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.schema.sql,v $ $Revision: 1.16 $ $Date: 2009/06/17 08:16:38 $ $Author: sponcec3 $
  *
  * This file contains all schema definitions which are not generated automatically.
  *
@@ -111,8 +111,8 @@ CREATE INDEX I_SubRequest_RT_CT_ID ON SubRequest(svcHandler, creationTime, id) L
 ALTER TABLE Stream2TapeCopy DROP CONSTRAINT FK_Stream2TapeCopy_C;
 DROP TABLE TapeCopy;
 CREATE TABLE TapeCopy
-  (copyNb NUMBER, errorCode NUMBER, nbRetry NUMBER, id INTEGER CONSTRAINT
-   PK_TapeCopy_Id PRIMARY KEY CONSTRAINT NN_TapeCopy_Id NOT NULL, 
+  (copyNb NUMBER, errorCode NUMBER, nbRetry NUMBER, missingCopies NUMBER,
+   id INTEGER CONSTRAINT PK_TapeCopy_Id PRIMARY KEY CONSTRAINT NN_TapeCopy_Id NOT NULL,
    castorFile INTEGER, status INTEGER)
   PCTFREE 50 PCTUSED 40 INITRANS 50
   ENABLE ROW MOVEMENT
