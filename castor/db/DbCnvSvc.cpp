@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbCnvSvc.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2009/05/19 16:23:00 $ $Author: itglp $
+ * @(#)$RCSfile: DbCnvSvc.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2009/06/17 14:58:42 $ $Author: itglp $
  *
  *
  *
@@ -71,7 +71,7 @@ castor::db::DbCnvSvc::~DbCnvSvc() throw() {
   // that their statements are not valid any longer.
   // XXX TODO: we should invalidate their pointer to this instance!
   // XXX deleting a db oriented service AFTER having deleted this
-  // XXX object results in dereferencing a dangling pointer!
+  // XXX object results in dereferencing a freed pointer!
   dropConnection();
 }
 
@@ -115,14 +115,9 @@ castor::IObject* castor::db::DbCnvSvc::createObj(castor::IAddress* address)
   if (OBJ_INVALID == address->objType()) {
     castor::BaseAddress* ad =
       dynamic_cast<castor::BaseAddress*>(address);
-    try {
-      unsigned int type = getTypeFromId(ad->target());
-      if (0 == type) return 0;
-      ad->setObjType(type);
-    } catch (castor::exception::NoEntry e) {
-      // no type found, assume this object does not exist
-      return 0;
-    }
+    unsigned int type = getTypeFromId(ad->target());
+    if (0 == type) return 0;
+    ad->setObjType(type);
   }
   // call method of parent object
   return this->BaseCnvSvc::createObj(address);
