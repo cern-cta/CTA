@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.100 $ $Release$ $Date: 2009/05/25 06:19:39 $ $Author: waldron $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.101 $ $Release$ $Date: 2009/06/17 15:05:12 $ $Author: itglp $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -804,12 +804,16 @@ void castor::stager::daemon::QueryRequestSvcThread::handleChangePrivilege
     castor::replier::RequestReplier::getInstance()->
       sendResponse(client, &res, true);
   } catch (castor::exception::Exception e) {
-    // "Unexpected exception caught"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Function", "QueryRequestSvcThread::handleChangePrivilege"),
-       castor::dlf::Param("Code", e.code()),
-       castor::dlf::Param("Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_EXCEPT, 3, params);
+    if(typeid(e) == typeid(castor::exception::PermissionDenied)) {
+      castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_USER_PERMISSION, 0);
+    } else {
+      // "Unexpected exception caught"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Function", "QueryRequestSvcThread::handleChangePrivilege"),
+         castor::dlf::Param("Code", e.code()),
+         castor::dlf::Param("Message", e.getMessage().str())};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_EXCEPT, 3, params);
+    }
     // Fill the reponse with the error
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
