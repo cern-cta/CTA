@@ -26,10 +26,11 @@ CFLAGS = -O -I../../../h -I../../.. $(THREADFLAGS)
 LDFLAGS += $(MTLDFLAGS)
 LD = g++
 
-DependsOnLibrary(../../common,castorcommon)
-DependsOnLibrary(../../dlf,castordlf)
 DependsOnLibrary(..,castorclient)
 DependsOnLibrary(../db/cnv,castorcnvs)
+DependsOnLibrary(../../common,castorcommon)
+DependsOnLibrary(../../dlf,castordlf)
+DependsOnLibrary(../../vdqm,castorvdqm)
 
 TAPEGATEWAY_MESSAGES_SRCS = \
   ../tapegateway/BaseFileInfo.cpp \
@@ -67,6 +68,8 @@ TAPEGATEWAY_IO_SRCS = \
   ../../io/StreamVolumeRequestCnv.cpp
 
 TPCPBIN_SRCS = \
+  ../utils/utils.cpp \
+  Action.cpp \
   TpcpCommand.cpp \
   TpcpMain.cpp \
   $(TAPEGATEWAY_MESSAGES_SRCS) \
