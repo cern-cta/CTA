@@ -67,6 +67,25 @@ void castor::tape::utils::splitString(const std::string &str,
 
 
 //-----------------------------------------------------------------------------
+// countOccurrences
+//-----------------------------------------------------------------------------
+int castor::tape::utils::countOccurrences(const char ch, const char *str) {
+
+  int  count   = 0;    // The number of occurences
+  char current = '\0'; // The current character
+
+  // For each character in the string
+  for(current = *str; str != NULL; str++) {
+    if(current == ch) {
+      count++;
+    }
+  }
+
+  return count;
+}
+
+
+//-----------------------------------------------------------------------------
 // toHex
 //-----------------------------------------------------------------------------
 void castor::tape::utils::toHex(const uint64_t i, char *dst,

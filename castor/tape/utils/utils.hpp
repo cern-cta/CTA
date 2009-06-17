@@ -109,6 +109,15 @@ namespace utils  {
    */
   void splitString(const std::string &str, const char separator,
     std::vector<std::string> &result) throw();
+
+  /**
+   * Returns the number of occurences the specified character appears in the
+   * specified string.
+   *
+   * @param ch The character to be searched for and counted.
+   * @param str The string to be seacrhed.
+   */
+  int countOccurrences(const char ch, const char *str);
   	
   /**
    * Writes the specified unsigned 64-bit integer into the specified
