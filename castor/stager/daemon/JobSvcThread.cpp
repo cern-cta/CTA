@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.65 $ $Release$ $Date: 2009/05/19 16:24:30 $ $Author: itglp $
+ * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.66 $ $Release$ $Date: 2009/06/17 15:03:36 $ $Author: itglp $
  *
  * Service thread for job related requests
  *
@@ -41,6 +41,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/RequestCanceled.hpp"
+#include "castor/exception/NoEntry.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/stager/SubRequest.hpp"
@@ -104,8 +105,10 @@ void castor::stager::daemon::JobSvcThread::handleStartRequest
     nsHost = sReq->nsHost();
     // Loading the subrequest from db
     ad.setTarget(sReq->subreqId());
-    castor::IObject *obj = svcs->createObj(&ad);
-    if (0 == obj) {
+    castor::IObject *obj = 0;
+    try {
+      obj = svcs->createObj(&ad);
+    } catch (castor::exception::NoEntry noe) {
       // Possibly the request has been canceled via stager_rm,
       // still log a warning message
       // "Could not find subrequest associated to Request"
@@ -391,8 +394,10 @@ void castor::stager::daemon::JobSvcThread::handleMoverCloseRequest
     fileId = mcReq->fileId();
     nsHost = mcReq->nsHost();
     ad.setTarget(mcReq->subReqId());
-    obj = svcs->createObj(&ad);
-    if (0 == obj) {
+    castor::IObject *obj = 0;
+    try {
+      obj = svcs->createObj(&ad);
+    } catch (castor::exception::NoEntry noe) {
       // As for the StartRequest, log a warning
       // "Could not find subrequest associated to Request"
       castor::dlf::Param params[] =
