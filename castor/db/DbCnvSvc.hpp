@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbCnvSvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/07/09 16:16:30 $ $Author: sponcec3 $
+ * @(#)$RCSfile: DbCnvSvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2009/06/17 14:57:27 $ $Author: itglp $
  *
  *
  *
@@ -77,7 +77,8 @@ namespace castor {
          * @param address the place where to find the foreign
          * representation
          * @return the C++ object created from its reprensentation
-         * or 0 if unsuccessful. Note that the caller is responsible
+         * or raises a NoEntry exception if not found.
+         * Note that the caller is responsible
          * for the deallocation of the newly created object
          * @exception Exception throws an Exception in case of error
          */
