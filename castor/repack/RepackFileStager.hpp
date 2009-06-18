@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.hpp,v $ $Revision: 1.20 $ $Release$ $Date: 2009/02/05 15:51:19 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackFileStager.hpp,v $ $Revision: 1.21 $ $Release$ $Date: 2009/06/18 15:30:29 $ $Author: gtaur $
  *
  *
  *
@@ -111,7 +111,7 @@ namespace castor {
        * Excutes stage_files and updates the RepackSubRequest. In case
        * stage_files gives an error the state is set to FAILED.
        */
-      void startRepack(RepackSubRequest* sreq) throw (castor::exception::Exception);
+      void startRepack(RepackSubRequest* sreq, castor::repack::IRepackSvc* oraSvc ) throw (castor::exception::Exception);
 
 
       /**

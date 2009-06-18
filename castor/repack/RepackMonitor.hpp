@@ -73,7 +73,7 @@ namespace castor {
        * information of the RepackRequest into account)
        * @throws castor::exception::Exception in case of an error.
        */
-      void updateTape(RepackSubRequest*)throw (castor::exception::Exception);
+      void updateTape(RepackSubRequest* sreq, castor::repack::IRepackSvc* oraSvc)throw (castor::exception::Exception);
   
       /** Retrieves the stats from a request (by the given cuuid in the
        *  RepackSubRequest). Beware that the returned objects in the vector

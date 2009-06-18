@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.28 $ $Release$ $Date: 2009/02/05 15:51:19 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.29 $ $Release$ $Date: 2009/06/18 15:30:29 $ $Author: gtaur $
  *
  *
  *
@@ -71,22 +71,22 @@ namespace castor {
 
       void  getPoolVmgrInfo(castor::repack::RepackRequest* rreq) throw (castor::exception::Exception);
 
-      RepackAck* handleRepack(RepackRequest* rreq) throw (castor::exception::Exception);
+      RepackAck* handleRepack(RepackRequest* rreq, castor::repack::IRepackSvc* oraSvc) throw (castor::exception::Exception);
 
-      RepackAck* removeRequest(RepackRequest* rreq) throw (castor::exception::Exception);
+      RepackAck* removeRequest(RepackRequest* rreq, castor::repack::IRepackSvc* oraSvc) throw (castor::exception::Exception);
 
-      RepackAck* restartRequest(RepackRequest* rreq) throw (castor::exception::Exception);
+      RepackAck* restartRequest(RepackRequest* rreq, castor::repack::IRepackSvc* oraSvc) throw (castor::exception::Exception);
 
-      RepackAck* archiveSubRequests(RepackRequest* rreq) throw (castor::exception::Exception);
+      RepackAck* archiveSubRequests(RepackRequest* rreq, castor::repack::IRepackSvc* oraSvc) throw (castor::exception::Exception);
 
-      RepackAck* archiveAllSubRequests(RepackRequest* rreq) throw (castor::exception::Exception);
+      RepackAck* archiveAllSubRequests(RepackRequest* rreq, castor::repack::IRepackSvc* oraSvc) throw (castor::exception::Exception);
 
-      RepackAck*  getSubRequestsWithSegments(RepackRequest* rreq) throw (castor::exception::Exception);
+      RepackAck*  getSubRequestsWithSegments(RepackRequest* rreq, castor::repack::IRepackSvc* oraSvc) throw (castor::exception::Exception);
 
 
-      RepackAck* getStatusAll(RepackRequest* rreq) throw (castor::exception::Exception);
+      RepackAck* getStatusAll(RepackRequest* rreq, castor::repack::IRepackSvc* oraSvc) throw (castor::exception::Exception);
       
-      RepackAck* getStatus(RepackRequest* rreq) throw (castor::exception::Exception);
+      RepackAck* getStatus(RepackRequest* rreq, castor::repack::IRepackSvc* oraSvc) throw (castor::exception::Exception);
 
 
       /**

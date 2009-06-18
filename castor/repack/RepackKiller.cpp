@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackKiller.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2009/02/27 09:02:09 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackKiller.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/06/18 15:30:29 $ $Author: gtaur $
  *
  *
  *
@@ -34,6 +34,11 @@
 #include "castor/stager/SubRequest.hpp"
 #include "castor/client/VectorResponseHandler.hpp"
 #include "castor/exception/Internal.hpp" 
+#include "IRepackSvc.hpp"
+
+#include "castor/Services.hpp"
+#include "castor/IService.hpp"
+
 
 namespace castor {
 	namespace repack {
@@ -63,13 +68,26 @@ RepackKiller::~RepackKiller() throw() {
 void RepackKiller::run(void *param) throw() {
   std::vector<RepackSubRequest*> sreqs;
   std::vector<RepackSubRequest*>::iterator sreq;
+
+  // connect to the db
+  // service to access the database
+  castor::IService* dbSvc = castor::BaseObject::services()->service("OraRepackSvc", castor::SVC_ORAREPACKSVC);
+  castor::repack::IRepackSvc* oraSvc = dynamic_cast<castor::repack::IRepackSvc*>(dbSvc);
+  
+
+  if (0 == oraSvc) {    
+   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 1 , 0, NULL);
+   return;
+  }
+
+
   try {
 
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 63, 0, 0);
         
     // remove
     
-    sreqs =  ptr_server->repackDbSvc()->getSubRequestsByStatus(RSUBREQUEST_TOBEREMOVED,true); // segments needed
+    sreqs =  oraSvc->getSubRequestsByStatus(RSUBREQUEST_TOBEREMOVED,true); // segments needed
     sreq=sreqs.begin();
     
     while (sreq != sreqs.end()){
@@ -80,7 +98,7 @@ void RepackKiller::run(void *param) throw() {
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 19, 3, params);
 
       try {
-	abortRepack(*sreq);
+	abortRepack(*sreq,oraSvc);
       } catch (castor::exception::Exception e) {
 	castor::dlf::Param params[] =
 	  {
@@ -118,7 +136,7 @@ void RepackKiller::stop() throw() {
 // abortRepack
 //------------------------------------------------------------------------------
 
-void  RepackKiller::abortRepack(RepackSubRequest* sreq) throw (castor::exception::Exception){
+void  RepackKiller::abortRepack(RepackSubRequest* sreq, castor::repack::IRepackSvc* oraSvc) throw (castor::exception::Exception){
   _Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
   try {
     sendRepackRemoveRequest(sreq);
@@ -135,7 +153,7 @@ void  RepackKiller::abortRepack(RepackSubRequest* sreq) throw (castor::exception
   }
 
   sreq->setStatus(RSUBREQUEST_TOBECLEANED);
-  ptr_server->repackDbSvc()->updateSubRequest(sreq);
+  oraSvc->updateSubRequest(sreq);
   castor::dlf::dlf_writep(stringtoCuuid(sreq->cuuid()), DLF_LVL_DEBUG, 25, 0, 0);
  
 }

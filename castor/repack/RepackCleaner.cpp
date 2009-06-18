@@ -28,7 +28,9 @@
 #include "RepackCleaner.hpp"
 #include "RepackUtility.hpp"
 #include "vmgr_api.h"
-
+#include "IRepackSvc.hpp"
+#include "castor/Services.hpp"
+#include "castor/IService.hpp"
 
 namespace castor{
 	namespace repack {
@@ -53,12 +55,24 @@ RepackCleaner::~RepackCleaner() throw() {
 void RepackCleaner::run(void* param) {
   std::vector<RepackSubRequest*> tapes;
   std::vector<RepackSubRequest*>::iterator tape; 
+
+   // connect to the db
+   // service to access the database
+  castor::IService* dbSvc = castor::BaseObject::services()->service("OraRepackSvc", castor::SVC_ORAREPACKSVC);
+  castor::repack::IRepackSvc* oraSvc = dynamic_cast<castor::repack::IRepackSvc*>(dbSvc);
+  
+
+  if (0 == oraSvc) {    
+   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 1 , 0, NULL);
+   return;
+  }
+
   try {
   
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 41, 0, 0);
 
     // get all the tape
-    tapes =  ptr_server->repackDbSvc()->getSubRequestsByStatus(RSUBREQUEST_TOBECLEANED,false);
+    tapes = oraSvc->getSubRequestsByStatus(RSUBREQUEST_TOBECLEANED,false);
     
 
       // loop over the tapes
@@ -74,7 +88,7 @@ void RepackCleaner::run(void* param) {
       if ( (*tape) != NULL )	{  
 	try {
 	  checkTape(*tape);
-	  ptr_server->repackDbSvc()->updateSubRequest((*tape));
+	  oraSvc->updateSubRequest((*tape));
 	} catch (castor::exception::Exception e){
 	  
 	    castor::dlf::Param params[] =
@@ -97,7 +111,7 @@ void RepackCleaner::run(void* param) {
     
     try {
       
-      ptr_server->repackDbSvc()->resurrectTapesOnHold(ptr_server->maxFiles(),ptr_server->maxTapes());
+      oraSvc->resurrectTapesOnHold(ptr_server->maxFiles(),ptr_server->maxTapes());
       
     } catch (castor::exception::Exception e){
 

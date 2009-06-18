@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackRestarter.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2009/02/27 10:25:35 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackRestarter.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/06/18 15:30:29 $ $Author: gtaur $
  *
  *
  *
@@ -27,6 +27,10 @@
 #include "RepackRestarter.hpp"
 #include "RepackSubRequestStatusCode.hpp"
 #include "RepackUtility.hpp"
+#include "IRepackSvc.hpp"
+
+#include "castor/Services.hpp"
+#include "castor/IService.hpp"
 
 namespace castor {
 	namespace repack {
@@ -56,6 +60,19 @@ RepackRestarter::~RepackRestarter() throw() {
 void RepackRestarter::run(void *param) throw() {
   std::vector<RepackSubRequest*> sreqs;
   std::vector<RepackSubRequest*>::iterator sreq;
+
+  // connect to the db
+  // service to access the database
+  castor::IService* dbSvc = castor::BaseObject::services()->service("OraRepackSvc", castor::SVC_ORAREPACKSVC);
+  castor::repack::IRepackSvc* oraSvc = dynamic_cast<castor::repack::IRepackSvc*>(dbSvc);
+  
+
+  if (0 == oraSvc) {    
+   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 1 , 0, NULL);
+   return;
+  }
+
+
   try {
 
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 64, 0, 0);
@@ -63,7 +80,7 @@ void RepackRestarter::run(void *param) throw() {
  	 
     // restart
         
-    sreqs = ptr_server->repackDbSvc()->getSubRequestsByStatus(RSUBREQUEST_TOBERESTARTED,false); // segments not needed
+    sreqs = oraSvc->getSubRequestsByStatus(RSUBREQUEST_TOBERESTARTED,false); // segments not needed
     sreq=sreqs.begin();
     while (sreq != sreqs.end()){
       castor::dlf::Param params[] =
@@ -73,7 +90,7 @@ void RepackRestarter::run(void *param) throw() {
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 20, 3, params);
       try {
 
-	ptr_server->repackDbSvc()->restartSubRequest((*sreq)->id());
+	oraSvc->restartSubRequest((*sreq)->id());
 
       } catch (castor::exception::Exception e) {
 	   // log the error in Dlf

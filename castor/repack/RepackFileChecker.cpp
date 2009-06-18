@@ -30,6 +30,10 @@
 #include "RepackUtility.hpp"
 #include "FileListHelper.hpp"
 #include "RepackSubRequest.hpp"
+#include "IRepackSvc.hpp"
+
+#include "castor/Services.hpp"
+#include "castor/IService.hpp"
 
 
 namespace castor{
@@ -55,12 +59,25 @@ void RepackFileChecker::run(void* param) throw(){
   std::vector<RepackSubRequest*> sreqs;
   std::vector<RepackSubRequest*>::iterator sreq;
 
+ // connect to the db
+   // service to access the database
+  castor::IService* dbSvc = castor::BaseObject::services()->service("OraRepackSvc", castor::SVC_ORAREPACKSVC);
+  castor::repack::IRepackSvc* oraSvc = dynamic_cast<castor::repack::IRepackSvc*>(dbSvc);
+  
+
+  if (0 == oraSvc) {    
+   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 1 , 0, NULL);
+   return;
+  }
+
+
+
   try {
     Cuuid_t cuuid = nullCuuid;
     FileListHelper m_filehelper (ptr_server->getNsName());
 
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 13, 0, 0);
-    sreqs = ptr_server->repackDbSvc()->getSubRequestsByStatus(RSUBREQUEST_TOBECHECKED,false);
+    sreqs = oraSvc->getSubRequestsByStatus(RSUBREQUEST_TOBECHECKED,false);
 
     sreq=sreqs.begin();
     
@@ -85,7 +102,7 @@ void RepackFileChecker::run(void* param) throw(){
 	  // no segment for this tape
 	  castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 15, 3, params);
 	  (*sreq)->setStatus(RSUBREQUEST_TOBECLEANED);
-	  ptr_server->repackDbSvc()->updateSubRequest(*sreq);
+	  oraSvc->updateSubRequest(*sreq);
 	  sreq++;
 	  continue;
 	}
@@ -95,11 +112,11 @@ void RepackFileChecker::run(void* param) throw(){
        
 	try {
 
-	  ptr_server->repackDbSvc()->insertSubRequestSegments(*sreq);
+	  oraSvc->insertSubRequestSegments(*sreq);
         
 	  // validate that none of the files on the tape is involved in another repack process.
 
-	  bool ret=ptr_server->repackDbSvc()->validateRepackSubRequest(*sreq,ptr_server->maxFiles(),ptr_server->maxTapes());
+	  bool ret=oraSvc->validateRepackSubRequest(*sreq,ptr_server->maxFiles(),ptr_server->maxTapes());
 
 	  if (ret){
 	    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 16, 1, params);

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.50 $ $Release$ $Date: 2009/03/17 14:42:41 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.51 $ $Release$ $Date: 2009/06/18 15:30:28 $ $Author: gtaur $
  *
  * @author Giulia Taurelli
  *****************************************************************************/
@@ -36,7 +36,10 @@
 #include "castor/client/VectorResponseHandler.hpp"
 #include "castor/client/BaseClient.hpp"
 #include "RepackRequest.hpp"
+#include "IRepackSvc.hpp"
 
+#include "castor/Services.hpp"
+#include "castor/IService.hpp"
 
 namespace castor {
 	namespace repack {
@@ -69,10 +72,22 @@ void RepackFileStager::run(void *param) throw() {
   try {
 
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 18, 0, 0);
+    
+    // connect to the db
+    // service to access the database
+    castor::IService* dbSvc = castor::BaseObject::services()->service("OraRepackSvc", castor::SVC_ORAREPACKSVC);
+    castor::repack::IRepackSvc* oraSvc = dynamic_cast<castor::repack::IRepackSvc*>(dbSvc);
+  
+
+    if (0 == oraSvc) {    
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 1 , 0, NULL);
+      return;
+    }
+
           
     // start
 
-    sreqs = ptr_server->repackDbSvc()->getSubRequestsByStatus(RSUBREQUEST_TOBESTAGED,true); // segments needed
+    sreqs = oraSvc->getSubRequestsByStatus(RSUBREQUEST_TOBESTAGED,true); // segments needed
     sreq=sreqs.begin();
     while (sreq != sreqs.end()){
       castor::dlf::Param params[] =
@@ -82,7 +97,7 @@ void RepackFileStager::run(void *param) throw() {
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 21, 3, params);
       try {
 
-	startRepack(*sreq);
+	startRepack(*sreq,oraSvc);
 	
       } catch (castor::exception::Exception e){
 	castor::dlf::Param params[] =
@@ -119,7 +134,7 @@ void RepackFileStager::stop() throw() {
 //------------------------------------------------------------------------------
 // startRepack
 //------------------------------------------------------------------------------
-void RepackFileStager::startRepack(RepackSubRequest* sreq) throw (castor::exception::Exception){
+void RepackFileStager::startRepack(RepackSubRequest* sreq,castor::repack::IRepackSvc* oraSvc) throw (castor::exception::Exception){
   _Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
   std::vector<RepackSegment*> failedSegments;
   std::vector<RepackSegment*>::iterator failedSegment;
@@ -144,9 +159,9 @@ void RepackFileStager::startRepack(RepackSubRequest* sreq) throw (castor::except
 
   // let's update the database 
   if (failedSegments.empty())
-    ptr_server->repackDbSvc()->updateSubRequest(sreq);
+    oraSvc->updateSubRequest(sreq);
   else 
-    ptr_server->repackDbSvc()->updateSubRequestSegments(sreq,failedSegments);
+    oraSvc->updateSubRequestSegments(sreq,failedSegments);
   
 
 }

@@ -35,6 +35,8 @@
 #include "RepackFileStager.hpp" 
 #include "RepackMonitor.hpp" 
 #include "RepackCleaner.hpp"
+#include "RepackKiller.hpp"
+#include "RepackRestarter.hpp"
 #include "RepackServer.hpp"
 
 #include "castor/Services.hpp"
@@ -76,13 +78,13 @@ int main(int argc, char *argv[]) {
     params->setSchemaVersion(REPACKSCHEMAVERSION);
     params->setDbAccessConfFile(ORAREPACKCONFIGFILE);
     
-    // service to access the database
+    // service to access the database ... just to check, we don't need that
+
     castor::IService* orasvc = castor::BaseObject::services()->service("OraRepackSvc", castor::SVC_ORAREPACKSVC);
     castor::repack::IRepackSvc* mySvc = dynamic_cast<castor::repack::IRepackSvc*>(orasvc);
   
     
     if (0 == mySvc) {
-      // we don't have DLF yet, and this is a major fault, so log to stderr and exit
       std::cerr << "Couldn't load the ora repack  service, check the castor.conf for DynamicLib entries" << std::endl;
       return -1;
     }
@@ -111,6 +113,25 @@ int main(int argc, char *argv[]) {
 					   SLEEP_TIME
                                           ));
 	  server.getThreadPool('S')->setNbThreads(1);
+
+    /// The Repack Killer Instance
+	  server.addThreadPool(
+      new castor::server::SignalThreadPool("killer", 
+					   new castor::repack::RepackKiller(&server),
+					   SLEEP_TIME
+                                          ));
+	  
+	  server.getThreadPool('k')->setNbThreads(1);
+
+
+    /// The Repack Restarter Instance
+	  server.addThreadPool(
+      new castor::server::SignalThreadPool("restarter", 
+					   new castor::repack::RepackRestarter(&server),
+					   SLEEP_TIME
+                                          ));
+	  
+	  server.getThreadPool('r')->setNbThreads(1);	  
 
     /// The Repack Monitor Instance (only 1 !)
 	  server.addThreadPool(
@@ -181,11 +202,11 @@ castor::repack::RepackServer::RepackServer() :
      {21, "RepackFileStager : Submition issued for tape"},
      {22, "RepackFileStager : No files on tape to repack"},
      {23, "RepackFileStager : Staging files"},
-     {24, "RepackFileStager : Not able to send stager_rm request"},
-     {25, "RepackFileStager : Stager_rm request sent"},
-     {26, "RepackFileStager : Restarted of unknow request is impossible"},
-     {27, "RepackFileStager : Restarted failed because of temporary stager problem"},
-     {28, "RepackFileStager :  There are still files in staging/migrating. Restart abort"},
+     {24, "RepackKiller : Not able to send stager_rm request"},
+     {25, "RepackKiller : Stager_rm request sent"},
+     {26, "RepackRestarter : Restarted of unknow request is impossible"},
+     {27, "RepackRestarter : Restarted failed because of temporary stager problem"},
+     {28, "RepackRestarter :  There are still files in staging/migrating. Restart abort"},
      {29, "RepackFileStager :  Error sending the repack request to the stager"},     
      {30, "RepackFileStager : Repack request sent to the stager"},
      {31, "RepackFileStager : Changing CUUID to stager one"},     
@@ -225,6 +246,8 @@ castor::repack::RepackServer::RepackServer() :
      {65, "RepackMonitor : impossible to get tapes to monitor" },
      {66, "RepackMonitor : impossible to get statistics about tape" },
      {67, "RepackWorker : impossible to perform"},
+     {68, "RepackMonitor : number of files on tape increased!"},   
+
      {-1, ""}};
 
   dlfInit(messages);
@@ -415,20 +438,6 @@ castor::repack::RepackServer::RepackServer() :
 
   params->setSchemaVersion(REPACKSCHEMAVERSION);
   params->setDbAccessConfFile(ORAREPACKCONFIGFILE);
-    
-  // service to access the database
-  castor::IService* orasvc = castor::BaseObject::services()->service("OraRepackSvc", castor::SVC_ORAREPACKSVC);
-  castor::repack::IRepackSvc* mySvc = dynamic_cast<castor::repack::IRepackSvc*>(orasvc);
-  
-    
-  if (0 == mySvc) {
-
-    castor::exception::Internal ex;
-    ex.getMessage() <<  "Couldn't load the ora repack  service, check the castor.conf for DynamicLib entries" << std::endl;
-    throw ex;
-
-  }
-  m_repackDbSvc=mySvc;
 
 }
 
@@ -441,7 +450,6 @@ castor::repack::RepackServer::~RepackServer() throw()
     m_stager.clear();
     m_serviceClass.clear();
     m_protocol.clear();
-    if (m_repackDbSvc != NULL) delete m_repackDbSvc;
     m_maxFiles=0;
     m_maxTapes=0;
     m_pollingTime = 0;

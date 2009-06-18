@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2009/02/05 15:51:19 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackServer.hpp,v $ $Revision: 1.17 $ $Release$ $Date: 2009/06/18 15:30:29 $ $Author: gtaur $
  *
  *
  *
@@ -90,12 +90,6 @@ namespace castor {
     int maxTapes() const {
       return m_maxTapes;
     }
-
-    /** Retrieves max number of tapes ONGOING **/
-    castor::repack::IRepackSvc* repackDbSvc() const {
-      return m_repackDbSvc;
-    }
-
     
     /** Overloaded method from BaseServer for individual command line parser */
     virtual void parseCommandLine(int argc, char *argv[]);
@@ -135,10 +129,6 @@ namespace castor {
     int m_maxFiles;
     
     int m_maxTapes;
-
-    // service to access the db
-
-    IRepackSvc* m_repackDbSvc;
 
   };
 

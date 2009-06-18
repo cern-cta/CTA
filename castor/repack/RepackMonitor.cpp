@@ -35,12 +35,16 @@
 #include "castor/client/VectorResponseHandler.hpp"
 #include "castor/repack/RepackUtility.hpp"
 #include "castor/exception/InvalidArgument.hpp"
+#include "IRepackSvc.hpp"
 
 #include <sys/types.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
 
+
+#include "castor/Services.hpp"
+#include "castor/IService.hpp"
 
 namespace castor {
   namespace repack {
@@ -69,10 +73,23 @@ namespace castor {
     
     std::vector<RepackSubRequest*> tapelist;
     std::vector<RepackSubRequest*>::iterator tape;
+
+    // connect to the db
+    // service to access the database
+    castor::IService* dbSvc = castor::BaseObject::services()->service("OraRepackSvc", castor::SVC_ORAREPACKSVC);
+    castor::repack::IRepackSvc* oraSvc = dynamic_cast<castor::repack::IRepackSvc*>(dbSvc);
+    
+
+    if (0 == oraSvc) {    
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 1 , 0, NULL);
+      return;
+    }
+
+
     try {
      
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 34, 0, 0);
-      tapelist = ptr_server->repackDbSvc()->getSubRequestsByStatus(RSUBREQUEST_ONGOING,false);
+      tapelist = oraSvc->getSubRequestsByStatus(RSUBREQUEST_ONGOING,false);
       tape=tapelist.begin();
 
       while (tape != tapelist.end()){ 
@@ -85,7 +102,7 @@ namespace castor {
 
 	// get information for this tape querying the stager
 	try {
-	  updateTape(*tape);
+	  updateTape(*tape,oraSvc);
 	} catch (castor::exception::Exception e){
 	  	  
 	  castor::dlf::Param params[] =
@@ -178,12 +195,12 @@ void RepackMonitor::getStats(RepackSubRequest* sreq,
 // updateTape
 //------------------------------------------------------------------------------
 
-void RepackMonitor::updateTape(RepackSubRequest *sreq)
+void RepackMonitor::updateTape(RepackSubRequest *sreq, castor::repack::IRepackSvc* oraSvc )
                           throw (castor::exception::Exception)
 { 
   /** status counters */
 
-  u_signed64 canbemig_status,stagein_status,waitingmig_status, stageout_status, staged_status, invalid_status;
+  int canbemig_status,stagein_status,waitingmig_status, stageout_status, staged_status, invalid_status;
   canbemig_status = stagein_status = waitingmig_status = stageout_status = staged_status = invalid_status = 0;
 
   Cuuid_t cuuid;  
@@ -198,12 +215,12 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq)
   } catch (castor::exception::InvalidArgument inval) {
     // CLEANED BY THE STAGER
     sreq->setStatus(RSUBREQUEST_TOBECLEANED);
-    ptr_server->repackDbSvc()->updateSubRequest(sreq);
+    oraSvc->updateSubRequest(sreq);
     return;
   } catch (castor::exception::Exception e) {
     // the stager might time out
     sreq->setStatus(RSUBREQUEST_ONGOING);
-    ptr_server->repackDbSvc()->updateSubRequest(sreq);
+    oraSvc->updateSubRequest(sreq);
     return;
   }
 
@@ -261,7 +278,7 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq)
 
       invalid_status+=sreq->filesFailedSubmit();
       sreq->setStatus(RSUBREQUEST_TOBECLEANED);
-      ptr_server->repackDbSvc()->updateSubRequest(sreq);
+      oraSvc->updateSubRequest(sreq);
 
       if (!invalid_status){
 
@@ -291,7 +308,17 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq)
       
       u_signed64 filesOnTape= filehelper.countFilesOnTape(sreq->vid());
 
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 40, 0, 0);
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("VID", sreq->vid()),
+	 castor::dlf::Param("staging",stagein_status ),
+	 castor::dlf::Param("migrating",waitingmig_status + canbemig_status),
+	 castor::dlf::Param("invalid",invalid_status),
+	 castor::dlf::Param("files",sreq->files()),
+	 castor::dlf::Param("files on tape", filesOnTape)
+	};
+
+
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 40, 6, params);
 
       sreq->setFilesMigrating( waitingmig_status + canbemig_status );
       sreq->setFilesStaging( stagein_status );
@@ -301,10 +328,22 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq)
 
       staged_status=sreq->files() - filesOnTape;
       
+      if (staged_status<0){
+
+	castor::dlf::Param params[] =
+	  {castor::dlf::Param("VID", sreq->vid())};
+	castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 40, 1,params);
+
+	sreq->setFiles(filesOnTape);
+	sreq->setFilesFailedSubmit(sreq->filesFailedSubmit() - staged_status);
+	staged_status=0;
+
+      }
+      
       sreq->setFilesStaged( staged_status );
       sreq->setStatus(RSUBREQUEST_ONGOING);
     
-      ptr_server->repackDbSvc()->updateSubRequest(sreq);
+      oraSvc->updateSubRequest(sreq);
   
     }
   }

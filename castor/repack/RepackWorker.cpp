@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.46 $ $Release$ $Date: 2009/02/05 15:51:19 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.47 $ $Release$ $Date: 2009/06/18 15:30:29 $ $Author: gtaur $
  *
  *
  *
@@ -34,7 +34,8 @@
 #include "castor/io/ServerSocket.hpp"
 #include "FileListHelper.hpp"
 #include "RepackResponse.hpp"
-
+#include "castor/IService.hpp"
+#include "castor/Services.hpp"
 
 #include "vmgr_api.h"
 
@@ -43,7 +44,7 @@
 #include <common.h> 
 #include <vector>
 #include <errno.h>
-
+#include "IRepackSvc.hpp"
 
 
 namespace castor {
@@ -82,6 +83,18 @@ void RepackWorker::run(void* param)
     
   unsigned short port=0;
   unsigned long ip=0;
+
+  // connect to the db
+  // service to access the database
+
+  castor::IService* dbSvc = castor::BaseObject::services()->service("OraRepackSvc", castor::SVC_ORAREPACKSVC);
+  castor::repack::IRepackSvc* oraSvc = dynamic_cast<castor::repack::IRepackSvc*>(dbSvc);
+  
+
+  if (0 == oraSvc) {    
+   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 1 , 0, NULL);
+   return;
+  }
  
   // we will continue if no error have been logged in ack. 
 
@@ -146,39 +159,39 @@ void RepackWorker::run(void* param)
 	switch ( rreq->command() ){
 
 	case REMOVE:            
-	  ack=removeRequest(rreq);
+	  ack=removeRequest(rreq,oraSvc);
 	  break;
   
 	case RESTART:           
-	  ack=restartRequest(rreq);
+	  ack=restartRequest(rreq,oraSvc);
 	  break;
 
 	case REPACK:            
-	  ack=handleRepack(rreq);
+	  ack=handleRepack(rreq,oraSvc);
 	  break;
 
 	case GET_STATUS:
-	  ack=getStatus(rreq);
+	  ack=getStatus(rreq,oraSvc);
 	  break;
 
 	case GET_ERROR:
-	  ack=getSubRequestsWithSegments(rreq); 
+	  ack=getSubRequestsWithSegments(rreq,oraSvc); 
 	  break;
       
 	case GET_NS_STATUS:             
-	  ack=getSubRequestsWithSegments(rreq);
+	  ack=getSubRequestsWithSegments(rreq,oraSvc);
 	  break;
 
 	case GET_STATUS_ALL:   
-	  ack=getStatusAll(rreq);
+	  ack=getStatusAll(rreq,oraSvc);
 	  break;
 
 	case ARCHIVE:           
-	  ack=archiveSubRequests(rreq);
+	  ack=archiveSubRequests(rreq,oraSvc);
 	  break;
 
 	case ARCHIVE_ALL:       
-	  ack=archiveAllSubRequests(rreq);
+	  ack=archiveAllSubRequests(rreq,oraSvc);
 	  break;
 	default: 
 	  RepackResponse* globalError=new RepackResponse();
@@ -197,7 +210,7 @@ void RepackWorker::run(void* param)
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 67, 2,params);
 	
 	RepackResponse* globalError=new RepackResponse();
-	ack=new RepackAck();
+ack=new RepackAck();
 	globalError->setErrorCode(e.code());
 	globalError->setErrorMessage(e.getMessage().str());
 	ack->addRepackresponse(globalError);
@@ -260,7 +273,7 @@ void RepackWorker::stop()
 // Retrieves the subrequest for client answer
 //------------------------------------------------------------------------------
 
-RepackAck*  RepackWorker::getSubRequestsWithSegments(RepackRequest* rreq) throw (castor::exception::Exception)
+RepackAck*  RepackWorker::getSubRequestsWithSegments(RepackRequest* rreq, castor::repack::IRepackSvc* oraSvc) throw (castor::exception::Exception)
 {
 
   if ( rreq== NULL || rreq->repacksubrequest().size()==0 ) {
@@ -279,7 +292,7 @@ RepackAck*  RepackWorker::getSubRequestsWithSegments(RepackRequest* rreq) throw 
   while (tape != rreq->repacksubrequest().end()){
     try {
 
-      resp=ptr_server->repackDbSvc()->getSubRequestByVid((*tape)->vid(),true); // get the segments
+      resp=oraSvc->getSubRequestByVid((*tape)->vid(),true); // get the segments
 
     } catch (castor::exception::Exception e){
       RepackResponse* resp= new RepackResponse();
@@ -298,14 +311,14 @@ RepackAck*  RepackWorker::getSubRequestsWithSegments(RepackRequest* rreq) throw 
 // Retrieves all the not archived subrequests in the repack system 
 //------------------------------------------------------------------------------
 
-RepackAck*  RepackWorker::getStatusAll(RepackRequest* rreq) throw (castor::exception::Exception)
+RepackAck*  RepackWorker::getStatusAll(RepackRequest* rreq, castor::repack::IRepackSvc* oraSvc) throw (castor::exception::Exception)
 {
 
   if ( rreq== NULL) {
     castor::exception::Exception e(EINVAL);
     throw e;
   }
-  RepackAck* result = ptr_server->repackDbSvc()->getAllSubRequests();
+  RepackAck* result = oraSvc->getAllSubRequests();
   return result;
 }
 
@@ -314,14 +327,14 @@ RepackAck*  RepackWorker::getStatusAll(RepackRequest* rreq) throw (castor::excep
 // Archive the finished tapes
 //------------------------------------------------------------------------------
 
-RepackAck* RepackWorker::archiveSubRequests(RepackRequest* rreq) throw (castor::exception::Exception)
+RepackAck* RepackWorker::archiveSubRequests(RepackRequest* rreq, castor::repack::IRepackSvc* oraSvc) throw (castor::exception::Exception)
 { 
   if ( rreq== NULL) {
     castor::exception::Exception e(EINVAL);
     throw e;
   }
 
-  RepackAck* result= ptr_server->repackDbSvc()->changeSubRequestsStatus(rreq->repacksubrequest(),RSUBREQUEST_ARCHIVED);
+  RepackAck* result= oraSvc->changeSubRequestsStatus(rreq->repacksubrequest(),RSUBREQUEST_ARCHIVED);
   return result;
 }
 
@@ -329,13 +342,13 @@ RepackAck* RepackWorker::archiveSubRequests(RepackRequest* rreq) throw (castor::
 //------------------------------------------------------------------------------
 // Archives all finished tapes
 //------------------------------------------------------------------------------
-RepackAck* RepackWorker::archiveAllSubRequests(RepackRequest* rreq) throw (castor::exception::Exception)
+RepackAck* RepackWorker::archiveAllSubRequests(RepackRequest* rreq, castor::repack::IRepackSvc* oraSvc) throw (castor::exception::Exception)
 {
   if ( rreq== NULL) {
     castor::exception::Exception e(EINVAL);
     throw e;
   }
-  RepackAck* result=ptr_server->repackDbSvc()->changeAllSubRequestsStatus(RSUBREQUEST_ARCHIVED);
+  RepackAck* result=oraSvc->changeAllSubRequestsStatus(RSUBREQUEST_ARCHIVED);
   return result;
 }
 
@@ -343,13 +356,13 @@ RepackAck* RepackWorker::archiveAllSubRequests(RepackRequest* rreq) throw (casto
 //------------------------------------------------------------------------------
 // Restart a  repack subrequest
 //------------------------------------------------------------------------------
-RepackAck* RepackWorker::restartRequest(RepackRequest* rreq) throw (castor::exception::Exception)
+RepackAck* RepackWorker::restartRequest(RepackRequest* rreq, castor::repack::IRepackSvc* oraSvc) throw (castor::exception::Exception)
 {   
   if ( rreq== NULL) {
     castor::exception::Exception e(EINVAL);
     throw e;
   }
-  RepackAck* result=ptr_server->repackDbSvc()->changeSubRequestsStatus(rreq->repacksubrequest(),RSUBREQUEST_TOBERESTARTED);
+  RepackAck* result=oraSvc->changeSubRequestsStatus(rreq->repacksubrequest(),RSUBREQUEST_TOBERESTARTED);
   return result;
 }
 
@@ -358,13 +371,13 @@ RepackAck* RepackWorker::restartRequest(RepackRequest* rreq) throw (castor::exce
 //------------------------------------------------------------------------------
 // Remove a request from repack
 //------------------------------------------------------------------------------
-RepackAck* RepackWorker::removeRequest(RepackRequest* rreq) throw (castor::exception::Exception)
+RepackAck* RepackWorker::removeRequest(RepackRequest* rreq, castor::repack::IRepackSvc* oraSvc) throw (castor::exception::Exception)
 {
   if ( rreq== NULL) {
     castor::exception::Exception e(EINVAL);
     throw e;
   }
-  RepackAck* result=ptr_server->repackDbSvc()->changeSubRequestsStatus(rreq->repacksubrequest(),RSUBREQUEST_TOBEREMOVED);    
+  RepackAck* result=oraSvc->changeSubRequestsStatus(rreq->repacksubrequest(),RSUBREQUEST_TOBEREMOVED);    
   return result;
  
 }
@@ -374,7 +387,7 @@ RepackAck* RepackWorker::removeRequest(RepackRequest* rreq) throw (castor::excep
 //------------------------------------------------------------------------------
 // handleRepack
 //------------------------------------------------------------------------------
-RepackAck* RepackWorker::handleRepack(RepackRequest* rreq) throw (castor::exception::Exception)
+RepackAck* RepackWorker::handleRepack(RepackRequest* rreq, castor::repack::IRepackSvc* oraSvc) throw (castor::exception::Exception)
 {
   RepackAck* ack= NULL;
   std::vector<RepackResponse*> badVmgrTapes;
@@ -460,7 +473,7 @@ RepackAck* RepackWorker::handleRepack(RepackRequest* rreq) throw (castor::except
   }
  
   if (!requestToSubmit->repacksubrequest().empty())
-    ack = ptr_server->repackDbSvc()->storeRequest(requestToSubmit);
+    ack = oraSvc->storeRequest(requestToSubmit);
 
   if (!badVmgrTapes.empty()){
     // report failure due to vmgr problems
@@ -548,7 +561,7 @@ void RepackWorker::checkTapeVmgrStatus(std::string tapename) throw (castor::exce
 // Get Status
 //-----------------------------------------------------------------------------
 
- RepackAck* RepackWorker::getStatus(RepackRequest* rreq) throw (castor::exception::Exception){
+ RepackAck* RepackWorker::getStatus(RepackRequest* rreq, castor::repack::IRepackSvc* oraSvc) throw (castor::exception::Exception){
   
    if ( rreq== NULL) {
      castor::exception::Exception e(EINVAL);
@@ -564,7 +577,7 @@ void RepackWorker::checkTapeVmgrStatus(std::string tapename) throw (castor::exce
      /** get the information from the db  */
      try {
 
-       resp=ptr_server->repackDbSvc()->getSubRequestByVid((*sreq)->vid(),false); // no segments
+       resp=oraSvc->getSubRequestByVid((*sreq)->vid(),false); // no segments
 
      } catch (castor::exception::Exception e) {
        RepackResponse* resp= new RepackResponse();

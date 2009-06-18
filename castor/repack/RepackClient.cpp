@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.45 $ $Release$ $Date: 2009/02/05 15:51:19 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.46 $ $Release$ $Date: 2009/06/18 15:30:28 $ $Author: gtaur $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -57,7 +57,7 @@
 
 void printTime(time_t* rawtime){
   if (!rawtime || *rawtime==0){
-    std::cout<<"    No_Time      ";
+    std::cout<<"    No_Time       ";
     return;
   }
   tm * timeptr = localtime(rawtime);
@@ -75,8 +75,8 @@ void printTime(time_t* rawtime){
   if (timeptr->tm_hour <10) std::cout<<"0";
   std::cout << timeptr->tm_hour <<":";
   if (timeptr->tm_min <10) std::cout<<"0";
-  std::cout<<timeptr->tm_min;
-  std::cout<<"  "; 
+  std::cout<<timeptr->tm_min<<"   "; 
+
 }
 
 
@@ -102,6 +102,7 @@ int main(int argc, char *argv[])
    } 
    catch (castor::exception::Exception ex) {
       std::cout << ex.getMessage().str() << std::endl;
+      exit(1);
    }
 
 }
@@ -142,7 +143,7 @@ RepackClient::RepackClient()
   svc = svcs()->cnvService("StreamCnvSvc", castor::SVC_STREAMCNV);
   if (0 == svc) {
       // "Could not get Conversion Service for Streaming" message
-	std::cerr << "Could not get Conversion Service for Streaming" << std::endl;
+	std::cout << "Could not get Conversion Service for Streaming" << std::endl;
 	return;
   }
 }
@@ -357,12 +358,12 @@ castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
     setRemotePort();
     setRemoteHost();
   }catch (castor::exception::Exception ex){
-    std::cerr << ex.getMessage().str() << " Aborting.." << std::endl;
+    std::cout << ex.getMessage().str() << " Aborting.." << std::endl;
     return NULL;
   }
   
   if ( gethostname(cName, CA_MAXHOSTNAMELEN) != 0 ){
-  	std::cerr << "Cannot get own hostname !" << std::endl << " Aborting.." << std::endl;
+  	std::cout << "Cannot get own hostname !" << std::endl << " Aborting.." << std::endl;
   	return NULL;
   }
   
@@ -386,7 +387,7 @@ castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
        rreq->setPool(cp.pool);
     else
     {
-    	std::cerr << "You must specify either a pool name or one or more volumes." 
+    	std::cout << "You must specify either a pool name or one or more volumes." 
     			  << std::endl;
     	usage();
     	freeRepackObj(rreq);
@@ -418,13 +419,13 @@ void RepackClient::run(int argc, char** argv)
     // parses the command line
     if (!parseInput(argc, argv)) {
       usage();
-      return;
+      exit(1);
     }
     // builds a request and prints it
     castor::repack::RepackRequest* req = buildRequest();
     
     if ( req == NULL ){
-    	return;
+    	exit(1);
     }
    
     // creates a socket
@@ -444,7 +445,8 @@ void RepackClient::run(int argc, char** argv)
     freeRepackObj(ack);
 
   } catch (castor::exception::Exception ex) {
-    	std::cerr << ex.getMessage().str() << std::endl;
+    	std::cout << ex.getMessage().str() << std::endl;
+	exit(1);
   }
 }
 
@@ -466,8 +468,8 @@ void RepackClient::handleResponse(castor::repack::RepackAck* ack) {
 	    std::cout<<"No tape found"<<std::endl;
 	    break;
     default:
-      std::cerr << "No Answer from the repackserver" << std::endl;
-      break;
+      std::cout << "No Answer from the repackserver" << std::endl;
+      exit(1);
     }
     return;
   } 
@@ -492,9 +494,9 @@ void RepackClient::handleResponse(castor::repack::RepackAck* ack) {
     if ((*resp)->errorCode() !=0){
       if (sub==NULL) {
 	// global error
-	std::cerr << "Repackserver respond :" << std::endl
+	std::cout << "Repackserver respond :" << std::endl
         << (*resp)->errorMessage() << std::endl;
-	return;
+	exit(1);
       }
       
       // tape related error
@@ -519,7 +521,7 @@ void RepackClient::handleResponse(castor::repack::RepackAck* ack) {
 	     std::cout << "no  file for this tape in Repack database \n" << std::endl;
 	    
 	  } else {
-	    std::cout << "================================================================================================================" << std::endl;
+	    std::cout << "===================================================================================================================" << std::endl;
 
 	    std::cout <<std::setw(15)<<"Fileid"
 		      <<std::setw(10)<<"Copyno"
@@ -531,7 +533,7 @@ void RepackClient::handleResponse(castor::repack::RepackAck* ack) {
 		      <<std::setw(17)<<"Blockid"
 		      <<std::setw(10)<<"Checksum"<< std::endl;
   
-	    std::cout << "================================================================================================================" << std::endl;
+	    std::cout << "===================================================================================================================" << std::endl;
 	    segment=segments.begin();
 	    while ( segment != segments.end() ) {
 	      m_filehelper.printFileInfo((*segment)->fileid(),(*segment)->copyno());
@@ -551,20 +553,20 @@ void RepackClient::handleResponse(castor::repack::RepackAck* ack) {
     case GET_STATUS_ALL: 
       if (resp == resps.begin()) {
 	  // tittle just at the begining
-	std::cout << "\n====================================================================================================================" 
+	std::cout << "\n=======================================================================================================================" 
 		    << std::endl;
-	std::cout <<std::setw(17)<< "CurrentTime  "<<
+	std::cout <<std::setw(13)<< "CurrentTime  "<<
 	  std::setw(17)<<"SubmitTime  "<<
-	  std::setw(8)<<"Vid"<<
-	  std::setw(10)<<"Total"<<
-	  std::setw(10)<<"Size"<<
-	  std::setw(11)<<"toRecall"<<
+	  std::setw(12)<<"Vid"<<
+	  std::setw(13)<<"Total"<<
+	  std::setw(12)<<"Size"<<
+	  std::setw(10)<<"toRecall"<<
 	  std::setw(10)<<"toMigr"<<
 	  std::setw(10)<<"Failed"<<
 	  std::setw(10)<<"Migrated"<<
 	  std::setw(12)<<"Status" <<std::endl; 
 
-	std::cout << "--------------------------------------------------------------------------------------------------------------------"<< std::endl;
+	std::cout << "-----------------------------------------------------------------------------------------------------------------------"<< std::endl;
       }
 	
       printTapeDetail(sub);
@@ -572,18 +574,19 @@ void RepackClient::handleResponse(castor::repack::RepackAck* ack) {
       
     case GET_STATUS:
       if (resp == resps.begin()) {
-	std::cout << "\n====================================================================================================================" << std::endl;
-	std::cout << std::setw(17)<<"CurrentTime  "<<
+	std::cout << "\n=======================================================================================================================" << std::endl;
+
+	std::cout <<std::setw(13)<< "CurrentTime  "<<
 	  std::setw(17)<<"SubmitTime  "<<
-	  std::setw(8)<<"Vid"<<
-	  std::setw(10)<<"Total"<<
-	  std::setw(10)<<"Size"<<
-	  std::setw(11)<<"toRecall"<<
+	  std::setw(12)<<"Vid"<<
+	  std::setw(13)<<"Total"<<
+	  std::setw(12)<<"Size"<<
+	  std::setw(10)<<"toRecall"<<
 	  std::setw(10)<<"toMigr"<<
 	  std::setw(10)<<"Failed"<<
 	  std::setw(10)<<"Migrated"<<
 	  std::setw(12)<<"Status" <<std::endl; 
-        std::cout << "--------------------------------------------------------------------------------------------------------------------"<< std::endl;
+        std::cout << "-----------------------------------------------------------------------------------------------------------------------"<< std::endl;
       }
       printTapeDetail(sub);
       break;
@@ -646,12 +649,12 @@ void RepackClient::printTapeDetail(RepackSubRequest *tape){
 
     std::cout<<
       std::setw(8)  <<std::right <<tape->vid()<<
-      std::setw(10)  <<std::right <<  "N/A"<< 
-      std::setw(10) << std::right << "N/A" <<
-      std::setw(10) << std::right << "N/A" <<
-      std::setw(10) << std::right << "N/A" <<
-      std::setw(10) << std::right << "N/A"  <<
-      std::setw(10) << std::right << "N/A" <<
+      std::setw(11)  <<std::right <<  " N/A"<< 
+      std::setw(12) << std::right << " N/A" <<
+      std::setw(10) << std::right << " N/A" <<
+      std::setw(10) << std::right << " N/A" <<
+      std::setw(10) << std::right << " N/A"  <<
+      std::setw(10) << std::right << " N/A" <<
       std::setw(12) << statuslist[tape->status()] <<
       std::endl;
 
@@ -662,8 +665,8 @@ void RepackClient::printTapeDetail(RepackSubRequest *tape){
 
     std::cout<< 
       std::setw(8)  <<std::right <<tape->vid() <<   
-      std::setw(10)  <<std::right <<   tape->files() << 
-      std::setw(10) << std::right << buf <<'B'<<
+      std::setw(11)  <<std::right <<   tape->files() << 
+      std::setw(11) << std::right << buf <<'B'<<
       std::setw(10) << std::right << "N/A" <<
       std::setw(10) << std::right << "N/A" <<
       std::setw(10) << std::right << "N/A"  <<
@@ -676,8 +679,8 @@ void RepackClient::printTapeDetail(RepackSubRequest *tape){
 
   std::cout <<
     std::setw(8) <<std::right <<tape->vid() <<
-    std::setw(10) <<std::right <<  tape->files() << 
-    std::setw(10) << std::right << buf <<"B"<<
+    std::setw(11) <<std::right <<  tape->files() << 
+    std::setw(11) << std::right << buf <<"B"<<
     std::setw(10) << std::right << tape->filesStaging() <<
     std::setw(10) << std::right << tape->filesMigrating() <<
     std::setw(10) << std::right << tape->filesFailed() + tape->filesFailedSubmit()   <<

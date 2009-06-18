@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackKiller.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2009/02/27 09:02:09 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackKiller.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/06/18 15:30:29 $ $Author: gtaur $
  *
  *
  *
@@ -83,7 +83,7 @@ namespace castor {
        * Abort a RepackSubRequest. 
        */
 
-      void abortRepack(RepackSubRequest* sreq) throw (castor::exception::Exception);
+      void abortRepack(RepackSubRequest* sreq, castor::repack::IRepackSvc* oraSvc) throw (castor::exception::Exception);
 
 
       /** 

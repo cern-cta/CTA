@@ -138,7 +138,7 @@ namespace castor {
        * Get the value of m_filesMigrating
        * @return the value of m_filesMigrating
        */
-      u_signed64 filesMigrating() const {
+      int filesMigrating() const {
         return m_filesMigrating;
       }
 
@@ -146,7 +146,7 @@ namespace castor {
        * Set the value of m_filesMigrating
        * @param new_var the new value of m_filesMigrating
        */
-      void setFilesMigrating(u_signed64 new_var) {
+      void setFilesMigrating(int new_var) {
         m_filesMigrating = new_var;
       }
 
@@ -154,7 +154,7 @@ namespace castor {
        * Get the value of m_filesStaging
        * @return the value of m_filesStaging
        */
-      u_signed64 filesStaging() const {
+      int filesStaging() const {
         return m_filesStaging;
       }
 
@@ -162,7 +162,7 @@ namespace castor {
        * Set the value of m_filesStaging
        * @param new_var the new value of m_filesStaging
        */
-      void setFilesStaging(u_signed64 new_var) {
+      void setFilesStaging(int new_var) {
         m_filesStaging = new_var;
       }
 
@@ -170,7 +170,7 @@ namespace castor {
        * Get the value of m_files
        * @return the value of m_files
        */
-      u_signed64 files() const {
+      int files() const {
         return m_files;
       }
 
@@ -178,7 +178,7 @@ namespace castor {
        * Set the value of m_files
        * @param new_var the new value of m_files
        */
-      void setFiles(u_signed64 new_var) {
+      void setFiles(int new_var) {
         m_files = new_var;
       }
 
@@ -186,7 +186,7 @@ namespace castor {
        * Get the value of m_filesFailed
        * @return the value of m_filesFailed
        */
-      u_signed64 filesFailed() const {
+      int filesFailed() const {
         return m_filesFailed;
       }
 
@@ -194,7 +194,7 @@ namespace castor {
        * Set the value of m_filesFailed
        * @param new_var the new value of m_filesFailed
        */
-      void setFilesFailed(u_signed64 new_var) {
+      void setFilesFailed(int new_var) {
         m_filesFailed = new_var;
       }
 
@@ -234,7 +234,7 @@ namespace castor {
        * Get the value of m_filesStaged
        * @return the value of m_filesStaged
        */
-      u_signed64 filesStaged() const {
+      int filesStaged() const {
         return m_filesStaged;
       }
 
@@ -242,7 +242,7 @@ namespace castor {
        * Set the value of m_filesStaged
        * @param new_var the new value of m_filesStaged
        */
-      void setFilesStaged(u_signed64 new_var) {
+      void setFilesStaged(int new_var) {
         m_filesStaged = new_var;
       }
 
@@ -250,7 +250,7 @@ namespace castor {
        * Get the value of m_filesFailedSubmit
        * @return the value of m_filesFailedSubmit
        */
-      u_signed64 filesFailedSubmit() const {
+      int filesFailedSubmit() const {
         return m_filesFailedSubmit;
       }
 
@@ -258,7 +258,7 @@ namespace castor {
        * Set the value of m_filesFailedSubmit
        * @param new_var the new value of m_filesFailedSubmit
        */
-      void setFilesFailedSubmit(u_signed64 new_var) {
+      void setFilesFailedSubmit(int new_var) {
         m_filesFailedSubmit = new_var;
       }
 
@@ -363,21 +363,21 @@ namespace castor {
 
       u_signed64 m_xsize;
 
-      u_signed64 m_filesMigrating;
+      int m_filesMigrating;
 
-      u_signed64 m_filesStaging;
+      int m_filesStaging;
 
-      u_signed64 m_files;
+      int m_files;
 
-      u_signed64 m_filesFailed;
+      int m_filesFailed;
 
       std::string m_cuuid;
 
       u_signed64 m_submitTime;
 
-      u_signed64 m_filesStaged;
+      int m_filesStaged;
 
-      u_signed64 m_filesFailedSubmit;
+      int m_filesFailedSubmit;
 
       u_signed64 m_retryNb;
 
