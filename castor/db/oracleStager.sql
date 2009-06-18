@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.738 $ $Date: 2009/05/28 13:31:05 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.739 $ $Date: 2009/06/18 14:24:42 $ $Author: sponcec3 $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -430,28 +430,40 @@ CREATE OR REPLACE PROCEDURE subRequestToDo(service IN VARCHAR2,
                                            srProtocol OUT VARCHAR2, srXsize OUT INTEGER, srPriority OUT INTEGER,
                                            srStatus OUT INTEGER, srModeBits OUT INTEGER, srFlags OUT INTEGER,
                                            srSubReqId OUT VARCHAR2, srAnswered OUT INTEGER, srSvcHandler OUT VARCHAR2) AS
-InvalidRowid EXCEPTION;
-PRAGMA EXCEPTION_INIT (InvalidRowid, -10632);
+  CURSOR SRcur IS SELECT /*+ FIRST_ROWS(10) INDEX(SR I_SubRequest_RT_CT_ID) */ SR.id
+                    FROM SubRequest PARTITION (P_STATUS_0_1_2) SR
+                   WHERE SR.svcHandler = service
+                   ORDER BY SR.creationTime ASC;
+  SrLocked EXCEPTION;
+  PRAGMA EXCEPTION_INIT (SrLocked, -54);
+  srIntId NUMBER;
 BEGIN
-  srId := 0;
-  UPDATE SubRequest SET status = 3, subReqId = nvl(subReqId, uuidGen()) -- WAITSCHED
-   WHERE id = (
-     SELECT id FROM (
-       SELECT /*+ INDEX(SR I_SubRequest_RT_CT_ID) */ SR.id
-         FROM SubRequest PARTITION (P_STATUS_0_1_2) SR
-        WHERE SR.svcHandler = service
-        ORDER BY SR.creationTime ASC
-     )
-      WHERE ROWNUM < 2
-  )
-  RETURNING id, retryCounter, fileName, protocol, xsize, priority, status, modeBits, flags, subReqId, answered, svcHandler
-  INTO srId, srRetryCounter, srFileName, srProtocol, srXsize, srPriority, srStatus, srModeBits, srFlags, srSubReqId, srAnswered, srSvcHandler;
-EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- just return srId = 0, nothing to do
-  NULL;
-WHEN InvalidRowid THEN
-  -- Ignore random ORA-10632 errors (invalid rowid) due to interferences with the online shrinking
-  NULL;
+  OPEN SRcur;
+  -- Loop on candidates until we can lock one
+  LOOP
+    -- Fetch next candidate
+    FETCH SRcur INTO srIntId;
+    EXIT WHEN SRcur%NOTFOUND;
+    BEGIN
+      -- Try to take a lock on the current candidate, and revalidate its status
+      SELECT id INTO srIntId FROM SubRequest PARTITION (P_STATUS_0_1_2) SR WHERE id = srIntId FOR UPDATE NOWAIT;
+      -- Since we are here, we got the lock. We have our winner, let's update it
+      UPDATE SubRequest
+         SET status = 3, subReqId = nvl(subReqId, uuidGen()) -- WAITSCHED
+       WHERE id = srIntId
+      RETURNING id, retryCounter, fileName, protocol, xsize, priority, status, modeBits, flags, subReqId, answered, svcHandler
+        INTO srId, srRetryCounter, srFileName, srProtocol, srXsize, srPriority, srStatus, srModeBits, srFlags, srSubReqId, srAnswered, srSvcHandler;
+      EXIT;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        -- Got to next candidate, this subrequest was processed already and its status changed
+        NULL;
+      WHEN SrLocked THEN
+        -- Go to next candidate, this subrequest is being processed by another thread
+        NULL;
+    END;
+  END LOOP;
+  CLOSE SRcur;
 END;
 /
 
