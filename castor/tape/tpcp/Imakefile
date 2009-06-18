@@ -70,8 +70,11 @@ TAPEGATEWAY_IO_SRCS = \
 TPCPBIN_SRCS = \
   ../utils/utils.cpp \
   Action.cpp \
+  DataMover.cpp \
+  Dumper.cpp \
   TpcpCommand.cpp \
   TpcpMain.cpp \
+  Verifier.cpp \
   $(TAPEGATEWAY_MESSAGES_SRCS) \
   $(TAPEGATEWAY_IO_SRCS)
 TPCPBIN_OBJS = $(TPCPBIN_SRCS:.cpp=.Osuf)

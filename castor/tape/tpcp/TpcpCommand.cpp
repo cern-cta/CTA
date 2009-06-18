@@ -42,6 +42,7 @@
 #include <getopt.h>
 #include <iostream>
 #include <list>
+#include <string.h>
 #include <poll.h>
 
 
@@ -50,7 +51,7 @@
 //------------------------------------------------------------------------------
 castor::tape::tpcp::TpcpCommand::TpcpCommand() throw () :
   m_callbackSocket(false) {
-  // Do nothing
+  utils::setBytes(m_dgn, '\0');
 }
 
 
@@ -83,6 +84,7 @@ void castor::tape::tpcp::TpcpCommand::usage(std::ostream &os,
     "Options:\n"
     "\n"
     "\t-d, --debug             Print debug information\n"
+    "\t-f, --file              List of file name\n"
     "\t-h, --help              Print this help and exit\n"
     "\t-q, --sequence sequence The tape file sequences\n"
     "\n"
@@ -98,6 +100,7 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
 
   static struct option longopts[] = {
     {"debug"   ,       NO_ARGUMENT, NULL, 'd'},
+    {"file"   ,        NO_ARGUMENT, NULL, 'f'},
     {"help"    ,       NO_ARGUMENT, NULL, 'h'},
     {"sequence", REQUIRED_ARGUMENT, NULL, 'q'},
     {NULL      , 0                , NULL,  0 }
@@ -108,11 +111,15 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
 
   char c;
 
-  while((c = getopt_long(argc, argv, ":dhq:", longopts, NULL)) != -1) {
+  while((c = getopt_long(argc, argv, ":df:hq:", longopts, NULL)) != -1) {
 
     switch (c) {
     case 'd':
       m_parsedCommandLine.debugOptionSet = true;
+      break;
+
+    case 'f':
+      parseFilenames(optarg);
       break;
 
     case 'h':
@@ -244,172 +251,47 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) {
       return 0;
     }
 
-/*
-    // Get the port range to be used
-    int   lowPort  = LOW_CLIENT_PORT_RANGE;
-    int   highPort = HIGH_CLIENT_PORT_RANGE;
-    char* sport;
-    if((sport = getconfent((char *)CLIENT_CONF,(char *)LOWPORT_CONF,0)) != 0) {
-      lowPort = castor::System::porttoi(sport);
+    // Get the DGN of the tape to be used
+    // TO BE DONE
+
+    // Setup the aggregator callback socket
+    // TO BE DONE
+
+    // Send the request for a drive to the VDQM
+    // TO BE DONE
+
+    // Wait for the callback from the aggregator
+    // TO BE DONE
+
+    // Dispatch the Action to appropriate Action handler
+    try {
+      switch(m_parsedCommandLine.action.value()) {
+      case Action::READ:
+        m_dataMover.run(m_parsedCommandLine, m_dgn, m_callbackSocket);
+        break;
+      case Action::WRITE:
+        m_dataMover.run(m_parsedCommandLine, m_dgn, m_callbackSocket);
+        break;
+      case Action::DUMP:
+        m_dumper.run(m_parsedCommandLine, m_dgn, m_callbackSocket);
+        break;
+      case Action::VERIFY:
+        m_verifier.run(m_parsedCommandLine, m_dgn, m_callbackSocket);
+        break;
+      default:
+        {
+          castor::exception::Internal ex;
+
+          ex.getMessage() << "Action unknown to ActionHandler dispatch logic";
+          throw(ex);
+        }
+      }
+    } catch(castor::exception::Exception &ex) {
+      std::cerr << "Failed to perform " << m_parsedCommandLine.action.str()
+        << " action: " << ex.getMessage().str();
+
+      return 1;
     }
-    if((sport = getconfent((char *)CLIENT_CONF,(char *)HIGHPORT_CONF,0)) != 0) {
-      highPort = castor::System::porttoi(sport);
-    }
-
-    // Bind the socket
-    m_callbackSocket.bind(lowPort, highPort);
-    m_callbackSocket.listen();
-
-    unsigned short port = 0;
-    unsigned long  ip   = 0;
-    m_callbackSocket.getPortIp(port, ip);
-
-    int VolReqID = 0;
-    // Send the request to read a tape
-    std::cerr<<"vdqm_SendAggregatorVolReq (NULL, " << VolReqID << ", " 
-      << m_parsedCommandLine.vid <<", "<< m_parsedCommandLine.dgn
-      <<", NULL, NULL, "
-      << actionToString(m_parsedCommandLine.action) <<", "
-      <<port<< ")"<<std::endl;
-    // *nv, *reqID, *VID, *dgn, *server, *unit, mode, client_port
-    int rc = 0;
-    rc = vdqm_SendAggregatorVolReq(NULL, &VolReqID,  m_parsedCommandLine.vid, 
-       m_parsedCommandLine.dgn, NULL, NULL, 
-       actionToString(m_parsedCommandLine.action), port);
-
-    if ( rc == -1 ) {
-      char codeStr[STRERRORBUFLEN];
-      strerror_r(errno, codeStr, sizeof(codeStr));
-      TAPE_THROW_EX(castor::exception::Internal,
-        ": vdqm_SendAggregatorVolReq()"
-        ": Error=" << codeStr);
-    }
-  
-    fprintf(stdout,
-      "Volume request successfully submitted. Volume request ID:%d\n", VolReqID);
-
-    //.........................................................................
-    // Wait for the Aggreator messege 
-    std::auto_ptr<castor::io::ServerSocket> socket(
-      (castor::io::ServerSocket*)waitForCallBack());
-
-    std::auto_ptr<castor::IObject>  obj(socket->readObject());
-    std::cerr<<"Obj type: " << obj->type()<<std::endl;
-    // OBJ_VolumeRequest = 168
-
-    //.........................................................................
-    // Create and send the Volume Request message to the Aggregator 
-    castor::tape::tapegateway::Volume volumeMsg; 
-
-    volumeMsg.setVid(vid);
-    volumeMsg.setMode(mode);
-    volumeMsg.setLabel("aul\0");
-    volumeMsg.setTransactionId(VolReqID);
-    volumeMsg.setDensity("1000GC\0");
-
-    socket->sendObject(volumeMsg);
-
-    // close the socket!!
-    //delete(socket);  //
-    delete(socket.release());
-
-    //.........................................................................
-    // Wait for the Aggreator messege 
-    socket.reset((castor::io::ServerSocket*)waitForCallBack());
-
-    std::auto_ptr<castor::IObject>  obj2(socket->readObject());
-    std::cerr<<"Obj type: " << obj2->type()<<std::endl;
-    // OBJ_FileToRecallRequest = 166
-
-
-    // Loop over all the files to recall
-
-    {
-      //.........................................................................
-      // Send a FileToRecall message to the Aggregator
-      castor::tape::tapegateway::FileToRecall fileToRecallMsg;
-  
-      fileToRecallMsg.setTransactionId(VolReqID);
-      fileToRecallMsg.setNshost("castorns\0");
-      fileToRecallMsg.setFileid(320723286);
-      fileToRecallMsg.setFseq(5);
-      fileToRecallMsg.setPositionCommandCode(
-        castor::tape::tapegateway::PositionCommandCode(3));
-    
-      fileToRecallMsg.setPath("lxc2disk15.cern.ch:/tmp/volume_I02000_file_n5");
-      fileToRecallMsg.setBlockId0(0);
-      fileToRecallMsg.setBlockId1(0);
-      fileToRecallMsg.setBlockId2(0);
-      fileToRecallMsg.setBlockId3(41);
-    
-      socket->sendObject(fileToRecallMsg);
-
-      // close the socket!!
-      delete(socket.release());
-
-
-      //.........................................................................
-      // Wait for the Aggreator messege 
-      socket.reset((castor::io::ServerSocket*)waitForCallBack());
-
-      std::auto_ptr<castor::IObject>  obj3(socket->readObject());
-      std::cerr<<"Obj type: " << obj3->type()<<std::endl;
-      // OBJ_FileToRecallRequest = 166
-    }
-
-
-    //.........................................................................
-    // Sent a NoMoreFile message
-    castor::tape::tapegateway::NoMoreFiles noMore;
-    noMore.setTransactionId(VolReqID);
-
-    socket->sendObject(noMore);
-
-    delete(socket.release());
-
-
-    //.........................................................................
-    // Wait for the Aggreator messege 
-    socket.reset((castor::io::ServerSocket*)waitForCallBack());
-
-    std::auto_ptr<castor::IObject>  obj4(socket->readObject());
-    std::cerr<<"Obj type: " << obj4->type()<<std::endl;
-    //OBJ_FileRecalledNotification = 163
-
-    //.........................................................................
-    // Notification Acknowledge 
-    castor::tape::tapegateway::NotificationAcknowledge notificationAcknowledge;
-    notificationAcknowledge.setTransactionId(VolReqID);
-    
-    socket->sendObject(notificationAcknowledge);
-
-    delete(socket.release());
-
-    //.........................................................................
-    // Wait for the Aggreator messege 
-    socket.reset((castor::io::ServerSocket*)waitForCallBack());
-
-    std::auto_ptr<castor::IObject>  obj5(socket->readObject());
-    std::cerr<<"Obj type: " << obj5->type()<<std::endl;
-    // OBJ_EndNotification = 172
-
-    
-    //.........................................................................
-    // Notification Acknowledge
-    socket->sendObject(notificationAcknowledge);
-
-    delete(socket.release());
-
-    //.........................................................................
-
-    std::cerr<<"We have probably recalled a file (lxc2disk15.cern.ch:/tmp/volume_I02000_file_n5)"<<std::endl;
-
-
-    
-
-
-
-*/
   } catch (castor::exception::Exception &ex) {
     std::cerr << std::endl << "Failed to start daemon: "
       << ex.getMessage().str() << std::endl << std::endl;
@@ -426,7 +308,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) {
 // writeTapeFseqRangeList
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TpcpCommand::writeTapeFseqRangeList(std::ostream &os,
-  castor::tape::tpcp::TpcpCommand::Uint32RangeList &list) {
+  castor::tape::tpcp::Uint32RangeList &list) {
   for(Uint32RangeList::iterator itor=list.begin(); itor!=list.end(); itor++) {
     if(itor!=list.begin()) {
       os << ",";
@@ -440,6 +322,21 @@ void castor::tape::tpcp::TpcpCommand::writeTapeFseqRangeList(std::ostream &os,
     } else {
       os << "END";
     }
+  }
+}
+
+//------------------------------------------------------------------------------
+// writeFilenameList
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::TpcpCommand::writeFilenameList(std::ostream &os,
+  std::list<std::string> &list) {
+  for(std::list<std::string>::iterator itor=list.begin(); itor!=list.end();
+    itor++) {
+    if(itor!=list.begin()) {
+      os << ",";
+    }
+
+    os << *itor; 
   }
 }
 
@@ -470,6 +367,14 @@ void castor::tape::tpcp::TpcpCommand::writeParsedCommandLine(std::ostream &os) {
 
   os << "tapeFseqRanges=";
   writeTapeFseqRangeList(os, m_parsedCommandLine.tapeFseqRanges);
+  os << std::endl;
+
+  os << "filenamesList =";
+  writeFilenameList(os, m_parsedCommandLine.filenamesList);
+  os << std::endl;
+  os << "NumOfFiles    ="<< countMinNumberOfFiles();
+  os << std::endl;
+  os << "nbRangesWithEnd="<< nbRangesWithEnd();
   os << std::endl;
 }
 
@@ -600,13 +505,18 @@ void castor::tape::tpcp::TpcpCommand::parseTapeFileSequence(
       // Parse the "m" of "m-n" or "m-"
       if(!utils::isValidUInt(boundaryStrs[0].c_str())) {
         castor::exception::InvalidArgument ex;
-        ex.getMessage() << "Invalid range string: '" << boundaryStrs[0]
+        ex.getMessage() << "Invalid range string: '" << *itor
           << "': The lower boundary should be an unsigned integer";
         throw ex;
       }
 
       range.lower = atoi(boundaryStrs[0].c_str());
-
+      if(range.lower == 0){
+        castor::exception::InvalidArgument ex;
+        ex.getMessage() << "Invalid range string: '" << *itor
+          << "': The lower boubary can not be '0'";
+        throw ex;
+      }
       // If "m-"
       if(boundaryStrs[1] == "") {
         // Inifinity (or until the end of tape) is represented by 0
@@ -616,14 +526,28 @@ void castor::tape::tpcp::TpcpCommand::parseTapeFileSequence(
         // Parse the "n" of "m-n"
         if(!utils::isValidUInt(boundaryStrs[1].c_str())) {
           castor::exception::InvalidArgument ex;
-          ex.getMessage() << "Invalid range string: '" << boundaryStrs[1]
+          ex.getMessage() << "Invalid range string: '" << *itor
             << "': The upper boundary should be an unsigned integer";
           throw ex;
         }
         range.upper = atoi(boundaryStrs[1].c_str());
+
+        if(range.upper == 0){
+          castor::exception::InvalidArgument ex;
+          ex.getMessage() << "Invalid range string: '" << *itor
+            << "': The uppre boubary can not be '0'";
+          throw ex;
+        }
+        if(range.upper < range.lower){
+          castor::exception::InvalidArgument ex;
+          ex.getMessage() << "Invalid range string: '" << *itor
+            << "': The uppre boubary must be greater or equal of the lower bounbary";
+          throw ex;
+        }
       }
 
       m_parsedCommandLine.tapeFseqRanges.push_back(range);
+
       break;
 
     default: // Range string is invalid
@@ -634,3 +558,70 @@ void castor::tape::tpcp::TpcpCommand::parseTapeFileSequence(
     }
   }
 }
+
+//------------------------------------------------------------------------------
+// parseFilenames
+//------------------------------------------------------------------------------
+
+void castor::tape::tpcp::TpcpCommand::parseFilenames(char *const str)
+  throw (castor::exception::Exception) {
+
+  std::vector<std::string> filenameStrs;
+
+  // Filename strings are separated by commas
+  utils::splitString(str, ',', filenameStrs);
+
+  // For each filename string
+  for(std::vector<std::string>::iterator itor=filenameStrs.begin();
+    itor!=filenameStrs.end(); itor++) {
+
+    if((*itor).length() == 0){
+      castor::exception::InvalidArgument ex;
+      ex.getMessage() << "Invalid file name: '" << *itor
+        << "': A filename cannot be an empty string.";
+      throw ex;
+    }
+    m_parsedCommandLine.filenamesList.push_back(*itor);
+  }
+}
+
+//------------------------------------------------------------------------------
+// countMinNumberOfFiles
+//------------------------------------------------------------------------------
+
+int castor::tape::tpcp::TpcpCommand::countMinNumberOfFiles()
+  throw (castor::exception::Exception) {
+  
+  int count = 0;
+  // Loop through all ranges
+  for(Uint32RangeList::iterator itor=m_parsedCommandLine.tapeFseqRanges.begin();
+    itor!=m_parsedCommandLine.tapeFseqRanges.end(); itor++) {
+  
+    if(itor->upper != 0 ){
+        count += (itor->upper - itor->lower) + 1;
+    } else {
+      count++;
+    }
+  }
+  return count; 
+}
+
+//------------------------------------------------------------------------------
+// nbRangesWithEnd
+//------------------------------------------------------------------------------
+
+int castor::tape::tpcp::TpcpCommand::nbRangesWithEnd()
+  throw (castor::exception::Exception) {
+
+  int count = 0;
+  // Loop through all ranges
+  for(Uint32RangeList::iterator itor=m_parsedCommandLine.tapeFseqRanges.begin();
+    itor!=m_parsedCommandLine.tapeFseqRanges.end(); itor++) {
+
+    if(itor->upper == 0 ){
+        count++;
+    } 
+  }
+  return count;
+}
+

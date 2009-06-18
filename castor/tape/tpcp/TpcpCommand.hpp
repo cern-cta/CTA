@@ -30,6 +30,10 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include "castor/tape/tpcp/Action.hpp"
+#include "castor/tape/tpcp/DataMover.hpp"
+#include "castor/tape/tpcp/Dumper.hpp"
+#include "castor/tape/tpcp/ParsedCommandLine.hpp"
+#include "castor/tape/tpcp/Verifier.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <iostream>
@@ -42,7 +46,16 @@ namespace tape   {
 namespace tpcp   {
 
 /**
- * The tape copy command.
+ * This class carries out the following steps:
+ * <ul>
+ * <li>Parses the command-line
+ * <li>Gets the DGN of the tape to be used from the VMGR
+ * <li>Creates the aggregator callback socket
+ * <li>Sends the request for a drive to the VDQM
+ * <li>Delegates the requested action (READ, WRITE, DUMP or VERIFY) to the
+ * appropriate action handler (DataMover for READ and WRITE, Dumper for DUMP or
+ * Verifier for VERIFY).
+ * </ul>
  */
 class TpcpCommand : public castor::BaseObject {
 public:
@@ -66,23 +79,34 @@ public:
 private:
 
   /**
-   * TCP/IP callback socket.
+   * The results of parsing the command-line.
+   */
+  ParsedCommandLine m_parsedCommandLine;
+
+  /**
+   * The DGN of the tape to be used.
+   */
+  char m_dgn[CA_MAXDGNLEN + 1];
+
+  /**
+   * TCP/IP aggregator callback socket.
    */
   castor::io::ServerSocket m_callbackSocket;
 
   /**
-   * A range of uint32_t's specified by an inclusive upper and lower set of
-   * bounds.
+   * ActionHandler responsible for performing the READ and WRITE tape actions.
    */
-  struct Uint32Range {
-    uint32_t lower;
-    uint32_t upper;
-  };
+  DataMover m_dataMover;
 
   /**
-   * List of ranges.
+   * ActionHandler responsible for performing the DUMP tape action.
    */
-  typedef std::list<Uint32Range> Uint32RangeList;
+  Dumper m_dumper;
+
+  /**
+   * ActionHandler responsible for performing the VERIFY tape action.
+   */
+  Verifier m_verifier;
 
   /**
    * Writes the command-line usage message of tpcp onto the specified output
@@ -92,29 +116,6 @@ private:
    * @param programName The program name to be used in the message.
    */
   void usage(std::ostream &os, const char *const programName) throw();
-
-  /**
-   * Data type used to store the results of parsing the command-line.
-   */
-  struct ParsedCommandLine {
-    bool            debugOptionSet;
-    bool            helpOptionSet;
-    Action          action;
-    const char      *vid;
-    Uint32RangeList tapeFseqRanges;
-
-    ParsedCommandLine() :
-      debugOptionSet(false),
-      helpOptionSet(false),
-      action(Action::read),
-      vid(NULL) {
-    }
-  };
-
-  /**
-   * The results of parsing the command-line.
-   */
-  ParsedCommandLine m_parsedCommandLine;
 
   /**
    * Parses the specified command-line arguments.
@@ -131,6 +132,12 @@ private:
    */
   void writeTapeFseqRangeList(std::ostream &os, Uint32RangeList &list);
 
+  /**
+   * Writes the specified list of filenames to the specified
+   * output stream.
+   */
+  void writeFilenameList(std::ostream &os, std::list<std::string> &list);
+ 
   /**
    * Writes the parsed command-line to the specified output stream.
    */
@@ -165,6 +172,27 @@ private:
    */
   void parseTapeFileSequence(char *const str) 
     throw (castor::exception::Exception);
+
+  /**
+   * Parse the specified filenames parameter string and store the
+   * resulting filenames into m_parsedCommandLine.filenamesList.
+   *
+   * @param str The string received as an argument for the filenameList
+   */
+   void parseFilenames(char *const str)
+     throw (castor::exception::Exception);
+
+  /**
+   * Count the minimum number of files specified in the tape file ranges
+   * provided as a parameter
+   */
+  int countMinNumberOfFiles() throw (castor::exception::Exception);
+
+  /**
+   * Count the number of ranges that contains a range untile the end of 
+   * tape ('m-').
+   */
+  int nbRangesWithEnd() throw (castor::exception::Exception);
 
 
 }; // class TpcpCommand
