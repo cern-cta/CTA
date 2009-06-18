@@ -460,14 +460,14 @@ void castor::db::cnv::DbRepackSubRequestCnv::createRep(castor::IAddress* address
     // Now Save the current object
     m_insertStatement->setString(1, obj->vid());
     m_insertStatement->setUInt64(2, obj->xsize());
-    m_insertStatement->setUInt64(3, obj->filesMigrating());
-    m_insertStatement->setUInt64(4, obj->filesStaging());
-    m_insertStatement->setUInt64(5, obj->files());
-    m_insertStatement->setUInt64(6, obj->filesFailed());
+    m_insertStatement->setInt(3, obj->filesMigrating());
+    m_insertStatement->setInt(4, obj->filesStaging());
+    m_insertStatement->setInt(5, obj->files());
+    m_insertStatement->setInt(6, obj->filesFailed());
     m_insertStatement->setString(7, obj->cuuid());
     m_insertStatement->setUInt64(8, obj->submitTime());
-    m_insertStatement->setUInt64(9, obj->filesStaged());
-    m_insertStatement->setUInt64(10, obj->filesFailedSubmit());
+    m_insertStatement->setInt(9, obj->filesStaged());
+    m_insertStatement->setInt(10, obj->filesFailedSubmit());
     m_insertStatement->setUInt64(11, obj->retryNb());
     m_insertStatement->setUInt64(12, (type == OBJ_RepackRequest && obj->repackrequest() != 0) ? obj->repackrequest()->id() : 0);
     m_insertStatement->setInt(13, (int)obj->status());
@@ -578,7 +578,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::bulkCreateRep(castor::IAddress* add
     m_insertStatement->setDataBuffer
       (2, xsizeBuffer, castor::db::DBTYPE_UINT64, sizeof(xsizeBuffer[0]), xsizeBufLens);
     // build the buffers for filesMigrating
-    double* filesMigratingBuffer = (double*) malloc(nb * sizeof(double));
+    int* filesMigratingBuffer = (int*) malloc(nb * sizeof(int));
     if (filesMigratingBuffer == 0) {
       castor::exception::OutOfMemory e;
       throw e;
@@ -592,12 +592,12 @@ void castor::db::cnv::DbRepackSubRequestCnv::bulkCreateRep(castor::IAddress* add
     allocMem.push_back(filesMigratingBufLens);
     for (int i = 0; i < nb; i++) {
       filesMigratingBuffer[i] = objs[i]->filesMigrating();
-      filesMigratingBufLens[i] = sizeof(double);
+      filesMigratingBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (3, filesMigratingBuffer, castor::db::DBTYPE_UINT64, sizeof(filesMigratingBuffer[0]), filesMigratingBufLens);
+      (3, filesMigratingBuffer, castor::db::DBTYPE_INT, sizeof(filesMigratingBuffer[0]), filesMigratingBufLens);
     // build the buffers for filesStaging
-    double* filesStagingBuffer = (double*) malloc(nb * sizeof(double));
+    int* filesStagingBuffer = (int*) malloc(nb * sizeof(int));
     if (filesStagingBuffer == 0) {
       castor::exception::OutOfMemory e;
       throw e;
@@ -611,12 +611,12 @@ void castor::db::cnv::DbRepackSubRequestCnv::bulkCreateRep(castor::IAddress* add
     allocMem.push_back(filesStagingBufLens);
     for (int i = 0; i < nb; i++) {
       filesStagingBuffer[i] = objs[i]->filesStaging();
-      filesStagingBufLens[i] = sizeof(double);
+      filesStagingBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (4, filesStagingBuffer, castor::db::DBTYPE_UINT64, sizeof(filesStagingBuffer[0]), filesStagingBufLens);
+      (4, filesStagingBuffer, castor::db::DBTYPE_INT, sizeof(filesStagingBuffer[0]), filesStagingBufLens);
     // build the buffers for files
-    double* filesBuffer = (double*) malloc(nb * sizeof(double));
+    int* filesBuffer = (int*) malloc(nb * sizeof(int));
     if (filesBuffer == 0) {
       castor::exception::OutOfMemory e;
       throw e;
@@ -630,12 +630,12 @@ void castor::db::cnv::DbRepackSubRequestCnv::bulkCreateRep(castor::IAddress* add
     allocMem.push_back(filesBufLens);
     for (int i = 0; i < nb; i++) {
       filesBuffer[i] = objs[i]->files();
-      filesBufLens[i] = sizeof(double);
+      filesBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (5, filesBuffer, castor::db::DBTYPE_UINT64, sizeof(filesBuffer[0]), filesBufLens);
+      (5, filesBuffer, castor::db::DBTYPE_INT, sizeof(filesBuffer[0]), filesBufLens);
     // build the buffers for filesFailed
-    double* filesFailedBuffer = (double*) malloc(nb * sizeof(double));
+    int* filesFailedBuffer = (int*) malloc(nb * sizeof(int));
     if (filesFailedBuffer == 0) {
       castor::exception::OutOfMemory e;
       throw e;
@@ -649,10 +649,10 @@ void castor::db::cnv::DbRepackSubRequestCnv::bulkCreateRep(castor::IAddress* add
     allocMem.push_back(filesFailedBufLens);
     for (int i = 0; i < nb; i++) {
       filesFailedBuffer[i] = objs[i]->filesFailed();
-      filesFailedBufLens[i] = sizeof(double);
+      filesFailedBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (6, filesFailedBuffer, castor::db::DBTYPE_UINT64, sizeof(filesFailedBuffer[0]), filesFailedBufLens);
+      (6, filesFailedBuffer, castor::db::DBTYPE_INT, sizeof(filesFailedBuffer[0]), filesFailedBufLens);
     // build the buffers for cuuid
     unsigned int cuuidMaxLen = 0;
     for (int i = 0; i < nb; i++) {
@@ -697,7 +697,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::bulkCreateRep(castor::IAddress* add
     m_insertStatement->setDataBuffer
       (8, submitTimeBuffer, castor::db::DBTYPE_UINT64, sizeof(submitTimeBuffer[0]), submitTimeBufLens);
     // build the buffers for filesStaged
-    double* filesStagedBuffer = (double*) malloc(nb * sizeof(double));
+    int* filesStagedBuffer = (int*) malloc(nb * sizeof(int));
     if (filesStagedBuffer == 0) {
       castor::exception::OutOfMemory e;
       throw e;
@@ -711,12 +711,12 @@ void castor::db::cnv::DbRepackSubRequestCnv::bulkCreateRep(castor::IAddress* add
     allocMem.push_back(filesStagedBufLens);
     for (int i = 0; i < nb; i++) {
       filesStagedBuffer[i] = objs[i]->filesStaged();
-      filesStagedBufLens[i] = sizeof(double);
+      filesStagedBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (9, filesStagedBuffer, castor::db::DBTYPE_UINT64, sizeof(filesStagedBuffer[0]), filesStagedBufLens);
+      (9, filesStagedBuffer, castor::db::DBTYPE_INT, sizeof(filesStagedBuffer[0]), filesStagedBufLens);
     // build the buffers for filesFailedSubmit
-    double* filesFailedSubmitBuffer = (double*) malloc(nb * sizeof(double));
+    int* filesFailedSubmitBuffer = (int*) malloc(nb * sizeof(int));
     if (filesFailedSubmitBuffer == 0) {
       castor::exception::OutOfMemory e;
       throw e;
@@ -730,10 +730,10 @@ void castor::db::cnv::DbRepackSubRequestCnv::bulkCreateRep(castor::IAddress* add
     allocMem.push_back(filesFailedSubmitBufLens);
     for (int i = 0; i < nb; i++) {
       filesFailedSubmitBuffer[i] = objs[i]->filesFailedSubmit();
-      filesFailedSubmitBufLens[i] = sizeof(double);
+      filesFailedSubmitBufLens[i] = sizeof(int);
     }
     m_insertStatement->setDataBuffer
-      (10, filesFailedSubmitBuffer, castor::db::DBTYPE_UINT64, sizeof(filesFailedSubmitBuffer[0]), filesFailedSubmitBufLens);
+      (10, filesFailedSubmitBuffer, castor::db::DBTYPE_INT, sizeof(filesFailedSubmitBuffer[0]), filesFailedSubmitBufLens);
     // build the buffers for retryNb
     double* retryNbBuffer = (double*) malloc(nb * sizeof(double));
     if (retryNbBuffer == 0) {
@@ -877,14 +877,14 @@ void castor::db::cnv::DbRepackSubRequestCnv::updateRep(castor::IAddress* address
     // Update the current object
     m_updateStatement->setString(1, obj->vid());
     m_updateStatement->setUInt64(2, obj->xsize());
-    m_updateStatement->setUInt64(3, obj->filesMigrating());
-    m_updateStatement->setUInt64(4, obj->filesStaging());
-    m_updateStatement->setUInt64(5, obj->files());
-    m_updateStatement->setUInt64(6, obj->filesFailed());
+    m_updateStatement->setInt(3, obj->filesMigrating());
+    m_updateStatement->setInt(4, obj->filesStaging());
+    m_updateStatement->setInt(5, obj->files());
+    m_updateStatement->setInt(6, obj->filesFailed());
     m_updateStatement->setString(7, obj->cuuid());
     m_updateStatement->setUInt64(8, obj->submitTime());
-    m_updateStatement->setUInt64(9, obj->filesStaged());
-    m_updateStatement->setUInt64(10, obj->filesFailedSubmit());
+    m_updateStatement->setInt(9, obj->filesStaged());
+    m_updateStatement->setInt(10, obj->filesFailedSubmit());
     m_updateStatement->setUInt64(11, obj->retryNb());
     m_updateStatement->setInt(12, (int)obj->status());
     m_updateStatement->setUInt64(13, obj->id());
@@ -974,14 +974,14 @@ castor::IObject* castor::db::cnv::DbRepackSubRequestCnv::createObj(castor::IAddr
     // Now retrieve and set members
     object->setVid(rset->getString(1));
     object->setXsize(rset->getUInt64(2));
-    object->setFilesMigrating(rset->getUInt64(3));
-    object->setFilesStaging(rset->getUInt64(4));
-    object->setFiles(rset->getUInt64(5));
-    object->setFilesFailed(rset->getUInt64(6));
+    object->setFilesMigrating(rset->getInt(3));
+    object->setFilesStaging(rset->getInt(4));
+    object->setFiles(rset->getInt(5));
+    object->setFilesFailed(rset->getInt(6));
     object->setCuuid(rset->getString(7));
     object->setSubmitTime(rset->getUInt64(8));
-    object->setFilesStaged(rset->getUInt64(9));
-    object->setFilesFailedSubmit(rset->getUInt64(10));
+    object->setFilesStaged(rset->getInt(9));
+    object->setFilesFailedSubmit(rset->getInt(10));
     object->setRetryNb(rset->getUInt64(11));
     object->setId(rset->getUInt64(12));
     object->setStatus((enum castor::repack::RepackSubRequestStatusCode)rset->getInt(14));
@@ -1032,14 +1032,14 @@ castor::db::cnv::DbRepackSubRequestCnv::bulkCreateObj(castor::IAddress* address)
       // Now retrieve and set members
       object->setVid(rset->getString(1));
       object->setXsize(rset->getUInt64(2));
-      object->setFilesMigrating(rset->getUInt64(3));
-      object->setFilesStaging(rset->getUInt64(4));
-      object->setFiles(rset->getUInt64(5));
-      object->setFilesFailed(rset->getUInt64(6));
+      object->setFilesMigrating(rset->getInt(3));
+      object->setFilesStaging(rset->getInt(4));
+      object->setFiles(rset->getInt(5));
+      object->setFilesFailed(rset->getInt(6));
       object->setCuuid(rset->getString(7));
       object->setSubmitTime(rset->getUInt64(8));
-      object->setFilesStaged(rset->getUInt64(9));
-      object->setFilesFailedSubmit(rset->getUInt64(10));
+      object->setFilesStaged(rset->getInt(9));
+      object->setFilesFailedSubmit(rset->getInt(10));
       object->setRetryNb(rset->getUInt64(11));
       object->setId(rset->getUInt64(12));
       object->setStatus((enum castor::repack::RepackSubRequestStatusCode)rset->getInt(14));
@@ -1082,14 +1082,14 @@ void castor::db::cnv::DbRepackSubRequestCnv::updateObj(castor::IObject* obj)
       dynamic_cast<castor::repack::RepackSubRequest*>(obj);
     object->setVid(rset->getString(1));
     object->setXsize(rset->getUInt64(2));
-    object->setFilesMigrating(rset->getUInt64(3));
-    object->setFilesStaging(rset->getUInt64(4));
-    object->setFiles(rset->getUInt64(5));
-    object->setFilesFailed(rset->getUInt64(6));
+    object->setFilesMigrating(rset->getInt(3));
+    object->setFilesStaging(rset->getInt(4));
+    object->setFiles(rset->getInt(5));
+    object->setFilesFailed(rset->getInt(6));
     object->setCuuid(rset->getString(7));
     object->setSubmitTime(rset->getUInt64(8));
-    object->setFilesStaged(rset->getUInt64(9));
-    object->setFilesFailedSubmit(rset->getUInt64(10));
+    object->setFilesStaged(rset->getInt(9));
+    object->setFilesFailedSubmit(rset->getInt(10));
     object->setRetryNb(rset->getUInt64(11));
     object->setId(rset->getUInt64(12));
     object->setStatus((enum castor::repack::RepackSubRequestStatusCode)rset->getInt(14));
