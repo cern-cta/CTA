@@ -33,7 +33,8 @@
 namespace castor {
 namespace tape   {
   	
-  const size_t STRERRORBUFLEN = 256;
+  const size_t STRERRORBUFLEN  = 256;
+  const size_t VMGRERRORBUFLEN = 512;
 
 } // namespace tape
 } // namespace castor
