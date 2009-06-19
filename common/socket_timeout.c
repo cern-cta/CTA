@@ -135,7 +135,9 @@ int DLL_DECL netconnect_timeout(fd, addr, addr_size, timeout)
 
 #ifndef _WIN32
 	/* Restore previous handlers */
+	int save_errno = errno;
 	_netsignal(SIGPIPE, sigpipe);
+	errno = save_errno;
 #endif
 	/* Restore blocking socket if connect was successful */
 	if ( timeout >= 0 && rc == 0 ) {
@@ -150,7 +152,6 @@ int DLL_DECL netconnect_timeout(fd, addr, addr_size, timeout)
 
 	return(rc);
 }
-
 
 ssize_t DLL_DECL netread_timeout(fd, vptr, n, timeout)
      SOCKET fd;
@@ -195,7 +196,6 @@ ssize_t DLL_DECL netread_timeout(fd, vptr, n, timeout)
 	time_elapsed = 0;
 
 	while (nleft > 0) {
-
 		if ((select_status = _net_readable(fd, timeout - time_elapsed)) <= 0) {
 			if (select_status == 0) {
 				/* Timeout */
@@ -243,7 +243,9 @@ ssize_t DLL_DECL netread_timeout(fd, vptr, n, timeout)
 
 #ifndef _WIN32
 	/* Restore previous handlers */
+	int save_errno = errno;
 	_netsignal(SIGPIPE, sigpipe);
+	errno = save_errno;
 #endif
 
 	if (flag != 0) {
@@ -296,13 +298,11 @@ ssize_t DLL_DECL netwrite_timeout(fd, vptr, n, timeout)
 	time_elapsed = 0;
 
 	while (nleft > 0) {
-
 	  	/* Check if the client has closed its connection */
 		if (_net_isclosed(fd)) {
 			flag = -1;
 			break;
 		}
-
 		if ((select_status = _net_writable(fd, timeout - time_elapsed)) <= 0) {
 			if (select_status == 0) {
 				/* Timeout */
@@ -342,12 +342,9 @@ ssize_t DLL_DECL netwrite_timeout(fd, vptr, n, timeout)
 
 #ifndef _WIN32
 	/* Restore previous handlers */
-	{
-		int save_errno = errno;
-		_netsignal(SIGPIPE, sigpipe);
-		errno = save_errno;
-	}
-  
+	int save_errno = errno;
+	_netsignal(SIGPIPE, sigpipe);
+	errno = save_errno;
 #endif
 
 	if (flag != 0) {
@@ -360,8 +357,8 @@ ssize_t DLL_DECL netwrite_timeout(fd, vptr, n, timeout)
 
 #ifndef _WIN32
 Sigfunc *_netsignal(signo, func)
-int signo;
-Sigfunc *func;
+     int signo;
+     Sigfunc *func;
 {
 	struct sigaction	act, oact;
 	int n = 0;
