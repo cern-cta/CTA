@@ -44,9 +44,9 @@ BEGIN
   INSERT INTO LatencyStats
     (timestamp, interval, type, protocol, started, minTime, maxTime, avgTime,
      stddevTime, medianTime)
-    SELECT now - 5/1440 timestamp, interval, 
-           nvl(type, 'StageDiskCopyReplicaRequest') type,  protocol, 
-           count(*) started, min(waitTime) min, max(waitTime) max, 
+    SELECT now - 5/1440 timestamp, interval,
+           nvl(type, 'StageDiskCopyReplicaRequest') type,  protocol,
+           count(*) started, min(waitTime) min, max(waitTime) max,
            avg(waitTime) avg, stddev_pop(waitTime) stddev, median(waitTime) median
       FROM (
         SELECT waitTime,
@@ -408,7 +408,7 @@ BEGIN
   INSERT INTO ReplicationStats
     (timestamp, interval, sourceSvcClass, destSvcClass, transferred, totalSize,
      minSize, maxSize, avgSize, stddevSize, medianSize)
-    SELECT now - 5/1440 timestamp, interval, src, dest, count(*) transferred, 
+    SELECT now - 5/1440 timestamp, interval, src, dest, count(*) transferred,
            sum(params.value) totalsize, min(params.value) min, max(params.value) max,
            avg(params.value) avg, stddev_pop(params.value) stddev, median(params.value) median
       FROM (
