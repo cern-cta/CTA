@@ -31,10 +31,10 @@
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/GatewayTxRx.hpp"
 #include "castor/tape/aggregator/MessageHeader.hpp"
-#include "castor/tape/aggregator/Net.hpp"
 #include "castor/tape/aggregator/RtcpTxRx.hpp"
 #include "castor/tape/aggregator/SmartFd.hpp"
 #include "castor/tape/aggregator/SmartFdList.hpp"
+#include "castor/tape/net/net.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/Ctape_constants.h"
 #include "h/rtcp_constants.h"
@@ -88,16 +88,16 @@ castor::tape::aggregator::BridgeProtocolEngine::BridgeProtocolEngine(
 int castor::tape::aggregator::BridgeProtocolEngine::acceptRtcpdConnection()
   throw(castor::exception::Exception) {
 
-  SmartFd connectedSocketFd(Net::acceptConnection(m_rtcpdCallbackSocketFd,
+  SmartFd connectedSocketFd(net::acceptConnection(m_rtcpdCallbackSocketFd,
     RTCPDPINGTIMEOUT));
 
   try {
     unsigned short port = 0; // Client port
     unsigned long  ip   = 0; // Client IP
-    char           hostName[HOSTNAMEBUFLEN];
+    char           hostName[net::HOSTNAMEBUFLEN];
 
-    Net::getPeerIpPort(connectedSocketFd.get(), ip, port);
-    Net::getPeerHostName(connectedSocketFd.get(), hostName);
+    net::getPeerIpPort(connectedSocketFd.get(), ip, port);
+    net::getPeerHostName(connectedSocketFd.get(), hostName);
 
     m_nbCallbackConnections++;
 

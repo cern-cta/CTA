@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      Net.cpp
+ *                      castor/tape/net/net.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -24,7 +24,7 @@
  *****************************************************************************/
 
 #include "castor/tape/aggregator/Constants.hpp"
-#include "castor/tape/aggregator/Net.hpp"
+#include "castor/tape/net/net.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/serrno.h"
 #include "h/socket_timeout.h"
@@ -40,7 +40,7 @@
 //-----------------------------------------------------------------------------
 // createListenerSocket
 //-----------------------------------------------------------------------------
-int castor::tape::aggregator::Net::createListenerSocket(const char *addr,
+int castor::tape::net::createListenerSocket(const char *addr,
   const unsigned short port) throw(castor::exception::Exception) {
 
   int    socketFd = 0;
@@ -73,7 +73,7 @@ int castor::tape::aggregator::Net::createListenerSocket(const char *addr,
 //-----------------------------------------------------------------------------
 // acceptConnection
 //-----------------------------------------------------------------------------
-int castor::tape::aggregator::Net::acceptConnection(const int listensocketFd)
+int castor::tape::net::acceptConnection(const int listensocketFd)
   throw(castor::exception::Exception) {
 
   struct sockaddr_in peerAddress;
@@ -100,7 +100,7 @@ int castor::tape::aggregator::Net::acceptConnection(const int listensocketFd)
 //-----------------------------------------------------------------------------
 // acceptConnection
 //-----------------------------------------------------------------------------
-int castor::tape::aggregator::Net::acceptConnection(
+int castor::tape::net::acceptConnection(
   const int listensocketFd, const int netReadWriteTimeout)
   throw(castor::exception::Exception) {
 
@@ -194,7 +194,7 @@ int castor::tape::aggregator::Net::acceptConnection(
 //-----------------------------------------------------------------------------
 // getSocketIpPort
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Net::getSocketIpPort(const int socketFd,
+void castor::tape::net::getSocketIpPort(const int socketFd,
   unsigned long& ip, unsigned short& port)
   throw(castor::exception::Exception) {
 
@@ -221,7 +221,7 @@ void castor::tape::aggregator::Net::getSocketIpPort(const int socketFd,
 //-----------------------------------------------------------------------------
 // getPeerIpPort
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Net::getPeerIpPort(const int socketFd,
+void castor::tape::net::getPeerIpPort(const int socketFd,
   unsigned long& ip, unsigned short& port)
   throw(castor::exception::Exception) {
 
@@ -248,7 +248,7 @@ void castor::tape::aggregator::Net::getPeerIpPort(const int socketFd,
 //------------------------------------------------------------------------------
 // getSocketHostName
 //------------------------------------------------------------------------------
-void castor::tape::aggregator::Net::getSocketHostName(const int socketFd,
+void castor::tape::net::getSocketHostName(const int socketFd,
   char *buf, size_t len) throw(castor::exception::Exception) {
 
   struct sockaddr_in address;
@@ -284,7 +284,7 @@ void castor::tape::aggregator::Net::getSocketHostName(const int socketFd,
 //------------------------------------------------------------------------------
 // getSocketIpHostnamePort
 //------------------------------------------------------------------------------
-void castor::tape::aggregator::Net::getSocketIpHostnamePort(const int socketFd,
+void castor::tape::net::getSocketIpHostnamePort(const int socketFd,
   unsigned long& ip, char *hostName, size_t hostNameLen,
   unsigned short& port) throw(castor::exception::Exception) {
 
@@ -321,7 +321,7 @@ void castor::tape::aggregator::Net::getSocketIpHostnamePort(const int socketFd,
 //------------------------------------------------------------------------------
 // getPeerHostName
 //------------------------------------------------------------------------------
-void castor::tape::aggregator::Net::getPeerHostName(const int socketFd,
+void castor::tape::net::getPeerHostName(const int socketFd,
   char *buf, size_t len) throw(castor::exception::Exception) {
 
   struct sockaddr_in address;
@@ -357,7 +357,7 @@ void castor::tape::aggregator::Net::getPeerHostName(const int socketFd,
 //------------------------------------------------------------------------------
 // printIp
 //------------------------------------------------------------------------------
-void castor::tape::aggregator::Net::printIp(std::ostream &os,
+void castor::tape::net::printIp(std::ostream &os,
   const unsigned long ip) throw() {
   os << ((ip >> 24) & 0x000000FF) << "."
      << ((ip >> 16) & 0x000000FF) << "."
@@ -369,7 +369,7 @@ void castor::tape::aggregator::Net::printIp(std::ostream &os,
 //------------------------------------------------------------------------------
 // printSocketDescription
 //------------------------------------------------------------------------------
-void castor::tape::aggregator::Net::printSocketDescription(std::ostream &os,
+void castor::tape::net::printSocketDescription(std::ostream &os,
   const int socketFd) throw() {
   unsigned long  localIp   = 0;
   unsigned short localPort = 0;
@@ -402,7 +402,7 @@ void castor::tape::aggregator::Net::printSocketDescription(std::ostream &os,
 //------------------------------------------------------------------------------
 // readBytes
 //------------------------------------------------------------------------------
-void castor::tape::aggregator::Net::readBytes(const int socketFd,
+void castor::tape::net::readBytes(const int socketFd,
   const int netReadWriteTimeout, const int nbBytes, char *buf)
   throw(castor::exception::Exception) {
 
@@ -429,7 +429,7 @@ void castor::tape::aggregator::Net::readBytes(const int socketFd,
 //------------------------------------------------------------------------------
 // readBytesFromCloseable
 //------------------------------------------------------------------------------
-void castor::tape::aggregator::Net::readBytesFromCloseable(bool &connClosed, 
+void castor::tape::net::readBytesFromCloseable(bool &connClosed, 
   const int socketFd, const int netReadWriteTimeout, const int nbBytes, 
   char *buf) throw(castor::exception::Exception) {
 
@@ -485,7 +485,7 @@ void castor::tape::aggregator::Net::readBytesFromCloseable(bool &connClosed,
 //------------------------------------------------------------------------------
 // writeBytes
 //------------------------------------------------------------------------------
-void castor::tape::aggregator::Net::writeBytes(const int socketFd,
+void castor::tape::net::writeBytes(const int socketFd,
   const int netReadWriteTimeout, const int nbBytes, char *const buf)
   throw(castor::exception::Exception) {
 

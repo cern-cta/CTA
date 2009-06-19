@@ -28,10 +28,10 @@
 #include "castor/io/ClientSocket.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/Marshaller.hpp"
-#include "castor/tape/aggregator/Net.hpp"
 #include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
 #include "castor/tape/aggregator/RcpJobReplyMsgBody.hpp"
 #include "castor/tape/aggregator/RcpJobSubmitter.hpp"
+#include "castor/tape/net/net.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/net.h"
 #include "h/osdep.h"
@@ -132,7 +132,7 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
   // Send the job submission request message to the RTCPD or tape aggregator
   // daemon
   try {
-    Net::writeBytes(socket.socket(), netReadWriteTimeout, totalLen, buf);
+    net::writeBytes(socket.socket(), netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
       ": Failed to send the job submission request message to " <<
@@ -156,7 +156,7 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
   // Read in the message header
   char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
   try {
-    Net::readBytes(socket.socket(), RTCPDNETRWTIMEOUT, sizeof(headerBuf),
+    net::readBytes(socket.socket(), RTCPDNETRWTIMEOUT, sizeof(headerBuf),
       headerBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
@@ -220,7 +220,7 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
 
   // Read the message body
   try {
-    Net::readBytes(socket.socket(), RTCPDNETRWTIMEOUT, header.lenOrStatus,
+    net::readBytes(socket.socket(), RTCPDNETRWTIMEOUT, header.lenOrStatus,
       bodyBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,

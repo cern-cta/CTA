@@ -28,14 +28,14 @@
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/Marshaller.hpp"
-#include "castor/tape/aggregator/Net.hpp"
 #include "castor/tape/aggregator/RtcpTxRx.hpp"
 #include "castor/tape/aggregator/RcpJobSubmitter.hpp"
-#include "castor/tape/utils/utils.hpp"
+#include "castor/tape/net/net.hpp"
 #include "castor/tape/tapegateway/ErrorReport.hpp"
 #include "castor/tape/tapegateway/FileToMigrate.hpp"
 #include "castor/tape/tapegateway/FileToMigrateRequest.hpp"
 #include "castor/tape/tapegateway/NoMoreFiles.hpp"
+#include "castor/tape/utils/utils.hpp"
 #include "h/common.h"
 #include "h/Ctape_constants.h"
 #include "h/rtcp.h"
@@ -80,7 +80,7 @@ void castor::tape::aggregator::RtcpTxRx::getRequestInfoFromRtcpd(
 
   // Send the request
   try {
-    Net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
+    net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
          ": Failed to send request for volume request ID to RTCPD: "
@@ -176,7 +176,7 @@ void castor::tape::aggregator::RtcpTxRx::giveVolumeToRtcpd(
 
   // Send the message
   try {
-    Net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
+    net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
          ": Failed to send volume message to RTCPD: "
@@ -256,7 +256,7 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
 
   // Send the message
   try {
-    Net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
+    net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
          ": Failed to send file message to RTCPD: "
@@ -328,7 +328,7 @@ void castor::tape::aggregator::RtcpTxRx::sendMessageHeader(
   }
 
   try {
-    Net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
+    net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
       ": Failed to send the RCP acknowledge message to RTCPD"
@@ -380,7 +380,7 @@ void castor::tape::aggregator::RtcpTxRx::pingRtcpd(const Cuuid_t &cuuid,
   }
 
   try {
-    Net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
+    net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
       ": Failed to send the RCPD ping message to RTCPD"
@@ -426,7 +426,7 @@ void castor::tape::aggregator::RtcpTxRx::tellRtcpdEndOfFileList(
 
   // Send the message
   try {
-    Net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
+    net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
          ": Failed to send file message to RTCPD: "
@@ -512,7 +512,7 @@ void castor::tape::aggregator::RtcpTxRx::tellRtcpdToAbort(const Cuuid_t &cuuid,
 
   // Send the message
   try {
-    Net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
+    net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
          ": Failed to send abort message to RTCPD: "
@@ -566,7 +566,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRcpJobRqst(const Cuuid_t &cuuid,
   // Read in the message header
   char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
   try {
-    Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, sizeof(headerBuf), headerBuf);
+    net::readBytes(socketFd, RTCPDNETRWTIMEOUT, sizeof(headerBuf), headerBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
          ": Failed to read message header from RCP job submitter"
@@ -614,7 +614,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRcpJobRqst(const Cuuid_t &cuuid,
 
   // Read the message body
   try {
-    Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.lenOrStatus, bodyBuf);
+    net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.lenOrStatus, bodyBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EIO,
          ": Failed to read message body from RCP job submitter"
@@ -707,7 +707,7 @@ void castor::tape::aggregator::RtcpTxRx::askRtcpdToRequestMoreWork(
 
   // Send the message
   try {
-    Net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
+    net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
          ": Failed to send ask RTCPD to request more "
@@ -815,7 +815,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveMessageHeader(
   // Read in the message header
   char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
   try {
-    Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, sizeof(headerBuf), headerBuf);
+    net::readBytes(socketFd, RTCPDNETRWTIMEOUT, sizeof(headerBuf), headerBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
          ": Failed to read message header from RTCPD"
@@ -846,7 +846,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveMessageHeaderFromCloseable(
   // Read in the message header
   char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
   try {
-    Net::readBytesFromCloseable(connClosed, socketFd, RTCPDNETRWTIMEOUT, 
+    net::readBytesFromCloseable(connClosed, socketFd, RTCPDNETRWTIMEOUT, 
       sizeof(headerBuf), headerBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
@@ -900,7 +900,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpFileRqstErrBody(
 
   // Read the message body
   try {
-    Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.lenOrStatus, bodyBuf);
+    net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.lenOrStatus, bodyBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EIO,
          ": Failed to read message body from RTCPD"
@@ -967,7 +967,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpFileRqstBody(
 
   // Read the message body
   try {
-    Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.lenOrStatus, bodyBuf);
+    net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.lenOrStatus, bodyBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EIO,
          ": Failed to read message body from RTCPD"
@@ -1034,7 +1034,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpTapeRqstErrBody(
 
   // Read the message body
   try {
-    Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.lenOrStatus, bodyBuf);
+    net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.lenOrStatus, bodyBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EIO,
          ": Failed to read message body from RTCPD"
@@ -1096,7 +1096,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpTapeRqstBody(
 
   // Read the message body
   try {
-    Net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.lenOrStatus, bodyBuf);
+    net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.lenOrStatus, bodyBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EIO,
          ": Failed to read message body from RTCPD"

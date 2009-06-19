@@ -75,7 +75,6 @@ AGGREGATORBIN_SRCS = \
   DriveAllocationProtocolEngine.cpp \
   GatewayTxRx.cpp \
   Marshaller.cpp \
-  Net.cpp \
   Packer.cpp \
   RcpJobSubmitter.cpp \
   RtcpTxRx.cpp \
@@ -83,8 +82,9 @@ AGGREGATORBIN_SRCS = \
   SmartFdList.cpp \
   SynchronizedCounter.cpp \
   Unpacker.cpp \
-  ../utils/utils.cpp \
   VdqmRequestHandler.cpp \
+  ../net/net.cpp \
+  ../utils/utils.cpp \
   $(TAPEGATEWAY_MESSAGES_SRCS) \
   $(TAPEGATEWAY_IO_SRCS)
 AGGREGATORBIN_OBJS = $(AGGREGATORBIN_SRCS:.cpp=.Osuf)

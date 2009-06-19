@@ -32,9 +32,15 @@
 
 namespace castor {
 namespace tape   {
-  	
-  const size_t STRERRORBUFLEN  = 256;
-  const size_t VMGRERRORBUFLEN = 512;
+
+  const char *const CLIENT_CONF            = "CLIENT";
+  const char *const HIGHPORT_CONF          = "HIGHPORT";
+  const int         HIGH_CLIENT_PORT_RANGE = 30100;
+  const char *const LOWPORT_CONF           = "LOWPORT";
+  const int         LOW_CLIENT_PORT_RANGE  = 30000;
+  const size_t      RTCPDNETRWTIMEOUT      = 5;
+  const size_t      STRERRORBUFLEN         = 256;
+  const size_t      VMGRERRORBUFLEN        = 512;
 
 } // namespace tape
 } // namespace castor

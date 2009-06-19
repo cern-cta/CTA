@@ -31,7 +31,6 @@
 #include "castor/tape/aggregator/DriveAllocationProtocolEngine.hpp"
 #include "castor/tape/aggregator/GatewayTxRx.hpp"
 #include "castor/tape/aggregator/Marshaller.hpp"
-#include "castor/tape/aggregator/Net.hpp"
 #include "castor/tape/aggregator/Packer.hpp"
 #include "castor/tape/aggregator/RcpJobSubmitter.hpp"
 #include "castor/tape/aggregator/Unpacker.hpp"
@@ -40,11 +39,12 @@
 #include "castor/tape/aggregator/SmartFd.hpp"
 #include "castor/tape/aggregator/SmartFdList.hpp"
 #include "castor/tape/aggregator/RtcpTxRx.hpp"
-#include "castor/tape/utils/utils.hpp"
 #include "castor/tape/aggregator/VdqmRequestHandler.hpp"
+#include "castor/tape/net/net.hpp"
 #include "castor/tape/tapegateway/ErrorReport.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
+#include "castor/tape/utils/utils.hpp"
 #include "h/common.h"
 #include "h/Ctape_constants.h"
 #include "h/rtcp_constants.h"
@@ -96,10 +96,10 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
   try {
     unsigned short port = 0; // Client port
     unsigned long  ip   = 0; // Client IP
-    char           hostName[HOSTNAMEBUFLEN];
+    char           hostName[net::HOSTNAMEBUFLEN];
 
-    Net::getPeerIpPort(vdqmSocket->socket(), ip, port);
-    Net::getPeerHostName(vdqmSocket->socket(), hostName);
+    net::getPeerIpPort(vdqmSocket->socket(), ip, port);
+    net::getPeerHostName(vdqmSocket->socket(), hostName);
 
     castor::dlf::Param params[] = {
       castor::dlf::Param("IP"      , castor::dlf::IPAddress(ip)),
@@ -120,14 +120,14 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
     // Create, bind and mark a listen socket for RTCPD callback connections
     // Wrap the socket file descriptor in a smart file descriptor so that it is
     // guaranteed to be closed when it goes out of scope.
-    SmartFd rtcpdCallbackSocketFd(Net::createListenerSocket("127.0.0.1",0));
+    SmartFd rtcpdCallbackSocketFd(net::createListenerSocket("127.0.0.1",0));
 
     // Get the IP, host name and port of the callback port
     unsigned long rtcpdCallbackIp = 0;
-    char rtcpdCallbackHost[HOSTNAMEBUFLEN];
+    char rtcpdCallbackHost[net::HOSTNAMEBUFLEN];
     utils::setBytes(rtcpdCallbackHost, '\0');
     unsigned short rtcpdCallbackPort = 0;
-    Net::getSocketIpHostnamePort(rtcpdCallbackSocketFd.get(),
+    net::getSocketIpHostnamePort(rtcpdCallbackSocketFd.get(),
     rtcpdCallbackIp, rtcpdCallbackHost, rtcpdCallbackPort);
 
     castor::dlf::Param params[] = {

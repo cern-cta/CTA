@@ -29,13 +29,13 @@
 #include "castor/tape/aggregator/DriveAllocationProtocolEngine.hpp"
 #include "castor/tape/aggregator/GatewayTxRx.hpp"
 #include "castor/tape/aggregator/Marshaller.hpp"
-#include "castor/tape/aggregator/Net.hpp"
 #include "castor/tape/aggregator/RcpJobReplyMsgBody.hpp"
 #include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
 #include "castor/tape/aggregator/RcpJobSubmitter.hpp"
 #include "castor/tape/aggregator/RtcpTxRx.hpp"
-#include "castor/tape/utils/utils.hpp"
 #include "castor/tape/fsm/Callback.hpp"
+#include "castor/tape/net/net.hpp"
+#include "castor/tape/utils/utils.hpp"
 #include "h/Ctape_constants.h"
 #include "h/rtcp_constants.h"
 #include "h/vdqm_constants.h"
@@ -155,7 +155,7 @@ bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
   size_t vdqmReplyLen = 0;
   vdqmReplyLen = Marshaller::marshallRcpJobReplyMsgBody(vdqmReplyBuf,
     rtcpdReply);
-  Net::writeBytes(vdqmSocket.socket(), RTCPDNETRWTIMEOUT, vdqmReplyLen,
+  net::writeBytes(vdqmSocket.socket(), RTCPDNETRWTIMEOUT, vdqmReplyLen,
     vdqmReplyBuf);
 
   // Close the connection to the VDQM
@@ -173,17 +173,17 @@ bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
   // Accept the initial incoming RTCPD callback connection.
   // Wrap the socket file descriptor in a smart file descriptor so that it is
   // guaranteed to be closed when it goes out of scope.
-  rtcpdInitialSocketFd.reset(Net::acceptConnection(rtcpdCallbackSocketFd,
+  rtcpdInitialSocketFd.reset(net::acceptConnection(rtcpdCallbackSocketFd,
     RTCPDCALLBACKTIMEOUT));
 
   // Log the connection
   try {
     unsigned short port = 0; // Client port
     unsigned long  ip   = 0; // Client IP
-    char           hostName[HOSTNAMEBUFLEN];
+    char           hostName[net::HOSTNAMEBUFLEN];
 
-    Net::getPeerIpPort(rtcpdInitialSocketFd.get(), ip, port);
-    Net::getPeerHostName(rtcpdInitialSocketFd.get(), hostName);
+    net::getPeerIpPort(rtcpdInitialSocketFd.get(), ip, port);
+    net::getPeerHostName(rtcpdInitialSocketFd.get(), hostName);
 
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId", volReqId),
