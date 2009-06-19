@@ -1,5 +1,5 @@
 /*******************************************************************
- * @(#)$RCSfile: oracleMonitoring.sql,v $ $Revision: 1.1 $ $Date: 2009/06/19 12:02:31 $ $Author: waldron $
+ * @(#)$RCSfile: oracleMonitoring.sql,v $ $Revision: 1.2 $ $Date: 2009/06/19 12:07:03 $ $Author: waldron $
  * PL/SQL code for stager monitoring
  *
  * @author Castor Dev team, castor-dev@cern.ch
@@ -22,7 +22,7 @@ CREATE OR REPLACE PACKAGE CastorMon AS
    * @param interval The frequency at which the data is refreshed.
    */
   PROCEDURE waitTapeMigrationStats(interval IN NUMBER);
-  
+
   /**
    * This procedure generates statistics on files which are waiting to be
    * recalled from tape.
@@ -50,7 +50,7 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
       (timestamp, interval, diskServer, mountPoint, dsStatus, fsStatus, available,
        status, totalSize, nbFiles)
       -- Gather data
-      SELECT sysdate timestamp, interval, a.name diskServer, a.mountPoint, a.dsStatus, 
+      SELECT sysdate timestamp, interval, a.name diskServer, a.mountPoint, a.dsStatus,
              a.fsStatus, a.available, a.statusName status,
              nvl(b.totalSize, 0) totalSize, nvl(b.nbFiles, 0) nbFiles
         FROM (
@@ -63,7 +63,7 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
                  (SELECT statusName FROM OBjStatus
                    WHERE object = 'FileSystem'
                      AND statusCode = FileSystem.status) fsStatus,
-                 decode(DiskServer.status, 2, 'N', 
+                 decode(DiskServer.status, 2, 'N',
                    decode(FileSystem.status, 2, 'N', 'Y')) available,
                  ObjStatus.statusName
             FROM DiskServer, FileSystem, ObjStatus
@@ -73,7 +73,7 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
         -- Attach the aggregation information for all filesystems to the results
         -- extracted above.
         LEFT JOIN (
-          SELECT DiskCopy.fileSystem, ObjStatus.statusName, 
+          SELECT DiskCopy.fileSystem, ObjStatus.statusName,
                  sum(DiskCopy.diskCopySize) totalSize, count(*) nbFiles
             FROM DiskCopy, ObjStatus
            WHERE DiskCopy.status = ObjStatus.statusCode
@@ -83,7 +83,7 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
           ON (a.id = b.fileSystem AND a.statusName = b.statusName)
        ORDER BY a.name, a.mountPoint, a.statusName;
   END diskCopyStats;
-  
+
 
   /**
    * PL/SQL method implementing waitTapeMigrationStats
@@ -109,17 +109,17 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
              round(nvl(max(a.diskCopySize), 0), 0) maxFileSize,
              round(nvl(avg(a.diskCopySize), 0), 0) avgFileSize,
              -- Wait time stats
-             sum(CASE WHEN nvl(a.waitTime, 0) BETWEEN 1     AND 3600   
+             sum(CASE WHEN nvl(a.waitTime, 0) BETWEEN 1     AND 3600
                       THEN 1 ELSE 0 END) BIN_LT_1,
-             sum(CASE WHEN nvl(a.waitTime, 0) BETWEEN 3600  AND 21600  
+             sum(CASE WHEN nvl(a.waitTime, 0) BETWEEN 3600  AND 21600
                       THEN 1 ELSE 0 END) BIN_1_TO_6,
-             sum(CASE WHEN nvl(a.waitTime, 0) BETWEEN 21600 AND 43200  
+             sum(CASE WHEN nvl(a.waitTime, 0) BETWEEN 21600 AND 43200
                       THEN 1 ELSE 0 END) BIN_6_TO_12,
-             sum(CASE WHEN nvl(a.waitTime, 0) BETWEEN 43200 AND 86400  
+             sum(CASE WHEN nvl(a.waitTime, 0) BETWEEN 43200 AND 86400
                       THEN 1 ELSE 0 END) BIN_12_TO_24,
-             sum(CASE WHEN nvl(a.waitTime, 0) BETWEEN 86400 AND 172800 
+             sum(CASE WHEN nvl(a.waitTime, 0) BETWEEN 86400 AND 172800
                       THEN 1 ELSE 0 END) BIN_24_TO_48,
-             sum(CASE WHEN nvl(a.waitTime, 0) > 172800                 
+             sum(CASE WHEN nvl(a.waitTime, 0) > 172800
                       THEN 1 ELSE 0 END) BIN_GT_48,
              -- Summary values
              nvl(sum(a.diskCopySize), 0) totalSize, nvl(sum(a.found), 0) nbFiles
@@ -128,9 +128,9 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
           -- status.
           SELECT /*+ USE_NL(TapeCopy DiskCopy) */ SvcClass.name svcClass,
                  decode(sign(TapeCopy.status - 2), -1, 'PENDING', 'SELECTED') status,
-                 (getTime() - DiskCopy.creationTime) waitTime, 
+                 (getTime() - DiskCopy.creationTime) waitTime,
                  DiskCopy.diskCopySize, 1 found
-            FROM DiskCopy, TapeCopy, FileSystem, DiskPool2SvcClass, SvcClass 
+            FROM DiskCopy, TapeCopy, FileSystem, DiskPool2SvcClass, SvcClass
            WHERE DiskCopy.fileSystem = FileSystem.id
              AND FileSystem.diskPool = DiskPool2SvcClass.parent
              AND DiskPool2SvcClass.child = SvcClass.id
@@ -150,7 +150,7 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
        ORDER BY b.svcClass, b.status;
   END waitTapeMigrationStats;
 
-  
+
   /**
    * PL/SQL method implementing waitTapeRecallStats
    * See the castorMon package specification for documentation.
@@ -175,17 +175,17 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
              round(nvl(max(a.fileSize), 0), 0) maxFileSize,
              round(nvl(avg(a.fileSize), 0), 0) avgFileSize,
              -- Wait time stats
-             sum(CASE WHEN nvl(a.waitTime, 0) BETWEEN 1     AND 3600   
+             sum(CASE WHEN nvl(a.waitTime, 0) BETWEEN 1     AND 3600
                       THEN 1 ELSE 0 END) BIN_LT_1,
-             sum(CASE WHEN nvl(a.waitTime, 0) BETWEEN 3600  AND 21600  
+             sum(CASE WHEN nvl(a.waitTime, 0) BETWEEN 3600  AND 21600
                       THEN 1 ELSE 0 END) BIN_1_TO_6,
-             sum(CASE WHEN nvl(a.waitTime, 0) BETWEEN 21600 AND 43200  
+             sum(CASE WHEN nvl(a.waitTime, 0) BETWEEN 21600 AND 43200
                       THEN 1 ELSE 0 END) BIN_6_TO_12,
-             sum(CASE WHEN nvl(a.waitTime, 0) BETWEEN 43200 AND 86400  
+             sum(CASE WHEN nvl(a.waitTime, 0) BETWEEN 43200 AND 86400
                       THEN 1 ELSE 0 END) BIN_12_TO_24,
-             sum(CASE WHEN nvl(a.waitTime, 0) BETWEEN 86400 AND 172800 
+             sum(CASE WHEN nvl(a.waitTime, 0) BETWEEN 86400 AND 172800
                       THEN 1 ELSE 0 END) BIN_24_TO_48,
-             sum(CASE WHEN nvl(a.waitTime, 0) > 172800                 
+             sum(CASE WHEN nvl(a.waitTime, 0) > 172800
                       THEN 1 ELSE 0 END) BIN_GT_48,
              -- Summary values
              nvl(sum(a.fileSize), 0) totalSize, nvl(sum(a.found), 0) nbFiles
@@ -194,7 +194,7 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
           -- SubRequest and Request tables here to work out the service class
           -- as the DiskCopy filesystem pointer is 0 until the file is
           -- successfully recalled.
-          SELECT Request.svcClassName svcClass, CastorFile.fileSize, 
+          SELECT Request.svcClassName svcClass, CastorFile.fileSize,
                  (getTime() - DiskCopy.creationTime) waitTime,1 found
             FROM DiskCopy, SubRequest, CastorFile,
               (SELECT id, svcClassName FROM StageGetRequest UNION ALL
@@ -239,7 +239,7 @@ BEGIN
                             castorMon.waitTapeMigrationStats(interval);
                             castorMon.waitTapeRecallStats(interval);
                           END;',
-      JOB_CLASS       => 'CASTOR_STATS_JOB_CLASS',
+      JOB_CLASS       => 'CASTOR_MON_JOB_CLASS',
       START_DATE      => SYSDATE + 60/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=60',
       ENABLED         => TRUE,
