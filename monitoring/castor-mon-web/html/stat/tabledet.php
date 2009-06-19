@@ -260,6 +260,7 @@
 				<table><tr><td colspan = "2" valign = "top">
 				<div id="menu">
 					<ul><li><a href="../dashboard/dashboard.php?service=<?php echo $service;?>">DASHBOARD</a></li></ul>
+					<ul><li><a href="../exp_mon/exp_dashboard.php?service=<?php echo $service;?>">EXPERIMENTS DASHBOARD</a></li></ul>
 					<ul>
 						<li><h2>Statistics (CASTOR Instance)</h2>
 							<ul> 
@@ -681,9 +682,13 @@
 								  </td>
 								 </tr>
 								 <tr>
-								  <td>
+								  <td align = 'center's>
 								   <img src ='sizedistr.php?service=$service&period=$timewindow&svcclass=$svcclass' title='File Size Distribution of Tape Recalled Files. Detailed Graphs per SvcClass'>
 								  </td>
+								 </tr>
+								 <tr>
+								   <td>"; include("tapeStat.php");
+						        echo "     </td>
 								 </tr>
 							       </table>
 							      </div>
@@ -702,9 +707,13 @@
 								  </td>
 								 </tr>
 								 <tr>
-								  <td>
+								  <td align = 'center'>
 								   <img src ='sizedistr.php?service=$service&from=$date1 $date1hour&to=$date2 $date2hour&svcclass=$svcclass' title='File Size Distribution of Tape Recalled Files. Detailed Graphs per SvcClass'>
 								  </td>
+								 </tr>
+								 <tr>
+								   <td>"; include("tapeStat.php");
+						        echo "     </td>
 								 </tr>
 							       </table>
 							      </div>
