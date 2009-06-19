@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: VmgrTapeGatewayHelper.cpp,v $ $Revision: 1.13 $ $Release$ 
- * $Date: 2009/05/18 13:52:38 $ $Author: gtaur $
+ * @(#)$RCSfile: VmgrTapeGatewayHelper.cpp,v $ $Revision: 1.14 $ $Release$ 
+ * $Date: 2009/06/19 12:05:31 $ $Author: gtaur $
  *
  *
  *
@@ -199,14 +199,14 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::getDataFromVmgr(castor::s
         
     if (rc == 0) {
       // ok call vmgr
-      if ( ((vmgrTapeInfo.status & DISABLED) == DISABLED) ||
-           ((vmgrTapeInfo.status & EXPORTED) == EXPORTED) ||
-           ((vmgrTapeInfo.status & ARCHIVED) == ARCHIVED) ) {
-        if ( (vmgrTapeInfo.status & DISABLED) == DISABLED ) {
+      if ( (vmgrTapeInfo.status & DISABLED) ||
+           (vmgrTapeInfo.status & EXPORTED) ||
+           (vmgrTapeInfo.status & ARCHIVED)) {
+        if ( vmgrTapeInfo.status & DISABLED ) {
           serrno = ETHELD;
-        } else if ( (vmgrTapeInfo.status & EXPORTED) == EXPORTED ) {
+        } else if ( vmgrTapeInfo.status & EXPORTED ) {
           serrno = ETABSENT;
-        } else if ( (vmgrTapeInfo.status & ARCHIVED) == ARCHIVED ) {
+        } else if ( vmgrTapeInfo.status & ARCHIVED ) {
           serrno = ETARCH;
         }
 	castor::exception::Exception ex(serrno);
@@ -258,14 +258,14 @@ int castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeStatusInVmgr(castor
     save_serrno = serrno;
   
     if ( rc == 0 ) {
-      if ( ((vmgrTapeInfo.status & DISABLED) == DISABLED) ||
-           ((vmgrTapeInfo.status & EXPORTED) == EXPORTED) ||
-           ((vmgrTapeInfo.status & ARCHIVED) == ARCHIVED) ) {
-        if ( (vmgrTapeInfo.status & DISABLED) == DISABLED ) {
+      if ( (vmgrTapeInfo.status & DISABLED ) ||
+           (vmgrTapeInfo.status & EXPORTED ) ||
+           (vmgrTapeInfo.status & ARCHIVED ) ) {
+        if (vmgrTapeInfo.status & DISABLED ) {
           serrno = ETHELD;
-        } else if ( (vmgrTapeInfo.status & EXPORTED) == EXPORTED ) {
+        } else if ( vmgrTapeInfo.status & EXPORTED ) {
           serrno = ETABSENT;
-        } else if ( (vmgrTapeInfo.status & ARCHIVED) == ARCHIVED ) {
+        } else if ( vmgrTapeInfo.status & ARCHIVED) {
           serrno = ETARCH;
         }
 	
@@ -342,14 +342,14 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(castor::
     save_serrno = serrno;
 
     if ( rc == 0 ) {
-      if ( ((vmgrTapeInfo.status & DISABLED) == DISABLED) ||
-           ((vmgrTapeInfo.status & EXPORTED) == EXPORTED) ||
-           ((vmgrTapeInfo.status & ARCHIVED) == ARCHIVED) ) {
-        if ( (vmgrTapeInfo.status & DISABLED) == DISABLED ) {
+      if ( (vmgrTapeInfo.status & DISABLED)  ||
+           (vmgrTapeInfo.status & EXPORTED) ||
+           (vmgrTapeInfo.status & ARCHIVED) ) {
+        if ( vmgrTapeInfo.status & DISABLED) {
           serrno = ETHELD;
-        } else if ( (vmgrTapeInfo.status & EXPORTED) == EXPORTED ) {
+        } else if ( vmgrTapeInfo.status & EXPORTED) {
           serrno = ETABSENT;
-        } else if ( (vmgrTapeInfo.status & ARCHIVED) == ARCHIVED ) {
+        } else if ( vmgrTapeInfo.status & ARCHIVED ) {
           serrno = ETARCH;
         }
 	castor::exception::Exception ex(serrno);
