@@ -1,25 +1,27 @@
-.\" @(#)$RCSfile: nsgetpath.man,v $ $Revision: 1.3 $ $Date: 2009/03/04 13:45:24 $ CERN Castor Dev team
+.\" @(#)$RCSfile: nsgetpath.man,v $ $Revision: 1.4 $ $Date: 2009/06/19 09:28:58 $ CERN Castor Dev team
 .\" Copyright (C) 2003  CERN
 .\" All rights reserved
 .\"
-.TH NSGETPATH 1 "$Date: 2009/03/04 13:45:24 $" CASTOR "Cns User Commands"
+.TH NSGETPATH 1 "$Date: 2009/06/19 09:28:58 $" CASTOR "Cns User Commands"
 .SH NAME
 nsgetpath \- get file path from fileid
 .SH SYNOPSIS
 .B nsgetpath
 [\fROPTION\fR]
-<\fCNSHOST\fR> [FILEID|-x HEXID\fR]
+[\f--h HOSTNAME\fR] [FILEID|-x HEXID\fR]
 .SH DESCRIPTION
 .B nsgetpath
 gets the name of the castorfile given by its fileid and the name
-server where it resides.
+server where it resides. If the residing name server is not specified the
+application will use the CNS_HOST option as defined in the users environment
+or as specified in castor.conf.
 .SH OPTIONS
 .TP
 .B -x,\ \-\-hex=HEXID
 Fileid expressed in hexadecimal form.
 .TP
-.B -i,\ \-\-ignore
-Ignore error messages related to forced CNS hosts.
+.BI -h,\ \-\-host=HOSTNAME
+specify the name server hostname.
 .TP
 .B \-\-help
 display this help and exit
@@ -28,9 +30,14 @@ display this help and exit
 .fi
 /castor/cern.ch/c3/itdc/notape/47eb6a9a-7cd5-439f-b156-0a953098b1ca
 
-.BI #\ nsgetpath\ cnsuser\ -x\ AF163A2
+.BI #\ nsgetpath\ -h\ cnsuser\ -x\ AF163A2
 .fi
 /castor/cern.ch/c3/itdc/notape/47eb6a9a-7cd5-439f-b156-0a953098b1ca
+
+.BI #\ nsgetpath\ -x\ AF163A2
+.fi
+/castor/cern.ch/c3/itdc/notape/47eb6a9a-7cd5-439f-b156-0a953098b1ca
+
 
 .SH EXIT STATUS
 This program returns 0 if the operation was successful or >0 if the operation failed.
