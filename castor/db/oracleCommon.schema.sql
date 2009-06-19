@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.schema.sql,v $ $Revision: 1.16 $ $Date: 2009/06/17 08:16:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleCommon.schema.sql,v $ $Revision: 1.17 $ $Date: 2009/06/19 09:16:17 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically.
  *
@@ -293,8 +293,11 @@ CREATE GLOBAL TEMPORARY TABLE BulkSelectHelper
  * required to solve the error: `ORA-04091: table is mutating, trigger/function`
  */
 CREATE GLOBAL TEMPORARY TABLE TooManyReplicasHelper
-  (id NUMBER, fileSystem NUMBER, castorFile NUMBER)
+  (svcClass NUMBER, castorFile NUMBER)
   ON COMMIT DELETE ROWS;
+
+ALTER TABLE TooManyReplicasHelper 
+  ADD CONSTRAINT UN_TooManyReplicasHelp_SVC_CF UNIQUE (svcClass, castorFile);
 
 /* Global temporary table to store subRequest and castorFile ids for cleanup operations.
    See the deleteTerminatedRequest procedure for more details.

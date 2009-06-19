@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.739 $ $Date: 2009/06/18 14:24:42 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.740 $ $Date: 2009/06/19 09:16:17 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -185,18 +185,7 @@ END castor;
      -- Invalidate the DiskCopy 	 
      UPDATE DiskCopy 	 
         SET status = 7  -- INVALID 	 
-      WHERE id = cf.id; 	 
-     -- Look for requests associated to the diskCopy and restart 	 
-     -- it and all the waiting ones 	 
-     UPDATE SubRequest SET status = 7 -- FAILED 	 
-      WHERE diskCopy = cf.id RETURNING id BULK COLLECT INTO srIds; 	 
-     UPDATE SubRequest 	 
-        SET status = 7, parent = 0 -- FAILED 	 
-      WHERE status = 5 -- WAITSUBREQ 	 
-        AND parent IN 	 
-          (SELECT /*+ CARDINALITY(sridTable 5) */ * 	 
-             FROM TABLE(srIds) sridTable) 	 
-        AND castorfile = cf.castorfile; 	 
+      WHERE id = cf.id;
    END LOOP; 	 
  END; 	 
 /
@@ -299,31 +288,21 @@ END;
 CREATE OR REPLACE TRIGGER tr_DiskCopy_Stmt_Online
 AFTER UPDATE OF STATUS ON DISKCOPY
 DECLARE
-  svcId NUMBER;
   maxReplicaNb NUMBER;
-  srIds "numList";
-  svcCount NUMBER;
+  unused NUMBER;
+  nbFiles NUMBER;
 BEGIN
   -- Loop over the diskcopies to be processed
   FOR a IN (SELECT * FROM TooManyReplicasHelper)
   LOOP
-    -- If the filesystem belongs to multiple service classes do nothing as this
-    -- is not supported!
-    SELECT count(*) INTO svcCount
-      FROM FileSystem, DiskPool2SvcClass
-     WHERE FileSystem.diskpool = DiskPool2SvcClass.parent
-       AND FileSystem.id = a.filesystem;
-    IF svcCount > 1 THEN
-      RETURN;  -- Not supported
-    END IF;
-    -- Get the service class id and max replica number of the service class the
-    -- diskcopy belongs too
-    SELECT SvcClass.id, SvcClass.maxReplicaNb
-      INTO svcId, maxReplicaNb
-      FROM FileSystem, DiskPool2SvcClass, SvcClass
-     WHERE FileSystem.diskpool = DiskPool2SvcClass.parent
-       AND DiskPool2SvcClass.child = SvcClass.id
-       AND FileSystem.id = a.filesystem;
+    -- Lock the castorfile. This shouldn't be necessary as the procedure that
+    -- caused the trigger to be executed should already have the lock.
+    -- Nevertheless, we make sure!
+    SELECT id INTO unused FROM CastorFile
+     WHERE id = a.castorfile FOR UPDATE;
+    -- Get the max replica number of the service class
+    SELECT maxReplicaNb INTO maxReplicaNb
+      FROM SvcClass WHERE id = a.svcclass;
     -- Produce a list of diskcopies to invalidate should too many replicas be
     -- online.
     FOR b IN (SELECT id FROM (
@@ -336,32 +315,32 @@ BEGIN
                      AND FileSystem.diskserver = DiskServer.id
                      AND DiskPool2SvcClass.child = SvcClass.id
                      AND DiskCopy.castorfile = a.castorfile
-                     -- Ignore the diskcopy being processed!!!!!
-                     AND DiskCopy.id != a.id
                      AND DiskCopy.status IN (0, 10)  -- STAGED, CANBEMIGR
-                     AND SvcClass.id = svcId
+                     AND SvcClass.id = a.svcclass
                    -- Select DISABLED or DRAINING hardware first
                    ORDER BY decode(FileSystem.status, 0,
                             decode(DiskServer.status, 0, 0, 1), 1) ASC,
                             DiskCopy.gcWeight DESC))
-               WHERE ind > (maxReplicaNb - 1))
+               WHERE ind > maxReplicaNb)
     LOOP
+      -- Sanity check, make sure that the last copy is never dropped!
+      SELECT count(*) INTO nbFiles
+        FROM DiskCopy, FileSystem, DiskPool2SvcClass, SvcClass, DiskServer
+       WHERE DiskCopy.filesystem = FileSystem.id
+         AND FileSystem.diskpool = DiskPool2SvcClass.parent
+         AND FileSystem.diskserver = DiskServer.id
+         AND DiskPool2SvcClass.child = SvcClass.id
+         AND DiskCopy.castorfile = a.castorfile
+         AND DiskCopy.status IN (0, 10)  -- STAGED, CANBEMIGR
+         AND SvcClass.id = a.svcclass;
+      IF nbFiles = 1 THEN
+        EXIT;  -- Last file, so exit the loop
+      END IF;
       -- Invalidate the diskcopy
       UPDATE DiskCopy
          SET status = 7,  -- INVALID
              gcType = 2   -- Too many replicas
        WHERE id = b.id;
-      -- Look for requests associated to the diskCopy and restart it and all
-      -- the waiting ones
-      UPDATE SubRequest SET status = 7 -- FAILED
-       WHERE diskCopy = b.id RETURNING id BULK COLLECT INTO srIds;
-      UPDATE SubRequest
-         SET status = 7, parent = 0 -- FAILED
-       WHERE status = 5 -- WAITSUBREQ
-         AND parent IN
-           (SELECT /*+ CARDINALITY(sridTable 5) */ *
-              FROM TABLE(srIds) sridTable)
-         AND castorfile = a.castorfile;
     END LOOP;
   END LOOP;
 END;
@@ -376,14 +355,36 @@ AFTER UPDATE OF status ON DiskCopy
 FOR EACH ROW
 WHEN ((old.status != 10) AND    -- !CANBEMIGR -> {STAGED, CANBEMIGR}
       (new.status = 0 OR new.status = 10))     
+DECLARE
+  svcId  NUMBER;
+  unused NUMBER;
+  -- Trap `ORA-00001: unique constraint violated` errors
+  CONSTRAINT_VIOLATED EXCEPTION;
+  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -00001);
 BEGIN
   -- Insert the information about the diskcopy being processed into
   -- the TooManyReplicasHelper. This information will be used later
   -- on the DiskCopy AFTER UPDATE statement level trigger. We cannot
   -- do the work of that trigger here as it would result in
   -- `ORA-04091: table is mutating, trigger/function` errors
-  INSERT INTO TooManyReplicasHelper
-  VALUES (:new.id, :new.filesystem, :new.castorfile);
+  BEGIN
+    SELECT SvcClass.id INTO svcId
+      FROM FileSystem, DiskPool2SvcClass, SvcClass
+     WHERE FileSystem.diskpool = DiskPool2SvcClass.parent
+       AND DiskPool2SvcClass.child = SvcClass.id
+       AND FileSystem.id = :new.filesystem;
+  EXCEPTION WHEN TOO_MANY_ROWS THEN
+    -- The filesystem belongs to multiple service classes which is not
+    -- supported by the replica management trigger.
+    RETURN;
+  END;
+  -- Insert an entry into the TooManyReplicasHelper table.
+  BEGIN
+    INSERT INTO TooManyReplicasHelper
+    VALUES (svcId, :new.castorfile);
+  EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
+    RETURN;  -- Entry already exists!
+  END;
 END;
 /
 
