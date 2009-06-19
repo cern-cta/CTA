@@ -133,6 +133,7 @@ int Cupv_opendb(dbfd)
 int Cupv_closedb(dbfd)
      struct Cupv_dbfd *dbfd;
 {
+  EXEC SQL ROLLBACK WORK RELEASE;
   EXEC SQL CONTEXT FREE :ctx[dbfd->idx];
   return (0);
 }

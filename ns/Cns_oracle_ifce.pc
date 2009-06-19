@@ -49,7 +49,8 @@ Cns_oracle_error(func, sql_method, dbfd, sqlca)
       sqlca->sqlcode == -32102 || sqlca->sqlcode == -3135  ||
       sqlca->sqlcode == -12170 || sqlca->sqlcode == -12541 ||
       sqlca->sqlcode == -1012  || sqlca->sqlcode == -1003  ||
-      sqlca->sqlcode == -12571 || (sqlca->sqlcode <= -25401 && sqlca->sqlcode >= -25409) ||
+      sqlca->sqlcode == -12571 || 
+      (sqlca->sqlcode <= -25401 && sqlca->sqlcode >= -25409) ||
       sqlca->sqlcode == -1033  || sqlca->sqlcode == -1089) {
     nslogit (func, "Trying to reconnect\n");
     Cns_closedb (dbfd);
@@ -75,6 +76,7 @@ int Cns_abort_tr(dbfd)
 int Cns_closedb(dbfd)
      struct Cns_dbfd *dbfd;
 {
+  EXEC SQL ROLLBACK WORK RELEASE;
   EXEC SQL CONTEXT FREE :ctx[dbfd->idx];
   return (0);
 }

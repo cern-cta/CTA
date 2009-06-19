@@ -75,6 +75,7 @@ struct vmgr_dbfd *dbfd;
 int vmgr_closedb(dbfd)
 struct vmgr_dbfd *dbfd;
 {
+	EXEC SQL ROLLBACK WORK RELEASE;
 	EXEC SQL CONTEXT FREE :ctx[dbfd->idx];
 	return (0);
 }
