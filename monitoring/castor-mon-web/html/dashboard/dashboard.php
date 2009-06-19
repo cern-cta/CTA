@@ -107,6 +107,7 @@
 						</tr>
 						<tr>
 							<td><div id="menu">
+							<ul><li><a href="../exp_mon/exp_dashboard.php?service=<?php echo $service;?>">EXPERIMENTS DASHBOARD</a></li></ul>
 								<ul>
 						<li><h2>Statistics (CASTOR Instance)</h2>
 							<ul> 
