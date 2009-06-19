@@ -35,6 +35,22 @@ namespace tpcp   {
 
 /**
  * Enumeration class representing the different actions tpcp can perform.
+ *
+ * This enumeration class has the following advantages over a plain
+ * enumeration:
+ * <ul>
+ * <li>Enumeration integer values are within there own name space, e.g.
+ * Action::READ as opposed to ACTION_READ.
+ * <li>Enumeration values include both an integer and a string represention,
+ * e.g. Action::read.value() == Action::READ and Action::read.string() == "READ"
+ * <li>The class provides its string to Enumeration value method, i.e.
+ * Action::stringToAction().
+ * <li>The class provides a method for writing all of the valid string values
+ * to an output stream, i.e. writeValidStrings().
+ * </ul>
+ *
+ * The above advantages fitted well with the requirements of an Action
+ * enumeration required in the command-line parsing logic of TpcpCommand.
  */
 class Action {
 public:

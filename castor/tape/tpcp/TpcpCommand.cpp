@@ -36,7 +36,9 @@
 #include "h/Cgetopt.h"
 #include "h/common.h"
 #include "h/Ctape_constants.h"
+#include "h/serrno.h"
 #include "h/vdqm_api.h"
+#include "h/vmgr_api.h"
 
 #include <ctype.h>
 #include <getopt.h>
@@ -44,6 +46,12 @@
 #include <list>
 #include <string.h>
 #include <poll.h>
+
+
+//------------------------------------------------------------------------------
+// vmgr_error_buffer
+//------------------------------------------------------------------------------
+char castor::tape::tpcp::TpcpCommand::vmgr_error_buffer[VMGRERRORBUFLEN];
 
 
 //------------------------------------------------------------------------------
@@ -198,7 +206,13 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
   optind++;
 
   // Parse the VID command-line argument
-  m_parsedCommandLine.vid = argv[optind];
+  try {
+    utils::copyString(m_parsedCommandLine.vid, argv[optind]);
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_EX(castor::exception::Internal,
+      ": Failed to copy VID comand-line argument into internal data structures"
+      ": " << ex.getMessage().str());
+  }
   try {
     utils::checkVidSyntax(m_parsedCommandLine.vid);
   } catch(castor::exception::InvalidArgument &ex) {
@@ -216,14 +230,24 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) {
+int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
 
   try {
+    // Set the VMGR error buffer so that the VMGR does not write errors to
+    // stderr
+    vmgr_error_buffer[0] = '\0';
+    if (vmgr_seterrbuf(vmgr_error_buffer,sizeof(vmgr_error_buffer)) != 0) {
+      std::cerr << "Failed to set VMGR error buffer" << std::endl;
+      return 1;
+    }
+
     // Parse the command line
     try {
       parseCommandLine(argc, argv);
     } catch (castor::exception::Exception &ex) {
-      std::cerr << std::endl << "Failed to parse the command-line:\n\n\t"
+      std::cerr
+        << std::endl
+        << "Failed to parse the command-line:\n\n\t"
         << ex.getMessage().str() << std::endl;
       castor::tape::tpcp::TpcpCommand::usage(std::cerr, TPCPPROGRAMNAME);
       std::cerr << std::endl;
@@ -234,10 +258,6 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) {
     if(m_parsedCommandLine.debugOptionSet) {
       std::ostream &os = std::cout;
 
-      os << std::endl;
-      os << "===================" << std::endl;
-      os << "Parsed command-line" << std::endl;
-      os << "===================" << std::endl;
       os << std::endl;
       writeParsedCommandLine(os);
       os << std::endl;
@@ -252,7 +272,39 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) {
     }
 
     // Get the DGN of the tape to be used
-    // TO BE DONE
+    vmgr_tape_info tapeInfo;
+
+    try {
+      utils::setBytes(tapeInfo, '\0');
+      const int side = 0;//1;
+      vmgrQueryTape(m_parsedCommandLine.vid, side, tapeInfo, m_dgn);
+    } catch(castor::exception::Exception &ex) {
+      castor::exception::Exception ex2(ECANCELED);
+
+      std::ostream &os = ex2.getMessage();
+      os << "Failed to query the VMGR about tape: VID="
+         << m_parsedCommandLine.vid;
+
+      // If the tape does not exist
+      if(ex.code() == ENOENT) {
+        os << ": Tape does not exist";
+      } else {
+        os << ": " << ex.getMessage().str();
+      }
+
+      throw ex2;
+    }
+
+    // If debug, then display the tape information retrieved from the VMGR
+    if(m_parsedCommandLine.debugOptionSet) {
+      std::ostream &os = std::cout;
+
+      os << std::endl;
+      writeVmgrTapeInfo(os, tapeInfo);
+      os << std::endl;
+      writeDgn(os);
+      os << std::endl;
+    }
 
     // Setup the aggregator callback socket
     // TO BE DONE
@@ -293,10 +345,11 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) {
       return 1;
     }
   } catch (castor::exception::Exception &ex) {
-    std::cerr << std::endl << "Failed to start daemon: "
-      << ex.getMessage().str() << std::endl << std::endl;
-    //castor::tape::aggregator::AggregatorDaemon::usage(std::cerr);
-    std::cerr << std::endl;
+    std::cerr << std::endl
+      << "Aborting: Unexpected exception: "
+      << ex.getMessage().str()
+      << std::endl
+      << std::endl;
     return 1;
   }
 
@@ -345,37 +398,36 @@ void castor::tape::tpcp::TpcpCommand::writeFilenameList(std::ostream &os,
 // writeParsedCommandLine
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TpcpCommand::writeParsedCommandLine(std::ostream &os) {
-  os << "debugOptionSet="
+  os << "===================" << std::endl
+     << "Parsed command-line" << std::endl
+     << "===================" << std::endl
+     << std::endl
+     << "debugOptionSet ="
      << utils::boolToString(m_parsedCommandLine.debugOptionSet)
-     << std::endl;
-
-  os << "helpOptionSet ="
+     << std::endl
+     << "helpOptionSet  ="
      << utils::boolToString(m_parsedCommandLine.helpOptionSet)
-     << std::endl;
-
-  os << "action        ="
+     << std::endl
+     << "action         ="
      << m_parsedCommandLine.action.str()
-     << std::endl;
-
-  os << "vid           =";
+     << std::endl
+     << "vid            =";
   if(m_parsedCommandLine.vid == NULL) {
     os << "NULL";
   } else {
     os << "\"" << m_parsedCommandLine.vid << "\"";
   }
-  os << std::endl;
-
-  os << "tapeFseqRanges=";
+  os << std::endl
+     << "tapeFseqRanges =";
   writeTapeFseqRangeList(os, m_parsedCommandLine.tapeFseqRanges);
-  os << std::endl;
-
-  os << "filenamesList =";
+  os << std::endl
+     << "filenamesList  =";
   writeFilenameList(os, m_parsedCommandLine.filenamesList);
-  os << std::endl;
-  os << "NumOfFiles    ="<< countMinNumberOfFiles();
-  os << std::endl;
-  os << "nbRangesWithEnd="<< nbRangesWithEnd();
-  os << std::endl;
+  os << std::endl
+     << "NumOfFiles     ="<< countMinNumberOfFiles()
+     << std::endl
+     << "nbRangesWithEnd="<< nbRangesWithEnd()
+     << std::endl;
 }
 
 
@@ -538,10 +590,11 @@ void castor::tape::tpcp::TpcpCommand::parseTapeFileSequence(
             << "': The uppre boubary can not be '0'";
           throw ex;
         }
-        if(range.upper < range.lower){
+        if(range.lower > range.upper){
           castor::exception::InvalidArgument ex;
           ex.getMessage() << "Invalid range string: '" << *itor
-            << "': The uppre boubary must be greater or equal of the lower bounbary";
+            << "': The lower boundary cannot be greater than the upper "
+            "boundary";
           throw ex;
         }
       }
@@ -559,10 +612,10 @@ void castor::tape::tpcp::TpcpCommand::parseTapeFileSequence(
   }
 }
 
+
 //------------------------------------------------------------------------------
 // parseFilenames
 //------------------------------------------------------------------------------
-
 void castor::tape::tpcp::TpcpCommand::parseFilenames(char *const str)
   throw (castor::exception::Exception) {
 
@@ -585,10 +638,10 @@ void castor::tape::tpcp::TpcpCommand::parseFilenames(char *const str)
   }
 }
 
+
 //------------------------------------------------------------------------------
 // countMinNumberOfFiles
 //------------------------------------------------------------------------------
-
 int castor::tape::tpcp::TpcpCommand::countMinNumberOfFiles()
   throw (castor::exception::Exception) {
   
@@ -606,10 +659,10 @@ int castor::tape::tpcp::TpcpCommand::countMinNumberOfFiles()
   return count; 
 }
 
+
 //------------------------------------------------------------------------------
 // nbRangesWithEnd
 //------------------------------------------------------------------------------
-
 int castor::tape::tpcp::TpcpCommand::nbRangesWithEnd()
   throw (castor::exception::Exception) {
 
@@ -625,3 +678,110 @@ int castor::tape::tpcp::TpcpCommand::nbRangesWithEnd()
   return count;
 }
 
+
+//------------------------------------------------------------------------------
+// vmgrQueryTape
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::TpcpCommand::vmgrQueryTape(
+  char (&vid)[CA_MAXVIDLEN+1], const int side, vmgr_tape_info &tapeInfo,
+  char (&dgn)[CA_MAXVIDLEN+1]) throw (castor::exception::Exception) {
+
+  int save_serrno = 0;
+
+  serrno=0;
+  const int rc = vmgr_querytape(m_parsedCommandLine.vid, side, &tapeInfo, dgn);
+  
+  save_serrno = serrno;
+
+  if(rc != 0) {
+    char buf[STRERRORBUFLEN];
+    sstrerror_r(serrno, buf, sizeof(buf));
+    buf[sizeof(buf)-1] = '\0';
+    TAPE_THROW_CODE(save_serrno,
+      ": Failed vmgr_querytape() call"
+      ": " << buf);
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// writeVmgrTapeInfo
+//------------------------------------------------------------------------------
+void  castor::tape::tpcp::TpcpCommand::writeVmgrTapeInfo(std::ostream &os,
+  vmgr_tape_info &tapeInfo) {
+  os << "============================" << std::endl
+     << "vmgr_tape_info from the VMGR" << std::endl
+     << "============================" << std::endl
+     << std::endl
+     << "vid                 =\"" << tapeInfo.vid << "\""          << std::endl
+     << "vsn                 =\"" << tapeInfo.vsn << "\""          << std::endl
+     << "library             =\"" << tapeInfo.library << "\""      << std::endl
+     << "density             =\"" << tapeInfo.density << "\""      << std::endl
+     << "lbltype             =\"" << tapeInfo.lbltype << "\""      << std::endl
+     << "model               =\"" << tapeInfo.model << "\""        << std::endl
+     << "media_letter        =\"" << tapeInfo.media_letter << "\"" << std::endl
+     << "manufacturer        =\"" << tapeInfo.manufacturer << "\"" << std::endl
+     << "sn                  =\"" << tapeInfo.sn << "\""           << std::endl
+     << "nbsides             =" << tapeInfo.nbsides                << std::endl
+     << "etime               =" << tapeInfo.etime                  << std::endl
+     << "rcount              =" << tapeInfo.rcount                 << std::endl
+     << "wcount              =" << tapeInfo.wcount                 << std::endl
+     << "rhost               =\"" << tapeInfo.rhost << "\""        << std::endl
+     << "whost               =\"" << tapeInfo.whost << "\""        << std::endl
+     << "rjid                =" << tapeInfo.rjid                   << std::endl
+     << "wjid                =" << tapeInfo.wjid                   << std::endl
+     << "rtime               =" << tapeInfo.rtime                  << std::endl
+     << "wtime               =" << tapeInfo.wtime                  << std::endl
+     << "side                =" << tapeInfo.side                   << std::endl
+     << "poolname            =\"" << tapeInfo.poolname << "\""     << std::endl
+     << "status              =" << tapeInfo.status                 << std::endl
+     << "estimated_free_space=" << tapeInfo.estimated_free_space   << std::endl
+     << "nbfiles             =" << tapeInfo.nbfiles                << std::endl;
+}
+
+
+//------------------------------------------------------------------------------
+// writeDgn
+//------------------------------------------------------------------------------
+void  castor::tape::tpcp::TpcpCommand::writeDgn(std::ostream &os) {
+  os << "=================" << std::endl
+     << "DGN from the VMGR" << std::endl
+     << "=================" << std::endl
+     << std::endl
+     << "DGN=\"" << m_dgn << "\"" << std::endl;
+}
+
+/*
+  if ( rc == 0 ) {
+    if ( ((vmgrTapeInfo.status & DISABLED) == DISABLED) ||
+         ((vmgrTapeInfo.status & EXPORTED) == EXPORTED) ||
+         ((vmgrTapeInfo.status & ARCHIVED) == ARCHIVED) ) {
+      if ( (vmgrTapeInfo.status & DISABLED) == DISABLED ) {
+        serrno = ETHELD;
+      } else if ( (vmgrTapeInfo.status & EXPORTED) == EXPORTED ) {
+        serrno = ETABSENT;
+      } else if ( (vmgrTapeInfo.status & ARCHIVED) == ARCHIVED ) {
+        serrno = ETARCH;
+      }
+
+      castor::exception::Exception ex(serrno);
+      ex.getMessage()
+        << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getDgnFromVmgr"
+        << " vmgr_querytape failed";
+      throw ex;
+    }
+    return vmgrTapeInfo.status; // break and return the status 
+
+  } else {
+    // go on looping
+    if ( (save_serrno == SECOMERR) || (save_serrno == EVMGRNACT) ) {
+      sleep(5);
+    } else {
+      castor::exception::Exception ex(save_serrno);
+      ex.getMessage()
+        << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getDgnFromVmgr"
+        << " vmgr_querytape failed";
+      throw ex;
+    }
+  }
+*/

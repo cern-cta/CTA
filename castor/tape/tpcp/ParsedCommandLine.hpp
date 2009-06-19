@@ -25,6 +25,7 @@
 #ifndef CASTOR_TAPE_TPCP_PARSEDCOMMANDLINE_HPP
 #define CASTOR_TAPE_TPCP_PARSEDCOMMANDLINE_HPP 1
 
+#include "h/Castor_limits.h"
 #include "castor/tape/tpcp/Action.hpp"
 
 #include <list>
@@ -55,7 +56,7 @@ struct ParsedCommandLine {
   bool                   debugOptionSet;
   bool                   helpOptionSet;
   Action                 action;
-  const char             *vid;
+  char                   vid[CA_MAXVIDLEN+1];
   Uint32RangeList        tapeFseqRanges;
   std::list<std::string> filenamesList;
 
@@ -65,8 +66,11 @@ struct ParsedCommandLine {
   ParsedCommandLine() :
     debugOptionSet(false),
     helpOptionSet(false),
-    action(Action::read),
-    vid(NULL) {
+    action(Action::read) {
+
+    for(size_t i=0; i<sizeof(vid); i++) {
+      vid[i] = '\0';
+    }
   }
 }; // struct ParsedCommandLine
 

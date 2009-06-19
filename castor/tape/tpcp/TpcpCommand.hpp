@@ -35,6 +35,7 @@
 #include "castor/tape/tpcp/ParsedCommandLine.hpp"
 #include "castor/tape/tpcp/Verifier.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "h/vmgr_struct.h"
 
 #include <iostream>
 #include <list>
@@ -73,10 +74,15 @@ public:
   /**
    * The entry function of the tpcp command.
    */
-  int main(const int argc, char **argv);
+  int main(const int argc, char **argv) throw();
 
 
 private:
+
+  /**
+   * Vmgr error buffer.
+   */
+  static char vmgr_error_buffer[VMGRERRORBUFLEN];
 
   /**
    * The results of parsing the command-line.
@@ -129,17 +135,25 @@ private:
   /**
    * Writes the specified list of tape file sequence ranges to the specified
    * output stream.
+   *
+   * @param os The output stream to be written to.
+   * @param list The list to be written.
    */
   void writeTapeFseqRangeList(std::ostream &os, Uint32RangeList &list);
 
   /**
    * Writes the specified list of filenames to the specified
    * output stream.
+   *
+   * @param os The output stream to be written to.
+   * @param list The list to be written.
    */
   void writeFilenameList(std::ostream &os, std::list<std::string> &list);
  
   /**
    * Writes the parsed command-line to the specified output stream.
+   *
+   * @param os The output stream to be written to.
    */
   void writeParsedCommandLine(std::ostream &os);
 
@@ -189,12 +203,42 @@ private:
   int countMinNumberOfFiles() throw (castor::exception::Exception);
 
   /**
-   * Count the number of ranges that contains a range untile the end of 
-   * tape ('m-').
+   * Count the number of ranges that contains the upper boundary "end of 
+   * tape" ('m-').
    */
   int nbRangesWithEnd() throw (castor::exception::Exception);
 
+  /**
+   * Retrieves information about the specified tape from the VMGR.
+   *
+   * This method is basically a C++ wrapper around the C VMGR function
+   * vmgr_querytape.  This method converts the return value of -1 and the
+   * serrno to an exception in the case of an error.
+   &
+   * @param vid The tape for which the information should be retrieved.
+   * @param side The tape side.
+   * @param tapeInfo Will be filled with the retrieved information.
+   * @param dgn Will be filled with the DGN asscoaited with the tape.
+   */
+  void vmgrQueryTape(char (&vid)[CA_MAXVIDLEN+1], const int side,
+    vmgr_tape_info &tapeInfo, char (&dgn)[CA_MAXDGNLEN+1])
+    throw (castor::exception::Exception);
 
+  /**
+   * Writes the specified vmgr_tape_info structure to the specified output
+   * stream.
+   *
+   * @param os The output stream to be written to.
+   * @param tapeInfo The vmgr_tape_info structure to be written.
+   */
+  void writeVmgrTapeInfo(std::ostream &os, vmgr_tape_info &tapeInfo);
+
+  /**
+   * Writes the DGN retreived from the VMGR to the specified output stream.
+   *
+   * @param os The output stream to be written to.
+   */
+  void writeDgn(std::ostream &os);
 }; // class TpcpCommand
 
 } // namespace tpcp
