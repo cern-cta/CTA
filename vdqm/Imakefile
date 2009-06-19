@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.12 $ $Release$ $Date: 2009/02/27 13:34:20 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.13 $ $Release$ $Date: 2009/06/19 09:22:40 $ $Author: waldron $
 #
 # Makefile for the VDQM API library and client
 #
@@ -47,7 +47,7 @@ VDQMLIB = SharedLibraryTargetName(castorvdqm)
 
 ClientProgramTarget(showqueues,showqueues.Osuf,$(VDQMLIB) $(DEPLIB),$(VDQMLIB) $(LIBS),0755)
 ClientProgramTarget(tpsrv_in_prod,tpsrv_in_prod.Osuf,$(VDQMLIB) $(DEPLIB),$(VDQMLIB) $(LIBS),0750)
-ClientProgramTarget(vdqm_admin,vdqm_admin.Osuf,$(VDQMLIB) $(DEPLIB),$(VDQMLIB) $(LIBS),0750)
+ClientProgramTarget(vdqm_admin,vdqm_admin.Osuf,$(VDQMLIB) $(DEPLIB),$(VDQMLIB) $(LIBS),0755)
 
 LIBMANPAGE(vdqm_Connect)
 LIBMANPAGE(vdqm_DelDrive)
