@@ -43,13 +43,13 @@ NEWTPWRITE_SRCS = \
      ALBWriter.cpp \
      $(TAPEFORMAT_SRCS)  
 NEWTPWRITEBIN_OBJS = $(NEWTPWRITE_SRCS:.cpp=.Osuf)
-NormalProgramTarget(tapeformatwrite,$(NEWTPWRITEBIN_OBJS),$(NSLIB) $(DEPLIB),$(LIBS) $(CKSUMLIB),750)
-EXEMANPAGE(tapeformatwrite)
+NormalProgramTarget(albwriter,$(NEWTPWRITEBIN_OBJS),$(NSLIB) $(DEPLIB),$(LIBS) $(CKSUMLIB),750)
+EXEMANPAGE(albwriter)
 
 NEWTPREAD = \
      ALBReader.cpp \
      $(TAPEFORMAT_SRCS)
 NEWTPREADBIN_OBJS = $(NEWTPREAD:.cpp=.Osuf)
-NormalProgramTarget(tapeformatread, $(NEWTPREADBIN_OBJS), $(NSLIB) $(DEPLIB),$(LIBS) $(CKSUMLIB),750)
-EXEMANPAGE(tapeformatread)
+NormalProgramTarget(albreader, $(NEWTPREADBIN_OBJS), $(NSLIB) $(DEPLIB),$(LIBS) $(CKSUMLIB),750)
+EXEMANPAGE(albreader)
 
