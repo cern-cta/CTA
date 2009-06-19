@@ -230,7 +230,9 @@ int Cns_main(main_args)
     } else {
       sin.sin_port = htons ((unsigned short)CNS_SEC_PORT);
     }
-    //Temporary workaround till we come up with something more clever to fix bug related with the KRB5 and GSI mixed libraries
+    /* Temporary workaround till we come up with something more clever to fix
+     * bug related with the KRB5 and GSI mixed libraries
+     */
     void *handle = dlopen ("libCsec_plugin_KRB5.so", RTLD_LAZY);
     if (!handle) {
         fprintf (stderr, "%s\n", dlerror());
@@ -250,7 +252,7 @@ int Cns_main(main_args)
     nslogit (func, NS002, "setsockopt", neterror());
   if (bind (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
     nslogit (func, NS002, "bind", neterror());
-    return (CONFERR); // SEE HOW TO REACT WHEN A SOCKET CAN NOT BE CREATED.
+    return (CONFERR);
   }
   listen (s, 5) ;
 
@@ -1023,7 +1025,7 @@ int proctransreq(magic, req_data, clienthost, thip)
         req_type != CNS_GETGRPNAM && req_type != CNS_GETUSRID &&
         req_type != CNS_GETUSRNAM && req_type != CNS_LASTFSEQ &&
         req_type != CNS_PING && req_type != CNS_BULKEXIST &&
-        req_type != CNS_TAPESUM) break;
+        req_type != CNS_TAPESUM && req_type != CNS_DROPSEGS) break;
     sendrep (thip->s, CNS_IRC, rc);
   }
   return (rc);
