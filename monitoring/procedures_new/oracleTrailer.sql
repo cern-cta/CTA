@@ -462,11 +462,11 @@ BEGIN
   -- has been started in the last sampling interval. This will act as a summary
   -- table
   INSERT INTO TapeMountsHelper
-    SELECT messages.timestamp, messages.tapevid
+    SELECT messages.timestamp, messages.facility, messages.tapevid
       FROM &dlfschema..dlf_messages messages
      WHERE messages.severity = 8 -- System
-       AND messages.facility = 2 -- Recaller
-       AND messages.msg_no = 13  -- Recaller started
+       AND ((messages.facility = 2 AND messages.msg_no = 13) OR --Recaller/Recaller started
+           (messages.facility = 1 AND messages.msg_no = 14))    --Migrator/Migrator started
        AND messages.subreqid <> '00000000-0000-0000-0000-000000000000'
        AND messages.timestamp >  now - 10/1440
        AND messages.timestamp <= now - 5/1440;
@@ -849,6 +849,87 @@ END;
 /
 
 
+/* PL/SQL method implementing statsTape */
+CREATE OR REPLACE PROCEDURE statsTape (now IN DATE, inter IN NUMBER) AS
+BEGIN
+  FOR mounts IN (
+    SELECT facility, 
+           nvl(sum(filescp),0) files, 
+	   nvl(round(sum(bytes/1073741824),1),0) gigaBytes, 
+	   nvl(round(avg((bytes/1048576)/filescp),2),0) filesize, 
+           nvl(round(avg((bytes/1048576)/runtime),2),0) rate, 
+	   nvl(round(avg(runtime),2),0) runtime, 
+	   nvl(round(avg(filescp),2),0) filesmount, 
+	   nvl(count(distinct tapevid),0) tapeVolumes 
+    FROM (
+       SELECT /*+ index(mes I_Messages_Facility) index(num I_Num_Param_Values_id) */
+              mes.timestamp, mes.reqid, mes.tapevid, mes.facility,
+              max(decode(num.name,'FILESCP',num.value,NULL)) filescp,
+              max(decode(num.name,'RUNTIME',num.value,NULL)) runtime,
+              max(decode(num.name,'BYTESCP',num.value,NULL)) bytes
+       FROM &dlfschema..dlf_messages mes, &dlfschema..dlf_num_param_values num
+       WHERE mes.id = num.id
+         AND ((mes.facility = 2 AND mes.msg_no = 20) OR (mes.facility = 1 AND mes.msg_no = 21))
+         AND num.name in ('FILESCP','BYTESCP','RUNTIME')
+         AND mes.timestamp > now - 10/1440
+         AND mes.timestamp <= now - 5/1440
+         AND num.timestamp > now - 10/1440
+         AND num.timestamp <= now - 5/1440
+         GROUP BY mes.timestamp, mes.reqid, mes.tapevid, mes.facility)
+    GROUP BY facility
+  )
+  LOOP
+    INSERT INTO TapeStat
+    (timestamp, interval, facility, files, gigaBytes, avgFileSize, rate, runtime, filespermount, tapeVolumes)
+    VALUES
+    (now - 5/1440, inter, mounts.facility, mounts.files, mounts.gigaBytes, mounts.filesize, mounts.rate, mounts.runtime, mounts.filesmount, mounts.tapeVolumes);
+  END LOOP;
+END;
+/
+
+
+CREATE OR REPLACE PROCEDURE statSRMProcessing (now IN DATE, inter IN NUMBER) AS
+BEGIN
+    FOR processing IN  (
+      SELECT type, svcclass, 
+             nvl(count(*),0) started, 
+	     nvl(min(elapsedTime),0) mintime, 
+	     nvl(max(elapsedTime),0) maxtime, 
+	     nvl(round(avg(elapsedTime),3),0) avgtime, 
+             nvl(round(stddev(elapsedTime),3),0) stddevtime, 
+	     nvl(round(median(elapsedTime),3),0) mediantime 
+      FROM (
+        SELECT /*+ index(mes I_Messages_Facility) index(str I_Str_Param_Values_id) index(num I_Num_Param_Values_id) */
+	       mes.id, 
+               max(decode(str.name,'Type',str.value)) type,
+               max(decode(str.name,'SvcClass',str.value)) svcclass,
+               max(decode(num.name,'ElapsedTime',num.value)) elapsedTime
+        FROM &dlfschema..dlf_messages mes, &dlfschema..dlf_str_param_values str, &dlfschema..dlf_num_param_values num
+        WHERE mes.id = str.id
+          AND mes.id = num.id 
+          AND str.name in ('Type','SvcClass')
+          AND num.name = 'ElapsedTime'
+          AND mes.facility = 14 --SRMDaemon
+          AND mes.msg_no = 9    --Processing complete
+          AND mes.timestamp > now - 10/1440
+          AND mes.timestamp <= now - 5/1440
+          AND str.timestamp > now - 10/1440
+          AND str.timestamp <= now - 5/1440
+          AND num.timestamp > now - 10/1440
+          AND num.timestamp <= now - 5/1440
+        GROUP BY mes.id )
+      GROUP BY type, svcclass;
+    )
+    LOOP
+      INSERT INTO SRMProcessingStats
+      (timestamp, interval, type, svcclass, started, mintime, maxtime, avgtime, stddevtime, mediantime)
+      values
+      (now - 5/1440, inter, processing.type, processing.svcclass, processing.started, processing.mintime, processing.maxtime, processing.avgtime, processing.stddevtime, 
+      processing.mediantime);
+    END LOOP;
+END;
+/
+
 /***** COMMON CODE *****/
 
 /* PL/SQL method implementing createPartition */
@@ -1066,6 +1147,8 @@ BEGIN
                             statsTapeRecalled(now, interval);
                             statsProcessingTime(now, interval);
                             statsClientVersion(now, interval);
+			    statsTape(now, interval);
+			    statSRMProcessing(now, interval);
                           END;',
       JOB_CLASS       => 'DLF_JOB_CLASS',
       START_DATE      => SYSDATE,

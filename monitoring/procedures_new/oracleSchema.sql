@@ -104,8 +104,11 @@ CREATE GLOBAL TEMPORARY TABLE CacheEfficiencyHelper (reqid CHAR(36))
   ON COMMIT DELETE ROWS;
 
 /* SQL statement for table TapeMountsHelper */
-CREATE TABLE TapeMountsHelper (timestamp DATE CONSTRAINT NN_TapeMountsHelper_ts NOT NULL, tapevid VARCHAR2(20))
+/* SQL statement for table TapeMountsHelper */
+CREATE TABLE TapeMountsHelper (timestamp DATE CONSTRAINT NN_TapeMountsHelper_ts NOT NULL, facility NUMBER, tapevid VARCHAR2(20))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
+/* SQL statements for indexes on the TapeMountsHelper table */
+CREATE INDEX I_TapeHelper_timestamp ON TapeMountsHelper (timestamp) LOCAL;  
 
 /* SQL statement for a view on the DLF_Monitoring table */
 CREATE OR REPLACE VIEW DLFStats AS
@@ -172,6 +175,20 @@ CREATE TABLE Migration (subReqId CHAR(36) CONSTRAINT NN_Migration_subReqId NOT N
 /* SQL statements for indexes on the Migration table */
 CREATE INDEX I_Migration_timestamp ON Migration (timestamp) LOCAL;
 CREATE INDEX I_Migration_reqId ON Migration (reqId) LOCAL;
+
+/* SQL statement for table TapeStat*/  
+CREATE TABLE TapeStat (timestamp DATE CONSTRAINT NN_TapeStat_ts NOT NULL, interval NUMBER, facility NUMBER, files  NUMBER, gigaBytes NUMBER, avgFileSize NUMBER, rate NUMBER, runtime  NUMBER, filespermount NUMBER, tapeVolumes NUMBER)
+  PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAX_VALUE));  
+/* SQL statements for indexes on the TapeStat table */
+CREATE INDEX I_TapeStat_timestamp ON TapeStat (timestamp) LOCAL;
+
+/* SQL statement for table SRMProcessingStats */
+CREATE TABLE SRMProcessingStats (timestamp DATE CONSTRAINT NN_srmProcessingStats NOT NULL, interval NUMBER, type VARCHAR2(255), svcclass VARCHAR(255), started NUMBER, mintime NUMBER, maxtime NUMBER, avgtime NUMBER, stddevtime NUMBER, mediantime NUMBER
+)
+PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
+
+/* SQL statements for indexes on the SRMProcessingStats table */
+CREATE INDEX I_SRMProc_timestamp ON SRMProcessingStats (timestamp) LOCAL;
 
 /* SQL statement for creation of the Errors materialized view */
 CREATE MATERIALIZED VIEW Errors_MV
