@@ -31,7 +31,7 @@ mkdir -p $RPM_BUILD_ROOT/var/www/html/castor-mon-web/dashboard
 mkdir -p $RPM_BUILD_ROOT/var/www/html/castor-mon-web/images
 mkdir -p $RPM_BUILD_ROOT/var/www/html/castor-mon-web/lib
 mkdir -p $RPM_BUILD_ROOT/var/www/html/castor-mon-web/stat
-mkdir -p $RPM_BUILD_ROOT/var/www/html/castor-mon-web/exp
+mkdir -p $RPM_BUILD_ROOT/var/www/html/castor-mon-web/exp_mon
 mkdir -p $RPM_BUILD_ROOT/var/www/html/castor-mon-web/jpgraph-1.27/docs/html/exframes
 mkdir -p $RPM_BUILD_ROOT/var/www/html/castor-mon-web/jpgraph-1.27/docs/html/img
 mkdir -p $RPM_BUILD_ROOT/var/www/html/castor-mon-web/jpgraph-1.27/docs/ref
@@ -45,7 +45,7 @@ install -m 644 html/dashboard/* $RPM_BUILD_ROOT/var/www/html/castor-mon-web/dash
 install -m 644 html/images/* $RPM_BUILD_ROOT/var/www/html/castor-mon-web/images/
 install -m 644 html/lib/* $RPM_BUILD_ROOT/var/www/html/castor-mon-web/lib/
 install -m 644 html/stat/* $RPM_BUILD_ROOT/var/www/html/castor-mon-web/stat/
-install -m 644 html/exp/* $RPM_BUILD_ROOT/var/www/html/castor-mon-web/exp/
+install -m 644 html/exp_mon/* $RPM_BUILD_ROOT/var/www/html/castor-mon-web/exp_mon/
 install -m 644 conf/* $RPM_BUILD_ROOT/var/www/conf/castor-mon-web/
 install -m 644 jpgraph-1.27/QPL.txt $RPM_BUILD_ROOT/var/www/html/castor-mon-web/jpgraph-1.27/
 install -m 644 jpgraph-1.27/README $RPM_BUILD_ROOT/var/www/html/castor-mon-web/jpgraph-1.27/
