@@ -27,6 +27,7 @@
 #define CASTOR_TAPE_AGGREGATOR_UTILS_UTILS_HPP 1
 
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/InvalidArgument.hpp"
 #include "castor/tape/Constants.hpp"
 
 #include <errno.h>

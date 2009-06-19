@@ -34,21 +34,6 @@ void castor::tape::tpcp::DataMover::run(
   throw(castor::exception::Exception) {
 
 /*
-    // Get the port range to be used by the aggregator callback socket
-    int   lowPort  = LOW_CLIENT_PORT_RANGE;
-    int   highPort = HIGH_CLIENT_PORT_RANGE;
-    char* sport;
-    if((sport = getconfent((char *)CLIENT_CONF,(char *)LOWPORT_CONF,0)) != 0) {
-      lowPort = castor::System::porttoi(sport);
-    }
-    if((sport = getconfent((char *)CLIENT_CONF,(char *)HIGHPORT_CONF,0)) != 0) {
-      highPort = castor::System::porttoi(sport);
-    }
-
-    // Bind the aggregator callback socket
-    m_callbackSocket.bind(lowPort, highPort);
-    m_callbackSocket.listen();
-
     unsigned short port = 0;
     unsigned long  ip   = 0;
     m_callbackSocket.getPortIp(port, ip);

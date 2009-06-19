@@ -58,10 +58,6 @@ void castor::tape::utils::splitString(const std::string &str,
     result.push_back(str.substr(beginIndex, endIndex - beginIndex));
     beginIndex = ++endIndex;
     endIndex = str.find(separator, endIndex);
-
-//  if(endIndex == std::string::npos) {
-//    result.push_back(str.substr(beginIndex, str.length()));
-//  }
   }
 
   if(endIndex == std::string::npos) {

@@ -239,6 +239,21 @@ private:
    * @param os The output stream to be written to.
    */
   void writeDgn(std::ostream &os);
+
+  /**
+   * Creates, binds and sets to listening the callback socket to be used for
+   * callbacks from the aggregator daemon.
+   */
+  void setupCallbackSocket() throw(castor::exception::Exception);
+
+  /**
+   * Writes a textual description of the aggregator callback socket to the
+   * specified output stream.
+   *
+   * @param os The output stream to be written to.
+   */
+  void writeCallbackSocket(std::ostream &os);
+
 }; // class TpcpCommand
 
 } // namespace tpcp

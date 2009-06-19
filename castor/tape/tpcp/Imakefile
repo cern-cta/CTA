@@ -69,6 +69,7 @@ TAPEGATEWAY_IO_SRCS = \
   ../../io/StreamVolumeRequestCnv.cpp
 
 TPCPBIN_SRCS = \
+  ../net/net.cpp \
   ../utils/utils.cpp \
   Action.cpp \
   DataMover.cpp \

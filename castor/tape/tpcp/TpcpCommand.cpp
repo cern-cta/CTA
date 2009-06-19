@@ -26,6 +26,7 @@
 #include "castor/System.hpp"
 #include "castor/exception/Internal.hpp" 
 #include "castor/exception/InvalidArgument.hpp"
+#include "castor/tape/net/net.hpp"
 #include "castor/tape/tapegateway/FileToRecall.hpp"
 #include "castor/tape/tapegateway/NoMoreFiles.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
@@ -306,8 +307,35 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
       os << std::endl;
     }
 
+    // Check the tape is available
+    if(tapeInfo.status & DISABLED ||
+       tapeInfo.status & EXPORTED ||
+       tapeInfo.status & ARCHIVED) {
+
+       castor::exception::Exception ex(ECANCELED);
+       std::ostream &os = ex.getMessage();
+
+       os << "Tape is not available: Tape is: ";
+
+       if(tapeInfo.status & DISABLED) os << " DISABLED";
+       if(tapeInfo.status & EXPORTED) os << " EXPORTED";
+       if(tapeInfo.status & ARCHIVED) os << " ARCHIVED";
+
+       throw ex;
+    }
+
     // Setup the aggregator callback socket
-    // TO BE DONE
+    setupCallbackSocket();
+
+    // If debug, then display a textual description of the aggregator callback
+    // socket
+    if(m_parsedCommandLine.debugOptionSet) {
+      std::ostream &os = std::cout;
+
+      os << std::endl;
+      writeCallbackSocket(os);
+      os << std::endl;
+    }
 
     // Send the request for a drive to the VDQM
     // TO BE DONE
@@ -749,6 +777,44 @@ void  castor::tape::tpcp::TpcpCommand::writeDgn(std::ostream &os) {
      << "=================" << std::endl
      << std::endl
      << "DGN=\"" << m_dgn << "\"" << std::endl;
+}
+
+
+//------------------------------------------------------------------------------
+// setupCallbackSocket
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::TpcpCommand::setupCallbackSocket()
+  throw(castor::exception::Exception) {
+
+  // Get the port range to be used by the aggregator callback socket
+  int   lowPort  = LOW_CLIENT_PORT_RANGE;
+  int   highPort = HIGH_CLIENT_PORT_RANGE;
+  char* sport    = NULL;
+  if((sport = getconfent((char *)CLIENT_CONF,(char *)LOWPORT_CONF,0)) != 0) {
+    lowPort = castor::System::porttoi(sport);
+  }
+  if((sport = getconfent((char *)CLIENT_CONF,(char *)HIGHPORT_CONF,0)) != 0) {
+    highPort = castor::System::porttoi(sport);
+  }
+
+  // Bind the aggregator callback socket
+  m_callbackSocket.bind(lowPort, highPort);
+  m_callbackSocket.listen();
+}
+
+
+//------------------------------------------------------------------------------
+// writeCallbackSocket
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::TpcpCommand::writeCallbackSocket(std::ostream &os) {
+  os << "==================================" << std::endl
+     << "Aggregator callback socket details" << std::endl
+     << "==================================" << std::endl
+     << std::endl;
+
+  net::printSocketDescription(os, m_callbackSocket.socket());
+
+  os << std::endl;
 }
 
 /*
