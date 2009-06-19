@@ -1,6 +1,7 @@
 fillType2Obj.sql
 oracleCommon.schema.sql
 oracleDrain.schema.sql
+oracleMonitoring.schema.sql
 oracleCommon.sql
 oraclePerm.sql
 oracleStager.sql
@@ -10,3 +11,4 @@ oracleTape.sql
 oracleGC.sql
 oracleDrain.sql
 oracleDebug.sql
+oracleMonitoring.sql
