@@ -918,7 +918,7 @@ BEGIN
           AND num.timestamp > now - 10/1440
           AND num.timestamp <= now - 5/1440
         GROUP BY mes.id )
-      GROUP BY type, svcclass;
+      GROUP BY type, svcclass
     )
     LOOP
       INSERT INTO SRMProcessingStats
