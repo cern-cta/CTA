@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.47 $ $Release$ $Date: 2009/06/18 15:30:29 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.48 $ $Release$ $Date: 2009/06/22 09:26:14 $ $Author: gtaur $
  *
  *
  *
@@ -152,7 +152,7 @@ void RepackWorker::run(void* param)
       castor::dlf::Param params[] =
 	{castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
 	 castor::dlf::Param("Port", port),
-	 castor::dlf::Param("Command", rreq->command())};
+	 castor::dlf::Param("Command", RepackCommandCodeStrings[rreq->command()%10])};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 5, 3, params);
       try {
 
@@ -210,7 +210,8 @@ void RepackWorker::run(void* param)
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 67, 2,params);
 	
 	RepackResponse* globalError=new RepackResponse();
-ack=new RepackAck();
+	if (ack==NULL)
+	  ack=new RepackAck();
 	globalError->setErrorCode(e.code());
 	globalError->setErrorMessage(e.getMessage().str());
 	ack->addRepackresponse(globalError);
@@ -218,20 +219,21 @@ ack=new RepackAck();
       } 
     }
 
-    if (ack !=NULL && rreq !=NULL)
+    if (ack != NULL && rreq !=NULL){
       ack->setCommand(rreq->command());
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
+	 castor::dlf::Param("Port", port),
+	 castor::dlf::Param("Command", RepackCommandCodeStrings[ack->command()%10])};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 8, 3, params);
+
+    }
 
 /****************************************************************************/ 
 
       // Answer the client
 
     try {
-    
-      castor::dlf::Param params[] =
-	{castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
-	 castor::dlf::Param("Port", port),
-	 castor::dlf::Param("Command", ack->command())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 8, 3, params);
 
       sock->sendObject(*ack);
 
@@ -475,7 +477,7 @@ RepackAck* RepackWorker::handleRepack(RepackRequest* rreq, castor::repack::IRepa
   if (!requestToSubmit->repacksubrequest().empty())
     ack = oraSvc->storeRequest(requestToSubmit);
 
-  if (!badVmgrTapes.empty()){
+  if (!badVmgrTapes.empty() && ack != NULL){
     // report failure due to vmgr problems
     errorVmgr=badVmgrTapes.begin();
     while (errorVmgr != badVmgrTapes.end()){

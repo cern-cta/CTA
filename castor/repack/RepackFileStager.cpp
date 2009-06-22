@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.51 $ $Release$ $Date: 2009/06/18 15:30:28 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.52 $ $Release$ $Date: 2009/06/22 09:26:14 $ $Author: gtaur $
  *
  * @author Giulia Taurelli
  *****************************************************************************/
@@ -93,7 +93,7 @@ void RepackFileStager::run(void *param) throw() {
       castor::dlf::Param params[] =
 	{castor::dlf::Param("VID", (*sreq)->vid()),
 	 castor::dlf::Param("ID", (*sreq)->id()),
-	 castor::dlf::Param("STATUS", (*sreq)->status())};
+	 castor::dlf::Param("STATUS", RepackSubRequestStatusCodeStrings[(*sreq)->status()])};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 21, 3, params);
       try {
 

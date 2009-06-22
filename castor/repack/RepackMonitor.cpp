@@ -41,7 +41,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
-
+#include <u64subr.h>
+#include <time.h>
 
 #include "castor/Services.hpp"
 #include "castor/IService.hpp"
@@ -97,7 +98,7 @@ namespace castor {
 	  castor::dlf::Param params[] =
 	    {castor::dlf::Param("VID", (*tape)->vid()),
 	     castor::dlf::Param("ID", (*tape)->id()),
-	     castor::dlf::Param("STATUS", (*tape)->status())};
+	     castor::dlf::Param("STATUS", RepackSubRequestStatusCodeStrings[(*tape)->status()])};
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 35, 3, params);
 
 	// get information for this tape querying the stager
@@ -263,16 +264,40 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq, castor::repack::IRepackSv
     response++;
   }
 
+  // call to the nameserver
+
+  FileListHelper filehelper(ptr_server->getNsName());
+  
+  u_signed64 filesOnTape= filehelper.countFilesOnTape(sreq->vid());
+  
 
 
-  if ( (waitingmig_status + canbemig_status) !=  sreq->filesMigrating() 
+  if ( filesOnTape==0 || (waitingmig_status + canbemig_status) !=  sreq->filesMigrating() 
         || stagein_status != sreq->filesStaging() ||  invalid_status != sreq->filesFailed() 
   )
   {
     
     // UPDATE NEEDED
     
-    if ( !(waitingmig_status + canbemig_status + stagein_status + stageout_status)){
+    if ( !(waitingmig_status + canbemig_status + stagein_status + stageout_status) || filesOnTape==0 ){
+
+      u_signed64 timeSpent=sreq->submitTime();
+      if (timeSpent) 
+	timeSpent=time(NULL)-timeSpent;
+
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("VID", sreq->vid()),
+	 castor::dlf::Param("STATUS",RepackSubRequestStatusCodeStrings[sreq->status()]),
+	 castor::dlf::Param("time", timeSpent)
+	};
+      
+
+      if (filesOnTape==0 && (waitingmig_status + canbemig_status + stagein_status + stageout_status)){
+	//inconsistency left around
+
+	castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 69, 3,params);
+
+      }
 
       // REPACK is finished
 
@@ -284,41 +309,17 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq, castor::repack::IRepackSv
 
 	// everything went fine
 
-	castor::dlf::Param params[] =
-	  {castor::dlf::Param("VID", sreq->vid()),
-	    castor::dlf::Param("STATUS", sreq->status())};
-	 castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 37, 2, params);
+	 castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 37, 3, params);
 
       } else{
 	// we faced some errors
-
-	  castor::dlf::Param params[] =
-	   {castor::dlf::Param("VID", sreq->vid()),
-	    castor::dlf::Param("STATUS", sreq->status())};
-	  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 39, 2, params);
+	  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 39, 3, params);
 	
 	}	
       
     } else {
     
     // Still ON_GOING
-  
-      // call to the nameserver
-      FileListHelper filehelper(ptr_server->getNsName());
-      
-      u_signed64 filesOnTape= filehelper.countFilesOnTape(sreq->vid());
-
-      castor::dlf::Param params[] =
-	{castor::dlf::Param("VID", sreq->vid()),
-	 castor::dlf::Param("staging",stagein_status ),
-	 castor::dlf::Param("migrating",waitingmig_status + canbemig_status),
-	 castor::dlf::Param("invalid",invalid_status),
-	 castor::dlf::Param("files",sreq->files()),
-	 castor::dlf::Param("files on tape", filesOnTape)
-	};
-
-
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 40, 6, params);
 
       sreq->setFilesMigrating( waitingmig_status + canbemig_status );
       sreq->setFilesStaging( stagein_status );
@@ -332,13 +333,36 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq, castor::repack::IRepackSv
 
 	castor::dlf::Param params[] =
 	  {castor::dlf::Param("VID", sreq->vid())};
-	castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 40, 1,params);
+	castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 68, 1,params);
 
 	sreq->setFiles(filesOnTape);
 	sreq->setFilesFailedSubmit(sreq->filesFailedSubmit() - staged_status);
 	staged_status=0;
 
       }
+
+      u_signed64 data=0;
+      if (sreq->files())
+	data=sreq->xsize()/sreq->files();
+      data=data*staged_status;
+      
+      char buf[21];
+      u64tostru(data, buf, 0);
+
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("VID", sreq->vid()),
+	 castor::dlf::Param("toRecall",stagein_status ),
+	 castor::dlf::Param("toMigrate",waitingmig_status + canbemig_status),
+	 castor::dlf::Param("failed",invalid_status+sreq->filesFailedSubmit()),
+	 castor::dlf::Param("done",staged_status),
+	 castor::dlf::Param("filesStillOnTape", filesOnTape),
+	 castor::dlf::Param("transferedDataVolume", buf)
+	};
+
+
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 40, 7, params);
+
+
       
       sreq->setFilesStaged( staged_status );
       sreq->setStatus(RSUBREQUEST_ONGOING);

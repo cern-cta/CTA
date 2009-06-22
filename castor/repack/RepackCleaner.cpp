@@ -82,7 +82,7 @@ void RepackCleaner::run(void* param) {
       castor::dlf::Param params[] =
 	{castor::dlf::Param("VID", (*tape)->vid()),
 	 castor::dlf::Param("ID", (*tape)->id()),
-	 castor::dlf::Param("STATUS", (*tape)->status())};
+	 castor::dlf::Param("STATUS",RepackSubRequestStatusCodeStrings[(*tape)->status()])};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 42, 3, params);
      
       if ( (*tape) != NULL )	{  
@@ -148,8 +148,8 @@ void  RepackCleaner::checkTape(RepackSubRequest* tape) throw (castor::exception:
   Cuuid_t cuuid;
 
   FileListHelper filelisthelper(ptr_server->getNsName());
-  u_signed64 fileOnTape=filelisthelper.countFilesOnTape(tape->vid()); 
-  u_signed64 filesDone=0;
+  int fileOnTape=filelisthelper.countFilesOnTape(tape->vid()); 
+  int filesDone=0;
   if (tape->files() > fileOnTape)
     filesDone=tape->files()-fileOnTape;
   tape->setFilesStaged(filesDone);
@@ -206,7 +206,7 @@ void  RepackCleaner::checkTape(RepackSubRequest* tape) throw (castor::exception:
      if (numRetry > 0){
        castor::dlf::Param params[] =
 	 {castor::dlf::Param("VID", tape->vid()),
-	  castor::dlf::Param("STATUS", tape->status())};
+	  castor::dlf::Param("STATUS", RepackSubRequestStatusCodeStrings[tape->status()])};
        castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 38, 2, params);
        
        numRetry--;

@@ -89,7 +89,7 @@ void RepackFileChecker::run(void* param) throw(){
 	castor::dlf::Param params[] =
 	  {castor::dlf::Param("VID", (*sreq)->vid()),
 	   castor::dlf::Param("ID", (*sreq)->id()),
-	   castor::dlf::Param("STATUS", (*sreq)->status())};
+	   castor::dlf::Param("STATUS", RepackSubRequestStatusCodeStrings[(*sreq)->status()])};
 	castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 14, 3, params);
     
       /** get the Segs for this tape  */

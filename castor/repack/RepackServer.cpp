@@ -246,8 +246,8 @@ castor::repack::RepackServer::RepackServer() :
      {65, "RepackMonitor : impossible to get tapes to monitor" },
      {66, "RepackMonitor : impossible to get statistics about tape" },
      {67, "RepackWorker : impossible to perform"},
-     {68, "RepackMonitor : number of files on tape increased!"},   
-
+     {68, "RepackMonitor : number of files on tape increased!"},
+     {69, "RepackMonitor : tape empty but the process is still ONGOING"},
      {-1, ""}};
 
   dlfInit(messages);

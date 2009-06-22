@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackRestarter.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/06/18 15:30:29 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackRestarter.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2009/06/22 09:26:14 $ $Author: gtaur $
  *
  *
  *
@@ -86,7 +86,7 @@ void RepackRestarter::run(void *param) throw() {
       castor::dlf::Param params[] =
 	{castor::dlf::Param("VID", (*sreq)->vid()),
 	  castor::dlf::Param("ID", (*sreq)->id()),
-	 castor::dlf::Param("STATUS", (*sreq)->status())};
+	 castor::dlf::Param("STATUS", RepackSubRequestStatusCodeStrings[(*sreq)->status()])};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 20, 3, params);
       try {
 
