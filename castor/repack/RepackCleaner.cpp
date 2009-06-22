@@ -31,6 +31,7 @@
 #include "IRepackSvc.hpp"
 #include "castor/Services.hpp"
 #include "castor/IService.hpp"
+#include <u64subr.h>
 
 namespace castor{
 	namespace repack {
@@ -152,18 +153,36 @@ void  RepackCleaner::checkTape(RepackSubRequest* tape) throw (castor::exception:
   int filesDone=0;
   if (tape->files() > fileOnTape)
     filesDone=tape->files()-fileOnTape;
+
   tape->setFilesStaged(filesDone);
   tape->setFilesFailed(fileOnTape);
   tape->setFilesFailedSubmit(0);
   tape->setFilesStaging(0);
   tape->setFilesMigrating(0);
 
+  u_signed64 data=tape->xsize();
+  
+  // not everything transfered 
+
+  if (fileOnTape){
+    if (tape->files())
+      data=tape->xsize()/tape->files();
+    data=data*filesDone;
+  }
+      
+  char buf[21];
+  u64tostru(data, buf, 0);
+  
+  castor::dlf::Param params[] =
+    {castor::dlf::Param("VID", tape->vid()),
+     castor::dlf::Param("STATUS",  RepackSubRequestStatusCodeStrings[tape->status()]),
+     castor::dlf::Param("transferedDataVolume", buf)};
+
+
   if (fileOnTape == 0){
    //tape done
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("VID", tape->vid()),
-       castor::dlf::Param("STATUS", "RSUBREQUEST_DONE" )};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 45, 2, params);
+
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 45, 3, params);
     tape->setStatus(RSUBREQUEST_DONE);
 
 
@@ -192,10 +211,8 @@ void  RepackCleaner::checkTape(RepackSubRequest* tape) throw (castor::exception:
 
   } else {
     // tape failed
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("VID", tape->vid()),
-       castor::dlf::Param("STATUS", "RSUBREQUEST_FAILED" )};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 44, 2, params);
+
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 44, 3, params);
     tape->setStatus(RSUBREQUEST_FAILED);
 
     // Retry
@@ -205,9 +222,8 @@ void  RepackCleaner::checkTape(RepackSubRequest* tape) throw (castor::exception:
 
      if (numRetry > 0){
        castor::dlf::Param params[] =
-	 {castor::dlf::Param("VID", tape->vid()),
-	  castor::dlf::Param("STATUS", RepackSubRequestStatusCodeStrings[tape->status()])};
-       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 38, 2, params);
+	 {castor::dlf::Param("VID", tape->vid())};
+       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 38, 1, params);
        
        numRetry--;
        tape->setRetryNb(numRetry);
