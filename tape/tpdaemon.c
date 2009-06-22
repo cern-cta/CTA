@@ -1,12 +1,12 @@
 /*
- * $Id: tpdaemon.c,v 1.19 2008/07/28 16:51:40 waldron Exp $
+ * $Id: tpdaemon.c,v 1.20 2009/06/22 09:01:56 wiebalck Exp $
  *
  * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.19 $ $Date: 2008/07/28 16:51:40 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.20 $ $Date: 2009/06/22 09:01:56 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -2990,19 +2990,35 @@ static int tpdrvidle( struct tptab *tunp ) {
 /*
 ** Get a drive's state in VDQM 
 */
-static int vdqmdrvstate( struct tptab *tunp ) {
+static int vdqmdrvstate(struct tptab *tunp) {
         
-        int status = VDQM_UNIT_QUERY;
+        int status;
         int rc = -1, value;
+        int ctr = 0, maxCtr = 3, sleepIntvl = 300;
         
-        rc = vdqm_UnitStatus(NULL, NULL, tunp->dgn, NULL, tunp->drive,
-                             &status, &value, 0);
-        if (rc < 0) {
+        while (ctr < maxCtr) {
 
-                tplogit( func, "vdqm_UnitStatus failed to query status: %d\n", rc);
-                return rc;
+                status = VDQM_UNIT_QUERY;
+                rc = vdqm_UnitStatus(NULL, NULL, tunp->dgn, NULL, tunp->drive,
+                                     &status, &value, 0);
+
+                /* all went fine, report the status */
+                if (0 == rc) {
+                        tplogit( func, "vdqm_UnitStatus reported status: 0x%x\n", status);
+                        return status;
+                }
+
+                /* sleep and retry */
+                tplogit( func, "vdqm_UnitStatus failed to query status: %d, attempt %d, retry in %d seconds\n", 
+                         rc, ctr, sleepIntvl);
+                sleep(sleepIntvl);
+
+                ctr++;
         }
-
-        return status;
+        
+        tplogit( func, "vdqm_UnitStatus failed to query status: %d, giving up, config drive down\n", rc);
+        (void) confdrive (tunp, -1, CONF_DOWN, -tunp->up);
+        tunp->up = 0;
+        return rc;
 }
 
