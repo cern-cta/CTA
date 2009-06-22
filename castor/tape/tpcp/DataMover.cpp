@@ -24,6 +24,8 @@
  
 #include "castor/tape/tpcp/DataMover.hpp"
 
+#include <errno.h>
+
 
 //------------------------------------------------------------------------------
 // run
@@ -32,6 +34,12 @@ void castor::tape::tpcp::DataMover::run(
   castor::tape::tpcp::ParsedCommandLine &parsedCommandLine, const char *dgn,
   castor::io::ServerSocket &callbackSocket)
   throw(castor::exception::Exception) {
+
+  castor::exception::Exception ex(ECANCELED);
+
+  ex.getMessage() << "DataMover not implemented";
+
+  throw ex;
 
 /*
     unsigned short port = 0;

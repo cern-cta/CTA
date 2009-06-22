@@ -100,6 +100,12 @@ private:
   castor::io::ServerSocket m_callbackSocket;
 
   /**
+   * The volume request ID returned by the VDQM as a result of requesting a
+   * drive.
+   */
+  int m_volReqId;
+
+  /**
    * ActionHandler responsible for performing the READ and WRITE tape actions.
    */
   DataMover m_dataMover;
@@ -139,7 +145,7 @@ private:
    * @param os The output stream to be written to.
    * @param list The list to be written.
    */
-  void writeTapeFseqRangeList(std::ostream &os, Uint32RangeList &list);
+  void writeTapeFseqRangeList(std::ostream &os, Uint32RangeList &list) throw();
 
   /**
    * Writes the specified list of filenames to the specified
@@ -148,14 +154,15 @@ private:
    * @param os The output stream to be written to.
    * @param list The list to be written.
    */
-  void writeFilenameList(std::ostream &os, std::list<std::string> &list);
+  void writeFilenameList(std::ostream &os, std::list<std::string> &list)
+    throw();
  
   /**
    * Writes the parsed command-line to the specified output stream.
    *
    * @param os The output stream to be written to.
    */
-  void writeParsedCommandLine(std::ostream &os);
+  void writeParsedCommandLine(std::ostream &os) throw();
 
   /**
    * Returns the port on which the server will listen for connections from the
@@ -231,14 +238,15 @@ private:
    * @param os The output stream to be written to.
    * @param tapeInfo The vmgr_tape_info structure to be written.
    */
-  void writeVmgrTapeInfo(std::ostream &os, vmgr_tape_info &tapeInfo);
+  void writeVmgrTapeInfo(std::ostream &os, vmgr_tape_info &tapeInfo)
+    throw();
 
   /**
    * Writes the DGN retreived from the VMGR to the specified output stream.
    *
    * @param os The output stream to be written to.
    */
-  void writeDgn(std::ostream &os);
+  void writeDgn(std::ostream &os) throw();
 
   /**
    * Creates, binds and sets to listening the callback socket to be used for
@@ -252,7 +260,24 @@ private:
    *
    * @param os The output stream to be written to.
    */
-  void writeCallbackSocket(std::ostream &os);
+  void writeCallbackSocket(std::ostream &os) throw();
+
+  /**
+   * Request a drive from the VDQM to mount the specified tape for the
+   * specified access mode (read or write).
+   *
+   * @param mode The access mode, either WRITE_DISABLE or WRITE_ENABLE.
+   */
+   void requestDriveFromVdqm(const int mode)
+     throw(castor::exception::Exception);
+
+  /**
+   * Writes the volume request ID obtained from the VDQM to the specified
+   * output stream.
+   *
+   * @param os The output stream to be written to.
+   */
+  void writeVolReqId(std::ostream &os) throw();
 
 }; // class TpcpCommand
 

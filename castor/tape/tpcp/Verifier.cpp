@@ -24,6 +24,8 @@
  
 #include "castor/tape/tpcp/Verifier.hpp"
 
+#include <errno.h>
+
 
 //------------------------------------------------------------------------------
 // run
@@ -32,5 +34,10 @@ void castor::tape::tpcp::Verifier::run(
   castor::tape::tpcp::ParsedCommandLine &parsedCommandLine, const char *dgn,
   castor::io::ServerSocket &callbackSocket)
   throw(castor::exception::Exception) {
-  // To be done
+
+  castor::exception::Exception ex(ECANCELED);
+
+  ex.getMessage() << "Verifier not implemented";
+
+  throw ex;
 }

@@ -45,8 +45,9 @@
 #include <getopt.h>
 #include <iostream>
 #include <list>
-#include <string.h>
 #include <poll.h>
+#include <string.h>
+#include <unistd.h>
 
 
 //------------------------------------------------------------------------------
@@ -59,7 +60,8 @@ char castor::tape::tpcp::TpcpCommand::vmgr_error_buffer[VMGRERRORBUFLEN];
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tpcp::TpcpCommand::TpcpCommand() throw () :
-  m_callbackSocket(false) {
+  m_callbackSocket(false),
+  m_volReqId(0) {
   utils::setBytes(m_dgn, '\0');
 }
 
@@ -234,6 +236,16 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
 int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
 
   try {
+    const uid_t userId  = getuid();
+    const gid_t groupId = getgid();
+    
+    // Exit with an error message if tpcp is being run as root
+    if(userId == 0 && groupId == 0) {
+      std::cerr << "tpcp cannot be ran as root" << std::endl
+                << std::endl;
+      return 1;
+    }
+
     // Set the VMGR error buffer so that the VMGR does not write errors to
     // stderr
     vmgr_error_buffer[0] = '\0';
@@ -324,6 +336,19 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
        throw ex;
     }
 
+    // Check if the access mode of the tape is compatible with the action to be
+    // performed by tpcp
+    if(m_parsedCommandLine.action == Action::write &&
+      tapeInfo.status & TAPE_RDONLY) {
+
+      castor::exception::Exception ex(ECANCELED);
+
+       ex.getMessage() << "Tape cannot be written to"
+         ": Tape marked as TAPE_RDONLY";
+
+       throw ex;
+    }
+
     // Setup the aggregator callback socket
     setupCallbackSocket();
 
@@ -338,7 +363,20 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     }
 
     // Send the request for a drive to the VDQM
-    // TO BE DONE
+    {
+      const int mode = m_parsedCommandLine.action == Action::write ?
+        WRITE_ENABLE : WRITE_DISABLE;
+      requestDriveFromVdqm(mode);
+    }
+
+    // If debug, then display the volume request ID returned by the VDQM
+    if(m_parsedCommandLine.debugOptionSet) {
+      std::ostream &os = std::cout;
+
+      os << std::endl;
+      writeVolReqId(os);
+      os << std::endl;
+    }
 
     // Wait for the callback from the aggregator
     // TO BE DONE
@@ -368,7 +406,8 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
       }
     } catch(castor::exception::Exception &ex) {
       std::cerr << "Failed to perform " << m_parsedCommandLine.action.str()
-        << " action: " << ex.getMessage().str();
+        << " action: " << ex.getMessage().str() << std::endl
+        << std::endl;
 
       return 1;
     }
@@ -389,7 +428,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
 // writeTapeFseqRangeList
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TpcpCommand::writeTapeFseqRangeList(std::ostream &os,
-  castor::tape::tpcp::Uint32RangeList &list) {
+  castor::tape::tpcp::Uint32RangeList &list) throw() {
   for(Uint32RangeList::iterator itor=list.begin(); itor!=list.end(); itor++) {
     if(itor!=list.begin()) {
       os << ",";
@@ -410,7 +449,7 @@ void castor::tape::tpcp::TpcpCommand::writeTapeFseqRangeList(std::ostream &os,
 // writeFilenameList
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TpcpCommand::writeFilenameList(std::ostream &os,
-  std::list<std::string> &list) {
+  std::list<std::string> &list) throw() {
   for(std::list<std::string>::iterator itor=list.begin(); itor!=list.end();
     itor++) {
     if(itor!=list.begin()) {
@@ -425,7 +464,8 @@ void castor::tape::tpcp::TpcpCommand::writeFilenameList(std::ostream &os,
 //------------------------------------------------------------------------------
 // writeParsedCommandLine
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::TpcpCommand::writeParsedCommandLine(std::ostream &os) {
+void castor::tape::tpcp::TpcpCommand::writeParsedCommandLine(std::ostream &os)
+  throw() {
   os << "===================" << std::endl
      << "Parsed command-line" << std::endl
      << "===================" << std::endl
@@ -736,7 +776,7 @@ void castor::tape::tpcp::TpcpCommand::vmgrQueryTape(
 // writeVmgrTapeInfo
 //------------------------------------------------------------------------------
 void  castor::tape::tpcp::TpcpCommand::writeVmgrTapeInfo(std::ostream &os,
-  vmgr_tape_info &tapeInfo) {
+  vmgr_tape_info &tapeInfo) throw() {
   os << "============================" << std::endl
      << "vmgr_tape_info from the VMGR" << std::endl
      << "============================" << std::endl
@@ -771,7 +811,7 @@ void  castor::tape::tpcp::TpcpCommand::writeVmgrTapeInfo(std::ostream &os,
 //------------------------------------------------------------------------------
 // writeDgn
 //------------------------------------------------------------------------------
-void  castor::tape::tpcp::TpcpCommand::writeDgn(std::ostream &os) {
+void  castor::tape::tpcp::TpcpCommand::writeDgn(std::ostream &os) throw() {
   os << "=================" << std::endl
      << "DGN from the VMGR" << std::endl
      << "=================" << std::endl
@@ -806,7 +846,8 @@ void castor::tape::tpcp::TpcpCommand::setupCallbackSocket()
 //------------------------------------------------------------------------------
 // writeCallbackSocket
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::TpcpCommand::writeCallbackSocket(std::ostream &os) {
+void castor::tape::tpcp::TpcpCommand::writeCallbackSocket(std::ostream &os)
+  throw() {
   os << "==================================" << std::endl
      << "Aggregator callback socket details" << std::endl
      << "==================================" << std::endl
@@ -817,37 +858,46 @@ void castor::tape::tpcp::TpcpCommand::writeCallbackSocket(std::ostream &os) {
   os << std::endl;
 }
 
-/*
-  if ( rc == 0 ) {
-    if ( ((vmgrTapeInfo.status & DISABLED) == DISABLED) ||
-         ((vmgrTapeInfo.status & EXPORTED) == EXPORTED) ||
-         ((vmgrTapeInfo.status & ARCHIVED) == ARCHIVED) ) {
-      if ( (vmgrTapeInfo.status & DISABLED) == DISABLED ) {
-        serrno = ETHELD;
-      } else if ( (vmgrTapeInfo.status & EXPORTED) == EXPORTED ) {
-        serrno = ETABSENT;
-      } else if ( (vmgrTapeInfo.status & ARCHIVED) == ARCHIVED ) {
-        serrno = ETARCH;
-      }
 
-      castor::exception::Exception ex(serrno);
-      ex.getMessage()
-        << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getDgnFromVmgr"
-        << " vmgr_querytape failed";
-      throw ex;
-    }
-    return vmgrTapeInfo.status; // break and return the status 
+//------------------------------------------------------------------------------
+// requestDriveFromVdqm 
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::TpcpCommand::requestDriveFromVdqm(const int mode)
+  throw(castor::exception::Exception) {
 
-  } else {
-    // go on looping
-    if ( (save_serrno == SECOMERR) || (save_serrno == EVMGRNACT) ) {
-      sleep(5);
-    } else {
-      castor::exception::Exception ex(save_serrno);
-      ex.getMessage()
-        << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getDgnFromVmgr"
-        << " vmgr_querytape failed";
-      throw ex;
-    }
+  unsigned short port = 0;
+  unsigned long  ip   = 0;
+  m_callbackSocket.getPortIp(port, ip);
+
+  std::cout<< "port= "<< port <<", ip= "<<ip<<std::endl;
+  vdqmnw_t *const nw     = NULL;
+  char     *const server = NULL;
+  char     *const unit   = NULL;
+  const int rc = vdqm_SendAggregatorVolReq(nw, &m_volReqId,
+    m_parsedCommandLine.vid, m_dgn, server, unit, mode, port);
+  const int save_serrno = serrno;
+
+  if(rc == -1) {
+    char buf[STRERRORBUFLEN];
+    sstrerror_r(save_serrno, buf, sizeof(buf));
+    buf[sizeof(buf)-1] = '\0';
+
+    castor::exception::Exception ex(ECANCELED);
+    ex.getMessage() << "Failed to request drive from VDQM: "
+      << buf;
+
+    throw ex;
   }
-*/
+}
+
+
+//------------------------------------------------------------------------------
+// writeVolReqId
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::TpcpCommand::writeVolReqId(std::ostream &os) throw() {
+  os << "======================================" << std::endl
+     << "Volume request ID returned by the VDQM" << std::endl
+     << "======================================" << std::endl
+     << std::endl
+     << "volReqId=" << m_volReqId << std::endl;
+}
