@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.689 $ $Date: 2009/04/08 12:44:25 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.690 $ $Date: 2009/06/22 12:56:39 $ $Author: sponcec3 $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -380,7 +380,64 @@ BEGIN
       DELETE FROM DiskCopy WHERE id = dcIds(i);
     -- then use a normal loop to clean castorFiles
     FOR cf IN (SELECT DISTINCT(cfId) FROM filesDeletedProcHelper) LOOP
-      deleteCastorFile(cf.cfId);
+      DECLARE
+        nb NUMBER;
+        LockError EXCEPTION;
+        PRAGMA EXCEPTION_INIT (LockError, -54);
+      BEGIN
+        -- First try to lock the castorFile
+        SELECT id INTO nb FROM CastorFile
+         WHERE id = cf.cfId FOR UPDATE NOWAIT;
+        -- See whether it has any DiskCopy
+        SELECT count(*) INTO nb FROM DiskCopy
+         WHERE castorFile = cf.cfId;
+        -- If any DiskCopy, give up
+        IF nb = 0 THEN
+          -- Delete the TapeCopies
+          deleteTapeCopies(cf.cfId);
+          -- See whether pending SubRequests exist
+          SELECT count(*) INTO nb FROM SubRequest
+           WHERE castorFile = cf.cfId
+             AND status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+          IF nb = 0 THEN
+            -- No Subrequest, delete the CastorFile
+            DECLARE
+              fid NUMBER;
+              fc NUMBER;
+              nsh VARCHAR2(2048);
+            BEGIN
+              -- Delete the CastorFile
+              DELETE FROM id2Type WHERE id = cf.cfId;
+              DELETE FROM CastorFile WHERE id = cf.cfId
+              RETURNING fileId, nsHost, fileClass
+                INTO fid, nsh, fc;
+              -- check whether this file potentially had TapeCopies
+              SELECT nbCopies INTO nb FROM FileClass WHERE id = fc;
+              IF nb = 0 THEN
+                -- This castorfile was created with no TapeCopy
+                -- So removing it from the stager means erasing
+                -- it completely. We should thus also remove it
+                -- from the name server
+                INSERT INTO FilesDeletedProcOutput VALUES (fid, nsh);
+              END IF;
+            END;
+          ELSE
+            -- SubRequests exist, fail them
+            UPDATE SubRequest SET status = 7 -- FAILED
+             WHERE castorFile = cf.cfId
+               AND status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14);
+          END IF;
+        END IF;
+      EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+          -- ignore, this means that the castorFile did not exist.
+          -- There is thus no way to find out whether to remove the
+          -- file from the nameserver. For safety, we thus keep it
+          NULL;
+        WHEN LockError THEN
+          -- ignore, somebody else is dealing with this castorFile, 
+        NULL;
+      END;
     END LOOP;
   END IF;
   OPEN fileIds FOR SELECT * FROM FilesDeletedProcOutput;
