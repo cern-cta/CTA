@@ -177,10 +177,11 @@ CREATE INDEX I_Migration_timestamp ON Migration (timestamp) LOCAL;
 CREATE INDEX I_Migration_reqId ON Migration (reqId) LOCAL;
 
 /* SQL statement for table TapeStat*/  
-CREATE TABLE TapeStat (timestamp DATE CONSTRAINT NN_TapeStat_ts NOT NULL, interval NUMBER, facility NUMBER, files  NUMBER, gigaBytes NUMBER, avgFileSize NUMBER, rate NUMBER, runtime  NUMBER, filespermount NUMBER, tapeVolumes NUMBER)
-  PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAX_VALUE));  
+CREATE TABLE TapeStat (timestamp DATE CONSTRAINT NN_TapeStat_ts NOT NULL, interval NUMBER, facility NUMBER, files  NUMBER, gigaBytes NUMBER, "avgFileSize(MB)" NUMBER, "rate(MB/sec)" NUMBER, runtime  NUMBER, filespermount NUMBER, tapeVolumes NUMBER)
+  PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));  
+
 /* SQL statements for indexes on the TapeStat table */
-CREATE INDEX I_TapeStat_timestamp ON TapeStat (timestamp) LOCAL;
+CREATE INDEX I_TapeStat_timestamp ON TapeStat (timestamp) LOCAL;  
 
 /* SQL statement for table SRMProcessingStats */
 CREATE TABLE SRMProcessingStats (timestamp DATE CONSTRAINT NN_srmProcessingStats NOT NULL, interval NUMBER, type VARCHAR2(255), svcclass VARCHAR(255), started NUMBER, mintime NUMBER, maxtime NUMBER, avgtime NUMBER, stddevtime NUMBER, mediantime NUMBER

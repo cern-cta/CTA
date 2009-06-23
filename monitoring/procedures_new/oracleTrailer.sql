@@ -850,17 +850,18 @@ END;
 
 
 /* PL/SQL method implementing statsTape */
-CREATE OR REPLACE PROCEDURE statsTape (now IN DATE, inter IN NUMBER) AS
+CREATE OR REPLACE PROCEDURE statsTape (now IN DATE, interval IN NUMBER) AS
 BEGIN
-  FOR mounts IN (
-    SELECT facility, 
+  INSERT INTO TapeStat_final
+  (timestamp, interval, facility, files, gigaBytes, "avgFileSize(MB)", "rate(MB/sec)", runtime, filespermount, tapeVolumes)
+    SELECT now - 5/1440 timestamp, interval, facility, 
            nvl(sum(filescp),0) files, 
-	   nvl(round(sum(bytes/1073741824),1),0) gigaBytes, 
-	   nvl(round(avg((bytes/1048576)/filescp),2),0) filesize, 
+           nvl(round(sum(bytes/1073741824),1),0) gigaBytes, 
+           nvl(round(avg((bytes/1048576)/filescp),2),0) filesize, 
            nvl(round(avg((bytes/1048576)/runtime),2),0) rate, 
-	   nvl(round(avg(runtime),2),0) runtime, 
-	   nvl(round(avg(filescp),2),0) filesmount, 
-	   nvl(count(distinct tapevid),0) tapeVolumes 
+           nvl(round(avg(runtime),2),0) runtime, 
+           nvl(round(avg(filescp),2),0) filesmount, 
+           nvl(count(distinct tapevid),0) tapeVolumes 
     FROM (
        SELECT /*+ index(mes I_Messages_Facility) index(num I_Num_Param_Values_id) */
               mes.timestamp, mes.reqid, mes.tapevid, mes.facility,
@@ -869,38 +870,34 @@ BEGIN
               max(decode(num.name,'BYTESCP',num.value,NULL)) bytes
        FROM &dlfschema..dlf_messages mes, &dlfschema..dlf_num_param_values num
        WHERE mes.id = num.id
-         AND ((mes.facility = 2 AND mes.msg_no = 20) OR (mes.facility = 1 AND mes.msg_no = 21))
+         AND ((mes.facility = 2 AND mes.msg_no = 20)      --Recaller / Recaller Ended 
+               OR (mes.facility = 1 AND mes.msg_no = 21)) --Migrator / Migrator Ended
          AND num.name in ('FILESCP','BYTESCP','RUNTIME')
          AND mes.timestamp > now - 10/1440
          AND mes.timestamp <= now - 5/1440
          AND num.timestamp > now - 10/1440
          AND num.timestamp <= now - 5/1440
          GROUP BY mes.timestamp, mes.reqid, mes.tapevid, mes.facility)
-    GROUP BY facility
-  )
-  LOOP
-    INSERT INTO TapeStat
-    (timestamp, interval, facility, files, gigaBytes, avgFileSize, rate, runtime, filespermount, tapeVolumes)
-    VALUES
-    (now - 5/1440, inter, mounts.facility, mounts.files, mounts.gigaBytes, mounts.filesize, mounts.rate, mounts.runtime, mounts.filesmount, mounts.tapeVolumes);
-  END LOOP;
+    WHERE filescp <> 0
+      AND runtime <> 0
+    GROUP BY facility;
 END;
 /
 
-
-CREATE OR REPLACE PROCEDURE statSRMProcessing (now IN DATE, inter IN NUMBER) AS
+/* PL/SQL method implementing statSRMProcessing */
+CREATE OR REPLACE PROCEDURE statSRMProcessing (now IN DATE, interval IN NUMBER) AS
 BEGIN
-    FOR processing IN  (
-      SELECT type, svcclass, 
-             nvl(count(*),0) started, 
-	     nvl(min(elapsedTime),0) mintime, 
-	     nvl(max(elapsedTime),0) maxtime, 
-	     nvl(round(avg(elapsedTime),3),0) avgtime, 
+    INSERT INTO SRMProcessingStats
+    (timestamp, interval, type, svcclass, started, mintime, maxtime, avgtime, stddevtime, mediantime)
+      SELECT now - 5/1440 timestamp, interval, type, svcclass, nvl(count(*),0) started, 
+	           nvl(min(elapsedTime),0) mintime, 
+	           nvl(max(elapsedTime),0) maxtime, 
+	           nvl(round(avg(elapsedTime),3),0) avgtime, 
              nvl(round(stddev(elapsedTime),3),0) stddevtime, 
-	     nvl(round(median(elapsedTime),3),0) mediantime 
+	           nvl(round(median(elapsedTime),3),0) mediantime 
       FROM (
         SELECT /*+ index(mes I_Messages_Facility) index(str I_Str_Param_Values_id) index(num I_Num_Param_Values_id) */
-	       mes.id, 
+	             mes.id, 
                max(decode(str.name,'Type',str.value)) type,
                max(decode(str.name,'SvcClass',str.value)) svcclass,
                max(decode(num.name,'ElapsedTime',num.value)) elapsedTime
@@ -918,15 +915,46 @@ BEGIN
           AND num.timestamp > now - 10/1440
           AND num.timestamp <= now - 5/1440
         GROUP BY mes.id )
-      GROUP BY type, svcclass
-    )
-    LOOP
-      INSERT INTO SRMProcessingStats
-      (timestamp, interval, type, svcclass, started, mintime, maxtime, avgtime, stddevtime, mediantime)
-      values
-      (now - 5/1440, inter, processing.type, processing.svcclass, processing.started, processing.mintime, processing.maxtime, processing.avgtime, processing.stddevtime, 
-      processing.mediantime);
-    END LOOP;
+      GROUP BY type, svcclass;
+END;
+/
+
+/* PL/SQL method implementing statsSRMRequests */
+CREATE OR REPLACE PROCEDURE statsSRMRequests (now IN DATE, interval IN NUMBER)
+BEGIN
+  INSERT INTO RequestsStats
+  (timestamp, interval, type, hostname, euid, requests)
+    SELECT sysdate - 5/1440 timestamp, 300 interval, type, client, DN, requests FROM (
+      SELECT /*+ index(mes I_Messages_Facility) index(str I_Str_Param_Values_id) */
+            str.value type, '-' client, '-' DN, count(*) requests
+      FROM &dlfschema..dlf_messages mes, &dlfschema..dlf_str_param_values str
+      WHERE mes.id = str.id 
+        AND str.name = 'Request'
+        AND mes.facility = 13 -- SRM Server
+        AND mes.msg_no = 1    -- New Request Arrival
+        AND mes.timestamp > now - 10/1440
+        AND mes.timestamp <= now - 5/1440
+        AND str.timestamp > now - 10/1440
+        AND str.timestamp <= now - 5/1440
+      GROUP BY str.value
+      UNION
+      SELECT type, client, DN, count(*) requests FROM (
+        SELECT /*+ index(mes I_Messages_Facility) index(str I_Str_Param_Values_id) */
+	       mes.id,
+               max(decode(str.name,'Request',str.value)) type,
+               max(decode(str.name,'Client',str.value)) client,
+               max(decode(str.name,'DN',str.value)) DN
+        FROM &dlfschema..dlf_messages mes, &dlfschema..dlf_str_param_values str
+        WHERE mes.id = str.id
+          AND str.name in ('Request','DN','Client')
+          AND mes.facility = 13  --SRM Server
+          AND mes.msg_no = 1     --New Request Arrival
+          AND mes.timestamp > now - 10/1440
+          AND mes.timestamp <= now - 5/1440
+          AND str.timestamp > now - 10/1440
+          AND str.timestamp <= now - 5/1440
+        GROUP BY mes.id)
+      GROUP BY type, Client, DN) 
 END;
 /
 
@@ -1149,6 +1177,7 @@ BEGIN
                             statsClientVersion(now, interval);
 			    statsTape(now, interval);
 			    statSRMProcessing(now, interval);
+			    statsSRMRequests(now, interval);
                           END;',
       JOB_CLASS       => 'DLF_JOB_CLASS',
       START_DATE      => SYSDATE,
