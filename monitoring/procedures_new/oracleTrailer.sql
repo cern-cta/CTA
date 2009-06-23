@@ -529,9 +529,9 @@ BEGIN
   -- Stats table: ProcessingTimeStats
   -- Frequency: 5 minutes
   INSERT INTO ProcessingTimeStats
-    (timestamp, interval, daemon, type, requests, minTime, maxTime, avgTime,
+    (timestamp, interval, daemon, svcclass, type, requests, minTime, maxTime, avgTime,
      stddevTime, medianTime)
-    SELECT now - 5/1440 timestamp, interval, facility.fac_name daemon, params.value type,
+    SELECT now - 5/1440 timestamp, interval, facility.fac_name daemon, results.SvcClass, params.value type,
            count(*) requests,
            min(results.value) min,
            max(results.value) max,
@@ -540,32 +540,42 @@ BEGIN
            median(results.value) median
       FROM (
         -- Extract all the processing time values for the Stager
-        SELECT messages.id, messages.facility, params.value
+        SELECT messages.id, messages.facility, decode(str_params.value,NULL,'ALL',str_params.value) SvcClass, num_params.value
           FROM &dlfschema..dlf_messages messages,
-               &dlfschema..dlf_num_param_values params
-         WHERE messages.id = params.id
+               &dlfschema..dlf_num_param_values num_params,
+	       &dlfschema..dlf_str_param_values str_params
+         WHERE messages.id = num_params.id
+	   AND messages.id = str_params.id
            AND messages.severity = 10 -- Monitoring
            AND messages.facility = 22 -- Stager
            AND messages.msg_no = 25   -- Request processed
            AND messages.timestamp >  now - 10/1440
            AND messages.timestamp <= now - 5/1440
-           AND params.name = 'ProcessingTime'
-           AND params.timestamp >  now - 10/1440
-           AND params.timestamp <= now - 5/1440
+           AND num_params.name = 'ProcessingTime'
+           AND num_params.timestamp >  now - 10/1440
+           AND num_params.timestamp <= now - 5/1440
+	   AND str_params.name = 'SvcClass'
+	   AND str_params.timestamp >  now - 10/1440
+           AND str_params.timestamp <= now - 5/1440
          UNION
         -- Extract all the processing time values for the RequestHandler
-        SELECT messages.id, messages.facility, params.value
+        SELECT messages.id, messages.facility, decode(str_params.value,NULL,'ALL',str_params.value) SvcClass, num_params.value
           FROM &dlfschema..dlf_messages messages,
-               &dlfschema..dlf_num_param_values params
-         WHERE messages.id = params.id
+               &dlfschema..dlf_num_param_values num_params,
+	       &dlfschema..dlf_str_param_values str_params
+         WHERE messages.id = num_params.id
+	   AND messages.id = str_params.id
            AND messages.severity = 10 -- Monitoring
            AND messages.facility = 4  -- RequestHandler
            AND messages.msg_no = 10   -- Reply sent to client
            AND messages.timestamp >  now - 10/1440
            AND messages.timestamp <= now - 5/1440
-           AND params.name = 'ElapsedTime'
-           AND params.timestamp >  now - 10/1440
-           AND params.timestamp <= now - 5/1440
+           AND num_params.name = 'ElapsedTime'
+           AND num_params.timestamp >  now - 10/1440
+           AND num_params.timestamp <= now - 5/1440
+	   AND str_params.name = 'SvcClass'
+           AND str_params.timestamp >  now - 10/1440
+           AND str_params.timestamp <= now - 5/1440
       ) results
      -- Attach the request type
      INNER JOIN &dlfschema..dlf_str_param_values params
@@ -576,7 +586,7 @@ BEGIN
      -- Resolve the facility number to a name
      INNER JOIN &dlfschema..dlf_facilities facility
         ON results.facility = facility.fac_no
-     GROUP BY facility.fac_name, params.value;
+     GROUP BY facility.fac_name, results.SvcClass, params.value;
 END;
 /
 
@@ -887,9 +897,10 @@ END;
 /* PL/SQL method implementing statSRMProcessing */
 CREATE OR REPLACE PROCEDURE statSRMProcessing (now IN DATE, interval IN NUMBER) AS
 BEGIN
-    INSERT INTO SRMProcessingStats
-    (timestamp, interval, type, svcclass, started, mintime, maxtime, avgtime, stddevtime, mediantime)
-      SELECT now - 5/1440 timestamp, interval, type, svcclass, nvl(count(*),0) started, 
+    INSERT INTO ProcessingTimeStats
+    (timestamp, interval, daemon, svcclass, type, requests, minTime, maxTime, avgTime,
+     stddevTime, medianTime)
+      SELECT now - 5/1440 timestamp, interval, facility.fac_name, svcclass, type, nvl(count(*),0) requests, 
 	           nvl(min(elapsedTime),0) mintime, 
 	           nvl(max(elapsedTime),0) maxtime, 
 	           nvl(round(avg(elapsedTime),3),0) avgtime, 
@@ -897,7 +908,7 @@ BEGIN
 	           nvl(round(median(elapsedTime),3),0) mediantime 
       FROM (
         SELECT /*+ index(mes I_Messages_Facility) index(str I_Str_Param_Values_id) index(num I_Num_Param_Values_id) */
-	             mes.id, 
+	             mes.id, mes.facility,
                max(decode(str.name,'Type',str.value)) type,
                max(decode(str.name,'SvcClass',str.value)) svcclass,
                max(decode(num.name,'ElapsedTime',num.value)) elapsedTime
@@ -914,8 +925,10 @@ BEGIN
           AND str.timestamp <= now - 5/1440
           AND num.timestamp > now - 10/1440
           AND num.timestamp <= now - 5/1440
-        GROUP BY mes.id )
-      GROUP BY type, svcclass;
+        GROUP BY mes.id, mes.facility ) results
+        INNER JOIN castor_dlf.dlf_facilities facility
+        ON results.facility = facility.fac_no 
+      GROUP BY type, svcclass, facility.fac_name;
 END;
 /
 

@@ -92,7 +92,7 @@ CREATE TABLE TapeRecalledStats (timestamp DATE CONSTRAINT NN_TapeRecalledStats_t
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statement for table ProcessingTimeStats */
-CREATE TABLE ProcessingTimeStats (timestamp DATE CONSTRAINT NN_ProcessingTimeStats_ts NOT NULL, interval NUMBER, daemon VARCHAR2(255), type VARCHAR2(255), requests NUMBER, minTime NUMBER(*,4), maxTime NUMBER(*,4), avgTime NUMBER(*,4), stddevTime NUMBER(*,4), medianTime NUMBER(*,4))
+CREATE TABLE ProcessingTimeStats (timestamp DATE CONSTRAINT NN_ProcessingTimeStats_ts NOT NULL, interval NUMBER, daemon VARCHAR2(255), svcClass VARCHAR2(255),  type VARCHAR2(255), requests NUMBER, minTime NUMBER(*,4), maxTime NUMBER(*,4), avgTime NUMBER(*,4), stddevTime NUMBER(*,4), medianTime NUMBER(*,4))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statement for table ClientVersionStats */
@@ -182,14 +182,6 @@ CREATE TABLE TapeStat (timestamp DATE CONSTRAINT NN_TapeStat_ts NOT NULL, interv
 
 /* SQL statements for indexes on the TapeStat table */
 CREATE INDEX I_TapeStat_timestamp ON TapeStat (timestamp) LOCAL;  
-
-/* SQL statement for table SRMProcessingStats */
-CREATE TABLE SRMProcessingStats (timestamp DATE CONSTRAINT NN_srmProcessingStats NOT NULL, interval NUMBER, type VARCHAR2(255), svcclass VARCHAR(255), started NUMBER, mintime NUMBER, maxtime NUMBER, avgtime NUMBER, stddevtime NUMBER, mediantime NUMBER
-)
-PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
-
-/* SQL statements for indexes on the SRMProcessingStats table */
-CREATE INDEX I_SRMProc_timestamp ON SRMProcessingStats (timestamp) LOCAL;
 
 /* SQL statement for creation of the Errors materialized view */
 CREATE MATERIALIZED VIEW Errors_MV
