@@ -91,10 +91,9 @@ private:
   ParsedCommandLine m_parsedCommandLine;
 
   /**
-   * The list of RFIO filenames parsed from the "filelist" file if specified
-   * on the command-line with the "-f | --filelist" option.
+   * The list of RFIO filenames to be processed by the request handlers.
    */
-  FilenameList m_fileListFiles;
+  FilenameList m_filenames;
 
   /**
    * The DGN of the tape to be used.
@@ -153,18 +152,17 @@ private:
   void writeParsedCommandLine(std::ostream &os) throw();
 
   /**
-   * Parse the specified "filelist" file  containing a list of filenames, one
-   * per line.
+   * Parses the "filelist" file with the specified filename into the specified
+   * list of filenames.
    *
-   * @param fileList The filename of the "filelist" file.
    */
-  void parseFileListFile() throw (castor::exception::Exception);
+  void parseFileListFile(const char *filename, FilenameList &list)
+    throw (castor::exception::Exception);
 
   /**
-   * Writes the list of files parsed from the "filelist" file if specified on
-   * the command-line with the "-f | --filelist" option.
+   * Writes the list of filenames to be processed by the ActionHandlers.
    */
-  void writeParsedFileListFiles(std::ostream &os) throw();
+  void writeFilenamesToBeProcessed(std::ostream &os) throw();
 
   /**
    * Returns the port on which the server will listen for connections from the

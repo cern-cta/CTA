@@ -98,6 +98,10 @@ void castor::tape::tpcp::TpcpCommand::usage(std::ostream &os,
     "\t-h, --help              Print this help and exit\n"
     "\t-q, --sequence sequence The tape file sequences\n"
     "\n"
+    "Constraints:\n"
+    "\tThe [FILE].. command-line arguments and the \"-f, --filelist\" option"
+    " are mutually exclusive\n"
+    "\n"
     "Comments to: Castor.Support@cern.ch" << std::endl;
 }
 
@@ -129,7 +133,8 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
       break;
 
     case 'f':
-      m_parsedCommandLine.fileListFile = optarg;
+      m_parsedCommandLine.fileListOptionSet = true;
+      m_parsedCommandLine.fileListFilename  = optarg;
       break;
 
     case 'h':
@@ -177,12 +182,26 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
     return;
   }
 
-  // Check the number of command-line arguments
+  // Check the minimum number of command-line arguments are present
   if(argc-optind < TPCPMINARGS){
     castor::exception::InvalidArgument ex;
 
     ex.getMessage() << "Wrong number of command-line arguments: Actual=" <<
       argc-optind << " Expected minimum=" << TPCPMINARGS; 
+
+    throw ex;
+  }
+
+  const int nbFilenamesOnCommandLine = argc - optind - TPCPMINARGS;
+
+  // Check that filenames as command-line arguments and the "-f, --filelist"
+  // command-line option have not been specified at the same time, as they are
+  // mutually exclusive
+  if(nbFilenamesOnCommandLine > 0 && m_parsedCommandLine.fileListOptionSet) {
+    castor::exception::InvalidArgument ex;
+
+    ex.getMessage() << "[FILE].. command-line arguments and the"
+       " \"-f, --filelist\" option are mutually exclusive";
 
     throw ex;
   }
@@ -291,15 +310,31 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
       return 0;
     }
 
-    // Parse the "filelist" file if it is specified on the command-line
-    parseFileListFile();
+    // Fill the list of filenames to be processed by the action handlers.
+    // The list of filenames will either come from the command-line arguments
+    // or (exclusive or) from a "filelist" file specified with the
+    // "-f, --filelist" option.
+    if(m_parsedCommandLine.fileListOptionSet) {
+      // Parse the "filelist" file into the list of filenames to be
+      // processed
+      parseFileListFile(m_parsedCommandLine.fileListFilename.c_str(),
+        m_filenames);
+    } else {
+      // Copy the command-line argument filenames into the list of filenames
+      // to be processed
+      for(FilenameList::iterator itor=m_parsedCommandLine.filenames.begin();
+        itor!=m_parsedCommandLine.filenames.end(); itor++) {
+        m_filenames.push_back(*itor);
+      }
+    }
 
-    // If debug, then display the parsed files from the "filelist" file
+    // If debug, then display the list of files to be processed by the action
+    // handlers
     if(m_parsedCommandLine.debugOptionSet) {
       std::ostream &os = std::cout;
 
       os << std::endl;
-      writeParsedFileListFiles(os);
+      writeFilenamesToBeProcessed(os);
       os << std::endl;
     }
 
@@ -498,7 +533,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
 
       return 1;
     }
-  } catch (castor::exception::Exception &ex) {
+  } catch(castor::exception::Exception &ex) {
     std::cerr << std::endl
       << "Aborting: Unexpected exception: "
       << ex.getMessage().str()
@@ -679,31 +714,23 @@ void castor::tape::tpcp::TpcpCommand::parseTapeFileSequence(
 //------------------------------------------------------------------------------
 // parseFileListFile
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::TpcpCommand::parseFileListFile()
-  throw (castor::exception::Exception) {
+void castor::tape::tpcp::TpcpCommand::parseFileListFile(const char *filename,
+  FilenameList &list) throw (castor::exception::Exception) {
 
 }
 
 
 //------------------------------------------------------------------------------
-// writeParsedFileListFiles
+// writeFilenamesToBeProcessed
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::TpcpCommand::writeParsedFileListFiles(
+void castor::tape::tpcp::TpcpCommand::writeFilenamesToBeProcessed(
   std::ostream &os) throw() {
 
-  os << "======================================================================"
-      << std::endl
-     << "File list parse from the list file: \""
-     << m_parsedCommandLine.fileListFile << "\"" << std::endl
-     << "======================================================================"
+  os << "=========================" << std::endl
+     << "Filenames to be processed" << std::endl
+     << "=========================" << std::endl
      << std::endl
-     << std::endl;
-
-  if(m_fileListFiles.size() == 0) {
-    os << "EMPTY" << std::endl;
-  } else {
-    os << m_fileListFiles;
-  }
+     << m_filenames;
 }
 
 
