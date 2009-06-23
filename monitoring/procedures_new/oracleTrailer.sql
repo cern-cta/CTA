@@ -924,7 +924,7 @@ CREATE OR REPLACE PROCEDURE statsSRMRequests (now IN DATE, interval IN NUMBER) A
 BEGIN
   INSERT INTO RequestStats
   (timestamp, interval, type, hostname, euid, requests)
-    SELECT now - 5/1440 timestamp, 300 interval, type, client, DN, requests FROM (
+    SELECT now - 5/1440 timestamp, interval, type, client, DN, requests FROM (
       SELECT /*+ index(mes I_Messages_Facility) index(str I_Str_Param_Values_id) */
             str.value type, '-' client, '-' DN, count(*) requests
       FROM &dlfschema..dlf_messages mes, &dlfschema..dlf_str_param_values str
