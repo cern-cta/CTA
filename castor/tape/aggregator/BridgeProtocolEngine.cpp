@@ -455,14 +455,14 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdRequest(
     magicHex[1] = 'x';
     utils::toHex(header.magic, &(magicHex[2]), 17);
 
-    const char *magicName = utils::magicToStr(header.magic);
+    const char *magicName = utils::magicToString(header.magic);
 
     char reqTypeHex[2 + 17]; // 0 + x + FFFFFFFFFFFFFFFF + '\0'
     reqTypeHex[0] = '0';
     reqTypeHex[1] = 'x';
     utils::toHex(header.reqType, &(reqTypeHex[2]), 17);
 
-    const char *reqTypeName = utils::rtcopyReqTypeToStr(header.reqType);
+    const char *reqTypeName = utils::rtcopyReqTypeToString(header.reqType);
 
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId"   , m_volReqId        ),
@@ -717,7 +717,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
       TAPE_THROW_CODE(EBADMSG,
            ": Received unexpected file request process status 0x"
         << std::hex << body.procStatus
-        << "(" << utils::procStatusToStr(body.procStatus) << ")");
+        << "(" << utils::procStatusToString(body.procStatus) << ")");
     }
   }
 }

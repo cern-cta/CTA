@@ -926,7 +926,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpFileRqstErrBody(
       castor::dlf::Param("bytesOut"  , body.bytesOut ),
       castor::dlf::Param("hostBytes" , body.hostBytes),
       castor::dlf::Param("procStatus",
-        utils::procStatusToStr(body.procStatus))};
+        utils::procStatusToString(body.procStatus))};
 
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_RECEIVED_FILERQSTERRBODY_FROM_RTCPD, params);
@@ -993,7 +993,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpFileRqstBody(
       castor::dlf::Param("bytesOut"  , body.bytesOut ),
       castor::dlf::Param("hostBytes" , body.hostBytes),
       castor::dlf::Param("procStatus",
-        utils::procStatusToStr(body.procStatus))};
+        utils::procStatusToString(body.procStatus))};
 
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_RECEIVED_FILERQSTBODY_FROM_RTCPD, params);
@@ -1136,9 +1136,9 @@ void castor::tape::aggregator::RtcpTxRx::checkMagic(const uint32_t expected,
     TAPE_THROW_CODE(EBADMSG,
          ": Invalid magic number"
          ": Expected: 0x" << std::hex << expected
-      << "(" << utils::magicToStr(expected) << ")"
+      << "(" << utils::magicToString(expected) << ")"
          ": Actual: 0x" << std::hex << actual
-      << "(" << utils::magicToStr(actual) << ")");
+      << "(" << utils::magicToString(actual) << ")");
   }
 }
 
@@ -1184,11 +1184,11 @@ void castor::tape::aggregator::RtcpTxRx::checkRtcopyReqType(
     }
 
     messageStream << " 0x" << std::hex << expected[i]
-      << "(" << utils::rtcopyReqTypeToStr(expected[i]) << ")";
+      << "(" << utils::rtcopyReqTypeToString(expected[i]) << ")";
   }
 
   messageStream << ": Actual: 0x" << std::hex << actual
-    << "(" << utils::rtcopyReqTypeToStr(actual) << ")";
+    << "(" << utils::rtcopyReqTypeToString(actual) << ")";
 
   TAPE_THROW_CODE(EBADMSG,
     messageStream.str());

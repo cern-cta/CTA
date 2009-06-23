@@ -22,6 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
  
+#include "castor/Constants.hpp"
 #include "castor/PortNumbers.hpp"
 #include "castor/System.hpp"
 #include "castor/exception/Internal.hpp" 
@@ -45,6 +46,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <poll.h>
+
 
 //------------------------------------------------------------------------------
 // vmgr_error_buffer
@@ -403,6 +405,26 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
       writeAggregatorCallbackConnection(os, connectionSocketFd);
       os << std::endl;
     }
+
+    // Wrap the connection socket descriptor in CASTOR framework socket in
+    // order to get access to the framework marshalling and un-marshalling
+    // methods
+    castor::io::AbstractTCPSocket callbackConnectionSocket(connectionSocketFd);
+
+    // Read in the first object sent by the aggregator
+    std::auto_ptr<castor::IObject> obj(callbackConnectionSocket.readObject());
+
+    if(obj->type() != OBJ_VolumeRequest) {
+      castor::exception::InvalidArgument ex;
+
+      ex.getMessage()
+        << "Received the wrong type of object from the aggregator"
+        << ": Expected: OBJ_VolumeRequest";
+
+      throw(ex);
+    }
+    std::cerr<<"Obj type: " << obj->type()<<std::endl;
+    // OBJ_VolumeRequest = 168
 
     // Dispatch the Action to appropriate Action handler
     try {
@@ -831,7 +853,7 @@ void castor::tape::tpcp::TpcpCommand::writeCallbackSocket(std::ostream &os)
      << "==================================" << std::endl
      << std::endl;
 
-  net::printSocketDescription(os, m_callbackSocket.socket());
+  net::writeSocketDescription(os, m_callbackSocket.socket());
 
   os << std::endl;
 }
@@ -888,6 +910,6 @@ void castor::tape::tpcp::TpcpCommand::writeAggregatorCallbackConnection(
      << "Aggregator callback connection" << std::endl
      << "==============================" << std::endl
      << std::endl;
-  net::printSocketDescription(os, connectSocketFd);
+  net::writeSocketDescription(os, connectSocketFd);
   os << std::endl;
 }

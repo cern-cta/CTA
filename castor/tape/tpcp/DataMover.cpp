@@ -22,10 +22,13 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
  
+#include "castor/Constants.hpp"
 #include "castor/tape/tapegateway/FileToRecall.hpp"
+#include "castor/tape/net/net.hpp"
 #include "castor/tape/tapegateway/NoMoreFiles.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
+#include "castor/tape/tpcp/Constants.hpp"
 #include "castor/tape/tpcp/DataMover.hpp"
 #include "castor/tape/tpcp/TpcpCommand.hpp"
 
@@ -63,19 +66,72 @@ void castor::tape::tpcp::DataMover::run(
   //delete(callbackSocket);  //
   //delete(callbackSocket.release());
 
+  // Socket file descriptor for a callback connection from the aggregator
+  int connectionSocketFd = 0;
+
+  // Wait for a callback connection from the aggregator
+  {
+    bool waitForCallback    = true;
+    while(waitForCallback) {
+      try {
+        connectionSocketFd = net::acceptConnection(callbackSocket.socket(),
+          WAITCALLBACKTIMEOUT);
+
+        waitForCallback = false;
+      } catch(castor::exception::TimeOut &tx) {
+        std::cout << "Waited " << WAITCALLBACKTIMEOUT << "seconds for a "
+        "callback connection from the tape server." << std::endl
+        << "Continuing to wait." <<  std::endl;
+      }
+    }
+  }
+
+  // If debug, then display a textual description of the aggregator
+  // callback connection
+  if(parsedCommandLine.debugOptionSet) {
+    std::ostream &os = std::cout;
+
+    os << std::endl;
+  //  writeAggregatorCallbackConnection(os, connectionSocketFd);
+    os << std::endl;
+  }
+
+  // Wrap the connection socket descriptor in CASTOR framework socket in
+  // order to get access to the framework marshalling and un-marshalling
+  // methods
+  castor::io::AbstractTCPSocket callbackConnectionSocket(connectionSocketFd);
+
+  // Read in the first object sent by the aggregator
+  std::auto_ptr<castor::IObject> obj(callbackConnectionSocket.readObject());
+
+  if(obj->type() != castor::OBJ_VolumeRequest) {
+    castor::exception::InvalidArgument ex;
+
+    ex.getMessage()
+      << "Received the wrong type of object from the aggregator"
+      << ": Expected: OBJ_VolumeRequest";
+
+    throw(ex);
+  }
+    std::cerr<<"Obj type: " << obj->type()<<std::endl;
+    // OBJ_FileToRecallRequest = 166
+
+
+
+
 
     //.........................................................................
     // Wait for the Aggreator messege 
     //callbackSocket.reset((castor::io::ServerSocket*)waitForCallBack());
 //  callbackSocket = waitForCallBack();
 
-    std::auto_ptr<castor::IObject>  obj2(callbackSocket.readObject());
+/*    std::auto_ptr<castor::IObject>  obj2(callbackSocket.readObject());
     std::cerr<<"Obj type: " << obj2->type()<<std::endl;
     // OBJ_FileToRecallRequest = 166
 
 
     // Loop over all the files to recall
-/*
+
     {
       //.........................................................................
       // Send a FileToRecall message to the Aggregator

@@ -355,9 +355,9 @@ void castor::tape::net::getPeerHostName(const int socketFd,
 
 
 //------------------------------------------------------------------------------
-// printIp
+// writeIp
 //------------------------------------------------------------------------------
-void castor::tape::net::printIp(std::ostream &os,
+void castor::tape::net::writeIp(std::ostream &os,
   const unsigned long ip) throw() {
   os << ((ip >> 24) & 0x000000FF) << "."
      << ((ip >> 16) & 0x000000FF) << "."
@@ -367,9 +367,9 @@ void castor::tape::net::printIp(std::ostream &os,
 
 
 //------------------------------------------------------------------------------
-// printSocketDescription
+// writeSocketDescription
 //------------------------------------------------------------------------------
-void castor::tape::net::printSocketDescription(std::ostream &os,
+void castor::tape::net::writeSocketDescription(std::ostream &os,
   const int socketFd) throw() {
   unsigned long  localIp   = 0;
   unsigned short localPort = 0;
@@ -391,10 +391,10 @@ void castor::tape::net::printSocketDescription(std::ostream &os,
   }
 
   os << "local=";
-  printIp(os, localIp);
+  writeIp(os, localIp);
   os << ":" << localPort;
   os << " peer=";
-  printIp(os, peerIp);
+  writeIp(os, peerIp);
   os << ":" << peerPort;
 }
 
@@ -416,7 +416,7 @@ void castor::tape::net::readBytes(const int socketFd,
     messageStream
       << "Failed to read " << nbBytes << " bytes from socket"
          ": ";
-    printSocketDescription(messageStream, socketFd);
+    writeSocketDescription(messageStream, socketFd);
     messageStream
       << ": Connection was closed by the remote end";
 
@@ -449,7 +449,7 @@ void castor::tape::net::readBytesFromCloseable(bool &connClosed,
       messageStream
         << ": Failed to read " << nbBytes << " bytes from socket"
            ": ";
-      printSocketDescription(messageStream, socketFd);
+      writeSocketDescription(messageStream, socketFd);
       messageStream
         << ": " << errorStr;
 
@@ -469,7 +469,7 @@ void castor::tape::net::readBytesFromCloseable(bool &connClosed,
       messageStream
         << "Failed to read " << nbBytes << " bytes from socket"
            ": ";
-      printSocketDescription(messageStream, socketFd);
+      writeSocketDescription(messageStream, socketFd);
       messageStream
         << ": Read the wrong number of bytes"
         << ": Expected: " << nbBytes
@@ -499,7 +499,7 @@ void castor::tape::net::writeBytes(const int socketFd,
       messageStream
         << ": Failed to write " << nbBytes << " bytes to socket"
            ": ";
-      printSocketDescription(messageStream, socketFd);
+      writeSocketDescription(messageStream, socketFd);
       messageStream
         << ": " << neterror();
 
@@ -512,7 +512,7 @@ void castor::tape::net::writeBytes(const int socketFd,
       messageStream
         << ": Failed to write " << nbBytes << " bytes to socket"
            ": ";
-      printSocketDescription(messageStream, socketFd);
+      writeSocketDescription(messageStream, socketFd);
       messageStream
         << ": Connection dropped";
 
@@ -525,7 +525,7 @@ void castor::tape::net::writeBytes(const int socketFd,
       messageStream
         << ": Failed to write " << nbBytes << " bytes to socket"
            ": ";
-      printSocketDescription(messageStream, socketFd);
+      writeSocketDescription(messageStream, socketFd);
       messageStream
         << ": Wrote the wrong number of bytes"
         << ": Expected: " << nbBytes

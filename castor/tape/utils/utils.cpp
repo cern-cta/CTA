@@ -23,6 +23,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
+#include "castor/Constants.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/tape/Constants.hpp"
@@ -176,9 +177,9 @@ void castor::tape::utils::writeStrings(std::ostream &os,
 
 
 //-----------------------------------------------------------------------------
-// magicToStr
+// magicToString
 //-----------------------------------------------------------------------------
-const char *castor::tape::utils::magicToStr(const uint32_t magic)
+const char *castor::tape::utils::magicToString(const uint32_t magic)
   throw() {
   switch(magic) {
   case RTCOPY_MAGIC_VERYOLD: return "RTCOPY_MAGIC_VERYOLD";
@@ -192,9 +193,9 @@ const char *castor::tape::utils::magicToStr(const uint32_t magic)
 
 
 //-----------------------------------------------------------------------------
-// rtcopyReqTypeToStr
+// rtcopyReqTypeToString
 //-----------------------------------------------------------------------------
-const char *castor::tape::utils::rtcopyReqTypeToStr(
+const char *castor::tape::utils::rtcopyReqTypeToString(
   const uint32_t reqType) throw() {
   switch(reqType) {
   case RTCP_TAPE_REQ     : return "RTCP_TAPE_REQ";
@@ -216,9 +217,9 @@ const char *castor::tape::utils::rtcopyReqTypeToStr(
 
 
 //-----------------------------------------------------------------------------
-// procStatusToStr
+// procStatusToString
 //-----------------------------------------------------------------------------
-const char *castor::tape::utils::procStatusToStr(
+const char *castor::tape::utils::procStatusToString(
   const uint32_t procStatus) throw() {
   switch(procStatus) {
   case RTCP_WAITING           : return "RTCP_WAITING";
@@ -360,4 +361,16 @@ void castor::tape::utils::checkDgnSyntax(const char *dgn)
   }
 
   checkIdSyntax(dgn);
+}
+
+
+//------------------------------------------------------------------------------
+// objectTypeToString
+//------------------------------------------------------------------------------
+const char *castor::tape::utils::objectTypeToString(const unsigned int type) {
+  if(type >= castor::ObjectsIdsNb) {
+    return "UNKNOWN";
+  }
+
+  return castor::ObjectsIdStrings[type];
 }

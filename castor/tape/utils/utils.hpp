@@ -28,6 +28,7 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidArgument.hpp"
+#include "castor/io/ServerSocket.hpp"
 #include "castor/tape/Constants.hpp"
 
 #include <errno.h>
@@ -219,7 +220,7 @@ namespace utils  {
    *
    * @param magic The magic number.
    */
-  const char *magicToStr(const uint32_t magic) throw();
+  const char *magicToString(const uint32_t magic) throw();
 
   /**
    * Returns the string representation of the specified RTCOPY_MAGIC request
@@ -227,7 +228,7 @@ namespace utils  {
    *
    * @param reqType The RTCP request type.
    */
-  const char *rtcopyReqTypeToStr(const uint32_t reqType) throw();
+  const char *rtcopyReqTypeToString(const uint32_t reqType) throw();
 
   /**
    * Returns the string representation of the specified file request status
@@ -235,7 +236,7 @@ namespace utils  {
    *
    * @param reqType The file request status code.
    */
-  const char *procStatusToStr(const uint32_t procStatus) throw();
+  const char *procStatusToString(const uint32_t procStatus) throw();
 
   /**
    * Checks if the specified string is a valid unsigned integer.
@@ -286,6 +287,12 @@ namespace utils  {
    */
   void checkDgnSyntax(const char *dgn)
     throw(castor::exception::InvalidArgument);
+
+  /**
+   * Returns the string representation of the specified CASTOR object type.
+   * In the case of the type being unknoen, the returned string is "UNKNOWN".
+   */
+  const char *objectTypeToString(const unsigned int type);
 
 } // namespace utils
 } // namespace tape

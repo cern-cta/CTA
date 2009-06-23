@@ -174,23 +174,23 @@ template<int n> static void getPeerHostName(const int socketFd,
 }
 
 /**
- * Prints the string form of specified IP using the specified output
+ * Writes the string form of specified IP using the specified output
  * stream.
  *
  * @param os The output stream.
  * @param ip The IP address in host byte order.
  */
-void printIp(std::ostream &os, const unsigned long ip) throw();
+void writeIp(std::ostream &os, const unsigned long ip) throw();
 
 /**
- * Prints a textual description of the specified socket to the specified
+ * Writes a textual description of the specified socket to the specified
  * output stream.
  *
  * @param os The output stream to which the string is to be printed.
  * @param socketFd The file descriptor of the socket whose textual
  * description is to be printed to the stream.
  */
-void printSocketDescription(std::ostream &os, const int socketFd)
+void writeSocketDescription(std::ostream &os, const int socketFd)
   throw();
 
 /**
