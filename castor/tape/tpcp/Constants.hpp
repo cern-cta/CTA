@@ -37,11 +37,12 @@ namespace tpcp   {
   const char *const TPCPPROGRAMNAME = "tpcp";
 
   /**
-   * The number of command-line arguments is 2.  The first command-line
+   * The minimum number of command-line arguments is 2.  The first command-line
    * argument is the ACTION to be performed by tpcp.  The second command-line
-   * argument is the VID of tape to copied to/from.
+   * argument is the VID of tape to copied to/from.  Any command-line
+   * argumenst after the first 2 are considered to be RFIO filenames.
    */
-  const int TPCP_NB_ARGS = 2;
+  const int TPCPMINARGS = 2;
 
   /**
    * The number of seconds to stay blocked while waiting for a callback

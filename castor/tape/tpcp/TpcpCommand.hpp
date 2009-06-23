@@ -32,6 +32,7 @@
 #include "castor/tape/tpcp/Action.hpp"
 #include "castor/tape/tpcp/DataMover.hpp"
 #include "castor/tape/tpcp/Dumper.hpp"
+#include "castor/tape/tpcp/FilenameList.hpp"
 #include "castor/tape/tpcp/ParsedCommandLine.hpp"
 #include "castor/tape/tpcp/Verifier.hpp"
 #include "castor/tape/utils/utils.hpp"
@@ -90,6 +91,12 @@ private:
   ParsedCommandLine m_parsedCommandLine;
 
   /**
+   * The list of RFIO filenames parsed from the "filelist" file if specified
+   * on the command-line with the "-f | --filelist" option.
+   */
+  FilenameList m_fileListFiles;
+
+  /**
    * The DGN of the tape to be used.
    */
   char m_dgn[CA_MAXDGNLEN + 1];
@@ -139,30 +146,25 @@ private:
     throw(castor::exception::Exception);
 
   /**
-   * Writes the specified list of tape file sequence ranges to the specified
-   * output stream.
-   *
-   * @param os The output stream to be written to.
-   * @param list The list to be written.
-   */
-  void writeTapeFseqRangeList(std::ostream &os, Uint32RangeList &list) throw();
-
-  /**
-   * Writes the specified list of filenames to the specified
-   * output stream.
-   *
-   * @param os The output stream to be written to.
-   * @param list The list to be written.
-   */
-  void writeFilenameList(std::ostream &os, std::list<std::string> &list)
-    throw();
- 
-  /**
    * Writes the parsed command-line to the specified output stream.
    *
    * @param os The output stream to be written to.
    */
   void writeParsedCommandLine(std::ostream &os) throw();
+
+  /**
+   * Parse the specified "filelist" file  containing a list of filenames, one
+   * per line.
+   *
+   * @param fileList The filename of the "filelist" file.
+   */
+  void parseFileListFile() throw (castor::exception::Exception);
+
+  /**
+   * Writes the list of files parsed from the "filelist" file if specified on
+   * the command-line with the "-f | --filelist" option.
+   */
+  void writeParsedFileListFiles(std::ostream &os) throw();
 
   /**
    * Returns the port on which the server will listen for connections from the
@@ -187,15 +189,6 @@ private:
    */
   void parseTapeFileSequence(char *const str) 
     throw (castor::exception::Exception);
-
-  /**
-   * Parse the specified filenames parameter string and store the
-   * resulting filenames into m_parsedCommandLine.filenamesList.
-   *
-   * @param str The string received as an argument for the filenameList
-   */
-   void parseFilenames(char *const str)
-     throw (castor::exception::Exception);
 
   /**
    * Count the minimum number of files specified in the tape file ranges

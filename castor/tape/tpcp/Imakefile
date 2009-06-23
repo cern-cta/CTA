@@ -74,6 +74,9 @@ TPCPBIN_SRCS = \
   Action.cpp \
   DataMover.cpp \
   Dumper.cpp \
+  FilenameList.cpp \
+  TapeFseqRange.cpp \
+  TapeFseqRangeList.cpp \
   TpcpCommand.cpp \
   TpcpMain.cpp \
   Verifier.cpp \

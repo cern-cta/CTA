@@ -27,8 +27,11 @@
 
 #include "h/Castor_limits.h"
 #include "castor/tape/tpcp/Action.hpp"
+#include "castor/tape/tpcp/FilenameList.hpp"
+#include "castor/tape/tpcp/TapeFseqRangeList.hpp"
 
 #include <list>
+#include <ostream>
 #include <string>
 
 namespace castor {
@@ -36,29 +39,16 @@ namespace tape   {
 namespace tpcp   {
 
 /**
- * A range of uint32_t's specified by an inclusive upper and lower set of
- * bounds.
- */
-struct Uint32Range {
-  uint32_t lower;
-  uint32_t upper;
-};
-
-/**
- * List of ranges.
- */
-typedef std::list<Uint32Range> Uint32RangeList;
-
-/**
  * Data type used to store the results of parsing the command-line.
  */
 struct ParsedCommandLine {
-  bool                   debugOptionSet;
-  bool                   helpOptionSet;
-  Action                 action;
-  char                   vid[CA_MAXVIDLEN+1];
-  Uint32RangeList        tapeFseqRanges;
-  std::list<std::string> filenamesList;
+  bool              debugOptionSet;
+  bool              helpOptionSet;
+  Action            action;
+  char              vid[CA_MAXVIDLEN+1];
+  TapeFseqRangeList tapeFseqRanges;
+  std::string       fileListFile;
+  FilenameList      filenames;
 
   /**
    * Constructor.
@@ -77,6 +67,5 @@ struct ParsedCommandLine {
 } // namespace tpcp
 } // namespace tape
 } // namespace castor
-
 
 #endif // CASTOR_TAPE_TPCP_PARSEDCOMMANDLINE_HPP

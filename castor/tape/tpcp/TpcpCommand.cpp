@@ -89,12 +89,12 @@ void castor::tape::tpcp::TpcpCommand::usage(std::ostream &os,
   Action::writeValidStrings(os, " or ");
   os <<
     " (case insensitive)\n"
-    "\tFILE   A file path in RFIO notation [host:]local_path\n"
+    "\tFILE   A filename in RFIO notation [host:]local_path\n"
     "\n"
     "Options:\n"
     "\n"
     "\t-d, --debug             Print debug information\n"
-    "\t-f, --file              List of file name\n"
+    "\t-f, --filelist          File containing a list of filenames\n"
     "\t-h, --help              Print this help and exit\n"
     "\t-q, --sequence sequence The tape file sequences\n"
     "\n"
@@ -110,7 +110,7 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
 
   static struct option longopts[] = {
     {"debug"   ,       NO_ARGUMENT, NULL, 'd'},
-    {"file"   ,        NO_ARGUMENT, NULL, 'f'},
+    {"filelist", REQUIRED_ARGUMENT, NULL, 'f'},
     {"help"    ,       NO_ARGUMENT, NULL, 'h'},
     {"sequence", REQUIRED_ARGUMENT, NULL, 'q'},
     {NULL      , 0                , NULL,  0 }
@@ -129,7 +129,7 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
       break;
 
     case 'f':
-      parseFilenames(optarg);
+      m_parsedCommandLine.fileListFile = optarg;
       break;
 
     case 'h':
@@ -178,11 +178,11 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
   }
 
   // Check the number of command-line arguments
-  if(argc-optind != TPCP_NB_ARGS){
+  if(argc-optind < TPCPMINARGS){
     castor::exception::InvalidArgument ex;
 
     ex.getMessage() << "Wrong number of command-line arguments: Actual=" <<
-      argc-optind << " Expected=" << TPCP_NB_ARGS; 
+      argc-optind << " Expected minimum=" << TPCPMINARGS; 
 
     throw ex;
   }
@@ -224,6 +224,14 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
       ex.getMessage().str();
 
     throw ex2;
+  }
+
+  // Move on to the next command-line argument (there may not be one)
+  optind++;
+
+  // Parse any filenames on the command-line
+  while(optind < argc) {
+    m_parsedCommandLine.filenames.push_back(argv[optind++]);
   }
 }
 
@@ -281,6 +289,18 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
       castor::tape::tpcp::TpcpCommand::usage(std::cout, TPCPPROGRAMNAME);
       std::cout << std::endl;
       return 0;
+    }
+
+    // Parse the "filelist" file if it is specified on the command-line
+    parseFileListFile();
+
+    // If debug, then display the parsed files from the "filelist" file
+    if(m_parsedCommandLine.debugOptionSet) {
+      std::ostream &os = std::cout;
+
+      os << std::endl;
+      writeParsedFileListFiles(os);
+      os << std::endl;
     }
 
     // Get the DGN of the tape to be used
@@ -492,43 +512,6 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
 
 
 //------------------------------------------------------------------------------
-// writeTapeFseqRangeList
-//------------------------------------------------------------------------------
-void castor::tape::tpcp::TpcpCommand::writeTapeFseqRangeList(std::ostream &os,
-  castor::tape::tpcp::Uint32RangeList &list) throw() {
-  for(Uint32RangeList::iterator itor=list.begin(); itor!=list.end(); itor++) {
-    if(itor!=list.begin()) {
-      os << ",";
-    }
-
-    os << itor->lower << "-";
-
-    // Write out the  upper bound, where 0 means end of tape
-    if(itor->upper > 0) {
-      os << itor->upper;
-    } else {
-      os << "END";
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
-// writeFilenameList
-//------------------------------------------------------------------------------
-void castor::tape::tpcp::TpcpCommand::writeFilenameList(std::ostream &os,
-  std::list<std::string> &list) throw() {
-  for(std::list<std::string>::iterator itor=list.begin(); itor!=list.end();
-    itor++) {
-    if(itor!=list.begin()) {
-      os << ",";
-    }
-
-    os << *itor; 
-  }
-}
-
-
-//------------------------------------------------------------------------------
 // writeParsedCommandLine
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TpcpCommand::writeParsedCommandLine(std::ostream &os)
@@ -553,16 +536,10 @@ void castor::tape::tpcp::TpcpCommand::writeParsedCommandLine(std::ostream &os)
     os << "\"" << m_parsedCommandLine.vid << "\"";
   }
   os << std::endl
-     << "tapeFseqRanges =";
-  writeTapeFseqRangeList(os, m_parsedCommandLine.tapeFseqRanges);
-  os << std::endl
-     << "filenamesList  =";
-  writeFilenameList(os, m_parsedCommandLine.filenamesList);
-  os << std::endl
-     << "NumOfFiles     ="<< countMinNumberOfFiles()
-     << std::endl
-     << "nbRangesWithEnd="<< nbRangesWithEnd()
-     << std::endl;
+     << "tapeFseqRanges =" << m_parsedCommandLine.tapeFseqRanges << std::endl
+     << "filenamesList  =" << m_parsedCommandLine.filenames      << std::endl
+     << "NumOfFiles     =" << countMinNumberOfFiles()            << std::endl
+     << "nbRangesWithEnd=" << nbRangesWithEnd()                  << std::endl;
 }
 
 
@@ -599,7 +576,7 @@ void castor::tape::tpcp::TpcpCommand::parseTapeFileSequence(
 
   std::vector<std::string> rangeStrs;
   int nbBoundaries = 0;
-  Uint32Range range;
+  TapeFseqRange range;
 
   // Range strings are separated by commas
   utils::splitString(str, ',', rangeStrs);
@@ -700,27 +677,32 @@ void castor::tape::tpcp::TpcpCommand::parseTapeFileSequence(
 
 
 //------------------------------------------------------------------------------
-// parseFilenames
+// parseFileListFile
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::TpcpCommand::parseFilenames(char *const str)
+void castor::tape::tpcp::TpcpCommand::parseFileListFile()
   throw (castor::exception::Exception) {
 
-  std::vector<std::string> filenameStrs;
+}
 
-  // Filename strings are separated by commas
-  utils::splitString(str, ',', filenameStrs);
 
-  // For each filename string
-  for(std::vector<std::string>::iterator itor=filenameStrs.begin();
-    itor!=filenameStrs.end(); itor++) {
+//------------------------------------------------------------------------------
+// writeParsedFileListFiles
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::TpcpCommand::writeParsedFileListFiles(
+  std::ostream &os) throw() {
 
-    if((*itor).length() == 0){
-      castor::exception::InvalidArgument ex;
-      ex.getMessage() << "Invalid file name: '" << *itor
-        << "': A filename cannot be an empty string.";
-      throw ex;
-    }
-    m_parsedCommandLine.filenamesList.push_back(*itor);
+  os << "======================================================================"
+      << std::endl
+     << "File list parse from the list file: \""
+     << m_parsedCommandLine.fileListFile << "\"" << std::endl
+     << "======================================================================"
+     << std::endl
+     << std::endl;
+
+  if(m_fileListFiles.size() == 0) {
+    os << "EMPTY" << std::endl;
+  } else {
+    os << m_fileListFiles;
   }
 }
 
@@ -733,7 +715,8 @@ int castor::tape::tpcp::TpcpCommand::countMinNumberOfFiles()
   
   int count = 0;
   // Loop through all ranges
-  for(Uint32RangeList::iterator itor=m_parsedCommandLine.tapeFseqRanges.begin();
+  for(TapeFseqRangeList::iterator itor=
+    m_parsedCommandLine.tapeFseqRanges.begin();
     itor!=m_parsedCommandLine.tapeFseqRanges.end(); itor++) {
   
     if(itor->upper != 0 ){
@@ -754,7 +737,8 @@ int castor::tape::tpcp::TpcpCommand::nbRangesWithEnd()
 
   int count = 0;
   // Loop through all ranges
-  for(Uint32RangeList::iterator itor=m_parsedCommandLine.tapeFseqRanges.begin();
+  for(TapeFseqRangeList::iterator itor=
+    m_parsedCommandLine.tapeFseqRanges.begin();
     itor!=m_parsedCommandLine.tapeFseqRanges.end(); itor++) {
 
     if(itor->upper == 0 ){
