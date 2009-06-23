@@ -29,6 +29,7 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
+#include "castor/tape/tapegateway/VolumeRequest.hpp"
 #include "castor/tape/tpcp/Constants.hpp"
 #include "castor/tape/tpcp/TpcpCommand.hpp"
 #include "castor/tape/utils/utils.hpp"
@@ -414,17 +415,34 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     // Read in the first object sent by the aggregator
     std::auto_ptr<castor::IObject> obj(callbackConnectionSocket.readObject());
 
-    if(obj->type() != OBJ_VolumeRequest) {
+    // Pointer to the received object with the object's type
+    tapegateway::VolumeRequest *volumeRequest = NULL;
+
+    // Cast the object to its type, i.e. VolumeRequest
+    volumeRequest = dynamic_cast<tapegateway::VolumeRequest*>(obj.get());
+    if(volumeRequest == NULL) {
       castor::exception::InvalidArgument ex;
 
       ex.getMessage()
         << "Received the wrong type of object from the aggregator"
-        << ": Expected: OBJ_VolumeRequest";
+        << ": Actual=" << utils::objectTypeToString(obj->type())
+        << " Expected=OBJ_VolumeRequest";
 
-      throw(ex);
+      throw ex;
     }
-    std::cerr<<"Obj type: " << obj->type()<<std::endl;
-    // OBJ_VolumeRequest = 168
+
+    // Check the volume request ID of the VolumeRequest object matches that of
+    // the reply from the VDQM when the drive was requested
+    if(volumeRequest->vdqmVolReqId() != m_volReqId) {
+      castor::exception::InvalidArgument ex;
+
+      ex.getMessage()
+        << "Received the wrong volume request ID from the aggregator"
+        << ": Actual=" << volumeRequest->vdqmVolReqId()
+        << " Expected=" <<  m_volReqId;
+
+      throw ex;
+    }
 
     // Dispatch the Action to appropriate Action handler
     try {
@@ -900,6 +918,7 @@ void castor::tape::tpcp::TpcpCommand::writeVolReqId(std::ostream &os) throw() {
      << std::endl
      << "volReqId=" << m_volReqId << std::endl;
 }
+
 
 //------------------------------------------------------------------------------
 // writeAggregatorCallbackConnection
