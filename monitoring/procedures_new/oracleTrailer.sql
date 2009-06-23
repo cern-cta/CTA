@@ -920,9 +920,9 @@ END;
 /
 
 /* PL/SQL method implementing statsSRMRequests */
-CREATE OR REPLACE PROCEDURE statsSRMRequests (now IN DATE, interval IN NUMBER)
+CREATE OR REPLACE PROCEDURE statsSRMRequests (now IN DATE, interval IN NUMBER) AS
 BEGIN
-  INSERT INTO RequestsStats
+  INSERT INTO RequestStats
   (timestamp, interval, type, hostname, euid, requests)
     SELECT sysdate - 5/1440 timestamp, 300 interval, type, client, DN, requests FROM (
       SELECT /*+ index(mes I_Messages_Facility) index(str I_Str_Param_Values_id) */
@@ -954,7 +954,7 @@ BEGIN
           AND str.timestamp > now - 10/1440
           AND str.timestamp <= now - 5/1440
         GROUP BY mes.id)
-      GROUP BY type, Client, DN) 
+      GROUP BY type, Client, DN);
 END;
 /
 
