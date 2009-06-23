@@ -27,6 +27,7 @@
 #define CASTOR_TAPE_NET_NET_HPP 1
 
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/TimeOut.hpp"
 #include "castor/tape/net/Constants.hpp"
 
 #include <errno.h>
@@ -51,7 +52,7 @@ int createListenerSocket(const char *addr,
 
 /**
  * Accepts a connection on the specified listener socket and returns the
- * socket file descriptor of the newly created connected soket.
+ * socket file descriptor of the newly created connected socket.
  *
  * @param listenSocketFd The file descriptor of the listener socket.
  */
@@ -60,15 +61,22 @@ int acceptConnection(const int listenSocketFd)
 
 /**
  * Accepts a connection on the specified listener socket and returns the
- * socket file descriptor of the newly created connected soket.
+ * socket file descriptor of the newly created connected socket.
+ *
+ * This method accepts a timeout parameter.  If the timeout is exceeded, then
+ * this method raises a castor::exception::TimeOut exception.  All other
+ * errors result in a castor::exception::Exception being raised.  Note that
+ * castor::exception::TimeOut inherits from castor::exception::Exception so one
+ * must catch castor::exception::TimeOut before catching
+ * castor::exception::Exception.
  *
  * @param listenSocketFd The file descriptor of the listener socket.
- * @param netReadWriteTimeout The timeout to be used when performing
- * network reads and writes.  Accepting a connection is classed a network
- * read operation in the case of this function.
+ * @param timeout The timeout in seconds to be used when waiting for a
+ * connection.
  */
 int acceptConnection(const int listenSocketFd,
-  const int netReadWriteTimeout) throw(castor::exception::Exception);
+  const int timeout) throw(castor::exception::TimeOut,
+    castor::exception::Exception);
 
 /**
  * Gets the locally-bound IP and port number of the specified socket.

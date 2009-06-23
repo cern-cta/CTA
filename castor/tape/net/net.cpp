@@ -100,35 +100,35 @@ int castor::tape::net::acceptConnection(const int listensocketFd)
 //-----------------------------------------------------------------------------
 // acceptConnection
 //-----------------------------------------------------------------------------
-int castor::tape::net::acceptConnection(
-  const int listensocketFd, const int netReadWriteTimeout)
-  throw(castor::exception::Exception) {
+int castor::tape::net::acceptConnection(const int listensocketFd,
+  const int timeout) throw(castor::exception::TimeOut,
+  castor::exception::Exception) {
 
   const time_t startTime     = time(NULL);
-  time_t       remainingTime = netReadWriteTimeout;
-  time_t       elapsedTime   = netReadWriteTimeout;
+  time_t       remainingTime = timeout;
+  time_t       elapsedTime   = timeout;
   bool         selectAgain   = true;
   int          selectRc      = 0;
   int          selectErrno   = 0;
   fd_set       fdSet;
-  timeval      timeout;
+  timeval      selectTimeout;
 
   // While a connection request has not arrived and the timeout has not expired
   while(selectAgain) {
     FD_ZERO(&fdSet);
     FD_SET(listensocketFd, &fdSet);
 
-    timeout.tv_sec  = remainingTime;
-    timeout.tv_usec = 0;
+    selectTimeout.tv_sec  = remainingTime;
+    selectTimeout.tv_usec = 0;
 
-    selectRc = select(listensocketFd + 1, &fdSet, NULL, NULL, &timeout);
+    selectRc = select(listensocketFd + 1, &fdSet, NULL, NULL, &selectTimeout);
     selectErrno = errno;
 
     switch(selectRc) {
     case 0: // Select timed out
       {
-        TAPE_THROW_CODE(ETIMEDOUT,
-             ": Timed out after " << netReadWriteTimeout
+        TAPE_THROW_EX(castor::exception::TimeOut,
+             ": Timed out after " << timeout
           << " seconds whilst trying to accept a connection");
       }
       break;
@@ -139,10 +139,10 @@ int castor::tape::net::acceptConnection(
 
         // Recalculate the amount of remaining time ready for another call to
         // select
-        if(elapsedTime >= netReadWriteTimeout) {
+        if(elapsedTime >= timeout) {
           remainingTime = 0; // One last non-blocking select
         } else {
-          remainingTime = netReadWriteTimeout - elapsedTime;
+          remainingTime = timeout - elapsedTime;
         }
       } else {
         char strerrorBuf[STRERRORBUFLEN];
