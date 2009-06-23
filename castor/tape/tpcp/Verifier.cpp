@@ -32,7 +32,7 @@
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::Verifier::run(
   castor::tape::tpcp::ParsedCommandLine &parsedCommandLine, const char *dgn,
-  castor::io::ServerSocket &callbackSocket)
+  const int volReqId, castor::io::ServerSocket &callbackSocket)
   throw(castor::exception::Exception) {
 
   castor::exception::Exception ex(ECANCELED);

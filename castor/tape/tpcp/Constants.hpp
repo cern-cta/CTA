@@ -34,14 +34,20 @@ namespace castor {
 namespace tape   {
 namespace tpcp   {
   	
-  const char *const TPCPPROGRAMNAME        = "tpcp";
+  const char *const TPCPPROGRAMNAME = "tpcp";
 
   /**
    * The number of command-line arguments is 2.  The first command-line
    * argument is the ACTION to be performed by tpcp.  The second command-line
    * argument is the VID of tape to copied to/from.
    */
-  const int         TPCP_NB_ARGS           = 2;
+  const int TPCP_NB_ARGS = 2;
+
+  /**
+   * The number of seconds to stay blocked while waiting for a callback
+   * connection from the aggregator.
+   */
+  const int WAITCALLBACKTIMEOUT = 60;
 
 } // namespace tpcp
 } // namespace tape

@@ -171,12 +171,6 @@ private:
   int getVdqmListenPort() throw(castor::exception::Exception);
 
   /**
-   * This function blocks until one call back has been made
-   */
-  castor::io::ServerSocket* waitForCallBack()
-    throw (castor::exception::Exception);
-
-  /**
    * Parse the specified tape file sequence parameter string and store the
    * resulting ranges into m_parsedCommandLine.tapeFseqRanges.
    *
@@ -278,6 +272,17 @@ private:
    * @param os The output stream to be written to.
    */
   void writeVolReqId(std::ostream &os) throw();
+
+  /**
+   * Writes a texutal description of the specified aggregator callback
+   * connection to the specified output stream.
+   *
+   * @param os The output stream to be written to.
+   * @param connectSocketFd The socket descriptor of the aggregator callback
+   * connection.
+   */
+  void writeAggregatorCallbackConnection(std::ostream &os,
+    const int connectSocketFd) throw();
 
 }; // class TpcpCommand
 

@@ -22,9 +22,15 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
  
+#include "castor/tape/tapegateway/FileToRecall.hpp"
+#include "castor/tape/tapegateway/NoMoreFiles.hpp"
+#include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
+#include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/tpcp/DataMover.hpp"
+#include "castor/tape/tpcp/TpcpCommand.hpp"
 
 #include <errno.h>
+
 
 
 //------------------------------------------------------------------------------
@@ -32,80 +38,44 @@
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::DataMover::run(
   castor::tape::tpcp::ParsedCommandLine &parsedCommandLine, const char *dgn,
-  castor::io::ServerSocket &callbackSocket)
+  const int volReqId, castor::io::ServerSocket &callbackSocket)
   throw(castor::exception::Exception) {
 
-  castor::exception::Exception ex(ECANCELED);
 
+/*  castor::exception::Exception ex(ECANCELED);
   ex.getMessage() << "DataMover not implemented";
-
   throw ex;
+*/
 
-/*
-    unsigned short port = 0;
-    unsigned long  ip   = 0;
-    m_callbackSocket.getPortIp(port, ip);
+  //.........................................................................
+  // Create and send the Volume Request message to the Aggregator 
+  castor::tape::tapegateway::Volume volumeMsg; 
 
-    int VolReqID = 0;
-    // Send the request to read a tape
-    std::cerr<<"vdqm_SendAggregatorVolReq (NULL, " << VolReqID << ", " 
-      << m_parsedCommandLine.vid <<", "<< m_parsedCommandLine.dgn
-      <<", NULL, NULL, "
-      << actionToString(m_parsedCommandLine.action) <<", "
-      <<port<< ")"<<std::endl;
-    // *nv, *reqID, *VID, *dgn, *server, *unit, mode, client_port
-    int rc = 0;
-    rc = vdqm_SendAggregatorVolReq(NULL, &VolReqID,  m_parsedCommandLine.vid, 
-       m_parsedCommandLine.dgn, NULL, NULL, 
-       actionToString(m_parsedCommandLine.action), port);
+  volumeMsg.setVid(parsedCommandLine.vid);
+  volumeMsg.setMode(parsedCommandLine.action.value());
+  volumeMsg.setLabel("aul\0");
+  volumeMsg.setTransactionId(volReqId);
+  volumeMsg.setDensity("1000GC\0");
 
-    if ( rc == -1 ) {
-      char codeStr[STRERRORBUFLEN];
-      strerror_r(errno, codeStr, sizeof(codeStr));
-      TAPE_THROW_EX(castor::exception::Internal,
-        ": vdqm_SendAggregatorVolReq()"
-        ": Error=" << codeStr);
-    }
-  
-    fprintf(stdout,
-      "Volume request successfully submitted. Volume request ID:%d\n", VolReqID);
+  callbackSocket.sendObject(volumeMsg);
+
+  // close the socket!!
+  //delete(callbackSocket);  //
+  //delete(callbackSocket.release());
+
 
     //.........................................................................
     // Wait for the Aggreator messege 
-    std::auto_ptr<castor::io::ServerSocket> socket(
-      (castor::io::ServerSocket*)waitForCallBack());
+    //callbackSocket.reset((castor::io::ServerSocket*)waitForCallBack());
+//  callbackSocket = waitForCallBack();
 
-    std::auto_ptr<castor::IObject>  obj(socket->readObject());
-    std::cerr<<"Obj type: " << obj->type()<<std::endl;
-    // OBJ_VolumeRequest = 168
-
-    //.........................................................................
-    // Create and send the Volume Request message to the Aggregator 
-    castor::tape::tapegateway::Volume volumeMsg; 
-
-    volumeMsg.setVid(vid);
-    volumeMsg.setMode(mode);
-    volumeMsg.setLabel("aul\0");
-    volumeMsg.setTransactionId(VolReqID);
-    volumeMsg.setDensity("1000GC\0");
-
-    socket->sendObject(volumeMsg);
-
-    // close the socket!!
-    //delete(socket);  //
-    delete(socket.release());
-
-    //.........................................................................
-    // Wait for the Aggreator messege 
-    socket.reset((castor::io::ServerSocket*)waitForCallBack());
-
-    std::auto_ptr<castor::IObject>  obj2(socket->readObject());
+    std::auto_ptr<castor::IObject>  obj2(callbackSocket.readObject());
     std::cerr<<"Obj type: " << obj2->type()<<std::endl;
     // OBJ_FileToRecallRequest = 166
 
 
     // Loop over all the files to recall
-
+/*
     {
       //.........................................................................
       // Send a FileToRecall message to the Aggregator

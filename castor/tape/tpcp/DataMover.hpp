@@ -42,8 +42,9 @@ public:
    * documentation.
    */
   void run(ParsedCommandLine &parsedCommandLine, const char *dgn,
-    castor::io::ServerSocket &callbackSocket)
+    const int volReqId, castor::io::ServerSocket &callbackSocket)
     throw(castor::exception::Exception);
+
 
 }; // class DataMover
 

@@ -27,9 +27,6 @@
 #include "castor/exception/Internal.hpp" 
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/tape/net/net.hpp"
-#include "castor/tape/tapegateway/FileToRecall.hpp"
-#include "castor/tape/tapegateway/NoMoreFiles.hpp"
-#include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/tpcp/Constants.hpp"
 #include "castor/tape/tpcp/TpcpCommand.hpp"
@@ -45,10 +42,9 @@
 #include <getopt.h>
 #include <iostream>
 #include <list>
-#include <poll.h>
 #include <string.h>
 #include <unistd.h>
-
+#include <poll.h>
 
 //------------------------------------------------------------------------------
 // vmgr_error_buffer
@@ -378,23 +374,54 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
       os << std::endl;
     }
 
-    // Wait for the callback from the aggregator
-    // TO BE DONE
+    // Socket file descriptor for a callback connection from the aggregator
+    int connectionSocketFd = 0;
+
+    // Wait for a callback connection from the aggregator
+    {
+      bool waitForCallback    = true;
+      while(waitForCallback) {
+        try {
+          connectionSocketFd = net::acceptConnection(m_callbackSocket.socket(),
+            WAITCALLBACKTIMEOUT);
+
+          waitForCallback = false;
+        } catch(castor::exception::TimeOut &tx) {
+          std::cout << "Waited " << WAITCALLBACKTIMEOUT << "seconds for a "
+          "callback connection from the tape server." << std::endl
+          << "Continuing to wait." <<  std::endl;
+        }
+      }
+    }
+
+    // If debug, then display a textual description of the aggregator
+    // callback connection
+    if(m_parsedCommandLine.debugOptionSet) {
+      std::ostream &os = std::cout;
+
+      os << std::endl;
+      writeAggregatorCallbackConnection(os, connectionSocketFd);
+      os << std::endl;
+    }
 
     // Dispatch the Action to appropriate Action handler
     try {
       switch(m_parsedCommandLine.action.value()) {
       case Action::READ:
-        m_dataMover.run(m_parsedCommandLine, m_dgn, m_callbackSocket);
+        m_dataMover.run(m_parsedCommandLine, m_dgn, m_volReqId,
+          m_callbackSocket);
         break;
       case Action::WRITE:
-        m_dataMover.run(m_parsedCommandLine, m_dgn, m_callbackSocket);
+        m_dataMover.run(m_parsedCommandLine, m_dgn, m_volReqId,
+          m_callbackSocket);
         break;
       case Action::DUMP:
-        m_dumper.run(m_parsedCommandLine, m_dgn, m_callbackSocket);
+        m_dumper.run(m_parsedCommandLine, m_dgn, m_volReqId,
+          m_callbackSocket);
         break;
       case Action::VERIFY:
-        m_verifier.run(m_parsedCommandLine, m_dgn, m_callbackSocket);
+        m_verifier.run(m_parsedCommandLine, m_dgn, m_volReqId,
+          m_callbackSocket);
         break;
       default:
         {
@@ -521,55 +548,6 @@ int castor::tape::tpcp::TpcpCommand::getVdqmListenPort()
   }
 
   return port;
-}
-
-//------------------------------------------------------------------------------
-// waitForCallBack
-//------------------------------------------------------------------------------
-castor::io::ServerSocket* castor::tape::tpcp::TpcpCommand::waitForCallBack()
-  throw (castor::exception::Exception) {
-  
-  int rc = 0; 
-  struct pollfd pollit;
-
-  pollit.fd      = m_callbackSocket.socket();
-  pollit.events  = POLLIN;
-  pollit.revents = 0;
-  
-  // Wait for an incoming connection
-  while (1) {
-    rc = poll(&pollit, 1, RTCPDNETRWTIMEOUT);
-    if (rc == 0) {
-     // Log TIMEOUT
-    } else 
-      if (rc < 0) {
-        if (errno == EINTR) {
-          continue; // A signal was caught during poll()
-        }
-        TAPE_THROW_EX(castor::exception::Internal,
-          ": Poll erro. Fd= "
-          << pollit.fd);
-      } else {
-        break; // Success
-      }
-  }
-
-  // Accept the incoming connection
-  castor::io::ServerSocket* socket = m_callbackSocket.accept();
-
-  // Log the ip address of the incoming connection
-  unsigned short port;
-  unsigned long  ip;
-  socket->getPeerIp(port, ip);
-
-  std::ostringstream ipToStr;
-  ipToStr << ((ip & 0xFF000000) >> 24) << "." << ((ip & 0x00FF0000) >> 16) << "."
-  << ((ip & 0x0000FF00) >> 8) << "." << ((ip & 0x000000FF));
-
-  std::cerr<<"Received a connection from -> port: "<<port<<" ip: "<< ipToStr.str().c_str() <<std::endl;
-
-
-  return socket;
 }
 
 
@@ -869,7 +847,6 @@ void castor::tape::tpcp::TpcpCommand::requestDriveFromVdqm(const int mode)
   unsigned long  ip   = 0;
   m_callbackSocket.getPortIp(port, ip);
 
-  std::cout<< "port= "<< port <<", ip= "<<ip<<std::endl;
   vdqmnw_t *const nw     = NULL;
   char     *const server = NULL;
   char     *const unit   = NULL;
@@ -900,4 +877,17 @@ void castor::tape::tpcp::TpcpCommand::writeVolReqId(std::ostream &os) throw() {
      << "======================================" << std::endl
      << std::endl
      << "volReqId=" << m_volReqId << std::endl;
+}
+
+//------------------------------------------------------------------------------
+// writeAggregatorCallbackConnection
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::TpcpCommand::writeAggregatorCallbackConnection(
+  std::ostream &os, const int connectSocketFd) throw() {
+  os << "==============================" << std::endl
+     << "Aggregator callback connection" << std::endl
+     << "==============================" << std::endl
+     << std::endl;
+  net::printSocketDescription(os, connectSocketFd);
+  os << std::endl;
 }

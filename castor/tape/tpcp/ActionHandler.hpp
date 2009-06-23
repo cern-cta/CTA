@@ -46,10 +46,12 @@ public:
    *
    * @param parsedCommandLine The parsed command-line arguments.
    * @param dgn The DGN of the tape to be worked on.
+   * @param volReqId The volume request ID returned by the VDQM in response to
+   * to the request for a drive.
    * @param callbackSocket The aggregator callback socket.
    */
   virtual void run(ParsedCommandLine &parsedCommandLine, const char *dgn,
-    castor::io::ServerSocket &callbackSocket)
+    const int volReqId, castor::io::ServerSocket &callbackSocket)
     throw(castor::exception::Exception) = 0;
 
 }; // class ActionHandler
