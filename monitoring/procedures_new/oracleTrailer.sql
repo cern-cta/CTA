@@ -512,6 +512,7 @@ BEGIN
        SELECT helper.tapevid, count(*) mounted
          FROM TapeMountsHelper helper
         WHERE helper.timestamp > (now - 1) - 5/1440
+	  AND helper.facility = 2
         GROUP BY helper.tapevid) mounts
        ON results.tapevid = mounts.tapevid
      GROUP BY type, username, groupname, results.tapevid, tapestatus;
