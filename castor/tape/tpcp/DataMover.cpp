@@ -31,17 +31,18 @@
 #include "castor/tape/tpcp/Constants.hpp"
 #include "castor/tape/tpcp/DataMover.hpp"
 #include "castor/tape/tpcp/TpcpCommand.hpp"
+#include "h/Ctape_constants.h"
 
 #include <errno.h>
-
 
 
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::DataMover::run(
-  castor::tape::tpcp::ParsedCommandLine &parsedCommandLine, const char *dgn,
-  const int volReqId, castor::io::ServerSocket &callbackSocket)
+void castor::tape::tpcp::DataMover::run(bool debug, Action &action,
+    char (&vid)[CA_MAXVIDLEN+1], TapeFseqRangeList &tapeFseqRanges,
+    FilenameList &filenames, const char *dgn, const int volReqId,
+    castor::io::ServerSocket &callbackSocket)
   throw(castor::exception::Exception) {
 
 
@@ -54,8 +55,8 @@ void castor::tape::tpcp::DataMover::run(
   // Create and send the Volume Request message to the Aggregator 
   castor::tape::tapegateway::Volume volumeMsg; 
 
-  volumeMsg.setVid(parsedCommandLine.vid);
-  volumeMsg.setMode(parsedCommandLine.action.value());
+  volumeMsg.setVid(vid);
+  volumeMsg.setMode(action == Action::write ? WRITE_ENABLE : WRITE_DISABLE);
   volumeMsg.setLabel("aul\0");
   volumeMsg.setTransactionId(volReqId);
   volumeMsg.setDensity("1000GC\0");
@@ -88,7 +89,7 @@ void castor::tape::tpcp::DataMover::run(
 
   // If debug, then display a textual description of the aggregator
   // callback connection
-  if(parsedCommandLine.debugOptionSet) {
+  if(debug) {
     std::ostream &os = std::cout;
 
     os << std::endl;

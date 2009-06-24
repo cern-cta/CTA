@@ -30,9 +30,10 @@
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::Dumper::run(
-  castor::tape::tpcp::ParsedCommandLine &parsedCommandLine, const char *dgn,
-  const int volReqId, castor::io::ServerSocket &callbackSocket)
+void castor::tape::tpcp::Dumper::run(bool debug, Action &action,
+    char (&vid)[CA_MAXVIDLEN+1], TapeFseqRangeList &tapeFseqRanges,
+    FilenameList &filenames, const char *dgn, const int volReqId,
+    castor::io::ServerSocket &callbackSocket)
   throw(castor::exception::Exception) {
 
   castor::exception::Exception ex(ECANCELED);

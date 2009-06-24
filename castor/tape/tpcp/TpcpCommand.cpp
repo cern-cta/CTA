@@ -62,6 +62,12 @@ castor::tape::tpcp::TpcpCommand::TpcpCommand() throw () :
   m_callbackSocket(false),
   m_volReqId(0) {
   utils::setBytes(m_dgn, '\0');
+
+  // Build the map of ActionHandlers
+  m_handlers[Action::READ]   = &m_dataMover;
+  m_handlers[Action::WRITE]  = &m_dataMover;
+  m_handlers[Action::DUMP]   = &m_dumper;
+  m_handlers[Action::VERIFY] = &m_verifier;
 }
 
 
@@ -500,39 +506,33 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
       throw ex;
     }
 
-    // Dispatch the Action to appropriate Action handler
-    try {
-      switch(m_parsedCommandLine.action.value()) {
-      case Action::READ:
-        m_dataMover.run(m_parsedCommandLine, m_dgn, m_volReqId,
-          m_callbackSocket);
-        break;
-      case Action::WRITE:
-        m_dataMover.run(m_parsedCommandLine, m_dgn, m_volReqId,
-          m_callbackSocket);
-        break;
-      case Action::DUMP:
-        m_dumper.run(m_parsedCommandLine, m_dgn, m_volReqId,
-          m_callbackSocket);
-        break;
-      case Action::VERIFY:
-        m_verifier.run(m_parsedCommandLine, m_dgn, m_volReqId,
-          m_callbackSocket);
-        break;
-      default:
-        {
-          castor::exception::Internal ex;
-
-          ex.getMessage() << "Action unknown to ActionHandler dispatch logic";
-          throw(ex);
-        }
+    // Find the appropriate ActionHandler
+    ActionHandler *handler = NULL;
+    {
+      ActionHandlerMap::iterator itor = m_handlers.find(
+        m_parsedCommandLine.action.value());
+      if(itor == m_handlers.end()) {
+        TAPE_THROW_EX(castor::exception::Internal,
+          ": Failed to find ActionHandler: Action="
+          << m_parsedCommandLine.action);
       }
-    } catch(castor::exception::Exception &ex) {
-      std::cerr << "Failed to perform " << m_parsedCommandLine.action.str()
-        << " action: " << ex.getMessage().str() << std::endl
-        << std::endl;
+      handler = itor->second;
+    }
 
-      return 1;
+    // Run the action handler
+    try {
+      handler->run(m_parsedCommandLine.debugOptionSet,
+        m_parsedCommandLine.action, m_parsedCommandLine.vid,
+        m_parsedCommandLine.tapeFseqRanges, m_filenames, m_dgn, m_volReqId,
+        m_callbackSocket);
+    } catch(castor::exception::Exception &ex) {
+      castor::exception::Exception ex2(ECANCELED);
+
+      ex2.getMessage() << "Failed to perform action"
+        ": Action=" << m_parsedCommandLine.action <<
+        ": " << ex.getMessage().str();
+
+      throw ex2;
     }
   } catch(castor::exception::Exception &ex) {
     std::cerr << std::endl
@@ -805,35 +805,35 @@ void castor::tape::tpcp::TpcpCommand::vmgrQueryTape(
 // writeVmgrTapeInfo
 //------------------------------------------------------------------------------
 void  castor::tape::tpcp::TpcpCommand::writeVmgrTapeInfo(std::ostream &os,
-  vmgr_tape_info &tapeInfo) throw() {
+  vmgr_tape_info &info) throw() {
   os << "============================" << std::endl
      << "vmgr_tape_info from the VMGR" << std::endl
      << "============================" << std::endl
      << std::endl
-     << "vid                 =\"" << tapeInfo.vid << "\""          << std::endl
-     << "vsn                 =\"" << tapeInfo.vsn << "\""          << std::endl
-     << "library             =\"" << tapeInfo.library << "\""      << std::endl
-     << "density             =\"" << tapeInfo.density << "\""      << std::endl
-     << "lbltype             =\"" << tapeInfo.lbltype << "\""      << std::endl
-     << "model               =\"" << tapeInfo.model << "\""        << std::endl
-     << "media_letter        =\"" << tapeInfo.media_letter << "\"" << std::endl
-     << "manufacturer        =\"" << tapeInfo.manufacturer << "\"" << std::endl
-     << "sn                  =\"" << tapeInfo.sn << "\""           << std::endl
-     << "nbsides             =" << tapeInfo.nbsides                << std::endl
-     << "etime               =" << tapeInfo.etime                  << std::endl
-     << "rcount              =" << tapeInfo.rcount                 << std::endl
-     << "wcount              =" << tapeInfo.wcount                 << std::endl
-     << "rhost               =\"" << tapeInfo.rhost << "\""        << std::endl
-     << "whost               =\"" << tapeInfo.whost << "\""        << std::endl
-     << "rjid                =" << tapeInfo.rjid                   << std::endl
-     << "wjid                =" << tapeInfo.wjid                   << std::endl
-     << "rtime               =" << tapeInfo.rtime                  << std::endl
-     << "wtime               =" << tapeInfo.wtime                  << std::endl
-     << "side                =" << tapeInfo.side                   << std::endl
-     << "poolname            =\"" << tapeInfo.poolname << "\""     << std::endl
-     << "status              =" << tapeInfo.status                 << std::endl
-     << "estimated_free_space=" << tapeInfo.estimated_free_space   << std::endl
-     << "nbfiles             =" << tapeInfo.nbfiles                << std::endl;
+     << "vid                  = \"" << info.vid << "\""          << std::endl
+     << "vsn                  = \"" << info.vsn << "\""          << std::endl
+     << "library              = \"" << info.library << "\""      << std::endl
+     << "density              = \"" << info.density << "\""      << std::endl
+     << "lbltype              = \"" << info.lbltype << "\""      << std::endl
+     << "model                = \"" << info.model << "\""        << std::endl
+     << "media_letter         = \"" << info.media_letter << "\"" << std::endl
+     << "manufacturer         = \"" << info.manufacturer << "\"" << std::endl
+     << "sn                   = \"" << info.sn << "\""           << std::endl
+     << "nbsides              = " << info.nbsides                << std::endl
+     << "etime                = " << info.etime                  << std::endl
+     << "rcount               = " << info.rcount                 << std::endl
+     << "wcount               = " << info.wcount                 << std::endl
+     << "rhost                = \"" << info.rhost << "\""        << std::endl
+     << "whost                = \"" << info.whost << "\""        << std::endl
+     << "rjid                 = " << info.rjid                   << std::endl
+     << "wjid                 = " << info.wjid                   << std::endl
+     << "rtime                = " << info.rtime                  << std::endl
+     << "wtime                = " << info.wtime                  << std::endl
+     << "side                 = " << info.side                   << std::endl
+     << "poolname             = \"" << info.poolname << "\""     << std::endl
+     << "status               = " << info.status                 << std::endl
+     << "estimated_free_space = " << info.estimated_free_space   << std::endl
+     << "nbfiles              = " << info.nbfiles                << std::endl;
 }
 
 

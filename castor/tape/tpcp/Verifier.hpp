@@ -41,8 +41,10 @@ public:
    * See the header file of castor::tape::tpcp::ActionHandler for this method's
    * documentation.
    */
-  void run(ParsedCommandLine &parsedCommandLine, const char *dgn,
-    const int volReqId, castor::io::ServerSocket &callbackSocket)
+  void run(bool debug, Action &action, char (&vid)[CA_MAXVIDLEN+1],
+    TapeFseqRangeList &tapeFseqRanges, FilenameList &filenames,
+    const char *dgn, const int volReqId,
+    castor::io::ServerSocket &callbackSocket)
     throw(castor::exception::Exception);
 
 }; // class Verifier

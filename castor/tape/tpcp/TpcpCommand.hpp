@@ -127,6 +127,17 @@ private:
   Verifier m_verifier;
 
   /**
+   * Datatype for the map of ActionHandler mapping Action value to
+   * ActionHandler.
+   */
+  typedef std::map<Action::Value, ActionHandler*> ActionHandlerMap;
+
+  /**
+   * Map of ActionHandlers mapping Action value to ActionHandler.
+   */
+  ActionHandlerMap m_handlers;
+
+  /**
    * Writes the command-line usage message of tpcp onto the specified output
    * stream.
    *
@@ -221,10 +232,9 @@ private:
    * stream.
    *
    * @param os The output stream to be written to.
-   * @param tapeInfo The vmgr_tape_info structure to be written.
+   * @param info The vmgr_tape_info structure to be written.
    */
-  void writeVmgrTapeInfo(std::ostream &os, vmgr_tape_info &tapeInfo)
-    throw();
+  void writeVmgrTapeInfo(std::ostream &os, vmgr_tape_info &info) throw();
 
   /**
    * Writes the DGN retreived from the VMGR to the specified output stream.

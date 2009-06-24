@@ -27,7 +27,10 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/io/ServerSocket.hpp"
-#include "castor/tape/tpcp/ParsedCommandLine.hpp"
+#include "castor/tape/tpcp/Action.hpp"
+#include "castor/tape/tpcp/FilenameList.hpp"
+#include "castor/tape/tpcp/TapeFseqRangeList.hpp"
+#include "h/Castor_limits.h"
 
 namespace castor {
 namespace tape   {
@@ -44,14 +47,21 @@ public:
    * Performs the action as laid out in the specified parsed command-line
    * arguments.
    *
-   * @param parsedCommandLine The parsed command-line arguments.
+   * @param debug True if debug messages should be displayed.
+   * @param action The Action to be performed.
+   * @param vid The VID of the tape to be worked on.
+   * @param tapeFseqRanges The list of tape file sequence ranges to be
+   * processed.
+   * @param filenames The list of RFIO filenames to be processed.
    * @param dgn The DGN of the tape to be worked on.
    * @param volReqId The volume request ID returned by the VDQM in response to
    * to the request for a drive.
    * @param callbackSocket The aggregator callback socket.
    */
-  virtual void run(ParsedCommandLine &parsedCommandLine, const char *dgn,
-    const int volReqId, castor::io::ServerSocket &callbackSocket)
+  virtual void run(bool debug, Action &action, char (&vid)[CA_MAXVIDLEN+1],
+    TapeFseqRangeList &tapeFseqRanges, FilenameList &filenames,
+    const char *dgn, const int volReqId,
+    castor::io::ServerSocket &callbackSocket)
     throw(castor::exception::Exception) = 0;
 
 }; // class ActionHandler
