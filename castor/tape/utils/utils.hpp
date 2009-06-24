@@ -32,6 +32,7 @@
 #include "castor/tape/Constants.hpp"
 
 #include <errno.h>
+#include <list>
 #include <stdint.h>
 #include <string>
 #include <string.h>
@@ -293,6 +294,12 @@ namespace utils  {
    * In the case of the type being unknoen, the returned string is "UNKNOWN".
    */
   const char *objectTypeToString(const unsigned int type);
+
+  /**
+   * Appends each line of the specified file to the specified list of lines.
+   */
+  void readFileIntoList(const char *filename, std::list<std::string> &lines)
+    throw(castor::exception::Exception);
 
 } // namespace utils
 } // namespace tape

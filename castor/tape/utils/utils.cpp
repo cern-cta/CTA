@@ -32,6 +32,7 @@
 #include "h/rtcp_constants.h"
 
 #include <arpa/inet.h>
+#include <fstream>
 #include <iostream>
 #include <string.h>
 #include <sys/socket.h>
@@ -373,4 +374,32 @@ const char *castor::tape::utils::objectTypeToString(const unsigned int type) {
   }
 
   return castor::ObjectsIdStrings[type];
+}
+
+
+//------------------------------------------------------------------------------
+// readFileIntoList
+//------------------------------------------------------------------------------
+void castor::tape::utils::readFileIntoList(const char *filename,
+  std::list<std::string> &lines) throw(castor::exception::Exception) {
+
+  std::ifstream file(filename);
+
+  if(!filename) {
+    castor::exception::Exception ex(ECANCELED);
+
+    ex.getMessage() << "Failed to open file: Filename=\"" << filename << "\"";
+
+    throw ex;
+  } 
+
+  std::string line;
+
+  while(!file.eof()) {
+    std::getline(file, line, '\n');
+
+    lines.push_back(line);
+
+    line.clear();
+  }
 }
