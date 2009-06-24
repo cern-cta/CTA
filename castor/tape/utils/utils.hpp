@@ -309,9 +309,19 @@ namespace utils  {
     throw(castor::exception::Exception);
 
   /**
-   * Parses the "filelist" file with the specified filename into the specified
-   * list of filenames.
+   * Appends to the specified list the filenames from the "filelist" file with
+   * the specified filename.
    *
+   * This method:
+   * <ul>
+   * <li>Trims leading and trailing white space from each line
+   * <li>Ignores blank lines with or without white space.
+   * <li>Ignores comment lines, i.e. those starting with a '#' after their
+   * leading and trailing white space has been trimmed.
+   * </ul>
+   *
+   * @param filename The filename of the "filelist" file.
+   * @param list The to which the filenames will be appended.
    */
   void parseFileList(const char *filename, std::list<std::string> &list)
     throw (castor::exception::Exception);
