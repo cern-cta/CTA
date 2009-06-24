@@ -156,18 +156,6 @@ private:
     throw(castor::exception::Exception);
 
   /**
-   * Writes the parsed command-line to the specified output stream.
-   *
-   * @param os The output stream to be written to.
-   */
-  void writeParsedCommandLine(std::ostream &os) throw();
-
-  /**
-   * Writes the list of filenames to be processed by the ActionHandlers.
-   */
-  void writeFilenamesToBeProcessed(std::ostream &os) throw();
-
-  /**
    * Returns the port on which the server will listen for connections from the
    * VDQM.
    */
@@ -229,25 +217,10 @@ private:
   void writeVmgrTapeInfo(std::ostream &os, vmgr_tape_info &info) throw();
 
   /**
-   * Writes the DGN retreived from the VMGR to the specified output stream.
-   *
-   * @param os The output stream to be written to.
-   */
-  void writeDgn(std::ostream &os) throw();
-
-  /**
    * Creates, binds and sets to listening the callback socket to be used for
    * callbacks from the aggregator daemon.
    */
   void setupCallbackSocket() throw(castor::exception::Exception);
-
-  /**
-   * Writes a textual description of the aggregator callback socket to the
-   * specified output stream.
-   *
-   * @param os The output stream to be written to.
-   */
-  void writeCallbackSocket(std::ostream &os) throw();
 
   /**
    * Request a drive from the VDQM to mount the specified tape for the
@@ -257,25 +230,6 @@ private:
    */
    void requestDriveFromVdqm(const int mode)
      throw(castor::exception::Exception);
-
-  /**
-   * Writes the volume request ID obtained from the VDQM to the specified
-   * output stream.
-   *
-   * @param os The output stream to be written to.
-   */
-  void writeVolReqId(std::ostream &os) throw();
-
-  /**
-   * Writes a texutal description of the specified aggregator callback
-   * connection to the specified output stream.
-   *
-   * @param os The output stream to be written to.
-   * @param connectSocketFd The socket descriptor of the aggregator callback
-   * connection.
-   */
-  void writeAggregatorCallbackConnection(std::ostream &os,
-    const int connectSocketFd) throw();
 
 }; // class TpcpCommand
 

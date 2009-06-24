@@ -304,7 +304,10 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
       std::ostream &os = std::cout;
 
       os << std::endl;
-      writeParsedCommandLine(os);
+      utils::writeBanner(os, "Parsed command-line");
+      os << std::endl
+      << m_parsedCommandLine;
+      os << std::endl;
       os << std::endl;
     }
 
@@ -340,8 +343,10 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     if(m_parsedCommandLine.debugOptionSet) {
       std::ostream &os = std::cout;
 
+      utils::writeBanner(os, "Filenames to be processed");
       os << std::endl;
-      writeFilenamesToBeProcessed(os);
+      os << "filenames = " << m_filenames << std::endl;
+      os << std::endl;
       os << std::endl;
     }
 
@@ -373,10 +378,14 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     if(m_parsedCommandLine.debugOptionSet) {
       std::ostream &os = std::cout;
 
-      os << std::endl;
+      utils::writeBanner(os, "vmgr_tape_info from the VMGR");
       writeVmgrTapeInfo(os, tapeInfo);
       os << std::endl;
-      writeDgn(os);
+      os << std::endl;
+      utils::writeBanner(os, "DGN from the VMGR");
+      os << std::endl;
+      os << "DGN=\"" << m_dgn << "\"" << std::endl;
+      os << std::endl;
       os << std::endl;
     }
 
@@ -418,8 +427,11 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     if(m_parsedCommandLine.debugOptionSet) {
       std::ostream &os = std::cout;
 
+      utils::writeBanner(os, "Aggregator callback socket details");
       os << std::endl;
-      writeCallbackSocket(os);
+      os << "Socket = ";
+      net::writeSocketDescription(os, m_callbackSocket.socket());
+      os << std::endl;
       os << std::endl;
     }
 
@@ -434,8 +446,10 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     if(m_parsedCommandLine.debugOptionSet) {
       std::ostream &os = std::cout;
 
+      utils::writeBanner(os, "Volume request ID returned by the VDQM");
       os << std::endl;
-      writeVolReqId(os);
+      os << "volReqId=" << m_volReqId << std::endl;
+      os << std::endl;
       os << std::endl;
     }
 
@@ -464,8 +478,10 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     if(m_parsedCommandLine.debugOptionSet) {
       std::ostream &os = std::cout;
 
+      utils::writeBanner(os, "Aggregator callback connection");
       os << std::endl;
-      writeAggregatorCallbackConnection(os, connectionSocketFd);
+      net::writeSocketDescription(os, connectionSocketFd);
+      os << std::endl;
       os << std::endl;
     }
 
@@ -548,19 +564,6 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
 
 
 //------------------------------------------------------------------------------
-// writeParsedCommandLine
-//------------------------------------------------------------------------------
-void castor::tape::tpcp::TpcpCommand::writeParsedCommandLine(std::ostream &os)
-  throw() {
-  os << "===================" << std::endl
-     << "Parsed command-line" << std::endl
-     << "===================" << std::endl
-     << std::endl
-     << m_parsedCommandLine;
-}
-
-
-//------------------------------------------------------------------------------
 // getVdqmListenPort()
 //------------------------------------------------------------------------------
 int castor::tape::tpcp::TpcpCommand::getVdqmListenPort()
@@ -573,12 +576,11 @@ int castor::tape::tpcp::TpcpCommand::getVdqmListenPort()
   if(configEntry != NULL) {
     if(utils::isValidUInt(configEntry)) {
       port = atoi(configEntry);
-    } 
-    else {
+    } else {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Invalid configuration entry:" 
       << configEntry);
-      }
+    }
   }
 
   return port;
@@ -694,20 +696,6 @@ void castor::tape::tpcp::TpcpCommand::parseTapeFileSequence(
 
 
 //------------------------------------------------------------------------------
-// writeFilenamesToBeProcessed
-//------------------------------------------------------------------------------
-void castor::tape::tpcp::TpcpCommand::writeFilenamesToBeProcessed(
-  std::ostream &os) throw() {
-
-  os << "=========================" << std::endl
-     << "Filenames to be processed" << std::endl
-     << "=========================" << std::endl
-     << std::endl
-     << "filenames = " << m_filenames;
-}
-
-
-//------------------------------------------------------------------------------
 // countMinNumberOfFiles
 //------------------------------------------------------------------------------
 int castor::tape::tpcp::TpcpCommand::countMinNumberOfFiles()
@@ -779,10 +767,8 @@ void castor::tape::tpcp::TpcpCommand::vmgrQueryTape(
 //------------------------------------------------------------------------------
 void  castor::tape::tpcp::TpcpCommand::writeVmgrTapeInfo(std::ostream &os,
   vmgr_tape_info &info) throw() {
-  os << "============================" << std::endl
-     << "vmgr_tape_info from the VMGR" << std::endl
-     << "============================" << std::endl
-     << std::endl
+
+  os << std::endl
      << "vid                  = \"" << info.vid << "\""          << std::endl
      << "vsn                  = \"" << info.vsn << "\""          << std::endl
      << "library              = \"" << info.library << "\""      << std::endl
@@ -811,18 +797,6 @@ void  castor::tape::tpcp::TpcpCommand::writeVmgrTapeInfo(std::ostream &os,
 
 
 //------------------------------------------------------------------------------
-// writeDgn
-//------------------------------------------------------------------------------
-void  castor::tape::tpcp::TpcpCommand::writeDgn(std::ostream &os) throw() {
-  os << "=================" << std::endl
-     << "DGN from the VMGR" << std::endl
-     << "=================" << std::endl
-     << std::endl
-     << "DGN=\"" << m_dgn << "\"" << std::endl;
-}
-
-
-//------------------------------------------------------------------------------
 // setupCallbackSocket
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TpcpCommand::setupCallbackSocket()
@@ -842,22 +816,6 @@ void castor::tape::tpcp::TpcpCommand::setupCallbackSocket()
   // Bind the aggregator callback socket
   m_callbackSocket.bind(lowPort, highPort);
   m_callbackSocket.listen();
-}
-
-
-//------------------------------------------------------------------------------
-// writeCallbackSocket
-//------------------------------------------------------------------------------
-void castor::tape::tpcp::TpcpCommand::writeCallbackSocket(std::ostream &os)
-  throw() {
-  os << "==================================" << std::endl
-     << "Aggregator callback socket details" << std::endl
-     << "==================================" << std::endl
-     << std::endl;
-
-  net::writeSocketDescription(os, m_callbackSocket.socket());
-
-  os << std::endl;
 }
 
 
@@ -889,30 +847,4 @@ void castor::tape::tpcp::TpcpCommand::requestDriveFromVdqm(const int mode)
 
     throw ex;
   }
-}
-
-
-//------------------------------------------------------------------------------
-// writeVolReqId
-//------------------------------------------------------------------------------
-void castor::tape::tpcp::TpcpCommand::writeVolReqId(std::ostream &os) throw() {
-  os << "======================================" << std::endl
-     << "Volume request ID returned by the VDQM" << std::endl
-     << "======================================" << std::endl
-     << std::endl
-     << "volReqId=" << m_volReqId << std::endl;
-}
-
-
-//------------------------------------------------------------------------------
-// writeAggregatorCallbackConnection
-//------------------------------------------------------------------------------
-void castor::tape::tpcp::TpcpCommand::writeAggregatorCallbackConnection(
-  std::ostream &os, const int connectSocketFd) throw() {
-  os << "==============================" << std::endl
-     << "Aggregator callback connection" << std::endl
-     << "==============================" << std::endl
-     << std::endl;
-  net::writeSocketDescription(os, connectSocketFd);
-  os << std::endl;
 }
