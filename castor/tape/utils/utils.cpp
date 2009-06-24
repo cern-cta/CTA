@@ -450,3 +450,28 @@ void castor::tape::utils::trimString(std::string &str) throw() {
     str = str.substr(start, end - start + 1);
   }
 }
+
+
+//------------------------------------------------------------------------------
+// writeBanner
+//------------------------------------------------------------------------------
+void castor::tape::utils::writeBanner(std::ostream &os,
+  const char *const title) throw() {
+
+  const size_t len = strlen(title);
+  size_t       i   = 0;
+
+  for(i=0; i<len+4; i++) {
+    os << "=";
+  }
+  os << std::endl;
+
+  os << "= ";
+  os << title;
+  os << " =" << std::endl;
+
+  for(i=0; i<len+4; i++) {
+    os << "=";
+  }
+  os << std::endl;
+}

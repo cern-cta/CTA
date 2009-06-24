@@ -299,8 +299,8 @@ namespace utils  {
 
   /**
    * Appends each line of the specified file to the specified list of lines.
-   *
-   * CRs or NOT???????????????????????????
+   * The new-line characters are extracted from the file, but they are not
+   * stored in the lines appended to the list.
    *
    * @param filename The filename of the file to be read.
    * @param lines The list to which each line of the file will be appended.
@@ -333,6 +333,14 @@ namespace utils  {
    * @param str The string to be trimmed.
    */
   void trimString(std::string &str) throw();
+
+  /**
+   * Writes a banner with the specified title text to the specified stream.
+   *
+   * @param os The stream to be written to.
+   * @param title The title text to be written.
+   */
+  void writeBanner(std::ostream &os, const char *const title) throw();
 
 } // namespace utils
 } // namespace tape
