@@ -323,7 +323,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     if(m_parsedCommandLine.fileListOptionSet) {
       // Parse the "filelist" file into the list of filenames to be
       // processed
-      parseFileListFile(m_parsedCommandLine.fileListFilename.c_str(),
+      utils::parseFileList(m_parsedCommandLine.fileListFilename.c_str(),
         m_filenames);
     } else {
       // Copy the command-line argument filenames into the list of filenames
@@ -688,33 +688,6 @@ void castor::tape::tpcp::TpcpCommand::parseTapeFileSequence(
       ex.getMessage() << "Invalid range string: '" << *itor
         << "': A range string can only contain one or no dashes ('-')";
       throw ex;
-    }
-  }
-}
-
-
-//------------------------------------------------------------------------------
-// parseFileListFile
-//------------------------------------------------------------------------------
-void castor::tape::tpcp::TpcpCommand::parseFileListFile(const char *filename,
-  FilenameList &list) throw (castor::exception::Exception) {
-
-  utils::readFileIntoList(filename, list);
-
-  FilenameList::iterator itor=list.begin();
-
-  while(itor!=list.end()) {
-    std::string &line = *itor;
-
-    // Left and right trim the line
-    utils::trimString(line);
-
-    // Remove the line if it is an empty string or if it starts with the shell
-    // comment character '#'
-    if(line.empty() || (line.size() > 0 && line[0] == '#')) {
-      itor = list.erase(itor);
-    } else {
-      itor++;
     }
   }
 }

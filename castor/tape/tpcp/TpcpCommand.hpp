@@ -163,14 +163,6 @@ private:
   void writeParsedCommandLine(std::ostream &os) throw();
 
   /**
-   * Parses the "filelist" file with the specified filename into the specified
-   * list of filenames.
-   *
-   */
-  void parseFileListFile(const char *filename, FilenameList &list)
-    throw (castor::exception::Exception);
-
-  /**
    * Writes the list of filenames to be processed by the ActionHandlers.
    */
   void writeFilenamesToBeProcessed(std::ostream &os) throw();
