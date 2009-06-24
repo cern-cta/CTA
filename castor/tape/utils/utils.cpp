@@ -408,7 +408,7 @@ void castor::tape::utils::readFileIntoList(const char *filename,
 //------------------------------------------------------------------------------
 // trimString
 //------------------------------------------------------------------------------
-void trimString(std::string &str) throw() {
+void castor::tape::utils::trimString(std::string &str) throw() {
   const char *whitespace = " \t";
 
   std::string::size_type start = str.find_first_not_of(whitespace);
