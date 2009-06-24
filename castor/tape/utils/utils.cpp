@@ -113,7 +113,7 @@ void castor::tape::utils::toHex(const uint64_t i, char *dst,
   const char hexDigits[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
     'A', 'B', 'C', 'D', 'E', 'F'};
   char backwardsHexDigits[16];
-  utils::setBytes(backwardsHexDigits, '\0');
+  setBytes(backwardsHexDigits, '\0');
   uint64_t exponent = 0;
   uint64_t quotient = i;
   int nbDigits = 0;
@@ -401,6 +401,33 @@ void castor::tape::utils::readFileIntoList(const char *filename,
     lines.push_back(line);
 
     line.clear();
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// parseFileList
+//------------------------------------------------------------------------------
+void castor::tape::utils::parseFileList(const char *filename,
+  std::list<std::string> &list) throw (castor::exception::Exception) {
+
+  readFileIntoList(filename, list);
+
+  std::list<std::string>::iterator itor=list.begin();
+
+  while(itor!=list.end()) {
+    std::string &line = *itor;
+
+    // Left and right trim the line
+    trimString(line);
+
+    // Remove the line if it is an empty string or if it starts with the shell
+    // comment character '#'
+    if(line.empty() || (line.size() > 0 && line[0] == '#')) {
+      itor = list.erase(itor);
+    } else {
+      itor++;
+    }
   }
 }
 

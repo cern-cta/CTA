@@ -309,6 +309,14 @@ namespace utils  {
     throw(castor::exception::Exception);
 
   /**
+   * Parses the "filelist" file with the specified filename into the specified
+   * list of filenames.
+   *
+   */
+  void parseFileList(const char *filename, std::list<std::string> &list)
+    throw (castor::exception::Exception);
+
+  /**
    * Trims the leading and trailing white space from the specified string.
    * White space is either a space ' ' or a tab '\t'.
    *
