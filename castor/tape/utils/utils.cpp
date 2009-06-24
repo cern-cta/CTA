@@ -403,3 +403,23 @@ void castor::tape::utils::readFileIntoList(const char *filename,
     line.clear();
   }
 }
+
+
+//------------------------------------------------------------------------------
+// trimString
+//------------------------------------------------------------------------------
+void trimString(std::string &str) throw() {
+  const char *whitespace = " \t";
+
+  std::string::size_type start = str.find_first_not_of(whitespace);
+  std::string::size_type end   = str.find_last_not_of(whitespace);
+
+  // If all the characters of the string are whitespace
+  if(start == std::string::npos) {
+    // The result is an empty string
+    str = "";
+  } else {
+    // The result is what is in the middle
+    str = str.substr(start, end - start + 1);
+  }
+}

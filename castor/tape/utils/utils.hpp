@@ -291,15 +291,30 @@ namespace utils  {
 
   /**
    * Returns the string representation of the specified CASTOR object type.
-   * In the case of the type being unknoen, the returned string is "UNKNOWN".
+   * In the case of the type being unknown, the returned string is "UNKNOWN".
+   *
+   * @param type The type of the CASTOR object.
    */
   const char *objectTypeToString(const unsigned int type);
 
   /**
    * Appends each line of the specified file to the specified list of lines.
+   *
+   * CRs or NOT???????????????????????????
+   *
+   * @param filename The filename of the file to be read.
+   * @param lines The list to which each line of the file will be appended.
    */
   void readFileIntoList(const char *filename, std::list<std::string> &lines)
     throw(castor::exception::Exception);
+
+  /**
+   * Trims the leading and trailing white space from the specified string.
+   * White space is either a space ' ' or a tab '\t'.
+   *
+   * @param str The string to be trimmed.
+   */
+  void trimString(std::string &str) throw();
 
 } // namespace utils
 } // namespace tape
