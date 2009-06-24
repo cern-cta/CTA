@@ -29,9 +29,11 @@
 // ostream << operator for castor::tape::tpcp::FilenameList
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os,
-  castor::tape::tpcp::FilenameList &list) {
+  const castor::tape::tpcp::FilenameList &list) {
 
-  for(castor::tape::tpcp::FilenameList::iterator itor =
+  os << '{';
+
+  for(castor::tape::tpcp::FilenameList::const_iterator itor =
     list.begin(); itor != list.end(); itor++) {
 
     // Write a separating comma if not the first item in the list
@@ -39,8 +41,10 @@ std::ostream &operator<<(std::ostream &os,
       os << ",";
     }
 
-    os << *itor;
+    os << "\"" << *itor << "\"";
   }
+
+  os << '}';
 
   return os;
 }

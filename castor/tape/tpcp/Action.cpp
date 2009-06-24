@@ -30,6 +30,18 @@
 
 
 //------------------------------------------------------------------------------
+// ostream << operator for castor::tape::tpcp::Action
+//------------------------------------------------------------------------------
+std::ostream &operator<<(std::ostream &os,
+  const castor::tape::tpcp::Action &action) {
+
+  os << action.str();
+
+  return os;
+}
+
+
+//------------------------------------------------------------------------------
 // read
 //------------------------------------------------------------------------------
 const castor::tape::tpcp::Action castor::tape::tpcp::Action::read(
@@ -127,7 +139,7 @@ void castor::tape::tpcp::Action::writeValidStrings(std::ostream &os,
 //------------------------------------------------------------------------------
 // value
 //------------------------------------------------------------------------------
-castor::tape::tpcp::Action::Value castor::tape::tpcp::Action::value() {
+castor::tape::tpcp::Action::Value castor::tape::tpcp::Action::value() const {
   return m_value;
 }
 
@@ -135,6 +147,6 @@ castor::tape::tpcp::Action::Value castor::tape::tpcp::Action::value() {
 //------------------------------------------------------------------------------
 // str
 //------------------------------------------------------------------------------
-const char *castor::tape::tpcp::Action::str() {
+const char *castor::tape::tpcp::Action::str() const {
   return m_str;
 }

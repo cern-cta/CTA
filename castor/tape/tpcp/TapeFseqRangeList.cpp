@@ -29,9 +29,11 @@
 // ostream << operator for castor::tape::tpcp::TapeFseqRangeList
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os,
-  castor::tape::tpcp::TapeFseqRangeList &list) {
+  const castor::tape::tpcp::TapeFseqRangeList &list) {
 
-  for(castor::tape::tpcp::TapeFseqRangeList::iterator itor =
+  os << '{';
+
+  for(castor::tape::tpcp::TapeFseqRangeList::const_iterator itor =
     list.begin(); itor != list.end(); itor++) {
 
     // Write a separating comma if not the first item in the list
@@ -41,6 +43,8 @@ std::ostream &operator<<(std::ostream &os,
 
     os << *itor;
   }
+
+  os << '}';
 
   return os;
 }

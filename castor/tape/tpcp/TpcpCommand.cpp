@@ -322,7 +322,8 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     } else {
       // Copy the command-line argument filenames into the list of filenames
       // to be processed
-      for(FilenameList::iterator itor=m_parsedCommandLine.filenames.begin();
+      for(FilenameList::const_iterator
+        itor=m_parsedCommandLine.filenames.begin();
         itor!=m_parsedCommandLine.filenames.end(); itor++) {
         m_filenames.push_back(*itor);
       }
@@ -535,7 +536,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     }
   } catch(castor::exception::Exception &ex) {
     std::cerr << std::endl
-      << "Aborting: Unexpected exception: "
+      << "Aborting: "
       << ex.getMessage().str()
       << std::endl
       << std::endl;
@@ -555,26 +556,7 @@ void castor::tape::tpcp::TpcpCommand::writeParsedCommandLine(std::ostream &os)
      << "Parsed command-line" << std::endl
      << "===================" << std::endl
      << std::endl
-     << "debugOptionSet ="
-     << utils::boolToString(m_parsedCommandLine.debugOptionSet)
-     << std::endl
-     << "helpOptionSet  ="
-     << utils::boolToString(m_parsedCommandLine.helpOptionSet)
-     << std::endl
-     << "action         ="
-     << m_parsedCommandLine.action.str()
-     << std::endl
-     << "vid            =";
-  if(m_parsedCommandLine.vid == NULL) {
-    os << "NULL";
-  } else {
-    os << "\"" << m_parsedCommandLine.vid << "\"";
-  }
-  os << std::endl
-     << "tapeFseqRanges =" << m_parsedCommandLine.tapeFseqRanges << std::endl
-     << "filenamesList  =" << m_parsedCommandLine.filenames      << std::endl
-     << "NumOfFiles     =" << countMinNumberOfFiles()            << std::endl
-     << "nbRangesWithEnd=" << nbRangesWithEnd()                  << std::endl;
+     << m_parsedCommandLine;
 }
 
 
@@ -617,7 +599,7 @@ void castor::tape::tpcp::TpcpCommand::parseTapeFileSequence(
   utils::splitString(str, ',', rangeStrs);
 
   // For each range string
-  for(std::vector<std::string>::iterator itor=rangeStrs.begin();
+  for(std::vector<std::string>::const_iterator itor=rangeStrs.begin();
     itor!=rangeStrs.end(); itor++) {
 
     std::vector<std::string> boundaryStrs;
@@ -719,10 +701,9 @@ void castor::tape::tpcp::TpcpCommand::parseFileListFile(const char *filename,
 
   utils::readFileIntoList(filename, list);
 
-  std::cout << "Number of raw lines = " << list.size() << std::endl;
+  FilenameList::iterator itor=list.begin();
 
-  // For each line
-  for(FilenameList::iterator itor=list.begin(); itor!=list.end(); itor++) {
+  while(itor!=list.end()) {
     std::string &line = *itor;
 
     // Left and right trim the line
@@ -731,17 +712,9 @@ void castor::tape::tpcp::TpcpCommand::parseFileListFile(const char *filename,
     // Remove the line if it is an empty string or if it starts with the shell
     // comment character '#'
     if(line.empty() || (line.size() > 0 && line[0] == '#')) {
-
-      std::cout << "Removing line because ";
-      if(line.empty()) {
-        std::cout << "the line is empty";
-      } else {
-        std::cout << "the line is a comment";
-      }
-      std::cout << std::endl;
-      std::cout << "The line is/was: " << line << std::endl;
-
       itor = list.erase(itor);
+    } else {
+      itor++;
     }
   }
 }
@@ -757,7 +730,7 @@ void castor::tape::tpcp::TpcpCommand::writeFilenamesToBeProcessed(
      << "Filenames to be processed" << std::endl
      << "=========================" << std::endl
      << std::endl
-     << m_filenames;
+     << "filenames = " << m_filenames;
 }
 
 
@@ -769,7 +742,7 @@ int castor::tape::tpcp::TpcpCommand::countMinNumberOfFiles()
   
   int count = 0;
   // Loop through all ranges
-  for(TapeFseqRangeList::iterator itor=
+  for(TapeFseqRangeList::const_iterator itor=
     m_parsedCommandLine.tapeFseqRanges.begin();
     itor!=m_parsedCommandLine.tapeFseqRanges.end(); itor++) {
   
@@ -791,7 +764,7 @@ int castor::tape::tpcp::TpcpCommand::nbRangesWithEnd()
 
   int count = 0;
   // Loop through all ranges
-  for(TapeFseqRangeList::iterator itor=
+  for(TapeFseqRangeList::const_iterator itor=
     m_parsedCommandLine.tapeFseqRanges.begin();
     itor!=m_parsedCommandLine.tapeFseqRanges.end(); itor++) {
 

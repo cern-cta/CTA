@@ -22,40 +22,42 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
  
+#include "castor/tape/tpcp/FilenameList.hpp"
 #include "castor/tape/tpcp/ParsedCommandLine.hpp"
+#include "castor/tape/tpcp/TapeFseqRange.hpp"
+#include "castor/tape/utils/utils.hpp"
 
 
-/*
-std::ostream &operator<<(std::ostream &s,
-  const castor::tape::tpcp::ParsedCommandLine::RangeList &list) {
+//------------------------------------------------------------------------------
+// ostream << operator for castor::tape::tpcp::ParsedCommandLine
+//------------------------------------------------------------------------------
+std::ostream &operator<<(std::ostream &os,
+  const castor::tape::tpcp::ParsedCommandLine &cmdLine) {
 
-  castor::tape::tpcp::ParsedCommandLine::RangeList::iterator funny;
+  using namespace castor::tape;
+  using namespace castor::tape::tpcp;
 
-  funny = list.begin();
-
-  list.begin();
-  list.end();
-
-  if(funny != list.end()) {
-    // Do nothing
+  os << "debugOptionSet    = " << utils::boolToString(cmdLine.debugOptionSet)
+     << std::endl
+     << "helpOptionSet     = " << utils::boolToString(cmdLine.helpOptionSet)
+     << std::endl
+     << "action            = " << cmdLine.action
+     << std::endl
+     << "vid               = ";
+  if(cmdLine.vid == NULL) {
+    os << "NULL";
+  } else {
+    os << "\"" << cmdLine.vid << "\"";
   }
+  os << std::endl;
+  os << "tapeFseqRanges    = " << cmdLine.tapeFseqRanges
+     << std::endl
+     << "fileListOptionSet = " << utils::boolToString(cmdLine.fileListOptionSet)
+     << std::endl
+     << "fileListFilename  = \"" << cmdLine.fileListFilename << "\""
+     << std::endl
+     << "filenames         = " << cmdLine.filenames
+     << std::endl;
 
-  for(castor::tape::tpcp::ParsedCommandLine::RangeList::iterator itor =
-    list.begin(); itor != list.end(); itor++) {
-
-    // Write a separating comma if not the first item in the list
-    if(itor!=list.begin()) {
-      os << ",";
-    }
-
-    os << itor->lower << "-";
-
-    // Write out the  upper bound, where 0 means end of tape
-    if(itor->upper > 0) {
-      os << itor->upper;
-    } else {
-      os << "END";
-    }
-  }
+   return os;
 }
-*/

@@ -75,6 +75,7 @@ TPCPBIN_SRCS = \
   DataMover.cpp \
   Dumper.cpp \
   FilenameList.cpp \
+  ParsedCommandLine.cpp \
   TapeFseqRange.cpp \
   TapeFseqRangeList.cpp \
   TpcpCommand.cpp \

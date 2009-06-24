@@ -49,6 +49,6 @@ class TapeFseqRangeList: public  std::list<TapeFseqRange> {
  * ostream << operator for castor::tape::tpcp::TapeFseqRangeList
  */
 std::ostream &operator<<(std::ostream &os,
-  castor::tape::tpcp::TapeFseqRangeList &list);
+  const castor::tape::tpcp::TapeFseqRangeList &list);
 
 #endif // CASTOR_TAPE_TPCP_TAPEFSEQRANGELIST_HPP

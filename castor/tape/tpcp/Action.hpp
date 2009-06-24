@@ -113,12 +113,12 @@ public:
   /**
    * Returns the enumeration value of this object.
    */
-  Value value();
+  Value value() const;
 
   /**
    * Returns the string representation of this object.
    */
-  const char *str();
+  const char *str() const;
 
   /**
    * == operator.
@@ -164,6 +164,13 @@ private:
 } // namespace tpcp
 } // namespace tape
 } // namespace castor
+
+
+/**
+ * ostream << operator for castor::tape::tpcp::Action
+ */
+std::ostream &operator<<(std::ostream &os,
+  const castor::tape::tpcp::Action &action);
 
 
 #endif // CASTOR_TAPE_TPCP_ACTION_HPP

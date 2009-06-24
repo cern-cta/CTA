@@ -48,6 +48,6 @@ class FilenameList : public std::list<std::string> {
  * ostream << operator for castor::tape::tpcp::FilenameList
  */
 std::ostream &operator<<(std::ostream &os,
-  castor::tape::tpcp::FilenameList &list);
+  const castor::tape::tpcp::FilenameList &list);
 
 #endif // CASTOR_TAPE_TPCP_FILENAMELIST_HPP
