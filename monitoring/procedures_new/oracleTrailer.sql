@@ -862,7 +862,7 @@ END;
 /* PL/SQL method implementing statsTape */
 CREATE OR REPLACE PROCEDURE statsTape (now IN DATE, interval IN NUMBER) AS
 BEGIN
-  INSERT INTO TapeStat_final
+  INSERT INTO TapeStat
   (timestamp, interval, facility, files, gigaBytes, "avgFileSize(MB)", "rate(MB/sec)", runtime, filespermount, tapeVolumes)
     SELECT now - 5/1440 timestamp, interval, facility, 
            nvl(sum(filescp),0) files, 
