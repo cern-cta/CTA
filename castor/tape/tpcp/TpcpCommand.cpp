@@ -429,8 +429,8 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
 
       utils::writeBanner(os, "Aggregator callback socket details");
       os << std::endl;
-      os << "Socket = ";
       net::writeSocketDescription(os, m_callbackSocket.socket());
+      os << std::endl;
       os << std::endl;
       os << std::endl;
     }
