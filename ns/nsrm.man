@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: nsrm.man,v $ $Revision: 1.3 $ $Date: 2008/11/03 10:37:05 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: nsrm.man,v $ $Revision: 1.4 $ $Date: 2009/06/24 09:03:38 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH NSRM 1 "$Date: 2008/11/03 10:37:05 $" CASTOR "Cns User Commands"
+.TH NSRM 1 "$Date: 2009/06/24 09:03:38 $" CASTOR "Cns User Commands"
 .SH NAME
 nsrm \- remove CASTOR files or directories in the name server
 .SH SYNOPSIS
@@ -42,7 +42,7 @@ environment variable.
 The following options are supported:
 .TP
 .B -f,\ \-\-force
-ignore nonexistent files or directories
+ignore nonexistent files or directories, never prompt
 .TP
 .B -i,\ \-\-interactive
 prompt before any removal
