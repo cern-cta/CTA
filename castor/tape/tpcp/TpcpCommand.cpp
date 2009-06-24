@@ -343,7 +343,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
 
     try {
       utils::setBytes(tapeInfo, '\0');
-      const int side = 0;//1;
+      const int side = 0;
       vmgrQueryTape(m_parsedCommandLine.vid, side, tapeInfo, m_dgn);
     } catch(castor::exception::Exception &ex) {
       castor::exception::Exception ex2(ECANCELED);
@@ -717,6 +717,33 @@ void castor::tape::tpcp::TpcpCommand::parseTapeFileSequence(
 void castor::tape::tpcp::TpcpCommand::parseFileListFile(const char *filename,
   FilenameList &list) throw (castor::exception::Exception) {
 
+  utils::readFileIntoList(filename, list);
+
+  std::cout << "Number of raw lines = " << list.size() << std::endl;
+
+  // For each line
+  for(FilenameList::iterator itor=list.begin(); itor!=list.end(); itor++) {
+    std::string &line = *itor;
+
+    // Left and right trim the line
+    utils::trimString(line);
+
+    // Remove the line if it is an empty string or if it starts with the shell
+    // comment character '#'
+    if(line.empty() || (line.size() > 0 && line[0] == '#')) {
+
+      std::cout << "Removing line because ";
+      if(line.empty()) {
+        std::cout << "the line is empty";
+      } else {
+        std::cout << "the line is a comment";
+      }
+      std::cout << std::endl;
+      std::cout << "The line is/was: " << line << std::endl;
+
+      itor = list.erase(itor);
+    }
+  }
 }
 
 
