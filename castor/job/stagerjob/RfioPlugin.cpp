@@ -28,14 +28,15 @@
 #include <string>
 #include <sstream>
 #include "getconfent.h"
+#include "rfio_constants.h"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/job/stagerjob/InputArguments.hpp"
 #include "castor/job/stagerjob/RfioPlugin.hpp"
 
 // Default port range
-#define RFIODMINPORT 50000
-#define RFIODMAXPORT 51000
+#define RFIODMINPORT RFIO_LOW_PORT_RANGE
+#define RFIODMAXPORT RFIO_HIGH_PORT_RANGE
 
 // Static instance of the RfioPlugin
 castor::job::stagerjob::RfioPlugin rfioPlugin;

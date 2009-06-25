@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_constants.h,v 1.4 2009/02/27 13:07:02 sponcec3 Exp $
+ * $Id: rfio_constants.h,v 1.5 2009/06/25 18:21:37 waldron Exp $
  */
 
 /*
@@ -33,7 +33,8 @@
 #define RFIO_CONNECTOPT 4
 #define RFIO_CONNECT_RETRY_COUNT_OPT	100
 #define RFIO_CONNECT_RETRY_INT_OPT	200
-
+#define RFIO_LOW_PORT_RANGE  50000
+#define RFIO_HIGH_PORT_RANGE 55000
 
 #define RFIO_READBUF    1
 #define RFIO_READAHEAD  2
