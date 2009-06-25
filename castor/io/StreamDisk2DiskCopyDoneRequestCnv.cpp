@@ -43,7 +43,6 @@
 #include "castor/stager/Disk2DiskCopyDoneRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
-#include <rfcntl.h>
 #include <string>
 
 //------------------------------------------------------------------------------
@@ -91,7 +90,7 @@ void castor::io::StreamDisk2DiskCopyDoneRequestCnv::createRep(castor::IAddress* 
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
-  ad->stream() << htolopnflg(obj->flags());
+  ad->stream() << obj->flags();
   ad->stream() << obj->userName();
   ad->stream() << obj->euid();
   ad->stream() << obj->egid();
@@ -122,7 +121,6 @@ castor::IObject* castor::io::StreamDisk2DiskCopyDoneRequestCnv::createObj(castor
   // Now retrieve and set members
   u_signed64 flags;
   ad->stream() >> flags;
-  flags = ltohopnflg(flags);
   object->setFlags(flags);
   std::string userName;
   ad->stream() >> userName;

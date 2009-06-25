@@ -96,6 +96,7 @@ void castor::io::StreamTapeCopyForMigrationCnv::createRep(castor::IAddress* addr
   ad->stream() << obj->copyNb();
   ad->stream() << obj->errorCode();
   ad->stream() << obj->nbRetry();
+  ad->stream() << obj->missingCopies();
   ad->stream() << obj->id();
   ad->stream() << obj->diskServer();
   ad->stream() << obj->mountPoint();
@@ -121,6 +122,9 @@ castor::IObject* castor::io::StreamTapeCopyForMigrationCnv::createObj(castor::IA
   int nbRetry;
   ad->stream() >> nbRetry;
   object->setNbRetry(nbRetry);
+  int missingCopies;
+  ad->stream() >> missingCopies;
+  object->setMissingCopies(missingCopies);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

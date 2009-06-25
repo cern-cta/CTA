@@ -45,7 +45,6 @@
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "osdep.h"
-#include <rfcntl.h>
 #include <string>
 
 //------------------------------------------------------------------------------
@@ -99,7 +98,7 @@ void castor::io::StreamSubRequestCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->xsize();
   ad->stream() << obj->priority();
   ad->stream() << obj->subreqId();
-  ad->stream() << htolopnflg(obj->flags());
+  ad->stream() << obj->flags();
   ad->stream() << obj->modeBits();
   ad->stream() << obj->creationTime();
   ad->stream() << obj->lastModificationTime();
@@ -138,7 +137,6 @@ castor::IObject* castor::io::StreamSubRequestCnv::createObj(castor::IAddress* ad
   object->setSubreqId(subreqId);
   int flags;
   ad->stream() >> flags;
-  flags = ltohopnflg(flags);
   object->setFlags(flags);
   int modeBits;
   ad->stream() >> modeBits;

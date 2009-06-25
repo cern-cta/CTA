@@ -43,7 +43,6 @@
 #include "castor/stager/PutDoneStart.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
-#include <rfcntl.h>
 #include <string>
 
 //------------------------------------------------------------------------------
@@ -96,7 +95,7 @@ void castor::io::StreamPutDoneStartCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->fileSystem();
   ad->stream() << obj->fileId();
   ad->stream() << obj->nsHost();
-  ad->stream() << htolopnflg(obj->flags());
+  ad->stream() << obj->flags();
   ad->stream() << obj->userName();
   ad->stream() << obj->euid();
   ad->stream() << obj->egid();
@@ -138,7 +137,6 @@ castor::IObject* castor::io::StreamPutDoneStartCnv::createObj(castor::IAddress* 
   object->setNsHost(nsHost);
   u_signed64 flags;
   ad->stream() >> flags;
-  flags = ltohopnflg(flags);
   object->setFlags(flags);
   std::string userName;
   ad->stream() >> userName;
