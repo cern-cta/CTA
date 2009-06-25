@@ -4120,6 +4120,7 @@ int check_user_perm(uid,gid,hostname,ptrcode,permstr)
   return(ignore_uid_gid != 0 ? 0 : chsuser(*uid,*gid,hostname,ptrcode,permstr));
 }
 
+
 int  sropen_v3(s, rt, host, bet)
 #if defined(_WIN32)
      SOCKET  s;
@@ -4142,6 +4143,12 @@ int  sropen_v3(s, rt, host, bet)
   char user[CA_MAXUSRNAMELEN+1];       /* User name            */
   char reqhost[MAXHOSTNAMELEN];
   char vmstr[MAXVMSTRING];
+  const char *value = NULL;
+  char *buf = NULL;
+  char *dp  = NULL;
+  char *dp2 = NULL;
+  long low_port  = RFIO_LOW_PORT_RANGE;
+  long high_port = RFIO_HIGH_PORT_RANGE;
 #if defined(_WIN32)
   SOCKET sock;
 #else
@@ -4154,6 +4161,7 @@ int  sropen_v3(s, rt, host, bet)
   extern int max_rcvbuf;
   extern int max_sndbuf;
   int yes;
+  struct timeval tv;
 #if defined(_WIN32)
   struct thData *td;
 #endif
@@ -4435,50 +4443,114 @@ int  sropen_v3(s, rt, host, bet)
       }
 #endif
       log(LOG_DEBUG, "data socket created fd=%d\n", data_s);
-      memset(&sin,0,sizeof(sin));
-      port = 0;
-      sin.sin_port = htons(port);
+
+      memset(&sin, 0, sizeof(sin));
       sin.sin_addr.s_addr = htonl(INADDR_ANY);
       sin.sin_family = AF_INET;
 
+      /* Check to see if there is a user defined RFIOD/PORT_RANGE configured */
+      if ((value = getconfent("RFIOD", "PORT_RANGE", 0)) != NULL) {
+        if ((buf = strdup(value)) == NULL) {
 #if defined(_WIN32)
-      if( bind(data_s, (struct sockaddr*)&sin, sizeof(sin)) == SOCKET_ERROR)
-	{
-	  log(LOG_ERR, "bind: %s\n", geterr());
-	  return(-1);
-	}
-#else
-      if( bind(data_s, (struct sockaddr*)&sin, sizeof(sin)) < 0 )
-	{
-	  log(LOG_ERR, "bind: %s\n",strerror(errno));
-	  exit(1);
-	}
-#endif
+          log(LOG_ERR, "ropen_v3: strdup: %s\n", geterr());
+          return(-1);
+#else    /* WIN32 */
+          log(LOG_ERR, "ropen_v3: strdup: %s\n", strerror(errno));
+          exit(1);
+#endif   /* else WIN32 */
+        }
+        if ((p = strchr(buf, ',')) != NULL) {
+          *p = '\0';
+          p++;
+          /* Check that the values are valid */
+          if ((((low_port = strtol(buf, &dp, 10)) <= 0) || (*dp != '\0')) ||
+              (((high_port = strtol(p, &dp2, 10)) <= 0) || (*dp2 != '\0')) ||
+              (high_port <= low_port) ||
+              ((low_port < 1024) || (low_port > 65535)) ||
+              ((high_port < 1024) || (high_port > 65535))) {
+            log(LOG_ERR, "ropen_v3: invalid port range: %s, using default %d,%d\n",
+                value, RFIO_LOW_PORT_RANGE, RFIO_HIGH_PORT_RANGE);
+            low_port  = RFIO_LOW_PORT_RANGE;
+            high_port = RFIO_HIGH_PORT_RANGE;
+          } else {
+	    log(LOG_DEBUG, "ropen64_v3: using port range: %d,%d\n", low_port, high_port);
+	  }
+        } else {
+          log(LOG_ERR, "ropen_v3: invalid port range: %s, using default %d,%d\n",
+              value, RFIO_LOW_PORT_RANGE, RFIO_HIGH_PORT_RANGE);
+        }
+        (void) free(buf);
+      }
+
+      /* Set random seed */
+      gettimeofday(&tv, NULL);
+      srand(tv.tv_usec * tv.tv_sec);
+
+      /* Loop over all the ports in the specified range starting at a random
+       * offset
+       */
+      port = (rand() % (high_port - (low_port + 1))) + low_port;
+      while (port++) {
+        /* If we reach the maximum allowed port, reset it! */
+        if (port > high_port) {
+          port = low_port;
+          sleep(1);  /* sleep between complete loops, prevents CPU thrashing */
+          continue;
+        }
+
+        /* Attempt to bind to the port */
+        sin.sin_port = htons(port);
+        if (bind(data_s, (struct sockaddr*)&sin, sizeof(sin)) == 0) {
+          /* Just because the bind was successfull, doesn't mean the listen
+           * will succeed!
+           */
+#if defined(_WIN32)
+          if (listen(data_s, 5) == INVALID_SOCKET) {
+            if (WSAGetLastError() == WSAEADDRINUSE) {
+              log(LOG_DEBUG, "ropen_v3: listen(%d): %s, attempting another port\n", data_s, geterr());
+              sleep(1);
+              continue;
+            } else {
+              log(LOG_ERR, "ropen_v3: listen(%d): %s\n", data_s, geterr());
+              return(-1);
+            }
+          }
+#else    /* WIN32 */
+          if (listen(data_s, 5) < 0) {
+            if (errno == EADDRINUSE) {
+              log(LOG_DEBUG, "ropen_v3: listen(%d): %s, attempting another port\n", data_s, strerror(errno));
+              sleep(1);
+              continue;
+            } else {
+              log(LOG_ERR, "ropen_v3: listen(%d): %s\n", data_s, strerror(errno));
+              exit(1);
+            }
+          }
+          break;
+#endif   /* else WIN32 */
+        } else {
+#if defined(_WIN32)
+          log(LOG_DEBUG, "ropen_v3: bind(%d:%d): %s, trying again\n", data_s, port, geterr());
+#else    /* WIN32 */
+          log(LOG_DEBUG, "ropen_v3: bind(%d:%d): %s, trying again\n", data_s, port, strerror(errno));
+#endif   /* else WIN32 */
+        }
+      }
 
       size_sin = sizeof(sin);
 #if defined(_WIN32)
-      if( getsockname(data_s, (struct sockaddr*)&sin, &size_sin) == SOCKET_ERROR )  {
-	log(LOG_ERR, "getsockname: %s\n", geterr());
-	return(-1);
+      if (getsockname(data_s, (struct sockaddr*)&sin, &size_sin) == SOCKET_ERROR )  {
+        log(LOG_ERR, "ropen_v3: getsockname: %s\n", geterr());
+        return(-1);
       }
-#else
-      if( getsockname(data_s, (struct sockaddr*)&sin, &size_sin) < 0 )  {
-	log(LOG_ERR, "getsockname: %s\n",strerror(errno));
-	exit(1);
+#else    /* WIN32 */
+      if (getsockname(data_s, (struct sockaddr*)&sin, &size_sin) < 0 )  {
+        log(LOG_ERR, "ropen_v3: getsockname: %s\n", strerror(errno));
+        exit(1);
       }
-#endif
-      log(LOG_DEBUG, "ropen_v3: assigning data port %d\n",htons(sin.sin_port));
-#if defined(_WIN32)
-      if( listen(data_s, 5) == INVALID_SOCKET )   {
-	log(LOG_ERR, "listen: %s\n", geterr());
-	return(-1);
-      }
-#else
-      if( listen(data_s, 5) < 0 )   {
-	log(LOG_ERR, "listen: %s\n",strerror(errno));
-	exit(1);
-      }
-#endif
+#endif   /* else WIN32 */
+
+      log(LOG_DEBUG, "ropen_v3: assigning data port %d\n", htons(sin.sin_port));
     }
   }
 
@@ -4952,7 +5024,7 @@ void *consume_thread(int *ptr)
       fremovexattr(fd,"user.castor.checksum.value");
     } else {
       /* Always try and set the type first! */
-      if (fsetxattr(fd,"user.castor.checksum.type",ckSumalg,strlen(ckSumalg),0)) 
+      if (fsetxattr(fd,"user.castor.checksum.type",ckSumalg,strlen(ckSumalg),0))
         log(LOG_ERR,"consume64_thread: fsetxattr failed for user.castor.checksum.type, error=%d\n",errno);
       else if (fsetxattr(fd,"user.castor.checksum.value",ckSumbuf,strlen(ckSumbuf),0))
         log(LOG_ERR,"consume64_thread: fsetxattr failed for user.castor.checksum.value, error=%d\n",errno);
