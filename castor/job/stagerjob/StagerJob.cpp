@@ -253,7 +253,7 @@ void switchToCastorSuperuser(castor::job::stagerjob::InputArguments *args)
 //------------------------------------------------------------------------------
 void bindSocketAndListen
 (castor::job::stagerjob::PluginContext &context,
- std::pair<int,int> &range, int attempts = 0)
+ std::pair<int,int> &range)
   throw (castor::exception::Exception) {
   // Build address
   struct sockaddr_in sin;
@@ -267,47 +267,40 @@ void bindSocketAndListen
   gettimeofday(&tv, NULL);
   srand(tv.tv_usec * tv.tv_sec);
 
-  // Loop over all the ports in the specified range starting at a random offset
-  int offset = 0;
-  int port   = -1;
-  int rc     = -1;
-  for (offset = (rand() % (range.second - range.first+1)) + range.first;
-       port != offset;
-       port++) {
-    if (port < 0) {
-      port = offset;
+  // Loop over all the ports in the specified range starting at a random
+  // offset
+  int port = (rand() % (range.second - (range.first + 1))) + range.first;
+  int attempts = 0;
+  while (port++) {
+    attempts++;
+    // If we reach the maximum allowed port, reset it!
+    if (port > range.second) {
+      port = range.first;
+      sleep(1);  // sleep between complete loops, prevents CPU thrashing
+      continue;
     }
+
     // Attempt to bind to the port
     sin.sin_port = htons(port);
-    rc = ::bind(context.socket, (struct sockaddr *)&sin, sizeof(sin));
-    if (rc == 0) {
-      break; // Port successfully bound, doesn't mean listen will succeed!
+    if (bind(context.socket, (struct sockaddr*)&sin, sizeof(sin)) == 0) {
+      // Just because the bind was successfull, doesn't mean the listen
+      // will succeed!
+      if (listen(context.socket, 1) < 0) {
+        // If the error is "Address already in use" we try and bind again after
+        // 5 seconds unless we have already tried 10 times.
+        if ((errno == EADDRINUSE) && (attempts <= 10)) {
+          sleep(5);
+          continue;
+        } else {
+          castor::exception::Exception e(errno);
+          e.getMessage() << "Error caught in call to listen";
+          throw e;
+        }
+      }
+      break;
     }
+  }
 
-    // If we reach the maximum allowed port value reset it
-    if (port >= range.second) {
-      port = 0;
-    }
-  }
-  if (rc != 0) {
-    castor::exception::Internal e;
-    e.getMessage() << "Unable to bind socket with range ["
-                   << range.first << "," << range.second << "]";
-    throw e;
-  }
-
-  // Listen for the client connection
-  if (listen(context.socket, 1) < 0) {
-    // If the error is "Address already in use" we try and bind again after 5
-    // seconds
-    if ((errno == EADDRINUSE) && (attempts < 10)) {
-      sleep(5);
-      bindSocketAndListen(context, range, attempts + 1);
-    }
-    castor::exception::Exception e(errno);
-    e.getMessage() << "Error caught in call to listen";
-    throw e;
-  }
   socklen_t len = sizeof(sin);
   if (getsockname(context.socket, (struct sockaddr *)&sin, &len) < 0) {
     castor::exception::Exception e(errno);
