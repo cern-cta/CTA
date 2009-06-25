@@ -34,7 +34,9 @@ namespace tape   {
 namespace tpcp   {
 
 /**
- * A list of filenames.
+ * A list of filenames.  This class effectively tags a list of strings for the
+ * specific use of representing an list of filenames.  This "tag" allows the
+ * creation of an ostream << operator.
  */
 class FilenameList : public std::list<std::string> {
 };

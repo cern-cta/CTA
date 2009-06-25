@@ -31,6 +31,7 @@
 #include "castor/tape/tpcp/FilenameList.hpp"
 #include "castor/tape/tpcp/TapeFseqRangeList.hpp"
 #include "h/Castor_limits.h"
+#include "h/vmgr_api.h"
 
 namespace castor {
 namespace tape   {
@@ -49,18 +50,19 @@ public:
    *
    * @param debug True if debug messages should be displayed.
    * @param action The Action to be performed.
-   * @param vid The VID of the tape to be worked on.
    * @param tapeFseqRanges The list of tape file sequence ranges to be
    * processed.
    * @param filenames The list of RFIO filenames to be processed.
+   * @param vmgrTapeInfo The information retrieved from the VMGR about the tape to
+   * be used.
    * @param dgn The DGN of the tape to be worked on.
    * @param volReqId The volume request ID returned by the VDQM in response to
    * to the request for a drive.
    * @param callbackSocket The aggregator callback socket.
    */
-  virtual void run(bool debug, Action &action, char (&vid)[CA_MAXVIDLEN+1],
+  virtual void run(bool debug, Action &action,
     TapeFseqRangeList &tapeFseqRanges, FilenameList &filenames,
-    const char *dgn, const int volReqId,
+    const vmgr_tape_info &vmgrTapeInfo, const char *dgn, const int volReqId,
     castor::io::ServerSocket &callbackSocket)
     throw(castor::exception::Exception) = 0;
 

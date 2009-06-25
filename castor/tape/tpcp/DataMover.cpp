@@ -40,26 +40,20 @@
 // run
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::DataMover::run(bool debug, Action &action,
-    char (&vid)[CA_MAXVIDLEN+1], TapeFseqRangeList &tapeFseqRanges,
-    FilenameList &filenames, const char *dgn, const int volReqId,
-    castor::io::ServerSocket &callbackSocket)
+  TapeFseqRangeList &tapeFseqRanges, FilenameList &filenames,
+  const vmgr_tape_info &vmgrTapeInfo, const char *dgn, const int volReqId,
+  castor::io::ServerSocket &callbackSocket)
   throw(castor::exception::Exception) {
-
-
-/*  castor::exception::Exception ex(ECANCELED);
-  ex.getMessage() << "DataMover not implemented";
-  throw ex;
-*/
 
   //.........................................................................
   // Create and send the Volume Request message to the Aggregator 
   castor::tape::tapegateway::Volume volumeMsg; 
 
-  volumeMsg.setVid(vid);
+  volumeMsg.setVid(vmgrTapeInfo.vid);
   volumeMsg.setMode(action == Action::write ? WRITE_ENABLE : WRITE_DISABLE);
-  volumeMsg.setLabel("aul\0");
+  volumeMsg.setLabel(vmgrTapeInfo.lbltype);
   volumeMsg.setTransactionId(volReqId);
-  volumeMsg.setDensity("1000GC\0");
+  volumeMsg.setDensity(vmgrTapeInfo.density);
 
   callbackSocket.sendObject(volumeMsg);
 

@@ -61,6 +61,7 @@ char castor::tape::tpcp::TpcpCommand::vmgr_error_buffer[VMGRERRORBUFLEN];
 castor::tape::tpcp::TpcpCommand::TpcpCommand() throw () :
   m_callbackSocket(false),
   m_volReqId(0) {
+  utils::setBytes(m_vmgrTapeInfo, '\0');
   utils::setBytes(m_dgn, '\0');
 
   // Build the map of ActionHandlers
@@ -350,13 +351,10 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
       os << std::endl;
     }
 
-    // Get the DGN of the tape to be used
-    vmgr_tape_info tapeInfo;
-
+    // Get information about the tape to be used from the VMGR
     try {
-      utils::setBytes(tapeInfo, '\0');
       const int side = 0;
-      vmgrQueryTape(m_parsedCommandLine.vid, side, tapeInfo, m_dgn);
+      vmgrQueryTape(m_parsedCommandLine.vid, side);
     } catch(castor::exception::Exception &ex) {
       castor::exception::Exception ex2(ECANCELED);
 
@@ -379,7 +377,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
       std::ostream &os = std::cout;
 
       utils::writeBanner(os, "vmgr_tape_info from the VMGR");
-      writeVmgrTapeInfo(os, tapeInfo);
+      writeVmgrTapeInfo(os, m_vmgrTapeInfo);
       os << std::endl;
       os << std::endl;
       utils::writeBanner(os, "DGN from the VMGR");
@@ -389,19 +387,34 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
       os << std::endl;
     }
 
+    // Check that the VID returned in the VMGR tape information matches that of
+    // the requested tape
+    if(strcmp(m_parsedCommandLine.vid, m_vmgrTapeInfo.vid) != 0) {
+       castor::exception::Exception ex(ECANCELED);
+       std::ostream &os = ex.getMessage();
+
+       os <<
+         "VID in tape information retrieved from VMGR does not match that of "
+         "the requested tape"
+         ": Request VID=" << m_parsedCommandLine.vid <<
+         " VID returned from VMGR=" << m_vmgrTapeInfo.vid;
+
+       throw ex;
+    }
+
     // Check the tape is available
-    if(tapeInfo.status & DISABLED ||
-       tapeInfo.status & EXPORTED ||
-       tapeInfo.status & ARCHIVED) {
+    if(m_vmgrTapeInfo.status & DISABLED ||
+       m_vmgrTapeInfo.status & EXPORTED ||
+       m_vmgrTapeInfo.status & ARCHIVED) {
 
        castor::exception::Exception ex(ECANCELED);
        std::ostream &os = ex.getMessage();
 
        os << "Tape is not available: Tape is: ";
 
-       if(tapeInfo.status & DISABLED) os << " DISABLED";
-       if(tapeInfo.status & EXPORTED) os << " EXPORTED";
-       if(tapeInfo.status & ARCHIVED) os << " ARCHIVED";
+       if(m_vmgrTapeInfo.status & DISABLED) os << " DISABLED";
+       if(m_vmgrTapeInfo.status & EXPORTED) os << " EXPORTED";
+       if(m_vmgrTapeInfo.status & ARCHIVED) os << " ARCHIVED";
 
        throw ex;
     }
@@ -409,7 +422,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     // Check if the access mode of the tape is compatible with the action to be
     // performed by tpcp
     if(m_parsedCommandLine.action == Action::write &&
-      tapeInfo.status & TAPE_RDONLY) {
+      m_vmgrTapeInfo.status & TAPE_RDONLY) {
 
       castor::exception::Exception ex(ECANCELED);
 
@@ -538,9 +551,8 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     // Run the action handler
     try {
       handler->run(m_parsedCommandLine.debugOptionSet,
-        m_parsedCommandLine.action, m_parsedCommandLine.vid,
-        m_parsedCommandLine.tapeFseqRanges, m_filenames, m_dgn, m_volReqId,
-        m_callbackSocket);
+        m_parsedCommandLine.action, m_parsedCommandLine.tapeFseqRanges,
+        m_filenames, m_vmgrTapeInfo, m_dgn, m_volReqId, m_callbackSocket);
     } catch(castor::exception::Exception &ex) {
       castor::exception::Exception ex2(ECANCELED);
 
@@ -741,13 +753,14 @@ int castor::tape::tpcp::TpcpCommand::nbRangesWithEnd()
 // vmgrQueryTape
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TpcpCommand::vmgrQueryTape(
-  char (&vid)[CA_MAXVIDLEN+1], const int side, vmgr_tape_info &tapeInfo,
-  char (&dgn)[CA_MAXVIDLEN+1]) throw (castor::exception::Exception) {
+  char (&vid)[CA_MAXVIDLEN+1], const int side)
+  throw (castor::exception::Exception) {
 
   int save_serrno = 0;
 
   serrno=0;
-  const int rc = vmgr_querytape(m_parsedCommandLine.vid, side, &tapeInfo, dgn);
+  const int rc = vmgr_querytape(m_parsedCommandLine.vid, side, &m_vmgrTapeInfo,
+    m_dgn);
   
   save_serrno = serrno;
 

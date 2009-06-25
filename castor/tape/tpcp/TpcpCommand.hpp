@@ -36,7 +36,7 @@
 #include "castor/tape/tpcp/ParsedCommandLine.hpp"
 #include "castor/tape/tpcp/Verifier.hpp"
 #include "castor/tape/utils/utils.hpp"
-#include "h/vmgr_struct.h"
+#include "h/vmgr_api.h"
 
 #include <iostream>
 #include <list>
@@ -94,6 +94,11 @@ private:
    * The list of RFIO filenames to be processed by the request handlers.
    */
   FilenameList m_filenames;
+
+  /**
+   * Tape information retrieved from the VMGR about the tape to be used.
+   */
+  vmgr_tape_info m_vmgrTapeInfo;
 
   /**
    * The DGN of the tape to be used.
@@ -200,11 +205,8 @@ private:
    &
    * @param vid The tape for which the information should be retrieved.
    * @param side The tape side.
-   * @param tapeInfo Will be filled with the retrieved information.
-   * @param dgn Will be filled with the DGN asscoaited with the tape.
    */
-  void vmgrQueryTape(char (&vid)[CA_MAXVIDLEN+1], const int side,
-    vmgr_tape_info &tapeInfo, char (&dgn)[CA_MAXDGNLEN+1])
+  void vmgrQueryTape(char (&vid)[CA_MAXVIDLEN+1], const int side)
     throw (castor::exception::Exception);
 
   /**
