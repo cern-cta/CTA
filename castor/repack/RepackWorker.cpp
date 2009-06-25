@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.48 $ $Release$ $Date: 2009/06/22 09:26:14 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.49 $ $Release$ $Date: 2009/06/25 12:34:22 $ $Author: gtaur $
  *
  *
  *
@@ -456,7 +456,7 @@ RepackAck* RepackWorker::handleRepack(RepackRequest* rreq, castor::repack::IRepa
       sub->setVid((*tape)->vid());
       sub->setRepackrequest(NULL);
       resp->setErrorCode(e.code()); 
-      resp->setErrorMessage(e.getMessage().str());
+      resp->setErrorMessage("invalid vmgr status");
       resp->setRepacksubrequest(sub);
       badVmgrTapes.push_back(resp);  
     }
@@ -477,7 +477,8 @@ RepackAck* RepackWorker::handleRepack(RepackRequest* rreq, castor::repack::IRepa
   if (!requestToSubmit->repacksubrequest().empty())
     ack = oraSvc->storeRequest(requestToSubmit);
 
-  if (!badVmgrTapes.empty() && ack != NULL){
+  if (!badVmgrTapes.empty()){
+    if (ack == NULL) ack = new RepackAck(); 
     // report failure due to vmgr problems
     errorVmgr=badVmgrTapes.begin();
     while (errorVmgr != badVmgrTapes.end()){
