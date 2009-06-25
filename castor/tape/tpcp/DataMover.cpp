@@ -45,22 +45,6 @@ void castor::tape::tpcp::DataMover::run(bool debug, Action &action,
   castor::io::ServerSocket &callbackSocket)
   throw(castor::exception::Exception) {
 
-  //.........................................................................
-  // Create and send the Volume Request message to the Aggregator 
-  castor::tape::tapegateway::Volume volumeMsg; 
-
-  volumeMsg.setVid(vmgrTapeInfo.vid);
-  volumeMsg.setMode(action == Action::write ? WRITE_ENABLE : WRITE_DISABLE);
-  volumeMsg.setLabel(vmgrTapeInfo.lbltype);
-  volumeMsg.setTransactionId(volReqId);
-  volumeMsg.setDensity(vmgrTapeInfo.density);
-
-  callbackSocket.sendObject(volumeMsg);
-
-  // close the socket!!
-  //delete(callbackSocket);  //
-  //delete(callbackSocket.release());
-
   // Socket file descriptor for a callback connection from the aggregator
   int connectionSocketFd = 0;
 

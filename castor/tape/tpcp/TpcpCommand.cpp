@@ -535,6 +535,33 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
       throw ex;
     }
 
+    // Bomb out if the requested action type is not yet supportd
+    if(m_parsedCommandLine.action != Action::read &&
+       m_parsedCommandLine.action != Action::write) {
+      castor::exception::Exception ex(ECANCELED);
+
+      ex.getMessage()
+        << "tpcp currently only supports the READ and WRITE actions";
+
+      throw ex;
+    }
+
+    // Create the volume message for the aggregator
+    castor::tape::tapegateway::Volume volumeMsg;
+
+    volumeMsg.setVid(m_vmgrTapeInfo.vid);
+    volumeMsg.setMode(m_parsedCommandLine.action == Action::write ?
+      WRITE_ENABLE : WRITE_DISABLE);
+    volumeMsg.setLabel(m_vmgrTapeInfo.lbltype);
+    volumeMsg.setTransactionId(m_volReqId);
+    volumeMsg.setDensity(m_vmgrTapeInfo.density);
+
+    // Send the volume message to the aggregator
+    callbackConnectionSocket.sendObject(volumeMsg);
+
+    // Close the connection to the aggregator
+    callbackConnectionSocket.close();
+
     // Find the appropriate ActionHandler
     ActionHandler *handler = NULL;
     {

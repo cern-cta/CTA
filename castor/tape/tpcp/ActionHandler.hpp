@@ -53,8 +53,8 @@ public:
    * @param tapeFseqRanges The list of tape file sequence ranges to be
    * processed.
    * @param filenames The list of RFIO filenames to be processed.
-   * @param vmgrTapeInfo The information retrieved from the VMGR about the tape to
-   * be used.
+   * @param vmgrTapeInfo The information retrieved from the VMGR about the tape
+   * to be used.
    * @param dgn The DGN of the tape to be worked on.
    * @param volReqId The volume request ID returned by the VDQM in response to
    * to the request for a drive.
