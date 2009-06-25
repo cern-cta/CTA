@@ -39,11 +39,11 @@
 // client to connect (see also castor.conf)
 #define SELECT_TIMEOUT_GSIFTP 180
 
-// default port range
+// Default port range
 #define GRIDFTPMINPORT 20000
 #define GRIDFTPMAXPORT 21000
 
-// static instance of the GridFTPPlugin
+// Static instance of the GridFTPPlugin
 castor::job::stagerjob::GridFTPPlugin gridFTPPlugin;
 
 //------------------------------------------------------------------------------
@@ -51,18 +51,6 @@ castor::job::stagerjob::GridFTPPlugin gridFTPPlugin;
 //------------------------------------------------------------------------------
 castor::job::stagerjob::GridFTPPlugin::GridFTPPlugin() throw() :
   RawMoverPlugin("gsiftp") {
-  // Set the default time out for select
-  char *value = getconfent("GSIFTP", "TIMEOUT", 0);
-  int t = SELECT_TIMEOUT_GSIFTP;
-  if (value) {
-    t = std::strtol(value, 0, 10);
-    if (t < 1) {
-      // silently override invalid values
-      // valid range is explained in castor.conf
-      t = SELECT_TIMEOUT_GSIFTP;
-    }
-  }
-  setSelectTimeOut(t);
 }
 
 //------------------------------------------------------------------------------
@@ -218,6 +206,34 @@ void castor::job::stagerjob::GridFTPPlugin::getEnvironment
 }
 
 //------------------------------------------------------------------------------
+// preForkHook
+//------------------------------------------------------------------------------
+void castor::job::stagerjob::GridFTPPlugin::preForkHook
+(InputArguments &args, PluginContext &context)
+  throw(castor::exception::Exception) {
+  // Set the default time out for select
+  char *value = getconfent("GSIFTP", "TIMEOUT", 0);
+  int t = SELECT_TIMEOUT_GSIFTP;
+  if (value) {
+    t = std::strtol(value, 0, 10);
+    if (t < 1) {
+      // "Invalid value for GSIFTP/TIMEOUT option, using default"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Value", t),
+         castor::dlf::Param("Default", SELECT_TIMEOUT_GSIFTP),
+         castor::dlf::Param(args.subRequestUuid)};
+      castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_WARNING,
+                              GSIBADTIMEOUT, 3, params, &args.fileId);
+      t = SELECT_TIMEOUT_GSIFTP;
+    }
+  }
+  setSelectTimeOut(t);
+
+  // Call upper level
+  RawMoverPlugin::preForkHook(args, context);
+}
+
+//------------------------------------------------------------------------------
 // postForkHook
 //------------------------------------------------------------------------------
 void castor::job::stagerjob::GridFTPPlugin::postForkHook
@@ -266,7 +282,7 @@ void castor::job::stagerjob::GridFTPPlugin::postForkHook
                             MOVERNOTEXEC, 3, params, &args.fileId);
   }
   // Call upper level
-  RawMoverPlugin::postForkHook(args, context, false);
+  RawMoverPlugin::postForkHook(args, context);
 }
 
 //------------------------------------------------------------------------------
@@ -324,7 +340,9 @@ void castor::job::stagerjob::GridFTPPlugin::execMover
     exit(EXIT_FAILURE);
   }
   // Duplicate socket on stdin/stdout/stderr and close the others
-  if (dup2(context.socket, 0) < 0 || dup2(context.socket, 1) < 0 || dup2(context.socket, 2) < 0) {
+  if (dup2(context.socket, 0) < 0 ||
+      dup2(context.socket, 1) < 0 ||
+      dup2(context.socket, 2) < 0) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("Error Code", errno),
        castor::dlf::Param("Error Message", strerror(errno)),

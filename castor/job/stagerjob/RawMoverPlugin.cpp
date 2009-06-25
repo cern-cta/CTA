@@ -89,11 +89,11 @@ void castor::job::stagerjob::RawMoverPlugin::preForkHook
                           (fd_set *) NULL, &timeval)) <= 0) {
     if (rc_select == 0) {
       castor::exception::TimeOut e;
-      e.getMessage() << "In call to select";
+      e.getMessage() << "In call to select()";
       throw e;
     } else {
       castor::exception::Exception e(errno);
-      e.getMessage() << "In call to select";
+      e.getMessage() << "In call to select()";
       throw e;
     }
   }
@@ -104,12 +104,12 @@ void castor::job::stagerjob::RawMoverPlugin::preForkHook
   // Connection established
   if ((saccept = accept (context.socket, (struct sockaddr *) &from, &fromlen)) < 0) {
     castor::exception::Exception e(errno);
-    e.getMessage() << "In call to accept";
+    e.getMessage() << "In call to accept()";
     throw e;
   }
   if (getpeername (saccept, (struct sockaddr*)&from, &fromlen) < 0) {
     castor::exception::Exception e(errno);
-    e.getMessage() << "In call to getpeername";
+    e.getMessage() << "In call to getpeername()";
     throw e;
   }
   hp = Cgethostbyaddr((char *)(&from.sin_addr), sizeof(struct in_addr), from.sin_family);
@@ -201,46 +201,46 @@ void castor::job::stagerjob::RawMoverPlugin::postForkHook
       supportedTypes["CRC32"]   = "CS";
       supportedTypes["MD5"]     = "MD";
       if (useChkSum) {
-	if ((getxattr((char*)context.fullDestPath.c_str(),
-		     "user.castor.checksum.value",
-		      csumvalue, CA_MAXCKSUMLEN) == -1) ||
-	    (getxattr((char*)context.fullDestPath.c_str(),
-		      "user.castor.checksum.type",
-		      csumtype, CA_MAXCKSUMNAMELEN) == -1)) {
-	  // Failed to get checksum information from extended attributes
-	  castor::dlf::Param params[] =
-	    {castor::dlf::Param("Path", context.fullDestPath),
-	     castor::dlf::Param("Error", strerror(errno)),
-	     castor::dlf::Param(args.subRequestUuid)};
-	  castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_WARNING,
-				  GETATTRFAILED, 3, params, &args.fileId);
-	  // Reset checksum information
-	  csumvalue[0] = csumtype[0] = '\0';
-	} else {
-	  std::map<std::string, std::string>::const_iterator it =
-	    supportedTypes.find(csumtype);
-	  if (it == supportedTypes.end()) {
-	    // Unsupported checksum type, ignoring checksum information
-	    castor::dlf::Param params[] =
-	      {castor::dlf::Param("Type", csumtype),
-	       castor::dlf::Param(args.subRequestUuid)};
-	    castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_WARNING,
-				    CSTYPENOTSOP, 2, params, &args.fileId);
-	    // Reset checksum information
-	    csumvalue[0] = csumtype[0] = '\0';
-	  }
-	  // Set csumtype to its abbreviated equivalent.
-	  strcpy(csumtype, it->second.c_str());
-	  csumtype[2] = '\0';
-	}
+        if ((getxattr((char*)context.fullDestPath.c_str(),
+                      "user.castor.checksum.value",
+                      csumvalue, CA_MAXCKSUMLEN) == -1) ||
+            (getxattr((char*)context.fullDestPath.c_str(),
+                      "user.castor.checksum.type",
+                      csumtype, CA_MAXCKSUMNAMELEN) == -1)) {
+          // Failed to get checksum information from extended attributes
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("Path", context.fullDestPath),
+             castor::dlf::Param("Error", strerror(errno)),
+             castor::dlf::Param(args.subRequestUuid)};
+          castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_WARNING,
+                                  GETATTRFAILED, 3, params, &args.fileId);
+          // Reset checksum information
+          csumvalue[0] = csumtype[0] = '\0';
+        } else {
+          std::map<std::string, std::string>::const_iterator it =
+            supportedTypes.find(csumtype);
+          if (it == supportedTypes.end()) {
+            // Unsupported checksum type, ignoring checksum information
+            castor::dlf::Param params[] =
+              {castor::dlf::Param("Type", csumtype),
+               castor::dlf::Param(args.subRequestUuid)};
+            castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_WARNING,
+                                    CSTYPENOTSOP, 2, params, &args.fileId);
+            // Reset checksum information
+            csumvalue[0] = csumtype[0] = '\0';
+          }
+          // Set csumtype to its abbreviated equivalent.
+          strcpy(csumtype, it->second.c_str());
+          csumtype[2] = '\0';
+        }
       }
       // Call prepareForMigration
       castor::stager::SubRequest subrequest;
       subrequest.setId(args.subRequestId);
       context.jobSvc->prepareForMigration
         (&subrequest, (u_signed64) statbuf.st_size,
-	 time(NULL), args.fileId.fileid, args.fileId.server,
-	 csumtype, csumvalue);
+         time(NULL), args.fileId.fileid, args.fileId.server,
+         csumtype, csumvalue);
     } else {
       // No file found on disk, log an error
       castor::dlf::Param params[] =

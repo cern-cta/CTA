@@ -34,6 +34,10 @@
 #include "castor/job/stagerjob/InputArguments.hpp"
 #include "castor/job/stagerjob/RootPlugin.hpp"
 
+// Timeout on select. This is the time we'll wait on a root
+// client to connect (see also castor.conf)
+#define SELECT_TIMEOUT_ROOT 60
+
 // Default port range
 #define ROOTDMINPORT 45000
 #define ROOTDMAXPORT 46000
@@ -125,6 +129,34 @@ castor::job::stagerjob::RootPlugin::getPortRange
 }
 
 //------------------------------------------------------------------------------
+// preForkHook
+//------------------------------------------------------------------------------
+void castor::job::stagerjob::RootPlugin::preForkHook
+(InputArguments &args, PluginContext &context)
+  throw(castor::exception::Exception) {
+  // Set the default time out for select
+  char *value = getconfent("ROOT", "TIMEOUT", 0);
+  int t = SELECT_TIMEOUT_ROOT;
+  if (value) {
+    t = std::strtol(value, 0, 10);
+    if (t < 1) {
+      // "Invalid value for ROOT/TIMEOUT option, using default"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Value", t),
+         castor::dlf::Param("Default", SELECT_TIMEOUT_ROOT),
+         castor::dlf::Param(args.subRequestUuid)};
+      castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_WARNING,
+                              ROOTDBADTIMEOUT, 3, params, &args.fileId);
+      t = SELECT_TIMEOUT_ROOT;
+    }
+  }
+  setSelectTimeOut(t);
+
+  // Call upper level
+  RawMoverPlugin::preForkHook(args, context);
+}
+
+//------------------------------------------------------------------------------
 // postForkHook
 //------------------------------------------------------------------------------
 void castor::job::stagerjob::RootPlugin::postForkHook
@@ -165,7 +197,7 @@ void castor::job::stagerjob::RootPlugin::postForkHook
                             MOVERNOTEXEC, 3, params, &args.fileId);
   }
   // Call upper level
-  RawMoverPlugin::postForkHook(args, context, false);
+  RawMoverPlugin::postForkHook(args, context);
 }
 
 //------------------------------------------------------------------------------
@@ -193,8 +225,8 @@ void castor::job::stagerjob::RootPlugin::execMover
     exit(EXIT_FAILURE);
   }
   // Duplicate socket on stdin/stdout/stderr and close the others
-  if ((dup2(context.socket, 0) < 0) || 
-      (dup2(context.socket, 1) < 0) || 
+  if ((dup2(context.socket, 0) < 0) ||
+      (dup2(context.socket, 1) < 0) ||
       (dup2(context.socket, 2) < 0)) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("Error Code", errno),
@@ -215,7 +247,7 @@ void castor::job::stagerjob::RootPlugin::execMover
     {castor::dlf::Param("Error Code", errno),
      castor::dlf::Param("Error Message", strerror(errno)),
      castor::dlf::Param(args.subRequestUuid)};
-  castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR, 
+  castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
                           EXECFAILED, 3, params, &args.fileId);
   dlf_shutdown(5);
   exit(EXIT_FAILURE);

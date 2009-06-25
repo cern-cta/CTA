@@ -45,7 +45,7 @@ namespace castor {
       public:
 
         /**
-         * default constructor
+         * Default constructor
          */
         RootPlugin() throw();
 
@@ -56,7 +56,18 @@ namespace castor {
         (castor::job::stagerjob::InputArguments &args) throw();
 
         /**
-         * hook for the code to be executed just after the mover fork,
+         * Hook for the code to be executed just before the mover fork.
+         * Used to set the timeout value on select calls waiting for
+         * client connections.
+         * @param args the arguments given to the stager job
+         * @param context the current context (localhost, port, etc...)
+         */
+        virtual void preForkHook(InputArguments &args,
+                                 PluginContext &context)
+          throw (castor::exception::Exception);
+
+        /**
+         * Hook for the code to be executed just after the mover fork,
          * in the parent process. Only logging and calling the method
          * of InstrumentedPlugin.
          * @param args the arguments given to the stager job
@@ -67,7 +78,7 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * hook for the launching of the mover
+         * Hook for the launching of the mover
          * @param args the arguments given to the stager job
          * @param context the current context (localhost, port, etc...)
          */

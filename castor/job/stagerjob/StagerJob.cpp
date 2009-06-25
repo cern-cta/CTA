@@ -257,7 +257,7 @@ void bindSocketAndListen
   throw (castor::exception::Exception) {
   // Build address
   struct sockaddr_in sin;
-  memset(&sin,'\0',sizeof(sin));
+  memset(&sin, '\0', sizeof(sin));
   sin.sin_addr.s_addr = htonl(INADDR_ANY);
   sin.sin_family = AF_INET;
 
@@ -371,7 +371,7 @@ void process(castor::job::stagerjob::InputArguments* args)
     sPortRange << portRange.first << ":" << portRange.second;
     castor::dlf::Param params[] =
       {castor::dlf::Param("Protocol", args->protocol),
-       castor::dlf::Param("Available port range", sPortRange.str()),
+       castor::dlf::Param("Port range", sPortRange.str()),
        castor::dlf::Param("Port used", context.port),
        castor::dlf::Param("JobId", getenv("LSB_JOBID")),
        castor::dlf::Param(args->subRequestUuid)};
@@ -508,25 +508,27 @@ int main(int argc, char** argv) {
 
       // Protocol specific. Should not be here if the plugins
       // were properly packaged in separate libs
-      { GSIBADPORT,      "Invalid port range for GridFTP in config file. using default" },
-      { GSIBADMINPORT,   "Invalid lower bound for GridFTP port range in config file. Using default" },
-      { GSIBADMAXPORT,   "Invalid upper bound for GridFTP port range in config file. Using default" },
-      { GSIBADMINVAL,    "Lower bound for GridFTP port range not in valid range. Using default" },
-      { GSIBADMAXVAL,    "Upper bound for GridFTP port range not in valid range. Using default" },
+      { GSIBADPORT,      "Invalid port range for GridFTP in config file, using default" },
+      { GSIBADMINPORT,   "Invalid lower bound for GridFTP port range in config file, using default" },
+      { GSIBADMAXPORT,   "Invalid upper bound for GridFTP port range in config file, using default" },
+      { GSIBADMINVAL,    "Lower bound for GridFTP port range not in valid range, using default" },
+      { GSIBADMAXVAL,    "Upper bound for GridFTP port range not in valid range, using default" },
+      { GSIBADTIMEOUT,   "Invalid value for GSIFTP/TIMEOUT option, using default" },
 
       { XROOTENOENT,     "Xrootd is not installed" },
 
-      { RFIODBADPORT,    "Invalid port range for RFIOD in config file. using default" },
-      { RFIODBADMINPORT, "Invalid lower bound for RFIOD port range in config file. Using default" },
-      { RFIODBADMAXPORT, "Invalid upper bound for RFIOD port range in config file. Using default" },
-      { RFIODBADMINVAL,  "Lower bound for RFIOD port range not in valid range. Using default" },
-      { RFIODBADMAXVAL,  "Upper bound for RFIOD port range not in valid range. Using default" },
+      { RFIODBADPORT,    "Invalid port range for RFIOD in config file, using default" },
+      { RFIODBADMINPORT, "Invalid lower bound for RFIOD port range in config file, using default" },
+      { RFIODBADMAXPORT, "Invalid upper bound for RFIOD port range in config file, using default" },
+      { RFIODBADMINVAL,  "Lower bound for RFIOD port range not in valid range, using default" },
+      { RFIODBADMAXVAL,  "Upper bound for RFIOD port range not in valid range, using default" },
 
-      { ROOTDBADPORT,    "Invalid port range for ROOT in config file. using default" },
-      { ROOTDBADMINPORT, "Invalid lower bound for ROOT port range in config file. Using default" },
-      { ROOTDBADMAXPORT, "Invalid upper bound for ROOT port range in config file. Using default" },
-      { ROOTDBADMINVAL,  "Lower bound for ROOT port range not in valid range. Using default" },
-      { ROOTDBADMAXVAL,  "Upper bound for ROOT port range not in valid range. Using default" },
+      { ROOTDBADPORT,    "Invalid port range for ROOT in config file, using default" },
+      { ROOTDBADMINPORT, "Invalid lower bound for ROOT port range in config file, using default" },
+      { ROOTDBADMAXPORT, "Invalid upper bound for ROOT port range in config file, using default" },
+      { ROOTDBADMINVAL,  "Lower bound for ROOT port range not in valid range, using default" },
+      { ROOTDBADMAXVAL,  "Upper bound for ROOT port range not in valid range, using default" },
+      { ROOTDBADTIMEOUT, "Invalid value for ROOT/TIMEOUT option, using default" },
 
       { -1, "" }};
     castor::dlf::dlf_init("Job", messages);
@@ -646,4 +648,5 @@ int main(int argc, char** argv) {
     return -1;
   }
   dlf_shutdown(10);
+  return 0;
 }

@@ -108,29 +108,31 @@ namespace castor {
         CHILDSTOPPED =    43, /* Child was stopped */
         NOANSWERSENT =    52, /* Could not send answer to client */
         GETATTRFAILED =   53, /* Failed to get checksum information from extended attributes */
-	CSTYPENOTSOP =    54, /* Unsupported checksum type, ignoring checksum information */
+        CSTYPENOTSOP =    54, /* Unsupported checksum type, ignoring checksum information */
 
         // Protocol specific. Should not be here if the plugins
         // were properly packaged in separate libs
-        GSIBADPORT =      44, /* Invalid port range for GridFTP in config file. using default */
-        GSIBADMINPORT =   45, /* Invalid lower bound for GridFTP port range in config file. Using default */
-        GSIBADMAXPORT =   46, /* Invalid upper bound for GridFTP port range in config file. Using default */
-        GSIBADMINVAL =    47, /* Lower bound for GridFTP port range not in valid range. Using default */
-        GSIBADMAXVAL =    48, /* Upper bound for GridFTP port range not in valid range. Using default */
+        GSIBADPORT =      44, /* Invalid port range for GridFTP in config file, using default */
+        GSIBADMINPORT =   45, /* Invalid lower bound for GridFTP port range in config file, using default */
+        GSIBADMAXPORT =   46, /* Invalid upper bound for GridFTP port range in config file, using default */
+        GSIBADMINVAL =    47, /* Lower bound for GridFTP port range not in valid range, using default */
+        GSIBADMAXVAL =    48, /* Upper bound for GridFTP port range not in valid range, using default */
+        GSIBADTIMEOUT =   66, /* Invalid value for GSIFTP/TIMEOUT option, using default */
 
-	XROOTENOENT =     51, /* Xrootd is not installed */
+        XROOTENOENT =     51, /* Xrootd is not installed */
 
-        RFIODBADPORT =    55, /* Invalid port range for RFIOD in config file. using default */
-        RFIODBADMINPORT = 56, /* Invalid lower bound for RFIOD port range in config file. Using default */
-        RFIODBADMAXPORT = 57, /* Invalid upper bound for RFIOD port range in config file. Using default */
-        RFIODBADMINVAL =  58, /* Lower bound for RFIOD port range not in valid range. Using default */
-        RFIODBADMAXVAL =  59, /* Upper bound for RFIOD port range not in valid range. Using default */
+        RFIODBADPORT =    55, /* Invalid port range for RFIOD in config file, using default */
+        RFIODBADMINPORT = 56, /* Invalid lower bound for RFIOD port range in config file, using default */
+        RFIODBADMAXPORT = 57, /* Invalid upper bound for RFIOD port range in config file, using default */
+        RFIODBADMINVAL =  58, /* Lower bound for RFIOD port range not in valid range, using default */
+        RFIODBADMAXVAL =  59, /* Upper bound for RFIOD port range not in valid range, using default */
 
-        ROOTDBADPORT =    60, /* Invalid port range for ROOT in config file. using default */
-        ROOTDBADMINPORT = 61, /* Invalid lower bound for ROOT port range in config file. Using default */
-        ROOTDBADMAXPORT = 62, /* Invalid upper bound for ROOT port range in config file. Using default */
-        ROOTDBADMINVAL =  63, /* Lower bound for ROOT port range not in valid range. Using default */
-        ROOTDBADMAXVAL =  64  /* Upper bound for ROOT port range not in valid range. Using default */
+        ROOTDBADPORT =    60, /* Invalid port range for ROOT in config file, using default */
+        ROOTDBADMINPORT = 61, /* Invalid lower bound for ROOT port range in config file, using default */
+        ROOTDBADMAXPORT = 62, /* Invalid upper bound for ROOT port range in config file, using default */
+        ROOTDBADMINVAL =  63, /* Lower bound for ROOT port range not in valid range, using default */
+        ROOTDBADMAXVAL =  64, /* Upper bound for ROOT port range not in valid range, using default */
+        ROOTDBADTIMEOUT = 65  /* Invalid value for ROOT/TIMEOUT option, using default */
       };
 
       /**

@@ -47,10 +47,10 @@ namespace castor {
 
       public:
 
-	/**
-	 * Default destructor
-	 */
-	virtual ~IPlugin() throw() {};
+        /**
+         * Default destructor
+         */
+        virtual ~IPlugin() throw() {};
 
         /**
          * Gets the port range that can be used by the protocol
@@ -70,7 +70,7 @@ namespace castor {
           throw (castor::exception::Exception) = 0;
 
         /**
-         * hook for the launching of the mover
+         * Hook for the launching of the mover
          * To be implemented in all plugins
          * @param args the arguments given to the stager job
          * @param context the current context (localhost, port, etc...)

@@ -72,13 +72,23 @@ namespace castor {
         (castor::job::stagerjob::InputArguments &args) throw();
 
         /**
+         * Hook for the code to be executed just before the mover fork.
+         * Used to set the timeout value on select calls waiting for
+         * client connections.
+         * @param args the arguments given to the stager job
+         * @param context the current context (localhost, port, etc...)
+         */
+        virtual void preForkHook(InputArguments &args,
+                                 PluginContext &context)
+          throw (castor::exception::Exception);
+
+        /**
          * Hook for the code to be executed just after the mover fork,
          * in the parent process. Only logging and calling the method
          * of InstrumentedPlugin.
          * @param args the arguments given to the stager job
          * @param context the current context (localhost, port, etc...)
-
-        */
+         */
         virtual void postForkHook(InputArguments &args,
                                   PluginContext &context)
           throw (castor::exception::Exception);
@@ -108,7 +118,7 @@ namespace castor {
          */
         static void getEnvironment(InputArguments &args,
                                    Environment &env)
-          throw(castor::exception::Exception);
+          throw (castor::exception::Exception);
 
       }; // end of class GridFTPPlugin
 
