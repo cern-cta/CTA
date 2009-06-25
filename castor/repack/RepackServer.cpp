@@ -284,9 +284,6 @@ castor::repack::RepackServer::RepackServer() :
   else
     m_listenPort = CSP_REPACKSERVER_PORT;
 
-  if (tmp) free(tmp);
-  tmp=NULL;
-
 
 
   /* --------------------------------------------------------------------- */
@@ -304,8 +301,7 @@ castor::repack::RepackServer::RepackServer() :
     throw ex; 
   }
   m_ns = std::string(tmp);
-  if (tmp) free(tmp);
-  tmp=NULL;
+
 
   /* --------------------------------------------------------------------- */
 
@@ -321,8 +317,7 @@ castor::repack::RepackServer::RepackServer() :
     throw ex; 
   }
   m_stager = std::string(tmp);
-  if (tmp) free(tmp);
-  tmp=NULL;
+
 
 
   /* --------------------------------------------------------------------- */
@@ -339,8 +334,7 @@ castor::repack::RepackServer::RepackServer() :
     throw ex; 
   }
   m_serviceClass = std::string(tmp);
-  if (tmp) free(tmp);
-  tmp=NULL;
+
 
  
   // Parameters to limitate concurrent repack processes 
@@ -357,9 +351,7 @@ castor::repack::RepackServer::RepackServer() :
      m_maxFiles = DEFAULT_MAX_FILES;   
    }
   
-   if (tmp) free(tmp);
-   tmp=NULL;
-
+  
    // Number of tapes
 
    if ((tmp = getconfent("REPACK", "MAXTAPES",0))) {
@@ -371,9 +363,7 @@ castor::repack::RepackServer::RepackServer() :
    } else {
      m_maxTapes = DEFAULT_MAX_TAPES; 
    }
-  
-     if (tmp) free(tmp);
-     tmp=NULL;
+
 
 
   /* --------------------------------------------------------------------- */
@@ -390,8 +380,7 @@ castor::repack::RepackServer::RepackServer() :
   }
   m_protocol = std::string(tmp);
 
-  if (tmp) free(tmp);
-  tmp=NULL;
+
   /* --------------------------------------------------------------------- */
 
   /** Get the polling time for the Monitor and service. This value should be not less
@@ -416,12 +405,7 @@ castor::repack::RepackServer::RepackServer() :
   }
   else
     m_pollingTime = CSP_REPACKPOLLTIME;
-  /* --------------------------------------------------------------------- */
-
-  if (tmp) free(tmp);
-  tmp=NULL;
-
- /* --------------------------------------------------------------------- */
+ 
   
   /** Get IRepackSvc */
 
