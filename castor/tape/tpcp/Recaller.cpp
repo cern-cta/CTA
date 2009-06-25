@@ -22,6 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
  
+#include "castor/Constants.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/tapegateway/FileToRecall.hpp"
@@ -45,7 +46,21 @@ castor::tape::tpcp::Recaller::Recaller(const bool debug,
   const vmgr_tape_info &vmgrTapeInfo, const char *const dgn,
   const int volReqId, castor::io::ServerSocket &callbackSocket) throw() :
   ActionHandler(debug, tapeFseqRanges, filenames, vmgrTapeInfo, dgn, volReqId,
-    callbackSocket) {
+    callbackSocket),
+  m_tapeFseqSequence(tapeFseqRanges) {
+
+  // Build the map of message body handlers
+  m_handlers[OBJ_FileToRecallRequest] = &Recaller::handleFileToRecallRequest;
+  m_handlers[OBJ_FileRecalledNotification] =
+    &Recaller::handleFileRecalledNotification;
+  m_handlers[OBJ_EndNotification] = &Recaller::handleEndNotification;
+}
+
+
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+castor::tape::tpcp::Recaller::~Recaller() {
 }
 
 
@@ -54,20 +69,12 @@ castor::tape::tpcp::Recaller::Recaller(const bool debug,
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::Recaller::run() throw(castor::exception::Exception) {
 
-  while(handleAnAggregatorMessage()) {
+  // Spin in the dispatch message loop until there is no more work
+  while(dispatchMessage()) {
     // Do nothing
   }
 
 /*
-  // Process the tape file sequence numbers
-  const ProcessTapeFseqsResult result = processTapeFseqs();
-
-  // Tell the aggregator that there are no more files to be processed
-  tellAggregatorNoMoreFiles();
-
-  // Acknowledge the end of the session
-  acknowledgeEndOfSession();
-
   // Display the result
   {
     std::ostream &os = std::cout;
@@ -105,66 +112,114 @@ void castor::tape::tpcp::Recaller::run() throw(castor::exception::Exception) {
 
 
 //------------------------------------------------------------------------------
-// handleAnAggregatorMessage
+// dispatchMessage
 //------------------------------------------------------------------------------
-bool castor::tape::tpcp::Recaller::handleAnAggregatorMessage() {
-  bool moreWork = false;
+bool castor::tape::tpcp::Recaller::dispatchMessage()
+  throw(castor::exception::Exception) {
+
+  // Socket file descriptor for a callback connection from the aggregator
+  int connectionSocketFd = 0;
+
+  // Wait for a callback connection from the aggregator
+  {
+    bool waitForCallback    = true;
+    while(waitForCallback) {
+      try {
+        connectionSocketFd = net::acceptConnection(m_callbackSocket.socket(),
+          WAITCALLBACKTIMEOUT);
+
+        waitForCallback = false;
+      } catch(castor::exception::TimeOut &tx) {
+        std::cout << "Waited " << WAITCALLBACKTIMEOUT << "seconds for a "
+        "callback connection from the tape server." << std::endl
+        << "Continuing to wait." <<  std::endl;
+      }
+    }
+  }
+
+  // If debug, then display a textual description of the aggregator
+  // callback connection
+  if(m_debug) {
+    std::ostream &os = std::cout;
+
+    utils::writeBanner(os, "Recaller: Aggregator connection");
+    os << std::endl;
+    net::writeSocketDescription(os, connectionSocketFd);
+    os << std::endl;
+    os << std::endl;
+    os << std::endl;
+  }
+
+  // Wrap the connection socket descriptor in a CASTOR framework socket in
+  // order to get access to the framework marshalling and un-marshalling
+  // methods
+  castor::io::AbstractTCPSocket callbackConnectionSocket(connectionSocketFd);
+
+  // Read in the message sent by the aggregator
+  std::auto_ptr<castor::IObject> msg(callbackConnectionSocket.readObject());
+
+  // If debug, then display the type of message received from the aggregator
+  if(m_debug) {
+    std::ostream &os = std::cout;
+
+    utils::writeBanner(os, "Recaller: Received aggregator message");
+    os << std::endl;
+    os << "Message type = " << utils::objectTypeToString(msg->type());
+    os << std::endl;
+    os << std::endl;
+    os << std::endl;
+  }
+
+  // Find the message type's corresponding handler
+  MsgHandlerMap::iterator itor = m_handlers.find(msg->type());
+  if(itor == m_handlers.end()) {
+    TAPE_THROW_CODE(EBADMSG,
+         ": Received unexpected aggregator message: "
+      << ": Message type = " << utils::objectTypeToString(msg->type()));
+  }
+  const MsgHandler handler = itor->second;
+
+  // Invoke the handler
+  const bool moreWork = (this->*handler)(*(msg.get()),
+    callbackConnectionSocket);
+
+  // Close the aggregator callback connection
+  callbackConnectionSocket.close();
 
   return moreWork;
 }
 
 
 //------------------------------------------------------------------------------
-// processTapeFseqs
+// handleFileToRecallRequest
 //------------------------------------------------------------------------------
-castor::tape::tpcp::Recaller::ProcessTapeFseqsResult
-  castor::tape::tpcp::Recaller::processTapeFseqs()
+bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
+  castor::IObject &msg, castor::io::AbstractSocket &socket)
   throw(castor::exception::Exception) {
 
-  FilenameList::iterator filenamesItor=m_filenames.begin();
+  return false;
+}
 
-  // For each range
-  for(TapeFseqRangeList::iterator itor=m_tapeFseqRanges.begin();
-    itor!=m_tapeFseqRanges.end(); itor++) {
 
-    TapeFseqRange &range = *itor;
+//------------------------------------------------------------------------------
+// handleFileRecalledNotification
+//------------------------------------------------------------------------------
+bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
+  castor::IObject &msg, castor::io::AbstractSocket &socket)
+  throw(castor::exception::Exception) {
 
-std::cout << "Found a range: " << range << std::endl;
+  return false;
+}
 
-    // Until end of tape is represented by range.upper = 0
-    for(uint32_t tapeFseq=range.lower;
-      range.upper == 0 || tapeFseq <= range.upper; tapeFseq++) {
 
-std::cout << "Found a sequence number: " << tapeFseq << std::endl;
+//------------------------------------------------------------------------------
+// handleEndNotification
+//------------------------------------------------------------------------------
+bool castor::tape::tpcp::Recaller::handleEndNotification(
+  castor::IObject &msg, castor::io::AbstractSocket &socket)
+  throw(castor::exception::Exception) {
 
-      // If there are no more RFIO filenames
-      if(filenamesItor == m_filenames.end()) {
-        return RESULT_MORE_TFSEQS_THAN_FILENAMES;
-      }
-
-      // Get the next RFIO filename
-      std::string &filename = *(filenamesItor++);
-
-      try {
-        processFile(tapeFseq, filename);
-      } catch(castor::exception::Exception &ex) {
-        castor::exception::Exception ex2(ex.code());
-
-        ex2.getMessage()
-          << "Failed to process file"
-             ": Filename=\"" << filename
-          << ": " << ex.getMessage().str();
-
-        throw ex2;
-      }
-    }
-  }
-
-  if(filenamesItor == m_filenames.end()) {
-    return RESULT_SUCCESS;
-  } else {
-    return RESULT_MORE_FILENAMES_THAN_TFSEQS;
-  }
+  return false;
 }
 
 

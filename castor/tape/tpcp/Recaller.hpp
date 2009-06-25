@@ -25,7 +25,10 @@
 #ifndef CASTOR_TAPE_TPCP_RECALLER_HPP
 #define CASTOR_TAPE_TPCP_RECALLER_HPP 1
 
+#include "castor/IObject.hpp"
+#include "castor/io/AbstractSocket.hpp"
 #include "castor/tape/tpcp/ActionHandler.hpp"
+#include "castor/tape/tpcp/TapeFseqRangeListSequence.hpp"
 
 namespace castor {
 namespace tape   {
@@ -49,6 +52,11 @@ public:
     castor::io::ServerSocket &callbackSocket) throw();
 
   /**
+   * Destructor.
+   */
+  virtual ~Recaller();
+
+  /**
    * See the header file of castor::tape::tpcp::ActionHandler for this method's
    * documentation.
    */
@@ -57,28 +65,76 @@ public:
 
 private:
 
+  /**
+   * The sequence of tape file sequence numbers to be processed.
+   */
+  TapeFseqRangeListSequence m_tapeFseqSequence;
 
   /**
-   * Handles a message from the aggregator.
+   * Pointer to a message handler function, where the handler function is a
+   * member of this class.
+   *
+   * @param msg The aggregator message to be processed.
+   * @param socket The socket on which to reply to the aggregator.
+   * @return True if there is more work to be done else false.
+   */
+  typedef bool (Recaller::*MsgHandler)(castor::IObject &msg,
+     castor::io::AbstractSocket &socket);
+
+  /**
+   * Map of CASTOR object type to message handler callback.
+   */
+  typedef std::map<int, MsgHandler> MsgHandlerMap;
+
+  /**
+   * Map of message handlers.
+   */
+  MsgHandlerMap m_handlers;
+
+  /**
+   * Accepts an incoming aggregator connection, reads in the aggregator message
+   * and then dispatches it to appropriate message handler method.
    *
    * @return True if there is more work to be done, else false.
    */
-  bool handleAnAggregatorMessage();
+  bool dispatchMessage() throw(castor::exception::Exception);
 
   /**
-   * The possible results of calling processTapeFseqs.
+   * FileToRecallRequest message handler.
+   *
+   * The parameters of this method are documentated in the comments of the
+   * Recaller::MsgHandler datatype.
    */
-  enum ProcessTapeFseqsResult {
+  bool handleFileToRecallRequest(castor::IObject &msg,
+    castor::io::AbstractSocket &socket) throw(castor::exception::Exception);
+
+  /**
+   * FileRecalledNotification message handler.
+   *
+   * The parameters of this method are documentated in the comments of the
+   * Recaller::MsgHandler datatype.
+   */
+  bool handleFileRecalledNotification(castor::IObject &msg,
+    castor::io::AbstractSocket &socket) throw(castor::exception::Exception);
+
+  /**
+   * EndNotification message handler.
+   *
+   * The parameters of this method are documentated in the comments of the
+   * Recaller::MsgHandler datatype.
+   */
+  bool handleEndNotification(castor::IObject &msg,
+    castor::io::AbstractSocket &socket) throw(castor::exception::Exception);
+
+  /**
+   * The possible results of a set of recall session.
+   */
+  enum Result {
     RESULT_SUCCESS,
     RESULT_REACHED_END_OF_TAPE,
     RESULT_MORE_TFSEQS_THAN_FILENAMES,
     RESULT_MORE_FILENAMES_THAN_TFSEQS
   };
-
-  /**
-   * Processes the specified list of tape file sequence ranges.
-   */
-  ProcessTapeFseqsResult processTapeFseqs() throw(castor::exception::Exception);
 
   /**
    * Processes the specified file.
