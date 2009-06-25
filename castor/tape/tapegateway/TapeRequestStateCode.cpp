@@ -32,11 +32,10 @@
 //------------------------------------------------------------------------------
 // TapeRequestStateCodeStrings
 //------------------------------------------------------------------------------
-const char* castor::tape::tapegateway::TapeRequestStateCodeStrings[5] = {
+const char* castor::tape::tapegateway::TapeRequestStateCodeStrings[4] = {
   "TO_BE_RESOLVED",
   "TO_BE_SENT_TO_VDQM",
   "WAITING_TAPESERVER",
-  "ONGOING",
-  "FAILED"
+  "ONGOING"
 };
 

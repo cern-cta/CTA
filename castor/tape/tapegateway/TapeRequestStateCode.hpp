@@ -44,15 +44,14 @@ namespace castor {
         TO_BE_RESOLVED = 0,
         TO_BE_SENT_TO_VDQM = 1,
         WAITING_TAPESERVER = 2,
-        ONGOING = 3,
-        FAILED = 4
+        ONGOING = 3
       }; /* end of enum TapeRequestStateCode */
 
       /**
        * Names of the differents representations, used to display
        * correctly the TapeRequestStateCode enum
        */
-      extern const char* TapeRequestStateCodeStrings[5];
+      extern const char* TapeRequestStateCodeStrings[4];
 
 #ifdef __cplusplus
     } /* end of namespace tapegateway */
