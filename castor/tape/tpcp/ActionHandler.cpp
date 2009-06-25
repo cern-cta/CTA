@@ -36,7 +36,7 @@
 castor::tape::tpcp::ActionHandler::ActionHandler(const bool debug,
   TapeFseqRangeList &tapeFseqRanges, FilenameList &filenames,
   const vmgr_tape_info &vmgrTapeInfo, const char *const dgn,
-  const int volReqId, castor::io::ServerSocket &callbackSocket) throw() :
+  const uint64_t volReqId, castor::io::ServerSocket &callbackSocket) throw() :
   m_debug(debug),
   m_tapeFseqRanges(tapeFseqRanges),
   m_filenames(filenames),

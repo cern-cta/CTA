@@ -33,6 +33,8 @@
 #include "h/Castor_limits.h"
 #include "h/vmgr_api.h"
 
+#include <stdint.h>
+
 namespace castor {
 namespace tape   {
 namespace tpcp   {
@@ -60,7 +62,7 @@ public:
    */
   ActionHandler(const bool debug, TapeFseqRangeList &tapeFseqRanges,
     FilenameList &filenames, const vmgr_tape_info &vmgrTapeInfo,
-    const char *const dgn, const int volReqId,
+    const char *const dgn, const uint64_t volReqId,
     castor::io::ServerSocket &callbackSocket) throw();
 
   /**
@@ -100,7 +102,7 @@ protected:
    * The volume request ID returned by the VDQM in response to the request for
    * a drive.
    */
-  const int m_volReqId;
+  const uint64_t m_volReqId;
 
   /**
    * The aggregator callback socket.

@@ -25,8 +25,10 @@
 #include "castor/Constants.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/tape/net/net.hpp"
+#include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/FileToRecall.hpp"
 #include "castor/tape/tapegateway/FileToRecallRequest.hpp"
+#include "castor/tape/tapegateway/FileRecalledNotification.hpp"
 #include "castor/tape/tapegateway/NoMoreFiles.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 #include "castor/tape/tapegateway/PositionCommandCode.hpp"
@@ -47,7 +49,7 @@ castor::tape::tpcp::Recaller::Recaller(const bool debug,
   const int volReqId, castor::io::ServerSocket &callbackSocket) throw() :
   ActionHandler(debug, tapeFseqRanges, filenames, vmgrTapeInfo, dgn, volReqId,
     callbackSocket),
-  m_tapeFseqSequence(tapeFseqRanges) {
+  m_tapeFseqSequence(tapeFseqRanges), m_filenameItor(filenames.begin()) {
 
   // Build the map of message body handlers
   m_handlers[OBJ_FileToRecallRequest] = &Recaller::handleFileToRecallRequest;
@@ -73,41 +75,6 @@ void castor::tape::tpcp::Recaller::run() throw(castor::exception::Exception) {
   while(dispatchMessage()) {
     // Do nothing
   }
-
-/*
-  // Display the result
-  {
-    std::ostream &os = std::cout;
-
-    os << "Recall result = ";
-
-    switch(result) {
-    case RESULT_SUCCESS:
-      os << "Success";
-      break;
-
-    case RESULT_REACHED_END_OF_TAPE:
-      os << "Reached end of tape";
-      break;
-
-    case RESULT_MORE_TFSEQS_THAN_FILENAMES:
-      os << "There were more tape file sequence numbers than RFIO filenames";
-      break;
-
-    case RESULT_MORE_FILENAMES_THAN_TFSEQS:
-      os << "There were more RFIO filenames than tape file sequence numbers";
-      break;
-
-    default:
-      {
-        TAPE_THROW_EX(castor::exception::Internal,
-          ": Unknown result type: Result=" << result);
-      }
-    }
-
-    os << std::endl;
-  }
-*/
 }
 
 
@@ -171,7 +138,7 @@ bool castor::tape::tpcp::Recaller::dispatchMessage()
   }
 
   // Find the message type's corresponding handler
-  MsgHandlerMap::iterator itor = m_handlers.find(msg->type());
+  MsgHandlerMap::const_iterator itor = m_handlers.find(msg->type());
   if(itor == m_handlers.end()) {
     TAPE_THROW_CODE(EBADMSG,
          ": Received unexpected aggregator message: "
@@ -180,8 +147,7 @@ bool castor::tape::tpcp::Recaller::dispatchMessage()
   const MsgHandler handler = itor->second;
 
   // Invoke the handler
-  const bool moreWork = (this->*handler)(*(msg.get()),
-    callbackConnectionSocket);
+  const bool moreWork = (this->*handler)(msg.get(), callbackConnectionSocket);
 
   // Close the aggregator callback connection
   callbackConnectionSocket.close();
@@ -194,10 +160,84 @@ bool castor::tape::tpcp::Recaller::dispatchMessage()
 // handleFileToRecallRequest
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
-  castor::IObject &msg, castor::io::AbstractSocket &socket)
+  castor::IObject *msg, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
-  return false;
+  tapegateway::FileToRecallRequest *const fileToRecallRequest =
+    dynamic_cast<tapegateway::FileToRecallRequest*>(msg);
+  if(fileToRecallRequest == NULL) {
+    TAPE_THROW_EX(castor::exception::Internal,
+         "Unexpected object type"
+      << ": Actual=" << utils::objectTypeToString(msg->type())
+      << " Expected=FileToRecallRequest");
+  }
+
+  // Check the transaction ID
+  if(fileToRecallRequest->transactionId() != m_volReqId) {
+    castor::exception::Exception ex(EBADMSG);
+
+    ex.getMessage()
+      << "Transaction ID mismatch"
+         ": Actual=" << fileToRecallRequest->transactionId()
+      << " Expected=" << m_volReqId;
+
+    throw ex;
+  }
+
+  const bool anotherFile = m_tapeFseqSequence.hasMore() &&
+    m_filenameItor != m_filenames.end();
+
+  if(anotherFile) {
+    // Get the tape file sequence number and RFIO filename
+    uint32_t    tapeFseq = m_tapeFseqSequence.next();
+    std::string filename = *(m_filenameItor++);
+
+    // Create FileToRecall message for the aggregator
+    tapegateway::FileToRecall fileToRecall;
+    fileToRecall.setTransactionId(m_volReqId);
+    fileToRecall.setNshost("tpcp\0");
+    fileToRecall.setFileid(0);
+    fileToRecall.setFseq(tapeFseq);
+    fileToRecall.setPositionCommandCode(tapegateway::TPPOSIT_FSEQ);
+    fileToRecall.setPath(filename);
+    fileToRecall.setBlockId0(0);
+    fileToRecall.setBlockId1(0);
+    fileToRecall.setBlockId2(0);
+    fileToRecall.setBlockId3(0);
+
+    // Send the FileToRecall message to the aggregator
+    sock.sendObject(fileToRecall);
+
+    // If debug, then display sending of the FileToRecall message
+    if(m_debug) {
+      std::ostream &os = std::cout;
+
+      utils::writeBanner(os, "Sent FileToRecall to aggregator");
+      os << std::endl;
+      os << std::endl;
+    }
+
+  // Else no more files
+  } else {
+
+    // Create the NoMoreFiles message for the aggregator
+    castor::tape::tapegateway::NoMoreFiles noMore;
+    noMore.setTransactionId(m_volReqId);
+
+    // Send the NoMoreFiles message to the aggregator
+    sock.sendObject(noMore);
+
+    // If debug, then display sending of the NoMoreFiles message
+    if(m_debug) {
+      std::ostream &os = std::cout;
+
+      utils::writeBanner(os, "Sent NoMoreFiles to aggregator");
+      os << std::endl;
+      os << std::endl;
+    }
+  }
+
+  return true;
 }
 
 
@@ -205,10 +245,47 @@ bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
 // handleFileRecalledNotification
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
-  castor::IObject &msg, castor::io::AbstractSocket &socket)
+  castor::IObject *msg, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
-  return false;
+  tapegateway::FileRecalledNotification *const fileRecallededNotification =
+    dynamic_cast<tapegateway::FileRecalledNotification*>(msg);
+  if(fileRecallededNotification == NULL) {
+    TAPE_THROW_EX(castor::exception::Internal,
+         "Unexpected object type"
+      << ": Actual=" << utils::objectTypeToString(msg->type())
+      << " Expected=FileRecalledNotification");
+  }
+
+  // Check the transaction ID
+  if(fileRecallededNotification->transactionId() != m_volReqId) {
+    castor::exception::Exception ex(EBADMSG);
+
+    ex.getMessage()
+      << "Transaction ID mismatch"
+         ": Actual=" << fileRecallededNotification->transactionId()
+      << " Expected=" << m_volReqId;
+
+    throw ex;
+  }
+
+  // Create the NotificationAcknowledge message for the aggregator
+  castor::tape::tapegateway::NotificationAcknowledge acknowledge;
+  acknowledge.setTransactionId(m_volReqId);
+
+  // Send the NotificationAcknowledge message to the aggregator
+  sock.sendObject(acknowledge);
+
+  // If debug, then display sending of the NotificationAcknowledge message
+  if(m_debug) {
+    std::ostream &os = std::cout;
+
+    utils::writeBanner(os, "Sent NotificationAcknowledge to aggregator");
+    os << std::endl;
+    os << std::endl;
+  }
+
+  return true;
 }
 
 
@@ -216,207 +293,45 @@ bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
 // handleEndNotification
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::Recaller::handleEndNotification(
-  castor::IObject &msg, castor::io::AbstractSocket &socket)
+  castor::IObject *msg, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
+
+  tapegateway::EndNotification *const fileRecallededNotification =
+    dynamic_cast<tapegateway::EndNotification*>(msg);
+  if(fileRecallededNotification == NULL) {
+    TAPE_THROW_EX(castor::exception::Internal,
+         "Unexpected object type"
+      << ": Actual=" << utils::objectTypeToString(msg->type())
+      << " Expected=EndNotification");
+  }
+
+  // Check the transaction ID
+  if(fileRecallededNotification->transactionId() != m_volReqId) {
+    castor::exception::Exception ex(EBADMSG);
+
+    ex.getMessage()
+      << "Transaction ID mismatch"
+         ": Actual=" << fileRecallededNotification->transactionId()
+      << " Expected=" << m_volReqId;
+
+    throw ex;
+  }
+
+  // Create the NotificationAcknowledge message for the aggregator
+  castor::tape::tapegateway::NotificationAcknowledge acknowledge;
+  acknowledge.setTransactionId(m_volReqId);
+
+  // Send the NotificationAcknowledge message to the aggregator
+  sock.sendObject(acknowledge);
+
+  // If debug, then display sending of the NotificationAcknowledge message
+  if(m_debug) {
+    std::ostream &os = std::cout;
+
+    utils::writeBanner(os, "Sent NotificationAcknowledge to aggregator");
+    os << std::endl;
+    os << std::endl;
+  }
 
   return false;
-}
-
-
-//------------------------------------------------------------------------------
-// processFile
-//------------------------------------------------------------------------------
-void castor::tape::tpcp::Recaller::processFile(const uint32_t tapeFseq,
-  const std::string &filename) throw(castor::exception::Exception) {
-
-  // Socket file descriptor for a callback connection from the aggregator
-  int connectionSocketFd = 0;
-
-  // Wait for a callback connection from the aggregator
-  {
-    bool waitForCallback    = true;
-    while(waitForCallback) {
-      try {
-        connectionSocketFd = net::acceptConnection(m_callbackSocket.socket(),
-          WAITCALLBACKTIMEOUT);
-
-        waitForCallback = false;
-      } catch(castor::exception::TimeOut &tx) {
-        std::cout << "Waited " << WAITCALLBACKTIMEOUT << "seconds for a "
-        "callback connection from the tape server." << std::endl
-        << "Continuing to wait." <<  std::endl;
-      }
-    }
-  }
-
-  // If debug, then display a textual description of the aggregator
-  // callback connection
-  if(m_debug) {
-    std::ostream &os = std::cout;
-
-    utils::writeBanner(os, "Recaller: Aggregator connection");
-    os << std::endl;
-    net::writeSocketDescription(os, connectionSocketFd);
-    os << std::endl;
-    os << std::endl;
-    os << std::endl;
-  }
-
-  // Wrap the connection socket descriptor in a CASTOR framework socket in
-  // order to get access to the framework marshalling and un-marshalling
-  // methods
-  castor::io::AbstractTCPSocket callbackConnectionSocket(connectionSocketFd);
-
-  // Read in the object sent by the aggregator
-  std::auto_ptr<castor::IObject> obj(callbackConnectionSocket.readObject());
-
-  // Pointer to the received object with the object's type
-  tapegateway::FileToRecallRequest *fileToRecallRequest = NULL;
-
-  // Cast the object to its type
-  fileToRecallRequest =
-    dynamic_cast<tapegateway::FileToRecallRequest*>(obj.get());
-  if(fileToRecallRequest == NULL) {
-    castor::exception::InvalidArgument ex;
-
-    ex.getMessage()
-     << "Received the wrong type of object from the aggregator"
-     << ": Actual=" << utils::objectTypeToString(obj->type())
-     << " Expected=FileToRecallRequest";
-
-    throw ex;
-  }
-
-  // If debug, then display reception of the FileToRecallRequest message
-  if(m_debug) {
-    std::ostream &os = std::cout;
-
-    utils::writeBanner(os, "Recaller: Received FileToRecallRequest from "
-      "aggregator");
-    os << std::endl;
-    os << std::endl;
-  }
-
-  // Create FileToRecall message for the aggregator
-  tapegateway::FileToRecall fileToRecall;
-  fileToRecall.setTransactionId(m_volReqId);
-  fileToRecall.setNshost("tpcp\0");
-  fileToRecall.setFileid(0);
-  fileToRecall.setFseq(tapeFseq);
-  fileToRecall.setPositionCommandCode(castor::tape::tapegateway::TPPOSIT_FSEQ);
-  fileToRecall.setPath(filename);
-  fileToRecall.setBlockId0(0);
-  fileToRecall.setBlockId1(0);
-  fileToRecall.setBlockId2(0);
-  fileToRecall.setBlockId3(0);
-
-  // Send the FileToRecall message to the aggregator
-  callbackConnectionSocket.sendObject(fileToRecall);
-
-  // Close the connection to the aggregator
-  callbackConnectionSocket.close();
-
-  // If debug, then display sending of the FileToRecall message
-  if(m_debug) {
-    std::ostream &os = std::cout;
-
-    utils::writeBanner(os, "Sent FileToRecall to aggregator");
-    os << std::endl;
-    os << std::endl;
-  }
-}
-
-
-//------------------------------------------------------------------------------
-// tellAggregatorNoMoreFiles
-//------------------------------------------------------------------------------
-void castor::tape::tpcp::Recaller::tellAggregatorNoMoreFiles()
-  throw(castor::exception::Exception) {
-
-  // Socket file descriptor for a callback connection from the aggregator
-  int connectionSocketFd = 0;
-
-  // Wait for a callback connection from the aggregator
-  {
-    bool waitForCallback    = true;
-    while(waitForCallback) {
-      try {
-        connectionSocketFd = net::acceptConnection(m_callbackSocket.socket(),
-          WAITCALLBACKTIMEOUT);
-
-        waitForCallback = false;
-      } catch(castor::exception::TimeOut &tx) {
-        std::cout << "Waited " << WAITCALLBACKTIMEOUT << "seconds for a "
-        "callback connection from the tape server." << std::endl
-        << "Continuing to wait." <<  std::endl;
-      }
-    }
-  }
-
-  // If debug, then display a textual description of the aggregator
-  // callback connection
-  if(m_debug) {
-    std::ostream &os = std::cout;
-
-    utils::writeBanner(os, "Recaller: Aggregator connection");
-    os << std::endl;
-    net::writeSocketDescription(os, connectionSocketFd);
-    os << std::endl;
-    os << std::endl;
-    os << std::endl;
-  }
-
-  // Wrap the connection socket descriptor in a CASTOR framework socket in
-  // order to get access to the framework marshalling and un-marshalling
-  // methods
-  castor::io::AbstractTCPSocket callbackConnectionSocket(connectionSocketFd);
-
-  // Read in the object sent by the aggregator
-  std::auto_ptr<castor::IObject> obj(callbackConnectionSocket.readObject());
-
-  // Pointer to the received object with the object's type
-  tapegateway::FileToRecallRequest *fileToRecallRequest = NULL;
-
-  // Cast the object to its type
-  fileToRecallRequest =
-    dynamic_cast<tapegateway::FileToRecallRequest*>(obj.get());
-  if(fileToRecallRequest == NULL) {
-    castor::exception::InvalidArgument ex;
-
-    ex.getMessage()
-     << "Received the wrong type of object from the aggregator"
-     << ": Actual=" << utils::objectTypeToString(obj->type())
-     << " Expected=FileToRecallRequest";
-
-    throw ex;
-  }
-
-  // If debug, then display reception of the FileToRecallRequest message
-  if(m_debug) {
-    std::ostream &os = std::cout;
-
-    utils::writeBanner(os, "Recaller: Received FileToRecallRequest from "
-      "aggregator");
-    os << std::endl;
-    os << std::endl;
-  }
-
-  // Create the NoMoreFiles message for the aggregator
-  castor::tape::tapegateway::NoMoreFiles noMore;
-  noMore.setTransactionId(m_volReqId);
-
-  // Send the NoMoreFiles  message to the aggregator
-  callbackConnectionSocket.sendObject(noMore);
-
-  // Close the connection to the aggregator
-  callbackConnectionSocket.close();
-
-  // If debug, then display sending of the NoMoreFiles message
-  if(m_debug) {
-    std::ostream &os = std::cout;
-
-    utils::writeBanner(os, "Sent NoMoreFiles to aggregator");
-    os << std::endl;
-    os << std::endl;
-  }
 }

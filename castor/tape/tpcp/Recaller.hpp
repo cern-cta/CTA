@@ -71,15 +71,20 @@ private:
   TapeFseqRangeListSequence m_tapeFseqSequence;
 
   /**
+   * Iterator pointing to the next RFIO filename;
+   */
+  FilenameList::const_iterator m_filenameItor;
+
+  /**
    * Pointer to a message handler function, where the handler function is a
    * member of this class.
    *
    * @param msg The aggregator message to be processed.
-   * @param socket The socket on which to reply to the aggregator.
+   * @param sock The socket on which to reply to the aggregator.
    * @return True if there is more work to be done else false.
    */
-  typedef bool (Recaller::*MsgHandler)(castor::IObject &msg,
-     castor::io::AbstractSocket &socket);
+  typedef bool (Recaller::*MsgHandler)(castor::IObject *msg,
+     castor::io::AbstractSocket &sock);
 
   /**
    * Map of CASTOR object type to message handler callback.
@@ -105,8 +110,8 @@ private:
    * The parameters of this method are documentated in the comments of the
    * Recaller::MsgHandler datatype.
    */
-  bool handleFileToRecallRequest(castor::IObject &msg,
-    castor::io::AbstractSocket &socket) throw(castor::exception::Exception);
+  bool handleFileToRecallRequest(castor::IObject *msg,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
    * FileRecalledNotification message handler.
@@ -114,8 +119,8 @@ private:
    * The parameters of this method are documentated in the comments of the
    * Recaller::MsgHandler datatype.
    */
-  bool handleFileRecalledNotification(castor::IObject &msg,
-    castor::io::AbstractSocket &socket) throw(castor::exception::Exception);
+  bool handleFileRecalledNotification(castor::IObject *msg,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
    * EndNotification message handler.
@@ -123,8 +128,8 @@ private:
    * The parameters of this method are documentated in the comments of the
    * Recaller::MsgHandler datatype.
    */
-  bool handleEndNotification(castor::IObject &msg,
-    castor::io::AbstractSocket &socket) throw(castor::exception::Exception);
+  bool handleEndNotification(castor::IObject *msg,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
    * The possible results of a set of recall session.
@@ -135,20 +140,6 @@ private:
     RESULT_MORE_TFSEQS_THAN_FILENAMES,
     RESULT_MORE_FILENAMES_THAN_TFSEQS
   };
-
-  /**
-   * Processes the specified file.
-   *
-   * @param tapeFseq The tape file sequence number to be processed.
-   * @param filename The RFIO filename to be processed.
-   */
-  void processFile(const uint32_t tapeFseq, const std::string &filename)
-    throw(castor::exception::Exception);
-
-  /**
-   * Tells the aggregator there are no more files to be processed.
-   */
-  void tellAggregatorNoMoreFiles() throw(castor::exception::Exception);
 
 }; // class Recaller
 
