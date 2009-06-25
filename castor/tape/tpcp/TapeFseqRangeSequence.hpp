@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/tpcp/Migrator.hpp
+ *                 castor/tape/tpcp/TapeFseqRangeSequence.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,43 +22,60 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TPCP_MIGRATOR_HPP
-#define CASTOR_TAPE_TPCP_MIGRATOR_HPP 1
+#ifndef CASTOR_TAPE_TPCP_TAPEFSEQRANGESEQUENCE_HPP
+#define CASTOR_TAPE_TPCP_TAPEFSEQRANGESEQUENCE_HPP 1
 
-#include "castor/tape/tpcp/ActionHandler.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/tape/tpcp/TapeFseqRange.hpp"
 
 namespace castor {
 namespace tape   {
 namespace tpcp   {
 
 /**
- * Responsible for carrying out the action of migrating files to tape.
+ * Generates a sequence of tape file sequence numbers from a range of tape file
+ * sequence numbers.
  */
-class Migrator : public ActionHandler {
+class TapeFseqRangeSequence {
 public:
 
   /**
-   * Constructor calling the ActionHandler constructor.
+   * Constructor.
    *
-   * See the header file of castor::tape::tpcp::ActionHandler for a description
-   * of the parameters.
+   * @param range The range from which the sequence is generated.
    */
-  Migrator(const bool debug, TapeFseqRangeList &tapeFseqRanges,
-    FilenameList &filenames, const vmgr_tape_info &vmgrTapeInfo,
-    const char *const dgn, const int volReqId,
-    castor::io::ServerSocket &callbackSocket) throw();
+  TapeFseqRangeSequence(TapeFseqRange &range) throw();
 
   /**
-   * See the header file of castor::tape::tpcp::ActionHandler for this method's
-   * documentation.
+   * Returns true if there is another tape file sequence number in the
+   * sequence.
    */
-  void run() throw(castor::exception::Exception);
+  bool hasMore() throw();
 
-}; // class Migrator
+  /**
+   * Returns the next  tape file sequence number in the sequence, or throws an
+   * exception if there isn't one.
+   */
+  uint32_t next() throw(castor::exception::Exception);
+
+
+private:
+
+  /**
+   * The range from which the sequence is generated.
+   */
+  TapeFseqRange m_range;
+
+  /**
+   * The value to be returned by a call to next().
+   */
+  uint32_t m_next;
+
+}; // class TapeFseqRangeSequence
 
 } // namespace tpcp
 } // namespace tape
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_TPCP_MIGRATOR_HPP
+#endif // CASTOR_TAPE_TPCP_TAPEFSEQRANGESEQUENCE_HPP

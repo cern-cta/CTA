@@ -63,12 +63,6 @@ castor::tape::tpcp::TpcpCommand::TpcpCommand() throw () :
   m_volReqId(0) {
   utils::setBytes(m_vmgrTapeInfo, '\0');
   utils::setBytes(m_dgn, '\0');
-
-  // Build the map of ActionHandlers
-  m_handlers[Action::READ]   = &m_recaller;
-  m_handlers[Action::WRITE]  = &m_migrator;
-  m_handlers[Action::DUMP]   = &m_dumper;
-  m_handlers[Action::VERIFY] = &m_verifier;
 }
 
 
@@ -259,6 +253,33 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
   while(optind < argc) {
     m_parsedCommandLine.filenames.push_back(argv[optind++]);
   }
+
+  // If the action to be performed is a recall
+  if(m_parsedCommandLine.action == Action::read) {
+    // Check that there is at least one file to be recalled
+    if(m_parsedCommandLine.tapeFseqRanges.size() == 0) {
+      castor::exception::InvalidArgument ex;
+
+      ex.getMessage()
+        << "There must be at least one tape file sequence number when "
+           "recalling";
+
+      throw ex;
+    }
+  }
+
+  // Check that there is no more than one tape file sequence range which goes
+  // to END of the tape
+  const unsigned int nbRangesWithEnd = countNbRangesWithEnd();
+  if(nbRangesWithEnd > 1) {
+    castor::exception::InvalidArgument ex;
+
+    ex.getMessage()
+      << "There cannot be more than one tape file sequence range whose upper "
+         "boundary is end of tape";
+
+    throw ex;
+  }
 }
 
 
@@ -294,7 +315,8 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
       std::cerr
         << std::endl
         << "Failed to parse the command-line:\n\n\t"
-        << ex.getMessage().str() << std::endl;
+        << ex.getMessage().str() << std::endl
+        << std::endl;
       castor::tape::tpcp::TpcpCommand::usage(std::cerr, TPCPPROGRAMNAME);
       std::cerr << std::endl;
       return 1;
@@ -360,6 +382,21 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
       os << "filenames = " << m_filenames << std::endl;
       os << std::endl;
       os << std::endl;
+    }
+
+    // Check that there are enough RFIO filenames to satisfy the minium number
+    // of tape file sequence numbers
+    const unsigned int minNbFiles = calculateMinNbOfFiles();
+    if(m_filenames.size() < minNbFiles) {
+      castor::exception::InvalidArgument ex;
+
+      ex.getMessage()
+        << "There are not enough RFIO filenames to cover the minimum number "
+           "of tape file sequence numbers"
+           ": Actual=" << m_filenames.size() << " Expected minimum="
+        << minNbFiles;
+
+      throw ex;
     }
 
     // Get information about the tape to be used from the VMGR
@@ -579,24 +616,9 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
       os << std::endl;
     }
 
-    // Find the appropriate ActionHandler
-    ActionHandler *handler = NULL;
-    {
-      ActionHandlerMap::iterator itor = m_handlers.find(
-        m_parsedCommandLine.action.value());
-      if(itor == m_handlers.end()) {
-        TAPE_THROW_EX(castor::exception::Internal,
-          ": Failed to find ActionHandler: Action="
-          << m_parsedCommandLine.action);
-      }
-      handler = itor->second;
-    }
-
-    // Run the action handler
+    // Dispatch the action to the appropriate ActionHandler
     try {
-      handler->run(m_parsedCommandLine.debugOptionSet,
-        m_parsedCommandLine.tapeFseqRanges, m_filenames, m_vmgrTapeInfo, m_dgn,
-        m_volReqId, m_callbackSocket);
+      dispatchAction();
     } catch(castor::exception::Exception &ex) {
       castor::exception::Exception ex2(ECANCELED);
 
@@ -752,17 +774,19 @@ void castor::tape::tpcp::TpcpCommand::parseTapeFileSequence(
 
 
 //------------------------------------------------------------------------------
-// countMinNumberOfFiles
+// calculateMinNbOfFiles
 //------------------------------------------------------------------------------
-int castor::tape::tpcp::TpcpCommand::countMinNumberOfFiles()
+unsigned int castor::tape::tpcp::TpcpCommand::calculateMinNbOfFiles()
   throw (castor::exception::Exception) {
   
-  int count = 0;
+  unsigned int count = 0;
+
   // Loop through all ranges
   for(TapeFseqRangeList::const_iterator itor=
     m_parsedCommandLine.tapeFseqRanges.begin();
     itor!=m_parsedCommandLine.tapeFseqRanges.end(); itor++) {
   
+    // If upper != END of tape
     if(itor->upper != 0 ){
         count += (itor->upper - itor->lower) + 1;
     } else {
@@ -774,12 +798,13 @@ int castor::tape::tpcp::TpcpCommand::countMinNumberOfFiles()
 
 
 //------------------------------------------------------------------------------
-// nbRangesWithEnd
+// countNbRangesWithEnd
 //------------------------------------------------------------------------------
-int castor::tape::tpcp::TpcpCommand::nbRangesWithEnd()
+unsigned int castor::tape::tpcp::TpcpCommand::countNbRangesWithEnd()
   throw (castor::exception::Exception) {
 
-  int count = 0;
+  unsigned int count = 0;
+
   // Loop through all ranges
   for(TapeFseqRangeList::const_iterator itor=
     m_parsedCommandLine.tapeFseqRanges.begin();
@@ -904,4 +929,58 @@ void castor::tape::tpcp::TpcpCommand::requestDriveFromVdqm(const int mode)
 
     throw ex;
   }
+}
+
+
+//------------------------------------------------------------------------------
+// dispatchAction
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::TpcpCommand::dispatchAction()
+  throw(castor::exception::Exception) {
+
+  switch(m_parsedCommandLine.action.value()) {
+  case Action::READ:
+    {
+      Recaller handler(m_parsedCommandLine.debugOptionSet,
+        m_parsedCommandLine.tapeFseqRanges, m_filenames, m_vmgrTapeInfo, m_dgn,
+        m_volReqId, m_callbackSocket);
+
+      handler.run();
+    }
+    break;
+  case Action::WRITE:
+    {
+      Migrator handler(m_parsedCommandLine.debugOptionSet,
+        m_parsedCommandLine.tapeFseqRanges, m_filenames, m_vmgrTapeInfo, m_dgn,
+        m_volReqId, m_callbackSocket);
+
+      handler.run();
+    }
+    break;
+  case Action::DUMP:
+    {
+      Dumper handler(m_parsedCommandLine.debugOptionSet,
+        m_parsedCommandLine.tapeFseqRanges, m_filenames, m_vmgrTapeInfo, m_dgn,
+        m_volReqId, m_callbackSocket);
+
+      handler.run();
+    }
+    break;
+  case Action::VERIFY:
+    {
+      Verifier handler(m_parsedCommandLine.debugOptionSet,
+        m_parsedCommandLine.tapeFseqRanges, m_filenames, m_vmgrTapeInfo, m_dgn,
+        m_volReqId, m_callbackSocket);
+
+      handler.run();
+    }
+    break;
+  default:
+    {
+      TAPE_THROW_EX(castor::exception::Internal,
+        ": Failed to find ActionHandler for Action:  Action="
+        << m_parsedCommandLine.action);
+    }
+    break;
+  } // switch(m_parsedCommandLine.action.value())
 }

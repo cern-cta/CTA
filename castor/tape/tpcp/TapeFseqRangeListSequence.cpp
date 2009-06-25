@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/tpcp/Dumper.cpp
+ *                 castor/tape/tpcp/TapeFseqRangeListSequence.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,7 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
  
-#include "castor/tape/tpcp/Dumper.hpp"
+#include "castor/tape/tpcp/TapeFseqRangeListSequence.hpp"
 
 #include <errno.h>
 
@@ -30,23 +30,39 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tpcp::Dumper::Dumper(const bool debug,
-  TapeFseqRangeList &tapeFseqRanges, FilenameList &filenames,
-  const vmgr_tape_info &vmgrTapeInfo, const char *const dgn,
-  const int volReqId, castor::io::ServerSocket &callbackSocket) throw() :
-  ActionHandler(debug, tapeFseqRanges, filenames, vmgrTapeInfo, dgn, volReqId,
-    callbackSocket) {
+castor::tape::tpcp::TapeFseqRangeListSequence::TapeFseqRangeListSequence(
+  TapeFseqRangeList &list) throw(castor::exception::Exception) :
+  m_list(list), m_rangeItor(list.begin()), m_nbSequence(*(list.begin())) {
 }
 
 
 //------------------------------------------------------------------------------
-// run
+// hasMore
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::Dumper::run() throw(castor::exception::Exception) {
+bool castor::tape::tpcp::TapeFseqRangeListSequence::hasMore() throw() {
 
-  castor::exception::Exception ex(ECANCELED);
+  return m_nbSequence.hasMore() || m_rangeItor != m_list.end();
+}
 
-  ex.getMessage() << "Dumper not implemented";
 
-  throw ex;
+//------------------------------------------------------------------------------
+// next
+//------------------------------------------------------------------------------
+uint32_t castor::tape::tpcp::TapeFseqRangeListSequence::next()
+  throw(castor::exception::Exception) {
+
+  if(!hasMore()) {
+    castor::exception::Exception ex(ECANCELED);
+
+    ex.getMessage()
+      << "Invalid operation: Sequence::next() called after end of sequence";
+
+    throw ex;
+  }
+
+  if(!m_nbSequence.hasMore()) {
+    m_nbSequence = *(++m_rangeItor);
+  }
+
+  return m_nbSequence.next();
 }

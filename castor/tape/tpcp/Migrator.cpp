@@ -28,13 +28,21 @@
 
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::tape::tpcp::Migrator::Migrator(const bool debug,
+  TapeFseqRangeList &tapeFseqRanges, FilenameList &filenames,
+  const vmgr_tape_info &vmgrTapeInfo, const char *const dgn,
+  const int volReqId, castor::io::ServerSocket &callbackSocket) throw() :
+  ActionHandler(debug, tapeFseqRanges, filenames, vmgrTapeInfo, dgn, volReqId,
+    callbackSocket) {
+}
+
+
+//------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::Migrator::run(const bool debug,
-  TapeFseqRangeList &tapeFseqRanges, FilenameList &filenames,
-  const vmgr_tape_info &vmgrTapeInfo, const char *dgn, const int volReqId,
-  castor::io::ServerSocket &callbackSocket)
-  throw(castor::exception::Exception) {
+void castor::tape::tpcp::Migrator::run() throw(castor::exception::Exception) {
 
   castor::exception::Exception ex(ECANCELED);
 

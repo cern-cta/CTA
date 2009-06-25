@@ -45,7 +45,7 @@ class ActionHandler {
 public:
 
   /**
-   * Performs the action.
+   * Constructor.
    *
    * @param debug True if debug messages should be displayed.
    * @param tapeFseqRanges The list of tape file sequence ranges to be
@@ -55,29 +55,62 @@ public:
    * to be used.
    * @param dgn The DGN of the tape to be worked on.
    * @param volReqId The volume request ID returned by the VDQM in response to
-   * to the request for a drive.
+   * the request for a drive.
    * @param callbackSocket The aggregator callback socket.
    */
-  virtual void run(const bool debug, TapeFseqRangeList &tapeFseqRanges,
+  ActionHandler(const bool debug, TapeFseqRangeList &tapeFseqRanges,
     FilenameList &filenames, const vmgr_tape_info &vmgrTapeInfo,
-    const char *dgn, const int volReqId,
-    castor::io::ServerSocket &callbackSocket)
-    throw(castor::exception::Exception) = 0;
+    const char *const dgn, const int volReqId,
+    castor::io::ServerSocket &callbackSocket) throw();
+
+  /**
+   * Performs the action.
+   */
+  virtual void run() throw(castor::exception::Exception) = 0;
 
 
 protected:
 
   /**
-   * Acknowledges the end of the session to the aggregator.
-   *
-   * @param debug True if debug messages should be displayed.
-   * @param volReqId The volume request ID returned by the VDQM in response to
-   * to the request for a drive.
-   * @param callbackSocket The aggregator callback socket.
+   * True if debug messages should be displayed.
    */
-  void acknowledgeEndOfSession(const bool debug, const int volReqId,
-    castor::io::ServerSocket &callbackSocket)
-    throw(castor::exception::Exception);
+  const bool m_debug;
+
+  /**
+   * The list of tape file sequence ranges to be processed.
+   */
+  TapeFseqRangeList &m_tapeFseqRanges;
+
+  /**
+   * The list of RFIO filenames to be processed.
+   */
+  FilenameList &m_filenames;
+
+  /**
+   *  The information retrieved from the VMGR about the tape to be used.
+   */
+  const vmgr_tape_info &m_vmgrTapeInfo;
+
+  /**
+   * The DGN of the tape to be worked on.
+   */
+  const char *const m_dgn;
+
+  /**
+   * The volume request ID returned by the VDQM in response to the request for
+   * a drive.
+   */
+  const int m_volReqId;
+
+  /**
+   * The aggregator callback socket.
+   */
+  castor::io::ServerSocket &m_callbackSocket;
+
+  /**
+   * Acknowledges the end of the session to the aggregator.
+   */
+  void acknowledgeEndOfSession() throw(castor::exception::Exception);
 
 }; // class ActionHandler
 

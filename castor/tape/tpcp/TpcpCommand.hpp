@@ -118,37 +118,6 @@ private:
   int m_volReqId;
 
   /**
-   * ActionHandler responsible for performing the READ tape action.
-   */
-  Recaller m_recaller;
-
-  /**
-   * ActionHandler responsible for performing the WRITE tape action.
-   */
-  Migrator m_migrator;
-
-  /**
-   * ActionHandler responsible for performing the DUMP tape action.
-   */
-  Dumper m_dumper;
-
-  /**
-   * ActionHandler responsible for performing the VERIFY tape action.
-   */
-  Verifier m_verifier;
-
-  /**
-   * Datatype for the map of ActionHandler mapping Action value to
-   * ActionHandler.
-   */
-  typedef std::map<Action::Value, ActionHandler*> ActionHandlerMap;
-
-  /**
-   * Map of ActionHandlers mapping Action value to ActionHandler.
-   */
-  ActionHandlerMap m_handlers;
-
-  /**
    * Writes the command-line usage message of tpcp onto the specified output
    * stream.
    *
@@ -191,16 +160,20 @@ private:
     throw (castor::exception::Exception);
 
   /**
-   * Count the minimum number of files specified in the tape file ranges
-   * provided as a parameter
+   * Calculate the minimum number of files specified in the tape file
+   * ranges provided as a command-line parameter.
+   *
+   * @return The minimum number of files.
    */
-  int countMinNumberOfFiles() throw (castor::exception::Exception);
+  unsigned int calculateMinNbOfFiles() throw (castor::exception::Exception);
 
   /**
-   * Count the number of ranges that contains the upper boundary "end of 
-   * tape" ('m-').
+   * Count the number of ranges that contain the upper boundary "end of tape"
+   * ('m-').
+   *
+   * @return The number of ranges that contain the upper boundary "end of tape".
    */
-  int nbRangesWithEnd() throw (castor::exception::Exception);
+  unsigned int countNbRangesWithEnd() throw (castor::exception::Exception);
 
   /**
    * Retrieves information about the specified tape from the VMGR.
@@ -236,8 +209,13 @@ private:
    *
    * @param mode The access mode, either WRITE_DISABLE or WRITE_ENABLE.
    */
-   void requestDriveFromVdqm(const int mode)
-     throw(castor::exception::Exception);
+  void requestDriveFromVdqm(const int mode)
+    throw(castor::exception::Exception);
+
+  /**
+   * Dispaches the action to be performed to the appropriate ActionHandler.
+   */
+  void dispatchAction() throw(castor::exception::Exception);
 
 }; // class TpcpCommand
 

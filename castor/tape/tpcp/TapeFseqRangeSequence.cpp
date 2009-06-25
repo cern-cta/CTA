@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/tpcp/Dumper.cpp
+ *                 castor/tape/tpcp/TapeFseqRangeSequence.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,7 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
  
-#include "castor/tape/tpcp/Dumper.hpp"
+#include "castor/tape/tpcp/TapeFseqRangeSequence.hpp"
 
 #include <errno.h>
 
@@ -30,23 +30,35 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tpcp::Dumper::Dumper(const bool debug,
-  TapeFseqRangeList &tapeFseqRanges, FilenameList &filenames,
-  const vmgr_tape_info &vmgrTapeInfo, const char *const dgn,
-  const int volReqId, castor::io::ServerSocket &callbackSocket) throw() :
-  ActionHandler(debug, tapeFseqRanges, filenames, vmgrTapeInfo, dgn, volReqId,
-    callbackSocket) {
+castor::tape::tpcp::TapeFseqRangeSequence::TapeFseqRangeSequence(
+  TapeFseqRange &range) throw() : m_range(range), m_next(range.lower) {
 }
 
 
 //------------------------------------------------------------------------------
-// run
+// hasMore
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::Dumper::run() throw(castor::exception::Exception) {
+bool castor::tape::tpcp::TapeFseqRangeSequence::hasMore() throw() {
 
-  castor::exception::Exception ex(ECANCELED);
+  // Until end of tape is represented by range.upper = 0
+  return m_range.upper == 0 || m_next <= m_range.upper;
+}
 
-  ex.getMessage() << "Dumper not implemented";
 
-  throw ex;
+//------------------------------------------------------------------------------
+// next
+//------------------------------------------------------------------------------
+uint32_t castor::tape::tpcp::TapeFseqRangeSequence::next()
+  throw(castor::exception::Exception) {
+
+  if(!hasMore()) {
+    castor::exception::Exception ex(ECANCELED);
+
+    ex.getMessage()
+      << "Invalid operation: Sequence::next() called after end of sequence";
+
+    throw ex;
+  }
+
+  return m_next++;
 }

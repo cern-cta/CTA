@@ -80,6 +80,8 @@ TPCPBIN_SRCS = \
   Recaller.cpp \
   TapeFseqRange.cpp \
   TapeFseqRangeList.cpp \
+  TapeFseqRangeListSequence.cpp \
+  TapeFseqRangeSequence.cpp \
   TpcpCommand.cpp \
   TpcpMain.cpp \
   Verifier.cpp \

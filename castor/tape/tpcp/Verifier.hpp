@@ -38,14 +38,21 @@ class Verifier : public ActionHandler {
 public:
 
   /**
+   * Constructor calling the ActionHandler constructor.
+   *
+   * See the header file of castor::tape::tpcp::ActionHandler for a description
+   * of the parameters.
+   */
+  Verifier(const bool debug, TapeFseqRangeList &tapeFseqRanges,
+    FilenameList &filenames, const vmgr_tape_info &vmgrTapeInfo,
+    const char *const dgn, const int volReqId,
+    castor::io::ServerSocket &callbackSocket) throw();
+
+  /**
    * See the header file of castor::tape::tpcp::ActionHandler for this method's
    * documentation.
    */
-  void run(const bool debug, TapeFseqRangeList &tapeFseqRanges,
-    FilenameList &filenames, const vmgr_tape_info &vmgrTapeInfo,
-    const char *dgn, const int volReqId,
-    castor::io::ServerSocket &callbackSocket)
-    throw(castor::exception::Exception);
+  void run() throw(castor::exception::Exception);
 
 }; // class Verifier
 

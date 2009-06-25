@@ -31,11 +31,26 @@
 
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::tape::tpcp::ActionHandler::ActionHandler(const bool debug,
+  TapeFseqRangeList &tapeFseqRanges, FilenameList &filenames,
+  const vmgr_tape_info &vmgrTapeInfo, const char *const dgn,
+  const int volReqId, castor::io::ServerSocket &callbackSocket) throw() :
+  m_debug(debug),
+  m_tapeFseqRanges(tapeFseqRanges),
+  m_filenames(filenames),
+  m_vmgrTapeInfo(vmgrTapeInfo),
+  m_dgn(dgn),
+  m_volReqId(volReqId),
+  m_callbackSocket(callbackSocket) {
+}
+
+
+//------------------------------------------------------------------------------
 // tellAggregatorNoMoreFiles
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::ActionHandler::acknowledgeEndOfSession(
-  const bool debug, const int volReqId,
-  castor::io::ServerSocket &callbackSocket)
+void castor::tape::tpcp::ActionHandler::acknowledgeEndOfSession()
   throw(castor::exception::Exception) {
 
   // Socket file descriptor for a callback connection from the aggregator
@@ -46,7 +61,7 @@ void castor::tape::tpcp::ActionHandler::acknowledgeEndOfSession(
     bool waitForCallback = true;
     while(waitForCallback) {
       try {
-        connectionSocketFd = net::acceptConnection(callbackSocket.socket(),
+        connectionSocketFd = net::acceptConnection(m_callbackSocket.socket(),
           WAITCALLBACKTIMEOUT);
 
         waitForCallback = false;
@@ -60,7 +75,7 @@ void castor::tape::tpcp::ActionHandler::acknowledgeEndOfSession(
 
   // If debug, then display a textual description of the aggregator
   // callback connection
-  if(debug) {
+  if(m_debug) {
     std::ostream &os = std::cout;
 
     utils::writeBanner(os, "ActionHandler: Aggregator connection");
@@ -96,7 +111,7 @@ void castor::tape::tpcp::ActionHandler::acknowledgeEndOfSession(
   }
 
   // If debug, then display reception of the EndNotification message
-  if(debug) {
+  if(m_debug) {
     std::ostream &os = std::cout;
 
     utils::writeBanner(os, "ActionHandler: Received EndNotification from "
@@ -107,7 +122,7 @@ void castor::tape::tpcp::ActionHandler::acknowledgeEndOfSession(
 
   // Create the NotificationAcknowledge message for the aggregator
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
-  acknowledge.setTransactionId(volReqId);
+  acknowledge.setTransactionId(m_volReqId);
 
   // Send the volume message to the aggregator
   callbackConnectionSocket.sendObject(acknowledge);
@@ -116,7 +131,7 @@ void castor::tape::tpcp::ActionHandler::acknowledgeEndOfSession(
   callbackConnectionSocket.close();
 
   // If debug, then display sending of the NotificationAcknowledge message
-  if(debug) {
+  if(m_debug) {
     std::ostream &os = std::cout;
 
     utils::writeBanner(os, "Sent NotificationAcknowledge to aggregator");

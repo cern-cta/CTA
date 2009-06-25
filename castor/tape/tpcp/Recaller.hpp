@@ -38,17 +38,32 @@ class Recaller : public ActionHandler {
 public:
 
   /**
+   * Constructor calling the ActionHandler constructor.
+   *
+   * See the header file of castor::tape::tpcp::ActionHandler for a description
+   * of the parameters.
+   */
+  Recaller(const bool debug, TapeFseqRangeList &tapeFseqRanges,
+    FilenameList &filenames, const vmgr_tape_info &vmgrTapeInfo,
+    const char *const dgn, const int volReqId,
+    castor::io::ServerSocket &callbackSocket) throw();
+
+  /**
    * See the header file of castor::tape::tpcp::ActionHandler for this method's
    * documentation.
    */
-  void run(const bool debug, TapeFseqRangeList &tapeFseqRanges,
-    FilenameList &filenames, const vmgr_tape_info &vmgrTapeInfo,
-    const char *dgn, const int volReqId,
-    castor::io::ServerSocket &callbackSocket)
-    throw(castor::exception::Exception);
+  void run() throw(castor::exception::Exception);
 
 
 private:
+
+
+  /**
+   * Handles a message from the aggregator.
+   *
+   * @return True if there is more work to be done, else false.
+   */
+  bool handleAnAggregatorMessage();
 
   /**
    * The possible results of calling processTapeFseqs.
@@ -62,50 +77,22 @@ private:
 
   /**
    * Processes the specified list of tape file sequence ranges.
-   *
-   * @param debug True if debug messages should be displayed.
-   * @param tapeFseqRanges The list of tape file sequence ranges to be
-   * processed.
-   * @param filenames The list of RFIO filenames to be processed.
-   * @param volReqId The volume request ID returned by the VDQM in response to
-   * to the request for a drive.
-   * @param callbackSocket The aggregator callback socket.
    */
-  ProcessTapeFseqsResult processTapeFseqs(const bool debug,
-    TapeFseqRangeList &tapeFseqRanges, FilenameList &filenames,
-    const int volReqId, castor::io::ServerSocket &callbackSocket)
-    throw(castor::exception::Exception);
+  ProcessTapeFseqsResult processTapeFseqs() throw(castor::exception::Exception);
 
   /**
    * Processes the specified file.
    *
-   * @param debug True if debug messages should be displayed.
    * @param tapeFseq The tape file sequence number to be processed.
    * @param filename The RFIO filename to be processed.
-   * @param volReqId The volume request ID returned by the VDQM in response to
-   * to the request for a drive.
-   * @param callbackSocket The aggregator callback socket.
    */
-  void processFile(const bool debug, const uint32_t tapeFseq,
-    const std::string &filename, const int volReqId,
-    castor::io::ServerSocket &callbackSocket)
+  void processFile(const uint32_t tapeFseq, const std::string &filename)
     throw(castor::exception::Exception);
 
   /**
    * Tells the aggregator there are no more files to be processed.
-   *
-   * @param debug True if debug messages should be displayed.
-   * @param tapeFseqRanges The list of tape file sequence ranges to be
-   * processed.
-   * @param filenames The list of RFIO filenames to be processed.
-   * @param volReqId The volume request ID returned by the VDQM in response to
-   * to the request for a drive.
-   * @param callbackSocket The aggregator callback socket.
    */
-  void tellAggregatorNoMoreFiles(bool debug, TapeFseqRangeList &tapeFseqRanges,
-    FilenameList &filenames, const int volReqId,
-    castor::io::ServerSocket &callbackSocket)
-    throw(castor::exception::Exception);
+  void tellAggregatorNoMoreFiles() throw(castor::exception::Exception);
 
 }; // class Recaller
 
