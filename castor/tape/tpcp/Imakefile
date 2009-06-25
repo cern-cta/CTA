@@ -72,10 +72,11 @@ TPCPBIN_SRCS = \
   ../net/net.cpp \
   ../utils/utils.cpp \
   Action.cpp \
-  DataMover.cpp \
   Dumper.cpp \
   FilenameList.cpp \
+  Migrator.cpp \
   ParsedCommandLine.cpp \
+  Recaller.cpp \
   TapeFseqRange.cpp \
   TapeFseqRangeList.cpp \
   TpcpCommand.cpp \

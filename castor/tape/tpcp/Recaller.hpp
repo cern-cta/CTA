@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/tpcp/DataMover.hpp
+ *                 castor/tape/tpcp/Recaller.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TPCP_DATAMOVER_HPP
-#define CASTOR_TAPE_TPCP_DATAMOVER_HPP 1
+#ifndef CASTOR_TAPE_TPCP_RECALLER_HPP
+#define CASTOR_TAPE_TPCP_RECALLER_HPP 1
 
 #include "castor/tape/tpcp/ActionHandler.hpp"
 
@@ -32,26 +32,26 @@ namespace tape   {
 namespace tpcp   {
 
 /**
- * Responsible for carrying out tape READ and WRITE actions.
+ * Responsible for carrying out the action of recalling files from tape.
  */
-class DataMover : public ActionHandler{
+class Recaller : public ActionHandler {
 public:
 
   /**
    * See the header file of castor::tape::tpcp::ActionHandler for this method's
    * documentation.
    */
-  void run(bool debug, Action &action,
-    TapeFseqRangeList &tapeFseqRanges, FilenameList &filenames,
-    const vmgr_tape_info &vmgrTapeInfo, const char *dgn, const int volReqId,
+  void run(bool debug, TapeFseqRangeList &tapeFseqRanges,
+    FilenameList &filenames, const vmgr_tape_info &vmgrTapeInfo,
+    const char *dgn, const int volReqId,
     castor::io::ServerSocket &callbackSocket)
     throw(castor::exception::Exception);
 
-
-}; // class DataMover
+}; // class Recaller
 
 } // namespace tpcp
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TPCP_DATAMOVER_HPP
+
+#endif // CASTOR_TAPE_TPCP_RECALLER_HPP

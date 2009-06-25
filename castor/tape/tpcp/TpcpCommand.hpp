@@ -30,10 +30,11 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include "castor/tape/tpcp/Action.hpp"
-#include "castor/tape/tpcp/DataMover.hpp"
+#include "castor/tape/tpcp/Migrator.hpp"
 #include "castor/tape/tpcp/Dumper.hpp"
 #include "castor/tape/tpcp/FilenameList.hpp"
 #include "castor/tape/tpcp/ParsedCommandLine.hpp"
+#include "castor/tape/tpcp/Recaller.hpp"
 #include "castor/tape/tpcp/Verifier.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/vmgr_api.h"
@@ -117,9 +118,14 @@ private:
   int m_volReqId;
 
   /**
-   * ActionHandler responsible for performing the READ and WRITE tape actions.
+   * ActionHandler responsible for performing the READ tape action.
    */
-  DataMover m_dataMover;
+  Recaller m_recaller;
+
+  /**
+   * ActionHandler responsible for performing the WRITE tape action.
+   */
+  Migrator m_migrator;
 
   /**
    * ActionHandler responsible for performing the DUMP tape action.

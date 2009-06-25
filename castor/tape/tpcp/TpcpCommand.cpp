@@ -65,8 +65,8 @@ castor::tape::tpcp::TpcpCommand::TpcpCommand() throw () :
   utils::setBytes(m_dgn, '\0');
 
   // Build the map of ActionHandlers
-  m_handlers[Action::READ]   = &m_dataMover;
-  m_handlers[Action::WRITE]  = &m_dataMover;
+  m_handlers[Action::READ]   = &m_recaller;
+  m_handlers[Action::WRITE]  = &m_migrator;
   m_handlers[Action::DUMP]   = &m_dumper;
   m_handlers[Action::VERIFY] = &m_verifier;
 }
@@ -320,6 +320,17 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
       return 0;
     }
 
+    // Abort if the requested action type is not yet supportd
+    if(m_parsedCommandLine.action != Action::read &&
+       m_parsedCommandLine.action != Action::write) {
+      castor::exception::Exception ex(ECANCELED);
+
+      ex.getMessage()
+        << "tpcp currently only supports the READ and WRITE actions";
+
+      throw ex;
+    }
+
     // Fill the list of filenames to be processed by the action handlers.
     // The list of filenames will either come from the command-line arguments
     // or (exclusive or) from a "filelist" file specified with the
@@ -498,18 +509,18 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
       os << std::endl;
     }
 
-    // Wrap the connection socket descriptor in CASTOR framework socket in
+    // Wrap the connection socket descriptor in a CASTOR framework socket in
     // order to get access to the framework marshalling and un-marshalling
     // methods
     castor::io::AbstractTCPSocket callbackConnectionSocket(connectionSocketFd);
 
-    // Read in the first object sent by the aggregator
+    // Read in the object sent by the aggregator
     std::auto_ptr<castor::IObject> obj(callbackConnectionSocket.readObject());
 
     // Pointer to the received object with the object's type
     tapegateway::VolumeRequest *volumeRequest = NULL;
 
-    // Cast the object to its type, i.e. VolumeRequest
+    // Cast the object to its type
     volumeRequest = dynamic_cast<tapegateway::VolumeRequest*>(obj.get());
     if(volumeRequest == NULL) {
       castor::exception::InvalidArgument ex;
@@ -517,9 +528,18 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
       ex.getMessage()
         << "Received the wrong type of object from the aggregator"
         << ": Actual=" << utils::objectTypeToString(obj->type())
-        << " Expected=OBJ_VolumeRequest";
+        << " Expected=VolumeRequest";
 
       throw ex;
+    }
+
+    // If debug, then display reception of the VolumeRequest message
+    if(m_parsedCommandLine.debugOptionSet) {
+      std::ostream &os = std::cout;
+
+      utils::writeBanner(os, "Received VolumeRequest from aggregator");
+      os << std::endl;
+      os << std::endl;
     }
 
     // Check the volume request ID of the VolumeRequest object matches that of
@@ -531,17 +551,6 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
         << "Received the wrong volume request ID from the aggregator"
         << ": Actual=" << volumeRequest->vdqmVolReqId()
         << " Expected=" <<  m_volReqId;
-
-      throw ex;
-    }
-
-    // Bomb out if the requested action type is not yet supportd
-    if(m_parsedCommandLine.action != Action::read &&
-       m_parsedCommandLine.action != Action::write) {
-      castor::exception::Exception ex(ECANCELED);
-
-      ex.getMessage()
-        << "tpcp currently only supports the READ and WRITE actions";
 
       throw ex;
     }
@@ -562,6 +571,15 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     // Close the connection to the aggregator
     callbackConnectionSocket.close();
 
+    // If debug, then display sending of the Volume message
+    if(m_parsedCommandLine.debugOptionSet) {
+      std::ostream &os = std::cout;
+
+      utils::writeBanner(os, "Sent Volume to aggregator");
+      os << std::endl;
+      os << std::endl;
+    }
+
     // Find the appropriate ActionHandler
     ActionHandler *handler = NULL;
     {
@@ -578,8 +596,8 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     // Run the action handler
     try {
       handler->run(m_parsedCommandLine.debugOptionSet,
-        m_parsedCommandLine.action, m_parsedCommandLine.tapeFseqRanges,
-        m_filenames, m_vmgrTapeInfo, m_dgn, m_volReqId, m_callbackSocket);
+        m_parsedCommandLine.tapeFseqRanges, m_filenames, m_vmgrTapeInfo, m_dgn,
+        m_volReqId, m_callbackSocket);
     } catch(castor::exception::Exception &ex) {
       castor::exception::Exception ex2(ECANCELED);
 

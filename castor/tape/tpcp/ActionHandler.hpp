@@ -45,11 +45,9 @@ class ActionHandler {
 public:
 
   /**
-   * Performs the action as laid out in the specified parsed command-line
-   * arguments.
+   * Performs the action.
    *
    * @param debug True if debug messages should be displayed.
-   * @param action The Action to be performed.
    * @param tapeFseqRanges The list of tape file sequence ranges to be
    * processed.
    * @param filenames The list of RFIO filenames to be processed.
@@ -60,9 +58,9 @@ public:
    * to the request for a drive.
    * @param callbackSocket The aggregator callback socket.
    */
-  virtual void run(bool debug, Action &action,
-    TapeFseqRangeList &tapeFseqRanges, FilenameList &filenames,
-    const vmgr_tape_info &vmgrTapeInfo, const char *dgn, const int volReqId,
+  virtual void run(bool debug, TapeFseqRangeList &tapeFseqRanges,
+    FilenameList &filenames, const vmgr_tape_info &vmgrTapeInfo,
+    const char *dgn, const int volReqId,
     castor::io::ServerSocket &callbackSocket)
     throw(castor::exception::Exception) = 0;
 

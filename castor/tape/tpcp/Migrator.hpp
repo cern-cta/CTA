@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/tpcp/Dumper.cpp
+ *                 castor/tape/tpcp/Migrator.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -21,24 +21,37 @@
  *
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
- 
-#include "castor/tape/tpcp/Dumper.hpp"
 
-#include <errno.h>
+#ifndef CASTOR_TAPE_TPCP_MIGRATOR_HPP
+#define CASTOR_TAPE_TPCP_MIGRATOR_HPP 1
+
+#include "castor/tape/tpcp/ActionHandler.hpp"
+
+namespace castor {
+namespace tape   {
+namespace tpcp   {
+
+/**
+ * Responsible for carrying out the action of migrating files to tape.
+ */
+class Migrator : public ActionHandler {
+public:
+
+  /**
+   * See the header file of castor::tape::tpcp::ActionHandler for this method's
+   * documentation.
+   */
+  void run(bool debug, TapeFseqRangeList &tapeFseqRanges,
+    FilenameList &filenames, const vmgr_tape_info &vmgrTapeInfo,
+    const char *dgn, const int volReqId,
+    castor::io::ServerSocket &callbackSocket)
+    throw(castor::exception::Exception);
+
+}; // class Migrator
+
+} // namespace tpcp
+} // namespace tape
+} // namespace castor
 
 
-//------------------------------------------------------------------------------
-// run
-//------------------------------------------------------------------------------
-void castor::tape::tpcp::Dumper::run(bool debug,
-  TapeFseqRangeList &tapeFseqRanges, FilenameList &filenames,
-  const vmgr_tape_info &vmgrTapeInfo, const char *dgn, const int volReqId,
-  castor::io::ServerSocket &callbackSocket)
-  throw(castor::exception::Exception) {
-
-  castor::exception::Exception ex(ECANCELED);
-
-  ex.getMessage() << "Dumper not implemented";
-
-  throw ex;
-}
+#endif // CASTOR_TAPE_TPCP_MIGRATOR_HPP

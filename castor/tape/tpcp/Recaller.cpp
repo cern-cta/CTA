@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/tpcp/Dumper.cpp
+ *                 castor/tape/tpcp/Recaller.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,7 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
  
-#include "castor/tape/tpcp/Dumper.hpp"
+#include "castor/tape/tpcp/Recaller.hpp"
 
 #include <errno.h>
 
@@ -30,7 +30,7 @@
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::Dumper::run(bool debug,
+void castor::tape::tpcp::Recaller::run(bool debug,
   TapeFseqRangeList &tapeFseqRanges, FilenameList &filenames,
   const vmgr_tape_info &vmgrTapeInfo, const char *dgn, const int volReqId,
   castor::io::ServerSocket &callbackSocket)
@@ -38,7 +38,7 @@ void castor::tape::tpcp::Dumper::run(bool debug,
 
   castor::exception::Exception ex(ECANCELED);
 
-  ex.getMessage() << "Dumper not implemented";
+  ex.getMessage() << "Recaller not implemented";
 
   throw ex;
 }
