@@ -1,5 +1,5 @@
 /*******************************************************************
- * @(#)$RCSfile: oracleMonitoring.schema.sql,v $ $Revision: 1.2 $ $Date: 2009/06/19 12:27:14 $ $Author: waldron $
+ * @(#)$RCSfile: oracleMonitoring.schema.sql,v $ $Revision: 1.3 $ $Date: 2009/06/25 06:39:17 $ $Author: waldron $
  * Schema creation code for Monitoring tables
  *
  * @author Castor Dev team, castor-dev@cern.ch
@@ -40,3 +40,4 @@ INSERT INTO ObjStatus VALUES ('DiskServer', 2, 'DISABLED');
 INSERT INTO ObjStatus VALUES ('FileSystem', 0, 'PRODUCTION');
 INSERT INTO ObjStatus VALUES ('FileSystem', 1, 'DRAINING');
 INSERT INTO ObjStatus VALUES ('FileSystem', 2, 'DISABLED');
+
