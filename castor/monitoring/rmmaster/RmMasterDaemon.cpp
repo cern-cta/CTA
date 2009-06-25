@@ -222,7 +222,7 @@ castor::monitoring::rmmaster::RmMasterDaemon::RmMasterDaemon() :
 
     // Database actuator thread
     { 32, "DatabaseActuator thread running" },
-    { 33, "DatabaseAcutator thread created" },
+    { 33, "DatabaseActuator thread created" },
     { 44, "Failed to synchronise shared memory with stager database" },
     { 47, "Assuming role as production RmMaster server. LSF failover detected" },
     { 48, "Assuming role as slave RmMaster server. LSF failover detected" },

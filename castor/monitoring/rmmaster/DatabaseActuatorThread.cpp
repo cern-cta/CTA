@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DatabaseActuatorThread.cpp,v $ $Author: sponcec3 $
+ * @(#)$RCSfile: DatabaseActuatorThread.cpp,v $ $Author: waldron $
  *
  * The DatabaseActuator thread of the RmMaster daemon. It updates the stager
  * database with monitoring data
@@ -44,7 +44,7 @@ castor::monitoring::rmmaster::DatabaseActuatorThread::DatabaseActuatorThread
   m_rmMasterService(0),
   m_clusterStatus(clusterStatus),
   m_prevMasterName("") {
-  // "DatabaseAcutator thread created"
+  // "DatabaseActuator thread created"
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 33, 0, 0);
 }
 
