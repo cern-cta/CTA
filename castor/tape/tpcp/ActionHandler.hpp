@@ -58,11 +58,26 @@ public:
    * to the request for a drive.
    * @param callbackSocket The aggregator callback socket.
    */
-  virtual void run(bool debug, TapeFseqRangeList &tapeFseqRanges,
+  virtual void run(const bool debug, TapeFseqRangeList &tapeFseqRanges,
     FilenameList &filenames, const vmgr_tape_info &vmgrTapeInfo,
     const char *dgn, const int volReqId,
     castor::io::ServerSocket &callbackSocket)
     throw(castor::exception::Exception) = 0;
+
+
+protected:
+
+  /**
+   * Acknowledges the end of the session to the aggregator.
+   *
+   * @param debug True if debug messages should be displayed.
+   * @param volReqId The volume request ID returned by the VDQM in response to
+   * to the request for a drive.
+   * @param callbackSocket The aggregator callback socket.
+   */
+  void acknowledgeEndOfSession(const bool debug, const int volReqId,
+    castor::io::ServerSocket &callbackSocket)
+    throw(castor::exception::Exception);
 
 }; // class ActionHandler
 

@@ -30,7 +30,7 @@
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::Verifier::run(bool debug,
+void castor::tape::tpcp::Verifier::run(const bool debug,
   TapeFseqRangeList &tapeFseqRanges, FilenameList &filenames,
   const vmgr_tape_info &vmgrTapeInfo, const char *dgn, const int volReqId,
   castor::io::ServerSocket &callbackSocket)

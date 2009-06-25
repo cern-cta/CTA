@@ -41,7 +41,7 @@ public:
    * See the header file of castor::tape::tpcp::ActionHandler for this method's
    * documentation.
    */
-  void run(bool debug, TapeFseqRangeList &tapeFseqRanges,
+  void run(const bool debug, TapeFseqRangeList &tapeFseqRanges,
     FilenameList &filenames, const vmgr_tape_info &vmgrTapeInfo,
     const char *dgn, const int volReqId,
     castor::io::ServerSocket &callbackSocket)

@@ -557,7 +557,6 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
 
     // Create the volume message for the aggregator
     castor::tape::tapegateway::Volume volumeMsg;
-
     volumeMsg.setVid(m_vmgrTapeInfo.vid);
     volumeMsg.setMode(m_parsedCommandLine.action == Action::write ?
       WRITE_ENABLE : WRITE_DISABLE);
