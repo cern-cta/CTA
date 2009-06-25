@@ -44,6 +44,7 @@
 #include "castor/stager/StageUpdateNextRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
+#include <rfcntl.h>
 #include <string>
 
 //------------------------------------------------------------------------------
@@ -92,7 +93,7 @@ void castor::io::StreamStageUpdateNextRequestCnv::createRep(castor::IAddress* ad
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
   ad->stream() << obj->parentUuid();
-  ad->stream() << obj->flags();
+  ad->stream() << htolopnflg(obj->flags());
   ad->stream() << obj->userName();
   ad->stream() << obj->euid();
   ad->stream() << obj->egid();
@@ -122,6 +123,7 @@ castor::IObject* castor::io::StreamStageUpdateNextRequestCnv::createObj(castor::
   object->setParentUuid(parentUuid);
   u_signed64 flags;
   ad->stream() >> flags;
+  flags = ltohopnflg(flags);
   object->setFlags(flags);
   std::string userName;
   ad->stream() >> userName;
