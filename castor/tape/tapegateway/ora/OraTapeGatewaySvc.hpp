@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2009/05/18 13:52:38 $ $Author: gtaur $
+ * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2009/06/25 08:08:31 $ $Author: gtaur $
  *
  * Implementation of the ITapeGatewaySvc for Oracle
  *
@@ -223,22 +223,6 @@ namespace castor {
 	
 	virtual castor::stager::Tape updateAfterFailure(FileErrorReport& failure) throw (castor::exception::Exception);
 
-
-      private:
-	
-	/*
-	 * Delete a segment which is not anymore in the nameserver 
-	 */
-
-	virtual void  invalidateSegment(castor::tape::tapegateway::FileToRecall& file, int errorCode) throw (castor::exception::Exception); 
-
-
-	/*
-	 * Delete a tapecopy which is not anymore in the nameserver 
-	 */
-
-	virtual void  invalidateTapeCopy(castor::tape::tapegateway::FileToMigrate& file, int errorCode) throw (castor::exception::Exception); 
-
       private:
 
         /// SQL statement for function getStreamsToResolve
@@ -348,18 +332,6 @@ namespace castor {
 
 	/// SQL statement for function updateDbEndTape
 	oracle::occi::Statement *m_updateDbEndTapeStatement;
-
-	// SQL statement object for function invalidateSegment
-        static const std::string s_invalidateSegmentStatementString;
-
-        /// SQL statement object for function invalidateSegmnet  
-        oracle::occi::Statement *m_invalidateSegmentStatement;
-
-	// SQL statement object for function invalidateTapeCopy
-        static const std::string s_invalidateTapeCopyStatementString;
-
-        /// SQL statement object for function invalidateTapeCopy  
-        oracle::occi::Statement *m_invalidateTapeCopyStatement;
 
 	// SQL statement object for function getSegmentInformation
         static const std::string s_getSegmentInformationStatementString;

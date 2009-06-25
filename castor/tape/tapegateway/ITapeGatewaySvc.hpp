@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeGatewaySvc.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2009/05/11 10:02:07 $ $Author: gtaur $
+ * @(#)$RCSfile: ITapeGatewaySvc.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2009/06/25 08:08:30 $ $Author: gtaur $
  *
  * This class provides methods related to tape handling
  *
@@ -207,19 +207,6 @@ namespace castor {
 	 */
 
 	virtual castor::stager::Tape updateAfterFailure(FileErrorReport& failure)=0;
-
-      private:
-	/*
-	 * Delete a segment which is not anymore in the nameserver 
-	 */
-
-	virtual void  invalidateSegment(castor::tape::tapegateway::FileToRecall& file, int errorCode) throw (castor::exception::Exception)=0; 
-	
-	/*
-	 * Delete a tapecopy which is not in the nameserver
-	 */
-
-	virtual void  invalidateTapeCopy(castor::tape::tapegateway::FileToMigrate& file, int errorCode) throw (castor::exception::Exception)=0;
 
       }; // end of class ITapeGatewaySvc
     } // end of namespace tapegateway

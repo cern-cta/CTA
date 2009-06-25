@@ -120,12 +120,6 @@ const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_updateDbS
 /// SQL statement for function updateDbEndTape
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_updateDbEndTapeStatementString="BEGIN updateDbEndTape(:1,:2,:3);END;";
 
-/// SQL statement for function invalidateSegment
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_invalidateSegmentStatementString="BEGIN invalidateSegment(:1,:2,:3,:4,:5);END;";
-
-/// SQL statement for function invalidateTapeCopy
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_invalidateTapeCopyStatementString="BEGIN invalidateTapeCopy(:1,:2,:3,:4,:5);END;";
-
 /// SQL statement for function getSegmentInformation
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getSegmentInformationStatementString="BEGIN getSegmentInformation(:1,:2,:3,:4,:5,:6,:7);END;";
 
@@ -157,8 +151,6 @@ castor::tape::tapegateway::ora::OraTapeGatewaySvc::OraTapeGatewaySvc(const std::
   m_getRepackVidAndFileInformationStatement(0),
   m_updateDbStartTapeStatement(0),
   m_updateDbEndTapeStatement(0),
-  m_invalidateSegmentStatement(0),
-  m_invalidateTapeCopyStatement(0),
   m_getSegmentInformationStatement(0),
   m_updateAfterFailureStatement(0)
 {
@@ -212,8 +204,6 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
     if ( m_getRepackVidAndFileInformationStatement ) deleteStatement(m_getRepackVidAndFileInformationStatement);
     if ( m_updateDbStartTapeStatement ) deleteStatement(m_updateDbStartTapeStatement);
     if ( m_updateDbEndTapeStatement ) deleteStatement(m_updateDbEndTapeStatement);
-    if ( m_invalidateSegmentStatement) deleteStatement(m_invalidateSegmentStatement);
-    if ( m_invalidateTapeCopyStatement ) deleteStatement(m_invalidateTapeCopyStatement);
     if ( m_getSegmentInformationStatement )  deleteStatement(m_getSegmentInformationStatement);
     if ( m_updateAfterFailureStatement ) deleteStatement(m_updateAfterFailureStatement);
   } catch (oracle::occi::SQLException e) {};
@@ -238,8 +228,6 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
   m_getRepackVidAndFileInformationStatement = 0;
   m_updateDbStartTapeStatement = 0;
   m_updateDbEndTapeStatement = 0; 
-  m_invalidateSegmentStatement = 0;
-  m_invalidateTapeCopyStatement = 0;
   m_getSegmentInformationStatement = 0;
   m_updateAfterFailureStatement = 0;
 }
@@ -900,7 +888,16 @@ castor::tape::tapegateway::FileToMigrate* castor::tape::tapegateway::ora::OraTap
 	  
 
 	  try {
-	    invalidateTapeCopy(*result, e.code());
+
+	    
+	    FileErrorReport failure;
+	    failure.setTransactionId(result->transactionId()); 
+	    failure.setFileid(result->fileid());
+	    failure.setNshost(result->nshost());
+	    failure.setFseq(result->fseq());
+	    failure.setErrorCode(e.code());
+	    updateAfterFailure(failure);
+
 	  } catch (castor::exception::Exception ex){
 
 	    // just log the error
@@ -1109,8 +1106,13 @@ castor::tape::tapegateway::FileToRecall* castor::tape::tapegateway::ora::OraTape
 	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 88, 2, params);
 
 	  try {
-
-	    invalidateSegment(*result, e.code());
+	    FileErrorReport failure;
+	    failure.setTransactionId(result->transactionId()); 
+	    failure.setFileid(result->fileid());
+	    failure.setNshost(result->nshost());
+	    failure.setFseq(result->fseq());
+	    failure.setErrorCode(e.code());
+	    updateAfterFailure(failure);
 	    
 	  } catch (castor::exception::Exception ex){
 
@@ -1737,81 +1739,6 @@ castor::stager::Tape*  castor::tape::tapegateway::ora::OraTapeGatewaySvc::update
   return result;
 
 } 
-
-//----------------------------------------------------------------------------
-// invalidateSegment
-//----------------------------------------------------------------------------
-
-void castor::tape::tapegateway::ora::OraTapeGatewaySvc::invalidateSegment(castor::tape::tapegateway::FileToRecall& file, int errorCode) throw (castor::exception::Exception){
- 
- try {
-    // Check whether the statements are ok
-
-    if (0 == m_invalidateSegmentStatement) {
-      m_invalidateSegmentStatement =
-        createStatement(s_invalidateSegmentStatementString);
- 
-    }
-
-    m_invalidateSegmentStatement->setDouble(1,(double)file.fileid());
-    m_invalidateSegmentStatement->setString(2,file.nshost());
-    m_invalidateSegmentStatement->setDouble(3,(double)file.transactionId());
-    m_invalidateSegmentStatement->setInt(4,file.fseq());
-    m_invalidateSegmentStatement->setInt(5,errorCode);
-
-    // execute the statement 
-
-    m_invalidateSegmentStatement->executeUpdate();
-
-
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in invalidate segment"
-      << std::endl << e.what();
-    throw ex;
-  }
-
-}
-
-
-//----------------------------------------------------------------------------
-// invalidateTapeCopy
-//----------------------------------------------------------------------------
-
-void castor::tape::tapegateway::ora::OraTapeGatewaySvc::invalidateTapeCopy(castor::tape::tapegateway::FileToMigrate& file, int errorCode) throw (castor::exception::Exception){
-
- try {
-
-    // Check whether the statements are ok
-
-    if (0 == m_invalidateTapeCopyStatement) {
-      m_invalidateTapeCopyStatement =
-        createStatement(s_invalidateTapeCopyStatementString);
-    }
-
-    m_invalidateTapeCopyStatement->setDouble(1,(double)file.fileid());
-    m_invalidateTapeCopyStatement->setString(2,file.nshost());
-    m_invalidateTapeCopyStatement->setDouble(3,(double)file.transactionId());
-    m_invalidateTapeCopyStatement->setInt(4,file.fseq());
-    m_invalidateTapeCopyStatement->setInt(5,errorCode);
- 
-    // execute the statement 
-
-    m_invalidateTapeCopyStatement->executeUpdate();
-
-
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in invalidate tapecopy"
-      << std::endl << e.what();
-    throw ex;
-  }
-
-}
 
 
 //----------------------------------------------------------------------------
