@@ -74,7 +74,7 @@
 73,AGGREGATOR_RECEIVED_TAPERQSTBODY,"Received tape request message body"
 74,AGGREGATOR_RECEIVE_TAPERQSTERRBODY,"Receiving tape request message body with error appendix"
 75,AGGREGATOR_RECEIVED_TAPERQSTERRBODY,"Received tape request message body with error appendix"
-76,AGGREGATOR_SEND_DELAYED_REQUEST_MORE_WORK_ACK_TO_RTCPD,"Sending delayed acknowlegde of request for more work to RTCPD"
+76,AGGREGATOR_SEND_DELAYED_REQUEST_MORE_WORK_ACK_TO_RTCPD,"Sending delayed acknowledge of request for more work to RTCPD"
 77,AGGREGATOR_SENT_DELAYED_REQUEST_MORE_WORK_ACK_TO_RTCPD,"Sent delayed acknowlegde of request for more work to RTCPD"
 78,AGGREGATOR_CREATED_RTCPD_CALLBACK_PORT,"Created TCP/IP port for RTCPD callbacks"
 79,AGGREGATOR_CONNECTION_CLOSED_BY_RTCPD,"Connection closed by RTCPD"
