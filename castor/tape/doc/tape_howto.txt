@@ -2000,3 +2000,26 @@ scp /tmp/aggregatord.sh tpsrv202:/aggregator
 ssh tpsrv202 /aggregator/aggregatord.sh
 rm /tmp/aggregatord.sh
 
+
+How to re-label and re-populate a tape with one thousand 100MB files
+====================================================================
+
+[root@lxcastordev04 tpcp]# vmgrmodifytape -V I10554 --st FULL
+[root@lxcastordev04 tpcp]# reclaim -V I10554
+[root@lxcastordev04 tpcp]# ssh tpsrv202 tplabel -D 35921001 -d 1000GC -g
+359B1A -l aul -V I10554 -v I10554 -f
+*******************************************************************************
+* http://cern.ch/ComputingRules : Govern the use of CERN computing facilities
+* *
+*******************************************************************************
+tplabel: uid=0 gid=0 vid=I10554 side=0 dgn=359B1A den=1000GC vsn=I10554
+lbltype=aul
+mounttape: TP062 - tape I10554 to be prelabelled has vsn I10554
+tplabel: tape labeled.
+[root@lxcastordev04 tpcp]# `(NB_FILES=1000; echo -n "sudo -u stage tpwrite -V
+I10554 -l aul -F F -q n$NB_FILES"; x=0; while test $x -lt $NB_FILES; do echo
+-n " lxc2disk07:/tmp/murrayc3/f"; let x=x+1; done; echo)`
+Jun 27 15:20:15 tpwrite[12164]: selecting tape server ...
+Jun 27 15:20:15 tpwrite[12164]: * tpsrv202 is a possible tape server.
+Jun 27 15:20:15 tpwrite[12164]: ! selected tape server is tpsrv202.
+
