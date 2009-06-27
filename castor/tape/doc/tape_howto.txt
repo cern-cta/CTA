@@ -2016,6 +2016,8 @@ tplabel: uid=0 gid=0 vid=I10554 side=0 dgn=359B1A den=1000GC vsn=I10554
 lbltype=aul
 mounttape: TP062 - tape I10554 to be prelabelled has vsn I10554
 tplabel: tape labeled.
+[root@lxcastordev04 tpcp]# ssh lxc2disk07 dd if=/dev/urandom
+of=/tmp/murrayc3/f bs=1M count=100
 [root@lxcastordev04 tpcp]# `(NB_FILES=1000; echo -n "sudo -u stage tpwrite -V
 I10554 -l aul -F F -q n$NB_FILES"; x=0; while test $x -lt $NB_FILES; do echo
 -n " lxc2disk07:/tmp/murrayc3/f"; let x=x+1; done; echo)`
