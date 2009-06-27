@@ -189,8 +189,8 @@ bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
 
   if(anotherFile) {
     // Get the tape file sequence number and RFIO filename
-    uint32_t    tapeFseq = m_tapeFseqSequence.next();
-    std::string filename = *(m_filenameItor++);
+    const uint32_t    tapeFseq = m_tapeFseqSequence.next();
+    const std::string filename = *(m_filenameItor++);
 
     // Create FileToRecall message for the aggregator
     tapegateway::FileToRecall fileToRecall;
@@ -213,6 +213,9 @@ bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
       std::ostream &os = std::cout;
 
       utils::writeBanner(os, "Sent FileToRecall to aggregator");
+      os << std::endl;
+      os << "tapeFseq = " << tapeFseq << std::endl;
+      os << "filename = " << filename << std::endl;
       os << std::endl;
       os << std::endl;
     }

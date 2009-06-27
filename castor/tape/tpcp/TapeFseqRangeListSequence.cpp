@@ -25,7 +25,6 @@
 #include "castor/tape/tpcp/TapeFseqRangeListSequence.hpp"
 
 #include <errno.h>
-#include <iostream>
 
 
 //------------------------------------------------------------------------------
