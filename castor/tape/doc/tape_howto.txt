@@ -1992,8 +1992,11 @@ scp castor/tape/aggregator/aggregatord tpsrv202:/aggregator
 cat > /tmp/aggregatord.sh << HERE
 #!/bin/sh
 
-export LD_LIBRARY_PATH=.
-\`pwd\`/aggregatord
+export LD_LIBRARY_PATH=/aggregator
+/aggregator/aggregatord
 HERE
 chmod +x /tmp/aggregatord.sh
 scp /tmp/aggregatord.sh tpsrv202:/aggregator
+ssh tpsrv202 /aggregator/aggregatord.sh
+rm /tmp/aggregatord.sh
+
