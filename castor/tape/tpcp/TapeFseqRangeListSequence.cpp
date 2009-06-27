@@ -25,6 +25,7 @@
 #include "castor/tape/tpcp/TapeFseqRangeListSequence.hpp"
 
 #include <errno.h>
+#include <iostream>
 
 
 //------------------------------------------------------------------------------
@@ -41,7 +42,7 @@ castor::tape::tpcp::TapeFseqRangeListSequence::TapeFseqRangeListSequence(
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::TapeFseqRangeListSequence::hasMore() throw() {
 
-  return m_nbSequence.hasMore() || m_rangeItor != m_list.end();
+  return m_nbSequence.hasMore();
 }
 
 
@@ -60,9 +61,17 @@ uint32_t castor::tape::tpcp::TapeFseqRangeListSequence::next()
     throw ex;
   }
 
+  uint32_t tmp = m_nbSequence.next();
+
+  // If the end of the current range sequence has been reached
   if(!m_nbSequence.hasMore()) {
-    m_nbSequence = *(++m_rangeItor);
+
+    // Move on to the next if there is one
+    m_rangeItor++;
+    if(m_rangeItor != m_list.end()) {
+      m_nbSequence = *m_rangeItor;
+    }
   }
 
-  return m_nbSequence.next();
+  return tmp;
 }
