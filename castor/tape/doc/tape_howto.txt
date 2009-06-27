@@ -1979,3 +1979,21 @@ tar -xvzf plotutils-2.5.tar.gz
 cd plotutils-2.5
 ./configure --enable-libplotter
 make
+
+
+How to install and run an aggregator for development on tpsrv202
+================================================================
+
+CASTOR_CVS=/usr/local/src/CASTOR2
+cd $CASTOR_CVS
+ssh tpsrv202 mkdir /aggregator
+scp `find -name '*.so*' | xargs echo` tpsrv202:/aggregator
+scp castor/tape/aggregator/aggregatord tpsrv202:/aggregator
+cat > /tmp/aggregatord.sh << HERE
+#!/bin/sh
+
+export LD_LIBRARY_PATH=.
+\`pwd\`/aggregatord
+HERE
+chmod +x /tmp/aggregatord.sh
+scp /tmp/aggregatord.sh tpsrv202:/aggregator
