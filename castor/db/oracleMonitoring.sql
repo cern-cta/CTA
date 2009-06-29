@@ -1,5 +1,5 @@
 /*******************************************************************
- * @(#)$RCSfile: oracleMonitoring.sql,v $ $Revision: 1.3 $ $Date: 2009/06/25 06:38:27 $ $Author: waldron $
+ * @(#)$RCSfile: oracleMonitoring.sql,v $ $Revision: 1.4 $ $Date: 2009/06/29 15:02:17 $ $Author: waldron $
  * PL/SQL code for stager monitoring
  *
  * @author Castor Dev team, castor-dev@cern.ch
@@ -44,7 +44,7 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
   PROCEDURE diskCopyStats(interval IN NUMBER) AS
   BEGIN
     -- Truncate the MonDiskCopyStats table
-    EXECUTE IMMEDIATE 'TRUNCATE TABLE MonDiskCopyStats';
+    EXECUTE IMMEDIATE 'DELETE FROM MonDiskCopyStats';
     -- Populate the MonDiskCopyStats table
     INSERT INTO MonDiskCopyStats
       (timestamp, interval, diskServer, mountPoint, dsStatus, fsStatus, available,
@@ -80,7 +80,8 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
              AND ObjStatus.object = 'DiskCopy'
              AND DiskCopy.status IN (0, 4, 5, 6, 7, 9, 10, 11)
            GROUP BY DiskCopy.fileSystem, ObjStatus.statusName) b
-          ON (a.id = b.fileSystem AND a.statusName = b.statusName);
+          ON (a.id = b.fileSystem AND a.statusName = b.statusName)
+       ORDER BY a.name, a.mountPoint, a.statusName;
   END diskCopyStats;
 
 
@@ -91,7 +92,7 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
   PROCEDURE waitTapeMigrationStats(interval IN NUMBER) AS
   BEGIN
     -- Truncate the MonWaitTapeMigrationStats table
-    EXECUTE IMMEDIATE 'TRUNCATE TABLE MonWaitTapeMigrationStats';
+    EXECUTE IMMEDIATE 'DELETE FROM MonWaitTapeMigrationStats';
     -- Populate the MonWaitTapeMigrationStats table
     INSERT INTO MonWaitTapeMigrationStats
       (timestamp, interval, svcClass, status, minFileAge, maxFileAge, avgFileAge,
@@ -145,7 +146,8 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
              (SELECT 'PENDING'  status FROM Dual UNION ALL
               SELECT 'SELECTED' status FROM Dual) a) b
            ON (a.svcClass = b.svcClass AND a.status = b.status)
-       GROUP BY GROUPING SETS (b.svcClass, b.status), (b.svcClass);
+       GROUP BY GROUPING SETS (b.svcClass, b.status), (b.svcClass)
+       ORDER BY b.svcClass, b.status;
   END waitTapeMigrationStats;
 
 
@@ -156,7 +158,7 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
   PROCEDURE waitTapeRecallStats(interval IN NUMBER) AS
   BEGIN
     -- Truncate the MonWaitTapeRecallStats table
-    EXECUTE IMMEDIATE 'TRUNCATE TABLE MonWaitTapeRecallStats';
+    EXECUTE IMMEDIATE 'DELETE FROM MonWaitTapeRecallStats';
     -- Populate the MonWaitTapeRecallStats table
     INSERT INTO MonWaitTapeRecallStats
       (timestamp, interval, svcClass, minFileAge, maxFileAge, avgFileAge,
@@ -209,7 +211,8 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
         -- Attach a list of all service classes
         RIGHT JOIN SvcClass
            ON SvcClass.name = a.svcClass
-        GROUP BY SvcClass.name;
+        GROUP BY SvcClass.name
+        ORDER BY SvcClass.name;
   END waitTapeRecallStats;
 
 END CastorMon;
