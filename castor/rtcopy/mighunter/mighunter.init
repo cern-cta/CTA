@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: mighunter.init,v $ $Revision: 1.13 $ $Release$ $Date: 2009/05/29 08:26:26 $ $Author: waldron $
+# @(#)$RCSfile: mighunter.init,v $ $Revision: 1.14 $ $Release$ $Date: 2009/06/29 14:31:44 $ $Author: waldron $
 #
 # chkconfig: 345 73 32
 # description: MigHunterDaemon Initialisation Script
@@ -232,7 +232,7 @@ case "$1" in
                 if [ -n "$2" ]; then
                         [ -f /var/lock/subsys/$prog.$2 ] && restart $2 || :
                 elif [ -z "$2" ]; then
-                        count=`find /var/lock/subsys/ -name '$prog.*' -type f | wc -l`
+                        count=`find /var/lock/subsys/ -name $prog.* -type f | wc -l`
                         [ $count -gt 0 ] && restart || :
                 fi
                 ;;
