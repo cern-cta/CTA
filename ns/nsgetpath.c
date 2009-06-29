@@ -37,6 +37,7 @@ int main(int argc, char**argv) {
   int hflg = 0;
   u_signed64 fileid = 0;
   char *server = NULL;
+  char *buf = NULL;
   char filepath[CA_MAXPATHLEN + 1];
   char tmpbuf[21];
   char *p = NULL;
@@ -64,7 +65,7 @@ int main(int argc, char**argv) {
       errflg++;
       break;
     case 'h':
-      server = Coptarg;
+      buf = Coptarg;
       break;
     default:
       break;
@@ -75,35 +76,38 @@ int main(int argc, char**argv) {
   }
   if (fileid == 0) {
     if ((argc - Coptind) > 1) {
-      server = argv[1];
+      buf = argv[1];
       fileid = strtou64(argv[2]);
     } else {
       fileid = strtou64(argv[argc - 1]);
     }
   }
-  if (server == NULL) {
-    (server = getenv (CNS_HOST_ENV)) ||
-      (server = getconfent (CNS_SCE, "HOST", 0));
+  if (buf == NULL) {
+    (buf = getenv (CNS_HOST_ENV)) ||
+      (buf = getconfent (CNS_SCE, "HOST", 0));
   } else {
     if ((p = getenv (CNS_HOST_ENV)) ||
 	(p = getconfent (CNS_SCE, "HOST", 0))) {
-      if (strcmp(p, server) != 0) {
+      if (strcmp(p, buf) != 0) {
 	fprintf (stderr,
 		 "cannot query '%s', all name server commands are forced to "
-		 "query '%s'\n", server, p);
+		 "query '%s'\n", buf, p);
 	exit (USERR);
       }
     }
   }
-  if (errflg || (server == NULL) || (fileid == 0)) {
+  if (errflg || (buf == NULL) || (fileid == 0)) {
     usage (USERR, argv[0]);
   }
+  server = strdup(buf);
   if (Cns_getpath(server, fileid, filepath) != 0) {
     fprintf(stderr, "server %s fileid %s: %s\n",
             server, u64tostr (fileid, tmpbuf, 0), sstrerror(serrno));
+    free(server);
     exit (USERR);
   }
 
+  free(server);
   printf("%s\n", filepath);
   exit (0);
 }
