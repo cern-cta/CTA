@@ -5961,6 +5961,7 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
 }
 
 /* internal method dropping all segments from a given file */
+
 int Cns_internal_dropsegs(func, thip, filentry)
      char* func;
      struct Cns_srv_thread_info *thip;
@@ -5986,16 +5987,15 @@ int Cns_internal_dropsegs(func, thip, filentry)
              smd_entry.checksum_name, smd_entry.checksum);
     Cns_logreq (func, logbuf);
     if (Cns_delete_smd_entry (&thip->dbfd, &rec_addrs))
-      RETURN (serrno);
+      return (serrno);
     bof = 0;
   }
   (void) Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry->fileid,
                               &smd_entry, 1, &rec_addrs, 1, &dblistptr); /* free res */
   if (c < 0)
-    RETURN (serrno);
-  RETURN (0);
+    return (serrno);
+  return (0);
 }
-
 
 /*      Cns_srv_dropsegs - drops all segments of a file */
 
@@ -6064,7 +6064,6 @@ int Cns_srv_dropsegs(magic, req_data, clienthost, thip)
   /* delete file segments if any */
   if (Cns_internal_dropsegs(func, thip, &filentry) != 0)
     RETURN (serrno);
-  
   RETURN (0);
 }
 
