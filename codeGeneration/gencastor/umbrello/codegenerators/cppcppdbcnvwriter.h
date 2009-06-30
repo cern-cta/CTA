@@ -204,6 +204,9 @@ class CppCppDbCnvWriter : public CppCppBaseCnvWriter {
   // Says whether it is the first call to writeClass
   bool m_firstClass;
 
+  // Set of all enums being processed, to avoid dups
+  // on generating the ObjState contents
+  std::set<UMLClassifier*> m_enumsList;
 };
 
 #endif // CODEGENERATORS_CPPCPPDBCNVWRITER_H

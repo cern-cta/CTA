@@ -42,6 +42,21 @@ void CppCppDbCnvWriter::startSQLFile() {
   file.close();
   openFile(file, s_topNS + "/db/oracleGeneratedCore_create.sql",
            IO_WriteOnly | IO_Truncate);
+  QTextStream stream(&file);
+  
+  stream << "/* Type2Obj metatable definition */" << endl
+         << "CREATE TABLE Type2Obj "
+         << "(type INTEGER CONSTRAINT PK_Type2Obj_Type PRIMARY KEY,"
+         << " object VARCHAR2(100) CONSTRAINT NN_Type2Obj_Object NOT NULL,"
+         << " svcHandler VARCHAR2(100));" << endl
+         << endl
+         << "/* ObjState metatable definition */" << endl
+         << "CREATE TABLE ObjState "
+         << "(object VARCHAR2(100) CONSTRAINT NN_ObjState_object NOT NULL,"
+         << " statusCode INTEGER CONSTRAINT NN_ObjState_statusCode NOT NULL,"
+         << " statusName VARCHAR2(100) CONSTRAINT NN_ObjState_statusCode NOT NULL);"
+         << endl << endl;
+  
   file.close();
   openFile(file, s_topNS + "/db/oracleGeneratedTrailer_create.sql",
 	   IO_WriteOnly | IO_Truncate);
@@ -95,24 +110,7 @@ void CppCppDbCnvWriter::endSQLFile() {
   QTextStream streamO(&file);
   insertFileintoStream(streamO, s_topNS + "/db/oracleGeneratedCore_create.sql");
   insertFileintoStream(streamO, s_topNS + "/db/oracleGeneratedTrailer_create.sql");
-  // don't append oracleTrailer, this will be done at release time
   file.close();
-
-  /*openFile(file, s_topNS + "/db/postgresSchema.sql",
-           IO_WriteOnly | IO_Append);
-  QTextStream streamP(&file);
-  insertFileintoStream(streamP, s_topNS + "/db/postgresGeneratedCore_create.sql");
-  insertFileintoStream(streamP, s_topNS + "/db/postgresGeneratedTrailer_create.sql");
-  file.close();
-
-  openFile(file, s_topNS + "/db/" + s_topNS + "_postgres_drop.sql",
-           IO_WriteOnly | IO_Append);
-  QTextStream streamPD(&file);
-  insertFileintoStream(streamPD, s_topNS + "/db/postgresHeader_drop.sql");
-  insertFileintoStream(streamPD, s_topNS + "/db/postgresGeneratedHeader_drop.sql");
-  insertFileintoStream(streamPD, s_topNS + "/db/postgresGeneratedCore_drop.sql");
-  insertFileintoStream(streamPD, s_topNS + "/db/postgresTrailer_drop.sql");
-  file.close();*/
 }
 
 //=============================================================================
@@ -508,8 +506,8 @@ void CppCppDbCnvWriter::writeConstants() {
               << "Db" << m_classInfo->className
               << "Cnv::s_insertNewReqStatementString =" << endl
               << getIndent()
-              << "\"INSERT INTO newRequests (id, type, creation)"
-              << " VALUES (:1, :2, SYSDATE)\";"
+              << "\"INSERT INTO newRequests (id, type)"
+              << " VALUES (:1, :2)\";"
               << endl << endl;
   }
   // Associations dedicated statements
@@ -763,10 +761,10 @@ void CppCppDbCnvWriter::writeOraSqlStatements() {
                << " (parent);"
                << endl;
         tStream << getIndent()
-		<< "/* SQL statements for constraints on "
-		<< m_classInfo->className
-		<< " */"
-		<< endl
+                << "/* SQL statements for constraints on "
+                << m_classInfo->className
+                << " */"
+                << endl
                 << "ALTER TABLE "
                 << compoundName
                 << endl << getIndent()
@@ -784,6 +782,24 @@ void CppCppDbCnvWriter::writeOraSqlStatements() {
     }
   }
   stream << endl;
+  
+  // ObjState contents
+  for (Assoc* as = assocs.first(); 0 != as; as = assocs.next()) {
+    UMLClassifier* c = getClassifier(as->remotePart.typeName);
+    if (isEnum(c) && m_enumsList.find(c) == m_enumsList.end()) {
+      m_enumsList.insert(c);
+      QPtrList<UMLAttribute> atl = c->getAttributeList();
+      for (UMLAttribute *at = atl.first(); at; at = atl.next()) {
+        stream << "INSERT INTO ObjState (object, statusCode, statusName) VALUES ('"
+               << as->remotePart.typeName << "', "
+               << at->getInitialValue() << ", '"
+               << at->getName() << "');"
+               << endl;
+      }
+      stream << endl;
+    }
+  }
+  
   file.close();
   tFile.close();
 }
