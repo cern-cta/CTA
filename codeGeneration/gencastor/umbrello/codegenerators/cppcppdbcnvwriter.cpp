@@ -50,11 +50,12 @@ void CppCppDbCnvWriter::startSQLFile() {
          << " object VARCHAR2(100) CONSTRAINT NN_Type2Obj_Object NOT NULL,"
          << " svcHandler VARCHAR2(100));" << endl
          << endl
-         << "/* ObjState metatable definition */" << endl
-         << "CREATE TABLE ObjState "
-         << "(object VARCHAR2(100) CONSTRAINT NN_ObjState_object NOT NULL,"
-         << " statusCode INTEGER CONSTRAINT NN_ObjState_statusCode NOT NULL,"
-         << " statusName VARCHAR2(100) CONSTRAINT NN_ObjState_statusCode NOT NULL);"
+         << "/* ObjStatus metatable definition */" << endl
+         << "CREATE TABLE ObjStatus "
+         << "(object VARCHAR2(100) CONSTRAINT NN_ObjStatus_object NOT NULL,"
+         << " statusCode INTEGER CONSTRAINT NN_ObjStatus_statusCode NOT NULL,"
+         << " statusName VARCHAR2(100) CONSTRAINT NN_ObjStatus_statusName NOT NULL,"
+         << " CONSTRAINT UN_ObjStatus_objectCode UNIQUE (object, statusCode));"
          << endl << endl;
   
   file.close();
@@ -783,14 +784,14 @@ void CppCppDbCnvWriter::writeOraSqlStatements() {
   }
   stream << endl;
   
-  // ObjState contents
+  // ObjStatus contents
   for (Assoc* as = assocs.first(); 0 != as; as = assocs.next()) {
     UMLClassifier* c = getClassifier(as->remotePart.typeName);
     if (isEnum(c) && m_enumsList.find(c) == m_enumsList.end()) {
       m_enumsList.insert(c);
       QPtrList<UMLAttribute> atl = c->getAttributeList();
       for (UMLAttribute *at = atl.first(); at; at = atl.next()) {
-        stream << "INSERT INTO ObjState (object, statusCode, statusName) VALUES ('"
+        stream << "INSERT INTO ObjStatus (object, statusCode, statusName) VALUES ('"
                << as->remotePart.typeName << "', "
                << at->getInitialValue() << ", '"
                << at->getName() << "');"
