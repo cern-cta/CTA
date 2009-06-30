@@ -8,7 +8,7 @@ COMM		Make CASTOR libraries and executables
 
 SUBDIRS = common dlf security upv ns rfio \
 	  expert rmc rtcopy client tape vdqm vmgr \
-	  hsmtools h castor config gridftp2 shlib clips
+	  hsmtools h castor config gridftp2 shlib clips test
 
 clean: imakeclean
 clobber: imakeclobber

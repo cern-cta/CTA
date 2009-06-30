@@ -1,5 +1,5 @@
 #
-#                      test/castor/Imakefile
+#                      test/castor/tape/tpcp/Imakefile
 #
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
@@ -17,12 +17,18 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.6 $ $Release$ $Date: 2009/06/30 11:58:38 $ $Author: murrayc3 $
 #
-# Make Castor tests
-#
-# @author Sebastien Ponce, sebastien.ponce@cern.ch
+# @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
 #
 
-#SUBDIRS = db io dbC stgSvc monitoring dstage tape
-SUBDIRS = tape
+CPPFLAGS = -pedantic -Wall -Werror -g -O0 -I../../../h -I../../.. $(MTCCFLAGS)
+CFLAGS = -O -I../../../h -I../../.. $(THREADFLAGS)
+LDFLAGS += $(MTLDFLAGS)
+LD = g++
+
+TESTTPCPBIN_SRCS = \
+  TestTpcpMain.cpp
+
+TESTTPCPBIN_OBJS = $(TESTTPCPBIN_SRCS:.cpp=.Osuf)
+
+NormalProgramTarget(testtpcp,$(TESTTPCPBIN_OBJS),$(DEPLIB),$(LIBS),750)
