@@ -1,5 +1,5 @@
 /*******************************************************************
- * @(#)$RCSfile: oracleMonitoring.sql,v $ $Revision: 1.4 $ $Date: 2009/06/29 15:02:17 $ $Author: waldron $
+ * @(#)$RCSfile: oracleMonitoring.sql,v $ $Revision: 1.5 $ $Date: 2009/06/30 14:13:40 $ $Author: itglp $
  * PL/SQL code for stager monitoring
  *
  * @author Castor Dev team, castor-dev@cern.ch
@@ -58,7 +58,7 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
           -- diskcopy states.
           SELECT DiskServer.name, FileSystem.mountPoint, FileSystem.id,
                  (SELECT statusName FROM ObjStatus
-                   WHERE object = 'DiskServer'
+                   WHERE object = 'DiskServerStatusCode'
                      AND statusCode = DiskServer.status) dsStatus,
                  (SELECT statusName FROM OBjStatus
                    WHERE object = 'FileSystem'
@@ -68,7 +68,7 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
                  ObjStatus.statusName
             FROM DiskServer, FileSystem, ObjStatus
            WHERE FileSystem.diskServer = DiskServer.id
-             AND ObjStatus.object(+) = 'DiskCopy'
+             AND ObjStatus.object(+) = 'DiskCopyStatusCodes'
              AND ObjStatus.statusCode IN (0, 4, 5, 6, 7, 9, 10, 11)) a
         -- Attach the aggregation information for all filesystems to the results
         -- extracted above.
@@ -77,7 +77,7 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
                  sum(DiskCopy.diskCopySize) totalSize, count(*) nbFiles
             FROM DiskCopy, ObjStatus
            WHERE DiskCopy.status = ObjStatus.statusCode
-             AND ObjStatus.object = 'DiskCopy'
+             AND ObjStatus.object = 'DiskCopyStatusCodes'
              AND DiskCopy.status IN (0, 4, 5, 6, 7, 9, 10, 11)
            GROUP BY DiskCopy.fileSystem, ObjStatus.statusName) b
           ON (a.id = b.fileSystem AND a.statusName = b.statusName)
