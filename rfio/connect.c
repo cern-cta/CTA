@@ -1,5 +1,5 @@
 /*
- * $Id: connect.c,v 1.21 2009/06/26 15:10:06 itglp Exp $
+ * $Id: connect.c,v 1.22 2009/06/30 12:34:37 waldron Exp $
  */
 
 /*
@@ -187,9 +187,10 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
   else {
     timeout=atoi(p);
   }
-  p = getenv("SECURE_CASTOR");
-  if(strcasecmp(p, "YES") == 0)
-    secure_connection++;
+  if ((p = getenv("SECURE_CASTOR"))) {
+    if (strcasecmp(p, "YES") == 0)
+      secure_connection++;
+  }
   if (port < 0) {
     if (secure_connection) { /* Secure connection should be made to secure port */
       /* Try environment variable */
