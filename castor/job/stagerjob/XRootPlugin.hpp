@@ -49,41 +49,40 @@ namespace castor {
          */
         XRootPlugin() throw();
 
-	/**
-	 * The raw mover plugin assumes an inetd mode of operation and as
-	 * a consequence sends a response back to the client before the
-	 * mover is execute (execMover). For xroot, the mover must be
-	 * forked first, before the callback to the client and no sockets
-	 * are needed for inetd mode. To achieve this we override the
-	 * preForkHook of the RawMoverPlugin to do nothing. So, why don't
-	 * we use the InstrumentedMoverPlugin?... because it implies that
-	 * the mover will handle the callbacks to CASTOR. This is not the
-	 * case for xroot. The mover is not inetd based and does not call
-	 * CASTOR.
-	 */
-	virtual void preForkHook(InputArguments &args,
-				 PluginContext &context)
-	  throw(castor::exception::Exception) {};
+        /**
+         *
+         */
+        void recvMessage(int socket, char *buf, ssize_t len, int timeout)
+          throw(castor::exception::Exception);
 
         /**
-         * Hook for the code to be executed just after the mover fork,
-         * in the parent process. Only logging and calling the method
-         * of InstrumentedPlugin.
-         * @param args the arguments given to the stager job
-         * @param context the current context (localhost, port, etc...)
+         *
+         */
+        virtual void preForkHook(InputArguments &args,
+                                 PluginContext &context)
+          throw(castor::exception::Exception);
+
+        /**
+         *
          */
         virtual void postForkHook(InputArguments &args,
                                   PluginContext &context)
           throw (castor::exception::Exception);
 
         /**
-         * Hook for the launching of the mover
-         * @param args the arguments given to the stager job
-         * @param context the current context (localhost, port, etc...)
+         *
          */
         virtual void execMover(InputArguments &args,
                                PluginContext &context)
-          throw (castor::exception::Exception);
+          throw (castor::exception::Exception) {};
+
+      private:
+
+        ///
+        int m_openTimeout;
+
+        ///
+        int m_closeTimeout;
 
       }; // end of class XRootPlugin
 

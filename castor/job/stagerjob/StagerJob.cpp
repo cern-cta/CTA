@@ -253,12 +253,20 @@ void switchToCastorSuperuser(castor::job::stagerjob::InputArguments *args)
 //------------------------------------------------------------------------------
 void bindSocketAndListen
 (castor::job::stagerjob::PluginContext &context,
+ castor::job::stagerjob::InputArguments* args,
  std::pair<int,int> &range)
   throw (castor::exception::Exception) {
   // Build address
   struct sockaddr_in sin;
   memset(&sin, '\0', sizeof(sin));
-  sin.sin_addr.s_addr = htonl(INADDR_ANY);
+
+  // For xroot based transfer bind to the loopback device. This prevents
+  // connections from external clients!
+  if (args->protocol == "xroot") {
+    sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+  } else {
+    sin.sin_addr.s_addr = htonl(INADDR_ANY);
+  }
   sin.sin_family = AF_INET;
 
   // Set the seed for the new sequence of pseudo-random numbers to be returned
@@ -336,42 +344,37 @@ void process(castor::job::stagerjob::InputArguments* args)
   // Get proper plugin
   castor::job::stagerjob::IPlugin* plugin =
     castor::job::stagerjob::getPlugin(args->protocol);
-  // Create the socket that the user will connect too. Note:
-  // xrootd requires no socket as users will connect to the
-  // xrd daemon on the machine itself!
-  if (args->protocol != "xroot") {
-    // Create a socket
-    context.socket = socket(AF_INET, SOCK_STREAM, 0);
-    if (context.socket < 0) {
-      castor::exception::Exception e(errno);
-      e.getMessage() << "Error caught in call to socket";
-      throw e;
-    }
-    int rcode = 1;
-    int rc = setsockopt(context.socket, SOL_SOCKET, SO_REUSEADDR,
-                        (char *)&rcode, sizeof(rcode));
-    if (rc < 0) {
-      castor::exception::Exception e(errno);
-      e.getMessage() << "Error caught in call to setsockopt";
-      throw e;
-    }
-    // Get available port range for the socket
-    std::pair<int,int> portRange = plugin->getPortRange(*args);
-    // Bind socket and listen for client connection
-    bindSocketAndListen(context, portRange);
-    // "Mover will use the following port"
-    std::ostringstream sPortRange;
-    sPortRange << portRange.first << ":" << portRange.second;
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Protocol", args->protocol),
-       castor::dlf::Param("Port range", sPortRange.str()),
-       castor::dlf::Param("Port used", context.port),
-       castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-       castor::dlf::Param(args->subRequestUuid)};
-    castor::dlf::dlf_writep
-      (args->requestUuid, DLF_LVL_DEBUG,
-       castor::job::stagerjob::MOVERPORT, 5, params, &args->fileId);
+  // Create the socket that the user will connect too
+  context.socket = socket(AF_INET, SOCK_STREAM, 0);
+  if (context.socket < 0) {
+    castor::exception::Exception e(errno);
+    e.getMessage() << "Error caught in call to socket";
+    throw e;
   }
+  int rcode = 1;
+  int rc = setsockopt(context.socket, SOL_SOCKET, SO_REUSEADDR,
+		      (char *)&rcode, sizeof(rcode));
+  if (rc < 0) {
+    castor::exception::Exception e(errno);
+    e.getMessage() << "Error caught in call to setsockopt";
+    throw e;
+  }
+  // Get available port range for the socket
+  std::pair<int,int> portRange = plugin->getPortRange(*args);
+  // Bind socket and listen for client connection
+  bindSocketAndListen(context, args, portRange);
+  // "Mover will use the following port"
+  std::ostringstream sPortRange;
+  sPortRange << portRange.first << ":" << portRange.second;
+  castor::dlf::Param params[] =
+    {castor::dlf::Param("Protocol", args->protocol),
+     castor::dlf::Param("Port range", sPortRange.str()),
+     castor::dlf::Param("Port used", context.port),
+     castor::dlf::Param("JobId", getenv("LSB_JOBID")),
+     castor::dlf::Param(args->subRequestUuid)};
+  castor::dlf::dlf_writep
+    (args->requestUuid, DLF_LVL_DEBUG,
+     castor::job::stagerjob::MOVERPORT, 5, params, &args->fileId);
   // Prefork hook for the different movers
   plugin->preForkHook(*args, context);
   // Set our mask to the most restrictive mode
@@ -386,26 +389,29 @@ void process(castor::job::stagerjob::InputArguments* args)
        castor::job::stagerjob::CHDIRFAILED, 2, params, &args->fileId);
     // Not fatal, we just ignore the error
   }
-  // Fork and execute the mover
-  dlf_prepare();
-  context.childPid = fork();
-  if (context.childPid < 0) {
+  // Fork and execute the mover. Note: For xroot based transfers there is no
+  // mover to execute so we avoid the need to fork.
+  if (args->protocol != "xroot") {
+    dlf_prepare();
+    context.childPid = fork();
+    if (context.childPid < 0) {
+      dlf_parent();
+      castor::exception::Exception e(errno);
+      e.getMessage() << "Error caught in call to fork";
+      throw e;
+    }
+    if (context.childPid == 0) {
+      // Child side of the fork
+      dlf_child();
+      // This call will never come back, since it call execl
+      plugin->execMover(*args, context);
+      // But in case, let's fail
+      dlf_shutdown(5);
+      exit(EXIT_FAILURE);
+    }
+    // Parent side of the fork
     dlf_parent();
-    castor::exception::Exception e(errno);
-    e.getMessage() << "Error caught in call to fork";
-    throw e;
   }
-  if (context.childPid == 0) {
-    // Child side of the fork
-    dlf_child();
-    // This call will never come back, since it call execl
-    plugin->execMover(*args, context);
-    // But in case, let's fail
-    dlf_shutdown(5);
-    exit(EXIT_FAILURE);
-  }
-  // Parent side of the fork
-  dlf_parent();
   plugin->postForkHook(*args, context);
 }
 
@@ -509,6 +515,7 @@ int main(int argc, char** argv) {
       { GSIBADTIMEOUT,   "Invalid value for GSIFTP/TIMEOUT option, using default" },
 
       { XROOTENOENT,     "Xrootd is not installed" },
+      { XROOTBADTIMEOUT, "Invalid value for XROOT/TIMEOUTS option, using default" },
 
       { RFIODBADPORT,    "Invalid port range for RFIOD in config file, using default" },
       { RFIODBADMINPORT, "Invalid lower bound for RFIOD port range in config file, using default" },

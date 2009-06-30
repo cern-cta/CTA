@@ -120,6 +120,7 @@ namespace castor {
         GSIBADTIMEOUT =   66, /* Invalid value for GSIFTP/TIMEOUT option, using default */
 
         XROOTENOENT =     51, /* Xrootd is not installed */
+        XROOTBADTIMEOUT = 67, /* Invalid value for XROOT/TIMEOUTS option, using default */
 
         RFIODBADPORT =    55, /* Invalid port range for RFIOD in config file, using default */
         RFIODBADMINPORT = 56, /* Invalid lower bound for RFIOD port range in config file, using default */

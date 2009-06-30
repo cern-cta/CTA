@@ -142,10 +142,16 @@ void castor::job::stagerjob::RawMoverPlugin::preForkHook
 // postForkHook
 //------------------------------------------------------------------------------
 void castor::job::stagerjob::RawMoverPlugin::postForkHook
-(InputArguments &args, PluginContext &context, bool useChkSum)
+(InputArguments &args, PluginContext &context,
+ bool useChkSum, int moverStatus)
   throw(castor::exception::Exception) {
-  // Wait for children
-  bool childFailed = waitForChild(args);
+  bool childFailed;
+  if (moverStatus == -1) {
+    // Wait for children
+    childFailed = waitForChild(args);
+  } else {
+    childFailed = moverStatus;
+  }
   // Inform CASTOR
   if (args.accessMode == ReadOnly ||
       args.accessMode == ReadWrite) {
@@ -162,7 +168,7 @@ void castor::job::stagerjob::RawMoverPlugin::postForkHook
     struct stat64 statbuf;
     if (stat64((char*)context.fullDestPath.c_str(), &statbuf) == 0) {
       // deal with the case of an empty file when the child failed
-      if (childFailed && 0 == statbuf.st_size) {
+      if (childFailed && (0 == statbuf.st_size)) {
         // log an error
         castor::dlf::Param params[] =
           {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
