@@ -1,3 +1,9 @@
+/* Type2Obj metatable definition */
+CREATE TABLE Type2Obj (type INTEGER CONSTRAINT PK_Type2Obj_Type PRIMARY KEY, object VARCHAR2(100) CONSTRAINT NN_Type2Obj_Object NOT NULL, svcHandler VARCHAR2(100));
+
+/* ObjState metatable definition */
+CREATE TABLE ObjState (object VARCHAR2(100) CONSTRAINT NN_ObjState_object NOT NULL, statusCode INTEGER CONSTRAINT NN_ObjState_statusCode NOT NULL, statusName VARCHAR2(100) CONSTRAINT NN_ObjState_statusCode NOT NULL);
+
 /* SQL statements for type BaseAddress */
 CREATE TABLE BaseAddress (objType NUMBER, cnvSvcName VARCHAR2(2048), cnvSvcType NUMBER, target INTEGER, id INTEGER CONSTRAINT PK_BaseAddress_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
@@ -46,6 +52,13 @@ CREATE TABLE GetUpdateStartRequest (subreqId INTEGER, diskServer VARCHAR2(2048),
 /* SQL statements for type QueryParameter */
 CREATE TABLE QueryParameter (value VARCHAR2(2048), id INTEGER CONSTRAINT PK_QueryParameter_Id PRIMARY KEY, query INTEGER, queryType INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('RequestQueryType', 0, 'REQUESTQUERYTYPE_FILENAME');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('RequestQueryType', 1, 'REQUESTQUERYTYPE_REQID');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('RequestQueryType', 2, 'REQUESTQUERYTYPE_USERTAG');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('RequestQueryType', 3, 'REQUESTQUERYTYPE_FILEID');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('RequestQueryType', 4, 'REQUESTQUERYTYPE_REQID_GETNEXT');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('RequestQueryType', 5, 'REQUESTQUERYTYPE_USERTAG_GETNEXT');
+
 /* SQL statements for type StagePrepareToGetRequest */
 CREATE TABLE StagePrepareToGetRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StagePrepareToGetRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
@@ -73,6 +86,26 @@ CREATE TABLE StageFileQueryRequest (flags INTEGER, userName VARCHAR2(2048), euid
 /* SQL statements for type SubRequest */
 CREATE TABLE SubRequest (retryCounter NUMBER, fileName VARCHAR2(2048), protocol VARCHAR2(2048), xsize INTEGER, priority NUMBER, subreqId VARCHAR2(2048), flags NUMBER, modeBits NUMBER, creationTime INTEGER, lastModificationTime INTEGER, answered NUMBER, errorCode NUMBER, errorMessage VARCHAR2(2048), requestedFileSystems VARCHAR2(2048), svcHandler VARCHAR2(2048), id INTEGER CONSTRAINT PK_SubRequest_Id PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER, request INTEGER, getNextStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('SubRequestStatusCodes', 0, 'SUBREQUEST_START');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('SubRequestStatusCodes', 1, 'SUBREQUEST_RESTART');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('SubRequestStatusCodes', 2, 'SUBREQUEST_RETRY');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('SubRequestStatusCodes', 3, 'SUBREQUEST_WAITSCHED');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('SubRequestStatusCodes', 4, 'SUBREQUEST_WAITTAPERECALL');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('SubRequestStatusCodes', 5, 'SUBREQUEST_WAITSUBREQ');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('SubRequestStatusCodes', 6, 'SUBREQUEST_READY');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('SubRequestStatusCodes', 7, 'SUBREQUEST_FAILED');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('SubRequestStatusCodes', 8, 'SUBREQUEST_FINISHED');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('SubRequestStatusCodes', 9, 'SUBREQUEST_FAILED_FINISHED');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('SubRequestStatusCodes', 10, 'SUBREQUEST_FAILED_ANSWERING');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('SubRequestStatusCodes', 11, 'SUBREQUEST_ARCHIVED');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('SubRequestStatusCodes', 12, 'SUBREQUEST_REPACK');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('SubRequestStatusCodes', 13, 'SUBREQUEST_READYFORSCHED');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('SubRequestStatusCodes', 14, 'SUBREQUEST_BEINGSCHED');
+
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('SubRequestGetNextStatusCodes', 0, 'GETNEXTSTATUS_NOTAPPLICABLE');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('SubRequestGetNextStatusCodes', 1, 'GETNEXTSTATUS_FILESTAGED');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('SubRequestGetNextStatusCodes', 2, 'GETNEXTSTATUS_NOTIFIED');
+
 /* SQL statements for type StageReleaseFilesRequest */
 CREATE TABLE StageReleaseFilesRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StageReleaseFilesRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
@@ -91,8 +124,24 @@ CREATE TABLE StageUpdateNextRequest (parentUuid VARCHAR2(2048), flags INTEGER, u
 /* SQL statements for type Tape */
 CREATE TABLE Tape (vid VARCHAR2(2048), side NUMBER, tpmode NUMBER, errMsgTxt VARCHAR2(2048), errorCode NUMBER, severity NUMBER, vwAddress VARCHAR2(2048), dgn VARCHAR2(2048), label VARCHAR2(2048), density VARCHAR2(2048), devtype VARCHAR2(2048), id INTEGER CONSTRAINT PK_Tape_Id PRIMARY KEY, stream INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('TapeStatusCodes', 0, 'TAPE_UNUSED');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('TapeStatusCodes', 1, 'TAPE_PENDING');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('TapeStatusCodes', 2, 'TAPE_WAITDRIVE');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('TapeStatusCodes', 3, 'TAPE_WAITMOUNT');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('TapeStatusCodes', 4, 'TAPE_MOUNTED');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('TapeStatusCodes', 5, 'TAPE_FINISHED');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('TapeStatusCodes', 6, 'TAPE_FAILED');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('TapeStatusCodes', 7, 'TAPE_UNKNOWN');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('TapeStatusCodes', 8, 'TAPE_WAITPOLICY');
+
 /* SQL statements for type Segment */
 CREATE TABLE Segment (fseq NUMBER, offset INTEGER, bytes_in INTEGER, bytes_out INTEGER, host_bytes INTEGER, segmCksumAlgorithm VARCHAR2(2048), segmCksum NUMBER, errMsgTxt VARCHAR2(2048), errorCode NUMBER, severity NUMBER, blockId0 INTEGER, blockId1 INTEGER, blockId2 INTEGER, blockId3 INTEGER, creationTime INTEGER, priority INTEGER, id INTEGER CONSTRAINT PK_Segment_Id PRIMARY KEY, copy INTEGER, status INTEGER, tape INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('SegmentStatusCodes', 0, 'SEGMENT_UNPROCESSED');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('SegmentStatusCodes', 5, 'SEGMENT_FILECOPIED');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('SegmentStatusCodes', 6, 'SEGMENT_FAILED');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('SegmentStatusCodes', 7, 'SEGMENT_SELECTED');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('SegmentStatusCodes', 8, 'SEGMENT_RETRIED');
 
 /* SQL statements for type TapePool */
 CREATE TABLE TapePool (name VARCHAR2(2048), migrSelectPolicy VARCHAR2(2048), id INTEGER CONSTRAINT PK_TapePool_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
@@ -100,14 +149,50 @@ CREATE TABLE TapePool (name VARCHAR2(2048), migrSelectPolicy VARCHAR2(2048), id 
 /* SQL statements for type TapeCopy */
 CREATE TABLE TapeCopy (copyNb NUMBER, errorCode NUMBER, nbRetry NUMBER, missingCopies NUMBER, id INTEGER CONSTRAINT PK_TapeCopy_Id PRIMARY KEY, castorFile INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('TapeCopyStatusCodes', 0, 'TAPECOPY_CREATED');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('TapeCopyStatusCodes', 1, 'TAPECOPY_TOBEMIGRATED');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('TapeCopyStatusCodes', 2, 'TAPECOPY_WAITINSTREAMS');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('TapeCopyStatusCodes', 3, 'TAPECOPY_SELECTED');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('TapeCopyStatusCodes', 4, 'TAPECOPY_TOBERECALLED');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('TapeCopyStatusCodes', 5, 'TAPECOPY_STAGED');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('TapeCopyStatusCodes', 6, 'TAPECOPY_FAILED');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('TapeCopyStatusCodes', 7, 'TAPECOPY_WAITPOLICY');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('TapeCopyStatusCodes', 8, 'TAPECOPY_REC_RETRY');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('TapeCopyStatusCodes', 9, 'TAPECOPY_MIG_RETRY');
+
 /* SQL statements for type CastorFile */
 CREATE TABLE CastorFile (fileId INTEGER, nsHost VARCHAR2(2048), fileSize INTEGER, creationTime INTEGER, lastAccessTime INTEGER, lastKnownFileName VARCHAR2(2048), lastUpdateTime INTEGER, id INTEGER CONSTRAINT PK_CastorFile_Id PRIMARY KEY, svcClass INTEGER, fileClass INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type DiskCopy */
 CREATE TABLE DiskCopy (path VARCHAR2(2048), gcWeight NUMBER, creationTime INTEGER, lastAccessTime INTEGER, diskCopySize INTEGER, nbCopyAccesses NUMBER, owneruid NUMBER, ownergid NUMBER, id INTEGER CONSTRAINT PK_DiskCopy_Id PRIMARY KEY, gcType INTEGER, fileSystem INTEGER, castorFile INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('GCTypeCodes', 0, 'GCTYPE_AUTO');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('GCTypeCodes', 1, 'GCTYPE_USER');
+
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('DiskCopyStatusCodes', 0, 'DISKCOPY_STAGED');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('DiskCopyStatusCodes', 1, 'DISKCOPY_WAITDISK2DISKCOPY');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('DiskCopyStatusCodes', 2, 'DISKCOPY_WAITTAPERECALL');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('DiskCopyStatusCodes', 3, 'DISKCOPY_DELETED');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('DiskCopyStatusCodes', 4, 'DISKCOPY_FAILED');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('DiskCopyStatusCodes', 5, 'DISKCOPY_WAITFS');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('DiskCopyStatusCodes', 6, 'DISKCOPY_STAGEOUT');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('DiskCopyStatusCodes', 7, 'DISKCOPY_INVALID');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('DiskCopyStatusCodes', 9, 'DISKCOPY_BEINGDELETED');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('DiskCopyStatusCodes', 10, 'DISKCOPY_CANBEMIGR');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('DiskCopyStatusCodes', 11, 'DISKCOPY_WAITFS_SCHEDULING');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('DiskCopyStatusCodes', 12, 'DISKCOPY_FAILED_TO_MIGRATE');
+
 /* SQL statements for type FileSystem */
 CREATE TABLE FileSystem (free INTEGER, mountPoint VARCHAR2(2048), minFreeSpace NUMBER, minAllowedFreeSpace NUMBER, maxFreeSpace NUMBER, totalSize INTEGER, readRate INTEGER, writeRate INTEGER, nbReadStreams NUMBER, nbWriteStreams NUMBER, nbReadWriteStreams NUMBER, nbMigratorStreams NUMBER, nbRecallerStreams NUMBER, id INTEGER CONSTRAINT PK_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('FileSystemStatusCodes', 0, 'FILESYSTEM_PRODUCTION');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('FileSystemStatusCodes', 1, 'FILESYSTEM_DRAINING');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('FileSystemStatusCodes', 2, 'FILESYSTEM_DISABLED');
+
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('AdminStatusCodes', 0, 'ADMIN_NONE');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('AdminStatusCodes', 1, 'ADMIN_FORCE');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('AdminStatusCodes', 2, 'ADMIN_RELEASE');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('AdminStatusCodes', 3, 'ADMIN_DELETED');
 
 /* SQL statements for type SvcClass */
 CREATE TABLE SvcClass (nbDrives NUMBER, name VARCHAR2(2048), defaultFileSize INTEGER, maxReplicaNb NUMBER, migratorPolicy VARCHAR2(2048), recallerPolicy VARCHAR2(2048), streamPolicy VARCHAR2(2048), gcPolicy VARCHAR2(2048), disk1Behavior NUMBER, replicateOnClose NUMBER, failJobsWhenNoSpace NUMBER, id INTEGER CONSTRAINT PK_SvcClass_Id PRIMARY KEY, forcedFileClass INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
@@ -127,11 +212,24 @@ CREATE TABLE Stream2TapeCopy (Parent INTEGER, Child INTEGER) INITRANS 50 PCTFREE
 CREATE INDEX I_Stream2TapeCopy_C on Stream2TapeCopy (child);
 CREATE INDEX I_Stream2TapeCopy_P on Stream2TapeCopy (parent);
 
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('StreamStatusCodes', 0, 'STREAM_PENDING');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('StreamStatusCodes', 1, 'STREAM_WAITDRIVE');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('StreamStatusCodes', 2, 'STREAM_WAITMOUNT');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('StreamStatusCodes', 3, 'STREAM_RUNNING');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('StreamStatusCodes', 4, 'STREAM_WAITSPACE');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('StreamStatusCodes', 5, 'STREAM_CREATED');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('StreamStatusCodes', 6, 'STREAM_STOPPED');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('StreamStatusCodes', 7, 'STREAM_WAITPOLICY');
+
 /* SQL statements for type FileClass */
 CREATE TABLE FileClass (name VARCHAR2(2048), nbCopies NUMBER, id INTEGER CONSTRAINT PK_FileClass_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type DiskServer */
 CREATE TABLE DiskServer (name VARCHAR2(2048), readRate INTEGER, writeRate INTEGER, nbReadStreams NUMBER, nbWriteStreams NUMBER, nbReadWriteStreams NUMBER, nbMigratorStreams NUMBER, nbRecallerStreams NUMBER, id INTEGER CONSTRAINT PK_DiskServer_Id PRIMARY KEY, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('DiskServerStatusCode', 0, 'DISKSERVER_PRODUCTION');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('DiskServerStatusCode', 1, 'DISKSERVER_DRAINING');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('DiskServerStatusCode', 2, 'DISKSERVER_DISABLED');
 
 /* SQL statements for type SetFileGCWeight */
 CREATE TABLE SetFileGCWeight (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, weight NUMBER, id INTEGER CONSTRAINT PK_SetFileGCWeight_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
@@ -178,6 +276,11 @@ CREATE TABLE ListPrivileges (flags INTEGER, userName VARCHAR2(2048), euid NUMBER
 /* SQL statements for type TapeRequestState */
 CREATE TABLE TapeRequestState (accessMode NUMBER, startTime INTEGER, lastVdqmPingTime INTEGER, vdqmVolReqId NUMBER, nbRetry NUMBER, lastFseq NUMBER, id INTEGER CONSTRAINT PK_TapeRequestState_Id PRIMARY KEY, streamMigration INTEGER, tapeRecall INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('TapeRequestStateCode', 0, 'TO_BE_RESOLVED');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('TapeRequestStateCode', 1, 'TO_BE_SENT_TO_VDQM');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('TapeRequestStateCode', 2, 'WAITING_TAPESERVER');
+INSERT INTO ObjState (object, statusCode, statusName) VALUES ('TapeRequestStateCode', 3, 'ONGOING');
+
 /* SQL statements for type MigrationWorkBasket */
 CREATE TABLE MigrationWorkBasket (fseq NUMBER, id INTEGER CONSTRAINT PK_MigrationWorkBasket_Id PRIMARY KEY, tapecopy INTEGER, tapeRequest INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
@@ -195,4 +298,158 @@ ALTER TABLE DiskPool2SvcClass
 ALTER TABLE Stream2TapeCopy
   ADD CONSTRAINT FK_Stream2TapeCopy_P FOREIGN KEY (Parent) REFERENCES Stream (id)
   ADD CONSTRAINT FK_Stream2TapeCopy_C FOREIGN KEY (Child) REFERENCES TapeCopy (id);
+
+/* Fill Type2Obj metatable */
+INSERT INTO Type2Obj (type, object) VALUES (0, 'INVALID');
+INSERT INTO Type2Obj (type, object) VALUES (1, 'Ptr');
+INSERT INTO Type2Obj (type, object) VALUES (2, 'CastorFile');
+INSERT INTO Type2Obj (type, object) VALUES (4, 'Cuuid');
+INSERT INTO Type2Obj (type, object) VALUES (5, 'DiskCopy');
+INSERT INTO Type2Obj (type, object) VALUES (6, 'DiskFile');
+INSERT INTO Type2Obj (type, object) VALUES (7, 'DiskPool');
+INSERT INTO Type2Obj (type, object) VALUES (8, 'DiskServer');
+INSERT INTO Type2Obj (type, object) VALUES (10, 'FileClass');
+INSERT INTO Type2Obj (type, object) VALUES (12, 'FileSystem');
+INSERT INTO Type2Obj (type, object) VALUES (13, 'IClient');
+INSERT INTO Type2Obj (type, object) VALUES (14, 'MessageAck');
+INSERT INTO Type2Obj (type, object) VALUES (16, 'ReqIdRequest');
+INSERT INTO Type2Obj (type, object) VALUES (17, 'Request');
+INSERT INTO Type2Obj (type, object) VALUES (18, 'Segment');
+INSERT INTO Type2Obj (type, object) VALUES (21, 'StageGetNextRequest');
+INSERT INTO Type2Obj (type, object) VALUES (26, 'Stream');
+INSERT INTO Type2Obj (type, object) VALUES (27, 'SubRequest');
+INSERT INTO Type2Obj (type, object) VALUES (28, 'SvcClass');
+INSERT INTO Type2Obj (type, object) VALUES (29, 'Tape');
+INSERT INTO Type2Obj (type, object) VALUES (30, 'TapeCopy');
+INSERT INTO Type2Obj (type, object) VALUES (31, 'TapePool');
+INSERT INTO Type2Obj (type, object) VALUES (33, 'StageFileQueryRequest');
+INSERT INTO Type2Obj (type, object) VALUES (35, 'StageGetRequest');
+INSERT INTO Type2Obj (type, object) VALUES (36, 'StagePrepareToGetRequest');
+INSERT INTO Type2Obj (type, object) VALUES (37, 'StagePrepareToPutRequest');
+INSERT INTO Type2Obj (type, object) VALUES (38, 'StagePrepareToUpdateRequest');
+INSERT INTO Type2Obj (type, object) VALUES (39, 'StagePutDoneRequest');
+INSERT INTO Type2Obj (type, object) VALUES (40, 'StagePutRequest');
+INSERT INTO Type2Obj (type, object) VALUES (42, 'StageRmRequest');
+INSERT INTO Type2Obj (type, object) VALUES (44, 'StageUpdateRequest');
+INSERT INTO Type2Obj (type, object) VALUES (45, 'FileRequest');
+INSERT INTO Type2Obj (type, object) VALUES (46, 'QryRequest');
+INSERT INTO Type2Obj (type, object) VALUES (48, 'StagePutNextRequest');
+INSERT INTO Type2Obj (type, object) VALUES (49, 'StageUpdateNextRequest');
+INSERT INTO Type2Obj (type, object) VALUES (50, 'StageAbortRequest');
+INSERT INTO Type2Obj (type, object) VALUES (51, 'StageReleaseFilesRequest');
+INSERT INTO Type2Obj (type, object) VALUES (58, 'DiskCopyForRecall');
+INSERT INTO Type2Obj (type, object) VALUES (59, 'TapeCopyForMigration');
+INSERT INTO Type2Obj (type, object) VALUES (60, 'GetUpdateStartRequest');
+INSERT INTO Type2Obj (type, object) VALUES (62, 'BaseAddress');
+INSERT INTO Type2Obj (type, object) VALUES (64, 'Disk2DiskCopyDoneRequest');
+INSERT INTO Type2Obj (type, object) VALUES (65, 'MoverCloseRequest');
+INSERT INTO Type2Obj (type, object) VALUES (66, 'StartRequest');
+INSERT INTO Type2Obj (type, object) VALUES (67, 'PutStartRequest');
+INSERT INTO Type2Obj (type, object) VALUES (69, 'IObject');
+INSERT INTO Type2Obj (type, object) VALUES (70, 'IAddress');
+INSERT INTO Type2Obj (type, object) VALUES (71, 'QueryParameter');
+INSERT INTO Type2Obj (type, object) VALUES (72, 'DiskCopyInfo');
+INSERT INTO Type2Obj (type, object) VALUES (73, 'Files2Delete');
+INSERT INTO Type2Obj (type, object) VALUES (74, 'FilesDeleted');
+INSERT INTO Type2Obj (type, object) VALUES (76, 'GCLocalFile');
+INSERT INTO Type2Obj (type, object) VALUES (78, 'GetUpdateDone');
+INSERT INTO Type2Obj (type, object) VALUES (79, 'GetUpdateFailed');
+INSERT INTO Type2Obj (type, object) VALUES (80, 'PutFailed');
+INSERT INTO Type2Obj (type, object) VALUES (81, 'GCFile');
+INSERT INTO Type2Obj (type, object) VALUES (82, 'GCFileList');
+INSERT INTO Type2Obj (type, object) VALUES (83, 'FilesDeletionFailed');
+INSERT INTO Type2Obj (type, object) VALUES (84, 'TapeRequest');
+INSERT INTO Type2Obj (type, object) VALUES (85, 'ClientIdentification');
+INSERT INTO Type2Obj (type, object) VALUES (86, 'TapeServer');
+INSERT INTO Type2Obj (type, object) VALUES (87, 'TapeDrive');
+INSERT INTO Type2Obj (type, object) VALUES (88, 'DeviceGroupName');
+INSERT INTO Type2Obj (type, object) VALUES (89, 'ErrorHistory');
+INSERT INTO Type2Obj (type, object) VALUES (90, 'TapeDriveDedication');
+INSERT INTO Type2Obj (type, object) VALUES (91, 'TapeAccessSpecification');
+INSERT INTO Type2Obj (type, object) VALUES (92, 'TapeDriveCompatibility');
+INSERT INTO Type2Obj (type, object) VALUES (93, 'PutDoneStart');
+INSERT INTO Type2Obj (type, object) VALUES (95, 'SetFileGCWeight');
+INSERT INTO Type2Obj (type, object) VALUES (96, 'RepackRequest');
+INSERT INTO Type2Obj (type, object) VALUES (97, 'RepackSubRequest');
+INSERT INTO Type2Obj (type, object) VALUES (98, 'RepackSegment');
+INSERT INTO Type2Obj (type, object) VALUES (99, 'RepackAck');
+INSERT INTO Type2Obj (type, object) VALUES (101, 'DiskServerDescription');
+INSERT INTO Type2Obj (type, object) VALUES (102, 'FileSystemDescription');
+INSERT INTO Type2Obj (type, object) VALUES (103, 'DiskPoolQuery');
+INSERT INTO Type2Obj (type, object) VALUES (104, 'EndResponse');
+INSERT INTO Type2Obj (type, object) VALUES (105, 'FileResponse');
+INSERT INTO Type2Obj (type, object) VALUES (106, 'StringResponse');
+INSERT INTO Type2Obj (type, object) VALUES (107, 'Response');
+INSERT INTO Type2Obj (type, object) VALUES (108, 'IOResponse');
+INSERT INTO Type2Obj (type, object) VALUES (109, 'AbortResponse');
+INSERT INTO Type2Obj (type, object) VALUES (111, 'FileQueryResponse');
+INSERT INTO Type2Obj (type, object) VALUES (113, 'GetUpdateStartResponse');
+INSERT INTO Type2Obj (type, object) VALUES (114, 'BasicResponse');
+INSERT INTO Type2Obj (type, object) VALUES (115, 'StartResponse');
+INSERT INTO Type2Obj (type, object) VALUES (116, 'GCFilesResponse');
+INSERT INTO Type2Obj (type, object) VALUES (117, 'FileQryResponse');
+INSERT INTO Type2Obj (type, object) VALUES (118, 'DiskPoolQueryResponse');
+INSERT INTO Type2Obj (type, object) VALUES (119, 'StageRepackRequest');
+INSERT INTO Type2Obj (type, object) VALUES (120, 'DiskServerStateReport');
+INSERT INTO Type2Obj (type, object) VALUES (121, 'DiskServerMetricsReport');
+INSERT INTO Type2Obj (type, object) VALUES (122, 'FileSystemStateReport');
+INSERT INTO Type2Obj (type, object) VALUES (123, 'FileSystemMetricsReport');
+INSERT INTO Type2Obj (type, object) VALUES (124, 'DiskServerAdminReport');
+INSERT INTO Type2Obj (type, object) VALUES (125, 'FileSystemAdminReport');
+INSERT INTO Type2Obj (type, object) VALUES (126, 'StreamReport');
+INSERT INTO Type2Obj (type, object) VALUES (127, 'FileSystemStateAck');
+INSERT INTO Type2Obj (type, object) VALUES (128, 'MonitorMessageAck');
+INSERT INTO Type2Obj (type, object) VALUES (129, 'Client');
+INSERT INTO Type2Obj (type, object) VALUES (130, 'JobSubmissionRequest');
+INSERT INTO Type2Obj (type, object) VALUES (131, 'VersionQuery');
+INSERT INTO Type2Obj (type, object) VALUES (132, 'VersionResponse');
+INSERT INTO Type2Obj (type, object) VALUES (133, 'StageDiskCopyReplicaRequest');
+INSERT INTO Type2Obj (type, object) VALUES (134, 'RepackResponse');
+INSERT INTO Type2Obj (type, object) VALUES (135, 'RepackFileQry');
+INSERT INTO Type2Obj (type, object) VALUES (136, 'CnsInfoMigrationPolicy');
+INSERT INTO Type2Obj (type, object) VALUES (137, 'DbInfoMigrationPolicy');
+INSERT INTO Type2Obj (type, object) VALUES (138, 'CnsInfoRecallPolicy');
+INSERT INTO Type2Obj (type, object) VALUES (139, 'DbInfoRecallPolicy');
+INSERT INTO Type2Obj (type, object) VALUES (140, 'DbInfoStreamPolicy');
+INSERT INTO Type2Obj (type, object) VALUES (141, 'PolicyObj');
+INSERT INTO Type2Obj (type, object) VALUES (142, 'NsFilesDeleted');
+INSERT INTO Type2Obj (type, object) VALUES (143, 'NsFilesDeletedResponse');
+INSERT INTO Type2Obj (type, object) VALUES (144, 'Disk2DiskCopyStartRequest');
+INSERT INTO Type2Obj (type, object) VALUES (145, 'Disk2DiskCopyStartResponse');
+INSERT INTO Type2Obj (type, object) VALUES (146, 'ThreadNotification');
+INSERT INTO Type2Obj (type, object) VALUES (147, 'FirstByteWritten');
+INSERT INTO Type2Obj (type, object) VALUES (148, 'VdqmTape');
+INSERT INTO Type2Obj (type, object) VALUES (149, 'StgFilesDeleted');
+INSERT INTO Type2Obj (type, object) VALUES (150, 'StgFilesDeletedResponse');
+INSERT INTO Type2Obj (type, object) VALUES (151, 'VolumePriority');
+INSERT INTO Type2Obj (type, object) VALUES (152, 'ChangePrivilege');
+INSERT INTO Type2Obj (type, object) VALUES (153, 'BWUser');
+INSERT INTO Type2Obj (type, object) VALUES (154, 'RequestType');
+INSERT INTO Type2Obj (type, object) VALUES (155, 'ListPrivileges');
+INSERT INTO Type2Obj (type, object) VALUES (156, 'Privilege');
+INSERT INTO Type2Obj (type, object) VALUES (157, 'ListPrivilegesResponse');
+INSERT INTO Type2Obj (type, object) VALUES (158, 'PriorityMap');
+INSERT INTO Type2Obj (type, object) VALUES (159, 'VectorAddress');
+INSERT INTO Type2Obj (type, object) VALUES (160, 'Tape2DriveDedication');
+INSERT INTO Type2Obj (type, object) VALUES (161, 'TapeRecall');
+INSERT INTO Type2Obj (type, object) VALUES (162, 'FileMigratedNotification');
+INSERT INTO Type2Obj (type, object) VALUES (163, 'FileRecalledNotification');
+INSERT INTO Type2Obj (type, object) VALUES (164, 'FileToMigrateRequest');
+INSERT INTO Type2Obj (type, object) VALUES (165, 'FileToMigrate');
+INSERT INTO Type2Obj (type, object) VALUES (166, 'FileToRecallRequest');
+INSERT INTO Type2Obj (type, object) VALUES (167, 'FileToRecall');
+INSERT INTO Type2Obj (type, object) VALUES (168, 'VolumeRequest');
+INSERT INTO Type2Obj (type, object) VALUES (169, 'Volume');
+INSERT INTO Type2Obj (type, object) VALUES (170, 'TapeRequestState');
+INSERT INTO Type2Obj (type, object) VALUES (171, 'DbInfoRetryPolicy');
+INSERT INTO Type2Obj (type, object) VALUES (172, 'EndNotification');
+INSERT INTO Type2Obj (type, object) VALUES (173, 'NoMoreFiles');
+INSERT INTO Type2Obj (type, object) VALUES (174, 'NotificationAcknowledge');
+INSERT INTO Type2Obj (type, object) VALUES (175, 'FileErrorReport');
+INSERT INTO Type2Obj (type, object) VALUES (176, 'BaseFileInfo');
+INSERT INTO Type2Obj (type, object) VALUES (177, 'ErrorReport');
+INSERT INTO Type2Obj (type, object) VALUES (178, 'RmMasterReport');
+INSERT INTO Type2Obj (type, object) VALUES (179, 'EndNotificationErrorReport');
+INSERT INTO Type2Obj (type, object) VALUES (180, 'MigrationWorkBasket');
+COMMIT;
 
