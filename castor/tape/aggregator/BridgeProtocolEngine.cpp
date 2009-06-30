@@ -144,91 +144,81 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSockets()
     maxFd = m_rtcpdInitialSocketFd;
   }
 
-  try {
-    // Select loop
-    bool continueRtcopySession = true;
-    while(continueRtcopySession) {
-      // Build the file descriptor set ready for the select call
-      FD_ZERO(&readFdSet);
-      for(std::list<int>::iterator itor = m_readFds.begin();
-        itor != m_readFds.end(); itor++) {
+  // Select loop
+  bool continueRtcopySession = true;
+  while(continueRtcopySession) {
+    // Build the file descriptor set ready for the select call
+    FD_ZERO(&readFdSet);
+    for(std::list<int>::iterator itor = m_readFds.begin();
+      itor != m_readFds.end(); itor++) {
 
-        FD_SET(*itor, &readFdSet);
+      FD_SET(*itor, &readFdSet);
 
-        if(*itor > maxFd) {
-          maxFd = *itor;
-        }
+      if(*itor > maxFd) {
+        maxFd = *itor;
       }
+    }
 
-      timeout.tv_sec  = RTCPDPINGTIMEOUT;
-      timeout.tv_usec = 0;
+    timeout.tv_sec  = RTCPDPINGTIMEOUT;
+    timeout.tv_usec = 0;
 
-      // See if any of the read file descriptors are ready?
-      selectRc = select(maxFd + 1, &readFdSet, NULL, NULL, &timeout);
-      selectErrno = errno;
+    // See if any of the read file descriptors are ready?
+    selectRc = select(maxFd + 1, &readFdSet, NULL, NULL, &timeout);
+    selectErrno = errno;
 
-      switch(selectRc) {
-      case 0: // Select timed out
+    switch(selectRc) {
+    case 0: // Select timed out
 
-        RtcpTxRx::pingRtcpd(m_cuuid, m_volReqId, m_rtcpdInitialSocketFd,
-          RTCPDNETRWTIMEOUT);
-        break;
+      RtcpTxRx::pingRtcpd(m_cuuid, m_volReqId, m_rtcpdInitialSocketFd,
+        RTCPDNETRWTIMEOUT);
+      break;
 
-      case -1: // Select encountered an error
+    case -1: // Select encountered an error
 
-        // If select encountered an error other than an interruption
-        if(selectErrno != EINTR) {
-          char strerrorBuf[STRERRORBUFLEN];
-          char *const errorStr = strerror_r(selectErrno, strerrorBuf,
-            sizeof(strerrorBuf));
+      // If select encountered an error other than an interruption
+      if(selectErrno != EINTR) {
+        char strerrorBuf[STRERRORBUFLEN];
+        char *const errorStr = strerror_r(selectErrno, strerrorBuf,
+          sizeof(strerrorBuf));
 
-          TAPE_THROW_CODE(selectErrno,
-            ": Select encountered an error other than an interruption"
-            ": " << errorStr);
-        }
-        break;
+        TAPE_THROW_CODE(selectErrno,
+          ": Select encountered an error other than an interruption"
+          ": " << errorStr);
+      }
+      break;
 
-      default: // One or more select file descriptors require attention
+    default: // One or more select file descriptors require attention
 
-        int nbProcessedFds = 0;
+      int nbProcessedFds = 0;
 
-        // For each read file descriptor or until all ready file descriptors
-        // have been processed
-        for(std::list<int>::iterator itor = m_readFds.begin();
-          itor != m_readFds.end() && nbProcessedFds < selectRc; itor++) {
+      // For each read file descriptor or until all ready file descriptors
+      // have been processed
+      for(std::list<int>::iterator itor = m_readFds.begin();
+        itor != m_readFds.end() && nbProcessedFds < selectRc; itor++) {
 
-          // If the read file descriptor is ready
-          if(FD_ISSET(*itor, &readFdSet)) {
-            bool endOfSession = false;
+        // If the read file descriptor is ready
+        if(FD_ISSET(*itor, &readFdSet)) {
+          bool endOfSession = false;
 
-            processRtcpdSocket(*itor, endOfSession);
-            nbProcessedFds++;
+          processRtcpdSocket(*itor, endOfSession);
+          nbProcessedFds++;
 
-            if(endOfSession) {
-              continueRtcopySession = false;
-            }
+          if(endOfSession) {
+            continueRtcopySession = false;
           }
         }
-      } // switch(selectRc)
-    } // while(continueRtcopySession)
+      }
+    } // switch(selectRc)
+  } // while(continueRtcopySession)
 
-    // Log the end of the RTCOPY session and notify the tape gateway
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", m_volReqId)};
-    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_FINISHED_RTCOPY_SESSION, params);
+  // Log the end of the RTCOPY session and notify the tape gateway
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("volReqId", m_volReqId)};
+  castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+    AGGREGATOR_FINISHED_RTCOPY_SESSION, params);
 
-    GatewayTxRx::notifyGatewayEndOfSession(m_cuuid, m_volReqId, m_gatewayHost,
-      m_gatewayPort);
-
-  } catch(castor::exception::Exception &ex) {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", m_volReqId           ),
-      castor::dlf::Param("Message" , ex.getMessage().str()),
-      castor::dlf::Param("Code"    , ex.code()            )};
-    CASTOR_DLF_WRITEPC(m_cuuid, DLF_LVL_ERROR, AGGREGATOR_MAIN_SELECT_FAILED,
-      params);
-  }
+  GatewayTxRx::notifyGatewayEndOfSession(m_cuuid, m_volReqId, m_gatewayHost,
+    m_gatewayPort);
 }
 
 
@@ -438,7 +428,16 @@ void castor::tape::aggregator::BridgeProtocolEngine::run()
     RTCPDNETRWTIMEOUT);
 
   // Spin a select loop processing the RTCPD sockets
-  processRtcpdSockets();
+  try {
+    processRtcpdSockets();
+  } catch(castor::exception::Exception &ex) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId", m_volReqId           ),
+      castor::dlf::Param("Message" , ex.getMessage().str()),
+      castor::dlf::Param("Code"    , ex.code()            )};
+    CASTOR_DLF_WRITEPC(m_cuuid, DLF_LVL_ERROR,
+      AGGREGATOR_FAILED_TO_PROCESS_RTCPD_SOCKETS, params);
+  }
 }
 
 
