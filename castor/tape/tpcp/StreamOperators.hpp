@@ -74,6 +74,12 @@ std::ostream &operator<<(std::ostream &os,
 std::ostream &operator<<(std::ostream &os, const vmgr_tape_info &value);
 
 /**
+ * ostream << operator for tapegateway::BaseFileInfo object
+ */
+std::ostream &operator<<(std::ostream &os,
+  const castor::tape::tapegateway::BaseFileInfo &value);
+
+/**
  * ostream << operator for tapegateway::fileToRecall object
  */
 std::ostream &operator<<(std::ostream &os,

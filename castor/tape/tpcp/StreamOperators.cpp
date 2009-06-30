@@ -177,10 +177,35 @@ std::ostream &operator<<(std::ostream &os, const vmgr_tape_info &value) {
 
 
 //------------------------------------------------------------------------------
+// ostream << operator for tapegateway::BaseFileInfo object 
+//------------------------------------------------------------------------------
+std::ostream &operator<<(std::ostream &os,
+  const castor::tape::tapegateway::BaseFileInfo &value) {
+
+  os << "transactionId       = "   << value.transactionId()       << std::endl
+     << "nshost              = \"" << value.nshost() << "\""      << std::endl
+     << "fileid              = "   << value.fileid()              << std::endl
+     << "fseq                = "   << value.fseq()                << std::endl
+     << "positionCommandCode = "   << value.positionCommandCode() << std::endl;
+
+  return os;
+}
+
+
+//------------------------------------------------------------------------------
 // ostream << operator for tapegateway::FileToRecall object 
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os,
   const castor::tape::tapegateway::FileToRecall &value) {
+
+  os << (castor::tape::tapegateway::BaseFileInfo&)value
+     << "path                = \"" << value.path() << "\""  << std::endl
+     << std::hex
+     << "blockId0            = "   << (int)value.blockId0() << std::endl
+     << "blockId1            = "   << (int)value.blockId1() << std::endl
+     << "blockId2            = "   << (int)value.blockId2() << std::endl
+     << "blockId3            = "   << (int)value.blockId3() << std::endl
+     << std::dec;
 
   return os;
 }
@@ -190,7 +215,9 @@ std::ostream &operator<<(std::ostream &os,
 // ostream << operator for tapegateway::FileToRecallRequest object 
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os,
-  const castor::tape::tapegateway::FileToRecallRequest &fileToRecallRequest) {
+  const castor::tape::tapegateway::FileToRecallRequest &value) {
+
+  os << "transactionId = "   << value.transactionId() << std::endl;
 
   return os;
 }
@@ -200,8 +227,12 @@ std::ostream &operator<<(std::ostream &os,
 // ostream << operator for tapegateway::FileRecalledNotification object 
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os,
-  const castor::tape::tapegateway::FileRecalledNotification &notificationInfo)
+  const castor::tape::tapegateway::FileRecalledNotification &value)
   {
+
+  os << (castor::tape::tapegateway::BaseFileInfo&)value
+     << "path                = \"" << value.path() << "\""         << std::endl
+     << "checksumName        = \"" << value.checksumName() << "\"" << std::endl;
 
   return os;
 }
