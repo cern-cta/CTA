@@ -5,7 +5,7 @@
 #
 # @author Castor dev team, castor-dev@cern.ch
 #
-# @(#)$RCSfile: gencastor,v $ $Revision: 1.19 $ $Release$ $Date: 2008/08/11 17:00:22 $ $Author: itglp $
+# @(#)$RCSfile: gencastor,v $ $Revision: 1.20 $ $Release$ $Date: 2009/06/30 10:45:58 $ $Author: itglp $
 # 
 
 if ("$1" == "-h" || "$1" == "") then
@@ -50,6 +50,12 @@ endif
 set pushdsilent
 pushd ${TMPDIR}
 rm -f ${TOPNS}/db/*Generated*
+
+# Type2Obj content
+echo '/* Fill Type2Obj metatable */' >> ${TOPNS}/db/oracleSchema.sql
+grep OBJ_ ${WORKDIR}/${TOPNS}/Constants.hpp | grep '=' | sed 's/ *\([^ ]*\) = \([0-9]*\).*$/\2  \1/' | sed 's/OBJ_//g' | awk '{print "INSERT INTO Type2Obj (type, object) VALUES (" $1 ", '\''" $2 "'\'');" }' >> ${TOPNS}/db/oracleSchema.sql
+echo 'COMMIT;' >> ${TOPNS}/db/oracleSchema.sql
+echo >> ${TOPNS}/db/oracleSchema.sql
 
 foreach f (`find . -type f`)
   #echo $f
