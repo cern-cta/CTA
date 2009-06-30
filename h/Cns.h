@@ -1,5 +1,5 @@
 /*
- * $Id: Cns.h,v 1.17 2009/05/29 13:43:06 sponcec3 Exp $
+ * $Id: Cns.h,v 1.18 2009/06/30 06:22:55 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns.h,v $ $Revision: 1.17 $ $Date: 2009/05/29 13:43:06 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns.h,v $ $Revision: 1.18 $ $Date: 2009/06/30 06:22:55 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_H
@@ -18,11 +18,6 @@
 
 #include "Cns_constants.h"
 #include "osdep.h"
-#if defined(NSTYPE_LFC)
-#include "lfc.h"
-#elif defined(NSTYPE_DPNS)
-#include "dpns.h"
-#else
 #define CNS_SCE "CNS"
 #define CNS_SVC "cns"
 #define CNS_SEC_SVC "cns_sec"
@@ -33,7 +28,7 @@
 #define CNS_CONNTIMEOUT_ENV "CNS_CONNTIMEOUT"
 #define CNS_CONRETRY_ENV "CNS_CONRETRY"
 #define CNS_CONRETRYINT_ENV "CNS_CONRETRYINT"
-#endif
+
 #define CNS_MAGIC	0x030E1301
 #define CNS_MAGIC2	0x030E1302
 #define CNS_MAGIC3	0x030E1303
@@ -74,7 +69,6 @@
 #define CNS_SHUTDOWN        	17 /* deprecated */
 #define CNS_GETSEGAT        	18
 #define CNS_SETSEGAT        	19
-#define CNS_DROPSEGS        	87
 #define CNS_LISTTAPE        	20
 #define CNS_ENDLIST        	21
 #define CNS_GETPATH        	22
@@ -139,6 +133,7 @@
 #define CNS_STATCS              84
 #define CNS_UPDATEFILE_CHECKSUM 85
 #define CNS_UPDATESEG_STATUS    86
+#define CNS_DROPSEGS        	87
 
 			/* name server reply types */
 

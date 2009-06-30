@@ -43,7 +43,6 @@ int Cns_update_unique_gid(struct Cns_dbfd *dbfd, unsigned int unique_id);
 int Cns_update_unique_uid(struct Cns_dbfd *dbfd, unsigned int unique_id);
 
 extern int being_shutdown;
-extern char *cmd;
 extern char localhost[CA_MAXHOSTNAMELEN+1];
 extern int rdonly;
 
@@ -859,7 +858,6 @@ int Cns_srv_creat(magic, req_data, clienthost, thip)
   Cns_dbrec_addr rec_addrs; /* segment record address */
   char repbuf[8];
   char *sbp;
-  struct Cns_file_replica rep_entry;
   struct Cns_seg_metadata smd_entry;
   char tmpbuf[21];
   uid_t uid;
@@ -915,33 +913,18 @@ int Cns_srv_creat(magic, req_data, clienthost, thip)
     if (Cns_chkentryperm (&filentry, S_IWRITE, uid, gid, clienthost))
       RETURN (EACCES);
 
-    if (strcmp (cmd, "nsdaemon")) {
-      /* check if replicas still exit */
+    /* delete file segments if any */
 
-      if ((c = Cns_list_rep_entry (&thip->dbfd, 1, filentry.fileid,
-                                   &rep_entry, 0, NULL, 0, &dblistptr)) == 0) {
-        (void) Cns_list_rep_entry (&thip->dbfd, 0, filentry.fileid,
-                                   &rep_entry, 0, NULL, 1, &dblistptr); /* free res */
-        RETURN (EEXIST);
-      }
-      (void) Cns_list_rep_entry (&thip->dbfd, 0, filentry.fileid,
-                                 &rep_entry, 0, NULL, 1, &dblistptr); /* free res */
-      if (c < 0)
+    while ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry.fileid,
+                                     &smd_entry, 1, &rec_addrs, 0, &dblistptr)) == 0) {
+      if (Cns_delete_smd_entry (&thip->dbfd, &rec_addrs))
         RETURN (serrno);
-    } else {
-      /* delete file segments if any */
-
-      while ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry.fileid,
-                                       &smd_entry, 1, &rec_addrs, 0, &dblistptr)) == 0) {
-        if (Cns_delete_smd_entry (&thip->dbfd, &rec_addrs))
-          RETURN (serrno);
-        bof = 0;
-      }
-      (void) Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry.fileid,
-                                  &smd_entry, 1, &rec_addrs, 1, &dblistptr); /* free res */
-      if (c < 0)
-        RETURN (serrno);
+      bof = 0;
     }
+    (void) Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry.fileid,
+                                &smd_entry, 1, &rec_addrs, 1, &dblistptr); /* free res */
+    if (c < 0)
+      RETURN (serrno);
 
     /* update basename entry */
 
@@ -955,10 +938,8 @@ int Cns_srv_creat(magic, req_data, clienthost, thip)
       RETURN (serrno);
     nslogit (func, "file %s reset\n", u64tostr (filentry.fileid, tmpbuf, 0));
   } else { /* must create the file */
-    if (strcmp (cmd, "nsdaemon") == 0 && parent_dir.fileclass <= 0)
+    if (parent_dir.fileclass <= 0)
       RETURN (EINVAL);
-    if (strncmp (cmd, "lfc", 3) == 0 && *guid == '\0')
-      RETURN (EINVAL); /* guid is mandatory for the LFC */
     if (Cns_unique_id (&thip->dbfd, &filentry.fileid) < 0)
       RETURN (serrno);
     /* parent_fileid and name have been set by Cns_parsepath */
@@ -1086,7 +1067,6 @@ int Cns_srv_delete(magic, req_data, clienthost, thip)
   Cns_dbrec_addr rec_addr; /* file record address */
   Cns_dbrec_addr rec_addrp; /* parent record address */
   Cns_dbrec_addr rec_addrs; /* segment record address */
-  struct Cns_file_replica rep_entry;
   struct Cns_seg_metadata smd_entry;
   uid_t uid;
   char *user;
@@ -1132,36 +1112,20 @@ int Cns_srv_delete(magic, req_data, clienthost, thip)
       Cns_chkentryperm (&filentry, S_IWRITE, uid, gid, clienthost))
     RETURN (EACCES);
 
-  if (strcmp (cmd, "nsdaemon")) {
-    /* mark file replicas if any as logically deleted */
+  /* mark file segments if any as logically deleted */
 
-    while ((c = Cns_list_rep_entry (&thip->dbfd, bof, filentry.fileid,
-                                    &rep_entry, 1, &rec_addrs, 0, &dblistptr)) == 0) {
-      rep_entry.status = 'D';
-      if (Cns_update_rep_entry (&thip->dbfd, &rec_addrs, &rep_entry))
-        RETURN (serrno);
-      bof = 0;
-    }
-    (void) Cns_list_rep_entry (&thip->dbfd, bof, filentry.fileid,
-                               &rep_entry, 1, &rec_addrs, 1, &dblistptr); /* free res */
-    if (c < 0)
+  bof = 1;
+  while ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry.fileid,
+                                   &smd_entry, 1, &rec_addrs, 0, &dblistptr)) == 0) {
+    smd_entry.s_status = 'D';
+    if (Cns_update_smd_entry (&thip->dbfd, &rec_addrs, &smd_entry))
       RETURN (serrno);
-  } else {
-    /* mark file segments if any as logically deleted */
-
-    bof = 1;
-    while ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry.fileid,
-                                     &smd_entry, 1, &rec_addrs, 0, &dblistptr)) == 0) {
-      smd_entry.s_status = 'D';
-      if (Cns_update_smd_entry (&thip->dbfd, &rec_addrs, &smd_entry))
-        RETURN (serrno);
-      bof = 0;
-    }
-    (void) Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry.fileid,
-                                &smd_entry, 1, &rec_addrs, 1, &dblistptr); /* free res */
-    if (c < 0)
-      RETURN (serrno);
+    bof = 0;
   }
+  (void) Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry.fileid,
+                              &smd_entry, 1, &rec_addrs, 1, &dblistptr); /* free res */
+  if (c < 0)
+    RETURN (serrno);
 
   /* mark file entry as logically deleted */
 
@@ -4009,10 +3973,9 @@ int Cns_srv_rename(magic, req_data, clienthost, thip)
   char oldpath[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
-  Cns_dbrec_addr rec_addrl;       /* symlink record address */
+  Cns_dbrec_addr rec_addrl; /* symlink record address */
   Cns_dbrec_addr rec_addrs; /* segment record address */
   Cns_dbrec_addr rec_addru; /* comment record address */
-  struct Cns_file_replica rep_entry;
   struct Cns_seg_metadata smd_entry;
   struct Cns_file_metadata tmp_fmd_entry;
   uid_t uid;
@@ -4096,23 +4059,6 @@ int Cns_srv_rename(magic, req_data, clienthost, thip)
     if (new_fmd_entry.filemode & S_IFDIR && new_fmd_entry.nlink)
       RETURN (EEXIST);
 
-    if (strcmp (cmd, "nsdaemon")) {
-      /* check if replicas exist */
-
-      if ((c = Cns_list_rep_entry (&thip->dbfd, 1,
-                                   new_fmd_entry.fileid, &rep_entry, 0, NULL, 0,
-                                   &dblistptr)) == 0) {
-        (void) Cns_list_rep_entry (&thip->dbfd, 0,
-                                   new_fmd_entry.fileid, &rep_entry, 0, NULL, 1,
-                                   &dblistptr); /* free res */
-        RETURN (EEXIST);
-      }
-      (void) Cns_list_rep_entry (&thip->dbfd, 0, new_fmd_entry.fileid,
-                                 &rep_entry, 0, NULL, 1, &dblistptr); /* free res */
-      if (c < 0)
-        RETURN (serrno);
-    }
-
     /* if parent of 'new' has the sticky bit set,
        the user must own 'new' or the parent of 'new' or
        the basename entry must have write permission */
@@ -4139,21 +4085,20 @@ int Cns_srv_rename(magic, req_data, clienthost, thip)
     RETURN (EACCES);
 
   if (new_exists) { /* must remove it */
-    if (strcmp (cmd, "nsdaemon") == 0) {
-      /* delete file segments if any */
 
-      while ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof,
-                                       new_fmd_entry.fileid, &smd_entry, 1, &rec_addrs, 0,
-                                       &dblistptr)) == 0) {
-        if (Cns_delete_smd_entry (&thip->dbfd, &rec_addrs))
-          RETURN (serrno);
-        bof = 0;
-      }
-      (void) Cns_get_smd_by_pfid (&thip->dbfd, bof, new_fmd_entry.fileid,
-                                  &smd_entry, 1, &rec_addrs, 1, &dblistptr); /* free res */
-      if (c < 0)
+    /* delete file segments if any */
+
+    while ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof,
+                                     new_fmd_entry.fileid, &smd_entry, 1, &rec_addrs, 0,
+                                     &dblistptr)) == 0) {
+      if (Cns_delete_smd_entry (&thip->dbfd, &rec_addrs))
         RETURN (serrno);
+      bof = 0;
     }
+    (void) Cns_get_smd_by_pfid (&thip->dbfd, bof, new_fmd_entry.fileid,
+                                &smd_entry, 1, &rec_addrs, 1, &dblistptr); /* free res */
+    if (c < 0)
+      RETURN (serrno);
 
     /* if the existing 'new' entry is a symlink, delete it */
 
@@ -4491,7 +4436,7 @@ int Cns_srv_replaceseg(magic, req_data, clienthost, thip)
   unmarshall_WORD (rbp, fsec);
   sprintf (logbuf, "replaceseg %s %lld %d %d",
            u64tostr (fileid, tmpbuf, 0),
-	   (long long int)last_mod_time, copyno, fsec);
+           (long long int)last_mod_time, copyno, fsec);
   Cns_logreq (func, logbuf);
 
   /* check if the user is authorized to replace segment attributes */
@@ -4661,7 +4606,7 @@ int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
     RETURN (EINVAL);
 
   sprintf (logbuf, "replacetapecopy %lld %s->%s %lld", fileid, oldvid, newvid,
-	   (long long int)last_mod_time);
+           (long long int)last_mod_time);
   Cns_logreq (func, logbuf);
 
   /* check if the user is authorized to replacetapecopy */
@@ -5268,8 +5213,8 @@ int Cns_srv_setfsize(magic, req_data, clienthost, thip)
   }
   get_cwd_path (thip, cwd, cwdpath);
   sprintf (logbuf, "setfsize %s %lld %lld %s %s %s", u64tostr (fileid, tmpbuf, 0),
-	   (long long int)last_mod_time,
-	   (long long int)new_mod_time,
+           (long long int)last_mod_time,
+           (long long int)new_mod_time,
            path, u64tostr (filesize, tmpbuf2, 0), cwdpath);
   Cns_logreq (func, logbuf);
 
@@ -5386,9 +5331,9 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
   }
   get_cwd_path (thip, cwd, cwdpath);
   sprintf (logbuf, "setfsizecs %s %lld %lld %s %s %s %s %s",
-	   u64tostr (fileid, tmpbuf, 0), (long long int)last_mod_time,
-	   (long long int)new_mod_time, path, u64tostr (filesize, tmpbuf2, 0),
-	   csumvalue, csumtype, cwdpath);
+           u64tostr (fileid, tmpbuf, 0), (long long int)last_mod_time,
+           (long long int)new_mod_time, path, u64tostr (filesize, tmpbuf2, 0),
+           csumvalue, csumtype, cwdpath);
   Cns_logreq (func, logbuf);
   if (*csumtype &&
       (strcmp (csumtype, "AD") && strcmp (csumtype, "PA")))
@@ -5509,8 +5454,8 @@ int Cns_srv_setfsizeg(magic, req_data, clienthost, thip)
     unmarshall_TIME_T (rbp, last_mod_time);
   }
   sprintf (logbuf, "setfsizeg %s %s %lld %lld", guid,
-	   u64tostr (filesize, tmpbuf, 0),
-	   (long long int)last_mod_time, (long long int)new_mod_time);
+           u64tostr (filesize, tmpbuf, 0),
+           (long long int)last_mod_time, (long long int)new_mod_time);
   Cns_logreq (func, logbuf);
   if (*csumtype &&
       strcmp (csumtype, "AD"))
@@ -5816,7 +5761,7 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
   get_cwd_path (thip, cwd, cwdpath);
   sprintf (logbuf, "setsegattrs %s %lld %s %s",
            u64tostr (fileid, tmpbuf, 0),
-	   (long long int)last_mod_time, path, cwdpath);
+           (long long int)last_mod_time, path, cwdpath);
   Cns_logreq (func, logbuf);
 
   /* start transaction */
@@ -5913,9 +5858,9 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
 
     if ((magic >= CNS_MAGIC4) && (nbseg == 1)) {
       /* Checking for a checksum in the file metadata table if we have
-	 only one segment for a file. We have different names for
-	 checksum type in Cns_seg_metadata table and Cns_file_metadata.
-	 adler32==AD */
+         only one segment for a file. We have different names for
+         checksum type in Cns_seg_metadata table and Cns_file_metadata.
+         adler32==AD */
       if (((strcmp(smd_entry.checksum_name, "adler32") == 0) &&
            (strcmp(filentry.csumtype, "AD") == 0))) {
         /* we have adler32 checksum type */
@@ -5960,7 +5905,7 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
   RETURN (0);
 }
 
-/* internal method dropping all segments from a given file */
+/*      Cns_internal_dropsegs - internal method dropping all segments from a given file */
 
 int Cns_internal_dropsegs(func, thip, filentry)
      char* func;
@@ -6052,13 +5997,13 @@ int Cns_srv_dropsegs(magic, req_data, clienthost, thip)
     RETURN (EISDIR);
   if ((filentry.filemode & S_IFLNK) == S_IFLNK) {
     RETURN (ENSISLINK);
-  /* if the parent has the sticky bit set,
-     the user must own the file or the parent or
-     the basename entry must have write permission */
-  if (parent_dir.filemode & S_ISVTX &&
-      uid != parent_dir.uid && uid != filentry.uid &&
-      Cns_chkentryperm (&filentry, S_IWRITE, uid, gid, clienthost))
-    RETURN (EACCES);
+    /* if the parent has the sticky bit set,
+       the user must own the file or the parent or
+       the basename entry must have write permission */
+    if (parent_dir.filemode & S_ISVTX &&
+        uid != parent_dir.uid && uid != filentry.uid &&
+        Cns_chkentryperm (&filentry, S_IWRITE, uid, gid, clienthost))
+      RETURN (EACCES);
   }
 
   /* delete file segments if any */
@@ -6529,10 +6474,9 @@ int Cns_srv_undelete(magic, req_data, clienthost, thip)
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
-  Cns_dbrec_addr rec_addr; /* file record address */
+  Cns_dbrec_addr rec_addr;  /* file record address */
   Cns_dbrec_addr rec_addrp; /* parent record address */
   Cns_dbrec_addr rec_addrs; /* segment record address */
-  struct Cns_file_replica rep_entry;
   struct Cns_seg_metadata smd_entry;
   uid_t uid;
   char *user;
@@ -6578,35 +6522,19 @@ int Cns_srv_undelete(magic, req_data, clienthost, thip)
       Cns_chkentryperm (&filentry, S_IWRITE, uid, gid, clienthost))
     RETURN (EACCES);
 
-  if (strcmp (cmd, "nsdaemon")) {
-    /* remove the mark "logically deleted" on the file replicas if any */
+  /* remove the mark "logically deleted" on the file segments if any */
 
-    while ((c = Cns_list_rep_entry (&thip->dbfd, bof, filentry.fileid,
-                                    &rep_entry, 1, &rec_addrs, 0, &dblistptr)) == 0) {
-      rep_entry.status = '-';
-      if (Cns_update_rep_entry (&thip->dbfd, &rec_addrs, &rep_entry))
-        RETURN (serrno);
-      bof = 0;
-    }
-    (void) Cns_list_rep_entry (&thip->dbfd, bof, filentry.fileid,
-                               &rep_entry, 1, &rec_addrs, 1, &dblistptr); /* free res */
-    if (c < 0)
+  while ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry.fileid,
+                                   &smd_entry, 1, &rec_addrs, 0, &dblistptr)) == 0) {
+    smd_entry.s_status = '-';
+    if (Cns_update_smd_entry (&thip->dbfd, &rec_addrs, &smd_entry))
       RETURN (serrno);
-  } else {
-    /* remove the mark "logically deleted" on the file segments if any */
-
-    while ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry.fileid,
-                                     &smd_entry, 1, &rec_addrs, 0, &dblistptr)) == 0) {
-      smd_entry.s_status = '-';
-      if (Cns_update_smd_entry (&thip->dbfd, &rec_addrs, &smd_entry))
-        RETURN (serrno);
-      bof = 0;
-    }
-    (void) Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry.fileid,
-                                &smd_entry, 1, &rec_addrs, 1, &dblistptr); /* free res */
-    if (c < 0)
-      RETURN (serrno);
+    bof = 0;
   }
+  (void) Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry.fileid,
+                              &smd_entry, 1, &rec_addrs, 1, &dblistptr); /* free res */
+  if (c < 0)
+    RETURN (serrno);
 
   /* remove the mark "logically deleted" */
 
@@ -6634,9 +6562,7 @@ int Cns_srv_unlink(magic, req_data, clienthost, thip)
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
 {
-  int c;
   u_signed64 cwd;
-  DBLISTPTR dblistptr;
   struct Cns_file_metadata filentry;
   char func[16];
   gid_t gid;
@@ -6646,11 +6572,10 @@ int Cns_srv_unlink(magic, req_data, clienthost, thip)
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
-  Cns_dbrec_addr rec_addr; /* file record address */
+  Cns_dbrec_addr rec_addr;  /* file record address */
   Cns_dbrec_addr rec_addrl; /* link record address */
   Cns_dbrec_addr rec_addrp; /* parent record address */
   Cns_dbrec_addr rec_addru; /* comment record address */
-  struct Cns_file_replica rep_entry;
   uid_t uid;
   struct Cns_user_metadata umd_entry;
   char *user;
@@ -6704,24 +6629,10 @@ int Cns_srv_unlink(magic, req_data, clienthost, thip)
       RETURN (serrno);
   } else {
 
-    if (strcmp (cmd, "nsdaemon")) {
-      /* check if replicas still exit */
+    /* delete file segments if any */
 
-      if ((c = Cns_list_rep_entry (&thip->dbfd, 1, filentry.fileid,
-                                   &rep_entry, 0, NULL, 0, &dblistptr)) == 0) {
-        (void) Cns_list_rep_entry (&thip->dbfd, 0, filentry.fileid,
-                                   &rep_entry, 0, NULL, 1, &dblistptr); /* free res */
-        RETURN (EEXIST);
-      }
-      (void) Cns_list_rep_entry (&thip->dbfd, 0, filentry.fileid,
-                                 &rep_entry, 0, NULL, 1, &dblistptr); /* free res */
-      if (c < 0)
-        RETURN (serrno);
-    } else {
-      /* delete file segments if any */
-      if (Cns_internal_dropsegs(func, thip, &filentry) != 0)
-        RETURN (serrno);
-    }
+    if (Cns_internal_dropsegs(func, thip, &filentry) != 0)
+      RETURN (serrno);
 
     /* delete the comment if it exists */
 

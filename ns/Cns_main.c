@@ -40,7 +40,6 @@ int procdirreq(int magic, int req_type, char *req_data, const char *clienthost, 
 int Cns_init_dbpkg();
 
 int being_shutdown = 0;
-char *cmd;
 char func[16];
 int jid;
 char lcgdmmapfile[CA_MAXPATHLEN+1];
@@ -95,14 +94,6 @@ int Cns_main(main_args)
   strcpy (func, "Cns_serv");
   nsconfigfile[0] = '\0';
   strcpy (logfile, LOGFILE);
-#if ! defined(_WIN32)
-  if ((cmd = strrchr (main_args->argv[0], '/')))
-#else
-    if ((cmd = strrchr (main_args->argv[0], '\\')))
-#endif
-      cmd++;
-    else
-      cmd = main_args->argv[0];
 
   /* process command line options if any */
 
@@ -846,10 +837,10 @@ doit(arg)
       clienthost = hp->h_name;
 
     clientport = ntohs(from.sin_port);
-    
+
     clientip = inet_ntop(AF_INET, &from.sin_addr, ipbuf, sizeof(ipbuf));
     nslogit (func, "incoming request from: %s, %s [%d]\n", clienthost, clientip, clientport);
-    
+
     Csec_server_reinitContext (&thip->sec_ctx, CSEC_SERVICE_TYPE_HOST, NULL);
     if (Csec_server_establishContext (&thip->sec_ctx, thip->s) < 0) {
       nslogit (func, "could not establish security context with %s [%d]: %s!\n",
@@ -861,8 +852,8 @@ doit(arg)
     Csec_server_getClientId (&thip->sec_ctx, &thip->Csec_mech, &thip->Csec_auth_id);
     if (Csec_mapToLocalUser (thip->Csec_mech, thip->Csec_auth_id,
                              username,CA_MAXUSRNAMELEN, &thip->Csec_uid, &thip->Csec_gid) < 0) {
-      nslogit (func, "could not map to local user from %s [%d]: %s !\n", 
-	       clientip, clientport, sstrerror (serrno));    
+      nslogit (func, "could not map to local user from %s [%d]: %s !\n",
+	       clientip, clientport, sstrerror (serrno));
       sendrep (thip->s, CNS_RC, serrno);
       thip->s = -1;
       return NULL;
