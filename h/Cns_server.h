@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_server.h,v 1.29 2009/06/30 12:54:07 waldron Exp $
+ * $Id: Cns_server.h,v 1.30 2009/06/30 15:04:59 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.29 $ $Date: 2009/06/30 12:54:07 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.30 $ $Date: 2009/06/30 15:04:59 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_SERVER_H
@@ -277,7 +277,6 @@ EXTERN_C int Cns_srv_mkdir _PROTO((int, char *, const char *, struct Cns_srv_thr
 EXTERN_C int Cns_srv_modgrpmap _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_modifyclass _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_modusrmap _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
-EXTERN_C int Cns_srv_open _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_opendir _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_ping _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_queryclass _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));

@@ -1,5 +1,5 @@
 /*
- * $Id: Cns.h,v 1.19 2009/06/30 12:54:07 waldron Exp $
+ * $Id: Cns.h,v 1.20 2009/06/30 15:04:59 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns.h,v $ $Revision: 1.19 $ $Date: 2009/06/30 12:54:07 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns.h,v $ $Revision: 1.20 $ $Date: 2009/06/30 15:04:59 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_H
@@ -62,7 +62,7 @@
 #define CNS_OPENDIR        	10
 #define CNS_READDIR        	11
 #define CNS_CLOSEDIR        	12
-#define CNS_OPEN        	13
+#define CNS_OPEN        	13 /* deprecated */
 #define CNS_CLOSE        	14
 #define CNS_SETATIME        	15
 #define CNS_SETFSIZE        	16

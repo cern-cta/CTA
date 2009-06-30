@@ -581,9 +581,6 @@ int procreq(magic, req_type, req_data, clienthost, thip)
   case CNS_MODCLASS:
     c = Cns_srv_modifyclass (magic, req_data, clienthost, thip);
     break;
-  case CNS_OPEN:
-    c = Cns_srv_open (magic, req_data, clienthost, thip);
-    break;
   case CNS_OPENDIR:
     c = procdirreq (magic, req_type, req_data, clienthost, thip);
     break;
