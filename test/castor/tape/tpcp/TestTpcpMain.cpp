@@ -22,10 +22,40 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
  
+#include "castor/tape/tapegateway/FileRecalledNotification.hpp"
+#include "castor/tape/tapegateway/FileToRecall.hpp"
+#include "castor/tape/tapegateway/FileToRecallRequest.hpp"
+#include "castor/tape/tpcp/StreamOperators.hpp"
+#include "castor/tape/utils/utils.hpp"
+
+#include <iostream>
+
 
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
 int main(int argc, char **argv) {
+
+  using namespace castor::tape;
+
+  std::ostream &os = std::cout;
+
+  tapegateway::FileToRecallRequest fileToRecallRequest;
+  utils::writeBanner(os, "fileToRecallRequest");
+  os << std::endl
+     << fileToRecallRequest << std::endl;
+
+  castor::tape::tapegateway::FileToRecall fileToRecall;
+  os << std::endl;
+  utils::writeBanner(os, "fileToRecall");
+  os << std::endl
+     << fileToRecall << std::endl;
+
+  tapegateway::FileRecalledNotification fileRecalledNotification;
+  os << std::endl;
+  utils::writeBanner(os, "fileRecalledNotification");
+    os << std::endl
+     << fileRecalledNotification << std::endl;
+
   return 0;
 }

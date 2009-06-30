@@ -21,13 +21,68 @@
 # @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
 #
 
-CPPFLAGS = -pedantic -Wall -Werror -g -O0 -I../../../h -I../../.. $(MTCCFLAGS)
-CFLAGS = -O -I../../../h -I../../.. $(THREADFLAGS)
+CPPFLAGS = -pedantic -Wall -Werror -g -O0 -I../../../../h -I../../../.. $(MTCCFLAGS)
+CFLAGS = -O -I../../../../h -I../../../.. $(THREADFLAGS)
 LDFLAGS += $(MTLDFLAGS)
 LD = g++
 
+DependsOnLibrary(../../../castor,castorclient)
+DependsOnLibrary(../../../castor/db/cnv,castorcnvs)
+DependsOnLibrary(../../../common,castorcommon)
+DependsOnLibrary(../../../dlf,castordlf)
+DependsOnLibrary(../../../vdqm,castorvdqm)
+DependsOnLibrary(../../../vmgr,castorvmgr)
+
+CASTOR_IO_STREAM_SRCS = \
+  ../../../../castor/io/StreamBaseCnv.cpp \
+  ../../../../castor/io/StreamBaseFileInfoCnv.cpp \
+  ../../../../castor/io/StreamCnvSvc.cpp \
+  ../../../../castor/io/StreamEndNotificationCnv.cpp \
+  ../../../../castor/io/StreamEndNotificationErrorReportCnv.cpp \
+  ../../../../castor/io/StreamErrorReportCnv.cpp \
+  ../../../../castor/io/StreamFileMigratedNotificationCnv.cpp \
+  ../../../../castor/io/StreamFileRecalledNotificationCnv.cpp \
+  ../../../../castor/io/StreamFileToMigrateCnv.cpp \
+  ../../../../castor/io/StreamFileToMigrateRequestCnv.cpp \
+  ../../../../castor/io/StreamFileToRecallCnv.cpp \
+  ../../../../castor/io/StreamFileToRecallRequestCnv.cpp \
+  ../../../../castor/io/StreamNoMoreFilesCnv.cpp \
+  ../../../../castor/io/StreamNotificationAcknowledgeCnv.cpp \
+  ../../../../castor/io/StreamVolumeCnv.cpp \
+  ../../../../castor/io/StreamVolumeRequestCnv.cpp
+
+TAPEGATEWAY_MESSAGES_SRCS = \
+  ../../../../castor/tape/tapegateway/BaseFileInfo.cpp \
+  ../../../../castor/tape/tapegateway/EndNotification.cpp \
+  ../../../../castor/tape/tapegateway/EndNotificationErrorReport.cpp \
+  ../../../../castor/tape/tapegateway/ErrorReport.cpp \
+  ../../../../castor/tape/tapegateway/FileMigratedNotification.cpp \
+  ../../../../castor/tape/tapegateway/FileRecalledNotification.cpp \
+  ../../../../castor/tape/tapegateway/FileToMigrate.cpp \
+  ../../../../castor/tape/tapegateway/FileToMigrateRequest.cpp \
+  ../../../../castor/tape/tapegateway/FileToRecall.cpp \
+  ../../../../castor/tape/tapegateway/FileToRecallRequest.cpp \
+  ../../../../castor/tape/tapegateway/NoMoreFiles.cpp \
+  ../../../../castor/tape/tapegateway/NotificationAcknowledge.cpp \
+  ../../../../castor/tape/tapegateway/PositionCommandCode.cpp \
+  ../../../../castor/tape/tapegateway/TapeRequestState.cpp \
+  ../../../../castor/tape/tapegateway/TapeRequestStateCode.cpp \
+  ../../../../castor/tape/tapegateway/Volume.cpp \
+  ../../../../castor/tape/tapegateway/VolumeRequest.cpp
+
+TAPE_UTILS_SRCS = \
+  ../../../../castor/tape/utils/utils.cpp
+
 TESTTPCPBIN_SRCS = \
-  TestTpcpMain.cpp
+  TestTpcpMain.cpp \
+  ../../../../castor/tape/tpcp/Action.cpp \
+  ../../../../castor/tape/tpcp/StreamOperators.cpp \
+  $(COMMON_SRCS) \
+  $(CASTOR_SRCS) \
+  $(CASTOR_EXCEPTION_SRCS) \
+  $(CASTOR_IO_STREAM_SRCS) \
+  $(TAPEGATEWAY_MESSAGES_SRCS) \
+  $(TAPE_UTILS_SRCS)
 
 TESTTPCPBIN_OBJS = $(TESTTPCPBIN_SRCS:.cpp=.Osuf)
 
