@@ -403,7 +403,6 @@ int procdirreq(magic, req_type, req_data, clienthost, thip)
   int new_req_type = -1;
   int rc = 0;
   fd_set readfd, readmask;
-  struct Cns_file_replica rep_entry;
   char *req_data2;
   struct Cns_seg_metadata smd_entry;
   DBLISTPTR smdlistptr;
@@ -422,18 +421,6 @@ int procdirreq(magic, req_type, req_data, clienthost, thip)
   } else if (req_type == CNS_LISTLINKS) {
     if ((c = Cns_srv_listlinks (magic, req_data, clienthost, thip,
                                 &lnk_entry, endlist, &dblistptr)))
-      return (c);
-  } else if (req_type == CNS_LISTREP4GC) {
-    if ((c = Cns_srv_listrep4gc (magic, req_data, clienthost, thip,
-                                 &rep_entry, endlist, &dblistptr)))
-      return (c);
-  } else if (req_type == CNS_LISTREPLICA) {
-    if ((c = Cns_srv_listreplica (magic, req_data, clienthost, thip,
-                                  &fmd_entry, &rep_entry, endlist, &dblistptr)))
-      return (c);
-  } else if (req_type == CNS_LISTREPLICAX) {
-    if ((c = Cns_srv_listreplicax (magic, req_data, clienthost, thip,
-                                   &rep_entry, endlist, &dblistptr)))
       return (c);
   } else {
     if ((c = Cns_srv_listtape (magic, req_data, clienthost, thip,
@@ -471,21 +458,6 @@ int procdirreq(magic, req_type, req_data, clienthost, thip)
         endlist = 1;
       c = Cns_srv_listlinks (magic, req_data2, clienthost, thip,
                              &lnk_entry, endlist, &dblistptr);
-    } else if (req_type == CNS_LISTREP4GC) {
-      if (new_req_type != CNS_LISTREP4GC)
-        endlist = 1;
-      c = Cns_srv_listrep4gc (magic, req_data2, clienthost, thip,
-                              &rep_entry, endlist, &dblistptr);
-    } else if (req_type == CNS_LISTREPLICA) {
-      if (new_req_type != CNS_LISTREPLICA)
-        endlist = 1;
-      c = Cns_srv_listreplica (magic, req_data2, clienthost, thip,
-                               &fmd_entry, &rep_entry, endlist, &dblistptr);
-    } else if (req_type == CNS_LISTREPLICAX) {
-      if (new_req_type != CNS_LISTREPLICAX)
-        endlist = 1;
-      c = Cns_srv_listreplicax (magic, req_data2, clienthost, thip,
-                                &rep_entry, endlist, &dblistptr);
     } else {
       if (new_req_type != CNS_LISTTAPE)
         endlist = 1;
@@ -681,17 +653,6 @@ int procreq(magic, req_type, req_data, clienthost, thip)
   case CNS_UPDATEFILE_CHECKSUM:
     c = Cns_srv_updatefile_checksum (magic, req_data, clienthost, thip);
     break;
-    /*
-      case CNS_ADDREPLICA:
-      c = Cns_srv_addreplica (magic, req_data, clienthost, thip);
-      break;
-      case CNS_DELREPLICA:
-      c = Cns_srv_delreplica (magic, req_data, clienthost, thip);
-      break;
-      case CNS_LISTREPLICA:
-      c = procdirreq (magic, req_type, req_data, clienthost, thip);
-      break;
-    */
   case CNS_STARTTRANS:
     c = proctransreq (magic, req_data, clienthost, thip);
     break;
@@ -710,29 +671,6 @@ int procreq(magic, req_type, req_data, clienthost, thip)
   case CNS_STATG:
     c = Cns_srv_statg (magic, req_data, clienthost, thip);
     break;
-    /*
-      case CNS_STATR:
-      c = Cns_srv_statr (magic, req_data, clienthost, thip);
-      break;
-      case CNS_SETPTIME:
-      c = Cns_srv_setptime (magic, req_data, clienthost, thip);
-      break;
-      case CNS_SETRATIME:
-      c = Cns_srv_setratime (magic, req_data, clienthost, thip);
-      break;
-      case CNS_SETRSTATUS:
-      c = Cns_srv_setrstatus (magic, req_data, clienthost, thip);
-      break;
-      case CNS_ACCESSR:
-      c = Cns_srv_accessr (magic, req_data, clienthost, thip);
-      break;
-      case CNS_LISTREP4GC:
-      c = procdirreq (magic, req_type, req_data, clienthost, thip);
-      break;
-      case CNS_LISTREPLICAX:
-      c = procdirreq (magic, req_type, req_data, clienthost, thip);
-      break;
-    */
   case CNS_LASTFSEQ:
     c = Cns_srv_lastfseq (magic, req_data, clienthost, thip);
     break;
@@ -781,11 +719,6 @@ int procreq(magic, req_type, req_data, clienthost, thip)
   case CNS_GETLINKS:
     c = Cns_srv_getlinks (magic, req_data, clienthost, thip);
     break;
-    /*
-      case CNS_GETREPLICA:
-      c = Cns_srv_getreplica (magic, req_data, clienthost, thip);
-      break;
-    */
   case CNS_ENTGRPMAP:
     c = Cns_srv_entergrpmap (magic, req_data, clienthost, thip);
     break;
@@ -1006,13 +939,13 @@ int proctransreq(magic, req_data, clienthost, thip)
     if (req_data2 != req_data)
       free (req_data2);
     if (req_type == CNS_ENDTRANS || req_type == CNS_ABORTTRANS) break;
-    if (rc && req_type != CNS_ACCESS && req_type != CNS_ACCESSR &&
+    if (rc && req_type != CNS_ACCESS &&
         req_type != CNS_DU && req_type != CNS_GETACL &&
         req_type != CNS_GETCOMMENT && req_type != CNS_GETLINKS &&
-        req_type != CNS_GETPATH && req_type != CNS_GETREPLICA &&
+        req_type != CNS_GETPATH &&
         req_type != CNS_LSTAT && req_type != CNS_READLINK &&
         req_type != CNS_STAT && req_type != CNS_STATCS && req_type != CNS_STATG &&
-        req_type != CNS_STATR && req_type != CNS_GETGRPID &&
+        req_type != CNS_GETGRPID &&
         req_type != CNS_GETGRPNAM && req_type != CNS_GETUSRID &&
         req_type != CNS_GETUSRNAM && req_type != CNS_LASTFSEQ &&
         req_type != CNS_PING && req_type != CNS_BULKEXIST &&

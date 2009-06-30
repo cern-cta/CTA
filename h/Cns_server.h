@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_server.h,v 1.28 2009/05/29 13:43:06 sponcec3 Exp $
+ * $Id: Cns_server.h,v 1.29 2009/06/30 12:54:07 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.28 $ $Date: 2009/05/29 13:43:06 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.29 $ $Date: 2009/06/30 12:54:07 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_SERVER_H
@@ -116,19 +116,6 @@ struct Cns_file_metadata {
 	char		acl[CA_MAXACLENTRIES*13];
 };
 
-struct Cns_file_replica {
-	u_signed64	fileid;
-	u_signed64	nbaccesses;
-	time_t		atime;		/* last access to replica */
-	time_t		ptime;		/* replica pin time */
-	char		status;
-	char		f_type;
-	char		poolname[CA_MAXPOOLNAMELEN+1];
-	char		host[CA_MAXHOSTNAMELEN+1];
-	char		fs[80];
-	char		sfn[CA_MAXSFNLEN+1];
-};
-
 struct Cns_srv_thread_info {
 	int		s;		/* socket for communication with client */
 	int		db_open_done;
@@ -206,7 +193,6 @@ EXTERN_C int Cns_delete_class_entry _PROTO((struct Cns_dbfd *, Cns_dbrec_addr *)
 EXTERN_C int Cns_delete_fmd_entry _PROTO((struct Cns_dbfd *, Cns_dbrec_addr *));
 EXTERN_C int Cns_delete_group_entry _PROTO((struct Cns_dbfd *, Cns_dbrec_addr *));
 EXTERN_C int Cns_delete_lnk_entry _PROTO((struct Cns_dbfd *, Cns_dbrec_addr *));
-EXTERN_C int Cns_delete_rep_entry _PROTO((struct Cns_dbfd *, Cns_dbrec_addr *));
 EXTERN_C int Cns_delete_smd_entry _PROTO((struct Cns_dbfd *, Cns_dbrec_addr *));
 EXTERN_C int Cns_delete_tppool_entry _PROTO((struct Cns_dbfd *, Cns_dbrec_addr *));
 EXTERN_C int Cns_delete_umd_entry _PROTO((struct Cns_dbfd *, Cns_dbrec_addr *));
@@ -223,7 +209,6 @@ EXTERN_C int Cns_get_grpinfo_by_name _PROTO((struct Cns_dbfd *, char *, struct C
 EXTERN_C int Cns_get_last_smd_by_vid _PROTO((struct Cns_dbfd *, char *, int, struct Cns_seg_metadata *));
 EXTERN_C int Cns_get_lnk_by_fileid _PROTO((struct Cns_dbfd *, u_signed64, struct Cns_symlinks *, int, Cns_dbrec_addr *));
 EXTERN_C int Cns_get_max_copyno _PROTO((struct Cns_dbfd *, u_signed64, int *));
-EXTERN_C int Cns_get_rep_by_sfn _PROTO((struct Cns_dbfd *, char *, struct Cns_file_replica *, int, Cns_dbrec_addr *));
 EXTERN_C int Cns_get_smd_by_copyno _PROTO((struct Cns_dbfd *, int, u_signed64, int,struct Cns_seg_metadata *, int, Cns_dbrec_addr *, int, DBLISTPTR *));
 EXTERN_C int Cns_get_smd_by_fullid _PROTO((struct Cns_dbfd *, u_signed64, int, int, struct Cns_seg_metadata *, int, Cns_dbrec_addr *));
 EXTERN_C int Cns_get_smd_by_pfid _PROTO((struct Cns_dbfd *, int, u_signed64, struct Cns_seg_metadata *, int,  Cns_dbrec_addr *, int, DBLISTPTR *));
@@ -238,16 +223,12 @@ EXTERN_C int Cns_insert_class_entry _PROTO((struct Cns_dbfd *, struct Cns_class_
 EXTERN_C int Cns_insert_fmd_entry _PROTO((struct Cns_dbfd *, struct Cns_file_metadata *));
 EXTERN_C int Cns_insert_group_entry _PROTO((struct Cns_dbfd *, struct Cns_groupinfo *));
 EXTERN_C int Cns_insert_lnk_entry _PROTO((struct Cns_dbfd *, struct Cns_symlinks *));
-EXTERN_C int Cns_insert_rep_entry _PROTO((struct Cns_dbfd *, struct Cns_file_replica *));
 EXTERN_C int Cns_insert_smd_entry _PROTO((struct Cns_dbfd *, struct Cns_seg_metadata *));
 EXTERN_C int Cns_insert_tppool_entry _PROTO((struct Cns_dbfd *, struct Cns_tp_pool *));
 EXTERN_C int Cns_insert_umd_entry _PROTO((struct Cns_dbfd *, struct Cns_user_metadata *));
 EXTERN_C int Cns_insert_user_entry _PROTO((struct Cns_dbfd *, struct Cns_userinfo *));
 EXTERN_C int Cns_list_class_entry _PROTO((struct Cns_dbfd *, int, struct Cns_class_metadata *, int, DBLISTPTR *));
 EXTERN_C int Cns_list_lnk_entry _PROTO((struct Cns_dbfd *, int, char *, struct Cns_symlinks *, int, DBLISTPTR *));
-EXTERN_C int Cns_list_rep_entry _PROTO((struct Cns_dbfd *, int, u_signed64, struct Cns_file_replica *, int,  Cns_dbrec_addr *, int, DBLISTPTR *));
-EXTERN_C int Cns_list_rep4admin _PROTO((struct Cns_dbfd *, int, char *, char *, char *, struct Cns_file_replica *, int, DBLISTPTR *));
-EXTERN_C int Cns_list_rep4gc _PROTO((struct Cns_dbfd *, int, char *, struct Cns_file_replica *, int, DBLISTPTR *));
 EXTERN_C int Cns_opendb _PROTO((struct Cns_dbfd *));
 EXTERN_C int Cns_parsepath _PROTO((struct Cns_dbfd *, u_signed64, char *, uid_t, gid_t, const char *, struct Cns_file_metadata *, Cns_dbrec_addr *, struct Cns_file_metadata *, Cns_dbrec_addr *, int));
 EXTERN_C int Cns_start_tr _PROTO((int, struct Cns_dbfd *));
@@ -257,7 +238,6 @@ EXTERN_C int Cns_unique_uid _PROTO((struct Cns_dbfd *, unsigned int *));
 EXTERN_C int Cns_update_class_entry _PROTO((struct Cns_dbfd *, Cns_dbrec_addr *, struct Cns_class_metadata *));
 EXTERN_C int Cns_update_fmd_entry _PROTO((struct Cns_dbfd *, Cns_dbrec_addr *, struct Cns_file_metadata *));
 EXTERN_C int Cns_update_group_entry _PROTO((struct Cns_dbfd *, Cns_dbrec_addr *, struct Cns_groupinfo *));
-EXTERN_C int Cns_update_rep_entry _PROTO((struct Cns_dbfd *, Cns_dbrec_addr *, struct Cns_file_replica *));
 EXTERN_C int Cns_update_smd_entry _PROTO((struct Cns_dbfd *, Cns_dbrec_addr *, struct Cns_seg_metadata *));
 EXTERN_C int Cns_update_umd_entry _PROTO((struct Cns_dbfd *, Cns_dbrec_addr *, struct Cns_user_metadata *));
 EXTERN_C int Cns_update_user_entry _PROTO((struct Cns_dbfd *, Cns_dbrec_addr *, struct Cns_userinfo *));
@@ -265,7 +245,6 @@ EXTERN_C int Cns_update_user_entry _PROTO((struct Cns_dbfd *, Cns_dbrec_addr *, 
 EXTERN_C int Cns_srv_aborttrans _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_access _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_accessr _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
-EXTERN_C int Cns_srv_addreplica _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_bulkexist _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_chclass _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_chdir _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
@@ -275,7 +254,6 @@ EXTERN_C int Cns_srv_creat _PROTO((int, char *, const char *, struct Cns_srv_thr
 EXTERN_C int Cns_srv_delcomment _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_delete _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_deleteclass _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
-EXTERN_C int Cns_srv_delreplica _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_du _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_endsess _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_endtrans _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
@@ -289,7 +267,6 @@ EXTERN_C int Cns_srv_getgrpbynam _PROTO((int, char *, const char *, struct Cns_s
 EXTERN_C int Cns_srv_getidmap _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_getlinks _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_getpath _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
-EXTERN_C int Cns_srv_getreplica _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_getsegattrs _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_getusrbynam _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_getusrbyuid _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
@@ -317,16 +294,12 @@ EXTERN_C int Cns_srv_setcomment _PROTO((int, char *, const char *, struct Cns_sr
 EXTERN_C int Cns_srv_setfsize _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_setfsizecs _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_setfsizeg _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
-EXTERN_C int Cns_srv_setptime _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
-EXTERN_C int Cns_srv_setratime _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
-EXTERN_C int Cns_srv_setrstatus _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_setsegattrs _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_dropsegs _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_shutdown _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_stat _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_statcs _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_statg _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
-EXTERN_C int Cns_srv_statr _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_symlink _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_tapesum _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_undelete _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
@@ -338,9 +311,6 @@ EXTERN_C int Cns_srv_utime _PROTO((int, char *, const char *, struct Cns_srv_thr
 
 EXTERN_C int Cns_srv_listclass _PROTO((int, char *, const char *, struct Cns_srv_thread_info *, struct Cns_class_metadata *, int, DBLISTPTR *));
 EXTERN_C int Cns_srv_listlinks _PROTO((int, char *, const char *, struct Cns_srv_thread_info *, struct Cns_symlinks *, int, DBLISTPTR *));
-EXTERN_C int Cns_srv_listrep4gc _PROTO((int, char *, const char *, struct Cns_srv_thread_info *, struct Cns_file_replica *, int, DBLISTPTR *));
-EXTERN_C int Cns_srv_listreplica _PROTO((int, char *, const char *, struct Cns_srv_thread_info *, struct Cns_file_metadata *, struct Cns_file_replica *, int, DBLISTPTR *));
-EXTERN_C int Cns_srv_listreplicax _PROTO((int, char *, const char *, struct Cns_srv_thread_info *, struct Cns_file_replica *, int, DBLISTPTR *));
 EXTERN_C int Cns_srv_listtape _PROTO((int, char *, const char *, struct Cns_srv_thread_info *, struct Cns_file_metadata *, struct Cns_seg_metadata *, int, DBLISTPTR *));
 EXTERN_C int Cns_srv_readdir _PROTO((int, char *, const char *, struct Cns_srv_thread_info *, struct Cns_file_metadata *, struct Cns_seg_metadata *, struct Cns_user_metadata *, int, DBLISTPTR *, DBLISTPTR *));
 EXTERN_C int Cns_srv_startsess _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cns_creat.man,v $ $Revision: 1.3 $ $Date: 2008/04/17 12:10:03 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Cns_creat.man,v $ $Revision: 1.4 $ $Date: 2009/06/30 12:54:06 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2005 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_CREAT 3 "$Date: 2008/04/17 12:10:03 $" CASTOR "Cns Library Functions"
+.TH CNS_CREAT 3 "$Date: 2009/06/30 12:54:06 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_creat \- create a new CASTOR file or reset it in the name server
 .SH SYNOPSIS
@@ -74,7 +74,7 @@ or
 is a NULL pointer.
 .TP
 .B EEXIST
-File exists already and has replicas.
+File exists already.
 .TP
 .B ENOTDIR
 A component of

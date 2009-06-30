@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/01/14 16:39:56 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/06/30 12:54:05 $ $Author: waldron $
  *
  * This script creates a new Castor Name Server schema
  *
@@ -85,18 +85,6 @@ CREATE TABLE Cns_symlinks (
        fileid NUMBER,
        linkname VARCHAR2(1023));
 
-CREATE TABLE Cns_file_replica (
-       fileid NUMBER,
-       nbaccesses NUMBER,
-       atime NUMBER(10),
-       ptime NUMBER(10),
-       status CHAR(1),
-       f_type CHAR(1),
-       poolname VARCHAR2(15),
-       host VARCHAR2(63),
-       fs VARCHAR2(79),
-       sfn VARCHAR2(1103));
-
 CREATE TABLE Cns_groupinfo (
        gid NUMBER(10),
        groupname VARCHAR2(255));
@@ -130,16 +118,11 @@ ALTER TABLE Cns_seg_metadata
 ALTER TABLE Cns_symlinks
        ADD CONSTRAINT pk_l_fileid PRIMARY KEY (fileid);
 
-ALTER TABLE Cns_file_replica
-       ADD CONSTRAINT repl_sfn UNIQUE (sfn);
-
 ALTER TABLE Cns_groupinfo
        ADD CONSTRAINT map_groupname UNIQUE (groupname);
 
 ALTER TABLE Cns_userinfo
        ADD CONSTRAINT map_username UNIQUE (username);
-
-CREATE INDEX replica_id ON Cns_file_replica(fileid);
 
 ALTER TABLE Cns_user_metadata
        ADD CONSTRAINT fk_u_fileid FOREIGN KEY (u_fileid) REFERENCES Cns_file_metadata(fileid);
@@ -153,9 +136,6 @@ ALTER TABLE Cns_tp_pool
 
 ALTER TABLE Cns_symlinks
        ADD CONSTRAINT fk_l_fileid FOREIGN KEY (fileid) REFERENCES Cns_file_metadata(fileid);
-
-ALTER TABLE Cns_file_replica
-       ADD CONSTRAINT fk_r_fileid FOREIGN KEY (fileid) REFERENCES Cns_file_metadata(fileid);
 
 -- Create the Cns_version table
 CREATE TABLE Cns_version (schemaVersion VARCHAR2(20), release VARCHAR2(20));

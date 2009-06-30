@@ -1,5 +1,5 @@
 /*
- * $Id: Cns.h,v 1.18 2009/06/30 06:22:55 waldron Exp $
+ * $Id: Cns.h,v 1.19 2009/06/30 12:54:07 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns.h,v $ $Revision: 1.18 $ $Date: 2009/06/30 06:22:55 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns.h,v $ $Revision: 1.19 $ $Date: 2009/06/30 12:54:07 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_H
@@ -142,8 +142,6 @@
 #define	CNS_RC		3
 #define	CNS_IRC		4
 #define	MSG_LINKS	5
-#define	MSG_REPLIC	6
-#define	MSG_REPLICP	7
 
 			/* name server messages */
 

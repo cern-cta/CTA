@@ -45,8 +45,6 @@ int sendrep(int rpfd, int rep_type, ...)
     break;
   case MSG_DATA:
   case MSG_LINKS:
-  case MSG_REPLIC:
-  case MSG_REPLICP:
     n = va_arg (args, int);
     marshall_LONG (rbp, n);
     msg = va_arg (args, char *);

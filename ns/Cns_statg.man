@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cns_statg.man,v $ $Revision: 1.3 $ $Date: 2008/09/22 13:41:37 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Cns_statg.man,v $ $Revision: 1.4 $ $Date: 2009/06/30 12:54:05 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2005 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_STATG 3 "$Date: 2008/09/22 13:41:37 $" CASTOR "Cns Library Functions"
+.TH CNS_STATG 3 "$Date: 2009/06/30 12:54:05 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_statg \- get information about a CASTOR file or directory in the name server
 .SH SYNOPSIS
@@ -13,15 +13,9 @@ Cns_statg \- get information about a CASTOR file or directory in the name server
 .BI "int Cns_statg (const char *" path ,
 .BI "const char *" guid,
 .BI "struct Cns_filestatg *" statbuf )
-.sp
-.BI "int Cns_statr (const char *" sfn ,
-.BI "struct Cns_filestatg *" statbuf )
 .SH DESCRIPTION
 .B Cns_statg
 gets information about a CASTOR file or directory, having the given GUID, in the name server.
-.LP
-.B Cns_statr
-retrieves information about the given replica.
 .LP
 The file can be specified by
 .I path
@@ -35,9 +29,6 @@ specifies the Grid Unique IDentifier.
 .I path
 specifies the logical pathname relative to the current CASTOR directory or
 the full CASTOR pathname.
-.TP
-.I sfn
-is either the Site URL or the Physical File Name for the replica.
 .LP
 The structure pointed to by
 .I statbuf

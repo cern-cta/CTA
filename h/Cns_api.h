@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_api.h,v 1.23 2009/05/29 13:43:06 sponcec3 Exp $
+ * $Id: Cns_api.h,v 1.24 2009/06/30 12:54:07 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.23 $ $Date: 2009/05/29 13:43:06 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.24 $ $Date: 2009/06/30 12:54:07 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_API_H
@@ -72,24 +72,6 @@ typedef struct {
 
 struct Cns_direncomm {
 	char		*comment;
-	unsigned short	d_reclen;	/* length of this entry */
-	char		d_name[1];
-};
-
-struct Cns_rep_info {
-	u_signed64	fileid;
-	char		status;
-	char		*host;
-	char		*sfn;
-};
-
-struct Cns_direnrep {
-	u_signed64	fileid;
-	char		guid[CA_MAXGUIDLEN+1];
-	mode_t		filemode;
-	u_signed64	filesize;
-	int		nbreplicas;
-	struct Cns_rep_info *rep;
 	unsigned short	d_reclen;	/* length of this entry */
 	char		d_name[1];
 };
@@ -187,19 +169,6 @@ struct Cns_fileid {
 	u_signed64	fileid;
 };
 
-struct Cns_filereplica {
-	u_signed64	fileid;
-	u_signed64	nbaccesses;
-	time_t		atime;		/* last access to replica */
-	time_t		ptime;		/* replica pin time */
-	char		status;
-	char		f_type;
-	char		poolname[CA_MAXPOOLNAMELEN+1];
-	char		host[CA_MAXHOSTNAMELEN+1];
-	char		fs[80];
-	char		sfn[CA_MAXSFNLEN+1];
-};
-
 struct Cns_filestat {
 	u_signed64	fileid;
 	mode_t		filemode;
@@ -276,10 +245,8 @@ struct Cns_segattrs {
 			/* function prototypes */
 
 EXTERN_C int DLL_DECL Cns_access _PROTO((const char *, int));
-EXTERN_C int DLL_DECL Cns_accessr _PROTO((const char *, int));
 EXTERN_C int DLL_DECL Cns_accessUser _PROTO((const char *, int, uid_t, gid_t));
 EXTERN_C int DLL_DECL Cns_aborttrans _PROTO(());
-EXTERN_C int DLL_DECL Cns_addreplica _PROTO((const char *, struct Cns_fileid *, const char *, const char *, const char, const char, const char *, const char *));
 EXTERN_C int DLL_DECL Cns_apiinit _PROTO((struct Cns_api_thread_info **));
 EXTERN_C int DLL_DECL Cns_chclass _PROTO((const char *, int, char *));
 EXTERN_C int DLL_DECL Cns_chdir _PROTO((const char *));
@@ -294,7 +261,6 @@ EXTERN_C int DLL_DECL Cns_creatx _PROTO((const char *, mode_t, struct Cns_fileid
 EXTERN_C int DLL_DECL Cns_delcomment _PROTO((const char *));
 EXTERN_C int DLL_DECL Cns_delete _PROTO((const char *));
 EXTERN_C int DLL_DECL Cns_deleteclass _PROTO((char *, int, char *));
-EXTERN_C int DLL_DECL Cns_delreplica _PROTO((const char *, struct Cns_fileid *, const char *));
 EXTERN_C int DLL_DECL Cns_du _PROTO((const char *, int, u_signed64 *, u_signed64 *));
 EXTERN_C int DLL_DECL Cns_endsess _PROTO(());
 EXTERN_C int DLL_DECL Cns_endtrans _PROTO(());
@@ -306,14 +272,10 @@ EXTERN_C char DLL_DECL *Cns_getcwd _PROTO((char *, int));
 EXTERN_C int DLL_DECL Cns_getlinks _PROTO((const char *, const char *, int *, struct Cns_linkinfo **));
 EXTERN_C int DLL_DECL Cns_getpath _PROTO((char *, u_signed64, char *));
 EXTERN_C int DLL_DECL Cns_getsegattrs _PROTO((const char *, struct Cns_fileid *, int *, struct Cns_segattrs **));
-EXTERN_C int DLL_DECL Cns_getreplica _PROTO((const char *, const char *, const char *, int *, struct Cns_filereplica **));
 EXTERN_C int DLL_DECL Cns_lchown _PROTO((const char *, uid_t, gid_t));
 EXTERN_C struct Cns_fileclass DLL_DECL *Cns_listclass _PROTO((char *, int, Cns_list *));
 EXTERN_C struct Cns_direntape DLL_DECL *Cns_listtape _PROTO((char *, char *, int, Cns_list *, int));
 EXTERN_C struct Cns_linkinfo DLL_DECL *Cns_listlinks _PROTO((const char *, const char *, int, Cns_list *));
-EXTERN_C struct Cns_filereplica DLL_DECL *Cns_listrep4gc _PROTO((const char *, int, Cns_list *));
-EXTERN_C struct Cns_filereplica DLL_DECL *Cns_listreplica _PROTO((const char *, const char *, int, Cns_list *));
-EXTERN_C struct Cns_filereplica DLL_DECL *Cns_listreplicax _PROTO((const char *, const char *, const char *, int, Cns_list *));
 EXTERN_C int DLL_DECL Cns_lstat _PROTO((const char *, struct Cns_filestat *));
 EXTERN_C int DLL_DECL Cns_lastfseq _PROTO((const char *, int, struct Cns_segattrs *));
 EXTERN_C int DLL_DECL Cns_bulkexist _PROTO((const char *, u_signed64 *, int *));
@@ -331,7 +293,6 @@ EXTERN_C struct Cns_direnstatg DLL_DECL *Cns_readdirg _PROTO((Cns_DIR *));
 EXTERN_C struct Cns_direnstat DLL_DECL *Cns_readdirx _PROTO((Cns_DIR *));
 EXTERN_C struct Cns_direnstatc DLL_DECL *Cns_readdirxc _PROTO((Cns_DIR *));
 EXTERN_C struct Cns_direntape DLL_DECL *Cns_readdirxt _PROTO((Cns_DIR *));
-EXTERN_C struct Cns_direnrep DLL_DECL *Cns_readdirxr _PROTO((Cns_DIR *, char *));
 EXTERN_C int DLL_DECL Cns_readlink _PROTO((const char *, char *, size_t));
 EXTERN_C int DLL_DECL Cns_rename _PROTO((const char *, const char *));
 EXTERN_C int DLL_DECL Cns_replacetapecopy _PROTO((struct Cns_fileid *, const char*, const char*, int, struct Cns_segattrs *, time_t last_mod_time));
@@ -351,14 +312,10 @@ EXTERN_C int DLL_DECL Cns_setfsizecs _PROTO((const char *, struct Cns_fileid *, 
 EXTERN_C int DLL_DECL Cns_setsegattrs _PROTO((const char *, struct Cns_fileid *, int, struct Cns_segattrs *, time_t));
 EXTERN_C int DLL_DECL Cns_dropsegs _PROTO((const char *, struct Cns_fileid *));
 EXTERN_C int DLL_DECL Cns_setfsizeg _PROTO((const char *, u_signed64, const char *, char *,time_t,time_t));
-EXTERN_C int DLL_DECL Cns_setptime _PROTO((const char *, time_t));
-EXTERN_C int DLL_DECL Cns_setratime _PROTO((const char *));
-EXTERN_C int DLL_DECL Cns_setrstatus _PROTO((const char *, const char));
 EXTERN_C int DLL_DECL Cns_startsess _PROTO((char *, char *));
 EXTERN_C int DLL_DECL Cns_starttrans _PROTO((char *, char *));
 EXTERN_C int DLL_DECL Cns_stat _PROTO((const char *, struct Cns_filestat *));
 EXTERN_C int DLL_DECL Cns_statg _PROTO((const char *, const char *, struct Cns_filestatg *));
-EXTERN_C int DLL_DECL Cns_statr _PROTO((const char *, struct Cns_filestatg *));
 EXTERN_C int DLL_DECL Cns_statx _PROTO((const char *, struct Cns_fileid *, struct Cns_filestat *));
 EXTERN_C int DLL_DECL Cns_statcsx _PROTO((const char *, struct Cns_fileid *, struct Cns_filestatcs *));
 EXTERN_C int DLL_DECL Cns_statcs _PROTO((const char *, struct Cns_filestatcs *));

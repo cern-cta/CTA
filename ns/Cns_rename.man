@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cns_rename.man,v $ $Revision: 1.4 $ $Date: 2008/05/05 13:08:53 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Cns_rename.man,v $ $Revision: 1.5 $ $Date: 2009/06/30 12:54:06 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2005 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_RENAME 3 "$Date: 2008/05/05 13:08:53 $" CASTOR "Cns Library Functions"
+.TH CNS_RENAME 3 "$Date: 2009/06/30 12:54:06 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_rename \- rename a CASTOR file or directory in the name server
 .SH SYNOPSIS
@@ -90,9 +90,7 @@ contains too many files and/or directories.
 .TP
 .B EEXIST
 .I newpath
-is an existing directory and is not empty or
-.I newpath
-is an existing file with replicas.
+is an existing directory and is not empty
 .TP
 .B ENOTDIR
 A component of the path prefixes is not a directory or

@@ -54,7 +54,6 @@ NSDAEMON_OBJS	=	Cns_main.Osuf \
 			nslogit.Osuf
 NSLIB_OBJS	=	Cns_aborttrans.Osuf \
                         Cns_access.Osuf \
-                        Cns_addreplica.Osuf \
                         Cns_apiinit.Osuf \
                         Cns_auth.Osuf \
                         Cns_bulkexist.Osuf \
@@ -67,7 +66,6 @@ NSLIB_OBJS	=	Cns_aborttrans.Osuf \
                         Cns_delcomment.Osuf \
                         Cns_delete.Osuf \
                         Cns_deleteclass.Osuf \
-                        Cns_delreplica.Osuf \
                         Cns_dropsegs.Osuf \
                         Cns_du.Osuf \
                         Cns_endsess.Osuf \
@@ -79,15 +77,11 @@ NSLIB_OBJS	=	Cns_aborttrans.Osuf \
                         Cns_getcwd.Osuf \
                         Cns_getlinks.Osuf \
                         Cns_getpath.Osuf \
-                        Cns_getreplica.Osuf \
                         Cns_getsegattrs.Osuf \
                         Cns_lastfseq.Osuf \
                         Cns_listclass.Osuf \
                         Cns_listtape.Osuf \
                         Cns_listlinks.Osuf \
-                        Cns_listrep4gc.Osuf \
-                        Cns_listreplica.Osuf \
-                        Cns_listreplicax.Osuf \
                         Cns_mkdir.Osuf \
                         Cns_modifyclass.Osuf \
                         Cns_opendir.Osuf \
@@ -98,7 +92,6 @@ NSLIB_OBJS	=	Cns_aborttrans.Osuf \
                         Cns_readdirg.Osuf \
                         Cns_readdirx.Osuf \
                         Cns_readdirxc.Osuf \
-                        Cns_readdirxr.Osuf \
                         Cns_readdirxt.Osuf \
                         Cns_readlink.Osuf \
                         Cns_rename.Osuf \
@@ -112,9 +105,6 @@ NSLIB_OBJS	=	Cns_aborttrans.Osuf \
                         Cns_setcomment.Osuf \
                         Cns_setfsize.Osuf \
                         Cns_setsegattrs.Osuf \
-                        Cns_setptime.Osuf \
-                        Cns_setratime.Osuf \
-                        Cns_setrstatus.Osuf \
                         Cns_startsess.Osuf \
                         Cns_starttrans.Osuf \
                         Cns_stat.Osuf \
@@ -161,7 +151,6 @@ ClientProgramTarget(nstouch,nstouch.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLI
 
 LIBMANPAGE(Cns_aborttrans)
 LIBMANPAGE(Cns_access)
-LIBMANPAGE(Cns_addreplica)
 LIBMANPAGE(Cns_chclass)
 LIBMANPAGE(Cns_chdir)
 LIBMANPAGE(Cns_chmod)
@@ -172,7 +161,6 @@ LIBMANPAGE(Cns_creatg)
 LIBMANPAGE(Cns_delcomment)
 LIBMANPAGE(Cns_delete)
 LIBMANPAGE(Cns_deleteclass)
-LIBMANPAGE(Cns_delreplica)
 LIBMANPAGE(Cns_dropsegs)
 LIBMANPAGE(Cns_endsess)
 LIBMANPAGE(Cns_endtrans)
@@ -185,7 +173,6 @@ LIBMANPAGE(Cns_lastfseq)
 LIBMANPAGE(Cns_listclass)
 LIBMANPAGE(Cns_listtape)
 LIBMANPAGE(Cns_listlinks)
-LIBMANPAGE(Cns_listreplica)
 LIBMANPAGE(Cns_mkdir)
 LIBMANPAGE(Cns_mkdirg)
 LIBMANPAGE(Cns_modifyclass)
@@ -214,7 +201,6 @@ LIBMANPAGE(Cns_startsess)
 LIBMANPAGE(Cns_starttrans)
 LIBMANPAGE(Cns_stat)
 LIBMANPAGE(Cns_statg)
-LIBMANPAGE(Cns_statr)
 LIBMANPAGE(Cns_symlink)
 LIBMANPAGE(Cns_tapesum)
 LIBMANPAGE(Cns_umask)

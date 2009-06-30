@@ -22,8 +22,6 @@
 int DLL_DECL
 Cns_closedir(Cns_DIR *dirp)
 {
-  int i;
-  struct Cns_rep_info *ir;
   int msglen;
   char *sbp;
   char sendbuf[REQBUFSZ];
@@ -41,17 +39,6 @@ Cns_closedir(Cns_DIR *dirp)
   msglen = 3 * LONGSIZE;
   marshall_LONG (sbp, msglen);
   (void) send2nsd (&dirp->dd_fd, NULL, sendbuf, msglen, NULL, 0);
-  if (dirp->replicas) { /* free previous replica information */
-    ir = (struct Cns_rep_info *) dirp->replicas;
-    for (i = 0; i < dirp->nbreplicas; i++) {
-      free (ir->host);
-      free (ir->sfn);
-      ir++;
-    }
-    free (dirp->replicas);
-    dirp->nbreplicas = 0;
-    dirp->replicas = NULL;
-  }
   free (dirp);
   return (0);
 }

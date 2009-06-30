@@ -47,28 +47,24 @@ int send2nsdx(socketp, host, reqp, reql, user_repbuf, user_repbuf_len, repbuf2, 
   char *getenv();
   struct hostent *hp;
   struct Cns_linkinfo *li;
-  struct Cns_filereplica *lp;
   int magic;
   int n;
   int nbretry;
   char *p,*sec_p;
   char prtbuf[PRTBUFSZ];
   char *q;
-  struct Cns_rep_info *ri;
   int rep_type;
   char repbuf[REPBUFSZ];
   int repbuf2sz;
   int retrycnt = 0;
   int retryint;
   int s;
-  char se[CA_MAXHOSTNAMELEN+1];
-  char sfn[CA_MAXSFNLEN+1];
   struct sockaddr_in sin; /* internet socket */
   struct servent *sp,*sec_sp;
   struct Cns_api_thread_info *thip = NULL;
   int timeout;
-  char * securemode;
-  int securityOpt=0;
+  char *securemode;
+  int securityOpt = 0;
 
   strcpy (func, "send2nsd");
   if (Cns_apiinit (&thip))
@@ -335,80 +331,6 @@ int send2nsdx(socketp, host, reqp, reql, user_repbuf, user_repbuf_len, repbuf2, 
         unmarshall_STRING (p, li->path);
         (*nbstruct)++;
         li++;
-      }
-    } else if (rep_type == MSG_REPLIC) {
-      if (errflag) continue;
-      if (alloced == 0) {
-        repbuf2sz = 4096;
-        if ((*repbuf2 = malloc (repbuf2sz)) == NULL) {
-          errflag++;
-          continue;
-        }
-        alloced = 1;
-        *nbstruct = 0;
-        lp = (struct Cns_filereplica *) *repbuf2;
-      }
-      while (p < repbuf + c) {
-        if ((char *)lp - (char *)(*repbuf2) +
-            sizeof(struct Cns_filereplica) > repbuf2sz) {
-          repbuf2sz += 4096;
-          if ((q = realloc (*repbuf2, repbuf2sz)) == NULL) {
-            errflag++;
-            break;
-          }
-          *repbuf2 = q;
-          lp = ((struct Cns_filereplica *) *repbuf2) + *nbstruct;
-        }
-        unmarshall_HYPER (p, lp->fileid);
-        unmarshall_HYPER (p, lp->nbaccesses);
-        unmarshall_TIME_T (p, lp->atime);
-        unmarshall_TIME_T (p, lp->ptime);
-        unmarshall_BYTE (p, lp->status);
-        unmarshall_BYTE (p, lp->f_type);
-        unmarshall_STRING (p, lp->poolname);
-        unmarshall_STRING (p, lp->host);
-        unmarshall_STRING (p, lp->fs);
-        unmarshall_STRING (p, lp->sfn);
-        (*nbstruct)++;
-        lp++;
-      }
-    } else if (rep_type == MSG_REPLICP) {
-      if (errflag) continue;
-      if (alloced == 0) {
-        repbuf2sz = 4096;
-        if ((*repbuf2 = malloc (repbuf2sz)) == NULL) {
-          errflag++;
-          continue;
-        }
-        alloced = 1;
-        *nbstruct = 0;
-        ri = (struct Cns_rep_info *) *repbuf2;
-      }
-      while (p < repbuf + c) {
-        if ((char *)ri - (char *)(*repbuf2) +
-            sizeof(struct Cns_rep_info) > repbuf2sz) {
-          repbuf2sz += 4096;
-          if ((q = realloc (*repbuf2, repbuf2sz)) == NULL) {
-            errflag++;
-            break;
-          }
-          *repbuf2 = q;
-          ri = ((struct Cns_rep_info *) *repbuf2) + *nbstruct;
-        }
-        unmarshall_HYPER (p, ri->fileid);
-        unmarshall_BYTE (p, ri->status);
-        unmarshall_STRING (p, se);
-        if ((ri->host = strdup (se)) == NULL) {
-          errflag++;
-          break;
-        }
-        unmarshall_STRING (p, sfn);
-        if ((ri->sfn = strdup (sfn)) == NULL) {
-          errflag++;
-          break;
-        }
-        (*nbstruct)++;
-        ri++;
       }
     } else if (user_repbuf) {
       if (actual_replen + c <= user_repbuf_len)
