@@ -166,11 +166,4 @@ private:
 } // namespace castor
 
 
-/**
- * ostream << operator for castor::tape::tpcp::Action
- */
-std::ostream &operator<<(std::ostream &os,
-  const castor::tape::tpcp::Action &action);
-
-
 #endif // CASTOR_TAPE_TPCP_ACTION_HPP

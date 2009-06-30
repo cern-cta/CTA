@@ -23,17 +23,16 @@
  *****************************************************************************/
  
 #include "castor/tape/tpcp/StreamOperators.hpp"
-
-#include <errno.h>
+#include "castor/tape/utils/utils.hpp"
 
 
 //------------------------------------------------------------------------------
 // ostream << operator for castor::tape::tpcp::Action
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os,
-  const castor::tape::tpcp::Action &action) {
+  const castor::tape::tpcp::Action &value) {
 
-  os << action.str();
+  os << value.str();
 
   return os;
 }
@@ -43,15 +42,15 @@ std::ostream &operator<<(std::ostream &os,
 // ostream << operator for castor::tape::tpcp::FilenameList
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os,
-  const castor::tape::tpcp::FilenameList &list) {
+  const castor::tape::tpcp::FilenameList &value) {
 
   os << '{';
 
   for(castor::tape::tpcp::FilenameList::const_iterator itor =
-    list.begin(); itor != list.end(); itor++) {
+    value.begin(); itor != value.end(); itor++) {
 
     // Write a separating comma if not the first item in the list
-    if(itor!=list.begin()) {
+    if(itor!=value.begin()) {
       os << ",";
     }
 
@@ -68,31 +67,31 @@ std::ostream &operator<<(std::ostream &os,
 // ostream << operator for castor::tape::tpcp::ParsedCommandLine
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os,
-  const castor::tape::tpcp::ParsedCommandLine &cmdLine) {
+  const castor::tape::tpcp::ParsedCommandLine &value) {
 
   using namespace castor::tape;
   using namespace castor::tape::tpcp;
 
-  os << "debugOptionSet    = " << utils::boolToString(cmdLine.debugOptionSet)
+  os << "debugOptionSet    = " << utils::boolToString(value.debugOptionSet)
      << std::endl
-     << "helpOptionSet     = " << utils::boolToString(cmdLine.helpOptionSet)
+     << "helpOptionSet     = " << utils::boolToString(value.helpOptionSet)
      << std::endl
-     << "action            = " << cmdLine.action
+     << "action            = " << value.action
      << std::endl
      << "vid               = ";
-  if(cmdLine.vid == NULL) {
+  if(value.vid == NULL) {
     os << "NULL";
   } else {
-    os << "\"" << cmdLine.vid << "\"";
+    os << "\"" << value.vid << "\"";
   }
   os << std::endl;
-  os << "tapeFseqRanges    = " << cmdLine.tapeFseqRanges
+  os << "tapeFseqRanges    = " << value.tapeFseqRanges
      << std::endl
-     << "fileListOptionSet = " << utils::boolToString(cmdLine.fileListOptionSet)
+     << "fileListOptionSet = " << utils::boolToString(value.fileListOptionSet)
      << std::endl
-     << "fileListFilename  = \"" << cmdLine.fileListFilename << "\""
+     << "fileListFilename  = \"" << value.fileListFilename << "\""
      << std::endl
-     << "filenames         = " << cmdLine.filenames
+     << "filenames         = " << value.filenames
      << std::endl;
 
    return os;
@@ -103,15 +102,15 @@ std::ostream &operator<<(std::ostream &os,
 // ostream << operator for castor::tape::tpcp::TapeFseqRange
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os,
-  const castor::tape::tpcp::TapeFseqRange &range) {
+  const castor::tape::tpcp::TapeFseqRange &value) {
 
-  os << range.lower << "-";
+  os << value.lower << "-";
 
   // 0 means end of tape ("END")
-  if(range.upper == 0) {
+  if(value.upper == 0) {
     os << "END";
   } else {
-    os << range.upper;
+    os << value.upper;
   }
 
   return os;
@@ -122,15 +121,15 @@ std::ostream &operator<<(std::ostream &os,
 // ostream << operator for castor::tape::tpcp::TapeFseqRangeList
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os,
-  const castor::tape::tpcp::TapeFseqRangeList &list) {
+  const castor::tape::tpcp::TapeFseqRangeList &value) {
 
   os << '{';
 
   for(castor::tape::tpcp::TapeFseqRangeList::const_iterator itor =
-    list.begin(); itor != list.end(); itor++) {
+    value.begin(); itor != value.end(); itor++) {
 
     // Write a separating comma if not the first item in the list
-    if(itor!=list.begin()) {
+    if(itor!=value.begin()) {
       os << ",";
     }
 
@@ -146,37 +145,34 @@ std::ostream &operator<<(std::ostream &os,
 //------------------------------------------------------------------------------
 // ostream << operator for vmgr_tape_info 
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os,
-  const vmgr_tape_info &tapeInfo) {
+std::ostream &operator<<(std::ostream &os, const vmgr_tape_info &value) {
 
-  os << std::endl
-     << "vid                  = \"" << tapeInfo.vid << "\""          << std::endl
-     << "vsn                  = \"" << tapeInfo.vsn << "\""          << std::endl
-     << "library              = \"" << tapeInfo.library << "\""      << std::endl
-     << "density              = \"" << tapeInfo.density << "\""      << std::endl
-     << "lbltype              = \"" << tapeInfo.lbltype << "\""      << std::endl
-     << "model                = \"" << tapeInfo.model << "\""        << std::endl
-     << "media_letter         = \"" << tapeInfo.media_letter << "\"" << std::endl
-     << "manufacturer         = \"" << tapeInfo.manufacturer << "\"" << std::endl
-     << "sn                   = \"" << tapeInfo.sn << "\""           << std::endl
-     << "nbsides              = "   << tapeInfo.nbsides              << std::endl
-     << "etime                = "   << tapeInfo.etime                << std::endl
-     << "rcount               = "   << tapeInfo.rcount               << std::endl
-     << "wcount               = "   << tapeInfo.wcount               << std::endl
-     << "rhost                = \"" << tapeInfo.rhost << "\""        << std::endl
-     << "whost                = \"" << tapeInfo.whost << "\""        << std::endl
-     << "rjid                 = "   << tapeInfo.rjid                 << std::endl
-     << "wjid                 = "   << tapeInfo.wjid                 << std::endl
-     << "rtime                = "   << tapeInfo.rtime                << std::endl
-     << "wtime                = "   << tapeInfo.wtime                << std::endl
-     << "side                 = "   << tapeInfo.side                 << std::endl
-     << "poolname             = \"" << tapeInfo.poolname << "\""     << std::endl
-     << "status               = "   << tapeInfo.status               << std::endl
-     << "estimated_free_space = "   << tapeInfo.estimated_free_space << std::endl
-     << "nbfiles              = "   << tapeInfo.nbfiles              << std::endl;
+  os << "vid                  = \"" << value.vid << "\""          << std::endl
+     << "vsn                  = \"" << value.vsn << "\""          << std::endl
+     << "library              = \"" << value.library << "\""      << std::endl
+     << "density              = \"" << value.density << "\""      << std::endl
+     << "lbltype              = \"" << value.lbltype << "\""      << std::endl
+     << "model                = \"" << value.model << "\""        << std::endl
+     << "media_letter         = \"" << value.media_letter << "\"" << std::endl
+     << "manufacturer         = \"" << value.manufacturer << "\"" << std::endl
+     << "sn                   = \"" << value.sn << "\""           << std::endl
+     << "nbsides              = "   << value.nbsides              << std::endl
+     << "etime                = "   << value.etime                << std::endl
+     << "rcount               = "   << value.rcount               << std::endl
+     << "wcount               = "   << value.wcount               << std::endl
+     << "rhost                = \"" << value.rhost << "\""        << std::endl
+     << "whost                = \"" << value.whost << "\""        << std::endl
+     << "rjid                 = "   << value.rjid                 << std::endl
+     << "wjid                 = "   << value.wjid                 << std::endl
+     << "rtime                = "   << value.rtime                << std::endl
+     << "wtime                = "   << value.wtime                << std::endl
+     << "side                 = "   << value.side                 << std::endl
+     << "poolname             = \"" << value.poolname << "\""     << std::endl
+     << "status               = "   << value.status               << std::endl
+     << "estimated_free_space = "   << value.estimated_free_space << std::endl
+     << "nbfiles              = "   << value.nbfiles              << std::endl;
 
   return os;
-
 }
 
 
@@ -184,13 +180,9 @@ std::ostream &operator<<(std::ostream &os,
 // ostream << operator for tapegateway::FileToRecall object 
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os,
-  const tapegateway::FileToRecall &fileToRecallInfo) {
-
-  castor::ObjectSet alreadyPrinted;
-  fileToRecallInfo.print(os, "", alreadyPrinted);
+  const castor::tape::tapegateway::FileToRecall &value) {
 
   return os;
-
 }
 
 
@@ -198,18 +190,9 @@ std::ostream &operator<<(std::ostream &os,
 // ostream << operator for tapegateway::FileToRecallRequest object 
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os,
-  const tapegateway::FileToRecallRequest &fileToRecallRequest) {
-
-//  castor::ObjectSet alreadyPrinted;
-//  fileToRecallRequest.print(os, "", alreadyPrinted);
-
-  // Output of all members
-  os << std::endl;
-  //   << "transactionId = " << fileToRecallRequest.transactionId << std::endl
-  //   << "id            = " << fileToRecallRequest.id            << std::endl;
+  const castor::tape::tapegateway::FileToRecallRequest &fileToRecallRequest) {
 
   return os;
-
 }
 
 
@@ -217,13 +200,8 @@ std::ostream &operator<<(std::ostream &os,
 // ostream << operator for tapegateway::FileRecalledNotification object 
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os,
-  const tapegateway::FileRecalledNotification &notificationInfo){
-
-  castor::ObjectSet alreadyPrinted;
-  notificationInfo.print(os, "", alreadyPrinted);
-  notificationInfo.print();
+  const castor::tape::tapegateway::FileRecalledNotification &notificationInfo)
+  {
 
   return os;
-
- 
 }

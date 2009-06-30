@@ -44,11 +44,4 @@ struct TapeFseqRange {
 } // namespace tape
 } // namespace castor
 
-
-/**
- * ostream << operator for castor::tape::tpcp::TapeFseqRange
- */
-std::ostream &operator<<(std::ostream &os,
-  const castor::tape::tpcp::TapeFseqRange &range);
-
 #endif // CASTOR_TAPE_TPCP_TAPEFSEQRANGE_HPP

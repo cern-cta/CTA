@@ -45,11 +45,4 @@ class FilenameList : public std::list<std::string> {
 } // namespace tape
 } // namespace castor
 
-
-/**
- * ostream << operator for castor::tape::tpcp::FilenameList
- */
-std::ostream &operator<<(std::ostream &os,
-  const castor::tape::tpcp::FilenameList &list);
-
 #endif // CASTOR_TAPE_TPCP_FILENAMELIST_HPP

@@ -74,12 +74,9 @@ TPCPBIN_SRCS = \
   Action.cpp \
   ActionHandler.cpp \
   Dumper.cpp \
-  FilenameList.cpp \
   Migrator.cpp \
-  ParsedCommandLine.cpp \
   Recaller.cpp \
-  TapeFseqRange.cpp \
-  TapeFseqRangeList.cpp \
+  StreamOperators.cpp \
   TapeFseqRangeListSequence.cpp \
   TapeFseqRangeSequence.cpp \
   TpcpCommand.cpp \

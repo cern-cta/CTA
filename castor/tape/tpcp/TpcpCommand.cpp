@@ -31,6 +31,7 @@
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
 #include "castor/tape/tpcp/Constants.hpp"
+#include "castor/tape/tpcp/StreamOperators.hpp"
 #include "castor/tape/tpcp/TpcpCommand.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/Cgetopt.h"

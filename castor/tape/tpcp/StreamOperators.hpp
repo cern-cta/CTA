@@ -33,77 +33,63 @@
 #include "castor/tape/tpcp/ParsedCommandLine.hpp"
 #include "castor/tape/tpcp/TapeFseqRange.hpp"
 #include "castor/tape/tpcp/TapeFseqRangeList.hpp"
-#include "castor/tape/utils/utils.hpp"
 #include "h/vmgr_api.h"
 
-//#include <list>
-//#include <ostream>
-//#include <string>
+#include <ostream>
 
-using namespace castor::tape;
 
 /**
  * ostream << operator for castor::tape::tpcp::Action
  */
 std::ostream &operator<<(std::ostream &os,
-  const castor::tape::tpcp::Action &action);
-
+  const castor::tape::tpcp::Action &value);
 
 /**
  * ostream << operator for castor::tape::tpcp::FilenameList
  */
 std::ostream &operator<<(std::ostream &os,
-  const castor::tape::tpcp::FilenameList &list);
-
+  const castor::tape::tpcp::FilenameList &value);
 
 /**
  * ostream << operator for castor::tape::tpcp::ParsedCommandLine
  */
 std::ostream &operator<<(std::ostream &os,
-  const castor::tape::tpcp::ParsedCommandLine &cmdLine);
-
+  const castor::tape::tpcp::ParsedCommandLine &value);
 
 /**
  * ostream << operator for castor::tape::tpcp::TapeFseqRange
  */
 std::ostream &operator<<(std::ostream &os,
-  const castor::tape::tpcp::TapeFseqRange &range);
-
+  const castor::tape::tpcp::TapeFseqRange &value);
 
 /**
  * ostream << operator for castor::tape::tpcp::TapeFseqRangeList
  */
 std::ostream &operator<<(std::ostream &os,
-  const castor::tape::tpcp::TapeFseqRangeList &list);
-
+  const castor::tape::tpcp::TapeFseqRangeList &value);
 
 /**
  * ostream << operator for vmgr_tape_info structure 
  */
-std::ostream &operator<<(std::ostream &os,
-  const vmgr_tape_info &FileToRecallRequest);
-
+std::ostream &operator<<(std::ostream &os, const vmgr_tape_info &value);
 
 /**
  * ostream << operator for tapegateway::fileToRecall object
  */
 std::ostream &operator<<(std::ostream &os,
-  const tapegateway::FileToRecall &fileToRecallInfo);
+  const castor::tape::tapegateway::FileToRecall &value);
 
 /**
  * ostream << operator for tapegateway::fileToRecallRequest object
  */
 std::ostream &operator<<(std::ostream &os,
-  const tapegateway::FileToRecallRequest &fileToRecallRequestInfo);
-
+  const castor::tape::tapegateway::FileToRecallRequest &value);
 
 /**
  * ostream << operator for tapegateway::FileRecalledNotification object 
  */
 std::ostream &operator<<(std::ostream &os,
-  const tapegateway::FileRecalledNotification &notificationInfo);
-
-
+  const castor::tape::tapegateway::FileRecalledNotification &value);
 
 
 #endif // CASTOR_TAPE_TPCP_STREAMOPERATORS_HPP

@@ -71,10 +71,4 @@ struct ParsedCommandLine {
 } // namespace castor
 
 
-/**
- * ostream << operator for castor::tape::tpcp::ParsedCommandLine
- */
-std::ostream &operator<<(std::ostream &os,
-  const castor::tape::tpcp::ParsedCommandLine &cmdLine);
-
 #endif // CASTOR_TAPE_TPCP_PARSEDCOMMANDLINE_HPP
