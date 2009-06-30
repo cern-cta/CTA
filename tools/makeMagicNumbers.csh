@@ -1,8 +1,10 @@
 #!/usr/bin/tcsh
 
-if $?CASTOR_ROOT then
+if !($?CASTOR_ROOT) then
   setenv CASTOR_ROOT /usr/local/src/CASTOR2
 endif
+
+echo CASTOR_ROOT = $CASTOR_ROOT
 
 rm -f MagicNumbers
 
@@ -41,17 +43,5 @@ if $?SRM_ROOT then
     endif
   end
 endif
-
-echo Creating SQL script for Type2Obj metatable...
-echo '/* Fill Type2Obj metatable */' > fillType2Obj.sql
-echo 'CREATE TABLE Type2Obj (type INTEGER CONSTRAINT I_Type2Obj_Type PRIMARY KEY, object VARCHAR2(100), svcHandler VARCHAR2(100));\n' >> fillType2Obj.sql
-echo '/* Type2Obj constraints */' >> fillType2Obj.sql
-echo 'ALTER TABLE Type2Obj' >> fillType2Obj.sql
-echo '  MODIFY (type CONSTRAINT NN_Type2Obj_Type NOT NULL);\n' >> fillType2Obj.sql
-echo 'ALTER TABLE Type2Obj' >> fillType2Obj.sql
-echo '  MODIFY (object CONSTRAINT NN_Type2Obj_Object NOT NULL);\n' >> fillType2Obj.sql
-grep OBJ_ MagicNumbers | sed 's/OBJ_//g' | awk '{print "INSERT INTO Type2Obj (type, object) VALUES (" $1 ", '\''" $2 "'\'');" }' >> fillType2Obj.sql
-echo >> fillType2Obj.sql
-mv fillType2Obj.sql $CASTOR_ROOT/castor/db
 
 a2ps --toc= --columns=4 -f 7.5 -c -o MagicNumbers.ps MagicNumbers
