@@ -17,8 +17,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NsTapeGatewayHelper.cpp,v $ $Revision: 1.12 $ $Release$ 
- * $Date: 2009/05/18 13:52:38 $ $Author: gtaur $
+ * @(#)$RCSfile: NsTapeGatewayHelper.cpp,v $ $Revision: 1.13 $ $Release$ 
+ * $Date: 2009/06/30 13:48:13 $ $Author: gtaur $
  *
  *
  *
@@ -330,8 +330,6 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate(castor:
     throw ex;
   }
 
-  int nbCopies=0; // to count the number of copies of this file in the nameserver
-
   // let's check if there is already a file on that tape 
 
   for ( int i=0; i< nbSegs ;i++) {
@@ -344,58 +342,16 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate(castor:
       << "this file have already a copy on that tape";
       throw ex;
     }
-    nbCopies++;
   }
   
-  // check the fileclass to verify the number of tapecopies allowed
 
-  struct Cns_filestat statbuf;
-  struct Cns_fileclass fileClass;
-  char castorFileName[CA_MAXPATHLEN+1];
-
-  *castorFileName = '\0';
-  serrno=0;
-  rc = Cns_statx(castorFileName,&castorFileId,&statbuf);
-
-  if ( rc == -1 ) {
-    if (segArray != NULL ) free(segArray);
-    segArray=NULL;
-    castor::exception::Exception ex(serrno);
-    ex.getMessage()
-      << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate:"
-      << "Cns_statx failed";
-    throw ex;
-  } 
- 
-  memset(&fileClass,'\0',sizeof(fileClass));
-  serrno=0;
-  rc = Cns_queryclass( castorFileId.server,statbuf.fileclass, NULL,&fileClass );
-  if ( rc == -1 ) {
-    if (segArray != NULL ) free(segArray);
-    segArray=NULL;
-    castor::exception::Exception ex(serrno);
-    ex.getMessage()
-      << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate:"
-      << "Cns_queryclass failed";
-    throw ex;
-  } 
-
-  if ( nbCopies >= fileClass.nbcopies ) {// extra check to avoid exceeded number of tapecopies
-      if (segArray != NULL ) free(segArray);
-      segArray=NULL;
-      castor::exception::Exception ex(-1); 
-      ex.getMessage()
-	<< "castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate:"
-	<< "too many tapecopies";
-      throw ex;
-  }
  
   if (segArray != NULL ) free(segArray);
   segArray=NULL;
 
   // stat to verify that the copy on disk has not zero file size and that it is the same in the nameserver
 
-// get with rfio the filesize of the copy on disk
+  // get with rfio the filesize of the copy on disk
 
   struct stat64 st;
   serrno=0;
