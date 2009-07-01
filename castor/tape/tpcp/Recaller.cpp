@@ -251,9 +251,9 @@ bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
   castor::IObject *msg, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
-  tapegateway::FileRecalledNotification *const fileRecallededNotification =
+  tapegateway::FileRecalledNotification *const fileRecalledNotification =
     dynamic_cast<tapegateway::FileRecalledNotification*>(msg);
-  if(fileRecallededNotification == NULL) {
+  if(fileRecalledNotification == NULL) {
     TAPE_THROW_EX(castor::exception::Internal,
          "Unexpected object type"
       << ": Actual=" << utils::objectTypeToString(msg->type())
@@ -261,12 +261,12 @@ bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
   }
 
   // Check the transaction ID
-  if(fileRecallededNotification->transactionId() != m_volReqId) {
+  if(fileRecalledNotification->transactionId() != m_volReqId) {
     castor::exception::Exception ex(EBADMSG);
 
     ex.getMessage()
       << "Transaction ID mismatch"
-         ": Actual=" << fileRecallededNotification->transactionId()
+         ": Actual=" << fileRecalledNotification->transactionId()
       << " Expected=" << m_volReqId;
 
     throw ex;
@@ -299,22 +299,33 @@ bool castor::tape::tpcp::Recaller::handleEndNotification(
   castor::IObject *msg, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
-  tapegateway::EndNotification *const fileRecallededNotification =
+  tapegateway::EndNotification *const fileRecalledNotification =
     dynamic_cast<tapegateway::EndNotification*>(msg);
-  if(fileRecallededNotification == NULL) {
+  if(fileRecalledNotification == NULL) {
     TAPE_THROW_EX(castor::exception::Internal,
          "Unexpected object type"
       << ": Actual=" << utils::objectTypeToString(msg->type())
       << " Expected=EndNotification");
   }
 
+  // If debug, then display fileRecalledNotification
+  if(m_debug) {
+    std::ostream &os = std::cout;
+
+    utils::writeBanner(os, "Received FileRecalledNotification from "
+      "aggregator");
+    os << std::endl;
+    os << fileRecalledNotification;
+    os << std::endl;
+  }
+
   // Check the transaction ID
-  if(fileRecallededNotification->transactionId() != m_volReqId) {
+  if(fileRecalledNotification->transactionId() != m_volReqId) {
     castor::exception::Exception ex(EBADMSG);
 
     ex.getMessage()
       << "Transaction ID mismatch"
-         ": Actual=" << fileRecallededNotification->transactionId()
+         ": Actual=" << fileRecalledNotification->transactionId()
       << " Expected=" << m_volReqId;
 
     throw ex;
