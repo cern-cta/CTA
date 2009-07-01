@@ -22,6 +22,8 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
  
+#include "castor/tape/tapegateway/EndNotification.hpp"
+#include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/FileRecalledNotification.hpp"
 #include "castor/tape/tapegateway/FileToRecall.hpp"
 #include "castor/tape/tapegateway/FileToRecallRequest.hpp"
@@ -56,6 +58,18 @@ int main(int argc, char **argv) {
   utils::writeBanner(os, "fileRecalledNotification");
     os << std::endl
      << fileRecalledNotification << std::endl;
+
+  tapegateway::EndNotification endNotification;
+  os << std::endl;
+  utils::writeBanner(os, "EndNotification");
+    os << std::endl
+     << endNotification << std::endl;
+
+  tapegateway::EndNotificationErrorReport endNotificationErrorReport;
+  os << std::endl;
+  utils::writeBanner(os, "EndNotificationErrorReport");
+    os << std::endl
+     << endNotificationErrorReport << std::endl;
 
   return 0;
 }
