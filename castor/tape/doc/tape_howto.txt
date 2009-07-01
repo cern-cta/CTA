@@ -2001,6 +2001,26 @@ ssh tpsrv202 /aggregator/aggregatord.sh
 rm /tmp/aggregatord.sh
 
 
+How to install and run an rtcpd for development on tpsrv202
+===========================================================
+
+CASTOR_CVS=/usr/local/src/CASTOR2
+cd $CASTOR_CVS
+ssh tpsrv202 mkdir /rtcpdEIO
+scp `find -name '*.so*' | xargs echo` tpsrv202:/rtcpdEIO
+scp rtcopy/rtcpd tpsrv202:/rtcpdEIO
+cat > /tmp/rtcpd.sh << HERE
+#!/bin/sh
+
+export LD_LIBRARY_PATH=/rtcpdEIO
+/rtcpdEIO/rtcpd
+HERE
+chmod +x /tmp/rtcpd.sh
+scp /tmp/rtcpd.sh tpsrv202:/rtcpdEIO
+ssh tpsrv202 /rtcpdEIO/rtcpd.sh
+rm /tmp/rtcpd.sh
+
+
 How to re-label and re-populate a tape with one thousand 100MB files
 ====================================================================
 
