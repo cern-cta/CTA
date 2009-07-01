@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.38 $ $Release$ 
- * $Date: 2009/05/26 13:07:21 $ $Author: waldron $
+ * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.39 $ $Release$ 
+ * $Date: 2009/07/01 12:10:38 $ $Author: waldron $
  *
  *
  *
@@ -145,7 +145,7 @@ u_signed64 FileListHelper::countFilesOnTape(std::string vid)
   if ( !vid.empty() )
   {
     /** the tape check was before ! */
-    Cns_tapesum(vid.c_str(), &numSegmentLeft, &sizeLeft, &maxFileId, 2);        
+    Cns_tapesum((char*)m_ns.c_str(), vid.c_str(), &numSegmentLeft, &sizeLeft, &maxFileId, 2);        
   }
   else{
       castor::exception::Internal ex;

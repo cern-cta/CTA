@@ -22,7 +22,7 @@
 #include "serrno.h"
 
 int DLL_DECL
-Cns_tapesum(const char *vid, u_signed64 *count, u_signed64 *size, u_signed64 *maxfileid, int filter)
+Cns_tapesum(const char *server, const char *vid, u_signed64 *count, u_signed64 *size, u_signed64 *maxfileid, int filter)
 {
   /* variables */
   char  func[16];
@@ -85,7 +85,7 @@ Cns_tapesum(const char *vid, u_signed64 *count, u_signed64 *size, u_signed64 *ma
   marshall_LONG(q, msglen);  /* Update the length field */
 
   /* Send message to name server daemon */
-  c = send2nsd(NULL, NULL, sendbuf, msglen, repbuf, sizeof(repbuf));
+  c = send2nsd(NULL, server, sendbuf, msglen, repbuf, sizeof(repbuf));
   if (c == 0) {
     rbp = repbuf;
     unmarshall_HYPER (rbp, *count);

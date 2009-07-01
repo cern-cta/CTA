@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cns_tapesum.man,v $ $Revision: 1.3 $ $Date: 2009/05/26 13:07:21 $ CERN IT-DM/SMD
+.\" @(#)$RCSfile: Cns_tapesum.man,v $ $Revision: 1.4 $ $Date: 2009/07/01 12:10:38 $ CERN IT-DM/SMD
 .\" Copyright (C) 2003 by CERN
 .\" All rights reserved
 .\"
-.TH CNS_tapesum 3 "$Date: 2009/05/26 13:07:21 $" CASTOR "Cns Library Functions"
+.TH CNS_tapesum 3 "$Date: 2009/07/01 12:10:38 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_tapesum \- returns the total size and number of files on a volume and largest fileid
 .SH SYNOPSIS
@@ -10,7 +10,8 @@ Cns_tapesum \- returns the total size and number of files on a volume and larges
 .br
 \fB#include "Cns_api.h"\fR
 .sp
-.BI "int *Cns_tapesum (char *" vid ,
+.BI "int *Cns_tapesum (const char *" server ,
+.BI "const char *" vid ,
 .BI "u_signed64 *" count ,
 .BI "u_signed64 *" size ,
 .BI "u_signed64 *" maxfileid ,
@@ -18,6 +19,9 @@ Cns_tapesum \- returns the total size and number of files on a volume and larges
 .SH DESCRIPTION
 .B Cns_tapesum
 returns the total size in bytes and the number of files on a volume
+.TP
+.I server
+specifies the CASTOR Name Server to be contacted.
 .TP
 .I vid
 is the visual identifier of the volume.

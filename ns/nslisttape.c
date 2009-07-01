@@ -156,7 +156,7 @@ int main(int argc,char **argv)
 #endif
 
   if (sumflag) {
-    c = Cns_tapesum(vid, &count, &size, &maxfileid, dflag == 0 ? 1 : 3);
+    c = Cns_tapesum(server, vid, &count, &size, &maxfileid, dflag == 0 ? 1 : 3);
     if (c < 0) {
       fprintf (stderr, "%s: %s\n", vid, (serrno == ENOENT) ? "No such volume or no files found" : sstrerror(serrno));
 #if defined(_WIN32)
