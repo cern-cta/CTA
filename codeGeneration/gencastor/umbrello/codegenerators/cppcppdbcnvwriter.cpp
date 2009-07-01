@@ -53,9 +53,10 @@ void CppCppDbCnvWriter::startSQLFile() {
          << "/* ObjStatus metatable definition */" << endl
          << "CREATE TABLE ObjStatus "
          << "(object VARCHAR2(100) CONSTRAINT NN_ObjStatus_object NOT NULL,"
+         << " field VARCHAR2(100) CONSTRAINT NN_ObjStatus_field NOT NULL,"
          << " statusCode INTEGER CONSTRAINT NN_ObjStatus_statusCode NOT NULL,"
          << " statusName VARCHAR2(100) CONSTRAINT NN_ObjStatus_statusName NOT NULL,"
-         << " CONSTRAINT UN_ObjStatus_objectCode UNIQUE (object, statusCode));"
+         << " CONSTRAINT UN_ObjStatus_objectFieldCode UNIQUE (object, field, statusCode));"
          << endl << endl;
   
   file.close();
@@ -507,8 +508,8 @@ void CppCppDbCnvWriter::writeConstants() {
               << "Db" << m_classInfo->className
               << "Cnv::s_insertNewReqStatementString =" << endl
               << getIndent()
-              << "\"INSERT INTO newRequests (id, type, creation)"
-              << " VALUES (:1, :2, SYSDATE)\";"
+              << "\"INSERT INTO newRequests (id, type)"
+              << " VALUES (:1, :2)\";"
               << endl << endl;
   }
   // Associations dedicated statements
@@ -787,12 +788,14 @@ void CppCppDbCnvWriter::writeOraSqlStatements() {
   // ObjStatus contents
   for (Assoc* as = assocs.first(); 0 != as; as = assocs.next()) {
     UMLClassifier* c = getClassifier(as->remotePart.typeName);
-    if (isEnum(c) && m_enumsList.find(c) == m_enumsList.end()) {
-      m_enumsList.insert(c);
-      QPtrList<UMLAttribute> atl = c->getAttributeList();
+    if (isEnum(c)) {
+      QPtrList<UMLAttribute> atl = 
+        getClassifier(as->remotePart.typeName)->getAttributeList();
       for (UMLAttribute *at = atl.first(); at; at = atl.next()) {
-        stream << "INSERT INTO ObjStatus (object, statusCode, statusName) VALUES ('"
-               << as->remotePart.typeName << "', "
+        stream << "INSERT INTO ObjStatus "
+               << "(object, field, statusCode, statusName) VALUES ('"
+               << as->localPart.typeName << "', '"
+               << as->remotePart.name << "', "
                << at->getInitialValue() << ", '"
                << at->getName() << "');"
                << endl;
