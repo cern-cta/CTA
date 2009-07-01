@@ -189,15 +189,6 @@ private:
     throw (castor::exception::Exception);
 
   /**
-   * Writes the specified vmgr_tape_info structure to the specified output
-   * stream.
-   *
-   * @param os The output stream to be written to.
-   * @param info The vmgr_tape_info structure to be written.
-   */
-  void writeVmgrTapeInfo(std::ostream &os, vmgr_tape_info &info) throw();
-
-  /**
    * Creates, binds and sets to listening the callback socket to be used for
    * callbacks from the aggregator daemon.
    */

@@ -72,27 +72,21 @@ std::ostream &operator<<(std::ostream &os,
   using namespace castor::tape;
   using namespace castor::tape::tpcp;
 
-  os << "debugOptionSet    = " << utils::boolToString(value.debugOptionSet)
-     << std::endl
-     << "helpOptionSet     = " << utils::boolToString(value.helpOptionSet)
-     << std::endl
-     << "action            = " << value.action
-     << std::endl
-     << "vid               = ";
+  os <<"{"
+        "debugOptionSet=" << utils::boolToString(value.debugOptionSet)<<","
+        "helpOptionSet="  << utils::boolToString(value.helpOptionSet) <<","
+        "action="         << value.action                             <<","
+        "vid=";
   if(value.vid == NULL) {
-    os << "NULL";
+    os << "NULL,";
   } else {
-    os << "\"" << value.vid << "\"";
+    os << "\"" << value.vid << "\",";
   }
-  os << std::endl;
-  os << "tapeFseqRanges    = " << value.tapeFseqRanges
-     << std::endl
-     << "fileListOptionSet = " << utils::boolToString(value.fileListOptionSet)
-     << std::endl
-     << "fileListFilename  = \"" << value.fileListFilename << "\""
-     << std::endl
-     << "filenames         = " << value.filenames
-     << std::endl;
+  os <<"tapeFseqRanges="    << value.tapeFseqRanges                        <<","
+       "fileListOptionSet=" << utils::boolToString(value.fileListOptionSet)<<","
+       "fileListFilename=\""<< value.fileListFilename                   << "\","
+       "filenames="         << value.filenames
+     <<"}";
 
    return os;
 }
@@ -147,30 +141,32 @@ std::ostream &operator<<(std::ostream &os,
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const vmgr_tape_info &value) {
 
-  os << "vid                  = \"" << value.vid << "\""          << std::endl
-     << "vsn                  = \"" << value.vsn << "\""          << std::endl
-     << "library              = \"" << value.library << "\""      << std::endl
-     << "density              = \"" << value.density << "\""      << std::endl
-     << "lbltype              = \"" << value.lbltype << "\""      << std::endl
-     << "model                = \"" << value.model << "\""        << std::endl
-     << "media_letter         = \"" << value.media_letter << "\"" << std::endl
-     << "manufacturer         = \"" << value.manufacturer << "\"" << std::endl
-     << "sn                   = \"" << value.sn << "\""           << std::endl
-     << "nbsides              = "   << value.nbsides              << std::endl
-     << "etime                = "   << value.etime                << std::endl
-     << "rcount               = "   << value.rcount               << std::endl
-     << "wcount               = "   << value.wcount               << std::endl
-     << "rhost                = \"" << value.rhost << "\""        << std::endl
-     << "whost                = \"" << value.whost << "\""        << std::endl
-     << "rjid                 = "   << value.rjid                 << std::endl
-     << "wjid                 = "   << value.wjid                 << std::endl
-     << "rtime                = "   << value.rtime                << std::endl
-     << "wtime                = "   << value.wtime                << std::endl
-     << "side                 = "   << value.side                 << std::endl
-     << "poolname             = \"" << value.poolname << "\""     << std::endl
-     << "status               = "   << value.status               << std::endl
-     << "estimated_free_space = "   << value.estimated_free_space << std::endl
-     << "nbfiles              = "   << value.nbfiles              << std::endl;
+  os << "{"
+        "vid=\""               << value.vid                 << "\","
+        "vsn=\""               << value.vsn                 << "\","
+        "library=\""           << value.library             << "\","
+        "density=\""           << value.density             << "\","
+        "lbltype=\""           << value.lbltype             << "\","
+        "model=\""             << value.model               << "\","
+        "media_letter=\""      << value.media_letter        << "\","
+        "manufacturer=\""      << value.manufacturer        << "\","
+        "sn= \""               << value.sn                  << "\","
+        "nbsides="             << value.nbsides             <<   ","
+        "etime="               << value.etime               <<   ","
+        "rcount="              << value.rcount              <<   ","
+        "wcount="              << value.wcount              <<   ","
+        "rhost=\""             << value.rhost               << "\","
+        "whost=\""             << value.whost               << "\","
+        "rjid="                << value.rjid                <<   ","
+        "wjid="                << value.wjid                <<   ","
+        "rtime="               << value.rtime               <<   ","
+        "wtime="               << value.wtime               <<   ","
+        "side="                << value.side                <<   ","
+        "poolname=\""          << value.poolname            << "\","
+        "status="              << value.status              <<   ","
+        "estimated_free_space="<< value.estimated_free_space<<   ","
+        "nbfiles="             << value.nbfiles
+     << "}";
 
   return os;
 }
@@ -182,11 +178,11 @@ std::ostream &operator<<(std::ostream &os, const vmgr_tape_info &value) {
 std::ostream &operator<<(std::ostream &os,
   const castor::tape::tapegateway::BaseFileInfo &value) {
 
-  os << "transactionId       = "   << value.transactionId()       << std::endl
-     << "nshost              = \"" << value.nshost() << "\""      << std::endl
-     << "fileid              = "   << value.fileid()              << std::endl
-     << "fseq                = "   << value.fseq()                << std::endl
-     << "positionCommandCode = "   << value.positionCommandCode() << std::endl;
+  os << "transactionId="       << value.transactionId()       <<   ","
+        "nshost=\""            << value.nshost()              << "\","     
+        "fileid="              << value.fileid()              <<   ","
+        "fseq="                << value.fseq()                <<   ","
+        "positionCommandCode=" << value.positionCommandCode() <<   "";
 
   return os;
 }
@@ -198,13 +194,14 @@ std::ostream &operator<<(std::ostream &os,
 std::ostream &operator<<(std::ostream &os,
   const castor::tape::tapegateway::FileToRecall &value) {
 
-  os << (castor::tape::tapegateway::BaseFileInfo&)value
-     << "path                = \"" << value.path() << "\""  << std::endl
+  os << "{"
+     << (castor::tape::tapegateway::BaseFileInfo&)value
+     << "path=\"" << value.path() << "\","
      << std::hex
-     << "blockId0            = "   << (int)value.blockId0() << std::endl
-     << "blockId1            = "   << (int)value.blockId1() << std::endl
-     << "blockId2            = "   << (int)value.blockId2() << std::endl
-     << "blockId3            = "   << (int)value.blockId3() << std::endl
+     << "blockId0="   << (int)value.blockId0() << ","   
+        "blockId1="   << (int)value.blockId1() << ","
+        "blockId2="   << (int)value.blockId2() << ","
+        "blockId3="   << (int)value.blockId3() << "}"
      << std::dec;
 
   return os;
@@ -217,7 +214,7 @@ std::ostream &operator<<(std::ostream &os,
 std::ostream &operator<<(std::ostream &os,
   const castor::tape::tapegateway::FileToRecallRequest &value) {
 
-  os << "transactionId = "   << value.transactionId() << std::endl;
+  os << "transactionId=" << value.transactionId();
 
   return os;
 }
@@ -230,9 +227,10 @@ std::ostream &operator<<(std::ostream &os,
   const castor::tape::tapegateway::FileRecalledNotification &value)
   {
 
-  os << (castor::tape::tapegateway::BaseFileInfo&)value
-     << "path                = \"" << value.path() << "\""         << std::endl
-     << "checksumName        = \"" << value.checksumName() << "\"" << std::endl;
+  os << "{"
+     << (castor::tape::tapegateway::BaseFileInfo&)value
+     << "path=\""         << value.path()         << "\","
+     << "checksumName=\"" << value.checksumName() << "\"}"; 
 
   return os;
 }

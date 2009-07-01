@@ -426,7 +426,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
       std::ostream &os = std::cout;
 
       utils::writeBanner(os, "vmgr_tape_info from the VMGR");
-      writeVmgrTapeInfo(os, m_vmgrTapeInfo);
+      os << m_vmgrTapeInfo;
       os << std::endl;
       os << std::endl;
       utils::writeBanner(os, "DGN from the VMGR");
@@ -843,41 +843,6 @@ void castor::tape::tpcp::TpcpCommand::vmgrQueryTape(
       ": " << buf);
   }
 }
-
-
-//------------------------------------------------------------------------------
-// writeVmgrTapeInfo
-//------------------------------------------------------------------------------
-void  castor::tape::tpcp::TpcpCommand::writeVmgrTapeInfo(std::ostream &os,
-  vmgr_tape_info &info) throw() {
-
-  os << std::endl
-     << "vid                  = \"" << info.vid << "\""          << std::endl
-     << "vsn                  = \"" << info.vsn << "\""          << std::endl
-     << "library              = \"" << info.library << "\""      << std::endl
-     << "density              = \"" << info.density << "\""      << std::endl
-     << "lbltype              = \"" << info.lbltype << "\""      << std::endl
-     << "model                = \"" << info.model << "\""        << std::endl
-     << "media_letter         = \"" << info.media_letter << "\"" << std::endl
-     << "manufacturer         = \"" << info.manufacturer << "\"" << std::endl
-     << "sn                   = \"" << info.sn << "\""           << std::endl
-     << "nbsides              = " << info.nbsides                << std::endl
-     << "etime                = " << info.etime                  << std::endl
-     << "rcount               = " << info.rcount                 << std::endl
-     << "wcount               = " << info.wcount                 << std::endl
-     << "rhost                = \"" << info.rhost << "\""        << std::endl
-     << "whost                = \"" << info.whost << "\""        << std::endl
-     << "rjid                 = " << info.rjid                   << std::endl
-     << "wjid                 = " << info.wjid                   << std::endl
-     << "rtime                = " << info.rtime                  << std::endl
-     << "wtime                = " << info.wtime                  << std::endl
-     << "side                 = " << info.side                   << std::endl
-     << "poolname             = \"" << info.poolname << "\""     << std::endl
-     << "status               = " << info.status                 << std::endl
-     << "estimated_free_space = " << info.estimated_free_space   << std::endl
-     << "nbfiles              = " << info.nbfiles                << std::endl;
-}
-
 
 //------------------------------------------------------------------------------
 // setupCallbackSocket
