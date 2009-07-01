@@ -234,3 +234,22 @@ std::ostream &operator<<(std::ostream &os,
 
   return os;
 }
+
+
+
+
+//------------------------------------------------------------------------------
+// ostream << operator for tapegateway::FileRecalledNotification object 
+//------------------------------------------------------------------------------
+std::ostream &operator<<(std::ostream &os,
+  const castor::tape::tapegateway::EndNotificationErrorReport &value)
+  {
+
+  os << "{"
+        "errorCode="     << value.errorCode()    <<   "," 
+        "transactionId=" << value.transactionId()<<   "," 
+        "errorMessage=\""<< value.errorMessage() << "\"," 
+        "id="            << value.id()           <<   "}";
+
+  return os;
+}
