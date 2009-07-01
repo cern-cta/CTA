@@ -427,7 +427,6 @@ void castor::tape::aggregator::BridgeProtocolEngine::run()
   RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_volReqId, m_rtcpdInitialSocketFd,
     RTCPDNETRWTIMEOUT);
 
-  // Spin a select loop processing the RTCPD sockets
   try {
     processRtcpdSockets();
   } catch(castor::exception::Exception &ex) {

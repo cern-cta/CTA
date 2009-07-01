@@ -171,8 +171,8 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
       // Else recalling
       } else {
 
-        Unpacker recallProtocolEngine;
-        recallProtocolEngine.run();
+        Unpacker unpacker;
+        unpacker.run();
       }
 
     // Else the volume does not have the aggregation format
