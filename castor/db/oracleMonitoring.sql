@@ -1,5 +1,5 @@
 /*******************************************************************
- * @(#)$RCSfile: oracleMonitoring.sql,v $ $Revision: 1.5 $ $Date: 2009/06/30 14:13:40 $ $Author: itglp $
+ * @(#)$RCSfile: oracleMonitoring.sql,v $ $Revision: 1.6 $ $Date: 2009/07/01 07:55:46 $ $Author: itglp $
  * PL/SQL code for stager monitoring
  *
  * @author Castor Dev team, castor-dev@cern.ch
@@ -58,17 +58,20 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
           -- diskcopy states.
           SELECT DiskServer.name, FileSystem.mountPoint, FileSystem.id,
                  (SELECT statusName FROM ObjStatus
-                   WHERE object = 'DiskServerStatusCode'
+                   WHERE object = 'DiskServer'
+                     AND field = 'status'
                      AND statusCode = DiskServer.status) dsStatus,
-                 (SELECT statusName FROM OBjStatus
+                 (SELECT statusName FROM ObjStatus
                    WHERE object = 'FileSystem'
+                     AND field = 'status'
                      AND statusCode = FileSystem.status) fsStatus,
                  decode(DiskServer.status, 2, 'N',
                    decode(FileSystem.status, 2, 'N', 'Y')) available,
                  ObjStatus.statusName
             FROM DiskServer, FileSystem, ObjStatus
            WHERE FileSystem.diskServer = DiskServer.id
-             AND ObjStatus.object(+) = 'DiskCopyStatusCodes'
+             AND ObjStatus.object(+) = 'DiskCopy'
+             AND ObjStatus.field = 'status'
              AND ObjStatus.statusCode IN (0, 4, 5, 6, 7, 9, 10, 11)) a
         -- Attach the aggregation information for all filesystems to the results
         -- extracted above.
@@ -77,7 +80,8 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
                  sum(DiskCopy.diskCopySize) totalSize, count(*) nbFiles
             FROM DiskCopy, ObjStatus
            WHERE DiskCopy.status = ObjStatus.statusCode
-             AND ObjStatus.object = 'DiskCopyStatusCodes'
+             AND ObjStatus.object = 'DiskCopy'
+             AND ObjStatus.field = 'status'
              AND DiskCopy.status IN (0, 4, 5, 6, 7, 9, 10, 11)
            GROUP BY DiskCopy.fileSystem, ObjStatus.statusName) b
           ON (a.id = b.fileSystem AND a.statusName = b.statusName)
