@@ -165,8 +165,8 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
 
   case OBJ_EndNotificationErrorReport:
     {
-       int errorCode;
-       std::string errorMessage;
+      int errorCode;
+      std::string errorMessage;
 
       // Copy the reply information
       try {
@@ -1094,5 +1094,120 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayEndOfSession(
       castor::dlf::Param("gatewayPort", gatewayPort)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_NOTIFIED_GATEWAY_END_OF_SESSION, params);
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// notifyGatewayEndOfFailedSession
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::GatewayTxRx::notifyGatewayEndOfFailedSession(
+  const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost,
+  const unsigned short gatewayPort, castor::exception::Exception &ex)
+  throw(castor::exception::Exception) {
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId"   , volReqId   ),
+      castor::dlf::Param("gatewayHost", gatewayHost),
+      castor::dlf::Param("gatewayPort", gatewayPort)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_NOTIFY_GATEWAY_END_OF_FAILED_SESSION, params);
+  }
+
+
+  //===================================================
+  // Hardcoded Gateway reply
+  #ifdef EMULATE_GATEWAY
+
+    return;
+
+  #endif
+  //===================================================
+
+  // Prepare the request
+  tapegateway::EndNotificationErrorReport request;
+  request.setTransactionId(volReqId);
+  request.setErrorCode(ex.code());
+  request.setErrorMessage(ex.getMessage().str());
+
+  // Connect to the tape gateway
+  castor::io::ClientSocket gatewaySocket(gatewayPort, gatewayHost);
+  try {
+    gatewaySocket.connect();
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ex.code(),
+      ": Failed to connect to gateway to send EndNotificationErrorReport"
+      ": " << ex.getMessage().str());
+  }
+
+  try {
+    // Send the request
+    gatewaySocket.sendObject(request);
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ex.code(),
+      ": Failed to send EndNotificationErrorReport to gateway"
+      ": " << ex.getMessage().str());
+  }
+
+  std::auto_ptr<castor::IObject> reply;
+  try {
+    // Receive the reply object wrapping it in an auto pointer so that it is
+    // automatically deallocated when it goes out of scope
+    reply.reset(gatewaySocket.readObject());
+
+    if(reply.get() == NULL) {
+      TAPE_THROW_EX(castor::exception::Internal,
+        ": ClientSocket::readObject() returned null");
+    }
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ex.code(),
+      ": Failed to read EndNotificationErrorReport reply from gateway"
+      ": " << ex.getMessage().str());
+  }
+
+  // Close the connection to the tape gateway
+  gatewaySocket.close();
+
+  // Temporary variable used to check for a transaction ID mistatch
+  uint64_t volReqIdFromGateway = 0;
+
+  switch(reply->type()) {
+  case OBJ_NotificationAcknowledge:
+    // Copy the reply information
+    try {
+      tapegateway::NotificationAcknowledge &notificationAcknowledge =
+        dynamic_cast<tapegateway::NotificationAcknowledge&>(*reply);
+      volReqIdFromGateway = notificationAcknowledge.transactionId();
+    } catch(std::bad_cast &bc) {
+      TAPE_THROW_EX(castor::exception::Internal,
+        ": Failed to down cast reply object to "
+        "tapegateway::NotificationAcknowledge");
+    }
+
+    // If there is a transaction ID mismatch
+    if(volReqIdFromGateway != volReqId) {
+      TAPE_THROW_CODE(EBADMSG,
+           ": Transaction ID mismatch"
+           ": Expected = " << volReqId
+        << ": Actual = " << volReqIdFromGateway);
+    }
+    break;
+
+  default:
+    {
+      TAPE_THROW_CODE(EBADMSG,
+        ": Unknown reply type "
+        ": Reply type = " << reply->type());
+    }
+  } // switch(reply->type())
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId"   , volReqId   ),
+      castor::dlf::Param("gatewayHost", gatewayHost),
+      castor::dlf::Param("gatewayPort", gatewayPort)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_NOTIFIED_GATEWAY_END_OF_FAILED_SESSION, params);
   }
 }

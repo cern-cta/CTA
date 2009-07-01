@@ -167,16 +167,29 @@ public:
     uint32_t checksum) throw(castor::exception::Exception);
 
   /**
-   * Notifies the tape gateway of the end of the entire session of
-   * recalls/migrations.
+   * Notifies the tape gateway of the end of the recall/migration session.
    *
    * @param cuuid The ccuid to be used for logging.
    * @param volReqId The volume request ID to be sent to the tape gateway.
    * @param gatewayHost The tape gateway host name.
    * @param gatewayPort The tape gateway port number.
    */
-  static void notifyGatewayEndOfSession(const Cuuid_t &cuuid, const uint32_t volReqId,
-    const char *gatewayHost, const unsigned short gatewayPort)
+  static void notifyGatewayEndOfSession(const Cuuid_t &cuuid,
+    const uint32_t volReqId, const char *gatewayHost,
+    const unsigned short gatewayPort) throw(castor::exception::Exception);
+
+  /**
+   * Notifies the tape gateway of the end of the recall/migration session.
+   *
+   * @param cuuid The ccuid to be used for logging.
+   * @param volReqId The volume request ID to be sent to the tape gateway.
+   * @param gatewayHost The tape gateway host name.
+   * @param gatewayPort The tape gateway port number.
+   * @param ex The exception which failed the session.
+   */
+  static void notifyGatewayEndOfFailedSession(const Cuuid_t &cuuid,
+    const uint32_t volReqId, const char *gatewayHost,
+    const unsigned short gatewayPort, castor::exception::Exception &e)
     throw(castor::exception::Exception);
 
 

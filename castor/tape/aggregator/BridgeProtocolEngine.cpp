@@ -210,15 +210,6 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSockets()
       }
     } // switch(selectRc)
   } // while(continueRtcopySession)
-
-  // Log the end of the RTCOPY session and notify the tape gateway
-  castor::dlf::Param params[] = {
-    castor::dlf::Param("volReqId", m_volReqId)};
-  castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-    AGGREGATOR_FINISHED_RTCOPY_SESSION, params);
-
-  GatewayTxRx::notifyGatewayEndOfSession(m_cuuid, m_volReqId, m_gatewayHost,
-    m_gatewayPort);
 }
 
 
@@ -429,13 +420,22 @@ void castor::tape::aggregator::BridgeProtocolEngine::run()
 
   try {
     processRtcpdSockets();
+
+    try {
+      GatewayTxRx::notifyGatewayEndOfSession(m_cuuid, m_volReqId, m_gatewayHost,
+        m_gatewayPort);
+    } catch(castor::exception::Exception &ex) {
+      // Don't rethrow, just log the exception
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", m_volReqId           ),
+        castor::dlf::Param("Message" , ex.getMessage().str()),
+        castor::dlf::Param("Code"    , ex.code()            )};
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_FAILED_TO_NOTIFY_GATEWAY_END_OF_SESSION, params);
+    }
   } catch(castor::exception::Exception &ex) {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", m_volReqId           ),
-      castor::dlf::Param("Message" , ex.getMessage().str()),
-      castor::dlf::Param("Code"    , ex.code()            )};
-    CASTOR_DLF_WRITEPC(m_cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_FAILED_TO_PROCESS_RTCPD_SOCKETS, params);
+    GatewayTxRx::notifyGatewayEndOfFailedSession(m_cuuid, m_volReqId,
+      m_gatewayHost, m_gatewayPort, ex);
   }
 }
 
