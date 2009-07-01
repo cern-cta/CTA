@@ -385,7 +385,7 @@ void castor::tape::utils::readFileIntoList(const char *filename,
 
   std::ifstream file(filename);
 
-  if(!filename) {
+  if(!file) {
     castor::exception::Exception ex(ECANCELED);
 
     ex.getMessage() << "Failed to open file: Filename=\"" << filename << "\"";
