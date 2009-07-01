@@ -76,6 +76,7 @@ TPCPBIN_SRCS = \
   Dumper.cpp \
   Migrator.cpp \
   Recaller.cpp \
+  StreamHelper.cpp \
   StreamOperators.cpp \
   TapeFseqRangeListSequence.cpp \
   TapeFseqRangeSequence.cpp \

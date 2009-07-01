@@ -224,8 +224,7 @@ std::ostream &operator<<(std::ostream &os,
 // ostream << operator for tapegateway::FileRecalledNotification object 
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os,
-  const castor::tape::tapegateway::FileRecalledNotification &value)
-  {
+  const castor::tape::tapegateway::FileRecalledNotification &value) {
 
   os << "{"
      << (castor::tape::tapegateway::BaseFileInfo&)value
@@ -236,20 +235,30 @@ std::ostream &operator<<(std::ostream &os,
 }
 
 
+//------------------------------------------------------------------------------
+// ostream << operator for tapegateway::EndNotification object
+//------------------------------------------------------------------------------
+std::ostream &operator<<(std::ostream &os,
+  const castor::tape::tapegateway::EndNotification &value) {
+
+  os << "{"
+        "transactionId=" << value.transactionId()<< "}";
+
+  return os;
+}
 
 
 //------------------------------------------------------------------------------
-// ostream << operator for tapegateway::FileRecalledNotification object 
+// ostream << operator for tapegateway::EndNotificationErrorReport object 
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os,
   const castor::tape::tapegateway::EndNotificationErrorReport &value)
   {
 
   os << "{"
-        "errorCode="     << value.errorCode()    <<   "," 
         "transactionId=" << value.transactionId()<<   "," 
-        "errorMessage=\""<< value.errorMessage() << "\"," 
-        "id="            << value.id()           <<   "}";
+        "errorCode="     << value.errorCode()    <<   "," 
+        "errorMessage=\""<< value.errorMessage() << "\"}";
 
   return os;
 }

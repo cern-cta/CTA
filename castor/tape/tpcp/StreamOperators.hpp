@@ -25,6 +25,7 @@
 #ifndef CASTOR_TAPE_TPCP_STREAMOPERATORS_HPP
 #define CASTOR_TAPE_TPCP_STREAMOPERATORS_HPP 1
 
+#include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/FileRecalledNotification.hpp"
 #include "castor/tape/tapegateway/FileToRecall.hpp"
@@ -98,6 +99,11 @@ std::ostream &operator<<(std::ostream &os,
 std::ostream &operator<<(std::ostream &os,
   const castor::tape::tapegateway::FileRecalledNotification &value);
 
+/**
+ * ostream << operator for tapegateway::EndNotification object
+ */
+std::ostream &operator<<(std::ostream &os,
+  const castor::tape::tapegateway::EndNotification &value);
 
 /**
  * ostream << operator for tapegateway::EndNotificationErrorReport object 

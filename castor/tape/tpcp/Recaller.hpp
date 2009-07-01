@@ -132,6 +132,15 @@ private:
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
+   * EndNotificationErrorReport message handler.
+   *
+   * The parameters of this method are documentated in the comments of the
+   * Recaller::MsgHandler datatype.
+   */
+  bool handleEndNotificationErrorReport(castor::IObject *msg,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+
+  /**
    * The possible results of a set of recall session.
    */
   enum Result {
