@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.684 $ $Date: 2009/06/15 12:47:22 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.685 $ $Date: 2009/07/01 12:09:30 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -159,7 +159,7 @@ BEGIN
   UPDATE /*+ INDEX (CastorFile) */ CastorFile
      SET lastKnownFileName = TO_CHAR(id)
    WHERE id IN (
-    SELECT /*+ INDEX (cfOld) */ cfOld.id 
+    SELECT /*+ INDEX (cfOld I_CastorFile_lastKnownFileName) */ cfOld.id 
       FROM CastorFile cfOld, CastorFile cfNew, SubRequest
      WHERE cfOld.lastKnownFileName = cfNew.lastKnownFileName
        AND cfOld.fileid <> cfNew.fileid
