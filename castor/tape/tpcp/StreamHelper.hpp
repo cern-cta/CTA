@@ -30,6 +30,8 @@
 #include "castor/tape/tapegateway/FileRecalledNotification.hpp"
 #include "castor/tape/tapegateway/FileToRecall.hpp"
 #include "castor/tape/tapegateway/FileToRecallRequest.hpp"
+#include "castor/tape/tapegateway/NoMoreFiles.hpp"
+#include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 
 #include <ostream>
 
@@ -63,7 +65,7 @@ public:
    * @param The output stream to be written to.
    * @param The value of which the textual representation is to be written.
    */
-  void write(std::ostream &os,
+  static void write(std::ostream &os,
     const castor::tape::tapegateway::BaseFileInfo &value) throw();
 
   /**
@@ -73,7 +75,7 @@ public:
    * @param The output stream to be written to.
    * @param The value of which the textual representation is to be written.
    */
-  void write(std::ostream &os,
+  static void write(std::ostream &os,
     const castor::tape::tapegateway::FileToRecall &value) throw();
 
   /**
@@ -83,7 +85,17 @@ public:
    * @param The output stream to be written to.
    * @param The value of which the textual representation is to be written.
    */
-  void write(std::ostream &os,
+  static void write(std::ostream &os,
+    const castor::tape::tapegateway::NoMoreFiles &value) throw();
+
+  /**
+   * Writes a textual representation of the specified value to the specified
+   * stream.
+   *
+   * @param The output stream to be written to.
+   * @param The value of which the textual representation is to be written.
+   */
+  static void write(std::ostream &os,
     const castor::tape::tapegateway::FileToRecallRequest &value) throw();
 
   /**
@@ -93,7 +105,7 @@ public:
    * @param The output stream to be written to.
    * @param The value of which the textual representation is to be written.
    */
-  void write(std::ostream &os,
+  static void write(std::ostream &os,
     const castor::tape::tapegateway::FileRecalledNotification &value) throw();
 
   /**
@@ -103,7 +115,17 @@ public:
    * @param The output stream to be written to.
    * @param The value of which the textual representation is to be written.
    */
-  void write(std::ostream &os,
+  static void write(std::ostream &os,
+    const castor::tape::tapegateway::NotificationAcknowledge &value) throw();
+
+  /**
+   * Writes a textual representation of the specified value to the specified
+   * stream.
+   *
+   * @param The output stream to be written to.
+   * @param The value of which the textual representation is to be written.
+   */
+  static void write(std::ostream &os,
     const castor::tape::tapegateway::EndNotification &value) throw();
 
   /**
@@ -113,7 +135,7 @@ public:
    * @param The output stream to be written to.
    * @param The value of which the textual representation is to be written.
    */
-  void write(std::ostream &os,
+  static void write(std::ostream &os,
     const castor::tape::tapegateway::EndNotificationErrorReport &value) throw();
 
 }; // class StreamHelper

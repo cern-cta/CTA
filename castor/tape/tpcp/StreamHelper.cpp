@@ -70,6 +70,17 @@ void castor::tape::tpcp::StreamHelper::write(std::ostream &os,
 // write
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::StreamHelper::write(std::ostream &os,
+  const castor::tape::tapegateway::NoMoreFiles &value) throw() {
+
+  os << "{"
+        "transactionId=" << value.transactionId()<< "}";
+}
+
+
+//------------------------------------------------------------------------------
+// write
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::StreamHelper::write(std::ostream &os,
   const castor::tape::tapegateway::FileToRecallRequest &value) throw() {
 
   os << "{"
@@ -87,6 +98,17 @@ void castor::tape::tpcp::StreamHelper::write(std::ostream &os,
      << (castor::tape::tapegateway::BaseFileInfo&)value
      << "path=\""         << value.path()         << "\","
      << "checksumName=\"" << value.checksumName() << "\"}"; 
+}
+
+
+//------------------------------------------------------------------------------
+// write
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::StreamHelper::write(std::ostream &os,
+  const castor::tape::tapegateway::NotificationAcknowledge &value) throw() {
+
+  os << "{"
+        "transactionId=" << value.transactionId()<< "}";
 }
 
 

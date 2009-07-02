@@ -36,6 +36,7 @@
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/tpcp/Constants.hpp"
 #include "castor/tape/tpcp/Recaller.hpp"
+#include "castor/tape/tpcp/StreamHelper.hpp"
 #include "castor/tape/tpcp/StreamOperators.hpp"
 #include "castor/tape/utils/utils.hpp"
 
@@ -174,6 +175,18 @@ bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
       << " Expected=FileToRecallRequest");
   }
 
+  // If debug, then display the FileToRecallRequest message
+  if(m_debug) {
+    std::ostream &os = std::cout;
+
+    utils::writeBanner(os, "Recaller: Received FileToRecallRequest from "
+      "aggregator");
+    os << std::endl;
+    StreamHelper::write(os, *fileToRecallRequest);
+    os << std::endl;
+    os << std::endl;
+  }
+
   // Check the transaction ID
   if(fileToRecallRequest->transactionId() != m_volReqId) {
     castor::exception::Exception ex(EBADMSG);
@@ -214,9 +227,9 @@ bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
     if(m_debug) {
       std::ostream &os = std::cout;
 
-      utils::writeBanner(os, "Sent FileToRecall to aggregator");
+      utils::writeBanner(os, "Recaller:: Sent FileToRecall to aggregator");
       os << std::endl;
-      os << fileToRecall;
+      StreamHelper::write(os, fileToRecall);
       os << std::endl;
       os << std::endl;
     }
@@ -236,6 +249,8 @@ bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
       std::ostream &os = std::cout;
 
       utils::writeBanner(os, "Sent NoMoreFiles to aggregator");
+      os << std::endl;
+      StreamHelper::write(os, noMore);
       os << std::endl;
       os << std::endl;
     }
@@ -261,6 +276,18 @@ bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
       << " Expected=FileRecalledNotification");
   }
 
+  // If debug, then display the FileRecalledNotification message
+  if(m_debug) {
+    std::ostream &os = std::cout;
+
+    utils::writeBanner(os, "Recaller: Received FileRecalledNotification from "
+      "aggregator");
+    os << std::endl;
+    StreamHelper::write(os, *fileRecalledNotification);
+    os << std::endl;
+    os << std::endl;
+  }
+
   // Check the transaction ID
   if(fileRecalledNotification->transactionId() != m_volReqId) {
     castor::exception::Exception ex(EBADMSG);
@@ -284,7 +311,10 @@ bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
   if(m_debug) {
     std::ostream &os = std::cout;
 
-    utils::writeBanner(os, "Sent NotificationAcknowledge to aggregator");
+    utils::writeBanner(os, "Recaller: Sent NotificationAcknowledge to "
+      "aggregator");
+    os << std::endl;
+    StreamHelper::write(os, acknowledge);
     os << std::endl;
     os << std::endl;
   }
@@ -316,7 +346,7 @@ bool castor::tape::tpcp::Recaller::handleEndNotification(
     utils::writeBanner(os, "Recaller: Received EndNotification from aggregator"
       );
     os << std::endl;
-    os << *endNotification;
+    StreamHelper::write(os, *endNotification);
     os << std::endl;
   }
 
@@ -344,6 +374,8 @@ bool castor::tape::tpcp::Recaller::handleEndNotification(
     std::ostream &os = std::cout;
 
     utils::writeBanner(os, "Sent NotificationAcknowledge to aggregator");
+    os << std::endl;
+    StreamHelper::write(os, acknowledge);
     os << std::endl;
     os << std::endl;
   }
@@ -376,7 +408,8 @@ bool castor::tape::tpcp::Recaller::handleEndNotificationErrorReport(
     utils::writeBanner(os, "Recaller: Received EndNotificationErrorReport from "
       "aggregator");
     os << std::endl;
-    os << *endNotificationErrorReport;
+    StreamHelper::write(os, *endNotificationErrorReport);
+    os << std::endl;
     os << std::endl;
   }
 
@@ -404,6 +437,8 @@ bool castor::tape::tpcp::Recaller::handleEndNotificationErrorReport(
     std::ostream &os = std::cout;
 
     utils::writeBanner(os, "Sent NotificationAcknowledge to aggregator");
+    os << std::endl;
+    StreamHelper::write(os, acknowledge);
     os << std::endl;
     os << std::endl;
   }

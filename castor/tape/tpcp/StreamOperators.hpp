@@ -75,40 +75,4 @@ std::ostream &operator<<(std::ostream &os,
  */
 std::ostream &operator<<(std::ostream &os, const vmgr_tape_info &value);
 
-/**
- * ostream << operator for tapegateway::BaseFileInfo object
- */
-std::ostream &operator<<(std::ostream &os,
-  const castor::tape::tapegateway::BaseFileInfo &value);
-
-/**
- * ostream << operator for tapegateway::fileToRecall object
- */
-std::ostream &operator<<(std::ostream &os,
-  const castor::tape::tapegateway::FileToRecall &value);
-
-/**
- * ostream << operator for tapegateway::fileToRecallRequest object
- */
-std::ostream &operator<<(std::ostream &os,
-  const castor::tape::tapegateway::FileToRecallRequest &value);
-
-/**
- * ostream << operator for tapegateway::FileRecalledNotification object 
- */
-std::ostream &operator<<(std::ostream &os,
-  const castor::tape::tapegateway::FileRecalledNotification &value);
-
-/**
- * ostream << operator for tapegateway::EndNotification object
- */
-std::ostream &operator<<(std::ostream &os,
-  const castor::tape::tapegateway::EndNotification &value);
-
-/**
- * ostream << operator for tapegateway::EndNotificationErrorReport object 
- */
-std::ostream &operator<<(std::ostream &os,
-  const castor::tape::tapegateway::EndNotificationErrorReport &value);
-
 #endif // CASTOR_TAPE_TPCP_STREAMOPERATORS_HPP
