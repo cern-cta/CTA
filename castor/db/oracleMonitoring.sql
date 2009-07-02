@@ -1,5 +1,5 @@
 /*******************************************************************
- * @(#)$RCSfile: oracleMonitoring.sql,v $ $Revision: 1.6 $ $Date: 2009/07/01 07:55:46 $ $Author: itglp $
+ * @(#)$RCSfile: oracleMonitoring.sql,v $ $Revision: 1.7 $ $Date: 2009/07/02 13:47:09 $ $Author: waldron $
  * PL/SQL code for stager monitoring
  *
  * @author Castor Dev team, castor-dev@cern.ch
@@ -47,12 +47,12 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
     EXECUTE IMMEDIATE 'DELETE FROM MonDiskCopyStats';
     -- Populate the MonDiskCopyStats table
     INSERT INTO MonDiskCopyStats
-      (timestamp, interval, diskServer, mountPoint, dsStatus, fsStatus, available,
-       status, totalSize, nbFiles)
+      (timestamp, interval, diskServer, mountPoint, dsStatus, fsStatus,
+       available, status, totalFileSize, nbFiles)
       -- Gather data
-      SELECT sysdate timestamp, interval, a.name diskServer, a.mountPoint, a.dsStatus,
-             a.fsStatus, a.available, a.statusName status,
-             nvl(b.totalSize, 0) totalSize, nvl(b.nbFiles, 0) nbFiles
+      SELECT sysdate timestamp, interval, a.name diskServer, a.mountPoint,
+             a.dsStatus, a.fsStatus, a.available, a.statusName status,
+             nvl(b.totalFileSize, 0) totalFileSize, nvl(b.nbFiles, 0) nbFiles
         FROM (
           -- Produce a matrix of all possible diskservers, filesystems and
           -- diskcopy states.
@@ -77,7 +77,7 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
         -- extracted above.
         LEFT JOIN (
           SELECT DiskCopy.fileSystem, ObjStatus.statusName,
-                 sum(DiskCopy.diskCopySize) totalSize, count(*) nbFiles
+                 sum(DiskCopy.diskCopySize) totalFileSize, count(*) nbFiles
             FROM DiskCopy, ObjStatus
            WHERE DiskCopy.status = ObjStatus.statusCode
              AND ObjStatus.object = 'DiskCopy'
@@ -99,9 +99,10 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
     EXECUTE IMMEDIATE 'DELETE FROM MonWaitTapeMigrationStats';
     -- Populate the MonWaitTapeMigrationStats table
     INSERT INTO MonWaitTapeMigrationStats
-      (timestamp, interval, svcClass, status, minFileAge, maxFileAge, avgFileAge,
-       minFileSize, maxFileSize, avgFileSize, bin_LT_1, bin_1_To_6, bin_6_To_12,
-       bin_12_To_24, bin_24_To_48, bin_GT_48, totalSize, nbFiles)
+      (timestamp, interval, svcClass, status, minFileAge, maxFileAge,
+       avgFileAge, minFileSize, maxFileSize, avgFileSize, bin_LT_1, bin_1_To_6,
+       bin_6_To_12, bin_12_To_24, bin_24_To_48, bin_GT_48, totalFileSize,
+       nbFiles)
       -- Gather data
       SELECT sysdate timestamp, interval, b.svcClass, nvl(b.status, '-') status,
              -- File age statistics
@@ -126,7 +127,7 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
              sum(CASE WHEN nvl(a.waitTime, 0) > 172800
                       THEN 1 ELSE 0 END) BIN_GT_48,
              -- Summary values
-             nvl(sum(a.diskCopySize), 0) totalSize, nvl(sum(a.found), 0) nbFiles
+             nvl(sum(a.diskCopySize), 0) totalFileSize, nvl(sum(a.found), 0) nbFiles
         FROM (
           -- Determine the service class of all tapecopies and their associated
           -- status.
@@ -167,7 +168,7 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
     INSERT INTO MonWaitTapeRecallStats
       (timestamp, interval, svcClass, minFileAge, maxFileAge, avgFileAge,
        minFileSize, maxFileSize, avgFileSize, bin_LT_1, bin_1_To_6, bin_6_To_12,
-       bin_12_To_24, bin_24_To_48, bin_GT_48, totalSize, nbFiles)
+       bin_12_To_24, bin_24_To_48, bin_GT_48, totalFileSize, nbFiles)
       -- Gather data
       SELECT sysdate timestamp, interval, SvcClass.name svcClass,
              -- File age statistics
@@ -192,14 +193,14 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
              sum(CASE WHEN nvl(a.waitTime, 0) > 172800
                       THEN 1 ELSE 0 END) BIN_GT_48,
              -- Summary values
-             nvl(sum(a.fileSize), 0) totalSize, nvl(sum(a.found), 0) nbFiles
+             nvl(sum(a.fileSize), 0) totalFileSize, nvl(sum(a.found), 0) nbFiles
         FROM (
           -- Determine the list of ongoing a. We need to join with the
           -- SubRequest and Request tables here to work out the service class
           -- as the DiskCopy filesystem pointer is 0 until the file is
           -- successfully recalled.
           SELECT Request.svcClassName svcClass, CastorFile.fileSize,
-                 (getTime() - DiskCopy.creationTime) waitTime,1 found
+                 (getTime() - DiskCopy.creationTime) waitTime, 1 found
             FROM DiskCopy, SubRequest, CastorFile,
               (SELECT id, svcClassName FROM StageGetRequest UNION ALL
                SELECT id, svcClassName FROM StagePrepareToGetRequest UNION ALL
