@@ -42,12 +42,17 @@ BEGIN
   -- Stats table: LatencyStats
   -- Frequency: 5 minutes
   INSERT INTO LatencyStats
-    (timestamp, interval, type, protocol, started, minTime, maxTime, avgTime,
-     stddevTime, medianTime)
+    (timestamp, interval, requestType, protocol, started, minLatencyTime,
+     maxLatencyTime, avgLatencyTime, stddevLatencyTime, medianLatencyTime)
+    -- Gather data
     SELECT now - 5/1440 timestamp, interval,
-           nvl(type, 'StageDiskCopyReplicaRequest') type,  protocol,
-           count(*) started, min(waitTime) min, max(waitTime) max,
-           avg(waitTime) avg, stddev_pop(waitTime) stddev, median(waitTime) median
+           nvl(type, 'StageDiskCopyReplicaRequest') requestType, protocol,
+           (count(*) / interval) started,
+           min(waitTime)         minLatencyTime,
+           max(waitTime)         maxLatencyTime,
+           avg(waitTime)         avgLatencyTime,
+           stddev_pop(waitTime)  stddevLatencyTime,
+           median(waitTime)      medianLatencyTime
       FROM (
         SELECT waitTime,
                max(decode(params.name, 'Type',     params.value, NULL)) type,
@@ -62,11 +67,11 @@ BEGIN
                AND messages.severity = 8 -- System
                AND ((messages.facility = 26 AND messages.msg_no = 20)  -- Job started
                 OR  (messages.facility = 23 AND messages.msg_no = 25)) -- DiskCopyTransfer started
-               AND messages.timestamp >  sysdate - 10/1440
-               AND messages.timestamp <= sysdate - 5/1440
+               AND messages.timestamp >  now - 10/1440
+               AND messages.timestamp <= now - 5/1440
                AND params.name = 'TotalWaitTime'
-               AND params.timestamp >  sysdate - 10/1440
-               AND params.timestamp <= sysdate - 5/1440
+               AND params.timestamp >  now - 10/1440
+               AND params.timestamp <= now - 5/1440
           ) results
       -- For facility 23 (DiskCopyTransfer) we can assume that the request type
       -- associated with the transfer is 133 (StageDiskCopyReplicaRequest).
@@ -76,11 +81,10 @@ BEGIN
       LEFT JOIN &dlfschema..dlf_str_param_values params
         ON results.id = params.id
        AND params.name IN ('Type', 'Protocol')
-       AND params.timestamp >  sysdate - 10/1440
-       AND params.timestamp <= sysdate - 5/1440
+       AND params.timestamp >  now - 10/1440
+       AND params.timestamp <= now - 5/1440
      GROUP BY waitTime)
-     GROUP BY type, protocol
-     ORDER BY type, protocol;
+     GROUP BY type, protocol;
 END;
 /
 
@@ -95,44 +99,41 @@ BEGIN
   -- Stats table: QueueTimeStats
   -- Frequency: 5 minutes
   INSERT INTO QueueTimeStats
-    (timestamp, interval, type, svcClass, dispatched, minTime, maxTime, avgTime,
-     stddevTime, medianTime)
-    SELECT now - 5/1440 timestamp, interval, type, svcclass,
-           count(*) dispatched,
-           nvl(min(params.value), 0) min,
-           nvl(max(params.value), 0) max,
-           nvl(avg(params.value), 0) avg,
-           nvl(stddev_pop(params.value), 0) stddev,
-           nvl(median(params.value), 0) median
-         FROM (
-         -- Extract the type and service class for all jobs dispatched by LSF
-         SELECT messages.id,
-                max(decode(params.name, 'Type',     params.value, NULL)) type,
-                max(decode(params.name, 'SvcClass', params.value, NULL)) svcclass
-           FROM &dlfschema..dlf_messages messages,
-                &dlfschema..dlf_str_param_values params
-          WHERE messages.id = params.id
-            AND messages.severity = 8 -- System
-            AND messages.facility = 9 -- Scheduler
-            AND messages.msg_no = 34  -- Wrote notification file
-            AND messages.timestamp >  now - 10/1440
-            AND messages.timestamp <= now - 5/1440
-            AND params.name IN ('Type', 'SvcClass')
-            AND params.timestamp >  now - 10/1440
-            AND params.timestamp <= now - 5/1440
-          GROUP BY messages.id
-       ) results
-      -- Attach the QueueTime attribute to the results previously collected.
-      -- After this we will have a line for each started job detailing the
-      -- service class the job is destined for, the request type and the number
-      -- of seconds it spent queued.
-      INNER JOIN &dlfschema..dlf_num_param_values params
-         ON results.id = params.id
-        AND params.name = 'QueueTime'
-        AND params.timestamp >  now - 10/1440
-        AND params.timestamp <= now - 5/1440
-      GROUP BY type, svcclass
-      ORDER BY type, svcclass;
+    (timestamp, interval, requestType, svcClass, dispatched, minQueueTime,
+     maxQueueTime, avgQueueTime, stddevQueueTime, medianQueueTime)
+    -- Gather data
+    SELECT now - 5/1440 timestamp, interval, type, svcClass,
+           (count(*) / interval) dispatched,
+           min(queueTime)        minQueueTime,
+           max(queueTime)        maxQueueTime,
+           avg(queueTime)        avgQueueTime,
+           stddev_pop(queueTime) stddevQueueTime,
+           median(queueTime)     medianQueueTime
+      FROM (
+        -- Extract the type, service class and queue time for all jobs
+        -- dispatched by LSF
+        SELECT messages.id,
+               max(decode(str.name, 'Type',      str.value, NULL)) type,
+               max(decode(str.name, 'SvcClass',  str.value, NULL)) svcClass,
+               max(decode(num.name, 'QueueTime', num.value, NULL)) queueTime
+          FROM &dlfschema..dlf_messages messages,
+               &dlfschema..dlf_str_param_values str,
+               &dlfschema..dlf_num_param_values num
+         WHERE messages.id = str.id
+           AND messages.id = num.id
+           AND messages.severity = 8 -- System
+           AND messages.facility = 9 -- Scheduler
+           AND messages.msg_no = 34  -- Wrote notification file
+           AND messages.timestamp >  now - 10/1440
+           AND messages.timestamp <= now - 5/1440
+           AND str.name IN ('Type', 'SvcClass')
+           AND str.timestamp >  now - 10/1440
+           AND str.timestamp <= now - 5/1440
+           AND num.name = 'QueueTime'
+           AND num.timestamp >  now - 10/1440
+           AND num.timestamp <= now - 5/1440
+         GROUP BY messages.id)
+     GROUP BY type, svcClass;
 END;
 /
 
@@ -148,30 +149,31 @@ BEGIN
   -- Stats table: GarbageCollectionStats
   -- Frequency: 5 minutes
   INSERT INTO GarbageCollectionStats
-    (timestamp, interval, diskServer, type, deleted, totalSize, minFileAge,
-     maxFileAge, avgFileAge, stddevFileAge, medianFileAge, minFileSize,
-     maxFileSize, avgFileSize, stddevFileSize, medianFileSize)
+    (timestamp, interval, diskServer, requestType, deleted, totalFileSize,
+     minFileAge, maxFileAge, avgFileAge, stddevFileAge, medianFileAge,
+     minFileSize, maxFileSize, avgFileSize, stddevFileSize, medianFileSize)
+    -- Gather data
     SELECT now - 5/1440 timestamp, interval, diskserver, type,
-           count(*) deleted,
-           sum(fileSize) totalSize,
+           (count(*) / interval) deleted,
+           sum(fileSize)        totalFileSize,
            -- File age statistics
-           min(fileAge) minFileAge,
-           max(fileAge) maxFileAge,
-           avg(fileAge) avgFileAge,
-           stddev_pop(fileAge) stddevFileAge,
-           median(fileAge) medianFileAge,
+           min(fileAge)         minFileAge,
+           max(fileAge)         maxFileAge,
+           avg(fileAge)         avgFileAge,
+           stddev_pop(fileAge)  stddevFileAge,
+           median(fileAge)      medianFileAge,
            -- File size statistics
-           min(fileSize) minFileSize,
-           max(fileSize) maxFileSize,
-           avg(fileSize) avgFileSize,
+           min(fileSize)        minFileSize,
+           max(fileSize)        maxFileSize,
+           avg(fileSize)        avgFileSize,
            stddev_pop(fileSize) stddevFileSize,
-           median(fileSize) medianFileSize
+           median(fileSize)     medianFileSize
       FROM (
         SELECT hostname diskserver, results.fileAge, results.fileSize,
                replace(params.value, ' ', '_') type
           FROM (
-            -- Extract the file age, size and service class of all files successfully
-            -- removed across all diskservers
+            -- Extract the file age, size and service class of all files
+            -- successfully removed across all diskservers
             SELECT messages.id, messages.hostid,
                    max(decode(params.name, 'FileAge',  params.value, NULL)) fileAge,
                    max(decode(params.name, 'FileSize', params.value, NULL)) fileSize
@@ -197,8 +199,7 @@ BEGIN
         -- Resolve the hostid to names
         INNER JOIN &dlfschema..dlf_host_map hosts
            ON results.hostid = hosts.hostid)
-    GROUP BY diskserver, type
-    ORDER BY diskserver, type;
+    GROUP BY diskserver, type;
 END;
 /
 
@@ -206,69 +207,50 @@ END;
 /* PL/SQL method implementing statsRequest
  *
  * Provides statistical information on the types of requests recorded by the
- * request handler, the total for all users and a break down of the top 10 users
- * per request type
+ * request handler, the total for all users and a break down of the top 10
+ * users per request type
  */
 CREATE OR REPLACE PROCEDURE statsRequest (now IN DATE, interval IN NUMBER) AS
 BEGIN
   -- Stats table: RequestStats
   -- Frequency: 5 minutes
   INSERT INTO RequestStats
-    (timestamp, interval, type, hostname, euid, requests)
-    SELECT now - 5/1440 timestamp, interval, type, hostname, euid, requests FROM (
-      -- For each request type display the top 5 users + the total number of
-      -- requests
-      SELECT type, euid, hostname, requests,
-             RANK() OVER (PARTITION BY type ORDER BY requests DESC, euid ASC) rank
-        FROM(
-          SELECT params.value type, hosts.hostname, '-' euid, count(*) requests
-            FROM &dlfschema..dlf_messages messages,
-                 &dlfschema..dlf_str_param_values params,
-                 &dlfschema..dlf_host_map hosts
-           WHERE messages.id = params.id
-             AND messages.severity = 10 -- Monitoring
-             AND messages.facility = 4  -- RequestHandler
-             AND messages.msg_no = 10   -- Reply sent to client
-             AND messages.timestamp >  now - 10/1440
-             AND messages.timestamp <= now - 5/1440
-             AND params.name = 'Type'
-             AND params.timestamp >  now - 10/1440
-             AND params.timestamp <= now - 5/1440
-             AND messages.hostid = hosts.hostid
-           GROUP BY params.value, hosts.hostname
-          -- Join the user and summary/aggregate level breakdowns together.
-          -- Note: this could probably be done using an analytical function or
-          -- grouping set!!!
-           UNION
-          -- Determine the number of requests made for each request type and
-          -- per user over the last sampling period. This gives us a user level
-          -- breakdown.
-          SELECT results.value type, hostname, TO_CHAR(params.value) euid, count(*) requests
-            FROM (
-              SELECT params.id, params.value, hosts.hostname
-                FROM &dlfschema..dlf_messages messages,
-                     &dlfschema..dlf_str_param_values params,
-                     &dlfschema..dlf_host_map hosts
-               WHERE messages.id = params.id
-                 AND messages.severity = 10 -- Monitoring
-                 AND messages.facility = 4  -- RequestHandler
-                 AND messages.msg_no = 10   -- Reply sent to client
-                 AND messages.timestamp >  now - 10/1440
-                 AND messages.timestamp <= now - 5/1440
-                 AND params.name = 'Type'
-                 AND params.timestamp >  now - 10/1440
-                 AND params.timestamp <= now - 5/1440
-                 AND messages.hostid = hosts.hostid
-            ) results
-          -- Determine the uid of the user associated with each request
-          INNER JOIN &dlfschema..dlf_num_param_values params
-             ON results.id = params.id
-            AND params.name = 'Euid'
-            AND params.timestamp >  now - 10/1440
-            AND params.timestamp <= now - 5/1440
-          GROUP BY results.value, hostname, params.value)
-      ) WHERE rank < 11
-     ORDER BY type, requests DESC;
+    (timestamp, interval, requestType, hostname, euid, requests)
+    -- Gather data
+    SELECT now - 5/1440 timestamp, interval, type, hostname, euid, requests
+      FROM (
+        -- For each request type display the top 10 users + the total number of
+        -- requests
+        SELECT type, hostname, euid, (requests / interval) requests,
+               RANK() OVER (PARTITION BY type
+                            ORDER BY requests DESC, euid ASC) rank
+          FROM (
+            -- Determine the number of requests made for each request type and
+            -- per user over the last sampling period. This gives us a user
+            -- level breakdown.
+            SELECT str.value type, hosts.hostname,
+                   nvl(to_char(num.value), '-') euid, count(*) requests
+              FROM &dlfschema..dlf_messages messages,
+                   &dlfschema..dlf_str_param_values str,
+                   &dlfschema..dlf_host_map hosts,
+                   &dlfschema..dlf_num_param_values num
+             WHERE messages.id = str.id
+               AND messages.id = num.id
+               AND messages.severity = 10 -- Monitoring
+               AND messages.facility = 4  -- RequestHandler
+               AND messages.msg_no = 10   -- Reply sent to client
+               AND messages.timestamp >  now - 10/1440
+               AND messages.timestamp <= now - 5/1440
+               AND str.name = 'Type'
+               AND str.timestamp >  now - 10/1440
+               AND str.timestamp <= now - 5/1440
+               AND num.name = 'Euid'
+               AND num.timestamp >  now - 10/1440
+               AND num.timestamp <= now - 5/1440
+               AND messages.hostid = hosts.hostid
+             GROUP BY GROUPING SETS (str.value, num.value),
+                                    (hosts.hostname, str.value))
+      ) WHERE rank < 12;
 END;
 /
 
@@ -296,36 +278,43 @@ BEGIN
 
   -- Record results
   INSERT INTO DiskCacheEfficiencyStats
-    (timestamp, interval, type, svcClass, wait, d2d, recall, staged, waitPerc,
-     d2dPerc, recallPerc, stagedPerc, total)
-    SELECT now - 5/1440 timestamp, interval, results.*,
+    (timestamp, interval, requestType, svcClass, wait, d2d, recall, staged,
+     waitPerc, d2dPerc, recallPerc, stagedPerc, total)
+    -- Gather data
+    SELECT now - 5/1440 timestamp, interval, results.type, results.svcClass,
+           (results.wait   / interval),
+           (results.d2d    / interval),
+           (results.recall / interval),
+           (results.staged / interval),
            -- Percentages
-           (results.Wait   / results.Total) * 100 WaitPerc,
-           (results.D2D    / results.Total) * 100 D2DPerc,
-           (results.Recall / results.Total) * 100 RecallPerc,
-           (results.Staged / results.Total) * 100 StagedPerc
-        FROM (
-        SELECT type, svcclass,
-               nvl(sum(decode(msg_no, 53, requests, 0)), 0) Wait,
-               nvl(sum(decode(msg_no, 56, requests, 0)), 0) D2D,
-               nvl(sum(decode(msg_no, 57, requests, 0)), 0) Recall,
-               nvl(sum(decode(msg_no, 60, requests, 0)), 0) Staged,
+           (results.wait   / results.total) * 100 waitPerc,
+           (results.d2d    / results.total) * 100 d2dPerc,
+           (results.recall / results.total) * 100 recallPerc,
+           (results.staged / results.total) * 100 stagedPerc,
+           (results.total) total
+      FROM (
+        SELECT type, svcClass,
+               nvl(sum(decode(msg_no, 53, requests, 0)), 0) wait,
+               nvl(sum(decode(msg_no, 56, requests, 0)), 0) d2d,
+               nvl(sum(decode(msg_no, 57, requests, 0)), 0) recall,
+               nvl(sum(decode(msg_no, 60, requests, 0)), 0) staged,
                nvl(sum(requests), 0) Total
           FROM (
-            SELECT type, svcclass, msg_no, count(*) requests FROM (
+            SELECT type, svcClass, msg_no, count(*) requests FROM (
               SELECT * FROM (
                 -- Get the first message issued for all subrequests of interest.
-                -- This will indicate to us whether the request was a hit or a miss
-                SELECT msg_no, type, svcclass,
+                -- This will indicate to us whether the request was a hit or a
+                --  miss
+                SELECT msg_no, type, svcClass,
                        RANK() OVER (PARTITION BY subreqid
                               ORDER BY timestamp ASC, timeusec ASC) rank
                   FROM (
-                    -- Extract all subrequests processed by the stager that resulted
-                    -- in read type access
+                    -- Extract all subrequests processed by the stager that
+                    -- resulted in read type access
                     SELECT messages.reqid, messages.subreqid, messages.timestamp,
                            messages.timeusec, messages.msg_no,
                            max(decode(params.name, 'Type',     params.value, NULL)) type,
-                           max(decode(params.name, 'SvcClass', params.value, 'default')) svcclass
+                           max(decode(params.name, 'SvcClass', params.value, 'default')) svcClass
                       FROM &dlfschema..dlf_messages messages,
                            &dlfschema..dlf_str_param_values params
                      WHERE messages.id = params.id
@@ -340,58 +329,91 @@ BEGIN
                      GROUP BY messages.reqid, messages.subreqid, messages.timestamp,
                               messages.timeusec, messages.msg_no
                   ) results
-                 -- Filter the subrequests so that we only process requests which
-                 -- entered the system through the request handler in the last
-                 -- sampling interval. This stops us from recounting subrequests
-                 -- that were restarted
+                 -- Filter the subrequests so that we only process requests
+                 -- which entered the system through the request handler in the
+                 -- last sampling interval. This stops us from recounting
+                 -- subrequests that were restarted
                  WHERE results.reqid IN
-                   (SELECT /*+ CARDINALITY(helper 1000) */ *
+                   (SELECT /*+ CARDINALITY(helper 10000) */ *
                       FROM CacheEfficiencyHelper helper))
-             ) WHERE rank = 1
-           GROUP BY type, svcclass, msg_no)
-         GROUP BY type, svcclass) results;
+              ) WHERE rank = 1
+             GROUP BY type, svcClass, msg_no)
+         GROUP BY type, svcClass) results;
 END;
 /
 
 
 /* PL/SQL method implementing statsMigratedFiles
  *
- * Provides statistical information on the number of files migrated to tape and
- * the total data volume transferred broken down by service class and tape pool.
+ * Provides statistical information on the number of files migrated to tape in
+ * the last sampling interval broken down by service class and tape pool.
  */
 CREATE OR REPLACE PROCEDURE statsMigratedFiles (now IN DATE, interval IN NUMBER) AS
 BEGIN
   -- Stats table: FilesMigratedStats
   -- Frequency: 5 minutes
   INSERT INTO FilesMigratedStats
-    (timestamp, interval, svcClass, tapePool, totalFiles, totalSize)
-    SELECT now - 5/1440 timestamp, interval, svcclass, nvl(tapepool, '-') tapepool,
-           count(*) files, sum(params.value) totalsize
+    (timestamp, interval, svcClass, tapePool, nbFiles, totalFileSize,
+     numBytesWriteAvg)
+    -- Gather data
+    SELECT now - 5/1440 timestamp, interval, svcClass,
+           nvl(tapepool, '-') tapepool, count(*) files, 
+           sum(fileSize) totalFileSize,
+           (sum(fileSize) / interval) numBytesWriteAvg
       FROM (
         -- Extract the messages to indicate when a file has been migrated
         SELECT messages.id,
-               max(decode(params.name, 'SVCCLASS', params.value, NULL)) svcclass,
-               max(decode(params.name, 'TAPEPOOL', params.value, NULL)) tapepool
+               max(decode(str.name, 'SVCCLASS', str.value, NULL)) svcClass,
+               max(decode(str.name, 'TAPEPOOL', str.value, NULL)) tapepool,
+               max(decode(num.name, 'FILESIZE', num.value, NULL)) fileSize
           FROM &dlfschema..dlf_messages messages,
-               &dlfschema..dlf_str_param_values params
-         WHERE messages.id = params.id
+               &dlfschema..dlf_str_param_values str,
+               &dlfschema..dlf_num_param_values num
+         WHERE messages.id = str.id
+           AND messages.id = num.id
            AND messages.severity = 8 -- System
            AND messages.facility = 1 -- migrator
            AND messages.msg_no = 55  -- File staged
            AND messages.timestamp >  now - 10/1440
            AND messages.timestamp <= now - 5/1440
-           AND params.name IN ('SVCCLASS', 'TAPEPOOL')
-           AND params.timestamp >  now - 10/1440
-           AND params.timestamp <= now - 5/1440
-         GROUP BY messages.id
-      ) results
-      -- Attach the filesize to the previously collected information
-     INNER JOIN &dlfschema..dlf_num_param_values params
-        ON results.id = params.id
-       AND params.name = 'FILESIZE'
-       AND params.timestamp >  now - 10/1440
-       AND params.timestamp <= now - 5/1440
-     GROUP BY GROUPING SETS (svcclass, tapepool), (svcclass);
+           AND str.name IN ('SVCCLASS', 'TAPEPOOL')
+           AND str.timestamp >  now - 10/1440
+           AND str.timestamp <= now - 5/1440
+           AND num.name = 'FILESIZE'
+           AND num.timestamp >  now - 10/1440
+           AND num.timestamp <= now - 5/1440
+         GROUP BY messages.id)
+     GROUP BY GROUPING SETS (svcClass, tapepool), (svcClass);
+END;
+/
+
+
+/* PL/SQL method implementing statsRecalledFiles
+ *
+ * Provides statistical information on the number of files recalled from tape in
+ * the last sampling interval.
+ */
+CREATE OR REPLACE PROCEDURE statsRecalledFiles (now IN DATE, interval IN NUMBER) AS
+BEGIN
+  -- Stats table: FilesRecalledStats
+  -- Frequency: 5 minutes
+  INSERT INTO FilesRecalledStats
+    (timestamp, interval, nbFiles, totalFileSize, numBytesReadAvg)
+    -- Gather data
+    SELECT now - 5/1440 timestamp, interval, count(*) files,
+           nvl(sum(num.value), 0) totalFileSize,
+           nvl((sum(num.value) / interval), 0) numBytesReadAvg
+      FROM &dlfschema..dlf_messages messages,
+           &dlfschema..dlf_num_param_values num
+     WHERE messages.id = num.id
+       AND messages.severity = 8 -- System
+       AND messages.facility = 2 -- recaller
+       AND messages.msg_no = 55  -- File staged
+       AND messages.timestamp >  now - 10/1440
+       AND messages.timestamp <= now - 5/1440
+       AND num.name = 'FILESIZE'
+       AND num.timestamp >  now - 10/1440
+       AND num.timestamp <= now - 5/1440;
 END;
 /
 
@@ -406,11 +428,17 @@ BEGIN
   -- Stats table: ReplicationStats
   -- Frequency: 5 minutes
   INSERT INTO ReplicationStats
-    (timestamp, interval, sourceSvcClass, destSvcClass, transferred, totalSize,
-     minSize, maxSize, avgSize, stddevSize, medianSize)
-    SELECT now - 5/1440 timestamp, interval, src, dest, count(*) transferred,
-           sum(params.value) totalsize, min(params.value) min, max(params.value) max,
-           avg(params.value) avg, stddev_pop(params.value) stddev, median(params.value) median
+    (timestamp, interval, sourceSvcClass, destSvcClass, transferred, totalFileSize,
+     minFileSize, maxFileSize, avgFileSize, stddevFileSize, medianFileSize)
+    -- Gather data
+    SELECT now - 5/1440 timestamp, interval, src, dest, 
+           (count(*) / interval) transferred,
+           sum(params.value)        totalFileSize,
+           min(params.value)        minFileSize,
+           max(params.value)        maxFileSize,
+           avg(params.value)        avgFileSize,
+           stddev_pop(params.value) stddevFileSize,
+           median(params.value)     medianFileSize
       FROM (
         SELECT params.id,
                substr(params.value, 0, instr(params.value, '->', 1) - 2) src,
@@ -443,15 +471,8 @@ END;
 /* PL/SQL method implementing statsTapeRecalled
  *
  * Provides statistical information on who triggered a tape recall, how many
- * files were requested, the status of the tape as the request was processed and
- * the type of request that triggered the recall.
- *
- * Example output:
- *   Type                     Username Groupname TapeVID TapeStatus   Files MountsPerDay
- *   StagePrepareToGetRequest waldron  c3        I10488	 TAPE_PENDING 10    0
- *   StagePrepareToGetRequest waldron  c3        I10487	 TAPE_PENDING 8     0
- *   StagePrepareToGetRequest waldron  c3        I10486	 TAPE_PENDING 2     0
- *   StagePrepareToGetRequest waldron  c3        I06983	 TAPE_PENDING 854   0
+ * files were requested, the status of the tape as the request was processed
+ * and the type of request that triggered the recall.
  */
 CREATE OR REPLACE PROCEDURE statsTapeRecalled (now IN DATE, interval IN NUMBER) AS
 BEGIN
@@ -465,18 +486,18 @@ BEGIN
     SELECT messages.timestamp, messages.facility, messages.tapevid
       FROM &dlfschema..dlf_messages messages
      WHERE messages.severity = 8 -- System
-       AND ((messages.facility = 2 AND messages.msg_no = 13) OR --Recaller/Recaller started
-           (messages.facility = 1 AND messages.msg_no = 14))    --Migrator/Migrator started
+       AND ((messages.facility = 2 AND messages.msg_no = 13) OR  -- Recaller / Recaller started
+            (messages.facility = 1 AND messages.msg_no = 14))    -- Migrator / Migrator started
        AND messages.subreqid <> '00000000-0000-0000-0000-000000000000'
        AND messages.timestamp >  now - 10/1440
        AND messages.timestamp <= now - 5/1440;
 
   -- Record results
   INSERT INTO TapeRecalledStats
-    (timestamp, interval, type, username, groupname, tapeVID, tapeStatus, files,
-     totalSize, mountsPerDay)
+    (timestamp, interval, requestType, username, groupname, tapeVID, tapeStatus,
+     nbFiles, totalFileSize, mountsPerDay)
     SELECT now - 5/1440 timestamp, interval, type, username, groupname, results.tapevid,
-           tapestatus, count(*) files, sum(params.value) totalsize,
+           tapestatus, count(*) nbFiles, sum(params.value) totalFileSize,
            max(nvl(mounts.mounted, 0)) mounted
       FROM (
         -- Extract all requests from the stager which triggered a tape recall
@@ -512,7 +533,7 @@ BEGIN
        SELECT helper.tapevid, count(*) mounted
          FROM TapeMountsHelper helper
         WHERE helper.timestamp > (now - 1) - 5/1440
-	  AND helper.facility = 2
+          AND helper.facility = 2  -- Recaller
         GROUP BY helper.tapevid) mounts
        ON results.tapevid = mounts.tapevid
      GROUP BY type, username, groupname, results.tapevid, tapestatus;
@@ -523,71 +544,67 @@ END;
 /* PL/SQL method implementing statsProcessingTime
  *
  * Provides statistics on the processing time in seconds of requests in the
- * Stager and RequestHandler daemons
+ * Stager, RequestHandler and SRM daemons
  */
 CREATE OR REPLACE PROCEDURE statsProcessingTime (now IN DATE, interval IN NUMBER) AS
 BEGIN
   -- Stats table: ProcessingTimeStats
   -- Frequency: 5 minutes
   INSERT INTO ProcessingTimeStats
-    (timestamp, interval, daemon, svcclass, type, requests, minTime, maxTime, avgTime,
-     stddevTime, medianTime)
-    SELECT now - 5/1440 timestamp, interval, facility.fac_name daemon, results.SvcClass, params.value type,
-           count(*) requests,
-           min(results.value) min,
-           max(results.value) max,
-           avg(results.value) avg,
-           stddev_pop(results.value) stddev,
-           median(results.value) median
+    (timestamp, interval, daemon, requestType, svcClass, requests,
+     minProcessingTime, maxProcessingTime, avgProcessingTime,
+     stddevProcessingTime, medianProcessingTime)
+    -- Gather data
+    SELECT now - 5/1440 timestamp, interval, results.fac_name daemon,
+           type.value type, nvl(svcClass.value, 'all') svcClass,
+           (count(*) / interval) requests,
+           min(elapsed)        minProcessingTime,
+           max(elapsed)        maxProcessingTime,
+           avg(elapsed)        avgProcessingTime,
+           stddev_pop(elapsed) stddevProcessingTime,
+           median(elapsed)     medianProcessingTime
       FROM (
-        -- Extract all the processing time values for the Stager
-        SELECT messages.id, messages.facility, decode(str_params.value,NULL,'ALL',str_params.value) SvcClass, num_params.value
+        -- Extract all the processing times
+        SELECT messages.id, facilities.fac_name, params.value elapsed
           FROM &dlfschema..dlf_messages messages,
-               &dlfschema..dlf_num_param_values num_params,
-	       &dlfschema..dlf_str_param_values str_params
-         WHERE messages.id = num_params.id
-	   AND messages.id = str_params.id
-           AND messages.severity = 10 -- Monitoring
-           AND messages.facility = 22 -- Stager
-           AND messages.msg_no = 25   -- Request processed
+               &dlfschema..dlf_num_param_values params,
+               &dlfschema..dlf_facilities facilities
+         WHERE messages.id = params.id
            AND messages.timestamp >  now - 10/1440
            AND messages.timestamp <= now - 5/1440
-           AND num_params.name = 'ProcessingTime'
-           AND num_params.timestamp >  now - 10/1440
-           AND num_params.timestamp <= now - 5/1440
-	   AND str_params.name = 'SvcClass'
-	   AND str_params.timestamp >  now - 10/1440
-           AND str_params.timestamp <= now - 5/1440
-         UNION
-        -- Extract all the processing time values for the RequestHandler
-        SELECT messages.id, messages.facility, decode(str_params.value,NULL,'ALL',str_params.value) SvcClass, num_params.value
-          FROM &dlfschema..dlf_messages messages,
-               &dlfschema..dlf_num_param_values num_params,
-	       &dlfschema..dlf_str_param_values str_params
-         WHERE messages.id = num_params.id
-	   AND messages.id = str_params.id
-           AND messages.severity = 10 -- Monitoring
-           AND messages.facility = 4  -- RequestHandler
-           AND messages.msg_no = 10   -- Reply sent to client
-           AND messages.timestamp >  now - 10/1440
-           AND messages.timestamp <= now - 5/1440
-           AND num_params.name = 'ElapsedTime'
-           AND num_params.timestamp >  now - 10/1440
-           AND num_params.timestamp <= now - 5/1440
-	   AND str_params.name = 'SvcClass'
-           AND str_params.timestamp >  now - 10/1440
-           AND str_params.timestamp <= now - 5/1440
+           AND params.timestamp >    now - 10/1440
+           AND params.timestamp <=   now - 5/1440
+           -- Stager
+           AND ((messages.severity = 10 -- Monitoring
+           AND   messages.facility = 22 -- Stager
+           AND   messages.msg_no = 25   -- Request processed
+           AND   params.name = 'ProcessingTime')
+           -- RequestHandler
+            OR  (messages.severity = 10 -- Monitoring
+           AND   messages.facility = 4  -- RequestHandler
+           AND   messages.msg_no = 10   -- Reply sent to client
+           AND   params.name = 'ElapsedTime')
+           -- SRMDaemon
+            OR  (messages.facility = 14 -- SRMDaemon
+           AND   messages.msg_no = 9    -- Processing complete
+           AND   params.name = 'ElapsedTime'))
+           -- Resolve facility name
+           AND messages.facility = facilities.fac_no
       ) results
      -- Attach the request type
-     INNER JOIN &dlfschema..dlf_str_param_values params
-        ON results.id = params.id
-       AND params.name = 'Type'
-       AND params.timestamp >  now - 10/1440
-       AND params.timestamp <= now - 5/1440
-     -- Resolve the facility number to a name
-     INNER JOIN &dlfschema..dlf_facilities facility
-        ON results.facility = facility.fac_no
-     GROUP BY facility.fac_name, results.SvcClass, params.value;
+     INNER JOIN &dlfschema..dlf_str_param_values type
+        ON results.id = type.id
+       AND type.name = 'Type'
+       AND type.timestamp >  now - 10/1440
+       AND type.timestamp <= now - 5/1440
+     -- Attach the service class. Note: it would have been nive to convert the
+     -- previous statement to in IN clause but the execution plan is not good!
+     INNER JOIN &dlfschema..dlf_str_param_values svcClass
+        ON results.id = svcClass.id
+       AND svcClass.name = 'SvcClass'
+       AND svcClass.timestamp >  now - 10/1440
+       AND svcClass.timestamp <= now - 5/1440
+     GROUP BY results.fac_name, type.value, svcClass.value;
 END;
 /
 
@@ -603,7 +620,8 @@ BEGIN
   -- Frequency: 5 minutes
   INSERT INTO ClientVersionStats
     (timestamp, interval, clientVersion, requests)
-    SELECT now - 5/1440 timestamp, interval, clientVersion, count(*) requests
+    SELECT now - 5/1440 timestamp, interval, clientVersion, 
+           (count(*) / interval) requests
       FROM (
         SELECT nvl(params.value, 'Unknown') clientVersion
           FROM &dlfschema..dlf_messages messages,
@@ -618,6 +636,50 @@ BEGIN
            AND params.timestamp >  now - 10/1440
            AND params.timestamp <= now - 5/1440)
      GROUP BY clientVersion;
+END;
+/
+
+/* PL/SQL method implementing statsTapeMounts
+ *
+ * Provides statistics on tape mounts for recalls and migrations
+ */
+CREATE OR REPLACE PROCEDURE statsTapeMounts (now IN DATE, interval IN NUMBER) AS
+BEGIN
+  -- Stats table: TapeMountStas
+  -- Frequency: 5 minutes
+  INSERT INTO TapeMountStats
+    (timestamp, interval, direction, nbMounts, nbFiles, totalFileSize,
+     avgRunTime, nbFilesPerMount, failures)
+    SELECT now - 5/1440 timestamp, interval,
+           decode(facility, 1, 'WRITE', 'READ') direction,
+           count(*) nbMounts, 
+           sum(nbFiles) nbFiles,
+           sum(totalFileSize) totalFileSize,
+           avg(runTime) avgRunTime,
+           (sum(nbFiles) / count(*)) nbFilesPerMount,
+           sum(failure) failures
+      FROM (
+        SELECT messages.id, messages.facility,
+               max(decode(params.name, 'FILESCP', params.value, NULL)) nbFiles,
+               max(decode(params.name, 'BYTESCP', params.value, NULL)) totalFileSize,
+               max(decode(params.name, 'RUNTIME', params.value, NULL)) runTime,
+               max(decode(params.name, 'serrno', 
+                 decode(params.value, 0, 0, 1), 0)) failure
+          FROM &dlfschema..dlf_messages messages,
+               &dlfschema..dlf_num_param_values params
+         WHERE messages.id = params.id
+           AND messages.severity = 8
+           AND ((messages.facility = 1     -- migrator 
+           AND   messages.msg_no   = 21)   -- migrator ended   
+            OR  (messages.facility = 2     -- recaller
+           AND   messages.msg_no   = 20))  -- recaller ended
+           AND messages.timestamp >  sysdate - 10/1440
+           AND messages.timestamp <= sysdate - 5/1440
+           AND params.name IN ('FILESCP', 'BYTESCP', 'RUNTIME', 'serrno')
+           AND params.timestamp >  now - 10/1440
+           AND params.timestamp <= now - 5/1440
+         GROUP BY messages.id, messages.facility)
+      GROUP BY facility;
 END;
 /
 
@@ -860,118 +922,6 @@ END;
 /
 
 
-/* PL/SQL method implementing statsTape */
-CREATE OR REPLACE PROCEDURE statsTape (now IN DATE, interval IN NUMBER) AS
-BEGIN
-  INSERT INTO TapeStat
-  (timestamp, interval, facility, files, gigaBytes, "avgFileSize(MB)", "rate(MB/sec)", runtime, filespermount, tapeVolumes)
-    SELECT now - 5/1440 timestamp, interval, facility, 
-           nvl(sum(filescp),0) files, 
-           nvl(round(sum(bytes/1073741824),1),0) gigaBytes, 
-           nvl(round(avg((bytes/1048576)/filescp),2),0) filesize, 
-           nvl(round(avg((bytes/1048576)/runtime),2),0) rate, 
-           nvl(round(avg(runtime),2),0) runtime, 
-           nvl(round(avg(filescp),2),0) filesmount, 
-           nvl(count(distinct tapevid),0) tapeVolumes 
-    FROM (
-       SELECT /*+ index(mes I_Messages_Facility) index(num I_Num_Param_Values_id) */
-              mes.timestamp, mes.reqid, mes.tapevid, mes.facility,
-              max(decode(num.name,'FILESCP',num.value,NULL)) filescp,
-              max(decode(num.name,'RUNTIME',num.value,NULL)) runtime,
-              max(decode(num.name,'BYTESCP',num.value,NULL)) bytes
-       FROM &dlfschema..dlf_messages mes, &dlfschema..dlf_num_param_values num
-       WHERE mes.id = num.id
-         AND ((mes.facility = 2 AND mes.msg_no = 20)      --Recaller / Recaller Ended 
-               OR (mes.facility = 1 AND mes.msg_no = 21)) --Migrator / Migrator Ended
-         AND num.name in ('FILESCP','BYTESCP','RUNTIME')
-         AND mes.timestamp > now - 10/1440
-         AND mes.timestamp <= now - 5/1440
-         AND num.timestamp > now - 10/1440
-         AND num.timestamp <= now - 5/1440
-         GROUP BY mes.timestamp, mes.reqid, mes.tapevid, mes.facility)
-    WHERE filescp <> 0
-      AND runtime <> 0
-    GROUP BY facility;
-END;
-/
-
-/* PL/SQL method implementing statSRMProcessing */
-CREATE OR REPLACE PROCEDURE statSRMProcessing (now IN DATE, interval IN NUMBER) AS
-BEGIN
-    INSERT INTO ProcessingTimeStats
-    (timestamp, interval, daemon, svcclass, type, requests, minTime, maxTime, avgTime,
-     stddevTime, medianTime)
-      SELECT now - 5/1440 timestamp, interval, facility.fac_name, svcclass, type, nvl(count(*),0) requests, 
-	           nvl(min(elapsedTime),0) mintime, 
-	           nvl(max(elapsedTime),0) maxtime, 
-	           nvl(round(avg(elapsedTime),3),0) avgtime, 
-             nvl(round(stddev(elapsedTime),3),0) stddevtime, 
-	           nvl(round(median(elapsedTime),3),0) mediantime 
-      FROM (
-        SELECT /*+ index(mes I_Messages_Facility) index(str I_Str_Param_Values_id) index(num I_Num_Param_Values_id) */
-	             mes.id, mes.facility,
-               max(decode(str.name,'Type',str.value)) type,
-               max(decode(str.name,'SvcClass',str.value)) svcclass,
-               max(decode(num.name,'ElapsedTime',num.value)) elapsedTime
-        FROM &dlfschema..dlf_messages mes, &dlfschema..dlf_str_param_values str, &dlfschema..dlf_num_param_values num
-        WHERE mes.id = str.id
-          AND mes.id = num.id 
-          AND str.name in ('Type','SvcClass')
-          AND num.name = 'ElapsedTime'
-          AND mes.facility = 14 --SRMDaemon
-          AND mes.msg_no = 9    --Processing complete
-          AND mes.timestamp > now - 10/1440
-          AND mes.timestamp <= now - 5/1440
-          AND str.timestamp > now - 10/1440
-          AND str.timestamp <= now - 5/1440
-          AND num.timestamp > now - 10/1440
-          AND num.timestamp <= now - 5/1440
-        GROUP BY mes.id, mes.facility ) results
-        INNER JOIN castor_dlf.dlf_facilities facility
-        ON results.facility = facility.fac_no 
-      GROUP BY type, svcclass, facility.fac_name;
-END;
-/
-
-/* PL/SQL method implementing statsSRMRequests */
-CREATE OR REPLACE PROCEDURE statsSRMRequests (now IN DATE, interval IN NUMBER) AS
-BEGIN
-  INSERT INTO RequestStats
-  (timestamp, interval, type, hostname, euid, requests)
-    SELECT now - 5/1440 timestamp, interval, type, client, DN, requests FROM (
-      SELECT /*+ index(mes I_Messages_Facility) index(str I_Str_Param_Values_id) */
-            str.value type, '-' client, '-' DN, count(*) requests
-      FROM &dlfschema..dlf_messages mes, &dlfschema..dlf_str_param_values str
-      WHERE mes.id = str.id 
-        AND str.name = 'Request'
-        AND mes.facility = 13 -- SRM Server
-        AND mes.msg_no = 1    -- New Request Arrival
-        AND mes.timestamp > now - 10/1440
-        AND mes.timestamp <= now - 5/1440
-        AND str.timestamp > now - 10/1440
-        AND str.timestamp <= now - 5/1440
-      GROUP BY str.value
-      UNION
-      SELECT type, client, DN, count(*) requests FROM (
-        SELECT /*+ index(mes I_Messages_Facility) index(str I_Str_Param_Values_id) */
-	       mes.id,
-               max(decode(str.name,'Request',str.value)) type,
-               max(decode(str.name,'Client',str.value)) client,
-               max(decode(str.name,'DN',str.value)) DN
-        FROM &dlfschema..dlf_messages mes, &dlfschema..dlf_str_param_values str
-        WHERE mes.id = str.id
-          AND str.name in ('Request','DN','Client')
-          AND mes.facility = 13  --SRM Server
-          AND mes.msg_no = 1     --New Request Arrival
-          AND mes.timestamp > now - 10/1440
-          AND mes.timestamp <= now - 5/1440
-          AND str.timestamp > now - 10/1440
-          AND str.timestamp <= now - 5/1440
-        GROUP BY mes.id)
-      GROUP BY type, Client, DN);
-END;
-/
-
 /***** COMMON CODE *****/
 
 /* PL/SQL method implementing createPartition */
@@ -1185,13 +1135,12 @@ BEGIN
                             statsRequest(now, interval);
                             statsDiskCacheEfficiency(now, interval);
                             statsMigratedFiles(now, interval);
+                            statsRecalledFiles(now, interval);
                             statsReplication(now, interval);
                             statsTapeRecalled(now, interval);
                             statsProcessingTime(now, interval);
                             statsClientVersion(now, interval);
-			    statsTape(now, interval);
-			    statSRMProcessing(now, interval);
-			    statsSRMRequests(now, interval);
+                            statsTapeMounts(now, interval);
                           END;',
       JOB_CLASS       => 'DLF_JOB_CLASS',
       START_DATE      => SYSDATE,
