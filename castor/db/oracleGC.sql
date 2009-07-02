@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.690 $ $Date: 2009/06/22 12:56:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.691 $ $Date: 2009/07/02 12:05:00 $ $Author: waldron $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -341,6 +341,7 @@ BEGIN
            CASE WHEN DiskCopy.gcType = 0 THEN 'Automatic'
                 WHEN DiskCopy.gcType = 1 THEN 'User Requested'
                 WHEN DiskCopy.gcType = 2 THEN 'Too many replicas'
+                WHEN DiskCopy.gcType = 3 THEN 'Draining filesystem'
                 ELSE 'Unknown' END,
            getSvcClassList(FileSystem.id)
       FROM CastorFile, DiskCopy, FileSystem, DiskServer
