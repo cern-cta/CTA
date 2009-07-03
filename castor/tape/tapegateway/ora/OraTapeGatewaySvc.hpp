@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2009/06/25 08:08:31 $ $Author: gtaur $
+ * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2009/07/03 13:19:36 $ $Author: gtaur $
  *
  * Implementation of the ITapeGatewaySvc for Oracle
  *
@@ -84,103 +84,101 @@ namespace castor {
 
       public:
 
+
+
+
 	/**
-	 * Get all the pending streams to associate a tape of the right 
-	 * tapepool.
+	 * Get all the pending streams 
 	 */
 
-	virtual std::vector<castor::stager::Stream*> getStreamsToResolve()throw (castor::exception::Exception);
+	virtual std::vector<castor::stager::Stream*> getStreamsWithoutTapes()throw (castor::exception::Exception);
 
         /**
-         * Create the link between tape-stream.
+         * Associate to each Stream a Tape
          */
 
-        virtual void resolveStreams(std::vector<u_signed64> strIds, std::vector<std::string> vids, std::vector<int> fseqs)
+        virtual void attachTapesToStreams(std::vector<u_signed64> strIds, std::vector<std::string> vids, std::vector<int> fseqs)
           throw (castor::exception::Exception);
 
         /*
          * Get all the tapes for which we have to send a request to VDQM.     
          */
 
-        virtual std::vector<castor::tape::tapegateway::TapeRequestState*> getTapesToSubmit()
-          throw (castor::exception::Exception);	
+        virtual std::vector<castor::tape::tapegateway::TapeRequestState*> getTapesWithoutDriveReqs()
+          throw (castor::exception::Exception);
 
 	/*
          * Update the request that we sent  to VDQM.     
          */
 
-	virtual void  updateSubmittedTapes(std::vector<castor::tape::tapegateway::TapeRequestState*> tapeRequests);
+	virtual void  attachDriveReqsToTapes(std::vector<castor::tape::tapegateway::TapeRequestState*> tapeRequests )throw (castor::exception::Exception);
 
         /**
          * Get all the tapes for which we have to check that VDQM didn't lost 
 	 * our request
          */
 
-        virtual std::vector<castor::tape::tapegateway::TapeRequestState*> getTapesToCheck(u_signed64 timeOut) 
+        virtual std::vector<castor::tape::tapegateway::TapeRequestState*> getTapesWithDriveReqs(u_signed64 timeOut) 
           throw (castor::exception::Exception);
 
-
         /**
-         * Update all the tapes we checked in VDQM
+         * Restart the request lost by VDQM or left around
          */
 
-        virtual void  updateCheckedTapes( std::vector<castor::tape::tapegateway::TapeRequestState*> tapes) 
-          throw (castor::exception::Exception);
-	
-
+	virtual void restartLostReqs( std::vector<castor::tape::tapegateway::TapeRequestState*> tapes) 
+	  throw (castor::exception::Exception);
 
         /**
-         * Get the best file to migrate at a certain point
+         * Get the best file to migrate
          */
 
-	virtual castor::tape::tapegateway::FileToMigrate* fileToMigrate(castor::tape::tapegateway::FileToMigrateRequest& req)
+        virtual castor::tape::tapegateway::FileToMigrate* getFileToMigrate(castor::tape::tapegateway::FileToMigrateRequest& req)
           throw (castor::exception::Exception);
 
         /*
-         * Update the db for a file which is migrated successfully or not
-	 * calling fileMigrated or fileFailedToMigrate
+         * Update the db for a file which is migrated successfully 
          */
 
-        virtual void  fileMigrationUpdate (castor::tape::tapegateway::FileMigratedNotification& resp)
+        virtual  void  setFileMigrated(castor::tape::tapegateway::FileMigratedNotification& resp)
           throw (castor::exception::Exception);
 
         /*
-	 * Get the best fileToRecall at a certain moment
+	 * Get the best file to recall 
          */
-	
-	virtual castor::tape::tapegateway::FileToRecall* fileToRecall(castor::tape::tapegateway::FileToRecallRequest& req)
+        virtual castor::tape::tapegateway::FileToRecall* getFileToRecall(castor::tape::tapegateway::FileToRecallRequest&  req)
           throw (castor::exception::Exception);
 
+	
         /**
-         * Update the db for a segment which has been recalled successfully or not
+         * Update the db for a segment which has been recalled successfully 
 	 */
 
-        virtual bool segmentRecallUpdate(castor::tape::tapegateway::FileRecalledNotification& resp) throw (castor::exception::Exception);
+        virtual bool  setSegmentRecalled(castor::tape::tapegateway::FileRecalledNotification& resp) throw (castor::exception::Exception);
 
         /**
-         * Update the db for a file which has been recalled successfully or not
+         * Update the db for a file which has been recalled successfully 
 	 */
 
-        virtual void fileRecallUpdate(castor::tape::tapegateway::FileRecalledNotification& resp) throw (castor::exception::Exception);
+        virtual void  setFileRecalled(castor::tape::tapegateway::FileRecalledNotification& resp) throw (castor::exception::Exception);
 
 	/**
-	 * Get Input for migration retries
+	 * Get the tapecopies which faced a migration failure
 	 */
 	
-	virtual std::vector<castor::stager::TapeCopy*>  inputForMigrationRetryPolicy()
+	virtual std::vector<castor::stager::TapeCopy*>  getFailedMigrations()
 	  throw (castor::exception::Exception);
 
 	/**
 	 * Update the db using the retry migration policy returned values
 	 */
 	
-	virtual void  updateWithMigrationRetryPolicyResult(std::vector<u_signed64> tcToRetry, std::vector<u_signed64> tcToFail  ) throw (castor::exception::Exception);
+	virtual void  setMigRetryResult(std::vector<u_signed64> tcToRetry, std::vector<u_signed64> tcToFail ) throw (castor::exception::Exception);
 
 	/**
-	 * Get Input for recall retries
+	 * Get the tapecopies which faced a recall failure 
 	 */
 
-	virtual std::vector<castor::stager::TapeCopy*>  inputForRecallRetryPolicy()
+	virtual std::vector<castor::stager::TapeCopy*>  getFailedRecalls()
 	  throw (castor::exception::Exception);
 	
 
@@ -188,162 +186,114 @@ namespace castor {
 	 * Update the db using the retry recall policy returned values
 	 */
 
-        virtual void  updateWithRecallRetryPolicyResult(std::vector<u_signed64> tcToRetry,std::vector<u_signed64> tcToFail) throw (castor::exception::Exception);
-	
+        virtual void  setRecRetryResult(std::vector<u_signed64> tcToRetry,std::vector<u_signed64> tcToFail) throw (castor::exception::Exception);
+
+
 	/**
-	 * Check file for repack returning the repackvid if any
+	 * Access the db to retrieve the information about a completed migration
 	 */
+	
+	virtual std::string getRepackVidAndFileInfo(castor::tape::tapegateway::FileMigratedNotification& file, std::string& vid, int& copyNumber, u_signed64& lastModificationTime )throw (castor::exception::Exception);
 
-	virtual std::string getRepackVidAndFileInformation(castor::tape::tapegateway::FileMigratedNotification& file, std::string& vid, int& copyNumber, u_signed64& lastModificationTime)throw (castor::exception::Exception);
-	
-	
 	/*
-	 * Update the database when the tape aggregator allows us to serve a request 
+	 * Update the database when the tape aggregator allows us to serve a request
 	 */
 
-	virtual castor::tape::tapegateway::Volume*  updateDbStartTape(castor::tape::tapegateway::VolumeRequest& startReq) throw (castor::exception::Exception); 
+	virtual castor::tape::tapegateway::Volume*  startTapeSession(castor::tape::tapegateway::VolumeRequest& startReq) throw (castor::exception::Exception); 
+
 
 	/*
 	 * Update the database when the tape request has been served 
 	 */
 
-	virtual castor::stager::Tape*  updateDbEndTape(castor::tape::tapegateway::EndNotification& endRequest) throw (castor::exception::Exception); 
+	virtual castor::stager::Tape* endTapeSession(castor::tape::tapegateway::EndNotification& endRequest) throw (castor::exception::Exception); 
 
-	
 	/*
-	 * get information to make cross check in the nameserver after a recall
+	 * Access the db to retrieve the information about a completed recall 
 	 */
 
 
-	virtual void getSegmentInformation(FileRecalledNotification &fileRecalled, std::string& vid,int& copyNb ) throw (castor::exception::Exception);  
-	
+	virtual void getSegmentInfo(FileRecalledNotification &fileRecalled, std::string& vid,int& copyNb)throw (castor::exception::Exception); 
+
 	/*
 	 * update the db after a major failure
 	 */
+
+	virtual castor::stager::Tape failTapeSession(castor::tape::tapegateway::EndNotificationErrorReport& failure)throw (castor::exception::Exception);
+
 	
-	virtual castor::stager::Tape updateAfterFailure(FileErrorReport& failure) throw (castor::exception::Exception);
+	/*
+	 * update the db after a file failure
+	 */
+
+
+	virtual void failFileTransfer(FileErrorReport& failure)throw (castor::exception::Exception);
 
       private:
 
-        /// SQL statement for function getStreamsToResolve
-        static const std::string s_getStreamsToResolveStatementString;
+	static const std::string s_getStreamsWithoutTapesStatementString;
+	oracle::occi::Statement *m_getStreamsWithoutTapesStatement;
+	
+	static const std::string s_attachTapesToStreamsStatementString;
+	oracle::occi::Statement *m_attachTapesToStreamsStatement;
+	
+	static const std::string s_getTapesWithoutDriveReqsStatementString;
+	oracle::occi::Statement *m_getTapesWithoutDriveReqsStatement;
 
-        /// SQL statement object for function getStreamsToResolve
-        oracle::occi::Statement *m_getStreamsToResolveStatement;
+	static const std::string s_attachDriveReqsToTapesStatementString;
+	oracle::occi::Statement *m_attachDriveReqsToTapesStatement;
+	
+	static const std::string s_getTapesWithDriveReqsStatementString;
+	oracle::occi::Statement *m_getTapesWithDriveReqsStatement;
 
-        /// SQL statement for function resolveStream
-        static const std::string s_resolveStreamsStatementString;
+	static const std::string s_restartLostReqsStatementString;
+	oracle::occi::Statement *m_restartLostReqsStatement;
+	
+	static const std::string s_getFileToMigrateStatementString;
+	oracle::occi::Statement *m_getFileToMigrateStatement;
 
-        /// SQL statement object for function resolveStreams
-        oracle::occi::Statement *m_resolveStreamsStatement;
+	static const std::string s_setFileMigratedStatementString;
+	oracle::occi::Statement *m_setFileMigratedStatement;
+	
+	static const std::string s_getFileToRecallStatementString;
+	oracle::occi::Statement *m_getFileToRecallStatement;
+	
+	static const std::string s_setFileRecalledStatementString;
+	oracle::occi::Statement *m_setFileRecalledStatement;
 
-        /// SQL statement for function getTapesTosubmit
-        static const std::string s_getTapesToSubmitStatementString;
+	static const std::string s_setSegmentRecalledStatementString;
+	oracle::occi::Statement *m_setSegmentRecalledStatement;
 
-        /// SQL statement object for function getTapesToSubmit
-        oracle::occi::Statement *m_getTapesToSubmitStatement;
+	static const std::string s_getFailedMigrationsStatementString;
+	oracle::occi::Statement *m_getFailedMigrationsStatement;
 
-	/// SQL statement for function updateSubmittedTapes
-        static const std::string s_updateSubmittedTapesStatementString;
+	static const std::string s_setMigRetryResultStatementString;
+	oracle::occi::Statement *m_setMigRetryResultStatement;
 
-        /// SQL statement object for function updateSubmittedTapes
-        oracle::occi::Statement *m_updateSubmittedTapesStatement;
+	static const std::string s_getFailedRecallsStatementString;
+	oracle::occi::Statement *m_getFailedRecallsStatement;
 
-        /// SQL statement for function getTapesToCheck
-        static const std::string s_getTapesToCheckStatementString;
+	static const std::string s_setRecRetryResultStatementString;	
+	oracle::occi::Statement *m_setRecRetryResultStatement;	
+	
+	static const std::string s_getRepackVidAndFileInfoStatementString;
+	oracle::occi::Statement *m_getRepackVidAndFileInfoStatement;
 
-        /// SQL statement object for function getTapesToCheck
-        oracle::occi::Statement *m_getTapesToCheckStatement;
+	static const std::string s_startTapeSessionStatementString;
+	oracle::occi::Statement *m_startTapeSessionStatement;
 
-        /// SQL statement for function updateCheckedTapes  
-        static const std::string s_updateCheckedTapesStatementString;
+	static const std::string s_endTapeSessionStatementString;
+	oracle::occi::Statement *m_endTapeSessionStatement;
+	
+	static const std::string s_getSegmentInfoStatementString;
+	oracle::occi::Statement *m_getSegmentInfoStatement;
 
-        /// SQL statement object for function updateCheckedTapes
-        oracle::occi::Statement *m_updateCheckedTapesStatement;
+	static const std::string s_failTapeSessionStatementString;
+	oracle::occi::Statement *m_failTapeSessionStatement;
 
-        /// SQL statement for function fileToMigrate
-        static const std::string s_fileToMigrateStatementString;
-
-        /// SQL statement object for function fileToMigrate
-        oracle::occi::Statement *m_fileToMigrateStatement;
-
-        /// SQL statement for function fileMigrationUpdate
-        static const std::string s_fileMigrationUpdateStatementString;
-
-        /// SQL statement object for function fileMigrationUpdate
-        oracle::occi::Statement *m_fileMigrationUpdateStatement;
-
-        /// SQL statement for function fileToRecall
-        static const std::string s_fileToRecallStatementString;
-
-        /// SQL statement object for function fileToRecall
-        oracle::occi::Statement *m_fileToRecallStatement;
-
-        /// SQL statement for function segmentRecallUpdate
-        static const std::string s_segmentRecallUpdateStatementString;
-
-        /// SQL statement object for function segmentRecallUpdate
-        oracle::occi::Statement *m_segmentRecallUpdateStatement;
-
-        /// SQL statement for function fileRecallUpdate
-        static const std::string s_fileRecallUpdateStatementString;
-
-        /// SQL statement object for function fileRecallUpdate
-        oracle::occi::Statement *m_fileRecallUpdateStatement;
-
-        /// SQL statement for function inputForMigrationRetryPolicy 
-        static const std::string s_inputForMigrationRetryPolicyStatementString;
-
-        /// SQL statement object for function inputForMigrationRetryPolicy
-        oracle::occi::Statement *m_inputForMigrationRetryPolicyStatement;
-
-	/// SQL statement for function updateWithMigrationRetryPolicyResult   
-        static const std::string s_updateWithMigrationRetryPolicyResultStatementString;
-
-        /// SQL statement object for function updateWithMigrationRetryPolicyResult  
-        oracle::occi::Statement *m_updateWithMigrationRetryPolicyResultStatement;
-
-        /// SQL statement for function inputForRecallRetryPolicy 
-        static const std::string s_inputForRecallRetryPolicyStatementString;
-
-        /// SQL statement object for function inputForRecallRetryPolicy
-        oracle::occi::Statement *m_inputForRecallRetryPolicyStatement;
-
-	/// SQL statement for function updateWithRecallRetryPolicyResult   
-        static const std::string s_updateWithRecallRetryPolicyResultStatementString;
-
-        /// SQL statement object for function updateWithRecallRetryPolicyResult  
-        oracle::occi::Statement *m_updateWithRecallRetryPolicyResultStatement;
-
-	/// SQL statement for function getRepackVidAndFileInformation  
-        static const std::string s_getRepackVidAndFileInformationStatementString;
-
-        /// SQL statement object for function getRepackVidAndFileInformation   
-        oracle::occi::Statement *m_getRepackVidAndFileInformationStatement;
-
-	//SQL statement object for function updateDbStartTape
-	static const std::string s_updateDbStartTapeStatementString;
-
-	/// SQL statement for function updateDbStartTape
-	oracle::occi::Statement *m_updateDbStartTapeStatement;
-
-	//SQL statement object for function updateDbEndTape
-	static const std::string s_updateDbEndTapeStatementString;
-
-	/// SQL statement for function updateDbEndTape
-	oracle::occi::Statement *m_updateDbEndTapeStatement;
-
-	// SQL statement object for function getSegmentInformation
-        static const std::string s_getSegmentInformationStatementString;
-
-        /// SQL statement object for function getSegmentInformation
-        oracle::occi::Statement *m_getSegmentInformationStatement;
-
-	// SQL statement object for function updateAfterFailure
-        static const std::string s_updateAfterFailureStatementString;
-
-        /// SQL statement object for function updateAfterFailure 
-        oracle::occi::Statement *m_updateAfterFailureStatement;
+	static const std::string s_failFileTransferStatementString;
+	oracle::occi::Statement *m_failFileTransferStatement;
+	
 
       }; // end of class OraTapeGateway
 

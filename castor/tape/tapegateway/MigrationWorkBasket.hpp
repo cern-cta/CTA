@@ -45,6 +45,7 @@ namespace castor {
 
     // Forward declarations
     class TapeCopy;
+    class DiskCopy;
 
   } /* end of namespace stager */
 
@@ -175,6 +176,22 @@ namespace castor {
           m_tapeRequest = new_var;
         }
 
+        /**
+         * Get the value of m_diskcopy
+         * @return the value of m_diskcopy
+         */
+        castor::stager::DiskCopy* diskcopy() const {
+          return m_diskcopy;
+        }
+
+        /**
+         * Set the value of m_diskcopy
+         * @param new_var the new value of m_diskcopy
+         */
+        void setDiskcopy(castor::stager::DiskCopy* new_var) {
+          m_diskcopy = new_var;
+        }
+
       private:
 
         int m_fseq;
@@ -185,6 +202,8 @@ namespace castor {
         castor::stager::TapeCopy* m_tapecopy;
 
         TapeRequestState* m_tapeRequest;
+
+        castor::stager::DiskCopy* m_diskcopy;
 
       }; /* end of class MigrationWorkBasket */
 

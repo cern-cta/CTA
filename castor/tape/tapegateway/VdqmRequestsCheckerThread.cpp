@@ -76,7 +76,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
      // get tapes to check from the db
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,CHECKER_GETTING_TAPES, 0, NULL);
 
-    tapeRequests = oraSvc->getTapesToCheck(m_timeOut); 
+    tapeRequests = oraSvc->getTapesWithDriveReqs(m_timeOut); 
   
   } catch (castor::exception::Exception e) {
      // error in getting new tape to submit
@@ -124,7 +124,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
 
   try {
 
-    oraSvc->updateCheckedTapes(tapesToRetry); 
+    oraSvc->restartLostReqs(tapesToRetry); 
 
     // if the db update succeeded I update vmgr releasing the busy tapes     
 

@@ -40,7 +40,6 @@
 #include "castor/tape/tapegateway/DlfCodes.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
-#include "castor/tape/tapegateway/ErrorReport.hpp"
 #include "castor/tape/tapegateway/FileErrorReport.hpp"
 #include "castor/tape/tapegateway/FileMigratedNotification.hpp"
 #include "castor/tape/tapegateway/FileToMigrate.hpp"
@@ -71,6 +70,7 @@ castor::tape::tapegateway::WorkerThread::WorkerThread():BaseDbThread(){
   m_handlerMap[OBJ_FileToMigrateRequest] = &WorkerThread::handleMigrationMoreWork;
   m_handlerMap[OBJ_EndNotification] = &WorkerThread::handleEndWorker;
   m_handlerMap[OBJ_FileErrorReport] = &WorkerThread::handleFileErrorReport;
+  m_handlerMap[OBJ_EndNotificationErrorReport] = &WorkerThread::handleFailWorker;
 
 }
 
@@ -219,7 +219,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker( cas
     
       // GET FROM DB
 
-      response = oraSvc.updateDbStartTape(startRequest); 
+      response = oraSvc.startTapeSession(startRequest); 
     
     } catch (castor::exception::Exception e){
     
@@ -308,7 +308,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
     int copyNb;
     try {
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,WORKER_RECALL_GET_DB_INFO, 1, params, &castorFileId); 
-      oraSvc.getSegmentInformation(fileRecalled,vid,copyNb);
+      oraSvc.getSegmentInfo(fileRecalled,vid,copyNb);
 
     } catch (castor::exception::Exception e){
       castor::dlf::Param params[] = { 
@@ -347,7 +347,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
 	failure.setFseq(fileRecalled.fseq());
 	failure.setErrorCode(e.code());
 	failure.setErrorMessage(e.getMessage().str());
-	oraSvc.updateAfterFailure(failure); 
+	oraSvc.failFileTransfer(failure); 
 	
       } catch (castor::exception::Exception e) {
 	// db failure to mark the recall as failed
@@ -368,7 +368,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
 
     try {
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_RECALL_DB_UPDATE, 1, params, &castorFileId); 
-      allSegmentsRecalled = oraSvc.segmentRecallUpdate(fileRecalled);
+      allSegmentsRecalled = oraSvc.setSegmentRecalled(fileRecalled);
       
     } catch (castor::exception::Exception e) {
       castor::dlf::Param params[] =
@@ -386,7 +386,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
       failure.setErrorCode(e.code());
       failure.setErrorMessage(e.getMessage().str());
       try {
-	oraSvc.updateAfterFailure(failure);
+	oraSvc.failFileTransfer(failure);
       } catch (castor::exception::Exception e) {
 	// db failure to mark the recall as failed
 	castor::dlf::Param params[] =
@@ -427,7 +427,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
 	  failure.setFseq(fileRecalled.fseq());
 	  failure.setErrorCode(e.code());
 	  failure.setErrorMessage(e.getMessage().str());
-	  oraSvc.updateAfterFailure(failure);
+	  oraSvc.failFileTransfer(failure);
 	} catch (castor::exception::Exception e) {
 	  // db failure to mark the recall as failed
 	  castor::dlf::Param params[] =
@@ -445,7 +445,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
 	// UPDATE DB
 
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_RECALL_COMPLETED_UPDATE_DB, 1, params, &castorFileId);
-	oraSvc.fileRecallUpdate(fileRecalled);
+	oraSvc.setFileRecalled(fileRecalled);
 	
       } catch (castor::exception::Exception e) {
 	// db failure to mark the recall as failed
@@ -464,7 +464,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
 	failure.setErrorCode(e.code());
 	failure.setErrorMessage(e.getMessage().str());
 	try {
-	  oraSvc.updateAfterFailure(failure);
+	  oraSvc.failFileTransfer(failure);
 	} catch (castor::exception::Exception e) {
 	  // db failure to mark the recall as failed
 	  castor::dlf::Param params[] =
@@ -482,7 +482,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
     // "Invalid Request" message
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_INVALID_CAST, 0, NULL);
     
-    ErrorReport* errorReport=new ErrorReport();
+    EndNotificationErrorReport* errorReport=new EndNotificationErrorReport();
     errorReport->setErrorCode(EINVAL);
     errorReport->setErrorMessage("invalid object");
     return errorReport;
@@ -542,7 +542,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
     u_signed64 lastModificationTime;
     try {
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,WORKER_MIGRATION_GET_DB_INFO, 1, params, &castorFileId);
-      repackVid=oraSvc.getRepackVidAndFileInformation(fileMigrated,vid,copyNumber,lastModificationTime);
+      repackVid=oraSvc.getRepackVidAndFileInfo(fileMigrated,vid,copyNumber,lastModificationTime);
     } catch (castor::exception::Exception e){
       
       castor::dlf::Param params[] =
@@ -583,7 +583,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
 	failure.setFseq(fileMigrated.fseq());
 	failure.setErrorCode(e.code());
 	failure.setErrorMessage(e.getMessage().str());
-	oraSvc.updateAfterFailure(failure);
+	oraSvc.failFileTransfer(failure);
       } catch (castor::exception::Exception e) {
       castor::dlf::Param params[] =
 	{
@@ -634,7 +634,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
 	failure.setFseq(fileMigrated.fseq());
 	failure.setErrorCode(e.code());
 	failure.setErrorMessage(e.getMessage().str());
-	oraSvc.updateAfterFailure(failure);
+	oraSvc.failFileTransfer(failure);
       } catch(castor::exception::Exception e) {
 	castor::dlf::Param params[] =
 	  {
@@ -655,7 +655,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
     try {
 	  
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_MIGRATION_DB_UPDATE, 1, params,&castorFileId);
-      oraSvc.fileMigrationUpdate(fileMigrated);
+      oraSvc.setFileMigrated(fileMigrated);
 
     }catch (castor::exception::Exception e) {
 	  
@@ -677,7 +677,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
 	failure.setFseq(fileMigrated.fseq());
 	failure.setErrorCode(e.code());
 	failure.setErrorMessage(e.getMessage().str());
-	oraSvc.updateAfterFailure(failure);
+	oraSvc.failFileTransfer(failure);
       } catch(castor::exception::Exception e) {
 	castor::dlf::Param params[] =
 	  {
@@ -695,7 +695,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
     // "Invalid Request" message
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_INVALID_CAST, 0, NULL);
     
-    ErrorReport* errorReport=new ErrorReport();
+    EndNotificationErrorReport* errorReport=new EndNotificationErrorReport();
     errorReport->setErrorCode(EINVAL);
     errorReport->setErrorMessage("invalid object");
     return errorReport;
@@ -723,7 +723,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(
     try {
       // CALL THE DB
       
-      response = oraSvc.fileToRecall(fileToRecall);
+      response = oraSvc.getFileToRecall(fileToRecall);
 
     } catch (castor::exception::Exception e) {
       castor::dlf::Param params[] =
@@ -734,7 +734,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(
       
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_RECALL_RETRIEVING_DB_ERROR, 3, params);
       
-      ErrorReport* errorReport=new ErrorReport();
+      EndNotificationErrorReport* errorReport=new EndNotificationErrorReport();
       errorReport->setErrorCode(e.code());
       errorReport->setErrorMessage(e.getMessage().str());
       errorReport->setTransactionId(fileToRecall.transactionId());
@@ -775,7 +775,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(
     
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,WORKER_INVALID_CAST, 0, NULL);
     
-    ErrorReport* errorReport=new ErrorReport();
+    EndNotificationErrorReport* errorReport=new EndNotificationErrorReport();
     errorReport->setErrorCode(EINVAL);
     errorReport->setErrorMessage("invalid object");
     return errorReport;
@@ -805,7 +805,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleMigrationMoreWor
    
       // CALL THE DB
 
-      response=oraSvc.fileToMigrate(fileToMigrate);
+      response=oraSvc.getFileToMigrate(fileToMigrate);
 
     } catch (castor::exception::Exception e) {
       castor::dlf::Param params[] =
@@ -816,7 +816,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleMigrationMoreWor
 
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_MIGRATION_RETRIEVING_DB_ERROR, 3, params);
     
-      ErrorReport* errorReport=new ErrorReport();
+      EndNotificationErrorReport* errorReport=new EndNotificationErrorReport();
       errorReport->setErrorCode(e.code());
       errorReport->setErrorMessage(e.getMessage().str());
       return errorReport;
@@ -853,7 +853,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleMigrationMoreWor
   } catch (std::bad_cast &ex) {
     // "Invalid Request" message
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_INVALID_CAST, 0, NULL);
-    ErrorReport* errorReport=new ErrorReport();
+    EndNotificationErrorReport* errorReport=new EndNotificationErrorReport();
     errorReport->setErrorCode(EINVAL);
     errorReport->setErrorMessage("invalid object");
     return errorReport;
@@ -883,7 +883,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker( cast
 
 	    // ACCESS DB
 	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,WORKER_END_DB_UPDATE, 1, params);
-	    std::auto_ptr<castor::stager::Tape> tape(oraSvc.updateDbEndTape(endRequest)); 
+	    std::auto_ptr<castor::stager::Tape> tape(oraSvc.endTapeSession(endRequest)); 
 
 	    try {
 	      
@@ -927,9 +927,9 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker( cast
 	} catch (std::bad_cast){
 
 	  // "Invalid Request" message
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 36, 0, NULL);
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_INVALID_CAST, 0, NULL);
 	  
-	  ErrorReport* errorReport=new ErrorReport();
+	  EndNotificationErrorReport* errorReport=new EndNotificationErrorReport();
 	  errorReport->setErrorCode(EINVAL);
 	  errorReport->setErrorMessage("invalid object");
 	  return errorReport;
@@ -967,29 +967,8 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleFileErrorReport(
     try {
     // DB UPDATE
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,WORKER_FILE_ERROR_DB_UPDATE, 1, params, &castorFileId);
-      castor::stager::Tape tape = oraSvc.updateAfterFailure(fileFailure);
-
-      try {
-	// UPDATE VMGR
-	if (fileFailure.errorCode() == ENOSPC ) {
-    
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_TAPE_MAKED_FULL, 1, params, &castorFileId);
-	  VmgrTapeGatewayHelper vmgrHelper;
-	  vmgrHelper.setTapeAsFull(tape);
-	
-	} 
-      
-      } catch (castor::exception::Exception e) {
-
-	castor::dlf::Param params[] =
-	  { castor::dlf::Param("transactionId",fileFailure.transactionId()),
-	    castor::dlf::Param("errorCode",sstrerror(e.code())),
-	    castor::dlf::Param("errorMessage",e.getMessage().str())
-	  };
-    
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_CANNOT_MARK_TAPE_FULL, 3, params,&castorFileId);
-       
-      }
+      oraSvc.failFileTransfer(fileFailure);
+     
 
     } catch (castor::exception::Exception e) {
       
@@ -1007,11 +986,88 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleFileErrorReport(
     // "Invalid Request" message
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_INVALID_CAST, 0, NULL);
     
-    ErrorReport* errorReport=new ErrorReport();
+    EndNotificationErrorReport* errorReport=new EndNotificationErrorReport();
     errorReport->setErrorCode(EINVAL);
     errorReport->setErrorMessage("invalid object");
     return errorReport;
     
   }
   return response;
+}
+
+
+castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker( castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc ) throw(){
+  	// I received an EndNotificationErrorReport 
+
+	NotificationAcknowledge* response=NULL;
+
+	try {
+	  EndNotificationErrorReport& endRequest = dynamic_cast<EndNotificationErrorReport&>(obj);
+	
+	  castor::dlf::Param params[] =
+	    {castor::dlf::Param("transactionId", endRequest.transactionId()),
+	     castor::dlf::Param("errorcode", endRequest.errorCode()),
+	    };
+	
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_FAIL_NOTIFICATION, 2, params);
+	  response = new NotificationAcknowledge();
+	  response->setTransactionId(endRequest.transactionId());
+
+	  try {
+
+	    // ACCESS DB
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,WORKER_FAIL_DB_UPDATE, 1, params);
+	    castor::stager::Tape tape = oraSvc.failTapeSession(endRequest); 
+
+	    try {
+	      
+	      // UPDATE VMGR
+
+	      if (tape.tpmode() == 1) { // just for write
+		castor::dlf::Param params[] =
+		  {castor::dlf::Param("transactionId", endRequest.transactionId()),
+		   castor::dlf::Param("TPVID", tape.vid())
+		  };
+	  
+	      
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_FAIL_RELEASE_TAPE, 2, params);
+		VmgrTapeGatewayHelper vmgrHelper;
+		vmgrHelper.resetBusyTape(tape);
+
+	      }
+	      
+	    } catch (castor::exception::Exception e) {
+	      castor::dlf::Param params[] =
+		{castor::dlf::Param("transactionId", endRequest.transactionId()),
+		 castor::dlf::Param("TPVID", tape.vid()),
+		 castor::dlf::Param("errorCode",sstrerror(e.code())),
+		 castor::dlf::Param("errorMessage",e.getMessage().str())
+		};
+	      
+	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_CANNOT_RELEASE_TAPE, 4, params);
+	    }
+
+	  } catch (castor::exception::Exception e){
+    
+	    castor::dlf::Param params[] =
+	      {castor::dlf::Param("transactionId", endRequest.transactionId()),
+	       castor::dlf::Param("errorCode",sstrerror(e.code())),
+	       castor::dlf::Param("errorMessage",e.getMessage().str())
+	      };
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_FAIL_DB_ERROR, 3, params);
+	    return response;
+	  }
+
+	} catch (std::bad_cast){
+
+	  // "Invalid Request" message
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_INVALID_CAST, 0, NULL);
+	  
+	  EndNotificationErrorReport* errorReport=new EndNotificationErrorReport();
+	  errorReport->setErrorCode(EINVAL);
+	  errorReport->setErrorMessage("invalid object");
+	  return errorReport;
+	  
+	}
+	return  response;
 }

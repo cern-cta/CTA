@@ -30,6 +30,7 @@
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
+#include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/TapeCopy.hpp"
 #include "castor/tape/tapegateway/MigrationWorkBasket.hpp"
 #include "castor/tape/tapegateway/TapeRequestState.hpp"
@@ -44,7 +45,8 @@ castor::tape::tapegateway::MigrationWorkBasket::MigrationWorkBasket() throw() :
   m_fseq(0),
   m_id(0),
   m_tapecopy(0),
-  m_tapeRequest(0) {
+  m_tapeRequest(0),
+  m_diskcopy(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -78,6 +80,12 @@ void castor::tape::tapegateway::MigrationWorkBasket::print(std::ostream& stream,
   stream << indent << "TapeRequest : " << std::endl;
   if (0 != m_tapeRequest) {
     m_tapeRequest->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
+  stream << indent << "Diskcopy : " << std::endl;
+  if (0 != m_diskcopy) {
+    m_diskcopy->print(stream, indent + "  ", alreadyPrinted);
   } else {
     stream << indent << "  null" << std::endl;
   }

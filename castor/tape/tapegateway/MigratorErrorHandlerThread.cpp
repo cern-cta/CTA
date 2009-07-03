@@ -74,7 +74,7 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void* par)
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,MIG_ERROR_GETTING_FILES, 0, NULL); 
 
   try {
-    tcList=  oraSvc->inputForMigrationRetryPolicy();
+    tcList=  oraSvc->getFailedMigrations();
   } catch (castor::exception::Exception e){
  
     castor::dlf::Param params[] =
@@ -126,7 +126,7 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void* par)
   // update the db 
 
   try {
-    oraSvc->updateWithMigrationRetryPolicyResult(tcIdsToRetry,tcIdsToFail); 
+    oraSvc->setMigRetryResult(tcIdsToRetry,tcIdsToFail); 
   } catch (castor::exception::Exception e) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("errorCode",sstrerror(e.code())),

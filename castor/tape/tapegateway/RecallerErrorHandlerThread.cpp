@@ -72,7 +72,7 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void* par)
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, REC_ERROR_GETTING_FILES, 0, NULL); 
   std::vector<castor::stager::TapeCopy*> tcList;
   try {
-    tcList =  oraSvc->inputForRecallRetryPolicy();
+    tcList =  oraSvc->getFailedRecalls();
   }  catch (castor::exception::Exception e){
  
     castor::dlf::Param params[] =
@@ -119,7 +119,7 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void* par)
 
   // update the db 
  try {
-  oraSvc->updateWithRecallRetryPolicyResult(tcIdsToRetry,tcIdsToFail); 
+  oraSvc->setRecRetryResult(tcIdsToRetry,tcIdsToFail); 
  } catch (castor::exception::Exception e) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("errorCode",sstrerror(e.code())),

@@ -74,7 +74,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::run(void* par)
   // get tapes to send from the db
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,PRODUCER_GETTING_TAPES, 0, NULL);
 
-    tapesToSubmit = oraSvc->getTapesToSubmit();
+    tapesToSubmit = oraSvc->getTapesWithoutDriveReqs();
 
   } catch (castor::exception::Exception e){
     // error in getting new tape to submit
@@ -146,7 +146,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::run(void* par)
   try {
       
     // save vdqm ids 
-      oraSvc->updateSubmittedTapes(submittedTapes);
+      oraSvc->attachDriveReqsToTapes(submittedTapes);
     
   } catch (castor::exception::Exception e) {
     // impossible to update the information of submitted tape

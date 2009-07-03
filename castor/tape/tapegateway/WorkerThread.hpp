@@ -82,23 +82,26 @@ namespace castor {
 	
 	// handlers used with the different message types
 
-	castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker(castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& dbSvc ) throw();
+	castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker(castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
 
-	castor::IObject* handleRecallUpdate( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& dbSvc  ) throw();
+	castor::IObject* handleRecallUpdate( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc  ) throw();
 
-	castor::IObject* handleMigrationUpdate( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& dbSvc ) throw();
+	castor::IObject* handleMigrationUpdate( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
 
-	castor::IObject* handleFileErrorReport( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& dbSvc ) throw();
+	castor::IObject* handleFileErrorReport( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
 
-	castor::IObject* handleRecallMoreWork( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& dbSvc ) throw();
+	castor::IObject* handleRecallMoreWork( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
 
-	castor::IObject* handleMigrationMoreWork( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& dbSvc ) throw();
+	castor::IObject* handleMigrationMoreWork( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
 
-	castor::IObject* handleEndWorker( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& dbSvc ) throw();
+	castor::IObject* handleEndWorker( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
+
+	castor::IObject* handleFailWorker( castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
+
 
 	// map to deal with the different request types
 
-	typedef castor::IObject* (WorkerThread::*Handler) (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& dbSvc );
+	typedef castor::IObject* (WorkerThread::*Handler) (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc );
 
 	typedef std::map<u_signed64, Handler> HandlerMap;
 	HandlerMap m_handlerMap;

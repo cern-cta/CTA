@@ -72,7 +72,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
   // get streams to check from the db
   try {
      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, LINKER_GETTING_STREAMS, 0, NULL);
-    streamsToResolve= oraSvc->getStreamsToResolve();
+    streamsToResolve= oraSvc->getStreamsWithoutTapes();
   } catch (castor::exception::Exception e) {
     // error in getting new tape to submit
     castor::dlf::Param params[] =
@@ -141,7 +141,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
 
   // update the db 
   try {
-    oraSvc->resolveStreams(strIds, vids, fseqs);
+    oraSvc->attachTapesToStreams(strIds, vids, fseqs);
   } catch (castor::exception::Exception e){
 
     castor::dlf::Param params[] =
