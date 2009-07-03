@@ -41,6 +41,7 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/exception/OutOfMemory.hpp"
+#include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/TapeCopy.hpp"
 #include "castor/tape/tapegateway/MigrationWorkBasket.hpp"
 #include "castor/tape/tapegateway/TapeRequestState.hpp"
@@ -57,7 +58,7 @@ static castor::CnvFactory<castor::db::cnv::DbMigrationWorkBasketCnv>* s_factoryD
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbMigrationWorkBasketCnv::s_insertStatementString =
-"INSERT INTO MigrationWorkBasket (fseq, id, tapecopy, tapeRequest) VALUES (:1,ids_seq.nextval,:2,:3) RETURNING id INTO :4";
+"INSERT INTO MigrationWorkBasket (fseq, id, tapecopy, tapeRequest, diskcopy) VALUES (:1,ids_seq.nextval,:2,:3,:4) RETURNING id INTO :5";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbMigrationWorkBasketCnv::s_deleteStatementString =
@@ -65,7 +66,7 @@ const std::string castor::db::cnv::DbMigrationWorkBasketCnv::s_deleteStatementSt
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbMigrationWorkBasketCnv::s_selectStatementString =
-"SELECT fseq, id, tapecopy, tapeRequest FROM MigrationWorkBasket WHERE id = :1";
+"SELECT fseq, id, tapecopy, tapeRequest, diskcopy FROM MigrationWorkBasket WHERE id = :1";
 
 /// SQL statement for bulk request selection
 const std::string castor::db::cnv::DbMigrationWorkBasketCnv::s_bulkSelectStatementString =
@@ -76,7 +77,7 @@ const std::string castor::db::cnv::DbMigrationWorkBasketCnv::s_bulkSelectStateme
    BEGIN \
      FORALL i IN ids.FIRST..ids.LAST \
        INSERT INTO bulkSelectHelper VALUES(ids(i)); \
-     OPEN objs FOR SELECT fseq, id, tapecopy, tapeRequest \
+     OPEN objs FOR SELECT fseq, id, tapecopy, tapeRequest, diskcopy \
                      FROM MigrationWorkBasket t, bulkSelectHelper h \
                     WHERE t.id = h.objId; \
      DELETE FROM bulkSelectHelper; \
@@ -113,6 +114,14 @@ const std::string castor::db::cnv::DbMigrationWorkBasketCnv::s_checkTapeRequestS
 const std::string castor::db::cnv::DbMigrationWorkBasketCnv::s_updateTapeRequestStateStatementString =
 "UPDATE MigrationWorkBasket SET tapeRequest = :1 WHERE id = :2";
 
+/// SQL existence statement for member diskcopy
+const std::string castor::db::cnv::DbMigrationWorkBasketCnv::s_checkDiskCopyExistStatementString =
+"SELECT id FROM DiskCopy WHERE id = :1";
+
+/// SQL update statement for member diskcopy
+const std::string castor::db::cnv::DbMigrationWorkBasketCnv::s_updateDiskCopyStatementString =
+"UPDATE MigrationWorkBasket SET diskcopy = :1 WHERE id = :2";
+
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
@@ -128,7 +137,9 @@ castor::db::cnv::DbMigrationWorkBasketCnv::DbMigrationWorkBasketCnv(castor::ICnv
   m_checkTapeCopyExistStatement(0),
   m_updateTapeCopyStatement(0),
   m_checkTapeRequestStateExistStatement(0),
-  m_updateTapeRequestStateStatement(0) {}
+  m_updateTapeRequestStateStatement(0),
+  m_checkDiskCopyExistStatement(0),
+  m_updateDiskCopyStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -155,6 +166,8 @@ void castor::db::cnv::DbMigrationWorkBasketCnv::reset() throw() {
     if(m_updateTapeCopyStatement) delete m_updateTapeCopyStatement;
     if(m_checkTapeRequestStateExistStatement) delete m_checkTapeRequestStateExistStatement;
     if(m_updateTapeRequestStateStatement) delete m_updateTapeRequestStateStatement;
+    if(m_checkDiskCopyExistStatement) delete m_checkDiskCopyExistStatement;
+    if(m_updateDiskCopyStatement) delete m_updateDiskCopyStatement;
   } catch (castor::exception::Exception ignored) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -168,6 +181,8 @@ void castor::db::cnv::DbMigrationWorkBasketCnv::reset() throw() {
   m_updateTapeCopyStatement = 0;
   m_checkTapeRequestStateExistStatement = 0;
   m_updateTapeRequestStateStatement = 0;
+  m_checkDiskCopyExistStatement = 0;
+  m_updateDiskCopyStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -201,6 +216,9 @@ void castor::db::cnv::DbMigrationWorkBasketCnv::fillRep(castor::IAddress* addres
       break;
     case castor::OBJ_TapeRequestState :
       fillRepTapeRequestState(obj);
+      break;
+    case castor::OBJ_DiskCopy :
+      fillRepDiskCopy(obj);
       break;
     default :
       castor::exception::InvalidArgument ex;
@@ -285,6 +303,38 @@ void castor::db::cnv::DbMigrationWorkBasketCnv::fillRepTapeRequestState(castor::
 }
 
 //------------------------------------------------------------------------------
+// fillRepDiskCopy
+//------------------------------------------------------------------------------
+void castor::db::cnv::DbMigrationWorkBasketCnv::fillRepDiskCopy(castor::tape::tapegateway::MigrationWorkBasket* obj)
+  throw (castor::exception::Exception) {
+  if (0 != obj->diskcopy()) {
+    // Check checkDiskCopyExist statement
+    if (0 == m_checkDiskCopyExistStatement) {
+      m_checkDiskCopyExistStatement = createStatement(s_checkDiskCopyExistStatementString);
+    }
+    // retrieve the object from the database
+    m_checkDiskCopyExistStatement->setUInt64(1, obj->diskcopy()->id());
+    castor::db::IDbResultSet *rset = m_checkDiskCopyExistStatement->executeQuery();
+    if (!rset->next()) {
+      castor::BaseAddress ad;
+      ad.setCnvSvcName("DbCnvSvc");
+      ad.setCnvSvcType(castor::SVC_DBCNV);
+      cnvSvc()->createRep(&ad, obj->diskcopy(), false);
+    }
+    // Close resultset
+    delete rset;
+  }
+  // Check update statement
+  if (0 == m_updateDiskCopyStatement) {
+    m_updateDiskCopyStatement = createStatement(s_updateDiskCopyStatementString);
+  }
+  // Update local object
+  m_updateDiskCopyStatement->setUInt64(1, 0 == obj->diskcopy() ? 0 : obj->diskcopy()->id());
+  m_updateDiskCopyStatement->setUInt64(2, obj->id());
+  m_updateDiskCopyStatement->execute();
+}
+
+//------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbMigrationWorkBasketCnv::fillObj(castor::IAddress* address,
@@ -300,6 +350,9 @@ void castor::db::cnv::DbMigrationWorkBasketCnv::fillObj(castor::IAddress* addres
     break;
   case castor::OBJ_TapeRequestState :
     fillObjTapeRequestState(obj);
+    break;
+  case castor::OBJ_DiskCopy :
+    fillObjDiskCopy(obj);
     break;
   default :
     castor::exception::InvalidArgument ex;
@@ -390,6 +443,44 @@ void castor::db::cnv::DbMigrationWorkBasketCnv::fillObjTapeRequestState(castor::
 }
 
 //------------------------------------------------------------------------------
+// fillObjDiskCopy
+//------------------------------------------------------------------------------
+void castor::db::cnv::DbMigrationWorkBasketCnv::fillObjDiskCopy(castor::tape::tapegateway::MigrationWorkBasket* obj)
+  throw (castor::exception::Exception) {
+  // Check whether the statement is ok
+  if (0 == m_selectStatement) {
+    m_selectStatement = createStatement(s_selectStatementString);
+  }
+  // retrieve the object from the database
+  m_selectStatement->setUInt64(1, obj->id());
+  castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
+  if (!rset->next()) {
+    castor::exception::NoEntry ex;
+    ex.getMessage() << "No object found for id :" << obj->id();
+    throw ex;
+  }
+  u_signed64 diskcopyId = rset->getInt64(5);
+  // Close ResultSet
+  delete rset;
+  // Check whether something should be deleted
+  if (0 != obj->diskcopy() &&
+      (0 == diskcopyId ||
+       obj->diskcopy()->id() != diskcopyId)) {
+    obj->setDiskcopy(0);
+  }
+  // Update object or create new one
+  if (0 != diskcopyId) {
+    if (0 == obj->diskcopy()) {
+      obj->setDiskcopy
+        (dynamic_cast<castor::stager::DiskCopy*>
+         (cnvSvc()->getObjFromId(diskcopyId)));
+    } else {
+      cnvSvc()->updateObj(obj->diskcopy());
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbMigrationWorkBasketCnv::createRep(castor::IAddress* address,
@@ -406,7 +497,7 @@ void castor::db::cnv::DbMigrationWorkBasketCnv::createRep(castor::IAddress* addr
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(4, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(5, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -415,8 +506,9 @@ void castor::db::cnv::DbMigrationWorkBasketCnv::createRep(castor::IAddress* addr
     m_insertStatement->setInt(1, obj->fseq());
     m_insertStatement->setUInt64(2, (type == OBJ_TapeCopy && obj->tapecopy() != 0) ? obj->tapecopy()->id() : 0);
     m_insertStatement->setUInt64(3, (type == OBJ_TapeRequestState && obj->tapeRequest() != 0) ? obj->tapeRequest()->id() : 0);
+    m_insertStatement->setUInt64(4, (type == OBJ_DiskCopy && obj->diskcopy() != 0) ? obj->diskcopy()->id() : 0);
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(4));
+    obj->setId(m_insertStatement->getUInt64(5));
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -437,7 +529,8 @@ void castor::db::cnv::DbMigrationWorkBasketCnv::createRep(castor::IAddress* addr
                     << "  fseq : " << obj->fseq() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  tapecopy : " << obj->tapecopy() << std::endl
-                    << "  tapeRequest : " << obj->tapeRequest() << std::endl;
+                    << "  tapeRequest : " << obj->tapeRequest() << std::endl
+                    << "  diskcopy : " << obj->diskcopy() << std::endl;
     throw ex;
   }
 }
@@ -463,7 +556,7 @@ void castor::db::cnv::DbMigrationWorkBasketCnv::bulkCreateRep(castor::IAddress* 
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(4, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(5, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -525,6 +618,25 @@ void castor::db::cnv::DbMigrationWorkBasketCnv::bulkCreateRep(castor::IAddress* 
     }
     m_insertStatement->setDataBuffer
       (3, tapeRequestBuffer, castor::db::DBTYPE_UINT64, sizeof(tapeRequestBuffer[0]), tapeRequestBufLens);
+    // build the buffers for diskcopy
+    double* diskcopyBuffer = (double*) malloc(nb * sizeof(double));
+    if (diskcopyBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(diskcopyBuffer);
+    unsigned short* diskcopyBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
+    if (diskcopyBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocMem.push_back(diskcopyBufLens);
+    for (int i = 0; i < nb; i++) {
+      diskcopyBuffer[i] = (type == OBJ_DiskCopy && objs[i]->diskcopy() != 0) ? objs[i]->diskcopy()->id() : 0;
+      diskcopyBufLens[i] = sizeof(double);
+    }
+    m_insertStatement->setDataBuffer
+      (4, diskcopyBuffer, castor::db::DBTYPE_UINT64, sizeof(diskcopyBuffer[0]), diskcopyBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
     if (idBuffer == 0) {
@@ -539,7 +651,7 @@ void castor::db::cnv::DbMigrationWorkBasketCnv::bulkCreateRep(castor::IAddress* 
     }
     allocMem.push_back(idBufLens);
     m_insertStatement->setDataBuffer
-      (4, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
+      (5, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
     m_insertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);

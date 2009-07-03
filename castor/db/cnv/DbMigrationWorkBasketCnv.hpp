@@ -224,6 +224,14 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Fill the database with objects of type DiskCopy refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepDiskCopy(castor::tape::tapegateway::MigrationWorkBasket* obj)
+          throw (castor::exception::Exception);
+
+        /**
          * Retrieve from the database some of the objects refered by a given object.
          * @param object the original object
          * @param type the type of the refered objects to retrieve
@@ -250,6 +258,14 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjTapeRequestState(castor::tape::tapegateway::MigrationWorkBasket* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type DiskCopy refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjDiskCopy(castor::tape::tapegateway::MigrationWorkBasket* obj)
           throw (castor::exception::Exception);
 
       private:
@@ -319,6 +335,18 @@ namespace castor {
 
         /// SQL update statement object for member tapeRequest
         castor::db::IDbStatement *m_updateTapeRequestStateStatement;
+
+        /// SQL checkExist statement for member diskcopy
+        static const std::string s_checkDiskCopyExistStatementString;
+
+        /// SQL checkExist statement object for member diskcopy
+        castor::db::IDbStatement *m_checkDiskCopyExistStatement;
+
+        /// SQL update statement for member diskcopy
+        static const std::string s_updateDiskCopyStatementString;
+
+        /// SQL update statement object for member diskcopy
+        castor::db::IDbStatement *m_updateDiskCopyStatement;
 
       }; // end of class DbMigrationWorkBasketCnv
 
