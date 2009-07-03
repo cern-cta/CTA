@@ -508,8 +508,8 @@ void CppCppDbCnvWriter::writeConstants() {
               << "Db" << m_classInfo->className
               << "Cnv::s_insertNewReqStatementString =" << endl
               << getIndent()
-              << "\"INSERT INTO newRequests (id, type)"
-              << " VALUES (:1, :2)\";"
+              << "\"INSERT INTO newRequests (id, type, creation)"
+              << " VALUES (:1, :2, SYSDATE)\";"
               << endl << endl;
   }
   // Associations dedicated statements
