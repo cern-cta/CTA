@@ -1737,24 +1737,39 @@ How to move the VDQM state of a tape drive from UNKNOWN to FREE
 ssh tpsrv202 tpmaint -stop; ssh tpsrv202 tpmaint -start
 
 
-How to create a sequence diagram
-================================
+How to install UMLGraph sequence.pic
+====================================
 
-Install the GNU plotutils package from http://www.gnu.org/software/plotutils
+# Install UMLGraphg
 
-Install UMLGraph from http://www.umlgraph.org, for example:
-
+UMLGRAPH_DIR=/usr/UMLGraph
+mkdir $UMLGRAPH_DIR
+cd $UMLGRAPH_DIR
 wget 'http://www.umlgraph.org/UMLGraph-5.2.tar.gz'
 tar -xvzf UMLGraph-5.2.tar.gz
 
-Make a symbolic link to the UMLGraph pic2plot macros for creating UML sequence
-diagrams:
 
-ln -s UMLGraph-5.2/src/sequence.pic sequence.pic
+# Create a symbolic link to the UMLGraph pic2plot macros file for creating UML
+# sequence diagrams
 
-Create a sequence disgram pic2plot source file, for example:
+CASTOR_CVS=/usr/local/src/CASTOR2
+ln -s $UMLGRAPH_DIR/UMLGraph-5.2/src/sequence.pic $CASTOR_CVS/castor/tape/doc/sequence_diagrams/sequence.pic
 
-cat << HERE > aggregatord.pic
+
+How to create a sequence diagram
+================================
+
+Install the pic2plot command of the GNU plotutils package from
+http://www.gnu.org/software/plotutils
+
+Install UMLGraph sequence.pic from http://www.umlgraph.org, for example:
+
+Create a sequence diagram pic2plot source file, for example:
+
+CASTOR_CVS=/usr/local/src/CASTOR2
+cd $CASTOR_CVS/castor/tape/doc/sequence_diagrams
+
+cat << HERE > test.pic
 .PS
 
 copy "sequence.pic";
@@ -1794,7 +1809,7 @@ HERE
 
 Generate the sequence diagram, for example:
 
-pic2plot -T ps aggregatord.pic > out.ps ; gv -scale=4 out.ps
+pic2plot -T ps test.pic > out.ps ; gv -scale=4 out.ps
 
 
 How to create a finite state transition network
@@ -1972,13 +1987,21 @@ string:
 How to compile GNU plotutils on SLC4
 ====================================
 
-mkdir plotutils
-cd plotutils
+# Download and install GNU plotutils
+
+PLOTUTILS_DIR=/usr/plotutils
+mkdir $PLOTUTILS_DIR
+cd $PLOTUTILS_DIR
 wget ftp://sunsite.cnlab-switch.ch/mirror/gnu/plotutils/plotutils-2.5.tar.gz
 tar -xvzf plotutils-2.5.tar.gz
 cd plotutils-2.5
 ./configure --enable-libplotter
 make
+
+
+# Create a symbolic link in /usr/bin to pic2plot
+
+ln -s $PLOTUTILS_DIR/plotutils-2.5/pic2plot/pic2plot /usr/bin/pic2plot
 
 
 How to install and run an aggregator for development on tpsrv202
