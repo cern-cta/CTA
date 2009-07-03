@@ -287,7 +287,7 @@ INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeReque
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeRequestState', 'status', 3, 'ONGOING');
 
 /* SQL statements for type MigrationWorkBasket */
-CREATE TABLE MigrationWorkBasket (fseq NUMBER, id INTEGER CONSTRAINT PK_MigrationWorkBasket_Id PRIMARY KEY, tapecopy INTEGER, tapeRequest INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE MigrationWorkBasket (fseq NUMBER, id INTEGER CONSTRAINT PK_MigrationWorkBasket_Id PRIMARY KEY, tapecopy INTEGER, tapeRequest INTEGER, diskcopy INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for constraints on SvcClass */
 ALTER TABLE SvcClass2TapePool
