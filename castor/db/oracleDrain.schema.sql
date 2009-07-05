@@ -1,5 +1,5 @@
 /*******************************************************************
- * @(#)$RCSfile: oracleDrain.schema.sql,v $ $Revision: 1.3 $ $Date: 2009/03/05 14:03:34 $ $Author: waldron $
+ * @(#)$RCSfile: oracleDrain.schema.sql,v $ $Revision: 1.4 $ $Date: 2009/07/05 13:49:08 $ $Author: waldron $
  * Schema creation code for Draining FileSystems Logic
  *
  * @author Castor Dev team, castor-dev@cern.ch
@@ -139,11 +139,8 @@ ALTER TABLE DrainingDiskCopy
 CREATE INDEX I_DrainingDCs_FileSystem
   ON DrainingDiskCopy (fileSystem);
 
-/* Function based index on status 4 to help optimize the listing of FAILED
- * transfers.
- */
-CREATE INDEX I_DrainingDCs_Status_4
-  ON DrainingDiskCopy (decode(status, 4, status, NULL));
+CREATE INDEX I_DrainingDCs_Status
+  ON DrainingDiskCopy (status);
 
 /* This index is essentially the same as the one on the SubRequest table which
  * allows us to process entries in order. In this case by priority and
@@ -154,34 +151,3 @@ CREATE INDEX I_DrainingDCs_PC
 
 CREATE INDEX I_DrainingDCs_Parent
   ON DrainingDiskCopy (parent);
-
-
-/* SQL statements for the creation of a DrainingDiskCopy materialized view
- * Refer too: http://www.sqlsnippets.com/en/topic-12924.html
- */
-CREATE MATERIALIZED VIEW LOG ON DrainingDiskCopy
-WITH ROWID, PRIMARY KEY (fileSystem, status, filesize)
-INCLUDING NEW VALUES;
-
-CREATE MATERIALIZED VIEW DrainingDiskCopy_MV
-  BUILD IMMEDIATE
-  REFRESH FAST ON COMMIT
-  DISABLE QUERY REWRITE
-AS
-  SELECT fileSystem, status, count(*) nbFiles, sum(fileSize) totalFileSize
-    FROM DrainingDiskCopy
-   GROUP BY fileSystem, status;
-
-/* SQL statement to rename the NOT NULL constraints of the materialized view */
-BEGIN
-  FOR a IN (SELECT constraint_name, column_name
-              FROM user_cons_columns
-             WHERE table_name = 'DRAININGDISKCOPY_MV'
-               AND constraint_name LIKE 'SYS_%')
-  LOOP
-    EXECUTE IMMEDIATE 'ALTER MATERIALIZED VIEW DrainingDiskCopy_MV RENAME 
-                      CONSTRAINT '|| a.constraint_name||
-                      ' TO NN_DrainingDCs_MV_'|| a.column_name;
-  END LOOP;
-END;
-/

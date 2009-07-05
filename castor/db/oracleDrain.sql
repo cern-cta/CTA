@@ -1,5 +1,5 @@
 /*******************************************************************
- * @(#)$RCSfile: oracleDrain.sql,v $ $Revision: 1.4 $ $Date: 2009/03/03 10:52:42 $ $Author: waldron $
+ * @(#)$RCSfile: oracleDrain.sql,v $ $Revision: 1.5 $ $Date: 2009/07/05 13:49:08 $ $Author: waldron $
  * PL/SQL code for Draining FileSystems Logic
  *
  * Additional procedures modified to support the DrainingFileSystems
@@ -197,7 +197,12 @@ AS
              max(decode(status, 4, nbFiles, 0)) Failed,
              sum(nbFiles) FilesRemaining,
              sum(totalFileSize) BytesRemaining
-        FROM DrainingDiskCopy_MV
+        FROM (
+          SELECT fileSystem, status, count(*) nbFiles,
+                 sum(fileSize) totalFileSize
+            FROM DrainingDiskCopy
+           GROUP BY fileSystem, status
+        )
        GROUP BY fileSystem
     ) DDCS
    RIGHT JOIN DrainingFileSystem DFS
@@ -221,7 +226,7 @@ AS
          nvl(DDC.comments, 'Unknown') Comments
     FROM DrainingDiskCopy DDC, DiskCopy DC, FileSystem FS, DiskServer DS
    WHERE DDC.diskCopy = DC.id
-     AND decode(DDC.status, 4, DDC.status, NULL) = 4  -- FAILED
+     AND DDC.status = 4  -- FAILED
      AND DC.fileSystem = FS.id
      AND FS.diskServer = DS.id
    ORDER BY DS.name, FS.mountPoint, DC.path;
@@ -612,7 +617,7 @@ BEGIN
   --  A) in a DELETING state and have no transfers pending in the scheduler.
   --  B) are COMPLETED and older the 7 days.
   DELETE FROM DrainingFileSystem
-   WHERE (NOT EXISTS (SELECT 'x' FROM DrainingDiskCopy_MV
+   WHERE (NOT EXISTS (SELECT 'x' FROM DrainingDiskCopy
                        WHERE fileSystem = DrainingFileSystem.fileSystem
                          AND status = 3)  -- WAITD2D
           AND status = 6)  -- DELETING
@@ -622,10 +627,12 @@ BEGIN
      SET status = 1  -- INITIALIZING
    WHERE status = 0  -- CREATED
   RETURNING fileSystem BULK COLLECT INTO fsIds;
-  -- Commit, this isn't really necessary but its done so that the user gets 
+  -- Commit, this isn't really necessary but its done so that the user gets
   -- feedback when listing the filesystems which are being drained.
   COMMIT;
   IF fsIds.COUNT = 0 THEN
+    -- Shrink the DrainingDiskCopy to keep the number of blocks small
+    EXECUTE IMMEDIATE 'ALTER TABLE DrainingDiskCopy SHRINK SPACE CASCADE';
     RETURN;  -- No results
   END IF;
   -- Create the DrainingDiskCopy snapshot
