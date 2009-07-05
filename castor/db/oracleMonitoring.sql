@@ -1,5 +1,5 @@
 /*******************************************************************
- * @(#)$RCSfile: oracleMonitoring.sql,v $ $Revision: 1.7 $ $Date: 2009/07/02 13:47:09 $ $Author: waldron $
+ * @(#)$RCSfile: oracleMonitoring.sql,v $ $Revision: 1.8 $ $Date: 2009/07/05 13:46:14 $ $Author: waldron $
  * PL/SQL code for stager monitoring
  *
  * @author Castor Dev team, castor-dev@cern.ch
@@ -99,16 +99,16 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
     EXECUTE IMMEDIATE 'DELETE FROM MonWaitTapeMigrationStats';
     -- Populate the MonWaitTapeMigrationStats table
     INSERT INTO MonWaitTapeMigrationStats
-      (timestamp, interval, svcClass, status, minFileAge, maxFileAge,
-       avgFileAge, minFileSize, maxFileSize, avgFileSize, bin_LT_1, bin_1_To_6,
-       bin_6_To_12, bin_12_To_24, bin_24_To_48, bin_GT_48, totalFileSize,
-       nbFiles)
+      (timestamp, interval, svcClass, status, minWaitTime, maxWaitTime,
+       avgWaitTime, minFileSize, maxFileSize, avgFileSize, bin_LT_1,
+       bin_1_To_6, bin_6_To_12, bin_12_To_24, bin_24_To_48, bin_GT_48,
+       totalFileSize, nbFiles)
       -- Gather data
       SELECT sysdate timestamp, interval, b.svcClass, nvl(b.status, '-') status,
              -- File age statistics
-             round(nvl(min(a.waitTime), 0), 0) minFileAge,
-             round(nvl(max(a.waitTime), 0), 0) maxFileAge,
-             round(nvl(avg(a.waitTime), 0), 0) avgFileAge,
+             round(nvl(min(a.waitTime), 0), 0) minWaitTime,
+             round(nvl(max(a.waitTime), 0), 0) maxWaitTime,
+             round(nvl(avg(a.waitTime), 0), 0) avgWaitTime,
              -- File size statistics
              round(nvl(min(a.diskCopySize), 0), 0) minFileSize,
              round(nvl(max(a.diskCopySize), 0), 0) maxFileSize,
@@ -166,15 +166,15 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
     EXECUTE IMMEDIATE 'DELETE FROM MonWaitTapeRecallStats';
     -- Populate the MonWaitTapeRecallStats table
     INSERT INTO MonWaitTapeRecallStats
-      (timestamp, interval, svcClass, minFileAge, maxFileAge, avgFileAge,
+      (timestamp, interval, svcClass, minWaitTime, maxWaitTime, avgWaitTime,
        minFileSize, maxFileSize, avgFileSize, bin_LT_1, bin_1_To_6, bin_6_To_12,
        bin_12_To_24, bin_24_To_48, bin_GT_48, totalFileSize, nbFiles)
       -- Gather data
       SELECT sysdate timestamp, interval, SvcClass.name svcClass,
              -- File age statistics
-             round(nvl(min(a.waitTime), 0), 0) minFileAge,
-             round(nvl(max(a.waitTime), 0), 0) maxFileAge,
-             round(nvl(avg(a.waitTime), 0), 0) avgFileAge,
+             round(nvl(min(a.waitTime), 0), 0) minWaitTime,
+             round(nvl(max(a.waitTime), 0), 0) maxWaitTime,
+             round(nvl(avg(a.waitTime), 0), 0) avgWaitTime,
              -- File size statistics
              round(nvl(min(a.fileSize), 0), 0) minFileSize,
              round(nvl(max(a.fileSize), 0), 0) maxFileSize,
