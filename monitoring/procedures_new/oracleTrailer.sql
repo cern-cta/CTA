@@ -357,7 +357,7 @@ BEGIN
      numBytesWriteAvg)
     -- Gather data
     SELECT now - 5/1440 timestamp, interval, svcClass,
-           nvl(tapepool, '-') tapepool, count(*) files, 
+           nvl(tapepool, '-') tapepool, count(*) files,
            sum(fileSize) totalFileSize,
            (sum(fileSize) / interval) numBytesWriteAvg
       FROM (
@@ -431,7 +431,7 @@ BEGIN
     (timestamp, interval, sourceSvcClass, destSvcClass, transferred, totalFileSize,
      minFileSize, maxFileSize, avgFileSize, stddevFileSize, medianFileSize)
     -- Gather data
-    SELECT now - 5/1440 timestamp, interval, src, dest, 
+    SELECT now - 5/1440 timestamp, interval, src, dest,
            (count(*) / interval) transferred,
            sum(params.value)        totalFileSize,
            min(params.value)        minFileSize,
@@ -620,7 +620,7 @@ BEGIN
   -- Frequency: 5 minutes
   INSERT INTO ClientVersionStats
     (timestamp, interval, clientVersion, requests)
-    SELECT now - 5/1440 timestamp, interval, clientVersion, 
+    SELECT now - 5/1440 timestamp, interval, clientVersion,
            (count(*) / interval) requests
       FROM (
         SELECT nvl(params.value, 'Unknown') clientVersion
@@ -652,7 +652,7 @@ BEGIN
      avgRunTime, nbFilesPerMount, failures)
     SELECT now - 5/1440 timestamp, interval,
            decode(facility, 1, 'WRITE', 'READ') direction,
-           count(*) nbMounts, 
+           count(*) nbMounts,
            sum(nbFiles) nbFiles,
            sum(totalFileSize) totalFileSize,
            avg(runTime) avgRunTime,
@@ -663,18 +663,20 @@ BEGIN
                max(decode(params.name, 'FILESCP', params.value, NULL)) nbFiles,
                max(decode(params.name, 'BYTESCP', params.value, NULL)) totalFileSize,
                max(decode(params.name, 'RUNTIME', params.value, NULL)) runTime,
-               max(decode(params.name, 'serrno', 
-                 decode(params.value, 0, 0, 1), 0)) failure
+               max(decode(params.name, 'serrno',
+                 decode(params.value, 0, 0,
+                   -- Ignore serrno=28 (No space left on device)
+                   decode(params.value, 28, 0, 1)), 0)) failure
           FROM &dlfschema..dlf_messages messages,
                &dlfschema..dlf_num_param_values params
          WHERE messages.id = params.id
            AND messages.severity = 8
-           AND ((messages.facility = 1     -- migrator 
-           AND   messages.msg_no   = 21)   -- migrator ended   
+           AND ((messages.facility = 1     -- migrator
+           AND   messages.msg_no   = 21)   -- migrator ended
             OR  (messages.facility = 2     -- recaller
            AND   messages.msg_no   = 20))  -- recaller ended
-           AND messages.timestamp >  sysdate - 10/1440
-           AND messages.timestamp <= sysdate - 5/1440
+           AND messages.timestamp >  now - 10/1440
+           AND messages.timestamp <= now - 5/1440
            AND params.name IN ('FILESCP', 'BYTESCP', 'RUNTIME', 'serrno')
            AND params.timestamp >  now - 10/1440
            AND params.timestamp <= now - 5/1440
