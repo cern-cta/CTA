@@ -269,7 +269,7 @@ castor::tape::tapegateway::TapeGatewayDaemon::TapeGatewayDaemon() : castor::serv
       {CHECKER_CANNOT_UPDATE_DB, "VdqmRequestsChecker: cannot update db"},
       {CHECKER_RELEASING_UNUSED_TAPE, "VdqmRequestsChecker: releasing BUSY tape"},
       {CHECKER_VMGR_ERROR, "VdqmRequestsChecker: vmgr error, impossible to reset BUSY state"},
-      {LINKER_GETTING_STREAMS,"TapeStreamLinker: getting streams to resole"},
+      {LINKER_GETTING_STREAMS,"TapeStreamLinker: getting streams to resolve"},
       {LINKER_NO_STREAM, "TapeStreamLinker: no stream to resolve" },
       {LINKER_QUERYING_VMGR,"TapeStreamLinker: querying vmgr"},
       {LINKER_LINKING_TAPE_STREAM, "TapeStreamLinker: association tape-stream done"},
