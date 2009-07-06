@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: biniostream.h,v $ $Revision: 1.9 $ $Release$ $Date: 2007/09/04 16:02:21 $ $Author: waldron $
+ * @(#)$RCSfile: biniostream.h,v $ $Revision: 1.10 $ $Release$ $Date: 2009/07/06 16:27:41 $ $Author: itglp $
  *
  *
  *
@@ -30,6 +30,7 @@
 #include <sstream>
 #include <byteswap.h>
 #include "osdep.h"
+#include "castor/exception/OutOfMemory.hpp"
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 /* The host byte order is the same as the "inverted network byte order",
@@ -280,6 +281,11 @@ template <class charT, class traits, class Allocator>
   int len;
   os >> len;
   char* buf = (char*)malloc(len+1);
+  if(0 == buf) {
+    castor::exception::OutOfMemory e;
+    e.getMessage() << "Failed to allocate buffer of length " << len;
+    throw e;
+  }
   os.read(buf, len);
   buf[len] = 0;
   s += buf;
