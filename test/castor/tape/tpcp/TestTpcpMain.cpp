@@ -22,12 +22,6 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
  
-#include "castor/tape/tapegateway/EndNotification.hpp"
-#include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
-#include "castor/tape/tapegateway/FileRecalledNotification.hpp"
-#include "castor/tape/tapegateway/FileToRecall.hpp"
-#include "castor/tape/tapegateway/FileToRecallRequest.hpp"
-#include "castor/tape/tpcp/StreamOperators.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <iostream>
@@ -42,34 +36,9 @@ int main(int argc, char **argv) {
 
   std::ostream &os = std::cout;
 
-  tapegateway::FileToRecallRequest fileToRecallRequest;
-  utils::writeBanner(os, "fileToRecallRequest");
-  os << std::endl
-     << fileToRecallRequest << std::endl;
-
-  castor::tape::tapegateway::FileToRecall fileToRecall;
   os << std::endl;
-  utils::writeBanner(os, "fileToRecall");
-  os << std::endl
-     << fileToRecall << std::endl;
-
-  tapegateway::FileRecalledNotification fileRecalledNotification;
+  utils::writeBanner(os, "Test tpcp");
   os << std::endl;
-  utils::writeBanner(os, "fileRecalledNotification");
-    os << std::endl
-     << fileRecalledNotification << std::endl;
-
-  tapegateway::EndNotification endNotification;
-  os << std::endl;
-  utils::writeBanner(os, "EndNotification");
-    os << std::endl
-     << endNotification << std::endl;
-
-  tapegateway::EndNotificationErrorReport endNotificationErrorReport;
-  os << std::endl;
-  utils::writeBanner(os, "EndNotificationErrorReport");
-    os << std::endl
-     << endNotificationErrorReport << std::endl;
 
   return 0;
 }
