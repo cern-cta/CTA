@@ -2046,27 +2046,53 @@ HERE
 chmod +x /tmp/aggregatord.sh
 scp /tmp/aggregatord.sh $TPSRV:/aggregator
 ssh $TPSRV /aggregator/aggregatord.sh
+ssh $TPSRV ps -ef | grep aggregatord
 rm /tmp/aggregatord.sh
 
 
-How to install and run an rtcpd for development on tpsrv202
-===========================================================
+How to install an rtcpd for development on a tape server
+========================================================
 
-CASTOR_CVS=/usr/local/src/CASTOR2
-cd $CASTOR_CVS
-ssh tpsrv202 mkdir /rtcpdEIO
-scp `find -name '*.so*' | xargs echo` tpsrv202:/rtcpdEIO
-scp rtcopy/rtcpd tpsrv202:/rtcpdEIO
+Create a new file called reinstallRtcpd.sh with your favourite text editor
+and enter the following code.  Once finished make sure the file is executable
+and then run it.  The code:
+
+NB_ARGS=$#
+
+# Function to print usage message
+function usage {
+  echo
+  echo "Usage: reinstallRtcpd.sh tapeServer"
+}
+
+# Check the number of command line arguments
+if test $NB_ARGS -ne 1; then
+  echo
+  echo -n "ERROR: "
+  echo "Invalid number of arguments"
+  usage
+  echo
+  exit -1
+fi
+
+TPSRV=$1
+
+ssh $TPSRV killall rtcpd
+ssh $TPSRV rm -rf /rtcpd
+ssh $TPSRV mkdir /rtcpd
+scp `find $CASTOR_CVS -name '*.so*' | xargs echo` $TPSRV:/rtcpd
+scp $CASTOR_CVS/rtcopy/rtcpd $TPSRV:/rtcpd
 cat > /tmp/rtcpd.sh << HERE
 #!/bin/sh
 
-export LD_LIBRARY_PATH=/rtcpdEIO
+export LD_LIBRARY_PATH=/rtcpd
 ulimit -c unlimited
-/rtcpdEIO/rtcpd
+/rtcpd/rtcpd
 HERE
 chmod +x /tmp/rtcpd.sh
-scp /tmp/rtcpd.sh tpsrv202:/rtcpdEIO
-ssh tpsrv202 /rtcpdEIO/rtcpd.sh
+scp /tmp/rtcpd.sh $TPSRV:/rtcpd
+ssh $TPSRV /rtcpd/rtcpd.sh
+ssh $TPSRV ps -ef | grep rtcpd
 rm /tmp/rtcpd.sh
 
 
