@@ -561,12 +561,12 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
 
     // Check the volume request ID of the VolumeRequest object matches that of
     // the reply from the VDQM when the drive was requested
-    if(volumeRequest->vdqmVolReqId() != m_volReqId) {
+    if(volumeRequest->mountTransactionId() != (uint64_t)m_volReqId) {
       castor::exception::InvalidArgument ex;
 
       ex.getMessage()
-        << "Received the wrong volume request ID from the aggregator"
-        << ": Actual=" << volumeRequest->vdqmVolReqId()
+        << "Received the wrong mount transaction ID from the aggregator"
+        << ": Actual=" << volumeRequest->mountTransactionId()
         << " Expected=" <<  m_volReqId;
 
       throw ex;
@@ -578,7 +578,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     volumeMsg.setMode(m_parsedCommandLine.action == Action::write ?
       WRITE_ENABLE : WRITE_DISABLE);
     volumeMsg.setLabel(m_vmgrTapeInfo.lbltype);
-    volumeMsg.setTransactionId(m_volReqId);
+    volumeMsg.setMountTransactionId(m_volReqId);
     volumeMsg.setDensity(m_vmgrTapeInfo.density);
 
     // Send the volume message to the aggregator

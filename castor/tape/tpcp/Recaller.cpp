@@ -178,13 +178,13 @@ bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
     os << std::endl;
   }
 
-  // Check the transaction ID
-  if(fileToRecallRequest->transactionId() != m_volReqId) {
+  // Check the mount transaction ID
+  if(fileToRecallRequest->mountTransactionId() != m_volReqId) {
     castor::exception::Exception ex(EBADMSG);
 
     ex.getMessage()
-      << "Transaction ID mismatch"
-         ": Actual=" << fileToRecallRequest->transactionId()
+      << "Mount transaction ID mismatch"
+         ": Actual=" << fileToRecallRequest->mountTransactionId()
       << " Expected=" << m_volReqId;
 
     throw ex;
@@ -200,7 +200,7 @@ bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
 
     // Create FileToRecall message for the aggregator
     tapegateway::FileToRecall fileToRecall;
-    fileToRecall.setTransactionId(m_volReqId);
+    fileToRecall.setMountTransactionId(m_volReqId);
     fileToRecall.setNshost("tpcp\0");
     fileToRecall.setFileid(0);
     fileToRecall.setFseq(tapeFseq);
@@ -228,7 +228,7 @@ bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
 
     // Create the NoMoreFiles message for the aggregator
     castor::tape::tapegateway::NoMoreFiles noMore;
-    noMore.setTransactionId(m_volReqId);
+    noMore.setMountTransactionId(m_volReqId);
 
     // Send the NoMoreFiles message to the aggregator
     sock.sendObject(noMore);
@@ -272,13 +272,13 @@ bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
     os << std::endl;
   }
 
-  // Check the transaction ID
-  if(fileRecalledNotification->transactionId() != m_volReqId) {
+  // Check the mount transaction ID
+  if(fileRecalledNotification->mountTransactionId() != m_volReqId) {
     castor::exception::Exception ex(EBADMSG);
 
     ex.getMessage()
-      << "Transaction ID mismatch"
-         ": Actual=" << fileRecalledNotification->transactionId()
+      << "Mount transaction ID mismatch"
+         ": Actual=" << fileRecalledNotification->mountTransactionId()
       << " Expected=" << m_volReqId;
 
     throw ex;
@@ -286,7 +286,7 @@ bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
 
   // Create the NotificationAcknowledge message for the aggregator
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
-  acknowledge.setTransactionId(m_volReqId);
+  acknowledge.setMountTransactionId(m_volReqId);
 
   // Send the NotificationAcknowledge message to the aggregator
   sock.sendObject(acknowledge);
@@ -329,13 +329,13 @@ bool castor::tape::tpcp::Recaller::handleEndNotification(
     os << std::endl;
   }
 
-  // Check the transaction ID
-  if(endNotification->transactionId() != m_volReqId) {
+  // Check the mount transaction ID
+  if(endNotification->mountTransactionId() != m_volReqId) {
     castor::exception::Exception ex(EBADMSG);
 
     ex.getMessage()
-      << "Transaction ID mismatch"
-         ": Actual=" << endNotification->transactionId()
+      << "Mount transaction ID mismatch"
+         ": Actual=" << endNotification->mountTransactionId()
       << " Expected=" << m_volReqId;
 
     throw ex;
@@ -343,7 +343,7 @@ bool castor::tape::tpcp::Recaller::handleEndNotification(
 
   // Create the NotificationAcknowledge message for the aggregator
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
-  acknowledge.setTransactionId(m_volReqId);
+  acknowledge.setMountTransactionId(m_volReqId);
 
   // Send the NotificationAcknowledge message to the aggregator
   sock.sendObject(acknowledge);
@@ -387,13 +387,13 @@ bool castor::tape::tpcp::Recaller::handleEndNotificationErrorReport(
     os << std::endl;
   }
 
-  // Check the transaction ID
-  if(endNotificationErrorReport->transactionId() != m_volReqId) {
+  // Check the mount transaction ID
+  if(endNotificationErrorReport->mountTransactionId() != m_volReqId) {
     castor::exception::Exception ex(EBADMSG);
 
     ex.getMessage()
-      << "Transaction ID mismatch"
-         ": Actual=" << endNotificationErrorReport->transactionId()
+      << "Mount transaction ID mismatch"
+         ": Actual=" << endNotificationErrorReport->mountTransactionId()
       << " Expected=" << m_volReqId;
 
     throw ex;
@@ -401,7 +401,7 @@ bool castor::tape::tpcp::Recaller::handleEndNotificationErrorReport(
 
   // Create the NotificationAcknowledge message for the aggregator
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
-  acknowledge.setTransactionId(m_volReqId);
+  acknowledge.setMountTransactionId(m_volReqId);
 
   // Send the NotificationAcknowledge message to the aggregator
   sock.sendObject(acknowledge);

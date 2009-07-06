@@ -122,7 +122,7 @@ void castor::tape::tpcp::ActionHandler::acknowledgeEndOfSession()
 
   // Create the NotificationAcknowledge message for the aggregator
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
-  acknowledge.setTransactionId(m_volReqId);
+  acknowledge.setMountTransactionId(m_volReqId);
 
   // Send the volume message to the aggregator
   callbackConnectionSocket.sendObject(acknowledge);

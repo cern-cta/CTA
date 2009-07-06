@@ -40,7 +40,7 @@ void castor::tape::tpcp::StreamHelper::write(std::ostream &os,
   const castor::tape::tapegateway::BaseFileInfo &value) throw() {
 
   os << "{"
-        "transactionId="       << value.transactionId()       <<   ","
+        "mountTransactionId()="       << value.mountTransactionId()       <<   ","
         "nshost=\""            << value.nshost()              << "\","     
         "fileid="              << value.fileid()              <<   ","
         "fseq="                << value.fseq()                <<   ","
@@ -74,7 +74,7 @@ void castor::tape::tpcp::StreamHelper::write(std::ostream &os,
   const castor::tape::tapegateway::NoMoreFiles &value) throw() {
 
   os << "{"
-        "transactionId=" << value.transactionId()<< "}";
+        "mountTransactionId()=" << value.mountTransactionId()<< "}";
 }
 
 
@@ -85,7 +85,7 @@ void castor::tape::tpcp::StreamHelper::write(std::ostream &os,
   const castor::tape::tapegateway::FileToRecallRequest &value) throw() {
 
   os << "{"
-        "transactionId=" << value.transactionId()<< "}";
+        "mountTransactionId()=" << value.mountTransactionId()<< "}";
 }
 
 
@@ -110,7 +110,7 @@ void castor::tape::tpcp::StreamHelper::write(std::ostream &os,
   const castor::tape::tapegateway::NotificationAcknowledge &value) throw() {
 
   os << "{"
-        "transactionId=" << value.transactionId()<< "}";
+        "mountTransactionId()=" << value.mountTransactionId()<< "}";
 }
 
 
@@ -121,7 +121,7 @@ void castor::tape::tpcp::StreamHelper::write(std::ostream &os,
   const castor::tape::tapegateway::EndNotification &value) throw() {
 
   os << "{"
-        "transactionId=" << value.transactionId() << "}";
+        "mountTransactionId()=" << value.mountTransactionId() << "}";
 }
 
 
@@ -132,7 +132,7 @@ void castor::tape::tpcp::StreamHelper::write(std::ostream &os,
   const castor::tape::tapegateway::EndNotificationErrorReport &value) throw() {
 
   os << "{"
-        "transactionId="  << value.transactionId() <<   "," 
+        "mountTransactionId()="  << value.mountTransactionId() <<   "," 
         "errorCode="      << value.errorCode()     <<   "," 
         "errorMessage=\"" << value.errorMessage()  << "\"}";
 }
