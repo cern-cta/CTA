@@ -77,7 +77,7 @@ public:
    * @param fileId               Out parameter: The CASTOR file ID.
    * @param tapeFileSeq          Out parameter: The tape file sequence number.
    * @param fileSize             Out parameter: The six of the file.
-   * @param lastKnownFileName    Out parameter: The last known name of the file
+   * @param lastKnownFilename    Out parameter: The last known name of the file
    * @param lastModificationTime Out parameter: The time of the last
    * modification.
    * @param positionCommandCode  The position command code.
@@ -88,7 +88,7 @@ public:
     const unsigned short gatewayPort, char (&filePath)[CA_MAXPATHLEN+1],
     char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId,
     int32_t &tapeFileSeq, uint64_t &fileSize,
-    char (&lastKnownFileName)[CA_MAXPATHLEN+1], uint64_t &lastModificationTime,
+    char (&lastKnownFilename)[CA_MAXPATHLEN+1], uint64_t &lastModificationTime,
     int32_t &positionCommandCode)
     throw(castor::exception::Exception);
 

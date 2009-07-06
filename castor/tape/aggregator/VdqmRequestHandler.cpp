@@ -41,7 +41,6 @@
 #include "castor/tape/aggregator/RtcpTxRx.hpp"
 #include "castor/tape/aggregator/VdqmRequestHandler.hpp"
 #include "castor/tape/net/net.hpp"
-#include "castor/tape/tapegateway/ErrorReport.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/utils/utils.hpp"

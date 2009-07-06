@@ -30,7 +30,6 @@
 #include "castor/tape/aggregator/SynchronizedCounter.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
-#include "castor/tape/tapegateway/ErrorReport.hpp"
 #include "castor/tape/tapegateway/FileMigratedNotification.hpp"
 #include "castor/tape/tapegateway/FileRecalledNotification.hpp"
 #include "castor/tape/tapegateway/FileToMigrate.hpp"
@@ -75,7 +74,7 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
 
   // Prepare the request
   tapegateway::VolumeRequest request;
-  request.setVdqmVolReqId(volReqId);
+  request.setMountTransactionId(volReqId);
 
   //===================================================
   // Hardcoded volume INFO
@@ -138,7 +137,7 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
     // Copy the reply information
     try {
       tapegateway::Volume &volume = dynamic_cast<tapegateway::Volume&>(*reply);
-      volReqIdFromGateway = volume.transactionId();
+      volReqIdFromGateway = volume.mountTransactionId();
       utils::copyString(vid, volume.vid().c_str());
       mode = volume.mode();
       utils::copyString(label, volume.label().c_str());
@@ -156,7 +155,7 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
     try {
       tapegateway::NoMoreFiles &noMoreFiles =
         dynamic_cast<tapegateway::NoMoreFiles&>(*reply);
-      volReqIdFromGateway = noMoreFiles.transactionId();
+      volReqIdFromGateway = noMoreFiles.mountTransactionId();
     } catch(std::bad_cast &bc) {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Failed to down cast reply object to tapegateway::NoMoreFiles");
@@ -172,7 +171,7 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
       try {
         tapegateway::EndNotificationErrorReport &errorReport =
           dynamic_cast<tapegateway::EndNotificationErrorReport&>(*reply);
-        volReqIdFromGateway = errorReport.transactionId();
+        volReqIdFromGateway = errorReport.mountTransactionId();
         errorCode = errorReport.errorCode();
         errorMessage = errorReport.errorMessage();
       } catch(std::bad_cast &bc) {
@@ -236,7 +235,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
   const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost,
   const unsigned short gatewayPort, char (&filePath)[CA_MAXPATHLEN+1], 
   char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId, int32_t &tapeFileSeq,
-  uint64_t &fileSize, char (&lastKnownFileName)[CA_MAXPATHLEN+1],
+  uint64_t &fileSize, char (&lastKnownFilename)[CA_MAXPATHLEN+1],
   uint64_t &lastModificationTime, int32_t &positionCommandCode)
   throw(castor::exception::Exception) {
 
@@ -262,9 +261,9 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
        fileId               = 111111111;
        tapeFileSeq          = 1;
        fileSize             = 1451640;
-       utils::copyString(lastKnownFileName, "file1.txt");
+       utils::copyString(lastKnownFilename, "file1.txt");
        lastModificationTime = 1234567890;
-       positionCommandCode  = 0;// TPPOSIT_FSEQ: position by file sequence number
+       positionCommandCode  = 0;//TPPOSIT_FSEQ: position by file sequence number
        {
          castor::dlf::Param params[] = {
            castor::dlf::Param("volReqId"            , volReqId            ),
@@ -275,7 +274,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
            castor::dlf::Param("fileId"              , fileId              ),
            castor::dlf::Param("tapeFileSeq"         , tapeFileSeq         ),
            castor::dlf::Param("fileSize"            , fileSize            ),
-           castor::dlf::Param("lastKnownFileName"   , lastKnownFileName   ),
+           castor::dlf::Param("lastKnownFilename"   , lastKnownFilename   ),
            castor::dlf::Param("lastModificationTime", lastModificationTime)};
          castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
            AGGREGATOR_GOT_FILE_TO_MIGRATE_FROM_GATEWAY, params);
@@ -292,9 +291,9 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
        fileId               = 222222222;
        tapeFileSeq          = 2;
        fileSize             = 1451640;
-       utils::copyString(lastKnownFileName, "file2.txt");
+       utils::copyString(lastKnownFilename, "file2.txt");
        lastModificationTime = 9876543210;
-       positionCommandCode  = 0;// TPPOSIT_FSEQ: position by file sequence number
+       positionCommandCode  = 0;//TPPOSIT_FSEQ: position by file sequence number
        {
          castor::dlf::Param params[] = {
            castor::dlf::Param("volReqId"            , volReqId            ),
@@ -305,7 +304,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
            castor::dlf::Param("fileId"              , fileId              ),
            castor::dlf::Param("tapeFileSeq"         , tapeFileSeq         ),
            castor::dlf::Param("fileSize"            , fileSize            ),
-           castor::dlf::Param("lastKnownFileName"   , lastKnownFileName   ),
+           castor::dlf::Param("lastKnownFilename"   , lastKnownFilename   ),
            castor::dlf::Param("lastModificationTime", lastModificationTime)};
          castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
            AGGREGATOR_GOT_FILE_TO_MIGRATE_FROM_GATEWAY, params);
@@ -334,7 +333,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
 
   // Prepare the request
   tapegateway::FileToMigrateRequest request;
-  request.setTransactionId(volReqId);
+  request.setMountTransactionId(volReqId);
 
   // Connect to the tape gateway
   castor::io::ClientSocket gatewaySocket(gatewayPort, gatewayHost);
@@ -383,13 +382,13 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
     try {
       tapegateway::FileToMigrate &file =
         dynamic_cast<tapegateway::FileToMigrate&>(*reply);
-      volReqIdFromGateway = file.transactionId();
+      volReqIdFromGateway = file.mountTransactionId();
       utils::copyString(filePath, file.path().c_str());
       utils::copyString(nsHost, file.nshost().c_str());
       fileId = file.fileid();
       tapeFileSeq = file.fseq();
       fileSize = file.fileSize();
-      utils::copyString(lastKnownFileName, file.lastKnownFileName().c_str());
+      utils::copyString(lastKnownFilename, file.lastKnownFilename().c_str());
       lastModificationTime = file.lastModificationTime();
       positionCommandCode = file.positionCommandCode();
     } catch(std::bad_cast &bc) {
@@ -413,7 +412,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
     try {
       tapegateway::NoMoreFiles &noMoreFiles =
         dynamic_cast<tapegateway::NoMoreFiles&>(*reply);
-      volReqIdFromGateway = noMoreFiles.transactionId();
+      volReqIdFromGateway = noMoreFiles.mountTransactionId();
     } catch(std::bad_cast &bc) {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Failed to down cast reply object to tapegateway::NoMoreFiles");
@@ -428,21 +427,22 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
     }
     break;
 
-  case OBJ_ErrorReport:
+  case OBJ_EndNotificationErrorReport:
     {
-       int errorCode;
-       std::string errorMessage;
+      int errorCode;
+      std::string errorMessage;
 
       // Copy the reply information
       try {
-        tapegateway::ErrorReport &errorReport =
-          dynamic_cast<tapegateway::ErrorReport&>(*reply);
-        volReqIdFromGateway = errorReport.transactionId();
+        tapegateway::EndNotificationErrorReport &errorReport =
+          dynamic_cast<tapegateway::EndNotificationErrorReport&>(*reply);
+        volReqIdFromGateway = errorReport.mountTransactionId();
         errorCode = errorReport.errorCode();
         errorMessage = errorReport.errorMessage();
       } catch(std::bad_cast &bc) {
         TAPE_THROW_EX(castor::exception::Internal,
-          "Failed to down cast reply object to tapegateway::NoMoreFiles");
+          ": Failed to down cast reply object to "
+          "tapegateway::EndNotificationErrorReport");
       }
 
       // If there is a transaction ID mismatch
@@ -455,10 +455,11 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
 
       // Translate the reception of the error report into a C++ exception
       TAPE_THROW_CODE(errorCode,
-        ": Tape gateway error report "
-        ": " << errorMessage);
+         ": Tape gateway error report "
+         ": " << errorMessage);
     }
     break;
+
   default:
     {
       TAPE_THROW_CODE(EBADMSG,
@@ -478,7 +479,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
       castor::dlf::Param("fileId"              , fileId              ),
       castor::dlf::Param("tapeFileSeq"         , tapeFileSeq         ),
       castor::dlf::Param("fileSize"            , fileSize            ),
-      castor::dlf::Param("lastKnownFileName"   , lastKnownFileName   ),
+      castor::dlf::Param("lastKnownFilename"   , lastKnownFilename   ),
       castor::dlf::Param("lastModificationTime", lastModificationTime)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_GOT_FILE_TO_MIGRATE_FROM_GATEWAY, params);
@@ -545,7 +546,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
 
   // Prepare the request
   tapegateway::FileToRecallRequest request;
-  request.setTransactionId(volReqId);
+  request.setMountTransactionId(volReqId);
 
   // Connect to the tape gateway
   castor::io::ClientSocket gatewaySocket(gatewayPort, gatewayHost);
@@ -594,7 +595,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
     try {
       tapegateway::FileToRecall &file =
         dynamic_cast<tapegateway::FileToRecall&>(*reply);
-      volReqIdFromGateway = file.transactionId();
+      volReqIdFromGateway = file.mountTransactionId();
       utils::copyString(filePath, file.path().c_str());
       utils::copyString(nsHost, file.nshost().c_str());
       fileId = file.fileid();
@@ -617,7 +618,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
     try {
       tapegateway::NoMoreFiles &noMoreFiles =
         dynamic_cast<tapegateway::NoMoreFiles&>(*reply);
-      volReqIdFromGateway = noMoreFiles.transactionId();
+      volReqIdFromGateway = noMoreFiles.mountTransactionId();
     } catch(std::bad_cast &bc) {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Failed to down cast reply object to tapegateway::NoMoreFiles");
@@ -625,29 +626,39 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
 
     break;
 
-  case OBJ_ErrorReport:
+  case OBJ_EndNotificationErrorReport:
     {
-       int errorCode;
-       std::string errorMessage;
+      int errorCode;
+      std::string errorMessage;
 
       // Copy the reply information
       try {
-        tapegateway::ErrorReport &errorReport =
-          dynamic_cast<tapegateway::ErrorReport&>(*reply);
-        volReqIdFromGateway = errorReport.transactionId();
+        tapegateway::EndNotificationErrorReport &errorReport =
+          dynamic_cast<tapegateway::EndNotificationErrorReport&>(*reply);
+        volReqIdFromGateway = errorReport.mountTransactionId();
         errorCode = errorReport.errorCode();
         errorMessage = errorReport.errorMessage();
       } catch(std::bad_cast &bc) {
         TAPE_THROW_EX(castor::exception::Internal,
-          ": Failed to down cast reply object to tapegateway::NoMoreFiles");
+          ": Failed to down cast reply object to "
+          "tapegateway::EndNotificationErrorReport");
+      }
+
+      // If there is a transaction ID mismatch
+      if(volReqIdFromGateway != volReqId) {
+        TAPE_THROW_CODE(EBADMSG,
+             ": Transaction ID mismatch"
+             ": Expected = " << volReqId
+          << ": Actual = " << volReqIdFromGateway);
       }
 
       // Translate the reception of the error report into a C++ exception
       TAPE_THROW_CODE(errorCode,
-        ": Tape gateway error report "
-        ": " << errorMessage);
+         ": Tape gateway error report "
+         ": " << errorMessage);
     }
     break;
+
   default:
     {
       TAPE_THROW_CODE(EBADMSG,
@@ -737,7 +748,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
   // Prepare the request
   tapegateway::FileMigratedNotification request;
 
-  request.setTransactionId(volReqId);
+  request.setMountTransactionId(volReqId);
   request.setNshost(nsHost);
   request.setFileid(fileId);
   request.setBlockId0(blockId[0]); // block ID=4 integers (little indian order)
@@ -799,7 +810,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
     try {
       tapegateway::NotificationAcknowledge &notificationAcknowledge =
         dynamic_cast<tapegateway::NotificationAcknowledge&>(*reply);
-      volReqIdFromGateway = notificationAcknowledge.transactionId();
+      volReqIdFromGateway = notificationAcknowledge.mountTransactionId();
     } catch(std::bad_cast &bc) {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Failed to down cast reply object to "
@@ -812,6 +823,39 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
            ": Transaction ID mismatch"
            ": Expected = " << volReqId
         << ": Actual = " << volReqIdFromGateway);
+    }
+    break;
+
+  case OBJ_EndNotificationErrorReport:
+    {
+      int errorCode;
+      std::string errorMessage;
+
+      // Copy the reply information
+      try {
+        tapegateway::EndNotificationErrorReport &errorReport =
+          dynamic_cast<tapegateway::EndNotificationErrorReport&>(*reply);
+        volReqIdFromGateway = errorReport.mountTransactionId();
+        errorCode = errorReport.errorCode();
+        errorMessage = errorReport.errorMessage();
+      } catch(std::bad_cast &bc) {
+        TAPE_THROW_EX(castor::exception::Internal,
+          ": Failed to down cast reply object to "
+          "tapegateway::EndNotificationErrorReport");
+      }
+
+      // If there is a transaction ID mismatch
+      if(volReqIdFromGateway != volReqId) {
+        TAPE_THROW_CODE(EBADMSG,
+             ": Transaction ID mismatch"
+             ": Expected = " << volReqId
+          << ": Actual = " << volReqIdFromGateway);
+      }
+
+      // Translate the reception of the error report into a C++ exception
+      TAPE_THROW_CODE(errorCode,
+         ": Tape gateway error report "
+         ": " << errorMessage);
     }
     break;
 
@@ -885,7 +929,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
 
   // Prepare the request
   tapegateway::FileRecalledNotification request;
-  request.setTransactionId(volReqId);
+  request.setMountTransactionId(volReqId);
   request.setNshost(nsHost);
   request.setFileid(fileId);
   request.setFseq(tapeFileSeq);
@@ -943,7 +987,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
     try {
       tapegateway::NotificationAcknowledge &notificationAcknowledge =
         dynamic_cast<tapegateway::NotificationAcknowledge&>(*reply);
-      volReqIdFromGateway = notificationAcknowledge.transactionId();
+      volReqIdFromGateway = notificationAcknowledge.mountTransactionId();
     } catch(std::bad_cast &bc) {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Failed to down cast reply object to "
@@ -956,6 +1000,39 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
            ": Transaction ID mismatch"
            ": Expected = " << volReqId
         << ": Actual = " << volReqIdFromGateway);
+    }
+    break;
+
+  case OBJ_EndNotificationErrorReport:
+    {
+      int errorCode;
+      std::string errorMessage;
+
+      // Copy the reply information
+      try {
+        tapegateway::EndNotificationErrorReport &errorReport =
+          dynamic_cast<tapegateway::EndNotificationErrorReport&>(*reply);
+        volReqIdFromGateway = errorReport.mountTransactionId();
+        errorCode = errorReport.errorCode();
+        errorMessage = errorReport.errorMessage();
+      } catch(std::bad_cast &bc) {
+        TAPE_THROW_EX(castor::exception::Internal,
+          ": Failed to down cast reply object to "
+          "tapegateway::EndNotificationErrorReport");
+      }
+
+      // If there is a transaction ID mismatch
+      if(volReqIdFromGateway != volReqId) {
+        TAPE_THROW_CODE(EBADMSG,
+             ": Transaction ID mismatch"
+             ": Expected = " << volReqId
+          << ": Actual = " << volReqIdFromGateway);
+      }
+
+      // Translate the reception of the error report into a C++ exception
+      TAPE_THROW_CODE(errorCode,
+         ": Tape gateway error report "
+         ": " << errorMessage);
     }
     break;
 
@@ -1014,7 +1091,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayEndOfSession(
 
   // Prepare the request
   tapegateway::EndNotification request;
-  request.setTransactionId(volReqId);
+  request.setMountTransactionId(volReqId);
 
   // Connect to the tape gateway
   castor::io::ClientSocket gatewaySocket(gatewayPort, gatewayHost);
@@ -1063,7 +1140,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayEndOfSession(
     try {
       tapegateway::NotificationAcknowledge &notificationAcknowledge =
         dynamic_cast<tapegateway::NotificationAcknowledge&>(*reply);
-      volReqIdFromGateway = notificationAcknowledge.transactionId();
+      volReqIdFromGateway = notificationAcknowledge.mountTransactionId();
     } catch(std::bad_cast &bc) {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Failed to down cast reply object to "
@@ -1076,6 +1153,39 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayEndOfSession(
            ": Transaction ID mismatch"
            ": Expected = " << volReqId
         << ": Actual = " << volReqIdFromGateway);
+    }
+    break;
+
+  case OBJ_EndNotificationErrorReport:
+    {
+      int errorCode;
+      std::string errorMessage;
+
+      // Copy the reply information
+      try {
+        tapegateway::EndNotificationErrorReport &errorReport =
+          dynamic_cast<tapegateway::EndNotificationErrorReport&>(*reply);
+        volReqIdFromGateway = errorReport.mountTransactionId();
+        errorCode = errorReport.errorCode();
+        errorMessage = errorReport.errorMessage();
+      } catch(std::bad_cast &bc) {
+        TAPE_THROW_EX(castor::exception::Internal,
+          ": Failed to down cast reply object to "
+          "tapegateway::EndNotificationErrorReport");
+      }
+
+      // If there is a transaction ID mismatch
+      if(volReqIdFromGateway != volReqId) {
+        TAPE_THROW_CODE(EBADMSG,
+             ": Transaction ID mismatch"
+             ": Expected = " << volReqId
+          << ": Actual = " << volReqIdFromGateway);
+      }
+
+      // Translate the reception of the error report into a C++ exception
+      TAPE_THROW_CODE(errorCode,
+         ": Tape gateway error report "
+         ": " << errorMessage);
     }
     break;
 
@@ -1127,7 +1237,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayEndOfFailedSession(
 
   // Prepare the request
   tapegateway::EndNotificationErrorReport request;
-  request.setTransactionId(volReqId);
+  request.setMountTransactionId(volReqId);
   request.setErrorCode(ex.code());
   request.setErrorMessage(ex.getMessage().str());
 
@@ -1178,7 +1288,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayEndOfFailedSession(
     try {
       tapegateway::NotificationAcknowledge &notificationAcknowledge =
         dynamic_cast<tapegateway::NotificationAcknowledge&>(*reply);
-      volReqIdFromGateway = notificationAcknowledge.transactionId();
+      volReqIdFromGateway = notificationAcknowledge.mountTransactionId();
     } catch(std::bad_cast &bc) {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Failed to down cast reply object to "
@@ -1191,6 +1301,39 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayEndOfFailedSession(
            ": Transaction ID mismatch"
            ": Expected = " << volReqId
         << ": Actual = " << volReqIdFromGateway);
+    }
+    break;
+
+  case OBJ_EndNotificationErrorReport:
+    {
+      int errorCode;
+      std::string errorMessage;
+
+      // Copy the reply information
+      try {
+        tapegateway::EndNotificationErrorReport &errorReport =
+          dynamic_cast<tapegateway::EndNotificationErrorReport&>(*reply);
+        volReqIdFromGateway = errorReport.mountTransactionId();
+        errorCode = errorReport.errorCode();
+        errorMessage = errorReport.errorMessage();
+      } catch(std::bad_cast &bc) {
+        TAPE_THROW_EX(castor::exception::Internal,
+          ": Failed to down cast reply object to "
+          "tapegateway::EndNotificationErrorReport");
+      }
+
+      // If there is a transaction ID mismatch
+      if(volReqIdFromGateway != volReqId) {
+        TAPE_THROW_CODE(EBADMSG,
+             ": Transaction ID mismatch"
+             ": Expected = " << volReqId
+          << ": Actual = " << volReqIdFromGateway);
+      }
+
+      // Translate the reception of the error report into a C++ exception
+      TAPE_THROW_CODE(errorCode,
+         ": Tape gateway error report "
+         ": " << errorMessage);
     }
     break;
 

@@ -353,8 +353,8 @@ void castor::tape::aggregator::BridgeProtocolEngine::run()
   uint64_t migrationFileId = 0;
   int32_t migrationFileTapeFileSeq = 0;
   uint64_t migrationFileSize = 0;
-  char migrationFileLastKnownFileName[CA_MAXPATHLEN+1];
-  utils::setBytes(migrationFileLastKnownFileName, '\0');
+  char migrationFileLastKnownFilename[CA_MAXPATHLEN+1];
+  utils::setBytes(migrationFileLastKnownFilename, '\0');
   uint64_t migrationFileLastModificationTime = 0;
   int32_t positionCommandCode = 0;
   char tapePath[CA_MAXPATHLEN+1];
@@ -371,7 +371,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::run()
       GatewayTxRx::getFileToMigrateFromGateway(m_cuuid, m_volReqId,
         m_gatewayHost, m_gatewayPort, migrationFilePath, migrationFileNsHost,
         migrationFileId, migrationFileTapeFileSeq, migrationFileSize,
-        migrationFileLastKnownFileName, migrationFileLastModificationTime,
+        migrationFileLastKnownFilename, migrationFileLastModificationTime,
         positionCommandCode);
 
     tapeFseq=migrationFileTapeFileSeq; 
@@ -546,8 +546,8 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
       uint64_t fileId = 0;
       int32_t tapeFseq = 0;
       uint64_t fileSize = 0;
-      char lastKnownFileName[CA_MAXPATHLEN+1];
-      utils::setBytes(lastKnownFileName, '\0');
+      char lastKnownFilename[CA_MAXPATHLEN+1];
+      utils::setBytes(lastKnownFilename, '\0');
       uint64_t lastModificationTime = 0;
       int32_t  positionMethod = 0;
       unsigned char blockId[4];
@@ -556,7 +556,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
       // If there is a file to migrate
       if(GatewayTxRx::getFileToMigrateFromGateway(m_cuuid, m_volReqId,
         m_gatewayHost, m_gatewayPort, filePath, nsHost, fileId, tapeFseq,
-        fileSize, lastKnownFileName, lastModificationTime, positionMethod)) {
+        fileSize, lastKnownFilename, lastModificationTime, positionMethod)) {
 
         char tapeFileId[CA_MAXPATHLEN+1];
         utils::toHex(fileId, tapeFileId);
