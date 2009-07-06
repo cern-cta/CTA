@@ -1,5 +1,5 @@
-//          $Id: XrdxCastor2Fs.cc,v 1.13 2009/06/08 19:15:41 apeters Exp $
-const char *XrdxCastor2FsCVSID = "$Id: XrdxCastor2Fs.cc,v 1.13 2009/06/08 19:15:41 apeters Exp $";
+//          $Id: XrdxCastor2Fs.cc,v 1.14 2009/07/06 08:27:11 apeters Exp $
+const char *XrdxCastor2FsCVSID = "$Id: XrdxCastor2Fs.cc,v 1.14 2009/07/06 08:27:11 apeters Exp $";
 
 #include "XrdVersion.hh"
 #include "XrdClient/XrdClientAdmin.hh"
@@ -1313,6 +1313,8 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
    redirectionpfn2 = 0; 
    redirectionpfn2 += ":"; redirectionpfn2 += stagehost;
    redirectionpfn2 += ":"; redirectionpfn2 += serviceclass;
+   redirectionpfn2 += ":0"; 
+   redirectionpfn2 += ":0";
 
    bool nocachelookup=true;
 

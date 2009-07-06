@@ -1,4 +1,4 @@
-//         $Id: XrdxCastor2Fs.hh,v 1.5 2009/05/19 19:52:21 apeters Exp $
+//         $Id: XrdxCastor2Fs.hh,v 1.6 2009/07/06 08:27:11 apeters Exp $
 
 #ifndef __XCASTOR2_FS_H__
 #define __XCASTOR2_FS_H__
@@ -23,6 +23,7 @@
 #include "XrdSfs/XrdSfsInterface.hh"
 #include "XrdOuc/XrdOucHash.hh"
 #include "XrdOuc/XrdOucTable.hh"
+#include "XrdOuc/XrdOucTrace.hh"
 #include "XrdOfs/XrdOfsEvr.hh"
 #include "XrdCms/XrdCmsFinder.hh"
 #include "XrdSec/XrdSecEntity.hh"

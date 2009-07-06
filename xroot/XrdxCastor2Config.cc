@@ -1,4 +1,4 @@
-//          $Id: XrdxCastor2Config.cc,v 1.2 2009/04/29 10:15:03 apeters Exp $
+//          $Id: XrdxCastor2Config.cc,v 1.3 2009/07/06 08:27:11 apeters Exp $
 
 
 #include <sys/types.h>
@@ -165,7 +165,6 @@ int XrdxCastor2Fs::Configure(XrdSysError &Eroute)
 	  Eroute.Say("=====> xcastor2.nsmap: ", sayit.c_str(),"");
 	  XrdOucString* mnsout = new XrdOucString(nsout.c_str());
 	  nstable->Add(nsin.c_str(),mnsout);
-	  printf("       verify:      : %s -> %s\n",nsin.c_str(),nstable->Find(nsin.c_str())->c_str());
 	}
 
 	if (!strcmp("proc",var)) 
@@ -211,7 +210,6 @@ int XrdxCastor2Fs::Configure(XrdSysError &Eroute)
 	  Eroute.Say("=====> xcastor2.role : ", sayit.c_str(),"");
 	  XrdOucString* mnsout = new XrdOucString(nsout.c_str());
 	  roletable->Add(nsin.c_str(),mnsout);
-	  printf("       verify:      : %s -> %s\n",nsin.c_str(),roletable->Find(nsin.c_str())->c_str());
 	}
       }
       if (!strcmp("capability",var)) {

@@ -1,4 +1,4 @@
-//          $Id: XrdxCastor2OfsProc.cc,v 1.1 2008/09/15 10:04:02 apeters Exp $
+//          $Id: XrdxCastor2OfsProc.cc,v 1.2 2009/07/06 08:27:11 apeters Exp $
 
 #include "XrdxCastor2Fs/XrdxCastor2Ofs.hh"
 #include "XrdOuc/XrdOucTrace.hh"
@@ -85,14 +85,26 @@ XrdxCastor2Ofs::UpdateProc(const char *inname)
     return Write2ProcFile("writedelay",(long long)WriteDelay);
   }
 
-  if (!strcmp(name,"/proc/readratelimit")) {
-    return Write2ProcFile("readratelimit",(long long)ReadRateLimit);
-  }
-  
-  if (!strcmp(name,"/proc/writeratelimit")) {
-    return Write2ProcFile("writeratelimit",(long long)WriteRateLimit);
+  if (RunRateLimiter){
+    if (!strcmp(name,"/proc/readratelimit")) {
+      return Write2ProcFile("readratelimit",(long long)ReadRateLimit);
+    }
+    
+    if (!strcmp(name,"/proc/writeratelimit")) {
+      return Write2ProcFile("writeratelimit",(long long)WriteRateLimit);
+    }
   }
 
+  if (ThirdPartyCopy) {
+    if (!strcmp(name, "/proc/thirdpartycopyslots")) {
+      return Write2ProcFile("thirdpartycopyslots",(long long)ThirdPartyCopySlots);
+    }
+    
+    if (!strcmp(name, "/proc/thirdpartycopyslotrate")) {
+      return Write2ProcFile("thirdpartycopyslotrate",(long long)ThirdPartyCopySlotRate);
+    }
+  }
+  
   if (!strcmp(name,"/proc/trace")) {
     return true;
   }
@@ -105,8 +117,16 @@ XrdxCastor2Ofs::UpdateProc(const char *inname)
     result *=Write2ProcFile("totalstreamwritebytes", TotalStreamWriteBytes);
     result *=Write2ProcFile("readdelay"      , ReadDelay);
     result *=Write2ProcFile("writedelay"     , WriteDelay);
-    result *=Write2ProcFile("readratelimit"  , ReadRateLimit);
-    result *=Write2ProcFile("writeratelimit" , WriteRateLimit);
+    if (RunRateLimiter){
+      result *=Write2ProcFile("readratelimit"  , ReadRateLimit);
+      result *=Write2ProcFile("writeratelimit" , WriteRateLimit);
+    }
+
+    if (ThirdPartyCopy) {
+      result *=Write2ProcFile("thirdpartycopyslots", ThirdPartyCopySlots);
+      result *=Write2ProcFile("thirdpartycopyslotrate", ThirdPartyCopySlotRate);
+    }
+
     return result;
   }
   return false;
@@ -125,8 +145,15 @@ XrdxCastor2Ofs::ReadAllProc()
   if (!ReadFromProc("totalstreamwritebytes")) result=false;
   if (!ReadFromProc("readdelay")) result=false;
   if (!ReadFromProc("writedelay")) result=false;
-  if (!ReadFromProc("readratelimit")) result=false;
-  if (!ReadFromProc("writeratelimit")) result=false;
+  if (RunRateLimiter){
+    if (!ReadFromProc("readratelimit")) result=false;
+    if (!ReadFromProc("writeratelimit")) result=false;
+  }
+  if (ThirdPartyCopy) {
+    if (!ReadFromProc("thirdpartycopyslots")) result=false;
+    if (!ReadFromProc("thirdpartycopyslotrate")) result=false;
+  }
+  
   ReadFromProc("trace");
   return result;
 }
@@ -176,6 +203,14 @@ XrdxCastor2Ofs::ReadFromProc(const char* entryname) {
   }
   if (entryname == "writeratelimit") {
     WriteRateLimit = (unsigned int) val;
+    return true;
+  }
+  if (entryname == "thirdpartycopyslots") {
+    ThirdPartyCopySlots = (unsigned int)val;
+    return true;
+  }
+  if (entryname == "thirdpartycopyslotrate") {
+    ThirdPartyCopySlotRate = (unsigned int) val;
     return true;
   }
   if (entryname == "trace") {

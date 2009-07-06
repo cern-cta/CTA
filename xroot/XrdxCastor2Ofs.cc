@@ -1,4 +1,4 @@
-//          $Id: XrdxCastor2Ofs.cc,v 1.7 2009/06/08 19:15:41 apeters Exp $
+//          $Id: XrdxCastor2Ofs.cc,v 1.8 2009/07/06 08:27:11 apeters Exp $
 
 #include "XrdOfs/XrdOfsTrace.hh"
 #include "XrdClient/XrdClientAdmin.hh"
@@ -8,6 +8,7 @@
 #include "XrdOss/XrdOssApi.hh"
 #include "XrdOuc/XrdOucTrace.hh"
 #include "XrdOuc/XrdOucHash.hh"
+#include "XrdNet/XrdNetOpts.hh"
 #include "XrdxCastor2Fs/XrdxCastor2Ofs.hh"
 #include "XrdxCastor2Fs/XrdxCastor2FsConstants.hh"
 #include "XrdxCastor2Fs/XrdxCastor2Timing.hh"
@@ -135,7 +136,10 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
 
   XrdOfsFS.doChecksumStreaming = true;
   XrdOfsFS.doChecksumUpdates   = false;
-  XrdOfsFS.WriteStateDirectory = "/var/log/xroot/server/openrw";
+  XrdOfsFS.ThirdPartyCopy = true;
+  XrdOfsFS.ThirdPartyCopySlots = 5;
+  XrdOfsFS.ThirdPartyCopySlotRate = 25;
+  XrdOfsFS.ThirdPartyCopyStateDirectory = "/var/log/xroot/server/transfer";
 
   Procfilesystem = "/tmp/xcastor2-ofs/";
   ProcfilesystemSync = false;
@@ -216,10 +220,36 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
 	    }
 	  }
 	}
-	
-	if (!strcmp("openstatedirectory", var)) {
+
+	if (!strcmp("thirdparty",var)) {
+	  if ((val = Config.GetWord())) {
+	    if ((!strcmp(val,"1")) || (!strcmp(val,"yes")) || (!strcmp(val,"true"))) {
+	      ThirdPartyCopy=true;
+	    }  else {
+	      ThirdPartyCopy=false;
+	    }
+	  }
+	}
+
+	if (!strcmp("thirdparty.slots",var)) {
+	  if ((val = Config.GetWord())) {
+	    int slots = atoi(val);
+	    if (slots<1)   slots = 1;
+	    if (slots>128) slots = 128;
+	    ThirdPartyCopySlots = slots;
+	  }
+	}
+
+	if (!strcmp("thirdparty.slotrate",var)) {
 	  if (( val = Config.GetWord())) {
-	    WriteStateDirectory = val;
+	    int rate = atoi(val);
+	    if (rate < 1) rate = 1;
+	    ThirdPartyCopySlotRate = rate;
+	  }
+	}
+	if (!strcmp("thirdparty.statedirectory",var)) {
+	  if (( val = Config.GetWord())) {
+	    ThirdPartyCopyStateDirectory = val;
 	  }
 	}
       }
@@ -235,21 +265,34 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
 #ifdef XFS_SUPPORT
   makeProc+="/xfs";
 #endif
-  makeProc+= "; chown stage.st "; makeProc+=Procfilesystem;
+  makeProc+= "; chown stage.st "; makeProc+=Procfilesystem; makeProc+="/proc";
 
   system(makeProc.c_str());
 
-if ( access(Procfilesystem.c_str(),R_OK | W_OK )) {
+  if ( access(Procfilesystem.c_str(),R_OK | W_OK )) {
     Eroute.Emsg("Config","Cannot use given third proc directory ",Procfilesystem.c_str());
     exit(-1);
     
   }
 
-  XrdOucString makeWriteState;
-  makeWriteState="mkdir -p ";
-  makeWriteState+=WriteStateDirectory;
-  makeWriteState+= "; chown stage.st "; makeWriteState+=WriteStateDirectory.c_str();;
-  system(makeWriteState.c_str());
+  if (XrdOfsFS.ThirdPartyCopy) {
+    XrdOucString makeStateDirectory;
+    makeStateDirectory="mkdir -p "; 
+    makeStateDirectory+= ThirdPartyCopyStateDirectory.c_str();
+    makeStateDirectory+= "; chown stage.st ";
+    makeStateDirectory+= ThirdPartyCopyStateDirectory.c_str();
+    
+    system(makeStateDirectory.c_str());
+    
+    if ( access(ThirdPartyCopyStateDirectory.c_str(),R_OK | W_OK )) {
+      Eroute.Emsg("Config","Cannot use given third party state directory ",ThirdPartyCopyStateDirectory.c_str());
+      exit(-1);
+    }
+    // set the configuration values
+    XrdOfsFS.ThirdPartySetup(XrdOfsFS.ThirdPartyCopyStateDirectory.c_str(), ThirdPartyCopySlots, ThirdPartyCopySlotRate);
+    XrdOfsFS.ThirdPartySetup(XrdOfsFS.ThirdPartyCopyStateDirectory.c_str(), ThirdPartyCopySlots, ThirdPartyCopySlotRate);
+    XrdxCastor2Ofs::ThirdPartyCleanupOnRestart();
+  }
 
   for (int i=0; i< procUsers.GetSize(); i++) {
     Eroute.Say("=====> xcastor2.procuser: ", procUsers[i].c_str());
@@ -260,6 +303,18 @@ if ( access(Procfilesystem.c_str(),R_OK | W_OK )) {
   } else {
     Eroute.Say("=====> xcastor2.ratelimiter: no ","","");
   }
+
+  if (ThirdPartyCopy) {
+    Eroute.Say("=====> xcastor2.thirdparty: yes","","");
+    XrdOucString slots=""; slots+= ThirdPartyCopySlots;
+    Eroute.Say("=====> xcastor2.thirdparty.slots: ", slots.c_str(),"");
+    XrdOucString rate =""; rate += ThirdPartyCopySlotRate; rate += " Mb/s";
+    Eroute.Say("=====> xcastor2.thirdparty.rate: ", rate.c_str(),"");
+    Eroute.Say("=====> xcastor2.thirdparty.statedirectory: ", ThirdPartyCopyStateDirectory.c_str());
+  } else {
+    Eroute.Say("=====> xcastor2.thirdparty: no ","","");
+  }
+
 
   // read in /proc variables at startup time to reset to previous values
   ReadAllProc();
@@ -284,100 +339,19 @@ if ( access(Procfilesystem.c_str(),R_OK | W_OK )) {
   return rc;
 }
 
-void
-XrdxCastor2OfsFile::SignalJob(bool onclose) {
-  EPNAME("SignalJob");
-
-  // don't deal with proc requests
-  if (procRequest != kProcNone) 
-    return;
-
-  const char *tident = error.getErrUser();
-  XrdOucString writestate = XrdOfsFS.WriteStateDirectory.c_str(); writestate += "/";
-  writestate += reqid;
-  
-  if (reqid != "0") {
-    ZTRACE(open,"Signalling x2castorjob with reqid " << reqid);
-    int fd=0;
-    if (!onclose) {
-      if ( (fd = ::creat(writestate.c_str(), S_IRWXU)) >0) {
-	// good, we put a state file
-	::close(fd);
-      }  else {
-	ZTRACE(open,"error: SignalJob => couldn't create write state file");
-      }
-    } else {
-      XrdOucString writestatedone=writestate;
-      writestatedone += ".done";
-      // rename the request file to '.done'
-      if (!rename(writestate.c_str(),writestatedone.c_str())) {
-	// wait that the .done state file disappears
-	struct stat buf;
-	int ntry=0;
-	while (!(::stat(writestatedone.c_str(),&buf))) {
-	  ntry++;
-	  if (ntry> 150) {
-	    // after 30 seconds give up
-	    break;
-	  } 
-	  usleep(200000);
-	}
-	// try to read the pid file
-	XrdOucString writestatepid=writestate;
-	writestatepid += ".pid";
-	int pfd=0;
-	int sjpid = 0;
-	if ( (pfd = ::open(writestatepid.c_str(),O_RDONLY) ) ) {
-	  char contents[1024];
-	  memset(contents,0,sizeof(contents));
-	  int nb = ::read(pfd,contents,sizeof(contents));
-	  ::close(pfd);
-	  unlink(writestatepid.c_str());
-	  int ncycles=0;
-	  if (nb>=0) {
-	    sjpid = atoi(contents);
-	    if (sjpid >0) {
-	      // now hang until this stagerJob guy disappears
-	      while (!(kill(sjpid,0))) {
-		// still there
-		usleep(100000);
-		ncycles++;
-	      }
-	      // now the guy is gone ;-) ... let's return
-	      ZTRACE(open,"info: SignalJob => we waited " << (ncycles * 100) << " ms for stagerJob to terminate");
-	    } else {
-	      ZTRACE(open,"error: SignalJob => stagerJob pid file contained PID 0!");
-	      unlink(writestatedone.c_str());
-	    }
-	  } else {
-	    ZTRACE(open,"error: SignalJob => stagerJob pid file couldn't be read - the x2castorjob script took to long or crashed");
-	    unlink(writestatedone.c_str());
-	  }
-
-	} else {
-	  ZTRACE(open,"error: SignalJob => stagerJob pid didn't appear - the x2castorjob script took to long or crashed");
-	  unlink(writestatedone.c_str());
-	}
-	
-	if (ntry>150) {
-	  ZTRACE(open,"error: SignalJob => open write state file didn't get removed within 30s - the x2castorjob script took to long or crashed");
-	  unlink(writestatedone.c_str());
-	}
-      } else {
-	ZTRACE(open,"error: SignalJob => open write state file didn't exist (rename failed)");
-	unlink(writestate.c_str());
-      }
-    }
-  }
-}
-
 int
 XrdxCastor2OfsFile::UpdateMeta() {
   EPNAME("UpdateMeta");
 
-  ZTRACE(open,"haswrite=" <<hasWrite << " firstWrite="<< firstWrite );
+  if (IsThirdPartyStreamCopy) {
+    return SFS_OK;
+  }
 
   XrdOucString preparename = envOpaque->Get("castor2fs.sfn");
+
+  ZTRACE(open,"haswrite=" <<hasWrite << " firstWrite="<< firstWrite << " 3rd-party="<< IsThirdPartyStream << "/" << IsThirdPartyStreamCopy << " lfn=" << preparename.c_str());
+
+
 
   // don't deal with proc requests
   if (procRequest != kProcNone) 
@@ -437,7 +411,7 @@ XrdxCastor2OfsFile::UpdateMeta() {
 
 
 /******************************************************************************/
-/*                         C a t a l o g O f s F i l e                        */
+/*                         x C a s t o r O f s F i l e                        */
 /******************************************************************************/
 /*                         o p e n                                            */
 /******************************************************************************/
@@ -454,6 +428,7 @@ XrdxCastor2OfsFile::open(const char                *path,
   procRequest = kProcNone;
 
   const char *tident = error.getErrUser();
+  char *val=0;
 
   XrdxCastor2Timing opentiming("ofsf::open");
   
@@ -462,6 +437,8 @@ XrdxCastor2OfsFile::open(const char                *path,
   XrdOucString spath = path;
   bool isRW=false;
   castorlfn = path;
+
+  XrdOucString newpath="";
 
   XrdOucString newopaque = opaque;
   // if thereis explicit user opaque information we find two ?, so we just replace it with a seperator.
@@ -473,11 +450,30 @@ XrdxCastor2OfsFile::open(const char                *path,
     newopaque.erase(triedpos);
   }
 
+  // this prevents 'clever' users faking internal opaque information 
+
+  newopaque.replace("ofsgranted=", "notgranted=");
+  newopaque.replace("source=","nosource=");
+
   envOpaque = new XrdOucEnv(newopaque.c_str());
+  newpath = envOpaque->Get("castor2fs.pfn1");
+  if (newopaque.endswith("&")) {
+    newopaque += "source="; 
+  } else {
+    newopaque += "&source=";
+  }
+
+  newopaque+= newpath.c_str();
+  if (!envOpaque->Get("target")) {
+    if (newopaque.endswith("&")) {
+      newopaque += "target="; 
+    } else {
+      newopaque += "&target=";
+    }
+    newopaque += "&target="; newopaque+= newpath.c_str();
+  }
 
   // store opaque information
-
-
 
   if (envOpaque->Get("castor2ofsproc")) {
     // that is strange ;-) ....
@@ -590,10 +586,50 @@ XrdxCastor2OfsFile::open(const char                *path,
 
   TIMING(OfsTrace,"PROCBLOCK",&opentiming);
 
-  XrdOucString newpath="";
 
-  newpath = envOpaque->Get("castor2fs.pfn1");
+  /////////////////////////////////////////////////////////////////////////////////////////////
+  // section to deal with third party transfer streams
+  if (XrdOfsFS.ThirdPartyCopy && ( val = envOpaque->Get("xferuuid"))) {
+    IsThirdPartyStream = true;
+    // look at third party transfers
+    // do some checks to allow to bypass the authorization module
+    val = envOpaque->Get("xfercmd");
+    XrdOucString xcmd = val;
+    if (xcmd == "copy") {
+      IsThirdPartyStreamCopy=true;
+      // we have to get the physical mapping from the Map
+      XrdOucString* mappedpath=0;
+      XrdOfsFS.FileNameMapLock.Lock();
+      mappedpath = XrdOfsFS.FileNameMap.Find(path);
+      XrdOfsFS.FileNameMapLock.UnLock();
+      if (!mappedpath) {
+	// the user has not anymore the file open, for the moment we forbid this!
+	return XrdOfsFS.Emsg(epname,error,EPERM,"open transfer stream - destination file is not open anymore",newpath.c_str());
+      } else {
+	newpath = mappedpath->c_str();
+	// place it for the close statement
+	envOpaque->Put("castor2fs.pfn1",newpath.c_str());
+      }
+      
+      // determine if the file exists and has size 0
+      if (!(XrdOfsOss->Stat(newpath.c_str(), &statinfo))) {
+	// this must be a copy write stream, and the file has to exist with size 0
+	if ( isRW && (!statinfo.st_size)) {
+	  newopaque+= "&ofsgranted=yes";
+	} // else: this will file latest during the open authorization
+      } // else: this will file latest during the open authorization
+    } else {
+      // store a mapping for the third party copy who doesn't know the PFN
+      XrdOfsFS.FileNameMapLock.Lock();
+      XrdOfsFS.FileNameMap.Add(path,new XrdOucString(newpath.c_str()));
+      XrdOfsFS.FileNameMapLock.UnLock();
+    }
+  }
+  //
+  /////////////////////////////////////////////////////////////////////////////////////////////
+  
 
+      
   int retc;
 
   if ((retc = XrdOfsOss->Stat(newpath.c_str(), &statinfo))) {
@@ -609,7 +645,7 @@ XrdxCastor2OfsFile::open(const char                *path,
     char diskckSumbuf[32+1];
     char diskckSumalg[32];
     diskckSumbuf[0]=diskckSumalg[0]=0;
-    
+
     // get existing checksum - we don't check errors here
     int nattr=0;
     nattr = getxattr(newpath.c_str(),"user.castor.checksum.type",diskckSumalg,sizeof(diskckSumalg));
@@ -633,35 +669,108 @@ XrdxCastor2OfsFile::open(const char                *path,
   }
   
   // extract the stager information
-  char* val;
   val = envOpaque->Get("castor2fs.pfn2");
-  
-  if (!(val) || (!strlen(val))) {
-    return XrdOfsFS.Emsg(epname,error,ESHUTDOWN,"reqid/pfn2 is missing",FName());
+
+  if (!(XrdOfsFS.ThirdPartyCopy) || (!IsThirdPartyStreamCopy)) {
+    if (!(val) || (!strlen(val))) {
+      return XrdOfsFS.Emsg(epname,error,ESHUTDOWN,"reqid/pfn2 is missing",FName());
+    }
+  } else {
+    // third party streams don't have any req id
+    val = "";
   }
 
   XrdOucString reqtag = val;
   reqid ="0";
   stagehost ="none";
   serviceclass ="none";
+  stagerjobport = 0;
+  SjobUuid="";
 
   int pos1;
   int pos2;
+  int pos3;
+  int pos4;
+
+  // syntax is reqid: <reqid:stagerhost:serviceclass:stagerjobport:stagerjobuuid
 
   if ( (pos1 = reqtag.find(":") ) != STR_NPOS) {
     reqid.assign(reqtag,0,pos1-1);
     if ( ( pos2 = reqtag.find(":",pos1+1)) != STR_NPOS)  {
       stagehost.assign(reqtag,pos1+1,pos2-1);
-      serviceclass.assign(reqtag,pos2+1);
+      if  ( ( pos3 = reqtag.find(":",pos2+1)) != STR_NPOS) {
+	serviceclass.assign(reqtag,pos2+1,pos3-1);
+	if ( ( pos4 = reqtag.find(":",pos3+1)) != STR_NPOS) {
+	  XrdOucString sport;
+	  sport.assign(reqtag,pos3+1,pos4-1);
+	  stagerjobport = atoi(sport.c_str());
+	  SjobUuid.assign(reqtag,pos4+1);
+	}
+      }
     }
   }
 
-  // send the sigusr1 to the loca xcastor2job to signal the open
-  SignalJob(false);
+  ZTRACE(open,"StagerJob uuid: " << SjobUuid.c_str() << " port: " << stagerjobport);
+  StagerJob = new XrdxCastor2Ofs2StagerJob(SjobUuid.c_str(), stagerjobport);
 
-  int rc = XrdOfsFile::open(newpath.c_str(),open_mode,create_mode,client,newopaque.c_str()); 
+
+  if (!IsThirdPartyStreamCopy) {
+    // send the sigusr1 to the local xcastor2job to signal the open
+    if (!StagerJob->Open()) {
+      // the open failed
+      TRACES("error: open => couldn't run the Open towards StagerJob: reqid=" <<reqid <<" stagerjobport=" <<stagerjobport << " stagerjobuuid=" << SjobUuid.c_str());
+      return XrdOfsFS.Emsg(epname,error, EIO, "signal open to the corresponding LSF stagerjob", "");
+    }
+
+    if (IsThirdPartyStream) {
+      if (isRW) {
+	hasWrite=true;
+	// here we send the update for the 1st byte written
+	if (UpdateMeta()!=SFS_OK) {
+	  return SFS_ERROR;
+	}
+	firstWrite = false;
+      }
+    }
+  }
 
   TIMING(OfsTrace,"FILEOPEN",&opentiming);
+  int rc = XrdOfsFile::open(newpath.c_str(),open_mode,create_mode,client,newopaque.c_str()); 
+
+  /////////////////////////////////////////////////////////////////////////////////////////////
+  // section to deal with third party transfer streams
+  if (rc == SFS_OK) {
+    if (IsThirdPartyStream) {
+      TIMING(OfsTrace,"THIRDPARTY",&opentiming);
+
+      // evt. change the thread parameters defined on the /proc state
+      XrdOfsFS.ThirdPartySetup(XrdOfsFS.ThirdPartyCopyStateDirectory.c_str(), XrdOfsFS.ThirdPartyCopySlots, XrdOfsFS.ThirdPartyCopySlotRate);
+
+      // execute the third party managing function
+      rc = ThirdPartyTransfer(path,open_mode,create_mode,client,newopaque.c_str());
+    }
+  }
+  //
+  /////////////////////////////////////////////////////////////////////////////////////////////
+
+
+  if (IsThirdPartyStreamCopy) {
+    // retrieve the req id from the opaque info
+    
+    // we wait for the stagerJob PID from x2castorjob
+    // try to read the pid file
+    if (!Transfer) {
+      // uups this is fatal and strange
+      return XrdOfsFS.Emsg(epname,error,EINVAL,"open attach any transfer as a copy stream; ",newpath.c_str());
+    }
+    
+    XrdOucString reqtag = Transfer->Options->Get("castor2fs.pfn2");
+    reqid ="0";
+    int pos1;
+    if ( (pos1 = reqtag.find(":") ) != STR_NPOS) {
+      reqid.assign(reqtag,0,pos1-1);
+    }
+  }
 
   opentiming.Print(OfsTrace);
   TIMING(OfsTrace,"DONE",&opentiming);
@@ -678,6 +787,10 @@ XrdxCastor2OfsFile::close()
   time_t now = time(NULL);
   int rc = SFS_OK;
 
+  if (IsClosed)
+    return true;
+
+  IsClosed=true;
   XrdOucString spath = FName();
 
   if (procRequest == kProcWrite) {
@@ -693,6 +806,7 @@ XrdxCastor2OfsFile::close()
     XrdOfsFS.ReadAllProc();
     XrdOfsFS.UpdateProc(newpath.c_str());
     XrdOfsFile::close();
+
     return rc;
   } else {
     XrdOfsFS.ReadFromProc("trace");
@@ -732,16 +846,19 @@ XrdxCastor2OfsFile::close()
       }
     }
     
-    if ((XrdOfsFS.doChecksumStreaming || XrdOfsFS.doChecksumUpdates) && hasadler) {     
-      if (setxattr(newpath.c_str(),"user.castor.checksum.type",ckSumalg, strlen(ckSumalg),0)) {
-	XrdOfsFS.Emsg(epname,error, EIO, "set checksum type", "");
-	rc=SFS_ERROR;
-	// anyway this is not returned to the client
-      } else {
-	if (setxattr(newpath.c_str(),"user.castor.checksum.value",ckSumbuf,strlen(ckSumbuf),0)) {
-	  XrdOfsFS.Emsg(epname,error, EIO, "set checksum", "");
+    if ((XrdOfsFS.doChecksumStreaming || XrdOfsFS.doChecksumUpdates) && hasadler) {
+      // only the real copy stream set's checksums, not the fake open
+      if ( (!IsThirdPartyStream) || (IsThirdPartyStream && IsThirdPartyStreamCopy)) {
+	if (setxattr(newpath.c_str(),"user.castor.checksum.type",ckSumalg, strlen(ckSumalg),0)) {
+	  XrdOfsFS.Emsg(epname,error, EIO, "set checksum type", "");
 	  rc=SFS_ERROR;
 	  // anyway this is not returned to the client
+	} else {
+	  if (setxattr(newpath.c_str(),"user.castor.checksum.value",ckSumbuf,strlen(ckSumbuf),0)) {
+	    XrdOfsFS.Emsg(epname,error, EIO, "set checksum", "");
+	    rc=SFS_ERROR;
+	    // anyway this is not returned to the client
+	  }
 	}
       }
     } else {
@@ -753,12 +870,32 @@ XrdxCastor2OfsFile::close()
     }
   }
 
+  if (XrdOfsFS.ThirdPartyCopy) {
+    if (IsThirdPartyStream) {
+      // terminate the transfer to set the final state and wait for the termination
+      rc = ThirdPartyTransferClose(envOpaque->Get("xferuuid"));
+	
+      if (!IsThirdPartyStreamCopy) {
+	// remove mappings for non third party streams
+	XrdOfsFS.FileNameMapLock.Lock();
+	XrdOfsFS.FileNameMap.Del(castorlfn.c_str());
+	XrdOfsFS.FileNameMapLock.UnLock();  
+	// comment: if there is no mapping defined, no 3rd party copy can be run towards this file
+      }
+    }
+  }
 
-  // send the sigusr2 signal to the local x2castorjob script 
-  SignalJob(true);
-  
+  // inform the StagerJob
+  if (!IsThirdPartyStreamCopy) {
+    if (!StagerJob->Close(true)) {
+      // for the moment, we cannot send this back, but soon we will
+      ZTRACE(close,"StagerJob close failed: got rc=" << StagerJob->ErrCode << " msg=" <<StagerJob->ErrMsg);
+      XrdOfsFS.Emsg(epname,error, StagerJob->ErrCode, StagerJob->ErrMsg.c_str(), "");
+      rc=SFS_ERROR;
+    } 
+  }
+
   XrdOfsFile::close();
-
   return rc;
 }
 
@@ -890,7 +1027,43 @@ XrdxCastor2OfsFile::write(XrdSfsFileOffset   fileOffset,
 		     const char        *buffer,
 		     XrdSfsXferSize     buffer_size)
 {
-  //  printf(" I am writing here !!!!!!!!!!!!\n");
+  EPNAME("write");
+  // if we are a transfer - check if we are still in running state,
+  if (Transfer) {
+    if (Transfer->State != XrdTransfer::kRunning) {
+      // this transfer has been canceled, we have terminate
+      XrdOfsFS.Emsg(epname,error, ECANCELED, "write - the transfer has been canceled already ", XrdTransferStateAsString[Transfer->State]);
+      // we truncate this file to 0!
+      if (!IsClosed) {
+	truncate(0);
+	sync();
+      }
+      return SFS_ERROR;
+    }
+  }
+
+  if (StagerJob->Connected()) {
+    // if we have a stagerJob watching, check it is still alive
+    if (!StagerJob->StillConnected()) {
+      // oh oh, the stagerJob died ... reject any write now
+      TRACES("error:write => StagerJob has been canceled");
+      // we truncate this file to 0!
+      if (!IsClosed) {
+	truncate(0);
+	sync();
+      }
+      if (Transfer && (Transfer->State == XrdTransfer::kRunning) ) {
+	// if we are a transfer we terminate the transfer and close the file ;-)
+	Transfer->SetState(XrdTransfer::kTerminate);
+	close();
+      }
+      XrdOfsFS.Emsg(epname,error, ECANCELED, "write - the LSF write slot has been canceled ", "");
+      return SFS_ERROR;
+    } else {
+      ZTRACE(write,"my StagerJob is alive");
+    }
+  }
+  
   int rc = XrdOfsFile::write(fileOffset,buffer,buffer_size);
 
   if (rc>0) {if (!IsAdminStream)ADDTOTALWRITEBYTES(buffer_size) else ADDTOTALSTREAMWRITEBYTES(buffer_size);FileWriteBytes+= buffer_size;}
@@ -930,6 +1103,43 @@ XrdxCastor2OfsFile::write(XrdSfsFileOffset   fileOffset,
 int
 XrdxCastor2OfsFile::write(XrdSfsAio *aioparm)
 {
+  EPNAME("write");
+
+  // if we are a transfer - check if we are still in running state,
+  if (Transfer) {
+    if (Transfer->State != XrdTransfer::kRunning) {
+      // this transfer has been canceled, we have terminate
+      XrdOfsFS.Emsg(epname,error, ECANCELED, "write - the transfer has been canceld already ", XrdTransferStateAsString[Transfer->State]);
+      // we truncate this file to 0!
+      if (!IsClosed){
+	truncate(0);
+	sync();
+      }
+      return SFS_ERROR;
+    }
+  }
+
+  if (StagerJob->Connected()) {
+    if (!StagerJob->StillConnected()) {
+      // oh oh, the stagerJob died ... reject any write now
+      TRACES("error:write => StagerJob has been canceled");
+      // we truncate this file to 0!
+      if (!IsClosed) {
+	truncate(0);
+	sync();
+      }
+      if (Transfer && (Transfer->State == XrdTransfer::kRunning) ) {
+	// if we are a transfer we terminate the transfer and close the file ;-)
+	Transfer->SetState(XrdTransfer::kTerminate);
+	close();
+      }
+      XrdOfsFS.Emsg(epname,error, ECANCELED, "write - the LSF write slot has been canceled ", "");
+      return SFS_ERROR;
+    } else {
+      ZTRACE(write,"my StagerJob is alive");
+    }
+  }
+  
   int rc = XrdOfsFile::write(aioparm);
 
   if (rc==SFS_OK) {if (!IsAdminStream)ADDTOTALWRITEBYTES(aioparm->sfsAio.aio_nbytes) else ADDTOTALSTREAMWRITEBYTES(aioparm->sfsAio.aio_nbytes);FileWriteBytes+=aioparm->sfsAio.aio_nbytes;}
@@ -970,7 +1180,7 @@ XrdxCastor2OfsFile::truncate(XrdSfsFileOffset   fileOffset)
 }
 
 /******************************************************************************/
-/*                         C a t a l o g O f s                                */
+/*                         x C a s t o r O f s                                */
 /******************************************************************************/
 /******************************************************************************/
 /*                                  r m                                       */
@@ -1013,4 +1223,155 @@ XrdxCastor2Ofs::rem(const char             *path,
   XrdOfsHandle::Hide(path);
   return SFS_OK;
 }
+
+
+/******************************************************************************/
+/*                         x C a s t o r O f s                                */
+/******************************************************************************/
+/******************************************************************************/
+/*                         StagerJob Interface                                */
+/******************************************************************************/
+
+
+XrdxCastor2Ofs2StagerJob::XrdxCastor2Ofs2StagerJob(const char* sjobuuid, int port) 
+{
+  Port     = port;
+  SjobUuid = sjobuuid;
+  Socket   = 0;
+  // select timeout is 0
+  to.tv_sec  = 0;
+  to.tv_usec = 1;
+  IsConnected=false;
+  ErrCode=0;
+  ErrMsg ="undef";
+}
+
+XrdxCastor2Ofs2StagerJob::~XrdxCastor2Ofs2StagerJob() 
+{
+  if (Socket) {
+    delete Socket;
+    Socket = 0;
+  }
+  IsConnected=false;
+}
+
+
+bool
+XrdxCastor2Ofs2StagerJob::Open()
+{
+  // if there shouldn't be a port, we don't inform anybode
+  if (!Port) 
+    return true;
+
+  Socket = new XrdNetSocket();
+  if ((Socket->Open("localhost",Port,0,0))<0) {
+    return false;
+  }
+
+  int on = 1;
+  Socket->setOpts(Socket->SockNum(), XRDNET_KEEPALIVE |XRDNET_DELAY );
+
+  // build IDENT message
+  XrdOucString ident = "IDENT "; ident += SjobUuid.c_str(); ident += "\n";
   
+  // send IDENT message
+  int nwrite = write(Socket->SockNum(),ident.c_str(),ident.length());
+  if (nwrite != ident.length()) {
+    return false;
+  }
+
+  
+  IsConnected=true;
+  // everything ok
+  return true;
+}
+
+bool 
+XrdxCastor2Ofs2StagerJob::StillConnected() 
+{
+  int sval;
+
+  if (!IsConnected) 
+    return false;
+
+  if (!Socket) 
+    return false;
+
+  char dummy;
+
+  // add the socket to the select set
+  FD_ZERO(&check_set);
+  FD_SET(Socket->SockNum(),&check_set);
+  
+  if((sval = select(Socket->SockNum() + 1,&check_set,0,0,&to)) < 0) {
+    return false;
+  }
+  
+  if (FD_ISSET(Socket->SockNum(), &check_set)) {
+    return false;
+  }
+
+  return true;
+}
+
+bool 
+XrdxCastor2Ofs2StagerJob::Close(bool ok) 
+{
+  EPNAME("Close");
+  const char* tident = "";
+
+  if (!Port) 
+    return true;
+
+  if (!Socket)
+    return false;
+
+  if (!IsConnected)
+    return false;
+
+  XrdOucString ident = "CLOSE ";ident += (int) ok; ident+="\n";
+  // send CLOSE message
+  ZTRACE(close,"Trying to send CLOSE message to StagerJob");
+  int nwrite = write(Socket->SockNum(),ident.c_str(),ident.length());
+  if (nwrite != ident.length()) {
+    ErrCode = EIO;
+    ErrMsg = "Couldn't write CLOSE request to StagerJob!";
+    return false;
+  } else {
+    ZTRACE(close,"Sent CLOSE message to StagerJob");
+  }
+  // read CLOSE response
+  char closeresp[16384];
+  int  respcode;
+  char respmesg[16384];
+  int nread=0;
+
+  ZTRACE(close,"Trying to read CLOSE response from StagerJob");
+  nread = ::read(Socket->SockNum(),closeresp,sizeof(closeresp));
+  ZTRACE(close,"This read gave " << nread << " errno: " << errno);
+
+  if (nread >0) {
+    ZTRACE(close,"Read CLOSE response from StagerJob");
+  
+    // ok, try to parse it 
+    if ( (sscanf(closeresp,"%d %[^\n]",&respcode, respmesg)) == 2) {
+      ErrMsg = respmesg;
+      ErrCode = respcode;
+      // check the code
+      if (ErrCode != 0) {
+	return false;
+      } 
+      // yes, everything worked!
+    } else {
+      ErrCode = EINVAL;
+      ErrMsg  = "StagerJob returned illegal response: "; ErrMsg += (char*)closeresp;
+      return false;
+    }
+  } else {
+    // that was an error
+    ErrCode = errno;
+    ErrMsg = "Couldn't read response from StagerJob!";
+    return false;
+  }
+  return true;
+}

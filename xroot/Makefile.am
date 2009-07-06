@@ -2,7 +2,7 @@
 ## Makefile.am for xCastor2 FS plugin
 ##
 ##
-## Version info: $Id: Makefile.am,v 1.16 2009/04/29 10:15:03 apeters Exp $
+## Version info: $Id: Makefile.am,v 1.17 2009/07/06 08:27:11 apeters Exp $
 ## Checked in by $Author: apeters $
 #######################################################################
 
@@ -45,23 +45,25 @@ libXrdxCastor2Fs_la_SOURCES = \
 
 
 libXrdxCastor2Fs_la_LIBADD = -L$(XROOTD_LOCATION)/lib$(MARK64)/  -lXrdSys -lXrdOuc -lXrdClient -lXrdCms -lXrdOfs -lcrypto -luuid -L$(CASTOR_LOCATION)/lib$(MARK64)/ -lshift
-EXTRA_DIST = configure.ac bootstrap.sh xrootd-xcastor2fs.spec xrootd-xcastor2util.spec xrootd-publickey.spec etc/xrd.cf etc/xrd.cf.meta x2castorjob x2cp etc/init.d/x2castormond x2castormonitoring.pl etc/logrotate.d/x2castormond etc/sysconfig/x2castormond.example etc/logrotate.d/xrd etc/init.d/xrd etc/init.d/cmsd etc/sysconfig/xrd.example
+EXTRA_DIST = configure.ac bootstrap.sh xrootd-xcastor2fs.spec xrootd-xcastor2util.spec xrootd-publickey.spec etc/xrd.cf etc/xrd.cf.meta x2cp x2proc etc/init.d/x2castormond x2castormonitoring.pl etc/logrotate.d/x2castormond etc/sysconfig/x2castormond.example etc/logrotate.d/xrd etc/init.d/xrd etc/init.d/cmsd etc/sysconfig/xrd.example
 
 
 libXrdxCastor2ServerAcc_la_SOURCES = \
 	XrdxCastor2ServerAcc.cc \
 	XrdxCastor2ServerAcc.hh 
 
-libXrdxCastor2ServerAcc_la_LIBADD = -L$(XROOTD_LOCATION)/lib$(MARK64)/  -lXrdSys -lXrdOuc -lXrdAcc -lcrypto
+libXrdxCastor2ServerAcc_la_LIBADD = -L$(XROOTD_LOCATION)/lib$(MARK64)/  -lXrdSys -lXrdOuc -lXrdAcc -lcrypto 
 
 libXrdxCastor2Ofs_la_SOURCES = \
 	XrdxCastor2Ofs.cc \
 	XrdxCastor2Ofs.hh \
 	XrdxCastor2OfsProc.cc \
 	XrdxCastor2OfsRateLimit.cc  \
-	XrdxCastor2OfsRateLimit.hh 
+	XrdxCastor2OfsRateLimit.hh \
+        XrdxCastor2OfsFSctl.cc \
+        XrdxCastor2OfsTransfer.cc 
 
-libXrdxCastor2Ofs_la_LIBADD = -L$(XROOTD_LOCATION)/lib$(MARK64)/  -lXrdSys -lXrdOuc -lXrdOfs -lXrdClient -lz -L$(CASTOR_LOCATION)/lib$(MARK64)/ -lshift
+libXrdxCastor2Ofs_la_LIBADD = -L$(XROOTD_LOCATION)/lib$(MARK64)/  -lXrdSys -lXrdOuc -lXrdOfs -lXrdClient -lXrdTransferManager -lz -L$(CASTOR_LOCATION)/lib$(MARK64)/ -lshift -luuid
 
 libXrdxCastor2Xmi_la_SOURCES = \
 	XrdxCastor2Xmi.cc \
@@ -99,7 +101,7 @@ install-exec-local: client-install
 	mkdir -p $(DESTDIR)/etc/sysconfig
 	$(INSTALL) -m 644 $(srcdir)/etc/xrd.cf $(DESTDIR)/etc/xrd.cf
 	$(INSTALL) -m 644 $(srcdir)/etc/xrd.cf.meta $(DESTDIR)/etc/xrd.cf.meta
-	$(INSTALL) -m 755 $(srcdir)/x2castorjob $(DESTDIR)/$(prefix)/bin/x2castorjob
+	$(INSTALL) -m 755 $(srcdir)/x2proc $(DESTDIR)/$(prefix)/bin/x2proc
 	$(INSTALL) -m 755 $(srcdir)/etc/init.d/xrd $(DESTDIR)/etc/rc.d/init.d/xrd
 	$(INSTALL) -m 755 $(srcdir)/etc/init.d/cmsd $(DESTDIR)/etc/rc.d/init.d/cmsd
 	$(INSTALL) -m 644 $(srcdir)/etc/logrotate.d/xrd $(DESTDIR)/etc/logrotate.d/xrd
@@ -122,7 +124,6 @@ uninstall: client-uninstall mon-uninstall
 	rm -f $(DESTDIR)/etc/rc.d/init.d/cmsd
 	rm -f $(DESTDIR)/etc/logrotate.d/xrd
 	rm -f $(DESTDIR)/etc/sysconfig/xrd.example
-	rm -f $(DESTDIR)/$(prefix)/bin/x2castorjob
 
 public-key-install:
 	mkdir -p $(DESTDIR)/$(prefix)/keys/

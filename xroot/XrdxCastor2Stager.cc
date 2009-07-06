@@ -1,4 +1,4 @@
-//          $Id: XrdxCastor2Stager.cc,v 1.8 2009/06/08 19:15:41 apeters Exp $
+//          $Id: XrdxCastor2Stager.cc,v 1.9 2009/07/06 08:27:11 apeters Exp $
 
 #ifndef __XCASTOR2FS__STAGER__HH
 #define __XCASTOR2FS__STAGER__HH
@@ -80,17 +80,20 @@ XrdxCastor2Stager::Prepare2Get(XrdOucErrInfo &error, uid_t uid, gid_t gid, const
   catch (castor::exception::Communication e) {
     TRACES("Communications error:" << e.getMessage().str().c_str());
     error.setErrInfo(ECOMM,e.getMessage().str().c_str());
+    delete subreq;
     return false;
   }
   catch (castor::exception::Exception e) {
     TRACES("sendRequest exception:"<< e.getMessage().str().c_str());
     error.setErrInfo(ECOMM,e.getMessage().str().c_str());
+    delete subreq;
     return false;
   }
   
   if (respvec.size() <= 0){
     TRACES("No response for prepare2get " << path );
     error.setErrInfo(ECOMM,"No response");
+    delete subreq;
     return false;
   }
     
@@ -101,6 +104,7 @@ XrdxCastor2Stager::Prepare2Get(XrdOucErrInfo &error, uid_t uid, gid_t gid, const
   if (0 == fr) {
     TRACES("Invalid response object for prepare2get " << path);
     error.setErrInfo(ECOMM,"Invalid response object for prepare2get");
+    delete subreq;
     return false;
   }
   
@@ -109,6 +113,8 @@ XrdxCastor2Stager::Prepare2Get(XrdOucErrInfo &error, uid_t uid, gid_t gid, const
     XrdOucString emsg = "received error code errc=";
     emsg += (int)fr->errorCode();
     error.setErrInfo(fr->errorCode(),emsg.c_str());
+    delete subreq;
+    delete respvec[0];
     return false;
   }  else {
     ZTRACE(stager, stage_requestStatusName(fr->status())<< "status=" << fr->status() <<" rc=" << fr->errorCode()
@@ -168,17 +174,20 @@ XrdxCastor2Stager::Get(XrdOucErrInfo &error, uid_t uid, gid_t gid,const char* pa
   catch (castor::exception::Communication e) {
     TRACES("Communications error:" << e.getMessage().str().c_str());
     error.setErrInfo(ECOMM,e.getMessage().str().c_str());
+    delete subreq;
     return false;
   }
   catch (castor::exception::Exception e) {
     TRACES("sendRequest exception:"<< e.getMessage().str().c_str());
     error.setErrInfo(ECOMM,e.getMessage().str().c_str());
+    delete subreq;
     return false;
   }
   
   if (respvec.size() <= 0){
     TRACES("No response for get " << path );
     error.setErrInfo(ECOMM,"No response");
+    delete subreq;
     return false;
   }
     
@@ -189,6 +198,7 @@ XrdxCastor2Stager::Get(XrdOucErrInfo &error, uid_t uid, gid_t gid,const char* pa
   if (0 == fr) {
     TRACES("Invalid response object for get " << path);
     error.setErrInfo(ECOMM,"Invalid response object for get");
+    delete subreq;
     return false;
   }
   
@@ -197,6 +207,8 @@ XrdxCastor2Stager::Get(XrdOucErrInfo &error, uid_t uid, gid_t gid,const char* pa
     XrdOucString emsg = "received error code errc=";
     emsg += (int)fr->errorCode();
     error.setErrInfo(fr->errorCode(),emsg.c_str());
+    delete subreq;
+    delete respvec[0];
     return false;
   }  else {
     ZTRACE(stager, stage_fileStatusName(fr->status()) <<" rc=" << fr->errorCode()
@@ -213,7 +225,10 @@ XrdxCastor2Stager::Get(XrdOucErrInfo &error, uid_t uid, gid_t gid,const char* pa
   redirectionpfn2 = sid;  // request id
   redirectionpfn2 += ":"; redirectionpfn2 += stagehost;
   redirectionpfn2 += ":"; redirectionpfn2 += serviceclass;
-  
+  // attach the port for the local host connection on a diskserver to talk with stagerJob
+  redirectionpfn2 += ":"; redirectionpfn2 += fr->port();
+  // attach the sub req ID needed to identity the local host connection
+  redirectionpfn2 += ":"; redirectionpfn2 += fr->subreqId().c_str();  
   delete subreq;
   delete respvec[0];
 
@@ -261,17 +276,20 @@ XrdxCastor2Stager::Put(XrdOucErrInfo &error, uid_t uid, gid_t gid,const char* pa
   catch (castor::exception::Communication e) {
     TRACES("Communications error:" << e.getMessage().str().c_str());
     error.setErrInfo(ECOMM,e.getMessage().str().c_str());
+    delete subreq;
     return false;
   }
   catch (castor::exception::Exception e) {
     TRACES("sendRequest exception:"<< e.getMessage().str().c_str());
     error.setErrInfo(ECOMM,e.getMessage().str().c_str());
+    delete subreq;
     return false;
   }
   
   if (respvec.size() <= 0){
     TRACES("No response for put " << path );
     error.setErrInfo(ECOMM,"No response");
+    delete subreq;
     return false;
   }
     
@@ -282,6 +300,7 @@ XrdxCastor2Stager::Put(XrdOucErrInfo &error, uid_t uid, gid_t gid,const char* pa
   if (0 == fr) {
     TRACES("Invalid response object for put " << path);
     error.setErrInfo(ECOMM,"Invalid response object for put");
+    delete subreq;
     return false;
   }
   
@@ -290,7 +309,8 @@ XrdxCastor2Stager::Put(XrdOucErrInfo &error, uid_t uid, gid_t gid,const char* pa
     XrdOucString emsg = "received error code errc=";
     emsg += (int)fr->errorCode();
     error.setErrInfo(fr->errorCode(),emsg.c_str());
-
+    delete subreq;
+    delete respvec[0];
     return false;
   }  else {
     ZTRACE(stager, stage_fileStatusName(fr->status()) <<" rc=" << fr->errorCode()
@@ -305,7 +325,11 @@ XrdxCastor2Stager::Put(XrdOucErrInfo &error, uid_t uid, gid_t gid,const char* pa
   redirectionpfn2 = sid;  // request id
   redirectionpfn2 += ":"; redirectionpfn2 += stagehost;
   redirectionpfn2 += ":"; redirectionpfn2 += serviceclass;
-  
+  // attach the port for the local host connection on a diskserver to talk with stagerJob
+  redirectionpfn2 += ":"; redirectionpfn2 += fr->port();
+  // attach the sub req ID needed to identity the local host connection
+  redirectionpfn2 += ":"; redirectionpfn2 += fr->subreqId().c_str();
+
   status          = stage_fileStatusName(fr->status());
   
   delete subreq;
@@ -410,17 +434,20 @@ XrdxCastor2Stager::Update(XrdOucErrInfo &error, uid_t uid, gid_t gid,const char*
   catch (castor::exception::Communication e) {
     TRACES("Communications error:" << e.getMessage().str().c_str());
     error.setErrInfo(ECOMM,e.getMessage().str().c_str());
+    delete subreq;
     return false;
   }
   catch (castor::exception::Exception e) {
     TRACES("sendRequest exception:"<< e.getMessage().str().c_str());
     error.setErrInfo(ECOMM,e.getMessage().str().c_str());
+    delete subreq;
     return false;
   }
   
   if (respvec.size() <= 0){
     TRACES("No response for update " << path );
     error.setErrInfo(ECOMM,"No response");
+    delete subreq;
     return false;
   }
     
@@ -431,6 +458,7 @@ XrdxCastor2Stager::Update(XrdOucErrInfo &error, uid_t uid, gid_t gid,const char*
   if (0 == fr) {
     TRACES("Invalid response object for update " << path);
     error.setErrInfo(ECOMM,"Invalid response object for update");
+    delete subreq;
     return false;
   }
   
@@ -438,8 +466,9 @@ XrdxCastor2Stager::Update(XrdOucErrInfo &error, uid_t uid, gid_t gid,const char*
     TRACES("Got error code err=" << fr->errorCode());
     XrdOucString emsg = "received error code errc=";
     emsg += (int)fr->errorCode();
-    error.setErrInfo(fr->errorCode(),emsg.c_str());
-
+    error.setErrInfo(fr->errorCode(),emsg.c_str());   
+    delete subreq;
+    delete respvec[0];
     return false;
   }  else {
     ZTRACE(stager, stage_fileStatusName(fr->status()) <<" rc=" << fr->errorCode()
@@ -709,7 +738,7 @@ XrdxCastor2Stager::StagerQuery(XrdOucErrInfo &error, uid_t uid, gid_t gid, const
   const char* tident = error.getErrUser();
 
   ZTRACE(stager,"uid=" << uid << " gid=" << gid << " path=" << path << " stagehost=" << stagehost << " serviceclass=" << serviceclass);
-  struct stage_query_req       *requests;  // <- this is allocated by next
+  struct stage_query_req       requests[1];  
   struct stage_filequery_resp  *resp;
   int                           nbresps, i;
   char errbuf[1024];
@@ -721,8 +750,6 @@ XrdxCastor2Stager::StagerQuery(XrdOucErrInfo &error, uid_t uid, gid_t gid, const
   Opts.stage_version = 2;
   Opts.stage_port    = 0;
 
-  // Initialize objects used for get processing.
-  create_query_req(&requests, 1);
   
   requests[0].type  = BY_FILENAME;
   requests[0].param = (char *) path;
@@ -773,6 +800,10 @@ XrdxCastor2Stager::GetDelayValue(const char* tag)
   if ( (delayval=delaystore->Find(tag)) ) {
     float oldval = atoi(delayval->c_str());
     oldval *= 1.8;
+    if (oldval > 3600 ) {
+      // more than 1 hour, doesn't make sense
+      oldval = 3600;
+    }
 
     // we double always the delay value
     (*delayval) = "";

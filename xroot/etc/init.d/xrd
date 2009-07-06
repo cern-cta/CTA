@@ -34,7 +34,7 @@ fi
 
 cleanup() {
         if [ "${XRD_ROLES}" = "server" ]; then
-	    pkill -f x2castorjob;
+	    echo ""
 	fi
 }
 
@@ -77,11 +77,9 @@ start() {
 			_XRD_OPTIONS=${_XRD_OPTIONS%' '}
 
 			# Setup xrootd environment
+
                         if [ -z "${XRD_USER}" ]; then chown root ${XRD_COREDIR}; fi
 			
-			# Cleanup state directories
-			if [ -d ${XRD_LOGDIR}/$i/openrw ]; then rm -rf ${XRD_LOGDIR}/$i/openrw/ >& /dev/null ; fi
-
 			cd ${XRD_COREDIR}
 
                         ulimit -n ${XRD_MAXFD}

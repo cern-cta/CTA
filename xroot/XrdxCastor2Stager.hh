@@ -1,4 +1,4 @@
-//          $Id: XrdxCastor2Stager.hh,v 1.2 2009/06/08 19:15:41 apeters Exp $
+//          $Id: XrdxCastor2Stager.hh,v 1.3 2009/07/06 08:27:11 apeters Exp $
 
 #ifndef __XCASTOR2_STAGER_H__
 #define __XCASTOR2_STAGER_H__

@@ -1,6 +1,7 @@
 ###########################################################
 xrootd.fslib /opt/xrootd/lib/libXrdxCastor2Ofs.so
 xrootd.async off nosf
+xrd.network keepalive
 ###########################################################
 xrootd.seclib /opt/xrootd/lib/libXrdSec.so
 sec.protocol /opt/xrootd/lib unix
@@ -19,8 +20,13 @@ xcastor2.publickey /opt/xrootd/keys/pkey.pem
 xcastor2.ratelimiter true
 ###########################################################
 xcastor2.proc /var/log/xroot/server/
-xcastor2.procuser root@lxbra0301
-xcastor2.procuser root@lxbra0302
+xcastor2.procuser root@localhost.localdomain
+xcastor2.procuser root@localhost
 ###########################################################
+#3rd party default values
+#xcastor2.thirdparty yes
+#xcastor2.thirdparty.slots 5
+#xcastor2.thirdparty.slotrate  25
+
 
 

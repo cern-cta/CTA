@@ -1,4 +1,4 @@
-//          $Id: XrdxCastor2ServerAcc.cc,v 1.2 2009/05/06 14:37:23 apeters Exp $
+//          $Id: XrdxCastor2ServerAcc.cc,v 1.3 2009/07/06 08:27:11 apeters Exp $
 
 #include "XrdxCastor2Fs/XrdxCastor2Trace.hh"
 #include "XrdxCastor2Fs/XrdxCastor2ServerAcc.hh"
@@ -422,6 +422,21 @@ XrdxCastor2ServerAcc::Access(const XrdSecEntity    *Entity,
     return XrdAccPriv_All;
   }
 
+  // check for localhost host connection
+  if (AllowLocalhost) {
+    XrdOucString chost = Entity->host;
+    if ((chost == "localhost" || (chost == "localhost.localdomain") || (chost == "127.0.0.0"))) {
+      decodeLock.UnLock();    
+      return XrdAccPriv_All;
+    }
+  }
+
+  // check for xfer request
+  // we must be very careful that all other requirements are checked within the OFS, to avoid security holes
+  if (Env->Get("xferuuid") && (Env->Get("ofsgranted"))) {
+    decodeLock.UnLock();    
+    return XrdAccPriv_All;
+  }
 
   time_t now = time(NULL);
 
@@ -430,6 +445,7 @@ XrdxCastor2ServerAcc::Access(const XrdSecEntity    *Entity,
   /* this is not nice, but ROOT puts a ? into the opaque string, if there is a user opaque info */
 
   if (!opaque) {
+    decodeLock.UnLock();    
     return XrdAccPriv_None;
   }
 
@@ -526,6 +542,8 @@ XrdxCastor2ServerAcc::Configure(const char* ConfigFN) {
 
   RequireCapability = false;
   StrictCapability = false;
+  AllowLocalhost = true;
+  AllowXfer = true;
 
   auth_certfile = NULL;
   if (!ConfigFN || !*ConfigFN) {
@@ -597,19 +615,55 @@ XrdxCastor2ServerAcc::Configure(const char* ConfigFN) {
 	    }
 	  }
 	}
+
+	if (!strcmp("allowxfer",var)) {
+	  if (!(val = Config.GetWord())) {
+	    TkEroute.Emsg("Config","argument 2 for allowxfer missing. Can be <true>/1 or <false>/0"); NoGo=1;
+	  } else {
+	    if ( (!(strcmp(val,"true"))) || (!(strcmp(val,"1"))) ) {
+	      AllowXfer = true;
+	    } else {
+	      AllowXfer = false;
+	    }
+	  }
+	}
+
+	if (!strcmp("allowlocalhost",var)) {
+	  if (!(val = Config.GetWord())) {
+	    TkEroute.Emsg("Config","argument 2 for allowlocalhost missing. Can be <true>/1 or <false>/0"); NoGo=1;
+	  } else {
+	    if ( (!(strcmp(val,"true"))) || (!(strcmp(val,"1"))) ) {
+	      AllowLocalhost = true;
+	    } else {
+	      AllowLocalhost = false;
+	    }
+	  }
+	}
       }
     }
 
     if (RequireCapability) {
       if (StrictCapability) {
-	TkEroute.Say("=====> xcastor2.capability : required");
+	TkEroute.Say("=====> xcastor2.capability     : required");
       } else{
-	TkEroute.Say("=====> xcastor2.capability : lazy/required - no authentication required");
+	TkEroute.Say("=====> xcastor2.capability     : lazy/required - no authentication required");
       }
     } else {
-      TkEroute.Say("=====> xcastor2.capability : ignored/not needed");
+      TkEroute.Say("=====> xcastor2.capability     : ignored/not needed");
     }
-    
+
+    if (AllowLocalhost) {
+      TkEroute.Say("=====> xcastor2.allowlocalhost : true");
+    } else {
+      TkEroute.Say("=====> xcastor2.allowlocalhost : false");
+    }
+     
+    if (AllowXfer) {
+      TkEroute.Say("=====> xcastor2.allowxfer      : true");
+    } else {
+      TkEroute.Say("=====> xcastor2.allowxfer      : false");
+    }
+
     const char* tp;
     int isMan = ((tp = getenv("XRDREDIRECT")) && !strcmp(tp, "R"));
     
@@ -625,7 +679,7 @@ XrdxCastor2ServerAcc::Configure(const char* ConfigFN) {
 	if (!auth_certfile) {
 	  TkEroute.Emsg("Config","missing xcastor2.publickey on server host.");NoGo=1;
 	} else {
-	  TkEroute.Say("=====> xcastor2.publickey : ", auth_certfile,"");
+	  TkEroute.Say("=====> xcastor2.publickey      : ", auth_certfile,"");
 	}
       }
     }

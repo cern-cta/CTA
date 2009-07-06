@@ -1,4 +1,4 @@
-//         $Id: XrdxCastor2ServerAcc.hh,v 1.2 2009/05/06 14:37:23 apeters Exp $
+//         $Id: XrdxCastor2ServerAcc.hh,v 1.3 2009/07/06 08:27:11 apeters Exp $
 
 #ifndef __XCASTOR2_SERVER_ACC__
 #define __XCASTOR2_SERVER_ACC__
@@ -112,6 +112,8 @@ private:
 
   bool RequireCapability;         /* a client has to show up with a capability in the opaque info, if true */
   bool StrictCapability;          /* a client has to show up with a capability but we don't require the authentication ID used in the capability e.g. we can run the disk server without strong authentication! */
+  bool AllowLocalhost;            /* a client connecting from localhost does not need authorization [default=yes] */
+  bool AllowXfer;                 /* a client coming from a transfer connection does not need authorization [default=yes] */
   
   X509* x509public;
   EVP_PKEY *      publickey;

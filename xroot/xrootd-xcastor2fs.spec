@@ -1,7 +1,7 @@
 Summary:     The next generation xrootd@Castor2 interface
 Name: 	     xrootd-xcastor2fs
-Version:     1.0.6
-Release:     11
+Version:     1.0.8
+Release:     6
 License:     none
 Group:       Applications/Castor
 Source0:     %{name}-%{version}.tar.gz
@@ -10,9 +10,10 @@ BuildRoot:   %{_builddir}/%{name}-%{version}-root
 AutoReqProv: no
 Requires:    castor-lib >= 2.1.8-6
 Requires:    xrootd
+Requires:    xrootd-libtransfermanager
 
-%define __check_files %{nil}
 %define debug_package %{nil}
+%define __check_files %{nil}
 
 %description
 A complete interface to Castor for xrootd with scheduled writes and scheduled or not-scheduled reads.
@@ -43,7 +44,7 @@ fi
 
 %files
 %defattr(-,root,root,-)
-/opt/xrootd/bin/x2castorjob
+/opt/xrootd/bin/x2proc
 /opt/xrootd/lib/lib*.so*
 %config(noreplace) /etc/xrd.cf
 %config(noreplace) /etc/xrd.cf.meta
@@ -60,12 +61,30 @@ fi
 %attr(-,stage,st) %dir /var/spool/xroot/core
 
 %changelog
-* Tue Jun 02 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.6-11
-- reimplemented inter-process communication between xroot and x2castorjob for 'write'
-  via files - no SIGNALs anymore to avoid race conditions under load
+* Mon Jun 29 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.8-6
+- remove x2castorjob script and introduce direct socket communication with stagerjob from the OFS
+- fixed memory leaks in Put and Rm, StagerQry everytime an error is returned or an exception is catched
+
+* Fri Jun 26 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.8-5
+- fixed again memory leak in StagerQuery command - previous fix didn't work as expected
+
+* Fri Jun 26 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.8-4
+- fixed memory leak in StagerQuery command
+
+* Wed Jun 10 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.8-3
+- put 'keepalive' option in default xrd.cf for disk servers
+
+* Sun May 31 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.8-1
+- changed the wrapper script to use state files instead of signals
+- removed the set filesize on close option - the close waits 30 seconds for the wrapper script to commit filesize+checksum
 
 * Fri May 29 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.6-10
 - allow now full arbitrary name space mapping, not only first subdirectory
+
+* Mon May 25 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.7-1
+- introduced 3rd party copy
+- introduced localhost connections without authorization (for gridFTP access)
+- added x2proc script to change proc settings on local host
 
 * Tue May 19 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.6-9
 - fixed typo in service class environment variable (serviceClass->svcClass)
@@ -80,7 +99,6 @@ fi
 * Thu May 07 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.6-7
 - rebuild for wrong stager headers used in the build process
 - fixed \0 termination in use of location link cache
-
 * Mon May 04 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.6-5
 - added support for multiple capability keys to provide signature to multiple instances with individual public keys
 - fixed bug during file creation for status PUT_FAILED (returns 0 and no serrno)

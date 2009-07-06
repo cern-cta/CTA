@@ -1,10 +1,12 @@
-//         $Id: XrdxCastor2Ofs.hh,v 1.6 2009/06/08 19:15:41 apeters Exp $
+//         $Id: XrdxCastor2Ofs.hh,v 1.7 2009/07/06 08:27:11 apeters Exp $
 
 #ifndef __XCASTOR2OFS_H__
 #define __XCASTOR2OFS_H__
 
+#include "XrdNet/XrdNetSocket.hh"
 #include "XrdOuc/XrdOucEnv.hh"
 #include "XrdOuc/XrdOucString.hh"
+#include "XrdOuc/XrdOucTrace.hh"
 #include "XrdOfs/XrdOfs.hh"
 #include "XrdSfs/XrdSfsInterface.hh"
 #include "XrdSys/XrdSysTimer.hh"
@@ -19,8 +21,33 @@
 #include <fcntl.h>
 #include <zlib.h>
 
+#include "XrdTransferManager/XrdTransferManager.hh"
 
 extern void *ofsRateLimiter(void *parg); // source in XrdxCastor2OfsRateLimiter.cc
+
+class XrdxCastor2Ofs2StagerJob {
+public:
+  XrdxCastor2Ofs2StagerJob(const char* sjobuuid, int port);
+  ~XrdxCastor2Ofs2StagerJob();
+  int  ErrCode;
+  XrdOucString ErrMsg;
+
+  bool Open();
+  bool Close(bool ok);
+  bool StillConnected();
+  bool Disconnect();
+  bool Connected() { return IsConnected;}
+
+private:
+  int Port;
+  bool IsConnected;
+  XrdOucString SjobUuid;
+  XrdNetSocket* Socket;
+  struct timeval to;
+  fd_set check_set;
+};
+
+
 
 class XrdxCastor2OfsFile : public XrdOfsFile {
 public:
@@ -60,7 +87,13 @@ public:
 
   bool         verifychecksum();
 
-  void         SignalJob(bool onclose);
+  int          ThirdPartyTransfer(const char                *fileName,
+				  XrdSfsFileOpenMode         openMode,
+				  mode_t                     createMode,
+				  const XrdSecEntity        *client,
+				  const char                *opaque);
+
+  int          ThirdPartyTransferClose(const char* uuidstring);
 
   long long           FileReadBytes;  // byte count for read
   long long           FileWriteBytes; // byte count for write
@@ -69,13 +102,19 @@ public:
   unsigned int        ReadDelay;       // delay time in ms used in read requests
   unsigned int        WriteDelay;      // delay time in ms used in write requests
   unsigned int        RateMissingCnt;  // rate missing cnt in OfsFile
-  
-  XrdSysTimer         RateTimer;
+  XrdxCastor2Ofs2StagerJob* StagerJob;    // interface to communicate with stagerjob
 
-  bool                IsAdminStream;   //
+  XrdSysTimer         RateTimer;
+  XrdTransfer*        Transfer;
+  int                 StagerJobPid;    // pid of an assigned stagerjob
+
+  bool                IsAdminStream;      //
+  bool                IsThirdPartyStream; //
+  bool                IsThirdPartyStreamCopy; //
+  bool                IsClosed;          //
   time_t              LastMdsUpdate;   //
-  XrdxCastor2OfsFile(const char* user) : XrdOfsFile(user){ envOpaque=NULL;FileReadBytes = FileWriteBytes = ReadRateLimit = WriteRateLimit = ReadDelay = WriteDelay = 0; IsAdminStream=false; RateMissingCnt = 0;firstWrite=true;hasWrite=false;stagehost="none";serviceclass="none";reqid="0";hasadler=1; adler = adler32(0L, Z_NULL, 0);adleroffset=0; DiskChecksum=""; DiskChecksumAlgorithm="";VerifyChecksum=true;hasadlererror=false;castorlfn="";}
-  virtual ~XrdxCastor2OfsFile() {close();if (envOpaque) delete envOpaque;envOpaque=NULL;}
+  XrdxCastor2OfsFile(const char* user) : XrdOfsFile(user){ envOpaque=NULL;FileReadBytes = FileWriteBytes = ReadRateLimit = WriteRateLimit = ReadDelay = WriteDelay = 0; IsAdminStream=false; IsThirdPartyStream=false;IsThirdPartyStreamCopy=false; RateMissingCnt = 0;firstWrite=true;hasWrite=false;stagehost="none";serviceclass="none";reqid="0";hasadler=1; adler = adler32(0L, Z_NULL, 0);adleroffset=0; DiskChecksum=""; DiskChecksumAlgorithm="";VerifyChecksum=true;hasadlererror=false;castorlfn="";Transfer=0;StagerJobPid=0;IsClosed=false;StagerJob=0;SjobUuid="";stagerjobport=0;}
+  virtual ~XrdxCastor2OfsFile() {close();if (envOpaque) delete envOpaque;envOpaque=NULL; if (Transfer) XrdTransferManager::TM()->DetachTransfer(Transfer);Transfer=0;if (StagerJob) delete StagerJob;}
 
 private:
   int                   procRequest;
@@ -85,6 +124,8 @@ private:
   XrdOucString          reqid;
   XrdOucString          stagehost;
   XrdOucString          serviceclass;
+  int                   stagerjobport;
+  XrdOucString          SjobUuid;
   XrdOucString          castorlfn;
   unsigned int          adler;
   bool                  hasadler;
@@ -160,7 +201,12 @@ public:
   bool                doChecksumStreaming;
   bool                doChecksumUpdates;
 
-  XrdOucString        WriteStateDirectory;         // default from Configure
+  bool                ThirdPartyCopy;               // default from Configure
+  int                 ThirdPartyCopySlots;          // default from Configure
+  int                 ThirdPartyCopySlotRate;       // default from Configure
+  XrdOucString        ThirdPartyCopyStateDirectory; // default from Configure
+
+  void                ThirdPartyCleanupOnRestart();
 
   // here we mask all illegal operations
   int            chmod(const char             *Name,
@@ -251,13 +297,20 @@ public:
     if (!::stat(Name,buf)) return SFS_OK; else return SFS_ERROR;}
 
 
+  // this function deals with plugin calls
+  int            FSctl(int, XrdSfsFSctl&, XrdOucErrInfo&, const XrdSecEntity*);
+  void           ThirdPartySetup(const char* transferdirectory, int slots, int rate);
+  
+
  
   XrdSysMutex         MetaMutex;             // mutex to protect the UpdateMeta function
   XrdSysMutex         PasswdMutex;           // mutex to protect the passwd expiry hash
 
   static XrdOucHash<XrdxCastor2ClientAdmin> *clientadmintable;
   static XrdOucHash<struct passwd> *passwdstore;
-
+  
+  XrdOucHash<XrdOucString> FileNameMap;      // keeping the mapping LFN->PFN for open files
+  XrdSysMutex         FileNameMapLock;       // protecting the MAP hash for LFN->PFN
   virtual ~XrdxCastor2Ofs() {};
 };
 
