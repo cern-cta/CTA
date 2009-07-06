@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.753 $ $Date: 2009/07/03 13:16:18 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.754 $ $Date: 2009/07/06 12:58:12 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -2088,7 +2088,7 @@ END;
 
 /*  get streams to ask vmgr tapes for them */
 
-create or replace PROCEDURE tg_getStreamsToWithoutTapes
+create or replace PROCEDURE tg_getStreamsWithoutTapes
 (strList OUT castor.Stream_Cur) AS
 BEGIN
  -- get request in status TO_BE_RESOLVED
@@ -2310,7 +2310,8 @@ BEGIN
 END;
 /
 
-create or replace PROCEDURE  tg_setMigRetryResult
+create or replace
+PROCEDURE  tg_setMigRetryResult
 (tcToRetry IN castor."cnumList", tcToFail IN castor."cnumList"  ) AS
 srId NUMBER;
 
@@ -2326,8 +2327,12 @@ BEGIN
     UPDATE DiskCopy SET status=12 WHERE castorfile in (SELECT castorfile FROM tapecopy WHERE  id = tcToFail(i)) AND status=10;
  -- fail repack subrequests
   FOR i IN tcToFail.FIRST .. tcToFail.LAST LOOP
-      SELECT subrequest.id into srId FROM subrequest,tapecopy WHERE tapecopy.id = tcToFail(i) AND  subrequest.castorfile = tapecopy.castorfile AND subrequest.status = 12;
-      archivesubreq(srId,9);
+      BEGIN 
+        SELECT subrequest.id into srId FROM subrequest,tapecopy WHERE tapecopy.id = tcToFail(i) AND  subrequest.castorfile = tapecopy.castorfile AND subrequest.status = 12;
+        archivesubreq(srId,9);
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        NULL;
+      END;
   END LOOP;
   COMMIT;
 END;
