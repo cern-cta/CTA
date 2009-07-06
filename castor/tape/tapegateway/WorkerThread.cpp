@@ -767,9 +767,10 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(
        castor::dlf::Param("fseq",response->fseq()),
        castor::dlf::Param("path",response->path()),
        castor::dlf::Param("blockid", blockid ),
+       castor::dlf::Param("fileTransactionId", response->fileTransactionId())
       };
  
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_RECALL_RETRIEVED, 4, completeParams, &castorFileId);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_RECALL_RETRIEVED, 5, completeParams, &castorFileId);
   } catch (std::bad_cast &ex) {
     // "Invalid Request" message
     
@@ -847,8 +848,9 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleMigrationMoreWor
        castor::dlf::Param("fileSize", response->fileSize()),
        castor::dlf::Param("lastKnownFileName", response->lastKnownFilename()),
        castor::dlf::Param("lastModificationTime", response->lastModificationTime()),
+       castor::dlf::Param("fileTransactionId", response->fileTransactionId())
       };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_MIGRATION_RETRIEVED, 6, completeParams, &castorFileId);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_MIGRATION_RETRIEVED, 7, completeParams, &castorFileId);
 
   } catch (std::bad_cast &ex) {
     // "Invalid Request" message

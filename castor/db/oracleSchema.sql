@@ -452,9 +452,9 @@ INSERT INTO Type2Obj (type, object) VALUES (173, 'NoMoreFiles');
 INSERT INTO Type2Obj (type, object) VALUES (174, 'NotificationAcknowledge');
 INSERT INTO Type2Obj (type, object) VALUES (175, 'FileErrorReport');
 INSERT INTO Type2Obj (type, object) VALUES (176, 'BaseFileInfo');
-INSERT INTO Type2Obj (type, object) VALUES (177, 'ErrorReport');
 INSERT INTO Type2Obj (type, object) VALUES (178, 'RmMasterReport');
 INSERT INTO Type2Obj (type, object) VALUES (179, 'EndNotificationErrorReport');
 INSERT INTO Type2Obj (type, object) VALUES (180, 'MigrationWorkBasket');
+INSERT INTO Type2Obj (type, object) VALUES (181, 'GatewayMessage');
 COMMIT;
 

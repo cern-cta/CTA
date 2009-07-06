@@ -863,6 +863,7 @@ castor::tape::tapegateway::FileToMigrate* castor::tape::tapegateway::ora::OraTap
 	result->setLastKnownFilename(rs->getString(7));
 	result->setFseq(rs->getInt(8));
 	result->setFileSize((u_signed64)rs->getDouble(9));
+	result->setFileTransactionId((u_signed64)rs->getDouble(10));
 
 	result->setMountTransactionId(req.mountTransactionId());
 	result->setPositionCommandCode(TPPOSIT_FSEQ);				   
@@ -1076,6 +1077,8 @@ castor::tape::tapegateway::FileToRecall* castor::tape::tapegateway::ora::OraTape
 	result->setPath(diskserver.append(":").append(mountpoint).append(rs->getString(5)));
 
 	result->setFseq(rs->getInt(6));
+	result->setFileTransactionId((u_signed64)rs->getDouble(7));
+
 	result->setMountTransactionId(req.mountTransactionId());
 	result->setPositionCommandCode(TPPOSIT_BLKID);
 

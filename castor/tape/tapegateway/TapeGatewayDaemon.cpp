@@ -340,6 +340,10 @@ castor::tape::tapegateway::TapeGatewayDaemon::TapeGatewayDaemon() : castor::serv
       {WORKER_FILE_ERROR_CANNOT_UPDATE_DB,"Worker: db error while updating for file error notification"},
       {WORKER_TAPE_MAKED_FULL,"Worker: set tape as FULL"},
       {WORKER_CANNOT_MARK_TAPE_FULL,"Worker: cannot set the tape as FULL"},
+      {WORKER_FAIL_NOTIFICATION, "Worker: received end notification error report"},
+      {WORKER_FAIL_DB_UPDATE,  "Worker: updating db after end notification error report"},
+      {WORKER_FAIL_DB_ERROR,"Worker: db error while updating for end notification error report"},
+      {WORKER_FAIL_RELEASE_TAPE,"Worker: cannot release BUSY tape after end notification error report"}, 
       {-1, ""}
     };
   dlfInit(messages);
