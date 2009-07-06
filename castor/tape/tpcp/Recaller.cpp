@@ -37,7 +37,6 @@
 #include "castor/tape/tpcp/Constants.hpp"
 #include "castor/tape/tpcp/Recaller.hpp"
 #include "castor/tape/tpcp/StreamHelper.hpp"
-#include "castor/tape/tpcp/StreamOperators.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <errno.h>
@@ -59,6 +58,8 @@ castor::tape::tpcp::Recaller::Recaller(const bool debug,
   m_handlers[OBJ_FileRecalledNotification] =
     &Recaller::handleFileRecalledNotification;
   m_handlers[OBJ_EndNotification] = &Recaller::handleEndNotification;
+  m_handlers[OBJ_EndNotificationErrorReport] = 
+    &Recaller::handleEndNotificationErrorReport;
 }
 
 
@@ -112,11 +113,8 @@ bool castor::tape::tpcp::Recaller::dispatchMessage()
   if(m_debug) {
     std::ostream &os = std::cout;
 
-    utils::writeBanner(os, "Recaller: Aggregator connection");
-    os << std::endl;
+    os << "Recaller: Aggregator connection = ";
     net::writeSocketDescription(os, connectionSocketFd);
-    os << std::endl;
-    os << std::endl;
     os << std::endl;
   }
 
@@ -132,12 +130,8 @@ bool castor::tape::tpcp::Recaller::dispatchMessage()
   if(m_debug) {
     std::ostream &os = std::cout;
 
-    utils::writeBanner(os, "Recaller: Received aggregator message");
-    os << std::endl;
-    os << "Message type = " << utils::objectTypeToString(msg->type());
-    os << std::endl;
-    os << std::endl;
-    os << std::endl;
+    os << "Recaller: Received aggregator message of type = "
+       << utils::objectTypeToString(msg->type()) << std::endl;
   }
 
   // Find the message type's corresponding handler
@@ -179,11 +173,8 @@ bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
   if(m_debug) {
     std::ostream &os = std::cout;
 
-    utils::writeBanner(os, "Recaller: Received FileToRecallRequest from "
-      "aggregator");
-    os << std::endl;
+    os << "Recaller: Received FileToRecallRequest from aggregator = ";
     StreamHelper::write(os, *fileToRecallRequest);
-    os << std::endl;
     os << std::endl;
   }
 
@@ -227,10 +218,8 @@ bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
     if(m_debug) {
       std::ostream &os = std::cout;
 
-      utils::writeBanner(os, "Recaller:: Sent FileToRecall to aggregator");
-      os << std::endl;
+      os << "Recaller: Sent FileToRecall to aggregator = ";
       StreamHelper::write(os, fileToRecall);
-      os << std::endl;
       os << std::endl;
     }
 
@@ -248,10 +237,8 @@ bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
     if(m_debug) {
       std::ostream &os = std::cout;
 
-      utils::writeBanner(os, "Sent NoMoreFiles to aggregator");
-      os << std::endl;
+      utils::writeBanner(os, "Sent NoMoreFiles to aggregator = ");
       StreamHelper::write(os, noMore);
-      os << std::endl;
       os << std::endl;
     }
   }
@@ -280,11 +267,8 @@ bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
   if(m_debug) {
     std::ostream &os = std::cout;
 
-    utils::writeBanner(os, "Recaller: Received FileRecalledNotification from "
-      "aggregator");
-    os << std::endl;
+    os << "Recaller: Received FileRecalledNotification from aggregator = ";
     StreamHelper::write(os, *fileRecalledNotification);
-    os << std::endl;
     os << std::endl;
   }
 
@@ -311,11 +295,8 @@ bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
   if(m_debug) {
     std::ostream &os = std::cout;
 
-    utils::writeBanner(os, "Recaller: Sent NotificationAcknowledge to "
-      "aggregator");
-    os << std::endl;
+    os << "Recaller: Sent NotificationAcknowledge to aggregator = ";
     StreamHelper::write(os, acknowledge);
-    os << std::endl;
     os << std::endl;
   }
 
@@ -343,9 +324,7 @@ bool castor::tape::tpcp::Recaller::handleEndNotification(
   if(m_debug) {
     std::ostream &os = std::cout;
 
-    utils::writeBanner(os, "Recaller: Received EndNotification from aggregator"
-      );
-    os << std::endl;
+    os << "Recaller: Received EndNotification from aggregator = ";
     StreamHelper::write(os, *endNotification);
     os << std::endl;
   }
@@ -373,10 +352,8 @@ bool castor::tape::tpcp::Recaller::handleEndNotification(
   if(m_debug) {
     std::ostream &os = std::cout;
 
-    utils::writeBanner(os, "Sent NotificationAcknowledge to aggregator");
-    os << std::endl;
+    os << "Sent NotificationAcknowledge to aggregator = ";
     StreamHelper::write(os, acknowledge);
-    os << std::endl;
     os << std::endl;
   }
 
@@ -405,11 +382,8 @@ bool castor::tape::tpcp::Recaller::handleEndNotificationErrorReport(
   if(m_debug) {
     std::ostream &os = std::cout;
 
-    utils::writeBanner(os, "Recaller: Received EndNotificationErrorReport from "
-      "aggregator");
-    os << std::endl;
+    os << "Recaller: Received EndNotificationErrorReport from aggregator = ";
     StreamHelper::write(os, *endNotificationErrorReport);
-    os << std::endl;
     os << std::endl;
   }
 
@@ -436,10 +410,8 @@ bool castor::tape::tpcp::Recaller::handleEndNotificationErrorReport(
   if(m_debug) {
     std::ostream &os = std::cout;
 
-    utils::writeBanner(os, "Sent NotificationAcknowledge to aggregator");
-    os << std::endl;
+    os << "Recaller: Sent NotificationAcknowledge to aggregator = ";
     StreamHelper::write(os, acknowledge);
-    os << std::endl;
     os << std::endl;
   }
 

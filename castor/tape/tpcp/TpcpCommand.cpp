@@ -327,12 +327,8 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     if(m_parsedCommandLine.debugOptionSet) {
       std::ostream &os = std::cout;
 
-      os << std::endl;
-      utils::writeBanner(os, "Parsed command-line");
-      os << std::endl
-      << m_parsedCommandLine;
-      os << std::endl;
-      os << std::endl;
+      os << "TpcpCommand: Parsed command-line = " << m_parsedCommandLine
+         << std::endl;
     }
 
     // Display usage message and exit if help option found on command-line
@@ -378,10 +374,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     if(m_parsedCommandLine.debugOptionSet) {
       std::ostream &os = std::cout;
 
-      utils::writeBanner(os, "Filenames to be processed");
-      os << std::endl;
-      os << "filenames = " << m_filenames << std::endl;
-      os << std::endl;
+      os << "TpcpCommand: Filenames to be processed = " << m_filenames;
       os << std::endl;
     }
 
@@ -425,15 +418,10 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     if(m_parsedCommandLine.debugOptionSet) {
       std::ostream &os = std::cout;
 
-      utils::writeBanner(os, "vmgr_tape_info from the VMGR");
-      os << m_vmgrTapeInfo;
+      os << "TpcpCommand: vmgr_tape_info from the VMGR = " <<  m_vmgrTapeInfo;
       os << std::endl;
-      os << std::endl;
-      utils::writeBanner(os, "DGN from the VMGR");
-      os << std::endl;
-      os << "DGN=\"" << m_dgn << "\"" << std::endl;
-      os << std::endl;
-      os << std::endl;
+
+      os << "TpcpCommand: DGN from the VMGR =\"" << m_dgn << "\"" << std::endl;
     }
 
     // Check that the VID returned in the VMGR tape information matches that of
@@ -489,11 +477,8 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     if(m_parsedCommandLine.debugOptionSet) {
       std::ostream &os = std::cout;
 
-      utils::writeBanner(os, "Aggregator callback socket details");
-      os << std::endl;
+      os << "TpcpCommand: Aggregator callback socket details = ";
       net::writeSocketDescription(os, m_callbackSocket.socket());
-      os << std::endl;
-      os << std::endl;
       os << std::endl;
     }
 
@@ -508,11 +493,8 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     if(m_parsedCommandLine.debugOptionSet) {
       std::ostream &os = std::cout;
 
-      utils::writeBanner(os, "Volume request ID returned by the VDQM");
-      os << std::endl;
-      os << "volReqId=" << m_volReqId << std::endl;
-      os << std::endl;
-      os << std::endl;
+      os << "TpcpCommand: Volume request ID returned by the VDQM = " 
+         << m_volReqId << std::endl;
     }
 
     // Socket file descriptor for a callback connection from the aggregator
@@ -540,10 +522,8 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     if(m_parsedCommandLine.debugOptionSet) {
       std::ostream &os = std::cout;
 
-      utils::writeBanner(os, "Aggregator callback connection");
-      os << std::endl;
+      os << "TpcpCommand: Aggregator callback connection = ";
       net::writeSocketDescription(os, connectionSocketFd);
-      os << std::endl;
       os << std::endl;
     }
 
@@ -575,8 +555,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     if(m_parsedCommandLine.debugOptionSet) {
       std::ostream &os = std::cout;
 
-      utils::writeBanner(os, "Received VolumeRequest from aggregator");
-      os << std::endl;
+      os << "TpcpCommand: Received VolumeRequest from aggregator";
       os << std::endl;
     }
 
@@ -612,8 +591,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     if(m_parsedCommandLine.debugOptionSet) {
       std::ostream &os = std::cout;
 
-      utils::writeBanner(os, "Sent Volume to aggregator");
-      os << std::endl;
+      os << "TpcpCommand: Sent Volume to aggregator";
       os << std::endl;
     }
 

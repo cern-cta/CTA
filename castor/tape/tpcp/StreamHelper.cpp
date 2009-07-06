@@ -54,8 +54,9 @@ void castor::tape::tpcp::StreamHelper::write(std::ostream &os,
 void castor::tape::tpcp::StreamHelper::write(std::ostream &os,
   const castor::tape::tapegateway::FileToRecall &value) throw() {
 
-  os << "{"
-     << (castor::tape::tapegateway::BaseFileInfo&)value
+  os << "{";
+  write(os, (castor::tape::tapegateway::BaseFileInfo&)value);
+  os <<                                           ","
      << "path=\"" << value.path()            << "\","
      << std::hex
      << "blockId0=" << (int)value.blockId0() <<   ","   
@@ -94,8 +95,9 @@ void castor::tape::tpcp::StreamHelper::write(std::ostream &os,
 void castor::tape::tpcp::StreamHelper::write(std::ostream &os,
   const castor::tape::tapegateway::FileRecalledNotification &value) throw() {
 
-  os << "{"
-     << (castor::tape::tapegateway::BaseFileInfo&)value
+  os << "{";
+  write(os, (castor::tape::tapegateway::BaseFileInfo&)value);
+  os <<                                                ","
      << "path=\""         << value.path()         << "\","
      << "checksumName=\"" << value.checksumName() << "\"}"; 
 }

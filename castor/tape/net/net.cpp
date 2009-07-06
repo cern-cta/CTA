@@ -390,12 +390,13 @@ void castor::tape::net::writeSocketDescription(std::ostream &os,
     peerPort = 0;
   }
 
-  os << "local=";
+  os << "{local=";
   writeIp(os, localIp);
   os << ":" << localPort;
-  os << " peer=";
+  os << ",peer=";
   writeIp(os, peerIp);
   os << ":" << peerPort;
+  os << "}";
 }
 
 
