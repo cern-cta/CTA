@@ -2016,6 +2016,7 @@ cat > /tmp/aggregatord.sh << HERE
 #!/bin/sh
 
 export LD_LIBRARY_PATH=/aggregator
+ulimit -c unlimited
 /aggregator/aggregatord
 HERE
 chmod +x /tmp/aggregatord.sh
@@ -2036,6 +2037,7 @@ cat > /tmp/rtcpd.sh << HERE
 #!/bin/sh
 
 export LD_LIBRARY_PATH=/rtcpdEIO
+ulimit -c unlimited
 /rtcpdEIO/rtcpd
 HERE
 chmod +x /tmp/rtcpd.sh
