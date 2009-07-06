@@ -2004,14 +2004,38 @@ make
 ln -s $PLOTUTILS_DIR/plotutils-2.5/pic2plot/pic2plot /usr/bin/pic2plot
 
 
-How to install and run an aggregator for development on tpsrv202
-================================================================
+How to install and run an aggregator for development on a tape server
+=====================================================================
 
-CASTOR_CVS=/usr/local/src/CASTOR2
-cd $CASTOR_CVS
-ssh tpsrv202 mkdir /aggregator
-scp `find -name '*.so*' | xargs echo` tpsrv202:/aggregator
-scp castor/tape/aggregator/aggregatord tpsrv202:/aggregator
+Create a new file called reinstallAggregator.sh with your favourite text editor
+and enter the following code.  Once finished make sure the file is executable
+and then run it.  The code:
+
+NB_ARGS=$#
+
+# Function to print usage message
+function usage {
+  echo
+  echo "Usage: reinstallAggregator.sh tapeServer"
+}
+
+# Check the number of command line arguments
+if test $NB_ARGS -ne 1; then
+  echo
+  echo -n "ERROR: "
+  echo "Invalid number of arguments"
+  usage
+  echo
+  exit -1
+fi
+
+TPSRV=$1
+
+ssh $TPSRV killall aggregatord
+ssh $TPSRV rm -rf /aggregator
+ssh $TPSRV mkdir /aggregator
+scp `find $CASTOR_CVS -name '*.so*' | xargs echo` $TPSRV:/aggregator
+scp $CASTOR_CVS/castor/tape/aggregator/aggregatord $TPSRV:/aggregator
 cat > /tmp/aggregatord.sh << HERE
 #!/bin/sh
 
@@ -2020,8 +2044,8 @@ ulimit -c unlimited
 /aggregator/aggregatord
 HERE
 chmod +x /tmp/aggregatord.sh
-scp /tmp/aggregatord.sh tpsrv202:/aggregator
-ssh tpsrv202 /aggregator/aggregatord.sh
+scp /tmp/aggregatord.sh $TPSRV:/aggregator
+ssh $TPSRV /aggregator/aggregatord.sh
 rm /tmp/aggregatord.sh
 
 
