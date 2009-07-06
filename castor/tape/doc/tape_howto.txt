@@ -2031,6 +2031,17 @@ fi
 
 TPSRV=$1
 
+if test "x$CASTOR_CVS" = x; then
+  echo "Error: The environment variable CASTOR_CVS is not set"
+  echo
+  echo "CASTOR_CVS should be the full path to the CASTOR source code up to and"
+  echo "including CASTOR2, e.g."
+  echo
+  echo "    export CASTOR_CVS=/usr/local/src/CASTOR2"
+  echo
+  exit -1
+fi
+
 ssh $TPSRV killall aggregatord
 ssh $TPSRV rm -rf /aggregator
 ssh $TPSRV mkdir /aggregator
@@ -2076,6 +2087,17 @@ if test $NB_ARGS -ne 1; then
 fi
 
 TPSRV=$1
+
+if test "x$CASTOR_CVS" = x; then
+  echo "Error: The environment variable CASTOR_CVS is not set"
+  echo
+  echo "CASTOR_CVS should be the full path to the CASTOR source code up to and"
+  echo "including CASTOR2, e.g."
+  echo
+  echo "    export CASTOR_CVS=/usr/local/src/CASTOR2"
+  echo
+  exit -1
+fi
 
 ssh $TPSRV killall rtcpd
 ssh $TPSRV rm -rf /rtcpd
