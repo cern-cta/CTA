@@ -89,10 +89,11 @@ void castor::io::StreamFileToRecallCnv::createRep(castor::IAddress* address,
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
-  ad->stream() << obj->transactionId();
+  ad->stream() << obj->fileTransactionId();
   ad->stream() << obj->nshost();
   ad->stream() << obj->fileid();
   ad->stream() << obj->fseq();
+  ad->stream() << obj->mountTransactionId();
   ad->stream() << obj->path();
   ad->stream() << obj->blockId0();
   ad->stream() << obj->blockId1();
@@ -111,9 +112,9 @@ castor::IObject* castor::io::StreamFileToRecallCnv::createObj(castor::IAddress* 
   // create the new Object
   castor::tape::tapegateway::FileToRecall* object = new castor::tape::tapegateway::FileToRecall();
   // Now retrieve and set members
-  u_signed64 transactionId;
-  ad->stream() >> transactionId;
-  object->setTransactionId(transactionId);
+  u_signed64 fileTransactionId;
+  ad->stream() >> fileTransactionId;
+  object->setFileTransactionId(fileTransactionId);
   std::string nshost;
   ad->stream() >> nshost;
   object->setNshost(nshost);
@@ -123,6 +124,9 @@ castor::IObject* castor::io::StreamFileToRecallCnv::createObj(castor::IAddress* 
   int fseq;
   ad->stream() >> fseq;
   object->setFseq(fseq);
+  u_signed64 mountTransactionId;
+  ad->stream() >> mountTransactionId;
+  object->setMountTransactionId(mountTransactionId);
   std::string path;
   ad->stream() >> path;
   object->setPath(path);

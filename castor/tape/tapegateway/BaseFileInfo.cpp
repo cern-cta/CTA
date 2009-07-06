@@ -31,6 +31,7 @@
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/tape/tapegateway/BaseFileInfo.hpp"
+#include "castor/tape/tapegateway/GatewayMessage.hpp"
 #include "castor/tape/tapegateway/PositionCommandCode.hpp"
 #include "osdep.h"
 #include <iostream>
@@ -40,11 +41,11 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::BaseFileInfo::BaseFileInfo() throw() :
-  m_transactionId(0),
+  GatewayMessage(),
+  m_fileTransactionId(0),
   m_nshost(""),
   m_fileid(0),
   m_fseq(0),
-  m_id(0),
   m_positionCommandCode(PositionCommandCode(0)) {
 }
 
@@ -66,12 +67,13 @@ void castor::tape::tapegateway::BaseFileInfo::print(std::ostream& stream,
     stream << indent << "Back pointer, see above" << std::endl;
     return;
   }
+  // Call print on the parent class(es)
+  this->GatewayMessage::print(stream, indent, alreadyPrinted);
   // Output of all members
-  stream << indent << "transactionId : " << m_transactionId << std::endl;
+  stream << indent << "fileTransactionId : " << m_fileTransactionId << std::endl;
   stream << indent << "nshost : " << m_nshost << std::endl;
   stream << indent << "fileid : " << m_fileid << std::endl;
   stream << indent << "fseq : " << m_fseq << std::endl;
-  stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "positionCommandCode : " << PositionCommandCodeStrings[m_positionCommandCode] << std::endl;
 }

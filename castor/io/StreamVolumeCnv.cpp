@@ -88,12 +88,11 @@ void castor::io::StreamVolumeCnv::createRep(castor::IAddress* address,
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
+  ad->stream() << obj->mountTransactionId();
   ad->stream() << obj->vid();
-  ad->stream() << obj->transactionId();
   ad->stream() << obj->mode();
   ad->stream() << obj->density();
   ad->stream() << obj->label();
-  ad->stream() << obj->id();
 }
 
 //------------------------------------------------------------------------------
@@ -106,12 +105,12 @@ castor::IObject* castor::io::StreamVolumeCnv::createObj(castor::IAddress* addres
   // create the new Object
   castor::tape::tapegateway::Volume* object = new castor::tape::tapegateway::Volume();
   // Now retrieve and set members
+  u_signed64 mountTransactionId;
+  ad->stream() >> mountTransactionId;
+  object->setMountTransactionId(mountTransactionId);
   std::string vid;
   ad->stream() >> vid;
   object->setVid(vid);
-  u_signed64 transactionId;
-  ad->stream() >> transactionId;
-  object->setTransactionId(transactionId);
   int mode;
   ad->stream() >> mode;
   object->setMode(mode);
@@ -121,9 +120,6 @@ castor::IObject* castor::io::StreamVolumeCnv::createObj(castor::IAddress* addres
   std::string label;
   ad->stream() >> label;
   object->setLabel(label);
-  u_signed64 id;
-  ad->stream() >> id;
-  object->setId(id);
   return object;
 }
 

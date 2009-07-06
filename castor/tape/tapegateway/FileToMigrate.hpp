@@ -32,14 +32,9 @@
 // Include Files
 #include "castor/tape/tapegateway/BaseFileInfo.hpp"
 #include "osdep.h"
-#include <iostream>
 #include <string>
 
 namespace castor {
-
-  // Forward declarations
-  class ObjectSet;
-  class IObject;
 
   namespace tape {
 
@@ -63,43 +58,6 @@ namespace castor {
         virtual ~FileToMigrate() throw();
 
         /**
-         * Outputs this object in a human readable format
-         * @param stream The stream where to print this object
-         * @param indent The indentation to use
-         * @param alreadyPrinted The set of objects already printed.
-         * This is to avoid looping when printing circular dependencies
-         */
-        virtual void print(std::ostream& stream,
-                           std::string indent,
-                           castor::ObjectSet& alreadyPrinted) const;
-
-        /**
-         * Outputs this object in a human readable format
-         */
-        virtual void print() const;
-
-        /**
-         * Gets the type of this kind of objects
-         */
-        static int TYPE();
-
-        /********************************************/
-        /* Implementation of IObject abstract class */
-        /********************************************/
-        /**
-         * Gets the type of the object
-         */
-        virtual int type() const;
-
-        /**
-         * virtual method to clone any object
-         */
-        virtual castor::IObject* clone();
-
-        /*********************************/
-        /* End of IObject abstract class */
-        /*********************************/
-        /**
          * Get the value of m_fileSize
          * @return the value of m_fileSize
          */
@@ -116,19 +74,19 @@ namespace castor {
         }
 
         /**
-         * Get the value of m_lastKnownFileName
-         * @return the value of m_lastKnownFileName
+         * Get the value of m_lastKnownFilename
+         * @return the value of m_lastKnownFilename
          */
-        std::string lastKnownFileName() const {
-          return m_lastKnownFileName;
+        std::string lastKnownFilename() const {
+          return m_lastKnownFilename;
         }
 
         /**
-         * Set the value of m_lastKnownFileName
-         * @param new_var the new value of m_lastKnownFileName
+         * Set the value of m_lastKnownFilename
+         * @param new_var the new value of m_lastKnownFilename
          */
-        void setLastKnownFileName(std::string new_var) {
-          m_lastKnownFileName = new_var;
+        void setLastKnownFilename(std::string new_var) {
+          m_lastKnownFilename = new_var;
         }
 
         /**
@@ -167,7 +125,7 @@ namespace castor {
 
         u_signed64 m_fileSize;
 
-        std::string m_lastKnownFileName;
+        std::string m_lastKnownFilename;
 
         u_signed64 m_lastModificationTime;
 

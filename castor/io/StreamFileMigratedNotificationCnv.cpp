@@ -89,10 +89,11 @@ void castor::io::StreamFileMigratedNotificationCnv::createRep(castor::IAddress* 
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
-  ad->stream() << obj->transactionId();
+  ad->stream() << obj->fileTransactionId();
   ad->stream() << obj->nshost();
   ad->stream() << obj->fileid();
   ad->stream() << obj->fseq();
+  ad->stream() << obj->mountTransactionId();
   ad->stream() << obj->fileSize();
   ad->stream() << obj->checksumName();
   ad->stream() << obj->checksum();
@@ -114,9 +115,9 @@ castor::IObject* castor::io::StreamFileMigratedNotificationCnv::createObj(castor
   // create the new Object
   castor::tape::tapegateway::FileMigratedNotification* object = new castor::tape::tapegateway::FileMigratedNotification();
   // Now retrieve and set members
-  u_signed64 transactionId;
-  ad->stream() >> transactionId;
-  object->setTransactionId(transactionId);
+  u_signed64 fileTransactionId;
+  ad->stream() >> fileTransactionId;
+  object->setFileTransactionId(fileTransactionId);
   std::string nshost;
   ad->stream() >> nshost;
   object->setNshost(nshost);
@@ -126,6 +127,9 @@ castor::IObject* castor::io::StreamFileMigratedNotificationCnv::createObj(castor
   int fseq;
   ad->stream() >> fseq;
   object->setFseq(fseq);
+  u_signed64 mountTransactionId;
+  ad->stream() >> mountTransactionId;
+  object->setMountTransactionId(mountTransactionId);
   u_signed64 fileSize;
   ad->stream() >> fileSize;
   object->setFileSize(fileSize);

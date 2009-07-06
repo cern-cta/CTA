@@ -49,7 +49,7 @@ TAPEGATEWAY_MESSAGES_SRCS = \
 	FileToRecallRequest.cpp FileToRecall.cpp \
 	FileMigratedNotification.cpp FileRecalledNotification.cpp \
 	EndNotification.cpp NotificationAcknowledge.cpp EndNotificationErrorReport.cpp\
-	NoMoreFiles.cpp \
+	NoMoreFiles.cpp  GatewayMessage.cpp \
 	BaseFileInfo.cpp PositionCommandCode.cpp FileErrorReport.cpp \
 	TapeRequestState.cpp TapeRequestStateCode.cpp MigrationWorkBasket.cpp
 
@@ -59,7 +59,7 @@ TAPEGATEWAY_IO_SRCS = \
 	../../io/StreamFileToRecallRequestCnv.cpp ../../io/StreamFileToRecallCnv.cpp \
 	../../io/StreamFileMigratedNotificationCnv.cpp ../../io/StreamFileRecalledNotificationCnv.cpp \
 	../../io/StreamEndNotificationCnv.cpp ../../io/StreamNotificationAcknowledgeCnv.cpp ../../io/StreamEndNotificationErrorReportCnv.cpp \
-	../../io/StreamNoMoreFilesCnv.cpp \
+	../../io/StreamNoMoreFilesCnv.cpp  ../../io/StreamGatewayMessageCnv.cpp \
 	../../io/StreamBaseFileInfoCnv.cpp  ../../io/StreamFileErrorReportCnv.cpp 
 
 TAPEGATEWAY_DB_SRCS = ../../db/cnv/DbTapeRequestStateCnv.cpp ora/OraTapeGatewaySvc.cpp ../../db/cnv/DbMigrationWorkBasketCnv.cpp

@@ -89,11 +89,11 @@ void castor::io::StreamBaseFileInfoCnv::createRep(castor::IAddress* address,
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
-  ad->stream() << obj->transactionId();
+  ad->stream() << obj->mountTransactionId();
+  ad->stream() << obj->fileTransactionId();
   ad->stream() << obj->nshost();
   ad->stream() << obj->fileid();
   ad->stream() << obj->fseq();
-  ad->stream() << obj->id();
   ad->stream() << obj->positionCommandCode();
 }
 
@@ -107,9 +107,12 @@ castor::IObject* castor::io::StreamBaseFileInfoCnv::createObj(castor::IAddress* 
   // create the new Object
   castor::tape::tapegateway::BaseFileInfo* object = new castor::tape::tapegateway::BaseFileInfo();
   // Now retrieve and set members
-  u_signed64 transactionId;
-  ad->stream() >> transactionId;
-  object->setTransactionId(transactionId);
+  u_signed64 mountTransactionId;
+  ad->stream() >> mountTransactionId;
+  object->setMountTransactionId(mountTransactionId);
+  u_signed64 fileTransactionId;
+  ad->stream() >> fileTransactionId;
+  object->setFileTransactionId(fileTransactionId);
   std::string nshost;
   ad->stream() >> nshost;
   object->setNshost(nshost);
@@ -119,9 +122,6 @@ castor::IObject* castor::io::StreamBaseFileInfoCnv::createObj(castor::IAddress* 
   int fseq;
   ad->stream() >> fseq;
   object->setFseq(fseq);
-  u_signed64 id;
-  ad->stream() >> id;
-  object->setId(id);
   int positionCommandCode;
   ad->stream() >> positionCommandCode;
   object->setPositionCommandCode((castor::tape::tapegateway::PositionCommandCode)positionCommandCode);

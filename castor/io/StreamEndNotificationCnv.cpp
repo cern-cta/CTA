@@ -87,8 +87,7 @@ void castor::io::StreamEndNotificationCnv::createRep(castor::IAddress* address,
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
-  ad->stream() << obj->transactionId();
-  ad->stream() << obj->id();
+  ad->stream() << obj->mountTransactionId();
 }
 
 //------------------------------------------------------------------------------
@@ -101,12 +100,9 @@ castor::IObject* castor::io::StreamEndNotificationCnv::createObj(castor::IAddres
   // create the new Object
   castor::tape::tapegateway::EndNotification* object = new castor::tape::tapegateway::EndNotification();
   // Now retrieve and set members
-  u_signed64 transactionId;
-  ad->stream() >> transactionId;
-  object->setTransactionId(transactionId);
-  u_signed64 id;
-  ad->stream() >> id;
-  object->setId(id);
+  u_signed64 mountTransactionId;
+  ad->stream() >> mountTransactionId;
+  object->setMountTransactionId(mountTransactionId);
   return object;
 }
 

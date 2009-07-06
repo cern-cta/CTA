@@ -27,13 +27,8 @@
  *****************************************************************************/
 
 // Include Files
-#include "castor/Constants.hpp"
-#include "castor/IObject.hpp"
-#include "castor/ObjectSet.hpp"
-#include "castor/tape/tapegateway/BaseFileInfo.hpp"
 #include "castor/tape/tapegateway/FileRecalledNotification.hpp"
 #include "osdep.h"
-#include <iostream>
 #include <string>
 
 //------------------------------------------------------------------------------
@@ -50,55 +45,5 @@ castor::tape::tapegateway::FileRecalledNotification::FileRecalledNotification() 
 // Destructor
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::FileRecalledNotification::~FileRecalledNotification() throw() {
-}
-
-//------------------------------------------------------------------------------
-// print
-//------------------------------------------------------------------------------
-void castor::tape::tapegateway::FileRecalledNotification::print(std::ostream& stream,
-                                                                std::string indent,
-                                                                castor::ObjectSet& alreadyPrinted) const {
-  stream << indent << "[# FileRecalledNotification #]" << std::endl;
-  if (alreadyPrinted.find(this) != alreadyPrinted.end()) {
-    // Circular dependency, this object was already printed
-    stream << indent << "Back pointer, see above" << std::endl;
-    return;
-  }
-  // Call print on the parent class(es)
-  this->BaseFileInfo::print(stream, indent, alreadyPrinted);
-  // Output of all members
-  stream << indent << "path : " << m_path << std::endl;
-  stream << indent << "checksumName : " << m_checksumName << std::endl;
-  stream << indent << "checksum : " << m_checksum << std::endl;
-  alreadyPrinted.insert(this);
-}
-
-//------------------------------------------------------------------------------
-// print
-//------------------------------------------------------------------------------
-void castor::tape::tapegateway::FileRecalledNotification::print() const {
-  castor::ObjectSet alreadyPrinted;
-  print(std::cout, "", alreadyPrinted);
-}
-
-//------------------------------------------------------------------------------
-// TYPE
-//------------------------------------------------------------------------------
-int castor::tape::tapegateway::FileRecalledNotification::TYPE() {
-  return OBJ_FileRecalledNotification;
-}
-
-//------------------------------------------------------------------------------
-// type
-//------------------------------------------------------------------------------
-int castor::tape::tapegateway::FileRecalledNotification::type() const {
-  return TYPE();
-}
-
-//------------------------------------------------------------------------------
-// clone
-//------------------------------------------------------------------------------
-castor::IObject* castor::tape::tapegateway::FileRecalledNotification::clone() {
-  return new FileRecalledNotification(*this);
 }
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.76 $ $Release$ $Date: 2009/03/26 11:06:42 $ $Author: itglp $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.77 $ $Release$ $Date: 2009/07/06 09:26:58 $ $Author: gtaur $
  *
  *
  *
@@ -219,10 +219,11 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "NotificationAcknowledge",
   "FileErrorReport",
   "BaseFileInfo",
-  "ErrorReport", 
+  "DELETED TYPE", 
   "RmMasterReport",
   "EndNotificationErrorReport",
-  "MigrationWorkBasket"
+  "MigrationWorkBasket",
+  "GatewayMessage"
 };
 
 

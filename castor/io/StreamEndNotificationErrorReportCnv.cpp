@@ -88,10 +88,9 @@ void castor::io::StreamEndNotificationErrorReportCnv::createRep(castor::IAddress
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
+  ad->stream() << obj->mountTransactionId();
   ad->stream() << obj->errorCode();
-  ad->stream() << obj->transactionId();
   ad->stream() << obj->errorMessage();
-  ad->stream() << obj->id();
 }
 
 //------------------------------------------------------------------------------
@@ -104,18 +103,15 @@ castor::IObject* castor::io::StreamEndNotificationErrorReportCnv::createObj(cast
   // create the new Object
   castor::tape::tapegateway::EndNotificationErrorReport* object = new castor::tape::tapegateway::EndNotificationErrorReport();
   // Now retrieve and set members
+  u_signed64 mountTransactionId;
+  ad->stream() >> mountTransactionId;
+  object->setMountTransactionId(mountTransactionId);
   int errorCode;
   ad->stream() >> errorCode;
   object->setErrorCode(errorCode);
-  u_signed64 transactionId;
-  ad->stream() >> transactionId;
-  object->setTransactionId(transactionId);
   std::string errorMessage;
   ad->stream() >> errorMessage;
   object->setErrorMessage(errorMessage);
-  u_signed64 id;
-  ad->stream() >> id;
-  object->setId(id);
   return object;
 }
 

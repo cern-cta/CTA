@@ -210,7 +210,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker( cas
     VolumeRequest &startRequest = dynamic_cast<VolumeRequest&>(obj);
     
     castor::dlf::Param params[] =
-      {castor::dlf::Param("transactionId", startRequest.vdqmVolReqId())
+      {castor::dlf::Param("mountTransactionId", startRequest.mountTransactionId())
     };
     
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_GETTING_VOLUME, 1, params);
@@ -228,7 +228,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker( cas
       errorReport->setErrorMessage(e.getMessage().str());
     
       castor::dlf::Param params[] =
-	{castor::dlf::Param("transactionId", startRequest.vdqmVolReqId()),
+	{castor::dlf::Param("mountTransactionId", startRequest.mountTransactionId()),
 	 castor::dlf::Param("errorCode",sstrerror(e.code())),
 	 castor::dlf::Param("errorMessage",e.getMessage().str())
 	};
@@ -242,11 +242,11 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker( cas
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,WORKER_NO_FILE, 1, params);
       
       NoMoreFiles* noMore= new NoMoreFiles();
-      noMore->setTransactionId(startRequest.vdqmVolReqId());
+      noMore->setMountTransactionId(startRequest.mountTransactionId());
       return noMore;
     }
     castor::dlf::Param params0[] =      
-      {castor::dlf::Param("transactionId", startRequest.vdqmVolReqId()),
+      {castor::dlf::Param("mountTransactionId", startRequest.mountTransactionId()),
        castor::dlf::Param("TPVID",response->vid()),
        castor::dlf::Param("mode",response->mode()),
        castor::dlf::Param("label",response->label()),
@@ -287,7 +287,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
     castorFileId.fileid = fileRecalled.fileid();
 
     castor::dlf::Param paramsComplete[] =
-      {castor::dlf::Param("transactionId",fileRecalled.transactionId()),
+      {castor::dlf::Param("mountTransactionId",fileRecalled.mountTransactionId()),
        castor::dlf::Param("fseq",fileRecalled.fseq()),
        castor::dlf::Param("checksum name",fileRecalled.checksumName().c_str()),
        castor::dlf::Param("checksum",fileRecalled.checksum())
@@ -295,10 +295,10 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
        
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_RECALL_NOTIFIED, 4, paramsComplete, &castorFileId);
     response = new NotificationAcknowledge();
-    response->setTransactionId(fileRecalled.transactionId());
+    response->setMountTransactionId(fileRecalled.mountTransactionId());
 
     castor::dlf::Param params[] =
-      {castor::dlf::Param("transactionId",fileRecalled.transactionId()),
+      {castor::dlf::Param("mountTransactionId",fileRecalled.mountTransactionId()),
       };
   
     // GET FILE FROM DB
@@ -312,7 +312,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
 
     } catch (castor::exception::Exception e){
       castor::dlf::Param params[] = { 
-	castor::dlf::Param("transactionId",fileRecalled.transactionId()),
+	castor::dlf::Param("mountTransactionId",fileRecalled.mountTransactionId()),
 	castor::dlf::Param("errorCode",sstrerror(e.code())),
 	castor::dlf::Param("errorMessage",e.getMessage().str())
       };
@@ -334,14 +334,14 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
       // nameserver error
       
       castor::dlf::Param params[] =
-	{ castor::dlf::Param("transactionId",fileRecalled.transactionId()),
+	{ castor::dlf::Param("mountTransactionId",fileRecalled.mountTransactionId()),
 	  castor::dlf::Param("errorCode",sstrerror(e.code())),
 	  castor::dlf::Param("errorMessage",e.getMessage().str())
 	};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_RECALL_NS_FAILURE, 3, params, &castorFileId);
       try {
 	FileErrorReport failure;
-	failure.setTransactionId(fileRecalled.transactionId());
+	failure.setMountTransactionId(fileRecalled.mountTransactionId());
 	failure.setFileid(fileRecalled.fileid());
 	failure.setNshost(fileRecalled.nshost());
 	failure.setFseq(fileRecalled.fseq());
@@ -352,7 +352,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
       } catch (castor::exception::Exception e) {
 	// db failure to mark the recall as failed
 	castor::dlf::Param params[] =
-	  { castor::dlf::Param("transactionId",fileRecalled.transactionId()),
+	  { castor::dlf::Param("mountTransactionId",fileRecalled.mountTransactionId()),
 	    castor::dlf::Param("errorCode",sstrerror(e.code())),
 	    castor::dlf::Param("errorMessage",e.getMessage().str())
 	  };
@@ -372,14 +372,14 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
       
     } catch (castor::exception::Exception e) {
       castor::dlf::Param params[] =
-	{ castor::dlf::Param("transactionId",fileRecalled.transactionId()),
+	{ castor::dlf::Param("mountTransactionId",fileRecalled.mountTransactionId()),
 	  castor::dlf::Param("errorCode",sstrerror(e.code())),
 	  castor::dlf::Param("errorMessage",e.getMessage().str())
 	};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_RECALL_CANNOT_UPDATE_DB, 3, params, &castorFileId);
       
       FileErrorReport failure;
-      failure.setTransactionId(fileRecalled.transactionId());
+      failure.setMountTransactionId(fileRecalled.mountTransactionId());
       failure.setFileid(fileRecalled.fileid());
       failure.setNshost(fileRecalled.nshost());
       failure.setFseq(fileRecalled.fseq());
@@ -390,7 +390,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
       } catch (castor::exception::Exception e) {
 	// db failure to mark the recall as failed
 	castor::dlf::Param params[] =
-	  { castor::dlf::Param("transactionId",fileRecalled.transactionId()),
+	  { castor::dlf::Param("mountTransactionId",fileRecalled.mountTransactionId()),
 	    castor::dlf::Param("errorCode",sstrerror(e.code())),
 	    castor::dlf::Param("errorMessage",e.getMessage().str())
 	  };
@@ -414,14 +414,14 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
       } catch (castor::exception::Exception e) {
 	
 	castor::dlf::Param params[] =
-	  { castor::dlf::Param("transactionId",fileRecalled.transactionId()),
+	  { castor::dlf::Param("mountTransactionId",fileRecalled.mountTransactionId()),
 	    castor::dlf::Param("errorCode",sstrerror(e.code())),
 	    castor::dlf::Param("errorMessage",e.getMessage().str())
 	  };
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_RECALL_WRONG_FILE_SIZE, 3, params, &castorFileId );
 	try {
 	  FileErrorReport failure;
-	  failure.setTransactionId(fileRecalled.transactionId());
+	  failure.setMountTransactionId(fileRecalled.mountTransactionId());
 	  failure.setFileid(fileRecalled.fileid());
 	  failure.setNshost(fileRecalled.nshost());
 	  failure.setFseq(fileRecalled.fseq());
@@ -431,7 +431,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
 	} catch (castor::exception::Exception e) {
 	  // db failure to mark the recall as failed
 	  castor::dlf::Param params[] =
-	    { castor::dlf::Param("transactionId",fileRecalled.transactionId()),
+	    { castor::dlf::Param("mountTransactionId",fileRecalled.mountTransactionId()),
 	      castor::dlf::Param("errorCode",sstrerror(e.code())),
 	      castor::dlf::Param("errorMessage",e.getMessage().str())
 	    };
@@ -450,14 +450,14 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
       } catch (castor::exception::Exception e) {
 	// db failure to mark the recall as failed
 	castor::dlf::Param params[] =
-	  { castor::dlf::Param("transactionId",fileRecalled.transactionId()),
+	  { castor::dlf::Param("mountTransactionId",fileRecalled.mountTransactionId()),
 	    castor::dlf::Param("errorCode",sstrerror(e.code())),
 	    castor::dlf::Param("errorMessage",e.getMessage().str())
 	  };
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_RECALL_CANNOT_UPDATE_DB, 3, params, &castorFileId );
 	
 	FileErrorReport failure;
-	failure.setTransactionId(fileRecalled.transactionId());
+	failure.setMountTransactionId(fileRecalled.mountTransactionId());
 	failure.setFileid(fileRecalled.fileid());
 	failure.setNshost(fileRecalled.nshost());
 	failure.setFseq(fileRecalled.fseq());
@@ -468,7 +468,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
 	} catch (castor::exception::Exception e) {
 	  // db failure to mark the recall as failed
 	  castor::dlf::Param params[] =
-	    { castor::dlf::Param("transactionId",fileRecalled.transactionId()),
+	    { castor::dlf::Param("mountTransactionId",fileRecalled.mountTransactionId()),
 	      castor::dlf::Param("errorCode",sstrerror(e.code())),
 	      castor::dlf::Param("errorMessage",e.getMessage().str())
 	    };
@@ -518,7 +518,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
     char blockid[5]={fileMigrated.blockId0() , fileMigrated.blockId1() , fileMigrated.blockId2() , fileMigrated.blockId3(), '\0' };
     
     castor::dlf::Param paramsComplete[] =
-      {castor::dlf::Param("transactionId",fileMigrated.transactionId()),
+      {castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
        castor::dlf::Param("fseq",fileMigrated.fseq()),
        castor::dlf::Param("checksum name",fileMigrated.checksumName()),
        castor::dlf::Param("checksum",fileMigrated.checksum()),
@@ -528,10 +528,10 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
       };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_MIGRATION_NOTIFIED, 7, paramsComplete, &castorFileId);
     response = new NotificationAcknowledge();
-    response->setTransactionId(fileMigrated.transactionId());
+    response->setMountTransactionId(fileMigrated.mountTransactionId());
 
     castor::dlf::Param params[] =
-      {castor::dlf::Param("transactionId",fileMigrated.transactionId())
+      {castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId())
       };
 
     // CHECK DB
@@ -546,7 +546,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
     } catch (castor::exception::Exception e){
       
       castor::dlf::Param params[] =
-	{castor::dlf::Param("transactionId",fileMigrated.transactionId()),
+	{castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
 	 castor::dlf::Param("errorCode",sstrerror(e.code())),
 	 castor::dlf::Param("errorMessage",e.getMessage().str())
 	};
@@ -568,7 +568,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
     
       castor::dlf::Param params[] =
 	{
-	  castor::dlf::Param("transactionId",fileMigrated.transactionId()),
+	  castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
 	  castor::dlf::Param("errorCode",sstrerror(e.code())),
 	  castor::dlf::Param("errorMessage",e.getMessage().str())
 	};
@@ -577,7 +577,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
       try {
 
 	FileErrorReport failure;
-	failure.setTransactionId(fileMigrated.transactionId());
+	failure.setMountTransactionId(fileMigrated.mountTransactionId());
 	failure.setFileid(fileMigrated.fileid());
 	failure.setNshost(fileMigrated.nshost());
 	failure.setFseq(fileMigrated.fseq());
@@ -587,7 +587,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
       } catch (castor::exception::Exception e) {
       castor::dlf::Param params[] =
 	{
-	  castor::dlf::Param("transactionId",fileMigrated.transactionId()),
+	  castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
 	  castor::dlf::Param("errorCode",sstrerror(e.code())),
 	  castor::dlf::Param("errorMessage",e.getMessage().str())
 	};
@@ -619,7 +619,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
     } catch (castor::exception::Exception e) {
       castor::dlf::Param params[] =
 	{
-	  castor::dlf::Param("transactionId",fileMigrated.transactionId()),
+	  castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
 	  castor::dlf::Param("errorCode",sstrerror(e.code())),
 	  castor::dlf::Param("errorMessage",e.getMessage().str())
 	};
@@ -628,7 +628,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
       try {
 
 	FileErrorReport failure;
-	failure.setTransactionId(fileMigrated.transactionId());
+	failure.setMountTransactionId(fileMigrated.mountTransactionId());
 	failure.setFileid(fileMigrated.fileid());
 	failure.setNshost(fileMigrated.nshost());
 	failure.setFseq(fileMigrated.fseq());
@@ -638,7 +638,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
       } catch(castor::exception::Exception e) {
 	castor::dlf::Param params[] =
 	  {
-	    castor::dlf::Param("transactionId",fileMigrated.transactionId()),
+	    castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
 	    castor::dlf::Param("errorCode",sstrerror(e.code())),
 	    castor::dlf::Param("errorMessage",e.getMessage().str())
 	  };
@@ -662,7 +662,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
       
       castor::dlf::Param params[] =
       {
-	castor::dlf::Param("transactionId",fileMigrated.transactionId()),
+	castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
 	castor::dlf::Param("errorCode",sstrerror(e.code())),
 	castor::dlf::Param("errorMessage",e.getMessage().str())
       };
@@ -671,7 +671,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
       try {
 
 	FileErrorReport failure;
-	failure.setTransactionId(fileMigrated.transactionId());
+	failure.setMountTransactionId(fileMigrated.mountTransactionId());
 	failure.setFileid(fileMigrated.fileid());
 	failure.setNshost(fileMigrated.nshost());
 	failure.setFseq(fileMigrated.fseq());
@@ -681,7 +681,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
       } catch(castor::exception::Exception e) {
 	castor::dlf::Param params[] =
 	  {
-	    castor::dlf::Param("transactionId",fileMigrated.transactionId()),
+	    castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
 	    castor::dlf::Param("errorCode",sstrerror(e.code())),
 	    castor::dlf::Param("errorMessage",e.getMessage().str())
 	  };
@@ -714,7 +714,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(
   try {
     FileToRecallRequest& fileToRecall = dynamic_cast<FileToRecallRequest&>(obj);
     castor::dlf::Param params[] =
-      {castor::dlf::Param("transactionId",fileToRecall.transactionId())
+      {castor::dlf::Param("mountTransactionId",fileToRecall.mountTransactionId())
       };
     
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,WORKER_RECALL_REQUESTED, 1, params);
@@ -727,7 +727,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(
 
     } catch (castor::exception::Exception e) {
       castor::dlf::Param params[] =
-	{castor::dlf::Param("transactionId",fileToRecall.transactionId()),
+	{castor::dlf::Param("mountTransactionId",fileToRecall.mountTransactionId()),
 	 castor::dlf::Param("errorCode",sstrerror(e.code())),
 	 castor::dlf::Param("errorMessage",e.getMessage().str())
 	};
@@ -737,7 +737,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(
       EndNotificationErrorReport* errorReport=new EndNotificationErrorReport();
       errorReport->setErrorCode(e.code());
       errorReport->setErrorMessage(e.getMessage().str());
-      errorReport->setTransactionId(fileToRecall.transactionId());
+      errorReport->setMountTransactionId(fileToRecall.mountTransactionId());
       return errorReport;
      
     }
@@ -747,7 +747,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_NO_FILE_TO_RECALL, 1, params);
     
       NoMoreFiles* noMore= new NoMoreFiles();
-      noMore->setTransactionId(fileToRecall.transactionId());
+      noMore->setMountTransactionId(fileToRecall.mountTransactionId());
       return noMore;
     }
 
@@ -763,7 +763,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(
     castorFileId.fileid = response->fileid();
 
     castor::dlf::Param completeParams[] =
-      {castor::dlf::Param("transactionId",response->transactionId()),
+      {castor::dlf::Param("mountTransactionId",response->mountTransactionId()),
        castor::dlf::Param("fseq",response->fseq()),
        castor::dlf::Param("path",response->path()),
        castor::dlf::Param("blockid", blockid ),
@@ -796,7 +796,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleMigrationMoreWor
     FileToMigrateRequest& fileToMigrate = dynamic_cast<FileToMigrateRequest&>(obj);
     
     castor::dlf::Param params[] =
-      {castor::dlf::Param("transactionId",fileToMigrate.transactionId())
+      {castor::dlf::Param("mountTransactionId",fileToMigrate.mountTransactionId())
       };
      
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_MIGRATION_REQUESTED, 1, params);
@@ -809,7 +809,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleMigrationMoreWor
 
     } catch (castor::exception::Exception e) {
       castor::dlf::Param params[] =
-	{castor::dlf::Param("transactionId",fileToMigrate.transactionId()),
+	{castor::dlf::Param("mountTransactionId",fileToMigrate.mountTransactionId()),
 	 castor::dlf::Param("errorCode",sstrerror(e.code())),
 	 castor::dlf::Param("errorMessage",e.getMessage().str())
 	};
@@ -827,7 +827,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleMigrationMoreWor
       // I don't have anything to migrate I send an NoMoreFiles
 
       NoMoreFiles* noMore= new NoMoreFiles();
-      noMore->setTransactionId(fileToMigrate.transactionId());
+      noMore->setMountTransactionId(fileToMigrate.mountTransactionId());
       return noMore;
     }    
     
@@ -841,11 +841,11 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleMigrationMoreWor
     castorFileId.fileid = response->fileid();
 
     castor::dlf::Param completeParams[] =
-      {castor::dlf::Param("transactionId",response->transactionId()),
+      {castor::dlf::Param("mountTransactionId",response->mountTransactionId()),
        castor::dlf::Param("fseq",response->fseq()),
        castor::dlf::Param("path",response->path()),
        castor::dlf::Param("fileSize", response->fileSize()),
-       castor::dlf::Param("lastKnownFileName", response->lastKnownFileName()),
+       castor::dlf::Param("lastKnownFileName", response->lastKnownFilename()),
        castor::dlf::Param("lastModificationTime", response->lastModificationTime()),
       };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_MIGRATION_RETRIEVED, 6, completeParams, &castorFileId);
@@ -872,12 +872,12 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker( cast
 	  EndNotification& endRequest = dynamic_cast<EndNotification&>(obj);
 	
 	  castor::dlf::Param params[] =
-	    {castor::dlf::Param("transactionId", endRequest.transactionId())
+	    {castor::dlf::Param("mountTransactionId", endRequest.mountTransactionId())
 	    };
 	
 	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_END_NOTIFICATION, 1, params);
 	  response = new NotificationAcknowledge();
-	  response->setTransactionId(endRequest.transactionId());
+	  response->setMountTransactionId(endRequest.mountTransactionId());
 
 	  try {
 
@@ -891,7 +891,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker( cast
 
 	      if (tape.get() != NULL && tape->tpmode() == 1) { // just for write
 		castor::dlf::Param params[] =
-		  {castor::dlf::Param("transactionId", endRequest.transactionId()),
+		  {castor::dlf::Param("mountTransactionId", endRequest.mountTransactionId()),
 		   castor::dlf::Param("TPVID", tape->vid())
 		  };
 	  
@@ -904,7 +904,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker( cast
 	      
 	    } catch (castor::exception::Exception e) {
 	      castor::dlf::Param params[] =
-		{castor::dlf::Param("transactionId", endRequest.transactionId()),
+		{castor::dlf::Param("mountTransactionId", endRequest.mountTransactionId()),
 		 castor::dlf::Param("TPVID", tape->vid()),
 		 castor::dlf::Param("errorCode",sstrerror(e.code())),
 		 castor::dlf::Param("errorMessage",e.getMessage().str())
@@ -916,7 +916,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker( cast
 	  } catch (castor::exception::Exception e){
     
 	    castor::dlf::Param params[] =
-	      {castor::dlf::Param("transactionId", endRequest.transactionId()),
+	      {castor::dlf::Param("mountTransactionId", endRequest.mountTransactionId()),
 	       castor::dlf::Param("errorCode",sstrerror(e.code())),
 	       castor::dlf::Param("errorMessage",e.getMessage().str())
 	      };
@@ -956,13 +956,13 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleFileErrorReport(
     castorFileId.fileid = fileFailure.fileid();
 
     castor::dlf::Param params[] =
-      {castor::dlf::Param("transactionId",fileFailure.transactionId()),
+      {castor::dlf::Param("mountTransactionId",fileFailure.mountTransactionId()),
       };
        
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_FILE_ERROR_NOTIFIED, 1, params, &castorFileId);
     
     response = new NotificationAcknowledge();
-    response->setTransactionId(fileFailure.transactionId());
+    response->setMountTransactionId(fileFailure.mountTransactionId());
   
     try {
     // DB UPDATE
@@ -973,7 +973,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleFileErrorReport(
     } catch (castor::exception::Exception e) {
       
       castor::dlf::Param params[] =
-	{ castor::dlf::Param("transactionId",fileFailure.transactionId()),
+	{ castor::dlf::Param("mountTransactionId",fileFailure.mountTransactionId()),
 	  castor::dlf::Param("errorCode",sstrerror(e.code())),
 	  castor::dlf::Param("errorMessage",e.getMessage().str())
 	};
@@ -1005,13 +1005,13 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker( cas
 	  EndNotificationErrorReport& endRequest = dynamic_cast<EndNotificationErrorReport&>(obj);
 	
 	  castor::dlf::Param params[] =
-	    {castor::dlf::Param("transactionId", endRequest.transactionId()),
+	    {castor::dlf::Param("mountTransactionId", endRequest.mountTransactionId()),
 	     castor::dlf::Param("errorcode", endRequest.errorCode()),
 	    };
 	
 	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_FAIL_NOTIFICATION, 2, params);
 	  response = new NotificationAcknowledge();
-	  response->setTransactionId(endRequest.transactionId());
+	  response->setMountTransactionId(endRequest.mountTransactionId());
 
 	  try {
 
@@ -1025,7 +1025,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker( cas
 
 	      if (tape.tpmode() == 1) { // just for write
 		castor::dlf::Param params[] =
-		  {castor::dlf::Param("transactionId", endRequest.transactionId()),
+		  {castor::dlf::Param("mountTransactionId", endRequest.mountTransactionId()),
 		   castor::dlf::Param("TPVID", tape.vid())
 		  };
 	  
@@ -1038,7 +1038,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker( cas
 	      
 	    } catch (castor::exception::Exception e) {
 	      castor::dlf::Param params[] =
-		{castor::dlf::Param("transactionId", endRequest.transactionId()),
+		{castor::dlf::Param("mountTransactionId", endRequest.mountTransactionId()),
 		 castor::dlf::Param("TPVID", tape.vid()),
 		 castor::dlf::Param("errorCode",sstrerror(e.code())),
 		 castor::dlf::Param("errorMessage",e.getMessage().str())
@@ -1050,7 +1050,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker( cas
 	  } catch (castor::exception::Exception e){
     
 	    castor::dlf::Param params[] =
-	      {castor::dlf::Param("transactionId", endRequest.transactionId()),
+	      {castor::dlf::Param("mountTransactionId", endRequest.mountTransactionId()),
 	       castor::dlf::Param("errorCode",sstrerror(e.code())),
 	       castor::dlf::Param("errorMessage",e.getMessage().str())
 	      };

@@ -27,12 +27,7 @@
  *****************************************************************************/
 
 // Include Files
-#include "castor/Constants.hpp"
-#include "castor/IObject.hpp"
-#include "castor/ObjectSet.hpp"
-#include "castor/tape/tapegateway/BaseFileInfo.hpp"
 #include "castor/tape/tapegateway/FileErrorReport.hpp"
-#include <iostream>
 #include <string>
 
 //------------------------------------------------------------------------------
@@ -48,54 +43,5 @@ castor::tape::tapegateway::FileErrorReport::FileErrorReport() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::FileErrorReport::~FileErrorReport() throw() {
-}
-
-//------------------------------------------------------------------------------
-// print
-//------------------------------------------------------------------------------
-void castor::tape::tapegateway::FileErrorReport::print(std::ostream& stream,
-                                                       std::string indent,
-                                                       castor::ObjectSet& alreadyPrinted) const {
-  stream << indent << "[# FileErrorReport #]" << std::endl;
-  if (alreadyPrinted.find(this) != alreadyPrinted.end()) {
-    // Circular dependency, this object was already printed
-    stream << indent << "Back pointer, see above" << std::endl;
-    return;
-  }
-  // Call print on the parent class(es)
-  this->BaseFileInfo::print(stream, indent, alreadyPrinted);
-  // Output of all members
-  stream << indent << "errorCode : " << m_errorCode << std::endl;
-  stream << indent << "errorMessage : " << m_errorMessage << std::endl;
-  alreadyPrinted.insert(this);
-}
-
-//------------------------------------------------------------------------------
-// print
-//------------------------------------------------------------------------------
-void castor::tape::tapegateway::FileErrorReport::print() const {
-  castor::ObjectSet alreadyPrinted;
-  print(std::cout, "", alreadyPrinted);
-}
-
-//------------------------------------------------------------------------------
-// TYPE
-//------------------------------------------------------------------------------
-int castor::tape::tapegateway::FileErrorReport::TYPE() {
-  return OBJ_FileErrorReport;
-}
-
-//------------------------------------------------------------------------------
-// type
-//------------------------------------------------------------------------------
-int castor::tape::tapegateway::FileErrorReport::type() const {
-  return TYPE();
-}
-
-//------------------------------------------------------------------------------
-// clone
-//------------------------------------------------------------------------------
-castor::IObject* castor::tape::tapegateway::FileErrorReport::clone() {
-  return new FileErrorReport(*this);
 }
 

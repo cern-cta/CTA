@@ -30,8 +30,8 @@
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
+#include "castor/tape/tapegateway/GatewayMessage.hpp"
 #include "castor/tape/tapegateway/NoMoreFiles.hpp"
-#include "osdep.h"
 #include <iostream>
 #include <string>
 
@@ -39,8 +39,7 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::NoMoreFiles::NoMoreFiles() throw() :
-  m_transactionId(0),
-  m_id(0) {
+  GatewayMessage() {
 }
 
 //------------------------------------------------------------------------------
@@ -61,9 +60,8 @@ void castor::tape::tapegateway::NoMoreFiles::print(std::ostream& stream,
     stream << indent << "Back pointer, see above" << std::endl;
     return;
   }
-  // Output of all members
-  stream << indent << "transactionId : " << m_transactionId << std::endl;
-  stream << indent << "id : " << m_id << std::endl;
+  // Call print on the parent class(es)
+  this->GatewayMessage::print(stream, indent, alreadyPrinted);
   alreadyPrinted.insert(this);
 }
 

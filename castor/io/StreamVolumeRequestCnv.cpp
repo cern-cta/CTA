@@ -87,8 +87,7 @@ void castor::io::StreamVolumeRequestCnv::createRep(castor::IAddress* address,
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
-  ad->stream() << obj->vdqmVolReqId();
-  ad->stream() << obj->id();
+  ad->stream() << obj->mountTransactionId();
 }
 
 //------------------------------------------------------------------------------
@@ -101,12 +100,9 @@ castor::IObject* castor::io::StreamVolumeRequestCnv::createObj(castor::IAddress*
   // create the new Object
   castor::tape::tapegateway::VolumeRequest* object = new castor::tape::tapegateway::VolumeRequest();
   // Now retrieve and set members
-  int vdqmVolReqId;
-  ad->stream() >> vdqmVolReqId;
-  object->setVdqmVolReqId(vdqmVolReqId);
-  u_signed64 id;
-  ad->stream() >> id;
-  object->setId(id);
+  u_signed64 mountTransactionId;
+  ad->stream() >> mountTransactionId;
+  object->setMountTransactionId(mountTransactionId);
   return object;
 }
 

@@ -30,8 +30,8 @@
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
+#include "castor/tape/tapegateway/GatewayMessage.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
-#include "osdep.h"
 #include <iostream>
 #include <string>
 
@@ -39,12 +39,11 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::Volume::Volume() throw() :
+  GatewayMessage(),
   m_vid(""),
-  m_transactionId(0),
   m_mode(0),
   m_density(""),
-  m_label(""),
-  m_id(0) {
+  m_label("") {
 }
 
 //------------------------------------------------------------------------------
@@ -65,13 +64,13 @@ void castor::tape::tapegateway::Volume::print(std::ostream& stream,
     stream << indent << "Back pointer, see above" << std::endl;
     return;
   }
+  // Call print on the parent class(es)
+  this->GatewayMessage::print(stream, indent, alreadyPrinted);
   // Output of all members
   stream << indent << "vid : " << m_vid << std::endl;
-  stream << indent << "transactionId : " << m_transactionId << std::endl;
   stream << indent << "mode : " << m_mode << std::endl;
   stream << indent << "density : " << m_density << std::endl;
   stream << indent << "label : " << m_label << std::endl;
-  stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }
 

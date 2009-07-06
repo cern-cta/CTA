@@ -27,12 +27,7 @@
  *****************************************************************************/
 
 // Include Files
-#include "castor/Constants.hpp"
-#include "castor/IObject.hpp"
-#include "castor/ObjectSet.hpp"
-#include "castor/tape/tapegateway/BaseFileInfo.hpp"
 #include "castor/tape/tapegateway/FileToRecall.hpp"
-#include <iostream>
 #include <string>
 
 //------------------------------------------------------------------------------
@@ -51,57 +46,5 @@ castor::tape::tapegateway::FileToRecall::FileToRecall() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::FileToRecall::~FileToRecall() throw() {
-}
-
-//------------------------------------------------------------------------------
-// print
-//------------------------------------------------------------------------------
-void castor::tape::tapegateway::FileToRecall::print(std::ostream& stream,
-                                                    std::string indent,
-                                                    castor::ObjectSet& alreadyPrinted) const {
-  stream << indent << "[# FileToRecall #]" << std::endl;
-  if (alreadyPrinted.find(this) != alreadyPrinted.end()) {
-    // Circular dependency, this object was already printed
-    stream << indent << "Back pointer, see above" << std::endl;
-    return;
-  }
-  // Call print on the parent class(es)
-  this->BaseFileInfo::print(stream, indent, alreadyPrinted);
-  // Output of all members
-  stream << indent << "path : " << m_path << std::endl;
-  stream << indent << "blockId0 : " << m_blockId0 << std::endl;
-  stream << indent << "blockId1 : " << m_blockId1 << std::endl;
-  stream << indent << "blockId2 : " << m_blockId2 << std::endl;
-  stream << indent << "blockId3 : " << m_blockId3 << std::endl;
-  alreadyPrinted.insert(this);
-}
-
-//------------------------------------------------------------------------------
-// print
-//------------------------------------------------------------------------------
-void castor::tape::tapegateway::FileToRecall::print() const {
-  castor::ObjectSet alreadyPrinted;
-  print(std::cout, "", alreadyPrinted);
-}
-
-//------------------------------------------------------------------------------
-// TYPE
-//------------------------------------------------------------------------------
-int castor::tape::tapegateway::FileToRecall::TYPE() {
-  return OBJ_FileToRecall;
-}
-
-//------------------------------------------------------------------------------
-// type
-//------------------------------------------------------------------------------
-int castor::tape::tapegateway::FileToRecall::type() const {
-  return TYPE();
-}
-
-//------------------------------------------------------------------------------
-// clone
-//------------------------------------------------------------------------------
-castor::IObject* castor::tape::tapegateway::FileToRecall::clone() {
-  return new FileToRecall(*this);
 }
 

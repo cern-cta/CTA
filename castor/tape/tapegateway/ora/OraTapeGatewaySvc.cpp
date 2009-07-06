@@ -828,7 +828,7 @@ castor::tape::tapegateway::FileToMigrate* castor::tape::tapegateway::ora::OraTap
 	  (4, oracle::occi::OCCICURSOR);
       }
 
-      m_getFileToMigrateStatement->setDouble(1,(double)req.transactionId());
+      m_getFileToMigrateStatement->setDouble(1,(double)req.mountTransactionId());
       m_getFileToMigrateStatement->executeUpdate();
 
       int ret = m_getFileToMigrateStatement->getInt(2);
@@ -860,11 +860,11 @@ castor::tape::tapegateway::FileToMigrate* castor::tape::tapegateway::ora::OraTap
 	diskserver=rs->getString(4);
 	mountpoint=rs->getString(5);
 	result->setPath(diskserver.append(":").append(mountpoint).append(rs->getString(6))); 
-	result->setLastKnownFileName(rs->getString(7));
+	result->setLastKnownFilename(rs->getString(7));
 	result->setFseq(rs->getInt(8));
 	result->setFileSize((u_signed64)rs->getDouble(9));
 
-	result->setTransactionId(req.transactionId());
+	result->setMountTransactionId(req.mountTransactionId());
 	result->setPositionCommandCode(TPPOSIT_FSEQ);				   
 
 	try {
@@ -884,7 +884,7 @@ castor::tape::tapegateway::FileToMigrate* castor::tape::tapegateway::ora::OraTap
 
 	    
 	    FileErrorReport failure;
-	    failure.setTransactionId(result->transactionId()); 
+	    failure.setMountTransactionId(result->mountTransactionId()); 
 	    failure.setFileid(result->fileid());
 	    failure.setNshost(result->nshost());
 	    failure.setFseq(result->fseq());
@@ -962,7 +962,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileMigrated(castor::
         (5, oracle::occi::OCCICURSOR);
     }
 
-    m_setFileMigratedStatement->setDouble(1,(double)resp.transactionId()); // transaction id
+    m_setFileMigratedStatement->setDouble(1,(double)resp.mountTransactionId()); // transaction id
     m_setFileMigratedStatement->setDouble(2,(double)resp.fileid());
     m_setFileMigratedStatement->setString(3,resp.nshost());
     m_setFileMigratedStatement->setInt(4,resp.fseq()); 
@@ -1037,7 +1037,7 @@ castor::tape::tapegateway::FileToRecall* castor::tape::tapegateway::ora::OraTape
 	  (4, oracle::occi::OCCICURSOR);
       }
    
-      m_getFileToRecallStatement->setDouble(1,(double)req.transactionId());
+      m_getFileToRecallStatement->setDouble(1,(double)req.mountTransactionId());
       
       // execute the statement and see whether we found something
  
@@ -1076,7 +1076,7 @@ castor::tape::tapegateway::FileToRecall* castor::tape::tapegateway::ora::OraTape
 	result->setPath(diskserver.append(":").append(mountpoint).append(rs->getString(5)));
 
 	result->setFseq(rs->getInt(6));
-	result->setTransactionId(req.transactionId());
+	result->setMountTransactionId(req.mountTransactionId());
 	result->setPositionCommandCode(TPPOSIT_BLKID);
 
 	// it might be changed after the ns check to TPPOSIT_FSEQ
@@ -1100,7 +1100,7 @@ castor::tape::tapegateway::FileToRecall* castor::tape::tapegateway::ora::OraTape
 
 	  try {
 	    FileErrorReport failure;
-	    failure.setTransactionId(result->transactionId()); 
+	    failure.setMountTransactionId(result->mountTransactionId()); 
 	    failure.setFileid(result->fileid());
 	    failure.setNshost(result->nshost());
 	    failure.setFseq(result->fseq());
@@ -1175,7 +1175,7 @@ bool  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setSegmentRecalled(cast
 	(6, oracle::occi::OCCIINT);
     }
 
-    m_setSegmentRecalledStatement->setDouble(1,(double)resp.transactionId());
+    m_setSegmentRecalledStatement->setDouble(1,(double)resp.mountTransactionId());
     m_setSegmentRecalledStatement->setDouble(2,(double)resp.fileid());
     m_setSegmentRecalledStatement->setString(3,resp.nshost());
     m_setSegmentRecalledStatement->setInt(4,resp.fseq());
@@ -1594,7 +1594,7 @@ std::string  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getRepackVidAndF
     
     m_getRepackVidAndFileInfoStatement->setInt(3,resp.fseq());
 
-    m_getRepackVidAndFileInfoStatement->setDouble(4,resp.transactionId());
+    m_getRepackVidAndFileInfoStatement->setDouble(4,resp.mountTransactionId());
     // execute the statement 
 
     m_getRepackVidAndFileInfoStatement->executeUpdate();
@@ -1645,7 +1645,7 @@ castor::tape::tapegateway::Volume* castor::tape::tapegateway::ora::OraTapeGatewa
       
     }
 
-    m_startTapeSessionStatement->setDouble(1,(double)startRequest.vdqmVolReqId());
+    m_startTapeSessionStatement->setDouble(1,(double)startRequest.mountTransactionId());
 
 
     // execute the statement
@@ -1670,7 +1670,7 @@ castor::tape::tapegateway::Volume* castor::tape::tapegateway::ora::OraTapeGatewa
     result->setMode(m_startTapeSessionStatement->getInt(3));
     result->setDensity(m_startTapeSessionStatement->getString(5));
     result->setLabel(m_startTapeSessionStatement->getString(6));
-    result->setTransactionId(startRequest.vdqmVolReqId());
+    result->setMountTransactionId(startRequest.mountTransactionId());
     
 
   } catch (oracle::occi::SQLException e) {
@@ -1709,7 +1709,7 @@ castor::stager::Tape*  castor::tape::tapegateway::ora::OraTapeGatewaySvc::endTap
 	(3, oracle::occi::OCCIINT);
     }
     
-    m_endTapeSessionStatement->setInt(1,endRequest.transactionId());
+    m_endTapeSessionStatement->setInt(1,endRequest.mountTransactionId());
  
 
     // Execute the statement
@@ -1752,7 +1752,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getSegmentInfo(FileRecal
 	(7, oracle::occi::OCCIINT); 
     }
 
-    m_getSegmentInfoStatement->setDouble(1,(double)fileRecalled.transactionId()); 
+    m_getSegmentInfoStatement->setDouble(1,(double)fileRecalled.mountTransactionId()); 
     m_getSegmentInfoStatement->setDouble(2,(double)fileRecalled.fileid());
     m_getSegmentInfoStatement->setString(3,fileRecalled.nshost());
     m_getSegmentInfoStatement->setInt(4,fileRecalled.fseq());
@@ -1795,7 +1795,7 @@ castor::stager::Tape castor::tape::tapegateway::ora::OraTapeGatewaySvc::failTape
 	      (4, oracle::occi::OCCIINT); 
     }
 
-    m_failTapeSessionStatement->setDouble(1,(double)failure.transactionId()); 
+    m_failTapeSessionStatement->setDouble(1,(double)failure.mountTransactionId()); 
     m_failTapeSessionStatement->setInt(2,failure.errorCode());
     
     m_failTapeSessionStatement->executeUpdate();
@@ -1830,7 +1830,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::failFileTransfer(FileErr
         createStatement(s_failFileTransferStatementString);
     }
 
-    m_failFileTransferStatement->setDouble(1,(double)failure.transactionId()); 
+    m_failFileTransferStatement->setDouble(1,(double)failure.mountTransactionId()); 
     m_failFileTransferStatement->setDouble(2,(double)failure.fileid());
     m_failFileTransferStatement->setString(3,failure.nshost());
     m_failFileTransferStatement->setInt(4,failure.fseq());

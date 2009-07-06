@@ -27,13 +27,8 @@
  *****************************************************************************/
 
 // Include Files
-#include "castor/Constants.hpp"
-#include "castor/IObject.hpp"
-#include "castor/ObjectSet.hpp"
-#include "castor/tape/tapegateway/BaseFileInfo.hpp"
 #include "castor/tape/tapegateway/FileMigratedNotification.hpp"
 #include "osdep.h"
-#include <iostream>
 #include <string>
 
 //------------------------------------------------------------------------------
@@ -55,60 +50,5 @@ castor::tape::tapegateway::FileMigratedNotification::FileMigratedNotification() 
 // Destructor
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::FileMigratedNotification::~FileMigratedNotification() throw() {
-}
-
-//------------------------------------------------------------------------------
-// print
-//------------------------------------------------------------------------------
-void castor::tape::tapegateway::FileMigratedNotification::print(std::ostream& stream,
-                                                                std::string indent,
-                                                                castor::ObjectSet& alreadyPrinted) const {
-  stream << indent << "[# FileMigratedNotification #]" << std::endl;
-  if (alreadyPrinted.find(this) != alreadyPrinted.end()) {
-    // Circular dependency, this object was already printed
-    stream << indent << "Back pointer, see above" << std::endl;
-    return;
-  }
-  // Call print on the parent class(es)
-  this->BaseFileInfo::print(stream, indent, alreadyPrinted);
-  // Output of all members
-  stream << indent << "fileSize : " << m_fileSize << std::endl;
-  stream << indent << "checksumName : " << m_checksumName << std::endl;
-  stream << indent << "checksum : " << m_checksum << std::endl;
-  stream << indent << "compressedFileSize : " << m_compressedFileSize << std::endl;
-  stream << indent << "blockId0 : " << m_blockId0 << std::endl;
-  stream << indent << "blockId1 : " << m_blockId1 << std::endl;
-  stream << indent << "blockId2 : " << m_blockId2 << std::endl;
-  stream << indent << "blockId3 : " << m_blockId3 << std::endl;
-  alreadyPrinted.insert(this);
-}
-
-//------------------------------------------------------------------------------
-// print
-//------------------------------------------------------------------------------
-void castor::tape::tapegateway::FileMigratedNotification::print() const {
-  castor::ObjectSet alreadyPrinted;
-  print(std::cout, "", alreadyPrinted);
-}
-
-//------------------------------------------------------------------------------
-// TYPE
-//------------------------------------------------------------------------------
-int castor::tape::tapegateway::FileMigratedNotification::TYPE() {
-  return OBJ_FileMigratedNotification;
-}
-
-//------------------------------------------------------------------------------
-// type
-//------------------------------------------------------------------------------
-int castor::tape::tapegateway::FileMigratedNotification::type() const {
-  return TYPE();
-}
-
-//------------------------------------------------------------------------------
-// clone
-//------------------------------------------------------------------------------
-castor::IObject* castor::tape::tapegateway::FileMigratedNotification::clone() {
-  return new FileMigratedNotification(*this);
 }
 

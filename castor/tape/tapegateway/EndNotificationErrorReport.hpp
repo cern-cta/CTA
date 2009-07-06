@@ -30,8 +30,7 @@
 #define CASTOR_TAPE_TAPEGATEWAY_ENDNOTIFICATIONERRORREPORT_HPP
 
 // Include Files
-#include "castor/IObject.hpp"
-#include "osdep.h"
+#include "castor/tape/tapegateway/GatewayMessage.hpp"
 #include <iostream>
 #include <string>
 
@@ -39,6 +38,7 @@ namespace castor {
 
   // Forward declarations
   class ObjectSet;
+  class IObject;
 
   namespace tape {
 
@@ -47,7 +47,7 @@ namespace castor {
       /**
        * class EndNotificationErrorReport
        */
-      class EndNotificationErrorReport : public virtual castor::IObject {
+      class EndNotificationErrorReport : public GatewayMessage {
 
       public:
 
@@ -115,22 +115,6 @@ namespace castor {
         }
 
         /**
-         * Get the value of m_transactionId
-         * @return the value of m_transactionId
-         */
-        u_signed64 transactionId() const {
-          return m_transactionId;
-        }
-
-        /**
-         * Set the value of m_transactionId
-         * @param new_var the new value of m_transactionId
-         */
-        void setTransactionId(u_signed64 new_var) {
-          m_transactionId = new_var;
-        }
-
-        /**
          * Get the value of m_errorMessage
          * @return the value of m_errorMessage
          */
@@ -146,34 +130,11 @@ namespace castor {
           m_errorMessage = new_var;
         }
 
-        /**
-         * Get the value of m_id
-         * The id of this object
-         * @return the value of m_id
-         */
-        u_signed64 id() const {
-          return m_id;
-        }
-
-        /**
-         * Set the value of m_id
-         * The id of this object
-         * @param new_var the new value of m_id
-         */
-        void setId(u_signed64 new_var) {
-          m_id = new_var;
-        }
-
       private:
 
         int m_errorCode;
 
-        u_signed64 m_transactionId;
-
         std::string m_errorMessage;
-
-        /// The id of this object
-        u_signed64 m_id;
 
       }; /* end of class EndNotificationErrorReport */
 
