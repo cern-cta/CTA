@@ -37,7 +37,7 @@ namespace aggregator {
   const size_t      HDRBUFSIZ             = 3 * sizeof(uint32_t);
   const int         MAXDRIVES             = 4;
   const int         MAXINITMIGFILES       = 2;
-  const int         MAXPENDINGTRANSFERS   = 1024;
+  const int         MAXPENDINGTRANSFERS   = 100;
   const uint32_t    MIGRATEUMASK          = 022;
   const size_t      MSGBUFSIZ             = 1024;
   const char *const AGGREGATORPROGRAMNAME = "aggregatord";
