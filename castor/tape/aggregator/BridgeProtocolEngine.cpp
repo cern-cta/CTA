@@ -434,8 +434,25 @@ void castor::tape::aggregator::BridgeProtocolEngine::run()
         AGGREGATOR_FAILED_TO_NOTIFY_GATEWAY_END_OF_SESSION, params);
     }
   } catch(castor::exception::Exception &ex) {
-    GatewayTxRx::notifyGatewayEndOfFailedSession(m_cuuid, m_volReqId,
-      m_gatewayHost, m_gatewayPort, ex);
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId", m_volReqId           ),
+      castor::dlf::Param("Message" , ex.getMessage().str()),
+      castor::dlf::Param("Code"    , ex.code()            )};
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_FAILED_TO_PROCESS_RTCPD_SOCKETS, params);
+
+    try {
+      GatewayTxRx::notifyGatewayEndOfFailedSession(m_cuuid, m_volReqId,
+        m_gatewayHost, m_gatewayPort, ex);
+    } catch(castor::exception::Exception &ex) {
+      // Don't rethrow, just log the exception
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", m_volReqId           ),
+        castor::dlf::Param("Message" , ex.getMessage().str()),
+        castor::dlf::Param("Code"    , ex.code()            )};
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_FAILED_TO_NOTIFY_GATEWAY_END_OF_FAILED_SESSION, params);
+    }
   }
 }
 

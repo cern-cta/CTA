@@ -87,3 +87,5 @@
 86,AGGREGATOR_FAILED_TO_NOTIFY_GATEWAY_END_OF_SESSION,"Failed to notify gateway end of session"
 87,AGGREGATOR_NOTIFY_GATEWAY_END_OF_FAILED_SESSION,"Notifying tape gateway end of failed session"
 88,AGGREGATOR_NOTIFIED_GATEWAY_END_OF_FAILED_SESSION,"Notified tape gateway end of failed session"
+89,AGGREGATOR_FAILED_TO_NOTIFY_GATEWAY_END_OF_FAILED_SESSION,"Failed to notify gateway end of failed session"
+90,AGGREGATOR_FAILED_TO_PROCESS_RTCPD_SOCKETS,"Failed to process RTCPD sockets"
