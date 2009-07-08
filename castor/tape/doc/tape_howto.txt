@@ -1737,6 +1737,12 @@ How to move the VDQM state of a tape drive from UNKNOWN to FREE
 ssh tpsrv202 tpmaint -stop; ssh tpsrv202 tpmaint -start
 
 
+How to install dot from the graphviz package on SLC4
+====================================================
+
+rpm -h -i http://swrepsrv.cern.ch/swrep/x86_64_slc4/graphviz-2.6-1.fc4.x86_64.rpm
+
+
 How to install UMLGraph sequence.pic
 ====================================
 
