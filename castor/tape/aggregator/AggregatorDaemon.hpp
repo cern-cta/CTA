@@ -28,6 +28,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidConfigEntry.hpp"
 #include "castor/server/BaseDaemon.hpp"
+#include "castor/server/BaseThreadPool.hpp"
 
 #include <iostream>
 
@@ -84,6 +85,12 @@ private:
    * The results of parsing the command-line.
    */
   ParsedCommandLine m_parsedCommandLine;
+
+  /**
+   * The VDQM request handler thread pool which should contain as many threads
+   * as there are drives per tape server.
+   */
+  server::BaseThreadPool *m_vdqmRequestHandlerThreadPool;
 
   /**
    * Parses the command-line arguments and sets the daemon options accordingly.

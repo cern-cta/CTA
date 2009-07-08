@@ -1350,7 +1350,6 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayEndOfFailedSession(
       castor::dlf::Param("volReqId"          , volReqId             ),
       castor::dlf::Param("gatewayHost"       , gatewayHost          ),
       castor::dlf::Param("gatewayPort"       , gatewayPort          ),
-      castor::dlf::Param("mountTransactionId", volReqId             ),
       castor::dlf::Param("errorCode"         , ex.code()            ),
       castor::dlf::Param("errorrMessage"     , ex.getMessage().str())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,

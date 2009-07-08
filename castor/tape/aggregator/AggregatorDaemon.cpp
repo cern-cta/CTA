@@ -302,13 +302,12 @@ void castor::tape::aggregator::AggregatorDaemon::
     new castor::server::TCPListenerThreadPool("VdqmRequestHandlerPool",
       new castor::tape::aggregator::VdqmRequestHandler(), vdqmListenPort));
 
-  castor::server::BaseThreadPool *const vdqmRequestHandlerThreadPool =
-    getThreadPool('V');
+  m_vdqmRequestHandlerThreadPool = getThreadPool('V');
 
-  if(vdqmRequestHandlerThreadPool == NULL) {
+  if(m_vdqmRequestHandlerThreadPool == NULL) {
     TAPE_THROW_EX(castor::exception::Internal,
      ": Failed to get VdqmRequestHandlerPool");
   }
 
-  vdqmRequestHandlerThreadPool->setNbThreads(0);
+  m_vdqmRequestHandlerThreadPool->setNbThreads(MAXDRIVES);
 }
