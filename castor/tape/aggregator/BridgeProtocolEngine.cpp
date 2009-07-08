@@ -356,37 +356,40 @@ void castor::tape::aggregator::BridgeProtocolEngine::run()
 void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
   throw(castor::exception::Exception) {
 
-  char migrationFilePath[CA_MAXPATHLEN+1];
-  utils::setBytes(migrationFilePath, '\0');
-  char migrationFileNsHost[CA_MAXHOSTNAMELEN+1];
-  utils::setBytes(migrationFileNsHost, '\0');
-  uint64_t migrationFileId = 0;
-  int32_t migrationFileTapeFileSeq = 0;
-  uint64_t migrationFileSize = 0;
-  char migrationFileLastKnownFilename[CA_MAXPATHLEN+1];
-  utils::setBytes(migrationFileLastKnownFilename, '\0');
-  uint64_t migrationFileLastModificationTime = 0;
-  int32_t positionCommandCode = 0;
-  char tapePath[CA_MAXPATHLEN+1];
-  utils::setBytes(tapePath, '\0');
-  int32_t tapeFseq;
+  char          filePath[CA_MAXPATHLEN+1];
+  char          fileNsHost[CA_MAXHOSTNAMELEN+1];
+  char          fileLastKnownFilename[CA_MAXPATHLEN+1];
+  char          tapePath[CA_MAXPATHLEN+1];
   unsigned char (blockId)[4];
-  utils::setBytes(blockId, '\0');
+
+  utils::setBytes(filePath             , '\0');
+  utils::setBytes(fileNsHost           , '\0');
+  utils::setBytes(fileLastKnownFilename, '\0');
+  utils::setBytes(tapePath             , '\0');
+  utils::setBytes(blockId              , '\0');
+
+  uint64_t fileId                   = 0;
+  int32_t  fileTapeFileSeq          = 0;
+  uint64_t fileSize                 = 0;
+  uint64_t fileLastModificationTime = 0;
+  int32_t  positionCommandCode      = 0;
 
   // Get first file to migrate from tape gateway
   const bool thereIsAFileToMigrate =
     GatewayTxRx::getFileToMigrateFromGateway(m_cuuid, m_volReqId,
-      m_gatewayHost, m_gatewayPort, migrationFilePath, migrationFileNsHost,
-      migrationFileId, migrationFileTapeFileSeq, migrationFileSize,
-      migrationFileLastKnownFilename, migrationFileLastModificationTime,
-      positionCommandCode);
+    m_gatewayHost, m_gatewayPort, filePath, fileNsHost, fileId,
+    fileTapeFileSeq, fileSize, fileLastKnownFilename,
+    fileLastModificationTime, positionCommandCode);
 
   // Return if there is no file to migrate
   if(!thereIsAFileToMigrate) {
     return;
   }
 
-  tapeFseq=migrationFileTapeFileSeq;
+  // Remember the file transaction ID and get its unique index to be passed to
+  // RTCPD through the "rtcpFileRequest.disk_fseq" message field
+
+  // TO BE DONE!!!!!!
 
   // Give volume to RTCPD
   RtcpTapeRqstErrMsgBody rtcpVolume;
@@ -407,11 +410,11 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
 
   // Give file to migrate to RTCPD
   char migrationTapeFileId[CA_MAXPATHLEN+1];
-  utils::toHex(migrationFileId, migrationTapeFileId);
+  utils::toHex(fileId, migrationTapeFileId);
   RtcpTxRx::giveFileToRtcpd(m_cuuid, m_volReqId, m_rtcpdInitialSocketFd,
-    RTCPDNETRWTIMEOUT, rtcpVolume.mode, migrationFilePath, migrationFileSize,
-    "", RECORDFORMAT, migrationTapeFileId, MIGRATEUMASK, positionCommandCode,
-    tapeFseq, migrationFileNsHost, migrationFileId, blockId);
+    RTCPDNETRWTIMEOUT, rtcpVolume.mode, filePath, fileSize, "", RECORDFORMAT,
+    migrationTapeFileId, MIGRATEUMASK, positionCommandCode, fileTapeFileSeq,
+    fileNsHost, fileId, blockId);
 
   // Ask RTCPD to request more work
   RtcpTxRx::askRtcpdToRequestMoreWork(m_cuuid, m_volReqId, tapePath,

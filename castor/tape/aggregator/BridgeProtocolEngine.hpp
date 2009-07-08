@@ -26,10 +26,12 @@
 #define CASTOR_TAPE_AGGREGATOR_BRIDGEPROTOCOLENGINE
 
 #include "castor/exception/Exception.hpp"
+#include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/MessageHeader.hpp"
 #include "castor/tape/aggregator/RtcpFileRqstMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpTapeRqstMsgBody.hpp"
 #include "castor/tape/aggregator/SmartFdList.hpp"
+#include "castor/tape/utils/IndexedContainer.hpp"
 #include "h/Castor_limits.h"
 #include "h/Cuuid.h"
 
@@ -181,6 +183,12 @@ private:
    * Map of message body handlers.
    */
   MsgBodyCallbackMap m_handlers;
+
+  /**
+   * Indexed container of the file transaction IDs of all the files currently
+   * being transfered either for recall or migration.
+   */
+  utils::IndexedContainer<uint64_t, MAXPENDINGTRANSFERS> m_pendingTransferIds;
 
   /**
    * Accepts an RTCPD connection using the specified listener socket.
