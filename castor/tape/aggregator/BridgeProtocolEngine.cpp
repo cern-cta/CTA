@@ -125,7 +125,8 @@ int castor::tape::aggregator::BridgeProtocolEngine::acceptRtcpdConnection()
 //-----------------------------------------------------------------------------
 // processRtcpdSockets
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSockets()
+void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSockets(
+)
   throw(castor::exception::Exception) {
 
   int selectRc = 0;
@@ -341,11 +342,20 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocket(
 void castor::tape::aggregator::BridgeProtocolEngine::run()
   throw(castor::exception::Exception) {
 
-  RtcpFileRqstErrMsgBody rtcpFileReply;
-  utils::setBytes(rtcpFileReply, '\0');
+  if(m_mode == WRITE_ENABLE) {
+    runMigrationSession();
+  } else {
+    runRecallSession();
+  }
+}
 
-  // Allocate some variables on the stack for information about a possible file
-  // to migrate.  These variables will not be used in the case of a recall
+
+//-----------------------------------------------------------------------------
+// runMigrationSession
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
+  throw(castor::exception::Exception) {
+
   char migrationFilePath[CA_MAXPATHLEN+1];
   utils::setBytes(migrationFilePath, '\0');
   char migrationFileNsHost[CA_MAXHOSTNAMELEN+1];
@@ -360,26 +370,23 @@ void castor::tape::aggregator::BridgeProtocolEngine::run()
   char tapePath[CA_MAXPATHLEN+1];
   utils::setBytes(tapePath, '\0');
   int32_t tapeFseq;
-  unsigned char (blockId)[4]; 
+  unsigned char (blockId)[4];
   utils::setBytes(blockId, '\0');
 
-  // If migrating
-  if(m_mode == WRITE_ENABLE) {
+  // Get first file to migrate from tape gateway
+  const bool thereIsAFileToMigrate =
+    GatewayTxRx::getFileToMigrateFromGateway(m_cuuid, m_volReqId,
+      m_gatewayHost, m_gatewayPort, migrationFilePath, migrationFileNsHost,
+      migrationFileId, migrationFileTapeFileSeq, migrationFileSize,
+      migrationFileLastKnownFilename, migrationFileLastModificationTime,
+      positionCommandCode);
 
-    // Get first file to migrate from tape gateway
-    const bool thereIsAFileToMigrate =
-      GatewayTxRx::getFileToMigrateFromGateway(m_cuuid, m_volReqId,
-        m_gatewayHost, m_gatewayPort, migrationFilePath, migrationFileNsHost,
-        migrationFileId, migrationFileTapeFileSeq, migrationFileSize,
-        migrationFileLastKnownFilename, migrationFileLastModificationTime,
-        positionCommandCode);
-
-    tapeFseq=migrationFileTapeFileSeq; 
-    // Return if there is no file to migrate
-    if(!thereIsAFileToMigrate) {
-      return;
-    }
+  // Return if there is no file to migrate
+  if(!thereIsAFileToMigrate) {
+    return;
   }
+
+  tapeFseq=migrationFileTapeFileSeq;
 
   // Give volume to RTCPD
   RtcpTapeRqstErrMsgBody rtcpVolume;
@@ -398,20 +405,89 @@ void castor::tape::aggregator::BridgeProtocolEngine::run()
   RtcpTxRx::giveVolumeToRtcpd(m_cuuid, m_volReqId, m_rtcpdInitialSocketFd,
     RTCPDNETRWTIMEOUT, rtcpVolume);
 
-  // If migrating
+  // Give file to migrate to RTCPD
   char migrationTapeFileId[CA_MAXPATHLEN+1];
-  if(m_mode == WRITE_ENABLE) {
-
-    // Give file to migrate to RTCPD
-    utils::toHex(migrationFileId, migrationTapeFileId);
-    RtcpTxRx::giveFileToRtcpd(m_cuuid, m_volReqId, m_rtcpdInitialSocketFd,
-      RTCPDNETRWTIMEOUT, rtcpVolume.mode, migrationFilePath, migrationFileSize,
-      "", RECORDFORMAT, migrationTapeFileId, MIGRATEUMASK, positionCommandCode,
-      tapeFseq, migrationFileNsHost, migrationFileId, blockId);
-  }
+  utils::toHex(migrationFileId, migrationTapeFileId);
+  RtcpTxRx::giveFileToRtcpd(m_cuuid, m_volReqId, m_rtcpdInitialSocketFd,
+    RTCPDNETRWTIMEOUT, rtcpVolume.mode, migrationFilePath, migrationFileSize,
+    "", RECORDFORMAT, migrationTapeFileId, MIGRATEUMASK, positionCommandCode,
+    tapeFseq, migrationFileNsHost, migrationFileId, blockId);
 
   // Ask RTCPD to request more work
-  RtcpTxRx::askRtcpdToRequestMoreWork(m_cuuid, m_volReqId, tapePath, 
+  RtcpTxRx::askRtcpdToRequestMoreWork(m_cuuid, m_volReqId, tapePath,
+    m_rtcpdInitialSocketFd, RTCPDNETRWTIMEOUT, m_mode);
+
+  // Tell RTCPD end of file list
+  RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_volReqId, m_rtcpdInitialSocketFd,
+    RTCPDNETRWTIMEOUT);
+
+  try {
+    processRtcpdSockets();
+
+    try {
+      GatewayTxRx::notifyGatewayEndOfSession(m_cuuid, m_volReqId, m_gatewayHost,
+        m_gatewayPort);
+    } catch(castor::exception::Exception &ex) {
+      // Don't rethrow, just log the exception
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", m_volReqId           ),
+        castor::dlf::Param("Message" , ex.getMessage().str()),
+        castor::dlf::Param("Code"    , ex.code()            )};
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_FAILED_TO_NOTIFY_GATEWAY_END_OF_SESSION, params);
+    }
+  } catch(castor::exception::Exception &ex) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId", m_volReqId           ),
+      castor::dlf::Param("Message" , ex.getMessage().str()),
+      castor::dlf::Param("Code"    , ex.code()            )};
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_FAILED_TO_PROCESS_RTCPD_SOCKETS, params);
+
+    try {
+      GatewayTxRx::notifyGatewayEndOfFailedSession(m_cuuid, m_volReqId,
+        m_gatewayHost, m_gatewayPort, ex);
+    } catch(castor::exception::Exception &ex) {
+      // Don't rethrow, just log the exception
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", m_volReqId           ),
+        castor::dlf::Param("Message" , ex.getMessage().str()),
+        castor::dlf::Param("Code"    , ex.code()            )};
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_FAILED_TO_NOTIFY_GATEWAY_END_OF_FAILED_SESSION, params);
+    }
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// runRecallSession
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::BridgeProtocolEngine::runRecallSession()
+  throw(castor::exception::Exception) {
+
+  char tapePath[CA_MAXPATHLEN+1];
+  utils::setBytes(tapePath, '\0');
+
+  // Give volume to RTCPD
+  RtcpTapeRqstErrMsgBody rtcpVolume;
+  utils::setBytes(rtcpVolume, '\0');
+  utils::copyString(rtcpVolume.vid    , m_vid    );
+  utils::copyString(rtcpVolume.vsn    , m_vsn    );
+  utils::copyString(rtcpVolume.label  , m_label  );
+  utils::copyString(rtcpVolume.density, m_density);
+  utils::copyString(rtcpVolume.unit   , m_unit   );
+  rtcpVolume.volReqId       = m_volReqId;
+  rtcpVolume.mode           = m_mode;
+  rtcpVolume.tStartRequest  = time(NULL);
+  rtcpVolume.err.severity   =  1;
+  rtcpVolume.err.maxTpRetry = -1;
+  rtcpVolume.err.maxCpRetry = -1;
+  RtcpTxRx::giveVolumeToRtcpd(m_cuuid, m_volReqId, m_rtcpdInitialSocketFd,
+    RTCPDNETRWTIMEOUT, rtcpVolume);
+
+  // Ask RTCPD to request more work
+  RtcpTxRx::askRtcpdToRequestMoreWork(m_cuuid, m_volReqId, tapePath,
     m_rtcpdInitialSocketFd, RTCPDNETRWTIMEOUT, m_mode);
 
   // Tell RTCPD end of file list

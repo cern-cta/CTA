@@ -74,7 +74,7 @@ public:
     const char (&density)[CA_MAXDENLEN+1]);
 
   /**
-   * Process a session of one or more recalls.
+   * Run a recall/migration session.
    */
   void run() throw(castor::exception::Exception);
 
@@ -82,7 +82,7 @@ public:
 private:
 
   /**
-   * The ccuid to be used for logging.
+   * The cuuid to be used for logging.
    */
   const Cuuid_t &m_cuuid;
 
@@ -194,6 +194,9 @@ private:
    * <li>The RTCPD callback listener socket
    * <li>The connected sockets of the tape and disk I/O threads
    * </ul>
+   *
+   * @param filesBeingMigrated
+   * @param filesBeingRecalled
    */
   void processRtcpdSockets() throw(castor::exception::Exception);
 
@@ -306,6 +309,16 @@ private:
   void rtcpEndOfReqCallback(const MessageHeader &header,
     const int socketFd, bool &receivedENDOF_REQ)
     throw(castor::exception::Exception);
+
+  /**
+   * Runs a migration session.
+   */
+  void runMigrationSession() throw(castor::exception::Exception);
+
+  /**
+   * Runs a recall session.
+   */
+  void runRecallSession() throw(castor::exception::Exception);
 };
 
 } // namespace aggregator
