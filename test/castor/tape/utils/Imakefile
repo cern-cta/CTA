@@ -1,0 +1,45 @@
+#
+#                      test/castor/tape/utils/Imakefile
+#
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
+#
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+#
+# @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
+#
+
+CPPFLAGS = -pedantic -Wall -Werror -g -O0 -I../../../../h -I../../../.. $(MTCCFLAGS)
+CFLAGS = -O -I../../../../h -I../../../.. $(THREADFLAGS)
+LDFLAGS += $(MTLDFLAGS)
+LD = g++
+
+DependsOnLibrary(../../../castor,castorclient)
+DependsOnLibrary(../../../castor/db/cnv,castorcnvs)
+DependsOnLibrary(../../../common,castorcommon)
+DependsOnLibrary(../../../dlf,castordlf)
+DependsOnLibrary(../../../vdqm,castorvdqm)
+DependsOnLibrary(../../../vmgr,castorvmgr)
+
+TAPE_UTILS_SRCS = \
+  ../../../../castor/tape/utils/utils.cpp
+
+TESTUTILSBIN_SRCS = \
+  TestUtilsMain.cpp \
+  $(TAPE_UTILS_SRCS)
+
+TESTUTILSBIN_OBJS = $(TESTUTILSBIN_SRCS:.cpp=.Osuf)
+
+NormalProgramTarget(testutils,$(TESTUTILSBIN_OBJS),$(DEPLIB),$(LIBS),750)
