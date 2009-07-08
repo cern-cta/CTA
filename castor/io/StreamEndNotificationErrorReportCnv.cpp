@@ -91,6 +91,7 @@ void castor::io::StreamEndNotificationErrorReportCnv::createRep(castor::IAddress
   ad->stream() << obj->mountTransactionId();
   ad->stream() << obj->errorCode();
   ad->stream() << obj->errorMessage();
+  ad->stream() << obj->id();
 }
 
 //------------------------------------------------------------------------------
@@ -112,6 +113,9 @@ castor::IObject* castor::io::StreamEndNotificationErrorReportCnv::createObj(cast
   std::string errorMessage;
   ad->stream() >> errorMessage;
   object->setErrorMessage(errorMessage);
+  u_signed64 id;
+  ad->stream() >> id;
+  object->setId(id);
   return object;
 }
 

@@ -32,6 +32,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/tape/tapegateway/GatewayMessage.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 
@@ -43,7 +44,8 @@ castor::tape::tapegateway::Volume::Volume() throw() :
   m_vid(""),
   m_mode(0),
   m_density(""),
-  m_label("") {
+  m_label(""),
+  m_id(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -71,6 +73,7 @@ void castor::tape::tapegateway::Volume::print(std::ostream& stream,
   stream << indent << "mode : " << m_mode << std::endl;
   stream << indent << "density : " << m_density << std::endl;
   stream << indent << "label : " << m_label << std::endl;
+  stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }
 

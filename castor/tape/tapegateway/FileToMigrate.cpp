@@ -27,8 +27,13 @@
  *****************************************************************************/
 
 // Include Files
+#include "castor/Constants.hpp"
+#include "castor/IObject.hpp"
+#include "castor/ObjectSet.hpp"
+#include "castor/tape/tapegateway/BaseFileInfo.hpp"
 #include "castor/tape/tapegateway/FileToMigrate.hpp"
 #include "osdep.h"
+#include <iostream>
 #include <string>
 
 //------------------------------------------------------------------------------
@@ -39,12 +44,65 @@ castor::tape::tapegateway::FileToMigrate::FileToMigrate() throw() :
   m_fileSize(0),
   m_lastKnownFilename(""),
   m_lastModificationTime(0),
-  m_path("") {
+  m_path(""),
+  m_id(0) {
 }
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::FileToMigrate::~FileToMigrate() throw() {
+}
+
+//------------------------------------------------------------------------------
+// print
+//------------------------------------------------------------------------------
+void castor::tape::tapegateway::FileToMigrate::print(std::ostream& stream,
+                                                     std::string indent,
+                                                     castor::ObjectSet& alreadyPrinted) const {
+  stream << indent << "[# FileToMigrate #]" << std::endl;
+  if (alreadyPrinted.find(this) != alreadyPrinted.end()) {
+    // Circular dependency, this object was already printed
+    stream << indent << "Back pointer, see above" << std::endl;
+    return;
+  }
+  // Call print on the parent class(es)
+  this->BaseFileInfo::print(stream, indent, alreadyPrinted);
+  // Output of all members
+  stream << indent << "fileSize : " << m_fileSize << std::endl;
+  stream << indent << "lastKnownFilename : " << m_lastKnownFilename << std::endl;
+  stream << indent << "lastModificationTime : " << m_lastModificationTime << std::endl;
+  stream << indent << "path : " << m_path << std::endl;
+  stream << indent << "id : " << m_id << std::endl;
+  alreadyPrinted.insert(this);
+}
+
+//------------------------------------------------------------------------------
+// print
+//------------------------------------------------------------------------------
+void castor::tape::tapegateway::FileToMigrate::print() const {
+  castor::ObjectSet alreadyPrinted;
+  print(std::cout, "", alreadyPrinted);
+}
+
+//------------------------------------------------------------------------------
+// TYPE
+//------------------------------------------------------------------------------
+int castor::tape::tapegateway::FileToMigrate::TYPE() {
+  return OBJ_FileToMigrate;
+}
+
+//------------------------------------------------------------------------------
+// type
+//------------------------------------------------------------------------------
+int castor::tape::tapegateway::FileToMigrate::type() const {
+  return TYPE();
+}
+
+//------------------------------------------------------------------------------
+// clone
+//------------------------------------------------------------------------------
+castor::IObject* castor::tape::tapegateway::FileToMigrate::clone() {
+  return new FileToMigrate(*this);
 }
 

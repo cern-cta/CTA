@@ -40,7 +40,6 @@ namespace castor {
 
   // Forward declarations
   class ObjectSet;
-  class IObject;
 
   namespace tape {
 
@@ -49,7 +48,7 @@ namespace castor {
       /**
        * class BaseFileInfo
        */
-      class BaseFileInfo : public GatewayMessage {
+      class BaseFileInfo : public virtual GatewayMessage {
 
       public:
 
@@ -79,27 +78,6 @@ namespace castor {
          */
         virtual void print() const;
 
-        /**
-         * Gets the type of this kind of objects
-         */
-        static int TYPE();
-
-        /********************************************/
-        /* Implementation of IObject abstract class */
-        /********************************************/
-        /**
-         * Gets the type of the object
-         */
-        virtual int type() const;
-
-        /**
-         * virtual method to clone any object
-         */
-        virtual castor::IObject* clone();
-
-        /*********************************/
-        /* End of IObject abstract class */
-        /*********************************/
         /**
          * Get the value of m_fileTransactionId
          * @return the value of m_fileTransactionId

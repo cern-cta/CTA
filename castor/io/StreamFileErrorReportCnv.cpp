@@ -96,6 +96,7 @@ void castor::io::StreamFileErrorReportCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->mountTransactionId();
   ad->stream() << obj->errorCode();
   ad->stream() << obj->errorMessage();
+  ad->stream() << obj->id();
   ad->stream() << obj->positionCommandCode();
 }
 
@@ -130,6 +131,9 @@ castor::IObject* castor::io::StreamFileErrorReportCnv::createObj(castor::IAddres
   std::string errorMessage;
   ad->stream() >> errorMessage;
   object->setErrorMessage(errorMessage);
+  u_signed64 id;
+  ad->stream() >> id;
+  object->setId(id);
   int positionCommandCode;
   ad->stream() >> positionCommandCode;
   object->setPositionCommandCode((castor::tape::tapegateway::PositionCommandCode)positionCommandCode);

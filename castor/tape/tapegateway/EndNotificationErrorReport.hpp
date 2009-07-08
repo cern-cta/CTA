@@ -31,6 +31,7 @@
 
 // Include Files
 #include "castor/tape/tapegateway/GatewayMessage.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 
@@ -47,7 +48,7 @@ namespace castor {
       /**
        * class EndNotificationErrorReport
        */
-      class EndNotificationErrorReport : public GatewayMessage {
+      class EndNotificationErrorReport : public virtual GatewayMessage {
 
       public:
 
@@ -130,11 +131,32 @@ namespace castor {
           m_errorMessage = new_var;
         }
 
+        /**
+         * Get the value of m_id
+         * The id of this object
+         * @return the value of m_id
+         */
+        u_signed64 id() const {
+          return m_id;
+        }
+
+        /**
+         * Set the value of m_id
+         * The id of this object
+         * @param new_var the new value of m_id
+         */
+        void setId(u_signed64 new_var) {
+          m_id = new_var;
+        }
+
       private:
 
         int m_errorCode;
 
         std::string m_errorMessage;
+
+        /// The id of this object
+        u_signed64 m_id;
 
       }; /* end of class EndNotificationErrorReport */
 

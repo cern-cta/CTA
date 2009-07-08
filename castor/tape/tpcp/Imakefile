@@ -53,7 +53,6 @@ TAPEGATEWAY_MESSAGES_SRCS = \
   ../tapegateway/VolumeRequest.cpp
 
 TAPEGATEWAY_IO_SRCS = \
-  ../../io/StreamBaseFileInfoCnv.cpp \
   ../../io/StreamEndNotificationCnv.cpp \
   ../../io/StreamEndNotificationErrorReportCnv.cpp \
   ../../io/StreamFileMigratedNotificationCnv.cpp \
@@ -62,7 +61,6 @@ TAPEGATEWAY_IO_SRCS = \
   ../../io/StreamFileToMigrateRequestCnv.cpp \
   ../../io/StreamFileToRecallCnv.cpp \
   ../../io/StreamFileToRecallRequestCnv.cpp \
-  ../../io/StreamGatewayMessageCnv.cpp \
   ../../io/StreamNoMoreFilesCnv.cpp \
   ../../io/StreamNotificationAcknowledgeCnv.cpp \
   ../../io/StreamVolumeCnv.cpp \

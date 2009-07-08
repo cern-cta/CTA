@@ -32,6 +32,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/tape/tapegateway/GatewayMessage.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 
@@ -39,7 +40,8 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::NotificationAcknowledge::NotificationAcknowledge() throw() :
-  GatewayMessage() {
+  GatewayMessage(),
+  m_id(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -62,6 +64,8 @@ void castor::tape::tapegateway::NotificationAcknowledge::print(std::ostream& str
   }
   // Call print on the parent class(es)
   this->GatewayMessage::print(stream, indent, alreadyPrinted);
+  // Output of all members
+  stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }
 

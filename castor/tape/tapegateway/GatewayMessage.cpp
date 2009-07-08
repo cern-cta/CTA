@@ -27,8 +27,6 @@
  *****************************************************************************/
 
 // Include Files
-#include "castor/Constants.hpp"
-#include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/tape/tapegateway/GatewayMessage.hpp"
 #include "osdep.h"
@@ -39,8 +37,7 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::GatewayMessage::GatewayMessage() throw() :
-  m_mountTransactionId(0),
-  m_id(0) {
+  m_mountTransactionId(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -63,7 +60,6 @@ void castor::tape::tapegateway::GatewayMessage::print(std::ostream& stream,
   }
   // Output of all members
   stream << indent << "mountTransactionId : " << m_mountTransactionId << std::endl;
-  stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }
 
@@ -73,26 +69,5 @@ void castor::tape::tapegateway::GatewayMessage::print(std::ostream& stream,
 void castor::tape::tapegateway::GatewayMessage::print() const {
   castor::ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
-}
-
-//------------------------------------------------------------------------------
-// TYPE
-//------------------------------------------------------------------------------
-int castor::tape::tapegateway::GatewayMessage::TYPE() {
-  return OBJ_GatewayMessage;
-}
-
-//------------------------------------------------------------------------------
-// type
-//------------------------------------------------------------------------------
-int castor::tape::tapegateway::GatewayMessage::type() const {
-  return TYPE();
-}
-
-//------------------------------------------------------------------------------
-// clone
-//------------------------------------------------------------------------------
-castor::IObject* castor::tape::tapegateway::GatewayMessage::clone() {
-  return new GatewayMessage(*this);
 }
 

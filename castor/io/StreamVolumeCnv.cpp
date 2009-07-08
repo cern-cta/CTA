@@ -93,6 +93,7 @@ void castor::io::StreamVolumeCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->mode();
   ad->stream() << obj->density();
   ad->stream() << obj->label();
+  ad->stream() << obj->id();
 }
 
 //------------------------------------------------------------------------------
@@ -120,6 +121,9 @@ castor::IObject* castor::io::StreamVolumeCnv::createObj(castor::IAddress* addres
   std::string label;
   ad->stream() >> label;
   object->setLabel(label);
+  u_signed64 id;
+  ad->stream() >> id;
+  object->setId(id);
   return object;
 }
 

@@ -102,6 +102,7 @@ void castor::io::StreamFileMigratedNotificationCnv::createRep(castor::IAddress* 
   ad->stream() << obj->blockId1();
   ad->stream() << obj->blockId2();
   ad->stream() << obj->blockId3();
+  ad->stream() << obj->id();
   ad->stream() << obj->positionCommandCode();
 }
 
@@ -154,6 +155,9 @@ castor::IObject* castor::io::StreamFileMigratedNotificationCnv::createObj(castor
   unsigned char blockId3;
   ad->stream() >> blockId3;
   object->setBlockId3(blockId3);
+  u_signed64 id;
+  ad->stream() >> id;
+  object->setId(id);
   int positionCommandCode;
   ad->stream() >> positionCommandCode;
   object->setPositionCommandCode((castor::tape::tapegateway::PositionCommandCode)positionCommandCode);

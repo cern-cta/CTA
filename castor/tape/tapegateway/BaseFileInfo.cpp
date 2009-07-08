@@ -27,8 +27,6 @@
  *****************************************************************************/
 
 // Include Files
-#include "castor/Constants.hpp"
-#include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/tape/tapegateway/BaseFileInfo.hpp"
 #include "castor/tape/tapegateway/GatewayMessage.hpp"
@@ -84,26 +82,5 @@ void castor::tape::tapegateway::BaseFileInfo::print(std::ostream& stream,
 void castor::tape::tapegateway::BaseFileInfo::print() const {
   castor::ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
-}
-
-//------------------------------------------------------------------------------
-// TYPE
-//------------------------------------------------------------------------------
-int castor::tape::tapegateway::BaseFileInfo::TYPE() {
-  return OBJ_BaseFileInfo;
-}
-
-//------------------------------------------------------------------------------
-// type
-//------------------------------------------------------------------------------
-int castor::tape::tapegateway::BaseFileInfo::type() const {
-  return TYPE();
-}
-
-//------------------------------------------------------------------------------
-// clone
-//------------------------------------------------------------------------------
-castor::IObject* castor::tape::tapegateway::BaseFileInfo::clone() {
-  return new BaseFileInfo(*this);
 }
 

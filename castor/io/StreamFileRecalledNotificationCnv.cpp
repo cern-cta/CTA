@@ -97,6 +97,7 @@ void castor::io::StreamFileRecalledNotificationCnv::createRep(castor::IAddress* 
   ad->stream() << obj->path();
   ad->stream() << obj->checksumName();
   ad->stream() << obj->checksum();
+  ad->stream() << obj->id();
   ad->stream() << obj->positionCommandCode();
 }
 
@@ -134,6 +135,9 @@ castor::IObject* castor::io::StreamFileRecalledNotificationCnv::createObj(castor
   u_signed64 checksum;
   ad->stream() >> checksum;
   object->setChecksum(checksum);
+  u_signed64 id;
+  ad->stream() >> id;
+  object->setId(id);
   int positionCommandCode;
   ad->stream() >> positionCommandCode;
   object->setPositionCommandCode((castor::tape::tapegateway::PositionCommandCode)positionCommandCode);

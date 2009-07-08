@@ -78,27 +78,6 @@ namespace castor {
         virtual void print() const;
 
         /**
-         * Gets the type of this kind of objects
-         */
-        static int TYPE();
-
-        /********************************************/
-        /* Implementation of IObject abstract class */
-        /********************************************/
-        /**
-         * Gets the type of the object
-         */
-        virtual int type() const;
-
-        /**
-         * virtual method to clone any object
-         */
-        virtual castor::IObject* clone();
-
-        /*********************************/
-        /* End of IObject abstract class */
-        /*********************************/
-        /**
          * Get the value of m_mountTransactionId
          * @return the value of m_mountTransactionId
          */
@@ -114,30 +93,9 @@ namespace castor {
           m_mountTransactionId = new_var;
         }
 
-        /**
-         * Get the value of m_id
-         * The id of this object
-         * @return the value of m_id
-         */
-        u_signed64 id() const {
-          return m_id;
-        }
-
-        /**
-         * Set the value of m_id
-         * The id of this object
-         * @param new_var the new value of m_id
-         */
-        void setId(u_signed64 new_var) {
-          m_id = new_var;
-        }
-
       private:
 
         u_signed64 m_mountTransactionId;
-
-        /// The id of this object
-        u_signed64 m_id;
 
       }; /* end of class GatewayMessage */
 

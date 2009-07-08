@@ -32,6 +32,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/GatewayMessage.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 
@@ -41,7 +42,8 @@
 castor::tape::tapegateway::EndNotificationErrorReport::EndNotificationErrorReport() throw() :
   GatewayMessage(),
   m_errorCode(0),
-  m_errorMessage("") {
+  m_errorMessage(""),
+  m_id(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -67,6 +69,7 @@ void castor::tape::tapegateway::EndNotificationErrorReport::print(std::ostream& 
   // Output of all members
   stream << indent << "errorCode : " << m_errorCode << std::endl;
   stream << indent << "errorMessage : " << m_errorMessage << std::endl;
+  stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }
 
