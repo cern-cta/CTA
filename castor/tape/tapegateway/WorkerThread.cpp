@@ -623,7 +623,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
 	  castor::dlf::Param("errorCode",sstrerror(e.code())),
 	  castor::dlf::Param("errorMessage",e.getMessage().str())
 	};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_MIGRATION_NS_FAILURE, 5, params,&castorFileId);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_MIGRATION_NS_FAILURE, 3, params,&castorFileId);
 
       try {
 
@@ -983,7 +983,6 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleFileErrorReport(
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_FILE_ERROR_CANNOT_UPDATE_DB, 3, params,&castorFileId);
     }
 
-
   } catch  (std::bad_cast &ex) {
     // "Invalid Request" message
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_INVALID_CAST, 0, NULL);
@@ -1009,9 +1008,10 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker( cas
 	  castor::dlf::Param params[] =
 	    {castor::dlf::Param("mountTransactionId", endRequest.mountTransactionId()),
 	     castor::dlf::Param("errorcode", endRequest.errorCode()),
+	     castor::dlf::Param("errorcode", endRequest.errorMessage())
 	    };
 	
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_FAIL_NOTIFICATION, 2, params);
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_FAIL_NOTIFICATION, 3, params);
 	  response = new NotificationAcknowledge();
 	  response->setMountTransactionId(endRequest.mountTransactionId());
 
@@ -1026,14 +1026,39 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker( cas
 	      // UPDATE VMGR
 
 	      if (tape.tpmode() == 1) { // just for write
+		VmgrTapeGatewayHelper vmgrHelper;
 		castor::dlf::Param params[] =
 		  {castor::dlf::Param("mountTransactionId", endRequest.mountTransactionId()),
 		   castor::dlf::Param("TPVID", tape.vid())
 		  };
-	  
-	      
+
+		// CHECK IF THE ERROR WAS DUE TO A FULL TAPE
+
+		try {
+
+		  if (endRequest.errorCode() == ENOSPC ) {
+
+		    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_TAPE_MAKED_FULL, 2, params);
+		    vmgrHelper.setTapeAsFull(tape);
+
+		  } 
+      
+		} catch (castor::exception::Exception e) {
+		  castor::dlf::Param params[] =
+		  {castor::dlf::Param("mountTransactionId", endRequest.mountTransactionId()),
+		   castor::dlf::Param("TPVID", tape.vid()),
+		   castor::dlf::Param("errorCode",sstrerror(e.code())),
+		   castor::dlf::Param("errorMessage",e.getMessage().str())
+		  };
+    
+		  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_CANNOT_MARK_TAPE_FULL, 4, params);
+       
+		}
+
+
+		// We just release the tape
 		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_FAIL_RELEASE_TAPE, 2, params);
-		VmgrTapeGatewayHelper vmgrHelper;
+		
 		vmgrHelper.resetBusyTape(tape);
 
 	      }
@@ -1059,6 +1084,8 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker( cas
 	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_FAIL_DB_ERROR, 3, params);
 	    return response;
 	  }
+
+	 
 
 	} catch (std::bad_cast){
 
