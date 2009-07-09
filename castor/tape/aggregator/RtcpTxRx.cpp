@@ -234,6 +234,8 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
       castor::dlf::Param("bytesOut"    , request.bytesOut ),
       castor::dlf::Param("hostBytes"   , request.hostBytes),
       castor::dlf::Param("tapePath"    , request.tapePath ),
+      castor::dlf::Param("tapeFseq"    , request.tapeFseq ),
+      castor::dlf::Param("diskFseq"    , request.diskFseq ),
       castor::dlf::Param("recordFormat", RECORDFORMAT     ),
       castor::dlf::Param("umask"       , MIGRATEUMASK     )};
    
@@ -284,13 +286,17 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
   }
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"    , volReqId        ),
-      castor::dlf::Param("socketFd"    , socketFd        ),
-      castor::dlf::Param("filePath"    , request.filePath),
-      castor::dlf::Param("bytesIn"     , request.bytesIn ), // File size
-      castor::dlf::Param("tapePath"    , request.tapePath),
-      castor::dlf::Param("recordFormat", RECORDFORMAT    ),
-      castor::dlf::Param("umask"       , MIGRATEUMASK    )};
+      castor::dlf::Param("volReqId"    , volReqId         ),
+      castor::dlf::Param("socketFd"    , socketFd         ),
+      castor::dlf::Param("filePath"    , request.filePath ),
+      castor::dlf::Param("bytesIn"     , request.bytesIn  ), // File size
+      castor::dlf::Param("bytesOut"    , request.bytesOut ),
+      castor::dlf::Param("hostBytes"   , request.hostBytes),
+      castor::dlf::Param("tapePath"    , request.tapePath ),
+      castor::dlf::Param("tapeFseq"    , request.tapeFseq ),
+      castor::dlf::Param("diskFseq"    , request.diskFseq ),
+      castor::dlf::Param("recordFormat", RECORDFORMAT     ),
+      castor::dlf::Param("umask"       , MIGRATEUMASK     )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       mode == WRITE_ENABLE ? AGGREGATOR_GAVE_MIGRATE_FILE_TO_RTCPD :
       AGGREGATOR_GAVE_RECALL_FILE_TO_RTCPD, params);
@@ -764,10 +770,10 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
 
   // Give file information to RTCPD
   utils::setBytes(request, '\0');
-  utils::copyString(request.filePath, filePath);
-  utils::copyString(request.tapePath, tapePath);
-  utils::copyString(request.recfm, recordFormat);
-  utils::copyString(request.fid, tapeFileId);
+  utils::copyString(request.filePath, filePath    );
+  utils::copyString(request.tapePath, tapePath    );
+  utils::copyString(request.recfm   , recordFormat);
+  utils::copyString(request.fid     , tapeFileId  );
 
   request.volReqId             = volReqId;
   request.jobId                = -1;

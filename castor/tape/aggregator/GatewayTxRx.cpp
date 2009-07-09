@@ -233,7 +233,7 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
   const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost,
-  const unsigned short gatewayPort, uint64_t fileTransactionId,
+  const unsigned short gatewayPort, uint64_t &fileTransactionId,
   char (&filePath)[CA_MAXPATHLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN+1],
   uint64_t &fileId, int32_t &tapeFileSeq, uint64_t &fileSize,
   char (&lastKnownFilename)[CA_MAXPATHLEN+1], uint64_t &lastModificationTime,
@@ -510,7 +510,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
   const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost,
-  const unsigned short gatewayPort, uint64_t fileTransactionId,
+  const unsigned short gatewayPort, uint64_t &fileTransactionId,
   char (&filePath)[CA_MAXPATHLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN+1],
   uint64_t &fileId, int32_t &tapeFileSeq, unsigned char (&blockId)[4],
   int32_t &positionCommandCode) throw(castor::exception::Exception) {

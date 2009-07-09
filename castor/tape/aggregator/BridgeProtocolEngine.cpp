@@ -387,6 +387,11 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
     return;
   }
 
+// DEBUGGING
+if(fileTransactionId == 0) {
+  abort();
+}
+
   // Remember the file transaction ID and get its unique index to be passed to
   // RTCPD through the "rtcpFileRequest.disk_fseq" message field
   const uint32_t diskFseq = m_pendingTransferIds.insert(fileTransactionId);
@@ -658,6 +663,10 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
         fileId, tapeFseq, fileSize, lastKnownFilename, lastModificationTime,
         positionMethod)) {
 
+if(fileTransactionId == 0) {
+  abort();
+}
+
         // Remember the file transaction ID and get its unique index to be
         // passed to RTCPD through the "rtcpFileRequest.disk_fseq" message
         // field
@@ -704,6 +713,10 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
       if(GatewayTxRx::getFileToRecallFromGateway(m_cuuid, m_volReqId,
         m_gatewayHost, m_gatewayPort, fileTransactionId, filePath, nsHost,
         fileId, tapeFseq, blockId, positionCommandCode)) {
+
+if(fileTransactionId == 0) {
+  abort();
+}
 
         // Remember the file transaction ID and get its unique index to be
         // passed to RTCPD through the "rtcpFileRequest.disk_fseq" message
@@ -790,7 +803,9 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
       castor::dlf::Param params[] = {
         castor::dlf::Param("volReqId", m_volReqId),
         castor::dlf::Param("filePath", body.filePath),
-        castor::dlf::Param("tapePath", body.tapePath)};
+        castor::dlf::Param("tapePath", body.tapePath),
+        castor::dlf::Param("tapeFseq", body.tapeFseq),
+        castor::dlf::Param("diskFseq", body.diskFseq)};
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
         AGGREGATOR_FILE_TRANSFERED, params);
 
@@ -805,6 +820,11 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
       // Get the file transaction ID that was sent by the tape gateway
       const uint64_t fileTransactonId =
         m_pendingTransferIds.remove(body.diskFseq);
+
+// DEBUGGING
+if(fileTransactonId == 0) {
+  abort();
+}
 
       // Notify the tape gateway
       if(m_mode == WRITE_ENABLE) {
