@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.754 $ $Date: 2009/07/06 12:58:12 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.755 $ $Date: 2009/07/09 07:11:27 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1860,6 +1860,7 @@ END;
 
 /* received EndNotification error */
 
+
 create or replace
 PROCEDURE tg_failTapeSession(transactionId IN NUMBER, inputErrorCode IN INTEGER, outVid OUT NOCOPY VARCHAR2, outMode OUT INTEGER)  AS
 cfId NUMBER;
@@ -1873,7 +1874,7 @@ BEGIN
     IF outmode = 0 THEN
       -- read
       -- fail all the segment
-      UPDATE segment SET status=6, severity=inputErrorCode, errorCode=-1 WHERE tape=tpId returning copy bulk collect INTO tcIds; 
+      UPDATE segment SET status=6, severity=inputErrorCode, errorCode=-1 WHERE tape=tpId and status = 7 returning copy bulk collect INTO tcIds; 
       FOR i in tcIds.FIRST .. tcIds.LAST LOOP
           UPDATE tapecopy  SET status=8, errorcode=inputErrorCode WHERE id=tcIds(i); -- retry REC_RETRY
           FORALL i in tcIds.FIRST .. tcIds.LAST 
