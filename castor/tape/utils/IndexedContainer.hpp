@@ -27,6 +27,7 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidArgument.hpp"
+#include "castor/exception/NoEntry.hpp"
 #include "castor/exception/OutOfMemory.hpp"
 #include "castor/tape/utils/utils.hpp"
 
@@ -118,18 +119,21 @@ public:
    * Returns a reference to the stored data within the element with the
    * specified array index.
    *
-   * Throws InvalidArgument if the index is invalid.
+   * Throws InvalidArgument if the index is invalid, i.e. no in range.
+   *
+   * Throws NoEntry if corresponding element is free.
    *
    * @param index The array index of the list element.
    * @return A reference to the data.
    */
-   T &get(const int index) throw(exception::InvalidArgument) {
+  T &get(const int index)
+    throw(exception::InvalidArgument, exception::NoEntry) {
 
     Element &element = getElement(index);
 
     // Throw an exception if the element is free
     if(element.isFree) {
-      exception::InvalidArgument ex;
+      exception::NoEntry ex;
 
       ex.getMessage()
         << "Element is free"
@@ -151,16 +155,19 @@ public:
    *
    * Throws InvalidArgument if the index is invalid.
    *
+   * Throws NoEntry if corresponding element is free.
+   *
    * @param index The array index of the list element.
    * @return The data pointer.
    */
-  T &remove(const int index) throw(exception::InvalidArgument) {
+  T &remove(const int index) throw(exception::InvalidArgument,
+    exception::NoEntry) {
 
     Element &element = getElement(index);
 
     // Throw an exception if the element is free
     if(element.isFree) {
-      exception::InvalidArgument ex;
+      exception::NoEntry ex;
 
       ex.getMessage()
         << "Element is free"

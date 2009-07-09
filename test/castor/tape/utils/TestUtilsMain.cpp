@@ -102,9 +102,9 @@ int testIndexedContainer() {
   try {
     c.remove(1);
     return(-1); // Test failed
-  } catch(castor::exception::InvalidArgument &ex) {
+  } catch(castor::exception::NoEntry &ex) {
     os << std::endl;
-    os << "Correctly caught castor::exception::InvalidArgument: "
+    os << "Correctly caught castor::exception::NoEntry: "
           "ex.code()=" << ex.code()
        << " ex.getMessage().str()=\"" << ex.getMessage().str() << "\"";
     os << std::endl;
