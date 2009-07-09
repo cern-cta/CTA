@@ -705,7 +705,7 @@ void castor::tape::tpcp::TpcpCommand::parseTapeFileSequence(
       if(range.lower == 0){
         castor::exception::InvalidArgument ex;
         ex.getMessage() << "Invalid range string: '" << *itor
-          << "': The lower boubary can not be '0'";
+          << "': The lower boundary can not be '0'";
         throw ex;
       }
       // If "m-"
@@ -726,7 +726,7 @@ void castor::tape::tpcp::TpcpCommand::parseTapeFileSequence(
         if(range.upper == 0){
           castor::exception::InvalidArgument ex;
           ex.getMessage() << "Invalid range string: '" << *itor
-            << "': The uppre boubary can not be '0'";
+            << "': The upper boundary can not be '0'";
           throw ex;
         }
         if(range.lower > range.upper){
