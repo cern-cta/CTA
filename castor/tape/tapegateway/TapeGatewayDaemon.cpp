@@ -343,7 +343,7 @@ castor::tape::tapegateway::TapeGatewayDaemon::TapeGatewayDaemon() : castor::serv
       {WORKER_FAIL_NOTIFICATION, "Worker: received end notification error report"},
       {WORKER_FAIL_DB_UPDATE,  "Worker: updating db after end notification error report"},
       {WORKER_FAIL_DB_ERROR,"Worker: db error while updating for end notification error report"},
-      {WORKER_FAIL_RELEASE_TAPE,"Worker: cannot release BUSY tape after end notification error report"}, 
+      {WORKER_FAIL_RELEASE_TAPE,"Worker: releasing BUSY tape after end notification error report"}, 
       {-1, ""}
     };
   dlfInit(messages);
