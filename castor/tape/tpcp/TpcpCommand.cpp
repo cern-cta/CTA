@@ -489,12 +489,13 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
       requestDriveFromVdqm(mode);
     }
 
-    // If debug, then display the volume request ID returned by the VDQM
-    if(m_parsedCommandLine.debugOptionSet) {
+    // Command-line user feedback
+    {
       std::ostream &os = std::cout;
 
-      os << "TpcpCommand: Volume request ID returned by the VDQM = " 
-         << m_volReqId << std::endl;
+      utils::writeTime(os);
+      os << ": Waiting for a drive: Volume request ID = " << m_volReqId
+         << std::endl;
     }
 
     // Socket file descriptor for a callback connection from the aggregator
@@ -510,21 +511,35 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
 
           waitForCallback = false;
         } catch(castor::exception::TimeOut &tx) {
-          std::cout << "Waited " << WAITCALLBACKTIMEOUT << "seconds for a "
+
+          // Command-line user feedback
+          std::ostream &os = std::cout;
+
+          utils::writeTime(os);
+          os << ": Waited " << WAITCALLBACKTIMEOUT << "seconds for a "
           "callback connection from the tape server." << std::endl
           << "Continuing to wait." <<  std::endl;
         }
       }
     }
 
-    // If debug, then display a textual description of the aggregator
-    // callback connection
-    if(m_parsedCommandLine.debugOptionSet) {
+    // Command-line user feedback
+    {
       std::ostream &os = std::cout;
 
-      os << "TpcpCommand: Aggregator callback connection = ";
-      net::writeSocketDescription(os, connectionSocketFd);
-      os << std::endl;
+      utils::writeTime(os);
+      os << ": Received connection from ";
+
+      unsigned long  peerIp    = 0;
+      unsigned short peerPort  = 0;
+      try {
+        net::getPeerIpPort(connectionSocketFd, peerIp, peerPort);
+      } catch(castor::exception::Exception &e) {
+        peerIp   = 0;
+        peerPort = 0;
+      }
+      net::writeIp(os, peerIp);
+      os << ":" << peerPort << std::endl;
     }
 
     // Wrap the connection socket descriptor in a CASTOR framework socket in

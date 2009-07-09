@@ -36,7 +36,29 @@
 #include <iostream>
 #include <string.h>
 #include <sys/socket.h>
+#include <time.h>
 #include <unistd.h>
+
+
+//-----------------------------------------------------------------------------
+// writeTime
+//-----------------------------------------------------------------------------
+void castor::tape::utils::writeTime(std::ostream &os) {
+  const time_t now = time(NULL);
+  char buf[80];
+
+  if(now != (time_t)-1 && ctime_r(&now, buf)) {
+    // End the string before the newline if there is one
+    char *const newline = strstr(buf, "\n");
+    if(newline) {
+      *newline = '\0';
+    }
+
+    os << buf;
+  } else {
+    os << "UKNOWN";
+  }
+}
 
 
 //-----------------------------------------------------------------------------

@@ -93,6 +93,13 @@ namespace utils  {
   }
 
   /**
+   * Writes the current time to the specified stream.
+   *
+   * @param The stream to be written to.
+   */
+  void writeTime(std::ostream &os);
+
+  /**
    * Returns the string representation of the specified boolean value.
    *
    * @param value The boolean value.

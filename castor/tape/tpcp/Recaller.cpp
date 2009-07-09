@@ -24,6 +24,7 @@
  
 #include "castor/Constants.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/tape/Constants.hpp"
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
@@ -86,7 +87,10 @@ void castor::tape::tpcp::Recaller::run() throw(castor::exception::Exception) {
 
   std::ostream &os = std::cout;
 
-  os << "Number of recall requests      = " << nbRecallRequests << std::endl
+  utils::writeTime(os);
+  os << ": End of recall session" << std::endl
+     << std::endl
+     << "Number of recall requests      = " << nbRecallRequests  << std::endl
      << "Number of successfull recalls  = " << m_nbRecalledFiles << std::endl
      << "Number of incomplete transfers = " << nbIncompleteTransfers
      << std::endl
@@ -332,6 +336,16 @@ bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
         << notification->fileTransactionId();
       throw(ex);
     }
+
+    // Command-line user feedback
+    std::ostream &os = std::cout;
+    FileTransfer &fileTransfer = itor->second;
+
+    utils::writeTime(os);
+    os << ": Recalled"
+          ": tapeFseq="   << fileTransfer.tapeFseq
+       <<  " filename=\"" << fileTransfer.filename << "\""
+       << std::endl;
 
     // The file has been transfer so remove it from the map of pending
     // transfers
