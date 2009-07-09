@@ -1803,8 +1803,8 @@ castor::stager::Tape castor::tape::tapegateway::ora::OraTapeGatewaySvc::failTape
     
     m_failTapeSessionStatement->executeUpdate();
 
-    result.setVid(m_failTapeSessionStatement->getString(6));
-    result.setTpmode(m_failTapeSessionStatement->getInt(7));
+    result.setVid(m_failTapeSessionStatement->getString(3));
+    result.setTpmode(m_failTapeSessionStatement->getInt(4));
 
   } catch (oracle::occi::SQLException e) {
    
@@ -1846,7 +1846,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::failFileTransfer(FileErr
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Error caught in failFileTransfery"
+      << "Error caught in failFileTransfer"
       << std::endl << e.what();
     throw ex;
   }
