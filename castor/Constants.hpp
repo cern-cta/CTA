@@ -214,7 +214,7 @@ namespace castor {
     OBJ_FileToRecall = 167,
     OBJ_VolumeRequest = 168,
     OBJ_Volume = 169,
-    OBJ_TapeRequestState = 170,
+    OBJ_TapeGatewayRequest = 170,
     OBJ_DbInfoRetryPolicy = 171,
     OBJ_EndNotification = 172,
     OBJ_NoMoreFiles = 173,
@@ -224,7 +224,7 @@ namespace castor {
    
     OBJ_RmMasterReport = 178,
     OBJ_EndNotificationErrorReport = 179,
-    OBJ_MigrationWorkBasket = 180,
+    OBJ_TapeGatewaySubRequest = 180,
     OBJ_GatewayMessage = 181
 
   };

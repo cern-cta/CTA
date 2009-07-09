@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.77 $ $Release$ $Date: 2009/07/06 09:26:58 $ $Author: gtaur $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.78 $ $Release$ $Date: 2009/07/09 15:47:46 $ $Author: gtaur $
  *
  *
  *
@@ -212,7 +212,7 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "FileToRecall",
   "VolumeRequest",
   "Volume",
-  "TapeRequestState",
+  "TapeGatewayRequest",
   "DbInfoRetryPolicy",
   "EndNotification",
   "NoMoreFiles",
@@ -222,7 +222,7 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "DELETED TYPE", 
   "RmMasterReport",
   "EndNotificationErrorReport",
-  "MigrationWorkBasket",
+  "TapeGatewaySubRequest",
   "GatewayMessage"
 };
 
