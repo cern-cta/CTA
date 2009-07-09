@@ -200,12 +200,6 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-oracle
 Description: castor (Cern Advanced STORage system)
  Stager server
 
-Package: castor-sysconfig
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: castor (Cern Advanced STORage system)
- Configuration files read by every server
-
 Package: castor-tape-client
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
