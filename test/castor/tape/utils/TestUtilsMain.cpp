@@ -1,3 +1,4 @@
+
 #include "castor/tape/utils/IndexedContainer.hpp"
 #include "castor/tape/utils/utils.hpp"
 
@@ -9,7 +10,7 @@ int testIndexedContainer() {
   std::ostream &os = std::cout;
 
   os << std::endl;
-  castor::tape::utils::writeBanner(os, "Test IndexedContainer");
+  castor::tape::utils::writeBanner(os, __FUNCTION__);
 
   castor::tape::utils::IndexedContainer<const void *, 3> c;
 

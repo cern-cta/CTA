@@ -36,9 +36,14 @@ DependsOnLibrary(../../../vmgr,castorvmgr)
 TAPE_UTILS_SRCS = \
   ../../../../castor/tape/utils/utils.cpp
 
+TAPE_TPCP_SRCS = \
+  ../../../../castor/tape/tpcp/TapeFseqRangeListSequence.cpp\
+  ../../../../castor/tape/tpcp/TapeFseqRangeSequence.cpp
+
 TESTTPCPBIN_SRCS = \
   TestTpcpMain.cpp \
-  $(TAPE_UTILS_SRCS)
+  $(TAPE_UTILS_SRCS)\
+  $(TAPE_TPCP_SRCS)
 
 TESTTPCPBIN_OBJS = $(TESTTPCPBIN_SRCS:.cpp=.Osuf)
 

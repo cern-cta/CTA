@@ -22,9 +22,72 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
  
+#include "castor/tape/tpcp/TapeFseqRange.hpp"
+#include "castor/tape/tpcp/TapeFseqRangeList.hpp"
+#include "castor/tape/tpcp/TapeFseqRangeListSequence.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <iostream>
+#include <stdint.h>
+
+
+
+int testTapeFseqRangeListSequence() {
+  using namespace castor::tape;
+
+  std::ostream &os = std::cout;
+  
+  os << std::endl;
+  utils::writeBanner(os, __FUNCTION__);
+  os << std::endl;
+  
+  castor::tape::tpcp::TapeFseqRange range0 = {1,3};
+  castor::tape::tpcp::TapeFseqRange range1 = {4,10};
+  castor::tape::tpcp::TapeFseqRange range2 = {21,29};
+  castor::tape::tpcp::TapeFseqRange range3 = {30,30};
+  
+  castor::tape::tpcp::TapeFseqRangeList list;
+    
+  list.push_back(range0);
+  list.push_back(range1);
+  list.push_back(range2);
+  list.push_back(range3);
+  
+  castor::tape::tpcp::TapeFseqRangeListSequence seq(list);
+
+  uint32_t expected = 0;
+  uint32_t actual   = 0;
+
+  for(expected=1 ;expected<=10; expected++) {
+    if(seq.hasMore()) {
+      actual = seq.next();
+
+      os << "seq.next() = " << actual << std::endl;
+
+      if(actual != expected) {
+        return -1; // Test failed
+      }
+    } else {
+      return -1; // Test failed
+    }
+  }
+
+  for(expected=21 ;expected<=30; expected++) {
+    if(seq.hasMore()) {
+      actual = seq.next();
+
+      os << "seq.next() = " << actual << std::endl;
+
+      if(actual != expected) {
+        return -1; // Test failed
+      }
+    } else {
+      return -1; // Test failed
+    }
+  }
+
+  return 0;
+}
 
 
 //------------------------------------------------------------------------------
@@ -35,10 +98,31 @@ int main(int argc, char **argv) {
   using namespace castor::tape;
 
   std::ostream &os = std::cout;
+  unsigned int nbTests    = 0;
+  unsigned int nbFailed   = 0;
+  int          testResult = 0;
+  int          endResult  = 0;
+
 
   os << std::endl;
   utils::writeBanner(os, "Test tpcp");
   os << std::endl;
 
-  return 0;
+
+  testResult = testTapeFseqRangeListSequence();
+  nbTests++;
+  if(testResult != 0) {
+    endResult = testResult;
+    nbFailed++;
+  }
+  
+  std::cout << std::endl;
+  if(endResult == 0) {
+    std::cout << "All " << nbTests << " tests passed" << std::endl;
+  } else {
+    std::cout << nbFailed << " tests failed out of " << nbTests << std::endl;
+  }
+  
+  return endResult;
+
 }
