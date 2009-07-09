@@ -31,7 +31,7 @@
 #include <u64subr.h>
 
 #include "castor/server/BaseDbThread.hpp"
-#include "castor/tape/tapegateway/TapeRequestState.hpp"
+#include "castor/tape/tapegateway/TapeGatewayRequest.hpp"
 
 
 namespace castor {

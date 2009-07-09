@@ -362,22 +362,59 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
       return response;
     }
       
-    bool allSegmentsRecalled= false;
-
-    // UPDATE DB FOR SEGMENT
-
+      
     try {
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_RECALL_DB_UPDATE, 1, params, &castorFileId); 
-      allSegmentsRecalled = oraSvc.setSegmentRecalled(fileRecalled);
+      // CHECK FILE SIZE
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_RECALL_CHECK_FILE_SIZE, 1, params, &castorFileId);
+      NsTapeGatewayHelper nsHelper;
+      nsHelper.checkFileSize(fileRecalled);
       
     } catch (castor::exception::Exception e) {
+      
       castor::dlf::Param params[] =
 	{ castor::dlf::Param("mountTransactionId",fileRecalled.mountTransactionId()),
 	  castor::dlf::Param("errorCode",sstrerror(e.code())),
 	  castor::dlf::Param("errorMessage",e.getMessage().str())
 	};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_RECALL_CANNOT_UPDATE_DB, 3, params, &castorFileId);
-      
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_RECALL_WRONG_FILE_SIZE, 3, params, &castorFileId );
+      try {
+	FileErrorReport failure;
+	failure.setMountTransactionId(fileRecalled.mountTransactionId());
+	failure.setFileid(fileRecalled.fileid());
+	failure.setNshost(fileRecalled.nshost());
+	failure.setFseq(fileRecalled.fseq());
+	failure.setErrorCode(e.code());
+	failure.setErrorMessage(e.getMessage().str());
+	oraSvc.failFileTransfer(failure);
+      } catch (castor::exception::Exception e) {
+	// db failure to mark the recall as failed
+	castor::dlf::Param params[] =
+	  { castor::dlf::Param("mountTransactionId",fileRecalled.mountTransactionId()),
+	    castor::dlf::Param("errorCode",sstrerror(e.code())),
+	    castor::dlf::Param("errorMessage",e.getMessage().str())
+	  };
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,WORKER_RECALL_CANNOT_UPDATE_DB, 3, params, &castorFileId);
+	  
+      }
+      return response;
+
+    }
+
+    try {
+      // UPDATE DB
+
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_RECALL_COMPLETED_UPDATE_DB, 1, params, &castorFileId);
+      oraSvc.setFileRecalled(fileRecalled);
+	
+    } catch (castor::exception::Exception e) {
+      // db failure to mark the recall as failed
+      castor::dlf::Param params[] =
+	{ castor::dlf::Param("mountTransactionId",fileRecalled.mountTransactionId()),
+	  castor::dlf::Param("errorCode",sstrerror(e.code())),
+	  castor::dlf::Param("errorMessage",e.getMessage().str())
+	};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_RECALL_CANNOT_UPDATE_DB, 3, params, &castorFileId );
+	
       FileErrorReport failure;
       failure.setMountTransactionId(fileRecalled.mountTransactionId());
       failure.setFileid(fileRecalled.fileid());
@@ -394,90 +431,11 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate( ca
 	    castor::dlf::Param("errorCode",sstrerror(e.code())),
 	    castor::dlf::Param("errorMessage",e.getMessage().str())
 	  };
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_RECALL_CANNOT_UPDATE_DB, 3, params, &castorFileId);
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,WORKER_RECALL_CANNOT_UPDATE_DB, 3, params, &castorFileId);
 	
       }
-      return response;
-       
-    }
-
-    
-    if (allSegmentsRecalled) {
-      // RECALL COMPLETED
       
-      try {
-	// CHECK FILE SIZE
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_RECALL_CHECK_FILE_SIZE, 1, params, &castorFileId);
-	NsTapeGatewayHelper nsHelper;
-	nsHelper.checkFileSize(fileRecalled);
-	
-      } catch (castor::exception::Exception e) {
-	
-	castor::dlf::Param params[] =
-	  { castor::dlf::Param("mountTransactionId",fileRecalled.mountTransactionId()),
-	    castor::dlf::Param("errorCode",sstrerror(e.code())),
-	    castor::dlf::Param("errorMessage",e.getMessage().str())
-	  };
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_RECALL_WRONG_FILE_SIZE, 3, params, &castorFileId );
-	try {
-	  FileErrorReport failure;
-	  failure.setMountTransactionId(fileRecalled.mountTransactionId());
-	  failure.setFileid(fileRecalled.fileid());
-	  failure.setNshost(fileRecalled.nshost());
-	  failure.setFseq(fileRecalled.fseq());
-	  failure.setErrorCode(e.code());
-	  failure.setErrorMessage(e.getMessage().str());
-	  oraSvc.failFileTransfer(failure);
-	} catch (castor::exception::Exception e) {
-	  // db failure to mark the recall as failed
-	  castor::dlf::Param params[] =
-	    { castor::dlf::Param("mountTransactionId",fileRecalled.mountTransactionId()),
-	      castor::dlf::Param("errorCode",sstrerror(e.code())),
-	      castor::dlf::Param("errorMessage",e.getMessage().str())
-	    };
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,WORKER_RECALL_CANNOT_UPDATE_DB, 3, params, &castorFileId);
-	  
-	}
-	return response;
-
-      }
-      try {
-	// UPDATE DB
-
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_RECALL_COMPLETED_UPDATE_DB, 1, params, &castorFileId);
-	oraSvc.setFileRecalled(fileRecalled);
-	
-      } catch (castor::exception::Exception e) {
-	// db failure to mark the recall as failed
-	castor::dlf::Param params[] =
-	  { castor::dlf::Param("mountTransactionId",fileRecalled.mountTransactionId()),
-	    castor::dlf::Param("errorCode",sstrerror(e.code())),
-	    castor::dlf::Param("errorMessage",e.getMessage().str())
-	  };
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_RECALL_CANNOT_UPDATE_DB, 3, params, &castorFileId );
-	
-	FileErrorReport failure;
-	failure.setMountTransactionId(fileRecalled.mountTransactionId());
-	failure.setFileid(fileRecalled.fileid());
-	failure.setNshost(fileRecalled.nshost());
-	failure.setFseq(fileRecalled.fseq());
-	failure.setErrorCode(e.code());
-	failure.setErrorMessage(e.getMessage().str());
-	try {
-	  oraSvc.failFileTransfer(failure);
-	} catch (castor::exception::Exception e) {
-	  // db failure to mark the recall as failed
-	  castor::dlf::Param params[] =
-	    { castor::dlf::Param("mountTransactionId",fileRecalled.mountTransactionId()),
-	      castor::dlf::Param("errorCode",sstrerror(e.code())),
-	      castor::dlf::Param("errorMessage",e.getMessage().str())
-	    };
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,WORKER_RECALL_CANNOT_UPDATE_DB, 3, params, &castorFileId);
-	  
-	}
-      
-      } 
-    }
+    } 
   } catch  (std::bad_cast &ex) {
     // "Invalid Request" message
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_INVALID_CAST, 0, NULL);

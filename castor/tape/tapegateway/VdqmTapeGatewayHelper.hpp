@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: VdqmTapeGatewayHelper.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2009/05/18 13:52:38 $ $Author: gtaur $
+ * @(#)$RCSfile: VdqmTapeGatewayHelper.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2009/07/09 15:47:11 $ $Author: gtaur $
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -32,7 +32,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/stager/Tape.hpp"
 
-#include "castor/tape/tapegateway/TapeRequestState.hpp"
+#include "castor/tape/tapegateway/TapeGatewayRequest.hpp"
 
 namespace castor {
 
@@ -44,7 +44,7 @@ namespace castor {
         public:
 	
 	int submitTapeToVdqm( castor::stager::Tape* tape, std::string dgn, int port) throw (castor::exception::Exception);
-	void checkVdqmForRequest(TapeRequestState* tapeRequest) throw (castor::exception::Exception);
+	void checkVdqmForRequest(TapeGatewayRequest* tapeRequest) throw (castor::exception::Exception);
 
       };
     

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeGatewaySvc.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2009/07/03 13:19:36 $ $Author: gtaur $
+ * @(#)$RCSfile: ITapeGatewaySvc.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2009/07/09 15:47:11 $ $Author: gtaur $
  *
  * This class provides methods related to tape handling
  *
@@ -52,7 +52,7 @@
 #include "castor/tape/tapegateway/FileToRecallRequest.hpp"
 #include "castor/tape/tapegateway/NoMoreFiles.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
-#include "castor/tape/tapegateway/TapeRequestState.hpp" 
+#include "castor/tape/tapegateway/TapeGatewayRequest.hpp" 
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
 
@@ -87,28 +87,28 @@ namespace castor {
          * Get all the tapes for which we have to send a request to VDQM.     
          */
 
-        virtual std::vector<castor::tape::tapegateway::TapeRequestState*> getTapesWithoutDriveReqs()
+        virtual std::vector<castor::tape::tapegateway::TapeGatewayRequest*> getTapesWithoutDriveReqs()
           throw (castor::exception::Exception)=0;
 
 	/*
          * Update the request that we sent  to VDQM.     
          */
 
-	virtual void  attachDriveReqsToTapes(std::vector<castor::tape::tapegateway::TapeRequestState*> tapeRequests )throw (castor::exception::Exception)=0;
+	virtual void  attachDriveReqsToTapes(std::vector<castor::tape::tapegateway::TapeGatewayRequest*> tapeRequests )throw (castor::exception::Exception)=0;
 
         /**
          * Get all the tapes for which we have to check that VDQM didn't lost 
 	 * our request
          */
 
-        virtual std::vector<castor::tape::tapegateway::TapeRequestState*> getTapesWithDriveReqs(u_signed64 timeOut) 
+        virtual std::vector<castor::tape::tapegateway::TapeGatewayRequest*> getTapesWithDriveReqs(u_signed64 timeOut) 
           throw (castor::exception::Exception)=0;
 
         /**
          * Restart the request lost by VDQM or left around
          */
 
-	virtual void restartLostReqs( std::vector<castor::tape::tapegateway::TapeRequestState*> tapes) 
+	virtual void restartLostReqs( std::vector<castor::tape::tapegateway::TapeGatewayRequest*> tapes) 
 	  throw (castor::exception::Exception)=0;
 
         /**
@@ -131,12 +131,6 @@ namespace castor {
         virtual castor::tape::tapegateway::FileToRecall* getFileToRecall(castor::tape::tapegateway::FileToRecallRequest&  req)
           throw (castor::exception::Exception)=0;
 
-	
-        /**
-         * Update the db for a segment which has been recalled successfully 
-	 */
-
-        virtual bool  setSegmentRecalled(castor::tape::tapegateway::FileRecalledNotification& resp) throw (castor::exception::Exception)=0;
 
         /**
          * Update the db for a file which has been recalled successfully 

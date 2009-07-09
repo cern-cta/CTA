@@ -91,10 +91,7 @@ const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_setFileMi
 
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getFileToRecallStatementString="BEGIN tg_getFileToRecall(:1,:2,:3,:4);END;";
 
-
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_setSegmentRecalledStatementString="BEGIN tg_setSegmentRecalled(:1,:2,:3,:4,:5,:6);END;";
-
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_setFileRecalledStatementString="BEGIN tg_setFileRecalled(:1,:2);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_setFileRecalledStatementString="BEGIN tg_setFileRecalled(:1,:2,:3,:4,:5);END;";
 
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getFailedMigrationsStatementString="BEGIN tg_getFailedMigrations(:1);END;";
  
@@ -110,7 +107,7 @@ const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_startTape
 
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_endTapeSessionStatementString="BEGIN tg_endTapeSession(:1,:2,:3);END;";
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getSegmentInfoStatementString="BEGIN tg_getSegmentInformation(:1,:2,:3,:4,:5,:6,:7);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getSegmentInfoStatementString="BEGIN tg_getSegmentInfo(:1,:2,:3,:4,:5,:6,:7);END;";
 
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_failTapeSessionStatementString="BEGIN tg_failTapeSession(:1,:2,:3,:4);END;";
 
@@ -430,10 +427,10 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachTapesToStreams(std
 // getTapesWithoutDriveReqs 
 //----------------------------------------------------------------------------
 
-std::vector<castor::tape::tapegateway::TapeRequestState*> castor::tape::tapegateway::ora::OraTapeGatewaySvc::getTapesWithoutDriveReqs()
+std::vector<castor::tape::tapegateway::TapeGatewayRequest*> castor::tape::tapegateway::ora::OraTapeGatewaySvc::getTapesWithoutDriveReqs()
           throw (castor::exception::Exception){
 
-  std::vector<castor::tape::tapegateway::TapeRequestState*> result;
+  std::vector<castor::tape::tapegateway::TapeGatewayRequest*> result;
   try {
     // Check whether the statements are ok
     if (0 == m_getTapesWithoutDriveReqsStatement) {
@@ -465,7 +462,7 @@ std::vector<castor::tape::tapegateway::TapeRequestState*> castor::tape::tapegate
       tape->setTpmode(rs->getInt(1));
       tape->setSide(rs->getInt(2));
       tape->setVid(rs->getString(3));
-      castor::tape::tapegateway::TapeRequestState* item= new  castor::tape::tapegateway::TapeRequestState();
+      castor::tape::tapegateway::TapeGatewayRequest* item= new  castor::tape::tapegateway::TapeGatewayRequest();
       item->setId((u_signed64)rs->getDouble(4));
       if (tape->tpmode() == 0){
 	item->setAccessMode(0);
@@ -497,7 +494,7 @@ std::vector<castor::tape::tapegateway::TapeRequestState*> castor::tape::tapegate
 // attachDriveReqsToTapes
 //----------------------------------------------------------------------------
 
-void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachDriveReqsToTapes(std::vector<castor::tape::tapegateway::TapeRequestState*> tapeRequests) throw (castor::exception::Exception){ 
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachDriveReqsToTapes(std::vector<castor::tape::tapegateway::TapeGatewayRequest*> tapeRequests) throw (castor::exception::Exception){ 
 
   try {
 
@@ -665,10 +662,10 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachDriveReqsToTapes(s
 // getTapesWithDriveReqs
 //----------------------------------------------------------------------------
 
-std::vector<castor::tape::tapegateway::TapeRequestState*> castor::tape::tapegateway::ora::OraTapeGatewaySvc::getTapesWithDriveReqs(u_signed64 timeOut) 
+std::vector<castor::tape::tapegateway::TapeGatewayRequest*> castor::tape::tapegateway::ora::OraTapeGatewaySvc::getTapesWithDriveReqs(u_signed64 timeOut) 
   throw (castor::exception::Exception){
 
-  std::vector<tape::tapegateway::TapeRequestState*> result;
+  std::vector<tape::tapegateway::TapeGatewayRequest*> result;
   try {
     // Check whether the statements are ok
     if (0 == m_getTapesWithDriveReqsStatement) {
@@ -698,8 +695,8 @@ std::vector<castor::tape::tapegateway::TapeRequestState*> castor::tape::tapegate
     // Run through the cursor
     oracle::occi::ResultSet::Status status = rs->next();
     while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
-      tape::tapegateway::TapeRequestState* item =
-        new tape::tapegateway::TapeRequestState();
+      tape::tapegateway::TapeGatewayRequest* item =
+        new tape::tapegateway::TapeGatewayRequest();
       item->setAccessMode(rs->getInt(1));
       item->setId((u_signed64)rs->getDouble(2));
       item->setStartTime((u_signed64)rs->getDouble(3));
@@ -744,7 +741,7 @@ std::vector<castor::tape::tapegateway::TapeRequestState*> castor::tape::tapegate
 // restartLostReqs 
 //----------------------------------------------------------------------------
 
-void castor::tape::tapegateway::ora::OraTapeGatewaySvc::restartLostReqs(std::vector<castor::tape::tapegateway::TapeRequestState*> tapes)
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::restartLostReqs(std::vector<castor::tape::tapegateway::TapeGatewayRequest*> tapes)
           throw (castor::exception::Exception){
 
   try {
@@ -1162,33 +1159,31 @@ castor::tape::tapegateway::FileToRecall* castor::tape::tapegateway::ora::OraTape
 // setSegmentRecalled  
 //----------------------------------------------------------------------------
    
-bool  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setSegmentRecalled(castor::tape::tapegateway::FileRecalledNotification& resp) throw (castor::exception::Exception){
+void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileRecalled(castor::tape::tapegateway::FileRecalledNotification& resp) throw (castor::exception::Exception){
  std::string diskserver;
  std::string mountpoint;
 
   try {
     // Check whether the statements are ok
 
-    if (0 == m_setSegmentRecalledStatement) {
-      m_setSegmentRecalledStatement =
-        createStatement(s_setSegmentRecalledStatementString);
-      m_setSegmentRecalledStatement->registerOutParam
+    if (0 == m_setFileRecalledStatement) {
+      m_setFileRecalledStatement =
+        createStatement(s_setFileRecalledStatementString);
+      m_setFileRecalledStatement->registerOutParam
 	(5, oracle::occi::OCCICURSOR); 
-      m_setSegmentRecalledStatement->registerOutParam
-	(6, oracle::occi::OCCIINT);
     }
 
-    m_setSegmentRecalledStatement->setDouble(1,(double)resp.mountTransactionId());
-    m_setSegmentRecalledStatement->setDouble(2,(double)resp.fileid());
-    m_setSegmentRecalledStatement->setString(3,resp.nshost());
-    m_setSegmentRecalledStatement->setInt(4,resp.fseq());
+    m_setFileRecalledStatement->setDouble(1,(double)resp.mountTransactionId());
+    m_setFileRecalledStatement->setDouble(2,(double)resp.fileid());
+    m_setFileRecalledStatement->setString(3,resp.nshost());
+    m_setFileRecalledStatement->setInt(4,resp.fseq());
 
-    m_setSegmentRecalledStatement->executeUpdate();
+    m_setFileRecalledStatement->executeUpdate();
     
     
     
     oracle::occi::ResultSet *rs =
-      m_setSegmentRecalledStatement->getCursor(5);
+      m_setFileRecalledStatement->getCursor(5);
 
     // Run through the cursor 
 
@@ -1212,44 +1207,8 @@ bool  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setSegmentRecalled(cast
       }
     }
 
-    bool ret=m_setSegmentRecalledStatement->getInt(6);
     
-    m_setSegmentRecalledStatement->closeResultSet(rs);
-    return ret;
-
-  } catch (oracle::occi::SQLException e) {
-
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in setSegmentRecalled"
-      << std::endl << e.what();
-    throw ex;
-  }
-
-}
-  
-
-
-//----------------------------------------------------------------------------
-// setFileRecalled  
-//----------------------------------------------------------------------------
-   
-void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileRecalled(castor::tape::tapegateway::FileRecalledNotification& resp) throw (castor::exception::Exception){
- std::string diskserver;
- std::string mountpoint;
-
-  try {
-    // Check whether the statements are ok
-
-    if (0 == m_setFileRecalledStatement) {
-      m_setFileRecalledStatement =
-        createStatement(s_setFileRecalledStatementString);
-    }
-    m_setFileRecalledStatement->setDouble(1,(double)resp.fileid());
-    m_setFileRecalledStatement->setString(2,resp.nshost());
-    m_setFileRecalledStatement->executeUpdate();
-    
+    m_setFileRecalledStatement->closeResultSet(rs);
 
   } catch (oracle::occi::SQLException e) {
 
@@ -1262,7 +1221,7 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileRecalled(castor:
   }
 
 }
-
+  
 
 
 //----------------------------------------------------------------------------

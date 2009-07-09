@@ -56,7 +56,7 @@ castor::tape::tapegateway::VdqmRequestsCheckerThread::VdqmRequestsCheckerThread(
 void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
 {
 
-  std::vector<castor::tape::tapegateway::TapeRequestState*> tapeRequests;
+  std::vector<castor::tape::tapegateway::TapeGatewayRequest*> tapeRequests;
   std::vector<castor::stager::Tape*> tapesToReset;
   std::vector<castor::stager::Tape*>::iterator tapeToReset;
 
@@ -89,10 +89,10 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
     return;
   }
 
-  std::vector<castor::tape::tapegateway::TapeRequestState*> tapesToRetry;
+  std::vector<castor::tape::tapegateway::TapeGatewayRequest*> tapesToRetry;
 
   // check the tapes to vdqm
-  std::vector<castor::tape::tapegateway::TapeRequestState*>::iterator tapeRequest = tapeRequests.begin();
+  std::vector<castor::tape::tapegateway::TapeGatewayRequest*>::iterator tapeRequest = tapeRequests.begin();
   
   while (tapeRequest != tapeRequests.end()){
 

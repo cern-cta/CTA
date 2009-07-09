@@ -54,7 +54,7 @@ castor::tape::tapegateway::VdqmRequestsProducerThread::VdqmRequestsProducerThrea
 //------------------------------------------------------------------------------
 void castor::tape::tapegateway::VdqmRequestsProducerThread::run(void* par)
 {
-  std::vector<castor::tape::tapegateway::TapeRequestState*> tapesToSubmit;
+  std::vector<castor::tape::tapegateway::TapeGatewayRequest*> tapesToSubmit;
   std::vector<int>  vdqmReqIds;
 
   // connect to the db
@@ -87,8 +87,8 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::run(void* par)
     return;
   }
 
-  std::vector<castor::tape::tapegateway::TapeRequestState*>::iterator tapeItem =tapesToSubmit.begin();
-  std::vector<castor::tape::tapegateway::TapeRequestState*> submittedTapes;
+  std::vector<castor::tape::tapegateway::TapeGatewayRequest*>::iterator tapeItem =tapesToSubmit.begin();
+  std::vector<castor::tape::tapegateway::TapeGatewayRequest*> submittedTapes;
 
   // send the tape to vdqm
 

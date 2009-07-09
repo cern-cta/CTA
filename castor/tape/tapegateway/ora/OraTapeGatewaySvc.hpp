@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2009/07/03 13:19:36 $ $Author: gtaur $
+ * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.17 $ $Release$ $Date: 2009/07/09 15:47:12 $ $Author: gtaur $
  *
  * Implementation of the ITapeGatewaySvc for Oracle
  *
@@ -104,28 +104,28 @@ namespace castor {
          * Get all the tapes for which we have to send a request to VDQM.     
          */
 
-        virtual std::vector<castor::tape::tapegateway::TapeRequestState*> getTapesWithoutDriveReqs()
+        virtual std::vector<castor::tape::tapegateway::TapeGatewayRequest*> getTapesWithoutDriveReqs()
           throw (castor::exception::Exception);
 
 	/*
          * Update the request that we sent  to VDQM.     
          */
 
-	virtual void  attachDriveReqsToTapes(std::vector<castor::tape::tapegateway::TapeRequestState*> tapeRequests )throw (castor::exception::Exception);
+	virtual void  attachDriveReqsToTapes(std::vector<castor::tape::tapegateway::TapeGatewayRequest*> tapeRequests )throw (castor::exception::Exception);
 
         /**
          * Get all the tapes for which we have to check that VDQM didn't lost 
 	 * our request
          */
 
-        virtual std::vector<castor::tape::tapegateway::TapeRequestState*> getTapesWithDriveReqs(u_signed64 timeOut) 
+        virtual std::vector<castor::tape::tapegateway::TapeGatewayRequest*> getTapesWithDriveReqs(u_signed64 timeOut) 
           throw (castor::exception::Exception);
 
         /**
          * Restart the request lost by VDQM or left around
          */
 
-	virtual void restartLostReqs( std::vector<castor::tape::tapegateway::TapeRequestState*> tapes) 
+	virtual void restartLostReqs( std::vector<castor::tape::tapegateway::TapeGatewayRequest*> tapes) 
 	  throw (castor::exception::Exception);
 
         /**
@@ -149,12 +149,6 @@ namespace castor {
           throw (castor::exception::Exception);
 
 	
-        /**
-         * Update the db for a segment which has been recalled successfully 
-	 */
-
-        virtual bool  setSegmentRecalled(castor::tape::tapegateway::FileRecalledNotification& resp) throw (castor::exception::Exception);
-
         /**
          * Update the db for a file which has been recalled successfully 
 	 */
@@ -260,9 +254,6 @@ namespace castor {
 	
 	static const std::string s_setFileRecalledStatementString;
 	oracle::occi::Statement *m_setFileRecalledStatement;
-
-	static const std::string s_setSegmentRecalledStatementString;
-	oracle::occi::Statement *m_setSegmentRecalledStatement;
 
 	static const std::string s_getFailedMigrationsStatementString;
 	oracle::occi::Statement *m_getFailedMigrationsStatement;

@@ -41,7 +41,8 @@ DependsOnLibrary(../../rfio,castorrfio)
 TAPEGATEWAYDAEMONBIN_SRCS = TapeGatewayDaemon.cpp WorkerThread.cpp \
 	MigratorErrorHandlerThread.cpp RecallerErrorHandlerThread.cpp \
 	TapeStreamLinkerThread.cpp VdqmRequestsCheckerThread.cpp VdqmRequestsProducerThread.cpp \
-	VmgrTapeGatewayHelper.cpp VdqmTapeGatewayHelper.cpp NsTapeGatewayHelper.cpp RmMasterTapeGatewayHelper.cpp
+	VmgrTapeGatewayHelper.cpp VdqmTapeGatewayHelper.cpp NsTapeGatewayHelper.cpp \
+	RmMasterTapeGatewayHelper.cpp
 
 TAPEGATEWAY_MESSAGES_SRCS = \
 	VolumeRequest.cpp Volume.cpp \
@@ -51,7 +52,7 @@ TAPEGATEWAY_MESSAGES_SRCS = \
 	EndNotification.cpp NotificationAcknowledge.cpp EndNotificationErrorReport.cpp\
 	NoMoreFiles.cpp  GatewayMessage.cpp \
 	BaseFileInfo.cpp PositionCommandCode.cpp FileErrorReport.cpp \
-	TapeRequestState.cpp TapeRequestStateCode.cpp MigrationWorkBasket.cpp
+	TapeGatewayRequest.cpp TapeRequestStateCode.cpp TapeGatewaySubRequest.cpp
 
 TAPEGATEWAY_IO_SRCS = \
 	../../io/StreamVolumeRequestCnv.cpp ../../io/StreamVolumeCnv.cpp \
@@ -62,7 +63,8 @@ TAPEGATEWAY_IO_SRCS = \
 	../../io/StreamEndNotificationErrorReportCnv.cpp ../../io/StreamNoMoreFilesCnv.cpp  \
 	../../io/StreamFileErrorReportCnv.cpp 
 
-TAPEGATEWAY_DB_SRCS = ../../db/cnv/DbTapeRequestStateCnv.cpp ora/OraTapeGatewaySvc.cpp ../../db/cnv/DbMigrationWorkBasketCnv.cpp
+TAPEGATEWAY_DB_SRCS = ../../db/cnv/DbTapeGatewayRequestCnv.cpp ora/OraTapeGatewaySvc.cpp \
+	../../db/cnv/DbTapeGatewaySubRequestCnv.cpp
 
 TAPEGATEWAYBIN_SRCS = $(TAPEGATEWAYDAEMONBIN_SRCS) $(TAPEGATEWAY_MESSAGES_SRCS) $(TAPEGATEWAY_IO_SRCS) $(TAPEGATEWAY_DB_SRCS)
 
