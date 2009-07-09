@@ -72,6 +72,7 @@ public:
    * gateway.
    * @param gatewayHost          The tape gateway host name.
    * @param gatewayPort          The tape gateway port number.
+   * @param fileTransactionId   Out parameter: The file transaction ID.
    * @param filePath             Out parameter: The path of the disk file.
    * @param nsHost               Out parameter: The name server host.
    * @param fileId               Out parameter: The CASTOR file ID.
@@ -85,9 +86,9 @@ public:
    */
   static bool getFileToMigrateFromGateway(const Cuuid_t &cuuid,
     const uint32_t volReqId, const char *gatewayHost,
-    const unsigned short gatewayPort, char (&filePath)[CA_MAXPATHLEN+1],
-    char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId,
-    int32_t &tapeFileSeq, uint64_t &fileSize,
+    const unsigned short gatewayPort, uint64_t fileTransactionId,
+    char (&filePath)[CA_MAXPATHLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN+1],
+    uint64_t &fileId, int32_t &tapeFileSeq, uint64_t &fileSize,
     char (&lastKnownFilename)[CA_MAXPATHLEN+1], uint64_t &lastModificationTime,
     int32_t &positionCommandCode)
     throw(castor::exception::Exception);
@@ -100,6 +101,7 @@ public:
    * gateway.
    * @param gatewayHost         The tape gateway host name.
    * @param gatewayPort         The tape gateway port number.
+   * @param fileTransactionId   Out parameter: The file transaction ID.
    * @param filePath            Out parameter: The path of the disk file.
    * @param nsHost              Out parameter: The name server host.
    * @param fileId              Out parameter: The CASTOR file ID.
@@ -111,32 +113,35 @@ public:
    */
   static bool getFileToRecallFromGateway(const Cuuid_t &cuuid,
     const uint32_t volReqId, const char *gatewayHost,
-    const unsigned short gatewayPort, char (&filePath)[CA_MAXPATHLEN+1],
-    char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId,
-    int32_t &tapeFileSeq, unsigned char (&blockId)[4],
+    const unsigned short gatewayPort, const uint64_t fileTransactionId,
+    char (&filePath)[CA_MAXPATHLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN+1],
+    uint64_t &fileId, int32_t &tapeFileSeq, unsigned char (&blockId)[4],
     int32_t &positionCommandCode) throw(castor::exception::Exception);
 
   /**
    * Notifies the tape gateway of the successful migration of a file to tape.
    *
-   * @param cuuid The ccuid to be used for logging.
-   * @param volReqId The volume request ID to be sent to the tape gateway.
-   * @param gatewayHost The tape gateway host name.
-   * @param gatewayPort The tape gateway port number.
-   * @param nsHost The name server host.
-   * @param fileId The CASTOR file ID.
-   * @param tapeFileSeq The tape file seuence number.
-   * @param blockId The tape block ID.
+   * @param cuuid               The ccuid to be used for logging.
+   * @param volReqId            The volume request ID to be sent to the tape
+   * gateway.
+   * @param gatewayHost         The tape gateway host name.
+   * @param gatewayPort         The tape gateway port number.
+   * @param fileTransactionId   The file transaction ID.
+   * @param nsHost              The name server host.
+   * @param fileId              The CASTOR file ID.
+   * @param tapeFileSeq         The tape file seuence number.
+   * @param blockId             The tape block ID.
    * @param positionCommandCode The position method uesd by the drive.
-   * @param checksumAlgorithm The name of the checksum algorithm.
-   * @param checksum The file checksum.
-   * @param fileSize The size of the file without compression.
-   * @param compressedFileSize The size of on-tape compressed file.
+   * @param checksumAlgorithm   The name of the checksum algorithm.
+   * @param checksum            The file checksum.
+   * @param fileSize            The size of the file without compression.
+   * @param compressedFileSize  The size of on-tape compressed file.
    */
   static void notifyGatewayFileMigrated(const Cuuid_t &cuuid,
     const uint32_t volReqId, const char *gatewayHost,
-    const unsigned short gatewayPort, char (&nsHost)[CA_MAXHOSTNAMELEN+1], 
-    uint64_t &fileId, int32_t &tapeFileSeq, unsigned char (&blockId)[4], 
+    const unsigned short gatewayPort, const uint64_t fileTransactionId,
+    char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId,
+    int32_t &tapeFileSeq, unsigned char (&blockId)[4], 
     int32_t positionCommandCode,
     char (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1], uint32_t checksum,
     uint32_t fileSize, uint32_t compressedFileSize) 
@@ -150,6 +155,7 @@ public:
    * gateway.
    * @param gatewayHost         The tape gateway host name.
    * @param gatewayPort         The tape gateway port number.
+   * @param fileTransactionId   The file transaction ID.
    * @param filePath            The path of the disk file.
    * @param nsHost              The name server host.
    * @param fileId              The CASTOR file ID.
@@ -161,8 +167,9 @@ public:
    */
   static void notifyGatewayFileRecalled(const Cuuid_t &cuuid,
     const uint32_t volReqId, const char *gatewayHost, 
-    const unsigned short gatewayPort, char (&nsHost)[CA_MAXHOSTNAMELEN+1],
-    uint64_t &fileId, int32_t &tapeFileSeq, char (&filePath)[CA_MAXPATHLEN+1], 
+    const unsigned short gatewayPort, const uint64_t fileTransactionId,
+    char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId,
+    int32_t &tapeFileSeq, char (&filePath)[CA_MAXPATHLEN+1], 
     int32_t positionCommandCode, char(&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1],
     uint32_t checksum) throw(castor::exception::Exception);
 

@@ -233,11 +233,11 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
   const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost,
-  const unsigned short gatewayPort, char (&filePath)[CA_MAXPATHLEN+1], 
-  char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId, int32_t &tapeFileSeq,
-  uint64_t &fileSize, char (&lastKnownFilename)[CA_MAXPATHLEN+1],
-  uint64_t &lastModificationTime, int32_t &positionCommandCode)
-  throw(castor::exception::Exception) {
+  const unsigned short gatewayPort, uint64_t fileTransactionId,
+  char (&filePath)[CA_MAXPATHLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN+1],
+  uint64_t &fileId, int32_t &tapeFileSeq, uint64_t &fileSize,
+  char (&lastKnownFilename)[CA_MAXPATHLEN+1], uint64_t &lastModificationTime,
+  int32_t &positionCommandCode) throw(castor::exception::Exception) {
 
   {
     castor::dlf::Param params[] = {
@@ -255,6 +255,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
    switch(emulatedRecallCounter.next()) {
    case 1:
      {
+       fileTransactionID = 1234;
        utils::copyString(filePath,
          "lxc2disk15.cern.ch:/tmp/nbessone/file1.txt");
        utils::copyString(nsHost, "castorns");
@@ -269,6 +270,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
            castor::dlf::Param("volReqId"            , volReqId            ),
            castor::dlf::Param("gatewayHost"         , gatewayHost         ),
            castor::dlf::Param("gatewayPort"         , gatewayPort         ),
+           castor::dlf::Param("fileTransationId"    , fileTransationId    ),
            castor::dlf::Param("filePath"            , filePath            ),
            castor::dlf::Param("nsHost"              , nsHost              ),
            castor::dlf::Param("fileId"              , fileId              ),
@@ -285,6 +287,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
 
    case 2:
      {
+       fileTransactionID = 1234;
        utils::copyString(filePath,
          "lxc2disk15.cern.ch:/tmp/nbessone/file1.txt");
        utils::copyString(nsHost, "castorns");
@@ -299,6 +302,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
            castor::dlf::Param("volReqId"            , volReqId            ),
            castor::dlf::Param("gatewayHost"         , gatewayHost         ),
            castor::dlf::Param("gatewayPort"         , gatewayPort         ),
+           castor::dlf::Param("fileTransationId"    , fileTransationId    ),
            castor::dlf::Param("filePath"            , filePath            ),
            castor::dlf::Param("nsHost"              , nsHost              ),
            castor::dlf::Param("fileId"              , fileId              ),
@@ -383,6 +387,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
       tapegateway::FileToMigrate &file =
         dynamic_cast<tapegateway::FileToMigrate&>(*reply);
       volReqIdFromGateway = file.mountTransactionId();
+      fileTransactionId = file.fileTransactionId();
       utils::copyString(filePath, file.path().c_str());
       utils::copyString(nsHost, file.nshost().c_str());
       fileId = file.fileid();
@@ -474,6 +479,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
       castor::dlf::Param("volReqId"            , volReqId            ),
       castor::dlf::Param("gatewayHost"         , gatewayHost         ),
       castor::dlf::Param("gatewayPort"         , gatewayPort         ),
+      castor::dlf::Param("fileTransactionId"   , fileTransactionId   ),
       castor::dlf::Param("filePath"            , filePath            ),
       castor::dlf::Param("nsHost"              , nsHost              ),
       castor::dlf::Param("fileId"              , fileId              ),
@@ -504,10 +510,10 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
   const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost,
-  const unsigned short gatewayPort, char (&filePath)[CA_MAXPATHLEN+1],
-  char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId, int32_t &tapeFileSeq,
-  unsigned char (&blockId)[4], int32_t &positionCommandCode)
-  throw(castor::exception::Exception) {
+  const unsigned short gatewayPort, uint64_t fileTransactionId,
+  char (&filePath)[CA_MAXPATHLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN+1],
+  uint64_t &fileId, int32_t &tapeFileSeq, unsigned char (&blockId)[4],
+  int32_t &positionCommandCode) throw(castor::exception::Exception) {
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("volReqId"   , volReqId   ),
@@ -523,6 +529,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
 
     if(emulatedRecallCounter.next() <= 1){
       //volReqIdFromGateway = volReqId;
+      fileTransactionId = 1234;
       utils::copyString(filePath,
         "lxc2disk15.cern.ch:/tmp/volume_I02000_file_n5");
       utils::copyString(nsHost, "castorns");
@@ -596,6 +603,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
       tapegateway::FileToRecall &file =
         dynamic_cast<tapegateway::FileToRecall&>(*reply);
       volReqIdFromGateway = file.mountTransactionId();
+      fileTransactionId = file.fileTransactionId();
       utils::copyString(filePath, file.path().c_str());
       utils::copyString(nsHost, file.nshost().c_str());
       fileId = file.fileid();
@@ -677,17 +685,18 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
 
   if(thereIsAFileToRecall) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"            , volReqId   ),
-      castor::dlf::Param("gatewayHost"         , gatewayHost),
-      castor::dlf::Param("gatewayPort"         , gatewayPort),
-      castor::dlf::Param("filePath"            , filePath   ),
-      castor::dlf::Param("nsHost"              , nsHost     ),
-      castor::dlf::Param("fileId"              , fileId     ),
-      castor::dlf::Param("tapeFileSeq"         , tapeFileSeq),
-      castor::dlf::Param("blockId[0]"          , blockId[0] ),
-      castor::dlf::Param("blockId[1]"          , blockId[1] ),
-      castor::dlf::Param("blockId[2]"          , blockId[2] ),
-      castor::dlf::Param("blockId[3]"          , blockId[3] )};
+      castor::dlf::Param("volReqId"            , volReqId         ),
+      castor::dlf::Param("gatewayHost"         , gatewayHost      ),
+      castor::dlf::Param("gatewayPort"         , gatewayPort      ),
+      castor::dlf::Param("fileTransactionId"   , fileTransactionId),
+      castor::dlf::Param("filePath"            , filePath         ),
+      castor::dlf::Param("nsHost"              , nsHost           ),
+      castor::dlf::Param("fileId"              , fileId           ),
+      castor::dlf::Param("tapeFileSeq"         , tapeFileSeq      ),
+      castor::dlf::Param("blockId[0]"          , blockId[0]       ),
+      castor::dlf::Param("blockId[1]"          , blockId[1]       ),
+      castor::dlf::Param("blockId[2]"          , blockId[2]       ),
+      castor::dlf::Param("blockId[3]"          , blockId[3]       )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_GOT_FILE_TO_RECALL_FROM_GATEWAY, params);
   } else {
@@ -708,7 +717,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
   const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost,
-  const unsigned short gatewayPort,
+  const unsigned short gatewayPort, const uint64_t fileTransactionId,
   char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId, int32_t &tapeFileSeq,
   unsigned char (&blockId)[4], int32_t positionCommandCode,
   char (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1], uint32_t checksum,
@@ -720,6 +729,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
       castor::dlf::Param("volReqId"           , volReqId           ),
       castor::dlf::Param("gatewayHost"        , gatewayHost        ),
       castor::dlf::Param("gatewayPort"        , gatewayPort        ),
+      castor::dlf::Param("fileTransactionId"  , fileTransactionId  ),
       castor::dlf::Param("nsHost"             , nsHost             ),
       castor::dlf::Param("fileId"             , fileId             ),
       castor::dlf::Param("tapeFileSeq"        , tapeFileSeq        ),
@@ -749,6 +759,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
   tapegateway::FileMigratedNotification request;
 
   request.setMountTransactionId(volReqId);
+  request.setFileTransactionId(fileTransactionId);
   request.setNshost(nsHost);
   request.setFileid(fileId);
   request.setBlockId0(blockId[0]); // block ID=4 integers (little indian order)
@@ -872,6 +883,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
       castor::dlf::Param("volReqId"           , volReqId           ),
       castor::dlf::Param("gatewayHost"        , gatewayHost        ),
       castor::dlf::Param("gatewayPort"        , gatewayPort        ),
+      castor::dlf::Param("fileTransactionId"  , fileTransactionId  ),
       castor::dlf::Param("nsHost"             , nsHost             ),
       castor::dlf::Param("fileId"             , fileId             ),
       castor::dlf::Param("tapeFileSeq"        , tapeFileSeq        ),
@@ -897,16 +909,18 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
   const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost,
-  const unsigned short gatewayPort, char (&nsHost)[CA_MAXHOSTNAMELEN+1], 
-  uint64_t &fileId, int32_t &tapeFileSeq,char (&filePath)[CA_MAXPATHLEN+1],
-  int32_t positionCommandCode, char (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1],
-  uint32_t checksum ) throw(castor::exception::Exception) {
+  const unsigned short gatewayPort, const uint64_t fileTransactionId,
+  char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId, int32_t &tapeFileSeq,
+  char (&filePath)[CA_MAXPATHLEN+1], int32_t positionCommandCode,
+  char (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1], uint32_t checksum )
+  throw(castor::exception::Exception) {
 
   {
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId"           , volReqId           ),
       castor::dlf::Param("gatewayHost"        , gatewayHost        ),
       castor::dlf::Param("gatewayPort"        , gatewayPort        ),
+      castor::dlf::Param("fileTransactionId"  , fileTransactionId  ),
       castor::dlf::Param("nsHost"             , nsHost             ),
       castor::dlf::Param("fileId"             , fileId             ),
       castor::dlf::Param("tapeFileSeq"        , tapeFileSeq        ),
@@ -930,6 +944,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
   // Prepare the request
   tapegateway::FileRecalledNotification request;
   request.setMountTransactionId(volReqId);
+  request.setFileTransactionId(fileTransactionId);
   request.setNshost(nsHost);
   request.setFileid(fileId);
   request.setFseq(tapeFileSeq);
@@ -1049,6 +1064,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
       castor::dlf::Param("volReqId"           , volReqId           ),
       castor::dlf::Param("gatewayHost"        , gatewayHost        ),
       castor::dlf::Param("gatewayPort"        , gatewayPort        ),
+      castor::dlf::Param("fileTransactionId"  , fileTransactionId  ),
       castor::dlf::Param("nsHost"             , nsHost             ),
       castor::dlf::Param("fileId"             , fileId             ),
       castor::dlf::Param("tapeFileSeq"        , tapeFileSeq        ),

@@ -165,6 +165,8 @@ public:
    * @param umask The umask of the file.
    * @param positionMethod The position method.
    * @param tapeFseq The tape file sequence.
+   * @param diskFseq The disk file sequence which has been overloaded to mean
+   * the file transaction ID between the aggregator and rtcpd.
    * @param nameServerHostName The host name of the name server.
    * @param castorFileId The CASTOR file ID.
    * @param blockId The block ID.
@@ -174,8 +176,8 @@ public:
     const char *const filePath, const uint64_t fileSize,
     const char *const tapePath, const char *const recordFormat,
     const char *const tapeFileId, const uint32_t umask,
-    const int32_t positionMethod, int32_t tapeFseq,
-    char (&nameServerHostName)[CA_MAXHOSTNAMELEN+1],
+    const int32_t positionMethod, const int32_t tapeFseq,
+    const int32_t diskFseq, char (&nameServerHostName)[CA_MAXHOSTNAMELEN+1],
     const uint64_t castorFileId, unsigned char (&blockId)[4]) 
     throw(castor::exception::Exception);
 

@@ -755,7 +755,7 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
   const char *const filePath, const uint64_t fileSize,
   const char *const tapePath, const char *const recordFormat,
   const char *const tapeFileId, const uint32_t umask,
-  const int32_t positionMethod, int32_t tapeFseq,
+  const int32_t positionMethod, const int32_t tapeFseq, const int32_t diskFseq,
   char (&nameServerHostName)[CA_MAXHOSTNAMELEN+1], const uint64_t castorFileId,
   unsigned char (&blockId)[4]) throw(castor::exception::Exception) {
 
@@ -775,9 +775,7 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
   request.umask                = umask;
   request.positionMethod       = positionMethod;
   request.tapeFseq             = tapeFseq;
-  request.diskFseq             = mode == WRITE_ENABLE ? 1 : 0;
-//  request.diskFseq             = 1;
-//request.diskFseq             = 0;
+  request.diskFseq             = diskFseq;
   request.blockSize            = -1;
   request.recordLength         = -1;
   request.retention            = -1;
