@@ -387,11 +387,6 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
     return;
   }
 
-// DEBUGGING
-if(fileTransactionId == 0) {
-  abort();
-}
-
   // Remember the file transaction ID and get its unique index to be passed to
   // RTCPD through the "rtcpFileRequest.disk_fseq" message field
   const uint32_t diskFseq = m_pendingTransferIds.insert(fileTransactionId);
@@ -663,10 +658,6 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
         fileId, tapeFseq, fileSize, lastKnownFilename, lastModificationTime,
         positionMethod)) {
 
-if(fileTransactionId == 0) {
-  abort();
-}
-
         // Remember the file transaction ID and get its unique index to be
         // passed to RTCPD through the "rtcpFileRequest.disk_fseq" message
         // field
@@ -713,10 +704,6 @@ if(fileTransactionId == 0) {
       if(GatewayTxRx::getFileToRecallFromGateway(m_cuuid, m_volReqId,
         m_gatewayHost, m_gatewayPort, fileTransactionId, filePath, nsHost,
         fileId, tapeFseq, blockId, positionCommandCode)) {
-
-if(fileTransactionId == 0) {
-  abort();
-}
 
         // Remember the file transaction ID and get its unique index to be
         // passed to RTCPD through the "rtcpFileRequest.disk_fseq" message
@@ -820,11 +807,6 @@ if(fileTransactionId == 0) {
       // Get the file transaction ID that was sent by the tape gateway
       const uint64_t fileTransactonId =
         m_pendingTransferIds.remove(body.diskFseq);
-
-// DEBUGGING
-if(fileTransactonId == 0) {
-  abort();
-}
 
       // Notify the tape gateway
       if(m_mode == WRITE_ENABLE) {
