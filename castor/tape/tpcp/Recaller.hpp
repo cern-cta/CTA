@@ -97,6 +97,43 @@ private:
   MsgHandlerMap m_handlers;
 
   /**
+   * The next file transaction ID.
+   */
+  uint64_t m_fileTransactionId;
+
+  /**
+   * The number of successfully transfered files.
+   */
+  uint64_t m_nbRecalledFiles;
+
+  /**
+   * Structure used to remember a file that is currently being transfered.
+   */
+  struct FileTransfer {
+
+    /**
+     * The tape file sequence number.
+     */
+    uint32_t tapeFseq;
+
+    /**
+     * The RFIO filename.
+     */
+    std::string filename;
+  };
+
+  /**
+   * Data type for a map of file transaction IDs to files currently being
+   * transfered.
+   */
+  typedef std::map<uint64_t, FileTransfer> FileTransferMap;
+
+  /**
+   * Map of file transaction IDs to files currently being transfered.
+   */
+  FileTransferMap m_pendingFileTransfers;
+
+  /**
    * Accepts an incoming aggregator connection, reads in the aggregator message
    * and then dispatches it to appropriate message handler method.
    *

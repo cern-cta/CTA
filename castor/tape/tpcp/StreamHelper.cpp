@@ -40,11 +40,12 @@ void castor::tape::tpcp::StreamHelper::write(std::ostream &os,
   const castor::tape::tapegateway::BaseFileInfo &value) throw() {
 
   os << "{"
-        "mountTransactionId()="       << value.mountTransactionId()       <<   ","
-        "nshost=\""            << value.nshost()              << "\","     
-        "fileid="              << value.fileid()              <<   ","
-        "fseq="                << value.fseq()                <<   ","
-        "positionCommandCode=" << value.positionCommandCode() <<   "}";
+        "mountTransactionId()=" << value.mountTransactionId()  <<   ","
+        "fileTransactionId()="  << value.fileTransactionId()   <<   ","
+        "nshost=\""             << value.nshost()              << "\","
+        "fileid="               << value.fileid()              <<   ","
+        "fseq="                 << value.fseq()                <<   ","
+        "positionCommandCode="  << value.positionCommandCode() <<   "}";
 }
 
 

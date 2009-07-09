@@ -50,8 +50,9 @@ castor::tape::tpcp::Recaller::Recaller(const bool debug,
   const vmgr_tape_info &vmgrTapeInfo, const char *const dgn,
   const int volReqId, castor::io::ServerSocket &callbackSocket) throw() :
   ActionHandler(debug, tapeFseqRanges, filenames, vmgrTapeInfo, dgn, volReqId,
-    callbackSocket),
-  m_tapeFseqSequence(tapeFseqRanges), m_filenameItor(filenames.begin()) {
+  callbackSocket), m_tapeFseqSequence(tapeFseqRanges),
+  m_filenameItor(filenames.begin()), m_fileTransactionId(1),
+  m_nbRecalledFiles(0) {
 
   // Build the map of message body handlers
   m_handlers[OBJ_FileToRecallRequest] = &Recaller::handleFileToRecallRequest;
@@ -78,6 +79,29 @@ void castor::tape::tpcp::Recaller::run() throw(castor::exception::Exception) {
   // Spin in the dispatch message loop until there is no more work
   while(dispatchMessage()) {
     // Do nothing
+  }
+
+  const uint64_t nbRecallRequests      = m_fileTransactionId - 1;
+  const uint64_t nbIncompleteTransfers = m_pendingFileTransfers.size();
+
+  std::ostream &os = std::cout;
+
+  os << "Number of recall requests      = " << nbRecallRequests << std::endl
+     << "Number of successfull recalls  = " << m_nbRecalledFiles << std::endl
+     << "Number of incomplete transfers = " << nbIncompleteTransfers
+     << std::endl
+     << std::endl;
+
+  for(FileTransferMap::iterator itor=m_pendingFileTransfers.begin();
+    itor!=m_pendingFileTransfers.end(); itor++) {
+
+    uint64_t     fileTransactionId = itor->first;
+    FileTransfer &fileTransfer     = itor->second;
+
+    os << "Incomplete transfer: fileTransactionId=" << fileTransactionId
+       << " tapeFseq=" << fileTransfer.tapeFseq
+       << " filename=" << fileTransfer.filename
+       << std::endl;
   }
 }
 
@@ -201,6 +225,7 @@ bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
     // Create FileToRecall message for the aggregator
     tapegateway::FileToRecall fileToRecall;
     fileToRecall.setMountTransactionId(m_volReqId);
+    fileToRecall.setFileTransactionId(m_fileTransactionId);
     fileToRecall.setNshost("tpcp\0");
     fileToRecall.setFileid(0);
     fileToRecall.setFseq(tapeFseq);
@@ -210,6 +235,14 @@ bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
     fileToRecall.setBlockId1(0);
     fileToRecall.setBlockId2(0);
     fileToRecall.setBlockId3(0);
+
+    // Update the map of current file transfers and increment the file
+    // transaction ID
+    {
+      FileTransfer fileTransfer = {tapeFseq, filename};
+      m_pendingFileTransfers[m_fileTransactionId] = fileTransfer;
+      m_fileTransactionId++;
+    }
 
     // Send the FileToRecall message to the aggregator
     sock.sendObject(fileToRecall);
@@ -237,7 +270,7 @@ bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
     if(m_debug) {
       std::ostream &os = std::cout;
 
-      utils::writeBanner(os, "Sent NoMoreFiles to aggregator = ");
+      utils::writeBanner(os, "Sent NoMoreFiles to aggregator");
       StreamHelper::write(os, noMore);
       os << std::endl;
     }
@@ -254,9 +287,9 @@ bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
   castor::IObject *msg, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
-  tapegateway::FileRecalledNotification *const fileRecalledNotification =
+  tapegateway::FileRecalledNotification *const notification =
     dynamic_cast<tapegateway::FileRecalledNotification*>(msg);
-  if(fileRecalledNotification == NULL) {
+  if(notification == NULL) {
     TAPE_THROW_EX(castor::exception::Internal,
          "Unexpected object type"
       << ": Actual=" << utils::objectTypeToString(msg->type())
@@ -268,21 +301,45 @@ bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
     std::ostream &os = std::cout;
 
     os << "Recaller: Received FileRecalledNotification from aggregator = ";
-    StreamHelper::write(os, *fileRecalledNotification);
+    StreamHelper::write(os, *notification);
     os << std::endl;
   }
 
   // Check the mount transaction ID
-  if(fileRecalledNotification->mountTransactionId() != m_volReqId) {
+  if(notification->mountTransactionId() != m_volReqId) {
     castor::exception::Exception ex(EBADMSG);
 
     ex.getMessage()
       << "Mount transaction ID mismatch"
-         ": Actual=" << fileRecalledNotification->mountTransactionId()
+         ": Actual=" << notification->mountTransactionId()
       << " Expected=" << m_volReqId;
 
     throw ex;
   }
+
+  // Check the file transaction ID
+  {
+    FileTransferMap::iterator itor = 
+      m_pendingFileTransfers.find(notification->fileTransactionId()); 
+
+    // Throw an exception if the fileTransactionId is unknown
+    if(itor == m_pendingFileTransfers.end()) {
+      castor::exception::Exception ex(ECANCELED);
+
+      ex.getMessage()
+        << "Received unknown file transaction ID from the aggregator"
+           ": fileTransactionId="
+        << notification->fileTransactionId();
+      throw(ex);
+    }
+
+    // The file has been transfer so remove it from the map of pending
+    // transfers
+    m_pendingFileTransfers.erase(itor);
+  }
+
+  // Update the count of successfull recalls
+  m_nbRecalledFiles++;
 
   // Create the NotificationAcknowledge message for the aggregator
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
