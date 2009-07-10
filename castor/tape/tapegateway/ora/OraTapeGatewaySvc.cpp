@@ -49,6 +49,7 @@
 #include "castor/stager/TapePool.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
 
+#include "castor/tape/tapegateway/DlfCodes.hpp"
 #include "castor/tape/tapegateway/NsTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/ora/OraTapeGatewaySvc.hpp"
 #include "castor/tape/tapegateway/PositionCommandCode.hpp"
@@ -870,12 +871,22 @@ castor::tape::tapegateway::FileToMigrate* castor::tape::tapegateway::ora::OraTap
 	  nsHelper.checkFileToMigrate(*result,vid);
 	} catch (castor::exception::Exception e) {
 
+	  struct Cns_fileid castorFileId;
+	  memset(&castorFileId,'\0',sizeof(castorFileId));
+	  strncpy(
+		  castorFileId.server,
+		  result->nshost().c_str(),
+		  sizeof(castorFileId.server)-1
+		  );
+	  castorFileId.fileid = result->fileid();
+
 	  castor::dlf::Param params[] =
 	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
-	     castor::dlf::Param("errorMessage",e.getMessage().str())
+	     castor::dlf::Param("errorMessage",e.getMessage().str()),
+	     castor::dlf::Param("TPVID", vid)
 	    };
     
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 86, 2, params);
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, ORA_FILE_TO_MIGRATE_NS_ERROR, 3, params, &castorFileId);
 	  
 
 	  try {
@@ -892,13 +903,13 @@ castor::tape::tapegateway::FileToMigrate* castor::tape::tapegateway::ora::OraTap
 	  } catch (castor::exception::Exception ex){
 
 	    // just log the error
-	    
 	    castor::dlf::Param params[] =
-	      {castor::dlf::Param("errorCode",sstrerror(ex.code())),
-	       castor::dlf::Param("errorMessage",ex.getMessage().str())
-	      };
+	    {castor::dlf::Param("errorCode",sstrerror(ex.code())),
+	     castor::dlf::Param("errorMessage",ex.getMessage().str()),
+	     castor::dlf::Param("TPVID", vid)
+	    };
     
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 87, 2, params);
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,ORA_DB_ERROR , 3, params, &castorFileId);
        
 	    
 	  }  
@@ -917,7 +928,14 @@ castor::tape::tapegateway::FileToMigrate* castor::tape::tapegateway::ora::OraTap
 	  rmMasterHelper.sendStreamReport(diskserver,mountpoint,castor::monitoring::STREAMDIRECTION_WRITE,true);
 	  
 	} catch (castor::exception::Exception e){
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 73, 0, NULL);
+	  
+	  castor::dlf::Param params[] =
+	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
+	     castor::dlf::Param("errorMessage",e.getMessage().str()),
+	     castor::dlf::Param("diskserver",diskserver),
+	     castor::dlf::Param("mountpoint",mountpoint)
+	    };
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, ORA_IMPOSSIBLE_TO_SEND_RMMASTER_REPORT, 4, params);
 	}
 
       }
@@ -990,7 +1008,15 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileMigrated(castor::
 	rmMasterHelper.sendStreamReport(diskserver, mountpoint, castor::monitoring::STREAMDIRECTION_WRITE,false);
   
       } catch (castor::exception::Exception e){
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 73, 0, NULL);
+
+	castor::dlf::Param params[] =
+	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
+	     castor::dlf::Param("errorMessage",e.getMessage().str()),
+	     castor::dlf::Param("diskserver",diskserver),
+	     castor::dlf::Param("mountpoint",mountpoint)
+	    };
+
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, ORA_IMPOSSIBLE_TO_SEND_RMMASTER_REPORT, 4, params);
       }
     }
 
@@ -1090,13 +1116,23 @@ castor::tape::tapegateway::FileToRecall* castor::tape::tapegateway::ora::OraTape
 	  break; // found a valid file
 
 	}catch (castor::exception::Exception e) {
+	  struct Cns_fileid castorFileId;
+	  memset(&castorFileId,'\0',sizeof(castorFileId));
+	  strncpy(
+		  castorFileId.server,
+		  result->nshost().c_str(),
+		  sizeof(castorFileId.server)-1
+		  );
+	  castorFileId.fileid = result->fileid();
 
 	  castor::dlf::Param params[] =
 	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
-	     castor::dlf::Param("errorMessage",e.getMessage().str())
+	     castor::dlf::Param("errorMessage",e.getMessage().str()),
+	     castor::dlf::Param("TPVID", vid)
 	    };
-	
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 88, 2, params);
+
+	  
+	  castor::dlf::dlf_writep(nullCuuid,ORA_FILE_TO_RECALL_NS_ERROR, 3, params,&castorFileId);
 
 	  try {
 	    FileErrorReport failure;
@@ -1111,13 +1147,14 @@ castor::tape::tapegateway::FileToRecall* castor::tape::tapegateway::ora::OraTape
 
 	    castor::dlf::Param params[] =
 	      {castor::dlf::Param("errorCode",sstrerror(ex.code())),
-	       castor::dlf::Param("errorMessage",ex.getMessage().str())
+	       castor::dlf::Param("errorMessage",ex.getMessage().str()),
+	       castor::dlf::Param("TPVID", vid)
 	      };
     
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 89, 2, params);
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, ORA_DB_ERROR, 2, params,&castorFileId);
 	  }
 
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 73, 0, NULL);
+	  
 	  if (result) delete result;
 	  m_getFileToRecallStatement->closeResultSet(rs);
 
@@ -1133,7 +1170,13 @@ castor::tape::tapegateway::FileToRecall* castor::tape::tapegateway::ora::OraTape
 	  rmMasterHelper.sendStreamReport(diskserver,mountpoint,castor::monitoring::STREAMDIRECTION_READ,true);
 	
 	} catch (castor::exception::Exception e){
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 73, 0, NULL);
+	  castor::dlf::Param params[] =
+	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
+	     castor::dlf::Param("errorMessage",e.getMessage().str()),
+	     castor::dlf::Param("diskserver",diskserver),
+	     castor::dlf::Param("mountpoint",mountpoint)
+	    };
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,ORA_IMPOSSIBLE_TO_SEND_RMMASTER_REPORT, 4, params);
 	}
 	
       }
@@ -1156,7 +1199,7 @@ castor::tape::tapegateway::FileToRecall* castor::tape::tapegateway::ora::OraTape
 }
  
 //----------------------------------------------------------------------------
-// setSegmentRecalled  
+// setFileRecalled  
 //----------------------------------------------------------------------------
    
 void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileRecalled(castor::tape::tapegateway::FileRecalledNotification& resp) throw (castor::exception::Exception){
@@ -1203,7 +1246,13 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileRecalled(castor:
 	rmMasterHelper.sendStreamReport(diskserver,mountpoint,castor::monitoring::STREAMDIRECTION_READ,false);
 	
       } catch (castor::exception::Exception e){
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 73, 0, NULL);
+	castor::dlf::Param params[] =
+	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
+	     castor::dlf::Param("errorMessage",e.getMessage().str()),
+	     castor::dlf::Param("diskserver",diskserver),
+	     castor::dlf::Param("mountpoint",mountpoint)
+	    };
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, ORA_IMPOSSIBLE_TO_SEND_RMMASTER_REPORT, 4, params);
       }
     }
 

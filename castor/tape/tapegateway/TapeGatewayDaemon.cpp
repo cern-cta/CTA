@@ -344,6 +344,13 @@ castor::tape::tapegateway::TapeGatewayDaemon::TapeGatewayDaemon() : castor::serv
       {WORKER_FAIL_DB_UPDATE,  "Worker: updating db after end notification error report"},
       {WORKER_FAIL_DB_ERROR,"Worker: db error while updating for end notification error report"},
       {WORKER_FAIL_RELEASE_TAPE,"Worker: releasing BUSY tape after end notification error report"}, 
+      {ORA_FILE_TO_MIGRATE_NS_ERROR, "OraTapeGatewaySvc: failed check against the nameserver for file to migrate"},
+      {ORA_DB_ERROR,  "OraTapeGatewaySvc: impossible to update db after failure"},
+      {ORA_IMPOSSIBLE_TO_SEND_RMMASTER_REPORT, "OraTapeGatewaySvc: impossible to send rmmaster report"},   
+      {ORA_FILE_TO_RECALL_NS_ERROR, "OraTapeGatewaySvc: failed check against the nameserver for file to recall"},
+      
+      
+ 
       {-1, ""}
     };
   dlfInit(messages);
