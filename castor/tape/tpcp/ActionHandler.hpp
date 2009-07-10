@@ -89,6 +89,11 @@ protected:
   FilenameList &m_filenames;
 
   /**
+   * Iterator pointing to the next RFIO filename;
+   */
+  FilenameList::const_iterator m_filenameItor;
+
+  /**
    *  The information retrieved from the VMGR about the tape to be used.
    */
   const vmgr_tape_info &m_vmgrTapeInfo;

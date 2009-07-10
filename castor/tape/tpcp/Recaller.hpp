@@ -71,11 +71,6 @@ private:
   TapeFseqRangeListSequence m_tapeFseqSequence;
 
   /**
-   * Iterator pointing to the next RFIO filename;
-   */
-  FilenameList::const_iterator m_filenameItor;
-
-  /**
    * Pointer to a message handler function, where the handler function is a
    * member of this class.
    *
