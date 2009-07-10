@@ -47,8 +47,6 @@ TAPEGATEWAY_MESSAGES_SRCS = \
   ../tapegateway/NoMoreFiles.cpp \
   ../tapegateway/NotificationAcknowledge.cpp \
   ../tapegateway/PositionCommandCode.cpp \
-  ../tapegateway/TapeRequestState.cpp \
-  ../tapegateway/TapeRequestStateCode.cpp \
   ../tapegateway/Volume.cpp \
   ../tapegateway/VolumeRequest.cpp
 
