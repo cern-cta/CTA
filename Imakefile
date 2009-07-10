@@ -8,7 +8,7 @@ COMM		Make CASTOR libraries and executables
 
 SUBDIRS = common dlf security upv ns rfio \
 	  expert rmc rtcopy client tape vdqm vmgr \
-	  hsmtools h castor config gridftp2 shlib clips test
+	  hsmtools h castor gridftp2 shlib clips test
 
 clean: imakeclean
 clobber: imakeclobber
@@ -34,10 +34,10 @@ doxygen: tools/doxyconfig
 .PHONY : client installclient tape installtape
 
 client: 
-	GotoSubdirs(upv ns client rfio vdqm vmgr security)
+	GotoSubdirs(upv ns client rfio vdqm vmgr security tape rtcopy)
 
 installclient: checkDESTDIR checkVERSION client
-	GotoSubdirs(upv ns client rfio vdqm vmgr castor common)
+	GotoSubdirs(upv ns client rfio vdqm vmgr castor common tape rtcopy)
 
 tape:
 	GotoSubdirs(rmc tape rtcopy)
