@@ -93,16 +93,29 @@ void castor::tape::tpcp::TpcpCommand::usage(std::ostream &os,
     " (case insensitive)\n"
     "\tFILE   A filename in RFIO notation [host:]local_path\n"
     "\n"
-    "Options:\n"
+    "Options common to all actions: ";
+  Action::writeValidStrings(os, " or ");
+  os <<
+    "\n"
     "\n"
     "\t-d, --debug             Print debug information\n"
-    "\t-f, --filelist          File containing a list of filenames\n"
     "\t-h, --help              Print this help and exit\n"
+    "\n"
+    "Options that apply to the READ action:\n"
+    "\n"
+    "\t-f, --filelist          File containing a list of filenames\n"
     "\t-q, --sequence sequence The tape file sequences\n"
     "\n"
+    "Options that apply to the WRITE action:\n"
+    "\n"
+    "\t-f, --filelist          File containing a list of filenames\n"
+    "\t-p, --position          Tape file sequence number to be positioned to\n"
+    "\t                        just before writing\n"
+    "\n"
     "Constraints:\n"
-    "\tThe [FILE].. command-line arguments and the \"-f, --filelist\" option"
-    " are mutually exclusive\n"
+    "\n"
+    "\tThe [FILE].. command-line arguments and the \"-f, --filelist\" option\n"
+    "\tare mutually exclusive\n"
     "\n"
     "Comments to: Castor.Support@cern.ch" << std::endl;
 }
@@ -119,6 +132,7 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
     {"filelist", REQUIRED_ARGUMENT, NULL, 'f'},
     {"help"    ,       NO_ARGUMENT, NULL, 'h'},
     {"sequence", REQUIRED_ARGUMENT, NULL, 'q'},
+    {"position", REQUIRED_ARGUMENT, NULL, 'p'},
     {NULL      , 0                , NULL,  0 }
   };
 
@@ -127,7 +141,7 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
 
   char c;
 
-  while((c = getopt_long(argc, argv, ":df:hq:", longopts, NULL)) != -1) {
+  while((c = getopt_long(argc, argv, ":df:hq:p:", longopts, NULL)) != -1) {
 
     switch (c) {
     case 'd':
@@ -145,6 +159,29 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
 
     case 'q':
       parseTapeFileSequence(optarg);
+      break;
+
+    case 'p':
+      if(!utils::isValidUInt(optarg)) {
+        castor::exception::InvalidArgument ex;
+        ex.getMessage() <<
+          "The -p, --position argument must be a valid unsigned integer "
+          "greater than 0: Actual=" << optarg;
+        throw ex;
+      }
+
+      m_parsedCommandLine.tapeFseqPosition = atoi(optarg);
+
+      if(m_parsedCommandLine.tapeFseqPosition == 0) {
+        castor::exception::InvalidArgument ex;
+        ex.getMessage() <<
+          "The -p, --position argument must be a valid unsigned integer "
+          "greater than 0: Actual=" << optarg;
+        throw ex;
+      }
+
+      m_parsedCommandLine.tapeFseqPositionOptionSet = true;
+
       break;
 
     case ':':

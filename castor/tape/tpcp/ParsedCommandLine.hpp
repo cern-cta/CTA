@@ -47,6 +47,8 @@ struct ParsedCommandLine {
   Action            action;
   char              vid[CA_MAXVIDLEN+1];
   TapeFseqRangeList tapeFseqRanges;
+  bool              tapeFseqPositionOptionSet;
+  uint32_t          tapeFseqPosition;
   bool              fileListOptionSet;
   std::string       fileListFilename;
   FilenameList      filenames;
@@ -58,6 +60,8 @@ struct ParsedCommandLine {
     debugOptionSet(false),
     helpOptionSet(false),
     action(Action::read),
+    tapeFseqPositionOptionSet(false),
+    tapeFseqPosition(0),
     fileListOptionSet(false) {
 
     for(size_t i=0; i<sizeof(vid); i++) {
