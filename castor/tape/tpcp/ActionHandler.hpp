@@ -120,6 +120,26 @@ protected:
   uint64_t m_fileTransactionId;
 
   /**
+   * EndNotification message handler.
+   *
+   * @param msg The aggregator message to be processed.
+   * @param sock The socket on which to reply to the aggregator.
+   * @return True if there is more work to be done else false.
+   */
+  bool handleEndNotification(castor::IObject *msg,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+
+  /**
+   * EndNotificationErrorReport message handler.
+   *
+   * @param msg The aggregator message to be processed.
+   * @param sock The socket on which to reply to the aggregator.
+   * @return True if there is more work to be done else false.
+   */
+  bool handleEndNotificationErrorReport(castor::IObject *msg,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+
+  /**
    * Acknowledges the end of the session to the aggregator.
    */
   void acknowledgeEndOfSession() throw(castor::exception::Exception);

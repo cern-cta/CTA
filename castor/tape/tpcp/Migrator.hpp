@@ -49,6 +49,88 @@ public:
     castor::io::ServerSocket &callbackSocket) throw();
 
   /**
+   * Destructor.
+   */
+  virtual ~Migrator();
+
+  /**
+   * Pointer to a message handler function, where the handler function is a
+   * member of this class.
+   *
+   * @param msg The aggregator message to be processed.
+   * @param sock The socket on which to reply to the aggregator.
+   * @return True if there is more work to be done else false.
+   */
+  typedef bool (Migrator::*MsgHandler)(castor::IObject *msg,
+     castor::io::AbstractSocket &sock);
+
+  /**
+   * Map of CASTOR object type to message handler callback.
+   */
+  typedef std::map<int, MsgHandler> MsgHandlerMap;
+
+  /**
+   * Map of message handlers.
+   */
+  MsgHandlerMap m_handlers;
+
+  /**
+   * Data type for a map of file transaction IDs to the RFIO filenames of
+   * files currently being transfered.
+   */
+  typedef std::map<uint64_t, std::string> FileTransferMap;
+
+  /**
+   * Map of file transaction IDs to the RFIO filenames of files currently
+   * being transfered.
+   */
+  FileTransferMap m_pendingFileTransfers;
+
+  /**
+   * Accepts an incoming aggregator connection, reads in the aggregator message
+   * and then dispatches it to appropriate message handler method.
+   *
+   * @return True if there is more work to be done, else false.
+   */
+  bool dispatchMessage() throw(castor::exception::Exception);
+
+  /**
+   * FileToMigrateRequest message handler.
+   *
+   * The parameters of this method are documentated in the comments of the
+   * Migrator::MsgHandler datatype.
+   */
+  bool handleFileToMigrateRequest(castor::IObject *msg,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+
+  /**
+   * FileMigratedNotification message handler.
+   *
+   * The parameters of this method are documentated in the comments of the
+   * Migrator::MsgHandler datatype.
+   */
+  bool handleFileMigratedNotification(castor::IObject *msg,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+
+  /**
+   * EndNotification message handler.
+   *
+   * The parameters of this method are documentated in the comments of the
+   * Migrator::MsgHandler datatype.
+   */
+  bool handleEndNotification(castor::IObject *msg,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+
+  /**
+   * EndNotificationErrorReport message handler.
+   *
+   * The parameters of this method are documentated in the comments of the
+   * Migrator::MsgHandler datatype.
+   */
+  bool handleEndNotificationErrorReport(castor::IObject *msg,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+
+  /**
    * See the header file of castor::tape::tpcp::ActionHandler for this method's
    * documentation.
    */

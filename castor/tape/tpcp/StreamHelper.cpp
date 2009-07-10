@@ -72,7 +72,34 @@ void castor::tape::tpcp::StreamHelper::write(std::ostream &os,
 // write
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::StreamHelper::write(std::ostream &os,
+  const castor::tape::tapegateway::FileToMigrate &value) throw() {
+
+  os << "{";
+  write(os, (castor::tape::tapegateway::BaseFileInfo&)value);
+  os <<                                                              ","
+     << "path=\""               << value.path()                 << "\","
+     << "fileSize="             << value.fileSize()             <<   ","
+     << "lastKnownFilename="    << value.lastKnownFilename()    <<   ","
+     << "lastModificationTime=" << value.lastModificationTime() <<   "}";
+}
+
+
+//------------------------------------------------------------------------------
+// write
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::StreamHelper::write(std::ostream &os,
   const castor::tape::tapegateway::NoMoreFiles &value) throw() {
+
+  os << "{"
+        "mountTransactionId()=" << value.mountTransactionId()<< "}";
+}
+
+
+//------------------------------------------------------------------------------
+// write
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::StreamHelper::write(std::ostream &os,
+  const castor::tape::tapegateway::FileToMigrateRequest &value) throw() {
 
   os << "{"
         "mountTransactionId()=" << value.mountTransactionId()<< "}";
@@ -87,6 +114,27 @@ void castor::tape::tpcp::StreamHelper::write(std::ostream &os,
 
   os << "{"
         "mountTransactionId()=" << value.mountTransactionId()<< "}";
+}
+
+
+//------------------------------------------------------------------------------
+// write
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::StreamHelper::write(std::ostream &os,
+  const castor::tape::tapegateway::FileMigratedNotification &value) throw() {
+  os <<                                                          "{"
+     << "fileSize="           << value.fileSize()           <<   ","
+     << "checksumName=\""     << value.checksumName()       << "\"," 
+     << std::hex
+     << "checksum=0x"         << value.checksum()           <<   ","
+     << std::dec
+     << "compressedFileSize=" << value.compressedFileSize() <<   ","
+     << std::hex
+     << "blockId0="           << (int)value.blockId0()      <<   ","
+        "blockId1="           << (int)value.blockId1()      <<   ","
+        "blockId2="           << (int)value.blockId2()      <<   ","
+        "blockId3="           << (int)value.blockId3()      <<   "}"
+     << std::dec;
 }
 
 

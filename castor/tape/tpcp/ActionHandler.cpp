@@ -27,6 +27,7 @@
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 #include "castor/tape/tpcp/ActionHandler.hpp"
 #include "castor/tape/tpcp/Constants.hpp"
+#include "castor/tape/tpcp/StreamHelper.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 
@@ -46,6 +47,122 @@ castor::tape::tpcp::ActionHandler::ActionHandler(const bool debug,
   m_volReqId(volReqId),
   m_callbackSocket(callbackSocket),
   m_fileTransactionId(1) {
+}
+
+
+//------------------------------------------------------------------------------
+// handleEndNotification
+//------------------------------------------------------------------------------
+bool castor::tape::tpcp::ActionHandler::handleEndNotification(
+  castor::IObject *msg, castor::io::AbstractSocket &sock)
+  throw(castor::exception::Exception) {
+
+  tapegateway::EndNotification *const endNotification =
+    dynamic_cast<tapegateway::EndNotification*>(msg);
+  if(endNotification == NULL) {
+    TAPE_THROW_EX(castor::exception::Internal,
+         "Unexpected object type"
+      << ": Actual=" << utils::objectTypeToString(msg->type())
+      << " Expected=EndNotification");
+  }
+
+  // If debug, then display endNotification
+  if(m_debug) {
+    std::ostream &os = std::cout;
+
+    os << "ActionHandler: Received EndNotification from aggregator = ";
+    StreamHelper::write(os, *endNotification);
+    os << std::endl;
+  }
+
+  // Check the mount transaction ID
+  if(endNotification->mountTransactionId() != m_volReqId) {
+    castor::exception::Exception ex(EBADMSG);
+
+    ex.getMessage()
+      << "Mount transaction ID mismatch"
+         ": Actual=" << endNotification->mountTransactionId()
+      << " Expected=" << m_volReqId;
+
+    throw ex;
+  }
+
+  // Create the NotificationAcknowledge message for the aggregator
+  castor::tape::tapegateway::NotificationAcknowledge acknowledge;
+  acknowledge.setMountTransactionId(m_volReqId);
+
+  // Send the NotificationAcknowledge message to the aggregator
+  sock.sendObject(acknowledge);
+
+  // If debug, then display sending of the NotificationAcknowledge message
+  if(m_debug) {
+    std::ostream &os = std::cout;
+
+    os << "Sent NotificationAcknowledge to aggregator = ";
+    StreamHelper::write(os, acknowledge);
+    os << std::endl;
+  }
+
+  return false;
+}
+
+
+//------------------------------------------------------------------------------
+// handleEndNotificationErrorReport
+//------------------------------------------------------------------------------
+bool castor::tape::tpcp::ActionHandler::handleEndNotificationErrorReport(
+  castor::IObject *msg, castor::io::AbstractSocket &sock)
+  throw(castor::exception::Exception) {
+
+  tapegateway::EndNotificationErrorReport *const
+    endNotificationErrorReport =
+    dynamic_cast<tapegateway::EndNotificationErrorReport*>(msg);
+  if(endNotificationErrorReport == NULL) {
+    TAPE_THROW_EX(castor::exception::Internal,
+         "Unexpected object type"
+      << ": Actual=" << utils::objectTypeToString(msg->type())
+      << " Expected=EndNotificationErrorReport");
+  }
+
+  // If debug, then display EndNotificationErrorReport
+  if(m_debug) {
+    std::ostream &os = std::cout;
+
+    os << "ActionHandler: "
+          "Received EndNotificationErrorReport from aggregator = ";
+    StreamHelper::write(os, *endNotificationErrorReport);
+    os << std::endl;
+  }
+
+  // Check the mount transaction ID
+  if(endNotificationErrorReport->mountTransactionId() != m_volReqId) {
+    castor::exception::Exception ex(EBADMSG);
+
+    ex.getMessage()
+      << "Mount transaction ID mismatch"
+         ": Actual=" << endNotificationErrorReport->mountTransactionId()
+      << " Expected=" << m_volReqId;
+
+    throw ex;
+  }
+
+  // Create the NotificationAcknowledge message for the aggregator
+  castor::tape::tapegateway::NotificationAcknowledge acknowledge;
+  acknowledge.setMountTransactionId(m_volReqId);
+
+  // Send the NotificationAcknowledge message to the aggregator
+  sock.sendObject(acknowledge);
+
+  // If debug, then display sending of the NotificationAcknowledge message
+  if(m_debug) {
+    std::ostream &os = std::cout;
+
+    os << "ActionHandler: Sent NotificationAcknowledge to aggregator = ";
+    StreamHelper::write(os, acknowledge);
+    os << std::endl;
+  }
+
+  return false;
 }
 
 

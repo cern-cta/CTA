@@ -27,7 +27,10 @@
 
 #include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
+#include "castor/tape/tapegateway/FileMigratedNotification.hpp"
 #include "castor/tape/tapegateway/FileRecalledNotification.hpp"
+#include "castor/tape/tapegateway/FileToMigrate.hpp"
+#include "castor/tape/tapegateway/FileToMigrateRequest.hpp"
 #include "castor/tape/tapegateway/FileToRecall.hpp"
 #include "castor/tape/tapegateway/FileToRecallRequest.hpp"
 #include "castor/tape/tapegateway/NoMoreFiles.hpp"
@@ -76,6 +79,16 @@ public:
    * @param The value of which the textual representation is to be written.
    */
   static void write(std::ostream &os,
+    const castor::tape::tapegateway::FileToMigrate &value) throw();
+
+  /**
+   * Writes a textual representation of the specified value to the specified
+   * stream.
+   *
+   * @param The output stream to be written to.
+   * @param The value of which the textual representation is to be written.
+   */
+  static void write(std::ostream &os,
     const castor::tape::tapegateway::FileToRecall &value) throw();
 
   /**
@@ -96,7 +109,27 @@ public:
    * @param The value of which the textual representation is to be written.
    */
   static void write(std::ostream &os,
+    const castor::tape::tapegateway::FileToMigrateRequest &value) throw();
+
+  /**
+   * Writes a textual representation of the specified value to the specified
+   * stream.
+   *
+   * @param The output stream to be written to.
+   * @param The value of which the textual representation is to be written.
+   */
+  static void write(std::ostream &os,
     const castor::tape::tapegateway::FileToRecallRequest &value) throw();
+
+  /**
+   * Writes a textual representation of the specified value to the specified
+   * stream.
+   *
+   * @param The output stream to be written to.
+   * @param The value of which the textual representation is to be written.
+   */
+  static void write(std::ostream &os,
+    const castor::tape::tapegateway::FileMigratedNotification &value) throw();
 
   /**
    * Writes a textual representation of the specified value to the specified

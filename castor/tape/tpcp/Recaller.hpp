@@ -167,16 +167,6 @@ private:
   bool handleEndNotificationErrorReport(castor::IObject *msg,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
-  /**
-   * The possible results of a set of recall session.
-   */
-  enum Result {
-    RESULT_SUCCESS,
-    RESULT_REACHED_END_OF_TAPE,
-    RESULT_MORE_TFSEQS_THAN_FILENAMES,
-    RESULT_MORE_FILENAMES_THAN_TFSEQS
-  };
-
 }; // class Recaller
 
 } // namespace tpcp
