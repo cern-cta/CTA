@@ -51,8 +51,7 @@ castor::tape::tpcp::Recaller::Recaller(const bool debug,
   const vmgr_tape_info &vmgrTapeInfo, const char *const dgn,
   const int volReqId, castor::io::ServerSocket &callbackSocket) throw() :
   ActionHandler(debug, tapeFseqRanges, filenames, vmgrTapeInfo, dgn, volReqId,
-  callbackSocket), m_tapeFseqSequence(tapeFseqRanges),
-  m_fileTransactionId(1), m_nbRecalledFiles(0) {
+  callbackSocket), m_tapeFseqSequence(tapeFseqRanges), m_nbRecalledFiles(0) {
 
   // Build the map of message body handlers
   m_handlers[OBJ_FileToRecallRequest] = &Recaller::handleFileToRecallRequest;

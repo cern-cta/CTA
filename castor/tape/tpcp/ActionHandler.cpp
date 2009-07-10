@@ -44,7 +44,8 @@ castor::tape::tpcp::ActionHandler::ActionHandler(const bool debug,
   m_vmgrTapeInfo(vmgrTapeInfo),
   m_dgn(dgn),
   m_volReqId(volReqId),
-  m_callbackSocket(callbackSocket) {
+  m_callbackSocket(callbackSocket),
+  m_fileTransactionId(1) {
 }
 
 

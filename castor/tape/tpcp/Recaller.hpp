@@ -92,11 +92,6 @@ private:
   MsgHandlerMap m_handlers;
 
   /**
-   * The next file transaction ID.
-   */
-  uint64_t m_fileTransactionId;
-
-  /**
    * The number of successfully transfered files.
    */
   uint64_t m_nbRecalledFiles;

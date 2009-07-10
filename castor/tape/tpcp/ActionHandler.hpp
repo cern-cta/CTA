@@ -115,6 +115,11 @@ protected:
   castor::io::ServerSocket &m_callbackSocket;
 
   /**
+   * The next file transaction ID.
+   */
+  uint64_t m_fileTransactionId;
+
+  /**
    * Acknowledges the end of the session to the aggregator.
    */
   void acknowledgeEndOfSession() throw(castor::exception::Exception);
