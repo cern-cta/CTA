@@ -33,6 +33,7 @@
 #include "h/Castor_limits.h"
 #include "h/vmgr_api.h"
 
+#include <map>
 #include <stdint.h>
 
 namespace castor {
@@ -64,6 +65,11 @@ public:
     FilenameList &filenames, const vmgr_tape_info &vmgrTapeInfo,
     const char *const dgn, const uint64_t volReqId,
     castor::io::ServerSocket &callbackSocket) throw();
+
+  /**
+   * Destructor.
+   */
+  virtual ~ActionHandler();
 
   /**
    * Performs the action.
@@ -120,6 +126,30 @@ protected:
   uint64_t m_fileTransactionId;
 
   /**
+   * Registers the specified Aggregator message handler member function.
+   *
+   * @param messageType The type of Aggregator message.
+   * @param func        The member function to handle the Aggregator message.
+   * @param obj         The object to handler the Aggregator message.
+   */
+  template<class T> void registerMsgHandler(
+    const int messageType,
+    bool (T::*func)(castor::IObject *msg, castor::io::AbstractSocket &sock),
+    T *obj) throw() {
+
+    m_msgHandlers[messageType] = new MsgHandler<T>(func, obj);
+  }
+
+  /**
+   * Waits for and accepts an incoming aggregator connection, reads in the
+   * aggregator message and then dispatches it to appropriate message handler
+   * member function.
+   *
+   * @return True if there is more work to be done, else false.
+   */
+  bool dispatchMessage() throw(castor::exception::Exception);
+
+  /**
    * EndNotification message handler.
    *
    * @param msg The aggregator message to be processed.
@@ -143,6 +173,107 @@ protected:
    * Acknowledges the end of the session to the aggregator.
    */
   void acknowledgeEndOfSession() throw(castor::exception::Exception);
+
+
+private:
+
+  /**
+   * An abstract functor to handle incomming Aggregator messages.
+   */
+  class AbstractMsgHandler {
+  public:
+
+    /**
+     * operator().
+     *
+     * @param msg The aggregator message to be processed.
+     * @param sock The socket on which to reply to the aggregator.
+     * @return True if there is more work to be done else false.
+     */
+    virtual bool operator()(castor::IObject *msg,
+      castor::io::AbstractSocket &sock) const
+      throw(castor::exception::Exception) = 0;
+
+    /**
+     * Destructor.
+     */
+    virtual ~AbstractMsgHandler();
+  };
+
+  /**
+   * Conscrete Aggregator message handler template functor.
+   */
+  template<class T> class MsgHandler : public AbstractMsgHandler {
+  public:
+
+    /**
+     * Constructor.
+     */
+    MsgHandler(bool (T::*const func)(castor::IObject *msg,
+        castor::io::AbstractSocket &sock), T *const obj) :
+      m_func(func), m_obj(obj) {
+      // Do nothing
+    }
+
+    /**
+     * operator().
+     *
+     * @param msg The aggregator message to be processed.
+     * @param sock The socket on which to reply to the aggregator.
+     * @return True if there is more work to be done else false.
+     */
+    virtual bool operator()(castor::IObject *msg,
+      castor::io::AbstractSocket &sock) const
+      throw(castor::exception::Exception) {
+
+      return (m_obj->*m_func)(msg, sock);
+    }
+
+    /**
+     * destructor.
+     */
+    virtual ~MsgHandler() {
+      // Do nothing
+    }
+
+    /**
+     * The member function of class T to be called by operator().
+     */
+    bool (T::*const m_func)(castor::IObject *msg,
+      castor::io::AbstractSocket &sock);
+
+    /**
+     * The object on which the member function shall be called by operator().
+     */
+    T *const m_obj;
+  };  // template<class T> class MsgHandler
+
+  /**
+   * Map from message type (int) to pointer message handler
+   * (AbstractMsgHandler *).
+   *
+   * The destructor of this map is responsible for and will deallocate the
+   * MsgHandlers it points to.
+   */
+  class MsgHandlerMap : public std::map<int, AbstractMsgHandler *> {
+  public:
+
+    /**
+     * Destructor.
+     *
+     * Deallocates the MsgHandlers pointed to by this map.
+     */
+    ~MsgHandlerMap();
+  }; // MsgHandlerMap
+
+  /**
+   * Map from message type (uint32_t) to pointer message handler
+   * (AbstractMsgHandler *).
+   *
+   * The destructor of this map is responsible for and will deallocate the
+   * MsgHandlers it points to.
+   */
+  MsgHandlerMap m_msgHandlers;
 
 }; // class ActionHandler
 

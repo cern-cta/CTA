@@ -53,13 +53,15 @@ castor::tape::tpcp::Recaller::Recaller(const bool debug,
   ActionHandler(debug, tapeFseqRanges, filenames, vmgrTapeInfo, dgn, volReqId,
   callbackSocket), m_tapeFseqSequence(tapeFseqRanges), m_nbRecalledFiles(0) {
 
-  // Build the map of message body handlers
-  m_handlers[OBJ_FileToRecallRequest] = &Recaller::handleFileToRecallRequest;
-  m_handlers[OBJ_FileRecalledNotification] =
-    &Recaller::handleFileRecalledNotification;
-  m_handlers[OBJ_EndNotification] = &Recaller::handleEndNotification;
-  m_handlers[OBJ_EndNotificationErrorReport] = 
-    &Recaller::handleEndNotificationErrorReport;
+  // Register the Aggregator message handler member functions
+  ActionHandler::registerMsgHandler(OBJ_FileToRecallRequest,
+    &Recaller::handleFileToRecallRequest, this);
+  ActionHandler::registerMsgHandler(OBJ_FileRecalledNotification,
+    &Recaller::handleFileRecalledNotification, this);
+  ActionHandler::registerMsgHandler(OBJ_EndNotification,
+    &Recaller::handleEndNotification, this);
+  ActionHandler::registerMsgHandler(OBJ_EndNotificationErrorReport,
+    &Recaller::handleEndNotificationErrorReport, this);
 }
 
 
@@ -76,7 +78,7 @@ castor::tape::tpcp::Recaller::~Recaller() {
 void castor::tape::tpcp::Recaller::run() throw(castor::exception::Exception) {
 
   // Spin in the dispatch message loop until there is no more work
-  while(dispatchMessage()) {
+  while(ActionHandler::dispatchMessage()) {
     // Do nothing
   }
 
@@ -105,77 +107,6 @@ void castor::tape::tpcp::Recaller::run() throw(castor::exception::Exception) {
        << " filename=" << fileTransfer.filename
        << std::endl;
   }
-}
-
-
-//------------------------------------------------------------------------------
-// dispatchMessage
-//------------------------------------------------------------------------------
-bool castor::tape::tpcp::Recaller::dispatchMessage()
-  throw(castor::exception::Exception) {
-
-  // Socket file descriptor for a callback connection from the aggregator
-  int connectionSocketFd = 0;
-
-  // Wait for a callback connection from the aggregator
-  {
-    bool waitForCallback    = true;
-    while(waitForCallback) {
-      try {
-        connectionSocketFd = net::acceptConnection(m_callbackSocket.socket(),
-          WAITCALLBACKTIMEOUT);
-
-        waitForCallback = false;
-      } catch(castor::exception::TimeOut &tx) {
-        std::cout << "Waited " << WAITCALLBACKTIMEOUT << "seconds for a "
-        "callback connection from the tape server." << std::endl
-        << "Continuing to wait." <<  std::endl;
-      }
-    }
-  }
-
-  // If debug, then display a textual description of the aggregator
-  // callback connection
-  if(m_debug) {
-    std::ostream &os = std::cout;
-
-    os << "Recaller: Aggregator connection = ";
-    net::writeSocketDescription(os, connectionSocketFd);
-    os << std::endl;
-  }
-
-  // Wrap the connection socket descriptor in a CASTOR framework socket in
-  // order to get access to the framework marshalling and un-marshalling
-  // methods
-  castor::io::AbstractTCPSocket callbackConnectionSocket(connectionSocketFd);
-
-  // Read in the message sent by the aggregator
-  std::auto_ptr<castor::IObject> msg(callbackConnectionSocket.readObject());
-
-  // If debug, then display the type of message received from the aggregator
-  if(m_debug) {
-    std::ostream &os = std::cout;
-
-    os << "Recaller: Received aggregator message of type = "
-       << utils::objectTypeToString(msg->type()) << std::endl;
-  }
-
-  // Find the message type's corresponding handler
-  MsgHandlerMap::const_iterator itor = m_handlers.find(msg->type());
-  if(itor == m_handlers.end()) {
-    TAPE_THROW_CODE(EBADMSG,
-         ": Received unexpected aggregator message: "
-      << ": Message type = " << utils::objectTypeToString(msg->type()));
-  }
-  const MsgHandler handler = itor->second;
-
-  // Invoke the handler
-  const bool moreWork = (this->*handler)(msg.get(), callbackConnectionSocket);
-
-  // Close the aggregator callback connection
-  callbackConnectionSocket.close();
-
-  return moreWork;
 }
 
 

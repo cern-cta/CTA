@@ -71,27 +71,6 @@ private:
   TapeFseqRangeListSequence m_tapeFseqSequence;
 
   /**
-   * Pointer to a message handler function, where the handler function is a
-   * member of this class.
-   *
-   * @param msg The aggregator message to be processed.
-   * @param sock The socket on which to reply to the aggregator.
-   * @return True if there is more work to be done else false.
-   */
-  typedef bool (Recaller::*MsgHandler)(castor::IObject *msg,
-     castor::io::AbstractSocket &sock);
-
-  /**
-   * Map of CASTOR object type to message handler callback.
-   */
-  typedef std::map<int, MsgHandler> MsgHandlerMap;
-
-  /**
-   * Map of message handlers.
-   */
-  MsgHandlerMap m_handlers;
-
-  /**
    * The number of successfully transfered files.
    */
   uint64_t m_nbRecalledFiles;
@@ -122,14 +101,6 @@ private:
    * Map of file transaction IDs to files currently being transfered.
    */
   FileTransferMap m_pendingFileTransfers;
-
-  /**
-   * Accepts an incoming aggregator connection, reads in the aggregator message
-   * and then dispatches it to appropriate message handler method.
-   *
-   * @return True if there is more work to be done, else false.
-   */
-  bool dispatchMessage() throw(castor::exception::Exception);
 
   /**
    * FileToRecallRequest message handler.
