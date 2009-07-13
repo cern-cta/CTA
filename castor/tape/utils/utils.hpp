@@ -106,6 +106,32 @@ namespace utils  {
    */
   const char *boolToString(const bool value);
 
+
+  /**
+   * Writes the hex form of the specified unsigned 32-bit integer into the
+   * first 8 bytes of the specified character buffer.  The string termination
+   * character '\0' is written to the ninth byte of the output buffer.
+   *
+   * @param number The 32-bit integer.
+   * @param buf    The character buffer that must have a minimum of 9 bytes.
+   * @param len    The length of the character buffer.
+   */
+  void toHex(uint32_t number, char *buf, size_t len)
+    throw(castor::exception::InvalidArgument);
+
+  /**
+   * Writes the hex form of the specified unsigned 32-bit integer into the
+   * first 8 bytes of the specified character buffer.  The string termination
+   * character '\0' is written to the ninth byte of the output buffer.
+   *
+   * @param number The 32-bit integer.
+   * @param buf    The character buffer that must have a minimum of 9 bytes.
+   */
+  template<size_t n> void toHex(uint32_t number, char (&buf)[n])
+    throw(castor::exception::InvalidArgument) {
+    toHex(number, buf, n);
+  }
+
   /**
    * Splits the specified string into a vector of strings using the specified
    * separator.
