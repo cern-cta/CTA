@@ -725,6 +725,12 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
   throw(castor::exception::Exception) {
 
   {
+    // 32-bits = 1 x '0' + 1 x 'x' + 8 x hex + 1 x '/0' = 11
+    char checksumHex[11];
+    checksumHex[0] = '0';
+    checksumHex[1] = 'x';
+    utils::toHex(checksum, &checksumHex[2], 9);
+
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId"           , volReqId           ),
       castor::dlf::Param("gatewayHost"        , gatewayHost        ),
@@ -739,7 +745,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
       castor::dlf::Param("blockId[3]"         , blockId[3]         ),
       castor::dlf::Param("positionCommandCode", positionCommandCode),
       castor::dlf::Param("checksumAlgorithm"  , checksumAlgorithm  ),
-      castor::dlf::Param("checksum"           , checksum           ),
+      castor::dlf::Param("checksum"           , checksumHex        ),
       castor::dlf::Param("fileSize"           , fileSize           ),
       castor::dlf::Param("compressedFileSize" , compressedFileSize )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
@@ -879,6 +885,12 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
   } // switch(reply->type())
 
   {
+    // 32-bits = 1 x '0' + 1 x 'x' + 8 x hex + 1 x '/0' = 11
+    char checksumHex[11];
+    checksumHex[0] = '0';
+    checksumHex[1] = 'x';
+    utils::toHex(checksum, &checksumHex[2], 9);
+
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId"           , volReqId           ),
       castor::dlf::Param("gatewayHost"        , gatewayHost        ),
@@ -893,7 +905,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
       castor::dlf::Param("blockId[3]"         , blockId[3]         ),
       castor::dlf::Param("positionCommandCode", positionCommandCode),
       castor::dlf::Param("checksumAlgorithm"  , checksumAlgorithm  ),
-      castor::dlf::Param("checksum"           , checksum           ),
+      castor::dlf::Param("checksum"           , checksumHex        ),
       castor::dlf::Param("fileSize"           , fileSize           ),
       castor::dlf::Param("compressedFileSize" , compressedFileSize )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
@@ -916,6 +928,12 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
   throw(castor::exception::Exception) {
 
   {
+    // 32-bits = 1 x '0' + 1 x 'x' + 8 x hex + 1 x '/0' = 11
+    char checksumHex[11];
+    checksumHex[0] = '0';
+    checksumHex[1] = 'x';
+    utils::toHex(checksum, &checksumHex[2], 9);
+
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId"           , volReqId           ),
       castor::dlf::Param("gatewayHost"        , gatewayHost        ),
@@ -926,7 +944,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
       castor::dlf::Param("tapeFileSeq"        , tapeFileSeq        ),
       castor::dlf::Param("positionCommandCode", positionCommandCode),
       castor::dlf::Param("checksumAlgorithm"  , checksumAlgorithm  ),
-      castor::dlf::Param("checksum"           , checksum           ),
+      castor::dlf::Param("checksum"           , checksumHex        ),
       castor::dlf::Param("filePath"           , filePath           )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_NOTIFY_GATEWAY_FILE_RECALLED, params);
@@ -1060,6 +1078,12 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
   } // switch(reply->type())
 
   {
+    // 32-bits = 1 x '0' + 1 x 'x' + 8 x hex + 1 x '/0' = 11
+    char checksumHex[11];
+    checksumHex[0] = '0';
+    checksumHex[1] = 'x';
+    utils::toHex(checksum, &checksumHex[2], 9);
+
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId"           , volReqId           ),
       castor::dlf::Param("gatewayHost"        , gatewayHost        ),
@@ -1070,7 +1094,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
       castor::dlf::Param("tapeFileSeq"        , tapeFileSeq        ),
       castor::dlf::Param("positionCommandCode", positionCommandCode),
       castor::dlf::Param("checksumAlgorithm"  , checksumAlgorithm  ),
-      castor::dlf::Param("checksum"           , checksum           )};
+      castor::dlf::Param("checksum"           , checksumHex        )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_NOTIFIED_GATEWAY_FILE_RECALLED, params);
   }
