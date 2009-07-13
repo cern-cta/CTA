@@ -102,6 +102,10 @@ int testIndexedContainer() {
   os << "Illegally removing the free element with index 1" << std::endl;
   try {
     c.remove(1);
+
+    os << "Failed to detect the entry is already free" << std::endl;
+    os << std::endl;
+
     return(-1); // Test failed
   } catch(castor::exception::NoEntry &ex) {
     os << std::endl;
@@ -116,6 +120,48 @@ int testIndexedContainer() {
   return 0;
 }
 
+
+int testToHex() {
+  std::ostream &os = std::cout;
+
+  os << std::endl;
+  castor::tape::utils::writeBanner(os, __FUNCTION__);
+
+  uint32_t   number          = 3735943886;
+  const char *expectedResult = "DEADFACE";
+
+  try {
+    char buf[8];
+    castor::tape::utils::toHex(number, buf);
+
+    os << std::endl;
+    os << "Failed to detect a buffer that is too small" << std::endl;
+
+    return(-1); // Test failed
+  } catch(castor::exception::InvalidArgument &ex) {
+    os << std::endl;
+    os << "Correctly caught castor::exception::InvalidArgument: "
+          "ex.code()=" << ex.code()
+       << " ex.getMessage().str()=\"" << ex.getMessage().str() << "\"";
+    os << std::endl;
+  }
+
+  char buf[9];
+  castor::tape::utils::toHex(number, buf);
+
+  os << std::endl;
+  os << "toHex(" << number << ", buf)=" << buf << std::endl;
+
+  if(strcmp(expectedResult, buf) != 0) {
+    os << std::endl;
+    os << "Failed: toHex did not give the expected result: " << expectedResult
+       << std::endl;
+    return(-1); // Test failed
+  }
+
+  return 0;
+}
+
 int main(int argc, char **argv) {
   unsigned int nbTests    = 0;
   unsigned int nbFailed   = 0;
@@ -124,6 +170,13 @@ int main(int argc, char **argv) {
 
 
   testResult = testIndexedContainer();
+  nbTests++;
+  if(testResult != 0) {
+    endResult = testResult;
+    nbFailed++;
+  }
+
+  testResult = testToHex();
   nbTests++;
   if(testResult != 0) {
     endResult = testResult;
