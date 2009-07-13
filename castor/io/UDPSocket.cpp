@@ -74,7 +74,7 @@ castor::io::UDPSocket::UDPSocket(const unsigned short port,
     int rc = ::bind(m_socket, (struct sockaddr *)&m_saddr, sizeof(m_saddr));
     if (0 < rc) {
       castor::exception::Exception ex(errno);
-      ex.getMessage() << "Can't bind socket";
+      ex.getMessage() << "Can't bind socket on port: " << port;
       throw ex;
     }
   }

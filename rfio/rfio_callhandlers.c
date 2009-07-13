@@ -18,7 +18,6 @@
 #include "rfio.h"
 #include "u64subr.h"
 #include "log.h"
-#include "castor/BaseObject.h"
 #include "castor/Constants.h"
 #include "castor/stager/SubRequest.h"
 #include "RemoteJobSvc.h"
@@ -140,7 +139,6 @@ int rfio_handle_firstwrite(void *ctx) {
         && !((internal_context->flags & O_TRUNC) == O_TRUNC)) {   /* Put case */
       struct Cstager_IJobSvc_t **jobSvc;
       struct C_Services_t **dbService;
-      C_BaseObject_initLog("rfio", SVC_STDMSG);
       if (stager_getRemJobAndDbSvc(&jobSvc,&dbService) == 0) {
         char tmpbuf[21];
         int rc;
@@ -180,7 +178,6 @@ int rfio_handle_close(void *ctx,
     struct Cstager_IJobSvc_t **jobSvc;
     struct C_Services_t **dbService;
 
-    C_BaseObject_initLog("rfio", SVC_STDMSG);
     if (stager_getRemJobAndDbSvc(&jobSvc,&dbService) == 0) {
       char tmpbuf[21];
 

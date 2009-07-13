@@ -285,11 +285,7 @@ int main(int argc, char **argv) {
   int         tpMode   = 0;
   int         lifespanType = 1; // Default = unlimited = 1
 
-
   parseCommandLine(argc, argv, vid, tpMode, lifespanType);
-
-  // Initializing the log
-  castor::BaseObject::initLog(argv[0], castor::SVC_NOMSG);
 
   // Retrieve the VDQM DB service
   castor::vdqm::IVdqmSvc *const vdqmSvc = retrieveVdqmSvc();

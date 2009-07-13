@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: listPriority.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/09/16 13:38:10 $ $Author: itglp $
+ * @(#)$RCSfile: listPriority.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2009/07/13 06:22:09 $ $Author: waldron $
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -41,14 +41,14 @@ static struct Coptions longopts[] = {
   { "user",     REQUIRED_ARGUMENT, NULL, 'U' },
   { "gid",      REQUIRED_ARGUMENT, NULL, 'g'},
   { "group",    REQUIRED_ARGUMENT, NULL, 'G'},
-  { "priority", REQUIRED_ARGUMENT, NULL, 'p'}, 
+  { "priority", REQUIRED_ARGUMENT, NULL, 'p'},
   { NULL,       0,                 NULL,  0 }
 };
 
 void usage(char *cmd) {
   std::cout << "Usage : \n"
             << cmd << " [-h] [-u/--uid uid] [-g/--gid gid] [-p/--priority priority]\n"
-            << cmd << " [-h] [-U/--user user] [-G/--group gid] [-p/--priority priority]\n" 
+            << cmd << " [-h] [-U/--user user] [-G/--group gid] [-p/--priority priority]\n"
             << std::endl;
 }
 
@@ -58,9 +58,9 @@ int main(int argc, char *argv[]) {
   int muser = -1;
   int mgroup = -1;
   int mpriority = -1;
-    
+
   char* progName = argv[0];
-  
+
   // Deal with options
   Coptind = 1;
   Copterr = 1;
@@ -106,20 +106,16 @@ int main(int argc, char *argv[]) {
       return 0;
     }
   }
-  
+
   if ((muid>=0 && muser>=0) || (mgid>=0 && mgroup>=0)){
-    std::cerr << " Invalid syntax"<<std::endl; 
+    std::cerr << " Invalid syntax"<<std::endl;
     usage(progName);
     return 0;
   }
 
   muid=muid>0?muid:muser;
-  mgid=mgid>0?mgid:mgroup; 
+  mgid=mgid>0?mgid:mgroup;
   try {
-    
-    // Initializing the log
-    castor::BaseObject::initLog("NewStagerLog", castor::SVC_NOMSG);
-    
     // retrieve a Services object
     castor::Services* svcs = castor::BaseObject::services();
     // retrieve the DB service
@@ -132,18 +128,18 @@ int main(int argc, char *argv[]) {
 
     castor::stager::IStagerSvc* stgsvc =
       dynamic_cast<castor::stager::IStagerSvc*>(isvc);
-    
+
     // list the priorities
-    std::vector<castor::stager::PriorityMap*> listPriority = 
+    std::vector<castor::stager::PriorityMap*> listPriority =
       stgsvc->selectPriority(muid, mgid, mpriority);
-    
+
     // print out the returned results
     std::vector<castor::stager::PriorityMap*>::iterator line = listPriority.begin();
     if (listPriority.empty()){
       fprintf(stdout, "No priorities found\n");
     } else {
       fprintf(stdout, "%-8s %-8s %-8s\n", "Uid", "Gid", "Priority");
-      while (line != listPriority.end()){ 
+      while (line != listPriority.end()){
         struct passwd *pass= getpwuid((*line)->euid());
         if (pass ==0){
 	  line++;
@@ -156,12 +152,12 @@ int main(int argc, char *argv[]) {
 	  continue;
 	}
 
-	fprintf(stdout, "%-8s %-8s %-8llu\n", 
+	fprintf(stdout, "%-8s %-8s %-8llu\n",
 		pass->pw_name,
 		grp->gr_name,
 		(*line)->priority());
 	line++;
-      } 
+      }
     }
 
     // cleanup
@@ -170,7 +166,7 @@ int main(int argc, char *argv[]) {
   } catch (castor::exception::Exception e) {
     std::cerr << "Caught exception :\n"
               << e.getMessage().str() << std::endl;
-    exit(1);  
+    exit(1);
   }
 }
 

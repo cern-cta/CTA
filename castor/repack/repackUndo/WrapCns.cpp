@@ -74,9 +74,6 @@ static PyObject* wrap_cns_getsegattrs(PyObject* self, PyObject* args) {
 
 static PyObject* wrap_cns_setsegattrs(PyObject* self, PyObject* args) {
 
-  castor::BaseObject::initLog("Repack", castor::SVC_STDMSG);
-
-
   // Parse Input
 
   int nbseg=0;

@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.40 2008/10/24 06:54:38 sponcec3 Exp $
+ * $Id: stager_client_api_query.cpp,v 1.41 2009/07/13 06:22:08 waldron Exp $
  */
 
 /*
@@ -47,7 +47,7 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
 				      struct stage_filequery_resp **responses,
 				      int *nbresps,
 				      struct stage_options* opts){
-  
+
   const char *func = "stage_filequery";
   int ret;
   if (requests == NULL
@@ -60,39 +60,37 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
   }
 
   try {
-    castor::BaseObject::initLog("", castor::SVC_NOMSG);
-    
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
     castor::stager::StageFileQueryRequest req;
-    
+
     ret=setDefaultOption(opts);
     client.setOptions(opts);
     client.setAuthorizationId();
     if (ret==-1){free(opts);}
-    
+
     // Preparing the requests
     for(int i=0; i<nbreqs; i++) {
-      
+
       if (!(requests[i].param)) {
         serrno = EINVAL;
         stager_errmsg(func, "Parameter in request %d is NULL", i);
         return -1;
       }
-      
+
       castor::stager::QueryParameter *par = new castor::stager::QueryParameter();
       par->setQueryType((castor::stager::RequestQueryType)(requests[i].type));
       par->setValue((const char *)requests[i].param);
       par->setQuery(&req);
       req.addParameters(par);
-      
-      stage_trace(3, "%s type=%d param=%s", 
+
+      stage_trace(3, "%s type=%d param=%s",
 		  func, requests[i].type, requests[i].param);
     }
 
     // Using the VectorResponseHandler which stores everything in
     // a vector. BEWARE, the responses must be de-allocated afterwards
-    std::vector<castor::rh::Response*>respvec;    
+    std::vector<castor::rh::Response*>respvec;
     castor::client::VectorResponseHandler rh(&respvec);
     client.sendRequest(&req, &rh);
 
@@ -105,11 +103,11 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
       stager_errmsg(func, "No responses received");
       return -1;
     }
-    
+
 
     // Creating the array of file responses
     // Same size as requests as we only do files for the moment
-    *responses = (struct stage_filequery_resp *) 
+    *responses = (struct stage_filequery_resp *)
       malloc(sizeof(struct stage_filequery_resp) * nbResponses);
 
     if (*responses == NULL) {
@@ -118,15 +116,15 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
       return -1;
     }
     *nbresps = nbResponses;
-    
+
     for (int i=0; i<(int)respvec.size(); i++) {
 
       // Casting the response into a FileResponse
-      castor::rh::FileQryResponse* fr = 
+      castor::rh::FileQryResponse* fr =
         dynamic_cast<castor::rh::FileQryResponse*>(respvec[i]);
       if (0 == fr) {
         // try a simple Response
-        castor::rh::Response* res = 
+        castor::rh::Response* res =
           dynamic_cast<castor::rh::Response*>(respvec[i]);
         if (0 == res) {
           // Not even a Response !
@@ -156,7 +154,7 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
       // The responses should be deallocated by the API !
       delete respvec[i];
     } // for
-    
+
   } catch (castor::exception::Exception e) {
     serrno = e.code();
     stager_errmsg(func, (e.getMessage().str().c_str()));
@@ -219,10 +217,8 @@ EXTERN_C int DLL_DECL stage_diskpoolquery
 
   int ret;
   const char *func = "stage_diskpoolquery";
- 
+
   try {
-    castor::BaseObject::initLog("", castor::SVC_NOMSG);
-    
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
     castor::query::DiskPoolQuery req;
@@ -236,7 +232,7 @@ EXTERN_C int DLL_DECL stage_diskpoolquery
 
     // Using the VectorResponseHandler which stores everything in
     // A vector. BEWARE, the responses must be de-allocated afterwards
-    std::vector<castor::rh::Response *>respvec;    
+    std::vector<castor::rh::Response *>respvec;
     castor::client::VectorResponseHandler rh(&respvec);
     client.sendRequest(&req, &rh);
 
@@ -260,7 +256,7 @@ EXTERN_C int DLL_DECL stage_diskpoolquery
     }
 
     // Casting the response into a DiskPoolQueryResponse
-    castor::query::DiskPoolQueryResponse* fr = 
+    castor::query::DiskPoolQueryResponse* fr =
       dynamic_cast<castor::query::DiskPoolQueryResponse*>(respvec[0]);
     if (0 == fr) {
       castor::exception::Exception e(SEINTERNAL);
@@ -274,7 +270,7 @@ EXTERN_C int DLL_DECL stage_diskpoolquery
 
     // Cleanup memory
     delete respvec[0];
-    
+
   } catch (castor::exception::Exception e) {
     serrno = e.code();
     stager_errmsg(func, (e.getMessage().str().c_str()));
@@ -295,10 +291,8 @@ EXTERN_C int DLL_DECL stage_diskpoolsquery
 
   int ret;
   const char *func = "stage_diskpoolsquery";
- 
+
   try {
-    castor::BaseObject::initLog("", castor::SVC_NOMSG);
-    
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
     castor::query::DiskPoolQuery req;
@@ -306,12 +300,12 @@ EXTERN_C int DLL_DECL stage_diskpoolsquery
     // Dealing with options
     ret = setDefaultOption(opts);
     client.setOptions(opts);
-    client.setAuthorizationId(); 
+    client.setAuthorizationId();
     if (-1 == ret) { free(opts); }
 
     // Using the VectorResponseHandler which stores everything in
     // A vector. BEWARE, the responses must be de-allocated afterwards
-    std::vector<castor::rh::Response *>respvec;    
+    std::vector<castor::rh::Response *>respvec;
     castor::client::VectorResponseHandler rh(&respvec);
     client.sendRequest(&req, &rh);
 
@@ -351,7 +345,7 @@ EXTERN_C int DLL_DECL stage_diskpoolsquery
       }
 
       // Casting the response into a DiskPoolQueryResponse
-      castor::query::DiskPoolQueryResponse* fr = 
+      castor::query::DiskPoolQueryResponse* fr =
         dynamic_cast<castor::query::DiskPoolQueryResponse*>(respvec[i]);
       if (0 == fr) {
         // cleanup previous responses

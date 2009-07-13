@@ -17,16 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DynamicThreadPool.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2009/06/03 09:56:08 $ $Author: sponcec3 $
+ * @(#)$RCSfile: DynamicThreadPool.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2009/07/13 06:22:07 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
 
 // Include files
 #include "castor/server/DynamicThreadPool.hpp"
-#include "castor/logstream.h"
-
-#include "unistd.h"
+#include <unistd.h>
 
 //-----------------------------------------------------------------------------
 // Constructor
@@ -116,14 +114,19 @@ void castor::server::DynamicThreadPool::run() throw (castor::exception::Exceptio
       // Throw exception
       castor::exception::Exception e(errno);
       e.getMessage() << "Failed to create " << m_initThreads << " initial "
-      << "threads in the pool";
+                     << "threads in the pool";
       throw e;
     }
   }
 
   // Threads have been created
-  clog() << DEBUG << "Dynamic thread pool '" << m_poolName << "' created with "
-         << m_initThreads << " of " << m_maxThreads << " threads" << std::endl;
+  castor::dlf::Param params[] =
+    {castor::dlf::Param("ThreadPool", m_poolName),
+     castor::dlf::Param("Type", "DynamicThreadPool"),
+     castor::dlf::Param("InitThreads", m_initThreads),
+     castor::dlf::Param("MaxThreads", m_maxThreads)};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                          DLF_BASE_FRAMEWORK + 3, 4, params);
 
   // Initialize the underlying user thread. We do it here once for the whole thread
   // pool instead of once per thread as the threads are created in a suspended
@@ -198,11 +201,19 @@ void* castor::server::DynamicThreadPool::_consumer(void *arg) {
         pool->m_thread->run(args);
       }
     } catch(castor::exception::Exception any) {
-      pool->clog() << ERROR << "Uncaught exception in a thread from pool "
-                   << pool->m_poolName << " : " << any.getMessage().str() << std::endl;
+      // "Uncaught exception in a thread from pool"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("ThreadPool", pool->m_poolName),
+         castor::dlf::Param("Error", sstrerror(any.code())),
+         castor::dlf::Param("Message", any.getMessage().str())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                              DLF_BASE_FRAMEWORK + 10, 3, params);
     } catch(...) {
-      pool->clog() << ERROR << "Uncaught GENERAL exception in a thread from pool "
-                   << pool->m_poolName << std::endl;
+      // "Uncaught GENERAL exception in a thread from pool"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("ThreadPool", pool->m_poolName)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                              DLF_BASE_FRAMEWORK + 11, 1, params);
     }
     
     // Destroy any threads over the initial thread limit if the number of tasks
@@ -240,7 +251,7 @@ void* castor::server::DynamicThreadPool::_consumer(void *arg) {
 // Add Task
 //-----------------------------------------------------------------------------
 void castor::server::DynamicThreadPool::addTask(void *data, bool wait)
-throw(castor::exception::Exception) {
+  throw(castor::exception::Exception) {
   
   // Variables
   pthread_t t;

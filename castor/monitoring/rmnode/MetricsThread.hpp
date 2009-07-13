@@ -29,6 +29,7 @@
 #define RMNODE_METRICSTHREAD_HPP 1
 
 #include "castor/server/IThread.hpp"
+#include <map>
 
 namespace castor {
 

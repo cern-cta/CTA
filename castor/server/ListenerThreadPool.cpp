@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2009/03/26 14:26:20 $ $Author: itglp $
+ * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2009/07/13 06:22:07 $ $Author: waldron $
  *
  * Abstract class defining a listener thread pool
  *
@@ -30,17 +30,16 @@
 #include "castor/server/ListenerThreadPool.hpp"
 #include "castor/exception/Internal.hpp"
 #include "Cthread_api.h"
-#include "castor/logstream.h"
 #include <iomanip>
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
 castor::server::ListenerThreadPool::ListenerThreadPool(const std::string poolName,
-                                               castor::server::IThread* thread,
-                                               unsigned int listenPort,
-                                               bool listenerOnOwnThread,
-                                               unsigned int nbThreads)
+                                                       castor::server::IThread* thread,
+                                                       unsigned int listenPort,
+                                                       bool listenerOnOwnThread,
+                                                       unsigned int nbThreads)
   throw(castor::exception::Exception) :
   DynamicThreadPool(poolName, thread, nbThreads, nbThreads),
   m_sock(0), m_port(listenPort), m_spawnListener(listenerOnOwnThread) {}
@@ -49,13 +48,13 @@ castor::server::ListenerThreadPool::ListenerThreadPool(const std::string poolNam
 // Constructor
 //------------------------------------------------------------------------------
 castor::server::ListenerThreadPool::ListenerThreadPool(const std::string poolName,
-                                               castor::server::IThread* thread,
-                                               unsigned int listenPort,
-                                               bool listenerOnOwnThread,
-                                               unsigned int initThreads,
-                                               unsigned int maxThreads,
-                                               unsigned int threshold,
-                                               unsigned int maxTasks)
+                                                       castor::server::IThread* thread,
+                                                       unsigned int listenPort,
+                                                       bool listenerOnOwnThread,
+                                                       unsigned int initThreads,
+                                                       unsigned int maxThreads,
+                                                       unsigned int threshold,
+                                                       unsigned int maxTasks)
   throw(castor::exception::Exception) :
   DynamicThreadPool(poolName, thread, initThreads, maxThreads, threshold, maxTasks),
   m_sock(0), m_port(listenPort), m_spawnListener(listenerOnOwnThread) {}
@@ -64,17 +63,17 @@ castor::server::ListenerThreadPool::ListenerThreadPool(const std::string poolNam
 // Destructor
 //------------------------------------------------------------------------------
 castor::server::ListenerThreadPool::~ListenerThreadPool() throw() {}
-  
+
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-void castor::server::ListenerThreadPool::run() throw (castor::exception::Exception) {  
+void castor::server::ListenerThreadPool::run() throw (castor::exception::Exception) {
   // bind the socket (this can fail, we just propagate the exception)
   bind();
 
   // create the thread pool
   DynamicThreadPool::run();
-  
+
   // start the listening loop
   if(m_spawnListener || m_nbThreads == 0) {
     Cthread_create_detached((void *(*)(void *))&_listener, this);
@@ -91,10 +90,10 @@ bool castor::server::ListenerThreadPool::shutdown(bool wait) throw() {
   if(m_sock != 0) {
     try {
       m_sock->close();
-    } 
+    }
     catch(castor::exception::Exception ignored) {}
   }
-  
+
   return castor::server::DynamicThreadPool::shutdown(wait);
 }
 
@@ -117,26 +116,35 @@ void castor::server::ListenerThreadPool::threadAssign(void *param) {
     try {
       m_thread->run(param);
     } catch(...) {
-      clog() << ERROR << "Uncaught GENERAL exception in a thread from pool "
-             << m_poolName << std::endl;
+      // "Uncaught GENERAL exception in a thread from pool"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("ThreadPool", m_poolName)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                              DLF_BASE_FRAMEWORK + 11, 1, params);
     }
     return;
   }
-  
+
   // Otherwise, dispatch the task
   try {
     addTask(param, false);
   } catch(castor::exception::Exception &e) {
     if(e.code() == EAGAIN) {
-      // the thread pool is exhausted
-      clog() << ERROR << "No idle thread in pool " << m_poolName 
-             << " to dispatch this request to at the moment" << std::endl;
+      // "No idle thread in pool to process request"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("ThreadPool", m_poolName)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                              DLF_BASE_FRAMEWORK + 18, 1, params);
       terminate(param);
     }
     else {
-      // just log any other exception
-      clog() << ERROR << "Error while dispatching to a thread in pool " 
-      << m_poolName << " : " << e.getMessage().str(); 
+      // "Error while dispatching to a thread"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("ThreadPool", m_poolName),
+         castor::dlf::Param("Error", sstrerror(e.code())),
+         castor::dlf::Param("Message", e.getMessage().str())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                              DLF_BASE_FRAMEWORK + 19, 3, params);
     }
   }
 }

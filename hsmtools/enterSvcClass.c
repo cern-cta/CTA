@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.19 $ $Release$ $Date: 2008/10/17 13:13:59 $ $Author: waldron $
+ * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.20 $ $Release$ $Date: 2009/07/13 06:22:09 $ $Author: waldron $
  *
  *
  *
@@ -41,7 +41,6 @@
 #include <castor/stager/IStagerSvc.h>
 #include <castor/Services.h>
 #include <castor/BaseAddress.h>
-#include <castor/BaseObject.h>
 #include <castor/stager/TapePool.h>
 #include <castor/stager/DiskPool.h>
 #include <castor/IAddress.h>
@@ -185,10 +184,6 @@ int main(int argc, char *argv[])
   Coptind = 1;
   Copterr = 1;
   cmd = argv[0];
-
-  /* Initializing the C++ log */
-  /* Necessary at start of program and after any fork */
-  C_BaseObject_initLog("NewStagerLog", SVC_NOMSG);
 
   rc = C_Services_create(&svcs);
   if ( rc == -1 ) {

@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_rm.cpp,v 1.14 2008/03/25 14:35:21 itglp Exp $
+ * $Id: stager_client_api_rm.cpp,v 1.15 2009/07/13 06:22:08 waldron Exp $
  */
 
 /*
@@ -32,7 +32,7 @@
 #include "castor/rh/Response.hpp"
 #include "castor/rh/FileResponse.hpp"
 
-// To be removed when getting rid of 
+// To be removed when getting rid of
 // request printing
 #include "castor/ObjectSet.hpp"
 
@@ -58,22 +58,18 @@ static int _processFileRequest(const char *func,
     return -1;
   }
 
-
   try {
-    castor::BaseObject::initLog("", castor::SVC_NOMSG);
-    
-	
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
     ret=setDefaultOption(opts);
     client.setOptions(opts);
-    client.setAuthorizationId(); 
+    client.setAuthorizationId();
     if(ret==-1){free(opts);}
 
     // Preparing the requests
     for(int i=0; i<nbreqs; i++) {
       castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
-      
+
       if (!(requests[i].filename)) {
         serrno = EINVAL;
         stager_errmsg(func, "filename in request %d is NULL", i);
@@ -89,14 +85,14 @@ static int _processFileRequest(const char *func,
 
     // Using the VectorResponseHandler which stores everything in
     // A vector. BEWARE, the responses must be de-allocated afterwards
-    std::vector<castor::rh::Response *>respvec;    
+    std::vector<castor::rh::Response *>respvec;
     castor::client::VectorResponseHandler rh(&respvec);
     std::string reqid = client.sendRequest(&req, &rh);
 
     if (requestId != NULL) {
       *requestId = strdup(reqid.c_str());
     }
-    
+
 
     // Parsing the responses which have been stored in the vector
     int nbResponses =  respvec.size();
@@ -107,11 +103,11 @@ static int _processFileRequest(const char *func,
       stager_errmsg(func, "No responses received");
       return -1;
     }
-    
+
 
     // Creating the array of file responses
     // Same size as requests as we only do files for the moment
-    *responses = (struct stage_fileresp *) malloc(sizeof(struct stage_fileresp) 
+    *responses = (struct stage_fileresp *) malloc(sizeof(struct stage_fileresp)
                                                   * nbResponses);
     if (*responses == NULL) {
       serrno = ENOMEM;
@@ -119,12 +115,12 @@ static int _processFileRequest(const char *func,
       return -1;
     }
     *nbresps = nbResponses;
-    
+
 
     for (int i=0; i<(int)respvec.size(); i++) {
 
       // Casting the response into a FileResponse !
-      castor::rh::FileResponse* fr = 
+      castor::rh::FileResponse* fr =
         dynamic_cast<castor::rh::FileResponse*>(respvec[i]);
       if (0 == fr) {
         castor::exception::Exception e(SEINTERNAL);
@@ -143,13 +139,13 @@ static int _processFileRequest(const char *func,
       // The responses should be deallocated by the API !
       delete respvec[i];
     } // for
-    
+
   } catch (castor::exception::Exception e) {
     serrno = e.code();
     stager_errmsg(func, (e.getMessage().str().c_str()));
     return -1;
   }
-  
+
   return 0;
 }
 
@@ -183,7 +179,7 @@ EXTERN_C int DLL_DECL stage_rm(struct stage_filereq *requests,
 			     nbresps,
 			     requestId,
 			     opts);
-  
+
 }
 
 
@@ -210,7 +206,7 @@ EXTERN_C int DLL_DECL stage_releaseFiles(struct stage_filereq *requests,
 			     nbresps,
 			     requestId,
 			     opts);
-  
+
 }
 
 
@@ -233,27 +229,24 @@ EXTERN_C int DLL_DECL stage_abortRequest(char *requestId,
     return -1;
   }
 
-  
   try {
-    castor::BaseObject::initLog("", castor::SVC_NOMSG);
-    
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
     castor::stager::StageAbortRequest req;
 
     ret=setDefaultOption(opts);
-    client.setOptions(opts);   
-    client.setAuthorizationId(); 
+    client.setOptions(opts);
+    client.setAuthorizationId();
     if(ret==-1){free(opts);}
 
     // Using the VectorResponseHandler which stores everything in
     // A vector. BEWARE, the responses must be de-allocated afterwards
-    std::vector<castor::rh::Response *>respvec;    
+    std::vector<castor::rh::Response *>respvec;
     castor::client::VectorResponseHandler rh(&respvec);
     std::string reqid = client.sendRequest(&req, &rh);
 
     int nbResponses =  respvec.size();
-    
+
     if (nbResponses !=  1) {
       // We got not replies, this is not normal !
       serrno = SEINTERNAL;
@@ -262,16 +255,16 @@ EXTERN_C int DLL_DECL stage_abortRequest(char *requestId,
     }
 
     // Casting the response into a FileResponse !
-    castor::rh::FileResponse* fr = 
+    castor::rh::FileResponse* fr =
       dynamic_cast<castor::rh::FileResponse*>(respvec[0]);
     if (0 == fr) {
       castor::exception::Exception e(SEINTERNAL);
       e.getMessage() << "Error in dynamic cast, response was NOT a file response";
       throw e;
     }
-    
+
     return fr->status();
-    
+
   } catch (castor::exception::Exception e) {
     serrno = e.code();
     stager_errmsg(func, (e.getMessage().str().c_str()));

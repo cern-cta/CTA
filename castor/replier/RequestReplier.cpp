@@ -19,8 +19,6 @@
  *
  * @(#)RequestReplier.cpp,v 1.23 $Release$ 2005/10/11 14:14:02 bcouturi
  *
- *
- *
  * @author Benjamin Couturier
  *****************************************************************************/
 
@@ -33,7 +31,6 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/Constants.hpp"
-#include "castor/logstream.h"
 #include "castor/io/biniostream.h"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/Services.hpp"
@@ -90,11 +87,9 @@ castor::replier::RequestReplier *castor::replier::RequestReplier::s_rr = 0;
 castor::replier::RequestReplier *
 castor::replier::RequestReplier::getInstance() throw() {
 
-  const char *func = "rr::getInstance";
   // XXX lock ?
   if (0 == s_rr) {
     s_rr = new castor::replier::RequestReplier();
-    s_rr->clog() << IMPORTANT << SETW func  <<  "Created new request replier" << std::endl;
   }
   return s_rr;
 }
@@ -120,7 +115,11 @@ castor::replier::RequestReplier::RequestReplier() throw() {
   int rc = _pipe(m_commPipe, 512, O_BINARY);
 #endif
   if (-1 == rc) {
-    clog() << ERROR << SETW func  <<  "Could not establish communication pipe !" << std::endl;
+    // "RR: Could not establish communication pipe"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Function", func)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT,
+                            DLF_BASE_STAGERLIB + 8, 1, params);
   }
   m_pipeRead = &m_commPipe[0];
   m_pipeWrite = &m_commPipe[1];
@@ -130,8 +129,9 @@ castor::replier::RequestReplier::RequestReplier() throw() {
 
   // Setting the statistics values
   m_lastStatTime = 0;
-  m_nbQueuedResponses =0;
-  m_nbDequeuedResponses =0;
+  m_nbQueuedResponses = 0;
+  m_nbDequeuedResponses = 0;
+
   // Starting the ReplierThread
   start();
 }
@@ -139,14 +139,21 @@ castor::replier::RequestReplier::RequestReplier() throw() {
 //-----------------------------------------------------------------------------
 // Routine that starts the replier thread processing
 //-----------------------------------------------------------------------------
-void
-castor::replier::RequestReplier::start() throw() {
-  const char *func = "rr::start ";
+void castor::replier::RequestReplier::start() throw() {
+  const char *func = "rr::start";
   if ((m_threadId = Cthread_create(&(staticReplierThread), this))<0) {
-    clog() << ALERT << SETW func  <<  "Could not create thread !" << std::endl;
+    // "RR: Could not create thread"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Function", func)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT,
+                            DLF_BASE_STAGERLIB + 9, 1, params);
   }
-  clog() << DEBUG << SETW func  <<  "Request Replier thread ID is: " << m_threadId << std::endl;
-
+  // "RR: Request Replier thread started"
+  castor::dlf::Param params[] =
+    {castor::dlf::Param("Function", func),
+     castor::dlf::Param("ThreadID", m_threadId)};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                          DLF_BASE_STAGERLIB + 10, 2, params);
 }
 
 //-----------------------------------------------------------------------------
@@ -155,15 +162,11 @@ castor::replier::RequestReplier::start() throw() {
 void *
 castor::replier::RequestReplier::staticReplierThread(void *arg) throw() {
   if (0 == arg) {
-    // XXX Commented out because clog no longer a static method !
-    //clog() << ERROR << SETW func  <<  "Please specify an argument to staticReplierThread" << std::endl;
     return 0;
   }
 
   castor::replier::RequestReplier *s_rr = static_cast<castor::replier::RequestReplier *>(arg);
   if (0 == s_rr) {
-    // XXX Commented out because clog no longer a static method !
-    // clog() << ERROR << SETW func  <<  "Error in dynamic cast" << std::endl;
     return 0;
   }
 
@@ -187,24 +190,25 @@ castor::replier::RequestReplier::replierThread(void *arg) throw() {
   unsigned int nbPollFd = 1000;
   struct ::pollfd *toPoll = new struct ::pollfd[nbPollFd];
 
-  const char *func = "rr::replierThread ";
+  const char *func = "rr::replierThread";
   m_lastStatTime = time(0);
 
   while (1) {
 
-
     // Display number of messages received/sent statistics !
     time_t curtime = time(0);
     if ((curtime - m_lastStatTime) >= 600) {
-      clog() << DEBUG << SETW func
-             << " STATISTICS During last " << (curtime - m_lastStatTime)
-             << " s New Requests:" << m_nbQueuedResponses
-             << " Processed:" <<  m_nbDequeuedResponses << std::endl;
+      // "RR: Request Replier statistics"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Interval", curtime - m_lastStatTime),
+         castor::dlf::Param("NewRequests", m_nbQueuedResponses),
+         castor::dlf::Param("ProcessedRequests", m_nbDequeuedResponses)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_MONITORING,
+                              DLF_BASE_STAGERLIB + 11, 3, params);
       m_nbQueuedResponses = 0;
       m_nbDequeuedResponses = 0;
       m_lastStatTime = curtime;
     }
-
 
     // Getting the value of the end processing flag
     Cthread_mutex_lock(&m_terminate);
@@ -214,15 +218,20 @@ castor::replier::RequestReplier::replierThread(void *arg) throw() {
     if (terminate) {
       if(m_connections->size() == 0
          && m_clientQueue->size() == 0) {
-        clog() << IMPORTANT << SETW func  <<  "Finished processing - Terminating"
-               << std::endl;
+        // "RR: Finished processing - terminating"
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("Function", func)};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                                DLF_BASE_STAGERLIB + 12, 1, params);
         break;
       } else {
-        clog() << IMPORTANT << SETW func  <<  "Waiting to terminate - ConnQ:"
-               << m_connections->size()
-               << " ClientQ:"
-               << m_clientQueue->size()
-               << std::endl;
+        // "RR: Waiting to terminate connection queue"
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("Function", func),
+           castor::dlf::Param("ConnQSize", m_connections->size()),
+           castor::dlf::Param("ClientQSize", m_clientQueue->size())};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                                DLF_BASE_STAGERLIB + 13, 3, params);
       }
     }
 
@@ -236,20 +245,22 @@ castor::replier::RequestReplier::replierThread(void *arg) throw() {
     // Build new poll array for next call
     int nbfd = buildNewPollArray(toPoll);
 
-    clog() << VERBOSE << SETW func
-           <<  "Polling, number of file descriptors:" << nbfd << std::endl;
+    // "RR: Polling file descriptors"
+    castor::dlf::Param params2[] =
+      {castor::dlf::Param("Function", func),
+       castor::dlf::Param("NbFDs", nbfd)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                            DLF_BASE_STAGERLIB + 14, 2, params2);
 
     pollRc = poll(toPoll, nbfd, pollTimeout * 1000);
-
-    clog() << VERBOSE << SETW func
-           <<  "Poll returned " << pollRc << std::endl;
-
-
     if (pollRc == 0) {
       // POLL TIMED OUT
 
-      clog() << VERBOSE << SETW func
-             << "Poll timed out" << std::endl;
+      // "RR: Poll returned - timed out"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Function", func)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                              DLF_BASE_STAGERLIB + 15, 1, params);
 
       // Poll timed-out grabage collect to free resources
       garbageCollect();
@@ -258,19 +269,24 @@ castor::replier::RequestReplier::replierThread(void *arg) throw() {
 
       // ERROR IN POLL
       if (errno == EINTR) {
-        clog() << VERBOSE << SETW func
-               <<  "Poll interrupted, continuing"
-               << std::endl;
+
+        // "RR: Poll returned - interrupted, continuing"
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("Function", func)};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                              DLF_BASE_STAGERLIB + 16, 1, params);
         continue;
       } else {
-        clog() << WARNING << SETW func
-               <<  "Error in poll:"
-               << strerror(errno)
-               << std::endl;
+
+        // "RR: Error in poll"
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("Function", func),
+           castor::dlf::Param("Error", sstrerror(errno))};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING,
+                              DLF_BASE_STAGERLIB + 17, 2, params);
         continue;
       }
     } // End if pollrc < 0
-
 
     // POLL RETURNED > 0
     processPollArray(toPoll, nbfd);
@@ -285,10 +301,11 @@ castor::replier::RequestReplier::replierThread(void *arg) throw() {
 //-----------------------------------------------------------------------------
 // Create connection socket
 //-----------------------------------------------------------------------------
-void castor::replier::RequestReplier::createNewClientConnection(ClientResponse cr)
+void castor::replier::RequestReplier::createNewClientConnection
+(ClientResponse cr)
   throw() {
 
-  const char *func = "rr::createNewClientConnection ";
+  const char *func = "rr::createNewClientConnection";
 
   // Looking in the hash of client to find if there is one already established
   ClientConnection *r = 0;
@@ -304,8 +321,13 @@ void castor::replier::RequestReplier::createNewClientConnection(ClientResponse c
         && newhost == c.ipAddress()) {
       // Found an existing connection !
       // XXX Should there be status testing ?
-      clog() << VERBOSE << SETW func  <<  "Found existing connection "
-             << (*iter).second->toString() << std::endl;
+
+      // "RR: Found existing connection"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Function", func),
+         castor::dlf::Param("ClientInfo", (*iter).second->toString())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                              DLF_BASE_STAGERLIB + 18, 2, params);
       r = (*iter).second;
       break;
     }
@@ -319,12 +341,24 @@ void castor::replier::RequestReplier::createNewClientConnection(ClientResponse c
       r->createSocket();
       r->connect();
       (*m_connections)[r->fd()] = r;
-      clog() << VERBOSE << SETW func  <<  "ClientConnection " << r << " added fd is "
-             << r->fd() << std::endl;
+
+      // "RR: Added FD to client connection"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Function", func),
+         castor::dlf::Param("ClientInfo", r->toString()),
+         castor::dlf::Param("FD", r->fd())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                              DLF_BASE_STAGERLIB + 19, 3, params);
+
     } catch(castor::exception::Exception e) {
-      clog() << WARNING
-             << "Exeption while Creating new ClientConnection: "
-             << e.getMessage().str() << std::endl;
+
+      // "RR: Exception while Creating new ClientConnection"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Function", func),
+         castor::dlf::Param("Message", e.getMessage().str())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING,
+                              DLF_BASE_STAGERLIB + 20, 2, params);
+
       r->setStatus(DONE_FAILURE);
       r->setErrorMessage("Could not connect:" + e.getMessage().str());
     }
@@ -340,19 +374,22 @@ void castor::replier::RequestReplier::createNewClientConnection(ClientResponse c
 //-----------------------------------------------------------------------------
 void castor::replier::RequestReplier::deleteConnection(int dfd) throw() {
 
-  const char *func = "rr::deleteConnection ";
+  const char *func = "rr::deleteConnection";
 
   ClientConnection *cr = (*m_connections)[dfd];
-  clog() << VERBOSE << SETW func  <<  cr->toString()
-         << " being deleted."
-         << std::endl;
+
+  // "RR: Deleting connection"
+  castor::dlf::Param params[] =
+    {castor::dlf::Param("Function", func),
+     castor::dlf::Param("ClientInfo", cr->toString())};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                          DLF_BASE_STAGERLIB + 21, 2, params);
 
   if (0 != cr) {
     cr->close();
     m_connections->erase(dfd);
     delete cr;
   }
-
 }
 
 
@@ -364,7 +401,7 @@ void castor::replier::RequestReplier::garbageCollect() throw() {
   int t = time(0);
   const int TIMEOUT = 60;
   std::stack<int> toremove;
-  const char *func = "rr::garbageCollect ";
+  const char *func = "rr::garbageCollect";
 
   for(std::map<int, ClientConnection *>::iterator iter = m_connections->begin();
       iter != m_connections->end();
@@ -373,14 +410,25 @@ void castor::replier::RequestReplier::garbageCollect() throw() {
     ClientConnection *cc = (*iter).second;
     castor::rh::Client client = cc->client();
 
-    clog() << VERBOSE << SETW func  <<  cc->toString() << " GC Check  active time: "
-           << (t - cc->lastEventDate())
-           << std::endl;
+    // "RR: GC Check active time"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Function", func),
+       castor::dlf::Param("ClientInfo", cc->toString()),
+       castor::dlf::Param("Active", t - cc->lastEventDate())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                            DLF_BASE_STAGERLIB + 22, 3, params);
 
     if ((*iter).second->getStatus() == DONE_FAILURE) {
       // This connection was a failure
       toremove.push(cc->fd());
-      clog() << DEBUG << SETW func  <<  cc->toString() << " in DONE_FAILURE - to remove" << std::endl;
+
+      // "RR: Cleanup client connection - in DONE_FAILURE - to remove"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Function", func),
+         castor::dlf::Param("ClientInfo", cc->toString())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                              DLF_BASE_STAGERLIB + 23, 2, params);
+
       if (m_connectionStatusCallback) {
         m_connectionStatusCallback(&client, MCS_FAILURE);
       }
@@ -390,8 +438,14 @@ void castor::replier::RequestReplier::garbageCollect() throw() {
 
       // Terminating requestreplier
       toremove.push(cc->fd());
-      clog() << VERBOSE << SETW func  <<  cc->toString()
-             << " terminate:true and no more messages - to remove" << std::endl;
+
+      // "RR: Cleanup client connection - terminate is true and no more
+      //  messages - to remove"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Function", func),
+         castor::dlf::Param("ClientInfo", cc->toString())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                              DLF_BASE_STAGERLIB + 24, 2, params);
 
       if (m_connectionStatusCallback) {
         m_connectionStatusCallback(&client, MCS_SUCCESS);
@@ -401,9 +455,14 @@ void castor::replier::RequestReplier::garbageCollect() throw() {
 
       // Terminating requestreplier
       toremove.push(cc->fd());
-      clog() << WARNING << SETW func  <<  cc->toString()
-             << " inactive for " << (t - cc->lastEventDate()) << " s >" << TIMEOUT
-             << std::endl;
+
+      // "RR: Cleanup client connection - timeout"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Function", func),
+         castor::dlf::Param("ClientInfo", cc->toString()),
+         castor::dlf::Param("InActive", t - cc->lastEventDate())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                              DLF_BASE_STAGERLIB + 25, 3, params);
 
       if (m_connectionStatusCallback) {
         m_connectionStatusCallback(&client, MCS_TIMEOUT);
@@ -426,8 +485,6 @@ int
 castor::replier::RequestReplier::buildNewPollArray(struct ::pollfd pl[])
   throw() {
 
-  const char *func = "rr::buildNewPollArray ";
-
   // BEWARE: Keep entry 0 identical as this the pollfd for the messaging pipe
   pl[0].fd = *m_pipeRead;
   pl[0].events = POLLIN;
@@ -449,22 +506,7 @@ castor::replier::RequestReplier::buildNewPollArray(struct ::pollfd pl[])
       pl[i].revents = 0;
       i++;
     }
-
-    //     if (cc->getStatus() == SENT) {
-    //       clog() << VERBOSE << SETW func  <<  "Listening to fd: "
-    //              << (*iter).first << std::endl;
-    //       pl[i].fd = (*iter).first;
-    //       pl[i].events = POLLIN|POLLHUP|POLLERR;
-    //       pl[i].revents = 0;
-    //       i++;
-    //     }
-
   }
-
-  clog() << VERBOSE << SETW func  <<  "There are " << (i-1)
-         << " client(s) to reply to ! (among "
-         << m_connections->size() << " connections)"
-         << std::endl;
 
   // i has been increased by the ++ but that's ok as we have to add
   return i;
@@ -477,42 +519,66 @@ void
 castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd)
   throw() {
 
-  const char *func = "rr::processPollArray ";
+  const char *func = "rr::processPollArray";
 
-  clog() << VERBOSE << SETW func  <<  "Processing poll Array. (New requests waiting?: "
-         << pl[0].revents << ")" << std::endl;
+  // "RR: Processing poll Array"
+  castor::dlf::Param params[] =
+    {castor::dlf::Param("Function", func),
+     castor::dlf::Param("NewRequestsWaiting", pl[0].revents)};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                              DLF_BASE_STAGERLIB + 26, 2, params);
 
   if (pl[0].revents != 0) {
     readFromClientQueue();
   }
 
-  for(unsigned int i=1; i < (unsigned int)nbfd; i++) {
+  for(unsigned int i = 1; i < (unsigned int)nbfd; i++) {
     if (pl[i].revents != 0) {
       // Fetching the corresponding ClientConnection
       ClientConnection *cr = (*m_connections)[(pl[i].fd)];
-      if (0==cr) {
-        clog() << WARNING
-               << "Could not look up Connection for fd : "
-               << pl[i].fd << " (index:" << i << ")" << std::endl;
+      if (0 == cr) {
+        // "RR: Could not look up Connection for FD"
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("Function", func),
+           castor::dlf::Param("FD", pl[i].fd),
+           castor::dlf::Param("Index", i)};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING,
+                              DLF_BASE_STAGERLIB + 27, 3, params);
         continue;
       }
 
-      clog() << VERBOSE << SETW func  <<  cr->toString()
-             << " fd active : " << pl[i].fd
-             << " Events:" << pl[i].revents << "("
-             <<  pollStr(pl[i].revents)  << ")"
-             << std::endl;
+      // "RR: Processing poll Array"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Function", func),
+         castor::dlf::Param("ClientInfo", cr->toString()),
+         castor::dlf::Param("FD", pl[i].fd),
+         castor::dlf::Param("Events", pollStr(pl[i].revents))};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                              DLF_BASE_STAGERLIB + 26, 4, params);
 
       if (pl[i].revents & POLLHUP) {
-        clog() << WARNING << SETW func  <<  cr->toString()
-               << " Connection dropped " << pl[i].fd << std::endl;
+
+        // "RR: Connection dropped"
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("Function", func),
+           castor::dlf::Param("ClientInfo", cr->toString()),
+           castor::dlf::Param("FD", pl[i].fd)};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING,
+                                DLF_BASE_STAGERLIB + 28, 3, params);
+
         cr->setStatus(DONE_FAILURE);
         cr->setErrorMessage("Peer dropped the connection!");
       }
 
       if (pl[i].revents & POLLERR) {
-        clog() << WARNING << SETW func  <<  cr->toString()
-               << " POLLERR received " << pl[i].fd << std::endl;
+
+        // "RR: POLLERR received"
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("Function", func),
+           castor::dlf::Param("ClientInfo", cr->toString()),
+           castor::dlf::Param("FD", pl[i].fd)};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING,
+                                DLF_BASE_STAGERLIB + 29, 3, params);
         cr->setStatus(DONE_FAILURE);
         cr->setErrorMessage("Connection error");
       }
@@ -525,20 +591,34 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
         try {
           cr->sendNextMessage();
         } catch (EndConnectionException ex) {
-          clog() << WARNING  << cr->toString()
-                 << " got EndConnectionException closing connection"
-                 << std::endl;
+
+          // "RR: Got EndConnectionException closing connection"
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("Function", func),
+             castor::dlf::Param("ClientInfo", cr->toString())};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING,
+                                  DLF_BASE_STAGERLIB + 30, 2, params);
           cr->setStatus(CLOSE);
         } catch (NoMoreMessagesException ex) {
-          clog() << DEBUG << cr->toString()
-                 << "No more messages to send, waiting"
-                 << sstrerror(ex.code())
-                 << ex.getMessage().str() << std::endl;
+
+          // "RR: No more messages to send, waiting"
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("Function", func),
+             castor::dlf::Param("ClientInfo", cr->toString()),
+             castor::dlf::Param("Error", sstrerror(ex.code())),
+             castor::dlf::Param("Message", ex.getMessage().str())};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                                  DLF_BASE_STAGERLIB + 31, 4, params);
         } catch (castor::exception::Exception ex) {
-          clog() << WARNING << cr->toString()
-                 << "Exception caught in sending data : "
-                 << sstrerror(ex.code())
-                 << ex.getMessage().str() << std::endl;
+
+          // "RR: Exception caught in sending data"
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("Function", func),
+             castor::dlf::Param("ClientInfo", cr->toString()),
+             castor::dlf::Param("Error", sstrerror(ex.code())),
+             castor::dlf::Param("Message", ex.getMessage().str())};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING,
+                                  DLF_BASE_STAGERLIB + 32, 4, params);
         }
 
         // Increasing statistics counter
@@ -547,49 +627,65 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
 
       case RESEND:
         if (pl[i].revents & POLLOUT) {
-          clog() << DEBUG << SETW func  <<  cr->toString()
-                 << " Resending data POLLOUT "
-                 << pl[i].fd << std::endl;
+
+          // "RR: Resending data POLLOUT"
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("Function", func),
+             castor::dlf::Param("ClientInfo", cr->toString()),
+             castor::dlf::Param("FD", pl[i].fd)};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                                  DLF_BASE_STAGERLIB + 33, 3, params);
           try {
             cr->sendNextMessage();
           } catch (castor::exception::Exception ex) {
-            clog() << WARNING << SETW func  <<  cr->toString() << "Exception caught in sending data : "
-                   << sstrerror(ex.code()) << std::endl
-                   << ex.getMessage().str() << std::endl;
+
+            // "RR: Exception caught in sending data"
+            castor::dlf::Param params[] =
+              {castor::dlf::Param("Function", func),
+               castor::dlf::Param("ClientInfo", cr->toString()),
+               castor::dlf::Param("Error", sstrerror(ex.code())),
+               castor::dlf::Param("Message", ex.getMessage().str())};
+            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING,
+                                    DLF_BASE_STAGERLIB + 32, 4, params);
           }
         } else if (pl[i].revents & POLLIN) {
-          clog() << DEBUG << SETW func  <<  cr->toString()
-                 <<"CCCR Resending data POLLIN "
-                 << pl[i].fd << std::endl;
+
+          // "RR: CCCR Resending data POLLIN"
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("Function", func),
+             castor::dlf::Param("ClientInfo", cr->toString()),
+             castor::dlf::Param("FD", pl[i].fd)};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                                  DLF_BASE_STAGERLIB + 34, 3, params);
           try {
             cr->sendNextMessage();
           } catch (castor::exception::Exception ex) {
-            clog() << WARNING << SETW func  <<  "Exception caught in sending data : "
-                   << sstrerror(ex.code()) << std::endl
-                   << ex.getMessage().str() << std::endl;
+
+            // "RR: Exception caught in sending data"
+            castor::dlf::Param params[] =
+              {castor::dlf::Param("Function", func),
+               castor::dlf::Param("ClientInfo", cr->toString()),
+               castor::dlf::Param("Error", sstrerror(ex.code())),
+               castor::dlf::Param("Message", ex.getMessage().str())};
+            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING,
+                                    DLF_BASE_STAGERLIB + 32, 4, params);
           }
         }
         break;
-        //       case SENT:
-        //         if (pl[i].revents & POLLIN) {
-        //           clog() << DEBUG
-        //                  << "CCCD POLLIN data sent successfully"
-        //                  << pl[i].fd << std::endl;
-        //           cr->setStatus(DONE_SUCCESS);
-        //           deleteConnection(pl[i].fd);
-        //         } else if (pl[i].revents & POLLOUT) {
-        //           clog() << DEBUG
-        //                  << "CCCD POLLOUT data sent successfully "
-        //                  << pl[i].fd << std::endl;
-        //           //cr->status = DONE_SUCCESS;
-        //           //close(pl[i].fd);
-        //         }
-        //         break;
       case DONE_FAILURE:
         break;
       default:
-        clog() << WARNING << SETW func  <<  cr->toString() <<  "Should not have status "
-               << cr->getStatusStr() << " " << pl[i].fd << std::endl;
+        {
+          // "RR: Unknown status"
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("Function", func),
+             castor::dlf::Param("ClientInfo", cr->toString()),
+             castor::dlf::Param("Status", cr->getStatusStr()),
+             castor::dlf::Param("FD", pl[i].fd)};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING,
+                                  DLF_BASE_STAGERLIB + 35, 4, params);
+        }
+        break;
       } // End switch
     } // End if revents != 0
   } // End for
@@ -602,19 +698,30 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
 void
 castor::replier::RequestReplier::readFromClientQueue() throw() {
 
-  const char *func = "rr::readFromClientQueue ";
+  const char *func = "rr::readFromClientQueue";
 
-  clog() << VERBOSE << SETW func  <<  "Locking m_clientQueue" << std::endl;
+  // "RR: Locking m_clientQueue"
+  castor::dlf::Param params[] =
+    {castor::dlf::Param("Function", func)};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                          DLF_BASE_STAGERLIB + 36, 1, params);
+
   Cthread_mutex_lock(&m_clientQueue);
 
-  clog() << VERBOSE << SETW func
-         << "*** Before processing - Client Queue size:"  << m_clientQueue->size()
-         << " Connection Queue size:"  << m_connections->size()
-         << std::endl;
+  // "RR: Info before processing"
+  castor::dlf::Param params1[] =
+    {castor::dlf::Param("Function", func),
+     castor::dlf::Param("ClientQSize", m_clientQueue->size()),
+     castor::dlf::Param("ConnQSize", m_connections->size())};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                          DLF_BASE_STAGERLIB + 37, 3, params1);
 
   if (m_clientQueue->size() == 0) {
-    clog() << VERBOSE << SETW func  <<  "No client in queue, removing lock"
-           << std::endl;
+
+    // "RR: No client in queue, removing lock"
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                            DLF_BASE_STAGERLIB + 38, 1, params);
+
     Cthread_mutex_unlock(&m_clientQueue);
     return;
   }
@@ -626,7 +733,6 @@ castor::replier::RequestReplier::readFromClientQueue() throw() {
     // Increasing the statistics counter
     m_nbQueuedResponses++;
 
-
     ClientResponse cr = m_clientQueue->front();
     m_clientQueue->pop();
 
@@ -635,20 +741,24 @@ castor::replier::RequestReplier::readFromClientQueue() throw() {
     int val;
     int rc = read(*m_pipeRead, &val, sizeof(val));
     if (rc < 0) {
-      clog() << ERROR << SETW func  <<  "Error reading !" << std::endl;
+      // "RR: Error reading"
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                              DLF_BASE_STAGERLIB + 39, 1, params);
     }
-
   }
-  clog() << VERBOSE << SETW func
-         << "*** After processing - Client Queue size:"  << m_clientQueue->size()
-         << " Connection Queue size:"  << m_connections->size()
-         << std::endl;
 
+  // "RR: Info after processing"
+  castor::dlf::Param params2[] =
+    {castor::dlf::Param("Function", func),
+     castor::dlf::Param("ClientQSize", m_clientQueue->size()),
+     castor::dlf::Param("ConnQSize", m_connections->size())};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                          DLF_BASE_STAGERLIB + 40, 3, params2);
 
-
-  clog() << VERBOSE << SETW func  <<  "Unlocking m_clientQueue" << std::endl;
+  // "RR: Unlocking m_clientQueue"
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                          DLF_BASE_STAGERLIB + 41, 1, params);
   Cthread_mutex_unlock(&m_clientQueue);
-
 }
 
 
@@ -659,10 +769,13 @@ void
 castor::replier::RequestReplier::terminate()
   throw() {
 
-  const char *func = "rr::terminate ";
+  const char *func = "rr::terminate";
 
-  clog() << SYSTEM << SETW func  <<  "Requesting RequestReplier termination"
-         << std::endl;
+  // "RR: Requesting RequestReplier termination"
+  castor::dlf::Param params[] =
+    {castor::dlf::Param("Function", func)};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+                          DLF_BASE_STAGERLIB + 42, 1, params);
 
   // Setting the end processing flag to 1
   Cthread_mutex_lock(&m_terminate);
@@ -714,8 +827,6 @@ castor::replier::RequestReplier::pollStr(int val) {
   return sst.str();
 }
 
-
-
 //////////////////////////////////////////////////////////////////////////////
 //
 // Code running in the server threads
@@ -738,7 +849,7 @@ void
 castor::replier::RequestReplier::setCallback(void (*callback)(castor::IClient *, MajorConnectionStatus))
   throw(castor::exception::Exception) {
 
-  const char *func = "rr::setCallback    CLIENT ";
+  const char *func = "rr::setCallback CLIENT";
 
   if (0 == callback) {
     castor::exception::Exception e(EINVAL);
@@ -747,14 +858,22 @@ castor::replier::RequestReplier::setCallback(void (*callback)(castor::IClient *,
   }
 
   // Setting the callback function, taking proper lock
-  clog() << VERBOSE << SETW func  <<  "Locking m_clientQueue" << std::endl;
+
+  // "RR: Locking m_clientQueue"
+  castor::dlf::Param params[] =
+    {castor::dlf::Param("Function", func)};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                          DLF_BASE_STAGERLIB + 36, 1, params);
+
   Cthread_mutex_lock(&m_clientQueue);
 
   m_connectionStatusCallback = callback;
 
   // Exiting...
-  clog() << VERBOSE << SETW func
-         << "Unlocking m_clientQueue" << std::endl;
+
+  // "RR: Unlocking m_clientQueue"
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                          DLF_BASE_STAGERLIB + 41, 1, params);
   Cthread_mutex_unlock(&m_clientQueue);
 }
 
@@ -765,7 +884,7 @@ castor::replier::RequestReplier::sendResponse(castor::IClient *client,
                                               bool isLastResponse)
   throw(castor::exception::Exception) {
 
-  const char *func = "rr::sendResponse    CLIENT ";
+  const char *func = "rr::sendResponse CLIENT";
 
   if (0 == client || 0 == response) {
     castor::exception::Exception e(EINVAL);
@@ -794,15 +913,23 @@ castor::replier::RequestReplier::sendResponse(castor::IClient *client,
   cr.isLast = isLastResponse;
 
   // Adding the client to the queue, taking proper lock
-  clog() << VERBOSE << SETW func  <<  "Locking m_clientQueue" << std::endl;
+
+  // "RR: Locking m_clientQueue"
+  castor::dlf::Param params[] =
+    {castor::dlf::Param("Function", func)};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                          DLF_BASE_STAGERLIB + 36, 1, params);
+
   Cthread_mutex_lock(&m_clientQueue);
 
-  clog() << DEBUG << SETW func
-         << "Adding Response for ";
-  clog() << castor::ip << cr.client.ipAddress() << ":"
-         << cr.client.port()
-         << " to m_ClientQueue"
-         << std::endl;
+  // "RR: Adding Response to m_ClientQueue"
+  castor::dlf::Param params1[] =
+    {castor::dlf::Param("Function", func),
+     castor::dlf::Param("IPAddress", cr.client.ipAddress()),
+     castor::dlf::Param("Port", cr.client.port())};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                          DLF_BASE_STAGERLIB + 44, 3, params1);
+
   m_clientQueue->push(cr);
 
   if (isLastResponse && cl->version() < 2010707) {
@@ -820,34 +947,37 @@ castor::replier::RequestReplier::sendResponse(castor::IClient *client,
 
     std::ostringstream buff;
 
-    clog() << DEBUG << SETW func
-           << "Adding EndResponse for ";
-    clog() << castor::ip << cr.client.ipAddress() << ":"
-           << cr.client.port()
-           << " to m_ClientQueue"
-           << std::endl;
+    // "RR: Adding EndResponse to m_ClientQueue"
+    castor::dlf::Param params1[] =
+      {castor::dlf::Param("Function", func),
+       castor::dlf::Param("IPAddress", cr.client.ipAddress()),
+       castor::dlf::Param("Port", cr.client.port())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                            DLF_BASE_STAGERLIB + 45, 3, params1);
+
     m_clientQueue->push(cr);
   }
 
-  clog() << VERBOSE << SETW func
-         << "Unlocking m_clientQueue" << std::endl;
+  // "RR: Unlocking m_clientQueue"
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                          DLF_BASE_STAGERLIB + 41, 1, params);
+
   Cthread_mutex_unlock(&m_clientQueue); // I release the lock here because it is used only to manage the queue
 
   // Now notifying the replierThread
   int val = 1;
   int rc = write(*m_pipeWrite, (void *)&val, sizeof(val));
   if (rc != sizeof(val)) {
-    clog() << ERROR << SETW func
-           <<  "Error writing to communication pipe with RRThread" << std::endl;
+    // "RR: Error writing to communication pipe with RRThread"
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, DLF_BASE_STAGERLIB + 46);
   }
 
   // In case of the last response, notify that an end response has been added
   if (isLastResponse && cl->version() < 2010707) {
     int rc = write(*m_pipeWrite, (void *)&val, sizeof(val));
     if (rc != sizeof(val)) {
-      clog() << ERROR << SETW func
-             << "Error writing to communication pipe with RRThread"
-             << std::endl;
+      // "RR: Error writing to communication pipe with RRThread"
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, DLF_BASE_STAGERLIB + 46);
     }
   }
 }
@@ -861,8 +991,8 @@ castor::replier::RequestReplier::sendEndResponse
 (castor::IClient *client,
  std::string reqId)
   throw(castor::exception::Exception) {
-    
-  const char *func = "rr::sendEndResponse CLIENT ";
+
+  const char *func = "rr::sendEndResponse CLIENT";
 
   if (0 == client) {
     castor::exception::Exception e(EINVAL);
@@ -892,28 +1022,38 @@ castor::replier::RequestReplier::sendEndResponse
     // XXX of each multi-file request by the stager.
     cr.response = 0;
   }
-  
+
   // Adding the client to the queue, taking proper lock
-  clog() << VERBOSE << SETW func  <<  "Locking m_clientQueue" << std::endl;
+
+  // "RR: Locking m_clientQueue"
+  castor::dlf::Param params[] =
+    {castor::dlf::Param("Function", func)};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                          DLF_BASE_STAGERLIB + 36, 1, params);
+
   Cthread_mutex_lock(&m_clientQueue);
 
-  clog() << DEBUG << SETW func
-         << "Adding EndResponse for ";
-  clog() << castor::ip << cr.client.ipAddress() << ":"
-         << cr.client.port()
-         << " to m_ClientQueue" << std::endl;
+  // "RR: Adding EndResponse to m_ClientQueue"
+  castor::dlf::Param params1[] =
+    {castor::dlf::Param("Function", func),
+     castor::dlf::Param("IPAddress", cr.client.ipAddress()),
+     castor::dlf::Param("Port", cr.client.port())};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                          DLF_BASE_STAGERLIB + 45, 3, params1);
+
   m_clientQueue->push(cr);
 
-  clog() << VERBOSE << SETW func
-         << "Unlocking m_clientQueue" << std::endl;
+  // "RR: Unlocking m_clientQueue"
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                          DLF_BASE_STAGERLIB + 41, 1, params);
+
   Cthread_mutex_unlock(&m_clientQueue);   // as in sendResponse, the lock is released here
 
   int val = 1;
   int rc = write(*m_pipeWrite, (void *)&val, sizeof(val));
   if (rc != sizeof(val)) {
-    clog() << ERROR << SETW func
-           << "Error writing to communication pipe with RRThread"
-           << std::endl;
+    // "RR: Error writing to communication pipe with RRThread"
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, DLF_BASE_STAGERLIB + 46);
   }
 }
 

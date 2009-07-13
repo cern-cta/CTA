@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.57 $ $Release$ $Date: 2008/11/07 16:42:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.58 $ $Release$ $Date: 2009/07/13 06:22:09 $ $Author: waldron $
  *
- * 
+ *
  *
  * @author Olof Barring
  *****************************************************************************/
@@ -63,7 +63,6 @@ WSADATA wsadata;
 #include <vdqm_api.h>
 #include <vmgr_api.h>
 #include <castor/Constants.h>
-#include <castor/BaseObject.h>
 #include <castor/stager/TapeStatusCodes.h>
 #include <castor/stager/SegmentStatusCodes.h>
 #include <rtcp.h>
@@ -80,7 +79,7 @@ extern int rtcpc_runReq_ext _PROTO((
                                     int (*)(void *(*)(void *), void *)
                                     ));
 extern int (*rtcpc_ClientCallback) _PROTO((
-                                           rtcpTapeRequest_t *, 
+                                           rtcpTapeRequest_t *,
                                            rtcpFileRequest_t *
                                            ));
 Cuuid_t childUuid, mainUuid;
@@ -111,7 +110,7 @@ void updateSvcClassList(
   int found = 0;
 
   if ( svcClassName == NULL ) return;
-  CLIST_ITERATE_BEGIN(svcClassList,iterator) 
+  CLIST_ITERATE_BEGIN(svcClassList,iterator)
     {
       if ( strcmp(iterator->svcClassName,svcClassName) == 0 ) {
         iterator->totFiles++;
@@ -132,11 +131,11 @@ void updateSvcClassList(
   return;
 }
 
-void logSvcClassTotals() 
+void logSvcClassTotals()
 {
   SvcClassList_t *iterator;
-  
-  CLIST_ITERATE_BEGIN(svcClassList,iterator) 
+
+  CLIST_ITERATE_BEGIN(svcClassList,iterator)
     {
       (void)dlf_write(
                       (inChild == 0 ? mainUuid : childUuid),
@@ -164,7 +163,7 @@ void logSvcClassTotals()
                       "TOTBYTES",
                       DLF_MSG_PARAM_INT64,
                       iterator->totBytes
-                      );      
+                      );
     }
   CLIST_ITERATE_END(svcClassList,iterator);
   return;
@@ -173,7 +172,7 @@ void logSvcClassTotals()
 int migratorCallbackFileCopied(
                                tapereq,
                                filereq
-                               ) 
+                               )
      rtcpTapeRequest_t *tapereq;
      rtcpFileRequest_t *filereq;
 {
@@ -203,7 +202,7 @@ int migratorCallbackFileCopied(
     LOG_SYSCALL_ERR("rtcpcld_lockTape()");
     return(-1);
   }
-  
+
   rc = rtcpcld_findFile(tape,filereq,&file);
   if ( rc == -1 ) {
     LOG_SYSCALL_ERR("rtcpcld_findFile()");
@@ -216,7 +215,7 @@ int migratorCallbackFileCopied(
     return(-1);
   }
 
-  
+
   (void)rtcpcld_getFileId(file,&castorFileId);
   blkid = rtcp_voidToString(
                             (void *)filereq->blockid,
@@ -237,7 +236,7 @@ int migratorCallbackFileCopied(
                             0,
                             &filesWritten
                             );
-    if ( (rc == -1) || 
+    if ( (rc == -1) ||
          ((filereq->cprc == 0) && (filereq->proc_status == RTCP_FINISHED) && (filesWritten == 0)) ) {
       save_serrno = serrno;
       if ( (filereq->cprc == 0) && (filereq->proc_status == RTCP_FINISHED) && (filesWritten == 0) ) save_serrno = SEINTERNAL;
@@ -533,7 +532,7 @@ int migratorCallbackMoreWork(
     LOG_SYSCALL_ERR("rtcpcld_unlockTape()");
     return(-1);
   }
-  
+
   return(rc);
 }
 
@@ -761,14 +760,10 @@ int main(
    */
   SOCKET sock = 0;
 
-  /* Initializing the C++ log */
-  /* Necessary at start of program and after any fork */
-  C_BaseObject_initLog("NewStagerLog", SVC_NOMSG);
-
   Cuuid_create(
                &childUuid
                );
-  
+
   /*
    * Initialise DLF for our facility
    */
@@ -784,7 +779,7 @@ int main(
     strcat(cmdline," ");
     i = strlen(cmdline)+1;
   }
-  
+
   (void)dlf_write(
                   childUuid,
                   RTCPCLD_LOG_MSG(RTCPCLD_MSG_MIGRATOR_STARTED),

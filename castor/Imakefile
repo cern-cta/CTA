@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.210 $ $Release$ $Date: 2009/07/10 17:54:14 $ $Author: waldron $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.211 $ $Release$ $Date: 2009/07/13 06:22:05 $ $Author: waldron $
 #
 # Make Castor libraries and executables
 #
@@ -48,7 +48,6 @@ STGLIB_SRCS = IAddressCInt.cpp \
               BaseAddressCInt.cpp \
               BaseCnvSvc.cpp \
               BaseObject.cpp \
-              BaseObjectCInt.cpp \
               BaseSvc.cpp \
               Constants.cpp \
               ConstantsCInt.cpp \
@@ -62,18 +61,12 @@ STGLIB_SRCS = IAddressCInt.cpp \
               IObjectCInt.cpp \
               MessageAck.cpp \
               MessageAckCInt.cpp \
-              MsgSvc.cpp \
-              NoMsgSvc.cpp \
-              StdMsgSvc.cpp \
               ObjectCatalog.cpp \
               ObjectSet.cpp \
               PortsConfig.cpp \
               Services.cpp \
               ServicesCInt.cpp \
               System.cpp \
-              logstream.cpp \
-              logbuf.cpp \
-              stdbuf.cpp \
               bwlist/Privilege.cpp \
               bwlist/ChangePrivilege.cpp \
               bwlist/ListPrivileges.cpp \
@@ -177,7 +170,6 @@ STGLIB_SRCS = IAddressCInt.cpp \
               io/StreamRequestTypeCnv.cpp \
               replier/ClientConnection.cpp \
               replier/RequestReplier.cpp \
-              replier/RequestReplierCInt.cpp \
               rh/Client.cpp \
               rh/ClientCInt.cpp \
               rh/StartResponse.cpp \
@@ -385,8 +377,6 @@ STGLIB_SRCS = IAddressCInt.cpp \
               sharedMemory/DLFInit.cpp \
               server/BaseDaemon.cpp \
               server/BaseServer.cpp \
-              DlfMsgSvc.cpp \
-              dlfbuf.cpp
 
 
 STAGERLIB_OBJS = \

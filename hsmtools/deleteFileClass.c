@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: deleteFileClass.c,v $ $Revision: 1.6 $ $Release$ $Date: 2008/09/22 11:57:56 $ $Author: waldron $
+ * @(#)$RCSfile: deleteFileClass.c,v $ $Revision: 1.7 $ $Release$ $Date: 2009/07/13 06:22:09 $ $Author: waldron $
  *
  *
  *
@@ -34,7 +34,6 @@
 #include <osdep.h>
 #include <serrno.h>
 #include <Cgetopt.h>
-#include <castor/BaseObject.h>
 #include <castor/stager/FileClass.h>
 #include <castor/stager/TapeCopy.h>
 #include <castor/stager/IStagerSvc.h>
@@ -89,9 +88,6 @@ int main(int argc, char *argv[])
   Coptind = 1;
   Copterr = 1;
   cmd = argv[0];
-  /* Initializing the C++ log */
-  /* Necessary at start of program and after any fork */
-  C_BaseObject_initLog("NewStagerLog", SVC_NOMSG);
 
   rc = C_Services_create(&svcs);
   if ( rc == -1 ) {

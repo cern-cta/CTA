@@ -41,7 +41,7 @@
 // getHostName
 //------------------------------------------------------------------------------
 std::string castor::System::getHostName() throw (castor::exception::Exception)
-{ 
+{
   // All this to get the hostname, thanks to C !
   int len = 64;
   char* hostname;
@@ -51,8 +51,6 @@ std::string castor::System::getHostName() throw (castor::exception::Exception)
     // The errno depends on the glibc version
     if (EINVAL != errno &&
         ENAMETOOLONG != errno) {
-      //clog() << "Unable to get hostname : "
-      //       << strerror(errno) << std::endl;
       free(hostname);
       castor::exception::Exception e(errno);
       e.getMessage() << "gethostname error";
@@ -64,8 +62,6 @@ std::string castor::System::getHostName() throw (castor::exception::Exception)
       len *= 2;
       char *hostnameLonger = (char*) realloc(hostname, len);
       if (0 == hostnameLonger) {
-        //clog() << "Unable to allocate memory for hostname."
-        //       << std::endl;
         free(hostname);
         castor::exception::Exception e(ENOMEM);
         e.getMessage() << "Could not allocate memory for hostname";
@@ -79,8 +75,6 @@ std::string castor::System::getHostName() throw (castor::exception::Exception)
         // The errno depends on the glibc version
         if (EINVAL != errno &&
             ENAMETOOLONG != errno) {
-          //clog() << "Unable to get hostname : "
-          //       << strerror(errno) << std::endl;
           free(hostname);
           castor::exception::Exception e(errno);
           e.getMessage() << "Could not get hostname"
@@ -129,13 +123,13 @@ std::string castor::System::ipAddressToHostname
       << ((ipAddress & 0x00FF0000) >> 16) << "."
       << ((ipAddress & 0x0000FF00) >> 8)  << "."
       << ((ipAddress & 0x000000FF));
-  
+
   // Resolve the ip address to a hostname
   in_addr_t addr = inet_addr(res.str().c_str());
   hostent *hp = Cgethostbyaddr((char *)&addr, sizeof(addr), AF_INET);
   if (hp == NULL) {
     castor::exception::Exception e(serrno);
-    e.getMessage() << "Failed to resolve ipAddress: " << res.str() 
+    e.getMessage() << "Failed to resolve ipAddress: " << res.str()
 		   << " to a hostname" << std::endl;
     throw e;
   }
@@ -196,7 +190,7 @@ void castor::System::switchToCastorSuperuser()
     e.getMessage() << "Unable to undo group privilege";
     throw e;
   }
-  // Undo user privilege 
+  // Undo user privilege
   if (setreuid (euid, ruid) < 0) {
     castor::exception::Internal e;
     e.getMessage() << "Unable to undo user privilege";

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2009/03/26 14:26:20 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2009/07/13 06:22:07 $ $Author: waldron $
  *
  * Thread pool supporting wakeup on signals and periodical run after timeout
  *
@@ -37,10 +37,10 @@ extern "C" {
 // constructor
 //------------------------------------------------------------------------------
 castor::server::SignalThreadPool::SignalThreadPool(const std::string poolName,
-                                 castor::server::IThread* thread,
-                                 const int timeout, 
-                                 const unsigned int nbThreads,
-                                 const unsigned int startingThreads) 
+                                                   castor::server::IThread* thread,
+                                                   const int timeout,
+                                                   const unsigned int nbThreads,
+                                                   const unsigned int startingThreads)
   throw(castor::exception::Exception) :
   BaseThreadPool(poolName, thread, nbThreads),
   m_poolMutex(-1, (unsigned)timeout), m_notified(startingThreads)
@@ -81,7 +81,7 @@ bool castor::server::SignalThreadPool::shutdown(bool wait) throw()
     if(m_stopped) {
       // quick answer if we were already told to stop
       return (m_notified + m_nbActiveThreads == 0);
-    }    
+    }
     m_poolMutex.lock();
     m_stopped = true;
     // notify all idle threads so that they can properly shutdown
@@ -118,7 +118,7 @@ void castor::server::SignalThreadPool::run()
   // create pool of detached threads
   for (unsigned i = 0; i < m_nbThreads; i++) {
     if (Cthread_create_detached(
-         (void *(*)(void *))&SignalThreadPool::_runner, this) >= 0) {
+                                (void *(*)(void *))&SignalThreadPool::_runner, this) >= 0) {
       ++n;
     }
   }
@@ -129,8 +129,13 @@ void castor::server::SignalThreadPool::run()
   }
   else {
     m_nbThreads = n;
-    clog() << DEBUG << "Thread pool " << m_poolName << " started with "
-           << m_nbThreads << " threads" << std::endl;
+    // "Thread pool started"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("ThreadPool", m_poolName),
+       castor::dlf::Param("Type", "SignalThreadPool"),
+       castor::dlf::Param("NbThreads", m_nbThreads)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                            DLF_BASE_FRAMEWORK + 3, 3, params);
   }
 }
 
@@ -142,7 +147,7 @@ void castor::server::SignalThreadPool::waitSignalOrTimeout()
   throw (castor::exception::Exception)
 {
   m_poolMutex.lock();
-  
+
   // Check if we were notified
   if (m_notified > 0) {
     m_notified--;
@@ -190,18 +195,18 @@ void* castor::server::SignalThreadPool::_runner(void* param) {
   try {
     // Perform user initialization
     pool->m_thread->init();
-    
+
     while (!pool->m_stopped) {
       // wait to be woken up by a signal or for a timeout
       pool->waitSignalOrTimeout();
 
       // we may have been stopped while sleeping
       if(!pool->m_stopped) {
-      
+
         // reset errno and serrno
         errno = 0;
         serrno = 0;
-  
+
         // do the user job and catch any exception for logging purposes
         try {
           // we pass the pool itself as parameter to allow e.g.
@@ -209,8 +214,12 @@ void* castor::server::SignalThreadPool::_runner(void* param) {
           pool->m_thread->run(pool);
         }
         catch (castor::exception::Exception e) {
-          pool->clog() << ERROR << "Exception caught in the user thread: "
-            << e.getMessage().str() << std::endl;
+          // "Exception caught in the user thread"
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("Error", sstrerror(e.code())),
+             castor::dlf::Param("Message", e.getMessage().str())};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                                  DLF_BASE_FRAMEWORK + 4, 2, params);
         }
       }
 
@@ -219,7 +228,7 @@ void* castor::server::SignalThreadPool::_runner(void* param) {
 
       // and continue forever until shutdown() is called
     }
-    
+
     // notify the user thread that we are over,
     // e.g. for dropping a db connection
     pool->m_thread->stop();
@@ -230,9 +239,14 @@ void* castor::server::SignalThreadPool::_runner(void* param) {
       pool->m_poolMutex.release();
     }
     catch(...) {}
-    pool->clog() << ERROR << "Thread runner error: "
-      << any.getMessage().str() << std::endl;
+
+    // "Thread run error"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Error", sstrerror(any.code())),
+       castor::dlf::Param("Message", any.getMessage().str())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                            DLF_BASE_FRAMEWORK + 5, 2, params);
   }
-   
+
   return 0;
 }

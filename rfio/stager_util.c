@@ -1,5 +1,5 @@
 /*
- * $Id: stager_util.c,v 1.2 2008/07/31 07:09:14 sponcec3 Exp $
+ * $Id: stager_util.c,v 1.3 2009/07/13 06:22:09 waldron Exp $
  */
 
 #include <sys/types.h>
@@ -23,7 +23,6 @@
 #include "stager_extern_globals.h"
 #include "stager_messages.h"
 #include "stager_uuid.h"
-#include "dlf_api.h"
 #include "log.h"
 
 #ifdef SIXMONTHS
@@ -98,62 +97,6 @@ void DLL_DECL stager_log(const char *func, const char *file, int line, int what,
         value2Int = va_arg(args, int);
       }
 
-      if (! stagerNoDlf) {
-        if ((strcmp(message, "STRING") == 0) || (strcmp(message, "SIGNAL NAME") == 0)) {
-          if ((strcmp(message2, "STRING") == 0) || (strcmp(message2, "SIGNAL NAME") == 0)) {
-            dlf_write(
-                      stager_request_uuid,
-                      stagerMessages[what].defaultSeverity,
-                      what,
-                      fileid,
-                      STAGER_NB_PARAMS+3,
-                      stagerMessages[what].what2Type,DLF_MSG_PARAM_STR,func,
-                      message,DLF_MSG_PARAM_STR,valueStr,
-                      message2,DLF_MSG_PARAM_STR,value2Str,
-                      STAGER_LOG_WHERE(file,line)
-                      );
-          } else {
-            dlf_write(
-                      stager_request_uuid,
-                      stagerMessages[what].defaultSeverity,
-                      what,
-                      fileid,
-                      STAGER_NB_PARAMS+3,
-                      stagerMessages[what].what2Type,DLF_MSG_PARAM_STR,func,
-                      message,DLF_MSG_PARAM_STR,valueStr,
-                      message2,DLF_MSG_PARAM_INT,value2Int,
-                      STAGER_LOG_WHERE(file,line)
-                      );
-          }
-        } else {
-          if ((strcmp(message2, "STRING") == 0) || (strcmp(message2, "SIGNAL NAME") == 0)) {
-            dlf_write(
-                      stager_request_uuid,
-                      stagerMessages[what].defaultSeverity,
-                      what,
-                      fileid,
-                      STAGER_NB_PARAMS+3,
-                      stagerMessages[what].what2Type,DLF_MSG_PARAM_STR,func,
-                      message,DLF_MSG_PARAM_INT,valueInt,
-                      message2,DLF_MSG_PARAM_STR,value2Str,
-                      STAGER_LOG_WHERE(file,line)
-                      );
-          } else {
-            dlf_write(
-                      stager_request_uuid,
-                      stagerMessages[what].defaultSeverity,
-                      what,
-                      fileid,
-                      STAGER_NB_PARAMS+3,
-                      stagerMessages[what].what2Type,DLF_MSG_PARAM_STR,func,
-                      message,DLF_MSG_PARAM_INT,valueInt,
-                      message2,DLF_MSG_PARAM_INT,value2Int,
-                      STAGER_LOG_WHERE(file,line)
-                      );
-          }
-        }
-
-      }
       if ((stagerLog != NULL) && (stagerLog[0] != '\0')) {
         if ((strcmp(message,"STRING") == 0) || (strcmp(message,"SIGNAL NAME") == 0)) {
           if ((strcmp(message2,"STRING") == 0) || (strcmp(message2,"SIGNAL NAME") == 0)) {
@@ -217,32 +160,6 @@ void DLL_DECL stager_log(const char *func, const char *file, int line, int what,
         }
       }
     } else {
-      if (! stagerNoDlf) {
-        if ((strcmp(message,"STRING") == 0) || (strcmp(message,"SIGNAL NAME") == 0)) {
-          dlf_write(
-                    stager_request_uuid,
-                    stagerMessages[what].defaultSeverity,
-                    what,
-                    fileid,
-                    STAGER_NB_PARAMS+2,
-                    stagerMessages[what].what2Type,DLF_MSG_PARAM_STR,func,
-                    message,DLF_MSG_PARAM_STR,valueStr,
-                    STAGER_LOG_WHERE(file,line)
-                    );
-        } else {
-          dlf_write(
-                    stager_request_uuid,
-                    stagerMessages[what].defaultSeverity,
-                    what,
-                    fileid,
-                    STAGER_NB_PARAMS+2,
-                    stagerMessages[what].what2Type,DLF_MSG_PARAM_STR,func,
-                    message,DLF_MSG_PARAM_INT,valueInt,
-                    STAGER_LOG_WHERE(file,line)
-                    );
-        }
-      }
-
       if ((stagerLog != NULL) && (stagerLog[0] != '\0')) {
         if ((strcmp(message,"STRING") == 0) || (strcmp(message,"SIGNAL NAME") == 0)) {
           log(
@@ -282,31 +199,6 @@ void DLL_DECL stager_log(const char *func, const char *file, int line, int what,
       } else {
         value2Int = va_arg(args, int);
       }
-      if (! stagerNoDlf) {
-        if ((strcmp(message2,"STRING") == 0) || (strcmp(message2,"SIGNAL NAME") == 0)) {
-          dlf_write(
-                    stager_request_uuid,
-                    stagerMessages[what].defaultSeverity,
-                    what,
-                    fileid,
-                    STAGER_NB_PARAMS+2,
-                    stagerMessages[what].what2Type,DLF_MSG_PARAM_STR,func,
-                    message2,DLF_MSG_PARAM_STR,value2Str,
-                    STAGER_LOG_WHERE(file,line)
-                    );
-        } else {
-          dlf_write(
-                    stager_request_uuid,
-                    stagerMessages[what].defaultSeverity,
-                    what,
-                    fileid,
-                    STAGER_NB_PARAMS+2,
-                    stagerMessages[what].what2Type,DLF_MSG_PARAM_STR,func,
-                    message2,DLF_MSG_PARAM_INT,value2Int,
-                    STAGER_LOG_WHERE(file,line)
-                    );
-        }
-      }
       if ((stagerLog != NULL) && (stagerLog[0] != '\0')) {
         if ((strcmp(message2,"STRING") == 0) || (strcmp(message2,"SIGNAL NAME") == 0)) {
           log(
@@ -331,18 +223,6 @@ void DLL_DECL stager_log(const char *func, const char *file, int line, int what,
         }
       }
     } else {
-      if (! stagerNoDlf)
-        dlf_write(
-                  stager_request_uuid,
-                  stagerMessages[what].defaultSeverity,
-                  what,
-                  (struct Cns_fileid *)fileid,
-                  STAGER_NB_PARAMS+1,
-                  stagerMessages[what].what2Type,
-                  DLF_MSG_PARAM_STR,
-                  func,
-                  STAGER_LOG_WHERE(file,line)
-                  );
       if ((stagerLog != NULL) && (stagerLog != '\0')) {
         log(
             stagerMessages[what].severity2LogLevel,

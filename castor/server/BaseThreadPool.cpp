@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2009/01/08 09:24:24 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2009/07/13 06:22:07 $ $Author: waldron $
  *
  * Abstract CASTOR thread pool
  *
@@ -33,9 +33,7 @@
 #include "Cinit.h"
 #include "Cuuid.h"
 #include "serrno.h"
-#include "castor/logstream.h"
 #include "castor/server/BaseThreadPool.hpp"
-#include "castor/MsgSvc.hpp"
 #include "castor/Services.hpp"
 #include "castor/exception/Internal.hpp"
 
@@ -55,7 +53,7 @@ throw (castor::exception::Exception) :
     castor::exception::Exception e(EINVAL);
     e.getMessage() << "A valid thread must be specified";
     throw e;
-  }  
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -76,7 +74,7 @@ castor::server::BaseThreadPool::~BaseThreadPool() throw()
 void castor::server::BaseThreadPool::init() throw (castor::exception::Exception)
 {
   castor::exception::Internal notImpl;
-  notImpl.getMessage() << 
+  notImpl.getMessage() <<
     "BaseThreadPool is (pseudo)abstract, you must use its derived classes";
   throw notImpl;
 }

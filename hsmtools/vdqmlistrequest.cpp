@@ -298,11 +298,7 @@ void printRequestList(castor::vdqm::IVdqmSvc::VolRequestList &requests,
 int main(int argc, char **argv) {
   bool displayColumnHeadings = false;
 
-
   parseCommandLine(argc, argv, displayColumnHeadings);
-
-  // Initializing the log
-  castor::BaseObject::initLog(argv[0], castor::SVC_NOMSG);
 
   // Retrieve the VDQM DB service
   castor::vdqm::IVdqmSvc *const vdqmSvc = retrieveVdqmSvc();

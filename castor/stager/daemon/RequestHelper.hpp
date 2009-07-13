@@ -43,7 +43,6 @@
 #include "serrno.h"
 #include <errno.h>
 
-#include "dlf_api.h"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Param.hpp"
 #include "castor/stager/daemon/DlfMessages.hpp"
@@ -57,7 +56,7 @@
 namespace castor{
   namespace stager{
     namespace daemon{
-      
+
       class castor::stager::IStagerSvc;
       class castor::db::DbCnvSvc;
       class castor::BaseAddress;
@@ -68,15 +67,15 @@ namespace castor{
       class castor::stager::CastorFile;
       class castor::stager::FileClass;
       class castor::stager::daemon::CnsHelper;
-    
+
       class RequestHelper : public virtual castor::BaseObject{
 
       public:
-	
+
 	/* services needed: database and stager services*/
 	castor::stager::IStagerSvc* stagerService;
 	castor::db::DbCnvSvc* dbSvc;
-	
+
 	// for logging purposes
 	struct Cns_fileid cnsFileId;
 
@@ -85,24 +84,24 @@ namespace castor{
 
 	/* subrequest and fileRequest  */
 	castor::stager::SubRequest* subrequest;
-	
+
 	castor::stager::FileRequest* fileRequest;
 
 	/* service class */
 	castor::stager::SvcClass* svcClass;
-		
+
 	/* castorFile attached to the subrequest*/
 	castor::stager::CastorFile* castorFile;
-	
+
 	std::string username;
 	std::string groupname;
 
-	/* Cuuid_t thread safe variables */ 
+	/* Cuuid_t thread safe variables */
 	Cuuid_t subrequestUuid;
 	Cuuid_t requestUuid;
-	
+
 	std::string default_protocol;
-	
+
 	timeval tvStart;
 
 	RequestHelper(castor::stager::SubRequest* subRequestToProcess, int &typeRequest) throw(castor::exception::Exception);
@@ -114,15 +113,15 @@ namespace castor{
    * resolve the svClass if not resolved yet by using the stagerService
    */
 	void resolveSvcClass() throw(castor::exception::Exception);
-	   
+
 	/* get subrequest and request uuids */
 	void setUuids() throw ();
-	
+
 	/**
 	 *  link the castorFile to the ServiceClass
 	 */
 	void getCastorFileFromSvcClass(castor::stager::daemon::CnsHelper* stgCnsHelper) throw(castor::exception::Exception);
-       
+
 	/************************************************************************************/
 	/* set the username and groupname string versions using id2name c function  */
 	/**********************************************************************************/
@@ -138,9 +137,9 @@ namespace castor{
 	 * @throw exception when the user has not enough permissions for this request.
 	 */
 	void checkFilePermission(bool fileCreated,
-				 castor::stager::daemon::CnsHelper* stgCnsHelper) 
+				 castor::stager::daemon::CnsHelper* stgCnsHelper)
 	  throw(castor::exception::Exception);
-	
+
 	/**
 	 * Logs a standard message to DLF including all needed info (e.g. filename, svcClass, etc.)
 	 * @param level the DLF logging level
@@ -148,7 +147,7 @@ namespace castor{
 	 * @param fid the fileId structure if needed
 	 */
 	void logToDlf(int level, int messageNb, struct Cns_fileid* fid = 0) throw();
-	
+
       }; //end RequestHelper class
     }//end namespace daemon
   }//end namespace stager

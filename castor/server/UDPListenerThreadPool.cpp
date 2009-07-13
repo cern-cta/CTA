@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: UDPListenerThreadPool.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2009/01/08 09:24:57 $ $Author: itglp $
+ * @(#)$RCSfile: UDPListenerThreadPool.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2009/07/13 06:22:07 $ $Author: waldron $
  *
  * A listener thread pool listening on an UDP port
  *
@@ -46,15 +46,9 @@ castor::server::UDPListenerThreadPool::UDPListenerThreadPool
 //------------------------------------------------------------------------------
 // bind
 //------------------------------------------------------------------------------
-void castor::server::UDPListenerThreadPool::bind() throw (castor::exception::Exception) {
-  // Create a socket for the server, bind, and listen
-  try {
-    m_sock = new castor::io::UDPSocket(m_port, true, true);
-  } catch (castor::exception::Exception e) {
-    clog() << ERROR << "Fatal error: cannot bind UDP socket on port " << m_port << ": "
-           << e.getMessage().str() << std::endl;
-    throw e;         // calling server should exit() here
-  }
+void castor::server::UDPListenerThreadPool::bind()
+  throw (castor::exception::Exception) {
+  m_sock = new castor::io::UDPSocket(m_port, true, true);
 }
 
 //------------------------------------------------------------------------------
@@ -74,8 +68,13 @@ void castor::server::UDPListenerThreadPool::listenLoop() {
       if (any.code() == EBADF) {
         break;
       }
-      clog() << ERROR << "Error while reading datagrams from port " << m_port << ": "
-             << any.getMessage().str() << std::endl;
+      // "Error while reading datagrams"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Port", m_port),
+         castor::dlf::Param("Error", sstrerror(any.code())),
+         castor::dlf::Param("Message", any.getMessage().str())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                              DLF_BASE_FRAMEWORK + 1, 3, params);
     }
   }
 }

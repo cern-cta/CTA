@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.25 $ $Release$ $Date: 2008/06/25 10:01:13 $ $Author: gtaur $
+ * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.26 $ $Release$ $Date: 2009/07/13 06:22:09 $ $Author: waldron $
  *
- * 
+ *
  *
  * @author Olof Barring
  *****************************************************************************/
@@ -84,7 +84,6 @@ WSADATA wsadata;
 #include <castor/stager/DiskServerStatusCode.h>
 #include <castor/stager/ITapeSvc.h>
 #include <castor/Services.h>
-#include <castor/BaseObject.h>
 #include <castor/BaseAddress.h>
 #include <castor/IAddress.h>
 #include <castor/IObject.h>
@@ -146,7 +145,7 @@ static int prepareForDBAccess(
     LOG_SYSCALL_ERR("C_BaseAddress_create()");
     return(-11);
   }
-  
+
   C_BaseAddress_setCnvSvcName(baseAddr,"DbCnvSvc");
   C_BaseAddress_setCnvSvcType(baseAddr,SVC_DBCNV);
   iAddr = C_BaseAddress_getIAddress(baseAddr);
@@ -154,7 +153,7 @@ static int prepareForDBAccess(
   if ( _dbSvc != NULL ) *_dbSvc = *dbSvc;
   if ( _tpSvc != NULL ) *_tpSvc = *tpSvc;
   if ( _iAddr != NULL ) *_iAddr = iAddr;
-  
+
   return(0);
 }
 
@@ -173,7 +172,7 @@ static int cleanupSegment(
     serrno = EINVAL;
     return(-1);
   }
-  
+
   rc = prepareForDBAccess(&dbSvc,&tpSvc,&iAddr);
   if ( rc == -1 ) return(-1);
 
@@ -211,7 +210,7 @@ static int callExpert(
     serrno = EINVAL;
     return(-1);
   }
-  
+
   msgLen = strlen(expertMessage);
   if ( mode == WRITE_ENABLE ) {
     rc = expert_send_request(&fd,EXP_RQ_MIGRATOR);
@@ -316,14 +315,14 @@ static int doRecallRetry(
   Cstager_Segment_setBlockId2(newSegment,blockid[2]);
   Cstager_Segment_blockId3(segment,&blockid[3]);
   Cstager_Segment_setBlockId3(newSegment,blockid[3]);
-  
+
   /* creation time of the old one */
 
   Cstager_Segment_creationTime(segment,&creationTime);
   Cstager_Segment_setCreationTime(newSegment,creationTime);
 
   /* get the old priority */
-  
+
   Cstager_Segment_priority(segment,&priority);
   Cstager_Segment_setPriority(newSegment,priority);
 
@@ -437,7 +436,7 @@ static int validNsSegment(
 {
   struct vmgr_tape_info vmgrTapeInfo;
   int rc;
-  
+
   if ( (nsSegment == NULL) || (*nsSegment->vid == '\0') ||
        (nsSegment->s_status != '-') ) {
     return(0);
@@ -498,7 +497,7 @@ static int checkRecallRetry(
     serrno = EINVAL;
     return(-1);
   }
-  Cstager_Tape_vid(tape,(CONST char **)&vid);  
+  Cstager_Tape_vid(tape,(CONST char **)&vid);
   if ( vid == NULL ) {
     serrno = EINVAL;
     return(-1);
@@ -591,7 +590,7 @@ static int checkRecallRetry(
           nsSegmentOK = 1;
           break;
         }
-      }      
+      }
     }
   }
   if ( nsSegmentOK == 0 ) {
@@ -706,7 +705,7 @@ static int checkRecallRetry(
   }
   if ( diskCopies != NULL ) free(diskCopies);
   if ( iAddr != NULL ) C_IAddress_delete(iAddr);
-    
+
   /*
    * Arguments for retry policy are:
    *  - policy name: e.g. "recallerRetryPolicy.pl"
@@ -894,7 +893,7 @@ static int doMigrationRetry(
      */
     Cstager_TapeCopy_setStatus(tapeCopy,TAPECOPY_CREATED);
   }
-  
+
   rc = C_Services_updateRep(
                             dbSvc,
                             iAddr,
@@ -930,7 +929,7 @@ static int doMigrationRetry(
  *              useless for the moment because disk file is not
  *              accessible
  *  - SERTYEXHAUST -> retry policy denies further retries. PUT_FAILED!
- * 
+ *
  * The routine returns 0 if migration candidate is OK and retry policy
  * admits another retry.
  *
@@ -1052,7 +1051,7 @@ static int checkMigrationRetry(
       if ( deleteDiskCopy != NULL ) *deleteDiskCopy = 1;
       save_serrno = SERTYEXHAUST;
     }
-    
+
     serrno = save_serrno;
     return(-1);
   }
@@ -1117,7 +1116,7 @@ static int checkMigrationRetry(
                             OBJ_FileSystem,
                             0
                             );
-    
+
     if ( rc == -1 ) {
       LOG_DBCALLANDKEY_ERR("C_Services_fillObj(diskCopy,OBJ_FileSystem)",
                            C_Services_errorMsg(dbSvc),
@@ -1142,7 +1141,7 @@ static int checkMigrationRetry(
                             OBJ_DiskServer,
                             0
                             );
-    
+
     if ( rc == -1 ) {
       LOG_DBCALLANDKEY_ERR("C_Services_fillObj(fileSystem,OBJ_DiskServer)",
                            C_Services_errorMsg(dbSvc),
@@ -1173,7 +1172,7 @@ static int checkMigrationRetry(
                     1,
                     "REASON",
                     DLF_MSG_PARAM_STR,
-                    (fileSystemAvailable == 0 ? 
+                    (fileSystemAvailable == 0 ?
                      "DiskCopy(s) on unavailable file system" :
                      "DiskCopy(s) on unavailable disk server")
                     );
@@ -1365,17 +1364,17 @@ static int checkMigrationRetry(
   return(rc);
 }
 
-void checkConfiguredPolicy() 
+void checkConfiguredPolicy()
 {
   char *p;
-  
+
   p = getconfent("TAPEERRORHANDLER","MIGRATOR_RETRY_POLICY",0);
   if ( p != NULL ) migratorRetryPolicy = strdup(p);
   p = getconfent("TAPEERRORHANDLER","RECALLER_RETRY_POLICY",0);
   if ( p != NULL ) recallerRetryPolicy = strdup(p);
   return;
 }
-     
+
 int main(
          argc,
          argv
@@ -1399,7 +1398,6 @@ int main(
   struct Cns_fileid fileid;
   ID_TYPE key;
 
-  C_BaseObject_initLog("NewStagerLog", SVC_NOMSG);
   Cuuid_create(
                &childUuid
                );
@@ -1408,7 +1406,7 @@ int main(
   (void)Cns_seterrbuf(cns_error_buffer,sizeof(cns_error_buffer));
 
   checkConfiguredPolicy();
-  
+
   rc = prepareForDBAccess(&dbSvc,&tpSvc,&iAddr);
   if ( rc == -1 ) {
     LOG_SYSCALL_ERR("prepareForDBAccess()");
@@ -1421,7 +1419,7 @@ int main(
                                          &failedSegments,
                                          &nbFailedSegments
                                          );
-  
+
   if ( rc == -1 ) {
     if ( rc == -1 ) {
       LOG_DBCALL_ERR("C_Services_failedSegments()",

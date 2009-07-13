@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamCnvSvc.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/07/09 16:18:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamCnvSvc.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2009/07/13 06:22:06 $ $Author: waldron $
  *
  *
  *
@@ -29,6 +29,7 @@
 
 #include "castor/Constants.hpp"
 #include "castor/BaseCnvSvc.hpp"
+#include "castor/ObjectSet.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/io/StreamAddress.hpp"
 #include "castor/ObjectCatalog.hpp"

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SynchronizationThread.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2009/03/23 16:08:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: SynchronizationThread.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2009/07/13 06:22:06 $ $Author: waldron $
  *
  * Thread going through the files stored on the CASTOR related filesystem and
  * checking their existence in the nameserver and in the stager catalog. In
@@ -34,6 +34,7 @@
 #include "castor/server/IThread.hpp"
 #include <string>
 #include <vector>
+#include <map>
 
 namespace castor {
 
@@ -52,7 +53,7 @@ namespace castor {
       SynchronizationThread();
 
       /**
-       * Constructor 
+       * Constructor
        * @param startDelay
        */
       SynchronizationThread(int startDelay);

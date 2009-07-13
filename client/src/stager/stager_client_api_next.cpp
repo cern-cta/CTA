@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_next.cpp,v 1.11 2008/03/25 14:35:21 itglp Exp $
+ * $Id: stager_client_api_next.cpp,v 1.12 2009/07/13 06:22:08 waldron Exp $
  */
 
 /*
@@ -32,7 +32,7 @@
 #include "castor/rh/FileResponse.hpp"
 #include "castor/rh/IOResponse.hpp"
 
-// To be removed when getting rid of 
+// To be removed when getting rid of
 // request printing
 #include "castor/ObjectSet.hpp"
 
@@ -45,7 +45,7 @@ static int _processReqIdRequest(const char *func,
 				const char *prevRequestId,
 				struct stage_io_fileresp ** response,
 				struct stage_options* opts) {
-  
+
   int ret=0;
 
   if (prevRequestId == NULL) {    serrno = EINVAL;
@@ -53,23 +53,19 @@ static int _processReqIdRequest(const char *func,
     return -1;
   }
 
-
   try {
-    castor::BaseObject::initLog("", castor::SVC_NOMSG);
-    
-	
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
     ret=setDefaultOption(opts);
     client.setOptions(opts);
     client.setAuthorizationId();
     if(ret==-1){free(opts);}
-    
+
     req.setParentUuid(std::string(prevRequestId));
 
     // Using the VectorResponseHandler which stores everything in
     // A vector. BEWARE, the responses must be de-allocated afterwards
-    std::vector<castor::rh::Response *>respvec;    
+    std::vector<castor::rh::Response *>respvec;
     castor::client::VectorResponseHandler rh(&respvec);
     std::string reqid = client.sendRequest(&req, &rh);
 
@@ -84,21 +80,21 @@ static int _processReqIdRequest(const char *func,
       stager_errmsg(func, "No responses received");
       return -1;
     }
-    
+
 
     // Creating the file response
     // Same size as requests as we only do files for the moment
-    *response = (struct stage_io_fileresp *) 
+    *response = (struct stage_io_fileresp *)
       malloc(sizeof(struct stage_io_fileresp));
-    
+
     if (*response == NULL) {
       serrno = ENOMEM;
       stager_errmsg(func, "Could not allocate memory for responses");
       return -1;
     }
-    
+
     // Casting the response into a FileResponse !
-    castor::rh::IOResponse* fr = 
+    castor::rh::IOResponse* fr =
       dynamic_cast<castor::rh::IOResponse*>(respvec[0]);
       if (0 == fr) {
         castor::exception::Exception e(SEINTERNAL);
@@ -125,7 +121,7 @@ static int _processReqIdRequest(const char *func,
     stager_errmsg(func, (e.getMessage().str().c_str()));
     return -1;
   }
-  
+
   return 0;
 }
 
@@ -134,15 +130,15 @@ static int _processReqIdRequest(const char *func,
 /* External routines */
 /* ================= */
 
-		       
+
 ////////////////////////////////////////////////////////////
 //    stage_getNext                                       //
 ////////////////////////////////////////////////////////////
-		       
+
 EXTERN_C int stage_getNext(const char *reqId,
 			   struct stage_io_fileresp ** response,
 			   struct stage_options* opts) {
- 
+
   const char *func = "stage_getNext";
   castor::stager::StageGetNextRequest req;
   int rc =  _processReqIdRequest(func, req, reqId, response, opts);
@@ -169,7 +165,7 @@ EXTERN_C int stage_updateNext(const char *reqId,
 ////////////////////////////////////////////////////////////
 //    stage_putNext                                       //
 ////////////////////////////////////////////////////////////
-		       
+
 
 
 EXTERN_C int stage_putNext(const char *reqId,

@@ -17,18 +17,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.46 $ $Release$ $Date: 2009/06/18 15:30:28 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.47 $ $Release$ $Date: 2009/07/13 06:22:06 $ $Author: waldron $
  *
  * The Repack Client.
- * Creates a RepackRequest and send it to the Repack server, specified in the 
+ * Creates a RepackRequest and send it to the Repack server, specified in the
  * castor config file, or from the enviroment.
- * 
+ *
  * For the enviroment serveral possibilities are possible:
- * REPACK_HOST and REPACK_HOST_ALT , the REPACK_HOST_ALT  is an alternative, if 
+ * REPACK_HOST and REPACK_HOST_ALT , the REPACK_HOST_ALT  is an alternative, if
  * no server entry is found in the config file or REPACK_HOST is not set.
  * REPACK_PORT and REPACK_PORT_ALT : same as for the REPACK_HOST
  *
- * 
+ *
  * @author Giulia Taurelli
  *****************************************************************************/
 
@@ -41,9 +41,11 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <iostream>
+#include <iomanip>
 
-/** 
- * By including the Header file, the Factory is automatically active !! 
+/**
+ * By including the Header file, the Factory is automatically active !!
  */
 #include "castor/io/StreamRepackRequestCnv.hpp"
 #include "castor/io/StreamRepackSubRequestCnv.hpp"
@@ -70,12 +72,12 @@ void printTime(time_t* rawtime){
   if ((timeptr->tm_year)%100 < 10) {
     std::cout<< (timeptr->tm_mday)<<"-"<<mon_name[timeptr->tm_mon]<<"-0"<< (timeptr->tm_year)%100<<"_";
   } else {
-    std::cout<< (timeptr->tm_mday)<<"-"<<mon_name[timeptr->tm_mon]<<"-"<< (timeptr->tm_year)%100<<"_"; 
+    std::cout<< (timeptr->tm_mday)<<"-"<<mon_name[timeptr->tm_mon]<<"-"<< (timeptr->tm_year)%100<<"_";
   }
   if (timeptr->tm_hour <10) std::cout<<"0";
   std::cout << timeptr->tm_hour <<":";
   if (timeptr->tm_min <10) std::cout<<"0";
-  std::cout<<timeptr->tm_min<<"   "; 
+  std::cout<<timeptr->tm_min<<"   ";
 
 }
 
@@ -94,12 +96,12 @@ public:
 //------------------------------------------------------------------------------
 // main method
 //------------------------------------------------------------------------------
-int main(int argc, char *argv[]) 
+int main(int argc, char *argv[])
 {
    castor::repack::RepackClient *client = new castor::repack::RepackClient();
    try{
       client->run(argc, argv);
-   } 
+   }
    catch (castor::exception::Exception ex) {
       std::cout << ex.getMessage().str() << std::endl;
       exit(1);
@@ -171,7 +173,7 @@ bool RepackClient::parseInput(int argc, char** argv)
   }
 
   if (getuid() == 0){
-    std::cout <<"You cannot use repack commands if you are root."<< std::endl; 
+    std::cout <<"You cannot use repack commands if you are root."<< std::endl;
     exit(1);
   }
 
@@ -190,11 +192,11 @@ bool RepackClient::parseInput(int argc, char** argv)
     {"retryMax", REQUIRED_ARGUMENT, 0, 'm'},
     {"reclaim", NO_ARGUMENT, NULL, 'c'},
     {"newPool",REQUIRED_ARGUMENT, NULL,'n'},
-    {"errors", NO_ARGUMENT, NULL, 'e'},  
+    {"errors", NO_ARGUMENT, NULL, 'e'},
     {NULL, 0, NULL, 0}
   };
 
-  
+
   Coptind = 1;
   Copterr = 0;
   char c;
@@ -262,9 +264,9 @@ bool RepackClient::parseInput(int argc, char** argv)
       if  (cp.vid == NULL) return false;
       return true;
     }
-  } 
+  }
   return ( cp.pool != NULL || cp.vid != NULL );
- 
+
 }
 
 
@@ -273,26 +275,26 @@ bool RepackClient::parseInput(int argc, char** argv)
 //------------------------------------------------------------------------------
 // usage
 //------------------------------------------------------------------------------
-void RepackClient::usage() 
+void RepackClient::usage()
 {
 	std::cout << " Usage:  \n ------  \n repack -V VID1[:VID2:..] | -P PoolID [-o serviceclass] [-m num] [-c] [-n finalPool" << " to start a repack request (-m to set the number of retry in case of failure of the request. Default is one). If the option -c is given the tapes in the request will be reclaimed. Option -n is used to specified a new tape pool in which the tape should be moved after being repacked."<< std::endl
-                  << " repack -s " 
+                  << " repack -s "
                   << "   (to have the global status of the all repack sequests not archived)" << std::endl
-                  << " repack -S VID[:VID2:..] " 
-                  << "   (to have the status of the repack requests not archivedfor that vid)" << std::endl 
-                  << " repack -x VID[:VID2:..] " 
-                  << "   (to have the name server information for the files which were in that tape before starting the repack process)" << std::endl   	
-		  << " repack -R VID1[:VID2:..] " 
+                  << " repack -S VID[:VID2:..] "
+                  << "   (to have the status of the repack requests not archivedfor that vid)" << std::endl
+                  << " repack -x VID[:VID2:..] "
+                  << "   (to have the name server information for the files which were in that tape before starting the repack process)" << std::endl
+		  << " repack -R VID1[:VID2:..] "
                   << "   (to abort a repack request)" << std::endl
-		  << " repack -r VID1[:VID2:..] " 
+		  << " repack -r VID1[:VID2:..] "
 		  << "   (to restart a failed or finished repack subrequest)" << std::endl
-		  << " repack -A VID1[:VID2:..] " 
+		  << " repack -A VID1[:VID2:..] "
                   << "   (to archive the finished  tape specified by VID)" << std::endl
-		  << " repack -a " 
+		  << " repack -a "
                   << "   (to archive all the finished tapes)" << std::endl
-		  << " repack -e VID1[:VID2:..] " 
+		  << " repack -e VID1[:VID2:..] "
                   << "  (to know the status and extra information of the failed files which where in  the  specified tape)" << std::endl
-		  << " repack -h " 
+		  << " repack -h "
 		  << "   (to have more information about the client)" << std::endl<< std::endl;
 
 }
@@ -303,13 +305,13 @@ void RepackClient::usage()
 //------------------------------------------------------------------------------
 void RepackClient::help(){
 	std::cout << "\n *** The RepackClient *** \n" << std::endl
-	<< " This client sends a request to the repack server with tapes or one pool to be repacked. "<< std::endl 
-	<< " Several tapes can be added by sperating them by ':'.It is also possible to repack a tape pool."<< std::endl 
+	<< " This client sends a request to the repack server with tapes or one pool to be repacked. "<< std::endl
+	<< " Several tapes can be added by sperating them by ':'.It is also possible to repack a tape pool."<< std::endl
 	<< " Here, only the name of one tape pool is allowed and a output ." << std::endl;
 
-	std::cout << " The hostname and port can be changed in your castor " << std::endl 
-	<< " config file or by defining them in your enviroment." << std::endl << std::endl 
-	<< " * The enviroment variables are: "<< std::endl 
+	std::cout << " The hostname and port can be changed in your castor " << std::endl
+	<< " config file or by defining them in your enviroment." << std::endl << std::endl
+	<< " * The enviroment variables are: "<< std::endl
         << "   REPACK_HOST or REPACK_HOST_ALT "<< std::endl
 	<< "   REPACK_PORT or REPACK_PORT_ALT "<< std::endl  << std::endl
 	<< " * The castor config file :" << std::endl
@@ -317,7 +319,7 @@ void RepackClient::help(){
 	<< "   REPACK PORT <port number> "<< std::endl << std::endl
 	<< " If the enviroment has no vaild entries, the castor configuration file" << std::endl
 	<< " is read." << std::endl << std::endl;
-		
+
         usage();
 }
 
@@ -339,7 +341,7 @@ int RepackClient::addTapes(RepackRequest *rreq)
 	  	rreq->addRepacksubrequest(sreq);
 	  }
 	  return 0;
-	}	
+	}
 	return -1;
 }
 
@@ -350,8 +352,8 @@ castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
 {
   char cName[CA_MAXHOSTNAMELEN];
   struct passwd *pw = Cgetpwuid(getuid());
-  
-  /** Get Remote Host and Port Number from environment or from castor config 
+
+  /** Get Remote Host and Port Number from environment or from castor config
     *  file
     */
   try {
@@ -361,12 +363,12 @@ castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
     std::cout << ex.getMessage().str() << " Aborting.." << std::endl;
     return NULL;
   }
-  
+
   if ( gethostname(cName, CA_MAXHOSTNAMELEN) != 0 ){
   	std::cout << "Cannot get own hostname !" << std::endl << " Aborting.." << std::endl;
   	return NULL;
   }
-  
+
   /// be sure to repack to the default service class tape pool
   if ( cp.command == REPACK && cp.serviceclass == NULL ){
     std::string answer;
@@ -375,26 +377,26 @@ castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
     if ( answer.compare("n") == 0 )
       return NULL;
   }
-  
+
   RepackRequest* rreq = new RepackRequest();
   addTapes(rreq);
   rreq->setCommand((castor::repack::RepackCommandCode)cp.command);
   if ( cp.stager ) rreq->setStager(cp.stager);
-  
+
   /* or, we want to repack a pool */
   if ( cp.pool != NULL ) {
   	if ( !rreq->repacksubrequest().size() )
        rreq->setPool(cp.pool);
     else
     {
-    	std::cout << "You must specify either a pool name or one or more volumes." 
+    	std::cout << "You must specify either a pool name or one or more volumes."
     			  << std::endl;
     	usage();
     	freeRepackObj(rreq);
-    	return NULL;  	
+    	return NULL;
      }
   }
-  
+
   rreq->setPid(getpid());
   rreq->setUserName(pw->pw_name);
   rreq->setUserId((u_signed64)pw->pw_uid);
@@ -406,13 +408,13 @@ castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
   if (cp.finalPool !=NULL) rreq->setFinalPool(cp.finalPool);
   if ( cp.serviceclass != NULL ) rreq->setSvcclass(cp.serviceclass);
   return rreq;
-  
+
 }
 
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-void RepackClient::run(int argc, char** argv) 
+void RepackClient::run(int argc, char** argv)
 {
 
   try {
@@ -423,11 +425,11 @@ void RepackClient::run(int argc, char** argv)
     }
     // builds a request and prints it
     castor::repack::RepackRequest* req = buildRequest();
-    
+
     if ( req == NULL ){
     	exit(1);
     }
-   
+
     // creates a socket
     castor::io::ClientSocket s(m_defaultport, m_defaulthost);
     s.setTimeout(100000);
@@ -435,7 +437,7 @@ void RepackClient::run(int argc, char** argv)
     // sends the request
     s.sendObject(*req);
     castor::IObject* obj = s.readObject();
-	
+
     RepackAck* ack = dynamic_cast<castor::repack::RepackAck*>(obj);
     if ( ack != 0 ) handleResponse(ack);
 
@@ -455,9 +457,9 @@ void RepackClient::run(int argc, char** argv)
 // handleResponse
 //------------------------------------------------------------------------------
 void RepackClient::handleResponse(castor::repack::RepackAck* ack) {
-	
+
   time_t submit_time = 0;
-  
+
   std::vector<castor::repack::RepackResponse*> resps=ack->repackresponse();
   if (resps.empty()){
     switch (ack->command()){
@@ -472,22 +474,22 @@ void RepackClient::handleResponse(castor::repack::RepackAck* ack) {
       exit(1);
     }
     return;
-  } 
+  }
 
   std::sort(resps.begin(), resps.end(), sortAnswers());
 
   std::vector<RepackResponse*>::iterator resp=resps.begin();
   std::vector<RepackSegment*>::iterator segment;
   std::vector<RepackSegment*> segments;
-  
-  char* nsStr; 
+
+  char* nsStr;
   if ( !(nsStr = getconfent("CNS", "HOST",0)) && !(nsStr = getenv("CNS_HOST")) ){
     nsStr=strdup("castorns");
-  }  
+  }
 
   std::string nameServer(nsStr);
   FileListHelper m_filehelper(nameServer);
-  
+
 
   while (resp != resps.end()){
     RepackSubRequest* sub=(*resp)->repacksubrequest();
@@ -498,7 +500,7 @@ void RepackClient::handleResponse(castor::repack::RepackAck* ack) {
         << (*resp)->errorMessage() << std::endl;
 	exit(1);
       }
-      
+
       // tape related error
 
       std::cout<<"Operation for tape "<<sub->vid()
@@ -511,15 +513,15 @@ void RepackClient::handleResponse(castor::repack::RepackAck* ack) {
     switch ( ack->command() ){
       case GET_NS_STATUS :
 	submit_time = sub->submitTime();
-       
+
           std::cout << "\n   *** Repacking of tape "<<sub->vid()<<" : details file by file ***\n" << std::endl;
 
-	  // Query the name server to retrieve more information related with the situation of segment 
+	  // Query the name server to retrieve more information related with the situation of segment
 
 	  segments= sub->repacksegment();
           if (segments.empty()){
 	     std::cout << "no  file for this tape in Repack database \n" << std::endl;
-	    
+
 	  } else {
 	    std::cout << "===================================================================================================================" << std::endl;
 
@@ -527,12 +529,12 @@ void RepackClient::handleResponse(castor::repack::RepackAck* ack) {
 		      <<std::setw(10)<<"Copyno"
 		      <<std::setw(10)<<"Fsec"
 		      <<std::setw(18)<<"Segsize"
-		      <<std::setw(11)<<"Comp"    
+		      <<std::setw(11)<<"Comp"
 		      <<std::setw(10)<<"Vid"
 		      <<std::setw(10)<<"Fseq"
 		      <<std::setw(17)<<"Blockid"
 		      <<std::setw(10)<<"Checksum"<< std::endl;
-  
+
 	    std::cout << "===================================================================================================================" << std::endl;
 	    segment=segments.begin();
 	    while ( segment != segments.end() ) {
@@ -543,17 +545,17 @@ void RepackClient::handleResponse(castor::repack::RepackAck* ack) {
 	  break;
 
     case REPACK:
-    case ARCHIVE: 
+    case ARCHIVE:
     case ARCHIVE_ALL:
     case REMOVE:
     case RESTART:
       std::cout<<"Operation succeeded for tape "<<sub->vid()<<std::endl;
       break;
 
-    case GET_STATUS_ALL: 
+    case GET_STATUS_ALL:
       if (resp == resps.begin()) {
 	  // tittle just at the begining
-	std::cout << "\n=======================================================================================================================" 
+	std::cout << "\n======================================================================================================================="
 		    << std::endl;
 	std::cout <<std::setw(13)<< "CurrentTime  "<<
 	  std::setw(17)<<"SubmitTime  "<<
@@ -564,14 +566,14 @@ void RepackClient::handleResponse(castor::repack::RepackAck* ack) {
 	  std::setw(10)<<"toMigr"<<
 	  std::setw(10)<<"Failed"<<
 	  std::setw(10)<<"Migrated"<<
-	  std::setw(12)<<"Status" <<std::endl; 
+	  std::setw(12)<<"Status" <<std::endl;
 
 	std::cout << "-----------------------------------------------------------------------------------------------------------------------"<< std::endl;
       }
-	
+
       printTapeDetail(sub);
       break;
-      
+
     case GET_STATUS:
       if (resp == resps.begin()) {
 	std::cout << "\n=======================================================================================================================" << std::endl;
@@ -585,7 +587,7 @@ void RepackClient::handleResponse(castor::repack::RepackAck* ack) {
 	  std::setw(10)<<"toMigr"<<
 	  std::setw(10)<<"Failed"<<
 	  std::setw(10)<<"Migrated"<<
-	  std::setw(12)<<"Status" <<std::endl; 
+	  std::setw(12)<<"Status" <<std::endl;
         std::cout << "-----------------------------------------------------------------------------------------------------------------------"<< std::endl;
       }
       printTapeDetail(sub);
@@ -610,13 +612,13 @@ void RepackClient::handleResponse(castor::repack::RepackAck* ack) {
 	}
 	std::cout<<std::endl;
       }
-      break;	
+      break;
 
     } //end switch
     resp++;
   } // end loop for each tape
   std::cout<<std::endl;
-} 
+}
 
 
 
@@ -640,7 +642,7 @@ void RepackClient::printTapeDetail(RepackSubRequest *tape){
   statuslist[RSUBREQUEST_TOBERESTARTED] = "RESTART";
   statuslist[RSUBREQUEST_ARCHIVED] = "ARCHIVED";
   statuslist[RSUBREQUEST_ONHOLD] = "ONHOLD";
-  
+
   u64tostru(tape->xsize(), buf, 0);
   printTime(&current_time);
   printTime(&submit_time);
@@ -649,7 +651,7 @@ void RepackClient::printTapeDetail(RepackSubRequest *tape){
 
     std::cout<<
       std::setw(8)  <<std::right <<tape->vid()<<
-      std::setw(11)  <<std::right <<  " N/A"<< 
+      std::setw(11)  <<std::right <<  " N/A"<<
       std::setw(12) << std::right << " N/A" <<
       std::setw(10) << std::right << " N/A" <<
       std::setw(10) << std::right << " N/A" <<
@@ -663,9 +665,9 @@ void RepackClient::printTapeDetail(RepackSubRequest *tape){
   if (tape->status() == RSUBREQUEST_TOBESTAGED || tape->status() == RSUBREQUEST_ONHOLD ) {
     // not sent to the stager  yet
 
-    std::cout<< 
-      std::setw(8)  <<std::right <<tape->vid() <<   
-      std::setw(11)  <<std::right <<   tape->files() << 
+    std::cout<<
+      std::setw(8)  <<std::right <<tape->vid() <<
+      std::setw(11)  <<std::right <<   tape->files() <<
       std::setw(11) << std::right << buf <<'B'<<
       std::setw(10) << std::right << "N/A" <<
       std::setw(10) << std::right << "N/A" <<
@@ -679,7 +681,7 @@ void RepackClient::printTapeDetail(RepackSubRequest *tape){
 
   std::cout <<
     std::setw(8) <<std::right <<tape->vid() <<
-    std::setw(11) <<std::right <<  tape->files() << 
+    std::setw(11) <<std::right <<  tape->files() <<
     std::setw(11) << std::right << buf <<"B"<<
     std::setw(10) << std::right << tape->filesStaging() <<
     std::setw(10) << std::right << tape->filesMigrating() <<
@@ -716,7 +718,7 @@ void RepackClient::setRemotePort()
   // Repack server port. Can be given through the environment
   // variable REPACK_PORT or in the castor.conf file as a
   // REPACK_PORT entry. If none is given, default is used
-  if ((port = getenv (PORT_ENV)) != 0 
+  if ((port = getenv (PORT_ENV)) != 0
       || (port = getenv ((char*)PORT_ENV_ALT)) != 0 ) {
     char* dp = port;
     errno = 0;
@@ -735,7 +737,7 @@ void RepackClient::setRemotePort()
     }
     m_defaultport = iport;
   }
-  
+
 }
 
 //------------------------------------------------------------------------------

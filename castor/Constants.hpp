@@ -234,9 +234,6 @@ namespace castor {
    */
   enum ServicesIds {
     SVC_INVALID = 0,
-    SVC_NOMSG = 1,
-    SVC_DLFMSG = 2,
-    SVC_STDMSG = 3,
     SVC_STREAMCNV = 4,
 
     SVC_REMOTEJOBSVC = 5,

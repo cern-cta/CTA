@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api_listPrivileges.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/05/30 10:54:09 $ $Author: sponcec3 $
+ * @(#)$RCSfile: stager_client_api_listPrivileges.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2009/07/13 06:22:08 $ $Author: waldron $
  *
  * api to list privileges i.e. the content of the black and white list
  *
@@ -96,13 +96,11 @@ EXTERN_C int DLL_DECL stage_listPrivileges
  int* nbPrivs,
  struct stage_options* opts) {
   try {
-    castor::BaseObject::initLog("", castor::SVC_NOMSG);
-
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
     int ret = setDefaultOption(opts);
     client.setOptions(opts);
-    client.setAuthorizationId(); 
+    client.setAuthorizationId();
     if (ret == -1) { free(opts); }
 
     // create request
@@ -112,7 +110,7 @@ EXTERN_C int DLL_DECL stage_listPrivileges
     req.setRequestType(requestType);
 
     // Send request
-    std::vector<castor::bwlist::Privilege *>respvec;    
+    std::vector<castor::bwlist::Privilege *>respvec;
     ListPrivilegesResponseHandler rh(&respvec);
     client.sendRequest(&req, &rh);
 

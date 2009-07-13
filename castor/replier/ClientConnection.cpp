@@ -19,8 +19,6 @@
  *
  * @(#)ClientConnection.cpp,v 1.7 $Release$ 2004/09/17 09:08:27 bcouturi
  *
- *
- *
  * @author Benjamin Couturier
  *****************************************************************************/
 
@@ -69,10 +67,7 @@ castor::replier::ClientConnection::ClientConnection() throw() :
   BaseObject(), m_client(), m_messages(), m_fd(-1),
   m_lastEventDate(time(0)), m_status(INACTIVE), m_terminate(false),
   m_nextMessageId(1) {
-
-  const char *func = "cc::ClientConnection ";
   m_clientStr = buildClientStr(m_client);
-  clog() << VERBOSE << SETW func  << this->toString() << " created" << std::endl;
 }
 
 castor::replier::ClientConnection::ClientConnection(ClientResponse cr) throw() :
@@ -89,10 +84,14 @@ void castor::replier::ClientConnection::addMessage(ClientResponse cr) throw() {
   cr.messageId = m_nextMessageId;
   m_nextMessageId++;
   m_messages.push(cr);
-  clog() << DEBUG << SETW func << this->toString() << " added msg:" 
-	       << cr.messageId << " (terminate:" 
-         << (cr.isLast ? 1 : 0) << ")"
-         << std::endl;
+  // "CC: Adding message to client connection"
+  castor::dlf::Param params[] =
+    {castor::dlf::Param("Function", func),
+     castor::dlf::Param("ClientInfo", this->toString()),
+     castor::dlf::Param("MessageId", cr.messageId),
+     castor::dlf::Param("IsLast", cr.isLast ? "Yes" : "No")};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                          DLF_BASE_STAGERLIB + 2, 4, params);
   if (cr.isLast) {
     m_terminate = true;
   }
@@ -145,19 +144,26 @@ void castor::replier::ClientConnection::close() throw() {
 #else
   ::closesocket(m_fd);
 #endif
-  clog() << VERBOSE << SETW func  << this->toString() << " Deleting while "
-	 << m_messages.size() << " messages are left"
-	 << std::endl;
+  // "CC: Closing client connection"
+  castor::dlf::Param params[] =
+    {castor::dlf::Param("Function", func),
+     castor::dlf::Param("ClientInfo", this->toString()),
+     castor::dlf::Param("MessagesLeft", m_messages.size())};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                          DLF_BASE_STAGERLIB + 3, 3, params);
   while (!m_messages.empty()) {
     ClientResponse message = m_messages.front();
-    clog() << VERBOSE << SETW func  << this->toString() << " Deleting msg "
-	   << message.messageId
-	   << std::endl;
+    // "CC: Deleting message"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Function", func),
+       castor::dlf::Param("ClientInfo", this->toString()),
+       castor::dlf::Param("MessageId", message.messageId)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                            DLF_BASE_STAGERLIB + 4, 3, params);
     delete message.response;
     m_messages.pop();
   }
 }
-
 
 castor::rh::Client castor::replier::ClientConnection::client()  throw() {
   return m_client;
@@ -183,7 +189,7 @@ void castor::replier::ClientConnection::setErrorMessage(std::string msg) throw (
   m_errorMessage = msg;
 }
 
-std::queue<castor::replier::ClientResponse> 
+std::queue<castor::replier::ClientResponse>
 castor::replier::ClientConnection::messages() throw() {
   return m_messages;
 }
@@ -194,11 +200,8 @@ bool castor::replier::ClientConnection::hasMessagesToSend() throw() {
 
 void castor::replier::ClientConnection::setStatus(enum RCStatus stat)
   throw() {
-  const char *func = "cc::setStatus ";
   m_status = stat;
   m_lastEventDate = time(0);
-  clog() << VERBOSE << SETW func  << this->toString() << " Setting status to "
-         << getStatusStr() << std::endl;
 }
 
 void castor::replier::ClientConnection::createSocket()
@@ -211,7 +214,7 @@ void castor::replier::ClientConnection::createSocket()
     ex.getMessage() << "Can't create socket:" << strerror(errno) << std::endl;
     throw ex;
   }
-  
+
   // Setting the socket to nodelay mode
   int yes = 1;
   if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, (char *)&yes, sizeof(yes)) < 0) {
@@ -219,12 +222,11 @@ void castor::replier::ClientConnection::createSocket()
     ex.getMessage() << "Can't set socket to TCP_NODELAY mode:"
                     << strerror(errno) << std::endl;
 #if !defined(_WIN32)
-	::close(s);
+    ::close(s);
 #else
-	::closesocket(s);
+    ::closesocket(s);
 #endif
     throw ex;
-
   }
 
   // Setting the socket to asynchonous mode
@@ -239,9 +241,9 @@ void castor::replier::ClientConnection::createSocket()
     ex.getMessage() << "Can't set socket to asynchonous mode:"
                     << strerror(errno) << std::endl;
 #if !defined(_WIN32)
-	::close(s);
+    ::close(s);
 #else
-	::closesocket(s);
+    ::closesocket(s);
 #endif
     throw ex;
   }
@@ -252,8 +254,6 @@ void castor::replier::ClientConnection::createSocket()
 
 void castor::replier::ClientConnection::connect()
   throw(castor::exception::Exception) {
-
-  const char *func = "cc::connect ";
 
   // Preparing the client address
   struct sockaddr_in saddr;
@@ -273,15 +273,12 @@ void castor::replier::ClientConnection::connect()
     ex.getMessage() << "Can't connect to client:"
                     << strerror(errno) << std::endl;
 #if !defined(_WIN32)
-	::close(m_fd);
+    ::close(m_fd);
 #else
-	::closesocket(m_fd);
+    ::closesocket(m_fd);
 #endif
     throw ex;
   }
-  clog() << VERBOSE << SETW func  << this->toString() 
-	 <<" connect syscall ok"
-         << std::endl;
   // The socket of the request replier is non-blocking. As a consequence of this
   // EINPROGRESS (Operation now in progress) is an expected return value of the
   // connect() call. We reset errno to 0 as this is expected behaviour.
@@ -294,16 +291,20 @@ void castor::replier::ClientConnection::connect()
     errno = 0;
   }
 #endif
-  setStatus(CONNECTING);  
+  setStatus(CONNECTING);
 }
 
 void castor::replier::ClientConnection::deleteNextMessage()  throw(castor::exception::Exception) {
   const char *func = "cc::deleteNextMessage ";
   if (!m_messages.empty()) {
     ClientResponse message = m_messages.front();
-    clog() << VERBOSE << SETW func  << this->toString() << " Deleting msg "
-	   << message.messageId
-	   << std::endl;
+    // "CC: Deleting message"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Function", func),
+       castor::dlf::Param("ClientInfo", this->toString()),
+       castor::dlf::Param("MessageId", message.messageId)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                            DLF_BASE_STAGERLIB + 4, 3, params);
     delete message.response;
     m_messages.pop();
   }
@@ -312,15 +313,17 @@ void castor::replier::ClientConnection::deleteNextMessage()  throw(castor::excep
 void castor::replier::ClientConnection::sendNextMessage()  throw(castor::exception::Exception) {
   const char *func = "cc::sendNextMessage ";
   if (m_messages.empty()) {
-    clog() << DEBUG << SETW func  << this->toString() 
-	   << "No more messages in queue!" << std::endl;
-     NoMoreMessagesException nme;
+    // "CC: No more messages in queue"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Function", func),
+       castor::dlf::Param("ClientInfo", this->toString())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                            DLF_BASE_STAGERLIB + 5, 2, params);
+    NoMoreMessagesException nme;
     throw nme;
   }
   send();
 }
-
-
 
 // Internal send method
 void castor::replier::ClientConnection::send()
@@ -384,17 +387,18 @@ void castor::replier::ClientConnection::send()
       setStatus(RESEND);
     } else {
       delete[] buf;
-      clog() << ERROR << SETW func  << this->toString() << " msg:" << message.messageId
-	     << " WRITE FAILURE (isLast:"
-	     << ((message.isLast)?1:0)
-	     << ") rc:" << rc
-	     <<  " (len:" << buflen << ")";
-      if (errno != 0) {
-        clog() << "error: " << strerror(errno);
-      }
-      clog() << std::endl;
+      // "CC: Write failure"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Function", func),
+         castor::dlf::Param("ClientInfo", this->toString()),
+         castor::dlf::Param("MessageId", message.messageId),
+         castor::dlf::Param("IsLast", message.isLast ? "Yes" : "No"),
+         castor::dlf::Param("Error", sstrerror(errno)),
+         castor::dlf::Param("Length", buflen)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                              DLF_BASE_STAGERLIB + 6, 6, params);
       setStatus(DONE_FAILURE);
-      m_errorMessage = std::string("Error while sending: ") 
+      m_errorMessage = std::string("Error while sending: ")
         + std::string(strerror(errno));
       castor::exception::Exception ex(errno);
       ex.getMessage() << "Error while sending";
@@ -403,27 +407,27 @@ void castor::replier::ClientConnection::send()
   } else {
     m_lastEventDate = time(0);
     deleteNextMessage();
- 
-    clog() << VERBOSE << SETW func  << this->toString() 
-	   << " msg:" << message.messageId 
-	   << " Send successful (isLast:"
-	   << ((message.isLast)?1:0)
-	   << ") written:" << written
-	   <<  " (len:" << buflen << ")"
-           << std::endl;   
+    // "CC: Send successful"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Function", func),
+       castor::dlf::Param("ClientInfo", this->toString()),
+       castor::dlf::Param("MessageId", message.messageId),
+       castor::dlf::Param("IsLast", message.isLast ? "Yes" : "No"),
+       castor::dlf::Param("Sent", written),
+       castor::dlf::Param("Length", buflen)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                            DLF_BASE_STAGERLIB + 7, 6, params);
   }
 
   delete[] buf;
 }
 
-
 std::string castor::replier::ClientConnection::toString() throw() {
-   std::ostringstream sst;
-   sst << m_clientStr 
-       << "(" << this->fd() <<  "," << this->getStatusStr() << ")";
+  std::ostringstream sst;
+  sst << m_clientStr
+      << "(" << this->fd() <<  "," << this->getStatusStr() << ")";
   return sst.str();
 }
-
 
 std::string castor::replier::ClientConnection::buildClientStr(castor::rh::Client client) {
   std::ostringstream sst;

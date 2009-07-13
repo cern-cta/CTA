@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_get.cpp,v 1.34 2008/03/25 14:35:21 itglp Exp $
+ * $Id: stager_client_api_get.cpp,v 1.35 2009/07/13 06:22:08 waldron Exp $
  */
 
 /*
@@ -54,7 +54,7 @@ EXTERN_C int DLL_DECL stage_prepareToGet(const char *userTag,
                                   char **requestId,
                                   struct stage_options* opts) {
 
- 
+
   const char *func = "stage_prepareToGet";
   int ret=0;
 
@@ -67,14 +67,10 @@ EXTERN_C int DLL_DECL stage_prepareToGet(const char *userTag,
     return -1;
   }
 
-
   const char *duserTag = (userTag != 0)?userTag:"NULL";
   stage_trace(3, "%s Usertag=%s", func, duserTag);
 
   try {
-    castor::BaseObject::initLog("", castor::SVC_NOMSG);
-    
-
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
     castor::stager::StagePrepareToGetRequest req;
@@ -98,7 +94,7 @@ EXTERN_C int DLL_DECL stage_prepareToGet(const char *userTag,
     // Preparing the requests
     for(int i=0; i<nbreqs; i++) {
       castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
-      
+
       if (!(requests[i].filename)) {
         serrno = EINVAL;
         stager_errmsg(func, "filename in request %d is NULL", i);
@@ -112,10 +108,10 @@ EXTERN_C int DLL_DECL stage_prepareToGet(const char *userTag,
       if (requests[i].protocol) {
 	subreq->setProtocol(std::string(requests[i].protocol));
       }
-      subreq->setPriority(requests[i].priority);      
+      subreq->setPriority(requests[i].priority);
       subreq->setRequest(&req);
-      
-      stage_trace(3, "%s file=%s proto=%s", 
+
+      stage_trace(3, "%s file=%s proto=%s",
 		  func, requests[i].filename, requests[i].protocol);
 
 
@@ -123,7 +119,7 @@ EXTERN_C int DLL_DECL stage_prepareToGet(const char *userTag,
 
     // Using the VectorResponseHandler which stores everything in
     // A vector. BEWARE, the responses must be de-allocated afterwards
-    std::vector<castor::rh::Response *>respvec;    
+    std::vector<castor::rh::Response *>respvec;
     castor::client::VectorResponseHandler rh(&respvec);
     std::string reqid = client.sendRequest(&req, &rh);
     if (requestId != NULL) {
@@ -139,11 +135,11 @@ EXTERN_C int DLL_DECL stage_prepareToGet(const char *userTag,
       stager_errmsg(func, "No responses received");
       return -1;
     }
-    
+
 
     // Creating the array of file responses
     // Same size as requests as we only do files for the moment
-    *responses = (struct stage_prepareToGet_fileresp *) 
+    *responses = (struct stage_prepareToGet_fileresp *)
       malloc(sizeof(struct stage_prepareToGet_fileresp) * nbResponses);
 
     if (*responses == NULL) {
@@ -152,12 +148,12 @@ EXTERN_C int DLL_DECL stage_prepareToGet(const char *userTag,
       return -1;
     }
     *nbresps = nbResponses;
-    
+
 
     for (int i=0; i<(int)respvec.size(); i++) {
 
       // Casting the response into a FileResponse !
-      castor::rh::FileResponse* fr = 
+      castor::rh::FileResponse* fr =
         dynamic_cast<castor::rh::FileResponse*>(respvec[i]);
       if (0 == fr) {
         castor::exception::Exception e(SEINTERNAL);
@@ -178,13 +174,13 @@ EXTERN_C int DLL_DECL stage_prepareToGet(const char *userTag,
       // The responses should be deallocated by the API !
       delete respvec[i];
     } // for
-    
+
   } catch (castor::exception::Exception e) {
     serrno = e.code();
     stager_errmsg(func, (e.getMessage().str().c_str()));
     return -1;
   }
-  
+
   return 0;
 
 }
@@ -201,7 +197,7 @@ EXTERN_C int DLL_DECL stage_get(const char *userTag,
 				struct stage_io_fileresp ** response,
 				char **requestId,
 				struct stage_options* opts) {
-  
+
   const char *func = "stage_get";
   int rc = -1;
   int saved_serrno = 0;
@@ -221,8 +217,6 @@ EXTERN_C int DLL_DECL stage_get(const char *userTag,
   stage_trace(3, "%s Usertag=%s Protocol=%s File=%s", func, duserTag, dprotocol, filename);
 
   try {
-    castor::BaseObject::initLog("", castor::SVC_NOMSG);
-
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
     castor::stager::StageGetRequest req;
@@ -256,15 +250,15 @@ EXTERN_C int DLL_DECL stage_get(const char *userTag,
     // Submitting the request
     castor::client::VectorResponseHandler rh(&respvec);
     std::string reqid = client.sendRequest(&req, &rh);
-    
+
     if (requestId != NULL) {
       *requestId = strdup(reqid.c_str());
     }
- 
+
     // Checking the result
     // Parsing the responses which have been stored in the vector
     int nbResponses =  respvec.size();
-    
+
     if (nbResponses <= 0) {
       castor::exception::Internal e;
       e.getMessage() << "No responses received";
@@ -273,17 +267,17 @@ EXTERN_C int DLL_DECL stage_get(const char *userTag,
 
     // Creating the file response
     // Same size as requests as we only do files for the moment
-    *response = (struct stage_io_fileresp *) 
+    *response = (struct stage_io_fileresp *)
       malloc(sizeof(struct stage_io_fileresp));
-    
+
     if (*response == NULL) {
       castor::exception::Exception e(ENOMEM);
       e.getMessage() << "Could not allocate memory for response";
       throw e;
     }
-    
+
     // Casting the response into an IOResponse !
-    castor::rh::IOResponse* fr = 
+    castor::rh::IOResponse* fr =
       dynamic_cast<castor::rh::IOResponse*>(respvec[0]);
       if (0 == fr) {
         castor::exception::Exception e(SEINTERNAL);
@@ -303,7 +297,7 @@ EXTERN_C int DLL_DECL stage_get(const char *userTag,
         (*response)->errorMessage=0;
       }
       rc = 0;
-      
+
   } catch (castor::exception::Communication e) {
     stager_errmsg(func, (e.getMessage().str().c_str()));
     if (requestId != NULL && e.getRequestId().length() > 0) {
@@ -316,11 +310,11 @@ EXTERN_C int DLL_DECL stage_get(const char *userTag,
     rc = -1;
     saved_serrno = e.code();
   }
-  
+
   // The responses should be deallocated by the API !
   // Only one entry has been put in the vector
   if (respvec.size() > 0 && 0 != respvec[0]) delete respvec[0];
-  
+
   serrno = saved_serrno;
   return rc;
 

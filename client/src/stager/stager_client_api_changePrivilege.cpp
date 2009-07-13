@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api_changePrivilege.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/11/25 17:45:52 $ $Author: sponcec3 $
+ * @(#)$RCSfile: stager_client_api_changePrivilege.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2009/07/13 06:22:08 $ $Author: waldron $
  *
  * api to handle privileges i.e. modify the black and white list
  *
@@ -97,7 +97,7 @@ int getRequestTypeId(std::string type)
   }
   castor::exception::InvalidArgument e;
   e.getMessage() << "Unknown requestType " << type;
-  throw e;  
+  throw e;
 }
 
 //-----------------------------------------------------------------------------
@@ -176,7 +176,7 @@ void parseRequestTypes(char *sreqTypes,
       delete r;
       throw e;
     }
-  }    
+  }
   // cleanup in case things went bad
   if (s.bad()) {
     for (std::vector<castor::bwlist::RequestType*>::const_iterator it =
@@ -199,21 +199,19 @@ void stage_changePrivilege(char* users,
                            char* requestTypes,
                            struct stage_options* opts,
                            bool isAdd) {
-  castor::BaseObject::initLog("", castor::SVC_NOMSG);
-  
   // Uses a BaseClient to handle the request
   castor::client::BaseClient client(stage_getClientTimeout());
   int ret = setDefaultOption(opts);
   client.setOptions(opts);
-  client.setAuthorizationId(); 
+  client.setAuthorizationId();
   if (ret==-1) { free(opts); }
-  
+
   // create request
   castor::bwlist::ChangePrivilege req;
   req.setIsGranted(isAdd);
   parseUsers(users, &req, req.users());
   parseRequestTypes(requestTypes, &req, req.requestTypes());
-  
+
   // Send request
   castor::client::BasicResponseHandler rh;
   client.sendRequest(&req, &rh);

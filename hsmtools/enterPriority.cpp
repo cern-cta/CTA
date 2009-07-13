@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: enterPriority.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/09/16 13:38:10 $ $Author: itglp $ 
+ * @(#)$RCSfile: enterPriority.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2009/07/13 06:22:09 $ $Author: waldron $
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -37,14 +37,14 @@ static struct Coptions longopts[] = {
   { "help",     NO_ARGUMENT,       NULL, 'h'},
   { "uid",      REQUIRED_ARGUMENT, NULL, 'u'},
   { "user",      REQUIRED_ARGUMENT, NULL, 'U'},
-  { "gid",      REQUIRED_ARGUMENT, NULL, 'g'}, 
+  { "gid",      REQUIRED_ARGUMENT, NULL, 'g'},
   { "group",      REQUIRED_ARGUMENT, NULL, 'G'},
-  { "priority", REQUIRED_ARGUMENT, NULL, 'p'}, 
+  { "priority", REQUIRED_ARGUMENT, NULL, 'p'},
   { NULL,       0,                 NULL,  0 }
 };
 
 void usage(char *cmd) {
-  std::cout << "Usage : \n" 
+  std::cout << "Usage : \n"
 	    << cmd << " [-h] -u/--uid uid -g/--gid gid -p/--priority priority"<<std::endl;
   std::cout << cmd << " [-h] -U/--user username -G/--group groupname -p/--priority priority"<< std::endl;
 }
@@ -54,10 +54,10 @@ int main(int argc, char *argv[]) {
   int mgid = -1;
   int muser=-1;
   int mgroup=-1;
-  int mpriority = -1; 
-     
+  int mpriority = -1;
+
   char* progName = argv[0];
-  
+
   // Deal with options
   Coptind = 1;
   Copterr = 1;
@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  // Check parameters  
+  // Check parameters
 
   if ((mpriority < 0) || (muid < 0 && muser < 0 )|| (mgid < 0 && mgroup < 0)) {
     std::cerr << " Uid, gid and/or priority options missing" << std::endl;
@@ -112,18 +112,15 @@ int main(int argc, char *argv[]) {
     return 0;
   }
   if ((muid>=0 && muser>=0) || (mgid>=0 && mgroup>=0)){
-    std::cerr << " Invalid syntax"<<std::endl; 
+    std::cerr << " Invalid syntax"<<std::endl;
     usage(progName);
     return 0;
   }
 
   muid=muid>0?muid:muser;
-  mgid=mgid>0?mgid:mgroup; 
+  mgid=mgid>0?mgid:mgroup;
 
   try {
-    // Initializing the log
-   castor::BaseObject::initLog("NewStagerLog", castor::SVC_NOMSG);
-
     // retrieve a Services object
     castor::Services* svcs = castor::BaseObject::services();
     // retrieve the DB service
@@ -133,23 +130,23 @@ int main(int argc, char *argv[]) {
                 << "Please check your configuration." << std::endl;
       exit(1);
     }
-    
+
     castor::stager::IStagerSvc* stgsvc =
       dynamic_cast<castor::stager::IStagerSvc*>(isvc);
-    
+
     // set the priority
     stgsvc->enterPriority(muid, mgid, mpriority);
 
-    // cleanup  
+    // cleanup
     stgsvc->release();
-    
+
   } catch (castor::exception::Exception e) {
     if (e.code() == 1) {
       std::cerr << "Priority for uid: " << muid << " and gid: " << mgid
 		<< " already exists" << std::endl;
     } else {
       std::cerr << "Caught exception :\n"
-		<< e.getMessage().str() << std::endl;    
+		<< e.getMessage().str() << std::endl;
     }
     exit(1);
   }

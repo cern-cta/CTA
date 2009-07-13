@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.41 $ $Release$ $Date: 2008/10/17 09:11:07 $ $Author: waldron $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.42 $ $Release$ $Date: 2009/07/13 06:22:06 $ $Author: waldron $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -82,8 +82,6 @@
 #include <Ctape_api.h>
 #include <serrno.h>
 
-#define NS_SEGMENT_NOTOK (' ')
-
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
@@ -129,7 +127,7 @@ const std::string castor::db::ora::OraGCSvc::s_dumpCleanupLogsString =
 
 const std::string castor::db::ora::OraGCSvc::s_truncateCleanupLogsString =
   "DELETE FROM CleanupJobLog";
-  // here a TRUNCATE statement won't work because we locked the table
+// here a TRUNCATE statement won't work because we locked the table
 
 /// SQL statement for function removeTerminatedRequests
 const std::string castor::db::ora::OraGCSvc::s_removeTerminatedRequestsString =
@@ -206,7 +204,7 @@ void castor::db::ora::OraGCSvc::reset() throw() {
 // selectFiles2Delete
 //------------------------------------------------------------------------------
 std::vector<castor::stager::GCLocalFile*>*
-  castor::db::ora::OraGCSvc::selectFiles2Delete(std::string diskServer)
+castor::db::ora::OraGCSvc::selectFiles2Delete(std::string diskServer)
   throw (castor::exception::Exception) {
   // Check whether the statements are ok
   if (0 == m_selectFiles2DeleteStatement) {
@@ -343,21 +341,21 @@ void castor::db::ora::OraGCSvc::filesDeleted
       int errBufLen = 1024;
       bool gotError = false;
       if (-1 == Cglobals_get(&nsErrBufKey, &errBuf, errBufLen)) {
-        clog() << ERROR
-               << "Unable to get thread safe variable in filesDeleted. "
-               << "The following files won't be deleted from name server"
-               << " while they should have been (we give fileids here) :"
-               << std::endl;
+        // "Error caught when calling Cglobals_get"
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("Function", "OraGCSvc::filesDeleted")};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                                DLF_BASE_ORACLELIB + 27, 1, params);
         gotError = true;
       }
       if (!gotError) {
         // Now let's give this buffer to the name server
         if (0 != Cns_seterrbuf((char*)errBuf, errBufLen)) {
-          clog() << ERROR
-                 << "Error caught when calling Cns_seterrbuf in filesDeleted. "
-                 << "The following files won't be deleted from name server"
-                 << " while they should have been (we give fileids here) :"
-                 << std::endl;
+          // "Error caught when calling Cns_seterrbuf"
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("Function", "OraGCSvc::filesDeleted")};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                                  DLF_BASE_ORACLELIB + 28, 1, params);
           gotError = true;
         }
       }
@@ -366,24 +364,29 @@ void castor::db::ora::OraGCSvc::filesDeleted
         try {
           oracle::occi::ResultSet::Status status = rs->next();
           while (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
-            //u_signed64 fileid = (u_signed64) rs->getDouble(1);
-            std::string nsHost = rs->getString(2);
-            clog() << ERROR << (u_signed64)rs->getDouble(1)
-                   << "@" << rs->getString(2)
-                   << std::endl;
+            // "The following file should have been deleted from the
+            //  nameserver but couldn't because of a previous error"
+            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                                    DLF_BASE_ORACLELIB + 29,
+                                    (u_signed64)rs->getDouble(1),
+                                    rs->getString(2));
             status = rs->next();
           }
           m_filesDeletedStatement->closeResultSet(rs);
         } catch (oracle::occi::SQLException e) {
-          clog() << ERROR << "Error caught while listing fileids :\n"
-                 << e.getMessage() << "\nGiving up." << std::endl;
+          // "Error caught while listing fileids - giving up"
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                                  DLF_BASE_ORACLELIB + 30);
         }
         // Cleanup the DB
         try {
           m_filesDeletedTruncateStatement->execute();
         } catch (oracle::occi::SQLException e) {
-          clog() << ERROR << "Error caught while truncating FilesDeletedProcOutput :\n"
-                 << e.getMessage() << std::endl;
+          // "Error caught while truncating FilesDeletedProcOutput"
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("Message", e.getMessage())};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                                  DLF_BASE_ORACLELIB + 31, 1, params);
         }
         //free allocated memory
         free(lens);
@@ -407,29 +410,32 @@ void castor::db::ora::OraGCSvc::filesDeleted
         std::string nsHost = rs->getString(2);
         // and first of all, get the file name
         if (0 != Cns_getpath((char*)nsHost.c_str(), fileid, castorFileName)) {
-	  if (serrno != ENOENT) {
-	    if (!strcmp((char *)errBuf, "")) {
-	      strncpy((char *)errBuf, sstrerror(serrno), errBufLen);
-	    }
-	    clog() << ERROR
-		   << "Error caught when calling Cns_getpath in filesDeleted "
-		   << "for fileid " << fileid << " and nsHost "
-		   << nsHost << " : " << (char*)errBuf
-		   << ". This file won't be "
-		   << "deleted from name server while it should have been."
-		   << std::endl;
-	  }
+          if (serrno != ENOENT) {
+            if (!strcmp((char *)errBuf, "")) {
+              strncpy((char *)errBuf, sstrerror(serrno), errBufLen);
+            }
+            // "Error caught when calling Cns_getpath. This file won't be
+            //  deleted from the nameserver when it should have been"
+            castor::dlf::Param params[] =
+              {castor::dlf::Param("Function", "OraGCSvc::filesDeleted"),
+               castor::dlf::Param("Message", (char*)errBuf)};
+            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                                    DLF_BASE_ORACLELIB + 32, fileid,
+                                    nsHost, 2, params);
+          }
         } else {
           if (0 != Cns_unlink(castorFileName)) {
-	    if (!strcmp((char *)errBuf, "")) {
-	      strncpy((char *)errBuf, sstrerror(serrno), errBufLen);
-	    }
-            clog() << ERROR
-                   << "Error caught when unlinking "
-                   << castorFileName << " (fileid "
-                   << fileid << ") from name server "
-                   << nsHost << " : " << (char*)errBuf
-                   << std::endl;
+            if (!strcmp((char *)errBuf, "")) {
+              strncpy((char *)errBuf, sstrerror(serrno), errBufLen);
+            }
+            // "Error caught when unlinking file"
+            castor::dlf::Param params[] =
+              {castor::dlf::Param("Function", "OraGCSvc::filesDeleted"),
+               castor::dlf::Param("Filename", castorFileName),
+               castor::dlf::Param("Message", (char*)errBuf)};
+            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                                    DLF_BASE_ORACLELIB + 33, fileid,
+                                    nsHost, 3, params);
           }
         }
         status = rs->next();
@@ -440,8 +446,11 @@ void castor::db::ora::OraGCSvc::filesDeleted
     try {
       m_filesDeletedTruncateStatement->execute();
     } catch (oracle::occi::SQLException e) {
-      clog() << ERROR << "Error caught while truncating FilesDeletedProcOutput :\n"
-             << e.getMessage() << std::endl;
+      // "Error caught while truncating FilesDeletedProcOutput"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Message", e.getMessage())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                              DLF_BASE_ORACLELIB + 31, 1, params);
     }
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
@@ -662,7 +671,7 @@ void castor::db::ora::OraGCSvc::dumpCleanupLogs()
         // "File was dropped by internal cleaning" or "Put Done enforced by internal cleaning"
         if(op == 0 || op == 1) {
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING,
-            DLF_BASE_ORACLELIB + 12 + op, 0, 0, &fileid);
+                                  DLF_BASE_ORACLELIB + 12 + op, 0, 0, &fileid);
         }
         status = rs->next();
       }

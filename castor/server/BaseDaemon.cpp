@@ -30,12 +30,10 @@
 #include "castor/server/BaseDaemon.hpp"
 #include "castor/server/UDPListenerThreadPool.hpp"
 #include "castor/exception/Internal.hpp"
-#include "castor/MsgSvc.hpp"
 #include "Cgetopt.h"
 #include "Cinit.h"
 #include "Cuuid.h"
 #include "Cthread_api.h"
-#include "castor/logstream.h"
 #include <sstream>
 #include <iostream>
 #include <iomanip>
@@ -63,11 +61,11 @@ void castor::server::BaseDaemon::init() throw (castor::exception::Exception)
   // Initialize mutex variable in case of a signal. Timeout = 10 seconds
   m_signalMutex = new Mutex(0);
 
-  // Initialize errno, serrno 
+  // Initialize errno, serrno
   errno = serrno = 0;
 
   // Mask all signals so that user threads are not unpredictably
-  // interrupted by them  
+  // interrupted by them
   sigemptyset(&m_signalSet);
   if(m_foreground) {
     // in foreground we catch Ctrl-C as well
@@ -92,7 +90,7 @@ void castor::server::BaseDaemon::init() throw (castor::exception::Exception)
 
   // Create the DLF related threads. This is done here because it is after
   // daemonization and signal handler creation.
-  dlf_create_threads(0); 
+  dlf_create_threads(0);
 }
 
 
@@ -102,7 +100,7 @@ void castor::server::BaseDaemon::init() throw (castor::exception::Exception)
 void castor::server::BaseDaemon::start() throw (castor::exception::Exception)
 {
   castor::server::BaseServer::start();
-  
+
   /* Wait forever on a caught signal */
   handleSignals();
 }
@@ -114,13 +112,13 @@ void castor::server::BaseDaemon::start() throw (castor::exception::Exception)
 void castor::server::BaseDaemon::addNotifierThreadPool(int port)
 {
   if(m_threadPools['_'] != 0) delete m_threadPools['_'];   // sanity check
-    
+
   // This is a pool for internal use, we don't use addThreadPool
   // so to not change the command line parsing behavior
   m_threadPools['_'] =
     new castor::server::UDPListenerThreadPool("_NotifierThread",
-      castor::server::NotifierThread::getInstance(this), port);
-  
+                                              castor::server::NotifierThread::getInstance(this), port);
+
   // we run the notifier in the same thread as the listening one
   m_threadPools['_']->setNbThreads(0);
 }
@@ -133,29 +131,40 @@ void castor::server::BaseDaemon::handleSignals()
 {
   while(true) {
     try {
-      m_signalMutex->lock();  
-  
+      m_signalMutex->lock();
+
       // poll the signalMutex
       while (!m_signalMutex->getValue()) {
-        // Note: Without COND_TIMEOUT > 0 this will never work - because the 
-        // condition variable is changed in a signal handler - we cannot use 
+        // Note: Without COND_TIMEOUT > 0 this will never work - because the
+        // condition variable is changed in a signal handler - we cannot use
         // condition signal in this signal handler
         m_signalMutex->wait();
       }
-      
+
       int sigValue = m_signalMutex->getValue();
 
       switch (sigValue) {
-        case STOP_GRACEFULLY:
-          clog() << SYSTEM << "GRACEFUL STOP [SIGTERM] - Shutting down the service" << std::endl;
+      case STOP_GRACEFULLY:
+        {
+          // "Caught signal - GRACEFUL STOP"
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("Type", "SIGTERM"),
+             castor::dlf::Param("Message", "Shutting down the service")};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+                                  DLF_BASE_FRAMEWORK + 12, 2, params);
           // Wait on all threads/processes to terminate
           waitAllThreads();
-          clog() << SYSTEM << "GRACEFUL STOP [SIGTERM] - Shut down successfully completed" << std::endl;
+          // "Caught signal - GRACEFUL STOP"
+          castor::dlf::Param params2[] =
+            {castor::dlf::Param("Type", "SIGTERM"),
+             castor::dlf::Param("Message", "Shut down successfully completed")};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+                                  DLF_BASE_FRAMEWORK + 12, 2, params2);
           dlf_shutdown(10);
           exit(EXIT_SUCCESS);
           break;
-        
-        case CHILD_STOPPED:
+        }
+      case CHILD_STOPPED:
         {
           // Reap dead processes to prevent defunct processes
           pid_t pid = 0;
@@ -163,26 +172,47 @@ void castor::server::BaseDaemon::handleSignals()
           while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
             if (WIFEXITED(status)) {
               if (WEXITSTATUS(status) == 0) {
-                clog() << DEBUG << "CHILD STOPPED [SIGCHLD] - " << pid 
-                       << " terminated normally" << std::endl;
+                // "Caught signal - CHILD STOPPED"
+                castor::dlf::Param params[] =
+                  {castor::dlf::Param("Signal", "SIGCHLD"),
+                   castor::dlf::Param("PID", pid),
+                   castor::dlf::Param("Message", "Terminated normally")};
+                castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                                        DLF_BASE_FRAMEWORK + 14, 3, params);
               } else {
-                clog() << ERROR << "CHILD STOPPED [SIGCHLD] - " << pid 
-                       << " terminated unexpectedly, exit code " 
-                       << WTERMSIG(status) << std::endl;
+                // "Caught signal - CHILD STOPPED"
+                castor::dlf::Param params[] =
+                  {castor::dlf::Param("Signal", "SIGCHLD"),
+                   castor::dlf::Param("PID", pid),
+                   castor::dlf::Param("Message", "Terminated unexpectedly"),
+                   castor::dlf::Param("ExitCode", WTERMSIG(status))};
+                castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                                        DLF_BASE_FRAMEWORK + 14, 4, params);
               }
             } else if (WIFSIGNALED(status)) {
-              clog() << ERROR << "CHILD STOPPED [SIGCHLD] - " << pid 
-                     << " exited with signal " 
-                     << WTERMSIG(status) << std::endl;
+              // "Caught signal - CHILD STOPPED"
+              castor::dlf::Param params[] =
+                {castor::dlf::Param("Signal", "SIGCHLD"),
+                 castor::dlf::Param("PID", pid),
+                 castor::dlf::Param("Message", "Exited with signal"),
+                 castor::dlf::Param("ExitCode", WTERMSIG(status))};
+              castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                                      DLF_BASE_FRAMEWORK + 14, 4, params);
             }
           }
           break;
         }
-        
-        default:
-          clog() << ERROR << "Signal caught but not handled [" << (-1*sigValue) << "] - IMMEDIATE STOP" << std::endl;
+
+      default:
+        {
+          // "Signal caught but not handled - IMMEDIATE STOP"
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("Signal", (-1 * sigValue))};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                                  DLF_BASE_FRAMEWORK + 15, 1, params);
           dlf_shutdown(1);
           exit(EXIT_FAILURE);
+        }
       }
 
       // release the mutex
@@ -193,7 +223,12 @@ void castor::server::BaseDaemon::handleSignals()
       try {
         m_signalMutex->release();
       } catch (castor::exception::Exception ignored) {}
-      clog() << ERROR << "Exception during wait for signal loop: " << e.getMessage().str() << std::endl;
+      // "Exception during wait for signal loop"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Error", sstrerror(e.code())),
+         castor::dlf::Param("Message", e.getMessage().str())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                              DLF_BASE_FRAMEWORK + 16, 2, params);
       // wait a bit and try again
       sleep(1);
     }
@@ -216,7 +251,7 @@ void castor::server::BaseDaemon::waitAllThreads() throw()
     else
       delete tp->second;
   }
-  
+
   // Reap child processes
   pid_t pid;
   while( (pid = waitpid(-1, NULL, WNOHANG)) > 0) {}
@@ -245,20 +280,20 @@ void castor::server::BaseDaemon::waitAllThreads() throw()
 void* castor::server::BaseDaemon::_signalHandler(void* arg)
 {
   castor::server::BaseDaemon* daemon = (castor::server::BaseDaemon*)arg;
-  
+
   // keep looping waiting signals
   int sig_number;
   while (true) {
     if (sigwait(&daemon->m_signalSet, &sig_number) == 0) {
 
-      // Note: from now on this is unsafe but here we go, we cannot use 
+      // Note: from now on this is unsafe but here we go, we cannot use
       // mutex/condition/printing etc... e.g. things unsafe in a signal handler
       // so from now on this function is calling nothing external
 
       // Because of the way in which signals are handled in the signalHandler
       // method its more than possible that multiple signals overwrite each other.
       // So for example, a killall -15 on a multi threaded, multi process daemon
-      // will trap a SIGTERM followed by multiple SIGCHLD's from the dying 
+      // will trap a SIGTERM followed by multiple SIGCHLD's from the dying
       // children. The SIGCHLD's will overwrite the SIGTERM and it will never be
       // processed. So, we spin lock on the signal value in the mutex until its
       // non zero, indicating that it has been processed.
@@ -266,26 +301,26 @@ void* castor::server::BaseDaemon::_signalHandler(void* arg)
         usleep(500);
       }
 
-      switch (sig_number) {       
-        case SIGABRT:
-        case SIGTERM:
-        case SIGINT:
-        case SIGHUP:
-          daemon->m_signalMutex->setValueNoMutex(castor::server::STOP_GRACEFULLY);
-          break;
-          
-        case SIGCHLD:
-          daemon->m_signalMutex->setValueNoMutex(castor::server::CHILD_STOPPED);
-          break;
-    
-        case SIGPIPE:
-          // ignore
-          break;
-    
-        default:
-          // all other signals
-          daemon->m_signalMutex->setValueNoMutex(-1*sig_number);
-          break;
+      switch (sig_number) {
+      case SIGABRT:
+      case SIGTERM:
+      case SIGINT:
+      case SIGHUP:
+        daemon->m_signalMutex->setValueNoMutex(castor::server::STOP_GRACEFULLY);
+        break;
+
+      case SIGCHLD:
+        daemon->m_signalMutex->setValueNoMutex(castor::server::CHILD_STOPPED);
+        break;
+
+      case SIGPIPE:
+        // ignore
+        break;
+
+      default:
+        // all other signals
+        daemon->m_signalMutex->setValueNoMutex(-1*sig_number);
+        break;
       }
       // signal the main thread to process the signal we got
       daemon->m_signalMutex->signal();

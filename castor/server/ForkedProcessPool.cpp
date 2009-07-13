@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2009/01/08 09:24:24 $ $Author: itglp $
+ * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2009/07/13 06:22:07 $ $Author: waldron $
  *
  * A pool of forked processes
  *
@@ -41,7 +41,7 @@
 #include "castor/exception/Internal.hpp"
 
 // We use a global variable here to indicate whether the child should stop or
-// countinue waiting for requests from the dispatcher. 
+// countinue waiting for requests from the dispatcher.
 static bool _childStop = false;
 
 //------------------------------------------------------------------------------
@@ -50,7 +50,7 @@ static bool _childStop = false;
 castor::server::ForkedProcessPool::ForkedProcessPool
 (const std::string poolName, castor::server::IThread* thread)
   throw(castor::exception::Exception) :
-  BaseThreadPool(poolName, thread), 
+  BaseThreadPool(poolName, thread),
   m_writeHighFd(0) {
   FD_ZERO(&m_writePipes);
   m_stopped = true;   // dispatch is closed until real start
@@ -94,14 +94,14 @@ bool castor::server::ForkedProcessPool::shutdown(bool wait) throw()
 //------------------------------------------------------------------------------
 // init
 //------------------------------------------------------------------------------
-void castor::server::ForkedProcessPool::init() 
+void castor::server::ForkedProcessPool::init()
   throw (castor::exception::Exception)
 {
   // don't do anything if nbThreads = 0
   if(m_nbThreads == 0) {
     return;
   }
-  
+
   // create pool of forked processes
   // we do it here so it is done before daemonization (BaseServer::init())
   m_childPid = new int[m_nbThreads];
@@ -112,8 +112,8 @@ void castor::server::ForkedProcessPool::init()
     // fork worker process
     dlf_prepare();
     int pid = fork();
-    
-    if(pid < 0) { 
+
+    if(pid < 0) {
       dlf_parent();
       castor::exception::Internal ex;
       ex.getMessage() << "Failed to fork in pool " << m_poolName;
@@ -125,7 +125,7 @@ void castor::server::ForkedProcessPool::init()
       freopen("/dev/null", "r", stdin);
       freopen("/dev/null", "w", stdout);
       freopen("/dev/null", "w", stderr);
-      
+
       ps->closeWrite();
       for (int fd = ps->getFdWrite(); fd < getdtablesize(); fd++) {
         if ((fd != ps->getFdRead()) && (fd != ps->getFdWrite())) {
@@ -153,15 +153,20 @@ void castor::server::ForkedProcessPool::init()
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-void castor::server::ForkedProcessPool::run() 
+void castor::server::ForkedProcessPool::run()
   throw (castor::exception::Exception)
 {
   // we already forked all processes, so not much to do here
   // open dispatch
   m_stopped = false;
 
-  clog() << DEBUG << "Thread pool " << m_poolName << " started with "
-         << m_nbThreads << " processes" << std::endl;
+  // "Thread pool started"
+  castor::dlf::Param params[] =
+    {castor::dlf::Param("ThreadPool", m_poolName),
+     castor::dlf::Param("Type", "ForkedProcessPool"),
+     castor::dlf::Param("NbChildren", m_nbThreads)};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                          DLF_BASE_FRAMEWORK + 3, 3, params);
 }
 
 
@@ -235,25 +240,32 @@ void castor::server::ForkedProcessPool::childRun(castor::io::PipeSocket* ps)
     m_thread->init();
   }
   catch(castor::exception::Exception any) {
-    clog() << ERROR << "Exception caught while initializing the child process: "
-           << any.getMessage().str() << std::endl;
+    // "Exception caught while initializing the child process"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Error", sstrerror(any.code())),
+       castor::dlf::Param("Message", any.getMessage().str())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                            DLF_BASE_FRAMEWORK + 8, 2, params);
     _childStop = true;
   }
   // loop forever waiting for something to do
-  while(!_childStop) { 
+  while(!_childStop) {
     try {
       castor::IObject* obj = ps->readObject();
       m_thread->run(obj);
       delete obj;
     }
     catch(castor::exception::Exception any) {
+      int priority = DLF_LVL_ERROR;
       if (any.getMessage().str().find("closed by remote end", 0)) {
-        clog() << DEBUG;
-      } else {
-        clog() << ERROR;
+        priority = DLF_LVL_DEBUG;
       }
-      clog() << "Error while processing an object from the pipe: "
-             << any.getMessage().str() << std::endl;
+      // "Error while processing an object from the pipe"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Error", sstrerror(any.code())),
+         castor::dlf::Param("Message", any.getMessage().str())};
+      castor::dlf::dlf_writep(nullCuuid, priority,
+                              DLF_BASE_FRAMEWORK + 9, 2, params);
 
       // we shutdown here as communication failures across a pipe are rare! If
       // we got this far its most likely that the parent has disappeared e.g.

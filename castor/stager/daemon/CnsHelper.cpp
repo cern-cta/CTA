@@ -21,7 +21,6 @@
 #include "Cgrp.h"
 #include "u64subr.h"
 #include "osdep.h"
-#include "dlf_api.h"
 #include "castor/Constants.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Param.hpp"
@@ -184,9 +183,11 @@ namespace castor{
 
             if ((serrno == ENOENT) || (serrno == EACCES) || (serrno == ENOTDIR) ||
                 (serrno == ENAMETOOLONG) || (serrno == EMLINK)) {
-              castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_CNS_EXCEPTION, 3, params);
+              castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR,
+                                      STAGER_CNS_EXCEPTION, 3, params);
             } else {
-              castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 3, params);
+              castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR,
+                                      STAGER_CNS_EXCEPTION, 3, params);
               serrno = SEINTERNAL;
             }
             castor::exception::Exception ex(serrno);

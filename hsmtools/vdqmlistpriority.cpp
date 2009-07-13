@@ -45,7 +45,7 @@ enum PriorityListType {
   EFFECTIVE_PRIO_LIST_TYPE,
   LIFESPAN_TYPE_PRIO_LIST_TYPE
 };
-  
+
 
 void usage(const std::string programName) {
   std::cerr << "Usage: " << programName <<
@@ -385,9 +385,6 @@ int main(int argc, char **argv) {
 
 
   parseCommandLine(argc, argv, listType, lifespanType, displayColumnHeadings);
-
-  // Initializing the log
-  castor::BaseObject::initLog(argv[0], castor::SVC_NOMSG);
 
   // Retrieve the VDQM DB service
   castor::vdqm::IVdqmSvc *const vdqmSvc = retrieveVdqmSvc();

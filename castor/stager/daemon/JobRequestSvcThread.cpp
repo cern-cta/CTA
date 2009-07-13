@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: JobRequestSvcThread.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/01/18 16:01:06 $ $Author: itglp $
+* @(#)$RCSfile: JobRequestSvcThread.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2009/07/13 06:22:08 $ $Author: waldron $
 *
 * Service thread for handling Job oriented requests
 *
@@ -45,7 +45,6 @@
 #include "expert_api.h"
 #include "serrno.h"
 
-#include "dlf_api.h"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Param.hpp"
 
@@ -87,33 +86,33 @@ castor::stager::daemon::JobRequestSvcThread::JobRequestSvcThread() throw (castor
   m_jobManagerHost = castor::PortsConfig::getInstance()->getHostName(castor::CASTOR_JOBMANAGER);
   m_jobManagerPort = castor::PortsConfig::getInstance()->getNotifPort(castor::CASTOR_JOBMANAGER);
 }
-      
+
 //-----------------------------------------------------------------------------
 // process
 //-----------------------------------------------------------------------------
 void castor::stager::daemon::JobRequestSvcThread::process(castor::IObject* subRequestToProcess) throw () {
- 
+
   RequestHelper* stgRequestHelper = NULL;
   JobRequestHandler* stgRequestHandler = NULL;
-  
+
   try {
     int typeRequest=0;
     stgRequestHelper = new RequestHelper(dynamic_cast<castor::stager::SubRequest*>(subRequestToProcess), typeRequest);
 
     switch(typeRequest){
-      
+
       case OBJ_StageGetRequest:
         stgRequestHandler = new GetHandler(stgRequestHelper);
         break;
-      
+
       case OBJ_StagePutRequest:
         stgRequestHandler = new PutHandler(stgRequestHelper);
         break;
-      
+
       case OBJ_StageUpdateRequest:
         stgRequestHandler = new UpdateHandler(stgRequestHelper);
         break;
-        
+
       default:
         // XXX should never happen, but happens?!
         castor::exception::Internal e;
@@ -121,21 +120,21 @@ void castor::stager::daemon::JobRequestSvcThread::process(castor::IObject* subRe
         stgRequestHelper->logToDlf(DLF_LVL_ERROR, STAGER_INVALID_TYPE, 0);
         throw e;
     }
-    
+
     stgRequestHandler->preHandle();
     stgRequestHandler->handle();
-    
+
     if (stgRequestHandler->notifyJobManager()) {
       castor::server::BaseServer::sendNotification(m_jobManagerHost, m_jobManagerPort, 'D');
     }
-    
-    delete stgRequestHelper;         
+
+    delete stgRequestHelper;
     delete stgRequestHandler;
   }
   catch(castor::exception::Exception ex) {
-    
+
     handleException(stgRequestHelper, (stgRequestHandler ? stgRequestHandler->getStgCnsHelper() : 0), ex.code(), ex.getMessage().str());
-    
+
     /* we delete our objects */
     if(stgRequestHelper) delete stgRequestHelper;
     if(stgRequestHandler) delete stgRequestHandler;

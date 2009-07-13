@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.51 $ $Release$ $Date: 2009/05/18 13:42:52 $ $Author: waldron $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.52 $ $Release$ $Date: 2009/07/13 06:22:06 $ $Author: waldron $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -200,13 +200,21 @@ castor::db::ora::OraQuerySvc::diskCopies4FileName
       char* pend = p;
       unsigned long ip = strtoul(p, &pend, 0);
       if (*pend != 0) {
-        clog() << ERROR
-               << "Invalid limit for number of responses to a file query : '"
-               << pend << "'. Should be a number." << std::endl;
+        // "Invalid FILEQUERY/MAXNBRESPONSES configuration option,
+        //  using default"
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("Error", "Invalid argument"),
+           castor::dlf::Param("Default", maxNbResponses)};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING,
+                                DLF_BASE_ORACLELIB + 34, 2, params);
       } else if (ip > 30000) {
-        clog() << ERROR
-               << "Limit for number of responses to a file query is too high : "
-               << ip << " > 30000. Will use default : 1000." << std::endl;
+        // "Invalid FILEQUERY/MAXNBRESPONSES configuration option,
+        //  using default"
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("Error", "Out of range"),
+           castor::dlf::Param("Default", maxNbResponses)};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING,
+                                DLF_BASE_ORACLELIB + 34, 2, params);
       } else {
         maxNbResponses = ip;
       }
@@ -232,13 +240,13 @@ castor::db::ora::OraQuerySvc::diskCopies4FileName
       // Too may files would have been returned, give up !
       castor::exception::TooBig ex;
       ex.getMessage() << "Too many matching files : more than "
-		      << maxNbResponses;
+                      << maxNbResponses;
       throw ex;
     } else {
       handleException(e);
       castor::exception::Internal ex;
       ex.getMessage() << "Error caught in diskCopies4FileName."
-		      << std::endl << e.what();
+                      << std::endl << e.what();
       throw ex;
     }
   }
@@ -384,7 +392,7 @@ castor::db::ora::OraQuerySvc::describeDiskPools
       m_describeDiskPoolsStatement =
         createStatement(s_describeDiskPoolsStatementString);
       m_describeDiskPoolsStatement->registerOutParam
-	(4, oracle::occi::OCCIINT);
+        (4, oracle::occi::OCCIINT);
       m_describeDiskPoolsStatement->registerOutParam
         (5, oracle::occi::OCCICURSOR);
     }
@@ -406,41 +414,41 @@ castor::db::ora::OraQuerySvc::describeDiskPools
     castor::query::DiskServerDescription* dsd = 0;
     while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
       if (rset->getInt(1) == 1) {
-	// This line indicates a new DiskPool and gives
-	// summary info
-	resp = new castor::query::DiskPoolQueryResponse();
-	resp->setReservedSpace(0);
-	resp->setDiskPoolName(rset->getString(3));
+        // This line indicates a new DiskPool and gives
+        // summary info
+        resp = new castor::query::DiskPoolQueryResponse();
+        resp->setReservedSpace(0);
+        resp->setDiskPoolName(rset->getString(3));
         resp->setFreeSpace((u_signed64)rset->getDouble(7));
         resp->setTotalSpace((u_signed64)rset->getDouble(8));
-	resp->setReservedSpace(0);
-	result->push_back(resp);
+        resp->setReservedSpace(0);
+        result->push_back(resp);
       } else if (detailed) {
-	// This is not a diskPool summary
-	if (rset->getInt(2) == 1) {
-	  // This line indicates a new DiskServer and gives summary info
-	  dsd = new castor::query::DiskServerDescription();
-	  dsd->setName(rset->getString(4));
-	  dsd->setStatus(rset->getInt(5));
-	  dsd->setFreeSpace((u_signed64)rset->getDouble(7));
-	  dsd->setTotalSpace((u_signed64)rset->getDouble(8));
-	  dsd->setReservedSpace(0);
-	  dsd->setQuery(resp);
-	  resp->addDiskServers(dsd);
-	} else {
-	  // This is a fileSystem description
-	  castor::query::FileSystemDescription* fsd =
-	    new castor::query::FileSystemDescription();
-	  fsd->setMountPoint(rset->getString(6));
-	  fsd->setFreeSpace((u_signed64)rset->getDouble(7));
-	  fsd->setTotalSpace((u_signed64)rset->getDouble(8));
-	  fsd->setReservedSpace(0);
-	  fsd->setMinFreeSpace(rset->getFloat(9));
-	  fsd->setMaxFreeSpace(rset->getFloat(10));
-	  fsd->setStatus(rset->getInt(11));
-	  fsd->setDiskServer(dsd);
-	  dsd->addFileSystems(fsd);
-	}
+        // This is not a diskPool summary
+        if (rset->getInt(2) == 1) {
+          // This line indicates a new DiskServer and gives summary info
+          dsd = new castor::query::DiskServerDescription();
+          dsd->setName(rset->getString(4));
+          dsd->setStatus(rset->getInt(5));
+          dsd->setFreeSpace((u_signed64)rset->getDouble(7));
+          dsd->setTotalSpace((u_signed64)rset->getDouble(8));
+          dsd->setReservedSpace(0);
+          dsd->setQuery(resp);
+          resp->addDiskServers(dsd);
+        } else {
+          // This is a fileSystem description
+          castor::query::FileSystemDescription* fsd =
+            new castor::query::FileSystemDescription();
+          fsd->setMountPoint(rset->getString(6));
+          fsd->setFreeSpace((u_signed64)rset->getDouble(7));
+          fsd->setTotalSpace((u_signed64)rset->getDouble(8));
+          fsd->setReservedSpace(0);
+          fsd->setMinFreeSpace(rset->getFloat(9));
+          fsd->setMaxFreeSpace(rset->getFloat(10));
+          fsd->setStatus(rset->getInt(11));
+          fsd->setDiskServer(dsd);
+          dsd->addFileSystems(fsd);
+        }
       }
     }
     m_describeDiskPoolsStatement->closeResultSet(rset);
@@ -450,11 +458,11 @@ castor::db::ora::OraQuerySvc::describeDiskPools
       castor::exception::InvalidArgument ex;
       int rc = m_describeDiskPoolsStatement->getInt(4);
       if (rc == -1) {
-	ex.getMessage() << "Insufficient user privileges to view DiskPools for service class '";
+        ex.getMessage() << "Insufficient user privileges to view DiskPools for service class '";
       } else if (rc > 0) {
-	ex.getMessage() << "No Diskservers found for service class '";
+        ex.getMessage() << "No Diskservers found for service class '";
       } else {
-	ex.getMessage() << "No Diskpools found for service class '";
+        ex.getMessage() << "No Diskpools found for service class '";
       }
       ex.getMessage() << (svcClass == "" ? "*" : svcClass) << "'";
       throw ex;
@@ -484,7 +492,7 @@ castor::db::ora::OraQuerySvc::describeDiskPool
       m_describeDiskPoolStatement =
         createStatement(s_describeDiskPoolStatementString);
       m_describeDiskPoolStatement->registerOutParam
-	(3, oracle::occi::OCCIINT);
+        (3, oracle::occi::OCCIINT);
       m_describeDiskPoolStatement->registerOutParam
         (4, oracle::occi::OCCICURSOR);
     }
@@ -503,37 +511,37 @@ castor::db::ora::OraQuerySvc::describeDiskPool
     castor::query::DiskServerDescription* dsd = 0;
     while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
       if (rset->getInt(1) == 1) {
-	result = new castor::query::DiskPoolQueryResponse();
-	result->setDiskPoolName(diskPool);
-	result->setFreeSpace((u_signed64)rset->getDouble(6));
-	result->setTotalSpace((u_signed64)rset->getDouble(7));
-	result->setReservedSpace(0);
+        result = new castor::query::DiskPoolQueryResponse();
+        result->setDiskPoolName(diskPool);
+        result->setFreeSpace((u_signed64)rset->getDouble(6));
+        result->setTotalSpace((u_signed64)rset->getDouble(7));
+        result->setReservedSpace(0);
       } else if (detailed) {
-	// This is not a diskPool summary
-	if (rset->getInt(2) == 1) {
-	  // This line indicates a new DiskServer and gives summary info
-	  dsd = new castor::query::DiskServerDescription();
-	  dsd->setName(rset->getString(3));
-	  dsd->setStatus(rset->getInt(4));
-	  dsd->setFreeSpace((u_signed64)rset->getDouble(6));
-	  dsd->setTotalSpace((u_signed64)rset->getDouble(7));
-	  dsd->setReservedSpace(0);
-	  dsd->setQuery(result);
-	  result->addDiskServers(dsd);
-	} else {
-	  // This is a fileSystem description
-	  castor::query::FileSystemDescription* fsd =
-	    new castor::query::FileSystemDescription();
-	  fsd->setMountPoint(rset->getString(5));
-	  fsd->setFreeSpace((u_signed64)rset->getDouble(6));
-	  fsd->setTotalSpace((u_signed64)rset->getDouble(7));
-	  fsd->setReservedSpace(0);
-	  fsd->setMinFreeSpace(rset->getFloat(8));
-	  fsd->setMaxFreeSpace(rset->getFloat(9));
-	  fsd->setStatus(rset->getInt(10));
-	  fsd->setDiskServer(dsd);
-	  dsd->addFileSystems(fsd);
-	}
+        // This is not a diskPool summary
+        if (rset->getInt(2) == 1) {
+          // This line indicates a new DiskServer and gives summary info
+          dsd = new castor::query::DiskServerDescription();
+          dsd->setName(rset->getString(3));
+          dsd->setStatus(rset->getInt(4));
+          dsd->setFreeSpace((u_signed64)rset->getDouble(6));
+          dsd->setTotalSpace((u_signed64)rset->getDouble(7));
+          dsd->setReservedSpace(0);
+          dsd->setQuery(result);
+          result->addDiskServers(dsd);
+        } else {
+          // This is a fileSystem description
+          castor::query::FileSystemDescription* fsd =
+            new castor::query::FileSystemDescription();
+          fsd->setMountPoint(rset->getString(5));
+          fsd->setFreeSpace((u_signed64)rset->getDouble(6));
+          fsd->setTotalSpace((u_signed64)rset->getDouble(7));
+          fsd->setReservedSpace(0);
+          fsd->setMinFreeSpace(rset->getFloat(8));
+          fsd->setMaxFreeSpace(rset->getFloat(9));
+          fsd->setStatus(rset->getInt(10));
+          fsd->setDiskServer(dsd);
+          dsd->addFileSystems(fsd);
+        }
       }
     }
     m_describeDiskPoolStatement->closeResultSet(rset);
@@ -542,11 +550,11 @@ castor::db::ora::OraQuerySvc::describeDiskPool
       castor::exception::InvalidArgument ex;
       int rc = m_describeDiskPoolStatement->getInt(3);
       if (rc == -1) {
-	ex.getMessage() << "Insufficient user privileges to view DiskPools";
+        ex.getMessage() << "Insufficient user privileges to view DiskPools";
       } else if (rc > 0) {
-	ex.getMessage() << "No Diskservers found associated to the DiskPool '" << diskPool << "'";
+        ex.getMessage() << "No Diskservers found associated to the DiskPool '" << diskPool << "'";
       } else {
-	ex.getMessage() << "No Diskpool found with name '" << diskPool << "'";
+        ex.getMessage() << "No Diskpool found with name '" << diskPool << "'";
       }
       ex.getMessage() << " in service class '" << (svcClass == "" ? "*" : svcClass) << "'";
       throw ex;

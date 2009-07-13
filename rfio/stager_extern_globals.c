@@ -1,5 +1,5 @@
 /*
- * $Id: stager_extern_globals.c,v 1.1 2008/07/28 16:23:57 waldron Exp $
+ * $Id: stager_extern_globals.c,v 1.2 2009/07/13 06:22:09 waldron Exp $
  */
 
 /*
@@ -9,7 +9,6 @@
 
 #include "stager_extern_globals.h"
 
-int stagerNoDlf;
 int stagerTrace;
 int stagerDebug;
 char *stagerLog;

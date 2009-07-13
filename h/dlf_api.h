@@ -109,12 +109,13 @@
 #define DLF_INIT              1             /**< initialisation request                   */
 #define DLF_LOG               2             /**< log message request                      */
 
-/* message ranges 
+/* message ranges
  *   0 - 999 is reserved for local messages
  */
-#define DLF_BASE_SHAREDMEMORY 1000 	    /**< Shared Memory related code               */
-#define DLF_BASE_STAGERLIB    1100 	    /**< Stager library related code              */
-#define DLF_BASE_ORACLELIB    1200 	    /**< Oracle library related code              */
+#define DLF_BASE_SHAREDMEMORY   1000        /**< Shared Memory related codes              */
+#define DLF_BASE_STAGERLIB      1100        /**< Stager library related codes             */
+#define DLF_BASE_ORACLELIB      1200        /**< Oracle library related codes             */
+#define DLF_BASE_FRAMEWORK      1300        /**< Framework related codes                  */
 
 /**
  * opaque structures
@@ -155,8 +156,8 @@ struct dlf_write_param_t {
  *                     buffer must have a minimum size of CA_MAXLINELEN bytes
  * @param usethreads : boolean to indicate whether the api should use threads ie. to record information
  *                     remotely or surrender control of the thread creation to the user via a separate
- *                     call to dlf_create_threads(). This is useful if you wish to have log file only 
- *                     logging before daemonization and then turn on remote logging afterwards avoiding 
+ *                     call to dlf_create_threads(). This is useful if you wish to have log file only
+ *                     logging before daemonization and then turn on remote logging afterwards avoiding
  *                     the need to recreate the dlf threads in the child process.
  *
  * @see              : dlf_prepare(), dlf_parent(), dlf_child(), dlf_create_threads()
@@ -170,8 +171,8 @@ EXTERN_C int DLL_DECL dlf_init _PROTO((const char *facility, char *errptr, int u
 
 
 /**
- * Shutdown the DLF interface. If the interface is already shutdown then no action will be taken. If a 
- * wait time is greater then 0, then the api will wait up to X seconds for the threads to flush their 
+ * Shutdown the DLF interface. If the interface is already shutdown then no action will be taken. If a
+ * wait time is greater then 0, then the api will wait up to X seconds for the threads to flush their
  * message queues to the central server.
  *
  * @param wait     : the number of seconds to wait for threads to flush there queues before thread
@@ -254,7 +255,7 @@ EXTERN_C int DLL_DECL dlf_writep _PROTO((Cuuid_t reqid,
  * This function writes a log message to the logging targets/destinations specified in the castor2 common
  * configuration file "/etc/castor/castor.conf" or through environment variables. dlf_write() is a wrapper
  * function around dlf_writep(). It basically takes a variable argument list '...' and converts it to an
- * array of dlf_write_param_t structures which is passed to dlf_writep() along with the other parameters. 
+ * array of dlf_write_param_t structures which is passed to dlf_writep() along with the other parameters.
  * All the other arguments and returns values are identical to that of dlf_write()
  *
  * @see dlf_write()
@@ -269,7 +270,7 @@ EXTERN_C int DLL_DECL dlf_write _PROTO((Cuuid_t reqid,
 
 /**
  * This function must be called prior to a fork(2) and after a dlf_init() call. It is necessary to ensure
- * that the api's mutexes remain in a valid and known state. The dlf_prepare(), dlf_child() and 
+ * that the api's mutexes remain in a valid and known state. The dlf_prepare(), dlf_child() and
  * dlf_parent() calls effectively provide the same style functionality as pthread_atfork(3) but its
  * specific to the dlf api and portable.
  */
@@ -291,7 +292,7 @@ EXTERN_C void DLL_DECL dlf_child _PROTO((void));
 
 
 /**
- * This function should be called from within the parent process after a fork(2). It essentially removes 
+ * This function should be called from within the parent process after a fork(2). It essentially removes
  * all locks and allows the api to resume normal logging for the parent.
  */
 
@@ -301,7 +302,7 @@ EXTERN_C void DLL_DECL dlf_parent _PROTO((void));
 /**
  * This function creates the dlf threads enabling communication between a client and server. This call
  * is only required if remote logging is enabled and dlf_init() was called with usethreads = 0.
- * 
+ *
  * @param erase : Erase the contents of the threads message cache before creating the thread?
  */
 

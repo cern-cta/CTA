@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.36 $ $Release$ $Date: 2009/05/19 16:21:14 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.37 $ $Release$ $Date: 2009/07/13 06:22:07 $ $Author: waldron $
  *
  * A base multithreaded server for simple listening servers
  *
@@ -38,7 +38,6 @@
 #include "Cinit.h"
 #include "Cuuid.h"
 #include "Cpool_api.h"
-#include "castor/logstream.h"
 #include "marshall.h"
 #include <iostream>
 #include <sstream>
@@ -78,7 +77,7 @@ castor::server::BaseServer::~BaseServer() throw()
 //------------------------------------------------------------------------------
 void castor::server::BaseServer::init() throw (castor::exception::Exception)
 {
-  // init daemon if to be run in background 
+  // init daemon if to be run in background
   if (!m_foreground) {
     dlf_prepare();
 
@@ -89,7 +88,7 @@ void castor::server::BaseServer::init() throw (castor::exception::Exception)
     if (pid < 0) {
       castor::exception::Internal ex;
       ex.getMessage() << "Background daemon initialization failed with result "
-		      << pid << std::endl;
+                      << pid << std::endl;
       dlf_parent();
       throw ex;
     }
@@ -101,23 +100,23 @@ void castor::server::BaseServer::init() throw (castor::exception::Exception)
 
     // run the program in a new session
     setsid();
-    
+
     // redirect the standard file descriptors to /dev/null
     if ((freopen("/dev/null", "r", stdin)  == NULL) ||
         (freopen("/dev/null", "w", stdout) == NULL) ||
         (freopen("/dev/null", "w", stderr) == NULL)) {
       castor::exception::Internal ex;
       ex.getMessage() << "Failed to redirect standard file descriptors to "
-		      << "/dev/null" << std::endl;
+                      << "/dev/null" << std::endl;
       throw ex;
     }
   }
-    
+
   // change identity to Castor superuser if requested
   if (m_runAsStagerSuperuser) {
     castor::System::switchToCastorSuperuser();
   }
-  
+
   // Ignore SIGPIPE (connection lost with client)
   // and SIGXFSZ (a file is too big)
   signal(SIGPIPE, SIG_IGN);
@@ -130,14 +129,27 @@ void castor::server::BaseServer::init() throw (castor::exception::Exception)
 void castor::server::BaseServer::dlfInit(castor::dlf::Message messages[])
   throw (castor::exception::Exception)
 {
-  castor::BaseObject::initLog(m_serverName, castor::SVC_DLFMSG);
   castor::dlf::dlf_init((char*)m_serverName.c_str(), messages);
-  // if missing, add an entry for the framework messages coming with the streaming
-  if(messages[0].number != 0) {
-    castor::dlf::Message frameworkMsg[] = 
-      {{ 0, "Framework message"}, { -1, ""}};
-    castor::dlf::dlf_addMessages(0, frameworkMsg);
-  }
+  // Add framework specific messages
+  castor::dlf::Message frameworkMessages[] =
+    {{  1, "Error while reading datagrams" },
+     {  2, "Error while accepting connections" },
+     {  3, "Thread pool started" },
+     {  4, "Exception caught in the user thread" },
+     {  5, "Thread run error" },
+     {  6, "NotifierThread exception" },
+     {  8, "Exception caught while initializing the child process" },
+     {  9, "Error while processing an object from the pipe" },
+     { 10, "Uncaught exception in a thread from pool" },
+     { 11, "Uncaught GENERAL exception in a thread from pool" },
+     { 12, "Caught signal - GRACEFUL STOP" },
+     { 14, "Caught signal - CHILD STOPPED" },
+     { 15, "Signal caught but not handled - IMMEDIATE STOP" },
+     { 16, "Exception during wait for signal loop" },
+     { 18, "No idle thread in pool to process request" },
+     { 19, "Error while dispatching to a thread" },
+     { -1, "" }};
+  castor::dlf::dlf_addMessages(DLF_BASE_FRAMEWORK, frameworkMessages);
 }
 
 //------------------------------------------------------------------------------
@@ -148,7 +160,7 @@ void castor::server::BaseServer::start() throw (castor::exception::Exception)
   if (m_foreground) {
     std::cout << "Starting " << m_serverName << std::endl;
   }
-  
+
   std::map<const char, castor::server::BaseThreadPool*>::iterator tp;
   for (tp = m_threadPools.begin(); tp != m_threadPools.end(); tp++) {
     tp->second->init();
@@ -157,7 +169,7 @@ void castor::server::BaseServer::start() throw (castor::exception::Exception)
 
   // daemonization
   init();
-  
+
   // if we got here, we're ready to start all the pools and detach corresponding threads
   for (tp = m_threadPools.begin(); tp != m_threadPools.end(); tp++) {
     tp->second->run();  // here run returns immediately
@@ -193,7 +205,7 @@ void castor::server::BaseServer::parseCommandLine(int argc, char *argv[])
 {
   Coptions_t* longopts = new Coptions_t[m_threadPools.size()+4];
   char tparam[] = "Xthreads";
-  
+
   longopts[0].name = "foreground";
   longopts[0].has_arg = NO_ARGUMENT;
   longopts[0].flag = NULL;
@@ -206,7 +218,7 @@ void castor::server::BaseServer::parseCommandLine(int argc, char *argv[])
   longopts[2].has_arg = NO_ARGUMENT;
   longopts[2].flag = NULL;
   longopts[2].val = 'h';
-  
+
   std::map<const char, castor::server::BaseThreadPool*>::iterator tp;
   int i = 3;
   for(tp = m_threadPools.begin(); tp != m_threadPools.end(); tp++, i++) {
@@ -280,14 +292,14 @@ void castor::server::BaseServer::sendNotification(std::string host, int port, ch
     castor::server::ThreadNotification notif;
     notif.setTpName(tpName);
     notif.setNbThreads(nbThreads);
-    
+
     // create UDP socket and send packet
     castor::io::UDPSocket sock(port, host);
     sock.sendObject(notif);
     sock.close();
   }
   catch (castor::exception::Exception ignored) {
-    // this is a best effort service, ignore any failure 
+    // this is a best effort service, ignore any failure
   }
 }
 

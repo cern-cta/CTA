@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DLFInit.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2009/06/16 14:00:10 $ $Author: sponcec3 $
+ * @(#)$RCSfile: DLFInit.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2009/07/13 06:22:05 $ $Author: waldron $
  *
  * Initialization of the DLF messages for the ORACLE part
  *
@@ -65,7 +65,18 @@ castor::db::ora::DLFInit::DLFInit() {
      { 21, "Error while contacting VMGR" },
      { 22, "Tape disabled, could not be used for recall" },
      { 23, "Missing tape copies detected, this recall will trigger new migration(s)" },
-     { -1, ""} };
+     { 24, "Created new Oracle connection" },
+     { 25, "Oracle connection dropped" },
+     { 26, "Failed to drop the Oracle connection" },
+     { 27, "Error caught when calling Cglobals_get" },
+     { 28, "Error caught when calling Cns_seterrbuf" },
+     { 29, "The following file should have been deleted from the nameserver but couldn't because of a previous error" },
+     { 30, "Error caught while listing fileids - giving up" },
+     { 31, "Error caught while truncating FilesDeletedProcOutput" },
+     { 32, "Error caught when calling Cns_getpath. This file won't be deleted from the nameserver when it should have been" },
+     { 33, "Error caught when unlinking file" },
+     { 34, "Invalid FILEQUERY/MAXNBRESPONSES configuration option, using default" },
+     { -1, ""}};
   try {
     castor::dlf::dlf_addMessages(DLF_BASE_ORACLELIB, messages);
   } catch (castor::exception::Exception ex) {

@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: StageRequestSvcThread.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/01/18 16:01:06 $ $Author: itglp $
+* @(#)$RCSfile: StageRequestSvcThread.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2009/07/13 06:22:08 $ $Author: waldron $
 *
 * Service thread for handling stager specific requests
 *
@@ -43,7 +43,6 @@
 #include "expert_api.h"
 #include "serrno.h"
 
-#include "dlf_api.h"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Param.hpp"
 
@@ -75,39 +74,39 @@
 #include <iostream>
 #include <string>
 
-      
+
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
 castor::stager::daemon::StageRequestSvcThread::StageRequestSvcThread() throw()
   : BaseRequestSvcThread("StageReqSvc", "DbStagerSvc", castor::SVC_DBSTAGERSVC) {}
-      
+
 //-----------------------------------------------------------------------------
 // process
 //-----------------------------------------------------------------------------
 void castor::stager::daemon::StageRequestSvcThread::process(castor::IObject* subRequestToProcess) throw() {
- 
+
   RequestHelper* stgRequestHelper= NULL;
   RequestHandler* stgRequestHandler = NULL;
-  
-  try {         
+
+  try {
     int typeRequest=0;
     stgRequestHelper = new RequestHelper(dynamic_cast<castor::stager::SubRequest*>(subRequestToProcess), typeRequest);
-    
+
     switch(typeRequest){
-      
+
       case OBJ_StagePutDoneRequest:
       stgRequestHandler = new PutDoneHandler(stgRequestHelper);
       break;
-      
+
       case OBJ_StageRmRequest:
       stgRequestHandler = new RmHandler(stgRequestHelper);
       break;
-      
+
       case OBJ_SetFileGCWeight:
       stgRequestHandler = new SetGCWeightHandler(stgRequestHelper);
       break;
-      
+
       default:
         // XXX should never happen, but happens?!
         castor::exception::Internal e;
@@ -115,18 +114,18 @@ void castor::stager::daemon::StageRequestSvcThread::process(castor::IObject* sub
         stgRequestHelper->logToDlf(DLF_LVL_ERROR, STAGER_INVALID_TYPE, 0);
         throw e;
     }//end switch(typeRequest)
-    
+
     stgRequestHandler->preHandle();
     stgRequestHandler->handle();
-    
+
     delete stgRequestHelper;
     delete stgRequestHandler;
-   
+
   }
   catch(castor::exception::Exception ex){
-    
+
     handleException(stgRequestHelper, (stgRequestHandler ? stgRequestHandler->getStgCnsHelper() : 0), ex.code(), ex.getMessage().str());
-    
+
     /* we delete our objects */
     if(stgRequestHelper) delete stgRequestHelper;
     if(stgRequestHandler) delete stgRequestHandler;

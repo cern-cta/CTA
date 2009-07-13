@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: deletePriority.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/09/16 13:38:10 $ $Author: itglp $
+ * @(#)$RCSfile: deletePriority.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2009/07/13 06:22:09 $ $Author: waldron $
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -43,7 +43,7 @@ static struct Coptions longopts[] = {
 };
 
 void usage(char *cmd) {
-  std::cout << "Usage : \n" 
+  std::cout << "Usage : \n"
 	    << cmd << " [-h] -u/--uid uid -g/--gid gid"<<std::endl;
   std::cout << cmd << " [-h] -U/--user username -G/--group groupname"<< std::endl;
 }
@@ -53,9 +53,9 @@ int main(int argc, char *argv[]) {
   int mgid = -1;
   int muser = -1;
   int mgroup = -1;
- 
+
   char* progName = argv[0];
-  
+
   // Deal with options
   Coptind = 1;
   Copterr = 1;
@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
       return 0;
     }
   }
-  
+
   // Check parameters
   if ((muid < 0 && muser<0) && (mgid < 0 && mgroup<0)) {
     std::cerr << "options missing" << std::endl;
@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) {
     return 0;
   }
   if ((muid>=0 && muser>=0) ||(mgid>=0 && mgroup>=0)) {
-    std::cerr << " Invalid syntax"<<std::endl; 
+    std::cerr << " Invalid syntax"<<std::endl;
     usage(progName);
     return 0;
   }
@@ -115,34 +115,31 @@ int main(int argc, char *argv[]) {
   mgid=mgid<0?mgroup:mgid;
 
   try {
-    
-    // Initializing the log
-    castor::BaseObject::initLog("NewStagerLog", castor::SVC_NOMSG);
     // retrieve a Services object
     castor::Services* svcs = castor::BaseObject::services();
     // retrieve the DB service
     castor::IService* isvc = svcs->service("DB", castor::SVC_DBSTAGERSVC);
-    
+
     if (0 == isvc) {
       std::cerr << " Unable to retrieve Stager Service." << std::endl
                 << " Please check your configuration." << std::endl;
       exit(1);
     }
-    
+
     castor::stager::IStagerSvc* stgsvc =
       dynamic_cast<castor::stager::IStagerSvc*>(isvc);
-    
+
     // delete the priority
     stgsvc->deletePriority(muid, mgid);
-    
-    // cleanup 
+
+    // cleanup
     stgsvc->release();
-    
+
   } catch (castor::exception::Exception e) {
     std::cerr << "Caught exception :\n"
               << e.getMessage().str() << std::endl;
     exit(1);
-  }  
+  }
 }
 
 

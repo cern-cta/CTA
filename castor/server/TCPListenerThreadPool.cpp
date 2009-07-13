@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TCPListenerThreadPool.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2009/01/08 09:24:57 $ $Author: itglp $
+ * @(#)$RCSfile: TCPListenerThreadPool.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2009/07/13 06:22:07 $ $Author: waldron $
  *
  * Listener thread pool based on TCP
  *
@@ -62,19 +62,13 @@ castor::server::TCPListenerThreadPool::TCPListenerThreadPool
 // Destructor
 //------------------------------------------------------------------------------
 castor::server::TCPListenerThreadPool::~TCPListenerThreadPool() throw() {}
-  
+
 //------------------------------------------------------------------------------
 // bind
 //------------------------------------------------------------------------------
 void castor::server::TCPListenerThreadPool::bind() throw (castor::exception::Exception) {
-  // Create a socket for the server, bind, and listen 
-  try {
-    m_sock = new castor::io::ServerSocket(m_port, true);
-  } catch (castor::exception::Exception e) {
-    clog() << ERROR << "Fatal error: cannot bind socket on port " << m_port << ": "
-           << sstrerror(e.code()) << std::endl;
-    throw e;
-  }
+  // Create a socket for the server, bind, and listen
+  m_sock = new castor::io::ServerSocket(m_port, true);
 }
 
 //------------------------------------------------------------------------------
@@ -91,13 +85,17 @@ void castor::server::TCPListenerThreadPool::listenLoop() {
     catch(castor::exception::Exception any) {
       // Some errors are consider fatal, such as closure of the listening
       // socket resulting in a bad file descriptor during the thread shutdown
-      // process. If we encounter this problem we exit the loop. 
+      // process. If we encounter this problem we exit the loop.
       if (any.code() == EBADF) {
         break;
       }
-      clog() << ERROR << "Error while accepting connections to port " << m_port << ": "
-             << sstrerror(any.code()) << " - " 
-             << any.getMessage().str() << std::endl;
+      // "Error while accepting connections"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Port", m_port),
+         castor::dlf::Param("Error", sstrerror(any.code())),
+         castor::dlf::Param("Message", any.getMessage().str())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                              DLF_BASE_FRAMEWORK + 2, 3, params);
     }
   }
 }
@@ -107,7 +105,7 @@ void castor::server::TCPListenerThreadPool::listenLoop() {
 //------------------------------------------------------------------------------
 void castor::server::TCPListenerThreadPool::terminate(void* param) {
   castor::io::ServerSocket* s = (castor::io::ServerSocket*)param;
-  
+
   // Here a proper implementation is to answer the client to try again later on.
   // As the standard castor clients have no retry mechanism, we simply close the
   // connection, which will make them fail (the process would have failed anyway).

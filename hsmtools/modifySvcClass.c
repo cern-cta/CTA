@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.25 $ $Release$ $Date: 2008/10/17 13:13:59 $ $Author: waldron $
+ * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.26 $ $Release$ $Date: 2009/07/13 06:22:09 $ $Author: waldron $
  *
  * @author Olof Barring
  *****************************************************************************/
@@ -40,7 +40,6 @@
 #include <castor/stager/DiskPool.h>
 #include <castor/stager/IStagerSvc.h>
 #include <castor/Services.h>
-#include <castor/BaseObject.h>
 #include <castor/BaseAddress.h>
 #include <castor/IAddress.h>
 #include <castor/IObject.h>
@@ -391,9 +390,9 @@ int main(int argc, char *argv[])
   char **addTapePoolsArray = NULL, **addDiskPoolsArray = NULL;
   char *removeTapePoolsStr = NULL, *removeDiskPoolsStr = NULL;
   char **removeTapePoolsArray = NULL, **removeDiskPoolsArray = NULL;
-  char *diskOnlyBehavior = NULL, *failJobsWhenNoSpace = NULL, 
+  char *diskOnlyBehavior = NULL, *failJobsWhenNoSpace = NULL,
        *forcedFileClass = NULL, *replicateOnClose = NULL,
-       *streamPolicy = NULL, *migratorPolicy = NULL, 
+       *streamPolicy = NULL, *migratorPolicy = NULL,
        *recallerPolicy = NULL;
   int nbDiskPools = 0, nbTapePools = 0;
   int nbAddTapePools = 0, nbRemoveTapePools = 0, nbAddDiskPools = 0, nbRemoveDiskPools = 0;
@@ -413,10 +412,6 @@ int main(int argc, char *argv[])
   Coptind = 1;
   Copterr = 1;
   cmd = argv[0];
-
-  /* Initializing the C++ log */
-  /* Necessary at start of program and after any fork */
-  C_BaseObject_initLog("NewStagerLog", SVC_NOMSG);
 
   rc = C_Services_create(&svcs);
   if ( rc == -1 ) {

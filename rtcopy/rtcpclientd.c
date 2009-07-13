@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.47 $ $Release$ $Date: 2008/08/26 17:04:59 $ $Author: murrayc3 $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.48 $ $Release$ $Date: 2009/07/13 06:22:09 $ $Author: waldron $
  *
  *
  *
@@ -50,7 +50,6 @@ WSADATA wsadata;
 #include <rtcp_constants.h>
 #include <vdqm_api.h>
 #include <castor/Constants.h>
-#include <castor/BaseObject.h>
 #include <castor/stager/TapeStatusCodes.h>
 #include <castor/stager/SegmentStatusCodes.h>
 #include <castor/stager/TapeCopy.h>
@@ -1136,10 +1135,6 @@ int rtcpcld_main(
   tape_list_t **tapeArray, *tape;
   rtcpTapeRequest_t tapereq;
   char *p = NULL;
-
-  /* Initializing the C++ log */
-  /* Necessary at start of program and after any fork */
-  C_BaseObject_initLog("NewStagerLog", SVC_NOMSG);
 
 #if !defined(_WIN32)
   signal(SIGPIPE, SIG_IGN);

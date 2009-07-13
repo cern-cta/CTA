@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: recaller.c,v $ $Revision: 1.30 $ $Release$ $Date: 2009/01/05 10:42:59 $ $Author: sponcec3 $
+ * @(#)$RCSfile: recaller.c,v $ $Revision: 1.31 $ $Release$ $Date: 2009/07/13 06:22:09 $ $Author: waldron $
  *
- * 
+ *
  *
  * @author Olof Barring
  *****************************************************************************/
@@ -61,7 +61,6 @@ WSADATA wsadata;
 #include <rtcp_constants.h>
 #include <vdqm_api.h>
 #include <vmgr_api.h>
-#include <castor/BaseObject.h>
 #include <castor/stager/TapeStatusCodes.h>
 #include <castor/stager/SegmentStatusCodes.h>
 #include <rtcp.h>
@@ -78,7 +77,7 @@ extern int rtcpc_runReq_ext _PROTO((
                                     int (*)(void *(*)(void *), void *)
                                     ));
 extern int (*rtcpc_ClientCallback) _PROTO((
-                                           rtcpTapeRequest_t *, 
+                                           rtcpTapeRequest_t *,
                                            rtcpFileRequest_t *
                                            ));
 
@@ -95,7 +94,7 @@ extern int checkFile;
 static int filesCopied = 0;
 static u_signed64 bytesCopied = 0;
 
-static int initLocks() 
+static int initLocks()
 {
   int rc;
   /*
@@ -110,7 +109,7 @@ static int initLocks()
   if ( rc == -1 ) {
     LOG_SYSCALL_ERR("Cthread_mutex_unlock()");
     return(-1);
-  }  
+  }
   segmCountLock = Cthread_mutex_lock_addr(&segmSubmitted);
   if ( segmCountLock == NULL ) {
     LOG_SYSCALL_ERR("Cthread_mutex_lock_addr()");
@@ -130,13 +129,13 @@ static int initLocks()
     LOG_SYSCALL_ERR("Cthread_mutex_unlock()");
     return(-1);
   }
-  
+
   abortLock = Cthread_mutex_lock_addr(&requestAborted);
   if ( segmCountLock == NULL ) {
     LOG_SYSCALL_ERR("Cthread_mutex_lock_addr()");
     return(-1);
   }
-  
+
   return(0);
 }
 
@@ -252,7 +251,7 @@ int recallerCallbackFileCopied(
     LOG_SYSCALL_ERR("rtcpcld_lockTape()");
     return(-1);
   }
-  
+
   rc = rtcpcld_findFile(tape,filereq,&file);
   if ( rc == -1 ) {
     save_serrno = serrno;
@@ -313,7 +312,7 @@ int recallerCallbackFileCopied(
                                      1);
       (void)rtcpcld_unlockTape();
       /*
-       * SEINTERNAL means that there was probably a database problem 
+       * SEINTERNAL means that there was probably a database problem
        * ERTWRONGSIZE means that there was a filesize
        * inconsistency. Try to carry on with the next file.
        */
@@ -395,7 +394,7 @@ int recallerCallbackFileCopied(
   }
   (void)updateSegmCount(0,finished,failed);
   if ( failed != 0 ) setAborted(1);
-  
+
   return(0);
 }
 
@@ -516,7 +515,7 @@ int recallerCallbackMoreWork(
    * or there is nothing left to do and we should just let the currently
    * running file copies finish (if any).
    */
-  
+
   return(0);
 }
 
@@ -730,7 +729,7 @@ int main(
          )
      int argc;
      char **argv;
-{  
+{
   char *recallerFacility = RECALLER_FACILITY_NAME, cmdline[CA_MAXLINELEN+1];
   int rc, c, i, save_serrno = 0, failed = 0, runTime;
   time_t startTime, endTime;
@@ -741,10 +740,6 @@ int main(
    */
   SOCKET sock = 0;
 
-  /* Initializing the C++ log */
-  /* Necessary at start of program and after any fork */
-  C_BaseObject_initLog("NewStagerLog", SVC_NOMSG);
-
   /*
    * Make sure that recalled disk files are properly protected
    */
@@ -754,7 +749,7 @@ int main(
   Cuuid_create(
                &childUuid
                );
-  
+
   /*
    * Initialise DLF for our facility
    */
@@ -769,7 +764,7 @@ int main(
     strcat(cmdline," ");
     i = strlen(cmdline)+1;
   }
-  
+
   (void)dlf_write(
                   childUuid,
                   RTCPCLD_LOG_MSG(RTCPCLD_MSG_RECALLER_STARTED),
@@ -838,7 +833,7 @@ int main(
        * tape mover version this can happen if there is an error on the
        * first file. If so, force a callback.
        */
-      if ( (tape->file != NULL) && 
+      if ( (tape->file != NULL) &&
            ((tape->file->filereq.cprc == -1) ||
             (tape->file->filereq.err.errorcode > 0) ||
             (*tape->file->filereq.err.errmsgtxt != '\0') ||

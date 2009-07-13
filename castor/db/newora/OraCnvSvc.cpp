@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.45 $ $Release$ $Date: 2009/01/09 14:46:17 $ $Author: itglp $
+ * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.46 $ $Release$ $Date: 2009/07/13 06:22:05 $ $Author: waldron $
  *
  * The conversion service to Oracle
  *
@@ -105,10 +105,10 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
   throw (oracle::occi::SQLException, castor::exception::Exception) {
   // Quick answer if connection available
   if (0 != m_connection) return m_connection;
-  
+
   // No connection available, try to build one
   // get the parameters service to resolve the schema version and the config file
-  castor::IService* s = 
+  castor::IService* s =
     castor::BaseObject::sharedServices()->service("DbParamsSvc", SVC_DBPARAMSSVC);
   castor::db::DbParamsSvc* params = dynamic_cast<castor::db::DbParamsSvc*>(s);
   if (params == 0) {
@@ -116,7 +116,7 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
     e.getMessage() << "Fail to instantiate a DbParamsSvc, cannot connect to database.";
     throw e;
   }
-  
+
   // If the CASTOR_INSTANCE environment variable exists, append it the name
   // of the configuration option to lookup in the config file.
   std::string nameVal = name();
@@ -136,8 +136,8 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
     char* cuser = getconfent_fromfile(confFile.c_str(), nameVal.c_str(), "user", 0);
     if (cuser == 0) {
       castor::exception::InvalidArgument e;
-      e.getMessage() << "Failed to connect to database. Missing " << nameVal 
-		     << "/user configuration option from " << confFile.c_str() 
+      e.getMessage() << "Failed to connect to database. Missing " << nameVal
+		     << "/user configuration option from " << confFile.c_str()
 		     << ".";
       if (serrno == SENOCONFIG) {
 	e.getMessage() << " The file could not be opened.";
@@ -150,8 +150,8 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
     char* cpasswd = getconfent_fromfile(confFile.c_str(), nameVal.c_str(), "passwd", 0);
     if (cpasswd == 0) {
       castor::exception::InvalidArgument e;
-      e.getMessage() << "Failed to connect to database. Missing " << nameVal 
-		     << "/passwd configuration option from " << confFile.c_str() 
+      e.getMessage() << "Failed to connect to database. Missing " << nameVal
+		     << "/passwd configuration option from " << confFile.c_str()
 		     << ".";
       if (serrno == SENOCONFIG) {
 	e.getMessage() << " The file could not be opened.";
@@ -164,8 +164,8 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
     char* cdbName = getconfent_fromfile(confFile.c_str(), nameVal.c_str(), "dbName", 0);
     if (cdbName == 0) {
       castor::exception::InvalidArgument e;
-      e.getMessage() << "Failed to connect to database. Missing " << nameVal 
-		     << "/dbName configuration option from " << confFile.c_str() 
+      e.getMessage() << "Failed to connect to database. Missing " << nameVal
+		     << "/dbName configuration option from " << confFile.c_str()
 		     << ".";
       if (serrno == SENOCONFIG) {
 	e.getMessage() << " The file could not be opened.";
@@ -203,7 +203,7 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
     oracle::occi::ResultSet *rset = stmt->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
       DBVersion = rset->getString(1);
-    }   
+    }
     m_connection->terminateStatement(stmt);
     if (codeVersion != DBVersion) {
       dropConnection();
@@ -213,7 +213,7 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
                      << codeVersion << "\"";
       throw e;
     }
-    
+
     // for logging/debugging purposes, we set an identifier for this session
     std::ostringstream ss;
     ss << "BEGIN DBMS_APPLICATION_INFO.SET_CLIENT_INFO('CASTOR pid="
@@ -238,8 +238,9 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
                     << " Original error was " << e.what();
     throw ex;
   }
-  
-  clog() << SYSTEM << "Created new Oracle connection" << std::endl;
+
+  // "Created new Oracle connection"
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, DLF_BASE_ORACLELIB + 24);
   return m_connection;
 }
 
@@ -262,16 +263,20 @@ void castor::db::ora::OraCnvSvc::dropConnection() throw() {
     if (0 != m_environment) {
       oracle::occi::Environment::terminateEnvironment(m_environment);
     }
-    clog() << SYSTEM << "Oracle connection dropped" << std::endl;
+    // "Oracle connection dropped"
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, DLF_BASE_ORACLELIB + 25);
   } catch (oracle::occi::SQLException e) {
-    clog() << ERROR << "Failed to drop the Oracle connection: "
-           << e.what() << std::endl;
+    // "Failed to drop the Oracle connection"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Message", e.what())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+			    DLF_BASE_ORACLELIB + 26, 1, params);
   } catch (...) {};
   // reset all whatever the state is
-  m_connection = 0;
+  m_connection  = 0;
   m_environment = 0;
   // also reset the connection string so that we reload parameters next time
-  m_user = "";
+  m_user   = "";
   m_passwd = "";
   m_dbName = "";
 }
@@ -317,7 +322,7 @@ castor::db::IDbStatement* castor::db::ora::OraCnvSvc::createStatement(const std:
   throw (castor::exception::Exception) {
   try {
     oracle::occi::Statement* statement = getConnection()->createStatement(stmt);
-    return new castor::db::ora::OraStatement(statement, this);     
+    return new castor::db::ora::OraStatement(statement, this);
   } catch(oracle::occi::SQLException e) {
     castor::exception::SQLError ex;
     ex.getMessage() << "Error creating statement, Oracle code: " << e.getErrorCode()
@@ -336,7 +341,7 @@ oracle::occi::Statement* castor::db::ora::OraCnvSvc::createOraStatement(const st
   try {
     // XXX this is exposing the OCCI API - should it disappear?
     oracle::occi::Statement* statement = getConnection()->createStatement(stmt);
-    return statement;     
+    return statement;
   } catch(oracle::occi::SQLException e) {
     castor::exception::SQLError ex;
     ex.getMessage() << "Error creating statement, Oracle code: " << e.getErrorCode()
@@ -373,7 +378,7 @@ void castor::db::ora::OraCnvSvc::handleException(std::exception& e) {
   if (errcode == 28 || errcode == 3113 || errcode == 3114 || errcode == 32102
       || errcode == 3135 || errcode == 12170 || errcode == 12541 || errcode == 1012
       || errcode == 1003 || errcode == 12571 || errcode == 1033
-      || errcode == 1089 || errcode == 12537) {  
+      || errcode == 1089 || errcode == 12537) {
     // here we lost the connection due to an Oracle restart or network glitch
     // and this is the current list of errors acknowledged as a lost connection.
     // Notes:

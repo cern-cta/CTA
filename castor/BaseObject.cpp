@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseObject.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2007/07/09 17:06:37 $ $Author: itglp $
+ * @(#)$RCSfile: BaseObject.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2009/07/13 06:22:05 $ $Author: waldron $
  *
- * 
+ *
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -27,28 +27,25 @@
 // Include Files
 #include "castor/Constants.hpp"
 #include "castor/Services.hpp"
-#include "castor/MsgSvc.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "Cglobals.h"
 #include <Cmutex.h>
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // static values initialization
-// -----------------------------------------------------------------------
-std::string castor::BaseObject::s_msgSvcName("");
-unsigned long castor::BaseObject::s_msgSvcId(0);
+//------------------------------------------------------------------------------
 castor::Services* castor::BaseObject::s_sharedServices(0);
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // constructor
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::BaseObject::BaseObject() throw() {}
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // destructor
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::BaseObject::~BaseObject() throw() {
   // clean the TLS for Services
   void **tls;
@@ -57,28 +54,6 @@ castor::BaseObject::~BaseObject() throw() {
   if (0 != *tls) {
     *tls = 0;
   }
-}
-
-// -----------------------------------------------------------------------
-// msgSvc
-// -----------------------------------------------------------------------
-castor::MsgSvc* castor::BaseObject::msgSvc(std::string name,
-                                           const unsigned long id)
-  throw (castor::exception::Exception) {
-  IService* svc = services()->service(name, id);
-  if (0 == svc) {
-    castor::exception::Internal e;
-    e.getMessage() << "Unable to retrieve MsgSvc";
-    throw(e);
-  }
-  castor::MsgSvc* msgSvc = dynamic_cast<castor::MsgSvc*> (svc);
-  if (0 == msgSvc) {
-    svc->release();
-    castor::exception::Internal e;
-    e.getMessage() << "Got something weird when retrieving MsgSvc";
-    throw(e);
-  }
-  return msgSvc;
 }
 
 //------------------------------------------------------------------------------
@@ -134,33 +109,4 @@ void castor::BaseObject::getTLS(int *key, void **thip)
   if (rc == 1) {
     *(void **)(*thip) = 0;
   }
-}
-
-//------------------------------------------------------------------------------
-// initlog
-//------------------------------------------------------------------------------
-void castor::BaseObject::initLog(std::string name,
-                                 const unsigned long id)
-  throw() {
-  Cmutex_lock(&s_msgSvcId, -1);
-  // Nothing to do if already called
-  if (0 == s_msgSvcId) {
-    s_msgSvcName = name;
-    s_msgSvcId = id;
-  }
-  Cmutex_unlock(&s_msgSvcId);
-}
-
-//------------------------------------------------------------------------------
-// clog
-//------------------------------------------------------------------------------
-castor::logstream& castor::BaseObject::clog()
- throw(castor::exception::Exception) {
-  if (0 == s_msgSvcId) {
-    castor::exception::Internal e;
-    e.getMessage() << "clog() was called before initialization of the log facility.\n"
-                   << "Please call initLog first.";
-    throw e;
-  }
-  return msgSvc(s_msgSvcName, s_msgSvcId)->stream();
 }

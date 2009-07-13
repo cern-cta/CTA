@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: enterFileClass.c,v $ $Revision: 1.10 $ $Release$ $Date: 2008/06/02 13:31:55 $ $Author: waldron $
+ * @(#)$RCSfile: enterFileClass.c,v $ $Revision: 1.11 $ $Release$ $Date: 2009/07/13 06:22:09 $ $Author: waldron $
  *
- * 
+ *
  *
  * @author Olof Barring
  *****************************************************************************/
@@ -34,7 +34,6 @@
 #include <osdep.h>
 #include <serrno.h>
 #include <Cgetopt.h>
-#include <castor/BaseObject.h>
 #include <castor/stager/FileClass.h>
 #include <castor/stager/TapeCopy.h>
 #include <castor/stager/IStagerSvc.h>
@@ -80,7 +79,7 @@ void usage(
   return;
 }
 
-int main(int argc, char *argv[]) 
+int main(int argc, char *argv[])
 {
   int ch, rc, nbCopiesSet = 0;
   char *cmd, *name = NULL, *nsHost = NULL;
@@ -92,13 +91,10 @@ int main(int argc, char *argv[])
   struct C_IService_t *iSvc = NULL;
   struct Cstager_FileClass_t *fileClass = NULL, *fileClassOld = NULL;
   struct Cns_fileclass nsFileClass;
-  
+
   Coptind = 1;
   Copterr = 1;
   cmd = argv[0];
-  /* Initializing the C++ log */
-  /* Necessary at start of program and after any fork */
-  C_BaseObject_initLog("NewStagerLog", SVC_NOMSG);
 
   rc = C_Services_create(&svcs);
   if ( rc == -1 ) {
@@ -114,7 +110,7 @@ int main(int argc, char *argv[])
     return(1);
   }
   fsSvc = Cstager_IStagerSvc_fromIService(iSvc);
-    
+
   Cstager_FileClass_create(&fileClass);
   while ((ch = Cgetopt_long(argc,argv,"h",longopts,NULL)) != EOF) {
     switch (ch) {
@@ -138,7 +134,7 @@ int main(int argc, char *argv[])
       return(1);
     }
   }
-  
+
   if ( help_flag != 0 || name == NULL ) {
     if ( name == NULL ) fprintf(stderr,"FileClass 'name' is required\n");
     usage(cmd);
@@ -188,7 +184,7 @@ int main(int argc, char *argv[])
     return(1);
   }
   C_Services_delete(svcs);
-  
+
   return(0);
 }
 

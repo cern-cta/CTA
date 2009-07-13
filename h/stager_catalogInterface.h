@@ -1,5 +1,5 @@
 /*
- * $Id: stager_catalogInterface.h,v 1.24 2007/04/03 09:46:13 sponcec3 Exp $
+ * $Id: stager_catalogInterface.h,v 1.25 2009/07/13 06:22:08 waldron Exp $
  */
 
 #ifndef __stager_catalogInterface_h
@@ -33,7 +33,6 @@
 #include "castor/rh/FileResponse.h"
 #include "castor/rh/IOResponse.h"
 #include "castor/rh/Client.h"
-#include "castor/replier/RequestReplier.h"
 
 EXTERN_C int DLL_DECL stager_getDbSvc _PROTO((struct C_Services_t ***));
 EXTERN_C int DLL_DECL stager_getStgAndDbSvc _PROTO((struct Cstager_IStagerSvc_t ***, struct C_Services_t ***));
