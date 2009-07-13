@@ -70,6 +70,37 @@ const char *castor::tape::utils::boolToString(const bool value) {
 
 
 //-----------------------------------------------------------------------------
+// toHex
+//-----------------------------------------------------------------------------
+void castor::tape::utils::toHex(uint32_t number, char *buf, size_t len)
+  throw(castor::exception::InvalidArgument) {
+
+  if(len < 9) {
+    castor::exception::InvalidArgument ex;
+
+    ex.getMessage() <<
+      "Failed to convert " << number << " to hex"
+      ": The output string is too small: Actual=" << len <<
+      " Minimum=9";
+
+    throw(ex);
+  }
+
+  int digitAsInt = 0;
+
+  for(int i=0; i<8; i++) {
+    digitAsInt = number % 16;
+
+    buf[7-i] = digitAsInt < 10 ? '0' + digitAsInt : 'A' + (digitAsInt-10);
+
+    number /= 16;
+  }
+
+  buf[8] = '\0';
+}
+
+
+//-----------------------------------------------------------------------------
 // splitString
 //-----------------------------------------------------------------------------
 void castor::tape::utils::splitString(const std::string &str,
