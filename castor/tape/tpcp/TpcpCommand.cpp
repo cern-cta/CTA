@@ -32,6 +32,7 @@
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
 #include "castor/tape/tpcp/Constants.hpp"
 #include "castor/tape/tpcp/StreamOperators.hpp"
+#include "castor/tape/tpcp/TapeFileSequenceParser.hpp"
 #include "castor/tape/tpcp/TpcpCommand.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/Cgetopt.h"
@@ -158,7 +159,7 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
       break;
 
     case 'q':
-      parseTapeFileSequence(optarg);
+      TapeFileSequenceParser::parse(optarg, m_parsedCommandLine.tapeFseqRanges);
       break;
 
     case 'p':
@@ -693,114 +694,6 @@ int castor::tape::tpcp::TpcpCommand::getVdqmListenPort()
   }
 
   return port;
-}
-
-
-//------------------------------------------------------------------------------
-// parseTapeFileSequence
-//------------------------------------------------------------------------------
-void castor::tape::tpcp::TpcpCommand::parseTapeFileSequence(
-  char *const str) throw (castor::exception::Exception) {
-
-  std::vector<std::string> rangeStrs;
-  int nbBoundaries = 0;
-  TapeFseqRange range;
-
-  // Range strings are separated by commas
-  utils::splitString(str, ',', rangeStrs);
-
-  // For each range string
-  for(std::vector<std::string>::const_iterator itor=rangeStrs.begin();
-    itor!=rangeStrs.end(); itor++) {
-
-    std::vector<std::string> boundaryStrs;
-
-    // Lower and upper boundary strings are separated by a dash ('-')
-    utils::splitString(*itor, '-', boundaryStrs);
-
-    nbBoundaries = boundaryStrs.size();
-
-    switch(nbBoundaries) {
-    case 1: // Range string = "n"
-      if(!utils::isValidUInt(boundaryStrs[0].c_str())) {
-        castor::exception::InvalidArgument ex;
-        ex.getMessage() << "Invalid range string: '" << boundaryStrs[0]
-          << "': Expecting an unsigned integer";
-        throw ex;
-      }
-
-      range.lower = range.upper = atoi(boundaryStrs[0].c_str());
-      m_parsedCommandLine.tapeFseqRanges.push_back(range);
-      break;
-
-    case 2: // Range string = "m-n" or "-n" or "m-" or "-"
-
-      // If "-n" or "-" then the range string is invalid
-      if(boundaryStrs[0] == "") {
-        castor::exception::InvalidArgument ex;
-        ex.getMessage() << "Invalid range string: '" << *itor
-          << "': Strings of the form '-n' or '-' are invalid";
-        throw ex;
-      }
-
-      // At this point the range string must be either "m-n" or "m-"
-
-      // Parse the "m" of "m-n" or "m-"
-      if(!utils::isValidUInt(boundaryStrs[0].c_str())) {
-        castor::exception::InvalidArgument ex;
-        ex.getMessage() << "Invalid range string: '" << *itor
-          << "': The lower boundary should be an unsigned integer";
-        throw ex;
-      }
-
-      range.lower = atoi(boundaryStrs[0].c_str());
-      if(range.lower == 0){
-        castor::exception::InvalidArgument ex;
-        ex.getMessage() << "Invalid range string: '" << *itor
-          << "': The lower boundary can not be '0'";
-        throw ex;
-      }
-      // If "m-"
-      if(boundaryStrs[1] == "") {
-        // Inifinity (or until the end of tape) is represented by 0
-        range.upper = 0;
-      // Else "m-n"
-      } else {
-        // Parse the "n" of "m-n"
-        if(!utils::isValidUInt(boundaryStrs[1].c_str())) {
-          castor::exception::InvalidArgument ex;
-          ex.getMessage() << "Invalid range string: '" << *itor
-            << "': The upper boundary should be an unsigned integer";
-          throw ex;
-        }
-        range.upper = atoi(boundaryStrs[1].c_str());
-
-        if(range.upper == 0){
-          castor::exception::InvalidArgument ex;
-          ex.getMessage() << "Invalid range string: '" << *itor
-            << "': The upper boundary can not be '0'";
-          throw ex;
-        }
-        if(range.lower > range.upper){
-          castor::exception::InvalidArgument ex;
-          ex.getMessage() << "Invalid range string: '" << *itor
-            << "': The lower boundary cannot be greater than the upper "
-            "boundary";
-          throw ex;
-        }
-      }
-
-      m_parsedCommandLine.tapeFseqRanges.push_back(range);
-
-      break;
-
-    default: // Range string is invalid
-      castor::exception::InvalidArgument ex;
-      ex.getMessage() << "Invalid range string: '" << *itor
-        << "': A range string can only contain one or no dashes ('-')";
-      throw ex;
-    }
-  }
 }
 
 

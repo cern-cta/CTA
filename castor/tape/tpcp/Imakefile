@@ -74,6 +74,7 @@ TPCPBIN_SRCS = \
   Recaller.cpp \
   StreamHelper.cpp \
   StreamOperators.cpp \
+  TapeFileSequenceParser.cpp \
   TapeFseqRangeListSequence.cpp \
   TapeFseqRangeSequence.cpp \
   TpcpCommand.cpp \

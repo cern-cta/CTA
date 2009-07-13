@@ -142,24 +142,6 @@ private:
   int getVdqmListenPort() throw(castor::exception::Exception);
 
   /**
-   * Parse the specified tape file sequence parameter string and store the
-   * resulting ranges into m_parsedCommandLine.tapeFseqRanges.
-   *
-   * The syntax rules for a tape file sequence specification are:
-   * <ul>
-   *  <li>  f1            File f1.
-   *  <li>  f1-f2         Files f1 to f2 included.
-   *  <li>  f1-           Files from f1 to the last file of the tape.
-   *  <li>  f1-f2,f4,f6-  Series of ranges "," separated.
-   * </ul>
-   *
-   * @param str The string received as an argument for the TapeFileSequence
-   * option.
-   */
-  void parseTapeFileSequence(char *const str) 
-    throw (castor::exception::Exception);
-
-  /**
    * Calculate the minimum number of files specified in the tape file
    * ranges provided as a command-line parameter.
    *
