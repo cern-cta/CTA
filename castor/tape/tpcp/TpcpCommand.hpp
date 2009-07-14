@@ -180,9 +180,11 @@ private:
    * Request a drive from the VDQM to mount the specified tape for the
    * specified access mode (read or write).
    *
-   * @param mode The access mode, either WRITE_DISABLE or WRITE_ENABLE.
+   * @param mode   The access mode, either WRITE_DISABLE or WRITE_ENABLE.
+   * @param server If not NULL then this parameter specifies the tape server to
+   * be used, therefore overriding drive scheduling of the VDQM.
    */
-  void requestDriveFromVdqm(const int mode)
+  void requestDriveFromVdqm(const int mode, char *const server)
     throw(castor::exception::Exception);
 
   /**

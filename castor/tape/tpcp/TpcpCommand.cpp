@@ -101,6 +101,8 @@ void castor::tape::tpcp::TpcpCommand::usage(std::ostream &os,
     "\n"
     "\t-d, --debug             Print debug information\n"
     "\t-h, --help              Print this help and exit\n"
+    "\t-s, --server server     Specifies the tape server to be used therefore\n"
+    "\t                        overriding the drive scheduling of the VDQM\n"
     "\n"
     "Options that apply to the READ action:\n"
     "\n"
@@ -133,6 +135,7 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
     {"filelist", REQUIRED_ARGUMENT, NULL, 'f'},
     {"help"    ,       NO_ARGUMENT, NULL, 'h'},
     {"sequence", REQUIRED_ARGUMENT, NULL, 'q'},
+    {"server"  , REQUIRED_ARGUMENT, NULL, 's'},
     {"position", REQUIRED_ARGUMENT, NULL, 'p'},
     {NULL      , 0                , NULL,  0 }
   };
@@ -158,10 +161,6 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
       m_parsedCommandLine.helpOptionSet = true;
       break;
 
-    case 'q':
-      TapeFileSequenceParser::parse(optarg, m_parsedCommandLine.tapeFseqRanges);
-      break;
-
     case 'p':
       if(!utils::isValidUInt(optarg)) {
         castor::exception::InvalidArgument ex;
@@ -183,6 +182,22 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
 
       m_parsedCommandLine.tapeFseqPositionOptionSet = true;
 
+      break;
+
+    case 'q':
+      TapeFileSequenceParser::parse(optarg, m_parsedCommandLine.tapeFseqRanges);
+      break;
+
+    case 's':
+      m_parsedCommandLine.serverOptionSet = true;
+      try {
+        utils::copyString(m_parsedCommandLine.server, optarg);
+      } catch(castor::exception::Exception &ex) {
+        TAPE_THROW_EX(castor::exception::Internal,
+          ": Failed to copy the argument of the server command-line option"
+          " into the internal data structures"
+          ": " << ex.getMessage().str());
+      }
       break;
 
     case ':':
@@ -271,7 +286,8 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
     utils::copyString(m_parsedCommandLine.vid, argv[optind]);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,
-      ": Failed to copy VID comand-line argument into internal data structures"
+      ": Failed to copy VID comand-line argument into the internal data"
+      " structures"
       ": " << ex.getMessage().str());
   }
   try {
@@ -524,7 +540,9 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     {
       const int mode = m_parsedCommandLine.action == Action::write ?
         WRITE_ENABLE : WRITE_DISABLE;
-      requestDriveFromVdqm(mode);
+      char *const server = m_parsedCommandLine.serverOptionSet ?
+        m_parsedCommandLine.server : NULL;
+      requestDriveFromVdqm(mode, server);
     }
 
     // Command-line user feedback
@@ -793,16 +811,15 @@ void castor::tape::tpcp::TpcpCommand::setupCallbackSocket()
 //------------------------------------------------------------------------------
 // requestDriveFromVdqm 
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::TpcpCommand::requestDriveFromVdqm(const int mode)
-  throw(castor::exception::Exception) {
+void castor::tape::tpcp::TpcpCommand::requestDriveFromVdqm(const int mode,
+  char *const server) throw(castor::exception::Exception) {
 
   unsigned short port = 0;
   unsigned long  ip   = 0;
   m_callbackSocket.getPortIp(port, ip);
 
-  vdqmnw_t *const nw     = NULL;
-  char     *const server = NULL;
-  char     *const unit   = NULL;
+  vdqmnw_t *const nw   = NULL;
+  char     *const unit = NULL;
   const int rc = vdqm_SendAggregatorVolReq(nw, &m_volReqId,
     m_parsedCommandLine.vid, m_dgn, server, unit, mode, port);
   const int save_serrno = serrno;

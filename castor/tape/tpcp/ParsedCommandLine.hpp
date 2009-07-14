@@ -28,6 +28,7 @@
 #include "castor/tape/tpcp/Action.hpp"
 #include "castor/tape/tpcp/FilenameList.hpp"
 #include "castor/tape/tpcp/TapeFseqRangeList.hpp"
+#include "castor/tape/utils/utils.hpp"
 #include "h/Castor_limits.h"
 
 #include <list>
@@ -42,31 +43,33 @@ namespace tpcp   {
  * Data type used to store the results of parsing the command-line.
  */
 struct ParsedCommandLine {
-  bool              debugOptionSet;
-  bool              helpOptionSet;
   Action            action;
-  char              vid[CA_MAXVIDLEN+1];
-  TapeFseqRangeList tapeFseqRanges;
-  bool              tapeFseqPositionOptionSet;
-  uint32_t          tapeFseqPosition;
-  bool              fileListOptionSet;
+  bool              debugOptionSet;
   std::string       fileListFilename;
+  bool              fileListOptionSet;
   FilenameList      filenames;
+  bool              helpOptionSet;
+  bool              serverOptionSet;
+  char              server[CA_MAXHOSTNAMELEN+1];
+  uint32_t          tapeFseqPosition;
+  bool              tapeFseqPositionOptionSet;
+  TapeFseqRangeList tapeFseqRanges;
+  char              vid[CA_MAXVIDLEN+1];
 
   /**
    * Constructor.
    */
   ParsedCommandLine() :
-    debugOptionSet(false),
-    helpOptionSet(false),
     action(Action::read),
-    tapeFseqPositionOptionSet(false),
+    debugOptionSet(false),
+    fileListOptionSet(false),
+    helpOptionSet(false),
+    serverOptionSet(false),
     tapeFseqPosition(0),
-    fileListOptionSet(false) {
+    tapeFseqPositionOptionSet(false) {
 
-    for(size_t i=0; i<sizeof(vid); i++) {
-      vid[i] = '\0';
-    }
+    utils::setBytes(server, '\0');
+    utils::setBytes(vid   , '\0');
   }
 }; // struct ParsedCommandLine
 
