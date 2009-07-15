@@ -2177,6 +2177,7 @@ set height 0
 set breakpoint pending on
 set follow-fork-mode child
 set logging file /tmp/trace_tpwrite.output
+set logging redirect on
 set logging on
 
 directory /usr/local/src/CASTOR2/rtcopy
