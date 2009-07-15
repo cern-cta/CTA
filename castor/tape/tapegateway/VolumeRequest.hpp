@@ -100,6 +100,22 @@ namespace castor {
         /* End of IObject abstract class */
         /*********************************/
         /**
+         * Get the value of m_unit
+         * @return the value of m_unit
+         */
+        std::string unit() const {
+          return m_unit;
+        }
+
+        /**
+         * Set the value of m_unit
+         * @param new_var the new value of m_unit
+         */
+        void setUnit(std::string new_var) {
+          m_unit = new_var;
+        }
+
+        /**
          * Get the value of m_id
          * The id of this object
          * @return the value of m_id
@@ -118,6 +134,8 @@ namespace castor {
         }
 
       private:
+
+        std::string m_unit;
 
         /// The id of this object
         u_signed64 m_id;

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.79 $ $Release$ $Date: 2009/07/13 06:22:05 $ $Author: waldron $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.80 $ $Release$ $Date: 2009/07/15 12:57:21 $ $Author: gtaur $
  *
  *
  *
@@ -223,7 +223,8 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "RmMasterReport",
   "EndNotificationErrorReport",
   "TapeGatewaySubRequest",
-  "GatewayMessage"
+  "GatewayMessage",
+  "DumpNotification"
 };
 
 

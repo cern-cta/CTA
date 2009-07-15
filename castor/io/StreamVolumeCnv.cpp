@@ -40,6 +40,7 @@
 #include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
+#include "castor/tape/tapegateway/VolumeMode.hpp"
 #include "osdep.h"
 #include <string>
 
@@ -90,10 +91,18 @@ void castor::io::StreamVolumeCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->type();
   ad->stream() << obj->mountTransactionId();
   ad->stream() << obj->vid();
-  ad->stream() << obj->mode();
   ad->stream() << obj->density();
   ad->stream() << obj->label();
+  ad->stream() << obj->dumpTapeMaxBytes();
+  ad->stream() << obj->dumpTapeBlockSize();
+  ad->stream() << obj->dumpTapeConverter();
+  ad->stream() << obj->dumpTapeErrAction();
+  ad->stream() << obj->dumpTapeStartFile();
+  ad->stream() << obj->dumpTapeMaxFile();
+  ad->stream() << obj->dumpTapeFromBlock();
+  ad->stream() << obj->dumpTapeToBlock();
   ad->stream() << obj->id();
+  ad->stream() << obj->mode();
 }
 
 //------------------------------------------------------------------------------
@@ -112,18 +121,42 @@ castor::IObject* castor::io::StreamVolumeCnv::createObj(castor::IAddress* addres
   std::string vid;
   ad->stream() >> vid;
   object->setVid(vid);
-  int mode;
-  ad->stream() >> mode;
-  object->setMode(mode);
   std::string density;
   ad->stream() >> density;
   object->setDensity(density);
   std::string label;
   ad->stream() >> label;
   object->setLabel(label);
+  int dumpTapeMaxBytes;
+  ad->stream() >> dumpTapeMaxBytes;
+  object->setDumpTapeMaxBytes(dumpTapeMaxBytes);
+  int dumpTapeBlockSize;
+  ad->stream() >> dumpTapeBlockSize;
+  object->setDumpTapeBlockSize(dumpTapeBlockSize);
+  int dumpTapeConverter;
+  ad->stream() >> dumpTapeConverter;
+  object->setDumpTapeConverter(dumpTapeConverter);
+  int dumpTapeErrAction;
+  ad->stream() >> dumpTapeErrAction;
+  object->setDumpTapeErrAction(dumpTapeErrAction);
+  int dumpTapeStartFile;
+  ad->stream() >> dumpTapeStartFile;
+  object->setDumpTapeStartFile(dumpTapeStartFile);
+  int dumpTapeMaxFile;
+  ad->stream() >> dumpTapeMaxFile;
+  object->setDumpTapeMaxFile(dumpTapeMaxFile);
+  int dumpTapeFromBlock;
+  ad->stream() >> dumpTapeFromBlock;
+  object->setDumpTapeFromBlock(dumpTapeFromBlock);
+  int dumpTapeToBlock;
+  ad->stream() >> dumpTapeToBlock;
+  object->setDumpTapeToBlock(dumpTapeToBlock);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
+  int mode;
+  ad->stream() >> mode;
+  object->setMode((castor::tape::tapegateway::VolumeMode)mode);
   return object;
 }
 

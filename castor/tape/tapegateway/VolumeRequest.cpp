@@ -41,6 +41,7 @@
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::VolumeRequest::VolumeRequest() throw() :
   GatewayMessage(),
+  m_unit(""),
   m_id(0) {
 }
 
@@ -65,6 +66,7 @@ void castor::tape::tapegateway::VolumeRequest::print(std::ostream& stream,
   // Call print on the parent class(es)
   this->GatewayMessage::print(stream, indent, alreadyPrinted);
   // Output of all members
+  stream << indent << "unit : " << m_unit << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }

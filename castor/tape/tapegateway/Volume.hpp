@@ -31,6 +31,7 @@
 
 // Include Files
 #include "castor/tape/tapegateway/GatewayMessage.hpp"
+#include "castor/tape/tapegateway/VolumeMode.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -116,22 +117,6 @@ namespace castor {
         }
 
         /**
-         * Get the value of m_mode
-         * @return the value of m_mode
-         */
-        int mode() const {
-          return m_mode;
-        }
-
-        /**
-         * Set the value of m_mode
-         * @param new_var the new value of m_mode
-         */
-        void setMode(int new_var) {
-          m_mode = new_var;
-        }
-
-        /**
          * Get the value of m_density
          * @return the value of m_density
          */
@@ -164,6 +149,134 @@ namespace castor {
         }
 
         /**
+         * Get the value of m_dumpTapeMaxBytes
+         * @return the value of m_dumpTapeMaxBytes
+         */
+        int dumpTapeMaxBytes() const {
+          return m_dumpTapeMaxBytes;
+        }
+
+        /**
+         * Set the value of m_dumpTapeMaxBytes
+         * @param new_var the new value of m_dumpTapeMaxBytes
+         */
+        void setDumpTapeMaxBytes(int new_var) {
+          m_dumpTapeMaxBytes = new_var;
+        }
+
+        /**
+         * Get the value of m_dumpTapeBlockSize
+         * @return the value of m_dumpTapeBlockSize
+         */
+        int dumpTapeBlockSize() const {
+          return m_dumpTapeBlockSize;
+        }
+
+        /**
+         * Set the value of m_dumpTapeBlockSize
+         * @param new_var the new value of m_dumpTapeBlockSize
+         */
+        void setDumpTapeBlockSize(int new_var) {
+          m_dumpTapeBlockSize = new_var;
+        }
+
+        /**
+         * Get the value of m_dumpTapeConverter
+         * @return the value of m_dumpTapeConverter
+         */
+        int dumpTapeConverter() const {
+          return m_dumpTapeConverter;
+        }
+
+        /**
+         * Set the value of m_dumpTapeConverter
+         * @param new_var the new value of m_dumpTapeConverter
+         */
+        void setDumpTapeConverter(int new_var) {
+          m_dumpTapeConverter = new_var;
+        }
+
+        /**
+         * Get the value of m_dumpTapeErrAction
+         * @return the value of m_dumpTapeErrAction
+         */
+        int dumpTapeErrAction() const {
+          return m_dumpTapeErrAction;
+        }
+
+        /**
+         * Set the value of m_dumpTapeErrAction
+         * @param new_var the new value of m_dumpTapeErrAction
+         */
+        void setDumpTapeErrAction(int new_var) {
+          m_dumpTapeErrAction = new_var;
+        }
+
+        /**
+         * Get the value of m_dumpTapeStartFile
+         * @return the value of m_dumpTapeStartFile
+         */
+        int dumpTapeStartFile() const {
+          return m_dumpTapeStartFile;
+        }
+
+        /**
+         * Set the value of m_dumpTapeStartFile
+         * @param new_var the new value of m_dumpTapeStartFile
+         */
+        void setDumpTapeStartFile(int new_var) {
+          m_dumpTapeStartFile = new_var;
+        }
+
+        /**
+         * Get the value of m_dumpTapeMaxFile
+         * @return the value of m_dumpTapeMaxFile
+         */
+        int dumpTapeMaxFile() const {
+          return m_dumpTapeMaxFile;
+        }
+
+        /**
+         * Set the value of m_dumpTapeMaxFile
+         * @param new_var the new value of m_dumpTapeMaxFile
+         */
+        void setDumpTapeMaxFile(int new_var) {
+          m_dumpTapeMaxFile = new_var;
+        }
+
+        /**
+         * Get the value of m_dumpTapeFromBlock
+         * @return the value of m_dumpTapeFromBlock
+         */
+        int dumpTapeFromBlock() const {
+          return m_dumpTapeFromBlock;
+        }
+
+        /**
+         * Set the value of m_dumpTapeFromBlock
+         * @param new_var the new value of m_dumpTapeFromBlock
+         */
+        void setDumpTapeFromBlock(int new_var) {
+          m_dumpTapeFromBlock = new_var;
+        }
+
+        /**
+         * Get the value of m_dumpTapeToBlock
+         * @return the value of m_dumpTapeToBlock
+         */
+        int dumpTapeToBlock() const {
+          return m_dumpTapeToBlock;
+        }
+
+        /**
+         * Set the value of m_dumpTapeToBlock
+         * @param new_var the new value of m_dumpTapeToBlock
+         */
+        void setDumpTapeToBlock(int new_var) {
+          m_dumpTapeToBlock = new_var;
+        }
+
+        /**
          * Get the value of m_id
          * The id of this object
          * @return the value of m_id
@@ -181,18 +294,50 @@ namespace castor {
           m_id = new_var;
         }
 
+        /**
+         * Get the value of m_mode
+         * @return the value of m_mode
+         */
+        VolumeMode mode() const {
+          return m_mode;
+        }
+
+        /**
+         * Set the value of m_mode
+         * @param new_var the new value of m_mode
+         */
+        void setMode(VolumeMode new_var) {
+          m_mode = new_var;
+        }
+
       private:
 
         std::string m_vid;
-
-        int m_mode;
 
         std::string m_density;
 
         std::string m_label;
 
+        int m_dumpTapeMaxBytes;
+
+        int m_dumpTapeBlockSize;
+
+        int m_dumpTapeConverter;
+
+        int m_dumpTapeErrAction;
+
+        int m_dumpTapeStartFile;
+
+        int m_dumpTapeMaxFile;
+
+        int m_dumpTapeFromBlock;
+
+        int m_dumpTapeToBlock;
+
         /// The id of this object
         u_signed64 m_id;
+
+        VolumeMode m_mode;
 
       }; /* end of class Volume */
 

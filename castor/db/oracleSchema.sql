@@ -445,7 +445,7 @@ INSERT INTO Type2Obj (type, object) VALUES (166, 'FileToRecallRequest');
 INSERT INTO Type2Obj (type, object) VALUES (167, 'FileToRecall');
 INSERT INTO Type2Obj (type, object) VALUES (168, 'VolumeRequest');
 INSERT INTO Type2Obj (type, object) VALUES (169, 'Volume');
-INSERT INTO Type2Obj (type, object) VALUES (170, 'TapeRequestState');
+INSERT INTO Type2Obj (type, object) VALUES (170, 'TapeGatewayRequest');
 INSERT INTO Type2Obj (type, object) VALUES (171, 'DbInfoRetryPolicy');
 INSERT INTO Type2Obj (type, object) VALUES (172, 'EndNotification');
 INSERT INTO Type2Obj (type, object) VALUES (173, 'NoMoreFiles');
@@ -454,7 +454,7 @@ INSERT INTO Type2Obj (type, object) VALUES (175, 'FileErrorReport');
 INSERT INTO Type2Obj (type, object) VALUES (176, 'BaseFileInfo');
 INSERT INTO Type2Obj (type, object) VALUES (178, 'RmMasterReport');
 INSERT INTO Type2Obj (type, object) VALUES (179, 'EndNotificationErrorReport');
-INSERT INTO Type2Obj (type, object) VALUES (180, 'MigrationWorkBasket');
+INSERT INTO Type2Obj (type, object) VALUES (180, 'TapeGatewaySubRequest');
 INSERT INTO Type2Obj (type, object) VALUES (181, 'GatewayMessage');
 COMMIT;
 

@@ -52,7 +52,7 @@ TAPEGATEWAY_MESSAGES_SRCS = \
 	EndNotification.cpp NotificationAcknowledge.cpp EndNotificationErrorReport.cpp\
 	NoMoreFiles.cpp  GatewayMessage.cpp \
 	BaseFileInfo.cpp PositionCommandCode.cpp FileErrorReport.cpp \
-	TapeGatewayRequest.cpp TapeRequestStateCode.cpp TapeGatewaySubRequest.cpp
+	TapeGatewayRequest.cpp TapeRequestStateCode.cpp TapeGatewaySubRequest.cpp VolumeMode.cpp
 
 TAPEGATEWAY_IO_SRCS = \
 	../../io/StreamVolumeRequestCnv.cpp ../../io/StreamVolumeCnv.cpp \

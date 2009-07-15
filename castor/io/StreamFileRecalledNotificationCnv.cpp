@@ -97,6 +97,7 @@ void castor::io::StreamFileRecalledNotificationCnv::createRep(castor::IAddress* 
   ad->stream() << obj->path();
   ad->stream() << obj->checksumName();
   ad->stream() << obj->checksum();
+  ad->stream() << obj->fileSize();
   ad->stream() << obj->id();
   ad->stream() << obj->positionCommandCode();
 }
@@ -135,6 +136,9 @@ castor::IObject* castor::io::StreamFileRecalledNotificationCnv::createObj(castor
   u_signed64 checksum;
   ad->stream() >> checksum;
   object->setChecksum(checksum);
+  u_signed64 fileSize;
+  ad->stream() >> fileSize;
+  object->setFileSize(fileSize);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

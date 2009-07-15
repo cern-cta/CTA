@@ -54,7 +54,7 @@
 #include "castor/tape/tapegateway/ora/OraTapeGatewaySvc.hpp"
 #include "castor/tape/tapegateway/PositionCommandCode.hpp"
 #include "castor/tape/tapegateway/RmMasterTapeGatewayHelper.hpp"
-
+#include "castor/tape/tapegateway/VolumeMode.hpp"
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
 //------------------------------------------------------------------------------
@@ -1694,7 +1694,7 @@ castor::tape::tapegateway::Volume* castor::tape::tapegateway::ora::OraTapeGatewa
    
     result = new Volume();
     result->setVid(m_startTapeSessionStatement->getString(2));
-    result->setMode(m_startTapeSessionStatement->getInt(3));
+    result->setMode((castor::tape::tapegateway::VolumeMode)m_startTapeSessionStatement->getInt(3));
     result->setDensity(m_startTapeSessionStatement->getString(5));
     result->setLabel(m_startTapeSessionStatement->getString(6));
     result->setMountTransactionId(startRequest.mountTransactionId());

@@ -29,6 +29,7 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
+#include "castor/tape/tapegateway/VolumeMode.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
 #include "castor/tape/tpcp/Constants.hpp"
 #include "castor/tape/tpcp/StreamOperators.hpp"
@@ -646,8 +647,8 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     // Create the volume message for the aggregator
     castor::tape::tapegateway::Volume volumeMsg;
     volumeMsg.setVid(m_vmgrTapeInfo.vid);
-    volumeMsg.setMode(m_parsedCommandLine.action == Action::write ?
-      WRITE_ENABLE : WRITE_DISABLE);
+    volumeMsg.setMode((castor::tape::tapegateway::VolumeMode)(m_parsedCommandLine.action == Action::write ?
+      WRITE_ENABLE : WRITE_DISABLE));
     volumeMsg.setLabel(m_vmgrTapeInfo.lbltype);
     volumeMsg.setMountTransactionId(m_volReqId);
     volumeMsg.setDensity(m_vmgrTapeInfo.density);

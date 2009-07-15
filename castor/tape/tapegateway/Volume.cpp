@@ -32,6 +32,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/tape/tapegateway/GatewayMessage.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
+#include "castor/tape/tapegateway/VolumeMode.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -42,10 +43,18 @@
 castor::tape::tapegateway::Volume::Volume() throw() :
   GatewayMessage(),
   m_vid(""),
-  m_mode(0),
   m_density(""),
   m_label(""),
-  m_id(0) {
+  m_dumpTapeMaxBytes(0),
+  m_dumpTapeBlockSize(0),
+  m_dumpTapeConverter(0),
+  m_dumpTapeErrAction(0),
+  m_dumpTapeStartFile(0),
+  m_dumpTapeMaxFile(0),
+  m_dumpTapeFromBlock(0),
+  m_dumpTapeToBlock(0),
+  m_id(0),
+  m_mode(VolumeMode(0)) {
 }
 
 //------------------------------------------------------------------------------
@@ -70,11 +79,19 @@ void castor::tape::tapegateway::Volume::print(std::ostream& stream,
   this->GatewayMessage::print(stream, indent, alreadyPrinted);
   // Output of all members
   stream << indent << "vid : " << m_vid << std::endl;
-  stream << indent << "mode : " << m_mode << std::endl;
   stream << indent << "density : " << m_density << std::endl;
   stream << indent << "label : " << m_label << std::endl;
+  stream << indent << "dumpTapeMaxBytes : " << m_dumpTapeMaxBytes << std::endl;
+  stream << indent << "dumpTapeBlockSize : " << m_dumpTapeBlockSize << std::endl;
+  stream << indent << "dumpTapeConverter : " << m_dumpTapeConverter << std::endl;
+  stream << indent << "dumpTapeErrAction : " << m_dumpTapeErrAction << std::endl;
+  stream << indent << "dumpTapeStartFile : " << m_dumpTapeStartFile << std::endl;
+  stream << indent << "dumpTapeMaxFile : " << m_dumpTapeMaxFile << std::endl;
+  stream << indent << "dumpTapeFromBlock : " << m_dumpTapeFromBlock << std::endl;
+  stream << indent << "dumpTapeToBlock : " << m_dumpTapeToBlock << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
+  stream << indent << "mode : " << VolumeModeStrings[m_mode] << std::endl;
 }
 
 //------------------------------------------------------------------------------
