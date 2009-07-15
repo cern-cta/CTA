@@ -716,16 +716,24 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
 // notifyGatewayFileMigrated
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost,
-  const unsigned short gatewayPort, const uint64_t fileTransactionId,
-  char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId, int32_t &tapeFileSeq,
-  unsigned char (&blockId)[4], int32_t positionCommandCode,
-  char (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1], uint32_t checksum,
-  uint32_t fileSize, uint32_t compressedFileSize )
+  const Cuuid_t        &cuuid,
+  const uint32_t       volReqId,
+  const char           *gatewayHost,
+  const unsigned short gatewayPort,
+  const uint64_t       fileTransactionId,
+  const char           (&nsHost)[CA_MAXHOSTNAMELEN+1],
+  const uint64_t       fileId,
+  const int32_t        tapeFileSeq,
+  const unsigned char  (&blockId)[4],
+  const int32_t        positionCommandCode,
+  const char           (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1],
+  const uint32_t       checksum,
+  const uint64_t       fileSize,
+  const uint64_t       compressedFileSize)
   throw(castor::exception::Exception) {
 
   {
-    // 32-bits = 1 x '0' + 1 x 'x' + 8 x hex + 1 x '/0' = 11
+    // 32-bits = 1 x '0' + 1 x 'x' + 8 x hex + 1 x '/0' = 11 byte string
     char checksumHex[11];
     checksumHex[0] = '0';
     checksumHex[1] = 'x';
@@ -885,7 +893,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
   } // switch(reply->type())
 
   {
-    // 32-bits = 1 x '0' + 1 x 'x' + 8 x hex + 1 x '/0' = 11
+    // 32-bits = 1 x '0' + 1 x 'x' + 8 x hex + 1 x '/0' = 11 byte string
     char checksumHex[11];
     checksumHex[0] = '0';
     checksumHex[1] = 'x';
@@ -920,15 +928,23 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
 // notifyGatewayFileRecalled
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost,
-  const unsigned short gatewayPort, const uint64_t fileTransactionId,
-  char (&nsHost)[CA_MAXHOSTNAMELEN+1], uint64_t &fileId, int32_t &tapeFileSeq,
-  char (&filePath)[CA_MAXPATHLEN+1], int32_t positionCommandCode,
-  char (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1], uint32_t checksum )
+  const Cuuid_t        &cuuid,
+  const uint32_t       volReqId,
+  const char           *gatewayHost,
+  const unsigned short gatewayPort,
+  const uint64_t       fileTransactionId,
+  const char           (&nsHost)[CA_MAXHOSTNAMELEN+1],
+  const uint64_t       fileId,
+  const int32_t        tapeFileSeq,
+  const char           (&filePath)[CA_MAXPATHLEN+1],
+  const int32_t        positionCommandCode,
+  const char           (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1],
+  const uint32_t       checksum,
+  const uint64_t       fileSize)
   throw(castor::exception::Exception) {
 
   {
-    // 32-bits = 1 x '0' + 1 x 'x' + 8 x hex + 1 x '/0' = 11
+    // 32-bits = 1 x '0' + 1 x 'x' + 8 x hex + 1 x '/0' = 11 byte string
     char checksumHex[11];
     checksumHex[0] = '0';
     checksumHex[1] = 'x';
@@ -945,7 +961,8 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
       castor::dlf::Param("positionCommandCode", positionCommandCode),
       castor::dlf::Param("checksumAlgorithm"  , checksumAlgorithm  ),
       castor::dlf::Param("checksum"           , checksumHex        ),
-      castor::dlf::Param("filePath"           , filePath           )};
+      castor::dlf::Param("filePath"           , filePath           ),
+      castor::dlf::Param("fileSize"           , fileSize           )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_NOTIFY_GATEWAY_FILE_RECALLED, params);
   }
@@ -971,6 +988,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
     (tapegateway::PositionCommandCode)positionCommandCode);
   request.setChecksumName(checksumAlgorithm);
   request.setChecksum(checksum);
+  request.setFileSize(fileSize);
 
   // Connect to the tape gateway
   castor::io::ClientSocket gatewaySocket(gatewayPort, gatewayHost);
@@ -1078,7 +1096,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
   } // switch(reply->type())
 
   {
-    // 32-bits = 1 x '0' + 1 x 'x' + 8 x hex + 1 x '/0' = 11
+    // 32-bits = 1 x '0' + 1 x 'x' + 8 x hex + 1 x '/0' = 11 byte string
     char checksumHex[11];
     checksumHex[0] = '0';
     checksumHex[1] = 'x';
@@ -1094,7 +1112,8 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
       castor::dlf::Param("tapeFileSeq"        , tapeFileSeq        ),
       castor::dlf::Param("positionCommandCode", positionCommandCode),
       castor::dlf::Param("checksumAlgorithm"  , checksumAlgorithm  ),
-      castor::dlf::Param("checksum"           , checksumHex        )};
+      castor::dlf::Param("checksum"           , checksumHex        ),
+      castor::dlf::Param("fileSize"           , fileSize           )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_NOTIFIED_GATEWAY_FILE_RECALLED, params);
   }

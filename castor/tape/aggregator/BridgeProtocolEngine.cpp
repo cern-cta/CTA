@@ -792,7 +792,9 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
         castor::dlf::Param("filePath", body.filePath),
         castor::dlf::Param("tapePath", body.tapePath),
         castor::dlf::Param("tapeFseq", body.tapeFseq),
-        castor::dlf::Param("diskFseq", body.diskFseq)};
+        castor::dlf::Param("diskFseq", body.diskFseq),
+        castor::dlf::Param("bytesIn" , body.bytesIn),
+        castor::dlf::Param("bytesOut", body.bytesOut)};
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
         AGGREGATOR_FILE_TRANSFERED, params);
 
@@ -810,8 +812,8 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
 
       // Notify the tape gateway
       if(m_mode == WRITE_ENABLE) {
-        const uint32_t fileSize           = body.bytesIn;
-        const uint32_t compressedFileSize = fileSize; // Ignore compression
+        const uint64_t fileSize           = body.bytesIn; // "in" to the tape
+        const uint64_t compressedFileSize = fileSize; // Ignore compression
 
         GatewayTxRx::notifyGatewayFileMigrated(m_cuuid, m_volReqId,
           m_gatewayHost, m_gatewayPort, fileTransactonId,
@@ -822,12 +824,13 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
 
       // Else recall 
       } else {
+        const uint64_t fileSize = body.bytesOut; // "out" from the tape
 
         GatewayTxRx::notifyGatewayFileRecalled(m_cuuid, m_volReqId,
           m_gatewayHost, m_gatewayPort, fileTransactonId,
           body.segAttr.nameServerHostName, body.segAttr.castorFileId,
           body.tapeFseq, body.filePath, body.positionMethod,
-          body.segAttr.segmCksumAlgorithm, body.segAttr.segmCksum);
+          body.segAttr.segmCksumAlgorithm, body.segAttr.segmCksum, fileSize);
       }
     }
     break;
