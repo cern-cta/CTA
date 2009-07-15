@@ -2148,3 +2148,167 @@ Jun 27 15:20:15 tpwrite[12164]: selecting tape server ...
 Jun 27 15:20:15 tpwrite[12164]: * tpsrv202 is a possible tape server.
 Jun 27 15:20:15 tpwrite[12164]: ! selected tape server is tpsrv202.
 
+
+How to trace RTCP_FILE[ERR]_REQ messages being sent and received by tpwrite
+===========================================================================
+
+With your favourite text editor create an executable shell script with the
+name trace_tpwrite.sh and the following contents:
+
+*************** BEGINNING OF trace_tpwrite.sh CONTENTS *******************
+
+#!/bin/sh
+
+PARAMS=$@
+
+if test "x$CASTOR_CVS" = x; then
+  echo "Error: The environment variable CASTOR_CVS is not set"
+  echo
+  echo "CASTOR_CVS should be the full path to the CASTOR source code up to and"
+  echo "including CASTOR2, e.g."
+  echo
+  echo "    export CASTOR_CVS=/usr/local/src/CASTOR2"
+  echo
+  exit -1
+fi
+
+cat > /tmp/trace_tpwrite.command_list << HERE
+set height 0
+set breakpoint pending on
+set follow-fork-mode child
+set logging file /tmp/trace_tpwrite.output
+set logging on
+
+directory /usr/local/src/CASTOR2/rtcopy
+
+b rtcp_Transfer if hdr != 0 && filereq != 0 && (hdr->reqtype == 0x2102 || hdr->reqtype == 0x2105)
+commands
+silent
+  printf "\n"
+  printf "\n"
+  if whereto == SendTo
+    printf "==================================\n"
+    printf "Sending RTCP_FILE[ERR]_REQ message\n"
+    printf "==================================\n"
+  else
+    printf "====================================\n"
+    printf "Receiving RTCP_FILE[ERR]_REQ message\n"
+    printf "====================================\n"
+  end
+  printf "\n"
+
+  printf "len=%d\n"            , hdr->len
+  printf "file_path=%s\n"      , filereq->file_path
+  printf "tape_path=%s\n"      , filereq->tape_path
+  printf "recfm=%s\n"          , filereq->recfm
+  printf "fid=%s\n"            , filereq->fid
+  printf "ifce=%s\n"           , filereq->ifce
+  printf "stageID=%s\n"        , filereq->stageID
+  if magic <= 0x0668
+    printf "vmsopt_dummy=%s\n", vmsopt_dummy
+  end
+  printf "VolReqID=%d\n"       , filereq->VolReqID
+  printf "jobID=%d\n"          , filereq->jobID
+  printf "stageSubreqID=%d\n"  , filereq->stageSubreqID
+  printf "umask=%d\n"          , filereq->umask
+  if magic <= 0x0668
+    printf "dummyInt=%d\n", dummyInt
+  end
+  printf "position_method=%d\n", filereq->position_method
+  printf "tape_fseq=%d\n"      , filereq->tape_fseq
+  printf "disk_fseq=%d\n"      , filereq->disk_fseq
+  printf "blocksize=%d\n"      , filereq->blocksize
+  printf "recordlength=%d\n"   , filereq->recordlength
+  printf "retention=%d\n"      , filereq->retention
+  printf "def_alloc=%d\n"      , filereq->def_alloc
+  printf "rtcp_err_action=%d\n", filereq->rtcp_err_action
+  printf "tp_err_action=%d\n"  , filereq->tp_err_action
+  printf "convert=%d\n"        , filereq->convert
+  printf "check_fid=%d\n"      , filereq->check_fid
+  printf "concat=%d\n"         , filereq->concat
+  printf "proc_status="
+  if filereq->proc_status == 0x1
+    printf "RTCP_WAITING\n"
+  else
+    if filereq->proc_status == 0x2
+      printf "RTCP_POSITIONED\n"
+    else
+      if filereq->proc_status == 0x3
+        printf "RTCP_PARTIALLY_FINISHED\n"
+      else
+        if filereq->proc_status == 0x4
+          printf "RTCP_FINISHED\n"
+        else
+          if filereq->proc_status == 0x5
+            printf "RTCP_EOV_HIT\n"
+          else
+            if filereq->proc_status == 0x6
+              printf "RTCP_UNREACHABLE\n"
+            else
+              if filereq->proc_status == 0x7
+                printf "RTCP_REQUEST_MORE_WORK\n"
+              else
+                printf "UNKNOWN3\n"
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+  printf "cprc=%d\n"              , filereq->cprc
+  printf "TStartPosition=%d\n"    , filereq->TStartPosition
+  printf "TEndPosition=%d\n"      , filereq->TEndPosition
+  printf "TStartTransferDisk=%d\n", filereq->TStartTransferDisk
+  printf "TEndTransferDisk=%d\n"  , filereq->TEndTransferDisk
+  printf "TStartTransferTape=%d\n", filereq->TStartTransferTape
+  printf "TEndTransferTape=%d\n"  , filereq->TEndTransferTape
+  printf "blockid[0]=%d\n"        , filereq->blockid[0]
+  printf "blockid[1]=%d\n"        , filereq->blockid[1]
+  printf "blockid[2]=%d\n"        , filereq->blockid[2]
+  printf "blockid[3]=%d\n"        , filereq->blockid[3]
+  printf "offset=%ld\n"           , filereq->offset
+  printf "bytes_in=%ld\n"         , filereq->bytes_in
+  printf "bytes_out=%ld\n"        , filereq->bytes_out
+  printf "host_bytes=%ld\n"       , filereq->host_bytes
+  printf "nbrecs=%ld\n"           , filereq->nbrecs
+  printf "maxnbrec=%ld\n"         , filereq->maxnbrec
+  printf "maxsize=%ld\n"          , filereq->maxsize
+  printf "startsize=%ld\n"        , filereq->startsize
+  if magic > 0x0668
+    printf "castorSegAttr.nameServerHostName=%s\n", filereq->castorSegAttr.nameServerHostName
+    printf "castorSegAttr.segmCksumAlgorithm=%s\n", filereq->castorSegAttr.segmCksumAlgorithm
+    printf "castorSegAttr.segmCksum=%d\n"         , filereq->castorSegAttr.segmCksum
+    printf "castorSegAttr.castorFileId=%ld\n"     , filereq->castorSegAttr.castorFileId
+  end
+  if magic > 0x0668
+    printf "stgReqId->time_low=%d\n"                 , filereq->stgReqId.time_low
+    printf "stgReqId->time_mid=%d\n"                 , filereq->stgReqId.time_mid
+    printf "stgReqId->time_hi_and_version=%d\n"      , filereq->stgReqId.time_hi_and_version
+    printf "stgReqId->clock_seq_hi_and_reserved=%d\n", filereq->stgReqId.clock_seq_hi_and_reserved
+    printf "stgReqId->clock_seq_low=%d\n"            , filereq->stgReqId.clock_seq_low
+    printf "stgReqId->node[0]=%d\n"                  , filereq->stgReqId.node[0]
+    printf "stgReqId->node[1]=%d\n"                  , filereq->stgReqId.node[1]
+    printf "stgReqId->node[2]=%d\n"                  , filereq->stgReqId.node[2]
+    printf "stgReqId->node[3]=%d\n"                  , filereq->stgReqId.node[3]
+    printf "stgReqId->node[4]=%d\n"                  , filereq->stgReqId.node[4]
+    printf "stgReqId->node[5]=%d\n"                  , filereq->stgReqId.node[5]
+  end
+c
+end
+
+run
+quit
+HERE
+
+LD_LIBRARY_PATH=`find $CASTOR_CVS -name '*.so*' | sed 's|/[^/]*$||' | sort | uniq`
+LD_LIBRARY_PATH=`echo $LD_LIBRARY_PATH | sed 's/ /:/g'`
+CMD="export LD_LIBRARY_PATH=$LD_LIBRARY_PATH; gdb -x /tmp/trace_tpwrite.command_list --args $CASTOR_CVS/rtcopy/tpwrite $PARAMS"
+
+if test $USER = root; then
+  sudo -u stage sh -c "$CMD"
+else
+  sh -c "$CMD"
+fi
+
+***************    END OF trace_tpwrite.sh CONTENTS    *******************
