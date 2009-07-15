@@ -105,9 +105,16 @@ bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
   // being a proxy for RTCPClientD
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", jobRequest.tapeRequestId),
-      castor::dlf::Param("Port"    , rtcpdCallbackPort),
-      castor::dlf::Param("HostName", rtcpdCallbackHost)};
+      castor::dlf::Param("volReqId"       , jobRequest.tapeRequestId  ),
+      castor::dlf::Param("Port"           , rtcpdCallbackPort         ),
+      castor::dlf::Param("HostName"       , rtcpdCallbackHost         ),
+      castor::dlf::Param("clientHost"     , jobRequest.clientHost     ),
+      castor::dlf::Param("clientPort"     , jobRequest.clientPort     ),
+      castor::dlf::Param("clientUserName" , jobRequest.clientUserName ),
+      castor::dlf::Param("clientEuid"     , jobRequest.clientEuid     ),
+      castor::dlf::Param("clientEgid"     , jobRequest.clientEgid     ),
+      castor::dlf::Param("deviceGroupName", jobRequest.deviceGroupName),
+      castor::dlf::Param("driveName"      , jobRequest.driveName      )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_SUBMITTING_JOB_TO_RTCPD, params);
   }
