@@ -106,14 +106,18 @@ const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getRepack
 
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_startTapeSessionStatementString="BEGIN tg_startTapeSession(:1,:2,:3,:4,:5,:6);END;";
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_endTapeSessionStatementString="BEGIN tg_endTapeSession(:1,:2,:3);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_endTapeSessionStatementString="BEGIN tg_endTapeSession(:1);END;";
 
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getSegmentInfoStatementString="BEGIN tg_getSegmentInfo(:1,:2,:3,:4,:5,:6,:7);END;";
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_failTapeSessionStatementString="BEGIN tg_failTapeSession(:1,:2,:3,:4);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_failTapeSessionStatementString="BEGIN tg_failTapeSession(:1,:2);END;";
 
 
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_failFileTransferStatementString="BEGIN tg_failFileTransfer(:1,:2,:3,:4,:5);END;";
+
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_invalidateFileStatementString="BEGIN tg_invalidateFile(:1,:2,:3,:4,:5);END;";
+
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getTapeToReleaseStatementString="BEGIN tg_getTapeToRelease(:1,:2,:3);END;";
 
 //------------------------------------------------------------------------------
 // OraTapeGatewaySvc
@@ -140,7 +144,9 @@ castor::tape::tapegateway::ora::OraTapeGatewaySvc::OraTapeGatewaySvc(const std::
   m_endTapeSessionStatement(0),
   m_getSegmentInfoStatement(0),
   m_failTapeSessionStatement(0),
-  m_failFileTransferStatement(0)
+  m_failFileTransferStatement(0),
+  m_invalidateFileStatement(0),
+  m_getTapeToReleaseStatement(0)
 {
 }
 
@@ -194,6 +200,8 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
     if ( m_getSegmentInfoStatement ) deleteStatement( m_getSegmentInfoStatement);
     if ( m_failTapeSessionStatement ) deleteStatement( m_failTapeSessionStatement);
     if ( m_failFileTransferStatement ) deleteStatement(m_failFileTransferStatement);
+    if ( m_invalidateFileStatement ) deleteStatement(m_invalidateFileStatement);
+    if ( m_getTapeToReleaseStatement ) deleteStatement(m_getTapeToReleaseStatement);
 
   } catch (oracle::occi::SQLException e) {};
 
@@ -220,6 +228,8 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
   m_getSegmentInfoStatement = 0;
   m_failTapeSessionStatement= 0;
   m_failFileTransferStatement= 0;
+  m_invalidateFileStatement = 0;
+  m_getTapeToReleaseStatement=0;
 
 }
 
@@ -830,9 +840,13 @@ castor::tape::tapegateway::FileToMigrate* castor::tape::tapegateway::ora::OraTap
       m_getFileToMigrateStatement->executeUpdate();
 
       int ret = m_getFileToMigrateStatement->getInt(2);
-      if (ret == -1 ) return NULL;
+      if (ret == -1 ) {
+	cnvSvc()->commit();
+	return NULL;
+      }
 
       if (ret == -2 ) {// UNKNOWN request
+	cnvSvc()->commit();
 	castor::exception::Exception e(EINVAL);
 	throw e;
       }
@@ -864,7 +878,7 @@ castor::tape::tapegateway::FileToMigrate* castor::tape::tapegateway::ora::OraTap
 	result->setFileTransactionId((u_signed64)rs->getDouble(10));
 
 	result->setMountTransactionId(req.mountTransactionId());
-	result->setPositionCommandCode(TPPOSIT_FSEQ);				   
+	result->setPositionCommandCode(TPPOSIT_FSEQ);
 
 	try {
 	  NsTapeGatewayHelper nsHelper;
@@ -898,7 +912,7 @@ castor::tape::tapegateway::FileToMigrate* castor::tape::tapegateway::ora::OraTap
 	    failure.setNshost(result->nshost());
 	    failure.setFseq(result->fseq());
 	    failure.setErrorCode(e.code());
-	    failFileTransfer(failure);
+	    invalidateFile(failure);
 
 	  } catch (castor::exception::Exception ex){
 
@@ -955,6 +969,7 @@ castor::tape::tapegateway::FileToMigrate* castor::tape::tapegateway::ora::OraTap
     throw ex;
   }
 
+  cnvSvc()->commit();
   return result;
 }
 
@@ -1141,7 +1156,7 @@ castor::tape::tapegateway::FileToRecall* castor::tape::tapegateway::ora::OraTape
 	    failure.setNshost(result->nshost());
 	    failure.setFseq(result->fseq());
 	    failure.setErrorCode(e.code());
-	    failFileTransfer(failure);
+	    invalidateFile(failure);
 	    
 	  } catch (castor::exception::Exception ex){
 
@@ -1194,6 +1209,7 @@ castor::tape::tapegateway::FileToRecall* castor::tape::tapegateway::ora::OraTape
     throw ex;
   }
 
+  cnvSvc()->commit(); 
   return result;
 
 }
@@ -1705,19 +1721,13 @@ castor::tape::tapegateway::Volume* castor::tape::tapegateway::ora::OraTapeGatewa
 //----------------------------------------------------------------------------
 
 
-castor::stager::Tape*  castor::tape::tapegateway::ora::OraTapeGatewaySvc::endTapeSession(castor::tape::tapegateway::EndNotification& endRequest) throw (castor::exception::Exception){
-  
-  castor::stager::Tape* result=NULL;
+void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::endTapeSession(castor::tape::tapegateway::EndNotification& endRequest) throw (castor::exception::Exception){
 
    try {
     // Check whether the statements are ok
     if (0 == m_endTapeSessionStatement) {
       m_endTapeSessionStatement =
 	createStatement(s_endTapeSessionStatementString);
-      m_endTapeSessionStatement->registerOutParam
-	(2, oracle::occi::OCCISTRING, 2048 );
-      m_endTapeSessionStatement->registerOutParam
-	(3, oracle::occi::OCCIINT);
     }
     
     m_endTapeSessionStatement->setInt(1,endRequest.mountTransactionId());
@@ -1725,11 +1735,6 @@ castor::stager::Tape*  castor::tape::tapegateway::ora::OraTapeGatewaySvc::endTap
 
     // Execute the statement
     (void)m_endTapeSessionStatement->executeUpdate();
-
-    result= new castor::stager::Tape();
-
-    result->setVid( m_endTapeSessionStatement->getString(2));
-    result->setTpmode( m_endTapeSessionStatement->getInt(3));
 
   } catch (oracle::occi::SQLException e) {
     
@@ -1740,7 +1745,6 @@ castor::stager::Tape*  castor::tape::tapegateway::ora::OraTapeGatewaySvc::endTap
       << std::endl << e.what();
     throw ex;
   }
-  return result;
 
 } 
 
@@ -1792,18 +1796,14 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getSegmentInfo(FileRecal
 // failTapeSession
 //----------------------------------------------------------------------------
 
-castor::stager::Tape castor::tape::tapegateway::ora::OraTapeGatewaySvc::failTapeSession(castor::tape::tapegateway::EndNotificationErrorReport& failure) throw (castor::exception::Exception){
-  castor::stager::Tape result;
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::failTapeSession(castor::tape::tapegateway::EndNotificationErrorReport& failure) throw (castor::exception::Exception){
   try {
     // Check whether the statements are ok
 
     if (0 == m_failTapeSessionStatement) {
       m_failTapeSessionStatement =
         createStatement(s_failTapeSessionStatementString);
-      m_failTapeSessionStatement->registerOutParam
-	      (3, oracle::occi::OCCISTRING, 2048 ); 
-      m_failTapeSessionStatement->registerOutParam
-	      (4, oracle::occi::OCCIINT); 
+
     }
 
     m_failTapeSessionStatement->setDouble(1,(double)failure.mountTransactionId()); 
@@ -1811,8 +1811,6 @@ castor::stager::Tape castor::tape::tapegateway::ora::OraTapeGatewaySvc::failTape
     
     m_failTapeSessionStatement->executeUpdate();
 
-    result.setVid(m_failTapeSessionStatement->getString(3));
-    result.setTpmode(m_failTapeSessionStatement->getInt(4));
 
   } catch (oracle::occi::SQLException e) {
    
@@ -1823,7 +1821,7 @@ castor::stager::Tape castor::tape::tapegateway::ora::OraTapeGatewaySvc::failTape
       << std::endl << e.what();
     throw ex;
   }
-  return result;
+  
 }
 
 
@@ -1848,7 +1846,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::failFileTransfer(FileErr
     m_failFileTransferStatement->setInt(5,failure.errorCode());
     
     m_failFileTransferStatement->executeUpdate();
-
+    cnvSvc()->commit(); 
   } catch (oracle::occi::SQLException e) {
    
     handleException(e);
@@ -1859,3 +1857,80 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::failFileTransfer(FileErr
     throw ex;
   }
 }
+
+
+
+//----------------------------------------------------------------------------
+// invalidateFile
+//----------------------------------------------------------------------------
+
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::invalidateFile(FileErrorReport& failure) throw (castor::exception::Exception){
+
+  try {
+    // Check whether the statements are ok
+
+    if (0 == m_invalidateFileStatement) {
+      m_invalidateFileStatement =
+        createStatement(s_invalidateFileStatementString);
+    }
+
+    m_invalidateFileStatement->setDouble(1,(double)failure.mountTransactionId()); 
+    m_invalidateFileStatement->setDouble(2,(double)failure.fileid());
+    m_invalidateFileStatement->setString(3,failure.nshost());
+    m_invalidateFileStatement->setInt(4,failure.fseq());
+    m_invalidateFileStatement->setInt(5,failure.errorCode());
+    
+    m_invalidateFileStatement->executeUpdate();
+
+  } catch (oracle::occi::SQLException e) {
+   
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in invalidateFile"
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+
+
+
+//----------------------------------------------------------------------------
+// getTapeToRelease
+//----------------------------------------------------------------------------
+
+castor::stager::Tape castor::tape::tapegateway::ora::OraTapeGatewaySvc::getTapeToRelease(u_signed64 mountTransactionId) throw (castor::exception::Exception){
+  castor::stager::Tape result;
+  try {
+    // Check whether the statements are ok
+
+    if (0 == m_getTapeToReleaseStatement) {
+      m_getTapeToReleaseStatement =
+        createStatement(s_getTapeToReleaseStatementString);
+      m_getTapeToReleaseStatement->registerOutParam
+	      (2, oracle::occi::OCCISTRING, 2048 ); 
+      m_getTapeToReleaseStatement->registerOutParam
+	      (3, oracle::occi::OCCIINT); 
+    }
+
+    m_getTapeToReleaseStatement->setDouble(1,(double)mountTransactionId); 
+    
+    m_getTapeToReleaseStatement->executeUpdate();
+
+    result.setVid(m_getTapeToReleaseStatement->getString(2));
+    result.setTpmode(m_getTapeToReleaseStatement->getInt(3));
+
+  } catch (oracle::occi::SQLException e) {
+   
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in getTapeToRelease"
+      << std::endl << e.what();
+    throw ex;
+  }
+  return result;
+}
+
+

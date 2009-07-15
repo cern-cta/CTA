@@ -120,13 +120,11 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
     tapeRequest++;
   }
   
-  // update the db to eventually send again some requests
+ 
 
   try {
 
-    oraSvc->restartLostReqs(tapesToRetry); 
-
-    // if the db update succeeded I update vmgr releasing the busy tapes     
+    //  I update vmgr releasing the busy tapes     
 
     tapeToReset = tapesToReset.begin();
     while (tapeToReset != tapesToReset.end()){
@@ -143,6 +141,8 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
       } 
       tapeToReset++;
     }
+    // update the db to eventually send again some requests
+    oraSvc->restartLostReqs(tapesToRetry); 
 
   } catch (castor::exception::Exception e){
      

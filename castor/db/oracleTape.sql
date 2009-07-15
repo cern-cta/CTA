@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.756 $ $Date: 2009/07/09 15:43:04 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.757 $ $Date: 2009/07/15 08:39:23 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1971,8 +1971,9 @@ END;
 
 /* received end notification message */
 
+
 create or replace PROCEDURE  tg_endTapeSession  
-( inputVdqmReqId IN INTEGER, outputTape OUT NOCOPY VARCHAR2, outputMode OUT INTEGER ) AS
+( inputVdqmReqId IN INTEGER) AS
 tpId NUMBER;
 trId NUMBER;
 strId NUMBER;
@@ -1980,16 +1981,16 @@ reqMode INTEGER;
 mIds "numList";
 tcIds "numList";
 segNum INTEGER;
+
 BEGIN
-  outputtape:=null;
-  outputmode:=0;
+  
   -- delete taperequest
   DELETE FROM tapegatewayrequest WHERE vdqmvolreqid = inputvdqmreqid RETURNING id,taperecall, streammigration,accessmode INTO trId,tpId, strid, reqMode;
   DELETE FROM id2type WHERE id=trId;
-  outputmode:= reqmode;
+
   IF reqMode = 0 THEN 
    --read
-    UPDATE tape set status=0 WHERE  tpmode=0 AND id=tpId returning vid into outputtape; --WAIT POLICY for rechandler
+    UPDATE tape set status=0 WHERE  tpmode=0 AND id=tpId; --WAIT POLICY for rechandler
     UPDATE segment set status=0 where status=7 AND tape=tpId; -- lost segments in SELECTED    
     SELECT count(*) into segNum from segment where tape=tpId AND status=0;
     IF segnum > 0 THEN
@@ -1998,8 +1999,7 @@ BEGIN
     END IF;
   ELSE 
     -- write
-    SELECT vid INTO outputTape FROM tape,stream WHERE tape.id = stream.tape and stream.id=strId;-- return the vid for vmgr
-    resetstream(strId);
+   resetstream(strId);
     DELETE FROM migrationworkbasket WHERE taperequest=trId returning id, tapecopy BULK COLLECT INTO mIds, tcIds;
     FORALL i IN mIds.FIRST .. mIds.LAST 
         DELETE FROM id2type WHERE id=mIds(i);
@@ -2013,7 +2013,8 @@ END;
 
 /* file failed for the specific file */
 
-create or replace PROCEDURE tg_failFileTransfer(transactionId IN NUMBER,inputFileId IN NUMBER, inputNsHost IN VARCHAR2, inputFseq IN INTEGER, inputErrorCode IN INTEGER)  AS
+create or replace
+PROCEDURE tg_failFileTransfer(transactionId IN NUMBER,inputFileId IN NUMBER, inputNsHost IN VARCHAR2, inputFseq IN INTEGER, inputErrorCode IN INTEGER)  AS
 cfId NUMBER;
 trId NUMBER;
 strId NUMBER;
@@ -2051,14 +2052,27 @@ BEGIN
 END;
 /
 
+
+/* invalidate file */
+
+create or replace PROCEDURE tg_invalidateFile(transactionId IN NUMBER,inputFileId IN NUMBER, inputNsHost IN VARCHAR2, inputFseq IN INTEGER, inputErrorCode IN INTEGER)  AS
+BEGIN
+      UPDATE tapegatewayrequest set lastfseq=lastfseq-1 
+	where vdqmvolreqid=transactionid; 
+     tg_failfiletransfer(transactionid,inputfileid, inputNsHost, inputFseq, inputErrorCode);
+END;
+/
+
+
 /* received EndNotification error */
 
-create or replace PROCEDURE tg_failTapeSession(transactionId IN NUMBER, inputErrorCode IN INTEGER, outVid OUT NOCOPY VARCHAR2, outMode OUT INTEGER)  AS
+create or replace PROCEDURE tg_failTapeSession(transactionId IN NUMBER, inputErrorCode IN INTEGER)  AS
 cfId NUMBER;
 trId NUMBER;
 tpId NUMBER;
 tcIds "numList";
 srIds "numList";
+outMode INTEGER;
 BEGIN 
  BEGIN
     SELECT accessmode, id, taperecall INTO outMode, trId, tpId FROM  tapegatewayrequest WHERE transactionid = vdqmvolreqid FOR UPDATE;   
@@ -2085,7 +2099,7 @@ BEGIN
     END IF;
     
     -- end the session
-    tg_endTapeSession(transactionId, outVid, outMode);
+    tg_endTapeSession(transactionId);
     
   EXCEPTION WHEN  NO_DATA_FOUND THEN
     null;
@@ -2267,7 +2281,7 @@ BEGIN
    UPDATE tapegatewayrequest set lastfseq=lastfseq+1 where id=trId; --increased when we have the proper value
    OPEN outputFile FOR 
     SELECT fileId,nshost,lastTime,ds,mp,path,knownName,fseq,filesize,id FROM tapegatewaysubrequest where id =srId;
-   COMMIT;
+   -- I cannot commit because of the maxfileseq number is shared
 END;
 /
 
@@ -2324,7 +2338,6 @@ BEGIN
   OPEN outputFile FOR 
    SELECT castorfile.fileid, castorfile.nshost, ds, mp, path, newFseq, srId FROM tapecopy,castorfile  WHERE tcId=tapecopy.id 
          AND castorfile.id=tapecopy.castorfile;
-  COMMIT;
 END;
 /
 
@@ -2550,13 +2563,15 @@ END;
 
 /* file migrated */
 
-create or replace PROCEDURE tg_setFileMigrated (transactionId IN NUMBER, inputFileId  IN NUMBER,inputNsHost IN VARCHAR2, inputFseq IN INTEGER, streamReport OUT castor.StreamReport_Cur) AS
+create or replace
+PROCEDURE tg_setFileMigrated (transactionId IN NUMBER, inputFileId  IN NUMBER,inputNsHost IN VARCHAR2, inputFseq IN INTEGER, streamReport OUT castor.StreamReport_Cur) AS
 trId NUMBER;
 tcNumb INTEGER;
 cfId NUMBER;
 tcId NUMBER;
-tcIds "numList";
 srId NUMBER;
+tcIds "numList";
+srIds "numList";
 dcId NUMBER;
 BEGIN
   select id  into trId from tapegatewayrequest where tapegatewayrequest.vdqmvolreqid=transactionid FOR UPDATE;
@@ -2575,8 +2590,10 @@ BEGIN
        DELETE FROM id2type WHERE id=tcIds(i);
   END IF;
   BEGIN 
-    SELECT id INTO srId FROM subrequest WHERE castorfile=cfId AND status=12;
-    archivesubreq(srId,8);
+    SELECT id BULK COLLECT INTO srIds FROM subrequest WHERE castorfile=cfId AND status=12;
+    for i in srIds.FIRST .. srIds.LAST LOOP
+       archivesubreq(srIds(i),8);
+    end loop;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- no repack
     null;
@@ -2587,6 +2604,7 @@ BEGIN
  COMMIT;
 END;
 /
+
 
 /* file recalled */
 
@@ -2738,4 +2756,21 @@ END;
 /
 
 
+/* get tape to release */
+
+create or replace
+PROCEDURE  tg_getTapeToRelease  
+( inputVdqmReqId IN INTEGER, outputTape OUT NOCOPY VARCHAR2, outputMode OUT INTEGER ) AS
+tpId NUMBER;
+trId NUMBER;
+strId NUMBER;
+reqMode INTEGER;
+mIds "numList";
+tcIds "numList";
+segNum INTEGER;
+BEGIN
+  SELECT tape.vid, tapegatewayrequest.accessmode INTO outputtape, outputmode from tapegatewayrequest,tape,stream 
+    where vdqmvolreqid = inputvdqmreqid and (tape.id=tapegatewayrequest.taperecall or (stream.id=tapegatewayrequest.streammigration and stream.tape=tape.id));
+END;
+/
 

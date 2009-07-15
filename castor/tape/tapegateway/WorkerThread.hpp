@@ -88,8 +88,6 @@ namespace castor {
 
 	castor::IObject* handleMigrationUpdate( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
 
-	castor::IObject* handleFileErrorReport( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
-
 	castor::IObject* handleRecallMoreWork( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
 
 	castor::IObject* handleMigrationMoreWork( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();

@@ -69,7 +69,6 @@ castor::tape::tapegateway::WorkerThread::WorkerThread():BaseDbThread(){
   m_handlerMap[OBJ_FileToRecallRequest] = &WorkerThread::handleRecallMoreWork;
   m_handlerMap[OBJ_FileToMigrateRequest] = &WorkerThread::handleMigrationMoreWork;
   m_handlerMap[OBJ_EndNotification] = &WorkerThread::handleEndWorker;
-  m_handlerMap[OBJ_FileErrorReport] = &WorkerThread::handleFileErrorReport;
   m_handlerMap[OBJ_EndNotificationErrorReport] = &WorkerThread::handleFailWorker;
 
 }
@@ -549,7 +548,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
 	  castor::dlf::Param("errorCode",sstrerror(e.code())),
 	  castor::dlf::Param("errorMessage",e.getMessage().str())
 	};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_MIGRATION_CANNOT_UPDATE_DB, 6, params,&castorFileId);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_MIGRATION_CANNOT_UPDATE_DB, 3, params,&castorFileId);
       
       }
     
@@ -841,37 +840,45 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker( cast
 
 	  try {
 
-	    // ACCESS DB
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,WORKER_END_DB_UPDATE, 1, params);
-	    std::auto_ptr<castor::stager::Tape> tape(oraSvc.endTapeSession(endRequest)); 
+	    // ACCESS DB to get tape to release
+	    
+	    castor::stager::Tape tape = oraSvc.getTapeToRelease(endRequest.mountTransactionId()); 
+
+	    castor::dlf::Param params[] =
+	    {castor::dlf::Param("mountTransactionId", endRequest.mountTransactionId()),
+	     castor::dlf::Param("TPVID",tape.vid()),
+	     castor::dlf::Param("mode",tape.tpmode())
+	    };
+	    castor::dlf::dlf_writep(nullCuuid, WORKER_END_GET_TAPE_TO_RELEASE, 3, params);
+
 
 	    try {
 	      
 	      // UPDATE VMGR
 
-	      if (tape.get() != NULL && tape->tpmode() == 1) { // just for write
-		castor::dlf::Param params[] =
-		  {castor::dlf::Param("mountTransactionId", endRequest.mountTransactionId()),
-		   castor::dlf::Param("TPVID", tape->vid())
-		  };
-	  
-	      
-		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_END_RELEASE_TAPE, 2, params);
+	      if (tape.tpmode() == 1) { // just for write
+	
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_END_RELEASE_TAPE, 3, params);
 		VmgrTapeGatewayHelper vmgrHelper;
-		vmgrHelper.resetBusyTape(*tape);
+		vmgrHelper.resetBusyTape(tape);
 
 	      }
 	      
 	    } catch (castor::exception::Exception e) {
 	      castor::dlf::Param params[] =
 		{castor::dlf::Param("mountTransactionId", endRequest.mountTransactionId()),
-		 castor::dlf::Param("TPVID", tape->vid()),
+		 castor::dlf::Param("TPVID", tape.vid()),
 		 castor::dlf::Param("errorCode",sstrerror(e.code())),
 		 castor::dlf::Param("errorMessage",e.getMessage().str())
 		};
 	      
 	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_CANNOT_RELEASE_TAPE, 4, params);
 	    }
+
+	    // ACCESS DB now we mark it as done
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,WORKER_END_DB_UPDATE, 3, params);
+	    oraSvc.endTapeSession(endRequest);
+    
 
 	  } catch (castor::exception::Exception e){
     
@@ -899,61 +906,6 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker( cast
 }
 
 
-castor::IObject* castor::tape::tapegateway::WorkerThread::handleFileErrorReport( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw(){
-
-  NotificationAcknowledge* response = NULL;
-
-  try {
-
-    FileErrorReport &fileFailure = dynamic_cast<FileErrorReport&>(obj);
-    struct Cns_fileid castorFileId;
-    memset(&castorFileId,'\0',sizeof(castorFileId));
-    strncpy(
-	    castorFileId.server,
-	    fileFailure.nshost().c_str(),
-	    sizeof(castorFileId.server)-1
-	    );
-    castorFileId.fileid = fileFailure.fileid();
-
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("mountTransactionId",fileFailure.mountTransactionId()),
-      };
-       
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_FILE_ERROR_NOTIFIED, 1, params, &castorFileId);
-    
-    response = new NotificationAcknowledge();
-    response->setMountTransactionId(fileFailure.mountTransactionId());
-  
-    try {
-    // DB UPDATE
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,WORKER_FILE_ERROR_DB_UPDATE, 1, params, &castorFileId);
-      oraSvc.failFileTransfer(fileFailure);
-     
-
-    } catch (castor::exception::Exception e) {
-      
-      castor::dlf::Param params[] =
-	{ castor::dlf::Param("mountTransactionId",fileFailure.mountTransactionId()),
-	  castor::dlf::Param("errorCode",sstrerror(e.code())),
-	  castor::dlf::Param("errorMessage",e.getMessage().str())
-	};
-      
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_FILE_ERROR_CANNOT_UPDATE_DB, 3, params,&castorFileId);
-    }
-
-  } catch  (std::bad_cast &ex) {
-    // "Invalid Request" message
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_INVALID_CAST, 0, NULL);
-    
-    EndNotificationErrorReport* errorReport=new EndNotificationErrorReport();
-    errorReport->setErrorCode(EINVAL);
-    errorReport->setErrorMessage("invalid object");
-    return errorReport;
-    
-  }
-  return response;
-}
-
 
 castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker( castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc ) throw(){
   	// I received an EndNotificationErrorReport 
@@ -975,20 +927,23 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker( cas
 
 	  try {
 
-	    // ACCESS DB
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,WORKER_FAIL_DB_UPDATE, 1, params);
-	    castor::stager::Tape tape = oraSvc.failTapeSession(endRequest); 
+	    // ACCESS DB to get tape to release
 
+	    castor::stager::Tape tape = oraSvc.getTapeToRelease(endRequest.mountTransactionId());
+	    
+	    castor::dlf::Param params[] =
+	    {castor::dlf::Param("mountTransactionId", endRequest.mountTransactionId()),
+	     castor::dlf::Param("TPVID",tape.vid()),
+	     castor::dlf::Param("mode",tape.tpmode())
+	    };
+	    castor::dlf::dlf_writep(nullCuuid, WORKER_FAIL_GET_TAPE_TO_RELEASE, 3, params);
 	    try {
 	      
 	      // UPDATE VMGR
 
 	      if (tape.tpmode() == 1) { // just for write
 		VmgrTapeGatewayHelper vmgrHelper;
-		castor::dlf::Param params[] =
-		  {castor::dlf::Param("mountTransactionId", endRequest.mountTransactionId()),
-		   castor::dlf::Param("TPVID", tape.vid())
-		  };
+	
 
 		// CHECK IF THE ERROR WAS DUE TO A FULL TAPE
 
@@ -996,7 +951,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker( cas
 
 		  if (endRequest.errorCode() == ENOSPC ) {
 
-		    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_TAPE_MAKED_FULL, 2, params);
+		    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_TAPE_MAKED_FULL, 3, params);
 		    vmgrHelper.setTapeAsFull(tape);
 
 		  } 
@@ -1015,7 +970,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker( cas
 
 
 		// We just release the tape
-		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_FAIL_RELEASE_TAPE, 2, params);
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_FAIL_RELEASE_TAPE, 3, params);
 		
 		vmgrHelper.resetBusyTape(tape);
 
@@ -1032,6 +987,11 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker( cas
 	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_CANNOT_RELEASE_TAPE, 4, params);
 	    }
 
+	    // ACCESS db now we fail it 
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,WORKER_FAIL_DB_UPDATE, 3, params);
+	    oraSvc.failTapeSession(endRequest); 
+
+	    
 	  } catch (castor::exception::Exception e){
     
 	    castor::dlf::Param params[] =

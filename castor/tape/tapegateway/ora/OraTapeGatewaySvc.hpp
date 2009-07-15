@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.17 $ $Release$ $Date: 2009/07/09 15:47:12 $ $Author: gtaur $
+ * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.18 $ $Release$ $Date: 2009/07/15 08:39:34 $ $Author: gtaur $
  *
  * Implementation of the ITapeGatewaySvc for Oracle
  *
@@ -200,7 +200,7 @@ namespace castor {
 	 * Update the database when the tape request has been served 
 	 */
 
-	virtual castor::stager::Tape* endTapeSession(castor::tape::tapegateway::EndNotification& endRequest) throw (castor::exception::Exception); 
+	virtual void endTapeSession(castor::tape::tapegateway::EndNotification& endRequest) throw (castor::exception::Exception); 
 
 	/*
 	 * Access the db to retrieve the information about a completed recall 
@@ -213,7 +213,7 @@ namespace castor {
 	 * update the db after a major failure
 	 */
 
-	virtual castor::stager::Tape failTapeSession(castor::tape::tapegateway::EndNotificationErrorReport& failure)throw (castor::exception::Exception);
+	virtual void failTapeSession(castor::tape::tapegateway::EndNotificationErrorReport& failure)throw (castor::exception::Exception);
 
 	
 	/*
@@ -222,6 +222,18 @@ namespace castor {
 
 
 	virtual void failFileTransfer(FileErrorReport& failure)throw (castor::exception::Exception);
+
+	/*
+	 * invalidate file
+	 */
+
+
+	virtual void invalidateFile(FileErrorReport& failure)throw (castor::exception::Exception);
+
+
+	/* get tapes to release in vmgr */
+
+	virtual castor::stager::Tape getTapeToRelease(u_signed64 mountTransactionId)throw (castor::exception::Exception);
 
       private:
 
@@ -284,7 +296,12 @@ namespace castor {
 
 	static const std::string s_failFileTransferStatementString;
 	oracle::occi::Statement *m_failFileTransferStatement;
+
+	static const std::string s_invalidateFileStatementString;
+	oracle::occi::Statement *m_invalidateFileStatement;
 	
+	static const std::string s_getTapeToReleaseStatementString;
+	oracle::occi::Statement *m_getTapeToReleaseStatement;
 
       }; // end of class OraTapeGateway
 

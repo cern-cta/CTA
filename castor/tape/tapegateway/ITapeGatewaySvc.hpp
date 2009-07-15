@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeGatewaySvc.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2009/07/09 15:47:11 $ $Author: gtaur $
+ * @(#)$RCSfile: ITapeGatewaySvc.hpp,v $ $Revision: 1.17 $ $Release$ $Date: 2009/07/15 08:39:33 $ $Author: gtaur $
  *
  * This class provides methods related to tape handling
  *
@@ -183,7 +183,7 @@ namespace castor {
 	 * Update the database when the tape request has been served 
 	 */
 
-	virtual castor::stager::Tape* endTapeSession(castor::tape::tapegateway::EndNotification& endRequest) throw (castor::exception::Exception)=0; 
+	virtual void  endTapeSession(castor::tape::tapegateway::EndNotification& endRequest) throw (castor::exception::Exception)=0; 
 
 	/*
 	 * Access the db to retrieve the information about a completed recall 
@@ -196,7 +196,7 @@ namespace castor {
 	 * update the db after a major failure
 	 */
 
-	virtual castor::stager::Tape failTapeSession(castor::tape::tapegateway::EndNotificationErrorReport& failure)throw (castor::exception::Exception)=0;
+	virtual void failTapeSession(castor::tape::tapegateway::EndNotificationErrorReport& failure)throw (castor::exception::Exception)=0;
 
 	
 	/*
@@ -205,6 +205,21 @@ namespace castor {
 
 
 	virtual void failFileTransfer(FileErrorReport& failure)throw (castor::exception::Exception)=0;
+
+	/*
+	 * invalidate a file in the db
+	 */
+
+
+	virtual void invalidateFile(FileErrorReport& failure)throw (castor::exception::Exception)=0;
+
+
+
+	/*
+	 * get tapes to release
+	 */
+
+	virtual castor::stager::Tape getTapeToRelease(u_signed64 mountTransationId)throw (castor::exception::Exception)=0;
 
       }; // end of class ITapeGatewaySvc
     } // end of namespace tapegateway
