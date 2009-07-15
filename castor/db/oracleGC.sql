@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.691 $ $Date: 2009/07/02 12:05:00 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.692 $ $Date: 2009/07/15 13:28:55 $ $Author: waldron $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -264,9 +264,16 @@ BEGIN
      WHERE fileSystem = fs.id
        AND status = 7  -- INVALID
        AND NOT EXISTS
+        -- Ignore diskcopies with active subrequests
         (SELECT 'x' FROM SubRequest
           WHERE SubRequest.diskcopy = DiskCopy.id
             AND SubRequest.status IN (4, 5, 6, 12, 13, 14)) -- being processed (WAIT*, READY, *SCHED)
+       AND NOT EXISTS
+        -- Ignore diskcopies with active replications
+        (SELECT * FROM StageDiskCopyReplicaRequest, DiskCopy D
+          WHERE StageDiskCopyReplicaRequest.destDiskCopy = D.id
+            AND StageDiskCopyReplicaRequest.sourceDiskCopy = DiskCopy.id
+            AND D.status = 1)  -- WAITD2D
        AND rownum <= 10000 - totalCount
     RETURNING id BULK COLLECT INTO dcIds;
     COMMIT;
