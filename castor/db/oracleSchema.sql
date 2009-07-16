@@ -456,5 +456,6 @@ INSERT INTO Type2Obj (type, object) VALUES (178, 'RmMasterReport');
 INSERT INTO Type2Obj (type, object) VALUES (179, 'EndNotificationErrorReport');
 INSERT INTO Type2Obj (type, object) VALUES (180, 'TapeGatewaySubRequest');
 INSERT INTO Type2Obj (type, object) VALUES (181, 'GatewayMessage');
+INSERT INTO Type2Obj (type, object) VALUES (182, 'DumpNotification');
 COMMIT;
 

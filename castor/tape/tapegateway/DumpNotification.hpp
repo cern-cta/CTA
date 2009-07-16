@@ -100,6 +100,22 @@ namespace castor {
         /* End of IObject abstract class */
         /*********************************/
         /**
+         * Get the value of m_message
+         * @return the value of m_message
+         */
+        std::string message() const {
+          return m_message;
+        }
+
+        /**
+         * Set the value of m_message
+         * @param new_var the new value of m_message
+         */
+        void setMessage(std::string new_var) {
+          m_message = new_var;
+        }
+
+        /**
          * Get the value of m_id
          * The id of this object
          * @return the value of m_id
@@ -118,6 +134,8 @@ namespace castor {
         }
 
       private:
+
+        std::string m_message;
 
         /// The id of this object
         u_signed64 m_id;

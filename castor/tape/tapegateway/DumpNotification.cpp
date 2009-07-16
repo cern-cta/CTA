@@ -41,6 +41,7 @@
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::DumpNotification::DumpNotification() throw() :
   GatewayMessage(),
+  m_message(""),
   m_id(0) {
 }
 
@@ -65,6 +66,7 @@ void castor::tape::tapegateway::DumpNotification::print(std::ostream& stream,
   // Call print on the parent class(es)
   this->GatewayMessage::print(stream, indent, alreadyPrinted);
   // Output of all members
+  stream << indent << "message : " << m_message << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }

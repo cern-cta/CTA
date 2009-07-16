@@ -41,6 +41,7 @@
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/tape/tapegateway/DumpNotification.hpp"
 #include "osdep.h"
+#include <string>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
@@ -88,6 +89,7 @@ void castor::io::StreamDumpNotificationCnv::createRep(castor::IAddress* address,
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
   ad->stream() << obj->mountTransactionId();
+  ad->stream() << obj->message();
   ad->stream() << obj->id();
 }
 
@@ -104,6 +106,9 @@ castor::IObject* castor::io::StreamDumpNotificationCnv::createObj(castor::IAddre
   u_signed64 mountTransactionId;
   ad->stream() >> mountTransactionId;
   object->setMountTransactionId(mountTransactionId);
+  std::string message;
+  ad->stream() >> message;
+  object->setMessage(message);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
