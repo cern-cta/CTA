@@ -35,6 +35,7 @@
 #include "castor/tape/tapegateway/FileToRecallRequest.hpp"
 #include "castor/tape/tapegateway/NoMoreFiles.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
+#include "castor/tape/tapegateway/VolumeRequest.hpp"
 
 #include <ostream>
 
@@ -170,6 +171,16 @@ public:
    */
   static void write(std::ostream &os,
     const castor::tape::tapegateway::EndNotificationErrorReport &value) throw();
+
+  /**
+   * Writes a textual representation of the specified value to the specified
+   * stream.
+   *
+   * @param The output stream to be written to.
+   * @param The value of which the textual representation is to be written.
+   */
+  static void write(std::ostream &os,
+    const castor::tape::tapegateway::VolumeRequest &value) throw();
 
 }; // class StreamHelper
 

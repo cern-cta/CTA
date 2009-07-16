@@ -148,7 +148,8 @@ void castor::tape::tpcp::StreamHelper::write(std::ostream &os,
   write(os, (castor::tape::tapegateway::BaseFileInfo&)value);
   os <<                                                ","
      << "path=\""         << value.path()         << "\","
-     << "checksumName=\"" << value.checksumName() << "\"}"; 
+     << "checksumName=\"" << value.checksumName() << "\","
+     << "fileSize="       << value.fileSize()     <<   "}"; 
 }
 
 
@@ -185,3 +186,15 @@ void castor::tape::tpcp::StreamHelper::write(std::ostream &os,
         "errorCode="      << value.errorCode()     <<   "," 
         "errorMessage=\"" << value.errorMessage()  << "\"}";
 }
+
+//------------------------------------------------------------------------------
+// write
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::StreamHelper::write(std::ostream &os,
+  const castor::tape::tapegateway::VolumeRequest &value) throw() {
+
+  os << "{"
+        "mountTransactionId()="  << value.mountTransactionId() <<   ","
+        "unit()=\"" << value.unit()  << "\"}";
+} 
+

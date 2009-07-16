@@ -32,6 +32,7 @@
 #include "castor/tape/tapegateway/VolumeMode.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
 #include "castor/tape/tpcp/Constants.hpp"
+#include "castor/tape/tpcp/StreamHelper.hpp"
 #include "castor/tape/tpcp/StreamOperators.hpp"
 #include "castor/tape/tpcp/TapeFileSequenceParser.hpp"
 #include "castor/tape/tpcp/TpcpCommand.hpp"
@@ -622,12 +623,11 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
 
       throw ex;
     }
-
-    // If debug, then display reception of the VolumeRequest message
-    if(m_parsedCommandLine.debugOptionSet) {
+   {
       std::ostream &os = std::cout;
 
-      os << "TpcpCommand: Received VolumeRequest from aggregator";
+      os << "TpcpCommand: Received VolumeRequest from aggregator"<< std::endl;
+      StreamHelper::write(os, *volumeRequest);
       os << std::endl;
     }
 
