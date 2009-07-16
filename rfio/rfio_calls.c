@@ -4880,7 +4880,8 @@ void *produce_thread(int *ptr)
 	    log(LOG_DEBUG,"produce_thread: checksums OK!\n");
 	  }
 	  else {
-	    log(LOG_ERR,"produce_thread: checksums do not match %s != %s\n",ckSumbufdisk,ckSumbuf);
+            log(LOG_ERR,"produce_thread: checksum error detected reading file: %s (recorded checksum: %s calculated checksum: %s)\n",
+                CORRECT_FILENAME(filename), ckSumbufdisk, ckSumbuf);
 	    array[produced % daemonv3_rdmt_nbuf].len = -(EREMOTEIO); /* setting errno=Remote I/O error */
 	    error = -1;
 	  }

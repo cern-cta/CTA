@@ -2476,7 +2476,8 @@ static void *produce64_thread(int *ptr)
             log(LOG_DEBUG,"produce64_thread: checksums OK!\n");
           }
           else {
-            log(LOG_ERR,"produce64_thread: checksums do not match %s != %s\n",ckSumbufdisk,ckSumbuf);
+            log(LOG_ERR,"produce64_thread: checksum error detected reading file: %s (recorded checksum: %s calculated checksum: %s)\n",
+                CORRECT_FILENAME(filename), ckSumbufdisk, ckSumbuf);
             array[produced64 % daemonv3_rdmt_nbuf].len = -(SECHECKSUM); /* setting errno= Bad checksum */
             error = -1;
           }
