@@ -820,6 +820,17 @@ void castor::tape::aggregator::Marshaller::unmarshallRtcpFileRqstMsgBody(
 
 
 //-----------------------------------------------------------------------------
+// unmarshallGiveOutpMsgBody
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::Marshaller::unmarshallGiveOutpMsgBody(
+  const char * &src, size_t &srcLen, GiveOutpMsgBody &dst)
+  throw(castor::exception::Exception) {
+
+  unmarshallString(src, srcLen, dst.message);
+}
+
+
+//-----------------------------------------------------------------------------
 // marshallRtcpNoMoreRequestsMsgBody
 //-----------------------------------------------------------------------------
 size_t castor::tape::aggregator::Marshaller::marshallRtcpNoMoreRequestsMsgBody(

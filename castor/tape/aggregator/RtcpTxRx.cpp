@@ -1129,6 +1129,68 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpTapeRqstBody(
 
 
 //-----------------------------------------------------------------------------
+// receiveGiveOutpBody
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::RtcpTxRx::receiveGiveOutpBody(
+  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
+  const int netReadWriteTimeout, const MessageHeader &header,
+  GiveOutpMsgBody &body) throw(castor::exception::Exception) {
+
+  checkMagic(RTCOPY_MAGIC_SHIFT, header.magic, __FUNCTION__);
+  checkRtcopyReqType(GIVE_OUTP, header.reqType, __FUNCTION__);
+
+  // Length of body buffer = Length of message buffer - length of header
+  char bodyBuf[MSGBUFSIZ - 3 * sizeof(uint32_t)];
+
+  // If the message body is too large
+  if(header.lenOrStatus > sizeof(bodyBuf)) {
+    TAPE_THROW_CODE(EMSGSIZE,
+         ": Message body from RTCPD is too large"
+         ": Maximum: " << sizeof(bodyBuf)
+      << ": Received: " << header.lenOrStatus);
+  }
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId", volReqId),
+      castor::dlf::Param("socketFd", socketFd)};
+
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_RECEIVE_GIVEOUTPBODY, params);
+  }
+
+  // Read the message body
+  try {
+    net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.lenOrStatus, bodyBuf);
+  } catch (castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(EIO,
+         ": Failed to read message body from RTCPD"
+      << ": "<< ex.getMessage().str());
+  }
+
+  // Unmarshall the message body
+  try {
+    const char *p           = bodyBuf;
+    size_t     remainingLen = header.lenOrStatus;
+    Marshaller::unmarshallGiveOutpMsgBody(p, remainingLen, body);
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_EX(castor::exception::Internal,
+         ": Failed to unmarshall message body from RTCPD"
+      << ": "<< ex.getMessage().str());
+  }
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId", volReqId),
+      castor::dlf::Param("socketFd", socketFd)};
+
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_RECEIVED_TAPERQSTBODY, params);
+  }
+}
+
+
+//-----------------------------------------------------------------------------
 // checkMagic
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::checkMagic(const uint32_t expected,

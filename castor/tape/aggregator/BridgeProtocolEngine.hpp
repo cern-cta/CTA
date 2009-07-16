@@ -319,6 +319,16 @@ private:
     throw(castor::exception::Exception);
 
   /**
+   * GIVE_OUTP message body handler.
+   *
+   * For full documenation please see the documentation of the type
+   * RtcpdBridgeProtocolEngine::MsgBodyCallback.
+   */
+  void giveOutpCallback(const MessageHeader &header,
+    const int socketFd, bool &receivedENDOF_REQ)
+    throw(castor::exception::Exception);
+
+  /**
    * Runs a migration session.
    */
   void runMigrationSession() throw(castor::exception::Exception);

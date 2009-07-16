@@ -28,6 +28,7 @@
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/GatewayTxRx.hpp"
 #include "castor/tape/aggregator/SynchronizedCounter.hpp"
+#include "castor/tape/tapegateway/DumpNotification.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/FileMigratedNotification.hpp"
@@ -56,7 +57,7 @@ static castor::tape::aggregator::SynchronizedCounter emulatedRecallCounter(0);
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
   const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost,
-  const unsigned short gatewayPort,
+  const unsigned short gatewayPort, const char (&unit)[CA_MAXUNMLEN+1],
   char (&vid)[CA_MAXVIDLEN+1], uint32_t &mode,
   char (&label)[CA_MAXLBLTYPLEN+1], char (&density)[CA_MAXDENLEN+1])
   throw(castor::exception::Exception) {
@@ -65,7 +66,8 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId"   , volReqId   ),
       castor::dlf::Param("gatewayHost", gatewayHost),
-      castor::dlf::Param("gatewayPort", gatewayPort)};
+      castor::dlf::Param("gatewayPort", gatewayPort),
+      castor::dlf::Param("unit"       , unit       )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_GET_VOLUME_FROM_GATEWAY, params);
   }
@@ -75,6 +77,7 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
   // Prepare the request
   tapegateway::VolumeRequest request;
   request.setMountTransactionId(volReqId);
+  request.setUnit(unit);
 
   //===================================================
   // Hardcoded volume INFO
@@ -200,6 +203,7 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
       castor::dlf::Param("volReqIdFromGateway", volReqIdFromGateway),
       castor::dlf::Param("gatewayHost"        , gatewayHost        ),
       castor::dlf::Param("gatewayPort"        , gatewayPort        ),
+      castor::dlf::Param("unit"               , unit               ),
       castor::dlf::Param("vid"                , vid                ),
       castor::dlf::Param("mode"               , mode               ),
       castor::dlf::Param("label"              , label              ),
@@ -211,7 +215,8 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId"   , volReqId   ),
       castor::dlf::Param("gatewayHost", gatewayHost),
-      castor::dlf::Param("gatewayPort", gatewayPort)};
+      castor::dlf::Param("gatewayPort", gatewayPort),
+      castor::dlf::Param("unit"       , unit       )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_GOT_NO_VOLUME_FROM_GATEWAY, params);
   }
@@ -1263,6 +1268,155 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayEndOfSession(
       castor::dlf::Param("gatewayPort", gatewayPort)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_NOTIFIED_GATEWAY_END_OF_SESSION, params);
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// notifyGatewayDumpMessage
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::GatewayTxRx::notifyGatewayDumpMessage(
+  const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost,
+  const unsigned short gatewayPort, const char (&message)[CA_MAXLINELEN+1])
+  throw(castor::exception::Exception) {
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId"   , volReqId   ),
+      castor::dlf::Param("gatewayHost", gatewayHost),
+      castor::dlf::Param("gatewayPort", gatewayPort),
+      castor::dlf::Param("message"    , message    )};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_NOTIFY_GATEWAY_DUMP_MESSAGE, params);
+  }
+
+
+  //===================================================
+  // Hardcoded Gateway reply
+  #ifdef EMULATE_GATEWAY
+
+    return;
+
+  #endif
+  //===================================================
+
+  // Prepare the request
+  tapegateway::DumpNotification request;
+  request.setMountTransactionId(volReqId);
+  request.setMessage(message);
+
+  // Connect to the tape gateway
+  castor::io::ClientSocket gatewaySocket(gatewayPort, gatewayHost);
+  try {
+    gatewaySocket.connect();
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ex.code(),
+      ": Failed to connect to gateway to send DumpNotification"
+      ": " << ex.getMessage().str());
+  }
+
+  try {
+    // Send the request
+    gatewaySocket.sendObject(request);
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ex.code(),
+      ": Failed to send DumpNotification to gateway"
+      ": " << ex.getMessage().str());
+  }
+
+  std::auto_ptr<castor::IObject> reply;
+  try {
+    // Receive the reply object wrapping it in an auto pointer so that it is
+    // automatically deallocated when it goes out of scope
+    reply.reset(gatewaySocket.readObject());
+
+    if(reply.get() == NULL) {
+      TAPE_THROW_EX(castor::exception::Internal,
+        ": ClientSocket::readObject() returned null");
+    }
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ex.code(),
+      ": Failed to read DumpNotification reply from gateway"
+      ": " << ex.getMessage().str());
+  }
+
+  // Close the connection to the tape gateway
+  gatewaySocket.close();
+
+  // Temporary variable used to check for a transaction ID mistatch
+  uint64_t volReqIdFromGateway = 0;
+
+  switch(reply->type()) {
+  case OBJ_NotificationAcknowledge:
+    // Copy the reply information
+    try {
+      tapegateway::NotificationAcknowledge &notificationAcknowledge =
+        dynamic_cast<tapegateway::NotificationAcknowledge&>(*reply);
+      volReqIdFromGateway = notificationAcknowledge.mountTransactionId();
+    } catch(std::bad_cast &bc) {
+      TAPE_THROW_EX(castor::exception::Internal,
+        ": Failed to down cast reply object to "
+        "tapegateway::NotificationAcknowledge");
+    }
+
+    // If there is a transaction ID mismatch
+    if(volReqIdFromGateway != volReqId) {
+      TAPE_THROW_CODE(EBADMSG,
+           ": Transaction ID mismatch"
+           ": Expected = " << volReqId
+        << ": Actual = " << volReqIdFromGateway);
+    }
+    break;
+
+  case OBJ_EndNotificationErrorReport:
+    {
+      int errorCode;
+      std::string errorMessage;
+
+      // Copy the reply information
+      try {
+        tapegateway::EndNotificationErrorReport &errorReport =
+          dynamic_cast<tapegateway::EndNotificationErrorReport&>(*reply);
+        volReqIdFromGateway = errorReport.mountTransactionId();
+        errorCode = errorReport.errorCode();
+        errorMessage = errorReport.errorMessage();
+      } catch(std::bad_cast &bc) {
+        TAPE_THROW_EX(castor::exception::Internal,
+          ": Failed to down cast reply object to "
+          "tapegateway::EndNotificationErrorReport");
+      }
+
+      // If there is a transaction ID mismatch
+      if(volReqIdFromGateway != volReqId) {
+        TAPE_THROW_CODE(EBADMSG,
+             ": Transaction ID mismatch"
+             ": Expected = " << volReqId
+          << ": Actual = " << volReqIdFromGateway);
+      }
+
+      // Translate the reception of the error report into a C++ exception
+      TAPE_THROW_CODE(errorCode,
+         ": Tape gateway error report "
+         ": " << errorMessage);
+    }
+    break;
+
+  default:
+    {
+      TAPE_THROW_CODE(EBADMSG,
+        ": Unknown reply type "
+        ": Reply type = " << reply->type());
+    }
+  } // switch(reply->type())
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId"   , volReqId   ),
+      castor::dlf::Param("gatewayHost", gatewayHost),
+      castor::dlf::Param("gatewayPort", gatewayPort),
+      castor::dlf::Param("message"    , message    )};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_NOTIFIED_GATEWAY_DUMP_MESSAGE, params);
   }
 }
 

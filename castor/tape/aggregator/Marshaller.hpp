@@ -27,6 +27,7 @@
 #define CASTOR_TAPE_AGGREGATOR_MARSHALLER_HPP 1
 
 #include "castor/exception/Exception.hpp"
+#include "castor/tape/aggregator/GiveOutpMsgBody.hpp"
 #include "castor/tape/aggregator/MessageHeader.hpp"
 #include "castor/tape/aggregator/RcpJobReplyMsgBody.hpp"
 #include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
@@ -518,6 +519,23 @@ namespace aggregator {
      */
     static void unmarshallRtcpFileRqstMsgBody(const char * &src,
       size_t &srcLen, RtcpFileRqstMsgBody &dst)
+      throw(castor::exception::Exception);
+
+    /**
+     * Unmarshalls the message body of a GIVE_OUTP message from the specified
+     * source buffer into the specified destination request structure.
+     *
+     * @param src In/out parameter, before invocation points to the source
+     * buffer where the message body should be unmarshalled from and on return
+     * points to the byte in the source buffer immediately after the
+     * unmarshalled message body.
+     * @param srcLen In/our parameter, before invocation is the length of the
+     * source buffer from where the message body should be unmarshalled and on
+     * return is the number of bytes remaining in the source buffer.
+     * @param dst The destination request structure.
+     */
+    static void unmarshallGiveOutpMsgBody(const char * &src,
+      size_t &srcLen, GiveOutpMsgBody &dst)
       throw(castor::exception::Exception);
 
     /**

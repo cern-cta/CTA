@@ -30,6 +30,7 @@
 #include "castor/tape/aggregator/BridgeProtocolEngine.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/GatewayTxRx.hpp"
+#include "castor/tape/aggregator/GiveOutpMsgBody.hpp"
 #include "castor/tape/aggregator/MessageHeader.hpp"
 #include "castor/tape/aggregator/RtcpTxRx.hpp"
 #include "castor/tape/aggregator/SmartFd.hpp"
@@ -79,6 +80,7 @@ castor::tape::aggregator::BridgeProtocolEngine::BridgeProtocolEngine(
   m_handlers[RTCP_TAPE_REQ]    = &BridgeProtocolEngine::rtcpTapeReqCallback;
   m_handlers[RTCP_TAPEERR_REQ] = &BridgeProtocolEngine::rtcpTapeErrReqCallback;
   m_handlers[RTCP_ENDOF_REQ]   = &BridgeProtocolEngine::rtcpEndOfReqCallback;
+  m_handlers[GIVE_OUTP]        = &BridgeProtocolEngine::giveOutpCallback;
 }
 
 
@@ -922,4 +924,21 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpEndOfReqCallback(
   ackMsg.lenOrStatus = 0;
   RtcpTxRx::sendMessageHeader(m_cuuid, m_volReqId, socketFd,
     RTCPDNETRWTIMEOUT, ackMsg);
+}
+
+
+//-----------------------------------------------------------------------------
+// giveOutpCallback
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::BridgeProtocolEngine::giveOutpCallback(
+  const MessageHeader &header, const int socketFd, bool &receivedENDOF_REQ)
+  throw(castor::exception::Exception) {
+
+  GiveOutpMsgBody body;
+
+  RtcpTxRx::receiveGiveOutpBody(m_cuuid, m_volReqId, socketFd,
+    RTCPDNETRWTIMEOUT, header, body);
+
+  GatewayTxRx::notifyGatewayDumpMessage(m_cuuid, m_volReqId, m_gatewayHost,
+    m_gatewayPort, body.message);
 }

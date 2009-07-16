@@ -27,6 +27,7 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/io/ClientSocket.hpp"
+#include "castor/tape/aggregator/GiveOutpMsgBody.hpp"
 #include "castor/tape/aggregator/MessageHeader.hpp"
 #include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpFileRqstErrMsgBody.hpp"
@@ -292,6 +293,23 @@ public:
   static void receiveRtcpTapeRqstBody(const Cuuid_t &cuuid,
     const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout,
     const MessageHeader &header, RtcpTapeRqstMsgBody &body)
+    throw(castor::exception::Exception);
+
+  /**
+   * Receives the body of a GIVE_OUTP message from RTCPD.
+   *
+   * @param cuuid The ccuid to be used for logging.
+   * @param volReqId The volume request ID to be sent to the tape gateway.
+   * @param socketFd The socket file desscriptor of the connection with RTCPD.
+   * @param netReadWriteTimeout The timeout to be applied when performing
+   * network read and write operations.
+   * @param header The message header which has already been received.
+   * @param body The body structure which will be filled with the contents of
+   * the received message body.
+   */
+  static void receiveGiveOutpBody(const Cuuid_t &cuuid,
+    const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout,
+    const MessageHeader &header, GiveOutpMsgBody &body)
     throw(castor::exception::Exception);
 
   /**

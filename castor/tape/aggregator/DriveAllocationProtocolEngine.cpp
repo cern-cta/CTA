@@ -222,7 +222,7 @@ bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
 
   // Get the volume from the tape gateway
   const bool thereIsAVolume = GatewayTxRx::getVolumeFromGateway(cuuid,
-    volReqId, gatewayHost, gatewayPort, vid, mode, label, density);
+    volReqId, gatewayHost, gatewayPort, unit, vid, mode, label, density);
 
   return thereIsAVolume;
 }
