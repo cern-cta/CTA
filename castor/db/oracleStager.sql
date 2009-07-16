@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.741 $ $Date: 2009/06/23 12:47:16 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.742 $ $Date: 2009/07/16 08:24:43 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -2302,7 +2302,7 @@ CREATE OR REPLACE PROCEDURE storeClusterStatus
  fileSystemValues IN castor."cnumList") AS
  found   NUMBER;
  ind     NUMBER;
- machine NUMBER := 0;
+ dsId    NUMBER := 0;
  fs      NUMBER := 0;
  fsIds   "numList";
 BEGIN
@@ -2316,8 +2316,7 @@ BEGIN
     IF machineValues(ind + 1) = 3 THEN -- ADMIN DELETED
       BEGIN
         -- Resolve the machine name to its id
-        SELECT id INTO machine
-          FROM DiskServer
+        SELECT id INTO dsId FROM DiskServer
          WHERE name = machines(i);
         -- If any of the filesystems belonging to the diskserver are currently
         -- in the process of being drained then do not delete the diskserver or
@@ -2326,7 +2325,7 @@ BEGIN
         SELECT fileSystem BULK COLLECT INTO fsIds
           FROM DrainingFileSystem DFS, FileSystem FS
          WHERE DFS.fileSystem = FS.id
-           AND FS.diskServer = machine;
+           AND FS.diskServer = dsId;
         IF fsIds.COUNT > 0 THEN
           -- Entries found so flag the draining process as DELETING
           UPDATE DrainingFileSystem
@@ -2337,11 +2336,11 @@ BEGIN
         ELSE
           -- There is no outstanding process to drain the diskservers
           -- filesystems so we can now delete it.
-          DELETE FROM Id2Type WHERE id = machine;
+          DELETE FROM Id2Type WHERE id = dsId;
           DELETE FROM Id2Type WHERE id IN
             (SELECT /*+ CARDINALITY(fsIdTable 5) */ *
                FROM TABLE (fsIds) fsIdTable);
-          DELETE FROM FileSystem WHERE diskServer = machine;
+          DELETE FROM FileSystem WHERE diskServer = dsId;
           DELETE FROM DiskServer WHERE name = machines(i);
         END IF;
       EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -2349,7 +2348,8 @@ BEGIN
       END;
     ELSE
       BEGIN
-        SELECT id INTO machine FROM DiskServer WHERE name = machines(i);
+        SELECT id INTO dsId FROM DiskServer
+         WHERE name = machines(i);
         UPDATE DiskServer
            SET status             = machineValues(ind),
                adminStatus        = machineValues(ind + 1),
@@ -2383,7 +2383,8 @@ BEGIN
   ind := fileSystemValues.FIRST;
   FOR i in fileSystems.FIRST .. fileSystems.LAST LOOP
     IF fileSystems(i) NOT LIKE ('/%') THEN
-      SELECT id INTO machine FROM DiskServer WHERE name = fileSystems(i);
+      SELECT id INTO dsId FROM DiskServer
+       WHERE name = fileSystems(i);
     ELSE
       IF fileSystemValues(ind + 1) = 3 THEN -- ADMIN DELETED
         BEGIN
@@ -2391,7 +2392,7 @@ BEGIN
           SELECT id INTO fs
             FROM FileSystem
            WHERE mountPoint = fileSystems(i)
-             AND diskServer = machine;
+             AND diskServer = dsId;
           -- Check to see if the filesystem is currently in the process of
           -- being drained. If so, we flag it for deletion.
           found := 0;
@@ -2409,8 +2410,8 @@ BEGIN
         END;
       ELSE
         BEGIN
-          SELECT diskServer INTO machine FROM FileSystem
-           WHERE mountPoint = fileSystems(i) AND diskServer = machine;
+          SELECT diskServer INTO dsId FROM FileSystem
+           WHERE mountPoint = fileSystems(i) AND diskServer = dsId;
           UPDATE FileSystem
              SET status              = fileSystemValues(ind),
                  adminStatus         = fileSystemValues(ind + 1),
@@ -2427,7 +2428,7 @@ BEGIN
                  maxFreeSpace        = fileSystemValues(ind + 12),
                  minAllowedFreeSpace = fileSystemValues(ind + 13)
            WHERE mountPoint          = fileSystems(i)
-             AND diskServer          = machine;
+             AND diskServer          = dsId;
         EXCEPTION WHEN NO_DATA_FOUND THEN
           -- we should insert a new filesystem here
           INSERT INTO FileSystem (free, mountPoint, minFreeSpace,
@@ -2442,7 +2443,7 @@ BEGIN
                   fileSystemValues(ind + 3), fileSystemValues(ind + 4),
                   fileSystemValues(ind + 5), fileSystemValues(ind + 6),
                   fileSystemValues(ind + 7), fileSystemValues(ind + 8),
-                  ids_seq.nextval, 0, machine, 2, 1); -- FILESYSTEM_DISABLED, ADMIN_FORCE
+                  ids_seq.nextval, 0, dsId, 2, 1); -- FILESYSTEM_DISABLED, ADMIN_FORCE
           INSERT INTO Id2Type (id, type) VALUES (ids_seq.currval, 12); -- OBJ_FileSystem
         END;
       END IF;
