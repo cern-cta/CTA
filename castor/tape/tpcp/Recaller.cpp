@@ -271,10 +271,9 @@ bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
     FileTransfer &fileTransfer = itor->second;
 
     utils::writeTime(os);
-    os << ": Recalled"
-          ": tapeFseq="   << fileTransfer.tapeFseq
-       <<  " filename=\"" << fileTransfer.filename << "\""
-       << std::endl;
+    os << ": Recalled fseq=" << fileTransfer.tapeFseq
+       << " size=" << notification->fileSize()
+       << " \"" << fileTransfer.filename << "\"" << std::endl;
 
     // The file has been transfer so remove it from the map of pending
     // transfers

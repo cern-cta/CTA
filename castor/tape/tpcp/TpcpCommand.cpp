@@ -623,12 +623,12 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
 
       throw ex;
     }
-   {
+
+    {
       std::ostream &os = std::cout;
 
-      os << "TpcpCommand: Received VolumeRequest from aggregator"<< std::endl;
-      StreamHelper::write(os, *volumeRequest);
-      os << std::endl;
+      utils::writeTime(os);
+      os << ": Tape mounted on drive " << volumeRequest->unit() << std::endl;
     }
 
     // Check the volume request ID of the VolumeRequest object matches that of
@@ -647,8 +647,22 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     // Create the volume message for the aggregator
     castor::tape::tapegateway::Volume volumeMsg;
     volumeMsg.setVid(m_vmgrTapeInfo.vid);
-    volumeMsg.setMode((castor::tape::tapegateway::VolumeMode)(m_parsedCommandLine.action == Action::write ?
-      WRITE_ENABLE : WRITE_DISABLE));
+    switch(m_parsedCommandLine.action.value()) {
+    case Action::READ:
+      volumeMsg.setMode(castor::tape::tapegateway::READ);
+      break;
+    case Action::WRITE:
+      volumeMsg.setMode(castor::tape::tapegateway::WRITE);
+      break;
+    case Action::DUMP:
+      volumeMsg.setMode(castor::tape::tapegateway::DUMP);
+      break;
+    default:
+      TAPE_THROW_EX(castor::exception::Internal,
+        ": Unknown action type: value=" << m_parsedCommandLine.action.value());
+    }
+    volumeMsg.setMode(m_parsedCommandLine.action == Action::write ?
+      castor::tape::tapegateway::WRITE : castor::tape::tapegateway::READ);
     volumeMsg.setLabel(m_vmgrTapeInfo.lbltype);
     volumeMsg.setMountTransactionId(m_volReqId);
     volumeMsg.setDensity(m_vmgrTapeInfo.density);
