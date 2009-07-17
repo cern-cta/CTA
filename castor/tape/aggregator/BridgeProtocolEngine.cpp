@@ -608,11 +608,6 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileReqCallback(
 
   RtcpFileRqstMsgBody body;
 
-/*
-  RtcpTxRx::receiveRtcpFileRqstBody(m_cuuid, m_volReqId, socketFd,
-    RTCPDNETRWTIMEOUT, header, body);
-*/
-
   RtcpTxRx::receiveMsgBody(m_cuuid, m_volReqId, socketFd, RTCPDNETRWTIMEOUT,
     header, body);
 
@@ -629,10 +624,6 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileErrReqCallback(
 
   RtcpFileRqstErrMsgBody body;
 
-/*
-  RtcpTxRx::receiveRtcpFileRqstErrBody(m_cuuid, m_volReqId, socketFd,
-    RTCPDNETRWTIMEOUT, header, body);
-*/
   RtcpTxRx::receiveMsgBody(m_cuuid, m_volReqId, socketFd, RTCPDNETRWTIMEOUT,
     header, body);
 
@@ -879,11 +870,6 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpTapeReqCallback(
 
   RtcpTapeRqstMsgBody body;
 
-/*
-  RtcpTxRx::receiveRtcpTapeRqstBody(m_cuuid, m_volReqId, socketFd,
-    RTCPDNETRWTIMEOUT, header, body);
-*/
-
   RtcpTxRx::receiveMsgBody(m_cuuid, m_volReqId, socketFd,
     RTCPDNETRWTIMEOUT, header, body);
 
@@ -900,11 +886,6 @@ void
   throw(castor::exception::Exception) {
 
   RtcpTapeRqstErrMsgBody body;
-
-/*
-  RtcpTxRx::receiveRtcpTapeRqstErrBody(m_cuuid, m_volReqId, socketFd,
-    RTCPDNETRWTIMEOUT, header, body);
-*/
 
   RtcpTxRx::receiveMsgBody(m_cuuid, m_volReqId, socketFd,
     RTCPDNETRWTIMEOUT, header, body);
@@ -969,8 +950,8 @@ void castor::tape::aggregator::BridgeProtocolEngine::giveOutpCallback(
 
   GiveOutpMsgBody body;
 
-  RtcpTxRx::receiveGiveOutpBody(m_cuuid, m_volReqId, socketFd,
-    RTCPDNETRWTIMEOUT, header, body);
+  RtcpTxRx::receiveMsgBody(m_cuuid, m_volReqId, socketFd, RTCPDNETRWTIMEOUT,
+    header, body);
 
   GatewayTxRx::notifyGatewayDumpMessage(m_cuuid, m_volReqId, m_gatewayHost,
     m_gatewayPort, body.message);

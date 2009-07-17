@@ -25,6 +25,7 @@
 #ifndef _CASTOR_TAPE_AGGREGATOR_RCPJOBSUBMITTER_HPP_
 #define _CASTOR_TAPE_AGGREGATOR_RCPJOBSUBMITTER_HPP_
 
+#include "castor/tape/aggregator/RcpJobReplyMsgBody.hpp"
 #include "h/net.h"
 
 #include <string>

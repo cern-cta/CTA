@@ -27,10 +27,10 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/io/ClientSocket.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
-#include "castor/tape/aggregator/Marshaller.hpp"
 #include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
 #include "castor/tape/aggregator/RcpJobReplyMsgBody.hpp"
 #include "castor/tape/aggregator/RcpJobSubmitter.hpp"
+#include "castor/tape/aggregator/RtcpMarshaller.hpp"
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/net.h"
@@ -109,7 +109,7 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
   size_t totalLen = 0;
 
   try {
-    totalLen = Marshaller::marshallRcpJobRqstMsgBody(buf, request);
+    totalLen = RtcpMarshaller::marshall(buf, request);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,
       ": Failed to marshall RCP job submission request message"
@@ -169,7 +169,7 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
   try {
     const char *p           = headerBuf;
     size_t     remainingLen = sizeof(headerBuf);
-    Marshaller::unmarshallMessageHeader(p, remainingLen, header);
+    RtcpMarshaller::unmarshallMessageHeader(p, remainingLen, header);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EBADMSG,
       ": Failed to unmarshall message header from " << remoteCopyType <<
@@ -232,7 +232,7 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
   try {
     const char *p           = bodyBuf;
     size_t     remainingLen = header.lenOrStatus;
-    Marshaller::unmarshallRcpJobReplyMsgBody(p, remainingLen, reply);
+    RtcpMarshaller::unmarshall(p, remainingLen, reply);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,
       ": Failed to unmarshall job submission reply"

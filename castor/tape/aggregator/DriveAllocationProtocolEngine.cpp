@@ -28,10 +28,10 @@
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/DriveAllocationProtocolEngine.hpp"
 #include "castor/tape/aggregator/GatewayTxRx.hpp"
-#include "castor/tape/aggregator/Marshaller.hpp"
 #include "castor/tape/aggregator/RcpJobReplyMsgBody.hpp"
 #include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
 #include "castor/tape/aggregator/RcpJobSubmitter.hpp"
+#include "castor/tape/aggregator/RtcpMarshaller.hpp"
 #include "castor/tape/aggregator/RtcpTxRx.hpp"
 #include "castor/tape/fsm/Callback.hpp"
 #include "castor/tape/net/net.hpp"
@@ -160,8 +160,7 @@ bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
   // from RTCPD
   char vdqmReplyBuf[MSGBUFSIZ];
   size_t vdqmReplyLen = 0;
-  vdqmReplyLen = Marshaller::marshallRcpJobReplyMsgBody(vdqmReplyBuf,
-    rtcpdReply);
+  vdqmReplyLen = RtcpMarshaller::marshall(vdqmReplyBuf, rtcpdReply);
   net::writeBytes(vdqmSocket.socket(), RTCPDNETRWTIMEOUT, vdqmReplyLen,
     vdqmReplyBuf);
 

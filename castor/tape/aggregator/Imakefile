@@ -74,7 +74,6 @@ AGGREGATORBIN_SRCS = \
   DriveAllocationProtocolEngine.cpp \
   GatewayTxRx.cpp \
   LogHelper.cpp \
-  Marshaller.cpp \
   Packer.cpp \
   RcpJobSubmitter.cpp \
   RtcpMarshaller.cpp \
