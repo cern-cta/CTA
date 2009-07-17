@@ -130,14 +130,9 @@ void castor::tape::aggregator::RtcpTxRx::getRequestInfoFromRtcpd(
       ": Failed to send acknowledge to RTCPD"
       ": " << ex.getMessage().str());
   }
-  {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", volReqId  ),
-      castor::dlf::Param("socketFd", socketFd  ),
-      castor::dlf::Param("unit"    , reply.unit)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_GOT_REQUEST_INFO_FROM_RTCPD, params);
-  }
+
+  LogHelper::logMsgBody(cuuid, DLF_LVL_SYSTEM,
+    AGGREGATOR_GOT_REQUEST_INFO_FROM_RTCPD, volReqId, socketFd, request);
 }
 
 
@@ -149,18 +144,8 @@ void castor::tape::aggregator::RtcpTxRx::giveVolumeToRtcpd(
   const int netReadWriteTimeout, RtcpTapeRqstErrMsgBody &request) 
   throw(castor::exception::Exception) {
 
- {
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("volReqId", volReqId       ),
-        castor::dlf::Param("socketFd", socketFd       ),
-        castor::dlf::Param("vid"     , request.vid    ),
-        castor::dlf::Param("mode"    , request.mode   ),
-        castor::dlf::Param("label"   , request.label  ),
-        castor::dlf::Param("density" , request.density),
-        castor::dlf::Param("unit"    , request.unit   )};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_GIVE_VOLUME_TO_RTCPD, params);
-  }
+  LogHelper::logMsgBody(cuuid, DLF_LVL_SYSTEM,
+    AGGREGATOR_GIVE_VOLUME_TO_RTCPD, volReqId, socketFd, request);
 
   // Marshall the message
   char buf[MSGBUFSIZ];
@@ -202,18 +187,9 @@ void castor::tape::aggregator::RtcpTxRx::giveVolumeToRtcpd(
       ": Received negative acknowledge from RTCPD"
       ": Status: " << ackMsg.lenOrStatus);
   }
-  {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", volReqId       ),
-      castor::dlf::Param("socketFd", socketFd       ),
-      castor::dlf::Param("vid"     , request.vid    ),
-      castor::dlf::Param("mode"    , request.mode   ),
-      castor::dlf::Param("label"   , request.label  ),
-      castor::dlf::Param("density" , request.density),
-      castor::dlf::Param("unit"    , request.unit   )};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_GAVE_VOLUME_TO_RTCPD, params);
-  }
+
+  LogHelper::logMsgBody(cuuid, DLF_LVL_SYSTEM, AGGREGATOR_GAVE_VOLUME_TO_RTCPD,
+    volReqId, socketFd, request);
 }
 
 
@@ -226,22 +202,12 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
   RtcpFileRqstErrMsgBody &request) throw(castor::exception::Exception) {
 
   {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"    , volReqId         ),
-      castor::dlf::Param("socketFd"    , socketFd         ),
-      castor::dlf::Param("filePath"    , request.filePath ),
-      castor::dlf::Param("bytesIn"     , request.bytesIn  ), // File size
-      castor::dlf::Param("bytesOut"    , request.bytesOut ),
-      castor::dlf::Param("hostBytes"   , request.hostBytes),
-      castor::dlf::Param("tapePath"    , request.tapePath ),
-      castor::dlf::Param("tapeFseq"    , request.tapeFseq ),
-      castor::dlf::Param("diskFseq"    , request.diskFseq ),
-      castor::dlf::Param("recordFormat", RECORDFORMAT     ),
-      castor::dlf::Param("umask"       , MIGRATEUMASK     )};
-   
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      mode == WRITE_ENABLE ? AGGREGATOR_GIVE_MIGRATE_FILE_TO_RTCPD :
-      AGGREGATOR_GIVE_RECALL_FILE_TO_RTCPD, params);
+    const int message_no = mode == WRITE_ENABLE ?
+      AGGREGATOR_GIVE_MIGRATE_FILE_TO_RTCPD :
+      AGGREGATOR_GIVE_RECALL_FILE_TO_RTCPD;
+
+    LogHelper::logMsgBody(cuuid, DLF_LVL_SYSTEM, message_no, volReqId,
+      socketFd, request);
   }
 
   // Marshall the message
@@ -284,22 +250,14 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
       ": Received negative acknowledge from RTCPD"
       ": Status: " << ackMsg.lenOrStatus);
   }
+
   {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"    , volReqId         ),
-      castor::dlf::Param("socketFd"    , socketFd         ),
-      castor::dlf::Param("filePath"    , request.filePath ),
-      castor::dlf::Param("bytesIn"     , request.bytesIn  ), // File size
-      castor::dlf::Param("bytesOut"    , request.bytesOut ),
-      castor::dlf::Param("hostBytes"   , request.hostBytes),
-      castor::dlf::Param("tapePath"    , request.tapePath ),
-      castor::dlf::Param("tapeFseq"    , request.tapeFseq ),
-      castor::dlf::Param("diskFseq"    , request.diskFseq ),
-      castor::dlf::Param("recordFormat", RECORDFORMAT     ),
-      castor::dlf::Param("umask"       , MIGRATEUMASK     )};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      mode == WRITE_ENABLE ? AGGREGATOR_GAVE_MIGRATE_FILE_TO_RTCPD :
-      AGGREGATOR_GAVE_RECALL_FILE_TO_RTCPD, params);
+    const int message_no = mode == WRITE_ENABLE ?
+      AGGREGATOR_GAVE_MIGRATE_FILE_TO_RTCPD :
+      AGGREGATOR_GAVE_RECALL_FILE_TO_RTCPD;
+
+    LogHelper::logMsgBody(cuuid, DLF_LVL_SYSTEM, message_no, volReqId,
+      socketFd, request);
   }
 }
 
@@ -639,19 +597,8 @@ void castor::tape::aggregator::RtcpTxRx::receiveRcpJobRqst(const Cuuid_t &cuuid,
       << ": "<< ex.getMessage().str());
   }
 
-  {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"       , request.tapeRequestId  ),
-      castor::dlf::Param("clientPort"     , request.clientPort     ),
-      castor::dlf::Param("clientEuid"     , request.clientEuid     ),
-      castor::dlf::Param("clientEgid"     , request.clientEgid     ),
-      castor::dlf::Param("clientHost"     , request.clientHost     ),
-      castor::dlf::Param("deviceGroupName", request.deviceGroupName),
-      castor::dlf::Param("driveName"      , request.driveName      ),
-      castor::dlf::Param("clientUserName" , request.clientUserName )};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_RECEIVED_RCP_JOB_RQST, params);
-  }
+  LogHelper::logMsgBody(cuuid, DLF_LVL_SYSTEM,
+    AGGREGATOR_RECEIVED_RCP_JOB_RQST, request.tapeRequestId, socketFd, request);
 }
 
 //-----------------------------------------------------------------------------
