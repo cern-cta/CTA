@@ -60,7 +60,7 @@ namespace aggregator {
     uint32_t tEndMount;     // Time when mount request returns
     uint32_t tStartUnmount; // Time when unmount request is sent to Ctape
     uint32_t tEndUnmount;   // Time when unmount request returns
-    Cuuid_t rtcpReqId;      // Unique request id assigned by RTCOPY
+    Cuuid_t  rtcpReqId;     // Unique request id assigned by RTCOPY
 
   }; // struct RtcpTapeRqstMsgBody
 

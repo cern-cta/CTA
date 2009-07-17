@@ -71,37 +71,40 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
   const int socketFd, const RtcpTapeRqstErrMsgBody &body) throw() {
-/*
+
   castor::dlf::Param params[] = {
-    castor::dlf::Param("volReqId"    , volReqId         ),
-    castor::dlf::Param("socketFd"    , socketFd         ),
-
-    castor::dlf::Param("vid", vid);
-    char vsn[CA_MAXVSNLEN+1];
-    char label[CA_MAXLBLTYPLEN+1];
-    char devtype[CA_MAXDVTLEN+1];
-    char density[CA_MAXDENLEN+1];
-    char unit[CA_MAXUNMLEN+1];
-    uint32_t volReqId;      // VDQM volume request ID
-    uint32_t jobId;         // Local RTCOPY server job ID
-    uint32_t mode;          // WRITE_DISABLE or WRITE_ENABLE
-    uint32_t start_file;    // Start file if mapped VID
-    uint32_t end_file;      // End file if mapped VID
-    uint32_t side;          // Disk side number
-    uint32_t tprc;          // Return code from last Ctape
-    uint32_t tStartRequest; // Start time of request (set by client)
-    uint32_t tEndRequest;   // End time of request (set by client)
-    uint32_t tStartRtcpd;   // Time when request is received by rtcpd server
-    uint32_t tStartMount;   // Time when mount request is sent to Ctape
-    uint32_t tEndMount;     // Time when mount request returns
-    uint32_t tStartUnmount; // Time when unmount request is sent to Ctape
-    uint32_t tEndUnmount;   // Time when unmount request returns
-    Cuuid_t rtcpReqId;      // Unique request id assigned by RTCOPY
-
+    castor::dlf::Param("volReqId"      , volReqId           ),
+    castor::dlf::Param("socketFd"      , socketFd           ),
+    castor::dlf::Param("vid"           , body.vid           ),
+    castor::dlf::Param("vsn"           , body.vsn           ),
+    castor::dlf::Param("label"         , body.label         ),
+    castor::dlf::Param("devtype"       , body.devtype       ),
+    castor::dlf::Param("density"       , body.density       ),
+    castor::dlf::Param("unit"          , body.unit          ),
+    castor::dlf::Param("volReqId"      , body.volReqId      ),
+    castor::dlf::Param("jobId"         , body.jobId         ),
+    castor::dlf::Param("mode"          , body.mode          ),
+    castor::dlf::Param("start_file"    , body.start_file    ),
+    castor::dlf::Param("end_file"      , body.end_file      ),
+    castor::dlf::Param("side"          , body.side          ),
+    castor::dlf::Param("tprc"          , body.tprc          ),
+    castor::dlf::Param("tStartRequest" , body.tStartRequest ),
+    castor::dlf::Param("tEndRequest"   , body.tEndRequest   ),
+    castor::dlf::Param("tStartRtcpd"   , body.tStartRtcpd   ),
+    castor::dlf::Param("tStartMount"   , body.tStartMount   ),
+    castor::dlf::Param("tEndMount"     , body.tEndMount     ),
+    castor::dlf::Param("tStartUnmount" , body.tStartUnmount ),
+    castor::dlf::Param("tEndUnmount"   , body.tEndUnmount   ),
+    castor::dlf::Param("rtcpReqId"     , body.rtcpReqId     ),
+    castor::dlf::Param("err.errorMsg"  , body.err.errorMsg  ),
+    castor::dlf::Param("err.severity"  , body.err.severity  ),
+    castor::dlf::Param("err.errorCode" , body.err.errorCode ),
+    castor::dlf::Param("err.maxTpRetry", body.err.maxTpRetry),
+    castor::dlf::Param("err.maxCpRetry", body.err.maxCpRetry)};
 
   castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, message_no, params);
-*/
 }
+
 
 //-----------------------------------------------------------------------------
 // logMsgBody
@@ -109,7 +112,35 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
   const int socketFd, const RtcpTapeRqstMsgBody &body) throw() {
+
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("volReqId"      , volReqId           ),
+    castor::dlf::Param("socketFd"      , socketFd           ),
+    castor::dlf::Param("vid"           , body.vid           ),
+    castor::dlf::Param("vsn"           , body.vsn           ),
+    castor::dlf::Param("label"         , body.label         ),
+    castor::dlf::Param("devtype"       , body.devtype       ),
+    castor::dlf::Param("density"       , body.density       ),
+    castor::dlf::Param("unit"          , body.unit          ),
+    castor::dlf::Param("volReqId"      , body.volReqId      ),
+    castor::dlf::Param("jobId"         , body.jobId         ),
+    castor::dlf::Param("mode"          , body.mode          ),
+    castor::dlf::Param("start_file"    , body.start_file    ),
+    castor::dlf::Param("end_file"      , body.end_file      ),
+    castor::dlf::Param("side"          , body.side          ),
+    castor::dlf::Param("tprc"          , body.tprc          ),
+    castor::dlf::Param("tStartRequest" , body.tStartRequest ),
+    castor::dlf::Param("tEndRequest"   , body.tEndRequest   ),
+    castor::dlf::Param("tStartRtcpd"   , body.tStartRtcpd   ),
+    castor::dlf::Param("tStartMount"   , body.tStartMount   ),
+    castor::dlf::Param("tEndMount"     , body.tEndMount     ),
+    castor::dlf::Param("tStartUnmount" , body.tStartUnmount ),
+    castor::dlf::Param("tEndUnmount"   , body.tEndUnmount   ),
+    castor::dlf::Param("rtcpReqId"     , body.rtcpReqId     )};
+
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, message_no, params);
 }
+
 
 //-----------------------------------------------------------------------------
 // logMsgBody
@@ -117,7 +148,68 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
   const int socketFd, const RtcpFileRqstErrMsgBody &body) throw() {
+
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("volReqId"            , volReqId                 ),
+    castor::dlf::Param("socketFd"            , socketFd                 ),
+    castor::dlf::Param("filePath"            , body.filePath            ),
+    castor::dlf::Param("tapePath"            , body.tapePath            ),
+    castor::dlf::Param("recfm"               , body.recfm               ),
+    castor::dlf::Param("fid"                 , body.fid                 ),
+    castor::dlf::Param("ifce"                , body.ifce                ),
+    castor::dlf::Param("stageId"             , body.stageId             ),
+    castor::dlf::Param("volReqId"            , body.volReqId            ),
+    castor::dlf::Param("jobId"               , body.jobId               ),
+    castor::dlf::Param("stageSubReqId"       , body.stageSubReqId       ),
+    castor::dlf::Param("umask"               , body.umask               ),
+    castor::dlf::Param("positionMethod"      , body.positionMethod      ),
+    castor::dlf::Param("tapeFseq"            , body.tapeFseq            ),
+    castor::dlf::Param("diskFseq"            , body.diskFseq            ),
+    castor::dlf::Param("blockSize"           , body.blockSize           ),
+    castor::dlf::Param("recordLength"        , body.recordLength        ),
+    castor::dlf::Param("retention"           , body.retention           ),
+    castor::dlf::Param("defAlloc"            , body.defAlloc            ),
+    castor::dlf::Param("rtcpErrAction"       , body.rtcpErrAction       ),
+    castor::dlf::Param("tpErrAction"         , body.tpErrAction         ),
+    castor::dlf::Param("convert"             , body.convert             ),
+    castor::dlf::Param("checkFid"            , body.checkFid            ),
+    castor::dlf::Param("concat"              , body.concat              ),
+    castor::dlf::Param("procStatus"          , body.procStatus          ),
+    castor::dlf::Param("cprc"                , body.cprc                ),
+    castor::dlf::Param("tStartPosition"      , body.tStartPosition      ),
+    castor::dlf::Param("tEndPosition"        , body.tEndPosition        ),
+    castor::dlf::Param("tStartTransferDisk"  , body.tStartTransferDisk  ),
+    castor::dlf::Param("tEndTransferDisk"    , body.tEndTransferDisk    ),
+    castor::dlf::Param("tStartTransferTape"  , body.tStartTransferTape  ),
+    castor::dlf::Param("tEndTransferTape"    , body.tEndTransferTape    ),
+    castor::dlf::Param("blockId[0]"          , body.blockId[0]          ),
+    castor::dlf::Param("blockId[1]"          , body.blockId[1]          ),
+    castor::dlf::Param("blockId[2]"          , body.blockId[2]          ),
+    castor::dlf::Param("blockId[3]"          , body.blockId[3]          ),
+    castor::dlf::Param("offset"              , body.offset              ),
+    castor::dlf::Param("bytesIn"             , body.bytesIn             ),
+    castor::dlf::Param("bytesOut"            , body.bytesOut            ),
+    castor::dlf::Param("hostBytes"           , body.hostBytes           ),
+    castor::dlf::Param("nbRecs"              , body.nbRecs              ),
+    castor::dlf::Param("maxNbRec"            , body.maxNbRec            ),
+    castor::dlf::Param("maxSize"             , body.maxSize             ),
+    castor::dlf::Param("startSize"           , body.startSize           ),
+    castor::dlf::Param("segAttr.nameServerHostName",
+      body.segAttr.nameServerHostName),
+    castor::dlf::Param("segAttr.segmCksumAlgorithm",
+      body.segAttr.segmCksumAlgorithm),
+    castor::dlf::Param("segAttr.segmCksum"   , body.segAttr.segmCksum   ),
+    castor::dlf::Param("segAttr.castorFileId", body.segAttr.castorFileId),
+    castor::dlf::Param("stgReqId"            , body.stgReqId            ),
+    castor::dlf::Param("err.errorMsg"        , body.err.errorMsg        ),
+    castor::dlf::Param("err.severity"        , body.err.severity        ),
+    castor::dlf::Param("err.errorCode"       , body.err.errorCode       ),
+    castor::dlf::Param("err.maxTpRetry"      , body.err.maxTpRetry      ),
+    castor::dlf::Param("err.maxCpRetry"      , body.err.maxCpRetry      )};
+
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, message_no, params);
 }
+
 
 //-----------------------------------------------------------------------------
 // logMsgBody
@@ -125,7 +217,63 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
   const int socketFd, const RtcpFileRqstMsgBody &body) throw() {
+
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("volReqId"            , volReqId                 ),
+    castor::dlf::Param("socketFd"            , socketFd                 ),
+    castor::dlf::Param("filePath"            , body.filePath            ),
+    castor::dlf::Param("tapePath"            , body.tapePath            ),
+    castor::dlf::Param("recfm"               , body.recfm               ),
+    castor::dlf::Param("fid"                 , body.fid                 ),
+    castor::dlf::Param("ifce"                , body.ifce                ),
+    castor::dlf::Param("stageId"             , body.stageId             ),
+    castor::dlf::Param("volReqId"            , body.volReqId            ),
+    castor::dlf::Param("jobId"               , body.jobId               ),
+    castor::dlf::Param("stageSubReqId"       , body.stageSubReqId       ),
+    castor::dlf::Param("umask"               , body.umask               ),
+    castor::dlf::Param("positionMethod"      , body.positionMethod      ),
+    castor::dlf::Param("tapeFseq"            , body.tapeFseq            ),
+    castor::dlf::Param("diskFseq"            , body.diskFseq            ),
+    castor::dlf::Param("blockSize"           , body.blockSize           ),
+    castor::dlf::Param("recordLength"        , body.recordLength        ),
+    castor::dlf::Param("retention"           , body.retention           ),
+    castor::dlf::Param("defAlloc"            , body.defAlloc            ),
+    castor::dlf::Param("rtcpErrAction"       , body.rtcpErrAction       ),
+    castor::dlf::Param("tpErrAction"         , body.tpErrAction         ),
+    castor::dlf::Param("convert"             , body.convert             ),
+    castor::dlf::Param("checkFid"            , body.checkFid            ),
+    castor::dlf::Param("concat"              , body.concat              ),
+    castor::dlf::Param("procStatus"          , body.procStatus          ),
+    castor::dlf::Param("cprc"                , body.cprc                ),
+    castor::dlf::Param("tStartPosition"      , body.tStartPosition      ),
+    castor::dlf::Param("tEndPosition"        , body.tEndPosition        ),
+    castor::dlf::Param("tStartTransferDisk"  , body.tStartTransferDisk  ),
+    castor::dlf::Param("tEndTransferDisk"    , body.tEndTransferDisk    ),
+    castor::dlf::Param("tStartTransferTape"  , body.tStartTransferTape  ),
+    castor::dlf::Param("tEndTransferTape"    , body.tEndTransferTape    ),
+    castor::dlf::Param("blockId[0]"          , body.blockId[0]          ),
+    castor::dlf::Param("blockId[1]"          , body.blockId[1]          ),
+    castor::dlf::Param("blockId[2]"          , body.blockId[2]          ),
+    castor::dlf::Param("blockId[3]"          , body.blockId[3]          ),
+    castor::dlf::Param("offset"              , body.offset              ),
+    castor::dlf::Param("bytesIn"             , body.bytesIn             ),
+    castor::dlf::Param("bytesOut"            , body.bytesOut            ),
+    castor::dlf::Param("hostBytes"           , body.hostBytes           ),
+    castor::dlf::Param("nbRecs"              , body.nbRecs              ),
+    castor::dlf::Param("maxNbRec"            , body.maxNbRec            ),
+    castor::dlf::Param("maxSize"             , body.maxSize             ),
+    castor::dlf::Param("startSize"           , body.startSize           ),
+    castor::dlf::Param("segAttr.nameServerHostName",
+      body.segAttr.nameServerHostName),
+    castor::dlf::Param("segAttr.segmCksumAlgorithm",
+      body.segAttr.segmCksumAlgorithm),
+    castor::dlf::Param("segAttr.segmCksum"   , body.segAttr.segmCksum   ),
+    castor::dlf::Param("segAttr.castorFileId", body.segAttr.castorFileId),
+    castor::dlf::Param("stgReqId"            , body.stgReqId            )};
+
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, message_no, params);
 }
+
 
 //-----------------------------------------------------------------------------
 // logMsgBody
@@ -133,7 +281,14 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
   const int socketFd, const GiveOutpMsgBody &body) throw() {
+
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("volReqId", volReqId    ),
+    castor::dlf::Param("socketFd", socketFd    ),
+    castor::dlf::Param("message" , body.message)};
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, message_no, params);
 }
+
 
 //-----------------------------------------------------------------------------
 // logMsgBody
@@ -141,7 +296,13 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
   const int socketFd, const RtcpNoMoreRequestsMsgBody &body) throw() {
+
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("volReqId", volReqId),
+    castor::dlf::Param("socketFd", socketFd)};
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, message_no, params);
 }
+
 
 //-----------------------------------------------------------------------------
 // logMsgBody
@@ -149,4 +310,9 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
   const int socketFd, const RtcpAbortMsgBody &body) throw() {
+
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("volReqId", volReqId),
+    castor::dlf::Param("socketFd", socketFd)};
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, message_no, params);
 }
