@@ -329,14 +329,14 @@ void castor::tape::aggregator::RtcpTxRx::sendMessageHeader(
       castor::dlf::Param("socketFd", socketFd)};
 
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_SEND_ACK_TO_RTCPD, params);
+      AGGREGATOR_SEND_HEADER_TO_RTCPD, params);
   }
 
   try {
     net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
-      ": Failed to send the RCP acknowledge message to RTCPD"
+      ": Failed to send message header to RTCPD"
       ": " << ex.getMessage().str());
   }
 
@@ -346,7 +346,7 @@ void castor::tape::aggregator::RtcpTxRx::sendMessageHeader(
       castor::dlf::Param("socketFd", socketFd)};
 
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_SENT_ACK_TO_RTCPD, params);
+      AGGREGATOR_SENT_HEADER_TO_RTCPD, params);
   }
 }
 
