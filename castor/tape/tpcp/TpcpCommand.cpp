@@ -551,7 +551,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     {
       std::ostream &os = std::cout;
 
-      utils::writeTime(os);
+      utils::writeTime(os, TIMEFORMAT);
       os << ": Waiting for a drive: Volume request ID = " << m_volReqId
          << std::endl;
     }
@@ -573,7 +573,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
           // Command-line user feedback
           std::ostream &os = std::cout;
 
-          utils::writeTime(os);
+          utils::writeTime(os, TIMEFORMAT);
           os << ": Waited " << WAITCALLBACKTIMEOUT << "seconds for a "
           "callback connection from the tape server." << std::endl
           << "Continuing to wait." <<  std::endl;
@@ -585,7 +585,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     {
       std::ostream &os = std::cout;
 
-      utils::writeTime(os);
+      utils::writeTime(os, TIMEFORMAT);
       os << ": Received connection from ";
 
       unsigned long  peerIp    = 0;
@@ -627,7 +627,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     {
       std::ostream &os = std::cout;
 
-      utils::writeTime(os);
+      utils::writeTime(os, TIMEFORMAT);
       os << ": Tape mounted on drive " << volumeRequest->unit() << std::endl;
     }
 

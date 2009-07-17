@@ -60,6 +60,22 @@ void castor::tape::utils::writeTime(std::ostream &os) {
   }
 }
 
+//-----------------------------------------------------------------------------
+// writeTime
+//-----------------------------------------------------------------------------
+void castor::tape::utils::writeTime(std::ostream &os, 
+  const char* const format) {
+
+  time_t now = time(0);
+  tm time = *localtime(&now);
+
+  const std::time_put<char>& dateWriter =
+    std::use_facet<std::time_put<char> >(os.getloc());
+  int n = strlen(format);
+  if (dateWriter.put(os, os, ' ', &time, format, format + n).failed()){
+    os << "UKNOWN";
+  }
+}
 
 //-----------------------------------------------------------------------------
 // boolToString

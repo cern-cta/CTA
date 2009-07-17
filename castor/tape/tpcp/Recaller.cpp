@@ -87,7 +87,7 @@ void castor::tape::tpcp::Recaller::run() throw(castor::exception::Exception) {
 
   std::ostream &os = std::cout;
 
-  utils::writeTime(os);
+  utils::writeTime(os, TIMEFORMAT);
   os << ": End of recall session" << std::endl
      << std::endl
      << "Number of recall requests      = " << nbRecallRequests  << std::endl
@@ -270,7 +270,7 @@ bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
     std::ostream &os = std::cout;
     FileTransfer &fileTransfer = itor->second;
 
-    utils::writeTime(os);
+    utils::writeTime(os, TIMEFORMAT);
     os << ": Recalled fseq=" << fileTransfer.tapeFseq
        << " size=" << notification->fileSize()
        << " \"" << fileTransfer.filename << "\"" << std::endl;
