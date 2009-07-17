@@ -114,8 +114,11 @@ void castor::tape::tpcp::TpcpCommand::usage(std::ostream &os,
     "Options that apply to the WRITE action:\n"
     "\n"
     "\t-f, --filelist          File containing a list of filenames\n"
-    "\t-p, --position          Tape file sequence number to be positioned to\n"
-    "\t                        just before writing\n"
+    "\t-p, --position          Either the string \"EOT\" meaning append to\n"
+    "\t                        End Of Tape, or the tape file sequence number\n"
+    "\t                        to be positioned to just before writing.  Note\n"
+    "\t                        this option is mandatory when the action is\n"
+    "\t                        WRITE\n"
     "\n"
     "Constraints:\n"
     "\n"
@@ -164,26 +167,36 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
       break;
 
     case 'p':
-      if(!utils::isValidUInt(optarg)) {
-        castor::exception::InvalidArgument ex;
-        ex.getMessage() <<
-          "The -p, --position argument must be a valid unsigned integer "
-          "greater than 0: Actual=" << optarg;
-        throw ex;
+      {
+        m_parsedCommandLine.tapeFseqPositionOptionSet = true;
+
+        std::string tmp(optarg);
+        utils::toUpper(tmp);
+
+        if(tmp == "EOT") {
+          m_parsedCommandLine.tapeFseqPosition = - 1;
+        } else {
+
+          if(!utils::isValidUInt(optarg)) {
+            castor::exception::InvalidArgument ex;
+            ex.getMessage() <<
+              "\tThe -p, --position argument must either be the string \"EOT\" "
+              "or a valid\n\tunsigned integer greater than 0: Actual=\""
+              << optarg << "\"";
+            throw ex;
+          }
+
+          m_parsedCommandLine.tapeFseqPosition = atoi(optarg);
+
+          if(m_parsedCommandLine.tapeFseqPosition == 0) {
+            castor::exception::InvalidArgument ex;
+            ex.getMessage() <<
+              "\tThe -p, --position argument must be a valid unsigned integer "
+              "greater\n\tthan 0: Actual=" << optarg;
+            throw ex;
+          }
+        }
       }
-
-      m_parsedCommandLine.tapeFseqPosition = atoi(optarg);
-
-      if(m_parsedCommandLine.tapeFseqPosition == 0) {
-        castor::exception::InvalidArgument ex;
-        ex.getMessage() <<
-          "The -p, --position argument must be a valid unsigned integer "
-          "greater than 0: Actual=" << optarg;
-        throw ex;
-      }
-
-      m_parsedCommandLine.tapeFseqPositionOptionSet = true;
-
       break;
 
     case 'q':
@@ -205,7 +218,7 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
     case ':':
       {
         castor::exception::InvalidArgument ex;
-        ex.getMessage() << "The -" << (char)optopt
+        ex.getMessage() << "\tThe -" << (char)optopt
           << " option requires a parameter";
         throw ex;
       }
@@ -216,9 +229,9 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
         castor::exception::InvalidArgument ex;
 
         if(optopt == 0) {
-          ex.getMessage() << "Unknown command-line option";
+          ex.getMessage() << "\tUnknown command-line option";
         } else {
-          ex.getMessage() << "Unknown command-line option: -" << (char)optopt;
+          ex.getMessage() << "\tUnknown command-line option: -" << (char)optopt;
         }
         throw ex;
       }
@@ -227,7 +240,7 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
       {
         castor::exception::Internal ex;
         ex.getMessage()
-          << "getopt_long returned the following unknown value: 0x"
+          << "\tgetopt_long returned the following unknown value: 0x"
           << std::hex << (int)c;
         throw ex;
       }
@@ -243,7 +256,7 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
   if(argc-optind < TPCPMINARGS){
     castor::exception::InvalidArgument ex;
 
-    ex.getMessage() << "Wrong number of command-line arguments: Actual=" <<
+    ex.getMessage() << "\tWrong number of command-line arguments: Actual=" <<
       argc-optind << " Expected minimum=" << TPCPMINARGS; 
 
     throw ex;
@@ -257,8 +270,8 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
   if(nbFilenamesOnCommandLine > 0 && m_parsedCommandLine.fileListOptionSet) {
     castor::exception::InvalidArgument ex;
 
-    ex.getMessage() << "[FILE].. command-line arguments and the"
-       " \"-f, --filelist\" option are mutually exclusive";
+    ex.getMessage() << "\t[FILE].. command-line arguments and the"
+       " \"-f, --filelist\" option are\n\tmutually exclusive";
 
     throw ex;
   }
@@ -272,7 +285,7 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
     castor::exception::InvalidArgument ex;
     std::ostream &os = ex.getMessage();
 
-    os << "First command-line argument must be a valid Action: Actual=" <<
+    os << "\tFirst command-line argument must be a valid Action:\n\tActual=" <<
       argv[optind] << " Expected=";
 
     Action::writeValidStrings(os, " or ");
@@ -283,6 +296,17 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
   // Move on to the next command-line argument
   optind++;
 
+  try {
+    utils::checkVidSyntax(argv[optind]);
+  } catch(castor::exception::InvalidArgument &ex) {
+    castor::exception::InvalidArgument ex2;
+
+    ex2.getMessage() << "\tSecond command-line argument must be a valid VID:\n"
+      "\t" << ex.getMessage().str();
+
+    throw ex2;
+  }
+
   // Parse the VID command-line argument
   try {
     utils::copyString(m_parsedCommandLine.vid, argv[optind]);
@@ -291,16 +315,6 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
       ": Failed to copy VID comand-line argument into the internal data"
       " structures"
       ": " << ex.getMessage().str());
-  }
-  try {
-    utils::checkVidSyntax(m_parsedCommandLine.vid);
-  } catch(castor::exception::InvalidArgument &ex) {
-    castor::exception::InvalidArgument ex2;
-
-    ex2.getMessage() << "Second command-line argument must be a valid VID: " <<
-      ex.getMessage().str();
-
-    throw ex2;
   }
 
   // Move on to the next command-line argument (there may not be one)
@@ -318,7 +332,7 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
       castor::exception::InvalidArgument ex;
 
       ex.getMessage()
-        << "There must be at least one tape file sequence number when "
+        << "\tThere must be at least one tape file sequence number when "
            "recalling";
 
       throw ex;
@@ -332,8 +346,19 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
     castor::exception::InvalidArgument ex;
 
     ex.getMessage()
-      << "There cannot be more than one tape file sequence range whose upper "
+      << "\tThere cannot be more than one tape file sequence range whose upper "
          "boundary is end of tape";
+
+    throw ex;
+  }
+
+  // The -p, --position option is mandatory when the action is WRITE
+  if(m_parsedCommandLine.action == Action::write &&
+    !m_parsedCommandLine.tapeFseqPositionOptionSet) {
+    castor::exception::InvalidArgument ex;
+
+    ex.getMessage()
+      << "\tThe -p, --position option is mandatory when the action is WRITE";
 
     throw ex;
   }
@@ -371,7 +396,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     } catch (castor::exception::Exception &ex) {
       std::cerr
         << std::endl
-        << "Failed to parse the command-line:\n\n\t"
+        << "Failed to parse the command-line:\n\n"
         << ex.getMessage().str() << std::endl
         << std::endl;
       castor::tape::tpcp::TpcpCommand::usage(std::cerr, TPCPPROGRAMNAME);

@@ -337,6 +337,16 @@ void castor::tape::utils::toUpper(char *str) {
 
 
 //------------------------------------------------------------------------------
+// toUpper
+//------------------------------------------------------------------------------
+void castor::tape::utils::toUpper(std::string &str) {
+  for(std::string::iterator itor=str.begin(); itor!=str.end(); itor++) {
+    *itor = toupper(*itor);
+  }
+}
+
+
+//------------------------------------------------------------------------------
 // drainFile
 //------------------------------------------------------------------------------
 ssize_t castor::tape::utils::drainFile(const int fd)

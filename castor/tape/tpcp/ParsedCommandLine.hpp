@@ -51,7 +51,7 @@ struct ParsedCommandLine {
   bool              helpOptionSet;
   bool              serverOptionSet;
   char              server[CA_MAXHOSTNAMELEN+1];
-  uint32_t          tapeFseqPosition;
+  int32_t           tapeFseqPosition;
   bool              tapeFseqPositionOptionSet;
   TapeFseqRangeList tapeFseqRanges;
   char              vid[CA_MAXVIDLEN+1];

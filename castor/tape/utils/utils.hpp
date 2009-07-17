@@ -296,6 +296,11 @@ namespace utils  {
   void toUpper(char *str);
 
   /**
+   * Converts the specified string to uppercase.
+   */
+  void toUpper(std::string &str);
+
+  /**
    * Drains (reads and discards) all data from the specified file until end of
    * file is reached.
    *
