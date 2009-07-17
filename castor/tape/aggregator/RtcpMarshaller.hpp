@@ -273,12 +273,12 @@ public:
    * Marshalls the specified source message header structure into the
    * specified destination buffer.
    *
-   * @param dst The destination buffer.
+   * @param dst    The destination buffer.
    * @param dstLen The length of the destination buffer.
-   * @param src The source structure.
-   * @return The total length of the header.
+   * @param src    The source structure.
+   * @return       The total length of the header.
    */
-  static size_t marshallMessageHeader(char *const dst, const size_t dstLen,
+  static size_t marshall(char *const dst, const size_t dstLen,
     const MessageHeader &src) throw(castor::exception::Exception);
 
   /**
@@ -287,11 +287,11 @@ public:
    *
    * @param dst The destination buffer.
    * @param src The source structure.
-   * @return The total length of the header.
+   * @return    The total length of the header.
    */
-  template<int n> static size_t marshallMessageHeader(char (&dst)[n],
+  template<int n> static size_t marshall(char (&dst)[n],
     const MessageHeader &src) throw(castor::exception::Exception) {
-    return marshallMessageHeader(dst, n, src);
+    return marshall(dst, n, src);
   }
 
   /**
@@ -307,8 +307,8 @@ public:
    * return is the number of bytes remaining in the source buffer.
    * @param dst The destination structure.
    */
-  static void unmarshallMessageHeader(const char * &src, size_t &srcLen,
-    MessageHeader &dst) throw(castor::exception::Exception);
+  static void unmarshall(const char * &src, size_t &srcLen, MessageHeader &dst)
+    throw(castor::exception::Exception);
 
   /**
    * Marshalls the specified source message body structure into the

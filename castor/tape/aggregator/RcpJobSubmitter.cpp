@@ -169,7 +169,7 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
   try {
     const char *p           = headerBuf;
     size_t     remainingLen = sizeof(headerBuf);
-    RtcpMarshaller::unmarshallMessageHeader(p, remainingLen, header);
+    RtcpMarshaller::unmarshall(p, remainingLen, header);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EBADMSG,
       ": Failed to unmarshall message header from " << remoteCopyType <<

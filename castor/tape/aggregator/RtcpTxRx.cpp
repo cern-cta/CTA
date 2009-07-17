@@ -316,7 +316,7 @@ void castor::tape::aggregator::RtcpTxRx::sendMessageHeader(
   size_t totalLen = 0;
 
   try {
-    totalLen = RtcpMarshaller::marshallMessageHeader(buf, header);
+    totalLen = RtcpMarshaller::marshall(buf, header);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,
          ": Failed to marshall RCP acknowledge message: "
@@ -368,7 +368,7 @@ void castor::tape::aggregator::RtcpTxRx::pingRtcpd(const Cuuid_t &cuuid,
 
   try {
     // The RTCPD message is a bodiless RTCP message
-    totalLen = RtcpMarshaller::marshallMessageHeader(buf, header);
+    totalLen = RtcpMarshaller::marshall(buf, header);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,
          ": Failed to marshall RCPD ping message : "
@@ -585,7 +585,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRcpJobRqst(const Cuuid_t &cuuid,
   try {
     const char *p           = headerBuf;
     size_t     remainingLen = sizeof(headerBuf);
-    RtcpMarshaller::unmarshallMessageHeader(p, remainingLen, header);
+    RtcpMarshaller::unmarshall(p, remainingLen, header);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EBADMSG,
       ": Failed to unmarshall message header from RCP job submitter"
@@ -831,7 +831,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveMessageHeader(
   try {
     const char *p           = headerBuf;
     size_t     remainingLen = sizeof(headerBuf);
-    RtcpMarshaller::unmarshallMessageHeader(p, remainingLen, header);
+    RtcpMarshaller::unmarshall(p, remainingLen, header);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EBADMSG,
        ": Failed to unmarshall message header from RTCPD"
@@ -863,7 +863,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveMessageHeaderFromCloseable(
   try {
     const char *p           = headerBuf;
     size_t     remainingLen = sizeof(headerBuf);
-    RtcpMarshaller::unmarshallMessageHeader(p, remainingLen, header);
+    RtcpMarshaller::unmarshall(p, remainingLen, header);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EBADMSG,
        ": Failed to unmarshall message header from RTCPD"

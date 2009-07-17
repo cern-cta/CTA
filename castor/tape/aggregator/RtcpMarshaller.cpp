@@ -226,10 +226,10 @@ void castor::tape::aggregator::RtcpMarshaller::unmarshallString(const char * &sr
 
 
 //-----------------------------------------------------------------------------
-// marshallMessageHeader
+// marshall
 //-----------------------------------------------------------------------------
-size_t castor::tape::aggregator::RtcpMarshaller::marshallMessageHeader(
-  char *const dst, const size_t dstLen, const MessageHeader &src)
+size_t castor::tape::aggregator::RtcpMarshaller::marshall(char *const dst,
+  const size_t dstLen, const MessageHeader &src)
   throw(castor::exception::Exception) {
 
   if(dst == NULL) {
@@ -271,11 +271,10 @@ size_t castor::tape::aggregator::RtcpMarshaller::marshallMessageHeader(
 
 
 //-----------------------------------------------------------------------------
-// unmarshallMessageHeader
+// unmarshall
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::RtcpMarshaller::unmarshallMessageHeader(
-  const char * &src, size_t &srcLen, MessageHeader &dst)
-  throw(castor::exception::Exception) {
+void castor::tape::aggregator::RtcpMarshaller::unmarshall(const char * &src,
+  size_t &srcLen, MessageHeader &dst) throw(castor::exception::Exception) {
 
   unmarshallUint32(src, srcLen, dst.magic);
   unmarshallUint32(src, srcLen, dst.reqType);

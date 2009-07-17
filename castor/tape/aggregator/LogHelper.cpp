@@ -25,6 +25,7 @@
 
 #include "castor/dlf/Dlf.hpp"
 #include "castor/tape/aggregator/LogHelper.hpp"
+#include "castor/tape/utils/utils.hpp"
 
 
 //-----------------------------------------------------------------------------
@@ -149,6 +150,12 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
   const int socketFd, const RtcpFileRqstErrMsgBody &body) throw() {
 
+  // 32-bits = 1 x '0' + 1 x 'x' + 8 x hex + 1 x '/0' = 11 byte string
+  char checksumHex[11];
+  checksumHex[0] = '0';
+  checksumHex[1] = 'x';
+  utils::toHex(body.segAttr.segmCksum, &checksumHex[2], 9);
+
   castor::dlf::Param params[] = {
     castor::dlf::Param("volReqId"            , volReqId                 ),
     castor::dlf::Param("socketFd"            , socketFd                 ),
@@ -198,7 +205,7 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
       body.segAttr.nameServerHostName),
     castor::dlf::Param("segAttr.segmCksumAlgorithm",
       body.segAttr.segmCksumAlgorithm),
-    castor::dlf::Param("segAttr.segmCksum"   , body.segAttr.segmCksum   ),
+    castor::dlf::Param("segAttr.segmCksum"   , checksumHex              ),
     castor::dlf::Param("segAttr.castorFileId", body.segAttr.castorFileId),
     castor::dlf::Param("stgReqId"            , body.stgReqId            ),
     castor::dlf::Param("err.errorMsg"        , body.err.errorMsg        ),
@@ -218,6 +225,12 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
   const int socketFd, const RtcpFileRqstMsgBody &body) throw() {
 
+  // 32-bits = 1 x '0' + 1 x 'x' + 8 x hex + 1 x '/0' = 11 byte string
+  char checksumHex[11];
+  checksumHex[0] = '0';
+  checksumHex[1] = 'x';
+  utils::toHex(body.segAttr.segmCksum, &checksumHex[2], 9);
+
   castor::dlf::Param params[] = {
     castor::dlf::Param("volReqId"            , volReqId                 ),
     castor::dlf::Param("socketFd"            , socketFd                 ),
@@ -267,7 +280,7 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
       body.segAttr.nameServerHostName),
     castor::dlf::Param("segAttr.segmCksumAlgorithm",
       body.segAttr.segmCksumAlgorithm),
-    castor::dlf::Param("segAttr.segmCksum"   , body.segAttr.segmCksum   ),
+    castor::dlf::Param("segAttr.segmCksum"   , checksumHex              ),
     castor::dlf::Param("segAttr.castorFileId", body.segAttr.castorFileId),
     castor::dlf::Param("stgReqId"            , body.stgReqId            )};
 
