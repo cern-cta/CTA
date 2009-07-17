@@ -75,12 +75,23 @@ castor::tape::aggregator::BridgeProtocolEngine::BridgeProtocolEngine(
   m_nbReceivedENDOF_REQs(0) {
 
   // Build the map of message body handlers
-  m_handlers[RTCP_FILE_REQ]    = &BridgeProtocolEngine::rtcpFileReqCallback;
-  m_handlers[RTCP_FILEERR_REQ] = &BridgeProtocolEngine::rtcpFileErrReqCallback;
-  m_handlers[RTCP_TAPE_REQ]    = &BridgeProtocolEngine::rtcpTapeReqCallback;
-  m_handlers[RTCP_TAPEERR_REQ] = &BridgeProtocolEngine::rtcpTapeErrReqCallback;
-  m_handlers[RTCP_ENDOF_REQ]   = &BridgeProtocolEngine::rtcpEndOfReqCallback;
-  m_handlers[GIVE_OUTP]        = &BridgeProtocolEngine::giveOutpCallback;
+  m_handlers[createHandlerKey(RTCOPY_MAGIC,       RTCP_FILE_REQ   )] = 
+    &BridgeProtocolEngine::rtcpFileReqCallback;
+
+  m_handlers[createHandlerKey(RTCOPY_MAGIC,       RTCP_FILEERR_REQ)] = 
+    &BridgeProtocolEngine::rtcpFileErrReqCallback;
+
+  m_handlers[createHandlerKey(RTCOPY_MAGIC,       RTCP_TAPE_REQ   )] = 
+    &BridgeProtocolEngine::rtcpTapeReqCallback;
+
+  m_handlers[createHandlerKey(RTCOPY_MAGIC,       RTCP_TAPEERR_REQ)] = 
+    &BridgeProtocolEngine::rtcpTapeErrReqCallback;
+
+  m_handlers[createHandlerKey(RTCOPY_MAGIC,       RTCP_ENDOF_REQ  )] = 
+    &BridgeProtocolEngine::rtcpEndOfReqCallback;
+
+  m_handlers[createHandlerKey(RTCOPY_MAGIC_SHIFT, GIVE_OUTP       )] = 
+    &BridgeProtocolEngine::giveOutpCallback;
 }
 
 
@@ -573,10 +584,13 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdRequest(
   }
 
   // Find the message type's corresponding handler
-  MsgBodyCallbackMap::iterator itor = m_handlers.find(header.reqType);
+  MsgBodyCallbackMap::iterator itor = m_handlers.find(
+    createHandlerKey(header.magic, header.reqType));
   if(itor == m_handlers.end()) {
     TAPE_THROW_CODE(EBADMSG,
-      ": Unknown request type: 0x" << header.reqType);
+      ": Unknown magic and request type combination"
+      ": magic=0x"   << std::hex << header.magic <<
+      ": reqType=0x" << header.reqType << std::dec);
   }
   const MsgBodyCallback handler = itor->second;
 
@@ -594,8 +608,13 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileReqCallback(
 
   RtcpFileRqstMsgBody body;
 
+/*
   RtcpTxRx::receiveRtcpFileRqstBody(m_cuuid, m_volReqId, socketFd,
     RTCPDNETRWTIMEOUT, header, body);
+*/
+
+  RtcpTxRx::receiveMsgBody(m_cuuid, m_volReqId, socketFd, RTCPDNETRWTIMEOUT,
+    header, body);
 
   processRtcpFileReq(header, body, socketFd, receivedENDOF_REQ);
 }
@@ -610,8 +629,12 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileErrReqCallback(
 
   RtcpFileRqstErrMsgBody body;
 
+/*
   RtcpTxRx::receiveRtcpFileRqstErrBody(m_cuuid, m_volReqId, socketFd,
     RTCPDNETRWTIMEOUT, header, body);
+*/
+  RtcpTxRx::receiveMsgBody(m_cuuid, m_volReqId, socketFd, RTCPDNETRWTIMEOUT,
+    header, body);
 
   // If RTCPD has reported an error
   if(body.err.errorCode != 0) {
@@ -856,7 +879,12 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpTapeReqCallback(
 
   RtcpTapeRqstMsgBody body;
 
+/*
   RtcpTxRx::receiveRtcpTapeRqstBody(m_cuuid, m_volReqId, socketFd,
+    RTCPDNETRWTIMEOUT, header, body);
+*/
+
+  RtcpTxRx::receiveMsgBody(m_cuuid, m_volReqId, socketFd,
     RTCPDNETRWTIMEOUT, header, body);
 
   return(processRtcpTape(header, body, socketFd, receivedENDOF_REQ));
@@ -873,7 +901,12 @@ void
 
   RtcpTapeRqstErrMsgBody body;
 
+/*
   RtcpTxRx::receiveRtcpTapeRqstErrBody(m_cuuid, m_volReqId, socketFd,
+    RTCPDNETRWTIMEOUT, header, body);
+*/
+
+  RtcpTxRx::receiveMsgBody(m_cuuid, m_volReqId, socketFd,
     RTCPDNETRWTIMEOUT, header, body);
 
   if(body.err.errorCode != 0) {

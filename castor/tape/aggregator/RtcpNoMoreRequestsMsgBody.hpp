@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/RcpJobReplyMsgBody.hpp
+ *                      castor/tape/aggregator/RtcpNoMoreRequestsMsgBody.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,29 +22,21 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_RCPJOBREPLYMSGBODY
-#define CASTOR_TAPE_AGGREGATOR_RCPJOBREPLYMSGBODY
-
-#include "h/Castor_limits.h"
-
-#include <stdint.h>
-#include <string>
-
+#ifndef CASTOR_TAPE_AGGREGATOR_RTCPNOMOREREQUESTSMSGBODY
+#define CASTOR_TAPE_AGGREGATOR_RTCPNOMOREREQUESTSMSGBODY
 
 namespace castor     {
 namespace tape       {
 namespace aggregator {
 
   /**
-   * An RCP job reply message.
+   * An RTCP no more request message.
    */
-  struct RcpJobReplyMsgBody {
-    uint32_t status;
-    char     errorMessage[1024];
-  };
+  struct RtcpNoMoreRequestsMsgBody {
+  }; // struct RtcpNoMoreRequestsMsgBody
 
 } // namespace aggregator
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_RCPJOBREPLYMSGBODY
+#endif // CASTOR_TAPE_AGGREGATOR_RTCPNOMOREREQUESTSMSGBODY

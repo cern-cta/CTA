@@ -73,9 +73,11 @@ AGGREGATORBIN_SRCS = \
   BridgeProtocolEngine.cpp \
   DriveAllocationProtocolEngine.cpp \
   GatewayTxRx.cpp \
+  LogHelper.cpp \
   Marshaller.cpp \
   Packer.cpp \
   RcpJobSubmitter.cpp \
+  RtcpMarshaller.cpp \
   RtcpTxRx.cpp \
   SmartFd.cpp \
   SmartFdList.cpp \

@@ -28,12 +28,17 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/io/ClientSocket.hpp"
 #include "castor/tape/aggregator/GiveOutpMsgBody.hpp"
+#include "castor/tape/aggregator/LogHelper.hpp"
+#include "castor/tape/aggregator/Marshaller.hpp"
 #include "castor/tape/aggregator/MessageHeader.hpp"
 #include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpFileRqstErrMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpFileRqstMsgBody.hpp"
+#include "castor/tape/aggregator/RtcpMarshaller.hpp"
 #include "castor/tape/aggregator/RtcpTapeRqstErrMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpTapeRqstMsgBody.hpp"
+#include "castor/tape/net/net.hpp"
+#include "castor/tape/utils/utils.hpp"
 #include "h/Cuuid.h"
 
 #include <iostream>
@@ -204,6 +209,69 @@ public:
   static void receiveMessageHeader(const Cuuid_t &cuuid,
     const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout,
     MessageHeader &header) throw(castor::exception::Exception);
+
+  /**
+   * Receives a message body from RTCPD.
+   *
+   * @param cuuid The ccuid to be used for logging.
+   * @param volReqId The volume request ID to be sent to the tape gateway.
+   * @param socketFd The socket file desscriptor of the connection with RTCPD.
+   * @param netReadWriteTimeout The timeout to be applied when performing
+   * network read and write operations.
+   * @param header The message header which has already been received.
+   * @param body The body structure which will be filled with the contents of
+   * the received message body.
+   */
+  template<class T> static void receiveMsgBody(
+    const Cuuid_t       &cuuid,
+    const uint32_t      volReqId,
+    const int           socketFd,
+    const int           netReadWriteTimeout,
+    const MessageHeader &header,
+    T                   &body) throw(castor::exception::Exception) {
+
+    // Length of body buffer = Length of message buffer - length of header
+    char bodyBuf[MSGBUFSIZ - 3 * sizeof(uint32_t)];
+
+    // If the message body is too large
+    if(header.lenOrStatus > sizeof(bodyBuf)) {
+      TAPE_THROW_CODE(EMSGSIZE,
+       ": Message body from RTCPD is too large"
+       ": Maximum=" << sizeof(bodyBuf) << " Received=" << header.lenOrStatus);
+    }
+
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", volReqId),
+        castor::dlf::Param("socketFd", socketFd)};
+
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_RECEIVE_MSGBODY_FROM_RTCPD, params);
+    }
+
+    // Read the message body
+    try {
+      net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.lenOrStatus, bodyBuf);
+    } catch (castor::exception::Exception &ex) {
+      TAPE_THROW_CODE(EIO,
+           ": Failed to read message body from RTCPD"
+        << ": "<< ex.getMessage().str());
+    }
+
+    // Unmarshall the message body
+    try {
+      const char *p           = bodyBuf;
+      size_t     remainingLen = header.lenOrStatus;
+      RtcpMarshaller::unmarshall(p, remainingLen, body);
+    } catch(castor::exception::Exception &ex) {
+      TAPE_THROW_EX(castor::exception::Internal,
+        ": Failed to unmarshall message body from RTCPD" <<
+        ": "<< ex.getMessage().str());
+    }
+
+    LogHelper::logMsgBody(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_RECEIVED_MSGBODY_FROM_RTCPD, volReqId, socketFd, body);
+  }
 
   /**
    * Receives a message header or a connection close message.
