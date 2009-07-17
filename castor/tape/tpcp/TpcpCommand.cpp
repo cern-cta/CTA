@@ -459,19 +459,35 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
       os << std::endl;
     }
 
-    // Check that there are enough RFIO filenames to satisfy the minium number
-    // of tape file sequence numbers
-    const unsigned int minNbFiles = calculateMinNbOfFiles();
-    if(m_filenames.size() < minNbFiles) {
-      castor::exception::InvalidArgument ex;
+    if(m_parsedCommandLine.action == Action::read) {
 
-      ex.getMessage()
-        << "There are not enough RFIO filenames to cover the minimum number "
-           "of tape file sequence numbers"
-           ": Actual=" << m_filenames.size() << " Expected minimum="
-        << minNbFiles;
+      // Check that there are enough RFIO filenames to satisfy the minium number
+      // of tape file sequence numbers
+      const unsigned int minNbFiles = calculateMinNbOfFiles();
+      if(m_filenames.size() < minNbFiles) {
+        castor::exception::InvalidArgument ex;
 
-      throw ex;
+        ex.getMessage()
+          << "There are not enough RFIO filenames to cover the minimum number "
+             "of tape file sequence numbers"
+             ": Actual=" << m_filenames.size() << " Expected minimum="
+          << minNbFiles;
+
+        throw ex;
+      }
+    }
+
+    if(m_parsedCommandLine.action == Action::write) {
+
+      // Check that there is at least one file to be migrated
+      if(m_filenames.size() == 0) {
+        castor::exception::InvalidArgument ex;
+
+        ex.getMessage()
+          << "There must be at least one file to be migrated";
+
+        throw ex;
+      }
     }
 
     // Get information about the tape to be used from the VMGR

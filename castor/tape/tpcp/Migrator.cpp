@@ -98,10 +98,10 @@ bool castor::tape::tpcp::Migrator::handleFileToMigrateRequest(
     TAPE_THROW_EX(castor::exception::Internal,
          "Unexpected object type"
       << ": Actual=" << utils::objectTypeToString(msg->type())
-      << " Expected=FileToRecallRequest");
+      << " Expected=FileToMigrateRequest");
   }
 
-  // If debug, then display the FileToRecallRequest message
+  // If debug, then display the FileToMigrateRequest message
   if(m_debug) {
     std::ostream &os = std::cout;
 
@@ -122,6 +122,22 @@ bool castor::tape::tpcp::Migrator::handleFileToMigrateRequest(
     throw ex;
   }
 
+//DEBUGGING ONLY
+    // Create the NoMoreFiles message for the aggregator
+    castor::tape::tapegateway::NoMoreFiles noMore;
+    noMore.setMountTransactionId(m_volReqId);
+
+    // Send the NoMoreFiles message to the aggregator
+    sock.sendObject(noMore);
+
+    // If debug, then display sending of the NoMoreFiles message
+    if(m_debug) {
+      std::ostream &os = std::cout;
+
+      utils::writeBanner(os, "Sent NoMoreFiles to aggregator");
+      StreamHelper::write(os, noMore);
+      os << std::endl;
+    }
 
   return true;
 }
