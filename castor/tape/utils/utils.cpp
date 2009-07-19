@@ -43,36 +43,15 @@
 //-----------------------------------------------------------------------------
 // writeTime
 //-----------------------------------------------------------------------------
-void castor::tape::utils::writeTime(std::ostream &os) {
-  const time_t now = time(NULL);
-  char buf[80];
-
-  if(now != (time_t)-1 && ctime_r(&now, buf)) {
-    // End the string before the newline if there is one
-    char *const newline = strstr(buf, "\n");
-    if(newline) {
-      *newline = '\0';
-    }
-
-    os << buf;
-  } else {
-    os << "UKNOWN";
-  }
-}
-
-//-----------------------------------------------------------------------------
-// writeTime
-//-----------------------------------------------------------------------------
-void castor::tape::utils::writeTime(std::ostream &os, 
+void castor::tape::utils::writeTime(std::ostream &os, const time_t time,
   const char* const format) {
 
-  time_t now = time(0);
-  tm time = *localtime(&now);
+  tm localTime = *localtime(&time);
 
   const std::time_put<char>& dateWriter =
     std::use_facet<std::time_put<char> >(os.getloc());
   int n = strlen(format);
-  if (dateWriter.put(os, os, ' ', &time, format, format + n).failed()){
+  if (dateWriter.put(os, os, ' ', &localTime, format, format + n).failed()){
     os << "UKNOWN";
   }
 }

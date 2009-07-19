@@ -92,22 +92,17 @@ namespace utils  {
     return n;
   }
 
-  /**
-   * Writes the current time to the specified stream.
-   *
-   * @param os The stream to be written to.
-   */
-  void writeTime(std::ostream &os);
-
  /**
-   * Writes the current time to the specified stream using the specified
+   * Writes the specified time to the specified stream using the specified
    * format.
    *
    * @param os     The stream to be written to.
+   * @param time   The time as the number of seconds since the Epoch
+   *               (00:00:00 UTC, January 1, 1970).
    * @param format The time format specified using the 
    * recognized formatting characters of 'std::strftime'.
    */
-  void writeTime(std::ostream &os, const char* const format);
+  void writeTime(std::ostream &os, const time_t time, const char* const format);
 
   /**
    * Returns the string representation of the specified boolean value.

@@ -41,6 +41,7 @@
 #include "castor/tape/utils/utils.hpp"
 
 #include <errno.h>
+#include <time.h>
 
 
 //------------------------------------------------------------------------------
@@ -87,7 +88,8 @@ void castor::tape::tpcp::Recaller::run() throw(castor::exception::Exception) {
 
   std::ostream &os = std::cout;
 
-  utils::writeTime(os, TIMEFORMAT);
+  time_t now = time(NULL);
+  utils::writeTime(os, now, TIMEFORMAT);
   os << ": End of recall session" << std::endl
      << std::endl
      << "Number of recall requests      = " << nbRecallRequests  << std::endl
@@ -270,7 +272,8 @@ bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
     std::ostream &os = std::cout;
     FileTransfer &fileTransfer = itor->second;
 
-    utils::writeTime(os, TIMEFORMAT);
+    time_t now = time(NULL);
+    utils::writeTime(os, now, TIMEFORMAT);
     os << ": Recalled fseq=" << fileTransfer.tapeFseq
        << " size=" << notification->fileSize()
        << " \"" << fileTransfer.filename << "\"" << std::endl;
