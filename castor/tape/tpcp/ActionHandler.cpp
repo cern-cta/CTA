@@ -96,7 +96,7 @@ bool castor::tape::tpcp::ActionHandler::dispatchMessage()
 
         waitForCallback = false;
       } catch(castor::exception::TimeOut &tx) {
-        std::cout << "Waited " << WAITCALLBACKTIMEOUT << "seconds for a "
+        std::cout << "Waited " << WAITCALLBACKTIMEOUT << " seconds for a "
         "callback connection from the tape server." << std::endl
         << "Continuing to wait." <<  std::endl;
       }
@@ -283,7 +283,7 @@ void castor::tape::tpcp::ActionHandler::acknowledgeEndOfSession()
 
         waitForCallback = false;
       } catch(castor::exception::TimeOut &tx) {
-        std::cout << "Waited " << WAITCALLBACKTIMEOUT << "seconds for a "
+        std::cout << "Waited " << WAITCALLBACKTIMEOUT << " seconds for a "
         "callback connection from the tape server." << std::endl
         << "Continuing to wait." <<  std::endl;
       }

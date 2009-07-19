@@ -618,7 +618,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
           time_t       now = time(NULL);
 
           utils::writeTime(os, now, TIMEFORMAT);
-          os << ": Waited " << WAITCALLBACKTIMEOUT << "seconds for a "
+          os << ": Waited " << WAITCALLBACKTIMEOUT << " seconds for a "
           "callback connection from the tape server." << std::endl
           << "Continuing to wait." <<  std::endl;
         }

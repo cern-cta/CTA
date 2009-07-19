@@ -269,14 +269,15 @@ bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
     }
 
     // Command-line user feedback
-    std::ostream &os = std::cout;
+    std::ostream &os           = std::cout;
     FileTransfer &fileTransfer = itor->second;
 
     time_t now = time(NULL);
     utils::writeTime(os, now, TIMEFORMAT);
     os << ": Recalled fseq=" << fileTransfer.tapeFseq
        << " size=" << notification->fileSize()
-       << " \"" << fileTransfer.filename << "\"" << std::endl;
+       << " checskum=0x" << std::hex << notification->checksum() << std::dec
+       << " filename=\"" << fileTransfer.filename << "\"" << std::endl;
 
     // The file has been transfer so remove it from the map of pending
     // transfers

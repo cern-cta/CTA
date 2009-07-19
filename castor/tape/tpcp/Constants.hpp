@@ -54,7 +54,7 @@ namespace tpcp   {
    * The time format specified using the recognized formatting characters of 
    * 'std::strftime'.
    */
-  const char *const TIMEFORMAT = "%B %d %I:%M.%S";
+  const char *const TIMEFORMAT = "%B %d %I:%M:%S";
 
 } // namespace tpcp
 } // namespace tape
