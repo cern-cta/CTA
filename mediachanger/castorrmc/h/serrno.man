@@ -695,6 +695,9 @@ The following error values are returned only by the volume manager package:
 .TP 1.9i
 .B EVMGRNACT
 (2001) volume manager not active or service being drained
+.TP
+.B EVMGRNOHOST
+(2002) VMGR HOST not set
 
 .SH VDQM ERRORS
 The following error values are returned only by the volume and drive queue manager package:
