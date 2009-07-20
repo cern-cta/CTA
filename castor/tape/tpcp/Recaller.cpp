@@ -41,6 +41,7 @@
 #include "castor/tape/utils/utils.hpp"
 
 #include <errno.h>
+#include <sstream>
 #include <time.h>
 
 
@@ -122,10 +123,16 @@ bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
   tapegateway::FileToRecallRequest *const fileToRecallRequest =
     dynamic_cast<tapegateway::FileToRecallRequest*>(msg);
   if(fileToRecallRequest == NULL) {
-    TAPE_THROW_EX(castor::exception::Internal,
-         "Unexpected object type"
-      << ": Actual=" << utils::objectTypeToString(msg->type())
-      << " Expected=FileToRecallRequest");
+    std::stringstream oss;
+
+    oss <<
+      "Unexpected object type" <<
+      ": Actual=" << utils::objectTypeToString(msg->type()) <<
+      " Expected=FileToRecallRequest";
+
+    sendEndNotificationErrorReport(SEINTERNAL, oss.str(), sock);
+
+    TAPE_THROW_EX(castor::exception::Internal, oss.str());
   }
 
   // If debug, then display the FileToRecallRequest message
@@ -139,13 +146,17 @@ bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
 
   // Check the mount transaction ID
   if(fileToRecallRequest->mountTransactionId() != m_volReqId) {
+    std::stringstream oss;
+
+    oss <<
+      "Mount transaction ID mismatch" <<
+      ": Actual=" << fileToRecallRequest->mountTransactionId() <<
+      " Expected=" << m_volReqId;
+
+    sendEndNotificationErrorReport(EBADMSG, oss.str(), sock);
+
     castor::exception::Exception ex(EBADMSG);
-
-    ex.getMessage()
-      << "Mount transaction ID mismatch"
-         ": Actual=" << fileToRecallRequest->mountTransactionId()
-      << " Expected=" << m_volReqId;
-
+    ex.getMessage() << oss.str();
     throw ex;
   }
 

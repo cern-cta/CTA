@@ -363,7 +363,7 @@ void castor::tape::tpcp::ActionHandler::acknowledgeEndOfSession()
 // sendEndNotificationErrorReport
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::ActionHandler::sendEndNotificationErrorReport(
-  const int errorCode, const char *errorMessage,
+  const int errorCode, const std::string &errorMessage,
   castor::io::AbstractSocket &sock) throw() {
 
   try {

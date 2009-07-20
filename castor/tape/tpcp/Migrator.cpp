@@ -41,6 +41,9 @@
 #include "castor/tape/utils/utils.hpp"
 
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 
 //------------------------------------------------------------------------------
@@ -122,7 +125,60 @@ bool castor::tape::tpcp::Migrator::handleFileToMigrateRequest(
     throw ex;
   }
 
-//DEBUGGING ONLY
+  const bool anotherFile = m_filenameItor != m_filenames.end();
+
+  if(anotherFile) {
+    const std::string filename = *(m_filenameItor++);
+    struct stat       buf;
+    const int         rc = stat(filename.c_str(), &buf);
+    if(rc <= 0){
+      castor::exception::Exception ex(ENOENT);
+
+      ex.getMessage()
+        << "No such file or directory"
+           ": file=" << filename.c_str();
+
+      throw ex;
+    }
+
+    if(rc != 0) {
+    }
+
+    // Create FileToMigrate message for the aggregator
+    tapegateway::FileToMigrate fileToMigrate;
+    fileToMigrate.setMountTransactionId(m_volReqId);
+    fileToMigrate.setFileTransactionId(m_fileTransactionId);
+
+/*
+    fileToMigrate.setFileSize();
+    fileToMigrate.setLastKnownFilename();
+    fileToMigrate.setLastModificationTime();
+    fileToMigrate.setPath();
+    fileToMigrate.setId();
+*/
+
+    // Update the map of current file transfers and increment the file
+    // transaction ID
+    {
+      m_pendingFileTransfers[m_fileTransactionId] = filename;
+      m_fileTransactionId++;
+    }
+
+    // Send the FileToMigrate message to the aggregator
+    sock.sendObject(fileToMigrate);
+
+    // If debug, then display sending of the FileToMigrate message
+    if(m_debug) {
+      std::ostream &os = std::cout;
+
+      os << "Migrator: Sent FileToMigrate to aggregator = ";
+      StreamHelper::write(os, fileToMigrate);
+      os << std::endl;
+    }
+
+  // Else no more files
+  } else {
+
     // Create the NoMoreFiles message for the aggregator
     castor::tape::tapegateway::NoMoreFiles noMore;
     noMore.setMountTransactionId(m_volReqId);
@@ -138,6 +194,7 @@ bool castor::tape::tpcp::Migrator::handleFileToMigrateRequest(
       StreamHelper::write(os, noMore);
       os << std::endl;
     }
+  }
 
   return true;
 }

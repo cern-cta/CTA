@@ -187,7 +187,7 @@ protected:
    * @param sock         The socket on which to reply to the aggregator.
    */
   void sendEndNotificationErrorReport(const int errorCode,
-    const char *errorMessage, castor::io::AbstractSocket &sock) throw();
+    const std::string &errorMessage, castor::io::AbstractSocket &sock) throw();
 
 
 private:
