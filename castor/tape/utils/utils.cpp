@@ -46,11 +46,14 @@
 void castor::tape::utils::writeTime(std::ostream &os, const time_t time,
   const char* const format) {
 
-  tm localTime = *localtime(&time);
+  tm localTime;
+
+  localtime_r(&time, &localTime);
 
   const std::time_put<char>& dateWriter =
     std::use_facet<std::time_put<char> >(os.getloc());
-  int n = strlen(format);
+  const size_t n = strlen(format);
+
   if (dateWriter.put(os, os, ' ', &localTime, format, format + n).failed()){
     os << "UKNOWN";
   }
