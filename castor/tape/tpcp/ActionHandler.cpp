@@ -25,11 +25,14 @@
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
+#include "castor/tape/tapegateway/GatewayMessage.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 #include "castor/tape/tpcp/ActionHandler.hpp"
 #include "castor/tape/tpcp/Constants.hpp"
 #include "castor/tape/tpcp/StreamHelper.hpp"
 #include "castor/tape/utils/utils.hpp"
+
+#include <sstream>
 
 
 //------------------------------------------------------------------------------
@@ -117,33 +120,68 @@ bool castor::tape::tpcp::ActionHandler::dispatchMessage()
   // Wrap the connection socket descriptor in a CASTOR framework socket in
   // order to get access to the framework marshalling and un-marshalling
   // methods
-  castor::io::AbstractTCPSocket callbackConnectionSocket(connectionSocketFd);
+  castor::io::AbstractTCPSocket sock(connectionSocketFd);
 
   // Read in the message sent by the aggregator
-  std::auto_ptr<castor::IObject> msg(callbackConnectionSocket.readObject());
+  std::auto_ptr<castor::IObject> obj(sock.readObject());
 
   // If debug, then display the type of message received from the aggregator
   if(m_debug) {
     std::ostream &os = std::cout;
 
     os << "ActionHandler: Received aggregator message of type = "
-       << utils::objectTypeToString(msg->type()) << std::endl;
+       << utils::objectTypeToString(obj->type()) << std::endl;
+  }
+
+  {
+    // Cast the message to a GatewayMessage so that the mount transaction ID
+    // can be checked
+    tapegateway::GatewayMessage *msg =
+      dynamic_cast<tapegateway::GatewayMessage *>(obj.get());
+    if(msg == NULL) {
+      std::stringstream oss;
+
+      oss <<
+        "Unexpected object type" <<
+        ": Actual=" << utils::objectTypeToString(obj->type()) <<
+        " Expected=Subclass of GatewayMessage";
+
+      sendEndNotificationErrorReport(SEINTERNAL, oss.str(), sock);
+
+      TAPE_THROW_EX(castor::exception::Internal, oss.str());
+    }
+
+    // Check the mount transaction ID
+    if(msg->mountTransactionId() != m_volReqId) {
+      std::stringstream oss;
+
+      oss <<
+        "Mount transaction ID mismatch" <<
+        ": Actual=" << msg->mountTransactionId() <<
+        " Expected=" << m_volReqId;
+
+      sendEndNotificationErrorReport(EBADMSG, oss.str(), sock);
+
+      castor::exception::Exception ex(EBADMSG);
+      ex.getMessage() << oss.str();
+      throw ex;
+    }
   }
 
   // Find the message type's corresponding handler
-  MsgHandlerMap::const_iterator itor = m_msgHandlers.find(msg->type());
+  MsgHandlerMap::const_iterator itor = m_msgHandlers.find(obj->type());
   if(itor == m_msgHandlers.end()) {
     TAPE_THROW_CODE(EBADMSG,
          ": Received unexpected aggregator message: "
-      << ": Message type = " << utils::objectTypeToString(msg->type()));
+      << ": Message type = " << utils::objectTypeToString(obj->type()));
   }
   const AbstractMsgHandler &handler = *itor->second;
 
   // Invoke the handler
-  const bool moreWork = handler(msg.get(), callbackConnectionSocket);
+  const bool moreWork = handler(obj.get(), sock);
 
   // Close the aggregator callback connection
-  callbackConnectionSocket.close();
+  sock.close();
 
   return moreWork;
 }
@@ -172,18 +210,6 @@ bool castor::tape::tpcp::ActionHandler::handleEndNotification(
     os << "ActionHandler: Received EndNotification from aggregator = ";
     StreamHelper::write(os, *endNotification);
     os << std::endl;
-  }
-
-  // Check the mount transaction ID
-  if(endNotification->mountTransactionId() != m_volReqId) {
-    castor::exception::Exception ex(EBADMSG);
-
-    ex.getMessage()
-      << "Mount transaction ID mismatch"
-         ": Actual=" << endNotification->mountTransactionId()
-      << " Expected=" << m_volReqId;
-
-    throw ex;
   }
 
   // Create the NotificationAcknowledge message for the aggregator
@@ -231,18 +257,6 @@ bool castor::tape::tpcp::ActionHandler::handleEndNotificationErrorReport(
           "Received EndNotificationErrorReport from aggregator = ";
     StreamHelper::write(os, *endNotificationErrorReport);
     os << std::endl;
-  }
-
-  // Check the mount transaction ID
-  if(endNotificationErrorReport->mountTransactionId() != m_volReqId) {
-    castor::exception::Exception ex(EBADMSG);
-
-    ex.getMessage()
-      << "Mount transaction ID mismatch"
-         ": Actual=" << endNotificationErrorReport->mountTransactionId()
-      << " Expected=" << m_volReqId;
-
-    throw ex;
   }
 
   // Create the NotificationAcknowledge message for the aggregator
@@ -307,10 +321,10 @@ void castor::tape::tpcp::ActionHandler::acknowledgeEndOfSession()
   // Wrap the connection socket descriptor in a CASTOR framework socket in
   // order to get access to the framework marshalling and un-marshalling
   // methods
-  castor::io::AbstractTCPSocket callbackConnectionSocket(connectionSocketFd);
+  castor::io::AbstractTCPSocket sock(connectionSocketFd);
 
   // Read in the object sent by the aggregator
-  std::auto_ptr<castor::IObject> obj(callbackConnectionSocket.readObject());
+  std::auto_ptr<castor::IObject> obj(sock.readObject());
 
   // Pointer to the received object with the object's type
   tapegateway::EndNotification *endNotification = NULL;
@@ -343,10 +357,10 @@ void castor::tape::tpcp::ActionHandler::acknowledgeEndOfSession()
   acknowledge.setMountTransactionId(m_volReqId);
 
   // Send the volume message to the aggregator
-  callbackConnectionSocket.sendObject(acknowledge);
+  sock.sendObject(acknowledge);
 
   // Close the connection to the aggregator
-  callbackConnectionSocket.close();
+  sock.close();
 
   // If debug, then display sending of the NotificationAcknowledge message
   if(m_debug) {

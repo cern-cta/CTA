@@ -144,22 +144,6 @@ bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
     os << std::endl;
   }
 
-  // Check the mount transaction ID
-  if(fileToRecallRequest->mountTransactionId() != m_volReqId) {
-    std::stringstream oss;
-
-    oss <<
-      "Mount transaction ID mismatch" <<
-      ": Actual=" << fileToRecallRequest->mountTransactionId() <<
-      " Expected=" << m_volReqId;
-
-    sendEndNotificationErrorReport(EBADMSG, oss.str(), sock);
-
-    castor::exception::Exception ex(EBADMSG);
-    ex.getMessage() << oss.str();
-    throw ex;
-  }
-
   const bool anotherFile = m_tapeFseqSequence.hasMore() &&
     m_filenameItor != m_filenames.end();
 
@@ -249,18 +233,6 @@ bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
     os << "Recaller: Received FileRecalledNotification from aggregator = ";
     StreamHelper::write(os, *notification);
     os << std::endl;
-  }
-
-  // Check the mount transaction ID
-  if(notification->mountTransactionId() != m_volReqId) {
-    castor::exception::Exception ex(EBADMSG);
-
-    ex.getMessage()
-      << "Mount transaction ID mismatch"
-         ": Actual=" << notification->mountTransactionId()
-      << " Expected=" << m_volReqId;
-
-    throw ex;
   }
 
   // Check the file transaction ID

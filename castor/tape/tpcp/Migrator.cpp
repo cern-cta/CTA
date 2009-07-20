@@ -113,18 +113,6 @@ bool castor::tape::tpcp::Migrator::handleFileToMigrateRequest(
     os << std::endl;
   }
 
-  // Check the mount transaction ID
-  if(fileToMigrateRequest->mountTransactionId() != m_volReqId) {
-    castor::exception::Exception ex(EBADMSG);
-
-    ex.getMessage()
-      << "Mount transaction ID mismatch"
-         ": Actual=" << fileToMigrateRequest->mountTransactionId()
-      << " Expected=" << m_volReqId;
-
-    throw ex;
-  }
-
   const bool anotherFile = m_filenameItor != m_filenames.end();
 
   if(anotherFile) {
@@ -223,18 +211,6 @@ bool castor::tape::tpcp::Migrator::handleFileMigratedNotification(
     os << "Migrator: Received FileMigratedNotification from aggregator = ";
     StreamHelper::write(os, *notification);
     os << std::endl;
-  }
-
-  // Check the mount transaction ID
-  if(notification->mountTransactionId() != m_volReqId) {
-    castor::exception::Exception ex(EBADMSG);
-
-    ex.getMessage()
-      << "Mount transaction ID mismatch"
-         ": Actual=" << notification->mountTransactionId()
-      << " Expected=" << m_volReqId;
-
-    throw ex;
   }
 
   return true;
