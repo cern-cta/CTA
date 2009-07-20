@@ -174,6 +174,21 @@ protected:
    */
   void acknowledgeEndOfSession() throw(castor::exception::Exception);
 
+  /**
+   * Convenience method fro sending EndNotificationErrorReport messages to the
+   * aggregator.
+   *
+   * Note that this method intentionally does not throw any exceptions.  The
+   * method tries to send an EndNotificationErrorReport messages to the
+   * aggregator and fails silently in the case it cannot.
+   *
+   * @param errorCode    The error code.
+   * @param errorMessage The error message.
+   * @param sock         The socket on which to reply to the aggregator.
+   */
+  void sendEndNotificationErrorReport(const int errorCode,
+    const char *errorMessage, castor::io::AbstractSocket &sock) throw();
+
 
 private:
 

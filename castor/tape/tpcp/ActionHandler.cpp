@@ -24,6 +24,7 @@
  
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
+#include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 #include "castor/tape/tpcp/ActionHandler.hpp"
 #include "castor/tape/tpcp/Constants.hpp"
@@ -354,5 +355,35 @@ void castor::tape::tpcp::ActionHandler::acknowledgeEndOfSession()
     utils::writeBanner(os, "Sent NotificationAcknowledge to aggregator");
     os << std::endl;
     os << std::endl;
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// sendEndNotificationErrorReport
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::ActionHandler::sendEndNotificationErrorReport(
+  const int errorCode, const char *errorMessage,
+  castor::io::AbstractSocket &sock) throw() {
+
+  try {
+    // Create the message
+    tapegateway::EndNotificationErrorReport errorReport;
+    errorReport.setErrorCode(errorCode);
+    errorReport.setErrorMessage(errorMessage);
+
+    // Send the message to the aggregator
+    sock.sendObject(errorReport);
+
+    // If debug, then display sending of message
+    if(m_debug) {
+      std::ostream &os = std::cout;
+
+      os << "ActionHandler: Sent EndNotificationErrorReport to aggregator = ";
+      StreamHelper::write(os, errorReport);
+      os << std::endl;
+    }
+  } catch(...) {
+    // Do nothing
   }
 }
