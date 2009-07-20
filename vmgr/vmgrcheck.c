@@ -27,8 +27,14 @@ int vmgrchecki(char *vid, char *vsn, char *dgn, char *den, char *lbl, int mode, 
 
 	strcpy (func, "vmgrcheck");
 	while (vmgr_querytape (vid, 0, &tape_info, vmgrdgn) < 0) {
-		if (serrno == ENOENT)
+		if (serrno == ENOENT) {
 			return (ETVUNKN);
+		}
+
+		if (serrno == EINVAL) {
+			return (EINVAL);
+		}
+
 		sleep (60);
 	}
 	if (tape_info.status & EXPORTED) {

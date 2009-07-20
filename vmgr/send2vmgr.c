@@ -91,8 +91,9 @@ int user_repbuf_len;
 		if ((p = getenv ("VMGR_HOST")) || (p = getconfent ("VMGR", "HOST", 0)))
 			strcpy (vmgrhost, p);
 		else {
-			gethostname (vmgrhost, sizeof(vmgrhost));
-			serrno = 0;
+			vmgr_errmsg (func, VMG09, "VMGR HOST", "Not set");
+			serrno = EINVAL;
+			return (-1);
 		}
 		if ((hp = Cgethostbyname (vmgrhost)) == NULL) {
 			vmgr_errmsg (func, VMG09, "Host unknown:", vmgrhost);
