@@ -191,16 +191,22 @@ bool castor::tape::tpcp::ActionHandler::dispatchMessage()
 // handleEndNotification
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::ActionHandler::handleEndNotification(
-  castor::IObject *msg, castor::io::AbstractSocket &sock)
+  castor::IObject *obj, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
   tapegateway::EndNotification *const endNotification =
-    dynamic_cast<tapegateway::EndNotification*>(msg);
+    dynamic_cast<tapegateway::EndNotification*>(obj);
   if(endNotification == NULL) {
-    TAPE_THROW_EX(castor::exception::Internal,
-         "Unexpected object type"
-      << ": Actual=" << utils::objectTypeToString(msg->type())
-      << " Expected=EndNotification");
+    std::stringstream oss;
+
+    oss <<
+      "Unexpected object type" <<
+      ": Actual=" << utils::objectTypeToString(obj->type()) <<
+      " Expected=EndNotification";
+
+    sendEndNotificationErrorReport(SEINTERNAL, oss.str(), sock);
+
+    TAPE_THROW_EX(castor::exception::Internal, oss.str());
   }
 
   // If debug, then display endNotification
@@ -236,17 +242,23 @@ bool castor::tape::tpcp::ActionHandler::handleEndNotification(
 // handleEndNotificationErrorReport
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::ActionHandler::handleEndNotificationErrorReport(
-  castor::IObject *msg, castor::io::AbstractSocket &sock)
+  castor::IObject *obj, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
   tapegateway::EndNotificationErrorReport *const
     endNotificationErrorReport =
-    dynamic_cast<tapegateway::EndNotificationErrorReport*>(msg);
+    dynamic_cast<tapegateway::EndNotificationErrorReport*>(obj);
   if(endNotificationErrorReport == NULL) {
-    TAPE_THROW_EX(castor::exception::Internal,
-         "Unexpected object type"
-      << ": Actual=" << utils::objectTypeToString(msg->type())
-      << " Expected=EndNotificationErrorReport");
+    std::stringstream oss;
+
+    oss <<
+      "Unexpected object type" <<
+      ": Actual=" << utils::objectTypeToString(obj->type()) <<
+      " Expected=EndNotificationErrorReport";
+
+    sendEndNotificationErrorReport(SEINTERNAL, oss.str(), sock);
+
+    TAPE_THROW_EX(castor::exception::Internal, oss.str());
   }
 
   // If debug, then display EndNotificationErrorReport
@@ -332,14 +344,16 @@ void castor::tape::tpcp::ActionHandler::acknowledgeEndOfSession()
   // Cast the object to its type
   endNotification = dynamic_cast<tapegateway::EndNotification*>(obj.get());
   if(endNotification == NULL) {
-    castor::exception::InvalidArgument ex;
+    std::stringstream oss;
 
-    ex.getMessage()
-     << "Received the wrong type of object from the aggregator"
-     << ": Actual=" << utils::objectTypeToString(obj->type())
-     << " Expected=EndNotification";
+    oss <<
+      "Unexpected object type" <<
+      ": Actual=" << utils::objectTypeToString(obj->type()) <<
+      " Expected=EndNotification";
 
-    throw ex;
+    sendEndNotificationErrorReport(SEINTERNAL, oss.str(), sock);
+
+    TAPE_THROW_EX(castor::exception::Internal, oss.str());
   }
 
   // If debug, then display reception of the EndNotification message

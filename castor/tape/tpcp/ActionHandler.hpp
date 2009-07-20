@@ -134,7 +134,7 @@ protected:
    */
   template<class T> void registerMsgHandler(
     const int messageType,
-    bool (T::*func)(castor::IObject *msg, castor::io::AbstractSocket &sock),
+    bool (T::*func)(castor::IObject *obj, castor::io::AbstractSocket &sock),
     T *obj) throw() {
 
     m_msgHandlers[messageType] = new MsgHandler<T>(func, obj);
@@ -152,21 +152,21 @@ protected:
   /**
    * EndNotification message handler.
    *
-   * @param msg The aggregator message to be processed.
+   * @param obj The aggregator message to be processed.
    * @param sock The socket on which to reply to the aggregator.
    * @return True if there is more work to be done else false.
    */
-  bool handleEndNotification(castor::IObject *msg,
+  bool handleEndNotification(castor::IObject *obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
    * EndNotificationErrorReport message handler.
    *
-   * @param msg The aggregator message to be processed.
+   * @param obj The aggregator message to be processed.
    * @param sock The socket on which to reply to the aggregator.
    * @return True if there is more work to be done else false.
    */
-  bool handleEndNotificationErrorReport(castor::IObject *msg,
+  bool handleEndNotificationErrorReport(castor::IObject *obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
@@ -201,11 +201,11 @@ private:
     /**
      * operator().
      *
-     * @param msg The aggregator message to be processed.
+     * @param obj The aggregator message to be processed.
      * @param sock The socket on which to reply to the aggregator.
      * @return True if there is more work to be done else false.
      */
-    virtual bool operator()(castor::IObject *msg,
+    virtual bool operator()(castor::IObject *obj,
       castor::io::AbstractSocket &sock) const
       throw(castor::exception::Exception) = 0;
 
@@ -224,7 +224,7 @@ private:
     /**
      * Constructor.
      */
-    MsgHandler(bool (T::*const func)(castor::IObject *msg,
+    MsgHandler(bool (T::*const func)(castor::IObject *obj,
         castor::io::AbstractSocket &sock), T *const obj) :
       m_func(func), m_obj(obj) {
       // Do nothing
@@ -233,15 +233,15 @@ private:
     /**
      * operator().
      *
-     * @param msg The aggregator message to be processed.
+     * @param obj The aggregator message to be processed.
      * @param sock The socket on which to reply to the aggregator.
      * @return True if there is more work to be done else false.
      */
-    virtual bool operator()(castor::IObject *msg,
+    virtual bool operator()(castor::IObject *obj,
       castor::io::AbstractSocket &sock) const
       throw(castor::exception::Exception) {
 
-      return (m_obj->*m_func)(msg, sock);
+      return (m_obj->*m_func)(obj, sock);
     }
 
     /**
@@ -254,7 +254,7 @@ private:
     /**
      * The member function of class T to be called by operator().
      */
-    bool (T::*const m_func)(castor::IObject *msg,
+    bool (T::*const m_func)(castor::IObject *obj,
       castor::io::AbstractSocket &sock);
 
     /**
