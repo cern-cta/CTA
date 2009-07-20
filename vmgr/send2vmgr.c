@@ -92,7 +92,7 @@ int user_repbuf_len;
 			strcpy (vmgrhost, p);
 		else {
 			vmgr_errmsg (func, VMG09, "VMGR HOST", "Not set");
-			serrno = EINVAL;
+			serrno = EVMGRNOHOST;
 			return (-1);
 		}
 		if ((hp = Cgethostbyname (vmgrhost)) == NULL) {

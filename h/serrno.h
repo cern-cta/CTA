@@ -341,7 +341,8 @@
  *------------------------------------------------------------------------
  */
 #define	EVMGRNACT	EVMBASEOFF+1	/* volume manager not active or service being drained */
-#define EVMMAXERR       EVMBASEOFF+1
+#define EVMGRNOHOST	EVMBASEOFF+2	/* VMGR HOST not set */
+#define EVMMAXERR       EVMBASEOFF+2
 
 /*
  *------------------------------------------------------------------------

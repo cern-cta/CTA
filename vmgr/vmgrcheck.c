@@ -31,8 +31,8 @@ int vmgrchecki(char *vid, char *vsn, char *dgn, char *den, char *lbl, int mode, 
 			return (ETVUNKN);
 		}
 
-		if (serrno == EINVAL) {
-			return (EINVAL);
+		if (serrno == EVMGRNOHOST) {
+			return (serrno);
 		}
 
 		sleep (60);
