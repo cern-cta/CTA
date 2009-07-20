@@ -340,6 +340,7 @@ char *sys_terrlist[ETMAXERR-ETBASEOFF+2] =
 char *sys_vaerrlist[EVMMAXERR-EVMBASEOFF+2] =
   {"Error 0",
    "Volume manager not active",
+   "VMGR HOST not set",
    "BAD ERROR NUMBER"
   };
 
