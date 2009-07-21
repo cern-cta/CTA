@@ -939,14 +939,13 @@ int proctransreq(magic, req_data, clienthost, thip)
     if (rc && req_type != CNS_ACCESS &&
         req_type != CNS_DU && req_type != CNS_GETACL &&
         req_type != CNS_GETCOMMENT && req_type != CNS_GETLINKS &&
-        req_type != CNS_GETPATH &&
-        req_type != CNS_LSTAT && req_type != CNS_READLINK &&
-        req_type != CNS_STAT && req_type != CNS_STATCS && req_type != CNS_STATG &&
-        req_type != CNS_GETGRPID &&
-        req_type != CNS_GETGRPNAM && req_type != CNS_GETUSRID &&
-        req_type != CNS_GETUSRNAM && req_type != CNS_LASTFSEQ &&
-        req_type != CNS_PING && req_type != CNS_BULKEXIST &&
-        req_type != CNS_TAPESUM && req_type != CNS_DROPSEGS) break;
+        req_type != CNS_GETPATH && req_type != CNS_LSTAT &&
+        req_type != CNS_READLINK && req_type != CNS_STAT && 
+        req_type != CNS_STATCS && req_type != CNS_STATG && 
+        req_type != CNS_GETGRPID && req_type != CNS_GETGRPNAM &&
+        req_type != CNS_GETUSRID && req_type != CNS_GETUSRNAM && 
+        req_type != CNS_LASTFSEQ && req_type != CNS_PING &&
+        req_type != CNS_BULKEXIST && req_type != CNS_TAPESUM) break;
     sendrep (thip->s, CNS_IRC, rc);
   }
   return (rc);
