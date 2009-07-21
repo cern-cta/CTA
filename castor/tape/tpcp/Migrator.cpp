@@ -39,11 +39,9 @@
 #include "castor/tape/tpcp/Migrator.hpp"
 #include "castor/tape/tpcp/StreamHelper.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "h/rfio_api.h"
 
 #include <errno.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
 
 
 //------------------------------------------------------------------------------
@@ -54,7 +52,7 @@ castor::tape::tpcp::Migrator::Migrator(const bool debug,
   const vmgr_tape_info &vmgrTapeInfo, const char *const dgn,
   const int volReqId, castor::io::ServerSocket &callbackSocket) throw() :
   ActionHandler(debug, tapeFseqRanges, filenames, vmgrTapeInfo, dgn, volReqId,
-    callbackSocket) {
+    callbackSocket), m_nbMigratedFiles(0) {
 
   // Register the Aggregator message handler member functions
   ActionHandler::registerMsgHandler(OBJ_FileToMigrateRequest,
@@ -104,33 +102,38 @@ bool castor::tape::tpcp::Migrator::handleFileToMigrateRequest(
 
   if(anotherFile) {
     const std::string filename = *(m_filenameItor++);
-    struct stat       buf;
-    const int         rc = stat(filename.c_str(), &buf);
-    if(rc <= 0){
-      castor::exception::Exception ex(ENOENT);
-
-      ex.getMessage()
-        << "No such file or directory"
-           ": file=" << filename.c_str();
-
-      throw ex;
-    }
+    struct stat64     statBuf;
+    const int         rc = rfio_stat64((char*)filename.c_str(), &statBuf);
+    const int         save_serrno = serrno;
 
     if(rc != 0) {
+      char buf[STRERRORBUFLEN];
+      sstrerror_r(save_serrno, buf, sizeof(buf));
+      buf[sizeof(buf)-1] = '\0';
+
+      std::stringstream oss;
+
+      oss <<
+        "Failed to rfio_stat64 file \"" << filename << "\""
+        ": " << buf;
+
+      sendEndNotificationErrorReport(save_serrno, oss.str(), sock);
+
+      castor::exception::Exception ex(save_serrno);
+
+      ex.getMessage() << oss.str();
+      throw(ex);
     }
 
     // Create FileToMigrate message for the aggregator
     tapegateway::FileToMigrate fileToMigrate;
     fileToMigrate.setMountTransactionId(m_volReqId);
     fileToMigrate.setFileTransactionId(m_fileTransactionId);
-
-/*
-    fileToMigrate.setFileSize();
-    fileToMigrate.setLastKnownFilename();
-    fileToMigrate.setLastModificationTime();
-    fileToMigrate.setPath();
-    fileToMigrate.setId();
-*/
+    fileToMigrate.setFileSize(statBuf.st_size);
+    fileToMigrate.setLastKnownFilename(filename);
+    fileToMigrate.setLastModificationTime(statBuf.st_mtime);
+    fileToMigrate.setPath(filename);
+    fileToMigrate.setId(0);
 
     // Update the map of current file transfers and increment the file
     // transaction ID
@@ -186,6 +189,56 @@ bool castor::tape::tpcp::Migrator::handleFileMigratedNotification(
 
   castMessage(obj, msg, sock);
   displayReceivedMessageIfDebug(*msg);
+
+  // Check the file transaction ID
+  {
+    FileTransferMap::iterator itor =
+      m_pendingFileTransfers.find(msg->fileTransactionId());
+
+    // If the fileTransactionId is unknown
+    if(itor == m_pendingFileTransfers.end()) {
+      std::stringstream oss;
+
+      oss <<
+        "Received unknown file transaction ID from the aggregator"
+        ": fileTransactionId=" << msg->fileTransactionId();
+
+      sendEndNotificationErrorReport(EBADMSG, oss.str(), sock);
+
+      castor::exception::Exception ex(ECANCELED);
+
+      ex.getMessage() << oss.str();
+      throw(ex);
+    }
+
+    // Command-line user feedback
+    std::ostream &os      = std::cout;
+    std::string  filename = itor->second;
+
+    time_t now = time(NULL);
+    utils::writeTime(os, now, TIMEFORMAT);
+    os <<
+       ": Migrated"
+       " size=" << msg->fileSize() <<
+       " checskum=0x" << std::hex << msg->checksum() << std::dec <<
+       " filename=\"" << filename << "\"" << std::endl;
+
+    // The file has been transfer so remove it from the map of pending
+    // transfers
+    m_pendingFileTransfers.erase(itor);
+  }
+
+  // Update the count of successfull recalls
+  m_nbMigratedFiles++;
+
+  // Create the NotificationAcknowledge message for the aggregator
+  castor::tape::tapegateway::NotificationAcknowledge acknowledge;
+  acknowledge.setMountTransactionId(m_volReqId);
+
+  // Send the NotificationAcknowledge message to the aggregator
+  sock.sendObject(acknowledge);
+
+  displaySentMessageIfDebug(acknowledge);
 
   return true;
 }

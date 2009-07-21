@@ -54,6 +54,15 @@ public:
   virtual ~Migrator();
 
   /**
+   * See the header file of castor::tape::tpcp::ActionHandler for this method's
+   * documentation.
+   */
+  void run() throw(castor::exception::Exception);
+
+
+private:
+
+  /**
    * Data type for a map of file transaction IDs to the RFIO filenames of
    * files currently being transfered.
    */
@@ -102,10 +111,9 @@ public:
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
-   * See the header file of castor::tape::tpcp::ActionHandler for this method's
-   * documentation.
+   * The number of successfully transfered files.
    */
-  void run() throw(castor::exception::Exception);
+  uint64_t m_nbMigratedFiles;
 
 }; // class Migrator
 

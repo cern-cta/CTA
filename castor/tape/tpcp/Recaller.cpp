@@ -194,14 +194,19 @@ bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
     FileTransferMap::iterator itor = 
       m_pendingFileTransfers.find(msg->fileTransactionId()); 
 
-    // Throw an exception if the fileTransactionId is unknown
+    // If the fileTransactionId is unknown
     if(itor == m_pendingFileTransfers.end()) {
+      std::stringstream oss;
+
+      oss <<
+        "Received unknown file transaction ID from the aggregator"
+        ": fileTransactionId=" << msg->fileTransactionId();
+
+      sendEndNotificationErrorReport(EBADMSG, oss.str(), sock);
+
       castor::exception::Exception ex(ECANCELED);
 
-      ex.getMessage()
-        << "Received unknown file transaction ID from the aggregator"
-           ": fileTransactionId="
-        << msg->fileTransactionId();
+      ex.getMessage() << oss.str();
       throw(ex);
     }
 
@@ -211,10 +216,12 @@ bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
 
     time_t now = time(NULL);
     utils::writeTime(os, now, TIMEFORMAT);
-    os << ": Recalled fseq=" << fileTransfer.tapeFseq
-       << " size=" << msg->fileSize()
-       << " checskum=0x" << std::hex << msg->checksum() << std::dec
-       << " filename=\"" << fileTransfer.filename << "\"" << std::endl;
+    os << 
+      ": Recalled"
+      " fseq=" << fileTransfer.tapeFseq <<
+      " size=" << msg->fileSize() <<
+      " checskum=0x" << std::hex << msg->checksum() << std::dec <<
+      " filename=\"" << fileTransfer.filename << "\"" << std::endl;
 
     // The file has been transfer so remove it from the map of pending
     // transfers
