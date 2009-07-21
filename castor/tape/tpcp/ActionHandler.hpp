@@ -30,10 +30,12 @@
 #include "castor/tape/tpcp/Action.hpp"
 #include "castor/tape/tpcp/FilenameList.hpp"
 #include "castor/tape/tpcp/TapeFseqRangeList.hpp"
+#include "castor/tape/utils/utils.hpp"
 #include "h/Castor_limits.h"
 #include "h/vmgr_api.h"
 
 #include <map>
+#include <sstream>
 #include <stdint.h>
 
 namespace castor {
@@ -188,6 +190,71 @@ protected:
    */
   void sendEndNotificationErrorReport(const int errorCode,
     const std::string &errorMessage, castor::io::AbstractSocket &sock) throw();
+
+
+  /**
+   * Convenience method that casts the specified CASTOR framework object into
+   * the specified pointer to Gateway message.
+   *
+   * If the cast fails then an EndNotificationErrorReport is sent to the
+   * Gateway and an appropriate exception is thrown.
+   *
+   * @param obj  The CASTOR framework object.
+   * @param msg  Out parameter. The pointer to the Gateway massage that will be
+   *             set by this method.
+   * @param sock The socket on which to reply to the aggregator with an
+   *             EndNotificationErrorReport message if the cast fails.
+   */
+  template<class T> void castMessage(castor::IObject *obj, T *&msg,
+    castor::io::AbstractSocket &sock) throw() {
+    msg = dynamic_cast<T*>(obj);
+
+    if(msg == NULL) {
+      std::stringstream oss;
+
+      oss <<
+        "Unexpected object type" <<
+        ": Actual=" << utils::objectTypeToString(obj->type()) <<
+        " Expected=" << utils::objectTypeToString(T().type());
+
+      sendEndNotificationErrorReport(SEINTERNAL, oss.str(), sock);
+
+      TAPE_THROW_EX(castor::exception::Internal, oss.str());
+    }
+  }
+
+  /**
+   * Convenience method that displays the specified received message if debug
+   * is on.
+   *
+   * @param msg The message to be displayed.
+   */
+  template<class T> void displayReceivedMessageIfDebug(T &msg) throw() {
+    if(m_debug) {
+      std::ostream &os = std::cout;
+
+      os <<
+        "Received " << utils::objectTypeToString(msg.type()) <<
+        " from aggregator" << std::endl <<
+        msg << std::endl;
+    }
+  }
+
+  /**
+   * Convenience method that displays the specified sent message if debug is on.
+   *
+   * @param msg The message to be displayed.
+   */
+  template<class T> void displaySentMessageIfDebug(T &msg) throw() {
+    if(m_debug) {
+      std::ostream &os = std::cout;
+
+      os <<
+        "Sent " << utils::objectTypeToString(msg.type()) <<
+        " to aggregator" << std::endl <<
+        msg << std::endl;
+    }
+  }
 
 
 private:

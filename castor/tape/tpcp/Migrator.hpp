@@ -71,7 +71,7 @@ public:
    * The parameters of this method are documentated in the comments of the
    * Migrator::MsgHandler datatype.
    */
-  bool handleFileToMigrateRequest(castor::IObject *msg,
+  bool handleFileToMigrateRequest(castor::IObject *obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
@@ -80,7 +80,7 @@ public:
    * The parameters of this method are documentated in the comments of the
    * Migrator::MsgHandler datatype.
    */
-  bool handleFileMigratedNotification(castor::IObject *msg,
+  bool handleFileMigratedNotification(castor::IObject *obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
@@ -89,7 +89,7 @@ public:
    * The parameters of this method are documentated in the comments of the
    * Migrator::MsgHandler datatype.
    */
-  bool handleEndNotification(castor::IObject *msg,
+  bool handleEndNotification(castor::IObject *obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
@@ -98,7 +98,7 @@ public:
    * The parameters of this method are documentated in the comments of the
    * Migrator::MsgHandler datatype.
    */
-  bool handleEndNotificationErrorReport(castor::IObject *msg,
+  bool handleEndNotificationErrorReport(castor::IObject *obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**

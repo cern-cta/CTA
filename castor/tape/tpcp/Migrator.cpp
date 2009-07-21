@@ -92,26 +92,13 @@ void castor::tape::tpcp::Migrator::run() throw(castor::exception::Exception) {
 // handleFileToMigrateRequest
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::Migrator::handleFileToMigrateRequest(
-  castor::IObject *msg, castor::io::AbstractSocket &sock)
+  castor::IObject *obj, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
- tapegateway::FileToMigrateRequest *const fileToMigrateRequest =
-    dynamic_cast<tapegateway::FileToMigrateRequest*>(msg);
-  if(fileToMigrateRequest == NULL) {
-    TAPE_THROW_EX(castor::exception::Internal,
-         "Unexpected object type"
-      << ": Actual=" << utils::objectTypeToString(msg->type())
-      << " Expected=FileToMigrateRequest");
-  }
+  tapegateway::FileToMigrateRequest *msg = NULL;
 
-  // If debug, then display the FileToMigrateRequest message
-  if(m_debug) {
-    std::ostream &os = std::cout;
-
-    os << "Migrator: Received FileToMigrateRequest from aggregator = ";
-    StreamHelper::write(os, *fileToMigrateRequest);
-    os << std::endl;
-  }
+  castMessage(obj, msg, sock);
+  displayReceivedMessageIfDebug(*msg);
 
   const bool anotherFile = m_filenameItor != m_filenames.end();
 
@@ -192,26 +179,13 @@ bool castor::tape::tpcp::Migrator::handleFileToMigrateRequest(
 // handleFileMigratedNotification
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::Migrator::handleFileMigratedNotification(
-  castor::IObject *msg, castor::io::AbstractSocket &sock)
+  castor::IObject *obj, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
-  tapegateway::FileMigratedNotification *const notification =
-    dynamic_cast<tapegateway::FileMigratedNotification*>(msg);
-  if(notification == NULL) {
-    TAPE_THROW_EX(castor::exception::Internal,
-         "Unexpected object type"
-      << ": Actual=" << utils::objectTypeToString(msg->type())
-      << " Expected=FileMigratedNotification");
-  }
+  tapegateway::FileMigratedNotification *msg = NULL;
 
-  // If debug, then display the FileMigratedNotification message
-  if(m_debug) {
-    std::ostream &os = std::cout;
-
-    os << "Migrator: Received FileMigratedNotification from aggregator = ";
-    StreamHelper::write(os, *notification);
-    os << std::endl;
-  }
+  castMessage(obj, msg, sock);
+  displayReceivedMessageIfDebug(*msg);
 
   return true;
 }
@@ -221,10 +195,10 @@ bool castor::tape::tpcp::Migrator::handleFileMigratedNotification(
 // handleEndNotification
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::Migrator::handleEndNotification(
-  castor::IObject *msg, castor::io::AbstractSocket &sock)
+  castor::IObject *obj, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
-  return ActionHandler::handleEndNotification(msg, sock);
+  return ActionHandler::handleEndNotification(obj, sock);
 }
 
 
@@ -232,8 +206,8 @@ bool castor::tape::tpcp::Migrator::handleEndNotification(
 // handleEndNotificationErrorReport
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::Migrator::handleEndNotificationErrorReport(
-  castor::IObject *msg, castor::io::AbstractSocket &sock)
+  castor::IObject *obj, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
-  return ActionHandler::handleEndNotificationErrorReport(msg, sock);
+  return ActionHandler::handleEndNotificationErrorReport(obj, sock);
 }

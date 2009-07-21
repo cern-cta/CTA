@@ -89,7 +89,7 @@ void castor::tape::utils::toHex(uint32_t number, char *buf, size_t len)
   for(int i=0; i<8; i++) {
     digitAsInt = number % 16;
 
-    buf[7-i] = digitAsInt < 10 ? '0' + digitAsInt : 'A' + (digitAsInt-10);
+    buf[7-i] = digitAsInt < 10 ? '0' + digitAsInt : 'a' + (digitAsInt-10);
 
     number /= 16;
   }

@@ -117,32 +117,13 @@ void castor::tape::tpcp::Recaller::run() throw(castor::exception::Exception) {
 // handleFileToRecallRequest
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
-  castor::IObject *msg, castor::io::AbstractSocket &sock)
+  castor::IObject *obj, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
-  tapegateway::FileToRecallRequest *const fileToRecallRequest =
-    dynamic_cast<tapegateway::FileToRecallRequest*>(msg);
-  if(fileToRecallRequest == NULL) {
-    std::stringstream oss;
+  tapegateway::FileToRecallRequest *msg = NULL;
 
-    oss <<
-      "Unexpected object type" <<
-      ": Actual=" << utils::objectTypeToString(msg->type()) <<
-      " Expected=FileToRecallRequest";
-
-    sendEndNotificationErrorReport(SEINTERNAL, oss.str(), sock);
-
-    TAPE_THROW_EX(castor::exception::Internal, oss.str());
-  }
-
-  // If debug, then display the FileToRecallRequest message
-  if(m_debug) {
-    std::ostream &os = std::cout;
-
-    os << "Recaller: Received FileToRecallRequest from aggregator = ";
-    StreamHelper::write(os, *fileToRecallRequest);
-    os << std::endl;
-  }
+  castMessage(obj, msg, sock);
+  displayReceivedMessageIfDebug(*msg);
 
   const bool anotherFile = m_tapeFseqSequence.hasMore() &&
     m_filenameItor != m_filenames.end();
@@ -177,14 +158,7 @@ bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
     // Send the FileToRecall message to the aggregator
     sock.sendObject(fileToRecall);
 
-    // If debug, then display sending of the FileToRecall message
-    if(m_debug) {
-      std::ostream &os = std::cout;
-
-      os << "Recaller: Sent FileToRecall to aggregator = ";
-      StreamHelper::write(os, fileToRecall);
-      os << std::endl;
-    }
+    displaySentMessageIfDebug(fileToRecall);
 
   // Else no more files
   } else {
@@ -196,14 +170,7 @@ bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
     // Send the NoMoreFiles message to the aggregator
     sock.sendObject(noMore);
 
-    // If debug, then display sending of the NoMoreFiles message
-    if(m_debug) {
-      std::ostream &os = std::cout;
-
-      utils::writeBanner(os, "Sent NoMoreFiles to aggregator");
-      StreamHelper::write(os, noMore);
-      os << std::endl;
-    }
+    displaySentMessageIfDebug(noMore);
   }
 
   return true;
@@ -214,31 +181,18 @@ bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
 // handleFileRecalledNotification
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
-  castor::IObject *msg, castor::io::AbstractSocket &sock)
+  castor::IObject *obj, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
-  tapegateway::FileRecalledNotification *const notification =
-    dynamic_cast<tapegateway::FileRecalledNotification*>(msg);
-  if(notification == NULL) {
-    TAPE_THROW_EX(castor::exception::Internal,
-         "Unexpected object type"
-      << ": Actual=" << utils::objectTypeToString(msg->type())
-      << " Expected=FileRecalledNotification");
-  }
+  tapegateway::FileRecalledNotification *msg = NULL;
 
-  // If debug, then display the FileRecalledNotification message
-  if(m_debug) {
-    std::ostream &os = std::cout;
-
-    os << "Recaller: Received FileRecalledNotification from aggregator = ";
-    StreamHelper::write(os, *notification);
-    os << std::endl;
-  }
+  castMessage(obj, msg, sock);
+  displayReceivedMessageIfDebug(*msg);
 
   // Check the file transaction ID
   {
     FileTransferMap::iterator itor = 
-      m_pendingFileTransfers.find(notification->fileTransactionId()); 
+      m_pendingFileTransfers.find(msg->fileTransactionId()); 
 
     // Throw an exception if the fileTransactionId is unknown
     if(itor == m_pendingFileTransfers.end()) {
@@ -247,7 +201,7 @@ bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
       ex.getMessage()
         << "Received unknown file transaction ID from the aggregator"
            ": fileTransactionId="
-        << notification->fileTransactionId();
+        << msg->fileTransactionId();
       throw(ex);
     }
 
@@ -258,8 +212,8 @@ bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
     time_t now = time(NULL);
     utils::writeTime(os, now, TIMEFORMAT);
     os << ": Recalled fseq=" << fileTransfer.tapeFseq
-       << " size=" << notification->fileSize()
-       << " checskum=0x" << std::hex << notification->checksum() << std::dec
+       << " size=" << msg->fileSize()
+       << " checskum=0x" << std::hex << msg->checksum() << std::dec
        << " filename=\"" << fileTransfer.filename << "\"" << std::endl;
 
     // The file has been transfer so remove it from the map of pending
@@ -277,14 +231,7 @@ bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
   // Send the NotificationAcknowledge message to the aggregator
   sock.sendObject(acknowledge);
 
-  // If debug, then display sending of the NotificationAcknowledge message
-  if(m_debug) {
-    std::ostream &os = std::cout;
-
-    os << "Recaller: Sent NotificationAcknowledge to aggregator = ";
-    StreamHelper::write(os, acknowledge);
-    os << std::endl;
-  }
+  displaySentMessageIfDebug(acknowledge);
 
   return true;
 }
@@ -294,10 +241,10 @@ bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
 // handleEndNotification
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::Recaller::handleEndNotification(
-  castor::IObject *msg, castor::io::AbstractSocket &sock)
+  castor::IObject *obj, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
-  return ActionHandler::handleEndNotification(msg, sock);
+  return ActionHandler::handleEndNotification(obj, sock);
 }
 
 
@@ -305,8 +252,8 @@ bool castor::tape::tpcp::Recaller::handleEndNotification(
 // handleEndNotificationErrorReport
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::Recaller::handleEndNotificationErrorReport(
-  castor::IObject *msg, castor::io::AbstractSocket &sock)
+  castor::IObject *obj, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
-  return ActionHandler::handleEndNotificationErrorReport(msg,sock);
+  return ActionHandler::handleEndNotificationErrorReport(obj,sock);
 }

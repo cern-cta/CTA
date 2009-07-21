@@ -108,7 +108,7 @@ private:
    * The parameters of this method are documentated in the comments of the
    * Recaller::MsgHandler datatype.
    */
-  bool handleFileToRecallRequest(castor::IObject *msg,
+  bool handleFileToRecallRequest(castor::IObject *obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
@@ -117,7 +117,7 @@ private:
    * The parameters of this method are documentated in the comments of the
    * Recaller::MsgHandler datatype.
    */
-  bool handleFileRecalledNotification(castor::IObject *msg,
+  bool handleFileRecalledNotification(castor::IObject *obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
@@ -126,7 +126,7 @@ private:
    * The parameters of this method are documentated in the comments of the
    * Recaller::MsgHandler datatype.
    */
-  bool handleEndNotification(castor::IObject *msg,
+  bool handleEndNotification(castor::IObject *obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
@@ -135,7 +135,7 @@ private:
    * The parameters of this method are documentated in the comments of the
    * Recaller::MsgHandler datatype.
    */
-  bool handleEndNotificationErrorReport(castor::IObject *msg,
+  bool handleEndNotificationErrorReport(castor::IObject *obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
 }; // class Recaller

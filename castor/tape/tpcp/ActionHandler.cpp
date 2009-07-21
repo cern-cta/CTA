@@ -112,7 +112,7 @@ bool castor::tape::tpcp::ActionHandler::dispatchMessage()
   if(m_debug) {
     std::ostream &os = std::cout;
 
-    os << "ActionHandler: Aggregator connection = ";
+    os << "Aggregator connection = ";
     net::writeSocketDescription(os, connectionSocketFd);
     os << std::endl;
   }
@@ -129,7 +129,7 @@ bool castor::tape::tpcp::ActionHandler::dispatchMessage()
   if(m_debug) {
     std::ostream &os = std::cout;
 
-    os << "ActionHandler: Received aggregator message of type = "
+    os << "Received aggregator message of type = "
        << utils::objectTypeToString(obj->type()) << std::endl;
   }
 
@@ -194,29 +194,10 @@ bool castor::tape::tpcp::ActionHandler::handleEndNotification(
   castor::IObject *obj, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
-  tapegateway::EndNotification *const endNotification =
-    dynamic_cast<tapegateway::EndNotification*>(obj);
-  if(endNotification == NULL) {
-    std::stringstream oss;
+  tapegateway::EndNotification *msg = NULL;
 
-    oss <<
-      "Unexpected object type" <<
-      ": Actual=" << utils::objectTypeToString(obj->type()) <<
-      " Expected=EndNotification";
-
-    sendEndNotificationErrorReport(SEINTERNAL, oss.str(), sock);
-
-    TAPE_THROW_EX(castor::exception::Internal, oss.str());
-  }
-
-  // If debug, then display endNotification
-  if(m_debug) {
-    std::ostream &os = std::cout;
-
-    os << "ActionHandler: Received EndNotification from aggregator = ";
-    StreamHelper::write(os, *endNotification);
-    os << std::endl;
-  }
+  castMessage(obj, msg, sock);
+  displayReceivedMessageIfDebug(*msg);
 
   // Create the NotificationAcknowledge message for the aggregator
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
@@ -225,14 +206,7 @@ bool castor::tape::tpcp::ActionHandler::handleEndNotification(
   // Send the NotificationAcknowledge message to the aggregator
   sock.sendObject(acknowledge);
 
-  // If debug, then display sending of the NotificationAcknowledge message
-  if(m_debug) {
-    std::ostream &os = std::cout;
-
-    os << "Sent NotificationAcknowledge to aggregator = ";
-    StreamHelper::write(os, acknowledge);
-    os << std::endl;
-  }
+  displaySentMessageIfDebug(acknowledge);
 
   return false;
 }
@@ -245,31 +219,10 @@ bool castor::tape::tpcp::ActionHandler::handleEndNotificationErrorReport(
   castor::IObject *obj, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
-  tapegateway::EndNotificationErrorReport *const
-    endNotificationErrorReport =
-    dynamic_cast<tapegateway::EndNotificationErrorReport*>(obj);
-  if(endNotificationErrorReport == NULL) {
-    std::stringstream oss;
+  tapegateway::EndNotificationErrorReport *msg = NULL;
 
-    oss <<
-      "Unexpected object type" <<
-      ": Actual=" << utils::objectTypeToString(obj->type()) <<
-      " Expected=EndNotificationErrorReport";
-
-    sendEndNotificationErrorReport(SEINTERNAL, oss.str(), sock);
-
-    TAPE_THROW_EX(castor::exception::Internal, oss.str());
-  }
-
-  // If debug, then display EndNotificationErrorReport
-  if(m_debug) {
-    std::ostream &os = std::cout;
-
-    os << "ActionHandler: "
-          "Received EndNotificationErrorReport from aggregator = ";
-    StreamHelper::write(os, *endNotificationErrorReport);
-    os << std::endl;
-  }
+  castMessage(obj, msg, sock);
+  displayReceivedMessageIfDebug(*msg);
 
   // Create the NotificationAcknowledge message for the aggregator
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
@@ -278,14 +231,7 @@ bool castor::tape::tpcp::ActionHandler::handleEndNotificationErrorReport(
   // Send the NotificationAcknowledge message to the aggregator
   sock.sendObject(acknowledge);
 
-  // If debug, then display sending of the NotificationAcknowledge message
-  if(m_debug) {
-    std::ostream &os = std::cout;
-
-    os << "ActionHandler: Sent NotificationAcknowledge to aggregator = ";
-    StreamHelper::write(os, acknowledge);
-    os << std::endl;
-  }
+  displaySentMessageIfDebug(acknowledge);
 
   return false;
 }
@@ -322,7 +268,7 @@ void castor::tape::tpcp::ActionHandler::acknowledgeEndOfSession()
   if(m_debug) {
     std::ostream &os = std::cout;
 
-    utils::writeBanner(os, "ActionHandler: Aggregator connection");
+    utils::writeBanner(os, "Aggregator connection");
     os << std::endl;
     net::writeSocketDescription(os, connectionSocketFd);
     os << std::endl;
@@ -360,8 +306,7 @@ void castor::tape::tpcp::ActionHandler::acknowledgeEndOfSession()
   if(m_debug) {
     std::ostream &os = std::cout;
 
-    utils::writeBanner(os, "ActionHandler: Received EndNotification from "
-      "aggregator");
+    utils::writeBanner(os, "Received EndNotification from aggregator");
     os << std::endl;
     os << std::endl;
   }
@@ -376,14 +321,7 @@ void castor::tape::tpcp::ActionHandler::acknowledgeEndOfSession()
   // Close the connection to the aggregator
   sock.close();
 
-  // If debug, then display sending of the NotificationAcknowledge message
-  if(m_debug) {
-    std::ostream &os = std::cout;
-
-    utils::writeBanner(os, "Sent NotificationAcknowledge to aggregator");
-    os << std::endl;
-    os << std::endl;
-  }
+  displaySentMessageIfDebug(acknowledge);
 }
 
 
@@ -403,14 +341,7 @@ void castor::tape::tpcp::ActionHandler::sendEndNotificationErrorReport(
     // Send the message to the aggregator
     sock.sendObject(errorReport);
 
-    // If debug, then display sending of message
-    if(m_debug) {
-      std::ostream &os = std::cout;
-
-      os << "ActionHandler: Sent EndNotificationErrorReport to aggregator = ";
-      StreamHelper::write(os, errorReport);
-      os << std::endl;
-    }
+    displaySentMessageIfDebug(errorReport);
   } catch(...) {
     // Do nothing
   }
