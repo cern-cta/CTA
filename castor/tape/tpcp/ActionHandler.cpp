@@ -268,11 +268,8 @@ void castor::tape::tpcp::ActionHandler::acknowledgeEndOfSession()
   if(m_debug) {
     std::ostream &os = std::cout;
 
-    utils::writeBanner(os, "Aggregator connection");
-    os << std::endl;
+    os << "Aggregator connection = ";
     net::writeSocketDescription(os, connectionSocketFd);
-    os << std::endl;
-    os << std::endl;
     os << std::endl;
   }
 
@@ -287,29 +284,8 @@ void castor::tape::tpcp::ActionHandler::acknowledgeEndOfSession()
   // Pointer to the received object with the object's type
   tapegateway::EndNotification *endNotification = NULL;
 
-  // Cast the object to its type
-  endNotification = dynamic_cast<tapegateway::EndNotification*>(obj.get());
-  if(endNotification == NULL) {
-    std::stringstream oss;
-
-    oss <<
-      "Unexpected object type" <<
-      ": Actual=" << utils::objectTypeToString(obj->type()) <<
-      " Expected=EndNotification";
-
-    sendEndNotificationErrorReport(SEINTERNAL, oss.str(), sock);
-
-    TAPE_THROW_EX(castor::exception::Internal, oss.str());
-  }
-
-  // If debug, then display reception of the EndNotification message
-  if(m_debug) {
-    std::ostream &os = std::cout;
-
-    utils::writeBanner(os, "Received EndNotification from aggregator");
-    os << std::endl;
-    os << std::endl;
-  }
+  castMessage(obj.get(), endNotification, sock);
+  displayReceivedMessageIfDebug(*endNotification);
 
   // Create the NotificationAcknowledge message for the aggregator
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;

@@ -171,14 +171,18 @@ bool castor::tape::tpcp::Migrator::handleFileToMigrateRequest(
     // Send the FileToMigrate message to the aggregator
     sock.sendObject(fileToMigrate);
 
-    // If debug, then display sending of the FileToMigrate message
-    if(m_debug) {
+    {
+      // Command-line user feedback
       std::ostream &os = std::cout;
 
-      os << "Migrator: Sent FileToMigrate to aggregator = ";
-      StreamHelper::write(os, fileToMigrate);
-      os << std::endl;
+      time_t now = time(NULL);
+      utils::writeTime(os, now, TIMEFORMAT);
+      os <<
+        ": Migrating"
+        " filename=\"" << filename << "\"" << std::endl;
     }
+
+    displaySentMessageIfDebug(fileToMigrate);
 
   // Else no more files
   } else {
@@ -190,14 +194,7 @@ bool castor::tape::tpcp::Migrator::handleFileToMigrateRequest(
     // Send the NoMoreFiles message to the aggregator
     sock.sendObject(noMore);
 
-    // If debug, then display sending of the NoMoreFiles message
-    if(m_debug) {
-      std::ostream &os = std::cout;
-
-      utils::writeBanner(os, "Sent NoMoreFiles to aggregator");
-      StreamHelper::write(os, noMore);
-      os << std::endl;
-    }
+    displaySentMessageIfDebug(noMore);
   }
 
   return true;
@@ -245,9 +242,9 @@ bool castor::tape::tpcp::Migrator::handleFileMigratedNotification(
     utils::writeTime(os, now, TIMEFORMAT);
     os <<
        ": Migrated"
+       " filename=\"" << filename << "\""
        " size=" << msg->fileSize() <<
-       " checskum=0x" << std::hex << msg->checksum() << std::dec <<
-       " filename=\"" << filename << "\"" << std::endl;
+       " checskum=0x" << std::hex << msg->checksum() << std::dec << std::endl;
 
     // The file has been transfer so remove it from the map of pending
     // transfers

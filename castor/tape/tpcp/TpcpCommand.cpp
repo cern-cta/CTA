@@ -409,8 +409,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     if(m_parsedCommandLine.debugOptionSet) {
       std::ostream &os = std::cout;
 
-      os << "TpcpCommand: Parsed command-line = " << m_parsedCommandLine
-         << std::endl;
+      os << "Parsed command-line = " << m_parsedCommandLine << std::endl;
     }
 
     // Display usage message and exit if help option found on command-line
@@ -457,8 +456,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     if(m_parsedCommandLine.debugOptionSet) {
       std::ostream &os = std::cout;
 
-      os << "TpcpCommand: Filenames to be processed = " << m_filenames;
-      os << std::endl;
+      os << "Filenames to be processed = " << m_filenames << std::endl;
     }
 
     if(m_parsedCommandLine.action == Action::read) {
@@ -517,10 +515,9 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     if(m_parsedCommandLine.debugOptionSet) {
       std::ostream &os = std::cout;
 
-      os << "TpcpCommand: vmgr_tape_info from the VMGR = " <<  m_vmgrTapeInfo;
-      os << std::endl;
+      os << "vmgr_tape_info from the VMGR = " <<  m_vmgrTapeInfo << std::endl;
 
-      os << "TpcpCommand: DGN from the VMGR =\"" << m_dgn << "\"" << std::endl;
+      os << "DGN from the VMGR =\"" << m_dgn << "\"" << std::endl;
     }
 
     // Check that the VID returned in the VMGR tape information matches that of
@@ -576,7 +573,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     if(m_parsedCommandLine.debugOptionSet) {
       std::ostream &os = std::cout;
 
-      os << "TpcpCommand: Aggregator callback socket details = ";
+      os << "Aggregator callback socket details = ";
       net::writeSocketDescription(os, m_callbackSocket.socket());
       os << std::endl;
     }
@@ -724,7 +721,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     if(m_parsedCommandLine.debugOptionSet) {
       std::ostream &os = std::cout;
 
-      os << "TpcpCommand: Sent Volume to aggregator";
+      os << "Sent Volume to aggregator";
       os << std::endl;
     }
 

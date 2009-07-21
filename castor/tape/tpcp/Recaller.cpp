@@ -158,6 +158,18 @@ bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
     // Send the FileToRecall message to the aggregator
     sock.sendObject(fileToRecall);
 
+    {
+      // Command-line user feedback
+      std::ostream &os = std::cout;
+
+      time_t now = time(NULL);
+      utils::writeTime(os, now, TIMEFORMAT);
+      os <<
+        ": Recalling"
+        " filename=\"" << filename << "\"" <<
+        " fseq=" << tapeFseq <<  std::endl;
+    }
+
     displaySentMessageIfDebug(fileToRecall);
 
   // Else no more files
@@ -211,17 +223,19 @@ bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
     }
 
     // Command-line user feedback
-    std::ostream &os           = std::cout;
-    FileTransfer &fileTransfer = itor->second;
+    {
+      std::ostream &os           = std::cout;
+      FileTransfer &fileTransfer = itor->second;
 
-    time_t now = time(NULL);
-    utils::writeTime(os, now, TIMEFORMAT);
-    os << 
-      ": Recalled"
-      " fseq=" << fileTransfer.tapeFseq <<
-      " size=" << msg->fileSize() <<
-      " checskum=0x" << std::hex << msg->checksum() << std::dec <<
-      " filename=\"" << fileTransfer.filename << "\"" << std::endl;
+      time_t now = time(NULL);
+      utils::writeTime(os, now, TIMEFORMAT);
+      os << 
+        ": Recalled"
+        " filename=\"" << fileTransfer.filename << "\""
+        " fseq=" << fileTransfer.tapeFseq <<
+        " size=" << msg->fileSize() <<
+        " checskum=0x" << std::hex << msg->checksum() << std::dec << std::endl;
+    }
 
     // The file has been transfer so remove it from the map of pending
     // transfers
