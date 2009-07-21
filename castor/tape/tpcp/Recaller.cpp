@@ -56,13 +56,13 @@ castor::tape::tpcp::Recaller::Recaller(const bool debug,
   callbackSocket), m_tapeFseqSequence(tapeFseqRanges), m_nbRecalledFiles(0) {
 
   // Register the Aggregator message handler member functions
-  ActionHandler::registerMsgHandler(OBJ_FileToRecallRequest,
+  registerMsgHandler(OBJ_FileToRecallRequest,
     &Recaller::handleFileToRecallRequest, this);
-  ActionHandler::registerMsgHandler(OBJ_FileRecalledNotification,
+  registerMsgHandler(OBJ_FileRecalledNotification,
     &Recaller::handleFileRecalledNotification, this);
-  ActionHandler::registerMsgHandler(OBJ_EndNotification,
+  registerMsgHandler(OBJ_EndNotification,
     &Recaller::handleEndNotification, this);
-  ActionHandler::registerMsgHandler(OBJ_EndNotificationErrorReport,
+  registerMsgHandler(OBJ_EndNotificationErrorReport,
     &Recaller::handleEndNotificationErrorReport, this);
 }
 

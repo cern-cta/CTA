@@ -105,8 +105,9 @@ private:
   /**
    * FileToRecallRequest message handler.
    *
-   * The parameters of this method are documentated in the comments of the
-   * Recaller::MsgHandler datatype.
+   * @param obj  The aggregator message to be processed.
+   * @param sock The socket on which to reply to the aggregator.
+   * @return     True if there is more work to be done else false.
    */
   bool handleFileToRecallRequest(castor::IObject *obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
@@ -114,8 +115,9 @@ private:
   /**
    * FileRecalledNotification message handler.
    *
-   * The parameters of this method are documentated in the comments of the
-   * Recaller::MsgHandler datatype.
+   * @param obj  The aggregator message to be processed.
+   * @param sock The socket on which to reply to the aggregator.
+   * @return     True if there is more work to be done else false.
    */
   bool handleFileRecalledNotification(castor::IObject *obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
@@ -123,8 +125,9 @@ private:
   /**
    * EndNotification message handler.
    *
-   * The parameters of this method are documentated in the comments of the
-   * Recaller::MsgHandler datatype.
+   * @param obj  The aggregator message to be processed.
+   * @param sock The socket on which to reply to the aggregator.
+   * @return     True if there is more work to be done else false.
    */
   bool handleEndNotification(castor::IObject *obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
@@ -132,8 +135,9 @@ private:
   /**
    * EndNotificationErrorReport message handler.
    *
-   * The parameters of this method are documentated in the comments of the
-   * Recaller::MsgHandler datatype.
+   * @param obj  The aggregator message to be processed.
+   * @param sock The socket on which to reply to the aggregator.
+   * @return     True if there is more work to be done else false.
    */
   bool handleEndNotificationErrorReport(castor::IObject *obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);

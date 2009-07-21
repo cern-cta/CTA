@@ -422,8 +422,9 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     }
 
     // Abort if the requested action type is not yet supportd
-    if(m_parsedCommandLine.action != Action::read &&
-       m_parsedCommandLine.action != Action::write) {
+    if(m_parsedCommandLine.action != Action::read  &&
+       m_parsedCommandLine.action != Action::write &&
+       m_parsedCommandLine.action != Action::dump) {
       castor::exception::Exception ex(ECANCELED);
 
       ex.getMessage()

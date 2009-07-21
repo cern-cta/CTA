@@ -55,13 +55,13 @@ castor::tape::tpcp::Migrator::Migrator(const bool debug,
     callbackSocket), m_nbMigratedFiles(0) {
 
   // Register the Aggregator message handler member functions
-  ActionHandler::registerMsgHandler(OBJ_FileToMigrateRequest,
+  registerMsgHandler(OBJ_FileToMigrateRequest,
     &Migrator::handleFileToMigrateRequest, this);
-  ActionHandler::registerMsgHandler(OBJ_FileMigratedNotification,
+  registerMsgHandler(OBJ_FileMigratedNotification,
     &Migrator::handleFileMigratedNotification, this);
-  ActionHandler::registerMsgHandler(OBJ_EndNotification,
+  registerMsgHandler(OBJ_EndNotification,
     &Migrator::handleEndNotification, this);
-  ActionHandler::registerMsgHandler(OBJ_EndNotificationErrorReport,
+  registerMsgHandler(OBJ_EndNotificationErrorReport,
     &Migrator::handleEndNotificationErrorReport, this);
 }
 

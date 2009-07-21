@@ -22,6 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
  
+#include "castor/Constants.hpp"
 #include "castor/tape/tpcp/Dumper.hpp"
 
 #include <errno.h>
@@ -36,11 +37,19 @@ castor::tape::tpcp::Dumper::Dumper(const bool debug,
   const int volReqId, castor::io::ServerSocket &callbackSocket) throw() :
   ActionHandler(debug, tapeFseqRanges, filenames, vmgrTapeInfo, dgn, volReqId,
     callbackSocket) {
+
+  // Register the Aggregator message handler member functions
+  registerMsgHandler(OBJ_DumpNotification,
+    &Dumper::handleDumpNotification, this);
+  registerMsgHandler(OBJ_EndNotification,
+    &Dumper::handleEndNotification, this);
+  registerMsgHandler(OBJ_EndNotificationErrorReport,
+    &Dumper::handleEndNotificationErrorReport, this);
 }
 
 
 //------------------------------------------------------------------------------
-// constructor
+// destructor
 //------------------------------------------------------------------------------
 castor::tape::tpcp::Dumper::~Dumper() {
   // Do nothing
@@ -52,9 +61,41 @@ castor::tape::tpcp::Dumper::~Dumper() {
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::Dumper::run() throw(castor::exception::Exception) {
 
-  castor::exception::Exception ex(ECANCELED);
+  // Spin in the dispatch message loop until there is no more work
+  while(ActionHandler::dispatchMessage()) {
+    // Do nothing
+  }
+}
 
-  ex.getMessage() << "Dumper not implemented";
 
-  throw ex;
+//------------------------------------------------------------------------------
+// handleDumpNotification
+//------------------------------------------------------------------------------
+bool castor::tape::tpcp::Dumper::handleDumpNotification(
+  castor::IObject *obj, castor::io::AbstractSocket &sock)
+  throw(castor::exception::Exception) {
+
+  return true;
+}
+
+
+//------------------------------------------------------------------------------
+// handleEndNotification
+//------------------------------------------------------------------------------
+bool castor::tape::tpcp::Dumper::handleEndNotification(
+  castor::IObject *obj, castor::io::AbstractSocket &sock)
+  throw(castor::exception::Exception) {
+
+  return ActionHandler::handleEndNotification(obj, sock);
+}
+
+
+//------------------------------------------------------------------------------
+// handleEndNotificationErrorReport
+//------------------------------------------------------------------------------
+bool castor::tape::tpcp::Dumper::handleEndNotificationErrorReport(
+  castor::IObject *obj, castor::io::AbstractSocket &sock)
+  throw(castor::exception::Exception) {
+
+  return ActionHandler::handleEndNotificationErrorReport(obj,sock);
 }
