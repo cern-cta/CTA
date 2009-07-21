@@ -17,11 +17,15 @@
 
   - All code related to CASTOR1 support has now been dropped. This includes :
     + CASTOR1 clients, that is the package stager-clientold
-    + support for RFIO_USE_CASTOR_V2 environment variable, which means that we now default to CASTOR2
-    + several defaults for standard CASTOR machines, namely StageHost, VmgrHost, ExpertHost, RhHost
-      This has an impact on the client configuration, where STAGE_HOST is now mandatory, an error
-      message being displayed if it is not set and on server configurations where the proper entries
-      must be in the castor.conf (e.g. fro VMGR_HOST). Otherwise, the default is to try to use localhost.
+    + support for RFIO_USE_CASTOR_V2 environment variable, which means that we now default
+      to CASTOR2
+    + several defaults for standard CASTOR machines, namely StageHost, VmgrHost,
+      ExpertHost, RhHost
+    The latter removal of code has an impact on the client configuration. STAGE_HOST and
+    VMGR_HOST are now mandatory and an error message will be displayed if they are not
+    set.   In general XXXX HOST entries must be specified in castor.conf or set as
+    enviornment variables (e.g. VMGR_HOST). The default value of "localhost" will be used
+    where a host is not set and the setting of that host is not mandatory.
 
   - Imakefiles, spec and config files have been cleaned up and revisited.
     All dependencies are now properly handled and checks have been added for
