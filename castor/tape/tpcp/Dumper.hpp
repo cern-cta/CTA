@@ -49,6 +49,11 @@ public:
     castor::io::ServerSocket &callbackSocket) throw();
 
   /**
+   * Destructor.
+   */
+  virtual ~Dumper();
+
+  /**
    * See the header file of castor::tape::tpcp::ActionHandler for this method's
    * documentation.
    */

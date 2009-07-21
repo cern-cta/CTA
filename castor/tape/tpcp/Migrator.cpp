@@ -83,6 +83,32 @@ void castor::tape::tpcp::Migrator::run() throw(castor::exception::Exception) {
   while(ActionHandler::dispatchMessage()) {
     // Do nothing
   }
+
+  const uint64_t nbMigrateRequests     = m_fileTransactionId - 1;
+  const uint64_t nbIncompleteTransfers = m_pendingFileTransfers.size();
+
+  std::ostream &os = std::cout;
+
+  time_t now = time(NULL);
+  utils::writeTime(os, now, TIMEFORMAT);
+  os << ": End of migrate session" << std::endl
+     << std::endl
+     << "Number of migrate requests     = " << nbMigrateRequests << std::endl
+     << "Number of successfull recalls  = " << m_nbMigratedFiles << std::endl
+     << "Number of incomplete transfers = " << nbIncompleteTransfers
+     << std::endl
+     << std::endl;
+
+  for(FileTransferMap::iterator itor=m_pendingFileTransfers.begin();
+    itor!=m_pendingFileTransfers.end(); itor++) {
+
+    uint64_t    fileTransactionId = itor->first;
+    std::string &filename         = itor->second;
+
+    os << "Incomplete transfer: fileTransactionId=" << fileTransactionId
+       << " filename=" << filename
+       << std::endl;
+  }
 }
 
 
@@ -212,8 +238,8 @@ bool castor::tape::tpcp::Migrator::handleFileMigratedNotification(
     }
 
     // Command-line user feedback
-    std::ostream &os      = std::cout;
-    std::string  filename = itor->second;
+    std::ostream &os       = std::cout;
+    std::string  &filename = itor->second;
 
     time_t now = time(NULL);
     utils::writeTime(os, now, TIMEFORMAT);
