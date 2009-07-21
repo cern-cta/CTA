@@ -30,9 +30,9 @@ LD = g++
 DependsOnLibrary(../../castor,castorclient)
 
 TAPEFORMAT_SRCS = \
-     ALB0100Marshaller.cpp \ 
-     ALB0100Unmarshaller.cpp \ 
-     Marshaller.cpp \ 
+     ALB0100Marshaller.cpp \
+     ALB0100Unmarshaller.cpp \
+     Marshaller.cpp \
      Unmarshaller.cpp
 TAPEFORMATLIB_OBJS = $(TAPEFORMAT_SRCS:.cpp=.Osuf)
 SharedLibraryTarget(castortapeformat,$(TAPEFORMATLIB_OBJS),$(DEPLIB),$(LIBS) $(CKSUMLIB))
