@@ -2182,9 +2182,10 @@ set logging on
 
 directory /usr/local/src/CASTOR2/rtcopy
 
-b rtcp_Transfer if hdr != 0 && filereq != 0 && (hdr->reqtype == 0x2102 || hdr->reqtype == 0x2105)
+b rtcp_Transfer
 commands
 silent
+if hdr != 0 && filereq != 0 && (hdr->reqtype == 0x2102 || hdr->reqtype == 0x2105)
   printf "\n"
   printf "\n"
   if whereto == SendTo
@@ -2312,6 +2313,56 @@ silent
     printf "stgReqId->node[4]=%d\n"                  , filereq->stgReqId.node[4]
     printf "stgReqId->node[5]=%d\n"                  , filereq->stgReqId.node[5]
   end
+end
+
+if hdr != 0 && tapereq != 0 && (hdr->reqtype == 0x2101 || hdr->reqtype == 0x2104)
+  printf "\n"
+  printf "\n"
+  if whereto == SendTo
+    printf "==================================\n"
+    printf "Sending RTCP_TAPE[ERR]_REQ message\n"
+    printf "==================================\n"
+  else
+    printf "====================================\n"
+    printf "Receiving RTCP_TAPE[ERR]_REQ message\n"
+    printf "====================================\n"
+  end
+  printf "\n"
+
+  printf "vid=%s\n"                                 , tapereq->vid
+  printf "vsn=%s\n"                                 , tapereq->vsn
+  printf "label=%s\n"                               , tapereq->label
+  printf "devtype=%s\n"                             , tapereq->devtype
+  printf "density=%s\n"                             , tapereq->density
+  printf "server=%s\n"                              , tapereq->server
+  printf "unit=%s\n"                                , tapereq->unit
+  printf "VolReqID=%d\n"                            , tapereq->VolReqID
+  printf "jobID=%d\n"                               , tapereq->jobID
+  printf "mode=%d\n"                                , tapereq->mode
+  printf "start_file=%d\n"                          , tapereq->start_file
+  printf "end_file=%d\n"                            , tapereq->end_file
+  printf "side=%d\n"                                , tapereq->side
+  printf "tprc=%d\n"                                , tapereq->tprc
+  printf "TStartRequest=%d\n"                       , tapereq->TStartRequest
+  printf "TEndRequest=%d\n"                         , tapereq->TEndRequest
+  printf "TStartRtcpd=%d\n"                         , tapereq->TStartRtcpd
+  printf "TStartMount=%d\n"                         , tapereq->TStartMount
+  printf "TEndMount=%d\n"                           , tapereq->TEndMount
+  printf "TStartUnmount=%d\n"                       , tapereq->TStartUnmount
+  printf "TEndUnmount=%d\n"                         , tapereq->TEndUnmount
+  printf "rtcpReqId->time_low=%d\n"                 , tapereq->rtcpReqId.time_low
+  printf "rtcpReqId->time_mid=%d\n"                 , tapereq->rtcpReqId.time_mid
+  printf "rtcpReqId->time_hi_and_version=%d\n"      , tapereq->rtcpReqId.time_hi_and_version
+  printf "rtcpReqId->clock_seq_hi_and_reserved=%d\n", tapereq->rtcpReqId.clock_seq_hi_and_reserved
+  printf "rtcpReqId->clock_seq_low=%d\n"            , tapereq->rtcpReqId.clock_seq_low
+  printf "rtcpReqId->node[0]=%d\n"                  , tapereq->rtcpReqId.node[0]
+  printf "rtcpReqId->node[1]=%d\n"                  , tapereq->rtcpReqId.node[1]
+  printf "rtcpReqId->node[2]=%d\n"                  , tapereq->rtcpReqId.node[2]
+  printf "rtcpReqId->node[3]=%d\n"                  , tapereq->rtcpReqId.node[3]
+  printf "rtcpReqId->node[4]=%d\n"                  , tapereq->rtcpReqId.node[4]
+  printf "rtcpReqId->node[5]=%d\n"                  , tapereq->rtcpReqId.node[5]
+end
+
 c
 end
 
