@@ -2384,26 +2384,19 @@ silent
 if dumpreq != 0
   printf "\n"
   printf "\n"
-  printf "==================================\n"
-  if whereto == SendTo
-    printf "Sending "
-  else
-    printf "Receiving "
-  end
-  print "RTCP_DUMPTAPE_REQ message\n"
-  printf "==================================\n"
+  printf "=================================\n"
+  printf "Sending RTCP_DUMPTAPE_REQ message\n"
+  printf "=================================\n"
   printf "\n"
 
-  if whereto == SendTo
-    printf " dumpreq->maxbyte=%d\n"      , dumpreq->maxbyte
-    printf " dumpreq->blocksize=%d\n"    , dumpreq->blocksize
-    printf " dumpreq->convert=%d\n"      , dumpreq->convert
-    printf " dumpreq->tp_err_action=%d\n", dumpreq->tp_err_action
-    printf " dumpreq->startfile=%d\n"    , dumpreq->startfile
-    printf " dumpreq->maxfile=%d\n"      , dumpreq->maxfile
-    printf " dumpreq->fromblock=%d\n"    , dumpreq->fromblock
-    printf " dumpreq->toblock=%d\n"      , dumpreq->toblock
-  end
+  printf " dumpreq->maxbyte=%d\n"      , dumpreq->maxbyte
+  printf " dumpreq->blocksize=%d\n"    , dumpreq->blocksize
+  printf " dumpreq->convert=%d\n"      , dumpreq->convert
+  printf " dumpreq->tp_err_action=%d\n", dumpreq->tp_err_action
+  printf " dumpreq->startfile=%d\n"    , dumpreq->startfile
+  printf " dumpreq->maxfile=%d\n"      , dumpreq->maxfile
+  printf " dumpreq->fromblock=%d\n"    , dumpreq->fromblock
+  printf " dumpreq->toblock=%d\n"      , dumpreq->toblock
 end
 
 c
