@@ -36,6 +36,7 @@
 #include "castor/tape/tapegateway/PositionCommandCode.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/tpcp/Constants.hpp"
+#include "castor/tape/tpcp/Helper.hpp"
 #include "castor/tape/tpcp/Migrator.hpp"
 #include "castor/tape/tpcp/StreamHelper.hpp"
 #include "castor/tape/utils/utils.hpp"
@@ -93,9 +94,9 @@ void castor::tape::tpcp::Migrator::run() throw(castor::exception::Exception) {
   utils::writeTime(os, now, TIMEFORMAT);
   os << ": End of migrate session" << std::endl
      << std::endl
-     << "Number of migrate requests     = " << nbMigrateRequests << std::endl
-     << "Number of successfull recalls  = " << m_nbMigratedFiles << std::endl
-     << "Number of incomplete transfers = " << nbIncompleteTransfers
+     << "Number of migrate requests       = " << nbMigrateRequests << std::endl
+     << "Number of successfull migrations = " << m_nbMigratedFiles << std::endl
+     << "Number of incomplete transfers   = " << nbIncompleteTransfers
      << std::endl
      << std::endl;
 
@@ -122,7 +123,7 @@ bool castor::tape::tpcp::Migrator::handleFileToMigrateRequest(
   tapegateway::FileToMigrateRequest *msg = NULL;
 
   castMessage(obj, msg, sock);
-  displayReceivedMessageIfDebug(*msg);
+  Helper::displayReceivedMessageIfDebug(*msg, m_debug);
 
   const bool anotherFile = m_filenameItor != m_filenames.end();
 
@@ -182,7 +183,7 @@ bool castor::tape::tpcp::Migrator::handleFileToMigrateRequest(
         " filename=\"" << filename << "\"" << std::endl;
     }
 
-    displaySentMessageIfDebug(fileToMigrate);
+    Helper::displaySentMessageIfDebug(fileToMigrate, m_debug);
 
   // Else no more files
   } else {
@@ -194,7 +195,7 @@ bool castor::tape::tpcp::Migrator::handleFileToMigrateRequest(
     // Send the NoMoreFiles message to the aggregator
     sock.sendObject(noMore);
 
-    displaySentMessageIfDebug(noMore);
+    Helper::displaySentMessageIfDebug(noMore, m_debug);
   }
 
   return true;
@@ -211,7 +212,7 @@ bool castor::tape::tpcp::Migrator::handleFileMigratedNotification(
   tapegateway::FileMigratedNotification *msg = NULL;
 
   castMessage(obj, msg, sock);
-  displayReceivedMessageIfDebug(*msg);
+  Helper::displayReceivedMessageIfDebug(*msg, m_debug);
 
   // Check the file transaction ID
   {
@@ -261,7 +262,7 @@ bool castor::tape::tpcp::Migrator::handleFileMigratedNotification(
   // Send the NotificationAcknowledge message to the aggregator
   sock.sendObject(acknowledge);
 
-  displaySentMessageIfDebug(acknowledge);
+  Helper::displaySentMessageIfDebug(acknowledge, m_debug);
 
   return true;
 }

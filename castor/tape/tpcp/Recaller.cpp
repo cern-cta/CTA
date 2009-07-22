@@ -36,6 +36,7 @@
 #include "castor/tape/tapegateway/PositionCommandCode.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/tpcp/Constants.hpp"
+#include "castor/tape/tpcp/Helper.hpp"
 #include "castor/tape/tpcp/Recaller.hpp"
 #include "castor/tape/tpcp/StreamHelper.hpp"
 #include "castor/tape/utils/utils.hpp"
@@ -123,7 +124,7 @@ bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
   tapegateway::FileToRecallRequest *msg = NULL;
 
   castMessage(obj, msg, sock);
-  displayReceivedMessageIfDebug(*msg);
+  Helper::displayReceivedMessageIfDebug(*msg, m_debug);
 
   const bool anotherFile = m_tapeFseqSequence.hasMore() &&
     m_filenameItor != m_filenames.end();
@@ -170,7 +171,7 @@ bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
         " fseq=" << tapeFseq <<  std::endl;
     }
 
-    displaySentMessageIfDebug(fileToRecall);
+    Helper::displaySentMessageIfDebug(fileToRecall, m_debug);
 
   // Else no more files
   } else {
@@ -182,7 +183,7 @@ bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
     // Send the NoMoreFiles message to the aggregator
     sock.sendObject(noMore);
 
-    displaySentMessageIfDebug(noMore);
+    Helper::displaySentMessageIfDebug(noMore, m_debug);
   }
 
   return true;
@@ -199,7 +200,7 @@ bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
   tapegateway::FileRecalledNotification *msg = NULL;
 
   castMessage(obj, msg, sock);
-  displayReceivedMessageIfDebug(*msg);
+  Helper::displayReceivedMessageIfDebug(*msg, m_debug);
 
   // Check the file transaction ID
   {
@@ -252,7 +253,7 @@ bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
   // Send the NotificationAcknowledge message to the aggregator
   sock.sendObject(acknowledge);
 
-  displaySentMessageIfDebug(acknowledge);
+  Helper::displaySentMessageIfDebug(acknowledge, m_debug);
 
   return true;
 }

@@ -29,6 +29,7 @@
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 #include "castor/tape/tpcp/ActionHandler.hpp"
 #include "castor/tape/tpcp/Constants.hpp"
+#include "castor/tape/tpcp/Helper.hpp"
 #include "castor/tape/tpcp/StreamHelper.hpp"
 #include "castor/tape/utils/utils.hpp"
 
@@ -197,7 +198,7 @@ bool castor::tape::tpcp::ActionHandler::handleEndNotification(
   tapegateway::EndNotification *msg = NULL;
 
   castMessage(obj, msg, sock);
-  displayReceivedMessageIfDebug(*msg);
+  Helper::displayReceivedMessageIfDebug(*msg, m_debug);
 
   // Create the NotificationAcknowledge message for the aggregator
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
@@ -206,7 +207,7 @@ bool castor::tape::tpcp::ActionHandler::handleEndNotification(
   // Send the NotificationAcknowledge message to the aggregator
   sock.sendObject(acknowledge);
 
-  displaySentMessageIfDebug(acknowledge);
+  Helper::displaySentMessageIfDebug(acknowledge, m_debug);
 
   return false;
 }
@@ -222,7 +223,7 @@ bool castor::tape::tpcp::ActionHandler::handleEndNotificationErrorReport(
   tapegateway::EndNotificationErrorReport *msg = NULL;
 
   castMessage(obj, msg, sock);
-  displayReceivedMessageIfDebug(*msg);
+  Helper::displayReceivedMessageIfDebug(*msg, m_debug);
 
   // Create the NotificationAcknowledge message for the aggregator
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
@@ -231,7 +232,7 @@ bool castor::tape::tpcp::ActionHandler::handleEndNotificationErrorReport(
   // Send the NotificationAcknowledge message to the aggregator
   sock.sendObject(acknowledge);
 
-  displaySentMessageIfDebug(acknowledge);
+  Helper::displaySentMessageIfDebug(acknowledge, m_debug);
 
   return false;
 }
@@ -285,7 +286,7 @@ void castor::tape::tpcp::ActionHandler::acknowledgeEndOfSession()
   tapegateway::EndNotification *endNotification = NULL;
 
   castMessage(obj.get(), endNotification, sock);
-  displayReceivedMessageIfDebug(*endNotification);
+  Helper::displayReceivedMessageIfDebug(*endNotification, m_debug);
 
   // Create the NotificationAcknowledge message for the aggregator
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
@@ -297,7 +298,7 @@ void castor::tape::tpcp::ActionHandler::acknowledgeEndOfSession()
   // Close the connection to the aggregator
   sock.close();
 
-  displaySentMessageIfDebug(acknowledge);
+  Helper::displaySentMessageIfDebug(acknowledge, m_debug);
 }
 
 
@@ -317,7 +318,7 @@ void castor::tape::tpcp::ActionHandler::sendEndNotificationErrorReport(
     // Send the message to the aggregator
     sock.sendObject(errorReport);
 
-    displaySentMessageIfDebug(errorReport);
+    Helper::displaySentMessageIfDebug(errorReport, m_debug);
   } catch(...) {
     // Do nothing
   }

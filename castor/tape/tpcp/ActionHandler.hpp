@@ -223,39 +223,6 @@ protected:
     }
   }
 
-  /**
-   * Convenience method that displays the specified received message if debug
-   * is on.
-   *
-   * @param msg The message to be displayed.
-   */
-  template<class T> void displayReceivedMessageIfDebug(T &msg) throw() {
-    if(m_debug) {
-      std::ostream &os = std::cout;
-
-      os <<
-        "Received " << utils::objectTypeToString(msg.type()) <<
-        " from aggregator" << std::endl <<
-        msg << std::endl;
-    }
-  }
-
-  /**
-   * Convenience method that displays the specified sent message if debug is on.
-   *
-   * @param msg The message to be displayed.
-   */
-  template<class T> void displaySentMessageIfDebug(T &msg) throw() {
-    if(m_debug) {
-      std::ostream &os = std::cout;
-
-      os <<
-        "Sent " << utils::objectTypeToString(msg.type()) <<
-        " to aggregator" << std::endl <<
-        msg << std::endl;
-    }
-  }
-
 
 private:
 

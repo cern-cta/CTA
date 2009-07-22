@@ -32,6 +32,7 @@
 #include "castor/tape/tapegateway/VolumeMode.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
 #include "castor/tape/tpcp/Constants.hpp"
+#include "castor/tape/tpcp/Helper.hpp"
 #include "castor/tape/tpcp/StreamHelper.hpp"
 #include "castor/tape/tpcp/StreamOperators.hpp"
 #include "castor/tape/tpcp/TapeFileSequenceParser.hpp"
@@ -667,6 +668,9 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
       throw ex;
     }
 
+    Helper::displayReceivedMessageIfDebug(*volumeRequest,
+      m_parsedCommandLine.debugOptionSet);
+
     {
       std::ostream &os = std::cout;
       time_t       now = time(NULL);
@@ -714,16 +718,11 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     // Send the volume message to the aggregator
     callbackConnectionSocket.sendObject(volumeMsg);
 
+    Helper::displaySentMessageIfDebug(volumeMsg,
+      m_parsedCommandLine.debugOptionSet);
+
     // Close the connection to the aggregator
     callbackConnectionSocket.close();
-
-    // If debug, then display sending of the Volume message
-    if(m_parsedCommandLine.debugOptionSet) {
-      std::ostream &os = std::cout;
-
-      os << "Sent Volume to aggregator";
-      os << std::endl;
-    }
 
     // Dispatch the action to the appropriate ActionHandler
     try {

@@ -72,6 +72,7 @@ TPCPBIN_SRCS = \
   Action.cpp \
   ActionHandler.cpp \
   Dumper.cpp \
+  Helper.cpp \
   Migrator.cpp \
   Recaller.cpp \
   StreamHelper.cpp \
