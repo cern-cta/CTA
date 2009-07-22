@@ -56,9 +56,9 @@ public:
    * @param volReqId The volume request ID.
    * @param gatewayHost The tape gateway host name.
    * @param gatewayPort The tape gateway port number.
-   * @param rtcpdCallbackSocketFd The file descriptor of the listener socket
+   * @param rtcpdCallbackSockFd The file descriptor of the listener socket
    * to be used to accept callback connections from RTCPD.
-   * @param rtcpdInitialSocketFd The socket file descriptor of initial RTCPD
+   * @param rtcpdInitialSockFd The socket file descriptor of initial RTCPD
    * connection.
    * @param mode The access mode.
    * @param unit The drive unit.
@@ -69,8 +69,8 @@ public:
    */
   BridgeProtocolEngine(const Cuuid_t &cuuid, const uint32_t volReqId,
     const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
-    const unsigned short gatewayPort, const int rtcpdCallbackSocketFd,
-    const int rtcpdInitialSocketFd, const uint32_t mode,
+    const unsigned short gatewayPort, const int rtcpdCallbackSockFd,
+    const int rtcpdInitialSockFd, const uint32_t mode,
     char (&unit)[CA_MAXUNMLEN+1], const char (&vid)[CA_MAXVIDLEN+1],
     char (&vsn)[CA_MAXVSNLEN+1], const char (&label)[CA_MAXLBLTYPLEN+1],
     const char (&density)[CA_MAXDENLEN+1]);
@@ -107,13 +107,13 @@ private:
    * The file descriptor of the listener socket
    * to be used to accept callback connections from RTCPD.
    */
-  const int m_rtcpdCallbackSocketFd;
+  const int m_rtcpdCallbackSockFd;
 
   /**
    * The socket file descriptor of initial RTCPD
    * connection.
    */
-  const int m_rtcpdInitialSocketFd;
+  const int m_rtcpdInitialSockFd;
 
   /**
    * The access mode.
@@ -233,7 +233,7 @@ private:
    * @param filesBeingMigrated
    * @param filesBeingRecalled
    */
-  void processRtcpdSockets() throw(castor::exception::Exception);
+  void processRtcpdSocks() throw(castor::exception::Exception);
 
   /**
    * Processes the specified RTCPD socket.
@@ -242,7 +242,7 @@ private:
    * @param endOfSession Out parameter: Will be set to true by this function
    * if the end of the recall/migration session has been reached.
    */
-  void processRtcpdSocket(const int socketFd, bool &endOfSession)
+  void processRtcpdSock(const int socketFd, bool &endOfSession)
     throw(castor::exception::Exception);
 
   /**

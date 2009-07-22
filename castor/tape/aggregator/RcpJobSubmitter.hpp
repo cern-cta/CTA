@@ -91,7 +91,7 @@ namespace aggregator {
     /**
      * Reads the reply of the RTCOPY or tape aggregator daemon.
      * 
-     * @param socket The socket of the connection to the RTCOPY or tape
+     * @param sock The socket of the connection to the RTCOPY or tape
      * aggregator daemon.
      * @param netReadWriteTimeout The timeout to be used when performing
      * network reads and writes.
@@ -99,7 +99,7 @@ namespace aggregator {
      * messages.
      * @param reply The reply from RTCPD.
      */
-    static void readReply(castor::io::AbstractTCPSocket &socket,
+    static void readReply(castor::io::AbstractTCPSocket &sock,
       const int netReadWriteTimeout, const char *remoteCopyType,
       RcpJobReplyMsgBody &reply) throw(castor::exception::Exception);    
 

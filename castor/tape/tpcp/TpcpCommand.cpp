@@ -65,7 +65,7 @@ char castor::tape::tpcp::TpcpCommand::vmgr_error_buffer[VMGRERRORBUFLEN];
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tpcp::TpcpCommand::TpcpCommand() throw () :
-  m_callbackSocket(false),
+  m_callbackSock(false),
   m_volReqId(0) {
   utils::setBytes(m_vmgrTapeInfo, '\0');
   utils::setBytes(m_dgn, '\0');
@@ -120,7 +120,8 @@ void castor::tape::tpcp::TpcpCommand::usage(std::ostream &os,
     "\t                        End Of Tape, or the tape file sequence number\n"
     "\t                        to be positioned to just before writing.  Note\n"
     "\t                        this option is mandatory when the action is\n"
-    "\t                        WRITE\n"
+    "\t                        WRITE.  Also not that a valid tape file\n"
+    "\t                        sequence number is equal or greater than 1.\n"
     "\n"
     "Constraints:\n"
     "\n"
@@ -156,27 +157,27 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
 
     switch (c) {
     case 'd':
-      m_parsedCommandLine.debugOptionSet = true;
+      m_cmdLine.debugSet = true;
       break;
 
     case 'f':
-      m_parsedCommandLine.fileListOptionSet = true;
-      m_parsedCommandLine.fileListFilename  = optarg;
+      m_cmdLine.fileListSet = true;
+      m_cmdLine.fileListFilename  = optarg;
       break;
 
     case 'h':
-      m_parsedCommandLine.helpOptionSet = true;
+      m_cmdLine.helpSet = true;
       break;
 
     case 'p':
       {
-        m_parsedCommandLine.tapeFseqPositionOptionSet = true;
+        m_cmdLine.tapeFseqPositionSet = true;
 
         std::string tmp(optarg);
         utils::toUpper(tmp);
 
         if(tmp == "EOT") {
-          m_parsedCommandLine.tapeFseqPosition = - 1;
+          m_cmdLine.tapeFseqPosition = 0;
         } else {
 
           if(!utils::isValidUInt(optarg)) {
@@ -188,9 +189,9 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
             throw ex;
           }
 
-          m_parsedCommandLine.tapeFseqPosition = atoi(optarg);
+          m_cmdLine.tapeFseqPosition = atoi(optarg);
 
-          if(m_parsedCommandLine.tapeFseqPosition == 0) {
+          if(m_cmdLine.tapeFseqPosition == 0) {
             castor::exception::InvalidArgument ex;
             ex.getMessage() <<
               "\tThe -p, --position argument must be a valid unsigned integer "
@@ -202,13 +203,13 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
       break;
 
     case 'q':
-      TapeFileSequenceParser::parse(optarg, m_parsedCommandLine.tapeFseqRanges);
+      TapeFileSequenceParser::parse(optarg, m_cmdLine.tapeFseqRanges);
       break;
 
     case 's':
-      m_parsedCommandLine.serverOptionSet = true;
+      m_cmdLine.serverSet = true;
       try {
-        utils::copyString(m_parsedCommandLine.server, optarg);
+        utils::copyString(m_cmdLine.server, optarg);
       } catch(castor::exception::Exception &ex) {
         TAPE_THROW_EX(castor::exception::Internal,
           ": Failed to copy the argument of the server command-line option"
@@ -250,7 +251,7 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
   } // while ((c = getopt_long(argc, argv, "h", longopts, NULL)) != -1)
 
   // There is no need to continue parsing when the help option is set
-  if( m_parsedCommandLine.helpOptionSet) {
+  if( m_cmdLine.helpSet) {
     return;
   }
 
@@ -269,7 +270,7 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
   // Check that filenames as command-line arguments and the "-f, --filelist"
   // command-line option have not been specified at the same time, as they are
   // mutually exclusive
-  if(nbFilenamesOnCommandLine > 0 && m_parsedCommandLine.fileListOptionSet) {
+  if(nbFilenamesOnCommandLine > 0 && m_cmdLine.fileListSet) {
     castor::exception::InvalidArgument ex;
 
     ex.getMessage() << "\t[FILE].. command-line arguments and the"
@@ -281,7 +282,7 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
   // Parse the action command-line argument
   try {
     utils::toUpper(argv[optind]);
-    m_parsedCommandLine.action = Action::stringToObject((char*)argv[optind]);
+    m_cmdLine.action = Action::stringToObject((char*)argv[optind]);
   } catch(castor::exception::InvalidArgument) {
 
     castor::exception::InvalidArgument ex;
@@ -311,7 +312,7 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
 
   // Parse the VID command-line argument
   try {
-    utils::copyString(m_parsedCommandLine.vid, argv[optind]);
+    utils::copyString(m_cmdLine.vid, argv[optind]);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,
       ": Failed to copy VID comand-line argument into the internal data"
@@ -324,13 +325,13 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
 
   // Parse any filenames on the command-line
   while(optind < argc) {
-    m_parsedCommandLine.filenames.push_back(argv[optind++]);
+    m_cmdLine.filenames.push_back(argv[optind++]);
   }
 
   // If the action to be performed is a recall
-  if(m_parsedCommandLine.action == Action::read) {
+  if(m_cmdLine.action == Action::read) {
     // Check that there is at least one file to be recalled
-    if(m_parsedCommandLine.tapeFseqRanges.size() == 0) {
+    if(m_cmdLine.tapeFseqRanges.size() == 0) {
       castor::exception::InvalidArgument ex;
 
       ex.getMessage()
@@ -355,8 +356,8 @@ void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
   }
 
   // The -p, --position option is mandatory when the action is WRITE
-  if(m_parsedCommandLine.action == Action::write &&
-    !m_parsedCommandLine.tapeFseqPositionOptionSet) {
+  if(m_cmdLine.action == Action::write &&
+    !m_cmdLine.tapeFseqPositionSet) {
     castor::exception::InvalidArgument ex;
 
     ex.getMessage()
@@ -407,14 +408,14 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     }
 
     // If debug, then display parsed command-line arguments
-    if(m_parsedCommandLine.debugOptionSet) {
+    if(m_cmdLine.debugSet) {
       std::ostream &os = std::cout;
 
-      os << "Parsed command-line = " << m_parsedCommandLine << std::endl;
+      os << "Parsed command-line = " << m_cmdLine << std::endl;
     }
 
     // Display usage message and exit if help option found on command-line
-    if(m_parsedCommandLine.helpOptionSet) {
+    if(m_cmdLine.helpSet) {
       std::cout << std::endl;
       castor::tape::tpcp::TpcpCommand::usage(std::cout, TPCPPROGRAMNAME);
       std::cout << std::endl;
@@ -422,9 +423,9 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     }
 
     // Abort if the requested action type is not yet supportd
-    if(m_parsedCommandLine.action != Action::read  &&
-       m_parsedCommandLine.action != Action::write &&
-       m_parsedCommandLine.action != Action::dump) {
+    if(m_cmdLine.action != Action::read  &&
+       m_cmdLine.action != Action::write &&
+       m_cmdLine.action != Action::dump) {
       castor::exception::Exception ex(ECANCELED);
 
       ex.getMessage()
@@ -437,30 +438,30 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     // The list of filenames will either come from the command-line arguments
     // or (exclusive or) from a "filelist" file specified with the
     // "-f, --filelist" option.
-    if(m_parsedCommandLine.fileListOptionSet) {
+    if(m_cmdLine.fileListSet) {
       // Parse the "filelist" file into the list of filenames to be
       // processed
-      utils::parseFileList(m_parsedCommandLine.fileListFilename.c_str(),
+      utils::parseFileList(m_cmdLine.fileListFilename.c_str(),
         m_filenames);
     } else {
       // Copy the command-line argument filenames into the list of filenames
       // to be processed
       for(FilenameList::const_iterator
-        itor=m_parsedCommandLine.filenames.begin();
-        itor!=m_parsedCommandLine.filenames.end(); itor++) {
+        itor=m_cmdLine.filenames.begin();
+        itor!=m_cmdLine.filenames.end(); itor++) {
         m_filenames.push_back(*itor);
       }
     }
 
     // If debug, then display the list of files to be processed by the action
     // handlers
-    if(m_parsedCommandLine.debugOptionSet) {
+    if(m_cmdLine.debugSet) {
       std::ostream &os = std::cout;
 
       os << "Filenames to be processed = " << m_filenames << std::endl;
     }
 
-    if(m_parsedCommandLine.action == Action::read) {
+    if(m_cmdLine.action == Action::read) {
 
       // Check that there are enough RFIO filenames to satisfy the minium number
       // of tape file sequence numbers
@@ -478,7 +479,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
       }
     }
 
-    if(m_parsedCommandLine.action == Action::write) {
+    if(m_cmdLine.action == Action::write) {
 
       // Check that there is at least one file to be migrated
       if(m_filenames.size() == 0) {
@@ -494,13 +495,13 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     // Get information about the tape to be used from the VMGR
     try {
       const int side = 0;
-      vmgrQueryTape(m_parsedCommandLine.vid, side);
+      vmgrQueryTape(m_cmdLine.vid, side);
     } catch(castor::exception::Exception &ex) {
       castor::exception::Exception ex2(ECANCELED);
 
       std::ostream &os = ex2.getMessage();
       os << "Failed to query the VMGR about tape: VID="
-         << m_parsedCommandLine.vid;
+         << m_cmdLine.vid;
 
       // If the tape does not exist
       if(ex.code() == ENOENT) {
@@ -513,7 +514,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     }
 
     // If debug, then display the tape information retrieved from the VMGR
-    if(m_parsedCommandLine.debugOptionSet) {
+    if(m_cmdLine.debugSet) {
       std::ostream &os = std::cout;
 
       os << "vmgr_tape_info from the VMGR = " <<  m_vmgrTapeInfo << std::endl;
@@ -523,14 +524,14 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
 
     // Check that the VID returned in the VMGR tape information matches that of
     // the requested tape
-    if(strcmp(m_parsedCommandLine.vid, m_vmgrTapeInfo.vid) != 0) {
+    if(strcmp(m_cmdLine.vid, m_vmgrTapeInfo.vid) != 0) {
        castor::exception::Exception ex(ECANCELED);
        std::ostream &os = ex.getMessage();
 
        os <<
          "VID in tape information retrieved from VMGR does not match that of "
          "the requested tape"
-         ": Request VID=" << m_parsedCommandLine.vid <<
+         ": Request VID=" << m_cmdLine.vid <<
          " VID returned from VMGR=" << m_vmgrTapeInfo.vid;
 
        throw ex;
@@ -555,7 +556,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
 
     // Check if the access mode of the tape is compatible with the action to be
     // performed by tpcp
-    if(m_parsedCommandLine.action == Action::write &&
+    if(m_cmdLine.action == Action::write &&
       m_vmgrTapeInfo.status & TAPE_RDONLY) {
 
       castor::exception::Exception ex(ECANCELED);
@@ -567,24 +568,24 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     }
 
     // Setup the aggregator callback socket
-    setupCallbackSocket();
+    setupCallbackSock();
 
     // If debug, then display a textual description of the aggregator callback
     // socket
-    if(m_parsedCommandLine.debugOptionSet) {
+    if(m_cmdLine.debugSet) {
       std::ostream &os = std::cout;
 
       os << "Aggregator callback socket details = ";
-      net::writeSocketDescription(os, m_callbackSocket.socket());
+      net::writeSockDescription(os, m_callbackSock.socket());
       os << std::endl;
     }
 
     // Send the request for a drive to the VDQM
     {
-      const int mode = m_parsedCommandLine.action == Action::write ?
+      const int mode = m_cmdLine.action == Action::write ?
         WRITE_ENABLE : WRITE_DISABLE;
-      char *const server = m_parsedCommandLine.serverOptionSet ?
-        m_parsedCommandLine.server : NULL;
+      char *const server = m_cmdLine.serverSet ?
+        m_cmdLine.server : NULL;
       requestDriveFromVdqm(mode, server);
     }
 
@@ -599,14 +600,14 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     }
 
     // Socket file descriptor for a callback connection from the aggregator
-    int connectionSocketFd = 0;
+    int connectionSockFd = 0;
 
     // Wait for a callback connection from the aggregator
     {
       bool waitForCallback    = true;
       while(waitForCallback) {
         try {
-          connectionSocketFd = net::acceptConnection(m_callbackSocket.socket(),
+          connectionSockFd = net::acceptConnection(m_callbackSock.socket(),
             WAITCALLBACKTIMEOUT);
 
           waitForCallback = false;
@@ -635,7 +636,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
       unsigned long  peerIp    = 0;
       unsigned short peerPort  = 0;
       try {
-        net::getPeerIpPort(connectionSocketFd, peerIp, peerPort);
+        net::getPeerIpPort(connectionSockFd, peerIp, peerPort);
       } catch(castor::exception::Exception &e) {
         peerIp   = 0;
         peerPort = 0;
@@ -647,10 +648,10 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     // Wrap the connection socket descriptor in a CASTOR framework socket in
     // order to get access to the framework marshalling and un-marshalling
     // methods
-    castor::io::AbstractTCPSocket callbackConnectionSocket(connectionSocketFd);
+    castor::io::AbstractTCPSocket callbackConnectionSock(connectionSockFd);
 
     // Read in the object sent by the aggregator
-    std::auto_ptr<castor::IObject> obj(callbackConnectionSocket.readObject());
+    std::auto_ptr<castor::IObject> obj(callbackConnectionSock.readObject());
 
     // Pointer to the received object with the object's type
     tapegateway::VolumeRequest *volumeRequest = NULL;
@@ -668,8 +669,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
       throw ex;
     }
 
-    Helper::displayReceivedMessageIfDebug(*volumeRequest,
-      m_parsedCommandLine.debugOptionSet);
+    Helper::displayRcvdMsgIfDebug(*volumeRequest, m_cmdLine.debugSet);
 
     {
       std::ostream &os = std::cout;
@@ -695,7 +695,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     // Create the volume message for the aggregator
     castor::tape::tapegateway::Volume volumeMsg;
     volumeMsg.setVid(m_vmgrTapeInfo.vid);
-    switch(m_parsedCommandLine.action.value()) {
+    switch(m_cmdLine.action.value()) {
     case Action::READ:
       volumeMsg.setMode(castor::tape::tapegateway::READ);
       break;
@@ -707,22 +707,21 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
       break;
     default:
       TAPE_THROW_EX(castor::exception::Internal,
-        ": Unknown action type: value=" << m_parsedCommandLine.action.value());
+        ": Unknown action type: value=" << m_cmdLine.action.value());
     }
-    volumeMsg.setMode(m_parsedCommandLine.action == Action::write ?
+    volumeMsg.setMode(m_cmdLine.action == Action::write ?
       castor::tape::tapegateway::WRITE : castor::tape::tapegateway::READ);
     volumeMsg.setLabel(m_vmgrTapeInfo.lbltype);
     volumeMsg.setMountTransactionId(m_volReqId);
     volumeMsg.setDensity(m_vmgrTapeInfo.density);
 
     // Send the volume message to the aggregator
-    callbackConnectionSocket.sendObject(volumeMsg);
+    callbackConnectionSock.sendObject(volumeMsg);
 
-    Helper::displaySentMessageIfDebug(volumeMsg,
-      m_parsedCommandLine.debugOptionSet);
+    Helper::displaySentMsgIfDebug(volumeMsg, m_cmdLine.debugSet);
 
     // Close the connection to the aggregator
-    callbackConnectionSocket.close();
+    callbackConnectionSock.close();
 
     // Dispatch the action to the appropriate ActionHandler
     try {
@@ -731,7 +730,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
       castor::exception::Exception ex2(ECANCELED);
 
       ex2.getMessage() << "Failed to perform action"
-        ": Action=" << m_parsedCommandLine.action <<
+        ": Action=" << m_cmdLine.action <<
         ": " << ex.getMessage().str();
 
       throw ex2;
@@ -783,8 +782,8 @@ unsigned int castor::tape::tpcp::TpcpCommand::calculateMinNbOfFiles()
 
   // Loop through all ranges
   for(TapeFseqRangeList::const_iterator itor=
-    m_parsedCommandLine.tapeFseqRanges.begin();
-    itor!=m_parsedCommandLine.tapeFseqRanges.end(); itor++) {
+    m_cmdLine.tapeFseqRanges.begin();
+    itor!=m_cmdLine.tapeFseqRanges.end(); itor++) {
   
     // If upper != END of tape
     if(itor->upper != 0 ){
@@ -807,8 +806,8 @@ unsigned int castor::tape::tpcp::TpcpCommand::countNbRangesWithEnd()
 
   // Loop through all ranges
   for(TapeFseqRangeList::const_iterator itor=
-    m_parsedCommandLine.tapeFseqRanges.begin();
-    itor!=m_parsedCommandLine.tapeFseqRanges.end(); itor++) {
+    m_cmdLine.tapeFseqRanges.begin();
+    itor!=m_cmdLine.tapeFseqRanges.end(); itor++) {
 
     if(itor->upper == 0 ){
         count++;
@@ -828,7 +827,7 @@ void castor::tape::tpcp::TpcpCommand::vmgrQueryTape(
   int save_serrno = 0;
 
   serrno=0;
-  const int rc = vmgr_querytape(m_parsedCommandLine.vid, side, &m_vmgrTapeInfo,
+  const int rc = vmgr_querytape(m_cmdLine.vid, side, &m_vmgrTapeInfo,
     m_dgn);
   
   save_serrno = serrno;
@@ -844,9 +843,9 @@ void castor::tape::tpcp::TpcpCommand::vmgrQueryTape(
 }
 
 //------------------------------------------------------------------------------
-// setupCallbackSocket
+// setupCallbackSock
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::TpcpCommand::setupCallbackSocket()
+void castor::tape::tpcp::TpcpCommand::setupCallbackSock()
   throw(castor::exception::Exception) {
 
   // Get the port range to be used by the aggregator callback socket
@@ -861,8 +860,8 @@ void castor::tape::tpcp::TpcpCommand::setupCallbackSocket()
   }
 
   // Bind the aggregator callback socket
-  m_callbackSocket.bind(lowPort, highPort);
-  m_callbackSocket.listen();
+  m_callbackSock.bind(lowPort, highPort);
+  m_callbackSock.listen();
 }
 
 
@@ -874,12 +873,12 @@ void castor::tape::tpcp::TpcpCommand::requestDriveFromVdqm(const int mode,
 
   unsigned short port = 0;
   unsigned long  ip   = 0;
-  m_callbackSocket.getPortIp(port, ip);
+  m_callbackSock.getPortIp(port, ip);
 
   vdqmnw_t *const nw   = NULL;
   char     *const unit = NULL;
   const int rc = vdqm_SendAggregatorVolReq(nw, &m_volReqId,
-    m_parsedCommandLine.vid, m_dgn, server, unit, mode, port);
+    m_cmdLine.vid, m_dgn, server, unit, mode, port);
   const int save_serrno = serrno;
 
   if(rc == -1) {
@@ -902,39 +901,35 @@ void castor::tape::tpcp::TpcpCommand::requestDriveFromVdqm(const int mode,
 void castor::tape::tpcp::TpcpCommand::dispatchAction()
   throw(castor::exception::Exception) {
 
-  switch(m_parsedCommandLine.action.value()) {
+  switch(m_cmdLine.action.value()) {
   case Action::READ:
     {
-      Recaller handler(m_parsedCommandLine.debugOptionSet,
-        m_parsedCommandLine.tapeFseqRanges, m_filenames, m_vmgrTapeInfo, m_dgn,
-        m_volReqId, m_callbackSocket);
+      Recaller handler(m_cmdLine, m_filenames, m_vmgrTapeInfo, m_dgn,
+        m_volReqId, m_callbackSock);
 
       handler.run();
     }
     break;
   case Action::WRITE:
     {
-      Migrator handler(m_parsedCommandLine.debugOptionSet,
-        m_parsedCommandLine.tapeFseqRanges, m_filenames, m_vmgrTapeInfo, m_dgn,
-        m_volReqId, m_callbackSocket);
+      Migrator handler(m_cmdLine, m_filenames, m_vmgrTapeInfo, m_dgn,
+        m_volReqId, m_callbackSock);
 
       handler.run();
     }
     break;
   case Action::DUMP:
     {
-      Dumper handler(m_parsedCommandLine.debugOptionSet,
-        m_parsedCommandLine.tapeFseqRanges, m_filenames, m_vmgrTapeInfo, m_dgn,
-        m_volReqId, m_callbackSocket);
+      Dumper handler(m_cmdLine, m_filenames, m_vmgrTapeInfo, m_dgn,
+        m_volReqId, m_callbackSock);
 
       handler.run();
     }
     break;
   case Action::VERIFY:
     {
-      Verifier handler(m_parsedCommandLine.debugOptionSet,
-        m_parsedCommandLine.tapeFseqRanges, m_filenames, m_vmgrTapeInfo, m_dgn,
-        m_volReqId, m_callbackSocket);
+      Verifier handler(m_cmdLine, m_filenames, m_vmgrTapeInfo, m_dgn,
+        m_volReqId, m_callbackSock);
 
       handler.run();
     }
@@ -943,8 +938,8 @@ void castor::tape::tpcp::TpcpCommand::dispatchAction()
     {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Failed to find ActionHandler for Action:  Action="
-        << m_parsedCommandLine.action);
+        << m_cmdLine.action);
     }
     break;
-  } // switch(m_parsedCommandLine.action.value())
+  } // switch(m_cmdLine.action.value())
 }

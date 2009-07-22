@@ -48,8 +48,8 @@ public:
    * @param msg   The message to be displayed.
    * @param debug To be set to true if debug is on, else false.
    */
-  template<class T> static void displayReceivedMessageIfDebug(T &msg,
-    const bool debug) throw() {
+  template<class T> static void displayRcvdMsgIfDebug(T &msg, const bool debug)
+    throw() {
     if(debug) {
       std::ostream &os = std::cout;
 
@@ -66,8 +66,8 @@ public:
    * @param msg   The message to be displayed.
    * @param debug To be set to true if debug is on, else false.
    */
-  template<class T> static void displaySentMessageIfDebug(T &msg,
-    const bool debug) throw() {
+  template<class T> static void displaySentMsgIfDebug(T &msg, const bool debug)
+    throw() {
     if(debug) {
       std::ostream &os = std::cout;
 

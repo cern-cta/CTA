@@ -49,12 +49,12 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tpcp::Recaller::Recaller(const bool debug,
-  TapeFseqRangeList &tapeFseqRanges, FilenameList &filenames,
-  const vmgr_tape_info &vmgrTapeInfo, const char *const dgn,
-  const int volReqId, castor::io::ServerSocket &callbackSocket) throw() :
-  ActionHandler(debug, tapeFseqRanges, filenames, vmgrTapeInfo, dgn, volReqId,
-  callbackSocket), m_tapeFseqSequence(tapeFseqRanges), m_nbRecalledFiles(0) {
+castor::tape::tpcp::Recaller::Recaller(ParsedCommandLine &cmdLine,
+  FilenameList &filenames, const vmgr_tape_info &vmgrTapeInfo,
+  const char *const dgn, const int volReqId,
+  castor::io::ServerSocket &callbackSock) throw() :
+  ActionHandler(cmdLine, filenames, vmgrTapeInfo, dgn, volReqId, callbackSock),
+  m_tapeFseqSequence(cmdLine.tapeFseqRanges), m_nbRecalledFiles(0) {
 
   // Register the Aggregator message handler member functions
   registerMsgHandler(OBJ_FileToRecallRequest,
@@ -124,7 +124,7 @@ bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
   tapegateway::FileToRecallRequest *msg = NULL;
 
   castMessage(obj, msg, sock);
-  Helper::displayReceivedMessageIfDebug(*msg, m_debug);
+  Helper::displayRcvdMsgIfDebug(*msg, m_cmdLine.debugSet);
 
   const bool anotherFile = m_tapeFseqSequence.hasMore() &&
     m_filenameItor != m_filenames.end();
@@ -171,7 +171,7 @@ bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
         " fseq=" << tapeFseq <<  std::endl;
     }
 
-    Helper::displaySentMessageIfDebug(fileToRecall, m_debug);
+    Helper::displaySentMsgIfDebug(fileToRecall, m_cmdLine.debugSet);
 
   // Else no more files
   } else {
@@ -183,7 +183,7 @@ bool castor::tape::tpcp::Recaller::handleFileToRecallRequest(
     // Send the NoMoreFiles message to the aggregator
     sock.sendObject(noMore);
 
-    Helper::displaySentMessageIfDebug(noMore, m_debug);
+    Helper::displaySentMsgIfDebug(noMore, m_cmdLine.debugSet);
   }
 
   return true;
@@ -200,7 +200,7 @@ bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
   tapegateway::FileRecalledNotification *msg = NULL;
 
   castMessage(obj, msg, sock);
-  Helper::displayReceivedMessageIfDebug(*msg, m_debug);
+  Helper::displayRcvdMsgIfDebug(*msg, m_cmdLine.debugSet);
 
   // Check the file transaction ID
   {
@@ -253,7 +253,7 @@ bool castor::tape::tpcp::Recaller::handleFileRecalledNotification(
   // Send the NotificationAcknowledge message to the aggregator
   sock.sendObject(acknowledge);
 
-  Helper::displaySentMessageIfDebug(acknowledge, m_debug);
+  Helper::displaySentMsgIfDebug(acknowledge, m_cmdLine.debugSet);
 
   return true;
 }

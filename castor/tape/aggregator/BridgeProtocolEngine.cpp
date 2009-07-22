@@ -51,8 +51,8 @@ castor::tape::aggregator::BridgeProtocolEngine::BridgeProtocolEngine(
   const uint32_t volReqId,
   const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
   const unsigned short gatewayPort,
-  const int rtcpdCallbackSocketFd,
-  const int rtcpdInitialSocketFd,
+  const int rtcpdCallbackSockFd,
+  const int rtcpdInitialSockFd,
   const uint32_t mode,
   char (&unit)[CA_MAXUNMLEN+1],
   const char (&vid)[CA_MAXVIDLEN+1],
@@ -63,8 +63,8 @@ castor::tape::aggregator::BridgeProtocolEngine::BridgeProtocolEngine(
   m_volReqId(volReqId),
   m_gatewayHost(gatewayHost),
   m_gatewayPort(gatewayPort),
-  m_rtcpdCallbackSocketFd(rtcpdCallbackSocketFd),
-  m_rtcpdInitialSocketFd(rtcpdInitialSocketFd),
+  m_rtcpdCallbackSockFd(rtcpdCallbackSockFd),
+  m_rtcpdInitialSockFd(rtcpdInitialSockFd),
   m_mode(mode),
   m_unit(unit),
   m_vid(vid),
@@ -101,7 +101,7 @@ castor::tape::aggregator::BridgeProtocolEngine::BridgeProtocolEngine(
 int castor::tape::aggregator::BridgeProtocolEngine::acceptRtcpdConnection()
   throw(castor::exception::Exception) {
 
-  SmartFd connectedSocketFd(net::acceptConnection(m_rtcpdCallbackSocketFd,
+  SmartFd connectedSockFd(net::acceptConnection(m_rtcpdCallbackSockFd,
     RTCPDPINGTIMEOUT));
 
   try {
@@ -109,8 +109,8 @@ int castor::tape::aggregator::BridgeProtocolEngine::acceptRtcpdConnection()
     unsigned long  ip   = 0; // Client IP
     char           hostName[net::HOSTNAMEBUFLEN];
 
-    net::getPeerIpPort(connectedSocketFd.get(), ip, port);
-    net::getPeerHostName(connectedSocketFd.get(), hostName);
+    net::getPeerIpPort(connectedSockFd.get(), ip, port);
+    net::getPeerHostName(connectedSockFd.get(), hostName);
 
     m_nbCallbackConnections++;
 
@@ -119,7 +119,7 @@ int castor::tape::aggregator::BridgeProtocolEngine::acceptRtcpdConnection()
       castor::dlf::Param("IP"             , castor::dlf::IPAddress(ip)),
       castor::dlf::Param("Port"           , port                      ),
       castor::dlf::Param("HostName"       , hostName                  ),
-      castor::dlf::Param("socketFd"       , connectedSocketFd.get()   ),
+      castor::dlf::Param("socketFd"       , connectedSockFd.get()   ),
       castor::dlf::Param("nbCallbackConns", m_nbCallbackConnections   )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_RTCPD_CALLBACK_WITH_INFO, params);
@@ -131,14 +131,14 @@ int castor::tape::aggregator::BridgeProtocolEngine::acceptRtcpdConnection()
       AGGREGATOR_RTCPD_CALLBACK_WITHOUT_INFO, params);
   }
 
-  return connectedSocketFd.release();
+  return connectedSockFd.release();
 }
 
 
 //-----------------------------------------------------------------------------
-// processRtcpdSockets
+// processRtcpdSocks
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSockets(
+void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocks(
 )
   throw(castor::exception::Exception) {
 
@@ -150,12 +150,12 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSockets(
 
   // Append the socket descriptors of the RTCPD callback port and the initial
   // connection from RTCPD to the list of read file descriptors
-  m_readFds.push_back(m_rtcpdCallbackSocketFd);
-  m_readFds.push_back(m_rtcpdInitialSocketFd);
-  if(m_rtcpdCallbackSocketFd > m_rtcpdInitialSocketFd) {
-    maxFd = m_rtcpdCallbackSocketFd;
+  m_readFds.push_back(m_rtcpdCallbackSockFd);
+  m_readFds.push_back(m_rtcpdInitialSockFd);
+  if(m_rtcpdCallbackSockFd > m_rtcpdInitialSockFd) {
+    maxFd = m_rtcpdCallbackSockFd;
   } else {
-    maxFd = m_rtcpdInitialSocketFd;
+    maxFd = m_rtcpdInitialSockFd;
   }
 
   // Select loop
@@ -183,7 +183,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSockets(
     switch(selectRc) {
     case 0: // Select timed out
 
-      RtcpTxRx::pingRtcpd(m_cuuid, m_volReqId, m_rtcpdInitialSocketFd,
+      RtcpTxRx::pingRtcpd(m_cuuid, m_volReqId, m_rtcpdInitialSockFd,
         RTCPDNETRWTIMEOUT);
       break;
 
@@ -214,7 +214,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSockets(
         if(FD_ISSET(*itor, &readFdSet)) {
           bool endOfSession = false;
 
-          processRtcpdSocket(*itor, endOfSession);
+          processRtcpdSock(*itor, endOfSession);
           nbProcessedFds++;
 
           if(endOfSession) {
@@ -228,13 +228,13 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSockets(
 
 
 //-----------------------------------------------------------------------------
-// processRtcpdSocket
+// processRtcpdSock
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocket(
+void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSock(
   const int socketFd, bool &endOfSession) throw(castor::exception::Exception) {
 
   // If the file descriptor is that of the callback port
-  if(socketFd == m_rtcpdCallbackSocketFd) {
+  if(socketFd == m_rtcpdCallbackSockFd) {
 
     // Accept the connection and append its socket descriptor to
     // the list of read file descriptors
@@ -310,12 +310,12 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocket(
         // Try to find the socket file descriptor of the initial callback
         // connection is the list of open connections
         SmartFdList::iterator itor = std::find(m_readFds.begin(),
-          m_readFds.end(), m_rtcpdInitialSocketFd);
+          m_readFds.end(), m_rtcpdInitialSockFd);
 
         // If the file descriptor cannot be found
         if(itor == m_readFds.end()) {
           TAPE_THROW_EX(castor::exception::Internal,
-            ": The initial callback connection (fd=" << m_rtcpdInitialSocketFd
+            ": The initial callback connection (fd=" << m_rtcpdInitialSockFd
             <<")is not the last one open. Found fd= " << *itor);
         }
 
@@ -325,13 +325,13 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocket(
         endofReqMsg.reqType     = RTCP_ENDOF_REQ;
         endofReqMsg.lenOrStatus = 0;
         RtcpTxRx::sendMessageHeader(m_cuuid, m_volReqId,
-          m_rtcpdInitialSocketFd, RTCPDNETRWTIMEOUT, endofReqMsg);
+          m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, endofReqMsg);
 
         // Receive the acknowledge of the RTCP_ENDOF_REQ message
         MessageHeader ackMsg;
         try {
           RtcpTxRx::receiveMessageHeader(m_cuuid, m_volReqId,
-            m_rtcpdInitialSocketFd, RTCPDNETRWTIMEOUT, ackMsg);
+            m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, ackMsg);
         } catch(castor::exception::Exception &ex) {
           TAPE_THROW_CODE(EPROTO,
             ": Failed to receive acknowledge of RTCP_ENDOF_REQ from RTCPD: "
@@ -339,7 +339,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocket(
         }
 
         // Close the connection
-        close(m_readFds.release(m_rtcpdInitialSocketFd));
+        close(m_readFds.release(m_rtcpdInitialSockFd));
 
         // Mark the end of the recall/migration session
         endOfSession = true;
@@ -418,27 +418,27 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
   rtcpVolume.err.severity   =  1;
   rtcpVolume.err.maxTpRetry = -1;
   rtcpVolume.err.maxCpRetry = -1;
-  RtcpTxRx::giveVolumeToRtcpd(m_cuuid, m_volReqId, m_rtcpdInitialSocketFd,
+  RtcpTxRx::giveVolumeToRtcpd(m_cuuid, m_volReqId, m_rtcpdInitialSockFd,
     RTCPDNETRWTIMEOUT, rtcpVolume);
 
   // Give file to migrate to RTCPD
   char migrationTapeFileId[CA_MAXPATHLEN+1];
   utils::toHex(fileId, migrationTapeFileId);
-  RtcpTxRx::giveFileToRtcpd(m_cuuid, m_volReqId, m_rtcpdInitialSocketFd,
+  RtcpTxRx::giveFileToRtcpd(m_cuuid, m_volReqId, m_rtcpdInitialSockFd,
     RTCPDNETRWTIMEOUT, rtcpVolume.mode, filePath, fileSize, "", RECORDFORMAT,
     migrationTapeFileId, MIGRATEUMASK, positionCommandCode, fileTapeFileSeq,
     diskFseq, fileNsHost, fileId, blockId);
 
   // Ask RTCPD to request more work
   RtcpTxRx::askRtcpdToRequestMoreWork(m_cuuid, m_volReqId, tapePath,
-    m_rtcpdInitialSocketFd, RTCPDNETRWTIMEOUT, m_mode);
+    m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, m_mode);
 
   // Tell RTCPD end of file list
-  RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_volReqId, m_rtcpdInitialSocketFd,
+  RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_volReqId, m_rtcpdInitialSockFd,
     RTCPDNETRWTIMEOUT);
 
   try {
-    processRtcpdSockets();
+    processRtcpdSocks();
 
     try {
       GatewayTxRx::notifyGatewayEndOfSession(m_cuuid, m_volReqId, m_gatewayHost,
@@ -499,19 +499,19 @@ void castor::tape::aggregator::BridgeProtocolEngine::runRecallSession()
   rtcpVolume.err.severity   =  1;
   rtcpVolume.err.maxTpRetry = -1;
   rtcpVolume.err.maxCpRetry = -1;
-  RtcpTxRx::giveVolumeToRtcpd(m_cuuid, m_volReqId, m_rtcpdInitialSocketFd,
+  RtcpTxRx::giveVolumeToRtcpd(m_cuuid, m_volReqId, m_rtcpdInitialSockFd,
     RTCPDNETRWTIMEOUT, rtcpVolume);
 
   // Ask RTCPD to request more work
   RtcpTxRx::askRtcpdToRequestMoreWork(m_cuuid, m_volReqId, tapePath,
-    m_rtcpdInitialSocketFd, RTCPDNETRWTIMEOUT, m_mode);
+    m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, m_mode);
 
   // Tell RTCPD end of file list
-  RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_volReqId, m_rtcpdInitialSocketFd,
+  RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_volReqId, m_rtcpdInitialSockFd,
     RTCPDNETRWTIMEOUT);
 
   try {
-    processRtcpdSockets();
+    processRtcpdSocks();
 
     try {
       GatewayTxRx::notifyGatewayEndOfSession(m_cuuid, m_volReqId, m_gatewayHost,

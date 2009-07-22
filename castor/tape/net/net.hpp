@@ -47,16 +47,16 @@ namespace net    {
  * @param port The port number to listen on or 0 if one should be allocated.
  * @return The socket file descriptor.
  */
-int createListenerSocket(const char *addr,
+int createListenerSock(const char *addr,
   const unsigned short port) throw(castor::exception::Exception);
 
 /**
  * Accepts a connection on the specified listener socket and returns the
  * socket file descriptor of the newly created connected socket.
  *
- * @param listenSocketFd The file descriptor of the listener socket.
+ * @param listenSockFd The file descriptor of the listener socket.
  */
-int acceptConnection(const int listenSocketFd)
+int acceptConnection(const int listenSockFd)
   throw(castor::exception::Exception);
 
 /**
@@ -70,11 +70,11 @@ int acceptConnection(const int listenSocketFd)
  * must catch castor::exception::TimeOut before catching
  * castor::exception::Exception.
  *
- * @param listenSocketFd The file descriptor of the listener socket.
+ * @param listenSockFd The file descriptor of the listener socket.
  * @param timeout The timeout in seconds to be used when waiting for a
  * connection.
  */
-int acceptConnection(const int listenSocketFd,
+int acceptConnection(const int listenSockFd,
   const int timeout) throw(castor::exception::TimeOut,
     castor::exception::Exception);
 
@@ -85,7 +85,7 @@ int acceptConnection(const int listenSocketFd,
  * @param ip The IP to be filled.
  * @param port The port to be filled.
  */
-void getSocketIpPort(const int socketFd, unsigned long& ip,
+void getSockIpPort(const int socketFd, unsigned long& ip,
   unsigned short& port) throw(castor::exception::Exception);
 
 /**
@@ -106,7 +106,7 @@ void getPeerIpPort(const int socketFd, unsigned long& ip,
  * @param len The length of the buffer into which the host name should be
  * written to.
  */
-void getSocketHostName(const int socketFd, char *buf, size_t len)
+void getSockHostName(const int socketFd, char *buf, size_t len)
   throw(castor::exception::Exception);
 
 /**
@@ -115,9 +115,9 @@ void getSocketHostName(const int socketFd, char *buf, size_t len)
  * @param socketFd The socket file descriptor.
  * @param buf The buffer into which the hostname should written to.
  */
-template<int n> static void getSocketHostName(const int socketFd,
+template<int n> static void getSockHostName(const int socketFd,
   char (&buf)[n]) throw(castor::exception::Exception) {
-  getSocketHostName(socketFd, buf, n);
+  getSockHostName(socketFd, buf, n);
 }
 
 
@@ -132,7 +132,7 @@ template<int n> static void getSocketHostName(const int socketFd,
  * @param port The port to be filled.
  * written to.
  */
-void getSocketIpHostnamePort(const int socketFd,
+void getSockIpHostnamePort(const int socketFd,
   unsigned long& ip, char *hostName, size_t hostNameLen,
   unsigned short& port) throw(castor::exception::Exception);
 
@@ -145,10 +145,10 @@ void getSocketIpHostnamePort(const int socketFd,
  * @param port The port to be filled.
  * written to.
  */
-template<int n> static void getSocketIpHostnamePort(const int socketFd,
+template<int n> static void getSockIpHostnamePort(const int socketFd,
   unsigned long& ip, char (&hostName)[n], unsigned short& port)
   throw(castor::exception::Exception) {
-  getSocketIpHostnamePort(socketFd, ip, hostName, n, port);
+  getSockIpHostnamePort(socketFd, ip, hostName, n, port);
 }
 
 /**
@@ -190,7 +190,7 @@ void writeIp(std::ostream &os, const unsigned long ip) throw();
  * @param socketFd The file descriptor of the socket whose textual
  * description is to be printed to the stream.
  */
-void writeSocketDescription(std::ostream &os, const int socketFd)
+void writeSockDescription(std::ostream &os, const int socketFd)
   throw();
 
 /**

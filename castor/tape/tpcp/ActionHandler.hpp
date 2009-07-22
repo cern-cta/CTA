@@ -29,7 +29,7 @@
 #include "castor/io/ServerSocket.hpp"
 #include "castor/tape/tpcp/Action.hpp"
 #include "castor/tape/tpcp/FilenameList.hpp"
-#include "castor/tape/tpcp/TapeFseqRangeList.hpp"
+#include "castor/tape/tpcp/ParsedCommandLine.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/Castor_limits.h"
 #include "h/vmgr_api.h"
@@ -52,21 +52,27 @@ public:
   /**
    * Constructor.
    *
-   * @param debug True if debug messages should be displayed.
-   * @param tapeFseqRanges The list of tape file sequence ranges to be
-   * processed.
-   * @param filenames The list of RFIO filenames to be processed.
+   * @param cmdLine      The parsed command-line.
+   * @param filenames    The list of RFIO filenames to be processed.  The list
+   *                     of filenames in the command-line parameter cmdLine
+   *                     should NOT be used.  Filenames are provided by the
+   *                     user on the command-line or in a "file list" file.
+   *                     These two methods of passing filenames are mutually
+   *                     exclusive.  The user must provide the filenames on
+   *                     the command-line or in a "file list" file, but NOT
+   *                     both.  This list parameter is populated using either
+   *                     the command-line or the "file list" file as
+   *                     appropriate.
    * @param vmgrTapeInfo The information retrieved from the VMGR about the tape
-   * to be used.
-   * @param dgn The DGN of the tape to be worked on.
-   * @param volReqId The volume request ID returned by the VDQM in response to
-   * the request for a drive.
-   * @param callbackSocket The aggregator callback socket.
+   *                     to be used.
+   * @param dgn          The DGN of the tape to be worked on.
+   * @param volReqId     The volume request ID returned by the VDQM in response
+   *                     to the request for a drive.
+   * @param callbackSock The aggregator callback socket.
    */
-  ActionHandler(const bool debug, TapeFseqRangeList &tapeFseqRanges,
-    FilenameList &filenames, const vmgr_tape_info &vmgrTapeInfo,
-    const char *const dgn, const uint64_t volReqId,
-    castor::io::ServerSocket &callbackSocket) throw();
+  ActionHandler(ParsedCommandLine &cmdLine, FilenameList &filenames,
+    const vmgr_tape_info &vmgrTapeInfo, const char *const dgn,
+    const uint64_t volReqId, castor::io::ServerSocket &callbackSock) throw();
 
   /**
    * Destructor.
@@ -82,14 +88,9 @@ public:
 protected:
 
   /**
-   * True if debug messages should be displayed.
+   * The parsed command-line.
    */
-  const bool m_debug;
-
-  /**
-   * The list of tape file sequence ranges to be processed.
-   */
-  TapeFseqRangeList &m_tapeFseqRanges;
+  ParsedCommandLine &m_cmdLine;
 
   /**
    * The list of RFIO filenames to be processed.
@@ -120,7 +121,7 @@ protected:
   /**
    * The aggregator callback socket.
    */
-  castor::io::ServerSocket &m_callbackSocket;
+  castor::io::ServerSocket &m_callbackSock;
 
   /**
    * The next file transaction ID.

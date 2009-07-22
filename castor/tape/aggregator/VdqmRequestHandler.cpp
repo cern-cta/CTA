@@ -89,7 +89,7 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
   // pointer goes out of scope it will delete the socket.  The destructor of
   // the socket will in turn close the connection.
   std::auto_ptr<castor::io::AbstractTCPSocket>
-    vdqmSocket((castor::io::AbstractTCPSocket*)param);
+    vdqmSock((castor::io::AbstractTCPSocket*)param);
 
   // Log the new connection
   try {
@@ -97,8 +97,8 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
     unsigned long  ip   = 0; // Client IP
     char           hostName[net::HOSTNAMEBUFLEN];
 
-    net::getPeerIpPort(vdqmSocket->socket(), ip, port);
-    net::getPeerHostName(vdqmSocket->socket(), hostName);
+    net::getPeerIpPort(vdqmSock->socket(), ip, port);
+    net::getPeerHostName(vdqmSock->socket(), hostName);
 
     castor::dlf::Param params[] = {
       castor::dlf::Param("IP"      , castor::dlf::IPAddress(ip)),
@@ -119,14 +119,14 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
     // Create, bind and mark a listen socket for RTCPD callback connections
     // Wrap the socket file descriptor in a smart file descriptor so that it is
     // guaranteed to be closed when it goes out of scope.
-    SmartFd rtcpdCallbackSocketFd(net::createListenerSocket("127.0.0.1",0));
+    SmartFd rtcpdCallbackSockFd(net::createListenerSock("127.0.0.1",0));
 
     // Get the IP, host name and port of the callback port
     unsigned long rtcpdCallbackIp = 0;
     char rtcpdCallbackHost[net::HOSTNAMEBUFLEN];
     utils::setBytes(rtcpdCallbackHost, '\0');
     unsigned short rtcpdCallbackPort = 0;
-    net::getSocketIpHostnamePort(rtcpdCallbackSocketFd.get(),
+    net::getSockIpHostnamePort(rtcpdCallbackSockFd.get(),
     rtcpdCallbackIp, rtcpdCallbackHost, rtcpdCallbackPort);
 
     castor::dlf::Param params[] = {
@@ -140,7 +140,7 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
     char gatewayHost[CA_MAXHOSTNAMELEN+1];
     utils::setBytes(gatewayHost, '\0');
     unsigned short gatewayPort = 0;
-    SmartFd rtcpdInitialSocketFd;
+    SmartFd rtcpdInitialSockFd;
     uint32_t mode = 0;
     char unit[CA_MAXUNMLEN+1];
     utils::setBytes(unit, '\0');
@@ -153,9 +153,9 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
 
     DriveAllocationProtocolEngine driveAllocationProtocolEngine;
 
-    driveAllocationProtocolEngine.run(cuuid, *(vdqmSocket.get()),
-      rtcpdCallbackSocketFd.get(), rtcpdCallbackHost, rtcpdCallbackPort,
-      volReqId, gatewayHost, gatewayPort, rtcpdInitialSocketFd, mode, unit,
+    driveAllocationProtocolEngine.run(cuuid, *(vdqmSock.get()),
+      rtcpdCallbackSockFd.get(), rtcpdCallbackHost, rtcpdCallbackPort,
+      volReqId, gatewayHost, gatewayPort, rtcpdInitialSockFd, mode, unit,
       vid, label, density);
 
     // If the volume has the aggregation format
@@ -181,7 +181,7 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
       char vsn[CA_MAXVSNLEN+1];
       utils::setBytes(vsn, '\0');
       BridgeProtocolEngine bridgeProtocolEngine(cuuid, volReqId, gatewayHost,
-        gatewayPort, rtcpdCallbackSocketFd.get(), rtcpdInitialSocketFd.get(),
+        gatewayPort, rtcpdCallbackSockFd.get(), rtcpdInitialSockFd.get(),
         mode, unit, vid, vsn, label, density);
       bridgeProtocolEngine.run();
     }

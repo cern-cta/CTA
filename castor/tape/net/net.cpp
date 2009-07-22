@@ -38,9 +38,9 @@
 
 
 //-----------------------------------------------------------------------------
-// createListenerSocket
+// createListenerSock
 //-----------------------------------------------------------------------------
-int castor::tape::net::createListenerSocket(const char *addr,
+int castor::tape::net::createListenerSock(const char *addr,
   const unsigned short port) throw(castor::exception::Exception) {
 
   int    socketFd = 0;
@@ -192,9 +192,9 @@ int castor::tape::net::acceptConnection(const int listensocketFd,
 
 
 //-----------------------------------------------------------------------------
-// getSocketIpPort
+// getSockIpPort
 //-----------------------------------------------------------------------------
-void castor::tape::net::getSocketIpPort(const int socketFd,
+void castor::tape::net::getSockIpPort(const int socketFd,
   unsigned long& ip, unsigned short& port)
   throw(castor::exception::Exception) {
 
@@ -246,9 +246,9 @@ void castor::tape::net::getPeerIpPort(const int socketFd,
 
 
 //------------------------------------------------------------------------------
-// getSocketHostName
+// getSockHostName
 //------------------------------------------------------------------------------
-void castor::tape::net::getSocketHostName(const int socketFd,
+void castor::tape::net::getSockHostName(const int socketFd,
   char *buf, size_t len) throw(castor::exception::Exception) {
 
   struct sockaddr_in address;
@@ -282,9 +282,9 @@ void castor::tape::net::getSocketHostName(const int socketFd,
 
 
 //------------------------------------------------------------------------------
-// getSocketIpHostnamePort
+// getSockIpHostnamePort
 //------------------------------------------------------------------------------
-void castor::tape::net::getSocketIpHostnamePort(const int socketFd,
+void castor::tape::net::getSockIpHostnamePort(const int socketFd,
   unsigned long& ip, char *hostName, size_t hostNameLen,
   unsigned short& port) throw(castor::exception::Exception) {
 
@@ -367,9 +367,9 @@ void castor::tape::net::writeIp(std::ostream &os,
 
 
 //------------------------------------------------------------------------------
-// writeSocketDescription
+// writeSockDescription
 //------------------------------------------------------------------------------
-void castor::tape::net::writeSocketDescription(std::ostream &os,
+void castor::tape::net::writeSockDescription(std::ostream &os,
   const int socketFd) throw() {
   unsigned long  localIp   = 0;
   unsigned short localPort = 0;
@@ -377,7 +377,7 @@ void castor::tape::net::writeSocketDescription(std::ostream &os,
   unsigned short peerPort  = 0;
 
   try {
-    getSocketIpPort(socketFd, localIp, localPort);
+    getSockIpPort(socketFd, localIp, localPort);
   } catch(castor::exception::Exception &e) {
     localIp   = 0;
     localPort = 0;
@@ -417,7 +417,7 @@ void castor::tape::net::readBytes(const int socketFd,
     messageStream
       << "Failed to read " << nbBytes << " bytes from socket"
          ": ";
-    writeSocketDescription(messageStream, socketFd);
+    writeSockDescription(messageStream, socketFd);
     messageStream
       << ": Connection was closed by the remote end";
 
@@ -450,7 +450,7 @@ void castor::tape::net::readBytesFromCloseable(bool &connClosed,
       messageStream
         << ": Failed to read " << nbBytes << " bytes from socket"
            ": ";
-      writeSocketDescription(messageStream, socketFd);
+      writeSockDescription(messageStream, socketFd);
       messageStream
         << ": " << errorStr;
 
@@ -470,7 +470,7 @@ void castor::tape::net::readBytesFromCloseable(bool &connClosed,
       messageStream
         << "Failed to read " << nbBytes << " bytes from socket"
            ": ";
-      writeSocketDescription(messageStream, socketFd);
+      writeSockDescription(messageStream, socketFd);
       messageStream
         << ": Read the wrong number of bytes"
         << ": Expected: " << nbBytes
@@ -500,7 +500,7 @@ void castor::tape::net::writeBytes(const int socketFd,
       messageStream
         << ": Failed to write " << nbBytes << " bytes to socket"
            ": ";
-      writeSocketDescription(messageStream, socketFd);
+      writeSockDescription(messageStream, socketFd);
       messageStream
         << ": " << neterror();
 
@@ -513,7 +513,7 @@ void castor::tape::net::writeBytes(const int socketFd,
       messageStream
         << ": Failed to write " << nbBytes << " bytes to socket"
            ": ";
-      writeSocketDescription(messageStream, socketFd);
+      writeSockDescription(messageStream, socketFd);
       messageStream
         << ": Connection dropped";
 
@@ -526,7 +526,7 @@ void castor::tape::net::writeBytes(const int socketFd,
       messageStream
         << ": Failed to write " << nbBytes << " bytes to socket"
            ": ";
-      writeSocketDescription(messageStream, socketFd);
+      writeSockDescription(messageStream, socketFd);
       messageStream
         << ": Wrote the wrong number of bytes"
         << ": Expected: " << nbBytes

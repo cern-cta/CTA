@@ -48,12 +48,12 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tpcp::Migrator::Migrator(const bool debug,
-  TapeFseqRangeList &tapeFseqRanges, FilenameList &filenames,
-  const vmgr_tape_info &vmgrTapeInfo, const char *const dgn,
-  const int volReqId, castor::io::ServerSocket &callbackSocket) throw() :
-  ActionHandler(debug, tapeFseqRanges, filenames, vmgrTapeInfo, dgn, volReqId,
-    callbackSocket), m_nbMigratedFiles(0) {
+castor::tape::tpcp::Migrator::Migrator(ParsedCommandLine &cmdLine,
+  FilenameList &filenames, const vmgr_tape_info &vmgrTapeInfo,
+  const char *const dgn, const int volReqId,
+  castor::io::ServerSocket &callbackSock) throw() :
+  ActionHandler(cmdLine, filenames, vmgrTapeInfo, dgn, volReqId, callbackSock),
+  m_nextTapeFseq(cmdLine.tapeFseqPosition), m_nbMigratedFiles(0) {
 
   // Register the Aggregator message handler member functions
   registerMsgHandler(OBJ_FileToMigrateRequest,
@@ -123,7 +123,7 @@ bool castor::tape::tpcp::Migrator::handleFileToMigrateRequest(
   tapegateway::FileToMigrateRequest *msg = NULL;
 
   castMessage(obj, msg, sock);
-  Helper::displayReceivedMessageIfDebug(*msg, m_debug);
+  Helper::displayRcvdMsgIfDebug(*msg, m_cmdLine.debugSet);
 
   const bool anotherFile = m_filenameItor != m_filenames.end();
 
@@ -156,11 +156,22 @@ bool castor::tape::tpcp::Migrator::handleFileToMigrateRequest(
     tapegateway::FileToMigrate fileToMigrate;
     fileToMigrate.setMountTransactionId(m_volReqId);
     fileToMigrate.setFileTransactionId(m_fileTransactionId);
+    fileToMigrate.setNshost("tpcp");
+    fileToMigrate.setFileid(0);
     fileToMigrate.setFileSize(statBuf.st_size);
     fileToMigrate.setLastKnownFilename(filename);
     fileToMigrate.setLastModificationTime(statBuf.st_mtime);
     fileToMigrate.setPath(filename);
-    fileToMigrate.setId(0);
+
+    // If migrating to end-of-tape (EOT)
+    if(m_cmdLine.tapeFseqPosition == 0) {
+      fileToMigrate.setPositionCommandCode(tapegateway::TPPOSIT_EOI);
+      fileToMigrate.setFseq(-1);
+    // Else migrating to a specific tape file sequence number
+    } else {
+      fileToMigrate.setPositionCommandCode(tapegateway::TPPOSIT_FSEQ);
+      fileToMigrate.setFseq(m_nextTapeFseq++);
+    }
 
     // Update the map of current file transfers and increment the file
     // transaction ID
@@ -171,6 +182,8 @@ bool castor::tape::tpcp::Migrator::handleFileToMigrateRequest(
 
     // Send the FileToMigrate message to the aggregator
     sock.sendObject(fileToMigrate);
+
+    Helper::displaySentMsgIfDebug(fileToMigrate, m_cmdLine.debugSet);
 
     {
       // Command-line user feedback
@@ -183,8 +196,6 @@ bool castor::tape::tpcp::Migrator::handleFileToMigrateRequest(
         " filename=\"" << filename << "\"" << std::endl;
     }
 
-    Helper::displaySentMessageIfDebug(fileToMigrate, m_debug);
-
   // Else no more files
   } else {
 
@@ -195,7 +206,7 @@ bool castor::tape::tpcp::Migrator::handleFileToMigrateRequest(
     // Send the NoMoreFiles message to the aggregator
     sock.sendObject(noMore);
 
-    Helper::displaySentMessageIfDebug(noMore, m_debug);
+    Helper::displaySentMsgIfDebug(noMore, m_cmdLine.debugSet);
   }
 
   return true;
@@ -212,7 +223,7 @@ bool castor::tape::tpcp::Migrator::handleFileMigratedNotification(
   tapegateway::FileMigratedNotification *msg = NULL;
 
   castMessage(obj, msg, sock);
-  Helper::displayReceivedMessageIfDebug(*msg, m_debug);
+  Helper::displayRcvdMsgIfDebug(*msg, m_cmdLine.debugSet);
 
   // Check the file transaction ID
   {
@@ -262,7 +273,7 @@ bool castor::tape::tpcp::Migrator::handleFileMigratedNotification(
   // Send the NotificationAcknowledge message to the aggregator
   sock.sendObject(acknowledge);
 
-  Helper::displaySentMessageIfDebug(acknowledge, m_debug);
+  Helper::displaySentMsgIfDebug(acknowledge, m_cmdLine.debugSet);
 
   return true;
 }

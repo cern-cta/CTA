@@ -49,15 +49,15 @@
 //------------------------------------------------------------------------------
 void castor::tape::aggregator::RcpJobSubmitter::submit(
   const std::string  &host,
-  const unsigned int  port,
-  const int           netReadWriteTimeout,
+  const unsigned int port,
+  const int          netReadWriteTimeout,
   const char         *remoteCopyType,
-  const u_signed64    tapeRequestId,
+  const u_signed64   tapeRequestId,
   const std::string  &clientUserName,
   const std::string  &clientHost,
-  const int           clientPort,
-  const int           clientEuid,
-  const int           clientEgid,
+  const int          clientPort,
+  const int          clientEuid,
+  const int          clientEgid,
   const std::string  &deviceGroupName,
   const std::string  &driveName,
   RcpJobReplyMsgBody &reply)
@@ -149,14 +149,14 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
 // readReply
 //------------------------------------------------------------------------------
 void castor::tape::aggregator::RcpJobSubmitter::readReply(
-  castor::io::AbstractTCPSocket &socket, const int netReadWriteTimeout,
+  castor::io::AbstractTCPSocket &sock, const int netReadWriteTimeout,
   const char *remoteCopyType, RcpJobReplyMsgBody &reply)
   throw(castor::exception::Exception) {
 
   // Read in the message header
   char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
   try {
-    net::readBytes(socket.socket(), RTCPDNETRWTIMEOUT, sizeof(headerBuf),
+    net::readBytes(sock.socket(), RTCPDNETRWTIMEOUT, sizeof(headerBuf),
       headerBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
@@ -220,7 +220,7 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
 
   // Read the message body
   try {
-    net::readBytes(socket.socket(), RTCPDNETRWTIMEOUT, header.lenOrStatus,
+    net::readBytes(sock.socket(), RTCPDNETRWTIMEOUT, header.lenOrStatus,
       bodyBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,

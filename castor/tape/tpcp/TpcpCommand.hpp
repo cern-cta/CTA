@@ -89,7 +89,7 @@ private:
   /**
    * The results of parsing the command-line.
    */
-  ParsedCommandLine m_parsedCommandLine;
+  ParsedCommandLine m_cmdLine;
 
   /**
    * The list of RFIO filenames to be processed by the request handlers.
@@ -109,7 +109,7 @@ private:
   /**
    * TCP/IP aggregator callback socket.
    */
-  castor::io::ServerSocket m_callbackSocket;
+  castor::io::ServerSocket m_callbackSock;
 
   /**
    * The volume request ID returned by the VDQM as a result of requesting a
@@ -174,7 +174,7 @@ private:
    * Creates, binds and sets to listening the callback socket to be used for
    * callbacks from the aggregator daemon.
    */
-  void setupCallbackSocket() throw(castor::exception::Exception);
+  void setupCallbackSock() throw(castor::exception::Exception);
 
   /**
    * Request a drive from the VDQM to mount the specified tape for the

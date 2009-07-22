@@ -43,30 +43,81 @@ namespace tpcp   {
  * Data type used to store the results of parsing the command-line.
  */
 struct ParsedCommandLine {
-  Action            action;
-  bool              debugOptionSet;
-  std::string       fileListFilename;
-  bool              fileListOptionSet;
-  FilenameList      filenames;
-  bool              helpOptionSet;
-  bool              serverOptionSet;
-  char              server[CA_MAXHOSTNAMELEN+1];
-  int32_t           tapeFseqPosition;
-  bool              tapeFseqPositionOptionSet;
+  /**
+   * The action to be performed: READ, WRITE, DUMP or VERIFY.
+   */
+  Action action;
+
+  /**
+   * True if the debug option has been set.
+   */
+  bool debugSet;
+
+  /**
+   * The filename of the "file list" file.
+   */
+  std::string fileListFilename;
+
+  /**
+   * True if the "file list" filename option has been set.
+   */
+  bool fileListSet;
+
+  /**
+   * The list filenames given on the command-line.
+   */
+  FilenameList filenames;
+
+  /**
+   * True if the help option has been set.
+   */
+  bool helpSet;
+
+  /**
+   * True if the tape server option has been set.
+   */
+  bool serverSet;
+
+  /**
+   * The tape server to be used therefore overriding the drive scheduling of
+   * the VDQM.
+   */
+  char server[CA_MAXHOSTNAMELEN+1];
+
+  /**
+   * The tape file sequence number to be positioned to just before writing.
+   *
+   * Please note that a value of 0 corresponding to end-of-tape.
+   */
+  int32_t tapeFseqPosition;
+
+  /**
+   * True if the "tape file sequence number to be positioned to just before
+   * writing" option is set.
+   */
+  bool tapeFseqPositionSet;
+
+  /**
+   * The tape file sequence number ranges.
+   */
   TapeFseqRangeList tapeFseqRanges;
-  char              vid[CA_MAXVIDLEN+1];
+
+  /**
+   * The VID of the tape to be mounted.
+   */
+  char vid[CA_MAXVIDLEN+1];
 
   /**
    * Constructor.
    */
   ParsedCommandLine() :
     action(Action::read),
-    debugOptionSet(false),
-    fileListOptionSet(false),
-    helpOptionSet(false),
-    serverOptionSet(false),
+    debugSet(false),
+    fileListSet(false),
+    helpSet(false),
+    serverSet(false),
     tapeFseqPosition(0),
-    tapeFseqPositionOptionSet(false) {
+    tapeFseqPositionSet(false) {
 
     utils::setBytes(server, '\0');
     utils::setBytes(vid   , '\0');

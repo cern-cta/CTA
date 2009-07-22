@@ -73,8 +73,8 @@ std::ostream &operator<<(std::ostream &os,
   using namespace castor::tape::tpcp;
 
   os <<"{"
-        "debugOptionSet=" << utils::boolToString(value.debugOptionSet)<<","
-        "helpOptionSet="  << utils::boolToString(value.helpOptionSet) <<","
+        "debugSet=" << utils::boolToString(value.debugSet)<<","
+        "helpSet="  << utils::boolToString(value.helpSet) <<","
         "action="         << value.action                             <<","
         "vid=";
   if(value.vid == NULL) {
@@ -83,7 +83,7 @@ std::ostream &operator<<(std::ostream &os,
     os << "\"" << value.vid << "\",";
   }
   os <<"tapeFseqRanges="    << value.tapeFseqRanges                        <<","
-       "fileListOptionSet=" << utils::boolToString(value.fileListOptionSet)<<","
+       "fileListSet=" << utils::boolToString(value.fileListSet)<<","
        "fileListFilename=\""<< value.fileListFilename                   << "\","
        "filenames="         << value.filenames
      <<"}";

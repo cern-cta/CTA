@@ -31,12 +31,12 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tpcp::Dumper::Dumper(const bool debug,
-  TapeFseqRangeList &tapeFseqRanges, FilenameList &filenames,
-  const vmgr_tape_info &vmgrTapeInfo, const char *const dgn,
-  const int volReqId, castor::io::ServerSocket &callbackSocket) throw() :
-  ActionHandler(debug, tapeFseqRanges, filenames, vmgrTapeInfo, dgn, volReqId,
-    callbackSocket) {
+castor::tape::tpcp::Dumper::Dumper(ParsedCommandLine &cmdLine,
+  FilenameList &filenames, const vmgr_tape_info &vmgrTapeInfo,
+  const char *const dgn, const int volReqId,
+  castor::io::ServerSocket &callbackSock) throw() :
+  ActionHandler(cmdLine, filenames, vmgrTapeInfo, dgn, volReqId,
+    callbackSock) {
 
   // Register the Aggregator message handler member functions
   registerMsgHandler(OBJ_DumpNotification,

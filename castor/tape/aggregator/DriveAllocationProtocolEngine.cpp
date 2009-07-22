@@ -78,11 +78,11 @@ void castor::tape::aggregator::DriveAllocationProtocolEngine::
 // run
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
-  const Cuuid_t &cuuid, castor::io::AbstractTCPSocket &vdqmSocket,
-  const int rtcpdCallbackSocketFd, const char *rtcpdCallbackHost,
+  const Cuuid_t &cuuid, castor::io::AbstractTCPSocket &vdqmSock,
+  const int rtcpdCallbackSockFd, const char *rtcpdCallbackHost,
   const unsigned short rtcpdCallbackPort, uint32_t &volReqId,
   char (&gatewayHost)[CA_MAXHOSTNAMELEN+1], unsigned short &gatewayPort,
-  SmartFd &rtcpdInitialSocketFd, uint32_t &mode, char (&unit)[CA_MAXUNMLEN+1],
+  SmartFd &rtcpdInitialSockFd, uint32_t &mode, char (&unit)[CA_MAXUNMLEN+1],
   char (&vid)[CA_MAXVIDLEN+1], char (&label)[CA_MAXLBLTYPLEN+1],
   char (&density)[CA_MAXDENLEN+1]) throw(castor::exception::Exception) {
   
@@ -90,9 +90,9 @@ bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
   
   utils::setBytes(jobRequest, '\0');
   
-  checkRcpJobSubmitterIsAuthorised(vdqmSocket.socket());
+  checkRcpJobSubmitterIsAuthorised(vdqmSock.socket());
   
-  RtcpTxRx::receiveRcpJobRqst(cuuid, vdqmSocket.socket(), RTCPDNETRWTIMEOUT,
+  RtcpTxRx::receiveRcpJobRqst(cuuid, vdqmSock.socket(), RTCPDNETRWTIMEOUT,
     jobRequest);
     
   // Extract the volume request ID, gateway host and gateway port
@@ -161,13 +161,13 @@ bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
   char vdqmReplyBuf[MSGBUFSIZ];
   size_t vdqmReplyLen = 0;
   vdqmReplyLen = RtcpMarshaller::marshall(vdqmReplyBuf, rtcpdReply);
-  net::writeBytes(vdqmSocket.socket(), RTCPDNETRWTIMEOUT, vdqmReplyLen,
+  net::writeBytes(vdqmSock.socket(), RTCPDNETRWTIMEOUT, vdqmReplyLen,
     vdqmReplyBuf);
 
   // Close the connection to the VDQM
   // Please note that the destructor of AbstractTCPSocket will not close the
   // socket a second time
-  vdqmSocket.close();
+  vdqmSock.close();
 
   // If RTCPD returned an error message then it will not make a callback
   // connection and the aggregator should not continue any further
@@ -179,7 +179,7 @@ bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
   // Accept the initial incoming RTCPD callback connection.
   // Wrap the socket file descriptor in a smart file descriptor so that it is
   // guaranteed to be closed when it goes out of scope.
-  rtcpdInitialSocketFd.reset(net::acceptConnection(rtcpdCallbackSocketFd,
+  rtcpdInitialSockFd.reset(net::acceptConnection(rtcpdCallbackSockFd,
     RTCPDCALLBACKTIMEOUT));
 
   // Log the connection
@@ -188,15 +188,15 @@ bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
     unsigned long  ip   = 0; // Client IP
     char           hostName[net::HOSTNAMEBUFLEN];
 
-    net::getPeerIpPort(rtcpdInitialSocketFd.get(), ip, port);
-    net::getPeerHostName(rtcpdInitialSocketFd.get(), hostName);
+    net::getPeerIpPort(rtcpdInitialSockFd.get(), ip, port);
+    net::getPeerHostName(rtcpdInitialSockFd.get(), hostName);
 
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId", volReqId),
       castor::dlf::Param("IP"      , castor::dlf::IPAddress(ip)  ),
       castor::dlf::Param("Port"    , port                        ),
       castor::dlf::Param("HostName", hostName                    ),
-      castor::dlf::Param("socketFd", rtcpdInitialSocketFd.get()  )};
+      castor::dlf::Param("socketFd", rtcpdInitialSockFd.get()  )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_INITIAL_RTCPD_CALLBACK_WITH_INFO, params);
   } catch(castor::exception::Exception &ex) {
@@ -206,7 +206,7 @@ bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
 
   // Get the request informatiom and the drive unit from RTCPD
   RtcpTapeRqstErrMsgBody rtcpdRequestInfoReply;
-  RtcpTxRx::getRequestInfoFromRtcpd(cuuid, volReqId, rtcpdInitialSocketFd.get(),
+  RtcpTxRx::getRequestInfoFromRtcpd(cuuid, volReqId, rtcpdInitialSockFd.get(),
     RTCPDNETRWTIMEOUT, rtcpdRequestInfoReply);
   utils::copyString(unit, rtcpdRequestInfoReply.unit);
 

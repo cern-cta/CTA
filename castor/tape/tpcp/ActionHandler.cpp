@@ -58,18 +58,17 @@ castor::tape::tpcp::ActionHandler::MsgHandlerMap::~MsgHandlerMap() {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tpcp::ActionHandler::ActionHandler(const bool debug,
-  TapeFseqRangeList &tapeFseqRanges, FilenameList &filenames,
-  const vmgr_tape_info &vmgrTapeInfo, const char *const dgn,
-  const uint64_t volReqId, castor::io::ServerSocket &callbackSocket) throw() :
-  m_debug(debug),
-  m_tapeFseqRanges(tapeFseqRanges),
+castor::tape::tpcp::ActionHandler::ActionHandler(ParsedCommandLine &cmdLine,
+  FilenameList &filenames, const vmgr_tape_info &vmgrTapeInfo,
+  const char *const dgn, const uint64_t volReqId,
+  castor::io::ServerSocket &callbackSock) throw() :
+  m_cmdLine(cmdLine),
   m_filenames(filenames),
   m_filenameItor(filenames.begin()),
   m_vmgrTapeInfo(vmgrTapeInfo),
   m_dgn(dgn),
   m_volReqId(volReqId),
-  m_callbackSocket(callbackSocket),
+  m_callbackSock(callbackSock),
   m_fileTransactionId(1) {
 }
 
@@ -89,14 +88,14 @@ bool castor::tape::tpcp::ActionHandler::dispatchMessage()
   throw(castor::exception::Exception) {
 
   // Socket file descriptor for a callback connection from the aggregator
-  int connectionSocketFd = 0;
+  int connectionSockFd = 0;
 
   // Wait for a callback connection from the aggregator
   {
     bool waitForCallback    = true;
     while(waitForCallback) {
       try {
-        connectionSocketFd = net::acceptConnection(m_callbackSocket.socket(),
+        connectionSockFd = net::acceptConnection(m_callbackSock.socket(),
           WAITCALLBACKTIMEOUT);
 
         waitForCallback = false;
@@ -110,24 +109,24 @@ bool castor::tape::tpcp::ActionHandler::dispatchMessage()
 
   // If debug, then display a textual description of the aggregator
   // callback connection
-  if(m_debug) {
+  if(m_cmdLine.debugSet) {
     std::ostream &os = std::cout;
 
     os << "Aggregator connection = ";
-    net::writeSocketDescription(os, connectionSocketFd);
+    net::writeSockDescription(os, connectionSockFd);
     os << std::endl;
   }
 
   // Wrap the connection socket descriptor in a CASTOR framework socket in
   // order to get access to the framework marshalling and un-marshalling
   // methods
-  castor::io::AbstractTCPSocket sock(connectionSocketFd);
+  castor::io::AbstractTCPSocket sock(connectionSockFd);
 
   // Read in the message sent by the aggregator
   std::auto_ptr<castor::IObject> obj(sock.readObject());
 
   // If debug, then display the type of message received from the aggregator
-  if(m_debug) {
+  if(m_cmdLine.debugSet) {
     std::ostream &os = std::cout;
 
     os << "Received aggregator message of type = "
@@ -198,7 +197,7 @@ bool castor::tape::tpcp::ActionHandler::handleEndNotification(
   tapegateway::EndNotification *msg = NULL;
 
   castMessage(obj, msg, sock);
-  Helper::displayReceivedMessageIfDebug(*msg, m_debug);
+  Helper::displayRcvdMsgIfDebug(*msg, m_cmdLine.debugSet);
 
   // Create the NotificationAcknowledge message for the aggregator
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
@@ -207,7 +206,7 @@ bool castor::tape::tpcp::ActionHandler::handleEndNotification(
   // Send the NotificationAcknowledge message to the aggregator
   sock.sendObject(acknowledge);
 
-  Helper::displaySentMessageIfDebug(acknowledge, m_debug);
+  Helper::displaySentMsgIfDebug(acknowledge, m_cmdLine.debugSet);
 
   return false;
 }
@@ -223,7 +222,7 @@ bool castor::tape::tpcp::ActionHandler::handleEndNotificationErrorReport(
   tapegateway::EndNotificationErrorReport *msg = NULL;
 
   castMessage(obj, msg, sock);
-  Helper::displayReceivedMessageIfDebug(*msg, m_debug);
+  Helper::displayRcvdMsgIfDebug(*msg, m_cmdLine.debugSet);
 
   // Create the NotificationAcknowledge message for the aggregator
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
@@ -232,7 +231,7 @@ bool castor::tape::tpcp::ActionHandler::handleEndNotificationErrorReport(
   // Send the NotificationAcknowledge message to the aggregator
   sock.sendObject(acknowledge);
 
-  Helper::displaySentMessageIfDebug(acknowledge, m_debug);
+  Helper::displaySentMsgIfDebug(acknowledge, m_cmdLine.debugSet);
 
   return false;
 }
@@ -245,14 +244,14 @@ void castor::tape::tpcp::ActionHandler::acknowledgeEndOfSession()
   throw(castor::exception::Exception) {
 
   // Socket file descriptor for a callback connection from the aggregator
-  int connectionSocketFd = 0;
+  int connectionSockFd = 0;
 
   // Wait for a callback connection from the aggregator
   {
     bool waitForCallback = true;
     while(waitForCallback) {
       try {
-        connectionSocketFd = net::acceptConnection(m_callbackSocket.socket(),
+        connectionSockFd = net::acceptConnection(m_callbackSock.socket(),
           WAITCALLBACKTIMEOUT);
 
         waitForCallback = false;
@@ -266,18 +265,18 @@ void castor::tape::tpcp::ActionHandler::acknowledgeEndOfSession()
 
   // If debug, then display a textual description of the aggregator
   // callback connection
-  if(m_debug) {
+  if(m_cmdLine.debugSet) {
     std::ostream &os = std::cout;
 
     os << "Aggregator connection = ";
-    net::writeSocketDescription(os, connectionSocketFd);
+    net::writeSockDescription(os, connectionSockFd);
     os << std::endl;
   }
 
   // Wrap the connection socket descriptor in a CASTOR framework socket in
   // order to get access to the framework marshalling and un-marshalling
   // methods
-  castor::io::AbstractTCPSocket sock(connectionSocketFd);
+  castor::io::AbstractTCPSocket sock(connectionSockFd);
 
   // Read in the object sent by the aggregator
   std::auto_ptr<castor::IObject> obj(sock.readObject());
@@ -286,7 +285,7 @@ void castor::tape::tpcp::ActionHandler::acknowledgeEndOfSession()
   tapegateway::EndNotification *endNotification = NULL;
 
   castMessage(obj.get(), endNotification, sock);
-  Helper::displayReceivedMessageIfDebug(*endNotification, m_debug);
+  Helper::displayRcvdMsgIfDebug(*endNotification, m_cmdLine.debugSet);
 
   // Create the NotificationAcknowledge message for the aggregator
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
@@ -298,7 +297,7 @@ void castor::tape::tpcp::ActionHandler::acknowledgeEndOfSession()
   // Close the connection to the aggregator
   sock.close();
 
-  Helper::displaySentMessageIfDebug(acknowledge, m_debug);
+  Helper::displaySentMsgIfDebug(acknowledge, m_cmdLine.debugSet);
 }
 
 
@@ -318,7 +317,7 @@ void castor::tape::tpcp::ActionHandler::sendEndNotificationErrorReport(
     // Send the message to the aggregator
     sock.sendObject(errorReport);
 
-    Helper::displaySentMessageIfDebug(errorReport, m_debug);
+    Helper::displaySentMsgIfDebug(errorReport, m_cmdLine.debugSet);
   } catch(...) {
     // Do nothing
   }

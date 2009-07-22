@@ -43,10 +43,9 @@ public:
    * See the header file of castor::tape::tpcp::ActionHandler for a description
    * of the parameters.
    */
-  Migrator(const bool debug, TapeFseqRangeList &tapeFseqRanges,
-    FilenameList &filenames, const vmgr_tape_info &vmgrTapeInfo,
-    const char *const dgn, const int volReqId,
-    castor::io::ServerSocket &callbackSocket) throw();
+  Migrator(ParsedCommandLine &cmdLine, FilenameList &filenames,
+    const vmgr_tape_info &vmgrTapeInfo, const char *const dgn,
+    const int volReqId, castor::io::ServerSocket &callbackSock) throw();
 
   /**
    * Destructor.
@@ -73,6 +72,18 @@ private:
    * being transfered.
    */
   FileTransferMap m_pendingFileTransfers;
+
+  /**
+   * The next tape file sequence number to be used when migrating using the
+   * TPPOSIT_FSEQ positioning method.  This member variable is not used with
+   * the TPPOSIT_EOI positioning method.
+   */
+  int32_t m_nextTapeFseq;
+
+  /**
+   * The number of successfully transfered files.
+   */
+  uint64_t m_nbMigratedFiles;
 
   /**
    * FileToMigrateRequest message handler.
@@ -109,11 +120,6 @@ private:
    */
   bool handleEndNotificationErrorReport(castor::IObject *obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
-
-  /**
-   * The number of successfully transfered files.
-   */
-  uint64_t m_nbMigratedFiles;
 
 }; // class Migrator
 
