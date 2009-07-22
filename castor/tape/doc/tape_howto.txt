@@ -2215,7 +2215,24 @@ silent
   if magic <= 0x0668
     printf "dummyInt=%d\n", dummyInt
   end
-  printf "position_method=%d\n", filereq->position_method
+  printf "position_method=%d ", filereq->position_method
+  if filereq->position_method == 0
+    printf "TPPOSIT_FSEQ\n"
+  else
+    if filereq->position_method == 1
+      printf "TPPOSIT_FID\n"
+    else
+      if filereq->position_method == 2
+        printf "TPPOSIT_EOI\n"
+      else
+        if filereq->position_method == 3
+          printf "TPPOSIT_BLKID\n"
+        else
+          printf "UNKNOWN\n"
+        end
+      end
+    end
+  end
   printf "tape_fseq=%d\n"      , filereq->tape_fseq
   printf "disk_fseq=%d\n"      , filereq->disk_fseq
   printf "blocksize=%d\n"      , filereq->blocksize
@@ -2227,7 +2244,7 @@ silent
   printf "convert=%d\n"        , filereq->convert
   printf "check_fid=%d\n"      , filereq->check_fid
   printf "concat=%d\n"         , filereq->concat
-  printf "proc_status="
+  printf "proc_status=%d "     , filereq->proc_status
   if filereq->proc_status == 0x1
     printf "RTCP_WAITING\n"
   else
@@ -2249,7 +2266,7 @@ silent
               if filereq->proc_status == 0x7
                 printf "RTCP_REQUEST_MORE_WORK\n"
               else
-                printf "UNKNOWN3\n"
+                printf "UNKNOWN\n"
               end
             end
           end
