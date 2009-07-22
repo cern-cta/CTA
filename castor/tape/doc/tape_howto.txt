@@ -2188,119 +2188,114 @@ silent
 if hdr != 0 && filereq != 0 && (hdr->reqtype == 0x2102 || hdr->reqtype == 0x2105)
   printf "\n"
   printf "\n"
+  printf "==================================\n"
   if whereto == SendTo
-    printf "==================================\n"
-    printf "Sending RTCP_FILE[ERR]_REQ message\n"
-    printf "==================================\n"
+    printf "Sending "
   else
-    printf "====================================\n"
-    printf "Receiving RTCP_FILE[ERR]_REQ message\n"
-    printf "====================================\n"
+    printf "Receiving "
   end
+
+  if hdr->reqtype == 0x2102
+    printf "RTCP_FILE_REQ message\n"
+  else
+    printf "RTCP_FILEERR_REQ message\n"
+  end
+  printf "==================================\n"
   printf "\n"
 
-  printf "len=%d\n"            , hdr->len
-  printf "file_path=%s\n"      , filereq->file_path
-  printf "tape_path=%s\n"      , filereq->tape_path
-  printf "recfm=%s\n"          , filereq->recfm
-  printf "fid=%s\n"            , filereq->fid
-  printf "ifce=%s\n"           , filereq->ifce
-  printf "stageID=%s\n"        , filereq->stageID
-  if magic <= 0x0668
-    printf "vmsopt_dummy=%s\n", vmsopt_dummy
-  end
-  printf "VolReqID=%d\n"       , filereq->VolReqID
-  printf "jobID=%d\n"          , filereq->jobID
-  printf "stageSubreqID=%d\n"  , filereq->stageSubreqID
-  printf "umask=%d\n"          , filereq->umask
-  if magic <= 0x0668
-    printf "dummyInt=%d\n", dummyInt
-  end
-  printf "position_method=%d ", filereq->position_method
-  if filereq->position_method == 0
-    printf "TPPOSIT_FSEQ\n"
-  else
-    if filereq->position_method == 1
-      printf "TPPOSIT_FID\n"
+  if whereto == SendTo
+    printf "file_path=%s\n"     , filereq->file_path
+    printf "tape_path=%s\n"     , filereq->tape_path
+    printf "recfm=%s\n"         , filereq->recfm
+    printf "fid=%s\n"           , filereq->fid
+    printf "ifce=%s\n"          , filereq->ifce
+    printf "stageID=%s\n"       , filereq->stageID
+    printf "VolReqID=%d\n"      , filereq->VolReqID
+    printf "jobID=%d\n"         , filereq->jobID
+    printf "stageSubreqID=%d\n" , filereq->stageSubreqID
+    printf "umask=%d\n"         , filereq->umask
+    printf "position_method=%d ", filereq->position_method
+    if filereq->position_method == 0
+      printf "TPPOSIT_FSEQ\n"
     else
-      if filereq->position_method == 2
-        printf "TPPOSIT_EOI\n"
+      if filereq->position_method == 1
+        printf "TPPOSIT_FID\n"
       else
-        if filereq->position_method == 3
-          printf "TPPOSIT_BLKID\n"
+        if filereq->position_method == 2
+          printf "TPPOSIT_EOI\n"
         else
-          printf "UNKNOWN\n"
+          if filereq->position_method == 3
+            printf "TPPOSIT_BLKID\n"
+          else
+            printf "UNKNOWN\n"
+          end
         end
       end
     end
-  end
-  printf "tape_fseq=%d\n"      , filereq->tape_fseq
-  printf "disk_fseq=%d\n"      , filereq->disk_fseq
-  printf "blocksize=%d\n"      , filereq->blocksize
-  printf "recordlength=%d\n"   , filereq->recordlength
-  printf "retention=%d\n"      , filereq->retention
-  printf "def_alloc=%d\n"      , filereq->def_alloc
-  printf "rtcp_err_action=%d\n", filereq->rtcp_err_action
-  printf "tp_err_action=%d\n"  , filereq->tp_err_action
-  printf "convert=%d\n"        , filereq->convert
-  printf "check_fid=%d\n"      , filereq->check_fid
-  printf "concat=%d\n"         , filereq->concat
-  printf "proc_status=%d "     , filereq->proc_status
-  if filereq->proc_status == 0x1
-    printf "RTCP_WAITING\n"
-  else
-    if filereq->proc_status == 0x2
-      printf "RTCP_POSITIONED\n"
+    printf "tape_fseq=%d\n"      , filereq->tape_fseq
+    printf "disk_fseq=%d\n"      , filereq->disk_fseq
+    printf "blocksize=%d\n"      , filereq->blocksize
+    printf "recordlength=%d\n"   , filereq->recordlength
+    printf "retention=%d\n"      , filereq->retention
+    printf "def_alloc=%d\n"      , filereq->def_alloc
+    printf "rtcp_err_action=%d\n", filereq->rtcp_err_action
+    printf "tp_err_action=%d\n"  , filereq->tp_err_action
+    printf "convert=%d\n"        , filereq->convert
+    printf "check_fid=%d\n"      , filereq->check_fid
+    printf "concat=%d\n"         , filereq->concat
+    printf "proc_status=%d "     , filereq->proc_status
+    if filereq->proc_status == 0x1
+      printf "RTCP_WAITING\n"
     else
-      if filereq->proc_status == 0x3
-        printf "RTCP_PARTIALLY_FINISHED\n"
+      if filereq->proc_status == 0x2
+        printf "RTCP_POSITIONED\n"
       else
-        if filereq->proc_status == 0x4
-          printf "RTCP_FINISHED\n"
+        if filereq->proc_status == 0x3
+          printf "RTCP_PARTIALLY_FINISHED\n"
         else
-          if filereq->proc_status == 0x5
-            printf "RTCP_EOV_HIT\n"
+          if filereq->proc_status == 0x4
+            printf "RTCP_FINISHED\n"
           else
-            if filereq->proc_status == 0x6
-              printf "RTCP_UNREACHABLE\n"
+            if filereq->proc_status == 0x5
+              printf "RTCP_EOV_HIT\n"
             else
-              if filereq->proc_status == 0x7
-                printf "RTCP_REQUEST_MORE_WORK\n"
+              if filereq->proc_status == 0x6
+                printf "RTCP_UNREACHABLE\n"
               else
-                printf "UNKNOWN\n"
+                if filereq->proc_status == 0x7
+                  printf "RTCP_REQUEST_MORE_WORK\n"
+                else
+                  printf "UNKNOWN\n"
+                end
               end
             end
           end
         end
       end
     end
-  end
-  printf "cprc=%d\n"              , filereq->cprc
-  printf "TStartPosition=%d\n"    , filereq->TStartPosition
-  printf "TEndPosition=%d\n"      , filereq->TEndPosition
-  printf "TStartTransferDisk=%d\n", filereq->TStartTransferDisk
-  printf "TEndTransferDisk=%d\n"  , filereq->TEndTransferDisk
-  printf "TStartTransferTape=%d\n", filereq->TStartTransferTape
-  printf "TEndTransferTape=%d\n"  , filereq->TEndTransferTape
-  printf "blockid[0]=%d\n"        , filereq->blockid[0]
-  printf "blockid[1]=%d\n"        , filereq->blockid[1]
-  printf "blockid[2]=%d\n"        , filereq->blockid[2]
-  printf "blockid[3]=%d\n"        , filereq->blockid[3]
-  printf "offset=%ld\n"           , filereq->offset
-  printf "bytes_in=%ld\n"         , filereq->bytes_in
-  printf "bytes_out=%ld\n"        , filereq->bytes_out
-  printf "host_bytes=%ld\n"       , filereq->host_bytes
-  printf "nbrecs=%ld\n"           , filereq->nbrecs
-  printf "maxnbrec=%ld\n"         , filereq->maxnbrec
-  printf "maxsize=%ld\n"          , filereq->maxsize
-  printf "startsize=%ld\n"        , filereq->startsize
-  if magic > 0x0668
+    printf "cprc=%d\n"              , filereq->cprc
+    printf "TStartPosition=%d\n"    , filereq->TStartPosition
+    printf "TEndPosition=%d\n"      , filereq->TEndPosition
+    printf "TStartTransferDisk=%d\n", filereq->TStartTransferDisk
+    printf "TEndTransferDisk=%d\n"  , filereq->TEndTransferDisk
+    printf "TStartTransferTape=%d\n", filereq->TStartTransferTape
+    printf "TEndTransferTape=%d\n"  , filereq->TEndTransferTape
+    printf "blockid[0]=%d\n"        , filereq->blockid[0]
+    printf "blockid[1]=%d\n"        , filereq->blockid[1]
+    printf "blockid[2]=%d\n"        , filereq->blockid[2]
+    printf "blockid[3]=%d\n"        , filereq->blockid[3]
+    printf "offset=%ld\n"           , filereq->offset
+    printf "bytes_in=%ld\n"         , filereq->bytes_in
+    printf "bytes_out=%ld\n"        , filereq->bytes_out
+    printf "host_bytes=%ld\n"       , filereq->host_bytes
+    printf "nbrecs=%ld\n"           , filereq->nbrecs
+    printf "maxnbrec=%ld\n"         , filereq->maxnbrec
+    printf "maxsize=%ld\n"          , filereq->maxsize
+    printf "startsize=%ld\n"        , filereq->startsize
     printf "castorSegAttr.nameServerHostName=%s\n", filereq->castorSegAttr.nameServerHostName
     printf "castorSegAttr.segmCksumAlgorithm=%s\n", filereq->castorSegAttr.segmCksumAlgorithm
     printf "castorSegAttr.segmCksum=%d\n"         , filereq->castorSegAttr.segmCksum
     printf "castorSegAttr.castorFileId=%ld\n"     , filereq->castorSegAttr.castorFileId
-  end
-  if magic > 0x0668
     printf "stgReqId->time_low=%d\n"                 , filereq->stgReqId.time_low
     printf "stgReqId->time_mid=%d\n"                 , filereq->stgReqId.time_mid
     printf "stgReqId->time_hi_and_version=%d\n"      , filereq->stgReqId.time_hi_and_version
@@ -2312,65 +2307,115 @@ if hdr != 0 && filereq != 0 && (hdr->reqtype == 0x2102 || hdr->reqtype == 0x2105
     printf "stgReqId->node[3]=%d\n"                  , filereq->stgReqId.node[3]
     printf "stgReqId->node[4]=%d\n"                  , filereq->stgReqId.node[4]
     printf "stgReqId->node[5]=%d\n"                  , filereq->stgReqId.node[5]
+    printf "err.errmsgtxt=%s\n"  , filereq->err.errmsgtxt
+    printf "err.severity=%d\n"   , filereq->err.severity
+    printf "err.errorcode=%d\n"  , filereq->err.errorcode
+    printf "err.max_tpretry=%d\n", filereq->err.max_tpretry
+    printf "err.max_cpretry=%d\n", filereq->err.max_cpretry
   end
 end
 
 if hdr != 0 && tapereq != 0 && (hdr->reqtype == 0x2101 || hdr->reqtype == 0x2104)
   printf "\n"
   printf "\n"
+  printf "==================================\n"
   if whereto == SendTo
-    printf "==================================\n"
-    printf "Sending RTCP_TAPE[ERR]_REQ message\n"
-    printf "==================================\n"
+    printf "Sending "
   else
-    printf "====================================\n"
-    printf "Receiving RTCP_TAPE[ERR]_REQ message\n"
-    printf "====================================\n"
+    printf "Receiving "
   end
+
+  if hdr->reqtype == 0x2101
+    printf "RTCP_TAPE_REQ message\n"
+  else
+    printf "RTCP_TAPEERR_REQ message\n"
+  end
+  printf "==================================\n"
   printf "\n"
 
-  printf "vid=%s\n"                                 , tapereq->vid
-  printf "vsn=%s\n"                                 , tapereq->vsn
-  printf "label=%s\n"                               , tapereq->label
-  printf "devtype=%s\n"                             , tapereq->devtype
-  printf "density=%s\n"                             , tapereq->density
-  printf "server=%s\n"                              , tapereq->server
-  printf "unit=%s\n"                                , tapereq->unit
-  printf "VolReqID=%d\n"                            , tapereq->VolReqID
-  printf "jobID=%d\n"                               , tapereq->jobID
-  printf "mode=%d\n"                                , tapereq->mode
-  printf "start_file=%d\n"                          , tapereq->start_file
-  printf "end_file=%d\n"                            , tapereq->end_file
-  printf "side=%d\n"                                , tapereq->side
-  printf "tprc=%d\n"                                , tapereq->tprc
-  printf "TStartRequest=%d\n"                       , tapereq->TStartRequest
-  printf "TEndRequest=%d\n"                         , tapereq->TEndRequest
-  printf "TStartRtcpd=%d\n"                         , tapereq->TStartRtcpd
-  printf "TStartMount=%d\n"                         , tapereq->TStartMount
-  printf "TEndMount=%d\n"                           , tapereq->TEndMount
-  printf "TStartUnmount=%d\n"                       , tapereq->TStartUnmount
-  printf "TEndUnmount=%d\n"                         , tapereq->TEndUnmount
-  printf "rtcpReqId->time_low=%d\n"                 , tapereq->rtcpReqId.time_low
-  printf "rtcpReqId->time_mid=%d\n"                 , tapereq->rtcpReqId.time_mid
-  printf "rtcpReqId->time_hi_and_version=%d\n"      , tapereq->rtcpReqId.time_hi_and_version
-  printf "rtcpReqId->clock_seq_hi_and_reserved=%d\n", tapereq->rtcpReqId.clock_seq_hi_and_reserved
-  printf "rtcpReqId->clock_seq_low=%d\n"            , tapereq->rtcpReqId.clock_seq_low
-  printf "rtcpReqId->node[0]=%d\n"                  , tapereq->rtcpReqId.node[0]
-  printf "rtcpReqId->node[1]=%d\n"                  , tapereq->rtcpReqId.node[1]
-  printf "rtcpReqId->node[2]=%d\n"                  , tapereq->rtcpReqId.node[2]
-  printf "rtcpReqId->node[3]=%d\n"                  , tapereq->rtcpReqId.node[3]
-  printf "rtcpReqId->node[4]=%d\n"                  , tapereq->rtcpReqId.node[4]
-  printf "rtcpReqId->node[5]=%d\n"                  , tapereq->rtcpReqId.node[5]
+  if whereto == SendTo
+    printf "vid=%s\n"          , tapereq->vid
+    printf "vsn=%s\n"          , tapereq->vsn
+    printf "label=%s\n"        , tapereq->label
+    printf "devtype=%s\n"      , tapereq->devtype
+    printf "density=%s\n"      , tapereq->density
+    printf "server=%s\n"       , tapereq->server
+    printf "unit=%s\n"         , tapereq->unit
+    printf "VolReqID=%d\n"     , tapereq->VolReqID
+    printf "jobID=%d\n"        , tapereq->jobID
+    printf "mode=%d\n"         , tapereq->mode
+    printf "start_file=%d\n"   , tapereq->start_file
+    printf "end_file=%d\n"     , tapereq->end_file
+    printf "side=%d\n"         , tapereq->side
+    printf "tprc=%d\n"         , tapereq->tprc
+    printf "TStartRequest=%d\n", tapereq->TStartRequest
+    printf "TEndRequest=%d\n"  , tapereq->TEndRequest
+    printf "TStartRtcpd=%d\n"  , tapereq->TStartRtcpd
+    printf "TStartMount=%d\n"  , tapereq->TStartMount
+    printf "TEndMount=%d\n"    , tapereq->TEndMount
+    printf "TStartUnmount=%d\n", tapereq->TStartUnmount
+    printf "TEndUnmount=%d\n"  , tapereq->TEndUnmount
+    printf "rtcpReqId->time_low=%d\n"                 , tapereq->rtcpReqId.time_low
+    printf "rtcpReqId->time_mid=%d\n"                 , tapereq->rtcpReqId.time_mid
+    printf "rtcpReqId->time_hi_and_version=%d\n"      , tapereq->rtcpReqId.time_hi_and_version
+    printf "rtcpReqId->clock_seq_hi_and_reserved=%d\n", tapereq->rtcpReqId.clock_seq_hi_and_reserved
+    printf "rtcpReqId->clock_seq_low=%d\n"            , tapereq->rtcpReqId.clock_seq_low
+    printf "rtcpReqId->node[0]=%d\n"                  , tapereq->rtcpReqId.node[0]
+    printf "rtcpReqId->node[1]=%d\n"                  , tapereq->rtcpReqId.node[1]
+    printf "rtcpReqId->node[2]=%d\n"                  , tapereq->rtcpReqId.node[2]
+    printf "rtcpReqId->node[3]=%d\n"                  , tapereq->rtcpReqId.node[3]
+    printf "rtcpReqId->node[4]=%d\n"                  , tapereq->rtcpReqId.node[4]
+    printf "rtcpReqId->node[5]=%d\n"                  , tapereq->rtcpReqId.node[5]
+    printf "err.errmsgtxt=%s\n"  , tapereq->err.errmsgtxt
+    printf "err.severity=%d\n"   , tapereq->err.severity
+    printf "err.errorcode=%d\n"  , tapereq->err.errorcode
+    printf "err.max_tpretry=%d\n", tapereq->err.max_tpretry
+    printf "err.max_cpretry=%d\n", tapereq->err.max_cpretry
+  end
 end
 
 c
 end
 
+b rtcp_SendTpDump
+commands
+silent
+
+if dumpreq != 0
+  printf "\n"
+  printf "\n"
+  printf "==================================\n"
+  if whereto == SendTo
+    printf "Sending "
+  else
+    printf "Receiving "
+  end
+  print "RTCP_DUMPTAPE_REQ message\n"
+  printf "==================================\n"
+  printf "\n"
+
+  if whereto == SendTo
+    printf " dumpreq->maxbyte=%d\n"      , dumpreq->maxbyte
+    printf " dumpreq->blocksize=%d\n"    , dumpreq->blocksize
+    printf " dumpreq->convert=%d\n"      , dumpreq->convert
+    printf " dumpreq->tp_err_action=%d\n", dumpreq->tp_err_action
+    printf " dumpreq->startfile=%d\n"    , dumpreq->startfile
+    printf " dumpreq->maxfile=%d\n"      , dumpreq->maxfile
+    printf " dumpreq->fromblock=%d\n"    , dumpreq->fromblock
+    printf " dumpreq->toblock=%d\n"      , dumpreq->toblock
+  end
+end
+
+c
+end
+
+
 run
 quit
 HERE
 
-LD_LIBRARY_PATH=`find $CASTOR_CVS -name '*.so*' | sed 's|/[^/]*$||' | sort | uniq`
+LD_LIBRARY_PATH=`find $CASTOR_CVS -name '*.so*' | sed 's|/[^/]*$||' | sort |
+uniq`
 LD_LIBRARY_PATH=`echo $LD_LIBRARY_PATH | sed 's/ /:/g'`
 CMD="export LD_LIBRARY_PATH=$LD_LIBRARY_PATH; gdb -x /tmp/trace_tpwrite.command_list --args $CASTOR_CVS/rtcopy/tpwrite $PARAMS"
 
@@ -2379,5 +2424,3 @@ if test $USER = root; then
 else
   sh -c "$CMD"
 fi
-
-***************    END OF trace_tpwrite.sh CONTENTS    *******************
