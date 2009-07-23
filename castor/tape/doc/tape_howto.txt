@@ -2163,6 +2163,7 @@ dumptape and DATE is the current date accurate to the nearest second. Please
 note that the script relies on the fact that rtcpc_SendRecv.c:400 is the last
 line of the RTCP client function rtcp_Transfer().
 
+
 #!/bin/sh
 
 PARAMS=$@
@@ -2217,6 +2218,13 @@ fi
 DATE=`date | sed 's/ /_/g;s/:/_/g'`
 GDB_COMMAND_FILE=/tmp/trace_$1.gdb_command_file
 GDB_LOG_FILE="/tmp/trace_$1.$DATE.output"
+
+echo "=======================================================" >  $GDB_LOG_FILE
+echo "Running"                                                 >> $GDB_LOG_FILE
+echo "$PARAMS"                                                 >> $GDB_LOG_FILE
+echo "=======================================================" >> $GDB_LOG_FILE
+echo                                                           >> $GDB_LOG_FILE
+chmod 666 $GDB_LOG_FILE
 
 cat > $GDB_COMMAND_FILE << HERE
 set height 0
