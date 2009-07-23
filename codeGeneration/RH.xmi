@@ -346,7 +346,7 @@ This request is there to avoid the jobs on the diskservers to handle a connectio
             <UML:Generalization xmi.idref="98432" />
            </UML:GeneralizableElement.generalization>
           </UML:Class>
-          <UML:Class stereotype="53500" comment="Request for telling the stager which files caused a failure when the gcDaemon tried to delete them" isSpecification="false" isLeaf="false" visibility="public" namespace="2105" xmi.id="96766" isRoot="false" isAbstract="false" name="FilesDeletionFailed" >
+          <UML:Class stereotype="53500" comment="Request for telling the stager which files caused a failure when the GC daemon tried to delete them" isSpecification="false" isLeaf="false" visibility="public" namespace="2105" xmi.id="96766" isRoot="false" isAbstract="false" name="FilesDeletionFailed" >
            <UML:GeneralizableElement.generalization>
             <UML:Generalization xmi.idref="98433" />
            </UML:GeneralizableElement.generalization>
@@ -1054,7 +1054,7 @@ Resources can be allocated to one or many projects are are composed of a set of 
             <UML:Attribute comment="The mountPoint of the concerned fileSystem" isSpecification="false" visibility="public" xmi.id="cjHmQXZAMIau" type="137289" name="mountPoint" />
            </UML:Classifier.feature>
           </UML:Class>
-          <UML:Class stereotype="53500" comment="Message ack used by the rmMasterDaemon to send the node status, as computed by the master, back to the rmNodeDaemon, as seen" isSpecification="false" isLeaf="false" visibility="public" namespace="178139" xmi.id="8MsXQ4qQHi0N" isRoot="false" isAbstract="false" name="MonitorMessageAck" >
+          <UML:Class stereotype="53500" comment="Message ack used by the rmmaster daemon to send the node status, as computed by the master, back to the rmnode daemon, as seen" isSpecification="false" isLeaf="false" visibility="public" namespace="178139" xmi.id="8MsXQ4qQHi0N" isRoot="false" isAbstract="false" name="MonitorMessageAck" >
            <UML:GeneralizableElement.generalization>
             <UML:Generalization xmi.idref="b8cEFclAcDv2" />
            </UML:GeneralizableElement.generalization>
