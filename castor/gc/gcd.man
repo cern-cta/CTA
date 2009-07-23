@@ -1,0 +1,45 @@
+.TH gcd 8 "$Date: 2009/07/23 12:18:44 $" CASTOR "Garbage Collector daemon"
+.SH NAME
+gcd \- CASTOR2 Garbage Collector daemon
+.SH SYNOPSIS
+.B gcd
+[ 
+.BI -f
+]
+[
+.BI -c " <config-file>"
+]
+[
+.BI -h
+]
+.LP
+The
+.B gcd
+is the CASTOR2 garbage collector daemon which periodically sends a request to the stager for the list of files which should be removed from the local filesystem to free up disk space and to synchronize the contains of the filesystems with the stager and nameserver. If no options are specified on the command-line then the default configuration file (usually \fI/etc/castor/castor.conf\fR) will be used.
+
+The
+.B -f, --foreground
+option forces the
+.B gcd
+to run in the foreground. The default is to run in the background as a "daemon".
+
+The
+.B -c, --config
+option instructs the 
+.B gcd 
+to load its configuration settings from the file pointed to by \fI<config-file>
+
+.SH FILES
+All configuration settings for the
+.B gcd
+can found in
+.B /etc/castor/castor.conf
+
+By default all log messages from the
+.B gcd
+are written too
+.B /var/spool/gc/log
+as well as the Distributed Logging Facility.
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

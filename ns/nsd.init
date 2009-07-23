@@ -1,0 +1,185 @@
+#! /bin/sh
+#
+#/******************************************************************************
+#                      nsd.init
+#
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
+#
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+# @(#)$RCSfile: nsd.init,v $ $Revision: 1.1 $ $Release$ $Date: 2009/07/23 12:18:46 $ $Author: waldron $
+#
+# chkconfig: 345 66 39
+# description: NS server daemo
+#
+# @author castor dev team
+#*****************************************************************************/
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# Variables
+prog="nsd"
+FRETVAL=0
+RETVAL=0
+
+# Source sysconfig files
+if [ -f /etc/sysconfig/castor ]; then
+        . /etc/sysconfig/castor
+fi
+if [ -f /etc/sysconfig/$prog ]; then
+        . /etc/sysconfig/$prog
+fi
+
+start() {
+        # Run daemon
+        echo -n $"Starting $prog: "
+        echo
+
+        # Set location of globus libraries
+        LD_LIBRARY_PATH=/opt/globus/lib
+        export LD_LIBRARY_PATH
+
+        # Start nsds
+        for i in ${ROLES}; do
+
+                # Load the appropriate sysconfig file for role
+                if [ -f /etc/sysconfig/$prog.$i ]; then
+                        . /etc/sysconfig/$prog.$i
+                else
+                        # Load default
+                        if [ -f /etc/sysconfig/$prog ]; then
+                                . /etc/sysconfig/$prog
+                        fi
+                fi
+                echo -n $"Starting $prog for role: $i "
+
+                # Check to see if the nsd for this role is already running
+                pid=`pidofproc $prog.$i`
+                if [ -n "$pid" ]; then
+                        echo -n $"- already started"
+                        failure
+                        echo
+                        FRETVAL=1
+                else
+                        cd /var/spool/ns
+                        daemon /usr/bin/$prog $NSD_OPTIONS
+
+                        # Write the pid to a file.
+                        RETVAL=$?
+                        if [ $RETVAL -eq 0 ]; then
+                                pid=`ps -eo pid,ppid,comm,cmd | egrep " 1 $prog.*$NSD_OPTIONS\$" | awk '{print $1}'`
+                                rm -f /var/run/$prog.$i.pid
+                                if [ -n "$pid" ]; then
+                                        echo $pid > /var/run/$prog.$i.pid
+                                        RETVAL=0
+                                else
+                                        RETVAL=1
+                                fi
+                        fi
+
+                        [ $RETVAL -eq 0 ] && success $"$base startup" || failure $"$base startup"
+                        echo
+                        if [ $RETVAL -eq 0 ]; then
+                                touch /var/lock/subsys/$prog.$i
+                        else
+                                FRETVAL=$RETVAL
+                        fi
+                fi
+        done
+
+        RETVAL=$FRETVAL
+        return $RETVAL
+}
+
+stop() {
+        echo -n $"Stopping $prog: $1 "
+        if [ -n "$1" ]; then
+                killproc $prog.$1
+        else
+                killproc $prog
+        fi
+        RETVAL=$?
+        echo
+        if [ -n "$1" ]; then
+                [ -f /var/lock/subsys/$prog.$1 ] && rm -f /var/lock/subsys/$prog.$1
+        else
+                rm -f /var/lock/subsys/$prog.*
+        fi
+        return $RETVAL
+}
+
+status() {
+        # Loop over nsds
+        for i in ${ROLES}; do
+                # Check if the nsd associated to this role running
+                pid=`pidofproc $prog.$i`
+                if [ -n "$pid" ]; then
+                        echo $"$prog for role: $i (pid $pid) is running..."
+                        continue
+                else
+                        # See if /var/lock/subsys/$prog.$i exists
+                        if [ -f /var/lock/subsys/$prog.$i ]; then
+                                echo $"$prog for role: $i dead but subsys locked"
+                        else
+                                echo $"$prog for role: $i is stopped"
+                        fi
+                        RETVAL=1
+                fi
+        done
+        return $RETVAL
+}
+
+restart() {
+        stop $1
+        start $1
+}
+
+# Check for roles
+if [ -n "$2" ]; then
+        ROLES=$2
+elif [ -z "${ROLES}" ]; then
+        ROLES="public"
+fi
+
+# See how we were called
+case "$1" in
+
+        start)
+                start $2
+                ;;
+        stop)
+                stop $2
+                ;;
+        status)
+                status
+                ;;
+        restart)
+                restart $2
+                ;;
+        condrestart)
+                if [ -n "$2" ]; then
+                        [ -f /var/lock/subsys/$prog.$2 ] && restart $2 || :
+                elif [ -z "$2" ]; then
+                        count=`find /var/lock/subsys/ -name $prog.* -type f | wc -l`
+                        [ $count -gt 0 ] && restart || :
+                fi
+                ;;
+        *)
+                echo $"Usage: $0 {start|stop|status|restart|condrestart} [role]"
+                exit 1
+esac
+
+exit $RETVAL

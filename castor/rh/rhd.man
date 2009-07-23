@@ -1,0 +1,70 @@
+.lf 8 rhd.man
+.TH RHD 8 "2007/08/16 16:50:00 CERN IT-FIO" CASTOR "request handler"
+.SH NAME
+rhd \- start the CASTOR Request Handler daemon
+.SH SYNOPSIS
+.B rhd
+[
+.BI -f
+]
+[
+.BI -h
+]
+[
+.BI -s
+]
+[
+.BI -c
+.BI <config-file>
+]
+[
+.BI -p
+.BI <port>
+]
+[
+.BI -R
+.BI <nb\ threads>
+]
+.SH DESCRIPTION
+.LP
+The
+.B rhd
+command starts the CASTOR request handler daemon,
+which is the user entry point into the CASTOR system.
+.LP
+
+.SH OPTIONS
+
+.TP
+.BI \-f,\ \-\-foreground
+runs in foreground mode (no daemonization).
+.TP
+.BI \-h,\ \-\-help
+displays command usage help.
+.TP
+.BI \-s,\ \-\-secure
+runs the daemon in secure mode
+.TP
+.BI \-c,\ \-\-config\ <config-file>
+specified the location of the configuration file to use. The default value
+is /etc/castor/castor.conf.
+.TP
+.BI \-R,\ \-\-Rthreads\ <nb\ threads>
+specifies the number of threads to use to handle client requests. Default is 20.
+.TP
+.BI \-p,\ \-\-port\ <port>
+specifies the port on which to listen for client request. The default port for the
+unsecure daemon is 9002 and for the secure is 9007.
+The port can also be overwritten using the RH_PORT enviroment variable or
+by having a RH/PORT entry in the /etc/castor/castor.conf file.
+.TP
+.BI \-b,\ \-\-bw
+specifies whether black and white list support is enabled.
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
+
+
+
+

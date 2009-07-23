@@ -1,0 +1,46 @@
+.TH RECHANDLERD 8 "2006/02/28 12:00:00 CERN IT-FIO" CASTOR "recall handler daemon"
+.SH NAME
+rechandlerd \- start the recall handler daemon
+.SH SYNOPSIS
+.B rechandlerd [-f] [-t time] 
+.SH DESCRIPTION
+.LP
+The 
+.B rechandlerd 
+command starts the rechandler daemon
+which trigger the recall from tape periodically.
+The tapes involed in the process are the one in STOPPED. 
+
+.LP
+A parameter in the 
+.B /etc/castor/castor.conf 
+specify the location of the file where all the policy function are declared. 
+
+e.g.:
+.B Policy Recall /etc/castor/policies/recallPolicies.py
+
+Then for each svcclass we specify in the database the function that we want to execute between the ones declared in the file.
+If no function is specified we set the tape as pending and we start to recall from it as soon as possible.
+The same we do if anything goes wrong in calling the policy for a tape.
+  
+.LP
+The recallHandler daemon execute its actions every 48 seconds by default but this option can be changed using -t comand line option.
+e.g. 
+.B rechandlerd -t 120
+
+.LP
+All 
+.B rechandlerd
+activity is logged using the Distributed Logging Facility (DLF).
+.LP 
+.B rechandlerd -f
+starts the daemon 
+in foreground mode. Should not be used normally.  
+.LP
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
+
+
+
+

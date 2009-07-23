@@ -1,0 +1,20 @@
+# Arguments for the nsd
+#   -c <path>      configuration file
+#   -l <logfile>  
+#   -m <mapfile>
+#   -r
+#   -t <nbthreads
+#   -s  
+#
+# Options to pass to the ns daemon
+#NSD_OPTIONS=
+
+# Should we run with another limit on the core file size than the default?
+DAEMON_COREFILE_LIMIT=unlimited
+
+# What roles should the nsd run for. For each role you can overwrite
+# the default options using a dedicate sysconfig file 
+# e.g. /etc/sysconfig/nsd.<role>. The role based mechanism allows for
+# multiple nsd's running with different options to be controlled via
+# the same initd script
+#ROLES=

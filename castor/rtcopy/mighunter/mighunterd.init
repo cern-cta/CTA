@@ -1,0 +1,243 @@
+#! /bin/sh
+#
+#/*****************************************************************************
+#                      mighunterd.init
+#
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
+#
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+# @(#)$RCSfile: mighunterd.init,v $ $Revision: 1.1 $ $Release$ $Date: 2009/07/23 12:18:45 $ $Author: waldron $
+#
+# chkconfig: 345 73 32
+# description: Mighunter Daemon Initialisation Script
+#
+# @author castor dev team
+#*****************************************************************************/
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# Variables
+prog="mighunterd"
+FRETVAL=0
+RETVAL=0
+SVCCLASSES_PER_PROCESS=1
+
+# Source sysconfig files
+if [ -f /etc/sysconfig/castor ]; then
+        . /etc/sysconfig/castor
+fi
+if [ -f /etc/sysconfig/$prog ]; then
+        . /etc/sysconfig/$prog
+fi
+
+start() {
+        # Run daemon
+        echo -n $"Starting mighunter: "
+
+        # Check for service classes
+        if [ -n "$1" ]; then
+                SVCCLASSES=$1
+        elif [ -z "${SVCCLASSES}" ]; then
+                echo -n $"no service classes defined"
+                failure && echo && exit 1
+        fi
+
+        # Check for multi process, multi service class mode
+        if [ "${SVCCLASSES_PER_PROCESS}" -gt 1 ]; then
+
+                # Check to see if the mighunter daemon is already runnig
+                pid=`ps -eo pid,ppid,comm | egrep " 1 $prog\$" | awk '{print $1}' | xargs`
+                if [ -n "$pid" ]; then
+                        echo -n $"- already started"
+                        failure
+                        echo
+                        return $RETVAL;
+                fi
+                echo
+
+                # Loop over the service classes
+                # Note: we change the internal field separator here to loop 
+                # over the svcclass list using ':' as a delimiter
+                IFS=$':'
+                for i in `echo $SVCCLASSES | xargs -n ${SVCCLASSES_PER_PROCESS} | awk '{ print $0 ":" }' | xargs | sed 's/: /:/g'`; do
+                        
+                        # Reset IFS so that the standard function calls 
+                        # (e.g. daemon) work correctly.
+                        unset IFS
+                        echo -n $"  For svcclasses: "
+                        if [ `echo $i | wc -m` -gt 35 ]; then
+                                echo -n "`echo $i | cut -c1-35`..."
+                        else
+                                echo -n "$i"
+                        fi
+
+                        # Start the mighunter
+                        cd /var/spool/mighunter
+                        daemon /usr/bin/$prog $MIGHUNTERD_OPTIONS $i
+                        
+                        RETVAL=$?
+                        [ $RETVAL -eq 0 ] && success $"$base startup" || failure $"$base startup"
+                        echo
+                        [ $RETVAL -eq 0 ] && touch /var/lock/subsys/$prog || FRETVAL=$RETVAL
+                done
+                unset IFS
+
+                RETVAL=$FRETVAL
+                return $RETVAL
+        fi
+        echo
+
+        # Start mighunters with multiple processes
+        for i in ${SVCCLASSES}; do
+
+                # Load the appropriate sysconfig file for service class
+                if [ -f /etc/sysconfig/$prog.$i ]; then
+                        . /etc/sysconfig/$prog.$i
+                else
+                        # Load default
+                        if [ -f /etc/sysconfig/$prog ]; then
+                                . /etc/sysconfig/$prog
+                        fi
+                fi
+                echo -n $"  For svcclass: $i "
+
+                # Checking to see if the mighunter daemon is already running
+                pid=`ps -eo pid,ppid,comm,cmd | egrep " 1 $prog.*$i\$" | awk '{print $1}' | xargs`
+                if [ -n "$pid" ]; then
+                        echo -n $"- already started"
+                        failure
+                        echo
+                        FRETVAL=1
+                else
+                        cd /var/spool/mighunter
+                        daemon /usr/bin/$prog $MIGHUNTERD_OPTIONS $i
+
+                        # Write the pid to a file.
+                        RETVAL=$?
+                        if [ $RETVAL -eq 0 ]; then
+                                pid=`ps -eo pid,ppid,comm,cmd | egrep " 1 $prog.*$i\$" | awk '{print $1}'`
+                                rm -f /var/run/$prog.$i.pid
+                                if [ -n "$pid" ]; then
+                                        echo $pid > /var/run/$prog.$i.pid
+                                        RETVAL=0
+                                else
+                                        RETVAL=1
+                                fi
+                        fi
+
+                        [ $RETVAL -eq 0 ] && success $"$base startup" || failure $"$base startup"
+                        echo
+                        if [ $RETVAL -eq 0 ]; then
+                                touch /var/lock/subsys/$prog.$i
+                        else
+                                FRETVAL=$RETVAL
+                        fi
+                fi
+        done
+
+        RETVAL=$FRETVAL
+        return $RETVAL
+}
+
+stop() {
+        echo -n $"Stopping mighunter: $1 "
+        if [ -n "$1" ]; then
+                killproc $prog.$1
+        else
+                killproc $prog
+        fi
+        RETVAL=$?
+        echo
+        if [ -n "$1" ]; then
+                [ -f /var/lock/subsys/$prog.$1 ] && rm -f /var/lock/subsys/$prog.$1
+        else
+                rm -f /var/lock/subsys/$prog
+                rm -f /var/lock/subsys/$prog.*
+        fi
+        return $RETVAL
+}
+
+migstatus() {
+        # If running in multi process, multi service class mode just check the
+        # existence of the main daemon
+        if [ "${SVCCLASSES_PER_PROCESS}" -gt 1 ]; then
+                status $prog
+                return $?
+        fi
+
+        # Loop over mighunters
+        for i in ${SVCCLASSES}; do
+                # Check if the mighunter associated to this service class 
+                # running
+                pid=`ps -eo pid,ppid,comm,cmd | egrep " 1 $prog.*$i\$" | awk '{print $1}' | xargs`
+                if [ -n "$pid" ]; then
+                        echo $"mighunter for svcclass: $i (pid $pid) is running..."
+                        continue
+                else
+                        # See if /var/lock/subsys/$prog.$i exists
+                        if [ -f /var/lock/subsys/$prog.$i ]; then
+                                echo $"mighunter for svcclass: $i dead but subsys locked"
+                        else
+                                echo $"mighunter for svcclass: $i is stopped"
+                        fi
+                        RETVAL=1
+                fi
+        done
+        return $RETVAL
+}
+
+restart() {
+        stop $1
+        start $1
+}
+
+# The svcclass option is not permitted when the mighunter daemon is running in
+# a multi service class, multi process mode
+if [ "${SVCCLASSES_PER_PROCESS}" -gt 1 -a -n "$2" ]; then
+        echo -n $"svcclass option cannot be specified when SVCCLASSES_PER_PROCESS is greater than 1"
+        echo && exit 1
+fi
+
+# See how we were called
+case "$1" in
+
+        start)
+                start $2
+                ;;
+        stop)
+                stop $2
+                ;;
+        status)
+                migstatus
+                ;;
+        restart)
+                restart $2
+                ;;
+        condrestart)
+                if [ -n "$2" ]; then
+                        [ -f /var/lock/subsys/$prog.$2 ] && restart $2 || :
+                elif [ -z "$2" ]; then
+                        count=`find /var/lock/subsys/ -name $prog.* -type f | wc -l`
+                        [ $count -gt 0 ] && restart || :
+                fi
+                ;;
+        *)
+                echo $"Usage: $0 {start|stop|status|restart|condrestart} [svcclass]"
+                exit 1
+esac
+
+exit $RETVAL

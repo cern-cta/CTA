@@ -1,0 +1,229 @@
+.\" @(#)$RCSfile: taped.man,v $ $Revision: 1.1 $ $Date: 2009/07/23 12:18:46 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-2003 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH TAPED 8 "$Date: 2009/07/23 12:18:46 $" CASTOR "Ctape Administrator Commands"
+.SH NAME
+taped \- starts the tape daemon
+.SH SYNOPSIS
+.B  /usr/bin/taped
+.SH DESCRIPTION
+.LP
+The 
+.B taped
+command starts the tape daemon.
+This command is usually executed at system startup time
+.RB ( /etc/rc.local ).
+This will read the configuration file
+/etc/TPCONFIG and look for requests. Short requests like
+.B tpstat
+are processed in the main loop. The daemon forks overlays to execute
+long requests like mounting, positionning, unloading tapes or configuring
+drives.
+.LP
+All error messages and statistical information are kept in a log.
+.LP
+The tape daemon listen port number can be defined on client hosts and
+on the tape server itself in either of the following ways:
+.RS
+.LP
+setting an environment variable TAPE_PORT
+.RS
+.HP
+setenv TAPE_PORT 5011
+.RE
+.LP
+an entry in
+.B /etc/castor/castor.conf
+like:
+.RS
+.HP
+TAPE	PORT	5011
+.RE
+.LP
+an entry in
+.B /etc/services
+like:
+.RS
+.HP
+tape          5011/tcp                        # CASTOR tape daemon
+.RE
+.RE
+.LP
+If none of these methods is used, the default port number is taken from the
+definition of TAPE_PORT in Ctape_constants.h.
+.LP
+There must be one entry in the configuration file per tape drive giving:
+.RS
+.TP 1.2i
+drive name
+as seen by the operators in the mount messages.
+The name cannot exceed
+.B CA_MAXUNMLEN
+characters.
+.TP
+device group
+must be a member of an installation defined set of "device groups".
+It cannot exceed
+.B CA_MAXDGNLEN
+characters.
+.TP
+device name
+as defined in /dev.
+The device must not rewind on close and have a Berkeley behaviour.
+The name cannot exceed
+.B CA_MAXDVNLEN
+characters.
+.TP
+density
+corresponding to the entry in /dev.
+The supported alphanumeric densities are:
+.br
+.B 1600
+or
+.B 6250
+for round (IBM 3420) tapes,
+.B 38000
+for standard IBM 3480 cartridges,
+.B 38KC
+for 3480 cartridges with compaction (IDRC),
+.B 38KD
+for double density IBM 3490 cartridges,
+.B 38KDC
+for 3490 cartridges with compaction (IDRC),
+.BR 8200 ,
+.BR 8200C ,
+.B 8500
+or
+.B 8500C
+for Exabytes,
+.B DDS
+or
+.B DDSC
+for DAT cartridges,
+.BR 2G ,
+.BR 6G ,
+.BR 10G ,
+.BR 10GC ,
+.BR 20G ,
+.BR 20GC ,
+.BR 35G ,
+.BR 35GC ,
+.B 40G
+or
+.B 40GC
+for DLT cartridges,
+.B 10G
+or
+.B 10GC
+for IBM 3590 cartridges,
+.B 40G
+or
+.B 40GC
+for IBM 3590E cartridges,
+.BR 10G ,
+.BR 10GC ,
+.BR 25G ,
+.BR 25GC ,
+.B 50G
+or
+.B 50GC
+for Redwood cartridges,
+.B 20G
+or
+.B 20GC
+for STK 9840 cassettes,
+.B 60G
+or
+.B 60GC
+for STK 9940 cartridges,
+.B 100G
+or
+.B 100GC
+for LTO cartridges. If
+.B 0
+is specified, the tape daemon does not check the density and does not set it on the drive either.
+.TP
+initial status
+.B up
+or
+.B down
+.TP
+robot/manual
+if the drive is defined as part of a
+.BR robot ,
+there will be no check on the ring status. This field may also be set to
+.BI lmcp xxxx
+(Library Manager Control Point as defined in /dev)
+if the IBM 3494/3495 robot is driven directly from an RS 6000,
+.BI acs a,l,p,d [,noro]
+for an STK robot driven by ACSLS ("noro" disables the use of the acs_mount read-only flag, when mounting tapes for reading; This is useful for the L700 library that does not support this flag),
+.BI R x
+for a SONY DMS-24 or
+.BI smc x,d
+for a SCSI robot (
+.BI smc x
+as defined in /dev,
+.I n
+is the drive ordinal).
+.TP
+device type
+for IBM
+.B 3480
+compatible drives, IBM
+.BR 3590 ,
+STK
+.B SD3
+(Redwood), STK
+.BR 9840 ,
+STK
+.B 9940
+or drives equipped with Vision Boxes from Peripheral Vision
+.RB ( /VB ) ,
+the drive LED display will show
+the vid requested or mounted or error messages like "wrong ring" or "wrong vsn".
+For
+.BR DLT s,
+.BR LTO s,
+.BR SD3 s
+.BR 9840 s
+and
+.BR 9940 s
+connected to DEC alpha or Linux systems or IBM
+.BR 3590 s
+connected to AIX or Linux platforms, fast tape positionning is used.
+.RE
+.LP
+If a tape drive supports several densities, there must be one line per density.
+.SH FILES
+.TP 1.5i
+.B /etc/castor/castor.conf
+.TP
+.B /etc/TPCONFIG
+configuration file
+.TP
+.B /var/spool/tape/log
+.SH EXAMPLES
+.LP
+Here is an example of a configuration file:
+
+.nf
+.ft CW
+# 				Tape configuration
+#
+# drive	  dev		dev		density		initial	robot/	dev
+# name	  group		name		(0 = N/A)	status	manual	type
+#
+cart0     CART		/dev/nrmt0	0		up	manual	3480
+cart1     CART		/dev/nrmt1	0		up	manual	3480
+exab0     8500		/dev/nrmt9	8500		up	manual	8500/VB
+.ft
+.fi
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR msgd(1) ,
+.BR msgdaemon(1) ,
+.BR oper(1) ,
+.B rep(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
