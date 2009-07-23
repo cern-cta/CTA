@@ -288,14 +288,14 @@ char **argv;
 
 	main_args.argc = argc;
 	main_args.argv = argv;
-	if ((maxfds = Cinitdaemon ("rmc_serv", NULL)) < 0)
+	if ((maxfds = Cinitdaemon ("rmcd", NULL)) < 0)
 		exit (SYERR);
 	exit (rmc_main (&main_args));
 }
 #else
 main()
 {
-	if (Cinitservice ("rmc_serv", &rmc_main))
+	if (Cinitservice ("rmcd", &rmc_main))
 		exit (SYERR);
 }
 #endif
