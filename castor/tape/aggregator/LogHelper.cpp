@@ -46,7 +46,7 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
     castor::dlf::Param("deviceGroupName", body.deviceGroupName),
     castor::dlf::Param("driveName"      , body.driveName      ),
     castor::dlf::Param("clientUserName" , body.clientUserName )};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, message_no, params);
+  castor::dlf::dlf_writep(cuuid, severity, message_no, params);
 }
 
 
@@ -62,7 +62,7 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
     castor::dlf::Param("socketFd"    , socketFd         ),
     castor::dlf::Param("status"      , body.status      ),
     castor::dlf::Param("errorMessage", body.errorMessage)};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, message_no, params);
+  castor::dlf::dlf_writep(cuuid, severity, message_no, params);
 }
 
 
@@ -103,7 +103,7 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
     castor::dlf::Param("err.maxTpRetry", body.err.maxTpRetry),
     castor::dlf::Param("err.maxCpRetry", body.err.maxCpRetry)};
 
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, message_no, params);
+  castor::dlf::dlf_writep(cuuid, severity, message_no, params);
 }
 
 
@@ -139,7 +139,7 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
     castor::dlf::Param("tEndUnmount"   , body.tEndUnmount   ),
     castor::dlf::Param("rtcpReqId"     , body.rtcpReqId     )};
 
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, message_no, params);
+  castor::dlf::dlf_writep(cuuid, severity, message_no, params);
 }
 
 
@@ -214,7 +214,7 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
     castor::dlf::Param("err.maxTpRetry"      , body.err.maxTpRetry      ),
     castor::dlf::Param("err.maxCpRetry"      , body.err.maxCpRetry      )};
 
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, message_no, params);
+  castor::dlf::dlf_writep(cuuid, severity, message_no, params);
 }
 
 
@@ -284,7 +284,7 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
     castor::dlf::Param("segAttr.castorFileId", body.segAttr.castorFileId),
     castor::dlf::Param("stgReqId"            , body.stgReqId            )};
 
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, message_no, params);
+  castor::dlf::dlf_writep(cuuid, severity, message_no, params);
 }
 
 
@@ -299,7 +299,7 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
     castor::dlf::Param("volReqId", volReqId    ),
     castor::dlf::Param("socketFd", socketFd    ),
     castor::dlf::Param("message" , body.message)};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, message_no, params);
+  castor::dlf::dlf_writep(cuuid, severity, message_no, params);
 }
 
 
@@ -313,7 +313,7 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   castor::dlf::Param params[] = {
     castor::dlf::Param("volReqId", volReqId),
     castor::dlf::Param("socketFd", socketFd)};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, message_no, params);
+  castor::dlf::dlf_writep(cuuid, severity, message_no, params);
 }
 
 
@@ -327,7 +327,7 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   castor::dlf::Param params[] = {
     castor::dlf::Param("volReqId", volReqId),
     castor::dlf::Param("socketFd", socketFd)};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, message_no, params);
+  castor::dlf::dlf_writep(cuuid, severity, message_no, params);
 }
 
 
@@ -337,4 +337,22 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 void castor::tape::aggregator::LogHelper::logMsg(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
   const int socketFd, const tapegateway::Volume &msg) throw() {
+
+ castor::dlf::Param params[] = {
+      castor::dlf::Param("mountTransactionId", msg.mountTransactionId()),
+      castor::dlf::Param("vid"               , msg.vid()               ),
+      castor::dlf::Param("density"           , msg.density()           ),
+      castor::dlf::Param("label"             , msg.label()             ),
+      castor::dlf::Param("dumpTapeMaxBytes"  , msg.dumpTapeMaxBytes()  ),
+      castor::dlf::Param("dumpTapeBlockSize" , msg.dumpTapeBlockSize() ),
+      castor::dlf::Param("dumpTapeConverter" , msg.dumpTapeConverter() ),
+      castor::dlf::Param("dumpTapeErrAction" , msg.dumpTapeErrAction() ),
+      castor::dlf::Param("dumpTapeStartFile" , msg.dumpTapeStartFile() ),
+      castor::dlf::Param("dumpTapeMaxFile"   , msg.dumpTapeMaxFile()   ),
+      castor::dlf::Param("dumpTapeFromBlock" , msg.dumpTapeFromBlock() ),
+      castor::dlf::Param("dumpTapeToBlock"   , msg.dumpTapeToBlock()   ),
+      castor::dlf::Param("id"                , msg.id()                ),
+      castor::dlf::Param("mode"              , msg.mode()              )};
+    castor::dlf::dlf_writep(cuuid, severity, message_no, params);
+
 }
