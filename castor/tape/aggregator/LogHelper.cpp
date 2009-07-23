@@ -329,3 +329,12 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
     castor::dlf::Param("socketFd", socketFd)};
   castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, message_no, params);
 }
+
+
+//-----------------------------------------------------------------------------
+// logMsgBody
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::LogHelper::logMsg(const Cuuid_t &cuuid,
+  const int severity, const int message_no, const uint32_t volReqId,
+  const int socketFd, const tapegateway::Volume &msg) throw() {
+}
