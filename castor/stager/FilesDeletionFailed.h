@@ -42,7 +42,7 @@ struct Cstager_SvcClass_t;
 /* --------------------------------------------------------------------------
   This defines a C interface to the following class
 // class FilesDeletionFailed
-// Request for telling the stager which files caused a failure when the gcDaemon
+// Request for telling the stager which files caused a failure when the GC daemon
 // tried to delete them
   -------------------------------------------------------------------------- */
 

@@ -110,7 +110,7 @@ namespace castor {
       /*********************************/
       /**
        * Get the value of m_jobID
-       * The jobID is given by the tpdaemon to the tape drive, when a job has been
+       * The jobID is given by the tape daemon to the tape drive, when a job has been
        * assigned.
        * @return the value of m_jobID
        */
@@ -120,7 +120,7 @@ namespace castor {
 
       /**
        * Set the value of m_jobID
-       * The jobID is given by the tpdaemon to the tape drive, when a job has been
+       * The jobID is given by the tape daemon to the tape drive, when a job has been
        * assigned.
        * @param new_var the new value of m_jobID
        */
@@ -417,7 +417,7 @@ namespace castor {
 
     private:
 
-      /// The jobID is given by the tpdaemon to the tape drive, when a job has been assigned.
+      /// The jobID is given by the tape daemon to the tape drive, when a job has been assigned.
       int m_jobID;
 
       /// The time, when the tape drive begins with its job or modified it
