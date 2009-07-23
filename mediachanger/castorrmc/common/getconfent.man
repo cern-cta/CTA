@@ -1,8 +1,8 @@
-.\" @(#)@(#)$RCSfile: getconfent.man,v $ $Revision: 1.8 $ $Date: 2009/03/23 14:44:18 $ CERN IT-PDP/DC Frederic Hemmer
+.\" @(#)@(#)$RCSfile: getconfent.man,v $ $Revision: 1.9 $ $Date: 2009/07/23 12:22:02 $ CERN IT-PDP/DC Frederic Hemmer
 .\" Copyright (C) 1990-2000 by CERN/IT/PDP/DC
 .\" All rights reserved
 .\"
-.TH GETCONFENT 3 "$Date: 2009/03/23 14:44:18 $" CASTOR "Common Library Functions"
+.TH GETCONFENT 3 "$Date: 2009/07/23 12:22:02 $" CASTOR "Common Library Functions"
 .SH NAME
 getconfent, getconfent_r \- Get configuration entry
 .SH SYNOPSIS
@@ -121,7 +121,6 @@ may be set to one of the following values:
 .B SENOCONFIG
 can't open configuration file.
 .SH "SEE ALSO"
-.BR shift.conf(4),
 .BR Cthread_create(3)
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

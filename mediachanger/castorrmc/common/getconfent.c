@@ -14,9 +14,9 @@
 
 #ifndef PATH_CONFIG
 #if defined(_WIN32)
-#define PATH_CONFIG "%SystemRoot%\\system32\\drivers\\etc\\shift.conf"
+#define PATH_CONFIG "%SystemRoot%\\system32\\drivers\\etc\\castor\\castor.conf"
 #else
-#define PATH_CONFIG "/etc/shift.conf"
+#define PATH_CONFIG "/etc/castor/castor.conf"
 #endif
 #endif /* PATH_CONFIG */
 
