@@ -1,5 +1,0 @@
-#
-# $Id: repackserver.sysconfig,v 1.5 2008/05/20 07:55:21 waldron Exp $
-#
-# Should we run with another limit on the core file size other than the default?
-DAEMON_COREFILE_LIMIT=unlimited
