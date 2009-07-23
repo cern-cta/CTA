@@ -1,4 +1,4 @@
 if [ "$1" = 0 ]; then
-    /sbin/service mighunter stop > /dev/null 2>&1 || :
-    /sbin/chkconfig --del mighunter
+    /sbin/service mighunterd stop > /dev/null 2>&1 || :
+    /sbin/chkconfig --del mighunterd
 fi

@@ -1,2 +1,2 @@
-/sbin/chkconfig --add rhserver
-/sbin/service rhserver condrestart > /dev/null 2>&1 || :
+/sbin/chkconfig --add rhd
+/sbin/service rhd condrestart > /dev/null 2>&1 || :

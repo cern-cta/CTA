@@ -341,7 +341,7 @@ void castor::job::stagerjob::RfioPlugin::execMover
              "-g", arg_G.str().c_str(),
              context.fullDestPath.c_str(),NULL);
     } else {
-      // The flags are the same as in unsecure mode so the stagerJob
+      // The flags are the same as in unsecure mode so the stagerjob
       // can work with rfiod unsecure (provisional)
       execl (progfullpath.c_str(), progname.c_str(),
              "-1", "-s", "-l", "-n", "-f", logFile.c_str(),

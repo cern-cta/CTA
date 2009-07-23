@@ -1,2 +1,2 @@
-/sbin/chkconfig --add nsdaemon
-/sbin/service nsdaemon condrestart > /dev/null 2>&1 || :
+/sbin/chkconfig --add nsd
+/sbin/service nsd condrestart > /dev/null 2>&1 || :

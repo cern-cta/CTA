@@ -5,7 +5,7 @@
 #   -p <port>    the port number that the daemon will listen on for connections from tape movers
 #   -u <name>    the user login name under which the daemon should run
 #
-# Options to pass to the jobManager
+# Options to pass to the rtcpclientd
 #RTCPCLIENTD_OPTIONS=
 
 # Should we run with another limit on the core file size than the default?

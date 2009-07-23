@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.692 $ $Date: 2009/07/15 13:28:55 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.693 $ $Date: 2009/07/23 12:21:55 $ $Author: waldron $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -339,7 +339,7 @@ BEGIN
     EXIT WHEN totalCount >= 10000;
   END LOOP;
 
-  -- Now select all the BEINGDELETED diskcopies in this diskserver for the gcDaemon
+  -- Now select all the BEINGDELETED diskcopies in this diskserver for the GC daemon
   OPEN files FOR
     SELECT /*+ INDEX(CastorFile PK_CastorFile_ID) */ FileSystem.mountPoint || DiskCopy.path,
            DiskCopy.id,
@@ -699,7 +699,7 @@ CREATE OR REPLACE PROCEDURE deleteFailedDiskCopies(timeOut IN NUMBER) AS
 BEGIN
   -- select INVALID diskcopies without filesystem (they can exist after a
   -- stageRm that came before the diskcopy had been created on disk) and ALL FAILED
-  -- ones (coming from failed recalls or failed removals from the gcDaemon).
+  -- ones (coming from failed recalls or failed removals from the GC daemon).
   -- Note that we don't select INVALID diskcopies from recreation of files
   -- because they are taken by the standard GC as they physically exist on disk.
   SELECT id

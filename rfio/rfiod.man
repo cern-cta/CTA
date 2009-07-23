@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfiod.man,v 1.3 2009/02/10 13:45:09 waldron Exp $
+.\" $Id: rfiod.man,v 1.4 2009/07/23 12:22:04 waldron Exp $
 .\"
-.\" @(#)$RCSfile: rfiod.man,v $ $Revision: 1.3 $ $Date: 2009/02/10 13:45:09 $ CERN/IT/PDP/DM
+.\" @(#)$RCSfile: rfiod.man,v $ $Revision: 1.4 $ $Date: 2009/07/23 12:22:04 $ CERN/IT/PDP/DM
 .\" Copyright (C) 1990-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIOD 1 "$Date: 2009/02/10 13:45:09 $" CASTOR "Rfio Administrator Commands"
+.TH RFIOD 1 "$Date: 2009/07/23 12:22:04 $" CASTOR "Rfio Administrator Commands"
 .SH NAME
 rfiod\- Remote file access daemon
 .SH SYNOPSIS
@@ -31,7 +31,7 @@ error and "syslog" which will send to syslog.
 .TP
 .B \-l
 Turn on printing of log messages. Default output device is in
-.BR /usr/spool/rfio/rfiod.log .
+.BR /var/spool/rfio/rfiod.log .
 .TP
 .BI \-p " port"
 Specify a network port for the service to listen on. If this option
@@ -85,6 +85,6 @@ Group id of the client.This option should be present when rfiod runs in secure m
 .RE
 .SH "SEE ALSO"
 .BR syslog(8) ,
-.B tcp(4)
+.B tcp(7)
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

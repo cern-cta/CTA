@@ -1,5 +1,5 @@
 /*
- * $Id: vmgr_main.c,v 1.12 2009/04/06 12:37:20 waldron Exp $
+ * $Id: vmgr_main.c,v 1.13 2009/07/23 12:22:06 waldron Exp $
  *
  * Copyright (C) 1999-2003 by CERN/IT/PDP/DM
  * All rights reserved
@@ -247,13 +247,13 @@ int main(argc, argv)
 #if ! defined(_WIN32)
   struct main_args main_args;
 
-  if ((maxfds = Cinitdaemon ("vmgr_serv", NULL)) < 0)
+  if ((maxfds = Cinitdaemon ("vmgrd", NULL)) < 0)
     exit (SYERR);
   main_args.argc = argc;
   main_args.argv = argv;
   exit (vmgr_main (&main_args));
 #else
-  if (Cinitservice ("vmgr", &vmgr_main))
+  if (Cinitservice ("vmgrd", &vmgr_main))
     exit (SYERR);
 #endif
 }

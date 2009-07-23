@@ -172,7 +172,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkConsistency()
     
     
     if ( ptr_driveRequest->status & VDQM_UNIT_BUSY ) {
-      // If we are here, the tpdaemon has sent a busy status 
+      // If we are here, the tape daemon has sent a busy status 
       // which must be checked. If this method succeed, we switched to
       // UNIT_STARTING mode.
       checkBusyConsistency();
@@ -248,7 +248,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkBusyConsistency()
      castor::exception::Exception ex(EVQBADSTAT);
     ex.getMessage()
       << "TapeDriveConsistencyChecker::checkBusyConsistency(): "
-         "bad status from tpdaemon! FREE + BUSY doesn't fit together" 
+         "bad status from tape daemon! FREE + BUSY doesn't fit together" 
       << std::endl;      
     throw ex;
   }

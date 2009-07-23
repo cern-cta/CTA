@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: PrepRequestSvcThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/01/15 14:50:46 $ $Author: itglp $
+* @(#)$RCSfile: PrepRequestSvcThread.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2009/07/23 12:22:00 $ $Author: waldron $
 *
 * Service thread for handling Prepare (prestage) requests
 *
@@ -51,7 +51,7 @@ namespace castor {
         
       private:
       
-        /// jobManager host and port
+        /// jobmanager daemon host and port
         std::string m_jobManagerHost;
         unsigned m_jobManagerPort;
   

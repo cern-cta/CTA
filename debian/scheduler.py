@@ -1,7 +1,7 @@
 ######################################################################################
 #
 # CASTOR2 LSF Plugin - Sample Policy File
-# $Id: scheduler.py,v 1.2 2008/03/04 06:57:06 waldron Exp $
+# $Id: scheduler.py,v 1.3 2009/07/23 12:22:03 waldron Exp $
 #
 ######################################################################################
 
@@ -25,9 +25,9 @@ import random
 # Note:
 #   These variables are not a true reflection of the state of a disk server and is its 
 #   file system(s) but an approximation based on the monitoring information collected 
-#   by the rmMasterDaemon with a predicated load added to the values whenever a file 
+#   by the rmmaster daemon with a predicted load added to the values whenever a file 
 #   system is selected to run a job. When new monitoring information is received by the
-#   rmMasterDaemon the predicated values are reset to 0.
+#   rmmaster daemon the predicted values are reset to 0.
 
 # General identifiers
 Diskserver              = "" 

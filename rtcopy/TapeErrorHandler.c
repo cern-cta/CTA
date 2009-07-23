@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.26 $ $Release$ $Date: 2009/07/13 06:22:09 $ $Author: waldron $
+ * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.27 $ $Release$ $Date: 2009/07/23 12:22:05 $ $Author: waldron $
  *
  *
  *
@@ -786,7 +786,7 @@ static int checkRecallRetry(
     rc = -1;
   } else if ( rc < 0 ) {
     /*
-     * The call to the expert system failed. Log it and let the next TapeErrorHandler pick
+     * The call to the expert system failed. Log it and let the next tperrhandler pick
      * up the segment with the hope that the error was temporary.
      */
     save_serrno = serrno;
@@ -823,7 +823,7 @@ static int checkRecallRetry(
  * Trigger a migration retry:
  *  - update status of failed Segment to SEGMENT_RETRY
  *  - update status of associated TapeCopy to TAPECOPY_CREATED allowing
- *    it to be picked up at next MigHunter iteration.
+ *    it to be picked up at next mighunter iteration.
  */
 static int doMigrationRetry(
                             segment,
@@ -889,7 +889,7 @@ static int doMigrationRetry(
     free(streamArray);
   } else {
     /*
-     * Else, the MigHunter must re-attach it
+     * Else, the mighunter must re-attach it
      */
     Cstager_TapeCopy_setStatus(tapeCopy,TAPECOPY_CREATED);
   }
@@ -1331,7 +1331,7 @@ static int checkMigrationRetry(
     rc = -1;
   } else if ( rc < 0 ) {
     /*
-     * The call to the expert system failed. Log it and let the next TapeErrorHandler pick
+     * The call to the expert system failed. Log it and let the next tperrhandler pick
      * up the segment with the hope that the error was temporary.
      */
     save_serrno = serrno;

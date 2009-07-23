@@ -37,12 +37,12 @@ DependsOnLibrary(../db/cnv,castorcnvs)
 DependsOnLibrary(../infoPolicy,castorinfopolicy)
 DependsOnLibrary(../../vdqm,castorvdqm)
 
-RECHANDLERDAEMONBIN_SRCS = RecHandlerDaemon.cpp RecHandlerThread.cpp  ora/OraRecHandlerSvc.cpp
-RECHANDLERDAEMONBIN_OBJS = $(RECHANDLERDAEMONBIN_SRCS:.cpp=.Osuf)
-NormalProgramTarget(recHandlerDaemon,$(RECHANDLERDAEMONBIN_OBJS),$(DEPLIB),$(LIBS),750)
+RECHANDLERDBIN_SRCS = RecHandlerDaemon.cpp RecHandlerThread.cpp  ora/OraRecHandlerSvc.cpp
+RECHANDLERDBIN_OBJS = $(RECHANDLERDBIN_SRCS:.cpp=.Osuf)
+NormalProgramTarget(rechandlerd,$(RECHANDLERDBIN_OBJS),$(DEPLIB),$(LIBS),750)
 MakeDir(/var/spool/rechandler,0755)
-ADMMANPAGE(recHandlerDaemon)
+ADMMANPAGE(rechandlerd)
 LOGROTATE(castor-rechandler-server,../../..,install)
-SYSCONFIG(rechandler,install)
-INITSCRIPT(rechandler,install)
+SYSCONFIG(rechandlerd,install)
+INITSCRIPT(rechandlerd,install)
 EXAMPLEFILE(rechandler.py,../../../debian,/etc/castor/policies,install)

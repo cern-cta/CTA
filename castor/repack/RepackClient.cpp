@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.47 $ $Release$ $Date: 2009/07/13 06:22:06 $ $Author: waldron $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.48 $ $Release$ $Date: 2009/07/23 12:21:58 $ $Author: waldron $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the
@@ -131,7 +131,7 @@ RepackClient::RepackClient()
 {
   /* the default server port */
   m_defaultport = CSP_REPACKSERVER_PORT;
-  /* the default repackserver host */
+  /* the default repack server host */
   m_defaulthost = "localhost";
   std::string clientname = "RepackClient";
 
@@ -470,7 +470,7 @@ void RepackClient::handleResponse(castor::repack::RepackAck* ack) {
 	    std::cout<<"No tape found"<<std::endl;
 	    break;
     default:
-      std::cout << "No Answer from the repackserver" << std::endl;
+      std::cout << "No Answer from the repack server" << std::endl;
       exit(1);
     }
     return;

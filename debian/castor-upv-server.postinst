@@ -1,2 +1,2 @@
-/sbin/chkconfig --add Cupvdaemon
-/sbin/service Cupvdaemon condrestart > /dev/null 2>&1 || :
+/sbin/chkconfig --add cupvd
+/sbin/service cupvd condrestart > /dev/null 2>&1 || :

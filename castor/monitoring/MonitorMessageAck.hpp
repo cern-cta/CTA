@@ -49,8 +49,8 @@ namespace castor {
 
     /**
      * class MonitorMessageAck
-     * Message ack used by the rmMasterDaemon to send the node status, as computed by
-     * the master, back to the rmNodeDaemon, as seen
+     * Message ack used by the rmmaster daemon to send the node status, as computed by
+     * the master, back to the rmnode daemon, as seen
      */
     class MonitorMessageAck : public castor::MessageAck {
 

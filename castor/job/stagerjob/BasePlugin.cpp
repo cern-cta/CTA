@@ -19,7 +19,7 @@
  *
  * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
- * Base class for a stagerJob plugin
+ * Base class for a stagerjob plugin
  *
  * @author Sebastien Ponce
  *****************************************************************************/

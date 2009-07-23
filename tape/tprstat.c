@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: tprstat.c,v $ $Revision: 1.2 $ $Date: 2007/03/01 16:41:37 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: tprstat.c,v $ $Revision: 1.3 $ $Date: 2009/07/23 12:22:05 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	tprstat - resource reservation status display */
@@ -63,7 +63,7 @@ char	**argv;
 		printf ("userid      jid dgn        rsvd used\n");
 		for (i = 0; i < c; i++) {
 			if (i == 0)
-				strcpy (name, "tpdaemon");
+				strcpy (name, "taped");
 			else {
 				if ((pwd = getpwuid (rsv_status[i].uid)) == NULL) {
 					sprintf (name, "%d", rsv_status[i].uid);

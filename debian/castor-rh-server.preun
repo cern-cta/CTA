@@ -1,4 +1,4 @@
 if [ "$1" = 0 ]; then
-    /sbin/service rhserver stop > /dev/null 2>&1 || :
-    /sbin/chkconfig --del rhserver
+    /sbin/service rhd stop > /dev/null 2>&1 || :
+    /sbin/chkconfig --del rhd
 fi

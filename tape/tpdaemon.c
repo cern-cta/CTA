@@ -1,12 +1,12 @@
 /*
- * $Id: tpdaemon.c,v 1.20 2009/06/22 09:01:56 wiebalck Exp $
+ * $Id: tpdaemon.c,v 1.21 2009/07/23 12:22:05 waldron Exp $
  *
  * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.20 $ $Date: 2009/06/22 09:01:56 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.21 $ $Date: 2009/07/23 12:22:05 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -60,7 +60,7 @@ char func[16];
 int jid;
 int maxfds;
 int nbdgp;		/* number of device groups */
-int nbjobs = 1;		/* number of jobs + 1 (tpdaemon itself) */
+int nbjobs = 1;		/* number of jobs + 1 (tape daemon itself) */
 int nbtpdrives;		/* number of tape drives */
 fd_set readfd, readmask;
 struct rlsq *rlsqp;	/* pointer to rls queue */
@@ -158,12 +158,12 @@ struct main_args *main_args;
         }
         tl_tpdaemon.tl_init( &tl_tpdaemon, 0 );
 
-	strcpy (func, "tpdaemon");
+	strcpy (func, "taped");
 	jid = getpid();
 	tplogit (func, "started\n");
         tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
                             "func",    TL_MSG_PARAM_STR, func,
-                            "Message", TL_MSG_PARAM_STR, "tpdaemon has started." );
+                            "Message", TL_MSG_PARAM_STR, "tape daemon has started." );
 #if SACCT
 	tapeacct (TPDSTART, 0, 0, jid, "", "", "", 0, 0);
 #endif
@@ -377,7 +377,7 @@ struct main_args *main_args;
             /* 
                Placing the config check into the outer IF avoids to
                open the config file every CHECKI (i.e. 10) seconds, but 
-               preserves the capability to do config changes w/o tpdaemon 
+               preserves the capability to do config changes w/o tape daemon 
                restart. However, changes to the config file to take effect 
                can take as long as (old) vdqmchkintvl seconds. 
             */
@@ -398,7 +398,7 @@ struct main_args *main_args;
 
                     /* 
                        If the drive has been unassigned since the last check and 
-                       tpdaemon thinks the drive is idle ... 
+                       tape daemon thinks the drive is idle ... 
                     */
                     int drvidle = tpdrvidle(tunp);
                     if (drvidle && (tunp->unasn_time > lasttime_vdqm_update)) {
@@ -414,7 +414,7 @@ struct main_args *main_args;
 
                             /* 
                                ... update VDQM. We explicitely do not check (vdqmstate == UP|FREE) here, since
-                               VDQM changes the state to UP|BUSY before contacting tpdaemon. The latter should 
+                               VDQM changes the state to UP|BUSY before contacting tape daemon. The latter should 
                                not reset the state to UP|FREE in that case. 
                             */
                             int vdqm_rc;
@@ -480,14 +480,14 @@ char **argv;
 	main_args.argc = argc;
 	main_args.argv = argv;
 
-	if ((maxfds = Cinitdaemon ("tpdaemon", wait4child)) < 0)
+	if ((maxfds = Cinitdaemon ("taped", wait4child)) < 0)
 		exit (1);
 	exit (tpd_main (&main_args));
 }
 #else
 main()
 {
-	if (Cinitservice ("tpdaemon", &tpd_main))
+	if (Cinitservice ("taped", &tpd_main))
 		exit (1);
 }
 #endif
@@ -2969,7 +2969,7 @@ void check_child_exit()
 #endif
 
 /* 
-** Check if the drive is available for use. Since tpdaemon
+** Check if the drive is available for use. Since the tape daemon
 ** is the only one changing the assignment status of drives,
 ** there should be no race with the child changing the drive's
 ** state in VDQM. 

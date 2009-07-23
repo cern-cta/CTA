@@ -101,7 +101,7 @@ namespace castor {
       throw (castor::exception::Exception);
           
       /**
-       * Waits for an acknowledgement of the old tpdaemon, that the
+       * Waits for an acknowledgement of the old tape daemon, that the
        * vdqm server has stored its request.
        * 
        * @return The message type, which has been send from the client

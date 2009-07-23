@@ -1,4 +1,4 @@
 if [ "$1" = 0 ]; then
-    /sbin/service rmMasterDaemon stop > /dev/null 2>&1 || :
-    /sbin/chkconfig --del rmMasterDaemon
+    /sbin/service rmmasterd stop > /dev/null 2>&1 || :
+    /sbin/chkconfig --del rmmasterd
 fi

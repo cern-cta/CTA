@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Csec_api.man,v $ $Revision: 1.5 $ $Date: 2008/01/16 15:37:27 $ CERN IT-ADC/CA Benjamin Couturier
+.\" @(#)$RCSfile: Csec_api.man,v $ $Revision: 1.6 $ $Date: 2009/07/23 12:22:05 $ CERN IT-ADC/CA Benjamin Couturier
 .\" Copyright (C) 2004 by CERN/IT/ADC/CA
 .\" All rights reserved
 .\"
-.TH CSEC_API 3 "$Date: 2008/01/16 15:37:27 $" CASTOR "CASTOR Security Functions"
+.TH CSEC_API 3 "$Date: 2009/07/23 12:22:05 $" CASTOR "CASTOR Security Functions"
 .SH NAME
 Csec_api \- Provides authentication in CASTOR services
 .SH SYNOPSIS
@@ -172,7 +172,7 @@ function.
 environment variable or 
 .B "CSEC MECH" 
 entry in 
-.B /etc/shift.conf 
+.B /etc/castor/castor.conf 
 .br
 This environment variable contains the list of protocols to be used for authentication. The variable has precedence over the 
 CASTOR configuration file.

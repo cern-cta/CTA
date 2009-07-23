@@ -366,7 +366,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolUnmountStatus()
     castor::exception::Exception ex(EVQBADSTAT);
     ex.getMessage()
       << "TapeDriveStatusHandler::handleVolUnmountStatus(): "
-         "bad status from tpdaemon! Can't unmount tape in this status! "
+         "bad status from tape daemon! Can't unmount tape in this status! "
          "TapeDrive is set to STATUS_UNKNOWN." 
       << std::endl;      
     throw ex;    

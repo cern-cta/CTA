@@ -1,2 +1,2 @@
-/sbin/chkconfig --add rmNodeDaemon
-/sbin/service rmNodeDaemon condrestart > /dev/null 2>&1 || :
+/sbin/chkconfig --add rmnoded
+/sbin/service rmnoded condrestart > /dev/null 2>&1 || :

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseTapeSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/04/02 15:26:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseTapeSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2009/07/23 12:21:59 $ $Author: waldron $
  *
  * Basic implementation of ITapeSvc.
  * This class only implements the functions that are not DB related.
@@ -53,7 +53,7 @@ namespace castor {
       BaseTapeSvc() throw(castor::exception::Exception);
 
       /**
-       * Sends a UDP message to the rmMasterDaemon to inform it
+       * Sends a UDP message to the rmmaster daemon to inform it
        * of the creation or deletion of a stream on a given
        * machine/filesystem. This method is always successful
        * although there is no guaranty that the UDP package is

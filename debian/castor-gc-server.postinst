@@ -1,4 +1,4 @@
-/sbin/chkconfig --add gcDaemon
-/sbin/service gcDaemon condrestart > /dev/null 2>&1 || :
+/sbin/chkconfig --add gcd
+/sbin/service gcd condrestart > /dev/null 2>&1 || :
 /bin/chown stage:st /var/spool/gc
 /bin/chown stage:st /var/spool/gc/log > /dev/null 2>&1

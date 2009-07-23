@@ -1,5 +1,5 @@
 /*
- * $Id: alrm.c,v 1.6 2008/07/31 13:16:54 sponcec3 Exp $
+ * $Id: alrm.c,v 1.7 2009/07/23 12:22:04 waldron Exp $
  */
 
 /*
@@ -18,7 +18,7 @@
 #include <alrm.h>
 
 #ifndef RFIO_ALRM
-#define RFIO_ALRM "/usr/spool/rfio/rfio_alrm"
+#define RFIO_ALRM "/var/spool/rfio/rfio_alrm"
 #endif
 #ifndef LOGSIZELIM
 #define LOGSIZELIM 102400

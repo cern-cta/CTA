@@ -46,10 +46,10 @@ DependsOnLibrary(../../dlf,castordlf)
 DependsOnLibrary(..,castorclient)
 DependsOnLibrary(,castormonitor)
 
-RMNODEDAEMONBIN_SRCS = MetricsThread.cpp StateThread.cpp RmNodeDaemon.cpp
-RMNODEDAEMONBIN_OBJS = $(RMNODEDAEMONBIN_SRCS:.cpp=.Osuf)
-NormalProgramTarget(rmNodeDaemon,$(RMNODEDAEMONBIN_OBJS),$(DEPLIB),$(LIBS),750)
+RMNODEDBIN_SRCS = MetricsThread.cpp StateThread.cpp RmNodeDaemon.cpp
+RMNODEDBIN_OBJS = $(RMNODEDBIN_SRCS:.cpp=.Osuf)
+NormalProgramTarget(rmnoded,$(RMNODEDBIN_OBJS),$(DEPLIB),$(LIBS),750)
 MakeDir(/var/spool/rmnode,0755)
 LOGROTATE(castor-rmnode-server,../../..,install)
-SYSCONFIG(rmNodeDaemon,install)
-INITSCRIPT(rmNodeDaemon,install)
+SYSCONFIG(rmnoded,install)
+INITSCRIPT(rmnoded,install)

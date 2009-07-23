@@ -1,9 +1,9 @@
 .\"
-.\" @(#)$RCSfile: vdqm_Connect.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:56 $ CERN IT-PDP/DM O.Barring
+.\" @(#)$RCSfile: vdqm_Connect.man,v $ $Revision: 1.3 $ $Date: 2009/07/23 12:22:06 $ CERN IT-PDP/DM O.Barring
 .\"
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\"
-.TH VDQM_CONNECT 3 "$Date: 2001/09/26 09:13:56 $" "CASTOR" "VDQM Library Functions"
+.TH VDQM_CONNECT 3 "$Date: 2009/07/23 12:22:06 $" "CASTOR" "VDQM Library Functions"
 .SH NAME
 .PP
 vdqm_Connect \- connect to the VDQM server
@@ -32,14 +32,14 @@ connect to it. The port number can be defined (in order of precedence) as
 an environment variable 
 .B VDQM_PORT
 , as a CASTOR configuration parameter (VDQM PORT) in the
-.B shift.conf 
+.B castor.conf 
 file or as the vdqm service (tcp protocol) in 
 .B services
 file. In the same way the VDQM server host name can be defined as
 environment variable
 .B VDQM_HOST
 or as a CASTOR configuration parameter (VDQM HOST) in the
-.B shift.conf
+.B castor.conf
 file. 
 
 The VDQM host configuration is allowed to contain two host names. The

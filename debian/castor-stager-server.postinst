@@ -1,2 +1,2 @@
-/sbin/chkconfig --add stager
-/sbin/service stager condrestart > /dev/null 2>&1 || :
+/sbin/chkconfig --add stagerd
+/sbin/service stagerd condrestart > /dev/null 2>&1 || :

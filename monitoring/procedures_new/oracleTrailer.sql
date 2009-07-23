@@ -1,3 +1,4 @@
+
 /******************************************************************************
  *              oracleTrailer.sql
  *
@@ -58,7 +59,7 @@ BEGIN
                max(decode(params.name, 'Type',     params.value, NULL)) type,
                max(decode(params.name, 'Protocol', params.value, NULL)) protocol
           FROM (
-            -- Extract the totalWaitTime for all stagerJobs or diskCopyTransfers
+            -- Extract the totalWaitTime for all stagerjob's or d2dtransfer's
             -- which have started.
             SELECT params.id, params.value waitTime
               FROM &dlfschema..dlf_messages messages,

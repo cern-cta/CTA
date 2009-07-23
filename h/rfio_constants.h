@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_constants.h,v 1.5 2009/06/25 18:21:37 waldron Exp $
+ * $Id: rfio_constants.h,v 1.6 2009/07/23 12:22:03 waldron Exp $
  */
 
 /*
@@ -85,8 +85,8 @@
 #define RQSTSIZE        3*(LONGSIZE+WORDSIZE)
 #define RQSTSIZE64      3*WORDSIZE + 3*LONGSIZE + HYPERSIZE
 
-/* FH to be in shift.conf, only default should be here */
-/*efine IOBUFFERSIZE 128*1024 *//* Buffered read buffer                 */
+/* FH to be in castor.conf, only default should be here */
+/*define IOBUFFERSIZE 128*1024 *//* Buffered read buffer                 */
 #define DEFIOBUFSIZE 128*1024   /* Default IO buffer size               */
 
 #define DEFRETRYCNT     38880   /* Default retry count 38880*60=1 week  */

@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2001-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.6 $ $Date: 2009/02/27 13:02:11 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.7 $ $Date: 2009/07/23 12:22:04 $ CERN IT-PDP/DM Jean-Philippe Baud
 
 COMM 	Make SCSI media changer server programs. 
 
@@ -14,15 +14,15 @@ DependsOnLibrary(upv,castorupv)
 DependsOnLibrary(dlf,castordlf)
 DependsOnLibrary(tape,castortape)
 
-RMCDAEMON_OBJS = rmc_serv.Osuf rmc_procreq.Osuf rmclogit.Osuf sendrep.Osuf usrmsg.Osuf
+RMCD_OBJS = rmc_serv.Osuf rmc_procreq.Osuf rmclogit.Osuf sendrep.Osuf usrmsg.Osuf
 OPSGRP = OperatorGid
-TapeProgramTarget(rmcdaemon,$(RMCDAEMON_OBJS),$(DEPLIB),$(LIBS),750)
+TapeProgramTarget(rmcd,$(RMCD_OBJS),$(DEPLIB),$(LIBS),750)
 MakeDir($(SPOOL),0755)
-ADMMANPAGE(rmcdaemon)
+ADMMANPAGE(rmcd)
 MakeDir(/var/spool/rmc,0755)
 LOGROTATE(castor-rmc-server,..,installtape)
-SYSCONFIG(rmcdaemon,installtape)
-INITSCRIPT(rmcdaemon,installtape)
+SYSCONFIG(rmcd,installtape)
+INITSCRIPT(rmcd,installtape)
 
 LIBMANPAGE(rmc_dismount)
 LIBMANPAGE(rmc_export)

@@ -1,5 +1,5 @@
 debian/castor/usr/share/man/man1/smc.1castor
 debian/castor/usr/share/man/man1/tape_oper.1castor
-debian/castor/usr/share/man/man8/tpdaemon.8castor
+debian/castor/usr/share/man/man8/taped.8castor
 debian/castor/usr/share/man/man1/tplabel.1castor
 debian/castor/usr/share/man/man1/dumptape.1castor

@@ -17,14 +17,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.9 $ $Release$ $Date: 2009/02/27 13:14:07 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.10 $ $Release$ $Date: 2009/07/23 12:21:57 $ $Author: waldron $
 #
 # Makefile for the CASTOR2 Job submission daemon
 #
 # @author Castor Dev team, castor-dev@cern.ch
 
-MANPAGES = FileName($(MANDIR),jobManager.$(MANSUFFIX))
-EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),jobManager.$(MANSUFFIX)))
+MANPAGES = FileName($(MANDIR),jobmanagerd.$(MANSUFFIX))
+EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),jobmanagerd.$(MANSUFFIX)))
 CPPFLAGS = -g -O0 -I $(ORACLE_HOME)/rdbms/public -I ../../h -I ../.. $(MTCCFLAGS) -DSTAGERSUPERUSER=\"stage\" -DSTAGERSUPERGROUP=\"st\"
 LIBS = -ldl -lbat -llsf -llsbstream -L$(ORACLE_HOME)/lib -locci -lclntsh
 LDFLAGS += $(MTLDFLAGS)
@@ -38,9 +38,9 @@ DependsOnLibrary(db/cnv,castorcnvs)
 
 JOBMANAGER_SRCS = JobManagerDaemon.cpp ManagementThread.cpp DispatchThread.cpp SubmissionProcess.cpp JobSubmissionRequest.cpp DiskServerResource.cpp FileSystemResource.cpp ../io/StreamJobSubmissionRequestCnv.cpp ora/OraJobManagerSvc.cpp
 JOBMANAGER_OBJS = $(JOBMANAGER_SRCS:.cpp=.Osuf)
-NormalProgramTarget(jobManager,$(JOBMANAGER_OBJS),$(DEPLIB),$(LIBS),750)
+NormalProgramTarget(jobmanagerd,$(JOBMANAGER_OBJS),$(DEPLIB),$(LIBS),750)
 MakeDir(/var/spool/jobmanager,0755)
-ADMMANPAGE(jobManager)
+ADMMANPAGE(jobmanagerd)
 LOGROTATE(castor-jobmanager-server,../..,install)
-SYSCONFIG(jobManager,install)
-INITSCRIPT(jobManager,install)
+SYSCONFIG(jobmanagerd,install)
+INITSCRIPT(jobmanagerd,install)

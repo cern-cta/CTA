@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.32 $ $Release$ $Date: 2009/02/27 13:13:31 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.33 $ $Release$ $Date: 2009/07/23 12:21:58 $ $Author: waldron $
 #
 # Make Castor Repack System
 #
@@ -52,7 +52,7 @@ REPACKCOMMON_SRC = ../io/StreamRepackRequestCnv.cpp \
                 FileListHelper.cpp \
                 RepackUtility.cpp
 
-REPACKSERVERBIN_SRCS =  RepackServer.cpp \
+REPACKDBIN_SRCS =  RepackServer.cpp \
 		RepackWorker.cpp \
 		RepackFileStager.cpp \
 	        RepackKiller.cpp \
@@ -65,13 +65,13 @@ REPACKSERVERBIN_SRCS =  RepackServer.cpp \
 		../db/cnv/DbRepackSegmentCnv.cpp \
 		../db/cnv/DbRepackSubRequestCnv.cpp \
 		$(REPACKCOMMON_SRC)
-REPACKSERVERBIN_OBJS = $(REPACKSERVERBIN_SRCS:.cpp=.Osuf)
+REPACKDBIN_OBJS = $(REPACKDBIN_SRCS:.cpp=.Osuf)
 MakeDepSharedLibrary(db/newora,castorcommonora)
-NormalProgramTarget(repackserver,$(REPACKSERVERBIN_OBJS),$(DEPLIB) $(SERVDEPLIB),$(LIBS) $(SERVLIBS),750)
+NormalProgramTarget(repackd,$(REPACKDBIN_OBJS),$(DEPLIB) $(SERVDEPLIB),$(LIBS) $(SERVLIBS),750)
 MakeDir(/var/spool/repack,0755)
 LOGROTATE(castor-repack-server,../..,install)
-SYSCONFIG(repackserver,install)
-INITSCRIPT(repackserver,install)
+SYSCONFIG(repackd,install)
+INITSCRIPT(repackd,install)
 CONFIGFILE(ORAREPACK,../..,install)
 
 REPACKBIN_SRCS =  RepackClient.cpp ../io/ClientSocket.cpp $(REPACKCOMMON_SRC)
@@ -79,4 +79,4 @@ REPACKBIN_OBJS = $(REPACKBIN_SRCS:.cpp=.Osuf)
 NormalProgramTarget(repack,$(REPACKBIN_OBJS),$(DEPLIB),$(LIBS),755)
 
 EXEMANPAGE(repack)
-ADMMANPAGE(repackserver)
+ADMMANPAGE(repackd)

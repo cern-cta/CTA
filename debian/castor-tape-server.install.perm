@@ -1,12 +1,12 @@
 %attr(0640,root,st) etc/castor/TPCONFIG.example
-%attr(0755,root,root) etc/init.d/tpdaemon
-%attr(0644,root,root) etc/sysconfig/tpdaemon.example
+%attr(0755,root,root) etc/init.d/taped
+%attr(0644,root,root) etc/sysconfig/taped.example
 %attr(0644,root,root) etc/logrotate.d/castor-tape-server
 %attr(0750,root,root) usr/bin/confdrive
 %attr(0750,root,root) usr/bin/mounttape
 %attr(0750,root,root) usr/bin/posovl
 %attr(0750,root,root) usr/bin/rlstape
 %attr(6755,root,root) usr/bin/smc
-%attr(0750,root,root) usr/bin/tpdaemon
+%attr(0750,root,root) usr/bin/taped
 %attr(0755,root,root) usr/bin/tpdump
 %attr(0755,root,root) usr/bin/tplabel

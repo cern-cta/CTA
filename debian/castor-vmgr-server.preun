@@ -1,4 +1,4 @@
 if [ "$1" = 0 ]; then
-    /sbin/service vmgrdaemon stop > /dev/null 2>&1 || :
-    /sbin/chkconfig --del vmgrdaemon
+    /sbin/service vmgrd stop > /dev/null 2>&1 || :
+    /sbin/chkconfig --del vmgrd
 fi

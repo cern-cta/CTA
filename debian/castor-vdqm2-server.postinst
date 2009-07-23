@@ -1,2 +1,2 @@
-/sbin/chkconfig --add vdqmserver
-/sbin/service vdqmserver condrestart > /dev/null 2>&1 || :
+/sbin/chkconfig --add vdqmd
+/sbin/service vdqmd condrestart > /dev/null 2>&1 || :

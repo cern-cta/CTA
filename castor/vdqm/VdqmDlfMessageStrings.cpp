@@ -67,7 +67,7 @@ castor::dlf::Message castor::vdqm::VdqmServer::s_dlfMessages[] = {
 {VDQM_DESIRED_OLD_PROTOCOL_CLIENT_STATUS, "The desired \"old Protocol\" status of the client"},
 {VDQM_ACTUAL_NEW_PROTOCOL_CLIENT_STATUS, "The actual \"new Protocol\" status of the client"},
 {VDQM_REMOVE_OLD_TAPE_REQUEST_FROM_DB, "Remove old TapeRequest from db"},
-{VDQM_WAIT_DOWN_REQUEST_FROM_TPDAEMON_CLIENT, "WAIT DOWN request from tpdaemon client"},
+{VDQM_WAIT_DOWN_REQUEST_FROM_TAPED_CLIENT, "WAIT DOWN request from tape daemon client"},
 {VDQM_ASSIGN_TAPE_REQUEST_TO_JOB_ID, "Assign of tapeRequest to jobID"},
 {VDQM_LOCAL_ASSIGN_TO_JOB_ID, "Local assign to jobID"},
 {VDQM_INCONSISTENT_RELEASE_ON_DRIVE, "Inconsistent release on tape drive"},

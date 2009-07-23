@@ -9,5 +9,5 @@ if [ -f /etc/sysconfig/castor_security ]; then
         . /etc/sysconfig/castor_security DISK
         export SECURE_CASTOR=1
         export CSEC_TRACE=1
-        export CSEC_TRACEFILE=/usr/spool/rfio/rfio_trace
+        export CSEC_TRACEFILE=/var/spool/rfio/rfio_trace
 fi

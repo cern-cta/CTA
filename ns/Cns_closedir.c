@@ -31,7 +31,7 @@ Cns_closedir(Cns_DIR *dirp)
     return (-1);
   }
 
-  /* tell nsdaemon to free the thread */
+  /* tell nsd to free the thread */
 
   sbp = sendbuf;
   marshall_LONG (sbp, CNS_MAGIC);

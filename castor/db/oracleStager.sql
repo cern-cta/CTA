@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.742 $ $Date: 2009/07/16 08:24:43 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.743 $ $Date: 2009/07/23 12:21:55 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -914,8 +914,8 @@ BEGIN
 
   -- Create the StageDiskCopyReplicaRequest. The euid and egid values default to
   -- 0 here, this indicates the request came from the user root. When the
-  -- jobManager encounters the StageDiskCopyReplicaRequest it will automatically
-  -- use the stage:st account for submission into LSF.
+  -- jobmanager daemon encounters the StageDiskCopyReplicaRequest it will
+  -- automatically use the stage:st account for submission into LSF.
   SELECT ids_seq.nextval INTO destDcId FROM Dual;
   INSERT INTO StageDiskCopyReplicaRequest
     (svcclassname, reqid, creationtime, lastmodificationtime, id, svcclass,
@@ -926,7 +926,7 @@ BEGIN
   INSERT INTO Id2Type (id, type) VALUES (reqId, 133);  -- OBJ_StageDiskCopyReplicaRequest;
 
   -- Create the SubRequest setting the initial status to READYFORSCHED for
-  -- immediate dispatching i.e no stager processing by the jobManager.
+  -- immediate dispatching i.e no stager processing by the jobmanager daemon.
   INSERT INTO SubRequest
     (retrycounter, filename, protocol, xsize, priority, subreqid, flags, modebits,
      creationtime, lastmodificationtime, answered, id, diskcopy, castorfile, parent,

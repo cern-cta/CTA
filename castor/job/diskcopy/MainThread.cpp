@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2009/03/23 15:26:20 $ $Author: sponcec3 $
+ * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2009/07/23 12:21:57 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -66,7 +66,7 @@ castor::job::diskcopy::MainThread::MainThread(int argc, char *argv[])
 
   // Process the command line arguments. Note: we log the error to stderr here
   // and not DLF as the most probable cause for this to fail is user error
-  // running the diskCopyTransfer mover manually.
+  // running the d2dtransfer mover manually.
   try {
     parseCommandLine(argc, argv);
   } catch (castor::exception::Exception e) {

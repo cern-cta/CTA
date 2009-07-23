@@ -1,8 +1,8 @@
-.\" $Id: sacct.man,v 1.5 2002/11/22 09:14:58 jdurand Exp $
+.\" $Id: sacct.man,v 1.6 2009/07/23 12:22:03 waldron Exp $
 .\"
 .\" Man page for the CASTOR accounting header file sacct.h
 .\"
-.TH SACCT "4" "$Date: 2002/11/22 09:14:58 $" "CASTOR" "Accounting records"
+.TH SACCT "4" "$Date: 2009/07/23 12:22:03 $" "CASTOR" "Accounting records"
 .SH NAME
 \fBsacct\fP \- CASTOR accounting records
 
@@ -10,7 +10,7 @@
 .BI "#include <" sacct.h ">"
 
 .SH DESCRIPTION
-The \fBsacct.h\fP header file contains the structure of the accounting records written by the CASTOR applications. Every record is composed of a header, plus a body. All CASTOR applications on a machine write to the same accounting file, usually /usr/spool/sacct/sacct.
+The \fBsacct.h\fP header file contains the structure of the accounting records written by the CASTOR applications. Every record is composed of a header, plus a body. All CASTOR applications on a machine write to the same accounting file, usually /var/spool/sacct/sacct.
 .P
 .br 
 The structure acchdr must be used to read the accounting header. 
@@ -36,7 +36,7 @@ RFIO accounting entries. Use \fBstruct acctrfio64\fP to read the content. This r
 .B ACCTTAPE
 Tape daemon accounting entries. Use \fBstruct accttape\fP. Information provided is: uid/gid of requestor, job id, the device group name of the drive, the drive used, the vid requested and the file sequence number on the tape. The subtype fields indicates what action was actually performed by the tape daemon, or what happened to the daemon the possible values are:
 .br
-	TPDSTART: tpdaemon started 
+	TPDSTART: taped started 
 .br
 	TPASSIGN: drive assigned 
 .br	
@@ -114,7 +114,7 @@ The accounting file is written using the machine's byte order. No marshalling is
 #include "rfio_api.h" /* To open accounting files remotely using rfio */
 #include "serrno.h" /* For CASTOR errors */
 
-#define STAGER_ACCT "stagepublic:/usr/spool/sacct/sacct"
+#define STAGER_ACCT "stagepublic:/var/spool/sacct/sacct"
 
 int size_read = 0;
 

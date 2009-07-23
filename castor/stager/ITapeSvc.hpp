@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeSvc.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/09/22 13:28:27 $ $Author: waldron $
+ * @(#)$RCSfile: ITapeSvc.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2009/07/23 12:21:59 $ $Author: waldron $
  *
  * This class provides methods related to tape handling
  *
@@ -290,7 +290,7 @@ namespace castor {
         throw (castor::exception::Exception) = 0;
 
       /**
-       * Sends a UDP message to the rmMasterDaemon to inform it
+       * Sends a UDP message to the rmmaster daemon to inform it
        * of the creation or deletion of a stream on a given
        * machine/filesystem This method is always successful
        * although there is no guaranty that the UDP package is

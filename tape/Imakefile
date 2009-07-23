@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 1990-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.20 $ $Date: 2009/06/10 15:47:09 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.21 $ $Date: 2009/07/23 12:22:05 $ CERN IT-PDP/DM Jean-Philippe Baud
 
 COMM 	Make tape daemon programs. 
 
@@ -153,12 +153,12 @@ EXEMANPAGE(tpstat)
 
 MakeDir($(SPOOL),0755)
 MakeDir($(SACCTDIR),0777)
-TPDAEMON_OBJS = tpdaemon.Osuf checkjobdied.Osuf cvtden.Osuf sendrep.Osuf tplogit.Osuf usrmsg.Osuf
+TAPED_OBJS = tpdaemon.Osuf checkjobdied.Osuf cvtden.Osuf sendrep.Osuf tplogit.Osuf usrmsg.Osuf
 CONFDRIVE_OBJS = confdrive.Osuf sendrep.Osuf tplogit.Osuf
 MOUNTTAPE_OBJS = mounttape.Osuf asc2ebc.Osuf buildhdrlbl.Osuf buildvollbl.Osuf ebc2asc.Osuf getdrvstatus.Osuf inquiry.Osuf lddisplay.Osuf rbtsubr.Osuf readlbl.Osuf rwndtape.Osuf send2tpd.Osuf sendrep.Osuf sendtmsmount.Osuf setdens.Osuf skiptape.Osuf smcsubr.Osuf tperror.Osuf tplogit.Osuf unldtape.Osuf usrmsg.Osuf writelbl.Osuf wrttpmrk.Osuf mircheck.Osuf
 POSOVL_OBJS = posovl.Osuf buildhdrlbl.Osuf builduhl.Osuf buildvollbl.Osuf ebc2asc.Osuf getdrvstatus.Osuf inquiry.Osuf locate.Osuf posittape.Osuf readlbl.Osuf rwndtape.Osuf send2tpd.Osuf sendrep.Osuf skiptape.Osuf tperror.Osuf tplogit.Osuf usrmsg.Osuf
 RLSTAPE_OBJS = rlstape.Osuf getdrvstatus.Osuf lddisplay.Osuf rbtsubr.Osuf send2tpd.Osuf smcsubr.Osuf sendrep.Osuf sendtmsmount.Osuf tperror.Osuf tplogit.Osuf usrmsg.Osuf unldtape.Osuf tapealertcheck.Osuf 
-TapeProgramTarget(tpdaemon,$(TPDAEMON_OBJS) $(IBMR2_OBJS) $(TAPEACCT), $(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),750)
+TapeProgramTarget(taped,$(TAPED_OBJS) $(IBMR2_OBJS) $(TAPEACCT), $(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),750)
 TapeProgramTarget(confdrive,$(CONFDRIVE_OBJS) $(TAPEACCT),$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),750)
 TapeProgramTarget(mounttape,$(MOUNTTAPE_OBJS) $(TAPEACCT),$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB) $(LIBCDK),750)
 TapeProgramTarget(posovl,$(POSOVL_OBJS) $(TAPEACCT),$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),750)
@@ -168,13 +168,13 @@ TapeProgramTarget(tpdump,tpdump.Osuf,$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),755
 TapeProgramTarget(tplabel,tplabel.Osuf,$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),755)
 LinkFile(dumptape,tpdump,755,tape)
 FilesToClobber += dumptape
-ADMMANPAGE(tpdaemon)
+ADMMANPAGE(taped)
 EXEMANPAGE(smc)
 EXEMANPAGE(tplabel)
 EXEMANPAGE(dumptape)
 EXEMANPAGE(tape_oper)
 LOGROTATE(castor-tape-server,..,installtape)
 LOGROTATE(castor-sacct,..,installtape)
-SYSCONFIG(tpdaemon,installtape)
-INITSCRIPT(tpdaemon,installtape)
+SYSCONFIG(taped,installtape)
+INITSCRIPT(taped,installtape)
 CONFIGFILE(TP,..,installtape)

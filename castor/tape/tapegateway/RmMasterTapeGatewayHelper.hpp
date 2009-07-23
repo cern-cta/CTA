@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RmMasterTapeGatewayHelper.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/05/18 13:52:38 $ $Author: gtaur $
+ * @(#)$RCSfile: RmMasterTapeGatewayHelper.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2009/07/23 12:22:01 $ $Author: waldron $
  *
  *
  * @author castor-dev team
@@ -48,7 +48,7 @@ namespace castor {
 	RmMasterTapeGatewayHelper() throw(castor::exception::Exception);
 	
 	/**
-	 * Sends a UDP message to the rmMasterDaemon to inform it
+	 * Sends a UDP message to the rmmaster daemon to inform it
 	 * of the creation or deletion of a stream on a given
 	 * machine/filesystem. This method is always successful
 	 * although there is no guaranty that the UDP package is

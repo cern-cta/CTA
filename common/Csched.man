@@ -1,8 +1,8 @@
-.\"   $Id: Csched.man,v 1.4 2001/09/26 09:13:48 jdurand Exp $
+.\"   $Id: Csched.man,v 1.5 2009/07/23 12:22:02 waldron Exp $
 .\"
 .\"   Man page for the CASTOR's Scheduling Interface (Csched)
 .\"
-.TH CSCHED "3" "$Date: 2001/09/26 09:13:48 $" "CASTOR" "Common Library Functions"
+.TH CSCHED "3" "$Date: 2009/07/23 12:22:02 $" "CASTOR" "Common Library Functions"
 .SH NAME
 \fBCsched\fP \- \fBCASTOR\fP \fBScheduling\fP inferface
 .SH SYNOPSIS
@@ -19,7 +19,7 @@
 .BI "int Csched_get_priority_max(int " policy ");"
 
 .SH ERRORS
-Beyond the errno value, \fBCsched\fP is setting the serrno value to generic values that are described in \fBCthread\fP(1).
+Beyond the errno value, \fBCsched\fP is setting the serrno value to generic values that are described in \fBCthread\fP(3).
 
 .SH DESCRIPTION
 

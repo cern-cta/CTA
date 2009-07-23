@@ -424,9 +424,9 @@ int topen(tape_list_t *tape, file_list_t *file) {
 
     /*
      * Set configured checksum algorithm once for the whole request to
-     * avoid /etc/shift.conf lookups for every segment. We can do this
-     * reliably with a static variable since the tape IO processing is
-     * sequential.
+     * avoid /etc/castor/castor.conf lookups for every segment. We can
+     * do this reliably with a static variable since the tape IO
+     * processing is sequential.
      */
     if ( *cfgCksumAlgorithm == '\0' ) {
       if ( (p = getenv("RTCOPYD_CKSUMALG")) != NULL ||

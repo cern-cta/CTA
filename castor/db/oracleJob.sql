@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.685 $ $Date: 2009/07/01 12:09:30 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.686 $ $Date: 2009/07/23 12:21:55 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -868,7 +868,7 @@ BEGIN
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- The subrequest has the correct status because A) the job was successfully
   -- scheduled in LSF or B) a postJobChecks call has already been performed by
-  -- another jobManager
+  -- another jobmanager daemon
   res := 0;
   RETURN;
 END;
@@ -959,9 +959,10 @@ BEGIN
          AND DiskPool2SvcClass.child = SvcClass.id
          AND SvcClass.name = reqSourceSvcClass;
     EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- The source diskcopy has been removed before the jobManager could enter
-      -- the job into LSF. Under this circumstance fail the diskcopy transfer.
-      -- This will restart the subrequest and trigger a tape recall if possible
+      -- The source diskcopy has been removed before the job manager daemon 
+      -- could enter the job into LSF. Under this circumstance fail the 
+      -- diskcopy transfer. This will restart the subrequest and trigger a tape
+      -- recall if possible
       disk2DiskCopyFailed(reqDestDiskCopy, 0, unused);
       COMMIT;
       RAISE;

@@ -196,7 +196,7 @@ void castor::job::stagerjob::XRootPlugin::preForkHook
   //
   // Here we wait for the IDENT message to be sent by the client. The IDENT
   // message has two purposes: A) it verifies that the connected client is
-  // transferring the file associated with the current stagerJob process and
+  // transferring the file associated with the current stagerjob process and
   // B) that xrootd has opened the file.
   try {
     recvMessage(context.socket, buf, MSGIDENTLEN, 5);
@@ -228,7 +228,7 @@ void castor::job::stagerjob::XRootPlugin::postForkHook
   char buf[CA_MAXLINELEN + 1];
 
   // Now we wait for the CLOSE message to indicate that xrootd has finished
-  // with the transfer and that stagerJob can perform any post mover operations
+  // with the transfer and that stagerjob can perform any post mover operations
   // such as prepareForMigration, getUpdateDone etc... on its behalf.
   try {
     recvMessage(context.socket, buf, MSGCLOSELEN, m_closeTimeout);

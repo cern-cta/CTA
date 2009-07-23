@@ -1,12 +1,12 @@
 /*
- * $Id: dmc.h,v 1.3 2006/12/14 13:42:18 itglp Exp $
+ * $Id: dmc.h,v 1.4 2009/07/23 12:22:03 waldron Exp $
  */
 
 /*
  * Copyright (C) 1997-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
-/* @(#)$RCSfile: dmc.h,v $ $Revision: 1.3 $ $Date: 2006/12/14 13:42:18 $ CERN IT-PDP/DM  Olof Barring */
+/* @(#)$RCSfile: dmc.h,v $ $Revision: 1.4 $ $Date: 2009/07/23 12:22:03 $ CERN IT-PDP/DM  Olof Barring */
 
 /*
  * CERN interface to DEC Media Robot Driver (MRD) library.
@@ -87,7 +87,7 @@
 #ifdef DEBUG
 #define LOGFILE "/tmp/testmru.log"
 #else
-#define LOGFILE "/usr/spool/robot/log"
+#define LOGFILE "/var/spool/robot/log"
 #endif /*DEBUG */
 #endif /*LOGFILE */
 #define ACCEPT_RETRY_MAX   5    /* Number of accept() max retries       */

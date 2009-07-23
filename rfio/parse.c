@@ -121,7 +121,7 @@ static int rfio_parseln_old(name, host, path, ln) /* parse name to host and path
    * forms recognized: host:<unix path name>
    *                   /<prefix>/host/<unix path name>
    *
-   * where prefix is defined in /etc/shift.conf :
+   * where prefix is defined in /etc/castor/castor.conf :
    *      RFIO  NFS_ROOT          /.....
    */
 

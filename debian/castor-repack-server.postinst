@@ -1,4 +1,4 @@
-/sbin/chkconfig --add repackserver
-/sbin/service repackserver condrestart > /dev/null 2>&1 || :
+/sbin/chkconfig --add repackd
+/sbin/service repackd condrestart > /dev/null 2>&1 || :
 /bin/chown stage:st /var/spool/repack
 /bin/chown stage:st /var/spool/repack/log > /dev/null 2>&1

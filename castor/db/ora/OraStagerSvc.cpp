@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.272 $ $Release$ $Date: 2009/06/16 14:02:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.273 $ $Release$ $Date: 2009/07/23 12:21:56 $ $Author: waldron $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -1044,7 +1044,7 @@ void castor::db::ora::OraStagerSvc::archiveSubReq
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to archive subRequest :"
-      << std::endl << e.getMessage();
+      << std::endl << e.what();
     throw ex;
   }
 }
@@ -1158,7 +1158,7 @@ int castor::db::ora::OraStagerSvc::stageRm
       if(Cns_getpath((char*)cf->nsHost().c_str(), cf->fileId(), nspath) != 0
          && serrno == ENOENT) {
         // indeed the file exists only in the stager db,
-        // execute stageForcedRm (cf. ns synch performed in gcDaemon)
+        // execute stageForcedRm (cf. ns synch performed in GC daemon)
         m_stageForcedRmStatement->setDouble(1, cf->fileId());
         m_stageForcedRmStatement->setString(2, cf->nsHost());
         unsigned int nb = m_stageForcedRmStatement->executeUpdate();

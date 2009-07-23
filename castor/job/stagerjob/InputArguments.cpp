@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: InputArguments.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/09/26 12:00:56 $ $Author: waldron $
+ * @(#)$RCSfile: InputArguments.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2009/07/23 12:21:57 $ $Author: waldron $
  *
- * small struct holding the list of arguments passed to stagerJob
+ * small struct holding the list of arguments passed to stagerjob
  *
  * @author Sebastien Ponce
  *****************************************************************************/

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cupv_check.man,v $ $Revision: 1.4 $ $Date: 2002/10/16 08:04:26 $ CERN IT-DS/HSM Ben Couturier
+.\" @(#)$RCSfile: Cupv_check.man,v $ $Revision: 1.5 $ $Date: 2009/07/23 12:22:06 $ CERN IT-DS/HSM Ben Couturier
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\" 
-.TH "Cupv_check" "3" "$Date: 2002/10/16 08:04:26 $" "CASTOR" "UPV Library Functions"
+.TH "Cupv_check" "3" "$Date: 2009/07/23 12:22:06 $" "CASTOR" "UPV Library Functions"
 .SH "NAME"
 Cupv_check \- Checks that a given user has the right to perform an operation, according to the user privilege validation system
 .SH "SYNOPSIS"
@@ -26,10 +26,10 @@ is the user id of the user for whom the authorization is requested.
 is the group id of the user for whom authorization is requested.
 .TP 
 .I source_host
-the source host or NULL. In this case, the Cupvdaemon fills in this field with the result of "getpeername" on the connection.
+the source host or NULL. In this case, the cupvd fills in this field with the result of "getpeername" on the connection.
 .TP 
 .I target_host
-the target host or NULL. In this case, the Cupvdaemon fills in this field with the result of "getpeername" on the connection.
+the target host or NULL. In this case, the cupvd fills in this field with the result of "getpeername" on the connection.
 .TP 
 .I privilege
 is the privilege requested. It must be one of the following:

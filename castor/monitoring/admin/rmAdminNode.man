@@ -1,4 +1,4 @@
-.TH RMADMINNODE 1 "$Date: 2007/12/04 13:10:33 $" CASTOR "stager catalogue administrative commands"
+.TH RMADMINNODE 1 "$Date: 2009/07/23 12:21:58 $" CASTOR "stager catalogue administrative commands"
 .SH NAME
 rmAdminNode \- handle statuses in rmMaster
 .SH SYNOPSIS
@@ -48,10 +48,10 @@ all its fileSystems (recursive mode).
 Get usage information
 .TP
 .BI -o,--host " rmMasterHost"
-Forces the RmMasterDaemon's host to contact. Default is taken from castor.conf.
+Specified the rmmaster daemon host to use. Default is taken from castor.conf.
 .TP
 .BI -p,--port " rmMasterPort"
-Forces the RmMasterDaemon's port. Default is taken from castor.conf.
+Specifies the rmmaster daemon port to use. Default is taken from castor.conf.
 .TP
 .BI \-n,\-\-node " nodeName"
 Name of the diskServer concerned. Mandatory.
@@ -92,8 +92,5 @@ In this state, the diskServer is not used at all by the system.
 .SH EXIT STATUS
 This program returns 0 if the operation was successful or > 0 if the operation
 failed.
-.SH SEE ALSO
-.BR rmMasterDaemon(1castor),
-.BR rmNodeDaemon(1castor),
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

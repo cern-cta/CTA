@@ -1,5 +1,5 @@
 %attr(0640,root,st) etc/castor/VMGRCONFIG.example
-%attr(0755,root,root) etc/init.d/vmgrdaemon
-%attr(0644,root,root) etc/sysconfig/vmgrdaemon.example
+%attr(0755,root,root) etc/init.d/vmgrd
+%attr(0644,root,root) etc/sysconfig/vmgrd.example
 %attr(0644,root,root) etc/logrotate.d/castor-vmgr-server
-%attr(0750,root,root) usr/bin/vmgrdaemon
+%attr(0750,root,root) usr/bin/vmgrd

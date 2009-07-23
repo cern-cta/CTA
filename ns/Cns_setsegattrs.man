@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cns_setsegattrs.man,v $ $Revision: 1.5 $ $Date: 2009/05/29 08:40:44 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Cns_setsegattrs.man,v $ $Revision: 1.6 $ $Date: 2009/07/23 12:22:04 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_SETSEGATTRS 3 "$Date: 2009/05/29 08:40:44 $" CASTOR "Cns Library Functions"
+.TH CNS_SETSEGATTRS 3 "$Date: 2009/07/23 12:22:04 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_setsegattrs \- set file segment attributes
 .SH SYNOPSIS
@@ -59,7 +59,7 @@ struct Cns_segattrs {
 .fi
 .TP
 .I copyno
-is the copy number. If specified as zero, nsdaemon will compute the actual
+is the copy number. If specified as zero, nsd will compute the actual
 value.
 .TP
 .I fsec

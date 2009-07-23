@@ -63,9 +63,9 @@ VDQMBIN_SRCS = CDevTools.cpp \
                handler/VdqmMagic3RequestHandler.cpp \
                handler/VdqmMagic4RequestHandler.cpp
 VDQMBIN_OBJS = $(VDQMBIN_SRCS:.cpp=.Osuf)
-NormalProgramTarget(vdqmserver,$(VDQMBIN_OBJS),$(DEPLIB),$(LIBS),750)
+NormalProgramTarget(vdqmd,$(VDQMBIN_OBJS),$(DEPLIB),$(LIBS),750)
 MakeDir(/var/spool/vdqm,0755)
-ADMMANPAGE(vdqmserver)
+ADMMANPAGE(vdqmd)
 LOGROTATE(castor-vdqm2-server,../..,install)
-SYSCONFIG(vdqmserver,install)
-INITSCRIPT(vdqmserver,install)
+SYSCONFIG(vdqmd,install)
+INITSCRIPT(vdqmd,install)

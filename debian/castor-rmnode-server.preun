@@ -1,4 +1,4 @@
 if [ "$1" = 0 ]; then
-    /sbin/service rmNodeDaemon stop > /dev/null 2>&1 || :
-    /sbin/chkconfig --del rmNodeDaemon
+    /sbin/service rmnoded stop > /dev/null 2>&1 || :
+    /sbin/chkconfig --del rmnoded
 fi

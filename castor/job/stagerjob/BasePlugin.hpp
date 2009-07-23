@@ -19,7 +19,7 @@
  *
  * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
- * Base class for a stagerJob plugin
+ * Base class for a stagerjob plugin
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -42,7 +42,7 @@ namespace castor {
     namespace stagerjob {
 
       /**
-       * Base, abstract class for a stagerJob plugin.
+       * Base, abstract class for a stagerjob plugin.
        * To be extended by each of the actual implementations
        */
       class BasePlugin : public IPlugin {

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2009/02/10 13:23:53 $ $Author: waldron $
+ * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2009/07/23 12:21:57 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
     }
 
     // For LSF a shared location is used to store notification files from the
-    // scheduler which are read/downloaded by stagerJob. It is mandatory for
+    // scheduler which are read/downloaded by stagerjob. It is mandatory for
     // this to be defined in the configuration file. No default is defined!
     value = getconfent("JobManager", "SharedLSFResource", 0);
     if (!value) {

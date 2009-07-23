@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.51 $ $Release$ $Date: 2009/01/05 10:42:59 $ $Author: sponcec3 $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.52 $ $Release$ $Date: 2009/07/23 12:22:05 $ $Author: waldron $
  *
  * 
  *
@@ -404,7 +404,7 @@ int rtcpcld_updateNsSegmentAttributes(
   /*
    * Protect against false ENOENT from name server. This is the last
    * chance for this file, so let's be sure. There have been cases when
-   * the nsdaemon reports ENOENT but in fact the file is there...
+   * the nsd reports ENOENT but in fact the file is there...
    */
   for ( retryNsUpdate = 0; retryNsUpdate<maxRetryNsUpdate; retryNsUpdate++ ) {
     if ( repackvid != NULL ) {

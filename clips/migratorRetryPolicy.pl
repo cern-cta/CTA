@@ -22,7 +22,7 @@
 # script) we limit the number of retries to, say 5, by simply counting the number of arguments:
 # 5 retries = 3*5 + 1 (for ARGV[0]) = 16.
 # 
-# The TapeErrorHandler will raise an ALERT upon a refused retry, which should normally trigger a
+# The tperrhandler will raise an ALERT upon a refused retry, which should normally trigger a
 # manual intervention.
 # 
 

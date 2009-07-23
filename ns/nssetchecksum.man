@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: nssetchecksum.man,v $ $Revision: 1.4 $ $Date: 2009/02/26 14:56:41 $ CERN IT/DM
+.\" @(#)$RCSfile: nssetchecksum.man,v $ $Revision: 1.5 $ $Date: 2009/07/23 12:22:04 $ CERN IT/DM
 .\" Copyright (C) 2004 by CERN/IT/D
 .\" All rights reserved
 .\"
-.TH NSSETCHECKSUM 1 "$Date: 2009/02/26 14:56:41 $" CASTOR "Cns User Commands"
+.TH NSSETCHECKSUM 1 "$Date: 2009/07/23 12:22:04 $" CASTOR "Cns User Commands"
 .SH NAME
 nssetchecksum \- set or reset the checksum for a file
 .SH SYNOPSIS
@@ -42,7 +42,7 @@ See
 .BR Cns_updatefile_checksum(3)
 for a list of possible errors.
 .SH SEE ALSO
-.BR Castor_limits(3) ,
+.BR Castor_limits(4) ,
 .BR Cns_updatefile_checksum(3)
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

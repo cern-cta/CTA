@@ -1,5 +1,5 @@
-%attr(0755,root,root) etc/init.d/vdqmserver
-%attr(0644,root,root) etc/sysconfig/vdqmserver.example
+%attr(0755,root,root) etc/init.d/vdqmd
+%attr(0644,root,root) etc/sysconfig/vdqmd.example
 %attr(0644,root,root) etc/logrotate.d/castor-vdqm2-server
-%attr(0750,root,root) usr/bin/vdqmserver
+%attr(0750,root,root) usr/bin/vdqmd
 %attr(0640,root,root) etc/castor/ORAVDQMCONFIG.example

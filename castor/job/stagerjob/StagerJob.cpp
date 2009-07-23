@@ -533,7 +533,7 @@ int main(int argc, char** argv) {
       { -1, "" }};
     castor::dlf::dlf_init("Job", messages);
 
-    // stagerJob does not inherit from the BaseDaemon so we must manually
+    // stagerjob does not inherit from the BaseDaemon so we must manually
     // trigger the creation of the logging threads.
     dlf_create_threads(0);
 

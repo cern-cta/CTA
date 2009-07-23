@@ -63,9 +63,9 @@ namespace castor{
 
 
       /********************************************/
-      /* for Get, Update                         */
-      /*     switch(getDiskCopyForJob):         */
-      /*        case 0,1: (staged) jobManager  */
+      /* for Get, Update                          */
+      /*     switch(getDiskCopyForJob):           */
+      /*        case 0,1: (staged) jobmanagerd    */
       /* to be overwriten in Repack, PrepareToGetHandler, PrepareToUpdateHandler  */
       bool GetHandler::switchDiskCopiesForJob() throw(castor::exception::Exception)
       {
@@ -74,7 +74,7 @@ namespace castor{
         switch(result) {
           case -3:
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_PREPARETOGET_DISK2DISKCOPY, &(stgCnsHelper->cnsFileid));
-            // we notify the jobManager as we have to wait on diskcopy replication
+            // we notify the jobmanager daemon as we have to wait on diskcopy replication
             m_notifyJobManager = true;
             break;
 
@@ -112,7 +112,7 @@ namespace castor{
               stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
               stgRequestHelper->dbSvc->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
 
-              // and we notify the jobManager
+              // and we notify the jobmanager daemon
               m_notifyJobManager = true;
             }
             break;
@@ -139,7 +139,7 @@ namespace castor{
                   delete dc;
                   throw(e);
                 }
-                // and we notify the jobManager
+                // and we notify the jobmanager daemon
                 m_notifyJobManager = true;
                 delete dc;
               }
@@ -156,7 +156,7 @@ namespace castor{
 		stgRequestHelper->stagerService->createEmptyFile(stgRequestHelper->subrequest, true);
 		// Note that all the process of updating the subrequest is done in PL/SQL,
 		// allowing to have a single round trip to the DB
-                // and we notify the jobManager
+                // and we notify the jobmanager daemon
                 m_notifyJobManager = true;
 		break;
 	      }

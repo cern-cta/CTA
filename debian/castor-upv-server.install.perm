@@ -1,5 +1,5 @@
 %attr(0640,root,st) etc/castor/CUPVCONFIG.example
-%attr(0755,root,root) etc/init.d/Cupvdaemon
-%attr(0644,root,root) etc/sysconfig/Cupvdaemon.example
+%attr(0755,root,root) etc/init.d/cupvd
+%attr(0644,root,root) etc/sysconfig/cupvd.example
 %attr(0644,root,root) etc/logrotate.d/castor-upv-server
-%attr(0750,root,root) usr/bin/Cupvdaemon
+%attr(0750,root,root) usr/bin/cupvd

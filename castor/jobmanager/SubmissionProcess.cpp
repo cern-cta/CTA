@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2008/11/12 12:49:01 $ $Author: waldron $
+ * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.28 $ $Release$ $Date: 2009/07/23 12:21:57 $ $Author: waldron $
  *
  * The Submission Process is used to submit new jobs into the scheduler. It is
  * run inside a separate process allowing for setuid and setgid calls to take
@@ -419,7 +419,7 @@ void castor::jobmanager::SubmissionProcess::submitJob
   char command[MAX_CMD_DESC_LEN];
   std::ostringstream cmd;
   if (request->requestType() == OBJ_StageDiskCopyReplicaRequest) {
-    cmd << "lsgrun -p -m \"$LSB_HOSTS\" /usr/bin/diskCopyTransfer"
+    cmd << "lsgrun -p -m \"$LSB_HOSTS\" /usr/bin/d2dtransfer"
 	<< " -r " << request->reqId()
 	<< " -s " << request->subReqId()
 	<< " -F " << request->fileId()
@@ -430,7 +430,7 @@ void castor::jobmanager::SubmissionProcess::submitJob
 	<< " -t " << request->requestCreationTime()
 	<< " -R " << m_sharedLSFResource << "/$LSB_JOBID";
   } else {
-    cmd << "/usr/bin/stagerJob"
+    cmd << "/usr/bin/stagerjob"
 	<< " -r " << request->reqId()
 	<< " -s " << request->subReqId()
 	<< " -F " << request->fileId()

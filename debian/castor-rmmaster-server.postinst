@@ -1,2 +1,2 @@
-/sbin/chkconfig --add rmMasterDaemon
-/sbin/service rmMasterDaemon condrestart > /dev/null 2>&1 || :
+/sbin/chkconfig --add rmmasterd
+/sbin/service rmmasterd condrestart > /dev/null 2>&1 || :

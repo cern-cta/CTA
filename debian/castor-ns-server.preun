@@ -1,4 +1,4 @@
 if [ "$1" = 0 ]; then
-    /sbin/service nsdaemon stop > /dev/null 2>&1 || :
-    /sbin/chkconfig --del nsdaemon
+    /sbin/service nsd stop > /dev/null 2>&1 || :
+    /sbin/chkconfig --del nsd
 fi

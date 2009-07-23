@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: rfiosetopt.man,v $ $Revision: 1.4 $ $Date: 2007/09/10 13:40:51 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfiosetopt.man,v $ $Revision: 1.5 $ $Date: 2009/07/23 12:22:04 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIOSETOPT 3 "$Date: 2007/09/10 13:40:51 $" CASTOR "Rfio Library Functions"
+.TH RFIOSETOPT 3 "$Date: 2009/07/23 12:22:04 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfiosetopt \- set RFIO options
 .SH SYNOPSIS
@@ -51,13 +51,13 @@ Default is RFIO_READBUF.
 .LP
 The default internal buffer size is 128kB, but the buffer size can be set with
 an entry RFIO IOBUFSIZE in
-.BR shift.conf .
+.BR castor.conf .
 .RE
 .TP
 .B RFIO_NETOPT
 The value pointed by pval can be RFIO_NONET or RFIO_NET.
 If set to RFIO_NONET, the NET entries in
-.B shift.conf
+.B castor.conf
 are ignored.
 Default is RFIO_NET.
 .TP
@@ -68,7 +68,7 @@ The value pointed by pval can be RFIO_RETRYIT or RFIO_NOTIME2RETRY.
 If set to RFIO_RETRYIT, there will be retries on failing connect.
 The number of retries is given by the environment variable RFIO_CONRETRY or
 the RFIO CONRETRY entry in
-.BR shift.conf .
+.BR castor.conf .
 The retry interval (in seconds) is given by the environment variable
 RFIO_CONRETRYINT or the RFIO CONRETRYINT entry.
 .LP

@@ -249,7 +249,7 @@ void castor::vdqm::VdqmServer::parseCommandLine(Cuuid_t &cuuid,
 //------------------------------------------------------------------------------
 void castor::vdqm::VdqmServer::usage()
   throw() {
-  std::cerr << "Usage: vdqmserver [options]\n"
+  std::cerr << "Usage: vdqmd [options]\n"
     "\n"
     "where options can be:\n"
     "\n"

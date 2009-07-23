@@ -1,2 +1,2 @@
-/sbin/chkconfig --add jobManager
-/sbin/service jobManager condrestart > /dev/null 2>&1 || :
+/sbin/chkconfig --add jobmanagerd
+/sbin/service jobmanagerd condrestart > /dev/null 2>&1 || :

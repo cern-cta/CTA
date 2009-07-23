@@ -157,7 +157,7 @@ int main()
 		exit (EXP_SYERR);
 	exit (expertd_main (NULL));
 #else
-	if (Cinitservice ("expert", &expertd_main))
+	if (Cinitservice ("expertd", &expertd_main))
 		exit (EXP_SYERR);
 #endif
 }

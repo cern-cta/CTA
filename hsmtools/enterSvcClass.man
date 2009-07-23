@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: enterSvcClass.man,v $ $Revision: 1.12 $ $Date: 2008/10/17 13:13:59 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: enterSvcClass.man,v $ $Revision: 1.13 $ $Date: 2009/07/23 12:22:03 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH ENTERSVCCLASS 1 "$Date: 2008/10/17 13:13:59 $" CASTOR "stager catalogue administrative commands"
+.TH ENTERSVCCLASS 1 "$Date: 2009/07/23 12:22:03 $" CASTOR "stager catalogue administrative commands"
 .SH NAME
 enterSvcClass \- define a new service class in the stager catalogue
 .SH SYNOPSIS
@@ -115,7 +115,7 @@ This value is irrelevant if Disk1Behavior is set to yes.
 Specifies the name of the migrator policy to be used for this service
 class. The policy should either be an executable external script known to the CASTOR
 expert system (see the
-.BI expertd(1castor)
+.BI expertd(8castor)
 man-page).
 .TP
 .BI \-\-StreamPolicy " streamPolicy"
@@ -129,7 +129,7 @@ is provided the existing policy setting (if any) will be revoked
 Specifies the name of the recaller policy to be used for this service
 class. The policy should either be an executable external script known to the CASTOR
 expert system (see the
-.BI expertd(1castor)
+.BI expertd(8castor)
 man-page).
 .TP
 .BI \-\-TapePools " tapePool1:tapePool2:..."
@@ -170,7 +170,7 @@ enterSvcClass --Name alicemdc6 --NbDrives 24 --DefaultFileSize 3221225472 --Tape
 .BR modifySvcClass(1castor) ,
 .BR deleteSvcClass(1castor) ,
 .BR printSvcClass(1castor) ,
-.BR expertd(1castor),
+.BR expertd(8castor),
 .BR adminMultiInstance(1castor)
 .SH NOTES
 The definition of FileClass and SvcClass classes in the stager catalogue is

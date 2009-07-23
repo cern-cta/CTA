@@ -310,13 +310,13 @@ int main(argc, argv)
 #if ! defined(_WIN32)
   struct main_args main_args;
 
-  if ((maxfds = Cinitdaemon ("nsdaemon", NULL)) < 0)
+  if ((maxfds = Cinitdaemon ("nsd", NULL)) < 0)
     exit (SYERR);
   main_args.argc = argc;
   main_args.argv = argv;
   exit (Cns_main (&main_args));
 #else
-  if (Cinitservice ("cns", &Cns_main))
+  if (Cinitservice ("nsd", &Cns_main))
     exit (SYERR);
 #endif
 }

@@ -53,9 +53,9 @@ namespace castor{
         void jobOriented() throw(castor::exception::Exception);
         
         /********************************************/	
-        /* for Get, Update                         */
-        /*     switch(getDiskCopyForJob):         */                                     
-        /*        case 0,1: (staged) jobManager  */
+        /* for Get, Update                          */
+        /*     switch(getDiskCopyForJob):           */
+        /*        case 0,1: (staged) jobmanager     */
         /*        case 2: (waitRecall) createTapeCopyForRecall */
         /* to be overwriten in Repack, PrepareToGetHandler, PrepareToUpdateHandler  */
         virtual bool switchDiskCopiesForJob() throw (castor::exception::Exception) { return false; }; 

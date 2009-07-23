@@ -1,2 +1,2 @@
-/sbin/chkconfig --add vmgrdaemon
-/sbin/service vmgrdaemon condrestart > /dev/null 2>&1 || :
+/sbin/chkconfig --add vmgrd
+/sbin/service vmgrd condrestart > /dev/null 2>&1 || :

@@ -1,4 +1,4 @@
 if [ "$1" = 0 ]; then
-    /sbin/service tpdaemon stop > /dev/null 2>&1 || :
-    /sbin/chkconfig --del tpdaemon
+    /sbin/service taped stop > /dev/null 2>&1 || :
+    /sbin/chkconfig --del taped
 fi

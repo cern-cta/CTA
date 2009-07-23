@@ -1,4 +1,4 @@
 if [ "$1" = 0 ]; then
-    /sbin/service rmcdaemon stop > /dev/null 2>&1 || :
-    /sbin/chkconfig --del rmcdaemon
+    /sbin/service rmcd stop > /dev/null 2>&1 || :
+    /sbin/chkconfig --del rmcd
 fi

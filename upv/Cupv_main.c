@@ -1,5 +1,5 @@
 /*
- * $Id: Cupv_main.c,v 1.13 2009/03/20 10:36:13 waldron Exp $
+ * $Id: Cupv_main.c,v 1.14 2009/07/23 12:22:06 waldron Exp $
  *
  * Copyright (C) 1999-2002 by CERN IT-DS/HSM
  * All rights reserved
@@ -234,13 +234,13 @@ int main(argc, argv)
 #if ! defined(_WIN32)
   struct main_args main_args;
 
-  if ((maxfds = Cinitdaemon ("Cupv_serv", NULL)) < 0)
+  if ((maxfds = Cinitdaemon ("cupvd", NULL)) < 0)
     exit (SYERR);
   main_args.argc = argc;
   main_args.argv = argv;
   exit (Cupv_main (&main_args));
 #else
-  if (Cinitservice ("Cupv", &Cupv_main))
+  if (Cinitservice ("cupvd", &Cupv_main))
     exit (SYERR);
 #endif
 }

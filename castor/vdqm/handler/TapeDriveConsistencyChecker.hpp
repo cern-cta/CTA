@@ -105,7 +105,7 @@ namespace castor {
             
           /**
            * This function is written, to check the consistency, if the
-           * tpdaemon has sent a BUSY status. 
+           * tape daemon has sent a BUSY status. 
            * It is only used internally from checkConsistency.
            */
           void checkBusyConsistency() 
@@ -113,7 +113,7 @@ namespace castor {
             
           /**
            * This function is written, to check the consistency, if the
-           * tpdaemon has sent a FREE status. 
+           * tape daemon has sent a FREE status. 
            * It is only used internally from checkConsistency.
            */
           void checkFreeConsistency() 
@@ -121,7 +121,7 @@ namespace castor {
             
           /**
            * This function is written, to check the consistency, if the
-           * tpdaemon wants to handle a tapeDrive which has in the db the
+           * tape daemon wants to handle a tapeDrive which has in the db the
            * status UNIT_ASSIGNED or VOL_MOUNTED. 
            * It is only used internally from checkConsistency.
            */

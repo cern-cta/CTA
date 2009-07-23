@@ -1,2 +1,2 @@
-/sbin/chkconfig --add rmcdaemon
-/sbin/service rmcdaemon condrestart > /dev/null 2>&1 || :
+/sbin/chkconfig --add rmcd
+/sbin/service rmcd condrestart > /dev/null 2>&1 || :

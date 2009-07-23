@@ -19,7 +19,7 @@
  *
  * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
- * abstract interface of a stagerJob plugin
+ * abstract interface of a stagerjob plugin
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -41,7 +41,7 @@ namespace castor {
       struct PluginContext;
 
       /**
-       * Abstract interface of a stagerJob plugin
+       * Abstract interface of a stagerjob plugin
        */
       class IPlugin {
 

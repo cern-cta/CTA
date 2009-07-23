@@ -1,9 +1,9 @@
-.lf 1 expertd.man
-.\" @(#)$RCSfile: expertd.man,v $ $Revision: 1.5 $ $Date: 2009/01/09 14:41:29 $ CERN IT-ADC Vitaly Motyakov
+.lf 8 expertd.man
+.\" @(#)$RCSfile: expertd.man,v $ $Revision: 1.6 $ $Date: 2009/07/23 12:22:03 $ CERN IT-ADC Vitaly Motyakov
 .\" Copyright (C) 2004 by CERN/IT/ADC
 .\" All rights reserved
 .\"
-.TH EXPERTD 1 "$Date: 2009/01/09 14:41:29 $" CASTOR "Expert Administrator Commands"
+.TH EXPERTD 8 "$Date: 2009/07/23 12:22:03 $" CASTOR "Expert Administrator Commands"
 .SH NAME
 expertd \- start the CASTOR Expert daemon
 .SH SYNOPSIS
@@ -145,7 +145,7 @@ is taken from the definition of ExpertConfig in site.def.
 .B /etc/EXPCONFIG
 - configuration file
 .TP 1.5i
-.B /usr/spool/expert/log
+.B /var/spool/expert/log
 - log file
 .fi
 .SH AUTHOR

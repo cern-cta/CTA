@@ -1,4 +1,4 @@
 if [ "$1" = 0 ]; then
-    /sbin/service Cupvdaemon stop > /dev/null 2>&1 || :
-    /sbin/chkconfig --del Cupvdaemon
+    /sbin/service cupvd stop > /dev/null 2>&1 || :
+    /sbin/chkconfig --del cupvd
 fi

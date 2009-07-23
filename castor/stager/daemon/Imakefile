@@ -62,9 +62,9 @@ DBSERVICEDAEMONBIN_SRCS = \
 	CleaningThread.cpp \
 	NsOverride.cpp
 DBSERVICEDAEMONBIN_OBJS = $(DBSERVICEDAEMONBIN_SRCS:.cpp=.Osuf)
-NormalProgramTarget(stagerDaemon,$(DBSERVICEDAEMONBIN_OBJS),$(DEPLIB),$(LIBS),750)
+NormalProgramTarget(stagerd,$(DBSERVICEDAEMONBIN_OBJS),$(DEPLIB),$(LIBS),750)
 MakeDir(/var/spool/stager,0755)
-ADMMANPAGE(stagerDaemon)
+ADMMANPAGE(stagerd)
 LOGROTATE(castor-stager-server,../../..,install)
-SYSCONFIG(stager,install)
-INITSCRIPT(stager,install)
+SYSCONFIG(stagerd,install)
+INITSCRIPT(stagerd,install)

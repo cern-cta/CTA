@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_preseek.man,v 1.6 2007/09/10 13:40:52 obarring Exp $
+.\" $Id: rfio_preseek.man,v 1.7 2009/07/23 12:22:04 waldron Exp $
 .\"
-.\" @(#)$RCSfile: rfio_preseek.man,v $ $Revision: 1.6 $ $Date: 2007/09/10 13:40:52 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_preseek.man,v $ $Revision: 1.7 $ $Date: 2009/07/23 12:22:04 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_PRESEEK 3 "$Date: 2007/09/10 13:40:52 $" CASTOR "Rfio Library Functions"
+.TH RFIO_PRESEEK 3 "$Date: 2009/07/23 12:22:04 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_preseek \- prefetch chunks of data from a file
 .SH SYNOPSIS
@@ -55,7 +55,7 @@ rather than an array of
 must be set to RFIO_READBUF, which is the default.
 The default internal buffer size is 128 kB, but the buffer size can be set with
 an entry RFIO IOBUFSIZE in 
-.BR shift.conf .
+.BR castor.conf .
 Then 
 .B rfio_read
 gets the data from that buffer.

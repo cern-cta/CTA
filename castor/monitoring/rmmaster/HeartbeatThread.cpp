@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: HeartbeatThread.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2008/03/27 18:18:54 $ $Author: waldron $
+ * @(#)$RCSfile: HeartbeatThread.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2009/07/23 12:21:58 $ $Author: waldron $
  *
- * The Heartbeat thread of the rmMasterDaemon is responsible for checking all
+ * The Heartbeat thread of the rmmaster daemon is responsible for checking all
  * disk servers in shared memory and automatically disabling them if no data
  * has been received from them with X number of seconds.
  *
@@ -97,7 +97,7 @@ void castor::monitoring::rmmaster::HeartbeatThread::run(void* par) throw() {
       return;
     }
 
-    // If the rmMasterDaemon has just started we cannot trust the information
+    // If the rmmaster daemon has just started we cannot trust the information
     // in the sharedMemory. Wait at least 2 * the timeout value before checking
     // machines
     if (m_startup > (u_signed64)(time(NULL) - (m_timeout * 2))) {

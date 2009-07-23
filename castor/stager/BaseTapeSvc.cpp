@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseTapeSvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/04/26 07:05:38 $ $Author: waldron $
+ * @(#)$RCSfile: BaseTapeSvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2009/07/23 12:21:59 $ $Author: waldron $
  *
  * Basic implementation of ITapeSvc.
  * This class only implements the functions that are not DB related.
@@ -86,7 +86,7 @@ void castor::stager::BaseTapeSvc::sendStreamReport
     s.sendObject(sr);
   } catch (castor::exception::Exception ex) {
     castor::dlf::Param initParams[] =
-      {castor::dlf::Param("Message", "Failed to send StreamReport to rmMasterDaemon via UDP. Exception Caught."),
+      {castor::dlf::Param("Message", "Failed to send StreamReport to rmmaster daemon via UDP. Exception Caught."),
        castor::dlf::Param("Original Error", ex.getMessage().str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 0, 2, initParams);
   }

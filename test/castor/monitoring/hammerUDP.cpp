@@ -17,11 +17,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: hammerUDP.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/10/02 15:40:21 $ $Author: sponcec3 $
+ * @(#)$RCSfile: hammerUDP.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2009/07/23 12:22:06 $ $Author: waldron $
  *
  * test program hammering the monitoring with UDP messages of
  * psuedo migrators and/or recallers in order to test
- * rmMasterDaemon stability
+ * rmmaster daemon stability
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -81,7 +81,7 @@ int main(int argc, char** argv) {
 	s.sendObject(sr);
       } catch (castor::exception::Exception ex) {
 	castor::dlf::Param initParams[] =
-	  {castor::dlf::Param("Message", "Failed to send StreamReport to rmMasterDaemon via UDP. Exception Caught."),
+	  {castor::dlf::Param("Message", "Failed to send StreamReport to rmmaster daemon via UDP. Exception Caught."),
 	   castor::dlf::Param("Original Error", ex.getMessage().str())};
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 0, 2, initParams);
       }

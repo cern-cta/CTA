@@ -219,7 +219,7 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
 //    drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_UNKNOWN;
 
   // If we have passed the consistency checker, then everything looks fine and 
-  // we are ready to handle the status from the tpdaemon.
+  // we are ready to handle the status from the tape daemon.
 
   // newRequestId will get a valid request ID (value > 0) if there is
   // another request for the same tape

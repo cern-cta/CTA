@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: nschown.man,v $ $Revision: 1.5 $ $Date: 2009/01/26 09:09:58 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: nschown.man,v $ $Revision: 1.6 $ $Date: 2009/07/23 12:22:04 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH NSCHOWN 1 "$Date: 2009/01/26 09:09:58 $" CASTOR "Cns User Commands"
+.TH NSCHOWN 1 "$Date: 2009/07/23 12:22:04 $" CASTOR "Cns User Commands"
 .SH NAME
 nschown \- change owner and group of a CASTOR directory/file in the name server
 .SH SYNOPSIS
@@ -56,7 +56,7 @@ failed.
 .BR Castor_limits(4) ,
 .BR Cns_chown(3) ,
 .BR Cupvlist(1) ,
-.BR group(4) ,
-.B passwd(4)
+.BR group(5) ,
+.B passwd(1)
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

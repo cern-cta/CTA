@@ -1,5 +1,5 @@
 /*
- * $Id: sacct.h,v 1.16 2007/03/13 16:27:31 wiebalck Exp $
+ * $Id: sacct.h,v 1.17 2009/07/23 12:22:03 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: sacct.h,v $ $Revision: 1.16 $ $Date: 2007/03/13 16:27:31 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: sacct.h,v $ $Revision: 1.17 $ $Date: 2009/07/23 12:22:03 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 /* Include file for CASTOR software accounting */
 
@@ -151,7 +151,7 @@ struct accttape {	/* accounting record for tape software */
 
 			/* subtypes for tape accounting records */
 
-#define	TPDSTART	0	/* tpdaemon started */
+#define	TPDSTART	0	/* taped started */
 #define	TPASSIGN	1	/* drive assigned */
 #define	TP2MOUNT	2	/* tape to be mounted */
 #define	TPMOUNTED	3	/* tape mounted */

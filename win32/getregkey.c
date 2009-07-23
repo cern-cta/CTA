@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] =  "@(#)$RCSfile: getregkey.c,v $ $Revision: 1.1 $ $Date: 2000/03/10 17:01:20 $ CERN IT-PDP/IP Aneta Baran";
+static char sccsid[] =  "@(#)$RCSfile: getregkey.c,v $ $Revision: 1.2 $ $Date: 2009/07/23 12:22:07 $ CERN IT-PDP/IP Aneta Baran";
 #endif /* not lint */
 
 /* getregkey.c - get registry key value (equivalent of getconfent())              */
@@ -16,7 +16,7 @@ static char sccsid[] =  "@(#)$RCSfile: getregkey.c,v $ $Revision: 1.1 $ $Date: 2
 #undef DEBUG
 
 /* It is assumed that SHIFT configuration resides at HKEY_LOCAL_MACHINE\Software\Shift.
-   The subkeys have names identical to the categories in shift.conf. Parameters category
+   The subkeys have names identical to the categories in castor.conf. Parameters category
    and name are the same as those used in getconfent() call. */ 
 
 #define REG_KEY_NAME "Software\\Shift"

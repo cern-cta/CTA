@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RmMasterTapeGatewayHelper.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/05/18 13:52:38 $ $Author: gtaur $
+ * @(#)$RCSfile: RmMasterTapeGatewayHelper.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2009/07/23 12:22:01 $ $Author: waldron $
  *
  * @author castor-dev team
  *****************************************************************************/
@@ -89,7 +89,7 @@ void castor::tape::tapegateway::RmMasterTapeGatewayHelper::sendStreamReport
     s.sendObject(sr);
   } catch (castor::exception::Exception ex) {
     castor::dlf::Param initParams[] =
-      {castor::dlf::Param("Message", "Failed to send StreamReport to rmMasterDaemon via UDP. Exception Caught."),
+      {castor::dlf::Param("Message", "Failed to send StreamReport to rmmaster daemon via UDP. Exception Caught."),
        castor::dlf::Param("Original Error", ex.getMessage().str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 0, 2, initParams);
   }

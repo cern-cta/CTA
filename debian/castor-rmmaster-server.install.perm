@@ -1,5 +1,5 @@
-%attr(0755,root,root) etc/init.d/rmMasterDaemon
-%attr(0644,root,root) etc/sysconfig/rmMasterDaemon.example
+%attr(0755,root,root) etc/init.d/rmmasterd
+%attr(0644,root,root) etc/sysconfig/rmmasterd.example
 %attr(0644,root,root) etc/logrotate.d/castor-rmmaster-server
-%attr(0750,root,root) usr/bin/rmMasterDaemon
+%attr(0750,root,root) usr/bin/rmmasterd
 %attr(0755,root,root) usr/bin/rmGetNodes

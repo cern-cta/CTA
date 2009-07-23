@@ -1,4 +1,4 @@
 if [ "$1" = 0 ]; then
-    /sbin/service gcDaemon stop > /dev/null 2>&1 || :
-    /sbin/chkconfig --del gcDaemon
+    /sbin/service gcd stop > /dev/null 2>&1 || :
+    /sbin/chkconfig --del gcd
 fi

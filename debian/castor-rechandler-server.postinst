@@ -1,2 +1,2 @@
-/sbin/chkconfig --add rechandler
-/sbin/service rechandler condrestart > /dev/null 2>&1 || :
+/sbin/chkconfig --add rechandlerd
+/sbin/service rechandlerd condrestart > /dev/null 2>&1 || :

@@ -115,7 +115,7 @@ namespace castor{
               stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);	      
               stgRequestHelper->dbSvc->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
               
-              // we have to notify the jobManager
+              // we have to notify the jobmanager daemon
               m_notifyJobManager = true;
             }
             delete dc;

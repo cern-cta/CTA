@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: schmod_python.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/11/12 12:49:02 $ $Author: waldron $
+ * @(#)$RCSfile: schmod_python.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2009/07/23 12:21:59 $ $Author: waldron $
  *
  * Castor LSF External Plugin - Phase 2 (Python)
  *
@@ -86,7 +86,7 @@ extern "C" {
       castor::dlf::Message messages[] = {
 	{  0, "LSF plugin initialization started" },
 	{  1, "Unable to access shared memory" },
-	{  2, "Shared memory doesn't exist, check the rmMasterDaemon is running" },
+	{  2, "Shared memory doesn't exist, check that the rmmaster daemon is running" },
 	{  3, "Failed to initialize handler plugin" },
 	{  4, "Unable to allocate SharedMemoryString" },
 	{  6, "Sched/SharedLSFResource configuration option not defined" },
@@ -213,7 +213,8 @@ extern "C" {
 
     // Shared memory defined ?
     if (clusterStatus == NULL) {
-      // "Shared memory doesn't exist, check the rmMasterDaemon is running"
+      // "Shared memory doesn't exist, check that the rmmaster daemon is
+      //  running"
       castor::dlf::Param params[] =
 	{castor::dlf::Param("Plugin", "schmod_python")};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2, 1, params);
@@ -305,7 +306,7 @@ extern "C" {
 	castor::monitoring::ClusterStatus::iterator it =
 	  clusterStatus->find(*smDiskServer);
 	if (it == clusterStatus->end()) {
-	  continue; // Not yet registered with the rmMasterDaemon
+	  continue; // Not yet registered with the rmmaster daemon
 	}
 
 	// Loop over all filesystems. Check if the rating group already exists.

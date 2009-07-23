@@ -1,2 +1,2 @@
-/sbin/chkconfig --add tpdaemon
-/sbin/service tpdaemon condrestart > /dev/null 2>&1 || :
+/sbin/chkconfig --add taped
+/sbin/service taped condrestart > /dev/null 2>&1 || :

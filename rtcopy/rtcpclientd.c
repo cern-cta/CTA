@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.48 $ $Release$ $Date: 2009/07/13 06:22:09 $ $Author: waldron $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.49 $ $Release$ $Date: 2009/07/23 12:22:05 $ $Author: waldron $
  *
  *
  *
@@ -1547,7 +1547,7 @@ int rtcpcld_main(
     if ( (now - tapeErrorHandler_lastCheck) >
          tapeErrorHandler_checkInterval ) {
       /*
-       * The TapeErrorHandler is forked when a recaller or migrator exits with errors.
+       * The tperrhandler is forked when a recaller or migrator exits with errors.
        * However, sometimes the recaller/migrator may exit with success despite failed
        * segments so we do an extra check every now and then...
        */
@@ -1699,14 +1699,14 @@ int main(
     /*
      * Windows
      */
-    if (Cinitservice("rtcpcld",rtcpcld_main) == -1)
+    if (Cinitservice("rtcpclientd",rtcpcld_main) == -1)
       exit(1);
 #else /* _WIN32 */
     /*
      * UNIX
      */
     dlf_prepare();
-    if (Cinitdaemon("rtcpcld",SIG_IGN) == -1) {
+    if (Cinitdaemon("rtcpclientd",SIG_IGN) == -1) {
       dlf_parent();
       dlf_shutdown(5);
       exit(1);

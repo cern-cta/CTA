@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.176 $ $Release$ $Date: 2009/06/15 12:01:26 $ $Author: murrayc3 $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.177 $ $Release$ $Date: 2009/07/23 12:22:05 $ $Author: waldron $
  *
  *
  *
@@ -2779,7 +2779,7 @@ int rtcpcld_updcRecallFailed(
      * This probably means that this file has already been staged but the file request
      * but the acknowledge to rtcpd after the callback failed with a communication error.
      * If so, try to attribute the error to next non-staged segment to force
-     * the TapeErrorHandler to check if a retry is necessary
+     * the tperrhandler to check if a retry is necessary
      */
     if ( file->filereq.proc_status == RTCP_FINISHED ) {
       CLIST_ITERATE_BEGIN(file,fl)
@@ -3178,7 +3178,7 @@ int rtcpcld_updcFileRecalled(
       serrno = save_serrno;
       return(-1);
     }
-    // let rmMasterDaemon known that the stream is over
+    // let the rmmaster daemon know that the stream is over
     rtcpcld_sendStreamReport(*tpSvc, file->filereq.file_path,
 			     O_WRONLY, 0, tape->tapereq.vid,
 			     (inChild == 0 ? mainUuid : childUuid));
@@ -3448,7 +3448,7 @@ int rtcpcld_updcFileMigrated(
   }
   if ( iAddr != NULL ) C_IAddress_delete(iAddr);
 
-  // let rmMasterDaemon known that the stream is over
+  // let the rmmaster daemon know that the stream is over
   rc = getStgSvc(&tpSvc);
   if ( rc == -1 || tpSvc == NULL || *tpSvc == NULL ) {
     save_serrno = serrno;
@@ -3496,7 +3496,7 @@ int rtcpcld_updcFileMigrated(
 }
 
 /**
- * Called by the TapeErrorHandler or MigHunter when a migration has failed after retries
+ * Called by the tperrhandler or mighunter when a migration has failed after retries
  * or a retry would not make sense (e.g. castor file has been removed).
  *  - Flag all TapeCopies TAPECOPY_FAILED
  *  - Flag all DiskCopies that are in DISKCOPY_CANBEMIGR status DISKCOPY_INVALID

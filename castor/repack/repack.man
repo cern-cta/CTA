@@ -47,10 +47,10 @@ status may be repacked. One can either specify a single volume using
 .B \-V
 option, a list of volumes by sperating them by ':'
 or a given tape pool (option
-\fB\-P\fR). repack sends a request to the repackserver and returns immediately.
+\fB\-P\fR). repack sends a request to the repack server and returns immediately.
 If an error occurs on the server side during the submission an error message
 is returned.
-The repackserver to contact, has to be provided by adding the line 
+The repack server to contact, has to be provided by adding the line 
 
 REPACK HOST <hostname>
 
@@ -100,7 +100,8 @@ specifies the volumes to repack seperated by :.
 specifies the source pool  to repack 
 
 \fB\-o\fR
-The service class used for migration (see obove). If none specified, the default is taken from the castor config file on the repackserver machine.
+The service class used for migration (see obove). If none specified, the default is taken from the castor config file on the repack server 
+machine.
 
 \fB\-S\fR
 The stager to be used to do the repack of the tape.

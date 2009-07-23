@@ -1,4 +1,4 @@
 if [ "$1" = 0 ]; then
-    /sbin/service vdqmserver stop > /dev/null 2>&1 || :
-    /sbin/chkconfig --del vdqmserver
+    /sbin/service vdqmd stop > /dev/null 2>&1 || :
+    /sbin/chkconfig --del vdqmd
 fi

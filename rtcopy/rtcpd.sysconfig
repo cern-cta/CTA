@@ -9,5 +9,5 @@ if [ -r /etc/sysconfig/castor_security ]; then
         . /etc/sysconfig/castor_security CENTRAL
         export SECURE_CASTOR=1
         export CSEC_TRACE=1
-        export CSEC_TRACEFILE=/usr/spool/rtcopy/rtcpd_trace
+        export CSEC_TRACEFILE=/var/spool/rtcopy/rtcpd_trace
 fi

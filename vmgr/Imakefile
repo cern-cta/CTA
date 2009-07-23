@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.16 $ $Date: 2009/03/27 07:12:10 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.17 $ $Date: 2009/07/23 12:22:06 $ CERN IT-PDP/DM Jean-Philippe Baud
 
 COMM    Make volume manager programs.
 
@@ -25,13 +25,13 @@ MakeDir($(SPOOL),0755)
 vmgr_oracle_ifce.c: vmgr_oracle_ifce.pc
 	proc iname=vmgr_oracle_ifce include=../h  threads=yes char_map=string parse=full prefetch=1000
 FilesToClean += vmgr_oracle_ifce.c vmgr_oracle_ifce.lis
-VMGRDAEMON_OBJS = vmgr_main.Osuf vmgr_oracle_ifce.Osuf vmgr_procreq.Osuf sendrep.Osuf vmgrlogit.Osuf
+VMGRD_OBJS = vmgr_main.Osuf vmgr_oracle_ifce.Osuf vmgr_procreq.Osuf sendrep.Osuf vmgrlogit.Osuf
 ORALIBS= -L$(ORACLE_HOME)/lib -lclntsh
-NormalProgramTarget(vmgrdaemon,$(VMGRDAEMON_OBJS), $(DEPLIB), $(ORALIBS) $(MTLDFLAGS) $(LIBS),750)
-ADMMANPAGE(vmgrdaemon)
+NormalProgramTarget(vmgrd,$(VMGRD_OBJS), $(DEPLIB), $(ORALIBS) $(MTLDFLAGS) $(LIBS),750)
+ADMMANPAGE(vmgrd)
 LOGROTATE(castor-vmgr-server,..,install)
-SYSCONFIG(vmgrdaemon,install)
-INITSCRIPT(vmgrdaemon,install)
+SYSCONFIG(vmgrd,install)
+INITSCRIPT(vmgrd,install)
 CONFIGFILE(VMGR,..,install)
 
 VMGRLIB_OBJS = vmgr_apiinit.Osuf vmgr_deletedenmap.Osuf vmgr_deletedgnmap.Osuf vmgr_deletelibrary.Osuf vmgr_deletemodel.Osuf vmgr_deletepool.Osuf vmgr_deletetape.Osuf vmgr_deltag.Osuf vmgr_enterdenmap.Osuf vmgr_enterdgnmap.Osuf vmgr_enterlibrary.Osuf vmgr_entermodel.Osuf vmgr_enterpool.Osuf vmgr_entertape.Osuf vmgr_errmsg.Osuf vmgr_gettag.Osuf vmgr_gettape.Osuf vmgr_listdenmap.Osuf vmgr_listdgnmap.Osuf vmgr_listlibrary.Osuf vmgr_listmodel.Osuf vmgr_listpool.Osuf vmgr_listtape.Osuf vmgr_modifylibrary.Osuf vmgr_modifymodel.Osuf vmgr_modifypool.Osuf vmgr_modifytape.Osuf vmgr_querylibrary.Osuf vmgr_querymodel.Osuf vmgr_querypool.Osuf vmgr_querytape.Osuf vmgr_reclaim.Osuf vmgr_settag.Osuf vmgr_tpmounted.Osuf vmgr_updatetape.Osuf send2vmgr.Osuf vmgrcheck.Osuf

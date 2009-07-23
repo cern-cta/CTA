@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: RecHandlerDaemon.cpp,v $ $Author: gtaur $
+* @(#)$RCSfile: RecHandlerDaemon.cpp,v $ $Author: waldron $
 *
 *
 *
@@ -42,7 +42,7 @@
 
 
 // -----------------------------------------------------------------------
-// External C function used for getting configuration from shift.conf file
+// External C function used for getting configuration from castor.conf file
 // -----------------------------------------------------------------------
 
 

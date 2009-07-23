@@ -1,4 +1,4 @@
-.TH schmod_castor 1castor "$Date: 2008/11/03 07:43:32 $" CASTOR "CASTOR2 LSF Scheduler plugin"
+.TH schmod_castor 1castor "$Date: 2009/07/23 12:21:59 $" CASTOR "CASTOR2 LSF Scheduler plugin"
 .SH NAME
 schmod_castor \- CASTOR2 LSF Scheduler plugin information
 .SH DESCRIPTION
@@ -15,7 +15,7 @@ command.
 Host not listed in shared memory.
 .P
 The scheduler plugins were given a host by LSF which is not registered in the shared memory of
-the rmMasterDaemon. As the host is not known to CASTOR no jobs are authorized to run there.
+the rmmaster daemon. As the host is not known to CASTOR no jobs are authorized to run there.
 .RE
 .P
 .B 20004
@@ -63,10 +63,9 @@ excluded from running as destination ends for the transfer.
 
 .SH SEE ALSO
 lsfintro(1),
-jobManager(1),
+jobmanagerd(8),
 lsb.modules(5),
 bjobs(1),
-rmMasterDaemon(1),
 rmGetNodes(1)
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

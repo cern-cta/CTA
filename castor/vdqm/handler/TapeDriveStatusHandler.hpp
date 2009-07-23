@@ -56,7 +56,7 @@ namespace castor {
         
           /**
            * Entry point for handling the status, which has been send from
-           * the tpdaemon to vdqm.
+           * the tape daemon to vdqm.
            * 
            * @exception In case of error
            */

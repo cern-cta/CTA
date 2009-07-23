@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.46 $ $Release$ $Date: 2009/07/13 06:22:05 $ $Author: waldron $
+ * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.47 $ $Release$ $Date: 2009/07/23 12:21:56 $ $Author: waldron $
  *
  * The conversion service to Oracle
  *
@@ -47,7 +47,7 @@
 #include "castor/db/newora/OraCnvSvc.hpp"
 
 //------------------------------------------------------------------------------
-// External C function used for getting configuration from shift.conf file
+// External C function used for getting configuration from castor.conf file
 //------------------------------------------------------------------------------
 extern "C" {
   char* getconfent_fromfile (const char *, const char *, const char *, int);

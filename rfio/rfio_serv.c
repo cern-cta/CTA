@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_serv.c,v 1.37 2009/05/26 14:50:12 murrayc3 Exp $
+ * $Id: rfio_serv.c,v 1.38 2009/07/23 12:22:04 waldron Exp $
  */
 
 /*
@@ -838,7 +838,7 @@ rfiod()
 	  close(ns);                          /* Parent */
 	  if ( subrequest_id > 0 ) {
 	    /*
-	     * If we are started by the stagerJob we don't allow for
+	     * If we are started by the stagerjob we don't allow for
 	     * more than one connection. Close the listen socket and loop back
 	     * to wait for the child we just forked.
 	     */

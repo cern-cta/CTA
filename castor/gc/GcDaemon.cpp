@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
 	      << sstrerror(e.code()) << std::endl
 	      << e.getMessage().str() << std::endl;
 
-    // "Exception caught when starting GcDaemon"
+    // "Exception caught when starting Garbage Collector daemon"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Code", sstrerror(e.code())),
        castor::dlf::Param("Message", e.getMessage().str())};
@@ -126,7 +126,7 @@ castor::gc::GcDaemon::GcDaemon(): castor::server::BaseDaemon("GC") {
     { 15, "No garbage files found" },
     { 16, "Error caught while informing stager of the failed deletions" },
     { 17, "Exception caught trying to getHostName" },
-    { 17, "Exception caught when starting GcDaemon" },
+    { 17, "Exception caught when starting Garbage Collector daemon" },
     { 18, "Starting synchronization thread" },
     { 19, "Invalid GC/SyncInterval option, using default" },
     { 20, "Invalid GC/ChunkSize option, using default" },

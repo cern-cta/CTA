@@ -1,2 +1,2 @@
-/sbin/chkconfig --add mighunter
-/sbin/service mighunter condrestart > /dev/null 2>&1 || :
+/sbin/chkconfig --add mighunterd
+/sbin/service mighunterd condrestart > /dev/null 2>&1 || :

@@ -537,10 +537,10 @@ Stop all daemons
 
 /etc/init.d/dlfserver stop
 /etc/init.d/expertd stop
-/etc/init.d/jobManager stop
-/etc/init.d/rhserver stop
-/etc/init.d/rmMasterDaemon stop
-/etc/init.d/stager stop
+/etc/init.d/jobmanagerd stop
+/etc/init.d/rhd stop
+/etc/init.d/rmmasterd stop
+/etc/init.d/stagerd stop
 
 
 STAGER DB
@@ -565,12 +565,12 @@ Start all daemons
 
 /etc/init.d/dlfserver start
 /etc/init.d/expertd start
-/etc/init.d/jobManager start
-/etc/init.d/rhserver start
-/etc/init.d/rmMasterDaemon start
-/etc/init.d/stager start
+/etc/init.d/jobmanagerd start
+/etc/init.d/rhd start
+/etc/init.d/rmmasterd start
+/etc/init.d/stagerd start
 
-Wait 10 seconds for rmMasterDaemon to learn about the existence of the disk
+Wait 10 seconds for rmmaster daemon to learn about the existence of the disk
 servers.
 
 for cname  in `nslistclass | grep NAME | awk '{print $2}'` ; do enterFileClass --Name $cname --GetFromCns ; done
@@ -626,11 +626,11 @@ Load the new configuration
 How to restart the CASTOR servers within a stager
 =================================================
 
-/etc/init.d/rechandler restart
-/etc/init.d/stager restart
+/etc/init.d/rechandlerd restart
+/etc/init.d/stagerd restart
 /etc/init.d/rtcpclientd restart
-/etc/init.d/jobManager restart
-/etc/init.d/mighunter restart default
+/etc/init.d/jobmanagerd restart
+/etc/init.d/mighunterd restart default
 
 
 How to create files full of random data
@@ -794,7 +794,7 @@ How to set the read priority of tape for a single-mount
 How to force recalls
 ====================
 
-stager_rm -S'*'  -M /castor....
+stager_rm -S '*' -M /castor....
 stager_get -M /castor.....
 
 
@@ -1235,12 +1235,12 @@ the labelling to take place if the tape already has data on it:
 I10487 -f
 
 
-How to run valgrind with the vdqmserver
+How to run valgrind with the vdqmd
 =======================================
 
-valgrind -v --leak-check=full --log-file=vdqm_valgrind.log --suppressions=/afs/cern.ch/user/m/murrayc3/public/castor/valgrind/vdqm2.supp /usr/local/src/CASTOR2/castor/vdqm/vdqmserver -f -c /root/castor.conf
+valgrind -v --leak-check=full --log-file=vdqm_valgrind.log --suppressions=/afs/cern.ch/user/m/murrayc3/public/castor/valgrind/vdqm2.supp /usr/local/src/CASTOR2/castor/vdqm/vdqmd -f -c /root/castor.conf
 
-valgrind -v --leak-check=full --log-file=vdqm_valgrind.log --suppressions=/afs/cern.ch/user/m/murrayc3/public/castor/valgrind/vdqm2.supp vdqmserver -f -c /root/castor.conf
+valgrind -v --leak-check=full --log-file=vdqm_valgrind.log --suppressions=/afs/cern.ch/user/m/murrayc3/public/castor/valgrind/vdqm2.supp vdqmd -f -c /root/castor.conf
 
 How to spot memory leaks
 ========================
@@ -1781,7 +1781,7 @@ cat << HERE > test.pic
 copy "sequence.pic";
 
 # Define the objects
-object(V,"vdqmserver");
+object(V,"vdqmd");
 object(A,"aggregatord");
 object(R,"rtcpd");
 

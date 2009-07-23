@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeSvc.h,v $ $Revision: 1.13 $ $Release$ $Date: 2008/12/08 13:51:22 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ITapeSvc.h,v $ $Revision: 1.14 $ $Release$ $Date: 2009/07/23 12:21:59 $ $Author: waldron $
  *
  *
  *
@@ -390,7 +390,7 @@ int Cstager_ITapeSvc_rtcpclientdCleanUp
 (struct Cstager_ITapeSvc_t* tpSvc);
 
 /**
- * Sends a UDP message to the rmMasterDaemon to inform it
+ * Sends a UDP message to the rmmaster daemon to inform it
  * of the creation or deletion of a stream on a given
  * machine/filesystem. This method is always successful
  * although there is no guaranty that the UDP package is
