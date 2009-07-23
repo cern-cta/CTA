@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.26 $ $Release$ $Date: 2009/06/25 08:29:15 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.27 $ $Release$ $Date: 2009/07/23 15:11:51 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -337,16 +337,16 @@ END;
 
 /* PL/SQL method implementing updateSubRequestSegments */
 
-CREATE OR REPLACE PROCEDURE updateSubRequestSegments 
- (srId IN NUMBER, fileIds IN repack."cnumList",
-  errorCodes IN repack."cnumList",
-  errorMessages IN repack."strList") AS 
+
+create or replace procedure updatesubrequestsegments
+(srId IN NUMBER, fileIds IN repack."cnumList",
+errorCodes IN repack."cnumList",
+errorMessages IN repack."strList") AS
 BEGIN
- 	FOR i in fileIds.FIRST .. fileIds.LAST LOOP	
- 		UPDATE RepackSegment SET errorCode=errorCodes(i), errorMessage=errorMessages(i)
- 			WHERE (fileid=fileIds(i) OR fileIds(i)=0) AND repacksubrequest=srId;
- 	END LOOP;
- 	COMMIT;
+   FORALL i in fileIds.FIRST .. fileIds.LAST
+       UPDATE RepackSegment SET errorCode=errorCodes(i),errorMessage=errorMessages(i)
+	  WHERE (fileid=fileIds(i) OR fileIds(i)=0) AND repacksubrequest=srId;
+   COMMIT;
 END;
 /
 
