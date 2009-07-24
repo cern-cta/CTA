@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.757 $ $Date: 2009/07/15 08:39:23 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.758 $ $Date: 2009/07/24 08:03:21 $ $Author: waldron $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1026,20 +1026,24 @@ BEGIN
   ELSE
   -- return for policy
   OPEN dbInfo FOR
-    SELECT Stream.id, count(distinct Stream2TapeCopy.child), sum(CastorFile.filesize), gettime() - min(CastorFile.creationtime)
+    SELECT /*+ INDEX(CastorFile PK_CastorFile_Id) */ Stream.id,
+           count(distinct Stream2TapeCopy.child),
+           sum(CastorFile.filesize), gettime() - min(CastorFile.creationtime)
       FROM Stream2TapeCopy, TapeCopy, CastorFile, Stream
-     WHERE Stream.id IN (SELECT /*+ CARDINALITY(stridTable 5) */ * FROM TABLE(strIds) stridTable)
+     WHERE Stream.id IN
+        (SELECT /*+ CARDINALITY(stridTable 5) */ * FROM TABLE(strIds) stridTable)
        AND Stream2TapeCopy.child = TapeCopy.id
        AND TapeCopy.castorfile = CastorFile.id
        AND Stream.id = Stream2TapeCopy.parent
        AND Stream.status = 7
      GROUP BY Stream.id
-     UNION ALL
-     SELECT Stream.id, 0, 0, 0
-       FROM Stream WHERE  Stream.id IN (SELECT /*+ CARDINALITY(stridTable 5) */ * FROM TABLE(strIds) stridTable)
-        AND Stream.status = 7
-        AND NOT EXISTS 
-          (SELECT 'x' FROM Stream2TapeCopy ST WHERE ST.parent = Stream.ID);
+   UNION ALL
+    SELECT Stream.id, 0, 0, 0
+      FROM Stream WHERE Stream.id IN
+        (SELECT /*+ CARDINALITY(stridTable 5) */ * FROM TABLE(strIds) stridTable)
+       AND Stream.status = 7
+       AND NOT EXISTS 
+        (SELECT 'x' FROM Stream2TapeCopy ST WHERE ST.parent = Stream.ID);
  END IF;         
 END;
 /
