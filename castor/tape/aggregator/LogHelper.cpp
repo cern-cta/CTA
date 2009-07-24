@@ -340,16 +340,16 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int socketFd, const RtcpDumpTapeRqstMsgBody &body) throw() {
 
   castor::dlf::Param params[] = {
-    castor::dlf::Param("volReqId"   , volReqId        ),
-    castor::dlf::Param("socketFd"   , socketFd        ),
-    castor::dlf::Param("maxBytes"   , body.maxBytes   ),
-    castor::dlf::Param("blockSize"  , body.blockSize  ),
-    castor::dlf::Param("convert"    , body.convert    ),
-    castor::dlf::Param("tpErrAction", body.tpErrAction),
-    castor::dlf::Param("startFile"  , body.startFile  ),
-    castor::dlf::Param("maxFiles"   , body.maxFiles   ),
-    castor::dlf::Param("fromBlock"  , body.fromBlock  ),
-    castor::dlf::Param("toBlock"    , body.toBlock    )};
+    castor::dlf::Param("volReqId"     , volReqId          ),
+    castor::dlf::Param("socketFd"     , socketFd          ),
+    castor::dlf::Param("maxBytes"     , body.maxBytes     ),
+    castor::dlf::Param("blockSize"    , body.blockSize    ),
+    castor::dlf::Param("convert"      , body.convert      ),
+    castor::dlf::Param("tapeErrAction", body.tapeErrAction),
+    castor::dlf::Param("startFile"    , body.startFile    ),
+    castor::dlf::Param("maxFiles"     , body.maxFiles     ),
+    castor::dlf::Param("fromBlock"    , body.fromBlock    ),
+    castor::dlf::Param("toBlock"      , body.toBlock      )};
   castor::dlf::dlf_writep(cuuid, severity, message_no, params);
 }
 

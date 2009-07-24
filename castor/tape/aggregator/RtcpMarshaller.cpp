@@ -945,7 +945,7 @@ size_t castor::tape::aggregator::RtcpMarshaller::marshall(char *dst,
   marshallUint32(src.maxBytes     , p);
   marshallUint32(src.blockSize    , p);
   marshallUint32(src.convert      , p);
-  marshallUint32(src.tpErrAction  , p);
+  marshallUint32(src.tapeErrAction, p);
   marshallUint32(src.startFile    , p);
   marshallUint32(src.maxFiles     , p);
   marshallUint32(src.fromBlock    , p);

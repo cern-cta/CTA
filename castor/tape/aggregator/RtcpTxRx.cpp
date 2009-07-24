@@ -263,7 +263,7 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
 
 
 //-----------------------------------------------------------------------------
-// tellRtcpdToDumpTape
+// tellRtcpdDumpTape
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::tellRtcpdDumpTape(
   const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
@@ -283,6 +283,9 @@ void castor::tape::aggregator::RtcpTxRx::tellRtcpdDumpTape(
          ": Failed to marshall file message: "
       << ex.getMessage().str());
   }
+
+  LogHelper::logMsgBody(cuuid, DLF_LVL_SYSTEM, AGGREGATOR_TOLD_RTCPD_DUMP_TAPE,
+    volReqId, socketFd, request);
 }
 
 

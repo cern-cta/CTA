@@ -38,7 +38,7 @@ namespace aggregator {
     int32_t maxBytes;
     int32_t blockSize;
     int32_t convert;
-    int32_t tpErrAction;
+    int32_t tapeErrAction;
     int32_t startFile;
     int32_t maxFiles;
     int32_t fromBlock;

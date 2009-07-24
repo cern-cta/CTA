@@ -153,14 +153,14 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
       volume.setMode(msg.mode());
       volume.setDensity(msg.density());
       volume.setLabel(msg.label());
-      volume.setDumpTapeMaxBytes(volume.dumpTapeMaxBytes());
-      volume.setDumpTapeBlockSize(volume.dumpTapeBlockSize());
-      volume.setDumpTapeConverter(volume.dumpTapeConverter());
-      volume.setDumpTapeErrAction(volume.dumpTapeErrAction());
-      volume.setDumpTapeStartFile(volume.dumpTapeStartFile());
-      volume.setDumpTapeMaxFile(volume.dumpTapeMaxFile());
-      volume.setDumpTapeFromBlock(volume.dumpTapeFromBlock());
-      volume.setDumpTapeToBlock(volume.dumpTapeToBlock());
+      volume.setDumpTapeMaxBytes(msg.dumpTapeMaxBytes());
+      volume.setDumpTapeBlockSize(msg.dumpTapeBlockSize());
+      volume.setDumpTapeConverter(msg.dumpTapeConverter());
+      volume.setDumpTapeErrAction(msg.dumpTapeErrAction());
+      volume.setDumpTapeStartFile(msg.dumpTapeStartFile());
+      volume.setDumpTapeMaxFile(msg.dumpTapeMaxFile());
+      volume.setDumpTapeFromBlock(msg.dumpTapeFromBlock());
+      volume.setDumpTapeToBlock(msg.dumpTapeToBlock());
     } catch(std::bad_cast &bc) {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Failed to down cast reply object to tapegateway::Volume");
