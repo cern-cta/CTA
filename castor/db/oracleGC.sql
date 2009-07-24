@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.693 $ $Date: 2009/07/23 12:21:55 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.694 $ $Date: 2009/07/24 07:52:18 $ $Author: waldron $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -264,16 +264,17 @@ BEGIN
      WHERE fileSystem = fs.id
        AND status = 7  -- INVALID
        AND NOT EXISTS
-        -- Ignore diskcopies with active subrequests
-        (SELECT 'x' FROM SubRequest
-          WHERE SubRequest.diskcopy = DiskCopy.id
-            AND SubRequest.status IN (4, 5, 6, 12, 13, 14)) -- being processed (WAIT*, READY, *SCHED)
+         -- Ignore diskcopies with active subrequests
+         (SELECT /*+ INDEX(SubRequest I_SubRequest_DiskCopy) */ 'x'
+            FROM SubRequest
+           WHERE SubRequest.diskcopy = DiskCopy.id
+             AND SubRequest.status IN (4, 5, 6, 12, 13, 14)) -- being processed (WAIT*, READY, *SCHED)
        AND NOT EXISTS
-        -- Ignore diskcopies with active replications
-        (SELECT * FROM StageDiskCopyReplicaRequest, DiskCopy D
-          WHERE StageDiskCopyReplicaRequest.destDiskCopy = D.id
-            AND StageDiskCopyReplicaRequest.sourceDiskCopy = DiskCopy.id
-            AND D.status = 1)  -- WAITD2D
+         -- Ignore diskcopies with active replications
+         (SELECT * FROM StageDiskCopyReplicaRequest, DiskCopy D
+           WHERE StageDiskCopyReplicaRequest.destDiskCopy = D.id
+             AND StageDiskCopyReplicaRequest.sourceDiskCopy = DiskCopy.id
+             AND D.status = 1)  -- WAITD2D
        AND rownum <= 10000 - totalCount
     RETURNING id BULK COLLECT INTO dcIds;
     COMMIT;
@@ -314,9 +315,10 @@ BEGIN
                       WHERE fileSystem = fs.id
                         AND status = 0 -- STAGED
                         AND NOT EXISTS (
-                            SELECT 'x' FROM SubRequest
-                             WHERE SubRequest.diskcopy = DiskCopy.id
-                               AND SubRequest.status IN (4, 5, 6, 12, 13, 14)) -- being processed (WAIT*, READY, *SCHED)
+                          SELECT /*+ INDEX(SubRequest I_SubRequest_DiskCopy) */ 'x'
+                            FROM SubRequest
+                           WHERE SubRequest.diskcopy = DiskCopy.id
+                             AND SubRequest.status IN (4, 5, 6, 12, 13, 14)) -- being processed (WAIT*, READY, *SCHED)
                         ORDER BY gcWeight ASC)
                    WHERE rownum <= 10000 - totalCount) LOOP
           -- Mark the DiskCopy

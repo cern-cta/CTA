@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.743 $ $Date: 2009/07/23 12:21:55 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.744 $ $Date: 2009/07/24 07:53:15 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -598,7 +598,8 @@ BEGIN
     FORALL i IN srIds.FIRST .. srIds.LAST
       DELETE FROM Id2Type WHERE id = srIds(i);
     -- archive the successful subrequests      
-    UPDATE SubRequest SET status = 11    -- ARCHIVED
+    UPDATE /*+ SubRequest I_SubRequest_Request */ SubRequest
+       SET status = 11    -- ARCHIVED
      WHERE request = rId
        AND status = 8;  -- FINISHED
   END IF;
