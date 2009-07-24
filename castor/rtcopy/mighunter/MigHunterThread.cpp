@@ -205,8 +205,8 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 		castor::dlf::Param("code", sstrerror(e.code())),
 		castor::dlf::Param("message", e.getMessage().str())};
 	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 13, 5, params);
-	    // restore the candidate
-	    candidatesToRestore.push_back(*infoCandidate);
+	    exit(-1);
+
 	  }
 	  infoCandidate++;
 	}
@@ -334,6 +334,8 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 		castor::dlf::Param("stream",streamInfo->streamId()),
 		castor::dlf::Param("message", e.getMessage().str())};
 	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 13, 4, params);
+	    exit(-1);
+
 	  }
 	  infoCandidateStream++;
 	}

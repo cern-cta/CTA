@@ -195,7 +195,7 @@ castor::rtcopy::mighunter::MigHunterDaemon::MigHunterDaemon() : castor::server::
    {10, "Executing stream policy"},
    {11, "Summary of stream policy results"},
    {12, "No Policy file available"},
-   {13,"Error in executing the policy script"},
+   {13,"Syntax error in the policy script"},
    {14,"Fatal Error"},
    {15,"Parameters used"},
    {-1, ""}
