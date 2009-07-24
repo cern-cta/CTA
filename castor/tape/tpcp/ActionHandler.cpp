@@ -230,7 +230,25 @@ bool castor::tape::tpcp::ActionHandler::handleEndNotificationErrorReport(
   tapegateway::EndNotificationErrorReport *msg = NULL;
 
   castMessage(obj, msg, sock);
+
   Helper::displayRcvdMsgIfDebug(*msg, m_cmdLine.debugSet);
+
+  {
+    char errorBuf[STRERRORBUFLEN];
+    sstrerror_r(msg->errorCode(), errorBuf, sizeof(errorBuf));
+    errorBuf[sizeof(errorBuf)-1] = '\0';
+
+    std::ostream &os = std::cout;
+
+    os <<
+      std::endl <<
+      "The aggregator encountered the following error:" << std::endl <<
+      std::endl <<
+      "Error code    = " << msg->errorCode() << " \"" << errorBuf << "\"" <<
+      std::endl <<
+      "Error message = \"" << msg->errorMessage() << "\"" << std::endl <<
+      std::endl;
+  }
 
   // Create the NotificationAcknowledge message for the aggregator
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
