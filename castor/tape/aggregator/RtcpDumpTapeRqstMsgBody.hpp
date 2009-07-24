@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/tpcp/Constants.hpp
+ *                      castor/tape/aggregator/RtcpDumpTapeRqstMsgBody.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,37 +18,35 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- *
- *
+ * 
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TPCP_CONSTANTS_HPP
-#define CASTOR_TAPE_TPCP_CONSTANTS_HPP 1
+#ifndef CASTOR_TAPE_AGGREGATOR_RTCPDUMPTAPERQSTMSGBODY
+#define CASTOR_TAPE_AGGREGATOR_RTCPDUMPTAPERQSTMSGBODY
 
 #include <stdint.h>
-#include <stdlib.h>
 
-
-namespace castor {
-namespace tape   {
-namespace tpcp   {
-  	
-  /**
-   * The number of seconds to stay blocked while waiting for a callback
-   * connection from the aggregator.
-   */
-  const int WAITCALLBACKTIMEOUT = 60;
+namespace castor     {
+namespace tape       {
+namespace aggregator {
 
   /**
-   * The time format specified using the recognized formatting characters of 
-   * 'std::strftime'.
+   * An RTCP dump tape request message.
    */
-  const char *const TIMEFORMAT = "%B %d %I:%M:%S";
+  struct RtcpDumpTapeRqstMsgBody {
+    int32_t maxBytes;
+    int32_t blockSize;
+    int32_t convert;
+    int32_t tpErrAction;
+    int32_t startFile;
+    int32_t maxFiles;
+    int32_t fromBlock;
+    int32_t toBlock;
+  }; // struct RtcpDumpTapeRqstMsgBody
 
-} // namespace tpcp
+} // namespace aggregator
 } // namespace tape
 } // namespace castor
 
-
-#endif // CASTOR_TAPE_TPCP_CONSTANTS_HPP
+#endif // CASTOR_TAPE_AGGREGATOR_RTCPDUMPTAPERQSTMSGBODY

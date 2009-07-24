@@ -26,6 +26,7 @@
 #define CASTOR_TAPE_AGGREGATOR_GATEWAYTXRX_HPP 1
 
 #include "castor/exception/Exception.hpp"
+#include "castor/tape/tapegateway/Volume.hpp"
 #include "h/Castor_limits.h"
 #include "h/Cuuid.h"
 
@@ -46,25 +47,21 @@ class GatewayTxRx {
 public:
 
   /**
-   * Gets a the volume to be mounted from the tape tape gateway.
+   * Gets a the volume to be mounted from the tape gateway.
    *
-   * @param cuuid The ccuid to be used for logging.
-   * @param volReqId The volume request ID to be sent to the tape gateway.
+   * @param cuuid       The ccuid to be used for logging.
+   * @param volReqId    The volume request ID to be sent to the tape gateway.
    * @param gatewayHost The tape gateway host name.
    * @param gatewayPort The tape gateway port number.
-   * @param unit The tape unit.
-   * @param vid Out parameter: The volume ID returned by the tape gateway.
-   * @param mode Out parameter: The access mode returned by the tape gateway.
-   * @param label Out parameter: The volume label returned by the tape gateway.
-   * @param density Out parameter: The volume density returned by the tape
+   * @param unit        The tape unit.
+   * @param volume      Out parameter: The volume message received from the tape
+   *                    gateway.
    * @return True if there is a volume to mount.
    */
   static bool getVolumeFromGateway(const Cuuid_t &cuuid,
     const uint32_t volReqId, const char *gatewayHost,
     const unsigned short gatewayPort, const char (&unit)[CA_MAXUNMLEN+1],
-    char (&vid)[CA_MAXVIDLEN+1], uint32_t &mode,
-    char (&label)[CA_MAXLBLTYPLEN+1], char (&density)[CA_MAXDENLEN+1])
-    throw(castor::exception::Exception);
+    tapegateway::Volume &volume) throw(castor::exception::Exception);
 
   /**
    * Gets a file to migrate from the tape tape gateway.

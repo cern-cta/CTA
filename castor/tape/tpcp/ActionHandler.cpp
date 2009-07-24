@@ -171,6 +171,14 @@ bool castor::tape::tpcp::ActionHandler::dispatchMessage()
   // Find the message type's corresponding handler
   MsgHandlerMap::const_iterator itor = m_msgHandlers.find(obj->type());
   if(itor == m_msgHandlers.end()) {
+    std::stringstream oss;
+
+    oss <<
+      "Received unexpected aggregator message"
+      ": Message type = " << utils::objectTypeToString(obj->type());
+
+    sendEndNotificationErrorReport(EBADMSG, oss.str(), sock);
+
     TAPE_THROW_CODE(EBADMSG,
          ": Received unexpected aggregator message: "
       << ": Message type = " << utils::objectTypeToString(obj->type()));

@@ -82,9 +82,8 @@ bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
   const int rtcpdCallbackSockFd, const char *rtcpdCallbackHost,
   const unsigned short rtcpdCallbackPort, uint32_t &volReqId,
   char (&gatewayHost)[CA_MAXHOSTNAMELEN+1], unsigned short &gatewayPort,
-  SmartFd &rtcpdInitialSockFd, uint32_t &mode, char (&unit)[CA_MAXUNMLEN+1],
-  char (&vid)[CA_MAXVIDLEN+1], char (&label)[CA_MAXLBLTYPLEN+1],
-  char (&density)[CA_MAXDENLEN+1]) throw(castor::exception::Exception) {
+  SmartFd &rtcpdInitialSockFd, char (&unit)[CA_MAXUNMLEN+1],
+  tapegateway::Volume &volume) throw(castor::exception::Exception) {
   
   RcpJobRqstMsgBody jobRequest;
   
@@ -221,7 +220,7 @@ bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
 
   // Get the volume from the tape gateway
   const bool thereIsAVolume = GatewayTxRx::getVolumeFromGateway(cuuid,
-    volReqId, gatewayHost, gatewayPort, unit, vid, mode, label, density);
+    volReqId, gatewayHost, gatewayPort, unit, volume);
 
   return thereIsAVolume;
 }

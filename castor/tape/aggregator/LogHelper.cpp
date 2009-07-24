@@ -256,7 +256,8 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
     castor::dlf::Param("convert"             , body.convert             ),
     castor::dlf::Param("checkFid"            , body.checkFid            ),
     castor::dlf::Param("concat"              , body.concat              ),
-    castor::dlf::Param("procStatus"          , body.procStatus          ),
+    castor::dlf::Param("procStatus"          ,
+      utils::procStatusToString(body.procStatus)),
     castor::dlf::Param("cprc"                , body.cprc                ),
     castor::dlf::Param("tStartPosition"      , body.tStartPosition      ),
     castor::dlf::Param("tEndPosition"        , body.tEndPosition        ),
@@ -334,6 +335,28 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 // logMsgBody
 //-----------------------------------------------------------------------------
+void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
+  const int severity, const int message_no, const uint32_t volReqId,
+  const int socketFd, const RtcpDumpTapeRqstMsgBody &body) throw() {
+
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("volReqId"   , volReqId        ),
+    castor::dlf::Param("socketFd"   , socketFd        ),
+    castor::dlf::Param("maxBytes"   , body.maxBytes   ),
+    castor::dlf::Param("blockSize"  , body.blockSize  ),
+    castor::dlf::Param("convert"    , body.convert    ),
+    castor::dlf::Param("tpErrAction", body.tpErrAction),
+    castor::dlf::Param("startFile"  , body.startFile  ),
+    castor::dlf::Param("maxFiles"   , body.maxFiles   ),
+    castor::dlf::Param("fromBlock"  , body.fromBlock  ),
+    castor::dlf::Param("toBlock"    , body.toBlock    )};
+  castor::dlf::dlf_writep(cuuid, severity, message_no, params);
+}
+
+
+//-----------------------------------------------------------------------------
+// logMsg
+//-----------------------------------------------------------------------------
 void castor::tape::aggregator::LogHelper::logMsg(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
   const int socketFd, const tapegateway::Volume &msg) throw() {
@@ -352,7 +375,8 @@ void castor::tape::aggregator::LogHelper::logMsg(const Cuuid_t &cuuid,
       castor::dlf::Param("dumpTapeFromBlock" , msg.dumpTapeFromBlock() ),
       castor::dlf::Param("dumpTapeToBlock"   , msg.dumpTapeToBlock()   ),
       castor::dlf::Param("id"                , msg.id()                ),
-      castor::dlf::Param("mode"              , msg.mode()              )};
+      castor::dlf::Param("mode"              ,
+        utils::volumeModeToString(msg.mode()))};
     castor::dlf::dlf_writep(cuuid, severity, message_no, params);
 
 }

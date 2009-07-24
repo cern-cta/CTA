@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/tpcp/Constants.hpp
+ *                 castor/tape/tpcp/WriteTpCommand.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,36 +19,59 @@
  *
  *
  *
- *
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TPCP_CONSTANTS_HPP
-#define CASTOR_TAPE_TPCP_CONSTANTS_HPP 1
+#ifndef CASTOR_TAPE_TPCP_READTPCOMMAND_HPP
+#define CASTOR_TAPE_TPCP_READTPCOMMAND_HPP 1
 
-#include <stdint.h>
-#include <stdlib.h>
-
+#include "castor/tape/tpcp/TpcpCommand.hpp"
 
 namespace castor {
 namespace tape   {
 namespace tpcp   {
-  	
-  /**
-   * The number of seconds to stay blocked while waiting for a callback
-   * connection from the aggregator.
-   */
-  const int WAITCALLBACKTIMEOUT = 60;
+
+/**
+ * The class implementing the writetp command.
+ */
+class WriteTpCommand : public TpcpCommand {
+public:
 
   /**
-   * The time format specified using the recognized formatting characters of 
-   * 'std::strftime'.
+   * Constructor.
    */
-  const char *const TIMEFORMAT = "%B %d %I:%M:%S";
+  WriteTpCommand() throw();
+
+  /**
+   * Destructor.
+   */
+  virtual ~WriteTpCommand() throw();
+
+
+protected:
+
+  /**
+   * Writes the command-line usage message of to the specified output stream.
+   *
+   * @param os Output stream to be written to.
+   * @param programName The program name to be used in the message.
+   */
+  void usage(std::ostream &os, const char *const programName) throw();
+
+  /**
+   * Parses the specified command-line arguments.
+   *
+   * @param argc Argument count from the executable's entry function: main().
+   * @param argv Argument vector from the executable's entry function: main().
+   */
+  void parseCommandLine(const int argc, char **argv)
+    throw(castor::exception::Exception);
+
+}; // class WriteTpCommand
 
 } // namespace tpcp
 } // namespace tape
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_TPCP_CONSTANTS_HPP
+#endif // CASTOR_TAPE_TPCP_READTPCOMMAND_HPP

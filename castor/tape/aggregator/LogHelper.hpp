@@ -29,6 +29,7 @@
 #include "castor/tape/aggregator/RcpJobReplyMsgBody.hpp"
 #include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpAbortMsgBody.hpp"
+#include "castor/tape/aggregator/RtcpDumpTapeRqstMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpNoMoreRequestsMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpFileRqstMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpFileRqstErrMsgBody.hpp"
@@ -211,6 +212,24 @@ public:
     const uint32_t         volReqId,
     const int              socketFd,
     const RtcpAbortMsgBody &body) throw();
+
+  /**
+   * Logs the specified RTCP message body.
+   *
+   * @param cuuid      The uuid of the component issuing the message.
+   * @param message_no The message number in the facility.
+   * @param severity   The severity of the message.
+   * @param volReqId   The volume request ID.
+   * @param socketFd   The file descriptor of the associated TCP/IP socket.
+   * @param body       The message body.
+   */
+  static void logMsgBody(
+    const Cuuid_t                 &cuuid,
+    const int                     severity,
+    const int                     message_no,
+    const uint32_t                volReqId,
+    const int                     socketFd,
+    const RtcpDumpTapeRqstMsgBody &body) throw();
 
   /**
    * Logs the specified Gateway message.

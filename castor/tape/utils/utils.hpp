@@ -30,6 +30,7 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include "castor/tape/Constants.hpp"
+#include "castor/tape/tapegateway/VolumeMode.hpp"
 
 #include <errno.h>
 #include <list>
@@ -271,11 +272,17 @@ namespace utils  {
 
   /**
    * Returns the string representation of the specified file request status
-   * code.
+   * code from an RTCP_FILE[ERR]_REQ message.
    *
    * @param reqType The file request status code.
    */
   const char *procStatusToString(const uint32_t procStatus) throw();
+
+  /**
+   * Returns the string representation of the specified volume mode from a
+   * tapegateay::Volume message (READ, WRITE or DUMP).
+   */
+  const char *volumeModeToString(const tapegateway::VolumeMode mode) throw();
 
   /**
    * Checks if the specified string is a valid unsigned integer.

@@ -29,6 +29,7 @@
 #include "castor/io/ClientSocket.hpp"
 #include "castor/tape/aggregator/LogHelper.hpp"
 #include "castor/tape/aggregator/MessageHeader.hpp"
+#include "castor/tape/aggregator/RtcpDumpTapeRqstMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpMarshaller.hpp"
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/utils/utils.hpp"
@@ -179,6 +180,21 @@ public:
     const int32_t diskFseq, char (&nameServerHostName)[CA_MAXHOSTNAMELEN+1],
     const uint64_t castorFileId, unsigned char (&blockId)[4]) 
     throw(castor::exception::Exception);
+
+
+  /**
+   * Tells RTCP to dump the tape.
+   *
+   * @param cuuid The ccuid to be used for logging.
+   * @param volReqId The volume request ID to be sent to the tape gateway.
+   * @param socketFd The socket file descriptor of the connection with RTCPD.
+   * @param netReadWriteTimeout The timeout to be applied when performing
+   * network read and write operations.
+   * @param request The body of the RTCPD dump tape request.
+   */
+  static void tellRtcpdDumpTape(const Cuuid_t &cuuid, const uint32_t volReqId,
+    const int socketFd, const int netReadWriteTimeout,
+    RtcpDumpTapeRqstMsgBody &request) throw(castor::exception::Exception);
 
   /**
    * Receives a message header.
@@ -384,7 +400,7 @@ private:
     const uint32_t (&expected)[n], const uint32_t actual, const char *function)
     throw(castor::exception::Exception) {
     checkRtcopyReqType(expected, n, actual, function);
-   }
+  }
 
 }; // class RtcpTxRx
 

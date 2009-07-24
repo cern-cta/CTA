@@ -87,15 +87,9 @@ struct ParsedCommandLine {
   /**
    * The tape file sequence number to be positioned to just before writing.
    *
-   * Please note that a value of 0 corresponding to end-of-tape.
+   * Please note that a value of 0 corresponds to end-of-tape.
    */
   int32_t tapeFseqPosition;
-
-  /**
-   * True if the "tape file sequence number to be positioned to just before
-   * writing" option is set.
-   */
-  bool tapeFseqPositionSet;
 
   /**
    * The tape file sequence number ranges.
@@ -107,6 +101,15 @@ struct ParsedCommandLine {
    */
   char vid[CA_MAXVIDLEN+1];
 
+  int32_t dumpTapeMaxBytes;
+  int32_t dumpTapeBlockSize;
+  int32_t dumpTapeConverter;
+  int32_t dumpTapeErrAction;
+  int32_t dumpTapeStartFile;
+  int32_t dumpTapeMaxFiles;
+  int32_t dumpTapeFromBlock;
+  int32_t dumpTapeToBlock;
+
   /**
    * Constructor.
    */
@@ -117,7 +120,15 @@ struct ParsedCommandLine {
     helpSet(false),
     serverSet(false),
     tapeFseqPosition(0),
-    tapeFseqPositionSet(false) {
+    dumpTapeMaxBytes(-1),
+    dumpTapeBlockSize(-1),
+    dumpTapeConverter(-1),
+    dumpTapeErrAction(-1),
+    dumpTapeStartFile(-1),
+    dumpTapeMaxFiles(-1),
+    dumpTapeFromBlock(-1),
+    dumpTapeToBlock(-1)
+ {
 
     utils::setBytes(server, '\0');
     utils::setBytes(vid   , '\0');

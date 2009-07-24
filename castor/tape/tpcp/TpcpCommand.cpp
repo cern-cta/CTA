@@ -81,298 +81,10 @@ castor::tape::tpcp::TpcpCommand::~TpcpCommand() throw () {
 
 
 //------------------------------------------------------------------------------
-// usage 
-//------------------------------------------------------------------------------
-void castor::tape::tpcp::TpcpCommand::usage(std::ostream &os,
-  const char *const programName) throw() {
-  os <<
-    "Usage:\n"
-    "\t" << programName << " ACTION VID [OPTIONS]... [FILE]...\n"
-    "\n"
-    "Where:\n"
-    "\n"
-    "\tVID    The VID of the tape to be copied to/from\n"
-    "\tACTION ";
-  Action::writeValidStrings(os, " or ");
-  os <<
-    " (case insensitive)\n"
-    "\tFILE   A filename in RFIO notation [host:]local_path\n"
-    "\n"
-    "Options common to all actions: ";
-  Action::writeValidStrings(os, " or ");
-  os <<
-    "\n"
-    "\n"
-    "\t-d, --debug             Print debug information\n"
-    "\t-h, --help              Print this help and exit\n"
-    "\t-s, --server server     Specifies the tape server to be used therefore\n"
-    "\t                        overriding the drive scheduling of the VDQM\n"
-    "\n"
-    "Options that apply to the READ action:\n"
-    "\n"
-    "\t-f, --filelist          File containing a list of filenames\n"
-    "\t-q, --sequence sequence The tape file sequences\n"
-    "\n"
-    "Options that apply to the WRITE action:\n"
-    "\n"
-    "\t-f, --filelist          File containing a list of filenames\n"
-    "\t-p, --position          Either the string \"EOT\" meaning append to\n"
-    "\t                        End Of Tape, or the tape file sequence number\n"
-    "\t                        to be positioned to just before writing.  Note\n"
-    "\t                        this option is mandatory when the action is\n"
-    "\t                        WRITE.  Also not that a valid tape file\n"
-    "\t                        sequence number is equal or greater than 1.\n"
-    "\n"
-    "Constraints:\n"
-    "\n"
-    "\tThe [FILE].. command-line arguments and the \"-f, --filelist\" option\n"
-    "\tare mutually exclusive\n"
-    "\n"
-    "Comments to: Castor.Support@cern.ch" << std::endl;
-}
-
-
-//------------------------------------------------------------------------------
-// parseCommandLine
-//------------------------------------------------------------------------------
-void castor::tape::tpcp::TpcpCommand::parseCommandLine(const int argc,
-  char **argv) throw(castor::exception::Exception) {
-
-  static struct option longopts[] = {
-    {"debug"   ,       NO_ARGUMENT, NULL, 'd'},
-    {"filelist", REQUIRED_ARGUMENT, NULL, 'f'},
-    {"help"    ,       NO_ARGUMENT, NULL, 'h'},
-    {"sequence", REQUIRED_ARGUMENT, NULL, 'q'},
-    {"server"  , REQUIRED_ARGUMENT, NULL, 's'},
-    {"position", REQUIRED_ARGUMENT, NULL, 'p'},
-    {NULL      , 0                , NULL,  0 }
-  };
-
-  optind = 1;
-  opterr = 0;
-
-  char c;
-
-  while((c = getopt_long(argc, argv, ":df:hq:p:", longopts, NULL)) != -1) {
-
-    switch (c) {
-    case 'd':
-      m_cmdLine.debugSet = true;
-      break;
-
-    case 'f':
-      m_cmdLine.fileListSet = true;
-      m_cmdLine.fileListFilename  = optarg;
-      break;
-
-    case 'h':
-      m_cmdLine.helpSet = true;
-      break;
-
-    case 'p':
-      {
-        m_cmdLine.tapeFseqPositionSet = true;
-
-        std::string tmp(optarg);
-        utils::toUpper(tmp);
-
-        if(tmp == "EOT") {
-          m_cmdLine.tapeFseqPosition = 0;
-        } else {
-
-          if(!utils::isValidUInt(optarg)) {
-            castor::exception::InvalidArgument ex;
-            ex.getMessage() <<
-              "\tThe -p, --position argument must either be the string \"EOT\" "
-              "or a valid\n\tunsigned integer greater than 0: Actual=\""
-              << optarg << "\"";
-            throw ex;
-          }
-
-          m_cmdLine.tapeFseqPosition = atoi(optarg);
-
-          if(m_cmdLine.tapeFseqPosition == 0) {
-            castor::exception::InvalidArgument ex;
-            ex.getMessage() <<
-              "\tThe -p, --position argument must be a valid unsigned integer "
-              "greater\n\tthan 0: Actual=" << optarg;
-            throw ex;
-          }
-        }
-      }
-      break;
-
-    case 'q':
-      TapeFileSequenceParser::parse(optarg, m_cmdLine.tapeFseqRanges);
-      break;
-
-    case 's':
-      m_cmdLine.serverSet = true;
-      try {
-        utils::copyString(m_cmdLine.server, optarg);
-      } catch(castor::exception::Exception &ex) {
-        TAPE_THROW_EX(castor::exception::Internal,
-          ": Failed to copy the argument of the server command-line option"
-          " into the internal data structures"
-          ": " << ex.getMessage().str());
-      }
-      break;
-
-    case ':':
-      {
-        castor::exception::InvalidArgument ex;
-        ex.getMessage() << "\tThe -" << (char)optopt
-          << " option requires a parameter";
-        throw ex;
-      }
-      break;
-
-    case '?':
-      {
-        castor::exception::InvalidArgument ex;
-
-        if(optopt == 0) {
-          ex.getMessage() << "\tUnknown command-line option";
-        } else {
-          ex.getMessage() << "\tUnknown command-line option: -" << (char)optopt;
-        }
-        throw ex;
-      }
-      break;
-    default:
-      {
-        castor::exception::Internal ex;
-        ex.getMessage()
-          << "\tgetopt_long returned the following unknown value: 0x"
-          << std::hex << (int)c;
-        throw ex;
-      }
-    } // switch (c)
-  } // while ((c = getopt_long(argc, argv, "h", longopts, NULL)) != -1)
-
-  // There is no need to continue parsing when the help option is set
-  if( m_cmdLine.helpSet) {
-    return;
-  }
-
-  // Check the minimum number of command-line arguments are present
-  if(argc-optind < TPCPMINARGS){
-    castor::exception::InvalidArgument ex;
-
-    ex.getMessage() << "\tWrong number of command-line arguments: Actual=" <<
-      argc-optind << " Expected minimum=" << TPCPMINARGS; 
-
-    throw ex;
-  }
-
-  const int nbFilenamesOnCommandLine = argc - optind - TPCPMINARGS;
-
-  // Check that filenames as command-line arguments and the "-f, --filelist"
-  // command-line option have not been specified at the same time, as they are
-  // mutually exclusive
-  if(nbFilenamesOnCommandLine > 0 && m_cmdLine.fileListSet) {
-    castor::exception::InvalidArgument ex;
-
-    ex.getMessage() << "\t[FILE].. command-line arguments and the"
-       " \"-f, --filelist\" option are\n\tmutually exclusive";
-
-    throw ex;
-  }
-
-  // Parse the action command-line argument
-  try {
-    utils::toUpper(argv[optind]);
-    m_cmdLine.action = Action::stringToObject((char*)argv[optind]);
-  } catch(castor::exception::InvalidArgument) {
-
-    castor::exception::InvalidArgument ex;
-    std::ostream &os = ex.getMessage();
-
-    os << "\tFirst command-line argument must be a valid Action:\n\tActual=" <<
-      argv[optind] << " Expected=";
-
-    Action::writeValidStrings(os, " or ");
-
-    throw ex;
-  }
-
-  // Move on to the next command-line argument
-  optind++;
-
-  try {
-    utils::checkVidSyntax(argv[optind]);
-  } catch(castor::exception::InvalidArgument &ex) {
-    castor::exception::InvalidArgument ex2;
-
-    ex2.getMessage() << "\tSecond command-line argument must be a valid VID:\n"
-      "\t" << ex.getMessage().str();
-
-    throw ex2;
-  }
-
-  // Parse the VID command-line argument
-  try {
-    utils::copyString(m_cmdLine.vid, argv[optind]);
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_EX(castor::exception::Internal,
-      ": Failed to copy VID comand-line argument into the internal data"
-      " structures"
-      ": " << ex.getMessage().str());
-  }
-
-  // Move on to the next command-line argument (there may not be one)
-  optind++;
-
-  // Parse any filenames on the command-line
-  while(optind < argc) {
-    m_cmdLine.filenames.push_back(argv[optind++]);
-  }
-
-  // If the action to be performed is a recall
-  if(m_cmdLine.action == Action::read) {
-    // Check that there is at least one file to be recalled
-    if(m_cmdLine.tapeFseqRanges.size() == 0) {
-      castor::exception::InvalidArgument ex;
-
-      ex.getMessage()
-        << "\tThere must be at least one tape file sequence number when "
-           "recalling";
-
-      throw ex;
-    }
-  }
-
-  // Check that there is no more than one tape file sequence range which goes
-  // to END of the tape
-  const unsigned int nbRangesWithEnd = countNbRangesWithEnd();
-  if(nbRangesWithEnd > 1) {
-    castor::exception::InvalidArgument ex;
-
-    ex.getMessage()
-      << "\tThere cannot be more than one tape file sequence range whose upper "
-         "boundary is end of tape";
-
-    throw ex;
-  }
-
-  // The -p, --position option is mandatory when the action is WRITE
-  if(m_cmdLine.action == Action::write &&
-    !m_cmdLine.tapeFseqPositionSet) {
-    castor::exception::InvalidArgument ex;
-
-    ex.getMessage()
-      << "\tThe -p, --position option is mandatory when the action is WRITE";
-
-    throw ex;
-  }
-}
-
-
-
-//------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
+int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
+  const int argc, char **argv) throw() {
 
   try {
     const uid_t userId  = getuid();
@@ -402,7 +114,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
         << "Failed to parse the command-line:\n\n"
         << ex.getMessage().str() << std::endl
         << std::endl;
-      castor::tape::tpcp::TpcpCommand::usage(std::cerr, TPCPPROGRAMNAME);
+      usage(std::cerr, programName);
       std::cerr << std::endl;
       return 1;
     }
@@ -417,7 +129,7 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     // Display usage message and exit if help option found on command-line
     if(m_cmdLine.helpSet) {
       std::cout << std::endl;
-      castor::tape::tpcp::TpcpCommand::usage(std::cout, TPCPPROGRAMNAME);
+      usage(std::cout, programName);
       std::cout << std::endl;
       return 0;
     }
@@ -709,11 +421,17 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Unknown action type: value=" << m_cmdLine.action.value());
     }
-    volumeMsg.setMode(m_cmdLine.action == Action::write ?
-      castor::tape::tapegateway::WRITE : castor::tape::tapegateway::READ);
     volumeMsg.setLabel(m_vmgrTapeInfo.lbltype);
     volumeMsg.setMountTransactionId(m_volReqId);
     volumeMsg.setDensity(m_vmgrTapeInfo.density);
+    volumeMsg.setDumpTapeMaxBytes(m_cmdLine.dumpTapeMaxBytes);
+    volumeMsg.setDumpTapeBlockSize(m_cmdLine.dumpTapeBlockSize);
+    volumeMsg.setDumpTapeConverter(m_cmdLine.dumpTapeConverter);
+    volumeMsg.setDumpTapeErrAction(m_cmdLine.dumpTapeErrAction);
+    volumeMsg.setDumpTapeStartFile(m_cmdLine.dumpTapeStartFile);
+    volumeMsg.setDumpTapeMaxFile(m_cmdLine.dumpTapeMaxFiles);
+    volumeMsg.setDumpTapeFromBlock(m_cmdLine.dumpTapeFromBlock);
+    volumeMsg.setDumpTapeToBlock(m_cmdLine.dumpTapeToBlock);
 
     // Send the volume message to the aggregator
     callbackConnectionSock.sendObject(volumeMsg);
@@ -793,27 +511,6 @@ unsigned int castor::tape::tpcp::TpcpCommand::calculateMinNbOfFiles()
     }
   }
   return count; 
-}
-
-
-//------------------------------------------------------------------------------
-// countNbRangesWithEnd
-//------------------------------------------------------------------------------
-unsigned int castor::tape::tpcp::TpcpCommand::countNbRangesWithEnd()
-  throw (castor::exception::Exception) {
-
-  unsigned int count = 0;
-
-  // Loop through all ranges
-  for(TapeFseqRangeList::const_iterator itor=
-    m_cmdLine.tapeFseqRanges.begin();
-    itor!=m_cmdLine.tapeFseqRanges.end(); itor++) {
-
-    if(itor->upper == 0 ){
-        count++;
-    } 
-  }
-  return count;
 }
 
 

@@ -23,6 +23,7 @@
  *****************************************************************************/
  
 #include "castor/Constants.hpp"
+#include "castor/tape/tapegateway/DumpNotification.hpp"
 #include "castor/tape/tpcp/Dumper.hpp"
 
 #include <errno.h>
@@ -74,6 +75,14 @@ void castor::tape::tpcp::Dumper::run() throw(castor::exception::Exception) {
 bool castor::tape::tpcp::Dumper::handleDumpNotification(
   castor::IObject *obj, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
+
+  tapegateway::DumpNotification *msg = NULL;
+
+  castMessage(obj, msg, sock);
+
+  std::ostream &os = std::cout;
+
+  os << msg->message();
 
   return true;
 }

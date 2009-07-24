@@ -31,6 +31,7 @@
 #include "castor/tape/aggregator/RtcpFileRqstMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpTapeRqstMsgBody.hpp"
 #include "castor/tape/aggregator/SmartFdList.hpp"
+#include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/utils/IndexedContainer.hpp"
 #include "h/Castor_limits.h"
 #include "h/Cuuid.h"
@@ -52,28 +53,25 @@ public:
   /**
    * Constructor.
    *
-   * @param cuuid The ccuid to be used for logging.
-   * @param volReqId The volume request ID.
-   * @param gatewayHost The tape gateway host name.
-   * @param gatewayPort The tape gateway port number.
-   * @param rtcpdCallbackSockFd The file descriptor of the listener socket
-   * to be used to accept callback connections from RTCPD.
-   * @param rtcpdInitialSockFd The socket file descriptor of initial RTCPD
-   * connection.
-   * @param mode The access mode.
-   * @param unit The drive unit.
-   * @param vid The volume ID.
-   * @param vsn The volume serial number.
-   * @param label The volume label.
-   * @param density The volume density.
+   * @param cuuid               The ccuid to be used for logging.
+   * @param volReqId            The volume request ID.
+   * @param gatewayHost         The tape gateway host name.
+   * @param gatewayPort         The tape gateway port number.
+   * @param rtcpdCallbackSockFd The file descriptor of the listener socket to
+   *                            be used to accept callback connections from
+   *                            RTCPD.
+   * @param rtcpdInitialSockFd  The socket file descriptor of initial RTCPD
+   *                            connection.
+   * @param unit                The drive unit received from RTCPD.
+   * @param volume              The volume message received from the tape
+   *                            gateway.
+   * @param vsn                 The volume serial number.
    */
   BridgeProtocolEngine(const Cuuid_t &cuuid, const uint32_t volReqId,
     const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
     const unsigned short gatewayPort, const int rtcpdCallbackSockFd,
-    const int rtcpdInitialSockFd, const uint32_t mode,
-    char (&unit)[CA_MAXUNMLEN+1], const char (&vid)[CA_MAXVIDLEN+1],
-    char (&vsn)[CA_MAXVSNLEN+1], const char (&label)[CA_MAXLBLTYPLEN+1],
-    const char (&density)[CA_MAXDENLEN+1]);
+    const int rtcpdInitialSockFd, char (&unit)[CA_MAXUNMLEN+1],
+    tapegateway::Volume &volume, char (&vsn)[CA_MAXVSNLEN+1]) throw();
 
   /**
    * Run a recall/migration session.
@@ -116,34 +114,19 @@ private:
   const int m_rtcpdInitialSockFd;
 
   /**
-   * The access mode.
-   */
-  const uint32_t m_mode;
-
-  /**
-   * The drive unit.
+   * The drive unit received from RTCPD.
    */
   char (&m_unit)[CA_MAXUNMLEN+1];
 
   /**
-   * The volume ID.
+   * The volume message received from the tape gateway.
    */
-  const char (&m_vid)[CA_MAXVIDLEN+1];
+  tapegateway::Volume &m_volume;
 
   /**
    * The volume serial number.
    */
   const char (&m_vsn)[CA_MAXVSNLEN+1];
-
-  /**
-   * The volume label.
-   */
-  const char (&m_label)[CA_MAXLBLTYPLEN+1];
-
-  /**
-   * The volume density.
-   */
-  const char (&m_density)[CA_MAXDENLEN+1];
 
   /**
    * The set of read RTCPD socket descriptors to be de-multiplexed by
@@ -361,9 +344,14 @@ private:
   void runMigrationSession() throw(castor::exception::Exception);
 
   /**
-   * Runs a recall session.
+   * Runs a recall or dump session.
    */
   void runRecallSession() throw(castor::exception::Exception);
+
+  /**
+   * Runs a dump session.
+   */
+  void runDumpSession() throw(castor::exception::Exception);
 };
 
 } // namespace aggregator

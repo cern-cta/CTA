@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/tpcp/TpcpMain.cpp
+ *                 castor/tape/tpcp/WriteTpMain.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,7 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
  
-#include "castor/tape/tpcp/TpcpCommand.hpp"
+#include "castor/tape/tpcp/WriteTpCommand.hpp"
 
 
 //------------------------------------------------------------------------------
@@ -30,7 +30,7 @@
 //------------------------------------------------------------------------------
 int main(int argc, char **argv) {
 
-  castor::tape::tpcp::TpcpCommand tpcpCommand;
+  castor::tape::tpcp::WriteTpCommand command;
 
-  return tpcpCommand.main(argc, argv);
+  return command.main("writetp", argc, argv);
 }

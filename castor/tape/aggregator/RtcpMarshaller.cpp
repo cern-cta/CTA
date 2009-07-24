@@ -913,3 +913,55 @@ size_t castor::tape::aggregator::RtcpMarshaller::marshall(char *dst,
 
   return totalLen;
 }
+
+
+//-----------------------------------------------------------------------------
+// marshall
+//-----------------------------------------------------------------------------
+size_t castor::tape::aggregator::RtcpMarshaller::marshall(char *dst,
+  const size_t dstLen, const RtcpDumpTapeRqstMsgBody &src)
+  throw(castor::exception::Exception) {
+
+  // Calculate the length of the message body
+  const uint32_t len = 8 * sizeof(int32_t);
+
+  // Calculate the total length of the message (header + body)
+  // Message header = magic + reqType + len = 3 * sizeof(uint32_t)
+  const size_t totalLen = 3 * sizeof(uint32_t) + len;
+
+  // Check that the message buffer is big enough
+  if(totalLen > dstLen) {
+    TAPE_THROW_CODE(EMSGSIZE,
+      ": Buffer too small for file request message"
+      ": Required size: " << totalLen <<
+      ": Actual size: " << dstLen);
+  }
+
+  // Marshall the whole message (header + body)
+  char *p = dst;
+  marshallUint32(RTCOPY_MAGIC     , p);
+  marshallUint32(RTCP_DUMPTAPE_REQ, p);
+  marshallUint32(len              , p);
+  marshallUint32(src.maxBytes     , p);
+  marshallUint32(src.blockSize    , p);
+  marshallUint32(src.convert      , p);
+  marshallUint32(src.tpErrAction  , p);
+  marshallUint32(src.startFile    , p);
+  marshallUint32(src.maxFiles     , p);
+  marshallUint32(src.fromBlock    , p);
+  marshallUint32(src.toBlock      , p);
+
+  // Calculate the number of bytes actually marshalled
+  const size_t nbBytesMarshalled = p - dst;
+
+  // Check that the number of bytes marshalled was what was expected
+  if(totalLen != nbBytesMarshalled) {
+    TAPE_THROW_EX(castor::exception::Internal,
+      ": Mismatch between the expected total length of the "
+      "RTCP file request message and the actual number of bytes marshalled"
+      ": Expected: " << totalLen <<
+      ": Marshalled: " << nbBytesMarshalled);
+  }
+
+  return totalLen;
+}

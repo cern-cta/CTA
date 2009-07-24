@@ -27,6 +27,7 @@
 #include "castor/io/ClientSocket.hpp"
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/GatewayTxRx.hpp"
+#include "castor/tape/aggregator/LogHelper.hpp"
 #include "castor/tape/aggregator/SynchronizedCounter.hpp"
 #include "castor/tape/tapegateway/DumpNotification.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
@@ -52,16 +53,22 @@
 static castor::tape::aggregator::SynchronizedCounter emulatedRecallCounter(0);
 
 
-//-----------------------------------------------------------------------------
-// getVolumeFromGateway
-//-----------------------------------------------------------------------------
+/**
+ * Gets a the volume to be mounted from the tape gateway.
+ *
+ * @param cuuid       The ccuid to be used for logging.
+ * @param volReqId    The volume request ID to be sent to the tape gateway.
+ * @param gatewayHost The tape gateway host name.
+ * @param gatewayPort The tape gateway port number.
+ * @param unit        The tape unit.
+ * @param volume      Out parameter: The volume message received from the tape
+ *                    gateway.
+ * @return True if there is a volume to mount.
+ */
 bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
   const Cuuid_t &cuuid, const uint32_t volReqId, const char *gatewayHost,
   const unsigned short gatewayPort, const char (&unit)[CA_MAXUNMLEN+1],
-  char (&vid)[CA_MAXVIDLEN+1], uint32_t &mode,
-  char (&label)[CA_MAXLBLTYPLEN+1], char (&density)[CA_MAXDENLEN+1])
-  throw(castor::exception::Exception) {
-
+  tapegateway::Volume &volume) throw(castor::exception::Exception) {
   {
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId"   , volReqId   ),
@@ -139,12 +146,21 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
   case OBJ_Volume:
     // Copy the reply information
     try {
-      tapegateway::Volume &volume = dynamic_cast<tapegateway::Volume&>(*reply);
-      volReqIdFromGateway = volume.mountTransactionId();
-      utils::copyString(vid, volume.vid().c_str());
-      mode = volume.mode();
-      utils::copyString(label, volume.label().c_str());
-      utils::copyString(density, volume.density().c_str());
+      tapegateway::Volume &msg = dynamic_cast<tapegateway::Volume&>(*reply);
+      volReqIdFromGateway = msg.mountTransactionId();
+      volume.setMountTransactionId(msg.mountTransactionId());
+      volume.setVid(msg.vid());
+      volume.setMode(msg.mode());
+      volume.setDensity(msg.density());
+      volume.setLabel(msg.label());
+      volume.setDumpTapeMaxBytes(volume.dumpTapeMaxBytes());
+      volume.setDumpTapeBlockSize(volume.dumpTapeBlockSize());
+      volume.setDumpTapeConverter(volume.dumpTapeConverter());
+      volume.setDumpTapeErrAction(volume.dumpTapeErrAction());
+      volume.setDumpTapeStartFile(volume.dumpTapeStartFile());
+      volume.setDumpTapeMaxFile(volume.dumpTapeMaxFile());
+      volume.setDumpTapeFromBlock(volume.dumpTapeFromBlock());
+      volume.setDumpTapeToBlock(volume.dumpTapeToBlock());
     } catch(std::bad_cast &bc) {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Failed to down cast reply object to tapegateway::Volume");
@@ -198,18 +214,8 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
   } // switch(reply->type())
 
   if(thereIsAVolumeToMount) {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"           , volReqId           ),
-      castor::dlf::Param("volReqIdFromGateway", volReqIdFromGateway),
-      castor::dlf::Param("gatewayHost"        , gatewayHost        ),
-      castor::dlf::Param("gatewayPort"        , gatewayPort        ),
-      castor::dlf::Param("unit"               , unit               ),
-      castor::dlf::Param("vid"                , vid                ),
-      castor::dlf::Param("mode"               , mode               ),
-      castor::dlf::Param("label"              , label              ),
-      castor::dlf::Param("density"            , density            )};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_GOT_VOLUME_FROM_GATEWAY, params);
+    LogHelper::logMsg(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_GOT_VOLUME_FROM_GATEWAY, volReqId, -1, volume);
   } else {
 
     castor::dlf::Param params[] = {

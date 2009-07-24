@@ -36,6 +36,7 @@ DependsOnLibrary(../../vmgr,castorvmgr)
 
 TAPEGATEWAY_MESSAGES_SRCS = \
   ../tapegateway/BaseFileInfo.cpp \
+  ../tapegateway/DumpNotification.cpp \
   ../tapegateway/EndNotification.cpp \
   ../tapegateway/EndNotificationErrorReport.cpp \
   ../tapegateway/FileMigratedNotification.cpp \
@@ -66,7 +67,51 @@ TAPEGATEWAY_IO_SRCS = \
   ../../io/StreamVolumeCnv.cpp \
   ../../io/StreamVolumeRequestCnv.cpp
 
-TPCPBIN_SRCS = \
+DUMPTPBIN_SRCS = \
+  ../net/net.cpp \
+  ../utils/utils.cpp \
+  Action.cpp \
+  ActionHandler.cpp \
+  Dumper.cpp \
+  DumpTpCommand.cpp \
+  Helper.cpp \
+  Migrator.cpp \
+  Recaller.cpp \
+  StreamHelper.cpp \
+  StreamOperators.cpp \
+  TapeFileSequenceParser.cpp \
+  TapeFseqRangeListSequence.cpp \
+  TapeFseqRangeSequence.cpp \
+  TpcpCommand.cpp \
+  DumpTpMain.cpp \
+  Verifier.cpp \
+  $(TAPEGATEWAY_MESSAGES_SRCS) \
+  $(TAPEGATEWAY_IO_SRCS)
+DUMPTPBIN_OBJS = $(DUMPTPBIN_SRCS:.cpp=.Osuf)
+
+READTPBIN_SRCS = \
+  ../net/net.cpp \
+  ../utils/utils.cpp \
+  Action.cpp \
+  ActionHandler.cpp \
+  Dumper.cpp \
+  Helper.cpp \
+  Migrator.cpp \
+  ReadTpCommand.cpp \
+  Recaller.cpp \
+  StreamHelper.cpp \
+  StreamOperators.cpp \
+  TapeFileSequenceParser.cpp \
+  TapeFseqRangeListSequence.cpp \
+  TapeFseqRangeSequence.cpp \
+  TpcpCommand.cpp \
+  ReadTpMain.cpp \
+  Verifier.cpp \
+  $(TAPEGATEWAY_MESSAGES_SRCS) \
+  $(TAPEGATEWAY_IO_SRCS)
+READTPBIN_OBJS = $(READTPBIN_SRCS:.cpp=.Osuf)
+
+WRITETPBIN_SRCS = \
   ../net/net.cpp \
   ../utils/utils.cpp \
   Action.cpp \
@@ -81,11 +126,18 @@ TPCPBIN_SRCS = \
   TapeFseqRangeListSequence.cpp \
   TapeFseqRangeSequence.cpp \
   TpcpCommand.cpp \
-  TpcpMain.cpp \
+  WriteTpCommand.cpp \
+  WriteTpMain.cpp \
   Verifier.cpp \
   $(TAPEGATEWAY_MESSAGES_SRCS) \
   $(TAPEGATEWAY_IO_SRCS)
-TPCPBIN_OBJS = $(TPCPBIN_SRCS:.cpp=.Osuf)
+WRITETPBIN_OBJS = $(WRITETPBIN_SRCS:.cpp=.Osuf)
 
-NormalProgramTarget(tpcp,$(TPCPBIN_OBJS),$(DEPLIB),$(LIBS),750)
-EXEMANPAGE(tpcp)
+NormalProgramTarget(dumptp,$(DUMPTPBIN_OBJS),$(DEPLIB),$(LIBS),750)
+EXEMANPAGE(dumptp)
+
+NormalProgramTarget(readtp,$(READTPBIN_OBJS),$(DEPLIB),$(LIBS),750)
+EXEMANPAGE(readtp)
+
+NormalProgramTarget(writetp,$(WRITETPBIN_OBJS),$(DEPLIB),$(LIBS),750)
+EXEMANPAGE(writetp)

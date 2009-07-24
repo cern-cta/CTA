@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/tpcp/Constants.hpp
+ *                 castor/tape/tpcp/DumpTpMain.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,36 +19,18 @@
  *
  *
  *
- *
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
-
-#ifndef CASTOR_TAPE_TPCP_CONSTANTS_HPP
-#define CASTOR_TAPE_TPCP_CONSTANTS_HPP 1
-
-#include <stdint.h>
-#include <stdlib.h>
+ 
+#include "castor/tape/tpcp/DumpTpCommand.hpp"
 
 
-namespace castor {
-namespace tape   {
-namespace tpcp   {
-  	
-  /**
-   * The number of seconds to stay blocked while waiting for a callback
-   * connection from the aggregator.
-   */
-  const int WAITCALLBACKTIMEOUT = 60;
+//------------------------------------------------------------------------------
+// main
+//------------------------------------------------------------------------------
+int main(int argc, char **argv) {
 
-  /**
-   * The time format specified using the recognized formatting characters of 
-   * 'std::strftime'.
-   */
-  const char *const TIMEFORMAT = "%B %d %I:%M:%S";
+  castor::tape::tpcp::DumpTpCommand command;
 
-} // namespace tpcp
-} // namespace tape
-} // namespace castor
-
-
-#endif // CASTOR_TAPE_TPCP_CONSTANTS_HPP
+  return command.main("dumptp", argc, argv);
+}

@@ -32,6 +32,7 @@
 #include "castor/tape/aggregator/RcpJobReplyMsgBody.hpp"
 #include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpAbortMsgBody.hpp"
+#include "castor/tape/aggregator/RtcpDumpTapeRqstMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpNoMoreRequestsMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpFileRqstMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpFileRqstErrMsgBody.hpp"
@@ -570,6 +571,31 @@ public:
    */
   template<int n> static size_t marshall(char (&dst)[n],
     const RtcpAbortMsgBody &src) throw(castor::exception::Exception) {
+    return marshall(dst, n, src);
+  }
+
+  /**
+   * Marshalls the specified source message body structure into the
+   * specified destination buffer.
+   *
+   * @param dst    The destination message buffer.
+   * @param dstLen The length of the destination buffer.
+   * @param src    The source structure.
+   * @return       The total length of the message (header + body).
+   */
+  static size_t marshall(char *const dst, const size_t dstLen,
+    const RtcpDumpTapeRqstMsgBody &src) throw(castor::exception::Exception);
+
+  /**
+   * Marshalls the specified source message body structure into the
+   * specified destination buffer.
+   *
+   * @param dst The destination message buffer.
+   * @param src The source structure.
+   * @return    The total length of the message (header + body).
+   */
+  template<int n> static size_t marshall(char (&dst)[n],
+    const RtcpDumpTapeRqstMsgBody &src) throw(castor::exception::Exception) {
     return marshall(dst, n, src);
   }
 

@@ -286,6 +286,21 @@ const char *castor::tape::utils::procStatusToString(
 }
 
 
+//-----------------------------------------------------------------------------
+// volumeModeToString
+//-----------------------------------------------------------------------------
+const char *castor::tape::utils::volumeModeToString(
+  const tapegateway::VolumeMode mode) throw() {
+
+  switch(mode) {
+  case tapegateway::READ : return "READ";
+  case tapegateway::WRITE: return "WRITE";
+  case tapegateway::DUMP : return "DUMP";
+  default                : return "UKNOWN";
+  }
+}
+
+
 //------------------------------------------------------------------------------
 // isValidUInt
 //------------------------------------------------------------------------------

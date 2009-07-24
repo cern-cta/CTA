@@ -71,12 +71,49 @@ public:
   /**
    * Destructor.
    */
-  ~TpcpCommand() throw();
+  virtual ~TpcpCommand() throw();
 
   /**
    * The entry function of the tpcp command.
+   *
+   * @param programName The program name.
+   * @param argc        The number of command-line arguments including the
+   *                    process name.
+   * @param argv        The command-line arguments including the process name
+   *                    (argv[0]).
    */
-  int main(const int argc, char **argv) throw();
+  int main(const char *const programName, const int argc, char **argv) throw();
+
+
+protected:
+
+  /**
+   * To be implemented by sub-classes.
+   *
+   * Writes the command-line usage message of tpcp onto the specified output
+   * stream.
+   *
+   * @param os Output stream to be written to.
+   * @param programName The program name to be used in the message.
+   */
+  virtual void usage(std::ostream &os, const char *const programName) throw()
+    = 0;
+
+  /**
+   * To be implemented by sub-classes.
+   *
+   * Parses the specified command-line arguments.
+   *
+   * @param argc Argument count from the executable's entry function: main().
+   * @param argv Argument vector from the executable's entry function: main().
+   */
+  virtual void parseCommandLine(const int argc, char **argv)
+    throw(castor::exception::Exception) = 0;
+
+  /**
+   * The results of parsing the command-line.
+   */
+  ParsedCommandLine m_cmdLine;
 
 
 private:
@@ -85,11 +122,6 @@ private:
    * Vmgr error buffer.
    */
   static char vmgr_error_buffer[VMGRERRORBUFLEN];
-
-  /**
-   * The results of parsing the command-line.
-   */
-  ParsedCommandLine m_cmdLine;
 
   /**
    * The list of RFIO filenames to be processed by the request handlers.
@@ -118,24 +150,6 @@ private:
   int m_volReqId;
 
   /**
-   * Writes the command-line usage message of tpcp onto the specified output
-   * stream.
-   *
-   * @param os Output stream to be written to.
-   * @param programName The program name to be used in the message.
-   */
-  void usage(std::ostream &os, const char *const programName) throw();
-
-  /**
-   * Parses the specified command-line arguments.
-   *
-   * @param argc Argument count from the executable's entry function: main().
-   * @param argv Argument vector from the executable's entry function: main().
-   */
-  void parseCommandLine(const int argc, char **argv)
-    throw(castor::exception::Exception);
-
-  /**
    * Returns the port on which the server will listen for connections from the
    * VDQM.
    */
@@ -148,14 +162,6 @@ private:
    * @return The minimum number of files.
    */
   unsigned int calculateMinNbOfFiles() throw (castor::exception::Exception);
-
-  /**
-   * Count the number of ranges that contain the upper boundary "end of tape"
-   * ('m-').
-   *
-   * @return The number of ranges that contain the upper boundary "end of tape".
-   */
-  unsigned int countNbRangesWithEnd() throw (castor::exception::Exception);
 
   /**
    * Retrieves information about the specified tape from the VMGR.

@@ -141,33 +141,45 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
     utils::setBytes(gatewayHost, '\0');
     unsigned short gatewayPort = 0;
     SmartFd rtcpdInitialSockFd;
-    uint32_t mode = 0;
     char unit[CA_MAXUNMLEN+1];
     utils::setBytes(unit, '\0');
-    char vid[CA_MAXVIDLEN+1];
-    utils::setBytes(vid, '\0');
-    char label[CA_MAXLBLTYPLEN+1];
-    utils::setBytes(label, '\0');
-    char density[CA_MAXDENLEN+1];
-    utils::setBytes(density, '\0');
+    tapegateway::Volume volume;
 
     DriveAllocationProtocolEngine driveAllocationProtocolEngine;
+    const bool thereIsAVolume = driveAllocationProtocolEngine.run(cuuid,
+      *(vdqmSock.get()), rtcpdCallbackSockFd.get(), rtcpdCallbackHost,
+      rtcpdCallbackPort, volReqId, gatewayHost, gatewayPort,
+      rtcpdInitialSockFd, unit, volume);
 
-    driveAllocationProtocolEngine.run(cuuid, *(vdqmSock.get()),
-      rtcpdCallbackSockFd.get(), rtcpdCallbackHost, rtcpdCallbackPort,
-      volReqId, gatewayHost, gatewayPort, rtcpdInitialSockFd, mode, unit,
-      vid, label, density);
+    // If there is no volume to mount, then notify tape gatway of end of session
+    // and return
+    if(!thereIsAVolume) {
+      try {
+        GatewayTxRx::notifyGatewayEndOfSession(cuuid, volReqId, gatewayHost,
+          gatewayPort);
+      } catch(castor::exception::Exception &ex) {
+        // Don't rethrow, just log the exception
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("volReqId", volReqId             ),
+          castor::dlf::Param("Message" , ex.getMessage().str()),
+          castor::dlf::Param("Code"    , ex.code()            )};
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+          AGGREGATOR_FAILED_TO_NOTIFY_GATEWAY_END_OF_SESSION, params);
+      }
+
+      return;
+    }
 
     // If the volume has the aggregation format
-    if(strcmp(label, "ALB") == 0) {
+    if(volume.label() == "ALB") {
 
       // If migrating
-      if(mode == WRITE_ENABLE) {
+      if(volume.mode() == tapegateway::WRITE) {
 
         Packer packer;
         packer.run();
 
-      // Else recalling
+      // Else recalling (READ or DUMP)
       } else {
 
         Unpacker unpacker;
@@ -181,8 +193,8 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
       char vsn[CA_MAXVSNLEN+1];
       utils::setBytes(vsn, '\0');
       BridgeProtocolEngine bridgeProtocolEngine(cuuid, volReqId, gatewayHost,
-        gatewayPort, rtcpdCallbackSockFd.get(), rtcpdInitialSockFd.get(),
-        mode, unit, vid, vsn, label, density);
+        gatewayPort, rtcpdCallbackSockFd.get(), rtcpdInitialSockFd.get(), unit,
+        volume, vsn);
       bridgeProtocolEngine.run();
     }
   } catch(castor::exception::Exception &ex) {
