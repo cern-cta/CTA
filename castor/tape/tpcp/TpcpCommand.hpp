@@ -30,7 +30,6 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include "castor/tape/tpcp/Action.hpp"
-#include "castor/tape/tpcp/Migrator.hpp"
 #include "castor/tape/tpcp/Dumper.hpp"
 #include "castor/tape/tpcp/FilenameList.hpp"
 #include "castor/tape/tpcp/ParsedCommandLine.hpp"
@@ -112,7 +111,7 @@ protected:
   /**
    * To be implemented by sub-classes.
    *
-   * Performs the tape copy whether it be READ, WRITE or DUMP.
+   * Performs the tape copy whether it be DUMP, READ, WRITE or VERIFY.
    */
   virtual void performTransfer() throw(castor::exception::Exception) = 0;
 

@@ -68,9 +68,76 @@ protected:
     throw(castor::exception::Exception);
 
   /**
-   * Performs the tape copy whether it be READ, WRITE or DUMP.
+   * Performs the tape copy whether it be DUMP, READ, WRITE or VERIFY.
    */
   void performTransfer() throw(castor::exception::Exception);
+
+
+private:
+
+  /**
+   * Data type for a map of file transaction IDs to the RFIO filenames of
+   * files currently being transfered.
+   */
+  typedef std::map<uint64_t, std::string> FileTransferMap;
+
+  /**
+   * Map of file transaction IDs to the RFIO filenames of files currently
+   * being transfered.
+   */
+  FileTransferMap m_pendingFileTransfers;
+
+  /**
+   * The next tape file sequence number to be used when migrating using the
+   * TPPOSIT_FSEQ positioning method.  This member variable is not used with
+   * the TPPOSIT_EOI positioning method.
+   */
+  int32_t m_nextTapeFseq;
+
+  /**
+   * The number of successfully transfered files.
+   */
+  uint64_t m_nbMigratedFiles;
+
+  /**
+   * FileToMigrateRequest message handler.
+   *
+   * @param obj  The aggregator message to be processed.
+   * @param sock The socket on which to reply to the aggregator.
+   * @return     True if there is more work to be done else false.
+   */
+  bool handleFileToMigrateRequest(castor::IObject *obj,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+
+  /**
+   * FileMigratedNotification message handler.
+   *
+   * @param obj  The aggregator message to be processed.
+   * @param sock The socket on which to reply to the aggregator.
+   * @return     True if there is more work to be done else false.
+   */
+  bool handleFileMigratedNotification(castor::IObject *obj,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+
+  /**
+   * EndNotification message handler.
+   *
+   * @param obj  The aggregator message to be processed.
+   * @param sock The socket on which to reply to the aggregator.
+   * @return     True if there is more work to be done else false.
+   */
+  bool handleEndNotification(castor::IObject *obj,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+
+  /**
+   * EndNotificationErrorReport message handler.
+   *
+   * @param obj  The aggregator message to be processed.
+   * @param sock The socket on which to reply to the aggregator.
+   * @return     True if there is more work to be done else false.
+   */
+  bool handleEndNotificationErrorReport(castor::IObject *obj,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
 }; // class WriteTpCommand
 

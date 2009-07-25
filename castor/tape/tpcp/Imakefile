@@ -75,7 +75,6 @@ DUMPTPBIN_SRCS = \
   Dumper.cpp \
   DumpTpCommand.cpp \
   Helper.cpp \
-  Migrator.cpp \
   StreamHelper.cpp \
   StreamOperators.cpp \
   TapeFileSequenceParser.cpp \
@@ -95,7 +94,6 @@ READTPBIN_SRCS = \
   ActionHandler.cpp \
   Dumper.cpp \
   Helper.cpp \
-  Migrator.cpp \
   ReadTpCommand.cpp \
   StreamHelper.cpp \
   StreamOperators.cpp \
@@ -116,7 +114,6 @@ WRITETPBIN_SRCS = \
   ActionHandler.cpp \
   Dumper.cpp \
   Helper.cpp \
-  Migrator.cpp \
   StreamHelper.cpp \
   StreamOperators.cpp \
   TapeFileSequenceParser.cpp \
