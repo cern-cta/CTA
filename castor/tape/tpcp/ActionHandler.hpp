@@ -251,7 +251,7 @@ private:
   };
 
   /**
-   * Conscrete Aggregator message handler template functor.
+   * Concrete Aggregator message handler template functor.
    */
   template<class T> class MsgHandler : public AbstractMsgHandler {
   public:

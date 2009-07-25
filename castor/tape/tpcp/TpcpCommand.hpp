@@ -197,11 +197,6 @@ protected:
   void requestDriveFromVdqm(const int mode, char *const server)
     throw(castor::exception::Exception);
 
-  /**
-   * Dispaches the action to be performed to the appropriate ActionHandler.
-   */
-  void dispatchAction() throw(castor::exception::Exception);
-
 }; // class TpcpCommand
 
 } // namespace tpcp
