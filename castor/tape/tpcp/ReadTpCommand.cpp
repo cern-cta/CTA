@@ -23,6 +23,7 @@
  *****************************************************************************/
  
 #include "castor/tape/tpcp/ReadTpCommand.hpp"
+#include "castor/tape/tpcp/Recaller.hpp"
 #include "castor/tape/tpcp/TapeFileSequenceParser.hpp"
 
 #include <getopt.h>
@@ -248,6 +249,19 @@ void castor::tape::tpcp::ReadTpCommand::parseCommandLine(const int argc,
 
     throw ex;
   }
+}
+
+
+//------------------------------------------------------------------------------
+// performTransfer
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::ReadTpCommand::performTransfer()
+  throw (castor::exception::Exception) {
+
+  Recaller handler(m_cmdLine, m_filenames, m_vmgrTapeInfo, m_dgn, m_volReqId,
+    m_callbackSock);
+
+  handler.run();
 }
 
 

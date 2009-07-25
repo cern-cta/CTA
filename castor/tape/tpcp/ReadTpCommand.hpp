@@ -67,6 +67,11 @@ protected:
   void parseCommandLine(const int argc, char **argv)
     throw(castor::exception::Exception);
 
+  /**
+   * Performs the tape copy whether it be READ, WRITE or DUMP.
+   */
+  void performTransfer() throw(castor::exception::Exception);
+
 
 private:
 

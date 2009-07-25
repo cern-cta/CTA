@@ -200,3 +200,15 @@ void castor::tape::tpcp::DumpTpCommand::parseCommandLine(const int argc,
       ": " << ex.getMessage().str());
   }
 }
+
+
+//------------------------------------------------------------------------------
+// performTransfer
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::DumpTpCommand::performTransfer()
+  throw (castor::exception::Exception) {
+  Dumper handler(m_cmdLine, m_filenames, m_vmgrTapeInfo, m_dgn,
+    m_volReqId, m_callbackSock);
+
+  handler.run();
+}

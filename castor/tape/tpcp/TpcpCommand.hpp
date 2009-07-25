@@ -111,12 +111,16 @@ protected:
     throw(castor::exception::Exception) = 0;
 
   /**
+   * To be implemented by sub-classes.
+   *
+   * Performs the tape copy whether it be READ, WRITE or DUMP.
+   */
+  virtual void performTransfer() throw(castor::exception::Exception) = 0;
+
+  /**
    * The results of parsing the command-line.
    */
   ParsedCommandLine m_cmdLine;
-
-
-private:
 
   /**
    * Vmgr error buffer.

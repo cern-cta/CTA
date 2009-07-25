@@ -441,14 +441,13 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
     // Close the connection to the aggregator
     callbackConnectionSock.close();
 
-    // Dispatch the action to the appropriate ActionHandler
+    // Perform the transfer, either READ, WRITE or DUMP
     try {
-      dispatchAction();
+      performTransfer();
     } catch(castor::exception::Exception &ex) {
       castor::exception::Exception ex2(ECANCELED);
 
-      ex2.getMessage() << "Failed to perform action"
-        ": Action=" << m_cmdLine.action <<
+      ex2.getMessage() << "Failed to perform " << m_cmdLine.action <<
         ": " << ex.getMessage().str();
 
       throw ex2;

@@ -22,6 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
  
+#include "castor/tape/tpcp/Migrator.hpp"
 #include "castor/tape/tpcp/WriteTpCommand.hpp"
 
 #include <getopt.h>
@@ -249,4 +250,17 @@ void castor::tape::tpcp::WriteTpCommand::parseCommandLine(const int argc,
   while(optind < argc) {
     m_cmdLine.filenames.push_back(argv[optind++]);
   }
+}
+
+
+//------------------------------------------------------------------------------
+// performTransfer
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::WriteTpCommand::performTransfer()
+  throw (castor::exception::Exception) {
+
+  Migrator handler(m_cmdLine, m_filenames, m_vmgrTapeInfo, m_dgn, m_volReqId,
+    m_callbackSock);
+
+  handler.run();
 }
