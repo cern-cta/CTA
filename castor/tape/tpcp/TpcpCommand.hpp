@@ -32,12 +32,12 @@
 #include "castor/tape/tpcp/Action.hpp"
 #include "castor/tape/tpcp/FilenameList.hpp"
 #include "castor/tape/tpcp/ParsedCommandLine.hpp"
-#include "castor/tape/tpcp/Verifier.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/vmgr_api.h"
 
 #include <iostream>
 #include <list>
+#include <map>
 #include <stdint.h>
 #include <stdlib.h>
 

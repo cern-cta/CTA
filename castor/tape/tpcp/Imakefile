@@ -72,6 +72,7 @@ DUMPTPBIN_SRCS = \
   ../utils/utils.cpp \
   Action.cpp \
   DumpTpCommand.cpp \
+  DumpTpMain.cpp \
   Helper.cpp \
   StreamHelper.cpp \
   StreamOperators.cpp \
@@ -79,7 +80,6 @@ DUMPTPBIN_SRCS = \
   TapeFseqRangeListSequence.cpp \
   TapeFseqRangeSequence.cpp \
   TpcpCommand.cpp \
-  DumpTpMain.cpp \
   $(TAPEGATEWAY_MESSAGES_SRCS) \
   $(TAPEGATEWAY_IO_SRCS)
 DUMPTPBIN_OBJS = $(DUMPTPBIN_SRCS:.cpp=.Osuf)
@@ -90,13 +90,13 @@ READTPBIN_SRCS = \
   Action.cpp \
   Helper.cpp \
   ReadTpCommand.cpp \
+  ReadTpMain.cpp \
   StreamHelper.cpp \
   StreamOperators.cpp \
   TapeFileSequenceParser.cpp \
   TapeFseqRangeListSequence.cpp \
   TapeFseqRangeSequence.cpp \
   TpcpCommand.cpp \
-  ReadTpMain.cpp \
   $(TAPEGATEWAY_MESSAGES_SRCS) \
   $(TAPEGATEWAY_IO_SRCS)
 READTPBIN_OBJS = $(READTPBIN_SRCS:.cpp=.Osuf)
