@@ -22,8 +22,12 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
  
+#include "castor/Constants.hpp"
+#include "castor/tape/tapegateway/DumpNotification.hpp"
+#include "castor/tape/tpcp/Constants.hpp"
 #include "castor/tape/tpcp/DumpTpCommand.hpp"
 
+#include <errno.h>
 #include <getopt.h>
 
 
@@ -31,7 +35,14 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tpcp::DumpTpCommand::DumpTpCommand() throw() {
-  // Do nothing
+
+  // Register the Aggregator message handler member functions
+  registerMsgHandler(OBJ_DumpNotification,
+    &DumpTpCommand::handleDumpNotification, this);
+  registerMsgHandler(OBJ_EndNotification,
+    &DumpTpCommand::handleEndNotification, this);
+  registerMsgHandler(OBJ_EndNotificationErrorReport,
+    &DumpTpCommand::handleEndNotificationErrorReport, this);
 }
 
 
@@ -207,8 +218,57 @@ void castor::tape::tpcp::DumpTpCommand::parseCommandLine(const int argc,
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::DumpTpCommand::performTransfer()
   throw (castor::exception::Exception) {
-  Dumper handler(m_cmdLine, m_filenames, m_vmgrTapeInfo, m_dgn,
-    m_volReqId, m_callbackSock);
 
-  handler.run();
+  // Spin in the dispatch message loop until there is no more work
+  while(dispatchMessage()) {
+    // Do nothing
+  }
+
+  std::ostream &os = std::cout;
+
+  time_t now = time(NULL);
+  utils::writeTime(os, now, TIMEFORMAT);
+  os << ": Finished dumping tape" << std::endl
+     << std::endl;
+}
+
+
+//------------------------------------------------------------------------------
+// handleDumpNotification
+//------------------------------------------------------------------------------
+bool castor::tape::tpcp::DumpTpCommand::handleDumpNotification(
+  castor::IObject *obj, castor::io::AbstractSocket &sock)
+  throw(castor::exception::Exception) {
+
+  tapegateway::DumpNotification *msg = NULL;
+
+  castMessage(obj, msg, sock);
+
+  std::ostream &os = std::cout;
+
+  os << msg->message();
+
+  return true;
+}
+
+
+//------------------------------------------------------------------------------
+// handleEndNotification
+//------------------------------------------------------------------------------
+bool castor::tape::tpcp::DumpTpCommand::handleEndNotification(
+  castor::IObject *obj, castor::io::AbstractSocket &sock)
+  throw(castor::exception::Exception) {
+
+  return TpcpCommand::handleEndNotification(obj, sock);
+}
+
+
+//------------------------------------------------------------------------------
+// handleEndNotificationErrorReport
+//------------------------------------------------------------------------------
+bool castor::tape::tpcp::DumpTpCommand::handleEndNotificationErrorReport(
+  castor::IObject *obj, castor::io::AbstractSocket &sock)
+  throw(castor::exception::Exception) {
+
+  return TpcpCommand::handleEndNotificationErrorReport(obj,sock);
 }

@@ -301,13 +301,16 @@ void castor::tape::tpcp::ReadTpCommand::performTransfer()
 
   time_t now = time(NULL);
   utils::writeTime(os, now, TIMEFORMAT);
-  os << ": End of recall session" << std::endl
+  os << ": Finished reading from tape" << std::endl
      << std::endl
      << "Number of recall requests      = " << nbRecallRequests  << std::endl
      << "Number of successfull recalls  = " << m_nbRecalledFiles << std::endl
      << "Number of incomplete transfers = " << nbIncompleteTransfers
-     << std::endl
      << std::endl;
+
+  if(m_pendingFileTransfers.size() > 0) {
+    os << std::endl;
+  }
 
   for(FileTransferMap::iterator itor=m_pendingFileTransfers.begin();
     itor!=m_pendingFileTransfers.end(); itor++) {
@@ -320,6 +323,8 @@ void castor::tape::tpcp::ReadTpCommand::performTransfer()
        << " filename=" << fileTransfer.filename
        << std::endl;
   }
+
+  os << std::endl;
 }
 
 

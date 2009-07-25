@@ -72,6 +72,39 @@ protected:
    */
   void performTransfer() throw(castor::exception::Exception);
 
+
+private:
+
+  /**
+   * DumpNotification message handler.
+   *
+   * @param obj  The aggregator message to be processed.
+   * @param sock The socket on which to reply to the aggregator.
+   * @return     True if there is more work to be done else false.
+   */
+  bool handleDumpNotification(castor::IObject *obj,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+
+  /**
+   * EndNotification message handler.
+   *
+   * @param obj  The aggregator message to be processed.
+   * @param sock The socket on which to reply to the aggregator.
+   * @return     True if there is more work to be done else false.
+   */
+  bool handleEndNotification(castor::IObject *obj,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+
+  /**
+   * EndNotificationErrorReport message handler.
+   *
+   * @param obj  The aggregator message to be processed.
+   * @param sock The socket on which to reply to the aggregator.
+   * @return     True if there is more work to be done else false.
+   */
+  bool handleEndNotificationErrorReport(castor::IObject *obj,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+
 }; // class DumpTpCommand
 
 } // namespace tpcp

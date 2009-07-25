@@ -301,13 +301,16 @@ void castor::tape::tpcp::WriteTpCommand::performTransfer()
 
   time_t now = time(NULL);
   utils::writeTime(os, now, TIMEFORMAT);
-  os << ": End of migrate session" << std::endl
+  os << ": Finished writing to tape" << std::endl
      << std::endl
      << "Number of migrate requests       = " << nbMigrateRequests << std::endl
      << "Number of successfull migrations = " << m_nbMigratedFiles << std::endl
      << "Number of incomplete transfers   = " << nbIncompleteTransfers
-     << std::endl
      << std::endl;
+
+  if(m_pendingFileTransfers.size() > 0) {
+    os << std::endl;
+  }
 
   for(FileTransferMap::iterator itor=m_pendingFileTransfers.begin();
     itor!=m_pendingFileTransfers.end(); itor++) {
@@ -319,6 +322,8 @@ void castor::tape::tpcp::WriteTpCommand::performTransfer()
        << " filename=" << filename
        << std::endl;
   }
+
+  os << std::endl;
 }
 
 

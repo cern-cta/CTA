@@ -30,7 +30,6 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include "castor/tape/tpcp/Action.hpp"
-#include "castor/tape/tpcp/Dumper.hpp"
 #include "castor/tape/tpcp/FilenameList.hpp"
 #include "castor/tape/tpcp/ParsedCommandLine.hpp"
 #include "castor/tape/tpcp/Verifier.hpp"
@@ -49,13 +48,14 @@ namespace tpcp   {
 /**
  * This class carries out the following steps:
  * <ul>
- * <li>Parses the command-line
- * <li>Gets the DGN of the tape to be used from the VMGR
- * <li>Creates the aggregator callback socket
- * <li>Sends the request for a drive to the VDQM
- * <li>Delegates the requested action (READ, WRITE, DUMP or VERIFY) to the
- * appropriate action handler (DataMover for READ and WRITE, Dumper for DUMP or
- * Verifier for VERIFY).
+ * <li>Delegates to a sub-class the parsing of the command-line.
+ * <li>Gets the DGN of the tape to be used from the VMGR.
+ * <li>Creates the aggregator callback socket.
+ * <li>Sends the request for a drive to the VDQM.
+ * <li>Waits for the callback from the aggregator on the chosen tape server.
+ * <li>Receives and replies to the volume request from the aggregator.
+ * <li>Delegates the tape transfer action (DUMP, READ, WRITE or VERIFY) to a
+ * sub-class.
  * </ul>
  */
 class TpcpCommand : public castor::BaseObject {

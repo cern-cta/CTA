@@ -72,7 +72,6 @@ DUMPTPBIN_SRCS = \
   ../utils/utils.cpp \
   Action.cpp \
   ActionHandler.cpp \
-  Dumper.cpp \
   DumpTpCommand.cpp \
   Helper.cpp \
   StreamHelper.cpp \
@@ -92,7 +91,6 @@ READTPBIN_SRCS = \
   ../utils/utils.cpp \
   Action.cpp \
   ActionHandler.cpp \
-  Dumper.cpp \
   Helper.cpp \
   ReadTpCommand.cpp \
   StreamHelper.cpp \
@@ -112,7 +110,6 @@ WRITETPBIN_SRCS = \
   ../utils/utils.cpp \
   Action.cpp \
   ActionHandler.cpp \
-  Dumper.cpp \
   Helper.cpp \
   StreamHelper.cpp \
   StreamOperators.cpp \
