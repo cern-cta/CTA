@@ -178,7 +178,7 @@ protected:
   void acknowledgeEndOfSession() throw(castor::exception::Exception);
 
   /**
-   * Convenience method fro sending EndNotificationErrorReport messages to the
+   * Convenience method for sending EndNotificationErrorReport messages to the
    * aggregator.
    *
    * Note that this method intentionally does not throw any exceptions.  The

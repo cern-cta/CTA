@@ -25,6 +25,7 @@
 #ifndef CASTOR_TAPE_TPCP_READTPCOMMAND_HPP
 #define CASTOR_TAPE_TPCP_READTPCOMMAND_HPP 1
 
+#include "castor/tape/tpcp/TapeFseqRangeListSequence.hpp"
 #include "castor/tape/tpcp/TpcpCommand.hpp"
 
 namespace castor {
@@ -82,6 +83,83 @@ private:
    * @return The number of ranges that contain the upper boundary "end of tape".
    */
   unsigned int countNbRangesWithEnd() throw (castor::exception::Exception);
+
+  /**
+   * The sequence of tape file sequence numbers to be processed.
+   */
+  TapeFseqRangeListSequence m_tapeFseqSequence;
+
+  /**
+   * The number of successfully transfered files.
+   */
+  uint64_t m_nbRecalledFiles;
+
+  /**
+   * Structure used to remember a file that is currently being transfered.
+   */
+  struct FileTransfer {
+
+    /**
+     * The tape file sequence number.
+     */
+    uint32_t tapeFseq;
+
+    /**
+     * The RFIO filename.
+     */
+    std::string filename;
+  };
+
+  /**
+   * Data type for a map of file transaction IDs to files currently being
+   * transfered.
+   */
+  typedef std::map<uint64_t, FileTransfer> FileTransferMap;
+
+  /**
+   * Map of file transaction IDs to files currently being transfered.
+   */
+  FileTransferMap m_pendingFileTransfers;
+
+  /**
+   * FileToRecallRequest message handler.
+   *
+   * @param obj  The aggregator message to be processed.
+   * @param sock The socket on which to reply to the aggregator.
+   * @return     True if there is more work to be done else false.
+   */
+  bool handleFileToRecallRequest(castor::IObject *obj,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+
+  /**
+   * FileRecalledNotification message handler.
+   *
+   * @param obj  The aggregator message to be processed.
+   * @param sock The socket on which to reply to the aggregator.
+   * @return     True if there is more work to be done else false.
+   */
+  bool handleFileRecalledNotification(castor::IObject *obj,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+
+  /**
+   * EndNotification message handler.
+   *
+   * @param obj  The aggregator message to be processed.
+   * @param sock The socket on which to reply to the aggregator.
+   * @return     True if there is more work to be done else false.
+   */
+  bool handleEndNotification(castor::IObject *obj,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+
+  /**
+   * EndNotificationErrorReport message handler.
+   *
+   * @param obj  The aggregator message to be processed.
+   * @param sock The socket on which to reply to the aggregator.
+   * @return     True if there is more work to be done else false.
+   */
+  bool handleEndNotificationErrorReport(castor::IObject *obj,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
 }; // class ReadTpCommand
 

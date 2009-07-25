@@ -66,7 +66,8 @@ char castor::tape::tpcp::TpcpCommand::vmgr_error_buffer[VMGRERRORBUFLEN];
 //------------------------------------------------------------------------------
 castor::tape::tpcp::TpcpCommand::TpcpCommand() throw () :
   m_callbackSock(false),
-  m_volReqId(0) {
+  m_volReqId(0),
+  m_fileTransactionId(1) {
   utils::setBytes(m_vmgrTapeInfo, '\0');
   utils::setBytes(m_dgn, '\0');
 }
@@ -146,7 +147,8 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
       throw ex;
     }
 
-    // Fill the list of filenames to be processed by the action handlers.
+    // Fill the list of filenames to be processed.
+    //
     // The list of filenames will either come from the command-line arguments
     // or (exclusive or) from a "filelist" file specified with the
     // "-f, --filelist" option.
@@ -172,6 +174,9 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
 
       os << "Filenames to be processed = " << m_filenames << std::endl;
     }
+
+    // Set the iterator pointing to the next RFIO filename to be processed
+    m_filenameItor = m_filenames.begin();
 
     if(m_cmdLine.action == Action::read) {
 
@@ -587,5 +592,274 @@ void castor::tape::tpcp::TpcpCommand::requestDriveFromVdqm(const int mode,
       << buf;
 
     throw ex;
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// dispatchMessage
+//------------------------------------------------------------------------------
+bool castor::tape::tpcp::TpcpCommand::dispatchMessage()
+  throw(castor::exception::Exception) {
+
+  // Socket file descriptor for a callback connection from the aggregator
+  int connectionSockFd = 0;
+
+  // Wait for a callback connection from the aggregator
+  {
+    bool waitForCallback    = true;
+    while(waitForCallback) {
+      try {
+        connectionSockFd = net::acceptConnection(m_callbackSock.socket(),
+          WAITCALLBACKTIMEOUT);
+
+        waitForCallback = false;
+      } catch(castor::exception::TimeOut &tx) {
+        std::cout << "Waited " << WAITCALLBACKTIMEOUT << " seconds for a "
+        "callback connection from the tape server." << std::endl
+        << "Continuing to wait." <<  std::endl;
+      }
+    }
+  }
+
+  // If debug, then display a textual description of the aggregator
+  // callback connection
+  if(m_cmdLine.debugSet) {
+    std::ostream &os = std::cout;
+
+    os << "Aggregator connection = ";
+    net::writeSockDescription(os, connectionSockFd);
+    os << std::endl;
+  }
+
+  // Wrap the connection socket descriptor in a CASTOR framework socket in
+  // order to get access to the framework marshalling and un-marshalling
+  // methods
+  castor::io::AbstractTCPSocket sock(connectionSockFd);
+
+  // Read in the message sent by the aggregator
+  std::auto_ptr<castor::IObject> obj(sock.readObject());
+
+  // If debug, then display the type of message received from the aggregator
+  if(m_cmdLine.debugSet) {
+    std::ostream &os = std::cout;
+
+    os << "Received aggregator message of type = "
+       << utils::objectTypeToString(obj->type()) << std::endl;
+  }
+
+  {
+    // Cast the message to a GatewayMessage so that the mount transaction ID
+    // can be checked
+    tapegateway::GatewayMessage *msg =
+      dynamic_cast<tapegateway::GatewayMessage *>(obj.get());
+    if(msg == NULL) {
+      std::stringstream oss;
+
+      oss <<
+        "Unexpected object type" <<
+        ": Actual=" << utils::objectTypeToString(obj->type()) <<
+        " Expected=Subclass of GatewayMessage";
+
+      sendEndNotificationErrorReport(SEINTERNAL, oss.str(), sock);
+
+      TAPE_THROW_EX(castor::exception::Internal, oss.str());
+    }
+
+    // Check the mount transaction ID
+    if(msg->mountTransactionId() != (uint64_t)m_volReqId) {
+      std::stringstream oss;
+
+      oss <<
+        "Mount transaction ID mismatch" <<
+        ": Actual=" << msg->mountTransactionId() <<
+        " Expected=" << m_volReqId;
+
+      sendEndNotificationErrorReport(EBADMSG, oss.str(), sock);
+
+      castor::exception::Exception ex(EBADMSG);
+      ex.getMessage() << oss.str();
+      throw ex;
+    }
+  }
+
+  // Find the message type's corresponding handler
+  MsgHandlerMap::const_iterator itor = m_msgHandlers.find(obj->type());
+  if(itor == m_msgHandlers.end()) {
+    std::stringstream oss;
+
+    oss <<
+      "Received unexpected aggregator message"
+      ": Message type = " << utils::objectTypeToString(obj->type());
+
+    sendEndNotificationErrorReport(EBADMSG, oss.str(), sock);
+
+    TAPE_THROW_CODE(EBADMSG,
+         ": Received unexpected aggregator message: "
+      << ": Message type = " << utils::objectTypeToString(obj->type()));
+  }
+  const AbstractMsgHandler &handler = *itor->second;
+
+  // Invoke the handler
+  const bool moreWork = handler(obj.get(), sock);
+
+  // Close the aggregator callback connection
+  sock.close();
+
+  return moreWork;
+}
+
+
+//------------------------------------------------------------------------------
+// handleEndNotification
+//------------------------------------------------------------------------------
+bool castor::tape::tpcp::TpcpCommand::handleEndNotification(
+  castor::IObject *obj, castor::io::AbstractSocket &sock)
+  throw(castor::exception::Exception) {
+
+  tapegateway::EndNotification *msg = NULL;
+
+  castMessage(obj, msg, sock);
+  Helper::displayRcvdMsgIfDebug(*msg, m_cmdLine.debugSet);
+
+  // Create the NotificationAcknowledge message for the aggregator
+  castor::tape::tapegateway::NotificationAcknowledge acknowledge;
+  acknowledge.setMountTransactionId(m_volReqId);
+
+  // Send the NotificationAcknowledge message to the aggregator
+  sock.sendObject(acknowledge);
+
+  Helper::displaySentMsgIfDebug(acknowledge, m_cmdLine.debugSet);
+
+  return false;
+}
+
+
+//------------------------------------------------------------------------------
+// handleEndNotificationErrorReport
+//------------------------------------------------------------------------------
+bool castor::tape::tpcp::TpcpCommand::handleEndNotificationErrorReport(
+  castor::IObject *obj, castor::io::AbstractSocket &sock)
+  throw(castor::exception::Exception) {
+
+  tapegateway::EndNotificationErrorReport *msg = NULL;
+
+  castMessage(obj, msg, sock);
+
+  Helper::displayRcvdMsgIfDebug(*msg, m_cmdLine.debugSet);
+
+  {
+    char errorBuf[STRERRORBUFLEN];
+    sstrerror_r(msg->errorCode(), errorBuf, sizeof(errorBuf));
+    errorBuf[sizeof(errorBuf)-1] = '\0';
+
+    std::ostream &os = std::cout;
+
+    os <<
+      std::endl <<
+      "The aggregator encountered the following error:" << std::endl <<
+      std::endl <<
+      "Error code    = " << msg->errorCode() << " \"" << errorBuf << "\"" <<
+      std::endl <<
+      "Error message = \"" << msg->errorMessage() << "\"" << std::endl <<
+      std::endl;
+  }
+
+  // Create the NotificationAcknowledge message for the aggregator
+  castor::tape::tapegateway::NotificationAcknowledge acknowledge;
+  acknowledge.setMountTransactionId(m_volReqId);
+
+  // Send the NotificationAcknowledge message to the aggregator
+  sock.sendObject(acknowledge);
+
+  Helper::displaySentMsgIfDebug(acknowledge, m_cmdLine.debugSet);
+
+  return false;
+}
+
+
+//------------------------------------------------------------------------------
+// tellAggregatorNoMoreFiles
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::TpcpCommand::acknowledgeEndOfSession()
+  throw(castor::exception::Exception) {
+
+  // Socket file descriptor for a callback connection from the aggregator
+  int connectionSockFd = 0;
+
+  // Wait for a callback connection from the aggregator
+  {
+    bool waitForCallback = true;
+    while(waitForCallback) {
+      try {
+        connectionSockFd = net::acceptConnection(m_callbackSock.socket(),
+          WAITCALLBACKTIMEOUT);
+
+        waitForCallback = false;
+      } catch(castor::exception::TimeOut &tx) {
+        std::cout << "Waited " << WAITCALLBACKTIMEOUT << " seconds for a "
+        "callback connection from the tape server." << std::endl
+        << "Continuing to wait." <<  std::endl;
+      }
+    }
+  }
+
+  // If debug, then display a textual description of the aggregator
+  // callback connection
+  if(m_cmdLine.debugSet) {
+    std::ostream &os = std::cout;
+
+    os << "Aggregator connection = ";
+    net::writeSockDescription(os, connectionSockFd);
+    os << std::endl;
+  }
+
+  // Wrap the connection socket descriptor in a CASTOR framework socket in
+  // order to get access to the framework marshalling and un-marshalling
+  // methods
+  castor::io::AbstractTCPSocket sock(connectionSockFd);
+
+  // Read in the object sent by the aggregator
+  std::auto_ptr<castor::IObject> obj(sock.readObject());
+
+  // Pointer to the received object with the object's type
+  tapegateway::EndNotification *endNotification = NULL;
+
+  castMessage(obj.get(), endNotification, sock);
+  Helper::displayRcvdMsgIfDebug(*endNotification, m_cmdLine.debugSet);
+
+  // Create the NotificationAcknowledge message for the aggregator
+  castor::tape::tapegateway::NotificationAcknowledge acknowledge;
+  acknowledge.setMountTransactionId(m_volReqId);
+
+  // Send the volume message to the aggregator
+  sock.sendObject(acknowledge);
+
+  // Close the connection to the aggregator
+  sock.close();
+
+  Helper::displaySentMsgIfDebug(acknowledge, m_cmdLine.debugSet);
+}
+
+
+//------------------------------------------------------------------------------
+// sendEndNotificationErrorReport
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::TpcpCommand::sendEndNotificationErrorReport(
+  const int errorCode, const std::string &errorMessage,
+  castor::io::AbstractSocket &sock) throw() {
+
+  try {
+    // Create the message
+    tapegateway::EndNotificationErrorReport errorReport;
+    errorReport.setErrorCode(errorCode);
+    errorReport.setErrorMessage(errorMessage);
+
+    // Send the message to the aggregator
+    sock.sendObject(errorReport);
+
+    Helper::displaySentMsgIfDebug(errorReport, m_cmdLine.debugSet);
+  } catch(...) {
+    // Do nothing
   }
 }

@@ -42,6 +42,14 @@ public:
   /**
    * Constructor.
    *
+   * Creates an empty sequence, in other word hasMore() will always return
+   * false.
+   */
+  TapeFseqRangeSequence() throw();
+
+  /**
+   * Constructor.
+   *
    * @param range The range from which the sequence is generated.
    */
   TapeFseqRangeSequence(TapeFseqRange &range) throw();

@@ -34,7 +34,6 @@
 #include "castor/tape/tpcp/Dumper.hpp"
 #include "castor/tape/tpcp/FilenameList.hpp"
 #include "castor/tape/tpcp/ParsedCommandLine.hpp"
-#include "castor/tape/tpcp/Recaller.hpp"
 #include "castor/tape/tpcp/Verifier.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/vmgr_api.h"
@@ -133,6 +132,11 @@ protected:
   FilenameList m_filenames;
 
   /**
+   * Iterator pointing to the next RFIO filename;
+   */
+  FilenameList::const_iterator m_filenameItor;
+
+  /**
    * Tape information retrieved from the VMGR about the tape to be used.
    */
   vmgr_tape_info m_vmgrTapeInfo;
@@ -151,7 +155,12 @@ protected:
    * The volume request ID returned by the VDQM as a result of requesting a
    * drive.
    */
-  int m_volReqId;
+  int32_t m_volReqId;
+
+  /**
+   * The next file transaction ID.
+   */
+  uint64_t m_fileTransactionId;
 
   /**
    * Returns the port on which the server will listen for connections from the
@@ -196,6 +205,209 @@ protected:
    */
   void requestDriveFromVdqm(const int mode, char *const server)
     throw(castor::exception::Exception);
+
+  /**
+   * Registers the specified Aggregator message handler member function.
+   *
+   * @param messageType The type of Aggregator message.
+   * @param func        The member function to handle the Aggregator message.
+   * @param obj         The object to handler the Aggregator message.
+   */
+  template<class T> void registerMsgHandler(
+    const int messageType,
+    bool (T::*func)(castor::IObject *, castor::io::AbstractSocket &),
+    T *obj) throw() {
+
+    m_msgHandlers[messageType] = new MsgHandler<T>(func, obj);
+  }
+
+  /**
+   * Waits for and accepts an incoming aggregator connection, reads in the
+   * aggregator message and then dispatches it to appropriate message handler
+   * member function.
+   *
+   * @return True if there is more work to be done, else false.
+   */
+  bool dispatchMessage() throw(castor::exception::Exception);
+
+  /**
+   * EndNotification message handler.
+   *
+   * @param obj  The aggregator message to be processed.
+   * @param sock The socket on which to reply to the aggregator.
+   * @return     True if there is more work to be done else false.
+   */
+  bool handleEndNotification(castor::IObject *obj,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+
+  /**
+   * EndNotificationErrorReport message handler.
+   *
+   * @param obj  The aggregator message to be processed.
+   * @param sock The socket on which to reply to the aggregator.
+   * @return     True if there is more work to be done else false.
+   */
+  bool handleEndNotificationErrorReport(castor::IObject *obj,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+
+  /**
+   * Acknowledges the end of the session to the aggregator.
+   */
+  void acknowledgeEndOfSession() throw(castor::exception::Exception);
+
+  /**
+   * Convenience method for sending EndNotificationErrorReport messages to the
+   * aggregator.
+   *
+   * Note that this method intentionally does not throw any exceptions.  The
+   * method tries to send an EndNotificationErrorReport messages to the
+   * aggregator and fails silently in the case it cannot.
+   *
+   * @param errorCode    The error code.
+   * @param errorMessage The error message.
+   * @param sock         The socket on which to reply to the aggregator.
+   */
+  void sendEndNotificationErrorReport(const int errorCode,
+    const std::string &errorMessage, castor::io::AbstractSocket &sock) throw();
+
+  /**
+   * Convenience method that casts the specified CASTOR framework object into
+   * the specified pointer to Gateway message.
+   *
+   * If the cast fails then an EndNotificationErrorReport is sent to the
+   * Gateway and an appropriate exception is thrown.
+   *
+   * @param obj  The CASTOR framework object.
+   * @param msg  Out parameter. The pointer to the Gateway massage that will be
+   *             set by this method.
+   * @param sock The socket on which to reply to the aggregator with an
+   *             EndNotificationErrorReport message if the cast fails.
+   */
+  template<class T> void castMessage(castor::IObject *obj, T *&msg,
+    castor::io::AbstractSocket &sock) throw() {
+    msg = dynamic_cast<T*>(obj);
+
+    if(msg == NULL) {
+      std::stringstream oss;
+
+      oss <<
+        "Unexpected object type" <<
+        ": Actual=" << utils::objectTypeToString(obj->type()) <<
+        " Expected=" << utils::objectTypeToString(T().type());
+
+      sendEndNotificationErrorReport(SEINTERNAL, oss.str(), sock);
+
+      TAPE_THROW_EX(castor::exception::Internal, oss.str());
+    }
+  }
+
+
+private:
+
+  /**
+   * An abstract functor to handle incomming Aggregator messages.
+   */
+  class AbstractMsgHandler {
+  public:
+
+    /**
+     * operator().
+     *
+     * @param obj The aggregator message to be processed.
+     * @param sock The socket on which to reply to the aggregator.
+     * @return True if there is more work to be done else false.
+     */
+    virtual bool operator()(castor::IObject *obj,
+      castor::io::AbstractSocket &sock) const
+      throw(castor::exception::Exception) = 0;
+
+    /**
+     * Destructor.
+     */
+    virtual ~AbstractMsgHandler() {
+      // DO nothing
+    }
+  };
+
+  /**
+   * Concrete Aggregator message handler template functor.
+   */
+  template<class T> class MsgHandler : public AbstractMsgHandler {
+  public:
+
+    /**
+     * Constructor.
+     */
+    MsgHandler(bool (T::*const func)(castor::IObject *obj,
+        castor::io::AbstractSocket &sock), T *const obj) :
+      m_func(func), m_obj(obj) {
+      // Do nothing
+    }
+
+    /**
+     * operator().
+     *
+     * @param obj The aggregator message to be processed.
+     * @param sock The socket on which to reply to the aggregator.
+     * @return True if there is more work to be done else false.
+     */
+    virtual bool operator()(castor::IObject *obj,
+      castor::io::AbstractSocket &sock) const
+      throw(castor::exception::Exception) {
+
+      return (m_obj->*m_func)(obj, sock);
+    }
+
+    /**
+     * destructor.
+     */
+    virtual ~MsgHandler() {
+      // Do nothing
+    }
+
+    /**
+     * The member function of class T to be called by operator().
+     */
+    bool (T::*const m_func)(castor::IObject *obj,
+      castor::io::AbstractSocket &sock);
+
+    /**
+     * The object on which the member function shall be called by operator().
+     */
+    T *const m_obj;
+  };  // template<class T> class MsgHandler
+
+  /**
+   * Map from message type (int) to pointer message handler
+   * (AbstractMsgHandler *).
+   *
+   * The destructor of this map is responsible for and will deallocate the
+   * MsgHandlers it points to.
+   */
+  class MsgHandlerMap : public std::map<int, AbstractMsgHandler *> {
+  public:
+
+    /**
+     * Destructor.
+     *
+     * Deallocates the MsgHandlers pointed to by this map.
+     */
+    ~MsgHandlerMap() {
+      for(iterator itor=begin(); itor!=end(); itor++) {
+        // Delete the MsgHandler
+        delete(itor->second);
+      }
+    }
+  }; // MsgHandlerMap
+
+  /**
+   * Map from message type (uint32_t) to pointer message handler
+   * (AbstractMsgHandler *).
+   *
+   * The destructor of this map is responsible for and will deallocate the
+   * MsgHandlers it points to.
+   */
+  MsgHandlerMap m_msgHandlers;
 
 }; // class TpcpCommand
 

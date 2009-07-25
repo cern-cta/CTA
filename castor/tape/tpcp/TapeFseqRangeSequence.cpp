@@ -30,6 +30,17 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
+castor::tape::tpcp::TapeFseqRangeSequence::TapeFseqRangeSequence() throw() {
+  // Initialise to an empty sequence
+  m_range.lower = 1;
+  m_range.upper = 1;
+  m_next        = 2;
+}
+
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
 castor::tape::tpcp::TapeFseqRangeSequence::TapeFseqRangeSequence(
   TapeFseqRange &range) throw() : m_range(range), m_next(range.lower) {
 }

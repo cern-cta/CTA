@@ -30,9 +30,32 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
+castor::tape::tpcp::TapeFseqRangeListSequence::TapeFseqRangeListSequence()
+  throw(castor::exception::Exception) {
+  reset(NULL);
+}
+
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
 castor::tape::tpcp::TapeFseqRangeListSequence::TapeFseqRangeListSequence(
-  TapeFseqRangeList &list) throw(castor::exception::Exception) :
-  m_list(list), m_rangeItor(list.begin()), m_nbSequence(*(list.begin())) {
+  TapeFseqRangeList *const list) throw(castor::exception::Exception) {
+  reset(list);
+}
+
+
+//------------------------------------------------------------------------------
+// reset
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::TapeFseqRangeListSequence::reset(
+  TapeFseqRangeList *const list) throw(castor::exception::Exception) {
+  m_list = list;
+
+  if(m_list != NULL) {
+    m_rangeItor  = list->begin();
+    m_nbSequence = (*(list->begin()));
+  }
 }
 
 
@@ -40,8 +63,11 @@ castor::tape::tpcp::TapeFseqRangeListSequence::TapeFseqRangeListSequence(
 // hasMore
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::TapeFseqRangeListSequence::hasMore() throw() {
-
-  return m_nbSequence.hasMore();
+  if(m_list != NULL) {
+    return m_nbSequence.hasMore();
+  } else {
+    return false;
+  }
 }
 
 
@@ -67,7 +93,7 @@ uint32_t castor::tape::tpcp::TapeFseqRangeListSequence::next()
 
     // Move on to the next if there is one
     m_rangeItor++;
-    if(m_rangeItor != m_list.end()) {
+    if(m_rangeItor != m_list->end()) {
       m_nbSequence = *m_rangeItor;
     }
   }
