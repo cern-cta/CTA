@@ -71,7 +71,6 @@ DUMPTPBIN_SRCS = \
   ../net/net.cpp \
   ../utils/utils.cpp \
   Action.cpp \
-  ActionHandler.cpp \
   DumpTpCommand.cpp \
   Helper.cpp \
   StreamHelper.cpp \
@@ -81,7 +80,6 @@ DUMPTPBIN_SRCS = \
   TapeFseqRangeSequence.cpp \
   TpcpCommand.cpp \
   DumpTpMain.cpp \
-  Verifier.cpp \
   $(TAPEGATEWAY_MESSAGES_SRCS) \
   $(TAPEGATEWAY_IO_SRCS)
 DUMPTPBIN_OBJS = $(DUMPTPBIN_SRCS:.cpp=.Osuf)
@@ -90,7 +88,6 @@ READTPBIN_SRCS = \
   ../net/net.cpp \
   ../utils/utils.cpp \
   Action.cpp \
-  ActionHandler.cpp \
   Helper.cpp \
   ReadTpCommand.cpp \
   StreamHelper.cpp \
@@ -100,7 +97,6 @@ READTPBIN_SRCS = \
   TapeFseqRangeSequence.cpp \
   TpcpCommand.cpp \
   ReadTpMain.cpp \
-  Verifier.cpp \
   $(TAPEGATEWAY_MESSAGES_SRCS) \
   $(TAPEGATEWAY_IO_SRCS)
 READTPBIN_OBJS = $(READTPBIN_SRCS:.cpp=.Osuf)
@@ -109,7 +105,6 @@ WRITETPBIN_SRCS = \
   ../net/net.cpp \
   ../utils/utils.cpp \
   Action.cpp \
-  ActionHandler.cpp \
   Helper.cpp \
   StreamHelper.cpp \
   StreamOperators.cpp \
@@ -119,7 +114,6 @@ WRITETPBIN_SRCS = \
   TpcpCommand.cpp \
   WriteTpCommand.cpp \
   WriteTpMain.cpp \
-  Verifier.cpp \
   $(TAPEGATEWAY_MESSAGES_SRCS) \
   $(TAPEGATEWAY_IO_SRCS)
 WRITETPBIN_OBJS = $(WRITETPBIN_SRCS:.cpp=.Osuf)
