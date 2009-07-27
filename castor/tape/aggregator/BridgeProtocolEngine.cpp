@@ -603,6 +603,10 @@ void castor::tape::aggregator::BridgeProtocolEngine::runDumpSession()
   RtcpTxRx::tellRtcpdDumpTape(m_cuuid, m_volReqId, m_rtcpdInitialSockFd,
     RTCPDNETRWTIMEOUT, request);
 
+  // Tell RTCPD end of file list
+  RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_volReqId, m_rtcpdInitialSockFd,
+    RTCPDNETRWTIMEOUT);
+
   try {
     processRtcpdSocks();
 

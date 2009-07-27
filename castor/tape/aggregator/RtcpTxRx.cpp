@@ -284,6 +284,39 @@ void castor::tape::aggregator::RtcpTxRx::tellRtcpdDumpTape(
       << ex.getMessage().str());
   }
 
+  // Send the message
+  try {
+    net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(SECOMERR,
+         ": Failed to send file message to RTCPD: "
+      << ex.getMessage().str());
+  }
+
+  // Receive acknowledge from RTCPD
+  MessageHeader ackMsg;
+  try {
+    receiveMessageHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
+      ackMsg);
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(EPROTO,
+         ": Failed to receive acknowledge from RTCPD: "
+      << ex.getMessage().str());
+  }
+
+  checkMagic(RTCOPY_MAGIC, ackMsg.magic, __FUNCTION__);
+  {
+    const uint32_t expected[] = {RTCP_DUMPTAPE_REQ};
+    checkRtcopyReqType(expected, ackMsg.reqType, __FUNCTION__);
+  }
+
+  // If the acknowledge is negative
+  if(ackMsg.lenOrStatus != 0) {
+    TAPE_THROW_CODE(ackMsg.lenOrStatus,
+      ": Received negative acknowledge from RTCPD"
+      ": Status: " << ackMsg.lenOrStatus);
+  }
+
   LogHelper::logMsgBody(cuuid, DLF_LVL_SYSTEM, AGGREGATOR_TOLD_RTCPD_DUMP_TAPE,
     volReqId, socketFd, request);
 }
