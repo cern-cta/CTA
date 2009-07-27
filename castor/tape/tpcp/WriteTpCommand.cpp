@@ -259,7 +259,7 @@ void castor::tape::tpcp::WriteTpCommand::parseCommandLine(const int argc,
         throw ex;
       }
 
-      m_cmdLine.tapeFseqPosition = atoi(optarg);
+      m_cmdLine.tapeFseqPosition = atoi(tmp.c_str());
 
       if(m_cmdLine.tapeFseqPosition == 0) {
         castor::exception::InvalidArgument ex;
