@@ -2,18 +2,13 @@
 
 copy "sequence.pic";
 
-step(); # useful for output readability
+step(); # For readability
 
 # Define the objects
 object(C,"tpread");
 object(M,"vmgr");
 object(V,"vdqm");
 object(R,"rtcpd");
-placeholder_object(A);
-placeholder_object(T);
-placeholder_object(D1);
-placeholder_object(D2);
-placeholder_object(D3);
 
 step();
 
@@ -21,8 +16,8 @@ step();
 
 # TPREAD <--> VMGR
 active(C);
-message(C,V,"connect");
-active(V);
+message(C,M,"connect");
+active(M);
 message(C,M,"VMGR_QRYTAPE");      # 0x0004
 message(M,C,"MSG_DATA");          # 0x0002
 message(M,C,"VMGR_RC");           # 0x0002
@@ -43,86 +38,66 @@ inactive(V);
 
 step();
 
+# VDQM <--> RTCPD
 active(V);
 message(V,R,"connect");
 active(R);
-create_message(R,RF,"main cntl");
-active(RF);
-inactive(R);
-
-message(V,RF,"RcpJob");
-message(RF,V,"RcpJobReply");
-message(RF,V,"disconnect");
+message(V,R,"VDQM_CLIENTINFO");         # 0x3104
+message(R,V,"VDQM_CLIENTINFO (ack)");   # 0x3104
+message(R,V,"disconnect");
 inactive(V);
 
-message(RF,C,"connect");
-message(C,RF,"volume");
-message(RF,C,"acknowledge");
+step();
 
-message(C,RF,"file1");
-message(RF,C,"acknowledge");
+# RTCPD <--> TPREAD
 
-message(C,RF,"file2");
-message(RF,C,"acknowledge");
+message(R,C,"connect");
+message(C,R,"volume");
+message(R,C,"acknowledge");
 
-message(C,RF,"RTCP_NOMORE_REQ");
-message(RF,C,"acknowledge");
+message(C,R,"file1");
+message(R,C,"acknowledge");
 
-create_message(RF,A,"abort");
-active(A);
+message(C,R,"file2");
+message(R,C,"acknowledge");
 
-message(RF,C,"connect for tape IO");
+message(C,R,"RTCP_NOMORE_REQ");
+message(R,C,"acknowledge");
 
-create_message(RF,T,"tape IO");
-active(T);
+message(R,C,"connect for tape IO");
 
-message(RF,C,"connect for disk IO");
-message(RF,C,"connect for disk IO");
-message(RF,C,"connect for disk IO");
+message(R,C,"connect for disk IO");
+message(R,C,"connect for disk IO");
+message(R,C,"connect for disk IO");
 
-create_message(RF,D1,"disk IO");
-active(D1);
-create_message(RF,D2,"disk IO");
-active(D2);
-create_message(RF,D3,"disk IO");
-active(D3);
+message(R,C,"positioned for file1 (tape req)");
+message(C,R,"acknowledge");
+message(R,C,"positioned for file1 (file req)");
+message(C,R,"acknowledge");
 
-message(T,C,"positioned for file1 (tape req)");
-message(C,T,"acknowledge");
-message(T,C,"positioned for file1 (file req)");
-message(C,T,"acknowledge");
+message(R,C,"positioned for file2 (tape req)");
+message(C,R,"acknowledge");
+message(R,C,"positioned for file2 (file req)");
+message(C,R,"acknowledge");
 
-message(T,C,"positioned for file2 (tape req)");
-message(C,T,"acknowledge");
-message(T,C,"positioned for file2 (file req)");
-message(C,T,"acknowledge");
+message(R,C,"RTCP_FINISHED file2");
+message(C,R,"acknowledge");
 
-message(D2,C,"RTCP_FINISHED file2");
-message(C,D2,"acknowledge");
-inactive(D2);
+message(R,C,"RTCP_FINISHED file1");
+message(C,R,"acknowledge");
 
-message(D1,C,"RTCP_FINISHED file1");
-message(C,D1,"acknowledge");
-inactive(D1);
+message(R,C,"RTCP_ENDOF_REQ");
+message(C,R,"acknowledge");
 
-message(T,C,"RTCP_ENDOF_REQ");
-message(C,T,"acknowledge");
-inactive(T);
-
-inactive(D3);
-inactive(A);
-inactive(RF);
+inactive(R);
 inactive(C);
 
 complete(C);
+complete(M);
 complete(V);
 complete(R);
-complete(RF);
-complete(A);
-complete(T);
-complete(D1);
-complete(D2);
-complete(D3);
+
+step(); # For readability
 
 .PE
 

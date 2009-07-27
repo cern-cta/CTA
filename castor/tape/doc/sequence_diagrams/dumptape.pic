@@ -2,7 +2,7 @@
 
 copy "sequence.pic";
 
-step(); # need for output readability
+step(); # For readability
 
 # Define the objects
 object(C,"dumptape");
@@ -14,7 +14,7 @@ step();
 
 # Message sequences
 
-# DUMPTAPE <--> VDQM
+# DUMPTAPE <--> VMGR
 active(C);
 message(C,M,"connect");
 active(M);
@@ -49,10 +49,10 @@ inactive(V);
 
 step();
 
-# DUMPTAPE <--> RTCPD
+# RTCPD <--> DUMPTAPE
 message(R,C,"connect");
-message(C,R,"volume");
-message(R,C,"acknowledge");
+message(C,R,"RTCP_TAPEERR_REQ");        # 0x2104
+message(R,C,"RTCP_TAPEERR_REQ (ack)");  # 0x2104
 
 step();
 
@@ -85,10 +85,8 @@ step();
 message(C,V,"connect");
 active(V);
 message(C,V,"VDQM_DEL_VOLREQ");
-message(V,C,"x00000843");
+message(V,C,"EVQREQASS");
 message(C,V,"disconnect");
-
-step(); # need for output readability
 
 inactive(V);
 inactive(R);
@@ -98,6 +96,8 @@ complete(C);
 complete(M);
 complete(V);
 complete(R);
+
+step(); # For readability
 
 .PE
 
