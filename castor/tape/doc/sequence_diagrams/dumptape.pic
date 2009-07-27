@@ -1,0 +1,103 @@
+.PS
+
+copy "sequence.pic";
+
+step(); # need for output readability
+
+# Define the objects
+object(C,"dumptape");
+object(M,"vmgr");
+object(V,"vdqm");
+object(R,"rtcpd");
+
+step();
+
+# Message sequences
+
+# DUMPTAPE <--> VDQM
+active(C);
+message(C,M,"connect");
+active(M);
+message(C,M,"VMGR_QRYTAPE");      # 0x0004
+message(M,C,"MSG_DATA");          # 0x0002
+message(M,C,"VMGR_RC");           # 0x0002
+message(M,C,"disconnect");
+inactive(M);
+
+step();
+
+# DUMPTAPE <--> VDQM
+message(C,V,"connect");
+active(V);
+message(C,V,"VDQM_VOL_REQ");      # 0x3101
+message(V,C,"VDQM_COMMIT");       # 0x310b
+message(C,V,"VDQM_VOL_REQ");      # 0x3101
+message(V,C,"VDQM_COMMIT");       # 0x310b
+message(C,V,"disconnect");
+inactive(V);
+
+step();
+
+# VDQM <--> RTCPD
+active(V);
+message(V,R,"connect");
+active(R);
+message(V,R,"VDQM_CLIENTINFO");         # 0x3104
+message(R,V,"VDQM_CLIENTINFO (ack)");   # 0x3104
+message(R,V,"disconnect");
+inactive(V);
+
+step();
+
+# DUMPTAPE <--> RTCPD
+message(R,C,"connect");
+message(C,R,"volume");
+message(R,C,"acknowledge");
+
+step();
+
+message(C,R,"RTCP_DUMPTAPE_REQ");       # 0x2109
+message(R,C,"RTCP_DUMPTAPE_REQ (ack)"); # 0x2109
+message(C,R,"RTCP_NOMORE_REQ");         # 0x2103
+message(R,C,"RTCP_NOMORE_REQ (ack)");   # 0x2103
+
+step();
+
+message(R,C,"connect");
+message(R,C,"GIVE_OUTP");               # 0x1006
+message(R,C,"...");
+message(R,C,"GIVE_OUTP");               # 0x1006
+
+step();
+
+message(R,C,"RTCP_FILEERR_REQ");        # 0x2105
+message(C,R,"RTCP_FILEERR_REQ (ack)");  # 0x2105
+
+step();
+
+message(C,R,"RTCP_ENDOF_REQ");          # 0x2106
+message(R,C,"RTCP_ENDOF_REQ (ack)");    # 0x2106
+message(C,R,"disconnect");
+
+step();
+
+# DUMPTAPE <--> VDQM 
+message(C,V,"connect");
+active(V);
+message(C,V,"VDQM_DEL_VOLREQ");
+message(V,C,"x00000843");
+message(C,V,"disconnect");
+
+step(); # need for output readability
+
+inactive(V);
+inactive(R);
+inactive(C);
+
+complete(C);
+complete(M);
+complete(V);
+complete(R);
+
+.PE
+

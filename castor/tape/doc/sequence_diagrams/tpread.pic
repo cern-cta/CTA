@@ -2,11 +2,13 @@
 
 copy "sequence.pic";
 
+step(); # useful for output readability
+
 # Define the objects
 object(C,"tpread");
+object(M,"vmgr");
 object(V,"vdqm");
 object(R,"rtcpd");
-placeholder_object(RF);
 placeholder_object(A);
 placeholder_object(T);
 placeholder_object(D1);
@@ -16,13 +18,26 @@ placeholder_object(D3);
 step();
 
 # Message sequences
+
+# TPREAD <--> VMGR
 active(C);
 message(C,V,"connect");
 active(V);
-message(C,V,"volume request");
-message(V,C,"acknowledge");
-message(V,C,"volReqID");
-message(C,V,"acknowledge");
+message(C,M,"VMGR_QRYTAPE");      # 0x0004
+message(M,C,"MSG_DATA");          # 0x0002
+message(M,C,"VMGR_RC");           # 0x0002
+message(M,C,"disconnect");
+inactive(M);
+
+step();
+
+# TPREAD <--> VDQM
+message(C,V,"connect");
+active(V);
+message(C,V,"VDQM_VOL_REQ");      # 0x3101
+message(V,C,"VDQM_COMMIT");       # 0x310b
+message(C,V,"VDQM_VOL_REQ");      # 0x3101
+message(V,C,"VDQM_COMMIT");       # 0x310b
 message(C,V,"disconnect");
 inactive(V);
 

@@ -7,11 +7,6 @@ object(C,"tpwrite");
 object(V,"vdqm");
 object(R,"rtcpd");
 placeholder_object(RF);
-placeholder_object(A);
-placeholder_object(T);
-placeholder_object(D1);
-placeholder_object(D2);
-placeholder_object(D3);
 
 step();
 
@@ -44,8 +39,6 @@ message(RF,C,"connect");
 message(C,RF,"volume");
 message(RF,C,"acknowledge");
 
-inactive(D3);
-inactive(A);
 inactive(RF);
 inactive(C);
 
@@ -53,11 +46,6 @@ complete(C);
 complete(V);
 complete(R);
 complete(RF);
-complete(A);
-complete(T);
-complete(D1);
-complete(D2);
-complete(D3);
 
 .PE
 
