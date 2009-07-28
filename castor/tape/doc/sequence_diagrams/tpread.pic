@@ -10,7 +10,7 @@ object(M,"vmgr");
 object(V,"vdqm");
 object(R,"rtcpd");
 
-step();
+step(); # For readability
 
 # Message sequences
 
@@ -29,9 +29,9 @@ step();
 # TPREAD <--> VDQM
 message(C,V,"connect");
 active(V);
-message(C,V,"VDQM_VOL_REQ");      # 0x3101
+message(C,V,"VDQM_VOL_REQ");      # 0x3101  (volume request)
 message(V,C,"VDQM_COMMIT");       # 0x310b
-message(C,V,"VDQM_VOL_REQ");      # 0x3101
+message(C,V,"VDQM_VOL_REQ");      # 0x3101  (volReqID)
 message(V,C,"VDQM_COMMIT");       # 0x310b
 message(C,V,"disconnect");
 inactive(V);
@@ -50,44 +50,66 @@ inactive(V);
 step();
 
 # RTCPD <--> TPREAD
-
 message(R,C,"connect");
-message(C,R,"volume");
-message(R,C,"acknowledge");
+message(C,R,"RTCP_TAPEERR_REQ");        # 0x2104 (RequestInfo)
+message(R,C,"RTCP_TAPEERR_REQ (ack)");  # 0x2104 (VolumeInfo)
 
-message(C,R,"file1");
-message(R,C,"acknowledge");
+message(C,R,"RTCP_FILEERR_REQ");        # 0x2105 (Placeholder)
+message(R,C,"RTCP_FILEERR_REQ (ack)");  # 0x2105
 
-message(C,R,"file2");
-message(R,C,"acknowledge");
+# .... (repeate for all file to recall)
 
-message(C,R,"RTCP_NOMORE_REQ");
-message(R,C,"acknowledge");
+message(C,R,"RTCP_NOMORE_REQ");         # 0x2103
+message(R,C,"RTCP_NOMORE_REQ (ack)");   # 0x2103
 
-message(R,C,"connect for tape IO");
+step();
+message(R,C,"connect for TapeIO & DiskIO(x3)");
 
-message(R,C,"connect for disk IO");
-message(R,C,"connect for disk IO");
-message(R,C,"connect for disk IO");
+#message(R,C,"connect for tape IO");
+#message(R,C,"connect for disk IO 1");
+#message(R,C,"connect for disk IO 2");
+#message(R,C,"connect for disk IO 3");
 
-message(R,C,"positioned for file1 (tape req)");
-message(C,R,"acknowledge");
-message(R,C,"positioned for file1 (file req)");
-message(C,R,"acknowledge");
+step();
 
-message(R,C,"positioned for file2 (tape req)");
-message(C,R,"acknowledge");
-message(R,C,"positioned for file2 (file req)");
-message(C,R,"acknowledge");
+message(C,R,"RTCP_PING");               # 0x210c
+message(R,C,"RTCP_PING (ack)");         # 0x210c
 
-message(R,C,"RTCP_FINISHED file2");
-message(C,R,"acknowledge");
+message(C,R,"RTCP_TAPE_REQ");           # 0x2101 (positioned for file1 (tape req))
+message(R,C,"RTCP_TAPE_REQ (ack)");     # 0x2101
 
-message(R,C,"RTCP_FINISHED file1");
-message(C,R,"acknowledge");
+message(C,R,"RTCP_FILE_REQ");           # 0x2102 (positioned for file1 (file req))
+message(R,C,"RTCP_FILE_REQ (ack)");     # 0x2102
 
-message(R,C,"RTCP_ENDOF_REQ");
-message(C,R,"acknowledge");
+# .... (repeate for all file to recall)
+
+message(C,R,"RTCP_FILE_REQ");           # 0x2102 (finished)
+message(R,C,"RTCP_FILE_REQ (ack)");     # 0x2102
+
+# .... (repeate for all file to recall)
+
+message(R,C,"RTCP_ENDOF_REQ");          # 0x2106
+message(C,R,"RTCP_ENDOF_REQ (ack)");    # 0x2106
+
+step();
+
+# Shutdown logic
+message(C,R,"RTCP_NOMORE_REQ to TapeIO & DiskIO(x3)"); # 0x2106
+message(R,C,"RTCP_NOMORE_REQ (ack) to TapeIO & DiskIO(x3)");     # 0x2106
+
+#message(C,R,"RTCP_NOMORE_REQ (DiskIO1)"); # 0x2106
+#message(R,C,"RTCP_NOMORE_REQ (ack)");     # 0x2106
+#message(C,R,"RTCP_NOMORE_REQ (DiskIO2)"); # 0x2106
+#message(R,C,"RTCP_NOMORE_REQ (ack)");     # 0x2106
+#message(C,R,"RTCP_NOMORE_REQ (DiskIO3)"); # 0x2106
+#message(R,C,"RTCP_NOMORE_REQ (ack)");     # 0x2106
+#message(C,R,"RTCP_NOMORE_REQ (TapeIO)");  # 0x2106
+#message(R,C,"RTCP_NOMORE_REQ (ack)");     # 0x2106
+
+message(R,C,"RTCP_NOMORE_REQ");         # 0x2106
+message(C,R,"RTCP_NOMORE_REQ (ack)");   # 0x2106
+
+step(); # For readability
 
 inactive(R);
 inactive(C);
@@ -97,7 +119,6 @@ complete(M);
 complete(V);
 complete(R);
 
-step(); # For readability
 
 .PE
 
