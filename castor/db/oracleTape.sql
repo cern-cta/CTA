@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.758 $ $Date: 2009/07/24 08:03:21 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.759 $ $Date: 2009/07/28 09:00:04 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -2567,8 +2567,7 @@ END;
 
 /* file migrated */
 
-create or replace
-PROCEDURE tg_setFileMigrated (transactionId IN NUMBER, inputFileId  IN NUMBER,inputNsHost IN VARCHAR2, inputFseq IN INTEGER, streamReport OUT castor.StreamReport_Cur) AS
+create or replace PROCEDURE tg_setFileMigrated (transactionId IN NUMBER, inputFileId  IN NUMBER,inputNsHost IN VARCHAR2, inputFseq IN INTEGER, streamReport OUT castor.StreamReport_Cur) AS
 trId NUMBER;
 tcNumb INTEGER;
 cfId NUMBER;
@@ -2578,33 +2577,38 @@ tcIds "numList";
 srIds "numList";
 dcId NUMBER;
 BEGIN
-  select id  into trId from tapegatewayrequest where tapegatewayrequest.vdqmvolreqid=transactionid FOR UPDATE;
-  SELECT id into cfId FROM castorfile WHERE  fileid=inputFileId AND nshost=inputNsHost FOR UPDATE;
-  
+ 
+   select id  into trId from tapegatewayrequest where tapegatewayrequest.vdqmvolreqid=transactionid FOR UPDATE;
+   SELECT id into cfId FROM castorfile WHERE  fileid=inputFileId AND nshost=inputNsHost FOR UPDATE;
+   
   DELETE FROM tapegatewaysubrequest where request =trId and fseq=inputFseq returning tapecopy,id, diskcopy into tcId, srId, dcId;
   DELETE FROM id2type WHERE id= srId;
 
   UPDATE tapecopy SET status=5 WHERE id=tcId;
+   
   SELECT count(*) INTO tcNumb FROM tapecopy WHERE castorfile = cfId  AND STATUS != 5;
   -- let's check if another copy should be done
   IF tcNumb = 0 THEN
      UPDATE diskcopy SET status=0 WHERE id=dcId;
      DELETE FROM tapecopy WHERE castorfile=cfId returning id BULK COLLECT INTO tcIds;
+   
      FORALL i IN tcIds.FIRST .. tcIds.LAST
        DELETE FROM id2type WHERE id=tcIds(i);
   END IF;
   BEGIN 
-    SELECT id BULK COLLECT INTO srIds FROM subrequest WHERE castorfile=cfId AND status=12;
-    for i in srIds.FIRST .. srIds.LAST LOOP
-       archivesubreq(srIds(i),8);
+  
+    for i in ( SELECT id FROM subrequest WHERE castorfile=cfId AND status=12) LOOP
+        archivesubreq( i.id ,8);
     end loop;
+  
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- no repack
-    null;
+     -- no repack
+     null;
   END;
- OPEN streamReport FOR
-  select diskserver.name,filesystem.mountpoint from diskserver,filesystem,diskcopy 
-      WHERE diskcopy.id=dcId AND diskcopy.filesystem=filesystem.id AND filesystem.diskserver = diskserver.id;
+ 
+  OPEN streamReport FOR
+   select diskserver.name,filesystem.mountpoint from diskserver,filesystem,diskcopy 
+    WHERE diskcopy.id=dcId AND diskcopy.filesystem=filesystem.id AND filesystem.diskserver = diskserver.id;
  COMMIT;
 END;
 /
