@@ -78,6 +78,7 @@ step();
 message(C,R,"RTCP_ENDOF_REQ");          # 0x2106
 message(R,C,"RTCP_ENDOF_REQ (ack)");    # 0x2106
 message(C,R,"disconnect");
+inactive(R);
 
 step();
 
@@ -89,7 +90,6 @@ message(V,C,"EVQREQASS");
 message(C,V,"disconnect");
 
 inactive(V);
-inactive(R);
 inactive(C);
 
 complete(C);

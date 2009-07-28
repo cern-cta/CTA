@@ -63,12 +63,8 @@ message(C,R,"RTCP_NOMORE_REQ");         # 0x2103
 message(R,C,"RTCP_NOMORE_REQ (ack)");   # 0x2103
 
 step();
-message(R,C,"connect for TapeIO & DiskIO(x3)");
 
-#message(R,C,"connect for tape IO");
-#message(R,C,"connect for disk IO 1");
-#message(R,C,"connect for disk IO 2");
-#message(R,C,"connect for disk IO 3");
+message(R,C,"connect for TapeIO(x1) & DiskIO(x3)");
 
 step();
 
@@ -78,12 +74,12 @@ message(R,C,"RTCP_PING (ack)");         # 0x210c
 message(C,R,"RTCP_TAPE_REQ");           # 0x2101 (positioned for file1 (tape req))
 message(R,C,"RTCP_TAPE_REQ (ack)");     # 0x2101
 
-message(C,R,"RTCP_FILE_REQ");           # 0x2102 (positioned for file1 (file req))
+message(C,R,"RTCP_FILE_REQ");           # 0x2102 (proc_status=RTCP_POSITIONED)
 message(R,C,"RTCP_FILE_REQ (ack)");     # 0x2102
 
 # .... (repeate for all file to recall)
 
-message(C,R,"RTCP_FILE_REQ");           # 0x2102 (finished)
+message(C,R,"RTCP_FILE_REQ");           # 0x2102 (proc_status=RTCP_FINISHED)
 message(R,C,"RTCP_FILE_REQ (ack)");     # 0x2102
 
 # .... (repeate for all file to recall)
@@ -94,17 +90,8 @@ message(C,R,"RTCP_ENDOF_REQ (ack)");    # 0x2106
 step();
 
 # Shutdown logic
-message(C,R,"RTCP_NOMORE_REQ to TapeIO & DiskIO(x3)"); # 0x2106
-message(R,C,"RTCP_NOMORE_REQ (ack) to TapeIO & DiskIO(x3)");     # 0x2106
-
-#message(C,R,"RTCP_NOMORE_REQ (DiskIO1)"); # 0x2106
-#message(R,C,"RTCP_NOMORE_REQ (ack)");     # 0x2106
-#message(C,R,"RTCP_NOMORE_REQ (DiskIO2)"); # 0x2106
-#message(R,C,"RTCP_NOMORE_REQ (ack)");     # 0x2106
-#message(C,R,"RTCP_NOMORE_REQ (DiskIO3)"); # 0x2106
-#message(R,C,"RTCP_NOMORE_REQ (ack)");     # 0x2106
-#message(C,R,"RTCP_NOMORE_REQ (TapeIO)");  # 0x2106
-#message(R,C,"RTCP_NOMORE_REQ (ack)");     # 0x2106
+message(C,R,"RTCP_NOMORE_REQ to TapeIO(x1) & DiskIO(x3)");      # 0x2106
+message(R,C,"RTCP_NOMORE_REQ(ack) to TapeIO(x1) & DiskIO(x3)"); # 0x2106
 
 message(R,C,"RTCP_NOMORE_REQ");         # 0x2106
 message(C,R,"RTCP_NOMORE_REQ (ack)");   # 0x2106
