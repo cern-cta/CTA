@@ -19,10 +19,10 @@
                           from ".$db_instances[$service]['schema'].".tapestatnew
 			  where timestamp >= sysdate - 3 - 5/1440 - 4/24
 			    and facility = 2";
- $avg_fileSize_1h = "select nvl(round(avg(avgfilesize),2),0) filesize
-                          from ".$db_instances[$service]['schema'].".tapestatnew
+ $avg_fileSize_1h = 'select nvl(round(avg("avgFileSize(MB)"),2),0) filesize
+                          from '.$db_instances[$service]['schema'].'.tapestatnew
 			  where timestamp >= sysdate - 3 - 5/1440 - 1/24
-			    and facility = 2";
+			    and facility = 2';
  $data_written_4h = "select nvl(sum(gigabytes),0) dataRead
                      from ".$db_instances[$service]['schema'].".tapestatnew
                      where timestamp >= sysdate - 3 - 5/1440 - 4/24
@@ -31,47 +31,47 @@
                       from ".$db_instances[$service]['schema'].".tapestatnew
 		      where timestamp >= sysdate - 3 - 5/1440 - 4/24
 			and facility = 1";
- $avg_filesize_w_1h = "select nvl(round(avg(avgfilesize),2),0) filesize
-                       from ".$db_instances[$service]['schema'].".tapestatnew
+ $avg_filesize_w_1h = 'select nvl(round(avg("avgFileSize(MB)"),2),0) filesize
+                       from '.$db_instances[$service]['schema'].'.tapestat
 		       where timestamp >= sysdate - 3 - 5/1440 - 1/24
-			 and facility = 1";
- $read_rate_1h = "select nvl(round(avg(rate),2),0) avg_filesize
-                  from ".$db_instances[$service]['schema'].".tapestatnew
+			 and facility = 1';
+ $read_rate_1h = 'select nvl(round(avg("rate(MB/sec)"),2),0) avg_filesize
+                  from '.$db_instances[$service]['schema'].'.tapestatnew
 		  where facility = 2
-		    and timestamp >= sysdate - 3 - 5/1440 - 1/24";
- $write_rate_1h = "select nvl(round(avg(rate),2),0) avg_filesize
-                   from ".$db_instances[$service]['schema'].".tapestatnew
+		    and timestamp >= sysdate - 3 - 5/1440 - 1/24';
+ $write_rate_1h = 'select nvl(round(avg("rate(MB/sec)"),2),0) avg_filesize
+                   from '.$db_instances[$service]['schema'].'.tapestat
 		   where facility = 1
-		     and timestamp >= sysdate - 3 - 5/1440 - 1/24";
- $total_mounts_4h = "select nvl(count(*),0) 
-                     from ".$db_instances[$service]['schema'].".tapemounts
+		     and timestamp >= sysdate - 3 - 5/1440 - 1/24';
+ $total_mounts_4h = "select nvl(sum(nbmounts),0) 
+                     from ".$db_instances[$service]['schema'].".tapemountstats
 		     where timestamp >= sysdate - 3 - 5/1440 - 4/24";
- $read_mounts_4h  = "select nvl(count(*),0) 
-                     from ".$db_instances[$service]['schema'].".tapemounts
+ $read_mounts_4h  = "select nvl(sum(nbmounts),0) 
+                     from ".$db_instances[$service]['schema'].".tapemountstats
 		     where timestamp >= sysdate - 3 - 5/1440 - 4/24
-		       and facility = 2";
- $write_mounts_4h = "select nvl(count(*),0) 
-                     from ".$db_instances[$service]['schema'].".tapemounts
+		       and direction = 'READ'";
+ $write_mounts_4h = "select nvl(sum(nbmounts),0) 
+                     from ".$db_instances[$service]['schema'].".tapemountstats
 		     where timestamp >= sysdate - 3 - 5/1440 - 4/24
-		       and facility = 1";
+		       and direction = 'WRITE'";
  $files_per_mount_read_4h = "select nvl(round(avg(filespermount),2),0)
- 			     from ".$db_instances[$service]['schema'].".tapestatnew
+ 			     from ".$db_instances[$service]['schema'].".tapestat
 		             where timestamp >= sysdate - 3 - 5/1440 - 4/24
 		               and facility = 2";
  $files_per_mount_write_4h = "select nvl(round(avg(filespermount),2),0)
- 			     from ".$db_instances[$service]['schema'].".tapestatnew
+ 			     from ".$db_instances[$service]['schema'].".tapestat
 		             where timestamp >= sysdate - 3 - 5/1440 - 4/24
 		               and facility = 1";
  $repeat_read_mounts_24h = "select nvl(round(avg(repeat),2),0) from (
                               select tapevid, count(*) repeat
-			      from ".$db_instances[$service]['schema'].".tapemounts
+			      from ".$db_instances[$service]['schema'].".tapemountshelper
 			      where tapevid is not null
 			        and timestamp >= sysdate - 3 - 1
 				and facility = 2
 			      group by tapevid)";
  $repeat_write_mounts_24h = "select nvl(round(avg(repeat),2),0) from (
                               select tapevid, count(*) repeat
-			      from ".$db_instances[$service]['schema'].".tapemounts
+			      from ".$db_instances[$service]['schema'].".tapemountshelper
 			      where tapevid is not null
 			        and timestamp >= sysdate - 3 - 1
 				and facility = 1
