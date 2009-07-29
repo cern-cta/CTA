@@ -23,6 +23,7 @@
  *****************************************************************************/
  
 #include "castor/Constants.hpp"
+#include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 #include "castor/tape/tapegateway/DumpNotification.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 #include "castor/tape/tpcp/Constants.hpp"
@@ -140,6 +141,36 @@ void castor::tape::tpcp::DumpTpCommand::parseCommandLine(const int argc,
       }
       break;
 
+    case 'B':  // maxbytes
+      std::cout<<"-B:"<<optarg<<std::endl; 
+      m_cmdLine.dumpTapeMaxBytes=atoi(optarg);
+      break;
+
+    case 'b':  // blksize
+      std::cout<<"-b:"<<optarg<<std::endl; 
+      m_cmdLine.dumpTapeBlockSize=atoi(optarg);
+      break;
+
+    case 'f':  // startfile
+      std::cout<<"-f:"<<optarg<<std::endl;
+      m_cmdLine.dumpTapeStartFile=atoi(optarg);
+      break;
+
+    case 'g':  // maxfiles
+      std::cout<<"-g:"<<optarg<<std::endl;
+      m_cmdLine.dumpTapeMaxFiles=atoi(optarg);
+      break;
+
+    case 'm':  // fromBlock
+      std::cout<<"-m:"<<optarg<<std::endl;
+      m_cmdLine.dumpTapeFromBlock=atoi(optarg);
+      break;
+
+    case 'n':  // toBlock
+      std::cout<<"-n:"<<optarg<<std::endl;
+      m_cmdLine.dumpTapeToBlock=atoi(optarg);
+      break;
+
     case ':':
       {
         castor::exception::InvalidArgument ex;
@@ -242,6 +273,7 @@ bool castor::tape::tpcp::DumpTpCommand::handleDumpNotification(
   castor::IObject *obj, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
+
   tapegateway::DumpNotification *msg = NULL;
 
   castMessage(obj, msg, sock);
@@ -258,6 +290,7 @@ bool castor::tape::tpcp::DumpTpCommand::handleDumpNotification(
   sock.sendObject(acknowledge);
 
   Helper::displaySentMsgIfDebug(acknowledge, m_cmdLine.debugSet);
+
 
   return true;
 }
