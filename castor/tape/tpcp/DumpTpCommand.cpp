@@ -24,8 +24,10 @@
  
 #include "castor/Constants.hpp"
 #include "castor/tape/tapegateway/DumpNotification.hpp"
+#include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 #include "castor/tape/tpcp/Constants.hpp"
 #include "castor/tape/tpcp/DumpTpCommand.hpp"
+#include "castor/tape/tpcp/Helper.hpp"
 
 #include <errno.h>
 #include <getopt.h>
@@ -244,9 +246,18 @@ bool castor::tape::tpcp::DumpTpCommand::handleDumpNotification(
 
   castMessage(obj, msg, sock);
 
+  // Write the message to standard out
   std::ostream &os = std::cout;
-
   os << msg->message();
+
+  // Create the NotificationAcknowledge message for the aggregator
+  castor::tape::tapegateway::NotificationAcknowledge acknowledge;
+  acknowledge.setMountTransactionId(m_volReqId);
+
+  // Send the NotificationAcknowledge message to the aggregator
+  sock.sendObject(acknowledge);
+
+  Helper::displaySentMsgIfDebug(acknowledge, m_cmdLine.debugSet);
 
   return true;
 }
