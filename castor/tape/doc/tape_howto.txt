@@ -400,6 +400,7 @@ vmgrenterpool --group st --name stager_cert2   --user stage
 vmgrenterpool --group st --name stager_cert3   --user stage
 vmgrenterpool --group st --name stager_cert4   --user stage
 vmgrenterpool --group st --name tprw_dev       --user stage
+vmgrenterpool --group st --name german_dev     --user stage
 
 vmgrentertape -V I02000 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po aggregator_dev
 vmgrentertape -V I05236 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po bad_dev
@@ -430,6 +431,8 @@ vmgrentertape -V I02040 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po sta
 vmgrentertape -V I02043 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po stager_dev07
 vmgrentertape -V I02053 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po stager_dev08
 vmgrentertape -V I02056 --mo 3592 --ml J --li IBMLIB1B -d 1000GC -l aul --po stager_dev08
+vmgrentertape -V I02061 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po german_dev
+vmgrentertape -V I02062 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po german_dev
 
 
 How to modify the density of a tape
