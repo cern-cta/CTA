@@ -72,20 +72,28 @@ void castor::tape::tpcp::DumpTpCommand::usage(std::ostream &os,
     "\n"
     "Options:\n"
     "\n"
-    "\t-d, --debug         Print debug information.\n"
-    "\t-h, --help          Print this help and exit.\n"
-    "\t-s, --server server Specifies the tape server to be used therefore\n"
-    "\t                    overriding the drive scheduling of the VDQM.\n"
-    "\t-B, --maxbytes      The number of bytes per block to be dumped (0\n"
-    "\t                    means all bytes.  The default is 320.\n"
-    "\t-b, --blksize       The maximum block size in bytes.  The default is\n"
-    "\t                    65536.\n"
-    "\t-f, --startfile     The tape file sequence number of the start file\n"
-    "\t-g, --maxfiles      The number of files to be dumped (0 means all\n"
-    "\t                    files).  The default is all files for 3420/3480/\n"
-    "\t                    3490, and 1 file for Exabyte/DLT/IBM3590.\n"
-    "\t-m, --fromBlock     Start block per file.  The default is 1.\n"
-    "\t-n, --toBlock       End block per file. The default is 1.\n"
+    "\t-d, --debug           Print debug information.\n"
+    "\t-h, --help            Print this help and exit.\n"
+    "\t-s, --server server   Specifies the tape server to be used therefore\n"
+    "\t                      overriding the drive scheduling of the VDQM.\n"
+    "\t-B, --maxbytes n      The number of bytes per block to be dumped.\n"
+    "\t                      This should be an unsigned integer greater than\n"
+    "\t                      or equal to 0, where 0 means all bytes.  The\n"
+    "\t                      default is 320.\n"
+    "\t-b, --blksize n       The maximum block size in bytes.  This should be\n"
+    "\t                      an unsigned integer greater than 0.  The default\n"
+    "\t                      is 65536.\n"
+    "\t-f, --fromfile seq    The tape file sequence number to start from.\n"
+    "\t                      This should be an unsigned integer greater than\n"
+    "\t                      0.  The default is 1.\n"
+    "\t-g, --maxfiles n      The number of files to be dumped.  This should\n"
+    "\t                      be an unsigned integer greater than or equal to\n"
+    "\t                      0, where 0 means all files.  The default is 1.\n"
+    "\t-m, --fromblock block Start block per file.  This should be an\n"
+    "\t                      unsigned integer greater than 0. The default is\n"
+    "\t                      1.\n"
+    "\t-n, --toblock block   End block per file.  This should be an unsigned\n"
+    "\t                      integer greater than 0. The default is 1\n"
     "\n"
     "Comments to: Castor.Support@cern.ch" << std::endl;
 }
@@ -105,10 +113,10 @@ void castor::tape::tpcp::DumpTpCommand::parseCommandLine(const int argc,
     {"server"   , 1, NULL, 's'},
     {"maxbytes" , 1, NULL, 'B'},
     {"blksize"  , 1, NULL, 'b'},
-    {"startfile", 1, NULL, 'f'},
+    {"fromfile" , 1, NULL, 'f'},
     {"maxfiles" , 1, NULL, 'g'},
-    {"fromBlock", 1, NULL, 'm'},
-    {"toBlock"  , 1, NULL, 'n'},
+    {"fromblock", 1, NULL, 'm'},
+    {"toblock"  , 1, NULL, 'n'},
     {NULL       , 0, NULL,  0 }
   };
 
@@ -142,33 +150,94 @@ void castor::tape::tpcp::DumpTpCommand::parseCommandLine(const int argc,
       break;
 
     case 'B':  // maxbytes
-      std::cout<<"-B:"<<optarg<<std::endl; 
-      m_cmdLine.dumpTapeMaxBytes=atoi(optarg);
+      if(!utils::isValidUInt(optarg)) {
+        castor::exception::InvalidArgument ex;
+        ex.getMessage() <<
+          "\tThe -B,--maxbytes argument must be an unsigned integer"
+          ": Actual=" << optarg;
+        throw ex;
+      }
+      m_cmdLine.dumpTapeMaxBytes = atoi(optarg);
       break;
 
     case 'b':  // blksize
-      std::cout<<"-b:"<<optarg<<std::endl; 
-      m_cmdLine.dumpTapeBlockSize=atoi(optarg);
+      if(!utils::isValidUInt(optarg)) {
+        castor::exception::InvalidArgument ex;
+        ex.getMessage() <<
+          "\tThe -b,--blksize argument must be an unsigned integer"
+          ": Actual=" << optarg;
+        throw ex;
+      }
+      m_cmdLine.dumpTapeBlockSize = atoi(optarg);
+      if(m_cmdLine.dumpTapeBlockSize < 1) {
+        castor::exception::InvalidArgument ex;
+        ex.getMessage() <<
+          "\tThe -b,--blksize argument must be greater than 0"
+          ": Actual=" << optarg;
+        throw ex;
+      }
       break;
 
-    case 'f':  // startfile
-      std::cout<<"-f:"<<optarg<<std::endl;
-      m_cmdLine.dumpTapeStartFile=atoi(optarg);
+    case 'f':  // fromfile
+      if(!utils::isValidUInt(optarg)) {
+        castor::exception::InvalidArgument ex;
+        ex.getMessage() <<
+          "\tThe -f,--fromfile argument must be an unsigned integer"
+          ": Actual=" << optarg;
+        throw ex;
+      }
+      if((m_cmdLine.dumpTapeFromFile = atoi(optarg)) < 1) {
+        castor::exception::InvalidArgument ex;
+        ex.getMessage() <<
+          "\tThe -f,--fromfile argument must be greater than 0"
+          ": Actual=" << optarg;
+        throw ex;
+      }
       break;
 
     case 'g':  // maxfiles
-      std::cout<<"-g:"<<optarg<<std::endl;
-      m_cmdLine.dumpTapeMaxFiles=atoi(optarg);
+      if(!utils::isValidUInt(optarg)) {
+        castor::exception::InvalidArgument ex;
+        ex.getMessage() <<
+          "\tThe -g,--maxfiles argument must be an unsigned integer"
+          ": Actual=" << optarg;
+        throw ex;
+      }
+      m_cmdLine.dumpTapeMaxFiles = atoi(optarg);
       break;
 
-    case 'm':  // fromBlock
-      std::cout<<"-m:"<<optarg<<std::endl;
-      m_cmdLine.dumpTapeFromBlock=atoi(optarg);
+    case 'm':  // fromblock
+      if(!utils::isValidUInt(optarg)) {
+        castor::exception::InvalidArgument ex;
+        ex.getMessage() <<
+          "\tThe -m,--fromblock argument must be an unsigned integer"
+          ": Actual=" << optarg;
+        throw ex;
+      }
+      if((m_cmdLine.dumpTapeFromBlock = atoi(optarg)) < 1) {
+        castor::exception::InvalidArgument ex;
+        ex.getMessage() <<
+          "\tThe -m,--fromblock argument must be greater than 0"
+          ": Actual=" << optarg;
+        throw ex;
+      }
       break;
 
-    case 'n':  // toBlock
-      std::cout<<"-n:"<<optarg<<std::endl;
-      m_cmdLine.dumpTapeToBlock=atoi(optarg);
+    case 'n':  // toblock
+      if(!utils::isValidUInt(optarg)) {
+        castor::exception::InvalidArgument ex;
+        ex.getMessage() <<
+          "\tThe -n,--toblock argument must be an unsigned integer"
+          ": Actual=" << optarg;
+        throw ex;
+      }
+      if((m_cmdLine.dumpTapeToBlock = atoi(optarg)) < 1) {
+        castor::exception::InvalidArgument ex;
+        ex.getMessage() <<
+          "\tThe -n,--toblock argument must be greater than 0"
+          ": Actual=" << optarg;
+        throw ex;
+      }
       break;
 
     case ':':
@@ -205,8 +274,18 @@ void castor::tape::tpcp::DumpTpCommand::parseCommandLine(const int argc,
   } // while ((c = getopt_long(argc, argv, "h", longopts, NULL)) != -1)
 
   // There is no need to continue parsing when the help option is set
-  if( m_cmdLine.helpSet) {
+  if(m_cmdLine.helpSet) {
     return;
+  }
+
+  if(m_cmdLine.dumpTapeFromBlock > m_cmdLine.dumpTapeToBlock) {
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() <<
+      "\tThe -n,--toblock argument must be greater than or equal to the \n"
+      "\t-m,--fromblock argument"
+      ": fromblock="<< m_cmdLine.dumpTapeFromBlock <<
+      " toblock=" << m_cmdLine.dumpTapeToBlock;
+      throw ex;
   }
 
   // The number of expected command-line arguments is 1

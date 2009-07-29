@@ -250,6 +250,7 @@ const char *castor::tape::utils::magicToString(const uint32_t magic)
 const char *castor::tape::utils::rtcopyReqTypeToString(
   const uint32_t reqType) throw() {
   switch(reqType) {
+  case GIVE_OUTP         : return "GIVE_OUTP";
   case RTCP_TAPE_REQ     : return "RTCP_TAPE_REQ";
   case RTCP_FILE_REQ     : return "RTCP_FILE_REQ";
   case RTCP_NOMORE_REQ   : return "RTCP_NOMORE_REQ";

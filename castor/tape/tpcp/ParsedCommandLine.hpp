@@ -105,7 +105,7 @@ struct ParsedCommandLine {
   int32_t dumpTapeBlockSize;
   int32_t dumpTapeConverter;
   int32_t dumpTapeErrAction;
-  int32_t dumpTapeStartFile;
+  int32_t dumpTapeFromFile;
   int32_t dumpTapeMaxFiles;
   int32_t dumpTapeFromBlock;
   int32_t dumpTapeToBlock;
@@ -120,16 +120,15 @@ struct ParsedCommandLine {
     helpSet(false),
     serverSet(false),
     tapeFseqPosition(0),
-    dumpTapeMaxBytes(-1),
-    dumpTapeBlockSize(-1),
+    dumpTapeMaxBytes(320),
+    dumpTapeBlockSize(65536),
     dumpTapeConverter(-1),
     dumpTapeErrAction(-1),
-    dumpTapeStartFile(-1),
-    dumpTapeMaxFiles(-1),
-    dumpTapeFromBlock(-1),
-    dumpTapeToBlock(-1)
- {
-
+    dumpTapeFromFile(1),
+    dumpTapeMaxFiles(1),
+    dumpTapeFromBlock(1),
+    dumpTapeToBlock(1)
+  {
     utils::setBytes(server, '\0');
     utils::setBytes(vid   , '\0');
   }

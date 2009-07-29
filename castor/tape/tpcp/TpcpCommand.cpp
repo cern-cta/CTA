@@ -433,7 +433,7 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
     volumeMsg.setDumpTapeBlockSize(m_cmdLine.dumpTapeBlockSize);
     volumeMsg.setDumpTapeConverter(m_cmdLine.dumpTapeConverter);
     volumeMsg.setDumpTapeErrAction(m_cmdLine.dumpTapeErrAction);
-    volumeMsg.setDumpTapeStartFile(m_cmdLine.dumpTapeStartFile);
+    volumeMsg.setDumpTapeStartFile(m_cmdLine.dumpTapeFromFile);
     volumeMsg.setDumpTapeMaxFile(m_cmdLine.dumpTapeMaxFiles);
     volumeMsg.setDumpTapeFromBlock(m_cmdLine.dumpTapeFromBlock);
     volumeMsg.setDumpTapeToBlock(m_cmdLine.dumpTapeToBlock);
