@@ -348,18 +348,13 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
       time_t       now = time(NULL);
 
       utils::writeTime(os, now, TIMEFORMAT);
-      os << ": Received connection from ";
+      os << ": Select tape server is ";
 
-      unsigned long  peerIp    = 0;
-      unsigned short peerPort  = 0;
-      try {
-        net::getPeerIpPort(connectionSockFd, peerIp, peerPort);
-      } catch(castor::exception::Exception &e) {
-        peerIp   = 0;
-        peerPort = 0;
-      }
-      net::writeIp(os, peerIp);
-      os << ":" << peerPort << std::endl;
+      char hostName[net::HOSTNAMEBUFLEN];
+
+      net::getPeerHostName(connectionSockFd, hostName);
+
+      os << hostName << std::endl;
     }
 
     // Wrap the connection socket descriptor in a CASTOR framework socket in
