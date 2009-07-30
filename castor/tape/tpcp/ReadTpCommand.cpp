@@ -81,22 +81,22 @@ void castor::tape::tpcp::ReadTpCommand::usage(std::ostream &os,
   const char *const programName) throw() {
   os <<
     "Usage:\n"
-    "\t" << programName << " VID [OPTIONS] [FILE]...\n"
+    "\t" << programName << " VID SEQUENCE [FILE]...\n"
     "\n"
     "Where:\n"
     "\n"
-    "\tVID  The VID of the tape to be read from.\n"
-    "\tFILE A filename in RFIO notation [host:]local_path.\n"
+    "\tVID      The VID of the tape to be read from.\n"
+    "\tSEQUENCE The sequence of tape file sequence numbers.\n"
+    "\tFILE     A filename in RFIO notation [host:]local_path.\n"
     "\n"
     "Options:\n"
     "\n"
-    "\t-d, --debug             Print debug information.\n"
-    "\t-h, --help              Print this help and exit.\n"
-    "\t-s, --server server     Specifies the tape server to be used therefore\n"
-    "\t                        overriding the drive scheduling of the VDQM.\n"
-    "\t-f, --filelist          File containing a list of filenames in RFIO\n"
-    "\t                        notation [host:]local_path\n"
-    "\t-q, --sequence sequence The tape file sequences.\n"
+    "\t-d, --debug         Print debug information.\n"
+    "\t-h, --help          Print this help and exit.\n"
+    "\t-s, --server server Specifies the tape server to be used therefore\n"
+    "\t                    overriding the drive scheduling of the VDQM.\n"
+    "\t-f, --filelist      File containing a list of filenames in RFIO\n"
+    "\t                    notation [host:]local_path\n"
     "\n"
     "Constraints:\n"
     "\n"
@@ -119,7 +119,6 @@ void castor::tape::tpcp::ReadTpCommand::parseCommandLine(const int argc,
     {"debug"   , 0, NULL, 'd'},
     {"filelist", 1, NULL, 'f'},
     {"help"    , 0, NULL, 'h'},
-    {"sequence", 1, NULL, 'q'},
     {"server"  , 1, NULL, 's'},
     {NULL      , 0, NULL,  0 }
   };
@@ -129,7 +128,7 @@ void castor::tape::tpcp::ReadTpCommand::parseCommandLine(const int argc,
 
   char c;
 
-  while((c = getopt_long(argc, argv, ":df:hq:s:", longopts, NULL)) != -1) {
+  while((c = getopt_long(argc, argv, ":df:hs:", longopts, NULL)) != -1) {
 
     switch (c) {
     case 'd':
@@ -143,10 +142,6 @@ void castor::tape::tpcp::ReadTpCommand::parseCommandLine(const int argc,
 
     case 'h':
       m_cmdLine.helpSet = true;
-      break;
-
-    case 'q':
-      TapeFileSequenceParser::parse(optarg, m_cmdLine.tapeFseqRanges);
       break;
 
     case 's':
@@ -199,21 +194,42 @@ void castor::tape::tpcp::ReadTpCommand::parseCommandLine(const int argc,
     return;
   }
 
-  // The minimum number of command-line arguments is 1 because the VID must be
-  // present
-  const int expectedMinArgs = 1;
+  // Calculate the number of non-option ARGV-elements
+  const int nbArgs = argc-optind;
 
-  // Check the minimum number of command-line arguments are present
-  if(argc-optind < expectedMinArgs){
+  // Check the VID has been specified
+  if(nbArgs < 1) {
     castor::exception::InvalidArgument ex;
 
-    ex.getMessage() << "\tWrong number of command-line arguments: Actual=" <<
-      argc-optind << " Expected minimum=" << expectedMinArgs;
+    ex.getMessage() << "\tThe VID and SEQUENCE have not been specified";
 
     throw ex;
   }
 
-  const int nbFilenamesOnCommandLine = argc - optind - expectedMinArgs;
+  // Check the SEQUENCE of tape file sequence numbers has been specified
+  if(nbArgs < 2) {
+    castor::exception::InvalidArgument ex;
+
+    ex.getMessage() <<
+      "\tThe SEQUENCE of tape file sequence numbers has not been specified";
+
+    throw ex;
+  }
+
+  // If no filenames have been specified on the command-line and the
+  // -f,--filelist option has not been set
+  if(nbArgs < 3 && !m_cmdLine.fileListSet) {
+    castor::exception::InvalidArgument ex;
+
+    ex.getMessage() <<
+      "\tThere must be at least one filename on the command-line if the\n"
+      "\t-f, --fileist option is not used";
+
+    throw ex;
+  }
+
+  // -2 = -1 for the VID and -1 for the SEQUENCE
+  const int nbFilenamesOnCommandLine = argc - optind - 2;
 
   // Filenames on the command-line and the "-f, --filelist" option are mutually
   // exclusive
@@ -247,6 +263,12 @@ void castor::tape::tpcp::ReadTpCommand::parseCommandLine(const int argc,
       " structures"
       ": " << ex.getMessage().str());
   }
+
+  // Move on to the next command-line argument
+  optind++;
+
+  // Parse the SEQUENCE command-line argument
+  TapeFileSequenceParser::parse(argv[optind], m_cmdLine.tapeFseqRanges);
 
   // Move on to the next command-line argument (there may not be one)
   optind++;

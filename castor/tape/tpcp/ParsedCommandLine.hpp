@@ -101,13 +101,44 @@ struct ParsedCommandLine {
    */
   char vid[CA_MAXVIDLEN+1];
 
+  /**
+   * Corresponds to the similarly named field of the RTCP_DUMPTAPE_REQ message.
+   */
   int32_t dumpTapeMaxBytes;
+
+  /**
+   * Corresponds to the similarly named field of the RTCP_DUMPTAPE_REQ message.
+   */
   int32_t dumpTapeBlockSize;
+
+  /**
+   * Corresponds to the similarly named field of the RTCP_DUMPTAPE_REQ message.
+   */
   int32_t dumpTapeConverter;
+
+  /**
+   * Corresponds to the similarly named field of the RTCP_DUMPTAPE_REQ message.
+   */
   int32_t dumpTapeErrAction;
+
+  /**
+   * Corresponds to the similarly named field of the RTCP_DUMPTAPE_REQ message.
+   */
   int32_t dumpTapeFromFile;
+
+  /**
+   * Corresponds to the similarly named field of the RTCP_DUMPTAPE_REQ message.
+   */
   int32_t dumpTapeMaxFiles;
+
+  /**
+   * Corresponds to the similarly named field of the RTCP_DUMPTAPE_REQ message.
+   */
   int32_t dumpTapeFromBlock;
+
+  /**
+   * Corresponds to the similarly named field of the RTCP_DUMPTAPE_REQ message.
+   */
   int32_t dumpTapeToBlock;
 
   /**

@@ -1,0 +1,95 @@
+.\" Copyright (C) 2003  CERN
+.\" This program is free software; you can redistribute it and/or
+.\" modify it under the terms of the GNU General Public License
+.\" as published by the Free Software Foundation; either version 2
+.\" of the License, or (at your option) any later version.
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program; if not, write to the Free Software
+.\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+.TH READTP 1 "$Date: 2009/07/30 15:56:00 $" CASTOR "Set a volume priority"
+.SH NAME
+readtp \- read from a tape
+.SH SYNOPSIS
+.BI "readtp VID [OPTIONS] [FILE]..."
+
+.SH DESCRIPTION
+.B readtp
+reads one or files from a tape.
+.P
+The readtp command-line tool 
+The RecallHandler daemon and the tape operator command-line tools send volume
+access priorities to the VDQM. A volume access priority sent from the
+RecallHandler will exist in the VDQM database for a single-mount of the tape in
+question.  A volume access priority sent from the tape operator command-line
+tools will by default have an unlimited lifespan within the VDQM database.  The
+priority will stay active until it is explicitly removed by the tape operator
+command-line tools.
+A volume access priority is a quadruple of:
+.RS
+.P
+*
+.B VID
+.br
+Volume visual identifier
+.P
+*
+.B
+Access mode
+.br
+Either read or write
+.P
+*
+.B
+Lifespan type
+.br
+Either single-mount or unlimited
+.P
+*
+.B
+Priority number
+.br
+A positive integer , where 0 is the lowest and default priority
+.RE
+.P
+A volume access priority quadruple is uniquely identified or named by the inner
+triplet of VID, access mode and lifespan type.  The priority number of the
+quadruple is the value of the volume access priority.  This means a given VID
+and access mode can have at most one "single-mount priority" and one "unlimited
+priority".  The effective priority in this case would be the unlimited priority.
+In other words, unlimited priorities overide single-mount priorities.
+.P
+If a priority set by
+.B
+readtp
+does not already exist in the database, then a new one will be inserted.  Else
+if the priority already exists, then its priority number will be updated.
+
+.SH OPTIONS
+.TP
+\fB\-c, \-\-config config-file
+Set the location of the configuration file.  The default is
+\fB/etc/castor/castor.conf\fP
+.TP
+\fB\-v, \-\-vid VID\fR
+Volume visual identifier
+.TP
+\fB\-a, \-\-tapeAccessMode read | write
+Tape access mode.  Valid values are "read" and "write".
+.TP
+\fB\-l, \-\-lifespanType singleMount | unlimited (default)
+Lifespan type. Valid values are "singleMount" and "unlimited".  The default
+value is "unlimited"
+.TP
+\fB\-p, \-\-priority positive integer
+Volume priority.  A positive integer, where 0 is the lowest and default
+priority
+.TP
+\fB\-h, \-\-help
+Get usage information
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
