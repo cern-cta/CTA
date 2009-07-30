@@ -1,76 +1,70 @@
-.TH MIGHUNTERDAEMON 1 "$Date: 2009/07/23 13:29:03 $" CASTOR "RTCOPY Operator Commands"
+.TH TAPEGATEWAYD "$Date: 2009/07/30 11:55:42 $" CASTOR "TapeGateway"
 .SH NAME
-migHunterDaemon \- default migration candidate hunter
+tapegatewayd \- tape gateway daemon
 .SH SYNOPSIS
-.B migHunterDaemon
-[
-.BI -C
-]
+.B tapegateway
 [
 .BI -f
-[
-.BI -t
-] [
-.BI sleepTime
-]
-[
-.BI -v
-] [
-.BI dataThreshold
-]
-.BI svcClass1
-[
-.BI svcClass2 ...
 ]
 .SH DESCRIPTION
-.B migHunterDaemon
-is the default stream creator and migration candidate hunter provided with the CASTOR
-stager.
+.B tapegatewayd
+is the CASTOR component which handles the interface between the disk cache and the tape backend, providing support for the new generation tape format.
+This component is a multi-threaded application, database centric, which uses the CASTOR framework.
+It submits drive requests to VDQM when migrations and/or recalls are required.
+The migrations/recalls are triggered thanks to the interaction of different daemons ( stager, mighunter, rechandler), each of them is in charge of different db transactions.
+The tapegateway interacts with the VDQM using messages over TCP/IP.
+The comunication between tapegateway and the several aggregators, which are running on the tape servers, is a based on TCP/IP messages too.
+The tapegatewayd relies on the DLF as logging facilities. Logs can be accessed by web interface or in the log files specified in the 
+.B /etc/castor/castor.conf .
+
+e.g. 
+
+.B TapeGateway      LOGSTANDARD file:///var/spool/tape/tapegateway/log x-dlf://castordlf.cern.ch/
+
+ 
 .SH OPTIONS
-At least one service class has to be specified at the end of the command line.
-If no other option is given, the program will start in foreground and make
-.I one
-iteration (select candidates, create streams, start streams) and exit. Information and
-error messages are logged to stdout/stderr.
-.TP
-.BI \-C
-switch instructs the
-.B migHunterDaemon
-when creating new streams to always clone an existing stream if it finds one associated
-with the service class. The stream cloning can give a load-balancing advantage when new
-streams are added to a service class. Be aware, however, that it is an heavy operation
-if the existing stream has many (1000s) of migration candidates.
-.TP
-.BI \-t " sleepTime"
-specifies the time between two database lookups. 
-.TP
 .BI \-f
 To run in foreground
-.TP
-.B \-v " dataThreshold"
-specifies the minimum amount of data required for starting a new migration. Note that
-this option has no effect if there are already running streams for the service class.
 
-Two parameters in the 
+There are several parameters that can be provided in the : 
 .B /etc/castor/castor.conf 
-specify the location of the file where all the policy functions are declared. 
 
-e.g.:
+There are four parameters used to specify the location of the files, where all the policy functions are declared, and the name of them.
+These policies are used by the system to tune the number of times that failed recalls/migrations should be retried.
+  
+i.e. :
 
-.B Policy Migration /etc/castor/policies/migrationPolicies.py
+.B Policy  RetryMigration  /etc/castor/policies/migrationRetry.py
 
-.B Policy Stream  /etc/castor/policies/streamPolicies.py
+.B Policy  RetryMigrationFunction migrationRetry
 
-Then for each svcclass we specify in the database the function that we want to execute between the ones declared in the file.
-If no function is specified we act like the policy allows the operation.
-If an error is reported by the function we act like a negative response from the policy.
+.B Policy  RetryRecall     /etc/castor/policies/recallRetry.py
 
+.B Policy  RetryRecallFunction     recallRetry
+
+If RetryMigration and/or RetryMigrationFunction are not provided, all the failed  migrations will be always retried.
+If RetryMigrationRecall and/or RetryRecallFunction are not provided, all the failed  recalls will be always retried.
+
+There are also paramenter to change the max/min number of threads for the thread pool in charge to serve aggregator's requests.
+
+i.e. :
+
+.B TAPEGATEWAY MINWORKERTHREADS    5
+.B TAPEGATEWAY MAXWORKERTHREADS    240
+
+If these parameters are not provided the default ones are used: 5 as minimum, 240 as maximum.
+
+The port used for the comunication between the aggregator and the tapegateway is also defined in this file.
+
+.B TAPEGATEWAY     PORT    62801
+
+If the port is not provided, 62801 is used as default.
 
 .SH EXAMPLE
 .fi
-# migHunterDaemon default
+# tapegatewayd
 .fi
-# migHunterDaemon  -t 300 -v 100G alicemdc6
+# tapegatewayd  -f
 
 .SH EXIT STATUS
 This program returns 0 if the operation was successful or > 0 if the operation
