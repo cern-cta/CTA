@@ -758,7 +758,7 @@ i=0; padded=000; while test $i -lt 1000; do if test $i -lt 10; then padded=00$i;
 # Tpwrite the files
 su stage
 bash
-`echo -n "tpwrite -V I10487 -F F -q 1"; i=0; padded=000; while test $i -lt 1000; do if test $i -lt 10; then padded=00$i; elif test $i -lt 100; then padded=0$i; else padded=$i; fi; echo -n " lxc2disk07:/tmp/murrayc3/file${padded}.txt" ; let i=i+1; done; echo`
+`echo -n "tpwrite -V I10487 -F F -q 1-"; i=0; padded=000; while test $i -lt 1000; do if test $i -lt 10; then padded=00$i; elif test $i -lt 100; then padded=0$i; else padded=$i; fi; echo -n " lxc2disk07:/tmp/murrayc3/file${padded}.txt" ; let i=i+1; done; echo`
 
 # Mount the tape
 smc -m -D 5 -h ibmlib3rmc -l /dev/smc -V I10487
