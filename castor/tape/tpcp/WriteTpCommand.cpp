@@ -94,7 +94,7 @@ void castor::tape::tpcp::WriteTpCommand::usage(std::ostream &os,
     "\t-h, --help          Print this help and exit.\n"
     "\t-s, --server server Specifies the tape server to be used, therefore\n"
     "\t                    overriding the drive scheduling of the VDQM.\n"
-    "\t-f, --filelist file File containing a list of filenames in RFIO
+    "\t-f, --filelist file File containing a list of filenames in RFIO\n"
     "\t                    notation [host:]local_path\n"
     "\n"
     "Constraints:\n"
