@@ -19,9 +19,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: aggregatord.init,v $ $Revision: 1.1 $ $Release$ $Date: 2009/07/31 09:05:06 $ $Author: gcancio $
+# @(#)$RCSfile: aggregatord.init,v $ $Revision: 1.2 $ $Release$ $Date: 2009/07/31 09:27:28 $ $Author: gcancio $
 #
-# chkconfig: 345 67 38
+# chkconfig: 345 74 31
 # description: Aggregator daemon initialisation script
 #
 # @author castor dev team
