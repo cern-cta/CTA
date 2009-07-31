@@ -1,0 +1,66 @@
+.\" Copyright (C) 2003  CERN
+.\" This program is free software; you can redistribute it and/or
+.\" modify it under the terms of the GNU General Public License
+.\" as published by the Free Software Foundation; either version 2
+.\" of the License, or (at your option) any later version.
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program; if not, write to the Free Software
+.\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+.TH DUMPTP 1 "$Date: 2009/07/31 12:58:40 $" CASTOR "Set a volume priority"
+.SH NAME
+dumptp \- dump the contents of a tape
+.SH SYNOPSIS
+.BI "dumptp VID [OPTIONS]"
+
+.SH DESCRIPTION
+.B dumptp
+dumps the selected contents of a tape to standard output.
+.P
+This command gives privileged users direct access to the tape system.
+.P
+The tape whose contents is to dumped is specified by the \fBVID\fP argument.
+
+.SH OPTIONS
+.TP
+\fB\-d, \-\-debug
+Turns on the printing of debug information.
+.TP
+\fB\-h, \-\-help
+Prints the usage message.
+.TP
+\fB\-s, \-\-server server
+Specifies the tape server to be used, therefore overriding the drive scheduling
+of the VDQM.  If this option is not set then the VDQM will allocate the first
+free drive it finds that is suitable for reading the tape.
+.TP
+\fB\-B, \-\-maxbytes n
+The number of bytes per block to be dumped. This should be an unsigned integer
+greater than or equal to 0, where 0 means all bytes.  The default is 320.
+.TP
+\fB\-b, \-\-blksize n
+The maximum block size in bytes.  This should be an unsigned integer greater
+than 0.  The default is 65536.
+.TP
+\fB\-f, \-\-fromfile seq
+The tape file sequence number to start from.  This should be an unsigned
+integer greater than 0.  The default is 1.
+.TP
+\fB\-g, \-\-maxfiles n
+The number of files to be dumped.  This should be an unsigned integer greater
+than or equal to 0, where 0 means all files.  The default is 1.
+.TP
+\fB\-m, \-\-fromblock block
+Start block per file.  This should be an unsigned integer greater than 0.  The
+default is 1.
+.TP
+\fB\-n, \-\-toblock block
+End block per file.  This should be an unsigned integer greater than 0. The
+default is 1.
+
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

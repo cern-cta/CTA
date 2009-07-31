@@ -90,10 +90,10 @@ void castor::tape::tpcp::DumpTpCommand::usage(std::ostream &os,
     "\t                      be an unsigned integer greater than or equal to\n"
     "\t                      0, where 0 means all files.  The default is 1.\n"
     "\t-m, --fromblock block Start block per file.  This should be an\n"
-    "\t                      unsigned integer greater than 0. The default is\n"
+    "\t                      unsigned integer greater than 0.  The default is\n"
     "\t                      1.\n"
     "\t-n, --toblock block   End block per file.  This should be an unsigned\n"
-    "\t                      integer greater than 0. The default is 1\n"
+    "\t                      integer greater than 0.  The default is 1.\n"
     "\n"
     "Comments to: Castor.Support@cern.ch" << std::endl;
 }
