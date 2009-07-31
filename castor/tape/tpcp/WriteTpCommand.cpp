@@ -189,21 +189,30 @@ void castor::tape::tpcp::WriteTpCommand::parseCommandLine(const int argc,
     return;
   }
 
-  // The minimum number of command-line arguments is 2 because the VID and the
-  // tape file sequence number must be present
-  const int expectedMinArgs = 2;
+  // Calculate the number of non-option ARGV-elements
+  const int nbArgs = argc-optind;
 
-  // Check the minimum number of command-line arguments are present
-  if(argc-optind < expectedMinArgs){
+  // Check the VID has been specified
+  if(nbArgs < 1) {
     castor::exception::InvalidArgument ex;
 
-    ex.getMessage() << "\tWrong number of command-line arguments: Actual=" <<
-      argc-optind << " Expected minimum=" << expectedMinArgs;
+    ex.getMessage() << "\tThe VID and POSITION have not been specified";
 
     throw ex;
   }
 
-  const int nbFilenamesOnCommandLine = argc - optind - expectedMinArgs;
+  // Check the POSITION has been specified
+  if(nbArgs < 2) {
+    castor::exception::InvalidArgument ex;
+
+    ex.getMessage() <<
+      "\tThe POSITION has not been specified";
+
+    throw ex;
+  }
+
+  // -2 = -1 for the VID and -1 for the POSITION
+  const int nbFilenamesOnCommandLine = nbArgs - 2;
 
   // Filenames on the command-line and the "-f, --filelist" option are mutually
   // exclusive

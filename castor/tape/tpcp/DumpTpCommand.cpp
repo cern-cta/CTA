@@ -288,15 +288,24 @@ void castor::tape::tpcp::DumpTpCommand::parseCommandLine(const int argc,
       throw ex;
   }
 
-  // The number of expected command-line arguments is 1
-  const int expectedNbArgs = 1;
+  // Calculate the number of non-option ARGV-elements
+  const int nbArgs = argc-optind;
 
-  // Check the number of command-line arguments are present
-  if(argc-optind < expectedNbArgs){
+  // Check the VID has been specified
+  if(nbArgs < 1) {
     castor::exception::InvalidArgument ex;
 
-    ex.getMessage() << "\tWrong number of command-line arguments: Actual=" <<
-      argc-optind << " Expected=" << expectedNbArgs;
+    ex.getMessage() << "\tThe VID has not been specified";
+
+    throw ex;
+  }
+
+  // Check there are no other non-option ARGV-elements
+  if(nbArgs > 1) {
+    castor::exception::InvalidArgument ex;
+
+    ex.getMessage() << "\tToo many command-line arguments: Actual=" << nbArgs
+      << " Expecting only a VID";
 
     throw ex;
   }
