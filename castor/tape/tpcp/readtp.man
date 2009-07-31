@@ -10,17 +10,17 @@
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-.TH READTP 1 "$Date: 2009/07/30 15:56:00 $" CASTOR "Set a volume priority"
+.TH READTP 1 "$Date: 2009/07/31 08:57:49 $" CASTOR "Set a volume priority"
 .SH NAME
 readtp \- read from a tape
 .SH SYNOPSIS
-.BI "readtp VID [OPTIONS] [FILE]..."
+.BI ""
 
 .SH DESCRIPTION
 .B readtp
 reads one or files from a tape.
 .P
-The readtp command-line tool 
+The readtp command-line tool reads
 The RecallHandler daemon and the tape operator command-line tools send volume
 access priorities to the VDQM. A volume access priority sent from the
 RecallHandler will exist in the VDQM database for a single-mount of the tape in

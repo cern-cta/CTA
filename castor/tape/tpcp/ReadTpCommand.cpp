@@ -81,7 +81,7 @@ void castor::tape::tpcp::ReadTpCommand::usage(std::ostream &os,
   const char *const programName) throw() {
   os <<
     "Usage:\n"
-    "\t" << programName << " VID SEQUENCE [FILE]...\n"
+    "\t" << programName << " VID SEQUENCE [OPTIONS] [FILE]...\n"
     "\n"
     "Where:\n"
     "\n"
