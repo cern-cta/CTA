@@ -1,5 +1,5 @@
 /*******************************************************************
- * @(#)$RCSfile: oracleDrain.sql,v $ $Revision: 1.5 $ $Date: 2009/07/05 13:49:08 $ $Author: waldron $
+ * @(#)$RCSfile: oracleDrain.sql,v $ $Revision: 1.6 $ $Date: 2009/07/31 15:24:37 $ $Author: waldron $
  * PL/SQL code for Draining FileSystems Logic
  *
  * Additional procedures modified to support the DrainingFileSystems
@@ -489,29 +489,6 @@ BEGIN
     drainFileSystem(fsId);
     RETURN;  -- No replication required
   END;
-  -- Check to see if there is already an outstanding request to replicate the
-  -- castorfile to the target service class. If so, we wait on that replication
-  -- to complete. This avoids having multiple requests to replicate the same
-  -- file to the same target service class multiple times.
-  BEGIN
-    SELECT DiskCopy.id INTO res
-      FROM DiskCopy, StageDiskCopyReplicaRequest
-     WHERE StageDiskCopyReplicaRequest.destDiskCopy = DiskCopy.id
-       AND StageDiskCopyReplicaRequest.svcclass = svcId
-       AND DiskCopy.castorFile = cfId
-       AND DiskCopy.status = 1  -- WAITDISK2DISKCOPY
-       AND rownum < 2;
-    IF res > 0 THEN
-      -- Wait on another replication to complete.
-      UPDATE DrainingDiskCopy
-         SET status = 3,  -- WAITD2D
-             parent = res
-       WHERE diskCopy = dcId AND fileSystem = fsId;
-       RETURN;
-    END IF;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    NULL;  -- No pending replications running
-  END;
   -- Just because the file was listed in the snapshot doesn't mean that it must
   -- be replicated! Here we check to see if the file is available on another
   -- diskserver in the target service class and if enough copies of the file
@@ -561,6 +538,29 @@ BEGIN
     drainFileSystem(fsId);
     RETURN;
   END IF;
+  -- Check to see if there is already an outstanding request to replicate the
+  -- castorfile to the target service class. If so, we wait on that replication
+  -- to complete. This avoids having multiple requests to replicate the same
+  -- file to the same target service class multiple times.
+  BEGIN
+    SELECT DiskCopy.id INTO res
+      FROM DiskCopy, StageDiskCopyReplicaRequest
+     WHERE StageDiskCopyReplicaRequest.destDiskCopy = DiskCopy.id
+       AND StageDiskCopyReplicaRequest.svcclass = svcId
+       AND DiskCopy.castorFile = cfId
+       AND DiskCopy.status = 1  -- WAITDISK2DISKCOPY
+       AND rownum < 2;
+    IF res > 0 THEN
+      -- Wait on another replication to complete.
+      UPDATE DrainingDiskCopy
+         SET status = 3,  -- WAITD2D
+             parent = res
+       WHERE diskCopy = dcId AND fileSystem = fsId;
+       RETURN;
+    END IF;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    NULL;  -- No pending replications running
+  END;
   -- If we have attempted to replicate the file more than 10 times already then
   -- give up! The error will be exposed later to an administrator for manual
   -- corrective action.
