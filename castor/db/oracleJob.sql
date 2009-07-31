@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.686 $ $Date: 2009/07/23 12:21:55 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.687 $ $Date: 2009/07/31 15:17:04 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -412,7 +412,6 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
   fileSize   NUMBER;
   ouid       INTEGER;
   ogid       INTEGER;
-  autoDelete NUMBER;
 BEGIN
   -- Lock the CastorFile
   SELECT castorFile INTO cfId
@@ -445,12 +444,14 @@ BEGIN
      WHERE parent = srId; -- SUBREQUEST_RESTART
     -- Archive the diskCopy replica request
     archiveSubReq(srId, 8);  -- FINISHED
-    -- Restart all entries in the snapshot of files to drain that maybe
+    -- Restart all entries in the snapshot of files to drain that may be
     -- waiting on the replication of the source diskcopy.
     UPDATE DrainingDiskCopy
        SET status = 1,  -- RESTARTED
            parent = 0
-     WHERE diskCopy = srcDcId OR parent = srcDcId;
+     WHERE status = 3  -- RUNNING
+       AND (diskCopy = srcDcId
+        OR  parent = srcDcId);
     drainFileSystem(srcFsId);
     RETURN;
   END;
@@ -487,52 +488,14 @@ BEGIN
   archiveSubReq(srId, 8);  -- FINISHED
   -- Trigger the creation of additional copies of the file, if necessary.
   replicateOnClose(cfId, ouid, ogid);
-  -- Diskserver draining logic
-  BEGIN
-    -- Check to see if the source diskcopy involved in the replication request
-    -- is hosted on a filesystem that is currently under the control of the
-    -- diskserver draining logic. If so, the source maybe a candidate for
-    -- garbage collection.
-    --
-    -- Note: we make 100% sure here that another copy of the same file exists on
-    -- another diskserver elsewhere and that the target and source diskcopy's
-    -- share a common service class!!!
-    SELECT DFS.autoDelete INTO autoDelete
-      FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass,
-           DrainingDiskCopy DDC, DrainingFileSystem DFS
-     WHERE DiskCopy.fileSystem = filesystem.id
-       AND DiskCopy.castorFile = cfId
-       AND DiskCopy.status IN (0, 10)  -- STAGED, CANBEMIGR
-       AND DiskCopy.id != srcDcId
-       AND FileSystem.diskPool = DiskPool2SvcClass.parent
-       AND FileSystem.status IN (0, 1)  -- PRODUCTION, DRAINING
-       AND FileSystem.diskServer = DiskServer.id
-       AND DiskServer.status IN (0, 1)  -- PRODUCTION, DRAINING
-       AND DiskPool2SvcClass.child = DFS.svcClass
-       AND DFS.fileSystem = DDC.fileSystem
-       AND DDC.diskcopy = srcDcId
-       AND DDC.status = 3  -- WAITD2D
-       AND rownum < 2;
-    -- Another copy was found so we delete the diskcopy from the snapshot.
-    DELETE FROM DrainingDiskCopy
-     WHERE diskCopy = srcDcId
-       AND filesystem = srcFsId;
-    -- Invalidate the source diskcopy so that it can be garbage collected.
-    IF autoDelete = 1 THEN
-      UPDATE DiskCopy
-         SET status = 7,  -- INVALID
-             gcType = 3   -- Draining filesystem
-       WHERE id = srcDcId AND fileSystem = srcFsId;
-    END IF;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- Restart all entries in the snapshot of files to drain that maybe
-    -- waiting on the replication of the source diskcopy.
-    UPDATE DrainingDiskCopy
-       SET status = 1,  -- RESTARTED
-           parent = 0
-     WHERE diskCopy = srcDcId
-        OR parent = srcDcId;  -- RUNNING
-  END;
+  -- Restart all entries in the snapshot of files to drain that may be
+  -- waiting on the replication of the source diskcopy.
+  UPDATE DrainingDiskCopy
+     SET status = 1,  -- RESTARTED
+         parent = 0
+   WHERE status = 3  -- RUNNING
+     AND (diskCopy = srcDcId
+      OR  parent = srcDcId);
   drainFileSystem(srcFsId);
   -- WARNING: previous call to drainFileSystem has a COMMIT inside. So all
   -- locks have been released!!
@@ -598,13 +561,14 @@ BEGIN
         FROM DiskCopy, StageDiskCopyReplicaRequest
        WHERE StageDiskCopyReplicaRequest.sourceDiskCopy = DiskCopy.id
          AND StageDiskCopyReplicaRequest.destDiskCopy = dcId;
-      -- Restart all entries in the snapshot of files to drain that maybe
+      -- Restart all entries in the snapshot of files to drain that may be
       -- waiting on the replication of the source diskcopy.
       UPDATE DrainingDiskCopy
          SET status = 1,  -- RESTARTED
              parent = 0
-       WHERE diskCopy = srcDcId
-          OR parent = srcDcId;
+       WHERE status = 3  -- RUNNING
+         AND (diskCopy = srcDcId
+          OR  parent = srcDcId);
       drainFileSystem(srcFsId);
     END;
     -- WARNING: previous call to drainFileSystem has a COMMIT inside. So all
