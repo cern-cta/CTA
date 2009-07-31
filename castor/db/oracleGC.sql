@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.694 $ $Date: 2009/07/24 07:52:18 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.695 $ $Date: 2009/07/31 15:24:23 $ $Author: waldron $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -311,9 +311,14 @@ BEGIN
         -- Loop on file deletions. Select only enough files until we reach the
         -- 10000 return limit.
         FOR dc IN (SELECT id, castorFile FROM (
-                     SELECT id, castorFile FROM DiskCopy
-                      WHERE fileSystem = fs.id
-                        AND status = 0 -- STAGED
+                     SELECT DiskCopy.id, DiskCopy.castorFile 
+                       FROM DiskCopy, FileSystem, DiskServer
+                      WHERE DiskCopy.filesystem = FileSystem.id
+                        AND FileSystem.id = fs.id
+                        AND FileSystem.status = 0 -- PRODUCTION
+                        AND FileSystem.diskserver = DiskServer.id
+                        AND DiskServer.status = 0 -- PRODUCTION
+                        AND DiskCopy.status = 0 -- STAGED
                         AND NOT EXISTS (
                           SELECT /*+ INDEX(SubRequest I_SubRequest_DiskCopy) */ 'x'
                             FROM SubRequest
