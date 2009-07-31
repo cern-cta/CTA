@@ -69,7 +69,7 @@ TAPEGATEWAY_DB_SRCS = ../../db/cnv/DbTapeGatewayRequestCnv.cpp ora/OraTapeGatewa
 TAPEGATEWAYBIN_SRCS = $(TAPEGATEWAYDAEMONBIN_SRCS) $(TAPEGATEWAY_MESSAGES_SRCS) $(TAPEGATEWAY_IO_SRCS) $(TAPEGATEWAY_DB_SRCS)
 
 TAPEGATEWAYBIN_OBJS = $(TAPEGATEWAYBIN_SRCS:.cpp=.Osuf)
-NormalProgramTarget(tapegateway,$(TAPEGATEWAYBIN_OBJS),$(DEPLIB),$(LIBS),750)
-ADMMANPAGE(tapegateway)
-SYSCONFIG(tapegateway,install)
-INITSCRIPT(tapegateway,install)
+NormalProgramTarget(tapegatewayd,$(TAPEGATEWAYBIN_OBJS),$(DEPLIB),$(LIBS),750)
+ADMMANPAGE(tapegatewayd)
+SYSCONFIG(tapegatewayd,install)
+INITSCRIPT(tapegatewayd,install)
