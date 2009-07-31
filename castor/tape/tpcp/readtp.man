@@ -10,86 +10,63 @@
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-.TH READTP 1 "$Date: 2009/07/31 08:57:49 $" CASTOR "Set a volume priority"
+.TH READTP 1 "$Date: 2009/07/31 11:59:45 $" CASTOR "Set a volume priority"
 .SH NAME
 readtp \- read from a tape
 .SH SYNOPSIS
-.BI ""
+.BI "readtp VID SEQUENCE [OPTIONS] [FILE]..."
 
 .SH DESCRIPTION
 .B readtp
-reads one or files from a tape.
+reads one or files from a tape and writes them to disk.
 .P
-The readtp command-line tool reads
-The RecallHandler daemon and the tape operator command-line tools send volume
-access priorities to the VDQM. A volume access priority sent from the
-RecallHandler will exist in the VDQM database for a single-mount of the tape in
-question.  A volume access priority sent from the tape operator command-line
-tools will by default have an unlimited lifespan within the VDQM database.  The
-priority will stay active until it is explicitly removed by the tape operator
-command-line tools.
-A volume access priority is a quadruple of:
+This command gives privileged users direct access to the tape system.
+.P
+The tape to be read is specified by the \fBVID\fP argument.  The tape files to
+be read are specified as a \fBSEQUENCE\fP of tape file sequence numbers.  The
+syntax used to specify the sequence is as follows:
 .RS
-.P
-*
-.B VID
-.br
-Volume visual identifier
-.P
-*
-.B
-Access mode
-.br
-Either read or write
-.P
-*
-.B
-Lifespan type
-.br
-Either single-mount or unlimited
-.P
-*
-.B
-Priority number
-.br
-A positive integer , where 0 is the lowest and default priority
+.TP 1.5i
+.I f1\-f2
+Files
+.I f1
+to
+.I f2
+inclusive.
+.TP
+.I f1\-
+Files
+.I f1
+to the last file on the tape.
+.TP
+.I f1\-f2,\|f4,\|f6-
+A series of non\-consecutive ranges of files.
 .RE
 .P
-A volume access priority quadruple is uniquely identified or named by the inner
-triplet of VID, access mode and lifespan type.  The priority number of the
-quadruple is the value of the volume access priority.  This means a given VID
-and access mode can have at most one "single-mount priority" and one "unlimited
-priority".  The effective priority in this case would be the unlimited priority.
-In other words, unlimited priorities overide single-mount priorities.
-.P
-If a priority set by
-.B
-readtp
-does not already exist in the database, then a new one will be inserted.  Else
-if the priority already exists, then its priority number will be updated.
+The filenames of the destination disk files can be specified using two
+mutually-exclusive methods.  They can be entered on the command-line
+(\fB[FILE]\fP) or in a "file-list" file using the
+.B -f, --filelist
+option.
 
 .SH OPTIONS
 .TP
-\fB\-c, \-\-config config-file
-Set the location of the configuration file.  The default is
-\fB/etc/castor/castor.conf\fP
-.TP
-\fB\-v, \-\-vid VID\fR
-Volume visual identifier
-.TP
-\fB\-a, \-\-tapeAccessMode read | write
-Tape access mode.  Valid values are "read" and "write".
-.TP
-\fB\-l, \-\-lifespanType singleMount | unlimited (default)
-Lifespan type. Valid values are "singleMount" and "unlimited".  The default
-value is "unlimited"
-.TP
-\fB\-p, \-\-priority positive integer
-Volume priority.  A positive integer, where 0 is the lowest and default
-priority
+\fB\-d, \-\-debug
+Prints debug information.
 .TP
 \fB\-h, \-\-help
-Get usage information
+Prints the usage message.
+.TP
+\fB\-s, \-\-server server
+Specifies the tape server to be used, therefore overriding the drive scheduling
+of the VDQM.  If this option is not set then the VDQM will allocate the first
+free drive it finds that is suitable for reading the tape.
+.TP
+\fB\-f, \-\-filelist file
+File containing the list of destination filenames in RFIO notation
+[host:]local_path.  There should be one filename per line with no whitespace or
+comments.  Please note that this option is mutually exclusive with the method
+of providing filenames on the command-line.
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
