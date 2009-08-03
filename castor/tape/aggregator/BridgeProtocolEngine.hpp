@@ -26,6 +26,7 @@
 #define CASTOR_TAPE_AGGREGATOR_BRIDGEPROTOCOLENGINE
 
 #include "castor/exception/Exception.hpp"
+#include "castor/tape/aggregator/BoolFunctor.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/MessageHeader.hpp"
 #include "castor/tape/aggregator/RtcpFileRqstMsgBody.hpp"
@@ -66,12 +67,15 @@ public:
    * @param volume              The volume message received from the tape
    *                            gateway.
    * @param vsn                 The volume serial number.
+   * @param stoppingGracefully  Functor that returns true if the daemon is
+   *                            stopping gracefully.
    */
   BridgeProtocolEngine(const Cuuid_t &cuuid, const uint32_t volReqId,
     const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
     const unsigned short gatewayPort, const int rtcpdCallbackSockFd,
     const int rtcpdInitialSockFd, char (&unit)[CA_MAXUNMLEN+1],
-    tapegateway::Volume &volume, char (&vsn)[CA_MAXVSNLEN+1]) throw();
+    tapegateway::Volume &volume, char (&vsn)[CA_MAXVSNLEN+1],
+    BoolFunctor &stoppingGracefully) throw();
 
   /**
    * Run a recall/migration session.
@@ -127,6 +131,11 @@ private:
    * The volume serial number.
    */
   const char (&m_vsn)[CA_MAXVSNLEN+1];
+
+  /**
+   * Functor that returns true if the daemon is stopping gracefully.
+   */
+  BoolFunctor &m_stoppingGracefully;
 
   /**
    * The set of read RTCPD socket descriptors to be de-multiplexed by

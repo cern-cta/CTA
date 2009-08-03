@@ -54,6 +54,15 @@
 
 
 //-----------------------------------------------------------------------------
+// constructor
+//-----------------------------------------------------------------------------
+castor::tape::aggregator::VdqmRequestHandler::VdqmRequestHandler(
+  BoolFunctor &stoppingGracefully) throw() :
+  m_stoppingGracefully(stoppingGracefully) {
+}
+
+
+//-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
 castor::tape::aggregator::VdqmRequestHandler::~VdqmRequestHandler()
@@ -194,7 +203,7 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
       utils::setBytes(vsn, '\0');
       BridgeProtocolEngine bridgeProtocolEngine(cuuid, volReqId, gatewayHost,
         gatewayPort, rtcpdCallbackSockFd.get(), rtcpdInitialSockFd.get(), unit,
-        volume, vsn);
+        volume, vsn, m_stoppingGracefully);
       bridgeProtocolEngine.run();
     }
   } catch(castor::exception::Exception &ex) {

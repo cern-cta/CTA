@@ -56,7 +56,8 @@ castor::tape::aggregator::BridgeProtocolEngine::BridgeProtocolEngine(
   const int rtcpdInitialSockFd,
   char (&unit)[CA_MAXUNMLEN+1],
   tapegateway::Volume &volume,
-  char (&vsn)[CA_MAXVSNLEN+1]) throw() :
+  char (&vsn)[CA_MAXVSNLEN+1],
+  BoolFunctor &stoppingGracefully) throw() :
   m_cuuid(cuuid),
   m_volReqId(volReqId),
   m_gatewayHost(gatewayHost),
@@ -66,6 +67,7 @@ castor::tape::aggregator::BridgeProtocolEngine::BridgeProtocolEngine(
   m_unit(unit),
   m_volume(volume),
   m_vsn(vsn),
+  m_stoppingGracefully(stoppingGracefully),
   m_nbCallbackConnections(1), // Initial callback connection has already exists
   m_nbReceivedENDOF_REQs(0) {
 
@@ -96,8 +98,38 @@ castor::tape::aggregator::BridgeProtocolEngine::BridgeProtocolEngine(
 int castor::tape::aggregator::BridgeProtocolEngine::acceptRtcpdConnection()
   throw(castor::exception::Exception) {
 
-  SmartFd connectedSockFd(net::acceptConnection(m_rtcpdCallbackSockFd,
-    RTCPDPINGTIMEOUT));
+  SmartFd connectedSockFd;
+
+  // Accept the the connection with a 5 second timeout as it should be
+  // instantaneous
+  {
+    bool   tryAgain = true;
+    time_t timeout  = 5;
+
+    while(tryAgain) {
+      try {
+        connectedSockFd.reset(net::acceptConnection(m_rtcpdCallbackSockFd,
+          timeout));
+        tryAgain = false;
+      } catch(castor::exception::TapeNetAcceptInterrupted &ix) {
+
+        // If the daemon should stop gracefully
+        if(m_stoppingGracefully()) {
+
+          // Rethrow exception so that it will eventually be converted into the
+          // sending of an EndNotificationErrorReport message to the client
+          // (tape gateway or tpcp).
+          throw(ix);
+
+        // Else the daemon should continue
+        } else {
+
+          // Wait again for the remaining amount of time
+          timeout = ix.remainingTime();
+        }
+      }
+    } // while(tryAgain)
+  }
 
   try {
     unsigned short port = 0; // Client port
@@ -182,6 +214,14 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocks()
       break;
 
     case -1: // Select encountered an error
+
+      // If select was interrupted and the daemon is stopping gracefully
+      if(selectErrno == EINTR && m_stoppingGracefully()) {
+        castor::exception::Exception ex(ECANCELED);
+
+        ex.getMessage() << "Select interrupted and stopping gracefully";
+        throw(ex);
+      }
 
       // If select encountered an error other than an interruption
       if(selectErrno != EINTR) {

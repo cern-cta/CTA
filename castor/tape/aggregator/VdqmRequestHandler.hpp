@@ -27,6 +27,7 @@
 
 #include "castor/io/ServerSocket.hpp"
 #include "castor/server/IThread.hpp"
+#include "castor/tape/aggregator/BoolFunctor.hpp"
 #include "castor/tape/aggregator/MessageHeader.hpp"
 #include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
 #include "castor/tape/aggregator/SmartFdList.hpp"
@@ -47,6 +48,14 @@ class VdqmRequestHandler : public castor::server::IThread {
 public:
 
   /**
+   * Constructor.
+   *
+   * @param stoppingGracefully Functor that returns true if the daemon is
+   * stopping gracefully.
+   */
+  VdqmRequestHandler(BoolFunctor &stoppingGracefully) throw();
+
+  /**
    * Destructor
    */
   ~VdqmRequestHandler() throw();
@@ -65,6 +74,14 @@ public:
    * Convenience method to stop the thread.
    */
   virtual void stop() throw();
+
+
+private:
+
+  /**
+   * Functor that returns true if the daemon is stopping gracefully.
+   */
+  BoolFunctor &m_stoppingGracefully;
 
 }; // class VdqmRequestHandler
 
