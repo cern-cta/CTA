@@ -333,7 +333,8 @@
 #define	ETWPROT		ETBASEOFF+31	/* cartridge write protected */
 #define	ETWVSN		ETBASEOFF+32	/* wrong vsn */
 #define ETBADMIR	ETBASEOFF+33    /* Tape has a bad MIR */
-#define ETMAXERR        ETBASEOFF+33
+#define ETNETACCEPTINTR ETBASEOFF+34    /* castor::tape::net::acceptConnection interrupted */
+#define ETMAXERR        ETBASEOFF+34
 
 /*
  *------------------------------------------------------------------------
