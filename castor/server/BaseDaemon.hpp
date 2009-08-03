@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseDaemon.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2009/01/08 09:18:25 $ $Author: itglp $
+ * @(#)$RCSfile: BaseDaemon.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2009/08/03 15:23:16 $ $Author: murrayc3 $
  *
  * A base multithreaded daemon supporting signal handling
  * Credits to Jean-Damien Durand for the original C code
@@ -90,6 +90,11 @@ namespace castor {
      * Called by start()
      */
     virtual void handleSignals();
+
+    /**
+     * Returns true if the daemon is in the state of "stopping gracefully".
+     */
+    bool stoppingGracefully();
 
   protected:
 
