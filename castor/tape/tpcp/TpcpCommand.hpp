@@ -38,6 +38,7 @@
 #include <iostream>
 #include <list>
 #include <map>
+#include <signal.h>
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -114,6 +115,12 @@ protected:
    * Performs the tape copy whether it be DUMP, READ, WRITE or VERIFY.
    */
   virtual void performTransfer() throw(castor::exception::Exception) = 0;
+
+  /**
+   * Initially set to false, but set to true if a SIGNINT interrupt is received
+   * (control-C).
+   */
+  static bool s_receivedSigint;
 
   /**
    * The results of parsing the command-line.
@@ -304,6 +311,11 @@ protected:
 private:
 
   /**
+   * Deletes the specified VDQM volume request.
+   */
+  void deleteVdqmVolumeRequest() throw (castor::exception::Exception);
+
+  /**
    * An abstract functor to handle incomming Aggregator messages.
    */
   class AbstractMsgHandler {
@@ -398,6 +410,16 @@ private:
       }
     }
   }; // MsgHandlerMap
+
+  /**
+   * The SIGINT signal handler.
+   */
+  static void sigintHandler(int signal);
+
+  /**
+   * The SIGINT action handler structure to be used with sigaction.
+   */
+  struct sigaction m_sigintAction;
 
   /**
    * Map from message type (uint32_t) to pointer message handler

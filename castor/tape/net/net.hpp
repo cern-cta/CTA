@@ -27,12 +27,14 @@
 #define CASTOR_TAPE_NET_NET_HPP 1
 
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/TapeNetAcceptInterrupted.hpp"
 #include "castor/exception/TimeOut.hpp"
 #include "castor/tape/net/Constants.hpp"
 
 #include <errno.h>
 #include <string.h>
 #include <iostream>
+#include <sys/types.h>
 
 namespace castor {
 namespace tape   {
@@ -64,19 +66,24 @@ int acceptConnection(const int listenSockFd)
  * socket file descriptor of the newly created connected socket.
  *
  * This method accepts a timeout parameter.  If the timeout is exceeded, then
- * this method raises a castor::exception::TimeOut exception.  All other
- * errors result in a castor::exception::Exception being raised.  Note that
- * castor::exception::TimeOut inherits from castor::exception::Exception so one
- * must catch castor::exception::TimeOut before catching
+ * this method raises a castor::exception::TimeOut exception.  If this method
+ * is interrupted, then this method raises a
+ * castor::exception::TapeNetAcceptInterrupted exception which gives the number
+ * of remaining seconds when the interrupt occured.  All other errors result in
+ * a castor::exception::Exception being raised.  Note that both
+ * castor::exception::TimeOut and castor::exception::TapeNetAcceptInterrupted
+ * inherit from castor::exception::Exception so callers of the this method must
+ * catch castor::exception::TimeOut and
+ * castor::exception::TapeNetAcceptInterrupted before catching
  * castor::exception::Exception.
  *
  * @param listenSockFd The file descriptor of the listener socket.
- * @param timeout The timeout in seconds to be used when waiting for a
- * connection.
+ * @param timeout      The timeout in seconds to be used when waiting for a
+ *                     connection.
  */
 int acceptConnection(const int listenSockFd,
-  const int timeout) throw(castor::exception::TimeOut,
-    castor::exception::Exception);
+  const time_t timeout) throw(castor::exception::TimeOut,
+    castor::exception::TapeNetAcceptInterrupted, castor::exception::Exception);
 
 /**
  * Gets the locally-bound IP and port number of the specified socket.

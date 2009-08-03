@@ -47,8 +47,15 @@ int castor::tape::net::createListenerSock(const char *addr,
   struct sockaddr_in address;
 
   if ((socketFd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-    TAPE_THROW_CODE(errno,
-      ": Failed to create a listener socket");
+    const int socketErrno = errno;
+
+    char strerrorBuf[STRERRORBUFLEN];
+    char *const errorStr = strerror_r(socketErrno, strerrorBuf,
+      sizeof(strerrorBuf));
+
+    TAPE_THROW_CODE(socketErrno,
+      ": Failed to create listener socket"
+      ": " << errorStr);
   }
 
   utils::setBytes(address, '\0');
@@ -57,13 +64,27 @@ int castor::tape::net::createListenerSock(const char *addr,
   address.sin_port = htons(port);
 
   if(bind(socketFd, (struct sockaddr *) &address, sizeof(address)) < 0) {
-    TAPE_THROW_CODE(errno,
-      ": Failed to bind listener socket");
+    const int bindErrno = errno;
+
+    char strerrorBuf[STRERRORBUFLEN];
+    char *const errorStr = strerror_r(bindErrno, strerrorBuf,
+      sizeof(strerrorBuf));
+
+    TAPE_THROW_CODE(bindErrno,
+      ": Failed to bind listener socket"
+      ": " << errorStr);
   }
 
   if(listen(socketFd, LISTENBACKLOG) < 0) {
-    TAPE_THROW_CODE(errno,
-      ": Failed to mark listener socket as being a listener socket");
+    const int listenErrno = errno;
+
+    char strerrorBuf[STRERRORBUFLEN];
+    char *const errorStr = strerror_r(listenErrno, strerrorBuf,
+      sizeof(strerrorBuf));
+
+    TAPE_THROW_CODE(listenErrno,
+      ": Failed to mark socket as being a listener"
+      ": " << errorStr);
   }
 
   return socketFd;
@@ -101,72 +122,55 @@ int castor::tape::net::acceptConnection(const int listensocketFd)
 // acceptConnection
 //-----------------------------------------------------------------------------
 int castor::tape::net::acceptConnection(const int listensocketFd,
-  const int timeout) throw(castor::exception::TimeOut,
-  castor::exception::Exception) {
+  const time_t timeout) throw(castor::exception::TimeOut,
+  castor::exception::TapeNetAcceptInterrupted, castor::exception::Exception) {
 
-  const time_t startTime     = time(NULL);
-  time_t       remainingTime = timeout;
-  time_t       elapsedTime   = timeout;
-  bool         selectAgain   = true;
-  int          selectRc      = 0;
-  int          selectErrno   = 0;
+  const time_t startTime   = time(NULL);
   fd_set       fdSet;
   timeval      selectTimeout;
 
-  // While a connection request has not arrived and the timeout has not expired
-  while(selectAgain) {
-    FD_ZERO(&fdSet);
-    FD_SET(listensocketFd, &fdSet);
+  FD_ZERO(&fdSet);
+  FD_SET(listensocketFd, &fdSet);
 
-    selectTimeout.tv_sec  = remainingTime;
-    selectTimeout.tv_usec = 0;
+  selectTimeout.tv_sec  = timeout;
+  selectTimeout.tv_usec = 0;
 
-    selectRc = select(listensocketFd + 1, &fdSet, NULL, NULL, &selectTimeout);
-    selectErrno = errno;
+  const int selectRc = select(listensocketFd + 1, &fdSet, NULL, NULL,
+    &selectTimeout);
+  const int selectErrno = errno;
 
-    switch(selectRc) {
-    case 0: // Select timed out
-      {
-        TAPE_THROW_EX(castor::exception::TimeOut,
-             ": Timed out after " << timeout
-          << " seconds whilst trying to accept a connection");
-      }
-      break;
-    case -1: // Select encountered an error
-      // If select was interrupted
-      if(errno == EINTR) {
-        elapsedTime = time(NULL) - startTime;
+  switch(selectRc) {
+  case 0: // Select timed out
+    {
+      TAPE_THROW_EX(castor::exception::TimeOut,
+           ": Timed out after " << timeout
+        << " seconds whilst trying to accept a connection");
+    }
+    break;
+  case -1: // Select encountered an error
+    // If select was interrupted
+    if(errno == EINTR) {
+      const time_t remainingTime = timeout - (time(NULL) - startTime);
 
-        // Recalculate the amount of remaining time ready for another call to
-        // select
-        if(elapsedTime >= timeout) {
-          remainingTime = 0; // One last non-blocking select
-        } else {
-          remainingTime = timeout - elapsedTime;
-        }
-      } else {
-        char strerrorBuf[STRERRORBUFLEN];
-        char *const errorStr = strerror_r(selectErrno, strerrorBuf,
-          sizeof(strerrorBuf));
+      castor::exception::TapeNetAcceptInterrupted ex(remainingTime);
 
-        TAPE_THROW_CODE(selectErrno,
-          ": Failed to accept connection"
-          ": Select failed: " << errorStr);
-      }
-      break;
-    default: // Select found a file descriptor awaiting attention
-      // If there is a connection request
-      if(FD_ISSET(listensocketFd, &fdSet)) {
+      throw(ex);
+    } else {
+      char strerrorBuf[STRERRORBUFLEN];
+      char *const errorStr = strerror_r(selectErrno, strerrorBuf,
+        sizeof(strerrorBuf));
 
-        // The select loop should now finish
-        selectAgain = false;
-
-      // Else the file descriptor set does not make sense
-      } else {
-        TAPE_THROW_CODE(selectErrno,
-          ": Failed to accept connection "
-          ": Invalid file descriptor set");
-      }
+      TAPE_THROW_CODE(selectErrno,
+        ": Failed to accept connection"
+        ": Select failed: " << errorStr);
+    }
+    break;
+  default: // Select found a file descriptor awaiting attention
+    // If it is not the expected connection request
+    if(!FD_ISSET(listensocketFd, &fdSet)) {
+      TAPE_THROW_CODE(selectErrno,
+        ": Failed to accept connection "
+        ": Invalid file descriptor set");
     }
   }
 

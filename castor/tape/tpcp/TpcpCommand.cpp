@@ -62,12 +62,51 @@ char castor::tape::tpcp::TpcpCommand::vmgr_error_buffer[VMGRERRORBUFLEN];
 
 
 //------------------------------------------------------------------------------
+// s_receivedSigint
+//------------------------------------------------------------------------------
+bool castor::tape::tpcp::TpcpCommand::s_receivedSigint = false;
+
+
+//------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tpcp::TpcpCommand::TpcpCommand() throw () :
   m_callbackSock(false),
   m_volReqId(0),
   m_fileTransactionId(1) {
+
+  // Prepare the SIGINT action handler structure ready for sigaction()
+  m_sigintAction.sa_handler = &sigintHandler;
+  if(sigfillset(&m_sigintAction.sa_mask) < 0) { // Mask all signals
+    const int savedErrno = errno;
+
+    char strerrorBuf[STRERRORBUFLEN];
+    char *const errorStr = strerror_r(savedErrno, strerrorBuf,
+      sizeof(strerrorBuf));
+
+    castor::exception::Exception ex(savedErrno);
+
+    TAPE_THROW_CODE(savedErrno,
+      "Failed to initialize signal mask using sigfillset"
+      ": " << errorStr);
+  }
+  m_sigintAction.sa_flags = 0; // No flags
+
+  // Set the SIGINT signal handler
+  if(sigaction(SIGINT, &m_sigintAction, 0) < 0){
+    const int savedErrno = errno;
+
+    char strerrorBuf[STRERRORBUFLEN];
+    char *const errorStr = strerror_r(savedErrno, strerrorBuf,
+      sizeof(strerrorBuf));
+
+    castor::exception::Exception ex(savedErrno);
+
+    TAPE_THROW_CODE(savedErrno,
+      "Failed to set the SIGINT signal handler using sigaction"
+      ": " << errorStr);
+  }
+
   utils::setBytes(m_vmgrTapeInfo, '\0');
   utils::setBytes(m_dgn, '\0');
 }
@@ -88,6 +127,8 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
   const int argc, char **argv) throw() {
 
   try {
+    // ;
+
     const uid_t userId  = getuid();
     const gid_t groupId = getgid();
     
@@ -321,7 +362,8 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
 
     // Wait for a callback connection from the aggregator
     {
-      bool waitForCallback    = true;
+      bool   waitForCallback = true;
+      time_t timeout         = WAITCALLBACKTIMEOUT;
       while(waitForCallback) {
         try {
           connectionSockFd = net::acceptConnection(m_callbackSock.socket(),
@@ -335,9 +377,43 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
           time_t       now = time(NULL);
 
           utils::writeTime(os, now, TIMEFORMAT);
-          os << ": Waited " << WAITCALLBACKTIMEOUT << " seconds for a "
-          "callback connection from the tape server." << std::endl
-          << "Continuing to wait." <<  std::endl;
+          os <<
+            ": Waited " << WAITCALLBACKTIMEOUT << " seconds for a "
+            "callback connection from the tape server." << std::endl <<
+            "Continuing to wait." <<  std::endl;
+
+          // Wait again for the default timeout
+          timeout = WAITCALLBACKTIMEOUT;
+          
+        } catch(castor::exception::TapeNetAcceptInterrupted &ix) {
+
+          // If a SIGINT signal was received (control-c)
+          if(s_receivedSigint) {
+
+            // Command-line user feedback
+            std::ostream &os = std::cout;
+            time_t       now = time(NULL);
+
+            utils::writeTime(os, now, TIMEFORMAT);
+            os <<
+              ": Received SIGNINT"
+              ": Deleting volume request from VDQM"
+              ": Volume request ID=" << m_volReqId << std::endl;
+
+            deleteVdqmVolumeRequest();
+
+            castor::exception::Exception ex(ECANCELED);
+
+            ex.getMessage() << "Received SIGNINT";
+
+            throw(ex);
+
+          // Else received a signal other than SIGINT
+          } else {
+
+            // Wait again for the remaining amount of time
+            timeout = ix.remainingTime();
+          }
         }
       }
     }
@@ -453,11 +529,16 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
       throw ex2;
     }
   } catch(castor::exception::Exception &ex) {
-    std::cerr << std::endl
-      << "Aborting: "
+    std::ostream &os = std::cerr;
+    time_t       now = time(NULL);
+
+    utils::writeTime(os, now, TIMEFORMAT);
+    os
+      << ": Aborting: "
       << ex.getMessage().str()
       << std::endl
       << std::endl;
+
     return 1;
   }
 
@@ -602,17 +683,45 @@ bool castor::tape::tpcp::TpcpCommand::dispatchMessage()
 
   // Wait for a callback connection from the aggregator
   {
-    bool waitForCallback    = true;
+    bool   waitForCallback = true;
+    time_t timeout         = WAITCALLBACKTIMEOUT;
     while(waitForCallback) {
       try {
         connectionSockFd = net::acceptConnection(m_callbackSock.socket(),
-          WAITCALLBACKTIMEOUT);
+          timeout);
 
         waitForCallback = false;
       } catch(castor::exception::TimeOut &tx) {
-        std::cout << "Waited " << WAITCALLBACKTIMEOUT << " seconds for a "
-        "callback connection from the tape server." << std::endl
-        << "Continuing to wait." <<  std::endl;
+
+        // Command-line user feedback
+        std::ostream &os = std::cout;
+        time_t       now = time(NULL);
+
+        utils::writeTime(os, now, TIMEFORMAT);
+        os <<
+          "Waited " << WAITCALLBACKTIMEOUT << " seconds for a "
+          "callback connection from the tape server." << std::endl <<
+          "Continuing to wait." <<  std::endl;
+
+        // Wait again for the default timeout
+        timeout = WAITCALLBACKTIMEOUT;
+
+      } catch(castor::exception::TapeNetAcceptInterrupted &ix) {
+
+         // If a SIGINT signal was received (control-c)
+         if(s_receivedSigint) {
+          castor::exception::Exception ex(ECANCELED);
+
+          ex.getMessage() << "Received SIGNINT";
+
+          throw(ex);
+
+        // Else received a signal other than SIGINT
+        } else {
+
+          // Wait again for the remaining amount of time
+          timeout = ix.remainingTime();
+        }
       }
     }
   }
@@ -774,7 +883,7 @@ bool castor::tape::tpcp::TpcpCommand::handleEndNotificationErrorReport(
 
 
 //------------------------------------------------------------------------------
-// tellAggregatorNoMoreFiles
+// acknowledgeEndOfSession
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TpcpCommand::acknowledgeEndOfSession()
   throw(castor::exception::Exception) {
@@ -784,17 +893,46 @@ void castor::tape::tpcp::TpcpCommand::acknowledgeEndOfSession()
 
   // Wait for a callback connection from the aggregator
   {
-    bool waitForCallback = true;
+    bool   waitForCallback = true;
+    time_t timeout         = WAITCALLBACKTIMEOUT;
     while(waitForCallback) {
       try {
         connectionSockFd = net::acceptConnection(m_callbackSock.socket(),
-          WAITCALLBACKTIMEOUT);
+          timeout);
 
         waitForCallback = false;
       } catch(castor::exception::TimeOut &tx) {
-        std::cout << "Waited " << WAITCALLBACKTIMEOUT << " seconds for a "
-        "callback connection from the tape server." << std::endl
-        << "Continuing to wait." <<  std::endl;
+
+        // Command-line user feedback
+        std::ostream &os = std::cout;
+        time_t       now = time(NULL);
+
+        utils::writeTime(os, now, TIMEFORMAT);
+        os <<
+          ": Waited " << WAITCALLBACKTIMEOUT << " seconds for a "
+          "callback connection from the tape server." << std::endl <<
+          "Continuing to wait." <<  std::endl;
+
+        // Wait again for the default timeout
+        timeout = WAITCALLBACKTIMEOUT;
+
+      } catch(castor::exception::TapeNetAcceptInterrupted &ix) {
+
+        // If a SIGINT signal was received (control-c)
+        if(s_receivedSigint) {
+          castor::exception::Exception ex(ECANCELED);
+
+          ex.getMessage() <<
+           ": Received SIGNINT";
+
+          throw(ex);
+
+        // Else received a signal other than SIGINT
+        } else {
+
+          // Wait again for the remaining amount of time
+          timeout = ix.remainingTime();
+        }
       }
     }
   }
@@ -856,5 +994,37 @@ void castor::tape::tpcp::TpcpCommand::sendEndNotificationErrorReport(
     Helper::displaySentMsgIfDebug(errorReport, m_cmdLine.debugSet);
   } catch(...) {
     // Do nothing
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// sigintHandler
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::TpcpCommand::sigintHandler(int signal) {
+  s_receivedSigint = true;
+}
+
+
+//------------------------------------------------------------------------------
+// deleteVdqmVolumeRequest
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::TpcpCommand::deleteVdqmVolumeRequest()
+  throw(castor::exception::Exception) {
+
+  const int rc = vdqm_DelVolumeReq(NULL, m_volReqId, m_vmgrTapeInfo.vid, m_dgn,
+    NULL, NULL, 0);
+
+  if(rc < 0) {
+    const int savedErrno = errno;
+
+    char strerrorBuf[STRERRORBUFLEN];
+    char *const errorStr = strerror_r(savedErrno, strerrorBuf,
+      sizeof(strerrorBuf));
+
+    TAPE_THROW_CODE(savedErrno,
+      ": Failed to delete volume request from VDQM"
+      ": Volume request ID=" << m_volReqId <<
+      ": " << errorStr);
   }
 }
