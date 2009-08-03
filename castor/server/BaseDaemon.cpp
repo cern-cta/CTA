@@ -277,7 +277,7 @@ void castor::server::BaseDaemon::waitAllThreads() throw()
 //------------------------------------------------------------------------------
 // stoppingGracefully
 //------------------------------------------------------------------------------
-bool stoppingGracefully() {
+bool castor::server::BaseDaemon::stoppingGracefully() {
   return m_signalMutex->getValue() == castor::server::STOP_GRACEFULLY;
 }
 
