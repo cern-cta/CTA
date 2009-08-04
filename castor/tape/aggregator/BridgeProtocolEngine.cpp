@@ -25,6 +25,7 @@
 
 #include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/exception/TimeOut.hpp"
 #include "castor/tape/Constants.hpp"
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/BridgeProtocolEngine.hpp"
@@ -99,13 +100,13 @@ int castor::tape::aggregator::BridgeProtocolEngine::acceptRtcpdConnection()
   throw(castor::exception::Exception) {
 
   SmartFd connectedSockFd;
-  const time_t timeout = 1; // 1 second
+  const int timeout = 5; // Seconds
 
-  // Try 5 times to accept the connection, with each try waiting up to 1 second
-  for(int i = 0; i< 5; i++) {
+  bool connectionAccepted = false;
+  for(int i=0; i<timeout && !connectionAccepted; i++) {
     try {
-      connectedSockFd.reset(net::acceptConnection(m_rtcpdCallbackSockFd,
-        timeout));
+      connectedSockFd.reset(net::acceptConnection(m_rtcpdCallbackSockFd, 1));
+      connectionAccepted = true;
     } catch(castor::exception::TimeOut &ex) {
       // Do nothing
     }
@@ -115,10 +116,21 @@ int castor::tape::aggregator::BridgeProtocolEngine::acceptRtcpdConnection()
       castor::exception::Exception ex(ECANCELED);
 
       ex.getMessage() << "Stopping gracefully";
-
       throw(ex);
     }
   }
+
+  // Throw an exception if the RTCPD connection could not be accepted
+  if(!connectionAccepted) {
+    castor::exception::TimeOut ex;
+
+    ex.getMessage() <<
+      "Failed to accept RTCPD connection after " << timeout << " seconds";
+    throw ex;
+  }
+
+  // Update the number of callback connections
+  m_nbCallbackConnections++;
 
   try {
     unsigned short port = 0; // Client port
@@ -127,8 +139,6 @@ int castor::tape::aggregator::BridgeProtocolEngine::acceptRtcpdConnection()
 
     net::getPeerIpPort(connectedSockFd.get(), ip, port);
     net::getPeerHostName(connectedSockFd.get(), hostName);
-
-    m_nbCallbackConnections++;
 
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId"       , m_volReqId                ),
@@ -200,7 +210,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocks()
     timeout.tv_sec  = 1; // 1 second
     timeout.tv_usec = 0;
 
-    // See if any of read file descriptors are ready waiting up to 1 second
+    // See if any of the read file descriptors are ready waiting up to 1 second
     selectRc = select(maxFd + 1, &readFdSet, NULL, NULL, &timeout);
     selectErrno = errno;
 
