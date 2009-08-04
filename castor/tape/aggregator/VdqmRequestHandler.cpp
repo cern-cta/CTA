@@ -198,7 +198,11 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
     // Else the volume does not have the aggregation format
     } else {
 
-      // Note the call to run() sets the vsn to ""
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", jobRequest.volReqId)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_ENTERING_BRIDGE_MODE, params);
+
       char vsn[CA_MAXVSNLEN+1];
       utils::setBytes(vsn, '\0');
       BridgeProtocolEngine bridgeProtocolEngine(cuuid, jobRequest.volReqId,
