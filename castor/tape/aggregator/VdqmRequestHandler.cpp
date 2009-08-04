@@ -226,4 +226,7 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::VdqmRequestHandler::stop()
   throw() {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("MESSAGE", "CAUGHT STOP, e.g. CONTROL-C")};
+    CASTOR_DLF_WRITEPC(nullCuuid, DLF_LVL_ERROR, AGGREGATOR_NULL, params);
 }

@@ -148,7 +148,7 @@ private:
      * Returns true if the daemon is sotpping gracefully.
      */
     bool operator()() {
-      return m_daemon.stoppingGracefully();
+      return false; // FOR DEBUGGING ONLY!!!!!!
     }
 
   private:
