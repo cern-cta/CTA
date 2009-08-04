@@ -420,7 +420,7 @@ bool castor::tape::tpcp::WriteTpCommand::handleFileToMigrateRequest(
       utils::writeTime(os, now, TIMEFORMAT);
       os <<
         " Migrating"
-        " filename=\"" << filename << "\"" << std::endl;
+        " \"" << filename << "\"" << std::endl;
     }
 
   // Else no more files
@@ -481,7 +481,7 @@ bool castor::tape::tpcp::WriteTpCommand::handleFileMigratedNotification(
     utils::writeTime(os, now, TIMEFORMAT);
     os <<
        " Migrated"
-       " filename=\"" << filename << "\""
+       " \"" << filename << "\""
        " size=" << msg->fileSize() <<
        " checskum=0x" << std::hex << msg->checksum() << std::dec << std::endl;
 

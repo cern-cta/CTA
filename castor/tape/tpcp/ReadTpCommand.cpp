@@ -424,7 +424,7 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileToRecallRequest(
       utils::writeTime(os, now, TIMEFORMAT);
       os <<
         " Recalling"
-        " filename=\"" << filename << "\"" <<
+        " \"" << filename << "\"" <<
         " fseq=" << tapeFseq <<  std::endl;
     }
 
@@ -489,7 +489,7 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileRecalledNotification(
       utils::writeTime(os, now, TIMEFORMAT);
       os <<
         " Recalled"
-        " filename=\"" << fileTransfer.filename << "\""
+        " \"" << fileTransfer.filename << "\""
         " fseq=" << fileTransfer.tapeFseq <<
         " size=" << msg->fileSize() <<
         " checskum=0x" << std::hex << msg->checksum() << std::dec << std::endl;
