@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.745 $ $Date: 2009/07/27 12:47:19 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.746 $ $Date: 2009/08/04 15:04:58 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1867,9 +1867,11 @@ BEGIN
       END IF;
     END;
   END IF;
-  -- reset svcClass to the request's one and filesize to 0
-  -- we are truncating the file and we want to use the new svcClass for migration
-  UPDATE CastorFile SET fileSize = 0, svcClass = sclassId
+  -- Reset svcClass to the request's one as we want to use the new one for migration.
+  -- However, we don't reset the filesize, this will be done at prepareForMigration time
+  -- so that in case the old file needs to be recovered from tape after e.g. a failed
+  -- transfer, we correctly have the previous size.
+  UPDATE CastorFile SET svcClass = sclassId
    WHERE id = cfId;
   -- link SubRequest and DiskCopy
   UPDATE SubRequest SET diskCopy = dcId,
