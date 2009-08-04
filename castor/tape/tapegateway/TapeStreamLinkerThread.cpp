@@ -115,6 +115,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
 	};
       
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, LINKER_NO_TAPE_AVAILABLE, 3, params);
+      
       strItem++;
       continue;
       // in case of errors we don't change the status from TO_BE_RESOLVED to TO_BE_SENT_TO_VDQM -- NO NEED OF WAITSPACE status

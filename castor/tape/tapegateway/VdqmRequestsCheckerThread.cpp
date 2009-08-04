@@ -27,6 +27,7 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "castor/Constants.hpp"
 #include "castor/IService.hpp"
@@ -108,13 +109,21 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
       vdqmHelper.checkVdqmForRequest(*tapeRequest);
 
     } catch (castor::exception::Exception e) {
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, CHECKER_LOST_VDQM_REQUEST, 1, params);
-      tapesToRetry.push_back(*tapeRequest);
-      if ((*tapeRequest)->accessMode() == 1 && (*tapeRequest)->status() == ONGOING ){
-	castor::stager::Tape* tapeToReset= new 	castor::stager::Tape();
-	tapeToReset->setTpmode(1);
-	tapeToReset->setVid((*tapeRequest)->streamMigration()->tape()->vid());
-	tapesToReset.push_back(tapeToReset);
+
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("vdqm request id", (*tapeRequest)->vdqmVolReqId()),
+       castor::dlf::Param("errorCode",sstrerror(e.code())),
+	 castor::dlf::Param("errorMessage",e.getMessage().str()),
+      };
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, CHECKER_LOST_VDQM_REQUEST, 3, params);
+      if ( e.code() == EPERM ) {
+	tapesToRetry.push_back(*tapeRequest);
+	if ((*tapeRequest)->accessMode() == 1 && (*tapeRequest)->status() == ONGOING ){
+	  castor::stager::Tape* tapeToReset= new 	castor::stager::Tape();
+	  tapeToReset->setTpmode(1);
+	  tapeToReset->setVid((*tapeRequest)->streamMigration()->tape()->vid());
+	  tapesToReset.push_back(tapeToReset);
+	}
       }
     }
     tapeRequest++;

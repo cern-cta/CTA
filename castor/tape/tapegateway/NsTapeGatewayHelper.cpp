@@ -17,8 +17,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NsTapeGatewayHelper.cpp,v $ $Revision: 1.13 $ $Release$ 
- * $Date: 2009/06/30 13:48:13 $ $Author: gtaur $
+ * @(#)$RCSfile: NsTapeGatewayHelper.cpp,v $ $Revision: 1.14 $ $Release$ 
+ * $Date: 2009/08/04 09:54:49 $ $Author: gtaur $
  *
  *
  *
@@ -362,7 +362,7 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate(castor:
   if (rc <0 ){
     castor::exception::Exception ex(serrno);
     ex.getMessage()
-      << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFileSize:"
+      << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate:"
       << "rfio_stat failed";
     throw ex;
 
@@ -372,9 +372,9 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate(castor:
   
   if (st.st_size == 0){
 
-    castor::exception::Exception ex(ERTZEROSIZE); // TODO mark it as failed
+    castor::exception::Exception ex(ERTZEROSIZE);
     ex.getMessage()
-      << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFileSize:"
+      << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate:"
       << "zero file size";
     throw ex;
 
@@ -382,8 +382,7 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate(castor:
 
   if ( (u_signed64)st.st_size !=  file.fileSize()){  //TODO new thing added verify it is ok
     castor::exception::Exception ex(ERTWRONGSIZE);
-    ex.getMessage()
-      << "wrong file size, ns filesize is "<< st.st_size <<"and on the diskcopy has size "<<file.fileSize() ;
+    ex.getMessage()<< "castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate: " << "wrong file size, ns filesize is "<< st.st_size <<"and on the diskcopy has size "<<file.fileSize() ;
     throw ex;  
 
   }
@@ -401,8 +400,7 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate(castor:
     } else {
 
       castor::exception::Exception ex(serrno);
-      ex.getMessage()
-	<< "cannot get the last fseq from VMGR for tape "<<vid.c_str();
+      ex.getMessage()<< "castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate: " << "cannot get the last fseq from VMGR for tape "<<vid.c_str();
       throw ex;  
     }
 
@@ -411,6 +409,7 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate(castor:
   if (file.fseq() <=  startSegment.fseq){
     castor::exception::Exception ex(ERTWRONGFSEQ);
     ex.getMessage()
+      << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate: " 
       << "inconsistent fseq the name server was "<<startSegment.fseq
       <<" and the file one is "<< file.fseq();
     throw ex;
@@ -446,7 +445,7 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::getBlockIdToRecall(castor::
     segArray=NULL;
     castor::exception::Exception ex(serrno);
     ex.getMessage()
-      << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToRecall:"
+      << "castor::tape::tapegateway::NsTapeGatewayHelper::getBlockIdToRecall:"
       << "Cns_getsegattrs failed";
     throw ex;
   }
@@ -481,7 +480,7 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::getBlockIdToRecall(castor::
   segArray=NULL;
   castor::exception::Exception ex(ENOENT);
   ex.getMessage()
-    << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToRecall:"
+    << "castor::tape::tapegateway::NsTapeGatewayHelper::getBlockIdToRecall:"
     << "impossible to find the segment";
   throw ex;
 }
@@ -674,6 +673,7 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileSize(castor::tape
   if ( (u_signed64)st.st_size !=  statBuf.filesize){ // cast done to follow castor convention 
     castor::exception::Exception ex(ERTWRONGSIZE);
     ex.getMessage()
+      << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFileSize:"
       << "wrong file size, ns filesize is "<< st.st_size <<"and on the diskcopy has size "<<statBuf.filesize ;
     throw ex;  
 
