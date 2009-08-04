@@ -49,11 +49,8 @@ public:
 
   /**
    * Constructor.
-   *
-   * @param stoppingGracefully Functor that returns true if the daemon is
-   * stopping gracefully.
    */
-  VdqmRequestHandler(BoolFunctor &stoppingGracefully) throw();
+  VdqmRequestHandler() throw();
 
   /**
    * Destructor
@@ -75,13 +72,56 @@ public:
    */
   virtual void stop() throw();
 
+  /**
+   * Returns true if the daemon is stopping gracefully.
+   */
+  bool stoppingGracefully() throw();
+
 
 private:
 
   /**
+   * True if the daemon is stopping gracefully.
+   */
+  bool m_stoppingGracefully;
+
+  /**
    * Functor that returns true if the daemon is stopping gracefully.
    */
-  BoolFunctor &m_stoppingGracefully;
+  class StoppingGracefullyFunctor : public BoolFunctor {
+  public:
+
+    /**
+     * Constructor.
+     *
+     * @param daemon The daemon on which this functor calls
+     *               BaseDaemon::stoppingGracefully().
+     */
+    StoppingGracefullyFunctor(VdqmRequestHandler &vdqmRequestHandler) :
+      m_vdqmRequestHandler(vdqmRequestHandler) {
+      // Do nothing
+    }
+
+    /**
+     * Returns true if the daemon is sotpping gracefully.
+     */
+    bool operator()() {
+      return m_vdqmRequestHandler.stoppingGracefully();
+    }
+
+  private:
+
+    /**
+     * The daemon on which this functor calls BaseDaemon::stoppingGracefully().
+     */
+    VdqmRequestHandler &m_vdqmRequestHandler;
+  };
+
+  /**
+   * Functor that returns true if the daemon is stopping gracefully.
+   */
+  StoppingGracefullyFunctor m_stoppingGracefullyFunctor;
+
 
 }; // class VdqmRequestHandler
 

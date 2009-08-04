@@ -99,36 +99,25 @@ int castor::tape::aggregator::BridgeProtocolEngine::acceptRtcpdConnection()
   throw(castor::exception::Exception) {
 
   SmartFd connectedSockFd;
+  const time_t timeout = 1; // 1 second
 
-  // Accept the the connection with a 5 second timeout as it should be
-  // instantaneous
-  {
-    bool   tryAgain = true;
-    time_t timeout  = 5;
+  // Try 5 times to accept the connection, with each try waiting up to 1 second
+  for(int i = 0; i< 5; i++) {
+    try {
+      connectedSockFd.reset(net::acceptConnection(m_rtcpdCallbackSockFd,
+        timeout));
+    } catch(castor::exception::TimeOut &ex) {
+      // Do nothing
+    }
 
-    while(tryAgain) {
-      try {
-        connectedSockFd.reset(net::acceptConnection(m_rtcpdCallbackSockFd,
-          timeout));
-        tryAgain = false;
-      } catch(castor::exception::TapeNetAcceptInterrupted &ix) {
+    // Throw an exception if the daemon is stopping gracefully
+    if(m_stoppingGracefully()) {
+      castor::exception::Exception ex(ECANCELED);
 
-        // If the daemon should stop gracefully
-        if(m_stoppingGracefully()) {
+      ex.getMessage() << "Stopping gracefully";
 
-          // Rethrow exception so that it will eventually be converted into the
-          // sending of an EndNotificationErrorReport message to the client
-          // (tape gateway or tpcp).
-          throw(ix);
-
-        // Else the daemon should continue
-        } else {
-
-          // Wait again for the remaining amount of time
-          timeout = ix.remainingTime();
-        }
-      }
-    } // while(tryAgain)
+      throw(ex);
+    }
   }
 
   try {
@@ -168,11 +157,12 @@ int castor::tape::aggregator::BridgeProtocolEngine::acceptRtcpdConnection()
 void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocks()
   throw(castor::exception::Exception) {
 
-  int selectRc = 0;
-  int selectErrno = 0;
-  fd_set readFdSet;
-  int maxFd = 0;
-  timeval timeout;
+  int          selectRc            = 0;
+  int          selectErrno         = 0;
+  int          maxFd               = 0;
+  unsigned int nbOneSecondTimeouts = 0;
+  timeval      timeout;
+  fd_set       readFdSet;
 
   // Append the socket descriptors of the RTCPD callback port and the initial
   // connection from RTCPD to the list of read file descriptors
@@ -187,6 +177,14 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocks()
   // Select loop
   bool continueRtcopySession = true;
   while(continueRtcopySession) {
+    // Throw an exception if the daemon is stopping gracefully
+    if(m_stoppingGracefully()) {
+      castor::exception::Exception ex(ECANCELED);
+
+      ex.getMessage() << "Stopping gracefully";
+      throw(ex);
+    }
+
     // Build the file descriptor set ready for the select call
     FD_ZERO(&readFdSet);
     for(std::list<int>::iterator itor = m_readFds.begin();
@@ -199,32 +197,39 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocks()
       }
     }
 
-    timeout.tv_sec  = RTCPDPINGTIMEOUT;
+    timeout.tv_sec  = 1; // 1 second
     timeout.tv_usec = 0;
 
-    // See if any of the read file descriptors are ready?
+    // See if any of read file descriptors are ready waiting up to 1 second
     selectRc = select(maxFd + 1, &readFdSet, NULL, NULL, &timeout);
     selectErrno = errno;
 
     switch(selectRc) {
     case 0: // Select timed out
 
-      RtcpTxRx::pingRtcpd(m_cuuid, m_volReqId, m_rtcpdInitialSockFd,
-        RTCPDNETRWTIMEOUT);
+      nbOneSecondTimeouts++;
+
+      if(nbOneSecondTimeouts % RTCPDPINGTIMEOUT == 0) {
+        RtcpTxRx::pingRtcpd(m_cuuid, m_volReqId, m_rtcpdInitialSockFd,
+          RTCPDNETRWTIMEOUT);
+      }
       break;
 
     case -1: // Select encountered an error
 
-      // If select was interrupted and the daemon is stopping gracefully
-      if(selectErrno == EINTR && m_stoppingGracefully()) {
-        castor::exception::Exception ex(ECANCELED);
+      // If the select was interrupted
+      if(selectErrno == EINTR) {
 
-        ex.getMessage() << "Select interrupted and stopping gracefully";
-        throw(ex);
-      }
+        // Write a log message
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("volReqId", m_volReqId)};
+        castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+          AGGREGATOR_SELECT_INTR, params);
 
-      // If select encountered an error other than an interruption
-      if(selectErrno != EINTR) {
+      // Else select encountered an error other than an interruption
+      } else {
+
+        // Convert the error into an exception
         char strerrorBuf[STRERRORBUFLEN];
         char *const errorStr = strerror_r(selectErrno, strerrorBuf,
           sizeof(strerrorBuf));

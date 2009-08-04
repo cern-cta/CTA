@@ -56,9 +56,9 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::aggregator::VdqmRequestHandler::VdqmRequestHandler(
-  BoolFunctor &stoppingGracefully) throw() :
-  m_stoppingGracefully(stoppingGracefully) {
+castor::tape::aggregator::VdqmRequestHandler::VdqmRequestHandler() throw() :
+  m_stoppingGracefully(false),
+  m_stoppingGracefullyFunctor(*this) {
 }
 
 
@@ -203,7 +203,7 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
       utils::setBytes(vsn, '\0');
       BridgeProtocolEngine bridgeProtocolEngine(cuuid, volReqId, gatewayHost,
         gatewayPort, rtcpdCallbackSockFd.get(), rtcpdInitialSockFd.get(), unit,
-        volume, vsn, m_stoppingGracefully);
+        volume, vsn, m_stoppingGracefullyFunctor);
       bridgeProtocolEngine.run();
     }
   } catch(castor::exception::Exception &ex) {
@@ -226,7 +226,14 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::VdqmRequestHandler::stop()
   throw() {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("MESSAGE", "CAUGHT STOP, e.g. CONTROL-C")};
-    CASTOR_DLF_WRITEPC(nullCuuid, DLF_LVL_ERROR, AGGREGATOR_NULL, params);
+  m_stoppingGracefully = true;
+}
+
+
+//-----------------------------------------------------------------------------
+// stoppingGracefully
+//-----------------------------------------------------------------------------
+bool castor::tape::aggregator::VdqmRequestHandler::stoppingGracefully()
+  throw() {
+  return m_stoppingGracefully;
 }

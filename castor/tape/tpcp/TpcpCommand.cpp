@@ -353,7 +353,7 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
       time_t       now = time(NULL);
 
       utils::writeTime(os, now, TIMEFORMAT);
-      os << ": Waiting for a drive: Volume request ID = " << m_volReqId
+      os << " Waiting for a drive: Volume request ID = " << m_volReqId
          << std::endl;
     }
 
@@ -378,8 +378,7 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
 
           utils::writeTime(os, now, TIMEFORMAT);
           os <<
-            ": Waited " << WAITCALLBACKTIMEOUT << " seconds for a "
-            "callback connection from the tape server." << std::endl <<
+            " Waited " << WAITCALLBACKTIMEOUT << " seconds.  "
             "Continuing to wait." <<  std::endl;
 
           // Wait again for the default timeout
@@ -396,7 +395,7 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
 
             utils::writeTime(os, now, TIMEFORMAT);
             os <<
-              ": Received SIGNINT"
+              " Received SIGNINT"
               ": Deleting volume request from VDQM"
               ": Volume request ID=" << m_volReqId << std::endl;
 
@@ -424,7 +423,7 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
       time_t       now = time(NULL);
 
       utils::writeTime(os, now, TIMEFORMAT);
-      os << ": Select tape server is ";
+      os << " Select tape server is ";
 
       char hostName[net::HOSTNAMEBUFLEN];
 
@@ -464,7 +463,7 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
       time_t       now = time(NULL);
 
       utils::writeTime(os, now, TIMEFORMAT);
-      os << ": Tape mounted on drive " << volumeRequest->unit() << std::endl;
+      os << " Tape mounted on drive " << volumeRequest->unit() << std::endl;
     }
 
     // Check the volume request ID of the VolumeRequest object matches that of
@@ -534,7 +533,7 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
 
     utils::writeTime(os, now, TIMEFORMAT);
     os
-      << ": Aborting: "
+      << " Aborting: "
       << ex.getMessage().str()
       << std::endl
       << std::endl;
@@ -699,7 +698,7 @@ bool castor::tape::tpcp::TpcpCommand::dispatchMessage()
 
         utils::writeTime(os, now, TIMEFORMAT);
         os <<
-          "Waited " << WAITCALLBACKTIMEOUT << " seconds for a "
+          " Waited " << WAITCALLBACKTIMEOUT << " seconds for a "
           "callback connection from the tape server." << std::endl <<
           "Continuing to wait." <<  std::endl;
 
@@ -909,7 +908,7 @@ void castor::tape::tpcp::TpcpCommand::acknowledgeEndOfSession()
 
         utils::writeTime(os, now, TIMEFORMAT);
         os <<
-          ": Waited " << WAITCALLBACKTIMEOUT << " seconds for a "
+          " Waited " << WAITCALLBACKTIMEOUT << " seconds for a "
           "callback connection from the tape server." << std::endl <<
           "Continuing to wait." <<  std::endl;
 

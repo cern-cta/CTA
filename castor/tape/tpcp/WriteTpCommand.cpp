@@ -314,7 +314,7 @@ void castor::tape::tpcp::WriteTpCommand::performTransfer()
 
   time_t now = time(NULL);
   utils::writeTime(os, now, TIMEFORMAT);
-  os << ": Finished writing to tape" << std::endl
+  os << " Finished writing to tape" << std::endl
      << std::endl
      << "Number of migrate requests       = " << nbMigrateRequests << std::endl
      << "Number of successfull migrations = " << m_nbMigratedFiles << std::endl
@@ -419,7 +419,7 @@ bool castor::tape::tpcp::WriteTpCommand::handleFileToMigrateRequest(
       time_t now = time(NULL);
       utils::writeTime(os, now, TIMEFORMAT);
       os <<
-        ": Migrating"
+        " Migrating"
         " filename=\"" << filename << "\"" << std::endl;
     }
 
@@ -480,7 +480,7 @@ bool castor::tape::tpcp::WriteTpCommand::handleFileMigratedNotification(
     time_t now = time(NULL);
     utils::writeTime(os, now, TIMEFORMAT);
     os <<
-       ": Migrated"
+       " Migrated"
        " filename=\"" << filename << "\""
        " size=" << msg->fileSize() <<
        " checskum=0x" << std::hex << msg->checksum() << std::dec << std::endl;

@@ -349,7 +349,7 @@ void castor::tape::tpcp::DumpTpCommand::performTransfer()
 
   time_t now = time(NULL);
   utils::writeTime(os, now, TIMEFORMAT);
-  os << ": Finished dumping tape" << std::endl
+  os << " Finished dumping tape" << std::endl
      << std::endl;
 }
 

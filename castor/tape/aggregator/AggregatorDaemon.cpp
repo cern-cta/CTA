@@ -41,7 +41,7 @@
 //------------------------------------------------------------------------------
 castor::tape::aggregator::AggregatorDaemon::AggregatorDaemon()
   throw(castor::exception::Exception) :
-  castor::server::BaseDaemon("aggregatord"), m_stoppingGracefully(*this) {
+  castor::server::BaseDaemon("aggregatord") {
 }
 
 
@@ -298,7 +298,7 @@ void castor::tape::aggregator::AggregatorDaemon::
 
   const int vdqmListenPort = getVdqmListenPort();
   server::IThread *iThread =
-    new castor::tape::aggregator::VdqmRequestHandler(m_stoppingGracefully);
+    new castor::tape::aggregator::VdqmRequestHandler();
   server::BaseThreadPool* threadPool =
     new castor::server::TCPListenerThreadPool("VdqmRequestHandlerPool",
       iThread, vdqmListenPort);

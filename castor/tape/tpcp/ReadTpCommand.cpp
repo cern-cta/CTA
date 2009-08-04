@@ -323,7 +323,7 @@ void castor::tape::tpcp::ReadTpCommand::performTransfer()
 
   time_t now = time(NULL);
   utils::writeTime(os, now, TIMEFORMAT);
-  os << ": Finished reading from tape" << std::endl
+  os << " Finished reading from tape" << std::endl
      << std::endl
      << "Number of recall requests      = " << nbRecallRequests  << std::endl
      << "Number of successfull recalls  = " << m_nbRecalledFiles << std::endl
@@ -423,7 +423,7 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileToRecallRequest(
       time_t now = time(NULL);
       utils::writeTime(os, now, TIMEFORMAT);
       os <<
-        ": Recalling"
+        " Recalling"
         " filename=\"" << filename << "\"" <<
         " fseq=" << tapeFseq <<  std::endl;
     }
@@ -488,7 +488,7 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileRecalledNotification(
       time_t now = time(NULL);
       utils::writeTime(os, now, TIMEFORMAT);
       os <<
-        ": Recalled"
+        " Recalled"
         " filename=\"" << fileTransfer.filename << "\""
         " fseq=" << fileTransfer.tapeFseq <<
         " size=" << msg->fileSize() <<

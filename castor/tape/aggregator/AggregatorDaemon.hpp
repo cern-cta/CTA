@@ -29,7 +29,6 @@
 #include "castor/exception/InvalidConfigEntry.hpp"
 #include "castor/server/BaseDaemon.hpp"
 #include "castor/server/BaseThreadPool.hpp"
-#include "castor/tape/aggregator/BoolFunctor.hpp"
 
 #include <iostream>
 
@@ -127,42 +126,6 @@ private:
    * VDQM.
    */
   int getVdqmListenPort() throw(castor::exception::InvalidConfigEntry);
-
-  /**
-   * Functor that returns true if the daemon is stopping gracefully.
-   */
-  class StoppingGracefullyFunctor : public BoolFunctor {
-  public:
-
-    /**
-     * Constructor.
-     *
-     * @param daemon The daemon on which this functor calls
-     *               BaseDaemon::stoppingGracefully().
-     */
-    StoppingGracefullyFunctor(BaseDaemon &daemon) : m_daemon(daemon) {
-      // Do nothing
-    }
-
-    /**
-     * Returns true if the daemon is sotpping gracefully.
-     */
-    bool operator()() {
-      return false; // FOR DEBUGGING ONLY!!!!!!
-    }
-
-  private:
-
-    /**
-     * The daemon on which this functor calls BaseDaemon::stoppingGracefully().
-     */
-    BaseDaemon &m_daemon;
-  };
-
-  /**
-   * Functor that returns true if the daemon is sotpping gracefully.
-   */
-  StoppingGracefullyFunctor m_stoppingGracefully;
 
 }; // class AggregatorDaemon
 
