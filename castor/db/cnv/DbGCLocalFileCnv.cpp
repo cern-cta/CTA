@@ -88,7 +88,7 @@ const std::string castor::db::cnv::DbGCLocalFileCnv::s_updateStatementString =
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbGCLocalFileCnv::s_storeTypeStatementString =
-"INSERT /* GCLocalFile class */ INTO Id2Type (id, type) VALUES (:1, :2)";
+"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::cnv::DbGCLocalFileCnv::s_deleteTypeStatementString =

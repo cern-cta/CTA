@@ -91,7 +91,7 @@ const std::string castor::db::cnv::DbFirstByteWrittenCnv::s_updateStatementStrin
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbFirstByteWrittenCnv::s_storeTypeStatementString =
-"INSERT /* FirstByteWritten class */ INTO Id2Type (id, type) VALUES (:1, :2)";
+"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::cnv::DbFirstByteWrittenCnv::s_deleteTypeStatementString =

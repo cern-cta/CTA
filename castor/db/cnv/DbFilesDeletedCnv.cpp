@@ -93,7 +93,7 @@ const std::string castor::db::cnv::DbFilesDeletedCnv::s_updateStatementString =
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbFilesDeletedCnv::s_storeTypeStatementString =
-"INSERT /* FilesDeleted class */ INTO Id2Type (id, type) VALUES (:1, :2)";
+"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::cnv::DbFilesDeletedCnv::s_deleteTypeStatementString =
