@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Queue.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2008/10/21 08:36:38 $ $Author: waldron $
+ * @(#)$RCSfile: Queue.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/08/04 09:19:57 $ $Author: murrayc3 $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -218,13 +218,14 @@ unsigned int castor::server::Queue::size() {
 //-----------------------------------------------------------------------------
 void castor::server::Queue::terminate() {
 
+  if (m_terminated) {
+    return;  // Already terminated
+  }
+
   // Update the termination flag to true and wake up all threads waiting to
   // read or write to the queue. The interrupted threads will see the queue
   // termination and throw an exception.
   pthread_mutex_lock(&m_lock);
-  if (m_terminated) {
-    return;  // Already terminated
-  }
   m_terminated = true;
 
   pthread_cond_broadcast(&m_writers);
