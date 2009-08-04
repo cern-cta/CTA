@@ -45,7 +45,7 @@ namespace aggregator {
   const char *const RECORDFORMAT          = "F";
   const int         RTCPDNETRWTIMEOUT     = 5;
   const int         RTCPDCALLBACKTIMEOUT  = 5;
-  const int         RTCPDPINGTIMEOUT      = 10;
+  const int         RTCPDPINGTIMEOUT      = 30;
 
 } // namespace aggregator
 } // namespace tape

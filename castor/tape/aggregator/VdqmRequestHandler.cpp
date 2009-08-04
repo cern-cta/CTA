@@ -145,31 +145,31 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_CREATED_RTCPD_CALLBACK_PORT, params);
 
-    uint32_t volReqId = 0;
-    char gatewayHost[CA_MAXHOSTNAMELEN+1];
-    utils::setBytes(gatewayHost, '\0');
-    unsigned short gatewayPort = 0;
     SmartFd rtcpdInitialSockFd;
-    char unit[CA_MAXUNMLEN+1];
-    utils::setBytes(unit, '\0');
     tapegateway::Volume volume;
+
+    // Receive the RTCOPY job request from the VDQM
+    RcpJobRqstMsgBody jobRequest;
+    utils::setBytes(jobRequest, '\0');
+    checkRcpJobSubmitterIsAuthorised(vdqmSock->socket());
+    RtcpTxRx::receiveRcpJobRqst(cuuid, vdqmSock->socket(), RTCPDNETRWTIMEOUT,
+      jobRequest);
 
     DriveAllocationProtocolEngine driveAllocationProtocolEngine;
     const bool thereIsAVolume = driveAllocationProtocolEngine.run(cuuid,
       *(vdqmSock.get()), rtcpdCallbackSockFd.get(), rtcpdCallbackHost,
-      rtcpdCallbackPort, volReqId, gatewayHost, gatewayPort,
-      rtcpdInitialSockFd, unit, volume);
+      rtcpdCallbackPort, rtcpdInitialSockFd, jobRequest, volume);
 
-    // If there is no volume to mount, then notify tape gatway of end of session
-    // and return
+    // If there is no volume to mount, then notify tape gatway of end of
+    // session and return
     if(!thereIsAVolume) {
       try {
-        GatewayTxRx::notifyGatewayEndOfSession(cuuid, volReqId, gatewayHost,
-          gatewayPort);
+        GatewayTxRx::notifyGatewayEndOfSession(cuuid, jobRequest.volReqId,
+          jobRequest.clientHost, jobRequest.clientPort);
       } catch(castor::exception::Exception &ex) {
         // Don't rethrow, just log the exception
         castor::dlf::Param params[] = {
-          castor::dlf::Param("volReqId", volReqId             ),
+          castor::dlf::Param("volReqId", jobRequest.volReqId  ),
           castor::dlf::Param("Message" , ex.getMessage().str()),
           castor::dlf::Param("Code"    , ex.code()            )};
         castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
@@ -201,9 +201,9 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
       // Note the call to run() sets the vsn to ""
       char vsn[CA_MAXVSNLEN+1];
       utils::setBytes(vsn, '\0');
-      BridgeProtocolEngine bridgeProtocolEngine(cuuid, volReqId, gatewayHost,
-        gatewayPort, rtcpdCallbackSockFd.get(), rtcpdInitialSockFd.get(), unit,
-        volume, vsn, m_stoppingGracefullyFunctor);
+      BridgeProtocolEngine bridgeProtocolEngine(cuuid, jobRequest.volReqId,
+        jobRequest.clientHost, jobRequest.clientPort, rtcpdCallbackSockFd.get(),        rtcpdInitialSockFd.get(), jobRequest.driveUnit, volume, vsn,
+        m_stoppingGracefullyFunctor);
       bridgeProtocolEngine.run();
     }
   } catch(castor::exception::Exception &ex) {
@@ -236,4 +236,35 @@ void castor::tape::aggregator::VdqmRequestHandler::stop()
 bool castor::tape::aggregator::VdqmRequestHandler::stoppingGracefully()
   throw() {
   return m_stoppingGracefully;
+}
+
+
+//-----------------------------------------------------------------------------
+// checkRcpJobSubmitterIsAuthorised
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::VdqmRequestHandler::
+  checkRcpJobSubmitterIsAuthorised(const int socketFd)
+  throw(castor::exception::Exception) {
+
+  char peerHost[CA_MAXHOSTNAMELEN+1];
+
+  // isadminhost fills in peerHost
+  const int rc = isadminhost(socketFd, peerHost);
+
+  if(rc == -1 && serrno != SENOTADMIN) {
+    TAPE_THROW_EX(castor::exception::Internal,
+         ": Failed to lookup connection"
+      << ": Peer Host: " << peerHost);
+  }
+
+  if(*peerHost == '\0' ) {
+    TAPE_THROW_CODE(EINVAL,
+      ": Peer host name is an empty string");
+  }
+
+  if(rc != 0) {
+    TAPE_THROW_CODE(SENOTADMIN,
+         ": Unauthorized host"
+      << ": Peer Host: " << peerHost);
+  }
 }

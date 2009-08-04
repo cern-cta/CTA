@@ -658,7 +658,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRcpJobRqst(const Cuuid_t &cuuid,
   }
 
   LogHelper::logMsgBody(cuuid, DLF_LVL_SYSTEM,
-    AGGREGATOR_RECEIVED_RCP_JOB_RQST, request.tapeRequestId, socketFd, request);
+    AGGREGATOR_RECEIVED_RCP_JOB_RQST, request.volReqId, socketFd, request);
 }
 
 //-----------------------------------------------------------------------------

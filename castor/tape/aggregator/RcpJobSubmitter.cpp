@@ -52,14 +52,14 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
   const unsigned int port,
   const int          netReadWriteTimeout,
   const char         *remoteCopyType,
-  const u_signed64   tapeRequestId,
+  const u_signed64   volReqId,
   const std::string  &clientUserName,
   const std::string  &clientHost,
   const int          clientPort,
   const int          clientEuid,
   const int          clientEgid,
   const std::string  &deviceGroupName,
-  const std::string  &driveName,
+  const std::string  &driveUnit,
   RcpJobReplyMsgBody &reply)
   throw(castor::exception::Exception) {
 
@@ -80,11 +80,11 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
       ": Maximum: " << (sizeof(request.deviceGroupName) - 1) <<
       ": Actual: " << deviceGroupName.length());
   }
-  if(driveName.length() > sizeof(request.driveName) - 1) {
+  if(driveUnit.length() > sizeof(request.driveUnit) - 1) {
     TAPE_THROW_CODE(EINVAL,
-      ": Length of driveName string is too large"
-      ": Maximum: " << (sizeof(request.driveName) - 1) <<
-      ": Actual: " << driveName.length());
+      ": Length of driveUnit string is too large"
+      ": Maximum: " << (sizeof(request.driveUnit) - 1) <<
+      ": Actual: " << driveUnit.length());
   }
   if(clientUserName.length() > sizeof(request.clientUserName) - 1) {
     TAPE_THROW_CODE(EINVAL,
@@ -95,13 +95,13 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
 
   // Prepare the job submission request information ready for marshalling
   // The validity of the string length were check above
-  request.tapeRequestId = tapeRequestId;
+  request.volReqId = volReqId;
   request.clientPort    = clientPort;
   request.clientEuid    = clientEuid;
   request.clientEgid    = clientEgid;
   strcpy(request.clientHost     , clientHost.c_str());
   strcpy(request.deviceGroupName, deviceGroupName.c_str());
-  strcpy(request.driveName      , driveName.c_str());
+  strcpy(request.driveUnit      , driveUnit.c_str());
   strcpy(request.clientUserName , clientUserName.c_str());
 
   // Marshall the job submission request message

@@ -66,7 +66,7 @@ namespace aggregator {
      * @param clientEuid The client user ID.
      * @param clientEgid The client group ID.
      * @param deviceGroupName The device group name.
-     * @param driveName The tape drive name.
+     * @param driveUnit The tape drive name.
      * @param reply The reply from RTCPD which may be positive or negative.
      */
     static void submit(
@@ -81,7 +81,7 @@ namespace aggregator {
       const int           clientEuid,
       const int           clientEgid,
       const std::string  &deviceGroupName,
-      const std::string  &driveName,
+      const std::string  &driveUnit,
       RcpJobReplyMsgBody &reply)
       throw(castor::exception::Exception);    
 

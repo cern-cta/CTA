@@ -299,7 +299,7 @@ size_t castor::tape::aggregator::RtcpMarshaller::marshall(char *const dst,
     4*sizeof(uint32_t)          +
     strlen(src.clientHost)      +
     strlen(src.deviceGroupName) +
-    strlen(src.driveName)       +
+    strlen(src.driveUnit)       +
     strlen(src.clientUserName)  +
     4; // 4 = the number of string termination characters
 
@@ -320,13 +320,13 @@ size_t castor::tape::aggregator::RtcpMarshaller::marshall(char *const dst,
   marshallUint32(RTCOPY_MAGIC_OLD0  , p); // Magic number
   marshallUint32(VDQM_CLIENTINFO    , p); // Request type
   marshallUint32(len                , p); // Length of message body
-  marshallUint32(src.tapeRequestId  , p);
+  marshallUint32(src.volReqId  , p);
   marshallUint32(src.clientPort     , p);
   marshallUint32(src.clientEuid     , p);
   marshallUint32(src.clientEgid     , p);
   marshallString(src.clientHost     , p);
   marshallString(src.deviceGroupName, p);
-  marshallString(src.driveName      , p);
+  marshallString(src.driveUnit      , p);
   marshallString(src.clientUserName , p);
 
   // Calculate the number of bytes actually marshalled
@@ -352,13 +352,13 @@ size_t castor::tape::aggregator::RtcpMarshaller::marshall(char *const dst,
 void castor::tape::aggregator::RtcpMarshaller::unmarshall(const char * &src,
   size_t &srcLen, RcpJobRqstMsgBody &dst) throw(castor::exception::Exception) {
 
-  unmarshallUint32(src, srcLen, dst.tapeRequestId);
+  unmarshallUint32(src, srcLen, dst.volReqId);
   unmarshallUint32(src, srcLen, dst.clientPort);
   unmarshallUint32(src, srcLen, dst.clientEuid);
   unmarshallUint32(src, srcLen, dst.clientEgid);
   unmarshallString(src, srcLen, dst.clientHost);
   unmarshallString(src, srcLen, dst.deviceGroupName);
-  unmarshallString(src, srcLen, dst.driveName);
+  unmarshallString(src, srcLen, dst.driveUnit);
   unmarshallString(src, srcLen, dst.clientUserName);
 }
 

@@ -122,6 +122,14 @@ private:
    */
   StoppingGracefullyFunctor m_stoppingGracefullyFunctor;
 
+  /**
+   * Throws an exception if the peer host associated with the specified
+   * socket is not an authorised RCP job submitter.
+   *
+   * @param socketFd The socket file descriptor.
+   */
+  void checkRcpJobSubmitterIsAuthorised(const int socketFd)
+    throw(castor::exception::Exception);
 
 }; // class VdqmRequestHandler
 

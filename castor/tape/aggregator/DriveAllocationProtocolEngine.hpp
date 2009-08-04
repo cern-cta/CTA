@@ -28,6 +28,7 @@
 #include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/io/AbstractTCPSocket.hpp"
+#include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
 #include "castor/tape/aggregator/SmartFd.hpp"
 #include "castor/tape/fsm/StateMachine.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
@@ -51,6 +52,9 @@ public:
    * Execute the drive allocation protocol which will result in the volume
    * information being received from the tape gateway.
    *
+   * This method will send an EndNotificationErrorReport message to the tape
+   * gateway if an error is detected.
+   *
    * @param cuuid               The ccuid to be used for logging.
    * @param vdqmSock            The socket of the VDQM connection.
    * @param rtcpdCallbackSockFd The file descriptor of the listener socket to
@@ -60,22 +64,22 @@ public:
    *                            to accept callback connections from RTCPD.
    * @param rtcpdCallbackPort   The port number of the listener socket to be
    *                            used to accept callback connections from RTCPD.
-   * @param volReqId            Out parameter: The volume request ID.
-   * @param gatewayHost         Out parameter: The tape gateway host name.
-   * @param gatewayPort         Out parameter: The tape gateway port number.
    * @param rtcpdInitialSockFd  Out parameter: The socket file descriptor of
    *                            the initial RTCPD connection.
-   * @param unit                Out parameter: The drive unit returned by RTCPD.
+   * @param jobRequest          The RTCOPY job requext from the VDQM.
    * @param volume              Out parameter: The volume message received from
    *                            the tape gateway.
    * @return                    True if there is a volume to mount.
    */
-  bool run(const Cuuid_t &cuuid, castor::io::AbstractTCPSocket &vdqmSock,
-    const int rtcpdCallbackSockFd, const char *rtcpdCallbackHost,
-    const unsigned short rtcpdCallbackPort, uint32_t &volReqId,
-    char (&gatewayHost)[CA_MAXHOSTNAMELEN+1], unsigned short &gatewayPort,
-    SmartFd &rtcpdInitialSockFd, char (&unit)[CA_MAXUNMLEN+1],
-    tapegateway::Volume &volume)
+  bool run(
+    const Cuuid_t                 &cuuid,
+    castor::io::AbstractTCPSocket &vdqmSock,
+    const int                     rtcpdCallbackSockFd,
+    const char                    *rtcpdCallbackHost,
+    const unsigned short          rtcpdCallbackPort,
+    SmartFd                       &rtcpdInitialSockFd,
+    const RcpJobRqstMsgBody       &jobRequest,
+    tapegateway::Volume           &volume)
     throw(castor::exception::Exception);
 
   /**
@@ -91,15 +95,6 @@ private:
    * protocol engine.
    */
   fsm::StateMachine m_fsm;
-
-  /**
-   * Throws an exception if the peer host associated with the specified
-   * socket is not an authorised RCP job submitter.
-   *
-   * @param socketFd The socket file descriptor.
-   */
-  void checkRcpJobSubmitterIsAuthorised(const int socketFd)
-    throw(castor::exception::Exception);
 
   const char *getReqFromRtcpd();
 

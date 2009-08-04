@@ -38,14 +38,14 @@ namespace aggregator {
    * An RCP job submission request message.
    */
   struct RcpJobRqstMsgBody {
-    uint32_t tapeRequestId;
+    uint32_t volReqId;
     uint32_t clientPort;
     uint32_t clientEuid;
     uint32_t clientEgid;
-    char clientHost[CA_MAXHOSTNAMELEN+1];
-    char deviceGroupName[CA_MAXDGNLEN+1];
-    char driveName[CA_MAXUNMLEN+1];
-    char clientUserName[CA_MAXUSRNAMELEN+1];
+    char     clientHost[CA_MAXHOSTNAMELEN+1];
+    char     deviceGroupName[CA_MAXDGNLEN+1];
+    char     driveUnit[CA_MAXUNMLEN+1];
+    char     clientUserName[CA_MAXUSRNAMELEN+1];
   };
 
 } // namespace aggregator

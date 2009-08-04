@@ -44,67 +44,25 @@
 
 
 //-----------------------------------------------------------------------------
-// checkRcpJobSubmitterIsAuthorised
-//-----------------------------------------------------------------------------
-void castor::tape::aggregator::DriveAllocationProtocolEngine::
-  checkRcpJobSubmitterIsAuthorised(const int socketFd)
-  throw(castor::exception::Exception) {
-
-  char peerHost[CA_MAXHOSTNAMELEN+1];
-
-  // isadminhost fills in peerHost
-  const int rc = isadminhost(socketFd, peerHost);
-
-  if(rc == -1 && serrno != SENOTADMIN) {
-    TAPE_THROW_EX(castor::exception::Internal,
-         ": Failed to lookup connection"
-      << ": Peer Host: " << peerHost);
-  }
-
-  if(*peerHost == '\0' ) {
-    TAPE_THROW_CODE(EINVAL,
-      ": Peer host name is an empty string");
-  }
-
-  if(rc != 0) {
-    TAPE_THROW_CODE(SENOTADMIN,
-         ": Unauthorized host"
-      << ": Peer Host: " << peerHost);
-  }
-}
-
-
-//-----------------------------------------------------------------------------
 // run
 //-----------------------------------------------------------------------------
 bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
-  const Cuuid_t &cuuid, castor::io::AbstractTCPSocket &vdqmSock,
-  const int rtcpdCallbackSockFd, const char *rtcpdCallbackHost,
-  const unsigned short rtcpdCallbackPort, uint32_t &volReqId,
-  char (&gatewayHost)[CA_MAXHOSTNAMELEN+1], unsigned short &gatewayPort,
-  SmartFd &rtcpdInitialSockFd, char (&unit)[CA_MAXUNMLEN+1],
-  tapegateway::Volume &volume) throw(castor::exception::Exception) {
-  
-  RcpJobRqstMsgBody jobRequest;
-  
-  utils::setBytes(jobRequest, '\0');
-  
-  checkRcpJobSubmitterIsAuthorised(vdqmSock.socket());
-  
-  RtcpTxRx::receiveRcpJobRqst(cuuid, vdqmSock.socket(), RTCPDNETRWTIMEOUT,
-    jobRequest);
-    
-  // Extract the volume request ID, gateway host and gateway port
-  volReqId = jobRequest.tapeRequestId;
-  utils::copyString(gatewayHost, jobRequest.clientHost);
-  gatewayPort = jobRequest.clientPort;
+  const Cuuid_t                 &cuuid,
+  castor::io::AbstractTCPSocket &vdqmSock,
+  const int                     rtcpdCallbackSockFd,
+  const char                    *rtcpdCallbackHost,
+  const unsigned short          rtcpdCallbackPort,
+  SmartFd                       &rtcpdInitialSockFd,
+  const RcpJobRqstMsgBody       &jobRequest,
+  tapegateway::Volume           &volume)
+  throw(castor::exception::Exception) {
   
   // Pass a modified version of the job request through to RTCPD, setting the
   // clientHost and clientPort parameters to identify the tape aggregator as
   // being a proxy for RTCPClientD
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"       , jobRequest.tapeRequestId  ),
+      castor::dlf::Param("volReqId"       , jobRequest.volReqId       ),
       castor::dlf::Param("Port"           , rtcpdCallbackPort         ),
       castor::dlf::Param("HostName"       , rtcpdCallbackHost         ),
       castor::dlf::Param("clientHost"     , jobRequest.clientHost     ),
@@ -113,7 +71,7 @@ bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
       castor::dlf::Param("clientEuid"     , jobRequest.clientEuid     ),
       castor::dlf::Param("clientEgid"     , jobRequest.clientEgid     ),
       castor::dlf::Param("deviceGroupName", jobRequest.deviceGroupName),
-      castor::dlf::Param("driveName"      , jobRequest.driveName      )};
+      castor::dlf::Param("driveUnit"      , jobRequest.driveUnit      )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_SUBMITTING_JOB_TO_RTCPD, params);
   }
@@ -124,14 +82,14 @@ bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
     RTCOPY_PORT,               // port
     RTCPDNETRWTIMEOUT,         // netReadWriteTimeout
     "RTCPD",                   // remoteCopyType
-    jobRequest.tapeRequestId,
+    jobRequest.volReqId,
     jobRequest.clientUserName,
     rtcpdCallbackHost,
     rtcpdCallbackPort,
     jobRequest.clientEuid,
     jobRequest.clientEgid,
     jobRequest.deviceGroupName,
-    jobRequest.driveName,
+    jobRequest.driveUnit,
     rtcpdReply);
 
   // Prepare a positive response for the VDQM which will be overwritten if
@@ -144,7 +102,7 @@ bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
   // even if there is no error
   if(strlen(rtcpdReply.errorMessage) > 0) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", jobRequest.tapeRequestId),
+      castor::dlf::Param("volReqId", jobRequest.volReqId),
       castor::dlf::Param("Message" , rtcpdReply.errorMessage ),
       castor::dlf::Param("Code"    , rtcpdReply.status       )};
     CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
@@ -191,7 +149,7 @@ bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
     net::getPeerHostName(rtcpdInitialSockFd.get(), hostName);
 
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", volReqId),
+      castor::dlf::Param("volReqId", jobRequest.volReqId    ),
       castor::dlf::Param("IP"      , castor::dlf::IPAddress(ip)  ),
       castor::dlf::Param("Port"    , port                        ),
       castor::dlf::Param("HostName", hostName                    ),
@@ -205,22 +163,31 @@ bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
 
   // Get the request informatiom and the drive unit from RTCPD
   RtcpTapeRqstErrMsgBody rtcpdRequestInfoReply;
-  RtcpTxRx::getRequestInfoFromRtcpd(cuuid, volReqId, rtcpdInitialSockFd.get(),
-    RTCPDNETRWTIMEOUT, rtcpdRequestInfoReply);
-  utils::copyString(unit, rtcpdRequestInfoReply.unit);
+  RtcpTxRx::getRequestInfoFromRtcpd(cuuid, jobRequest.volReqId,
+    rtcpdInitialSockFd.get(), RTCPDNETRWTIMEOUT, rtcpdRequestInfoReply);
 
-  // If the VDQM and RTCPD volume request IDs do not match
-  if(rtcpdRequestInfoReply.volReqId != volReqId) {
+  // If the VDQM and RTCPD drive units do not match
+  if(strcmp(jobRequest.driveUnit, rtcpdRequestInfoReply.unit) != 0) {
 
     TAPE_THROW_CODE(EBADMSG,
-         ": VDQM and RTCPD volume request Ids do not match"
-         ": VDQM volume request ID: " << volReqId
-      << ": RTCPD volume request ID: " << rtcpdRequestInfoReply.volReqId);
+      ": VDQM and RTCPD drive units do not match"
+      ": VDQM drive unit='" << jobRequest.driveUnit           << "'"
+      " RTCPD drive unit='" << rtcpdRequestInfoReply.volReqId << "'");
+  }
+
+  // If the VDQM and RTCPD volume request IDs do not match
+  if(jobRequest.volReqId != rtcpdRequestInfoReply.volReqId) {
+
+    TAPE_THROW_CODE(EBADMSG,
+      ": VDQM and RTCPD volume request Ids do not match"
+      ": VDQM volume request ID=" << jobRequest.volReqId <<
+      " RTCPD volume request ID=" << rtcpdRequestInfoReply.volReqId);
   }
 
   // Get the volume from the tape gateway
   const bool thereIsAVolume = GatewayTxRx::getVolumeFromGateway(cuuid,
-    volReqId, gatewayHost, gatewayPort, unit, volume);
+    jobRequest.volReqId, jobRequest.clientHost, jobRequest.clientPort,
+    jobRequest.driveUnit, volume);
 
   return thereIsAVolume;
 }
