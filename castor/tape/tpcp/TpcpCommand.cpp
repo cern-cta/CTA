@@ -423,7 +423,7 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
       time_t       now = time(NULL);
 
       utils::writeTime(os, now, TIMEFORMAT);
-      os << " Select tape server is ";
+      os << " Selected tape server is ";
 
       char hostName[net::HOSTNAMEBUFLEN];
 
@@ -698,8 +698,7 @@ bool castor::tape::tpcp::TpcpCommand::dispatchMessage()
 
         utils::writeTime(os, now, TIMEFORMAT);
         os <<
-          " Waited " << WAITCALLBACKTIMEOUT << " seconds for a "
-          "callback connection from the tape server." << std::endl <<
+          " Waited " << WAITCALLBACKTIMEOUT << " seconds.  "
           "Continuing to wait." <<  std::endl;
 
         // Wait again for the default timeout
@@ -857,14 +856,15 @@ bool castor::tape::tpcp::TpcpCommand::handleEndNotificationErrorReport(
     errorBuf[sizeof(errorBuf)-1] = '\0';
 
     std::ostream &os = std::cout;
+    const time_t now = time(NULL);
 
+    utils::writeTime(os, now, TIMEFORMAT);
     os <<
+      " Aggregator encountered the following error:" << std::endl <<
       std::endl <<
-      "The aggregator encountered the following error:" << std::endl <<
-      std::endl <<
-      "Error code    = " << msg->errorCode() << " \"" << errorBuf << "\"" <<
-      std::endl <<
-      "Error message = \"" << msg->errorMessage() << "\"" << std::endl <<
+      "Error code        = "   << msg->errorCode()            << std::endl <<
+      "Error code string = \"" << errorBuf            << "\"" << std::endl <<
+      "Error message     = \"" << msg->errorMessage() << "\"" << std::endl <<
       std::endl;
   }
 
@@ -908,8 +908,7 @@ void castor::tape::tpcp::TpcpCommand::acknowledgeEndOfSession()
 
         utils::writeTime(os, now, TIMEFORMAT);
         os <<
-          " Waited " << WAITCALLBACKTIMEOUT << " seconds for a "
-          "callback connection from the tape server." << std::endl <<
+          " Waited " << WAITCALLBACKTIMEOUT << " seconds.  "
           "Continuing to wait." <<  std::endl;
 
         // Wait again for the default timeout
