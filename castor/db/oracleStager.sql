@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.746 $ $Date: 2009/08/04 15:04:58 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.747 $ $Date: 2009/08/04 15:52:40 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -616,6 +616,8 @@ RETURN NUMBER AS
   failJobsFlag NUMBER;
   defFileSize NUMBER;
   c NUMBER;
+  availSpace NUMBER;
+  reservedSpace NUMBER;
 BEGIN
   -- Determine if the service class is D1 and the default
   -- file size. If the default file size is 0 we assume 2G
@@ -624,9 +626,11 @@ BEGIN
     INTO failJobsFlag, defFileSize
     FROM SvcClass
    WHERE id = svcClassId;
-  -- If D1 check that the pool has space
+  -- Check that the pool has space, taking into account current
+  -- availability and space reserved by Put requests in the queue
   IF (failJobsFlag = 1) THEN
-    SELECT count(*) INTO c
+    SELECT count(*), sum(free - totalSize * minAllowedFreeSpace) 
+      INTO c, availSpace
       FROM diskpool2svcclass, FileSystem, DiskServer
      WHERE diskpool2svcclass.child = svcClassId
        AND diskpool2svcclass.parent = FileSystem.diskPool
@@ -635,6 +639,17 @@ BEGIN
        AND DiskServer.status = 0 -- PRODUCTION
        AND totalSize * minAllowedFreeSpace < free - defFileSize;
     IF (c = 0) THEN
+      RETURN 1;
+    END IF;
+    SELECT sum(xsize) INTO reservedSpace
+      FROM SubRequest, StagePutRequest R, DiskCopy
+     WHERE SubRequest.request = R.id
+       AND SubRequest.diskCopy = DiskCopy.id
+       AND SubRequest.status = 6  -- READY
+       AND DiskCopy.status IN (5, 6, 11)  -- WAITFS[_SCHEDULING], STAGEOUT
+       AND DiskCopy.fileSystem = 0  -- not yet scheduled
+       AND R.svcClass = svcClassId;
+    IF availSpace < reservedSpace THEN
       RETURN 1;
     END IF;
   END IF;
@@ -1725,8 +1740,8 @@ BEGIN
         -- this means we are a PrepareToPut and another PrepareToPut/Update
         -- is already running. This is forbidden
         dcId := 0;
-        UPDATE SubRequest
-           SET status = 7, -- FAILED
+    UPDATE SubRequest
+       SET status = 7, -- FAILED
                errorCode = 16, -- EBUSY
                errorMessage = 'Another prepareToPut/Update is ongoing for this file'
          WHERE id = srId;
