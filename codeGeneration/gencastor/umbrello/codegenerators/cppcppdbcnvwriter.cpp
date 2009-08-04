@@ -482,12 +482,7 @@ void CppCppDbCnvWriter::writeConstants() {
             << "Db" << m_classInfo->className
             << "Cnv::s_storeTypeStatementString =" << endl
             << getIndent()
-            << "\"INSERT /* "
-    // Do not remove this comment unless the BigId problem (sr #106879) is solved
-    // This is a workaround that consists in dissociating the different SQLs inserting
-    // into Id2Type by adding a different comment into them
-            << m_classInfo->className
-            << " class */ INTO Id2Type (id, type) VALUES (:1, :2)\";"
+            << "\"INSERT INTO Id2Type (id, type) VALUES (:1, :2)\";"
             << endl << endl << getIndent()
             << "/// SQL statement for type deletion"
             << endl << getIndent()
