@@ -150,6 +150,7 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
       volReqIdFromGateway = msg.mountTransactionId();
       volume.setMountTransactionId(msg.mountTransactionId());
       volume.setVid(msg.vid());
+      volume.setClientType(msg.clientType());
       volume.setMode(msg.mode());
       volume.setDensity(msg.density());
       volume.setLabel(msg.label());
