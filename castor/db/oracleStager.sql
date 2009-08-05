@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.747 $ $Date: 2009/08/04 15:52:40 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.748 $ $Date: 2009/08/05 17:08:02 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -2285,9 +2285,8 @@ BEGIN
   SELECT Id2Type.id INTO reqId
     FROM SubRequest, Id2Type
    WHERE SubRequest.id = srId
-     AND Id2Type.id = SubRequest.request;
-  SELECT id INTO reqId FROM Id2Type
-   WHERE id = reqId FOR UPDATE;
+     AND Id2Type.id = SubRequest.request
+     FOR UPDATE OF Id2Type.id;
   -- Update Status
   UPDATE SubRequest
      SET status = newStatus,
