@@ -123,7 +123,6 @@ namespace castor{
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_RMPERFORMED, &(stgCnsHelper->cnsFileid));
             delete stgReplyHelper;
             stgReplyHelper = NULL;
-            stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id(), SUBREQUEST_FINISHED);
           }
           else {
             // user error, log it, only in case the file existed
