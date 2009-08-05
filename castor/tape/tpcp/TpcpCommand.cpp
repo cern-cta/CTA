@@ -484,12 +484,15 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
     volumeMsg.setVid(m_vmgrTapeInfo.vid);
     switch(m_cmdLine.action.value()) {
     case Action::READ:
+      volumeMsg.setClientType(castor::tape::tapegateway::READ_TP);
       volumeMsg.setMode(castor::tape::tapegateway::READ);
       break;
     case Action::WRITE:
+      volumeMsg.setClientType(castor::tape::tapegateway::WRITE_TP);
       volumeMsg.setMode(castor::tape::tapegateway::WRITE);
       break;
     case Action::DUMP:
+      volumeMsg.setClientType(castor::tape::tapegateway::DUMP_TP);
       volumeMsg.setMode(castor::tape::tapegateway::DUMP);
       break;
     default:
