@@ -205,9 +205,9 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
 
       char vsn[CA_MAXVSNLEN+1];
       utils::setBytes(vsn, '\0');
-      BridgeProtocolEngine bridgeProtocolEngine(cuuid, jobRequest.volReqId,
-        jobRequest.clientHost, jobRequest.clientPort, rtcpdCallbackSockFd.get(),        rtcpdInitialSockFd.get(), jobRequest.driveUnit, volume, vsn,
-        m_stoppingGracefullyFunctor);
+      BridgeProtocolEngine bridgeProtocolEngine(cuuid,
+        rtcpdCallbackSockFd.get(), rtcpdInitialSockFd.get(), jobRequest,
+        volume, vsn, m_stoppingGracefullyFunctor);
       bridgeProtocolEngine.run();
     }
   } catch(castor::exception::Exception &ex) {

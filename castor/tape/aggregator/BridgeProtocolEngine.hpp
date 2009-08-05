@@ -29,6 +29,7 @@
 #include "castor/tape/aggregator/BoolFunctor.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/MessageHeader.hpp"
+#include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpFileRqstMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpTapeRqstMsgBody.hpp"
 #include "castor/tape/aggregator/SmartFdList.hpp"
@@ -55,27 +56,26 @@ public:
    * Constructor.
    *
    * @param cuuid               The ccuid to be used for logging.
-   * @param volReqId            The volume request ID.
-   * @param gatewayHost         The tape gateway host name.
-   * @param gatewayPort         The tape gateway port number.
    * @param rtcpdCallbackSockFd The file descriptor of the listener socket to
    *                            be used to accept callback connections from
    *                            RTCPD.
    * @param rtcpdInitialSockFd  The socket file descriptor of initial RTCPD
    *                            connection.
-   * @param unit                The drive unit received from RTCPD.
+   * @param jobRequest          The RTCOPY job request from the VDQM.
    * @param volume              The volume message received from the tape
    *                            gateway.
    * @param vsn                 The volume serial number.
    * @param stoppingGracefully  Functor that returns true if the daemon is
    *                            stopping gracefully.
    */
-  BridgeProtocolEngine(const Cuuid_t &cuuid, const uint32_t volReqId,
-    const char (&gatewayHost)[CA_MAXHOSTNAMELEN+1],
-    const unsigned short gatewayPort, const int rtcpdCallbackSockFd,
-    const int rtcpdInitialSockFd, char (&unit)[CA_MAXUNMLEN+1],
-    tapegateway::Volume &volume, char (&vsn)[CA_MAXVSNLEN+1],
-    BoolFunctor &stoppingGracefully) throw();
+  BridgeProtocolEngine(
+    const Cuuid_t           &cuuid,
+    const int               rtcpdCallbackSockFd,
+    const int               rtcpdInitialSockFd,
+    const RcpJobRqstMsgBody &jobRequest,
+    tapegateway::Volume     &volume,
+    char                    (&vsn)[CA_MAXVSNLEN+1],
+    BoolFunctor             &stoppingGracefully) throw();
 
   /**
    * Run a recall/migration session.
@@ -91,21 +91,6 @@ private:
   const Cuuid_t &m_cuuid;
 
   /**
-   * The volume request ID.
-   */
-  const uint32_t m_volReqId;
-
-  /**
-   * The tape gateway host name.
-   */
-  const char (&m_gatewayHost)[CA_MAXHOSTNAMELEN+1];
-
-  /**
-   * The tape gateway port number.
-   */
-  const unsigned short m_gatewayPort;
-
-  /**
    * The file descriptor of the listener socket
    * to be used to accept callback connections from RTCPD.
    */
@@ -118,9 +103,9 @@ private:
   const int m_rtcpdInitialSockFd;
 
   /**
-   * The drive unit received from RTCPD.
+   * The RTCOPY job request from the VDQM.
    */
-  char (&m_unit)[CA_MAXUNMLEN+1];
+  const RcpJobRqstMsgBody &m_jobRequest;
 
   /**
    * The volume message received from the tape gateway.

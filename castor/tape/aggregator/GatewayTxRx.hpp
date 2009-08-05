@@ -51,16 +51,16 @@ public:
    *
    * @param cuuid       The ccuid to be used for logging.
    * @param volReqId    The volume request ID to be sent to the tape gateway.
-   * @param gatewayHost The tape gateway host name.
-   * @param gatewayPort The tape gateway port number.
+   * @param clientHost  The client host name.
+   * @param clientPort  The client port number.
    * @param unit        The tape unit.
    * @param volume      Out parameter: The volume message received from the tape
    *                    gateway.
    * @return True if there is a volume to mount.
    */
   static bool getVolumeFromGateway(const Cuuid_t &cuuid,
-    const uint32_t volReqId, const char *gatewayHost,
-    const unsigned short gatewayPort, const char (&unit)[CA_MAXUNMLEN+1],
+    const uint32_t volReqId, const char *clientHost,
+    const unsigned short clientPort, const char (&unit)[CA_MAXUNMLEN+1],
     tapegateway::Volume &volume) throw(castor::exception::Exception);
 
   /**
@@ -69,8 +69,8 @@ public:
    * @param cuuid                The ccuid to be used for logging.
    * @param volReqId             The volume request ID to be sent to the tape 
    * gateway.
-   * @param gatewayHost          The tape gateway host name.
-   * @param gatewayPort          The tape gateway port number.
+   * @param clientHost           The client host name.
+   * @param clientPort           The client port number.
    * @param fileTransactionId    Out parameter: The file transaction ID.
    * @param filePath             Out parameter: The path of the disk file.
    * @param nsHost               Out parameter: The name server host.
@@ -84,8 +84,8 @@ public:
    * @return True if there is a file to migrate.
    */
   static bool getFileToMigrateFromGateway(const Cuuid_t &cuuid,
-    const uint32_t volReqId, const char *gatewayHost,
-    const unsigned short gatewayPort, uint64_t &fileTransactionId,
+    const uint32_t volReqId, const char *clientHost,
+    const unsigned short clientPort, uint64_t &fileTransactionId,
     char (&filePath)[CA_MAXPATHLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN+1],
     uint64_t &fileId, int32_t &tapeFileSeq, uint64_t &fileSize,
     char (&lastKnownFilename)[CA_MAXPATHLEN+1], uint64_t &lastModificationTime,
@@ -98,8 +98,8 @@ public:
    * @param cuuid               The ccuid to be used for logging.
    * @param volReqId            The volume request ID to be sent to the tape 
    * gateway.
-   * @param gatewayHost         The tape gateway host name.
-   * @param gatewayPort         The tape gateway port number.
+   * @param clientHost          The client host name.
+   * @param clientPort          The client port number.
    * @param fileTransactionId   Out parameter: The file transaction ID.
    * @param filePath            Out parameter: The path of the disk file.
    * @param nsHost              Out parameter: The name server host.
@@ -111,8 +111,8 @@ public:
    * @return True if there is a file to recall.
    */
   static bool getFileToRecallFromGateway(const Cuuid_t &cuuid,
-    const uint32_t volReqId, const char *gatewayHost,
-    const unsigned short gatewayPort, uint64_t &fileTransactionId,
+    const uint32_t volReqId, const char *clientHost,
+    const unsigned short clientPort, uint64_t &fileTransactionId,
     char (&filePath)[CA_MAXPATHLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN+1],
     uint64_t &fileId, int32_t &tapeFileSeq, unsigned char (&blockId)[4],
     int32_t &positionCommandCode) throw(castor::exception::Exception);
@@ -122,9 +122,9 @@ public:
    *
    * @param cuuid               The ccuid to be used for logging.
    * @param volReqId            The volume request ID to be sent to the tape
-   * gateway.
-   * @param gatewayHost         The tape gateway host name.
-   * @param gatewayPort         The tape gateway port number.
+   *                            gateway.
+   * @param clientHost          The client host name.
+   * @param clientPort          The client port number.
    * @param fileTransactionId   The file transaction ID.
    * @param nsHost              The name server host.
    * @param fileId              The CASTOR file ID.
@@ -139,8 +139,8 @@ public:
   static void notifyGatewayFileMigrated(
     const Cuuid_t        &cuuid,
     const uint32_t       volReqId,
-    const char           *gatewayHost,
-    const unsigned short gatewayPort,
+    const char           *clientHost,
+    const unsigned short clientPort,
     const uint64_t       fileTransactionId,
     const char           (&nsHost)[CA_MAXHOSTNAMELEN+1],
     const uint64_t       fileId,
@@ -159,8 +159,8 @@ public:
    * @param cuuid               The ccuid to be used for logging.
    * @param volReqId            The volume request ID to be sent to the tape 
    * gateway.
-   * @param gatewayHost         The tape gateway host name.
-   * @param gatewayPort         The tape gateway port number.
+   * @param clientHost          The client host name.
+   * @param clientPort         The client port number.
    * @param fileTransactionId   The file transaction ID.
    * @param filePath            The path of the disk file.
    * @param nsHost              The name server host.
@@ -175,8 +175,8 @@ public:
   static void notifyGatewayFileRecalled(
     const Cuuid_t        &cuuid,
     const uint32_t       volReqId,
-    const char           *gatewayHost, 
-    const unsigned short gatewayPort,
+    const char           *clientHost, 
+    const unsigned short clientPort,
     const uint64_t       fileTransactionId,
     const char           (&nsHost)[CA_MAXHOSTNAMELEN+1],
     const uint64_t       fileId,
@@ -193,25 +193,25 @@ public:
    *
    * @param cuuid       The ccuid to be used for logging.
    * @param volReqId    The volume request ID to be sent to the tape gateway.
-   * @param gatewayHost The tape gateway host name.
-   * @param gatewayPort The tape gateway port number.
+   * @param clientHost  The client host name.
+   * @param clientPort  The client port number.
    */
   static void notifyGatewayEndOfSession(const Cuuid_t &cuuid,
-    const uint32_t volReqId, const char *gatewayHost,
-    const unsigned short gatewayPort) throw(castor::exception::Exception);
+    const uint32_t volReqId, const char *clientHost,
+    const unsigned short clientPort) throw(castor::exception::Exception);
 
   /**
    * Notifies the tape gateway of the end of the recall/migration session.
    *
    * @param cuuid       The ccuid to be used for logging.
    * @param volReqId    The volume request ID to be sent to the tape gateway.
-   * @param gatewayHost The tape gateway host name.
-   * @param gatewayPort The tape gateway port number.
+   * @param clientHost  The client host name.
+   * @param clientPort  The client port number.
    * @param ex          The exception which failed the session.
    */
   static void notifyGatewayEndOfFailedSession(const Cuuid_t &cuuid,
-    const uint32_t volReqId, const char *gatewayHost,
-    const unsigned short gatewayPort, castor::exception::Exception &e)
+    const uint32_t volReqId, const char *clientHost,
+    const unsigned short clientPort, castor::exception::Exception &e)
     throw(castor::exception::Exception);
 
   /**
@@ -219,14 +219,27 @@ public:
    *
    * @param cuuid       The ccuid to be used for logging.
    * @param volReqId    The volume request ID to be sent to the tape gateway.
-   * @param gatewayHost The tape gateway host name.
-   * @param gatewayPort The tape gateway port number.
+   * @param clientHost  The client host name.
+   * @param clientPort  The client port number.
    * @param message     The dump tape message string.
    */
   static void notifyGatewayDumpMessage(const Cuuid_t &cuuid,
-    const uint32_t volReqId, const char *gatewayHost,
-    const unsigned short gatewayPort, const char (&message)[CA_MAXLINELEN+1])
+    const uint32_t volReqId, const char *clientHost,
+    const unsigned short clientPort, const char (&message)[CA_MAXLINELEN+1])
     throw(castor::exception::Exception);
+
+  /**
+   * Pings the client and throws an exception if the ping has failed.
+   *
+   * @param cuuid      The ccuid to be used for logging.
+   * @param volReqId   The volume request ID to be sent to the tape gateway.
+   * @param clientHost The client host name.
+   * @param clientPort The client port number.
+   * @param message    The dump tape message string.
+   */
+  static void pingClient(const Cuuid_t &cuuid,
+    const uint32_t volReqId, const char *clientHost,
+    const unsigned short clientPort) throw(castor::exception::Exception);
 
 
 private:

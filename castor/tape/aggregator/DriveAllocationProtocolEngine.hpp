@@ -66,7 +66,7 @@ public:
    *                            used to accept callback connections from RTCPD.
    * @param rtcpdInitialSockFd  Out parameter: The socket file descriptor of
    *                            the initial RTCPD connection.
-   * @param jobRequest          The RTCOPY job requext from the VDQM.
+   * @param jobRequest          The RTCOPY job request from the VDQM.
    * @param volume              Out parameter: The volume message received from
    *                            the tape gateway.
    * @return                    True if there is a volume to mount.
