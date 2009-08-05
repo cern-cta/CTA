@@ -226,7 +226,8 @@ namespace castor {
     OBJ_EndNotificationErrorReport = 179,
     OBJ_TapeGatewaySubRequest = 180,
     OBJ_GatewayMessage = 181,
-    OBJ_DumpNotification = 182
+    OBJ_DumpNotification = 182,
+    OBJ_PingNotification = 183
   };
 
   /**
@@ -304,7 +305,7 @@ namespace castor {
    * declared outside of any function.
    */
 
-#define OBJECT_IDS_NB 183
+#define OBJECT_IDS_NB 184
 
   static const unsigned int ObjectsIdsNb = OBJECT_IDS_NB;
 

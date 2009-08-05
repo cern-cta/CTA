@@ -48,8 +48,10 @@ TAPEGATEWAY_MESSAGES_SRCS = \
   ../tapegateway/GatewayMessage.cpp \
   ../tapegateway/NoMoreFiles.cpp \
   ../tapegateway/NotificationAcknowledge.cpp \
+  ../tapegateway/PingNotification.cpp \
   ../tapegateway/PositionCommandCode.cpp \
   ../tapegateway/Volume.cpp \
+  ../tapegateway/ClientType.cpp \
   ../tapegateway/VolumeMode.cpp \
   ../tapegateway/VolumeRequest.cpp
 
@@ -65,6 +67,7 @@ TAPEGATEWAY_IO_SRCS = \
   ../../io/StreamFileToRecallRequestCnv.cpp \
   ../../io/StreamNoMoreFilesCnv.cpp \
   ../../io/StreamNotificationAcknowledgeCnv.cpp \
+  ../../io/StreamPingNotificationCnv.cpp \
   ../../io/StreamVolumeCnv.cpp \
   ../../io/StreamVolumeRequestCnv.cpp
 

@@ -49,12 +49,15 @@
 #include "castor/stager/TapePool.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
 
+#include "castor/tape/tapegateway/ClientType.hpp"
 #include "castor/tape/tapegateway/DlfCodes.hpp"
 #include "castor/tape/tapegateway/NsTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/ora/OraTapeGatewaySvc.hpp"
 #include "castor/tape/tapegateway/PositionCommandCode.hpp"
 #include "castor/tape/tapegateway/RmMasterTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/VolumeMode.hpp"
+
+
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
 //------------------------------------------------------------------------------
@@ -1693,6 +1696,7 @@ castor::tape::tapegateway::Volume* castor::tape::tapegateway::ora::OraTapeGatewa
     }
    
     result = new Volume();
+    result->setClientType(TAPE_GATEWAY);
     result->setVid(m_startTapeSessionStatement->getString(2));
     result->setMode((castor::tape::tapegateway::VolumeMode)m_startTapeSessionStatement->getInt(3));
     result->setDensity(m_startTapeSessionStatement->getString(5));

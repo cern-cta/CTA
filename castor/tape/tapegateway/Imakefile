@@ -51,7 +51,7 @@ TAPEGATEWAY_MESSAGES_SRCS = \
 	FileMigratedNotification.cpp FileRecalledNotification.cpp \
 	EndNotification.cpp NotificationAcknowledge.cpp EndNotificationErrorReport.cpp\
 	NoMoreFiles.cpp  GatewayMessage.cpp \
-	BaseFileInfo.cpp PositionCommandCode.cpp FileErrorReport.cpp \
+	BaseFileInfo.cpp PositionCommandCode.cpp FileErrorReport.cpp ClientType.cpp \
 	TapeGatewayRequest.cpp TapeRequestStateCode.cpp TapeGatewaySubRequest.cpp VolumeMode.cpp
 
 TAPEGATEWAY_IO_SRCS = \
