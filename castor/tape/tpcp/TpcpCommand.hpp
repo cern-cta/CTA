@@ -34,6 +34,7 @@
 #include "castor/tape/tpcp/ParsedCommandLine.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/vmgr_api.h"
+#include "h/Castor_limits.h"
 
 #include <iostream>
 #include <list>
@@ -456,6 +457,22 @@ private:
    * MsgHandlers it points to.
    */
   MsgHandlerMap m_msgHandlers;
+
+  /**
+   * Check the format of the filenames, that MUST BE of the form: 
+   * hostaname:<filepath>/filename.
+   * Local files need to have an hostname specified, if not will be added the
+   * local hostname.
+   * Hostnames like "localhost" or "127.0.0.1" are not allowed, they will be
+   * translate in to local hostname.
+   * 
+   */
+  void checkFilenameFormat() throw(castor::exception::Exception);
+
+  /**
+   * The hostaname of the machine.
+   */
+  char m_hostname[CA_MAXHOSTNAMELEN];
 
 }; // class TpcpCommand
 

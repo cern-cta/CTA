@@ -51,10 +51,11 @@
 #include <iostream>
 #include <list>
 #include <string.h>
+#include <sys/unistd.h>
 #include <time.h>
 #include <unistd.h>
 #include <poll.h>
-
+ 
 
 //------------------------------------------------------------------------------
 // vmgr_error_buffer
@@ -129,6 +130,15 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
 
   try {
     // ;
+    gethostname(m_hostname, sizeof(m_hostname));
+
+    // chek if the hostaname of the machine. If it is set to "localost"
+    if(strcmp(m_hostname, "localhost") == 0) {
+      std::cerr << "tpcp cannot be ran on a machine where hostname is set to "
+                   "\"localhost\"" << std::endl << std::endl;
+      return 1;
+    }
+
 
     const uid_t userId  = getuid();
     const gid_t groupId = getgid();
@@ -208,6 +218,9 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
         m_filenames.push_back(*itor);
       }
     }
+
+    //check the format of the filename: hostname:path/filename
+    checkFilenameFormat();
 
     // If debug, then display the list of files to be processed by the action
     // handlers
@@ -801,8 +814,8 @@ bool castor::tape::tpcp::TpcpCommand::waitForAndDispatchMessage()
     sendEndNotificationErrorReport(EBADMSG, oss.str(), sock);
 
     TAPE_THROW_CODE(EBADMSG,
-         ": Received unexpected aggregator message: "
-      << ": Message type = " << utils::objectTypeToString(obj->type()));
+         ": Received unexpected aggregator message "
+         ": Message type = " << utils::objectTypeToString(obj->type()));
   }
   const AbstractMsgHandler &handler = *itor->second;
 
@@ -1054,4 +1067,52 @@ void castor::tape::tpcp::TpcpCommand::deleteVdqmVolumeRequest()
       ": Volume request ID=" << m_volReqId <<
       ": " << errorStr);
   }
+}
+//------------------------------------------------------------------------------
+// checkFilenameFormat
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::TpcpCommand::checkFilenameFormat()
+  throw(castor::exception::Exception) {
+
+  FilenameList::iterator itor = m_filenames.begin();
+  // local string containing the hostname + ":"
+  std::string hostname(m_hostname);
+  hostname.append(":");
+
+  size_t firstPos, lastPos;
+
+  while(itor!=m_filenames.end()) {
+
+   std::string &line = *itor;
+   firstPos = line.find_first_of(":");
+   lastPos  = line.find_last_of(":");
+
+   // if there are 0 ":" --> (is a local file) prepend m_hostname + ":"
+   if (firstPos == std::string::npos){
+
+     line.insert(0, hostname);
+
+   } else {// if there is only 1 ":" -->check the "hostname" entered by the user
+     if(firstPos == lastPos){
+
+       std::string str = line.substr(0, firstPos);
+       // if file hostamane == "localhost" or "127.0.0.1" -> replace it 
+       // with m_hostname + ":"
+       if (str == "localhost" || str == "127.0.0.1"){
+
+         line.replace(0, firstPos+1, hostname);
+
+       }
+     } else {  // if there are more than 1 ":" -->  ERROR
+
+       TAPE_THROW_EX(castor::exception::Internal,
+         ": Invalid RFIO filename syntax"
+         ": Found too many ':' characters, only 1 is allowed"
+         ": filename=\"" << line <<"\"");
+
+     }
+   }// else
+
+  ++itor;
+  }//for(itor=m_cmdLine.filenames.begin()...
 }
