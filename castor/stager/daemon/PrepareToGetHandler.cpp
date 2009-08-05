@@ -6,30 +6,24 @@
 
 #include "castor/stager/daemon/RequestHelper.hpp"
 #include "castor/stager/daemon/CnsHelper.hpp"
-#include "ReplyHelper.hpp"
-
+#include "castor/stager/daemon/ReplyHelper.hpp"
 #include "castor/stager/daemon/RequestHandler.hpp"
 #include "castor/stager/daemon/JobRequestHandler.hpp"
 #include "castor/stager/daemon/PrepareToGetHandler.hpp"
 
 #include "stager_uuid.h"
 #include "stager_constants.h"
-
 #include "Cns_api.h"
 #include "expert_api.h"
-
 #include "Cpwd.h"
 #include "Cgrp.h"
 
 #include "castor/stager/SubRequestStatusCodes.hpp"
-#include "castor/stager/SubRequestGetNextStatusCodes.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
-
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Message.hpp"
 #include "castor/stager/daemon/DlfMessages.hpp"
-
 
 #include "serrno.h"
 #include <errno.h>
@@ -76,7 +70,6 @@ namespace castor{
           case DISKCOPY_STAGED:             // nothing to do, just log it
           case DISKCOPY_WAITDISK2DISKCOPY:
           stgRequestHelper->subrequest->setStatus(SUBREQUEST_FINISHED);
-          stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
           if(result == DISKCOPY_STAGED)
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_ARCHIVE_SUBREQ, &(stgCnsHelper->cnsFileid));
           else
@@ -90,6 +83,7 @@ namespace castor{
             // first check the special case of 0 bytes files
             if (0 == stgRequestHelper->subrequest->castorFile()->fileSize()) {
               stgRequestHelper->stagerService->createEmptyFile(stgRequestHelper->subrequest, false);
+              stgRequestHelper->subrequest->setStatus(SUBREQUEST_FINISHED);
               reply = true;
               break;
             }
@@ -135,15 +129,13 @@ namespace castor{
           stgRequestHelper->logToDlf(DLF_LVL_DEBUG, STAGER_PREPARETOGET, &(stgCnsHelper->cnsFileid));
           jobOriented();	  
           
-          /* depending on the value returned by getDiskCopiesForJob */
-          /* if needed, we update the subrequestStatus internally  */
           if(switchDiskCopiesForJob()) {
             if(stgRequestHelper->subrequest->answered() == 0) {
               stgReplyHelper = new ReplyHelper();
               if(stgRequestHelper->subrequest->protocol() == "xroot") {
                 diskCopy = stgRequestHelper->stagerService->
                   getBestDiskCopyToRead(stgRequestHelper->subrequest->castorFile(),
-					                    stgRequestHelper->svcClass);
+					                              stgRequestHelper->svcClass);
               }
               if (diskCopy) {
                 stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0, "", diskCopy);

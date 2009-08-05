@@ -16,20 +16,15 @@
 #include "stager_constants.h"
 #include "Cns_api.h"
 #include "expert_api.h"
-
 #include "Cpwd.h"
 #include "Cgrp.h"
 
 #include "castor/stager/SubRequestStatusCodes.hpp"
-#include "castor/stager/SubRequestGetNextStatusCodes.hpp"
-
 #include "castor/stager/DiskCopyForRecall.hpp"
-
 #include "castor/exception/Exception.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Message.hpp"
 #include "castor/stager/daemon/DlfMessages.hpp"
-
 
 #include "serrno.h"
 #include <errno.h>
@@ -89,8 +84,6 @@ namespace castor{
           else{
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_CASTORFILE_RECREATION, &(stgCnsHelper->cnsFileid));
             stgRequestHelper->subrequest->setStatus(SUBREQUEST_READY);
-            /* since newSubrequestStatus == SUBREQUEST_READY, we have to setGetNextStatus */
-            stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
             
             /* we are gonna replyToClient so we dont  updateRep on DB explicitly */
             stgReplyHelper = new ReplyHelper();
