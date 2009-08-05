@@ -761,7 +761,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
       castor::dlf::Param("fileSize"           , fileSize           ),
       castor::dlf::Param("compressedFileSize" , compressedFileSize )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_NOTIFY_GATEWAY_FILE_MIGRATED, params);
+      AGGREGATOR_NOTIFY_CLIENT_FILE_MIGRATED, params);
   }
 
   //===================================================
@@ -921,7 +921,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
       castor::dlf::Param("fileSize"           , fileSize           ),
       castor::dlf::Param("compressedFileSize" , compressedFileSize )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_NOTIFIED_GATEWAY_FILE_MIGRATED, params);
+      AGGREGATOR_NOTIFIED_CLIENT_FILE_MIGRATED, params);
   }
 }
 
@@ -968,7 +968,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
       castor::dlf::Param("filePath"           , filePath           ),
       castor::dlf::Param("fileSize"           , fileSize           )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_NOTIFY_GATEWAY_FILE_RECALLED, params);
+      AGGREGATOR_NOTIFY_CLIENT_FILE_RECALLED, params);
   }
 
   //===================================================
@@ -1119,7 +1119,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
       castor::dlf::Param("checksum"           , checksumHex        ),
       castor::dlf::Param("fileSize"           , fileSize           )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_NOTIFIED_GATEWAY_FILE_RECALLED, params);
+      AGGREGATOR_NOTIFIED_CLIENT_FILE_RECALLED, params);
   }
 }
 
@@ -1139,7 +1139,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayEndOfSession(
       castor::dlf::Param("clientHost", clientHost),
       castor::dlf::Param("clientPort", clientPort)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_NOTIFY_GATEWAY_END_OF_SESSION, params);
+      AGGREGATOR_NOTIFY_CLIENT_END_OF_SESSION, params);
   }
 
 
@@ -1266,7 +1266,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayEndOfSession(
       castor::dlf::Param("clientHost", clientHost),
       castor::dlf::Param("clientPort", clientPort)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_NOTIFIED_GATEWAY_END_OF_SESSION, params);
+      AGGREGATOR_NOTIFIED_CLIENT_END_OF_SESSION, params);
   }
 }
 
@@ -1286,7 +1286,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayDumpMessage(
       castor::dlf::Param("clientPort", clientPort),
       castor::dlf::Param("message"   , message   )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_NOTIFY_GATEWAY_DUMP_MESSAGE, params);
+      AGGREGATOR_NOTIFY_CLIENT_DUMP_MESSAGE, params);
   }
 
 
@@ -1415,7 +1415,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayDumpMessage(
       castor::dlf::Param("clientPort", clientPort),
       castor::dlf::Param("message"    , message  )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_NOTIFIED_GATEWAY_DUMP_MESSAGE, params);
+      AGGREGATOR_NOTIFIED_CLIENT_DUMP_MESSAGE, params);
   }
 }
 
@@ -1434,7 +1434,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayEndOfFailedSession(
       castor::dlf::Param("clientHost", clientHost),
       castor::dlf::Param("clientPort", clientPort)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_NOTIFY_GATEWAY_END_OF_FAILED_SESSION, params);
+      AGGREGATOR_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
   }
 
 
@@ -1565,7 +1565,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayEndOfFailedSession(
       castor::dlf::Param("errorCode"         , ex.code()            ),
       castor::dlf::Param("errorrMessage"     , ex.getMessage().str())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_NOTIFIED_GATEWAY_END_OF_FAILED_SESSION, params);
+      AGGREGATOR_NOTIFIED_CLIENT_END_OF_FAILED_SESSION, params);
   }
 }
 

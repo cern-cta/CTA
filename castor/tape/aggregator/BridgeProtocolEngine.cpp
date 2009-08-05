@@ -470,7 +470,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
         castor::dlf::Param("Message" , ex.getMessage().str()),
         castor::dlf::Param("Code"    , ex.code()            )};
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_FAILED_TO_NOTIFY_GATEWAY_END_OF_SESSION, params);
+        AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
     }
 
     return;
@@ -527,7 +527,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
         castor::dlf::Param("Message" , ex.getMessage().str()),
         castor::dlf::Param("Code"    , ex.code()            )};
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_FAILED_TO_NOTIFY_GATEWAY_END_OF_SESSION, params);
+        AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
     }
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
@@ -548,7 +548,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
         castor::dlf::Param("Message" , ex.getMessage().str()),
         castor::dlf::Param("Code"    , ex.code()            )};
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_FAILED_TO_NOTIFY_GATEWAY_END_OF_FAILED_SESSION, params);
+        AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
     }
   }
 }
@@ -601,7 +601,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runRecallSession()
         castor::dlf::Param("Message" , ex.getMessage().str()),
         castor::dlf::Param("Code"    , ex.code()            )};
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_FAILED_TO_NOTIFY_GATEWAY_END_OF_SESSION, params);
+        AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
     }
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
@@ -622,7 +622,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runRecallSession()
         castor::dlf::Param("Message" , ex.getMessage().str()),
         castor::dlf::Param("Code"    , ex.code()            )};
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_FAILED_TO_NOTIFY_GATEWAY_END_OF_FAILED_SESSION, params);
+        AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
     }
   }
 }
@@ -681,7 +681,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runDumpSession()
         castor::dlf::Param("Message" , ex.getMessage().str()),
         castor::dlf::Param("Code"    , ex.code()            )};
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_FAILED_TO_NOTIFY_GATEWAY_END_OF_SESSION, params);
+        AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
     }
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
@@ -701,7 +701,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runDumpSession()
         castor::dlf::Param("Message" , ex.getMessage().str()),
         castor::dlf::Param("Code"    , ex.code()            )};
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_FAILED_TO_NOTIFY_GATEWAY_END_OF_FAILED_SESSION, params);
+        AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
     }
   }
 }

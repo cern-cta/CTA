@@ -173,7 +173,7 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
           castor::dlf::Param("Message" , ex.getMessage().str()),
           castor::dlf::Param("Code"    , ex.code()            )};
         castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-          AGGREGATOR_FAILED_TO_NOTIFY_GATEWAY_END_OF_SESSION, params);
+          AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
       }
 
       return;
