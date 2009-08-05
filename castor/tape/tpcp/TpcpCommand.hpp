@@ -56,8 +56,25 @@ namespace tpcp   {
  * <li>Waits for the callback from the aggregator on the chosen tape server.
  * <li>Receives and replies to the volume request from the aggregator.
  * <li>Delegates the tape transfer action (DUMP, READ, WRITE or VERIFY) to a
- * sub-class.
+ *     sub-class.
  * </ul>
+ *
+ * Sub-classes must do the following:
+ * <ul>
+ * <li>Implement the usage() method.
+ * <li>Implement the parseCommandLine() mthod.
+ * <li>Implement one message handling method for each type of message that is
+ *     a part of the sub-class' protocol.  For example the DumpTpCommand
+ *     sub-class should implement a message handler method for DumpNotification
+ *     messages.
+ * <li>Register in their constructor the message handling methods they have
+ *     implemented by calling TpcpCommand::registerMsgHandler for each of their
+ *     message handling methods.
+ * </ul>
+ *
+ * Please note that TpcpCommand checks the mount transaction ID of all
+ * incomming aggregator messages.  Sub-classes therefore do not need to check
+ * the mount transaction ID in their message handler methods.
  */
 class TpcpCommand : public castor::BaseObject {
 public:
@@ -234,7 +251,17 @@ protected:
    *
    * @return True if there is more work to be done, else false.
    */
-  bool dispatchMessage() throw(castor::exception::Exception);
+  bool waitForAndDispatchMessage() throw(castor::exception::Exception);
+
+  /**
+   * PingNotification message handler.
+   *
+   * @param obj  The aggregator message to be processed.
+   * @param sock The socket on which to reply to the aggregator.
+   * @return     True if there is more work to be done else false.
+   */
+  bool handlePingNotification(castor::IObject *obj,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
    * EndNotification message handler.

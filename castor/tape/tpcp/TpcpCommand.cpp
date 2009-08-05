@@ -28,6 +28,7 @@
 #include "castor/exception/Internal.hpp" 
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/tape/net/net.hpp"
+#include "castor/tape/tapegateway/PingNotification.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/tapegateway/VolumeMode.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
@@ -675,9 +676,9 @@ void castor::tape::tpcp::TpcpCommand::requestDriveFromVdqm(const int mode,
 
 
 //------------------------------------------------------------------------------
-// dispatchMessage
+// waitForAndDispatchMessage
 //------------------------------------------------------------------------------
-bool castor::tape::tpcp::TpcpCommand::dispatchMessage()
+bool castor::tape::tpcp::TpcpCommand::waitForAndDispatchMessage()
   throw(castor::exception::Exception) {
 
   // Socket file descriptor for a callback connection from the aggregator
@@ -816,6 +817,31 @@ bool castor::tape::tpcp::TpcpCommand::dispatchMessage()
 
 
 //------------------------------------------------------------------------------
+// handlePingNotification
+//------------------------------------------------------------------------------
+bool castor::tape::tpcp::TpcpCommand::handlePingNotification(
+  castor::IObject *obj, castor::io::AbstractSocket &sock)
+  throw(castor::exception::Exception) {
+
+  tapegateway::PingNotification *msg = NULL;
+
+  castMessage(obj, msg, sock);
+  Helper::displayRcvdMsgIfDebug(*msg, m_cmdLine.debugSet);
+
+  // Create the NotificationAcknowledge message for the aggregator
+  castor::tape::tapegateway::NotificationAcknowledge acknowledge;
+  acknowledge.setMountTransactionId(m_volReqId);
+
+  // Send the NotificationAcknowledge message to the aggregator
+  sock.sendObject(acknowledge);
+
+  Helper::displaySentMsgIfDebug(acknowledge, m_cmdLine.debugSet);
+
+  return true;
+}
+
+
+//------------------------------------------------------------------------------
 // handleEndNotification
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::TpcpCommand::handleEndNotification(
@@ -850,9 +876,9 @@ bool castor::tape::tpcp::TpcpCommand::handleEndNotificationErrorReport(
   tapegateway::EndNotificationErrorReport *msg = NULL;
 
   castMessage(obj, msg, sock);
-
   Helper::displayRcvdMsgIfDebug(*msg, m_cmdLine.debugSet);
 
+  // Command-line user feedback
   {
     char errorBuf[STRERRORBUFLEN];
     sstrerror_r(msg->errorCode(), errorBuf, sizeof(errorBuf));

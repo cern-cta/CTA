@@ -302,8 +302,8 @@ void castor::tape::tpcp::WriteTpCommand::performTransfer()
 
   m_nextTapeFseq = m_cmdLine.tapeFseqPosition;
 
-  // Spin in the dispatch message loop until there is no more work
-  while(dispatchMessage()) {
+  // Spin in the wait for and dispatch message loop until there is no more work
+  while(waitForAndDispatchMessage()) {
     // Do nothing
   }
 

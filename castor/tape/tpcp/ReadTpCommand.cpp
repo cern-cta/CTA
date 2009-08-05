@@ -311,8 +311,8 @@ void castor::tape::tpcp::ReadTpCommand::performTransfer()
 
   m_tapeFseqSequence.reset(&m_cmdLine.tapeFseqRanges);
 
-  // Spin in the dispatch message loop until there is no more work
-  while(dispatchMessage()) {
+  // Spin in the wait for and dispatch message loop until there is no more work
+  while(waitForAndDispatchMessage()) {
     // Do nothing
   }
 
