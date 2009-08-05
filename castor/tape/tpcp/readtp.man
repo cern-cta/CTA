@@ -10,7 +10,7 @@
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-.TH READTP 1 "$Date: 2009/07/31 14:07:48 $" CASTOR "CASTOR"
+.TH READTP 1 "$Date: 2009/08/05 09:34:14 $" CASTOR "CASTOR"
 .SH NAME
 readtp \- read from a tape
 .SH SYNOPSIS
@@ -64,8 +64,11 @@ free drive it finds that is suitable for reading the tape.
 .TP
 \fB\-f, \-\-filelist file
 File containing the list of destination filenames in RFIO notation
-[host:]local_path.  There should be one filename per line with no whitespace or
-comments.  Please note that this option is mutually exclusive with the method
+[host:]local_path.  There should be one filename per line. Whitespace is
+trimmed from the left and right of each filename.  Blank lines are ignored.
+Lines starting with a '#' character are considered comments and are therefore
+ignored.  Whitespace is allowed between the beginning of the line and a '#'
+character.  Please note that this option is mutually exclusive with the method
 of providing filenames on the command-line.
 
 .SH EXAMPLE
