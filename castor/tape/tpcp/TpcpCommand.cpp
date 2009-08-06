@@ -131,16 +131,23 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
   const int argc, char **argv) throw() {
 
   try {
-    // ;
-    gethostname(m_hostname, sizeof(m_hostname));
 
+    // get the local hostnale
+    gethostname(m_hostname, sizeof(m_hostname));    
     // chek if the hostaname of the machine. If it is set to "localost"
     if(strcmp(m_hostname, "localhost") == 0) {
       std::cerr << "tpcp cannot be ran on a machine where hostname is set to "
                    "\"localhost\"" << std::endl << std::endl;
       return 1;
     }
-
+    
+    // get the Current Working directory
+    getcwd(m_cwd, PATH_MAX);
+    if(m_cwd == NULL){
+      std::cerr << "tpcp cannot be ran on a machine where the current working "
+                   "directory is not been set" << std::endl << std::endl;
+      return 1;
+    }
 
     const uid_t userId  = getuid();
     const gid_t groupId = getgid();
@@ -1083,15 +1090,14 @@ void castor::tape::tpcp::TpcpCommand::checkFilenameFormat()
   hostname.append(":");
 
   size_t firstPos, lastPos;
-
   while(itor!=m_filenames.end()) {
 
    std::string &line = *itor;
 
-   const char *characters = "/";
-   std::string::size_type end   = line.find_last_not_of(characters);
+   // check if the filename ends with '.' or '/'
+   const char *characters = "/.";
+   std::string::size_type end = line.find_last_not_of(characters);
 
-   // If filename ends with 1 or more '/' trow an exception
    if(end == std::string::npos || end != line.length()-1) {
 
     castor::exception::Exception ex(ECANCELED);
@@ -1103,35 +1109,26 @@ void castor::tape::tpcp::TpcpCommand::checkFilenameFormat()
       throw ex;
    } 
    
-   end   = line.find_last_of(characters);
+   firstPos = line.find(":/");
+   lastPos  = line.find(":/", firstPos+1);
 
-   // If filename do not contain any '/'
-   if(end == std::string::npos) {
-
-    castor::exception::Exception ex(ECANCELED);
-    ex.getMessage() <<
-           ": Invalid RFIO filename syntax"
-           ": Filename must identiry a regular file"
-           ": filename=\"" << line <<"\"";
-
-      throw ex;
-   }
- 
-   firstPos = line.find_first_of(":");
-   lastPos  = line.find_last_of(":");
-
-   // if there are 0 ":" --> (is a local file) prepend m_hostname + ":"
-   if (firstPos == std::string::npos){
-
+   // if there are 0 ":/" --> (is a local file) 
+   if(firstPos == std::string::npos){
+     if(line.find_first_of("/") != 0){
+       // Prefix it with the CWD
+       line.insert(0, "/");
+       line.insert(0, m_cwd);
+     }
+     // Prefix it with the Hostname
      line.insert(0, hostname);
 
-   } else {// if there is only 1 ":" -->check the "hostname" entered by the user
-     if(firstPos == lastPos){
+   } else {// if there is only 1 ":/" -->check the "hostname" entered by the user
+     if(lastPos == std::string::npos){
 
        std::string str = line.substr(0, firstPos);
-       // if file hostamane == "localhost" or "127.0.0.1" -> replace it 
-       // with m_hostname + ":"
-       if (str == "localhost" || str == "127.0.0.1"){
+       // if file hostamane == "localhost" or "127.0.0.1" or is empty 
+       // -> replace it with hostname
+       if (str == "localhost" || str == "127.0.0.1" || str.empty()){
 
          line.replace(0, firstPos+1, hostname);
        }
@@ -1140,7 +1137,7 @@ void castor::tape::tpcp::TpcpCommand::checkFilenameFormat()
       castor::exception::Exception ex(ECANCELED);
       ex.getMessage() << 
          ": Invalid RFIO filename syntax"
-         ": Found too many ':' characters, only 1 is allowed"
+         ": Found too many ':/' characters, only 1 is allowed"
          ": filename=\"" << line <<"\"";
 
       throw ex;

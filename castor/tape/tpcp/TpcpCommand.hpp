@@ -478,7 +478,7 @@ private:
   /**
    * The current working directory where tpcp command is run.
    */
-  //char m_cwd[PATH_MAX];
+  char m_cwd[PATH_MAX];
 
 }; // class TpcpCommand
 
