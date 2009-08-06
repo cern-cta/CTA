@@ -474,6 +474,12 @@ private:
    */
   char m_hostname[CA_MAXHOSTNAMELEN];
 
+
+  /**
+   * The current working directory where tpcp command is run.
+   */
+  //char m_cwd[PATH_MAX];
+
 }; // class TpcpCommand
 
 } // namespace tpcp

@@ -391,9 +391,11 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileToRecallRequest(
 
   if(anotherFile) {
 
-    const std::string filename = *(m_filenameItor++);
+    std::string filename = *(m_filenameItor++);
+
+    std::string filepath(filename.substr(0, filename.find_last_of("/")+1)); 
     struct stat64     statBuf;
-    const int         rc = rfio_stat64((char*)filename.c_str(), &statBuf);
+    const int         rc = rfio_stat64((char*)filepath.c_str(), &statBuf);
     const int         save_serrno = rfio_serrno();
     // rfio_stat64 in case of fail can set:
     // serrno     if error appened in support routines
@@ -410,7 +412,7 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileToRecallRequest(
       std::stringstream oss;
 
       oss <<
-        "Failed to rfio_stat64 file \"" << filename << "\""
+        "Failed to rfio_stat64 file \"" << filepath << "\""
         ": " << err_msg;
 
       sendEndNotificationErrorReport(save_serrno, oss.str(), sock);

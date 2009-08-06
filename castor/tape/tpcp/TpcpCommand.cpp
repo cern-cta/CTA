@@ -1102,6 +1102,20 @@ void castor::tape::tpcp::TpcpCommand::checkFilenameFormat()
 
       throw ex;
    } 
+   
+   end   = line.find_last_of(characters);
+
+   // If filename do not contain any '/'
+   if(end == std::string::npos) {
+
+    castor::exception::Exception ex(ECANCELED);
+    ex.getMessage() <<
+           ": Invalid RFIO filename syntax"
+           ": Filename must identiry a regular file"
+           ": filename=\"" << line <<"\"";
+
+      throw ex;
+   }
  
    firstPos = line.find_first_of(":");
    lastPos  = line.find_last_of(":");
