@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/03/26 13:14:16 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/08/06 06:07:21 $ $Author: waldron $
  *
  * This script create a new DLF schema
  *
@@ -129,28 +129,31 @@ INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('11', 'Debug');
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('12', 'UserError');
 
 /* Fill the dlf_facilities table */
-INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (0, 'rtcpcld');
-INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (1, 'migrator');
-INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (2, 'recaller');
-INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (4, 'RequestHandler');
-INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (8, 'GC');
-INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (9, 'Scheduler');
-INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (10, 'TapeErrorHandler');
-INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (11, 'Vdqm');
-INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (12, 'rfio');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (0,  'rtcpclientd');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (1,  'migrator');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (2,  'recaller');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (4,  'rhd');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (8,  'gcd');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (9,  'schedulerd');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (10, 'tperrhandler');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (11, 'vdqmd');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (13, 'SRMServer');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (14, 'SRMDaemon');
-INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (15, 'Repack');
-INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (17, 'tpdaemon');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (15, 'repackd');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (17, 'taped');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (18, 'rtcpd');
-INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (19, 'RmMaster');
-INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (20, 'RmNode');
-INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (21, 'JobManager');
-INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (22, 'Stager');
-INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (23, 'DiskCopy');
-INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (24, 'Mighunter');
-INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (25, 'Rechandler');
-INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (26, 'Job');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (19, 'rmmasterd');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (20, 'rmnoded');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (21, 'jobmanagerd');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (22, 'stagerd');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (23, 'd2dtransfer');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (24, 'mighunterd');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (25, 'rechandlerd');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (26, 'stagerjob');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (27, 'aggregatord');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (28, 'rmcd');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (29, 'tapegatewayd');
+
 
 /* Fill the dlf_sequences table */
 INSERT INTO dlf_sequences (seq_name, seq_no) VALUES ('id',       1);
