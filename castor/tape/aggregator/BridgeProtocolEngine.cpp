@@ -663,6 +663,8 @@ void castor::tape::aggregator::BridgeProtocolEngine::runDumpSession()
   RtcpTxRx::giveVolumeToRtcpd(m_cuuid, m_jobRequest.volReqId,
     m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, rtcpVolume);
 
+  // Get dump parameters from client
+
   // Tell RTCPD to dump tape
   RtcpDumpTapeRqstMsgBody request;
   // request.maxBytes      = m_volume.dumpTapeMaxBytes();

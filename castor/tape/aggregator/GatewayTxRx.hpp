@@ -26,6 +26,7 @@
 #define CASTOR_TAPE_AGGREGATOR_GATEWAYTXRX_HPP 1
 
 #include "castor/exception/Exception.hpp"
+#include "castor/tape/tapegateway/DumpParameters.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "h/Castor_limits.h"
 #include "h/Cuuid.h"
@@ -213,6 +214,20 @@ public:
     const uint32_t volReqId, const char *clientHost,
     const unsigned short clientPort, castor::exception::Exception &e)
     throw(castor::exception::Exception);
+
+  /**
+   * Gets the parameters to be used when dumping a tape.
+   *
+   * @param cuuid      The ccuid to be used for logging.
+   * @param volReqId   The volume request ID to be sent to the tape gateway.
+   * @param clientHost The client host name.
+   * @param clientPort The client port number.
+   * @return           A pointer to the DumpParamaters message which MUST be
+   *                   deallocated by the callee.
+   */
+  static tapegateway::DumpParameters *getDumpParametersFromGateway(
+    const Cuuid_t &cuuid, const uint32_t volReqId, const char *clientHost,
+    const unsigned short clientPort) throw(castor::exception::Exception);
 
   /**
    * Notifies the tape gateway of a dump tape message string.

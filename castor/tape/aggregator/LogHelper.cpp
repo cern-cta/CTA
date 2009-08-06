@@ -361,24 +361,15 @@ void castor::tape::aggregator::LogHelper::logMsg(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
   const int socketFd, const tapegateway::Volume &msg) throw() {
 
- castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", msg.mountTransactionId()),
-      castor::dlf::Param("vid"               , msg.vid()               ),
-      castor::dlf::Param("density"           , msg.density()           ),
-      castor::dlf::Param("label"             , msg.label()             ),
-      // castor::dlf::Param("dumpTapeMaxBytes"  , msg.dumpTapeMaxBytes()  ),
-      //castor::dlf::Param("dumpTapeBlockSize" , msg.dumpTapeBlockSize() ),
-      //castor::dlf::Param("dumpTapeConverter" , msg.dumpTapeConverter() ),
-      // castor::dlf::Param("dumpTapeErrAction" , msg.dumpTapeErrAction() ),
-      //castor::dlf::Param("dumpTapeStartFile" , msg.dumpTapeStartFile() ),
-      //castor::dlf::Param("dumpTapeMaxFile"   , msg.dumpTapeMaxFile()   ),
-      //castor::dlf::Param("dumpTapeFromBlock" , msg.dumpTapeFromBlock() ),
-      //castor::dlf::Param("dumpTapeToBlock"   , msg.dumpTapeToBlock()   ),
-      castor::dlf::Param("id"                , msg.id()                ),
-      castor::dlf::Param("clientType"        ,
-        utils::volumeClientTypeToString(msg.clientType())),
-      castor::dlf::Param("mode"              ,
-        utils::volumeModeToString(msg.mode()))};
-    castor::dlf::dlf_writep(cuuid, severity, message_no, params);
-
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("mountTransactionId", msg.mountTransactionId()),
+    castor::dlf::Param("vid"               , msg.vid()               ),
+    castor::dlf::Param("density"           , msg.density()           ),
+    castor::dlf::Param("label"             , msg.label()             ),
+    castor::dlf::Param("id"                , msg.id()                ),
+    castor::dlf::Param("clientType"        ,
+      utils::volumeClientTypeToString(msg.clientType())),
+    castor::dlf::Param("mode"              ,
+      utils::volumeModeToString(msg.mode()))};
+  castor::dlf::dlf_writep(cuuid, severity, message_no, params);
 }
