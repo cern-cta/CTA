@@ -30,7 +30,7 @@
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/BridgeProtocolEngine.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
-#include "castor/tape/aggregator/GatewayTxRx.hpp"
+#include "castor/tape/aggregator/ClientTxRx.hpp"
 #include "castor/tape/aggregator/GiveOutpMsgBody.hpp"
 #include "castor/tape/aggregator/MessageHeader.hpp"
 #include "castor/tape/aggregator/RtcpDumpTapeRqstMsgBody.hpp"
@@ -195,7 +195,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocks()
        m_volume.clientType() == tapegateway::DUMP_TP) {
 
       try {
-        GatewayTxRx::pingClient(m_cuuid, m_jobRequest.volReqId,
+        ClientTxRx::pingClient(m_cuuid, m_jobRequest.volReqId,
           m_jobRequest.clientHost, m_jobRequest.clientPort);
       } catch(castor::exception::Exception &ex) {
         castor::exception::Exception ex2(ex.code());
@@ -464,7 +464,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
 
   // Get first file to migrate from tape gateway
   const bool thereIsAFileToMigrate =
-    GatewayTxRx::getFileToMigrateFromGateway(m_cuuid, m_jobRequest.volReqId,
+    ClientTxRx::getFileToMigrate(m_cuuid, m_jobRequest.volReqId,
     m_jobRequest.clientHost, m_jobRequest.clientPort, fileTransactionId,
     filePath, fileNsHost, fileId, fileTapeFileSeq, fileSize,
     fileLastKnownFilename, fileLastModificationTime, positionCommandCode);
@@ -473,7 +473,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
   // and return
   if(!thereIsAFileToMigrate) {
     try {
-      GatewayTxRx::notifyGatewayEndOfSession(m_cuuid, m_jobRequest.volReqId,
+      ClientTxRx::notifyEndOfSession(m_cuuid, m_jobRequest.volReqId,
         m_jobRequest.clientHost, m_jobRequest.clientPort);
     } catch(castor::exception::Exception &ex) {
       // Don't rethrow, just log the exception
@@ -530,7 +530,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
     processRtcpdSocks();
 
     try {
-      GatewayTxRx::notifyGatewayEndOfSession(m_cuuid, m_jobRequest.volReqId,
+      ClientTxRx::notifyEndOfSession(m_cuuid, m_jobRequest.volReqId,
         m_jobRequest.clientHost, m_jobRequest.clientPort);
     } catch(castor::exception::Exception &ex) {
       // Don't rethrow, just log the exception
@@ -550,7 +550,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
       AGGREGATOR_FAILED_TO_PROCESS_RTCPD_SOCKETS, params);
 
     try {
-      GatewayTxRx::notifyGatewayEndOfFailedSession(m_cuuid,
+      ClientTxRx::notifyEndOfFailedSession(m_cuuid,
          m_jobRequest.volReqId, m_jobRequest.clientHost,
          m_jobRequest.clientPort, ex);
     } catch(castor::exception::Exception &ex) {
@@ -604,7 +604,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runRecallSession()
     processRtcpdSocks();
 
     try {
-      GatewayTxRx::notifyGatewayEndOfSession(m_cuuid, m_jobRequest.volReqId,
+      ClientTxRx::notifyEndOfSession(m_cuuid, m_jobRequest.volReqId,
         m_jobRequest.clientHost, m_jobRequest.clientPort);
     } catch(castor::exception::Exception &ex) {
       // Don't rethrow, just log the exception
@@ -624,7 +624,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runRecallSession()
       AGGREGATOR_FAILED_TO_PROCESS_RTCPD_SOCKETS, params);
 
     try {
-      GatewayTxRx::notifyGatewayEndOfFailedSession(m_cuuid,
+      ClientTxRx::notifyEndOfFailedSession(m_cuuid,
         m_jobRequest.volReqId, m_jobRequest.clientHost,
         m_jobRequest.clientPort, ex);
     } catch(castor::exception::Exception &ex) {
@@ -686,7 +686,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runDumpSession()
     processRtcpdSocks();
 
     try {
-      GatewayTxRx::notifyGatewayEndOfSession(m_cuuid, m_jobRequest.volReqId,
+      ClientTxRx::notifyEndOfSession(m_cuuid, m_jobRequest.volReqId,
         m_jobRequest.clientHost, m_jobRequest.clientPort);
     } catch(castor::exception::Exception &ex) {
       // Don't rethrow, just log the exception
@@ -705,7 +705,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runDumpSession()
       AGGREGATOR_FAILED_TO_PROCESS_RTCPD_SOCKETS, params);
 
     try {
-      GatewayTxRx::notifyGatewayEndOfFailedSession(m_cuuid,
+      ClientTxRx::notifyEndOfFailedSession(m_cuuid,
         m_jobRequest.volReqId, m_jobRequest.clientHost,
         m_jobRequest.clientPort, ex);
     } catch(castor::exception::Exception &ex) {
@@ -855,7 +855,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
       int32_t  positionMethod       = 0;
 
       // If there is a file to migrate
-      if(GatewayTxRx::getFileToMigrateFromGateway(m_cuuid,
+      if(ClientTxRx::getFileToMigrate(m_cuuid,
         m_jobRequest.volReqId, m_jobRequest.clientHost,
         m_jobRequest.clientPort, fileTransactionId, filePath, nsHost,
         fileId, tapeFseq, fileSize, lastKnownFilename, lastModificationTime,
@@ -904,7 +904,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
       int32_t  positionCommandCode = 0;
 
       // If there is a file to recall
-      if(GatewayTxRx::getFileToRecallFromGateway(m_cuuid,
+      if(ClientTxRx::getFileToRecall(m_cuuid,
         m_jobRequest.volReqId, m_jobRequest.clientHost,
         m_jobRequest.clientPort, fileTransactionId, filePath, nsHost,
         fileId, tapeFseq, blockId, positionCommandCode)) {
@@ -1020,7 +1020,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
         const uint64_t fileSize           = body.bytesIn; // "in" to the tape
         const uint64_t compressedFileSize = fileSize; // Ignore compression
 
-        GatewayTxRx::notifyGatewayFileMigrated(m_cuuid, m_jobRequest.volReqId,
+        ClientTxRx::notifyFileMigrated(m_cuuid, m_jobRequest.volReqId,
           m_jobRequest.clientHost, m_jobRequest.clientPort, fileTransactonId,
           body.segAttr.nameServerHostName, body.segAttr.castorFileId,
           body.tapeFseq, body.blockId, body.positionMethod,
@@ -1031,7 +1031,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
       } else {
         const uint64_t fileSize = body.bytesOut; // "out" from the tape
 
-        GatewayTxRx::notifyGatewayFileRecalled(m_cuuid, m_jobRequest.volReqId,
+        ClientTxRx::notifyFileRecalled(m_cuuid, m_jobRequest.volReqId,
           m_jobRequest.clientHost, m_jobRequest.clientPort, fileTransactonId,
           body.segAttr.nameServerHostName, body.segAttr.castorFileId,
           body.tapeFseq, body.filePath, body.positionMethod,
@@ -1142,6 +1142,6 @@ void castor::tape::aggregator::BridgeProtocolEngine::giveOutpCallback(
   RtcpTxRx::receiveMsgBody(m_cuuid, m_jobRequest.volReqId, socketFd,
     RTCPDNETRWTIMEOUT, header, body);
 
-  GatewayTxRx::notifyGatewayDumpMessage(m_cuuid, m_jobRequest.volReqId,
+  ClientTxRx::notifyDumpMessage(m_cuuid, m_jobRequest.volReqId,
     m_jobRequest.clientHost, m_jobRequest.clientPort, body.message);
 }

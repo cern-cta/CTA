@@ -29,7 +29,7 @@
 #include "castor/tape/aggregator/BridgeProtocolEngine.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/DriveAllocationProtocolEngine.hpp"
-#include "castor/tape/aggregator/GatewayTxRx.hpp"
+#include "castor/tape/aggregator/ClientTxRx.hpp"
 #include "castor/tape/aggregator/Packer.hpp"
 #include "castor/tape/aggregator/RcpJobSubmitter.hpp"
 #include "castor/tape/aggregator/Unpacker.hpp"
@@ -164,7 +164,7 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
     // session and return
     if(!thereIsAVolume) {
       try {
-        GatewayTxRx::notifyGatewayEndOfSession(cuuid, jobRequest.volReqId,
+        ClientTxRx::notifyEndOfSession(cuuid, jobRequest.volReqId,
           jobRequest.clientHost, jobRequest.clientPort);
       } catch(castor::exception::Exception &ex) {
         // Don't rethrow, just log the exception

@@ -78,8 +78,8 @@ AGGREGATORBIN_SRCS = \
   AggregatorDaemon.cpp \
   AggregatorMain.cpp \
   BridgeProtocolEngine.cpp \
+  ClientTxRx.cpp \
   DriveAllocationProtocolEngine.cpp \
-  GatewayTxRx.cpp \
   LogHelper.cpp \
   Packer.cpp \
   RcpJobSubmitter.cpp \

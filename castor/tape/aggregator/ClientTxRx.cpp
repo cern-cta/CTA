@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/aggregator/GatewayTxRx.cpp
+ *                castor/tape/aggregator/ClientTxRx.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -26,7 +26,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/io/ClientSocket.hpp"
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
-#include "castor/tape/aggregator/GatewayTxRx.hpp"
+#include "castor/tape/aggregator/ClientTxRx.hpp"
 #include "castor/tape/aggregator/LogHelper.hpp"
 #include "castor/tape/aggregator/SynchronizedCounter.hpp"
 #include "castor/tape/tapegateway/DumpNotification.hpp"
@@ -56,9 +56,9 @@ static castor::tape::aggregator::SynchronizedCounter emulatedRecallCounter(0);
 
 
 //------------------------------------------------------------------------------
-// getVolumeFromGateway
+// getVolume
 //------------------------------------------------------------------------------
-bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
+bool castor::tape::aggregator::ClientTxRx::getVolume(
   const Cuuid_t &cuuid, const uint32_t volReqId, const char *clientHost,
   const unsigned short clientPort, const char (&unit)[CA_MAXUNMLEN+1],
   tapegateway::Volume &volume) throw(castor::exception::Exception) {
@@ -94,13 +94,13 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
   #endif
   //===================================================
 
-  // Connect to the tape gateway
+  // Connect to the client
   castor::io::ClientSocket sock(clientPort, clientHost);
   try {
     sock.connect();
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to connect to gateway to send VolumeRequest"
+      ": Failed to connect to client to send VolumeRequest"
       ": " << ex.getMessage().str());
   }
 
@@ -109,7 +109,7 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
     sock.sendObject(request);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to send VolumeRequest to gateway"
+      ": Failed to send VolumeRequest to client"
       ": " << ex.getMessage().str());
   }
 
@@ -125,11 +125,11 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
     }
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to read VolumeRequest reply from gateway"
+      ": Failed to read VolumeRequest reply from client"
       ": " << ex.getMessage().str());
   }
 
-  // Close the connection to the tape gateway
+  // Close the connection to the client
   sock.close();
 
   // Temporary variable used to check for a transaction ID mistatch
@@ -226,9 +226,9 @@ bool castor::tape::aggregator::GatewayTxRx::getVolumeFromGateway(
 
 
 //-----------------------------------------------------------------------------
-// getFileToMigrateFromGateway
+// getFileToMigrate
 //-----------------------------------------------------------------------------
-bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
+bool castor::tape::aggregator::ClientTxRx::getFileToMigrate(
   const Cuuid_t &cuuid, const uint32_t volReqId, const char *clientHost,
   const unsigned short clientPort, uint64_t &fileTransactionId,
   char (&filePath)[CA_MAXPATHLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN+1],
@@ -336,13 +336,13 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
   tapegateway::FileToMigrateRequest request;
   request.setMountTransactionId(volReqId);
 
-  // Connect to the tape gateway
+  // Connect to the client
   castor::io::ClientSocket sock(clientPort, clientHost);
   try {
     sock.connect();
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to connect to gateway to send FileToMigrateRequest"
+      ": Failed to connect to client to send FileToMigrateRequest"
       ": " << ex.getMessage().str());
   }
 
@@ -351,7 +351,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
     sock.sendObject(request);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to send FileToMigrateRequest to gateway"
+      ": Failed to send FileToMigrateRequest to client"
       ": " << ex.getMessage().str());
   }
 
@@ -367,11 +367,11 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
     }
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to read FileToMigrateRequest reply from gateway"
+      ": Failed to read FileToMigrateRequest reply from client"
       ": " << ex.getMessage().str());
   }
 
-  // Close the connection to the tape gateway
+  // Close the connection to the client
   sock.close();
 
   // Temporary variable used to check for a transaction ID mistatch
@@ -503,9 +503,9 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToMigrateFromGateway(
 
 
 //-----------------------------------------------------------------------------
-// getFileToRecallFromGateway
+// getFileToRecall
 //-----------------------------------------------------------------------------
-bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
+bool castor::tape::aggregator::ClientTxRx::getFileToRecall(
   const Cuuid_t &cuuid, const uint32_t volReqId, const char *clientHost,
   const unsigned short clientPort, uint64_t &fileTransactionId,
   char (&filePath)[CA_MAXPATHLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN+1],
@@ -552,13 +552,13 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
   tapegateway::FileToRecallRequest request;
   request.setMountTransactionId(volReqId);
 
-  // Connect to the tape gateway
+  // Connect to the client
   castor::io::ClientSocket sock(clientPort, clientHost);
   try {
     sock.connect();
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to connect to gateway to send FileToRecallRequest"
+      ": Failed to connect to client to send FileToRecallRequest"
       ": " << ex.getMessage().str());
   }
 
@@ -567,7 +567,7 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
     sock.sendObject(request);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to send FileToRecallRequest to gateway"
+      ": Failed to send FileToRecallRequest to client"
       ": " << ex.getMessage().str());
   }
 
@@ -583,11 +583,11 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
     }
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to read FileToRecallRequest reply from gateway"
+      ": Failed to read FileToRecallRequest reply from client"
       ": " << ex.getMessage().str());
   }
 
-  // Close the connection to the tape gateway
+  // Close the connection to the client
   sock.close();
 
   // Temporary variable used to check for a transaction ID mistatch
@@ -710,9 +710,9 @@ bool castor::tape::aggregator::GatewayTxRx::getFileToRecallFromGateway(
 
 
 //-----------------------------------------------------------------------------
-// notifyGatewayFileMigrated
+// notifyFileMigrated
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
+void castor::tape::aggregator::ClientTxRx::notifyFileMigrated(
   const Cuuid_t        &cuuid,
   const uint32_t       volReqId,
   const char           *clientHost,
@@ -758,7 +758,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
   }
 
   //===================================================
-  // Hardcoded Gateway reply
+  // Hardcoded client reply
   #ifdef EMULATE_GATEWAY
 
     return;
@@ -785,13 +785,13 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
   request.setFileSize(fileSize);
   request.setCompressedFileSize( compressedFileSize);
 
-  // Connect to the tape gateway
+  // Connect to the client
   castor::io::ClientSocket sock(clientPort, clientHost);
   try {
     sock.connect();
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to connect to gateway to send FileMigratedNotification"
+      ": Failed to connect to client to send FileMigratedNotification"
       ": " << ex.getMessage().str());
   }
 
@@ -800,7 +800,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
     sock.sendObject(request);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to send FileMigratedNotification to gateway"
+      ": Failed to send FileMigratedNotification to client"
       ": " << ex.getMessage().str());
   }
 
@@ -816,11 +816,11 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
     }
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to read FileMigratedNotification reply from gateway"
+      ": Failed to read FileMigratedNotification reply from client"
       ": " << ex.getMessage().str());
   }
 
-  // Close the connection to the tape gateway
+  // Close the connection to the client
   sock.close();
 
   // Temporary variable used to check for a transaction ID mistatch
@@ -922,9 +922,9 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileMigrated(
 
 
 //-----------------------------------------------------------------------------
-// notifyGatewayFileRecalled
+// notifyFileRecalled
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
+void castor::tape::aggregator::ClientTxRx::notifyFileRecalled(
   const Cuuid_t        &cuuid,
   const uint32_t       volReqId,
   const char           *clientHost,
@@ -965,7 +965,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
   }
 
   //===================================================
-  // Hardcoded Gateway reply
+  // Hardcoded client reply
   #ifdef EMULATE_GATEWAY
 
     return;
@@ -987,13 +987,13 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
   request.setChecksum(checksum);
   request.setFileSize(fileSize);
 
-  // Connect to the tape gateway
+  // Connect to the client
   castor::io::ClientSocket sock(clientPort, clientHost);
   try {
     sock.connect();
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to connect to gateway to send FileRecalledNotification"
+      ": Failed to connect to client to send FileRecalledNotification"
       ": " << ex.getMessage().str());
   }
 
@@ -1002,7 +1002,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
     sock.sendObject(request);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to send FileRecalledNotification to gateway"
+      ": Failed to send FileRecalledNotification to client"
       ": " << ex.getMessage().str());
   }
 
@@ -1019,11 +1019,11 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
     }
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to read FileRecalledNotification reply from gateway"
+      ": Failed to read FileRecalledNotification reply from client"
       ": " << ex.getMessage().str());
   }
 
-  // Close the connection to the tape gateway
+  // Close the connection to the client
   sock.close();
 
   // Temporary variable used to check for a transaction ID mistatch
@@ -1119,9 +1119,9 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayFileRecalled(
 
 
 //-----------------------------------------------------------------------------
-// notifyGatewayEndOfSession
+// notifyEndOfSession
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::GatewayTxRx::notifyGatewayEndOfSession(
+void castor::tape::aggregator::ClientTxRx::notifyEndOfSession(
   const Cuuid_t &cuuid, const uint32_t volReqId, const char *clientHost,
   const unsigned short clientPort)
   throw(castor::exception::Exception) {
@@ -1137,7 +1137,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayEndOfSession(
 
 
   //===================================================
-  // Hardcoded Gateway reply
+  // Hardcoded client reply
   #ifdef EMULATE_GATEWAY
 
     return;
@@ -1149,13 +1149,13 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayEndOfSession(
   tapegateway::EndNotification request;
   request.setMountTransactionId(volReqId);
 
-  // Connect to the tape gateway
+  // Connect to the client
   castor::io::ClientSocket sock(clientPort, clientHost);
   try {
     sock.connect();
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to connect to gateway to send EndNotification"
+      ": Failed to connect to client to send EndNotification"
       ": " << ex.getMessage().str());
   }
 
@@ -1164,7 +1164,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayEndOfSession(
     sock.sendObject(request);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to send EndNotification to gateway"
+      ": Failed to send EndNotification to client"
       ": " << ex.getMessage().str());
   }
 
@@ -1180,11 +1180,11 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayEndOfSession(
     }
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to read EndNotification reply from gateway"
+      ": Failed to read EndNotification reply from client"
       ": " << ex.getMessage().str());
   }
 
-  // Close the connection to the tape gateway
+  // Close the connection to the client
   sock.close();
 
   // Temporary variable used to check for a transaction ID mistatch
@@ -1265,10 +1265,10 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayEndOfSession(
 
 
 //-----------------------------------------------------------------------------
-// getDumpParametersFromGateway
+// getDumpParameters
 //-----------------------------------------------------------------------------
 castor::tape::tapegateway::DumpParameters
-  *castor::tape::aggregator::GatewayTxRx::getDumpParametersFromGateway(
+  *castor::tape::aggregator::ClientTxRx::getDumpParameters(
   const Cuuid_t &cuuid, const uint32_t volReqId, const char *clientHost,
   const unsigned short clientPort) throw(castor::exception::Exception) {
 
@@ -1285,13 +1285,13 @@ castor::tape::tapegateway::DumpParameters
   tapegateway::DumpParametersRequest request;
   request.setMountTransactionId(volReqId);
 
-  // Connect to the tape gateway
+  // Connect to the client
   castor::io::ClientSocket sock(clientPort, clientHost);
   try {
     sock.connect();
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to connect to gateway to send DumpParametersRequest"
+      ": Failed to connect to client to send DumpParametersRequest"
       ": " << ex.getMessage().str());
   }
 
@@ -1300,7 +1300,7 @@ castor::tape::tapegateway::DumpParameters
     sock.sendObject(request);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to send DumpParametersRequest to gateway"
+      ": Failed to send DumpParametersRequest to client"
       ": " << ex.getMessage().str());
   }
 
@@ -1316,11 +1316,11 @@ castor::tape::tapegateway::DumpParameters
     }
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to read DumpParametersRequest reply from gateway"
+      ": Failed to read DumpParametersRequest reply from client"
       ": " << ex.getMessage().str());
   }
 
-  // Close the connection to the tape gateway
+  // Close the connection to the client
   sock.close();
 
   switch(obj->type()) {
@@ -1404,9 +1404,9 @@ castor::tape::tapegateway::DumpParameters
 
 
 //-----------------------------------------------------------------------------
-// notifyGatewayDumpMessage
+// notifyDumpMessage
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::GatewayTxRx::notifyGatewayDumpMessage(
+void castor::tape::aggregator::ClientTxRx::notifyDumpMessage(
   const Cuuid_t &cuuid, const uint32_t volReqId, const char *clientHost,
   const unsigned short clientPort, const char (&message)[CA_MAXLINELEN+1])
   throw(castor::exception::Exception) {
@@ -1423,7 +1423,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayDumpMessage(
 
 
   //===================================================
-  // Hardcoded Gateway reply
+  // Hardcoded client reply
   #ifdef EMULATE_GATEWAY
 
     return;
@@ -1436,13 +1436,13 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayDumpMessage(
   request.setMountTransactionId(volReqId);
   request.setMessage(message);
 
-  // Connect to the tape gateway
+  // Connect to the client
   castor::io::ClientSocket sock(clientPort, clientHost);
   try {
     sock.connect();
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to connect to gateway to send DumpNotification"
+      ": Failed to connect to client to send DumpNotification"
       ": " << ex.getMessage().str());
   }
 
@@ -1451,7 +1451,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayDumpMessage(
     sock.sendObject(request);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to send DumpNotification to gateway"
+      ": Failed to send DumpNotification to client"
       ": " << ex.getMessage().str());
   }
 
@@ -1467,11 +1467,11 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayDumpMessage(
     }
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to read DumpNotification reply from gateway"
+      ": Failed to read DumpNotification reply from client"
       ": " << ex.getMessage().str());
   }
 
-  // Close the connection to the tape gateway
+  // Close the connection to the client
   sock.close();
 
   // Temporary variable used to check for a transaction ID mistatch
@@ -1553,9 +1553,9 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayDumpMessage(
 
 
 //-----------------------------------------------------------------------------
-// notifyGatewayEndOfFailedSession
+// notifyEndOfFailedSession
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::GatewayTxRx::notifyGatewayEndOfFailedSession(
+void castor::tape::aggregator::ClientTxRx::notifyEndOfFailedSession(
   const Cuuid_t &cuuid, const uint32_t volReqId, const char *clientHost,
   const unsigned short clientPort, castor::exception::Exception &ex)
   throw(castor::exception::Exception) {
@@ -1571,7 +1571,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayEndOfFailedSession(
 
 
   //===================================================
-  // Hardcoded Gateway reply
+  // Hardcoded client reply
   #ifdef EMULATE_GATEWAY
 
     return;
@@ -1585,13 +1585,13 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayEndOfFailedSession(
   request.setErrorCode(ex.code());
   request.setErrorMessage(ex.getMessage().str());
 
-  // Connect to the tape gateway
+  // Connect to the client
   castor::io::ClientSocket sock(clientPort, clientHost);
   try {
     sock.connect();
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to connect to gateway to send EndNotificationErrorReport"
+      ": Failed to connect to client to send EndNotificationErrorReport"
       ": " << ex.getMessage().str());
   }
 
@@ -1600,7 +1600,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayEndOfFailedSession(
     sock.sendObject(request);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to send EndNotificationErrorReport to gateway"
+      ": Failed to send EndNotificationErrorReport to client"
       ": " << ex.getMessage().str());
   }
 
@@ -1616,11 +1616,11 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayEndOfFailedSession(
     }
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to read EndNotificationErrorReport reply from gateway"
+      ": Failed to read EndNotificationErrorReport reply from client"
       ": " << ex.getMessage().str());
   }
 
-  // Close the connection to the tape gateway
+  // Close the connection to the client
   sock.close();
 
   // Temporary variable used to check for a transaction ID mistatch
@@ -1705,7 +1705,7 @@ void castor::tape::aggregator::GatewayTxRx::notifyGatewayEndOfFailedSession(
 //-----------------------------------------------------------------------------
 // pingClient
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::GatewayTxRx::pingClient(
+void castor::tape::aggregator::ClientTxRx::pingClient(
   const Cuuid_t &cuuid, const uint32_t volReqId, const char *clientHost,
   const unsigned short clientPort)
   throw(castor::exception::Exception) {

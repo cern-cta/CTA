@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/aggregator/GatewayTxRx.hpp
+ *                castor/tape/aggregator/ClientTxRx.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_GATEWAYTXRX_HPP
-#define CASTOR_TAPE_AGGREGATOR_GATEWAYTXRX_HPP 1
+#ifndef CASTOR_TAPE_AGGREGATOR_CLIENTTXRX_HPP
+#define CASTOR_TAPE_AGGREGATOR_CLIENTTXRX_HPP 1
 
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/tapegateway/DumpParameters.hpp"
@@ -40,36 +40,35 @@ namespace aggregator {
 
 
 /**
- * Provides functions for sending and receiving the messages of the tape
- * gateway/aggregator protocol.
+ * Provides functions for sending and receiving messages to and from aggregator
+ * clients (tape gateway, tpread, tpwrite and tpdump).
  */
-class GatewayTxRx {
+class ClientTxRx {
 
 public:
 
   /**
-   * Gets a the volume to be mounted from the tape gateway.
+   * Gets the volume to be mounted from the client.
    *
    * @param cuuid       The ccuid to be used for logging.
-   * @param volReqId    The volume request ID to be sent to the tape gateway.
+   * @param volReqId    The volume request ID to be sent to the client.
    * @param clientHost  The client host name.
    * @param clientPort  The client port number.
    * @param unit        The tape unit.
-   * @param volume      Out parameter: The volume message received from the tape
-   *                    gateway.
+   * @param volume      Out parameter: The volume message received from the
+   *                    client.
    * @return True if there is a volume to mount.
    */
-  static bool getVolumeFromGateway(const Cuuid_t &cuuid,
+  static bool getVolume(const Cuuid_t &cuuid,
     const uint32_t volReqId, const char *clientHost,
     const unsigned short clientPort, const char (&unit)[CA_MAXUNMLEN+1],
     tapegateway::Volume &volume) throw(castor::exception::Exception);
 
   /**
-   * Gets a file to migrate from the tape tape gateway.
+   * Gets a file to migrate from the client.
    *
    * @param cuuid                The ccuid to be used for logging.
-   * @param volReqId             The volume request ID to be sent to the tape 
-   * gateway.
+   * @param volReqId             The volume request ID to be sent to the client.
    * @param clientHost           The client host name.
    * @param clientPort           The client port number.
    * @param fileTransactionId    Out parameter: The file transaction ID.
@@ -84,7 +83,7 @@ public:
    * @param positionCommandCode  The position command code.
    * @return True if there is a file to migrate.
    */
-  static bool getFileToMigrateFromGateway(const Cuuid_t &cuuid,
+  static bool getFileToMigrate(const Cuuid_t &cuuid,
     const uint32_t volReqId, const char *clientHost,
     const unsigned short clientPort, uint64_t &fileTransactionId,
     char (&filePath)[CA_MAXPATHLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN+1],
@@ -94,11 +93,10 @@ public:
     throw(castor::exception::Exception);
 
   /**
-   * Gets a file to recall from the tape gateway.
+   * Gets a file to recall from the client.
    *
    * @param cuuid               The ccuid to be used for logging.
-   * @param volReqId            The volume request ID to be sent to the tape 
-   * gateway.
+   * @param volReqId            The volume request ID to be sent to the client. 
    * @param clientHost          The client host name.
    * @param clientPort          The client port number.
    * @param fileTransactionId   Out parameter: The file transaction ID.
@@ -111,7 +109,7 @@ public:
    * @param positionCommandCode The position command code.
    * @return True if there is a file to recall.
    */
-  static bool getFileToRecallFromGateway(const Cuuid_t &cuuid,
+  static bool getFileToRecall(const Cuuid_t &cuuid,
     const uint32_t volReqId, const char *clientHost,
     const unsigned short clientPort, uint64_t &fileTransactionId,
     char (&filePath)[CA_MAXPATHLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN+1],
@@ -119,11 +117,10 @@ public:
     int32_t &positionCommandCode) throw(castor::exception::Exception);
 
   /**
-   * Notifies the tape gateway of the successful migration of a file to tape.
+   * Notifies the client of the successful migration of a file to tape.
    *
    * @param cuuid               The ccuid to be used for logging.
-   * @param volReqId            The volume request ID to be sent to the tape
-   *                            gateway.
+   * @param volReqId            The volume request ID to be sent to the client.
    * @param clientHost          The client host name.
    * @param clientPort          The client port number.
    * @param fileTransactionId   The file transaction ID.
@@ -137,7 +134,7 @@ public:
    * @param fileSize            The size of the file without compression.
    * @param compressedFileSize  The size of on-tape compressed file.
    */
-  static void notifyGatewayFileMigrated(
+  static void notifyFileMigrated(
     const Cuuid_t        &cuuid,
     const uint32_t       volReqId,
     const char           *clientHost,
@@ -155,11 +152,10 @@ public:
     throw(castor::exception::Exception);
 
   /**
-   * Notifies the tape gateway of the successful recall of a file from tape.
+   * Notifies the client of the successful recall of a file from tape.
    *
    * @param cuuid               The ccuid to be used for logging.
-   * @param volReqId            The volume request ID to be sent to the tape 
-   * gateway.
+   * @param volReqId            The volume request ID to be sent to the client. 
    * @param clientHost          The client host name.
    * @param clientPort         The client port number.
    * @param fileTransactionId   The file transaction ID.
@@ -173,7 +169,7 @@ public:
    * @param checksum            The file checksum.
    * @param fileSize            The size of the file without compression.
    */
-  static void notifyGatewayFileRecalled(
+  static void notifyFileRecalled(
     const Cuuid_t        &cuuid,
     const uint32_t       volReqId,
     const char           *clientHost, 
@@ -190,27 +186,27 @@ public:
     throw(castor::exception::Exception);
 
   /**
-   * Notifies the tape gateway of the end of the recall/migration session.
+   * Notifies the client of the end of the recall/migration session.
    *
    * @param cuuid       The ccuid to be used for logging.
-   * @param volReqId    The volume request ID to be sent to the tape gateway.
+   * @param volReqId    The volume request ID to be sent to the client.
    * @param clientHost  The client host name.
    * @param clientPort  The client port number.
    */
-  static void notifyGatewayEndOfSession(const Cuuid_t &cuuid,
+  static void notifyEndOfSession(const Cuuid_t &cuuid,
     const uint32_t volReqId, const char *clientHost,
     const unsigned short clientPort) throw(castor::exception::Exception);
 
   /**
-   * Notifies the tape gateway of the end of the recall/migration session.
+   * Notifies the client of the end of the recall/migration session.
    *
    * @param cuuid       The ccuid to be used for logging.
-   * @param volReqId    The volume request ID to be sent to the tape gateway.
+   * @param volReqId    The volume request ID to be sent to the client.
    * @param clientHost  The client host name.
    * @param clientPort  The client port number.
    * @param ex          The exception which failed the session.
    */
-  static void notifyGatewayEndOfFailedSession(const Cuuid_t &cuuid,
+  static void notifyEndOfFailedSession(const Cuuid_t &cuuid,
     const uint32_t volReqId, const char *clientHost,
     const unsigned short clientPort, castor::exception::Exception &e)
     throw(castor::exception::Exception);
@@ -219,26 +215,26 @@ public:
    * Gets the parameters to be used when dumping a tape.
    *
    * @param cuuid      The ccuid to be used for logging.
-   * @param volReqId   The volume request ID to be sent to the tape gateway.
+   * @param volReqId   The volume request ID to be sent to the client.
    * @param clientHost The client host name.
    * @param clientPort The client port number.
    * @return           A pointer to the DumpParamaters message which MUST be
    *                   deallocated by the callee.
    */
-  static tapegateway::DumpParameters *getDumpParametersFromGateway(
+  static tapegateway::DumpParameters *getDumpParameters(
     const Cuuid_t &cuuid, const uint32_t volReqId, const char *clientHost,
     const unsigned short clientPort) throw(castor::exception::Exception);
 
   /**
-   * Notifies the tape gateway of a dump tape message string.
+   * Notifies the client of a dump tape message string.
    *
    * @param cuuid       The ccuid to be used for logging.
-   * @param volReqId    The volume request ID to be sent to the tape gateway.
+   * @param volReqId    The volume request ID to be sent to the client.
    * @param clientHost  The client host name.
    * @param clientPort  The client port number.
    * @param message     The dump tape message string.
    */
-  static void notifyGatewayDumpMessage(const Cuuid_t &cuuid,
+  static void notifyDumpMessage(const Cuuid_t &cuuid,
     const uint32_t volReqId, const char *clientHost,
     const unsigned short clientPort, const char (&message)[CA_MAXLINELEN+1])
     throw(castor::exception::Exception);
@@ -247,7 +243,7 @@ public:
    * Pings the client and throws an exception if the ping has failed.
    *
    * @param cuuid      The ccuid to be used for logging.
-   * @param volReqId   The volume request ID to be sent to the tape gateway.
+   * @param volReqId   The volume request ID to be sent to the client.
    * @param clientHost The client host name.
    * @param clientPort The client port number.
    * @param message    The dump tape message string.
@@ -263,12 +259,12 @@ private:
    * Private constructor to inhibit instances of this class from being
    * instantiated.
    */
-  GatewayTxRx() {}
+  ClientTxRx() {}
 
-}; // class GatewayTxRx
+}; // class ClientTxRx
 
 } // namespace aggregator
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_GATEWAYTXRX_HPP
+#endif // CASTOR_TAPE_AGGREGATOR_CLIENTTXRX_HPP

@@ -27,7 +27,7 @@
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/DriveAllocationProtocolEngine.hpp"
-#include "castor/tape/aggregator/GatewayTxRx.hpp"
+#include "castor/tape/aggregator/ClientTxRx.hpp"
 #include "castor/tape/aggregator/RcpJobReplyMsgBody.hpp"
 #include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
 #include "castor/tape/aggregator/RcpJobSubmitter.hpp"
@@ -185,7 +185,7 @@ bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
   }
 
   // Get the volume from the tape gateway
-  const bool thereIsAVolume = GatewayTxRx::getVolumeFromGateway(cuuid,
+  const bool thereIsAVolume = ClientTxRx::getVolume(cuuid,
     jobRequest.volReqId, jobRequest.clientHost, jobRequest.clientPort,
     jobRequest.driveUnit, volume);
 
