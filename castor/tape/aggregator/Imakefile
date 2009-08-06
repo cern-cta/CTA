@@ -35,6 +35,8 @@ DependsOnLibrary(../tape/fsm,castortapefsm)
 TAPEGATEWAY_MESSAGES_SRCS = \
   ../tapegateway/BaseFileInfo.cpp \
   ../tapegateway/DumpNotification.cpp \
+  ../tapegateway/DumpParameters.cpp \
+  ../tapegateway/DumpParametersRequest.cpp \
   ../tapegateway/EndNotification.cpp \
   ../tapegateway/EndNotificationErrorReport.cpp \
   ../tapegateway/FileMigratedNotification.cpp \
@@ -55,6 +57,8 @@ TAPEGATEWAY_MESSAGES_SRCS = \
 
 TAPEGATEWAY_IO_SRCS = \
   ../../io/StreamDumpNotificationCnv.cpp \
+  ../../io/StreamDumpParametersCnv.cpp \
+  ../../io/StreamDumpParametersRequestCnv.cpp \
   ../../io/StreamEndNotificationCnv.cpp \
   ../../io/StreamEndNotificationErrorReportCnv.cpp \
   ../../io/StreamFileMigratedNotificationCnv.cpp \
