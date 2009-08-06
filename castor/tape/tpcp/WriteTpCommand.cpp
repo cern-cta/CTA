@@ -360,18 +360,24 @@ bool castor::tape::tpcp::WriteTpCommand::handleFileToMigrateRequest(
     const std::string filename = *(m_filenameItor++);
     struct stat64     statBuf;
     const int         rc = rfio_stat64((char*)filename.c_str(), &statBuf);
-    const int         save_serrno = serrno;
+    const int         save_serrno = rfio_serrno();
+    // rfio_stat64 in case of fail can set:
+    // serrno     if error appened in support routines
+    // errno      if error appened on system calls
+    // rfio_errno if error appened on the remote host (if remote host run 
+    //            different os it will return an unknown error code)
+    // rfio_serrno() return the set error (one of the 3)
+    // rfio_serror() return the error string maching the error code (if remote
+    //   error, connect to remote host and ask for the maching string)
 
     if(rc != 0) {
-      char buf[STRERRORBUFLEN];
-      sstrerror_r(save_serrno, buf, sizeof(buf));
-      buf[sizeof(buf)-1] = '\0';
+      const char *err_msg = rfio_serror();
 
       std::stringstream oss;
 
       oss <<
         "Failed to rfio_stat64 file \"" << filename << "\""
-        ": " << buf;
+        ": " << err_msg;
 
       sendEndNotificationErrorReport(save_serrno, oss.str(), sock);
 
