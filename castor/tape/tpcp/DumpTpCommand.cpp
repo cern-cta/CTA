@@ -25,6 +25,8 @@
 #include "castor/Constants.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 #include "castor/tape/tapegateway/DumpNotification.hpp"
+#include "castor/tape/tapegateway/DumpParameters.hpp"
+#include "castor/tape/tapegateway/DumpParametersRequest.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 #include "castor/tape/tpcp/Constants.hpp"
 #include "castor/tape/tpcp/DumpTpCommand.hpp"
@@ -40,6 +42,8 @@
 castor::tape::tpcp::DumpTpCommand::DumpTpCommand() throw() {
 
   // Register the Aggregator message handler member functions
+  registerMsgHandler(OBJ_DumpParametersRequest,
+    &DumpTpCommand::handleDumpParametersRequest, this);
   registerMsgHandler(OBJ_DumpNotification,
     &DumpTpCommand::handleDumpNotification, this);
   registerMsgHandler(OBJ_EndNotification,
@@ -357,16 +361,49 @@ void castor::tape::tpcp::DumpTpCommand::performTransfer()
 
 
 //------------------------------------------------------------------------------
+// handleDumpParametersRequest
+//------------------------------------------------------------------------------
+bool castor::tape::tpcp::DumpTpCommand::handleDumpParametersRequest(
+  castor::IObject *obj, castor::io::AbstractSocket &sock)
+  throw(castor::exception::Exception) {
+
+  tapegateway::DumpParametersRequest *msg = NULL;
+
+  castMessage(obj, msg, sock);
+  Helper::displayRcvdMsgIfDebug(*msg, m_cmdLine.debugSet);
+
+  // Create DumpParameters message for the aggregator
+  tapegateway::DumpParameters dumpParameters;
+  dumpParameters.setMountTransactionId(m_volReqId);
+  dumpParameters.setTapeMaxBytes(m_cmdLine.dumpTapeMaxBytes);
+  dumpParameters.setTapeBlockSize(m_cmdLine.dumpTapeBlockSize);
+  dumpParameters.setTapeConverter(m_cmdLine.dumpTapeConverter);
+  dumpParameters.setTapeErrAction(m_cmdLine.dumpTapeErrAction);
+  dumpParameters.setTapeStartFile(m_cmdLine.dumpTapeFromFile);
+  dumpParameters.setTapeMaxFile(m_cmdLine.dumpTapeMaxFiles);
+  dumpParameters.setTapeFromBlock(m_cmdLine.dumpTapeFromBlock);
+  dumpParameters.setTapeToBlock(m_cmdLine.dumpTapeToBlock);
+
+  // Send the DumpParameters message to the aggregator
+  sock.sendObject(dumpParameters);
+
+  Helper::displaySentMsgIfDebug(dumpParameters, m_cmdLine.debugSet);
+
+  return true;
+}
+
+
+//------------------------------------------------------------------------------
 // handleDumpNotification
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::DumpTpCommand::handleDumpNotification(
   castor::IObject *obj, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
-
   tapegateway::DumpNotification *msg = NULL;
 
   castMessage(obj, msg, sock);
+  Helper::displayRcvdMsgIfDebug(*msg, m_cmdLine.debugSet);
 
   // Write the message to standard out
   std::ostream &os = std::cout;

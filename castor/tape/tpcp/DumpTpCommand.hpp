@@ -76,6 +76,16 @@ protected:
 private:
 
   /**
+   * DumpParametersRequest message handler.
+   *
+   * @param obj  The aggregator message to be processed.
+   * @param sock The socket on which to reply to the aggregator.
+   * @return     True if there is more work to be done else false.
+   */
+  bool handleDumpParametersRequest(castor::IObject *obj,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+
+  /**
    * DumpNotification message handler.
    *
    * @param obj  The aggregator message to be processed.
