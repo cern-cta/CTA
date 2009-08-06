@@ -317,3 +317,14 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib, vdt_globus_essentials, 
 Description: castor (Cern Advanced STORage system)
  Csec library
 
+Package: castor-aggregator-server
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-oracle
+Description: castor (Cern Advanced STORage system)
+ Tape Aggregator Daemon
+
+Package: castor-aggregator-client
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Description: castor (Cern Advanced STORage system)
+ Tape Aggregator Clients
