@@ -373,3 +373,24 @@ void castor::tape::aggregator::LogHelper::logMsg(const Cuuid_t &cuuid,
       utils::volumeModeToString(msg.mode()))};
   castor::dlf::dlf_writep(cuuid, severity, message_no, params);
 }
+
+
+//-----------------------------------------------------------------------------
+// logMsg
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::LogHelper::logMsg(const Cuuid_t &cuuid,
+  const int severity, const int message_no, const uint32_t volReqId,
+  const int socketFd, const tapegateway::DumpParameters &msg) throw() {
+
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("mountTransactionId", msg.mountTransactionId()),
+    castor::dlf::Param("maxBytes"          , msg.tapeMaxBytes()      ),
+    castor::dlf::Param("blockSize"         , msg.tapeBlockSize()     ),
+    castor::dlf::Param("converter"         , msg.tapeConverter()     ),
+    castor::dlf::Param("errAction"         , msg.tapeErrAction()     ),
+    castor::dlf::Param("startFile"         , msg.tapeStartFile()     ),
+    castor::dlf::Param("maxFile"           , msg.tapeMaxFile()       ),
+    castor::dlf::Param("fromBlock"         , msg.tapeFromBlock()     ),
+    castor::dlf::Param("toBlock"           , msg.tapeToBlock()       )};
+  castor::dlf::dlf_writep(cuuid, severity, message_no, params);
+}

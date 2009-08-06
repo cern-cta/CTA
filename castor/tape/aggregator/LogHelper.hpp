@@ -35,6 +35,7 @@
 #include "castor/tape/aggregator/RtcpFileRqstErrMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpTapeRqstMsgBody.hpp"
 #include "castor/tape/aggregator/RtcpTapeRqstErrMsgBody.hpp"
+#include "castor/tape/tapegateway/DumpParameters.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 
 #include "h/Cuuid.h"
@@ -232,7 +233,7 @@ public:
     const RtcpDumpTapeRqstMsgBody &body) throw();
 
   /**
-   * Logs the specified Gateway message.
+   * Logs the specified Client message.
    *
    * @param cuuid      The uuid of the component issuing the message.
    * @param message_no The message number in the facility.
@@ -248,6 +249,24 @@ public:
     const uint32_t            volReqId,
     const int                 socketFd,
     const tapegateway::Volume &msg) throw();
+
+  /**
+   * Logs the specified Client message.
+   *
+   * @param cuuid      The uuid of the component issuing the message.
+   * @param message_no The message number in the facility.
+   * @param severity   The severity of the message.
+   * @param volReqId   The volume request ID.
+   * @param socketFd   The file descriptor of the associated TCP/IP socket.
+   * @param msg        The message.
+   */
+  static void logMsg(
+    const Cuuid_t                     &cuuid,
+    const int                         severity,
+    const int                         message_no,
+    const uint32_t                    volReqId,
+    const int                         socketFd,
+    const tapegateway::DumpParameters &msg) throw();
 };
 
 } // namespace aggregator
