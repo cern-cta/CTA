@@ -146,7 +146,7 @@ namespace castor {
          * Get the value of m_umask
          * @return the value of m_umask
          */
-        unsigned char umask() const {
+        int umask() const {
           return m_umask;
         }
 
@@ -154,7 +154,7 @@ namespace castor {
          * Set the value of m_umask
          * @param new_var the new value of m_umask
          */
-        void setUmask(unsigned char new_var) {
+        void setUmask(int new_var) {
           m_umask = new_var;
         }
 
@@ -184,7 +184,7 @@ namespace castor {
 
         int m_fseq;
 
-        unsigned char m_umask;
+        int m_umask;
 
         PositionCommandCode m_positionCommandCode;
 

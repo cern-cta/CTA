@@ -125,7 +125,7 @@ castor::IObject* castor::io::StreamFileToMigrateCnv::createObj(castor::IAddress*
   int fseq;
   ad->stream() >> fseq;
   object->setFseq(fseq);
-  unsigned char umask;
+  int umask;
   ad->stream() >> umask;
   object->setUmask(umask);
   u_signed64 mountTransactionId;
