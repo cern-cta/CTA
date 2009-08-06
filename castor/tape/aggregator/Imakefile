@@ -97,4 +97,8 @@ AGGREGATORBIN_SRCS = \
 AGGREGATORBIN_OBJS = $(AGGREGATORBIN_SRCS:.cpp=.Osuf)
 
 NormalProgramTarget(aggregatord,$(AGGREGATORBIN_OBJS),$(DEPLIB),$(LIBS),750)
-EXEMANPAGE(aggregatord)
+MakeDir(/var/spool/tape/aggregatord,0755)
+ADMMANPAGE(aggregatord)
+LOGROTATE(castor-aggregator-server,../../..,install)
+SYSCONFIG(aggregatord,install)
+INITSCRIPT(aggregatord,install)
