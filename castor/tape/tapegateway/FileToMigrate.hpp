@@ -164,6 +164,22 @@ namespace castor {
         }
 
         /**
+         * Get the value of m_umask
+         * @return the value of m_umask
+         */
+        int umask() const {
+          return m_umask;
+        }
+
+        /**
+         * Set the value of m_umask
+         * @param new_var the new value of m_umask
+         */
+        void setUmask(int new_var) {
+          m_umask = new_var;
+        }
+
+        /**
          * Get the value of m_id
          * The id of this object
          * @return the value of m_id
@@ -190,6 +206,8 @@ namespace castor {
         u_signed64 m_lastModificationTime;
 
         std::string m_path;
+
+        int m_umask;
 
         /// The id of this object
         u_signed64 m_id;

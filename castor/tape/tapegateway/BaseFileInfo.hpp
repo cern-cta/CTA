@@ -143,22 +143,6 @@ namespace castor {
         }
 
         /**
-         * Get the value of m_umask
-         * @return the value of m_umask
-         */
-        int umask() const {
-          return m_umask;
-        }
-
-        /**
-         * Set the value of m_umask
-         * @param new_var the new value of m_umask
-         */
-        void setUmask(int new_var) {
-          m_umask = new_var;
-        }
-
-        /**
          * Get the value of m_positionCommandCode
          * @return the value of m_positionCommandCode
          */
@@ -183,8 +167,6 @@ namespace castor {
         u_signed64 m_fileid;
 
         int m_fseq;
-
-        int m_umask;
 
         PositionCommandCode m_positionCommandCode;
 

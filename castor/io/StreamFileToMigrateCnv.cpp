@@ -93,12 +93,12 @@ void castor::io::StreamFileToMigrateCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->nshost();
   ad->stream() << obj->fileid();
   ad->stream() << obj->fseq();
-  ad->stream() << obj->umask();
   ad->stream() << obj->mountTransactionId();
   ad->stream() << obj->fileSize();
   ad->stream() << obj->lastKnownFilename();
   ad->stream() << obj->lastModificationTime();
   ad->stream() << obj->path();
+  ad->stream() << obj->umask();
   ad->stream() << obj->id();
   ad->stream() << obj->positionCommandCode();
 }
@@ -125,9 +125,6 @@ castor::IObject* castor::io::StreamFileToMigrateCnv::createObj(castor::IAddress*
   int fseq;
   ad->stream() >> fseq;
   object->setFseq(fseq);
-  int umask;
-  ad->stream() >> umask;
-  object->setUmask(umask);
   u_signed64 mountTransactionId;
   ad->stream() >> mountTransactionId;
   object->setMountTransactionId(mountTransactionId);
@@ -143,6 +140,9 @@ castor::IObject* castor::io::StreamFileToMigrateCnv::createObj(castor::IAddress*
   std::string path;
   ad->stream() >> path;
   object->setPath(path);
+  int umask;
+  ad->stream() >> umask;
+  object->setUmask(umask);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

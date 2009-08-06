@@ -93,7 +93,6 @@ void castor::io::StreamFileRecalledNotificationCnv::createRep(castor::IAddress* 
   ad->stream() << obj->nshost();
   ad->stream() << obj->fileid();
   ad->stream() << obj->fseq();
-  ad->stream() << obj->umask();
   ad->stream() << obj->mountTransactionId();
   ad->stream() << obj->path();
   ad->stream() << obj->checksumName();
@@ -125,9 +124,6 @@ castor::IObject* castor::io::StreamFileRecalledNotificationCnv::createObj(castor
   int fseq;
   ad->stream() >> fseq;
   object->setFseq(fseq);
-  int umask;
-  ad->stream() >> umask;
-  object->setUmask(umask);
   u_signed64 mountTransactionId;
   ad->stream() >> mountTransactionId;
   object->setMountTransactionId(mountTransactionId);

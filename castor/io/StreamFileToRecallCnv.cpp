@@ -93,13 +93,13 @@ void castor::io::StreamFileToRecallCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->nshost();
   ad->stream() << obj->fileid();
   ad->stream() << obj->fseq();
-  ad->stream() << obj->umask();
   ad->stream() << obj->mountTransactionId();
   ad->stream() << obj->path();
   ad->stream() << obj->blockId0();
   ad->stream() << obj->blockId1();
   ad->stream() << obj->blockId2();
   ad->stream() << obj->blockId3();
+  ad->stream() << obj->umask();
   ad->stream() << obj->id();
   ad->stream() << obj->positionCommandCode();
 }
@@ -126,9 +126,6 @@ castor::IObject* castor::io::StreamFileToRecallCnv::createObj(castor::IAddress* 
   int fseq;
   ad->stream() >> fseq;
   object->setFseq(fseq);
-  int umask;
-  ad->stream() >> umask;
-  object->setUmask(umask);
   u_signed64 mountTransactionId;
   ad->stream() >> mountTransactionId;
   object->setMountTransactionId(mountTransactionId);
@@ -147,6 +144,9 @@ castor::IObject* castor::io::StreamFileToRecallCnv::createObj(castor::IAddress* 
   unsigned char blockId3;
   ad->stream() >> blockId3;
   object->setBlockId3(blockId3);
+  int umask;
+  ad->stream() >> umask;
+  object->setUmask(umask);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

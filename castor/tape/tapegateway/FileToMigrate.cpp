@@ -45,6 +45,7 @@ castor::tape::tapegateway::FileToMigrate::FileToMigrate() throw() :
   m_lastKnownFilename(""),
   m_lastModificationTime(0),
   m_path(""),
+  m_umask(0),
   m_id(0) {
 }
 
@@ -73,6 +74,7 @@ void castor::tape::tapegateway::FileToMigrate::print(std::ostream& stream,
   stream << indent << "lastKnownFilename : " << m_lastKnownFilename << std::endl;
   stream << indent << "lastModificationTime : " << m_lastModificationTime << std::endl;
   stream << indent << "path : " << m_path << std::endl;
+  stream << indent << "umask : " << m_umask << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }
