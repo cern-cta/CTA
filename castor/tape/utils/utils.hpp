@@ -30,6 +30,7 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include "castor/tape/Constants.hpp"
+#include "castor/tape/tapegateway/ClientType.hpp"
 #include "castor/tape/tapegateway/VolumeMode.hpp"
 
 #include <errno.h>
@@ -277,6 +278,13 @@ namespace utils  {
    * @param reqType The file request status code.
    */
   const char *procStatusToString(const uint32_t procStatus) throw();
+
+  /**
+   * Returns the string representation of the specified aggregator client type
+   * from a tapegateay::Volume message (READ, WRITE or DUMP).
+   */
+  const char *volumeClientTypeToString(const tapegateway::ClientType mode)
+    throw();
 
   /**
    * Returns the string representation of the specified volume mode from a

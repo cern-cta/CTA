@@ -375,7 +375,8 @@ void castor::tape::aggregator::LogHelper::logMsg(const Cuuid_t &cuuid,
       castor::dlf::Param("dumpTapeFromBlock" , msg.dumpTapeFromBlock() ),
       castor::dlf::Param("dumpTapeToBlock"   , msg.dumpTapeToBlock()   ),
       castor::dlf::Param("id"                , msg.id()                ),
-      castor::dlf::Param("clientType"        , msg.clientType()        ),
+      castor::dlf::Param("clientType"        ,
+        utils::volumeClientTypeToString(msg.clientType())),
       castor::dlf::Param("mode"              ,
         utils::volumeModeToString(msg.mode()))};
     castor::dlf::dlf_writep(cuuid, severity, message_no, params);
