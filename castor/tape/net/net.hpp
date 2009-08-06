@@ -213,13 +213,12 @@ void writeSockDescription(std::ostream &os, const int socketFd)
  * readBytesFromCloseable().
  *
  * @param socketFd The file descriptor of the socket to be read from.
- * @param netReadWriteTimeout The timeout to be used when performing
- * network reads and writes.
- * @param nbBytes The number of bytes to be read.
- * @param buf The buffer into which the bytes will be written.
+ * @param timeout  The timeout in seconds.
+ * @param nbBytes  The number of bytes to be read.
+ * @param buf      The buffer into which the bytes will be written.
  */
-void readBytes(const int socketFd, const int netReadWriteTimeout,
-  const int nbBytes, char *buf) throw(castor::exception::Exception);
+void readBytes(const int socketFd, const int timeout, const int nbBytes,
+  char *buf) throw(castor::exception::Exception);
 
 /**
  * Reads the specified number of bytes from the specified closable socket
@@ -228,13 +227,12 @@ void readBytes(const int socketFd, const int netReadWriteTimeout,
  * @param connClosed Output parameter: True if the connection was closed
  * by the peer.
  * @param socketFd The file descriptor of the socket to be read from.
- * @param netReadWriteTimeout The timeout to be used when performing
- * network reads and writes.
- * @param nbBytes The number of bytes to be read.
- * @param buf The buffer into which the bytes will be written.
+ * @param timeout  The timeout in seconds.
+ * @param nbBytes  The number of bytes to be read.
+ * @param buf      The buffer into which the bytes will be written.
  */
 void readBytesFromCloseable(bool &connClosed, const int socketFd, 
-  const int netReadWriteTimeout, const int nbBytes, char *buf) 
+  const int timeout, const int nbBytes, char *buf) 
   throw(castor::exception::Exception);
 
 /**
@@ -242,13 +240,12 @@ void readBytesFromCloseable(bool &connClosed, const int socketFd,
  * specified socket.
  *
  * @param socketFd The file descriptor of the socket to be written to
- * @param netReadWriteTimeout The timeout to be used when performing
- * network reads and writes.
- * @param nbBytes The number of bytes to be written.
- * @param buf The buffer of bytes to be written to the socket.
+ * @param timeout  The timeout in seconds.
+ * @param nbBytes  The number of bytes to be written.
+ * @param buf      The buffer of bytes to be written to the socket.
  */
-void writeBytes(const int socketFd, const int netReadWriteTimeout,
-  const int nbBytes, char *const buf) throw(castor::exception::Exception);
+void writeBytes(const int socketFd, const int timeout, const int nbBytes,
+  char *const buf) throw(castor::exception::Exception);
 
 } // namespace aggregator
 } // namespace tape

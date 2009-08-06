@@ -407,14 +407,12 @@ void castor::tape::net::writeSockDescription(std::ostream &os,
 //------------------------------------------------------------------------------
 // readBytes
 //------------------------------------------------------------------------------
-void castor::tape::net::readBytes(const int socketFd,
-  const int netReadWriteTimeout, const int nbBytes, char *buf)
-  throw(castor::exception::Exception) {
+void castor::tape::net::readBytes(const int socketFd, const int timeout,
+  const int nbBytes, char *buf) throw(castor::exception::Exception) {
 
   bool connClosed = false;
 
-  readBytesFromCloseable(connClosed, socketFd, netReadWriteTimeout, nbBytes,
-    buf);
+  readBytesFromCloseable(connClosed, socketFd, timeout, nbBytes, buf);
 
   if(connClosed) {
     std::stringstream oss;
@@ -431,11 +429,11 @@ void castor::tape::net::readBytes(const int socketFd,
 // readBytesFromCloseable
 //------------------------------------------------------------------------------
 void castor::tape::net::readBytesFromCloseable(bool &connClosed, 
-  const int socketFd, const int netReadWriteTimeout, const int nbBytes, 
-  char *buf) throw(castor::exception::Exception) {
+  const int socketFd, const int timeout, const int nbBytes, char *buf)
+  throw(castor::exception::Exception) {
 
   connClosed = false;
-  const int rc = netread_timeout(socketFd, buf, nbBytes, netReadWriteTimeout);
+  const int rc = netread_timeout(socketFd, buf, nbBytes, timeout);
   const int savedSerrno = serrno;
 
   switch(rc) {
@@ -445,6 +443,9 @@ void castor::tape::net::readBytesFromCloseable(bool &connClosed,
       oss << ": Failed to read " << nbBytes << " bytes from socket: ";
       writeSockDescription(oss, socketFd);
       oss << ": " << sstrerror(savedSerrno);
+      if(savedSerrno == SETIMEDOUT) {
+        oss << ": timeout=" << timeout;
+      }
 
       TAPE_THROW_CODE(savedSerrno, oss.str());
     }
@@ -474,11 +475,10 @@ void castor::tape::net::readBytesFromCloseable(bool &connClosed,
 //------------------------------------------------------------------------------
 // writeBytes
 //------------------------------------------------------------------------------
-void castor::tape::net::writeBytes(const int socketFd,
-  const int netReadWriteTimeout, const int nbBytes, char *const buf)
-  throw(castor::exception::Exception) {
+void castor::tape::net::writeBytes(const int socketFd, const int timeout,
+  const int nbBytes, char *const buf) throw(castor::exception::Exception) {
 
-  const int rc = netwrite_timeout(socketFd, buf, nbBytes, netReadWriteTimeout);
+  const int rc = netwrite_timeout(socketFd, buf, nbBytes, timeout);
   const int savedSerrno = serrno;
 
   switch(rc) {
@@ -488,6 +488,9 @@ void castor::tape::net::writeBytes(const int socketFd,
       oss << ": Failed to write " << nbBytes << " bytes to socket: ";
       writeSockDescription(oss, socketFd);
       oss << ": " << sstrerror(savedSerrno);
+      if(savedSerrno == SETIMEDOUT) {
+        oss << ": timeout=" << timeout;
+      }
 
       TAPE_THROW_CODE(SECOMERR, oss.str());
     }
