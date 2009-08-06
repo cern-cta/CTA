@@ -444,90 +444,90 @@ void castor::tape::aggregator::BridgeProtocolEngine::run()
 void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
   throw(castor::exception::Exception) {
 
-  char          filePath[CA_MAXPATHLEN+1];
-  char          fileNsHost[CA_MAXHOSTNAMELEN+1];
-  char          fileLastKnownFilename[CA_MAXPATHLEN+1];
-  char          tapePath[CA_MAXPATHLEN+1];
-  unsigned char (blockId)[4];
+  try {
+    char          filePath[CA_MAXPATHLEN+1];
+    char          fileNsHost[CA_MAXHOSTNAMELEN+1];
+    char          fileLastKnownFilename[CA_MAXPATHLEN+1];
+    char          tapePath[CA_MAXPATHLEN+1];
+    unsigned char (blockId)[4];
 
-  utils::setBytes(filePath             , '\0');
-  utils::setBytes(fileNsHost           , '\0');
-  utils::setBytes(fileLastKnownFilename, '\0');
-  utils::setBytes(tapePath             , '\0');
-  utils::setBytes(blockId              , '\0');
+    utils::setBytes(filePath             , '\0');
+    utils::setBytes(fileNsHost           , '\0');
+    utils::setBytes(fileLastKnownFilename, '\0');
+    utils::setBytes(tapePath             , '\0');
+    utils::setBytes(blockId              , '\0');
 
-  uint64_t fileTransactionId        = 0;
-  uint64_t fileId                   = 0;
-  int32_t  fileTapeFileSeq          = 0;
-  uint64_t fileSize                 = 0;
-  uint64_t fileLastModificationTime = 0;
-  int32_t  positionCommandCode      = 0;
+    uint64_t fileTransactionId        = 0;
+    uint64_t fileId                   = 0;
+    int32_t  fileTapeFileSeq          = 0;
+    uint64_t fileSize                 = 0;
+    uint64_t fileLastModificationTime = 0;
+    int32_t  positionCommandCode      = 0;
 
-  // Get first file to migrate from tape gateway
-  const bool thereIsAFileToMigrate =
-    ClientTxRx::getFileToMigrate(m_cuuid, m_jobRequest.volReqId,
-    m_jobRequest.clientHost, m_jobRequest.clientPort, fileTransactionId,
-    filePath, fileNsHost, fileId, fileTapeFileSeq, fileSize,
-    fileLastKnownFilename, fileLastModificationTime, positionCommandCode);
+    // Get first file to migrate from tape gateway
+    const bool thereIsAFileToMigrate =
+      ClientTxRx::getFileToMigrate(m_cuuid, m_jobRequest.volReqId,
+      m_jobRequest.clientHost, m_jobRequest.clientPort, fileTransactionId,
+      filePath, fileNsHost, fileId, fileTapeFileSeq, fileSize,
+      fileLastKnownFilename, fileLastModificationTime, positionCommandCode);
 
-  // If there is no file to migrate, then notify tape gatway of end of session
-  // and return
-  if(!thereIsAFileToMigrate) {
-    try {
-      ClientTxRx::notifyEndOfSession(m_cuuid, m_jobRequest.volReqId,
-        m_jobRequest.clientHost, m_jobRequest.clientPort);
-    } catch(castor::exception::Exception &ex) {
-      // Don't rethrow, just log the exception
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("volReqId", m_jobRequest.volReqId           ),
-        castor::dlf::Param("Message" , ex.getMessage().str()),
-        castor::dlf::Param("Code"    , ex.code()            )};
-      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
+    // If there is no file to migrate, then notify tape gatway of end of session
+    // and return
+    if(!thereIsAFileToMigrate) {
+      try {
+        ClientTxRx::notifyEndOfSession(m_cuuid, m_jobRequest.volReqId,
+          m_jobRequest.clientHost, m_jobRequest.clientPort);
+      } catch(castor::exception::Exception &ex) {
+        // Don't rethrow, just log the exception
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("volReqId", m_jobRequest.volReqId           ),
+          castor::dlf::Param("Message" , ex.getMessage().str()),
+          castor::dlf::Param("Code"    , ex.code()            )};
+        castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+          AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
+      }
+
+      return;
     }
 
-    return;
-  }
+    // Remember the file transaction ID and get its unique index to be passed
+    // to RTCPD through the "rtcpFileRequest.disk_fseq" message field
+    const uint32_t diskFseq = m_pendingTransferIds.insert(fileTransactionId);
 
-  // Remember the file transaction ID and get its unique index to be passed to
-  // RTCPD through the "rtcpFileRequest.disk_fseq" message field
-  const uint32_t diskFseq = m_pendingTransferIds.insert(fileTransactionId);
+    // Give volume to RTCPD
+    RtcpTapeRqstErrMsgBody rtcpVolume;
+    utils::setBytes(rtcpVolume, '\0');
+    utils::copyString(rtcpVolume.vid    , m_volume.vid().c_str()    );
+    utils::copyString(rtcpVolume.vsn    , m_vsn                     );
+    utils::copyString(rtcpVolume.label  , m_volume.label().c_str()  );
+    utils::copyString(rtcpVolume.density, m_volume.density().c_str());
+    utils::copyString(rtcpVolume.unit   , m_jobRequest.driveUnit    );
+    rtcpVolume.volReqId       = m_jobRequest.volReqId;
+    rtcpVolume.mode           = WRITE_ENABLE;
+    rtcpVolume.tStartRequest  = time(NULL);
+    rtcpVolume.err.severity   =  1;
+    rtcpVolume.err.maxTpRetry = -1;
+    rtcpVolume.err.maxCpRetry = -1;
+    RtcpTxRx::giveVolumeToRtcpd(m_cuuid, m_jobRequest.volReqId,
+      m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, rtcpVolume);
 
-  // Give volume to RTCPD
-  RtcpTapeRqstErrMsgBody rtcpVolume;
-  utils::setBytes(rtcpVolume, '\0');
-  utils::copyString(rtcpVolume.vid    , m_volume.vid().c_str()    );
-  utils::copyString(rtcpVolume.vsn    , m_vsn                     );
-  utils::copyString(rtcpVolume.label  , m_volume.label().c_str()  );
-  utils::copyString(rtcpVolume.density, m_volume.density().c_str());
-  utils::copyString(rtcpVolume.unit   , m_jobRequest.driveUnit    );
-  rtcpVolume.volReqId       = m_jobRequest.volReqId;
-  rtcpVolume.mode           = WRITE_ENABLE;
-  rtcpVolume.tStartRequest  = time(NULL);
-  rtcpVolume.err.severity   =  1;
-  rtcpVolume.err.maxTpRetry = -1;
-  rtcpVolume.err.maxCpRetry = -1;
-  RtcpTxRx::giveVolumeToRtcpd(m_cuuid, m_jobRequest.volReqId,
-     m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, rtcpVolume);
+    // Give file to migrate to RTCPD
+    char migrationTapeFileId[CA_MAXPATHLEN+1];
+    utils::toHex(fileId, migrationTapeFileId);
+    RtcpTxRx::giveFileToRtcpd(m_cuuid, m_jobRequest.volReqId,
+      m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, rtcpVolume.mode, filePath,
+      fileSize, "", RECORDFORMAT, migrationTapeFileId, MIGRATEUMASK,
+      positionCommandCode, fileTapeFileSeq, diskFseq, fileNsHost, fileId,
+      blockId);
 
-  // Give file to migrate to RTCPD
-  char migrationTapeFileId[CA_MAXPATHLEN+1];
-  utils::toHex(fileId, migrationTapeFileId);
-  RtcpTxRx::giveFileToRtcpd(m_cuuid, m_jobRequest.volReqId,
-    m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, rtcpVolume.mode, filePath,
-    fileSize, "", RECORDFORMAT, migrationTapeFileId, MIGRATEUMASK,
-    positionCommandCode, fileTapeFileSeq, diskFseq, fileNsHost, fileId,
-    blockId);
+    // Ask RTCPD to request more work
+    RtcpTxRx::askRtcpdToRequestMoreWork(m_cuuid, m_jobRequest.volReqId,
+      tapePath, m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, WRITE_ENABLE);
 
-  // Ask RTCPD to request more work
-  RtcpTxRx::askRtcpdToRequestMoreWork(m_cuuid, m_jobRequest.volReqId, tapePath,
-    m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, WRITE_ENABLE);
+    // Tell RTCPD end of file list
+    RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_jobRequest.volReqId,
+      m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT);
 
-  // Tell RTCPD end of file list
-  RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_jobRequest.volReqId,
-    m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT);
-
-  try {
     processRtcpdSocks();
 
     try {
@@ -573,35 +573,35 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
 void castor::tape::aggregator::BridgeProtocolEngine::runRecallSession()
   throw(castor::exception::Exception) {
 
-  char tapePath[CA_MAXPATHLEN+1];
-  utils::setBytes(tapePath, '\0');
-
-  // Give volume to RTCPD
-  RtcpTapeRqstErrMsgBody rtcpVolume;
-  utils::setBytes(rtcpVolume, '\0');
-  utils::copyString(rtcpVolume.vid    , m_volume.vid().c_str()    );
-  utils::copyString(rtcpVolume.vsn    , m_vsn                     );
-  utils::copyString(rtcpVolume.label  , m_volume.label().c_str()  );
-  utils::copyString(rtcpVolume.density, m_volume.density().c_str());
-  utils::copyString(rtcpVolume.unit   , m_jobRequest.driveUnit    );
-  rtcpVolume.volReqId       = m_jobRequest.volReqId;
-  rtcpVolume.mode           = WRITE_DISABLE;
-  rtcpVolume.tStartRequest  = time(NULL);
-  rtcpVolume.err.severity   =  1;
-  rtcpVolume.err.maxTpRetry = -1;
-  rtcpVolume.err.maxCpRetry = -1;
-  RtcpTxRx::giveVolumeToRtcpd(m_cuuid, m_jobRequest.volReqId,
-    m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, rtcpVolume);
-
-  // Ask RTCPD to request more work
-  RtcpTxRx::askRtcpdToRequestMoreWork(m_cuuid, m_jobRequest.volReqId, tapePath,
-    m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, WRITE_DISABLE);
-
-  // Tell RTCPD end of file list
-  RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_jobRequest.volReqId,
-    m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT);
-
   try {
+    char tapePath[CA_MAXPATHLEN+1];
+    utils::setBytes(tapePath, '\0');
+
+    // Give volume to RTCPD
+    RtcpTapeRqstErrMsgBody rtcpVolume;
+    utils::setBytes(rtcpVolume, '\0');
+    utils::copyString(rtcpVolume.vid    , m_volume.vid().c_str()    );
+    utils::copyString(rtcpVolume.vsn    , m_vsn                     );
+    utils::copyString(rtcpVolume.label  , m_volume.label().c_str()  );
+    utils::copyString(rtcpVolume.density, m_volume.density().c_str());
+    utils::copyString(rtcpVolume.unit   , m_jobRequest.driveUnit    );
+    rtcpVolume.volReqId       = m_jobRequest.volReqId;
+    rtcpVolume.mode           = WRITE_DISABLE;
+    rtcpVolume.tStartRequest  = time(NULL);
+    rtcpVolume.err.severity   =  1;
+    rtcpVolume.err.maxTpRetry = -1;
+    rtcpVolume.err.maxCpRetry = -1;
+    RtcpTxRx::giveVolumeToRtcpd(m_cuuid, m_jobRequest.volReqId,
+      m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, rtcpVolume);
+
+    // Ask RTCPD to request more work
+    RtcpTxRx::askRtcpdToRequestMoreWork(m_cuuid, m_jobRequest.volReqId,
+      tapePath, m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, WRITE_DISABLE);
+
+    // Tell RTCPD end of file list
+    RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_jobRequest.volReqId,
+      m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT);
+
     processRtcpdSocks();
 
     try {
@@ -647,46 +647,46 @@ void castor::tape::aggregator::BridgeProtocolEngine::runRecallSession()
 void castor::tape::aggregator::BridgeProtocolEngine::runDumpSession()
   throw(castor::exception::Exception) {
 
-  // Give volume to RTCPD
-  RtcpTapeRqstErrMsgBody rtcpVolume;
-  utils::setBytes(rtcpVolume, '\0');
-  utils::copyString(rtcpVolume.vid    , m_volume.vid().c_str()    );
-  utils::copyString(rtcpVolume.vsn    , m_vsn                     );
-  utils::copyString(rtcpVolume.label  , m_volume.label().c_str()  );
-  utils::copyString(rtcpVolume.density, m_volume.density().c_str());
-  utils::copyString(rtcpVolume.unit   , m_jobRequest.driveUnit    );
-  rtcpVolume.volReqId       = m_jobRequest.volReqId;
-  rtcpVolume.mode           = WRITE_DISABLE;
-  rtcpVolume.tStartRequest  = time(NULL);
-  rtcpVolume.err.severity   =  1;
-  rtcpVolume.err.maxTpRetry = -1;
-  rtcpVolume.err.maxCpRetry = -1;
-  RtcpTxRx::giveVolumeToRtcpd(m_cuuid, m_jobRequest.volReqId,
-    m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, rtcpVolume);
-
-  // Get dump parameters message from client an wrap it in an auto_ptr
-  std::auto_ptr<tapegateway::DumpParameters> dumpParameters(
-    ClientTxRx::getDumpParameters(m_cuuid, m_jobRequest.volReqId,
-    m_jobRequest.clientHost, m_jobRequest.clientPort));
-
-  // Tell RTCPD to dump tape
-  RtcpDumpTapeRqstMsgBody request;
-  request.maxBytes      = dumpParameters->tapeMaxBytes();
-  request.blockSize     = dumpParameters->tapeBlockSize();
-  request.convert       = dumpParameters->tapeConverter();
-  request.tapeErrAction = dumpParameters->tapeErrAction();
-  request.startFile     = dumpParameters->tapeStartFile();
-  request.maxFiles      = dumpParameters->tapeMaxFile();
-  request.fromBlock     = dumpParameters->tapeFromBlock();
-  request.toBlock       = dumpParameters->tapeToBlock();
-  RtcpTxRx::tellRtcpdDumpTape(m_cuuid, m_jobRequest.volReqId,
-    m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, request);
-
-  // Tell RTCPD end of file list
-  RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_jobRequest.volReqId,
-    m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT);
-
   try {
+    // Give volume to RTCPD
+    RtcpTapeRqstErrMsgBody rtcpVolume;
+    utils::setBytes(rtcpVolume, '\0');
+    utils::copyString(rtcpVolume.vid    , m_volume.vid().c_str()    );
+    utils::copyString(rtcpVolume.vsn    , m_vsn                     );
+    utils::copyString(rtcpVolume.label  , m_volume.label().c_str()  );
+    utils::copyString(rtcpVolume.density, m_volume.density().c_str());
+    utils::copyString(rtcpVolume.unit   , m_jobRequest.driveUnit    );
+    rtcpVolume.volReqId       = m_jobRequest.volReqId;
+    rtcpVolume.mode           = WRITE_DISABLE;
+    rtcpVolume.tStartRequest  = time(NULL);
+    rtcpVolume.err.severity   =  1;
+    rtcpVolume.err.maxTpRetry = -1;
+    rtcpVolume.err.maxCpRetry = -1;
+    RtcpTxRx::giveVolumeToRtcpd(m_cuuid, m_jobRequest.volReqId,
+      m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, rtcpVolume);
+
+    // Get dump parameters message from client an wrap it in an auto_ptr
+    std::auto_ptr<tapegateway::DumpParameters> dumpParameters(
+      ClientTxRx::getDumpParameters(m_cuuid, m_jobRequest.volReqId,
+      m_jobRequest.clientHost, m_jobRequest.clientPort));
+
+    // Tell RTCPD to dump the tape
+    RtcpDumpTapeRqstMsgBody request;
+    request.maxBytes      = dumpParameters->tapeMaxBytes();
+    request.blockSize     = dumpParameters->tapeBlockSize();
+    request.convert       = dumpParameters->tapeConverter();
+    request.tapeErrAction = dumpParameters->tapeErrAction();
+    request.startFile     = dumpParameters->tapeStartFile();
+    request.maxFiles      = dumpParameters->tapeMaxFile();
+    request.fromBlock     = dumpParameters->tapeFromBlock();
+    request.toBlock       = dumpParameters->tapeToBlock();
+    RtcpTxRx::tellRtcpdDumpTape(m_cuuid, m_jobRequest.volReqId,
+      m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, request);
+
+    // Tell RTCPD end of file list
+    RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_jobRequest.volReqId,
+      m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT);
+
     processRtcpdSocks();
 
     try {
