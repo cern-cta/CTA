@@ -971,8 +971,9 @@ castor::tape::tapegateway::FileToMigrate* castor::tape::tapegateway::ora::OraTap
       << std::endl << e.what();
     throw ex;
   }
-
   cnvSvc()->commit();
+  // hardcoded umask
+  result->setUmask(022);  
   return result;
 }
 
@@ -1212,7 +1213,10 @@ castor::tape::tapegateway::FileToRecall* castor::tape::tapegateway::ora::OraTape
     throw ex;
   }
 
-  cnvSvc()->commit(); 
+  cnvSvc()->commit();
+ 
+  // hardcoded umask
+  result->setUmask(077);  
   return result;
 
 }
