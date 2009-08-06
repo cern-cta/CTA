@@ -417,16 +417,12 @@ void castor::tape::net::readBytes(const int socketFd,
     buf);
 
   if(connClosed) {
-    std::stringstream messageStream;
-    messageStream
-      << "Failed to read " << nbBytes << " bytes from socket"
-         ": ";
-    writeSockDescription(messageStream, socketFd);
-    messageStream
-      << ": Connection was closed by the remote end";
+    std::stringstream oss;
+    oss << "Failed to read " << nbBytes << " bytes from socket: ";
+    writeSockDescription(oss, socketFd);
+    oss << ": Connection was closed by the remote end";
 
-    TAPE_THROW_CODE(SECONNDROP,
-      messageStream.str());
+    TAPE_THROW_CODE(SECONNDROP, oss.str());
   }
 }
 
@@ -439,27 +435,18 @@ void castor::tape::net::readBytesFromCloseable(bool &connClosed,
   char *buf) throw(castor::exception::Exception) {
 
   connClosed = false;
-  const int netreadRc = netread_timeout(socketFd, buf, nbBytes,
-    netReadWriteTimeout);
-  const int netreadErrno = errno;
+  const int rc = netread_timeout(socketFd, buf, nbBytes, netReadWriteTimeout);
+  const int savedSerrno = serrno;
 
-  switch(netreadRc) {
+  switch(rc) {
   case -1:
     {
-      char strerrorBuf[STRERRORBUFLEN];
-      char *const errorStr = strerror_r(netreadErrno, strerrorBuf,
-        sizeof(strerrorBuf));
+      std::stringstream oss;
+      oss << ": Failed to read " << nbBytes << " bytes from socket: ";
+      writeSockDescription(oss, socketFd);
+      oss << ": " << sstrerror(savedSerrno);
 
-      std::stringstream messageStream;
-      messageStream
-        << ": Failed to read " << nbBytes << " bytes from socket"
-           ": ";
-      writeSockDescription(messageStream, socketFd);
-      messageStream
-        << ": " << errorStr;
-
-      TAPE_THROW_CODE(serrno,
-        messageStream.str());
+      TAPE_THROW_CODE(savedSerrno, oss.str());
     }
     break;
   case 0:
@@ -468,20 +455,17 @@ void castor::tape::net::readBytesFromCloseable(bool &connClosed,
     }
     break;
   default:
-    if (netreadRc != nbBytes) {
+    if (rc != nbBytes) {
 
-      std::stringstream messageStream;
-      messageStream
-        << "Failed to read " << nbBytes << " bytes from socket"
-           ": ";
-      writeSockDescription(messageStream, socketFd);
-      messageStream
+      std::stringstream oss;
+      oss << "Failed to read " << nbBytes << " bytes from socket: ";
+      writeSockDescription(oss, socketFd);
+      oss
         << ": Read the wrong number of bytes"
         << ": Expected: " << nbBytes
-        << ": Read: " << netreadRc;
+        << ": Read: " << rc;
 
-      TAPE_THROW_CODE(SECOMERR,
-        messageStream.str());
+      TAPE_THROW_CODE(SECOMERR, oss.str());
     }
   }
 }
@@ -494,49 +478,38 @@ void castor::tape::net::writeBytes(const int socketFd,
   const int netReadWriteTimeout, const int nbBytes, char *const buf)
   throw(castor::exception::Exception) {
 
-  const int netwriteRc = netwrite_timeout(socketFd, buf, nbBytes,
-    netReadWriteTimeout);
+  const int rc = netwrite_timeout(socketFd, buf, nbBytes, netReadWriteTimeout);
+  const int savedSerrno = serrno;
 
-  switch(netwriteRc) {
+  switch(rc) {
   case -1:
     {
-      std::stringstream messageStream;
-      messageStream
-        << ": Failed to write " << nbBytes << " bytes to socket"
-           ": ";
-      writeSockDescription(messageStream, socketFd);
-      messageStream
-        << ": " << neterror();
+      std::stringstream oss;
+      oss << ": Failed to write " << nbBytes << " bytes to socket: ";
+      writeSockDescription(oss, socketFd);
+      oss << ": " << sstrerror(savedSerrno);
 
-      TAPE_THROW_CODE(SECOMERR,
-        messageStream.str());
+      TAPE_THROW_CODE(SECOMERR, oss.str());
     }
   case 0:
     {
-      std::stringstream messageStream;
-      messageStream
-        << ": Failed to write " << nbBytes << " bytes to socket"
-           ": ";
-      writeSockDescription(messageStream, socketFd);
-      messageStream
-        << ": Connection dropped";
+      std::stringstream oss;
+      oss << ": Failed to write " << nbBytes << " bytes to socket: ";
+      writeSockDescription(oss, socketFd);
+      oss << ": Connection dropped";
 
-      TAPE_THROW_CODE(SECONNDROP,
-        messageStream.str());
+      TAPE_THROW_CODE(SECONNDROP, oss.str());
     }
   default:
-    if(netwriteRc != nbBytes) {
-      std::stringstream messageStream;
-      messageStream
-        << ": Failed to write " << nbBytes << " bytes to socket"
-           ": ";
-      writeSockDescription(messageStream, socketFd);
-      messageStream
+    if(rc != nbBytes) {
+      std::stringstream oss;
+      oss << ": Failed to write " << nbBytes << " bytes to socket: ";
+      writeSockDescription(oss, socketFd);
+      oss
         << ": Wrote the wrong number of bytes"
         << ": Expected: " << nbBytes
-        << ": Wrote: " << netwriteRc;
-      TAPE_THROW_CODE(SECOMERR,
-        messageStream.str());
+        << ": Wrote: " << rc;
+      TAPE_THROW_CODE(SECOMERR, oss.str());
     }
   }
 }
