@@ -194,8 +194,20 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocks()
        m_volume.clientType() == tapegateway::WRITE_TP ||
        m_volume.clientType() == tapegateway::DUMP_TP) {
 
-      GatewayTxRx::pingClient(m_cuuid, m_jobRequest.volReqId,
-        m_jobRequest.clientHost, m_jobRequest.clientPort);
+      try {
+        GatewayTxRx::pingClient(m_cuuid, m_jobRequest.volReqId,
+          m_jobRequest.clientHost, m_jobRequest.clientPort);
+      } catch(castor::exception::Exception &ex) {
+        castor::exception::Exception ex2(ex.code());
+
+        ex2.getMessage() <<
+          "Failed to ping client"
+          ": clientType=" <<
+          utils::volumeClientTypeToString(m_volume.clientType()) <<
+          ": " << ex.getMessage().str();
+
+        throw(ex2);
+      }
     }
 
     // Build the file descriptor set ready for the select call
