@@ -56,6 +56,8 @@
 #include <unistd.h>
 #include <poll.h>
  
+#include "h/rfio_api.h"
+
 
 //------------------------------------------------------------------------------
 // vmgr_error_buffer
@@ -1084,6 +1086,22 @@ void castor::tape::tpcp::TpcpCommand::checkFilenameFormat()
   while(itor!=m_filenames.end()) {
 
    std::string &line = *itor;
+
+   const char *characters = "/";
+   std::string::size_type end   = line.find_last_not_of(characters);
+
+   // If filename ends with 1 or more '/' trow an exception
+   if(end == std::string::npos || end != line.length()-1) {
+
+    castor::exception::Exception ex(ECANCELED);
+    ex.getMessage() <<
+           ": Invalid RFIO filename syntax"
+           ": Filename must identiry a regular file"
+           ": filename=\"" << line <<"\"";
+
+      throw ex;
+   } 
+ 
    firstPos = line.find_first_of(":");
    lastPos  = line.find_last_of(":");
 
@@ -1101,15 +1119,16 @@ void castor::tape::tpcp::TpcpCommand::checkFilenameFormat()
        if (str == "localhost" || str == "127.0.0.1"){
 
          line.replace(0, firstPos+1, hostname);
-
        }
      } else {  // if there are more than 1 ":" -->  ERROR
 
-       TAPE_THROW_EX(castor::exception::Internal,
+      castor::exception::Exception ex(ECANCELED);
+      ex.getMessage() << 
          ": Invalid RFIO filename syntax"
          ": Found too many ':' characters, only 1 is allowed"
-         ": filename=\"" << line <<"\"");
+         ": filename=\"" << line <<"\"";
 
+      throw ex;
      }
    }// else
 

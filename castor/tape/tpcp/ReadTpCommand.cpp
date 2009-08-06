@@ -41,6 +41,7 @@
 #include "castor/tape/tpcp/StreamHelper.hpp"
 #include "castor/tape/tpcp/TapeFileSequenceParser.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "h/rfio_api.h"
 
 #include <errno.h>
 #include <getopt.h>
@@ -389,9 +390,33 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileToRecallRequest(
     m_filenameItor != m_filenames.end();
 
   if(anotherFile) {
+
+    const std::string filename = *(m_filenameItor++);
+    struct stat64     statBuf;
+    const int         rc = rfio_stat64((char*)filename.c_str(), &statBuf);
+    const int         save_serrno = serrno ? serrno : rfio_errno;
+
+    if(rc != 0) {
+      char buf[STRERRORBUFLEN];
+      sstrerror_r(save_serrno, buf, sizeof(buf));
+      buf[sizeof(buf)-1] = '\0';
+
+      std::stringstream oss;
+
+      oss <<
+        "Failed to rfio_stat64 file \"" << filename << "\""
+        ": " << buf;
+
+      sendEndNotificationErrorReport(save_serrno, oss.str(), sock);
+
+      castor::exception::Exception ex(save_serrno);
+
+      ex.getMessage() << oss.str();
+      throw(ex);
+    }
+
     // Get the tape file sequence number and RFIO filename
     const uint32_t    tapeFseq = m_tapeFseqSequence.next();
-    const std::string filename = *(m_filenameItor++);
 
     // Create FileToRecall message for the aggregator
     tapegateway::FileToRecall fileToRecall;
