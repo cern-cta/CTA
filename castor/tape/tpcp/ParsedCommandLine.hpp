@@ -26,6 +26,7 @@
 #define CASTOR_TAPE_TPCP_PARSEDCOMMANDLINE_HPP 1
 
 #include "castor/tape/tpcp/Action.hpp"
+#include "castor/tape/tpcp/Constants.hpp"
 #include "castor/tape/tpcp/FilenameList.hpp"
 #include "castor/tape/tpcp/TapeFseqRangeList.hpp"
 #include "castor/tape/utils/utils.hpp"
@@ -152,7 +153,7 @@ struct ParsedCommandLine {
     serverSet(false),
     tapeFseqPosition(0),
     dumpTapeMaxBytes(320),
-    dumpTapeBlockSize(65536),
+    dumpTapeBlockSize(DEFAULTDUMPBLOCKSIZE),
     dumpTapeConverter(-1),
     dumpTapeErrAction(-1),
     dumpTapeFromFile(1),

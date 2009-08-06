@@ -88,7 +88,7 @@ void castor::tape::tpcp::DumpTpCommand::usage(std::ostream &os,
     "\t                      default is 320.\n"
     "\t-b, --blksize n       The maximum block size in bytes.  This should be\n"
     "\t                      an unsigned integer greater than 0.  The default\n"
-    "\t                      is 65536.\n"
+    "\t                      is " << DEFAULTDUMPBLOCKSIZE << ".\n"
     "\t-f, --fromfile seq    The tape file sequence number to start from.\n"
     "\t                      This should be an unsigned integer greater than\n"
     "\t                      0.  The default is 1.\n"

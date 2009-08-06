@@ -46,6 +46,11 @@ namespace tpcp   {
    */
   const char *const TIMEFORMAT = "%B %d %H:%M:%S";
 
+  /**
+   * The default blocksize in bytes to be used when dumping a tape.
+   */
+  const int32_t DEFAULTDUMPBLOCKSIZE = 262144;
+
 } // namespace tpcp
 } // namespace tape
 } // namespace castor
