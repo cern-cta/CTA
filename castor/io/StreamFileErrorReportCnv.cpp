@@ -93,6 +93,7 @@ void castor::io::StreamFileErrorReportCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->nshost();
   ad->stream() << obj->fileid();
   ad->stream() << obj->fseq();
+  ad->stream() << obj->umask();
   ad->stream() << obj->mountTransactionId();
   ad->stream() << obj->errorCode();
   ad->stream() << obj->errorMessage();
@@ -122,6 +123,9 @@ castor::IObject* castor::io::StreamFileErrorReportCnv::createObj(castor::IAddres
   int fseq;
   ad->stream() >> fseq;
   object->setFseq(fseq);
+  unsigned char umask;
+  ad->stream() >> umask;
+  object->setUmask(umask);
   u_signed64 mountTransactionId;
   ad->stream() >> mountTransactionId;
   object->setMountTransactionId(mountTransactionId);
