@@ -46,15 +46,15 @@
 //-----------------------------------------------------------------------------
 // run
 //-----------------------------------------------------------------------------
-bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
+castor::tape::tapegateway::Volume
+  *castor::tape::aggregator::DriveAllocationProtocolEngine::run(
   const Cuuid_t                 &cuuid,
   castor::io::AbstractTCPSocket &vdqmSock,
   const int                     rtcpdCallbackSockFd,
   const char                    *rtcpdCallbackHost,
   const unsigned short          rtcpdCallbackPort,
   SmartFd                       &rtcpdInitialSockFd,
-  const RcpJobRqstMsgBody       &jobRequest,
-  tapegateway::Volume           &volume)
+  const RcpJobRqstMsgBody       &jobRequest)
   throw(castor::exception::Exception) {
   
   // Pass a modified version of the job request through to RTCPD, setting the
@@ -185,11 +185,8 @@ bool castor::tape::aggregator::DriveAllocationProtocolEngine::run(
   }
 
   // Get the volume from the tape gateway
-  const bool thereIsAVolume = ClientTxRx::getVolume(cuuid,
-    jobRequest.volReqId, jobRequest.clientHost, jobRequest.clientPort,
-    jobRequest.driveUnit, volume);
-
-  return thereIsAVolume;
+  return ClientTxRx::getVolume(cuuid, jobRequest.volReqId,
+    jobRequest.clientHost, jobRequest.clientPort, jobRequest.driveUnit);
 }
 
 

@@ -67,19 +67,19 @@ public:
    * @param rtcpdInitialSockFd  Out parameter: The socket file descriptor of
    *                            the initial RTCPD connection.
    * @param jobRequest          The RTCOPY job request from the VDQM.
-   * @param volume              Out parameter: The volume message received from
-   *                            the tape gateway.
-   * @return                    True if there is a volume to mount.
+   * @return                    A pointer to the volume message received from
+   *                            the client or NULL if there is no volume to
+   *                            mount.  The callee is responsible for
+   *                            deallocating the message.
    */
-  bool run(
+  tapegateway::Volume *run(
     const Cuuid_t                 &cuuid,
     castor::io::AbstractTCPSocket &vdqmSock,
     const int                     rtcpdCallbackSockFd,
     const char                    *rtcpdCallbackHost,
     const unsigned short          rtcpdCallbackPort,
     SmartFd                       &rtcpdInitialSockFd,
-    const RcpJobRqstMsgBody       &jobRequest,
-    tapegateway::Volume           &volume)
+    const RcpJobRqstMsgBody       &jobRequest)
     throw(castor::exception::Exception);
 
   /**

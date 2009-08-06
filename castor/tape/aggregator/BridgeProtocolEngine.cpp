@@ -43,6 +43,7 @@
 #include "h/rtcp_constants.h"
 
 #include <list>
+#include <memory>
 
 
 //-----------------------------------------------------------------------------
@@ -195,7 +196,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocks()
        m_volume.clientType() == tapegateway::DUMP_TP) {
 
       try {
-        ClientTxRx::pingClient(m_cuuid, m_jobRequest.volReqId,
+        ClientTxRx::ping(m_cuuid, m_jobRequest.volReqId,
           m_jobRequest.clientHost, m_jobRequest.clientPort);
       } catch(castor::exception::Exception &ex) {
         castor::exception::Exception ex2(ex.code());
@@ -663,18 +664,21 @@ void castor::tape::aggregator::BridgeProtocolEngine::runDumpSession()
   RtcpTxRx::giveVolumeToRtcpd(m_cuuid, m_jobRequest.volReqId,
     m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, rtcpVolume);
 
-  // Get dump parameters from client
+  // Get dump parameters message from client an wrap it in an auto_ptr
+  std::auto_ptr<tapegateway::DumpParameters> dumpParameters(
+    ClientTxRx::getDumpParameters(m_cuuid, m_jobRequest.volReqId,
+    m_jobRequest.clientHost, m_jobRequest.clientPort));
 
   // Tell RTCPD to dump tape
   RtcpDumpTapeRqstMsgBody request;
-  // request.maxBytes      = m_volume.dumpTapeMaxBytes();
-  // request.blockSize     = m_volume.dumpTapeBlockSize();
-  // request.convert       = m_volume.dumpTapeConverter();
-  // request.tapeErrAction = m_volume.dumpTapeErrAction();
-  // request.startFile     = m_volume.dumpTapeStartFile();
-  // request.maxFiles      = m_volume.dumpTapeMaxFile();
-  // request.fromBlock     = m_volume.dumpTapeFromBlock();
-  // request.toBlock       = m_volume.dumpTapeToBlock();
+  request.maxBytes      = dumpParameters->tapeMaxBytes();
+  request.blockSize     = dumpParameters->tapeBlockSize();
+  request.convert       = dumpParameters->tapeConverter();
+  request.tapeErrAction = dumpParameters->tapeErrAction();
+  request.startFile     = dumpParameters->tapeStartFile();
+  request.maxFiles      = dumpParameters->tapeMaxFile();
+  request.fromBlock     = dumpParameters->tapeFromBlock();
+  request.toBlock       = dumpParameters->tapeToBlock();
   RtcpTxRx::tellRtcpdDumpTape(m_cuuid, m_jobRequest.volReqId,
     m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, request);
 

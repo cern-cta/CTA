@@ -50,19 +50,19 @@ public:
   /**
    * Gets the volume to be mounted from the client.
    *
-   * @param cuuid       The ccuid to be used for logging.
-   * @param volReqId    The volume request ID to be sent to the client.
-   * @param clientHost  The client host name.
-   * @param clientPort  The client port number.
-   * @param unit        The tape unit.
-   * @param volume      Out parameter: The volume message received from the
-   *                    client.
-   * @return True if there is a volume to mount.
+   * @param cuuid      The ccuid to be used for logging.
+   * @param volReqId   The volume request ID to be sent to the client.
+   * @param clientHost The client host name.
+   * @param clientPort The client port number.
+   * @param unit       The tape unit.
+   * @return           A pointer to the volume message received from the client
+   *                   or NULL if there is no volume to mount.  The callee is
+   *                   responsible for deallocating the message.
    */
-  static bool getVolume(const Cuuid_t &cuuid,
+  static tapegateway::Volume *getVolume(const Cuuid_t &cuuid,
     const uint32_t volReqId, const char *clientHost,
-    const unsigned short clientPort, const char (&unit)[CA_MAXUNMLEN+1],
-    tapegateway::Volume &volume) throw(castor::exception::Exception);
+    const unsigned short clientPort, const char (&unit)[CA_MAXUNMLEN+1])
+    throw(castor::exception::Exception);
 
   /**
    * Gets a file to migrate from the client.
@@ -218,8 +218,8 @@ public:
    * @param volReqId   The volume request ID to be sent to the client.
    * @param clientHost The client host name.
    * @param clientPort The client port number.
-   * @return           A pointer to the DumpParamaters message which MUST be
-   *                   deallocated by the callee.
+   * @return           A pointer to the DumpParamaters message.  The callee is
+   *                   responsible for deallocating the message.
    */
   static tapegateway::DumpParameters *getDumpParameters(
     const Cuuid_t &cuuid, const uint32_t volReqId, const char *clientHost,
@@ -248,9 +248,9 @@ public:
    * @param clientPort The client port number.
    * @param message    The dump tape message string.
    */
-  static void pingClient(const Cuuid_t &cuuid,
-    const uint32_t volReqId, const char *clientHost,
-    const unsigned short clientPort) throw(castor::exception::Exception);
+  static void ping(const Cuuid_t &cuuid, const uint32_t volReqId,
+    const char *clientHost, const unsigned short clientPort)
+    throw(castor::exception::Exception);
 
 
 private:

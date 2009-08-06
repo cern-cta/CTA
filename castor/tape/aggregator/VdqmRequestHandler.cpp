@@ -145,9 +145,6 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_CREATED_RTCPD_CALLBACK_PORT, params);
 
-    SmartFd rtcpdInitialSockFd;
-    tapegateway::Volume volume;
-
     // Receive the RTCOPY job request from the VDQM
     RcpJobRqstMsgBody jobRequest;
     utils::setBytes(jobRequest, '\0');
@@ -155,14 +152,17 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
     RtcpTxRx::receiveRcpJobRqst(cuuid, vdqmSock->socket(), RTCPDNETRWTIMEOUT,
       jobRequest);
 
-    DriveAllocationProtocolEngine driveAllocationProtocolEngine;
-    const bool thereIsAVolume = driveAllocationProtocolEngine.run(cuuid,
-      *(vdqmSock.get()), rtcpdCallbackSockFd.get(), rtcpdCallbackHost,
-      rtcpdCallbackPort, rtcpdInitialSockFd, jobRequest, volume);
+    SmartFd rtcpdInitialSockFd;
 
-    // If there is no volume to mount, then notify tape gatway of end of
-    // session and return
-    if(!thereIsAVolume) {
+    DriveAllocationProtocolEngine driveAllocationProtocolEngine;
+    std::auto_ptr<tapegateway::Volume>
+      volume(driveAllocationProtocolEngine.run(cuuid, *(vdqmSock.get()),
+      rtcpdCallbackSockFd.get(), rtcpdCallbackHost, rtcpdCallbackPort,
+      rtcpdInitialSockFd, jobRequest));
+
+    // If there is no volume to mount, then notify the client end of session
+    // and return
+    if(volume.get() == NULL) {
       try {
         ClientTxRx::notifyEndOfSession(cuuid, jobRequest.volReqId,
           jobRequest.clientHost, jobRequest.clientPort);
@@ -180,10 +180,10 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
     }
 
     // If the volume has the aggregation format
-    if(volume.label() == "ALB") {
+    if(volume->label() == "ALB") {
 
       // If migrating
-      if(volume.mode() == tapegateway::WRITE) {
+      if(volume->mode() == tapegateway::WRITE) {
 
         Packer packer;
         packer.run();
@@ -207,7 +207,7 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
       utils::setBytes(vsn, '\0');
       BridgeProtocolEngine bridgeProtocolEngine(cuuid,
         rtcpdCallbackSockFd.get(), rtcpdInitialSockFd.get(), jobRequest,
-        volume, vsn, m_stoppingGracefullyFunctor);
+        *volume, vsn, m_stoppingGracefullyFunctor);
       bridgeProtocolEngine.run();
     }
   } catch(castor::exception::Exception &ex) {
