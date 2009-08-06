@@ -1336,14 +1336,8 @@ castor::tape::tapegateway::DumpParameters
           ": Failed to down cast reply object to tapegateway::DumpParameters");
       }
 
-      {
-        castor::dlf::Param params[] = {
-          castor::dlf::Param("volReqId"  , volReqId  ),
-          castor::dlf::Param("clientHost", clientHost),
-          castor::dlf::Param("clientPort", clientPort)};
-        castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-          AGGREGATOR_GOT_DUMP_PARAMETERS_FROM_CLIENT, params);
-      }
+      LogHelper::logMsg(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_GOT_DUMP_PARAMETERS_FROM_CLIENT, volReqId, -1, *reply);
 
       // If there is a transaction ID mismatch
       if(reply->mountTransactionId() != volReqId) {
