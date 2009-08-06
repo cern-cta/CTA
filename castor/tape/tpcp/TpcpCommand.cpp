@@ -518,14 +518,15 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
     volumeMsg.setLabel(m_vmgrTapeInfo.lbltype);
     volumeMsg.setMountTransactionId(m_volReqId);
     volumeMsg.setDensity(m_vmgrTapeInfo.density);
-    volumeMsg.setDumpTapeMaxBytes(m_cmdLine.dumpTapeMaxBytes);
-    volumeMsg.setDumpTapeBlockSize(m_cmdLine.dumpTapeBlockSize);
-    volumeMsg.setDumpTapeConverter(m_cmdLine.dumpTapeConverter);
-    volumeMsg.setDumpTapeErrAction(m_cmdLine.dumpTapeErrAction);
-    volumeMsg.setDumpTapeStartFile(m_cmdLine.dumpTapeFromFile);
-    volumeMsg.setDumpTapeMaxFile(m_cmdLine.dumpTapeMaxFiles);
-    volumeMsg.setDumpTapeFromBlock(m_cmdLine.dumpTapeFromBlock);
-    volumeMsg.setDumpTapeToBlock(m_cmdLine.dumpTapeToBlock);
+
+    //  volumeMsg.setDumpTapeMaxBytes(m_cmdLine.dumpTapeMaxBytes);
+    //  volumeMsg.setDumpTapeBlockSize(m_cmdLine.dumpTapeBlockSize);
+    //  volumeMsg.setDumpTapeConverter(m_cmdLine.dumpTapeConverter);
+    //  volumeMsg.setDumpTapeErrAction(m_cmdLine.dumpTapeErrAction);
+    //  volumeMsg.setDumpTapeStartFile(m_cmdLine.dumpTapeFromFile);
+    //  volumeMsg.setDumpTapeMaxFile(m_cmdLine.dumpTapeMaxFiles);
+    //  volumeMsg.setDumpTapeFromBlock(m_cmdLine.dumpTapeFromBlock);
+    //  volumeMsg.setDumpTapeToBlock(m_cmdLine.dumpTapeToBlock);
 
     // Send the volume message to the aggregator
     callbackConnectionSock.sendObject(volumeMsg);
