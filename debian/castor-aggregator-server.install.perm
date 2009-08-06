@@ -1,0 +1,4 @@
+%attr(0750,root,root) usr/bin/aggregatord
+%attr(0644,root,root) etc/sysconfig/aggregatord.example
+%attr(0755,root,root) etc/init.d/aggregatord
+%attr(0644,root,root) etc/logrotate.d/castor-aggregator-server

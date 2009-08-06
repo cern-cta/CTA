@@ -1,0 +1,6 @@
+/var/log/aggregatord /var/spool/tape/aggregatord/log {
+    compress
+    daily
+    missingok
+    rotate 90
+}

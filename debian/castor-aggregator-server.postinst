@@ -1,0 +1,2 @@
+/sbin/chkconfig --add aggregatord
+/sbin/service aggregatord condrestart > /dev/null 2>&1 || :
