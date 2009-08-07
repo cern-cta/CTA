@@ -175,6 +175,9 @@ The following error values might be returned by any package:
 .TP
 .B SELOOP
 (1040) Too many symbolic links
+.TP
+.B SENOPORTINRANGE
+(1041) No port in range
 
 .SH COPYTAPE ERRORS
 None yet
