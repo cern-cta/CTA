@@ -37,25 +37,25 @@ namespace castor {
    * The default inclusive low port of the aggregator client callback port
    * number range.
    */
-  const unsigned short AGGREGATORCLIENT_LOWPORT = 300201;
+  const unsigned short AGGREGATORCLIENT_LOWPORT = 30201;
 
   /**
    * The default inclusive high port of the aggregator client callback port
    * number range.
    */
-  const unsigned short AGGREGATORCLIENT_HIGHPORT = 300300;
+  const unsigned short AGGREGATORCLIENT_HIGHPORT = 30300;
 
   /**
    * The default inclusive low port of the aggregator's RTCPD callback port
    * number range.
    */
-  const unsigned short AGGREGATORRTCPD_LOWPORT = 300101;
+  const unsigned short AGGREGATORRTCPD_LOWPORT = 30101;
 
   /**
    * The default inclusive high port of the aggregator's RTCPD callback port
    * number range.
    */
-  const unsigned short AGGREGATORRTCPD_HIGHPORT = 300200;
+  const unsigned short AGGREGATORRTCPD_HIGHPORT = 30200;
 
   /**
    * The default port on which the job manager listenes for notifications.
