@@ -357,7 +357,9 @@ bool castor::tape::tpcp::WriteTpCommand::handleFileToMigrateRequest(
   const bool anotherFile = m_filenameItor != m_filenames.end();
 
   if(anotherFile) {
+
     const std::string filename = *(m_filenameItor++);
+
     struct stat64     statBuf;
     const int         rc = rfio_stat64((char*)filename.c_str(), &statBuf);
     const int         save_serrno = rfio_serrno();
@@ -375,9 +377,8 @@ bool castor::tape::tpcp::WriteTpCommand::handleFileToMigrateRequest(
 
       std::stringstream oss;
 
-      oss <<
-        "Failed to rfio_stat64 file \"" << filename << "\""
-        ": " << err_msg;
+      oss << "Failed to rfio_stat64 file \"" << filename << "\""
+             ": " << err_msg;
 
       sendEndNotificationErrorReport(save_serrno, oss.str(), sock);
 

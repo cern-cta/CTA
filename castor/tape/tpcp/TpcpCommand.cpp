@@ -56,8 +56,6 @@
 #include <unistd.h>
 #include <poll.h>
  
-#include "h/rfio_api.h"
-
 
 //------------------------------------------------------------------------------
 // vmgr_error_buffer
@@ -134,14 +132,14 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
 
     // get the local hostnale
     gethostname(m_hostname, sizeof(m_hostname));    
-    // chek if the hostaname of the machine. If it is set to "localost"
+    // chek if the hostaname of the machine is set to "localost"
     if(strcmp(m_hostname, "localhost") == 0) {
       std::cerr << "tpcp cannot be ran on a machine where hostname is set to "
                    "\"localhost\"" << std::endl << std::endl;
       return 1;
     }
     
-    // get the Current Working directory
+    // get the Current Working Directory
     getcwd(m_cwd, PATH_MAX);
     if(m_cwd == NULL){
       std::cerr << "tpcp cannot be ran on a machine where the current working "
@@ -228,7 +226,7 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
       }
     }
 
-    //check the format of the filename: hostname:path/filename
+    //check the format of the filename: hostname:/filepath/filename
     checkFilenameFormat();
 
     // If debug, then display the list of files to be processed by the action

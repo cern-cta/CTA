@@ -459,26 +459,27 @@ private:
   MsgHandlerMap m_msgHandlers;
 
   /**
-   * Check the format of the filenames, that MUST BE of the form: 
-   * hostaname:<filepath>/filename.
+   * Check the format of the filename, that MUST BE of the form: 
+   * hostaname:/<filepath/>filename.
    * Local files need to have an hostname specified, if not will be added the
    * local hostname.
-   * Hostnames like "localhost" or "127.0.0.1" are not allowed, they will be
+   * Hostnames like "localhost", "127.0.0.1" or "" are not allowed, they will be
    * translate in to local hostname.
-   * 
+   * Relative filename will be prefix by the hostaname and by the current
+   * working directory
    */
   void checkFilenameFormat() throw(castor::exception::Exception);
 
   /**
    * The hostaname of the machine.
    */
-  char m_hostname[CA_MAXHOSTNAMELEN];
+  char m_hostname[CA_MAXHOSTNAMELEN+1];
 
 
   /**
    * The current working directory where tpcp command is run.
    */
-  char m_cwd[PATH_MAX];
+  char m_cwd[CA_MAXPATHLEN+1];
 
 }; // class TpcpCommand
 

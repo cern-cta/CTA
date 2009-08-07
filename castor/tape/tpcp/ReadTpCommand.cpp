@@ -411,9 +411,8 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileToRecallRequest(
 
       std::stringstream oss;
 
-      oss <<
-        "Failed to rfio_stat64 file \"" << filepath << "\""
-        ": " << err_msg;
+      oss << "Failed to rfio_stat64 directory \"" << filepath << "\""
+             ": " << err_msg;
 
       sendEndNotificationErrorReport(save_serrno, oss.str(), sock);
 
