@@ -1115,9 +1115,18 @@ void castor::tape::tpcp::TpcpCommand::checkFilenameFormat()
      if(lastPos == std::string::npos){
 
        std::string str = line.substr(0, firstPos);
-       // if file hostamane == "localhost" or "127.0.0.1" or is empty 
+       if(str.empty()){
+         castor::exception::Exception ex(ECANCELED);
+         ex.getMessage() <<
+           ": Invalid RFIO filename syntax"
+           ": Found ':/' character whith not hostname specified"
+           ": filename=\"" << line <<"\"";
+
+        throw ex;
+       }
+       // if file hostamane == "localhost" or "127.0.0.1"  
        // -> replace it with hostname
-       if (str == "localhost" || str == "127.0.0.1" || str.empty()){
+       if (str == "localhost" || str == "127.0.0.1"){
 
          line.replace(0, firstPos+1, hostname);
        }
