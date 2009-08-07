@@ -23,6 +23,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
+#include "castor/exception/InvalidArgument.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/utils/utils.hpp"
@@ -41,21 +42,25 @@
 // createListenerSock
 //-----------------------------------------------------------------------------
 int castor::tape::net::createListenerSock(const char *addr,
-  const unsigned short port) throw(castor::exception::Exception) {
+  const unsigned short port) throw(castor::exception::Communication) {
 
   int    socketFd = 0;
   struct sockaddr_in address;
 
   if ((socketFd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-    const int socketErrno = errno;
+    const int savedErrno = errno;
 
     char strerrorBuf[STRERRORBUFLEN];
-    char *const errorStr = strerror_r(socketErrno, strerrorBuf,
+    char *const errorStr = strerror_r(savedErrno, strerrorBuf,
       sizeof(strerrorBuf));
 
-    TAPE_THROW_CODE(socketErrno,
+    castor::exception::Communication ex(strerrorBuf, savedErrno);
+
+    ex.getMessage() <<
       ": Failed to create listener socket"
-      ": " << errorStr);
+      ": " << errorStr;
+
+    throw(ex);
   }
 
   utils::setBytes(address, '\0');
@@ -64,31 +69,92 @@ int castor::tape::net::createListenerSock(const char *addr,
   address.sin_port = htons(port);
 
   if(bind(socketFd, (struct sockaddr *) &address, sizeof(address)) < 0) {
-    const int bindErrno = errno;
+    const int savedErrno = errno;
 
     char strerrorBuf[STRERRORBUFLEN];
-    char *const errorStr = strerror_r(bindErrno, strerrorBuf,
+    char *const errorStr = strerror_r(savedErrno, strerrorBuf,
       sizeof(strerrorBuf));
 
-    TAPE_THROW_CODE(bindErrno,
+    castor::exception::Communication ex(strerrorBuf, savedErrno);
+
+    ex.getMessage() <<
       ": Failed to bind listener socket"
-      ": " << errorStr);
+      ": " << errorStr;
+
+    throw(ex);
   }
 
   if(listen(socketFd, LISTENBACKLOG) < 0) {
-    const int listenErrno = errno;
+    const int savedErrno = errno;
 
     char strerrorBuf[STRERRORBUFLEN];
-    char *const errorStr = strerror_r(listenErrno, strerrorBuf,
+    char *const errorStr = strerror_r(savedErrno, strerrorBuf,
       sizeof(strerrorBuf));
 
-    TAPE_THROW_CODE(listenErrno,
+    castor::exception::Communication ex(strerrorBuf, savedErrno);
+
+    ex.getMessage() <<
       ": Failed to mark socket as being a listener"
-      ": " << errorStr);
+      ": " << errorStr;
+
+    throw(ex);
   }
 
   return socketFd;
 }
+
+
+//-----------------------------------------------------------------------------
+// createListenerSock
+//-----------------------------------------------------------------------------
+int castor::tape::net::createListenerSock(
+  const char           *addr,
+  const unsigned short lowPort,
+  const unsigned short highPort,
+  unsigned short       &chosenPort)
+  throw(castor::exception::InvalidArgument, castor::exception::NoPortInRange,
+    castor::exception::Communication) {
+
+  // Check range validity
+  if(lowPort < 1) {
+    TAPE_THROW_EX(castor::exception::InvalidArgument,
+      "lowPort must be greater than 0"
+      ": lowPort=" << lowPort);
+  }
+  if(highPort < 1) {
+    TAPE_THROW_EX(castor::exception::InvalidArgument,
+      "highPort must be greater than 0"
+      ": highPort=" << lowPort);
+  }
+  if(lowPort > highPort) {
+    TAPE_THROW_EX(castor::exception::InvalidArgument,
+      "lowPort must be less than or equal to highPort"
+      ": lowPort=" << lowPort << " highPort=" << highPort);
+  }
+
+  // For each port in the range
+  for(unsigned short p=lowPort; p<=highPort; ++p) {
+    try{
+      const int rc = createListenerSock(addr, p);
+      chosenPort = p;
+      return rc;
+    } catch(castor::exception::Communication &ex) {
+      // Rethow all communication exceptions except for address in use
+      if(ex.code() != EADDRINUSE) {
+        throw(ex);
+      }
+    }
+  }
+
+  // Failed to bind to a port within  the specified range
+  castor::exception::NoPortInRange ex(lowPort, highPort);
+
+  ex.getMessage() << "Failed to bind a port within the specified range"
+    ": lowPort=" << lowPort << " highPort=" << highPort;
+
+  throw(ex);
+}
+
 
 
 //-----------------------------------------------------------------------------

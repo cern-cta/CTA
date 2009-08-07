@@ -26,7 +26,10 @@
 #ifndef CASTOR_TAPE_NET_NET_HPP
 #define CASTOR_TAPE_NET_NET_HPP 1
 
+#include "castor/exception/Communication.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/InvalidArgument.hpp"
+#include "castor/exception/NoPortInRange.hpp"
 #include "castor/exception/TapeNetAcceptInterrupted.hpp"
 #include "castor/exception/TimeOut.hpp"
 #include "castor/tape/net/Constants.hpp"
@@ -45,12 +48,40 @@ namespace net    {
  * listener socket.
  *
  * @param addr The IP address in dotted quad notation to be used by
- * inet_addr().
+ *             inet_addr().
  * @param port The port number to listen on or 0 if one should be allocated.
- * @return The socket file descriptor.
+ * @return     The socket file descriptor.
  */
-int createListenerSock(const char *addr,
-  const unsigned short port) throw(castor::exception::Exception);
+int createListenerSock(const char *addr, const unsigned short port)
+  throw(castor::exception::Communication);
+
+/**
+ * Creates a listener socket with a port number within the specified range.
+ * This method creates the socket, binds it and marks it as a listener.
+ *
+ * This method raises a castor::exception::InvalidArgument exception if one or
+ * more of its input parameters are invalid.
+ *
+ * This method raises a castor::exception::NoPortInRange exception if it cannot
+ * find a free port to bind to within the specified range.
+ *
+ * This method raises a castor::exception::Communication exception if it
+ * encounters an unexpected communication error.
+ *
+ * @param addr       The IP address in dotted quad notation to be used by
+ *                   inet_addr().
+ * @param lowPort    The inclusive low port of the port number range.  This
+ *                   parameter must be an unsigned integer greater than 0.
+ * @param highPort   The inclusive high port of the port number range.  This
+ *                   parameter must be an unsigned integer greater than 0.
+ * @param chosenPort Out parameter: The actual port that this method binds the
+ *                   socket to.
+ * @return           The socket file descriptor.
+ */
+int createListenerSock(const char *addr, const unsigned short lowPort,
+  const unsigned short highPort, unsigned short &chosenPort)
+  throw(castor::exception::InvalidArgument, castor::exception::NoPortInRange,
+    castor::exception::Communication);
 
 /**
  * Accepts a connection on the specified listener socket and returns the
