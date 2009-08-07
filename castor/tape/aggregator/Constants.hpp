@@ -34,6 +34,7 @@ namespace castor     {
 namespace tape       {
 namespace aggregator {
   	
+  const int         CLIENTPINGTIMEOUT     = 5;
   const size_t      HDRBUFSIZ             = 3 * sizeof(uint32_t);
   const int         MAXDRIVES             = 4;
   const int         MAXINITMIGFILES       = 2;

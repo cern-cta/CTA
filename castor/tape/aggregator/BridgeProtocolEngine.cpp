@@ -190,10 +190,13 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocks()
       throw(ex);
     }
 
-    // Ping the client if it is readtp, writetp or dumptp
-    if(m_volume.clientType() == tapegateway::READ_TP  ||
+    // Ping the client if the ping timeout has been reached and the client is
+    // readtp, writetp or dumptp
+    if(
+      (nbOneSecondTimeouts % CLIENTPINGTIMEOUT == 0) &&
+      (m_volume.clientType() == tapegateway::READ_TP  ||
        m_volume.clientType() == tapegateway::WRITE_TP ||
-       m_volume.clientType() == tapegateway::DUMP_TP) {
+       m_volume.clientType() == tapegateway::DUMP_TP)) {
 
       try {
         ClientTxRx::ping(m_cuuid, m_jobRequest.volReqId,
