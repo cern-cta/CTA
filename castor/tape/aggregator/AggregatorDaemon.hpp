@@ -121,12 +121,6 @@ private:
    */
   static castor::dlf::Message s_dlfMessages[];
 
-  /**
-   * Returns the port on which the server will listen for connections from the
-   * VDQM.
-   */
-  int getVdqmListenPort() throw(castor::exception::InvalidConfigEntry);
-
 }; // class AggregatorDaemon
 
 } // namespace aggregator

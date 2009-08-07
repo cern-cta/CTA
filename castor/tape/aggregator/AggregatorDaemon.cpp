@@ -260,43 +260,13 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
 
 
 //------------------------------------------------------------------------------
-// getVdqmListenPort()
-//------------------------------------------------------------------------------
-int castor::tape::aggregator::AggregatorDaemon::getVdqmListenPort()
-  throw(castor::exception::InvalidConfigEntry) {
-  int port = AGGREGATOR_VDQMPORT; // Initialise to default value
-  const char *const configEntry = getconfent("TAPEAGGREGATOR", "VDQMPORT", 0);
-
-  if(configEntry != NULL) {
-    if(utils::isValidUInt(configEntry)) {
-      port = atoi(configEntry);
-    } else {
-      castor::exception::InvalidConfigEntry ex("TAPEAGGREGATOR", "VDQMPORT",
-        configEntry);
-
-      ex.getMessage()
-        <<  "File="     << __FILE__
-        << " Line="     << __LINE__
-        << " Function=" << __FUNCTION__
-        << ": Invalid configuration entry: "
-        << ex.getEntryCategory() << " " << ex.getEntryName() << " "
-        << ex.getEntryValue();
-
-      throw ex;
-    }
-  }
-
-  return port;
-}
-
-
-//------------------------------------------------------------------------------
 // createVdqmRequestHandlerPool
 //------------------------------------------------------------------------------
 void castor::tape::aggregator::AggregatorDaemon::
   createVdqmRequestHandlerPool() throw(castor::exception::Exception) {
 
-  const int vdqmListenPort = getVdqmListenPort();
+  const int vdqmListenPort = utils::getPortFromConfig("AGGREGATOR", "VDQMPORT",
+    AGGREGATOR_VDQMPORT);
   server::IThread *iThread =
     new castor::tape::aggregator::VdqmRequestHandler();
   server::BaseThreadPool* threadPool =

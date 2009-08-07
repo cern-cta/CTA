@@ -115,7 +115,7 @@ castor::tape::tapegateway::Volume
 
   // Acknowledge the VDQM - maybe positive or negative depending on reply
   // from RTCPD
-  char vdqmReplyBuf[MSGBUFSIZ];
+  char vdqmReplyBuf[RTCPMSGBUFSIZE];
   size_t vdqmReplyLen = 0;
   vdqmReplyLen = RtcpMarshaller::marshall(vdqmReplyBuf, rtcpdReply);
   net::writeBytes(vdqmSock.socket(), RTCPDNETRWTIMEOUT, vdqmReplyLen,

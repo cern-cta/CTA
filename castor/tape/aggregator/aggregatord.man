@@ -10,7 +10,7 @@
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-.TH AGGREGATORD 8 "$Date: 2009/08/06 21:17:48 $" CASTOR "CASTOR"
+.TH AGGREGATORD 8 "$Date: 2009/08/07 15:56:38 $" CASTOR "CASTOR"
 .SH NAME
 aggregatord \- Tape aggregator daemon
 .SH SYNOPSIS
@@ -42,8 +42,21 @@ Prints the usage message
 
 .SH CASTOR CONFIGURATION PARAMETERS
 The tape aggregator daemon reads and uses the following CASTOR configuration
-parameters which are specified within the CASTOR configuration file (the
-default location is /etc/castor/castor.conf).
+parameters which are specified using environment variables or within the CASTOR
+configuration file (the default location is /etc/castor/castor.conf).
+.TP
+\fBAGGREGATOR VDQMPORT
+The port on which the aggregator will listen for RTCOPY jobs from the VDQM.
+The default is 5070.  This configuration parameter should \fBNOT\fP normally be
+set and the default should be used.
+.TP
+\fBAGGREGATORRTCPD LOWPORT
+The inclusive low port of the aggregator's RTCPD callback port number range.
+The default is 300101.
+.TP
+\fBAGGREGATORRTCPD HIGHPORT
+The inclusive high port of the aggregator's RTCPD callback port number range.
+The default is 300200.
 .TP
 \fBaggregatord LOGSTANDARD XXXX
 Sets the location of the \fBaggregatord\fP log file to be \fBXXXX\fP.

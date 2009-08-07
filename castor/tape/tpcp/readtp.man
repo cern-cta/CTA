@@ -10,7 +10,7 @@
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-.TH READTP 1 "$Date: 2009/08/05 09:34:14 $" CASTOR "CASTOR"
+.TH READTP 1 "$Date: 2009/08/07 15:56:38 $" CASTOR "CASTOR"
 .SH NAME
 readtp \- read from a tape
 .SH SYNOPSIS
@@ -70,6 +70,25 @@ Lines starting with a '#' character are considered comments and are therefore
 ignored.  Whitespace is allowed between the beginning of the line and a '#'
 character.  Please note that this option is mutually exclusive with the method
 of providing filenames on the command-line.
+
+.SH CASTOR CONFIGURATION PARAMETERS
+The \fBreadtp\fP command reads and uses the following CASTOR configuration
+parameters which are specified using environment variables or within the CASTOR
+configuration file (the default location is /etc/castor/castor.conf).
+.TP
+\fBAGGREGATORCLIENT LOWPORT
+The inclusive low port of the aggregator client callback port number range.
+The default is 300201.
+.TP
+\fBAGGREGATORCLIENT HIGHPORT
+The inclusive high port of the aggregator client callback port number range.
+The default is 300300.
+.TP
+\fBVDQM HOST
+The name of the host on which the VDQM daemon is running.
+.TP
+\fBVMGR HOST
+The name of the host on which the VMGR daemon is running.
 
 .SH EXAMPLE
 The follwing example reads the first and fourth files from the tape with the

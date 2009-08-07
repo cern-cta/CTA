@@ -33,8 +33,8 @@
 #include "castor/tape/tpcp/FilenameList.hpp"
 #include "castor/tape/tpcp/ParsedCommandLine.hpp"
 #include "castor/tape/utils/utils.hpp"
-#include "h/vmgr_api.h"
 #include "h/Castor_limits.h"
+#include "h/vmgr_api.h"
 
 #include <iostream>
 #include <list>
@@ -185,12 +185,6 @@ protected:
    * The next file transaction ID.
    */
   uint64_t m_fileTransactionId;
-
-  /**
-   * Returns the port on which the server will listen for connections from the
-   * VDQM.
-   */
-  int getVdqmListenPort() throw(castor::exception::Exception);
 
   /**
    * Calculate the minimum number of files specified in the tape file

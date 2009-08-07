@@ -105,7 +105,7 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
   strcpy(request.clientUserName , clientUserName.c_str());
 
   // Marshall the job submission request message
-  char buf[MSGBUFSIZ];
+  char buf[RTCPMSGBUFSIZE];
   size_t totalLen = 0;
 
   try {
@@ -208,7 +208,7 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
   }
 
   // Length of message header = 3 * sizeof(uint32_t)
-  char bodyBuf[MSGBUFSIZ - 3 * sizeof(uint32_t)];
+  char bodyBuf[RTCPMSGBUFSIZE - 3 * sizeof(uint32_t)];
 
   // If the message body is larger than the message body buffer
   if(header.lenOrStatus > sizeof(bodyBuf)) {

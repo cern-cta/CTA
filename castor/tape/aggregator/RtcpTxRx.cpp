@@ -67,7 +67,7 @@ void castor::tape::aggregator::RtcpTxRx::getRequestInfoFromRtcpd(
   utils::setBytes(request, '\0');
 
   // Marshall the request
-  char buf[MSGBUFSIZ];
+  char buf[RTCPMSGBUFSIZE];
   size_t totalLen = 0;
   try {
     totalLen = RtcpMarshaller::marshall(buf, request);
@@ -148,7 +148,7 @@ void castor::tape::aggregator::RtcpTxRx::giveVolumeToRtcpd(
     AGGREGATOR_GIVE_VOLUME_TO_RTCPD, volReqId, socketFd, request);
 
   // Marshall the message
-  char buf[MSGBUFSIZ];
+  char buf[RTCPMSGBUFSIZE];
   size_t totalLen = 0;
   try {
     totalLen = RtcpMarshaller::marshall(buf, request);
@@ -211,7 +211,7 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
   }
 
   // Marshall the message
-  char buf[MSGBUFSIZ];
+  char buf[RTCPMSGBUFSIZE];
   size_t totalLen = 0;
   try {
     totalLen = RtcpMarshaller::marshall(buf, request);
@@ -274,7 +274,7 @@ void castor::tape::aggregator::RtcpTxRx::tellRtcpdDumpTape(
     volReqId, socketFd, request);
 
   // Marshall the message
-  char buf[MSGBUFSIZ];
+  char buf[RTCPMSGBUFSIZE];
   size_t totalLen = 0;
   try {
     totalLen = RtcpMarshaller::marshall(buf, request);
@@ -330,7 +330,7 @@ void castor::tape::aggregator::RtcpTxRx::sendMessageHeader(
   const int netReadWriteTimeout, const MessageHeader &header) 
   throw(castor::exception::Exception) {
 
-  char buf[MSGBUFSIZ];
+  char buf[RTCPMSGBUFSIZE];
   size_t totalLen = 0;
 
   try {
@@ -376,7 +376,7 @@ void castor::tape::aggregator::RtcpTxRx::pingRtcpd(const Cuuid_t &cuuid,
   const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout)
   throw(castor::exception::Exception) {
 
-  char buf[MSGBUFSIZ];
+  char buf[RTCPMSGBUFSIZE];
   size_t totalLen = 0;
 
   MessageHeader header;
@@ -438,7 +438,7 @@ void castor::tape::aggregator::RtcpTxRx::tellRtcpdEndOfFileList(
 
   // Marshall the message
   RtcpNoMoreRequestsMsgBody body;
-  char buf[MSGBUFSIZ];
+  char buf[RTCPMSGBUFSIZE];
   size_t totalLen = 0;
   try {
     totalLen = RtcpMarshaller::marshall(buf, body);
@@ -525,7 +525,7 @@ void castor::tape::aggregator::RtcpTxRx::tellRtcpdToAbort(const Cuuid_t &cuuid,
 
   // Marshall the message
   RtcpAbortMsgBody body;
-  char buf[MSGBUFSIZ];
+  char buf[RTCPMSGBUFSIZE];
   size_t totalLen = 0;
   try {
     totalLen = RtcpMarshaller::marshall(buf, body);
@@ -614,7 +614,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRcpJobRqst(const Cuuid_t &cuuid,
   checkRtcopyReqType(VDQM_CLIENTINFO, header.reqType, __FUNCTION__);
 
   // Length of body buffer = Length of message buffer - length of header
-  char bodyBuf[MSGBUFSIZ - 3 * sizeof(uint32_t)];
+  char bodyBuf[RTCPMSGBUFSIZE - 3 * sizeof(uint32_t)];
 
   // If the message body is too large
   if(header.lenOrStatus > sizeof(bodyBuf)) {
@@ -708,7 +708,7 @@ void castor::tape::aggregator::RtcpTxRx::askRtcpdToRequestMoreWork(
   request.err.maxCpRetry = -1;
 
   // Marshall the message
-  char buf[MSGBUFSIZ];
+  char buf[RTCPMSGBUFSIZE];
   size_t totalLen = 0;
   try {
     totalLen = RtcpMarshaller::marshall(buf, request);

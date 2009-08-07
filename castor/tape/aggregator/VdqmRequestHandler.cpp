@@ -22,6 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
+#include "castor/PortNumbers.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
@@ -128,7 +129,13 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
     // Create, bind and mark a listen socket for RTCPD callback connections
     // Wrap the socket file descriptor in a smart file descriptor so that it is
     // guaranteed to be closed when it goes out of scope.
-    SmartFd rtcpdCallbackSockFd(net::createListenerSock("127.0.0.1",0));
+    const unsigned short lowPort = utils::getPortFromConfig(
+      "AGGREGATORRTCPD", "LOWPORT", AGGREGATORRTCPD_LOWPORT);
+    const unsigned short highPort = utils::getPortFromConfig(
+      "AGGREGATORRTCPD", "HIGHPORT", AGGREGATORRTCPD_HIGHPORT);
+    unsigned short chosenPort = 0;
+    SmartFd rtcpdCallbackSockFd(net::createListenerSock("127.0.0.1", lowPort,
+      highPort,  chosenPort));
 
     // Get the IP, host name and port of the callback port
     unsigned long rtcpdCallbackIp = 0;

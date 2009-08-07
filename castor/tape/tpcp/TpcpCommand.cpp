@@ -562,30 +562,6 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
 
 
 //------------------------------------------------------------------------------
-// getVdqmListenPort()
-//------------------------------------------------------------------------------
-int castor::tape::tpcp::TpcpCommand::getVdqmListenPort()
-  throw(castor::exception::Exception) {
-
-  int port = AGGREGATOR_VDQMPORT; // Initialise to default value
-
-  const char *const configEntry = getconfent("TAPEAGGREGATOR", "VDQMPORT", 0);
-
-  if(configEntry != NULL) {
-    if(utils::isValidUInt(configEntry)) {
-      port = atoi(configEntry);
-    } else {
-      TAPE_THROW_EX(castor::exception::Internal,
-        ": Invalid configuration entry:" 
-      << configEntry);
-    }
-  }
-
-  return port;
-}
-
-
-//------------------------------------------------------------------------------
 // calculateMinNbOfFiles
 //------------------------------------------------------------------------------
 unsigned int castor::tape::tpcp::TpcpCommand::calculateMinNbOfFiles()
@@ -640,16 +616,10 @@ void castor::tape::tpcp::TpcpCommand::vmgrQueryTape(
 void castor::tape::tpcp::TpcpCommand::setupCallbackSock()
   throw(castor::exception::Exception) {
 
-  // Get the port range to be used by the aggregator callback socket
-  int   lowPort  = LOW_CLIENT_PORT_RANGE;
-  int   highPort = HIGH_CLIENT_PORT_RANGE;
-  char* sport    = NULL;
-  if((sport = getconfent((char *)CLIENT_CONF,(char *)LOWPORT_CONF,0)) != 0) {
-    lowPort = castor::System::porttoi(sport);
-  }
-  if((sport = getconfent((char *)CLIENT_CONF,(char *)HIGHPORT_CONF,0)) != 0) {
-    highPort = castor::System::porttoi(sport);
-  }
+  const unsigned short lowPort = utils::getPortFromConfig(
+    "AGGREGATORCLIENT", "LOWPORT", AGGREGATORCLIENT_LOWPORT);
+  const unsigned short highPort = utils::getPortFromConfig(
+    "AGGREGATORCLIENT", "HIGHPORT", AGGREGATORCLIENT_HIGHPORT);
 
   // Bind the aggregator callback socket
   m_callbackSock.bind(lowPort, highPort);
@@ -1067,6 +1037,8 @@ void castor::tape::tpcp::TpcpCommand::deleteVdqmVolumeRequest()
       ": " << errorStr);
   }
 }
+
+
 //------------------------------------------------------------------------------
 // checkFilenameFormat
 //------------------------------------------------------------------------------
@@ -1092,7 +1064,7 @@ void castor::tape::tpcp::TpcpCommand::checkFilenameFormat()
     castor::exception::Exception ex(ECANCELED);
     ex.getMessage() <<
            ": Invalid RFIO filename syntax"
-           ": Filename must identiry a regular file"
+           ": Filename must identify a regular file"
            ": filename=\"" << line <<"\"";
 
       throw ex;
@@ -1119,7 +1091,7 @@ void castor::tape::tpcp::TpcpCommand::checkFilenameFormat()
          castor::exception::Exception ex(ECANCELED);
          ex.getMessage() <<
            ": Invalid RFIO filename syntax"
-           ": Found ':/' character whith not hostname specified"
+           ": Found ':/' character with no hostname specified"
            ": filename=\"" << line <<"\"";
 
         throw ex;

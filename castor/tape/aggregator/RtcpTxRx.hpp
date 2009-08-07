@@ -27,6 +27,7 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/io/ClientSocket.hpp"
+#include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/LogHelper.hpp"
 #include "castor/tape/aggregator/MessageHeader.hpp"
 #include "castor/tape/aggregator/RtcpDumpTapeRqstMsgBody.hpp"
@@ -240,7 +241,7 @@ public:
     T                   &body) throw(castor::exception::Exception) {
 
     // Length of body buffer = Length of message buffer - length of header
-    char bodyBuf[MSGBUFSIZ - 3 * sizeof(uint32_t)];
+    char bodyBuf[RTCPMSGBUFSIZE - 3 * sizeof(uint32_t)];
 
     // If the message body is too large
     if(header.lenOrStatus > sizeof(bodyBuf)) {
