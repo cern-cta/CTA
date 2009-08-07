@@ -2027,7 +2027,7 @@ NB_ARGS=$#
 # Function to print usage message
 function usage {
   echo
-  echo "Usage: reinstallAggregator.sh tapeServer"
+  echo "Usage: reinstallAggregator.sh tapeServer [tapeServer]..."
 }
 
 # Check the number of command line arguments
