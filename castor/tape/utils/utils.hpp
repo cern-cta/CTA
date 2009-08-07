@@ -28,6 +28,7 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidArgument.hpp"
+#include "castor/exception/InvalidConfigEntry.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include "castor/tape/Constants.hpp"
 #include "castor/tape/tapegateway/ClientType.hpp"
@@ -399,6 +400,18 @@ namespace utils  {
    * @param title The title text to be written.
    */
   void writeBanner(std::ostream &os, const char *const title) throw();
+
+  /**
+   * Gets and returns the specified port number using getconfent or returns the
+   * default if getconfent cannot find it.
+   *
+   * @param catagory   The category of the configuration entry.
+   * @param entryName  The name of the configuration entry.
+   * @param entryValue The (invalid) value of the configuration entry.
+   */
+  unsigned short getPortFromConfig(const char *const category,
+    const char *const entryName, const unsigned short defaultPort)
+    throw(exception::InvalidConfigEntry, castor::exception::Exception);
 
 } // namespace utils
 } // namespace tape

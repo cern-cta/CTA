@@ -29,6 +29,7 @@
 #include "castor/tape/Constants.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/Castor_limits.h"
+#include "h/getconfent.h"
 #include "h/rtcp_constants.h"
 
 #include <arpa/inet.h>
@@ -567,4 +568,47 @@ void castor::tape::utils::writeBanner(std::ostream &os,
     os << "=";
   }
   os << std::endl;
+}
+
+
+//------------------------------------------------------------------------------
+// getPortFromConfig
+//------------------------------------------------------------------------------
+unsigned short castor::tape::utils::getPortFromConfig(
+  const char *const category, const char *const entryName,
+  const unsigned short defaultPort)
+  throw(exception::InvalidConfigEntry, castor::exception::Exception) {
+
+  unsigned short    port       = defaultPort;
+  const char *const entryValue = getconfent(category, entryName, 0);
+
+  if(entryValue != NULL) {
+    if(utils::isValidUInt(entryValue)) {
+      port = atoi(entryValue);
+    } else {
+      exception::InvalidConfigEntry ex(category, entryName, entryValue);
+
+      ex.getMessage() <<
+        ": Invalid \"" << category << " " << entryName <<
+        "\" configuration entry"
+        ": Value should be an unsigned integer greater than 0"
+        ": Value=\"" << entryValue << "\"";
+
+      throw(ex);
+    }
+
+    if(port == 0) {
+      exception::InvalidConfigEntry ex(category, entryName, entryValue);
+
+      ex.getMessage() <<
+        ": Invalid \"" << category << " " << entryName <<
+        "\" configuration entry"
+        ": Value should be an unsigned integer greater than 0"
+        ": Value=\"" << entryValue << "\"";
+
+      throw(ex);
+    }
+  }
+
+  return port;
 }
