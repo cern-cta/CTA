@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.212 $ $Release$ $Date: 2009/08/03 08:25:30 $ $Author: murrayc3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.213 $ $Release$ $Date: 2009/08/07 13:06:45 $ $Author: murrayc3 $
 #
 # Make Castor libraries and executables
 #
@@ -355,6 +355,7 @@ STGLIB_SRCS = IAddressCInt.cpp \
               exception/OutOfMemory.cpp \
               exception/Communication.cpp \
               exception/NoEntry.cpp \
+              exception/NoPortInRange.cpp \
               exception/NoSegmentFound.cpp \
               exception/PermissionDenied.cpp \
               exception/RequestCanceled.cpp \

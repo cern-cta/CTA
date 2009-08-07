@@ -74,8 +74,9 @@
 #define SESVCCLASSNFND  SEBASEOFF+38    /* This service class is not available for this host */
 #define SESQLERR        SEBASEOFF+39    /* Got SQL exception from database */
 #define SELOOP          SEBASEOFF+40    /* Too many symbolic links      */
+#define SENOPORTINRANGE SEBASEOFF+41    /* No port in range             */
 
-#define SEMAXERR        SEBASEOFF+40    /* Maximum error number         */
+#define SEMAXERR        SEBASEOFF+41    /* Maximum error number         */
 
 #define SERRNO  (serrno - SEBASEOFF)    /* User convenience             */
 /*
