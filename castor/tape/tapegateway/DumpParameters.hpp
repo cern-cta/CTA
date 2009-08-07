@@ -100,131 +100,131 @@ namespace castor {
         /* End of IObject abstract class */
         /*********************************/
         /**
-         * Get the value of m_tapeMaxBytes
-         * @return the value of m_tapeMaxBytes
+         * Get the value of m_maxBytes
+         * @return the value of m_maxBytes
          */
-        int tapeMaxBytes() const {
-          return m_tapeMaxBytes;
+        int maxBytes() const {
+          return m_maxBytes;
         }
 
         /**
-         * Set the value of m_tapeMaxBytes
-         * @param new_var the new value of m_tapeMaxBytes
+         * Set the value of m_maxBytes
+         * @param new_var the new value of m_maxBytes
          */
-        void setTapeMaxBytes(int new_var) {
-          m_tapeMaxBytes = new_var;
+        void setMaxBytes(int new_var) {
+          m_maxBytes = new_var;
         }
 
         /**
-         * Get the value of m_tapeBlockSize
-         * @return the value of m_tapeBlockSize
+         * Get the value of m_blockSize
+         * @return the value of m_blockSize
          */
-        int tapeBlockSize() const {
-          return m_tapeBlockSize;
+        int blockSize() const {
+          return m_blockSize;
         }
 
         /**
-         * Set the value of m_tapeBlockSize
-         * @param new_var the new value of m_tapeBlockSize
+         * Set the value of m_blockSize
+         * @param new_var the new value of m_blockSize
          */
-        void setTapeBlockSize(int new_var) {
-          m_tapeBlockSize = new_var;
+        void setBlockSize(int new_var) {
+          m_blockSize = new_var;
         }
 
         /**
-         * Get the value of m_tapeConverter
-         * @return the value of m_tapeConverter
+         * Get the value of m_converter
+         * @return the value of m_converter
          */
-        int tapeConverter() const {
-          return m_tapeConverter;
+        int converter() const {
+          return m_converter;
         }
 
         /**
-         * Set the value of m_tapeConverter
-         * @param new_var the new value of m_tapeConverter
+         * Set the value of m_converter
+         * @param new_var the new value of m_converter
          */
-        void setTapeConverter(int new_var) {
-          m_tapeConverter = new_var;
+        void setConverter(int new_var) {
+          m_converter = new_var;
         }
 
         /**
-         * Get the value of m_tapeErrAction
-         * @return the value of m_tapeErrAction
+         * Get the value of m_errAction
+         * @return the value of m_errAction
          */
-        int tapeErrAction() const {
-          return m_tapeErrAction;
+        int errAction() const {
+          return m_errAction;
         }
 
         /**
-         * Set the value of m_tapeErrAction
-         * @param new_var the new value of m_tapeErrAction
+         * Set the value of m_errAction
+         * @param new_var the new value of m_errAction
          */
-        void setTapeErrAction(int new_var) {
-          m_tapeErrAction = new_var;
+        void setErrAction(int new_var) {
+          m_errAction = new_var;
         }
 
         /**
-         * Get the value of m_tapeStartFile
-         * @return the value of m_tapeStartFile
+         * Get the value of m_startFile
+         * @return the value of m_startFile
          */
-        int tapeStartFile() const {
-          return m_tapeStartFile;
+        int startFile() const {
+          return m_startFile;
         }
 
         /**
-         * Set the value of m_tapeStartFile
-         * @param new_var the new value of m_tapeStartFile
+         * Set the value of m_startFile
+         * @param new_var the new value of m_startFile
          */
-        void setTapeStartFile(int new_var) {
-          m_tapeStartFile = new_var;
+        void setStartFile(int new_var) {
+          m_startFile = new_var;
         }
 
         /**
-         * Get the value of m_tapeMaxFile
-         * @return the value of m_tapeMaxFile
+         * Get the value of m_maxFile
+         * @return the value of m_maxFile
          */
-        int tapeMaxFile() const {
-          return m_tapeMaxFile;
+        int maxFile() const {
+          return m_maxFile;
         }
 
         /**
-         * Set the value of m_tapeMaxFile
-         * @param new_var the new value of m_tapeMaxFile
+         * Set the value of m_maxFile
+         * @param new_var the new value of m_maxFile
          */
-        void setTapeMaxFile(int new_var) {
-          m_tapeMaxFile = new_var;
+        void setMaxFile(int new_var) {
+          m_maxFile = new_var;
         }
 
         /**
-         * Get the value of m_tapeFromBlock
-         * @return the value of m_tapeFromBlock
+         * Get the value of m_fromBlock
+         * @return the value of m_fromBlock
          */
-        int tapeFromBlock() const {
-          return m_tapeFromBlock;
+        int fromBlock() const {
+          return m_fromBlock;
         }
 
         /**
-         * Set the value of m_tapeFromBlock
-         * @param new_var the new value of m_tapeFromBlock
+         * Set the value of m_fromBlock
+         * @param new_var the new value of m_fromBlock
          */
-        void setTapeFromBlock(int new_var) {
-          m_tapeFromBlock = new_var;
+        void setFromBlock(int new_var) {
+          m_fromBlock = new_var;
         }
 
         /**
-         * Get the value of m_tapeToBlock
-         * @return the value of m_tapeToBlock
+         * Get the value of m_toBlock
+         * @return the value of m_toBlock
          */
-        int tapeToBlock() const {
-          return m_tapeToBlock;
+        int toBlock() const {
+          return m_toBlock;
         }
 
         /**
-         * Set the value of m_tapeToBlock
-         * @param new_var the new value of m_tapeToBlock
+         * Set the value of m_toBlock
+         * @param new_var the new value of m_toBlock
          */
-        void setTapeToBlock(int new_var) {
-          m_tapeToBlock = new_var;
+        void setToBlock(int new_var) {
+          m_toBlock = new_var;
         }
 
         /**
@@ -247,21 +247,21 @@ namespace castor {
 
       private:
 
-        int m_tapeMaxBytes;
+        int m_maxBytes;
 
-        int m_tapeBlockSize;
+        int m_blockSize;
 
-        int m_tapeConverter;
+        int m_converter;
 
-        int m_tapeErrAction;
+        int m_errAction;
 
-        int m_tapeStartFile;
+        int m_startFile;
 
-        int m_tapeMaxFile;
+        int m_maxFile;
 
-        int m_tapeFromBlock;
+        int m_fromBlock;
 
-        int m_tapeToBlock;
+        int m_toBlock;
 
         /// The id of this object
         u_signed64 m_id;

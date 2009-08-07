@@ -375,14 +375,14 @@ bool castor::tape::tpcp::DumpTpCommand::handleDumpParametersRequest(
   // Create DumpParameters message for the aggregator
   tapegateway::DumpParameters dumpParameters;
   dumpParameters.setMountTransactionId(m_volReqId);
-  dumpParameters.setTapeMaxBytes(m_cmdLine.dumpTapeMaxBytes);
-  dumpParameters.setTapeBlockSize(m_cmdLine.dumpTapeBlockSize);
-  dumpParameters.setTapeConverter(m_cmdLine.dumpTapeConverter);
-  dumpParameters.setTapeErrAction(m_cmdLine.dumpTapeErrAction);
-  dumpParameters.setTapeStartFile(m_cmdLine.dumpTapeFromFile);
-  dumpParameters.setTapeMaxFile(m_cmdLine.dumpTapeMaxFiles);
-  dumpParameters.setTapeFromBlock(m_cmdLine.dumpTapeFromBlock);
-  dumpParameters.setTapeToBlock(m_cmdLine.dumpTapeToBlock);
+  dumpParameters.setMaxBytes(m_cmdLine.dumpTapeMaxBytes);
+  dumpParameters.setBlockSize(m_cmdLine.dumpTapeBlockSize);
+  dumpParameters.setConverter(m_cmdLine.dumpTapeConverter);
+  dumpParameters.setErrAction(m_cmdLine.dumpTapeErrAction);
+  dumpParameters.setStartFile(m_cmdLine.dumpTapeFromFile);
+  dumpParameters.setMaxFile(m_cmdLine.dumpTapeMaxFiles);
+  dumpParameters.setFromBlock(m_cmdLine.dumpTapeFromBlock);
+  dumpParameters.setToBlock(m_cmdLine.dumpTapeToBlock);
 
   // Send the DumpParameters message to the aggregator
   sock.sendObject(dumpParameters);

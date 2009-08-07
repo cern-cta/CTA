@@ -672,14 +672,14 @@ void castor::tape::aggregator::BridgeProtocolEngine::runDumpSession()
 
     // Tell RTCPD to dump the tape
     RtcpDumpTapeRqstMsgBody request;
-    request.maxBytes      = dumpParameters->tapeMaxBytes();
-    request.blockSize     = dumpParameters->tapeBlockSize();
-    request.convert       = dumpParameters->tapeConverter();
-    request.tapeErrAction = dumpParameters->tapeErrAction();
-    request.startFile     = dumpParameters->tapeStartFile();
-    request.maxFiles      = dumpParameters->tapeMaxFile();
-    request.fromBlock     = dumpParameters->tapeFromBlock();
-    request.toBlock       = dumpParameters->tapeToBlock();
+    request.maxBytes      = dumpParameters->maxBytes();
+    request.blockSize     = dumpParameters->blockSize();
+    request.convert       = dumpParameters->converter();
+    request.tapeErrAction = dumpParameters->errAction();
+    request.startFile     = dumpParameters->startFile();
+    request.maxFiles      = dumpParameters->maxFile();
+    request.fromBlock     = dumpParameters->fromBlock();
+    request.toBlock       = dumpParameters->toBlock();
     RtcpTxRx::tellRtcpdDumpTape(m_cuuid, m_jobRequest.volReqId,
       m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, request);
 

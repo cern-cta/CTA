@@ -41,14 +41,14 @@
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::DumpParameters::DumpParameters() throw() :
   GatewayMessage(),
-  m_tapeMaxBytes(0),
-  m_tapeBlockSize(0),
-  m_tapeConverter(0),
-  m_tapeErrAction(0),
-  m_tapeStartFile(0),
-  m_tapeMaxFile(0),
-  m_tapeFromBlock(0),
-  m_tapeToBlock(0),
+  m_maxBytes(0),
+  m_blockSize(0),
+  m_converter(0),
+  m_errAction(0),
+  m_startFile(0),
+  m_maxFile(0),
+  m_fromBlock(0),
+  m_toBlock(0),
   m_id(0) {
 }
 
@@ -73,14 +73,14 @@ void castor::tape::tapegateway::DumpParameters::print(std::ostream& stream,
   // Call print on the parent class(es)
   this->GatewayMessage::print(stream, indent, alreadyPrinted);
   // Output of all members
-  stream << indent << "tapeMaxBytes : " << m_tapeMaxBytes << std::endl;
-  stream << indent << "tapeBlockSize : " << m_tapeBlockSize << std::endl;
-  stream << indent << "tapeConverter : " << m_tapeConverter << std::endl;
-  stream << indent << "tapeErrAction : " << m_tapeErrAction << std::endl;
-  stream << indent << "tapeStartFile : " << m_tapeStartFile << std::endl;
-  stream << indent << "tapeMaxFile : " << m_tapeMaxFile << std::endl;
-  stream << indent << "tapeFromBlock : " << m_tapeFromBlock << std::endl;
-  stream << indent << "tapeToBlock : " << m_tapeToBlock << std::endl;
+  stream << indent << "maxBytes : " << m_maxBytes << std::endl;
+  stream << indent << "blockSize : " << m_blockSize << std::endl;
+  stream << indent << "converter : " << m_converter << std::endl;
+  stream << indent << "errAction : " << m_errAction << std::endl;
+  stream << indent << "startFile : " << m_startFile << std::endl;
+  stream << indent << "maxFile : " << m_maxFile << std::endl;
+  stream << indent << "fromBlock : " << m_fromBlock << std::endl;
+  stream << indent << "toBlock : " << m_toBlock << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }

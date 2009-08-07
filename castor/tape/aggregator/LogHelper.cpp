@@ -384,13 +384,13 @@ void castor::tape::aggregator::LogHelper::logMsg(const Cuuid_t &cuuid,
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("mountTransactionId", msg.mountTransactionId()),
-    castor::dlf::Param("maxBytes"          , msg.tapeMaxBytes()      ),
-    castor::dlf::Param("blockSize"         , msg.tapeBlockSize()     ),
-    castor::dlf::Param("converter"         , msg.tapeConverter()     ),
-    castor::dlf::Param("errAction"         , msg.tapeErrAction()     ),
-    castor::dlf::Param("startFile"         , msg.tapeStartFile()     ),
-    castor::dlf::Param("maxFile"           , msg.tapeMaxFile()       ),
-    castor::dlf::Param("fromBlock"         , msg.tapeFromBlock()     ),
-    castor::dlf::Param("toBlock"           , msg.tapeToBlock()       )};
+    castor::dlf::Param("maxBytes"          , msg.maxBytes()      ),
+    castor::dlf::Param("blockSize"         , msg.blockSize()     ),
+    castor::dlf::Param("converter"         , msg.converter()     ),
+    castor::dlf::Param("errAction"         , msg.errAction()     ),
+    castor::dlf::Param("startFile"         , msg.startFile()     ),
+    castor::dlf::Param("maxFile"           , msg.maxFile()       ),
+    castor::dlf::Param("fromBlock"         , msg.fromBlock()     ),
+    castor::dlf::Param("toBlock"           , msg.toBlock()       )};
   castor::dlf::dlf_writep(cuuid, severity, message_no, params);
 }
