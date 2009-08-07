@@ -2020,6 +2020,8 @@ Create a new file called reinstallAggregator.sh with your favourite text editor
 and enter the following code.  Once finished make sure the file is executable
 and then run it.  The code:
 
+#!/bin/sh
+
 NB_ARGS=$#
 
 # Function to print usage message
@@ -2029,7 +2031,7 @@ function usage {
 }
 
 # Check the number of command line arguments
-if test $NB_ARGS -ne 1; then
+if test $NB_ARGS -lt 1; then
   echo
   echo -n "ERROR: "
   echo "Invalid number of arguments"
@@ -2038,7 +2040,7 @@ if test $NB_ARGS -ne 1; then
   exit -1
 fi
 
-TPSRV=$1
+TPSRVS=$@
 
 if test "x$CASTOR_CVS" = x; then
   echo "Error: The environment variable CASTOR_CVS is not set"
@@ -2051,11 +2053,6 @@ if test "x$CASTOR_CVS" = x; then
   exit -1
 fi
 
-ssh $TPSRV killall aggregatord
-ssh $TPSRV rm -rf /aggregator
-ssh $TPSRV mkdir /aggregator
-scp `find $CASTOR_CVS -name '*.so*' | xargs echo` $TPSRV:/aggregator
-scp $CASTOR_CVS/castor/tape/aggregator/aggregatord $TPSRV:/aggregator
 cat > /tmp/aggregatord.sh << HERE
 #!/bin/sh
 
@@ -2063,10 +2060,23 @@ export LD_LIBRARY_PATH=/aggregator
 ulimit -c unlimited
 /aggregator/aggregatord
 HERE
+
 chmod +x /tmp/aggregatord.sh
-scp /tmp/aggregatord.sh $TPSRV:/aggregator
-ssh $TPSRV /aggregator/aggregatord.sh
-ssh $TPSRV ps -ef | grep aggregatord
+
+for TPSRV in $TPSRVS; do
+  echo
+  echo "Reinstalling $TPSRV"
+  echo
+  ssh $TPSRV killall aggregatord
+  ssh $TPSRV rm -rf /aggregator
+  ssh $TPSRV mkdir /aggregator
+  scp `find $CASTOR_CVS -name '*.so*' | xargs echo` $TPSRV:/aggregator
+  scp $CASTOR_CVS/castor/tape/aggregator/aggregatord $TPSRV:/aggregator
+  scp /tmp/aggregatord.sh $TPSRV:/aggregator
+  ssh $TPSRV /aggregator/aggregatord.sh
+  ssh $TPSRV ps -ef | grep aggregatord | sed "s/^/$TPSRV: /"
+done
+
 rm /tmp/aggregatord.sh
 
 
