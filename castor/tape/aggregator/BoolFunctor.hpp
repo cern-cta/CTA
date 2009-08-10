@@ -41,6 +41,11 @@ namespace aggregator {
      */
     virtual bool operator()() = 0;
 
+    /**
+     * Virtual destructor.
+     */
+    virtual ~BoolFunctor() throw();
+
   }; // class BoolFunctor
 
 } // namespace aggregator
