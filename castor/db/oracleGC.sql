@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.695 $ $Date: 2009/07/31 15:24:23 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.696 $ $Date: 2009/08/10 15:30:12 $ $Author: itglp $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -765,7 +765,7 @@ BEGIN
        WHERE id = f.dcid;
       -- and we also fail the correspondent prepareToPut/Update request if it exists
       BEGIN
-        SELECT id INTO srId   -- there can be only one outstanding PrepareToPut/Update, if any
+        SELECT id INTO srId   -- there can only be one outstanding PrepareToPut/Update, if any
           FROM SubRequest
          WHERE status = 6 AND diskCopy = f.dcid;
         archiveSubReq(srId, 9);  -- FAILED_FINISHED

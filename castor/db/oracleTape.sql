@@ -1,5 +1,5 @@
 /*******************************************************************	
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.760 $ $Date: 2009/08/10 07:42:07 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.761 $ $Date: 2009/08/10 15:30:13 $ $Author: itglp $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -7,8 +7,7 @@
  *******************************************************************/
 
 /* PL/SQL declaration for the castorTape package */
-
-create or replace PACKAGE castorTape AS 
+CREATE OR REPLACE PACKAGE castorTape AS 
    TYPE TapeGatewayRequestExtended IS RECORD (
     accessMode NUMBER,
     id NUMBER,

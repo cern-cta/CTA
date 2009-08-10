@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.749 $ $Date: 2009/08/10 07:44:13 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.750 $ $Date: 2009/08/10 15:30:12 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -8,7 +8,6 @@
  *******************************************************************/
 
 /* PL/SQL declaration for the castor package */
-
 create or replace PACKAGE castor AS
   TYPE DiskCopyCore IS RECORD (
     id INTEGER,

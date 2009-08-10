@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.schema.sql,v $ $Revision: 1.18 $ $Date: 2009/08/10 08:54:40 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleCommon.schema.sql,v $ $Revision: 1.19 $ $Date: 2009/08/10 15:30:12 $ $Author: itglp $
  *
  * This file contains all schema definitions which are not generated automatically.
  *
@@ -243,6 +243,20 @@ ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_FileClass
 /* Stream constraints */
 ALTER TABLE Stream ADD CONSTRAINT FK_Stream_TapePool
   FOREIGN KEY (tapePool) REFERENCES TapePool (id);
+
+/* Index and Constraints for the tapegateway tables */
+CREATE INDEX I_TGSubRequest_Request ON TapeGatewaySubRequest(request);
+CREATE UNIQUE INDEX I_TGSubRequest_TapeCopy ON TapeGatewaySubRequest(tapeCopy);
+CREATE UNIQUE INDEX I_TGSubRequest_DiskCopy ON TapeGatewaySubRequest(diskCopy);
+CREATE UNIQUE INDEX I_TGRequest_Tape ON TapeGatewayRequest(tapeRecall);
+CREATE UNIQUE INDEX I_TGRequest_Stream ON TapeGatewayRequest(streamMigration);
+CREATE UNIQUE INDEX I_TGRequest_VdqmVolReqId ON TapeGatewayRequest(vdqmVolReqId);
+
+ALTER TABLE TapeGatewaySubRequest ADD CONSTRAINT FK_TGSubRequest_TC FOREIGN KEY (tapeCopy) REFERENCES TapeCopy (id);
+ALTER TABLE TapeGatewaySubRequest ADD CONSTRAINT FK_TGSubRequest_DC FOREIGN KEY (tapeCopy) REFERENCES DiskCopy (id);
+ALTER TABLE TapeGatewaySubRequest ADD CONSTRAINT FK_TGSubRequest_TGR FOREIGN KEY (request) REFERENCES TapeGatewayRequest(id);
+ALTER TABLE TapeGatewayRequest ADD CONSTRAINT FK_TGSubRequest_SM FOREIGN KEY (streamMigration) REFERENCES Stream (id);
+ALTER TABLE TapeGatewayRequest ADD CONSTRAINT FK_TGSubRequest_TR FOREIGN KEY (tapeRecall) REFERENCES Tape (id);
 
 /* Global temporary table to handle output of the filesDeletedProc procedure */
 CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcOutput
@@ -512,25 +526,7 @@ BEGIN
 END;
 /
 
-
 /* FileSystem index based on the rate. */
 CREATE INDEX I_FileSystem_Rate
     ON FileSystem(fileSystemRate(readRate, writeRate,
 	          nbReadStreams,nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams));
-
-/* Index and Constraints for the tapegateway tables */
-
-CREATE INDEX I_TGSubRequest_Request ON TapeGatewaySubRequest(request);
-CREATE UNIQUE INDEX I_TGSubRequest_TapeCopy ON TapeGatewaySubRequest(tapecopy);
-CREATE UNIQUE INDEX I_TGSubRequest_DiskCopy ON TapeGatewaySubRequest(diskcopy);
-CREATE UNIQUE INDEX I_TGRequest_Tape ON TapeGatewayRequest(taperecall);
-CREATE UNIQUE INDEX I_TGRequest_Stream ON TapeGatewayRequest(streammigration);
-CREATE UNIQUE INDEX I_TGRequest_VdqmReqId ON TapeGatewayRequest(vdqmvolreqid);
-
-ALTER TABLE TapeGatewaySubRequest ADD CONSTRAINT FK_TGSubRequest_TC FOREIGN KEY (tapecopy) REFERENCES TapeCopy (id);
-ALTER TABLE TapeGatewaySubRequest ADD CONSTRAINT FK_TGSubRequest_DC FOREIGN KEY (tapecopy) REFERENCES DiskCopy (id);
-ALTER TABLE TapeGatewaySubRequest ADD CONSTRAINT FK_TGSubRequest_TGR FOREIGN KEY (request) REFERENCES TapeGatewayRequest(id);
-ALTER TABLE TapeGatewayRequest ADD CONSTRAINT FK_TGSubRequest_SM FOREIGN KEY (streammigration) REFERENCES Stream (id);
-ALTER TABLE TapeGatewayRequest ADD CONSTRAINT FK_TGSubRequest_TR FOREIGN KEY (taperecall) REFERENCES Tape (id);
-
-
