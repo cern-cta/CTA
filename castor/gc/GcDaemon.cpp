@@ -34,6 +34,7 @@
 #include "castor/server/BaseThreadPool.hpp"
 #include "Cgetopt.h"
 #include "getconfent.h"
+#include <sys/time.h>
 
 
 //-----------------------------------------------------------------------------
