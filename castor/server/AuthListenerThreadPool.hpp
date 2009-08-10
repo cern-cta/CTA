@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AuthListenerThreadPool.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2009/01/08 09:24:57 $ $Author: itglp $
+ * @(#)$RCSfile: AuthListenerThreadPool.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2009/08/10 15:27:31 $ $Author: itglp $
  *
  * A ListenerThreadPool which uses AuthSockets to handle the connections
  *
@@ -55,19 +55,17 @@ namespace castor {
      * Inherited constructor, see TCPListenerThreadPool
      */
     AuthListenerThreadPool(const std::string poolName, castor::server::IThread* thread,
-                       unsigned int listenPort, bool listenerOnOwnThread = true,
-                       unsigned int nbThreads = DEFAULT_THREAD_NUMBER)
+                           unsigned int listenPort, unsigned int nbThreads = DEFAULT_THREAD_NUMBER)
       throw (castor::exception::Exception);
 
     /**
      * Inherited constructor, see TCPListenerThreadPool
      */
     AuthListenerThreadPool(const std::string poolName, castor::server::IThread* thread,
-                       unsigned int listenPort, bool listenerOnOwnThread,
-                       unsigned int initThreads,
-                       unsigned int maxThreads,
-                       unsigned int threshold = DEFAULT_THRESHOLD,
-                       unsigned int maxTasks  = DEFAULT_MAXTASKS)      
+                           unsigned int listenPort,
+                           unsigned int initThreads, unsigned int maxThreads,
+                           unsigned int threshold = DEFAULT_THRESHOLD,
+                           unsigned int maxTasks  = DEFAULT_MAXTASKS)      
       throw (castor::exception::Exception);               
 
     /**

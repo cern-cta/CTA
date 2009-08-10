@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TCPListenerThreadPool.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2009/07/13 06:22:07 $ $Author: waldron $
+ * @(#)$RCSfile: TCPListenerThreadPool.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2009/08/10 15:27:31 $ $Author: itglp $
  *
  * Listener thread pool based on TCP
  *
@@ -39,9 +39,8 @@ castor::server::TCPListenerThreadPool::TCPListenerThreadPool
 (const std::string poolName,
  castor::server::IThread* thread,
  unsigned int listenPort,
- bool listenerOnOwnThread,
  unsigned int nbThreads) throw(castor::exception::Exception) :
-  ListenerThreadPool(poolName, thread, listenPort, listenerOnOwnThread, nbThreads) {}
+  ListenerThreadPool(poolName, thread, listenPort, nbThreads) {}
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -50,12 +49,11 @@ castor::server::TCPListenerThreadPool::TCPListenerThreadPool
 (const std::string poolName,
  castor::server::IThread* thread,
  unsigned int listenPort,
- bool listenerOnOwnThread,
  unsigned int initThreads,
  unsigned int maxThreads,
  unsigned int threshold,
  unsigned int maxTasks) throw(castor::exception::Exception) :
-  ListenerThreadPool(poolName, thread, listenPort, listenerOnOwnThread,
+  ListenerThreadPool(poolName, thread, listenPort,
                      initThreads, maxThreads, threshold, maxTasks) {}
 
 //------------------------------------------------------------------------------

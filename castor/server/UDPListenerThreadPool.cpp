@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: UDPListenerThreadPool.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2009/07/13 06:22:07 $ $Author: waldron $
+ * @(#)$RCSfile: UDPListenerThreadPool.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2009/08/10 15:27:31 $ $Author: itglp $
  *
  * A listener thread pool listening on an UDP port
  *
@@ -39,9 +39,8 @@ castor::server::UDPListenerThreadPool::UDPListenerThreadPool
 (const std::string poolName,
  castor::server::IThread* thread,
  int listenPort,
- bool listenerOnOwnThread,
  unsigned nbThreads) throw() :
-  ListenerThreadPool(poolName, thread, listenPort, listenerOnOwnThread, nbThreads) {}
+  ListenerThreadPool(poolName, thread, listenPort, nbThreads) {}
 
 //------------------------------------------------------------------------------
 // bind

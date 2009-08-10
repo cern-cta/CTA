@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AuthListenerThreadPool.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2009/07/13 06:22:07 $ $Author: waldron $
+ * @(#)$RCSfile: AuthListenerThreadPool.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2009/08/10 15:27:31 $ $Author: itglp $
  *
  * A ListenerThreadPool which uses AuthSockets to handle the connections
  *
@@ -37,9 +37,8 @@ castor::server::AuthListenerThreadPool::AuthListenerThreadPool
 (const std::string poolName,
  castor::server::IThread* thread,
  unsigned int listenPort,
- bool listenerOnOwnThread,
  unsigned int nbThreads) throw(castor::exception::Exception) :
-  TCPListenerThreadPool(poolName, thread, listenPort, listenerOnOwnThread, nbThreads) {}
+  TCPListenerThreadPool(poolName, thread, listenPort, nbThreads) {}
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -48,12 +47,11 @@ castor::server::AuthListenerThreadPool::AuthListenerThreadPool
 (const std::string poolName,
  castor::server::IThread* thread,
  unsigned int listenPort,
- bool listenerOnOwnThread,
  unsigned int initThreads,
  unsigned int maxThreads,
  unsigned int threshold,
  unsigned int maxTasks) throw(castor::exception::Exception) :
-  TCPListenerThreadPool(poolName, thread, listenPort, listenerOnOwnThread,
+  TCPListenerThreadPool(poolName, thread, listenPort,
                         initThreads, maxThreads, threshold, maxTasks) {}
 
 //------------------------------------------------------------------------------

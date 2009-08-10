@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TCPListenerThreadPool.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2009/01/08 09:24:57 $ $Author: itglp $
+ * @(#)$RCSfile: TCPListenerThreadPool.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2009/08/10 15:27:31 $ $Author: itglp $
  *
  * Listener thread pool based on TCP
  *
@@ -58,27 +58,24 @@ namespace castor {
        * Constructor for a TCP listener with a fixed number of threads.
        * @param poolName, thread as in BaseThreadPool
        * @param listenPort the port to be used by the listening socket.
-       * @param listenereOnOwnThread if false the listener loop is run directly. See run().
        * @param nbThreads number of threads in the pool
        */
       TCPListenerThreadPool(const std::string poolName, castor::server::IThread* thread,
-                         unsigned int listenPort, bool listenerOnOwnThread = true,
-                         unsigned int nbThreads = DEFAULT_THREAD_NUMBER)
+                            unsigned int listenPort,
+                            unsigned int nbThreads = DEFAULT_THREAD_NUMBER)
         throw (castor::exception::Exception);
   
       /**
        * Constructor for a TCP listener with a dynamic number of threads.
        * @param poolName, thread as in BaseThreadPool
        * @param listenPort the port to be used by the listening socket.
-       * @param listenereOnOwnThread if false the listener loop is run directly. See run().
        * @param initThreads, maxThreads, threshold, maxTasks as in DynamicThreadPool
        */
       TCPListenerThreadPool(const std::string poolName, castor::server::IThread* thread,
-                         unsigned int listenPort, bool listenerOnOwnThread,
-                         unsigned int initThreads,
-                         unsigned int maxThreads,
-                         unsigned int threshold = DEFAULT_THRESHOLD,
-                         unsigned int maxTasks  = DEFAULT_MAXTASKS)      
+                            unsigned int listenPort,
+                            unsigned int initThreads, unsigned int maxThreads,
+                            unsigned int threshold = DEFAULT_THRESHOLD,
+                            unsigned int maxTasks  = DEFAULT_MAXTASKS)      
         throw (castor::exception::Exception);
                        
       /**

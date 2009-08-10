@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: UDPListenerThreadPool.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2009/01/08 09:24:58 $ $Author: itglp $
+ * @(#)$RCSfile: UDPListenerThreadPool.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2009/08/10 15:27:31 $ $Author: itglp $
  *
  * Listener thread pool based on UDP
  *
@@ -58,10 +58,9 @@ namespace castor {
        * constructor
        * @param poolName, thread as in BaseThreadPool
        * @param listenPort the TCP port to which to attach the ServerSocket.
-       * @param listenereOnOwnThread if false the listener loop is run directly. See run().
        */
       UDPListenerThreadPool(const std::string poolName, castor::server::IThread* thread,
-                            int listenPort, bool listenerOnOwnThread = true,
+                            int listenPort,
                             unsigned nbThreads = castor::server::DEFAULT_THREAD_NUMBER) throw();
 
     protected:
