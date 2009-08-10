@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: WorkerThread.hpp,v $ $Author: gtaur $
+ * @(#)$RCSfile: WorkerThread.hpp,v $ $Author: murrayc3 $
  *
  *
  *
@@ -82,7 +82,7 @@ namespace castor {
 	
 	// handlers used with the different message types
 
-	castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker(castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
+	castor::IObject* handleStartWorker(castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
 
 	castor::IObject* handleRecallUpdate( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc  ) throw();
 

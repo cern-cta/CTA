@@ -17,8 +17,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NsTapeGatewayHelper.cpp,v $ $Revision: 1.14 $ $Release$ 
- * $Date: 2009/08/04 09:54:49 $ $Author: gtaur $
+ * @(#)$RCSfile: NsTapeGatewayHelper.cpp,v $ $Revision: 1.15 $ $Release$ 
+ * $Date: 2009/08/10 22:07:12 $ $Author: murrayc3 $
  *
  *
  *
@@ -261,7 +261,7 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile( tape::t
   nbSegments=0; // now I count the number of segments
 
   for(int i = 0; i < oldNbSegms; i++) {
-    if ( nsSegAttrs->copyno = oldSegattrs[i].copyno ) nbSegments++;
+    if ( nsSegAttrs->copyno == oldSegattrs[i].copyno ) nbSegments++;
   }
        
   // just in case of a sigle segment I check the checksum
