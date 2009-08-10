@@ -68,7 +68,10 @@ void castor::server::BaseDaemon::init() throw (castor::exception::Exception)
   // interrupted by them
   sigemptyset(&m_signalSet);
   if(m_foreground) {
-    // in foreground we catch Ctrl-C as well
+    // In foreground we catch Ctrl-C as well; we don't want to catch
+    // it in background to ease debugging with gdb, as gdb has its own
+    // SIGINT handler to pause the process anywhere. Our signal handler
+    // would override this feature and just gracefully terminate.
     sigaddset(&m_signalSet, SIGINT);
   }
   sigaddset(&m_signalSet, SIGTERM);
