@@ -209,6 +209,10 @@ castor::tape::tapegateway::Volume
         ": Reply type = " << obj->type());
     }
   } // switch(obj->type())
+
+
+  // This line should never be reached
+  return NULL;
 }
 
 
