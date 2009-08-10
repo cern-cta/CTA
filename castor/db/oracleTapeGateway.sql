@@ -372,23 +372,23 @@ BEGIN
   SELECT vid INTO strVid FROM tape where id IN (SELECT tape from stream WHERE
     id IN (SELECT streammigration FROM tapegatewayrequest WHERE vdqmVolReqId = transactionId));
 END;
-/create or replace PROCEDURE tg_getSegmentInfo (transactionId IN NUMBER, inFileId IN NUMBER, inHost IN VARCHAR2,inFseq IN INTEGER, inPath IN VARCHAR2 , outVid OUT NOCOPY VARCHAR2, outCopy OUT INTEGER ) AS
-filePath VARCHAR2(2048);
-fsId NUMBER;
+/
+
+create or replace
+PROCEDURE tg_getSegmentInfo (transactionId IN NUMBER, inFileId IN NUMBER, inHost IN VARCHAR2,inFseq IN INTEGER, outVid OUT NOCOPY VARCHAR2, outCopy OUT INTEGER ) AS
+trId NUMBER;
 cfId NUMBER;
-fileDiskserver VARCHAR2(2048);
-fileMountpoint VARCHAR2(2048);
-givenPath VARCHAR2(2048);
 BEGIN
-  -- check also the path
-  SELECT path,filesystem,castorfile INTO filePath,fsId,cfId FROM diskcopy,castorfile 
-    WHERE castorfile.id = diskcopy.castorfile AND castorfile.id IN 
-      (SELECT id FROM castorfile WHERE fileid=inFileId AND nshost=inHost) AND diskcopy.status=2;
-  SELECT diskserver.name, filesystem.mountpoint INTO fileDiskserver, fileMountpoint FROM diskserver,filesystem 
-    WHERE diskserver.id= filesystem.diskserver AND filesystem.id=fsid;
-  SELECT filediskserver||':'|| filemountpoint||filepath INTO givenPath FROM dual;
-  SELECT copynb,vid INTO outCopy, outvid FROM tape,segment,tapecopy 
-    WHERE tape.id=segment.tape AND fseq=inFseq AND segment.copy = tapecopy.id AND tapecopy.castorfile=cfId AND inPath = givenPath; 
+  SELECT id INTO cfId FROM castorfile 
+    WHERE fileid=inFileId AND nshost=inHost FOR UPDATE;
+  SELECT tape.vid, tapegatewayrequest.id  INTO outVid, trId FROM tape,tapegatewayrequest
+    WHERE tape.id=tapegatewayrequest.taperecall 
+    AND tapegatewayrequest.vdqmvolreqid= transactionId
+    AND tape.tpmode = 0;
+  SELECT copynb INTO outCopy FROM tapecopy, tapegatewaysubrequest
+    WHERE tapecopy.id = tapegatewaysubrequest.tapecopy
+    AND tapegatewaysubrequest.fseq = inFseq
+    AND tapegatewaysubrequest.request = trId;
 END;
 /
 
