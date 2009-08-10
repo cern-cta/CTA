@@ -346,33 +346,40 @@ tg_getRepackVidAndFileInfo( inputFileId IN NUMBER, inputNsHost IN VARCHAR2, inFs
 cfId NUMBER;
 BEGIN
   outrepackvid:=NULL;
-  BEGIN 
-    -- Get the repackvid field from the existing request (if none, then we are not in a repack process
-     
-     SELECT StageRepackRequest.repackvid, castorfile.lastupdatetime, castorfile.id
-    INTO outRepackVid, outlasttime, cfId
-    FROM SubRequest, DiskCopy, CastorFile, StageRepackRequest
-   WHERE stagerepackrequest.id = subrequest.request
-     AND diskcopy.id = subrequest.diskcopy
-     AND diskcopy.status = 10 -- CANBEMIGR
-     AND subrequest.status = 12 -- SUBREQUEST_REPACK
-     AND diskcopy.castorfile = castorfile.id
-     AND castorfile.fileid = inputFileId AND castorfile.nshost = inputNsHost
-     AND ROWNUM < 2;
+   -- ignore the repack state
+  SELECT  castorfile.lastupdatetime, castorfile.id INTO outlasttime, cfId
+      FROM CastorFile WHERE castorfile.fileid = inputFileId AND castorfile.nshost = inputNsHost;
       
+  SELECT copynb INTO outcopynb FROM tapecopy,tapegatewaysubrequest, tapegatewayrequest  
+    WHERE tapecopy.id=tapegatewaysubrequest.tapecopy 
+    AND tapegatewayrequest.id = tapegatewaysubrequest.request
+    AND tapecopy.castorfile = cfId
+    AND tapegatewaysubrequest.fseq= inFseq
+    AND tapegatewayrequest.vdqmVolReqId = transactionId;
+ 
+  SELECT vid INTO strVid FROM tape,stream,tapegatewayrequest 
+    WHERE  tape.id = stream.tape
+    AND  tapegatewayrequest.streammigration = stream.id
+    AND  tapegatewayrequest.vdqmVolReqId = transactionId;
+
+  BEGIN 
+   --REPACK case
+    -- Get the repackvid field from the existing request (if none, then we are not in a repack process
+     SELECT StageRepackRequest.repackvid INTO outRepackVid
+        FROM SubRequest, DiskCopy,StageRepackRequest
+        WHERE stagerepackrequest.id = subrequest.request
+        AND diskcopy.id = subrequest.diskcopy
+        AND diskcopy.status = 10 -- CANBEMIGR
+        AND subrequest.status = 12 -- SUBREQUEST_REPACK
+        AND diskcopy.castorfile = cfId
+        AND ROWNUM < 2;
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- ignore the repack state
-     SELECT  castorfile.lastupdatetime, castorfile.id
-    INTO outlasttime, cfId
-    FROM CastorFile WHERE castorfile.fileid = inputFileId AND castorfile.nshost = inputNsHost AND ROWNUM < 2;
+   -- standard migration
+    null;
   END;
-  SELECT copynb INTO outcopynb FROM tapecopy WHERE castorfile=cfId AND id IN 
-      (SELECT tapecopy FROM tapegatewaysubrequest WHERE tapegatewaysubrequest.fseq= inFseq AND tapegatewaysubrequest.request 
-          IN (SELECT id FROM tapegatewayrequest WHERE vdqmVolReqId = transactionId ));
-  SELECT vid INTO strVid FROM tape where id IN (SELECT tape from stream WHERE
-    id IN (SELECT streammigration FROM tapegatewayrequest WHERE vdqmVolReqId = transactionId));
 END;
 /
+
 
 create or replace
 PROCEDURE tg_getSegmentInfo (transactionId IN NUMBER, inFileId IN NUMBER, inHost IN VARCHAR2,inFseq IN INTEGER, outVid OUT NOCOPY VARCHAR2, outCopy OUT INTEGER ) AS
