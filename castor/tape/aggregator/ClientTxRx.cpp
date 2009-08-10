@@ -79,21 +79,6 @@ castor::tape::tapegateway::Volume
   request.setMountTransactionId(volReqId);
   request.setUnit(unit);
 
-  //===================================================
-  // Hardcoded volume INFO
-  #ifdef EMULATE_GATEWAY
-
-    //volReqIdFromClient = volReqId;
-    utils::copyString(vid,     "I02011");
-    //mode = 0;  // tpread
-    mode = 1;  // tpwrite
-    utils::copyString(label,   "aul");
-    utils::copyString(density, "1000GC");
-    return(true);
-
-  #endif
-  //===================================================
-
   // Connect to the client
   castor::io::ClientSocket sock(clientPort, clientHost);
   try {
@@ -649,15 +634,6 @@ void castor::tape::aggregator::ClientTxRx::notifyFileMigrated(
       AGGREGATOR_NOTIFY_CLIENT_FILE_MIGRATED, params);
   }
 
-  //===================================================
-  // Hardcoded client reply
-  #ifdef EMULATE_GATEWAY
-
-    return;
-
-  #endif
-  //===================================================
-
   // Prepare the request
   tapegateway::FileMigratedNotification request;
 
@@ -856,15 +832,6 @@ void castor::tape::aggregator::ClientTxRx::notifyFileRecalled(
       AGGREGATOR_NOTIFY_CLIENT_FILE_RECALLED, params);
   }
 
-  //===================================================
-  // Hardcoded client reply
-  #ifdef EMULATE_GATEWAY
-
-    return;
-
-  #endif
-  //===================================================
-
   // Prepare the request
   tapegateway::FileRecalledNotification request;
   request.setMountTransactionId(volReqId);
@@ -1025,16 +992,6 @@ void castor::tape::aggregator::ClientTxRx::notifyEndOfSession(
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_NOTIFY_CLIENT_END_OF_SESSION, params);
   }
-
-
-  //===================================================
-  // Hardcoded client reply
-  #ifdef EMULATE_GATEWAY
-
-    return;
-
-  #endif
-  //===================================================
 
   // Prepare the request
   tapegateway::EndNotification request;
@@ -1309,15 +1266,6 @@ void castor::tape::aggregator::ClientTxRx::notifyDumpMessage(
   }
 
 
-  //===================================================
-  // Hardcoded client reply
-  #ifdef EMULATE_GATEWAY
-
-    return;
-
-  #endif
-  //===================================================
-
   // Prepare the request
   tapegateway::DumpNotification request;
   request.setMountTransactionId(volReqId);
@@ -1456,15 +1404,6 @@ void castor::tape::aggregator::ClientTxRx::notifyEndOfFailedSession(
       AGGREGATOR_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
   }
 
-
-  //===================================================
-  // Hardcoded client reply
-  #ifdef EMULATE_GATEWAY
-
-    return;
-
-  #endif
-  //===================================================
 
   // Prepare the request
   tapegateway::EndNotificationErrorReport request;
