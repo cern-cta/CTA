@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.748 $ $Date: 2009/08/05 17:08:02 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.749 $ $Date: 2009/08/10 07:44:13 $ $Author: gtaur $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -8,7 +8,8 @@
  *******************************************************************/
 
 /* PL/SQL declaration for the castor package */
-CREATE OR REPLACE PACKAGE castor AS
+
+create or replace PACKAGE castor AS
   TYPE DiskCopyCore IS RECORD (
     id INTEGER,
     path VARCHAR2(2048),
@@ -20,28 +21,6 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE TapeCopy_Cur IS REF CURSOR RETURN TapeCopy%ROWTYPE;
   TYPE Tape_Cur IS REF CURSOR RETURN Tape%ROWTYPE;
   TYPE Segment_Cur IS REF CURSOR RETURN Segment%ROWTYPE;
-  TYPE TapeRequestStateExtended IS RECORD (
-    accessMode NUMBER,
-    id NUMBER,
-    starttime NUMBER,
-    lastvdqmpingtime NUMBER, 
-    vdqmvolreqid NUMBER, 
-    status NUMBER,
-    vid VARCHAR2(2048));
-  TYPE TapeRequestState_Cur IS REF CURSOR RETURN TapeRequestStateExtended;
-  TYPE TapeRequestStateCore IS RECORD (
-    tpmode INTEGER,
-    side INTEGER,
-    vid VARCHAR2(2048),
-    tapeRequestId NUMBER);
-  TYPE TapeRequestStateCore_Cur IS REF CURSOR RETURN TapeRequestStateCore;
-  TYPE StreamCore IS RECORD (
-    id INTEGER,
-    initialSizeToTransfer INTEGER,
-    status NUMBER,
-    tapePoolId NUMBER,
-    tapePoolName VARCHAR2(2048));
-  TYPE Stream_Cur IS REF CURSOR RETURN StreamCore;
   TYPE "strList" IS TABLE OF VARCHAR2(2048) index BY binary_integer;
   TYPE "cnumList" IS TABLE OF NUMBER index BY binary_integer;
   TYPE QueryLine IS RECORD (
@@ -102,48 +81,7 @@ CREATE OR REPLACE PACKAGE castor AS
     fileid INTEGER,
     nshost VARCHAR2(2048));
   TYPE FileEntry_Cur IS REF CURSOR RETURN FileEntry;
-  TYPE DbMigrationInfo IS RECORD (
-    id NUMBER,
-    copyNb NUMBER,
-    fileName VARCHAR2(2048),
-    nsHost VARCHAR2(2048),
-    fileId NUMBER,
-    fileSize NUMBER);
-  TYPE DbMigrationInfo_Cur IS REF CURSOR RETURN DbMigrationInfo;
-  TYPE DbStreamInfo IS RECORD (
-    id NUMBER,
-    numFile NUMBER,
-    byteVolume NUMBER,
-    age NUMBER);
-  TYPE DbStreamInfo_Cur IS REF CURSOR RETURN DbStreamInfo;
-  TYPE DbRecallInfo IS RECORD (
-    vid VARCHAR2(2048),
-    tapeId NUMBER,
-    dataVolume NUMBER,
-    numbFiles NUMBER,
-    expireTime NUMBER,
-    priority NUMBER);
-  TYPE DbRecallInfo_Cur IS REF CURSOR RETURN DbRecallInfo;
   TYPE PriorityMap_Cur IS REF CURSOR RETURN PriorityMap%ROWTYPE;
-  TYPE FileToRecallCore IS RECORD (
-   fileId NUMBER,
-   nsHost VARCHAR2(2048),
-   diskserver VARCHAR2(2048),
-   mountPoint VARCHAR(2048),
-   path VARCHAR2(2048),
-   fseq INTEGER);
-  TYPE FileToRecallCore_Cur IS REF CURSOR RETURN  FileToRecallCore;  
-  TYPE FileToMigrateCore IS RECORD (
-   fileId NUMBER,
-   nsHost VARCHAR2(2048),
-   lastModificationTime NUMBER,
-   diskserver VARCHAR2(2048),
-   mountPoint VARCHAR(2048),
-   path VARCHAR2(2048),
-   lastKnownFilename VARCHAR2(2048), 
-   fseq INTEGER,
-   fileSize NUMBER);
-  TYPE FileToMigrateCore_Cur IS REF CURSOR RETURN  FileToMigrateCore;  
   TYPE StreamReport IS RECORD (
    diskserver VARCHAR2(2048),
    mountPoint VARCHAR2(2048));
