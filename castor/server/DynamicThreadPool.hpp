@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DynamicThreadPool.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2009/01/08 09:24:24 $ $Author: itglp $
+ * @(#)$RCSfile: DynamicThreadPool.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2009/08/10 15:27:12 $ $Author: itglp $
  *
  * This header file describes the implementation of a generic thread pool with
  * dynamic thread creation and destruction. A thread pool is a set of threads
@@ -76,11 +76,16 @@ namespace castor {
        * Empty constructor
        */
       DynamicThreadPool() : 
-         BaseThreadPool(), m_initThreads(0), m_maxThreads(0), m_threshold(0) {};
+         BaseThreadPool(), m_producerThread(0),
+         m_initThreads(0), m_maxThreads(0), m_threshold(0) {};
 
       /**
        * Default Constructor.
-       * @param poolName, thread as in BaseThreadPool
+       * @param poolName As in BaseThreadPool
+       * @param consumerThread The consumer thread, passed to BaseThreadPool
+       * @param producerThread The producer thread: there will be a single
+       * instance running this thread, having as param of its run() method
+       * this pool instance.
        * @param initThreads The number of threads to initially be created in
        * the pool.
        * @param maxThreads The maximum number of threads that can be created.
@@ -97,7 +102,8 @@ namespace castor {
        * @exception Exception in case of error
        */
       DynamicThreadPool(const std::string poolName,
-        castor::server::IThread* thread,
+        castor::server::IThread* consumerThread,
+        castor::server::IThread* producerThread,
         unsigned int initThreads = DEFAULT_INITTHREADS,
         unsigned int maxThreads  = DEFAULT_MAXTHREADS,
         unsigned int threshold   = DEFAULT_THRESHOLD,
@@ -148,6 +154,13 @@ namespace castor {
     private:
 
       /**
+       * The start routine for the producer thread for the pool
+       * @param arg A pointer to the thread pool object. This is needed so that
+       * the threads can access the thread pools internal data.
+       */
+      static void* _producer(void *arg);
+
+      /**
        * The start routine for threads in the pool.
        * @param arg A pointer to the thread pool object. This is needed so that
        * the threads can access the thread pools internal counters.
@@ -165,6 +178,9 @@ namespace castor {
 
     protected:
 
+      /// The producer thread
+      castor::server::IThread* m_producerThread;
+
       /// The initial (minimum) number of threads
       unsigned int m_initThreads;
 
@@ -177,7 +193,6 @@ namespace castor {
 
       /// The last time in seconds since EPOCH that a thread was destroyed.
       u_signed64 m_lastPoolShrink;
-
     };
 
   } // End of namespace server

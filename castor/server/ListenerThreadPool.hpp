@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2009/01/08 09:24:24 $ $Author: itglp $
+ * @(#)$RCSfile: ListenerThreadPool.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2009/08/10 15:27:12 $ $Author: itglp $
  *
  * Abstract class defining a listener thread pool
  *
@@ -43,6 +43,9 @@ namespace castor {
    */
   class ListenerThreadPool : public DynamicThreadPool {
 
+  /// This is the producer thread for this pool
+  friend class ListenerProducerThread;
+
   public:
 
     /**
@@ -55,11 +58,10 @@ namespace castor {
      * Constructor for a listener with a fixed number of threads.
      * @param poolName, thread as in BaseThreadPool
      * @param listenPort the port to be used by the listening socket.
-     * @param listenereOnOwnThread if false the listener loop is run directly. See run().
      * @param nbThreads number of threads in the pool
      */
     ListenerThreadPool(const std::string poolName, castor::server::IThread* thread,
-                       unsigned int listenPort, bool listenerOnOwnThread = true,
+                       unsigned int listenPort,
                        unsigned int nbThreads = DEFAULT_THREAD_NUMBER)
       throw (castor::exception::Exception);
 
@@ -67,11 +69,10 @@ namespace castor {
      * Constructor for a listener with a dynamic number of threads.
      * @param poolName, thread as in BaseThreadPool
      * @param listenPort the port to be used by the listening socket.
-     * @param listenereOnOwnThread if false the listener loop is run directly. See run().
      * @param initThreads, maxThreads, threshold, maxTasks as in DynamicThreadPool
      */
     ListenerThreadPool(const std::string poolName, castor::server::IThread* thread,
-                       unsigned int listenPort, bool listenerOnOwnThread,
+                       unsigned int listenPort,
                        unsigned int initThreads,
                        unsigned int maxThreads,
                        unsigned int threshold = DEFAULT_THRESHOLD,
@@ -84,11 +85,7 @@ namespace castor {
     virtual ~ListenerThreadPool() throw();
     
     /**
-     * Starts the listener loop to accept connections.
-     * If m_spawnListener (default), the loop is started on a separate thread,
-     * otherwise it is run directly: in the latter case the method does NOT return,
-     * thus it does NOT obey the contract of BaseThreadPool; however, for simple
-     * listening servers like the RH, this results in less overhead.
+     * Starts the pool and the listener loop to accept connections.
      */
     virtual void run() throw (castor::exception::Exception);
     
@@ -141,16 +138,21 @@ namespace castor {
     /// TCP port to listen for
     unsigned int m_port;
     
-    /// flag to decide whether the listener loop has to run in a separate thread
-    bool m_spawnListener;
-    
-  private:
-    
-    /// Thread entrypoint for the listener loop
-    static void* _listener(void* param);
-    
   };
+  
+  /// A simple producer helper class, which runs the listening loop
+  class ListenerProducerThread : public IThread {
 
+    /// Empty init
+    virtual void init() {};
+
+    /// Runs the listening loop of the pool passed as argument
+    virtual void run(void* param);
+    
+    /// Empty stop
+    virtual void stop() {};
+  };
+  
  } // end of namespace server
 
 } // end of namespace castor

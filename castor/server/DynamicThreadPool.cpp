@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DynamicThreadPool.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2009/07/13 06:22:07 $ $Author: waldron $
+ * @(#)$RCSfile: DynamicThreadPool.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2009/08/10 15:27:12 $ $Author: itglp $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -31,14 +31,16 @@
 //-----------------------------------------------------------------------------
 castor::server::DynamicThreadPool::DynamicThreadPool
 (const std::string poolName,
- castor::server::IThread* thread,
+ castor::server::IThread* consumerThread,
+ castor::server::IThread* producerThread,
  unsigned int initThreads, 
  unsigned int maxThreads,
  unsigned int threshold,
  unsigned int maxTasks)
   throw(castor::exception::Exception) :
-  BaseThreadPool(poolName, thread, 0),
+  BaseThreadPool(poolName, consumerThread, 0),
   m_taskQueue(maxTasks),
+  m_producerThread(producerThread),
   m_lastPoolShrink(0) {
 
   int rv;
@@ -90,16 +92,23 @@ void castor::server::DynamicThreadPool::run() throw (castor::exception::Exceptio
   pthread_t t;
   int       rv;
   
+  if(0 == m_producerThread) {
+    // This is not acceptable
+    castor::exception::Exception e(EINVAL);
+    e.getMessage() << "Cannot run a DynamicThreadPool without producer";
+    throw e;
+  }
+  
   if(m_initThreads > 0) {
     // Initialize thread attributes
     pthread_attr_init(&m_attr);
-    pthread_attr_setdetachstate(&m_attr, 1);
+    pthread_attr_setdetachstate(&m_attr, PTHREAD_CREATE_DETACHED);
     pthread_attr_setstacksize(&m_attr, DEFAULT_THREAD_STACKSIZE);
     
     // Create the initial pool of threads. The threads themselves just act as
     // consumers of the task queue and wait for tasks to process.
     for (unsigned int i = 0; i < m_initThreads; i++) {
-      rv = pthread_create(&t, &m_attr, (void *(*)(void *))&castor::server::DynamicThreadPool::_consumer, this);
+      rv = pthread_create(&t, &m_attr, (void *(*)(void *))&DynamicThreadPool::_consumer, this);
       if (rv != 0) {
         break;
       }
@@ -118,6 +127,16 @@ void castor::server::DynamicThreadPool::run() throw (castor::exception::Exceptio
       throw e;
     }
   }
+    
+  // Initialize producer thread
+  rv = pthread_create(&t, &m_attr, (void *(*)(void *))&DynamicThreadPool::_producer, this);
+  if (rv != 0) {
+    // Same as above
+    m_stopped = true;
+    castor::exception::Exception e(errno);
+    e.getMessage() << "Failed to create the producer thread";
+    throw e;
+  }    
 
   // Threads have been created
   castor::dlf::Param params[] =
@@ -128,9 +147,11 @@ void castor::server::DynamicThreadPool::run() throw (castor::exception::Exceptio
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
                           DLF_BASE_FRAMEWORK + 3, 4, params);
 
-  // Initialize the underlying user thread. We do it here once for the whole thread
-  // pool instead of once per thread as the threads are created in a suspended
-  // state and will get some work only when the addTask method is called
+  // Initialize the underlying producer and consumer user threads.
+  // For the consumers, we do it here once for the whole pool
+  // instead of once per thread as the threads are all waiting for
+  // the queue to be filled by the producer or via the addTask method.
+  m_producerThread->init();
   m_thread->init();
 }
 
@@ -140,10 +161,13 @@ void castor::server::DynamicThreadPool::run() throw (castor::exception::Exceptio
 castor::server::DynamicThreadPool::~DynamicThreadPool() throw() {
 
   // Destroy global mutexes
-  pthread_mutex_destroy(&m_lock);
+  pthread_mutex_destroy(&m_lock);              
   
   // Destroy thread attributes
   pthread_attr_destroy(&m_attr);
+  
+  // Destroy the producer thread 
+  delete m_producerThread;
 }
 
 //-----------------------------------------------------------------------------
@@ -152,9 +176,10 @@ castor::server::DynamicThreadPool::~DynamicThreadPool() throw() {
 bool castor::server::DynamicThreadPool::shutdown(bool wait) throw() {
 
   // Update the termination flag to true and notify both the task queue and
-  // the user thread of the termination.
+  // the user threads of the termination.
   m_stopped = true;
   m_taskQueue.terminate();
+  m_producerThread->stop();
 
   if(wait) {
     // Spin lock to make sure we're over
@@ -165,6 +190,34 @@ bool castor::server::DynamicThreadPool::shutdown(bool wait) throw() {
   
   // Inform whether we're done
   return (m_nbThreads == 0);
+}
+
+//-----------------------------------------------------------------------------
+// Producer
+//-----------------------------------------------------------------------------
+void* castor::server::DynamicThreadPool::_producer(void *arg) {
+  
+  DynamicThreadPool *pool = (DynamicThreadPool *)arg;
+
+  try {
+    // this is supposed to run forever
+    pool->m_producerThread->run(pool);
+  } catch(castor::exception::Exception any) {
+    // "Uncaught exception in a thread from pool"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("ThreadPool", pool->m_poolName),
+       castor::dlf::Param("Error", sstrerror(any.code())),
+       castor::dlf::Param("Message", any.getMessage().str())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                            DLF_BASE_FRAMEWORK + 10, 3, params);
+  } catch(...) {
+    // "Uncaught GENERAL exception in a thread from pool"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("ThreadPool", pool->m_poolName)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                            DLF_BASE_FRAMEWORK + 11, 1, params);
+  }
+  return NULL;
 }
 
 //-----------------------------------------------------------------------------

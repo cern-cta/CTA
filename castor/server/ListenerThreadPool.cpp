@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2009/07/13 06:22:07 $ $Author: waldron $
+ * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2009/08/10 15:27:12 $ $Author: itglp $
  *
  * Abstract class defining a listener thread pool
  *
@@ -29,7 +29,6 @@
 #include "castor/server/BaseThreadPool.hpp"
 #include "castor/server/ListenerThreadPool.hpp"
 #include "castor/exception/Internal.hpp"
-#include "Cthread_api.h"
 #include <iomanip>
 
 //------------------------------------------------------------------------------
@@ -38,11 +37,10 @@
 castor::server::ListenerThreadPool::ListenerThreadPool(const std::string poolName,
                                                        castor::server::IThread* thread,
                                                        unsigned int listenPort,
-                                                       bool listenerOnOwnThread,
                                                        unsigned int nbThreads)
   throw(castor::exception::Exception) :
-  DynamicThreadPool(poolName, thread, nbThreads, nbThreads),
-  m_sock(0), m_port(listenPort), m_spawnListener(listenerOnOwnThread) {}
+  DynamicThreadPool(poolName, thread, 0, nbThreads, nbThreads),
+  m_sock(0), m_port(listenPort) {}
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -50,14 +48,13 @@ castor::server::ListenerThreadPool::ListenerThreadPool(const std::string poolNam
 castor::server::ListenerThreadPool::ListenerThreadPool(const std::string poolName,
                                                        castor::server::IThread* thread,
                                                        unsigned int listenPort,
-                                                       bool listenerOnOwnThread,
                                                        unsigned int initThreads,
                                                        unsigned int maxThreads,
                                                        unsigned int threshold,
                                                        unsigned int maxTasks)
   throw(castor::exception::Exception) :
-  DynamicThreadPool(poolName, thread, initThreads, maxThreads, threshold, maxTasks),
-  m_sock(0), m_port(listenPort), m_spawnListener(listenerOnOwnThread) {}
+  DynamicThreadPool(poolName, thread, 0, initThreads, maxThreads, threshold, maxTasks),
+  m_sock(0), m_port(listenPort) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -71,15 +68,11 @@ void castor::server::ListenerThreadPool::run() throw (castor::exception::Excepti
   // bind the socket (this can fail, we just propagate the exception)
   bind();
 
-  // create the thread pool
-  DynamicThreadPool::run();
+  // create the producer thread
+  m_producerThread = new castor::server::ListenerProducerThread();
 
-  // start the listening loop
-  if(m_spawnListener || m_nbThreads == 0) {
-    Cthread_create_detached((void *(*)(void *))&_listener, this);
-  } else {
-    listenLoop();
-  }
+  // create the thread pool; this also starts the producer thread
+  DynamicThreadPool::run();
 }
 
 //------------------------------------------------------------------------------
@@ -98,20 +91,11 @@ bool castor::server::ListenerThreadPool::shutdown(bool wait) throw() {
 }
 
 //------------------------------------------------------------------------------
-// _listener
-//------------------------------------------------------------------------------
-void* castor::server::ListenerThreadPool::_listener(void* param) {
-  castor::server::ListenerThreadPool* tp = (castor::server::ListenerThreadPool*)param;
-  tp->listenLoop();
-  return 0;
-}
-
-//------------------------------------------------------------------------------
 // threadAssign
 //------------------------------------------------------------------------------
 void castor::server::ListenerThreadPool::threadAssign(void *param) {
   if (m_nbThreads == 0) {
-    // In this case we run the user thread code in the same thread.
+    // In this case we run the user thread code in the same thread of the producer/listener.
     // Note that during the user thread execution we cannot accept connections.
     try {
       m_thread->run(param);
@@ -147,4 +131,13 @@ void castor::server::ListenerThreadPool::threadAssign(void *param) {
                               DLF_BASE_FRAMEWORK + 19, 3, params);
     }
   }
+}
+
+
+//------------------------------------------------------------------------------
+// Producer::run
+//------------------------------------------------------------------------------
+void castor::server::ListenerProducerThread::run(void* param) {
+  castor::server::ListenerThreadPool* tp = (castor::server::ListenerThreadPool*)param;
+  tp->listenLoop();
 }
