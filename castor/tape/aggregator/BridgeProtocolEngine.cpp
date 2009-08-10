@@ -124,9 +124,6 @@ int castor::tape::aggregator::BridgeProtocolEngine::acceptRtcpdConnection()
     throw ex;
   }
 
-  // Update the number of callback connections
-  m_nbCallbackConnections++;
-
   try {
     unsigned short port = 0; // Client port
     unsigned long  ip   = 0; // Client IP
@@ -167,12 +164,13 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocks()
   int          maxFd               = 0;
   unsigned int nbOneSecondTimeouts = 0;
   timeval      timeout;
-  fd_set       readFdSet;
+  SmartFdList  readFds;   // List of read file descriptors to be checked
+  fd_set       readFdSet; // The read file descriptor set used with select()
 
   // Append the socket descriptors of the RTCPD callback port and the initial
   // connection from RTCPD to the list of read file descriptors
-  m_readFds.push_back(m_rtcpdCallbackSockFd);
-  m_readFds.push_back(m_rtcpdInitialSockFd);
+  readFds.push_back(m_rtcpdCallbackSockFd);
+  readFds.push_back(m_rtcpdInitialSockFd);
   if(m_rtcpdCallbackSockFd > m_rtcpdInitialSockFd) {
     maxFd = m_rtcpdCallbackSockFd;
   } else {
@@ -190,34 +188,10 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocks()
       throw(ex);
     }
 
-    // Ping the client if the ping timeout has been reached and the client is
-    // readtp, writetp or dumptp
-    if(
-      (nbOneSecondTimeouts % CLIENTPINGTIMEOUT == 0) &&
-      (m_volume.clientType() == tapegateway::READ_TP  ||
-       m_volume.clientType() == tapegateway::WRITE_TP ||
-       m_volume.clientType() == tapegateway::DUMP_TP)) {
-
-      try {
-        ClientTxRx::ping(m_cuuid, m_jobRequest.volReqId,
-          m_jobRequest.clientHost, m_jobRequest.clientPort);
-      } catch(castor::exception::Exception &ex) {
-        castor::exception::Exception ex2(ex.code());
-
-        ex2.getMessage() <<
-          "Failed to ping client"
-          ": clientType=" <<
-          utils::volumeClientTypeToString(m_volume.clientType()) <<
-          ": " << ex.getMessage().str();
-
-        throw(ex2);
-      }
-    }
-
     // Build the file descriptor set ready for the select call
     FD_ZERO(&readFdSet);
-    for(std::list<int>::iterator itor = m_readFds.begin();
-      itor != m_readFds.end(); itor++) {
+    for(std::list<int>::iterator itor = readFds.begin();
+      itor != readFds.end(); itor++) {
 
       FD_SET(*itor, &readFdSet);
 
@@ -238,10 +212,36 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocks()
 
       nbOneSecondTimeouts++;
 
+      // Ping RTCPD if the RTCPDPINGTIMEOUT has been reached
       if(nbOneSecondTimeouts % RTCPDPINGTIMEOUT == 0) {
         RtcpTxRx::pingRtcpd(m_cuuid, m_jobRequest.volReqId,
         m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT);
       }
+
+      // Ping the client if the ping timeout has been reached and the client is
+      // readtp, writetp or dumptp
+      if(
+        (nbOneSecondTimeouts % CLIENTPINGTIMEOUT == 0) &&
+        (m_volume.clientType() == tapegateway::READ_TP  ||
+         m_volume.clientType() == tapegateway::WRITE_TP ||
+         m_volume.clientType() == tapegateway::DUMP_TP)) {
+
+        try {
+          ClientTxRx::ping(m_cuuid, m_jobRequest.volReqId,
+            m_jobRequest.clientHost, m_jobRequest.clientPort);
+        } catch(castor::exception::Exception &ex) {
+          castor::exception::Exception ex2(ex.code());
+
+          ex2.getMessage() <<
+            "Failed to ping client"
+            ": clientType=" <<
+            utils::volumeClientTypeToString(m_volume.clientType()) <<
+            ": " << ex.getMessage().str();
+
+          throw(ex2);
+        }
+      }
+
       break;
 
     case -1: // Select encountered an error
@@ -271,97 +271,114 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocks()
 
     default: // One or more select file descriptors require attention
 
-      int nbProcessedFds = 0;
+      continueRtcopySession = processAPendingRtcpdSocket(readFds, &readFdSet);
 
-      // For each read file descriptor or until all ready file descriptors
-      // have been processed
-      for(std::list<int>::iterator itor = m_readFds.begin();
-        itor != m_readFds.end() && nbProcessedFds < selectRc; itor++) {
-
-        // If the read file descriptor is ready
-        if(FD_ISSET(*itor, &readFdSet)) {
-          bool endOfSession = false;
-
-          processRtcpdSock(*itor, endOfSession);
-          nbProcessedFds++;
-
-          if(endOfSession) {
-            continueRtcopySession = false;
-          }
-        }
-      }
     } // switch(selectRc)
   } // while(continueRtcopySession)
 }
 
 
-//-----------------------------------------------------------------------------
-// processRtcpdSock
-//-----------------------------------------------------------------------------
-void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSock(
-  const int socketFd, bool &endOfSession) throw(castor::exception::Exception) {
+//------------------------------------------------------------------------------
+// processAPendingRtcpdSocket
+//------------------------------------------------------------------------------
+bool
+  castor::tape::aggregator::BridgeProtocolEngine::processAPendingRtcpdSocket(
+  SmartFdList &fds, fd_set *fdSet) throw(castor::exception::Exception) {
 
-  // If the file descriptor is that of the callback port
+  const int socketFd = findPendingFd(fds, fdSet);
+  if(socketFd == -1) {
+    TAPE_THROW_EX(exception::Internal,
+      ": Lost pending file descriptor");
+  }
+
+  // Accept the new connection if the read file descriptor is the callback port
   if(socketFd == m_rtcpdCallbackSockFd) {
 
-    // Accept the connection and append its socket descriptor to
-    // the list of read file descriptors
-    //
-    // acceptRtcpdConnection() increments m_nbCallbackConnections
-    m_readFds.push_back(acceptRtcpdConnection());
+    // Accept the connection
+    const int acceptedConnection = acceptRtcpdConnection();
+    m_nbCallbackConnections++;
+    fds.push_back(acceptedConnection);
 
-  // Else the file descriptor is that of a tape/disk IO connection
-  } else {
+    return true; // Continue the RTCOPY session
+  }
 
-    // Try to receive the message header which may not be possible; The file
-    // descriptor may be ready because RTCPD has closed the connection
-    bool connectionClosed = false;
-    MessageHeader header;
-    utils::setBytes(header, '\0');
-    RtcpTxRx::receiveMessageHeaderFromCloseable(m_cuuid, connectionClosed,
-      m_jobRequest.volReqId, socketFd, RTCPDNETRWTIMEOUT, header);
+  const ProcessRtcpdSockResult result = processRtcpdSock(socketFd);
 
-    // If the connection has been closed by RTCPD, then remove the
-    // file descriptor from the list of read file descriptors and
-    // close it
-    if(connectionClosed) {
-      close(m_readFds.release(socketFd));
-
-      m_nbCallbackConnections--;
-
+  switch(result) {
+  case MSG_PROCESSED:
+    return true; // Continue the RTCOPY session
+  case PEER_CLOSED:
+    close(fds.release(socketFd));
+    m_nbCallbackConnections--;
+    {
       castor::dlf::Param params[] = {
         castor::dlf::Param("volReqId"       , m_jobRequest.volReqId  ),
         castor::dlf::Param("socketFd"       , socketFd               ),
         castor::dlf::Param("nbCallbackConns", m_nbCallbackConnections)};
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
         AGGREGATOR_CONNECTION_CLOSED_BY_RTCPD, params);
+    }
+    return true; // Continue the RTCOPY session
+  case END_RECEIVED:
+    m_nbReceivedENDOF_REQs++;
 
-      // Finished processing socket as the connection is closed
-      return;
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId"            , m_jobRequest.volReqId ),
+        castor::dlf::Param("socketFd"            , socketFd              ),
+        castor::dlf::Param("nbReceivedENDOF_REQs", m_nbReceivedENDOF_REQs)};
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_RECEIVED_RTCP_ENDOF_REQ, params);
     }
 
-    bool receivedENDOF_REQ = false;
-    processRtcpdRequest(header, socketFd, receivedENDOF_REQ);
+    close(fds.release(socketFd));
+    m_nbCallbackConnections--;
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId"       , m_jobRequest.volReqId  ),
+        castor::dlf::Param("socketFd"       , socketFd               ),
+        castor::dlf::Param("nbCallbackConns", m_nbCallbackConnections)};
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_CLOSED_CONNECTION, params);
+    }
 
-    // If an RTCP_ENDOF_REQ message was received
-    if(receivedENDOF_REQ) {
-      m_nbReceivedENDOF_REQs++;
+    // If only the initial callback connection is open, then send an
+    // RTCP_ENDOF_REQ message to RTCPD and close the connection
+    if(m_nbCallbackConnections == 1) {
 
-      {
-        castor::dlf::Param params[] = {
-          castor::dlf::Param("volReqId"            , m_jobRequest.volReqId ),
-          castor::dlf::Param("socketFd"            , socketFd              ),
-          castor::dlf::Param("nbReceivedENDOF_REQs", m_nbReceivedENDOF_REQs)};
-        castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-          AGGREGATOR_RECEIVED_RTCP_ENDOF_REQ, params);
+      // Try to find the socket file descriptor of the initial callback
+      // connection is the list of open connections
+      SmartFdList::iterator itor = std::find(fds.begin(),
+        fds.end(), m_rtcpdInitialSockFd);
+
+      // If the file descriptor cannot be found
+      if(itor == fds.end()) {
+        TAPE_THROW_EX(castor::exception::Internal,
+          ": The initial callback connection (fd=" << m_rtcpdInitialSockFd
+          <<")is not the last one open. Found fd= " << *itor);
       }
 
-      // Remove the file descriptor from the list of read file descriptors and
-      // close it
-      close(m_readFds.release(socketFd));
+      // Send an RTCP_ENDOF_REQ message to RTCPD
+      MessageHeader endofReqMsg;
+      endofReqMsg.magic       = RTCOPY_MAGIC;
+      endofReqMsg.reqType     = RTCP_ENDOF_REQ;
+      endofReqMsg.lenOrStatus = 0;
+      RtcpTxRx::sendMessageHeader(m_cuuid, m_jobRequest.volReqId,
+        m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, endofReqMsg);
 
+      // Receive the acknowledge of the RTCP_ENDOF_REQ message
+      MessageHeader ackMsg;
+      try {
+        RtcpTxRx::receiveMessageHeader(m_cuuid, m_jobRequest.volReqId,
+          m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, ackMsg);
+      } catch(castor::exception::Exception &ex) {
+        TAPE_THROW_CODE(EPROTO,
+          ": Failed to receive acknowledge of RTCP_ENDOF_REQ from RTCPD: "
+          << ex.getMessage().str());
+      }
+
+      close(fds.release(m_rtcpdInitialSockFd));
       m_nbCallbackConnections--;
-
       {
         castor::dlf::Param params[] = {
           castor::dlf::Param("volReqId"       , m_jobRequest.volReqId  ),
@@ -371,49 +388,70 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSock(
           AGGREGATOR_CLOSED_CONNECTION, params);
       }
 
-      // If only the initial callback connection is open, then send an
-      // RTCP_ENDOF_REQ message to RTCPD and close the connection
-      if(m_nbCallbackConnections == 1) {
+      return false; // End the RTCOPY session
+    }
 
-        // Try to find the socket file descriptor of the initial callback
-        // connection is the list of open connections
-        SmartFdList::iterator itor = std::find(m_readFds.begin(),
-          m_readFds.end(), m_rtcpdInitialSockFd);
+    return true; // Continue the RTCOPY session
 
-        // If the file descriptor cannot be found
-        if(itor == m_readFds.end()) {
-          TAPE_THROW_EX(castor::exception::Internal,
-            ": The initial callback connection (fd=" << m_rtcpdInitialSockFd
-            <<")is not the last one open. Found fd= " << *itor);
-        }
+  default:
+    TAPE_THROW_EX(exception::Internal,
+      ": Unknown result type"
+      ": result=" << result);
+  }
+}
 
-        // Send an RTCP_ENDOF_REQ message to RTCPD
-        MessageHeader endofReqMsg;
-        endofReqMsg.magic       = RTCOPY_MAGIC;
-        endofReqMsg.reqType     = RTCP_ENDOF_REQ;
-        endofReqMsg.lenOrStatus = 0;
-        RtcpTxRx::sendMessageHeader(m_cuuid, m_jobRequest.volReqId,
-          m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, endofReqMsg);
 
-        // Receive the acknowledge of the RTCP_ENDOF_REQ message
-        MessageHeader ackMsg;
-        try {
-          RtcpTxRx::receiveMessageHeader(m_cuuid, m_jobRequest.volReqId,
-            m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, ackMsg);
-        } catch(castor::exception::Exception &ex) {
-          TAPE_THROW_CODE(EPROTO,
-            ": Failed to receive acknowledge of RTCP_ENDOF_REQ from RTCPD: "
-            << ex.getMessage().str());
-        }
+//-----------------------------------------------------------------------------
+// findPendingFd
+//-----------------------------------------------------------------------------
+int castor::tape::aggregator::BridgeProtocolEngine::findPendingFd(
+  const std::list<int> &fds, fd_set *fdSet) throw() {
 
-        // Close the connection
-        close(m_readFds.release(m_rtcpdInitialSockFd));
+  // Find a file descriptor requiring attention
+  for(std::list<int>::const_iterator itor = fds.begin(); itor != fds.end();
+    itor++) {
 
-        // Mark the end of the recall/migration session
-        endOfSession = true;
-      }
+    // If the read file descriptor is ready
+    if(FD_ISSET(*itor, fdSet)) {
+      return *itor;
     }
   }
+
+  return -1;
+}
+
+
+//-----------------------------------------------------------------------------
+// processRtcpdSock
+//-----------------------------------------------------------------------------
+castor::tape::aggregator::BridgeProtocolEngine::ProcessRtcpdSockResult
+  castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSock(
+  const int socketFd) throw(castor::exception::Exception) {
+
+  MessageHeader header;
+  utils::setBytes(header, '\0');
+
+  // Try to receive the message header which may not be possible; The file
+  // descriptor may be ready because RTCPD has closed the connection
+  bool peerClosed = false;
+  {
+    RtcpTxRx::receiveMessageHeaderFromCloseable(m_cuuid, peerClosed,
+      m_jobRequest.volReqId, socketFd, RTCPDNETRWTIMEOUT, header);
+  }
+
+  // If the peer closed its side of the connection
+  if(peerClosed) {
+    return PEER_CLOSED;
+  }
+
+  bool end = false;
+  processRtcpdRequest(header, socketFd, end);
+
+  if(end) {
+    return END_RECEIVED;
+  }
+
+  return MSG_PROCESSED;
 }
 
 

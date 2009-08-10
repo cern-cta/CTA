@@ -123,12 +123,6 @@ private:
   BoolFunctor &m_stoppingGracefully;
 
   /**
-   * The set of read RTCPD socket descriptors to be de-multiplexed by
-   * the BridgeProtocolEngine.
-   */
-  SmartFdList m_readFds;
-
-  /**
    * The number of callback connections.
    */
   uint32_t m_nbCallbackConnections;
@@ -195,31 +189,61 @@ private:
   }
 
   /**
+   * Processes the RTCPD sockets.
+   */
+  void processRtcpdSocks() throw(castor::exception::Exception);
+
+  /**
    * Accepts an RTCPD connection using the specified listener socket.
    */
   int acceptRtcpdConnection() throw(castor::exception::Exception);
 
   /**
-   * Processes the following RTCPD sockets:
-   * <ul>
-   * <li>The connected socket of the initial RTCPD connection
-   * <li>The RTCPD callback listener socket
-   * <li>The connected sockets of the tape and disk I/O threads
-   * </ul>
+   * Processes a pending RTCPD socket given the list of read file descriptors
+   * to be checked and the result of calling select().
    *
-   * @param filesBeingMigrated
-   * @param filesBeingRecalled
+   * Please note that this method will modify the list of read file descriptors
+   * as necessary.  For example closed connection will be removed and newly
+   * accepted connections will be added.
+   *
+   * @param fds   The read file descriptors to be checked.
+   * @param fdSet The file descriptor set from calling select().
+   * @return      True if the RTCOPY session should continue else false.
    */
-  void processRtcpdSocks() throw(castor::exception::Exception);
+  bool processAPendingRtcpdSocket(SmartFdList &fds, fd_set *fdSet)
+    throw (castor::exception::Exception);
+
+  /**
+   * Finds a file descriptor in a select() file descriptor set that requires
+   * attention.
+   *
+   * @param fds   The file descriptors to be checked.
+   * @param fdSet The file descriptor set from calling select().
+   * @return      The file descriptor requiring attention or -1 if none was
+   *              found.
+   */
+  int findPendingFd(const std::list<int> &fds, fd_set *fdSet) throw();
+
+  /**
+   * The possible return values of processRtcpdSock.  For documentation please
+   * see the documentation of processRtcpdSock().
+   */
+  enum ProcessRtcpdSockResult {
+    MSG_PROCESSED,
+    PEER_CLOSED,
+    END_RECEIVED
+  };
 
   /**
    * Processes the specified RTCPD socket.
    *
    * @param socketFd The file descriptor of the socket to be processed.
-   * @param endOfSession Out parameter: Will be set to true by this function
-   * if the end of the recall/migration session has been reached.
+   * @return         Returns MSG_PROCESSED if a message was succesfully received
+   *                 and processed and it was not the ENDOF_REQ message.
+   *                 Returns PEER_CLOSED if the peerc losed the connection.
+   *                 Returns END_RECEIVED if the ENDOF_REQ message was received.
    */
-  void processRtcpdSock(const int socketFd, bool &endOfSession)
+  ProcessRtcpdSockResult processRtcpdSock(const int socketFd)
     throw(castor::exception::Exception);
 
   /**
