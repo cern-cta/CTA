@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.18 $ $Release$ $Date: 2009/07/15 08:39:34 $ $Author: gtaur $
+ * @(#)$RCSfile: OraTapeGatewaySvc.hpp,v $ $Revision: 1.19 $ $Release$ $Date: 2009/08/10 09:48:17 $ $Author: gtaur $
  *
  * Implementation of the ITapeGatewaySvc for Oracle
  *
@@ -290,9 +290,6 @@ namespace castor {
 	
 	static const std::string s_getSegmentInfoStatementString;
 	oracle::occi::Statement *m_getSegmentInfoStatement;
-
-	static const std::string s_failTapeSessionStatementString;
-	oracle::occi::Statement *m_failTapeSessionStatement;
 
 	static const std::string s_failFileTransferStatementString;
 	oracle::occi::Statement *m_failFileTransferStatement;
