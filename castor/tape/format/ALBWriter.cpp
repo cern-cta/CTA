@@ -155,7 +155,7 @@ int main(int argc, char** argv) {
       strcat (s," 2>&1");
       fp = popen(s, "r");// 2>&1 reditect output from stder  to  stdio
       char  strA[100];
-      fscanf (fp, "%s %s %10d",strA, strA ,&file.file_checksum); // How to get the Third 'string'
+      fscanf (fp, "%s %s %10ud",strA, strA ,&file.file_checksum); // How to get the Third 'string'
       pclose(fp);
       copyString("castorns.cern.ch", file.file_ns_host);
       file.file_ns_id = 226994274;
