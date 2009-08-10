@@ -140,15 +140,8 @@ void castor::tape::aggregator::AggregatorDaemon::logStart(const int argc,
     concatenatedArgs += argv[i];
   }
 
-#ifdef EMULATE_GATEWAY
-  const char *emulateGatway = "TRUE";
-#else
-  const char *emulateGatway = "FALSE";
-#endif // EMULATE_GATEWAY
-
   castor::dlf::Param params[] = {
-    castor::dlf::Param("argv"         , concatenatedArgs),
-    castor::dlf::Param("emulateGatway", emulateGatway)};
+    castor::dlf::Param("argv"         , concatenatedArgs)};
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, AGGREGATOR_STARTED,
     params);
 }

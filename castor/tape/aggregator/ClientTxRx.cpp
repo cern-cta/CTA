@@ -247,90 +247,6 @@ bool castor::tape::aggregator::ClientTxRx::getFileToMigrate(
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_GET_FILE_TO_MIGRATE_FROM_CLIENT, params);
   }
-  //===================================================
-  // Hardcoded volume INFO
-  #ifdef EMULATE_GATEWAY
-  
-   switch(emulatedRecallCounter.next()) {
-   case 1:
-     {
-       fileTransactionID = 1234;
-       utils::copyString(filePath,
-         "lxc2disk15.cern.ch:/tmp/nbessone/file1.txt");
-       utils::copyString(nsHost, "castorns");
-       fileId               = 111111111;
-       tapeFileSeq          = 1;
-       fileSize             = 1451640;
-       utils::copyString(lastKnownFilename, "file1.txt");
-       lastModificationTime = 1234567890;
-       positionCommandCode  = 0;//TPPOSIT_FSEQ: position by file sequence number
-       {
-         castor::dlf::Param params[] = {
-           castor::dlf::Param("volReqId"            , volReqId            ),
-           castor::dlf::Param("clientHost"          , clientHost          ),
-           castor::dlf::Param("clientPort"          , clientPort          ),
-           castor::dlf::Param("fileTransationId"    , fileTransationId    ),
-           castor::dlf::Param("filePath"            , filePath            ),
-           castor::dlf::Param("nsHost"              , nsHost              ),
-           castor::dlf::Param("fileId"              , fileId              ),
-           castor::dlf::Param("tapeFileSeq"         , tapeFileSeq         ),
-           castor::dlf::Param("fileSize"            , fileSize            ),
-           castor::dlf::Param("lastKnownFilename"   , lastKnownFilename   ),
-           castor::dlf::Param("lastModificationTime", lastModificationTime)};
-         castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-           AGGREGATOR_GOT_FILE_TO_MIGRATE_FROM_CLIENT, params);
-       }  
-       return(true);
-     }
-     break;
-
-   case 2:
-     {
-       fileTransactionID = 1234;
-       utils::copyString(filePath,
-         "lxc2disk15.cern.ch:/tmp/nbessone/file1.txt");
-       utils::copyString(nsHost, "castorns");
-       fileId               = 222222222;
-       tapeFileSeq          = 2;
-       fileSize             = 1451640;
-       utils::copyString(lastKnownFilename, "file2.txt");
-       lastModificationTime = 9876543210;
-       positionCommandCode  = 0;//TPPOSIT_FSEQ: position by file sequence number
-       {
-         castor::dlf::Param params[] = {
-           castor::dlf::Param("volReqId"            , volReqId            ),
-           castor::dlf::Param("clientHost"          , clientHost          ),
-           castor::dlf::Param("clientPort"          , clientPort          ),
-           castor::dlf::Param("fileTransationId"    , fileTransationId    ),
-           castor::dlf::Param("filePath"            , filePath            ),
-           castor::dlf::Param("nsHost"              , nsHost              ),
-           castor::dlf::Param("fileId"              , fileId              ),
-           castor::dlf::Param("tapeFileSeq"         , tapeFileSeq         ),
-           castor::dlf::Param("fileSize"            , fileSize            ),
-           castor::dlf::Param("lastKnownFilename"   , lastKnownFilename   ),
-           castor::dlf::Param("lastModificationTime", lastModificationTime)};
-         castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-           AGGREGATOR_GOT_FILE_TO_MIGRATE_FROM_CLIENT, params);
-       }
-       return(true);
-     }
-     break;
-
-   default:     
-     { // No more files to migrate
-       castor::dlf::Param params[] = {
-         castor::dlf::Param("volReqId"  , volReqId  ),
-         castor::dlf::Param("clientHost", clientHost),
-         castor::dlf::Param("clientPort", clientPort)};
-       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-         AGGREGATOR_NO_MORE_FILES_TO_MIGRATE, params);
-
-       return(false);
-     }
-   }// switch
- 
-  #endif
-  //===================================================
 
   bool thereIsAFileToMigrate = false;
 
@@ -521,32 +437,6 @@ bool castor::tape::aggregator::ClientTxRx::getFileToRecall(
     castor::dlf::Param("positionCommandCode", positionCommandCode)};
   castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
     AGGREGATOR_GET_FILE_TO_RECALL_FROM_CLIENT, params);
-
-  //===================================================
-  // Hardcoded volume INFO
-  #ifdef EMULATE_GATEWAY
-
-    if(emulatedRecallCounter.next() <= 1){
-      //volReqIdFromClient = volReqId;
-      fileTransactionId = 1234;
-      utils::copyString(filePath,
-        "lxc2disk15.cern.ch:/tmp/volume_I02000_file_n5");
-      utils::copyString(nsHost, "castorns");
-      fileId      = 320723286;
-      tapeFileSeq = 5;
-      blockId[0]  = 0;
-      blockId[1]  = 0;
-      blockId[2]  = 0;
-      blockId[3]  = 41;
-      positionCommandCode = 3; // TPPOSIT_BLKID: position by block id (locate)
-      return(true);
-    }
-    else {
-      return(false);
-    } 
-
-  #endif
-  //===================================================
 
   bool thereIsAFileToRecall = false;
 
