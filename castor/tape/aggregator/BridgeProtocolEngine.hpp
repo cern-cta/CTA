@@ -206,11 +206,11 @@ private:
    * as necessary.  For example closed connection will be removed and newly
    * accepted connections will be added.
    *
-   * @param fds   The read file descriptors to be checked.
-   * @param fdSet The file descriptor set from calling select().
-   * @return      True if the RTCOPY session should continue else false.
+   * @param socketFds The read file descriptors to be checked.
+   * @param fdSet     The file descriptor set from calling select().
+   * @return          True if the RTCOPY session should continue else false.
    */
-  bool processAPendingRtcpdSocket(SmartFdList &fds, fd_set *fdSet)
+  bool processAPendingRtcpdSocket(SmartFdList &socketFds, fd_set *fdSet)
     throw (castor::exception::Exception);
 
   /**
@@ -257,6 +257,14 @@ private:
    */
   void processRtcpdRequest(const MessageHeader &header, const int socketFd,
     bool &receivedENDOF_REQ) throw(castor::exception::Exception);
+
+  /**
+   * Closes the specified RTCPD socket.  After closing the connection this
+   * method throws an exception if the specified socket is that of the initial
+   * callback connection.
+   */
+  void closeNonInitialRtcpdSocket(SmartFdList &socketFds, const int socketFd)
+    throw(castor::exception::Exception);
 
   /**
    * RTCP_FILE_REQ message body handler.

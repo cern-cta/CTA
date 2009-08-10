@@ -283,9 +283,9 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocks()
 //------------------------------------------------------------------------------
 bool
   castor::tape::aggregator::BridgeProtocolEngine::processAPendingRtcpdSocket(
-  SmartFdList &fds, fd_set *fdSet) throw(castor::exception::Exception) {
+  SmartFdList &socketFds, fd_set *fdSet) throw(castor::exception::Exception) {
 
-  const int socketFd = findPendingFd(fds, fdSet);
+  const int socketFd = findPendingFd(socketFds, fdSet);
   if(socketFd == -1) {
     TAPE_THROW_EX(exception::Internal,
       ": Lost pending file descriptor");
@@ -297,7 +297,7 @@ bool
     // Accept the connection
     const int acceptedConnection = acceptRtcpdConnection();
     m_nbCallbackConnections++;
-    fds.push_back(acceptedConnection);
+    socketFds.push_back(acceptedConnection);
 
     return true; // Continue the RTCOPY session
   }
@@ -308,16 +308,7 @@ bool
   case MSG_PROCESSED:
     return true; // Continue the RTCOPY session
   case PEER_CLOSED:
-    close(fds.release(socketFd));
-    m_nbCallbackConnections--;
-    {
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("volReqId"       , m_jobRequest.volReqId  ),
-        castor::dlf::Param("socketFd"       , socketFd               ),
-        castor::dlf::Param("nbCallbackConns", m_nbCallbackConnections)};
-      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_CONNECTION_CLOSED_BY_RTCPD, params);
-    }
+    closeNonInitialRtcpdSocket(socketFds, socketFd);
     return true; // Continue the RTCOPY session
   case END_RECEIVED:
     m_nbReceivedENDOF_REQs++;
@@ -331,16 +322,7 @@ bool
         AGGREGATOR_RECEIVED_RTCP_ENDOF_REQ, params);
     }
 
-    close(fds.release(socketFd));
-    m_nbCallbackConnections--;
-    {
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("volReqId"       , m_jobRequest.volReqId  ),
-        castor::dlf::Param("socketFd"       , socketFd               ),
-        castor::dlf::Param("nbCallbackConns", m_nbCallbackConnections)};
-      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_CLOSED_CONNECTION, params);
-    }
+    closeNonInitialRtcpdSocket(socketFds, socketFd);
 
     // If only the initial callback connection is open, then send an
     // RTCP_ENDOF_REQ message to RTCPD and close the connection
@@ -348,17 +330,18 @@ bool
 
       // Try to find the socket file descriptor of the initial callback
       // connection is the list of open connections
-      SmartFdList::iterator itor = std::find(fds.begin(),
-        fds.end(), m_rtcpdInitialSockFd);
+      SmartFdList::iterator itor = std::find(socketFds.begin(),
+        socketFds.end(), m_rtcpdInitialSockFd);
 
       // If the file descriptor cannot be found
-      if(itor == fds.end()) {
+      if(itor == socketFds.end()) {
         TAPE_THROW_EX(castor::exception::Internal,
           ": The initial callback connection (fd=" << m_rtcpdInitialSockFd
           <<")is not the last one open. Found fd= " << *itor);
       }
 
-      // Send an RTCP_ENDOF_REQ message to RTCPD
+      // Send an RTCP_ENDOF_REQ message to RTCPD via the initial callback
+      // connection
       MessageHeader endofReqMsg;
       endofReqMsg.magic       = RTCOPY_MAGIC;
       endofReqMsg.reqType     = RTCP_ENDOF_REQ;
@@ -377,15 +360,16 @@ bool
           << ex.getMessage().str());
       }
 
-      close(fds.release(m_rtcpdInitialSockFd));
+      // Close the initial callback connection
+      close(socketFds.release(m_rtcpdInitialSockFd));
       m_nbCallbackConnections--;
       {
         castor::dlf::Param params[] = {
           castor::dlf::Param("volReqId"       , m_jobRequest.volReqId  ),
-          castor::dlf::Param("socketFd"       , socketFd               ),
+          castor::dlf::Param("socketFd"       , m_rtcpdInitialSockFd   ),
           castor::dlf::Param("nbCallbackConns", m_nbCallbackConnections)};
         castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-          AGGREGATOR_CLOSED_CONNECTION, params);
+          AGGREGATOR_CLOSED_INITIAL_CALLBACK_CONNECTION, params);
       }
 
       return false; // End the RTCOPY session
@@ -397,6 +381,35 @@ bool
     TAPE_THROW_EX(exception::Internal,
       ": Unknown result type"
       ": result=" << result);
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// closeNonInitialRtcpdSocket
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::BridgeProtocolEngine::
+  closeNonInitialRtcpdSocket(SmartFdList &socketFds, const int socketFd)
+  throw(castor::exception::Exception) {
+
+  close(socketFds.release(socketFd));
+  m_nbCallbackConnections--;
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId"       , m_jobRequest.volReqId  ),
+      castor::dlf::Param("socketFd"       , socketFd               ),
+      castor::dlf::Param("nbCallbackConns", m_nbCallbackConnections)};
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_CONNECTION_CLOSED_BY_RTCPD, params);
+  }
+
+  // Throw an exception if the socket is that of the initial callback connection
+  if(socketFd == m_rtcpdInitialSockFd) {
+    castor::exception::Exception ex(ECANCELED);
+
+    ex.getMessage() << "Initial callback connection socket unexpectedly closed";
+
+    throw(ex);
   }
 }
 
