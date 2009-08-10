@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.37 $ $Release$ $Date: 2009/07/13 06:22:07 $ $Author: waldron $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.38 $ $Release$ $Date: 2009/08/10 08:39:44 $ $Author: itglp $
  *
  * A base multithreaded server for simple listening servers
  *
@@ -248,8 +248,6 @@ void castor::server::BaseServer::parseCommandLine(int argc, char *argv[])
       help(argv[0]);
       exit(0);
       break;
-    case '?':
-      break;
     default:
       BaseThreadPool* p = m_threadPools[c];
       if(p != 0) {
@@ -262,7 +260,7 @@ void castor::server::BaseServer::parseCommandLine(int argc, char *argv[])
   for(int j = 3; j < i;j++) {
     free((char*)longopts[j].name);
   };
-  delete [] longopts;
+  delete[] longopts;
 }
 
 //------------------------------------------------------------------------------
