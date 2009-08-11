@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2009/07/13 06:22:07 $ $Author: waldron $
+ * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2009/08/11 10:34:43 $ $Author: itglp $
  *
  * Thread pool supporting wakeup on signals and periodical run after timeout
  *
@@ -61,15 +61,10 @@ castor::server::SignalThreadPool::~SignalThreadPool() throw()
 void castor::server::SignalThreadPool::init()
   throw (castor::exception::Exception)
 {
-  // nbThreads == 0 is not acceptable for this type of pool
-  if(m_nbThreads == 0) {
-    castor::exception::Exception e(EINVAL);
-    e.getMessage() << "nbThreads must be > 0";
-    throw e;
-  }
   if(m_notified > (int)m_nbThreads) {
     m_notified = m_nbThreads;
   }
+  // Note: if m_nbThreads == 0, this thread pool will just stay idle
 }
 
 //------------------------------------------------------------------------------
@@ -113,6 +108,9 @@ bool castor::server::SignalThreadPool::shutdown(bool wait) throw()
 void castor::server::SignalThreadPool::run()
   throw (castor::exception::Exception)
 {
+  if(m_nbThreads == 0) {
+    return;
+  }
   unsigned int n = 0;
 
   // create pool of detached threads
