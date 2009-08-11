@@ -403,14 +403,19 @@ void castor::tape::aggregator::LogHelper::logMsg(const Cuuid_t &cuuid,
   const int socketFd, const tapegateway::FileToRecall &msg) throw() {
     
   castor::dlf::Param params[] = {
-    castor::dlf::Param("volReqId"       , volReqId           ),
-    castor::dlf::Param("socketFd"       , socketFd           ),
-    castor::dlf::Param("path"           , msg.path()         ),
-    castor::dlf::Param("umask"          , msg.umask()        ),
-    castor::dlf::Param("blockId[0]"     , msg.blockId0()     ),
-    castor::dlf::Param("blockId[1]"     , msg.blockId1()     ),
-    castor::dlf::Param("blockId[2]"     , msg.blockId2()     ),
-    castor::dlf::Param("blockId[3]"     , msg.blockId3()     )};
+    castor::dlf::Param("volReqId"          , volReqId                ),
+    castor::dlf::Param("socketFd"          , socketFd                ),
+    castor::dlf::Param("mountTransactionId", msg.mountTransactionId()),
+    castor::dlf::Param("fileTransactionId" , msg.fileTransactionId() ),
+    castor::dlf::Param("nshost"            , msg.nshost()            ),
+    castor::dlf::Param("fileid"            , msg.fileid()            ),
+    castor::dlf::Param("fseq"              , msg.fseq()              ),
+    castor::dlf::Param("path"              , msg.path()              ),
+    castor::dlf::Param("umask"             , msg.umask()             ),
+    castor::dlf::Param("blockId[0]"        , msg.blockId0()          ),
+    castor::dlf::Param("blockId[1]"        , msg.blockId1()          ),
+    castor::dlf::Param("blockId[2]"        , msg.blockId2()          ),
+    castor::dlf::Param("blockId[3]"        , msg.blockId3()          )};
   castor::dlf::dlf_writep(cuuid, severity, message_no, params);
 }   
 //-----------------------------------------------------------------------------
@@ -423,6 +428,11 @@ void castor::tape::aggregator::LogHelper::logMsg(const Cuuid_t &cuuid,
   castor::dlf::Param params[] = {
     castor::dlf::Param("volReqId"            , volReqId                  ),
     castor::dlf::Param("socketFd"            , socketFd                  ),
+    castor::dlf::Param("mountTransactionId"  , msg.mountTransactionId()  ),
+    castor::dlf::Param("fileTransactionId"   , msg.fileTransactionId()   ),
+    castor::dlf::Param("nshost"              , msg.nshost()              ),
+    castor::dlf::Param("fileid"              , msg.fileid()              ),
+    castor::dlf::Param("fseq"                , msg.fseq()                ),
     castor::dlf::Param("fileSize"            , msg.fileSize()            ),
     castor::dlf::Param("lastKnownFilename"   , msg.lastKnownFilename()   ),
     castor::dlf::Param("lastModificationTime", msg.lastModificationTime()),
