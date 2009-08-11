@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTapeGateway.sql,v $ $Revision: 1.5 $ $Date: 2009/08/10 15:29:54 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTapeGateway.sql,v $ $Revision: 1.6 $ $Date: 2009/08/11 15:34:17 $ $Author: itglp $
  *
  * PL/SQL code for the tape gateway daemon
  *
@@ -356,7 +356,7 @@ CREATE OR REPLACE PROCEDURE  tg_getFailedMigrations(tcs OUT castor.TapeCopy_Cur)
 BEGIN
   -- get TAPECOPY_MIG_RETRY
   OPEN tcs FOR
-    SELECT copynb, id, castorfile, status,errorCode, nbretry 
+    SELECT copynb, id, castorFile, status, errorCode, nbretry, missingCopies 
       FROM TapeCopy
       WHERE status=9 
       AND ROWNUM < 1000 
@@ -372,7 +372,7 @@ CREATE OR REPLACE PROCEDURE  tg_getFailedRecalls(tcs OUT castor.TapeCopy_Cur) AS
 BEGIN
   -- get TAPECOPY_REC_RETRY
   OPEN tcs FOR
-    SELECT copynb, id, castorfile, status,errorCode, nbretry 
+    SELECT copynb, id, castorFile, status, errorCode, nbretry, missingCopies
      FROM TapeCopy
      WHERE status=8 
      AND ROWNUM < 1000 
@@ -381,12 +381,12 @@ END;
 /
 
 /* default migration candidate selection policy */
-CREATE OR REPLACE PROCEDURE defaultMigrSelPolicy(streamId IN INTEGER,
-                                                 diskServerName OUT VARCHAR2, mountPoint OUT VARCHAR2,
-                                                 path OUT VARCHAR2, dci OUT INTEGER,
-                                                 castorFileId OUT INTEGER, fileId OUT INTEGER,
-                                                 nsHost OUT VARCHAR2, fileSize OUT INTEGER,
-                                                 tapeCopyId OUT INTEGER, lastUpdateTime OUT INTEGER) AS
+CREATE OR REPLACE PROCEDURE tg_defaultMigrSelPolicy(streamId IN INTEGER,
+                                                    diskServerName OUT VARCHAR2, mountPoint OUT VARCHAR2,
+                                                    path OUT VARCHAR2, dci OUT INTEGER,
+                                                    castorFileId OUT INTEGER, fileId OUT INTEGER,
+                                                    nsHost OUT VARCHAR2, fileSize OUT INTEGER,
+                                                    tapeCopyId OUT INTEGER, lastUpdateTime OUT INTEGER) AS
   fileSystemId INTEGER := 0;
   diskServerId NUMBER;
   lastFSChange NUMBER;
@@ -494,16 +494,10 @@ BEGIN
   
   IF findNewFS = 1 THEN
     UPDATE Stream
-       SET status = 3, -- RUNNING
-           lastFileSystemUsed = fileSystemId,
+       SET lastFileSystemUsed = fileSystemId,
            lastButOneFileSystemUsed = lastFileSystemUsed,
            lastFileSystemChange = getTime()
-     WHERE id = streamId AND status IN (2,3);
-  ELSE
-    -- only update status
-    UPDATE Stream
-       SET status = 3 -- RUNNING
-     WHERE id = streamId AND status IN (2,3);
+     WHERE id = streamId;
   END IF;
 
   -- Update Filesystem state
@@ -511,13 +505,258 @@ BEGIN
 END;
 /
 
-/* get a candidate for migration */
 
+/* drain disk migration candidate selection policy */
+CREATE OR REPLACE PROCEDURE tg_drainDiskMigrSelPolicy(streamId IN INTEGER,
+                                                      diskServerName OUT VARCHAR2, mountPoint OUT VARCHAR2,
+                                                      path OUT VARCHAR2, dci OUT INTEGER,
+                                                      castorFileId OUT INTEGER, fileId OUT INTEGER,
+                                                      nsHost OUT VARCHAR2, fileSize OUT INTEGER,
+                                                      tapeCopyId OUT INTEGER, lastUpdateTime OUT INTEGER) AS
+  fileSystemId INTEGER := 0;
+  diskServerId NUMBER;
+  fsDiskServer NUMBER;
+  lastFSChange NUMBER;
+  lastFSUsed NUMBER;
+  lastButOneFSUsed NUMBER;
+  findNewFS NUMBER := 1;
+  nbMigrators NUMBER := 0;
+  unused NUMBER;
+BEGIN
+  tapeCopyId := 0;
+  -- First try to see whether we should resuse the same filesystem as last time
+  SELECT lastFileSystemChange, lastFileSystemUsed, lastButOneFileSystemUsed
+    INTO lastFSChange, lastFSUsed, lastButOneFSUsed
+    FROM Stream WHERE id = streamId;
+  IF getTime() < lastFSChange + 1800 THEN
+    SELECT (SELECT count(*) FROM stream WHERE lastFileSystemUsed = lastFSUsed)
+      INTO nbMigrators FROM DUAL;
+    -- only go if we are the only migrator on the box
+    IF nbMigrators = 1 THEN
+      BEGIN
+        -- check states of the diskserver and filesystem and get mountpoint and diskserver name
+        SELECT diskserver.id, name, mountPoint, FileSystem.id INTO diskServerId, diskServerName, mountPoint, fileSystemId
+          FROM FileSystem, DiskServer
+         WHERE FileSystem.diskServer = DiskServer.id
+           AND FileSystem.id = lastFSUsed
+           AND FileSystem.status IN (0, 1)  -- PRODUCTION, DRAINING
+           AND DiskServer.status IN (0, 1); -- PRODUCTION, DRAINING
+        -- we are within the time range, so we try to reuse the filesystem
+        SELECT P.path, P.diskcopy_id, P.castorfile,
+             C.fileId, C.nsHost, C.fileSize, P.id, C.lastUpdateTime
+        INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
+        FROM (SELECT /*+ ORDERED USE_NL(D T) INDEX(T I_TapeCopy_CF_Status_2) INDEX(ST I_Stream2TapeCopy_PC) */
+              D.path, D.diskcopy_id, D.castorfile, T.id
+                FROM (SELECT /*+ INDEX(DK I_DiskCopy_FS_Status_10) */
+                             DK.path path, DK.id diskcopy_id, DK.castorfile
+                        FROM DiskCopy DK
+                       WHERE decode(DK.status, 10, DK.status, NULL) = 10 -- CANBEMIGR
+                         AND DK.filesystem = lastFSUsed) D,
+                      TapeCopy T, Stream2TapeCopy ST
+               WHERE T.castorfile = D.castorfile
+                 AND ST.child = T.id
+                 AND ST.parent = streamId
+                 AND decode(T.status, 2, T.status, NULL) = 2 -- WAITINSTREAMS
+                 AND ROWNUM < 2) P, castorfile C
+         WHERE P.castorfile = C.id;
+        -- we found one, no need to go for new filesystem
+        findNewFS := 0;
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- found no tapecopy or diskserver, filesystem are down. We'll go through the normal selection
+        NULL;
+      END;
+    END IF;
+  END IF;
+  IF findNewFS = 1 THEN
+    -- We try first to reuse the diskserver of the lastFSUsed, even if we change filesystem
+    FOR f IN (
+      SELECT FileSystem.id AS FileSystemId, DiskServer.id AS DiskServerId, DiskServer.name, FileSystem.mountPoint
+        FROM FileSystem, DiskServer
+       WHERE FileSystem.diskServer = DiskServer.id
+         AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
+         AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
+         AND DiskServer.id = lastButOneFSUsed) LOOP
+       DECLARE
+         lock_detected EXCEPTION;
+         PRAGMA EXCEPTION_INIT(lock_detected, -54);
+       BEGIN
+         -- lock the complete diskServer as we will update all filesystems
+         SELECT id INTO unused FROM DiskServer WHERE id = f.DiskServerId FOR UPDATE NOWAIT;
+         SELECT /*+ FIRST_ROWS(1) LEADING(D T StT C) */
+                f.diskServerId, f.name, f.mountPoint, f.fileSystemId, D.path, D.id, D.castorfile, C.fileId, C.nsHost, C.fileSize, T.id, C.lastUpdateTime
+           INTO diskServerId, diskServerName, mountPoint, fileSystemId, path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
+           FROM DiskCopy D, TapeCopy T, Stream2TapeCopy StT, Castorfile C
+          WHERE decode(D.status, 10, D.status, NULL) = 10 -- CANBEMIGR
+            AND D.filesystem = f.fileSystemId
+            AND StT.parent = streamId
+            AND T.status = 2 -- WAITINSTREAMS
+            AND StT.child = T.id
+            AND T.castorfile = D.castorfile
+            AND C.id = D.castorfile
+            AND ROWNUM < 2;
+         -- found something on this filesystem, no need to go on
+         diskServerId := f.DiskServerId;
+         fileSystemId := f.fileSystemId;
+         EXIT;
+       EXCEPTION WHEN NO_DATA_FOUND OR lock_detected THEN
+         -- either the filesystem is already locked or we found nothing,
+         -- let's go to the next one
+         NULL;
+       END;
+    END LOOP;
+  END IF;
+  IF tapeCopyId = 0 THEN
+    -- Then we go for all potential filesystems. Note the duplication of code, due to the fact that ORACLE cannot order unions
+    FOR f IN (
+      SELECT FileSystem.id AS FileSystemId, DiskServer.id AS DiskServerId, DiskServer.name, FileSystem.mountPoint
+        FROM Stream, SvcClass2TapePool, DiskPool2SvcClass, FileSystem, DiskServer
+       WHERE Stream.id = streamId
+         AND Stream.TapePool = SvcClass2TapePool.child
+         AND SvcClass2TapePool.parent = DiskPool2SvcClass.child
+         AND DiskPool2SvcClass.parent = FileSystem.diskPool
+         AND FileSystem.diskServer = DiskServer.id
+         AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
+         AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
+       ORDER BY -- first prefer diskservers where no migrator runs and filesystems with no recalls
+                DiskServer.nbMigratorStreams ASC, FileSystem.nbRecallerStreams ASC,
+                -- then order by rate as defined by the function
+                fileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams, FileSystem.nbWriteStreams,
+                               FileSystem.nbReadWriteStreams, FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC,
+                -- finally use randomness to avoid preferring always the same FS
+                DBMS_Random.value) LOOP
+       DECLARE
+         lock_detected EXCEPTION;
+         PRAGMA EXCEPTION_INIT(lock_detected, -54);
+       BEGIN
+         -- lock the complete diskServer as we will update all filesystems
+         SELECT id INTO unused FROM DiskServer WHERE id = f.DiskServerId FOR UPDATE NOWAIT;
+         SELECT /*+ FIRST_ROWS(1) LEADING(D T StT C) */
+                f.diskServerId, f.name, f.mountPoint, f.fileSystemId, D.path, D.id, D.castorfile, C.fileId, C.nsHost, C.fileSize, T.id, C.lastUpdateTime
+           INTO diskServerId, diskServerName, mountPoint, fileSystemId, path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
+           FROM DiskCopy D, TapeCopy T, Stream2TapeCopy StT, Castorfile C
+          WHERE decode(D.status, 10, D.status, NULL) = 10 -- CANBEMIGR
+            AND D.filesystem = f.fileSystemId
+            AND StT.parent = streamId
+            AND T.status = 2 -- WAITINSTREAMS
+            AND StT.child = T.id
+            AND T.castorfile = D.castorfile
+            AND C.id = D.castorfile
+            AND ROWNUM < 2;
+         -- found something on this filesystem, no need to go on
+         diskServerId := f.DiskServerId;
+         fileSystemId := f.fileSystemId;
+         EXIT;
+       EXCEPTION WHEN NO_DATA_FOUND OR lock_detected THEN
+         -- either the filesystem is already locked or we found nothing,
+         -- let's go to the next one
+         NULL;
+       END;
+    END LOOP;
+  END IF;
+
+  IF tapeCopyId = 0 THEN
+    -- Nothing found, return; locks will be released by the caller
+    RETURN;
+  END IF;
+  
+  IF findNewFS = 1 THEN
+    UPDATE Stream
+       SET lastFileSystemUsed = fileSystemId,
+           lastButOneFileSystemUsed = lastFileSystemUsed,
+           lastFileSystemChange = getTime()
+     WHERE id = streamId;
+  END IF;
+
+  -- Update Filesystem state
+  updateFSMigratorOpened(diskServerId, fileSystemId, 0);
+END;
+/
+
+/* repack migration candidate selection policy */
+CREATE OR REPLACE PROCEDURE tg_repackMigrSelPolicy(streamId IN INTEGER,
+                                                   diskServerName OUT VARCHAR2, mountPoint OUT VARCHAR2,
+                                                   path OUT VARCHAR2, dci OUT INTEGER,
+                                                   castorFileId OUT INTEGER, fileId OUT INTEGER,
+                                                   nsHost OUT VARCHAR2, fileSize OUT INTEGER,
+                                                   tapeCopyId OUT INTEGER, lastUpdateTime OUT INTEGER) AS
+  fileSystemId INTEGER := 0;
+  diskServerId NUMBER;
+  lastFSChange NUMBER;
+  lastFSUsed NUMBER;
+  lastButOneFSUsed NUMBER;
+  nbMigrators NUMBER := 0;
+  unused NUMBER;
+BEGIN
+  tapeCopyId := 0;
+  FOR f IN (
+    SELECT FileSystem.id AS FileSystemId, DiskServer.id AS DiskServerId, DiskServer.name, FileSystem.mountPoint
+       FROM Stream, SvcClass2TapePool, DiskPool2SvcClass, FileSystem, DiskServer
+      WHERE Stream.id = streamId
+        AND Stream.TapePool = SvcClass2TapePool.child
+        AND SvcClass2TapePool.parent = DiskPool2SvcClass.child
+        AND DiskPool2SvcClass.parent = FileSystem.diskPool
+        AND FileSystem.diskServer = DiskServer.id
+        AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
+        AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
+      ORDER BY -- first prefer diskservers where no migrator runs and filesystems with no recalls
+               DiskServer.nbMigratorStreams ASC, FileSystem.nbRecallerStreams ASC,
+               -- then order by rate as defined by the function
+               fileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams, FileSystem.nbWriteStreams,
+                              FileSystem.nbReadWriteStreams, FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC,
+               -- finally use randomness to avoid preferring always the same FS
+               DBMS_Random.value) LOOP
+    DECLARE
+      lock_detected EXCEPTION;
+      PRAGMA EXCEPTION_INIT(lock_detected, -54);
+    BEGIN
+      -- lock the complete diskServer as we will update all filesystems
+      SELECT id INTO unused FROM DiskServer WHERE id = f.DiskServerId FOR UPDATE NOWAIT;
+      SELECT /*+ FIRST_ROWS(1) LEADING(D T StT C) */
+             f.diskServerId, f.name, f.mountPoint, f.fileSystemId, D.path, D.id, D.castorfile, C.fileId, C.nsHost, C.fileSize, T.id, C.lastUpdateTime
+        INTO diskServerId, diskServerName, mountPoint, fileSystemId, path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
+        FROM DiskCopy D, TapeCopy T, Stream2TapeCopy StT, Castorfile C
+       WHERE decode(D.status, 10, D.status, NULL) = 10 -- CANBEMIGR
+         AND D.filesystem = f.fileSystemId
+         AND StT.parent = streamId
+         AND T.status = 2 -- WAITINSTREAMS
+         AND StT.child = T.id
+         AND T.castorfile = D.castorfile
+         AND C.id = D.castorfile
+         AND ROWNUM < 2;
+      -- found something on this filesystem, no need to go on
+      diskServerId := f.DiskServerId;
+      fileSystemId := f.fileSystemId;
+      EXIT;
+    EXCEPTION WHEN NO_DATA_FOUND OR lock_detected THEN
+      -- either the filesystem is already locked or we found nothing,
+      -- let's go to the next one
+      NULL;
+    END;
+  END LOOP;
+
+  IF tapeCopyId = 0 THEN
+    -- Nothing found, return; locks will be released by the caller
+    RETURN;
+  END IF;
+  
+  UPDATE Stream
+     SET lastFileSystemUsed = fileSystemId,
+         lastButOneFileSystemUsed = lastFileSystemUsed,
+         lastFileSystemChange = getTime()
+   WHERE id = streamId;
+
+  -- Update Filesystem state
+  updateFSMigratorOpened(diskServerId, fileSystemId, 0);
+END;
+/
+
+/* get a candidate for migration */
 CREATE OR REPLACE PROCEDURE tg_getFileToMigrate(transactionId IN NUMBER,
                                                 ret OUT INTEGER, 
                                                 outVid OUT NOCOPY VARCHAR2,
                                                 outputFile OUT castorTape.FileToMigrateCore_cur) AS
   strId NUMBER;
+  policy VARCHAR2(100);
   ds VARCHAR2(2048);
   mp VARCHAR2(2048);
   path  VARCHAR2(2048);
@@ -538,9 +777,9 @@ BEGIN
   ret:=0;
   BEGIN 
     -- last fseq is the first fseq value available for this migration
-    SELECT streammigration,lastfseq,id INTO strId,newFseq,trId 
+    SELECT streammigration, lastfseq, id INTO strId, newFseq, trId 
       FROM TapeGatewayRequest  
-     WHERE vdqmvolreqid=transactionId 
+     WHERE vdqmvolreqid = transactionId 
      FOR UPDATE;
 
     SELECT vid INTO outVid 
@@ -548,28 +787,25 @@ BEGIN
      WHERE id IN 
          (SELECT tape 
             FROM Stream 
-           WHERE id=strId);
+           WHERE id = strId);
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- stream is over
-    ret:=-2;
-    COMMIT;
+    ret:=-2;   -- stream is over
     RETURN;
-  END;  
+  END;
   
   SELECT COUNT(*) INTO tcNum 
     FROM Stream2TapeCopy
     WHERE parent=strId;
   IF tcnum = 0 THEN 
-    ret:=-1; -- NO MORE FILES
-    COMMIT;
+    ret:=-1;   -- no more files
     RETURN;
   END IF;
    
-  -- get the policy name
+  -- get the policy name and execute the policy
   BEGIN
     SELECT migrSelectPolicy INTO policy
       FROM Stream, TapePool
-     WHERE Stream.id = streamId
+     WHERE Stream.id = strId
        AND Stream.tapePool = TapePool.id;
     -- check for NULL value
     IF policy IS NULL THEN
@@ -583,7 +819,7 @@ BEGIN
     USING IN strId, OUT ds, OUT mp, OUT path, OUT dcId, OUT cfId, OUT fileId, OUT nsHost, OUT fileSize, OUT tcId, OUT lastUpdateTime;
    
   IF tcId = 0 THEN
-    ret := -1; -- the migration selection policy cannot find a suitable candidate
+    ret := -1; -- the migration selection policy didn't find any candidate
     COMMIT;
     RETURN;
   END IF;
@@ -599,13 +835,12 @@ BEGIN
   
   SELECT lastknownfilename INTO knownName 
     FROM CastorFile 
-   WHERE id=cfId; -- we rely on the check done before
+   WHERE id = cfId; -- we rely on the check done before
    
   INSERT INTO TapeGatewaySubRequest 
     (fseq, id, tapecopy, request,diskcopy) 
     VALUES (newFseq, ids_seq.nextval, tcId,trId, dcid) 
     RETURNING id INTO srId;
-
   INSERT INTO id2type 
     (id,type) 
     VALUES (srId,180);    
@@ -621,8 +856,8 @@ BEGIN
 END;
 /
 
-/* get a candidate for recall */
 
+/* get a candidate for recall */
 CREATE OR REPLACE PROCEDURE tg_getFileToRecall (transactionId IN NUMBER, 
                                                 ret OUT INTEGER, 
                                                 vidOut OUT NOCOPY VARCHAR2,
@@ -683,14 +918,10 @@ BEGIN
   END;
 
   DECLARE
-
     application_error EXCEPTION;
     PRAGMA EXCEPTION_INIT(application_error,-20115);
-
   BEGIN
-
     bestFileSystemForSegment(segId,ds,mp,path,dcId);
-
   EXCEPTION WHEN  application_error THEN 
     ret:=-1;
     COMMIT;
@@ -715,7 +946,6 @@ BEGIN
       FROM TapeCopy,Castorfile  
       WHERE tcId=TapeCopy.id 
       AND CastorFile.id=TapeCopy.castorfile;
-
 END;
 /
 
@@ -729,8 +959,7 @@ CREATE OR REPLACE PROCEDURE tg_getRepackVidAndFileInfo( inputFileId IN NUMBER,
                                                         strVid OUT NOCOPY VARCHAR,
                                                         outCopyNb OUT INTEGER,
                                                         outLastTime OUT NUMBER) AS 
- cfId NUMBER;
-
+  cfId NUMBER;
 BEGIN
   outrepackvid:=NULL;
    -- ignore the repack state
@@ -783,13 +1012,6 @@ CREATE OR REPLACE PROCEDURE tg_getSegmentInfo ( transactionId IN NUMBER,
  cfId NUMBER;
 
 BEGIN
-
-  SELECT id INTO cfId 
-    FROM CastorFile 
-    WHERE fileid=inFileId 
-    AND nshost=inHost 
-    FOR UPDATE;
-
   SELECT Tape.vid, TapeGatewayRequest.id  INTO outVid, trId 
     FROM Tape,TapeGatewayRequest
     WHERE Tape.id=TapeGatewayRequest.taperecall 
@@ -800,7 +1022,6 @@ BEGIN
     WHERE TapeCopy.id = TapeGatewaySubRequest.tapecopy
     AND TapeGatewaySubRequest.fseq = inFseq
     AND TapeGatewaySubRequest.request = trId;
-
 END;
 /
 
@@ -1017,7 +1238,6 @@ BEGIN
     AND STATUS != 5;
 
   -- let's check if another copy should be done
-
   IF tcNumb = 0 THEN
      UPDATE DiskCopy SET status=0 
        WHERE castorfile = cfId 
@@ -1030,21 +1250,21 @@ BEGIN
      FORALL i IN tcIds.FIRST .. tcIds.LAST
        DELETE FROM id2type 
          WHERE id=tcIds(i);
-
   END IF;
 
-  FOR i IN ( SELECT id FROM SubRequest WHERE castorfile=cfId AND status=12) LOOP
-        archivesubreq( i.id ,8);
+  -- archive Repack requests should any be in the db
+  FOR i IN (SELECT id FROM SubRequest WHERE castorfile=cfId AND status=12) LOOP
+    archivesubreq(i.id, 8);
   END LOOP;
   
+  -- return data for informing the rmMaster
   OPEN streamReport FOR
    SELECT DiskServer.name,FileSystem.mountpoint 
      FROM DiskServer,FileSystem,DiskCopy 
      WHERE DiskCopy.id=dcId 
      AND DiskCopy.filesystem=FileSystem.id 
      AND FileSystem.diskserver = DiskServer.id;
-
- COMMIT;
+  COMMIT;
 END;
 /
 
@@ -1074,8 +1294,8 @@ CREATE OR REPLACE PROCEDURE tg_setFileRecalled (transactionId IN NUMBER,
   trId NUMBER;
 
 BEGIN
-
-  SELECT id, taperecall  INTO trId, tpId 
+  -- take locks
+  SELECT id, taperecall INTO trId, tpId 
     FROM TapeGatewayRequest 
     WHERE TapeGatewayRequest.vdqmvolreqid=transactionid 
     FOR UPDATE;
@@ -1086,27 +1306,20 @@ BEGIN
     FOR UPDATE;
    
   DELETE FROM TapeGatewaySubRequest 
-    WHERE request =trId 
-    AND fseq=inputFseq 
+    WHERE request = trId 
+    AND fseq = inputFseq 
     RETURNING tapecopy,id, diskcopy INTO tcId, srId, dcId;
-
   DELETE FROM id2type WHERE id= srId;
  
-  SELECT SubRequest.id, SubRequest.request INTO subRequestId, requestId
-    FROM SubRequest
-    WHERE SubRequest.diskcopy(+) = dcId;
-   
-  -- delete any previous failed diskcopy for this castorfile (due to failed recall attempts for instance)
-  DELETE FROM Id2Type 
-    WHERE id IN 
-      (SELECT id FROM DiskCopy 
-         WHERE castorFile = cfId AND status = 4);
-
-  DELETE FROM DiskCopy 
-    WHERE castorFile = cfId
-    AND status = 4;  -- FAILED
+  -- delete tapecopies
+  deleteTapeCopies(cfId);
   
-  -- update diskcopy size and gweight
+  -- update diskcopy status, size and gweight
+  SELECT SubRequest.id, SubRequest.request, Id2Type.type 
+    INTO subRequestId, requestId, reqType
+    FROM SubRequest, Id2Type
+   WHERE SubRequest.request = Id2Type.id
+     AND SubRequest.diskcopy = dcId;
   SELECT Request.svcClass, euid, egid INTO svcClassId, ouid, ogid
     FROM (SELECT id, svcClass, euid, egid FROM StageGetRequest UNION ALL
           SELECT id, svcClass, euid, egid FROM StagePrepareToGetRequest UNION ALL
@@ -1115,9 +1328,8 @@ BEGIN
           SELECT id, svcClass, euid, egid FROM StageRepackRequest) Request
     WHERE Request.id = requestId;
     gcwProc := castorGC.getRecallWeight(svcClassId);
-    EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:size); END;'
+  EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:size); END;'
     USING OUT gcw, IN fs;
-
   UPDATE DiskCopy 
     SET status = 0,  -- DISKCOPY_STAGED
         lastAccessTime = getTime(),  -- for the GC, effective lifetime of this diskcopy starts now
@@ -1125,63 +1337,33 @@ BEGIN
         diskCopySize = fs
     WHERE id = dcid;
   
-  -- determine the type of the request
-  SELECT type INTO reqType 
-    FROM Id2Type 
-    WHERE id =
-      (SELECT request 
-         FROM SubRequest 
-         WHERE id = subRequestId);
-
   IF reqType = 119 THEN  -- OBJ_StageRepackRequest
     startRepackMigration(subRequestId, cfId, dcid, ouid, ogid);
- 
   ELSE
     -- restart this subrequest if it's not a repack one
     UPDATE SubRequest
        SET status = 1, getNextStatus = 1,  -- SUBREQUEST_RESTART, GETNEXTSTATUS_FILESTAGED
            lastModificationTime = getTime(), parent = 0
        WHERE id = subRequestId;
-  
   END IF;
   
- -- restart other requests waiting on this recall
- 
+  -- restart other requests waiting on this recall
   UPDATE SubRequest
-    SET status = 1, getNextStatus = 1,  -- SUBREQUEST_RESTART, GETNEXTSTATUS_FILESTAGED
-           lastModificationTime = getTime(), parent = 0
-    WHERE parent = subRequestId;
+     SET status = 1, getNextStatus = 1,  -- SUBREQUEST_RESTART, GETNEXTSTATUS_FILESTAGED
+         lastModificationTime = getTime(), parent = 0
+     WHERE parent = subRequestId;
 
-  -- Trigger the creation of additional copies of the file, if necessary.
+  -- trigger the creation of additional copies of the file, if necessary.
   replicateOnClose(cfId, ouid, ogid);
 
-  -- delete segment
-  DELETE FROM id2type 
-    WHERE id IN 
-      (SELECT id 
-         FROM Segment 
-         WHERE copy=tcId);
-
-  DELETE FROM Segment   
-    WHERE copy=tcId;
- 
-  -- delete tapecopy
-  DELETE FROM TapeCopy 
-    WHERE  id=tcId;
-
-  DELETE FROM id2type 
-    WHERE id=tcId; 
-
+  -- return data for informing the rmMaster
   OPEN streamReport FOR
-    SELECT DiskServer.name,FileSystem.mountpoint 
-      FROM DiskServer,FileSystem,DiskCopy
-      WHERE DiskCopy.castorfile=cfId 
-      AND DiskCopy.status=2 
-      AND DiskCopy.filesystem=FileSystem.id 
+    SELECT DiskServer.name, FileSystem.mountpoint 
+      FROM DiskServer, FileSystem, DiskCopy
+      WHERE DiskCopy.id = dcId
+      AND DiskCopy.filesystem = FileSystem.id 
       AND FileSystem.diskserver = DiskServer.id;
-
   COMMIT;
-
 END;
 /
 
@@ -1241,36 +1423,28 @@ END;
 
 CREATE OR REPLACE PROCEDURE  tg_setRecRetryResult( tcToRetry IN castor."cnumList", 
                                                    tcToFail IN castor."cnumList"  ) AS
- segIds "numList";
- tcId NUMBER;
+ tapeId NUMBER;
  cfId NUMBER;
 
 BEGIN
   -- I restart the recall that I want to retry
   -- check because oracle cannot handle empty buffer
   IF tcToRetry(1) != -1 THEN 
-    FOR i IN tcToRetry.FIRST .. tcToRetry.LAST  LOOP
-    
-      -- tapecopy => TOBERECALLED
-      -- segment => UNPROCESSED
-      -- tape => PENDIN if UNUSED OR FAILED with still segments unprocessed
-		
+
+    -- tapecopy => TOBERECALLED
+    FORALL i IN tcToRetry.FIRST .. tcToRetry.LAST
       UPDATE TapeCopy SET status=4, errorcode=0, nbretry= nbretry+1 
         WHERE id=tcToRetry(i);
-
-      UPDATE Segment SET status=0  
-        WHERE copy=tcToRetry(i) 
-        RETURNING id BULK COLLECT INTO segIds;
-
-      UPDATE Tape SET status=8 
-        WHERE status IN (0,6) 
-        AND id IN 
-          (SELECT tape FROM Segment 
-                       WHERE id  IN 
-                          (SELECT /*+ CARDINALITY(segTable 5) */ * 
-                             FROM TABLE(segIds) segTable ));  
+    
+    -- segment => UNPROCESSED
+    -- tape => PENDING if UNUSED OR FAILED with still segments unprocessed
+    FOR i IN tcToRetry.FIRST .. tcToRetry.LAST LOOP
+      UPDATE Segment SET status=0
+       WHERE copy = tcToRetry(i)
+      RETURNING tape INTO tapeId;
+      UPDATE Tape set status = 8
+       WHERE id = tapeId AND status IN (0, 6);
     END LOOP;
-
   END IF;
   
   -- I mark as failed the hopeless recall
@@ -1278,13 +1452,14 @@ BEGIN
   IF tcToFail(1) != -1 THEN
     FOR i IN tcToFail.FIRST .. tcToFail.LAST  LOOP
 
-      -- clean up diskcopy and subrequest	
+      -- lock castorFile	
       SELECT castorFile INTO cfId 
         FROM TapeCopy,CastorFile
         WHERE TapeCopy.id = tcToFail(i) 
         AND CastorFile.id = TapeCopy.castorfile 
         FOR UPDATE OF castorfile.id;
 
+      -- fail diskcopy
       UPDATE DiskCopy SET status = 4 -- DISKCOPY_FAILED
         WHERE castorFile = cfId 
         AND status = 2; -- DISKCOPY_WAITTAPERECALL   
@@ -1294,9 +1469,9 @@ BEGIN
       -- sort of manual intervention. For the time being, as we can't
       -- say whether the failure is fatal or not, we drop everything
       -- and we won't deny a future request for recall.
-      
       deleteTapeCopies(cfId);
       
+      -- fail subrequests
       UPDATE SubRequest 
         SET status = 7, -- SUBREQUEST_FAILED
             getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED (not strictly correct but the request is over anyway)
