@@ -58,8 +58,6 @@ namespace aggregator {
    */
   const int MAXPENDINGTRANSFERS = 100;
 
-  const uint32_t MIGRATEUMASK = 022;
-
   /**
    * The maximum size of an RTCOPY message in bytes including both message
    * header and message body.
@@ -70,8 +68,6 @@ namespace aggregator {
    * The program name of the aggregator daemon.
    */
   const char *const AGGREGATORPROGRAMNAME = "aggregatord";
-
-  const uint32_t    RECALLUMASK           = 077;
 
   /**
    * The tape record format.

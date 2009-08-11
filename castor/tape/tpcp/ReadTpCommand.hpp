@@ -28,6 +28,8 @@
 #include "castor/tape/tpcp/TapeFseqRangeListSequence.hpp"
 #include "castor/tape/tpcp/TpcpCommand.hpp"
 
+#include <sys/types.h>
+
 namespace castor {
 namespace tape   {
 namespace tpcp   {
@@ -83,6 +85,11 @@ private:
    * @return The number of ranges that contain the upper boundary "end of tape".
    */
   unsigned int countNbRangesWithEnd() throw (castor::exception::Exception);
+
+  /**
+   * The umask of the process.
+   */
+  const mode_t m_umask;
 
   /**
    * The sequence of tape file sequence numbers to be processed.

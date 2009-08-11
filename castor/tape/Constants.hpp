@@ -28,14 +28,36 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <sys/types.h>
 
 
 namespace castor {
 namespace tape   {
 
+  /**
+   * The timeout in seconds used when sending and receiving RTCPD network
+   * messages.
+   */
   const size_t RTCPDNETRWTIMEOUT = 5;
-  const size_t STRERRORBUFLEN    = 256;
-  const size_t VMGRERRORBUFLEN   = 512;
+
+  /**
+   * The size in bytes of the error string buffer to be used with the strerror
+   * family of commands.
+   */
+  const size_t STRERRORBUFLEN = 256;
+
+  /**
+   * The size in bytes of the VMGR error buffer.
+   */
+  const size_t VMGRERRORBUFLEN = 512;
+
+  /**
+   * The conservative umask to be used in the RTCOPY protocol when it makes no
+   * sense to send one. The RTCOPY protocol sends umask information when
+   * migrating files from disk to tape and when indicating that more files can
+   * be requested by RTCPD.
+   */
+  const mode_t RTCOPYCONSERVATIVEUMASK = 077;
 
 } // namespace tape
 } // namespace castor

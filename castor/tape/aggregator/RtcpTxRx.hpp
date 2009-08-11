@@ -145,7 +145,7 @@ public:
    */ 
   static void askRtcpdToRequestMoreWork(const Cuuid_t &cuuid,
     const uint32_t volReqId, char (&tapePath)[CA_MAXPATHLEN+1], 
-    const int socketFd, const int netReadWriteTimeout, const uint32_t mode) 
+    const int socketFd, const int netReadWriteTimeout, const uint32_t mode)
     throw(castor::exception::Exception);
 
   /**

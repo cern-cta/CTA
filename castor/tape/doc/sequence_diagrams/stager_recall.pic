@@ -2,6 +2,8 @@
 
 copy "sequence.pic";
 
+step(); # For readability
+
 # Define the objects
 object(RC,"rtcpcld");
 placeholder_object(C);
@@ -121,6 +123,8 @@ step();
 
 message(RF,C,"End_of_Req");
 message(C,RF,"ack");
+
+step(); # For readability
 
 inactive(RF);
 inactive(C);

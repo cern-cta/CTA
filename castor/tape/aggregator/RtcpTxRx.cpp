@@ -689,7 +689,7 @@ void castor::tape::aggregator::RtcpTxRx::askRtcpdToRequestMoreWork(
   request.volReqId       =  volReqId;
   request.jobId          = -1;
   request.stageSubReqId  = -1;
-  request.umask          = mode == WRITE_ENABLE ? MIGRATEUMASK : RECALLUMASK;
+  request.umask          = RTCOPYCONSERVATIVEUMASK;
   request.positionMethod = -1;
   request.tapeFseq       = -1;
   request.diskFseq       = -1;

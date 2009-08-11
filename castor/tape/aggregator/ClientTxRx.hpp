@@ -27,6 +27,8 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/tapegateway/DumpParameters.hpp"
+#include "castor/tape/tapegateway/FileToMigrate.hpp"
+#include "castor/tape/tapegateway/FileToRecall.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "h/Castor_limits.h"
 #include "h/Cuuid.h"
@@ -67,54 +69,32 @@ public:
   /**
    * Gets a file to migrate from the client.
    *
-   * @param cuuid                The ccuid to be used for logging.
-   * @param volReqId             The volume request ID to be sent to the client.
-   * @param clientHost           The client host name.
-   * @param clientPort           The client port number.
-   * @param fileTransactionId    Out parameter: The file transaction ID.
-   * @param filePath             Out parameter: The path of the disk file.
-   * @param nsHost               Out parameter: The name server host.
-   * @param fileId               Out parameter: The CASTOR file ID.
-   * @param tapeFileSeq          Out parameter: The tape file sequence number.
-   * @param fileSize             Out parameter: The six of the file.
-   * @param lastKnownFilename    Out parameter: The last known name of the file
-   * @param lastModificationTime Out parameter: The time of the last
-   * modification.
-   * @param positionCommandCode  The position command code.
-   * @return True if there is a file to migrate.
+   * @param cuuid      The ccuid to be used for logging.
+   * @param volReqId   The volume request ID to be sent to the client.
+   * @param clientHost The client host name.
+   * @param clientPort The client port number.
+   * @return           A pointer to the file to migrate message received from
+   *                   the client or NULL if there is no file to be migrated.
+   *                   The callee is responsible for deallocating the message.
    */
-  static bool getFileToMigrate(const Cuuid_t &cuuid,
+  static tapegateway::FileToMigrate *getFileToMigrate(const Cuuid_t &cuuid,
     const uint32_t volReqId, const char *clientHost,
-    const unsigned short clientPort, uint64_t &fileTransactionId,
-    char (&filePath)[CA_MAXPATHLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN+1],
-    uint64_t &fileId, int32_t &tapeFileSeq, uint64_t &fileSize,
-    char (&lastKnownFilename)[CA_MAXPATHLEN+1], uint64_t &lastModificationTime,
-    int32_t &positionCommandCode)
-    throw(castor::exception::Exception);
+    const unsigned short clientPort) throw(castor::exception::Exception);
 
   /**
    * Gets a file to recall from the client.
    *
-   * @param cuuid               The ccuid to be used for logging.
-   * @param volReqId            The volume request ID to be sent to the client. 
-   * @param clientHost          The client host name.
-   * @param clientPort          The client port number.
-   * @param fileTransactionId   Out parameter: The file transaction ID.
-   * @param filePath            Out parameter: The path of the disk file.
-   * @param nsHost              Out parameter: The name server host.
-   * @param fileId              Out parameter: The CASTOR file ID.
-   * @param tapeFileSeq         Out parameter: The tape file sequence number.
-   * @param blockId             Out parameter: The ID of the first block of 
-   * the file.
-   * @param positionCommandCode The position command code.
-   * @return True if there is a file to recall.
+   * @param cuuid      The ccuid to be used for logging.
+   * @param volReqId   The volume request ID to be sent to the client. 
+   * @param clientHost The client host name.
+   * @param clientPort The client port number.
+   * @return           A pointer to the file to recall message received from
+   *                   the client or NULL if there is no file to be recalled.
+   *                   The callee is responsible for deallocating the message.
    */
-  static bool getFileToRecall(const Cuuid_t &cuuid,
+  static tapegateway::FileToRecall *getFileToRecall(const Cuuid_t &cuuid,
     const uint32_t volReqId, const char *clientHost,
-    const unsigned short clientPort, uint64_t &fileTransactionId,
-    char (&filePath)[CA_MAXPATHLEN+1], char (&nsHost)[CA_MAXHOSTNAMELEN+1],
-    uint64_t &fileId, int32_t &tapeFileSeq, unsigned char (&blockId)[4],
-    int32_t &positionCommandCode) throw(castor::exception::Exception);
+    const unsigned short clientPort) throw(castor::exception::Exception);
 
   /**
    * Notifies the client of the successful migration of a file to tape.

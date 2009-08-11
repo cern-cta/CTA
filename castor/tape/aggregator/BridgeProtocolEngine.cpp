@@ -38,6 +38,8 @@
 #include "castor/tape/aggregator/SmartFd.hpp"
 #include "castor/tape/aggregator/SmartFdList.hpp"
 #include "castor/tape/net/net.hpp"
+#include "castor/tape/tapegateway/FileToMigrate.hpp"
+#include "castor/tape/tapegateway/FileToRecall.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/Ctape_constants.h"
 #include "h/rtcp_constants.h"
@@ -499,35 +501,14 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
   throw(castor::exception::Exception) {
 
   try {
-    char          filePath[CA_MAXPATHLEN+1];
-    char          fileNsHost[CA_MAXHOSTNAMELEN+1];
-    char          fileLastKnownFilename[CA_MAXPATHLEN+1];
-    char          tapePath[CA_MAXPATHLEN+1];
-    unsigned char (blockId)[4];
-
-    utils::setBytes(filePath             , '\0');
-    utils::setBytes(fileNsHost           , '\0');
-    utils::setBytes(fileLastKnownFilename, '\0');
-    utils::setBytes(tapePath             , '\0');
-    utils::setBytes(blockId              , '\0');
-
-    uint64_t fileTransactionId        = 0;
-    uint64_t fileId                   = 0;
-    int32_t  fileTapeFileSeq          = 0;
-    uint64_t fileSize                 = 0;
-    uint64_t fileLastModificationTime = 0;
-    int32_t  positionCommandCode      = 0;
-
-    // Get first file to migrate from tape gateway
-    const bool thereIsAFileToMigrate =
+    // Get first file to migrate from client
+    std::auto_ptr<tapegateway::FileToMigrate> fileFromClient(
       ClientTxRx::getFileToMigrate(m_cuuid, m_jobRequest.volReqId,
-      m_jobRequest.clientHost, m_jobRequest.clientPort, fileTransactionId,
-      filePath, fileNsHost, fileId, fileTapeFileSeq, fileSize,
-      fileLastKnownFilename, fileLastModificationTime, positionCommandCode);
+      m_jobRequest.clientHost, m_jobRequest.clientPort));
 
-    // If there is no file to migrate, then notify tape gatway of end of session
-    // and return
-    if(!thereIsAFileToMigrate) {
+    // If there is no file to migrate, then notify tape gateway of end of
+    // session and return
+    if(fileFromClient.get() == NULL) {
       try {
         ClientTxRx::notifyEndOfSession(m_cuuid, m_jobRequest.volReqId,
           m_jobRequest.clientHost, m_jobRequest.clientPort);
@@ -546,7 +527,8 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
 
     // Remember the file transaction ID and get its unique index to be passed
     // to RTCPD through the "rtcpFileRequest.disk_fseq" message field
-    const uint32_t diskFseq = m_pendingTransferIds.insert(fileTransactionId);
+    const uint32_t diskFseq =
+      m_pendingTransferIds.insert(fileFromClient->fileTransactionId());
 
     // Give volume to RTCPD
     RtcpTapeRqstErrMsgBody rtcpVolume;
@@ -566,13 +548,36 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
       m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, rtcpVolume);
 
     // Give file to migrate to RTCPD
-    char migrationTapeFileId[CA_MAXPATHLEN+1];
-    utils::toHex(fileId, migrationTapeFileId);
-    RtcpTxRx::giveFileToRtcpd(m_cuuid, m_jobRequest.volReqId,
-      m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, rtcpVolume.mode, filePath,
-      fileSize, "", RECORDFORMAT, migrationTapeFileId, MIGRATEUMASK,
-      positionCommandCode, fileTapeFileSeq, diskFseq, fileNsHost, fileId,
-      blockId);
+    {
+      char migrationTapeFileId[CA_MAXPATHLEN+1];
+      utils::toHex((uint64_t)fileFromClient->fileid(), migrationTapeFileId);
+      unsigned char blockId[4];
+      utils::setBytes(blockId, '\0');
+      char nshost[CA_MAXHOSTNAMELEN+1];
+      utils::copyString(nshost, fileFromClient->nshost().c_str());
+
+      RtcpTxRx::giveFileToRtcpd(
+        m_cuuid,
+        m_jobRequest.volReqId,
+        m_rtcpdInitialSockFd,
+        RTCPDNETRWTIMEOUT,
+        rtcpVolume.mode,
+        fileFromClient->path().c_str(),
+        fileFromClient->fileSize(),
+        "",
+        RECORDFORMAT,
+        migrationTapeFileId,
+        RTCOPYCONSERVATIVEUMASK,
+        (int32_t)fileFromClient->positionCommandCode(),
+        (int32_t)fileFromClient->fseq(),
+        diskFseq,
+        nshost,
+        (uint64_t)fileFromClient->fileid(),
+        blockId);
+    }
+
+    char tapePath[CA_MAXPATHLEN+1];
+    utils::setBytes(tapePath, '\0');
 
     // Ask RTCPD to request more work
     RtcpTxRx::askRtcpdToRequestMoreWork(m_cuuid, m_jobRequest.volReqId,
@@ -893,47 +898,57 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
     // If migrating
     if(m_volume.mode() == tapegateway::WRITE) {
 
-      char filePath[CA_MAXPATHLEN+1];
-      char nsHost[CA_MAXHOSTNAMELEN+1];
-      char tapePath[CA_MAXPATHLEN+1];
-      char lastKnownFilename[CA_MAXPATHLEN+1];
-      unsigned char blockId[4];
-
-      utils::setBytes(filePath         , '\0');
-      utils::setBytes(nsHost           , '\0');
-      utils::setBytes(tapePath         , '\0');
-      utils::setBytes(lastKnownFilename, '\0');
-      utils::setBytes(blockId          , '\0');
-
-      uint64_t fileTransactionId    = 0;
-      uint64_t fileId               = 0;
-      int32_t  tapeFseq             = 0;
-      uint64_t fileSize             = 0;
-      uint64_t lastModificationTime = 0;
-      int32_t  positionMethod       = 0;
+      // Get file to migrate from client
+      std::auto_ptr<tapegateway::FileToMigrate> fileFromClient(
+        ClientTxRx::getFileToMigrate(m_cuuid, m_jobRequest.volReqId,
+        m_jobRequest.clientHost, m_jobRequest.clientPort));
 
       // If there is a file to migrate
-      if(ClientTxRx::getFileToMigrate(m_cuuid,
-        m_jobRequest.volReqId, m_jobRequest.clientHost,
-        m_jobRequest.clientPort, fileTransactionId, filePath, nsHost,
-        fileId, tapeFseq, fileSize, lastKnownFilename, lastModificationTime,
-        positionMethod)) {
+      if(fileFromClient.get() != NULL) {
 
         // Remember the file transaction ID and get its unique index to be
         // passed to RTCPD through the "rtcpFileRequest.disk_fseq" message
         // field
-        const int diskFseq = m_pendingTransferIds.insert(fileTransactionId);
+        const int diskFseq =
+          m_pendingTransferIds.insert(fileFromClient->fileTransactionId());
 
-        char tapeFileId[CA_MAXPATHLEN+1];
-        utils::toHex(fileId, tapeFileId);
-        RtcpTxRx::giveFileToRtcpd(m_cuuid, m_jobRequest.volReqId, socketFd,
-          RTCPDNETRWTIMEOUT, WRITE_ENABLE, filePath, fileSize, "", RECORDFORMAT,
-          tapeFileId, MIGRATEUMASK, positionMethod, tapeFseq, diskFseq, nsHost,
-          fileId, blockId);
+        // Give file to migrate to RTCPD
+        {
+          char migrationTapeFileId[CA_MAXPATHLEN+1];
+          utils::toHex((uint64_t)fileFromClient->fileid(), migrationTapeFileId);
+          unsigned char blockId[4];
+          utils::setBytes(blockId, '\0');
+          char nshost[CA_MAXHOSTNAMELEN+1];
+          utils::copyString(nshost, fileFromClient->nshost().c_str());
 
+          RtcpTxRx::giveFileToRtcpd(
+            m_cuuid,
+            m_jobRequest.volReqId,
+            m_rtcpdInitialSockFd,
+            RTCPDNETRWTIMEOUT,
+            WRITE_ENABLE,
+            fileFromClient->path().c_str(),
+            fileFromClient->fileSize(),
+            "",
+            RECORDFORMAT,
+            migrationTapeFileId,
+            RTCOPYCONSERVATIVEUMASK,
+            (int32_t)fileFromClient->positionCommandCode(),
+            (int32_t)fileFromClient->fseq(),
+            diskFseq,
+            nshost,
+            (uint64_t)fileFromClient->fileid(),
+            blockId);
+        }
+
+        char tapePath[CA_MAXPATHLEN+1];
+        utils::setBytes(tapePath, '\0');
+
+        // Ask RTCPD to request more work
         RtcpTxRx::askRtcpdToRequestMoreWork(m_cuuid, m_jobRequest.volReqId,
           tapePath, socketFd, RTCPDNETRWTIMEOUT, WRITE_ENABLE);
 
+        // Tell RTCPD end of file list
         RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_jobRequest.volReqId,
           socketFd, RTCPDNETRWTIMEOUT);
 
@@ -948,55 +963,65 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
     // Else recalling (READ or DUMP)
     } else {
 
-      char filePath[CA_MAXPATHLEN+1];
-      char nsHost[CA_MAXHOSTNAMELEN+1];
-      unsigned char blockId[4];
-
-      utils::setBytes(filePath, '\0');
-      utils::setBytes(nsHost  , '\0');
-      utils::setBytes(blockId , '\0');
-
-      uint64_t fileTransactionId   = 0;
-      uint64_t fileId              = 0;
-      int32_t  tapeFseq            = 0;
-      int32_t  positionCommandCode = 0;
+      // Get file to recall from client
+      std::auto_ptr<tapegateway::FileToRecall> fileFromClient(
+        ClientTxRx::getFileToRecall(m_cuuid, m_jobRequest.volReqId,
+        m_jobRequest.clientHost, m_jobRequest.clientPort));
 
       // If there is a file to recall
-      if(ClientTxRx::getFileToRecall(m_cuuid,
-        m_jobRequest.volReqId, m_jobRequest.clientHost,
-        m_jobRequest.clientPort, fileTransactionId, filePath, nsHost,
-        fileId, tapeFseq, blockId, positionCommandCode)) {
+      if(fileFromClient.get() != NULL) {
 
         // Remember the file transaction ID and get its unique index to be
         // passed to RTCPD through the "rtcpFileRequest.disk_fseq" message
         // field
-        const int diskFseq = m_pendingTransferIds.insert(fileTransactionId);
+        const int diskFseq =
+          m_pendingTransferIds.insert(fileFromClient->fileTransactionId());
 
-        // The file size is not specified when recalling
-        const uint64_t fileSize = 0;
+        // Give file to recall to RTCPD
+        {
+          char tapeFileId[CA_MAXPATHLEN+1];
+          utils::setBytes(tapeFileId, '\0');
+          unsigned char blockId[4] = {
+            fileFromClient->blockId0(),
+            fileFromClient->blockId1(),
+            fileFromClient->blockId2(),
+            fileFromClient->blockId3()};
+          char nshost[CA_MAXHOSTNAMELEN+1];
+          utils::copyString(nshost, fileFromClient->nshost().c_str());
 
-        char tapeFileId[CA_MAXPATHLEN+1];
-        utils::setBytes(tapeFileId, '\0');
-        RtcpTxRx::giveFileToRtcpd(m_cuuid, m_jobRequest.volReqId, socketFd,
-          RTCPDNETRWTIMEOUT, WRITE_DISABLE, filePath, fileSize, body.tapePath,
-          RECORDFORMAT, tapeFileId, RECALLUMASK, positionCommandCode, tapeFseq,
-          diskFseq, nsHost, fileId, blockId);
+          // The file size is not specified when recalling
+          const uint64_t fileSize = 0;
 
+          RtcpTxRx::giveFileToRtcpd(
+            m_cuuid,
+            m_jobRequest.volReqId,
+            socketFd,
+            RTCPDNETRWTIMEOUT,
+            WRITE_DISABLE,
+            fileFromClient->path().c_str(),
+            fileSize,
+            body.tapePath,
+            RECORDFORMAT,
+            tapeFileId,
+            (uint32_t)fileFromClient->umask(),
+            (int32_t)fileFromClient->positionCommandCode(),
+            (int32_t)fileFromClient->fseq(),
+            diskFseq,
+            nshost,
+            (uint64_t)fileFromClient->fileid(),
+            blockId);
+        }
+
+        // Ask RTCPD to request more work
         RtcpTxRx::askRtcpdToRequestMoreWork(m_cuuid, m_jobRequest.volReqId,
           body.tapePath, socketFd, RTCPDNETRWTIMEOUT, WRITE_DISABLE);
 
+        // Tell RTCPD end of file list
         RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_jobRequest.volReqId,
           socketFd, RTCPDNETRWTIMEOUT);
 
       // Else there is no file to recall
       } else {
-
-        castor::dlf::Param params[] = {
-          castor::dlf::Param("volReqId"   , m_jobRequest.volReqId  ),
-          castor::dlf::Param("gatewayHost", m_jobRequest.clientHost),
-          castor::dlf::Param("gatewayPort", m_jobRequest.clientPort)};
-        castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-          AGGREGATOR_NO_MORE_FILES_TO_RECALL, params);
 
         // Tell RTCPD there is no file by sending an empty file list
         RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_jobRequest.volReqId,

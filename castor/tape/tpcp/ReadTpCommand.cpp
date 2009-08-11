@@ -47,13 +47,18 @@
 #include <getopt.h>
 #include <sstream>
 #include <time.h>
+#include <sys/stat.h>
 
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tpcp::ReadTpCommand::ReadTpCommand() throw() :
+  m_umask(umask(0)),
   m_nbRecalledFiles(0) {
+
+  // Restore original umask
+  umask(m_umask);
 
   // Register the Aggregator message handler member functions
   registerMsgHandler(OBJ_FileToRecallRequest,
@@ -397,14 +402,17 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileToRecallRequest(
     struct stat64     statBuf;
     const int         rc = rfio_stat64((char*)filepath.c_str(), &statBuf);
     const int         save_serrno = rfio_serrno();
-    // rfio_stat64 in case of fail can set:
-    // serrno     if error appened in support routines
-    // errno      if error appened on system calls
-    // rfio_errno if error appened on the remote host (if remote host run 
-    //            different os it will return an unknown error code)
-    // rfio_serrno() return the set error (one of the 3)
-    // rfio_serror() return the error string maching the error code (if remote
-    //   error, connect to remote host and ask for the maching string)
+    // In case of failure, rfio_stat64 can set:
+    // serrno     if error from support routines
+    // errno      if error from system calls
+    // rfio_errno if error from remote host (if remote host runs a different
+    //            OS, then it will return a locally unknown error code)
+    //
+    // rfio_serrno() Returns the error taking into account what rfio_stat64 can
+    //               set.
+    // rfio_serror() Returns the error string matching the error code (if
+    //               the error is from a remote host, then this function
+    //               connects to the host and asks for the maching string)
 
     if(rc != 0) {
       const char *err_msg = rfio_serror();
@@ -423,7 +431,7 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileToRecallRequest(
     }
 
     // Get the tape file sequence number and RFIO filename
-    const uint32_t    tapeFseq = m_tapeFseqSequence.next();
+    const uint32_t tapeFseq = m_tapeFseqSequence.next();
 
     // Create FileToRecall message for the aggregator
     tapegateway::FileToRecall fileToRecall;
@@ -434,6 +442,7 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileToRecallRequest(
     fileToRecall.setFseq(tapeFseq);
     fileToRecall.setPositionCommandCode(tapegateway::TPPOSIT_FSEQ);
     fileToRecall.setPath(filename);
+    fileToRecall.setUmask(m_umask);
     fileToRecall.setBlockId0(0);
     fileToRecall.setBlockId1(0);
     fileToRecall.setBlockId2(0);
