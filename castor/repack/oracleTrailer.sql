@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.27 $ $Release$ $Date: 2009/07/23 15:11:51 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.28 $ $Release$ $Date: 2009/08/11 15:25:34 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -65,28 +65,45 @@ INSERT INTO RepackConfig
 
 
 /* repack cleanup cronjob */
-CREATE OR REPLACE PROCEDURE repackCleanup AS
+
+create or replace PROCEDURE repackCleanup AS
   t INTEGER;
   srIds "numList";
+  segIds "numList";
   rIds "numList";
 BEGIN
   -- First perform some cleanup of old stuff:
   -- for each, read relevant timeout from configuration table
   SELECT TO_NUMBER(value) INTO t FROM RepackConfig
    WHERE class = 'Repack' AND key = 'CleaningTimeout' AND ROWNUM < 2;
-  SELECT id BULK COLLECT INTO srIds FROM RepackSubrequest WHERE status=8 AND submittime < gettime() + t*3600 FOR UPDATE;
-  DELETE FROM id2type where id IN (Select id FROM RepackSegment WHERE RepackSubrequest MEMBER OF srIds);
-  DELETE FROM RepackSegment WHERE RepackSubrequest MEMBER OF srIds;
-  DELETE FROM id2type WHERE id MEMBER OF srIds;
-  DELETE FROM RepackSubrequest WHERE id MEMBER OF srIds;
-  DELETE FROM RepackRequest A WHERE NOT EXISTS (SELECT id FROM RepackSubRequest WHERE A.id=RepackSubRequest.repackrequest) RETURNING A.id BULK COLLECT INTO rIds;
-  DELETE FROM id2type WHERE id MEMBER OF rIds;
-  COMMIT;  
- 
-  -- Loop over all tables which support row movement and recover space from 
-  -- the object and all dependant objects. We deliberately ignore tables 
-  -- with function based indexes here as the 'shrink space' option is not 
-  -- supported.  
+  SELECT id BULK COLLECT INTO srIds
+    FROM RepackSubrequest WHERE status=8 AND submittime < gettime() + t*3600;
+    
+  -- delete segments
+  FOR i IN srIds.FIRST .. srIds.LAST LOOP
+   DELETE FROM RepackSegment WHERE RepackSubrequest = srIds(i)
+     RETURNING id BULK COLLECT INTO segIds;
+   FORALL j IN segIds.FIRST .. segIds.LAST 
+     DELETE FROM Id2Type WHERE id = segIds(j);
+  END LOOP;
+  COMMIT;
+  
+  -- delete subrequests
+  FORALL i IN srIds.FIRST .. srIds.LAST 
+   DELETE FROM RepackSubrequest WHERE id = srIds(i);
+  FORALL i IN srIds.FIRST .. srIds.LAST  
+   DELETE FROM id2type WHERE id = srIds(i);
+  -- delete requests without any other subrequest
+  DELETE FROM RepackRequest A WHERE NOT EXISTS 
+    (SELECT 'x' FROM RepackSubRequest WHERE A.id = repackrequest)
+    RETURNING A.id BULK COLLECT INTO rIds;
+  FORALL i IN rIds.FIRST .. rIds.LAST
+    DELETE FROM Id2Type WHERE id = rIds(i);
+  COMMIT;
+  -- Loop over all tables which support row movement and recover space from
+  -- the object and all dependant objects. We deliberately ignore tables
+  -- with function based indexes here as the 'shrink space' option is not
+  -- supported.
   FOR t IN (SELECT table_name FROM user_tables
              WHERE row_movement = 'ENABLED'
                AND table_name NOT IN (
@@ -96,7 +113,6 @@ BEGIN
   LOOP
     EXECUTE IMMEDIATE 'ALTER TABLE '|| t.table_name ||' SHRINK SPACE CASCADE';
   END LOOP;
-  COMMIT;
 END;
 /
 
