@@ -1091,7 +1091,7 @@ void castor::tape::tpcp::TpcpCommand::checkFilenameFormat()
          castor::exception::Exception ex(ECANCELED);
          ex.getMessage() <<
            ": Invalid RFIO filename syntax"
-           ": Found ':/' character with no hostname specified"
+           ": Missing hostname before ':/'"
            ": filename=\"" << line <<"\"";
 
         throw ex;
