@@ -469,7 +469,6 @@ private:
    */
   char m_hostname[CA_MAXHOSTNAMELEN+1];
 
-
   /**
    * The current working directory where tpcp command is run.
    */
