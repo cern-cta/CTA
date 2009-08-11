@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DynamicThreadPool.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2009/08/10 15:27:12 $ $Author: itglp $
+ * @(#)$RCSfile: DynamicThreadPool.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2009/08/11 09:49:08 $ $Author: itglp $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -98,13 +98,13 @@ void castor::server::DynamicThreadPool::run() throw (castor::exception::Exceptio
     e.getMessage() << "Cannot run a DynamicThreadPool without producer";
     throw e;
   }
-  
-  if(m_initThreads > 0) {
-    // Initialize thread attributes
-    pthread_attr_init(&m_attr);
-    pthread_attr_setdetachstate(&m_attr, PTHREAD_CREATE_DETACHED);
-    pthread_attr_setstacksize(&m_attr, DEFAULT_THREAD_STACKSIZE);
+
+  // Initialize thread attributes
+  pthread_attr_init(&m_attr);
+  pthread_attr_setdetachstate(&m_attr, PTHREAD_CREATE_DETACHED);
+  pthread_attr_setstacksize(&m_attr, DEFAULT_THREAD_STACKSIZE);
     
+  if(m_initThreads > 0) {
     // Create the initial pool of threads. The threads themselves just act as
     // consumers of the task queue and wait for tasks to process.
     for (unsigned int i = 0; i < m_initThreads; i++) {
