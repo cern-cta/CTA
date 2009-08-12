@@ -74,6 +74,7 @@ bool castor::tape::tpcp::TpcpCommand::s_receivedSigint = false;
 //------------------------------------------------------------------------------
 castor::tape::tpcp::TpcpCommand::TpcpCommand() throw () :
   m_callbackSock(false),
+  m_gotVolReqId(false),
   m_volReqId(0),
   m_fileTransactionId(1) {
 
@@ -256,6 +257,33 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
 
         throw ex;
       }
+
+      // RFIO stat the directory to which the first file to be recalled file
+      // will be written to in order to check the RFIO daemon is running
+      {
+        FilenameList::const_iterator itor = m_filenames.begin();
+
+        // Sanity check - there should be at least one file to be migrated
+        if(itor == m_filenames.end()) {
+          TAPE_THROW_EX(exception::Internal,
+            ": List of filenames to be processed is unexpectedly empty");
+        }
+
+        const std::string &filename = *itor;
+        std::string filepath(filename.substr(0, filename.find_last_of("/")+1));
+
+        // Command-line user feedback
+        std::ostream &os = std::cout;
+        time_t       now = time(NULL);
+
+        utils::writeTime(os, now, TIMEFORMAT);
+        os << " RFIO stat the directory of the first file \""
+           << filepath << "\"" << std::endl;
+
+        // Perform the RFIO stat
+        struct stat64 statBuf;
+        rfioStat(filepath.c_str(), statBuf);
+      }
     }
 
     if(m_cmdLine.action == Action::write) {
@@ -268,6 +296,32 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
           << "There must be at least one file to be migrated";
 
         throw ex;
+      }
+
+      // RFIO stat the first file to be migrated in order to check the RFIO
+      // daemon is running
+      {
+        FilenameList::const_iterator itor = m_filenames.begin();
+
+        // Sanity check - there should be at least one file to be migrated
+        if(itor == m_filenames.end()) {
+          TAPE_THROW_EX(exception::Internal,
+            ": List of filenames to be processed is unexpectedly empty");
+        }
+
+        const std::string &filename = *itor;
+
+        // Command-line user feedback
+        std::ostream &os = std::cout;
+        time_t       now = time(NULL);
+
+        utils::writeTime(os, now, TIMEFORMAT);
+        os << " RFIO stat the first file \""
+           << filename << "\"" << std::endl;
+
+        // Perform the RFIO stat
+        struct stat64 statBuf;
+        rfioStat(filename.c_str(), statBuf);
       }
     }
 
@@ -539,20 +593,22 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
     utils::writeTime(os, now, TIMEFORMAT);
     os << " Error occured: " << ex.getMessage().str() << std::endl;
 
-    utils::writeTime(os, now, TIMEFORMAT);
-    os << " Deleting volume request with ID = " << m_volReqId << std::endl;
-
-    try {
-      deleteVdqmVolumeRequest();
-    } catch(castor::exception::Exception &ex2) {
-
-      // Command-line user feedback
-      std::ostream &os = std::cerr;
-      time_t       now = time(NULL);
-
+    if(m_gotVolReqId) {
       utils::writeTime(os, now, TIMEFORMAT);
-      os << " Failed to delete VDQM volume request: " << ex2.getMessage().str()
-         << std::endl;
+      os << " Deleting volume request with ID = " << m_volReqId << std::endl;
+
+      try {
+        deleteVdqmVolumeRequest();
+      } catch(castor::exception::Exception &ex2) {
+
+        // Command-line user feedback
+        std::ostream &os = std::cerr;
+        time_t       now = time(NULL);
+
+        utils::writeTime(os, now, TIMEFORMAT);
+        os << " Failed to delete VDQM volume request: "
+           << ex2.getMessage().str() << std::endl;
+      }
     }
 
     return 1;
@@ -655,6 +711,8 @@ void castor::tape::tpcp::TpcpCommand::requestDriveFromVdqm(const int mode,
 
     throw ex;
   }
+
+  m_gotVolReqId = true;
 }
 
 
@@ -1100,4 +1158,38 @@ void castor::tape::tpcp::TpcpCommand::checkFilenameFormat()
 
   ++itor;
   }//for(itor=m_cmdLine.filenames.begin()...
+}
+
+
+//------------------------------------------------------------------------------
+// rfioStat
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::TpcpCommand::rfioStat(const char *const path,
+  struct stat64 &statBuf) throw(castor::exception::Exception) {
+
+  const int rc = rfio_stat64((char *)path, &statBuf);
+  const int savedSerrno = rfio_serrno();
+
+  if(rc != 0) {
+    // In case of failure, rfio_stat64 can set:
+    // serrno     if error from support routines
+    // errno      if error from system calls
+    // rfio_errno if error from remote host (if remote host runs a different
+    //            OS, then it will return a locally unknown error code)
+    //
+    // rfio_serrno() Returns the error taking into account what rfio_stat64 can
+    //               set.
+    // rfio_serror() Returns the error string matching the error code (if
+    //               the error is from a remote host, then this function
+    //               connects to the host and asks for the maching string)
+
+    const char *err_msg = rfio_serror();
+
+    castor::exception::Exception ex(savedSerrno);
+
+    ex.getMessage() << "Failed to rfio_stat64 \"" << path << "\""
+      ": " << err_msg;
+
+    throw(ex);
+  }
 }

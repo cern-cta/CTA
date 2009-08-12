@@ -43,6 +43,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include <sys/types.h>
+#include "h/rfio_api.h"
+
 namespace castor {
 namespace tape   {
 namespace tpcp   {
@@ -174,6 +177,11 @@ protected:
    * TCP/IP aggregator callback socket.
    */
   castor::io::ServerSocket m_callbackSock;
+
+  /**
+   * True if the tpcp command has got a volume request ID from the VDQM.
+   */
+  bool m_gotVolReqId;
 
   /**
    * The volume request ID returned by the VDQM as a result of requesting a
@@ -328,6 +336,16 @@ protected:
       TAPE_THROW_EX(castor::exception::Internal, oss.str());
     }
   }
+
+  /**
+   * Helper method that wraps the C function rfio_stat64 and converts any
+   * error it reports into an exception.
+   *
+   * @param path    The path to be passed to rfio_stat64.
+   * @param statBuf The stat buffer to be passed to rfio_stat64.
+   */
+  void rfioStat(const char *path, struct stat64 &statBuf)
+    throw(castor::exception::Exception);
 
 
 private:

@@ -360,34 +360,16 @@ bool castor::tape::tpcp::WriteTpCommand::handleFileToMigrateRequest(
 
     const std::string filename = *(m_filenameItor++);
 
-    struct stat64     statBuf;
-    const int         rc = rfio_stat64((char*)filename.c_str(), &statBuf);
-    const int         save_serrno = rfio_serrno();
-    // In case of failure, rfio_stat64 can set:
-    // serrno     if error from support routines
-    // errno      if error from system calls
-    // rfio_errno if error from remote host (if remote host runs a different
-    //            OS, then it will return a locally unknown error code)
-    //
-    // rfio_serrno() Returns the error taking into account what rfio_stat64 can
-    //               set.
-    // rfio_serror() Returns the error string matching the error code (if
-    //               the error is from a remote host, then this function
-    //               connects to the host and asks for the maching string)
+    struct stat64 statBuf;
 
-    if(rc != 0) {
-      const char *err_msg = rfio_serror();
+    // RFIO stat the disk file in order to check the RFIO daemon is running and
+    // to get the file size
+    try {
+      rfioStat(filename.c_str(), statBuf);
+    } catch(castor::exception::Exception &ex) {
 
-      std::stringstream oss;
-
-      oss << "Failed to rfio_stat64 file \"" << filename << "\""
-             ": " << err_msg;
-
-      sendEndNotificationErrorReport(save_serrno, oss.str(), sock);
-
-      castor::exception::Exception ex(save_serrno);
-
-      ex.getMessage() << oss.str();
+      // Notify the aggregator about the exception and rethrow
+      sendEndNotificationErrorReport(ex.code(), ex.getMessage().str(), sock);
       throw(ex);
     }
 
