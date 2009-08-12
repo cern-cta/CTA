@@ -184,7 +184,7 @@ void castor::vdqm::SocketHelper::netReadVdqmHeader(
 // checkCupvPermissions
 //------------------------------------------------------------------------------
 void castor::vdqm::SocketHelper::checkCupvPermissions(
-  castor::io::ServerSocket &socket, const uid_t uid, const gid_t gid,
+  castor::io::ServerSocket &sock, const uid_t uid, const gid_t gid,
   const int privilege, const char *privilegeName, const char *messageType)
   throw (castor::exception::PermissionDenied) {
   // Get local hostname
@@ -208,7 +208,7 @@ void castor::vdqm::SocketHelper::checkCupvPermissions(
     unsigned long  ip;
 
     try {
-      socket.getPeerIp(port, ip);
+      sock.getPeerIp(port, ip);
     } catch(castor::exception::Exception &e) {
       castor::exception::PermissionDenied pe;
 

@@ -28,6 +28,7 @@
 #define _TAPEREQUESTHANDLER_HPP_
 
 #include "castor/vdqm/handler/BaseRequestHandler.hpp"
+#include "castor/io/ServerSocket.hpp"
 
 
 namespace castor {
@@ -76,9 +77,13 @@ namespace castor {
            * 
            * @param volumeRequest The TapeRequest in the old protocol
            * @param cuuid The unique id of the request. Needed for dlf
+           * @param sock The socket used to receive the message.  This socket
+           * will only be used for CUPV purposes.  No data will be sent or
+           * received.
            */
           void deleteTapeRequest(const vdqmVolReq_t *volumeRequest,
-            const Cuuid_t cuuid) throw (castor::exception::Exception);
+            const Cuuid_t cuuid, castor::io::ServerSocket &sock)
+            throw (castor::exception::Exception);
             
           /**
            * This function replaces the old vdqm_GetQueuePos() C-function. It

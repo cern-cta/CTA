@@ -162,12 +162,8 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
     } else {        
       logVolumeRequest(ptr_header, ptr_volumeRequest, cuuid, DLF_LVL_SYSTEM);
 
-      SocketHelper::checkCupvPermissions(m_socket, ptr_volumeRequest->clientUID,
-        ptr_volumeRequest->clientGID, P_TAPE_OPERATOR, "P_TAPE_OPERATOR",
-        "VDQM_DEL_VOLREQ");
-
       TapeRequestHandler requestHandler;
-      requestHandler.deleteTapeRequest(ptr_volumeRequest, cuuid); 
+      requestHandler.deleteTapeRequest(ptr_volumeRequest, cuuid, m_socket); 
     }
     break;
   case VDQM_DEL_DRVREQ:

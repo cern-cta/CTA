@@ -43,6 +43,7 @@
 #include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/DevTools.hpp"
 #include "castor/vdqm/OldProtocolInterpreter.hpp"
+#include "castor/vdqm/SocketHelper.hpp"
 #include "castor/vdqm/TapeAccessSpecification.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
@@ -56,6 +57,7 @@
 #include <net.h>
 #include <vdqm_constants.h>
 #include "h/Ctape_constants.h"
+#include "h/Cupv_constants.h"
 #include <common.h> //for getconfent
 
 /**
@@ -245,8 +247,8 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(
 // deleteTapeRequest
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
-  const vdqmVolReq_t *const volumeRequest, const Cuuid_t cuuid) 
-  throw (castor::exception::Exception) {
+  const vdqmVolReq_t *const volumeRequest, const Cuuid_t cuuid,
+  castor::io::ServerSocket &sock) throw (castor::exception::Exception) {
 
   // The tape request may be associated with a drive, and if so a lock will
   // be required on both the request and the drive.  Care must be taken as
@@ -269,6 +271,29 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
       VDQM_TAPE_REQUEST_NOT_FOUND_IN_DB, 2, params);
 
     return;
+  }
+
+  // Sanity check - make sure the TapeRequest object has its associated
+  // ClientIdentification object
+  if(tapeReq->client() == NULL) {
+    castor::exception::Internal ie;
+
+    ie.getMessage() <<
+      "Failed to delete tape request"
+      ": Tape request does not have its associated ClientIdentification object"
+      ": volumeRequest=" << volumeRequest->VolReqID;
+
+    throw ie;
+  }
+
+  // The user requesting the delete must be either the owner of the tape
+  // request or a tape operator
+  if(volumeRequest->clientUID != tapeReq->client()->euid() ||
+    volumeRequest->clientGID != tapeReq->client()->egid()) {
+
+      SocketHelper::checkCupvPermissions(sock, volumeRequest->clientUID,
+        volumeRequest->clientGID, P_TAPE_OPERATOR, "P_TAPE_OPERATOR",
+        "VDQM_DEL_VOLREQ");
   }
 
 /* TEMPORARILY REMOVED TAKING OF TAPE REQUEST LOCK DUE TO DEADLOCK

@@ -92,7 +92,7 @@ namespace castor {
        * @param privilegeName The name string of the required privilege
        * @param messageType Then type string of the message.
        */
-      static void checkCupvPermissions(castor::io::ServerSocket &socket,
+      static void checkCupvPermissions(castor::io::ServerSocket &sock,
         const uid_t uid, const gid_t gid, const int privilege,
         const char *privilegeName, const char *messageType)
         throw (castor::exception::PermissionDenied);
