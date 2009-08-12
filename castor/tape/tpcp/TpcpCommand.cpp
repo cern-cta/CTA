@@ -1023,18 +1023,13 @@ void castor::tape::tpcp::TpcpCommand::deleteVdqmVolumeRequest()
 
   const int rc = vdqm_DelVolumeReq(NULL, m_volReqId, m_vmgrTapeInfo.vid, m_dgn,
     NULL, NULL, 0);
+  const int savedSerrno = serrno;
 
   if(rc < 0) {
-    const int savedErrno = errno;
-
-    char strerrorBuf[STRERRORBUFLEN];
-    char *const errorStr = strerror_r(savedErrno, strerrorBuf,
-      sizeof(strerrorBuf));
-
-    TAPE_THROW_CODE(savedErrno,
+    TAPE_THROW_CODE(savedSerrno,
       ": Failed to delete volume request from VDQM"
       ": Volume request ID=" << m_volReqId <<
-      ": " << errorStr);
+      ": " << sstrerror(savedSerrno));
   }
 }
 
