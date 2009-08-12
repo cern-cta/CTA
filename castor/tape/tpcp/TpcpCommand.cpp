@@ -279,7 +279,7 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
       castor::exception::Exception ex2(ECANCELED);
 
       std::ostream &os = ex2.getMessage();
-      os << "Failed to query the VMGR about tape: VID="
+      os << "Failed to query the VMGR about tape: VID = "
          << m_cmdLine.vid;
 
       // If the tape does not exist
@@ -310,8 +310,8 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
        os <<
          "VID in tape information retrieved from VMGR does not match that of "
          "the requested tape"
-         ": Request VID=" << m_cmdLine.vid <<
-         " VID returned from VMGR=" << m_vmgrTapeInfo.vid;
+         ": Request VID = " << m_cmdLine.vid <<
+         " VID returned from VMGR = " << m_vmgrTapeInfo.vid;
 
        throw ex;
     }
@@ -410,20 +410,7 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
           // If a SIGINT signal was received (control-c)
           if(s_receivedSigint) {
 
-            // Command-line user feedback
-            std::ostream &os = std::cout;
-            time_t       now = time(NULL);
-
-            utils::writeTime(os, now, TIMEFORMAT);
-            os <<
-              " Received SIGNINT"
-              ": Deleting volume request from VDQM"
-              ": Volume request ID=" << m_volReqId << std::endl;
-
-            deleteVdqmVolumeRequest();
-
             castor::exception::Exception ex(ECANCELED);
-
             ex.getMessage() << "Received SIGNINT";
 
             throw(ex);
@@ -544,15 +531,29 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
       throw ex2;
     }
   } catch(castor::exception::Exception &ex) {
-    std::ostream &os = std::cerr;
+
+    // Command-line user feedback
+    std::ostream &os = std::cout;
     time_t       now = time(NULL);
 
     utils::writeTime(os, now, TIMEFORMAT);
-    os
-      << " Aborting: "
-      << ex.getMessage().str()
-      << std::endl
-      << std::endl;
+    os << " Error occured: " << ex.getMessage().str() << std::endl;
+
+    utils::writeTime(os, now, TIMEFORMAT);
+    os << " Deleting volume request with ID = " << m_volReqId << std::endl;
+
+    try {
+      deleteVdqmVolumeRequest();
+    } catch(castor::exception::Exception &ex2) {
+
+      // Command-line user feedback
+      std::ostream &os = std::cerr;
+      time_t       now = time(NULL);
+
+      utils::writeTime(os, now, TIMEFORMAT);
+      os << " Failed to delete VDQM volume request: " << ex2.getMessage().str()
+         << std::endl;
+    }
 
     return 1;
   }
@@ -697,7 +698,6 @@ bool castor::tape::tpcp::TpcpCommand::waitForAndDispatchMessage()
           castor::exception::Exception ex(ECANCELED);
 
           ex.getMessage() << "Received SIGNINT";
-
           throw(ex);
 
         // Else received a signal other than SIGINT
@@ -1026,10 +1026,10 @@ void castor::tape::tpcp::TpcpCommand::deleteVdqmVolumeRequest()
   const int savedSerrno = serrno;
 
   if(rc < 0) {
-    TAPE_THROW_CODE(savedSerrno,
-      ": Failed to delete volume request from VDQM"
-      ": Volume request ID=" << m_volReqId <<
-      ": " << sstrerror(savedSerrno));
+    castor::exception::Exception ex(savedSerrno);
+
+    ex.getMessage() << sstrerror(savedSerrno);
+    throw(ex);
   }
 }
 
