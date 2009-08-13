@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTapeGateway.sql,v $ $Revision: 1.9 $ $Date: 2009/08/13 08:57:57 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTapeGateway.sql,v $ $Revision: 1.10 $ $Date: 2009/08/13 13:30:05 $ $Author: itglp $
  *
  * PL/SQL code for the tape gateway daemon
  *
@@ -1286,6 +1286,7 @@ CREATE OR REPLACE PROCEDURE tg_setFileRecalled (transactionId IN NUMBER,
   ogid INTEGER;
   svcClassId NUMBER;
   trId NUMBER;
+  missingTCs INTEGER;
 
 BEGIN
   -- take locks
@@ -1303,8 +1304,12 @@ BEGIN
     WHERE request = trId 
     AND fseq = inputFseq 
     RETURNING tapecopy,id, diskcopy INTO tcId, srId, dcId;
-  DELETE FROM id2type WHERE id= srId;
+  DELETE FROM id2type WHERE id = srId;
  
+  -- missing tapecopies handling
+  SELECT missingCopies INTO missingTCs
+    FROM TapeCopy WHERE id = tcId;
+    
   -- delete tapecopies
   deleteTapeCopies(cfId);
   
@@ -1325,7 +1330,7 @@ BEGIN
   EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:size); END;'
     USING OUT gcw, IN fs;
   UPDATE DiskCopy 
-    SET status = 0,  -- DISKCOPY_STAGED
+    SET status = decode(missingTCs, 0, 0, 10), -- DISKCOPY_STAGED if missingTCs = 0, otherwise CANBEMIGR
         lastAccessTime = getTime(),  -- for the GC, effective lifetime of this diskcopy starts now
         gcWeight = gcw,
         diskCopySize = fs
@@ -1339,6 +1344,18 @@ BEGIN
        SET status = 1, getNextStatus = 1,  -- SUBREQUEST_RESTART, GETNEXTSTATUS_FILESTAGED
            lastModificationTime = getTime(), parent = 0
        WHERE id = subRequestId;
+    IF missingTCs > 0 THEN
+      DECLARE
+        newTcId INTEGER;
+      BEGIN
+        FOR i IN 1..missingTCs LOOP
+          INSERT INTO TapeCopy (id, copyNb, castorFile, status, nbRetry, missingCopies)
+          VALUES (ids_seq.nextval, 0, cfId, 0, 0, 0)  -- TAPECOPY_CREATED
+          RETURNING id INTO newTcId;
+          INSERT INTO Id2Type (id, type) VALUES (newTcId, 30); -- OBJ_TapeCopy
+        END LOOP;
+      END;
+    END IF;
   END IF;
   
   -- restart other requests waiting on this recall
