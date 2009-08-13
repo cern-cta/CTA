@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleDebug.sql,v $ $Revision: 1.13 $ $Date: 2009/02/10 17:56:48 $ $Author: waldron $
+ * @(#)$RCSfile: oracleDebug.sql,v $ $Revision: 1.14 $ $Date: 2009/08/13 13:34:16 $ $Author: itglp $
  *
  * Some SQL code to ease support and debugging
  *
@@ -33,6 +33,8 @@ CREATE OR REPLACE PACKAGE castorDebug AS
   TYPE TapeCopyDebug_typ IS RECORD (
     TCId NUMBER,
     TCStatus NUMBER,
+    TCMissing NUMBER,
+    TCNbRetry NUMBER,
     SegId NUMBER,
     SegStatus NUMBER,
     SegErrCode NUMBER,
@@ -96,6 +98,7 @@ END;
 CREATE OR REPLACE FUNCTION getTCs(ref number) RETURN castorDebug.TapeCopyDebug PIPELINED AS
 BEGIN
   FOR t IN (SELECT TapeCopy.id AS TCId, TapeCopy.status AS TCStatus,
+                   TapeCopy.missingCopies AS TCmissing, TapeCopy.nbRetry AS TCNbRetry,
                    Segment.Id, Segment.status AS SegStatus, Segment.errorCode AS SegErrCode,
                    Tape.vid AS VID, Tape.tpMode AS tpMode, Tape.Status AS TapeStatus,
                    CASE WHEN Stream2TapeCopy.child IS NULL THEN 0 ELSE count(*) END AS nbStreams,
@@ -105,8 +108,9 @@ BEGIN
                AND Segment.tape = Tape.id(+)
                AND TapeCopy.castorfile = getCF(ref)
                AND Stream2TapeCopy.child(+) = TapeCopy.id
-              GROUP BY TapeCopy.id, TapeCopy.status, Segment.id, Segment.status, Segment.errorCode,
-                       Tape.vid, Tape.tpMode, Tape.Status, Segment.errMsgTxt, Stream2TapeCopy.child) LOOP
+              GROUP BY TapeCopy.id, TapeCopy.status, TapeCopy.missingCopies, TapeCopy.nbRetry,
+                       Segment.id, Segment.status, Segment.errorCode, Tape.vid, Tape.tpMode,
+                       Tape.Status, Segment.errMsgTxt, Stream2TapeCopy.child) LOOP
      PIPE ROW(t);
   END LOOP;
 END;
