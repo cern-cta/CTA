@@ -42,6 +42,8 @@
 #include "h/Cgetopt.h"
 #include "h/common.h"
 #include "h/Ctape_constants.h"
+#include "h/Cupv_api.h"
+#include "h/Cupv_constants.h"
 #include "h/serrno.h"
 #include "h/vdqm_api.h"
 #include "h/vmgr_api.h"
@@ -131,16 +133,17 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
 
   try {
 
-    // get the local hostnale
+    // Get the local hostname
     gethostname(m_hostname, sizeof(m_hostname));    
-    // chek if the hostaname of the machine is set to "localost"
+
+    // Check if the hostname of the machine is set to "localhost"
     if(strcmp(m_hostname, "localhost") == 0) {
       std::cerr << "tpcp cannot be ran on a machine where hostname is set to "
                    "\"localhost\"" << std::endl << std::endl;
       return 1;
     }
     
-    // get the Current Working Directory
+    // Get the Current Working Directory
     getcwd(m_cwd, PATH_MAX);
     if(m_cwd == NULL){
       std::cerr << "tpcp cannot be ran on a machine where the current working "
@@ -368,6 +371,45 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
          " VID returned from VMGR = " << m_vmgrTapeInfo.vid;
 
        throw ex;
+    }
+
+    // If writing to tape then to have permission the user must be either the
+    // owner of the pool or an ADMIN
+    if(m_cmdLine.action == Action::write) {
+      // Get the owner of the pool by querying the VMGR
+      uid_t poolUserId  = 0;
+      gid_t poolGroupId = 0;
+      {
+        const int rc = vmgr_querypool (m_vmgrTapeInfo.poolname, &poolUserId,
+          &poolGroupId, NULL, NULL);
+        const int saved_serrno = serrno;
+
+        if(rc < 0) {
+          castor::exception::Exception ex(saved_serrno);
+
+          ex.getMessage() <<
+            "Failed to query tape pool"
+            ": poolname=" << m_vmgrTapeInfo.poolname <<
+            ": " << sstrerror(saved_serrno);
+        }
+      }
+
+      // Throw an exception if the user not the owner of the tape pool and is
+      // not an ADMIN
+      if(
+        (userId != poolUserId || groupId != poolGroupId)                 &&
+        Cupv_check(userId, groupId, m_hostname, "TAPE_SERVERS", P_ADMIN) &&
+        Cupv_check(userId, groupId, m_hostname, NULL          , P_ADMIN)) {
+
+        castor::exception::Exception ex(EACCES);
+
+        ex.getMessage() <<
+          "Permission denied"
+          ": User must own the \"" << m_vmgrTapeInfo.poolname << "\" tape "
+          "pool or have ADMIN privileges";
+
+        throw ex;
+      }
     }
 
     // Check the tape is available
