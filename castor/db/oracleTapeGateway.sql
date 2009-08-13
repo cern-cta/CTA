@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTapeGateway.sql,v $ $Revision: 1.6 $ $Date: 2009/08/11 15:34:17 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTapeGateway.sql,v $ $Revision: 1.7 $ $Date: 2009/08/13 08:18:23 $ $Author: gtaur $
  *
  * PL/SQL code for the tape gateway daemon
  *
@@ -172,7 +172,7 @@ END;
 
 /* update the db when a tape session is ended */
 
-CREATE OR REPLACE PROCEDURE tg_endTapeSession ( transactionId IN NUMBER,
+create or replace PROCEDURE tg_endTapeSession ( transactionId IN NUMBER,
                                                 inputErrorCode IN INTEGER)  AS
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -02292);
@@ -185,7 +185,6 @@ CREATE OR REPLACE PROCEDURE tg_endTapeSession ( transactionId IN NUMBER,
   cfId NUMBER;
   tcIds "numList";
   srIds "numList";
-  outMode INTEGER;
 
 BEGIN 
   BEGIN
@@ -206,7 +205,7 @@ BEGIN
     FORALL i in srIds.FIRST .. srIds.LAST 
      DELETE FROM id2type WHERE id=srIds(i);
 
-    IF outmode = 0 THEN
+    IF reqMode = 0 THEN
      -- read
       SELECT id INTO tpId 
         FROM Tape 
