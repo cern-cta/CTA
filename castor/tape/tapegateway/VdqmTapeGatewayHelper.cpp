@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: VdqmTapeGatewayHelper.cpp,v $ $Revision: 1.4 $ $Release$ 
- * $Date: 2009/07/09 15:47:11 $ $Author: gtaur $
+ * @(#)$RCSfile: VdqmTapeGatewayHelper.cpp,v $ $Revision: 1.5 $ $Release$ 
+ * $Date: 2009/08/13 08:40:53 $ $Author: gtaur $
  *
  *
  *
@@ -70,8 +70,8 @@ int castor::tape::tapegateway::VdqmTapeGatewayHelper::submitTapeToVdqm( castor::
    if (rc<0) {
      castor::exception::Exception ex(serrno);
      ex.getMessage()
-       << "castor::tape::tapegateway::VdqmTapeGatewayHelper::submitTapeToVdqm"
-       << "vdqm_PingServer failed";
+       << "castor::tape::tapegateway::VdqmTapeGatewayHelper::checkVdqmForReques"
+       << " vdqm_PingServer failed";
      throw ex;
    }
  }
