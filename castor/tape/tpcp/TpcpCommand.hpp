@@ -28,6 +28,7 @@
 #include "castor/BaseObject.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
+#include "castor/exception/PermissionDenied.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include "castor/tape/tpcp/Action.hpp"
 #include "castor/tape/tpcp/FilenameList.hpp"
@@ -42,6 +43,7 @@
 #include <signal.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <sys/types.h>
 #include "h/rfio_api.h"
@@ -142,6 +144,16 @@ protected:
    * (control-C).
    */
   static bool s_receivedSigint;
+
+  /**
+   * The ID of the user running the tpcp command.
+   */
+  const uid_t m_userId;
+
+  /**
+   * The ID of default group of the user running the tpcp command.
+   */
+  const gid_t m_groupId;
 
   /**
    * The results of parsing the command-line.
@@ -349,6 +361,16 @@ protected:
 
 
 private:
+
+  /**
+   * Throws a permission denied exception if the user of the tpcp command
+   * does not have permission to write to tape.
+   *
+   * @param poolName The name of the pool in which the tape to be written
+   *                 resides.
+   */
+  void checkUserHasTapeWritePermission(const char *poolName)
+    throw (castor::exception::PermissionDenied);
 
   /**
    * Deletes the specified VDQM volume request.

@@ -75,6 +75,8 @@ bool castor::tape::tpcp::TpcpCommand::s_receivedSigint = false;
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tpcp::TpcpCommand::TpcpCommand() throw () :
+  m_userId(getuid()),
+  m_groupId(getgid()),
   m_callbackSock(false),
   m_gotVolReqId(false),
   m_volReqId(0),
@@ -151,11 +153,8 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
       return 1;
     }
 
-    const uid_t userId  = getuid();
-    const gid_t groupId = getgid();
-    
     // Exit with an error message if tpcp is being run as root
-    if(userId == 0 && groupId == 0) {
+    if(m_userId == 0 && m_groupId == 0) {
       std::cerr << "tpcp cannot be ran as root" << std::endl
                 << std::endl;
       return 1;
@@ -373,43 +372,10 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
        throw ex;
     }
 
-    // If writing to tape then to have permission the user must be either the
-    // owner of the pool or an ADMIN
+    // If writing to tape then check that the user has permission to write to
+    // the tape
     if(m_cmdLine.action == Action::write) {
-      // Get the owner of the pool by querying the VMGR
-      uid_t poolUserId  = 0;
-      gid_t poolGroupId = 0;
-      {
-        const int rc = vmgr_querypool (m_vmgrTapeInfo.poolname, &poolUserId,
-          &poolGroupId, NULL, NULL);
-        const int saved_serrno = serrno;
-
-        if(rc < 0) {
-          castor::exception::Exception ex(saved_serrno);
-
-          ex.getMessage() <<
-            "Failed to query tape pool"
-            ": poolname=" << m_vmgrTapeInfo.poolname <<
-            ": " << sstrerror(saved_serrno);
-        }
-      }
-
-      // Throw an exception if the user not the owner of the tape pool and is
-      // not an ADMIN
-      if(
-        (userId != poolUserId || groupId != poolGroupId)                 &&
-        Cupv_check(userId, groupId, m_hostname, "TAPE_SERVERS", P_ADMIN) &&
-        Cupv_check(userId, groupId, m_hostname, NULL          , P_ADMIN)) {
-
-        castor::exception::Exception ex(EACCES);
-
-        ex.getMessage() <<
-          "Permission denied"
-          ": User must own the \"" << m_vmgrTapeInfo.poolname << "\" tape "
-          "pool or have ADMIN privileges";
-
-        throw ex;
-      }
+      checkUserHasTapeWritePermission(m_vmgrTapeInfo.poolname);
     }
 
     // Check the tape is available
@@ -1233,5 +1199,68 @@ void castor::tape::tpcp::TpcpCommand::rfioStat(const char *const path,
       ": " << err_msg;
 
     throw(ex);
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// checkUserHasTapeWritePermission
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::TpcpCommand::checkUserHasTapeWritePermission(
+  const char *poolName) throw(castor::exception::PermissionDenied) {
+
+  // Get the owner of the pool by querying the VMGR
+  uid_t poolUserId  = 0;
+  gid_t poolGroupId = 0;
+  {
+    const int rc = vmgr_querypool (poolName, &poolUserId,
+      &poolGroupId, NULL, NULL);
+    const int saved_serrno = serrno;
+
+    if(rc < 0) {
+      castor::exception::Exception ex(saved_serrno);
+
+      ex.getMessage() <<
+        "Failed to query tape pool"
+        ": poolname=" << m_vmgrTapeInfo.poolname <<
+        ": " << sstrerror(saved_serrno);
+    }
+  }
+
+  const bool userOwnsPool = m_userId == poolUserId && m_groupId == poolGroupId;
+
+  if(userOwnsPool) {
+    // Command-line user feedback
+    std::ostream &os = std::cout;
+    time_t       now = time(NULL);
+
+    utils::writeTime(os, now, TIMEFORMAT);
+    os <<
+      " User can write to tape: User owns tape pool \"" <<
+      m_vmgrTapeInfo.poolname << "\"" << std::endl;
+  } else {
+
+    const bool userIsAdmin =
+      Cupv_check(m_userId,m_groupId,m_hostname,"TAPE_SERVERS",P_ADMIN) == 0 ||
+      Cupv_check(m_userId,m_groupId,m_hostname,NULL          ,P_ADMIN) == 0;
+
+    if(userIsAdmin) {
+      // Command-line user feedback
+      std::ostream &os = std::cout;
+      time_t       now = time(NULL);
+
+      utils::writeTime(os, now, TIMEFORMAT);
+      os <<
+        " User can write to tape: User has ADMIN privilege" << std::endl;
+    } else {
+      castor::exception::PermissionDenied ex;
+
+      ex.getMessage() <<
+        "User cannot write to tape"
+        ": User must own the \"" << m_vmgrTapeInfo.poolname << "\" tape "
+        "pool or have the ADMIN privilege";
+
+      throw ex;
+    }
   }
 }
