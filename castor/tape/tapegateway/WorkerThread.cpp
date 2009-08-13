@@ -937,54 +937,56 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker( cas
 	     castor::dlf::Param("mode",tape.tpmode())
 	    };
 	    castor::dlf::dlf_writep(nullCuuid, WORKER_FAIL_GET_TAPE_TO_RELEASE, 3, params);
-	    try {
+	   
 	      
-	      // UPDATE VMGR
-
-	      if (tape.tpmode() == 1) { // just for write
-		VmgrTapeGatewayHelper vmgrHelper;
+	    // UPDATE VMGR
+	    
+	    if (tape.tpmode() == 1) { // just for write
+	      VmgrTapeGatewayHelper vmgrHelper;
 	
 
-		// CHECK IF THE ERROR WAS DUE TO A FULL TAPE
+	      // CHECK IF THE ERROR WAS DUE TO A FULL TAPE
+	      if (endRequest.errorCode() == ENOSPC ) {
 
+		
 		try {
-
-		  if (endRequest.errorCode() == ENOSPC ) {
-
-		    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_TAPE_MAKED_FULL, 3, params);
-		    vmgrHelper.setTapeAsFull(tape);
-
-		  } 
-      
+		  
+		  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_TAPE_MAKED_FULL, 3, params);
+		  vmgrHelper.setTapeAsFull(tape);
+		  
 		} catch (castor::exception::Exception e) {
 		  castor::dlf::Param params[] =
-		  {castor::dlf::Param("mountTransactionId", endRequest.mountTransactionId()),
-		   castor::dlf::Param("TPVID", tape.vid()),
-		   castor::dlf::Param("errorCode",sstrerror(e.code())),
-		   castor::dlf::Param("errorMessage",e.getMessage().str())
-		  };
+		    {castor::dlf::Param("mountTransactionId", endRequest.mountTransactionId()),
+		     castor::dlf::Param("TPVID", tape.vid()),
+		     castor::dlf::Param("errorCode",sstrerror(e.code())),
+		     castor::dlf::Param("errorMessage",e.getMessage().str())
+		    };
     
 		  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_CANNOT_MARK_TAPE_FULL, 4, params);
        
 		}
-
-
-		// We just release the tape
-		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_FAIL_RELEASE_TAPE, 3, params);
 		
-		vmgrHelper.resetBusyTape(tape);
+	      } else {
 
+		try {
+		  // We just release the tape
+		  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_FAIL_RELEASE_TAPE, 3, params);
+		
+		  vmgrHelper.resetBusyTape(tape);
+
+		  
+	      
+		} catch (castor::exception::Exception e) {
+		  castor::dlf::Param params[] =
+		    {castor::dlf::Param("mountTransactionId", endRequest.mountTransactionId()),
+		     castor::dlf::Param("TPVID", tape.vid()),
+		     castor::dlf::Param("errorCode",sstrerror(e.code())),
+		     castor::dlf::Param("errorMessage",e.getMessage().str())
+		    };
+	      
+		  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_CANNOT_RELEASE_TAPE, 4, params);
+		}
 	      }
-	      
-	    } catch (castor::exception::Exception e) {
-	      castor::dlf::Param params[] =
-		{castor::dlf::Param("mountTransactionId", endRequest.mountTransactionId()),
-		 castor::dlf::Param("TPVID", tape.vid()),
-		 castor::dlf::Param("errorCode",sstrerror(e.code())),
-		 castor::dlf::Param("errorMessage",e.getMessage().str())
-		};
-	      
-	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_CANNOT_RELEASE_TAPE, 4, params);
 	    }
 
 	    // ACCESS db now we fail it 
