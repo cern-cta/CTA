@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTapeGateway.sql,v $ $Revision: 1.10 $ $Date: 2009/08/13 13:30:05 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTapeGateway.sql,v $ $Revision: 1.11 $ $Date: 2009/08/13 13:33:59 $ $Author: itglp $
  *
  * PL/SQL code for the tape gateway daemon
  *
@@ -1344,6 +1344,7 @@ BEGIN
        SET status = 1, getNextStatus = 1,  -- SUBREQUEST_RESTART, GETNEXTSTATUS_FILESTAGED
            lastModificationTime = getTime(), parent = 0
        WHERE id = subRequestId;
+    -- and trigger new migrations if missing tape copies were detected
     IF missingTCs > 0 THEN
       DECLARE
         newTcId INTEGER;
