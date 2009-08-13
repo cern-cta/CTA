@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.750 $ $Date: 2009/08/10 15:30:12 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.751 $ $Date: 2009/08/13 08:18:36 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -2012,17 +2012,19 @@ BEGIN
          AND FileSystem.diskPool = DP2SC.parent
          AND DP2SC.child = scId)
     UNION ALL (
-      -- and then diskcopies resulting from previous PrepareToPut|replica requests
+      -- and then diskcopies resulting from previous PrepareToPut|recall|replica requests
       SELECT DC.id
         FROM (SELECT id, svcClass FROM StagePrepareToPutRequest UNION ALL
               SELECT id, svcClass FROM StagePrepareToUpdateRequest UNION ALL
+              SELECT id, svcClass FROM StagePrepareToGetRequest UNION ALL
+              SELECT id, svcClass FROM StageRepackRequest UNION ALL
               SELECT id, svcClass FROM StageDiskCopyReplicaRequest) PrepareRequest,
              SubRequest, DiskCopy DC
        WHERE SubRequest.diskCopy = DC.id
          AND PrepareRequest.id = SubRequest.request
          AND PrepareRequest.svcClass = scId
          AND DC.castorFile = cfId
-         AND DC.status IN (1, 5, 11)  -- WAITDISK2DISKCOPY, WAITFS, WAITFS_SCHEDULING
+         AND DC.status IN (1, 2, 5, 11)  -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, WAITFS_SCHEDULING
       );
     IF dcsToRm.COUNT = 0 THEN
       -- We didn't find anything on this svcClass, fail and return
