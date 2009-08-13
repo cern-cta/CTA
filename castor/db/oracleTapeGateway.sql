@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTapeGateway.sql,v $ $Revision: 1.8 $ $Date: 2009/08/13 08:24:54 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTapeGateway.sql,v $ $Revision: 1.9 $ $Date: 2009/08/13 08:57:57 $ $Author: gtaur $
  *
  * PL/SQL code for the tape gateway daemon
  *
@@ -1123,7 +1123,8 @@ END;
 
 /* get tape to release in VMGR */
 
-CREATE OR REPLACE PROCEDURE  tg_getTapeToRelease ( inputVdqmReqId IN INTEGER, 
+create or replace
+PROCEDURE  tg_getTapeToRelease ( inputVdqmReqId IN INTEGER, 
                                                    outputTape OUT NOCOPY VARCHAR2, 
                                                    outputMode OUT INTEGER ) AS
 BEGIN
@@ -1131,7 +1132,10 @@ BEGIN
     FROM TapeGatewayRequest,Tape,Stream 
     WHERE vdqmvolreqid = inputvdqmreqid 
     AND (Tape.id=TapeGatewayRequest.taperecall 
-         OR (Stream.id=TapeGatewayRequest.streammigration AND Stream.tape=Tape.id));
+        OR (Stream.id=TapeGatewayRequest.streammigration AND Stream.tape=Tape.id));
+EXCEPTION WHEN NO_DATA_FOUND THEN
+ -- already cleaned by the checker
+ null;
 END;
 /
 
