@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.696 $ $Date: 2009/04/20 13:13:24 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.697 $ $Date: 2009/08/13 14:11:33 $ $Author: itglp $
  *
  * This file contains some common PL/SQL utilities for the stager database.
  *
@@ -135,7 +135,7 @@ CREATE OR REPLACE FUNCTION normalizePath(path IN VARCHAR2) RETURN VARCHAR2 IS
   buf VARCHAR2(2048);
   ret VARCHAR2(2048);
 BEGIN
-  -- drop '.'s snd multiple '/'s
+  -- drop '.'s and multiple '/'s
   ret := replace(regexp_replace(path, '[/]+', '/'), '/./', '/');
   LOOP
     buf := ret;
