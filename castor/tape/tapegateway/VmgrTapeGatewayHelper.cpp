@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: VmgrTapeGatewayHelper.cpp,v $ $Revision: 1.14 $ $Release$ 
- * $Date: 2009/06/19 12:05:31 $ $Author: gtaur $
+ * @(#)$RCSfile: VmgrTapeGatewayHelper.cpp,v $ $Revision: 1.15 $ $Release$ 
+ * $Date: 2009/08/13 16:34:56 $ $Author: gtaur $
  *
  *
  *
@@ -437,7 +437,7 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::setTapeAsFull(castor::sta
   if ( (status & (TAPE_FULL|DISABLED|EXPORTED|TAPE_RDONLY|ARCHIVED)) == 0 ) {
     status = TAPE_FULL;
     serrno=0;
-    int rc = vmgr_updatetape(tape.vid().c_str(), 1, 0, 100, 0, status); 
+    int rc = vmgr_updatetape(tape.vid().c_str(), 0, 0, 100, 0, status); 
     if (rc <0) {
       castor::exception::Exception ex(serrno);
       ex.getMessage()
