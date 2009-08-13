@@ -1,5 +1,5 @@
 /*******************************************************************
- * @(#)$RCSfile: oracleDrain.sql,v $ $Revision: 1.6 $ $Date: 2009/07/31 15:24:37 $ $Author: waldron $
+ * @(#)$RCSfile: oracleDrain.sql,v $ $Revision: 1.7 $ $Date: 2009/08/13 14:11:04 $ $Author: itglp $
  * PL/SQL code for Draining FileSystems Logic
  *
  * Additional procedures modified to support the DrainingFileSystems
@@ -38,7 +38,7 @@ BEGIN
     OPEN c;
     FETCH c BULK COLLECT INTO reqIds, srIds, clientIds LIMIT 10000;
     -- Break out of the loop when the cursor returns no results
-    EXIT WHEN c%NOTFOUND;
+    EXIT WHEN reqIds.count = 0;
     -- Delete data
     FORALL i IN reqIds.FIRST .. reqIds.LAST
       DELETE FROM Id2Type WHERE id IN (reqIds(i), clientIds(i), srIds(i));

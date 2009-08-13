@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.696 $ $Date: 2009/08/10 15:30:12 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.697 $ $Date: 2009/08/13 14:11:04 $ $Author: itglp $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -589,7 +589,7 @@ BEGIN
     LOOP
       OPEN s;
       FETCH s BULK COLLECT INTO ids LIMIT 100000;
-      EXIT WHEN s%NOTFOUND;
+      EXIT WHEN ids.count = 0;
       FORALL i IN ids.FIRST..ids.LAST
         DELETE FROM '||tab||' WHERE id = ids(i);
       CLOSE s;
@@ -663,7 +663,7 @@ BEGIN
     OPEN s;
     LOOP
       FETCH s BULK COLLECT INTO ids LIMIT 10000;
-      EXIT WHEN s%NOTFOUND;
+      EXIT WHEN ids.count = 0;
       FORALL i IN ids.FIRST..ids.LAST
         DELETE FROM SubRequest WHERE id = ids(i);
       COMMIT;
@@ -672,7 +672,7 @@ BEGIN
   END;
   EXECUTE IMMEDIATE 'TRUNCATE TABLE DeleteTermReqHelper';
 
-  -- and then related Requests + Clients
+  -- and then related Requests
     ---- Get ----
   bulkDeleteRequests('StageGetRequest');
     ---- Put ----
