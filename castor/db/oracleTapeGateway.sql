@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTapeGateway.sql,v $ $Revision: 1.7 $ $Date: 2009/08/13 08:18:23 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTapeGateway.sql,v $ $Revision: 1.8 $ $Date: 2009/08/13 08:24:54 $ $Author: gtaur $
  *
  * PL/SQL code for the tape gateway daemon
  *
@@ -1126,15 +1126,6 @@ END;
 CREATE OR REPLACE PROCEDURE  tg_getTapeToRelease ( inputVdqmReqId IN INTEGER, 
                                                    outputTape OUT NOCOPY VARCHAR2, 
                                                    outputMode OUT INTEGER ) AS
-
- tpId NUMBER;
- trId NUMBER;
- strId NUMBER;
- reqMode INTEGER;
- mIds "numList";
- tcIds "numList";
- segNum INTEGER;
-
 BEGIN
   SELECT Tape.vid, TapeGatewayRequest.accessmode INTO outputtape, outputmode 
     FROM TapeGatewayRequest,Tape,Stream 
