@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTapeGateway.sql,v $ $Revision: 1.11 $ $Date: 2009/08/13 13:33:59 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTapeGateway.sql,v $ $Revision: 1.12 $ $Date: 2009/08/13 15:14:25 $ $Author: gtaur $
  *
  * PL/SQL code for the tape gateway daemon
  *
@@ -1127,17 +1127,31 @@ create or replace
 PROCEDURE  tg_getTapeToRelease ( inputVdqmReqId IN INTEGER, 
                                                    outputTape OUT NOCOPY VARCHAR2, 
                                                    outputMode OUT INTEGER ) AS
+  strId NUMBER;
+  tpId NUMBER;
 BEGIN
-  SELECT Tape.vid, TapeGatewayRequest.accessmode INTO outputtape, outputmode 
-    FROM TapeGatewayRequest,Tape,Stream 
-    WHERE vdqmvolreqid = inputvdqmreqid 
-    AND (Tape.id=TapeGatewayRequest.taperecall 
-        OR (Stream.id=TapeGatewayRequest.streammigration AND Stream.tape=Tape.id));
+  SELECT  accessmode, streammigration, tapeRecall 
+     INTO  outputmode, strId, tpId 
+    FROM TapeGatewayRequest
+    WHERE vdqmvolreqid = inputvdqmreqid;
+    
+   IF outputmode = 0 THEN
+     -- read case
+     SELECT vid INTO outputTape 
+       FROM Tape
+       WHERE id=tpId; 
+   ELSE
+     -- write case
+     SELECT Tape.vid INTO outputtape 
+       FROM Tape,Stream 
+       WHERE Stream.id=strId AND Stream.tape=Tape.id;
+   END IF;
 EXCEPTION WHEN NO_DATA_FOUND THEN
  -- already cleaned by the checker
  null;
 END;
 /
+
 
 /* invalidate a file that it is not possible to tape as candidate to migrate or recall */
 
