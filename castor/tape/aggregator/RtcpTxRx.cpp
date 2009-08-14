@@ -58,7 +58,7 @@ void castor::tape::aggregator::RtcpTxRx::getRequestInfoFromRtcpd(
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId", volReqId),
       castor::dlf::Param("socketFd", socketFd)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_GET_REQUEST_INFO_FROM_RTCPD, params);
   }
 
@@ -144,7 +144,7 @@ void castor::tape::aggregator::RtcpTxRx::giveVolumeToRtcpd(
   const int netReadWriteTimeout, RtcpTapeRqstErrMsgBody &request) 
   throw(castor::exception::Exception) {
 
-  LogHelper::logMsgBody(cuuid, DLF_LVL_SYSTEM,
+  LogHelper::logMsgBody(cuuid, DLF_LVL_DEBUG,
     AGGREGATOR_GIVE_VOLUME_TO_RTCPD, volReqId, socketFd, request);
 
   // Marshall the message
@@ -206,7 +206,7 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
       AGGREGATOR_GIVE_MIGRATE_FILE_TO_RTCPD :
       AGGREGATOR_GIVE_RECALL_FILE_TO_RTCPD;
 
-    LogHelper::logMsgBody(cuuid, DLF_LVL_SYSTEM, message_no, volReqId,
+    LogHelper::logMsgBody(cuuid, DLF_LVL_DEBUG, message_no, volReqId,
       socketFd, request);
   }
 
@@ -270,7 +270,7 @@ void castor::tape::aggregator::RtcpTxRx::tellRtcpdDumpTape(
   const int netReadWriteTimeout, RtcpDumpTapeRqstMsgBody &request)
   throw(castor::exception::Exception) {
 
-  LogHelper::logMsgBody(cuuid, DLF_LVL_SYSTEM, AGGREGATOR_TELL_RTCPD_DUMP_TAPE,
+  LogHelper::logMsgBody(cuuid, DLF_LVL_DEBUG, AGGREGATOR_TELL_RTCPD_DUMP_TAPE,
     volReqId, socketFd, request);
 
   // Marshall the message
@@ -346,7 +346,7 @@ void castor::tape::aggregator::RtcpTxRx::sendMessageHeader(
       castor::dlf::Param("volReqId", volReqId),
       castor::dlf::Param("socketFd", socketFd)};
 
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_SEND_HEADER_TO_RTCPD, params);
   }
 
@@ -363,7 +363,7 @@ void castor::tape::aggregator::RtcpTxRx::sendMessageHeader(
       castor::dlf::Param("volReqId", volReqId),
       castor::dlf::Param("socketFd", socketFd)};
 
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_SENT_HEADER_TO_RTCPD, params);
   }
 }
@@ -398,7 +398,7 @@ void castor::tape::aggregator::RtcpTxRx::pingRtcpd(const Cuuid_t &cuuid,
       castor::dlf::Param("volReqId", volReqId),
       castor::dlf::Param("socketFd", socketFd)};
 
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_PING_RTCPD, params);
   }
 
@@ -415,7 +415,7 @@ void castor::tape::aggregator::RtcpTxRx::pingRtcpd(const Cuuid_t &cuuid,
       castor::dlf::Param("volReqId", volReqId),
       castor::dlf::Param("socketFd", socketFd)};
 
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_PINGED_RTCPD, params);
   }
 }
@@ -432,7 +432,7 @@ void castor::tape::aggregator::RtcpTxRx::tellRtcpdEndOfFileList(
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId", volReqId),
       castor::dlf::Param("socketFd", socketFd)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_TELL_RTCPD_END_OF_FILE_LIST, params);
   }
 
@@ -519,7 +519,7 @@ void castor::tape::aggregator::RtcpTxRx::tellRtcpdToAbort(const Cuuid_t &cuuid,
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId", volReqId),
       castor::dlf::Param("socketFd", socketFd)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_TELL_RTCPD_TO_ABORT, params);
   }
 
@@ -585,7 +585,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRcpJobRqst(const Cuuid_t &cuuid,
   const int socketFd, const int netReadWriteTimeout,
   RcpJobRqstMsgBody &request) throw(castor::exception::Exception) {
 
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
     AGGREGATOR_RECEIVE_RCP_JOB_RQST);
 
   // Read in the message header
@@ -674,7 +674,7 @@ void castor::tape::aggregator::RtcpTxRx::askRtcpdToRequestMoreWork(
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId", volReqId),
       castor::dlf::Param("socketFd", socketFd)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       mode == WRITE_ENABLE ? AGGREGATOR_ASK_RTCPD_TO_RQST_MORE_MIGRATE_WORK :
       AGGREGATOR_ASK_RTCPD_TO_RQST_MORE_RECALL_WORK, params);
   }

@@ -50,12 +50,6 @@
 
 
 //------------------------------------------------------------------------------
-// emulateRecallCounter
-//------------------------------------------------------------------------------
-static castor::tape::aggregator::SynchronizedCounter emulatedRecallCounter(0);
-
-
-//------------------------------------------------------------------------------
 // getVolume
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::Volume
@@ -70,7 +64,7 @@ castor::tape::tapegateway::Volume
       castor::dlf::Param("clientHost", clientHost),
       castor::dlf::Param("clientPort", clientPort),
       castor::dlf::Param("unit"      , unit      )};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_GET_VOLUME_FROM_CLIENT, params);
   }
 
@@ -229,7 +223,7 @@ castor::tape::tapegateway::FileToMigrate
       castor::dlf::Param("volReqId"  , volReqId  ),
       castor::dlf::Param("clientHost", clientHost),
       castor::dlf::Param("clientPort", clientPort)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_GET_FILE_TO_MIGRATE_FROM_CLIENT, params);
   }
 
@@ -387,7 +381,7 @@ castor::tape::tapegateway::FileToRecall
     castor::dlf::Param("volReqId"  , volReqId  ),
     castor::dlf::Param("clientHost", clientHost),
     castor::dlf::Param("clientPort", clientPort)};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
     AGGREGATOR_GET_FILE_TO_RECALL_FROM_CLIENT, params);
 
   // Prepare the request
@@ -576,7 +570,7 @@ void castor::tape::aggregator::ClientTxRx::notifyFileMigrated(
       castor::dlf::Param("checksum"           , checksumHex        ),
       castor::dlf::Param("fileSize"           , fileSize           ),
       castor::dlf::Param("compressedFileSize" , compressedFileSize )};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_NOTIFY_CLIENT_FILE_MIGRATED, params);
   }
 
@@ -774,7 +768,7 @@ void castor::tape::aggregator::ClientTxRx::notifyFileRecalled(
       castor::dlf::Param("checksum"           , checksumHex        ),
       castor::dlf::Param("filePath"           , filePath           ),
       castor::dlf::Param("fileSize"           , fileSize           )};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_NOTIFY_CLIENT_FILE_RECALLED, params);
   }
 
@@ -935,7 +929,7 @@ void castor::tape::aggregator::ClientTxRx::notifyEndOfSession(
       castor::dlf::Param("volReqId"  , volReqId  ),
       castor::dlf::Param("clientHost", clientHost),
       castor::dlf::Param("clientPort", clientPort)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_NOTIFY_CLIENT_END_OF_SESSION, params);
   }
 
@@ -1071,7 +1065,7 @@ castor::tape::tapegateway::DumpParameters
       castor::dlf::Param("volReqId"  , volReqId  ),
       castor::dlf::Param("clientHost", clientHost),
       castor::dlf::Param("clientPort", clientPort)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_GET_DUMP_PARAMETERS_FROM_CLIENT, params);
   }
 
@@ -1207,7 +1201,7 @@ void castor::tape::aggregator::ClientTxRx::notifyDumpMessage(
       castor::dlf::Param("clientHost", clientHost),
       castor::dlf::Param("clientPort", clientPort),
       castor::dlf::Param("message"   , message   )};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_NOTIFY_CLIENT_DUMP_MESSAGE, params);
   }
 
@@ -1327,7 +1321,7 @@ void castor::tape::aggregator::ClientTxRx::notifyDumpMessage(
       castor::dlf::Param("clientHost", clientHost),
       castor::dlf::Param("clientPort", clientPort),
       castor::dlf::Param("message"    , message  )};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_NOTIFIED_CLIENT_DUMP_MESSAGE, params);
   }
 }
@@ -1346,7 +1340,7 @@ void castor::tape::aggregator::ClientTxRx::notifyEndOfFailedSession(
       castor::dlf::Param("volReqId"  , volReqId  ),
       castor::dlf::Param("clientHost", clientHost),
       castor::dlf::Param("clientPort", clientPort)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
   }
 
@@ -1601,7 +1595,7 @@ void castor::tape::aggregator::ClientTxRx::ping(const Cuuid_t &cuuid,
       castor::dlf::Param("volReqId"  , volReqId  ),
       castor::dlf::Param("clientHost", clientHost),
       castor::dlf::Param("clientPort", clientPort)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_PINGED_CLIENT, params);
   }
 }

@@ -518,7 +518,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
           castor::dlf::Param("volReqId", m_jobRequest.volReqId           ),
           castor::dlf::Param("Message" , ex.getMessage().str()),
           castor::dlf::Param("Code"    , ex.code()            )};
-        castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+        castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
           AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
       }
 
@@ -598,7 +598,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
         castor::dlf::Param("volReqId", m_jobRequest.volReqId),
         castor::dlf::Param("Message" , ex.getMessage().str()),
         castor::dlf::Param("Code"    , ex.code()            )};
-      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
         AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
     }
   } catch(castor::exception::Exception &ex) {
@@ -606,7 +606,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
       castor::dlf::Param("volReqId", m_jobRequest.volReqId),
       castor::dlf::Param("Message" , ex.getMessage().str()),
       castor::dlf::Param("Code"    , ex.code()            )};
-    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
       AGGREGATOR_FAILED_TO_PROCESS_RTCPD_SOCKETS, params);
 
     try {
@@ -619,7 +619,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
         castor::dlf::Param("volReqId", m_jobRequest.volReqId),
         castor::dlf::Param("Message" , ex.getMessage().str()),
         castor::dlf::Param("Code"    , ex.code()            )};
-      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
         AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
     }
   }
@@ -672,7 +672,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runRecallSession()
         castor::dlf::Param("volReqId", m_jobRequest.volReqId),
         castor::dlf::Param("Message" , ex.getMessage().str()),
         castor::dlf::Param("Code"    , ex.code()            )};
-      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
         AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
     }
   } catch(castor::exception::Exception &ex) {
@@ -680,7 +680,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runRecallSession()
       castor::dlf::Param("volReqId", m_jobRequest.volReqId),
       castor::dlf::Param("Message" , ex.getMessage().str()),
       castor::dlf::Param("Code"    , ex.code()            )};
-    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
       AGGREGATOR_FAILED_TO_PROCESS_RTCPD_SOCKETS, params);
 
     try {
@@ -693,7 +693,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runRecallSession()
         castor::dlf::Param("volReqId", m_jobRequest.volReqId),
         castor::dlf::Param("Message" , ex.getMessage().str()),
         castor::dlf::Param("Code"    , ex.code()            )};
-      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
         AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
     }
   }
@@ -757,14 +757,15 @@ void castor::tape::aggregator::BridgeProtocolEngine::runDumpSession()
         castor::dlf::Param("volReqId", m_jobRequest.volReqId),
         castor::dlf::Param("Message" , ex.getMessage().str()),
         castor::dlf::Param("Code"    , ex.code()            )};
-      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
         AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
     }
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId", m_jobRequest.volReqId),
       castor::dlf::Param("Message" , ex.getMessage().str()),
-      castor::dlf::Param("Code"    , ex.code()            )};                       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      castor::dlf::Param("Code"    , ex.code()            )};                       
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
       AGGREGATOR_FAILED_TO_PROCESS_RTCPD_SOCKETS, params);
 
     try {
@@ -777,7 +778,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runDumpSession()
         castor::dlf::Param("volReqId", m_jobRequest.volReqId),
         castor::dlf::Param("Message" , ex.getMessage().str()),
         castor::dlf::Param("Code"    , ex.code()            )};
-      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
         AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
     }
   }
@@ -1033,7 +1034,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
       castor::dlf::Param params[] = {
         castor::dlf::Param("volReqId", m_jobRequest.volReqId),
         castor::dlf::Param("socketFd", socketFd             )};
-      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG,
         AGGREGATOR_SEND_DELAYED_REQUEST_MORE_WORK_ACK_TO_RTCPD, params);
     }
 
