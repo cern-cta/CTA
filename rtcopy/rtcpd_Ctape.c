@@ -493,10 +493,11 @@ int rtcpd_Mount(tape_list_t *tape) {
 
             rtcp_log(LOG_ERR,"rtcpd_Mount() Ctape_mount() VMGR lib error %s\n",
                      errbuf);
-            tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 4,
                              "func"   , TL_MSG_PARAM_STR, "rtcpd_Mount",
                              "Message", TL_MSG_PARAM_STR, "Ctape_mount",
-                             "Error"  , TL_MSG_PARAM_STR, errbuf        );
+                             "Error"  , TL_MSG_PARAM_STR, errbuf,
+                             "Drive"  , TL_MSG_PARAM_STR, tapereq->unit );
           }
         }
     
@@ -506,9 +507,10 @@ int rtcpd_Mount(tape_list_t *tape) {
         tapereq->TEndMount = (int)time(NULL);
         if ( AbortFlag == 1 ) {
             rtcp_log(LOG_ERR,"rtcpd_Mount() ABORTING!\n");
-            tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
-                             "func"   , TL_MSG_PARAM_STR  , "rtcpd_Mount",
-                             "Message", TL_MSG_PARAM_STR  , "ABORTING!" );
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
+                             "func"   , TL_MSG_PARAM_STR, "rtcpd_Mount",
+                             "Message", TL_MSG_PARAM_STR, "ABORTING!",
+                             "Drive"  , TL_MSG_PARAM_STR, tapereq->unit );
             severity = RTCP_FAILED | RTCP_USERR;
             rtcpd_SetReqStatus(tape,NULL,save_serrno,severity);
             return(-1);
@@ -523,10 +525,11 @@ int rtcpd_Mount(tape_list_t *tape) {
              */
             rtcp_log(LOG_ERR,"rtcpd_Mount() Ctape_mount() %s\n",
                      CTP_ERRTXT);
-            tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 4,
                              "func"   , TL_MSG_PARAM_STR, "rtcpd_Mount",
                              "Message", TL_MSG_PARAM_STR, "Ctape_mount",
-                             "Error"  , TL_MSG_PARAM_STR, CTP_ERRTXT );
+                             "Error"  , TL_MSG_PARAM_STR, CTP_ERRTXT,
+                             "Drive"  , TL_MSG_PARAM_STR, tapereq->unit );
             if ( save_serrno != ETVBSY && save_serrno != EBUSY ) 
                 rtcpd_AppendClientMsg(tape, NULL, "%s\n",CTP_ERRTXT);
 
@@ -630,10 +633,11 @@ int rtcpd_Mount(tape_list_t *tape) {
     if ( rc == -1 && save_serrno == EBUSY ) {
          rtcp_log(LOG_ERR,"rtcpd_Mount() giving up after %d retries on EBUSY\n",
                   retry);
-         tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
+         tl_rtcpd.tl_log( &tl_rtcpd, 3, 4,
                           "func"   , TL_MSG_PARAM_STR, "rtcpd_Mount",
                           "Message", TL_MSG_PARAM_STR, "giving up after retries on EBUSY",
-                          "Retries", TL_MSG_PARAM_INT, retry );
+                          "Retries", TL_MSG_PARAM_INT, retry,
+                          "Drive"  , TL_MSG_PARAM_STR, tapereq->unit );
          severity = RTCP_FAILED | RTCP_USERR;
          rtcpd_SetReqStatus(tape,NULL,save_serrno,severity);
     }

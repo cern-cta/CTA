@@ -508,9 +508,10 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
             
 	    if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"MemoryToTape() tape write error\n");
-                tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
                                  "func"   , TL_MSG_PARAM_STR, "MemoryToTape",
-                                 "Message", TL_MSG_PARAM_STR, "tape write error" );
+                                 "Message", TL_MSG_PARAM_STR, "tape write error",
+                                 "Drive"  , TL_MSG_PARAM_STR, tapereq->unit );
                 if ( NoSyncAccess == 0 ) {
                     (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                     (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
