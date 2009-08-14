@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.38 $ $Date: 2009/01/05 16:17:29 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.39 $ $Date: 2009/08/14 13:27:41 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -190,11 +190,12 @@ char	**argv;
 			else {
 				usrmsg (func, TP042, path, "open",
 					strerror(errno));
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 6,
                                                     "func"   , TL_MSG_PARAM_STR  , func,
                                                     "path"   , TL_MSG_PARAM_STR  , path,
                                                     "Message", TL_MSG_PARAM_STR  , "open",
                                                     "JobID"  , TL_MSG_PARAM_INT  , jid,
+                                                    "Drive"  , TL_MSG_PARAM_STR  , drive, 
                                                     "TPVID"  , TL_MSG_PARAM_TPVID, vid );
                         }
 			goto reply;

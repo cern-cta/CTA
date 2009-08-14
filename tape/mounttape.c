@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.72 $ $Date: 2009/01/05 16:17:29 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.73 $ $Date: 2009/08/14 13:27:41 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -400,12 +400,13 @@ remount_loop:
 				else {
 					usrmsg (func, TP042, path, "open",
 						strerror(errno));
-                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 6,
+                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 7,
                                                             "func"   , TL_MSG_PARAM_STR  , func,
                                                             "path"   , TL_MSG_PARAM_STR  , path,
                                                             "Message", TL_MSG_PARAM_STR  , "open",
                                                             "Error"  , TL_MSG_PARAM_STR  , strerror(errno),
                                                             "JobID"  , TL_MSG_PARAM_INT  , jid,
+                                                            "Drive"  , TL_MSG_PARAM_STR  , drive, 
                                                             "TPVID"  , TL_MSG_PARAM_TPVID, vid);
 	                                if (strcmp (devtype, "3592") == 0) {
 #if VDQM
@@ -493,12 +494,13 @@ remount_loop:
 			close (tapefd);         /* to avoid errno 22 on read */
 			if ((tapefd = open (path, O_RDONLY)) < 0) {
 				usrmsg (func, TP042, path, "reopen", strerror(errno));
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 6,
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 7,
                                                     "func"   , TL_MSG_PARAM_STR  , func,
                                                     "path"   , TL_MSG_PARAM_STR  , path,
                                                     "Message", TL_MSG_PARAM_STR  , "reopen",
                                                     "Error"  , TL_MSG_PARAM_STR  , strerror(errno),
                                                     "JobID"  , TL_MSG_PARAM_INT  , jid,
+                                                    "Drive"  , TL_MSG_PARAM_STR  , drive, 
                                                     "TPVID"  , TL_MSG_PARAM_TPVID, vid);
 				c = errno;
 				goto reply;
@@ -646,9 +648,10 @@ remount_loop:
                     char *p = NULL;
 
                     tplogit(func, "Bad MIR detected vid=%s\n", vid );
-                    tl_tpdaemon.tl_log( &tl_tpdaemon, 86, 3,
+                    tl_tpdaemon.tl_log( &tl_tpdaemon, 86, 4,
                                         "func"   , TL_MSG_PARAM_STR  , func,
                                         "Message", TL_MSG_PARAM_STR  , "Bad MIR detected",
+                                        "Drive"  , TL_MSG_PARAM_STR  , drive, 
                                         "TPVID"  , TL_MSG_PARAM_TPVID, vid );                    
 
                     p = getconfent( "TAPE", "BADMIR_HANDLING", 0 );
@@ -889,12 +892,13 @@ mounted:
 		close (tapefd);
 		if ((tapefd = open (path, O_WRONLY)) < 0) {
 			usrmsg (func, TP042, path, "reopen", strerror(errno));
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 6,
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 7,
                                             "func"   , TL_MSG_PARAM_STR  , func,
                                             "path"   , TL_MSG_PARAM_STR  , path,
                                             "Message", TL_MSG_PARAM_STR  , "reopen",
                                             "Error"  , TL_MSG_PARAM_STR  , strerror(errno),
                                             "JobID"  , TL_MSG_PARAM_INT  , jid,
+                                            "Drive"  , TL_MSG_PARAM_STR  , drive, 
                                             "TPVID"  , TL_MSG_PARAM_TPVID, vid);
 			c = errno;
 			goto reply;

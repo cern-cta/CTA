@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.38 $ $Date: 2008/04/18 09:24:21 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.39 $ $Date: 2009/08/14 13:27:41 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -146,10 +146,11 @@ char *loader;
                                     "Message", TL_MSG_PARAM_STR, buf );
 		if ((f = popen (buf, "r")) == NULL) {
 			usrmsg (func, TP042, "", "popen", strerror(errno));
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 3,
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
                                             "func",    TL_MSG_PARAM_STR, func,
                                             "Message", TL_MSG_PARAM_STR, "popen",
-                                            "Error",   TL_MSG_PARAM_STR, strerror(errno) );
+                                            "Error",   TL_MSG_PARAM_STR, strerror(errno),
+                                            "Drive"  , TL_MSG_PARAM_STR, cur_unm );
 			RETURN (-errno);
 		}
 		while (fgets (buf, sizeof(buf), f) != NULL) {
@@ -159,7 +160,7 @@ char *loader;
                                             "func",    TL_MSG_PARAM_STR, func,
                                             "action",  TL_MSG_PARAM_STR, action,
                                             "cur_vid", TL_MSG_PARAM_STR, cur_vid,
-                                            "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                            "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                             "Message", TL_MSG_PARAM_STR, buf );
                 }
 		if (pclose (f)) {
@@ -181,7 +182,7 @@ char *loader;
                             "func",    TL_MSG_PARAM_STR, func,
                             "action",  TL_MSG_PARAM_STR, action,
                             "cur_vid", TL_MSG_PARAM_STR, cur_vid,
-                            "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                            "Drive",   TL_MSG_PARAM_STR, cur_unm,
                             "Message", TL_MSG_PARAM_STR, "invalid loader type" );
 	RETURN (RBT_CONF_DRV_DN);
 }
@@ -253,10 +254,11 @@ int vsnretry;
                                     "Message", TL_MSG_PARAM_STR, buf );
 		if ((f = popen (buf, "r")) == NULL) {
 			usrmsg (func, TP042, "", "popen", strerror(errno));
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 3,
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
                                             "func",    TL_MSG_PARAM_STR, func,
                                             "Message", TL_MSG_PARAM_STR, "popen",
-                                            "Error",   TL_MSG_PARAM_STR, strerror(errno) );
+                                            "Error",   TL_MSG_PARAM_STR, strerror(errno),
+                                            "Drive",   TL_MSG_PARAM_STR, cur_unm );
 			RETURN (-errno);
 		}
 		while (fgets (buf, sizeof(buf), f) != NULL) {
@@ -266,7 +268,7 @@ int vsnretry;
                                             "func",    TL_MSG_PARAM_STR, func,
                                             "action",  TL_MSG_PARAM_STR, action,
                                             "cur_vid", TL_MSG_PARAM_STR, cur_vid,
-                                            "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                            "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                             "Message", TL_MSG_PARAM_STR, buf );
                 }
 		if (pclose (f)) {
@@ -288,7 +290,7 @@ int vsnretry;
                             "func",    TL_MSG_PARAM_STR, func,
                             "action",  TL_MSG_PARAM_STR, action,
                             "cur_vid", TL_MSG_PARAM_STR, cur_vid,
-                            "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                            "Drive",   TL_MSG_PARAM_STR, cur_unm,
                             "Message", TL_MSG_PARAM_STR, "invalid loader type" );
 	RETURN (RBT_CONF_DRV_DN);
 }
@@ -315,7 +317,7 @@ char *loader;
 		usrmsg (func, TP042, drive, "open", strerror(errno));
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
                                     "func",    TL_MSG_PARAM_STR, func,
-                                    "drive",   TL_MSG_PARAM_STR, drive, 
+                                    "Drive",   TL_MSG_PARAM_STR, drive, 
                                     "Message", TL_MSG_PARAM_STR, "open",
                                     "Error",   TL_MSG_PARAM_STR, strerror(errno) );
 		RETURN (-errno);
@@ -325,11 +327,12 @@ char *loader;
 	sprintf (ldr, "/dev/%s", loader);
 	if ((lmcpfd = open (ldr, O_RDWR)) < 0) {
 		usrmsg (func, TP042, ldr, "open", strerror(errno));
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
                                     "func",    TL_MSG_PARAM_STR, func,
                                     "ldr",     TL_MSG_PARAM_STR, ldr, 
                                     "Message", TL_MSG_PARAM_STR, "open",
-                                    "Error",   TL_MSG_PARAM_STR, strerror(errno) );
+                                    "Error",   TL_MSG_PARAM_STR, strerror(errno),
+                                    "Drive"  , TL_MSG_PARAM_STR, drive );
 		RETURN (-errno);
 	}
 	RETURN (lmcpfd);
@@ -435,7 +438,7 @@ int *status;
                                                     "func",    TL_MSG_PARAM_STR, func,
                                                     "action",  TL_MSG_PARAM_STR, action,
                                                     "cur_vid", TL_MSG_PARAM_STR, cur_vid,
-                                                    "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                                    "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                                     "msgaddr", TL_MSG_PARAM_STR, msgaddr );
                         }
 			return (0);
@@ -447,7 +450,7 @@ int *status;
                                             "func",    TL_MSG_PARAM_STR, func,
                                             "action",  TL_MSG_PARAM_STR, action,
                                             "cur_vid", TL_MSG_PARAM_STR, cur_vid,
-                                            "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                            "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                             "msgaddr", TL_MSG_PARAM_STR, msgaddr );
 			c =  liberr2act (0, libcc);
 			RETURN (c);
@@ -609,11 +612,12 @@ char sense_bytes[];
 
 	if (errno != EIO) {
 		usrmsg (func, TP042, ldr, "ioctl", strerror(errno));
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
                                     "func",    TL_MSG_PARAM_STR, func,
                                     "ldr",     TL_MSG_PARAM_STR, ldr,
                                     "Message", TL_MSG_PARAM_STR, "ioctl",
-                                    "Error",   TL_MSG_PARAM_STR, strerror(errno) );                
+                                    "Error",   TL_MSG_PARAM_STR, strerror(errno),
+                                    "Drive",   TL_MSG_PARAM_STR, cur_unm);                
 		return (-errno);
 	} else {
 		if (cc == MTCC_IO_FAILED) {
@@ -624,7 +628,7 @@ char sense_bytes[];
                                             "func",    TL_MSG_PARAM_STR, func,
                                             "action",  TL_MSG_PARAM_STR, action,
                                             "cur_vid", TL_MSG_PARAM_STR, cur_vid,
-                                            "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                            "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                             "msgaddr", TL_MSG_PARAM_STR, msgaddr );                       
  			if (number_sense)
 				return (eracod2act (*action == 'm' ? 0 : 1, sense_bytes[3]));
@@ -639,7 +643,7 @@ char sense_bytes[];
                                             "func",    TL_MSG_PARAM_STR, func,
                                             "action",  TL_MSG_PARAM_STR, action,
                                             "cur_vid", TL_MSG_PARAM_STR, cur_vid,
-                                            "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                            "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                             "msgaddr", TL_MSG_PARAM_STR, msgaddr );
 			return (liberr2act (*action == 'm' ? 0 : 1, cc));
 		}
@@ -826,7 +830,7 @@ int ring;
                                             "func",      TL_MSG_PARAM_STR, func,
                                             "action",    TL_MSG_PARAM_STR, action,
                                             "cur_vid",   TL_MSG_PARAM_STR, cur_vid,
-                                            "cur_unm",   TL_MSG_PARAM_STR, cur_unm,
+                                            "Drive",     TL_MSG_PARAM_STR, cur_unm,
                                             "acsstatus", TL_MSG_PARAM_STR, acsstatus( status ) );
                         c = acserr2act (0, status);
                         RETURN (c);
@@ -880,7 +884,7 @@ unsigned int force;
                                     "func",      TL_MSG_PARAM_STR, func,
                                     "action",    TL_MSG_PARAM_STR, action,
                                     "cur_vid",   TL_MSG_PARAM_STR, cur_vid,
-                                    "cur_unm",   TL_MSG_PARAM_STR, cur_unm,
+                                    "Drive",     TL_MSG_PARAM_STR, cur_unm,
                                     "acsstatus", TL_MSG_PARAM_STR, acsstatus( status ) );
 		c = acserr2act (1, status);
 		RETURN (c);
@@ -919,7 +923,7 @@ unsigned int force;
                                     "func",      TL_MSG_PARAM_STR, func,
                                     "action",    TL_MSG_PARAM_STR, action,
                                     "cur_vid",   TL_MSG_PARAM_STR, cur_vid,
-                                    "cur_unm",   TL_MSG_PARAM_STR, cur_unm,
+                                    "Drive",     TL_MSG_PARAM_STR, cur_unm,
                                     "acsstatus", TL_MSG_PARAM_STR, acsstatus( status ) );
 		c = acserr2act (1, status);
 		RETURN (c);
@@ -938,7 +942,7 @@ unsigned int force;
                                 "func",             TL_MSG_PARAM_STR, func,
                                 "action",           TL_MSG_PARAM_STR, action,
                                 "cur_vid",          TL_MSG_PARAM_STR, cur_vid,
-                                "cur_unm",          TL_MSG_PARAM_STR, cur_unm,
+                                "Drive",            TL_MSG_PARAM_STR, cur_unm,
                                 "acsstatus (rbuf)", TL_MSG_PARAM_STR, acsstatus (dr->dismount_status) );           
 	    c = acserr2act (1, dr->dismount_status);
 	    RETURN (c);
@@ -990,7 +994,7 @@ int acsmountresp()
                                     "func",      TL_MSG_PARAM_STR, func,
                                     "action",    TL_MSG_PARAM_STR, action,
                                     "cur_vid",   TL_MSG_PARAM_STR, cur_vid,
-                                    "cur_unm",   TL_MSG_PARAM_STR, cur_unm,
+                                    "Drive",     TL_MSG_PARAM_STR, cur_unm,
                                     "acsstatus", TL_MSG_PARAM_STR, acsstatus( status ) );
 		c = acserr2act (0, status);
 		RETURN (c);
@@ -1009,7 +1013,7 @@ int acsmountresp()
                                 "func",             TL_MSG_PARAM_STR, func,
                                 "action",           TL_MSG_PARAM_STR, action,
                                 "cur_vid",          TL_MSG_PARAM_STR, cur_vid,
-                                "cur_unm",          TL_MSG_PARAM_STR, cur_unm,
+                                "Drive",            TL_MSG_PARAM_STR, cur_unm,
                                 "acsstatus (rbuf)", TL_MSG_PARAM_STR, acsstatus( dr->mount_status ) );
 	    c = acserr2act (0, dr->mount_status);
 	    RETURN (c);
@@ -1059,7 +1063,7 @@ int wait4acsfinalresp()
                                     "func",      TL_MSG_PARAM_STR, func,
                                     "action",    TL_MSG_PARAM_STR, action,
                                     "cur_vid",   TL_MSG_PARAM_STR, cur_vid,
-                                    "cur_unm",   TL_MSG_PARAM_STR, cur_unm,
+                                    "Drive",     TL_MSG_PARAM_STR, cur_unm,
                                     "acsstatus", TL_MSG_PARAM_STR, acsstatus( status ) );
 		c = acserr2act (*action == 'm' ? 0 : 1, status);
 		RETURN (c);
@@ -1079,7 +1083,7 @@ int wait4acsfinalresp()
                                             "func",             TL_MSG_PARAM_STR, func,
                                             "action",           TL_MSG_PARAM_STR, action,
                                             "cur_vid",          TL_MSG_PARAM_STR, cur_vid,
-                                            "cur_unm",          TL_MSG_PARAM_STR, cur_unm,
+                                            "Drive",            TL_MSG_PARAM_STR, cur_unm,
                                             "acsstatus (rbuf)", TL_MSG_PARAM_STR, acsstatus( dr->mount_status ) );
                         c = acserr2act (0, dr->mount_status);
                         RETURN (c);
@@ -1097,7 +1101,7 @@ int wait4acsfinalresp()
                                             "func",             TL_MSG_PARAM_STR, func,
                                             "action",           TL_MSG_PARAM_STR, action,
                                             "cur_vid",          TL_MSG_PARAM_STR, cur_vid,
-                                            "cur_unm",          TL_MSG_PARAM_STR, cur_unm,
+                                            "Drive",            TL_MSG_PARAM_STR, cur_unm,
                                             "acsstatus (rbuf)", TL_MSG_PARAM_STR, acsstatus( dr->dismount_status ) );
                         c = acserr2act (1, dr->dismount_status);
                         RETURN (c);
@@ -1154,11 +1158,12 @@ char *loader;
 		if ((hostid = fbsinit (NULL)) < 0) {
 			usrmsg (func, TP042, loader, "fbsinit",
 				fbsstrerror (fbs_errno, msgbuf));
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
                                             "func",    TL_MSG_PARAM_STR, func,
                                             "loader",  TL_MSG_PARAM_STR, loader,
                                             "Message", TL_MSG_PARAM_STR, "fbsinit", 
-                                            "Error",   TL_MSG_PARAM_STR, fbsstrerror( fbs_errno, msgbuf ) );
+                                            "Error",   TL_MSG_PARAM_STR, fbsstrerror(fbs_errno, msgbuf),
+                                            "Drive",   TL_MSG_PARAM_STR, cur_unm );
 			RETURN (-errno);
 		}
 	}
@@ -1172,7 +1177,7 @@ char *loader;
                                     "func",    TL_MSG_PARAM_STR, func,
                                     "action",  TL_MSG_PARAM_STR, action,
                                     "cur_vid", TL_MSG_PARAM_STR, cur_vid,
-                                    "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                    "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                     "Error",   TL_MSG_PARAM_STR, fbsstrerror( fbs_errno, msgbuf ) );
 		c = fbserr2act (0, fbs_errno);
 		RETURN (c);
@@ -1195,11 +1200,12 @@ unsigned int force;
 		if ((hostid = fbsinit (NULL)) < 0) {
 			usrmsg (func, TP042, loader, "fbsinit",
 				fbsstrerror (fbs_errno, msgbuf));
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
                                             "func",    TL_MSG_PARAM_STR, func,
                                             "loader",  TL_MSG_PARAM_STR, loader,
                                             "Message", TL_MSG_PARAM_STR, "fbsinit", 
-                                            "Error",   TL_MSG_PARAM_STR, fbsstrerror( fbs_errno, msgbuf ) );
+                                            "Error",   TL_MSG_PARAM_STR, fbsstrerror( fbs_errno, msgbuf ),
+                                            "Drive",   TL_MSG_PARAM_STR, cur_unm );
 			RETURN (-errno);
 		}
 	}
@@ -1215,7 +1221,7 @@ unsigned int force;
                                     "func",    TL_MSG_PARAM_STR, func,
                                     "action",  TL_MSG_PARAM_STR, action,
                                     "cur_vid", TL_MSG_PARAM_STR, cur_vid,
-                                    "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                    "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                     "Error",   TL_MSG_PARAM_STR, fbsstrerror( fbs_errno, msgbuf ) );
 		c = fbserr2act (1, fbs_errno);
 		RETURN (c);
@@ -1234,11 +1240,12 @@ char *loader;
 		if (fbsterm (hostid) < 0) {
 			usrmsg (func, TP042, loader, "fbsterm",
 				fbsstrerror (fbs_errno, msgbuf));
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
                                             "func",    TL_MSG_PARAM_STR, func,
                                             "loader",  TL_MSG_PARAM_STR, loader,
                                             "Message", TL_MSG_PARAM_STR, "fbsterm", 
-                                            "Error",   TL_MSG_PARAM_STR, fbsstrerror( fbs_errno, msgbuf ) );
+                                            "Error",   TL_MSG_PARAM_STR, fbsstrerror( fbs_errno, msgbuf ),
+                                            "Drive",   TL_MSG_PARAM_STR, cur_unm );
 			RETURN (-EIO);
 		}
 	}
@@ -1284,7 +1291,7 @@ char *loader;
                                             "func",    TL_MSG_PARAM_STR, func,
                                             "action",  TL_MSG_PARAM_STR, action,
                                             "cur_vid", TL_MSG_PARAM_STR, cur_vid,
-                                            "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                            "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                             "last",    TL_MSG_PARAM_STR, last );
 		}
 	}
@@ -1334,7 +1341,7 @@ unsigned int force;
                                             "func",    TL_MSG_PARAM_STR, func,
                                             "action",  TL_MSG_PARAM_STR, action,
                                             "cur_vid", TL_MSG_PARAM_STR, cur_vid,
-                                            "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                            "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                             "last",    TL_MSG_PARAM_STR, last );
 		}
 	}
@@ -1526,7 +1533,7 @@ char *loader;
                                     "func",    TL_MSG_PARAM_STR, func,
                                     "action",  TL_MSG_PARAM_STR, action,
                                     "cur_vid", TL_MSG_PARAM_STR, cur_vid,
-                                    "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                    "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                     "Message", TL_MSG_PARAM_STR, "invalid loader" );
 		RETURN (RBT_NORETRY);
 	}
@@ -1539,7 +1546,7 @@ char *loader;
                                     "func",    TL_MSG_PARAM_STR, func,
                                     "action",  TL_MSG_PARAM_STR, action,
                                     "cur_vid", TL_MSG_PARAM_STR, cur_vid,
-                                    "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                    "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                     "Message", TL_MSG_PARAM_STR, "invalid loader" );
 		RETURN (RBT_NORETRY);
 	}
@@ -1561,11 +1568,12 @@ char *loader;
 		else
 			c = RBT_NORETRY;
                 usrmsg (func, TP042, smc_ldr, "open", strerror(errno));
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
                                     "func",    TL_MSG_PARAM_STR, func,
                                     "smc_ldr", TL_MSG_PARAM_STR, smc_ldr,
                                     "Message", TL_MSG_PARAM_STR, "open", 
-                                    "Error",   TL_MSG_PARAM_STR, strerror( errno ) );
+                                    "Error",   TL_MSG_PARAM_STR, strerror( errno ),
+                                    "Drive",   TL_MSG_PARAM_STR, cur_unm );
 		RETURN (c);
         }
 #endif
@@ -1583,11 +1591,12 @@ char *loader;
                         } else {
 				usrmsg (func, TP042, smc_ldr, "get_geometry",
 					strrchr (msgaddr, ':') + 2);
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
                                                     "func",    TL_MSG_PARAM_STR, func,
                                                     "smc_ldr", TL_MSG_PARAM_STR, smc_ldr,
                                                     "Message", TL_MSG_PARAM_STR, "get_geometry", 
-                                                    "Error",   TL_MSG_PARAM_STR, strrchr (msgaddr, ':') + 2 );
+                                                    "Error",   TL_MSG_PARAM_STR, strrchr (msgaddr, ':') + 2,
+                                                    "Drive",   TL_MSG_PARAM_STR, cur_unm );
                         }
 			RETURN (c);
 		}
@@ -1601,7 +1610,7 @@ char *loader;
                                     "func",    TL_MSG_PARAM_STR, func,
                                     "action",  TL_MSG_PARAM_STR, action,
                                     "cur_vid", TL_MSG_PARAM_STR, cur_vid,
-                                    "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                    "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                     "Message", TL_MSG_PARAM_STR, "invalid loader" );
 		RETURN (RBT_NORETRY);
 	}
@@ -1652,7 +1661,7 @@ int vsnretry;
                                             "func",    TL_MSG_PARAM_STR, func,
                                             "action",  TL_MSG_PARAM_STR, "mount",
                                             "cur_vid", TL_MSG_PARAM_STR, vid,
-                                            "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                            "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                             "Message", TL_MSG_PARAM_STR, p ? p + 2 : rmc_errbuf );
                         
                         while (retryCtr < RETRIES) {
@@ -1715,7 +1724,7 @@ int vsnretry;
                                             "func",    TL_MSG_PARAM_STR, func,
                                             "action",  TL_MSG_PARAM_STR, "mount",
                                             "cur_vid", TL_MSG_PARAM_STR, vid,
-                                            "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                            "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                             "Message", TL_MSG_PARAM_STR, p ? p + 2 : rmc_errbuf );
                         
                         while (retryCtr < RETRIES) {
@@ -1777,7 +1786,7 @@ int vsnretry;
                                                     "func",    TL_MSG_PARAM_STR, func,
                                                     "action",  TL_MSG_PARAM_STR, "mount",
                                                     "cur_vid", TL_MSG_PARAM_STR, vid,
-                                                    "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                                    "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                                     "Message", TL_MSG_PARAM_STR, p ? p + 2 : rmc_errbuf );
                         } else if (vsnretry <= 3 && (serrno == SECOMERR)) {
                                 tplogit (func, "%s", msg);
@@ -1785,7 +1794,7 @@ int vsnretry;
                                                     "func",    TL_MSG_PARAM_STR, func,
                                                     "action",  TL_MSG_PARAM_STR, "mount",
                                                     "cur_vid", TL_MSG_PARAM_STR, vid,
-                                                    "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                                    "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                                     "Message", TL_MSG_PARAM_STR, p ? p + 2 : rmc_errbuf );
                         } else {
                                 usrmsg (func, "%s\n", msg);
@@ -1793,7 +1802,7 @@ int vsnretry;
                                                     "func",    TL_MSG_PARAM_STR, func,
                                                     "action",  TL_MSG_PARAM_STR, "mount",
                                                     "cur_vid", TL_MSG_PARAM_STR, vid,
-                                                    "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                                    "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                                     "Message", TL_MSG_PARAM_STR, p ? p + 2 : rmc_errbuf );
                         }
                         c = (serrno == SECOMERR) ? RBT_FAST_RETRY : serrno - ERMCRBTERR;
@@ -1817,11 +1826,12 @@ int vsnretry;
 			p = strrchr (msgaddr, ':');
 			usrmsg (func, TP042, smc_ldr, "find_cartridge",
 				p ? p + 2 : msgaddr);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
                                             "func",    TL_MSG_PARAM_STR, func,
                                             "smc_ldr", TL_MSG_PARAM_STR, smc_ldr,
                                             "Message", TL_MSG_PARAM_STR, "find_cartridge", 
-                                            "Error",   TL_MSG_PARAM_STR, p ? p + 2 : msgaddr );
+                                            "Error",   TL_MSG_PARAM_STR, p ? p + 2 : msgaddr,
+                                            "Drive",   TL_MSG_PARAM_STR, cur_unm );
 		}
 		RETURN (c);
 	}
@@ -1832,7 +1842,7 @@ int vsnretry;
                                     "func",    TL_MSG_PARAM_STR, func,
                                     "action",  TL_MSG_PARAM_STR, "mount",
                                     "cur_vid", TL_MSG_PARAM_STR, vid,
-                                    "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                    "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                     "Message", TL_MSG_PARAM_STR, "volume not in library" );
 		RETURN (RBT_NORETRY);
 	}
@@ -1843,7 +1853,7 @@ int vsnretry;
                                     "func",    TL_MSG_PARAM_STR, func,
                                     "action",  TL_MSG_PARAM_STR, "mount",
                                     "cur_vid", TL_MSG_PARAM_STR, vid,
-                                    "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                    "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                     "Message", TL_MSG_PARAM_STR, "volume in use" );
 		RETURN (RBT_SLOW_RETRY);
 	}
@@ -1870,7 +1880,7 @@ int vsnretry;
                                             "func",    TL_MSG_PARAM_STR, func,
                                             "action",  TL_MSG_PARAM_STR, "mount",
                                             "cur_vid", TL_MSG_PARAM_STR, vid,
-                                            "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                            "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                             "Message", TL_MSG_PARAM_STR, p ? p + 2 : msgaddr );
                 }
 		RETURN (c);
@@ -1912,7 +1922,7 @@ int smcdismount(vid, loader, force, vsnretry)
                                             "func",    TL_MSG_PARAM_STR, func,
                                             "action",  TL_MSG_PARAM_STR, "demount",
                                             "cur_vid", TL_MSG_PARAM_STR, vid,
-                                            "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                            "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                             "Message", TL_MSG_PARAM_STR, p ? p + 2 : rmc_errbuf );
 
                         tplogit (func, "Encountered EBUSY. Will retry.\n" );
@@ -1944,7 +1954,7 @@ int smcdismount(vid, loader, force, vsnretry)
                                                     "func",    TL_MSG_PARAM_STR, func,
                                                     "action",  TL_MSG_PARAM_STR, "demount",
                                                     "cur_vid", TL_MSG_PARAM_STR, vid,
-                                                    "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                                    "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                                     "Message", TL_MSG_PARAM_STR, p ? p + 2 : rmc_errbuf );
                         } else if (vsnretry <= 3 && (serrno == SECOMERR)){
                                 tplogit (func, "%s", msg);
@@ -1952,7 +1962,7 @@ int smcdismount(vid, loader, force, vsnretry)
                                                     "func",    TL_MSG_PARAM_STR, func,
                                                     "action",  TL_MSG_PARAM_STR, "demount",
                                                     "cur_vid", TL_MSG_PARAM_STR, vid,
-                                                    "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                                    "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                                     "Message", TL_MSG_PARAM_STR, p ? p + 2 : rmc_errbuf );
                         } else {
                                 usrmsg (func, "%s\n", msg);
@@ -1960,7 +1970,7 @@ int smcdismount(vid, loader, force, vsnretry)
                                                     "func",    TL_MSG_PARAM_STR, func,
                                                     "action",  TL_MSG_PARAM_STR, "demount",
                                                     "cur_vid", TL_MSG_PARAM_STR, vid,
-                                                    "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                                    "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                                     "Message", TL_MSG_PARAM_STR, p ? p + 2 : rmc_errbuf );
                         }
                         c = (serrno == SECOMERR) ? RBT_FAST_RETRY : serrno - ERMCRBTERR;
@@ -1985,11 +1995,12 @@ int smcdismount(vid, loader, force, vsnretry)
 			p = strrchr (msgaddr, ':');
 			usrmsg (func, TP042, smc_ldr, "read_elem_status",
 				p ? p + 2 : msgaddr);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
                                             "func",    TL_MSG_PARAM_STR, func,
                                             "smc_ldr", TL_MSG_PARAM_STR, smc_ldr,
                                             "Message", TL_MSG_PARAM_STR, "read_elem_status", 
-                                            "Error",   TL_MSG_PARAM_STR, p ? p + 2 : msgaddr );
+                                            "Error",   TL_MSG_PARAM_STR, p ? p + 2 : msgaddr,
+                                            "Drive",   TL_MSG_PARAM_STR, cur_unm );
 		}
 		RETURN (c);
 	}
@@ -1999,7 +2010,7 @@ int smcdismount(vid, loader, force, vsnretry)
                                     "func",    TL_MSG_PARAM_STR, func,
                                     "action",  TL_MSG_PARAM_STR, "demount",
                                     "cur_vid", TL_MSG_PARAM_STR, vid,
-                                    "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                    "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                     "Message", TL_MSG_PARAM_STR, "Medium Not Present" );
 		RETURN (RBT_OK);
 	}
@@ -2009,7 +2020,7 @@ int smcdismount(vid, loader, force, vsnretry)
                                     "func",    TL_MSG_PARAM_STR, func,
                                     "action",  TL_MSG_PARAM_STR, "demount",
                                     "cur_vid", TL_MSG_PARAM_STR, vid,
-                                    "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                    "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                     "Message", TL_MSG_PARAM_STR, "Drive Not Unloaded" );
 		RETURN (RBT_UNLD_DMNT);
 	}
@@ -2047,7 +2058,7 @@ int smcdismount(vid, loader, force, vsnretry)
                                             "func",    TL_MSG_PARAM_STR, func,
                                             "action",  TL_MSG_PARAM_STR, "demount",
                                             "cur_vid", TL_MSG_PARAM_STR, vid,
-                                            "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                            "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                             "Message", TL_MSG_PARAM_STR, p ? p + 2 : msgaddr );
                 }
                 RETURN (c);

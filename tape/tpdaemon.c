@@ -1,12 +1,12 @@
 /*
- * $Id: tpdaemon.c,v 1.21 2009/07/23 12:22:05 waldron Exp $
+ * $Id: tpdaemon.c,v 1.22 2009/08/14 13:27:41 wiebalck Exp $
  *
  * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.21 $ $Date: 2009/07/23 12:22:05 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.22 $ $Date: 2009/08/14 13:27:41 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -1015,8 +1015,9 @@ char *clienthost;
 	}
 	if (j == nbtpdrives) {    /* unknown drive name */
 		usrmsg (func, TP015);
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 15, 1,
-                                    "func", TL_MSG_PARAM_STR, func );                                
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 15, 2,
+                                    "func" , TL_MSG_PARAM_STR, func,
+                                    "Drive", TL_MSG_PARAM_STR, drive );          
                 c = ETIDN;
 		goto reply;
 	}
@@ -1097,8 +1098,9 @@ char *clienthost;
 	}
 	if (! found) {
 		usrmsg (func, TP015);
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 15, 1,
-                                    "func", TL_MSG_PARAM_STR, func );
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 15, 2,
+                                    "func"  , TL_MSG_PARAM_STR, func,
+                                     "Drive", TL_MSG_PARAM_STR, drive );
 		c = ENOENT;
 		goto reply;
 	} else {
@@ -1499,9 +1501,10 @@ char *clienthost;
 		}
 		if (i == nbtpdrives) {
 			usrmsg (func, TP015);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 15, 2,
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 15, 3,
                                             "func",  TL_MSG_PARAM_STR, func,
-                                            "JobID", TL_MSG_PARAM_INT, jid );                
+                                            "JobID", TL_MSG_PARAM_INT, jid,
+                                            "Drive", TL_MSG_PARAM_STR, drive );
 			c = ETIDN;	/* non existing drive */
 			goto reply;
 		}
@@ -1515,17 +1518,19 @@ char *clienthost;
 		}
 		if (rrtp->dg[j].used >= rrtp->dg[j].rsvd) {
 			usrmsg (func, TP012);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 12, 2,
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 12, 3,
                                             "func",  TL_MSG_PARAM_STR, func,
-                                            "JobID", TL_MSG_PARAM_INT, jid );                
+                                            "JobID", TL_MSG_PARAM_INT, jid,
+                                            "Drive", TL_MSG_PARAM_STR, drive );                
 			c = ETNDV;	/* request would exceed # of drives rsvd */
 			goto reply;
 		}
 		if (chk_den (tunp, den, &cdevp) != 0) {
 			usrmsg (func, TP015);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 15, 2,
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 15, 3,
                                             "func",  TL_MSG_PARAM_STR, func,
-                                            "JobID", TL_MSG_PARAM_INT, jid );                
+                                            "JobID", TL_MSG_PARAM_INT, jid,
+                                            "Drive", TL_MSG_PARAM_STR, drive );
 			c = ETIDN;	/* drive does not have requested density */
 			goto reply;
 		}
@@ -1545,9 +1550,10 @@ char *clienthost;
 	} else {	/* non specific drive request */
 		if (rrtp->dg[j].used >= rrtp->dg[j].rsvd) {
 			usrmsg (func, TP012);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 12, 2,
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 12, 3,
                                             "func" ,  TL_MSG_PARAM_STR, func,
-                                            "JobID", TL_MSG_PARAM_INT, jid );
+                                            "JobID", TL_MSG_PARAM_INT , jid,
+                                            "Drive", TL_MSG_PARAM_STR , drive );
 			c = ETNDV;	/* request would exceed # of drives rsvd */
 			goto reply;
 		}
@@ -1579,8 +1585,9 @@ char *clienthost;
 			}
 			if (! found) {
 				usrmsg (func, TP015);
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 15, 1,
-                                                    "func", TL_MSG_PARAM_STR, func );                
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 15, 2,
+                                                    "func" , TL_MSG_PARAM_STR, func,
+                                                    "Drive", TL_MSG_PARAM_STR, drive );                
 				c = ETIDN;	/* no drive with requested density */
 				goto reply;
 			} else {
@@ -2221,8 +2228,9 @@ char *clienthost;
 	}
 	if (i == nbtpdrives) {
 		usrmsg (func, TP015);
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 15, 1,
-                                    "func", TL_MSG_PARAM_STR, func );
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 15, 2,
+                                    "func" , TL_MSG_PARAM_STR, func,
+                                    "Drive", TL_MSG_PARAM_STR, newdrive );
 		c = ETIDN;	/* non existing drive */
 		goto reply;
 	}
@@ -2235,8 +2243,9 @@ char *clienthost;
 	}
 	if (chk_den (tunp, oldtunp->cdevp->den, &cdevp) != 0) {
 		usrmsg (func, TP015);
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 15, 1,
-                                    "func", TL_MSG_PARAM_STR, func );
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 15, 2,
+                                    "func" , TL_MSG_PARAM_STR, func,
+                                    "Drive", TL_MSG_PARAM_STR, newdrive );
 		c = ETIDN;	/* drive does not have requested density */
 		goto reply;
 	}

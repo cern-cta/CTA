@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.54 $ $Date: 2009/01/29 13:53:27 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.55 $ $Date: 2009/08/14 13:27:41 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -249,12 +249,13 @@ char	**argv;
 #endif
                         {
                                 tplogit (func, TP042, dvn, "open", strerror(errno));
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 6,
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 7,
                                                     "func"   , TL_MSG_PARAM_STR  , func,
                                                     "dvn"    , TL_MSG_PARAM_STR  , dvn,
                                                     "Message", TL_MSG_PARAM_STR  , "open",
                                                     "Error"  , TL_MSG_PARAM_STR  , strerror(errno),
                                                     "JobID"  , TL_MSG_PARAM_INT  , jid,
+                                                    "Drive"  , TL_MSG_PARAM_STR  , drive, 
                                                     "TPVID"  , TL_MSG_PARAM_TPVID, vid );
                         }
  	}
@@ -359,12 +360,13 @@ unload_loop:
 #endif
                         {
                                 tplogit (func, TP042, dvn, "open", strerror(errno));
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 6,
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 7,
                                                     "func"   , TL_MSG_PARAM_STR  , func,
                                                     "dvn"    , TL_MSG_PARAM_STR  , dvn,
                                                     "Message", TL_MSG_PARAM_STR  , "open",
                                                     "Error"  , TL_MSG_PARAM_STR  , strerror(errno),
                                                     "JobID"  , TL_MSG_PARAM_INT  , jid,
+                                                    "Drive"  , TL_MSG_PARAM_STR  , drive, 
                                                     "TPVID"  , TL_MSG_PARAM_TPVID, vid );
                         }
 	}
