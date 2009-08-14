@@ -86,7 +86,7 @@ void castor::tape::tpcp::WriteTpCommand::usage(std::ostream &os,
     "Where:\n"
     "\n"
     "\tVID      The VID of the tape to be written to.\n"
-    "\tPOSITION Either \"EOT\" meaning append to End-Of-Tape, or a tape file\n"
+    "\tPOSITION Either \"EOD\" meaning append to End-Of-Tape, or a tape file\n"
     "\t         sequence number equal to or greater than 1.\n"
     "\tFILE     A filename in RFIO notation [host:]local_path.\n"
     "\n"
@@ -261,14 +261,14 @@ void castor::tape::tpcp::WriteTpCommand::parseCommandLine(const int argc,
     std::string tmp(argv[optind]);
     utils::toUpper(tmp);
 
-    if(tmp == "EOT") {
+    if(tmp == "EOD") {
       m_cmdLine.tapeFseqPosition = 0;
     } else {
 
       if(!utils::isValidUInt(argv[optind])) {
         castor::exception::InvalidArgument ex;
         ex.getMessage() <<
-          "\tSecond command-line argument must either be the string \"EOT\" "
+          "\tSecond command-line argument must either be the string \"EOD\" "
           "or a valid\n\tunsigned integer greater than 0: Actual=\""
           << optarg << "\"";
         throw ex;
@@ -385,7 +385,7 @@ bool castor::tape::tpcp::WriteTpCommand::handleFileToMigrateRequest(
     fileToMigrate.setUmask(RTCOPYCONSERVATIVEUMASK);
     fileToMigrate.setPath(filename);
 
-    // If migrating to end-of-tape (EOT)
+    // If migrating to end-of-tape (EOD)
     if(m_cmdLine.tapeFseqPosition == 0) {
       fileToMigrate.setPositionCommandCode(tapegateway::TPPOSIT_EOI);
       fileToMigrate.setFseq(-1);

@@ -10,7 +10,7 @@
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-.TH WRITETP 1 "$Date: 2009/08/07 15:56:38 $" CASTOR "CASTOR"
+.TH WRITETP 1 "$Date: 2009/08/14 14:04:25 $" CASTOR "CASTOR"
 .SH NAME
 writetp \- write to a tape
 .SH SYNOPSIS
@@ -24,8 +24,8 @@ This command gives privileged users direct access to the tape system.
 .P
 The tape to be written is specified by the \fBVID\fP argument.  The position
 where the writing should start on the tape is specified by the \fBPOSITION\fP
-argument.  This argument should either have the value of "EOT" meaning append
-to End-Of-Tape, or a tape file sequence number equal to or greater than 1.  The
+argument.  This argument should either have the value of "EOD" meaning append
+to End-Of-Data, or a tape file sequence number equal to or greater than 1.  The
 filenames of the source disk files can be specified using two
 mutually-exclusive methods.  They can be entered on the command-line
 (\fB[FILE]\fP) or in a "file-list" file using the
@@ -75,14 +75,15 @@ The name of the host on which the VMGR daemon is running.
 
 .SH EXAMPLE
 The following example appends all of the files specified in the file
-\fBfile_list\fP to the end of the tape with the VID \fBI02024\fP.
+\fBfile_list\fP to the end of the data on the tape with VID \fBI02024\fP.
 .P
-writetp I02024 EOT -f file_list
+writetp I02024 EOD -f file_list
 .P
 The following example writes the file \fBlxc2disk07:/tmp/test\fP to the tape
-with the VID \fBI02024\fP.  The file will be written as the 5 file on the tape.
-\fBCAUTION:\fP Any files that were on the tape after the fith file will be
-lost as the new end-of-tape will be the end of the newly written fifth file.
+with VID \fBI02024\fP.  The file will be written as the fifth file on the
+tape.  \fBCAUTION:\fP Any files that were on the tape after the fifth file
+will be lost as the new end-of-data will be the end of the newly written
+fifth file.
 .P
 writetp I02024 5 lxc2disk07:/tmp/test
 
