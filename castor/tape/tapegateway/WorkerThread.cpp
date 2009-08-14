@@ -116,8 +116,8 @@ void castor::tape::tapegateway::WorkerThread::run(void* arg)
     }
     
     castor::dlf::Param params[] =
-      {castor::dlf::Param("Client IP", ip), 
-       castor::dlf::Param("Client port",port)
+      {castor::dlf::Param("IP",  castor::dlf::IPAddress(ip)), 
+       castor::dlf::Param("Port",port)
       };
 
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, WORKER_MESSAGE_RECEIVED, 2, params);
