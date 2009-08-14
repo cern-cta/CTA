@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.38 $ $Release$ $Date: 2009/08/10 08:39:44 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.39 $ $Release$ $Date: 2009/08/14 16:10:08 $ $Author: itglp $
  *
  * A base multithreaded server for simple listening servers
  *
@@ -161,7 +161,7 @@ void castor::server::BaseServer::start() throw (castor::exception::Exception)
     std::cout << "Starting " << m_serverName << std::endl;
   }
 
-  std::map<const char, castor::server::BaseThreadPool*>::iterator tp;
+  std::map<const char, castor::server::BaseThreadPool*>::const_iterator tp;
   for (tp = m_threadPools.begin(); tp != m_threadPools.end(); tp++) {
     tp->second->init();
     // in case of exception, don't go further and propagate it
@@ -219,8 +219,9 @@ void castor::server::BaseServer::parseCommandLine(int argc, char *argv[])
   longopts[2].flag = NULL;
   longopts[2].val = 'h';
 
-  std::map<const char, castor::server::BaseThreadPool*>::iterator tp;
-  int i = 3;
+
+  std::map<const char, castor::server::BaseThreadPool*>::const_iterator tp;
+  unsigned i = 3;
   for(tp = m_threadPools.begin(); tp != m_threadPools.end(); tp++, i++) {
     tparam[0] = tp->first;
     longopts[i].name = strdup(tparam);
@@ -249,15 +250,15 @@ void castor::server::BaseServer::parseCommandLine(int argc, char *argv[])
       exit(0);
       break;
     default:
-      BaseThreadPool* p = m_threadPools[c];
-      if(p != 0) {
-        p->setNbThreads(atoi(Coptarg));
+      tp = m_threadPools.find(c);
+      if(tp != m_threadPools.end()) {
+        tp->second->setNbThreads(atoi(Coptarg));
       }
       break;
     }
   }
   // free memory
-  for(int j = 3; j < i;j++) {
+  for(unsigned j = 3; j < i;j++) {
     free((char*)longopts[j].name);
   };
   delete[] longopts;
