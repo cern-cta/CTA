@@ -925,7 +925,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
           RtcpTxRx::giveFileToRtcpd(
             m_cuuid,
             m_jobRequest.volReqId,
-            m_rtcpdInitialSockFd,
+            socketFd,
             RTCPDNETRWTIMEOUT,
             WRITE_ENABLE,
             fileFromClient->path().c_str(),
