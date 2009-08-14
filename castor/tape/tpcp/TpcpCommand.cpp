@@ -285,6 +285,17 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
         // Perform the RFIO stat
         struct stat64 statBuf;
         rfioStat(filepath.c_str(), statBuf);
+
+        // Test if the filepath is not a directory
+        if( (statBuf.st_mode & S_IFMT) != S_IFDIR ){
+          castor::exception::Exception ex(ECANCELED);
+          ex.getMessage() <<
+            ": Invalid RFIO filename syntax"
+            ": Filepath must identify a regular directory"
+            ": filepath=\"" << filepath.c_str() <<"\"";
+
+          throw ex;
+        }
       }
     }
 
@@ -324,6 +335,27 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
         // Perform the RFIO stat
         struct stat64 statBuf;
         rfioStat(filename.c_str(), statBuf);
+
+        // Test if the filename corrispond to a directory
+        if( (statBuf.st_mode & S_IFMT) == S_IFDIR ){
+          castor::exception::Exception ex(ECANCELED);
+          ex.getMessage() <<
+            ": Invalid RFIO filename syntax"
+            ": Filename must identify a regular file"
+            ": filename=\"" << filename.c_str() <<"\"";
+
+          throw ex;
+	}
+
+        // Test if the filesize is greather than zero
+        if(statBuf.st_size == 0){
+          castor::exception::Exception ex(ECANCELED);
+          ex.getMessage() <<
+            ": Invalid file size: File size must be greater than zero"
+            ": filename=\"" << filename.c_str() <<"\"";
+
+          throw ex;
+        }
       }
     }
 
@@ -1154,7 +1186,7 @@ void castor::tape::tpcp::TpcpCommand::checkFilenameFormat()
            ": Missing hostname before ':/'"
            ": filename=\"" << line <<"\"";
 
-        throw ex;
+         throw ex;
        }
        // if file hostamane == "localhost" or "127.0.0.1"  
        // --> replace it with hostname
