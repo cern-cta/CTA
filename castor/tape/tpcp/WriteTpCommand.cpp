@@ -270,7 +270,7 @@ void castor::tape::tpcp::WriteTpCommand::parseCommandLine(const int argc,
         ex.getMessage() <<
           "\tSecond command-line argument must either be the string \"EOD\" "
           "or a valid\n\tunsigned integer greater than 0: Actual=\""
-          << optarg << "\"";
+          << argv[optind] << "\"";
         throw ex;
       }
 
@@ -280,7 +280,7 @@ void castor::tape::tpcp::WriteTpCommand::parseCommandLine(const int argc,
         castor::exception::InvalidArgument ex;
         ex.getMessage() <<
           "\tSecond command-line argument must be a valid unsigned integer "
-          "greater\n\tthan 0: Actual=" << optarg;
+          "greater\n\tthan 0: Actual=" << argv[optind];
         throw ex;
       }
     }
