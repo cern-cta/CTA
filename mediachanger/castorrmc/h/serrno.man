@@ -178,6 +178,9 @@ The following error values might be returned by any package:
 .TP
 .B SENOPORTINRANGE
 (1041) No port in range
+.TP
+.B SENOVALUE
+(1042) No value
 
 .SH COPYTAPE ERRORS
 None yet

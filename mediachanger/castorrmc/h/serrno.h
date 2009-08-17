@@ -75,8 +75,9 @@
 #define SESQLERR        SEBASEOFF+39    /* Got SQL exception from database */
 #define SELOOP          SEBASEOFF+40    /* Too many symbolic links      */
 #define SENOPORTINRANGE SEBASEOFF+41    /* No port in range             */
+#define SENOVALUE       SEBASEOFF+42    /* No value                     */
 
-#define SEMAXERR        SEBASEOFF+41    /* Maximum error number         */
+#define SEMAXERR        SEBASEOFF+42    /* Maximum error number         */
 
 #define SERRNO  (serrno - SEBASEOFF)    /* User convenience             */
 /*
