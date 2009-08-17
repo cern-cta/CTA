@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.697 $ $Date: 2009/08/13 14:11:04 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.698 $ $Date: 2009/08/17 15:08:33 $ $Author: sponcec3 $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -539,7 +539,7 @@ BEGIN
     BEGIN
       SELECT id INTO unused FROM CastorFile
        WHERE fileid = fileIds(fid) AND nsHost = nsHostName;
-      stageForcedRm(fileIds(fid), nsHostName, unused);
+      stageForcedRm(fileIds(fid), nsHostName);
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- this file was dropped from nameServer AND stager
       -- and still exists on disk. We put it into the list

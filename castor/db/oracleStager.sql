@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.751 $ $Date: 2009/08/13 08:18:36 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.752 $ $Date: 2009/08/17 15:08:33 $ $Author: sponcec3 $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1915,15 +1915,12 @@ END;
 
 /* PL/SQL method implementing stageForcedRm */
 CREATE OR REPLACE PROCEDURE stageForcedRm (fid IN INTEGER,
-                                           nh IN VARCHAR2,
-                                           result OUT NUMBER) AS
+                                           nh IN VARCHAR2) AS
   cfId INTEGER;
   nbRes INTEGER;
   dcsToRm "numList";
   nsHostName VARCHAR2(2048);
 BEGIN
-  -- by default, we are successful
-  result := 1;
   -- Get the stager/nsHost configuration option
   nsHostName := getConfigOption('stager', 'nsHost', nh);
   -- Lock the access to the CastorFile
@@ -1936,11 +1933,6 @@ BEGIN
     FROM DiskCopy
    WHERE castorFile = cfId
      AND status IN (0, 5, 6, 10, 11);  -- STAGED, WAITFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
-  -- If nothing found, report ENOENT
-  IF dcsToRm.COUNT = 0 THEN
-    result := 0;
-    RETURN;
-  END IF;
   -- Stop ongoing recalls
   deleteTapeCopies(cfId);
   -- mark all get/put requests for those diskcopies

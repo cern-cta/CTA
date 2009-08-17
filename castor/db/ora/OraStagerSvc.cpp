@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.273 $ $Release$ $Date: 2009/07/23 12:21:56 $ $Author: waldron $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.274 $ $Release$ $Date: 2009/08/17 15:08:33 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -158,7 +158,7 @@ const std::string castor::db::ora::OraStagerSvc::s_stageRmStatementString =
 
 /// SQL statement for stageForcedRm
 const std::string castor::db::ora::OraStagerSvc::s_stageForcedRmStatementString =
-  "BEGIN stageForcedRm(:1, :2, :3); END;";
+  "BEGIN stageForcedRm(:1, :2); END;";
 
 /// SQL statement for getCFByName
 const std::string castor::db::ora::OraStagerSvc::s_getCFByNameStatementString =
@@ -1112,8 +1112,6 @@ int castor::db::ora::OraStagerSvc::stageRm
       m_stageRmStatement->setAutoCommit(true);
       m_stageForcedRmStatement =
         createStatement(s_stageForcedRmStatementString);
-      m_stageForcedRmStatement->registerOutParam
-        (3, oracle::occi::OCCIINT);
       m_stageForcedRmStatement->setAutoCommit(true);
       m_getCFByNameStatement =
         createStatement(s_getCFByNameStatementString);
@@ -1170,14 +1168,7 @@ int castor::db::ora::OraStagerSvc::stageRm
           throw ex;
         }
         delete cf;
-        // In case of ENOENT, fail the request
-        if (0 == m_stageForcedRmStatement->getInt(3)) {
-          subreq->setStatus(castor::stager::SUBREQUEST_FAILED);
-          subreq->setErrorCode(ENOENT);
-          cnvSvc()->updateRep(&ad, subreq, true);
-          return 0;
-        }
-        // Otherwise the removal was successful
+        // The removal was successful
         return 1;
       }
       else {
