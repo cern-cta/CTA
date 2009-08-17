@@ -64,7 +64,7 @@ InstallTarget(migrateNewCopy,755,$(BIN))
 
 MakeDir(/var/spool/hsmtools,0755)
 InstallNonExecFile(castor_tools.pm,$(PERLLIBDIR),755)
-InstallNonExecFile(castor_tools.py,$(PYTHONLIBDIR),755)
+InstallNonExecFile(castor_tools.py,$(PYTHONLIBDIR),644)
 
 EXEMANPAGE(reclaim)
 EXEMANPAGE(cleanLostFiles)
