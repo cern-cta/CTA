@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.83 2009/03/17 10:58:57 waldron Exp $
+# $Id: maketar.sh,v 1.84 2009/08/17 14:02:08 waldron Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -47,7 +47,7 @@ c=`echo ${MINOR_CASTOR_VERSION} | sed 's/\..*//g'`
 d=`echo ${MINOR_CASTOR_VERSION} | sed 's/.*\.//g'`
 version=${a}.${b}.${c}
 fullversion=${version}.${d}
- 
+
 echo "### INFO ### Making build directory"
 
 #
@@ -282,6 +282,10 @@ for this in `grep Package: debian/control | awk '{print $NF}'` castor-tape-serve
     if [ -s "debian/$package.preun" ]; then
         echo "%preun -n $actualPackage" >> CASTOR.spec
         cat debian/$package.preun >> CASTOR.spec
+    fi
+    if [ -s "debian/$package.pre" ]; then
+        echo "%pre -n $actualPackage" >> CASTOR.spec
+        cat debian/$package.pre >> CASTOR.spec
     fi
     if [ -s "debian/$package.postun" ]; then
         echo "%postun -n $actualPackage" >> CASTOR.spec
