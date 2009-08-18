@@ -37,6 +37,7 @@ TAPE_UTILS_SRCS = \
   ../../../../castor/tape/utils/utils.cpp
 
 TAPE_TPCP_SRCS = \
+  ../../../../castor/tape/tpcp/TapeFseqRange.cpp\
   ../../../../castor/tape/tpcp/TapeFseqRangeListSequence.cpp\
   ../../../../castor/tape/tpcp/TapeFseqRangeSequence.cpp
 

@@ -69,13 +69,26 @@ public:
    * Returns true if there is another tape file sequence number in the
    * sequence.
    */
-  bool hasMore() throw();
+  bool hasMore() const throw();
 
   /**
    * Returns the next  tape file sequence number in the sequence, or throws an
    * exception if there isn't one.
    */
   uint32_t next() throw(castor::exception::Exception);
+
+  /**
+   * Returns true if the sequence is finite, else false if it is infinite.
+   */
+  bool isFinite() const throw();
+
+  /**
+   * Returns the total number of values the sequence could ever generate.  The
+   * value returned by this method is not affected by calls to next().  This
+   * method returns 0 if the total number of values is 0 or infinity.  The
+   * isFinite() method can be used to distinguish between the two cases.
+   */
+  uint32_t totalSize() const throw();
 
 
 private:
@@ -89,6 +102,19 @@ private:
    * Iterator pointing to the current range of tape file sequence numbers.
    */
   TapeFseqRangeList::iterator m_rangeItor;
+
+  /**
+   * True if the sequence is finite, else false if it is infinite.
+   */
+  bool m_isFinite;
+
+  /**
+   * The total number of values the sequence could ever generate.  The
+   * value returned by this method is not affected by calls to next().  This
+   * method returns 0 if the total number of values is 0 or infinity.  The
+   * isFinite() method can be used to distinguish between the two cases.
+   */
+  uint32_t m_totalSize;
 
   /**
    * The current sequence of the tape file sequence numbers.

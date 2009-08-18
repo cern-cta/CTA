@@ -316,8 +316,9 @@ void castor::tape::tpcp::WriteTpCommand::performTransfer()
 
   time_t now = time(NULL);
   utils::writeTime(os, now, TIMEFORMAT);
-  os << " Finished writing to tape" << std::endl
+  os << " Finished writing to tape " << m_cmdLine.vid << std::endl
      << std::endl
+     << "Number of files to be migrated   = " << m_filenames.size() << std::endl
      << "Number of migrate requests       = " << nbMigrateRequests << std::endl
      << "Number of successfull migrations = " << m_nbMigratedFiles << std::endl
      << "Number of incomplete transfers   = " << nbIncompleteTransfers

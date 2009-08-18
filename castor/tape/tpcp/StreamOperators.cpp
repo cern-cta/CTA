@@ -98,13 +98,27 @@ std::ostream &operator<<(std::ostream &os,
 std::ostream &operator<<(std::ostream &os,
   const castor::tape::tpcp::TapeFseqRange &value) {
 
-  os << value.lower << "-";
-
-  // 0 means end of tape ("END")
-  if(value.upper == 0) {
-    os << "END";
+  if(value.isEmpty()) {
+    os << "EMPTY";
   } else {
-    os << value.upper;
+    uint32_t lower = 0;
+    uint32_t upper = 0;
+
+    try {
+      lower = value.lower();
+      upper = value.upper();
+
+      os << lower << "-";
+
+      // An upper value of 0 means END of tape
+      if(upper !=0) {
+        os << upper;
+      } else {
+        os << "END";
+      }
+    } catch(castor::exception::NoValue &ex) {
+      os << "ERROR";
+    }
   }
 
   return os;

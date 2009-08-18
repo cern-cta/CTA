@@ -31,10 +31,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tpcp::TapeFseqRangeSequence::TapeFseqRangeSequence() throw() {
-  // Initialise to an empty sequence
-  m_range.lower = 1;
-  m_range.upper = 1;
-  m_next        = 2;
+  reset();
 }
 
 
@@ -42,17 +39,52 @@ castor::tape::tpcp::TapeFseqRangeSequence::TapeFseqRangeSequence() throw() {
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tpcp::TapeFseqRangeSequence::TapeFseqRangeSequence(
-  TapeFseqRange &range) throw() : m_range(range), m_next(range.lower) {
+  const TapeFseqRange &range) throw() {
+  reset(range);
+}
+
+
+//------------------------------------------------------------------------------
+// reset
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::TapeFseqRangeSequence::reset() throw() {
+
+  // Reset the range to be empty
+  m_range.reset();
+
+  m_next = 0; // Ignored
+}
+
+
+//------------------------------------------------------------------------------
+// reset
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::TapeFseqRangeSequence::reset(
+  const TapeFseqRange &range) throw() {
+  m_range = range;
+
+  if(range.isEmpty()) {
+    m_next = 0; // Ignored
+  } else {
+    m_next = m_range.lower();
+  }
 }
 
 
 //------------------------------------------------------------------------------
 // hasMore
 //------------------------------------------------------------------------------
-bool castor::tape::tpcp::TapeFseqRangeSequence::hasMore() throw() {
+bool castor::tape::tpcp::TapeFseqRangeSequence::hasMore() const throw() {
 
-  // Until end of tape is represented by range.upper = 0
-  return m_range.upper == 0 || m_next <= m_range.upper;
+  if(m_range.isEmpty()) {
+
+    return false;
+
+  } else {
+
+    // Infinity is represented by range.upper() == 0
+    return m_range.upper() == 0 || m_next <= m_range.upper();
+  }
 }
 
 
@@ -60,16 +92,25 @@ bool castor::tape::tpcp::TapeFseqRangeSequence::hasMore() throw() {
 // next
 //------------------------------------------------------------------------------
 uint32_t castor::tape::tpcp::TapeFseqRangeSequence::next()
-  throw(castor::exception::Exception) {
+  throw(exception::NoValue) {
 
   if(!hasMore()) {
-    castor::exception::Exception ex(ECANCELED);
+    exception::NoValue ex;
 
     ex.getMessage()
-      << "Invalid operation: Sequence::next() called after end of sequence";
+      << "Sequence::next() called after end of sequence";
 
     throw ex;
   }
 
   return m_next++;
+}
+
+
+//------------------------------------------------------------------------------
+// range
+//------------------------------------------------------------------------------
+const castor::tape::tpcp::TapeFseqRange
+  &castor::tape::tpcp::TapeFseqRangeSequence::range() const throw() {
+  return m_range;
 }

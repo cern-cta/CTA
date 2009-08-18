@@ -52,9 +52,33 @@ void castor::tape::tpcp::TapeFseqRangeListSequence::reset(
   TapeFseqRangeList *const list) throw(castor::exception::Exception) {
   m_list = list;
 
-  if(m_list != NULL) {
+  if(m_list == NULL) {
+    m_isFinite  = true;
+    m_totalSize = 0;
+  } else {
     m_rangeItor  = list->begin();
     m_nbSequence = (*(list->begin()));
+
+    // Determine the values of m_isFinite and m_totalSize
+    m_isFinite  = true; // Initial guess
+    m_totalSize = 0;    // Initial guess
+    for(TapeFseqRangeList::const_iterator itor=list->begin();
+      itor != list->end(); itor++) {
+      const TapeFseqRange &range = *itor;
+
+      // If upper bound of range is infinity
+      if(range.upper() == 0) {
+        m_isFinite  = false;
+        m_totalSize = 0;
+
+        // No need to continue counting
+        break;
+
+      // Else the upper bound is finite
+      } else {
+        m_totalSize += range.size();
+      }
+    }
   }
 }
 
@@ -62,7 +86,7 @@ void castor::tape::tpcp::TapeFseqRangeListSequence::reset(
 //------------------------------------------------------------------------------
 // hasMore
 //------------------------------------------------------------------------------
-bool castor::tape::tpcp::TapeFseqRangeListSequence::hasMore() throw() {
+bool castor::tape::tpcp::TapeFseqRangeListSequence::hasMore() const throw() {
   if(m_list != NULL) {
     return m_nbSequence.hasMore();
   } else {
@@ -99,4 +123,21 @@ uint32_t castor::tape::tpcp::TapeFseqRangeListSequence::next()
   }
 
   return tmp;
+}
+
+
+//------------------------------------------------------------------------------
+// isFinite
+//------------------------------------------------------------------------------
+bool castor::tape::tpcp::TapeFseqRangeListSequence::isFinite() const throw() {
+  return m_isFinite;
+}
+
+
+//------------------------------------------------------------------------------
+// totalSize
+//------------------------------------------------------------------------------
+uint32_t castor::tape::tpcp::TapeFseqRangeListSequence::totalSize()
+  const throw() {
+  return m_totalSize;
 }

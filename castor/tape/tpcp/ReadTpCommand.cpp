@@ -331,8 +331,15 @@ void castor::tape::tpcp::ReadTpCommand::performTransfer()
 
   time_t now = time(NULL);
   utils::writeTime(os, now, TIMEFORMAT);
-  os << " Finished reading from tape" << std::endl
+  os << " Finished reading from tape " << m_cmdLine.vid << std::endl
      << std::endl
+     << "Number of files to be recalled = ";
+  if(m_tapeFseqSequence.isFinite()) {
+    os << m_tapeFseqSequence.totalSize();
+  } else {
+    os << "until EOT";
+  }
+  os << std::endl
      << "Number of recall requests      = " << nbRecallRequests  << std::endl
      << "Number of successfull recalls  = " << m_nbRecalledFiles << std::endl
      << "Number of incomplete transfers = " << nbIncompleteTransfers
@@ -371,7 +378,7 @@ unsigned int castor::tape::tpcp::ReadTpCommand::countNbRangesWithEnd()
     m_cmdLine.tapeFseqRanges.begin();
     itor!=m_cmdLine.tapeFseqRanges.end(); itor++) {
 
-    if(itor->upper == 0 ){
+    if(itor->upper() == 0 ){
         count++;
     }
   }

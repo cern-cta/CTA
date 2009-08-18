@@ -207,14 +207,6 @@ protected:
   uint64_t m_fileTransactionId;
 
   /**
-   * Calculate the minimum number of files specified in the tape file
-   * ranges provided as a command-line parameter.
-   *
-   * @return The minimum number of files.
-   */
-  unsigned int calculateMinNbOfFiles() throw (castor::exception::Exception);
-
-  /**
    * Retrieves information about the specified tape from the VMGR.
    *
    * This method is basically a C++ wrapper around the C VMGR function
@@ -366,10 +358,14 @@ private:
    * Throws a permission denied exception if the user of the tpcp command
    * does not have permission to write to tape.
    *
-   * @param poolName The name of the pool in which the tape to be written
-   *                 resides.
+   * @param poolName   The name of the pool in which the tape to be written
+   *                   resides.
+   * @param userId     The ID of the user.
+   * @param groupId    The group ID of the user.
+   * @param sourceHost The CUPV source host.
    */
-  void checkUserHasTapeWritePermission(const char *poolName)
+  void checkUserHasTapeWritePermission(const char *const poolName,
+    const uid_t userId, const gid_t groupId, const char *const sourceHost)
     throw (castor::exception::PermissionDenied);
 
   /**

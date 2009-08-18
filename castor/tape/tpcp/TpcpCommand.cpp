@@ -37,6 +37,7 @@
 #include "castor/tape/tpcp/StreamHelper.hpp"
 #include "castor/tape/tpcp/StreamOperators.hpp"
 #include "castor/tape/tpcp/TapeFileSequenceParser.hpp"
+#include "castor/tape/tpcp/TapeFseqRangeListSequence.hpp"
 #include "castor/tape/tpcp/TpcpCommand.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/Cgetopt.h"
@@ -245,17 +246,23 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
 
     if(m_cmdLine.action == Action::read) {
 
-      // Check that there are enough RFIO filenames to satisfy the minium number
-      // of tape file sequence numbers
-      const unsigned int minNbFiles = calculateMinNbOfFiles();
-      if(m_filenames.size() < minNbFiles) {
+      // Determine the number of tape files based on the sequence of tape
+      // file sequence numbers they would produce
+      //
+      // Note that the number maybe infinite if the user has requested to read
+      // until the end of the tape
+      TapeFseqRangeListSequence seq(&m_cmdLine.tapeFseqRanges);
+
+      // Throw an exception if the number of tape files is finite and does not
+      // match the number of RFIO file names
+      if(seq.isFinite() && seq.totalSize() != m_filenames.size()) {
         castor::exception::InvalidArgument ex;
 
-        ex.getMessage()
-          << "There are not enough RFIO filenames to cover the minimum number "
-             "of tape file sequence numbers"
-             ": Actual=" << m_filenames.size() << " Expected minimum="
-          << minNbFiles;
+        ex.getMessage() <<
+          "The number of tape files does not match the number of RFIO "
+          "filenames"
+          ": Number of tape files=" << seq.totalSize() <<
+          " Number of RFIO filenames=" << m_filenames.size();
 
         throw ex;
       }
@@ -407,7 +414,8 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
     // If writing to tape then check that the user has permission to write to
     // the tape
     if(m_cmdLine.action == Action::write) {
-      checkUserHasTapeWritePermission(m_vmgrTapeInfo.poolname);
+      checkUserHasTapeWritePermission(m_vmgrTapeInfo.poolname, m_userId,
+        m_groupId, m_hostname);
     }
 
     // Check the tape is available
@@ -655,30 +663,6 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
   }
 
   return 0;
-}
-
-
-//------------------------------------------------------------------------------
-// calculateMinNbOfFiles
-//------------------------------------------------------------------------------
-unsigned int castor::tape::tpcp::TpcpCommand::calculateMinNbOfFiles()
-  throw (castor::exception::Exception) {
-  
-  unsigned int count = 0;
-
-  // Loop through all ranges
-  for(TapeFseqRangeList::const_iterator itor=
-    m_cmdLine.tapeFseqRanges.begin();
-    itor!=m_cmdLine.tapeFseqRanges.end(); itor++) {
-  
-    // If upper != END of tape
-    if(itor->upper != 0 ){
-        count += (itor->upper - itor->lower) + 1;
-    } else {
-      count++;
-    }
-  }
-  return count; 
 }
 
 
@@ -1239,13 +1223,14 @@ void castor::tape::tpcp::TpcpCommand::rfioStat(const char *const path,
 // checkUserHasTapeWritePermission
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TpcpCommand::checkUserHasTapeWritePermission(
-  const char *poolName) throw(castor::exception::PermissionDenied) {
+  const char *const poolName, const uid_t userId, const gid_t groupId,
+  const char *const sourceHost) throw(castor::exception::PermissionDenied) {
 
   // Get the owner of the pool by querying the VMGR
   uid_t poolUserId  = 0;
   gid_t poolGroupId = 0;
   {
-    const int rc = vmgr_querypool (poolName, &poolUserId,
+    const int rc = vmgr_querypool(poolName, &poolUserId,
       &poolGroupId, NULL, NULL);
     const int saved_serrno = serrno;
 
@@ -1254,12 +1239,12 @@ void castor::tape::tpcp::TpcpCommand::checkUserHasTapeWritePermission(
 
       ex.getMessage() <<
         "Failed to query tape pool"
-        ": poolname=" << m_vmgrTapeInfo.poolname <<
+        ": poolName=" << poolName <<
         ": " << sstrerror(saved_serrno);
     }
   }
 
-  const bool userOwnsPool = m_userId == poolUserId && m_groupId == poolGroupId;
+  const bool userOwnsPool = userId == poolUserId && groupId == poolGroupId;
 
   if(userOwnsPool) {
     // Command-line user feedback
@@ -1268,13 +1253,13 @@ void castor::tape::tpcp::TpcpCommand::checkUserHasTapeWritePermission(
 
     utils::writeTime(os, now, TIMEFORMAT);
     os <<
-      " User can write to tape: User owns tape pool \"" <<
-      m_vmgrTapeInfo.poolname << "\"" << std::endl;
+      " User can write to tape: User owns tape pool \"" << poolName << "\"" <<
+      std::endl;
   } else {
 
     const bool userIsAdmin =
-      Cupv_check(m_userId,m_groupId,m_hostname,"TAPE_SERVERS",P_ADMIN) == 0 ||
-      Cupv_check(m_userId,m_groupId,m_hostname,NULL          ,P_ADMIN) == 0;
+      Cupv_check(userId, groupId, sourceHost, "TAPE_SERVERS",P_ADMIN) == 0 ||
+      Cupv_check(userId, groupId, sourceHost, NULL          ,P_ADMIN) == 0;
 
     if(userIsAdmin) {
       // Command-line user feedback
@@ -1289,8 +1274,8 @@ void castor::tape::tpcp::TpcpCommand::checkUserHasTapeWritePermission(
 
       ex.getMessage() <<
         "User cannot write to tape"
-        ": User must own the \"" << m_vmgrTapeInfo.poolname << "\" tape "
-        "pool or have the ADMIN privilege";
+        ": User must own the \"" << poolName << "\" tape pool or "
+        "have the ADMIN privilege";
 
       throw ex;
     }

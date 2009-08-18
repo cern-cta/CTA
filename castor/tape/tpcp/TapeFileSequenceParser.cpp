@@ -41,7 +41,6 @@ void castor::tape::tpcp::TapeFileSequenceParser::parse(char *const str,
 
   std::vector<std::string> rangeStrs;
   int nbBoundaries = 0;
-  TapeFseqRange range;
 
   // Range strings are separated by commas
   utils::splitString(str, ',', rangeStrs);
@@ -66,8 +65,10 @@ void castor::tape::tpcp::TapeFileSequenceParser::parse(char *const str,
         throw ex;
       }
 
-      range.lower = range.upper = atoi(boundaryStrs[0].c_str());
-      tapeFseqRanges.push_back(range);
+      {
+        const uint32_t upperLower = atoi(boundaryStrs[0].c_str());
+        tapeFseqRanges.push_back(TapeFseqRange(upperLower, upperLower));
+      }
       break;
 
     case 2: // Range string = "m-n" or "-n" or "m-" or "-"
@@ -90,44 +91,54 @@ void castor::tape::tpcp::TapeFileSequenceParser::parse(char *const str,
         throw ex;
       }
 
-      range.lower = atoi(boundaryStrs[0].c_str());
-      if(range.lower == 0){
-        castor::exception::InvalidArgument ex;
-        ex.getMessage() << "Invalid range string: '" << *itor
-          << "': The lower boundary can not be '0'";
-        throw ex;
-      }
-      // If "m-"
-      if(boundaryStrs[1] == "") {
-        // Inifinity (or until the end of tape) is represented by 0
-        range.upper = 0;
-      // Else "m-n"
-      } else {
-        // Parse the "n" of "m-n"
-        if(!utils::isValidUInt(boundaryStrs[1].c_str())) {
-          castor::exception::InvalidArgument ex;
-          ex.getMessage() << "Invalid range string: '" << *itor
-            << "': The upper boundary should be an unsigned integer";
-          throw ex;
-        }
-        range.upper = atoi(boundaryStrs[1].c_str());
+      {
+        const uint32_t lower = atoi(boundaryStrs[0].c_str());
 
-        if(range.upper == 0){
+        if(lower == 0) {
           castor::exception::InvalidArgument ex;
           ex.getMessage() << "Invalid range string: '" << *itor
-            << "': The upper boundary can not be '0'";
+            << "': The lower boundary can not be '0'";
           throw ex;
         }
-        if(range.lower > range.upper){
-          castor::exception::InvalidArgument ex;
-          ex.getMessage() << "Invalid range string: '" << *itor
-            << "': The lower boundary cannot be greater than the upper "
-            "boundary";
-          throw ex;
-        }
+
+        // If "m-"
+        if(boundaryStrs[1] == "") {
+
+          // Infinity (or until the end of tape) is represented by 0
+          tapeFseqRanges.push_back(TapeFseqRange(lower, 0));
+
+        // Else "m-n"
+        } else {
+
+          // Parse the "n" of "m-n"
+          if(!utils::isValidUInt(boundaryStrs[1].c_str())) {
+            castor::exception::InvalidArgument ex;
+            ex.getMessage() << "Invalid range string: '" << *itor
+              << "': The upper boundary should be an unsigned integer";
+            throw ex;
+          }
+
+          const uint32_t upper = atoi(boundaryStrs[1].c_str());
+
+          if(upper == 0){
+            castor::exception::InvalidArgument ex;
+            ex.getMessage() << "Invalid range string: '" << *itor
+              << "': The upper boundary can not be '0'";
+            throw ex;
+          }
+
+          if(lower > upper){
+            castor::exception::InvalidArgument ex;
+            ex.getMessage() << "Invalid range string: '" << *itor
+              << "': The lower boundary cannot be greater than the upper "
+              "boundary";
+            throw ex;
+          }
+
+          tapeFseqRanges.push_back(TapeFseqRange(lower, upper));
+        } // Else "m-n"
       }
 
-      tapeFseqRanges.push_back(range);
 
       break;
 

@@ -85,6 +85,7 @@ DUMPTPBIN_SRCS = \
   StreamHelper.cpp \
   StreamOperators.cpp \
   TapeFileSequenceParser.cpp \
+  TapeFseqRange.cpp \
   TapeFseqRangeListSequence.cpp \
   TapeFseqRangeSequence.cpp \
   TpcpCommand.cpp \
@@ -102,6 +103,7 @@ READTPBIN_SRCS = \
   StreamHelper.cpp \
   StreamOperators.cpp \
   TapeFileSequenceParser.cpp \
+  TapeFseqRange.cpp \
   TapeFseqRangeListSequence.cpp \
   TapeFseqRangeSequence.cpp \
   TpcpCommand.cpp \
@@ -117,6 +119,7 @@ WRITETPBIN_SRCS = \
   StreamHelper.cpp \
   StreamOperators.cpp \
   TapeFileSequenceParser.cpp \
+  TapeFseqRange.cpp \
   TapeFseqRangeListSequence.cpp \
   TapeFseqRangeSequence.cpp \
   TpcpCommand.cpp \

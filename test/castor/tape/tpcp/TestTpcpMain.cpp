@@ -35,43 +35,153 @@
 int testTapeFseqRangeSequence() {
   using namespace castor::tape::tpcp;
   using namespace castor::tape::utils;
+  using namespace std;
 
-  std::ostream &os = std::cout;
+  ostream &os = cout;
 
-  os << std::endl;
-  writeBanner(os, __FUNCTION__);
-  os << std::endl;
+  try {
+    os << endl;
+    writeBanner(os, __FUNCTION__);
+    os << endl;
 
-  TapeFseqRange range = {21,29};
+    try {
+      os << "Expecting InvalidArgument exception with range(0, 1)" << endl;
+      TapeFseqRange range(0, 1);
+      os << "Did not catch the expected InvalidArgument exception" << endl;
+      return -1; // Test failed
+    } catch(castor::exception::Exception &ex) {
+      os << "Caught expected InvalidArgument exception" << endl;
+    }
 
-  TapeFseqRangeSequence seq0;  // Empty sequence
-  TapeFseqRangeSequence seq1(range);
+    try {
+      os << "Expecting InvalidArgument exception with range(2, 1)" << endl;
+      TapeFseqRange range(2, 1);
+      os << "Did not catch the expected InvalidArgument exception" << endl;
+      return -1; // Test failed
+    } catch(castor::exception::Exception &ex) {
+      os << "Caught expected InvalidArgument exception" << endl;
+    }
 
-  os << "Expected seq0.hasMore() = false" << std::endl;
-  os << "Actual   seq0.hasMore() = " << (seq0.hasMore() ? "true" : "false")
-    << std::endl;
+    TapeFseqRange emptyRange;
 
-  if(seq0.hasMore()) {
-    return -1; // Test failed
-  }
-
-  uint32_t expected = 0;
-  uint32_t actual   = 0;
-
-  for(expected=21 ;expected<=29; expected++) {
-    os << "Expected seq1.next() = " << expected << std::endl;
-    if(seq1.hasMore()) {
-      actual = seq1.next();
-
-      os << "Actual   seq1.next() = " << actual << std::endl;
-
-      if(actual != expected) {
-        return -1; // Test failed
-      }
+    os << "Checking emptyRange.isEmpty() is true" << endl;
+    if(emptyRange.isEmpty()) {
+      os << "emptyRange.isEmpty() is true" << endl;
     } else {
-      os << "Actual NO MORE" << std::endl;
+      os << "emptyRange.isEmpty() is false" << endl;
       return -1; // Test failed
     }
+
+    os << "Checking emptyRange.lower() is 0" << endl;
+    if(emptyRange.lower() == 0) {
+      os << "emptyRange.lower() is 0" << endl;
+    } else {
+      os << "emptyRange.lower() is " << emptyRange.lower() << endl;
+      return -1; // Test failed
+    }
+
+    os << "Checking emptyRange.upper() is 0" << endl;
+    if(emptyRange.upper() == 0) {
+      os << "emptyRange.upper() is 0" << endl;
+    } else {
+      os << "emptyRange.upper() is " << emptyRange.upper() << endl;
+      return -1; // Test failed
+    }
+
+    os << "Checking emptyRange.size() is 0" << endl;
+    if(emptyRange.size() == 0) {
+      os << "emptyRange.size() is 0" << endl;
+    } else {
+      os << "emptyRange.size() is " << emptyRange.size() << endl;
+      return -1; // Test failed
+    }
+
+    TapeFseqRange from5ToInifinity(5, 0);
+
+    os << "Checking from5ToInifinity.lower() is 5" << endl;
+    if(from5ToInifinity.lower() == 5) {
+      os << "from5ToInifinity.lower() is 5" << endl;
+    } else {
+      os << "from5ToInifinity.lower() is " << from5ToInifinity.lower() << endl;
+      return -1; // Test failed
+    }
+
+    os << "Checking from5ToInifinity.upper() is 0" << endl;
+    if(from5ToInifinity.upper() == 0) {
+      os << "from5ToInifinity.upper() is 0" << endl;
+    } else {
+      os << "from5ToInifinity.upper() is " << from5ToInifinity.upper() << endl;
+      return -1; // Test failed
+    }
+
+    os << "Checking from5ToInifinity.size() is 0" << endl;
+    if(from5ToInifinity.size() == 0) {
+      os << "from5ToInifinity.size() is 0" << endl;
+    } else {
+      os << "from5ToInifinity.size() is " << from5ToInifinity.size() << endl;
+      return -1; // Test failed
+    }
+
+    os << "Checking from5ToInifinity.isEmpty() is false" << endl;
+    if(from5ToInifinity.isEmpty()) {
+      os << "from5ToInifinity.isEmpty() is true" << endl;
+      return -1; // Test failed
+    } else {
+      os << "from5ToInifinity.isEmpty() is false" << endl;
+    }
+
+    TapeFseqRange from7To7(7, 7);
+
+    os << "Checking from7To7.size() is 1" << endl;
+    if(from7To7.size() == 1) {
+      os << "from7To7.size() is 1" << endl;
+    } else {
+      os << "from7To7.size() is " << from7To7.size() << endl;
+      return -1; // Test failed
+    }
+
+    TapeFseqRange range(21, 29);
+
+    os << "Checking range(21, 29).size() is 9" << endl;
+    if(range.size() == 9) {
+      os << "range(21, 29).size() is 9" << endl;
+    } else {
+      os << "range(21, 29).size() is " << range.size() << endl;
+      return -1; // Test failed
+    }
+
+    TapeFseqRangeSequence seq0;  // Empty sequence
+    TapeFseqRangeSequence seq1(range);
+
+    os << "Expected seq0.hasMore() = false" << endl;
+    os << "Actual   seq0.hasMore() = " << (seq0.hasMore() ? "true" : "false")
+       << endl;
+
+    if(seq0.hasMore()) {
+      return -1; // Test failed
+    }
+
+    uint32_t expected = 0;
+    uint32_t actual   = 0;
+
+    for(expected=21 ;expected<=29; expected++) {
+      os << "Expected seq1.next() = " << expected << endl;
+      if(seq1.hasMore()) {
+        actual = seq1.next();
+
+        os << "Actual   seq1.next() = " << actual << endl;
+
+        if(actual != expected) {
+          return -1; // Test failed
+        }
+      } else {
+        os << "Actual NO MORE" << endl;
+        return -1; // Test failed
+      }
+    }
+  } catch(castor::exception::Exception &ex) {
+    os << "Caught an unexpected exception: " << ex.getMessage().str() << endl;
+    return -1; // Test failed
   }
 
   return 0;
@@ -80,6 +190,7 @@ int testTapeFseqRangeSequence() {
 
 int testTapeFseqRangeListSequence() {
   using namespace castor::tape;
+  using namespace std;
 
   std::ostream &os = std::cout;
   
@@ -89,6 +200,22 @@ int testTapeFseqRangeListSequence() {
 
   castor::tape::tpcp::TapeFseqRangeListSequence emtpySeq;
 
+  os << "Checking emtpySeq.isFinite() is true" << endl;
+  if(emtpySeq.isFinite()) {
+    os << "emtpySeq.isFinite() is true" << endl;
+  } else {
+    os << "emtpySeq.isFinite() is false" << endl;
+    return -1; // Test failed
+  }
+
+  os << "Checking emtpySeq.totalSize() is 0" << endl;
+  if(emtpySeq.totalSize() == 0) {
+    os << "emtpySeq.totalSize() is 0" << endl;
+  } else {
+    os << "emtpySeq.totalSize() is " << emtpySeq.totalSize() << endl;
+    return -1; // Test failed
+  }
+
   os << "Expected emtpySeq.hasMore() = false" << std::endl;
   os << "Actual   emtpySeq.hasMore() = "
      << (emtpySeq.hasMore() ? "true" : "false") << std::endl;
@@ -96,11 +223,55 @@ int testTapeFseqRangeListSequence() {
   if(emtpySeq.hasMore()) {
     return -1; // Test failed
   }
+
+  castor::tape::tpcp::TapeFseqRange from7To9(7, 9);
+  castor::tape::tpcp::TapeFseqRangeList from7To9List;
+  from7To9List.push_back(from7To9);
+  castor::tape::tpcp::TapeFseqRangeListSequence from7To9Seq(&from7To9List);
+
+  os << "Checking from7To9Seq.isFinite() is true" << endl;
+  if(from7To9Seq.isFinite()) {
+    os << "from7To9Seq.isFinite() is true" << endl;
+  } else {
+    os << "from7To9Seq.isFinite() is false" << endl;
+    return -1; // Test failed
+  }
+
+  os << "Checking from7To9Seq.totalSize() is 3" << endl;
+  if(from7To9Seq.totalSize() == 3) {
+    os << "from7To9Seq.totalSize() is 3" << endl;
+  } else {
+    os << "from7To9Seq.totalSize() is " << from7To9Seq.totalSize() << endl;
+    return -1; // Test failed
+  }
+
+  castor::tape::tpcp::TapeFseqRange from7ToInfinity(7, 0);
+  castor::tape::tpcp::TapeFseqRangeList from7ToInfinityList;
+  from7ToInfinityList.push_back(from7ToInfinity);
+  castor::tape::tpcp::TapeFseqRangeListSequence
+    from7ToInfinitySeq(&from7ToInfinityList);
+
+  os << "Checking from7ToInfinitySeq.isFinite() is false" << endl;
+  if(from7ToInfinitySeq.isFinite()) {
+    os << "from7ToInfinitySeq.isFinite() is true" << endl;
+    return -1; // Test failed
+  } else {
+    os << "from7ToInfinitySeq.isFinite() is false" << endl;
+  }
+
+  os << "Checking from7ToInfinitySeq.totalSize() is 0" << endl;
+  if(from7ToInfinitySeq.totalSize() == 0) {
+    os << "from7ToInfinitySeq.totalSize() is 0" << endl;
+  } else {
+    os << "from7ToInfinitySeq.totalSize() is "
+       << from7ToInfinitySeq.totalSize() << endl;
+    return -1; // Test failed
+  }
   
-  castor::tape::tpcp::TapeFseqRange range0 = { 1, 3};
-  castor::tape::tpcp::TapeFseqRange range1 = { 4,10};
-  castor::tape::tpcp::TapeFseqRange range2 = {21,29};
-  castor::tape::tpcp::TapeFseqRange range3 = {30,30};
+  castor::tape::tpcp::TapeFseqRange range0( 1, 3);
+  castor::tape::tpcp::TapeFseqRange range1( 4,10);
+  castor::tape::tpcp::TapeFseqRange range2(21,29);
+  castor::tape::tpcp::TapeFseqRange range3(30,30);
   
   castor::tape::tpcp::TapeFseqRangeList list;
     
