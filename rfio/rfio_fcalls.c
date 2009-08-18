@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_fcalls.c,v 1.9 2008/07/31 13:16:55 sponcec3 Exp $
+ * $Id: rfio_fcalls.c,v 1.10 2009/08/18 09:43:00 waldron Exp $
  */
 
 /*
@@ -194,13 +194,7 @@ int   srxyopen(s, rlun,access, rt,host, bet)
 
     if (rt) {
       log(LOG_DEBUG, "Mapping: %s\n", (mapping ? "yes" : "no") );
-#if !defined(ultrix)
-      openlog("rfio",LOG_PID, LOG_USER) ;
-#else
-      openlog("rfio",LOG_PID) ;
-#endif
-      syslog(LOG_ALERT, "rfio: connection %s mapping by %s(%d,%d) from %s",(mapping ?"with" : "without"),user,uid,gid,host) ;
-      closelog() ;
+      log(LOG_ALERT, "rfio: connection %s mapping by %s(%d,%d) from %s",(mapping ?"with" : "without"),user,uid,gid,host) ;
     }
 
     if (rt && !mapping) {
@@ -293,16 +287,16 @@ int   srxyopen(s, rlun,access, rt,host, bet)
       }
       else
 #endif
-      {
-        const char *perm_array[] = { "WTRUST", "OPENTRUST", NULL };
-        char ofilename[MAXFILENAMSIZE];
-        if (!check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
-          status=switch_open(access, &lun, ofilename, &filen, &lrecl, (LONG *)&append,(LONG *)&trunc,LLTM);
-        } else {
-          status=errno;
+        {
+          const char *perm_array[] = { "WTRUST", "OPENTRUST", NULL };
+          char ofilename[MAXFILENAMSIZE];
+          if (!check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
+            status=switch_open(access, &lun, ofilename, &filen, &lrecl, (LONG *)&append,(LONG *)&trunc,LLTM);
+          } else {
+            status=errno;
+          }
+          log(LOG_DEBUG, "rxyopen: %d\n", status);
         }
-        log(LOG_DEBUG, "rxyopen: %d\n", status);
-      }
     }
   }
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BlockDict.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2009/06/03 10:19:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BlockDict.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2009/08/18 09:42:54 $ $Author: waldron $
  *
  * A static dictionnary of blocks, referenced by their
  * BlockKey
@@ -95,7 +95,7 @@ void castor::sharedMemory::BlockDict::createBlock
       throw e;
     }
     // "Created the shared memory."
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
                             DLF_BASE_SHAREDMEMORY+2,
                             0, 0);
   }

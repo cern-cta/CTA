@@ -176,7 +176,7 @@ int main(int argc, char *argv[]) {
 // Constructor
 //-----------------------------------------------------------------------------
 castor::monitoring::rmnode::RmNodeDaemon::RmNodeDaemon() :
-  castor::server::BaseDaemon("RmNode") {
+  castor::server::BaseDaemon("rmnoded") {
 
   // Now with predefined messages
   castor::dlf::Message messages[] = {
@@ -212,7 +212,7 @@ castor::monitoring::rmnode::RmNodeDaemon::RmNodeDaemon() :
     { 25, "Failed to send metrics information" },
     { 26, "Received no acknowledgement from server" },
     { 27, "Failed to collect filesystem metrics" },
-
+ 
     { -1, "" }};
   dlfInit(messages);
 }
@@ -221,10 +221,10 @@ castor::monitoring::rmnode::RmNodeDaemon::RmNodeDaemon() :
 //-----------------------------------------------------------------------------
 // getMountPoints
 //-----------------------------------------------------------------------------
-std::vector<std::string> 
-castor::monitoring::rmnode::RmNodeDaemon::getMountPoints() 
+std::vector<std::string>
+castor::monitoring::rmnode::RmNodeDaemon::getMountPoints()
   throw(castor::exception::Exception) {
-  
+
   // Convert the value of the RmNode/MountPoints configuration option into a
   // vector of strings
   std::vector<std::string> fileSystems;

@@ -1,9 +1,9 @@
 .lf 8 expertd.man
-.\" @(#)$RCSfile: expertd.man,v $ $Revision: 1.6 $ $Date: 2009/07/23 12:22:03 $ CERN IT-ADC Vitaly Motyakov
+.\" @(#)$RCSfile: expertd.man,v $ $Revision: 1.7 $ $Date: 2009/08/18 09:42:59 $ CERN IT-ADC Vitaly Motyakov
 .\" Copyright (C) 2004 by CERN/IT/ADC
 .\" All rights reserved
 .\"
-.TH EXPERTD 8 "$Date: 2009/07/23 12:22:03 $" CASTOR "Expert Administrator Commands"
+.TH EXPERTD 8 "$Date: 2009/08/18 09:42:59 $" CASTOR "Expert Administrator Commands"
 .SH NAME
 expertd \- start the CASTOR Expert daemon
 .SH SYNOPSIS
@@ -20,7 +20,7 @@ When a request arrives the daemon forks a child which processes the request.
 The child reads the configuration file and if the request is valid and
 can be fulfilled it replaces itself by the external program.
 .LP
-All error messages are kept in a log, in /var/spool/expert/log.
+All error messages are kept in a log, in /var/log/castor/expertd.log.
 .LP
 The Expert daemon listen port number can be defined on client hosts
 and on the machine where the Expert daemon runs in either of the
@@ -127,14 +127,14 @@ EXP_RQ_REPLICATION /etc/expert/  /usr/bin/clips -f replication.clp
 .RE
 .LP
 The name of the configuration file can be defined also through the environment
-variable 
+variable
 .B EXPERT_CONFIG
-or via the entry in 
+or via the entry in
 .B /etc/castor/castor.conf:
 .RS
 .RS
 .HP
-EXPERT CONFIG /etc/sysconfig/castor/expert.conf
+EXPERT CONFIG /etc/sysconfig/expertd
 .RE
 .RE
 .LP
@@ -145,7 +145,7 @@ is taken from the definition of ExpertConfig in site.def.
 .B /etc/EXPCONFIG
 - configuration file
 .TP 1.5i
-.B /var/spool/expert/log
+.B /var/log/castor/expertd.log
 - log file
 .fi
 .SH AUTHOR

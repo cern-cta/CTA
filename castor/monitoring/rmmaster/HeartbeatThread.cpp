@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: HeartbeatThread.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2009/07/23 12:21:58 $ $Author: waldron $
+ * @(#)$RCSfile: HeartbeatThread.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2009/08/18 09:42:52 $ $Author: waldron $
  *
  * The Heartbeat thread of the rmmaster daemon is responsible for checking all
  * disk servers in shared memory and automatically disabling them if no data
@@ -62,7 +62,7 @@ castor::monitoring::rmmaster::HeartbeatThread::HeartbeatThread
       // "Invalid RmMaster/HeartbeatInterval option, using default"
       castor::dlf::Param initParams[] =
         {castor::dlf::Param("Default", value)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 18, 1, initParams);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 18, 1, initParams);
     }
   }
 }

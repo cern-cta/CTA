@@ -53,49 +53,49 @@ void DLL_DECL setlogbits _PROTO((int));
  * Storing the process pid.
  */
 void DLL_DECL initlog(name, level, output)
-char    *name;                  /* facility name                        */
-int     level;                  /* logging level                        */
-char    *output;                /* output specifier                     */
+     char    *name;                  /* facility name                        */
+     int     level;                  /* logging level                        */
+     char    *output;                /* output specifier                     */
 {
-    register char  *p;
+  register char  *p;
 
-    loglevel=level;
+  loglevel=level;
 
-    /* bypass level if set in environment */
-    if ((p = getenv("LOG_PRIORITY")) != NULL) {
-        loglevel=atoi(p);
-    }
-    /*
-     * Opening syslog path.
-     */
-    strcpy(logname,name);
+  /* bypass level if set in environment */
+  if ((p = getenv("LOG_PRIORITY")) != NULL) {
+    loglevel=atoi(p);
+  }
+  /*
+   * Opening syslog path.
+   */
+  strcpy(logname,name);
 
-    /*
-     * Opening log file and setting logfunc
-     * to either syslog or logit.
-     */
-    if (!strcmp(output,"syslog"))   {
-        logfunc=(void (*) _PROTO((int, char *, ...)))syslog;
-    } else if (!strcmp(output,"stdout"))   {
-        logfunc=(void (*) _PROTO((int, char *, ...)))logit;
-        logfd= fileno(stdout) ; /* standard output       */
+  /*
+   * Opening log file and setting logfunc
+   * to either syslog or logit.
+   */
+  if (!strcmp(output,"syslog"))   {
+    logfunc=(void (*) _PROTO((int, char *, ...)))syslog;
+  } else if (!strcmp(output,"stdout"))   {
+    logfunc=(void (*) _PROTO((int, char *, ...)))logit;
+    logfd= fileno(stdout) ; /* standard output       */
+  } else {
+    logfunc=(void (*) _PROTO((int, char *, ...)))logit;
+    if (strlen(output) == 0) {
+      logfd= fileno(stderr) ; /* standard error       */
     } else {
-        logfunc=(void (*) _PROTO((int, char *, ...)))logit;
-        if (strlen(output) == 0) {
-            logfd= fileno(stderr) ; /* standard error       */
-        } else {
-            strcpy(logfilename,output);        
-        }    
+      strcpy(logfilename,output);
     }
+  }
 }
 
 /*
  * Mode bits for log file.
  */
 void DLL_DECL setlogbits(bits)
-	int bits;                  /* logfile mode bits */
+     int bits;                  /* logfile mode bits */
 {
-    logbits=(mode_t) bits;
+  logbits=(mode_t) bits;
 }
 
 /*
@@ -104,71 +104,71 @@ void DLL_DECL setlogbits(bits)
  */
 void DLL_DECL logit(int level, char *format, ...)
 {
-    va_list args ;          /* Variable argument list               */
-    time_t  clock;
+  va_list args ;          /* Variable argument list               */
+  time_t  clock;
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
-    struct tm tmstruc;
+  struct tm tmstruc;
 #endif /* _REENTRANT || _THREAD_SAFE */
-    struct tm *tp;
-    char    timestr[64] ;   /* Time in its ASCII format             */
-    char    line[BUFSIZ] ;  /* Formatted log message                */
-    int     fd;             /* log file descriptor                  */
-    int     Tid = 0;        /* Thread ID if MT                      */
-	int     save_errno;
+  struct tm *tp;
+  char    timestr[64] ;   /* Time in its ASCII format             */
+  char    line[BUFSIZ] ;  /* Formatted log message                */
+  int     fd;             /* log file descriptor                  */
+  int     Tid = 0;        /* Thread ID if MT                      */
+  int     save_errno;
 
-	save_errno = errno;
-    va_start(args, format);
-    if (loglevel >= level)  {
-        (void) time(&clock);
+  save_errno = errno;
+  va_start(args, format);
+  if (loglevel >= level)  {
+    (void) time(&clock);
 #if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
-        (void)localtime_r(&clock,&tmstruc);
-        tp = &tmstruc;
+    (void)localtime_r(&clock,&tmstruc);
+    tp = &tmstruc;
 #else
-        tp = localtime(&clock);
+    tp = localtime(&clock);
 #endif /* _REENTRANT || _THREAD_SAFE */
-        (void) strftime(timestr,64,strftime_format,tp);
-        Cglobals_getTid(&Tid);
-        if ( Tid < 0 ) {
-            /*
-             * Non-MT or main thread. Don't print thread ID.
-             */
-            pid = getpid();
-            (void) sprintf(line,"%s %s[%d]: ",timestr,logname,pid) ;
-        } else {
+    (void) strftime(timestr,64,strftime_format,tp);
+    Cglobals_getTid(&Tid);
+    if ( Tid < 0 ) {
+      /*
+       * Non-MT or main thread. Don't print thread ID.
+       */
+      pid = getpid();
+      (void) sprintf(line,"%s %s[%d]: ",timestr,logname,pid) ;
+    } else {
 #if defined(linux) || defined(__APPLE__)
-            pid = getpgrp();
+      pid = getpgrp();
 #else
-            pid = getpid();
+      pid = getpid();
 #endif
-            (void) sprintf(line,"%s %s[%d,%d]: ",timestr,logname,pid,Tid) ;
-        }
-        (void) vsprintf(line+strlen(line),format,args);
-        if (strlen(logfilename)!=0) {
-            if ( (fd= open(logfilename,O_CREAT|O_WRONLY|
-                O_APPEND,logbits)) == -1 ) {
-                syslog(LOG_ERR,"open: %s", logfilename);
-                /* FH we probably should retry */
-				va_end(args);
-				errno = save_errno;
-                return;
-            } else
-                /*
-                 * To be sure that file access is enables
-                 * even if root umask is not 0 
-                 */
-                 (void) chmod( logfilename, logbits );           
-        } else {
-            if  (strlen(logfilename)==0)
-                fd= fileno (stderr); /* standard error */
-        }
-        (void) write(fd,line,strlen(line)) ;
-        if (strlen(logfilename)!=0) (void) close(fd);
+      (void) sprintf(line,"%s %s[%d,%d]: ",timestr,logname,pid,Tid) ;
     }
-    va_end(args);
+    (void) vsprintf(line+strlen(line),format,args);
+    if (strlen(logfilename)!=0) {
+      if ( (fd= open(logfilename,O_CREAT|O_WRONLY|
+		     O_APPEND,logbits)) == -1 ) {
+	syslog(LOG_ERR,"open: %s", logfilename);
+	/* FH we probably should retry */
+	va_end(args);
 	errno = save_errno;
+	return;
+      } else
+	/*
+	 * To be sure that file access is enables
+	 * even if root umask is not 0
+	 */
+	(void) chmod( logfilename, logbits );
+    } else {
+      if  (strlen(logfilename)==0)
+	fd= fileno (stderr); /* standard error */
+    }
+    (void) write(fd,line,strlen(line)) ;
+    if (strlen(logfilename)!=0) (void) close(fd);
+  }
+  va_end(args);
+  errno = save_errno;
 }
-        
+
 int DLL_DECL getloglv()
 {
-    return(loglevel);
+  return(loglevel);
 }

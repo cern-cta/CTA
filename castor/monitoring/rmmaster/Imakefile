@@ -36,10 +36,10 @@ DependsOnLibrary(,castormonitor)
 DependsOnLibrary(../db/newora,castorcommonora)
 DependsOnLibrary(../db/cnv,castorcnvs)
 
-RMMASTERDBIN_SRCS = RmMasterDaemon.cpp CollectorThread.cpp DatabaseActuatorThread.cpp UpdateThread.cpp HeartbeatThread.cpp LSFStatus.cpp ora/OraRmMasterSvc.cpp ora/StatusUpdateHelper.cpp
-RMMASTERDBIN_OBJS = $(RMMASTERDBIN_SRCS:.cpp=.Osuf)
-NormalProgramTarget(rmmasterd,$(RMMASTERDBIN_OBJS),$(DEPLIB),$(LIBS),750)
-MakeDir(/var/spool/rmmaster,0755)
+RMMASTERDAEMONBIN_SRCS = RmMasterDaemon.cpp CollectorThread.cpp DatabaseActuatorThread.cpp UpdateThread.cpp HeartbeatThread.cpp LSFStatus.cpp ora/OraRmMasterSvc.cpp ora/StatusUpdateHelper.cpp
+RMMASTERDAEMONBIN_OBJS = $(RMMASTERDAEMONBIN_SRCS:.cpp=.Osuf)
+NormalProgramTarget(rmmasterd,$(RMMASTERDAEMONBIN_OBJS),$(DEPLIB),$(LIBS),750)
+MakeDir(/var/log/castor,0755)
 LOGROTATE(castor-rmmaster-server,../../..,install)
 SYSCONFIG(rmmasterd,install)
 INITSCRIPT(rmmasterd,install)

@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: rhd.init,v $ $Revision: 1.1 $ $Release$ $Date: 2009/07/23 12:18:45 $ $Author: waldron $
+# @(#)$RCSfile: rhd.init,v $ $Revision: 1.2 $ $Release$ $Date: 2009/08/18 09:42:53 $ $Author: waldron $
 #
 # chkconfig: 345 63 52
 # description: Request Handler Initialisation Script
@@ -81,7 +81,7 @@ start() {
                         echo
                         FRETVAL=1
                 else
-                        cd /var/spool/rhserver
+                        cd /var/log/castor
                         daemon /usr/bin/$prog $RHD_OPTIONS
 
                         # Write the pid to a file.
@@ -122,7 +122,7 @@ stop() {
         echo
         if [ -n "$1" ]; then
                 [ -f /var/lock/subsys/$prog.$1 ] && rm -f /var/lock/subsys/$prog.$1
-        else 
+        else
                 rm -f /var/lock/subsys/$prog.*
         fi
         return $RETVAL
@@ -148,7 +148,7 @@ status() {
                                 echo $"$prog for role: $i is stopped"
                         fi
                         RETVAL=1
-                fi                        
+                fi
         done
         return $RETVAL
 }

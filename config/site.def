@@ -26,6 +26,7 @@
 #else
 #define InstallLibDir	        /usr/lib
 #endif
+#define InstallLibNoArchDir     /usr/lib
 #define OperatorDir	        /var/run
 
 #endif
@@ -59,7 +60,6 @@
 #define TapeConfigFile	CONFIGPATH(TPCONFIG)
 #define VdqmHost        "castorvdqm1 castorvdqm2"
 #define VmgrConfigFile	CONFIGPATH(VMGRCONFIG)
-#define DlfConfigFile   CONFIGPATH(DLFCONFIG)
 #define ExpertConfigFile CONFIGPATH(EXPCONFIG)
 
 #define HasCDK                  NO

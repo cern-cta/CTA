@@ -32,9 +32,9 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/IObject.hpp"
 
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // Constructor
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 castor::dlf::Param::Param(const char* name,
                           castor::IObject* value) :
   m_deallocate(true) {
@@ -43,12 +43,12 @@ castor::dlf::Param::Param(const char* name,
   std::ostringstream s;
   castor::ObjectSet set;
   value->print(s, "", set);
-  m_cParam.par.par_string = strdup(s.str().c_str());
+  m_cParam.value.par_string = strdup(s.str().c_str());
 }
 
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // Constructor
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 castor::dlf::Param::Param(const char* name,
                           castor::dlf::IPAddress value) :
   m_deallocate(true) {
@@ -59,12 +59,12 @@ castor::dlf::Param::Param(const char* name,
     << ((value.ip() & 0x00FF0000) >> 16) << "."
     << ((value.ip() & 0x0000FF00) >> 8) << "."
     << ((value.ip() & 0x000000FF));
-  m_cParam.par.par_string = strdup(s.str().c_str());
+  m_cParam.value.par_string = strdup(s.str().c_str());
 }
 
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // Constructor
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 castor::dlf::Param::Param(const char* name,
                           castor::dlf::TimeStamp value) :
   m_deallocate(true) {
@@ -87,5 +87,5 @@ castor::dlf::Param::Param(const char* name,
     << " " << tmstruc.tm_hour
     << ":" << tmstruc.tm_min
     << ":" << tmstruc.tm_sec;
-  m_cParam.par.par_string = strdup(s.str().c_str());
+  m_cParam.value.par_string = strdup(s.str().c_str());
 }

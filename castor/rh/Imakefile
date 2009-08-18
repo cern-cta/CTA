@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.23 $ $Release$ $Date: 2009/07/23 12:21:59 $ $Author: waldron $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.24 $ $Release$ $Date: 2009/08/18 09:42:53 $ $Author: waldron $
 #
 # Make Castor RH library
 #
@@ -49,7 +49,7 @@ DependsOnLibrary(../security,castorsecurity)
 RHBIN_SRCS = Server.cpp RHThread.cpp
 RHBIN_OBJS = $(RHBIN_SRCS:.cpp=.Osuf)
 NormalProgramTarget(rhd,$(RHBIN_OBJS),$(DEPLIB),$(LIBS),750)
-MakeDir(/var/spool/rhserver,0755)
+MakeDir(/var/log/castor,0755)
 ADMMANPAGE(rhd)
 LOGROTATE(castor-rh-server,../..,install)
 SYSCONFIG(rhd,install)

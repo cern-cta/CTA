@@ -1,12 +1,12 @@
 /*
- * $Id: tpdaemon.c,v 1.22 2009/08/14 13:27:41 wiebalck Exp $
+ * $Id: tpdaemon.c,v 1.23 2009/08/18 09:43:02 waldron Exp $
  *
  * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.22 $ $Date: 2009/08/14 13:27:41 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.23 $ $Date: 2009/08/18 09:43:02 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -645,7 +645,6 @@ int reason;
         tl_tpdaemon.tl_log( &tl_tpdaemon, 108, 2,
                             "func",    TL_MSG_PARAM_STR, func,
                             "Message", TL_MSG_PARAM_STR, "Forking a confdrive process" );
-        tl_tpdaemon.tl_fork_prepare( &tl_tpdaemon ); 
 
 	rqp->ovly_pid = fork ();
 	pid = rqp->ovly_pid;
@@ -663,8 +662,6 @@ int reason;
 		char arg_gid[11], arg_jid[11], arg_reason[2], arg_rpfd[3];
 		char arg_status[2], arg_uid[11];
 		char progfullpath[CA_MAXPATHLEN+1];
-
-                tl_tpdaemon.tl_fork_child( &tl_tpdaemon ); 
 
 		sprintf (progfullpath, "%s/confdrive", BIN);
 		sprintf (arg_rpfd, "%d", rpfd);
@@ -692,7 +689,6 @@ int reason;
                 tl_tpdaemon.tl_exit( &tl_tpdaemon, 0 );
 		exit (errno);
 	}
-        tl_tpdaemon.tl_fork_parent( &tl_tpdaemon ); 
 	return (c);
 }
 
@@ -1663,7 +1659,6 @@ char *clienthost;
         tl_tpdaemon.tl_log( &tl_tpdaemon, 108, 2,
                             "func",    TL_MSG_PARAM_STR, func,
                             "Message", TL_MSG_PARAM_STR, "Forking a mounttape process" );                        
-        tl_tpdaemon.tl_fork_prepare( &tl_tpdaemon ); 
 
 	tunp->mntovly_pid = fork ();
 	pid = tunp->mntovly_pid;
@@ -1688,8 +1683,6 @@ char *clienthost;
 		char arg_prelabel[3], arg_rpfd[3], arg_side[2];
 		char arg_tpmounted[2], arg_uid[11], arg_ux[3], arg_vdqmid[10];
 		char progfullpath[CA_MAXPATHLEN+1];
-
-                tl_tpdaemon.tl_fork_child( &tl_tpdaemon ); 
 
 		sprintf (progfullpath, "%s/mounttape", BIN);
 		sprintf (arg_rpfd, "%d", rpfd);
@@ -1739,7 +1732,6 @@ reply:
 		sendrep (rpfd, TAPERC, c);
 	else
 		netclose (rpfd);
-        tl_tpdaemon.tl_fork_parent( &tl_tpdaemon ); 
 }
 
 void procposreq(req_data, clienthost)
@@ -1956,7 +1948,6 @@ char *clienthost;
         tl_tpdaemon.tl_log( &tl_tpdaemon, 108, 2,
                             "func",    TL_MSG_PARAM_STR, func,
                             "Message", TL_MSG_PARAM_STR, "Forking a posovl process" );                        
-        tl_tpdaemon.tl_fork_prepare( &tl_tpdaemon ); 
 
 	tunp->mntovly_pid = fork ();
 	pid = tunp->mntovly_pid;
@@ -1978,8 +1969,6 @@ char *clienthost;
 		char arg_method[2], arg_mode[2], arg_Qfirst[11], arg_Qlast[11];
 		char arg_retentd[5], arg_rpfd[3], arg_uid[11], arg_ux[3];
 		char progfullpath[CA_MAXPATHLEN+1];
-
-                tl_tpdaemon.tl_fork_child( &tl_tpdaemon ); 
 
 		sprintf (progfullpath, "%s/posovl", BIN);
 		sprintf (arg_rpfd, "%d", rpfd);
@@ -2030,7 +2019,6 @@ reply:
 		sendrep (rpfd, TAPERC, c);
 	else
 		netclose (rpfd);
-        tl_tpdaemon.tl_fork_parent( &tl_tpdaemon ); 
 }
 
 void procrlsreq(req_data, clienthost)
@@ -2660,10 +2648,9 @@ int rlsflags;
         tl_tpdaemon.tl_log( &tl_tpdaemon, 108, 2,
                             "func",    TL_MSG_PARAM_STR, func,
                             "Message", TL_MSG_PARAM_STR, "Forking an rlstape process" );                        
-        tl_tpdaemon.tl_fork_prepare( &tl_tpdaemon ); 
 
 	pid = fork ();
-    tunp->rlsovly_pid = pid;
+	tunp->rlsovly_pid = pid;
 	if (pid < 0) {
 		usrmsg (func, TP002, "fork", strerror(errno));
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 3,
@@ -2678,8 +2665,6 @@ int rlsflags;
 		char arg_den[4], arg_gid[11], arg_jid[11], arg_rlsflags[3];
 		char arg_mode[2], arg_rpfd[3], arg_uid[11], arg_ux[3];
 		char progfullpath[CA_MAXPATHLEN+1];
-
-                tl_tpdaemon.tl_fork_child( &tl_tpdaemon ); 
 
 		sprintf (progfullpath, "%s/rlstape", BIN);
 		sprintf (arg_rpfd, "%d", rpfd);
@@ -2738,7 +2723,6 @@ int rlsflags;
 		}
 		rqp->unldcnt++;
 	}
-        tl_tpdaemon.tl_fork_parent( &tl_tpdaemon ); 
 	return (c);
 }
 

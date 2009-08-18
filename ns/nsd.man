@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: nsd.man,v $ $Revision: 1.1 $ $Date: 2009/07/23 12:18:46 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: nsd.man,v $ $Revision: 1.2 $ $Date: 2009/08/18 09:43:00 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2005 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH NSD 8 "$Date: 2009/07/23 12:18:46 $" CASTOR "Cns Administrator Commands"
+.TH NSD 8 "$Date: 2009/08/18 09:43:00 $" CASTOR "Cns Administrator Commands"
 .SH NAME
 nsd \- start the name server
 .SH SYNOPSIS
@@ -44,7 +44,7 @@ The name server listen port number can be defined on client hosts and
 on the name server itself in either of the following ways:
 .RS
 .LP
-setting an environment variable CNS_PORT and CNS_SEC_PORT for the secure port 
+setting an environment variable CNS_PORT and CNS_SEC_PORT for the secure port
 .RS
 .HP
 setenv CNS_PORT 5010
@@ -137,13 +137,13 @@ Read-only mode. Only query operations are allowed.
 Specifies the number of threads. Default is 20.
 .TP
 .B -s
-Enables strong authentication mode. 
+Enables strong authentication mode.
 .SH FILES
 .TP 1.5i
 .B /etc/NSCONFIG
 configuration file
 .TP
-.B /var/spool/ns/log
+.B /var/log/castor/nsd.log
 .SH EXAMPLES
 .TP
 Here is a small log:

@@ -33,12 +33,6 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib-oracle
 Description: castor (Cern Advanced STORage system)
  Oracle API
 
-Package: castor-dlf-server
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
-Description: castor (Cern Advanced STORage system)
- Distributed Logging Facility server
-
 Package: castor-expert-server
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
@@ -83,7 +77,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-lsf-plugin
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, python
+Depends: ${shlibs:Depends}, ${misc:Depends}, python, logrotate
 Description: castor (Cern Advanced STORage system)
  Scheduler plugin for LSF (6.1 minimum) framework
 
@@ -312,7 +306,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-csec
 Architecture: any
-Build-Depends: vdt_globus_sdk, vdt_compile_globus_core, glite-security-voms-api, 
+Build-Depends: vdt_globus_sdk, vdt_compile_globus_core, glite-security-voms-api,
 Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib, vdt_globus_essentials, glite-security-voms-api-c
 Description: castor (Cern Advanced STORage system)
  Csec library

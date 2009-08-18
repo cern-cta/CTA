@@ -36,7 +36,7 @@ DependsOnLibrary(,castorclient)
 GCBIN_SRCS = GcDaemon.cpp DeletionThread.cpp SynchronizationThread.cpp
 GCBIN_OBJS = $(GCBIN_SRCS:.cpp=.Osuf)
 NormalProgramTarget(gcd,$(GCBIN_OBJS),$(DEPLIB),$(LIBS),0755)
-MakeDir(/var/spool/gc,0755)
+MakeDir(/var/log/castor,0755)
 ADMMANPAGE(gcd)
 LOGROTATE(castor-gc-server,../..,install)
 SYSCONFIG(gcd,install)

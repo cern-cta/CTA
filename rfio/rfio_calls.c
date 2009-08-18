@@ -9,7 +9,7 @@
 
 /* NOTE(fuji): AIX might support O_DIRECT as well, to be verified. */
 #if defined(linux) && !defined(__ia64__)
-#define _GNU_SOURCE		/* O_DIRECT */
+#define _GNU_SOURCE                /* O_DIRECT */
 #endif
 
 #ifdef _WIN32
@@ -155,8 +155,8 @@ static int write_error = 0;
 static int stop_read;
 
 extern char *getconfent();
-int check_user_perm();		/* Forward declaration 		*/
-static int chksuser();		/* Forward declaration 		*/
+int check_user_perm();                /* Forward declaration                 */
+static int chksuser();                /* Forward declaration                 */
 
 #if defined(_WIN32)
 #if !defined (MAX_THREADS)
@@ -205,8 +205,8 @@ extern struct thData {
 /*
  * Buffer declarations
  */
-char 	rqstbuf[BUFSIZ];		/* Request buffer		*/
-char    filename[MAXFILENAMSIZE];       /* file name             	*/
+char         rqstbuf[BUFSIZ];                /* Request buffer                */
+char    filename[MAXFILENAMSIZE];       /* file name                     */
 
 static char     *iobuffer;              /* Data communication buffer    */
 static int      iobufsiz= 0;            /* Current io buffer size       */
@@ -404,10 +404,10 @@ static char **l_canonicalize_path(inpath,sym_depth,effective_cwd,path_typep,pref
   if (*inpath != '/') {
     if (effective_cwd != NULL) {
       if (strlen(effective_cwd)>=sizeof(buffer)) {
-	errno = ENAMETOOLONG;
-	goto error;
+        errno = ENAMETOOLONG;
+        goto error;
       } else {
-	strcpy(buffer, effective_cwd);
+        strcpy(buffer, effective_cwd);
       }
     } else {
       if (getcwd(buffer, sizeof(buffer))==NULL) goto error;
@@ -443,8 +443,8 @@ static char **l_canonicalize_path(inpath,sym_depth,effective_cwd,path_typep,pref
     if (!strcmp(cp,".")) continue;
     if (!strcmp(cp,"..")) {
       if (n>0) {
-	free(elements[--n]);
-	elements[n] = NULL;
+        free(elements[--n]);
+        elements[n] = NULL;
       }
       continue;
     }
@@ -673,20 +673,20 @@ int check_path_whitelist(hostname,path,rfiod_permstrs,opath,opathsize,travel_sym
     } else {
       char **p = (char**)realloc(white_list, sizeof(char *) * (count+count2+1));
       if (p == NULL) {
-	save_errno = errno;
-	l_free_strlist(white_list);
-	l_free_strlist(additional);
-	l_free_strlist(test_path_elements);
-	free(test_path_prefix);
-	free(test_path);
-	log(LOG_ERR, "check_path_whitelist: Problem making the white list, disallowing access\n");
-	errno = save_errno;
-	return -1;
+        save_errno = errno;
+        l_free_strlist(white_list);
+        l_free_strlist(additional);
+        l_free_strlist(test_path_elements);
+        free(test_path_prefix);
+        free(test_path);
+        log(LOG_ERR, "check_path_whitelist: Problem making the white list, disallowing access\n");
+        errno = save_errno;
+        return -1;
       }
       white_list = p;
       for(n=0;n<count2;++n) {
-	white_list[count+n] = additional[n];
-	additional[n] = NULL;
+        white_list[count+n] = additional[n];
+        additional[n] = NULL;
       }
       white_list[count+count2] = NULL;
       count += count2;
@@ -701,14 +701,14 @@ int check_path_whitelist(hostname,path,rfiod_permstrs,opath,opathsize,travel_sym
     int p_type;
     if (!rfio_canonicalize_path(white_list[n],NULL,&p_type,&p_prefix,&p_elem,1)) {
       if (p_type == test_path_type && !strcmp(p_prefix,test_path_prefix)) {
-	for(i=0;1;i++) {
-	  if (p_elem[i] == NULL) break;
-	  if (test_path_elements[i] == NULL || strcmp(p_elem[i], test_path_elements[i])) {
-	    match = 0;
-	    break;
-	  }
-	}
-	if (match) { found=1; }
+        for(i=0;1;i++) {
+          if (p_elem[i] == NULL) break;
+          if (test_path_elements[i] == NULL || strcmp(p_elem[i], test_path_elements[i])) {
+            match = 0;
+            break;
+          }
+        }
+        if (match) { found=1; }
       }
       l_free_strlist(p_elem);
       free(p_prefix);
@@ -899,13 +899,13 @@ int srsymlink(s,request,rt, host)
     unmarshall_WORD(p, gid);
     *name1 = *name2 = *user = '\0';
     if ( (status == 0) &&
-	 (status = unmarshall_STRINGN( p, name1, MAXFILENAMSIZE )) == -1 )
+         (status = unmarshall_STRINGN( p, name1, MAXFILENAMSIZE )) == -1 )
       rcode = E2BIG;
     if ( (status == 0) &&
-	 (status = unmarshall_STRINGN( p, name2, MAXFILENAMSIZE )) == -1 )
+         (status = unmarshall_STRINGN( p, name2, MAXFILENAMSIZE )) == -1 )
       rcode = E2BIG;
     if ( (status == 0) &&
-	 (status = unmarshall_STRINGN( p, user, CA_MAXUSRNAMELEN+1 )) == -1 )
+         (status = unmarshall_STRINGN( p, user, CA_MAXUSRNAMELEN+1 )) == -1 )
       rcode = E2BIG;
 
     /*
@@ -918,31 +918,31 @@ int srsymlink(s,request,rt, host)
       int to_uid, to_gid;
 
       if ( (rcd = get_user(host,user,uid,gid,to,&to_uid,&to_gid)) == -ENOENT ) {
-	log(LOG_ERR,"r%slink: get_user(): Error opening mapping file\n",(name1[0]=='\0' ? "un":"sym"));
-	status= -1;
-	errno = EINVAL;
-	rcode = errno;
+        log(LOG_ERR,"r%slink: get_user(): Error opening mapping file\n",(name1[0]=='\0' ? "un":"sym"));
+        status= -1;
+        errno = EINVAL;
+        rcode = errno;
       }
 
       if ( !status && abs(rcd) == 1 ) {
-	log(LOG_ERR,"No entry in mapping file for (%s,%s,%d,%d)\n", host,user,uid,gid);
-	status= -1;
-	errno=EACCES;
-	rcode=errno;
+        log(LOG_ERR,"No entry in mapping file for (%s,%s,%d,%d)\n", host,user,uid,gid);
+        status= -1;
+        errno=EACCES;
+        rcode=errno;
       }
       else {
-	log(LOG_DEBUG,"(%s,%s,%d,%d) mapped to %s(%d,%d)\n",
-	    host, user, uid, gid, to, to_uid, to_gid);
-	uid = to_uid;
-	gid = to_gid;
+        log(LOG_DEBUG,"(%s,%s,%d,%d) mapped to %s(%d,%d)\n",
+            host, user, uid, gid, to, to_uid, to_gid);
+        uid = to_uid;
+        gid = to_gid;
       }
     }
 
     if ( (status == 0) && ((status = check_user_perm(&uid,&gid,host,&rcode,"WTRUST")) < 0) && ((status = check_user_perm(&uid,&gid,host,&rcode,"LINKTRUST")) < 0) ) {
       if ( status == -2 )
-	log(LOG_ERR,"srsymlink(): UID %d not allowed to r%slink().\n",uid,(name1[0]=='\0' ? "un":"sym"));
+        log(LOG_ERR,"srsymlink(): UID %d not allowed to r%slink().\n",uid,(name1[0]=='\0' ? "un":"sym"));
       else
-	log(LOG_ERR,"srsymlink(): failed, rcode = %d\n",rcode);
+        log(LOG_ERR,"srsymlink(): failed, rcode = %d\n",rcode);
     }
 
     if ( !status && name1[0]!='\0' && forced_filename != NULL) {
@@ -957,20 +957,20 @@ int srsymlink(s,request,rt, host)
       char oname2[MAXFILENAMSIZE];
       strcpy(oname2, name2);
       if (forced_filename != NULL || !check_path_whitelist(host, name2, perm_array, oname2, sizeof(oname2),1)) {
-	if (name1[0]=='\0') {
-	  status = unlink(CORRECT_FILENAME(oname2));
-	  rcode = (status < 0 ? errno: 0);
-	  log(LOG_INFO ,"runlink(): unlink(%s) returned %d, rcode=%d\n",CORRECT_FILENAME(oname2),status,rcode);
-	}
-	else {
-	  log(LOG_INFO, "symlink for (%d, %d)\n",getuid(), getgid());
-	  status = symlink( name1, oname2 );
-	  rcode = (status < 0 ? errno: 0);
-	  log(LOG_INFO ,"rsymlink(): symlink(%s,%s) returned %d,rcode=%d\n",name1, oname2, status,rcode );
-	}
+        if (name1[0]=='\0') {
+          status = unlink(CORRECT_FILENAME(oname2));
+          rcode = (status < 0 ? errno: 0);
+          log(LOG_INFO ,"runlink(): unlink(%s) returned %d, rcode=%d\n",CORRECT_FILENAME(oname2),status,rcode);
+        }
+        else {
+          log(LOG_INFO, "symlink for (%d, %d)\n",getuid(), getgid());
+          status = symlink( name1, oname2 );
+          rcode = (status < 0 ? errno: 0);
+          log(LOG_INFO ,"rsymlink(): symlink(%s,%s) returned %d,rcode=%d\n",name1, oname2, status,rcode );
+        }
       } else {
-	status = -1;
-	rcode = errno;
+        status = -1;
+        rcode = errno;
       }
     }
   }
@@ -1026,7 +1026,7 @@ int srreadlink(s,host,rt)
     unmarshall_WORD(p, gid);
     *path = '\0';
     if ( (status == 0) &&
-	 (status = unmarshall_STRINGN( p, path, MAXFILENAMSIZE)) == -1 )
+         (status = unmarshall_STRINGN( p, path, MAXFILENAMSIZE)) == -1 )
       rcode = E2BIG;
     /* While performing tape operations multiple calls to change uid are issued. As
      * a result we ignore errors from setgroups if we are not running as the super-
@@ -1045,14 +1045,14 @@ int srreadlink(s,host,rt)
       char opath[MAXFILENAMSIZE];
       rcode = -1;
       if (!check_path_whitelist(host, path, perm_array, opath, sizeof(opath),0)) {
-	rcode = readlink( opath, lpath, MAXFILENAMSIZE);
+        rcode = readlink( opath, lpath, MAXFILENAMSIZE);
       }
       if (rcode < 0) {
-	lpath[0]='\0';
-	status = -1;
-	rcode = errno;
+        lpath[0]='\0';
+        status = -1;
+        rcode = errno;
       } else {
-	lpath[rcode]='\0';
+        lpath[rcode]='\0';
       }
     }
   }
@@ -1108,42 +1108,42 @@ int     srchown(s,host,rt)
     }
     else {
       if ( ((status = check_user_perm(&uid,&gid,host,&rcode,"WTRUST")) < 0) && ((status = check_user_perm(&uid,&gid,host,&rcode,"CHOWNTRUST")) < 0) ) {
-	if (status == -2)
-	  log(LOG_ERR,"srchown(): UID %d not allowed to chown\n",uid);
-	else
-	  log(LOG_ERR,"srchown(): failed, rcode = %d\n",rcode);
-	status = -1;
+        if (status == -2)
+          log(LOG_ERR,"srchown(): UID %d not allowed to chown\n",uid);
+        else
+          log(LOG_ERR,"srchown(): failed, rcode = %d\n",rcode);
+        status = -1;
       }
       if ( !status && forced_filename != NULL) {
-	log(LOG_ERR,"Disallowing chown in forced filename mode\n");
-	status= -1;
-	errno=EACCES;
-	rcode=errno;
+        log(LOG_ERR,"Disallowing chown in forced filename mode\n");
+        status= -1;
+        errno=EACCES;
+        rcode=errno;
       }
       if (netread_timeout(s, rqstbuf, len, RFIO_CTRL_TIMEOUT) != len) {
-	log(LOG_ERR, "srchown(): read(): %s\n", strerror(errno));
-	return -1;
+        log(LOG_ERR, "srchown(): read(): %s\n", strerror(errno));
+        return -1;
       }
       p = rqstbuf;
       *filename = '\0';
       if ( (status == 0) &&
-	   (status = unmarshall_STRINGN(p, filename, MAXFILENAMSIZE)) == -1 )
-	rcode = SENAMETOOLONG;
+           (status = unmarshall_STRINGN(p, filename, MAXFILENAMSIZE)) == -1 )
+        rcode = SENAMETOOLONG;
       unmarshall_WORD(p,owner);
       unmarshall_WORD(p,group);
       log(LOG_INFO,"rchown: filename: %s, uid: %d ,gid: %d\n",filename,owner,group);
       if (status == 0 ) {
-	const char *perm_array[] = { "WTRUST", "CHOWNTRUST", NULL };
-	char ofilename[MAXFILENAMSIZE];
-	if (!check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
-	  if ( (status =  chown(ofilename,owner,group)) < 0 )
-	    rcode = errno;
-	  else
-	    status = 0;
-	} else {
-	  status = -1;
-	  rcode = errno;
-	}
+        const char *perm_array[] = { "WTRUST", "CHOWNTRUST", NULL };
+        char ofilename[MAXFILENAMSIZE];
+        if (!check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
+          if ( (status =  chown(ofilename,owner,group)) < 0 )
+            rcode = errno;
+          else
+            status = 0;
+        } else {
+          status = -1;
+          rcode = errno;
+        }
       }
     }
   }
@@ -1205,45 +1205,45 @@ int     srchmod(s,host,rt)
     }
     else {
       if ( ((status=check_user_perm(&uid,&gid,host,&rcode,"WTRUST")) < 0) && ((status=check_user_perm(&uid,&gid,host,&rcode,"CHMODTRUST")) < 0) ) {
-	if (status == -1)
-	  log(LOG_ERR,"srchmod(): UID %d not allowed to chmod()\n",uid);
-	else
-	  log(LOG_ERR,"srchmod(): failed, rcode = %d\n",rcode);
-	status = -1;
+        if (status == -1)
+          log(LOG_ERR,"srchmod(): UID %d not allowed to chmod()\n",uid);
+        else
+          log(LOG_ERR,"srchmod(): failed, rcode = %d\n",rcode);
+        status = -1;
       }
       if ( !status && forced_filename != NULL) {
-	log(LOG_ERR,"Disallowing chmod in forced filename mode\n");
-	status= -1;
-	errno=EACCES;
-	rcode=errno;
+        log(LOG_ERR,"Disallowing chmod in forced filename mode\n");
+        status= -1;
+        errno=EACCES;
+        rcode=errno;
       }
       if (netread_timeout(s, rqstbuf, len, RFIO_CTRL_TIMEOUT) != len) {
 #if defined(_WIN32)
-	log(LOG_ERR, "srchmod(): read(): %s\n", geterr());
+        log(LOG_ERR, "srchmod(): read(): %s\n", geterr());
 #else
-	log(LOG_ERR, "srchmod(): read(): %s\n", strerror(errno));
+        log(LOG_ERR, "srchmod(): read(): %s\n", strerror(errno));
 #endif  /* WIN32 */
-	return -1;
+        return -1;
       }
       p = rqstbuf;
       *filename = '\0';
       if ( (status == 0) &&
-	   (status = unmarshall_STRINGN(p, filename, MAXFILENAMSIZE)) == -1 )
-	serrno = SENAMETOOLONG;
+           (status = unmarshall_STRINGN(p, filename, MAXFILENAMSIZE)) == -1 )
+        serrno = SENAMETOOLONG;
       unmarshall_LONG(p, mode);
       log(LOG_INFO,"chmod: filename: %s, mode: %o\n", filename, mode);
       if (status == 0 ) {
-	const char *perm_array[] = { "WTRUST", "CHMODTRUST", NULL };
-	char ofilename[MAXFILENAMSIZE];
-	if (!check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
-	  if ( (status =  chmod(ofilename, mode)) < 0 )
-	    rcode = errno;
-	  else
-	    status = 0;
-	} else {
-	  status = -1;
-	  rcode = errno;
-	}
+        const char *perm_array[] = { "WTRUST", "CHMODTRUST", NULL };
+        char ofilename[MAXFILENAMSIZE];
+        if (!check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
+          if ( (status =  chmod(ofilename, mode)) < 0 )
+            rcode = errno;
+          else
+            status = 0;
+        } else {
+          status = -1;
+          rcode = errno;
+        }
       }
     }
   }
@@ -1308,45 +1308,45 @@ int     srmkdir(s,host,rt)
     }
     else {
       if ( ((status=check_user_perm(&uid,&gid,host,&rcode,"WTRUST")) < 0) && ((status=check_user_perm(&uid,&gid,host,&rcode,"MKDIRTRUST")) < 0) ) {
-	if (status == -1)
-	  log(LOG_ERR,"srmkdir(): UID %d not allowed to mkdir()\n",uid);
-	else
-	  log(LOG_ERR,"srmkdir(): failed, rcode = %d\n",rcode);
-	status = -1;
+        if (status == -1)
+          log(LOG_ERR,"srmkdir(): UID %d not allowed to mkdir()\n",uid);
+        else
+          log(LOG_ERR,"srmkdir(): failed, rcode = %d\n",rcode);
+        status = -1;
       }
       if ( !status && forced_filename != NULL) {
-	log(LOG_ERR,"Disallowing mkdir in forced filename mode\n");
-	status= -1;
-	errno=EACCES;
-	rcode=errno;
+        log(LOG_ERR,"Disallowing mkdir in forced filename mode\n");
+        status= -1;
+        errno=EACCES;
+        rcode=errno;
       }
       if (netread_timeout(s, rqstbuf, len, RFIO_CTRL_TIMEOUT) != len) {
 #if defined(_WIN32)
-	log(LOG_ERR, "srmkdir(): read(): %s\n", geterr());
+        log(LOG_ERR, "srmkdir(): read(): %s\n", geterr());
 #else
-	log(LOG_ERR, "srmkdir(): read(): %s\n", strerror(errno));
+        log(LOG_ERR, "srmkdir(): read(): %s\n", strerror(errno));
 #endif
-	return -1;
+        return -1;
       }
       p = rqstbuf;
       *filename = '\0';
       if ( (status == 0) &&
-	   (status = unmarshall_STRINGN(p, filename, MAXFILENAMSIZE)) == -1 )
-	rcode = SENAMETOOLONG;
+           (status = unmarshall_STRINGN(p, filename, MAXFILENAMSIZE)) == -1 )
+        rcode = SENAMETOOLONG;
       unmarshall_LONG(p, mode);
       log(LOG_INFO,"rmkdir: filename: %s, mode: %o\n", filename, mode);
       if (status == 0 ) {
-	const char *perm_array[] = { "WTRUST", "MKDIRTRUST", NULL };
-	char ofilename[MAXFILENAMSIZE];
-	if (!check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
-	  if ( (status =  mkdir(ofilename, mode)) < 0 )
-	    rcode = errno;
-	  else
-	    status = 0;
-	} else {
-	  status = -1;
-	  rcode = errno;
-	}
+        const char *perm_array[] = { "WTRUST", "MKDIRTRUST", NULL };
+        char ofilename[MAXFILENAMSIZE];
+        if (!check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
+          if ( (status =  mkdir(ofilename, mode)) < 0 )
+            rcode = errno;
+          else
+            status = 0;
+        } else {
+          status = -1;
+          rcode = errno;
+        }
       }
     }
   }
@@ -1410,44 +1410,44 @@ int     srrmdir(s,host,rt)
     }
     else {
       if ( ((status=check_user_perm(&uid,&gid,host,&rcode,"WTRUST")) < 0) && ((status=check_user_perm(&uid,&gid,host,&rcode,"RMDIRTRUST")) < 0) ) {
-	if (status == -1)
-	  log(LOG_ERR,"srrmdir(): UID %d not allowed to rmdir()\n",uid);
-	else
-	  log(LOG_ERR,"srrmdir(): failed, rcode = %d\n",rcode);
-	status = -1;
+        if (status == -1)
+          log(LOG_ERR,"srrmdir(): UID %d not allowed to rmdir()\n",uid);
+        else
+          log(LOG_ERR,"srrmdir(): failed, rcode = %d\n",rcode);
+        status = -1;
       }
       if ( !status && forced_filename != NULL) {
-	log(LOG_ERR,"Disallowing rmdir in forced filename mode\n");
-	status= -1;
-	errno=EACCES;
-	rcode=errno;
+        log(LOG_ERR,"Disallowing rmdir in forced filename mode\n");
+        status= -1;
+        errno=EACCES;
+        rcode=errno;
       }
       if (netread_timeout(s, rqstbuf, len, RFIO_CTRL_TIMEOUT) != len) {
 #if defined(_WIN32)
-	log(LOG_ERR, "srrmdir(): read(): %s\n", geterr());
+        log(LOG_ERR, "srrmdir(): read(): %s\n", geterr());
 #else
-	log(LOG_ERR, "srrmdir(): read(): %s\n", strerror(errno));
+        log(LOG_ERR, "srrmdir(): read(): %s\n", strerror(errno));
 #endif
-	return -1;
+        return -1;
       }
       p = rqstbuf;
       *filename = '\0';
       if ( (status == 0) &&
-	   (status = unmarshall_STRINGN(p, filename, MAXFILENAMSIZE)) == -1 )
-	rcode = SENAMETOOLONG;
+           (status = unmarshall_STRINGN(p, filename, MAXFILENAMSIZE)) == -1 )
+        rcode = SENAMETOOLONG;
       log(LOG_INFO,"rrmdir: filename: %s\n", filename);
       if (status == 0 ) {
-	const char *perm_array[] = { "WTRUST", "RMDIRTRUST", NULL };
-	char ofilename[MAXFILENAMSIZE];
-	if (!check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
-	  if ( (status =  rmdir(ofilename)) < 0 )
-	    rcode = errno;
-	  else
-	    status = 0;
-	} else {
-	  status = -1;
-	  rcode = errno;
-	}
+        const char *perm_array[] = { "WTRUST", "RMDIRTRUST", NULL };
+        char ofilename[MAXFILENAMSIZE];
+        if (!check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
+          if ( (status =  rmdir(ofilename)) < 0 )
+            rcode = errno;
+          else
+            status = 0;
+        } else {
+          status = -1;
+          rcode = errno;
+        }
       }
     }
   }
@@ -1511,48 +1511,48 @@ int srrename(s,host,rt)
     }
     else {
       if ( ((status=check_user_perm(&uid,&gid,host,&rcode,"WTRUST")) < 0) && ((status=check_user_perm(&uid,&gid,host,&rcode,"RENAMETRUST")) < 0) ) {
-	if (status == -1)
-	  log(LOG_ERR,"srrename(): UID %d not allowed to rename()\n",uid);
-	else
-	  log(LOG_ERR,"srrename(): failed, rcode = %d\n",rcode);
-	status = -1;
+        if (status == -1)
+          log(LOG_ERR,"srrename(): UID %d not allowed to rename()\n",uid);
+        else
+          log(LOG_ERR,"srrename(): failed, rcode = %d\n",rcode);
+        status = -1;
       }
       if ( !status && forced_filename != NULL) {
-	log(LOG_ERR,"Disallowing rename in forced filename mode\n");
-	status= -1;
-	errno=EACCES;
-	rcode=errno;
+        log(LOG_ERR,"Disallowing rename in forced filename mode\n");
+        status= -1;
+        errno=EACCES;
+        rcode=errno;
       }
       if (netread_timeout(s, rqstbuf, len, RFIO_CTRL_TIMEOUT) != len) {
 #if defined(_WIN32)
-	log(LOG_ERR, "srrename(): read(): %s\n", geterr());
+        log(LOG_ERR, "srrename(): read(): %s\n", geterr());
 #else
-	log(LOG_ERR, "srrename(): read(): %s\n", strerror(errno));
+        log(LOG_ERR, "srrename(): read(): %s\n", strerror(errno));
 #endif
-	return -1;
+        return -1;
       }
       p = rqstbuf;
       *filenameo = *filenamen = '\0';
       if ( (status == 0) &&
-	   (status = unmarshall_STRINGN(p, filenameo,MAXFILENAMSIZE)) == -1)
-	rcode = SENAMETOOLONG;
+           (status = unmarshall_STRINGN(p, filenameo,MAXFILENAMSIZE)) == -1)
+        rcode = SENAMETOOLONG;
       if ( (status == 0) &&
-	   (status = unmarshall_STRINGN(p, filenamen,MAXFILENAMSIZE)) == -1)
-	rcode = SENAMETOOLONG;
+           (status = unmarshall_STRINGN(p, filenamen,MAXFILENAMSIZE)) == -1)
+        rcode = SENAMETOOLONG;
       log(LOG_INFO,"srrename: filenameo %s, filenamen %s\n", filenameo, filenamen);
       if (status == 0 ) {
-	const char *perm_array[] = { "WTRUST", "RENAMETRUST", NULL };
-	char ofilenameo[MAXFILENAMSIZE], ofilenamen[MAXFILENAMSIZE];
-	if (!check_path_whitelist(host, filenameo, perm_array, ofilenameo, sizeof(ofilenameo),0) &&
-	    !check_path_whitelist(host, filenamen, perm_array, ofilenamen, sizeof(ofilenamen),0)) {
-	  if ( (status =  rename(ofilenameo, ofilenamen)) < 0 )
-	    rcode = errno;
-	  else
-	    status = 0;
-	} else {
-	  status = -1;
-	  rcode = errno;
-	}
+        const char *perm_array[] = { "WTRUST", "RENAMETRUST", NULL };
+        char ofilenameo[MAXFILENAMSIZE], ofilenamen[MAXFILENAMSIZE];
+        if (!check_path_whitelist(host, filenameo, perm_array, ofilenameo, sizeof(ofilenameo),0) &&
+            !check_path_whitelist(host, filenamen, perm_array, ofilenamen, sizeof(ofilenamen),0)) {
+          if ( (status =  rename(ofilenameo, ofilenamen)) < 0 )
+            rcode = errno;
+          else
+            status = 0;
+        } else {
+          status = -1;
+          rcode = errno;
+        }
       }
     }
   }
@@ -1622,9 +1622,9 @@ int srlockf(s,fd)
     log(LOG_INFO,"srlockf: op %d, siz %ld\n", op, siz);
     if (status == 0 ) {
       if ( (status = lockf(fd, op, siz)) < 0 )
-	rcode = errno;
+        rcode = errno;
       else
-	status = 0;
+        status = 0;
     }
   }
 
@@ -1717,12 +1717,12 @@ int     srlstat(s,rt,host,bet)
       unmarshall_WORD(p,gid);
       *user = '\0';
       if ( (status == 0) &&
-	   (status = unmarshall_STRINGN(p,user,CA_MAXUSRNAMELEN+1)) == -1 )
-	rcode = E2BIG;
+           (status = unmarshall_STRINGN(p,user,CA_MAXUSRNAMELEN+1)) == -1 )
+        rcode = E2BIG;
     }
     *filename = '\0';
     if ( (status == 0) &&
-	 (status = unmarshall_STRINGN(p,filename,MAXFILENAMSIZE)) == -1 )
+         (status = unmarshall_STRINGN(p,filename,MAXFILENAMSIZE)) == -1 )
       rcode = SENAMETOOLONG;
 
     if ( (status == 0) && bet && rt ) {
@@ -1731,55 +1731,55 @@ int     srlstat(s,rt,host,bet)
       int to_uid, to_gid;
 
       if ( (rcd = get_user(host,user,uid,gid,to,&to_uid,&to_gid)) == -ENOENT ) {
-	log(LOG_ERR,"rlstat: get_user(): Error opening mapping file\n");
-	status= -1;
-	errno = EINVAL;
-	rcode = errno;
+        log(LOG_ERR,"rlstat: get_user(): Error opening mapping file\n");
+        status= -1;
+        errno = EINVAL;
+        rcode = errno;
       }
 
       if ( !status && abs(rcd) == 1 ) {
-	log(LOG_ERR,"No entry in mapping file for (%s,%s,%d,%d)\n", host,user,uid,gid);
-	status= -1;
-	errno=EACCES;
-	rcode=errno;
+        log(LOG_ERR,"No entry in mapping file for (%s,%s,%d,%d)\n", host,user,uid,gid);
+        status= -1;
+        errno=EACCES;
+        rcode=errno;
       }
       else {
-	log(LOG_DEBUG,"(%s,%s,%d,%d) mapped to %s(%d,%d)\n",
-	    host,user,uid,gid,to,to_uid,to_gid);
-	uid = to_uid;
-	gid = to_gid;
+        log(LOG_DEBUG,"(%s,%s,%d,%d) mapped to %s(%d,%d)\n",
+            host,user,uid,gid,to,to_uid,to_gid);
+        uid = to_uid;
+        gid = to_gid;
       }
     }
     if ( !status ) {
       if (bet &&
-	  (status=check_user_perm(&uid,&gid,host,&rcode,"FTRUST")) < 0 &&
-	  (status=check_user_perm(&uid,&gid,host,&rcode,"WTRUST")) < 0 &&
-	  (status=check_user_perm(&uid,&gid,host,&rcode,"RTRUST")) < 0 &&
-	  (status=check_user_perm(&uid,&gid,host,&rcode,"XTRUST")) < 0 &&
-	  (status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0 &&
-	  (status=check_user_perm(&uid,&gid,host,&rcode,"STATTRUST")) < 0 &&
-	  (status=check_user_perm(&uid,&gid,host,&rcode,"POPENTRUST")) < 0 &&
-	  (status=check_user_perm(&uid,&gid,host,&rcode,"LINKTRUST")) < 0  &&
-	  (status=check_user_perm(&uid,&gid,host,&rcode,"CHMODTRUST")) < 0 &&
-	  (status=check_user_perm(&uid,&gid,host,&rcode,"CHOWNTRUST")) < 0 &&
-	  (status=check_user_perm(&uid,&gid,host,&rcode,"MKDIRTRUST")) < 0 &&
-	  (status=check_user_perm(&uid,&gid,host,&rcode,"RMDIRTRUST")) < 0 &&
-	  (status=check_user_perm(&uid,&gid,host,&rcode,"RENAMETRUST")) < 0 ) {
-	if (status == -2)
-	  log(LOG_ERR,"rlstat(): uid %d not allowed to stat()\n",uid);
-	else
-	  log(LOG_ERR,"rlstat(): failed at check_user_perm(), rcode %d\n",rcode);
-	memset(&statbuf,'\0',sizeof(statbuf));
-	status = rcode;
+          (status=check_user_perm(&uid,&gid,host,&rcode,"FTRUST")) < 0 &&
+          (status=check_user_perm(&uid,&gid,host,&rcode,"WTRUST")) < 0 &&
+          (status=check_user_perm(&uid,&gid,host,&rcode,"RTRUST")) < 0 &&
+          (status=check_user_perm(&uid,&gid,host,&rcode,"XTRUST")) < 0 &&
+          (status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0 &&
+          (status=check_user_perm(&uid,&gid,host,&rcode,"STATTRUST")) < 0 &&
+          (status=check_user_perm(&uid,&gid,host,&rcode,"POPENTRUST")) < 0 &&
+          (status=check_user_perm(&uid,&gid,host,&rcode,"LINKTRUST")) < 0  &&
+          (status=check_user_perm(&uid,&gid,host,&rcode,"CHMODTRUST")) < 0 &&
+          (status=check_user_perm(&uid,&gid,host,&rcode,"CHOWNTRUST")) < 0 &&
+          (status=check_user_perm(&uid,&gid,host,&rcode,"MKDIRTRUST")) < 0 &&
+          (status=check_user_perm(&uid,&gid,host,&rcode,"RMDIRTRUST")) < 0 &&
+          (status=check_user_perm(&uid,&gid,host,&rcode,"RENAMETRUST")) < 0 ) {
+        if (status == -2)
+          log(LOG_ERR,"rlstat(): uid %d not allowed to stat()\n",uid);
+        else
+          log(LOG_ERR,"rlstat(): failed at check_user_perm(), rcode %d\n",rcode);
+        memset(&statbuf,'\0',sizeof(statbuf));
+        status = rcode;
       } else {
-	char ofilename[MAXFILENAMSIZE];
-	strcpy(ofilename, filename);
-	if (forced_filename != NULL || !check_path_whitelist(host, filename, rfio_all_perms, ofilename, sizeof(ofilename),0)) {
-	  status= ( lstat(CORRECT_FILENAME(ofilename), &statbuf) < 0 ) ? errno : 0;
-	} else {
-	  status = errno;
-	}
-	log(LOG_INFO,"rlstat: file: %s , status %d\n",CORRECT_FILENAME(filename),status);
+        char ofilename[MAXFILENAMSIZE];
+        strcpy(ofilename, filename);
+        if (forced_filename != NULL || !check_path_whitelist(host, filename, rfio_all_perms, ofilename, sizeof(ofilename),0)) {
+          status= ( lstat(CORRECT_FILENAME(ofilename), &statbuf) < 0 ) ? errno : 0;
+        } else {
+          status = errno;
+        }
+        log(LOG_INFO,"rlstat: file: %s , status %d\n",CORRECT_FILENAME(filename),status);
       }
     }
   }
@@ -1855,11 +1855,11 @@ int     srstat(s,rt,host,bet)
       unmarshall_WORD(p,gid);
       *user = '\0';
       if ( (status == 0) &&
-	   (status = unmarshall_STRINGN(p,user,CA_MAXUSRNAMELEN+1)) == -1 )
-	rcode = E2BIG;
+           (status = unmarshall_STRINGN(p,user,CA_MAXUSRNAMELEN+1)) == -1 )
+        rcode = E2BIG;
     }
     if ( (status == 0) &&
-	 (status = unmarshall_STRINGN(p,filename,MAXFILENAMSIZE)) == -1 )
+         (status = unmarshall_STRINGN(p,filename,MAXFILENAMSIZE)) == -1 )
       rcode = SENAMETOOLONG;
 
     if ( (status == 0) && bet && rt ) {
@@ -1868,23 +1868,23 @@ int     srstat(s,rt,host,bet)
       int to_uid, to_gid;
 
       if ( (rcd = get_user(host,user,uid,gid,to,&to_uid,&to_gid)) == -ENOENT ) {
-	log(LOG_ERR,"rstat: get_user(): Error opening mapping file\n");
-	status= -1;
-	errno = EINVAL;
-	rcode = errno;
+        log(LOG_ERR,"rstat: get_user(): Error opening mapping file\n");
+        status= -1;
+        errno = EINVAL;
+        rcode = errno;
       }
 
       if ( !status && abs(rcd) == 1 ) {
-	log(LOG_ERR,"No entry in mapping file for (%s,%s,%d,%d)\n", host,user,uid,gid);
-	status= -1;
-	errno=EACCES;
-	rcode=errno;
+        log(LOG_ERR,"No entry in mapping file for (%s,%s,%d,%d)\n", host,user,uid,gid);
+        status= -1;
+        errno=EACCES;
+        rcode=errno;
       }
       else {
-	log(LOG_DEBUG,"(%s,%s,%d,%d) mapped to %s(%d,%d)\n",
-	    host,user,uid,gid,to,to_uid,to_gid);
-	uid = to_uid;
-	gid = to_gid;
+        log(LOG_DEBUG,"(%s,%s,%d,%d) mapped to %s(%d,%d)\n",
+            host,user,uid,gid,to,to_uid,to_gid);
+        uid = to_uid;
+        gid = to_gid;
       }
     }
     if ( !status ) {
@@ -1893,35 +1893,35 @@ int     srstat(s,rt,host,bet)
        */
       rcode = 0;
       if (bet &&
-	  (status=check_user_perm(&uid,&gid,host,&rcode,"FTRUST")) < 0 &&
-	  (status=check_user_perm(&uid,&gid,host,&rcode,"WTRUST")) < 0 &&
-	  (status=check_user_perm(&uid,&gid,host,&rcode,"RTRUST")) < 0 &&
-	  (status=check_user_perm(&uid,&gid,host,&rcode,"XTRUST")) < 0 &&
-	  (status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0 &&
-	  (status=check_user_perm(&uid,&gid,host,&rcode,"STATTRUST")) < 0 &&
-	  (status=check_user_perm(&uid,&gid,host,&rcode,"POPENTRUST")) < 0 &&
-	  (status=check_user_perm(&uid,&gid,host,&rcode,"LINKTRUST")) < 0  &&
-	  (status=check_user_perm(&uid,&gid,host,&rcode,"CHMODTRUST")) < 0 &&
-	  (status=check_user_perm(&uid,&gid,host,&rcode,"CHOWNTRUST")) < 0 &&
-	  (status=check_user_perm(&uid,&gid,host,&rcode,"MKDIRTRUST")) < 0 &&
-	  (status=check_user_perm(&uid,&gid,host,&rcode,"RMDIRTRUST")) < 0 &&
-	  (status=check_user_perm(&uid,&gid,host,&rcode,"RENAMETRUST")) < 0 ) {
-	if (status == -2)
-	  log(LOG_ERR,"rstat(): uid %d not allowed to stat()\n",uid);
-	else
-	  log(LOG_ERR,"rstat(): failed at check_user_perm(), rcode %d\n",rcode);
-	memset(&statbuf,'\0',sizeof(statbuf));
-	status = rcode;
+          (status=check_user_perm(&uid,&gid,host,&rcode,"FTRUST")) < 0 &&
+          (status=check_user_perm(&uid,&gid,host,&rcode,"WTRUST")) < 0 &&
+          (status=check_user_perm(&uid,&gid,host,&rcode,"RTRUST")) < 0 &&
+          (status=check_user_perm(&uid,&gid,host,&rcode,"XTRUST")) < 0 &&
+          (status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0 &&
+          (status=check_user_perm(&uid,&gid,host,&rcode,"STATTRUST")) < 0 &&
+          (status=check_user_perm(&uid,&gid,host,&rcode,"POPENTRUST")) < 0 &&
+          (status=check_user_perm(&uid,&gid,host,&rcode,"LINKTRUST")) < 0  &&
+          (status=check_user_perm(&uid,&gid,host,&rcode,"CHMODTRUST")) < 0 &&
+          (status=check_user_perm(&uid,&gid,host,&rcode,"CHOWNTRUST")) < 0 &&
+          (status=check_user_perm(&uid,&gid,host,&rcode,"MKDIRTRUST")) < 0 &&
+          (status=check_user_perm(&uid,&gid,host,&rcode,"RMDIRTRUST")) < 0 &&
+          (status=check_user_perm(&uid,&gid,host,&rcode,"RENAMETRUST")) < 0 ) {
+        if (status == -2)
+          log(LOG_ERR,"rstat(): uid %d not allowed to stat()\n",uid);
+        else
+          log(LOG_ERR,"rstat(): failed at check_user_perm(), rcode %d\n",rcode);
+        memset(&statbuf,'\0',sizeof(statbuf));
+        status = rcode;
       } else  {
-	char ofilename[MAXFILENAMSIZE];
-	strcpy(ofilename, filename);
-	if (forced_filename != NULL || !check_path_whitelist(host, filename, rfio_all_perms, ofilename, sizeof(ofilename),1)) {
-	  status= ( stat(CORRECT_FILENAME(ofilename), &statbuf) < 0 ) ? errno : 0;
-	} else {
-	  status = errno;
-	}
+        char ofilename[MAXFILENAMSIZE];
+        strcpy(ofilename, filename);
+        if (forced_filename != NULL || !check_path_whitelist(host, filename, rfio_all_perms, ofilename, sizeof(ofilename),1)) {
+          status= ( stat(CORRECT_FILENAME(ofilename), &statbuf) < 0 ) ? errno : 0;
+        } else {
+          status = errno;
+        }
 
-	log(LOG_INFO,"rstat: stat(): file: %s for (%d,%d) status %d\n",CORRECT_FILENAME(filename),uid,gid,status);
+        log(LOG_INFO,"rstat: stat(): file: %s for (%d,%d) status %d\n",CORRECT_FILENAME(filename),uid,gid,status);
       }
     }
   }
@@ -1990,7 +1990,7 @@ int     sraccess(s, host, rt)
     *filename = '\0';
     status = 0;
     if ( (status == 0) &&
-	 (status = unmarshall_STRINGN(p,filename,MAXFILENAMSIZE)) == -1)
+         (status = unmarshall_STRINGN(p,filename,MAXFILENAMSIZE)) == -1)
       rcode = SENAMETOOLONG;
     unmarshall_LONG(p,uid);
     unmarshall_LONG(p,gid);
@@ -2013,108 +2013,108 @@ int     sraccess(s, host, rt)
 
     if (!status) {
       if ((mode & (R_OK | W_OK | X_OK)) != 0) {
-	if ((mode & R_OK) == R_OK) {
-	  perm_array[9] = "RTRUST";
-	  if (
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"RTRUST")) < 0 &&
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0 &&
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"STATTRUST")) < 0 &&
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"POPENTRUST")) < 0 &&
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"LINKTRUST")) < 0  &&
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"CHMODTRUST")) < 0 &&
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"CHOWNTRUST")) < 0 &&
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"MKDIRTRUST")) < 0 &&
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"RMDIRTRUST")) < 0 &&
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"RENAMETRUST")) < 0
-	      ) {
-	    if (status == -2)
-	      log(LOG_ERR,"raccess(): uid %d not allowed to do access(R_OK)\n",uid);
-	    else
-	      log(LOG_ERR,"raccess(): failed at check_user_perm(), rcode %d\n",rcode);
-	  }
-	}
-	if ((! status) && ((mode & W_OK) == W_OK)) {
-	  perm_array[9] = "WTRUST";
-	  if (
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"WTRUST")) < 0 &&
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0 &&
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"STATTRUST")) < 0 &&
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"POPENTRUST")) < 0 &&
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"LINKTRUST")) < 0  &&
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"CHMODTRUST")) < 0 &&
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"CHOWNTRUST")) < 0 &&
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"MKDIRTRUST")) < 0 &&
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"RMDIRTRUST")) < 0 &&
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"RENAMETRUST")) < 0
-	      ) {
-	    if (status == -2)
-	      log(LOG_ERR,"raccess(): uid %d not allowed to do access(W_OK)\n",uid);
-	    else
-	      log(LOG_ERR,"raccess(): failed at check_user_perm(), rcode %d\n",rcode);
-	  }
-	}
-	if ((! status) && ((mode & X_OK) == X_OK)) {
-	  perm_array[9] = "XTRUST";
-	  if (
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"XTRUST")) < 0 &&
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0 &&
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"STATTRUST")) < 0 &&
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"POPENTRUST")) < 0 &&
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"LINKTRUST")) < 0  &&
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"CHMODTRUST")) < 0 &&
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"CHOWNTRUST")) < 0 &&
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"MKDIRTRUST")) < 0 &&
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"RMDIRTRUST")) < 0 &&
-	      (status=check_user_perm(&uid,&gid,host,&rcode,"RENAMETRUST")) < 0
-	      ) {
-	    if (status == -2)
-	      log(LOG_ERR,"raccess(): uid %d not allowed to do access(X_OK)\n",uid);
-	    else
-	      log(LOG_ERR,"raccess(): failed at check_user_perm(), rcode %d\n",rcode);
-	  }
-	}
+        if ((mode & R_OK) == R_OK) {
+          perm_array[9] = "RTRUST";
+          if (
+              (status=check_user_perm(&uid,&gid,host,&rcode,"RTRUST")) < 0 &&
+              (status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0 &&
+              (status=check_user_perm(&uid,&gid,host,&rcode,"STATTRUST")) < 0 &&
+              (status=check_user_perm(&uid,&gid,host,&rcode,"POPENTRUST")) < 0 &&
+              (status=check_user_perm(&uid,&gid,host,&rcode,"LINKTRUST")) < 0  &&
+              (status=check_user_perm(&uid,&gid,host,&rcode,"CHMODTRUST")) < 0 &&
+              (status=check_user_perm(&uid,&gid,host,&rcode,"CHOWNTRUST")) < 0 &&
+              (status=check_user_perm(&uid,&gid,host,&rcode,"MKDIRTRUST")) < 0 &&
+              (status=check_user_perm(&uid,&gid,host,&rcode,"RMDIRTRUST")) < 0 &&
+              (status=check_user_perm(&uid,&gid,host,&rcode,"RENAMETRUST")) < 0
+              ) {
+            if (status == -2)
+              log(LOG_ERR,"raccess(): uid %d not allowed to do access(R_OK)\n",uid);
+            else
+              log(LOG_ERR,"raccess(): failed at check_user_perm(), rcode %d\n",rcode);
+          }
+        }
+        if ((! status) && ((mode & W_OK) == W_OK)) {
+          perm_array[9] = "WTRUST";
+          if (
+              (status=check_user_perm(&uid,&gid,host,&rcode,"WTRUST")) < 0 &&
+              (status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0 &&
+              (status=check_user_perm(&uid,&gid,host,&rcode,"STATTRUST")) < 0 &&
+              (status=check_user_perm(&uid,&gid,host,&rcode,"POPENTRUST")) < 0 &&
+              (status=check_user_perm(&uid,&gid,host,&rcode,"LINKTRUST")) < 0  &&
+              (status=check_user_perm(&uid,&gid,host,&rcode,"CHMODTRUST")) < 0 &&
+              (status=check_user_perm(&uid,&gid,host,&rcode,"CHOWNTRUST")) < 0 &&
+              (status=check_user_perm(&uid,&gid,host,&rcode,"MKDIRTRUST")) < 0 &&
+              (status=check_user_perm(&uid,&gid,host,&rcode,"RMDIRTRUST")) < 0 &&
+              (status=check_user_perm(&uid,&gid,host,&rcode,"RENAMETRUST")) < 0
+              ) {
+            if (status == -2)
+              log(LOG_ERR,"raccess(): uid %d not allowed to do access(W_OK)\n",uid);
+            else
+              log(LOG_ERR,"raccess(): failed at check_user_perm(), rcode %d\n",rcode);
+          }
+        }
+        if ((! status) && ((mode & X_OK) == X_OK)) {
+          perm_array[9] = "XTRUST";
+          if (
+              (status=check_user_perm(&uid,&gid,host,&rcode,"XTRUST")) < 0 &&
+              (status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0 &&
+              (status=check_user_perm(&uid,&gid,host,&rcode,"STATTRUST")) < 0 &&
+              (status=check_user_perm(&uid,&gid,host,&rcode,"POPENTRUST")) < 0 &&
+              (status=check_user_perm(&uid,&gid,host,&rcode,"LINKTRUST")) < 0  &&
+              (status=check_user_perm(&uid,&gid,host,&rcode,"CHMODTRUST")) < 0 &&
+              (status=check_user_perm(&uid,&gid,host,&rcode,"CHOWNTRUST")) < 0 &&
+              (status=check_user_perm(&uid,&gid,host,&rcode,"MKDIRTRUST")) < 0 &&
+              (status=check_user_perm(&uid,&gid,host,&rcode,"RMDIRTRUST")) < 0 &&
+              (status=check_user_perm(&uid,&gid,host,&rcode,"RENAMETRUST")) < 0
+              ) {
+            if (status == -2)
+              log(LOG_ERR,"raccess(): uid %d not allowed to do access(X_OK)\n",uid);
+            else
+              log(LOG_ERR,"raccess(): failed at check_user_perm(), rcode %d\n",rcode);
+          }
+        }
       } else {
-	perm_array[9] = "FTRUST";
-	perm_array[10] = "WTRUST";
-	perm_array[11] = "RTRUST";
-	perm_array[12] = "XTRUST";
-	if (
-	    (status=check_user_perm(&uid,&gid,host,&rcode,"FTRUST")) < 0 &&
-	    (status=check_user_perm(&uid,&gid,host,&rcode,"WTRUST")) < 0 &&
-	    (status=check_user_perm(&uid,&gid,host,&rcode,"RTRUST")) < 0 &&
-	    (status=check_user_perm(&uid,&gid,host,&rcode,"XTRUST")) < 0 &&
-	    (status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0 &&
-	    (status=check_user_perm(&uid,&gid,host,&rcode,"STATTRUST")) < 0 &&
-	    (status=check_user_perm(&uid,&gid,host,&rcode,"POPENTRUST")) < 0 &&
-	    (status=check_user_perm(&uid,&gid,host,&rcode,"LINKTRUST")) < 0  &&
-	    (status=check_user_perm(&uid,&gid,host,&rcode,"CHMODTRUST")) < 0 &&
-	    (status=check_user_perm(&uid,&gid,host,&rcode,"CHOWNTRUST")) < 0 &&
-	    (status=check_user_perm(&uid,&gid,host,&rcode,"MKDIRTRUST")) < 0 &&
-	    (status=check_user_perm(&uid,&gid,host,&rcode,"RMDIRTRUST")) < 0 &&
-	    (status=check_user_perm(&uid,&gid,host,&rcode,"RENAMETRUST")) < 0
-	    ) {
-	  if (status == -2)
-	    log(LOG_ERR,"raccess(): uid %d not allowed to do access(F_OK)\n",uid);
-	  else
-	    log(LOG_ERR,"raccess(): failed at check_user_perm(), rcode %d\n",rcode);
-	}
+        perm_array[9] = "FTRUST";
+        perm_array[10] = "WTRUST";
+        perm_array[11] = "RTRUST";
+        perm_array[12] = "XTRUST";
+        if (
+            (status=check_user_perm(&uid,&gid,host,&rcode,"FTRUST")) < 0 &&
+            (status=check_user_perm(&uid,&gid,host,&rcode,"WTRUST")) < 0 &&
+            (status=check_user_perm(&uid,&gid,host,&rcode,"RTRUST")) < 0 &&
+            (status=check_user_perm(&uid,&gid,host,&rcode,"XTRUST")) < 0 &&
+            (status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0 &&
+            (status=check_user_perm(&uid,&gid,host,&rcode,"STATTRUST")) < 0 &&
+            (status=check_user_perm(&uid,&gid,host,&rcode,"POPENTRUST")) < 0 &&
+            (status=check_user_perm(&uid,&gid,host,&rcode,"LINKTRUST")) < 0  &&
+            (status=check_user_perm(&uid,&gid,host,&rcode,"CHMODTRUST")) < 0 &&
+            (status=check_user_perm(&uid,&gid,host,&rcode,"CHOWNTRUST")) < 0 &&
+            (status=check_user_perm(&uid,&gid,host,&rcode,"MKDIRTRUST")) < 0 &&
+            (status=check_user_perm(&uid,&gid,host,&rcode,"RMDIRTRUST")) < 0 &&
+            (status=check_user_perm(&uid,&gid,host,&rcode,"RENAMETRUST")) < 0
+            ) {
+          if (status == -2)
+            log(LOG_ERR,"raccess(): uid %d not allowed to do access(F_OK)\n",uid);
+          else
+            log(LOG_ERR,"raccess(): failed at check_user_perm(), rcode %d\n",rcode);
+        }
       }
       if ( !status && forced_filename != NULL) {
-	log(LOG_ERR,"Disallowing access() in forced filename mode\n");
-	status= -1;
-	errno=EACCES;
-	rcode=errno;
+        log(LOG_ERR,"Disallowing access() in forced filename mode\n");
+        status= -1;
+        errno=EACCES;
+        rcode=errno;
       }
       if (status) {
-	status = rcode;
+        status = rcode;
       } else {
-	char ofilename[MAXFILENAMSIZE];
-	if (!check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
-	  status= ( access(ofilename, mode) < 0 ) ? errno : 0;
-	} else {
-	  status = errno;
-	}
-	log(LOG_INFO,"raccess: filen: %s, mode %d for (%d,%d) status %d\n",filename,mode,uid,gid,status);
+        char ofilename[MAXFILENAMSIZE];
+        if (!check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
+          status= ( access(ofilename, mode) < 0 ) ? errno : 0;
+        } else {
+          status = errno;
+        }
+        log(LOG_INFO,"raccess: filen: %s, mode %d for (%d,%d) status %d\n",filename,mode,uid,gid,status);
       }
     }
   }
@@ -2172,7 +2172,7 @@ int  srstatfs(s)
     status = 0;
     *path = '\0';
     if ( (status == 0) &&
-	 (status = unmarshall_STRINGN(p,path,MAXFILENAMSIZE)) == -1) {
+         (status = unmarshall_STRINGN(p,path,MAXFILENAMSIZE)) == -1) {
       rcode = SENAMETOOLONG;
       log(LOG_ERR,"srstatfs: path too long\n");
     } else {
@@ -2271,23 +2271,23 @@ int  sropen(s,rt,host,bet)
     unmarshall_LONG(p, mode);
     *account = *filename = *user = *reqhost = *vmstr = '\0';
     if ( (status == 0) &&
-	 (status = unmarshall_STRINGN(p, account, MAXACCTSIZE)) == -1 )
+         (status = unmarshall_STRINGN(p, account, MAXACCTSIZE)) == -1 )
       rcode = E2BIG;
     if ( (status == 0) &&
-	 (status = unmarshall_STRINGN(p, filename, MAXFILENAMSIZE)) == -1 )
+         (status = unmarshall_STRINGN(p, filename, MAXFILENAMSIZE)) == -1 )
       rcode = SENAMETOOLONG;
     if ((status == 0) && bet) {
       if ( (status == 0) &&
-	   (status = unmarshall_STRINGN(p, user, CA_MAXUSRNAMELEN+1)) == -1 )
-	rcode = E2BIG;
+           (status = unmarshall_STRINGN(p, user, CA_MAXUSRNAMELEN+1)) == -1 )
+        rcode = E2BIG;
       if ( (status == 0) &&
-	   (status = unmarshall_STRINGN(p, reqhost, MAXHOSTNAMELEN)) == -1 )
-	rcode = E2BIG;
+           (status = unmarshall_STRINGN(p, reqhost, MAXHOSTNAMELEN)) == -1 )
+        rcode = E2BIG;
       unmarshall_LONG(p, passwd);
       unmarshall_WORD(p, mapping);
       if ( (status == 0) &&
-	   (status = unmarshall_STRINGN(p, vmstr, sizeof(vmstr))) == -1 )
-	rcode = E2BIG;
+           (status = unmarshall_STRINGN(p, vmstr, sizeof(vmstr))) == -1 )
+        rcode = E2BIG;
     }
 
     log(LOG_DEBUG,"vms string is %s\n", vmstr);
@@ -2312,13 +2312,7 @@ int  sropen(s,rt,host,bet)
     }
 
     if ( rt ) {
-#if !defined(ultrix)
-      openlog("rfio",LOG_PID, LOG_USER);
-#else
-      openlog("rfio",LOG_PID );
-#endif
-      syslog(LOG_ALERT, "rfio: connection %s mapping by %s(%d,%d) from %s",(mapping ? "with" : "without"),user,uid,gid,host);
-      closelog();
+      log(LOG_ALERT, "rfio: connection %s mapping by %s(%d,%d) from %s",(mapping ? "with" : "without"),user,uid,gid,host);
     }
 
     /*
@@ -2330,28 +2324,28 @@ int  sropen(s,rt,host,bet)
 
       log(LOG_DEBUG,"Mapping (%s, %d, %d) \n",user, uid, gid );
       if ( (rcd = get_user(host,user,uid,gid,to,&to_uid,&to_gid)) == -ENOENT ) {
-	log(LOG_ERR,"sropen(): get_user() error opening mapping file\n");
-	status = -1;
-	errno = EINVAL;
-	rcode = SEHOSTREFUSED;
+        log(LOG_ERR,"sropen(): get_user() error opening mapping file\n");
+        status = -1;
+        errno = EINVAL;
+        rcode = SEHOSTREFUSED;
       }
 
       else if ( abs(rcd) == 1 ) {
-	log(LOG_ERR,"No entry found in mapping file for (%s,%s,%d,%d)\n", host,user,uid,gid);
-	status = -1;
-	errno = EACCES;
-	rcode = SEHOSTREFUSED;
+        log(LOG_ERR,"No entry found in mapping file for (%s,%s,%d,%d)\n", host,user,uid,gid);
+        status = -1;
+        errno = EACCES;
+        rcode = SEHOSTREFUSED;
       }
       else {
-	log(LOG_DEBUG,"(%s,%s,%d,%d) mapped to %s(%d,%d)\n",
-	    host,user,uid,gid,to,to_uid,to_gid);
-	uid = to_uid;
-	gid = to_gid;
-	if ( uid < 100 || gid < 100 ) {
-	  errno = EACCES;
-	  status = -1;
-	  rcode = SEHOSTREFUSED;
-	}
+        log(LOG_DEBUG,"(%s,%s,%d,%d) mapped to %s(%d,%d)\n",
+            host,user,uid,gid,to,to_uid,to_gid);
+        uid = to_uid;
+        gid = to_gid;
+        if ( uid < 100 || gid < 100 ) {
+          errno = EACCES;
+          status = -1;
+          rcode = SEHOSTREFUSED;
+        }
       }
     }
     /*
@@ -2360,33 +2354,33 @@ int  sropen(s,rt,host,bet)
     if ( !status && rt && !mapping ){
       char * rtuser;
       if ( (rtuser=getconfent ("RTUSER","CHECK",0) ) == NULL || ! strcmp (rtuser,"YES") )
-	{
-	  /* Port is also passwd */
+        {
+          /* Port is also passwd */
 #if defined(_WIN32)
-	  if( (sock = connecttpread(reqhost, passwd)) != INVALID_SOCKET
-	      && !checkkey(sock, passwd) )
+          if( (sock = connecttpread(reqhost, passwd)) != INVALID_SOCKET
+              && !checkkey(sock, passwd) )
 #else
-	    if( (sock = connecttpread(reqhost, passwd)) >= 0 && !checkkey(sock, passwd) )
+            if( (sock = connecttpread(reqhost, passwd)) >= 0 && !checkkey(sock, passwd) )
 #endif
-	      {
-		status= -1;
-		errno = EACCES;
-		rcode= errno;
-		log(LOG_ERR,"ropen: DIRECT mapping : permission denied\n");
-	      }
+              {
+                status= -1;
+                errno = EACCES;
+                rcode= errno;
+                log(LOG_ERR,"ropen: DIRECT mapping : permission denied\n");
+              }
 #if defined(_WIN32)
-	  if( sock == INVALID_SOCKET )
+          if( sock == INVALID_SOCKET )
 #else
-	    if( sock < 0 )
+            if( sock < 0 )
 #endif
-	      {
-		status= -1;
-		log(LOG_ERR,"ropen: DIRECT mapping failed: Couldn't connect %s\n", reqhost);
-		rcode = EACCES;
-	      }
-	}
+              {
+                status= -1;
+                log(LOG_ERR,"ropen: DIRECT mapping failed: Couldn't connect %s\n", reqhost);
+                rcode = EACCES;
+              }
+        }
       else
-	log(LOG_INFO ,"Any DIRECT rfio request from out of site is authorized\n");
+        log(LOG_INFO ,"Any DIRECT rfio request from out of site is authorized\n");
     }
     if ( !status ) {
       int need_user_check = 1;
@@ -2398,60 +2392,60 @@ int  sropen(s,rt,host,bet)
       (void) umask((mode_t) CORRECT_UMASK(mask));
 
       rc = rfio_handle_open(CORRECT_FILENAME(filename),
-			    ntohopnflg(flags),
-			    mode,
-			    uid,
-			    gid,
-			    &pfn,
-			    &handler_context,
-			    &need_user_check);
+                            ntohopnflg(flags),
+                            mode,
+                            uid,
+                            gid,
+                            &pfn,
+                            &handler_context,
+                            &need_user_check);
       if (rc < 0) {
-	char alarmbuf[1024];
-	sprintf(alarmbuf,"sropen(): %s",CORRECT_FILENAME(filename));
-	log(LOG_DEBUG, "sropen: rfio_handler_open refused open: %s\n", sstrerror(serrno));
-	rcode = serrno;
-	rfio_alrm(rcode,alarmbuf);
+        char alarmbuf[1024];
+        sprintf(alarmbuf,"sropen(): %s",CORRECT_FILENAME(filename));
+        log(LOG_DEBUG, "sropen: rfio_handler_open refused open: %s\n", sstrerror(serrno));
+        rcode = serrno;
+        rfio_alrm(rcode,alarmbuf);
       }
 
       if (need_user_check && ((status=check_user_perm(&uid,&gid,host,&rcode,(((ntohopnflg(flags)) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
-	  ((status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0) ) {
-	if (status == -2)
-	  log(LOG_ERR,"ropen(): uid %d not allowed to open()\n",uid);
-	else
-	  log(LOG_ERR,"ropen(): failed at check_user_perm(), rcode %d\n",rcode);
-	status = -1;
+          ((status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0) ) {
+        if (status == -2)
+          log(LOG_ERR,"ropen(): uid %d not allowed to open()\n",uid);
+        else
+          log(LOG_ERR,"ropen(): failed at check_user_perm(), rcode %d\n",rcode);
+        status = -1;
       }
       else
-	{
-	  const char *perm_array[3];
-	  char ofilename[MAXFILENAMSIZE];
-	  perm_array[0] = (((ntohopnflg(flags)) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST";
-	  perm_array[1] = "OPENTRUST";
-	  perm_array[2] = NULL;
+        {
+          const char *perm_array[3];
+          char ofilename[MAXFILENAMSIZE];
+          perm_array[0] = (((ntohopnflg(flags)) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST";
+          perm_array[1] = "OPENTRUST";
+          perm_array[2] = NULL;
 
-	  strcpy(ofilename, filename);
-	  fd = -1;
-	  if (forced_filename!=NULL || !check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
-	    fd = open(CORRECT_FILENAME(ofilename), ntohopnflg(flags), mode);
-	    log(LOG_DEBUG, "ropen: open(%s,%d,%d) returned %x (hex)\n", CORRECT_FILENAME(ofilename), flags, mode, fd);
-	  }
-	  if (fd < 0) {
-	    char alarmbuf[1024];
-	    sprintf(alarmbuf,"sropen(): %s",CORRECT_FILENAME(filename));
-	    status= -1;
-	    rcode= errno;
-	    log(LOG_DEBUG,"ropen: open: %s\n",strerror(errno));
-	    rfio_alrm(rcode,alarmbuf);
-	  }
-	  else {
-	    /*
-	     * Getting current offset
-	     */
-	    status= lseek(fd,0L,SEEK_CUR);
-	    log(LOG_DEBUG,"ropen: lseek(%d,0,SEEK_CUR) returned %x (hex)\n",fd,status);
-	    if ( status < 0 ) rcode= errno;
-	  }
-	}
+          strcpy(ofilename, filename);
+          fd = -1;
+          if (forced_filename!=NULL || !check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
+            fd = open(CORRECT_FILENAME(ofilename), ntohopnflg(flags), mode);
+            log(LOG_DEBUG, "ropen: open(%s,%d,%d) returned %x (hex)\n", CORRECT_FILENAME(ofilename), flags, mode, fd);
+          }
+          if (fd < 0) {
+            char alarmbuf[1024];
+            sprintf(alarmbuf,"sropen(): %s",CORRECT_FILENAME(filename));
+            status= -1;
+            rcode= errno;
+            log(LOG_DEBUG,"ropen: open: %s\n",strerror(errno));
+            rfio_alrm(rcode,alarmbuf);
+          }
+          else {
+            /*
+             * Getting current offset
+             */
+            status= lseek(fd,0L,SEEK_CUR);
+            log(LOG_DEBUG,"ropen: lseek(%d,0,SEEK_CUR) returned %x (hex)\n",fd,status);
+            if ( status < 0 ) rcode= errno;
+          }
+        }
     }
   }
 
@@ -2654,11 +2648,11 @@ int srread(s, infop, fd)
       marshall_LONG(p,0);
       if ( netwrite_timeout(s,rqstbuf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+3*LONGSIZE) ) {
 #if defined(_WIN32)
-	log(LOG_ERR, "rread: netwrite_timeout(): %s\n", geterr());
+        log(LOG_ERR, "rread: netwrite_timeout(): %s\n", geterr());
 #else
-	log(LOG_ERR, "rread: netwrite_timeout(): %s\n", strerror(errno));
+        log(LOG_ERR, "rread: netwrite_timeout(): %s\n", strerror(errno));
 #endif
-	return -1;
+        return -1;
       }
       return -1;
     }
@@ -2685,11 +2679,11 @@ int srread(s, infop, fd)
       marshall_LONG(p,0);
       if ( netwrite_timeout(s,rqstbuf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+3*LONGSIZE) ) {
 #if defined(_WIN32)
-	log(LOG_ERR, "rread: netwrite_timeout(): %s\n", geterr());
+        log(LOG_ERR, "rread: netwrite_timeout(): %s\n", geterr());
 #else
-	log(LOG_ERR, "rread: netwrite_timeout(): %s\n", strerror(errno));
+        log(LOG_ERR, "rread: netwrite_timeout(): %s\n", strerror(errno));
 #endif
-	return -1;
+        return -1;
       }
       return -1;
     }
@@ -2698,7 +2692,7 @@ int srread(s, infop, fd)
     optval = (iobufsiz > 64 * 1024) ? iobufsiz : (64 * 1024);
 #if defined(_WIN32)
     if( setsockopt(s, SOL_SOCKET, SO_SNDBUF, (char*)&optval, sizeof(optval))
-	== SOCKET_ERROR )
+        == SOCKET_ERROR )
       log(LOG_ERR, "rread(): setsockopt(SO_SNDBUF): %s\n", geterr());
 #else
     if( setsockopt(s, SOL_SOCKET, SO_SNDBUF, (char*)&optval, sizeof(optval)) == -1 )
@@ -2780,11 +2774,11 @@ int srreadahead(s, infop, fd)
       marshall_LONG(p,rcode);
       if ( netwrite_timeout(s,iobuffer,iobufsiz,RFIO_CTRL_TIMEOUT) != iobufsiz ) {
 #if defined(_WIN32)
-	log(LOG_ERR, "rreadahead(): netwrite_timeout(): %s\n",geterr());
+        log(LOG_ERR, "rreadahead(): netwrite_timeout(): %s\n",geterr());
 #else
-	log(LOG_ERR, "rreadahead(): netwrite_timeout(): %s\n", strerror(errno));
+        log(LOG_ERR, "rreadahead(): netwrite_timeout(): %s\n", strerror(errno));
 #endif
-	return -1;
+        return -1;
       }
       return status;
     }
@@ -3244,11 +3238,11 @@ int     srfstat(s, infop, fd)
       marshall_LONG(p,rcode);
       if ( netwrite_timeout(s,rqstbuf,6*LONGSIZE+6*WORDSIZE,RFIO_CTRL_TIMEOUT) != (6*LONGSIZE+6*WORDSIZE) ) {
 #if defined(WIN32)
-	log(LOG_ERR, "rreadahead(): netwrite_timeout(): %s\n", geterr());
+        log(LOG_ERR, "rreadahead(): netwrite_timeout(): %s\n", geterr());
 #else
-	log(LOG_ERR, "rreadahead(): netwrite_timeout(): %s\n", strerror(errno));
+        log(LOG_ERR, "rreadahead(): netwrite_timeout(): %s\n", strerror(errno));
 #endif
-	return -1;
+        return -1;
       }
       return status;
     }
@@ -3477,45 +3471,45 @@ int srpreseek(s, infop, fd)
       nbfree -= 4*LONGSIZE;
       status= lseek(fd,(off_t)v[reqno].iov_base,SEEK_SET);
       if ( status == -1 ) {
-	marshall_LONG(p,v[reqno].iov_base);
-	marshall_LONG(p,v[reqno].iov_len);
-	marshall_LONG(p,status);
-	marshall_LONG(p,errno);
-	continue;
+        marshall_LONG(p,v[reqno].iov_base);
+        marshall_LONG(p,v[reqno].iov_len);
+        marshall_LONG(p,status);
+        marshall_LONG(p,errno);
+        continue;
       }
       if ( v[reqno].iov_len <= nbfree ) {
-	status= read(fd,p+4*LONGSIZE,v[reqno].iov_len);
-	marshall_LONG(p,v[reqno].iov_base);
-	marshall_LONG(p,v[reqno].iov_len);
-	marshall_LONG(p,status);
-	marshall_LONG(p,errno);
-	if ( status != -1 ) {
-	  infop->rnbr += status;
-	  nbfree -= status;
-	  p += status;
-	}
+        status= read(fd,p+4*LONGSIZE,v[reqno].iov_len);
+        marshall_LONG(p,v[reqno].iov_base);
+        marshall_LONG(p,v[reqno].iov_len);
+        marshall_LONG(p,status);
+        marshall_LONG(p,errno);
+        if ( status != -1 ) {
+          infop->rnbr += status;
+          nbfree -= status;
+          p += status;
+        }
       }
       else {
-	/*
-	 * The record is broken into two pieces.
-	 */
-	status= read(fd,p+4*LONGSIZE,nbfree);
-	marshall_LONG(p,v[reqno].iov_base);
-	marshall_LONG(p,nbfree);
-	marshall_LONG(p,status);
-	marshall_LONG(p,errno);
-	if ( status != -1 ) {
-	  infop->rnbr += status;
-	  nbfree -= status;
-	  p += status;
+        /*
+         * The record is broken into two pieces.
+         */
+        status= read(fd,p+4*LONGSIZE,nbfree);
+        marshall_LONG(p,v[reqno].iov_base);
+        marshall_LONG(p,nbfree);
+        marshall_LONG(p,status);
+        marshall_LONG(p,errno);
+        if ( status != -1 ) {
+          infop->rnbr += status;
+          nbfree -= status;
+          p += status;
 #if HPUX1010 || IRIX6 || IRIX5
-	  v[reqno].iov_base = (caddr_t)v[reqno].iov_base + status;
+          v[reqno].iov_base = (caddr_t)v[reqno].iov_base + status;
 #else
-	  v[reqno].iov_base += status;
+          v[reqno].iov_base += status;
 #endif
-	  v[reqno].iov_len -= status;
-	  reqno --;
-	}
+          v[reqno].iov_len -= status;
+          reqno --;
+        }
       }
 
     }
@@ -3552,12 +3546,12 @@ int     srfchmod(s, host, rt, fd)
      int     s;
      char    *host;
      int     rt;
-     int	fd;
+     int        fd;
 {
-  int	status;
-  int	rcode;
-  int	mode;
-  char	*p;
+  int        status;
+  int        rcode;
+  int        mode;
+  char        *p;
   int  uid;
 
   log(LOG_DEBUG, "rfchmod(%d, %d)\n",s,fd);
@@ -3569,7 +3563,7 @@ int     srfchmod(s, host, rt, fd)
   } else {
     uid = getuid();
     if ( ((status=chksuser(uid,0,host,&rcode,"WTRUST")) < 0) &&
-	 ((status=chksuser(uid,0,host,&rcode,"CHMODTRUST")) < 0) ) {
+         ((status=chksuser(uid,0,host,&rcode,"CHMODTRUST")) < 0) ) {
       log(LOG_ERR,"srchmod(): UID %d not allowed to chmod()\n",uid);
     } else {
       p= rqstbuf + 2*WORDSIZE;
@@ -3600,13 +3594,13 @@ int     srfchown(s, host, rt, fd)
      int     s;
      char    *host;
      int     rt;
-     int	fd;
+     int        fd;
 {
-  int	status;
-  int	rcode;
-  int	owner;
-  int	group;
-  char	*p;
+  int        status;
+  int        rcode;
+  int        owner;
+  int        group;
+  char        *p;
   int  uid;
 
   log(LOG_DEBUG, "rfchown(%d, %d)\n",s,fd);
@@ -3618,7 +3612,7 @@ int     srfchown(s, host, rt, fd)
   } else {
     uid = getuid();
     if ( ((status=chksuser(uid,0,host,&rcode,"WTRUST")) < 0) &&
-	 ((status=chksuser(uid,0,host,&rcode,"CHOWNTRUST")) < 0) ) {
+         ((status=chksuser(uid,0,host,&rcode,"CHOWNTRUST")) < 0) ) {
       log(LOG_ERR,"srfchown(): UID %d not allowed to chown()\n",uid);
     } else {
       p= rqstbuf + 2*WORDSIZE;
@@ -3649,10 +3643,10 @@ int     srfchown(s, host, rt, fd)
 
 #if !defined(_WIN32)
 DIR *sropendir(s,rt,host,bet)
-int s;
-int rt;
-char *host;
-int bet;
+     int s;
+     int rt;
+     char *host;
+     int bet;
 {
   int status;
   int rcode = 0;
@@ -3688,21 +3682,21 @@ int bet;
     unmarshall_WORD(p,uid);
     unmarshall_WORD(p,gid);
     if ( (status == 0) &&
-	 (status = unmarshall_STRINGN(p, account,MAXACCTSIZE)) == -1 )
+         (status = unmarshall_STRINGN(p, account,MAXACCTSIZE)) == -1 )
       rcode = E2BIG;
     if ( (status == 0) &&
-	 (status = unmarshall_STRINGN(p, filename, MAXFILENAMSIZE)) == -1 )
+         (status = unmarshall_STRINGN(p, filename, MAXFILENAMSIZE)) == -1 )
       rcode = SENAMETOOLONG;
     if ( (status == 0) &&
-	 (status = unmarshall_STRINGN(p, user, CA_MAXUSRNAMELEN+1)) == -1 )
+         (status = unmarshall_STRINGN(p, user, CA_MAXUSRNAMELEN+1)) == -1 )
       rcode = E2BIG;
     if ( (status == 0) &&
-	 (status = unmarshall_STRINGN(p, reqhost, MAXHOSTNAMELEN)) == -1 )
+         (status = unmarshall_STRINGN(p, reqhost, MAXHOSTNAMELEN)) == -1 )
       rcode = E2BIG;
     unmarshall_LONG(p, passwd);
     unmarshall_WORD(p, mapping);
     if ( (status == 0) &&
-	 (status = unmarshall_STRINGN(p, vmstr, sizeof(vmstr))) == -1 )
+         (status = unmarshall_STRINGN(p, vmstr, sizeof(vmstr))) == -1 )
       rcode = E2BIG;
     log(LOG_DEBUG,"vms string is %s\n", vmstr);
     if (bet)
@@ -3726,13 +3720,7 @@ int bet;
     }
 
     if ( rt ) {
-#if !defined(ultrix)
-      openlog("rfio",LOG_PID, LOG_USER);
-#else
-      openlog("rfio",LOG_PID );
-#endif
-      syslog(LOG_ALERT, "rfio: connection %s mapping by %s(%d,%d) from %s",(mapping ? "with" : "without"),user,uid,gid,host);
-      closelog();
+      log(LOG_ALERT, "rfio: connection %s mapping by %s(%d,%d) from %s",(mapping ? "with" : "without"),user,uid,gid,host);
     }
 
     /*
@@ -3744,28 +3732,28 @@ int bet;
 
       log(LOG_DEBUG,"Mapping (%s, %d, %d) \n",user, uid, gid );
       if ( (rcd = get_user(host,user,uid,gid,to,&to_uid,&to_gid)) == -ENOENT ) {
-	log(LOG_ERR,"sropendir(): get_user() error opening mapping file\n");
-	status = -1;
-	errno = EINVAL;
-	rcode = SEHOSTREFUSED;
+        log(LOG_ERR,"sropendir(): get_user() error opening mapping file\n");
+        status = -1;
+        errno = EINVAL;
+        rcode = SEHOSTREFUSED;
       }
 
       else if ( abs(rcd) == 1 ) {
-	log(LOG_ERR,"No entry found in mapping file for (%s,%s,%d,%d)\n", host,user,uid,gid);
-	status = -1;
-	errno = EACCES;
-	rcode = SEHOSTREFUSED;
+        log(LOG_ERR,"No entry found in mapping file for (%s,%s,%d,%d)\n", host,user,uid,gid);
+        status = -1;
+        errno = EACCES;
+        rcode = SEHOSTREFUSED;
       }
       else {
-	log(LOG_DEBUG,"(%s,%s,%d,%d) mapped to %s(%d,%d)\n",
-	    host,user,uid,gid,to,to_uid,to_gid);
-	uid = to_uid;
-	gid = to_gid;
-	if ( uid < 100 || gid < 100 ) {
-	  errno = EACCES;
-	  status = -1;
-	  rcode = SEHOSTREFUSED;
-	}
+        log(LOG_DEBUG,"(%s,%s,%d,%d) mapped to %s(%d,%d)\n",
+            host,user,uid,gid,to,to_uid,to_gid);
+        uid = to_uid;
+        gid = to_gid;
+        if ( uid < 100 || gid < 100 ) {
+          errno = EACCES;
+          status = -1;
+          rcode = SEHOSTREFUSED;
+        }
       }
     }
     /*
@@ -3774,20 +3762,20 @@ int bet;
     if ( !status && rt && !mapping ) {
       char * rtuser;
       if ( (rtuser=getconfent ("RTUSER","CHECK",0) ) == NULL || ! strcmp (rtuser,"YES") )
-	{
-	  /* Port is also passwd */
-	  if  ((sock=connecttpread(reqhost,passwd))>=0 && !checkkey(sock,passwd)) {
-	    status= -1;
-	    errno = EACCES;
-	    rcode= errno;
-	    log(LOG_ERR,"ropendir: DIRECT mapping : permission denied\n");
-	  }
-	  if (sock < 0) {
-	    status= -1;
-	    log(LOG_ERR,"ropendir: DIRECT mapping failed: Couldn't connect %s\n",reqhost);
-	    rcode = EACCES;
-	  }
-	}
+        {
+          /* Port is also passwd */
+          if  ((sock=connecttpread(reqhost,passwd))>=0 && !checkkey(sock,passwd)) {
+            status= -1;
+            errno = EACCES;
+            rcode= errno;
+            log(LOG_ERR,"ropendir: DIRECT mapping : permission denied\n");
+          }
+          if (sock < 0) {
+            status= -1;
+            log(LOG_ERR,"ropendir: DIRECT mapping failed: Couldn't connect %s\n",reqhost);
+            rcode = EACCES;
+          }
+        }
       else log(LOG_INFO ,"Any DIRECT rfio request from out of site is authorized\n");
     }
     if ( !status ) {
@@ -3796,35 +3784,35 @@ int bet;
       log(LOG_DEBUG, "ropendir: dirname: %s\n", filename);
       log(LOG_INFO, "ropendir(%s) for (%d,%d)\n",filename,uid,gid);
       if ( ((status=check_user_perm(&uid,&gid,host,&rcode,"RTRUST")) < 0) && ((status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0) ) {
-	if (status == -2)
-	  log(LOG_ERR,"ropendir(): uid %d not allowed to open()\n",uid);
-	else
-	  log(LOG_ERR,"ropendir(): failed at check_user_perm(), rcode %d\n",rcode);
-	status = -1;
+        if (status == -2)
+          log(LOG_ERR,"ropendir(): uid %d not allowed to open()\n",uid);
+        else
+          log(LOG_ERR,"ropendir(): failed at check_user_perm(), rcode %d\n",rcode);
+        status = -1;
       }
       if ( !status && forced_filename != NULL) {
-	log(LOG_ERR,"Disallowing opendir in forced filename mode\n");
-	status= -1;
-	errno=EACCES;
-	rcode=errno;
+        log(LOG_ERR,"Disallowing opendir in forced filename mode\n");
+        status= -1;
+        errno=EACCES;
+        rcode=errno;
       }
       if ( !status ) {
-	const char *perm_array[] = { "RTRUST", "OPENTRUST", NULL };
-	char ofilename[MAXFILENAMSIZE];
-	dirp = NULL;
-	if (!check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
-	  dirp= opendir(ofilename);
-	}
+        const char *perm_array[] = { "RTRUST", "OPENTRUST", NULL };
+        char ofilename[MAXFILENAMSIZE];
+        dirp = NULL;
+        if (!check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
+          dirp= opendir(ofilename);
+        }
 
-	if ( dirp == NULL ) {
-	  char alarmbuf[1024];
-	  status= -1;
-	  rcode= errno;
-	  sprintf(alarmbuf,"sropendir(): %s",filename);
-	  log(LOG_ERR,"ropendir: opendir: %s\n",strerror(rcode));
-	  rfio_alrm(rcode,alarmbuf);
-	}
-	log(LOG_DEBUG,"ropendir: opendir(%s) returned %x (hex)\n",filename,dirp);
+        if ( dirp == NULL ) {
+          char alarmbuf[1024];
+          status= -1;
+          rcode= errno;
+          sprintf(alarmbuf,"sropendir(): %s",filename);
+          log(LOG_ERR,"ropendir: opendir: %s\n",strerror(rcode));
+          rfio_alrm(rcode,alarmbuf);
+        }
+        log(LOG_DEBUG,"ropendir: opendir(%s) returned %x (hex)\n",filename,dirp);
       }
     }
   }
@@ -3969,11 +3957,11 @@ int srclosedir(s,infop,dirp)
  * check if trusted host.
  */
 static int chksuser(uid,gid,hostname,ptrcode,permstr)
-     int uid; 		/* uid of caller */
-     int gid;		/* gid of caller */
-     char *hostname;	/* caller's host name */
-     int *ptrcode;		/* Return code */
-     char *permstr;		/* permission string for the request */
+     int uid;                 /* uid of caller */
+     int gid;                /* gid of caller */
+     char *hostname;        /* caller's host name */
+     int *ptrcode;                /* Return code */
+     char *permstr;                /* permission string for the request */
 {
 
   char ptr[BUFSIZ];
@@ -4043,13 +4031,13 @@ int chsgroup(pw,gid)
     (void) setgrent();
     while ((gr = getgrent()))
       {
-	if ( gr->gr_gid != (gid_t)gid ) continue;
-	for ( membername = gr->gr_mem; membername && *membername; membername++ )
-	  if ( !strcmp(*membername,pw->pw_name) ) {
-	    found = 1;
-	    break;
-	  }
-	if ( found ) break;
+        if ( gr->gr_gid != (gid_t)gid ) continue;
+        for ( membername = gr->gr_mem; membername && *membername; membername++ )
+          if ( !strcmp(*membername,pw->pw_name) ) {
+            found = 1;
+            break;
+          }
+        if ( found ) break;
       }
     endgrent();
     if ( !found && chk_newacct(pw,(gid_t)gid) ) return(-1);
@@ -4081,9 +4069,9 @@ int chsuser(uid,gid,hostname,ptrcode,permstr)
     return -2;
   if ( uid >=100 && ( (pw = getpwuid((uid_t)uid)) == NULL
 #if !defined(_WIN32)
-		      || chsgroup(pw,gid)
+                      || chsgroup(pw,gid)
 #endif
-		      ))
+                      ))
     {
       *ptrcode = EACCES;
       log(LOG_ERR,"chsuser(): user (%d,%d) does not exist at local host\n",uid,gid);
@@ -4175,9 +4163,9 @@ int  sropen_v3(s, rt, host, bet)
     {
       param.sched_priority = SCHED_PRIO_RT_MIN;
       if (sched_setscheduler((pid_t) mypid,(int) SCHED_RR,&param) < 0)
-	log(LOG_DEBUG,"ropen_v3: sched_setscheduler (SCHED_RR,priority=%d) error : %s\n",(int) param.sched_priority, strerror(errno));
+        log(LOG_DEBUG,"ropen_v3: sched_setscheduler (SCHED_RR,priority=%d) error : %s\n",(int) param.sched_priority, strerror(errno));
       else
-	log(LOG_DEBUG,"ropen_v3: changing to real time class (SCHED_RR,priority=%d)\n", (int) param.sched_priority);
+        log(LOG_DEBUG,"ropen_v3: changing to real time class (SCHED_RR,priority=%d)\n", (int) param.sched_priority);
     }
 #endif
 #endif
@@ -4225,23 +4213,23 @@ int  sropen_v3(s, rt, host, bet)
     unmarshall_LONG(p, flags);
     unmarshall_LONG(p, mode);
     if ( (status == 0) &&
-	 (status = unmarshall_STRINGN(p, account, MAXACCTSIZE)) == -1)
+         (status = unmarshall_STRINGN(p, account, MAXACCTSIZE)) == -1)
       rcode = E2BIG;
     if ( (status == 0) &&
-	 (status = unmarshall_STRINGN(p, filename, MAXFILENAMSIZE)) == -1)
+         (status = unmarshall_STRINGN(p, filename, MAXFILENAMSIZE)) == -1)
       rcode = SENAMETOOLONG;
     if (bet) {
       if ( (status == 0) &&
-	   (status = unmarshall_STRINGN(p, user, CA_MAXUSRNAMELEN+1)) == -1)
-	rcode = E2BIG;
+           (status = unmarshall_STRINGN(p, user, CA_MAXUSRNAMELEN+1)) == -1)
+        rcode = E2BIG;
       if ( (status == 0) &&
-	   (status = unmarshall_STRINGN(p, reqhost, MAXHOSTNAMELEN)) == -1)
-	rcode = E2BIG;
+           (status = unmarshall_STRINGN(p, reqhost, MAXHOSTNAMELEN)) == -1)
+        rcode = E2BIG;
       unmarshall_LONG(p, passwd);
       unmarshall_WORD(p, mapping);
       if ( (status == 0) &&
-	   (status = unmarshall_STRINGN(p, vmstr, sizeof(vmstr))) == -1)
-	rcode = E2BIG;
+           (status = unmarshall_STRINGN(p, vmstr, sizeof(vmstr))) == -1)
+        rcode = E2BIG;
     }
 
     log(LOG_DEBUG,"vms string is %s\n", vmstr);
@@ -4266,15 +4254,7 @@ int  sropen_v3(s, rt, host, bet)
     }
 
     if ( rt ) {
-#if !defined(ultrix)
-      openlog("rfio",LOG_PID, LOG_USER);
-#else
-      openlog("rfio",LOG_PID );
-#endif
-      syslog(LOG_ALERT, "rfio: connection %s mapping by %s(%d,%d) from %s",(mapping ? "with" : "without"),user,uid,gid,host);
-#if !defined(_WIN32)
-      closelog();
-#endif
+      log(LOG_ALERT, "rfio: connection %s mapping by %s(%d,%d) from %s",(mapping ? "with" : "without"),user,uid,gid,host);
     }
 
     /*
@@ -4286,28 +4266,28 @@ int  sropen_v3(s, rt, host, bet)
 
       log(LOG_DEBUG,"Mapping (%s, %d, %d) \n",user, uid, gid );
       if ( (rcd = get_user(host,user,uid,gid,to,&to_uid,&to_gid)) == -ENOENT ) {
-	log(LOG_ERR,"sropen_v3(): get_user() error opening mapping file\n");
-	status = -1;
-	errno = EINVAL;
-	rcode = SEHOSTREFUSED;
+        log(LOG_ERR,"sropen_v3(): get_user() error opening mapping file\n");
+        status = -1;
+        errno = EINVAL;
+        rcode = SEHOSTREFUSED;
       }
 
       else if ( abs(rcd) == 1 ) {
-	log(LOG_ERR,"No entry found in mapping file for (%s,%s,%d,%d)\n", host,user,uid,gid);
-	status = -1;
-	errno = EACCES;
-	rcode = SEHOSTREFUSED;
+        log(LOG_ERR,"No entry found in mapping file for (%s,%s,%d,%d)\n", host,user,uid,gid);
+        status = -1;
+        errno = EACCES;
+        rcode = SEHOSTREFUSED;
       }
       else {
-	log(LOG_DEBUG,"(%s,%s,%d,%d) mapped to %s(%d,%d)\n",
-	    host,user,uid,gid,to,to_uid,to_gid);
-	uid = to_uid;
-	gid = to_gid;
-	if ( uid < 100 || gid < 100 ) {
-	  errno = EACCES;
-	  status = -1;
-	  rcode = SEHOSTREFUSED;
-	}
+        log(LOG_DEBUG,"(%s,%s,%d,%d) mapped to %s(%d,%d)\n",
+            host,user,uid,gid,to,to_uid,to_gid);
+        uid = to_uid;
+        gid = to_gid;
+        if ( uid < 100 || gid < 100 ) {
+          errno = EACCES;
+          status = -1;
+          rcode = SEHOSTREFUSED;
+        }
       }
     }
     /*
@@ -4316,33 +4296,33 @@ int  sropen_v3(s, rt, host, bet)
     if( !status && rt && !mapping ) {
       char *rtuser;
       if( (rtuser = getconfent("RTUSER","CHECK",0) ) == NULL || ! strcmp (rtuser,"YES") )
-	{
-	  /* Port is also passwd */
-	  sock = connecttpread(reqhost, passwd);
+        {
+          /* Port is also passwd */
+          sock = connecttpread(reqhost, passwd);
 #if defined(_WIN32)
-	  if( (sock != INVALID_SOCKET) && !checkkey(sock, passwd) )
+          if( (sock != INVALID_SOCKET) && !checkkey(sock, passwd) )
 #else
-	    if( (sock >= 0) && !checkkey(sock, passwd) )
+            if( (sock >= 0) && !checkkey(sock, passwd) )
 #endif
-	      {
-		status= -1;
-		errno = EACCES;
-		rcode= errno;
-		log(LOG_ERR,"ropen_v3: DIRECT mapping : permission denied\n");
-	      }
+              {
+                status= -1;
+                errno = EACCES;
+                rcode= errno;
+                log(LOG_ERR,"ropen_v3: DIRECT mapping : permission denied\n");
+              }
 #if defined(_WIN32)
-	  if( sock == INVALID_SOCKET )
+          if( sock == INVALID_SOCKET )
 #else
-	    if (sock < 0)
+            if (sock < 0)
 #endif
-	      {
-		status= -1;
-		log(LOG_ERR,"ropen_v3: DIRECT mapping failed: Couldn't connect %s\n",reqhost);
-		rcode = EACCES;
-	      }
-	}
+              {
+                status= -1;
+                log(LOG_ERR,"ropen_v3: DIRECT mapping failed: Couldn't connect %s\n",reqhost);
+                rcode = EACCES;
+              }
+        }
       else
-	log(LOG_INFO ,"Any DIRECT rfio request from out of site is authorized\n");
+        log(LOG_INFO ,"Any DIRECT rfio request from out of site is authorized\n");
     }
     if ( !status ) {
       int need_user_check = 1;
@@ -4356,76 +4336,76 @@ int  sropen_v3(s, rt, host, bet)
       (void) umask((mode_t) CORRECT_UMASK(mask));
 
       rc = rfio_handle_open(CORRECT_FILENAME(filename),
-			    ntohopnflg(flags),
-			    mode,
-			    uid,
-			    gid,
-			    &pfn,
-			    &handler_context,
-			    &need_user_check);
+                            ntohopnflg(flags),
+                            mode,
+                            uid,
+                            gid,
+                            &pfn,
+                            &handler_context,
+                            &need_user_check);
 
       if (rc < 0) {
-	char alarmbuf[1024];
-	sprintf(alarmbuf,"sropen_v3(): %s",CORRECT_FILENAME(filename));
-	log(LOG_DEBUG, "ropen_v3: rfio_handler_open refused open: %s\n", sstrerror(serrno));
-	rcode = serrno;
-	rfio_alrm(rcode,alarmbuf);
+        char alarmbuf[1024];
+        sprintf(alarmbuf,"sropen_v3(): %s",CORRECT_FILENAME(filename));
+        log(LOG_DEBUG, "ropen_v3: rfio_handler_open refused open: %s\n", sstrerror(serrno));
+        rcode = serrno;
+        rfio_alrm(rcode,alarmbuf);
       }
 
       /* NOTE(fuji): from now on, flags is in host byte-order... */
       flags = ntohopnflg(flags);
       if ( getconfent("RFIOD","DIRECTIO",0) ) {
 #if defined(linux)
-	log(LOG_DEBUG, "%s: O_DIRECT requested\n", __func__);
-	flags |= O_DIRECT;
+        log(LOG_DEBUG, "%s: O_DIRECT requested\n", __func__);
+        flags |= O_DIRECT;
 #else
-	log(LOG_DEBUG, "%s: O_DIRECT requested but ignored.");
+        log(LOG_DEBUG, "%s: O_DIRECT requested but ignored.");
 #endif
       }
 
 #if !defined(_WIN32)
       if (need_user_check && ((status=check_user_perm(&uid,&gid,host,&rcode,((flags & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
-	  ((status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0) ) {
-	if (status == -2)
-	  log(LOG_ERR,"ropen_v3: uid %d not allowed to open()\n",uid);
-	else
-	  log(LOG_ERR,"ropen_v3: failed at check_user_perm(), rcode %d\n",rcode);
-	status = -1;
+          ((status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0) ) {
+        if (status == -2)
+          log(LOG_ERR,"ropen_v3: uid %d not allowed to open()\n",uid);
+        else
+          log(LOG_ERR,"ropen_v3: failed at check_user_perm(), rcode %d\n",rcode);
+        status = -1;
       }  else
 #endif
-	{
-	  const char *perm_array[3];
-	  char ofilename[MAXFILENAMSIZE];
-	  perm_array[0] = ((flags & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST";
-	  perm_array[1] = "OPENTRUST";
-	  perm_array[2] = NULL;
+        {
+          const char *perm_array[3];
+          char ofilename[MAXFILENAMSIZE];
+          perm_array[0] = ((flags & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST";
+          perm_array[1] = "OPENTRUST";
+          perm_array[2] = NULL;
 
-	  strcpy(ofilename, filename);
-	  fd = -1;
-	  if (forced_filename!=NULL || !check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
-	    fd = open(CORRECT_FILENAME(ofilename), flags, mode);
+          strcpy(ofilename, filename);
+          fd = -1;
+          if (forced_filename!=NULL || !check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
+            fd = open(CORRECT_FILENAME(ofilename), flags, mode);
 #if defined(_WIN32)
-	    _setmode( fd, _O_BINARY );        /* default is text mode  */
+            _setmode( fd, _O_BINARY );        /* default is text mode  */
 #endif
-	    log(LOG_DEBUG,"ropen_v3: open(%s,%d,%d) returned %x (hex)\n",CORRECT_FILENAME(ofilename),flags,mode,fd);
-	  }
-	  if (fd < 0)  {
+            log(LOG_DEBUG,"ropen_v3: open(%s,%d,%d) returned %x (hex)\n",CORRECT_FILENAME(ofilename),flags,mode,fd);
+          }
+          if (fd < 0)  {
             char alarmbuf[1024];
             sprintf(alarmbuf,"sropen_v3: %s",CORRECT_FILENAME(filename));
             status= -1;
             rcode= errno;
             log(LOG_DEBUG,"ropen_v3: open: %s\n",strerror(errno));
             /* rfio_alrm(rcode,alarmbuf); */
-	  }
-	  else  {
+          }
+          else  {
             /*
              * Getting current offset
              */
             status= lseek(fd,0L,SEEK_CUR);
             log(LOG_DEBUG,"ropen_v3: lseek(%d,0,SEEK_CUR) returned %x (hex)\n",fd,status);
             if ( status < 0 ) rcode= errno;
-	  }
-	}
+          }
+        }
       if (pfn != NULL) free(pfn);
     }
 
@@ -4433,13 +4413,13 @@ int  sropen_v3(s, rt, host, bet)
       data_s = socket(AF_INET, SOCK_STREAM, 0);
 #if defined(_WIN32)
       if( data_s == INVALID_SOCKET )  {
-	log( LOG_ERR, "datasocket(): %s\n", geterr());
-	return(-1);
+        log( LOG_ERR, "datasocket(): %s\n", geterr());
+        return(-1);
       }
 #else
       if( data_s < 0 )  {
-	log(LOG_ERR, "datasocket(): %s\n", strerror(errno));
-	exit(1);
+        log(LOG_ERR, "datasocket(): %s\n", strerror(errno));
+        exit(1);
       }
 #endif
       log(LOG_DEBUG, "data socket created fd=%d\n", data_s);
@@ -4473,8 +4453,8 @@ int  sropen_v3(s, rt, host, bet)
             low_port  = RFIO_LOW_PORT_RANGE;
             high_port = RFIO_HIGH_PORT_RANGE;
           } else {
-	    log(LOG_DEBUG, "ropen64_v3: using port range: %d,%d\n", low_port, high_port);
-	  }
+            log(LOG_DEBUG, "ropen64_v3: using port range: %d,%d\n", low_port, high_port);
+          }
         } else {
           log(LOG_ERR, "ropen_v3: invalid port range: %s, using default %d,%d\n",
               value, RFIO_LOW_PORT_RANGE, RFIO_HIGH_PORT_RANGE);
@@ -4589,33 +4569,33 @@ int  sropen_v3(s, rt, host, bet)
       log(LOG_DEBUG, "doing setsockopt rcv\n");
 #if defined(_WIN32)
       if( setsockopt(data_s, SOL_SOCKET, SO_RCVBUF, (char*)&max_rcvbuf,
-		     sizeof(max_rcvbuf)) == SOCKET_ERROR )  {
-	log(LOG_ERR, "setsockopt open rcvbuf(%d bytes): %s\n", max_rcvbuf, geterr());
+                     sizeof(max_rcvbuf)) == SOCKET_ERROR )  {
+        log(LOG_ERR, "setsockopt open rcvbuf(%d bytes): %s\n", max_rcvbuf, geterr());
       }
 #else
       if (setsockopt(data_s,SOL_SOCKET,SO_RCVBUF,(char *)&max_rcvbuf,
-		     sizeof(max_rcvbuf)) < 0) {
-	log(LOG_ERR, "setsockopt open rcvbuf(%d bytes): %s\n", max_rcvbuf, strerror(errno));
+                     sizeof(max_rcvbuf)) < 0) {
+        log(LOG_ERR, "setsockopt open rcvbuf(%d bytes): %s\n", max_rcvbuf, strerror(errno));
       }
 #endif   /* WIN32 */
       log(LOG_DEBUG, "setsockopt rcvbuf on data socket (%d bytes)\n", max_rcvbuf);
       for (;;) {
-	fromlen = sizeof(from);
-	log(LOG_DEBUG, "ropen_v3: wait for accept to complete\n");
-	data_sock = accept(data_s, (struct sockaddr*)&from, &fromlen);
+        fromlen = sizeof(from);
+        log(LOG_DEBUG, "ropen_v3: wait for accept to complete\n");
+        data_sock = accept(data_s, (struct sockaddr*)&from, &fromlen);
 #if defined(_WIN32)
-	if( data_sock == INVALID_SOCKET )  {
-	  log(LOG_ERR, "data accept(): %s\n", geterr());
-	  return(-1);
-	}
+        if( data_sock == INVALID_SOCKET )  {
+          log(LOG_ERR, "data accept(): %s\n", geterr());
+          return(-1);
+        }
 #else
-	if( data_sock < 0 )  {
-	  log(LOG_ERR, "data accept(): %s\n",strerror(errno));
-	  exit(1);
-	}
+        if( data_sock < 0 )  {
+          log(LOG_ERR, "data accept(): %s\n",strerror(errno));
+          exit(1);
+        }
 #endif   /* WIN32 */
-	else
-	  break;
+        else
+          break;
       }
       log(LOG_DEBUG, "data accept is ok, fildesc=%d\n",data_sock);
 
@@ -4626,30 +4606,30 @@ int  sropen_v3(s, rt, host, bet)
       log(LOG_DEBUG, "doing setsockopt snd\n");
 #if defined(_WIN32)
       if( setsockopt(data_sock, SOL_SOCKET, SO_SNDBUF, (char*)&max_sndbuf,
-		     sizeof(max_sndbuf)) == SOCKET_ERROR)  {
-	log(LOG_ERR, "setsockopt open sndbuf(%d bytes): %s\n",
+                     sizeof(max_sndbuf)) == SOCKET_ERROR)  {
+        log(LOG_ERR, "setsockopt open sndbuf(%d bytes): %s\n",
             max_sndbuf, geterr());
       }
 #else
       if (setsockopt(data_sock,SOL_SOCKET,SO_SNDBUF,(char *)&max_sndbuf,
-		     sizeof(max_sndbuf)) < 0) {
-	log(LOG_ERR, "setsockopt open sndbuf(%d bytes): %s\n",
-	    max_sndbuf, strerror(errno));
+                     sizeof(max_sndbuf)) < 0) {
+        log(LOG_ERR, "setsockopt open sndbuf(%d bytes): %s\n",
+            max_sndbuf, strerror(errno));
       }
 #endif   /* WIN32 */
       log(LOG_DEBUG, "setsockopt sndbuf on data socket (%d bytes)\n",
-	  max_sndbuf);
+          max_sndbuf);
 
       /* Set the keepalive option on both sockets */
       yes = 1;
 #if defined(_WIN32)
       if( setsockopt(data_sock, SOL_SOCKET, SO_KEEPALIVE, (char*)&yes,
-		     sizeof(yes)) == SOCKET_ERROR) {
-	log(LOG_ERR, "setsockopt keepalive on data: %s\n", geterr());
+                     sizeof(yes)) == SOCKET_ERROR) {
+        log(LOG_ERR, "setsockopt keepalive on data: %s\n", geterr());
       }
 #else
       if (setsockopt(data_sock,SOL_SOCKET,SO_KEEPALIVE,(char *)&yes, sizeof(yes)) < 0) {
-	log(LOG_ERR, "setsockopt keepalive on data: %s\n",strerror(errno));
+        log(LOG_ERR, "setsockopt keepalive on data: %s\n",strerror(errno));
       }
 #endif   /* WIN32 */
       log(LOG_DEBUG, "setsockopt keepalive on data done\n");
@@ -4657,12 +4637,12 @@ int  sropen_v3(s, rt, host, bet)
       yes = 1;
 #if defined(_WIN32)
       if( setsockopt(ctrl_sock, SOL_SOCKET, SO_KEEPALIVE, (char*)&yes,
-		     sizeof(yes)) == SOCKET_ERROR )  {
-	log(LOG_ERR, "setsockopt keepalive on ctrl: %s\n", geterr());
+                     sizeof(yes)) == SOCKET_ERROR )  {
+        log(LOG_ERR, "setsockopt keepalive on ctrl: %s\n", geterr());
       }
 #else
       if (setsockopt(ctrl_sock,SOL_SOCKET,SO_KEEPALIVE,(char *)&yes, sizeof(yes)) < 0) {
-	log(LOG_ERR, "setsockopt keepalive on ctrl: %s\n",strerror(errno));
+        log(LOG_ERR, "setsockopt keepalive on ctrl: %s\n",strerror(errno));
       }
 #endif   /* WIN32 */
       log(LOG_DEBUG, "setsockopt keepalive on ctrl done\n");
@@ -4671,13 +4651,13 @@ int  sropen_v3(s, rt, host, bet)
       /* Set the keepalive interval to 20 mns instead of the default 2 hours */
       yes = 20 * 60;
       if (setsockopt(data_sock,IPPROTO_TCP,TCP_KEEPIDLE,(char *)&yes,sizeof(yes)) < 0) {
-	log(LOG_ERR, "setsockopt keepidle on data: %s\n",strerror(errno));
+        log(LOG_ERR, "setsockopt keepidle on data: %s\n",strerror(errno));
       }
       log(LOG_DEBUG, "setsockopt keepidle on data done (%d s)\n",yes);
 
       yes = 20 * 60;
       if (setsockopt(ctrl_sock,IPPROTO_TCP,TCP_KEEPIDLE,(char *)&yes,sizeof(yes)) < 0) {
-	log(LOG_ERR, "setsockopt keepidle on ctrl: %s\n",strerror(errno));
+        log(LOG_ERR, "setsockopt keepidle on ctrl: %s\n",strerror(errno));
       }
       log(LOG_DEBUG, "setsockopt keepidle on ctrl done (%d s)\n",yes);
 #endif
@@ -4688,12 +4668,12 @@ int  sropen_v3(s, rt, host, bet)
       yes = 1;
 #if defined(_WIN32)
       if( setsockopt(data_sock, IPPROTO_TCP, TCP_NODELAY, (char*)&yes,
-		     sizeof(yes))  == SOCKET_ERROR )  {
-	log(LOG_ERR, "setsockopt nodelay on data: %s\n", geterr());
+                     sizeof(yes))  == SOCKET_ERROR )  {
+        log(LOG_ERR, "setsockopt nodelay on data: %s\n", geterr());
       }
 #else
       if (setsockopt(data_sock,IPPROTO_TCP,TCP_NODELAY,(char *)&yes,sizeof(yes)) < 0) {
-	log(LOG_ERR, "setsockopt nodelay on data: %s\n",strerror(errno));
+        log(LOG_ERR, "setsockopt nodelay on data: %s\n",strerror(errno));
       }
 #endif   /* WIN32 */
       log(LOG_DEBUG,"setsockopt nodelay option set on data socket\n");
@@ -4702,12 +4682,12 @@ int  sropen_v3(s, rt, host, bet)
       yes = 1;
 #if defined(_WIN32)
       if( setsockopt(ctrl_sock, IPPROTO_TCP, TCP_NODELAY, (char*)&yes,
-		     sizeof(yes)) == SOCKET_ERROR )  {
-	log(LOG_ERR, "setsockopt nodelay on ctrl: %s\n", geterr());
+                     sizeof(yes)) == SOCKET_ERROR )  {
+        log(LOG_ERR, "setsockopt nodelay on ctrl: %s\n", geterr());
       }
 #else
       if (setsockopt(ctrl_sock,IPPROTO_TCP,TCP_NODELAY,(char *)&yes,sizeof(yes)) < 0) {
-	log(LOG_ERR, "setsockopt nodelay on ctrl: %s\n",strerror(errno));
+        log(LOG_ERR, "setsockopt nodelay on ctrl: %s\n",strerror(errno));
       }
 #endif  /* WIN32 */
       log(LOG_DEBUG,"setsockopt nodelay option set on ctrl socket\n");
@@ -4771,11 +4751,11 @@ int   srclose_v3(s, infop, fd)
 #if defined(_WIN32)
   if( closesocket(data_sock) == SOCKET_ERROR )
     log(LOG_DEBUG, "rclose_v3: Error closing data socket fildesc=%d, errno=%d\n",
-	data_sock, WSAGetLastError());
+        data_sock, WSAGetLastError());
 #else
   if( close(data_sock) < 0 )
     log(LOG_DEBUG, "rclose_v3 : Error closing data socket fildesc=%d,errno=%d\n",
-	data_sock, errno);
+        data_sock, errno);
 #endif   /* WIN32 */
   else
     log(LOG_DEBUG, "rclose_v3 : closing data socket fildesc=%d\n", data_sock);
@@ -4801,11 +4781,11 @@ int   srclose_v3(s, infop, fd)
 #if defined(_WIN32)
   if( closesocket(s) == SOCKET_ERROR )
     log(LOG_DEBUG, "rclose_v3: Error closing control socket fildesc=%d, errno=%d\n",
-	s, WSAGetLastError());
+        s, WSAGetLastError());
 #else
   if( close(s) < 0 )
     log(LOG_DEBUG, "rclose_v3 : Error closing control socket fildesc=%d,errno=%d\n",
-	s, errno);
+        s, errno);
 #endif  /* WIN32 */
   else
     log(LOG_DEBUG, "rclose_v3 : closing ctrl socket fildesc=%d\n", s);
@@ -4864,34 +4844,34 @@ void *produce_thread(int *ptr)
       total_produced += byte_read;
       array[produced % daemonv3_rdmt_nbuf].len = byte_read;
       if (useCksum) {
-	ckSum = adler32(ckSum,(unsigned char*)array[produced % daemonv3_rdmt_nbuf].p,(unsigned int)byte_read);
-	log(LOG_DEBUG,"produce_thread: current checksum=0x%x\n",ckSum);
+        ckSum = adler32(ckSum,(unsigned char*)array[produced % daemonv3_rdmt_nbuf].p,(unsigned int)byte_read);
+        log(LOG_DEBUG,"produce_thread: current checksum=0x%x\n",ckSum);
       }
     }
     else {
       if (byte_read == 0) {
-	log(LOG_DEBUG,"End of reading : total produced = %d,buffers=%d\n",total_produced,produced);
-	array[produced % daemonv3_rdmt_nbuf].len = 0;
-	/* Check for checksum mismatch. */
-	if (useCksum) {
-	  sprintf(ckSumbuf,"%x", ckSum);
-	  log(LOG_DEBUG,"produce_thread: file checksum=0x%s\n",ckSumbuf);
-	  if (strncmp(ckSumbufdisk,ckSumbuf,CA_MAXCKSUMLEN)==0) {
-	    log(LOG_DEBUG,"produce_thread: checksums OK!\n");
-	  }
-	  else {
+        log(LOG_DEBUG,"End of reading : total produced = %d,buffers=%d\n",total_produced,produced);
+        array[produced % daemonv3_rdmt_nbuf].len = 0;
+        /* Check for checksum mismatch. */
+        if (useCksum) {
+          sprintf(ckSumbuf,"%x", ckSum);
+          log(LOG_DEBUG,"produce_thread: file checksum=0x%s\n",ckSumbuf);
+          if (strncmp(ckSumbufdisk,ckSumbuf,CA_MAXCKSUMLEN)==0) {
+            log(LOG_DEBUG,"produce_thread: checksums OK!\n");
+          }
+          else {
             log(LOG_ERR,"produce_thread: checksum error detected reading file: %s (recorded checksum: %s calculated checksum: %s)\n",
                 CORRECT_FILENAME(filename), ckSumbufdisk, ckSumbuf);
-	    array[produced % daemonv3_rdmt_nbuf].len = -(EREMOTEIO); /* setting errno=Remote I/O error */
-	    error = -1;
-	  }
-	}
+            array[produced % daemonv3_rdmt_nbuf].len = -(EREMOTEIO); /* setting errno=Remote I/O error */
+            error = -1;
+          }
+        }
       }
       else {
-	if (byte_read < 0) {
-	  array[produced % daemonv3_rdmt_nbuf].len = -errno;
-	  error = -1;
-	}
+        if (byte_read < 0) {
+          array[produced % daemonv3_rdmt_nbuf].len = -errno;
+          error = -1;
+        }
       }
     }
     produced++;
@@ -4938,7 +4918,7 @@ void *consume_thread(int *ptr)
      * remove the checksum value but leave the type.
      */
     else if ((mode & O_WRONLY) &&
-	     (fgetxattr(fd,"user.castor.checksum.type",ckSumbufdisk,CA_MAXCKSUMLEN) != -1)) {
+             (fgetxattr(fd,"user.castor.checksum.type",ckSumbufdisk,CA_MAXCKSUMLEN) != -1)) {
       log(LOG_INFO,"consume_thread: file opened in O_WRONLY and checksum already exists, removing checksum\n");
       useCksum = 0;
     } else {
@@ -4960,11 +4940,11 @@ void *consume_thread(int *ptr)
 
       byte_written = write(fd, buffer_to_write, len_to_write);
       /* If the write is successfull but incomplete (fs is full) we
-	 report the ENOSPC error immediately in order to simplify the code
+         report the ENOSPC error immediately in order to simplify the code
       */
       if ((byte_written >= 0) && (byte_written != len_to_write)) {
-	byte_written = -1;
-	errno = ENOSPC;
+        byte_written = -1;
+        errno = ENOSPC;
       }
 
       /* The following Cthread_mutex_lock call may modify this value */
@@ -4972,41 +4952,41 @@ void *consume_thread(int *ptr)
 
       /* Error reporting to global var */
       if (byte_written == -1) {
-	error = 1;
-	if (Cthread_mutex_lock(&write_error)) {
-	  log(LOG_ERR,"Cannot get mutex : serrno=%d",serrno);
-	  return(NULL);
-	}
+        error = 1;
+        if (Cthread_mutex_lock(&write_error)) {
+          log(LOG_ERR,"Cannot get mutex : serrno=%d",serrno);
+          return(NULL);
+        }
 
-	write_error = saved_errno;
+        write_error = saved_errno;
 
-	if (Cthread_mutex_unlock(&write_error)) {
-	  log(LOG_ERR,"Cannot release mutex : serrno=%d",serrno);
-	  return(NULL);
-	}
+        if (Cthread_mutex_unlock(&write_error)) {
+          log(LOG_ERR,"Cannot release mutex : serrno=%d",serrno);
+          return(NULL);
+        }
 
-	log(LOG_DEBUG,"Error when writing : buffers=%d, error=%d\n",consumed,errno);
+        log(LOG_DEBUG,"Error when writing : buffers=%d, error=%d\n",consumed,errno);
       }
       else {
-	/* All bytes written to disks */
-	total_consumed += byte_written;
-	log(LOG_DEBUG,"Has written buf %d to disk (len %d)\n",consumed % daemonv3_wrmt_nbuf,byte_written);
-	if(useCksum) {
-	  ckSum = adler32(ckSum,(unsigned char*)buffer_to_write,(unsigned int)byte_written);
-	  log(LOG_DEBUG,"consume_thread: current checksum=0x%x\n",ckSum);
-	}
+        /* All bytes written to disks */
+        total_consumed += byte_written;
+        log(LOG_DEBUG,"Has written buf %d to disk (len %d)\n",consumed % daemonv3_wrmt_nbuf,byte_written);
+        if(useCksum) {
+          ckSum = adler32(ckSum,(unsigned char*)buffer_to_write,(unsigned int)byte_written);
+          log(LOG_DEBUG,"consume_thread: current checksum=0x%x\n",ckSum);
+        }
       }
     }
     else
       if (len_to_write == 0) {
-	log(LOG_DEBUG,"End of writing : total consumed = %d,buffers=%d\n",total_consumed,consumed);
-	end = 1;
+        log(LOG_DEBUG,"End of writing : total consumed = %d,buffers=%d\n",total_consumed,consumed);
+        end = 1;
       }
       else
-	if (len_to_write < 0) {
-	  /* Error indicated by the thread reading from network, this thread just terminates */
-	  error = 1;
-	}
+        if (len_to_write < 0) {
+          /* Error indicated by the thread reading from network, this thread just terminates */
+          error = 1;
+        }
     consumed++;
     Csemaphore_up(&empty);
   }
@@ -5059,10 +5039,10 @@ int srread_v3(s, infop, fd)
      SOCKET  s;
 #else
      int srread_v3(ctrl_sock, infop, fd)
-	  int     ctrl_sock;
+     int     ctrl_sock;
 #endif
-	  int     fd;
-	  struct  rfiostat* infop;
+     int     fd;
+     struct  rfiostat* infop;
 {
   int  status;         /* Return code          */
   int  rcode;          /* To send back errno   */
@@ -5102,80 +5082,80 @@ int srread_v3(s, infop, fd)
       join_done = 0;
 
       if( (p = getconfent("RFIO", "DAEMONV3_RDSIZE", 0)) != NULL ) {
-	if (atoi(p) > 0)
-	  DISKBUFSIZE_READ = atoi(p);
+        if (atoi(p) > 0)
+          DISKBUFSIZE_READ = atoi(p);
       }
 
       daemonv3_rdmt = DAEMONV3_RDMT;
       if( (p = getconfent("RFIO", "DAEMONV3_RDMT", 0)) != NULL ) {
-	if (*p == '0')
-	  daemonv3_rdmt = 0;
-	else
-	  daemonv3_rdmt = 1;
+        if (*p == '0')
+          daemonv3_rdmt = 0;
+        else
+          daemonv3_rdmt = 1;
       }
 
       daemonv3_rdmt_nbuf = DAEMONV3_RDMT_NBUF;
       if( (p = getconfent("RFIO", "DAEMONV3_RDMT_NBUF", 0)) != NULL )
-	if (atoi(p) > 0)
-	  daemonv3_rdmt_nbuf = atoi(p);
+        if (atoi(p) > 0)
+          daemonv3_rdmt_nbuf = atoi(p);
 
       daemonv3_rdmt_bufsize = DAEMONV3_RDMT_BUFSIZE;
       if( (p = getconfent("RFIO", "DAEMONV3_RDMT_BUFSIZE", 0)) != NULL )
-	if (atoi(p) > 0)
-	  daemonv3_rdmt_bufsize = atoi(p);
+        if (atoi(p) > 0)
+          daemonv3_rdmt_bufsize = atoi(p);
 
       log(LOG_DEBUG,"rread_v3 : daemonv3_rdmt=%d,daemonv3_rdmt_nbuf=%d,daemonv3_rdmt_bufsize=%d\n",
-	  daemonv3_rdmt,daemonv3_rdmt_nbuf,daemonv3_rdmt_bufsize);
+          daemonv3_rdmt,daemonv3_rdmt_nbuf,daemonv3_rdmt_bufsize);
 
       if (daemonv3_rdmt) {
-	/* Indicates we are using RFIO V3 and multithreadding while reading */
-	myinfo.aheadop = 3;
-	/* Allocating circular buffer itself */
-	log(LOG_DEBUG, "rread_v3 allocating circular buffer : %d bytes\n",sizeof(struct element) * daemonv3_rdmt_nbuf);
-	if ((array = (struct element *)malloc(sizeof(struct element) * daemonv3_rdmt_nbuf)) == NULL)  {
-	  log(LOG_ERR, "rread_v3: malloc array: ERROR occured (errno=%d)", errno);
-	  return -1;
-	}
-	log(LOG_DEBUG, "rread_v3 malloc array allocated : 0X%X\n",array);
+        /* Indicates we are using RFIO V3 and multithreadding while reading */
+        myinfo.aheadop = 3;
+        /* Allocating circular buffer itself */
+        log(LOG_DEBUG, "rread_v3 allocating circular buffer : %d bytes\n",sizeof(struct element) * daemonv3_rdmt_nbuf);
+        if ((array = (struct element *)malloc(sizeof(struct element) * daemonv3_rdmt_nbuf)) == NULL)  {
+          log(LOG_ERR, "rread_v3: malloc array: ERROR occured (errno=%d)", errno);
+          return -1;
+        }
+        log(LOG_DEBUG, "rread_v3 malloc array allocated : 0X%X\n",array);
 
-	/* Allocating memory for each element of circular buffer */
-	for (el=0; el < daemonv3_rdmt_nbuf; el++) {
-	  log(LOG_DEBUG, "rread_v3 allocating circular buffer element %d: %d bytes\n",el,daemonv3_rdmt_bufsize);
-	  if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
-	    array[el].p = (char *)malloc_page_aligned(daemonv3_rdmt_bufsize);
-	  } else {
-	    array[el].p = (char *)malloc(daemonv3_rdmt_bufsize);
-	  }
-	  if ( array[el].p == NULL)  {
-	    log(LOG_ERR, "rread_v3: malloc array element %d: ERROR occured (errno=%d)", el, errno);
-	    return -1;
-	  }
-	  log(LOG_DEBUG, "rread_v3 malloc array element %d allocated : 0X%X\n",el, array[el].p);
-	}
+        /* Allocating memory for each element of circular buffer */
+        for (el=0; el < daemonv3_rdmt_nbuf; el++) {
+          log(LOG_DEBUG, "rread_v3 allocating circular buffer element %d: %d bytes\n",el,daemonv3_rdmt_bufsize);
+          if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+            array[el].p = (char *)malloc_page_aligned(daemonv3_rdmt_bufsize);
+          } else {
+            array[el].p = (char *)malloc(daemonv3_rdmt_bufsize);
+          }
+          if ( array[el].p == NULL)  {
+            log(LOG_ERR, "rread_v3: malloc array element %d: ERROR occured (errno=%d)", el, errno);
+            return -1;
+          }
+          log(LOG_DEBUG, "rread_v3 malloc array element %d allocated : 0X%X\n",el, array[el].p);
+        }
       }
       else {
-	log(LOG_DEBUG, "rread_v3 allocating malloc buffer : %d bytes\n",DISKBUFSIZE_READ);
-	if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
-	  iobuffer = (char *)malloc_page_aligned(DISKBUFSIZE_READ);
-	} else {
-	  iobuffer = (char *)malloc(DISKBUFSIZE_READ);
-	}
-	if ( iobuffer == NULL)  {
-	  log(LOG_ERR, "rread_v3: malloc: ERROR occured (errno=%d)", errno);
-	  return -1;
-	}
-	log(LOG_DEBUG, "rread_v3 malloc buffer allocated : 0X%X\n",iobuffer);
+        log(LOG_DEBUG, "rread_v3 allocating malloc buffer : %d bytes\n",DISKBUFSIZE_READ);
+        if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+          iobuffer = (char *)malloc_page_aligned(DISKBUFSIZE_READ);
+        } else {
+          iobuffer = (char *)malloc(DISKBUFSIZE_READ);
+        }
+        if ( iobuffer == NULL)  {
+          log(LOG_ERR, "rread_v3: malloc: ERROR occured (errno=%d)", errno);
+          return -1;
+        }
+        log(LOG_DEBUG, "rread_v3 malloc buffer allocated : 0X%X\n",iobuffer);
       }
 
       if (fstat(fd,&st) < 0) {
-	log(LOG_ERR, "rread_v3: fstat(): ERROR occured (errno=%d)", errno);
-	return -1;
+        log(LOG_ERR, "rread_v3: fstat(): ERROR occured (errno=%d)", errno);
+        return -1;
       }
 
       log(LOG_DEBUG, "rread_v3 filesize : %d bytes\n",st.st_size);
       if ((offset = lseek(fd,0L,SEEK_CUR)) < 0) {
-	log(LOG_ERR, "rread_v3: lseek offset(): ERROR occured (errno=%d)", errno);
-	return -1;
+        log(LOG_ERR, "rread_v3: lseek offset(): ERROR occured (errno=%d)", errno);
+        return -1;
       }
       bytes2send = st.st_size - offset;
       if (bytes2send < 0) bytes2send = 0;
@@ -5188,30 +5168,30 @@ int srread_v3(s, infop, fd)
       errno = ECONNRESET;
       if ((n = netwrite_timeout(ctrl_sock, rfio_buf, RQSTSIZE, RFIO_CTRL_TIMEOUT)) != RQSTSIZE) {
 #if defined(_WIN32)
-	log(LOG_ERR, "rread_v3: netwrite_timeout(): %s\n", geterr());
+        log(LOG_ERR, "rread_v3: netwrite_timeout(): %s\n", geterr());
 #else    /* WIN32 */
-	log(LOG_ERR, "rread_v3: netwrite_timeout(): %s\n", strerror(errno));
+        log(LOG_ERR, "rread_v3: netwrite_timeout(): %s\n", strerror(errno));
 #endif   /* else WIN32 */
-	return -1;
+        return -1;
       }
 
 #ifdef CS2
       if (ioctl(fd,NFSIOCACHE,CLIENTNOCACHE) < 0)
-	log(LOG_ERR,"rfio","rread_v3: ioctl client nocache error occured (errno=%d)",errno);
+        log(LOG_ERR,"rfio","rread_v3: ioctl client nocache error occured (errno=%d)",errno);
 
       if (ioctl(fd,NFSIOCACHE,SERVERNOCACHE) < 0)
-	log(LOG_ERR,"rfio","rread_v3: ioctl server nocache error occured (errno=%d)",errno);
+        log(LOG_ERR,"rfio","rread_v3: ioctl server nocache error occured (errno=%d)",errno);
       log(LOG_DEBUG,"rread_v3: CS2: clientnocache, servernocache\n");
 #endif
 
       if (daemonv3_rdmt) {
-	Csemaphore_init(&empty,daemonv3_rdmt_nbuf);
-	Csemaphore_init(&full,0);
+        Csemaphore_init(&empty,daemonv3_rdmt_nbuf);
+        Csemaphore_init(&full,0);
 
-	if ((cid1 = Cthread_create((void *(*)(void *))produce_thread,(void *)&fd)) < 0) {
-	  log(LOG_ERR,"Cannot create producer thread : serrno=%d,errno=%d\n",serrno,errno);
-	  return(-1);
-	}
+        if ((cid1 = Cthread_create((void *(*)(void *))produce_thread,(void *)&fd)) < 0) {
+          log(LOG_ERR,"Cannot create producer thread : serrno=%d,errno=%d\n",serrno,errno);
+          return(-1);
+        }
       }
     }
 
@@ -5233,86 +5213,86 @@ int srread_v3(s, infop, fd)
       t.tv_usec = 0;
 
       if (eof_met)
-	write_fdset = NULL;
+        write_fdset = NULL;
       else
-	write_fdset = &fdvar2;
+        write_fdset = &fdvar2;
 
       log(LOG_DEBUG,"srread: doing select\n");
 #if defined(_WIN32)
       if( select(FD_SETSIZE, &fdvar, write_fdset, NULL, &t) == SOCKET_ERROR )  {
-	log(LOG_ERR, "srread_v3: select failed: %s\n", geterr());
-	return -1;
+        log(LOG_ERR, "srread_v3: select failed: %s\n", geterr());
+        return -1;
       }
 #else
       if( select(FD_SETSIZE, &fdvar, write_fdset, NULL, &t) < 0 )  {
-	log(LOG_ERR, "rfio","srread_v3: select failed (errno=%d)", errno);
-	return -1;
+        log(LOG_ERR, "rfio","srread_v3: select failed (errno=%d)", errno);
+        return -1;
       }
 #endif
       if( FD_ISSET(ctrl_sock, &fdvar) )  {
-	int n, magic, code;
+        int n, magic, code;
 
-	/* Something received on the control socket */
-	log(LOG_DEBUG, "ctrl socket: reading %d bytes\n", RQSTSIZE);
-	errno = ECONNRESET;
-	if ((n = netread_timeout(ctrl_sock,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT)) != RQSTSIZE) {
+        /* Something received on the control socket */
+        log(LOG_DEBUG, "ctrl socket: reading %d bytes\n", RQSTSIZE);
+        errno = ECONNRESET;
+        if ((n = netread_timeout(ctrl_sock,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT)) != RQSTSIZE) {
 #if defined(_WIN32)
-	  log(LOG_ERR, "read ctrl socket: netread(): %s\n", geterr());
+          log(LOG_ERR, "read ctrl socket: netread(): %s\n", geterr());
 #else
-	  log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
+          log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
 #endif
-	  return -1;
-	}
-	p = rqstbuf;
-	unmarshall_WORD(p,magic);
-	unmarshall_WORD(p,code);
+          return -1;
+        }
+        p = rqstbuf;
+        unmarshall_WORD(p,magic);
+        unmarshall_WORD(p,code);
 
-	/* what to do ? */
-	if (code == RQST_CLOSE_V3)  {
-	  log(LOG_DEBUG,"close request: magic: %x code: %x\n", magic, code);
-	  if (!daemonv3_rdmt) {
-	    log(LOG_DEBUG,"freeing iobuffer at 0X%X\n",iobuffer);
-	    if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
-	      free_page_aligned(iobuffer);
-	    } else {
-	      free(iobuffer);
-	    }
-	  }
-	  else {
-	    if(!join_done) {
-	      if (Cthread_mutex_lock(&stop_read)) {
-		log(LOG_ERR,"srread_v3: Cannot get mutex : serrno=%d\n", serrno);
-		return(-1);
-	      }
-	      stop_read = 1;
-	      if (Cthread_mutex_unlock(&stop_read)) {
-		log(LOG_ERR,"srread_v3: Cannot release mutex : serrno=%d\n", serrno);
-		return(-1);
-	      }
-	      Csemaphore_up(&empty);
-	      if (Cthread_join(cid1,NULL) < 0) {
-		log(LOG_ERR,"srread_v3: Error joining producer, serrno=%d\n", serrno);
-		return(-1);
-	      }
-	    }
-	    for (el=0; el < daemonv3_rdmt_nbuf; el++) {
-	      log(LOG_DEBUG,"freeing array element %d at 0X%X\n",el,array[el].p);
-	      if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
-		free_page_aligned(array[el].p);
-	      } else {
-		free(array[el].p);
-	      }
-	    }
-	    log(LOG_DEBUG,"freeing array at 0X%X\n",array);
-	    free(array);
-	  }
-	  srclose_v3(ctrl_sock,&myinfo,fd);
-	  return 0;
-	}
-	else  {
-	  log(LOG_ERR,"unknown request:  magic: %x code: %x\n",magic,code);
-	  return(-1);
-	}
+        /* what to do ? */
+        if (code == RQST_CLOSE_V3)  {
+          log(LOG_DEBUG,"close request: magic: %x code: %x\n", magic, code);
+          if (!daemonv3_rdmt) {
+            log(LOG_DEBUG,"freeing iobuffer at 0X%X\n",iobuffer);
+            if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+              free_page_aligned(iobuffer);
+            } else {
+              free(iobuffer);
+            }
+          }
+          else {
+            if(!join_done) {
+              if (Cthread_mutex_lock(&stop_read)) {
+                log(LOG_ERR,"srread_v3: Cannot get mutex : serrno=%d\n", serrno);
+                return(-1);
+              }
+              stop_read = 1;
+              if (Cthread_mutex_unlock(&stop_read)) {
+                log(LOG_ERR,"srread_v3: Cannot release mutex : serrno=%d\n", serrno);
+                return(-1);
+              }
+              Csemaphore_up(&empty);
+              if (Cthread_join(cid1,NULL) < 0) {
+                log(LOG_ERR,"srread_v3: Error joining producer, serrno=%d\n", serrno);
+                return(-1);
+              }
+            }
+            for (el=0; el < daemonv3_rdmt_nbuf; el++) {
+              log(LOG_DEBUG,"freeing array element %d at 0X%X\n",el,array[el].p);
+              if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+                free_page_aligned(array[el].p);
+              } else {
+                free(array[el].p);
+              }
+            }
+            log(LOG_DEBUG,"freeing array at 0X%X\n",array);
+            free(array);
+          }
+          srclose_v3(ctrl_sock,&myinfo,fd);
+          return 0;
+        }
+        else  {
+          log(LOG_ERR,"unknown request:  magic: %x code: %x\n",magic,code);
+          return(-1);
+        }
       }
 
       /*
@@ -5320,117 +5300,117 @@ int srread_v3(s, infop, fd)
        */
 
       if( !eof_met && (FD_ISSET(data_sock, &fdvar2)) )  {
-	if (daemonv3_rdmt) {
-	  Csemaphore_down(&full);
+        if (daemonv3_rdmt) {
+          Csemaphore_down(&full);
 
-	  if (array[consumed % daemonv3_rdmt_nbuf].len > 0) {
-	    iobuffer = array[consumed % daemonv3_rdmt_nbuf].p;
-	    status = array[consumed % daemonv3_rdmt_nbuf].len;
-	  }
-	  else if (array[consumed % daemonv3_rdmt_nbuf].len == 0) {
-	    status = 0;
-	    iobuffer = NULL;
-	    log(LOG_DEBUG,"Waiting for producer thread\n");
-	    if (Cthread_join(cid1,NULL) < 0) {
-	      log(LOG_ERR,"Error joining producer, serrno=%d\n",serrno);
-	      return(-1);
-	    }
-	    join_done = 1;
-	  }
-	  else if (array[consumed % daemonv3_rdmt_nbuf].len < 0) {
-	    status = -1;
-	    errno = -(array[consumed % daemonv3_rdmt_nbuf].len);
-	  }
-	  consumed++;
-	}
-	else
+          if (array[consumed % daemonv3_rdmt_nbuf].len > 0) {
+            iobuffer = array[consumed % daemonv3_rdmt_nbuf].p;
+            status = array[consumed % daemonv3_rdmt_nbuf].len;
+          }
+          else if (array[consumed % daemonv3_rdmt_nbuf].len == 0) {
+            status = 0;
+            iobuffer = NULL;
+            log(LOG_DEBUG,"Waiting for producer thread\n");
+            if (Cthread_join(cid1,NULL) < 0) {
+              log(LOG_ERR,"Error joining producer, serrno=%d\n",serrno);
+              return(-1);
+            }
+            join_done = 1;
+          }
+          else if (array[consumed % daemonv3_rdmt_nbuf].len < 0) {
+            status = -1;
+            errno = -(array[consumed % daemonv3_rdmt_nbuf].len);
+          }
+          consumed++;
+        }
+        else
           status = read(fd,iobuffer,DISKBUFSIZE_READ);
 
-	/* To simulate a read I/O error
-	   status = -1;
-	   errno = 5; */
+        /* To simulate a read I/O error
+           status = -1;
+           errno = 5; */
 
-	rcode = (status < 0) ? errno:0;
-	log(LOG_DEBUG, "%d bytes have been read on disk\n",status);
+        rcode = (status < 0) ? errno:0;
+        log(LOG_DEBUG, "%d bytes have been read on disk\n",status);
 
-	if (status == 0)  {
-	  if (daemonv3_rdmt)
-	    Csemaphore_up(&empty);
-	  eof_met = 1;
-	  p = rqstbuf;
-	  marshall_WORD(p,REP_EOF);
-	  log(LOG_DEBUG, "rread_v3: eof\n");
-	  errno = ECONNRESET;
-	  if ((n = netwrite_timeout(ctrl_sock, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT)) != RQSTSIZE)  {
+        if (status == 0)  {
+          if (daemonv3_rdmt)
+            Csemaphore_up(&empty);
+          eof_met = 1;
+          p = rqstbuf;
+          marshall_WORD(p,REP_EOF);
+          log(LOG_DEBUG, "rread_v3: eof\n");
+          errno = ECONNRESET;
+          if ((n = netwrite_timeout(ctrl_sock, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT)) != RQSTSIZE)  {
 #if defined(_WIN32)
-	    log(LOG_ERR,"rread_v3: netwrite_timeout(): %s\n", geterr());
+            log(LOG_ERR,"rread_v3: netwrite_timeout(): %s\n", geterr());
 #else
-	    log(LOG_ERR,"rread_v3: netwrite_timeout(): %s\n", strerror(errno));
+            log(LOG_ERR,"rread_v3: netwrite_timeout(): %s\n", strerror(errno));
 #endif   /* WIN32 */
-	    return -1;
-	  }
-	} /*  status == 0 */
-	else
-	  if (status < 0)  {
-	    if (daemonv3_rdmt)
-	      Csemaphore_up(&empty);
-	    p = rqstbuf;
-	    marshall_WORD(p, REP_ERROR);
-	    marshall_LONG(p, status);
-	    marshall_LONG(p, rcode);
-	    log(LOG_DEBUG, "rread_v3: status %d, rcode %d\n", status, rcode);
-	    errno = ECONNRESET;
-	    if ((n = netwrite_timeout(ctrl_sock, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT)) != RQSTSIZE)  {
+            return -1;
+          }
+        } /*  status == 0 */
+        else
+          if (status < 0)  {
+            if (daemonv3_rdmt)
+              Csemaphore_up(&empty);
+            p = rqstbuf;
+            marshall_WORD(p, REP_ERROR);
+            marshall_LONG(p, status);
+            marshall_LONG(p, rcode);
+            log(LOG_DEBUG, "rread_v3: status %d, rcode %d\n", status, rcode);
+            errno = ECONNRESET;
+            if ((n = netwrite_timeout(ctrl_sock, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT)) != RQSTSIZE)  {
 #if defined(_WIN32)
-	      log(LOG_ERR, "rread_v3: netwrite_timeout(): %s\n", geterr());
+              log(LOG_ERR, "rread_v3: netwrite_timeout(): %s\n", geterr());
 #else
-	      log(LOG_ERR, "rread_v3: netwrite_timeout(): %s\n", strerror(errno));
+              log(LOG_ERR, "rread_v3: netwrite_timeout(): %s\n", strerror(errno));
 #endif  /* WIN32 */
-	      return -1;
-	    }
-	    log(LOG_DEBUG, "read_v3: waiting ack for error\n");
-	    if ((n = netread_timeout(ctrl_sock,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT)) != RQSTSIZE) {
-	      if (n == 0)  {
+              return -1;
+            }
+            log(LOG_DEBUG, "read_v3: waiting ack for error\n");
+            if ((n = netread_timeout(ctrl_sock,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT)) != RQSTSIZE) {
+              if (n == 0)  {
 #if defined(_WIN32)
-		WSASetLastError(WSAECONNRESET);
-		log(LOG_ERR, "read ctrl socket: read(): %s\n", geterr());
+                WSASetLastError(WSAECONNRESET);
+                log(LOG_ERR, "read ctrl socket: read(): %s\n", geterr());
 #else
-		errno = ECONNRESET;
-		log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
+                errno = ECONNRESET;
+                log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
 #endif   /* WIN32 */
-		return -1;
-	      }  else  {
+                return -1;
+              }  else  {
 #if defined(_WIN32)
-		log(LOG_ERR, "read ctrl socket: read(): %s\n", geterr());
+                log(LOG_ERR, "read ctrl socket: read(): %s\n", geterr());
 #else
-		log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
+                log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
 #endif
-		return -1;
-	      }
-	    }
-	    return(-1);
-	  }  else  {
-	    log(LOG_DEBUG, "rread_v3: writing %d bytes to data socket %d\n",status, data_sock);
+                return -1;
+              }
+            }
+            return(-1);
+          }  else  {
+            log(LOG_DEBUG, "rread_v3: writing %d bytes to data socket %d\n",status, data_sock);
 #if defined(_WIN32)
-	    WSASetLastError(WSAECONNRESET);
-	    if( (n = send(data_sock, iobuffer, status, 0)) != status )  {
-	      log(LOG_ERR, "rread_v3: send() (to data sock): %s", geterr() );
-	      log(LOG_ERR, "rread_v3: freeing iobuffer after error in send: 0X%X\n", iobuffer);
-	      free(iobuffer);
-	      return -1;
-	    }
+            WSASetLastError(WSAECONNRESET);
+            if( (n = send(data_sock, iobuffer, status, 0)) != status )  {
+              log(LOG_ERR, "rread_v3: send() (to data sock): %s", geterr() );
+              log(LOG_ERR, "rread_v3: freeing iobuffer after error in send: 0X%X\n", iobuffer);
+              free(iobuffer);
+              return -1;
+            }
 #else
-	    errno = ECONNRESET;
-	    if( (n = netwrite(data_sock, iobuffer, status)) != status ) {
-	      log(LOG_ERR, "rread_v3: netwrite(): %s\n", strerror(errno));
-	      return -1;
-	    }
+            errno = ECONNRESET;
+            if( (n = netwrite(data_sock, iobuffer, status)) != status ) {
+              log(LOG_ERR, "rread_v3: netwrite(): %s\n", strerror(errno));
+              return -1;
+            }
 #endif
-	    if (daemonv3_rdmt)
-	      Csemaphore_up(&empty);
-	    myinfo.rnbr += status;
-	    myinfo.readop++;
-	  }
+            if (daemonv3_rdmt)
+              Csemaphore_up(&empty);
+            myinfo.rnbr += status;
+            myinfo.readop++;
+          }
       }
     }
 }
@@ -5495,41 +5475,41 @@ int srwrite_v3(s, infop, fd)
       marshall_LONG(p,serrno);
       if( netwrite_timeout(s, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT) != RQSTSIZE )  {
 #if defined(_WIN32)
-	log(LOG_ERR, "rwrite_v3: netwrite_timeout(): %s\n", ws_strerr(errno));
+        log(LOG_ERR, "rwrite_v3: netwrite_timeout(): %s\n", ws_strerr(errno));
 #else
-	log(LOG_ERR, "rwrite_v3: netwrite_timeout(): %s\n", strerror(errno));
+        log(LOG_ERR, "rwrite_v3: netwrite_timeout(): %s\n", strerror(errno));
 #endif
       }
       return -1;
     }
     if ((p = getconfent("RFIO","DAEMONV3_WRSIZE",0)) != NULL)  {
       if (atoi(p) > 0)
-	DISKBUFSIZE_WRITE = atoi(p);
+        DISKBUFSIZE_WRITE = atoi(p);
     }
 
     daemonv3_wrmt = DAEMONV3_WRMT;
     if( (p = getconfent("RFIO", "DAEMONV3_WRMT", 0)) != NULL ) {
       if (*p == '0')
-	daemonv3_wrmt = 0;
+        daemonv3_wrmt = 0;
       else
-	daemonv3_wrmt = 1;
+        daemonv3_wrmt = 1;
     }
 
     daemonv3_wrmt_nbuf = DAEMONV3_WRMT_NBUF;
     if( (p = getconfent("RFIO", "DAEMONV3_WRMT_NBUF", 0)) != NULL )
       if (atoi(p) > 0)
-	daemonv3_wrmt_nbuf = atoi(p);
+        daemonv3_wrmt_nbuf = atoi(p);
 
     daemonv3_wrmt_bufsize = DAEMONV3_WRMT_BUFSIZE;
     DISKBUFSIZE_WRITE = DAEMONV3_WRMT_BUFSIZE;
     if( (p = getconfent("RFIO", "DAEMONV3_WRMT_BUFSIZE", 0)) != NULL )
       if (atoi(p) > 0)  {
-	daemonv3_wrmt_bufsize = atoi(p);
-	DISKBUFSIZE_WRITE = atoi(p);
+        daemonv3_wrmt_bufsize = atoi(p);
+        DISKBUFSIZE_WRITE = atoi(p);
       }
 
     log(LOG_DEBUG,"rwrite_v3 : daemonv3_wrmt=%d,daemonv3_wrmt_nbuf=%d,daemonv3_wrmt_bufsize=%d\n",
-	daemonv3_wrmt,daemonv3_wrmt_nbuf,daemonv3_wrmt_bufsize);
+        daemonv3_wrmt,daemonv3_wrmt_nbuf,daemonv3_wrmt_bufsize);
 
     if (daemonv3_wrmt) {
       /* Indicates we are using RFIO V3 and multithreading while writing */
@@ -5537,36 +5517,36 @@ int srwrite_v3(s, infop, fd)
       /* Allocating circular buffer itself */
       log(LOG_DEBUG, "rwrite_v3 allocating circular buffer : %d bytes\n",sizeof(struct element) * daemonv3_wrmt_nbuf);
       if ((array = (struct element *)malloc(sizeof(struct element) * daemonv3_wrmt_nbuf)) == NULL)  {
-	log(LOG_ERR, "rwrite_v3: malloc array: ERROR occured (errno=%d)", errno);
-	return -1;
+        log(LOG_ERR, "rwrite_v3: malloc array: ERROR occured (errno=%d)", errno);
+        return -1;
       }
       log(LOG_DEBUG, "rwrite_v3 malloc array allocated : 0X%X\n",array);
 
       /* Allocating memory for each element of circular buffer */
       for (el=0; el < daemonv3_wrmt_nbuf; el++) {
-	log(LOG_DEBUG, "rwrite_v3 allocating circular buffer element %d: %d bytes\n",el,daemonv3_wrmt_bufsize);
-	if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
-	  array[el].p = (char *)malloc_page_aligned(daemonv3_wrmt_bufsize);
-	} else {
-	  array[el].p = (char *)malloc(daemonv3_wrmt_bufsize);
-	}
-	if ( array[el].p == NULL)  {
-	  log(LOG_ERR, "rwrite_v3: malloc array element %d: ERROR occured (errno=%d)", el, errno);
-	  return -1;
-	}
-	log(LOG_DEBUG, "rwrite_v3 malloc array element %d allocated : 0X%X\n",el, array[el].p);
+        log(LOG_DEBUG, "rwrite_v3 allocating circular buffer element %d: %d bytes\n",el,daemonv3_wrmt_bufsize);
+        if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+          array[el].p = (char *)malloc_page_aligned(daemonv3_wrmt_bufsize);
+        } else {
+          array[el].p = (char *)malloc(daemonv3_wrmt_bufsize);
+        }
+        if ( array[el].p == NULL)  {
+          log(LOG_ERR, "rwrite_v3: malloc array element %d: ERROR occured (errno=%d)", el, errno);
+          return -1;
+        }
+        log(LOG_DEBUG, "rwrite_v3 malloc array element %d allocated : 0X%X\n",el, array[el].p);
       }
     }
     else {
       log(LOG_DEBUG, "rwrite_v3 allocating malloc buffer : %d bytes\n",DISKBUFSIZE_WRITE);
       if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
-	iobuffer = (char *)malloc_page_aligned(DISKBUFSIZE_WRITE);
+        iobuffer = (char *)malloc_page_aligned(DISKBUFSIZE_WRITE);
       } else {
-	iobuffer = (char *)malloc(DISKBUFSIZE_WRITE);
+        iobuffer = (char *)malloc(DISKBUFSIZE_WRITE);
       }
       if ( iobuffer == NULL)  {
-	log(LOG_ERR, "rwrite_v3: malloc: ERROR occured (errno=%d)", errno);
-	return -1;
+        log(LOG_ERR, "rwrite_v3: malloc: ERROR occured (errno=%d)", errno);
+        return -1;
       }
       log(LOG_DEBUG, "rwrite_v3 malloc buffer allocated : 0X%X\n",iobuffer);
     }
@@ -5599,8 +5579,8 @@ int srwrite_v3(s, infop, fd)
       Csemaphore_init(&full,0);
 
       if ((cid2 = Cthread_create((void *(*)(void *))&consume_thread,(void *)&fd)) < 0) {
-	log(LOG_ERR,"Cannot create consumer thread : serrno=%d,errno=%d\n",serrno,errno);
-	return(-1);
+        log(LOG_ERR,"Cannot create consumer thread : serrno=%d,errno=%d\n",serrno,errno);
+        return(-1);
       }
     }
 
@@ -5623,14 +5603,14 @@ int srwrite_v3(s, infop, fd)
     if( select(FD_SETSIZE, &fdvar, NULL, NULL, &t) == SOCKET_ERROR ) {
       log(LOG_ERR, "rwrite_v3: select: %s", geterr());
       if (daemonv3_wrmt)
-	wait_consumer_thread(cid2);
+        wait_consumer_thread(cid2);
       return -1;
     }
 #else
     if( select(FD_SETSIZE, &fdvar, NULL, NULL, &t) < 0 )  {
       log(LOG_ERR, "rfio", "rwrite_v3: select failed (errno=%d)", errno);
       if (daemonv3_wrmt)
-	wait_consumer_thread(cid2);
+        wait_consumer_thread(cid2);
       return -1;
     }
 #endif   /* WIN32 */
@@ -5641,27 +5621,27 @@ int srwrite_v3(s, infop, fd)
       /* Something received on the control socket */
       log(LOG_DEBUG, "ctrl socket: reading %d bytes\n",RQSTSIZE);
       if( (n = netread_timeout(ctrl_sock, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT)) != RQSTSIZE )  {
-	if (n == 0)  {
-	  errno = ECONNRESET;
+        if (n == 0)  {
+          errno = ECONNRESET;
 #if defined(_WIN32)
-	  log(LOG_ERR, "read ctrl socket: netread(): %s\n", ws_strerr(errno));
+          log(LOG_ERR, "read ctrl socket: netread(): %s\n", ws_strerr(errno));
 #else
-	  log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
+          log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
 #endif   /* WIN32 */
-	  if (daemonv3_wrmt)
-	    wait_consumer_thread(cid2);
-	  return -1;
-	}
-	else {
+          if (daemonv3_wrmt)
+            wait_consumer_thread(cid2);
+          return -1;
+        }
+        else {
 #if defined(_WIN32)
-	  log(LOG_ERR, "read ctrl socket: netread(): %s\n", geterr());
+          log(LOG_ERR, "read ctrl socket: netread(): %s\n", geterr());
 #else
-	  log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
+          log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
 #endif   /* WIN32 */
-	  if (daemonv3_wrmt)
-	    wait_consumer_thread(cid2);
-	  return -1;
-	}
+          if (daemonv3_wrmt)
+            wait_consumer_thread(cid2);
+          return -1;
+        }
       }
       p = rqstbuf;
       unmarshall_WORD(p,magic);
@@ -5669,356 +5649,356 @@ int srwrite_v3(s, infop, fd)
       unmarshall_LONG(p,byte_written_by_client);
 
       if (code == RQST_CLOSE_V3)
-	log(LOG_DEBUG,"close request:  magic: %x code: %x\n",magic,code);
+        log(LOG_DEBUG,"close request:  magic: %x code: %x\n",magic,code);
       else
-	log(LOG_DEBUG,"unknown request:  magic: %x code: %x\n",magic,code);
+        log(LOG_DEBUG,"unknown request:  magic: %x code: %x\n",magic,code);
 
       log(LOG_DEBUG, "data socket: read_from_net=%d, written_by_client=%d\n",
-	  byte_read_from_network, byte_written_by_client);
+          byte_read_from_network, byte_written_by_client);
 
       if( byte_read_from_network == byte_written_by_client )  {
-	/*
-	 * Writing last buffered data on disk if necessary
-	 */
+        /*
+         * Writing last buffered data on disk if necessary
+         */
 
-	if( byte_in_diskbuffer )  {
-	  log(LOG_DEBUG, "writing last %d bytes on disk\n",byte_in_diskbuffer);
-	  if (daemonv3_wrmt) {
-	    array[produced % daemonv3_wrmt_nbuf].len = byte_in_diskbuffer;
-	    produced++;
-	    Csemaphore_up(&full);
+        if( byte_in_diskbuffer )  {
+          log(LOG_DEBUG, "writing last %d bytes on disk\n",byte_in_diskbuffer);
+          if (daemonv3_wrmt) {
+            array[produced % daemonv3_wrmt_nbuf].len = byte_in_diskbuffer;
+            produced++;
+            Csemaphore_up(&full);
 
-	    /* Indicate to the consumer thread that writing is finished */
-	    Csemaphore_down(&empty);
-	    array[produced % daemonv3_wrmt_nbuf].len = 0;
-	    produced++;
-	    Csemaphore_up(&full);
-	  }
-	  else {
-	    status = write(fd,iobuffer,byte_in_diskbuffer);
-	    /* If the write is successfull but incomplete (fs is full) we
-	       report the ENOSPC error immediately in order to simplify the
-	       code */
-	    if ((status > 0) && (status != byte_in_diskbuffer)) {
-	      status = -1;
-	      errno = ENOSPC;
-	    }
-	  }
-	}  /* if( byte_in_diskbuffer ) */
-	else {
-	  if (daemonv3_wrmt) {
-	    /* Indicate to the consumer thread that writing is finished */
-	    Csemaphore_down(&empty);
-	    array[produced % daemonv3_wrmt_nbuf].len = 0;
-	    produced++;
-	    Csemaphore_up(&full);
-	  }
-	}
-	if (daemonv3_wrmt) {
-	  log(LOG_INFO,"Joining thread\n");
-	  /* Wait for consumer thread */
-	  /* We can then safely catch deferred disk write errors */
-	  if (Cthread_join(cid2,NULL) < 0) {
-	    log(LOG_ERR,"Error joining consumer, serrno=%d\n",serrno);
-	    return(-1);
-	  }
+            /* Indicate to the consumer thread that writing is finished */
+            Csemaphore_down(&empty);
+            array[produced % daemonv3_wrmt_nbuf].len = 0;
+            produced++;
+            Csemaphore_up(&full);
+          }
+          else {
+            status = write(fd,iobuffer,byte_in_diskbuffer);
+            /* If the write is successfull but incomplete (fs is full) we
+               report the ENOSPC error immediately in order to simplify the
+               code */
+            if ((status > 0) && (status != byte_in_diskbuffer)) {
+              status = -1;
+              errno = ENOSPC;
+            }
+          }
+        }  /* if( byte_in_diskbuffer ) */
+        else {
+          if (daemonv3_wrmt) {
+            /* Indicate to the consumer thread that writing is finished */
+            Csemaphore_down(&empty);
+            array[produced % daemonv3_wrmt_nbuf].len = 0;
+            produced++;
+            Csemaphore_up(&full);
+          }
+        }
+        if (daemonv3_wrmt) {
+          log(LOG_INFO,"Joining thread\n");
+          /* Wait for consumer thread */
+          /* We can then safely catch deferred disk write errors */
+          if (Cthread_join(cid2,NULL) < 0) {
+            log(LOG_ERR,"Error joining consumer, serrno=%d\n",serrno);
+            return(-1);
+          }
 
-	  /* Catch deferred disk errors, if any */
-	  if (Cthread_mutex_lock(&write_error)) {
-	    log(LOG_ERR,"Cannot get mutex : serrno=%d",serrno);
-	    return(-1);
-	  }
+          /* Catch deferred disk errors, if any */
+          if (Cthread_mutex_lock(&write_error)) {
+            log(LOG_ERR,"Cannot get mutex : serrno=%d",serrno);
+            return(-1);
+          }
 
-	  if (write_error) {
-	    status = -1;
-	    saved_errno = write_error;
-	  }
-	  else
-	    status = byte_in_diskbuffer;
+          if (write_error) {
+            status = -1;
+            saved_errno = write_error;
+          }
+          else
+            status = byte_in_diskbuffer;
 
-	  if (Cthread_mutex_unlock(&write_error)) {
-	    log(LOG_ERR,"Cannot release mutex : serrno=%d",serrno);
-	    return(-1);
-	  }
-	}
-	if ((daemonv3_wrmt) && (status == -1))
-	  errno = saved_errno;
+          if (Cthread_mutex_unlock(&write_error)) {
+            log(LOG_ERR,"Cannot release mutex : serrno=%d",serrno);
+            return(-1);
+          }
+        }
+        if ((daemonv3_wrmt) && (status == -1))
+          errno = saved_errno;
 
-	rcode = (status < 0) ? errno:0;
+        rcode = (status < 0) ? errno:0;
 
-	if (status < 0)  {
-	  p = rqstbuf;
-	  marshall_WORD(p,REP_ERROR);
-	  marshall_LONG(p,status);
-	  marshall_LONG(p,rcode);
-	  log(LOG_ERR, "rwrite_v3: status %d (%s), rcode %d\n", status,
-	      strerror(errno), rcode);
-	  errno = ECONNRESET;
-	  if( (n = netwrite_timeout(s, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT)) != RQSTSIZE )  {
+        if (status < 0)  {
+          p = rqstbuf;
+          marshall_WORD(p,REP_ERROR);
+          marshall_LONG(p,status);
+          marshall_LONG(p,rcode);
+          log(LOG_ERR, "rwrite_v3: status %d (%s), rcode %d\n", status,
+              strerror(errno), rcode);
+          errno = ECONNRESET;
+          if( (n = netwrite_timeout(s, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT)) != RQSTSIZE )  {
 #if defined(_WIN32)
-	    log(LOG_ERR, "rwrite_v3: netwrite_timeout(): %s\n", ws_strerr(errno));
+            log(LOG_ERR, "rwrite_v3: netwrite_timeout(): %s\n", ws_strerr(errno));
 #else
-	    log(LOG_ERR, "rwrite_v3: netwrite_timeout(): %s\n", strerror(errno));
+            log(LOG_ERR, "rwrite_v3: netwrite_timeout(): %s\n", strerror(errno));
 #endif
-	    /* No need to wait consumer thread here since it already exited after error */
-	    return -1;
-	  }
+            /* No need to wait consumer thread here since it already exited after error */
+            return -1;
+          }
 
-	  /* No deadlock here since the client has already sent a CLOSE request
-	     (thus no data is still in transit) */
-	  log(LOG_DEBUG, "rwrite_v3: waiting ack for error\n");
-	  if ((n = netread_timeout(ctrl_sock,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT)) != RQSTSIZE) {
-	    if (n == 0)  {
-	      errno = ECONNRESET;
+          /* No deadlock here since the client has already sent a CLOSE request
+             (thus no data is still in transit) */
+          log(LOG_DEBUG, "rwrite_v3: waiting ack for error\n");
+          if ((n = netread_timeout(ctrl_sock,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT)) != RQSTSIZE) {
+            if (n == 0)  {
+              errno = ECONNRESET;
 #if defined(_WIN32)
-	      log(LOG_ERR, "read ctrl socket: netread(): %s\n", ws_strerr(errno));
+              log(LOG_ERR, "read ctrl socket: netread(): %s\n", ws_strerr(errno));
 #else
-	      log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
+              log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
 #endif   /* WIN32 */
-	      /* No need to wait consumer thread here since it already exited after error */
-	      return -1;
-	    }
-	    else    {
+              /* No need to wait consumer thread here since it already exited after error */
+              return -1;
+            }
+            else    {
 #if defined(_WIN32)
-	      log(LOG_ERR, "read ctrl socket: netread(): %s\n", geterr());
+              log(LOG_ERR, "read ctrl socket: netread(): %s\n", geterr());
 #else
-	      log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
+              log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
 #endif   /* WIN32 */
-	      /* No need to wait consumer thread here since it already exited after error */
-	      return -1;
-	    }
-	  }
-	}
-	else   {
-	  myinfo.wnbr += byte_in_diskbuffer;
-	  if (byte_in_diskbuffer)
-	    myinfo.writop++;
-	  byte_in_diskbuffer = 0;
-	  if (daemonv3_wrmt)
-	    iobuffer_p = NULL; /* For safety */
-	  else
-	    iobuffer_p = iobuffer;
-	}
+              /* No need to wait consumer thread here since it already exited after error */
+              return -1;
+            }
+          }
+        }
+        else   {
+          myinfo.wnbr += byte_in_diskbuffer;
+          if (byte_in_diskbuffer)
+            myinfo.writop++;
+          byte_in_diskbuffer = 0;
+          if (daemonv3_wrmt)
+            iobuffer_p = NULL; /* For safety */
+          else
+            iobuffer_p = iobuffer;
+        }
 
-	if (!daemonv3_wrmt) {
-	  log(LOG_DEBUG,"freeing iobuffer at 0X%X\n",iobuffer);
-	  if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
-	    free_page_aligned(iobuffer);
-	  } else {
-	    free(iobuffer);
-	  }
-	}
-	else {
-	  for (el=0; el < daemonv3_wrmt_nbuf; el++) {
-	    log(LOG_DEBUG,"freeing array element %d at 0X%X\n",el,array[el].p);
-	    if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
-	      free_page_aligned(array[el].p);
-	    } else {
-	      free(array[el].p);
-	    }
-	  }
-	  log(LOG_DEBUG,"freeing array at 0X%X\n",array);
-	  free(array);
-	}
+        if (!daemonv3_wrmt) {
+          log(LOG_DEBUG,"freeing iobuffer at 0X%X\n",iobuffer);
+          if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+            free_page_aligned(iobuffer);
+          } else {
+            free(iobuffer);
+          }
+        }
+        else {
+          for (el=0; el < daemonv3_wrmt_nbuf; el++) {
+            log(LOG_DEBUG,"freeing array element %d at 0X%X\n",el,array[el].p);
+            if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+              free_page_aligned(array[el].p);
+            } else {
+              free(array[el].p);
+            }
+          }
+          log(LOG_DEBUG,"freeing array at 0X%X\n",array);
+          free(array);
+        }
 #ifdef USE_XFSPREALLOC
-	if ( (p = getconfent("RFIOD","XFSPREALLOC",0)) ) {
-	  rfio_xfs_unresvsp64(fd, atoi(p), myinfo.wnbr);
-	}
+        if ( (p = getconfent("RFIOD","XFSPREALLOC",0)) ) {
+          rfio_xfs_unresvsp64(fd, atoi(p), myinfo.wnbr);
+        }
 #endif
-	srclose_v3(ctrl_sock, &myinfo, fd);
-	return 0;
+        srclose_v3(ctrl_sock, &myinfo, fd);
+        return 0;
       } /*  if( byte_read_from_network == byte_written_by_client ) */
       else  {
-	int diff;
+        int diff;
 
-	diff = byte_written_by_client - byte_read_from_network;
-	if (byte_in_diskbuffer + diff > DISKBUFSIZE_WRITE)  {
-	  /* If previous buffer is empty then we must take a new one */
-	  if ((daemonv3_wrmt) && (byte_in_diskbuffer == 0)) {
-	    Csemaphore_down(&empty);
-	    iobuffer = array[produced % daemonv3_wrmt_nbuf].p;
-	  }
-	  iobuffer = (char*)realloc(iobuffer, byte_in_diskbuffer + diff);
+        diff = byte_written_by_client - byte_read_from_network;
+        if (byte_in_diskbuffer + diff > DISKBUFSIZE_WRITE)  {
+          /* If previous buffer is empty then we must take a new one */
+          if ((daemonv3_wrmt) && (byte_in_diskbuffer == 0)) {
+            Csemaphore_down(&empty);
+            iobuffer = array[produced % daemonv3_wrmt_nbuf].p;
+          }
+          iobuffer = (char*)realloc(iobuffer, byte_in_diskbuffer + diff);
 
-	  log(LOG_DEBUG, "data socket: realloc done to get %d additional bytes, buffer 0X%X\n", diff, iobuffer);
-	  if (iobuffer == NULL)  {
-	    log(LOG_ERR, "realloc failed: %s\n", strerror(errno));
-	    if (daemonv3_wrmt)
-	      wait_consumer_thread(cid2);
-	    return -1;
-	  }
-	  iobuffer_p = iobuffer + byte_in_diskbuffer;
-	  if (daemonv3_wrmt) {
-	    log(LOG_DEBUG,"Updating circular elem %d to address %X\n",produced % daemonv3_wrmt_nbuf,iobuffer);
-	    /* Update circular array element to take reallocation into account */
-	    array[produced % daemonv3_wrmt_nbuf].p = iobuffer;
-	    array[produced % daemonv3_wrmt_nbuf].len = byte_in_diskbuffer + diff;
-	  }
+          log(LOG_DEBUG, "data socket: realloc done to get %d additional bytes, buffer 0X%X\n", diff, iobuffer);
+          if (iobuffer == NULL)  {
+            log(LOG_ERR, "realloc failed: %s\n", strerror(errno));
+            if (daemonv3_wrmt)
+              wait_consumer_thread(cid2);
+            return -1;
+          }
+          iobuffer_p = iobuffer + byte_in_diskbuffer;
+          if (daemonv3_wrmt) {
+            log(LOG_DEBUG,"Updating circular elem %d to address %X\n",produced % daemonv3_wrmt_nbuf,iobuffer);
+            /* Update circular array element to take reallocation into account */
+            array[produced % daemonv3_wrmt_nbuf].p = iobuffer;
+            array[produced % daemonv3_wrmt_nbuf].len = byte_in_diskbuffer + diff;
+          }
 
-	} /* buffer reallocation was necessary */
+        } /* buffer reallocation was necessary */
 
-	/* If previous buffer is empty then we must take a new one */
-	if ((daemonv3_wrmt) && (byte_in_diskbuffer == 0)) {
-	  Csemaphore_down(&empty);
-	  iobuffer = iobuffer_p = array[produced % daemonv3_wrmt_nbuf].p;
-	}
-	log(LOG_DEBUG, "data socket: reading residu %d bytes\n", diff);
-	if( (n = netread_timeout(data_sock, iobuffer_p, diff, RFIO_DATA_TIMEOUT)) != diff )  {
-	  if (n == 0)   {
-	    errno = ECONNRESET;
+        /* If previous buffer is empty then we must take a new one */
+        if ((daemonv3_wrmt) && (byte_in_diskbuffer == 0)) {
+          Csemaphore_down(&empty);
+          iobuffer = iobuffer_p = array[produced % daemonv3_wrmt_nbuf].p;
+        }
+        log(LOG_DEBUG, "data socket: reading residu %d bytes\n", diff);
+        if( (n = netread_timeout(data_sock, iobuffer_p, diff, RFIO_DATA_TIMEOUT)) != diff )  {
+          if (n == 0)   {
+            errno = ECONNRESET;
 #if defined(_WIN32)
-	    log(LOG_ERR, "read ctrl socket: netread(): %s\n", ws_strerr(errno));
+            log(LOG_ERR, "read ctrl socket: netread(): %s\n", ws_strerr(errno));
 #else
-	    log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
+            log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
 #endif   /* WIN32 */
-	    if (daemonv3_wrmt)
-	      wait_consumer_thread(cid2);
-	    return -1;
-	  }
-	  else  {
+            if (daemonv3_wrmt)
+              wait_consumer_thread(cid2);
+            return -1;
+          }
+          else  {
 #if defined(_WIN32)
-	    log(LOG_ERR, "read data residu socket: netread(): %s\n", geterr());
+            log(LOG_ERR, "read data residu socket: netread(): %s\n", geterr());
 #else
-	    log(LOG_ERR, "read data residu socket: read(): %s\n", strerror(errno));
+            log(LOG_ERR, "read data residu socket: read(): %s\n", strerror(errno));
 #endif   /* WIN32 */
-	    if (daemonv3_wrmt)
-	      wait_consumer_thread(cid2);
-	    return -1;
-	  }
-	}
-	byte_read_from_network += diff;
-	byte_in_diskbuffer += diff;
-	/*
-	 * Writing data on disk.
-	 */
+            if (daemonv3_wrmt)
+              wait_consumer_thread(cid2);
+            return -1;
+          }
+        }
+        byte_read_from_network += diff;
+        byte_in_diskbuffer += diff;
+        /*
+         * Writing data on disk.
+         */
 
-	log(LOG_DEBUG, "writing %d bytes on disk\n",byte_in_diskbuffer);
-	if (daemonv3_wrmt) {
-	  array[produced % daemonv3_wrmt_nbuf].len = byte_in_diskbuffer;
-	  produced++;
-	  Csemaphore_up(&full);
+        log(LOG_DEBUG, "writing %d bytes on disk\n",byte_in_diskbuffer);
+        if (daemonv3_wrmt) {
+          array[produced % daemonv3_wrmt_nbuf].len = byte_in_diskbuffer;
+          produced++;
+          Csemaphore_up(&full);
 
-	  /* Indicate to the consumer thread that writing is finished */
-	  Csemaphore_down(&empty);
-	  array[produced % daemonv3_wrmt_nbuf].len = 0;
-	  produced++;
-	  Csemaphore_up(&full);
-	}
-	else {
-	  status = write(fd, iobuffer, byte_in_diskbuffer);
-	  /* If the write is successfull but incomplete (fs is full) we
-	     report the ENOSPC error immediately in order to simplify the
-	     code */
-	  if ((status > 0) && (status != byte_in_diskbuffer)) {
-	    status = -1;
-	    errno = ENOSPC;
-	  }
-	}
+          /* Indicate to the consumer thread that writing is finished */
+          Csemaphore_down(&empty);
+          array[produced % daemonv3_wrmt_nbuf].len = 0;
+          produced++;
+          Csemaphore_up(&full);
+        }
+        else {
+          status = write(fd, iobuffer, byte_in_diskbuffer);
+          /* If the write is successfull but incomplete (fs is full) we
+             report the ENOSPC error immediately in order to simplify the
+             code */
+          if ((status > 0) && (status != byte_in_diskbuffer)) {
+            status = -1;
+            errno = ENOSPC;
+          }
+        }
 
-	if (daemonv3_wrmt) {
-	  log(LOG_INFO,"Joining thread\n");
-	  /* Wait for consumer thread */
-	  /* We can then safely catch deferred disk write errors */
-	  if (Cthread_join(cid2,NULL) < 0) {
-	    log(LOG_ERR,"Error joining consumer, serrno=%d\n",serrno);
-	    return(-1);
-	  }
+        if (daemonv3_wrmt) {
+          log(LOG_INFO,"Joining thread\n");
+          /* Wait for consumer thread */
+          /* We can then safely catch deferred disk write errors */
+          if (Cthread_join(cid2,NULL) < 0) {
+            log(LOG_ERR,"Error joining consumer, serrno=%d\n",serrno);
+            return(-1);
+          }
 
-	  /* Catch deferred disk write errors, if any */
-	  if (Cthread_mutex_lock(&write_error)) {
-	    log(LOG_ERR,"Cannot get mutex : serrno=%d",serrno);
-	    return(-1);
-	  }
+          /* Catch deferred disk write errors, if any */
+          if (Cthread_mutex_lock(&write_error)) {
+            log(LOG_ERR,"Cannot get mutex : serrno=%d",serrno);
+            return(-1);
+          }
 
-	  if (write_error) {
-	    status = -1;
-	    saved_errno = write_error;
-	  }
-	  else
-	    status = byte_in_diskbuffer;
+          if (write_error) {
+            status = -1;
+            saved_errno = write_error;
+          }
+          else
+            status = byte_in_diskbuffer;
 
-	  if (Cthread_mutex_unlock(&write_error)) {
-	    log(LOG_ERR,"Cannot release mutex : serrno=%d",serrno);
-	    return(-1);
-	  }
-	}
-	if ((daemonv3_wrmt) && (status == -1))
-	  errno = saved_errno;
-	rcode = (status<0) ? errno:0;
+          if (Cthread_mutex_unlock(&write_error)) {
+            log(LOG_ERR,"Cannot release mutex : serrno=%d",serrno);
+            return(-1);
+          }
+        }
+        if ((daemonv3_wrmt) && (status == -1))
+          errno = saved_errno;
+        rcode = (status<0) ? errno:0;
 
-	if (status < 0)  {
-	  p = rqstbuf;
-	  marshall_WORD(p, REP_ERROR);
-	  marshall_LONG(p, status);
-	  marshall_LONG(p, rcode);
-	  log(LOG_DEBUG, "rwrite_v3: status %d, rcode %d\n", status, rcode);
-	  errno = ECONNRESET;
-	  if( (n = netwrite_timeout(s, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT)) != RQSTSIZE )  {
+        if (status < 0)  {
+          p = rqstbuf;
+          marshall_WORD(p, REP_ERROR);
+          marshall_LONG(p, status);
+          marshall_LONG(p, rcode);
+          log(LOG_DEBUG, "rwrite_v3: status %d, rcode %d\n", status, rcode);
+          errno = ECONNRESET;
+          if( (n = netwrite_timeout(s, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT)) != RQSTSIZE )  {
 #if defined(_WIN32)
-	    log(LOG_ERR, "rwrite_v3: netwrite_timeout(): %s\n", ws_strerr(errno));
+            log(LOG_ERR, "rwrite_v3: netwrite_timeout(): %s\n", ws_strerr(errno));
 #else
-	    log(LOG_ERR, "rwrite_v3: netwrite_timeout(): %s\n", strerror(errno));
+            log(LOG_ERR, "rwrite_v3: netwrite_timeout(): %s\n", strerror(errno));
 #endif
-	    /* Consumer thread already exited */
-	    return -1;
-	  }
-	  /* No deadlock possible here since all the data sent by the client
-	     using the data socket has been read at this point */
+            /* Consumer thread already exited */
+            return -1;
+          }
+          /* No deadlock possible here since all the data sent by the client
+             using the data socket has been read at this point */
 
-	  log(LOG_DEBUG, "rwrite_v3: waiting ack for error\n");
-	  if ((n = netread_timeout(ctrl_sock,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT)) != RQSTSIZE) {
-	    if (n == 0)  {
-	      errno = ECONNRESET;
+          log(LOG_DEBUG, "rwrite_v3: waiting ack for error\n");
+          if ((n = netread_timeout(ctrl_sock,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT)) != RQSTSIZE) {
+            if (n == 0)  {
+              errno = ECONNRESET;
 #if defined(_WIN32)
-	      log(LOG_ERR, "read ctrl socket: read(): %s\n", ws_strerr(errno));
+              log(LOG_ERR, "read ctrl socket: read(): %s\n", ws_strerr(errno));
 #else
-	      log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
+              log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
 #endif   /* WIN32 */
-	      /* Consumer thread already exited */
-	      return -1;
-	    }
-	    else  {
+              /* Consumer thread already exited */
+              return -1;
+            }
+            else  {
 #if defined(_WIN32)
-	      log(LOG_ERR, "read ctrl socket: read(): %s\n", geterr());
+              log(LOG_ERR, "read ctrl socket: read(): %s\n", geterr());
 #else
-	      log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
+              log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
 #endif   /* WIN32 */
-	      /* Consumer thread already exited */
-	      return -1;
-	    }
-	  }
-	}
-	else   {
-	  myinfo.wnbr += byte_in_diskbuffer;
-	  myinfo.writop++;
-	  byte_in_diskbuffer = 0;
-	  if (daemonv3_wrmt)
-	    iobuffer_p = NULL; /* For safety */
-	  else
-	    iobuffer_p = iobuffer;
-	}
-	if (!daemonv3_wrmt) {
-	  log(LOG_DEBUG,"freeing iobuffer at 0X%X\n",iobuffer);
-	  if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
-	    free_page_aligned(iobuffer);
-	  } else {
-	    free(iobuffer);
-	  }
-	}
-	else {
-	  for (el=0; el < daemonv3_wrmt_nbuf; el++) {
-	    log(LOG_DEBUG,"freeing array element %d at 0X%X\n",el,array[el].p);
-	    if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
-	      free_page_aligned(array[el].p);
-	    } else {
-	      free(array[el].p);
-	    }
-	  }
-	  log(LOG_DEBUG,"freeing array at 0X%X\n",array);
-	  free(array);
-	}
-	srclose_v3(ctrl_sock, &myinfo, fd);
-	return 0;
+              /* Consumer thread already exited */
+              return -1;
+            }
+          }
+        }
+        else   {
+          myinfo.wnbr += byte_in_diskbuffer;
+          myinfo.writop++;
+          byte_in_diskbuffer = 0;
+          if (daemonv3_wrmt)
+            iobuffer_p = NULL; /* For safety */
+          else
+            iobuffer_p = iobuffer;
+        }
+        if (!daemonv3_wrmt) {
+          log(LOG_DEBUG,"freeing iobuffer at 0X%X\n",iobuffer);
+          if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+            free_page_aligned(iobuffer);
+          } else {
+            free(iobuffer);
+          }
+        }
+        else {
+          for (el=0; el < daemonv3_wrmt_nbuf; el++) {
+            log(LOG_DEBUG,"freeing array element %d at 0X%X\n",el,array[el].p);
+            if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+              free_page_aligned(array[el].p);
+            } else {
+              free(array[el].p);
+            }
+          }
+          log(LOG_DEBUG,"freeing array at 0X%X\n",array);
+          free(array);
+        }
+        srclose_v3(ctrl_sock, &myinfo, fd);
+        return 0;
       }
     }
 
@@ -6027,9 +6007,9 @@ int srwrite_v3(s, infop, fd)
       int n,can_be_read;
 
       if ((daemonv3_wrmt) && (byte_in_diskbuffer == 0)) {
-	log(LOG_DEBUG, "Data received on data socket, new buffer %d requested\n",produced % daemonv3_wrmt_nbuf);
-	Csemaphore_down(&empty);
-	iobuffer = iobuffer_p = array[produced % daemonv3_wrmt_nbuf].p;
+        log(LOG_DEBUG, "Data received on data socket, new buffer %d requested\n",produced % daemonv3_wrmt_nbuf);
+        Csemaphore_down(&empty);
+        iobuffer = iobuffer_p = array[produced % daemonv3_wrmt_nbuf].p;
       }
 
       log(LOG_DEBUG,"iobuffer_p = %X,DISKBUFSIZE_WRITE = %d\n",iobuffer_p,DISKBUFSIZE_WRITE);
@@ -6037,35 +6017,35 @@ int srwrite_v3(s, infop, fd)
       n = recv(data_sock, iobuffer_p, DISKBUFSIZE_WRITE-byte_in_diskbuffer, 0);
       if( (n == 0) || n == SOCKET_ERROR )
 #else
-	if( (n = read(data_sock, iobuffer_p, DISKBUFSIZE_WRITE-byte_in_diskbuffer)) <= 0 )
+        if( (n = read(data_sock, iobuffer_p, DISKBUFSIZE_WRITE-byte_in_diskbuffer)) <= 0 )
 #endif
-	  {
+          {
             if (n == 0)  {
-	      errno = ECONNRESET;
+              errno = ECONNRESET;
 #if defined(_WIN32)
-	      log(LOG_ERR, "read ctrl socket: recv(): %s\n", ws_strerr(errno));
+              log(LOG_ERR, "read ctrl socket: recv(): %s\n", ws_strerr(errno));
 #else
-	      log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
+              log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
 #endif   /* WIN32 */
-	      if (daemonv3_wrmt)
-		wait_consumer_thread(cid2);
-	      return -1;
+              if (daemonv3_wrmt)
+                wait_consumer_thread(cid2);
+              return -1;
             }
             else  {
 #if defined(_WIN32)
-	      log(LOG_DEBUG, "read data socket: recv(): %s\n", geterr());
+              log(LOG_DEBUG, "read data socket: recv(): %s\n", geterr());
 #else
-	      log(LOG_DEBUG, "read data socket: read(): %s\n", strerror(errno));
+              log(LOG_DEBUG, "read data socket: read(): %s\n", strerror(errno));
 #endif
-	      if (daemonv3_wrmt)
-		wait_consumer_thread(cid2);
-	      return -1;
+              if (daemonv3_wrmt)
+                wait_consumer_thread(cid2);
+              return -1;
             }
-	  }
-	else  {
-	  can_be_read = n;
-	  log(LOG_DEBUG, "read data socket : %d bytes\n", can_be_read);
-	}
+          }
+        else  {
+          can_be_read = n;
+          log(LOG_DEBUG, "read data socket : %d bytes\n", can_be_read);
+        }
 
       byte_read_from_network += can_be_read;
       byte_in_diskbuffer += can_be_read;
@@ -6076,200 +6056,200 @@ int srwrite_v3(s, infop, fd)
        */
 
       if (byte_in_diskbuffer == DISKBUFSIZE_WRITE)  {
-	log(LOG_DEBUG, "writing %d bytes on disk\n", byte_in_diskbuffer);
-	if (daemonv3_wrmt) {
-	  array[produced % daemonv3_wrmt_nbuf].len = byte_in_diskbuffer;
-	  produced++;
-	  Csemaphore_up(&full);
-	}
-	else {
-	  status = write(fd, iobuffer, byte_in_diskbuffer);
-	  /* If the write is successfull but incomplete (fs is full) we
-	     report the ENOSPC error immediately in order to simplify the
-	     code */
-	  if ((status > 0) && (status != byte_in_diskbuffer)) {
-	    status = -1;
-	    errno = ENOSPC;
-	  }
-	}
+        log(LOG_DEBUG, "writing %d bytes on disk\n", byte_in_diskbuffer);
+        if (daemonv3_wrmt) {
+          array[produced % daemonv3_wrmt_nbuf].len = byte_in_diskbuffer;
+          produced++;
+          Csemaphore_up(&full);
+        }
+        else {
+          status = write(fd, iobuffer, byte_in_diskbuffer);
+          /* If the write is successfull but incomplete (fs is full) we
+             report the ENOSPC error immediately in order to simplify the
+             code */
+          if ((status > 0) && (status != byte_in_diskbuffer)) {
+            status = -1;
+            errno = ENOSPC;
+          }
+        }
 
-	if (daemonv3_wrmt) {
-	  if (Cthread_mutex_lock(&write_error)) {
-	    log(LOG_ERR,"Cannot get mutex : serrno=%d",serrno);
-	    return(-1);
-	  }
+        if (daemonv3_wrmt) {
+          if (Cthread_mutex_lock(&write_error)) {
+            log(LOG_ERR,"Cannot get mutex : serrno=%d",serrno);
+            return(-1);
+          }
 
-	  if (write_error) {
-	    status = -1;
-	    saved_errno = write_error;
-	  }
-	  else
-	    status = byte_in_diskbuffer;
+          if (write_error) {
+            status = -1;
+            saved_errno = write_error;
+          }
+          else
+            status = byte_in_diskbuffer;
 
-	  if (Cthread_mutex_unlock(&write_error)) {
-	    log(LOG_ERR,"Cannot release mutex : serrno=%d",serrno);
-	    return(-1);
-	  }
-	}
-	if ((daemonv3_wrmt) && (status == -1))
-	  errno = saved_errno;
+          if (Cthread_mutex_unlock(&write_error)) {
+            log(LOG_ERR,"Cannot release mutex : serrno=%d",serrno);
+            return(-1);
+          }
+        }
+        if ((daemonv3_wrmt) && (status == -1))
+          errno = saved_errno;
 
-	rcode = (status < 0) ? errno:0;
+        rcode = (status < 0) ? errno:0;
 
-	if (status < 0)  {
-	  p = rqstbuf;
-	  marshall_WORD(p, REP_ERROR);
-	  marshall_LONG(p, status);
-	  marshall_LONG(p, rcode);
-	  log(LOG_ERR, "rwrite_v3: status %d (%s), rcode %d\n", status,strerror(errno), rcode);
-	  errno = ECONNRESET;
-	  if ((n = netwrite_timeout(s,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT)) != RQSTSIZE)  {
+        if (status < 0)  {
+          p = rqstbuf;
+          marshall_WORD(p, REP_ERROR);
+          marshall_LONG(p, status);
+          marshall_LONG(p, rcode);
+          log(LOG_ERR, "rwrite_v3: status %d (%s), rcode %d\n", status,strerror(errno), rcode);
+          errno = ECONNRESET;
+          if ((n = netwrite_timeout(s,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT)) != RQSTSIZE)  {
 #if defined(_WIN32)
-	    log(LOG_ERR, "rwrite_v3: netwrite_timeout(): %s\n", ws_strerr(errno));
+            log(LOG_ERR, "rwrite_v3: netwrite_timeout(): %s\n", ws_strerr(errno));
 #else
-	    log(LOG_ERR, "rwrite_v3: netwrite_timeout(): %s\n", strerror(errno));
+            log(LOG_ERR, "rwrite_v3: netwrite_timeout(): %s\n", strerror(errno));
 #endif
-	    /* Consumer thread already exited after error */
-	    return -1;
-	  }
+            /* Consumer thread already exited after error */
+            return -1;
+          }
 
-	  /*
-	   * To avoid overflowing the local thread stack we must
-	   * put dummy on heap
-	   */
-	  sizeofdummy = 256 * 1024;
-	  dummy = (unsigned char *)malloc(sizeof(unsigned char) * sizeofdummy);
-	  if (dummy == NULL)
-	    log(LOG_ERR, "rwrite_v3: malloc(): %s\n", strerror(errno));
+          /*
+           * To avoid overflowing the local thread stack we must
+           * put dummy on heap
+           */
+          sizeofdummy = 256 * 1024;
+          dummy = (unsigned char *)malloc(sizeof(unsigned char) * sizeofdummy);
+          if (dummy == NULL)
+            log(LOG_ERR, "rwrite_v3: malloc(): %s\n", strerror(errno));
 
-	  /*
-	    There is a potential deadlock here since the client may be stuck
-	    in netwrite (cf rfio_write_v3), trying to write data on the data
-	    socket while both socket buffers (client + server) are full.
-	    To avoid this problem, we empty the data socket while waiting
-	    for the ack to be received on the control socket
-	  */
+          /*
+            There is a potential deadlock here since the client may be stuck
+            in netwrite (cf rfio_write_v3), trying to write data on the data
+            socket while both socket buffers (client + server) are full.
+            To avoid this problem, we empty the data socket while waiting
+            for the ack to be received on the control socket
+          */
 
-	  while (1)  {
-	    FD_ZERO(&fdvar2);
-	    FD_SET(ctrl_sock,&fdvar2);
-	    FD_SET(data_sock,&fdvar2);
+          while (1)  {
+            FD_ZERO(&fdvar2);
+            FD_SET(ctrl_sock,&fdvar2);
+            FD_SET(data_sock,&fdvar2);
 
-	    t.tv_sec = 1;
-	    t.tv_usec = 0;
+            t.tv_sec = 1;
+            t.tv_usec = 0;
 
-	    log(LOG_DEBUG,"rwrite_v3: doing select after error writing on disk\n");
+            log(LOG_DEBUG,"rwrite_v3: doing select after error writing on disk\n");
 #if defined(_WIN32)
-	    if( select(FD_SETSIZE, &fdvar2, NULL, NULL, &t) == SOCKET_ERROR )
+            if( select(FD_SETSIZE, &fdvar2, NULL, NULL, &t) == SOCKET_ERROR )
 #else
-	      if( select(FD_SETSIZE, &fdvar2, NULL, NULL, &t) < 0 )
+              if( select(FD_SETSIZE, &fdvar2, NULL, NULL, &t) < 0 )
 #endif
-		{
+                {
 #if defined(_WIN32)
-		  errno = WSAGetLastError();
+                  errno = WSAGetLastError();
 #endif
-		  log(LOG_ERR,"rfio","rwrite_v3: select fdvar2 failed (errno=%d)",errno);
-		  /* Consumer thread already exited after error */
-		  return -1;
-		}
+                  log(LOG_ERR,"rfio","rwrite_v3: select fdvar2 failed (errno=%d)",errno);
+                  /* Consumer thread already exited after error */
+                  return -1;
+                }
 
-	    if( FD_ISSET(ctrl_sock, &fdvar2) )  {
-	      /* The ack has been received on the control socket */
+            if( FD_ISSET(ctrl_sock, &fdvar2) )  {
+              /* The ack has been received on the control socket */
 
-	      log(LOG_DEBUG, "rwrite_v3: waiting ack for error\n");
-	      n = netread_timeout(ctrl_sock, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT);
-	      if (n != RQSTSIZE)  {
-		if (n == 0)  {
-		  errno = ECONNRESET;
+              log(LOG_DEBUG, "rwrite_v3: waiting ack for error\n");
+              n = netread_timeout(ctrl_sock, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT);
+              if (n != RQSTSIZE)  {
+                if (n == 0)  {
+                  errno = ECONNRESET;
 #if defined(_WIN32)
-		  log(LOG_ERR, "read ctrl socket: read(): %s\n", ws_strerr(errno));
+                  log(LOG_ERR, "read ctrl socket: read(): %s\n", ws_strerr(errno));
 #else
-		  log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
+                  log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
 #endif
-		  /* Consumer thread already exited after error */
-		  return -1;
-		}
-		else  {
+                  /* Consumer thread already exited after error */
+                  return -1;
+                }
+                else  {
 #if defined(_WIN32)
-		  log(LOG_ERR, "read ctrl socket: read(): %s\n", geterr());
+                  log(LOG_ERR, "read ctrl socket: read(): %s\n", geterr());
 #else
-		  log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
+                  log(LOG_ERR, "read ctrl socket: read(): %s\n", strerror(errno));
 #endif
-		  /* Consumer thread already exited after error */
-		  return -1;
-		}
-	      }
-	      else  {
-		if (!daemonv3_wrmt) {
-		  log(LOG_DEBUG,"freeing iobuffer at 0X%X\n",iobuffer);
-		  if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
-		    free_page_aligned(iobuffer);
-		  } else {
-		    free(iobuffer);
-		  }
-		}
-		else {
-		  for (el=0; el < daemonv3_wrmt_nbuf; el++) {
-		    log(LOG_DEBUG,"freeing array element %d at 0X%X\n",el,array[el].p);
-		    if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
-		      free_page_aligned(array[el].p);
-		    } else {
-		      free(array[el].p);
-		    }
-		  }
-		  log(LOG_DEBUG,"freeing array at 0X%X\n",array);
-		  free(array);
-		}
-		/* srclose_v3(ctrl_sock,&myinfo,fd); */
-		return 0;
-	      }
-	    }
+                  /* Consumer thread already exited after error */
+                  return -1;
+                }
+              }
+              else  {
+                if (!daemonv3_wrmt) {
+                  log(LOG_DEBUG,"freeing iobuffer at 0X%X\n",iobuffer);
+                  if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+                    free_page_aligned(iobuffer);
+                  } else {
+                    free(iobuffer);
+                  }
+                }
+                else {
+                  for (el=0; el < daemonv3_wrmt_nbuf; el++) {
+                    log(LOG_DEBUG,"freeing array element %d at 0X%X\n",el,array[el].p);
+                    if ( getconfent("RFIOD", "DIRECTIO", 0) ) {
+                      free_page_aligned(array[el].p);
+                    } else {
+                      free(array[el].p);
+                    }
+                  }
+                  log(LOG_DEBUG,"freeing array at 0X%X\n",array);
+                  free(array);
+                }
+                /* srclose_v3(ctrl_sock,&myinfo,fd); */
+                return 0;
+              }
+            }
 
-	    if (FD_ISSET(data_sock,&fdvar2))  {
-	      /* Read as much data as possible from the data socket */
+            if (FD_ISSET(data_sock,&fdvar2))  {
+              /* Read as much data as possible from the data socket */
 
-	      log(LOG_DEBUG, "rwrite_v3: emptying data socket (last disk write)\n");
+              log(LOG_DEBUG, "rwrite_v3: emptying data socket (last disk write)\n");
 #if defined(_WIN32)
-	      n = recv(data_sock, dummy, sizeofdummy, 0);
-	      if( (n == 0) || (n == SOCKET_ERROR) )
+              n = recv(data_sock, dummy, sizeofdummy, 0);
+              if( (n == 0) || (n == SOCKET_ERROR) )
 #else
-		n = read(data_sock, dummy, sizeofdummy);
-	      if( n <= 0 )
+                n = read(data_sock, dummy, sizeofdummy);
+              if( n <= 0 )
 #endif  /* WIN32 */
-		{
-		  (void) free(dummy);
+                {
+                  (void) free(dummy);
 
-		  if (n == 0)  {
-		    errno = ECONNRESET;
+                  if (n == 0)  {
+                    errno = ECONNRESET;
 #if defined(_WIN32)
-		    log(LOG_ERR, "read emptying data socket: recv(): %s\n", ws_strerr(errno));
+                    log(LOG_ERR, "read emptying data socket: recv(): %s\n", ws_strerr(errno));
 #else
-		    log(LOG_ERR, "read emptying data socket: read(): %s\n", strerror(errno));
+                    log(LOG_ERR, "read emptying data socket: read(): %s\n", strerror(errno));
 #endif   /* WIN32 */
-		    /* Consumer thread already exited after error */
-		    return -1;
-		  }
-		  else {
+                    /* Consumer thread already exited after error */
+                    return -1;
+                  }
+                  else {
 #if defined(_WIN32)
-		    log(LOG_ERR, "read emptying data socket: recv(): %s\n", geterr());
+                    log(LOG_ERR, "read emptying data socket: recv(): %s\n", geterr());
 #else
-		    log(LOG_ERR, "read emptying data socket: read(): %s\n", strerror(errno));
+                    log(LOG_ERR, "read emptying data socket: read(): %s\n", strerror(errno));
 #endif
-		    /* Consumer thread already exited after error */
-		    return -1;
-		  }
-		}
-	      log(LOG_DEBUG, "rwrite_v3: emptying data socket, %d bytes read\n",n);
-	    }
-	  }
-	  free(dummy);
-	}
-	else  {
-	  myinfo.wnbr += byte_in_diskbuffer;
-	  myinfo.writop++;
-	  byte_in_diskbuffer = 0;
-	  iobuffer_p = iobuffer;
-	}
+                    /* Consumer thread already exited after error */
+                    return -1;
+                  }
+                }
+              log(LOG_DEBUG, "rwrite_v3: emptying data socket, %d bytes read\n",n);
+            }
+          }
+          free(dummy);
+        }
+        else  {
+          myinfo.wnbr += byte_in_diskbuffer;
+          myinfo.writop++;
+          byte_in_diskbuffer = 0;
+          iobuffer_p = iobuffer;
+        }
       }
     }
   }

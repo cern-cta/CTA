@@ -1,7 +1,7 @@
 # Arguments for the tapegateway
 #   -f             keep process in the foreground, do not fork
 
-# Options to pass to the tapegatewayd
+# Options to pass to the tapegateway daemon
 #TAPEGATEWAYD_OPTIONS=
 
 # Should we run with another limit on the core file size other than the default?

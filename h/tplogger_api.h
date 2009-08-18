@@ -19,7 +19,7 @@
 
 
 /*
-** $Id: tplogger_api.h,v 1.6 2008/08/04 12:33:35 wiebalck Exp $
+** $Id: tplogger_api.h,v 1.7 2009/08/18 09:43:00 waldron Exp $
 */
 
 
@@ -35,8 +35,16 @@
  * @brief tplogger interface
  */
 
+/* Required by tplogger */
+#define DLF_LEN_MSGTEXT       512
+#define DLF_MSG_PARAM_UID     8
+#define DLF_MSG_PARAM_GID     9
+#define DLF_MSG_PARAM_STYPE   10
+#define DLF_MSG_PARAM_SNAME   11
+
+
 /*
-** The tape logger message 
+** The tape logger message
 */
 typedef struct tplogger_message_s {
 
@@ -60,36 +68,18 @@ typedef struct tplogger_s {
         /* Initalize a logging mechanism             */
         int (*tl_init)        ( struct tplogger_s *self, int init );
 
-        /* Log a message with ist default level      */
+        /* Log a message with its default level      */
         int (*tl_log)         ( struct tplogger_s *self, unsigned short msg_no, int num_params, ... );
 
-        /* Log a message with a certain log level    */
-        int (*tl_llog)        ( struct tplogger_s *self, int lvl, unsigned short msg_no, int num_params, ... ); 
-
-        /* Get the log level of a predefined message */
-        int (*tl_get_lvl)     ( struct tplogger_s *self, unsigned short msg_no );
-
-        /* Set the log level of a predefined message */
-        int (*tl_set_lvl)     ( struct tplogger_s *self, unsigned short msg_no, int lvl );
-        
         /* Shutdown a logging mechanism              */
         int (*tl_exit)        ( struct tplogger_s *self, int exit );
 
-        /* Prepare a call to fork                    */
-        int (*tl_fork_prepare)( struct tplogger_s *self );
-
-        /* Fork follow up for the child              */
-        int (*tl_fork_child)  ( struct tplogger_s *self );
-
-        /* Fork follow up for the parent             */
-        int (*tl_fork_parent) ( struct tplogger_s *self );
-        
         /* A tplogger identifier                     */
         char               *tl_name;
 
         /* Output file stream                        */
         FILE               *out_stream;
-        
+
         /* Message table                             */
         tplogger_message_t *tl_msg;
 
@@ -148,7 +138,7 @@ extern tplogger_t tl_gen;
 
 
 /*
-** Determine the number of elements in an array 
+** Determine the number of elements in an array
 */
 #define ARRAY_ENTRIES(arr) (sizeof(arr))/(sizeof((arr)[0]))
 
@@ -160,7 +150,7 @@ EXTERN_C int DLL_DECL tplogger_nb_messages _PROTO(( tplogger_t *self ));
 */
 
 /* #define MAX_SYSLOG_MSG_LEN 1024 */
-#define MAX_SYSLOG_MSG_LEN 1048576 
+#define MAX_SYSLOG_MSG_LEN 1048576
 
 /* chunk size -1 passed to syslog  */
 #define MAX_SYSLOG_CHUNK 767
@@ -170,18 +160,6 @@ EXTERN_C int DLL_DECL tl_init_dlf         _PROTO(( tplogger_t *self, int init ))
 EXTERN_C int DLL_DECL tl_exit_dlf         _PROTO(( tplogger_t *self, int exit ));
 
 EXTERN_C int DLL_DECL tl_log_dlf          _PROTO(( tplogger_t *self, unsigned short msg_no, int num_params, ... ));
-
-EXTERN_C int DLL_DECL tl_llog_dlf         _PROTO(( tplogger_t *self, int sev, unsigned short msg_no, int num_params, ... ));
-
-EXTERN_C int DLL_DECL tl_get_lvl_dlf      _PROTO(( tplogger_t *self, unsigned short msg_no ));
-
-EXTERN_C int DLL_DECL tl_set_lvl_dlf      _PROTO(( tplogger_t *self, unsigned short msg_no, int lvl ));
-
-EXTERN_C int DLL_DECL tl_fork_prepare_dlf _PROTO(( tplogger_t *self ));
-
-EXTERN_C int DLL_DECL tl_fork_child_dlf   _PROTO(( tplogger_t *self ));
-
-EXTERN_C int DLL_DECL tl_fork_parent_dlf  _PROTO(( tplogger_t *self ));
 
 
 /*
@@ -193,18 +171,6 @@ EXTERN_C int DLL_DECL tl_exit_syslog         _PROTO(( tplogger_t *self, int exit
 
 EXTERN_C int DLL_DECL tl_log_syslog          _PROTO(( tplogger_t *self, unsigned short msg_no, int num_params, ... ));
 
-EXTERN_C int DLL_DECL tl_llog_syslog         _PROTO(( tplogger_t *self, int sev, unsigned short msg_no, int num_params, ... ));
-
-EXTERN_C int DLL_DECL tl_get_lvl_syslog      _PROTO(( tplogger_t *self, unsigned short msg_no ));
-
-EXTERN_C int DLL_DECL tl_set_lvl_syslog      _PROTO(( tplogger_t *self, unsigned short msg_no, int lvl ));
-
-EXTERN_C int DLL_DECL tl_fork_prepare_syslog _PROTO(( tplogger_t *self ));
-
-EXTERN_C int DLL_DECL tl_fork_child_syslog   _PROTO(( tplogger_t *self ));
-
-EXTERN_C int DLL_DECL tl_fork_parent_syslog  _PROTO(( tplogger_t *self ));
-
 
 /*
 ** stdio prototypes of the tplogger interface
@@ -214,18 +180,6 @@ EXTERN_C int DLL_DECL tl_init_stdio         _PROTO(( tplogger_t *self, int init 
 EXTERN_C int DLL_DECL tl_exit_stdio         _PROTO(( tplogger_t *self, int exit ));
 
 EXTERN_C int DLL_DECL tl_log_stdio          _PROTO(( tplogger_t *self, unsigned short msg_no, int num_params, ... ));
-
-EXTERN_C int DLL_DECL tl_llog_stdio         _PROTO(( tplogger_t *self, int sev, unsigned short msg_no, int num_params, ... ));
-
-EXTERN_C int DLL_DECL tl_get_lvl_stdio      _PROTO(( tplogger_t *self, unsigned short msg_no ));
-
-EXTERN_C int DLL_DECL tl_set_lvl_stdio      _PROTO(( tplogger_t *self, unsigned short msg_no, int lvl ));
-
-EXTERN_C int DLL_DECL tl_fork_prepare_stdio _PROTO(( tplogger_t *self ));
-
-EXTERN_C int DLL_DECL tl_fork_child_stdio   _PROTO(( tplogger_t *self ));
-
-EXTERN_C int DLL_DECL tl_fork_parent_stdio  _PROTO(( tplogger_t *self ));
 
 
 /*

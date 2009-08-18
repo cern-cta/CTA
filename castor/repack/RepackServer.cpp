@@ -19,7 +19,7 @@
  *
  *
  *
- * @author CastorDev 
+ * @author CastorDev
  *****************************************************************************/
 
 // Include Files
@@ -32,8 +32,8 @@
 #include "castor/server/SignalThreadPool.hpp"
 #include "RepackWorker.hpp"
 #include "RepackFileChecker.hpp"
-#include "RepackFileStager.hpp" 
-#include "RepackMonitor.hpp" 
+#include "RepackFileStager.hpp"
+#include "RepackMonitor.hpp"
 #include "RepackCleaner.hpp"
 #include "RepackKiller.hpp"
 #include "RepackRestarter.hpp"
@@ -51,7 +51,7 @@ extern "C" {
 // hardcoded schema version of the Repack database
 const std::string REPACKSCHEMAVERSION = "2_1_8_0";
 
-#define SLEEP_TIME 10 
+#define SLEEP_TIME 10
 #define DEFAULT_MAX_FILES 6000000
 #define DEFAULT_MAX_TAPES 300
 #define CSP_REPACKPOLLTIME 240 // the standard polling time
@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
   try {
 
     castor::repack::RepackServer server;
-  
+
     // Create a db parameters service and fill with appropriate defaults
     castor::IService* s = castor::BaseObject::sharedServices()->service("DbParamsSvc", castor::SVC_DBPARAMSSVC);
     castor::db::DbParamsSvc* params = dynamic_cast<castor::db::DbParamsSvc*>(s);
@@ -77,13 +77,13 @@ int main(int argc, char *argv[]) {
 
     params->setSchemaVersion(REPACKSCHEMAVERSION);
     params->setDbAccessConfFile(ORAREPACKCONFIGFILE);
-    
+
     // service to access the database ... just to check, we don't need that
 
     castor::IService* orasvc = castor::BaseObject::services()->service("OraRepackSvc", castor::SVC_ORAREPACKSVC);
     castor::repack::IRepackSvc* mySvc = dynamic_cast<castor::repack::IRepackSvc*>(orasvc);
-  
-    
+
+
     if (0 == mySvc) {
       std::cerr << "Couldn't load the ora repack  service, check the castor.conf for DynamicLib entries" << std::endl;
       return -1;
@@ -91,24 +91,24 @@ int main(int argc, char *argv[]) {
 
     /// The Repack Worker Instance
      server.addThreadPool(
-      new castor::server::TCPListenerThreadPool("Worker", 
+      new castor::server::TCPListenerThreadPool("Worker",
                                               new castor::repack::RepackWorker(&server),
                                               server.getListenPort()
                                             ));
-     server.getThreadPool('W')->setNbThreads(1); 
-     
-	
+     server.getThreadPool('W')->setNbThreads(1);
+
+
     /// The Repack File Checker
      server.addThreadPool(
-      new castor::server::SignalThreadPool("checker",
+      new castor::server::SignalThreadPool("Checker",
 					   new castor::repack::RepackFileChecker(&server),
 					   SLEEP_TIME
                                              ));
-     server.getThreadPool('c')->setNbThreads(1); 
+     server.getThreadPool('C')->setNbThreads(1);
 
     /// The Repack File Stager Instance
 	  server.addThreadPool(
-      new castor::server::SignalThreadPool("Stager", 
+      new castor::server::SignalThreadPool("Stager",
 					   new castor::repack::RepackFileStager(&server),
 					   SLEEP_TIME
                                           ));
@@ -116,36 +116,36 @@ int main(int argc, char *argv[]) {
 
     /// The Repack Killer Instance
 	  server.addThreadPool(
-      new castor::server::SignalThreadPool("killer", 
+      new castor::server::SignalThreadPool("killer",
 					   new castor::repack::RepackKiller(&server),
 					   SLEEP_TIME
                                           ));
-	  
+
 	  server.getThreadPool('k')->setNbThreads(1);
 
 
     /// The Repack Restarter Instance
 	  server.addThreadPool(
-      new castor::server::SignalThreadPool("restarter", 
+      new castor::server::SignalThreadPool("restarter",
 					   new castor::repack::RepackRestarter(&server),
 					   SLEEP_TIME
                                           ));
-	  
-	  server.getThreadPool('r')->setNbThreads(1);	  
+
+	  server.getThreadPool('r')->setNbThreads(1);
 
     /// The Repack Monitor Instance (only 1 !)
 	  server.addThreadPool(
-      new castor::server::SignalThreadPool("Monitor", 
+      new castor::server::SignalThreadPool("Monitor",
                                             new castor::repack::RepackMonitor(&server),
                                             server.getPollTime()
                                           ));
-	  server.getThreadPool('M')->setNbThreads(1); 
-    
+	  server.getThreadPool('M')->setNbThreads(1);
+
     /// The Repack Cleaner
 	  server.addThreadPool(
       new castor::server::SignalThreadPool("Cleaner",
                                             new castor::repack::RepackCleaner(&server),SLEEP_TIME));
-	  server.getThreadPool('C')->setNbThreads(1); 
+	  server.getThreadPool('C')->setNbThreads(1);
 
 
     /// Read the command line parameters
@@ -173,8 +173,8 @@ int main(int argc, char *argv[]) {
 // RepackServer Constructor
 // also initialises the logging facility
 //------------------------------------------------------------------------------
-castor::repack::RepackServer::RepackServer() : 
-	castor::server::BaseDaemon("Repack")
+castor::repack::RepackServer::RepackServer() :
+	castor::server::BaseDaemon("repackd")
 {
   // Initializes the DLF logging. This includes
   // defining the predefined messages
@@ -207,9 +207,9 @@ castor::repack::RepackServer::RepackServer() :
      {26, "RepackRestarter : Restarted of unknow request is impossible"},
      {27, "RepackRestarter : Restarted failed because of temporary stager problem"},
      {28, "RepackRestarter :  There are still files in staging/migrating. Restart abort"},
-     {29, "RepackFileStager :  Error sending the repack request to the stager"},     
+     {29, "RepackFileStager :  Error sending the repack request to the stager"},
      {30, "RepackFileStager : Repack request sent to the stager"},
-     {31, "RepackFileStager : Changing CUUID to stager one"},     
+     {31, "RepackFileStager : Changing CUUID to stager one"},
      {32, "RepackFileStager : Error getting answer from the stager"},
      {33, "RepackFileStager : Failed to submit recall for file to Stager"},
      {34, "RepackMonitor : Getting tape to monitor"},
@@ -220,7 +220,7 @@ castor::repack::RepackServer::RepackServer() :
      {39, "RepackMonitor : Repack failed"},
      {40, "RepackMonitor : Updated tape"},
      {41, "RepackCleaner : Getting finished tapes to check" },
-     {42, "RepackCleaner : Checking tape" },    
+     {42, "RepackCleaner : Checking tape" },
      {43, "RepackCleaner : Resurrecting on-hold tapes" },
      {44, "RepackCleaner : Files left on the tape" },
      {45, "RepackCleaner : Success in repacking the tape" },
@@ -255,22 +255,22 @@ castor::repack::RepackServer::RepackServer() :
   /** the Command line parameters */
   m_cmdLineParams << "fsh";
 
-  
+
 
   char* tmp=NULL;
   char* dp=NULL;
 
   /* --------------------------------------------------------------------- */
-  /** This gets the repack port configuration in the enviroment, this 
+  /** This gets the repack port configuration in the enviroment, this
       is the only on, which is taken from the enviroment */
 
   if ( (tmp = getenv ("REPACK_PORT")) != 0 ) {
       char* dp = tmp;
       m_listenPort = strtoul(tmp, &dp, 0);
-      
+
       if (*dp != 0) {
         castor::exception::Internal ex;
-        ex.getMessage() << "Bad port value in enviroment variable " 
+        ex.getMessage() << "Bad port value in enviroment variable "
                         << tmp << std::endl;
         throw ex;
       }
@@ -298,23 +298,23 @@ castor::repack::RepackServer::RepackServer() :
     ex.getMessage() << "Unable to initialise RepackServer with nameserver "
                     << "entry in castor config file or enviroment variable"
 		    << std::endl;
-    throw ex; 
+    throw ex;
   }
   m_ns = std::string(tmp);
 
 
   /* --------------------------------------------------------------------- */
 
-  /** the stager name 
+  /** the stager name
   */
   if ( !(tmp = getenv("RH_HOST")) &&
        !(tmp = getconfent("RH", "HOST",0))
      ){
     castor::exception::Internal ex;
     ex.getMessage() << "Unable to initialise RepackServer with stager "
-                    << "entry in castor config file or enviroment variable" 
+                    << "entry in castor config file or enviroment variable"
 		    << std::endl;
-    throw ex; 
+    throw ex;
   }
   m_stager = std::string(tmp);
 
@@ -322,22 +322,22 @@ castor::repack::RepackServer::RepackServer() :
 
   /* --------------------------------------------------------------------- */
 
-  /** Get the repack service class, which is used for staging in files 
+  /** Get the repack service class, which is used for staging in files
     * The diskpool in this service class is used for recall process.
     */
-  if ( !(tmp = getconfent("REPACK", "SVCCLASS",0)) && 
+  if ( !(tmp = getconfent("REPACK", "SVCCLASS",0)) &&
        !(tmp = getenv ("REPACK_SVCCLASS")) ){
     castor::exception::Internal ex;
     ex.getMessage() << "Unable to initialise RepackServer with service class "
                     << "entry in castor config file or enviroment variable"
 		    << std::endl;
-    throw ex; 
+    throw ex;
   }
   m_serviceClass = std::string(tmp);
 
 
- 
-  // Parameters to limitate concurrent repack processes 
+
+  // Parameters to limitate concurrent repack processes
 
   // Number of files
 
@@ -348,10 +348,10 @@ castor::repack::RepackServer::RepackServer() :
        m_maxFiles = DEFAULT_MAX_FILES;
      }
    } else {
-     m_maxFiles = DEFAULT_MAX_FILES;   
+     m_maxFiles = DEFAULT_MAX_FILES;
    }
-  
-  
+
+
    // Number of tapes
 
    if ((tmp = getconfent("REPACK", "MAXTAPES",0))) {
@@ -361,14 +361,14 @@ castor::repack::RepackServer::RepackServer() :
        m_maxTapes = DEFAULT_MAX_TAPES;
      }
    } else {
-     m_maxTapes = DEFAULT_MAX_TAPES; 
+     m_maxTapes = DEFAULT_MAX_TAPES;
    }
 
 
 
   /* --------------------------------------------------------------------- */
 
-  /** Get the repack service class, which is used for staging in files 
+  /** Get the repack service class, which is used for staging in files
     * The diskpool in this service class is used for recall process.
     */
   if ( !(tmp = getconfent("REPACK", "PROTOCOL",0)) &&
@@ -376,7 +376,7 @@ castor::repack::RepackServer::RepackServer() :
     castor::exception::Internal ex;
     ex.getMessage() << "Unable to initialise RepackServer with protocol "
                     << "entry in castor config file" << std::endl;
-    throw ex; 
+    throw ex;
   }
   m_protocol = std::string(tmp);
 
@@ -389,10 +389,10 @@ castor::repack::RepackServer::RepackServer() :
   if ( (tmp = getenv ("REPACK_POLLTIME")) != 0 ){
     dp = tmp;
     m_pollingTime = strtoul(tmp, &dp, 0);
-      
+
     if (*dp != 0) {
       castor::exception::Internal ex;
-      ex.getMessage() << "Bad polling time value in enviroment variable " 
+      ex.getMessage() << "Bad polling time value in enviroment variable "
                       << tmp << std::endl;
       throw ex;
     }
@@ -405,17 +405,17 @@ castor::repack::RepackServer::RepackServer() :
   }
   else
     m_pollingTime = CSP_REPACKPOLLTIME;
- 
-  
+
+
   /** Get IRepackSvc */
 
   // Create a db parameters service and fill with appropriate defaults
   castor::IService* s = castor::BaseObject::sharedServices()->service("DbParamsSvc", castor::SVC_DBPARAMSSVC);
   castor::db::DbParamsSvc* params = dynamic_cast<castor::db::DbParamsSvc*>(s);
   if(params == 0) {
-    
+
     castor::exception::Internal ex;
-    ex.getMessage() << "Could not instantiate the parameters service " 
+    ex.getMessage() << "Could not instantiate the parameters service "
 		    << std::endl;
     throw ex;
   }
@@ -446,7 +446,7 @@ castor::repack::RepackServer::~RepackServer() throw()
 void castor::repack::RepackServer::parseCommandLine(int argc, char *argv[])
 {
   Coptions_t* longopts = new Coptions_t[2];
-  
+
   longopts[0].name = "foreground";
   longopts[0].has_arg = NO_ARGUMENT;
   longopts[0].flag = NULL;
@@ -473,7 +473,7 @@ void castor::repack::RepackServer::parseCommandLine(int argc, char *argv[])
       help(argv[0]);
       exit(0);
     }
-    
+
   }
   delete [] longopts;
 }

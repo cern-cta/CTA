@@ -66,9 +66,9 @@ namespace castor{
 
       /* constructor-> return the request type, called on the different thread (job, pre, stg) */
       RequestHelper::RequestHelper(castor::stager::SubRequest* subRequestToProcess, int &typeRequest)
-      throw(castor::exception::Exception) :
-      stagerService(0), dbSvc(0), baseAddr(0),
-      subrequest(0), fileRequest(0), svcClass(0), castorFile(0) {
+        throw(castor::exception::Exception) :
+        stagerService(0), dbSvc(0), baseAddr(0),
+        subrequest(0), fileRequest(0), svcClass(0), castorFile(0) {
 
         try{
           // for monitoring purposes
@@ -77,11 +77,11 @@ namespace castor{
           // get thread-safe pointers to services. They were already initialized
           // in the main, so we are sure pointers are valid
           castor::IService* svc = castor::BaseObject::services()->
-          service("DbStagerSvc", castor::SVC_DBSTAGERSVC);
+            service("DbStagerSvc", castor::SVC_DBSTAGERSVC);
           stagerService = dynamic_cast<castor::stager::IStagerSvc*>(svc);
 
           svc = castor::BaseObject::services()->
-          service("DbCnvSvc", castor::SVC_DBCNV);
+            service("DbCnvSvc", castor::SVC_DBCNV);
           dbSvc = dynamic_cast<castor::db::DbCnvSvc*>(svc);
 
           baseAddr = new castor::BaseAddress;
@@ -99,7 +99,8 @@ namespace castor{
         }
         catch(castor::exception::Exception e){
           // should never happen: the db service is initialized in the main as well
-          castor::dlf::Param params[]={	castor::dlf::Param("Function","RequestHelper constructor")};
+          castor::dlf::Param params[]={
+            castor::dlf::Param("Function","RequestHelper constructor")};
 
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_SERVICES_EXCEPTION, 1 ,params);
           e.getMessage()<< "Error on the Database";
@@ -125,7 +126,7 @@ namespace castor{
             castor::dlf::Param("SvcClass", (svcClass ? svcClass->name() : "Unknown")),
             castor::dlf::Param("ProcessingTime", procTime * 0.000001)
           };
-          castor::dlf::dlf_writep(requestUuid, DLF_LVL_MONITORING, STAGER_REQ_PROCESSED, 7, params, &cnsFileId);
+          castor::dlf::dlf_writep(requestUuid, DLF_LVL_SYSTEM, STAGER_REQ_PROCESSED, 7, params, &cnsFileId);
         }
 
         delete baseAddr;
@@ -174,10 +175,10 @@ namespace castor{
           groupname = this_gr->gr_name;
         } catch(castor::exception::Exception e) {
           castor::dlf::Param params[]=
-          {castor::dlf::Param("Filename", subrequest->fileName()),
-            castor::dlf::Param("Euid", fileRequest->euid()),
-            castor::dlf::Param("Egid", fileRequest->egid()),
-          castor::dlf::Param("Function", "RequestHelper->setUsernameAndGroupname")};
+            {castor::dlf::Param("Filename", subrequest->fileName()),
+             castor::dlf::Param("Euid", fileRequest->euid()),
+             castor::dlf::Param("Egid", fileRequest->egid()),
+             castor::dlf::Param("Function", "RequestHelper->setUsernameAndGroupname")};
           castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_USER_INVALID, 4, params);
           e.getMessage() << "Invalid user";
           throw e;
@@ -257,8 +258,8 @@ namespace castor{
       /* check if the user (euid,egid) has the right permission for the request's type */
       /*********************************************************************************/
       void RequestHelper::checkFilePermission(bool fileCreated,
-      castor::stager::daemon::CnsHelper* stgCnsHelper)
-      throw(castor::exception::Exception)
+                                              castor::stager::daemon::CnsHelper* stgCnsHelper)
+        throw(castor::exception::Exception)
       {
         try{
           std::string filename = this->subrequest->fileName();
@@ -266,60 +267,60 @@ namespace castor{
           uid_t egid = this->fileRequest->egid();
 
           switch(fileRequest->type()) {
-            case OBJ_StageGetRequest:
-            case OBJ_StagePrepareToGetRequest:
-            case OBJ_StageRepackRequest:
+          case OBJ_StageGetRequest:
+          case OBJ_StagePrepareToGetRequest:
+          case OBJ_StageRepackRequest:
             if ( Cns_accessUser(filename.c_str(), R_OK, euid, egid) == -1 ) {
               castor::exception::Exception ex(serrno);
               throw ex;
             }
             break;
 
-            case OBJ_StagePrepareToPutRequest:
-            case OBJ_StagePrepareToUpdateRequest:
-            case OBJ_StagePutRequest:
-            case OBJ_StageUpdateRequest:
-            case OBJ_StagePutDoneRequest:
+          case OBJ_StagePrepareToPutRequest:
+          case OBJ_StagePrepareToUpdateRequest:
+          case OBJ_StagePutRequest:
+          case OBJ_StageUpdateRequest:
+          case OBJ_StagePutDoneRequest:
             if ( Cns_accessUser(filename.c_str(), (fileCreated ? R_OK : W_OK), euid, egid) == -1 ) {
               castor::exception::Exception ex(serrno);
               throw ex;
             }
             break;
 
-            case OBJ_SetFileGCWeight: {
-              // Get the name of the localhost to pass into the Cupv interface.
-              std::string localHost;
-              try {
-                localHost = castor::System::getHostName();
-              } catch (castor::exception::Exception e) {
-                castor::exception::Exception ex(SEINTERNAL);
-                ex.getMessage() << "Failed to determine the name of the localhost";
-                throw ex;
-              }
-              // Check if the user has GRP_ADMIN or ADMIN privileges.
-              int rc = Cupv_check(euid, egid, localHost.c_str(), localHost.c_str(), P_GRP_ADMIN);
-              if ((rc < 0) && (serrno != EACCES)) {
-                castor::exception::Exception ex(serrno);
-                ex.getMessage() << "Failed Cupv_check call for "
-                << euid << ":" << egid << " (GRP_ADMIN)";
-                throw ex;
-              } else if ((stgCnsHelper->cnsFilestat.gid == egid) && (rc == 0)) {
-                return;
-              }
-
-              rc = Cupv_check(euid, egid, localHost.c_str(), localHost.c_str(), P_ADMIN);
-              if (rc == -1) {
-                castor::exception::Exception ex(serrno);
-                if (serrno != EACCES) {
-                  ex.getMessage() << "Failed Cupv_check call for "
-                  << euid << ":" << egid << " (ADMIN)";
-                }
-                throw ex;
-              }
+          case OBJ_SetFileGCWeight: {
+            // Get the name of the localhost to pass into the Cupv interface.
+            std::string localHost;
+            try {
+              localHost = castor::System::getHostName();
+            } catch (castor::exception::Exception e) {
+              castor::exception::Exception ex(SEINTERNAL);
+              ex.getMessage() << "Failed to determine the name of the localhost";
+              throw ex;
             }
+            // Check if the user has GRP_ADMIN or ADMIN privileges.
+            int rc = Cupv_check(euid, egid, localHost.c_str(), localHost.c_str(), P_GRP_ADMIN);
+            if ((rc < 0) && (serrno != EACCES)) {
+              castor::exception::Exception ex(serrno);
+              ex.getMessage() << "Failed Cupv_check call for "
+                              << euid << ":" << egid << " (GRP_ADMIN)";
+              throw ex;
+            } else if ((stgCnsHelper->cnsFilestat.gid == egid) && (rc == 0)) {
+              return;
+            }
+
+            rc = Cupv_check(euid, egid, localHost.c_str(), localHost.c_str(), P_ADMIN);
+            if (rc == -1) {
+              castor::exception::Exception ex(serrno);
+              if (serrno != EACCES) {
+                ex.getMessage() << "Failed Cupv_check call for "
+                                << euid << ":" << egid << " (ADMIN)";
+              }
+              throw ex;
+            }
+          }
             break;
 
-            default:
+          default:
             break;
           }
         }
@@ -328,8 +329,8 @@ namespace castor{
             castor::dlf::Param params[] = {
               castor::dlf::Param(subrequestUuid),
               castor::dlf::Param("Type",
-                ((unsigned)fileRequest->type() < castor::ObjectsIdsNb ?
-                castor::ObjectsIdStrings[fileRequest->type()] : "Unknown")),
+                                 ((unsigned)fileRequest->type() < castor::ObjectsIdsNb ?
+                                  castor::ObjectsIdStrings[fileRequest->type()] : "Unknown")),
               castor::dlf::Param("Filename", subrequest->fileName()),
               castor::dlf::Param("Username", username),
               castor::dlf::Param("Groupname", groupname),
@@ -351,8 +352,8 @@ namespace castor{
         castor::dlf::Param params[] = {
           castor::dlf::Param(subrequestUuid),
           castor::dlf::Param("Type",
-          ((unsigned)fileRequest->type() < castor::ObjectsIdsNb ?
-          castor::ObjectsIdStrings[fileRequest->type()] : "Unknown")),
+                             ((unsigned)fileRequest->type() < castor::ObjectsIdsNb ?
+                              castor::ObjectsIdStrings[fileRequest->type()] : "Unknown")),
           castor::dlf::Param("Filename", subrequest->fileName()),
           castor::dlf::Param("Username", username),
           castor::dlf::Param("Groupname", groupname),

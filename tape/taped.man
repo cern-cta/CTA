@@ -1,15 +1,15 @@
-.\" @(#)$RCSfile: taped.man,v $ $Revision: 1.1 $ $Date: 2009/07/23 12:18:46 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: taped.man,v $ $Revision: 1.2 $ $Date: 2009/08/18 09:43:02 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH TAPED 8 "$Date: 2009/07/23 12:18:46 $" CASTOR "Ctape Administrator Commands"
+.TH TAPED 8 "$Date: 2009/08/18 09:43:02 $" CASTOR "Ctape Administrator Commands"
 .SH NAME
 taped \- starts the tape daemon
 .SH SYNOPSIS
 .B  /usr/bin/taped
 .SH DESCRIPTION
 .LP
-The 
+The
 .B taped
 command starts the tape daemon.
 This command is usually executed at system startup time
@@ -202,7 +202,7 @@ If a tape drive supports several densities, there must be one line per density.
 .B /etc/TPCONFIG
 configuration file
 .TP
-.B /var/spool/tape/log
+.B /var/log/castor/taped.log
 .SH EXAMPLES
 .LP
 Here is an example of a configuration file:

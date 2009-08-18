@@ -47,7 +47,6 @@ int main(int argc, char *argv[]) {
     castor::server::BaseThreadPool *driveSchedulerThreadPool   = NULL;
     castor::server::BaseThreadPool *rtcpJobSubmitterThreadPool = NULL;
 
-
     Cuuid_create(&cuuid);
 
     server.logStart(cuuid, argc, argv);
@@ -166,7 +165,6 @@ int main(int argc, char *argv[]) {
         castor::vdqm::VDQM_SET_NOTIFYPORT, 1, params);
     }
 
-
     //----------------------------------------------
     // Set the number of threads in each thread pool
     //----------------------------------------------
@@ -230,7 +228,7 @@ int main(int argc, char *argv[]) {
       //-----------------
 
       server.start();
-
+      
     } catch (castor::exception::Exception &e) {
       std::cerr << "Failed to start VDQM server : "
                 << sstrerror(e.code()) << std::endl

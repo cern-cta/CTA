@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeStreamLinkerThread.cpp,v $ $Author: gtaur $
+ * @(#)$RCSfile: TapeStreamLinkerThread.cpp,v $ $Author: waldron $
  *
  *
  *
@@ -41,12 +41,12 @@
 #include "castor/tape/tapegateway/ITapeGatewaySvc.hpp"
 #include "castor/tape/tapegateway/TapeStreamLinkerThread.hpp"
 #include "castor/tape/tapegateway/VmgrTapeGatewayHelper.hpp"
-  
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::TapeStreamLinkerThread::TapeStreamLinkerThread(){
- 
+
 }
 
 //------------------------------------------------------------------------------
@@ -54,14 +54,14 @@ castor::tape::tapegateway::TapeStreamLinkerThread::TapeStreamLinkerThread(){
 //------------------------------------------------------------------------------
 void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
 {
- 
+
   std::vector<castor::stager::Stream*> streamsToResolve;
   std::vector<castor::stager::Stream*>::iterator stream;
-  
+
  // service to access the database
   castor::IService* dbSvc = castor::BaseObject::services()->service("OraTapeGatewaySvc", castor::SVC_ORATAPEGATEWAYSVC);
   castor::tape::tapegateway::ITapeGatewaySvc* oraSvc = dynamic_cast<castor::tape::tapegateway::ITapeGatewaySvc*>(dbSvc);
-  
+
 
   if (0 == oraSvc) {
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR, 0, NULL);
@@ -71,7 +71,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
 
   // get streams to check from the db
   try {
-     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, LINKER_GETTING_STREAMS, 0, NULL);
+     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, LINKER_GETTING_STREAMS, 0, NULL);
     streamsToResolve= oraSvc->getStreamsWithoutTapes();
   } catch (castor::exception::Exception e) {
     // error in getting new tape to submit
@@ -79,13 +79,13 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
        castor::dlf::Param("errorMessage",e.getMessage().str())
       };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, LINKER_NO_STREAM, 2, params); 
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, LINKER_NO_STREAM, 2, params);
     return;
   }
 
   // ask tapes to vmgr
 
-  std::vector<u_signed64> strIds; 
+  std::vector<u_signed64> strIds;
   std::vector<std::string> vids;
   std::vector<int> fseqs;
   std::vector<castor::stager::Tape*> tapesUsed;
@@ -103,7 +103,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
       {castor::dlf::Param("StreamId",(*strItem)->id())
       };
     int lastFseq=-1;
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,LINKER_QUERYING_VMGR, 1, params0);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,LINKER_QUERYING_VMGR, 1, params0);
     try {
       // last Fseq is the value which should be used for the first file
       tapeToUse=vmgrHelper.getTapeForStream(**strItem,lastFseq);
@@ -113,34 +113,32 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
 	 castor::dlf::Param("errorCode",sstrerror(e.code())),
 	 castor::dlf::Param("errorMessage",e.getMessage().str())
 	};
-      
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, LINKER_NO_TAPE_AVAILABLE, 3, params);
-      
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, LINKER_NO_TAPE_AVAILABLE, 3, params);
       strItem++;
       continue;
       // in case of errors we don't change the status from TO_BE_RESOLVED to TO_BE_SENT_TO_VDQM -- NO NEED OF WAITSPACE status
     }
 
-    if ( tapeToUse != NULL ){ 
+    if ( tapeToUse != NULL ){
       // got the tape
       castor::dlf::Param params[] =
 	{castor::dlf::Param("StreamId",(*strItem)->id()),
 	 castor::dlf::Param("TPVID",tapeToUse->vid())
 	};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, LINKER_LINKING_TAPE_STREAM, 2, params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, LINKER_LINKING_TAPE_STREAM, 2, params);
 
       strIds.push_back((*strItem)->id());
       vids.push_back(tapeToUse->vid());
       fseqs.push_back(lastFseq);
       tapesUsed.push_back(tapeToUse);
-      
+
     }
-   
+
     strItem++;
 
   }
 
-  // update the db 
+  // update the db
   try {
     oraSvc->attachTapesToStreams(strIds, vids, fseqs);
   } catch (castor::exception::Exception e){
@@ -156,11 +154,11 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
       // release the tape
       castor::dlf::Param params[] =
 	{castor::dlf::Param("TPVID",(*tapeItem)->vid())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, LINKER_RELEASED_BUSY_TAPE, 1, params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, LINKER_RELEASED_BUSY_TAPE, 1, params);
       try {
 	vmgrHelper.resetBusyTape(**tapeItem);
       } catch (castor::exception::Exception e){
-	
+
 	castor::dlf::Param params[] =
 	  {castor::dlf::Param("TPVID",(*tapeItem)->vid()),
 	   castor::dlf::Param("errorCode",sstrerror(e.code())),
@@ -189,9 +187,9 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
     strItem++;
   }
   streamsToResolve.clear();
-  strIds.clear(); 
+  strIds.clear();
   vids.clear();
   fseqs.clear();
-  
+
 }
 

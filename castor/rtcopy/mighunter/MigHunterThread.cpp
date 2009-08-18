@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunterThread.cpp,v $ $Author: gtaur $
+ * @(#)$RCSfile: MigHunterThread.cpp,v $ $Author: waldron $
  *
  *
  *
@@ -112,7 +112,7 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 
 
 	if (infoCandidateTapeCopies.empty()){	
-	   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 3, 1, params0);
+	   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 3, 1, params0);
 	}
 
 	// input for stream operation 
@@ -257,7 +257,7 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	if  (infoCandidateStreams.empty()) {
 	  // log error and continue with the next svc class
 	  castor::dlf::Param params4 []= {castor::dlf::Param("SvcClass",(*svcClassName) )};
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 9, 1, params4);
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 9, 1, params4);
 	  castor::exception::Internal ex;
 	  ex.getMessage()
 	    << "No streams available";
@@ -280,7 +280,7 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	policyYes=0;
 	policyNo=0;
         withoutPolicy=0;
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 10, 1, params0);
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 10, 1, params0);
 
 	while (infoCandidateStream != infoCandidateStreams.end()){
 	  streamInfo=NULL;

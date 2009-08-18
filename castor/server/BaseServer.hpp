@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2009/01/08 09:25:15 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2009/08/18 09:42:54 $ $Author: waldron $
  *
  * A base multithreaded server for simple listening servers
  *
@@ -37,131 +37,131 @@
 
 namespace castor {
 
- namespace server {
-
-  /**
-   * Basic CASTOR multithreaded server; cf. also BaseDaemon.
-   * Credits to Ben Couturier.
-   */
-  class BaseServer : public castor::BaseObject {
-
-  public:
+  namespace server {
 
     /**
-     * Constructor
-     * @param serverName a friendly name for this daemon,
-     * used to initialize the logging facility.
+     * Basic CASTOR multithreaded server; cf. also BaseDaemon.
+     * Credits to Ben Couturier.
      */
-    BaseServer(const std::string serverName);
+    class BaseServer : public castor::BaseObject {
 
-    /*
-     * Destructor
-     */
-    virtual ~BaseServer() throw();
+    public:
+
+      /**
+       * Constructor
+       * @param serverName a friendly name for this daemon,
+       * used to initialize the logging facility.
+       */
+      BaseServer(const std::string serverName);
+
+      /*
+       * Destructor
+       */
+      virtual ~BaseServer() throw();
 
 
-    /**
-     * Starts all the thread pools
-     */
-    virtual void start() throw (castor::exception::Exception);
+      /**
+       * Starts all the thread pools
+       */
+      virtual void start() throw (castor::exception::Exception);
 
-    /**
-     * Parses a command line to set the server options
-     */
-    virtual void parseCommandLine(int argc, char *argv[]);
+      /**
+       * Parses a command line to set the server options
+       */
+      virtual void parseCommandLine(int argc, char *argv[]);
 
-    /**
-     * Sets the foreground flag
-     */
-    void setForeground(bool value) { m_foreground = value; }
-    
-    /**
-     * Sets the runAsStagerSuperuser flag
-     */
-     void runAsStagerSuperuser() { m_runAsStagerSuperuser = true; }
-    
-    /**
-     * Initializes the DLF, both for streaming and regular messages
-     * Does not create the DLF thread, this is created after daemonization
-     * @param messages the messages to be passed to dlf_init
-     */
-    void dlfInit(castor::dlf::Message messages[])
-      throw (castor::exception::Exception);
+      /**
+       * Sets the foreground flag
+       */
+      void setForeground(bool value) { m_foreground = value; }
 
-    /**
-     * Adds a thread pool to this server
-     */
-    void addThreadPool(BaseThreadPool* tpool) throw();
+      /**
+       * Sets the runAsStagerSuperuser flag
+       */
+      void runAsStagerSuperuser() { m_runAsStagerSuperuser = true; }
 
-    /**
-     * Gets a pool by its name initial
-     */
-    BaseThreadPool* getThreadPool(const char nameIn) throw();
+      /**
+       * Initializes the DLF, both for streaming and regular messages
+       * Does not create the DLF thread, this is created after daemonization
+       * @param messages the messages to be passed to dlf_init
+       */
+      void dlfInit(castor::dlf::Message messages[])
+        throw (castor::exception::Exception);
 
-    /**
-     * Sends a notification message to the given host,port
-     * to wake up nbThreads threads to handle pending requests.
-     * @param host the destination host
-     * @param port the destination port
-     * @param tpName the name of the thread pool to be signaled
-     * @param nbThreads the number of threads to be signaled
-     */
-    static void sendNotification(std::string host, int port, char tpName, int nbThreads = 1)
-      throw();
+      /**
+       * Adds a thread pool to this server
+       */
+      void addThreadPool(BaseThreadPool* tpool) throw();
 
-  protected:
+      /**
+       * Gets a pool by its name initial
+       */
+      BaseThreadPool* getThreadPool(const char nameIn) throw();
 
-    /**
-     * Initializes the server as daemon
-     */
-    virtual void init() throw (castor::exception::Exception);
+      /**
+       * Sends a notification message to the given host,port
+       * to wake up nbThreads threads to handle pending requests.
+       * @param host the destination host
+       * @param port the destination port
+       * @param tpName the name of the thread pool to be signaled
+       * @param nbThreads the number of threads to be signaled
+       */
+      static void sendNotification(std::string host, int port, char tpName, int nbThreads = 1)
+        throw();
 
-    /**
-     * Prints out the online help
-     */
-    virtual void help(std::string programName);
+    protected:
 
-    /**
-     * gets the message service log stream
-     * Note that the service has to be released after usage
-     * @return a pointer to the message service or 0 if none
-     * is available.
-     */
-    std::ostream& log() throw (castor::exception::Exception);
+      /**
+       * Initializes the server as daemon
+       */
+      virtual void init() throw (castor::exception::Exception);
 
-    /**
-     * Flag indicating whether the server should
-     * run in foreground or background mode.
-     */
-    bool m_foreground;
+      /**
+       * Prints out the online help
+       */
+      virtual void help(std::string programName);
 
-    /**
-     * Flag indicating whether the server should
-     * change identity at startup and run as STAGERSUPERUSER
-     * (normally defined as stage:st)
-     */
-    bool m_runAsStagerSuperuser;
+      /**
+       * gets the message service log stream
+       * Note that the service has to be released after usage
+       * @return a pointer to the message service or 0 if none
+       * is available.
+       */
+      std::ostream& log() throw (castor::exception::Exception);
 
-    /**
-     * Name of the server, for logging purposes.
-     */
-    std::string m_serverName;
-    
-    /**
-     * Command line parameters. Includes by default a parameter
-     * per each thread pool to specify the number of threads.
-     */
-    std::stringstream m_cmdLineParams;
+      /**
+       * Flag indicating whether the server should
+       * run in foreground or background mode.
+       */
+      bool m_foreground;
 
-    /**
-     * List of thread pools running on this server,
-     * identified by their name initials (= cmd line parameter).
-     */
-    std::map<const char, BaseThreadPool*> m_threadPools;
+      /**
+       * Flag indicating whether the server should
+       * change identity at startup and run as STAGERSUPERUSER
+       * (normally defined as stage:st)
+       */
+      bool m_runAsStagerSuperuser;
 
-  };
+      /**
+       * Name of the server, for logging purposes.
+       */
+      std::string m_serverName;
 
- } // end of namespace server
+      /**
+       * Command line parameters. Includes by default a parameter
+       * per each thread pool to specify the number of threads.
+       */
+      std::stringstream m_cmdLineParams;
+
+      /**
+       * List of thread pools running on this server,
+       * identified by their name initials (= cmd line parameter).
+       */
+      std::map<const char, BaseThreadPool*> m_threadPools;
+
+    };
+
+  } // end of namespace server
 
 } // end of namespace castor
 

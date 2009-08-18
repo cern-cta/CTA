@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.42 $ $Release$ $Date: 2009/07/13 06:22:06 $ $Author: waldron $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.43 $ $Release$ $Date: 2009/08/18 09:42:51 $ $Author: waldron $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -716,7 +716,7 @@ void castor::db::ora::OraGCSvc::removeTerminatedRequests()
       throw e;
     }
     // "Cleaning of archived requests done"
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, DLF_BASE_ORACLELIB + 3);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, DLF_BASE_ORACLELIB + 3);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;

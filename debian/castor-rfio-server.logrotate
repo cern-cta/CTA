@@ -1,6 +1,6 @@
-/var/log/rfiod /var/spool/rfio/rfiod.log {
+/var/log/castor/rfiod*.log {
     compress
     daily
     missingok
-    rotate 90
+    rotate 120
 }

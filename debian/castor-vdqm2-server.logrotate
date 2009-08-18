@@ -1,6 +1,9 @@
-/var/log/vdqmserv /var/spool/vdqm/log {
+/var/log/castor/vdqmd*.log {
     compress
     daily
     missingok
-    rotate 90
+    rotate 120
+    postrotate
+        /bin/kill -HUP `cat /var/run/syslogd.pid 2> /dev/null` 2> /dev/null || true
+    endscript
 }

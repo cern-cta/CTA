@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DiskCopyTransfer.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2009/06/25 06:40:47 $ $Author: waldron $
+ * @(#)$RCSfile: DiskCopyTransfer.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2009/08/18 09:42:51 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
 // Constructor
 //-----------------------------------------------------------------------------
 castor::job::diskcopy::DiskCopyTransfer::DiskCopyTransfer():
-  castor::server::BaseDaemon("DiskCopy") {
+  castor::server::BaseDaemon("d2dtransfer") {
 
   // Now with predefined messages
   castor::dlf::Message messages[] = {

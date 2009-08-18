@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.29 $ $Release$ $Date: 2008/09/30 06:20:31 $ $Author: waldron $
+ * @(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.30 $ $Release$ $Date: 2009/08/18 09:42:55 $ $Author: waldron $
  *
  * Service thread for garbage collection related requests
  *
@@ -92,11 +92,11 @@ void castor::stager::daemon::GcSvcThread::handleFilesDeletedOrFailed
     }
     if (castor::OBJ_FilesDeleted == req->type()) {
       // "Invoking filesDeleted"
-      castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_GCSVC_FDELOK);
+      castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_GCSVC_FDELOK);
       gcSvc->filesDeleted(arg);
     } else {
       // "Invoking filesDeletionFailed"
-      castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_GCSVC_FDELFAIL);
+      castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_GCSVC_FDELFAIL);
       gcSvc->filesDeletionFailed(arg);
     }
     delete[] argArray;
@@ -147,7 +147,7 @@ void castor::stager::daemon::GcSvcThread::handleFiles2Delete
     // "Invoking selectFiles2Delete"
     castor::dlf::Param params[] =
       {castor::dlf::Param("DiskServer", uReq->diskServer())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_GCSVC_SELF2DEL, 1, params);
+    castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_GCSVC_SELF2DEL, 1, params);
     result = gcSvc->selectFiles2Delete(uReq->diskServer());
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
@@ -229,7 +229,7 @@ void castor::stager::daemon::GcSvcThread::handleNsFilesDeleted
     // "Invoking nsFilesDeleted"
     castor::dlf::Param params[] =
       {castor::dlf::Param("NbFiles", uReq->files().size())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_GCSVC_NSFILDEL, 1, params);
+    castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_GCSVC_NSFILDEL, 1, params);
     result = gcSvc->nsFilesDeleted(input, uReq->nsHost());
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
@@ -244,7 +244,7 @@ void castor::stager::daemon::GcSvcThread::handleNsFilesDeleted
   Cns_fileid fileId;
   strncpy(fileId.server, uReq->nsHost().c_str(), CA_MAXHOSTNAMELEN+1);
   for(std::vector<u_signed64>::iterator it =
-	result.begin();
+        result.begin();
       it != result.end();
       it++) {
     // Here we transfer the ownership of the GCFiles
@@ -303,7 +303,7 @@ void castor::stager::daemon::GcSvcThread::handleStgFilesDeleted
     // "Invoking stgFilesDeleted"
     castor::dlf::Param params[] =
       {castor::dlf::Param("NbFiles", uReq->files().size())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_GCSVC_STGFILDEL, 1, params);
+    castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_GCSVC_STGFILDEL, 1, params);
     orphanDiskCopies = gcSvc->stgFilesDeleted(diskCopies, uReq->nsHost());
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
@@ -319,7 +319,7 @@ void castor::stager::daemon::GcSvcThread::handleStgFilesDeleted
   memset(&fileId, 0, sizeof(fileId));
   strncpy(fileId.server, uReq->nsHost().c_str(), CA_MAXHOSTNAMELEN+1);
   for(std::vector<u_signed64>::iterator it =
-	orphanDiskCopies.begin();
+        orphanDiskCopies.begin();
       it != orphanDiskCopies.end();
       it++) {
     // Here we transfer the ownership of the GCFiles

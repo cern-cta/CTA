@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/08/06 06:07:21 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCreate.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/08/18 09:42:58 $ $Author: waldron $
  *
  * This script create a new DLF schema
  *
@@ -26,14 +26,7 @@
 
 /* SQL statements for table dlf_version */
 CREATE TABLE dlf_version(schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO dlf_version VALUES ('2_1_2_0', 'releaseTag');
-
-/* SQL statements for table dlf_sequences */
-CREATE TABLE dlf_sequences(seq_name CHAR(15), seq_no NUMBER);
-
-/* SQL statement for table dlf_monitoring */
-CREATE TABLE dlf_monitoring(timestamp DATE CONSTRAINT NN_Monitoring_Timestamp NOT NULL, h_threads NUMBER, h_messages NUMBER, h_inits NUMBER, h_errors NUMBER, h_connections NUMBER, h_clientpeak NUMBER, h_timeouts NUMBER, db_threads NUMBER, db_commits NUMBER, db_errors NUMBER, db_inserts NUMBER, db_rollbacks NUMBER, db_selects NUMBER, db_updates NUMBER, db_cursors NUMBER, db_messages NUMBER, db_inits NUMBER, db_hashstats NUMBER, s_uptime NUMBER, s_mode NUMBER, s_queued NUMBER, s_response NUMBER(*,4), interval NUMBER)
-  PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
+INSERT INTO dlf_version VALUES ('2_1_9_0', 'releaseTag');
 
 /* SQL statement for table dlf_config */
 CREATE TABLE dlf_config(name VARCHAR2(255) CONSTRAINT NN_Config_Name NOT NULL, value VARCHAR2(255), description VARCHAR2(255));
@@ -72,11 +65,9 @@ CREATE INDEX I_Str_Param_Values_id ON dlf_str_param_values (id) LOCAL;
 /* SQL statements for table dlf_severities */
 CREATE TABLE dlf_severities(sev_no NUMBER(3), sev_name VARCHAR2(20));
 
-CREATE UNIQUE INDEX UN_Severities_Sev_No ON dlf_severities (sev_no);
-CREATE UNIQUE INDEX UN_Severities_Sev_Name ON dlf_severities (sev_name);
+CREATE UNIQUE INDEX UN_Severities_Sev_NoName ON dlf_severities (sev_no, sev_name);
 
-ALTER TABLE dlf_severities ADD CONSTRAINT UN_Severities_Sev_No UNIQUE (sev_no) ENABLE;
-ALTER TABLE dlf_severities ADD CONSTRAINT UN_Severities_Sev_Name UNIQUE (sev_name) ENABLE;
+ALTER TABLE dlf_severities ADD CONSTRAINT UN_Severities_Sev_NoName UNIQUE (sev_no, sev_name) ENABLE;
 
 /* SQL statements for table dlf_facilities */
 CREATE TABLE dlf_facilities(fac_no NUMBER(3), fac_name VARCHAR2(20));
@@ -115,18 +106,19 @@ INSERT INTO dlf_config (name, value, description) VALUES ('instance', 'castordlf
 INSERT INTO dlf_config (name, value, description) VALUES ('expiry', '90', 'The expiry time of the logging data in days');
 
 /* Fill the dlf_severities table */
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('1', 'Emergency');
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('2', 'Alert');
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('3', 'Error');
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('4', 'Warning');
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('5', 'Auth');
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('6', 'Security');
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('7', 'Usage');
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('8', 'System');
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('9', 'Important');
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('10', 'Monitoring');
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('1',  'Emerg');
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('2',  'Alert');
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('3',  'Error');
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('4',  'Warn');
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('5',  'Notice'); /* Auth */
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('6',  'Notice'); /* Security */
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('7', ' Debug');  /* Usage */
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('8',  'Info');   /* System */
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('10', 'Info');   /* Monitoring */
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('11', 'Debug');
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('12', 'UserError');
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('12', 'Notice'); /* User Error */
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('13', 'Crit');
+
 
 /* Fill the dlf_facilities table */
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (0,  'rtcpclientd');
@@ -153,12 +145,6 @@ INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (26, 'stagerjob');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (27, 'aggregatord');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (28, 'rmcd');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (29, 'tapegatewayd');
-
-
-/* Fill the dlf_sequences table */
-INSERT INTO dlf_sequences (seq_name, seq_no) VALUES ('id',       1);
-INSERT INTO dlf_sequences (seq_name, seq_no) VALUES ('hostid',   1);
-INSERT INTO dlf_sequences (seq_name, seq_no) VALUES ('nshostid', 1);
 
 
 /* PL/SQL method implementing createPartition */

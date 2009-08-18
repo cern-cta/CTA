@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: cupvd.man,v $ $Revision: 1.1 $ $Date: 2009/07/23 12:18:47 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: cupvd.man,v $ $Revision: 1.2 $ $Date: 2009/08/18 09:43:02 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 2003 by CERN/IT/ADC/CA
 .\" All rights reserved
 .\"
-.TH CUPVD 8 "$Date: 2009/07/23 12:18:47 $" CASTOR "Cupv Administrator Commands"
+.TH CUPVD 8 "$Date: 2009/08/18 09:43:02 $" CASTOR "Cupv Administrator Commands"
 .SH NAME
 cupvd \- start the user privilege validation daemon
 .SH SYNOPSIS
@@ -11,7 +11,7 @@ cupvd \- start the user privilege validation daemon
 .BI -c " config_file"
 ] [
 .BI -t " nbthreads"
-] 
+]
 .SH DESCRIPTION
 .LP
 The
@@ -107,6 +107,6 @@ Specifies the number of threads. Default is 6.
 .B /etc/CUPVCONFIG
 configuration file
 .TP
-.B /var/spool/upv/log
+.B /var/log/castor/cupvd.log
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

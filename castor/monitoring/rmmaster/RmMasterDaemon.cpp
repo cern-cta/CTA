@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
     char **results = NULL;
 
     // Errors are ignored here!
-    lsb_init("RmMasterDaemon");
+    lsb_init("rmmasterd");
     clusterInfo *cInfo = ls_clusterinfo(NULL, NULL, results, 0, 0);
     if (cInfo != NULL) {
       clusterName = cInfo[0].clusterName;
@@ -169,7 +169,7 @@ int main(int argc, char *argv[]) {
 // Constructor
 //-----------------------------------------------------------------------------
 castor::monitoring::rmmaster::RmMasterDaemon::RmMasterDaemon() :
-  castor::server::BaseDaemon("RmMaster") {
+  castor::server::BaseDaemon("rmmasterd") {
 
   // Now with predefined messages
   castor::dlf::Message messages[] = {

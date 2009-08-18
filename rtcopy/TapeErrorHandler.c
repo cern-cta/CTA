@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.27 $ $Release$ $Date: 2009/07/23 12:22:05 $ $Author: waldron $
+ * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.28 $ $Release$ $Date: 2009/08/18 09:43:01 $ $Author: waldron $
  *
  *
  *
@@ -1410,7 +1410,7 @@ int main(
   rc = prepareForDBAccess(&dbSvc,&tpSvc,&iAddr);
   if ( rc == -1 ) {
     LOG_SYSCALL_ERR("prepareForDBAccess()");
-    dlf_shutdown(5);
+    dlf_shutdown();
     return(1);
   }
 
@@ -1425,12 +1425,12 @@ int main(
       LOG_DBCALL_ERR("C_Services_failedSegments()",
                      Cstager_ITapeSvc_errorMsg(tpSvc));
       C_IAddress_delete(iAddr);
-      dlf_shutdown(5);
+      dlf_shutdown();
       return(1);
     }
   }
   if ( (nbFailedSegments == 0) || (failedSegments == NULL) ) {
-    dlf_shutdown(5);
+    dlf_shutdown();
     return(0);
   }
 
@@ -1585,6 +1585,6 @@ int main(
     }
   }
   if ( failedSegments != NULL ) free(failedSegments);
-  dlf_shutdown(10);
+  dlf_shutdown();
   return(0);
 }

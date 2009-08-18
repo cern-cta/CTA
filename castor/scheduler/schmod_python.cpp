@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: schmod_python.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2009/07/23 12:21:59 $ $Author: waldron $
+ * @(#)$RCSfile: schmod_python.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2009/08/18 09:42:54 $ $Author: waldron $
  *
  * Castor LSF External Plugin - Phase 2 (Python)
  *
@@ -84,36 +84,31 @@ extern "C" {
     // Initialize DLF logging
     try {
       castor::dlf::Message messages[] = {
-	{  0, "LSF plugin initialization started" },
-	{  1, "Unable to access shared memory" },
-	{  2, "Shared memory doesn't exist, check that the rmmaster daemon is running" },
-	{  3, "Failed to initialize handler plugin" },
-	{  4, "Unable to allocate SharedMemoryString" },
-	{  6, "Sched/SharedLSFResource configuration option not defined" },
-	{  7, "Failed to initialise LSF batch library interface" },
-	{  8, "Failed to open Sched/SharedLSFResource directory" },
-	{  9, "Failed to determine the service classes of all diskservers" },
-	{ 10, "LSF plugin initialization successful" },
-	{ 11, "Failed to create the ratings thread to analyse diskserver and filesystem information" },
-	{ 13, "Failed to parse resource requirements, exiting castor_new" },
-	{ 14, "Failed to load python library" },
-	{ 15, "Duplicate job detected. A job with the same name is already registered in the plugin" },
-	{ 23, "Error caught rating a filesystem" },
-	{ 33, "Failed to open notification file" },
-	{ 34, "Wrote notification file" },
-	{ 35, "LSF Job already notified, skipping notification phase" },
-	{ 80, "Missing handler specific data in notification phase" },
-	{ 82, "Exception caught in initializing embedded Python interpreter" },
-	{ -1, "" }};
-      castor::dlf::dlf_init("Scheduler", messages);
+        {  0, "LSF plugin initialization started" },
+        {  1, "Unable to access shared memory" },
+        {  2, "Shared memory doesn't exist, check that the rmmaster daemon is running" },
+        {  3, "Failed to initialize handler plugin" },
+        {  4, "Unable to allocate SharedMemoryString" },
+        {  6, "Sched/SharedLSFResource configuration option not defined" },
+        {  7, "Failed to initialise LSF batch library interface" },
+        {  8, "Failed to open Sched/SharedLSFResource directory" },
+        {  9, "Failed to determine the service classes of all diskservers" },
+        { 10, "LSF plugin initialization successful" },
+        { 11, "Failed to create the ratings thread to analyse diskserver and filesystem information" },
+        { 13, "Failed to parse resource requirements, exiting castor_new" },
+        { 14, "Failed to load python library" },
+        { 15, "Duplicate job detected. A job with the same name is already registered in the plugin" },
+        { 23, "Error caught rating a filesystem" },
+        { 33, "Failed to open notification file" },
+        { 34, "Wrote notification file" },
+        { 35, "LSF Job already notified, skipping notification phase" },
+        { 80, "Missing handler specific data in notification phase" },
+        { 82, "Exception caught in initializing embedded Python interpreter" },
+        { -1, "" }};
+      castor::dlf::dlf_init("schedulerd", messages);
     } catch (castor::exception::Exception e) {
       // Ignored. DLF failure is not a reason to stop the module loading
     }
-
-    // Create the dlf thread for remote server logging. Normally this is done
-    // automatically by the BaseDaemon after daemonization. However, as the
-    // plugin does not daemonize we must call the dlf api ourselves.
-    dlf_create_threads(0);
 
     // "LSF plugin initialization started"
     castor::dlf::Param params[] =
@@ -149,8 +144,8 @@ extern "C" {
     if (dir == NULL) {
       // "Failed to open Sched/SharedLSFResource directory"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Directory", notifyDir),
-	 castor::dlf::Param("Error", strerror(errno))};
+        {castor::dlf::Param("Directory", notifyDir),
+         castor::dlf::Param("Error", strerror(errno))};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 8, 2, params);
       return -1;
     }
@@ -163,14 +158,14 @@ extern "C" {
 
       struct stat file;
       if (stat(filepath.str().c_str(), &file) < 0) {
-	continue; // Ignored
+        continue; // Ignored
       } else if (strspn(entry->d_name, "0123456789") !=
-		 strlen(entry->d_name)) {
-	continue; // A regular file with only numbers in the name
+                 strlen(entry->d_name)) {
+        continue; // A regular file with only numbers in the name
       } else if (!(file.st_mode & S_IFREG)) {
-	continue; // Not a regular file
+        continue; // Not a regular file
       } else if (file.st_mtime < (time(NULL) - 400)) {
-	unlink(filepath.str().c_str());
+        unlink(filepath.str().c_str());
       }
     }
     closedir(dir);
@@ -181,7 +176,7 @@ extern "C" {
       policyFile = value;
     }
 
-    // Load the python library. 
+    // Load the python library.
     value = getconfent("Sched", "DynamicPythonLib", 0);
     if (value != NULL) {
       dynamicPythonLib = value;
@@ -190,8 +185,8 @@ extern "C" {
     if (handle == NULL) {
       // "Failed to load python library"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("DynamicPythonLib", value),
-	 castor::dlf::Param("Error", Cdlerror())};
+        {castor::dlf::Param("DynamicPythonLib", value),
+         castor::dlf::Param("Error", Cdlerror())};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 14, 2, params);
       return -1;
     }
@@ -200,13 +195,13 @@ extern "C" {
     try {
       bool create = false;
       clusterStatus =
-	castor::monitoring::ClusterStatus::getClusterStatus(create);
+        castor::monitoring::ClusterStatus::getClusterStatus(create);
     } catch (castor::exception::Exception e) {
       // "Unable to access shared memory"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Type", sstrerror(e.code())),
-	 castor::dlf::Param("Error", e.getMessage().str()),
-	 castor::dlf::Param("Plugin", "shmod_python")};
+        {castor::dlf::Param("Type", sstrerror(e.code())),
+         castor::dlf::Param("Error", e.getMessage().str()),
+         castor::dlf::Param("Plugin", "shmod_python")};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 1, 3, params);
       return -1;
     }
@@ -216,7 +211,7 @@ extern "C" {
       // "Shared memory doesn't exist, check that the rmmaster daemon is
       //  running"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Plugin", "schmod_python")};
+        {castor::dlf::Param("Plugin", "schmod_python")};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2, 1, params);
       return -1;
     }
@@ -247,8 +242,8 @@ extern "C" {
     if (lsb_init("schmod_python") < 0) {
       // "Failed to initialise LSF batch library interface"
       castor::dlf::Param params[] =
-     	{castor::dlf::Param("Function", "lsb_init"),
-    	 castor::dlf::Param("Error", lsberrno ? lsb_sysmsg() : "no message")};
+             {castor::dlf::Param("Function", "lsb_init"),
+             castor::dlf::Param("Error", lsberrno ? lsb_sysmsg() : "no message")};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 7, 2, params);
       return -1;
     }
@@ -257,13 +252,13 @@ extern "C" {
     // cannot change from one service class to another without a complete
     // reset/wipe of the shared memory
     for (castor::monitoring::ClusterStatus::iterator it =
-	   clusterStatus->begin(); it != clusterStatus->end(); it++) {
+           clusterStatus->begin(); it != clusterStatus->end(); it++) {
       for (castor::monitoring::DiskServerStatus::iterator it2 =
-	     it->second.begin(); it2 != it->second.end(); it2++) {
-	for (castor::monitoring::FileSystemStatus::iterator it3 =
-	       it2->second.begin(); it3 != it2->second.end(); it3++) {
-	  it3->second.setActive(false);
-	}
+             it->second.begin(); it2 != it->second.end(); it2++) {
+        for (castor::monitoring::FileSystemStatus::iterator it3 =
+               it2->second.begin(); it3 != it2->second.end(); it3++) {
+          it3->second.setActive(false);
+        }
       }
     }
 
@@ -275,8 +270,8 @@ extern "C" {
     if ((grpInfo = lsb_hostgrpinfo(NULL, &enumGrp, HOST_GRP)) == NULL) {
       // "Failed to determine the service classes of all diskservers"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Function", "lsb_hostgrpinfo"),
-	 castor::dlf::Param("Error", lsberrno ? lsb_sysmsg() : "no message")};
+        {castor::dlf::Param("Function", "lsb_hostgrpinfo"),
+         castor::dlf::Param("Error", lsberrno ? lsb_sysmsg() : "no message")};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 9, 2, params);
       return -1;
     }
@@ -288,9 +283,9 @@ extern "C" {
       // Extract the real group name. The format is groupName<Group>
       std::string hostGroup(grpInfo[i].group);
       std::string::size_type index =
-	hostGroup.find_last_of("Group", hostGroup.length());
+        hostGroup.find_last_of("Group", hostGroup.length());
       if (index == std::string::npos) {
-	continue;   // Group name does not conform to known standards
+        continue;   // Group name does not conform to known standards
       }
       std::string groupName = hostGroup.substr(0, index - 4);
 
@@ -299,48 +294,48 @@ extern "C" {
       std::string diskServer;
       while (std::getline(membersList, diskServer, ' ')) {
 
-    	// Cast normal string into sharedMemory one in order to be able to
-	// search for it in the clusterStatus map.
-	castor::monitoring::SharedMemoryString *smDiskServer =
-	  (castor::monitoring::SharedMemoryString *)(&(diskServer));
-	castor::monitoring::ClusterStatus::iterator it =
-	  clusterStatus->find(*smDiskServer);
-	if (it == clusterStatus->end()) {
-	  continue; // Not yet registered with the rmmaster daemon
-	}
+        // Cast normal string into sharedMemory one in order to be able to
+        // search for it in the clusterStatus map.
+        castor::monitoring::SharedMemoryString *smDiskServer =
+          (castor::monitoring::SharedMemoryString *)(&(diskServer));
+        castor::monitoring::ClusterStatus::iterator it =
+          clusterStatus->find(*smDiskServer);
+        if (it == clusterStatus->end()) {
+          continue; // Not yet registered with the rmmaster daemon
+        }
 
-	// Loop over all filesystems. Check if the rating group already exists.
-	// If so activate it or create and associate a new rating group with
-	// the filesystem
-	for (castor::monitoring::DiskServerStatus::iterator it2 =
-	       it->second.begin();
-	     it2 != it->second.end();
-	     it2++) {
+        // Loop over all filesystems. Check if the rating group already exists.
+        // If so activate it or create and associate a new rating group with
+        // the filesystem
+        for (castor::monitoring::DiskServerStatus::iterator it2 =
+               it->second.begin();
+             it2 != it->second.end();
+             it2++) {
 
-	  // Cast normal string into sharedMemory one in order to be able to
-	  // search for it in the fileSystemStatus map.
-	  castor::monitoring::SharedMemoryString *smGroupName =
-	    (castor::monitoring::SharedMemoryString *)(&(groupName));
-	  castor::monitoring::FileSystemStatus::iterator it3 =
-	    it2->second.find(*smGroupName);
+          // Cast normal string into sharedMemory one in order to be able to
+          // search for it in the fileSystemStatus map.
+          castor::monitoring::SharedMemoryString *smGroupName =
+            (castor::monitoring::SharedMemoryString *)(&(groupName));
+          castor::monitoring::FileSystemStatus::iterator it3 =
+            it2->second.find(*smGroupName);
 
-	  if (it3 == it2->second.end()) {
-	    try {
-	      // Here we really have to create a shared memory string, the
-	      // previous cast won't work since we need to allocate memory
-	      castor::monitoring::SharedMemoryString smGName(groupName.c_str());
-	      it2->second.insert
-		(std::make_pair(smGName,
-				castor::monitoring::FileSystemRating())).first;
-	    } catch (castor::exception::Exception e) {
-	      // "Unable to allocate SharedMemoryString"
-	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 4, 0, 0);
-	      return -1;
-	    }
-	  }
-	  // Flag the group as valid and active
-	  it3->second.setActive(true);
-	}
+          if (it3 == it2->second.end()) {
+            try {
+              // Here we really have to create a shared memory string, the
+              // previous cast won't work since we need to allocate memory
+              castor::monitoring::SharedMemoryString smGName(groupName.c_str());
+              it2->second.insert
+                (std::make_pair(smGName,
+                                castor::monitoring::FileSystemRating())).first;
+            } catch (castor::exception::Exception e) {
+              // "Unable to allocate SharedMemoryString"
+              castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 4, 0, 0);
+              return -1;
+            }
+          }
+          // Flag the group as valid and active
+          it3->second.setActive(true);
+        }
       }
     }
 
@@ -350,8 +345,8 @@ extern "C" {
     if (handler == NULL) {
       // "Failed to initialize handler plugin"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Error", strerror(errno)),
-	 castor::dlf::Param("Plugin", "schmod_python")};
+        {castor::dlf::Param("Error", strerror(errno)),
+         castor::dlf::Param("Plugin", "schmod_python")};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 3, 2, params);
       return -1;
     }
@@ -374,9 +369,9 @@ extern "C" {
     } catch (castor::exception::Exception e) {
       // Exception caught in initializing embedded Python interpreter"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("PolicyFile", policyFile),
-	 castor::dlf::Param("Type", sstrerror(e.code())),
-	 castor::dlf::Param("Message", e.getMessage().str())};
+        {castor::dlf::Param("PolicyFile", policyFile),
+         castor::dlf::Param("Type", sstrerror(e.code())),
+         castor::dlf::Param("Message", e.getMessage().str())};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 82, 3, params);
       return -1;
     }
@@ -387,7 +382,7 @@ extern "C" {
       // "Failed to create the ratings thread to analyse diskserver and
       // filesystem information"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Error", sstrerror(serrno))};
+        {castor::dlf::Param("Error", sstrerror(serrno))};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 11, 1, params);
       return -1;
     }
@@ -449,34 +444,34 @@ extern "C" {
       // Add the handler data to the internal hash table. But first check that
       // a job with the same name isn't already registered!
       castor::scheduler::HandlerData *it =
-	castor::scheduler::hashTable[handler->jobName.c_str()];
+        castor::scheduler::hashTable[handler->jobName.c_str()];
       if (it != NULL) {
 
-	// "Duplicate job detected. A job with the same name is already
-	// registered in the plugin"
-	castor::dlf::Param params[] =
-	  {castor::dlf::Param("JobName", handler->jobName),
-	   castor::dlf::Param(handler->subReqId)};
-	castor::dlf::dlf_writep(handler->reqId, DLF_LVL_ERROR, 15, 2, params,
-				&handler->fileId);
-	delete handler;
-	return -1;
+        // "Duplicate job detected. A job with the same name is already
+        // registered in the plugin"
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("JobName", handler->jobName),
+           castor::dlf::Param(handler->subReqId)};
+        castor::dlf::dlf_writep(handler->reqId, DLF_LVL_ERROR, 15, 2, params,
+                                &handler->fileId);
+        delete handler;
+        return -1;
       }
       castor::scheduler::hashTable[handler->jobName.c_str()] = handler;
 
       // Set the key and handler specific data for this resource requirement
       lsb_resreq_setobject(resreq, HANDLER_PYTHON_ID,
-			   (char *)handler->jobName.c_str(),
-			   handler);
+                           (char *)handler->jobName.c_str(),
+                           handler);
     } catch (castor::exception::Exception e) {
       // Free resources
       if (handler)
-	delete handler;
+        delete handler;
 
       // "Failed to parse resource requirements, exiting python_new"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Type", sstrerror(e.code())),
-	 castor::dlf::Param("Error", e.getMessage().str())};
+        {castor::dlf::Param("Type", sstrerror(e.code())),
+         castor::dlf::Param("Error", e.getMessage().str())};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 13, 2, params);
       return -1;
     }
@@ -489,15 +484,15 @@ extern "C" {
   // python_match
   //---------------------------------------------------------------------------
   int python_match(castor::scheduler::HandlerData *handler,
-		   void *candGroupList,
-		   void *reasonTb) {
+                   void *candGroupList,
+                   void *reasonTb) {
 
     // Check parameters
     if (handler == NULL) {
-        return 0;
+      return 0;
     }
     if ((candGroupList == NULL) || (reasonTb == NULL)) {
-        return -1;
+      return -1;
     }
 
     // Useful variables
@@ -519,173 +514,173 @@ extern "C" {
     candHostGroup *candGroupEntry = lsb_cand_getnextgroup(candGroupList);
     while (candGroupEntry != NULL) {
       if (candGroupEntry->numOfMembers <= 0) {
-	return 0; // No candidate hosts provided
+        return 0; // No candidate hosts provided
       }
       int index = 0, reason = 0;
       while (index < candGroupEntry->numOfMembers) {
-	candHost *candHost = &(candGroupEntry->candHost[index]);
-	hostSlot *hInfo    = lsb_cand_getavailslot(candHost);
+        candHost *candHost = &(candGroupEntry->candHost[index]);
+        hostSlot *hInfo    = lsb_cand_getavailslot(candHost);
 
-   	// Cast normal string into sharedMemory one in order to be able to
-	// search for it in the clusterStatus map.
-	std::string diskServer = hInfo->name;
-	castor::monitoring::SharedMemoryString *smDiskServer =
-	  (castor::monitoring::SharedMemoryString *)(&(diskServer));
-	castor::monitoring::ClusterStatus::const_iterator it =
-	  clusterStatus->find(*smDiskServer);
+           // Cast normal string into sharedMemory one in order to be able to
+        // search for it in the clusterStatus map.
+        std::string diskServer = hInfo->name;
+        castor::monitoring::SharedMemoryString *smDiskServer =
+          (castor::monitoring::SharedMemoryString *)(&(diskServer));
+        castor::monitoring::ClusterStatus::const_iterator it =
+          clusterStatus->find(*smDiskServer);
 
-	reason = 0;
-	if (it == clusterStatus->end()) {
-	  reason = PEND_HOST_CUNKNOWN; // Host not listed in shared memory
-	} else if (python == NULL) {
-	  reason = PEND_HOST_PYERR;    // Embedded python interpreter error
-	} else {
+        reason = 0;
+        if (it == clusterStatus->end()) {
+          reason = PEND_HOST_CUNKNOWN; // Host not listed in shared memory
+        } else if (python == NULL) {
+          reason = PEND_HOST_PYERR;    // Embedded python interpreter error
+        } else {
 
-	  // Loop over all filesystems
-	  for (castor::monitoring::DiskServerStatus::const_iterator it3 =
-		 it->second.begin();
-	       it3 != it->second.end();
-	       it3++) {
+          // Loop over all filesystems
+          for (castor::monitoring::DiskServerStatus::const_iterator it3 =
+                 it->second.begin();
+               it3 != it->second.end();
+               it3++) {
 
-	    // If we have requested filesystems defined, check that this
-	    // filesystem is of interest to us
-	    if (handler->rfs.size()) {
-	      std::ostringstream key;
-	      key << diskServer << ":" << it3->first;
-	      std::vector<std::string>::const_iterator it2 =
-		std::find(handler->rfs.begin(), handler->rfs.end(), key.str());
-	      if (it2 == handler->rfs.end()) {
-		continue;
-	      }
-	    }
+            // If we have requested filesystems defined, check that this
+            // filesystem is of interest to us
+            if (handler->rfs.size()) {
+              std::ostringstream key;
+              key << diskServer << ":" << it3->first;
+              std::vector<std::string>::const_iterator it2 =
+                std::find(handler->rfs.begin(), handler->rfs.end(), key.str());
+              if (it2 == handler->rfs.end()) {
+                continue;
+              }
+            }
 
-	    // For non diskcopy replication requests the filesystem must be in
-	    // PRODUCTION
-	    else if ((handler->requestType !=
-		 castor::OBJ_StageDiskCopyReplicaRequest) &&
-		(it3->second.status() !=
-		 castor::stager::FILESYSTEM_PRODUCTION)) {
-	      continue;
-	    }
+            // For non diskcopy replication requests the filesystem must be in
+            // PRODUCTION
+            else if ((handler->requestType !=
+                      castor::OBJ_StageDiskCopyReplicaRequest) &&
+                     (it3->second.status() !=
+                      castor::stager::FILESYSTEM_PRODUCTION)) {
+              continue;
+            }
 
-	    // For diskcopy replication requests where the diskserver being
-	    // processed is the source diskserver the diskserver must be in
-	    // PRODUCTION or DRAINING
-	    else if ((handler->requestType ==
-		      castor::OBJ_StageDiskCopyReplicaRequest) &&
-		     (handler->sourceDiskServer == diskServer)) {
-	      if ((handler->sourceFileSystem == it3->first.c_str()) &&
-		  (it3->second.status() ==
-		   castor::stager::FILESYSTEM_DISABLED)) {
-		continue;
-	      }
-	    }
+            // For diskcopy replication requests where the diskserver being
+            // processed is the source diskserver the diskserver must be in
+            // PRODUCTION or DRAINING
+            else if ((handler->requestType ==
+                      castor::OBJ_StageDiskCopyReplicaRequest) &&
+                     (handler->sourceDiskServer == diskServer)) {
+              if ((handler->sourceFileSystem == it3->first.c_str()) &&
+                  (it3->second.status() ==
+                   castor::stager::FILESYSTEM_DISABLED)) {
+                continue;
+              }
+            }
 
-	    // For all other requests the filesystem must be in PRODUCTION
-	    else if (it3->second.status() !=
-		     castor::stager::FILESYSTEM_PRODUCTION) {
-	      continue;
-	    }
+            // For all other requests the filesystem must be in PRODUCTION
+            else if (it3->second.status() !=
+                     castor::stager::FILESYSTEM_PRODUCTION) {
+              continue;
+            }
 
-	    // Does the filesystem have enough space to accept the job? This
-	    // check does not apply to diskcopy replication requests where
-	    // the source diskserver and filesystem are the ones being
-	    // tested. Why? because the job only reads from the source!
-	    if ((handler->xsize > 0) &&
-		(!((handler->requestType ==
-		    castor::OBJ_StageDiskCopyReplicaRequest) &&
-		   (handler->sourceDiskServer == diskServer) &&
-		   (handler->sourceFileSystem == it3->first.c_str())))) {
+            // Does the filesystem have enough space to accept the job? This
+            // check does not apply to diskcopy replication requests where
+            // the source diskserver and filesystem are the ones being
+            // tested. Why? because the job only reads from the source!
+            if ((handler->xsize > 0) &&
+                (!((handler->requestType ==
+                    castor::OBJ_StageDiskCopyReplicaRequest) &&
+                   (handler->sourceDiskServer == diskServer) &&
+                   (handler->sourceFileSystem == it3->first.c_str())))) {
 
-	      // Calculate the actual amount of free space left on the
-	      // filesystem. To try and minimise the likelihood of writing
-	      // to a full filesystem we also try to take into consideration
-	      // how much the current number of streams will take up on the
-	      // filesystem in the not too distant future.
-	      signed64 actualFreeSpace =
-		(signed64)it3->second.freeSpace() + it3->second.deltaFreeSpace() -
-		handler->defaultFileSize * (it3->second.nbWriteStreams() +
-					    it3->second.deltaNbWriteStreams() +
-					    it3->second.nbReadWriteStreams() +
-					    it3->second.deltaNbReadWriteStreams());
+              // Calculate the actual amount of free space left on the
+              // filesystem. To try and minimise the likelihood of writing
+              // to a full filesystem we also try to take into consideration
+              // how much the current number of streams will take up on the
+              // filesystem in the not too distant future.
+              signed64 actualFreeSpace =
+                (signed64)it3->second.freeSpace() + it3->second.deltaFreeSpace() -
+                handler->defaultFileSize * (it3->second.nbWriteStreams() +
+                                            it3->second.deltaNbWriteStreams() +
+                                            it3->second.nbReadWriteStreams() +
+                                            it3->second.deltaNbReadWriteStreams());
 
-	      if (!((actualFreeSpace > (signed64)handler->xsize) &&
-		    (actualFreeSpace > it3->second.minAllowedFreeSpace() *
-		     it3->second.space()))) {
-		continue;
-	      }
-	    }
+              if (!((actualFreeSpace > (signed64)handler->xsize) &&
+                    (actualFreeSpace > it3->second.minAllowedFreeSpace() *
+                     it3->second.space()))) {
+                continue;
+              }
+            }
 
-	    // At this point the filesystem is a possible candidate to run the
-	    // job. I.e. it has the correct status, has been requested and has
-	    // sufficient space. Now we look at the filesystems rating for the
-	    // requested service class.
-	    if ((handler->requestType ==
-		 castor::OBJ_StageDiskCopyReplicaRequest) &&
-		(handler->sourceDiskServer == diskServer) &&
-		(handler->sourceFileSystem == it3->first.c_str())) {
+            // At this point the filesystem is a possible candidate to run the
+            // job. I.e. it has the correct status, has been requested and has
+            // sufficient space. Now we look at the filesystems rating for the
+            // requested service class.
+            if ((handler->requestType ==
+                 castor::OBJ_StageDiskCopyReplicaRequest) &&
+                (handler->sourceDiskServer == diskServer) &&
+                (handler->sourceFileSystem == it3->first.c_str())) {
 
-	      // Lookup the filesystem rating for the source filesystem that
-	      // a diskcopy replication request is to read from
-	      castor::monitoring::SharedMemoryString *smRatingGroup =
-		(castor::monitoring::SharedMemoryString *)(&(handler->sourceSvcClass));
-	      castor::monitoring::FileSystemStatus::const_iterator it4 =
-		it3->second.find(*smRatingGroup);
-	      if (it4 == it3->second.end()) {
-		// The source diskserver is not in the service class we expected
-		validSource = false;
-	      } else if (!it4->second.active()) {
-		validSource = false;
-	      } else if (it4->second.readRating() > 0) {
-		// Policies dictate that the filesystem cannot be read from
-		validSource = false;
-	      }
-	    } else {
+              // Lookup the filesystem rating for the source filesystem that
+              // a diskcopy replication request is to read from
+              castor::monitoring::SharedMemoryString *smRatingGroup =
+                (castor::monitoring::SharedMemoryString *)(&(handler->sourceSvcClass));
+              castor::monitoring::FileSystemStatus::const_iterator it4 =
+                it3->second.find(*smRatingGroup);
+              if (it4 == it3->second.end()) {
+                // The source diskserver is not in the service class we expected
+                validSource = false;
+              } else if (!it4->second.active()) {
+                validSource = false;
+              } else if (it4->second.readRating() > 0) {
+                // Policies dictate that the filesystem cannot be read from
+                validSource = false;
+              }
+            } else {
 
-	      // Lookup the filesystem rating for the service class
-	      castor::monitoring::SharedMemoryString *smRatingGroup =
-		(castor::monitoring::SharedMemoryString *)(&(handler->svcClass));
-	      castor::monitoring::FileSystemStatus::const_iterator it4 =
-		it3->second.find(*smRatingGroup);
-	      if (it4 == it3->second.end()) {
-		continue; // Filesystem not part of service class?
-	      } else if (!it4->second.active()) {
-		continue;
-	      }
+              // Lookup the filesystem rating for the service class
+              castor::monitoring::SharedMemoryString *smRatingGroup =
+                (castor::monitoring::SharedMemoryString *)(&(handler->svcClass));
+              castor::monitoring::FileSystemStatus::const_iterator it4 =
+                it3->second.find(*smRatingGroup);
+              if (it4 == it3->second.end()) {
+                continue; // Filesystem not part of service class?
+              } else if (!it4->second.active()) {
+                continue;
+              }
 
-	      float newWeight = 0.0;
-	      if (handler->openFlags == "r") {
-		newWeight = it4->second.readRating() -
-		  it3->second.deltaReadRate() -
-		  it3->second.deltaNbReadStreams();
-	      } else if (handler->openFlags == "w") {
-		newWeight = it4->second.writeRating() -
-		  it3->second.deltaWriteRate() -
-		  it3->second.deltaNbWriteStreams();
-	      } else {
-		newWeight = it4->second.readWriteRating() -
-		  it3->second.deltaReadRate() -
-		  it3->second.deltaWriteRate() -
-		  it3->second.deltaNbReadWriteStreams();
-	      }
+              float newWeight = 0.0;
+              if (handler->openFlags == "r") {
+                newWeight = it4->second.readRating() -
+                  it3->second.deltaReadRate() -
+                  it3->second.deltaNbReadStreams();
+              } else if (handler->openFlags == "w") {
+                newWeight = it4->second.writeRating() -
+                  it3->second.deltaWriteRate() -
+                  it3->second.deltaNbWriteStreams();
+              } else {
+                newWeight = it4->second.readWriteRating() -
+                  it3->second.deltaReadRate() -
+                  it3->second.deltaWriteRate() -
+                  it3->second.deltaNbReadWriteStreams();
+              }
 
-	      if ((newWeight < 0) && (newWeight > bestWeight)) {
-		handler->selectedDiskServer = diskServer;
-		handler->selectedFileSystem = it3->first.c_str();
-		bestWeight = newWeight;
-	      }
-	    }
-	  }
-	}
+              if ((newWeight < 0) && (newWeight > bestWeight)) {
+                handler->selectedDiskServer = diskServer;
+                handler->selectedFileSystem = it3->first.c_str();
+                bestWeight = newWeight;
+              }
+            }
+          }
+        }
 
-	// Remove the host from the candidate list if a reason exists
-	if (reason) {
-	  lsb_reason_set(reasonTb, candHost, reason);
-	  lsb_cand_removehost(candGroupEntry, index);
-	} else {
-	  index++;
-	}
-	free(hInfo);
+        // Remove the host from the candidate list if a reason exists
+        if (reason) {
+          lsb_reason_set(reasonTb, candHost, reason);
+          lsb_cand_removehost(candGroupEntry, index);
+        } else {
+          index++;
+        }
+        free(hInfo);
       }
       candGroupEntry = lsb_cand_getnextgroup(NULL);
     }
@@ -697,42 +692,42 @@ extern "C" {
     while (candGroupEntry != NULL) {
       int index = 0;
       for (index = 0; index < candGroupEntry->numOfMembers; ) {
-	candHost *candHost = &(candGroupEntry->candHost[index]);
-	hostSlot *hInfo    = lsb_cand_getavailslot(candHost);
+        candHost *candHost = &(candGroupEntry->candHost[index]);
+        hostSlot *hInfo    = lsb_cand_getavailslot(candHost);
 
-	// Useful variables
-	std::string diskServer = handler->selectedDiskServer;
-	std::string fileSystem = handler->selectedFileSystem;
-	std::string openFlags  = handler->openFlags;
+        // Useful variables
+        std::string diskServer = handler->selectedDiskServer;
+        std::string fileSystem = handler->selectedFileSystem;
+        std::string openFlags  = handler->openFlags;
 
-	// Determine if the diskserver should be removed
-	bool remove = false;
-	if ((handler->requestType ==
-	     castor::OBJ_StageDiskCopyReplicaRequest) &&
-	    (handler->sourceDiskServer == hInfo->name)) {
-	  if (validSource == false) {
-	    remove = true;
-	  } else {
-	    diskServer = handler->sourceDiskServer;
-	    fileSystem = handler->sourceFileSystem;
-	    openFlags  = "r";
-	  }
-	} else if ((handler->selectedDiskServer != hInfo->name) ||
-		   (validSource == false)) {
-	  remove = true;
-	}
+        // Determine if the diskserver should be removed
+        bool remove = false;
+        if ((handler->requestType ==
+             castor::OBJ_StageDiskCopyReplicaRequest) &&
+            (handler->sourceDiskServer == hInfo->name)) {
+          if (validSource == false) {
+            remove = true;
+          } else {
+            diskServer = handler->sourceDiskServer;
+            fileSystem = handler->sourceFileSystem;
+            openFlags  = "r";
+          }
+        } else if ((handler->selectedDiskServer != hInfo->name) ||
+                   (validSource == false)) {
+          remove = true;
+        }
 
-	if (remove) {
-	  lsb_reason_set(reasonTb, candHost, PEND_HOST_CNOINTEREST);
-	  lsb_cand_removehost(candGroupEntry, index);
-	} else {
-	  // This diskserver and filesystem combination is to be kept so we
-	  // update the delta values in the shared memory
-	  python_update_deltas
-	    (diskServer, fileSystem, openFlags, handler->xsize);
-	  index++;
-	}
-	free(hInfo);
+        if (remove) {
+          lsb_reason_set(reasonTb, candHost, PEND_HOST_CNOINTEREST);
+          lsb_cand_removehost(candGroupEntry, index);
+        } else {
+          // This diskserver and filesystem combination is to be kept so we
+          // update the delta values in the shared memory
+          python_update_deltas
+            (diskServer, fileSystem, openFlags, handler->xsize);
+          index++;
+        }
+        free(hInfo);
       }
       candGroupEntry = lsb_cand_getnextgroup(NULL);
     }
@@ -745,9 +740,9 @@ extern "C" {
   // python_update_deltas
   //---------------------------------------------------------------------------
   void python_update_deltas(std::string diskServer,
-			    std::string fileSystem,
-			    std::string openFlags,
-			    u_signed64 fileSize) {
+                            std::string fileSystem,
+                            std::string openFlags,
+                            u_signed64 fileSize) {
 
     // Find the diskserver
     castor::monitoring::SharedMemoryString *smDiskServer =
@@ -770,36 +765,36 @@ extern "C" {
     // Update deltas
     if (openFlags == "r") {
       it->second.setDeltaReadRate
-	(it->second.deltaReadRate() + jobReadRateCost);
+        (it->second.deltaReadRate() + jobReadRateCost);
       it->second.setDeltaNbReadStreams
-	(it->second.deltaNbReadStreams() + jobNbReadStreamCost);
+        (it->second.deltaNbReadStreams() + jobNbReadStreamCost);
       it2->second.setDeltaReadRate
-	(it2->second.deltaReadRate() + jobReadRateCost);
+        (it2->second.deltaReadRate() + jobReadRateCost);
       it2->second.setDeltaNbReadStreams
-	(it2->second.deltaNbReadStreams() + jobNbReadStreamCost);
+        (it2->second.deltaNbReadStreams() + jobNbReadStreamCost);
     } else if (openFlags == "w") {
       it->second.setDeltaWriteRate
-	(it->second.deltaWriteRate() + jobWriteRateCost);
+        (it->second.deltaWriteRate() + jobWriteRateCost);
       it->second.setDeltaNbWriteStreams
-	(it->second.deltaNbWriteStreams() + jobNbWriteStreamCost);
+        (it->second.deltaNbWriteStreams() + jobNbWriteStreamCost);
       it2->second.setDeltaWriteRate
-	(it2->second.deltaWriteRate() + jobWriteRateCost);
+        (it2->second.deltaWriteRate() + jobWriteRateCost);
       it2->second.setDeltaNbWriteStreams
-	(it2->second.deltaNbWriteStreams() + jobNbWriteStreamCost);
+        (it2->second.deltaNbWriteStreams() + jobNbWriteStreamCost);
       it2->second.setDeltaFreeSpace(it2->second.deltaFreeSpace() - fileSize);
     } else {
       it->second.setDeltaWriteRate
-	(it->second.deltaWriteRate() + jobWriteRateCost);
+        (it->second.deltaWriteRate() + jobWriteRateCost);
       it2->second.setDeltaWriteRate
-	(it2->second.deltaWriteRate() + jobWriteRateCost);
+        (it2->second.deltaWriteRate() + jobWriteRateCost);
       it->second.setDeltaReadRate
-	(it->second.deltaReadRate() + jobReadRateCost);
+        (it->second.deltaReadRate() + jobReadRateCost);
       it2->second.setDeltaReadRate
-	(it2->second.deltaReadRate() + jobReadRateCost);
+        (it2->second.deltaReadRate() + jobReadRateCost);
       it->second.setDeltaNbReadWriteStreams
-	(it->second.deltaNbReadWriteStreams() + jobNbReadWriteStreamCost);
+        (it->second.deltaNbReadWriteStreams() + jobNbReadWriteStreamCost);
       it2->second.setDeltaNbReadWriteStreams
-	(it2->second.deltaNbReadWriteStreams() + jobNbReadWriteStreamCost);
+        (it2->second.deltaNbReadWriteStreams() + jobNbReadWriteStreamCost);
       it2->second.setDeltaFreeSpace(it2->second.deltaFreeSpace() - fileSize);
     }
 
@@ -813,14 +808,14 @@ extern "C" {
   // python_notify
   //---------------------------------------------------------------------------
   int python_notify(void *info,
-		    void *job,
-		    void *alloc,
-		    void *allocLimitList,
-		    int  notifyFlag) {
+                    void *job,
+                    void *alloc,
+                    void *allocLimitList,
+                    int  notifyFlag) {
 
     // Check parameters
     if ((info == NULL)  || (job == NULL) ||
-	(alloc == NULL) || (allocLimitList == NULL)) {
+        (alloc == NULL) || (allocLimitList == NULL)) {
       return -1;
     }
 
@@ -843,9 +838,9 @@ extern "C" {
     if (handler == NULL) {
       // "Missing handler specific data in notification phase"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("HashKey", key),
-	 castor::dlf::Param("JobId", j->jobId),
-	 castor::dlf::Param("JobStatus", j->status)};
+        {castor::dlf::Param("HashKey", key),
+         castor::dlf::Param("JobId", j->jobId),
+         castor::dlf::Param("JobStatus", j->status)};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 80, 3, params);
       return -1;
     }
@@ -863,14 +858,14 @@ extern "C" {
     // either already been notified and currently running or the plugin has
     // just been reloaded
     if ((handler->selectedDiskServer == "") ||
-	(handler->selectedFileSystem == "")) {
+        (handler->selectedFileSystem == "")) {
       // "LSF Job already notified, skipping notification phase"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("JobId", handler->jobId),
-	 castor::dlf::Param("JobStatus", j->status),
-	 castor::dlf::Param(handler->subReqId)};
+        {castor::dlf::Param("JobId", handler->jobId),
+         castor::dlf::Param("JobStatus", j->status),
+         castor::dlf::Param(handler->subReqId)};
       castor::dlf::dlf_writep(handler->reqId, DLF_LVL_DEBUG, 35, 3, params,
-			      &handler->fileId);
+                              &handler->fileId);
       return 0;
     }
 
@@ -880,15 +875,15 @@ extern "C" {
     handler->notifyFile = filepath.str();
 
     std::fstream fin(handler->notifyFile.c_str(),
-		     std::ios::out | std::ios::trunc);
+                     std::ios::out | std::ios::trunc);
     if (!fin) {
       // "Failed to open notification file"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("JobId", handler->jobId),
-	 castor::dlf::Param("Filename", handler->notifyFile),
-	 castor::dlf::Param(handler->subReqId)};
+        {castor::dlf::Param("JobId", handler->jobId),
+         castor::dlf::Param("Filename", handler->notifyFile),
+         castor::dlf::Param(handler->subReqId)};
       castor::dlf::dlf_writep(handler->reqId, DLF_LVL_ERROR, 33, 3, params,
-			      &handler->fileId);
+                              &handler->fileId);
       return -1;
     }
 
@@ -914,10 +909,10 @@ extern "C" {
        castor::dlf::Param("Type", castor::ObjectsIdStrings[handler->requestType]),
        castor::dlf::Param("SvcClass", handler->svcClass),
        castor::dlf::Param("QueueTime",
-			  queueTime > 0 ? queueTime * 0.000001 : 0),
+                          queueTime > 0 ? queueTime * 0.000001 : 0),
        castor::dlf::Param(handler->subReqId)};
     castor::dlf::dlf_writep(handler->reqId, DLF_LVL_SYSTEM, 34, 9, param,
-			    &handler->fileId);
+                            &handler->fileId);
 
     return 0;
   }
@@ -958,119 +953,119 @@ extern "C" {
       // If we fail sleep for PYINI_THROTTLING seconds so that we don't flood
       // the log file with error messages
       if (python == NULL) {
-	try {
-	  python = new castor::scheduler::Python(policyFile);
-	} catch (castor::exception::Exception e) {
-	  // Exception caught in initializing embedded Python interpreter"
-	  castor::dlf::Param params[] =
-	    {castor::dlf::Param("PolicyFile", policyFile),
-	     castor::dlf::Param("Type", sstrerror(e.code())),
-	     castor::dlf::Param("Message", e.getMessage().str())};
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 82, 3, params);
-	  sleep(PYINI_THROTTLING);
-	  continue;
-	}
+        try {
+          python = new castor::scheduler::Python(policyFile);
+        } catch (castor::exception::Exception e) {
+          // Exception caught in initializing embedded Python interpreter"
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("PolicyFile", policyFile),
+             castor::dlf::Param("Type", sstrerror(e.code())),
+             castor::dlf::Param("Message", e.getMessage().str())};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 82, 3, params);
+          sleep(PYINI_THROTTLING);
+          continue;
+        }
       }
 
       // Loop over all diskservers
       u_signed64 processed = 0;
       for (castor::monitoring::ClusterStatus::iterator it =
-	     clusterStatus->begin(); it != clusterStatus->end(); it++) {
+             clusterStatus->begin(); it != clusterStatus->end(); it++) {
 
-	// Loop over all filesystems
-	for (castor::monitoring::DiskServerStatus::iterator it2 =
-	       it->second.begin(); it2 != it->second.end(); it2++) {
+        // Loop over all filesystems
+        for (castor::monitoring::DiskServerStatus::iterator it2 =
+               it->second.begin(); it2 != it->second.end(); it2++) {
 
-	  // Do not recalculate the rating of this filesystem unless the
-	  // metrics related with it have been updated recently
-	  if (it2->second.lastRatingUpdate() >= it2->second.lastMetricsUpdate()) {
-	    continue;
-	  }
-	  it2->second.setLastRatingUpdate((u_signed64)time(NULL));
+          // Do not recalculate the rating of this filesystem unless the
+          // metrics related with it have been updated recently
+          if (it2->second.lastRatingUpdate() >= it2->second.lastMetricsUpdate()) {
+            continue;
+          }
+          it2->second.setLastRatingUpdate((u_signed64)time(NULL));
 
-	  // Setup the global variables in the python modules namespace
-	  python->pySet("Diskserver", it->first.c_str());
-	  python->pySet("Filesystem", it2->first.c_str());
-	  python->pySet("FreeSpace", it2->second.freeSpace());
-	  python->pySet("TotalSpace", it2->second.space());
-	  python->pySet("TotalNbFilesystems", (unsigned int)it->second.size());
+          // Setup the global variables in the python modules namespace
+          python->pySet("Diskserver", it->first.c_str());
+          python->pySet("Filesystem", it2->first.c_str());
+          python->pySet("FreeSpace", it2->second.freeSpace());
+          python->pySet("TotalSpace", it2->second.space());
+          python->pySet("TotalNbFilesystems", (unsigned int)it->second.size());
 
-	  // The data rate and stream counts for this filesystem only
-	  python->pySet("ReadRate", it2->second.readRate() +
-			it2->second.deltaReadRate());
-	  python->pySet("WriteRate", it2->second.writeRate() +
-			it2->second.deltaWriteRate());
-	  python->pySet("NbReadStreams", it2->second.nbReadStreams() +
-			it2->second.deltaNbReadStreams());
-	  python->pySet("NbWriteStreams", it2->second.nbWriteStreams() +
-			it2->second.deltaNbWriteStreams());
-	  python->pySet("NbReadWriteStreams", it2->second.nbReadWriteStreams() +
-			it2->second.deltaNbReadWriteStreams());
+          // The data rate and stream counts for this filesystem only
+          python->pySet("ReadRate", it2->second.readRate() +
+                        it2->second.deltaReadRate());
+          python->pySet("WriteRate", it2->second.writeRate() +
+                        it2->second.deltaWriteRate());
+          python->pySet("NbReadStreams", it2->second.nbReadStreams() +
+                        it2->second.deltaNbReadStreams());
+          python->pySet("NbWriteStreams", it2->second.nbWriteStreams() +
+                        it2->second.deltaNbWriteStreams());
+          python->pySet("NbReadWriteStreams", it2->second.nbReadWriteStreams() +
+                        it2->second.deltaNbReadWriteStreams());
 
-	  // The total values for data rates and stream counts across
-	  // the whole diskserver i.e. all filesystems
-	  python->pySet("TotalReadRate", it->second.readRate() +
-			it->second.deltaReadRate());
-	  python->pySet("TotalWriteRate", it->second.writeRate() +
-			it->second.deltaWriteRate());
-	  python->pySet("TotalNbReadStreams", it->second.nbReadStreams() +
-			it->second.deltaNbReadStreams());
-	  python->pySet("TotalNbWriteStreams", it->second.nbWriteStreams() +
-			it->second.deltaNbWriteStreams());
-	  python->pySet("TotalNbReadWriteStreams", it->second.nbReadWriteStreams() +
-			it->second.deltaNbReadWriteStreams());
+          // The total values for data rates and stream counts across
+          // the whole diskserver i.e. all filesystems
+          python->pySet("TotalReadRate", it->second.readRate() +
+                        it->second.deltaReadRate());
+          python->pySet("TotalWriteRate", it->second.writeRate() +
+                        it->second.deltaWriteRate());
+          python->pySet("TotalNbReadStreams", it->second.nbReadStreams() +
+                        it->second.deltaNbReadStreams());
+          python->pySet("TotalNbWriteStreams", it->second.nbWriteStreams() +
+                        it->second.deltaNbWriteStreams());
+          python->pySet("TotalNbReadWriteStreams", it->second.nbReadWriteStreams() +
+                        it->second.deltaNbReadWriteStreams());
 
-	  // Recaller and migrator streams. Note: there are no deltas to be
-	  // added here as migrations and recalls are scheduled through LSF
-	  python->pySet("NbRecallerStreams", it2->second.nbRecallerStreams());
-	  python->pySet("NbMigratorStreams", it2->second.nbMigratorStreams());
-	  python->pySet("TotalNbRecallerStreams", it->second.nbRecallerStreams());
-	  python->pySet("TotalNbMigratorStreams", it->second.nbMigratorStreams());
+          // Recaller and migrator streams. Note: there are no deltas to be
+          // added here as migrations and recalls are scheduled through LSF
+          python->pySet("NbRecallerStreams", it2->second.nbRecallerStreams());
+          python->pySet("NbMigratorStreams", it2->second.nbMigratorStreams());
+          python->pySet("TotalNbRecallerStreams", it->second.nbRecallerStreams());
+          python->pySet("TotalNbMigratorStreams", it->second.nbMigratorStreams());
 
-	  // Update the ratings of the filesystem for all rating groups
-	  for (castor::monitoring::FileSystemStatus::iterator it3 =
-		 it2->second.begin();
-	       it3 != it2->second.end(); it3++) {
+          // Update the ratings of the filesystem for all rating groups
+          for (castor::monitoring::FileSystemStatus::iterator it3 =
+                 it2->second.begin();
+               it3 != it2->second.end(); it3++) {
 
-	    if (!it3->second.active()) {
-	      continue; // Rating group not active
-	    }
+            if (!it3->second.active()) {
+              continue; // Rating group not active
+            }
 
-	    try {
-	      processed++;
-	      python->pySet("OpenFlags", "r");
-	      it3->second.setReadRating(python->pyExecute(it3->first.c_str()));
-	      python->pySet("OpenFlags", "w");
-	      it3->second.setWriteRating(python->pyExecute(it3->first.c_str()));
-	      python->pySet("OpenFlags", "o");
-	      it3->second.setReadWriteRating(python->pyExecute(it3->first.c_str()));
-	    } catch (castor::exception::Exception e) {
+            try {
+              processed++;
+              python->pySet("OpenFlags", "r");
+              it3->second.setReadRating(python->pyExecute(it3->first.c_str()));
+              python->pySet("OpenFlags", "w");
+              it3->second.setWriteRating(python->pyExecute(it3->first.c_str()));
+              python->pySet("OpenFlags", "o");
+              it3->second.setReadWriteRating(python->pyExecute(it3->first.c_str()));
+            } catch (castor::exception::Exception e) {
 
-	      // We throttle error messages here as we have no delay/sleep
-	      // caused by the tight loop we run in
-	      if ((time(NULL) - it2->second.lastRatingError()) > PYERR_THROTTLING) {
-		// "Error caught rating a filesystem"
-		castor::dlf::Param params[] =
-		  {castor::dlf::Param("DiskServer", it->first.c_str()),
-		   castor::dlf::Param("Function", it3->first.c_str()),
-		   castor::dlf::Param("Type", sstrerror(e.code())),
-		   castor::dlf::Param("Error", e.getMessage().str())};
-		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 23, 4, params);
-		it2->second.setLastRatingError((u_signed64)time(NULL));
-	      }
-	      // We set the ratings to a positive number which will cause this
-	      // filesystem to be excluded in the match phase
-	      it3->second.setReadRating(1.0);
-	      it3->second.setWriteRating(1.0);
-	      it3->second.setReadWriteRating(1.0);
-	    }
-	  }
-	}
+              // We throttle error messages here as we have no delay/sleep
+              // caused by the tight loop we run in
+              if ((time(NULL) - it2->second.lastRatingError()) > PYERR_THROTTLING) {
+                // "Error caught rating a filesystem"
+                castor::dlf::Param params[] =
+                  {castor::dlf::Param("DiskServer", it->first.c_str()),
+                   castor::dlf::Param("Function", it3->first.c_str()),
+                   castor::dlf::Param("Type", sstrerror(e.code())),
+                   castor::dlf::Param("Error", e.getMessage().str())};
+                castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 23, 4, params);
+                it2->second.setLastRatingError((u_signed64)time(NULL));
+              }
+              // We set the ratings to a positive number which will cause this
+              // filesystem to be excluded in the match phase
+              it3->second.setReadRating(1.0);
+              it3->second.setWriteRating(1.0);
+              it3->second.setReadWriteRating(1.0);
+            }
+          }
+        }
       }
 
       // If we didn't process any filesystems sleep for a bit
       if (processed == 0) {
-	sleep(1);
+        sleep(1);
       }
     }
 

@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.6 $ $Release$ $Date: 2009/02/27 13:12:31 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.7 $ $Release$ $Date: 2009/08/18 09:42:54 $ $Author: waldron $
 #
 # Makefile for the CASTOR2 LSF External Plugin
 #
@@ -36,7 +36,7 @@ SchModTarget(schmod_shmem,$(SCHMOD_SHMEM_SRCS),$(DEPLIB),$(LIBS),$(LIBDIR))
 SCHMOD_PYTHON_SRCS = schmod_python.cpp HandlerData.cpp Python.cpp
 SchModTarget(schmod_python,$(SCHMOD_PYTHON_SRCS),$(DEPLIB),$(LIBS) $(PYTHONLIBS),$(LIBDIR))
 
-MakeDir(/var/spool/scheduler,0755)
+MakeDir(/var/log/castor,0755)
 EXEMANPAGE(schmod_castor)
 LOGROTATE(castor-lsf-plugin,../..,install)
 EXAMPLEFILE(scheduler.py,../../debian,/etc/castor/policies,install)

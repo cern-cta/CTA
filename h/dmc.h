@@ -1,12 +1,12 @@
 /*
- * $Id: dmc.h,v 1.4 2009/07/23 12:22:03 waldron Exp $
+ * $Id: dmc.h,v 1.5 2009/08/18 09:42:59 waldron Exp $
  */
 
 /*
  * Copyright (C) 1997-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
-/* @(#)$RCSfile: dmc.h,v $ $Revision: 1.4 $ $Date: 2009/07/23 12:22:03 $ CERN IT-PDP/DM  Olof Barring */
+/* @(#)$RCSfile: dmc.h,v $ $Revision: 1.5 $ $Date: 2009/08/18 09:42:59 $ CERN IT-PDP/DM  Olof Barring */
 
 /*
  * CERN interface to DEC Media Robot Driver (MRD) library.
@@ -87,7 +87,7 @@
 #ifdef DEBUG
 #define LOGFILE "/tmp/testmru.log"
 #else
-#define LOGFILE "/var/spool/robot/log"
+#define LOGFILE "/var/log/castor/robot.log
 #endif /*DEBUG */
 #endif /*LOGFILE */
 #define ACCEPT_RETRY_MAX   5    /* Number of accept() max retries       */
@@ -160,10 +160,10 @@
  * Some macros to implement a primitive procedure traceback mechanism.
  * Useful only when one procedure = one source file. Use as follows:
  * UNWIND_START should be called in the end of the declaration section of
- * the procedure (but before the execution entry point). The Return macro 
+ * the procedure (but before the execution entry point). The Return macro
  * should replace the normal return. STACK_TRACE should be called in the
  * signal catcher or the exit routine (if exit through Die). Call-stack
- * will bail out and STACK_TRACE will cease to work (but not cause any crash) 
+ * will bail out and STACK_TRACE will cease to work (but not cause any crash)
  * if stack deepth larger than 20.
  */
 
@@ -231,9 +231,9 @@ typedef struct {
   int reqtype;
   char host[16];
   int jid;
-  char loader[16];                 /* 
+  char loader[16];                 /*
 				    * Loader name begins with a "d" and
-				    * the follows the special file name 
+				    * the follows the special file name
 				    * followed by a "," and finally the
 				    * drive name, e.g. dmc54,dlr42 for
 				    * /dev/mc54 special file for robot
@@ -276,7 +276,7 @@ typedef struct {
 /*
  * Prototypes
  */
-#if defined(__STDC__) 
+#if defined(__STDC__)
 extern int dmc_build_inventory(DMCinventory_t **);
 extern int dmc_destroy_inventory(DMCinventory_t **);
 extern int dmc_rehash(DMCinventory_t *);

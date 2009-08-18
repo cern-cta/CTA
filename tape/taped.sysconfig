@@ -9,5 +9,5 @@ if [ -f /etc/sysconfig/castor_security ]; then
         . /etc/sysconfig/castor_security TAPE
         export SECURE_CASTOR=1
         export CSEC_TRACE=1
-        export CSEC_TRACEFILE=/var/spool/tape/taped_trace
+        export CSEC_TRACEFILE=/var/log/castor/taped.csec.log
 fi

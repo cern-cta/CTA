@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: expertd.init,v $ $Revision: 1.12 $ $Release$ $Date: 2008/07/28 16:42:49 $ $Author: waldron $
+# @(#)$RCSfile: expertd.init,v $ $Revision: 1.13 $ $Release$ $Date: 2009/08/18 09:42:59 $ $Author: waldron $
 #
 # chkconfig: 345 75 30
 # description: EXPERT Server Daemon Initialisation Script
@@ -46,7 +46,7 @@ start() {
         # Run daemon
         echo -n $"Starting $prog: "
 
-        cd /var/spool/expert
+        cd /var/log/castor
         daemon /usr/bin/$prog $EXPERTD_OPTIONS
 
         # Write the pid to a file.

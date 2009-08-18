@@ -203,7 +203,7 @@ castor::replier::RequestReplier::replierThread(void *arg) throw() {
         {castor::dlf::Param("Interval", curtime - m_lastStatTime),
          castor::dlf::Param("NewRequests", m_nbQueuedResponses),
          castor::dlf::Param("ProcessedRequests", m_nbDequeuedResponses)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_MONITORING,
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
                               DLF_BASE_STAGERLIB + 11, 3, params);
       m_nbQueuedResponses = 0;
       m_nbDequeuedResponses = 0;

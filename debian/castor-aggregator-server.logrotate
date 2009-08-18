@@ -1,6 +1,9 @@
-/var/log/aggregatord /var/spool/tape/aggregatord/log {
+/var/log/castor/aggregatord*.log {
     compress
     daily
     missingok
     rotate 90
+    postrotate
+        /bin/kill -HUP `cat /var/run/syslogd.pid 2> /dev/null` 2> /dev/null || true
+    endscript
 }

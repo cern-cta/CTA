@@ -90,10 +90,6 @@ void castor::server::BaseDaemon::init() throw (castor::exception::Exception)
 
   // Start the thread handling all the signals
   Cthread_create_detached((void *(*)(void *))&_signalHandler, this);
-
-  // Create the DLF related threads. This is done here because it is after
-  // daemonization and signal handler creation.
-  dlf_create_threads(0);
 }
 
 
@@ -163,7 +159,7 @@ void castor::server::BaseDaemon::handleSignals()
              castor::dlf::Param("Message", "Shut down successfully completed")};
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
                                   DLF_BASE_FRAMEWORK + 12, 2, params2);
-          dlf_shutdown(10);
+          dlf_shutdown();
           exit(EXIT_SUCCESS);
           break;
         }
@@ -213,7 +209,7 @@ void castor::server::BaseDaemon::handleSignals()
             {castor::dlf::Param("Signal", (-1 * sigValue))};
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
                                   DLF_BASE_FRAMEWORK + 15, 1, params);
-          dlf_shutdown(1);
+          dlf_shutdown();
           exit(EXIT_FAILURE);
         }
       }

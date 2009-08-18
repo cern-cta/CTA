@@ -1,18 +1,20 @@
-.lf 3 dlf_isinitialized.man
-.TH dlf_isinitialized 3 "CERN IT-FIO" CASTOR "DLF Library Functions"
+.TH dlf_isinitialized 3 "CERN IT-DM" CASTOR "DLF Library Functions"
 .SH NAME
-dlf_isinitialized \- checks to see if the DLF interface is initialized
+dlf_isinitialized \- check to see if the DLF interface has been initialized
+
 .SH SYNOPSIS
 .B #include "dlf_api.h"
 
-.BI "void dlf_isinitialized (void)"
+.BI "int dlf_isinitialized (void)"
 .SH DESCRIPTION
 .B dlf_isinitialized
 checks to see if the DLF interface has been previsouly initialized via a call to
 .BR dlf_init().
-The function returns 1 if the interface has been initialized, 0 if it has not.
 
-.SH "SEE ALSO"
+.SH RETURN VALUE
+This routine returns 1 if the interface is initialized, 0 if not.
+
+.SH SEE ALSO
 .BR dlf_init (3)
 
 .SH AUTHOR

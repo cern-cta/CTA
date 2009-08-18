@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
 //-----------------------------------------------------------------------------
 // Constructor
 //-----------------------------------------------------------------------------
-castor::gc::GcDaemon::GcDaemon(): castor::server::BaseDaemon("GC") {
+castor::gc::GcDaemon::GcDaemon(): castor::server::BaseDaemon("gcd") {
 
   // Now with predefined messages
   castor::dlf::Message messages[] = {

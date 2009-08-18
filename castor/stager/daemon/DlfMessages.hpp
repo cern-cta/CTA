@@ -23,8 +23,8 @@ namespace castor{
 	STAGER_DAEMON_POOLCREATION = 7, /* " Daemon Pool creation" */
 
 
-	STAGER_CONFIGURATION = 8, /* "Got wrong configuration, using default" */ /* DLF_LVL_USAGE */
-	STAGER_CONFIGURATION_ERROR = 9, /* "Impossible to get (right) configuration" */ /* DLF_LVL_ERROR */
+	STAGER_CONFIGURATION = 8, /* "Got wrong configuration, using default" */
+	STAGER_CONFIGURATION_ERROR = 9, /* "Impossible to get (right) configuration" */
 
 	/*******************************************************************************************************/
 	/* Constants related with the DBService SvcThreads: JobRequestSvc, PreRequestSvc, StgRequestSvc */

@@ -221,7 +221,7 @@ void castor::job::stagerjob::RootPlugin::execMover
   progfullpath += "/rootd";
   std::string progname = "rootd";
   if (access(progfullpath.c_str(), X_OK) != 0) {
-    dlf_shutdown(5);
+    dlf_shutdown();
     exit(EXIT_FAILURE);
   }
   // Duplicate socket on stdin/stdout/stderr and close the others
@@ -235,7 +235,7 @@ void castor::job::stagerjob::RootPlugin::execMover
     castor::dlf::dlf_writep
       (args.requestUuid, DLF_LVL_ERROR,
        castor::job::stagerjob::DUP2FAILED, 3, params, &args.fileId);
-    dlf_shutdown(5);
+    dlf_shutdown();
     exit(EXIT_FAILURE);
   }
   // Execute mover
@@ -249,6 +249,6 @@ void castor::job::stagerjob::RootPlugin::execMover
      castor::dlf::Param(args.subRequestUuid)};
   castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
                           EXECFAILED, 3, params, &args.fileId);
-  dlf_shutdown(5);
+  dlf_shutdown();
   exit(EXIT_FAILURE);
 }

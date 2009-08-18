@@ -38,7 +38,7 @@
 
 #include <Cgetopt.h>
 #include <u64subr.h>
-#include <string> 
+#include <string>
 
 
 // -----------------------------------------------------------------------
@@ -49,15 +49,15 @@
 extern "C" {
   char* getconfent(const char *, const char *, int);
 }
- 
-#define SLEEP_TIME        48   // seconds default if it is not specified 
+
+#define SLEEP_TIME        48   // seconds default if it is not specified
 
 //------------------------------------------------------------------------------
 // main method
 //------------------------------------------------------------------------------
 
 int main(int argc, char* argv[]) {
-  
+
   // service to access the database
   // just to check that the configuration is correct
 
@@ -68,16 +68,16 @@ int main(int argc, char* argv[]) {
     std::cerr << "Couldn't load the policy service, check the castor.conf for DynamicLib entries" << std::endl;
     return -1;
   }
-    
+
   try {
 
     char* pr=NULL;
     std::string recallPolicyName;
     std::string recallFunctionName;
-    castor::infoPolicy::RecallPySvc* recallPySvc=NULL;   
+    castor::infoPolicy::RecallPySvc* recallPySvc=NULL;
 
-    // new BaseDaemon as Server 
-    
+    // new BaseDaemon as Server
+
     castor::rtcopy::rechandler::RecHandlerDaemon*  newRecHandler= new castor::rtcopy::rechandler::RecHandlerDaemon();
     newRecHandler->parseCommandLine(argc,argv);
 
@@ -87,15 +87,15 @@ int main(int argc, char* argv[]) {
 
     // get policy information
 
-    if ( (pr = getconfent("Policy","Recall",0)) != NULL ){ 
+    if ( (pr = getconfent("Policy","Recall",0)) != NULL ){
       recallPolicyName=pr;
-    } else { 
+    } else {
         castor::dlf::Param params[] =
 	  {castor::dlf::Param("message","No policy for recall in castor.conf")};
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, 8, 1, params);
     }
 
-    if ( (pr = getconfent("Policy","RecallFunction",0)) != NULL ){ 
+    if ( (pr = getconfent("Policy","RecallFunction",0)) != NULL ){
       recallFunctionName=pr;
     } else {
         castor::dlf::Param params[] =
@@ -109,13 +109,13 @@ int main(int argc, char* argv[]) {
       std::cerr << "Couldn't find a valid recall function, check the castor.conf" << std::endl;
       return -1;
     }
-    
+
     newRecHandler->addThreadPool(
       new castor::server::SignalThreadPool("RecHandlerThread", new castor::rtcopy::rechandler::RecHandlerThread(recallPySvc), sleepTime));
-    
+
     newRecHandler->getThreadPool('R')->setNbThreads(1);
     newRecHandler->start();
-    
+
   }// end try block
      catch (castor::exception::Exception e) {
        std::cerr << "Caught Fatal exception!\n" << e.getMessage().str() << std::endl;
@@ -128,13 +128,13 @@ int main(int argc, char* argv[]) {
     return -1;
   }
   catch (...) {
-    
+
     std::cerr << "Caught general exception!" << std::endl;
     castor::dlf::Param params2[] =
 	  {castor::dlf::Param("Standard Message", "Caught general exception in cleaning daemon.")};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 7, 1, params2);
     return -1;
-    
+
   }
   return 0;
 }
@@ -144,9 +144,9 @@ int main(int argc, char* argv[]) {
 // also initialises the logging facility
 //------------------------------------------------------------------------------
 
-castor::rtcopy::rechandler::RecHandlerDaemon::RecHandlerDaemon() : castor::server::BaseDaemon("Rechandler") 
+castor::rtcopy::rechandler::RecHandlerDaemon::RecHandlerDaemon() : castor::server::BaseDaemon("rechandlerd")
 {
-  
+
   m_timeSleep=SLEEP_TIME;      // seconds
 
   // Initializes the DLF logging. This includes
@@ -165,7 +165,6 @@ castor::rtcopy::rechandler::RecHandlerDaemon::RecHandlerDaemon() : castor::serve
     { 10, "Error in the executing the policy script"},
     { 11, "Recall not allowed"},
     {-1, ""}};
-  
  dlfInit(messages);
 
 }
@@ -175,7 +174,7 @@ castor::rtcopy::rechandler::RecHandlerDaemon::RecHandlerDaemon() : castor::serve
 void castor::rtcopy::rechandler::RecHandlerDaemon::parseCommandLine(int argc, char* argv[]){
   Coptind = 1;
   Copterr = 1;
-  int c;  
+  int c;
   while ( (c = Cgetopt(argc,argv,"t:fh")) != -1 ) {
     switch (c) {
     case 't':
@@ -195,12 +194,12 @@ void castor::rtcopy::rechandler::RecHandlerDaemon::parseCommandLine(int argc, ch
 }
 
 void castor::rtcopy::rechandler::RecHandlerDaemon::usage(){
-  std::cout << "\nUsage: " << "RecHandlerDaemon" 
+  std::cout << "\nUsage: " << "RecHandlerDaemon"
             << " [options]\n "
-            << "Where options are:\n" 
+            << "Where options are:\n"
             << "-f     : to run in foreground\n"
             << "-t sleepTime(seconds)  : sleep time (in seconds) between two checks. Default=300\n"
             << "-h : to ask for help\n"
-	    <<std::endl; 
-  
+	    <<std::endl;
+
 }

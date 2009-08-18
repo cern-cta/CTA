@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      RecallerErrorHandlerThread.cpp 
+ *                      RecallerErrorHandlerThread.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RecallerErrorHandlerThread.cpp,v $ $Author: gtaur $
+ * @(#)$RCSfile: RecallerErrorHandlerThread.cpp,v $ $Author: waldron $
  *
  *
  *
@@ -47,7 +47,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapegateway::RecallerErrorHandlerThread::RecallerErrorHandlerThread(castor::infoPolicy::TapeRetryPySvc* retryPySvc ){ 
+castor::tape::tapegateway::RecallerErrorHandlerThread::RecallerErrorHandlerThread(castor::infoPolicy::TapeRetryPySvc* retryPySvc ){
   m_retryPySvc=retryPySvc;
 }
 
@@ -58,31 +58,31 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void* par)
 {
   // get failed recall tapecopies
 
-  
+
  // service to access the database
   castor::IService* dbSvc = castor::BaseObject::services()->service("OraTapeGatewaySvc", castor::SVC_ORATAPEGATEWAYSVC);
   castor::tape::tapegateway::ITapeGatewaySvc* oraSvc = dynamic_cast<castor::tape::tapegateway::ITapeGatewaySvc*>(dbSvc);
-  
+
 
   if (0 == oraSvc) {
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR, 0, NULL);
     return;
   }
- 
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, REC_ERROR_GETTING_FILES, 0, NULL); 
+
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, REC_ERROR_GETTING_FILES, 0, NULL);
   std::vector<castor::stager::TapeCopy*> tcList;
   try {
     tcList =  oraSvc->getFailedRecalls();
   }  catch (castor::exception::Exception e){
- 
+
     castor::dlf::Param params[] =
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
        castor::dlf::Param("errorMessage",e.getMessage().str())
       };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, REC_ERROR_NO_FILE, 2, params); 
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, REC_ERROR_NO_FILE, 2, params);
     return;
   }
-  
+
   std::vector<u_signed64> tcIdsToRetry;
   std::vector<u_signed64> tcIdsToFail;
 
@@ -94,22 +94,22 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void* par)
     dbInfo->setTapecopy(*tcItem);
     castor::infoPolicy::PolicyObj* policyObj = new castor::infoPolicy::PolicyObj();
     policyObj->addDbInfoPolicy(dbInfo);
-    
+
     //apply the policy
 
     castor::dlf::Param params[] =
-      {castor::dlf::Param("tapecopyId",(*tcItem)->id())      
+      {castor::dlf::Param("tapecopyId",(*tcItem)->id())
       };
     try {
       if (m_retryPySvc==NULL || m_retryPySvc->applyPolicy(policyObj)) {
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, REC_ERROR_RETRY, 1, params); 
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, REC_ERROR_RETRY, 1, params);
 	tcIdsToRetry.push_back( (*tcItem)->id());
       }    else  {
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, REC_ERROR_FAILED, 1, params); 
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, REC_ERROR_FAILED, 1, params);
 	tcIdsToFail.push_back( (*tcItem)->id());
       }
     } catch (castor::exception::Exception e) {
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, REC_ERROR_RETRY_BY_DEFAULT, 1, params); 
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, REC_ERROR_RETRY_BY_DEFAULT, 1, params);
       tcIdsToRetry.push_back( (*tcItem)->id());
     }
 
@@ -117,21 +117,21 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void* par)
 
   }
 
-  // update the db 
+  // update the db
  try {
-  oraSvc->setRecRetryResult(tcIdsToRetry,tcIdsToFail); 
+  oraSvc->setRecRetryResult(tcIdsToRetry,tcIdsToFail);
  } catch (castor::exception::Exception e) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
        castor::dlf::Param("errorMessage",e.getMessage().str())
       };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, REC_ERROR_CANNOT_UPDATE_DB, 2, params); 
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, REC_ERROR_CANNOT_UPDATE_DB, 2, params);
   }
 
  //clean up
 
  tcItem =tcList.begin();
- while (tcItem != tcList.end()){ 
+ while (tcItem != tcList.end()){
    if (*tcItem) delete *tcItem;
    *tcItem=NULL;
    tcItem++;

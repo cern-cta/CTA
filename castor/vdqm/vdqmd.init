@@ -45,7 +45,7 @@ start() {
         # Run daemon
         echo -n $"Starting $prog: "
 
-        cd /var/spool/vdqm
+        cd /var/log/castor
         daemon /usr/bin/$prog $VDQMD_OPTIONS
 
         # Write the pid to a file.

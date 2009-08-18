@@ -223,7 +223,7 @@ void castor::job::stagerjob::RfioPlugin::getEnvironment
 
       const char *csec_tracefile = getconfent("CSEC", "TRACEFILE", 0);
       if (csec_tracefile == NULL) {
-        env.csec_tracefile = "/var/spool/rfio/rfiod.sec.log";
+        env.csec_tracefile = "/var/log/castor/rfiod.csec.log";
       } else {
         env.csec_tracefile = csec_tracefile;
       }
@@ -352,6 +352,6 @@ void castor::job::stagerjob::RfioPlugin::execMover
     }
   }
   // Should never be reached
-  dlf_shutdown(5);
+  dlf_shutdown();
   exit(EXIT_FAILURE);
 }

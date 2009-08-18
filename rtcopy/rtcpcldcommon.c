@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.41 $ $Release$ $Date: 2008/08/26 17:04:58 $ $Author: murrayc3 $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.42 $ $Release$ $Date: 2009/08/18 09:43:01 $ $Author: waldron $
  *
- * 
+ *
  *
  * @author Olof Barring
  *****************************************************************************/
@@ -80,7 +80,7 @@ extern int rtcpc_runReq_ext _PROTO((
                                     int (*)(void *(*)(void *), void *)
                                     ));
 extern int (*rtcpc_ClientCallback) _PROTO((
-                                           rtcpTapeRequest_t *, 
+                                           rtcpTapeRequest_t *,
                                            rtcpFileRequest_t *
                                            ));
 extern int inChild;
@@ -93,7 +93,7 @@ extern Cuuid_t childUuid;
  */
 void rtcpcld_extlog(
                     int level,
-                    CONST char *format, 
+                    CONST char *format,
                     ...
                     )
 {
@@ -141,15 +141,13 @@ int rtcpcld_initLogging(
      char *facilityName;
 {
   int rc, i;
-  char dlfErrBuf[CA_MAXLINELEN+1];
 
-  rc = dlf_init(facilityName,dlfErrBuf,1);
-  
-  i=-1;
+  rc = dlf_init(facilityName,-1);
+
+  i = -1;
   while ( *rtcpcldMessages[++i].messageTxt != '\0' ) {
     (void)dlf_regtext(rtcpcldMessages[i].msgNo,
-		      rtcpcldMessages[i].messageTxt
-		      );
+		      rtcpcldMessages[i].messageTxt);
   }
   rtcp_log = rtcpcld_extlog;
   return(0);
@@ -165,13 +163,13 @@ static int getServerNotifyAddr(
 {
   char *p;
   struct servent *sp;
-  
+
   if ( serverPort != NULL ) {
     if ( (p = getenv("RTCPCLD_NOTIFY_PORT")) != NULL ) {
       *serverPort = atoi(p);
     } else if ( (p = getconfent("rtcpcld","NOTIFY_PORT",0)) != NULL ) {
       *serverPort = atoi(p);
-    } else if ( (sp = Cgetservbyname("rtcpcld","udp")) != 
+    } else if ( (sp = Cgetservbyname("rtcpcld","udp")) !=
                 (struct servent *)NULL ) {
       *serverPort = (int)ntohs(sp->s_port);
     } else {
@@ -244,7 +242,7 @@ int rtcpcld_initNotifyByPort(
     getServerNotifyAddr(NULL,-1,&notificationPort);
     if ( notificationPort == -1 ) return(-1);
   }
-  
+
   *notificationSocket = (SOCKET *)malloc(sizeof(SOCKET));
   if ( *notificationSocket == NULL ) {
     serrno = SESYSERR;
@@ -273,9 +271,9 @@ int rtcpcld_initNotifyByPort(
       serrno = SECOMERR;
       return(-1);
     }
-    *usePort = (int)ntohs(sin.sin_port);    
+    *usePort = (int)ntohs(sin.sin_port);
   }
-  
+
   return(0);
 }
 
@@ -321,7 +319,7 @@ int rtcpcld_getNotifyWithAddr(
       hp = Cgethostbyaddr((void *)&(from.sin_addr),sizeof(struct in_addr),
                           from.sin_family);
       if ( hp != NULL ) {
-        sprintf(fromAddrStr,"%s:%d",hp->h_name,ntohs(from.sin_port));  
+        sprintf(fromAddrStr,"%s:%d",hp->h_name,ntohs(from.sin_port));
       }
     }
   }
@@ -404,11 +402,11 @@ int rtcpcld_sendNotify(
   return(rtcpcld_sendNotifyByAddr(toHost,toPort));
 }
 
-int rtcpcld_notifyRtcpclientd() 
+int rtcpcld_notifyRtcpclientd()
 {
   char toHost[CA_MAXHOSTNAMELEN+1];
   int toPort, rc;
-  
+
   rc = getServerNotifyAddr(toHost,sizeof(toHost),&toPort);
   if ( rc == -1 ) return(-1);
   return(rtcpcld_sendNotifyByAddr(toHost,toPort));
@@ -416,7 +414,7 @@ int rtcpcld_notifyRtcpclientd()
 
 int rtcpcld_setVIDFailedStatus(
                                tape
-                               ) 
+                               )
      tape_list_t *tape;
 {
   int failed = 0;
@@ -437,10 +435,10 @@ int rtcpcld_setVIDFailedStatus(
 char *rtcpcld_fixStr(
                      str
                      )
-     CONST char *str; 
+     CONST char *str;
 {
   char *retStr = NULL, *p;
-  
+
   if ( str == NULL ) return(strdup(""));
   retStr = strdup(str);
   if ( retStr == NULL ) return(strdup(""));
@@ -463,12 +461,12 @@ int rtcpcld_validBlockid(
      unsigned char *blockid;
 {
   unsigned char nullBlockid[4] = {'\0', '\0', '\0', '\0'};
-  
+
   if ( blockid == NULL ) return(0);
   if ( memcmp(blockid,nullBlockid,sizeof(nullBlockid)) == 0 ) return(0);
   return(1);
-}  
-      
+}
+
 int rtcpcld_validPosition(
                           fseq,
                           blockid
@@ -546,13 +544,13 @@ int rtcpcld_findFile(
      file_list_t **file;
 {
   file_list_t *fl;
-  
+
   if ( (tape == NULL) || (filereq == NULL) || (file == NULL) ) {
     serrno = EINVAL;
     return(-1);
   }
-  
-  CLIST_ITERATE_BEGIN(tape->file,fl) 
+
+  CLIST_ITERATE_BEGIN(tape->file,fl)
     {
       if ( filereqsEqual(&(fl->filereq),filereq) == 1 ) {
         *file = fl;
@@ -590,11 +588,11 @@ int rtcpcld_nextFileToProcess(
      * know (by the path) which filereqs have been submitted to the
      * mover.
      */
-    CLIST_ITERATE_BEGIN(tape->file,fl) 
+    CLIST_ITERATE_BEGIN(tape->file,fl)
       {
         filereq = &(fl->filereq);
         if ( ((filereq->proc_status == RTCP_WAITING) ||
-              (filereq->proc_status == RTCP_POSITIONED)) && 
+              (filereq->proc_status == RTCP_POSITIONED)) &&
              ((filereq->err.severity & RTCP_OK) == RTCP_OK) &&
              (rtcpcld_validPath(filereq->file_path) == 1) ) {
           if ( filereq->tape_fseq > lastFseqInProcess ) {
@@ -604,8 +602,8 @@ int rtcpcld_nextFileToProcess(
       }
     CLIST_ITERATE_END(tape->file,fl);
   }
-  
-  CLIST_ITERATE_BEGIN(tape->file,fl) 
+
+  CLIST_ITERATE_BEGIN(tape->file,fl)
     {
       filereq = &(fl->filereq);
       if ( ((tape->tapereq.mode == WRITE_ENABLE) ||
@@ -633,7 +631,7 @@ int rtcpcld_nextFileToProcess(
     else *file = NULL;
   }
   return(found);
-} 
+}
 
 static int updateClientInfo(
                             origSocket,
@@ -651,9 +649,9 @@ static int updateClientInfo(
   uid_t myUid;
   gid_t myGid;
 
-  if ( origSocket == NULL || 
-       *origSocket == INVALID_SOCKET || 
-       port < 0 || 
+  if ( origSocket == NULL ||
+       *origSocket == INVALID_SOCKET ||
+       port < 0 ||
        tape == NULL ) {
     (void)dlf_write(
                     childUuid,
@@ -753,7 +751,7 @@ static int addPlaceholderFile(
 {
   int rc;
   file_list_t *placeHolderFile = NULL;
-  
+
   rc = rtcp_NewFileList(
                         &tape,
                         &placeHolderFile,
@@ -863,8 +861,8 @@ int rtcpcld_runWorker(
     internalTapeList->tapereq = tape->tapereq;
     rc = addPlaceholderFile(internalTapeList);
   }
-  
-  if ( (rc == -1) || internalTapeList == NULL || 
+
+  if ( (rc == -1) || internalTapeList == NULL ||
        internalTapeList->file == NULL ) {
     save_serrno = serrno;
     (void)dlf_write(
@@ -874,8 +872,8 @@ int rtcpcld_runWorker(
                     RTCPCLD_NB_PARAMS+2,
                     "SYSCALL",
                     DLF_MSG_PARAM_STR,
-                    (internalTapeList == NULL ? 
-                     "rtcp_NewTapeList()" : 
+                    (internalTapeList == NULL ?
+                     "rtcp_NewTapeList()" :
                      "addPlaceholderFile()"),
                     "ERROR_STR",
                     DLF_MSG_PARAM_STR,
@@ -996,7 +994,7 @@ int rtcpcld_runWorker(
                       "SYSCALL",
                       DLF_MSG_PARAM_STR,
                       "vdqm_SendVolReq()",
-                      "ERROR_STR", 
+                      "ERROR_STR",
                       DLF_MSG_PARAM_STR,
                       sstrerror(save_serrno),
                       RTCPCLD_LOG_WHERE
@@ -1010,7 +1008,7 @@ int rtcpcld_runWorker(
    * Put the vwAddress in the database to allow client to send abort
    */
   (void)rtcpcld_setVidWorkerAddress(tape,port);
-  
+
   /*
    * Run the request;
    */
@@ -1075,7 +1073,7 @@ static int checkArgs(
                     );
     rc = -1;
   }
-  if ( (dgn == NULL && vdqmVolReqID > 0) || 
+  if ( (dgn == NULL && vdqmVolReqID > 0) ||
        (dgn != NULL && strlen(dgn) > CA_MAXDGNLEN) ) {
     (void)dlf_write(
                     childUuid,
@@ -1092,7 +1090,7 @@ static int checkArgs(
                     );
     rc = -1;
   }
-  if ( (lbltype == NULL && vdqmVolReqID > 0) || 
+  if ( (lbltype == NULL && vdqmVolReqID > 0) ||
        (lbltype != NULL && strlen(lbltype) > CA_MAXLBLTYPLEN) ) {
     (void)dlf_write(
                     childUuid,
@@ -1109,7 +1107,7 @@ static int checkArgs(
                     );
     rc = -1;
   }
-  if ( (density == NULL && vdqmVolReqID > 0) || 
+  if ( (density == NULL && vdqmVolReqID > 0) ||
        (density != NULL && strlen(density) > CA_MAXDENLEN) ) {
     (void)dlf_write(
                     childUuid,
@@ -1127,7 +1125,7 @@ static int checkArgs(
     rc = -1;
   }
 
-  if ( (unit == NULL && vdqmVolReqID > 0) || 
+  if ( (unit == NULL && vdqmVolReqID > 0) ||
        (unit != NULL && strlen(unit) > CA_MAXUNMLEN) ) {
     (void)dlf_write(
                     childUuid,
@@ -1167,7 +1165,7 @@ static int initTapeReq(
     serrno = EINVAL;
     return(-1);
   }
-  
+
   strncpy(
           tape->tapereq.vid,
           vid,
@@ -1204,7 +1202,7 @@ static int initTapeReq(
 
   tape->tapereq.VolReqID = vdqmVolReqID;
   tape->tapereq.TStartRequest = tStartRequest;
-  
+
   return(0);
 }
 
@@ -1224,12 +1222,12 @@ int rtcpcld_parseWorkerCmd(
   file_list_t *fl;
   int vdqmVolReqID = -1, c, rc, side = 0, tStartRequest = 0;
   ID_TYPE key;
-  
+
   if ( (argc < 0) || (argv == NULL) || (tape == NULL) || (sock == NULL) ) {
     serrno =EINVAL;
     return(-1);
   }
-  
+
   Coptind = 1;
   Copterr = 1;
 
@@ -1255,7 +1253,7 @@ int rtcpcld_parseWorkerCmd(
       fl->filereq.proc_status = RTCP_REQUEST_MORE_WORK;
       break;
     case 'g':
-      /* 
+      /*
        * Device group name. If not provided, it will be taken from VMGR
        */
       dgn = Coptarg;
@@ -1392,9 +1390,9 @@ static void setErrorInfo(
      int errorCode;
 {
   if ( tape == NULL ) return;
-  
+
   if ( tape->tapereq.tprc == 0 ) tape->tapereq.tprc = -1;
-  if ( tape->tapereq.err.errorcode == 0 ) 
+  if ( tape->tapereq.err.errorcode == 0 )
     tape->tapereq.err.errorcode = errorCode;
   if ( *tape->tapereq.err.errmsgtxt == '\0' ) {
     if ( errMsgTxt != NULL ) {
@@ -1411,7 +1409,7 @@ static void setErrorInfo(
        (tape->tapereq.err.severity == 0 ) ) {
     tape->tapereq.err.severity = RTCP_UNERR|RTCP_FAILED;
   }
-  return;  
+  return;
 }
 
 int rtcpcld_workerFinished(
@@ -1466,7 +1464,7 @@ int rtcpcld_workerFinished(
   default:
     shiftMsg = strdup("command failed");
     break;
-  }  
+  }
   (void)dlf_write(
                   childUuid,
                   RTCPCLD_LOG_MSG((tape->tapereq.mode == WRITE_ENABLE ?

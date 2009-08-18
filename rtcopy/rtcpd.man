@@ -1,21 +1,21 @@
-.\" @(#)$RCSfile: rtcpd.man,v $ $Revision: 1.9 $ $Date: 2009/07/23 12:22:05 $ CERN CERN IT-PDP/DM Olof Barring
+.\" @(#)$RCSfile: rtcpd.man,v $ $Revision: 1.10 $ $Date: 2009/08/18 09:43:01 $ CERN CERN IT-PDP/DM Olof Barring
 .\" Copyright (C) 2000-2004 by CERN IT-ADC
 .\" All rights reserved
 .\"
 .nh
-.TH RTCPD 1 "$Date: 2009/07/23 12:22:05 $" CASTOR "RTCOPY daemon"
+.TH RTCPD 1 "$Date: 2009/08/18 09:43:01 $" CASTOR "RTCOPY daemon"
 .SH NAME
 rtcpd \- CASTOR remote tape copy daemon
 .SH SYNOPSIS
-.B rtcpd 
+.B rtcpd
 .SH DESCRIPTION
 \fBrtcpd\fP is the CASTOR tape mover. It runs as a daemon on each tape
 server known to the CASTOR volume and queue manager (VDQM). An RTCOPY
-client application sends a volume request to VDQM using the \fBrtcpc(3)\fP 
+client application sends a volume request to VDQM using the \fBrtcpc(3)\fP
 routine. The volume request consists of the visual ID of the volume (VID),
 the access mode (read/write), the address of the client (host + port number),
 the client login name and uid/gid. Once the request is eligible to run
-the VDQM server sends the volume request to the "rtcopy" service port on 
+the VDQM server sends the volume request to the "rtcopy" service port on
 the selected tape server and passes the tape volume request to it. The
 \fBrtcpd\fP daemon listens on the "rtcopy" service port and forks a subprocess
 upon each new connection. The child process receives the volume request and
@@ -23,21 +23,21 @@ contacts the client to receive the full tape copy request.
 .PP
 If the tape copy request is correctly constructed, the \fBrtcpd\fP child
 process calls the \fBCtape\fP API to mount and position the tape. It also
-allocates large memory buffers (by default 128MB) for the data transfer. 
+allocates large memory buffers (by default 128MB) for the data transfer.
 If it is a tape write request and the tape blocksize has been specified,
 the \fBrtcpd\fP child process will also start to fill the memory buffers
 with input disk file data, while it is waiting for the tape to be mounted and
-positioned. \fBrtcpd\fP is highly multi-threaded and able to process 
+positioned. \fBrtcpd\fP is highly multi-threaded and able to process
 disk+network I/O in parallel with the tape I/O.
 .PP
 To access the tapes \fBrtcpd\fP uses the character devices created by the tape daemon in the /var/lib/castor/rtcopy directory. This directory is created by \fBrtcpd\fP at startup time, and must not be removed.
- 
+
 .SH ENVIRONMENT
 The \fBrtcpd\fP daemon does not take any arguments. A set of configuration
 variables can be used to change default settings of \fBrtcpd\fP run parameters.
-New values of the configuration variables can be set either statically 
-through environment variables when starting the \fBrtcpd\fP daemon, or 
-dynamically (taken into account by all following request) by modifying the 
+New values of the configuration variables can be set either statically
+through environment variables when starting the \fBrtcpd\fP daemon, or
+dynamically (taken into account by all following request) by modifying the
 local CASTOR configuration file "/etc/castor/castor.conf".
 .PP
 The following configuration variables are available:
@@ -68,7 +68,7 @@ memory buffers. \fBRTCOPY_LOGLEVEL\fP should be set to 7.
 is 7.
 .PP
 .B RTCOPYD_MAX_TPRETRY
-\- Set the maximum number of retries on retry-able tape operation errors 
+\- Set the maximum number of retries on retry-able tape operation errors
 (mount/position). Default is 2.
 .PP
 .B RTCOPYD_MAX_CPRETRY
@@ -87,7 +87,7 @@ which can run in parallel. Default is 3.
 for suspening the tape writing for the given time if there are no buffers
 available. The intention is to avoid that the tape stops and starts at
 every buffer. The wait time should be configured to match the drive speed
-and the configured size of the rtcpd memory buffers. 
+and the configured size of the rtcpd memory buffers.
 .PP
 .B RTCOPYD_SELF_MONITOR
 \- Switch on the RTCOPY self monitor thread. The RTCOPY self monitoring thread
@@ -100,23 +100,23 @@ dedicated set of configuration variables:
 \- is the self-monitor timeout to mount a volume. Default is 3600 seconds.
 .PP
 .B RTCOPYD_POSITION_TIME
-\- is the self-monitor timeout to position to a tape file. 
+\- is the self-monitor timeout to position to a tape file.
 Default is 3600 seconds.
 .PP
 .B RTCOPYD_OPEN_TIME
-\- is the self-monitor timeout open a file (disk or tape). 
+\- is the self-monitor timeout open a file (disk or tape).
 Default is 300 seconds.
-.PP 
+.PP
 .B RTCOPYD_READ_TIME
-\- is the self-monitor timeout for a single read operation on a file 
+\- is the self-monitor timeout for a single read operation on a file
 (disk or tape). Default is 300 seconds.
 .PP
 .B RTCOPYD_WRITE_TIME
-\- is the self-monitor timeout for a single write operation on a file 
+\- is the self-monitor timeout for a single write operation on a file
 (disk or tape). Default is 300 seconds.
 .PP
 .B RTCOPYD_CLOSE_TIME
-\- is the self-monitor timeout to close a file (disk or tape). 
+\- is the self-monitor timeout to close a file (disk or tape).
 Default is 300 seconds
 .PP
 .B RTCOPYD_STAGEUPDC_TIME
@@ -126,7 +126,7 @@ Default is 3600 seconds.
 Each one of the listed environment variables can also be set through a
 corresponding CASTOR configuration parameter pair in "/etc/castor/castor.conf".
 The CASTOR configuration parameters are constructed such that the part
-before the first underscore ("_") sets the configuration parameter "category" 
+before the first underscore ("_") sets the configuration parameter "category"
 and the remaining part sets the configuration parameter "name".
 For instance: the environment variable \fBRTCOPYD_NB_BUFS\fP corresponds to
 a "/etc/castor/castor.conf" entry "\fBRTCOPYD   NB_BUFS\fP". The environment variables
@@ -152,10 +152,10 @@ failure with \fBRTCP_NORETRY\fP severity in case of tape media errors
 .B /etc/castor/castor.conf
 CASTOR configuration file
 .TP
-.B /var/lib/castor/RTCOPY
+.B /var/lib/castor/rtcpd
 Directory where the tape daemon creates the character devices
 .TP
-.B /var/spool/rtcopy/rtcopyd.log
+.B /var/log/castor/rtcpd.log
 RTCOPY server log file
 
 .SH SEE ALSO

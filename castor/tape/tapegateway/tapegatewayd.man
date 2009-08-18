@@ -1,4 +1,4 @@
-.TH TAPEGATEWAYD "$Date: 2009/07/30 12:54:35 $" CASTOR "TapeGateway"
+.TH TAPEGATEWAYD "$Date: 2009/08/18 09:42:55 $" CASTOR "TapeGateway"
 .SH NAME
 tapegatewayd \- tape gateway daemon
 .SH SYNOPSIS
@@ -15,13 +15,7 @@ The migrations/recalls are triggered thanks to the interaction of different daem
 The tapegateway interacts with the VDQM using messages over TCP/IP.
 The tapegateway is also sending report to RmMaster over TCP/IP to monitor the load on the diskservers.
 The comunication between tapegateway and the several aggregators, which are running on the tape servers, is a based on TCP/IP messages too.
-The tapegatewayd relies on the DLF as logging facilities. Logs can be accessed by web interface or in the log files specified in the 
-.B /etc/castor/castor.conf .
-
-e.g. 
-
-.B TapeGateway      LOGSTANDARD file:///var/spool/tape/tapegateway/log x-dlf://castordlf.cern.ch/
-
+The tapegatewayd relies on the DLF logging interface. Logs can be accessed by web interface or locally on the machine using the /var/log/castor/tapegatewayd.log log file.
  
 .SH OPTIONS
 .BI \-f

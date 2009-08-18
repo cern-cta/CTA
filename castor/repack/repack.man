@@ -1,45 +1,45 @@
 .\" Copyright (C) 2001-2006 by CERN/IT/FIO/FD
 .\" All rights reserved
-.\" 
+.\"
 .TH "REPACK" "2" "July, 2006" "CASTOR" "vmgr Administrator Commands"
 .SH "NAME"
-repack \- Move files from tape(s) to other tape destination 
+repack \- Move files from tape(s) to other tape destination
 .SH "SYNOPSIS"
 
 
-.B repack [option] 
+.B repack [option]
 
-options: 
+options:
 .B
-.br 
+.br
 .BI \-V " VID1[:VID2[:VID3... ]] ["\-o " OutputServiceClass ][ "\-m " numberRetry ][" \-c "]["\-n " newPoolName ]
-.br 
+.br
 .BI \-P " SourcePoolname"  [\-o " OutputServiceClass ] [" \-m " retryNumber ][ " \-c " ]["\-n " newPoolName ][ " \-o " OutputServiceClass ]
-.br 
+.br
 .BI  \-r " VID1[:VID2[:VID3...]]"
 .br
-.BI \-A " VID1[:VID2[:VID3...]]" 
-.br 
-.br 
+.BI \-A " VID1[:VID2[:VID3...]]"
+.br
+.br
 .BI  \-R " VID1[:VID2[:VID3...]]"
 .br
-.B \-s 
-.br 
+.B \-s
+.br
 .BI \-S " VID1[:VID2[:VID3...]]"
 .br
 .BI \-x " VID1[:VID2[:VID3...]]"
 .br
-.BI \-e " VID1[:VID2[:VID3...]]" 
-.br 
-.BI \-A " VID1[:VID2[:VID3...]]" 
-.br 
-.BI \-a  
+.BI \-e " VID1[:VID2[:VID3...]]"
+.br
+.BI \-A " VID1[:VID2[:VID3...]]"
+.br
+.BI \-a
 .br
 .BI  \-h
- 
+
 .SH "DESCRIPTION"
 .B repack
-moves files of active segments from a set of tape(s) to a target tape pool and gives 
+moves files of active segments from a set of tape(s) to a target tape pool and gives
 a status overview of the tapes in the repack system.
 Only volumes having
 .B FULL
@@ -50,42 +50,42 @@ or a given tape pool (option
 \fB\-P\fR). repack sends a request to the repack server and returns immediately.
 If an error occurs on the server side during the submission an error message
 is returned.
-The repack server to contact, has to be provided by adding the line 
+The repack server to contact, has to be provided by adding the line
 
 REPACK HOST <hostname>
 
-in the castor config file. Additionally the following environment 
-variables can be specified to override the default port (6800) and host defaults. 
+in the castor config file. Additionally the following environment
+variables can be specified to override the default port (6800) and host defaults.
 
 REPACK_HOST=<hostname>
-.br 
+.br
 REPACK_PORT=<port>
 
-When the repack process has been successfully completed (FINISHED status), the volume can be 
+When the repack process has been successfully completed (FINISHED status), the volume can be
 reclaimed using the reclaim command.
-.LP 
-This command requires ADMIN privilege in the Cupv database. In case an error 
-occurs during a repack, messages can be found on the server side in 
-/var/spool/repack/log.
+.LP
+This command requires ADMIN privilege in the Cupv database. In case an error
+occurs during a repack, messages can be found on the server side in
+/var/log/castor/repackd.log.
 
-.TP 
+.TP
 .I VID
 The volume visual identifier of the single volume to be repacked.
-It must be at most CA_MAXVIDLEN characters long. The status in the VMGR has to be 
+It must be at most CA_MAXVIDLEN characters long. The status in the VMGR has to be
 .BR FULL
-.TP 
+.TP
 .I OutputServiceClass
 The name of the service class which is used for writing back the files to tape.
 The tape pool information in this service class is taken by the CASTOR II
 migrator to get a destination tape from the VMGR. To write to one specific tape, this
 service class has to have a tape pool containing this tape.
-.br 
+.br
 .B Note that this service class has to be known by the stager given in the castor config file.
-.TP 
+.TP
 .I SourcePoolname
 The name of the tape pool which is to be repacked . It must be at most CA_MAXPOOLNAMELEN characters long.
 The list of pools can be obtained with vmgrlistpool .
-.TP 
+.TP
 .I retryNumber
 Maximum number of automatic retry allowed. If this option is not used the default is zero.
 .TP
@@ -97,10 +97,10 @@ New tapepool in with should be moved the tape after a successful repack.
 specifies the volumes to repack seperated by :.
 
 \fB\-P\fR
-specifies the source pool  to repack 
+specifies the source pool  to repack
 
 \fB\-o\fR
-The service class used for migration (see obove). If none specified, the default is taken from the castor config file on the repack server 
+The service class used for migration (see obove). If none specified, the default is taken from the castor config file on the repack server
 machine.
 
 \fB\-S\fR
@@ -122,17 +122,17 @@ Prints information about a given tape in an active repack process.
 Prints detailed information of the given volume. It lists the nameserver information of the files which were on that tape when repack has been started.
 
 \fB\-a\fR
-Archives all the FINISHED tapes. They are not listed anymore when the \fB\-s\fR option is 
+Archives all the FINISHED tapes. They are not listed anymore when the \fB\-s\fR option is
 given
 
 \fB\-A\fR
-Archives the FINISHED-FAILED tapes given by command line 
+Archives the FINISHED-FAILED tapes given by command line
 
 \fB\-e\fR
 For each given tape, it list the error reported by the stager when repack have been issued.
 
 \fB\-m\fR
-To set the maximum number of automatic retry which should be issued in case of failure.  
+To set the maximum number of automatic retry which should be issued in case of failure.
 
 \fB\-c\fR
 To issue vmgr_reclaim of the tape if repack does not report any failure.
@@ -144,7 +144,7 @@ To change the pool of the tape with the given one ,if repack does not report any
 Help
 
 .SH "EXAMPLE"
-.nf 
+.nf
 .ft CW
 Repack to default service class:
 repack \-V L30076
@@ -156,13 +156,13 @@ Repack of a tape pool to service class alicemdc:
 repack \-P alicemdc3_9940 \-o alicemdc
 
 .ft
-.fi 
+.fi
 .SH "EXIT STATUS"
 This program returns 0 if the operation was successful or >0 if the operation failed:
 
-.br 
+.br
 0	Ok.
-.br 
+.br
 1	An error occured.
 
 .SH KNOWN BUGS

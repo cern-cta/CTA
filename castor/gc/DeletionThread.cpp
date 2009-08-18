@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DeletionThread.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/10/17 09:10:25 $ $Author: waldron $
+ * @(#)$RCSfile: DeletionThread.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2009/08/18 09:42:51 $ $Author: waldron $
  *
  * Deletion thread used to check periodically whether files need to be deleted
  *
@@ -221,7 +221,7 @@ void castor::gc::DeletionThread::run(void *param) {
            castor::dlf::Param("FailedFiles", filesfailed),
            castor::dlf::Param("TotalFiles", filestotal),
            castor::dlf::Param("SpaceFreed", removedsize)};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_MONITORING, 13, 4, params);
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 13, 4, params);
       }
 
       // Inform stager of the deletion/failure

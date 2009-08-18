@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Param.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/06/04 08:59:15 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Param.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2009/08/18 09:42:51 $ $Author: waldron $
  *
  * A parameter for the DLF (Distributed Logging System)
  *
@@ -51,11 +51,11 @@ namespace castor {
       Param(const char* name, std::string value) :
         m_deallocate(true) {
         m_cParam.name = (char*) name;
-	m_cParam.type = DLF_MSG_PARAM_STR;
-	if (!strcmp(name, "TPVID")) {
-	  m_cParam.type = DLF_MSG_PARAM_TPVID;
-	}
-        m_cParam.par.par_string = strdup(value.c_str());
+        m_cParam.type = DLF_MSG_PARAM_STR;
+        if (!strcmp(name, "TPVID")) {
+          m_cParam.type = DLF_MSG_PARAM_TPVID;
+        }
+        m_cParam.value.par_string = strdup(value.c_str());
       };
 
       /**
@@ -64,14 +64,14 @@ namespace castor {
       Param(const char* name, const char* value) :
         m_deallocate(true) {
         m_cParam.name = (char*) name;
-	m_cParam.type = DLF_MSG_PARAM_STR;
-	if (!strcmp(name, "TPVID")) {
-	  m_cParam.type = DLF_MSG_PARAM_TPVID;
-	}
+        m_cParam.type = DLF_MSG_PARAM_STR;
+        if (!strcmp(name, "TPVID")) {
+          m_cParam.type = DLF_MSG_PARAM_TPVID;
+        }
         if (0 != value) {
-          m_cParam.par.par_string = strdup(value);
+          m_cParam.value.par_string = strdup(value);
         } else {
-          m_cParam.par.par_string = 0;
+          m_cParam.value.par_string = 0;
         }
       };
 
@@ -82,7 +82,7 @@ namespace castor {
         m_deallocate(false) {
         m_cParam.name = (char*) name;
         m_cParam.type = DLF_MSG_PARAM_UUID;
-        m_cParam.par.par_uuid = value;
+        m_cParam.value.par_uuid = value;
       };
 
       /**
@@ -92,8 +92,8 @@ namespace castor {
         m_deallocate(false) {
         m_cParam.name = NULL;
         m_cParam.type = DLF_MSG_PARAM_UUID;
-        m_cParam.par.par_uuid = value;
-      };   
+        m_cParam.value.par_uuid = value;
+      };
 
       /**
        * Constructor for int
@@ -102,7 +102,7 @@ namespace castor {
         m_deallocate(false) {
         m_cParam.name = (char*) name;
         m_cParam.type = DLF_MSG_PARAM_INT;
-        m_cParam.par.par_int = value;
+        m_cParam.value.par_int = value;
       };
 
       /**
@@ -112,7 +112,7 @@ namespace castor {
         m_deallocate(false) {
         m_cParam.name = (char*) name;
         m_cParam.type = DLF_MSG_PARAM_INT;
-        m_cParam.par.par_int = value;
+        m_cParam.value.par_int = value;
       };
 
       /**
@@ -122,7 +122,7 @@ namespace castor {
         m_deallocate(false) {
         m_cParam.name = (char*) name;
         m_cParam.type = DLF_MSG_PARAM_INT;
-        m_cParam.par.par_int = value;
+        m_cParam.value.par_int = value;
       };
 
       /**
@@ -132,7 +132,7 @@ namespace castor {
         m_deallocate(false) {
         m_cParam.name = (char*) name;
         m_cParam.type = DLF_MSG_PARAM_INT;
-        m_cParam.par.par_int = value;
+        m_cParam.value.par_int = value;
       };
 
       /**
@@ -142,7 +142,7 @@ namespace castor {
         m_deallocate(false) {
         m_cParam.name = (char*) name;
         m_cParam.type = DLF_MSG_PARAM_INT64;
-        m_cParam.par.par_u64 = value;
+        m_cParam.value.par_u64 = value;
       };
 
       /**
@@ -152,7 +152,7 @@ namespace castor {
         m_deallocate(false) {
         m_cParam.name = (char*) name;
         m_cParam.type = DLF_MSG_PARAM_DOUBLE;
-        m_cParam.par.par_double = value;
+        m_cParam.value.par_double = value;
       };
 
       /**
@@ -162,7 +162,7 @@ namespace castor {
         m_deallocate(false) {
         m_cParam.name = (char*) name;
         m_cParam.type = DLF_MSG_PARAM_DOUBLE;
-        m_cParam.par.par_double = value;
+        m_cParam.value.par_double = value;
       };
 
       /**
@@ -173,9 +173,9 @@ namespace castor {
         m_cParam.name = (char*) name;
         m_cParam.type = DLF_MSG_PARAM_TPVID;
         if (0 != value.vid()) {
-          m_cParam.par.par_string = strdup(value.vid());
+          m_cParam.value.par_string = strdup(value.vid());
         } else {
-          m_cParam.par.par_string = 0;
+          m_cParam.value.par_string = 0;
         }
       };
 
@@ -198,8 +198,8 @@ namespace castor {
        *
        */
       ~Param() {
-        if (m_deallocate && 0 != m_cParam.par.par_string) {
-          free(m_cParam.par.par_string);
+        if (m_deallocate && 0 != m_cParam.value.par_string) {
+          free(m_cParam.value.par_string);
         }
       };
 

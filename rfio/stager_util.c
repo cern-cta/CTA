@@ -1,5 +1,5 @@
 /*
- * $Id: stager_util.c,v 1.3 2009/07/13 06:22:09 waldron Exp $
+ * $Id: stager_util.c,v 1.4 2009/08/18 09:43:01 waldron Exp $
  */
 
 #include <sys/types.h>
@@ -24,46 +24,6 @@
 #include "stager_messages.h"
 #include "stager_uuid.h"
 #include "log.h"
-
-#ifdef SIXMONTHS
-#undef SIXMONTHS
-#endif
-#define SIXMONTHS (6*30*24*60*60)
-
-#if defined(_WIN32)
-static char strftime_format_sixmonthsold[] = "%b %d %Y";
-static char strftime_format[] = "%b %d %H:%M:%S";
-#else /* _WIN32 */
-static char strftime_format_sixmonthsold[] = "%b %e %Y";
-static char strftime_format[] = "%b %e %H:%M:%S";
-#endif /* _WIN32 */
-
-void DLL_DECL stager_util_time(this,timestr)
-     time_t this;
-     char *timestr;
-{
-  time_t this_time = time(NULL);
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
-  struct tm tmstruc;
-#endif /* _REENTRANT || _THREAD_SAFE */
-  struct tm *tp;
-
-#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
-  localtime_r(&(this),&tmstruc);
-  tp = &tmstruc;
-#else
-  tp = localtime(&(this));
-#endif /* _REENTRANT || _THREAD_SAFE */
-  if ((this_time >= this) && ((this_time - this) > SIXMONTHS)) {
-    /* Too much in past */
-    strftime(timestr,64,strftime_format_sixmonthsold,tp);
-  } else if ((this_time < this) && ((this - this_time) > SIXMONTHS)) {
-    /* Too much in feature...! */
-    strftime(timestr,64,strftime_format_sixmonthsold,tp);
-  } else {
-    strftime(timestr,64,strftime_format,tp);
-  }
-}
 
 void DLL_DECL stager_log(const char *func, const char *file, int line, int what, struct Cns_fileid *fileid, ...)
 {

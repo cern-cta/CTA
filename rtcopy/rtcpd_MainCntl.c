@@ -107,7 +107,7 @@ static void rtcpd_SetDebug() {
   if ( getenv("RTCOPY_DEBUG") != NULL ||
        getconfent("RTCOPY","DEBUG",1) != NULL ) Debug = TRUE;
   else NOTRACE;                 /* Switch off tracing */
-  if ( Debug == TRUE ) initlog("rtcopyd",LOG_DEBUG,rtcpd_logfile);
+  if ( Debug == TRUE ) initlog("rtcpd",LOG_DEBUG,rtcpd_logfile);
   return;
 }
 
@@ -124,7 +124,7 @@ int rtcpd_CheckNoMoreTapes() {
   return(0);
 }
 /*
- * Check that client account code exists for requested group 
+ * Check that client account code exists for requested group
  */
 static int rtcpd_ChkNewAcct(char *acctstr,struct passwd *pwd,gid_t gid) {
   char buf[BUFSIZ] ;
@@ -151,9 +151,9 @@ static int rtcpd_ChkNewAcct(char *acctstr,struct passwd *pwd,gid_t gid) {
 
 /*
  * Routine to check and authorize client. This routine should be called
- * from main thread. It's inherently thread unsafe because of getgrent(). 
+ * from main thread. It's inherently thread unsafe because of getgrent().
  */
-int rtcpd_CheckClient(int _uid, int _gid, char *name, 
+int rtcpd_CheckClient(int _uid, int _gid, char *name,
                       char *acctstr, int *rc) {
   struct passwd *pw;
 #if !defined(_WIN32)
@@ -203,11 +203,11 @@ int rtcpd_CheckClient(int _uid, int _gid, char *name,
       for ( gr_mem = gr->gr_mem; gr_mem != NULL && *gr_mem != NULL;
             gr_mem++ ) if ( !strcmp(*gr_mem,name) ) break;
 
-      if ( gr_mem != NULL && *gr_mem != NULL && 
+      if ( gr_mem != NULL && *gr_mem != NULL &&
            !strcmp(*gr_mem,name) ) break;
     }
     endgrent();
-    if ( (gr_mem == NULL || *gr_mem == NULL || 
+    if ( (gr_mem == NULL || *gr_mem == NULL ||
           strcmp(*gr_mem,name)) &&
          (rtcpd_ChkNewAcct(acctstr,pw,gid) < 0) ) {
       rtcp_log(LOG_ERR,"your gid does not match your uid\n") ;
@@ -250,7 +250,7 @@ static int rtcpd_PrintCmd(tape_list_t *tape, file_list_t *file) {
 
 
   if ( (tape == NULL) && (file == NULL) ) return(-1);
-    
+
   *logline = '\0';
   if ( tape != NULL ) {
     tapereq = &tape->tapereq;
@@ -258,7 +258,7 @@ static int rtcpd_PrintCmd(tape_list_t *tape, file_list_t *file) {
     vsn = tapereq->vsn;
     label = tapereq->label;
     mode = tapereq->mode;
-    if ( tape->file != NULL ) 
+    if ( tape->file != NULL )
       sprintf(logline,"%s %s %s%s%s",(mode == WRITE_ENABLE ? "tpwrite" : "tpread"),
               (*vid != '\0' ? "-V" : "-v"),(*vid != '\0' ? vid : vsn),(*label != '\0' ? " -l " : ""),(*label != '\0' ? label : ""));
     else
@@ -271,14 +271,14 @@ static int rtcpd_PrintCmd(tape_list_t *tape, file_list_t *file) {
                        (*vid != '\0' ? tapereq->vid : tapereq->vsn));
       }
     } CLIST_ITERATE_END(tape,tl);
-      
+
     if ( tape->file == NULL ) {
       dumpreq = &tape->dumpreq;
       if ( dumpreq->maxbyte >= 0 ) LOGLINE_APPEND(" -B %d",dumpreq->maxbyte);
       if ( dumpreq->blocksize >= 0 ) LOGLINE_APPEND(" -b %d",dumpreq->blocksize);
       if ( dumpreq->maxfile >= 0 ) LOGLINE_APPEND(" -F %d",dumpreq->maxfile);
       if ( dumpreq->tp_err_action != -1 &&
-           (dumpreq->tp_err_action == IGNOREEOI) != 0 ) 
+           (dumpreq->tp_err_action == IGNOREEOI) != 0 )
         LOGLINE_APPEND(" -E %s","ignoreeoi");
       if ( dumpreq->convert == EBCCONV ) LOGLINE_APPEND(" -C %s","ebcdic");
       if ( dumpreq->fromblock >= 0 && dumpreq->toblock >= 0 ) {
@@ -287,11 +287,11 @@ static int rtcpd_PrintCmd(tape_list_t *tape, file_list_t *file) {
       } else if ( dumpreq->toblock >= 0 ) {
         LOGLINE_APPEND(" -N %d",dumpreq->toblock);
       }
-      if ( *logline != '\0' ) { 
-              rtcp_log(LOG_INFO,"%s\n",logline); 
+      if ( *logline != '\0' ) {
+              rtcp_log(LOG_INFO,"%s\n",logline);
               tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
                                "func"   , TL_MSG_PARAM_STR, "rtcpd_PrintCmd",
-                               "Message", TL_MSG_PARAM_STR, logline );              
+                               "Message", TL_MSG_PARAM_STR, logline );
       }
       return(0);
     }
@@ -300,11 +300,11 @@ static int rtcpd_PrintCmd(tape_list_t *tape, file_list_t *file) {
     filereq = &file->filereq;
     if ( filereq->proc_status == RTCP_REQUEST_MORE_WORK ) {
       sprintf(logline,"New placeholder for more work");
-      if ( *logline != '\0' ) { 
-              rtcp_log(LOG_INFO,"%s\n",logline); 
+      if ( *logline != '\0' ) {
+              rtcp_log(LOG_INFO,"%s\n",logline);
               tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
                                "func"   , TL_MSG_PARAM_STR, "rtcpd_PrintCmd",
-                               "Message", TL_MSG_PARAM_STR, logline );                            
+                               "Message", TL_MSG_PARAM_STR, logline );
       }
       return(0);
     } else {
@@ -321,18 +321,18 @@ static int rtcpd_PrintCmd(tape_list_t *tape, file_list_t *file) {
   }
   if ( filereq->blocksize > 0 )
     LOGLINE_APPEND(" -b %d",filereq->blocksize);
-  if ( filereq->recordlength > 0 ) 
+  if ( filereq->recordlength > 0 )
     LOGLINE_APPEND(" -L %d",filereq->recordlength);
   if ( filereq->def_alloc > 0 )
     LOGLINE_APPEND(" -A %s","deferred");
   if ( filereq->rtcp_err_action != -1 &&
-       (filereq->rtcp_err_action & SKIPBAD) != 0 ) 
+       (filereq->rtcp_err_action & SKIPBAD) != 0 )
     LOGLINE_APPEND(" -E %s","skip");
   if ( filereq->rtcp_err_action != -1 &&
-       (filereq->rtcp_err_action & KEEPFILE) != 0 ) 
+       (filereq->rtcp_err_action & KEEPFILE) != 0 )
     LOGLINE_APPEND(" -E %s","keep");
   if ( filereq->tp_err_action != -1 &&
-       (filereq->tp_err_action & IGNOREEOI) != 0 ) 
+       (filereq->tp_err_action & IGNOREEOI) != 0 )
     LOGLINE_APPEND(" -E %s","ignoreeoi");
   if ( filereq->tp_err_action != -1 &&
        (filereq->tp_err_action & NOTRLCHK) != 0 )
@@ -343,14 +343,14 @@ static int rtcpd_PrintCmd(tape_list_t *tape, file_list_t *file) {
     LOGLINE_APPEND(" %s","-n");
   if ( *filereq->stageID != '\0' )
     LOGLINE_APPEND(" -Z %s",filereq->stageID);
-  if ( filereq->convert > 0 && (filereq->convert & (EBCCONV|FIXVAR)) != 0 ) { 
-    LOGLINE_APPEND("%s"," -C "); 
+  if ( filereq->convert > 0 && (filereq->convert & (EBCCONV|FIXVAR)) != 0 ) {
+    LOGLINE_APPEND("%s"," -C ");
     if ( (filereq->convert & EBCCONV) != 0 ) {
       LOGLINE_APPEND("%s","ebcdic");
     } else LOGLINE_APPEND("%s","ascii");
     if ( (filereq->convert & FIXVAR) != 0 )
       LOGLINE_APPEND(",%s","block");
-  } 
+  }
 
   if ( filereq->maxnbrec > 0 )
     LOGLINE_APPEND(" -N %d",(int)filereq->maxnbrec);
@@ -369,7 +369,7 @@ static int rtcpd_PrintCmd(tape_list_t *tape, file_list_t *file) {
   }
 
   fseq = filereq->tape_fseq;
-  if ( filereq->position_method == TPPOSIT_FSEQ || 
+  if ( filereq->position_method == TPPOSIT_FSEQ ||
        filereq->position_method == TPPOSIT_BLKID ) {
     if ( tape == NULL ) {
       LOGLINE_APPEND(" -q %d",fseq);
@@ -380,18 +380,18 @@ static int rtcpd_PrintCmd(tape_list_t *tape, file_list_t *file) {
         else if ( filereq->tape_fseq != fseq ) {
           if ( strlen(logline) + 11 >= CA_MAXLINELEN ) {
             if ( logline[strlen(logline)-1] == '-' )
-              if ( (filereq->concat & 
+              if ( (filereq->concat &
                     (NOCONCAT_TO_EOD|CONCAT_TO_EOD))==0 ) {
                 rtcp_log(LOG_INFO,"%s%d \\\n",logline,fseq);
                 tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
                                  "func"   , TL_MSG_PARAM_STR, "rtcpd_PrintCmd",
-                                 "Message", TL_MSG_PARAM_STR, logline ); 
+                                 "Message", TL_MSG_PARAM_STR, logline );
               }
               else {
                 rtcp_log(LOG_INFO,"%s \\\n",logline);
                 tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
                                  "func"   , TL_MSG_PARAM_STR, "rtcpd_PrintCmd",
-                                 "Message", TL_MSG_PARAM_STR, logline ); 
+                                 "Message", TL_MSG_PARAM_STR, logline );
               }
             else {
               rtcp_log(LOG_INFO,"%s, \\\n",logline);
@@ -403,22 +403,22 @@ static int rtcpd_PrintCmd(tape_list_t *tape, file_list_t *file) {
           }
           if ( (filereq->concat & (NOCONCAT_TO_EOD|CONCAT_TO_EOD))==0 ) {
             if ( filereq->tape_fseq == fseq + 1 ) {
-              if ( *logline!='\0' && 
+              if ( *logline!='\0' &&
                    logline[strlen(logline)-1] != '-' &&
-                   (fl->next->filereq.concat & 
+                   (fl->next->filereq.concat &
                     (NOCONCAT_TO_EOD|CONCAT_TO_EOD)) == 0 &&
-                   (fl->next->next->filereq.concat & 
+                   (fl->next->next->filereq.concat &
                     NOCONCAT_TO_EOD)  == 0 ) {
                 LOGLINE_APPEND("%s","-");
               } else if ( *logline == '\0' ||
-                          (logline[strlen(logline)-1] == '-' && 
+                          (logline[strlen(logline)-1] == '-' &&
                            ((fl->next->filereq.concat & CONCAT_TO_EOD) != 0 ||
-                            (fl->next->next->filereq.concat & 
+                            (fl->next->next->filereq.concat &
                              NOCONCAT_TO_EOD) != 0)) ) {
                 LOGLINE_APPEND("%d",filereq->tape_fseq);
               }
             } else {
-              if ( *logline!='\0' && 
+              if ( *logline!='\0' &&
                    logline[strlen(logline)-1] != '-' ) {
                 LOGLINE_APPEND("%s",",");
               } else if ( *logline != '\0' && fseq > 0 ) {
@@ -427,10 +427,10 @@ static int rtcpd_PrintCmd(tape_list_t *tape, file_list_t *file) {
               LOGLINE_APPEND("%d",filereq->tape_fseq);
             }
           } else {
-            if ( fl != tape->file && 
+            if ( fl != tape->file &&
                  (fl->prev->filereq.concat & (NOCONCAT_TO_EOD|CONCAT_TO_EOD))==0 ) {
               if ( *logline!='\0' ) LOGLINE_APPEND("%s",",");
-              if ( (filereq->concat & NOCONCAT_TO_EOD) != 0 ) 
+              if ( (filereq->concat & NOCONCAT_TO_EOD) != 0 )
                 LOGLINE_APPEND("%d",fseq);
               else LOGLINE_APPEND("%d",filereq->tape_fseq);
             }
@@ -457,7 +457,7 @@ static int rtcpd_PrintCmd(tape_list_t *tape, file_list_t *file) {
           rtcp_log(LOG_INFO,"%s- \\\n",logline);
           tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
                            "func"   , TL_MSG_PARAM_STR, "rtcpd_PrintCmd",
-                           "Message", TL_MSG_PARAM_STR, logline );          
+                           "Message", TL_MSG_PARAM_STR, logline );
         }
         else LOGLINE_APPEND("%s","-");
       }
@@ -485,14 +485,14 @@ static int rtcpd_PrintCmd(tape_list_t *tape, file_list_t *file) {
       filereq = &fl->filereq;
       if ( fl == tape->file ) LOGLINE_APPEND(" -f %s",filereq->fid);
       else if ( filereq->tape_fseq != fseq || filereq->tape_fseq == -1 ) {
-        if ( !(mode==WRITE_ENABLE && (filereq->concat & CONCAT)!=0) ) { 
+        if ( !(mode==WRITE_ENABLE && (filereq->concat & CONCAT)!=0) ) {
           if ( strlen(logline)+strlen(filereq->fid)+5<CA_MAXLINELEN )
             LOGLINE_APPEND(":%s",filereq->fid);
           else {
             rtcp_log(LOG_INFO,"%s: \\\n",logline);
             tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
                            "func"   , TL_MSG_PARAM_STR, "rtcpd_PrintCmd",
-                           "Message", TL_MSG_PARAM_STR, logline );          
+                           "Message", TL_MSG_PARAM_STR, logline );
             *logline = '\0';
             LOGLINE_APPEND("%s",filereq->fid);
           }
@@ -550,7 +550,7 @@ static int rtcpd_PrintCmd(tape_list_t *tape, file_list_t *file) {
           rtcp_log(LOG_INFO,"%s \\\n",logline);
           tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
                            "func"   , TL_MSG_PARAM_STR, "rtcpd_PrintCmd",
-                           "Message", TL_MSG_PARAM_STR, logline );          
+                           "Message", TL_MSG_PARAM_STR, logline );
           *logline = '\0';
           LOGLINE_APPEND("%s",filereq->file_path);
         }
@@ -563,7 +563,7 @@ static int rtcpd_PrintCmd(tape_list_t *tape, file_list_t *file) {
           rtcp_log(LOG_INFO,"%s\n",logline);
           tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
                            "func"   , TL_MSG_PARAM_STR, "rtcpd_PrintCmd",
-                           "Message", TL_MSG_PARAM_STR, logline );                            
+                           "Message", TL_MSG_PARAM_STR, logline );
   }
 
   return(0);
@@ -585,7 +585,7 @@ static int rtcpd_AllocBuffers() {
     nb_bufs = atoi(p);
   } else if ( (p = getconfent("RTCOPYD","NB_BUFS",0)) != NULL ) {
     nb_bufs = atoi(p);
-  } 
+  }
 
   if ( (p = getenv("RTCOPYD_BUFSZ")) != NULL ) {
     bufsz = atoi(p);
@@ -597,9 +597,9 @@ static int rtcpd_AllocBuffers() {
   tl_rtcpd.tl_log( &tl_rtcpd, 11, 4,
                    "func"       , TL_MSG_PARAM_STR, "rtcpd_AllocBuffers",
                    "Message"    , TL_MSG_PARAM_STR, "allocate buffers",
-                   "# buffers"  , TL_MSG_PARAM_INT, nb_bufs, 
-                   "buffer size", TL_MSG_PARAM_INT, bufsz );                            
-  
+                   "# buffers"  , TL_MSG_PARAM_INT, nb_bufs,
+                   "buffer size", TL_MSG_PARAM_INT, bufsz );
+
   databufs = (buffer_table_t **)calloc((size_t)nb_bufs, sizeof(buffer_table_t *));
   serrno = errno;
   if ( databufs == NULL ) {
@@ -609,8 +609,8 @@ static int rtcpd_AllocBuffers() {
           tl_rtcpd.tl_log( &tl_rtcpd, 3, 4,
                            "func"       , TL_MSG_PARAM_STR, "rtcpd_AllocBuffers",
                            "Message"    , TL_MSG_PARAM_STR, "malloc",
-                           "mem size"   , TL_MSG_PARAM_INT, nb_bufs * sizeof(buffer_table_t *), 
-                           "buffer size", TL_MSG_PARAM_STR, sstrerror(serrno) );                            
+                           "mem size"   , TL_MSG_PARAM_INT, nb_bufs * sizeof(buffer_table_t *),
+                           "buffer size", TL_MSG_PARAM_STR, sstrerror(serrno) );
           return(-1);
   }
   for (i=0; i<nb_bufs; i++) {
@@ -622,8 +622,8 @@ static int rtcpd_AllocBuffers() {
             tl_rtcpd.tl_log( &tl_rtcpd, 3, 4,
                              "func"    , TL_MSG_PARAM_STR, "rtcpd_AllocBuffers",
                              "Message" , TL_MSG_PARAM_STR, "malloc",
-                             "mem size", TL_MSG_PARAM_INT, sizeof(buffer_table_t), 
-                             "Error"   , TL_MSG_PARAM_STR, sstrerror(serrno) );                            
+                             "mem size", TL_MSG_PARAM_INT, sizeof(buffer_table_t),
+                             "Error"   , TL_MSG_PARAM_STR, sstrerror(serrno) );
             return(-1);
     }
     databufs[i]->buffer = (char *)malloc(bufsz);
@@ -634,8 +634,8 @@ static int rtcpd_AllocBuffers() {
       tl_rtcpd.tl_log( &tl_rtcpd, 3, 4,
                        "func"       , TL_MSG_PARAM_STR, "rtcpd_AllocBuffers",
                        "Message"    , TL_MSG_PARAM_STR, "malloc",
-                       "bufsz"      , TL_MSG_PARAM_INT, bufsz, 
-                       "buffer size", TL_MSG_PARAM_STR, sstrerror(serrno) );                            
+                       "bufsz"      , TL_MSG_PARAM_INT, bufsz,
+                       "buffer size", TL_MSG_PARAM_STR, sstrerror(serrno) );
       return(-1);
     }
     databufs[i]->maxlength = bufsz;
@@ -656,8 +656,8 @@ static int rtcpd_AllocBuffers() {
       tl_rtcpd.tl_log( &tl_rtcpd, 3, 4,
                        "func"        , TL_MSG_PARAM_STR, "rtcpd_AllocBuffers",
                        "Message"     , TL_MSG_PARAM_STR, "Cthread_mutex_lock",
-                       "buffer index", TL_MSG_PARAM_INT, i, 
-                       "buffer size" , TL_MSG_PARAM_STR, sstrerror(serrno) );                            
+                       "buffer index", TL_MSG_PARAM_INT, i,
+                       "buffer size" , TL_MSG_PARAM_STR, sstrerror(serrno) );
       return(-1);
     }
     rc = Cthread_mutex_unlock(&databufs[i]->flag);
@@ -668,8 +668,8 @@ static int rtcpd_AllocBuffers() {
       tl_rtcpd.tl_log( &tl_rtcpd, 3, 4,
                        "func"        , TL_MSG_PARAM_STR, "rtcpd_AllocBuffers",
                        "Message"     , TL_MSG_PARAM_STR, "Cthread_mutex_unlock",
-                       "buffer index", TL_MSG_PARAM_INT, i, 
-                       "buffer size" , TL_MSG_PARAM_STR, sstrerror(serrno) );                            
+                       "buffer index", TL_MSG_PARAM_INT, i,
+                       "buffer size" , TL_MSG_PARAM_STR, sstrerror(serrno) );
       return(-1);
     }
     /*
@@ -684,8 +684,8 @@ static int rtcpd_AllocBuffers() {
       tl_rtcpd.tl_log( &tl_rtcpd, 3, 4,
                        "func"        , TL_MSG_PARAM_STR, "rtcpd_AllocBuffers",
                        "Message"     , TL_MSG_PARAM_STR, "Cthread_mutex_lock_addr",
-                       "buffer index", TL_MSG_PARAM_INT, i, 
-                       "buffer size" , TL_MSG_PARAM_STR, sstrerror(serrno) );                            
+                       "buffer index", TL_MSG_PARAM_INT, i,
+                       "buffer size" , TL_MSG_PARAM_STR, sstrerror(serrno) );
       return(-1);
     }
   }
@@ -731,9 +731,9 @@ static int rtcpd_ResetRequest(tape_list_t *tape) {
         tl_rtcpd.tl_log( &tl_rtcpd, 11, 5,
                          "func"     , TL_MSG_PARAM_STR, "rtcpd_ResetRequest",
                          "Message"  , TL_MSG_PARAM_STR, "reset filereq",
-                         "tape_fseq", TL_MSG_PARAM_INT, filereq->tape_fseq, 
-                         "disk_fseq", TL_MSG_PARAM_INT, filereq->disk_fseq , 
-                         "file_path", TL_MSG_PARAM_STR, filereq->file_path );                            
+                         "tape_fseq", TL_MSG_PARAM_INT, filereq->tape_fseq,
+                         "disk_fseq", TL_MSG_PARAM_INT, filereq->disk_fseq ,
+                         "file_path", TL_MSG_PARAM_STR, filereq->file_path );
         filereq->proc_status = RTCP_WAITING;
         filereq->bytes_out = 0;
         fl->diskbytes_sofar = 0;
@@ -743,7 +743,7 @@ static int rtcpd_ResetRequest(tape_list_t *tape) {
         /*
          * On tape write the limited by size status is set
          * already in rtcp_CheckReq() since disk file sizes are
-         * all known. Therefor we cannot reset that status here. 
+         * all known. Therefor we cannot reset that status here.
          */
         if ( !((mode == WRITE_ENABLE) &&
                (filereq->err.severity == (RTCP_OK | RTCP_LIMBYSZ))) ) {
@@ -755,7 +755,7 @@ static int rtcpd_ResetRequest(tape_list_t *tape) {
         tl->tapereq.err.errorcode = 0;
         *tl->tapereq.err.errmsgtxt = '\0';
       }
-      if ( (((filereq->concat & CONCAT) != 0) && 
+      if ( (((filereq->concat & CONCAT) != 0) &&
             ((fl->next->filereq.concat & CONCAT) == 0)) ||
            (((filereq->concat & CONCAT_TO_EOD) != 0) &&
             (((fl->next->filereq.concat & CONCAT_TO_EOD) == 0) ||
@@ -773,19 +773,19 @@ static int rtcpd_ResetRequest(tape_list_t *tape) {
           tl_rtcpd.tl_log( &tl_rtcpd, 11, 6,
                          "func"     , TL_MSG_PARAM_STR, "rtcpd_ResetRequest",
                          "Message"  , TL_MSG_PARAM_STR, "reset filereq",
-                         "tape_fseq", TL_MSG_PARAM_INT, filereq->tape_fseq, 
-                         "disk_fseq", TL_MSG_PARAM_INT, filereq->disk_fseq , 
+                         "tape_fseq", TL_MSG_PARAM_INT, filereq->tape_fseq,
+                         "disk_fseq", TL_MSG_PARAM_INT, filereq->disk_fseq ,
                          "file_path", TL_MSG_PARAM_STR, filereq->file_path,
-                         "concat"   , TL_MSG_PARAM_INT, filereq->concat );                            
+                         "concat"   , TL_MSG_PARAM_INT, filereq->concat );
           filereq->proc_status = RTCP_WAITING;
           filereq->err.severity = RTCP_OK;
           filereq->err.errorcode = 0;
-          *filereq->err.errmsgtxt = '\0'; 
+          *filereq->err.errmsgtxt = '\0';
           tl->tapereq.err.severity = RTCP_OK;
           tl->tapereq.err.errorcode = 0;
           *tl->tapereq.err.errmsgtxt = '\0';
           fltmp = fl;
-          while ( fltmp->prev != fl && 
+          while ( fltmp->prev != fl &&
                   ((fltmp->filereq.concat & CONCAT) != 0 ||
                    (fltmp->prev->filereq.concat & CONCAT_TO_EOD) != 0) ) {
             fltmp = fltmp->prev;
@@ -797,10 +797,10 @@ static int rtcpd_ResetRequest(tape_list_t *tape) {
             tl_rtcpd.tl_log( &tl_rtcpd, 11, 6,
                              "func"     , TL_MSG_PARAM_STR, "rtcpd_ResetRequest",
                              "Message"  , TL_MSG_PARAM_STR, "reset filereq",
-                             "tape_fseq", TL_MSG_PARAM_INT, fltmp->filereq.tape_fseq, 
-                             "disk_fseq", TL_MSG_PARAM_INT, fltmp->filereq.disk_fseq, 
+                             "tape_fseq", TL_MSG_PARAM_INT, fltmp->filereq.tape_fseq,
+                             "disk_fseq", TL_MSG_PARAM_INT, fltmp->filereq.disk_fseq,
                              "file_path", TL_MSG_PARAM_STR, fltmp->filereq.file_path,
-                             "concat"   , TL_MSG_PARAM_INT, fltmp->filereq.concat );                            
+                             "concat"   , TL_MSG_PARAM_INT, fltmp->filereq.concat );
             fltmp->filereq.proc_status = RTCP_WAITING;
             fltmp->filereq.err = filereq->err;
             fltmp->filereq.bytes_out = 0;
@@ -879,7 +879,7 @@ static int rtcpd_InitProcCntl() {
   INITLOCK(proc_cntl.DiskFileAppend,proc_cntl.DiskFileAppend_lock);
 
   /*
-   * Initialize exclusive lock for stage_updc_tppos() 
+   * Initialize exclusive lock for stage_updc_tppos()
    */
   INITLOCK(proc_cntl.TpPos,proc_cntl.TpPos_lock);
 
@@ -891,7 +891,7 @@ static int rtcpd_InitProcCntl() {
   return(0);
 }
 
-int rtcpd_SerializeLock(const int lock, int *lockflag, void *lockaddr, 
+int rtcpd_SerializeLock(const int lock, int *lockflag, void *lockaddr,
                         int *nb_waiters, int *next_entry, int **wait_list) {
   int rc, i, *my_wait_entry;
   int *loc_wait_list, loc_next_entry;
@@ -928,7 +928,7 @@ int rtcpd_SerializeLock(const int lock, int *lockflag, void *lockaddr,
     {
             char __addr[32];
             sprintf( __addr, "0x%lx", (unsigned long int)*wait_list );
-            tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+            tl_rtcpd.tl_log( &tl_rtcpd, 11, 3,
                              "func"   , TL_MSG_PARAM_STR, "rtcpd_SerializeLock",
                              "Message", TL_MSG_PARAM_STR, "allocated wait_list at",
                              "Address", TL_MSG_PARAM_STR, __addr );
@@ -951,13 +951,13 @@ int rtcpd_SerializeLock(const int lock, int *lockflag, void *lockaddr,
       {
               char __addr[32];
               sprintf( __addr, "0x%lx", (unsigned long int)*my_wait_entry );
-              tl_rtcpd.tl_log( &tl_rtcpd, 11, 6, 
+              tl_rtcpd.tl_log( &tl_rtcpd, 11, 6,
                                "func"         , TL_MSG_PARAM_STR, "rtcpd_SerializeLock",
                                "nb_Waiters"   , TL_MSG_PARAM_INT, *nb_waiters,
                                "next_entry"   , TL_MSG_PARAM_INT, *next_entry,
                                "my_index"     , TL_MSG_PARAM_INT, loc_next_entry,
-                               "my_wait_entry", TL_MSG_PARAM_INT,*my_wait_entry, 
-                               "Address"      , TL_MSG_PARAM_STR, __addr ); 
+                               "my_wait_entry", TL_MSG_PARAM_INT,*my_wait_entry,
+                               "Address"      , TL_MSG_PARAM_STR, __addr );
       }
 
       for (i=0;i<proc_stat.nb_diskIO;i++) {
@@ -965,7 +965,7 @@ int rtcpd_SerializeLock(const int lock, int *lockflag, void *lockaddr,
         {
                 char __addr[32];
                 sprintf( __addr, "0x%lx", (unsigned long int)&loc_wait_list[i] );
-                tl_rtcpd.tl_log( &tl_rtcpd, 11, 4, 
+                tl_rtcpd.tl_log( &tl_rtcpd, 11, 4,
                                  "func"          , TL_MSG_PARAM_STR, "rtcpd_SerializeLock",
                                  "loc_wait_index", TL_MSG_PARAM_INT, i,
                                  "Address"       , TL_MSG_PARAM_STR, __addr,
@@ -986,7 +986,7 @@ int rtcpd_SerializeLock(const int lock, int *lockflag, void *lockaddr,
       {
               char __addr[32];
               sprintf( __addr, "0x%lx", (unsigned long int)my_wait_entry );
-              tl_rtcpd.tl_log( &tl_rtcpd, 11, 6, 
+              tl_rtcpd.tl_log( &tl_rtcpd, 11, 6,
                                "func"          , TL_MSG_PARAM_STR, "rtcpd_SerializeLock",
                                "Message"       , TL_MSG_PARAM_STR, "woke up with",
                                "nb_waiters"    , TL_MSG_PARAM_INT, *nb_waiters,
@@ -1000,7 +1000,7 @@ int rtcpd_SerializeLock(const int lock, int *lockflag, void *lockaddr,
   }
   rtcp_log(LOG_DEBUG,"rtcpd_SerializeLock() change lock from %d to %d\n",
            *lockflag,lock);
-  tl_rtcpd.tl_log( &tl_rtcpd, 11, 4, 
+  tl_rtcpd.tl_log( &tl_rtcpd, 11, 4,
                    "func"   , TL_MSG_PARAM_STR, "rtcpd_SerializeLock",
                    "Message", TL_MSG_PARAM_STR, "change lock",
                    "from"   , TL_MSG_PARAM_INT, *lockflag,
@@ -1027,7 +1027,7 @@ int rtcpd_FreeBuffers() {
       {
               char __addr[32];
               sprintf( __addr, "0x%lx", (unsigned long int)databufs[i]->buffer );
-              tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+              tl_rtcpd.tl_log( &tl_rtcpd, 11, 3,
                                "func"   , TL_MSG_PARAM_STR, "rtcpd_FreeBuffers",
                                "Message", TL_MSG_PARAM_STR, "free data buffer",
                                "Address", TL_MSG_PARAM_STR, __addr );
@@ -1078,10 +1078,10 @@ int rtcpd_AdmUformatInfo(file_list_t *file, int indxp) {
   int blksiz, nb_blks;
 
   if ( file == NULL || *(file->filereq.recfm) != 'U' ||
-       file->filereq.blocksize <= 0 || indxp < 0 || 
+       file->filereq.blocksize <= 0 || indxp < 0 ||
        indxp > nb_bufs ) {
     rtcp_log(LOG_ERR,"rtcpd_AdmUformatInfo() invalid parameter(s)\n");
-    tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_AdmUformatInfo",
                      "Message", TL_MSG_PARAM_STR, "invalid parameter(s)" );
     serrno = EINVAL;
@@ -1091,7 +1091,7 @@ int rtcpd_AdmUformatInfo(file_list_t *file, int indxp) {
   nb_blks = databufs[indxp]->length / blksiz;
   if ( nb_blks <= 0 ) {
     rtcp_log(LOG_ERR,"rtcpd_AdmUformatInfo() internal error: buffer too small!!!\n");
-    tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_AdmUformatInfo",
                      "Message", TL_MSG_PARAM_STR, "internal error: buffer too small" );
     serrno = SEINTERNAL;
@@ -1099,7 +1099,7 @@ int rtcpd_AdmUformatInfo(file_list_t *file, int indxp) {
   }
   if ( nb_blks > databufs[indxp]->nbrecs ) {
     if ( databufs[indxp] != NULL ) {
-      if ( databufs[indxp]->lrecl_table != NULL ) 
+      if ( databufs[indxp]->lrecl_table != NULL )
         free(databufs[indxp]->lrecl_table);
       databufs[indxp]->lrecl_table = NULL;
       databufs[indxp]->nbrecs = 0;
@@ -1109,7 +1109,7 @@ int rtcpd_AdmUformatInfo(file_list_t *file, int indxp) {
       serrno = errno;
       rtcp_log(LOG_ERR,"rtcpd_AdmUformatInfo() calloc(): %s\n",
                sstrerror(serrno));
-      tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+      tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                        "func"   , TL_MSG_PARAM_STR, "rtcpd_AdmUformatInfo",
                        "Message", TL_MSG_PARAM_STR, "calloc()",
                        "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
@@ -1144,16 +1144,16 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
   int VolReqID;
   int client_uid, client_gid;
   char client_host[CA_MAXHOSTNAMELEN+1];
-  char client_name[CA_MAXUSRNAMELEN+1]; 
+  char client_name[CA_MAXUSRNAMELEN+1];
 
   /*
    * Close and free client listen socket if still active. This
-   * will certainly kill off the client listen thread if it is 
+   * will certainly kill off the client listen thread if it is
    * still there.
    */
   if ( client_socket != NULL && *client_socket != NULL ) {
     rtcp_log(LOG_DEBUG,"rtcpd_FreeResources() close and free client socket\n");
-    tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 2,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_FreeResources",
                      "Message", TL_MSG_PARAM_STR, "close and free client socket" );
     rtcp_CloseConnection(*client_socket);
@@ -1193,24 +1193,24 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
       strcpy(dgn,tapereq->dgn);
       strcpy(vid,tapereq->vid);
       strcpy(label,tapereq->label);
-      Tservice = ((time_t)tapereq->TEndUnmount - 
+      Tservice = ((time_t)tapereq->TEndUnmount -
                   (time_t)tapereq->TStartRequest);
       if (Tservice<0) {
-              /* failed request: the unmount time is not set, 
+              /* failed request: the unmount time is not set,
                  so take the current time as an approximation */
-              Tservice = ((time_t)time(NULL) - 
+              Tservice = ((time_t)time(NULL) -
                           (time_t)tapereq->TStartRequest);
       }
-      if ( Twait == 0 ) 
-        Twait = ((time_t)tapereq->TStartMount - 
+      if ( Twait == 0 )
+        Twait = ((time_t)tapereq->TStartMount -
                  (time_t)tapereq->TStartRequest);
-      Twait += ((time_t)tapereq->TEndMount - 
+      Twait += ((time_t)tapereq->TEndMount -
                 (time_t)tapereq->TStartMount);
-      TMount += ((time_t)tapereq->TEndMount - 
+      TMount += ((time_t)tapereq->TEndMount -
                 (time_t)tapereq->TStartMount);
-      Twait += ((time_t)tapereq->TEndUnmount - 
+      Twait += ((time_t)tapereq->TEndUnmount -
                 (time_t)tapereq->TStartUnmount);
-      TUnmount += ((time_t)tapereq->TEndUnmount - 
+      TUnmount += ((time_t)tapereq->TEndUnmount -
                 (time_t)tapereq->TStartUnmount);
       tmpfile = nextfile = nexttape->file;
       while ( nextfile != NULL ) {
@@ -1226,21 +1226,21 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
                (filereq->concat & CONCAT) == 0 ) {
             time_t endxfer;
             time_t startxfer;
-            
+
             /*
             endxfer = (time_t)max(
                                   (time_t)filereq->TEndTransferDisk,
                                   (time_t)filereq->TEndTransferTape);
-                        
+
             startxfer =  (time_t)max(
                                      (time_t)filereq->TStartTransferDisk,
                                      (time_t)filereq->TStartTransferTape);
-                        
+
             if (endxfer > 0 && startxfer > 0) {
               Ttransfer +=  ( endxfer - startxfer );
             }
             */
-            
+
             /* get only the transfer time to/from tape */
             endxfer   = (time_t)filereq->TEndTransferTape;
             startxfer = (time_t)filereq->TStartTransferTape;
@@ -1255,27 +1255,27 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
           else if ( tapereq->mode == WRITE_DISABLE )
             totSz += filereq->bytes_out;
           totFiles++;
-                    
+
           if (filereq) {
-                  Tposition += ((time_t)filereq->TEndPosition - 
+                  Tposition += ((time_t)filereq->TEndPosition -
                                 (time_t)filereq->TStartPosition);
           }
         }
-        
-        /* Get the VDQM ID */       
+
+        /* Get the VDQM ID */
         if (filereq) {
                 VolReqID = filereq->VolReqID;
         } else {
                 VolReqID = -1;
         }
-                
+
         CLIST_DELETE(nextfile,tmpfile);
         rtcp_log(LOG_DEBUG,"rtcpd_FreeResources() free file element 0x%lx\n",
                  tmpfile);
         {
                 char __addr[32];
                 sprintf( __addr, "0x%lx", (unsigned long int)tmpfile );
-                tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+                tl_rtcpd.tl_log( &tl_rtcpd, 11, 3,
                                  "func"   , TL_MSG_PARAM_STR, "rtcpd_FreeResources",
                                  "Message", TL_MSG_PARAM_STR, "free file element",
                                  "Address", TL_MSG_PARAM_STR, __addr );
@@ -1284,7 +1284,7 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
         tmpfile = nextfile;
       }
     } CLIST_ITERATE_END(*tape,nexttape);
-        
+
     nexttape = *tape;
     while ( *tape != NULL ) {
       CLIST_DELETE(*tape,nexttape);
@@ -1293,7 +1293,7 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
       {
               char __addr[32];
               sprintf( __addr, "0x%lx", (unsigned long int)nexttape );
-              tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+              tl_rtcpd.tl_log( &tl_rtcpd, 11, 3,
                                "func"   , TL_MSG_PARAM_STR, "rtcpd_FreeResources",
                                "Message", TL_MSG_PARAM_STR, "free tape element",
                                "Address", TL_MSG_PARAM_STR, __addr );
@@ -1313,7 +1313,7 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
     if ( rc == -1 ) {
       rtcp_log(LOG_ERR,"vdqm_UnitStatus(VDQM_UNIT_MBCOUNT,%d MB): %s\n",
                totMBSz,sstrerror(serrno));
-      tl_rtcpd.tl_log( &tl_rtcpd, 3, 4, 
+      tl_rtcpd.tl_log( &tl_rtcpd, 3, 4,
                        "func"             , TL_MSG_PARAM_STR, "rtcpd_FreeResources",
                        "Message"          , TL_MSG_PARAM_STR, "vdqm_UnitStatus",
                        "VDQM_UNIT_MBCOUNT", TL_MSG_PARAM_INT, totMBSz,
@@ -1323,51 +1323,51 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
 
   if ( (rtcpd_CheckProcError() & RTCP_OK) != 0 ) {
     rtcp_log(LOG_INFO,"total number of Kbytes transferred is %d\n",totKBSz);
-    tl_rtcpd.tl_log( &tl_rtcpd, 10, 3, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 10, 3,
                      "func"   , TL_MSG_PARAM_STR   , "rtcpd_FreeResources",
                      "Message", TL_MSG_PARAM_STR   , "total number of Mbytes transferred",
                      "MBytes" , TL_MSG_PARAM_DOUBLE, totMBSz_d );
     rtcp_log(LOG_INFO,"waiting time was %ld seconds\n",Twait);
-    tl_rtcpd.tl_log( &tl_rtcpd, 39, 3, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 39, 3,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_FreeResources",
                      "Message", TL_MSG_PARAM_STR, "waiting time",
                      "seconds", TL_MSG_PARAM_INT, Twait );
     rtcp_log(LOG_INFO,"service time was %ld seconds\n",Tservice);
-    tl_rtcpd.tl_log( &tl_rtcpd, 40, 3, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 40, 3,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_FreeResources",
                      "Message", TL_MSG_PARAM_STR, "service time",
                      "seconds", TL_MSG_PARAM_INT, Tservice );
-    
+
     if ( Ttransfer <= 0 ) Ttransfer = 1;
     if ( mode == WRITE_ENABLE ) {
       rtcp_log(LOG_INFO,"cpdsktp: Data transfer bandwidth (%s) is %d KB/sec\n",
-               ifce,totKBSz/Ttransfer); 
-      tl_rtcpd.tl_log( &tl_rtcpd, 41, 4, 
+               ifce,totKBSz/Ttransfer);
+      tl_rtcpd.tl_log( &tl_rtcpd, 41, 4,
                        "func"   , TL_MSG_PARAM_STR, "rtcpd_FreeResources",
                        "Message", TL_MSG_PARAM_STR, "cpdsktp: Data transfer bandwidth",
-                       "ifce"   , TL_MSG_PARAM_STR, ifce,                       
+                       "ifce"   , TL_MSG_PARAM_STR, ifce,
                        "MB/sec" , TL_MSG_PARAM_DOUBLE, (double)totMBSz_d/Ttransfer );
     } else {
       rtcp_log(LOG_INFO,"cptpdsk: Data transfer bandwidth (%s) is %d KB/sec\n",
                ifce,totKBSz/Ttransfer);
-      tl_rtcpd.tl_log( &tl_rtcpd, 41, 4, 
+      tl_rtcpd.tl_log( &tl_rtcpd, 41, 4,
                        "func"   , TL_MSG_PARAM_STR, "rtcpd_FreeResources",
                        "Message", TL_MSG_PARAM_STR, "cptpdsk: Data transfer bandwidth",
-                       "ifce"   , TL_MSG_PARAM_STR, ifce,                       
+                       "ifce"   , TL_MSG_PARAM_STR, ifce,
                        "MB/sec" , TL_MSG_PARAM_DOUBLE, (double)totMBSz_d/Ttransfer );
     }
     rtcp_log(LOG_INFO,"request successful\n");
-    tl_rtcpd.tl_log( &tl_rtcpd, 42, 2, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 42, 2,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_FreeResources",
                      "Message", TL_MSG_PARAM_STR, "request successful" );
 
-    tl_rtcpd.tl_log( &tl_rtcpd, 44, 22, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 44, 22,
                      "func"            , TL_MSG_PARAM_STR   , "rtcpd_FreeResources",
                      "Message"         , TL_MSG_PARAM_STR   , "Request statistics",
                      "RequestType"     , TL_MSG_PARAM_STR   , (mode == WRITE_ENABLE) ? "WRITE" : "READ",
-                     "VID"             , TL_MSG_PARAM_STR   , vid, 
-                     "Drive"           , TL_MSG_PARAM_STR   , unit, 
-                     "Label"           , TL_MSG_PARAM_STR   , label, 
+                     "VID"             , TL_MSG_PARAM_STR   , vid,
+                     "Drive"           , TL_MSG_PARAM_STR   , unit,
+                     "Label"           , TL_MSG_PARAM_STR   , label,
                      "MountTime"       , TL_MSG_PARAM_INT   , TMount,
                      "ServiceTime"     , TL_MSG_PARAM_INT   , Tservice,
                      "WaitTime"        , TL_MSG_PARAM_INT   , Twait,
@@ -1378,7 +1378,7 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
                      "Files"           , TL_MSG_PARAM_INT   , totFiles,
                      "DGN"             , TL_MSG_PARAM_STR   , dgn,
                      "VolReqID"        , TL_MSG_PARAM_INT   , VolReqID,
-                     "ClientName"      , TL_MSG_PARAM_STR   , client_name,                     
+                     "ClientName"      , TL_MSG_PARAM_STR   , client_name,
                      "ClientUID"       , TL_MSG_PARAM_INT   , client_uid,
                      "ClientGID"       , TL_MSG_PARAM_INT   , client_gid,
                      "ClientHost"      , TL_MSG_PARAM_STR   , client_host,
@@ -1387,17 +1387,17 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
 
   } else {
     rtcp_log(LOG_INFO,"request failed\n");
-    tl_rtcpd.tl_log( &tl_rtcpd, 43, 2, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 43, 2,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_FreeResources",
                      "Message", TL_MSG_PARAM_STR, "request failed" );
     if ( Ttransfer <= 0 ) Ttransfer = 1;
-    tl_rtcpd.tl_log( &tl_rtcpd, 44, 22, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 44, 22,
                      "func"            , TL_MSG_PARAM_STR   , "rtcpd_FreeResources",
                      "Message"         , TL_MSG_PARAM_STR   , "Request statistics",
                      "RequestType"     , TL_MSG_PARAM_STR   , (mode == WRITE_ENABLE) ? "WRITE" : "READ",
-                     "VID"             , TL_MSG_PARAM_STR   , vid, 
+                     "VID"             , TL_MSG_PARAM_STR   , vid,
                      "Label"           , TL_MSG_PARAM_STR   , label,
-                     "Drive"           , TL_MSG_PARAM_STR   , unit,  
+                     "Drive"           , TL_MSG_PARAM_STR   , unit,
                      "MountTime"       , TL_MSG_PARAM_INT   , TMount,
                      "ServiceTime"     , TL_MSG_PARAM_INT   , Tservice,
                      "WaitTime"        , TL_MSG_PARAM_INT   , Twait,
@@ -1407,11 +1407,11 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
                      "DataRateMBs"     , TL_MSG_PARAM_DOUBLE, totMBSz_d/Ttransfer,
                      "Files"           , TL_MSG_PARAM_INT   , totFiles,
                      "DGN"             , TL_MSG_PARAM_STR   , dgn,
-                     "VolReqID"        , TL_MSG_PARAM_INT   , VolReqID, 
-                     "ClientName"      , TL_MSG_PARAM_STR   , client_name,                     
+                     "VolReqID"        , TL_MSG_PARAM_INT   , VolReqID,
+                     "ClientName"      , TL_MSG_PARAM_STR   , client_name,
                      "ClientUID"       , TL_MSG_PARAM_INT   , client_uid,
                      "ClientGID"       , TL_MSG_PARAM_INT   , client_gid,
-                     "ClientHost"      , TL_MSG_PARAM_STR   , client_host,                   
+                     "ClientHost"      , TL_MSG_PARAM_STR   , client_host,
                      "TPVID"           , TL_MSG_PARAM_TPVID , vid,
                      "RequestState"    , TL_MSG_PARAM_STR   , "failed");
   }
@@ -1428,7 +1428,7 @@ void rtcpd_BroadcastException() {
    * blocked since they are used as pure semaphores.
    */
   rtcp_log(LOG_DEBUG,"rtcpd_BroadcastException() broadcast to cntl_lock\n");
-  tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
+  tl_rtcpd.tl_log( &tl_rtcpd, 11, 2,
                    "func"   , TL_MSG_PARAM_STR, "rtcpd_BroadcastException",
                    "Message", TL_MSG_PARAM_STR, "broadcast to cntl_lock" );
   (void)Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
@@ -1436,7 +1436,7 @@ void rtcpd_BroadcastException() {
   (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
 
   rtcp_log(LOG_DEBUG,"rtcpd_BroadcastException() broadcast to ReqStatus_lock\n");
-  tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
+  tl_rtcpd.tl_log( &tl_rtcpd, 11, 2,
                    "func"   , TL_MSG_PARAM_STR, "rtcpd_BroadcastException",
                    "Message", TL_MSG_PARAM_STR, "broadcast to ReqStatus_lock" );
   (void)Cthread_mutex_lock_ext(proc_cntl.ReqStatus_lock);
@@ -1444,7 +1444,7 @@ void rtcpd_BroadcastException() {
   (void)Cthread_mutex_unlock_ext(proc_cntl.ReqStatus_lock);
 
   rtcp_log(LOG_DEBUG,"rtcpd_BroadcastException() broadcast to DiskFileAppend_lock\n");
-  tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
+  tl_rtcpd.tl_log( &tl_rtcpd, 11, 2,
                    "func"   , TL_MSG_PARAM_STR, "rtcpd_BroadcastException",
                    "Message", TL_MSG_PARAM_STR, "broadcast to DiskFileAppend_lock" );
   (void)Cthread_mutex_lock_ext(proc_cntl.DiskFileAppend_lock);
@@ -1452,7 +1452,7 @@ void rtcpd_BroadcastException() {
   (void)Cthread_mutex_unlock_ext(proc_cntl.DiskFileAppend_lock);
 
   rtcp_log(LOG_DEBUG,"rtcpd_BroadcastException() broadcast to TpPos_lock\n");
-  tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
+  tl_rtcpd.tl_log( &tl_rtcpd, 11, 2,
                    "func"   , TL_MSG_PARAM_STR, "rtcpd_BroadcastException",
                    "Message", TL_MSG_PARAM_STR, "broadcast to TpPos_lock" );
   (void)Cthread_mutex_lock_ext(proc_cntl.TpPos_lock);
@@ -1460,7 +1460,7 @@ void rtcpd_BroadcastException() {
   (void)Cthread_mutex_unlock_ext(proc_cntl.TpPos_lock);
 
   rtcp_log(LOG_DEBUG,"rtcpd_BroadcastException() broadcast to requestMoreWork_lock\n");
-  tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
+  tl_rtcpd.tl_log( &tl_rtcpd, 11, 2,
                    "func"   , TL_MSG_PARAM_STR, "rtcpd_BroadcastException",
                    "Message", TL_MSG_PARAM_STR, "broadcast to requestMoreWork_lock" );
   (void)Cthread_mutex_lock_ext(proc_cntl.requestMoreWork_lock);
@@ -1469,7 +1469,7 @@ void rtcpd_BroadcastException() {
 
   /*
    * Finally, signal all data buffers. Since those conditions also protects
-   * the memory buffers (in addition to being semaphores), this could 
+   * the memory buffers (in addition to being semaphores), this could
    * potentially block if for instance, a diskIO thread is blocked in a
    * rfio_...() call. Although this is normally correct (condition broadcast
    * is intended for global thread synchronisation), it could prevent proper
@@ -1486,19 +1486,19 @@ void rtcpd_BroadcastException() {
         (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
         rtcp_log(LOG_DEBUG,
                  "rtcpd_BroadcastException() broadcast to databuf[%d]\n",i);
-        tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+        tl_rtcpd.tl_log( &tl_rtcpd, 11, 3,
                          "func"         , TL_MSG_PARAM_STR, "rtcpd_BroadcastException",
                          "Message"      , TL_MSG_PARAM_STR, "broadcast to databuf",
-                         "databuf index", TL_MSG_PARAM_INT, i );        
+                         "databuf index", TL_MSG_PARAM_INT, i );
       }
     }
   }
 
   rtcp_log(LOG_DEBUG,"rtcpd_BroadcastException() finished\n");
-  tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
+  tl_rtcpd.tl_log( &tl_rtcpd, 11, 2,
                    "func"   , TL_MSG_PARAM_STR, "rtcpd_BroadcastException",
                    "Message", TL_MSG_PARAM_STR, "finished" );
-  return; 
+  return;
 }
 
 static int rtcpd_ProcError(int *code) {
@@ -1511,7 +1511,7 @@ static int rtcpd_ProcError(int *code) {
   if ( rc == -1 ) {
     rtcp_log(LOG_ERR,"rtcpd_ProcError(): Cthread_mutex_lock_ext(): %s\n",
              sstrerror(serrno));
-    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_ProcError",
                      "Message", TL_MSG_PARAM_STR, "Cthread_mutex_lock_ext",
                      "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
@@ -1539,13 +1539,13 @@ void rtcpd_SetProcError(int code) {
 
   set_code = code;
   rtcp_log(LOG_DEBUG,"rtcpd_SetProcError(%d) called\n",set_code);
-  tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+  tl_rtcpd.tl_log( &tl_rtcpd, 11, 3,
                    "func"    , TL_MSG_PARAM_STR, "rtcpd_SetProcError",
                    "Message" , TL_MSG_PARAM_STR, "called",
                    "set_code", TL_MSG_PARAM_INT, set_code );
   rc = rtcpd_ProcError(&set_code);
-  if ( (rc != code) && 
-       ((rc & RTCP_FAILED) == 0) && 
+  if ( (rc != code) &&
+       ((rc & RTCP_FAILED) == 0) &&
        (AbortFlag == 0) ) {
     /*
      * There was an error setting the global ProcError.
@@ -1553,13 +1553,13 @@ void rtcpd_SetProcError(int code) {
      * the error is set (although thread-unsafe).
      */
     rtcp_log(LOG_ERR,"rtcpd_SetProcError() force FAILED status\n");
-    tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
                      "func"    , TL_MSG_PARAM_STR, "rtcpd_SetProcError",
                      "Message" , TL_MSG_PARAM_STR, "force FAILED status" );
     rc = proc_cntl.ProcError = RTCP_FAILED;
   }
-  if ( (rc & (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV|RTCP_EOD)) != 0 ) 
-    rtcpd_BroadcastException(); 
+  if ( (rc & (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV|RTCP_EOD)) != 0 )
+    rtcpd_BroadcastException();
 
   return;
 }
@@ -1580,7 +1580,7 @@ int rtcpd_WaitCompletion(tape_list_t *tape, file_list_t *file) {
     if ( rc == -1 ) {
       rtcp_log(LOG_ERR,"rtcpd_WaitCompletion() Cthread_mutex_lock_ext() : %s\n",
                sstrerror(serrno));
-      tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+      tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                        "func"   , TL_MSG_PARAM_STR, "rtcpd_WaitCompletion",
                        "Message", TL_MSG_PARAM_STR, "Cthread_mutex_lock_ext",
                        "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
@@ -1596,28 +1596,28 @@ int rtcpd_WaitCompletion(tape_list_t *tape, file_list_t *file) {
         }
       } CLIST_ITERATE_END(tl->file,fl);
       if ( all_finished == 0 ) break;
-    } CLIST_ITERATE_END(tape,tl); 
+    } CLIST_ITERATE_END(tape,tl);
     if ( all_finished == 0 ) {
       rc = Cthread_cond_wait_ext(proc_cntl.cntl_lock);
       if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_WaitCompletion() Cthread_cond_wait_ext(): %s\n",
                  sstrerror(serrno));
-        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                          "func"   , TL_MSG_PARAM_STR, "rtcpd_WaitCompletion",
                          "Message", TL_MSG_PARAM_STR, "Cthread_cond_wait_ext",
-                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );        
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
         (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
         return(-1);
-      } 
+      }
     } /* if ( all_finished == 0 ) */
     rc = Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
     if ( rc == -1 ) {
       rtcp_log(LOG_ERR,"rtcpd_WaitCompletion() Cthread_cond_wait_ext(): %s\n",
                sstrerror(serrno));
-      tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+      tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                        "func"   , TL_MSG_PARAM_STR, "rtcpd_WaitCompletion",
                        "Message", TL_MSG_PARAM_STR, "Cthread_cond_wait_ext",
-                       "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );              
+                       "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
       return(-1);
     }
   } /* while (all_finished == 0)  */
@@ -1635,10 +1635,10 @@ void rtcpd_SetReqStatus(tape_list_t *tape,
 
   rtcp_log(LOG_DEBUG,"rtcpd_SetReqStatus() status=%d, severity=%d\n",
            status,severity);
-  tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+  tl_rtcpd.tl_log( &tl_rtcpd, 11, 3,
                    "func"    , TL_MSG_PARAM_STR, "rtcpd_SetReqStatus",
                    "status"  , TL_MSG_PARAM_INT, status,
-                   "severity", TL_MSG_PARAM_INT, severity );              
+                   "severity", TL_MSG_PARAM_INT, severity );
   if ( tape == NULL && file == NULL ) return;
   if ( tape != NULL ) tapereq = &tape->tapereq;
   if ( file != NULL ) filereq = &file->filereq;
@@ -1647,14 +1647,14 @@ void rtcpd_SetReqStatus(tape_list_t *tape,
   if ( rc == -1 ) {
     rtcp_log(LOG_ERR,"rtcpd_SetReqStatus() Cthread_mutex_lock_ext(): %s\n",
              sstrerror(serrno));
-    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_SetReqStatus",
                      "Message", TL_MSG_PARAM_STR, "Cthread_mutex_lock_ext",
-                     "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );                  
+                     "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
     return;
   }
   if ( tapereq != NULL ) {
-    if ( severity != 0 && (severity & RTCP_OK) == 0 ) 
+    if ( severity != 0 && (severity & RTCP_OK) == 0 )
       tapereq->err.severity = tapereq->err.severity & ~RTCP_OK;
     /*
      * Don't reset failed status
@@ -1666,9 +1666,9 @@ void rtcpd_SetReqStatus(tape_list_t *tape,
         tapereq->err.severity = tapereq->err.severity & ~RTCP_OK;
         tapereq->err.severity = tapereq->err.severity & ~RTCP_LOCAL_RETRY;
         tapereq->err.severity |= severity;
-      } else { 
+      } else {
         tapereq->err.severity |= severity;
-      } 
+      }
     }
   }
   if ( filereq != NULL ) {
@@ -1677,14 +1677,14 @@ void rtcpd_SetReqStatus(tape_list_t *tape,
      */
     if ( (filereq->err.severity & RTCP_FAILED) == 0 ) {
       filereq->err.errorcode = status;
-      if ( (severity & (RTCP_FAILED | RTCP_RESELECT_SERV | RTCP_USERR | 
+      if ( (severity & (RTCP_FAILED | RTCP_RESELECT_SERV | RTCP_USERR |
                         RTCP_SYERR | RTCP_UNERR | RTCP_SEERR)) != 0 ) {
         filereq->err.severity = filereq->err.severity & ~RTCP_OK;
         filereq->err.severity = filereq->err.severity & ~RTCP_LOCAL_RETRY;
         filereq->err.severity |= severity;
         fl = file;
         /*
-         * On tape write we must set same status for all 
+         * On tape write we must set same status for all
          * concatenated requests so far.
          */
         if ( file->tape->tapereq.mode == WRITE_ENABLE ) {
@@ -1710,7 +1710,7 @@ void rtcpd_SetReqStatus(tape_list_t *tape,
             }
           }
         }
-      } 
+      }
     }
   }
   (void)Cthread_mutex_unlock_ext(proc_cntl.ReqStatus_lock);
@@ -1735,10 +1735,10 @@ void rtcpd_CheckReqStatus(tape_list_t *tape,
   if ( rc == -1 ) {
     rtcp_log(LOG_ERR,"rtcpd_CheckReqStatus() Cthread_mutex_lock_ext(): %s\n",
              sstrerror(serrno));
-    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_CheckReqStatus",
                      "Message", TL_MSG_PARAM_STR, "Cthread_mutex_lock_ext",
-                     "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );                  
+                     "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
     return;
   }
   _severity = 0;
@@ -1749,7 +1749,7 @@ void rtcpd_CheckReqStatus(tape_list_t *tape,
   }
   if ( filereq != NULL ) {
     if ( _status == 0 ) _status = filereq->err.errorcode;
-    if ( _severity == 0 || (_severity & RTCP_OK) != 0 ) 
+    if ( _severity == 0 || (_severity & RTCP_OK) != 0 )
       _severity = filereq->err.severity;
   }
   (void)Cthread_mutex_unlock_ext(proc_cntl.ReqStatus_lock);
@@ -1765,11 +1765,11 @@ static int lockMoreWork() {
                       (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) ) {
     rtcp_log(LOG_ERR,"lockMoreWork(): Cthread_mutex_lock_ext(requestMoreWork_lock): rc=%d, %s\n",
              rc, sstrerror(serrno));
-    tl_rtcpd.tl_log( &tl_rtcpd, 3, 4, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 3, 4,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_CheckReqStatus",
                      "Message", TL_MSG_PARAM_STR, "Cthread_mutex_lock_ext(requestMoreWork_lock)",
-                     "rc"     , TL_MSG_PARAM_INT, rc, 
-                     "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );                      
+                     "rc"     , TL_MSG_PARAM_INT, rc,
+                     "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
     if ( rc == 0 ) {
       (void)Cthread_mutex_unlock_ext(proc_cntl.requestMoreWork_lock);
       /*
@@ -1789,10 +1789,10 @@ static int unlockMoreWork() {
                       (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) ) {
     rtcp_log(LOG_ERR,"unlockMoreWork(): Cthread_mutex_unlock_ext(requestMoreWork_lock): %s\n",
              sstrerror(serrno));
-    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                      "func"   , TL_MSG_PARAM_STR, "unlockMoreWork",
                      "Message", TL_MSG_PARAM_STR, "Cthread_mutex_lock_ext(requestMoreWork_lock)",
-                     "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );                      
+                     "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
     return(-1);
   }
   return(0);
@@ -1810,10 +1810,10 @@ int rtcpd_checkMoreWork(SOCKET *client_socket,
     if ( rc == -1 ) {
       rtcp_log(LOG_ERR,"rtcpd_checkMoreWork() tellClient(): %s\n",
                sstrerror(serrno));
-      tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+      tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                        "func"   , TL_MSG_PARAM_STR, "rtcpd_checkMoreWork",
                        "Message", TL_MSG_PARAM_STR, "tellClient",
-                       "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );                      
+                       "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
       (void)unlockMoreWork();
       return(-1);
 
@@ -1829,16 +1829,16 @@ int rtcpd_checkMoreWork(SOCKET *client_socket,
       if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_checkMoreWork() Cthread_cond_broadcast_ext(): %s\n",
                  sstrerror(serrno));
-        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                          "func"   , TL_MSG_PARAM_STR, "rtcpd_checkMoreWork",
                          "Message", TL_MSG_PARAM_STR, "Cthread_cond_broadcast_ext",
-                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );                              
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
         (void)unlockMoreWork();
         return(-1);
       }
     }
   }
-  if ( (proc_cntl.requestMoreWork == 0) && 
+  if ( (proc_cntl.requestMoreWork == 0) &&
        (fl->filereq.proc_status == RTCP_REQUEST_MORE_WORK) ) rc = 1;
   if ( unlockMoreWork() == -1 ) return(-1);
   return(rc);
@@ -1858,10 +1858,10 @@ int rtcpd_waitMoreWork(file_list_t *fl) {
     if ( rc == -1 ) {
       rtcp_log(LOG_ERR,"rtcpd_waitMoreWork() Cthread_cond_wait_ext(): %s\n",
                sstrerror(serrno));
-      tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+      tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                        "func"   , TL_MSG_PARAM_STR, "rtcpd_waitMoreWork",
                        "Message", TL_MSG_PARAM_STR, "Cthread_cond_wait_ext",
-                       "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );                              
+                       "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
       (void)unlockMoreWork();
       /*
        * Our error
@@ -1874,9 +1874,9 @@ int rtcpd_waitMoreWork(file_list_t *fl) {
        * Not our error, some other thread has failed
        */
       return(0);
-    } 
+    }
   }
-  if ( (proc_cntl.requestMoreWork == 0) && 
+  if ( (proc_cntl.requestMoreWork == 0) &&
        (fl->filereq.proc_status == RTCP_REQUEST_MORE_WORK) ) rc = 1;
 
   if ( unlockMoreWork() == -1 ) return(-1);
@@ -1910,12 +1910,12 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
           char __tapePtr[32], __filePtr[32];
           sprintf( __tapePtr, "0x%lx", (unsigned long int)rootTape );
           sprintf( __filePtr, "0x%lx", (unsigned long int)startFile );
-          tl_rtcpd.tl_log( &tl_rtcpd, 11, 5, 
+          tl_rtcpd.tl_log( &tl_rtcpd, 11, 5,
                            "func"         , TL_MSG_PARAM_STR, "rtcpd_GetRequestList",
                            "Message"      , TL_MSG_PARAM_STR, "called with client_socket",
                            "client_socket", TL_MSG_PARAM_INT, *client_socket,
                            "tape"         , TL_MSG_PARAM_STR, __tapePtr,
-                           "file"         , TL_MSG_PARAM_STR, __filePtr );                              
+                           "file"         , TL_MSG_PARAM_STR, __filePtr );
   }
   /*
    * Loop to get the full request.
@@ -1925,7 +1925,7 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
   if ( tape != NULL ) nexttape = tape->prev;
   if ( startFile != NULL ) nextfile = startFile;
   if ( vdqm_tapereq != NULL ) {
-    Cuuid_create(&(vdqm_tapereq->rtcpReqId)); 
+    Cuuid_create(&(vdqm_tapereq->rtcpReqId));
     tapereq = *vdqm_tapereq;
   } else memset(&tapereq,'\0',sizeof(tapereq));
 
@@ -1942,7 +1942,7 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
                tot_reqlen,
                RTCP_MAX_REQUEST_LENGTH
                );
-      tl_rtcpd.tl_log( &tl_rtcpd, 3, 4, 
+      tl_rtcpd.tl_log( &tl_rtcpd, 3, 4,
                        "func"                   , TL_MSG_PARAM_STR, "rtcpd_GetRequestList",
                        "Message"                , TL_MSG_PARAM_STR, "request too long",
                        "Request Length"         , TL_MSG_PARAM_INT, tot_reqlen,
@@ -1963,7 +1963,7 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
       save_serrno = serrno;
       rtcp_log(LOG_ERR,"rtcpd_GetRequestList() rtcp_RecvReq(): %s\n",
                sstrerror(serrno));
-      tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+      tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                        "func"   , TL_MSG_PARAM_STR, "rtcpd_GetRequestList",
                        "Message", TL_MSG_PARAM_STR, "rtcp_RecvReq",
                        "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
@@ -1978,10 +1978,10 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
     {
             char __reqtype[32];
             sprintf( __reqtype, "0x%lx", (unsigned long int)reqtype );
-            tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+            tl_rtcpd.tl_log( &tl_rtcpd, 11, 3,
                              "func"   , TL_MSG_PARAM_STR, "rtcpd_GetRequestList",
                              "Message", TL_MSG_PARAM_STR, "received request",
-                             "type"   , TL_MSG_PARAM_STR, __reqtype );    
+                             "type"   , TL_MSG_PARAM_STR, __reqtype );
     }
     if ( client_magic == 0 ) client_magic = hdr.magic;
     if ( reqtype == RTCP_DUMPTAPE_REQ ) {
@@ -1990,15 +1990,15 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
         save_serrno = serrno;
         rtcp_log(LOG_ERR,"rtcpd_GetRequestList() rtcp_RecvTpDump(): %s\n",
                  sstrerror(serrno));
-        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                          "func"   , TL_MSG_PARAM_STR, "rtcpd_GetRequestList",
                          "Message", TL_MSG_PARAM_STR, "rtcp_RecvTpDump",
-                         "Error"  , TL_MSG_PARAM_STR,  sstrerror(serrno));    
+                         "Error"  , TL_MSG_PARAM_STR,  sstrerror(serrno));
         break;
       }
       if ( nexttape == NULL ) {
         rtcp_log(LOG_ERR,"rtcpd_GetRequestList() invalid request sequence\n");
-        tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
                          "func"   , TL_MSG_PARAM_STR, "rtcpd_GetRequestList",
                          "Message", TL_MSG_PARAM_STR, "invalid request sequence" );
         rc = -1;
@@ -2012,7 +2012,7 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
     {
             char __reqtype[32];
             sprintf( __reqtype, "0x%lx", (unsigned long int)reqtype );
-            tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+            tl_rtcpd.tl_log( &tl_rtcpd, 11, 3,
                              "func"   , TL_MSG_PARAM_STR, "rtcpd_GetRequestList",
                              "Message", TL_MSG_PARAM_STR, "send acknowledge",
                              "type"   , TL_MSG_PARAM_STR, __reqtype );
@@ -2022,10 +2022,10 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
       save_serrno = serrno;
       rtcp_log(LOG_ERR,"rtcpd_GetRequestList() rtcp_SendAckn(): %s\n",
                sstrerror(serrno));
-      tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+      tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                        "func"   , TL_MSG_PARAM_STR, "rtcpd_GetRequestList",
                        "Message", TL_MSG_PARAM_STR, "rtcp_SendAckn",
-                       "Error"  , TL_MSG_PARAM_STR,  sstrerror(serrno));    
+                       "Error"  , TL_MSG_PARAM_STR,  sstrerror(serrno));
       break;
     }
     /*
@@ -2035,7 +2035,7 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
     if ( reqtype == VDQM_CLIENTINFO ) {
       if ( client == NULL ) {
         rtcp_log(LOG_ERR,"rtcpd_GetRequestList() unexpected VDQM_CLIENTINFO request\n");
-        tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
                          "func"   , TL_MSG_PARAM_STR, "rtcpd_GetRequestList",
                          "Message", TL_MSG_PARAM_STR, "unexpected VDQM_CLIENTINFO request" );
         save_serrno = SEINTERNAL;
@@ -2050,13 +2050,13 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
       rtcp_log(LOG_INFO,"rtcpd_GetRequestList(), received new client address %s:%d (old %s:%d)\n",
                client->clienthost,client->clientport,
                savedClient.clienthost,savedClient.clientport);
-      tl_rtcpd.tl_log( &tl_rtcpd, 10, 6, 
+      tl_rtcpd.tl_log( &tl_rtcpd, 10, 6,
                        "func"       , TL_MSG_PARAM_STR, "rtcpd_GetRequestList",
                        "Message"    , TL_MSG_PARAM_STR, "received new client address",
                        "Client Host", TL_MSG_PARAM_STR, client->clienthost,
                        "Client Port", TL_MSG_PARAM_INT, client->clientport,
                        "Saved Host" , TL_MSG_PARAM_STR, savedClient.clienthost,
-                       "Saved Port" , TL_MSG_PARAM_INT, savedClient.clientport );      
+                       "Saved Port" , TL_MSG_PARAM_INT, savedClient.clientport );
       /*
        * Check if client is still OK.
        */
@@ -2068,13 +2068,13 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
          */
         rtcp_log(LOG_ERR,"rtcpd_GetRequestList() %s(%d,%d)@%s not authorised\n",
                  client->name,client->uid,client->gid,client->clienthost);
-        tl_rtcpd.tl_log( &tl_rtcpd, 3, 6, 
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 6,
                          "func"       , TL_MSG_PARAM_STR, "rtcpd_GetRequestList",
                          "Message"    , TL_MSG_PARAM_STR, "not authorised",
                          "Client Name", TL_MSG_PARAM_STR, client->name,
                          "Client UID" , TL_MSG_PARAM_INT, client->uid,
                          "Client GID" , TL_MSG_PARAM_INT, client->gid,
-                         "Client Host", TL_MSG_PARAM_STR, client->clienthost );      
+                         "Client Host", TL_MSG_PARAM_STR, client->clienthost );
         save_serrno = EACCES;
         break;
       }
@@ -2084,7 +2084,7 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
       if ( rc == -1 ) {
         save_serrno = serrno;
         rtcp_log(LOG_ERR,"rtcpd_GetRequestList() rtcpd_ConnectToClient(): %s\n",sstrerror(serrno));
-        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                          "func"   , TL_MSG_PARAM_STR, "rtcpd_GetRequestList",
                          "Message", TL_MSG_PARAM_STR, "rtcpd_ConnectToClient",
                          "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
@@ -2108,7 +2108,7 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
         if ( rc == -1 ) {
           rtcp_log(LOG_ERR,"rtcpd_GetRequestList() rtcp_RecvAckn(): %s\n",
                    sstrerror(serrno));
-          tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+          tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                            "func"   , TL_MSG_PARAM_STR, "rtcpd_GetRequestList",
                            "Message", TL_MSG_PARAM_STR, "rtcp_RecvAckn",
                            "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
@@ -2125,7 +2125,7 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
         save_serrno = serrno;
         rtcp_log(LOG_ERR,"rtcpd_GetRequestList() calloc(): %s\n",
                  sstrerror(errno));
-        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                          "func"   , TL_MSG_PARAM_STR, "rtcpd_GetRequestList",
                          "Message", TL_MSG_PARAM_STR, "calloc",
                          "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
@@ -2137,7 +2137,7 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
       tmp = rtcp_voidToString((void *)&tapereq.rtcpReqId,sizeof(Cuuid_t));
 
       rtcp_log(LOG_INFO,"rtcpd_GetRequestList(): assigned RTCOPY request id %s\n",(tmp == NULL ? "(null)" : tmp));
-      tl_rtcpd.tl_log( &tl_rtcpd, 21, 3, 
+      tl_rtcpd.tl_log( &tl_rtcpd, 21, 3,
                        "func"   , TL_MSG_PARAM_STR, "rtcpd_GetRequestList",
                        "Message", TL_MSG_PARAM_STR, "assigned RTCOPY request",
                        "ID"     , TL_MSG_PARAM_STR, (tmp == NULL ? "(null)" : tmp) );
@@ -2151,7 +2151,7 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
       if ( tapereq.VolReqID != client->VolReqID ) {
         rtcp_log(LOG_ERR,"rtcpd_GetRequestList() wrong VolReqID %d, should be %d\n",
                  tapereq.VolReqID, client->VolReqID);
-        tl_rtcpd.tl_log( &tl_rtcpd, 3, 4, 
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 4,
                          "func"     , TL_MSG_PARAM_STR, "rtcpd_GetRequestList",
                          "Message"  , TL_MSG_PARAM_STR, "wrong VolReqID",
                          "Is"       , TL_MSG_PARAM_INT, tapereq.VolReqID,
@@ -2164,7 +2164,7 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
       rtcp_log(LOG_DEBUG,"Tape VID: %s, DGN: %s, unit %s, VolReqID=%d,mode=%d\n",
                tapereq.vid,tapereq.dgn,tapereq.unit,tapereq.VolReqID,
                tapereq.mode);
-      tl_rtcpd.tl_log( &tl_rtcpd, 25, 7, 
+      tl_rtcpd.tl_log( &tl_rtcpd, 25, 7,
                        "func"    , TL_MSG_PARAM_STR  , "rtcpd_GetRequestList",
                        "VID"     , TL_MSG_PARAM_STR  , tapereq.vid,
                        "Tape VID", TL_MSG_PARAM_TPVID, tapereq.vid,
@@ -2181,7 +2181,7 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
        */
       if ( nexttape == NULL ) {
         rtcp_log(LOG_ERR,"rtcpd_GetRequestList() invalid request sequence\n");
-        tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
                          "func"     , TL_MSG_PARAM_STR, "rtcpd_GetRequestList",
                          "Message"  , TL_MSG_PARAM_STR, "invalid request sequence" );
         rc = -1;
@@ -2202,7 +2202,7 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
         save_serrno = errno;
         rtcp_log(LOG_ERR,"rtcpd_GetRequestList() calloc(): %s\n",
                  sstrerror(errno));
-        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                          "func"   , TL_MSG_PARAM_STR, "rtcpd_GetRequestList",
                          "Message", TL_MSG_PARAM_STR, "calloc",
                          "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
@@ -2228,7 +2228,7 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
         proc_cntl.requestMoreWork = 1;
       }
       nextfile->filereq.err.severity = nextfile->filereq.err.severity &
-        ~RTCP_RESELECT_SERV; 
+        ~RTCP_RESELECT_SERV;
       if ( !VALID_PROC_STATUS(nextfile->filereq.proc_status) ) {
         rtcp_log(LOG_DEBUG,"   Reset invalide processing status 0x%x to RTCP_WAITING (0x%x)\n",
                  nextfile->filereq.proc_status,RTCP_WAITING);
@@ -2236,7 +2236,7 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
                 char __proc_status[32], __RTCP_WAITING[32];
                 sprintf( __proc_status , "0x%lx", (unsigned long int)nextfile->filereq.proc_status );
                 sprintf( __RTCP_WAITING, "0x%lx", (unsigned long int)RTCP_WAITING );
-                tl_rtcpd.tl_log( &tl_rtcpd, 11, 4, 
+                tl_rtcpd.tl_log( &tl_rtcpd, 11, 4,
                                  "func"   , TL_MSG_PARAM_STR, "rtcpd_GetRequestList",
                                  "Message", TL_MSG_PARAM_STR, "Reset invalid processing status",
                                  "From"   , TL_MSG_PARAM_STR, __proc_status,
@@ -2260,7 +2260,7 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
           save_serrno = serrno;
           rtcp_log(LOG_ERR,"rtcpd_GetRequestList() rtcpd_CheckFileReq(): %s\n",
                    sstrerror(save_serrno));
-          tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+          tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                            "func"   , TL_MSG_PARAM_STR, "rtcpd_GetRequestList",
                            "Message", TL_MSG_PARAM_STR, "rtcpd_CheckFileReq",
                            "Error"  , TL_MSG_PARAM_STR, sstrerror(save_serrno) );
@@ -2274,7 +2274,7 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
       rtcp_log(LOG_DEBUG,"   File: %s, FSEQ %d, Blksz %d, proc_status %d\n",
                filereq.file_path,filereq.tape_fseq,filereq.blocksize,
                filereq.proc_status);
-      tl_rtcpd.tl_log( &tl_rtcpd, 26, 5, 
+      tl_rtcpd.tl_log( &tl_rtcpd, 26, 5,
                        "func"       , TL_MSG_PARAM_STR, "rtcpd_GetRequestList",
                        "File"       , TL_MSG_PARAM_STR, filereq.file_path ,
                        "FSEQ"       , TL_MSG_PARAM_INT, filereq.tape_fseq,
@@ -2292,7 +2292,7 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
     if ( rtcpd_drvinfo(tape) == -1 ) {
       rtcp_log(LOG_ERR,"rtcpd_GetRequestList() rtcpd_drvinfo(): %s\n",
                sstrerror(serrno));
-      tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+      tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                        "func"   , TL_MSG_PARAM_STR, "rtcpd_GetRequestList",
                        "Message", TL_MSG_PARAM_STR, "rtcpd_drvinfo",
                        "Error"  , TL_MSG_PARAM_STR, sstrerror(save_serrno) );
@@ -2327,7 +2327,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
 #endif /* _WIN32 */
   AbortFlag = 0;
   rtcp_log(LOG_DEBUG,"rtcpd_MainCntl() called\n");
-  tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
+  tl_rtcpd.tl_log( &tl_rtcpd, 11, 2,
                    "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                    "Message", TL_MSG_PARAM_STR, "called" );
   rtcpd_SetDebug();
@@ -2335,7 +2335,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
   if ( client == NULL ) {
     rtcp_log(LOG_ERR,"rtcpd_MainCntl() malloc(): %s\n",
              sstrerror(errno));
-    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                      "Message", TL_MSG_PARAM_STR, "malloc",
                      "Error"  , TL_MSG_PARAM_STR, sstrerror(errno) );
@@ -2360,7 +2360,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     if ( errmsg != NULL ) errmsglen = strlen(errmsg);
     rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcp_RecvReq(): %s\n",
              (errmsg == NULL ? "Unknown error" : errmsg));
-    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                      "Message", TL_MSG_PARAM_STR, "rtcp_RecvReq",
                      "Error"  , TL_MSG_PARAM_STR, (errmsg == NULL ? "Unknown error" : errmsg) );
@@ -2377,18 +2377,18 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
   } else reqtype = rc;
 
   /*
-   * Not SHIFT request. We only allow connections from VDQM or 
+   * Not SHIFT request. We only allow connections from VDQM or
    * authorised hosts.
    */
   if ( rtcp_CheckConnect(accept_socket,NULL) != 1 ) {
     rtcp_log(LOG_ERR,"rtcpd_MainCntl() connection from unauthorised host\n");
-    tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                      "Message", TL_MSG_PARAM_STR, "connection from unauthorised host" );
     (void)rtcp_CloseConnection(accept_socket);
     rtcpd_FreeResources(NULL,&client,NULL);
     return(-1);
-  } 
+  }
 
   /*
    * If local nomoretapes is set, we don't acknowledge VDQM message.
@@ -2405,7 +2405,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
   if ( rc == -1 ) {
     rtcp_log(LOG_ERR,"rtcpd_MainCntl() vdqm_AcknClientAddr(): %s\n",
              sstrerror(serrno));
-    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                      "Message", TL_MSG_PARAM_STR, "vdqm_AcknClientAddr",
                      "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
@@ -2425,7 +2425,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
      */
     rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcp_CloseConnection(): %s\n",
              sstrerror(serrno));
-    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                      "Message", TL_MSG_PARAM_STR, "rtcp_CloseConnection",
                      "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
@@ -2442,13 +2442,13 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
      */
     rtcp_log(LOG_ERR,"rtcpd_MainCntl() %s(%d,%d)@%s not authorised\n",
              client->name,client->uid,client->gid,client->clienthost);
-    tl_rtcpd.tl_log( &tl_rtcpd, 3, 6, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 3, 6,
                      "func"       , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                      "Message"    , TL_MSG_PARAM_STR, "not authorised",
                      "Client Name", TL_MSG_PARAM_STR, client->name,
                      "Client UID" , TL_MSG_PARAM_INT, client->uid,
                      "Client GID" , TL_MSG_PARAM_INT, client->gid,
-                     "Client Host", TL_MSG_PARAM_STR, client->clienthost );      
+                     "Client Host", TL_MSG_PARAM_STR, client->clienthost );
     (void)rtcpd_Deassign(client->VolReqID,&tapereq,client);
     rtcpd_FreeResources(NULL,&client,NULL);
     return(-1);
@@ -2461,7 +2461,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
   if ( client_socket == NULL ) {
     rtcp_log(LOG_ERR,"rtcpd_MainCntl() malloc(): %s\n",
              sstrerror(errno));
-    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                      "Message", TL_MSG_PARAM_STR, "malloc",
                      "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
@@ -2476,7 +2476,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
   if ( rc == -1 ) {
     rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcp_ConnectToClient(%s,%d): %s\n",
              client->clienthost,client->clientport,sstrerror(serrno));
-    tl_rtcpd.tl_log( &tl_rtcpd, 3, 5, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 3, 5,
                      "func"       , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                      "Message"    , TL_MSG_PARAM_STR, "rtcp_ConnectToClient",
                      "Client Host", TL_MSG_PARAM_STR, client->clienthost,
@@ -2496,7 +2496,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
 
   if ( rc == -1 ) {
     rtcp_log(LOG_ERR,"rtcpd_MainCntl() request loop finished with error\n");
-    tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                      "Message", TL_MSG_PARAM_STR, "request loop finished with error" );
     (void)rtcpd_Deassign(client->VolReqID,&tapereq,client);
@@ -2509,31 +2509,31 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
   if ( tapereq.mode == WRITE_ENABLE ) {
     rtcp_log(LOG_INFO,"cpdsktp request by %s (%d,%d) from %s\n",
              client->name,client->uid,client->gid,client->clienthost);
-    tl_rtcpd.tl_log( &tl_rtcpd, 22, 6, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 22, 6,
                      "func"       , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                      "Message"    , TL_MSG_PARAM_STR, "cpdsktp request",
-                     "Client Name", TL_MSG_PARAM_STR, client->name,                     
+                     "Client Name", TL_MSG_PARAM_STR, client->name,
                      "Client UID" , TL_MSG_PARAM_INT, client->uid,
                      "Client GID" , TL_MSG_PARAM_INT, client->gid,
                      "Client Host", TL_MSG_PARAM_STR, client->clienthost );
   } else {
-    if ( tape->file != NULL ) { 
+    if ( tape->file != NULL ) {
       rtcp_log(LOG_INFO,"cptpdsk request by %s (%d,%d) from %s\n",
                client->name,client->uid,client->gid,client->clienthost);
-      tl_rtcpd.tl_log( &tl_rtcpd, 23, 6, 
+      tl_rtcpd.tl_log( &tl_rtcpd, 23, 6,
                        "func"       , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                        "Message"    , TL_MSG_PARAM_STR, "cptpdsk request",
-                       "Client Name", TL_MSG_PARAM_STR, client->name,                     
+                       "Client Name", TL_MSG_PARAM_STR, client->name,
                        "Client UID" , TL_MSG_PARAM_INT, client->uid,
                        "Client GID" , TL_MSG_PARAM_INT, client->gid,
                        "Client Host", TL_MSG_PARAM_STR, client->clienthost );
     } else {
       rtcp_log(LOG_INFO,"tpdump request by %s (%d,%d) from %s\n",
                client->name,client->uid,client->gid,client->clienthost);
-      tl_rtcpd.tl_log( &tl_rtcpd, 24, 6, 
+      tl_rtcpd.tl_log( &tl_rtcpd, 24, 6,
                        "func"       , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                        "Message"    , TL_MSG_PARAM_STR, "tpdump request",
-                       "Client Name", TL_MSG_PARAM_STR, client->name,                     
+                       "Client Name", TL_MSG_PARAM_STR, client->name,
                        "Client UID" , TL_MSG_PARAM_INT, client->uid,
                        "Client GID" , TL_MSG_PARAM_INT, client->gid,
                        "Client Host", TL_MSG_PARAM_STR, client->clienthost );
@@ -2543,7 +2543,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
   (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDR);
 
   cmd = rtcp_cmds[tapereq.mode];
-            
+
   /*
    * On UNIX: set client UID/GID
    */
@@ -2553,11 +2553,11 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
   if ( rc == -1 ) {
     rtcp_log(LOG_ERR,"rtcpd_MainCntl() setgid(%d): %s\n",
              client->gid,sstrerror(save_errno));
-    tl_rtcpd.tl_log( &tl_rtcpd, 3, 4, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 3, 4,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                      "Message", TL_MSG_PARAM_STR, "setgid",
-                     "GID"    , TL_MSG_PARAM_STR, client->gid,                     
-                     "Error"  , TL_MSG_PARAM_STR, sstrerror(save_errno));    
+                     "GID"    , TL_MSG_PARAM_STR, client->gid,
+                     "Error"  , TL_MSG_PARAM_STR, sstrerror(save_errno));
     (void)rtcpd_AppendClientMsg(tape,NULL,"setgid(%d): %s",
                                 client->gid,sstrerror(save_errno));
   } else {
@@ -2565,11 +2565,11 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     if ( rc == -1 ) {
       rtcp_log(LOG_ERR,"rtcpd_MainCntl() setuid(%d): %s\n",
                client->uid,sstrerror(save_errno));
-      tl_rtcpd.tl_log( &tl_rtcpd, 3, 4, 
+      tl_rtcpd.tl_log( &tl_rtcpd, 3, 4,
                        "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                        "Message", TL_MSG_PARAM_STR, "setuid",
-                       "GID"    , TL_MSG_PARAM_STR, client->uid,                     
-                       "Error"  , TL_MSG_PARAM_STR, sstrerror(save_errno));    
+                       "GID"    , TL_MSG_PARAM_STR, client->uid,
+                       "Error"  , TL_MSG_PARAM_STR, sstrerror(save_errno));
       (void)rtcpd_AppendClientMsg(tape,NULL,"setuid(%d): %s",
                                   client->uid,sstrerror(save_errno));
     }
@@ -2577,7 +2577,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
       (void) sprintf(envacct,"ACCOUNT=%s",acctstr);
       if ( putenv(envacct) != 0 ) {
         rtcp_log(LOG_ERR,"putenv(%s) failed\n",envacct);
-        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                          "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                          "Message", TL_MSG_PARAM_STR, "putenv failed",
                          "env"    , TL_MSG_PARAM_STR, envacct );
@@ -2604,7 +2604,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
   if ( rc == -1 ) {
     rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcp_CheckReq(): %s\n",
              sstrerror(serrno));
-    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                      "Message", TL_MSG_PARAM_STR, "rtcp_CheckReq",
                      "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
@@ -2623,7 +2623,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_RESELECT_SERV);
     rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcpd_ClientListen(): %s\n",
              sstrerror(serrno));
-    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                      "Message", TL_MSG_PARAM_STR, "rtcpd_ClientListen",
                      "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
@@ -2649,7 +2649,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     if ( rc == -1 ) {
       rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcpd_tpdump(): %s\n",
                sstrerror(serrno));
-      tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+      tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                        "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                        "Message", TL_MSG_PARAM_STR, "rtcpd_tpdump",
                        "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
@@ -2674,7 +2674,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
 		tape->tapereq.err.max_tpretry--;
     (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_RESELECT_SERV);
     rtcp_log(LOG_ERR,"rtcpd_MainCntl() failed to allocate buffers\n");
-    tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                      "Message", TL_MSG_PARAM_STR, "failed to allocate buffers" );
     (void)rtcpd_AppendClientMsg(tape,NULL,RT105,cmd,sstrerror(serrno));
@@ -2697,11 +2697,11 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     {
             char __thPoolSz[32];
             sprintf( __thPoolSz, "0x%lx", (unsigned long int)&thPoolSz );
-            tl_rtcpd.tl_log( &tl_rtcpd, 3, 4, 
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 4,
                              "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                              "Message", TL_MSG_PARAM_STR, "rtcpd_InitDiskIO",
                              "Address", TL_MSG_PARAM_STR, __thPoolSz,
-                             "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );    
+                             "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
     }
     (void)rtcpd_AppendClientMsg(tape,NULL,"rtcpd_InitDiskIO(): %s\n",
                                 sstrerror(serrno));
@@ -2720,11 +2720,11 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
   if ( rc == -1 ) {
     rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcp_StartMonitor(%d): %s\n",
              thPoolSz,sstrerror(serrno));
-    tl_rtcpd.tl_log( &tl_rtcpd, 3, 4, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 3, 4,
                      "func"     , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                      "Message"  , TL_MSG_PARAM_STR, "rtcp_StartMonitor",
                      "Pool Size", TL_MSG_PARAM_INT, thPoolSz,
-                     "Error"    , TL_MSG_PARAM_STR, sstrerror(serrno) );    
+                     "Error"    , TL_MSG_PARAM_STR, sstrerror(serrno) );
   }
   /*
    * Local retry loop to break out from
@@ -2741,7 +2741,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
       (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_RESELECT_SERV);
       rtcp_log(LOG_ERR,
                "rtcpd_MainCntl() failed to start Tape I/O thread\n");
-      tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+      tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
                        "func"     , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                        "Message"  , TL_MSG_PARAM_STR, "failed to start Tape I/O thread" );
       (void)rtcpd_AppendClientMsg(tape,NULL,"rtcpd_StartTapeIO(): %s\n",
@@ -2760,7 +2760,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     if ( rc == -1 ) {
       (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_RESELECT_SERV);
       rtcp_log(LOG_ERR,"rtcpd_MainCntl() failed to start disk I/O thread\n");
-      tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+      tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
                        "func"     , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                        "Message"  , TL_MSG_PARAM_STR, "failed to start disk I/O thread" );
       (void)rtcpd_AppendClientMsg(tape,NULL,"rtcpd_StartDiskIO(): %s\n",
@@ -2777,24 +2777,24 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     if ( rc == -1 ) {
       rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcpd_WaitTapeIO(): %s\n",
                sstrerror(serrno));
-      tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+      tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                        "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                        "Message", TL_MSG_PARAM_STR, "rtcpd_WaitTapeIO",
-                       "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );    
+                       "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
     }
     rtcp_log(LOG_DEBUG,"rtcpd_MainCntl() tape I/O thread returned status=%d\n",
              status);
-    tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 3,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                      "Message", TL_MSG_PARAM_STR, "tape I/O thread returned",
-                     "Status"  , TL_MSG_PARAM_INT, status );    
-    if ( (rtcpd_CheckProcError() & RTCP_LOCAL_RETRY) != 0 ) { 
+                     "Status"  , TL_MSG_PARAM_INT, status );
+    if ( (rtcpd_CheckProcError() & RTCP_LOCAL_RETRY) != 0 ) {
       retry++;
       rtcp_log(LOG_INFO,"Automatic retry number %d\n",retry);
-      tl_rtcpd.tl_log( &tl_rtcpd, 10, 3, 
+      tl_rtcpd.tl_log( &tl_rtcpd, 10, 3,
                        "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                        "Message", TL_MSG_PARAM_STR, "Automatic retry number",
-                       "Retry"  , TL_MSG_PARAM_INT, retry );    
+                       "Retry"  , TL_MSG_PARAM_INT, retry );
     } else break;
     /*
      * do a local retry
@@ -2826,16 +2826,16 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
   rc = rtcpd_WaitCLThread(CLThId,&status);
   if ( rc == -1 ) {
     rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcpd_WaitCLThread(%d): %s\n",
-             CLThId,sstrerror(serrno)); 
-    tl_rtcpd.tl_log( &tl_rtcpd, 3, 4, 
+             CLThId,sstrerror(serrno));
+    tl_rtcpd.tl_log( &tl_rtcpd, 3, 4,
                      "func"        , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                      "Message"     , TL_MSG_PARAM_STR, "rtcpd_WaitCLThread",
                      "CL Thread ID", TL_MSG_PARAM_INT, CLThId,
-                     "Error"       , TL_MSG_PARAM_STR, sstrerror(serrno) );    
+                     "Error"       , TL_MSG_PARAM_STR, sstrerror(serrno) );
  }
   rtcp_log(LOG_DEBUG,"rtcpd_MainCntl() Client Listen thread returned status=%d\n",
            status);
-  tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+  tl_rtcpd.tl_log( &tl_rtcpd, 11, 3,
                    "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                    "Message", TL_MSG_PARAM_STR, "Client Listen thread returned",
                    "Status" , TL_MSG_PARAM_INT, status );

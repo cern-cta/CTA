@@ -14,8 +14,8 @@ SCNSHOSTPFX = SNsHostPfx
 INCLUDES = ../h
 LIBS = -luuid
 NSLIB = SharedLibraryTargetName(castorns)
-SPOOL = /var/spool/ns
-LOGFILE = $(SPOOL)/log
+LOGDIR = /var/log/castor
+LOGFILE = $(LOGDIR)/nsd.log
 LCGDM_MAPFILE = IdMapFile
 NSCONFIG = NsConfigFile
 ORAFLG = -DUSE_ORACLE
@@ -244,7 +244,7 @@ DependsOnLibrary(dlf,castordlf)
 Cns_oracle_ifce.c: Cns_oracle_ifce.pc
 	proc iname=Cns_oracle_ifce include=$(INCLUDES) threads=yes char_map=string parse=full prefetch=1000
 FilesToClean += Cns_oracle_ifce.c Cns_oracle_ifce.lis
-MakeDir($(SPOOL),0755)
+MakeDir($(LOGDIR),0755)
 ORALIBS= -L$(ORACLE_HOME)/lib -lclntsh
 
 NormalProgramTarget(nsd,$(NSD_OBJS), $(DEPLIB), $(ORALIBS) $(MTLDFLAGS) $(LIBS) $(LIBCSEC),750)

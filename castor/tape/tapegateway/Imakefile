@@ -23,8 +23,8 @@
 #
 
 
-CPPFLAGS = -g -O0 -I $(ORACLE_HOME)/rdbms/public -I ../../../h -I ../../.. $(PYTHONINC) $(MTCCFLAGS) 
-LDFLAGS += $(MTLDFLAGS) 
+CPPFLAGS = -g -O0 -I $(ORACLE_HOME)/rdbms/public -I ../../../h -I ../../.. $(PYTHONINC) $(MTCCFLAGS)
+LDFLAGS += $(MTLDFLAGS)
 LD = g++
 LIBS = -L$(ORACLE_HOME)/lib -locci -lclntsh $(PYTHONLIBS)
 
@@ -38,7 +38,7 @@ DependsOnLibrary(../db/cnv,castorcnvs)
 DependsOnLibrary(../infoPolicy,castorinfopolicy)
 DependsOnLibrary(../../rfio,castorrfio)
 
-TAPEGATEWAYDAEMONBIN_SRCS = TapeGatewayDaemon.cpp WorkerThread.cpp \
+TAPEGATEWAYDBIN_SRCS = TapeGatewayDaemon.cpp WorkerThread.cpp \
 	MigratorErrorHandlerThread.cpp RecallerErrorHandlerThread.cpp \
 	TapeStreamLinkerThread.cpp VdqmRequestsCheckerThread.cpp VdqmRequestsProducerThread.cpp \
 	VmgrTapeGatewayHelper.cpp VdqmTapeGatewayHelper.cpp NsTapeGatewayHelper.cpp \
@@ -61,12 +61,12 @@ TAPEGATEWAY_IO_SRCS = \
 	../../io/StreamFileMigratedNotificationCnv.cpp ../../io/StreamFileRecalledNotificationCnv.cpp \
 	../../io/StreamEndNotificationCnv.cpp ../../io/StreamNotificationAcknowledgeCnv.cpp \
 	../../io/StreamEndNotificationErrorReportCnv.cpp ../../io/StreamNoMoreFilesCnv.cpp  \
-	../../io/StreamFileErrorReportCnv.cpp 
+	../../io/StreamFileErrorReportCnv.cpp
 
 TAPEGATEWAY_DB_SRCS = ../../db/cnv/DbTapeGatewayRequestCnv.cpp ora/OraTapeGatewaySvc.cpp \
 	../../db/cnv/DbTapeGatewaySubRequestCnv.cpp
 
-TAPEGATEWAYBIN_SRCS = $(TAPEGATEWAYDAEMONBIN_SRCS) $(TAPEGATEWAY_MESSAGES_SRCS) $(TAPEGATEWAY_IO_SRCS) $(TAPEGATEWAY_DB_SRCS)
+TAPEGATEWAYBIN_SRCS = $(TAPEGATEWAYDBIN_SRCS) $(TAPEGATEWAY_MESSAGES_SRCS) $(TAPEGATEWAY_IO_SRCS) $(TAPEGATEWAY_DB_SRCS)
 
 TAPEGATEWAYBIN_OBJS = $(TAPEGATEWAYBIN_SRCS:.cpp=.Osuf)
 NormalProgramTarget(tapegatewayd,$(TAPEGATEWAYBIN_OBJS),$(DEPLIB),$(LIBS),750)

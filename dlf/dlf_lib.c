@@ -1,1611 +1,525 @@
-/******************************************************************************************************
- *                                                                                                    *
- * dlf_lib.c - Castor Distribution Logging Facility                                                   *
- * Copyright (C) 2006 CERN IT/FIO (castor-dev@cern.ch)                                                *
- *                                                                                                    *
- * This program is free software; you can redistribute it and/or modify it under the terms of the GNU *
- * General Public License as published by the Free Software Foundation; either version 2 of the       *
- * License, or (at your option) any later version.                                                    *
- *                                                                                                    *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without  *
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU     *
- * General Public License for more details.                                                           *
- *                                                                                                    *
- * You should have received a copy of the GNU General Public License along with this program; if not, *
- * write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,  *
- * USA.                                                                                               *
- *                                                                                                    *
- ******************************************************************************************************/
+/******************************************************************************
+ *                      dlf/dlf_lib.c
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * @(#)$RCSfile: dlf_lib.c,v $ $Revision: 1.33 $ $Release$ $Date: 2009/08/18 09:42:58 $ $Author: waldron $
+ *
+ * @author Castor Dev team, castor-dev@cern.ch
+ *****************************************************************************/
 
-/**
- * $Id: dlf_lib.c,v 1.32 2009/02/10 13:26:24 waldron Exp $
- */
-
-/* headers */
-#include <ctype.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <netdb.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <time.h>
-
-#include "Cglobals.h"
-#include "Cnetdb.h"
-#include "Csnprintf.h"
-#include "common.h"
-#include "Cthread_api.h"
-#include "dlf_api.h"
-#include "getconfent.h"
-#include "hash.h"
+/* Include files */
 #include "dlf_lib.h"
-#include "marshall.h"
-#include "net.h"
-#include "queue.h"
-#include "server.h"
-#include "u64subr.h"
+#include "dlf_api.h"
 
-/* hashes, tables and pools */
-static target_t  *targets[API_MAX_TARGETS];     /**< target pool for targets/destinations    */
-static msgtext_t *texts[DLF_MAX_MSGTEXTS];      /**< the clients message texts               */
-static hash_t    *hashtexts = NULL;             /**< fast lookup of message texts            */
-
-/* mutexes */
-static int global_mutex;
-
-/* api variables */
-static long api_mode = MODE_DEFAULT;            /**< api mode                                */
-static char api_facname[DLF_LEN_FACNAME + 1];   /**< facility name as provided to db_init()  */
-static char api_ucfacname[DLF_LEN_FACNAME + 1]; /**< facility name in upper case             */
-static int  api_targetcount = 0;                /**< the number of targets the client should
-						     write too                               */
-static int  api_usethreads = 0;                 /**< the value of the usethreads arg to init */
-
-/* prototype for common/socket_timeout.c */
-EXTERN_C int DLL_DECL netconnect_timeout _PROTO((SOCKET, struct sockaddr *, size_t, int));
+/* Global variables */
+static char *messages[DLF_MAX_MSGTEXTS];
+static int  initialized = 0;
+static int  maxmsglen   = DEFAULT_SYSLOG_MSGLEN;
 
 
-/*
- * dlf_read
- */
+/*---------------------------------------------------------------------------
+ * _clean_string
+ *---------------------------------------------------------------------------*/
+char *_clean_string(char *str, int underscore) {
 
-int dlf_read(target_t *t, int *rtype, int *rcode) {
+  /* Variables */
+  char *end = NULL;
+  char *ptr = NULL;
 
-	/* variables */
-	int       len;
-	int       rc;
-	int       type;
-	int       magic;
-	char      header[3 * LONGSIZE];
-	char      *rbp;
+  /* Replace newline and tab with a space */
+  while (((ptr = strchr(str, '\n')) != NULL) ||
+         ((ptr = strchr(str, '\t')) != NULL)) {
+    *ptr = ' ';
+  }
 
-	/* extract header */
-	len = netread_timeout(t->socket, header, sizeof(header), API_READ_TIMEOUT);
-	if (len != sizeof(header)) {
-		netclose(t->socket);
-		t->socket = -1;
-		ClrConnected(t->mode);
-		return APP_FAILURE;
-	}
+  /* Remove leading whitespace */
+  while (isspace(*str)) str++;
 
-	/* initialise variables */
-	rbp = header;
+  /* Remove trailing whitespace */
+  end = str + strlen(str) - 1;
+  while (end > str && isspace(*end)) end--;
 
-	unmarshall_LONG(rbp, magic);
-	unmarshall_LONG(rbp, type);
-	unmarshall_LONG(rbp, rc);
+  /* Write new null terminator */
+  *(end + 1) = '\0';
 
-	/* correct protocol version ?
-	 *   - this should never happen as the server shouldn't answer requests from clients using an
-	 *     incorrect protocol version!
-	 */
-	if (magic != DLF_MAGIC) {
-		netclose(t->socket);
-		t->socket = -1;
-		ClrConnected(t->socket);
-		SetShutdown(t->mode);
-		return APP_FAILURE;
-	}
+  /* Replace double quotes with single quotes */
+  while ((ptr = strchr(str, '"')) != NULL) {
+    *ptr = '\'';
+  }
 
-	/* process the response type */
-	if (type == DLF_REP_RC) {
-		netclose(t->socket);
-		t->socket = -1;
-		ClrConnected(t->mode);
-	} else if (type == DLF_REP_ERR) {
-		/* nothing */
-	} else if (type == DLF_REP_IRC) {
-		/* nothing */
-	} else {
-		return APP_FAILURE;  /* unknown response type */
-	}
+  /* Check for replacement of spaces with underscores */
+  if (underscore) {
+    while ((ptr = strchr(str, ' ')) != NULL) {
+      *ptr = '_';
+    }
+  }
 
-	*rtype = type;
-	*rcode = rc;
-
-	return APP_SUCCESS;
+  return str;
 }
 
 
-/*
- * dlf_send
- */
-
-int dlf_send(target_t *t, char *data, int len) {
-
-	/* variables */
-	struct sockaddr_in server_addr;
-	struct hostent     *hp;
-
-	int    rv;
-	int    opts;
-
-	/* already connected ? */
-	if ((t->socket == -1) || (!IsConnected(t->mode))) {
-
-		/* populate structure */
-		server_addr.sin_family = AF_INET;
-		server_addr.sin_port   = htons(t->port);
-
-		Cthread_mutex_lock(&t->mutex);
-		hp = Cgethostbyname(t->server);
-		if (hp == NULL) {
-			Cthread_mutex_unlock(&t->mutex);
-			return h_errno;
-		}
-		Cthread_mutex_unlock(&t->mutex);
-		server_addr.sin_addr.s_addr = ((struct in_addr *)hp->h_addr)->s_addr;
-
-		/* open socket */
-		t->socket = socket(AF_INET, SOCK_STREAM, 0);
-		if (t->socket < 0) {
-			return errno;
-		}
-
-		/* keep connection alive */
-		opts = 1;
-		rv = setsockopt(t->socket, SOL_SOCKET, SO_KEEPALIVE, &opts, sizeof(opts));
-		if (rv != APP_SUCCESS) {
-			netclose(t->socket);
-			t->socket = -1;
-			ClrConnected(t->mode);
-			return errno;
-		}
-
-		/* connect */
-		rv = netconnect_timeout(t->socket, (struct sockaddr *)&server_addr, sizeof(server_addr), API_CONNECT_TIMEOUT);
-		if (rv < 0) {
-			netclose(t->socket);
-			t->socket = -1;
-			ClrConnected(t->mode);
-			return rv;
-		}
-		SetConnected(t->mode);
-	}
-
-	/* attempt to send data to the server
-	 *   - a failure here updates the socket to -1
-	 */
-	rv = netwrite_timeout(t->socket, data, len, API_WRITE_TIMEOUT);
-	if (rv < 0) {
-		netclose(t->socket);
-		t->socket = -1;
-		ClrConnected(t->mode);
-		return APP_FAILURE;
-	}
-
-	return APP_SUCCESS;
-}
-
-
-/*
- * dlf_writep
- */
-
-int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_fileid *ns, int numparams, dlf_write_param_t params[]) {
-
-	/* variables */
-	struct timeval tv;
-	struct tm      tm_str;
-
-	message_t *message;
-	message_t *m;
-	param_t   *param;
-	param_t   *p;
-	param_t   *p2;
-	int       rv;
-	int       fd;
-	int       i, j, n;
-	int       error;
-	int       left;
-	int       found;
-	int       sevmask;
-	char      *ptr;
-	char      *pos  = NULL;
-	char      *text = NULL;
-	char      buffer[8192];
-	char      value[DLF_LEN_STRINGVALUE + 1];
-	Cuuid_t   preqid;
-
-	/* interface initialised ? */
-	if (!IsInitialised(api_mode)) {
-		return APP_FAILURE;
-	}
-
-	/* no targets to write too ? */
-	if (api_targetcount == 0) {
-		return APP_SUCCESS;
-	}
-
-	/* valid severity ? */
-	for (j = 0, found = 0; severitylist[j].name != NULL; j++) {
-		if ((severitylist[j].sevno == severity) && (severitylist[j].sevno > 0)) {
-			found = 1;
-			break;
-		}
-	}
-	if (found == 0) {
-		return APP_FAILURE;
-	}
-	sevmask = severitylist[j].sevmask;
-
-	/* convert the msg_no to a message text
-	 *   - this is only used by targets of type file. Here we specify the text as opposed to the
-	 *     number as this is more useful in standard log files
-	 */
-	snprintf(buffer, sizeof(buffer) - 1, "%d", msg_no);
-
-	rv = hash_search(hashtexts, buffer, (void **)&text);
-	if (rv != APP_SUCCESS) {
-		return APP_FAILURE;
-	}
-
-	/* alocate memory for new message */
-	message = (message_t *) malloc(sizeof(message_t));
-	if (message == NULL) {
-		return APP_FAILURE;
-	}
-	message->plist = NULL;
-	message->size  = 0;
-
-	/* timestamp */
-	gettimeofday(&tv, NULL);
-	localtime_r(&tv.tv_sec, &tm_str);
-	strftime(message->timestamp, DLF_LEN_TIMESTAMP + 1, "%Y%m%d%H%M%S", &tm_str);
-	message->timestamp[DLF_LEN_TIMESTAMP] = '\0';
-	message->timeusec = tv.tv_usec;
-	message->size = DLF_LEN_TIMESTAMP + sizeof(int) + 1;
-
-	/* hostname */
-	rv = gethostname(message->hostname, sizeof(message->hostname) - 1);
-	if (rv < 0) {
-		free_message(message);
-		return APP_FAILURE;
-	}
-
-	/* request id */
-	rv = Cuuid2string(message->reqid, sizeof(message->reqid), &reqid);
-	if (rv < 0) {
-		free_message(message);
-		return APP_FAILURE;
-	}
-
-	/* pid and thread id */
-	message->pid = getpid();
-	Cglobals_getTid(&message->tid);
-
-	/* nameserver info */
-	if ((ns != NULL) && (ns->server[0] != '\0')) {
-		strncpy(message->nshostname, ns->server, sizeof(message->nshostname) - 1);
-		u64tostr(ns->fileid, message->nsfileid, -1);
-	} else {
-		strcpy(message->nshostname, "N/A");
-		strcpy(message->nsfileid, "0");
-	}
-
-	/* severity and message number */
-	message->severity = severity;
-	message->msg_no   = msg_no;
-
-	/* update message size */
-	message->size += sizeof(message->hostname) + sizeof(message->reqid) + sizeof(message->nshostname)
-		+  sizeof(message->nsfileid) + sizeof(unsigned char)  + sizeof(unsigned char)
-		+  sizeof(unsigned short)    + sizeof(pid_t)          + sizeof(uid_t)
-		+  sizeof(gid_t)             + sizeof(int)            + 4;
-
-       	/* process parameter */
-	for (i = 0; i < numparams; i++) {
-
-		/* allocate memory to hold parameter */
-		param = (param_t *) malloc(sizeof(param_t));
-		if (param == NULL) {
-			free_message(message);
-			return APP_FAILURE;
-		}
-
-		/* extract name and type */
-		if (params[i].name != NULL) {
-			strncpy(param->name, params[i].name, DLF_LEN_PARAMNAME);
-			param->name[DLF_LEN_PARAMNAME] = '\0';
-		} else {
-			strcpy(param->name, "(null)");
-		}
-		param->name[DLF_LEN_PARAMNAME] = '\0';
-		param->type = params[i].type;
-
-		/* process type */
-		if (param->type == DLF_MSG_PARAM_TPVID) {
-			strncpy(param->name, "TPVID", sizeof(param->name) - 1);
-			if (0 != params[i].par.par_string) {
-				strncpy(value, params[i].par.par_string, DLF_LEN_TAPEID);
-				value[DLF_LEN_TAPEID] = '\0';
-			} else {
-				strcpy(value, "(null)");
-			}
-		}
-		else if (param->type == DLF_MSG_PARAM_STR) {
-			if (0 != params[i].par.par_string) {
-				strncpy(value, params[i].par.par_string, DLF_LEN_STRINGVALUE);
-				rtrim(value);
-				value[DLF_LEN_STRINGVALUE] = '\0';
-			} else {
-				value[0] = 0;
-			}
-		}
-		else if (param->type == DLF_MSG_PARAM_INT) {
-			snprintf(value, DLF_LEN_NUMBERVALUE, "%d", params[i].par.par_int);
-		}
-		else if (param->type == DLF_MSG_PARAM_INT64) {
-			snprintf(value, DLF_LEN_NUMBERVALUE, "%lld", params[i].par.par_u64);
-		}
-		else if (param->type == DLF_MSG_PARAM_DOUBLE) {
-			snprintf(value, DLF_LEN_NUMBERVALUE, "%f", params[i].par.par_double);
-		}
-		else if (param->type == DLF_MSG_PARAM_UUID) {
-			preqid = params[i].par.par_uuid;
-			rv = Cuuid2string(value, sizeof(message->reqid), &preqid);
-			if (rv < 0) {
-				free_param(param);
-				free_message(message);
-				return APP_FAILURE;
-			}
-			strncpy(param->name, "SUBREQID", sizeof(param->name) - 1);
-		}
-		else if (param->type == DLF_MSG_PARAM_UID) {
-			snprintf(value, DLF_LEN_NUMBERVALUE, "%d", params[i].par.par_int);
-			strncpy(param->name, "UID", sizeof(param->name) - 1);
-		}
-		else if (param->type == DLF_MSG_PARAM_GID) {
-			snprintf(value, DLF_LEN_NUMBERVALUE, "%d", params[i].par.par_int);
-			strncpy(param->name, "GID", sizeof(param->name) - 1);
-		}
-		else if (param->type == DLF_MSG_PARAM_STYPE) {
-			strncpy(value, params[i].par.par_string, DLF_LEN_STYPE);
-			rtrim(value);
-			strncpy(param->name, "SEC_TYPE", sizeof(param->name) - 1);
-			value[DLF_LEN_STYPE] = '\0';
-		}
-		else if (param->type == DLF_MSG_PARAM_SNAME) {
-			strncpy(value, params[i].par.par_string, DLF_LEN_SNAME);
-			rtrim(value);
-			strncpy(param->name, "SEC_NAME", sizeof(param->name) - 1);
-			value[DLF_LEN_SNAME] = '\0';
-		}
-
-		/* unknown, free resources */
-		else {
-			free_param(param);
-			free_message(message);
-			return APP_FAILURE;
-		}
-
-		/* copy value */
-		param->value = strdup(value);
-		if (param->value == NULL) {
-			free_param(param);
-			free_message(message);
-			return APP_FAILURE;
-		}
-
-		/* first parameter ? */
-		if (message->plist == NULL) {
-			message->plist = param;
-		} else {
-			for (p = message->plist; p->next != NULL; p = p->next);
-			p->next = param;
-		}
-		param->next = NULL;
-	}
-
-	/* replace all occurrences of the new line '\n' and '\t' character in all parameter strings */
-	for (param = message->plist; param != NULL; param = param->next) {
-
-		/* value */
-		while ((ptr = strchr(param->value, '\n')) != NULL) {
-			*ptr = ' ';
-		}
-		while ((ptr = strchr(param->value, '\t')) != NULL) {
-			*ptr = ' ';
-		}
-		/* name */
-		while ((ptr = strchr(param->name, '\n')) != NULL) {
-			*ptr = '_';
-		}
-		while ((ptr = strchr(param->name, ' ')) != NULL) {
-			*ptr = '_';
-		}
-		message->size += sizeof(int) + strlen(param->name) + strlen(param->value) + 2;
-	}
-
-	/* deal with files first, they take priority! */
-	for (i = 0; i < API_MAX_TARGETS; i++) {
-		if (targets[i] == NULL)
-			continue;
-		if (!IsFile(targets[i]->mode))
-			continue;
-		if (!(targets[i]->sevmask & sevmask) &&
-		    !(targets[i]->sevmask & severitylist[12].sevmask))
-			continue;                     /* severity not of interest */
-
-		left = sizeof(buffer) - 2;
-
-		/* construct message */
-		buffer[0]='\0';
-		n = Csnprintf(buffer, left,
-			      "DATE=%s.%06d HOST=%s LVL=%s FACILITY=%s PID=%d TID=%d MSG=\"%s\" REQID=%s NSHOSTNAME=%s NSFILEID=%s",
-			      message->timestamp,
-			      message->timeusec,
-			      message->hostname,
-			      severitylist[j].name,
-			      api_facname,
-			      message->pid,
-			      message->tid,
-			      text != NULL ? text : "Unknown",
-			      message->reqid,
-			      message->nshostname,
-			      message->nsfileid);
-
-		/* buffer too small ? */
-		if (n >= sizeof(buffer)) {
-			continue;
-		}
-		left -= n;
-		pos  = buffer + n;
-
-		/* add parameters */
-		for (param = message->plist, error = 0; param != NULL; param = param->next) {
-			if ((param->type == DLF_MSG_PARAM_STR)   ||
-			    (param->type == DLF_MSG_PARAM_STYPE) ||
-			    (param->type == DLF_MSG_PARAM_SNAME)) {
-				n = Csnprintf(pos, left, " %s=\"%s\"", param->name, param->value);
-			} else {
-				n = Csnprintf(pos, left, " %s=%s", param->name, param->value);
-			}
-			if (n >= left) {
-				error = 1;
-				break;
-			}
-			left -= n;
-			pos += n;
-		}
-		if (error == 1) {
-			continue;
-		}
-
-		/* terminate string */
-		n = Csnprintf(pos, left, "\n");
-
-		/* write to stdout or file */
-		if (!strncasecmp(targets[i]->path, "stdout", 6)) {
-			fprintf(stdout, "%s", buffer);
-			fflush(stdout);
-		} else {
-#ifdef O_LARGEFILE
-  			fd = open(targets[i]->path, O_APPEND|O_WRONLY|O_CREAT|O_LARGEFILE, targets[i]->perm);
-#else
-        		fd = open(targets[i]->path, O_APPEND|O_WRONLY|O_CREAT, targets[i]->perm);
-#endif
-			if (fd < 0) {
-				continue;
-			}
-			write(fd, buffer, pos - buffer + 1);
-			close(fd);
-		}
-	}
-
-	/* servers
-	 *   - push the message onto the internal message queue of each server, this requires adding a
-	 *     message_t structure
-	 */
-	for (i = 0; i < API_MAX_TARGETS; i++) {
-		if (targets[i] == NULL)
-			continue;
-		if (!IsServer(targets[i]->mode))
-			continue;                     /* not a server             */
-		if (!(targets[i]->sevmask & sevmask) &&
-		    !(targets[i]->sevmask & severitylist[12].sevmask))
-			continue;                     /* severity not of interest */
-
-		/* it is necessary to create a copy of the message before passing it into the targets fifo
-		 * queue. If we don't do this all queues will be sharing the same data as the queue just
-		 * holds a pointer to a structure of type void.
-		 */
-		m = (message_t *) malloc(sizeof(message_t));
-		if (m == NULL) {
-			free_message(message);
-			return APP_FAILURE;
-		}
-		m->size     = message->size;
-		m->msg_no   = message->msg_no;
-		m->pid      = message->pid;
-		m->plist    = NULL;
-		m->severity = message->severity;
-		m->tid      = message->tid;
-		m->timeusec = message->timeusec;
-		strcpy(m->hostname,   message->hostname);
-		strcpy(m->nsfileid,   message->nsfileid);
-		strcpy(m->nshostname, message->nshostname);
-		strcpy(m->reqid,      message->reqid);
-		strcpy(m->timestamp,  message->timestamp);
-
-		/* copy parameters */
-		for (param = message->plist; param != NULL; param = param->next) {
-
-			/* allocate memory for new parameter */
-			p = (param_t *) malloc(sizeof(param_t));
-			if (p == NULL) {
-				free_message(m);
-				free_message(message);
-				return APP_FAILURE;
-			}
-			p->value = NULL;
-
-			p->type = param->type;
-			strcpy(p->name,  param->name);
-
-			/* copy the parameter value */
-			p->value = strdup(param->value);
-			if (p->value == NULL) {
-				free_param(param);
-				free_message(m);
-				free_message(message);
-				return APP_FAILURE;
-			}
-
-			/* first parameter ? */
-			if (m->plist == NULL) {
-				m->plist = p;
-			} else {
-				for (p2 = m->plist; p2->next != NULL; p2 = p2->next);
-				p2->next = p;
-			}
-			p->next = NULL;
-		}
-
-		/* push message to servers queue, retry up to 3 times on a full queue */
-		j = 0;
-		do {
-			rv = queue_push(targets[i]->queue, m);
-			j++;
-		} while ((rv == APP_QUEUE_FULL) && (j < 3));
-
-		/* free message on queue failure */
-		if (rv != APP_SUCCESS) {
-			free_message(m);
-		}
-	}
-
-	free_message(message);
-
-	return APP_SUCCESS;
-}
-
-
-/*
- * dlf_write
- */
-
-int DLL_DECL dlf_write(Cuuid_t reqid, int severity, int msg_no, struct Cns_fileid *ns, int numparams, ...) {
-
-	/* variables */
-	dlf_write_param_t *plist = NULL;
-	char              *name;
-	char              *string;
-	int               i;
-	int		  rv;
-	int               ok;
-	va_list           ap;
-
-	/* no targets to write too ? */
-	if (api_targetcount == 0) {
-		return APP_SUCCESS;
-	}
-
-	plist = (dlf_write_param_t *) malloc(numparams * sizeof(dlf_write_param_t));
-	if (plist == NULL) {
-		return -1;
-	}
-
-	/* translate the variable argument list to a dlf_write_param_t array */
-       	va_start(ap, numparams);
-	for (i = 0, ok = 1; i < numparams; i++) {
-
-		string = NULL;
-		name   = va_arg(ap, char *);
-		if (name == NULL) {
-			plist[i].name = NULL;
-		} else {
-			plist[i].name = strdup(name);
-		}
-		plist[i].type = va_arg(ap, int);
-
-		/* process type */
-		if ((plist[i].type == DLF_MSG_PARAM_TPVID) || (plist[i].type == DLF_MSG_PARAM_STR) ||
-		    (plist[i].type == DLF_MSG_PARAM_STYPE) || (plist[i].type == DLF_MSG_PARAM_SNAME)) {
-			string = va_arg(ap, char *);
-			if (string == NULL) {
-				plist[i].par.par_string = NULL;
-			} else {
-				plist[i].par.par_string = strdup(string);
-			}
-		}
-		else if ((plist[i].type == DLF_MSG_PARAM_INT) ||
-			 (plist[i].type == DLF_MSG_PARAM_UID) ||
-			 (plist[i].type == DLF_MSG_PARAM_GID)) {
-			plist[i].par.par_int = va_arg(ap, int);
-		}
-		else if (plist[i].type == DLF_MSG_PARAM_INT64) {
-			plist[i].par.par_u64 = va_arg(ap, HYPER);
-		}
-		else if (plist[i].type == DLF_MSG_PARAM_DOUBLE) {
-			plist[i].par.par_double = va_arg(ap, double);
-		}
-		else if (plist[i].type == DLF_MSG_PARAM_UUID) {
-			plist[i].par.par_uuid = va_arg(ap, Cuuid_t);
-		}
-		else if (plist[i].type == DLF_MSG_PARAM_FLOAT) {
-			plist[i].par.par_double = va_arg(ap, double);
-			plist[i].type = DLF_MSG_PARAM_DOUBLE;
-		}
-		else {
-			ok = 0;
-			break;
-		}
-	}
-	va_end(ap);
-
-	/* everything ok ? */
-	rv = APP_FAILURE;
-	if (ok == 1) {
-		rv = dlf_writep(reqid, severity, msg_no, ns, numparams, plist);
-	}
-
-	/* free resources */
-	for (i = 0; i < numparams; i++) {
-		if (plist[i].name != NULL)
-			free(plist[i].name);
-		if ((plist[i].type == DLF_MSG_PARAM_TPVID) || (plist[i].type == DLF_MSG_PARAM_STR) ||
-		    (plist[i].type == DLF_MSG_PARAM_STYPE) || (plist[i].type == DLF_MSG_PARAM_SNAME)) {
-			if (plist[i].par.par_string != NULL) {
-				free(plist[i].par.par_string);
-			}
-		}
-	}
-	free(plist);
-
-	return rv;
-}
-
-
-/*
- * dlf_worker
- */
-
-void dlf_worker(target_t *t) {
-
-	/* variables */
-	message_t *message;
-	param_t   *param;
-	uid_t     uid;
-	gid_t     gid;
-	int       i;
-	int       rv;
-	int       len;
-	int       code;
-	int       type;
-	char      *sbp;
-	char      *buffer;
-	char      *ptr;
-	time_t    pause = time(NULL);
-
-	/* initialise variables */
-	uid = geteuid();
-	gid = getegid();
-
-	/* worker thread loop
-	 *   - deals with all outgoing connections and message transfers to the remote dlf server, this
-	 *     is done in an endless loop until a shutdown is requested.
-	 *   - it is important not to sleep(3) in this loop, this can cause shutdown requests to be
-	 *     missed
-	 */
-	while (1) {
-		Cthread_mutex_lock(&t->mutex);
-		if (t->shutdown) {
-			if (!queue_size(t->queue)) {
-				Cthread_mutex_unlock(&t->mutex);
-				break;
-			}
-			if (IsInitialised(t->mode)) {
-				pause = 0;
-			}
-		}
-		Cthread_mutex_unlock(&t->mutex);
-
-		/* the client-server communication protocol has the capacity for the server to notify
-		 * the client to slow down or pause message send for X seconds of time. This helps reduce
-		 * the load on a heavily loaded DLF server.
-		 */
-		if (pause > time(NULL)) {
-			sleep(1);
-			continue;
-		}
-
-		/* initialised ?
-		 *   - the thread cannot send any messages to the remote target/destination until
-		 *     initialisation has occurred. This is because the thread doesn't know its facility
-		 *     number yet
-		 */
-		if (!IsInitialised(t->mode)) {
-
-			/* calculate message size */
-			len = strlen(api_facname) + 1;
-			rv  = Cthread_mutex_lock(&global_mutex);
-                        for (i = 0; i < DLF_MAX_MSGTEXTS; i++) {
-                                if (texts[i] == NULL)
-                                        continue;
-                                len += sizeof(unsigned short) + strlen(texts[i]->msg_text) + 1;
-			}
-
-			/* allocate memory for DLF_INIT message */
-			buffer = (char *) malloc((5 * LONGSIZE) + len);
-			if (buffer == NULL) {
-				pause = time(NULL) + 10;
-				if (rv == APP_SUCCESS) {
-					Cthread_mutex_unlock(&global_mutex);
-				}
-				continue;
-			}
-
-			/* build request header */
-			sbp = buffer;
-			marshall_LONG(sbp, DLF_MAGIC);     /* protocol version     */
-			marshall_LONG(sbp, DLF_INIT);      /* request method       */
-
-			ptr = sbp;
-			len = 5 * LONGSIZE;
-
-			marshall_LONG(sbp, len);           /* total message length */
-
-			/* build request body */
-			marshall_LONG(sbp, uid);
-			marshall_LONG(sbp, gid);
-
-			/* marshall the facility name */
-			marshall_STRING(sbp, api_facname);
-
-			/* marshall the message texts */
-			if (rv != APP_SUCCESS) {
-				free(buffer);
-				Cthread_mutex_unlock(&global_mutex);
-				continue;
-			}
-			for (i = 0; i < DLF_MAX_MSGTEXTS; i++) {
-				if (texts[i] == NULL)
-					continue;
-				marshall_SHORT(sbp,  texts[i]->msg_no);
-				marshall_STRING(sbp, texts[i]->msg_text);
-			}
-			Cthread_mutex_unlock(&global_mutex);
-
-			/* update message length */
-			len = sbp - buffer;
-			marshall_LONG(ptr, len);
-
-		     	/* send data to remote host
-			 *   - the api is asynchronous reporting errors would be pointless and only fill
-			 *     up the log. All we do is try again.
-			 */
-			rv = dlf_send(t, buffer, len);
-			if (rv != APP_SUCCESS) {
-				pause = time(NULL) + 10;
-				free(buffer);
-				continue;
-			}
-
-			/* read the response */
-			rv = dlf_read(t, &type, &code);
-			if (rv != APP_SUCCESS) {
-				pause = time(NULL) + 10;
-				free(buffer);
-				continue;
-			}
-
-			/* initialisation complete */
-			if (type == DLF_REP_RC) {
-				SetInitialised(t->mode);
-				t->fac_no = code;
-			}
-			free(buffer);
-			continue;
-		}
-
-		/* pop a message from the queue */
-		rv = queue_pop(t->queue, (void **)&message);
-
-		/* queue errors ? */
-		if (rv == APP_QUEUE_TERMINATED) {
-			break;                             /* queue terminated, signifies a shutdown */
-		} else if (rv == APP_QUEUE_EMPTY) {
-			pause = time(NULL) + 5;            /* no messages available                  */
-			continue;
-		} else if (rv != APP_SUCCESS) {
-			pause = time(NULL) + 5;
-			continue;
-		}
-
-		if (message == NULL) {
-			pause = time(NULL) + 3;
-			continue;
-		}
-
-		/* allocate memory for DLF_LOG message
-		 *   - the length of bytes to allocate should have been pre-calculated in dlf_write()
-		 */
-		buffer = (char *) malloc((5 * LONGSIZE) + message->size);
-		if (buffer == NULL) {
-			pause = time(NULL) + 60;
-			continue;
-		}
-
-		/* build request header */
-		sbp = buffer;
-		marshall_LONG(sbp, DLF_MAGIC);             /* protocol version     */
-		marshall_LONG(sbp, DLF_LOG);               /* request method       */
-
-		ptr = sbp;
-		len = 5 * LONGSIZE;
-
-		marshall_LONG(sbp, len);                   /* total message length */
-
-		/* build request body */
-		marshall_LONG(sbp, uid);
-		marshall_LONG(sbp, gid);
-
-		/*  this is the last message in the queue ? */
-		if (queue_size(t->queue) == 0) {
-			marshall_BYTE(sbp, 1);
-		} else {
-			marshall_BYTE(sbp, 0);
-		}
-
-		/* marshall standard header components */
-		marshall_STRING(sbp, message->timestamp);
-		marshall_LONG(sbp, message->timeusec);
-		marshall_STRING(sbp, message->hostname);
-		marshall_STRING(sbp, message->reqid);
-		marshall_LONG(sbp, message->pid);
-		marshall_LONG(sbp, message->tid);
-		marshall_STRING(sbp, message->nshostname);
-		marshall_STRING(sbp, message->nsfileid);
-		marshall_BYTE(sbp, t->fac_no);
-		marshall_BYTE(sbp, message->severity);
-		marshall_SHORT(sbp, message->msg_no);
-
-		/* marshall parameters */
-		for (param = message->plist; param != NULL; param = param->next) {
-			marshall_BYTE(sbp, param->type);
-			marshall_STRING(sbp, param->name);
-			marshall_STRING(sbp, param->value);
-		}
-
-		/* update message length */
-		len = sbp - buffer;
-		marshall_LONG(ptr, len);
-
-		/* send data to server */
-		rv = dlf_send(t, buffer, len);
-		if (rv != APP_SUCCESS) {
-			pause = time(NULL) + 20;
-			free(buffer);
-			free_message(message);
-			continue;
-		}
-
-		/* read the response */
-		rv = dlf_read(t, &type, &code);
-		if (rv != APP_SUCCESS) {
-			pause = time(NULL) + 10;
-			free(buffer);
-			free_message(message);
-			continue;
-		}
-
-		/* instructed to throttle by the server ? */
-		if ((type == DLF_REP_IRC) && (code > 0)) {
-			usleep((code * 1000));
-		}
-
-	       	free(buffer);
-		free_message(message);
-	}
-
-	/* exit */
-	Cthread_exit(0);
-}
-
-
-/*
- * dlf_isinitialized
- */
-
-int DLL_DECL dlf_isinitialized(void) {
-
-	Cthread_mutex_lock(&global_mutex);
-	if (!IsInitialised(api_mode)) {
-		Cthread_mutex_unlock(&global_mutex);
-		return 0;
-	}
-	Cthread_mutex_unlock(&global_mutex);
-	return 1;
-}
-
-
-/*
- * dlf_prepare
- */
-
-void DLL_DECL dlf_prepare(void) {
-
-	/* variables */
-	int     i;
-
-	/* prevent dlf_regtext(), dlf_init() and dlf_shutdown() calls being made */
-	Cthread_mutex_lock(&global_mutex);
-	if (!IsInitialised(api_mode) || IsForking(api_mode)) {
-		Cthread_mutex_unlock(&global_mutex);
-		return;
-	}
-	SetForking(api_mode);
-
-	/* prevent further dlf_write() and dlf_writep() calls */
-	hash_lock(hashtexts);
-
-	/* lock all server queues */
-	for (i = 0; i < API_MAX_TARGETS; i++) {
-		if (targets[i] == NULL)
-			continue;
-		if (!IsServer(targets[i]->mode))
-			continue;
-		if (targets[i]->queue == NULL)
-			continue;
-		queue_lock(targets[i]->queue);
-		Cthread_mutex_lock(&targets[i]->mutex);
-	}
-}
-
-
-/*
- * dlf_child
- */
-
-void DLL_DECL dlf_child(void) {
-
-	/* variables */
-	int     i;
-
-	/* never initialised, so never did any locks! */
-	if (!IsInitialised(api_mode) || !IsForking(api_mode)) {
-		return;
-	}
-	ClrForking(api_mode);
-
-	/* fork(2) doesn't duplicate threads other then its main calling thread. Therefore, it is
-	 * neccessary to recreate the thread in the child
-	 */
-	for (i = 0; i < API_MAX_TARGETS; i++) {
-		if (targets[i] == NULL)
-			continue;
-		if (!IsServer(targets[i]->mode))
-			continue;
-		if (targets[i]->queue == NULL)
-			continue;
-		queue_unlock(targets[i]->queue);
-		Cthread_mutex_unlock(&targets[i]->mutex);
-		if (!api_usethreads)
-			continue;
-
-		/* recreate the server's internal queue */
-		(void)queue_destroy(targets[i]->queue, (void *(*)(void *))free_message);
-		free(targets[i]->queue);
-		(void)queue_create(&targets[i]->queue, targets[i]->queue_size);
-
-		/* recreate the thread */
-		Cthread_create((void *(*)(void *))dlf_worker, (target_t *)targets[i]);
-	}
-
-	/* allow dlf_write() and dlf_writep() calls */
-	hash_unlock(hashtexts);
-
-	/* restore global api mutex */
-	Cthread_mutex_unlock(&global_mutex);
-}
-
-
-/*
- * dlf_parent
- */
-
-void DLL_DECL dlf_parent(void) {
-
-	/* variables */
-	int     i;
-
-	/* never initialised, so never did any locks! */
-	if (!IsInitialised(api_mode) || !IsForking(api_mode)) {
-		return;
-	}
-	ClrForking(api_mode);
-
-	/* unlock all server queues */
-	for (i = 0; i < API_MAX_TARGETS; i++) {
-		if (targets[i] == NULL)
-			continue;
-		if (!IsServer(targets[i]->mode))
-			continue;
-		if (targets[i]->queue == NULL)
-			continue;
-		queue_unlock(targets[i]->queue);
-		Cthread_mutex_unlock(&targets[i]->mutex);
-	}
-
-	/* allow dlf_write() and dlf_writep() calls */
-	hash_unlock(hashtexts);
-
-	/* restore global api mutex */
-	Cthread_mutex_unlock(&global_mutex);
-}
-
-
-/*
- * dlf_create_threads
- */
-
-void DLL_DECL dlf_create_threads(int erase) {
-
-	/* variables */
-	int i;
-
-	/* previously initialised ? */
-	if (!IsInitialised(api_mode)) {
-		return;
-	}
-	if (api_usethreads)
-		return;
-	Cthread_mutex_lock(&global_mutex);
-
-	/* create server threads */
-	for (i = 0; i < API_MAX_TARGETS; i++) {
-		if (targets[i] == NULL)
-			continue;
-		if (!IsServer(targets[i]->mode))
-			continue;            /* not a server */
-
-		/* erase the threads cached messages ? */
-		(void)queue_destroy(targets[i]->queue, (void *(*)(void *))free_message);
-		free(targets[i]->queue);
-		(void)queue_create(&targets[i]->queue, targets[i]->queue_size);
-
-		/* create thread */
-		if (Cthread_create_detached((void *(*)(void *))dlf_worker, (target_t *)targets[i]) == -1) {
-			Cthread_mutex_unlock(&global_mutex);
-			return;
-		}
-	}
-
-	Cthread_mutex_unlock(&global_mutex);
-}
-
-
-/*
- * dlf_regtext
- */
-
-int DLL_DECL dlf_regtext(unsigned short msg_no, const char *msg_text) {
-
-	/* variables */
-	msgtext_t  *entry;
-	int        i;
-	int        rv;
-	int        found;
-
-	char       *message;
-	char       num[10];
-	char       text[DLF_LEN_MSGTEXT + 1];
-
-	/* although the fast lookup hash is thread safe, the message text global table isn't hence the
-	 * need for this global mutex lock of the entire interface.
-	 */
-	Cthread_mutex_lock(&global_mutex);
-
-	/* not initialised ? */
-	if (!IsInitialised(api_mode)) {
-		Cthread_mutex_unlock(&global_mutex);
-		return -1;
-	}
-
-	/* allocate memory */
-	entry = (msgtext_t *) malloc(sizeof(msgtext_t));
-	if (entry == NULL) {
-		Cthread_mutex_unlock(&global_mutex);
-		return -1;
-	}
-	entry->msg_text = NULL;
-
-	if (strlen(msg_text) > DLF_LEN_STRINGVALUE) {
-		free(entry);
-		Cthread_mutex_unlock(&global_mutex);
-		return -1;
-	}
-
-	/* find an available msgtext slot */
-	for (i = 0, found = 0; i < DLF_MAX_MSGTEXTS; i++) {
-		if (texts[i] == NULL) {
-			found = 1;
-			break;
-		}
-	}
-
-	/* too many msgtexts defined ? */
-	if (found == 0) {
-		free(entry);
-		Cthread_mutex_unlock(&global_mutex);
-		return -1;
-	}
-
-	/* to provide fast msgtext to msgno lookups we use a global hash. Here we check to make sure
-	 * the next entry will not be a duplicate
-	 */
-	snprintf(num,  sizeof(num),  "%d", msg_no);
-	snprintf(text, sizeof(text), "%s", msg_text);
-
-	message = strdup(text);
-	if (message == NULL) {
-		free(entry);
-		return -1;
-	}
-
-	rv = hash_insert(hashtexts, num, message);
-	if (rv == -1) {
-		free(message);
-		free(entry);
-		Cthread_mutex_unlock(&global_mutex);
-		return 0;     /* key already exits */
-	}
-
-	/* add entry to msgtext table */
-	entry->msg_text = strdup(text);
-	if (entry->msg_text == NULL) {
-		free(entry);
-		Cthread_mutex_unlock(&global_mutex);
-		return -1;
-	}
-	entry->msg_no = msg_no;
-
-	texts[i] = entry;
-
-	/* if the message is new to the api and the server threads have already completed initialisation
-	 * with the server, force them to reinitialise causing the message texts to be re-registered
-	 */
-	for (i = 0; i < API_MAX_TARGETS; i++) {
-		if (targets[i] == NULL)
-			continue;
-		if (!IsServer(targets[i]->mode))
-			continue;
-		if (IsInitialised(targets[i]->mode)) {
-			ClrInitialised(targets[i]->mode);
-		}
-	}
-
-	Cthread_mutex_unlock(&global_mutex);
-
-	return 0;
-}
-
-
-/*
+/*---------------------------------------------------------------------------
  * dlf_init
- */
+ *---------------------------------------------------------------------------*/
+int DLL_DECL dlf_init(const char *ident, int maskpri) {
 
-int DLL_DECL dlf_init(const char *facility, char *errptr, int usethreads) {
+  /* Variables */
+  FILE *fp = NULL;
+  char *p;
+  char buffer[1024];
+  int  i, found, size = 0;
 
-	/* variables */
-	struct servent *servent;
+  /* Check if already initialized */
+  if (initialized) {
+    errno = EPERM;
+    return (-1);
+  }
 
-	target_t     *t;
-	int          i;
-	int          j;
-	int          k;
-	int          rv;
-	int          port;
-	unsigned int perm;
-	int          found;
-	int          queue_size;
-	char         *value;
-	char         *word;
-	char         buffer[1024];
-	char         uri[10];
- 	char         tmp[1024];
+  /* Initialize the messages array. */
+  for (i = 0; i < DLF_MAX_MSGTEXTS; i++) {
+    messages[i] = NULL;
+  }
 
-	/* we can't pass an error message back if the pointer to the error is NULL */
-	if (errptr == NULL) {
-		return -1;
-	}
-	Cthread_init();
+  /* Check if the ident is too big */
+  if (strlen(ident) > DLF_MAX_IDENTLEN) {
+    errno = EINVAL;
+    return (-1);
+  }
 
-	/* already initialised ? */
-	Cthread_mutex_lock(&global_mutex);
-	if (IsInitialised(api_mode)) {
-		Cthread_mutex_unlock(&global_mutex);
-		return 0;
-	}
-	SetInitialised(api_mode);
-	api_usethreads = usethreads;
+  /* The default syslog log mask is set so that all messages irrespective of
+   * there priority should be logged. This can be changed by modifying the
+   * syslog configuration file but this is not formant as syslogd still
+   * needs to process the message to determine whether or not it should be
+   * logged. So, we set the syslog priority mask at the client application.
+   */
 
-	/* flush pools and tables */
-	for (i = 0; i < API_MAX_TARGETS; i++) {
-		targets[i] = NULL;
-	}
-	for (i = 0; i < DLF_MAX_MSGTEXTS; i++) {
-		texts[i] = NULL;
-	}
-	value  = NULL;
-	word   = NULL;
-	t      = NULL;
+  /* The default mask for castor is to logged everything up to and including
+   * INFO messages. I.e. we exclude debug messages.
+   */
+  if (maskpri < 0) {
+    (void)setlogmask(LOG_UPTO(LOG_INFO));
 
-       	/* convert facility name to upper case */
-	if (strlen(facility) > (sizeof(api_facname) - 1)) {
-		snprintf(errptr, CA_MAXLINELEN, "dlf_init(): facility name exceeds %d characters in length", DLF_LEN_FACNAME + 1);
-		Cthread_mutex_unlock(&global_mutex);
-		return -1;
-	}
-	strncpy(api_facname, facility, sizeof(api_facname) - 1);
+    /* Check if the configuration file defines the log mask to use */
+    if ((p = getconfent(ident, "LogMask", 0)) != NULL) {
+      /* Lookup the prority in the priority list */
+      found = 0;
+      for (i = 0; prioritylist[i].name != NULL; i++) {
+        if (!strcasecmp(p, prioritylist[i].name)) {
+          (void)setlogmask(LOG_UPTO(prioritylist[i].value));
+          found = 1;
+          break;
+        }
+      }
+      /* If the priority wasn't found abort the initialization of the
+       * logging interface
+       */
+      if (!found) {
+        errno = EINVAL;
+        return (-1);
+      }
+    }
+  } else {
+    /* Use the mask supplied by the user */
+    (void)setlogmask(maskpri);
+  }
 
-	for (i = 0, api_ucfacname[0] = '\0'; facility[i] != '\0'; i++) {
-		api_ucfacname[i] = toupper(facility[i]);
-	}
-	api_ucfacname[i] = '\0';
+  /* Determine the maximum message size that the client syslog server can
+   * handle.
+   */
+  if ((p = getconfent("DLF", "MaxMessageSize", 0)) != NULL) {
+    size = atoi(p);
+  } else {
+    /* Determine the size automatically, this is not guaranteed to work! */
+    fp = fopen("/etc/rsyslog.conf", "r");
+    if (fp) {
+      /* The /etc/rsyslog.conf file exists so we assume the default message
+       * size of 2K.
+       */
+      maxmsglen = DEFAULT_RSYSLOG_MSGLEN;
 
-	/* initialise global hashes for fast message text lookups */
-	hash_create(&hashtexts, 100);
+      /* In rsyslog versions >= 3.21.4, the maximum size of a message became
+       * configurable through the $MaxMessageSize global config directive.
+       * Here we attempt to find out if the user has increased the size!
+       */
+      while (fgets(buffer, sizeof(buffer), fp) != NULL) {
+        if (strncasecmp(buffer, "$MaxMessageSize", 15)) {
+          continue; /* Option not of interest */
+        }
+        size = atol(&buffer[15]);
+      }
+      fclose(fp);
+    } else {
+      /* The /etc/rsyslog.conf file is missing which implies that we are
+       * running on a stock syslogd system, therefore the message size is
+       * governed by the syslog RFC: http://www.faqs.org/rfcs/rfc3164.html
+       */
+    }
+  }
 
-	/* determine the queue size of use, if not the default */
-	snprintf(tmp, sizeof(tmp) - 1, "%s_DLF_QUEUESIZE", api_ucfacname);
-	if ((value = getenv(tmp))) {
-		queue_size = atoi(value);
-	} else if ((value = getconfent(api_facname, "DLF_QUEUESIZE", 1))) {
-		queue_size = atoi(value);
-	} else {
-		queue_size = API_QUEUE_SIZE;
-	}
+  /* Check that the size of messages falls within acceptable limits */
+  if ((size >= DEFAULT_SYSLOG_MSGLEN) &&
+      (size <= DLF_MAX_LINELEN)) {
+    maxmsglen = size;
+  }
 
-	/* the logging targets can be configured either through environment variables or via confents in
-	 * the castor configuration file (e.g. /etc/castor/castor.conf). The format for the target name:
-	 *   - <facility_name>_<severity_name>
-	 */
-	for (i = 0; severitylist[i].name != NULL; i++, value = NULL) {
-		snprintf(tmp, sizeof(tmp) - 1, "%s_%s", api_ucfacname, severitylist[i].confentname);
+  /* Open syslog */
+  openlog(ident, LOG_PID, LOG_LOCAL3);
+  initialized = 1;
 
-		/* option defined ?
-		 *    - environment variables take precedence over confents
-		 */
-		if ((value = getenv(tmp)) == NULL) {
-			if ((value = getconfent(api_facname, severitylist[i].confentname, 1)) == NULL) {
-				continue;
-			}
-		}
-
-		/* we need to copy the value as multiple calls to getconfent re-define this value */
-		value = strdup(value);
-
-		/* loop over each word in the value */
-		for (word = strtok(value," \t"); word != NULL; word = strtok(NULL," \t")) {
-
-			/* logging targets take the following format:
-			 *   - <uri>://<[server|filepath]>:[port]
-			 */
-			if (sscanf(word, "%9[^://]://%1023s", uri, buffer) != 2) {
-				continue;
-			}
-
-			/* invalid uniform resource identifer ? */
-			if (!strcasecmp(uri, "file") && !strcasecmp(uri, "x-dlf")) {
-				continue;
-			}
-
-			/* remove trailing '/' in server urls */
-			if (!strcasecmp(uri, "x-dlf")) {
-				j = strlen(buffer) - 1;
-				if (buffer[j] == '/') {
-					buffer[j] = '\0';
-				}
-			}
-
-			/* determine server port */
-			if (!strcasecmp(uri, "x-dlf")) {
-				if (sscanf(buffer, "%1023[^:]:%d", tmp, &port) == 2) {
-					strcpy(buffer, tmp);
-				} else if (getenv("DLF_PORT") != NULL) {
-					port = atoi(getenv("DLF_PORT"));
-				} else if (getconfent("DLF", "PORT", 0) != NULL) {
-					port = atoi(getconfent("DLF", "PORT", 0));
-				} else if ((servent = getservbyname("dlf", "tcp"))) {
-					port = servent->s_port;
-				} else {
-					port = DEFAULT_SERVER_PORT;
-				}
-			}
-
-			/* determine permissions for files */
-			else {
-				if (sscanf(buffer, "%1023[^:]:%o", tmp, &perm) == 2) {
-					strcpy(buffer, tmp);
-					perm |= umask(0);
-				} else {
-					perm = 0644;
-				}
-			}
-
-			/* lookup the server and port or filepath and alter the severity mask accordingly
-			 *   - note: multiple servers are allowed with different ports!
-			 */
-			for (j = 0, found = 0; j < API_MAX_TARGETS; j++) {
-				if (targets[j] == NULL)
-					continue;
-
-				if (IsServer(targets[j]->mode)) {
-					if (strcmp(targets[j]->server, buffer))
-						continue;
-				} else {
-					if (strcmp(targets[j]->path, buffer))
-						continue;
-				}
-
-				/* take into account additional attributes */
-				if (IsServer(targets[j]->mode)) {
-					if (targets[j]->port != port)
-						continue;                    /* incorrect port        */
-				} else {
-					if (targets[j]->perm != perm)
-						continue;                    /* incorrect permissions */
-				}
-
-				/* alter severity mask
-				 *   - for LOGSTANDARD (-2) we log everything apart from DEBUG messages.
-				 *     Additionally usage messages are not recorded remotely.
-				 */
-				if (severitylist[i].sevno == -2) {
-					for (k = 0; severitylist[k].sevno > 0; k++) {
-						if (IsServer(targets[j]->mode)) {
-							if ((severitylist[k].sevno == DLF_LVL_USAGE) ||
-							    (severitylist[k].sevno == DLF_LVL_DEBUG)) {
-								continue;
-							}
-						} else if (severitylist[k].sevno == DLF_LVL_DEBUG) {
-							continue;
-						}
-						targets[j]->sevmask |= severitylist[k].sevmask;
-					}
-				} else {
-					targets[j]->sevmask |= severitylist[i].sevmask;
-				}
-
-				found = 1;
-				break;
-			}
-
-			/* found an entry ? */
-			if (found == 1) {
-				continue;
-			}
-
-			/* find an available target slot */
-			for (j = 0, found = 0; j < API_MAX_TARGETS; j++) {
-				if (targets[j] == NULL) {
-					found = 1;
-					break;
-				}
-			}
-
-			/* too many targets defined ? */
-			if (found == 0) {
-				snprintf(errptr, CA_MAXLINELEN, "dlf_init(): too many logging destinations defined");
-				Cthread_mutex_unlock(&global_mutex);
-				free(value);
-				return -1;
-			}
-
-			/* create structure */
-			t = (target_t *) malloc(sizeof(target_t));
-			if (t == NULL) {
-				snprintf(errptr, CA_MAXLINELEN, "dlf_init(): failed to malloc() : %s", strerror(errno));
-				Cthread_mutex_unlock(&global_mutex);
-				free(value);
-				return -1;
-			}
-
-			/* initialise target_t structure
-			 *   - files are far less complicated then servers. We simple initialise everything too
-			 *     NULL here and later create the server threads, queue and hash'ing structures once
-			 *     the whole initialisation sequence has completed.
-			 */
-			t->port       = port;
-			t->socket     = -1;
-			t->queue      = NULL;
-			t->queue_size = queue_size;
-			t->mode       = MODE_DEFAULT;
-			t->fac_no     = -1;
-			t->sevmask    = 0x000000;
-			if (severitylist[i].sevno == -2) {
-				for (k = 0; severitylist[k].sevno > 0; k++) {
-					if (strcasecmp(uri, "file")) {
-						if ((severitylist[k].sevno == DLF_LVL_USAGE) ||
-						    (severitylist[k].sevno == DLF_LVL_DEBUG)) {
-							continue;
-						}
-					} else if (severitylist[k].sevno == DLF_LVL_DEBUG) {
-						continue;
-					}
-					t->sevmask |= severitylist[k].sevmask;
-				}
-			} else {
-				t->sevmask = severitylist[i].sevmask;
-			}
-			t->path[0]    = '\0';
-			t->perm       = perm;
-			t->shutdown   = 0;
-
-			/* set the type */
-			if (!strcasecmp(uri, "file")) {
-				strncpy(t->path, buffer, sizeof(t->path) - 1);
-				SetFile(t->mode);
-			} else {
-				strncpy(t->server, buffer, sizeof(t->server) - 1);
-				SetServer(t->mode);
-			}
-
-			targets[j] = t;
-			api_targetcount++;
-		}
-		free(value);
-	}
-
-	/* at this point we haven't initialised any threads, if we've exceed API_MAX_THREADS then the
-	 * whole initialisation phase fails!
-	 */
-	for (i = 0, j = 0; i < API_MAX_TARGETS; i++) {
-		if (targets[i] == NULL)
-			continue;
-		if (IsServer(targets[i]->mode)) {
-			j++;
-		}
-	}
-	if (j > API_MAX_THREADS) {
-		snprintf(errptr, CA_MAXLINELEN, "dlf_init(): too many servers defined, maximum threads would be exceeded");
-		Cthread_mutex_unlock(&global_mutex);
-		return -1;
-	}
-
-	/* create server threads */
-	for (i = 0; i < API_MAX_TARGETS; i++) {
-		if (targets[i] == NULL)
-			continue;
-		if (!IsServer(targets[i]->mode))
-			continue;            /* not a server */
-
-		/* create server specific bounded fifo queue */
-		rv = queue_create(&targets[i]->queue, targets[i]->queue_size);
-		if (rv != 0) {
-			snprintf(errptr, CA_MAXLINELEN, "dlf_init(): failed to queue_create() : code %d", rv);
-			Cthread_mutex_unlock(&global_mutex);
-			return -1;
-		}
-		if (usethreads) {
-			/* create thread */
-			if (Cthread_create_detached((void *(*)(void *))dlf_worker, (target_t *)targets[i]) == -1) {
-				snprintf(errptr, CA_MAXLINELEN, "dlf_init(): failed to Cthread_create_detached() : %s", strerror(errno));
-				Cthread_mutex_unlock(&global_mutex);
-				return -1;
-			}
-		}
-	}
-
-	Cthread_mutex_unlock(&global_mutex);
-	return 0;
+  return (0);
 }
 
 
-/*
- * dlf_shutdown
- */
+/*---------------------------------------------------------------------------
+ * dlf_shutdwn
+ *---------------------------------------------------------------------------*/
+int DLL_DECL dlf_shutdown(void) {
 
-int DLL_DECL dlf_shutdown(int wait) {
+  /* Variables */
+  int i;
 
-	/* variables */
-	int    i;
-	int    j;
-	int    found;
+  /* Logging interface is initialized? */
+  if (!initialized) {
+    errno = EPERM;
+    return (-1);
+  }
 
-	/* interface already shutdown */
-	Cthread_mutex_lock(&global_mutex);
-	if (IsShutdown(api_mode) || !IsInitialised(api_mode)) {
-		Cthread_mutex_unlock(&global_mutex);
-		return 0;
-	}
-	Cthread_mutex_unlock(&global_mutex);
+  /* Free the resources allocated to the messages array */
+  for (i = 0; i < DLF_MAX_MSGTEXTS; i++) {
+    if (messages[i] != NULL)
+      free(messages[i]);
+  }
 
-	/* flag the targets for shutdown */
-	for (i = 0; i < API_MAX_TARGETS; i++) {
-		if (targets[i] == NULL)
-			continue;
-		if (!IsServer(targets[i]->mode))
-			continue;
-		Cthread_mutex_lock(&targets[i]->mutex);
-		targets[i]->shutdown = 1;
-		Cthread_mutex_unlock(&targets[i]->mutex);
-	}
+  /* Close syslog */
+  closelog();
 
-	/* wait up to X seconds for targets to flush */
-	for (i = 0; i < wait; i++) {
-		for (j = 0, found = 0; j < API_MAX_TARGETS; j++) {
-			if (targets[j] == NULL)
-				continue;
-			if (!IsServer(targets[j]->mode))
-				continue;
-			if (queue_size(targets[j]->queue))
-				found++;
-		}
-		if (found == 0) {
-			break;
-		}
-		sleep(1);
-	}
+  /* Reset the defaults */
+  initialized = 0;
+  maxmsglen   = DEFAULT_SYSLOG_MSGLEN;
 
-	/* we deliberately don't clear the initialisation and shutdown flags here, once shutdown,
-	 * reinitialisation is not possible, nor do we destroy the messages fifo queues as threads may
-	 * still be using them
-	 */
-
-	/* destroy global structures */
-	Cthread_mutex_lock(&global_mutex);
-	if (hashtexts != NULL) {
-		hash_destroy(hashtexts, (void *(*)(void *))free);
-		hashtexts = NULL;
-	}
-	if (texts[0] != NULL) {
-		free_msgtexts(texts);
-	}
-	api_targetcount = 0;
-	Cthread_mutex_unlock(&global_mutex);
-
-	return 0;
+  return (0);
 }
 
 
-/** End-of-File **/
+/*---------------------------------------------------------------------------
+ * dlf_regtext
+ *---------------------------------------------------------------------------*/
+int DLL_DECL dlf_regtext(unsigned int msgno, const char *message) {
 
+  /* Logging interface is initialized? */
+  if (!initialized) {
+    errno = EPERM;
+    return (-1);
+  }
+
+  /* Verify that the message number and associated text are valid */
+  if (message == NULL) {
+    errno = EINVAL;
+    return (-1);
+  }
+  if (msgno > DLF_MAX_MSGTEXTS) {
+    errno = EINVAL;
+    return (-1);
+  }
+  if (strlen(message) > DLF_MAX_PARAMSTRLEN) {
+    errno = EINVAL;
+    return (-1);
+  }
+
+  /* Insert the message into the messages array */
+  messages[msgno] = strdup(message);
+  if (messages[msgno] == NULL) {
+    return (-1);
+  }
+
+  /* Record the message using the INFO priority and the LOCAL2 facility */
+  syslog(LOG_INFO | LOG_LOCAL2, "MSGNO=%u MSGTEXT=\"%s\"", msgno, message);
+
+  return (0);
+}
+
+
+/*---------------------------------------------------------------------------
+ * dlf_write
+ *---------------------------------------------------------------------------*/
+int DLL_DECL dlf_write(Cuuid_t reqid,
+                       unsigned int priority,
+                       unsigned int msgno,
+                       struct Cns_fileid *ns,
+                       int numparams,
+                       ...) {
+
+  /* Variables */
+  dlf_write_param_t *params = NULL;
+  va_list           ap;
+  int               i;
+  int               rv;
+  char              *buf = NULL;
+
+  /* Logging interface is initialized? */
+  if (!initialized) {
+    errno = EPERM;
+    return (-1);
+  }
+
+  params = (dlf_write_param_t *)
+    malloc(numparams * sizeof(dlf_write_param_t));
+  if (params == NULL) {
+    return (-1);
+  }
+
+  /* Process parameters */
+  va_start(ap, numparams);
+  for (i = 0; i < numparams; i++) {
+
+    /* Extract parameter name */
+    params[i].name = NULL;
+    if ((buf = va_arg(ap, char *)) != NULL) {
+      params[i].name = strdup(buf);
+    }
+
+    /* Extract parameter data type */
+    params[i].type = va_arg(ap, int);
+
+    /* Process parameter data type */
+    switch(params[i].type) {
+    case DLF_MSG_PARAM_TPVID:
+    case DLF_MSG_PARAM_STR:
+      params[i].value.par_string = NULL;
+      if ((buf = va_arg(ap, char *)) != NULL) {
+        params[i].value.par_string = strdup(buf);
+      }
+      break;
+    case DLF_MSG_PARAM_INT:
+      params[i].value.par_int = va_arg(ap, int);
+      break;
+    case DLF_MSG_PARAM_INT64:
+      params[i].value.par_u64 = va_arg(ap, signed64);
+      break;
+    case DLF_MSG_PARAM_DOUBLE:
+      params[i].value.par_double = va_arg(ap, double);
+      break;
+    case DLF_MSG_PARAM_UUID:
+      params[i].value.par_uuid = va_arg(ap, Cuuid_t);
+      break;
+    case DLF_MSG_PARAM_FLOAT:
+      /* Floats are treated as doubles */
+      params[i].value.par_double = va_arg(ap, double);
+      params[i].type = DLF_MSG_PARAM_DOUBLE;
+      break;
+    default:
+      /* Set unknown data types to strings with a NULL value. They will appear
+       * in the log file with the parameter name="(null)" message to indicate
+       * an error
+       */
+      params[i].value.par_string = NULL;
+      params[i].type = DLF_MSG_PARAM_STR;
+      break;
+    }
+  }
+  va_end(ap);
+
+  rv = dlf_writep(reqid, priority, msgno, ns, numparams, params);
+
+  /* Free resources */
+  for (i = 0; i < numparams; i++) {
+    if (params[i].name != NULL)
+      free(params[i].name);
+    if ((params[i].type == DLF_MSG_PARAM_TPVID) ||
+        (params[i].type == DLF_MSG_PARAM_STR)) {
+      if (params[i].value.par_string != NULL)
+        free(params[i].value.par_string);
+    }
+  }
+  free(params);
+
+  return (rv);
+}
+
+
+/*---------------------------------------------------------------------------
+ * dlf_writep
+ *---------------------------------------------------------------------------*/
+int DLL_DECL dlf_writep(Cuuid_t reqid,
+                        unsigned int priority,
+                        unsigned int msgno,
+                        struct Cns_fileid *ns,
+                        unsigned int numparams,
+                        dlf_write_param_t params[]) {
+
+  /* Variables */
+  char   uuidstr[CUUID_STRING_LEN + 1];
+  char   buffer[DLF_MAX_LINELEN * 2];
+  char   *name = NULL;
+  char   *value = NULL;
+  char   *p = NULL;
+  int    i;
+  size_t len = 0;
+
+  /* Logging interface is initialized? */
+  if (!initialized) {
+    errno = EPERM;
+    return (-1);
+  }
+
+  /* Initialize buffers */
+  memset(uuidstr, '\0', CUUID_STRING_LEN + 1);
+  memset(buffer,  '\0', sizeof(buffer));
+
+  /* Verify that the msgno argument is valid and exists */
+  if (msgno > DLF_MAX_MSGTEXTS) {
+    errno = EINVAL;
+    return (-1);
+  }
+  if (messages[msgno] == NULL) {
+    errno = EINVAL;
+    return (-1);
+  }
+
+  if (priority > LOG_DEBUG) {
+    errno = EINVAL;
+    return (-1);
+  }
+
+  /* Convert the request uuid type to a string */
+  if (Cuuid2string(uuidstr, CUUID_STRING_LEN + 1, &reqid)) {
+    errno = EINVAL;
+    return (-1);
+  }
+
+  buffer[0] = '\0';
+  len = snprintf(buffer, maxmsglen - len, "LVL=%s TID=%d MSG=\"%s\" ",
+                 prioritylist[priority].text, (int)syscall(__NR_gettid),
+                 messages[msgno]);
+
+  /* Append the request uuid if defined */
+  if (Cuuid_compare(&reqid, &nullCuuid)) {
+    len += snprintf(buffer + len, maxmsglen - len, "REQID=%s ", uuidstr);
+  }
+
+  /* Name server information */
+  if (ns && ns->server[0]) {
+    len += snprintf(buffer + len, maxmsglen - len,
+                    "NSHOSTNAME=%.*s NSFILEID=%llu ",
+                    CA_MAXHOSTNAMELEN, ns->server, ns->fileid);
+  }
+
+  /* Process parameters */
+  for (i = 0; i < numparams; i++) {
+
+    /* Check the parameter name, if it's NULL or an empty string set the value
+     * to 'Undefined'.
+     */
+    p = params[i].name;
+    if (!p || (p && !strcmp(p, ""))) {
+      name = strdup("Undefined"); /* Default value */
+    } else {
+      name = strdup(p);
+    }
+
+    /* Check for memory allocation failure */
+    if (name == NULL) {
+      return (-1);
+    }
+
+    /* Process the data type associated to the parameter */
+    switch (params[i].type) {
+      /* Strings */
+    case DLF_MSG_PARAM_TPVID:
+    case DLF_MSG_PARAM_STR:
+      {
+        /* Check the value */
+        if ((p = params[i].value.par_string) == NULL) {
+          value = strdup("(null)");  /* Default value */
+        } else {
+          value = strdup(p);
+        }
+
+        /* Check for memory allocation failure */
+        if (value == NULL) {
+          return (-1);
+        }
+
+        if (params[i].type == DLF_MSG_PARAM_TPVID) {
+          len += snprintf(buffer + len, maxmsglen - len, "TPVID=%.*s ",
+                          CA_MAXVIDLEN, _clean_string(value, 0));
+        } else {
+          len += snprintf(buffer + len, maxmsglen - len, "%.*s=\"%.*s\" ",
+                          DLF_MAX_PARAMNAMELEN, _clean_string(name, 1),
+                          DLF_MAX_PARAMSTRLEN, _clean_string(value, 0));
+        }
+        free(value);
+        break;
+      }
+
+      /* Numerical values */
+    case DLF_MSG_PARAM_INT:
+      len += snprintf(buffer + len, maxmsglen - len, "%.*s=%d ",
+                      DLF_MAX_PARAMNAMELEN, _clean_string(name, 1),
+                      params[i].value.par_int);
+      break;
+    case DLF_MSG_PARAM_INT64:
+      len += snprintf(buffer + len, maxmsglen - len, "%.*s=%lld ",
+                      DLF_MAX_PARAMNAMELEN, _clean_string(name, 1),
+                      params[i].value.par_u64);
+      break;
+    case DLF_MSG_PARAM_DOUBLE:
+      len += snprintf(buffer + len, maxmsglen - len, "%.*s=%f ",
+                      DLF_MAX_PARAMNAMELEN, _clean_string(name, 1),
+                      params[i].value.par_double);
+      break;
+
+      /* Subrequest uuid */
+    case DLF_MSG_PARAM_UUID:
+      if (Cuuid2string(uuidstr, CUUID_STRING_LEN + 1,
+                       &(params[i].value.par_uuid))) {
+        free(name);
+        errno = EINVAL;
+        return (-1);
+      }
+      len += snprintf(buffer + len, maxmsglen - len, "SUBREQID=%.*s ",
+                      CUUID_STRING_LEN, uuidstr);
+      break;
+    default:
+      break; /* Nothing */
+    }
+    free(name);
+
+    /* Check if there is enough space in the buffer */
+    if (len >= maxmsglen) {
+      buffer[maxmsglen - 1] = '\n';
+      break;
+    }
+  }
+
+  /* Terminate the string */
+  if (len < maxmsglen) {
+    snprintf(buffer + (len - 1), maxmsglen - len, "\n");
+  }
+
+  syslog(priority, "%s", buffer);
+
+  return (0);
+}
+
+/*---------------------------------------------------------------------------
+ * dlf_isinitialized
+ *---------------------------------------------------------------------------*/
+int DLL_DECL dlf_isinitialized(void) {
+  return (initialized);
+}

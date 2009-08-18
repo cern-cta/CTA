@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Dlf.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2009/02/04 11:13:37 $ $Author: murrayc3 $
+ * @(#)$RCSfile: Dlf.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2009/08/18 09:42:51 $ $Author: waldron $
  *
  * C++ interface to DLF
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef DLF_DLF_WRITE_HPP 
+#ifndef DLF_DLF_WRITE_HPP
 #define DLF_DLF_WRITE_HPP 1
 
 // Include Files
@@ -128,11 +128,11 @@ namespace castor {
      * removing the need for the devloper to provide it explicity.
      */
     template<int n>
-      void dlf_writep (Cuuid_t uuid,
-                       int severity,
-                       int message_no,
-                       castor::dlf::Param (&params)[n],
-                       struct Cns_fileid *ns_invariant = 0) throw() {
+    void dlf_writep (Cuuid_t uuid,
+                     int severity,
+                     int message_no,
+                     castor::dlf::Param (&params)[n],
+                     struct Cns_fileid *ns_invariant = 0) throw() {
       dlf_writep(uuid, severity, message_no, n, params, ns_invariant);
     }
 
@@ -168,16 +168,16 @@ namespace castor {
      * removing the need for the devloper to provide it explicity.
      */
     template<int n>
-      void dlf_writepc (const char *file,
-                        const int line,
-                        const char *function,
-                        Cuuid_t uuid,
-                        int severity,
-                        int message_no,
-                        castor::dlf::Param (&params)[n],
-                        struct Cns_fileid *ns_invariant = 0) throw() {
+    void dlf_writepc (const char *file,
+                      const int line,
+                      const char *function,
+                      Cuuid_t uuid,
+                      int severity,
+                      int message_no,
+                      castor::dlf::Param (&params)[n],
+                      struct Cns_fileid *ns_invariant = 0) throw() {
       dlf_writepc(file, line, function, uuid, severity, message_no, n, params,
-        ns_invariant);
+                  ns_invariant);
     }
 
     /**

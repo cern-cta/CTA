@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrd.man,v $ $Revision: 1.1 $ $Date: 2009/07/23 12:18:47 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrd.man,v $ $Revision: 1.2 $ $Date: 2009/08/18 09:43:02 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRD 8 "$Date: 2009/07/23 12:18:47 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRD 8 "$Date: 2009/08/18 09:43:02 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrd \- start the volume manager
 .SH SYNOPSIS
@@ -11,7 +11,7 @@ vmgrd \- start the volume manager
 .BI -c " config_file"
 ] [
 .BI -t " nbthreads"
-] 
+]
 .SH DESCRIPTION
 .LP
 The
@@ -120,7 +120,7 @@ Specifies the number of threads. Default is 6.
 .B /etc/VMGRCONFIG
 configuration file
 .TP
-.B /var/spool/vmgr/log
+.B /var/log/castor/vmgrd.log
 .SH EXAMPLES
 .TP
 Here is a small log:

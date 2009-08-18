@@ -2,11 +2,11 @@ COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC
 COMM  All rights reserved
 COMM
-COMM     @(#)$RCSfile: Imakefile,v $ $Revision: 1.9 $ $Date: 2009/02/27 13:07:34 $ CERN IT-ADC Vitaly Motyakov
+COMM     @(#)$RCSfile: Imakefile,v $ $Revision: 1.10 $ $Date: 2009/08/18 09:42:59 $ CERN IT-ADC Vitaly Motyakov
 COMM    Make expert programs.
 
-SPOOL = /var/spool/expert
-LOGFILE = $(SPOOL)/log
+LOGDIR = /var/log/castor
+LOGFILE = $(LOGDIR)/expertd.log
 EXPERT_CONFIG = ExpertConfigFile
 CFLAGS = -I../h $(MTCCFLAGS) -DBIN=\"$(BIN)\" -DLOGFILE=\"$(LOGFILE)\" -DEXPERT_CONFIG=\"$(EXPERT_CONFIG)\"
 
@@ -16,7 +16,7 @@ DependsOnLibrary(upv,castorupv)
 EXPERTLIB_OBJS = send2expert.Osuf exp_api.Osuf
 SharedLibraryTarget(castorexpert,$(EXPERTLIB_OBJS),$(DEPLIB),$(LIBS))
 
-MakeDir($(SPOOL),0755)
+MakeDir($(LOGDIR),0755)
 EXPERTD_OBJS = expertd.Osuf exp_procreq.Osuf sendrep.Osuf explogit.Osuf
 EXPERTDEPLIB = SharedLibraryTargetName(castorexpert)
 NormalProgramTarget(expertd,$(EXPERTD_OBJS),$(EXPERTDEPLIB) $(DEPLIB),$(LIBS) SharedLibraryTargetName(castorexpert),750)

@@ -1,30 +1,28 @@
-.lf 3 dlf_shutdown.man
-.TH dlf_shutdown 3 "CERN IT-FIO" CASTOR "DLF Library Functions"
+.TH dlf_shutdown 3 "CERN IT-DM" CASTOR "DLF Library Functions"
+
 .SH NAME
-dlf_shutdown \- shutdown the DLF interface
+dlf_shutdown \- shutdown the DLF logging interface
+
 .SH SYNOPSIS
 .B #include "dlf_api.h"
+.BI "int dlf_shutdown (void)"
 
-.BI "int dlf_shutdown (int " wait ")"
 .SH DESCRIPTION
 .B dlf_shutdown
-shuts down the DLF interface. If the interface is already shutdown by a previous call or the interface was not previous initialised with a call to
-.BR "dlf_init" (3)
-then no action will be taken.
-
-If a
-.I wait
-time is greater then 0, then the api will wait up to X seconds for the threads to flush their messages queues to the
-.BR dlfserver
-
-Note: once shutdown the api cannot be re initialised
+shuts down the DLF logging interface deallocating all resources. Once the
+shutdown is complete the interface can be reinitialized again with
 .BR "dlf_init" (3)
 
-.SH "RETURN VALUE"
-The function always returns 0 indicating success.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B errno
+is set appropriately.
 
-.SH "SEE ALSO"
-.BR dlf_init (3),
+.SH ERRORS
+.TP 1.3i
+.B EPERM
+The interface is not initialized.
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,2 +1,2 @@
-var/spool/rtcopy
+var/log/castor
 var/lib/castor

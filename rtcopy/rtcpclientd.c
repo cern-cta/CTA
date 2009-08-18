@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.49 $ $Release$ $Date: 2009/07/23 12:22:05 $ $Author: waldron $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.50 $ $Release$ $Date: 2009/08/18 09:43:01 $ $Author: waldron $
  *
  *
  *
@@ -725,7 +725,7 @@ static void shutdownService(
                   DLF_MSG_PARAM_INT,
                   signo
                   );
-  dlf_shutdown(5);
+  dlf_shutdown();
   exit(0);
 }
 
@@ -742,19 +742,16 @@ static void startTapeErrorHandler()
    */
   if ( tapeErrorHandlerPid > 0 ) return;
 
-  dlf_prepare();
   pid = fork();
   if ( pid > 0 ) {
     /*
      * Parent
      */
-    dlf_parent();
     tapeErrorHandlerPid = pid;
   } else if ( pid == 0 ) {
     /*
      * Child
      */
-    dlf_child();
     sprintf(cmd,"%s/%s",BIN,TAPEERRORHANDLER_CMD);
 #ifndef _WIN32
 #if defined(SOLARIS) || (defined(__osf__) && defined(__alpha)) || defined(linux) || defined(sgi)
@@ -861,14 +858,13 @@ static void startTapeErrorHandler()
                     strerror(errno),
                     RTCPCLD_LOG_WHERE
                     );
-    dlf_shutdown(5);
+    dlf_shutdown();
     exit(SYERR);
 #endif /* _WIN32 */
   } else {
     /*
      * fork() failed
      */
-    dlf_parent();
     (void)dlf_write(
                     mainUuid,
                     RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
@@ -1109,7 +1105,7 @@ static int startWorker(
                   strerror(errno),
                   RTCPCLD_LOG_WHERE
                   );
-  dlf_shutdown(5);
+  dlf_shutdown();
   exit(SYERR);
 #endif /* _WIN32 */
 
@@ -1372,14 +1368,12 @@ int rtcpcld_main(
              tapereq.unit
              );
 
-      dlf_parent();
 #if !defined(_WIN32)
       pid = (int)fork();
 #else  /* !_WIN32 */
       pid = 0;
 #endif /* _WIN32 */
       if ( pid == -1 ) {
-	dlf_parent();
         (void)dlf_write(
                         mainUuid,
                         RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
@@ -1400,7 +1394,6 @@ int rtcpcld_main(
          * Parent, update the internal request list with the pid of
          * the newly forked child.
          */
-	dlf_parent();
         (void)dlf_write(
                         mainUuid,
                         RTCPCLD_LOG_MSG(RTCPCLD_MSG_REQSTARTED),
@@ -1431,7 +1424,6 @@ int rtcpcld_main(
       /*
        * Child, kick off the migrator/recaller program and exit.
        */
-      dlf_child();
       inChild = 1;
 #if !defined(_WIN32)
       signal(SIGPIPE,SIG_IGN);
@@ -1705,17 +1697,14 @@ int main(
     /*
      * UNIX
      */
-    dlf_prepare();
     if (Cinitdaemon("rtcpclientd",SIG_IGN) == -1) {
-      dlf_parent();
-      dlf_shutdown(5);
+      dlf_shutdown();
       exit(1);
     }
 #endif /* _WIN32 */
-    dlf_child();
     rc = rtcpcld_main(NULL);
   }
-  dlf_shutdown(10);
+  dlf_shutdown();
   if ( rc != 0 ) exit(1);
   else exit(0);
 }

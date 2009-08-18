@@ -21,7 +21,7 @@
  *
  * @author castor dev team
  *****************************************************************************/
- 
+
 #define VDQMSERV
 
 #include "castor/Services.hpp"
@@ -54,7 +54,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::vdqm::VdqmServer::VdqmServer() throw(castor::exception::Exception) :
-  castor::server::BaseDaemon("Vdqm"),
+  castor::server::BaseDaemon("vdqmd"),
   m_requestHandlerThreadNumber(REQUESTHANDLERDEFAULTTHREADNUMBER),
   m_RTCPJobSubmitterThreadNumber(RTCPJOBSUBMITTERDEFAULTTHREADNUMBER),
   m_schedulerThreadNumber(SCHEDULERDEFAULTTHREADNUMBER) {

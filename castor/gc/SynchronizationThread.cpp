@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2009/03/23 16:08:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2009/08/18 09:42:51 $ $Author: waldron $
  *
  * Synchronization thread used to check periodically whether files need to be
  * deleted
@@ -50,6 +50,7 @@
 #define DEFAULT_CHUNKINTERVAL      120
 #define DEFAULT_CHUNKSIZE          2000
 #define DEFAULT_DISABLESTAGERSYNC  false
+
 
 //-----------------------------------------------------------------------------
 // Constructor
@@ -196,7 +197,7 @@ void castor::gc::SynchronizationThread::run(void *param) {
                 {castor::dlf::Param("NbFiles", diskCopyIds[fid.first].size()),
                  castor::dlf::Param("Nameserver", fid.first)};
 	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 31, 2, params);
-	      
+
 	      synchronizeFiles(fid.first, diskCopyIds[fid.first],
                                paths[fid.first], disableStagerSync);
 	      diskCopyIds[fid.first].clear();
@@ -214,7 +215,7 @@ void castor::gc::SynchronizationThread::run(void *param) {
       free(fs[fsIt]);
       fsIt = (fsIt + 1) % nbFs;
     }
-    
+
     // Synchronize the remaining files not yet checked
     for (std::map<std::string, std::vector<u_signed64> >::const_iterator it2 =
 	   diskCopyIds.begin();
@@ -489,12 +490,12 @@ void castor::gc::SynchronizationThread::synchronizeFiles
   if (!disableStagerSync) {
     orphans = gcSvc->stgFilesDeleted(dcIds, nameServer);
 
-    // Remove orphaned files
+  // Remove orphaned files
     for (std::vector<u_signed64>::const_iterator it = orphans.begin();
          it != orphans.end();
          it++) {
       fileId.fileid = fileIdFromFilePath(filePaths.find(*it)->second);
-    
+
       // Get information about the file before unlinking
       struct stat64 fileinfo;
       if (stat64(filePaths.find(*it)->second.c_str(), &fileinfo) < 0) {
@@ -536,7 +537,7 @@ void castor::gc::SynchronizationThread::synchronizeFiles
       castor::dlf::Param params[] =
         {castor::dlf::Param("NbOrphanFiles", nbOrphanFiles),
          castor::dlf::Param("SpaceFreed", spaceFreed)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_MONITORING, 33, 2, params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 33, 2, params);
     }
 
     // During the unlinking of the files in the diskserver to stager catalog
@@ -644,7 +645,7 @@ void castor::gc::SynchronizationThread::synchronizeFiles
     castor::dlf::Param params[] =
       {castor::dlf::Param("NbOrphanFiles", nbOrphanFiles),
        castor::dlf::Param("SpaceFreed", spaceFreed)};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_MONITORING, 35, 2, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 35, 2, params);
   }
 
   // List all files that will be scheduled for later deletion using the normal
@@ -667,6 +668,6 @@ void castor::gc::SynchronizationThread::synchronizeFiles
     castor::dlf::Param params[] =
       {castor::dlf::Param("Filename", cnsFilePaths.find(*it)->second)};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 42, 1, params, &fileId);
-   
+
   }
 }

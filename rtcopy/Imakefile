@@ -12,14 +12,14 @@ COMM         Make RTCOPY API library and server
 COMM
 COMM Define the remote tape copy daemon log file.
 COMM
-SPOOL = /var/spool/rtcopy
-LOGFILE = $(SPOOL)/rtcopyd.log
+LOGDIR = /var/log/castor
+LOGFILE = $(LOGDIR)/rtcpd.log
 
 COMM
-COMM Define the working directory of 
+COMM Define the working directory of
 COMM the remote tape copy jobs.
 COMM
-RTCOPYWORKDIR = /var/lib/castor/rtcopy
+RTCOPYWORKDIR = /var/lib/castor/rtcpd
 
 COMM
 COMM Define the file indicating that more
@@ -31,7 +31,7 @@ NOMORETAPES = OperatorDir.nomoretapes
 COMM
 COMM Define the file indicating the hosts
 COMM authorized to use remotely rtcopy server
-COMM 
+COMM
 AUTHORIZEDHOSTS = AuthorizedHosts
 
 COMM
@@ -84,7 +84,7 @@ RTCPFLAG=-DRTCP_SERVER
 #if BuildSecureRtcopy
 SECURITYFLAG=-DCSEC
 LIBS = -ldl
-#endif  
+#endif
 
 DFLAGS = -DBIN=\"$(BIN)\" -DRTCOPY_LOGFILE=\"$(LOGFILE)\" -DNOMORETAPES=\"$(NOMORETAPES)\" \
 	 -DAUTH_HOSTS=\"$(AUTHORIZEDHOSTS)\" -DWORKDIR=\"$(RTCOPYWORKDIR)\" \
@@ -149,12 +149,11 @@ NormalProgramTarget(recaller,recaller.Osuf $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS),$(
 NormalProgramTarget(migrator,migrator.Osuf $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS),$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(MTLDFLAGS) $(LIBS),0750)
 NormalProgramTarget(tperrhandler,TapeErrorHandler.Osuf $(RTCPCLD_OBJS),$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(LIBS),0750)
 EXEMANPAGE(rtcpclientd)
-MakeDir(/var/spool/rtcpclientd,0755)
+MakeDir($(LOGDIR),0755)
 LOGROTATE(castor-rtcopy-clientserver,..,install)
 SYSCONFIG(rtcpclientd,install)
 INITSCRIPT(rtcpclientd,install)
 
-MakeDir($(SPOOL),0755)
 MakeDir($(RTCOPYWORKDIR),777)
 MakeDir($(SACCTDIR),0777)
 RTCPD_OBJS =	rtcpd.Osuf rtcp_CallVMGR.Osuf rtcp_CheckReq.Osuf \
@@ -164,8 +163,8 @@ RTCPD_OBJS =	rtcpd.Osuf rtcp_CallVMGR.Osuf rtcp_CheckReq.Osuf \
 		rtcpd_TapeIO.Osuf rtcp_InitNW.Osuf \
 		rtcpd_ConvertData.Osuf \
 		rtcpc_BuildReq.Osuf rtcpapi.Osuf rtcp_RetvalSHIFT.Osuf \
-		rtcpd_tpdump.Osuf Ctape_dummies.Osuf rtcp_accounting.Osuf		
-TapeProgramTarget(rtcpd,$(RTCPD_OBJS),$(DEPLIB),$(MTLDFLAGS) $(LIBS) $(CKSUMLIB),0750) 
+		rtcpd_tpdump.Osuf Ctape_dummies.Osuf rtcp_accounting.Osuf
+TapeProgramTarget(rtcpd,$(RTCPD_OBJS),$(DEPLIB),$(MTLDFLAGS) $(LIBS) $(CKSUMLIB),0750)
 TapeProgramTarget(killjid,killjid.Osuf,$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(MTLDFLAGS) $(LIBS),0750)
 EXEMANPAGE(rtcpd)
 EXEMANPAGE(killjid)

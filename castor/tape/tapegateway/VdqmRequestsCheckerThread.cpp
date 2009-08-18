@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: VdqmRequestsCheckerThread.cpp,v $ $Author: gtaur $
+ * @(#)$RCSfile: VdqmRequestsCheckerThread.cpp,v $ $Author: waldron $
  *
  *
  *
@@ -61,24 +61,24 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
   std::vector<castor::stager::Tape*> tapesToReset;
   std::vector<castor::stager::Tape*>::iterator tapeToReset;
 
-  
+
  // service to access the database
   castor::IService* dbSvc = castor::BaseObject::services()->service("OraTapeGatewaySvc", castor::SVC_ORATAPEGATEWAYSVC);
   castor::tape::tapegateway::ITapeGatewaySvc* oraSvc = dynamic_cast<castor::tape::tapegateway::ITapeGatewaySvc*>(dbSvc);
-  
+
 
   if (0 == oraSvc) {
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR, 0, NULL);
     return;
   }
 
-  
+
   try {
      // get tapes to check from the db
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,CHECKER_GETTING_TAPES, 0, NULL);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,CHECKER_GETTING_TAPES, 0, NULL);
 
-    tapeRequests = oraSvc->getTapesWithDriveReqs(m_timeOut); 
-  
+    tapeRequests = oraSvc->getTapesWithDriveReqs(m_timeOut);
+
   } catch (castor::exception::Exception e) {
      // error in getting new tape to submit
 
@@ -86,7 +86,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
        castor::dlf::Param("errorMessage",e.getMessage().str())
       };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,CHECKER_NO_TAPE, 2, params); 
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,CHECKER_NO_TAPE, 2, params);
     return;
   }
 
@@ -94,16 +94,16 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
 
   // check the tapes to vdqm
   std::vector<castor::tape::tapegateway::TapeGatewayRequest*>::iterator tapeRequest = tapeRequests.begin();
-  
+
   while (tapeRequest != tapeRequests.end()){
 
     castor::dlf::Param params[] =
       {castor::dlf::Param("vdqm request id", (*tapeRequest)->vdqmVolReqId())
       };
-    
+
     castor::tape::tapegateway::VdqmTapeGatewayHelper vdqmHelper;
 
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,CHECKER_QUERYING_VDQM, 1, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,CHECKER_QUERYING_VDQM, 1, params);
 
     try {
       vdqmHelper.checkVdqmForRequest(*tapeRequest);
@@ -128,12 +128,12 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
     }
     tapeRequest++;
   }
-  
- 
+
+
 
   try {
 
-    //  I update vmgr releasing the busy tapes     
+    //  I update vmgr releasing the busy tapes
 
     tapeToReset = tapesToReset.begin();
     while (tapeToReset != tapesToReset.end()){
@@ -142,31 +142,31 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
 	vmgrHelper.resetBusyTape(**tapeToReset);
 	castor::dlf::Param params[] =
 	  {castor::dlf::Param("VID", (*tapeToReset)->vid())};
-	castor::dlf::dlf_writep(nullCuuid,DLF_LVL_USAGE, CHECKER_RELEASING_UNUSED_TAPE, 1, params);
+	castor::dlf::dlf_writep(nullCuuid,DLF_LVL_DEBUG, CHECKER_RELEASING_UNUSED_TAPE, 1, params);
       } catch (castor::exception::Exception e){
  	castor::dlf::Param params[] =
 	  {castor::dlf::Param("VID", (*tapeToReset)->vid())};
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, CHECKER_VMGR_ERROR, 1, params);
-      } 
+      }
       tapeToReset++;
     }
     // update the db to eventually send again some requests
-    oraSvc->restartLostReqs(tapesToRetry); 
+    oraSvc->restartLostReqs(tapesToRetry);
 
   } catch (castor::exception::Exception e){
-     
+
     // impossible to update the information of checked tape
-    
+
     castor::dlf::Param params[] =
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
        castor::dlf::Param("errorMessage",e.getMessage().str())
       };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, CHECKER_CANNOT_UPDATE_DB, 2, params); 
- 
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, CHECKER_CANNOT_UPDATE_DB, 2, params);
+
   }
 
   // cleanUp
-  
+
   tapeRequest=tapeRequests.begin();
   while (tapeRequest != tapeRequests.end()){
     if (*tapeRequest) delete *tapeRequest;
@@ -183,7 +183,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
 
   tapeRequests.clear();
   tapesToRetry.clear();
-  tapesToReset.clear();  
+  tapesToReset.clear();
 
 }
 

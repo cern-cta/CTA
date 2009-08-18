@@ -1,4 +1,4 @@
-%attr(0640,root,st) etc/castor/TPCONFIG.example
+%attr(0640,root,root) etc/castor/TPCONFIG.example
 %attr(0755,root,root) etc/init.d/taped
 %attr(0644,root,root) etc/sysconfig/taped.example
 %attr(0644,root,root) etc/logrotate.d/castor-tape-server

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.71 $ $Release$ $Date: 2009/04/08 12:45:30 $ $Author: waldron $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.72 $ $Release$ $Date: 2009/08/18 09:42:53 $ $Author: waldron $
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
     // "RequestHandler started"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Port", server.m_port),
-      castor::dlf::Param("Secure", server.m_secure ? "yes" : "no")};
+       castor::dlf::Param("Secure", server.m_secure ? "yes" : "no")};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 16, 2, params);
 
     // start the server
@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
 // Constructor
 //------------------------------------------------------------------------------
 castor::rh::Server::Server() :
-  castor::server::BaseDaemon("RequestHandler"),
+  castor::server::BaseDaemon("rhd"),
   m_port(-1),
   m_secure(false) {
 
@@ -213,15 +213,15 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
     if (iport == -1) {
       if ((sport = getenv (castor::rh::PORT_SEC_ENV)) != 0
           || (sport = getconfent((char *)castor::rh::CATEGORY_CONF,
-				 (char *)castor::rh::PORT_SEC_CONF, 0)) != 0) {
+                                 (char *)castor::rh::PORT_SEC_CONF, 0)) != 0) {
         m_port = castor::System::porttoi(sport);
       } else { // default port
-	m_port = CSP_RHSERVER_SEC_PORT;
+        m_port = CSP_RHSERVER_SEC_PORT;
       }
     } else {
       m_port = iport;
     }
-    // Temporary workaround till we come up with something more clever to fix 
+    // Temporary workaround till we come up with something more clever to fix
     // bug related with the KRB5 and GSI mixed libraries.
     void *handle = dlopen ("libCsec_plugin_KRB5.so", RTLD_LAZY);
     if (!handle) {
@@ -234,10 +234,10 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
     if (iport == -1) {
       if ((sport = getenv (castor::rh::PORT_ENV)) != 0
           || (sport = getconfent((char *)castor::rh::CATEGORY_CONF,
-				 (char *)castor::rh::PORT_CONF, 0)) != 0) {
+                                 (char *)castor::rh::PORT_CONF, 0)) != 0) {
         m_port = castor::System::porttoi(sport);
       } else { // default port
-	m_port = CSP_RHSERVER_PORT;
+        m_port = CSP_RHSERVER_PORT;
       }
     } else {
       m_port = iport;

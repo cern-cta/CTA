@@ -1,6 +1,6 @@
-/var/log/nsdaemon /var/spool/ns/log {
+/var/log/castor/nsd*.log {
     compress
     daily
     missingok
-    rotate 90
+    rotate 120
 }

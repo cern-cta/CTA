@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_serv.c,v 1.38 2009/07/23 12:22:04 waldron Exp $
+ * $Id: rfio_serv.c,v 1.39 2009/08/18 09:43:00 waldron Exp $
  */
 
 /*
@@ -268,8 +268,8 @@ int set_rcv_sockparam(s,value)
   if (setsockopt(s,SOL_SOCKET,SO_RCVBUF,(char *)&value, sizeof(value)) < 0) {
     if (errno != ENOBUFS)
       {
-	log(LOG_ERR, "setsockopt rcvbuf(): %s\n",strerror(errno));
-	exit(1);
+        log(LOG_ERR, "setsockopt rcvbuf(): %s\n",strerror(errno));
+        exit(1);
       }
     else
       return(-1);
@@ -284,8 +284,8 @@ int set_snd_sockparam(s,value)
   if (setsockopt(s,SOL_SOCKET,SO_SNDBUF,(char *)&value, sizeof(value)) < 0) {
     if (errno != ENOBUFS)
       {
-	log(LOG_ERR, "setsockopt sndbuf(): %s\n",strerror(errno));
-	exit(1);
+        log(LOG_ERR, "setsockopt sndbuf(): %s\n",strerror(errno));
+        exit(1);
       }
     else
       return(-1);
@@ -446,8 +446,8 @@ rfiod()
   if (logging && !lfname) {
     strcpy(logfile, LOGFILE);
   }
-  if (!(strcmp(logfile,"stderr"))) {
-    strcpy(logfile,"");
+  if (!(strcmp(logfile, "stderr"))) {
+    strcpy(logfile, "");
   }
   if (standalone) {
     /*
@@ -536,7 +536,7 @@ rfiod()
       freopen( "/dev/null", "r", stdin);
       freopen( "/dev/null", "w", stdout);
       freopen( "/dev/null", "w", stderr);
-      for (i=3; i< maxfds; i++) {
+      for (i = 3; i< maxfds; i++) {
         if (i != Socket_parent) {
           (void) close(i);
         }
@@ -628,41 +628,41 @@ rfiod()
 
         /* If CSEC define and security requested (set uid and gid) and user not root */
         if (uid > 0 && gid > 0) {
-	  if ((p = getenv ("SRFIO_PORT")) || (p = getconfent ("SRFIO", "PORT", 0))) {
-	    sin.sin_port = htons ((unsigned short)atoi (p));
-	  } else {
-	    log(LOG_INFO, "using default port number %d\n", (int) SRFIO_PORT);
-	    sin.sin_port = htons((u_short) SRFIO_PORT);
+          if ((p = getenv ("SRFIO_PORT")) || (p = getconfent ("SRFIO", "PORT", 0))) {
+            sin.sin_port = htons ((unsigned short)atoi (p));
+          } else {
+            log(LOG_INFO, "using default port number %d\n", (int) SRFIO_PORT);
+            sin.sin_port = htons((u_short) SRFIO_PORT);
           }
         } else {
-	  if ((p = getenv ("RFIO_PORT")) || (p = getconfent ("RFIO", "PORT", 0))) {
-	    sin.sin_port = htons ((unsigned short)atoi (p));
-	  } else {
-	    log(LOG_INFO, "using default port number %d\n", (int) RFIO_PORT);
+          if ((p = getenv ("RFIO_PORT")) || (p = getconfent ("RFIO", "PORT", 0))) {
+            sin.sin_port = htons ((unsigned short)atoi (p));
+          } else {
+            log(LOG_INFO, "using default port number %d\n", (int) RFIO_PORT);
             sin.sin_port = htons((u_short) RFIO_PORT);
           }
-	}
+        }
       } else {
-	sin.sin_port = htons(port);
+        sin.sin_port = htons(port);
       }
 
       sin.sin_addr.s_addr = htonl(INADDR_ANY);
       sin.sin_family = AF_INET;
       {  /* Re-usable port */
-	int bool = 1;
-	setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&bool, sizeof(bool));
+        int bool = 1;
+        setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&bool, sizeof(bool));
       }
 #if defined(_WIN32)
       if( bind(s, (struct sockaddr*)&sin, sizeof(sin)) == SOCKET_ERROR ) {
-	log(LOG_ERR, "bind(): %s\n", geterr());
-	WSACleanup();
-	TlsFree(tls_i);
-	exit(1);
+        log(LOG_ERR, "bind(): %s\n", geterr());
+        WSACleanup();
+        TlsFree(tls_i);
+        exit(1);
       }
 #else
       if( bind(s, (struct sockaddr*)&sin, sizeof(sin)) < 0 ) {
-	log(LOG_ERR, "bind(): %s\n",strerror(errno));
-	exit(1);
+        log(LOG_ERR, "bind(): %s\n",strerror(errno));
+        exit(1);
       }
 #endif
       listen(s, 5);
@@ -677,14 +677,14 @@ rfiod()
 
     for (i = setsock_ceiling ; i >= 16 * 1024 ; i >>= 1) {
       if (set_rcv_sockparam(s, i) == i) {
-	max_rcvbuf = i;
-	break;
+        max_rcvbuf = i;
+        break;
       }
     }
     for (i = setsock_ceiling ; i >= 16 * 1024 ; i >>= 1) {
       if (set_snd_sockparam(s,i) == i) {
-	max_sndbuf = i;
-	break;
+        max_sndbuf = i;
+        break;
       }
     }
 
@@ -703,32 +703,32 @@ rfiod()
 #ifdef STAGERSUPERGROUP
       log(LOG_INFO,"Checking existence of alternate super-group \"%s\" in group file\n", STAGERSUPERGROUP);
       if ((this_group = Cgetgrnam(STAGERSUPERGROUP)) == NULL) {
-	log(LOG_ERR, "Cannot Cgetgrnam(\"%s\") (%s)\n",STAGERSUPERGROUP,strerror(errno));
-	log(LOG_ERR, "Please check existence of group \"%s\" in group file\n", STAGERSUPERGROUP);
-	log(LOG_ERR, "No alternate super-user in action\n");
+        log(LOG_ERR, "Cannot Cgetgrnam(\"%s\") (%s)\n",STAGERSUPERGROUP,strerror(errno));
+        log(LOG_ERR, "Please check existence of group \"%s\" in group file\n", STAGERSUPERGROUP);
+        log(LOG_ERR, "No alternate super-user in action\n");
       } else {
-	/* We check that this group is the primary group of the yet found stagersuperuser account */
-	log(LOG_INFO,"Checking consistency for alternate super-user\n");
-	if (stagersuperuser.pw_gid != this_group->gr_gid) {
-	  log(LOG_ERR, "\"%s\"'s gid (%d) is not the primary group of account \"%s\" (%d) - No alternate super-user defined\n", STAGERSUPERGROUP, (int) this_group->gr_gid, STAGERSUPERUSER, (int) stagersuperuser.pw_uid);
-	  log(LOG_ERR, "Please check existence of primary account (\"%s\",\"%s\")=(%d,%d) in password file\n", STAGERSUPERUSER, STAGERSUPERGROUP, (int) stagersuperuser.pw_uid, (int) this_group->gr_gid);
-	  log(LOG_ERR, "No alternate super-user in action\n");
-	} else {
-	  /* An alternate super-user has been defined */
-	  log(LOG_INFO, "Allowing the alternate super-user privileges for account: (\"%s\",\"%s\")=(%d,%d)\n", STAGERSUPERUSER, STAGERSUPERGROUP, (int) stagersuperuser.pw_uid, (int) stagersuperuser.pw_gid);
-	  have_stagersuperuser = 1;
-	}
+        /* We check that this group is the primary group of the yet found stagersuperuser account */
+        log(LOG_INFO,"Checking consistency for alternate super-user\n");
+        if (stagersuperuser.pw_gid != this_group->gr_gid) {
+          log(LOG_ERR, "\"%s\"'s gid (%d) is not the primary group of account \"%s\" (%d) - No alternate super-user defined\n", STAGERSUPERGROUP, (int) this_group->gr_gid, STAGERSUPERUSER, (int) stagersuperuser.pw_uid);
+          log(LOG_ERR, "Please check existence of primary account (\"%s\",\"%s\")=(%d,%d) in password file\n", STAGERSUPERUSER, STAGERSUPERGROUP, (int) stagersuperuser.pw_uid, (int) this_group->gr_gid);
+          log(LOG_ERR, "No alternate super-user in action\n");
+        } else {
+          /* An alternate super-user has been defined */
+          log(LOG_INFO, "Allowing the alternate super-user privileges for account: (\"%s\",\"%s\")=(%d,%d)\n", STAGERSUPERUSER, STAGERSUPERGROUP, (int) stagersuperuser.pw_uid, (int) stagersuperuser.pw_gid);
+          have_stagersuperuser = 1;
+        }
       }
 #else
       log(LOG_INFO,"Checking existence of alternate super-group %d in group file\n", (int) stagersuperuser.pw_gid);
       if ((this_group = Cgetgrgid(stagersuperuser.pw_gid)) == NULL) {
-	log(LOG_ERR, "Cannot Cgetgrgid(%d) (%s)\n",(int) stagersuperuser.pw_gid,strerror(errno));
-	log(LOG_ERR, "Please check existence of group %d in group file\n", (int) stagersuperuser.pw_gid);
-	log(LOG_ERR, "No alternate super-user in action\n");
+        log(LOG_ERR, "Cannot Cgetgrgid(%d) (%s)\n",(int) stagersuperuser.pw_gid,strerror(errno));
+        log(LOG_ERR, "Please check existence of group %d in group file\n", (int) stagersuperuser.pw_gid);
+        log(LOG_ERR, "No alternate super-user in action\n");
       } else {
-	/* An alternate super-user has been defined */
-	log(LOG_INFO, "Allowing the alternate super-user privileges for account: (\"%s\",\"%s\")=(%d,%d)\n", STAGERSUPERUSER, this_group->gr_name, (int) stagersuperuser.pw_uid, (int) stagersuperuser.pw_gid);
-	have_stagersuperuser = 1;
+        /* An alternate super-user has been defined */
+        log(LOG_INFO, "Allowing the alternate super-user privileges for account: (\"%s\",\"%s\")=(%d,%d)\n", STAGERSUPERUSER, this_group->gr_name, (int) stagersuperuser.pw_uid, (int) stagersuperuser.pw_gid);
+        have_stagersuperuser = 1;
       }
 #endif
     }
@@ -741,150 +741,150 @@ rfiod()
       check_child_exit((subrequest_id>0 ? have_a_child : 0)); /* check childs [pid,status] */
       if ( (s != INVALID_SOCKET) && FD_ISSET (s, &readfd)) {
 #endif
-	fromlen = sizeof(from);
-	ns = accept(s, (struct sockaddr *)&from, &fromlen);
+        fromlen = sizeof(from);
+        ns = accept(s, (struct sockaddr *)&from, &fromlen);
 #if defined(_WIN32)
-	if( ns == INVALID_SOCKET ) {
-	  log(LOG_DEBUG, "accept(): %s\n", geterr());
-	  goto select_continue;
-	}
+        if( ns == INVALID_SOCKET ) {
+          log(LOG_DEBUG, "accept(): %s\n", geterr());
+          goto select_continue;
+        }
 #else
-	if( ns < 0 ) {
-	  log(LOG_DEBUG, "accept(): %s\n",strerror(errno));
-	  goto select_continue;
-	}
+        if( ns < 0 ) {
+          log(LOG_DEBUG, "accept(): %s\n",strerror(errno));
+          goto select_continue;
+        }
 #endif
-	log(LOG_DEBUG, "accepting requests\n");
+        log(LOG_DEBUG, "accepting requests\n");
 #if defined(_WIN32)
-	if( getpeername(ns, (struct sockaddr*)&from, &fromlen) == SOCKET_ERROR ) {
-	  log(LOG_ERR, "getpeername: %s\n", geterr());
-	  (void) closesocket(ns);
-	  goto select_continue;
-	}
+        if( getpeername(ns, (struct sockaddr*)&from, &fromlen) == SOCKET_ERROR ) {
+          log(LOG_ERR, "getpeername: %s\n", geterr());
+          (void) closesocket(ns);
+          goto select_continue;
+        }
 #else
-	if( getpeername(ns, (struct sockaddr*)&from, &fromlen) < 0 ) {
-	  log(LOG_ERR, "getpeername: %s\n",strerror(errno));
-	  (void) close(ns);
-	  goto select_continue;
-	}
+        if( getpeername(ns, (struct sockaddr*)&from, &fromlen) < 0 ) {
+          log(LOG_ERR, "getpeername: %s\n",strerror(errno));
+          (void) close(ns);
+          goto select_continue;
+        }
 #endif
-	{
-	  char *p;
+        {
+          char *p;
 
-	  if (((p = getenv("RFIOD_TCP_NODELAY")) != NULL) ||
-	      ((p = getconfent("RFIOD", "TCP_NODELAY", 0)) != NULL)
-	      ) {
-	    if ((strcmp(p,"YES") == 0) || (strcmp(p,"yes") == 0)) {
-	      int rcode = 1;
-	      if ( setsockopt(ns,IPPROTO_TCP,TCP_NODELAY,(char *)&rcode,sizeof(rcode)) == -1 ) {
-		log(LOG_ERR, "setsockopt(..,TCP_NODELAY,...): %s\n",strerror(errno));
-	      }
-	    }
-	  }
-	}
-	if (!singlethread) {
+          if (((p = getenv("RFIOD_TCP_NODELAY")) != NULL) ||
+              ((p = getconfent("RFIOD", "TCP_NODELAY", 0)) != NULL)
+              ) {
+            if ((strcmp(p,"YES") == 0) || (strcmp(p,"yes") == 0)) {
+              int rcode = 1;
+              if ( setsockopt(ns,IPPROTO_TCP,TCP_NODELAY,(char *)&rcode,sizeof(rcode)) == -1 ) {
+                log(LOG_ERR, "setsockopt(..,TCP_NODELAY,...): %s\n",strerror(errno));
+              }
+            }
+          }
+        }
+        if (!singlethread) {
 #if defined(_WIN32)
-	  td = (struct thData*)malloc(sizeof(struct thData));
-	  if( td == NULL ) {
-	    perror("malloc");
-	    closesocket(ns);
-	    closesocket(s);
-	    TlsFree(tls_i);
-	    WSACleanup();
-	    exit(1);
-	  }
-	  td->uid = uid;
-	  td->gid = gid;
-	  td->ns = ns;
-	  memcpy(&(td->from), (void*)&from, sizeof(from));
-	  td->mode = 1;
-	  td->_is_remote = 0;
-	  hp = Cgethostbyaddr((char*)(&(from.sin_addr)), sizeof(struct in_addr), from.sin_family);
-	  if( hp == NULL ) {
-	    strcpy(td->from_host, (char*)inet_ntoa(from.sin_addr));
-	    log(LOG_INFO, "connection from %s\n", inet_ntoa(from.sin_addr));
-	  }
-	  else {
-	    strcpy(td->from_host, hp->h_name);
-	    log(LOG_INFO, "connection from %s\n", hp->h_name);
-	  }
-	  /*
-	   * Detect whether client is in or out of site
-	   */
-	  {
-	    int sav_serrno = serrno;
-	    if( isremote(from.sin_addr, td->from_host) )
-	      td->_is_remote++;
-	    serrno = sav_serrno; /* Failure or not of isremote(), we continue */
-	  }
-	  pid = _beginthread(mt_doit, 0, (void*)td );
-	  if( pid == -1 ) {
-	    log(LOG_ERR, "_beginthread: %s\n", strerror(errno));
-	    closesocket(ns);
-	  }
+          td = (struct thData*)malloc(sizeof(struct thData));
+          if( td == NULL ) {
+            perror("malloc");
+            closesocket(ns);
+            closesocket(s);
+            TlsFree(tls_i);
+            WSACleanup();
+            exit(1);
+          }
+          td->uid = uid;
+          td->gid = gid;
+          td->ns = ns;
+          memcpy(&(td->from), (void*)&from, sizeof(from));
+          td->mode = 1;
+          td->_is_remote = 0;
+          hp = Cgethostbyaddr((char*)(&(from.sin_addr)), sizeof(struct in_addr), from.sin_family);
+          if( hp == NULL ) {
+            strcpy(td->from_host, (char*)inet_ntoa(from.sin_addr));
+            log(LOG_INFO, "connection from %s\n", inet_ntoa(from.sin_addr));
+          }
+          else {
+            strcpy(td->from_host, hp->h_name);
+            log(LOG_INFO, "connection from %s\n", hp->h_name);
+          }
+          /*
+           * Detect whether client is in or out of site
+           */
+          {
+            int sav_serrno = serrno;
+            if( isremote(from.sin_addr, td->from_host) )
+              td->_is_remote++;
+            serrno = sav_serrno; /* Failure or not of isremote(), we continue */
+          }
+          pid = _beginthread(mt_doit, 0, (void*)td );
+          if( pid == -1 ) {
+            log(LOG_ERR, "_beginthread: %s\n", strerror(errno));
+            closesocket(ns);
+          }
 #else
-	  pid = fork();
-	  switch (pid) {
-	  case -1:
-	    log(LOG_ERR,"fork(): %s \n",strerror(errno));
-	    break;
-	  case 0:                          /* Child  */
-	    close(s);
-	    mode = 0;
-	    doit(ns, &from, mode, uid, gid);
-	    break;
-	  }
-	  have_a_child = 1;
-	  close(ns);                          /* Parent */
-	  if ( subrequest_id > 0 ) {
-	    /*
-	     * If we are started by the stagerjob we don't allow for
-	     * more than one connection. Close the listen socket and loop back
-	     * to wait for the child we just forked.
-	     */
-	    close(Socket_parent);
-	    s = Socket_parent = INVALID_SOCKET;
-	    continue;
-	  }
+          pid = fork();
+          switch (pid) {
+          case -1:
+            log(LOG_ERR,"fork(): %s \n",strerror(errno));
+            break;
+          case 0:                          /* Child  */
+            close(s);
+            mode = 0;
+            doit(ns, &from, mode, uid, gid);
+            break;
+          }
+          have_a_child = 1;
+          close(ns);                          /* Parent */
+          if ( subrequest_id > 0 ) {
+            /*
+             * If we are started by the stagerjob we don't allow for
+             * more than one connection. Close the listen socket and loop back
+             * to wait for the child we just forked.
+             */
+            close(Socket_parent);
+            s = Socket_parent = INVALID_SOCKET;
+            continue;
+          }
 #endif /* WIN32 */
-	} else { /* singlethread */
-	  mode = 1;
-	  doit(ns, &from, mode, uid, gid);
-	}
+        } else { /* singlethread */
+          mode = 1;
+          doit(ns, &from, mode, uid, gid);
+        }
 #ifndef _WIN32
-	FD_CLR (ns, &readfd);
+        FD_CLR (ns, &readfd);
       }
 #endif
     select_continue:
       if ( s != INVALID_SOCKET ) {
-	memcpy (&readfd, &readmask, sizeof(readmask));
-	timeval.tv_sec = (once_only && have_a_child) ? 1 : select_timeout;  /* must set each time for linux */
-	timeval.tv_usec = 0;
-	select_status = select (s + 1, &readfd, NULL, NULL, &timeval);
+        memcpy (&readfd, &readmask, sizeof(readmask));
+        timeval.tv_sec = (once_only && have_a_child) ? 1 : select_timeout;  /* must set each time for linux */
+        timeval.tv_usec = 0;
+        select_status = select (s + 1, &readfd, NULL, NULL, &timeval);
       } else select_status = 0;
       if ( select_status < 0 ) {
-	log(LOG_DEBUG,"select error No %d (%s)\n", errno, strerror(errno));
-	if (once_only) {
-	  if (have_a_child && exit_code_from_last_child >= 0) {
-	    log(LOG_DEBUG,"Exiting with status %d\n", exit_code_from_last_child);
-	    exit(exit_code_from_last_child);
-	  } else if (! have_a_child) {
-	    /* error and no child : we assume very old client */
-	    log(LOG_DEBUG,"Exiting with status %d\n", 0);
-	    exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-	  }
-	}
-	FD_ZERO (&readfd);
+        log(LOG_DEBUG,"select error No %d (%s)\n", errno, strerror(errno));
+        if (once_only) {
+          if (have_a_child && exit_code_from_last_child >= 0) {
+            log(LOG_DEBUG,"Exiting with status %d\n", exit_code_from_last_child);
+            exit(exit_code_from_last_child);
+          } else if (! have_a_child) {
+            /* error and no child : we assume very old client */
+            log(LOG_DEBUG,"Exiting with status %d\n", 0);
+            exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+          }
+        }
+        FD_ZERO (&readfd);
       }
       if (select_status == 0 && once_only) { /* Timeout */
-	if (have_a_child && exit_code_from_last_child >= 0) {
-	  log(LOG_DEBUG,"Exiting with status %d\n", exit_code_from_last_child);
-	  exit(exit_code_from_last_child);
-	} else if (! have_a_child) {
-	  /* timeout and no child : we assume very old client */
-	  log(LOG_DEBUG,"Exiting with status %d\n", 0);
-	  exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-	}
+        if (have_a_child && exit_code_from_last_child >= 0) {
+          log(LOG_DEBUG,"Exiting with status %d\n", exit_code_from_last_child);
+          exit(exit_code_from_last_child);
+        } else if (! have_a_child) {
+          /* timeout and no child : we assume very old client */
+          log(LOG_DEBUG,"Exiting with status %d\n", 0);
+          exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+        }
       }
     }
   } else {       /* !standalone */
@@ -1066,8 +1066,8 @@ int doit(s, fromp, mode, uid, gid)
     //  }
     //  else {
     if (Csec_mapToLocalUser(Csec_mech, Csec_auth_id,
-			    username, CA_MAXUSRNAMELEN,
-			    &peer_uid, &peer_gid) < 0) {
+                            username, CA_MAXUSRNAMELEN,
+                            &peer_uid, &peer_gid) < 0) {
       log(LOG_ERR, "CSEC: Could not map user %s/%s from %s [%d]\n", Csec_mech, Csec_auth_id,from_host,from_port);
     }
     //  closesocket(s);
@@ -1081,16 +1081,16 @@ int doit(s, fromp, mode, uid, gid)
     } else {
       log(LOG_INFO, "Comparing gid %d and peer_gid %d \n",gid ,peer_gid);
       if(peer_gid != gid) {
-	log(LOG_ERR, "CSEC: The group id of this group is not valid %s/%d\n", Csec_mech, peer_gid);
-	closesocket(s);
-	exit(1);
+        log(LOG_ERR, "CSEC: The group id of this group is not valid %s/%d\n", Csec_mech, peer_gid);
+        closesocket(s);
+        exit(1);
       }
     }
 
     log(LOG_INFO, "CSEC: Client is %s (%d/%d)\n",
-	username,
-	peer_uid,
-	peer_gid);
+        username,
+        peer_uid,
+        peer_gid);
     Csec_service_type = -1;
   }
 
@@ -1189,9 +1189,9 @@ int doit(s, fromp, mode, uid, gid)
        * Lock program in memory
        */
       if ( prctl(PR_RESIDENT) < 0)
-	log(LOG_INFO,"prctl(PR_RESIDENT): %s\n",strerror(errno)) ;
+        log(LOG_INFO,"prctl(PR_RESIDENT): %s\n",strerror(errno)) ;
       else
-	log(LOG_INFO,"Daemon locked\n");
+        log(LOG_INFO,"Daemon locked\n");
     }
   }
   if ((p1 = getconfent("RFIO","NDPRIORITY",0)) != NULL) {
@@ -1212,7 +1212,7 @@ int doit(s, fromp, mode, uid, gid)
     log(LOG_INFO,"Trying to set scheduling priority to %d\n",priority);
     sched_rc = setpriority(PRIO_PROCESS,0,priority);
     if ( sched_rc == -1 ) log(LOG_ERR,"setpriority(%d,%d,%d): %s\n",
-			      PRIO_PGRP,0,priority,strerror(errno));
+                              PRIO_PGRP,0,priority,strerror(errno));
   }
 #endif /* linux */
 
@@ -1223,7 +1223,7 @@ int doit(s, fromp, mode, uid, gid)
     int bet ;
     request = srrequest(s, &bet);
     if ( (request==RQST_OPEN || request==RQST_OPENDIR ||
-	  request==RQST_XYOPEN) && !bet && is_remote ) {
+          request==RQST_XYOPEN) && !bet && is_remote ) {
       log(LOG_ERR,"Attempt to call daemon with expired magic from outside site\n");
 #if defined(_WIN32)
       return(mt_cleanup(td, &fd, 1));
@@ -1235,10 +1235,10 @@ int doit(s, fromp, mode, uid, gid)
     }
     if (request < 0) {
       log(LOG_INFO,"drop_socket(%d): %d read, %d readahead, %d write, %d flush, %d stat, %d lseek and %d lockf\n",
-	  s, info.readop, info.aheadop, info.writop, info.flusop, info.statop,
-	  info.seekop, info.lockop);
+          s, info.readop, info.aheadop, info.writop, info.flusop, info.statop,
+          info.seekop, info.lockop);
       log(LOG_INFO,"drop_socket(%d): %s bytes read and %s bytes written\n",
-	  s, u64tostr(info.rnbr,tmpbuf,0),u64tostr(info.wnbr,tmpbuf2,0)) ;
+          s, u64tostr(info.rnbr,tmpbuf,0),u64tostr(info.wnbr,tmpbuf2,0)) ;
       log(LOG_ERR, "fatal error on socket %d: %s\n", s, strerror(errno));
 
 #if defined(_WIN32)
@@ -1252,11 +1252,11 @@ int doit(s, fromp, mode, uid, gid)
     switch (request) {
     case 0:
       log(LOG_INFO,
-	  "close_socket(%d): %d read, %d readahead, %d write, %d flush, %d stat, %d lseek and %d lockf\n",
-	  s, info.readop, info.aheadop, info.writop, info.flusop, info.statop,
-	  info.seekop, info.lockop);
+          "close_socket(%d): %d read, %d readahead, %d write, %d flush, %d stat, %d lseek and %d lockf\n",
+          s, info.readop, info.aheadop, info.writop, info.flusop, info.statop,
+          info.seekop, info.lockop);
       log(LOG_INFO,"close_socket(%d): %s bytes read and %s bytes written\n",
-	  s, u64tostr(info.rnbr,tmpbuf,0), u64tostr(info.wnbr,tmpbuf2,0)) ;
+          s, u64tostr(info.rnbr,tmpbuf,0), u64tostr(info.wnbr,tmpbuf2,0)) ;
       log(LOG_ERR, "connection %d dropped by remote end\n", s);
 #if defined(SACCT)
       rfioacct(0,0,0,s,0,0,status,errno,&info,NULL,NULL);
@@ -1267,9 +1267,9 @@ int doit(s, fromp, mode, uid, gid)
 #endif
       shutdown(s, 2);
       if( close(s) < 0 )
-	log(LOG_ERR, "Error closing socket fildesc=%d, errno=%d\n", s, errno);
+        log(LOG_ERR, "Error closing socket fildesc=%d, errno=%d\n", s, errno);
       else
-	log(LOG_INFO, "Closing socket fildesc=%d\n", s);
+        log(LOG_INFO, "Closing socket fildesc=%d\n", s);
       if( mode ) return(1); else  exit(1);
     case RQST_CHKCON :
       log(LOG_DEBUG, "request type : check connect\n");
@@ -1393,10 +1393,10 @@ int doit(s, fromp, mode, uid, gid)
       log(LOG_DEBUG, "stat() returned %d\n",status);
       if (request==RQST_STAT || request==RQST_STAT_SEC) {
 #if defined(_WIN32)
-	return(mt_cleanup(td, &fd, 0));
+        return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */
-	shutdown(s, 2); close(s);
-	if(mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+        shutdown(s, 2); close(s);
+        if(mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       }  /* if request == RQST_STAT  */
       break ;
 #if !defined(_WIN32)
@@ -1448,8 +1448,8 @@ int doit(s, fromp, mode, uid, gid)
       status = srsymlink(s,request,(bet?is_remote:0),(bet?from_host:(char *)NULL)) ;
       log(LOG_DEBUG, "srsymlink() returned %d\n", status) ;
       if (request==RQST_SYMLINK) {
-	shutdown(s,2); close(s);
-	if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+        shutdown(s,2); close(s);
+        if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       }
       break;
     case RQST_READLINK:
@@ -1687,10 +1687,10 @@ int doit(s, fromp, mode, uid, gid)
       log(LOG_DEBUG, "stat64() returned %d\n",status);
       if (request == RQST_STAT64) {
 #if defined(_WIN32)
-	return(mt_cleanup(td, &fd, 0));
+        return(mt_cleanup(td, &fd, 0));
 #endif /* WIN32 */
-	shutdown(s, 2); close(s);
-	if(mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+        shutdown(s, 2); close(s);
+        if(mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       }  /* if request == RQST_STAT64  */
       break ;
 #if !defined(_WIN32)
@@ -1733,11 +1733,11 @@ void check_child_exit(int block)
     while ((child_pid = waitpid(-1, &term_status, WNOHANG)) > 0) {
       exit_code_from_last_child = WEXITSTATUS(term_status);
       if (WIFEXITED(term_status)) {
-	log(LOG_ERR,"Waiting for end of child %d, status %d\n", child_pid, exit_code_from_last_child);
+        log(LOG_ERR,"Waiting for end of child %d, status %d\n", child_pid, exit_code_from_last_child);
       } else if (WIFSIGNALED(term_status)) {
-	log(LOG_ERR,"Waiting for end of child %d, uncaught signal %d\n", child_pid, WTERMSIG(term_status));
+        log(LOG_ERR,"Waiting for end of child %d, uncaught signal %d\n", child_pid, WTERMSIG(term_status));
       } else {
-	log(LOG_ERR,"Waiting for end of child %d, stopped\n", child_pid);
+        log(LOG_ERR,"Waiting for end of child %d, stopped\n", child_pid);
       }
     }
   }

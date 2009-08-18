@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.39 $ $Release$ $Date: 2009/08/14 16:10:08 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.40 $ $Release$ $Date: 2009/08/18 09:42:54 $ $Author: waldron $
  *
  * A base multithreaded server for simple listening servers
  *
@@ -50,19 +50,21 @@
 #include <stdio.h>
 
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // constructor
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 castor::server::BaseServer::BaseServer(const std::string serverName) :
-  m_foreground(false), m_runAsStagerSuperuser(false), m_serverName(serverName)
+  m_foreground(false),
+  m_runAsStagerSuperuser(false),
+  m_serverName(serverName)
 {
   m_cmdLineParams.clear();
   m_cmdLineParams << "fc:h";
 }
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // destructor
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 castor::server::BaseServer::~BaseServer() throw()
 {
   // tries to free all thread pools
@@ -72,14 +74,13 @@ castor::server::BaseServer::~BaseServer() throw()
   }
 }
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // init
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void castor::server::BaseServer::init() throw (castor::exception::Exception)
 {
   // init daemon if to be run in background
   if (!m_foreground) {
-    dlf_prepare();
 
     // we could set our working directory to '/' here with a call to chdir(2).
     // For the time being we don't and leave it to the initd script to change
@@ -89,14 +90,12 @@ void castor::server::BaseServer::init() throw (castor::exception::Exception)
       castor::exception::Internal ex;
       ex.getMessage() << "Background daemon initialization failed with result "
                       << pid << std::endl;
-      dlf_parent();
       throw ex;
     }
     else if (pid > 0) {
       // the parent exits normally
       exit(EXIT_SUCCESS);
     }
-    dlf_child();
 
     // run the program in a new session
     setsid();
@@ -123,9 +122,9 @@ void castor::server::BaseServer::init() throw (castor::exception::Exception)
   signal(SIGXFSZ, SIG_IGN);
 }
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // dlfInit
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void castor::server::BaseServer::dlfInit(castor::dlf::Message messages[])
   throw (castor::exception::Exception)
 {
@@ -152,9 +151,9 @@ void castor::server::BaseServer::dlfInit(castor::dlf::Message messages[])
   castor::dlf::dlf_addMessages(DLF_BASE_FRAMEWORK, frameworkMessages);
 }
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // start
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void castor::server::BaseServer::start() throw (castor::exception::Exception)
 {
   if (m_foreground) {
@@ -170,7 +169,8 @@ void castor::server::BaseServer::start() throw (castor::exception::Exception)
   // daemonization
   init();
 
-  // if we got here, we're ready to start all the pools and detach corresponding threads
+  // if we got here, we're ready to start all the pools and detach corresponding
+  // threads
   for (tp = m_threadPools.begin(); tp != m_threadPools.end(); tp++) {
     tp->second->run();  // here run returns immediately
   }
@@ -179,7 +179,8 @@ void castor::server::BaseServer::start() throw (castor::exception::Exception)
 //-----------------------------------------------------------------------------
 // addThreadPool
 //-----------------------------------------------------------------------------
-void castor::server::BaseServer::addThreadPool(castor::server::BaseThreadPool* pool) throw()
+void castor::server::BaseServer::addThreadPool
+(castor::server::BaseThreadPool* pool) throw()
 {
   if(pool != 0) {
     const char id = pool->getPoolId();
@@ -193,17 +194,18 @@ void castor::server::BaseServer::addThreadPool(castor::server::BaseThreadPool* p
 //-----------------------------------------------------------------------------
 // getThreadPool
 //-----------------------------------------------------------------------------
-castor::server::BaseThreadPool* castor::server::BaseServer::getThreadPool(const char id) throw()
+castor::server::BaseThreadPool* castor::server::BaseServer::getThreadPool
+(const char id) throw()
 {
   return m_threadPools[id];
 }
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // parseCommandLine
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void castor::server::BaseServer::parseCommandLine(int argc, char *argv[])
 {
-  Coptions_t* longopts = new Coptions_t[m_threadPools.size()+4];
+  Coptions_t* longopts = new Coptions_t[m_threadPools.size() + 4];
   char tparam[] = "Xthreads";
 
   longopts[0].name = "foreground";
@@ -264,9 +266,9 @@ void castor::server::BaseServer::parseCommandLine(int argc, char *argv[])
   delete[] longopts;
 }
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // help
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void castor::server::BaseServer::help(std::string programName)
 {
   std::cout << "Usage: " << programName << " [options]\n"
@@ -280,10 +282,11 @@ void castor::server::BaseServer::help(std::string programName)
     "Comments to: Castor.Support@cern.ch\n";
 }
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // sendNotification
-//------------------------------------------------------------------------------
-void castor::server::BaseServer::sendNotification(std::string host, int port, char tpName, int nbThreads)
+//-----------------------------------------------------------------------------
+void castor::server::BaseServer::sendNotification
+(std::string host, int port, char tpName, int nbThreads)
   throw()
 {
   try {

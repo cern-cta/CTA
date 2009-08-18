@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: mighunterd.init,v $ $Revision: 1.1 $ $Release$ $Date: 2009/07/23 12:18:45 $ $Author: waldron $
+# @(#)$RCSfile: mighunterd.init,v $ $Revision: 1.2 $ $Release$ $Date: 2009/08/18 09:42:53 $ $Author: waldron $
 #
 # chkconfig: 345 73 32
 # description: Mighunter Daemon Initialisation Script
@@ -70,12 +70,12 @@ start() {
                 echo
 
                 # Loop over the service classes
-                # Note: we change the internal field separator here to loop 
+                # Note: we change the internal field separator here to loop
                 # over the svcclass list using ':' as a delimiter
                 IFS=$':'
                 for i in `echo $SVCCLASSES | xargs -n ${SVCCLASSES_PER_PROCESS} | awk '{ print $0 ":" }' | xargs | sed 's/: /:/g'`; do
-                        
-                        # Reset IFS so that the standard function calls 
+
+                        # Reset IFS so that the standard function calls
                         # (e.g. daemon) work correctly.
                         unset IFS
                         echo -n $"  For svcclasses: "
@@ -86,9 +86,9 @@ start() {
                         fi
 
                         # Start the mighunter
-                        cd /var/spool/mighunter
+                        cd /var/log/castor
                         daemon /usr/bin/$prog $MIGHUNTERD_OPTIONS $i
-                        
+
                         RETVAL=$?
                         [ $RETVAL -eq 0 ] && success $"$base startup" || failure $"$base startup"
                         echo
@@ -123,7 +123,7 @@ start() {
                         echo
                         FRETVAL=1
                 else
-                        cd /var/spool/mighunter
+                        cd /var/log/castor
                         daemon /usr/bin/$prog $MIGHUNTERD_OPTIONS $i
 
                         # Write the pid to a file.
@@ -181,7 +181,7 @@ migstatus() {
 
         # Loop over mighunters
         for i in ${SVCCLASSES}; do
-                # Check if the mighunter associated to this service class 
+                # Check if the mighunter associated to this service class
                 # running
                 pid=`ps -eo pid,ppid,comm,cmd | egrep " 1 $prog.*$i\$" | awk '{print $1}' | xargs`
                 if [ -n "$pid" ]; then

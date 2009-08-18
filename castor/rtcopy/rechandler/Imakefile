@@ -24,8 +24,8 @@
 # @author Castor Dev team, castor-dev@cern.ch
 #
 
-CPPFLAGS = -g -O0 -I $(ORACLE_HOME)/rdbms/public -I ../../../h -I ../../.. $(PYTHONINC) $(MTCCFLAGS) 
-LDFLAGS += $(MTLDFLAGS) 
+CPPFLAGS = -g -O0 -I $(ORACLE_HOME)/rdbms/public -I ../../../h -I ../../.. $(PYTHONINC) $(MTCCFLAGS)
+LDFLAGS += $(MTLDFLAGS)
 LD = g++
 LIBS = -L$(ORACLE_HOME)/lib -locci -lclntsh $(PYTHONLIBS)
 
@@ -37,10 +37,10 @@ DependsOnLibrary(../db/cnv,castorcnvs)
 DependsOnLibrary(../infoPolicy,castorinfopolicy)
 DependsOnLibrary(../../vdqm,castorvdqm)
 
-RECHANDLERDBIN_SRCS = RecHandlerDaemon.cpp RecHandlerThread.cpp  ora/OraRecHandlerSvc.cpp
-RECHANDLERDBIN_OBJS = $(RECHANDLERDBIN_SRCS:.cpp=.Osuf)
-NormalProgramTarget(rechandlerd,$(RECHANDLERDBIN_OBJS),$(DEPLIB),$(LIBS),750)
-MakeDir(/var/spool/rechandler,0755)
+RECHANDLERDAEMONBIN_SRCS = RecHandlerDaemon.cpp RecHandlerThread.cpp  ora/OraRecHandlerSvc.cpp
+RECHANDLERDAEMONBIN_OBJS = $(RECHANDLERDAEMONBIN_SRCS:.cpp=.Osuf)
+NormalProgramTarget(rechandlerd,$(RECHANDLERDAEMONBIN_OBJS),$(DEPLIB),$(LIBS),750)
+MakeDir(/var/log/castor,0755)
 ADMMANPAGE(rechandlerd)
 LOGROTATE(castor-rechandler-server,../../..,install)
 SYSCONFIG(rechandlerd,install)

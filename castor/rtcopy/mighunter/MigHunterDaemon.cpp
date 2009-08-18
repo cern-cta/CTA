@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: MigHunterDaemon.cpp,v $ $Author: gtaur $
+* @(#)$RCSfile: MigHunterDaemon.cpp,v $ $Author: waldron $
 *
 *
 *
@@ -47,12 +47,12 @@
 extern "C" {
   char* getconfent(const char *, const char *, int);
 }
- 
+
 
 // default values
 
 #define MIN_BYTE_VOLUME   1     // bytes
-#define SLEEP_TIME        7200  // seconds (2 hours) 
+#define SLEEP_TIME        7200  // seconds (2 hours)
 
 
 //------------------------------------------------------------------------------
@@ -61,12 +61,12 @@ extern "C" {
 
 int main(int argc, char* argv[]){
 
- // service to access the database 
+ // service to access the database
  // now I just check that everything is ok
 
   castor::IService* orasvc = castor::BaseObject::services()->service("OraMigHunterSvc", castor::SVC_ORAMIGHUNTERSVC);
   castor::rtcopy::mighunter::IMigHunterSvc* mySvc = dynamic_cast<castor::rtcopy::mighunter::IMigHunterSvc*>(orasvc);
-  
+
 
   if (0 == mySvc) {
     // we don't have DLF yet, and this is a major fault, so log to stderr and exit
@@ -74,46 +74,46 @@ int main(int argc, char* argv[]){
     return -1;
   }
 
-  // new BaseDaemon as Server 
-    
+  // new BaseDaemon as Server
+
   castor::rtcopy::mighunter::MigHunterDaemon newMigHunter; //dlf available now
 
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 0,NULL);
-  
-    
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 1, 0,NULL);
+
+
   // create the policy
   try{
     char* pm=NULL;
     char* ps=NULL;
     std::string migrationPolicyName;
     std::string streamPolicyName;
-    
+
     // get migration policy name
 
-    if ( (pm = getconfent("Policy","Migration",0)) != NULL ){ 
+    if ( (pm = getconfent("Policy","Migration",0)) != NULL ){
       migrationPolicyName=pm;
     } else {
        castor::dlf::Param params[] =
 	  {castor::dlf::Param("message","No policy for migration in castor.conf")};
-       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, 12, 1, params);
+       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 12, 1, params);
 
     }
 
     // get stream policy name
 
-    if ( (ps = getconfent("Policy","Stream",0)) != NULL ){ 
+    if ( (ps = getconfent("Policy","Stream",0)) != NULL ){
       streamPolicyName=ps;
     } else {
       castor::dlf::Param params[] =
-	  {castor::dlf::Param("message","No policy for stream  in castor.conf")};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, 12, 1, params);
+	  {castor::dlf::Param("message","No policy for stream in castor.conf")};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 12, 1, params);
 
     }
 
     // start interpreter and load the files
     castor::infoPolicy::MigrationPySvc* migrSvc=NULL;
     castor::infoPolicy::StreamPySvc* strSvc=NULL;
-    
+
     //migration
     if (pm != NULL)
 	migrSvc = new castor::infoPolicy::MigrationPySvc(migrationPolicyName);
@@ -121,10 +121,10 @@ int main(int argc, char* argv[]){
     // stream
     if (ps != NULL )
 	strSvc = new  castor::infoPolicy::StreamPySvc(streamPolicyName);
-  
-    
+
+
     newMigHunter.parseCommandLine(argc, argv);
-    
+
     u_signed64 minByteVolume=newMigHunter.byteVolume();
     u_signed64 sleepTime=newMigHunter.timeSleep();
     bool doClone=newMigHunter.doClone();
@@ -142,13 +142,13 @@ int main(int argc, char* argv[]){
       new castor::server::SignalThreadPool("MigHunterThread", new castor::rtcopy::mighunter::MigHunterThread(listSvcClass,minByteVolume,doClone,migrSvc,strSvc), sleepTime));
     newMigHunter.getThreadPool('M')->setNbThreads(1);
     newMigHunter.start();
-  
+
   }// end try block
   catch (castor::exception::Exception e) {
     std::cerr << "Caught castor exception : "
      << sstrerror(e.code()) << std::endl
      << e.getMessage().str() << std::endl;
-         
+
     castor::dlf::Param params0[] =
       {castor::dlf::Param("errorCode",e.code()),
        castor::dlf::Param("errorMessage",e.getMessage().str())
@@ -157,12 +157,12 @@ int main(int argc, char* argv[]){
     return -1;
   }
   catch (...) {
-    
-    std::cerr << "Caught general exception!" << std::endl;  
+
+    std::cerr << "Caught general exception!" << std::endl;
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, 14, 0, NULL);
     return -1;
-    
-  } 
+
+  }
   return 0;
 }
 
@@ -171,7 +171,7 @@ int main(int argc, char* argv[]){
 // also initialises the logging facility
 //------------------------------------------------------------------------------
 
-castor::rtcopy::mighunter::MigHunterDaemon::MigHunterDaemon() : castor::server::BaseDaemon("Mighunter") 
+castor::rtcopy::mighunter::MigHunterDaemon::MigHunterDaemon() : castor::server::BaseDaemon("mighunterd")
 {
     m_timeSleep= SLEEP_TIME;
     m_byteVolume= MIN_BYTE_VOLUME;
@@ -184,7 +184,7 @@ castor::rtcopy::mighunter::MigHunterDaemon::MigHunterDaemon() : castor::server::
 
   castor::dlf::Message messages[] =
   {{1, "Service startup"},
-   {2, "Service shutdown"},  
+   {2, "Service shutdown"},
    {3, "No migration candidate found"},
    {4, "Error in creating or updating stream"},
    {5, "Executing the policy for migration"},
@@ -211,32 +211,32 @@ void castor::rtcopy::mighunter::MigHunterDaemon::parseCommandLine(int argc, char
   }
   Coptind = 1;
   Copterr = 1;
-  int c; // ???? 
+  int c; // ????
 
   std::string optionStr="Option used: ";
-   
+
   while ( (c = Cgetopt(argc,argv,"Ct:v:fh")) != -1 ) {
     switch (c) {
     case 'C':
-      optionStr+=" -C "; 
+      optionStr+=" -C ";
       m_doClone = true;
       break;
     case 't':
       optionStr+=" -t ";
-      optionStr+=Coptarg; 
+      optionStr+=Coptarg;
       m_timeSleep = strutou64(Coptarg);
       break;
     case 'v':
       optionStr+=" -v ";
-      optionStr+=Coptarg; 
+      optionStr+=Coptarg;
       m_byteVolume = strutou64(Coptarg);
       break;
     case 'f':
-      optionStr+=" -f "; 
+      optionStr+=" -f ";
       m_foreground = true;
       break;
     case 'h':
-      optionStr+=" -h "; 
+      optionStr+=" -h ";
       usage();
       exit(0);
     default:
@@ -253,22 +253,22 @@ void castor::rtcopy::mighunter::MigHunterDaemon::parseCommandLine(int argc, char
    svcClassesStr+=argv[i];
    svcClassesStr+=" ";
   }
-  if (m_listSvcClass.empty()) { 
-    m_listSvcClass.push_back("default"); 
-    svcClassesStr+=" default "; 
+  if (m_listSvcClass.empty()) {
+    m_listSvcClass.push_back("default");
+    svcClassesStr+=" default ";
   }
-  
+
   castor::dlf::Param params[] = {castor::dlf::Param("message", optionStr.c_str()),
 				 castor::dlf::Param("message", svcClassesStr.c_str()),};
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, 15, 2, params);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 15, 2, params);
 
 }
 
 void castor::rtcopy::mighunter::MigHunterDaemon::usage(){
-  std::cout << "\nUsage: " << "MigHunterDaemon" 
+  std::cout << "\nUsage: " << "MigHunterDaemon"
             << "[options] svcClass1 svcClass2 svcClass3 ...\n"
             << "-C  : clone tapecopies from existing to new streams (very slow!)\n"
             << "-f     : to run in foreground\n"
             << "-t sleepTime(seconds)  : sleep time (in seconds) between two checks. Default= 7200 \n"
-            << "-v volume(bytes)       : data volume threshold below migration will not start\n"<<std::endl; 
+            << "-v volume(bytes)       : data volume threshold below migration will not start\n"<<std::endl;
 }

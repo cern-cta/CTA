@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RecHandlerThread.cpp,v $ $Author: gtaur $
+ * @(#)$RCSfile: RecHandlerThread.cpp,v $ $Author: waldron $
  *
  *
  *
@@ -101,7 +101,7 @@ void RecHandlerThread::run(void* par)
 	 castor::dlf::Param params[] =
 	   {
           castor::dlf::Param("message", "No input tapes for the policy")};
-         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 3, 1, params);
+         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 3, 1, params);
 
       }
 
@@ -124,7 +124,7 @@ void RecHandlerThread::run(void* par)
 	  castor::dlf::Param params[] =
 	      {castor::dlf::Param("Tape", realInfo->vid()),
 	       castor::dlf::Param("message", "Policy called")};
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 4, 2, params);
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 4, 2, params);
 	}
 
 	try {
@@ -133,7 +133,7 @@ void RecHandlerThread::run(void* par)
 	     eligibleTapeIds.push_back(realInfo->tapeId()); // tape to resurrect
 	    castor::dlf::Param params[] =
 	      {castor::dlf::Param("Tape", realInfo->vid())};
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 5, 1, params);
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 5, 1, params);
 	  } else {
 	     int priorityChosen=m_recallPolicy->applyPolicy(*infoCandidate);
 	    
@@ -141,7 +141,7 @@ void RecHandlerThread::run(void* par)
 	       eligibleTapeIds.push_back(realInfo->tapeId()); // tape to resurrect
 	       castor::dlf::Param params[] =
 		 {castor::dlf::Param("Tape", realInfo->vid())};
-	       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 5, 1, params);
+	       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 5, 1, params);
 
 	       // call to VDQM with the priority (temporary hack)
 
@@ -150,7 +150,7 @@ void RecHandlerThread::run(void* par)
 	     } else {
 	       castor::dlf::Param params[] =
 		 {castor::dlf::Param("Tape", realInfo->vid())};
-	       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 11, 1, params);
+	       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 11, 1, params);
 	     }
 	  }
 	} catch (castor::exception::Exception e) {
@@ -164,7 +164,7 @@ void RecHandlerThread::run(void* par)
  
 	    castor::dlf::Param params2[] =
 	      {castor::dlf::Param("Tape", realInfo->vid())};
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 5, 1, params2);
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 5, 1, params2);
 	}
 
 	

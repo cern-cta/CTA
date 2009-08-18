@@ -10,7 +10,7 @@
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-.TH VDQM 8 "$Date: 2009/07/23 12:18:46 $" CASTOR "VDQM server daemon"
+.TH VDQM 8 "$Date: 2009/08/18 09:42:56 $" CASTOR "VDQM server daemon"
 .SH NAME
 vdqmd \- Volume and Drive Queue Manager (VDQM) server
 .SH SYNOPSIS
@@ -21,7 +21,7 @@ vdqmd \- Volume and Drive Queue Manager (VDQM) server
 is the central CASTOR server handling all tape volume and drive queues.
 It runs as a daemon on a host which must be known to all clients and
 tape servers.  The following methods are tried in sequence by clients and
-tape servers to determine this connection information: 
+tape servers to determine this connection information:
 .TP
 1. Read the environment variables:
 \fBVDQM_HOST\fP
@@ -106,7 +106,7 @@ CASTOR configuration file.
 .B /etc/castor/ORAVDQMCONFIG
 Database connection details.
 .TP
-.B /var/spool/vdqm/log
+.B /var/log/castor/vdqm.log
 Default location of the VDQM server log file.
 
 .SH SEE ALSO

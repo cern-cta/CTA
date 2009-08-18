@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.58 $ $Release$ $Date: 2009/07/13 06:22:09 $ $Author: waldron $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.59 $ $Release$ $Date: 2009/08/18 09:43:01 $ $Author: waldron $
  *
  *
  *
@@ -796,21 +796,21 @@ int main(
   rc = rtcp_NewTapeList(&tape,NULL,WRITE_ENABLE);
   if ( rc == -1 ) {
     LOG_SYSCALL_ERR("rtcp_NewTapeList()");
-    dlf_shutdown(5);
+    dlf_shutdown();
     return(1);
   }
 
   rc = rtcpcld_initLocks(tape);
   if ( rc == -1 ) {
     LOG_SYSCALL_ERR("rtcpcld_initLocks()");
-    dlf_shutdown(5);
+    dlf_shutdown();
     return(1);
   }
 
   rc = rtcpcld_initNsInterface();
   if ( rc == -1 ) {
     LOG_SYSCALL_ERR("rtcpcld_initNsInterface()");
-    dlf_shutdown(5);
+    dlf_shutdown();
     return(1);
   }
 
@@ -930,6 +930,6 @@ int main(
                               rc,
                               save_serrno
                               );
-  dlf_shutdown(5);
+  dlf_shutdown();
   return(rc);
 }

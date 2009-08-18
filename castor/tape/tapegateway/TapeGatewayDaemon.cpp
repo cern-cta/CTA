@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: TapeGatewayDaemon.cpp,v $ $Author: gtaur $
+* @(#)$RCSfile: TapeGatewayDaemon.cpp,v $ $Author: waldron $
 *
 *
 *
@@ -59,24 +59,24 @@
 
 
 #define  DEFAULT_SLEEP_INTERVAL   10
-#define  VDQM_TIME_OUT_INTERVAL 600 // Timeout between two polls on a VDQM request 
+#define  VDQM_TIME_OUT_INTERVAL 600 // Timeout between two polls on a VDQM request
 #define  MIN_WORKER_THREADS 5
 #define  MAX_WORKER_THREADS 240
 
 extern "C" {
   char* getconfent(const char *, const char *, int);
 }
- 
+
 
 //------------------------------------------------------------------------------
 // main method
 //------------------------------------------------------------------------------
 
 int main(int argc, char* argv[]){
- 
+
   castor::tape::tapegateway::TapeGatewayDaemon tgDaemon;
 
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, castor::tape::tapegateway::DAEMON_START, 0, NULL);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, castor::tape::tapegateway::DAEMON_START, 0, NULL);
 
   // load the TapeGateway service to check that everything is fine with it
 
@@ -89,7 +89,7 @@ int main(int argc, char* argv[]){
 	      << std::endl;
     exit(-1);
   }
-  
+
   // create the retry policies
   try{
     char* prm=NULL;
@@ -98,10 +98,10 @@ int main(int argc, char* argv[]){
     std::string retryRecallPolicyName;
     std::string migrationFunctionName;
     std::string recallFunctionName;
-    
-    // get migration retry policy 
 
-    if ( (prm = getconfent("Policy","RetryMigration",0)) != NULL ){ 
+    // get migration retry policy
+
+    if ( (prm = getconfent("Policy","RetryMigration",0)) != NULL ){
       retryMigrationPolicyName=prm;
     } else {
        castor::dlf::Param params[] =
@@ -110,7 +110,7 @@ int main(int argc, char* argv[]){
 
     }
     prm=NULL;
-    if ( (prm = getconfent("Policy","RetryMigrationFunction",0)) != NULL ){ 
+    if ( (prm = getconfent("Policy","RetryMigrationFunction",0)) != NULL ){
       migrationFunctionName=prm;
     } else {
         castor::dlf::Param params[] =
@@ -119,9 +119,9 @@ int main(int argc, char* argv[]){
     }
 
 
-    // get recall retry  policy 
+    // get recall retry  policy
 
-    if ( (prr = getconfent("Policy","RetryRecall",0)) != NULL ){ 
+    if ( (prr = getconfent("Policy","RetryRecall",0)) != NULL ){
       retryRecallPolicyName=prr;
     } else {
       castor::dlf::Param params[] =
@@ -130,7 +130,7 @@ int main(int argc, char* argv[]){
 
     }
     prr=NULL;
-    if ( (prr = getconfent("Policy","RetryRecallFunction",0)) != NULL ){ 
+    if ( (prr = getconfent("Policy","RetryRecallFunction",0)) != NULL ){
       recallFunctionName=prr;
     } else {
         castor::dlf::Param params[] =
@@ -141,7 +141,7 @@ int main(int argc, char* argv[]){
 
     castor::infoPolicy::TapeRetryPySvc* retryMigrationSvc=NULL;
     castor::infoPolicy::TapeRetryPySvc* retryRecallSvc=NULL;
-    
+
     // migration
     if (!retryMigrationPolicyName.empty() && !migrationFunctionName.empty())
       retryMigrationSvc = new castor::infoPolicy::TapeRetryPySvc(retryMigrationPolicyName,migrationFunctionName);
@@ -151,22 +151,22 @@ int main(int argc, char* argv[]){
       retryRecallSvc = new castor::infoPolicy::TapeRetryPySvc(retryRecallPolicyName,recallFunctionName);
 
     // Get the min and max number of thread used by the Worker
-    
+
     int minThreadsNumber = MIN_WORKER_THREADS;
     int maxThreadsNumber = MAX_WORKER_THREADS;
 
     char* tmp=NULL;
-    if ( (tmp= getconfent("TAPEGATEWAY","MINWORKERTHREADS",0)) != NULL ){ 
+    if ( (tmp= getconfent("TAPEGATEWAY","MINWORKERTHREADS",0)) != NULL ){
       char* dp = tmp;
-      minThreadsNumber= strtoul(tmp, &dp, 0);      
+      minThreadsNumber= strtoul(tmp, &dp, 0);
       if (*dp != 0 || minThreadsNumber <=0 ) {
         minThreadsNumber = MIN_WORKER_THREADS;
       }
     }
 
-    if ( (tmp= getconfent("TAPEGATEWAY","MAXWORKERTHREADS",0)) != NULL ){ 
+    if ( (tmp= getconfent("TAPEGATEWAY","MAXWORKERTHREADS",0)) != NULL ){
       char* dp = tmp;
-      maxThreadsNumber= strtoul(tmp, &dp, 0);      
+      maxThreadsNumber= strtoul(tmp, &dp, 0);
       if (*dp != 0 || maxThreadsNumber <=0 ) {
         maxThreadsNumber = MAX_WORKER_THREADS;
       }
@@ -179,41 +179,41 @@ int main(int argc, char* argv[]){
     tgDaemon.runAsStagerSuperuser();
 
      // send request to vdmq
-         
+
     tgDaemon.addThreadPool(
 			   new castor::server::SignalThreadPool("ProducerOfVdqmRequestsThread", new castor::tape::tapegateway::VdqmRequestsProducerThread(tgDaemon.listenPort()), DEFAULT_SLEEP_INTERVAL)); // port used just to be sent to vdqm
     tgDaemon.getThreadPool('P')->setNbThreads(1);
-			   
+
      // check requests for vdmq
-			       
+
     tgDaemon.addThreadPool(
 			    new castor::server::SignalThreadPool("CheckerOfVdqmRequestsThread", new castor::tape::tapegateway::VdqmRequestsCheckerThread( VDQM_TIME_OUT_INTERVAL), DEFAULT_SLEEP_INTERVAL ));
-    tgDaemon.getThreadPool('C')->setNbThreads(1); 
+    tgDaemon.getThreadPool('C')->setNbThreads(1);
 
-    
+
     // query vmgr for tape and tapepools
-   
+
     tgDaemon.addThreadPool(
       new castor::server::SignalThreadPool("TapeStreamLinkerThread", new castor::tape::tapegateway::TapeStreamLinkerThread(), DEFAULT_SLEEP_INTERVAL));
       tgDaemon.getThreadPool('T')->setNbThreads(1);
-    
+
     // migration error handler
 
     tgDaemon.addThreadPool(
       new castor::server::SignalThreadPool("MigrationErrorHandlerThread", new castor::tape::tapegateway::MigratorErrorHandlerThread(retryMigrationSvc),  DEFAULT_SLEEP_INTERVAL));
     tgDaemon.getThreadPool('M')->setNbThreads(1);
-    
+
     // recaller error handler
 
     tgDaemon.addThreadPool(
       new castor::server::SignalThreadPool("RecallerErrorHandlerThread", new castor::tape::tapegateway::RecallerErrorHandlerThread(retryRecallSvc), DEFAULT_SLEEP_INTERVAL ));
-      tgDaemon.getThreadPool('R')->setNbThreads(1); 
-    
+      tgDaemon.getThreadPool('R')->setNbThreads(1);
+
     // recaller/migration dynamic thread pool
 
     tgDaemon.addThreadPool(
-			   new castor::server::TCPListenerThreadPool("WorkerThread", new castor::tape::tapegateway::WorkerThread(),tgDaemon.listenPort(),true, minThreadsNumber, maxThreadsNumber )); 
-			   
+			   new castor::server::TCPListenerThreadPool("WorkerThread", new castor::tape::tapegateway::WorkerThread(),tgDaemon.listenPort(),true, minThreadsNumber, maxThreadsNumber ));
+
     // start the daemon
 
     tgDaemon.start();
@@ -227,13 +227,13 @@ int main(int argc, char* argv[]){
     return -1;
   }
   catch (...) {
-    
-    std::cerr << "Caught general exception!" << std::endl;    
-    return -1;
-    
-  } 
 
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, castor::tape::tapegateway::DAEMON_STOP, 0, NULL);
+    std::cerr << "Caught general exception!" << std::endl;
+    return -1;
+
+  }
+
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, castor::tape::tapegateway::DAEMON_STOP, 0, NULL);
   return 0;
 }
 
@@ -242,9 +242,9 @@ int main(int argc, char* argv[]){
 // also initialises the logging facility
 //------------------------------------------------------------------------------
 
-castor::tape::tapegateway::TapeGatewayDaemon::TapeGatewayDaemon() : castor::server::BaseDaemon("TapeGateway") 
+castor::tape::tapegateway::TapeGatewayDaemon::TapeGatewayDaemon() : castor::server::BaseDaemon("tapegatewayd")
 {
- 
+
   // Initializes the DLF logging. This includes
   // registration of the predefined messages
   // Initializes the DLF logging. This includes
@@ -254,7 +254,7 @@ castor::tape::tapegateway::TapeGatewayDaemon::TapeGatewayDaemon() : castor::serv
     { {DAEMON_START, "Service startup"},
       {DAEMON_STOP, "Service shoutdown"},
       {NO_RETRY_POLICY_FOUND, "Incomplete parameters for retry policy"},
-      {FATAL_ERROR, "Fatal error"}, 
+      {FATAL_ERROR, "Fatal error"},
       {PRODUCER_GETTING_TAPES, "VdqmRequestsProducer: getting tapes to submit"},
       {PRODUCER_NO_TAPE, "VdqmRequestsProducer: no tape to submit"},
       {PRODUCER_CANNOT_UPDATE_DB,"VdqmRequestsProducer: cannot update db"},
@@ -310,7 +310,7 @@ castor::tape::tapegateway::TapeGatewayDaemon::TapeGatewayDaemon() : castor::serv
       {WORKER_RECALL_DB_UPDATE,"Worker: updating db after recall notification"},
       {WORKER_RECALL_CANNOT_UPDATE_DB,"Worker: cannot update db for recalled"},
       {WORKER_RECALL_CHECK_FILE_SIZE,"Worker: checking file size of recalled file"},
-      {WORKER_RECALL_WRONG_FILE_SIZE, "Worker: wrong file size for recalled file"}, 
+      {WORKER_RECALL_WRONG_FILE_SIZE, "Worker: wrong file size for recalled file"},
       {WORKER_RECALL_COMPLETED_UPDATE_DB, "Worker: update the db after full recall completed"},
       {WORKER_MIGRATION_NOTIFIED,"Worker: received migration notification"},
       {WORKER_MIGRATION_GET_DB_INFO, "Worker: getting data from db for migrated file"},
@@ -342,14 +342,11 @@ castor::tape::tapegateway::TapeGatewayDaemon::TapeGatewayDaemon() : castor::serv
       {WORKER_FAIL_DB_UPDATE,  "Worker: updating db after end notification error report"},
       {WORKER_FAIL_DB_ERROR,"Worker: db error while updating for end notification error report"},
       {WORKER_FAIL_GET_TAPE_TO_RELEASE, "Worker: getting tape used during failure"},
-      {WORKER_FAIL_RELEASE_TAPE,"Worker: releasing BUSY tape after end notification error report"}, 
+      {WORKER_FAIL_RELEASE_TAPE,"Worker: releasing BUSY tape after end notification error report"},
       {ORA_FILE_TO_MIGRATE_NS_ERROR, "Worker: OraTapeGatewaySvc: failed check against the nameserver for file to migrate"},
       {ORA_DB_ERROR,  "Worker: OraTapeGatewaySvc: impossible to update db after failure"},
-      {ORA_IMPOSSIBLE_TO_SEND_RMMASTER_REPORT, "Worker: OraTapeGatewaySvc: impossible to send rmmaster report"},   
+      {ORA_IMPOSSIBLE_TO_SEND_RMMASTER_REPORT, "Worker: OraTapeGatewaySvc: impossible to send rmmaster report"},
       {ORA_FILE_TO_RECALL_NS_ERROR, "Worker: OraTapeGatewaySvc: failed check against the nameserver for file to recall"},
-      
-      
- 
       {-1, ""}
     };
   dlfInit(messages);
@@ -357,17 +354,17 @@ castor::tape::tapegateway::TapeGatewayDaemon::TapeGatewayDaemon() : castor::serv
 
   // get the port
 
- 				      
+
   char* tmp=NULL;
 
-  // This let's try to  the tapegateway port in castor.conf 
-   
-  if ( (tmp= getconfent("TAPEGATEWAY","PORT",0)) != NULL ){ 
+  // This let's try to  the tapegateway port in castor.conf
+
+  if ( (tmp= getconfent("TAPEGATEWAY","PORT",0)) != NULL ){
     char* dp = tmp;
-    m_listenPort = strtoul(tmp, &dp, 0);      
+    m_listenPort = strtoul(tmp, &dp, 0);
     if (*dp != 0) {
         castor::exception::Internal ex;
-        ex.getMessage() << "Bad port value in enviroment variable " 
+        ex.getMessage() << "Bad port value in enviroment variable "
                         << tmp << std::endl;
         throw ex;
     }
@@ -409,7 +406,7 @@ void castor::tape::tapegateway::TapeGatewayDaemon::parseCommandLine(int argc, ch
 }
 
 void castor::tape::tapegateway::TapeGatewayDaemon::usage(){
-  std::cout << "\nUsage: " << "tapegateway [-f][-h]\n" 
+  std::cout << "\nUsage: " << "tapegateway [-f][-h]\n"
 	    << "-f     : to run in foreground\n"
-	    <<std::endl; 
+	    <<std::endl;
 }

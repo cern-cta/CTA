@@ -24,8 +24,8 @@
 # @author Castor Dev team, castor-dev@cern.ch
 #
 
-CPPFLAGS = -g -O0 -I $(ORACLE_HOME)/rdbms/public -I ../../../h -I ../../.. $(PYTHONINC) $(MTCCFLAGS) 
-LDFLAGS += $(MTLDFLAGS) 
+CPPFLAGS = -g -O0 -I $(ORACLE_HOME)/rdbms/public -I ../../../h -I ../../.. $(PYTHONINC) $(MTCCFLAGS)
+LDFLAGS += $(MTLDFLAGS)
 LD = g++
 LIBS = -L$(ORACLE_HOME)/lib -locci -lclntsh $(PYTHONLIBS)
 
@@ -36,10 +36,10 @@ DependsOnLibrary(../db/newora,castorcommonora)
 DependsOnLibrary(../db/cnv,castorcnvs)
 DependsOnLibrary(../infoPolicy,castorinfopolicy)
 
-MIGHUNTERDBIN_SRCS = MigHunterDaemon.cpp MigHunterThread.cpp ora/OraMigHunterSvc.cpp
-MIGHUNTERDBIN_OBJS = $(MIGHUNTERDBIN_SRCS:.cpp=.Osuf)
-NormalProgramTarget(mighunterd,$(MIGHUNTERDBIN_OBJS),$(DEPLIB),$(LIBS),750)
-MakeDir(/var/spool/mighunter,0755)
+MIGHUNTERDAEMONBIN_SRCS = MigHunterDaemon.cpp MigHunterThread.cpp ora/OraMigHunterSvc.cpp
+MIGHUNTERDAEMONBIN_OBJS = $(MIGHUNTERDAEMONBIN_SRCS:.cpp=.Osuf)
+NormalProgramTarget(mighunterd,$(MIGHUNTERDAEMONBIN_OBJS),$(DEPLIB),$(LIBS),750)
+MakeDir(/var/log/castor,0755)
 ADMMANPAGE(mighunterd)
 LOGROTATE(castor-mighunter-server,../../..,install)
 SYSCONFIG(mighunterd,install)

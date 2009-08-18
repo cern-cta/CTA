@@ -1,4 +1,4 @@
-%attr(0640,root,st) etc/castor/NSCONFIG.example
+%attr(0640,root,root) etc/castor/NSCONFIG.example
 %attr(0755,root,root) etc/init.d/nsd
 %attr(0644,root,root) etc/sysconfig/nsd.example
 %attr(0644,root,root) etc/logrotate.d/castor-ns-server

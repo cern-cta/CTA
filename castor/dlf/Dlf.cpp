@@ -29,36 +29,37 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 
-// -----------------------------------------------------------------------
+#include <errno.h>
+
+
+//-----------------------------------------------------------------------------
 // dlf_getPendingMessages
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 std::vector<std::pair<int, castor::dlf::Message*> >&
 castor::dlf::dlf_getPendingMessages () throw() {
   static std::vector<std::pair<int, castor::dlf::Message*> > pendingMessages;
   return pendingMessages;
 }
 
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // dlf_init
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void castor::dlf::dlf_init
 (const char* facilityName, castor::dlf::Message messages[])
   throw (castor::exception::Exception) {
-  // Initialise the DLF interface, ignore any errors that may be generated
-  char dlfErrBuf[CA_MAXLINELEN+1];  
-  if (::dlf_init(facilityName, dlfErrBuf, 0) != 0) {
+  // Initialise the DLF interface
+  if (::dlf_init(facilityName, -1) != 0) {
     castor::exception::Internal ex;
-    dlfErrBuf[sizeof(dlfErrBuf)-1]='\0'; // Ensure dlfErrBuf is null terminated
-    ex.getMessage() << "Unable to initialize DLF: " << dlfErrBuf;
+    ex.getMessage() << "Unable to initialize DLF: " << sstrerror(errno);
     throw ex;
   }
   // Register the facility's messages with the interface. We do this even
-  // if the interface fails to initialisation as it is used for local 
+  // if the interface fails to initialisation as it is used for local
   // logging
   dlf_addMessages(0, messages);
   // Also register the pending messages
   for (std::vector<std::pair<int, Message*> >::const_iterator it =
-	 dlf_getPendingMessages().begin();
+         dlf_getPendingMessages().begin();
        it != dlf_getPendingMessages().end();
        it++) {
     dlf_addMessages(it->first, it->second);
@@ -67,16 +68,16 @@ void castor::dlf::dlf_init
   dlf_getPendingMessages().clear();
 }
 
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // dlf_addMessages
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void castor::dlf::dlf_addMessages (int offset, Message messages[])
-throw () {
+  throw () {
   if (::dlf_isinitialized()) {
     int i = 0;
     while (messages[i].number >= 0) {
       ::dlf_regtext(offset + messages[i].number,
-		    messages[i].text.c_str());
+                    messages[i].text.c_str());
       i++;
     }
   } else {
@@ -96,10 +97,10 @@ throw () {
   }
 }
 
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // dlf_writep
 // wrapper of the dlf writep that compounds the Cns_fileid struct
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void castor::dlf::dlf_writep
 (Cuuid_t uuid,
  int severity,
@@ -109,17 +110,17 @@ void castor::dlf::dlf_writep
  int numparams,
  castor::dlf::Param params[])
   throw() {
-  
+
   struct Cns_fileid ns_invariant;
   ns_invariant.fileid = fileId;
   strncpy(ns_invariant.server, nsHost.c_str(), sizeof(ns_invariant.server) - 1);
-  
+
   castor::dlf::dlf_writep(uuid, severity, message_no, numparams, params, &ns_invariant);
 }
 
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // dlf_writep
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void castor::dlf::dlf_writep
 (Cuuid_t uuid,
  int severity,
@@ -139,9 +140,9 @@ void castor::dlf::dlf_writep
   delete[] cparams;
 }
 
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // dlf_writepc
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void castor::dlf::dlf_writepc
 (const char *file,
  const int line,
@@ -159,15 +160,15 @@ void castor::dlf::dlf_writepc
   dlf_write_param_t* cparams = new dlf_write_param_t[numcparams];
 
   // Fill the context parameters: file, line and function
-  cparams[0].name           = "File";
-  cparams[0].type           = DLF_MSG_PARAM_STR;
-  cparams[0].par.par_string = (char *)file;
-  cparams[1].name           = "Line";
-  cparams[1].type           = DLF_MSG_PARAM_INT;
-  cparams[1].par.par_int    = line;
-  cparams[2].name           = "Function";
-  cparams[2].type           = DLF_MSG_PARAM_STR;
-  cparams[2].par.par_string = (char*)function;
+  cparams[0].name             = "File";
+  cparams[0].type             = DLF_MSG_PARAM_STR;
+  cparams[0].value.par_string = (char *)file;
+  cparams[1].name             = "Line";
+  cparams[1].type             = DLF_MSG_PARAM_INT;
+  cparams[1].value.par_int    = line;
+  cparams[2].name             = "Function";
+  cparams[2].type             = DLF_MSG_PARAM_STR;
+  cparams[2].value.par_string = (char*)function;
 
   // Translate parameters from C++ to C
   for (int i = 0; i < numparams; i++) {

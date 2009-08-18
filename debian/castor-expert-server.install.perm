@@ -1,4 +1,4 @@
-%attr(0640,root,st) etc/castor/EXPCONFIG.example
+%attr(0640,root,root) etc/castor/EXPCONFIG.example
 %attr(0755,root,root) etc/init.d/expertd
 %attr(0644,root,root) etc/sysconfig/expertd.example
 %attr(0644,root,root) etc/logrotate.d/castor-expert-server

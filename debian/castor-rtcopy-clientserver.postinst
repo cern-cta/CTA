@@ -1,3 +1,2 @@
 /sbin/chkconfig --add rtcpclientd
-/bin/chown stage:st /var/spool/rtcpclientd
 /sbin/service rtcpclientd condrestart > /dev/null 2>&1 || :

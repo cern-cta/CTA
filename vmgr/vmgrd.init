@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: vmgrd.init,v $ $Revision: 1.1 $ $Release$ $Date: 2009/07/23 12:18:47 $ $Author: waldron $
+# @(#)$RCSfile: vmgrd.init,v $ $Revision: 1.2 $ $Release$ $Date: 2009/08/18 09:43:02 $ $Author: waldron $
 #
 # chkconfig: 345 67 38
 # description: VMGR daemon
@@ -46,7 +46,7 @@ start() {
         # Run daemon
         echo -n $"Starting $prog: "
 
-        cd /var/spool/vmgr
+        cd /var/log/castor
         daemon /usr/bin/$prog $VMGRD_OPTIONS
 
         # Write the pid to a file.

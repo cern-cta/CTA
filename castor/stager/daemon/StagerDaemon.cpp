@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.66 $ $Release$ $Date: 2009/05/20 09:07:45 $ $Author: itglp $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.67 $ $Release$ $Date: 2009/08/18 09:42:55 $ $Author: waldron $
  *
  * Main stager daemon
  *
@@ -140,7 +140,7 @@ int main(int argc, char* argv[]){
 /* constructor: initiallizes the DLF logging and set the default value to its attributes */
 /****************************************************************************************/
 castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::Exception)
-  : castor::server::BaseDaemon("Stager") {
+  : castor::server::BaseDaemon("stagerd") {
 
   castor::dlf::Message stagerDlfMessages[]={
 
@@ -152,8 +152,8 @@ castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::E
     { STAGER_DAEMON_EXECUTION, "StagerDaemon execution"},
     { STAGER_DAEMON_ERROR_CONFIG, "StagerDaemon configuration error"},
     { STAGER_DAEMON_EXCEPTION, "Exception caught when starting "},
-    { STAGER_CONFIGURATION, "Got wrong configuration, using default"}, /* DLF_LVL_USAGE */
-    { STAGER_CONFIGURATION_ERROR, "Impossible to get (right) configuration"}, /* DLF_LVL_ERROR */
+    { STAGER_CONFIGURATION, "Got wrong configuration, using default"},
+    { STAGER_CONFIGURATION_ERROR, "Impossible to get (right) configuration"},
 
     /*******************************************************************************************************/
     /* Constants related with the DBService SvcThreads: JobRequestSvc, PreRequestSvc, StgRequestSvc */

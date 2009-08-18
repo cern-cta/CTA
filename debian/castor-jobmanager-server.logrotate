@@ -1,6 +1,9 @@
-/var/log/jobmanager /var/spool/jobmanager/log {
+/var/log/castor/jobmanagerd*.log {
     compress
     daily
     missingok
-    rotate 90
+    rotate 120
+    postrotate
+        /bin/kill -HUP `cat /var/run/syslogd.pid 2> /dev/null` 2> /dev/null || true
+    endscript
 }

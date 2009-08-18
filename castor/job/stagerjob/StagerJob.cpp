@@ -353,7 +353,7 @@ void process(castor::job::stagerjob::InputArguments* args)
   }
   int rcode = 1;
   int rc = setsockopt(context.socket, SOL_SOCKET, SO_REUSEADDR,
-		      (char *)&rcode, sizeof(rcode));
+                      (char *)&rcode, sizeof(rcode));
   if (rc < 0) {
     castor::exception::Exception e(errno);
     e.getMessage() << "Error caught in call to setsockopt";
@@ -392,25 +392,21 @@ void process(castor::job::stagerjob::InputArguments* args)
   // Fork and execute the mover. Note: For xroot based transfers there is no
   // mover to execute so we avoid the need to fork.
   if (args->protocol != "xroot") {
-    dlf_prepare();
     context.childPid = fork();
     if (context.childPid < 0) {
-      dlf_parent();
       castor::exception::Exception e(errno);
       e.getMessage() << "Error caught in call to fork";
       throw e;
     }
     if (context.childPid == 0) {
       // Child side of the fork
-      dlf_child();
       // This call will never come back, since it call execl
       plugin->execMover(*args, context);
       // But in case, let's fail
-      dlf_shutdown(5);
+      dlf_shutdown();
       exit(EXIT_FAILURE);
     }
     // Parent side of the fork
-    dlf_parent();
   }
   plugin->postForkHook(*args, context);
 }
@@ -531,11 +527,7 @@ int main(int argc, char** argv) {
       { ROOTDBADTIMEOUT, "Invalid value for ROOT/TIMEOUT option, using default" },
 
       { -1, "" }};
-    castor::dlf::dlf_init("Job", messages);
-
-    // stagerjob does not inherit from the BaseDaemon so we must manually
-    // trigger the creation of the logging threads.
-    dlf_create_threads(0);
+    castor::dlf::dlf_init("stagerjob", messages);
 
     // Parse the command line
     arguments = new castor::job::stagerjob::InputArguments(argc, argv);
@@ -551,7 +543,7 @@ int main(int argc, char** argv) {
     castor::dlf::dlf_writep
       (nullCuuid, DLF_LVL_ERROR,
        castor::job::stagerjob::JOBFAILEDNOANS, 3, params);
-    dlf_shutdown(10);
+    dlf_shutdown();
     return -1;
   }
 
@@ -644,9 +636,9 @@ int main(int argc, char** argv) {
     }
     // Memory cleanup
     if (0 != arguments) delete arguments;
-    dlf_shutdown(10);
+    dlf_shutdown();
     return -1;
   }
-  dlf_shutdown(10);
+  dlf_shutdown();
   return 0;
 }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.44 $ $Release$ $Date: 2009/04/14 11:30:00 $ $Author: itglp $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.45 $ $Release$ $Date: 2009/08/18 09:42:53 $ $Author: waldron $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -58,13 +58,13 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::rh::RHThread::RHThread()
-throw (castor::exception::Exception) :
+  throw (castor::exception::Exception) :
   BaseDbThread() {
   m_stagerHost = castor::PortsConfig::getInstance()->
     getHostName(castor::CASTOR_STAGER);
   m_stagerPort = castor::PortsConfig::getInstance()->
     getNotifPort(castor::CASTOR_STAGER);
-  
+
   // Statically initialize the list of stager service handlers for each
   // request type.
   // XXX This knowledge is already in the db, cf. the Type2Obj table,
@@ -100,7 +100,7 @@ throw (castor::exception::Exception) :
   m_svcHandler[OBJ_FilesDeletionFailed] = "G";
   m_svcHandler[OBJ_NsFilesDeleted] = "G";
   m_svcHandler[OBJ_StgFilesDeleted] = "G";
-  
+
   // Read the list of SRM trusted hosts. Requests coming from
   // these hosts are entitled to override the request UUID.
   char** values;
@@ -120,15 +120,15 @@ throw (castor::exception::Exception) :
 //------------------------------------------------------------------------------
 castor::rh::RHThread::~RHThread() throw ()
 {
-/*
-This empty destructor has to be implemented here and NOT inline,
-otherwise the following error will happen at linking time:
-  
-RHThread.o(.text+0x469): In function `castor::rh::RHThread::RHThread(bool)':
-.../castor/rh/RHThread.cpp:61: undefined reference to `VTT for castor::rh::RHThread'
+  /*
+    This empty destructor has to be implemented here and NOT inline,
+    otherwise the following error will happen at linking time:
 
-See e.g. http://www.daniweb.com/forums/thread114299.html for more details.
-*/
+    RHThread.o(.text+0x469): In function `castor::rh::RHThread::RHThread(bool)':
+    .../castor/rh/RHThread.cpp:61: undefined reference to `VTT for castor::rh::RHThread'
+
+    See e.g. http://www.daniweb.com/forums/thread114299.html for more details.
+  */
 }
 
 //------------------------------------------------------------------------------
@@ -171,7 +171,7 @@ void castor::rh::RHThread::run(void* param) {
     {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
      castor::dlf::Param("Port", port)};
 
-  // If the request comes from a secure connection then establish the context & 
+  // If the request comes from a secure connection then establish the context &
   // map the user.
   bool secure = false;
   std::string client_mech = "Unsecure";
@@ -321,17 +321,17 @@ void castor::rh::RHThread::run(void* param) {
     // "Reply sent to client"
     if (fr == 0) {
       castor::dlf::Param params2[] =
-       {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
-        castor::dlf::Param("Port", port),
-        castor::dlf::Param("ElapsedTime", elapsedTime * 0.000001)};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_MONITORING, 10, 3, params2);
+        {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
+         castor::dlf::Param("Port", port),
+         castor::dlf::Param("ElapsedTime", elapsedTime * 0.000001)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 10, 3, params2);
     } else {
 
       // If possible convert the request type to a string for logging
       // purposes
       std::ostringstream type;
       if ((fr->type() > 0) &&
-         ((unsigned int)fr->type() < castor::ObjectsIdsNb)) {
+          ((unsigned int)fr->type() < castor::ObjectsIdsNb)) {
         type << castor::ObjectsIdStrings[fr->type()];
       } else {
         type << fr->type();
@@ -349,28 +349,28 @@ void castor::rh::RHThread::run(void* param) {
         int majorrelease = (version -= (minorversion * 10000)) / 100;
         int minorrelease = (version -= (majorrelease * 100));
         clientVersion << majorversion << "."
-        << minorversion << "."
-        << majorrelease << "-"
-        << minorrelease;
+                      << minorversion << "."
+                      << majorrelease << "-"
+                      << minorrelease;
       }
-      
+
       castor::dlf::Param params2[] =
-       {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
-        castor::dlf::Param("Type", type.str()),
-        castor::dlf::Param("Euid", fr->euid()),
-        castor::dlf::Param("Egid", fr->egid()),
-        castor::dlf::Param("SvcClass", fr->svcClassName()),
-        castor::dlf::Param("SubRequests", nbThreads),
-        castor::dlf::Param("ClientVersion", clientVersion.str()),
-        castor::dlf::Param("SecurityMechanism", client_mech),
-      castor::dlf::Param("ElapsedTime", elapsedTime * 0.000001)};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_MONITORING, 10, 9, params2);
+        {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
+         castor::dlf::Param("Type", type.str()),
+         castor::dlf::Param("Euid", fr->euid()),
+         castor::dlf::Param("Egid", fr->egid()),
+         castor::dlf::Param("SvcClass", fr->svcClassName()),
+         castor::dlf::Param("SubRequests", nbThreads),
+         castor::dlf::Param("ClientVersion", clientVersion.str()),
+         castor::dlf::Param("SecurityMechanism", client_mech),
+         castor::dlf::Param("ElapsedTime", elapsedTime * 0.000001)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 10, 9, params2);
     }
   } catch (castor::exception::Exception e) {
     // "Unable to send Ack to client"
     castor::dlf::Param params[] =
-     {castor::dlf::Param("Standard Message", sstrerror(e.code())),
-      castor::dlf::Param("Precise Message", e.getMessage().str())};
+      {castor::dlf::Param("Standard Message", sstrerror(e.code())),
+       castor::dlf::Param("Precise Message", e.getMessage().str())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 11, 2, params);
 
     // Rollback transaction
@@ -381,8 +381,8 @@ void castor::rh::RHThread::run(void* param) {
     } catch (castor::exception::Exception e) {
       // "Exception caught : failed to rollback transaction"
       castor::dlf::Param params[] =
-       {castor::dlf::Param("Standard Message", sstrerror(e.code())),
-        castor::dlf::Param("Precise Message", e.getMessage().str())};
+        {castor::dlf::Param("Standard Message", sstrerror(e.code())),
+         castor::dlf::Param("Precise Message", e.getMessage().str())};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 15, 2, params);
     }
   }

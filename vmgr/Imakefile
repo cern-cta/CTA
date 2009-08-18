@@ -2,26 +2,26 @@ COMM
 COMM  Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.17 $ $Date: 2009/07/23 12:22:06 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.18 $ $Date: 2009/08/18 09:43:02 $ CERN IT-PDP/DM Jean-Philippe Baud
 
 COMM    Make volume manager programs.
 
 OPSGRP = OperatorGid
-SPOOL = /var/spool/vmgr
-LOGFILE = $(SPOOL)/log
+LOGDIR = /var/log/castor
+LOGFILE = $(LOGDIR)/vmgrd.log
 VMGRCONFIG = VmgrConfigFile
 ORAFLG = -DUSE_ORACLE
 ORAINC = -I$(ORACLE_HOME)/precomp/public
 #if BuildSecureVmgr
 SECURITYFLAG=-DCSEC
 LIBS+= -ldl
-#endif  
+#endif
 CFLAGS = -g -I../h $(MTCCFLAGS) -DBIN=\"$(BIN)\" -DLOGFILE=\"$(LOGFILE)\" -DVMGRCONFIG=\"$(VMGRCONFIG)\" $(RDSFLG) $(ORAFLG) $(RDSINC) $(ORAINC) $(SECURITYFLAG)
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(upv,castorupv)
 
-MakeDir($(SPOOL),0755)
+MakeDir($(LOGDIR),0755)
 vmgr_oracle_ifce.c: vmgr_oracle_ifce.pc
 	proc iname=vmgr_oracle_ifce include=../h  threads=yes char_map=string parse=full prefetch=1000
 FilesToClean += vmgr_oracle_ifce.c vmgr_oracle_ifce.lis

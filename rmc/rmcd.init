@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: rmcd.init,v $ $Revision: 1.1 $ $Release$ $Date: 2009/07/23 12:18:46 $ $Author: waldron $
+# @(#)$RCSfile: rmcd.init,v $ $Revision: 1.2 $ $Release$ $Date: 2009/08/18 09:43:01 $ $Author: waldron $
 #
 # chkconfig: 345 71 34
 # description: RMC server daemon
@@ -46,7 +46,7 @@ start() {
         # Run daemon
         echo -n $"Starting $prog: "
 
-        cd /var/spool/rmc
+        cd /var/log/castor
         daemon /usr/bin/$prog $RMCD_OPTIONS
 
         # Write the pid to a file.

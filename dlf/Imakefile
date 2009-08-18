@@ -1,62 +1,41 @@
-COMM -----------------------------------------------------------------------------------------------------#
-COMM                                                                                                      #
-COMM  Imakefile - Castor Distribution Logging Facility                                                    #
-COMM  Copyright (C) 2006 CERN IT/FIO (castor-dev@cern.ch)                                                 #
-COMM                                                                                                      #
-COMM  This program is free software; you can redistribute it and/or modify it under the terms of the GNU  #
-COMM  General Public License as published by the Free Software Foundation; either version 2 of the        #
-COMM  License, or (at your option) any later version.                                                     #
-COMM                                                                                                      #
-COMM  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without   #
-COMM  even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU      #
-COMM  General Public License for more details.                                                            #
-COMM                                                                                                      #
-COMM  You should have received a copy of the GNU General Public License along with this program; if not,  #
-COMM  write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,   #
-COMM  USA.                                                                                                #
-COMM                                                                                                      #
-COMM -----------------------------------------------------------------------------------------------------#
+#
+#                      dlf/Imakefile
+#
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
+#
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.28 $ $Release$ $Date: 2009/08/18 09:42:58 $ $Author: waldron $
+#
+# Makefile for the DLF client library
+#
+# @author Castor Dev team, castor-dev@cern.ch
 
 SUBDIRS   = web
 INCLUDES  = ../h
 MANSUBDIR = doc/man/
 
-SPOOL     = /var/spool/dlf
-LOGFILE   = $(SPOOL)/log
-DLFCONFIG = DlfConfigFile
-
-DBFLAG    = -DUSE_ORACLE
-ORAINC    = -I$(ORACLE_HOME)/precomp/public
-DFLAGS    = -DLOGFILE=\"$(LOGFILE)\" -DDLFCONFIG=\"$(DLFCONFIG)\" $(DBFLAG)
-CFLAGS    = -pedantic -Wno-long-long -g -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS) $(ORAINC)
+CFLAGS    = -pedantic -Wno-long-long -g -I$(INCLUDES) $(MTCCFLAGS)
 
 DependsOnLibrary(common,castorcommon)
 
-DLFLIB_OBJS = queue.Osuf hash.Osuf common.Osuf dlf_lib.Osuf
+DLFLIB_OBJS = dlf_lib.Osuf
 ClientSharedLibraryTarget(castordlf,$(DLFLIB_OBJS),$(DEPLIB),$(LIBS))
 
-LIBMANPAGE(dlf_child)
-LIBMANPAGE(dlf_create_threads)
 LIBMANPAGE(dlf_init)
 LIBMANPAGE(dlf_isinitialized)
-LIBMANPAGE(dlf_parent)
-LIBMANPAGE(dlf_prepare)
 LIBMANPAGE(dlf_regtext)
 LIBMANPAGE(dlf_write)
 LIBMANPAGE(dlf_shutdown)
-
-oracle.c: oracle.pc
-	proc iname=oracle include=$(INCLUDES) threads=yes char_map=string parse=full
-FilesToClean += oracle.c oracle.lis
-ORALIBS= -L$(ORACLE_HOME)/lib -lclntsh
-
-MakeDir($(SPOOL),0755)
-
-DLFSRV_OBJS = queue.Osuf hash.Osuf process.Osuf common.Osuf server.Osuf oracle.Osuf
-NormalProgramTarget(dlfserver,$(DLFSRV_OBJS), $(DEPLIB), $(ORALIBS) $(MTLDFLAGS) $(LIBS),750)
-
-ADMMANPAGE(dlfserver)
-LOGROTATE(castor-dlf-server,..,install)
-SYSCONFIG(dlfserver,install)
-INITSCRIPT(dlfserver,install)
-CONFIGFILE(DLF,..,install)

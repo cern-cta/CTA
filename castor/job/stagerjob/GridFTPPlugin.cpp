@@ -152,14 +152,14 @@ void castor::job::stagerjob::GridFTPPlugin::getEnvironment
   // Get log file names and log level
   char *globus_logfile = getconfent("GSIFTP", "LOGFILE", 0);
   if (globus_logfile == NULL) {
-    env.globus_logfile = "/var/log/gridftp.log";
+    env.globus_logfile = "/var/log/castor/gridftp.log";
   } else {
     env.globus_logfile = globus_logfile;
   }
 
   const char *globus_logfile_netlogger = getconfent("GSIFTP", "NETLOGFILE", 0);
   if (globus_logfile_netlogger == NULL) {
-    env.globus_logfile_netlogger = "/var/log/globus-gridftp.log";
+    env.globus_logfile_netlogger = "/var/log/castor/globus-gridftp.log";
   } else {
     env.globus_logfile_netlogger = globus_logfile_netlogger;
   }
@@ -189,7 +189,7 @@ void castor::job::stagerjob::GridFTPPlugin::getEnvironment
   const char *globus_x509_user_cert = getconfent("GSIFTP", "X509_USER_CERT", 0);
   if (globus_x509_user_cert == NULL) {
     env.globus_x509_user_cert = "/etc/grid-security/castor-gridftp-dsi-" +
-      env.dsi_module_extension + "/castor-gridftp-dsi-" + 
+      env.dsi_module_extension + "/castor-gridftp-dsi-" +
       env.dsi_module_extension + "-cert.pem";
   } else {
     env.globus_x509_user_cert = globus_x509_user_cert;
@@ -198,7 +198,7 @@ void castor::job::stagerjob::GridFTPPlugin::getEnvironment
   const char *globus_x509_user_key = getconfent("GSIFTP", "X509_USER_KEY", 0);
   if (globus_x509_user_key == NULL) {
     env.globus_x509_user_key = "/etc/grid-security/castor-gridftp-dsi-" +
-      env.dsi_module_extension + "/castor-gridftp-dsi-" + 
+      env.dsi_module_extension + "/castor-gridftp-dsi-" +
       env.dsi_module_extension + "-key.pem";
   } else {
     env.globus_x509_user_key = globus_x509_user_key;
@@ -336,7 +336,7 @@ void castor::job::stagerjob::GridFTPPlugin::execMover
   std::string progfullpath = env.globus_location + "/sbin/globus-gridftp-server";
   std::string progname = "globus-gridftp-server";
   if (access(progfullpath.c_str(), X_OK) != 0) {
-    dlf_shutdown(5);
+    dlf_shutdown();
     exit(EXIT_FAILURE);
   }
   // Duplicate socket on stdin/stdout/stderr and close the others
@@ -349,7 +349,7 @@ void castor::job::stagerjob::GridFTPPlugin::execMover
        castor::dlf::Param(args.subRequestUuid)};
     castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
                             DUP2FAILED, 3, params, &args.fileId);
-    dlf_shutdown(5);
+    dlf_shutdown();
     exit(EXIT_FAILURE);
   }
   std::string moduleName = "CASTOR2" + env.dsi_module_extension;
@@ -366,6 +366,6 @@ void castor::job::stagerjob::GridFTPPlugin::execMover
          "-allowed-modules", moduleName.c_str(),
          NULL);
   // Should never be reached
-  dlf_shutdown(5);
+  dlf_shutdown();
   exit(EXIT_FAILURE);
 }

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: rmcd.man,v $ $Revision: 1.1 $ $Date: 2009/07/23 12:18:46 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rmcd.man,v $ $Revision: 1.2 $ $Date: 2009/08/18 09:43:01 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RMCD 8 "$Date: 2009/07/23 12:18:46 $" CASTOR "rmc Administrator Commands"
+.TH RMCD 8 "$Date: 2009/08/18 09:43:01 $" CASTOR "rmc Administrator Commands"
 .SH NAME
 rmcd \- start the Remote Media Changer daemon
 .SH SYNOPSIS
@@ -83,7 +83,7 @@ itself.
 The completion code of the command is also logged.
 .SH FILES
 .TP 1.5i
-.B /var/spool/rmc/log
+.B /var/log/castor/rmcd.log
 .SH EXAMPLES
 .TP
 Here is a small log:

@@ -87,7 +87,7 @@ void rtcpc_SetErrTxt(int level, char *format, ...) {
          * (like "selecting server ...").
          */
         if ( level == LOG_INFO && (strncmp(msgbuf," CP",3) != 0 &&
-             strncmp(msgbuf," DUMP",5) != 0 && 
+             strncmp(msgbuf," DUMP",5) != 0 &&
              *msgbuf != '\0' && *msgbuf != '\n') ) {
             if ( tpread_command == TRUE ) log(LOG_INFO,"%s",msgbuf);
             RESTORE_ERRNO;
@@ -98,8 +98,8 @@ void rtcpc_SetErrTxt(int level, char *format, ...) {
             if ( level <= LOG_ERR ) log(level,"%s",msgbuf);
             rtcp_ClientMsg(*client_socket_p,msgbuf);
         }
- 
-        if ( out_p != NULL && *out_p != NULL && 
+
+        if ( out_p != NULL && *out_p != NULL &&
              err_p != NULL && *err_p != NULL ) {
             if ( loglevel >= LOG_INFO ) fprintf(*out_p,"%s",msgbuf);
             else fprintf(*err_p,"%s",msgbuf);
@@ -130,7 +130,7 @@ int rtcp_InitLog(char *msgbuf, FILE *out, FILE *err, SOCKET *client_socket) {
              ((p = getconfent("RTCOPY","LOGFILE",0)) != NULL) ) {
             rtcpd_logfile=strdup(p);
         }
-        initlog("rtcopyd",loglevel,rtcpd_logfile);
+        initlog("rtcpd",loglevel,rtcpd_logfile);
         if ( msgbuf == NULL && client_socket == NULL ) {
             rtcp_log = (void (*)(int, const char *, ...))log;
             RESTORE_ERRNO;
@@ -156,7 +156,7 @@ int rtcp_InitLog(char *msgbuf, FILE *out, FILE *err, SOCKET *client_socket) {
 
     Cglobals_get(&client_socket_key,(void **)&client_socket_p,sizeof(SOCKET *));
     if ( client_socket != NULL && client_socket_p == NULL ) {
-      RESTORE_ERRNO; 
+      RESTORE_ERRNO;
       return(-1);
     }
     else *client_socket_p = client_socket;
@@ -203,7 +203,7 @@ int rtcp_stringToVoid(char *str, void *out, int len)
     serrno = EINVAL;
     return(-1);
   }
-  
+
   outCp = (u_char *)malloc(len);
   if ( outCp == NULL ) return(-1);
   p = str;

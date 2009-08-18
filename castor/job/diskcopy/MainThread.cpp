@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2009/07/23 12:21:57 $ $Author: waldron $
+ * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2009/08/18 09:42:51 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -129,8 +129,8 @@ void castor::job::diskcopy::MainThread::init() {
 
       // "Invalid DiskCopy/RetryInterval option, using default"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Default", attempts),
-	 castor::dlf::Param(m_subRequestUuid)};
+        {castor::dlf::Param("Default", attempts),
+         castor::dlf::Param(m_subRequestUuid)};
       castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_WARNING, 12, 2, params, &m_fileId);
     }
   }
@@ -146,8 +146,8 @@ void castor::job::diskcopy::MainThread::init() {
 
       // "Invalid DiskCopy/RetryAttempts option, value too small. Using default"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Default", interval),
-	 castor::dlf::Param(m_subRequestUuid)};
+        {castor::dlf::Param("Default", interval),
+         castor::dlf::Param(m_subRequestUuid)};
       castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_WARNING, 13, 2, params, &m_fileId);
     }
   }
@@ -329,25 +329,25 @@ void castor::job::diskcopy::MainThread::run(void *param) {
 
       // "Invalid Uniform Resource Indicator, cannot download resource file"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("URI", m_resourceFile.substr(0, 7))};
+        {castor::dlf::Param("URI", m_resourceFile.substr(0, 7))};
       castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_ERROR, 21, 1, params, &m_fileId);
     } else if (e.code() == SERTYEXHAUST) {
 
       // "Exceeded maximum number of attempts trying to download resource file"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Error", m_resHelper->errorBuffer() != "" ?
-			    m_resHelper->errorBuffer() : "no message"),
-	 castor::dlf::Param("MaxAttempts", m_resHelper->retryAttempts()),
-	 castor::dlf::Param("URL", m_resourceFile),
-	 castor::dlf::Param(m_subRequestUuid)};
+        {castor::dlf::Param("Error", m_resHelper->errorBuffer() != "" ?
+                            m_resHelper->errorBuffer() : "no message"),
+         castor::dlf::Param("MaxAttempts", m_resHelper->retryAttempts()),
+         castor::dlf::Param("URL", m_resourceFile),
+         castor::dlf::Param(m_subRequestUuid)};
       castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_ERROR, 22, 4, params, &m_fileId);
     } else {
 
       // "Exception caught trying to download resource file"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Message", e.getMessage().str()),
-	 castor::dlf::Param("Filename", m_resourceFile.substr(7)),
-	 castor::dlf::Param(m_subRequestUuid)};
+        {castor::dlf::Param("Message", e.getMessage().str()),
+         castor::dlf::Param("Filename", m_resourceFile.substr(7)),
+         castor::dlf::Param(m_subRequestUuid)};
       castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_ERROR, 23, 3, params, &m_fileId);
     }
     terminate(m_diskCopyId, EXIT_FAILURE);
@@ -410,7 +410,7 @@ void castor::job::diskcopy::MainThread::run(void *param) {
        castor::dlf::Param(m_subRequestUuid)};
     castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_DEBUG, 34, 2, params2, &m_fileId);
 
-    dlf_shutdown(5);
+    dlf_shutdown();
     exit(0);
   }
 
@@ -427,7 +427,7 @@ void castor::job::diskcopy::MainThread::run(void *param) {
      castor::dlf::Param("SourceDiskCopyId", m_sourceDiskCopyId),
      castor::dlf::Param("Protocol", m_protocol),
      castor::dlf::Param("TotalWaitTime",
-			totalWaitTime > 0 ? totalWaitTime * 0.000001 : 0),
+                        totalWaitTime > 0 ? totalWaitTime * 0.000001 : 0),
      castor::dlf::Param(m_subRequestUuid)};
   castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_SYSTEM, 25, 6, params, &m_fileId);
 
@@ -438,13 +438,13 @@ void castor::job::diskcopy::MainThread::run(void *param) {
   castor::stager::DiskCopyInfo *sourceDiskCopy = 0;
   try {
     m_jobSvc->disk2DiskCopyStart(m_diskCopyId,
-				 m_sourceDiskCopyId,
-				 diskserver,
-				 filesystem,
-				 diskCopy,
-				 sourceDiskCopy,
-				 m_fileId.fileid,
-				 m_fileId.server);
+                                 m_sourceDiskCopyId,
+                                 diskserver,
+                                 filesystem,
+                                 diskCopy,
+                                 sourceDiskCopy,
+                                 m_fileId.fileid,
+                                 m_fileId.server);
   } catch (castor::exception::Exception e) {
 
     // "Exception caught trying to get information on destination and source
@@ -470,12 +470,12 @@ void castor::job::diskcopy::MainThread::run(void *param) {
   try {
     castor::dlf::Param params[] =
       {castor::dlf::Param("SourcePath",
-			  sourceDiskCopy->diskServer() + ":" +
-			  sourceDiskCopy->mountPoint() +
-			  sourceDiskCopy->diskCopyPath()),
+                          sourceDiskCopy->diskServer() + ":" +
+                          sourceDiskCopy->mountPoint() +
+                          sourceDiskCopy->diskCopyPath()),
        castor::dlf::Param("DestinationPath",
-			  diskCopy->mountPoint() +
-			  diskCopy->diskCopyPath()),
+                          diskCopy->mountPoint() +
+                          diskCopy->diskCopyPath()),
        castor::dlf::Param("Protocol", m_protocol),
        castor::dlf::Param("ChkSumType", sourceDiskCopy->csumType()),
        castor::dlf::Param("ChkSumValue", sourceDiskCopy->csumValue()),
@@ -498,9 +498,9 @@ void castor::job::diskcopy::MainThread::run(void *param) {
   // an exception is thrown here. The stager will do this automatically for us.
   try {
     m_jobSvc->disk2DiskCopyDone(m_diskCopyId,
-				m_sourceDiskCopyId,
-				m_fileId.fileid,
-				m_fileId.server);
+                                m_sourceDiskCopyId,
+                                m_fileId.fileid,
+                                m_fileId.server);
   } catch (castor::exception::Exception e) {
 
     // "Exception caught trying to finalize disk2disk copy transfer, transfer
@@ -531,8 +531,8 @@ void castor::job::diskcopy::MainThread::run(void *param) {
     {castor::dlf::Param("ElapsedTime", elapsedTime  * 0.000001),
      castor::dlf::Param("FileSize", m_mover->fileSize()),
      castor::dlf::Param("Direction",
-			sourceDiskCopy->svcClass() + " -> " +
-			diskCopy->svcClass()),
+                        sourceDiskCopy->svcClass() + " -> " +
+                        diskCopy->svcClass()),
      castor::dlf::Param(m_subRequestUuid)};
   castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_SYSTEM, 39, 4, params2, &m_fileId);
   terminate(0, EXIT_SUCCESS);
@@ -617,7 +617,7 @@ void castor::job::diskcopy::MainThread::terminate
 
   // Everything ok ?
   if (status == 0) {
-    dlf_shutdown(5);
+    dlf_shutdown();
     exit(status);
   }
 
@@ -640,7 +640,7 @@ void castor::job::diskcopy::MainThread::terminate
     // "Failed to remotely execute disk2DiskCopyFailed"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", "General exception caught"),
-      castor::dlf::Param("DiskCopyId", diskCopyId),
+       castor::dlf::Param("DiskCopyId", diskCopyId),
        castor::dlf::Param(m_subRequestUuid)};
     castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_ERROR, 43, 3, params, &m_fileId);
   }
@@ -659,6 +659,6 @@ void castor::job::diskcopy::MainThread::terminate
        castor::dlf::Param(m_subRequestUuid)};
     castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_SYSTEM, 41, 2, params, &m_fileId);
   }
-  dlf_shutdown(5);
+  dlf_shutdown();
   exit(status);
 }

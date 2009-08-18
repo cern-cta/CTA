@@ -12,8 +12,8 @@ COMM should be issued.
 COMM
 
 NOMORERFIO = OperatorDir/nomorerfio
-SPOOL = /var/spool/rfio
-LOGFILE = $(SPOOL)/rfiod.log
+LOGDIR = /var/log/castor
+LOGFILE = $(LOGDIR)/rfiod.log
 CNS_ROOT_DIR = NsRoot
 CNS_ROOT = -DCNS_ROOT=\"$(CNS_ROOT_DIR)\"
 RFIO_ALRM= RfioSpool/RfioAlarmFile
@@ -158,7 +158,7 @@ LIBMANPAGE(rfio_write)
 LIBMANPAGE(rfioreadopt)
 LIBMANPAGE(rfiosetopt)
 
-MakeDir($(SPOOL),0755)
+MakeDir($(LOGDIR),0755)
 SRVOBJS = Csemaphore.Osuf rfio_serv.Osuf rfio_calls.Osuf \
 		rfio_call64.Osuf rfio_fcalls.Osuf rfio_callhandlers.Osuf switch_req.Osuf \
 		checkkey.Osuf $(FIOO) rfstatfs.Osuf alrm.Osuf \

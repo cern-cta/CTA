@@ -1,5 +1,5 @@
 /*
- * $Id: stager_util.h,v 1.3 2007/12/07 11:40:53 sponcec3 Exp $
+ * $Id: stager_util.h,v 1.4 2009/08/18 09:43:00 waldron Exp $
  */
 
 #ifndef stager_util_h
@@ -11,7 +11,6 @@
 #include "osdep.h"
 #include "Cns_api.h"
 
-EXTERN_C void DLL_DECL stager_util_time _PROTO((time_t, char *));
 EXTERN_C void DLL_DECL stager_log _PROTO((const char *, const char *, int, int, struct Cns_fileid *, ...));
 
 #endif /* stager_api_h */

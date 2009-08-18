@@ -1,4 +1,4 @@
-%attr(0640,root,st) etc/castor/ORAREPACKCONFIG.example
+%attr(0640,root,root) etc/castor/ORAREPACKCONFIG.example
 %attr(0755,root,root) etc/init.d/repackd
 %attr(0644,root,root) etc/sysconfig/repackd.example
 %attr(0644,root,root) etc/logrotate.d/castor-repack-server

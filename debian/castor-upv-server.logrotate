@@ -1,6 +1,6 @@
-/var/log/Cupvdaemon /var/spool/Cupv/log /var/spool/upv/log {
+/var/log/castor/cupvd*.log {
     compress
     daily
     missingok
-    rotate 90
+    rotate 120
 }

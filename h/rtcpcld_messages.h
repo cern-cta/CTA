@@ -9,7 +9,7 @@
 #ifndef RTCPCLDMESSAGES_H_INCLUDED
 #define RTCPCLDMESSAGES_H_INCLUDED
 
-#define RTCPCLIENTD_FACILITY_NAME "rtcpcld"
+#define RTCPCLIENTD_FACILITY_NAME "rtcpclientd"
 #define RECALLER_FACILITY_NAME "recaller"
 #define MIGRATOR_FACILITY_NAME "migrator"
 
@@ -23,16 +23,16 @@
 
 enum RtcpcldMessageNo {
     RTCPCLD_MSG_STARTUP,
-    RTCPCLD_MSG_INITNW, 
-    RTCPCLD_MSG_LISTEN, 
-    RTCPCLD_MSG_SYSCALL, 
+    RTCPCLD_MSG_INITNW,
+    RTCPCLD_MSG_LISTEN,
+    RTCPCLD_MSG_SYSCALL,
     RTCPCLD_MSG_NOVOLREQID,
     RTCPCLD_MSG_REQSTARTED,
     RTCPCLD_MSG_PWUID,
-    RTCPCLD_MSG_INTERNAL, 
-    RTCPCLD_MSG_CALLBACK_POS, 
-    RTCPCLD_MSG_CALLBACK_CP, 
-    RTCPCLD_MSG_CATALOGUE, 
+    RTCPCLD_MSG_INTERNAL,
+    RTCPCLD_MSG_CALLBACK_POS,
+    RTCPCLD_MSG_CALLBACK_CP,
+    RTCPCLD_MSG_CATALOGUE,
     RTCPCLD_MSG_VDQM,
     RTCPCLD_MSG_WFAILED,
     RTCPCLD_MSG_RECALLER_STARTED,
@@ -189,12 +189,12 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_CALLBACK_ADDGETW, DLF_LVL_DEBUG, "Get more work callback: add placeholder"},
     { RTCPCLD_MSG_RESTORESEGS, DLF_LVL_SYSTEM,"Re-enable tape+segments for selection"},
     { RTCPCLD_MSG_TPNOTRETRIED, DLF_LVL_ALERT,"Tape request failed without failed segments"},
-    { RTCPCLD_MSG_CALL_TRACE, DLF_LVL_USAGE,"Tracing statement"},
+    { RTCPCLD_MSG_CALL_TRACE, DLF_LVL_DEBUG,"Tracing statement"},
     { RTCPCLD_MSG_POSTPONERETRY, DLF_LVL_WARNING,"Tape Error retry postponed"},
     { RTCPCLD_MSG_PUTFAILED, DLF_LVL_ALERT,"Migration failed for file"},
     { RTCPCLD_MSG_GETFAILED, DLF_LVL_WARNING,"Recall retry rejected by policy"},
     { RTCPCLD_MSG_INVALSEGM, DLF_LVL_ERROR,"Name server segment no longer valid"},
-    { RTCPCLD_MSG_SHUTDOWN, DLF_LVL_ALERT,"Service shutdown"},
+    { RTCPCLD_MSG_SHUTDOWN, DLF_LVL_SYSTEM,"Service shutdown"},
     { RTCPCLD_MSG_MIGRCANDS, DLF_LVL_SYSTEM,"Checked for new migration candidates"},
     { RTCPCLD_MSG_NBSTREAMS, DLF_LVL_SYSTEM,"Number of streams for SvcClass"},
     { RTCPCLD_MSG_TOOMANYSTRS, DLF_LVL_WARNING,"SvcClass has too many streams"},
@@ -202,7 +202,7 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_WRONGSIZE, DLF_LVL_ALERT,"Recalled disk file has wrong size"},
     { RTCPCLD_MSG_NOTPPOOLS, DLF_LVL_ERROR,"No tape pool for service class with migr candidates"},
     { RTCPCLD_MSG_REPACK, DLF_LVL_SYSTEM,"Repack Information found"},
-    { RTCPCLD_MSG_STATS, DLF_LVL_MONITORING,"Service class statistics"},
+    { RTCPCLD_MSG_STATS, DLF_LVL_SYSTEM,"Service class statistics"},
     { RTCPCLD_MSG_UDPERR, DLF_LVL_ERROR,"Could not send UDP Stream report"},
     { RTCPCLD_MSG_NOCASTORFILE, DLF_LVL_ERROR,"Tape copy not linked with a CastorFile"},
     { RTCPCLD_MSG_FALSE_ENOENT, DLF_LVL_ALERT,"Inconsistent name server answer" },

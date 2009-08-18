@@ -1,24 +1,9 @@
-/var/log/rtcpcld /var/log/MigHunter {
+/var/log/castor/migrator*.log /var/log/castor/recaller*.log /var/log/castor/rtcpclientd*.log /var/log/castor/tperrhandler*.log {
     compress
     daily
     missingok
-    rotate 90
-}
-/var/log/TapeErrorHandler /var/log/recaller /var/log/migrator {
-    compress
-    daily
-    missingok
-    rotate 90
-}
-/var/spool/rtcpclientd/rtcpcld /var/spool/rtcpclientd/MigHunter {
-    compress
-    daily
-    missingok
-    rotate 90
-}
-/var/spool/rtcpclientd/TapeErrorHandler /var/spool/rtcpclientd/recaller /var/spool/rtcpclientd/migrator {
-    compress
-    daily
-    missingok
-    rotate 90
+    rotate 120
+    postrotate
+        /bin/kill -HUP `cat /var/run/syslogd.pid 2> /dev/null` 2> /dev/null || true
+    endscript
 }

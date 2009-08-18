@@ -8,8 +8,8 @@ COMM    Make UPV programs.
 
 INCLUDES = ../h
 CUPVLIB = SharedLibraryTargetName(castorupv)
-SPOOL = /var/spool/upv
-LOGFILE = $(SPOOL)/log
+LOGDIR = /var/log/castor
+LOGFILE = $(LOGDIR)/cupvd.log
 CUPVCONFIG = CupvConfigFile
 CUPV_HOST = CupvHost
 ORAFLG = -DUSE_ORACLE
@@ -17,7 +17,7 @@ ORAINC = -I$(ORACLE_HOME)/precomp/public
 USE_CUPV=-DUSE_CUPV
 #if BuildSecureCupv
 SECURITYFLAG=-DCSEC
-#endif  
+#endif
 
 DFLAGS = -DBIN=\"$(BIN)\" -DCUPV_HOST=\"$(CUPV_HOST)\" $(USE_CUPV) \
          -DLOGFILE=\"$(LOGFILE)\" -DCUPVCONFIG=\"$(CUPVCONFIG)\" \
@@ -50,7 +50,7 @@ Cupv_oracle_ifce.c: Cupv_oracle_ifce.pc
 	proc iname=Cupv_oracle_ifce include=$(INCLUDES) threads=yes char_map=string parse=full prefetch=1000
 FilesToClean += Cupv_oracle_ifce.c Cupv_oracle_ifce.lis
 CUPVD_OBJS = Cupv_main.Osuf Cupv_oracle_ifce.Osuf Cupv_procreq.Osuf sendrep.Osuf Cupv_util.Osuf Cupvlogit.Osuf
-MakeDir($(SPOOL),0755)
+MakeDir($(LOGDIR),0755)
 ORALIBS= -L$(ORACLE_HOME)/lib -lclntsh
 NormalProgramTarget(cupvd,$(CUPVD_OBJS), $(DEPLIB), $(ORALIBS) $(MTLDFLAGS) $(LIBS),750)
 ADMMANPAGE(cupvd)

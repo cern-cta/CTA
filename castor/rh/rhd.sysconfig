@@ -3,6 +3,7 @@
 #   -f             keep process in the foreground, do not fork
 #   -p <integer>   port to be used
 #   -R <integer>   the number of request handling threads
+#   -s             runs the daemon in secure mode
 #
 # Options to pass to the rh daemon
 #RHD_OPTIONS=
@@ -11,7 +12,7 @@
 DAEMON_COREFILE_LIMIT=unlimited
 
 # What roles should the rhd run for. For each role you can overwrite
-# the default options using a dedicate sysconfig file 
+# the default options using a dedicate sysconfig file
 # e.g. /etc/sysconfig/rhd.<role>. The role based mechanism allows for
 # multiple rhd's running with different options to be controlled via
 # the same initd script

@@ -1,6 +1,9 @@
-/var/log/repack /var/spool/repack/log {
+/var/log/castor/repackd*.log {
     compress
     daily
     missingok
     rotate 60
+    postrotate
+        /bin/kill -HUP `cat /var/run/syslogd.pid 2> /dev/null` 2> /dev/null || true
+    endscript
 }

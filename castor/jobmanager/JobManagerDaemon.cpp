@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2009/07/23 12:21:57 $ $Author: waldron $
+ * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2009/08/18 09:42:52 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
     char **results = NULL;
 
     // Errors are ignored here!
-    lsb_init("JobManager");
+    lsb_init("jobmanagerd");
     clusterInfo *cInfo = ls_clusterinfo(NULL, NULL, results, 0, 0);
     if (cInfo != NULL) {
       clusterName = cInfo[0].clusterName;
@@ -212,7 +212,7 @@ int main(int argc, char *argv[]) {
 // Constructor
 //-----------------------------------------------------------------------------
 castor::jobmanager::JobManagerDaemon::JobManagerDaemon():
-  castor::server::BaseDaemon("JobManager") {
+  castor::server::BaseDaemon("jobmanagerd") {
 
   // Now with predefined messages
   castor::dlf::Message messages[] = {

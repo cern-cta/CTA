@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2009/07/13 06:22:07 $ $Author: waldron $
+ * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2009/08/18 09:42:54 $ $Author: waldron $
  *
  * A pool of forked processes
  *
@@ -110,11 +110,9 @@ void castor::server::ForkedProcessPool::init()
     castor::io::PipeSocket* ps = new castor::io::PipeSocket();
     m_childPid[i] = 0;
     // fork worker process
-    dlf_prepare();
     int pid = fork();
 
     if(pid < 0) {
-      dlf_parent();
       castor::exception::Internal ex;
       ex.getMessage() << "Failed to fork in pool " << m_poolName;
       throw ex;
@@ -137,7 +135,6 @@ void castor::server::ForkedProcessPool::init()
     }
     else {
       // parent: save pipe and pid
-      dlf_parent();
       m_childPid[i] = pid;
       m_childPipe.push_back(ps);
       ps->closeRead();
@@ -228,8 +225,6 @@ void castor::server::ForkedProcessPool::childRun(castor::io::PipeSocket* ps)
 {
   // ignore SIGTERM while recreating dlf thread
   signal(SIGTERM, SIG_IGN);
-  dlf_child();
-  dlf_create_threads(1);
   _childStop = false;
 
   // setup a signal handler 'C sytle'
@@ -271,11 +266,11 @@ void castor::server::ForkedProcessPool::childRun(castor::io::PipeSocket* ps)
       // we got this far its most likely that the parent has disappeared e.g.
       // via a kill -9 therefore missing the call to the destructor asking the
       // children to stop.
-      dlf_shutdown(1);
+      dlf_shutdown();
       exit(EXIT_FAILURE);
     }
   }
 
-  dlf_shutdown(10);
+  dlf_shutdown();
   exit(EXIT_SUCCESS);
 }
