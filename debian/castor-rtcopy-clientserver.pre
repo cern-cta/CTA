@@ -1,0 +1,33 @@
+if [ -d /var/spool/rtcpclientd ]; then
+    for src in `ls /var/spool/rtcpclientd/rtcpcld.*.gz 2>/dev/null`; do
+        dest=`basename $src | sed 's/rtcpcld/rtcpclientd.log/'`
+        /bin/mv --reply=no $src /var/log/castor/$dest 2>/dev/null
+    done
+    /bin/mv --reply=no /var/spool/rtcpclientd/rtcpcld /var/log/castor/rtcpclientd.log 2>/dev/null
+
+    for src in `ls /var/spool/rtcpclientd/migrator.*.gz 2>/dev/null`; do
+        dest=`basename $src.log`
+        /bin/mv --reply=no $src /var/log/castor/$dest 2>/dev/null
+    done
+    /bin/mv --reply=no /var/spool/rtcpclientd/migrator /var/log/castor/migrator.log 2>/dev/null
+
+    for src in `ls /var/spool/rtcpclientd/recaller.*.gz 2>/dev/null`; do
+        dest=`basename $src.log`
+        /bin/mv --reply=no $src /var/log/castor/$dest 2>/dev/null
+    done
+    /bin/mv --reply=no /var/spool/rtcpclientd/recaller /var/log/castor/recaller.log 2>/dev/null
+
+    for src in `ls /var/spool/rtcpclientd/TapeErrorHandler.*.gz 2>/dev/null`; do
+        dest=`basename $src | sed 's/TapeErrorHandler/tperrhandler.log/'`
+        /bin/mv --reply=no $src /var/log/castor/$dest 2>/dev/null
+    done
+    /bin/mv --reply=no /var/spool/rtcpclientd/TapeErrorHandler /var/log/castor/tperrhandler.log 2>/dev/null
+
+    /bin/rm -f /var/spool/rtcpclientd/sqlnet.log
+    /bin/rmdir /var/spool/rtcpclientd 2>/dev/null
+
+    /bin/chown root:root /var/log/castor/rtcpclientd* 2>/dev/null
+    /bin/chown root:root /var/log/castor/migrator* 2>/dev/null
+    /bin/chown root:root /var/log/castor/recaller* 2>/dev/null
+    /bin/chown root:root /var/log/castor/tperrhandler* 2>/dev/null
+fi

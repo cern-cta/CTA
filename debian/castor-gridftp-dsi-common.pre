@@ -1,0 +1,6 @@
+if [ -f /var/log/globus-gridftp.log ]; then
+    /bin/mv --reply=no /var/log/globus-gridftp* /var/log/castor/ 2>/dev/null
+fi
+if [ -f /var/log/gridftp.log ]; then
+    /bin/mv --reply=no /var/log/gridftp* /var/log/castor/ 2>/dev/null
+fi

@@ -1,0 +1,12 @@
+if [ -f /etc/rc.d/init.d/stager ]; then
+    /sbin/service stager stop > /dev/null 2>&1 || :
+fi
+if [ -d /var/spool/stager ]; then
+    for src in `ls /var/spool/stager/log.*.gz 2>/dev/null`; do
+        dest=`basename $src | sed 's/log/stagerd.log/'`
+        /bin/mv --reply=no $src /var/log/castor/$dest 2>/dev/null
+    done
+    /bin/mv --reply=no /var/spool/stager/log /var/log/castor/stagerd.log 2>/dev/null
+    /bin/rm -f /var/spool/stager/sqlnet.log
+    /bin/rmdir /var/spool/stager 2>/dev/null
+fi

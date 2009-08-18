@@ -1,0 +1,12 @@
+if [ -f /etc/rc.d/init.d/vmgrdaemon ]; then
+    /sbin/service vmgrdaemon stop > /dev/null 2>&1 || :
+fi
+if [ -d /var/spool/vmgr ]; then
+    for src in `ls /var/spool/vmgr/log.*.gz 2>/dev/null`; do
+        dest=`basename $src | sed 's/log/vmgrd.log/'`
+        /bin/mv --reply=no $src /var/log/castor/$dest 2>/dev/null
+    done
+    /bin/mv --reply=no /var/spool/vmgr/log /var/log/castor/vmgrd.log 2>/dev/null
+    /bin/rm -f /var/spool/vmgr/sqlnet.log
+    /bin/rmdir /var/spool/vmgr 2>/dev/null
+fi

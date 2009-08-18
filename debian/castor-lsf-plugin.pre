@@ -1,0 +1,10 @@
+if [ -d /var/spool/scheduler ]; then
+    for src in `ls /var/spool/scheduler/log.*.gz 2>/dev/null`; do
+        dest=`basename $src | sed 's/log/schedulerd.log/'`
+        /bin/mv --reply=no $src /var/log/castor/$dest 2>/dev/null
+    done
+    /bin/mv --reply=no /var/spool/scheduler/log /var/log/castor/schedulerd.log 2>/dev/null
+    /bin/rmdir /var/spool/scheduler 2>/dev/null
+    /bin/chown root:root /var/log/castor/schedulerd* 2>/dev/null
+fi
+
