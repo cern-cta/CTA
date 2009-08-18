@@ -2,12 +2,12 @@ COMM
 COMM  Copyright (C) 2001-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.7 $ $Date: 2009/07/23 12:22:04 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.8 $ $Date: 2009/08/18 09:43:01 $ CERN IT-PDP/DM Jean-Philippe Baud
 
-COMM 	Make SCSI media changer server programs. 
+COMM 	Make SCSI media changer server programs.
 
-SPOOL = /var/spool/rfio
-CFLAGS = -I../h $(MTCCFLAGS) -DBIN=\"$(BIN)\" -DLOGFILE=\"$(SPOOL)/log\"
+LOGDIR = /var/log/castor
+CFLAGS = -I../h $(MTCCFLAGS) -DBIN=\"$(BIN)\" -DLOGFILE=\"$(LOGDIR)/rmcd.log\"
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(upv,castorupv)
@@ -17,9 +17,8 @@ DependsOnLibrary(tape,castortape)
 RMCD_OBJS = rmc_serv.Osuf rmc_procreq.Osuf rmclogit.Osuf sendrep.Osuf usrmsg.Osuf
 OPSGRP = OperatorGid
 TapeProgramTarget(rmcd,$(RMCD_OBJS),$(DEPLIB),$(LIBS),750)
-MakeDir($(SPOOL),0755)
 ADMMANPAGE(rmcd)
-MakeDir(/var/spool/rmc,0755)
+MakeDir($(LOGDIR),0755)
 LOGROTATE(castor-rmc-server,..,installtape)
 SYSCONFIG(rmcd,installtape)
 INITSCRIPT(rmcd,installtape)
