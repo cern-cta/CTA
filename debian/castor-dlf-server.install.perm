@@ -1,5 +1,0 @@
-%attr(0640,root,root) etc/castor/DLFCONFIG.example
-%attr(0644,root,root) etc/sysconfig/dlfserver.example
-%attr(0755,root,root) etc/init.d/dlfserver
-%attr(0644,root,root) etc/logrotate.d/castor-dlf-server
-%attr(0750,root,root) usr/bin/dlfserver

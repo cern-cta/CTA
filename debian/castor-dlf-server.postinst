@@ -1,2 +1,0 @@
-/sbin/chkconfig --add dlfserver
-/sbin/service dlfserver condrestart > /dev/null 2>&1 || :

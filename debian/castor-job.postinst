@@ -1,2 +1,0 @@
-/bin/chown stage:st /var/spool/job
-/bin/chmod 755 /var/spool/job
