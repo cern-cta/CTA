@@ -13,7 +13,7 @@ case "$1" in
 		GSI_CERT=castor-disk-cert.pem
 		GSI_KEY=castor-disk.pem
 		;;
-			
+
 	TAPE)
 		KRB5_PRINCIPAL=host/`hostname`
 		GSI_CERT=castor-tape-cert.pem
@@ -21,19 +21,15 @@ case "$1" in
 		;;
 	*)
         	echo "Usage: $0 {CENTRAL|DISK|TAPE}"
-        	RETVAL=1;	
+        	RETVAL=1;
         	;;
 esac
 
 if [ $RETVAL -ne 1 ]; then
-	/usr/sue/bin/kinit -k $KRB5_PRINCIPAL 
+	/usr/sue/bin/kinit -k $KRB5_PRINCIPAL
 	export X509_USER_CERT=$GSI_SEC_DIR/$GSI_CERT
 	export X509_USER_KEY=$GSI_SEC_DIR/$GSI_KEY
 	export CSEC_MECH=KRB5
 	export CSEC_AUTH_MECH='KRB5 GSI'
 fi
-
-#export CSEC_TRACE=1
-#export CSEC_TRACEFILE=/tmp/vmgr_csec_trace
-
 
