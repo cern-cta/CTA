@@ -136,7 +136,7 @@ globus_l_gfs_CASTOR2ext_start(
                         &msvcclass		   /* char **msvcclass */
 			)){
 	    	if(mstager!=NULL) globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: user has been mapped to STAGE_HOST: %s\n",func, mstager);
-		if(msvcclass!=NULL) globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: user has been mapped to STAGE_CVSCLASS: %s\n",func, msvcclass);
+		if(msvcclass!=NULL) globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: user has been mapped to STAGE_SVCCLASS: %s\n",func, msvcclass);
 	}
 	else globus_gfs_log_message(GLOBUS_GFS_LOG_WARN,"%s: stage_mapper_setenv error\n",func);
     }
