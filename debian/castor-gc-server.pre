@@ -8,5 +8,5 @@ if [ -d /var/spool/gc ]; then
     done
     /bin/mv --reply=no /var/spool/gc/log /var/log/castor/gcd.log 2>/dev/null
     /bin/rmdir /var/spool/gc 2>/dev/null
-    /bin/chown root:root /var/log/castor/gcd* 2>/dev/null
+    /bin/chown root:root /var/log/castor/gcd* 2>/dev/null || :
 fi

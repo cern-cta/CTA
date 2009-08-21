@@ -7,6 +7,5 @@ if [ -d /var/spool/repack ]; then
         /bin/mv --reply=no $src /var/log/castor/$dest 2>/dev/null
     done
     /bin/mv --reply=no /var/spool/repack/log /var/log/castor/repackd.log 2>/dev/null
-    /bin/rm -f /var/spool/repack/sqlnet.log
-    /bin/rmdir /var/spool/repack 2>/dev/null
+    /bin/rmdir /var/spool/repack 2>/dev/null || :
 fi

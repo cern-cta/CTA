@@ -7,6 +7,5 @@ if [ -d /var/spool/rechandler ]; then
         /bin/mv --reply=no $src /var/log/castor/$dest 2>/dev/null
     done
     /bin/mv --reply=no /var/spool/rechandler/log /var/log/castor/rechandlerd.log 2>/dev/null
-    /bin/rm -f /var/spool/rechandler/sqlnet.log
-    /bin/rmdir /var/spool/rechandler 2>/dev/null
+    /bin/rmdir /var/spool/rechandler 2>/dev/null || :
 fi

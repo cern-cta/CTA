@@ -7,6 +7,5 @@ if [ -d /var/spool/mighunter ]; then
         /bin/mv --reply=no $src /var/log/castor/$dest 2>/dev/null
     done
     /bin/mv --reply=no /var/spool/mighunter/log /var/log/castor/mighunterd.log 2>/dev/null
-    /bin/rm -f /var/spool/mighunter/sqlnet.log
-    /bin/rmdir /var/spool/mighunter 2>/dev/null
+    /bin/rmdir /var/spool/mighunter 2>/dev/null || :
 fi

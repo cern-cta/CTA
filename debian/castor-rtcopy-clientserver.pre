@@ -23,11 +23,10 @@ if [ -d /var/spool/rtcpclientd ]; then
     done
     /bin/mv --reply=no /var/spool/rtcpclientd/TapeErrorHandler /var/log/castor/tperrhandler.log 2>/dev/null
 
-    /bin/rm -f /var/spool/rtcpclientd/sqlnet.log
     /bin/rmdir /var/spool/rtcpclientd 2>/dev/null
 
     /bin/chown root:root /var/log/castor/rtcpclientd* 2>/dev/null
     /bin/chown root:root /var/log/castor/migrator* 2>/dev/null
     /bin/chown root:root /var/log/castor/recaller* 2>/dev/null
-    /bin/chown root:root /var/log/castor/tperrhandler* 2>/dev/null
+    /bin/chown root:root /var/log/castor/tperrhandler* 2>/dev/null || :
 fi

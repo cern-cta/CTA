@@ -7,6 +7,5 @@ if [ -d /var/spool/upv ]; then
         /bin/mv --reply=no $src /var/log/castor/$dest 2>/dev/null
     done
     /bin/mv --reply=no /var/spool/upv/log /var/log/castor/cupvd.log 2>/dev/null
-    /bin/rm -f /var/spool/upv/sqlnet.log
-    /bin/rmdir /var/spool/upv 2>/dev/null
+    /bin/rmdir /var/spool/upv 2>/dev/null || :
 fi

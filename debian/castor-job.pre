@@ -13,5 +13,5 @@ if [ -d /var/spool/job ]; then
     /bin/rmdir /var/spool/job 2>/dev/null
 
     /bin/chown root:root /var/log/castor/stagerjob* 2>/dev/null
-    /bin/chown root:root /var/log/castor/d2dtransfer* 2>/dev/null
+    /bin/chown root:root /var/log/castor/d2dtransfer* 2>/dev/null || :
 fi
