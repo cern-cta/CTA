@@ -71,7 +71,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-lib
 Architecture: any
-Obsoletes: castor-sysconfig, castor-rtcopy-client, castor-lib-compat, castor-dlf-server, castor-doc, castor-commands, CASTOR-client, castor-stager-clientold
+Obsoletes: castor-sysconfig, castor-rtcopy-client, castor-lib-compat, castor-dlf-server, castor-doc, castor-commands, CASTOR-client, castor-stager-clientold, castor-rtcopy-messages
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: castor (Cern Advanced STORage system)
  Static and shared libraries for end-users
@@ -161,12 +161,6 @@ Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-monitor
 Description: castor (Cern Advanced STORage system)
  Resource Monitoring running on each worker node
-
-Package: castor-rtcopy-messages
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: castor (Cern Advanced STORage system)
- Remote Tape Copy messages
 
 Package: castor-rtcopy-server
 Architecture: any
