@@ -24,6 +24,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <linux/version.h>
+#include <sys/param.h>
 /* Impossible unless very very old kernels: */
 #ifndef KERNEL_VERSION
 #define KERNEL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
@@ -176,7 +177,7 @@ char **msgaddr;
 	static int sg_bufsiz = 0;
 	struct sg_header *sg_hd;
 	char sgpath[80];
-	static int Timeout = 0;
+	int timeout_in_jiffies = 0;
 	int sg_big_buff_val =  SG_BIG_BUFF;
 	int procfd, nbread;
 	char procbuf[PROCBUFSZ];
@@ -269,10 +270,11 @@ char **msgaddr;
 			return (-1);
 		}
 	}
-	if (timeout != (Timeout * 10)) {
-		Timeout = timeout / 10;
-		ioctl (fd, SG_SET_TIMEOUT, &Timeout);
-	}
+
+        /* set the sg timeout (in jiffies) */
+        timeout_in_jiffies = timeout * HZ / 1000;
+        ioctl (fd, SG_SET_TIMEOUT, &timeout_in_jiffies);
+
 	memset (sg_buffer, 0, sizeof(struct sg_header));
 	sg_hd = (struct sg_header *) sg_buffer;
 	sg_hd->reply_len = sizeof(struct sg_header) + ((flags & SCSI_IN) ? buflen : 0);
