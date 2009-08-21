@@ -71,6 +71,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-lib
 Architecture: any
+Obsoletes: castor-sysconfig, castor-rtcopy-client, castor-lib-compat, castor-dlf-server, castor-doc, castor-commands, CASTOR-client, castor-stager-clientold
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: castor (Cern Advanced STORage system)
  Static and shared libraries for end-users
@@ -183,7 +184,6 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-stager-client
 Architecture: any
-Obsoletes: castor-commands, castor-doc
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: castor (Cern Advanced STORage system)
  Stager clients
