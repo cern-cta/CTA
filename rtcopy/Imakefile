@@ -51,10 +51,6 @@ ACCTON= -DACCTON
 SACCTDIR = SacctDir
 SACCTFILE = $(SACCTDIR)/sacct
 ACCTFILE = -DACCTFILE=\"$(SACCTFILE)\"
-ERRLISTDIR = InstallLibDir/rtcopy
-ERRLISTFILE = $(ERRLISTDIR)/err_messages
-ESTATD = $(EXPORTSHR)/lib/rtcopy/err_messages
-RTCOPYERRLIST = -DRTCOPYERRLIST=\"$(ERRLISTFILE)\"
 
 SCONFIGFILE = ShiftConfigFile
 CONFIGFILE = -DCONFIGFILE=\"$(SCONFIGFILE)\"
@@ -88,7 +84,7 @@ LIBS = -ldl
 
 DFLAGS = -DBIN=\"$(BIN)\" -DRTCOPY_LOGFILE=\"$(LOGFILE)\" -DNOMORETAPES=\"$(NOMORETAPES)\" \
 	 -DAUTH_HOSTS=\"$(AUTHORIZEDHOSTS)\" -DWORKDIR=\"$(RTCOPYWORKDIR)\" \
-	 -DNS_ROOT=\"$(NS_ROOT)\" $(ACCTON) $(CONFIGFILE) $(RTCOPYERRLIST) $(TPCONFIG) \
+	 -DNS_ROOT=\"$(NS_ROOT)\" $(ACCTON) $(CONFIGFILE) $(TPCONFIG) \
 	 $(RTCPFLAG) -DVMGR $(VDQMFLG) $(CTAPEFLG) $(ACCTFLAG) $(ACCTFILE) $(RTCPCLDFLAGS)
 CFLAGS = $(CCOPTIM) -I../h -I.. $(THREADFLAGS) $(DFLAGS) $(SECURITYFLAG)
 
@@ -171,10 +167,3 @@ EXEMANPAGE(killjid)
 LOGROTATE(castor-rtcopy-server,..,installtape)
 SYSCONFIG(rtcpd,installtape)
 INITSCRIPT(rtcpd,installtape)
-
-InstallNonExecFile(err_messages,$(ERRLISTDIR),644)
-
-$(ESTATD): err_messages
-	-mkdir -p $(@D)
-	-mv $(@D)/$? $(@D)/OLD$?
-	cp $? $@
