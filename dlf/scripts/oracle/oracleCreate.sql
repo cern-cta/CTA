@@ -32,6 +32,9 @@ INSERT INTO dlf_version VALUES ('2_1_9_0', 'releaseTag');
 CREATE TABLE dlf_config(name VARCHAR2(255) CONSTRAINT NN_Config_Name NOT NULL, value VARCHAR2(255), description VARCHAR2(255));
 ALTER TABLE dlf_config ADD CONSTRAINT UN_Config_Name UNIQUE (name) ENABLE;
 
+/* SQL statement for ids sequence */
+CREATE SEQUENCE ids_seq INCREMENT BY 1 CACHE 300;
+
 /* SQL statements for table dlf_messages */
 CREATE TABLE dlf_messages(id NUMBER, timestamp DATE CONSTRAINT NN_Messages_Timestamp NOT NULL, timeusec NUMBER, reqid CHAR(36), subreqid CHAR(36), hostid NUMBER, facility NUMBER(3), severity NUMBER(3), msg_no NUMBER(5), pid NUMBER(10), tid NUMBER(10), nshostid NUMBER, nsfileid NUMBER, tapevid VARCHAR2(20), userid NUMBER(10), groupid NUMBER(10), sec_type VARCHAR2(20), sec_name VARCHAR2(255))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
@@ -112,7 +115,7 @@ INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('3',  'Error');
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('4',  'Warn');
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('5',  'Notice'); /* Auth */
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('6',  'Notice'); /* Security */
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('7', ' Debug');  /* Usage */
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('7',  'Debug');  /* Usage */
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('8',  'Info');   /* System */
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('10', 'Info');   /* Monitoring */
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('11', 'Debug');
