@@ -30,7 +30,7 @@ DependsOnLibrary(../../common,castorcommon)
 DependsOnLibrary(../../dlf,castordlf)
 DependsOnLibrary(..,castorclient)
 DependsOnLibrary(../db/cnv,castorcnvs)
-DependsOnLibrary(../tape/fsm,castortapefsm)
+#DependsOnLibrary(../tape/fsm,castortapefsm)
 
 TAPEGATEWAY_MESSAGES_SRCS = \
   ../tapegateway/BaseFileInfo.cpp \

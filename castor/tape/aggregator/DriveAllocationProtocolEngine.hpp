@@ -30,7 +30,7 @@
 #include "castor/io/AbstractTCPSocket.hpp"
 #include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
 #include "castor/tape/aggregator/SmartFd.hpp"
-#include "castor/tape/fsm/StateMachine.hpp"
+//#include "castor/tape/fsm/StateMachine.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "h/Castor_limits.h"
 #include "h/common.h"
@@ -94,7 +94,7 @@ private:
    * State machine responsible for controlling the dynamic behaviour of this
    * protocol engine.
    */
-  fsm::StateMachine m_fsm;
+  //fsm::StateMachine m_fsm;
 
   const char *getReqFromRtcpd();
 

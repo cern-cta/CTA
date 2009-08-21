@@ -33,7 +33,7 @@
 #include "castor/tape/aggregator/RcpJobSubmitter.hpp"
 #include "castor/tape/aggregator/RtcpMarshaller.hpp"
 #include "castor/tape/aggregator/RtcpTxRx.hpp"
-#include "castor/tape/fsm/Callback.hpp"
+//#include "castor/tape/fsm/Callback.hpp"
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/Ctape_constants.h"
@@ -194,6 +194,7 @@ castor::tape::tapegateway::Volume
 // testFsm
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::DriveAllocationProtocolEngine::testFsm() {
+/*
   std::cout << std::endl;                         
   std::cout << "=========================================" << std::endl;
   std::cout << "castor::tape::aggregator::FsmTest::doit()" << std::endl;
@@ -264,6 +265,7 @@ void castor::tape::aggregator::DriveAllocationProtocolEngine::testFsm() {
   }
 
   std::cout << std::endl;
+*/
 }
 
 
