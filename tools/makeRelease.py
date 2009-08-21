@@ -8,7 +8,7 @@ platforms = (('SLC4', 'i386',   'lxc2slc4-i386.cern.ch'),
              ('SLC5', 'x86_64', 'lxc2slc5-x64.cern.ch'))
 
 def usage():
-    print sys.argv[0] + " <CVS tag of the release>"
+    print sys.argv[0] + " <tag of the release>"
 
 def runCommand(cmd, errorMessage):
     global intReleaseDir
@@ -68,7 +68,7 @@ os.chdir('/tmp')
 workDir = tempfile.mkdtemp('','CastorRelease', '/tmp')
 print "Checking out code into " + workDir
 os.chdir(workDir)
-runCommand('cvs -Q -d :gserver:isscvs.cern.ch/local/reps/castor co -r ' + version + ' CASTOR2',
+runCommand('svn --quiet co svn+ssh://svn/reps/CASTOR/CASTOR2/tags/' + version + ' CASTOR2',
            'Error while checking out source code')
 
 # Create the tar ball
@@ -129,7 +129,7 @@ for o in outputs:
 # make a fresh checkout in the internal release space for easy debugging using AFS
 print "Creating a fresh checkout in the internal release space"
 os.chdir(intReleaseDir)
-runCommand('cvs -Q -d :gserver:isscvs.cern.ch/local/reps/castor co -r ' + version + ' CASTOR2',
+runCommand('svn --quiet co svn+ssh://svn/reps/CASTOR/CASTOR2/tags/' + version + ' CASTOR2',
            'Error while checking out release into internal release space')
 
 # create a 'fast' testsuite directory
