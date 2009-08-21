@@ -1,12 +1,11 @@
 if [ -f /etc/rc.d/init.d/nsdaemon ]; then
     /sbin/service nsdaemon stop > /dev/null 2>&1 || :
 fi
-if [ -d /var/spool/nsdaemon ]; then
-    for src in `ls /var/spool/nsdaemon/log.*.gz 2>/dev/null`; do
+if [ -d /var/spool/ns ]; then
+    for src in `ls /var/spool/ns/log.*.gz 2>/dev/null`; do
         dest=`basename $src | sed 's/log/nsd.log/'`
         /bin/mv --reply=no $src /var/log/castor/$dest 2>/dev/null
     done
-    /bin/mv --reply=no /var/spool/nsdaemon/log /var/log/castor/nsd.log 2>/dev/null
-    /bin/rm -f /var/spool/nsdaemon/sqlnet.log
-    /bin/rmdir /var/spool/nsdaemon 2>/dev/null
+    /bin/mv --reply=no /var/spool/ns/log /var/log/castor/nsd.log 2>/dev/null
+    /bin/rmdir /var/spool/ns 2>/dev/null || :
 fi
