@@ -165,6 +165,7 @@
 struct stage_options {
   char *stage_host;
   char *service_class;
+  int stage_version;   /* deprecated */
   int stage_port;
 };
 
