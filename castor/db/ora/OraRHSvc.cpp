@@ -281,10 +281,11 @@ void castor::db::ora::OraRHSvc::changePrivilege
                       << "and denying the complement afterward";
       throw ex;
     } else if (e.getErrorCode() == 20113) {
+      std::string msg = e.what();
       castor::exception::InvalidArgument ex;
-      ex.getMessage() << "Invalid service class '"
-                      << svcClassName
-                      << "'\n";
+      // extract the original message sent by the PL/SQL code
+      // from the surrounding oracle additions
+      ex.getMessage() << msg.substr(11,msg.find('\n')-11) << "\n";
       throw ex;
     } else {
       castor::exception::Internal ex;

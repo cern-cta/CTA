@@ -77,7 +77,7 @@ BEGIN
     -- If permitted to do so raise an application error if the service class does
     -- not exist
     IF raiseError = 1 THEN
-      raise_application_error(-20113, 'Invalid service class');
+      raise_application_error(-20113, 'Invalid service class ''' || svcClassName || '''');
     END IF;
     RETURN 0;
   END;
