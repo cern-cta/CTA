@@ -23,4 +23,5 @@
 /etc/logrotate.d/castor-upv-server
 /etc/logrotate.d/castor-vdqm2-server
 /etc/logrotate.d/castor-vmgr-server
+/etc/logrotate.d/castor-logprocessor-server
 /etc/xinetd.d/gsiftp

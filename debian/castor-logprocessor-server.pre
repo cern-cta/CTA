@@ -1,0 +1,3 @@
+if [ -d /var/spool/dlf ]; then
+    /bin/rm -rf /var/spool/dlf 2>/dev/null || :
+fi

@@ -6,7 +6,7 @@ COMM
 
 COMM		Make CASTOR libraries and executables
 
-SUBDIRS = common dlf security upv ns rfio \
+SUBDIRS = common dlf security upv ns rfio logprocessor \
 	  expert rmc rtcopy client tape vdqm vmgr \
 	  hsmtools h castor gridftp2 shlib clips test
 

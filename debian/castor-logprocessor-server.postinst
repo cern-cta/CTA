@@ -1,0 +1,7 @@
+/sbin/chkconfig --add logprocessord
+/sbin/service logprocessord condrestart > /dev/null 2>&1 || :
+
+if [ ! -p /var/log/dlf/syslog.input ]; then
+    /usr/bin/mkfifo /var/log/dlf/syslog.input
+fi
+

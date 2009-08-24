@@ -1,0 +1,6 @@
+/var/log/castor/logprocessord.log {
+    compress
+    daily
+    missingok
+    rotate 120
+}

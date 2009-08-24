@@ -1,0 +1,314 @@
+#!/usr/bin/env python
+#-------------------------------------------------------------------------------
+# Author: Lukasz Janyst <ljanyst@cern.ch>
+# Date:   22.05.2009
+# File:   logprocessord
+# Desc:   Log parser and db dispatcher
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+# Imports
+#-------------------------------------------------------------------------------
+import sys
+import getopt
+import ConfigParser
+import os
+import signal
+import datetime
+
+LoggingCommon  = None
+currentProcess = None
+
+#-------------------------------------------------------------------------------
+# Some constants and global stuff
+#-------------------------------------------------------------------------------
+configFile  = '/etc/castor/logprocessord.conf'
+pidFilePath = '/var/run/logprocessord.pid'
+logFilePath = '/var/log/castor/logprocessord.log'
+
+#-------------------------------------------------------------------------------
+# Print the help message
+#-------------------------------------------------------------------------------
+def printHelp():
+    print 'logprocessord'
+    print '   -d start|stop - start stop daemon'
+    print '   -c file       - use file as a config file'
+    print '   -p name       - run the given process'
+
+
+#-------------------------------------------------------------------------------
+# Process the config file
+#-------------------------------------------------------------------------------
+def processConfig():
+    #---------------------------------------------------------------------------
+    # Read the config file
+    #---------------------------------------------------------------------------
+    try:
+        config = ConfigParser.ConfigParser()
+        config.readfp( file( configFile ) )
+    except Exception, e:
+        raise Exception( 'Error while parsing the config:' + str(e) )
+
+    #---------------------------------------------------------------------------
+    # Run the basic setup
+    #---------------------------------------------------------------------------
+    global logFilePath
+    global pidFilePath
+    if config.has_option( 'main', 'plugin_path' ):
+        sys.path.append( config.get( 'main', 'plugin_path' ) )
+
+    if config.has_option( 'main', 'pid_file' ):
+        pidFilePath = config.get( 'main', 'pid_file' )
+
+    if config.has_option( 'main', 'log_file' ):
+        logFilePath = config.get( 'main', 'log_file' )
+
+    #---------------------------------------------------------------------------
+    # Import the common logger module
+    #---------------------------------------------------------------------------
+    global LoggingCommon
+    if not 'LogProcessorCommon' in sys.modules.keys():
+        try:
+            LoggingCommon = __import__( 'LoggingCommon' )
+        except ImportError, e:
+            raise Exception( 'Unable to load common logging functionality' )
+
+    return LoggingCommon.processConfig( config ), config
+
+
+#-------------------------------------------------------------------------------
+# Signal handler slushing data in the buffers
+#-------------------------------------------------------------------------------
+def sigTermHandler( signum, frame ):
+    currentProcess.finalize()
+
+#-------------------------------------------------------------------------------
+# Print check if the daemon is running and if so, return it's pid
+#-------------------------------------------------------------------------------
+def checkDaemon():
+    try:
+        f = file( pidFilePath, 'r' )
+    except IOError:
+        return []
+
+    try:
+        tmp1 = f.readline().split( ' ' )
+        tmp2 = filter( lambda x: x != '', tmp1 )
+        pidList = map( lambda x: int( x ), tmp2 )
+
+    except ValueError, val:
+        f.close()
+        raise RuntimeError( 'Malformed pid file, please kill the process ' +
+                            'manually, remove: ' + str(pidFilePath) + ', and ' +
+                            'restart the process' )
+    f.close()
+    return pidList
+
+
+#-------------------------------------------------------------------------------
+# Start the daemon
+#-------------------------------------------------------------------------------
+def startDaemon( config, configproc ):
+    #---------------------------------------------------------------------------
+    # Check if the process is already running
+    #---------------------------------------------------------------------------
+    pids = checkDaemon()
+    if len( pids ) > 0:
+        raise RuntimeError( 'The process is running: ' + str( pids ) )
+
+    #---------------------------------------------------------------------------
+    # Create the processes we are supposed to run
+    #---------------------------------------------------------------------------
+    if not configproc.has_option( 'main', 'daemon_processes' ):
+        raise LoggingCommon.ConfigError( 'No daemon processes specified in ' +
+                                         'the config file' )
+
+    procs = configproc.get( 'main', 'daemon_processes' )
+    procs = procs.split( ' ' )
+    procs = filter( lambda x: x!='', procs )
+
+    processes = []
+    for proc in procs:
+        processes.append( LoggingCommon.createProcess( proc, config ) )
+
+    #---------------------------------------------------------------------------
+    # Check if we can access the files
+    #---------------------------------------------------------------------------
+    global logFilePath
+    try:
+        for proc in processes:
+            logFile = file( logFilePath + '.' + proc.name, 'a+' )
+            logFile.close()
+        pidFile = file( pidFilePath, 'w' )
+    except Exception, e:
+        raise LoggingCommon.ConfigError( 'Cannot access: ' + str( e ) )
+
+    #---------------------------------------------------------------------------
+    # Fork me
+    #---------------------------------------------------------------------------
+    global currentProcess
+    currentProcess = processes[0]
+    pid = 0
+    for proc in processes:
+        currentProcess = proc
+        try:
+            pid = os.fork()
+
+            #-------------------------------------------------------------------
+            # I am the parent
+            #-------------------------------------------------------------------
+            if pid > 0:
+                print 'A daemon for process', proc.name, 'was launched',
+                print 'successfully, pid:', pid
+                pidFile.write( str(pid) + ' ')
+            #-------------------------------------------------------------------
+            # We're in the child, no need to loop any more
+            #-------------------------------------------------------------------
+            else:
+                pidFile.close()
+                break
+
+        #-----------------------------------------------------------------------
+        # Houston, we have a problem
+        #-----------------------------------------------------------------------
+        except OSError, e:
+            raise RuntimeError( 'Fork for process: ' + proc.name + ' failed: '
+                                + str( e )  )
+
+    if pid > 0:
+        pidFile.close()
+        sys.exit( 0 )
+
+    #---------------------------------------------------------------------------
+    # Redirect the standard output
+    #---------------------------------------------------------------------------
+    logFilePath += '.'
+    logFilePath += currentProcess.name
+    outLog = None
+    os.setsid()
+    try:
+        outLog  = file( logFilePath, 'a+' )
+        devNull = file( '/dev/null', 'r' )
+        sys.stdout.flush()
+        sys.stderr.flush()
+        os.close( sys.stdin.fileno() )
+        os.close( sys.stdout.fileno() )
+        os.close( sys.stderr.fileno() )
+        os.dup2( outLog.fileno(),  sys.stdout.fileno() )
+        os.dup2( outLog.fileno(),  sys.stderr.fileno() )
+        os.dup2( devNull.fileno(), sys.stdin.fileno() )
+        os.chdir( '/')
+    except IOError, e:
+        raise LoggingCommon.ConfigError( 'Cannot redirect output to the log ' +
+                                         'file: ' + str(e) )
+
+    #---------------------------------------------------------------------------
+    # Process the messages
+    #---------------------------------------------------------------------------
+    print datetime.datetime.now(), 'Running', currentProcess.name, 'process',
+    print '[' + str(os.getpid()) + ']'
+    sys.stdout.flush()
+    currentProcess.initialize()
+    currentProcess.run()
+    currentProcess.finalize()
+
+#-------------------------------------------------------------------------------
+# Stop the deamon
+#-------------------------------------------------------------------------------
+def stopDaemon( config ):
+    #---------------------------------------------------------------------------
+    # Check if the daemon is running
+    #---------------------------------------------------------------------------
+    pids = checkDaemon()
+    if len( pids ) == 0:
+        print 'The deamon is not running'
+        return
+
+    #---------------------------------------------------------------------------
+    # It is, so kill it
+    #---------------------------------------------------------------------------
+    for pid in pids:
+        try:
+            os.kill( pid, signal.SIGTERM )
+        except OSError, e:
+            raise RuntimeError( 'Unable to terminate: ' + str(pid) +
+                                ', because: ' + str( e ) )
+
+    try:
+      os.remove( pidFilePath )
+    except Exception, e:
+      raise RuntimeError( 'Unable to remove: ' + pidFile + ' please do it' +
+                          ' manually: ' + str(e) )
+    print 'The deamons have been stopped'
+
+#-------------------------------------------------------------------------------
+# Begin the show
+#-------------------------------------------------------------------------------
+if __name__ == '__main__':
+    #---------------------------------------------------------------------------
+    # Parse the commandline
+    #---------------------------------------------------------------------------
+    try:
+        optlist, args = getopt.getopt( sys.argv[1:], 'c:d:p:', '' )
+    except getopt.GetoptError, e:
+        print e
+        printHelp()
+        sys.exit( 1 )
+
+    if not len(optlist):
+        printHelp()
+        sys.exit( 1 )
+
+    opts = dict( optlist )
+    if (opts.has_key( '-d' ) and opts.has_key( '-p' )) or (
+        not opts.has_key( '-d' ) and not opts.has_key( '-p' ) ):
+        print 'You can either process a file or run in daemon mode'
+        sys.exit( 2 )
+
+    #---------------------------------------------------------------------------
+    # Change the configuration file
+    #---------------------------------------------------------------------------
+    if opts.has_key( '-c' ):
+        configFile = opts['-c']
+
+    config, cp = processConfig()
+
+    #---------------------------------------------------------------------------
+    # Process a file
+    #---------------------------------------------------------------------------
+    if opts.has_key( '-p' ):
+        try:
+            process = LoggingCommon.createProcess( opts['-p'], config )
+            print 'Running process', opts['-p'], '...'
+            d1 = datetime.datetime.now()
+            process.initialize()
+            process.run()
+            process.finalize()
+            d2 = datetime.datetime.now()
+            d = d2 - d1
+            print 'Time: ', int( d.seconds/60 ), 'm.', d.seconds%60, 's.'
+
+        except Exception, e:
+            print e
+            sys.exit( 1 )
+
+    #---------------------------------------------------------------------------
+    # Run as a daemon
+    #---------------------------------------------------------------------------
+    if opts.has_key( '-d' ):
+        try:
+            #-------------------------------------------------------------------
+            # Manage the daemon
+            #-------------------------------------------------------------------
+            if opts['-d'] == 'start':
+                startDaemon( config, cp )
+            elif opts['-d'] == 'stop':
+                stopDaemon( cp )
+            else:
+                print 'You can either start or stop the deamon'
+                sys.exit( 3 )
+        except SystemExit:
+            pass
+        except Exception, e:
+            print e
+            sys.exit( 1 )
