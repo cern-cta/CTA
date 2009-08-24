@@ -184,13 +184,13 @@ AS
          -- Calculate the estimated time to completion in seconds if the process
          -- is in a RUNNING status and more than 10% of the data has already by
          -- transferred.
-         decode(DFS.status, 2,
+         decode(DFS.status, 2, decode(DFS.totalBytes, 0, 'N/A',
            decode(sign((getTime() - 3600) - DFS.lastUpdateTime), -1,
              decode(sign((((DFS.totalBytes - nvl(DDCS.bytesRemaining, 0)) /
                             DFS.totalBytes) * 100) - 10), -1, 'N/A',
                getInterval(0, trunc(DDCS.bytesRemaining / ((DFS.totalBytes -
                            nvl(DDCS.bytesRemaining, 0)) /
-                           (getTime() - DFS.startTime))))), 'N/A'), 'N/A') ETC
+                           (getTime() - DFS.startTime))))), 'N/A'), 'N/A')) ETC
     FROM (
       SELECT fileSystem,
              max(decode(status, 3, nbFiles, 0)) Running,
@@ -683,7 +683,7 @@ BEGIN
             CONNECT BY CONNECT_BY_ROOT fileSystem = fileSystem
                 AND LEVEL <= maxTransfers
                 AND PRIOR sys_guid() IS NOT NULL
-              ORDER BY fileSystem)
+              ORDER BY totalBytes ASC, fileSystem)
   LOOP
     drainFileSystem(a.fileSystem);
   END LOOP;
