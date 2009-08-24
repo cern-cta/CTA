@@ -42,7 +42,6 @@ int main(argc, argv)
   int errflg = 0;
   int hflg = 0;
   char *server = NULL;
-  char *p = NULL;
 
   memset (&Cns_fileclass, 0, sizeof(struct Cns_fileclass));
 
@@ -72,15 +71,7 @@ int main(argc, argv)
       break;
     case 'h':
       server = Coptarg;
-      if ((p = getenv (CNS_HOST_ENV)) ||
-	  (p = getconfent (CNS_SCE, "HOST", 0))) {
-	if (strcmp(p, server) != 0) {
-	  fprintf (stderr,
-		   "cannot query '%s', all name server commands are forced to "
-		   "query '%s'\n", server, p);
-	  errflg++;
-	}
-      }
+      setenv(CNS_HOST_ENV, server, 1);
       break;
     case '?':
     case ':':

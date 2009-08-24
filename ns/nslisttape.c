@@ -72,7 +72,6 @@ int main(int argc,char **argv)
   u_signed64 count = 0;
   u_signed64 size = 0;
   u_signed64 maxfileid = 0;
-  char *p = NULL;
 
 #if defined(_WIN32)
   WSADATA wsadata;
@@ -94,15 +93,7 @@ int main(int argc,char **argv)
     switch (c) {
     case 'h':
       server = Coptarg;
-      if ((p = getenv (CNS_HOST_ENV)) ||
-	  (p = getconfent (CNS_SCE, "HOST", 0))) {
-	if (strcmp(p, server) != 0) {
-	  fprintf (stderr,
-		   "cannot query '%s', all name server commands are forced to "
-		   "query '%s'\n", server, p);
-	  errflg++;
-	}
-      }
+      setenv(CNS_HOST_ENV, server, 1);
       break;
     case 'H':
       humanflag++;

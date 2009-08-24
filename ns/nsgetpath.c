@@ -40,7 +40,6 @@ int main(int argc, char**argv) {
   char *buf = NULL;
   char filepath[CA_MAXPATHLEN + 1];
   char tmpbuf[21];
-  char *p = NULL;
 
   Coptions_t longopts[] = {
     { "help",   NO_ARGUMENT,       &hflg, 1  },
@@ -66,6 +65,7 @@ int main(int argc, char**argv) {
       break;
     case 'h':
       buf = Coptarg;
+      setenv(CNS_HOST_ENV, buf, 1);
       break;
     default:
       break;
@@ -76,6 +76,7 @@ int main(int argc, char**argv) {
   }
   if (fileid == 0) {
     if ((argc - Coptind) > 1) {
+      setenv(CNS_HOST_ENV, argv[1], 1);
       buf = argv[1];
       fileid = strtou64(argv[2]);
     } else {
@@ -85,18 +86,12 @@ int main(int argc, char**argv) {
   if (buf == NULL) {
     (buf = getenv (CNS_HOST_ENV)) ||
       (buf = getconfent (CNS_SCE, "HOST", 0));
-  } else {
-    if ((p = getenv (CNS_HOST_ENV)) ||
-	(p = getconfent (CNS_SCE, "HOST", 0))) {
-      if (strcmp(p, buf) != 0) {
-	fprintf (stderr,
-		 "cannot query '%s', all name server commands are forced to "
-		 "query '%s'\n", buf, p);
-	exit (USERR);
-      }
-    }
   }
-  if (errflg || (buf == NULL) || (fileid == 0)) {
+  if (buf == NULL) {
+    fprintf(stderr, "unable to determine which host to contact, please use the -h option\n");
+    usage (USERR, argv[0]);
+  }
+  if (errflg || (fileid == 0)) {
     usage (USERR, argv[0]);
   }
   server = strdup(buf);
