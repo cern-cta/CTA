@@ -152,14 +152,14 @@ void castor::job::stagerjob::GridFTPPlugin::getEnvironment
   // Get log file names and log level
   char *globus_logfile = getconfent("GSIFTP", "LOGFILE", 0);
   if (globus_logfile == NULL) {
-    env.globus_logfile = "/var/log/castor/gridftp.log";
+    env.globus_logfile = "/var/log/gridftp.log";
   } else {
     env.globus_logfile = globus_logfile;
   }
 
   const char *globus_logfile_netlogger = getconfent("GSIFTP", "NETLOGFILE", 0);
   if (globus_logfile_netlogger == NULL) {
-    env.globus_logfile_netlogger = "/var/log/castor/globus-gridftp.log";
+    env.globus_logfile_netlogger = "/var/log/globus-gridftp.log";
   } else {
     env.globus_logfile_netlogger = globus_logfile_netlogger;
   }

@@ -1,4 +1,4 @@
-/bin/touch /var/log/castor/gridftp.log
-/bin/touch /var/log/castor/globus-gridftp.log
-/bin/chown stage:st /var/log/castor/gridftp.log
-/bin/chown stage:st /var/log/castor/globus-gridftp.log
+/bin/touch /var/log/gridftp.log
+/bin/touch /var/log/globus-gridftp.log
+/bin/chown stage:st /var/log/gridftp.log
+/bin/chown stage:st /var/log/globus-gridftp.log

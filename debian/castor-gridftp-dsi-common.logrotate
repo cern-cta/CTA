@@ -1,4 +1,4 @@
-/var/log/castor/globus-gridftp.log /var/log/castor/gridftp.log {
+/var/log/globus-gridftp.log /var/log/gridftp.log {
     compress
     daily
     missingok

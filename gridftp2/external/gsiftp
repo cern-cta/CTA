@@ -18,7 +18,7 @@ service gsiftp
         env             += X509_USER_CERT=/etc/grid-security/castor-gridftp-dsi-ext/castor-gridftp-dsi-ext-cert.pem
         env             += X509_USER_KEY=/etc/grid-security/castor-gridftp-dsi-ext/castor-gridftp-dsi-ext-key.pem
         server          = /opt/globus/sbin/globus-gridftp-server
-        server_args     = -i -Z /var/log/castor/globus-gridftp.log -l /var/log/castor/gridftp.log -d ALL -dsi CASTOR2ext -allowed-modules CASTOR2ext -control-idle-timeout 3600
+        server_args     = -i -Z /var/log/globus-gridftp.log -l /var/log/gridftp.log -d ALL -dsi CASTOR2ext -allowed-modules CASTOR2ext -control-idle-timeout 3600
         log_on_success  += DURATION
         nice            = 10
         disable         = no
