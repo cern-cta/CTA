@@ -497,8 +497,8 @@ char *vol1, *hdr1, *hdr2, *uhl1;
                                         
                                         if (1 == c) {
                                         
-                                                sprintf( badLabelReason, "Could not read a whole hdr1 label, only %ld bytes", 
-                                                         strlen( hdr1 ) );
+                                                sprintf( badLabelReason, 
+							 "Could not read hdr1 label: unexpected record length");
                                                 sprintf( badLabelContent, "%s", hdr1 );
                                         
                                         } else {
@@ -557,8 +557,8 @@ char *vol1, *hdr1, *hdr2, *uhl1;
 			}
 			if (c == 1) {
 
-                                sprintf( badLabelReason, "Could not read a whole hdr1 label, only %ld bytes", 
-                                         strlen( hdr1 ) );
+				sprintf( badLabelReason, 
+					 "Could not read hdr1 label: unexpected record length");
                                 sprintf( badLabelContent, "%s", hdr1 );
 
 				c = ETLBL;
