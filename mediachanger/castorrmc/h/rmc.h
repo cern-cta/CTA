@@ -24,7 +24,7 @@
 #define	RETRYI	60
 #define	LOGBUFSZ 1024
 #define	PRTBUFSZ 180
-#define	REPBUFSZ 90000	/* must be >= max media changer server reply size */
+#define	REPBUFSZ 524288	/* must be >= max media changer server reply size */
 #define	REQBUFSZ 256	/* must be >= max media changer server request size */
 #define RMC_MAGIC	0x120D0301
 #define RMC_TIMEOUT	5	/* netread timeout while receiving a request */
