@@ -69,6 +69,10 @@ BEGIN
       RETURN ret;
     END IF;
   END IF;
+  -- We do accept '*' as being valid, as it is the wildcard
+  IF SvcClassName = '*' THEN
+    RETURN 1;
+  END IF;
   -- Check to see if service class exists by name and return its id
   BEGIN
     SELECT id INTO ret FROM SvcClass WHERE name = svcClassName;
