@@ -32,7 +32,7 @@ stager_addprivilege, stager_removeprivilege \- add/remove privileges to/from the
 .BI [user][:group][,[user][:group]]*
 [
 .BI -R
-.BI type[,type]*
+.BI type[,type]
 ]
 [
 .BI -S
@@ -47,7 +47,7 @@ stager_addprivilege, stager_removeprivilege \- add/remove privileges to/from the
 .BI [user][:group][,[user][:group]]*
 [
 .BI -R
-.BI type[,type]*
+.BI type[,type]
 ]
 [
 .BI -S
@@ -88,12 +88,12 @@ that an empty list is however not allowed. To specify that any user and any
 group is concerned, use ":". In case a user is given with no group, the
 group will be filled with the primary group of the user.
 .TP
-.BI \-R,\ \-\-reqTypes " type[,type]*"
+.BI \-R,\ \-\-reqTypes " type[,type]"
 specifies the list of request types concerned by the new privileges. The list is
 comma separated and should use predefined request types. See 
 .BR stager_listprivileges(1castor)
 for a complete list. Examples are StageGetRequest, StageRmRequest or ChangePrivilege.
-This parameter can be ommited, defaulting then to all request types.
+To specify all request types, this parameter must be ommited.
 .TP
 .BI \-S,\ \-\-service_class " service_class"
 specifies the service class concerned by the new privileges.
