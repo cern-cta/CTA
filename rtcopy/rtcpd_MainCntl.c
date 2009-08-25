@@ -1035,12 +1035,22 @@ int rtcpd_FreeBuffers() {
       if ( (p = databufs[i]->buffer) != NULL ) free(p);
       databufs[i]->buffer = NULL;
       if ( (q = databufs[i]->lrecl_table) != NULL ) free(q);
-      free(databufs[i]);
-      databufs[i] = NULL;
+      /* S. Murray 24/08/09                                          */
+      /* The CLThread concurrently broadcasts an exception whilst    */
+      /* the tape thread is in this function.  Therefore do not free */
+      /* the data buffer meta-data structures, because they contain  */
+      /* the locks used by the CLThread to broadcast the exception.  */
+      /* free(databufs[i]);  */
+      /* databufs[i] = NULL; */
     }
   }
-  free(databufs);
-  databufs = NULL;
+  /* S. Murray 24/08/09                                          */
+  /* The CLThread concurrently broadcasts an exception whilst    */
+  /* the tape thread is in this function.  Therefore do not free */
+  /* the data buffer meta-data structures, because they contain  */
+  /* the locks used by the CLThread to broadcast the exception.  */
+  /* free(databufs);  */
+  /* databufs = NULL; */
   return(0);
 }
 
