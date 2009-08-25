@@ -378,13 +378,31 @@ vmgrenterdenmap -d 500GC  --ml J --mo 3592 --nc 465G
 
 vmgrenterlibrary --name IBMLIB1A --capacity 6600
 vmgrenterlibrary --name IBMLIB1B --capacity 6600
+vmgrenterlibrary --name IBMLIB2A --capacity 6600
+vmgrenterlibrary --name IBMLIB2B --capacity 6600
+vmgrenterlibrary --name IBMLIB3A --capacity 6600
+vmgrenterlibrary --name IBMLIB3B --capacity 6600
 
 vmgrenterdgnmap -g 359B1A --mo 3592 --library IBMLIB1A
 vmgrenterdgnmap -g 359B1B --mo 3592 --library IBMLIB1B
+vmgrenterdgnmap -g 359B2A --mo 3592 --library IBMLIB2A
+vmgrenterdgnmap -g 359B2B --mo 3592 --library IBMLIB2B
+vmgrenterdgnmap -g 359B3A --mo 3592 --library IBMLIB3A
+vmgrenterdgnmap -g 359B3B --mo 3592 --library IBMLIB3B
 
 vmgrenterpool --group st --name aggregator_dev --user stage
 vmgrenterpool --group st --name bad_dev        --user stage
+vmgrenterpool --group st --name german_dev     --user stage
 vmgrenterpool --group st --name giulia_dev     --user stage
+vmgrenterpool --group st --name nbessone_dev   --user stage
+vmgrenterpool --group st --name repack_src     --user stage
+vmgrenterpool --group st --name repack_dst     --user stage
+vmgrenterpool --group st --name repack_spare   --user stage
+vmgrenterpool --group st --name spare_dev      --user stage
+vmgrenterpool --group st --name stager_cert1   --user stage
+vmgrenterpool --group st --name stager_cert2   --user stage
+vmgrenterpool --group st --name stager_cert3   --user stage
+vmgrenterpool --group st --name stager_cert4   --user stage
 vmgrenterpool --group st --name stager_dev01   --user stage
 vmgrenterpool --group st --name stager_dev02   --user stage
 vmgrenterpool --group st --name stager_dev03   --user stage
@@ -393,14 +411,8 @@ vmgrenterpool --group st --name stager_dev05   --user stage
 vmgrenterpool --group st --name stager_dev06   --user stage
 vmgrenterpool --group st --name stager_dev07   --user stage
 vmgrenterpool --group st --name stager_dev08   --user stage
-vmgrenterpool --group st --name nbessone_dev   --user stage
-vmgrenterpool --group st --name spare_dev      --user stage
-vmgrenterpool --group st --name stager_cert1   --user stage
-vmgrenterpool --group st --name stager_cert2   --user stage
-vmgrenterpool --group st --name stager_cert3   --user stage
-vmgrenterpool --group st --name stager_cert4   --user stage
 vmgrenterpool --group st --name tprw_dev       --user stage
-vmgrenterpool --group st --name german_dev     --user stage
+vmgrenterpool --group st --name tpsrv249_dev   --user stage
 
 vmgrentertape -V I02000 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po aggregator_dev
 vmgrentertape -V I05236 --mo 3592 --ml J --li IBMLIB1A -d 1000GC -l aul --po bad_dev
@@ -2487,3 +2499,12 @@ How to modify an SVN commit comment
 ===================================
 
 svn propedit svn:log --revprop -r 18620
+
+
+How to extract the white-list privilege rules from a stager database
+====================================================================
+
+select 'insert into whitelist values (' || nvl2(svcclass, '''' || svcclass ||
+'''','NULL') || ', ' || nvl(to_char(euid), 'NULL') || ', ' ||
+nvl(to_char(egid), 'NULL') || ',' || nvl(to_char(reqtype), 'NULL') || ');'
+from whitelist;
