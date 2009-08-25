@@ -30,7 +30,7 @@ COMMONLIB_OBJS = $(SYSDEP_OBJS) \
 		 Cdomainname.Osuf Cnetdb.Osuf Cpool.Osuf Cpwd.Osuf Cstrerror.Osuf \
 		 socket_timeout.Osuf u64subr.Osuf Cinitdaemon.Osuf Cgetopt.Osuf \
 		 Cregexp.Osuf Csetprocname.Osuf Cexportconf.Osuf Csnprintf.Osuf util.Osuf \
-		 Csecloader.Osuf
+		 Csecloader.Osuf castor1compat.Osuf
 
 sendscsicmd.o: sendscsicmd.c
 	@if [ -f "/usr/src/linux/include/scsi/sg.h" ] ;\
