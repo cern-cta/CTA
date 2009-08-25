@@ -50,7 +50,7 @@
 #define RemoteHostsList CONFIGPATH(castor.remhosts)
 #define RfioAlarmFile	rfio_alrm
 #define	RtcpclientdHost	"castorrtcpcld"
-#define SacctDir	/var/spool/sacct
+#define SacctDir	/var/log/castor
 #define ShiftConfigFile	CONFIGPATH(castor.conf)
 #define StageMapFile    CONFIGPATH(stagemap.conf)
 #define OraStagerConfigFile CONFIGPATH(ORASTAGERCONFIG)

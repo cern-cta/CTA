@@ -10,7 +10,7 @@
 .BI "#include <" sacct.h ">"
 
 .SH DESCRIPTION
-The \fBsacct.h\fP header file contains the structure of the accounting records written by the CASTOR applications. Every record is composed of a header, plus a body. All CASTOR applications on a machine write to the same accounting file, usually /var/spool/sacct/sacct.
+The \fBsacct.h\fP header file contains the structure of the accounting records written by the CASTOR applications. Every record is composed of a header, plus a body. All CASTOR applications on a machine write to the same accounting file, usually /var/log/castor/sacct.
 .P
 .br 
 The structure acchdr must be used to read the accounting header. 
@@ -114,7 +114,7 @@ The accounting file is written using the machine's byte order. No marshalling is
 #include "rfio_api.h" /* To open accounting files remotely using rfio */
 #include "serrno.h" /* For CASTOR errors */
 
-#define STAGER_ACCT "stagepublic:/var/spool/sacct/sacct"
+#define STAGER_ACCT "stagepublic:/var/log/castor/sacct"
 
 int size_read = 0;
 
