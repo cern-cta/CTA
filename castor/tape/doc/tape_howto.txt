@@ -2475,3 +2475,15 @@ if test $USER = root; then
 else
   sh -c "$CMD"
 fi
+
+
+How to checkout CASTOR from SVN
+===============================
+
+svn co svn+ssh://username@svn.cern.ch/reps/CASTOR/CASTOR2/trunk CASTOR2
+
+
+How to modify an SVN commit comment
+===================================
+
+svn propedit svn:log --revprop -r 18620
