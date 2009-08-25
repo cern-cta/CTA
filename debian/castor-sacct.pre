@@ -1,0 +1,4 @@
+if [ -d /var/spool/sacct ]; then
+    /bin/mv --reply=no /var/spool/sacct/sacct* /var/log/castor/ 2>/dev/null
+    /bin/rmdir /var/spool/sacct 2>/dev/null || :
+fi
