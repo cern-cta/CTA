@@ -21,7 +21,7 @@
 #
 # @(#)$RCSfile: dlfserver.init,v $ $Revision: 1.22 $ $Release$ $Date: 2008/07/28 16:42:48 $ $Author: waldron $
 #
-# chkconfig: 345 67 38
+# chkconfig: 345 60 38
 # description: Log Processor Daemon Initialisation Script
 #
 # @author castor dev team

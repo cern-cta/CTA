@@ -78,12 +78,21 @@ class DLFDbDest(LoggingCommon.MsgDestination):
             self.bulkCount = 1000
 
         #-----------------------------------------------------------------------
-        # Set up the bulk count
+        # Set up the domain name
         #-----------------------------------------------------------------------
         if config.has_key( 'domain_name' ):
             self.domainName = config['domain_name']
         else:
             self.domainName = ''
+
+        #-----------------------------------------------------------------------
+        # Set up the flush interval
+        #-----------------------------------------------------------------------
+        if config.has_key( 'flush_interval' ):
+            self.flushInterval = int(config['flush_interval'])
+        else:
+            self.flushInterval = 60
+        self.lastFlush = time.time()
 
         #-----------------------------------------------------------------------
         # Check the if the database schema version matches the one we expect
@@ -175,6 +184,7 @@ class DLFDbDest(LoggingCommon.MsgDestination):
 
     #---------------------------------------------------------------------------
     def flushQueues( self ):
+        self.lastFlush = time.time()
         #-----------------------------------------------------------------------
         # Insert with returning doesn't work in cx_Oracle with bulk insertions
         # so we first have to get the ids and then insert the records
@@ -279,7 +289,7 @@ class DLFDbDest(LoggingCommon.MsgDestination):
         #-----------------------------------------------------------------------
         if not self.__facmap.has_key( message['facility'] ):
             raise RuntimeError( 'Unrecognized type of facility' )
-        facility = self.__facmap[message['facility']];
+        facility = self.__facmap[message['facility']]
 
         #-----------------------------------------------------------------------
         # Process the message
@@ -300,9 +310,23 @@ class DLFDbDest(LoggingCommon.MsgDestination):
         # Update the database
         #-----------------------------------------------------------------------
         try:
-            self.__curs.execute( """INSERT INTO
-                                    DLF_MSG_TEXTS(FAC_NO, MSG_NO, MSG_TEXT)
-                                    VALUES(:fac, :no, :txt)""", msg ) 
+            self.__curs.execute( """MERGE INTO DLF_MSG_TEXTS A
+                                    USING 
+                                     (SELECT fac_no, msg_no 
+                                        FROM (SELECT fac_no, msg_no
+                                                FROM DLF_MSG_TEXTS
+                                               WHERE fac_no = :fac
+                                                 AND msg_no = :no
+                                               UNION ALL
+                                              SELECT -1, -1 FROM DUAL)
+                                       WHERE rownum = 1) B
+                                          ON (A.fac_no = B.fac_no
+                                         AND  A.msg_no = B.msg_no)
+                                    WHEN MATCHED THEN
+                                      UPDATE SET A.msg_text = :txt  
+                                    WHEN NOT MATCHED THEN
+                                      INSERT (fac_no, msg_no, msg_text)
+                                      VALUES (:fac, :no, :txt)""", msg ) 
             self.__conn.commit()
         except cx_Oracle.DatabaseError, e:
             # Somebody have already inserted this message text
@@ -415,7 +439,7 @@ class DLFDbDest(LoggingCommon.MsgDestination):
         tmptm   = time.strptime( tstring, '%Y-%m-%d %H:%M:%S' )
         tm      = dt( tmptm.tm_year, tmptm.tm_mon, tmptm.tm_mday, tmptm.tm_hour,
                       tmptm.tm_min, tmptm.tm_sec, int( tsplit[1] ) )
-        msg['timestamp'] = tm;
+        msg['timestamp'] = tm
         msg['timeusec']  = int( tsplit[1] )
 
         #-----------------------------------------------------------------------
@@ -547,8 +571,8 @@ class DLFDbDest(LoggingCommon.MsgDestination):
         self.__strQueue += kv_str
         self.__intQueue += kv_int
         self.__msgQueue.append( msg )
-
-        if self.bulkCount <= len( self.__msgQueue ):
+        
+        if (self.bulkCount <= len( self.__msgQueue )) or (len( self.__msgQueue ) > 0 and (time.time() - self.lastFlush) > self.flushInterval):
             self.flushQueues()
 
     #---------------------------------------------------------------------------
