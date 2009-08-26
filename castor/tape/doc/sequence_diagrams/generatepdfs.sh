@@ -33,6 +33,17 @@ SEQUENCE_PIC="$SEQUENCE_DIR/sequence.pic"
 if test ! -e $SEQUENCE_PIC; then
   echo "Error: The file $SEQUENCE_PIC does not exist"
   echo
+  echo "One way to install it:"
+  echo
+  echo "UMLGRAPH_DIR=/usr/UMLGraph"
+  echo "mkdir \$UMLGRAPH_DIR"
+  echo "cd \$UMLGRAPH_DIR"
+  echo "wget 'http://www.umlgraph.org/UMLGraph-5.2.tar.gz'"
+  echo "tar -xvzf UMLGraph-5.2.tar.gz"
+  echo
+  echo "CASTOR_CVS=/usr/local/src/CASTOR2"
+  echo "ln -s \$UMLGRAPH_DIR/UMLGraph-5.2/src/sequence.pic \$CASTOR_CVS/castor/tape/doc/sequence_diagrams/sequence.pic"
+  echo
   exit -1
 fi
 

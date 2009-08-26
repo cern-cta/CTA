@@ -1,0 +1,44 @@
+.PS
+
+copy "sequence.pic";
+
+step(); # For readability
+
+# Define the objects
+object(G,"gateway");
+object(GD,"gateway db");
+object(V,"vdqm");
+
+step(); # For readability
+
+# Message sequences
+
+# GATEWAY <--> VDQM
+active(G);
+message(G,V,"connect");
+active(V);
+message(G,V,"VDQM_VOL_REQ");      # 0x3101
+message(V,G,"VDQM_COMMIT");       # 0x310b
+message(V,G,"VDQM_VOL_REQ");      # 0x3101
+message(G,GD,"insert volReqId");
+active(GD);
+message(G,GD,"open transaction");
+message(G,GD,"commit");
+inactive(GD);
+message(G,V,"VDQM_COMMIT");       # 0x310b
+message(G,V,"disconnect");
+inactive(V);
+inactive(G);
+
+step(); # For readability
+
+complete(G);
+complete(GD);
+
+complete(V);
+
+step(); # For readability
+
+
+.PE
+

@@ -31,8 +31,8 @@ message(C,V,"connect");
 active(V);
 message(C,V,"VDQM_VOL_REQ");      # 0x3101
 message(V,C,"VDQM_COMMIT");       # 0x310b
-message(C,V,"VDQM_VOL_REQ");      # 0x3101
-message(V,C,"VDQM_COMMIT");       # 0x310b
+message(V,C,"VDQM_VOL_REQ");      # 0x3101
+message(C,V,"VDQM_COMMIT");       # 0x310b
 message(C,V,"disconnect");
 inactive(V);
 
