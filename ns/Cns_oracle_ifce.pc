@@ -92,11 +92,16 @@ int Cns_delete_class_entry(dbfd, rec_addr)
   strcpy (func, "Cns_delete_class_entry");
   memcpy (rowid_value, rec_addr, sizeof(rowid_value));
   EXEC SQL DELETE FROM Cns_class_metadata WHERE ROWID = :rowid_value;
-  if (sqlca.sqlcode) {
+  switch (sqlca.sqlcode) {
+  case 0:
+    return (0);
+  case -2292:
+    serrno = EEXIST;
+    break;
+  default:
     Cns_oracle_error (func, "DELETE", dbfd, &sqlca);
-    return (-1);
   }
-  return (0);
+  return (-1);
 }
 
 int Cns_delete_fmd_entry(dbfd, rec_addr)
