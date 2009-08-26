@@ -131,17 +131,19 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
         FROM (
           -- Determine the service class of all tapecopies and their associated
           -- status.
-          SELECT /*+ USE_NL(TapeCopy DiskCopy) */ SvcClass.name svcClass,
-                 decode(sign(TapeCopy.status - 2), -1, 'PENDING', 'SELECTED') status,
+          SELECT /*+ USE_NL(TapeCopy DiskCopy CastorFile) */ 
+                 SvcClass.name svcClass,
+                 decode(sign(TapeCopy.status - 2), -1, 'PENDING',
+                   decode(TapeCopy.status, 6, 'FAILED', 'SELECTED')) status,
                  (getTime() - DiskCopy.creationTime) waitTime,
                  DiskCopy.diskCopySize, 1 found
-            FROM DiskCopy, TapeCopy, FileSystem, DiskPool2SvcClass, SvcClass
-           WHERE DiskCopy.fileSystem = FileSystem.id
-             AND FileSystem.diskPool = DiskPool2SvcClass.parent
-             AND DiskPool2SvcClass.child = SvcClass.id
-             AND DiskCopy.castorFile = TapeCopy.castorFile
+            FROM DiskCopy, CastorFile, TapeCopy, SvcClass 
+           WHERE DiskCopy.castorFile = CastorFile.id
+             AND CastorFile.id = TapeCopy.castorFile
+             AND CastorFile.svcClass = SvcClass.id
              AND decode(DiskCopy.status, 10, DiskCopy.status, NULL) = 10  -- CANBEMIGR
-             AND TapeCopy.status IN (0, 1, 2, 3)  -- CREATED, TOBEMIGRATED, WAITINSTREAMS, SELECTED
+             AND TapeCopy.status IN (0, 1, 2, 3, 6) -- CREATED, TOBEMIGRATED, WAITINSTREAMS,
+                                                    -- SELECTED, FAILED
         ) a
         -- Attach a list of all service classes and possible states (PENDING,
         -- SELECTED) to the results above.
@@ -149,7 +151,8 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
           SELECT SvcClass.name svcClass, a.status
             FROM SvcClass,
              (SELECT 'PENDING'  status FROM Dual UNION ALL
-              SELECT 'SELECTED' status FROM Dual) a) b
+              SELECT 'SELECTED' status FROM Dual UNION ALL
+              SELECT 'FAILED'   status FROM Dual) a) b
            ON (a.svcClass = b.svcClass AND a.status = b.status)
        GROUP BY GROUPING SETS (b.svcClass, b.status), (b.svcClass)
        ORDER BY b.svcClass, b.status;
