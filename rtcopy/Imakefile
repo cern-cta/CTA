@@ -151,7 +151,6 @@ SYSCONFIG(rtcpclientd,install)
 INITSCRIPT(rtcpclientd,install)
 
 MakeDir($(RTCOPYWORKDIR),777)
-MakeDir($(SACCTDIR),0777)
 RTCPD_OBJS =	rtcpd.Osuf rtcp_CallVMGR.Osuf rtcp_CheckReq.Osuf \
 		rtcp_Listen.Osuf rtcp_SendRecv.Osuf rtcp_log.Osuf \
 		rtcpd_ClientListen.Osuf rtcpd_Ctape.Osuf rtcpd_Disk.Osuf \

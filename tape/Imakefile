@@ -152,7 +152,6 @@ EXEMANPAGE(tprstat)
 EXEMANPAGE(tpstat)
 
 MakeDir($(LOGDIR),0755)
-MakeDir($(SACCTDIR),0777)
 TAPED_OBJS = tpdaemon.Osuf checkjobdied.Osuf cvtden.Osuf sendrep.Osuf tplogit.Osuf usrmsg.Osuf
 CONFDRIVE_OBJS = confdrive.Osuf sendrep.Osuf tplogit.Osuf
 MOUNTTAPE_OBJS = mounttape.Osuf asc2ebc.Osuf buildhdrlbl.Osuf buildvollbl.Osuf ebc2asc.Osuf getdrvstatus.Osuf inquiry.Osuf lddisplay.Osuf rbtsubr.Osuf readlbl.Osuf rwndtape.Osuf send2tpd.Osuf sendrep.Osuf sendtmsmount.Osuf setdens.Osuf skiptape.Osuf smcsubr.Osuf tperror.Osuf tplogit.Osuf unldtape.Osuf usrmsg.Osuf writelbl.Osuf wrttpmrk.Osuf mircheck.Osuf
