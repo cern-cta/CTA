@@ -27,7 +27,7 @@
 
 
 /* Update the schema version */
-UPDATE CastorVersion SET schemaVersion = '2_1_8_10';
+UPDATE CastorVersion SET schemaVersion = '2_1_9_0';
 
 
 /***** EXISTING/OLD MONITORING *****/
@@ -65,16 +65,18 @@ BEGIN
               FROM &dlfschema..dlf_messages messages,
                    &dlfschema..dlf_num_param_values params
              WHERE messages.id = params.id
-               AND messages.severity = 8 -- System
-               AND ((messages.facility = 26 AND messages.msg_no = 20)  -- Job started
-                OR  (messages.facility = 23 AND messages.msg_no = 25)) -- DiskCopyTransfer started
+               AND messages.severity = 8     -- Info
+               AND ((messages.facility = 26  -- stagerjob
+               AND   messages.msg_no = 20)   -- Job started
+                OR  (messages.facility = 23  -- d2dtransfer
+               AND   messages.msg_no = 25))  -- DiskCopyTransfer started
                AND messages.timestamp >  now - 10/1440
                AND messages.timestamp <= now - 5/1440
                AND params.name = 'TotalWaitTime'
                AND params.timestamp >  now - 10/1440
                AND params.timestamp <= now - 5/1440
           ) results
-      -- For facility 23 (DiskCopyTransfer) we can assume that the request type
+      -- For facility 23 (d2dtransfer) we can assume that the request type
       -- associated with the transfer is 133 (StageDiskCopyReplicaRequest).
       -- However, for normal jobs we must parse the Arguments attribute of the
       -- start message to determine the request type. Hence the left join,
@@ -122,8 +124,8 @@ BEGIN
                &dlfschema..dlf_num_param_values num
          WHERE messages.id = str.id
            AND messages.id = num.id
-           AND messages.severity = 8 -- System
-           AND messages.facility = 9 -- Scheduler
+           AND messages.severity = 8 -- Info
+           AND messages.facility = 9 -- schedulerd
            AND messages.msg_no = 34  -- Wrote notification file
            AND messages.timestamp >  now - 10/1440
            AND messages.timestamp <= now - 5/1440
@@ -181,8 +183,8 @@ BEGIN
               FROM &dlfschema..dlf_messages messages,
                    &dlfschema..dlf_num_param_values params
              WHERE messages.id = params.id
-               AND messages.severity = 8 -- System
-               AND messages.facility = 8 -- GC
+               AND messages.severity = 8 -- Info
+               AND messages.facility = 8 -- gcd
                AND (messages.msg_no = 11 OR -- Removed file successfully
                     messages.msg_no = 27 OR -- Deleting ... nameserver
                     messages.msg_no = 36)   -- Deleting ... stager catalog
@@ -237,8 +239,8 @@ BEGIN
                    &dlfschema..dlf_num_param_values num
              WHERE messages.id = str.id
                AND messages.id = num.id
-               AND messages.severity = 10 -- Monitoring
-               AND messages.facility = 4  -- RequestHandler
+               AND messages.severity = 8  -- Info
+               AND messages.facility = 4  -- rhd
                AND messages.msg_no = 10   -- Reply sent to client
                AND messages.timestamp >  now - 10/1440
                AND messages.timestamp <= now - 5/1440
@@ -271,8 +273,8 @@ BEGIN
   INSERT INTO CacheEfficiencyHelper
     SELECT messages.reqid
       FROM &dlfschema..dlf_messages messages
-     WHERE messages.severity = 10 -- Monitoring
-       AND messages.facility = 4  -- RequestHandler
+     WHERE messages.severity = 8  -- Info
+       AND messages.facility = 4  -- rhd
        AND messages.msg_no = 10   -- Reply sent to client
        AND messages.timestamp >  now - 10/1440
        AND messages.timestamp <= now - 5/1440;
@@ -319,8 +321,8 @@ BEGIN
                       FROM &dlfschema..dlf_messages messages,
                            &dlfschema..dlf_str_param_values params
                      WHERE messages.id = params.id
-                       AND messages.severity = 8  -- System
-                       AND messages.facility = 22 -- Stager
+                       AND messages.severity = 8   -- Info
+                       AND messages.facility = 22  -- stagerd
                        AND messages.msg_no IN (53, 56, 57, 60)
                        AND messages.timestamp >  now - 10/1440
                        AND messages.timestamp <= now - 3/1440
@@ -372,9 +374,9 @@ BEGIN
                &dlfschema..dlf_num_param_values num
          WHERE messages.id = str.id
            AND messages.id = num.id
-           AND messages.severity = 8 -- System
-           AND messages.facility = 1 -- migrator
-           AND messages.msg_no = 55  -- File staged
+           AND messages.severity = 8  -- Info
+           AND messages.facility = 1  -- migrator
+           AND messages.msg_no = 55   -- File staged
            AND messages.timestamp >  now - 10/1440
            AND messages.timestamp <= now - 5/1440
            AND str.name IN ('SVCCLASS', 'TAPEPOOL')
@@ -407,9 +409,9 @@ BEGIN
       FROM &dlfschema..dlf_messages messages,
            &dlfschema..dlf_num_param_values num
      WHERE messages.id = num.id
-       AND messages.severity = 8 -- System
-       AND messages.facility = 2 -- recaller
-       AND messages.msg_no = 55  -- File staged
+       AND messages.severity = 8  -- Info
+       AND messages.facility = 2  -- recaller
+       AND messages.msg_no = 55   -- File staged
        AND messages.timestamp >  now - 10/1440
        AND messages.timestamp <= now - 5/1440
        AND num.name = 'FILESIZE'
@@ -447,9 +449,9 @@ BEGIN
           FROM &dlfschema..dlf_messages messages,
                &dlfschema..dlf_str_param_values params
          WHERE messages.id = params.id
-           AND messages.severity = 8  -- System
-           AND messages.facility = 23 -- DiskCopyTransfer
-           AND messages.msg_no = 39   -- DiskCopy Transfer successful
+           AND messages.severity = 8   -- Info
+           AND messages.facility = 23  -- d2dtransfer
+           AND messages.msg_no = 39    -- DiskCopy Transfer successful
            AND messages.timestamp >  now - 10/1440
            AND messages.timestamp <= now - 5/1440
            AND params.name = 'Direction'
@@ -486,9 +488,11 @@ BEGIN
   INSERT INTO TapeMountsHelper
     SELECT messages.timestamp, messages.facility, messages.tapevid
       FROM &dlfschema..dlf_messages messages
-     WHERE messages.severity = 8 -- System
-       AND ((messages.facility = 2 AND messages.msg_no = 13) OR  -- Recaller / Recaller started
-            (messages.facility = 1 AND messages.msg_no = 14))    -- Migrator / Migrator started
+     WHERE messages.severity = 8  -- Info
+       AND ((messages.facility = 2    -- recaller
+       AND   messages.msg_no   = 13)  -- Recaller started
+        OR  (messages.facility = 1    -- migrator
+       AND   messages.msg_no   = 14)) -- Migrator started
        AND messages.subreqid <> '00000000-0000-0000-0000-000000000000'
        AND messages.timestamp >  now - 10/1440
        AND messages.timestamp <= now - 5/1440;
@@ -512,9 +516,9 @@ BEGIN
           FROM &dlfschema..dlf_messages messages,
                &dlfschema..dlf_str_param_values params
          WHERE messages.id = params.id
-           AND messages.severity = 8  -- System
-           AND messages.facility = 22 -- Stager
-           AND messages.msg_no = 57   -- Triggering Tape Recall
+           AND messages.severity = 8   -- Info
+           AND messages.facility = 22  -- stagerd
+           AND messages.msg_no = 57    -- Triggering Tape Recall
            AND messages.timestamp >  now - 10/1440
            AND messages.timestamp <= now - 5/1440
            AND params.name IN ('Type', 'Username', 'Groupname', 'TapeStatus')
@@ -534,7 +538,7 @@ BEGIN
        SELECT helper.tapevid, count(*) mounted
          FROM TapeMountsHelper helper
         WHERE helper.timestamp > (now - 1) - 5/1440
-          AND helper.facility = 2  -- Recaller
+          AND helper.facility = 2  -- recaller
         GROUP BY helper.tapevid) mounts
        ON results.tapevid = mounts.tapevid
      GROUP BY type, username, groupname, results.tapevid, tapestatus;
@@ -545,7 +549,7 @@ END;
 /* PL/SQL method implementing statsProcessingTime
  *
  * Provides statistics on the processing time in seconds of requests in the
- * Stager, RequestHandler and SRM daemons
+ * stagerd, rhd and SRM daemons
  */
 CREATE OR REPLACE PROCEDURE statsProcessingTime (now IN DATE, interval IN NUMBER) AS
 BEGIN
@@ -575,14 +579,14 @@ BEGIN
            AND messages.timestamp <= now - 5/1440
            AND params.timestamp >    now - 10/1440
            AND params.timestamp <=   now - 5/1440
-           -- Stager
-           AND ((messages.severity = 10 -- Monitoring
-           AND   messages.facility = 22 -- Stager
+           -- stagerd
+           AND ((messages.severity = 8  -- Info
+           AND   messages.facility = 22 -- stagerd
            AND   messages.msg_no = 25   -- Request processed
            AND   params.name = 'ProcessingTime')
-           -- RequestHandler
-            OR  (messages.severity = 10 -- Monitoring
-           AND   messages.facility = 4  -- RequestHandler
+           -- rhd
+            OR  (messages.severity = 8  -- Info
+           AND   messages.facility = 4  -- rhd
            AND   messages.msg_no = 10   -- Reply sent to client
            AND   params.name = 'ElapsedTime')
            -- SRMDaemon
@@ -628,8 +632,8 @@ BEGIN
           FROM &dlfschema..dlf_messages messages,
                &dlfschema..dlf_str_param_values params
          WHERE messages.id = params.id
-           AND messages.severity = 10 -- Monitoring
-           AND messages.facility = 4  -- RequestHandler
+           AND messages.severity = 8  -- Info
+           AND messages.facility = 4  -- rhd
            AND messages.msg_no = 10   -- Reply sent to client
            AND messages.timestamp >  now - 10/1440
            AND messages.timestamp <= now - 5/1440
@@ -671,7 +675,7 @@ BEGIN
           FROM &dlfschema..dlf_messages messages,
                &dlfschema..dlf_num_param_values params
          WHERE messages.id = params.id
-           AND messages.severity = 8
+           AND messages.severity = 8       -- Info
            AND ((messages.facility = 1     -- migrator
            AND   messages.msg_no   = 21)   -- migrator ended
             OR  (messages.facility = 2     -- recaller
@@ -698,8 +702,8 @@ BEGIN
     (SELECT DISTINCT a.subReqId, a.timestamp, a.nsfileid, b.value
        FROM &dlfschema..dlf_messages a, &dlfschema..dlf_num_param_values b
       WHERE a.id = b.id
-        AND a.facility = 26 -- Job
-        AND a.msg_no = 20   -- Job Started
+        AND a.facility = 26  -- stagerjob
+        AND a.msg_no = 20    -- Job Started
         AND a.timestamp >= maxTimeStamp
         AND b.timestamp >= maxTimeStamp
         AND a.timestamp < maxTimeStamp + 5/1440
@@ -733,8 +737,8 @@ BEGIN
         FROM &dlfschema..dlf_messages a, &dlfschema..dlf_str_param_values b,
              &dlfschema..dlf_host_map c
        WHERE a.id = b.id
-         AND a.facility = 23      -- DiskCopy
-         AND a.msg_no IN (39, 28) -- DiskCopy Transfer Successful, Transfer information
+         AND a.facility = 23       -- d2dtransfer
+         AND a.msg_no IN (39, 28)  -- DiskCopy Transfer Successful, Transfer information
          AND a.hostid = c.hostid
          AND a.timestamp >= maxTimeStamp
          AND b.timestamp >= maxTimeStamp
@@ -765,7 +769,7 @@ BEGIN
               substr(b.value, instr(b.value, '->', 1) + 3) dest
          FROM &dlfschema..dlf_messages a, &dlfschema..dlf_str_param_values b
         WHERE a.id = b.id
-          AND a.facility = 23  -- DiskCopy
+          AND a.facility = 23  -- d2dtransfer
           AND a.msg_no = 39    -- DiskCopy Transfer Successful
           AND a.timestamp >= maxTimeStamp
           AND b.timestamp >= maxTimeStamp
@@ -785,7 +789,9 @@ BEGIN
   INSERT INTO GcFiles
     (timestamp, nsfileid, fileSize, fileAge, lastAccessTime, nbAccesses,
      gcType, svcclass)
-    SELECT /*+ index(mes I_Messages_NSFileid) index(num I_Num_Param_Values_id) index(str I_Str_Param_Values_id) */
+    SELECT /*+ index(mes I_Messages_NSFileid)
+               index(num I_Num_Param_Values_id)
+               index(str I_Str_Param_Values_id) */
            mes.timestamp,
            mes.nsfileid,
            max(decode(num.name, 'FileSize', num.value, NULL)) fileSize,
@@ -797,8 +803,8 @@ BEGIN
       FROM &dlfschema..dlf_messages mes,
            &dlfschema..dlf_num_param_values num,
            &dlfschema..dlf_str_param_values str
-     WHERE mes.facility = 8 -- GC
-       AND mes.msg_no = 11  -- Removed file successfully
+     WHERE mes.facility = 8  -- gcd
+       AND mes.msg_no = 11   -- Removed file successfully
        AND mes.id = num.id
        AND num.id = str.id
        AND num.name IN ('FileSize', 'FileAge', 'LastAccessTime', 'NbAccesses')
@@ -824,8 +830,8 @@ BEGIN
             mes.timestamp, mes.subreqid, mes.tapevid, str.value
        FROM &dlfschema..dlf_messages mes, &dlfschema..dlf_str_param_values str
       WHERE mes.id = str.id
-        AND mes.facility = 22 -- Stager
-        AND mes.msg_no = 57   -- Triggering Tape Recall
+        AND mes.facility = 22  -- stagerd
+        AND mes.msg_no = 57    -- Triggering Tape Recall
         AND str.name = 'TapeStatus'
         AND mes.timestamp >= maxTimeStamp
         AND str.timestamp >= maxTimeStamp
@@ -837,7 +843,7 @@ BEGIN
                    mes.subreqid, num.value
               FROM &dlfschema..dlf_messages mes, &dlfschema..dlf_num_param_values num
              WHERE mes.id = num.id
-               AND mes.facility = 22  -- Stager
+               AND mes.facility = 22  -- stagerd
                AND mes.msg_no = 57    -- Triggering Tape Recall
                AND num.name = 'FileSize'
                AND mes.timestamp >= maxTimeStamp
@@ -875,7 +881,7 @@ BEGIN
              AND value LIKE 'Stage%'
              AND timestamp >= maxTimeStamp
              AND timestamp < maxTimeStamp + 5/1440)
-       AND mes.facility = 22  -- Stager
+       AND mes.facility = 22  -- stagerd
        AND mes.msg_no = 58    -- Recreating CastorFile
        AND str.name IN ('SvcClass', 'Username', 'Groupname', 'Type', 'Filename')
        AND mes.timestamp >= maxTimeStamp
@@ -911,7 +917,7 @@ BEGIN
              AND value LIKE 'Stage%'
              AND timestamp >= maxtimestamp
              AND timestamp < maxtimestamp + 5/1440)
-       AND mes.facility = 22           -- Stager
+       AND mes.facility = 22           -- stagerd
        AND mes.msg_no IN (56, 57, 60)  -- Triggering internal DiskCopy replication, Triggering Tape Recall, Diskcopy available, scheduling job
        AND str.name IN ('SvcClass', 'Username', 'Groupname', 'Type', 'Filename')
        AND mes.timestamp >= maxtimestamp

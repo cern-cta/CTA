@@ -118,10 +118,6 @@ CREATE TABLE TapeMountsHelper (timestamp DATE CONSTRAINT NN_TapeMountsHelper_ts 
 /* SQL statements for indexes on the TapeMountsHelper table */
 CREATE INDEX I_TapeHelper_timestamp ON TapeMountsHelper (timestamp) LOCAL;
 
-/* SQL statement for a view on the DLF_Monitoring table */
-CREATE OR REPLACE VIEW DLFStats AS
-  SELECT * FROM &dlfschema..dlf_monitoring;
-
 /* SQL statement for a view on the DLF_Config table */
 CREATE OR REPLACE VIEW DLFConfig AS
   SELECT * FROM &dlfschema..dlf_config;
@@ -194,9 +190,9 @@ AS
    WHERE mes.msg_no = txt.msg_no
      AND fac.fac_no = mes.facility
      AND mes.facility = txt.fac_no
-     AND mes.severity = 3  -- Errors
-     AND mes.timestamp >= sysdate - 15/1440
-     AND mes.timestamp < sysdate - 5/1440
+     AND mes.severity = 3  -- Error
+     AND mes.timestamp >= SYSDATE - 15/1440
+     AND mes.timestamp < SYSDATE - 5/1440
    GROUP BY fac.fac_name, txt.msg_text;
 
 /* SQL statement for creation of the ReqDel materialized view */
@@ -224,12 +220,12 @@ AS
          round((a.avgsize - b.avgsize) / b.avgsize, 4) size_per
     FROM (SELECT count(*) tot, avg(fileAge) avgage, avg(fileSize) avgsize
             FROM GcFiles
-           WHERE timestamp > sysdate - 10/1440
-             AND timestamp <= sysdate - 5/1440) a,
+           WHERE timestamp > SYSDATE - 10/1440
+             AND timestamp <= SYSDATE - 5/1440) a,
          (SELECT avg(fileAge) avgage, avg(fileSize) avgsize
             FROM GcFiles
-           WHERE timestamp > sysdate - 15/1440
-             AND timestamp <= sysdate - 10/1140) b;
+           WHERE timestamp > SYSDATE - 15/1440
+             AND timestamp <= SYSDATE - 10/1140) b;
 
 /* SQL statement for creation of the MainTableCounters materialized view */
 CREATE MATERIALIZED VIEW MainTableCounters_MV
@@ -240,13 +236,13 @@ AS
          round((a.num - b.num) / b.num, 2) per
     FROM (SELECT svcclass, state, count(*) num
               FROM Requests
-           WHERE timestamp > sysdate - 10/1440
-             AND timestamp <= sysdate -5/1440
+           WHERE timestamp > SYSDATE - 10/1440
+             AND timestamp <= SYSDATE -5/1440
              GROUP BY svcclass,state) a ,
          (SELECT svcclass, state, count(*) num
             FROM Requests
-           WHERE timestamp > sysdate - 15/1440
-             AND timestamp <= sysdate - 10/1440
+           WHERE timestamp > SYSDATE - 15/1440
+             AND timestamp <= SYSDATE - 10/1440
            GROUP BY svcclass, state) b
    WHERE a.svcclass = b.svcclass
      AND a.state = b.state
@@ -259,8 +255,8 @@ CREATE MATERIALIZED VIEW MigMonitor_MV
 AS
   SELECT svcclass, count(*) migs
     FROM Migration
-   WHERE timestamp > sysdate - 10/1440
-     AND timestamp <= sysdate - 5/1440
+   WHERE timestamp > SYSDATE - 10/1440
+     AND timestamp <= SYSDATE - 5/1440
    GROUP BY svcclass;
 
 /* SQL statement for creation of the SvcClassMap_MV materialized view */
