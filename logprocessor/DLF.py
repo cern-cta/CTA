@@ -311,8 +311,8 @@ class DLFDbDest(LoggingCommon.MsgDestination):
         #-----------------------------------------------------------------------
         try:
             self.__curs.execute( """MERGE INTO DLF_MSG_TEXTS A
-                                    USING 
-                                     (SELECT fac_no, msg_no 
+                                    USING
+                                     (SELECT fac_no, msg_no
                                         FROM (SELECT fac_no, msg_no
                                                 FROM DLF_MSG_TEXTS
                                                WHERE fac_no = :fac
@@ -323,10 +323,10 @@ class DLFDbDest(LoggingCommon.MsgDestination):
                                           ON (A.fac_no = B.fac_no
                                          AND  A.msg_no = B.msg_no)
                                     WHEN MATCHED THEN
-                                      UPDATE SET A.msg_text = :txt  
+                                      UPDATE SET A.msg_text = :txt
                                     WHEN NOT MATCHED THEN
                                       INSERT (fac_no, msg_no, msg_text)
-                                      VALUES (:fac, :no, :txt)""", msg ) 
+                                      VALUES (:fac, :no, :txt)""", msg )
             self.__conn.commit()
         except cx_Oracle.DatabaseError, e:
             # Somebody have already inserted this message text
@@ -556,22 +556,40 @@ class DLFDbDest(LoggingCommon.MsgDestination):
                 msg['subreqid'] = kvdict[kv]
             else:
                 intval = None
-                try:
-                    rec = {}
-                    rec['id']        = id
-                    rec['timestamp'] = msg['timestamp']
-                    rec['name']      = kv
-                    intval = int( kvdict[kv] )
-                    rec['value'] = intval
-                    kv_int.append( rec )
-                except ValueError:
-                    rec['value'] = kvdict[kv]
+                rec = {}
+                rec['id']        = id
+                rec['timestamp'] = msg['timestamp']
+                rec['name']      = kv
+
+                if kvdict[kv] == None:
+                    rec['value'] = ""
                     kv_str.append( rec )
+                    continue
+
+                # Integers
+                try:
+                    rec['value'] = int( kvdict[kv] )
+                    kv_int.append( rec )
+                    continue
+                except ValueError:
+                    pass
+
+                # Floats
+                try:
+                    rec['value'] = float( kvdict[kv] )
+                    kv_int.append( rec )
+                    continue
+                except ValueError:
+                    pass
+
+                # Strings
+                rec['value'] = kvdict[kv]
+                kv_str.append( rec )
 
         self.__strQueue += kv_str
         self.__intQueue += kv_int
         self.__msgQueue.append( msg )
-        
+
         if (self.bulkCount <= len( self.__msgQueue )) or (len( self.__msgQueue ) > 0 and (time.time() - self.lastFlush) > self.flushInterval):
             self.flushQueues()
 
@@ -627,8 +645,7 @@ class DLFMsgParser:
            \s*                                       # white spaces
            =                                         # equals
            \s*                                       # white spaces
-           (?:"([\s\w/+\-.:[\]_]+)" | 
-                ([\w/+\-.:[\]_]+) )                  # value
+           (?:"(.*?)" | (\S+))                       # value
               """, re.VERBOSE )
 
         self.maddexp = re.compile( r"""
@@ -649,7 +666,6 @@ class DLFMsgParser:
            \s*                                       # whitespaces
            $                                         # the end
               """, re.VERBOSE )
-
 
 
     #---------------------------------------------------------------------------
