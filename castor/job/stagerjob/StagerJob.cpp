@@ -547,6 +547,20 @@ int main(int argc, char** argv) {
     return -1;
   }
 
+  // Check that the intended host of the transfer is this host!
+  if (arguments->diskServer != castor::System::getHostName()) {
+    // not the case, LSF has failed...
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Error", sstrerror(ESTSCHEDERR)),
+       castor::dlf::Param("Message", "Hostname mismatch, job scheduled to the wrong host"),
+       castor::dlf::Param("JobId", getenv("LSB_JOBID"))};
+    castor::dlf::dlf_writep
+      (nullCuuid, DLF_LVL_ERROR,
+       castor::job::stagerjob::JOBFAILEDNOANS, 3, params);
+    dlf_shutdown();
+    return -1;
+  }
+
   try {
 
     // Construct command line
