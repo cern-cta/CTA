@@ -75,7 +75,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
 
   try {
      // get tapes to check from the db
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,CHECKER_GETTING_TAPES, 0, NULL);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,CHECKER_GETTING_TAPES, 0, NULL);
 
     tapeRequests = oraSvc->getTapesWithDriveReqs(m_timeOut);
 
@@ -103,7 +103,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
 
     castor::tape::tapegateway::VdqmTapeGatewayHelper vdqmHelper;
 
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,CHECKER_QUERYING_VDQM, 1, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,CHECKER_QUERYING_VDQM, 1, params);
 
     try {
       vdqmHelper.checkVdqmForRequest(*tapeRequest);
@@ -142,7 +142,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
 	vmgrHelper.resetBusyTape(**tapeToReset);
 	castor::dlf::Param params[] =
 	  {castor::dlf::Param("VID", (*tapeToReset)->vid())};
-	castor::dlf::dlf_writep(nullCuuid,DLF_LVL_DEBUG, CHECKER_RELEASING_UNUSED_TAPE, 1, params);
+	castor::dlf::dlf_writep(nullCuuid,DLF_LVL_SYSTEM, CHECKER_RELEASING_UNUSED_TAPE, 1, params);
       } catch (castor::exception::Exception e){
  	castor::dlf::Param params[] =
 	  {castor::dlf::Param("VID", (*tapeToReset)->vid())};

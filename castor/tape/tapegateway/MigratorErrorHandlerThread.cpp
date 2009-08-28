@@ -71,7 +71,7 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void* par)
 
 
   std::vector<castor::stager::TapeCopy*> tcList;
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,MIG_ERROR_GETTING_FILES, 0, NULL);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,MIG_ERROR_GETTING_FILES, 0, NULL);
 
   try {
     tcList=  oraSvc->getFailedMigrations();
@@ -106,17 +106,17 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void* par)
     try {
 
       if (m_retryPySvc == NULL ||  m_retryPySvc->applyPolicy(policyObj)) {
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,MIG_ERROR_RETRY, 1, params);
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,MIG_ERROR_RETRY, 1, params);
 	tcIdsToRetry.push_back( (*tcItem)->id());
       } else {
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,MIG_ERROR_FAILED, 2, params);
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,MIG_ERROR_FAILED, 2, params);
 	tcIdsToFail.push_back( (*tcItem)->id());
       }
 
     } catch (castor::exception::Exception e){
       // retry in case of error
       tcIdsToRetry.push_back( (*tcItem)->id());
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,MIG_ERROR_RETRY_BY_DEFAULT, 1, params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,MIG_ERROR_RETRY_BY_DEFAULT, 1, params);
     }
 
     tcItem++;

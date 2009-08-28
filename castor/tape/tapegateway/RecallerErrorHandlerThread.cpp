@@ -102,14 +102,14 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void* par)
       };
     try {
       if (m_retryPySvc==NULL || m_retryPySvc->applyPolicy(policyObj)) {
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, REC_ERROR_RETRY, 1, params);
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, REC_ERROR_RETRY, 1, params);
 	tcIdsToRetry.push_back( (*tcItem)->id());
       }    else  {
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, REC_ERROR_FAILED, 1, params);
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, REC_ERROR_FAILED, 1, params);
 	tcIdsToFail.push_back( (*tcItem)->id());
       }
     } catch (castor::exception::Exception e) {
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, REC_ERROR_RETRY_BY_DEFAULT, 1, params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, REC_ERROR_RETRY_BY_DEFAULT, 1, params);
       tcIdsToRetry.push_back( (*tcItem)->id());
     }
 

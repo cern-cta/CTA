@@ -72,7 +72,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::run(void* par)
   try {
 
   // get tapes to send from the db
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,PRODUCER_GETTING_TAPES, 0, NULL);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,PRODUCER_GETTING_TAPES, 0, NULL);
 
     tapesToSubmit = oraSvc->getTapesWithoutDriveReqs();
 
@@ -117,7 +117,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::run(void* par)
 
       // tape is fine
 
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, PRODUCER_QUERYING_VMGR, 0, NULL);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, PRODUCER_QUERYING_VMGR, 0, NULL);
 
       VdqmTapeGatewayHelper vdqmHelper;
       int vdqmReqId=0;
@@ -134,7 +134,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::run(void* par)
       }
       if ( vdqmReqId  > 0 ){
 	// submition went fine
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, PRODUCER_SUBMITTING_VDQM, 0, NULL);
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, PRODUCER_SUBMITTING_VDQM, 0, NULL);
 	(*tapeItem)->setVdqmVolReqId(vdqmReqId);
 	submittedTapes.push_back(*tapeItem);
       }
