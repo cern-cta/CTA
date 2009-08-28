@@ -434,10 +434,11 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::setTapeAsFull(castor::sta
   // called if FileErrorReport ENOSPC
 
   int status = getTapeStatusInVmgr(tape);
+
   if ( (status & (TAPE_FULL|DISABLED|EXPORTED|TAPE_RDONLY|ARCHIVED)) == 0 ) {
     status = TAPE_FULL;
     serrno=0;
-    int rc = vmgr_updatetape(tape.vid().c_str(), 0, 0, 100, 0, status); 
+    int rc= vmgr_modifytape(tape.vid().c_str(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, status); 
     if (rc <0) {
       castor::exception::Exception ex(serrno);
       ex.getMessage()
