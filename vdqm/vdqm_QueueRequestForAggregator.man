@@ -1,0 +1,79 @@
+.\"
+.\"
+.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+.\"
+.TH VDQM_QUEUEREQUESTFORAGGREGATOR l "$Date: 2008/10/11 11:37:41 $" "CASTOR" "VDQM Library Functions"
+.SH NAME
+.PP
+vdqm_QueueRequestForAggregator \- asks the VDQM to queue a request for a drive and an aggregator
+.SH SYNOPSIS
+.br
+\fB#include "Castor_limits.h"\fR
+.br
+\fB#include "osdep.h"\fR
+.br
+\fB#include "net.h"\fR
+.br
+\fB#include "vdqm_api.h"\fR
+.sp
+.BI "int vdqm_QueueRequestForAggregator (const vdqmnw_t *" nw);
+.SH PARAMETERS
+.I nw
+\- points to a structure containing internal VDQM API network information used
+by a prior call to 
+.B vdqm_CreateRequestForAggregatorvdqm(3).
+This function assumes that
+.B vdqm_CreateRequestForAggregatorvdqm(3)
+has been called and therefore this parameter must not be NULL and the socket
+must be valid.
+.PP
+.SH DESCRIPTION
+.B vdqm_QueueRequestForAggregator
+asks the VDQM to queue an already created request for a drive and an
+aggregator.  The request is identified indirectly by the
+.I nw
+parameter as this identifies the still open network connection through which
+the client asked for the request to be created with a prior call to
+.B vdqm_CreateRequestForAggregatorvdqm(3).
+When successful the request is queued in the VDQM.
+
+.SH RETURN VALUES
+.PP
+On successful completion, the
+.B vdqm_QueueRequestForAggregator
+function returns 0. Otherwise, a value of \-1 is returned and
+.B serrno
+is set to indicate the error.
+.SH ERRORS
+.PP
+If the
+.B vdqm_QueueRequestForAggregator
+function fails,
+.B serrno
+may be set to one of the following values:
+.TP
+.B SEINTERNAL
+Unexpected internal error 
+.TP
+.B EINVAL
+A parameter is invalid.
+.TP
+.B EVQSYERR
+A fatal system call (e.g. calloc()) failure in VDQM server.
+.TP
+.B EVQHOLD
+The server is in HOLD status. This is normally a temporary error due
+to VDQM server maintenance. Client should retry after a short delay.
+
+.SH EXAMPLE
+See the man page of
+.B vdqm_CreateRequestForAggregator(1)
+for some example boiler plate code.
+
+.SH SEE ALSO
+.BR vdqm_Connect(3), 
+.BR vdqm_CreateRequestForAggregator(1),
+.BR vdqm_Disconnect(3)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,0 +1,204 @@
+.\"
+.\"
+.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+.\"
+.TH VDQM_CREATEREQUESTFORAGGREGATOR l "$Date: 2008/10/11 11:37:41 $" "CASTOR" "VDQM Library Functions"
+.SH NAME
+.PP
+vdqm_CreateRequestForAggregator \- asks the VDQM to create a request for a drive and an aggregator
+.SH SYNOPSIS
+.br
+\fB#include "Castor_limits.h"\fR
+.br
+\fB#include "osdep.h"\fR
+.br
+\fB#include "net.h"\fR
+.br
+\fB#include "vdqm_api.h"\fR
+.sp
+.BI "int vdqm_CreateRequestForAggregator ("
+.br
+.BI "                const vdqmnw_t *" nw ,
+.br
+.BI "                int *" reqID ,
+.br
+.BI "                char *" VID ,
+.br
+.BI "                const char *" dgn ,
+.br
+.BI "                const char *" server,
+.br
+.BI "                const char *" unit ,
+.br
+.BI "                int " mode ,
+.br
+.BI "                int " port );
+.SH PARAMETERS
+.I nw
+\- points to a structure containing internal VDQM API network information returned
+by a prior call to 
+.B vdqm_Connect(3).
+This function assumes that
+.B vdqm_Connect(3)
+has been called and therefore this parameter must not be NULL and the socket
+must be valid.
+.PP
+.I reqID
+\- points to an integer location that receives the volume request queue ID 
+returned by the VDQM. This is the key used by the aggregator server when
+contacting the client. 
+.I VID
+\- character string specifying the volume visual identifier.
+.PP
+.I dgn
+\- character string specifying the device group name associated with the unit.
+.PP
+.I server
+\- character string specifying the tape server. 
+If NULL the first available tape server will be choosen.
+.PP
+.I unit
+\- character string specifying the drive unit name.
+If NULL the first available drive unit will be choosen.
+.PP
+.I mode
+\- integer value specifying the access mode. This parameter can only take
+the two values WRITE_DISABLE and WRITE_ENABLE defined in the "Ctape_constants.h"
+header file. Any other value will result in an error.
+.PP
+.I port
+\- integer value specifying a network listen port opened and bound by
+the client application. The aggregator server will use this port when
+contacting the client at job startup. The port value should be given in host
+order.
+.PP
+.SH DESCRIPTION
+.B vdqm_CreateRequestForAggregator
+asks the VDQM to create a request for a drive and an aggregator. When successful the volume
+request identifier is returned and the VDQM waits on the network connection
+specified by
+.I nw
+for the client to ask for the request to be queued using
+.B vdqm_QueueRequestForAggregator(1).
+This two-phase commit is required to allow the client to store the
+.I reqID
+before the VDQM can allocate a free drive for the request.  This prevents the
+race condition where the action of the client storing the
+.I reqID
+is racing against the action of the client receiving the connection from the
+allocated drive.
+When the request is due to run the VDQM server assigns
+a free drive and contacts the aggregator on the node hosting the
+assigned drive. The aggregator receives the client host name and port
+number passed in the
+.I port
+parameter and contacts the client to receive the mount request.
+When contacting the client the aggregator checks that the volume request
+identifier is correct and rejects the request if not.
+
+.SH RETURN VALUES
+.PP
+On successful completion, the
+.B vdqm_CreateRequestForAggregator
+function returns 0. Otherwise, a value of \-1 is returned and
+.B serrno
+is set to indicate the error.
+.SH ERRORS
+.PP
+If the
+.B vdqm_CreateRequestForAggregator
+function fails,
+.B serrno
+may be set to one of the following values:
+.TP
+.B SEINTERNAL
+Unexpected internal error 
+.TP
+.B SENOSSERV
+VDQM service unknown.
+.TP
+.B SENOSHOST
+VDQM host unknown.
+.TP
+.B SECOMERR
+A network library call failed when trying to establish the connection
+with the VDQM server.
+.TP
+.B EINVAL
+A parameter or combination of parameters is invalid. For instance if
+any of the required parameters device group name (dgn) or vid
+is a NULL pointer or if the port argument is a invalid ( <0 ).
+.TP
+.B EVQSYERR
+A fatal system call (e.g. calloc()) failure in VDQM server.
+.TP
+.B EVQHOLD
+The server is in HOLD status. This is normally a temporary error due
+to VDQM server maintenance. Client should retry after a short delay.
+
+.SH EXAMPLE
+Here is some example boiler plate code for using
+.B vdqm_CreateRequestForAggregator.
+The character string XXXX shows where user code needs to be a added.
+.P
+.nf
+int      rc          = 0;
+int      savedSerrno = 0;
+vdqmnw_t *nw         = NULL;
+int      *reqID      = XXXX;
+char     *VID        = XXXX;
+char     *dgn        = XXXX;
+char     *server     = XXXX;
+char     *unit       = XXXX;
+int      mode        = XXXX;
+int      client_port = XXXX;
+
+// Connect to the VDQM
+rc = vdqm_Connect(&nw);
+savedSerrno = serrno;
+
+// If successfully connected
+if(rc != -1) {
+
+  // Ask the VDQM to create a request for a drive with an aggregator
+  rc = vdqm_CreateRequestForAggregator(nw, reqID, VID, dgn, server, unit,
+    mode, client_port);
+  savedSerrno = serrno;
+
+  // If the request was sucessfully created
+  if(rc != -1) {
+
+    // Store the request ID in a database if necessary
+    XXXX
+
+    // Ask the VDQM to queue the newly created request
+    rc = vdqm_QueueRequestForAggregator(nw);
+    savedSerrno = serrno;
+  }
+
+  // If the request was successfully queued
+  if(rc != -1) {
+
+    // Record the fact
+    m_gotVolReqId = true;
+  }
+
+  // Disconnect from the VDQM
+  rc = vdqm_Disconnect(&nw);
+  savedSerrno = serrno;
+}
+
+// If there was an error
+if(rc == -1) {
+  // Process the error using savedSerrno if necessary
+  XXXX
+}
+.fi
+
+.SH SEE ALSO
+.BR vdqm_Connect(3), 
+.BR vdqm_Disconnect(3),
+.BR vdqm_QueueRequestForAggregator(1)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
