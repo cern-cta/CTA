@@ -12,6 +12,9 @@ import os
 import time
 from datetime import date
 
+# Bug Fix: python 2.3 has no os.SEEK_END constant
+SEEK_END = 2
+
 #-------------------------------------------------------------------------------
 class ConfigError( Exception ):
     def __init__( self, msg ):
@@ -53,7 +56,7 @@ def processConfig( config ):
         if i[0:8] == 'process-':
             if len( i ) < 9:
                 raise ConfigError( 'All processes must be named' )
-            
+
             processes[i[8:]] = secDict
 
         #-----------------------------------------------------------------------
@@ -234,7 +237,7 @@ class PipeSource(MsgSource):
                 continue
             self.__openDate = p
             if self.__seek:
-                self.__file.seek( 0, os.SEEK_END )            
+                self.__file.seek( 0, SEEK_END )
                 self.__seek = False
             break
 
@@ -281,7 +284,7 @@ class PipeSource(MsgSource):
         else:
             self.__file = open( config['path'], 'r' )
             if self.__seek:
-                self.__file.seek( 0, os.SEEK_END )
+                self.__file.seek( 0, SEEK_END )
             self.getMessage = self.getMessageNoDynfiles
 
     #---------------------------------------------------------------------------
@@ -309,7 +312,7 @@ def createObject( moduleName, className ):
 
     cls = classes[className]
     return cls()
-    
+
 
 #-------------------------------------------------------------------------------
 def createProcess( name, config ):
