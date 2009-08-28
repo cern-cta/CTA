@@ -121,13 +121,11 @@ CREATE OR REPLACE PROCEDURE tg_attachTapesToStreams (startFseqs IN castor."cnumL
                                                      tapeVids IN castor."strList") AS
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
-
-  nsHostName VARCHAR2(2048);
   tapeId NUMBER;
-  strId NUMBER;
 
 BEGIN
  FOR i IN strIds.FIRST .. strIds.LAST LOOP
+      tapeId:=NULL;
       -- update tapegatewayrequest
       UPDATE TapeGatewayRequest 
         SET status=1, lastfseq= startfseqs(i) 
@@ -162,8 +160,7 @@ BEGIN
   
     -- update the stream
       UPDATE Stream SET tape=tapeId 
-        WHERE Stream.id=strIds(i) 
-        RETURNING id into strId;
+        WHERE Stream.id=strIds(i); 
 
  END LOOP;
  COMMIT;
