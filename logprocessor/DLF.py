@@ -568,19 +568,19 @@ class DLFDbDest(LoggingCommon.MsgDestination):
 
                 # Integers
                 try:
-                    rec['value'] = int( kvdict[kv] )
-                    kv_int.append( rec )
-                    continue
+                   rec['value'] = int( kvdict[kv] )
+                   kv_int.append( rec )
+                   continue
                 except ValueError:
-                    pass
+                   pass
 
                 # Floats
                 try:
-                    rec['value'] = float( kvdict[kv] )
-                    kv_int.append( rec )
-                    continue
+                   rec['value'] = float( kvdict[kv] )
+                   kv_int.append( rec )
+                   continue
                 except ValueError:
-                    pass
+                   pass
 
                 # Strings
                 rec['value'] = kvdict[kv]
