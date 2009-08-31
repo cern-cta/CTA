@@ -8,24 +8,29 @@ step(); # For readability
 object(G,"gateway");
 object(GD,"gateway db");
 object(V,"vdqm");
+object(VD,"vdqm db");
 
 step(); # For readability
 
 # Message sequences
 
-# GATEWAY <--> VDQM
 active(G);
 message(G,V,"connect");
 active(V);
 message(G,V,"VDQM_VOL_REQ");      # 0x3101
 message(V,G,"VDQM_COMMIT");       # 0x310b
+message(V,VD,"start transaction");
+active(VD);
+message(V,VD,"insert volReqId");
 message(V,G,"VDQM_VOL_REQ");      # 0x3101
-message(G,GD,"insert volReqId");
+message(G,GD,"start transaction");
 active(GD);
-message(G,GD,"open transaction");
+message(G,GD,"insert volReqId");
 message(G,GD,"commit");
 inactive(GD);
 message(G,V,"VDQM_COMMIT");       # 0x310b
+message(V,VD,"commit");
+inactive(VD);
 message(G,V,"disconnect");
 inactive(V);
 inactive(G);
@@ -34,8 +39,8 @@ step(); # For readability
 
 complete(G);
 complete(GD);
-
 complete(V);
+complete(VD);
 
 step(); # For readability
 
