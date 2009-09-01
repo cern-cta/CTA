@@ -59,6 +59,8 @@
 #include <unistd.h>
 #include <poll.h>
  
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 //------------------------------------------------------------------------------
 // vmgr_error_buffer
@@ -136,8 +138,13 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
 
   try {
 
+    char Buf [ 200 ] ;
+    struct hostent * Host;
+    gethostname ( Buf , 200 ) ;
+    Host = ( struct hostent * ) gethostbyname ( Buf ) ;
+
     // Get the local hostname
-    gethostname(m_hostname, sizeof(m_hostname));    
+    strncpy(m_hostname, Host->h_name, sizeof(m_hostname));
 
     // Check if the hostname of the machine is set to "localhost"
     if(strcmp(m_hostname, "localhost") == 0) {
@@ -145,7 +152,17 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
                    "\"localhost\"" << std::endl << std::endl;
       return 1;
     }
-    
+
+    // Get the local IP address
+    strncpy(m_hostip, inet_ntoa(*((struct in_addr *)Host->h_addr)), sizeof(m_hostip) );
+
+    // Check if the IP of the machine is set to "127.0.0.1"
+    if(strcmp(m_hostname, "127.0.0.1") == 0) {
+      std::cerr << "tpcp cannot be ran on a machine where hostname is set to "
+                   "\"127.0.0.1\"" << std::endl << std::endl;
+      return 1;
+    }
+
     // Get the Current Working Directory
     getcwd(m_cwd, PATH_MAX);
     if(m_cwd == NULL){
@@ -1122,12 +1139,15 @@ void castor::tape::tpcp::TpcpCommand::deleteVdqmVolumeRequest()
 void castor::tape::tpcp::TpcpCommand::checkFilenameFormat()
   throw(castor::exception::Exception) {
 
-  FilenameList::iterator itor = m_filenames.begin();
-  // local string containing the hostname + ":"
+  // local string containing the hostip + ":"
+  std::string hostip(m_hostip);
+  hostip.append(":");
+
+  // local string containing the hostname 
   std::string hostname(m_hostname);
-  hostname.append(":");
 
   size_t firstPos;
+  FilenameList::iterator itor = m_filenames.begin();
   while(itor!=m_filenames.end()) {
 
    std::string &line = *itor;
@@ -1156,8 +1176,8 @@ void castor::tape::tpcp::TpcpCommand::checkFilenameFormat()
        line.insert(0, "/");
        line.insert(0, m_cwd);
      }
-     // Prefix it with the Hostname
-     line.insert(0, hostname);
+     // Prefix it with the Hostip
+     line.insert(0, hostip);
 
    } else {
        // if there is at least 1 ":/" -->check the "hostname" entered by the 
@@ -1172,13 +1192,41 @@ void castor::tape::tpcp::TpcpCommand::checkFilenameFormat()
 
          throw ex;
        }
-       // if file hostamane == "localhost" or "127.0.0.1"  
-       // --> replace it with hostname
+
+       // Remove the domain from the hostname and from the user entered 
+       // hostname and check if they match. 
+       // if so -> convert the hostname in IP address
+       {
+         size_t pos = hostname.find_first_of(".");
+         std::string hostname_no_domain;
+         // substring position "0" to the first occurrence of the character "."
+         if(pos != std::string::npos){
+           hostname_no_domain = hostname.substr(0, pos);
+         }else{
+           hostname_no_domain = hostname;
+         } 
+
+         pos = str.find_first_of(".");
+         std::string user_hostname_no_domain;
+         // substring position "0" to the first occurrence of the character "."
+         if(pos != std::string::npos){
+           user_hostname_no_domain = str.substr(0, pos);
+         }else{
+           user_hostname_no_domain = str;
+         }
+
+         if(hostname_no_domain.compare(user_hostname_no_domain) == 0){
+           line.replace(0, firstPos+1, hostip);
+         }
+       }
+
+       // if file hostamane == "localhost" or "127.0.0.1"
+       // --> replace it with hostip
        if (str == "localhost" || str == "127.0.0.1"){
 
-         line.replace(0, firstPos+1, hostname);
+         line.replace(0, firstPos+1, hostip);
        }
-   } 
+   }//else 
 
   ++itor;
   }//for(itor=m_cmdLine.filenames.begin()...
@@ -1207,7 +1255,14 @@ void castor::tape::tpcp::TpcpCommand::rfioStat(const char *const path,
     //               the error is from a remote host, then this function
     //               connects to the host and asks for the maching string)
 
-    const char *err_msg = rfio_serror();
+    // In case of ECONNREFUSED error, most likely is because on the peer host 
+    // there is no "rfiod" running.  
+    const char *err_msg = NULL;
+    if(savedSerrno == ECONNREFUSED){
+      err_msg = "rfiod unreachable";
+    }else{
+      err_msg = rfio_serror();
+    }
 
     castor::exception::Exception ex(savedSerrno);
 

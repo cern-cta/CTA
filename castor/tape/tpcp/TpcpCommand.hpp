@@ -506,6 +506,12 @@ private:
   char m_hostname[CA_MAXHOSTNAMELEN+1];
 
   /**
+   * The IP address of the machine.
+   */
+  char m_hostip[INET_ADDRSTRLEN+1];
+
+
+  /**
    * The current working directory where tpcp command is run.
    */
   char m_cwd[CA_MAXPATHLEN+1];
