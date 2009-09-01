@@ -2,10 +2,11 @@ if [ -f /etc/rc.d/init.d/mighunter ]; then
     /sbin/service mighunter stop > /dev/null 2>&1 || :
 fi
 if [ -d /var/spool/mighunter ]; then
+    /bin/mkdir /var/log/castor 2>/dev/null
     for src in `ls /var/spool/mighunter/log.*.gz 2>/dev/null`; do
         dest=`basename $src | sed 's/log/mighunterd.log/'`
-        /bin/mv --reply=no $src /var/log/castor/$dest 2>/dev/null
+        /bin/mv $src /var/log/castor/$dest 2>/dev/null
     done
-    /bin/mv --reply=no /var/spool/mighunter/log /var/log/castor/mighunterd.log 2>/dev/null
+    /bin/mv /var/spool/mighunter/log /var/log/castor/mighunterd.log 2>/dev/null
     /bin/rmdir /var/spool/mighunter 2>/dev/null || :
 fi

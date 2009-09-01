@@ -2,11 +2,12 @@ if [ -f /etc/rc.d/init.d/gcDaemon ]; then
     /sbin/service gcDaemon stop > /dev/null 2>&1 || :
 fi
 if [ -d /var/spool/gc ]; then
+    /bin/mkdir /var/log/castor 2>/dev/null
     for src in `ls /var/spool/gc/log.*.gz 2>/dev/null`; do
         dest=`basename $src | sed 's/log/gcd.log/'`
-        /bin/mv --reply=no $src /var/log/castor/$dest 2>/dev/null
+        /bin/mv $src /var/log/castor/$dest 2>/dev/null
     done
-    /bin/mv --reply=no /var/spool/gc/log /var/log/castor/gcd.log 2>/dev/null
+    /bin/mv /var/spool/gc/log /var/log/castor/gcd.log 2>/dev/null
     /bin/rmdir /var/spool/gc 2>/dev/null
     /bin/chown root:root /var/log/castor/gcd* 2>/dev/null || :
 fi

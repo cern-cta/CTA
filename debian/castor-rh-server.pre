@@ -2,10 +2,11 @@ if [ -f /etc/rc.d/init.d/rhserver ]; then
     /sbin/service rhserver stop > /dev/null 2>&1 || :
 fi
 if [ -d /var/spool/rhserver ]; then
+    /bin/mkdir /var/log/castor 2>/dev/null
     for src in `ls /var/spool/rhserver/log.*.gz 2>/dev/null`; do
         dest=`basename $src | sed 's/log/rhd.log/'`
-        /bin/mv --reply=no $src /var/log/castor/$dest 2>/dev/null
+        /bin/mv $src /var/log/castor/$dest 2>/dev/null
     done
-    /bin/mv --reply=no /var/spool/rhserver/log /var/log/castor/rhd.log 2>/dev/null
+    /bin/mv /var/spool/rhserver/log /var/log/castor/rhd.log 2>/dev/null
     /bin/rmdir /var/spool/rhserver 2>/dev/null || :
 fi

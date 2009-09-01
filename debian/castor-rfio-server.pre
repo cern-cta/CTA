@@ -1,8 +1,9 @@
 if [ -d /var/spool/rfio ]; then
+    /bin/mkdir /var/log/castor 2>/dev/null
     for src in `ls /var/spool/rfio/rfiod.*.gz 2>/dev/null`; do
         dest=`basename $src`
-        /bin/mv --reply=no $src /var/log/castor/$dest 2>/dev/null
+        /bin/mv $src /var/log/castor/$dest 2>/dev/null
     done
-    /bin/mv --reply=no /var/spool/rfio/rfiod.log /var/log/castor/rfiod.log 2>/dev/null
+    /bin/mv /var/spool/rfio/rfiod.log /var/log/castor/rfiod.log 2>/dev/null
     /bin/rmdir /var/spool/rfio 2>/dev/null || :
 fi

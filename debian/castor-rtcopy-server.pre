@@ -1,8 +1,9 @@
 if [ -d /var/spool/rtcopy ]; then
+    /bin/mkdir /var/log/castor 2>/dev/null
     for src in `ls /var/spool/rtcopy/rtcopyd.*.gz 2>/dev/null`; do
         dest=`basename $src | sed 's/rtcopyd/rtcpcd/'`
-        /bin/mv --reply=no $src /var/log/castor/$dest 2>/dev/null
+        /bin/mv $src /var/log/castor/$dest 2>/dev/null
     done
-    /bin/mv --reply=no /var/spool/rtcopy/rtcopyd.log /var/log/castor/rtcpcd.log 2>/dev/null
+    /bin/mv /var/spool/rtcopy/rtcopyd.log /var/log/castor/rtcpcd.log 2>/dev/null
     /bin/rmdir /var/spool/rtcopy 2>/dev/null || :
 fi
