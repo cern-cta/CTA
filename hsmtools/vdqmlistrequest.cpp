@@ -25,7 +25,6 @@
 #include "castor/BaseObject.hpp"
 #include "castor/Constants.hpp"
 #include "castor/Services.hpp"
-#include "castor/Services.hpp"
 #include "castor/db/DbParamsSvc.hpp"
 #include "castor/vdqm/Constants.hpp"
 #include "castor/vdqm/IVdqmSvc.hpp"
@@ -182,7 +181,16 @@ castor::vdqm::IVdqmSvc *retrieveVdqmSvc() {
   paramsSvc->setDbAccessConfFile(ORAVDQMCONFIGFILE);
 
   // Retrieve the VDQM DB service
-  svc = svcs->service("DbVdqmSvc", castor::SVC_DBVDQMSVC);
+  try {
+    svc = svcs->service("DbVdqmSvc", castor::SVC_DBVDQMSVC);
+  } catch(castor::exception::Exception &ex) {
+    std::cerr
+      << std::endl
+      << "Failed to retrieve the VDQM DB service"
+      << ": " << ex.getMessage().str()
+      << std::endl << std::endl;
+    exit(1);
+  }
   if(svc == NULL) {
     std::cerr
       << std::endl
