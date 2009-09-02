@@ -39,8 +39,9 @@ castor::server::UDPListenerThreadPool::UDPListenerThreadPool
 (const std::string poolName,
  castor::server::IThread* thread,
  int listenPort,
+ bool waitIfBusy,
  unsigned nbThreads) throw() :
-  ListenerThreadPool(poolName, thread, listenPort, nbThreads) {}
+  ListenerThreadPool(poolName, thread, listenPort, waitIfBusy, nbThreads) {}
 
 //------------------------------------------------------------------------------
 // bind

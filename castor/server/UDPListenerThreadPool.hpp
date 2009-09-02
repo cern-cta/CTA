@@ -50,17 +50,22 @@ namespace castor {
     public:
 
       /**
-       * empty constructor
+       * Empty constructor
        */
       UDPListenerThreadPool() throw() : ListenerThreadPool() {};
 
       /**
-       * constructor
+       * Constructor
        * @param poolName, thread as in BaseThreadPool
        * @param listenPort the TCP port to which to attach the ServerSocket.
+       * @param waitIfBusy true to wait on dispatching to a worker thread
+       * even if all threads are busy, as opposed to reject the connection.
+       * False by default for this UDP-based listener (note there's no
+       * default for the generic ListenerThreadPool).
+       * @param nbThreads as in ListenerThreadPool. This listener is not dynamic.
        */
       UDPListenerThreadPool(const std::string poolName, castor::server::IThread* thread,
-                            int listenPort,
+                            int listenPort, bool waitIfBusy = false,
                             unsigned nbThreads = castor::server::DEFAULT_THREAD_NUMBER) throw();
 
     protected:

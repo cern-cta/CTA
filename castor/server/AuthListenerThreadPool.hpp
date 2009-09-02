@@ -55,7 +55,9 @@ namespace castor {
      * Inherited constructor, see TCPListenerThreadPool
      */
     AuthListenerThreadPool(const std::string poolName, castor::server::IThread* thread,
-                           unsigned int listenPort, unsigned int nbThreads = DEFAULT_THREAD_NUMBER)
+                           unsigned int listenPort,
+                           bool waitIfBusy = true,
+                           unsigned int nbThreads = DEFAULT_THREAD_NUMBER)
       throw (castor::exception::Exception);
 
     /**
@@ -63,6 +65,7 @@ namespace castor {
      */
     AuthListenerThreadPool(const std::string poolName, castor::server::IThread* thread,
                            unsigned int listenPort,
+                           bool waitIfBusy,
                            unsigned int initThreads, unsigned int maxThreads,
                            unsigned int threshold = DEFAULT_THRESHOLD,
                            unsigned int maxTasks  = DEFAULT_MAXTASKS)      

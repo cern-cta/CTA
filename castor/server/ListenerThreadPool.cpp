@@ -37,10 +37,11 @@
 castor::server::ListenerThreadPool::ListenerThreadPool(const std::string poolName,
                                                        castor::server::IThread* thread,
                                                        unsigned int listenPort,
+                                                       bool waitIfBusy,
                                                        unsigned int nbThreads)
   throw(castor::exception::Exception) :
   DynamicThreadPool(poolName, thread, 0, nbThreads, nbThreads),
-  m_sock(0), m_port(listenPort) {}
+  m_sock(0), m_port(listenPort), m_waitIfBusy(waitIfBusy) {}
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -48,13 +49,14 @@ castor::server::ListenerThreadPool::ListenerThreadPool(const std::string poolNam
 castor::server::ListenerThreadPool::ListenerThreadPool(const std::string poolName,
                                                        castor::server::IThread* thread,
                                                        unsigned int listenPort,
+                                                       bool waitIfBusy,
                                                        unsigned int initThreads,
                                                        unsigned int maxThreads,
                                                        unsigned int threshold,
                                                        unsigned int maxTasks)
   throw(castor::exception::Exception) :
   DynamicThreadPool(poolName, thread, 0, initThreads, maxThreads, threshold, maxTasks),
-  m_sock(0), m_port(listenPort) {}
+  m_sock(0), m_port(listenPort), m_waitIfBusy(waitIfBusy) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -111,7 +113,7 @@ void castor::server::ListenerThreadPool::threadAssign(void *param) {
 
   // Otherwise, dispatch the task
   try {
-    addTask(param, false);
+    addTask(param, m_waitIfBusy);
   } catch(castor::exception::Exception &e) {
     if(e.code() == EAGAIN) {
       // "No idle thread in pool to process request"

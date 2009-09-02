@@ -58,10 +58,13 @@ namespace castor {
      * Constructor for a listener with a fixed number of threads.
      * @param poolName, thread as in BaseThreadPool
      * @param listenPort the port to be used by the listening socket.
+     * @param waitIfBusy true to wait on dispatching to a worker thread
+     * even if all threads are busy, as opposed to reject the connection
      * @param nbThreads number of threads in the pool
      */
     ListenerThreadPool(const std::string poolName, castor::server::IThread* thread,
                        unsigned int listenPort,
+                       bool waitIfBusy,
                        unsigned int nbThreads = DEFAULT_THREAD_NUMBER)
       throw (castor::exception::Exception);
 
@@ -69,10 +72,13 @@ namespace castor {
      * Constructor for a listener with a dynamic number of threads.
      * @param poolName, thread as in BaseThreadPool
      * @param listenPort the port to be used by the listening socket.
+     * @param waitIfBusy true to wait on dispatching to a worker thread
+     * even if all threads are busy, as opposed to reject the connection
      * @param initThreads, maxThreads, threshold, maxTasks as in DynamicThreadPool
      */
     ListenerThreadPool(const std::string poolName, castor::server::IThread* thread,
                        unsigned int listenPort,
+                       bool waitIfBusy,
                        unsigned int initThreads,
                        unsigned int maxThreads,
                        unsigned int threshold = DEFAULT_THRESHOLD,
@@ -137,6 +143,12 @@ namespace castor {
     
     /// TCP port to listen for
     unsigned int m_port;
+
+    /**
+     * Flag to decide whether to wait for dispatching in case
+     * no thread is idle as opposed to reject the incoming connection
+     */
+    bool m_waitIfBusy;
     
   };
   

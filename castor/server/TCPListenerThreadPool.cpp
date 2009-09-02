@@ -39,8 +39,9 @@ castor::server::TCPListenerThreadPool::TCPListenerThreadPool
 (const std::string poolName,
  castor::server::IThread* thread,
  unsigned int listenPort,
+ bool waitIfBusy,
  unsigned int nbThreads) throw(castor::exception::Exception) :
-  ListenerThreadPool(poolName, thread, listenPort, nbThreads) {}
+  ListenerThreadPool(poolName, thread, listenPort, waitIfBusy, nbThreads) {}
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -49,11 +50,12 @@ castor::server::TCPListenerThreadPool::TCPListenerThreadPool
 (const std::string poolName,
  castor::server::IThread* thread,
  unsigned int listenPort,
+ bool waitIfBusy,
  unsigned int initThreads,
  unsigned int maxThreads,
  unsigned int threshold,
  unsigned int maxTasks) throw(castor::exception::Exception) :
-  ListenerThreadPool(poolName, thread, listenPort,
+  ListenerThreadPool(poolName, thread, listenPort, waitIfBusy,
                      initThreads, maxThreads, threshold, maxTasks) {}
 
 //------------------------------------------------------------------------------
