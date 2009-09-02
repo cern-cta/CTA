@@ -401,6 +401,12 @@ BEGIN
 END;
 /
 
+/* Drop the tapegateway tables created in the oracleSchema until such a time
+ * that the tables are needed by a release
+ */
+DROP TABLE TapeGatewaySubRequest;
+DROP TABLE TapeGatewayRequest;
+
 COMMIT;
 
 
