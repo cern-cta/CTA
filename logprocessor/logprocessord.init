@@ -43,7 +43,8 @@ start() {
         # Run daemon
         echo -n $"Starting $prog: "
 
-        daemon /usr/bin/$prog -d start $LOGPROCESSORD_OPTIONS 1>/dev/null
+        export PYTHONUNBUFFERED=1
+        daemon /usr/bin/python /usr/bin/$prog -d start $LOGPROCESSORD_OPTIONS 1>/dev/null
 
         RETVAL=$?
         [ $RETVAL -eq 0 ] && success $"$base startup" || failure $"$base startup"
