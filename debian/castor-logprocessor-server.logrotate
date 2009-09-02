@@ -1,6 +1,17 @@
-/var/log/castor/logprocessord.log {
+/var/log/castor/logprocessord.log.dlf-syslog-to-db {
     compress
     daily
     missingok
     rotate 120
+}
+
+/var/log/dlf/syslog.input {
+    compress
+    daily
+    missingok
+    rotate 5
+    postrotate
+        /bin/kill -HUP `cat /var/run/syslogd.pid 2> /dev/null` 2> /dev/null || true
+        /bin/kill -HUP `cat /var/run/logprocessord.pid 2> /dev/null` 2> /dev/null || true
+    endscript
 }
