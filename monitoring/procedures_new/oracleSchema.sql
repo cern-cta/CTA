@@ -126,8 +126,8 @@ CREATE OR REPLACE VIEW DLFConfig AS
 /***** NEW MONITORING *****/
 
 /* SQL statement for table ConfigSchema */
-CREATE TABLE ConfigSchema (expiry NUMBER, runMaxTime DATE);
-INSERT INTO ConfigSchema VALUES (90, SYSDATE);
+CREATE TABLE ConfigSchema (expiry NUMBER);
+INSERT INTO ConfigSchema VALUES (90);
 
 /* SQL statement for table Requests */
 CREATE TABLE Requests (subReqId CHAR(36) CONSTRAINT NN_Requests_subReqId NOT NULL CONSTRAINT PK_Requests_subReqId PRIMARY KEY, timestamp DATE CONSTRAINT NN_Requests_timestamp NOT NULL, reqId CHAR(36) CONSTRAINT NN_Requests_reqId NOT NULL, nsFileId NUMBER CONSTRAINT NN_Requests_nsFileId NOT NULL, type VARCHAR2(255), svcclass VARCHAR2(255), username VARCHAR2(255), state VARCHAR2(255), filename VARCHAR2(2048), filesize NUMBER)

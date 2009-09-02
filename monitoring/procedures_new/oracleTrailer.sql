@@ -1162,21 +1162,16 @@ BEGIN
       JOB_NAME        => 'populateJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'DECLARE
-                            maxTimeStamp DATE;
+                            now DATE := SYSDATE - 10/1440;
                           BEGIN
                             EXECUTE IMMEDIATE ''TRUNCATE TABLE ERR_Requests'';
-                            SELECT runmaxtime INTO maxTimeStamp FROM ConfigSchema;
-
-                            statsReqs(maxTimeStamp);
-                            statsDiskCopy(maxTimeStamp);
-                            statsInternalDiskCopy(maxTimeStamp);
-                            statsTapeRecall(maxTimeStamp);
-                            statsMigs(maxTimeStamp);
-                            statsTotalLat(maxTimeStamp);
-                            statsGcFiles(maxTimeStamp);
-
-                            UPDATE ConfigSchema
-                               SET runmaxtime = runmaxtime + 5/1440;
+                            statsReqs(now);
+                            statsDiskCopy(now);
+                            statsInternalDiskCopy(now);
+                            statsTapeRecall(now);
+                            statsMigs(now);
+                            statsTotalLat(now);
+                            statsGcFiles(now);
                           END;',
       JOB_CLASS       => 'DLF_JOB_CLASS',
       START_DATE      => SYSDATE + 10/1440,
