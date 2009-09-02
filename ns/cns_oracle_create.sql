@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)RCSfile: oracleCreate.sql,v  Release: 1.2  Release Date: 2008/11/06 13:20:07  Author: waldron 
+ * @(#)RCSfile: oracleCreate.sql,v  Release: 1.2  Release Date: 2009/08/18 09:40:13  Author: waldron 
  *
  * This script creates a new Castor Name Server schema
  *
@@ -37,7 +37,6 @@ CREATE TABLE Cns_class_metadata (
        migr_time_interval NUMBER,
        mintime_beforemigr NUMBER,
        nbcopies NUMBER(1),
-       nbdirs_using_class NUMBER,
        retenp_on_disk NUMBER);
 
 CREATE TABLE Cns_tp_pool (
@@ -86,18 +85,6 @@ CREATE TABLE Cns_symlinks (
        fileid NUMBER,
        linkname VARCHAR2(1023));
 
-CREATE TABLE Cns_file_replica (
-       fileid NUMBER,
-       nbaccesses NUMBER,
-       atime NUMBER(10),
-       ptime NUMBER(10),
-       status CHAR(1),
-       f_type CHAR(1),
-       poolname VARCHAR2(15),
-       host VARCHAR2(63),
-       fs VARCHAR2(79),
-       sfn VARCHAR2(1103));
-
 CREATE TABLE Cns_groupinfo (
        gid NUMBER(10),
        groupname VARCHAR2(255));
@@ -113,43 +100,51 @@ CREATE SEQUENCE Cns_unique_id START WITH 3 INCREMENT BY 1;
 ALTER TABLE Cns_class_metadata
        ADD CONSTRAINT pk_classid PRIMARY KEY (classid)
        ADD CONSTRAINT classname UNIQUE (name);
+
 ALTER TABLE Cns_file_metadata
        ADD CONSTRAINT pk_fileid PRIMARY KEY (fileid)
        ADD CONSTRAINT file_full_id UNIQUE (parent_fileid, name)
        ADD CONSTRAINT file_guid UNIQUE (guid)
 	USING INDEX STORAGE (INITIAL 2M NEXT 2M PCTINCREASE 0);
-ALTER TABLE Cns_user_metadata
-       ADD CONSTRAINT pk_u_fileid PRIMARY KEY (u_fileid);
-ALTER TABLE Cns_seg_metadata
-       ADD CONSTRAINT pk_s_fileid PRIMARY KEY (s_fileid, copyno, fsec);
-ALTER TABLE Cns_symlinks
-       ADD CONSTRAINT pk_l_fileid PRIMARY KEY (fileid);
-ALTER TABLE Cns_file_replica
-       ADD CONSTRAINT repl_sfn UNIQUE (sfn);
-ALTER TABLE Cns_groupinfo
-       ADD CONSTRAINT map_groupname UNIQUE (groupname);
-ALTER TABLE Cns_userinfo
-       ADD CONSTRAINT map_username UNIQUE (username);
-CREATE INDEX replica_id ON Cns_file_replica(fileid);
 
 ALTER TABLE Cns_user_metadata
-       ADD CONSTRAINT fk_u_fileid FOREIGN KEY (u_fileid) REFERENCES Cns_file_metadata(fileid);
+       ADD CONSTRAINT pk_u_fileid PRIMARY KEY (u_fileid);
+
 ALTER TABLE Cns_seg_metadata
-       ADD CONSTRAINT fk_s_fileid FOREIGN KEY (s_fileid) REFERENCES Cns_file_metadata(fileid)
+       ADD CONSTRAINT pk_s_fileid PRIMARY KEY (s_fileid, copyno, fsec);
+
+ALTER TABLE Cns_symlinks
+       ADD CONSTRAINT pk_l_fileid PRIMARY KEY (fileid);
+
+ALTER TABLE Cns_groupinfo
+       ADD CONSTRAINT map_groupname UNIQUE (groupname);
+
+ALTER TABLE Cns_userinfo
+       ADD CONSTRAINT map_username UNIQUE (username);
+
+ALTER TABLE Cns_user_metadata
+       ADD CONSTRAINT fk_u_fileid FOREIGN KEY (u_fileid) REFERENCES Cns_file_metadata (fileid);
+
+ALTER TABLE Cns_file_metadata
+       ADD CONSTRAINT fk_class FOREIGN KEY (fileclass) REFERENCES Cns_class_metadata (classid);
+
+ALTER TABLE Cns_seg_metadata
+       ADD CONSTRAINT fk_s_fileid FOREIGN KEY (s_fileid) REFERENCES Cns_file_metadata (fileid)
        ADD CONSTRAINT tapeseg UNIQUE (vid, side, fseq);
+
 ALTER TABLE Cns_tp_pool
        ADD CONSTRAINT classpool UNIQUE (classid, tape_pool);
+
 ALTER TABLE Cns_symlinks
-       ADD CONSTRAINT fk_l_fileid FOREIGN KEY (fileid) REFERENCES Cns_file_metadata(fileid);
-ALTER TABLE Cns_file_replica
-       ADD CONSTRAINT fk_r_fileid FOREIGN KEY (fileid) REFERENCES Cns_file_metadata(fileid);
+       ADD CONSTRAINT fk_l_fileid FOREIGN KEY (fileid) REFERENCES Cns_file_metadata (fileid);
 
 -- Create the Cns_version table
 CREATE TABLE Cns_version (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO Cns_version VALUES ('2_1_8_0', '2_1_8_3');
+INSERT INTO Cns_version VALUES ('2_1_9_0', '2_1_9_0');
 
--- Create an index on Cns_file_metadata(PARENT_FILEID)
-CREATE INDEX PARENT_FILEID_IDX on Cns_file_metadata(PARENT_FILEID);
+-- Create indexes on Cns_file_metadata
+CREATE INDEX PARENT_FILEID_IDX ON Cns_file_metadata (parent_fileid);
+CREATE INDEX I_file_metadata_fileclass ON Cns_file_metadata (fileclass);
 
 -- Temporary table to support Cns_bulkexist calls
 CREATE GLOBAL TEMPORARY TABLE Cns_files_exist_tmp
