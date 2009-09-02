@@ -77,7 +77,7 @@ class DLFDbDest(LoggingCommon.MsgDestination):
         if config.has_key( 'bulk_count' ):
             self.bulkCount = int(config['bulk_count'])
         else:
-            self.bulkCount = 1000
+            self.bulkCount = 5000
 
         #-----------------------------------------------------------------------
         # Set up the domain name
@@ -281,7 +281,8 @@ class DLFDbDest(LoggingCommon.MsgDestination):
 
     #---------------------------------------------------------------------------
     def finalize( self ):
-        self.flushQueues()
+        if len( self.__msgQueue ):
+            self.flushQueues()
 
     #---------------------------------------------------------------------------
     def insertMsgText( self, message ):
