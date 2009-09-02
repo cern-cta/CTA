@@ -100,6 +100,10 @@ class Process( object ):
         self.source.finalize()
         self.destination.finalize()
 
+    def notify( self ):
+        self.source.notify()
+        self.destination.notify()
+
     def run( self ):
         while True:
             try:
@@ -107,7 +111,7 @@ class Process( object ):
                 if not message:
                     break
                 self.destination.sendMessage( message )
-            except Exception, e:
+            except ValueError, e:
                 print 'Errors occurred while processing message:', e
 
 #-------------------------------------------------------------------------------
@@ -127,6 +131,10 @@ class MsgDestination(object):
     def initizlize( self, config ):
         pass
 
+    #---------------------------------------------------------------------------
+    def notify( self ):
+        pass
+
 #-------------------------------------------------------------------------------
 class MsgSource(object):
     """
@@ -143,6 +151,10 @@ class MsgSource(object):
 
     #---------------------------------------------------------------------------
     def finalize( self ):
+        pass
+
+    #---------------------------------------------------------------------------
+    def notify( self ):
         pass
 
 
@@ -192,6 +204,13 @@ class PipeSource(MsgSource):
         self.transform = lambda x: {}
 
     #---------------------------------------------------------------------------
+    def notify( self ):
+        if not self.__dynfiles:
+            print 'Reopening the input file:', self.__path
+            self.__file.close()
+            self.__file = open( self.__path, 'r' )            
+
+    #---------------------------------------------------------------------------
     def getMessageNoDynfiles( self ):
         line = self.__file.readline()
         if not line:
@@ -228,7 +247,7 @@ class PipeSource(MsgSource):
     def waitForFile( self ):
         while True:
             p = date.today()
-            path =  self.__dir + '/'
+            path =  self.__path + '/'
             path += "%d-%02d-%02d.log" % (p.year, p.month, p.day)
             try:
                 self.__file = file( path, 'r' )
@@ -248,14 +267,14 @@ class PipeSource(MsgSource):
         #-----------------------------------------------------------------------
         if config.has_key( 'dynfiles' ):
             if config['dynfiles'] == 'true':
-                dynfiles = True
+                self.__dynfiles = True
             elif config['dynfiles'] == 'false':
-                dynfiles = False
+                self.__dynfiles = False
             else:
                 raise ConfigError( 'PipeSource: only true and false are ' +
                                    'are supported as values for dynfiles' )
         else:
-            dynfiles = False
+            self.__dynfiles = False
 
         #-----------------------------------------------------------------------
         # Should we seek for the end of the file?
@@ -272,11 +291,18 @@ class PipeSource(MsgSource):
             self.__seek = True
 
         #-----------------------------------------------------------------------
+        # Check if we have the path specified
+        #-----------------------------------------------------------------------
+        if not config.has_key( 'path' ):
+            raise ConfigError( 'Input file path is not specified' )
+
+        self.__path = config['path']
+
+        #-----------------------------------------------------------------------
         # We are using dynfiles
         #-----------------------------------------------------------------------
-        if dynfiles:
+        if self.__dynfiles:
             self.__file = None
-            self.__dir  = config['path']
             self.getMessage = self.getMessageDynfiles
         #-----------------------------------------------------------------------
         # We are not using dynfiles
@@ -289,7 +315,8 @@ class PipeSource(MsgSource):
 
     #---------------------------------------------------------------------------
     def finalize( self ):
-        self.__file.close()
+        if self.__file:
+            self.__file.close()
 
 
 #-------------------------------------------------------------------------------

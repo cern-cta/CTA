@@ -45,6 +45,8 @@ class DLFDbDest(LoggingCommon.MsgDestination):
         #-----------------------------------------------------------------------
         if not config.has_key( 'connection_string' ):
             connString = 'file:///etc/castor/DLFCONFIG'
+        else:
+            connString = config['connection_string']
 
         #-----------------------------------------------------------------------
         # Read the connect string from a file
@@ -275,7 +277,7 @@ class DLFDbDest(LoggingCommon.MsgDestination):
             self.__strQueue = []
 
             self.__conn.rollback()
-            raise e
+            raise RuntimeError( str(e) )
 
     #---------------------------------------------------------------------------
     def finalize( self ):
@@ -288,7 +290,7 @@ class DLFDbDest(LoggingCommon.MsgDestination):
         # Check if we know this facility
         #-----------------------------------------------------------------------
         if not self.__facmap.has_key( message['facility'] ):
-            raise RuntimeError( 'Unrecognized type of facility' )
+            raise ValueError( 'Unrecognized type of facility' )
         facility = self.__facmap[message['facility']]
 
         #-----------------------------------------------------------------------
@@ -331,7 +333,7 @@ class DLFDbDest(LoggingCommon.MsgDestination):
         except cx_Oracle.DatabaseError, e:
             # Somebody have already inserted this message text
             if e.message.code != 1:
-                raise e
+                raise RuntimeError(str(e))
 
         #-----------------------------------------------------------------------
         # Update the cache
@@ -600,7 +602,7 @@ class DLFDbDest(LoggingCommon.MsgDestination):
         elif msg['type'] == 'msgadd':
             self.insertMsgText( msg )
         else:
-            raise SyntaxError( 'Unrecognized type of message' )
+            raise ValueError( 'Unrecognized type of message' )
 
 #-------------------------------------------------------------------------------
 class DLFMsgParser:
@@ -740,6 +742,11 @@ class DLFLogFile(LoggingCommon.MsgSource):
     #---------------------------------------------------------------------------
     def __init__( self ):
         self.source = LoggingCommon.PipeSource()
+
+
+    #---------------------------------------------------------------------------
+    def notify( self ):
+        self.source.notify()
 
     #---------------------------------------------------------------------------
     def getMessage( self ):

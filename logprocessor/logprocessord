@@ -15,9 +15,7 @@ import ConfigParser
 import os
 import signal
 import datetime
-
-LoggingCommon  = None
-currentProcess = None
+import syslog
 
 #-------------------------------------------------------------------------------
 # Some constants and global stuff
@@ -25,6 +23,10 @@ currentProcess = None
 configFile  = '/etc/castor/logprocessord.conf'
 pidFilePath = '/var/run/logprocessord.pid'
 logFilePath = '/var/log/castor/logprocessord.log'
+
+LoggingCommon  = None
+currentProcess = None
+isDaemon       = True
 
 #-------------------------------------------------------------------------------
 # Print the help message
@@ -47,7 +49,7 @@ def processConfig():
         config = ConfigParser.ConfigParser()
         config.readfp( file( configFile ) )
     except Exception, e:
-        raise Exception( 'Error while parsing the config:' + str(e) )
+        raise RuntimeError( 'Error while parsing the config:' + str(e) )
 
     #---------------------------------------------------------------------------
     # Run the basic setup
@@ -71,16 +73,44 @@ def processConfig():
         try:
             LoggingCommon = __import__( 'LoggingCommon' )
         except ImportError, e:
-            raise Exception( 'Unable to load common logging functionality' )
+            raise RuntimeError( 'Unable to load common logging functionality' )
 
     return LoggingCommon.processConfig( config ), config
 
+#-------------------------------------------------------------------------------
+# Redirect the stderr and stdout to a file
+#-------------------------------------------------------------------------------
+def redirectOutput():
+    outLog  = file( logFilePath, 'a+' )
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os.close( sys.stdout.fileno() )
+    os.close( sys.stderr.fileno() )
+    os.dup2( outLog.fileno(),  sys.stdout.fileno() )
+    os.dup2( outLog.fileno(),  sys.stderr.fileno() )
 
 #-------------------------------------------------------------------------------
 # Signal handler slushing data in the buffers
 #-------------------------------------------------------------------------------
 def sigTermHandler( signum, frame ):
     currentProcess.finalize()
+    sys.exit( 0 )
+
+#-------------------------------------------------------------------------------
+# Signal handler external notifications
+#-------------------------------------------------------------------------------
+def sigHupHandler( signum, frame ):
+    if isDaemon:
+        try:
+            redirectOutput()
+        except IOError, e:
+            # This is rather critical. It most probably means that we cannot
+            # reopen the log file after it was logrotated so we want be able to
+            # communicate anything till the next sighup
+            syslog.openlog( 'logprocessord' )
+            syslog.syslog( 'Cannot redirect output to the log file: ' + str(e) )
+            syslog.closelog()
+    currentProcess.notify()
 
 #-------------------------------------------------------------------------------
 # Print check if the daemon is running and if so, return it's pid
@@ -187,20 +217,20 @@ def startDaemon( config, configproc ):
     outLog = None
     os.setsid()
     try:
-        outLog  = file( logFilePath, 'a+' )
         devNull = file( '/dev/null', 'r' )
-        sys.stdout.flush()
-        sys.stderr.flush()
         os.close( sys.stdin.fileno() )
-        os.close( sys.stdout.fileno() )
-        os.close( sys.stderr.fileno() )
-        os.dup2( outLog.fileno(),  sys.stdout.fileno() )
-        os.dup2( outLog.fileno(),  sys.stderr.fileno() )
         os.dup2( devNull.fileno(), sys.stdin.fileno() )
         os.chdir( '/')
+        redirectOutput()
     except IOError, e:
         raise LoggingCommon.ConfigError( 'Cannot redirect output to the log ' +
                                          'file: ' + str(e) )
+
+    #---------------------------------------------------------------------------
+    # Set up the signal handlers
+    #---------------------------------------------------------------------------
+    signal.signal( signal.SIGTERM, sigTermHandler )
+    signal.signal( signal.SIGHUP,  sigHupHandler )
 
     #---------------------------------------------------------------------------
     # Process the messages
@@ -278,12 +308,15 @@ if __name__ == '__main__':
     #---------------------------------------------------------------------------
     if opts.has_key( '-p' ):
         try:
-            process = LoggingCommon.createProcess( opts['-p'], config )
+            isDaemon = False
+            signal.signal( signal.SIGTERM, sigTermHandler )
+            signal.signal( signal.SIGHUP,  sigHupHandler )
+            currentProcess = LoggingCommon.createProcess( opts['-p'], config )
             print 'Running process', opts['-p'], '...'
             d1 = datetime.datetime.now()
-            process.initialize()
-            process.run()
-            process.finalize()
+            currentProcess.initialize()
+            currentProcess.run()
+            currentProcess.finalize()
             d2 = datetime.datetime.now()
             d = d2 - d1
             print 'Time: ', int( d.seconds/60 ), 'm.', d.seconds%60, 's.'
@@ -307,8 +340,8 @@ if __name__ == '__main__':
             else:
                 print 'You can either start or stop the deamon'
                 sys.exit( 3 )
-        except SystemExit:
-            pass
-        except Exception, e:
+        except (LoggingCommon.ConfigError, RuntimeError, ValueError,
+               IOError), e:
+
             print e
             sys.exit( 1 )
