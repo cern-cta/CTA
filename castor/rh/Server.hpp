@@ -74,6 +74,12 @@ namespace castor {
       /// Flag to indicate whether strong authentication is enabled or not
       bool m_secure;
 
+      /**
+       * Flag to indicate whether to wait for dispatching a request when
+       * all threads are busy as opposed to discarding it
+       */
+      bool m_waitIfBusy;
+      
     protected:
 
       /**

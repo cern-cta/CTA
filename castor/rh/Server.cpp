@@ -87,7 +87,8 @@ int main(int argc, char *argv[]) {
 castor::rh::Server::Server() :
   castor::server::BaseDaemon("rhd"),
   m_port(-1),
-  m_secure(false) {
+  m_secure(false),
+  m_waitIfBusy(true) {
 
   // Initializes the DLF logging
   castor::dlf::Message messages[] =
@@ -147,6 +148,7 @@ void castor::rh::Server::help(std::string programName)
     "\t--secure                or -s           \tRun the daemon in secure mode\n"
     "\t--config <config-file>  or -c           \tConfiguration file\n"
     "\t--port                  or -p {integer} \tPort to be used\n"
+    "\t--no-wait               or -n           \tDon't wait to dispatch requests when all threads are busy\n"
     "\t--Rthreads              or -R {integer} \tNumber of Request Handler threads\n"
     "\n"
     "Comments to: Castor.Support@cern.ch\n";
@@ -165,6 +167,7 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
       {"config",     REQUIRED_ARGUMENT, NULL, 'c'},
       {"Rthreads",   REQUIRED_ARGUMENT, NULL, 'R'},
       {"port",       REQUIRED_ARGUMENT, NULL, 'p'},
+      {"nowait",     NO_ARGUMENT,       NULL, 'n'},
       {NULL,         0,                 NULL,  0 }
     };
   Coptind = 1;
@@ -174,7 +177,7 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
   int iport = -1;
   int nbThreads = -1;
 
-  while ((c = Cgetopt_long(argc, argv, "fhsR:p:c:b", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long(argc, argv, "fhsR:p:c:n", longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
       m_foreground = true;
@@ -203,6 +206,9 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
     case 'p':
       iport = castor::System::porttoi(Coptarg);
       break;
+    case 'n':
+      m_waitIfBusy = false;
+      break;
     default:
       help(argv[0]);
       exit(0);
@@ -229,7 +235,7 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
     }
     addThreadPool
       (new castor::server::AuthListenerThreadPool
-       ("RH", new castor::rh::RHThread(), m_port, true, 8, 10));
+       ("RH", new castor::rh::RHThread(), m_port, m_waitIfBusy, 8, 10));
   } else {
     if (iport == -1) {
       if ((sport = getenv (castor::rh::PORT_ENV)) != 0
@@ -244,7 +250,7 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
     }
     addThreadPool
       (new castor::server::TCPListenerThreadPool
-       ("RH", new castor::rh::RHThread(), m_port, true, 10, 20));
+       ("RH", new castor::rh::RHThread(), m_port, m_waitIfBusy, 10, 20));
   }
 
   if (nbThreads != -1) {
