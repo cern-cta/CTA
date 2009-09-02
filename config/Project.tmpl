@@ -19,10 +19,7 @@ checkDESTDIR:
 	fi;
 
 checkORACLE:
-	@if [ -z "${ORACLE_HOME}" ]; then \
-	  if [ -r /etc/sysconfig/castor ]; then /etc/sysconfig/castor; fi \
-	fi; \
-        if [ -z ${ORACLE_HOME} ]; then \
+	if [ -z ${ORACLE_HOME} ]; then \
 	  echo "Please define ORACLE_HOME environment variable before invoking make."; \
 	  exit 1; \
 	fi; \
