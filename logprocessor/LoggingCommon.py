@@ -10,6 +10,7 @@ import inspect
 import sys
 import os
 import time
+import datetime
 from datetime import date
 
 # Bug Fix: python 2.3 has no os.SEEK_END constant
@@ -112,6 +113,7 @@ class Process( object ):
                     break
                 self.destination.sendMessage( message )
             except ValueError, e:
+                print datetime.datetime.now(),
                 print 'Errors occurred while processing message:', e
 
 #-------------------------------------------------------------------------------
@@ -206,7 +208,6 @@ class PipeSource(MsgSource):
     #---------------------------------------------------------------------------
     def notify( self ):
         if not self.__dynfiles:
-            print 'Reopening the input file:', self.__path
             self.__file.close()
             self.__file = open( self.__path, 'r' )            
 

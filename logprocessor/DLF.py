@@ -69,7 +69,7 @@ class DLFDbDest(LoggingCommon.MsgDestination):
             self.__conn = cx_Oracle.Connection( self.__connString )
             self.__curs = self.__conn.cursor()
         except cx_Oracle.DatabaseError, e:
-            raise RuntimeError( str(e) )
+            raise RuntimeError( 'Unable to connect to the database: ' + str(e) )
 
         #-----------------------------------------------------------------------
         # Set up the bulk count
@@ -151,7 +151,8 @@ class DLFDbDest(LoggingCommon.MsgDestination):
                     self.reconnect()
                     continue
                 else:
-                    raise RuntimeError( str(e) )
+                    raise RuntimeError( 'Unable to reload host cache: '
+                                        + str(e) )
 
         #-----------------------------------------------------------------------
         # Process the data
@@ -176,7 +177,8 @@ class DLFDbDest(LoggingCommon.MsgDestination):
                     self.reconnect()
                     continue
                 else:
-                    raise RuntimeError( str(e) )
+                    raise RuntimeError( 'Unable to reload facility cache: '
+                                        + str(e) )
 
         #-----------------------------------------------------------------------
         # Process the data
@@ -202,7 +204,8 @@ class DLFDbDest(LoggingCommon.MsgDestination):
                     self.reconnect()
                     continue
                 else:
-                    raise RuntimeError( str(e) )
+                    raise RuntimeError( 'Unable to reload severity cache: '
+                                        + str(e) )
 
         #-----------------------------------------------------------------------
         # Process the data
@@ -227,7 +230,8 @@ class DLFDbDest(LoggingCommon.MsgDestination):
                     self.reconnect()
                     continue
                 else:
-                    raise RuntimeError( str(e) )
+                    raise RuntimeError( 'Unable to reload text cache: '
+                                        + str(e) )
 
         #-----------------------------------------------------------------------
         # Process the data
@@ -259,7 +263,8 @@ class DLFDbDest(LoggingCommon.MsgDestination):
                     self.reconnect()
                     continue
                 else:
-                    raise RuntimeError( str(e) )
+                    raise RuntimeError( 'Unable to reload text cache: '
+                                        + str(e) )
 
         #-----------------------------------------------------------------------
         # Insert the records to the cache
@@ -285,7 +290,8 @@ class DLFDbDest(LoggingCommon.MsgDestination):
                     self.reconnect()
                     continue
                 else:
-                    raise RuntimeError( str(e) )
+                    raise RuntimeError( 'Unable to reload NSHost cache: '
+                                        + str(e) )
         #-----------------------------------------------------------------------
         # Process the data
         #-----------------------------------------------------------------------
@@ -315,7 +321,8 @@ class DLFDbDest(LoggingCommon.MsgDestination):
                     self.reconnect()
                     continue
                 else:
-                    raise RuntimeError( str(e) )
+                    raise RuntimeError( 'Unable to get message identifiers'
+                                        + str(e) )
 
         #-----------------------------------------------------------------------
         # Assign the indices
@@ -410,7 +417,8 @@ class DLFDbDest(LoggingCommon.MsgDestination):
                     self.__intQueue = []
                     self.__strQueue = []
                     self.__conn.rollback()
-                    raise RuntimeError( str(e) )
+                    raise RuntimeError( 'Unable to flush message queues'
+                                        + str(e) )
 
     #---------------------------------------------------------------------------
     def finalize( self ):
@@ -479,7 +487,8 @@ class DLFDbDest(LoggingCommon.MsgDestination):
                     self.reconnect()
                     continue
                 else:
-                    raise RuntimeError(str(e))
+                    raise RuntimeError( 'Unable to update message texts table: '
+                                        + str(e) )
 
         #-----------------------------------------------------------------------
         # Update the cache
@@ -522,7 +531,8 @@ class DLFDbDest(LoggingCommon.MsgDestination):
                     self.reconnect()
                     continue
                 else:
-                    raise RuntimeError(str(e))
+                    raise RuntimeError( 'Unable to update hostid table: '
+                                        + str(e) )
 
         #-----------------------------------------------------------------------
         # Update the host cache
@@ -560,7 +570,8 @@ class DLFDbDest(LoggingCommon.MsgDestination):
                     self.reconnect()
                     continue
                 else:
-                    raise RuntimeError(str(e))
+                    raise RuntimeError( 'Unable to update nshostid table: '
+                                        + str(e))
 
         #-----------------------------------------------------------------------
         # Update the host cache
@@ -770,7 +781,7 @@ class DLFDbDest(LoggingCommon.MsgDestination):
         elif msg['type'] == 'msgadd':
             self.insertMsgText( msg )
         else:
-            raise ValueError( 'Unrecognized type of message' )
+            raise ValueError( 'Unrecognized type of message: ' + str(msg) )
 
 #-------------------------------------------------------------------------------
 class DLFMsgParser:

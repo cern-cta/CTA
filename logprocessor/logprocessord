@@ -342,6 +342,5 @@ if __name__ == '__main__':
                 sys.exit( 3 )
         except (LoggingCommon.ConfigError, RuntimeError, ValueError,
                IOError), e:
-
-            print e
+            print datetime.datetime.now(), e
             sys.exit( 1 )
