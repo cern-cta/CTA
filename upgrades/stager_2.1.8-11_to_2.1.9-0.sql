@@ -6212,21 +6212,28 @@ END;
 /
 
 /* invalidate tape copies */
-
-create or replace
-PROCEDURE invalidateTapeCopies
+CREATE OR REPLACE PROCEDURE invalidateTapeCopies
 (tapecopyIds IN castor."cnumList") -- tapecopies not in the nameserver
 AS
+  srId NUMBER;
 BEGIN
- -- tapecopies
+  -- tapecopies
   FORALL i IN tapecopyIds.FIRST .. tapecopyIds.LAST
     UPDATE TapeCopy SET status = 6 WHERE id = tapecopyIds(i) AND status = 7;
- -- diskcopies
-  FORALL i IN tapecopyIds.FIRST .. tapecopyIds.LAST 
-    UPDATE DiskCopy SET status=12 WHERE castorfile in (SELECT castorfile FROM tapecopy WHERE  id = tapecopyIds(i)) AND status=10;
- -- repack subrequest
-  FORALL i IN tapecopyIds.FIRST .. tapecopyIds.LAST 
-      UPDATE subrequest SET status=9 WHERE castorfile in (SELECT castorfile FROM tapecopy WHERE id= tapecopyIds(i)) AND status=12;
+
+  -- repack subrequests to be archived
+  FOR i IN tapecopyIds.FIRST .. tapecopyIds.LAST LOOP
+    BEGIN
+      SELECT subrequest.id INTO srId FROM subrequest, tapecopy 
+       WHERE subrequest.castorfile = tapecopy.castorfile
+         AND tapecopy.id = tapecopyIds(i)
+         AND subrequest.status = 12;
+      archivesubreq(srId,9);
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- no repack pending
+      NULL;
+    END;
+  END LOOP;
   COMMIT;
 END;
 /
