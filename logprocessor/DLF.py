@@ -44,19 +44,19 @@ class DLFDbDest(LoggingCommon.MsgDestination):
         # Connect to the database
         #-----------------------------------------------------------------------
         if not config.has_key( 'connection_string' ):
-            connString = 'file:///etc/castor/DLFCONFIG'
+            self.__connString = 'file:///etc/castor/DLFCONFIG'
         else:
-            connString = config['connection_string']
+            self.__connString = config['connection_string']
 
         #-----------------------------------------------------------------------
         # Read the connect string from a file
         #-----------------------------------------------------------------------
-        if connString[0:7] == 'file://':
+        if self.__connString[0:7] == 'file://':
             try:
-                f = open( connString[7:] , 'r' )
+                f = open( self.__connString[7:] , 'r' )
                 for line in f.readlines():
                     if line[0:1] not in '#':
-                        connString = line.rstrip( '\n' )
+                        self.__connString = line.rstrip( '\n' )
                 f.close
             except:
                 raise LoggingCommon.ConfigError( 'Unable to parse connect '
@@ -66,7 +66,7 @@ class DLFDbDest(LoggingCommon.MsgDestination):
         # Try and connect to the database
         #-----------------------------------------------------------------------
         try:
-            self.__conn = cx_Oracle.Connection( connString )
+            self.__conn = cx_Oracle.Connection( self.__connString )
             self.__curs = self.__conn.cursor()
         except cx_Oracle.DatabaseError, e:
             raise RuntimeError( str(e) )
@@ -119,36 +119,120 @@ class DLFDbDest(LoggingCommon.MsgDestination):
         self.reloadNsHostCache()
 
     #---------------------------------------------------------------------------
+    def isDisconnected( self, e ):
+        if e.message.code in [28, 3113, 3114, 32102, 3135, 12170, 12541, 1012,
+                              1003, 12571, 1033, 1089, 12537]:
+            return True
+        return False
+
+    #---------------------------------------------------------------------------
+    def reconnect( self ):
+        while True:
+            try:
+                self.__conn = cx_Oracle.Connection( self.__connString )
+                self.__curs = self.__conn.cursor()
+                break
+            except cx_Oracle.DatabaseError, e:
+                continue
+
+    #---------------------------------------------------------------------------
     def reloadHostCache( self ):
+        #-----------------------------------------------------------------------
+        # Fetch the data
+        #-----------------------------------------------------------------------
+        while True:
+            try:
+                self.__curs.execute( """SELECT hostid, hostname
+                                        FROM DLF_HOST_MAP""" )
+                data = self.__curs.fetchall()
+                break
+            except cx_Oracle.DatabaseError, e:
+                if self.isDisconnected( e ):
+                    self.reconnect()
+                    continue
+                else:
+                    raise RuntimeError( str(e) )
+
+        #-----------------------------------------------------------------------
+        # Process the data
+        #-----------------------------------------------------------------------
         self.__hostmap = {}
-        self.__curs.execute( "SELECT hostid, hostname FROM DLF_HOST_MAP" )
-        data = self.__curs.fetchall()
         for row in data:
             self.__hostmap[row[1]] = row[0]
 
     #---------------------------------------------------------------------------
     def reloadFacCache( self ):
+        #-----------------------------------------------------------------------
+        # Fetch the data
+        #-----------------------------------------------------------------------
+        while True:
+            try:
+                self.__curs.execute( """SELECT fac_no, fac_name
+                                        FROM DLF_FACILITIES""" )
+                data = self.__curs.fetchall()
+                break
+            except cx_Oracle.DatabaseError, e:
+                if self.isDisconnected( e ):
+                    self.reconnect()
+                    continue
+                else:
+                    raise RuntimeError( str(e) )
+
+        #-----------------------------------------------------------------------
+        # Process the data
+        #-----------------------------------------------------------------------
         self.__facmap = {}
-        self.__curs.execute( "SELECT fac_no, fac_name FROM DLF_FACILITIES" )
-        data = self.__curs.fetchall()
         for row in data:
             self.__facmap[row[1]] = row[0]
 
     #---------------------------------------------------------------------------
     def reloadSevCache( self ):
+        #-----------------------------------------------------------------------
+        # Fetch the data
+        #-----------------------------------------------------------------------
+        while True:
+            try:
+                self.__curs.execute( """SELECT sev_no, sev_name
+                                        FROM DLF_SEVERITIES
+                                        ORDER BY sev_no DESC""" )
+                data = self.__curs.fetchall()
+                break
+            except cx_Oracle.DatabaseError, e:
+                if self.isDisconnected( e ):
+                    self.reconnect()
+                    continue
+                else:
+                    raise RuntimeError( str(e) )
+
+        #-----------------------------------------------------------------------
+        # Process the data
+        #-----------------------------------------------------------------------
         self.__sevmap = {}
-        self.__curs.execute( """SELECT sev_no, sev_name
-                                FROM DLF_SEVERITIES ORDER BY sev_no DESC""" )
-        data = self.__curs.fetchall()
         for row in data:
             self.__sevmap[row[1]] = row[0]
 
     #---------------------------------------------------------------------------
     def reloadTextsCache( self ):
+        #-----------------------------------------------------------------------
+        # Fetch the data
+        #-----------------------------------------------------------------------
+        while True:
+            try:
+                self.__curs.execute( """SELECT fac_no, msg_no, msg_text
+                                        FROM DLF_MSG_TEXTS""" )
+                data = self.__curs.fetchall()
+                break
+            except cx_Oracle.DatabaseError, e:
+                if self.isDisconnected( e ):
+                    self.reconnect()
+                    continue
+                else:
+                    raise RuntimeError( str(e) )
+
+        #-----------------------------------------------------------------------
+        # Process the data
+        #-----------------------------------------------------------------------
         self.__textmap = {}
-        self.__curs.execute( """SELECT fac_no, msg_no, msg_text
-                                FROM DLF_MSG_TEXTS""" )
-        data = self.__curs.fetchall()
         for row in data:
             tmap = None
             if row[0] in self.__textmap.keys():
@@ -163,10 +247,19 @@ class DLFDbDest(LoggingCommon.MsgDestination):
         #-----------------------------------------------------------------------
         # Fetch the data
         #-----------------------------------------------------------------------
-        self.__curs.execute( """SELECT msg_no, msg_text FROM DLF_MSG_TEXTS
-                                WHERE fac_no = :fac""",
-                             fac = facility)
-        data = self.__curs.fetchall()
+        while True:
+            try:
+                self.__curs.execute( """SELECT msg_no, msg_text FROM DLF_MSG_TEXTS
+                                        WHERE fac_no = :fac""",
+                                     fac = facility)
+                data = self.__curs.fetchall()
+                break
+            except cx_Oracle.DatabaseError, e:
+                if self.isDisconnected( e ):
+                    self.reconnect()
+                    continue
+                else:
+                    raise RuntimeError( str(e) )
 
         #-----------------------------------------------------------------------
         # Insert the records to the cache
@@ -178,106 +271,146 @@ class DLFDbDest(LoggingCommon.MsgDestination):
 
     #---------------------------------------------------------------------------
     def reloadNsHostCache( self ):
+        #-----------------------------------------------------------------------
+        # Fetch the data
+        #-----------------------------------------------------------------------
+        while True:
+            try:
+                self.__curs.execute( """SELECT nshostid, nshostname
+                                        FROM DLF_NSHOST_MAP""" )
+                data = self.__curs.fetchall()
+                break
+            except cx_Oracle.DatabaseError, e:
+                if self.isDisconnected( e ):
+                    self.reconnect()
+                    continue
+                else:
+                    raise RuntimeError( str(e) )
+        #-----------------------------------------------------------------------
+        # Process the data
+        #-----------------------------------------------------------------------
         self.__nshostmap = {}
-        self.__curs.execute( "SELECT nshostid, nshostname FROM DLF_NSHOST_MAP" )
-        data = self.__curs.fetchall()
         for row in data:
             self.__nshostmap[row[1]] = row[0]
+
 
     #---------------------------------------------------------------------------
     def flushQueues( self ):
         self.lastFlush = time.time()
-        #-----------------------------------------------------------------------
-        # Insert with returning doesn't work in cx_Oracle with bulk insertions
-        # so we first have to get the ids and then insert the records
-        #-----------------------------------------------------------------------
-        self.__curs.execute( """SELECT rownum, ids_seq.nextval
-                                FROM DUAL CONNECT BY rownum <= :num""",
-                             num = len(self.__msgQueue) )
-        ids = self.__curs.fetchall()
 
         #-----------------------------------------------------------------------
-        # Insert the messages
+        # Insert with returning doesn't work in cx_Oracle with bulk
+        # insertions so we first have to get the ids and then insert the
+        # records
+        #-----------------------------------------------------------------------
+        while True:
+            try:
+                self.__curs.execute( """SELECT rownum, ids_seq.nextval
+                                        FROM DUAL CONNECT BY rownum <= :num""",
+                                 num = len(self.__msgQueue) )
+                ids = self.__curs.fetchall()
+                break
+            except cx_Oracle.DatabaseError, e:
+                if self.isDisconnected( e ):
+                    self.reconnect()
+                    continue
+                else:
+                    raise RuntimeError( str(e) )
+
+        #-----------------------------------------------------------------------
+        # Assign the indices
         #-----------------------------------------------------------------------
         for i in range(len(self.__msgQueue)):
             msg = self.__msgQueue[i]
             msg['id'] = ids[i][1]
 
-        try:
-            self.__curs.prepare( """INSERT /*+ APPEND */ INTO
-                                    DLF_MESSAGES
-                                    VALUES(:id, :timestamp,
-                                           :timeusec, :reqid, :subreqid,
-                                           :hostid, :facility, :severity,
-                                           :msg_no, :pid, :tid, :nshostid,
-                                           :nsfileid, :tapevid, :userid,
-                                           :groupid, :sec_type, :sec_name)""" )
+        for kv in self.__strQueue:
+            kv['id'] = ids[kv['id']][1]
 
-            self.__curs.setinputsizes( id        = cx_Oracle.NUMBER,
-                                       timestamp = cx_Oracle.DATETIME,
-                                       timeusec  = cx_Oracle.NUMBER,
-                                       reqid     = cx_Oracle.STRING,
-                                       subreqid  = cx_Oracle.STRING,
-                                       hostid    = cx_Oracle.NUMBER,
-                                       facility  = cx_Oracle.NUMBER,
-                                       severity  = cx_Oracle.NUMBER,
-                                       msg_no    = cx_Oracle.NUMBER,
-                                       pid       = cx_Oracle.NUMBER,
-                                       tid       = cx_Oracle.NUMBER,
-                                       nshostid  = cx_Oracle.NUMBER,
-                                       nsfileid  = cx_Oracle.NUMBER,
-                                       tapevid   = cx_Oracle.STRING,
-                                       userid    = cx_Oracle.NUMBER,
-                                       groupid   = cx_Oracle.NUMBER,
-                                       sec_type  = cx_Oracle.STRING,
-                                       sec_name  = cx_Oracle.STRING )
+        for kv in self.__intQueue:
+            kv['id'] = ids[kv['id']][1]
 
-            self.__curs.executemany( None, self.__msgQueue )
+        #------------------------------------------------------------------------
+        # Insert the messages
+        #------------------------------------------------------------------------
+        while True:
+            try:
+                self.__curs.prepare( """INSERT /*+ APPEND */ INTO
+                                        DLF_MESSAGES
+                                        VALUES(:id, :timestamp,
+                                               :timeusec, :reqid, :subreqid,
+                                               :hostid, :facility, :severity,
+                                               :msg_no, :pid, :tid, :nshostid,
+                                               :nsfileid, :tapevid, :userid,
+                                               :groupid, :sec_type,
+                                               :sec_name)""" )
 
-            #-------------------------------------------------------------------
-            # Assign the ids to the key value pairs
-            #-------------------------------------------------------------------
-            for kv in self.__strQueue:
-                kv['id'] = ids[kv['id']][1]
+                self.__curs.setinputsizes( id        = cx_Oracle.NUMBER,
+                                           timestamp = cx_Oracle.DATETIME,
+                                           timeusec  = cx_Oracle.NUMBER,
+                                           reqid     = cx_Oracle.STRING,
+                                           subreqid  = cx_Oracle.STRING,
+                                           hostid    = cx_Oracle.NUMBER,
+                                           facility  = cx_Oracle.NUMBER,
+                                           severity  = cx_Oracle.NUMBER,
+                                           msg_no    = cx_Oracle.NUMBER,
+                                           pid       = cx_Oracle.NUMBER,
+                                           tid       = cx_Oracle.NUMBER,
+                                           nshostid  = cx_Oracle.NUMBER,
+                                           nsfileid  = cx_Oracle.NUMBER,
+                                           tapevid   = cx_Oracle.STRING,
+                                           userid    = cx_Oracle.NUMBER,
+                                           groupid   = cx_Oracle.NUMBER,
+                                           sec_type  = cx_Oracle.STRING,
+                                           sec_name  = cx_Oracle.STRING )
 
-            for kv in self.__intQueue:
-                kv['id'] = ids[kv['id']][1]
+                self.__curs.executemany( None, self.__msgQueue )
 
-            #-------------------------------------------------------------------
-            # Insert the key-value pairs
-            #-------------------------------------------------------------------
-            if len(self.__intQueue):
-                self.__curs.executemany( """INSERT /*+ APPEND */ INTO
-                                            DLF_NUM_PARAM_VALUES
-                                            VALUES(:id, :timestamp, :name,
-                                               :value)""",
-                                            self.__intQueue )
-            if len(self.__strQueue):
-                self.__curs.executemany( """INSERT /*+ APPEND */ INTO
-                                            DLF_STR_PARAM_VALUES
-                                            VALUES(:id, :timestamp, :name,
-                                               :value)""",
-                                            self.__strQueue )
+                #---------------------------------------------------------------
+                # Insert the key-value pairs
+                #---------------------------------------------------------------
+                if len(self.__intQueue):
+                    self.__curs.executemany( """INSERT /*+ APPEND */ INTO
+                                                DLF_NUM_PARAM_VALUES
+                                                VALUES(:id, :timestamp, :name,
+                                                       :value)""",
+                                                self.__intQueue )
+                if len(self.__strQueue):
+                    self.__curs.executemany( """INSERT /*+ APPEND */ INTO
+                                                DLF_STR_PARAM_VALUES
+                                                VALUES(:id, :timestamp, :name,
+                                                       :value)""",
+                                                self.__strQueue )
 
-            #-------------------------------------------------------------------
-            # Clean the buffers and commit the transaction
-            #-------------------------------------------------------------------
-            self.__msgQueue = []
-            self.__intQueue = []
-            self.__strQueue = []
+                self.__conn.commit()
 
-            self.__conn.commit()
+                #---------------------------------------------------------------
+                # Clean the buffers and commit the transaction
+                #---------------------------------------------------------------
+                self.__msgQueue = []
+                self.__intQueue = []
+                self.__strQueue = []
+                break
 
-        except cx_Oracle.DatabaseError, e:
-            #-------------------------------------------------------------------
-            # Clean the buffers and rollback the transaction.
-            #-------------------------------------------------------------------
-            self.__msgQueue = []
-            self.__intQueue = []
-            self.__strQueue = []
-
-            self.__conn.rollback()
-            raise RuntimeError( str(e) )
+            #--------------------------------------------------------------------
+            # We have a problem
+            #--------------------------------------------------------------------
+            except cx_Oracle.DatabaseError, e:
+                #----------------------------------------------------------------
+                # Repeat
+                #----------------------------------------------------------------
+                if self.isDisconnected( e ):
+                    self.reconnect()
+                    continue
+                #----------------------------------------------------------------
+                # Clean the buffers and rollback the transaction.
+                #----------------------------------------------------------------
+                else:
+                    self.__msgQueue = []
+                    self.__intQueue = []
+                    self.__strQueue = []
+                    self.__conn.rollback()
+                    raise RuntimeError( str(e) )
 
     #---------------------------------------------------------------------------
     def finalize( self ):
@@ -312,29 +445,41 @@ class DLFDbDest(LoggingCommon.MsgDestination):
         #-----------------------------------------------------------------------
         # Update the database
         #-----------------------------------------------------------------------
-        try:
-            self.__curs.execute( """MERGE INTO DLF_MSG_TEXTS A
-                                    USING
-                                     (SELECT fac_no, msg_no
-                                        FROM (SELECT fac_no, msg_no
-                                                FROM DLF_MSG_TEXTS
-                                               WHERE fac_no = :fac
-                                                 AND msg_no = :no
-                                               UNION ALL
-                                              SELECT -1, -1 FROM DUAL)
-                                       WHERE rownum = 1) B
-                                          ON (A.fac_no = B.fac_no
-                                         AND  A.msg_no = B.msg_no)
-                                    WHEN MATCHED THEN
-                                      UPDATE SET A.msg_text = :txt
-                                    WHEN NOT MATCHED THEN
-                                      INSERT (fac_no, msg_no, msg_text)
-                                      VALUES (:fac, :no, :txt)""", msg )
-            self.__conn.commit()
-        except cx_Oracle.DatabaseError, e:
-            # Somebody have already inserted this message text
-            if e.message.code != 1:
-                raise RuntimeError(str(e))
+        while True:
+            try:
+                self.__curs.execute( """MERGE INTO DLF_MSG_TEXTS A
+                                        USING
+                                         (SELECT fac_no, msg_no
+                                            FROM (SELECT fac_no, msg_no
+                                                    FROM DLF_MSG_TEXTS
+                                                   WHERE fac_no = :fac
+                                                     AND msg_no = :no
+                                                   UNION ALL
+                                                  SELECT -1, -1 FROM DUAL)
+                                           WHERE rownum = 1) B
+                                              ON (A.fac_no = B.fac_no
+                                             AND  A.msg_no = B.msg_no)
+                                        WHEN MATCHED THEN
+                                          UPDATE SET A.msg_text = :txt
+                                        WHEN NOT MATCHED THEN
+                                          INSERT (fac_no, msg_no, msg_text)
+                                          VALUES (:fac, :no, :txt)""", msg )
+                self.__conn.commit()
+                break
+            except cx_Oracle.DatabaseError, e:
+                #---------------------------------------------------------------
+                # Somebody have already inserted this message text
+                #---------------------------------------------------------------
+                if e.message.code == 1:
+                    break
+                #----------------------------------------------------------------
+                # Repeat
+                #----------------------------------------------------------------
+                if self.isDisconnected( e ):
+                    self.reconnect()
+                    continue
+                else:
+                    raise RuntimeError(str(e))
 
         #-----------------------------------------------------------------------
         # Update the cache
@@ -352,21 +497,32 @@ class DLFDbDest(LoggingCommon.MsgDestination):
         #-----------------------------------------------------------------------
         # Try to insert the hostname
         #-----------------------------------------------------------------------
-        try:
-            hostidVar = self.__curs.var( cx_Oracle.NUMBER )
-            self.__curs.execute( """INSERT INTO
-                                    DLF_HOST_MAP(hostid, hostname)
-                                    VALUES(ids_seq.nextval, :name)
-                                    RETURNING hostid INTO :id""",
-                                    name = host, id = hostidVar )
-            self.__conn.commit()
-            hostid = hostidVar.getvalue()
-            self.__hostmap[host] = int( hostid )
-            return int( hostid )
-        except cx_Oracle.DatabaseError, e:
-            # Somebody might have already inserted this host
-            if e.message.code != 1:
-                raise RuntimeError( 'Unable to insert new record to host map' )
+        while True:
+            try:
+                hostidVar = self.__curs.var( cx_Oracle.NUMBER )
+                self.__curs.execute( """INSERT INTO
+                                        DLF_HOST_MAP(hostid, hostname)
+                                        VALUES(ids_seq.nextval, :name)
+                                        RETURNING hostid INTO :id""",
+                                        name = host, id = hostidVar )
+                self.__conn.commit()
+                hostid = hostidVar.getvalue()
+                self.__hostmap[host] = int( hostid )
+                return int( hostid )
+            except cx_Oracle.DatabaseError, e:
+                #---------------------------------------------------------------
+                # Somebody have already inserted this message text
+                #---------------------------------------------------------------
+                if e.message.code == 1:
+                    break
+                #----------------------------------------------------------------
+                # Repeat
+                #----------------------------------------------------------------
+                if self.isDisconnected( e ):
+                    self.reconnect()
+                    continue
+                else:
+                    raise RuntimeError(str(e))
 
         #-----------------------------------------------------------------------
         # Update the host cache
@@ -379,21 +535,32 @@ class DLFDbDest(LoggingCommon.MsgDestination):
         #-----------------------------------------------------------------------
         # Try to insert the hostname
         #-----------------------------------------------------------------------
-        try:
-            hostidVar = self.__curs.var( cx_Oracle.NUMBER )
-            self.__curs.execute( """INSERT INTO
-                                    DLF_NSHOST_MAP(nshostid, nshostname)
-                                    VALUES(ids_seq.nextval, :name)
-                                    RETURNING nshostid into :id""",
-                                    name = host, id = hostidVar )
-            self.__conn.commit()
-            hostid = hostidVar.getvalue()
-            self.__nshostmap[host] = int( hostid )
-            return int( hostid )
-        except cx_Oracle.DatabaseError, e:
-            # Somebody might have already inserted this host
-            if e.message.code != 1:
-                raise RuntimeError( 'Unable to insert new record to host map' )
+        while True:
+            try:
+                hostidVar = self.__curs.var( cx_Oracle.NUMBER )
+                self.__curs.execute( """INSERT INTO
+                                        DLF_NSHOST_MAP(nshostid, nshostname)
+                                        VALUES(ids_seq.nextval, :name)
+                                        RETURNING nshostid into :id""",
+                                        name = host, id = hostidVar )
+                self.__conn.commit()
+                hostid = hostidVar.getvalue()
+                self.__nshostmap[host] = int( hostid )
+                return int( hostid )
+            except cx_Oracle.DatabaseError, e:
+                #---------------------------------------------------------------
+                # Somebody have already inserted this message text
+                #---------------------------------------------------------------
+                if e.message.code == 1:
+                    break
+                #----------------------------------------------------------------
+                # Repeat
+                #----------------------------------------------------------------
+                if self.isDisconnected( e ):
+                    self.reconnect()
+                    continue
+                else:
+                    raise RuntimeError(str(e))
 
         #-----------------------------------------------------------------------
         # Update the host cache
