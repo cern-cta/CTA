@@ -590,7 +590,7 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
       time_t       now = time(NULL);
 
       utils::writeTime(os, now, TIMEFORMAT);
-      os << " Tape mounted on drive " << volumeRequest->unit() << std::endl;
+      os << " Selected drive unit is " << volumeRequest->unit() << std::endl;
     }
 
     // Check the volume request ID of the VolumeRequest object matches that of
