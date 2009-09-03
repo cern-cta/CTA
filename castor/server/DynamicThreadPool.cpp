@@ -159,27 +159,26 @@ void castor::server::DynamicThreadPool::run() throw (castor::exception::Exceptio
 // Destructor
 //-----------------------------------------------------------------------------
 castor::server::DynamicThreadPool::~DynamicThreadPool() throw() {
+  // Destroy the producer thread 
+  delete m_producerThread;
 
   // Destroy global mutexes
   pthread_mutex_destroy(&m_lock);              
   
   // Destroy thread attributes
   pthread_attr_destroy(&m_attr);
-  
-  // Destroy the producer thread 
-  delete m_producerThread;
 }
 
 //-----------------------------------------------------------------------------
 // Shutdown
 //-----------------------------------------------------------------------------
 bool castor::server::DynamicThreadPool::shutdown(bool wait) throw() {
-
-  // Update the termination flag to true and notify both the task queue and
-  // the user threads of the termination.
+  // Update the termination flag to true
   m_stopped = true;
-  m_taskQueue.terminate();
+  
+  // Notify the producer and the consumer threads (via the task queue) to stop
   m_producerThread->stop();
+  m_taskQueue.terminate();
 
   if(wait) {
     // Spin lock to make sure we're over
@@ -301,7 +300,7 @@ void* castor::server::DynamicThreadPool::_consumer(void *arg) {
 
 
 //-----------------------------------------------------------------------------
-// Add Task
+// addTask
 //-----------------------------------------------------------------------------
 void castor::server::DynamicThreadPool::addTask(void *data, bool wait)
   throw(castor::exception::Exception) {
