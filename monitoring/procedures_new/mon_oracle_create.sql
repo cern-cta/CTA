@@ -991,7 +991,7 @@ END;
 /***** NEW MONITORING *****/
 
 /* PL/SQL method implementing statsTotalLat */
-CREATE OR REPLACE PROCEDURE statsTotalLat(maxTimeStamp IN DATE)
+CREATE OR REPLACE PROCEDURE statsTotalLat(now IN DATE)
 AS
 BEGIN
   -- Extract total latency info from job started summary message
@@ -1001,25 +1001,24 @@ BEGIN
       WHERE a.id = b.id
         AND a.facility = 26  -- stagerjob
         AND a.msg_no = 20    -- Job Started
-        AND a.timestamp >= maxTimeStamp
-        AND b.timestamp >= maxTimeStamp
-        AND a.timestamp < maxTimeStamp + 5/1440
-        AND b.timestamp < maxTimeStamp + 5/1440)
+        AND a.timestamp >= now
+        AND b.timestamp >= now
+        AND a.timestamp < now + 5/1440
+        AND b.timestamp < now + 5/1440)
   LOG ERRORS INTO Err_Latency REJECT LIMIT 100000;
 END;
 /
 
 
 /* PL/SQL method implementing statsDiskCopy */
-CREATE OR REPLACE PROCEDURE statsDiskCopy(maxTimeStamp IN DATE)
+CREATE OR REPLACE PROCEDURE statsDiskCopy(now IN DATE)
 AS
 BEGIN
   -- Info about external file replication: source - target SvcClass
   INSERT INTO DiskCopy
     (nsfileid, timestamp, originalPool, targetPool, srcHost, destHost)
     SELECT * FROM (
-      SELECT /*+ index(a I_Messages_Facility) index(a I_Messages_NSFileid)*/
-             a.nsfileid nsfileid,
+      SELECT a.nsfileid nsfileid,
              min(a.timestamp) timestamp,
              max(decode(b.name, 'Direction',
                         substr(b.value, 0, instr(b.value, '->', 1) - 2),
@@ -1037,10 +1036,10 @@ BEGIN
          AND a.facility = 23       -- d2dtransfer
          AND a.msg_no IN (39, 28)  -- DiskCopy Transfer Successful, Transfer information
          AND a.hostid = c.hostid
-         AND a.timestamp >= maxTimeStamp
-         AND b.timestamp >= maxTimeStamp
-         AND a.timestamp < maxTimeStamp + 5/1440
-         AND b.timestamp < maxTimeStamp + 5/1440
+         AND a.timestamp >= now
+         AND b.timestamp >= now
+         AND a.timestamp < now + 5/1440
+         AND b.timestamp < now + 5/1440
        GROUP BY nsfileid
     ) temp
    WHERE temp.src <> temp.dest
@@ -1053,12 +1052,12 @@ END;
 
 
 /* PL/SQL method implementing statsInternalDiskCopy */
-CREATE OR REPLACE PROCEDURE statsInternalDiskCopy(maxTimeStamp IN DATE)
+CREATE OR REPLACE PROCEDURE statsInternalDiskCopy(now IN DATE)
 AS
 BEGIN
   -- Info about external file replication: source - target SvcClass
   INSERT ALL INTO InternalDiskCopy (timestamp, svcclass, copies)
-  VALUES (maxTimeStamp, src, copies)
+  VALUES (now, src, copies)
     SELECT src, count(*) copies
      FROM (
        SELECT a.nsfileid nsfileid,
@@ -1068,10 +1067,10 @@ BEGIN
         WHERE a.id = b.id
           AND a.facility = 23  -- d2dtransfer
           AND a.msg_no = 39    -- DiskCopy Transfer Successful
-          AND a.timestamp >= maxTimeStamp
-          AND b.timestamp >= maxTimeStamp
-          AND a.timestamp < maxTimeStamp + 5/1440
-          AND b.timestamp < maxTimeStamp + 5/1440
+          AND a.timestamp >= now
+          AND b.timestamp >= now
+          AND a.timestamp < now + 5/1440
+          AND b.timestamp < now + 5/1440
      ) temp
     WHERE temp.src = temp.dest
     GROUP BY src;
@@ -1080,17 +1079,13 @@ END;
 
 
 /* PL/SQL method implementing statsGCFiles */
-CREATE OR REPLACE PROCEDURE statsGCFiles(maxTimeStamp IN DATE)
+CREATE OR REPLACE PROCEDURE statsGCFiles(now IN DATE)
 AS
 BEGIN
   INSERT INTO GcFiles
     (timestamp, nsfileid, fileSize, fileAge, lastAccessTime, nbAccesses,
      gcType, svcclass)
-    SELECT /*+ index(mes I_Messages_NSFileid)
-               index(num I_Num_Param_Values_id)
-               index(str I_Str_Param_Values_id) */
-           mes.timestamp,
-           mes.nsfileid,
+    SELECT mes.timestamp, mes.nsfileid,
            max(decode(num.name, 'FileSize', num.value, NULL)) fileSize,
            max(decode(num.name, 'FileAge', num.value, NULL)) fileAge,
            max(decode(num.name, 'LastAccessTime', num.value, NULL)) lastAccessTime,
@@ -1106,47 +1101,45 @@ BEGIN
        AND num.id = str.id
        AND num.name IN ('FileSize', 'FileAge', 'LastAccessTime', 'NbAccesses')
        AND str.name IN ('SvcClass', 'GcType')
-       AND mes.timestamp >= maxTimeStamp
-       AND num.timestamp >= maxTimeStamp
-       AND str.timestamp >= maxTimeStamp
-       AND mes.timestamp < maxTimeStamp + 5/1440
-       AND num.timestamp < maxTimeStamp + 5/1440
-       AND str.timestamp < maxTimeStamp + 5/1440
+       AND mes.timestamp >= now
+       AND num.timestamp >= now
+       AND str.timestamp >= now
+       AND mes.timestamp < now + 5/1440
+       AND num.timestamp < now + 5/1440
+       AND str.timestamp < now + 5/1440
      GROUP BY mes.timestamp, mes.nsfileid;
 END;
 /
 
 
 /* PL/SQL method implementing statsTapeRecall */
-CREATE OR REPLACE PROCEDURE statsTapeRecall(maxTimeStamp IN DATE)
+CREATE OR REPLACE PROCEDURE statsTapeRecall(now IN DATE)
 AS
 BEGIN
   -- Info about tape recalls: Tape Volume Id - Tape Status
   INSERT INTO TapeRecall (timestamp, subReqId, tapeId, tapeMountState)
-    (SELECT /*+ index(mes I_Messages_Facility) index(str I_Str_Param_Values_id) */
-            mes.timestamp, mes.subreqid, mes.tapevid, str.value
+    (SELECT mes.timestamp, mes.subreqid, mes.tapevid, str.value
        FROM &dlfschema..dlf_messages mes, &dlfschema..dlf_str_param_values str
       WHERE mes.id = str.id
         AND mes.facility = 22  -- stagerd
         AND mes.msg_no = 57    -- Triggering Tape Recall
         AND str.name = 'TapeStatus'
-        AND mes.timestamp >= maxTimeStamp
-        AND str.timestamp >= maxTimeStamp
-        AND mes.timestamp < maxTimeStamp + 5/1440
-        AND str.timestamp < maxTimeStamp + 5/1440)
+        AND mes.timestamp >= now
+        AND str.timestamp >= now
+        AND mes.timestamp < now + 5/1440
+        AND str.timestamp < now + 5/1440)
   LOG ERRORS INTO Err_Taperecall REJECT LIMIT 100000;
   -- Insert info about size of recalled file
-  FOR a IN (SELECT /*+ index(mes I_Messages_Facility) index(num I_Num_Param_Values_id) */
-                   mes.subreqid, num.value
+  FOR a IN (SELECT mes.subreqid, num.value
               FROM &dlfschema..dlf_messages mes, &dlfschema..dlf_num_param_values num
              WHERE mes.id = num.id
                AND mes.facility = 22  -- stagerd
                AND mes.msg_no = 57    -- Triggering Tape Recall
                AND num.name = 'FileSize'
-               AND mes.timestamp >= maxTimeStamp
-               AND num.timestamp >= maxTimeStamp
-               AND mes.timestamp < maxTimeStamp + 5/1440
-               AND num.timestamp < maxTimeStamp + 5/1440)
+               AND mes.timestamp >= now
+               AND num.timestamp >= now
+               AND mes.timestamp < now + 5/1440
+               AND num.timestamp < now + 5/1440)
   LOOP
     UPDATE Requests
        SET filesize = to_number(a.value)
@@ -1157,13 +1150,12 @@ END;
 
 
 /* PL/SQL method implementing statsMigs */
-CREATE OR REPLACE PROCEDURE statsMigs(maxTimeStamp IN DATE)
+CREATE OR REPLACE PROCEDURE statsMigs(now IN DATE)
 AS
 BEGIN
   INSERT INTO Migration
     (timestamp, reqid, subreqid, nsfileid, type, svcclass, username, filename)
-    SELECT /*+ index(mes I_Messages_NSFileid) index(str I_Str_Param_Values_id) */
-           mes.timestamp,mes.reqid,
+    SELECT mes.timestamp,mes.reqid,
            mes.subreqid, mes.nsfileid,
            max(decode(str.name, 'Type',     str.value, NULL)) type,
            max(decode(str.name, 'SvcClass', str.value, NULL)) svcclass,
@@ -1176,15 +1168,15 @@ BEGIN
             FROM &dlfschema..dlf_str_param_values
            WHERE name = 'Type'
              AND value LIKE 'Stage%'
-             AND timestamp >= maxTimeStamp
-             AND timestamp < maxTimeStamp + 5/1440)
+             AND timestamp >= now
+             AND timestamp < now + 5/1440)
        AND mes.facility = 22  -- stagerd
        AND mes.msg_no = 58    -- Recreating CastorFile
        AND str.name IN ('SvcClass', 'Username', 'Groupname', 'Type', 'Filename')
-       AND mes.timestamp >= maxTimeStamp
-       AND mes.timestamp < maxTimeStamp + 5/1440
-       AND str.timestamp >= maxTimeStamp
-       AND str.timestamp < maxTimeStamp + 5/1440
+       AND mes.timestamp >= now
+       AND mes.timestamp < now + 5/1440
+       AND str.timestamp >= now
+       AND str.timestamp < now + 5/1440
      GROUP BY mes.timestamp, mes.id, mes.reqid, mes.subreqid, mes.nsfileid
      ORDER BY mes.timestamp
   LOG ERRORS INTO Err_Migration REJECT LIMIT 100000;
@@ -1193,34 +1185,33 @@ END;
 
 
 /* PL/SQL method implementing statsReqs */
-CREATE OR REPLACE PROCEDURE statsReqs(maxtimestamp IN DATE)
+CREATE OR REPLACE PROCEDURE statsReqs(now IN DATE)
 AS
 BEGIN
   INSERT INTO Requests
     (timestamp, reqId, subReqId, nsfileid, type, svcclass, username, state, filename)
-    SELECT /*+ index(mes I_Messages_Facility) index(str I_Str_Param_Values_id) */
-           mes.timestamp, mes.reqid, mes.subreqid, mes.nsfileid,
+    SELECT mes.timestamp, mes.reqid, mes.subreqid, mes.nsfileid,
            max(decode(str.name, 'Type', str.value, NULL)) type,
            max(decode(str.name, 'SvcClass', str.value, NULL)) svcclass,
            max(decode(str.name, 'Username', str.value, NULL)) username,
            max(decode(mes.msg_no, 60, 'DiskHit', 56, 'DiskCopy', 57, 'TapeRecall', NULL)) state,
            max(decode(str.name, 'Filename', str.value, NULL)) filename
-      FROM &dlfschema..dlf_messages mes , &dlfschema..dlf_str_param_values str
+      FROM &dlfschema..dlf_messages mes, &dlfschema..dlf_str_param_values str
      WHERE mes.id = str.id
        AND str.id IN
          (SELECT id
             FROM &dlfschema..dlf_str_param_values
            WHERE name = 'Type'
              AND value LIKE 'Stage%'
-             AND timestamp >= maxtimestamp
-             AND timestamp < maxtimestamp + 5/1440)
+             AND timestamp >= now
+             AND timestamp < now + 5/1440)
        AND mes.facility = 22           -- stagerd
        AND mes.msg_no IN (56, 57, 60)  -- Triggering internal DiskCopy replication, Triggering Tape Recall, Diskcopy available, scheduling job
        AND str.name IN ('SvcClass', 'Username', 'Groupname', 'Type', 'Filename')
-       AND mes.timestamp >= maxtimestamp
-       AND mes.timestamp < maxtimestamp + 5/1440
-       AND str.timestamp >= maxtimestamp
-       AND str.timestamp < maxtimestamp + 5/1440
+       AND mes.timestamp >= now
+       AND mes.timestamp < now + 5/1440
+       AND str.timestamp >= now
+       AND str.timestamp < now + 5/1440
      GROUP BY mes.timestamp, mes.id ,mes.reqid, mes.subreqid, mes.nsfileid
      ORDER BY mes.timestamp
   LOG ERRORS INTO Err_Requests REJECT LIMIT 1000000;
