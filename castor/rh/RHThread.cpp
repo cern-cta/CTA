@@ -387,12 +387,14 @@ void castor::rh::RHThread::run(void* param) {
     }
   }
 
-  if(fr->svcClass()) {
-    // this object has been allocated as part of the checkPermission() call
-    // and needs to be deallocated by hand here
-    delete fr->svcClass();
+  if(fr) {
+    if(fr->svcClass()) {
+      // this object has been allocated as part of the checkPermission() call
+      // and needs to be deallocated by hand here
+      delete fr->svcClass();
+    }
+    delete fr;
   }
-  delete fr;
   delete sock;
 }
 
