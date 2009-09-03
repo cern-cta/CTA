@@ -79,11 +79,15 @@ void castor::server::TCPListenerThreadPool::listenLoop() {
     try {
       // Accept connections
       castor::io::ServerSocket* s = ((castor::io::ServerSocket*)m_sock)->accept();
+      if(m_stopped) {
+        // we just got stopped, don't bother processing as we're terminating
+        break;
+      }
       // Handle the command
       threadAssign(s);
     }
     catch(castor::exception::Exception any) {
-      // Some errors are consider fatal, such as closure of the listening
+      // Some errors are considered fatal, such as closure of the listening
       // socket resulting in a bad file descriptor during the thread shutdown
       // process. If we encounter this problem we exit the loop.
       if (any.code() == EBADF) {

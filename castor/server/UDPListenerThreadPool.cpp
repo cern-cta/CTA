@@ -59,10 +59,14 @@ void castor::server::UDPListenerThreadPool::listenLoop() {
     try {
       // Read next datagram
       castor::IObject* obj = ((castor::io::UDPSocket*)m_sock)->readObject();
-      // handle the command
+      if(m_stopped) {
+        // we just got stopped, don't bother processing as we're terminating
+        break;
+      }
+      // Handle the command
       threadAssign(obj);
     } catch (castor::exception::Exception any) {
-      // Some errors are consider fatal, such as closure of the listening
+      // Some errors are considered fatal, such as closure of the listening
       // socket resulting in a bad file descriptor during the thread shutdown
       // process. If we encounter this problem we exit the loop.
       if (any.code() == EBADF) {

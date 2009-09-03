@@ -94,13 +94,6 @@ namespace castor {
      * Starts the pool and the listener loop to accept connections.
      */
     virtual void run() throw (castor::exception::Exception);
-    
-    /**
-     * Shutdowns the pool by closing the underlying server socket and
-     * calling the parent's shutdown method.
-     * @return true if the pool has stopped.
-     */
-    virtual bool shutdown(bool wait = false) throw();
 
     /**
      * Sets the port on which this ThreadPool should listen
