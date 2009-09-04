@@ -8,5 +8,6 @@ if [ -d /var/spool/tape ]; then
         /bin/mv $src /var/log/castor/$dest 2>/dev/null
     done
     /bin/mv /var/spool/tape/log /var/log/castor/taped.log 2>/dev/null
+    /bin/chmod 644 /var/log/castor/taped.* 2>/dev/null
     /bin/rmdir /var/spool/tape 2>/dev/null || :
 fi

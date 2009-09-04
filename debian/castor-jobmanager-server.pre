@@ -8,5 +8,6 @@ if [ -d /var/spool/jobmanager ]; then
         /bin/mv $src /var/log/castor/$dest 2>/dev/null
     done
     /bin/mv /var/spool/jobmanager/log /var/log/castor/jobmanagerd.log 2>/dev/null
+    /bin/chmod 644 /var/log/castor/jobmanagerd.* 2>/dev/null
     /bin/rmdir /var/spool/jobmanager 2>/dev/null || :
 fi

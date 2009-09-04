@@ -8,5 +8,7 @@ if [ -d /var/spool/repack ]; then
         /bin/mv $src /var/log/castor/$dest 2>/dev/null
     done
     /bin/mv /var/spool/repack/log /var/log/castor/repackd.log 2>/dev/null
+    /bin/chmod 644 /var/log/castor/repackd.* 2>/dev/null
+    /bin/chown root:root /var/log/castor/repackd.* 2>/dev/null
     /bin/rmdir /var/spool/repack 2>/dev/null || :
 fi

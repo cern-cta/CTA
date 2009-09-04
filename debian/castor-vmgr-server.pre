@@ -8,5 +8,6 @@ if [ -d /var/spool/vmgr ]; then
         /bin/mv $src /var/log/castor/$dest 2>/dev/null
     done
     /bin/mv /var/spool/vmgr/log /var/log/castor/vmgrd.log 2>/dev/null
+    /bin/chmod 644 /var/log/castor/vmgr.* 2>/dev/null
     /bin/rmdir /var/spool/vmgr 2>/dev/null || :
 fi

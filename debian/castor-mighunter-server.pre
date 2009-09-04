@@ -8,5 +8,6 @@ if [ -d /var/spool/mighunter ]; then
         /bin/mv $src /var/log/castor/$dest 2>/dev/null
     done
     /bin/mv /var/spool/mighunter/log /var/log/castor/mighunterd.log 2>/dev/null
+    /bin/chmod 644 /var/log/castor/mighunterd.* 2>/dev/null
     /bin/rmdir /var/spool/mighunter 2>/dev/null || :
 fi

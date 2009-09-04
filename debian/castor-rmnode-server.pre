@@ -8,5 +8,6 @@ if [ -d /var/spool/rmnode ]; then
         /bin/mv $src /var/log/castor/$dest 2>/dev/null
     done
     /bin/mv /var/spool/rmnode/log /var/log/castor/rmnoded.log 2>/dev/null
+    /bin/chmod 644 /var/log/castor/rmnoded.* 2>/dev/null
     /bin/rmdir /var/spool/rmnode 2>/dev/null || :
 fi

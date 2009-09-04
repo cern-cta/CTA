@@ -8,5 +8,6 @@ if [ -d /var/spool/rmmaster ]; then
         /bin/mv $src /var/log/castor/$dest 2>/dev/null
     done
     /bin/mv /var/spool/rmmaster/log /var/log/castor/rmmasterd.log 2>/dev/null
+    /bin/chmod 644 /var/log/castor/rmmasterd.* 2>/dev/null
     /bin/rmdir /var/spool/rmmaster 2>/dev/null || :
 fi

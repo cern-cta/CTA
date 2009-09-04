@@ -6,6 +6,7 @@ if [ -d /var/spool/scheduler ]; then
     done
     /bin/mv /var/spool/scheduler/log /var/log/castor/schedulerd.log 2>/dev/null
     /bin/rmdir /var/spool/scheduler 2>/dev/null
+    /bin/chmod 644 /var/log/castor/schedulerd.* 2>/dev/null
     /bin/chown root:root /var/log/castor/schedulerd* 2>/dev/null || :
 fi
 

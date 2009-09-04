@@ -13,6 +13,8 @@ if [ -d /var/spool/job ]; then
     /bin/mv /var/spool/job/diskcopy /var/log/castor/d2dtransfer.log 2>/dev/null
     /bin/rmdir /var/spool/job 2>/dev/null
 
+    /bin/chmod 644 /var/log/castor/stagerjob.* 2>/dev/null
+    /bin/chmod 644 /var/log/castor/d2dtransfer.* 2>/dev/null
     /bin/chown root:root /var/log/castor/stagerjob* 2>/dev/null
     /bin/chown root:root /var/log/castor/d2dtransfer* 2>/dev/null || :
 fi

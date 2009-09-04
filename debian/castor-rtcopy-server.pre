@@ -5,5 +5,6 @@ if [ -d /var/spool/rtcopy ]; then
         /bin/mv $src /var/log/castor/$dest 2>/dev/null
     done
     /bin/mv /var/spool/rtcopy/rtcopyd.log /var/log/castor/rtcpcd.log 2>/dev/null
+    /bin/chmod 644 /var/log/castor/rtcpcd.* 2>/dev/null
     /bin/rmdir /var/spool/rtcopy 2>/dev/null || :
 fi

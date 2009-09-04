@@ -8,5 +8,6 @@ if [ -d /var/spool/rmc ]; then
         /bin/mv $src /var/log/castor/$dest 2>/dev/null
     done
     /bin/mv /var/spool/rmc/log /var/log/castor/rmcd.log 2>/dev/null
+    /bin/chmod 644 /var/log/castor/rmcd.* 2>/dev/null
     /bin/rmdir /var/spool/rmc 2>/dev/null || :
 fi
