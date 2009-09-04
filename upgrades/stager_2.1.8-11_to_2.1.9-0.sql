@@ -4397,7 +4397,6 @@ BEGIN
           SELECT UNIQUE CastorFile.id, CastorFile.fileId, CastorFile.nsHost, DC.id AS dcId,
                  DC.path, CastorFile.fileSize, DC.status,
                  CASE WHEN DC.svcClass IS NULL THEN
-                   -- this only happens on waiting for recall/replica or prepareToPut
                    (SELECT UNIQUE Req.svcClassName
                       FROM SubRequest,
                         (SELECT id, svcClassName FROM StagePrepareToGetRequest    UNION ALL
@@ -4405,9 +4404,8 @@ BEGIN
                          SELECT id, svcClassName FROM StagePrepareToUpdateRequest UNION ALL
                          SELECT id, svcClassName FROM StageRepackRequest          UNION ALL
                          SELECT id, svcClassName FROM StageGetRequest) Req
-                          WHERE SubRequest.castorFile = CastorFile.id
-                            AND request = Req.id
-                            AND rownum < 2)   -- if many requests exist for the same file, pick one of them         
+                          WHERE SubRequest.CastorFile = CastorFile.id
+                            AND request = Req.id)              
                    ELSE DC.svcClass END AS svcClass,
                  DC.machine, DC.mountPoint, DC.nbCopyAccesses, CastorFile.lastKnownFileName,
                  DC.creationTime, DC.lastAccessTime
