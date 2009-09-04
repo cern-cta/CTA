@@ -70,6 +70,20 @@ restart() {
         start
 }
 
+mystatus() {
+        pid=`pidofproc $prog`
+        if [ -n "$pid" ]; then
+                echo $"$prog (pid $pid) is running..."
+        else
+                if [ -f /var/lock/subsys/$prog ]; then
+                        echo $"$prog dead but subsys locked"
+                else
+                        echo $"$prog is stopped"
+                fi
+                RETVAL=1
+        fi
+}
+
 # See how we were called
 case "$1" in
 
@@ -80,7 +94,7 @@ case "$1" in
                 stop
                 ;;
         status)
-                status "python /usr/bin/$prog"
+                mystatus
                 RETVAL=$?
                 ;;
         restart)
