@@ -1856,7 +1856,7 @@ BEGIN
     SELECT id, fileSize INTO rid, rfs FROM CastorFile
      WHERE fileId = fid AND nsHost = nsHostName FOR UPDATE;
     -- update lastAccess time
-    UPDATE CastorFile SET LastAccessTime = getTime(),
+    UPDATE CastorFile SET lastAccessTime = getTime(),
                           lastKnownFileName = normalizePath(fn)
      WHERE id = rid;
   EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -1968,6 +1968,8 @@ CREATE OR REPLACE PROCEDURE stageRm (srId IN INTEGER,
   scId INTEGER;
   nbRes INTEGER;
   dcsToRm "numList";
+  srIds "numList";
+  srType INTEGER;
   dcStatus INTEGER;
   nsHostName VARCHAR2(2048);
 BEGIN
@@ -2155,13 +2157,26 @@ BEGIN
   -- mark all get/put requests for those diskcopies
   -- and the ones waiting on them as failed
   -- so that clients eventually get an answer
-  FORALL i IN dcsToRm.FIRST .. dcsToRm.LAST
+  SELECT id BULK COLLECT INTO srIds
+    FROM SubRequest 	 
+   WHERE diskcopy IN
+     (SELECT /*+ CARDINALITY(dcidTable 5) */ * 	 
+	      FROM TABLE(dcsToRm) dcidTable) 	 
+	   AND status IN (0, 1, 2, 5, 6, 13); -- START, WAITSUBREQ, READY, READYFORSCHED
+  FOR i IN srIds.FIRST .. srIds.LAST LOOP
+    SELECT type INTO srType
+      FROM SubRequest, Id2Type
+     WHERE SubRequest.request = Id2Type.id
+       AND SubRequest.id = srIds(i);
     UPDATE SubRequest
-       SET status = 7, parent = 0,  -- FAILED
+       SET status = CASE
+           WHEN status IN (6, 13) AND srType = 133 THEN 9 ELSE 7
+           END,  -- FAILED_FINISHED for DiskCopyReplicaRequests in status READYFORSCHED or READY, otherwise FAILED
+           -- this so that user requests in status WAITSUBREQ are always marked FAILED even if they wait on a replication
            errorCode = 4,  -- EINTR
            errorMessage = 'Canceled by another user request'
-     WHERE diskCopy = dcsToRm(i)
-       AND status IN (0, 1, 2, 5, 6, 13);
+     WHERE id = srIds(i) OR parent = srIds(i);
+  END LOOP;
   -- Set selected DiskCopies to either INVALID or FAILED
   FORALL i IN dcsToRm.FIRST .. dcsToRm.LAST
     UPDATE DiskCopy SET status = 
