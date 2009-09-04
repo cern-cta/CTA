@@ -185,6 +185,17 @@ void castor::job::stagerjob::GridFTPPlugin::getEnvironment
   }
   env.dsi_module_extension = (useXroot ? "xroot" : "int");
 
+  // Get the location of xroot
+  char* xroot_location = getenv("XROOT_LOCATION");
+  if (xroot_location == NULL) {
+    xroot_location = getconfent("GSIFTP", "XROOT_LOCATION", 0);
+    if (xroot_location == NULL) {
+      env.xroot_location = "/opt/xrootd";
+    } else {
+      env.xroot_location = xroot_location;
+    }
+  }
+
   // Get certificate and key file names
   const char *globus_x509_user_cert = getconfent("GSIFTP", "X509_USER_CERT", 0);
   if (globus_x509_user_cert == NULL) {
@@ -298,6 +309,9 @@ void castor::job::stagerjob::GridFTPPlugin::execMover
   setenv("GLOBUS_LOCATION", env.globus_location.c_str(), 1);
   std::ostringstream libloc;
   libloc << env.globus_location << "/lib";
+  if (env.dsi_module_extension == "xroot") {
+    libloc << ":" << env.xroot_location << "/lib";
+  }
   setenv("LD_LIBRARY_PATH", libloc.str().c_str(), 1);
   std::ostringstream tcprange;
   tcprange << env.tcp_port_range.first << ","

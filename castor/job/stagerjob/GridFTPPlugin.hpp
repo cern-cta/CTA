@@ -42,6 +42,7 @@ namespace castor {
        */
       struct Environment {
         std::string globus_location;
+        std::string xroot_location;
         std::pair<int, int> tcp_port_range;
         std::pair<int, int> tcp_source_range;
         std::string globus_logfile;
