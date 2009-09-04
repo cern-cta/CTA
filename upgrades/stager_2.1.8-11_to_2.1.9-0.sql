@@ -81,6 +81,11 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
+/* cleanup for bug #55355: stager_rm does not properly fail outstanding replication requests */
+UPDATE SubRequest SR SET status = 7
+ WHERE status = 5
+ AND NOT EXISTS (SELECT 'x' FROM SubRequest WHERE id = SR.parent);
+
 /* Recreate ObjStatus table  */
 TRUNCATE TABLE ObjStatus;
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DiskCopy', 'gcType', 0, 'GCTYPE_AUTO');
