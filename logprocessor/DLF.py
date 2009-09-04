@@ -120,8 +120,9 @@ class DLFDbDest(LoggingCommon.MsgDestination):
 
     #---------------------------------------------------------------------------
     def isDisconnected( self, e ):
-        if e.message.code in [28, 3113, 3114, 32102, 3135, 12170, 12541, 1012,
-                              1003, 12571, 1033, 1089, 12537]:
+        error, = e.args
+        if error.code in [28, 3113, 3114, 32102, 3135, 12170, 12541, 1012,
+                          1003, 12571, 1033, 1089, 12537]:
             return True
         return False
 
@@ -253,8 +254,9 @@ class DLFDbDest(LoggingCommon.MsgDestination):
         #-----------------------------------------------------------------------
         while True:
             try:
-                self.__curs.execute( """SELECT msg_no, msg_text FROM DLF_MSG_TEXTS
-                                        WHERE fac_no = :fac""",
+                self.__curs.execute( """SELECT msg_no, msg_text
+                                          FROM DLF_MSG_TEXTS
+                                         WHERE fac_no = :fac""",
                                      fac = facility)
                 data = self.__curs.fetchall()
                 break
@@ -292,6 +294,7 @@ class DLFDbDest(LoggingCommon.MsgDestination):
                 else:
                     raise RuntimeError( 'Unable to reload NSHost cache: '
                                         + str(e) )
+
         #-----------------------------------------------------------------------
         # Process the data
         #-----------------------------------------------------------------------
@@ -337,9 +340,9 @@ class DLFDbDest(LoggingCommon.MsgDestination):
         for kv in self.__intQueue:
             kv['id'] = ids[kv['id']][1]
 
-        #------------------------------------------------------------------------
+        #-----------------------------------------------------------------------
         # Insert the messages
-        #------------------------------------------------------------------------
+        #-----------------------------------------------------------------------
         while True:
             try:
                 self.__curs.prepare( """INSERT /*+ APPEND */ INTO
@@ -399,19 +402,19 @@ class DLFDbDest(LoggingCommon.MsgDestination):
                 self.__strQueue = []
                 break
 
-            #--------------------------------------------------------------------
+            #-------------------------------------------------------------------
             # We have a problem
-            #--------------------------------------------------------------------
+            #-------------------------------------------------------------------
             except cx_Oracle.DatabaseError, e:
-                #----------------------------------------------------------------
+                #---------------------------------------------------------------
                 # Repeat
-                #----------------------------------------------------------------
+                #---------------------------------------------------------------
                 if self.isDisconnected( e ):
                     self.reconnect()
                     continue
-                #----------------------------------------------------------------
+                #---------------------------------------------------------------
                 # Clean the buffers and rollback the transaction.
-                #----------------------------------------------------------------
+                #---------------------------------------------------------------
                 else:
                     self.__msgQueue = []
                     self.__intQueue = []
@@ -475,14 +478,15 @@ class DLFDbDest(LoggingCommon.MsgDestination):
                 self.__conn.commit()
                 break
             except cx_Oracle.DatabaseError, e:
+                error, = e.args
                 #---------------------------------------------------------------
                 # Somebody have already inserted this message text
                 #---------------------------------------------------------------
-                if e.message.code == 1:
+                if error.code == 1:
                     break
-                #----------------------------------------------------------------
+                #---------------------------------------------------------------
                 # Repeat
-                #----------------------------------------------------------------
+                #---------------------------------------------------------------
                 if self.isDisconnected( e ):
                     self.reconnect()
                     continue
@@ -519,14 +523,15 @@ class DLFDbDest(LoggingCommon.MsgDestination):
                 self.__hostmap[host] = int( hostid )
                 return int( hostid )
             except cx_Oracle.DatabaseError, e:
+                error, = e.args
                 #---------------------------------------------------------------
                 # Somebody have already inserted this message text
                 #---------------------------------------------------------------
-                if e.message.code == 1:
+                if error.code == 1:
                     break
-                #----------------------------------------------------------------
+                #---------------------------------------------------------------
                 # Repeat
-                #----------------------------------------------------------------
+                #---------------------------------------------------------------
                 if self.isDisconnected( e ):
                     self.reconnect()
                     continue
@@ -558,14 +563,15 @@ class DLFDbDest(LoggingCommon.MsgDestination):
                 self.__nshostmap[host] = int( hostid )
                 return int( hostid )
             except cx_Oracle.DatabaseError, e:
+                error, = e.args
                 #---------------------------------------------------------------
                 # Somebody have already inserted this message text
                 #---------------------------------------------------------------
-                if e.message.code == 1:
+                if error.code == 1:
                     break
-                #----------------------------------------------------------------
+                #---------------------------------------------------------------
                 # Repeat
-                #----------------------------------------------------------------
+                #---------------------------------------------------------------
                 if self.isDisconnected( e ):
                     self.reconnect()
                     continue
