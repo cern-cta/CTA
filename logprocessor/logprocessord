@@ -121,18 +121,23 @@ def checkDaemon():
     except IOError:
         return []
 
+    pids = []
     try:
         tmp1 = f.readline().split( ' ' )
         tmp2 = filter( lambda x: x != '', tmp1 )
         pidList = map( lambda x: int( x ), tmp2 )
 
+        # Check if the process exists
+        for pid in pidList:
+            if os.path.exists( '/proc/' + str(pid) ):
+                pids.append( pid )
     except ValueError, val:
         f.close()
         raise RuntimeError( 'Malformed pid file, please kill the process ' +
                             'manually, remove: ' + str(pidFilePath) + ', and ' +
                             'restart the process' )
     f.close()
-    return pidList
+    return pids
 
 
 #-------------------------------------------------------------------------------
