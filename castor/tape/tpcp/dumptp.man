@@ -81,9 +81,15 @@ The name of the host on which the VDQM daemon is running.
 The name of the host on which the VMGR daemon is running.
 
 .SH EXAMPLE
-The following example dumps the contents of the tape with the VID \fBI10553\fP.
+The following example dumps the first 320 bytes of the first block of the first
+file on the tape with VID \fBI10553\fP.
 .P
 dumptp I10553
+.P
+The following example dumps the first 320 bytes of the first block of each of
+the files on the tape with VID \fBI10553\fP.
+.P
+dumptp I10553 -g 0
 
 
 .SH AUTHOR
