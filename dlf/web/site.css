@@ -236,7 +236,7 @@ td.parameters {
 	text-align: center;
 }
 
-td.sev_emergency {
+td.sev_emerg {
 	background-color : #FF0000;
 	border: 1px solid #999999;
 	text-align: center;
@@ -244,77 +244,49 @@ td.sev_emergency {
 }
 
 td.sev_alert {
-	background-color : #990000;
+	background-color : #B20000;
+	border: 1px solid #999999;
+	text-align: center;
+	min-width: 60px;
+}
+
+td.sev_crit {
+	background-color : #B20000;
 	border: 1px solid #999999;
 	text-align: center;
 	min-width: 60px;
 }
 
 td.sev_error {
-	background-color : #FF724B;
+	background-color : #FE8080;
 	border: 1px solid #999999;
 	text-align: center;
 	min-width: 60px;
 }
 
-td.sev_warning {
+td.sev_warn {
 	background-color : #FFEC5A;
 	border: 1px solid #999999;
 	text-align: center;
 	min-width: 60px;
 }
 
-td.sev_usererror {
+td.sev_notice {
 	background-color : #FFEC5A;
 	border: 1px solid #999999;
 	text-align: center;
 	min-width: 60px;
 }
 
-td.sev_auth {
-	background-color : #EB981D;
-	border: 1px solid #999999;
-	text-align: center;
-	min-width: 60px;
-}
-
-td.sev_security {
-	background-color : #EB981D;
-	border: 1px solid #999999;
-	text-align: center;
-	min-width: 60px;
-}
-
-td.sev_usage {
-	background-color : #11AA55;
-	border: 1px solid #999999;
-	text-align: center;
-	min-width: 60px;
-}
-
-td.sev_system {
+td.sev_info {
 	background-color : #AB09EB;
 	border: 1px solid #999999;
 	text-align: center;
 	min-width: 60px;
 }
 
-td.sev_important {
-	background-color : #EB6227;
-	border: 1px solid #999999;
-	text-align: center;
-	min-width: 60px;
-}
-
-td.sev_monitoring {
-	background-color : #CCCCCC;
-	border: 1px solid #999999;
-	text-align: center;
-	min-width: 60px;
-}
-
 td.sev_debug {
-	background-color : #1D73EB;
+	background-color : #CCCCCC;
 	border: 1px solid #999999;
 	text-align: center;
 	min-width: 60px;
