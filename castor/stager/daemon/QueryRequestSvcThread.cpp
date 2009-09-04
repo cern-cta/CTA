@@ -205,34 +205,36 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileName
        ++dcit) {
     castor::stager::DiskCopyInfo* diskcopy = *dcit;
 
-    std::ostringstream sst;
-    sst << diskcopy->fileId() << "@" <<  diskcopy->nsHost();
-    res.setFileName(sst.str());
-    res.setFileId(fileid);
-
-    if ((diskcopy->fileId() != fileid) ||
-        (diskcopy->nsHost() != nshost)) {
-      // Send the response for the previous castor file being processed
-      if (foundDiskCopy) {
-        castor::replier::RequestReplier::getInstance()->
-          sendResponse(client, &res);
-      }
-      // Now processing a new file !
-      foundDiskCopy = false;
-      fileid = diskcopy->fileId();
-      nshost = diskcopy->nsHost();
-    }
-    // Report for all diskcopies
-    else if (all) {
-      fileid = diskcopy->fileId();
-      nshost = diskcopy->nsHost();
+    if (all) {
+      std::ostringstream sst;
+      sst << diskcopy->fileId() << "@" <<  diskcopy->nsHost();
+      res.setFileName(sst.str());
+      res.setFileId(diskcopy->fileId());
       // Send the response
+      setFileResponseStatus(&res, *dcit, foundDiskCopy);
       castor::replier::RequestReplier::getInstance()->
         sendResponse(client, &res);
       foundDiskCopy = false;
+    } else {
+      if (diskcopy->fileId() != fileid ||
+          diskcopy->nsHost() != nshost) {
+        // Send the response for the previous castor file being processed
+        if (foundDiskCopy) {
+          castor::replier::RequestReplier::getInstance()->
+            sendResponse(client, &res);
+        }
+        // Now processing a new file !
+        foundDiskCopy = false;
+        fileid = diskcopy->fileId();
+        nshost = diskcopy->nsHost();
+        std::ostringstream sst;
+        sst << diskcopy->fileId() << "@" <<  diskcopy->nsHost();
+        res.setFileName(sst.str());
+        res.setFileId(diskcopy->fileId());
+      }
+      // Preparing the response
+      setFileResponseStatus(&res, diskcopy, foundDiskCopy);
     }
-    // Preparing the response
-    setFileResponseStatus(&res, diskcopy, foundDiskCopy);
   }
   // Send the last response if necessary
   if (foundDiskCopy) {
@@ -474,7 +476,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
           // If NS Override is active check to make sure the user is not trying
           // to query a name server daemon that the stager cannot communicate
           // with.
-          std::string cnsHost = NsOverride::getInstance()->getTargetCnsHost();  
+          std::string cnsHost = NsOverride::getInstance()->getTargetCnsHost();
           if (cnsHost.length() > 0) {
             if (cnsHost != nshost) {
               castor::exception::Exception e(EINVAL);
@@ -506,7 +508,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
             dynamic_cast<const castor::rh::Client*>(client);
           std::string srcHostName =
             castor::System::ipAddressToHostname(c->ipAddress());
-          
+
           // Check if the user has ADMIN privileges so that they can perform
           // this type of query
           int rc = Cupv_check(req->euid(), req->egid(),
@@ -551,12 +553,12 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
           ptype = REQUESTQUERYTYPE_FILEID;
           if (0 == fid) {
             fid = Cnsfileid.fileid;
-	    std::string cnsHost = NsOverride::getInstance()->getTargetCnsHost();
-	    if (cnsHost.length() > 0) {
-	      nshost = cnsHost;
-	    } else {
-	      nshost = Cnsfileid.server;
-	    }
+            std::string cnsHost = NsOverride::getInstance()->getTargetCnsHost();
+            if (cnsHost.length() > 0) {
+              nshost = cnsHost;
+            } else {
+              nshost = Cnsfileid.server;
+            }
           }
         }
       }
