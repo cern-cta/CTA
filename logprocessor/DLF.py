@@ -314,6 +314,7 @@ class DLFDbDest(LoggingCommon.MsgDestination):
         #-----------------------------------------------------------------------
         while True:
             try:
+                self.__curs.arraysize = 1000
                 self.__curs.execute( """SELECT rownum, ids_seq.nextval
                                         FROM DUAL CONNECT BY rownum <= :num""",
                                  num = len(self.__msgQueue) )
