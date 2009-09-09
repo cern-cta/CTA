@@ -46,7 +46,7 @@ start() {
         # Run daemon
         echo -n $"Starting $prog: "
 
-        cd /var/spool/tape/aggregatord
+        cd /var/log/castor
         daemon /usr/bin/$prog $AGGREGATORD_OPTIONS
 
         # Write the pid to a file.
