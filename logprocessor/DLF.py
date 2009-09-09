@@ -255,8 +255,8 @@ class DLFDbDest(LoggingCommon.MsgDestination):
         while True:
             try:
                 self.__curs.execute( """SELECT msg_no, msg_text
-                                          FROM DLF_MSG_TEXTS
-                                         WHERE fac_no = :fac""",
+                                        FROM DLF_MSG_TEXTS
+                                        WHERE fac_no = :fac""",
                                      fac = facility)
                 data = self.__curs.fetchall()
                 break
@@ -342,12 +342,17 @@ class DLFDbDest(LoggingCommon.MsgDestination):
 
         #-----------------------------------------------------------------------
         # Insert the messages
+        #
+        # We have to insert dates as strings because of a bug in python 2.3
+        # 64 bit causing the garbage collector not to clean up the datetime
+        # objects properly
         #-----------------------------------------------------------------------
         while True:
             try:
                 self.__curs.prepare( """INSERT /*+ APPEND */ INTO
                                         DLF_MESSAGES
-                                        VALUES(:id, :timestamp,
+                                        VALUES(:id, to_date(:timestamp,
+                                                    'YYYY-MM-DD HH24:MI:SS'),
                                                :timeusec, :reqid, :subreqid,
                                                :hostid, :facility, :severity,
                                                :msg_no, :pid, :tid, :nshostid,
@@ -356,7 +361,7 @@ class DLFDbDest(LoggingCommon.MsgDestination):
                                                :sec_name)""" )
 
                 self.__curs.setinputsizes( id        = cx_Oracle.NUMBER,
-                                           timestamp = cx_Oracle.DATETIME,
+                                           timestamp = cx_Oracle.STRING,
                                            timeusec  = cx_Oracle.NUMBER,
                                            reqid     = cx_Oracle.STRING,
                                            subreqid  = cx_Oracle.STRING,
@@ -380,17 +385,28 @@ class DLFDbDest(LoggingCommon.MsgDestination):
                 # Insert the key-value pairs
                 #---------------------------------------------------------------
                 if len(self.__intQueue):
-                    self.__curs.executemany( """INSERT /*+ APPEND */ INTO
+                    self.__curs.prepare( """INSERT /*+ APPEND */ INTO
                                                 DLF_NUM_PARAM_VALUES
-                                                VALUES(:id, :timestamp, :name,
-                                                       :value)""",
-                                                self.__intQueue )
+                                                VALUES(:id, to_date(:timestamp,
+                                                       'YYYY-MM-DD HH24:MI:SS'),
+                                                       :name, :value)""" )
+                    self.__curs.setinputsizes( id        = cx_Oracle.NUMBER,
+                                               timestamp = cx_Oracle.STRING,
+                                               name      = cx_Oracle.STRING,
+                                               value     = cx_Oracle.NUMBER )
+                    self.__curs.executemany( None, self.__intQueue )
+
                 if len(self.__strQueue):
-                    self.__curs.executemany( """INSERT /*+ APPEND */ INTO
+                    self.__curs.prepare( """INSERT /*+ APPEND */ INTO
                                                 DLF_STR_PARAM_VALUES
-                                                VALUES(:id, :timestamp, :name,
-                                                       :value)""",
-                                                self.__strQueue )
+                                                VALUES(:id, to_date(:timestamp,
+                                                       'YYYY-MM-DD HH24:MI:SS'),
+                                                       :name, :value)""" )
+                    self.__curs.setinputsizes( id        = cx_Oracle.NUMBER,
+                                               timestamp = cx_Oracle.STRING,
+                                               name      = cx_Oracle.STRING,
+                                               value     = cx_Oracle.STRING )
+                    self.__curs.executemany( None, self.__strQueue )
 
                 self.__conn.commit()
 
@@ -614,19 +630,12 @@ class DLFDbDest(LoggingCommon.MsgDestination):
             message['nsfileid']   = 0
 
         #-----------------------------------------------------------------------
-        # Create the timestamp - parsing fractional seconds is not supported
-        # in python <= 2.5 which is a default but should be supported in
-        # later versions. Hence this workaround.
-        #
-        # For some reason the fractional seconds do not work with the
-        # cx_Oracle version I am using
+        # We have to process timestams as strings because of a garbage
+        # collector bug in python 2.3 64 bit not cleaning properly datetime
+        # objects
         #-----------------------------------------------------------------------
         tsplit  = message['time'].split('.')
-        tstring = message['date'] + ' ' + tsplit[0]
-        tmptm   = time.strptime( tstring, '%Y-%m-%d %H:%M:%S' )
-        tm      = dt( tmptm.tm_year, tmptm.tm_mon, tmptm.tm_mday, tmptm.tm_hour,
-                      tmptm.tm_min, tmptm.tm_sec, int( tsplit[1] ) )
-        msg['timestamp'] = tm
+        msg['timestamp'] = message['date'] + ' ' + tsplit[0]
         msg['timeusec']  = int( tsplit[1] )
 
         #-----------------------------------------------------------------------
