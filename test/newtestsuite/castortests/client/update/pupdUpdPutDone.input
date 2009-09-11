@@ -1,0 +1,9 @@
+stager_update -M <noTapeFileName>
+stager_qry -M <noTapeFileName>
+<rfcpupd>  <localFileName> <noTapeFileName>
+stager_qry -M <noTapeFileName>
+<rfcpupd>  <localFileName> <noTapeFileName>
+stager_qry -M <noTapeFileName>
+stager_putdone -M <noTapeFileName>
+stager_qry -M <noTapeFileName>
+nsrm <noTapeFileName>

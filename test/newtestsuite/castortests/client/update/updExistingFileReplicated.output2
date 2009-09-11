@@ -1,0 +1,14 @@
+    **** : trace level set to 3
+    stager: stage_get Usertag=NULL Protocol=<protocol> File=<noTapeFileName>
+    stager: Looking up RH host - Using <rhhost>
+    stager: Looking up RH port - Using <rhport>
+    stager: Setting euid: <userid>
+    stager: Setting egid: <groupid>
+    stager: Localhost is: <localhost>
+    stager: Creating socket for castor callback - Using port <callback port>
+    stager: <sending time> Sending request
+    stager: <uuid4> SND <send duration1> s to send the request
+    stager: Waiting for callback from castor
+    stager: <uuid4> CBK <answer duration4> s before callback from <server ip2> was received
+<nb bytes> bytes in <time to transfer> seconds through <interface in1> and local (out)
+<nb bytes> bytes in remote file

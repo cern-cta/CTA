@@ -1,0 +1,4 @@
+stager_put -M <noTapeFileName>
+touch <tmpLocalFileName>
+rfcp <tmpLocalFileName> <noTapeFileName>
+stager_putdone -M <noTapeFileName>

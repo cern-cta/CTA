@@ -1,0 +1,10 @@
+stager_put -M <noTapeFileName>
+rfcp <localFileName> <noTapeFileName>
+nsls -l <noTapeFileName>
+stager_putdone -M <noTapeFileName>
+nsls -l <noTapeFileName>
+stager_qry -M <noTapeFileName>
+
+rfcp <localFileName> <noTapeFileName1>
+nsls -l <noTapeFileName1>
+stager_qry -M <noTapeFileName1>

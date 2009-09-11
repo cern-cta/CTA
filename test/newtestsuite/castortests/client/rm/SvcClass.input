@@ -1,0 +1,3 @@
+stager_put -M <noTapeFileName> -S <tapeServiceClass>
+stager_rm -M <noTapeFileName> -S <tapeServiceClass1>
+stager_qry -M <noTapeFileName>

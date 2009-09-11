@@ -1,0 +1,14 @@
+stager_put -M <noTapeFileName> -M <noTapeFileName1> -M <noTapeFileName2> -M <noTapeFileName3> -M <noTapeFileName4> -M <noTapeFileName5> -M <noTapeFileName6> -M <noTapeFileName7> -M <noTapeFileName8> -M <noTapeFileName9>
+rfcp <localFileName> <noTapeFileName>
+rfcp <localFileName> <noTapeFileName1>
+rfcp <localFileName> <noTapeFileName2>
+rfcp <localFileName> <noTapeFileName3>
+rfcp <localFileName> <noTapeFileName4>
+rfcp <localFileName> <noTapeFileName5>
+rfcp <localFileName> <noTapeFileName6>
+rfcp <localFileName> <noTapeFileName7>
+rfcp <localFileName> <noTapeFileName8>
+rfcp <localFileName> <noTapeFileName9>
+stager_putdone -M <noTapeFileName> -M <noTapeFileName1> -M <noTapeFileName2> -M <noTapeFileName3> -M <noTapeFileName4> -M <noTapeFileName5> -M <noTapeFileName6> -M <noTapeFileName7> -M <noTapeFileName8> -M <noTapeFileName9>
+sleep 30
+stager_qry  -M <noTapeFileName> -M <noTapeFileName1> -M <noTapeFileName2> -M <noTapeFileName3> -M <noTapeFileName4> -M <noTapeFileName5> -M <noTapeFileName6> -M <noTapeFileName7> -M <noTapeFileName8> -M <noTapeFileName9>

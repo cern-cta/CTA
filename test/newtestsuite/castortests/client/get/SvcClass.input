@@ -1,0 +1,9 @@
+stager_put -M <noTapeFileName> -S <tapeServiceClass>
+STAGE_SVCCLASS=<tapeServiceClass> rfcp <localFileName> <noTapeFileName>
+stager_qry -M <noTapeFileName> -S <tapeServiceClass1>
+stager_get -M <noTapeFileName> -S <tapeServiceClass1>
+stager_put -M <noTapeFileName1> -S <tapeServiceClass1>
+STAGE_SVCCLASS=<tapeServiceClass> rfcp <localFileName> <noTapeFileName1>
+stager_qry -M <noTapeFileName1> -S <tapeServiceClass1>
+stager_get -M <noTapeFileName1> -S <tapeServiceClass1>
+stager_qry -M <noTapeFileName1> -S <tapeServiceClass>

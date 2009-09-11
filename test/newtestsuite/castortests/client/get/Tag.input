@@ -1,0 +1,6 @@
+stager_put -M <noTapeFileName> -U <castorTag>
+stager_get -M <noTapeFileName> -U <castorTag>
+rfcp <localFileName> <noTapeFileName>
+stager_get  -M <noTapeFileName> -U <castorTag>
+stager_putdone -M <noTapeFileName>
+stager_get -M <noTapeFileName> -U <castorTag>

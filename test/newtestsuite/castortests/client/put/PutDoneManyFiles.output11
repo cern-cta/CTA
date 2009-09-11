@@ -1,0 +1,33 @@
+    **** : trace level set to 3
+    stager: stage_putDone PutRequestId=NULL
+    stager: Looking up RH host - Using <rhhost>
+    stager: Looking up RH port - Using <rhport>
+    stager: stage_putDone file=<noTapeFileName>
+    stager: stage_putDone file=<noTapeFileName1>
+    stager: stage_putDone file=<noTapeFileName2>
+    stager: stage_putDone file=<noTapeFileName3>
+    stager: stage_putDone file=<noTapeFileName4>
+    stager: stage_putDone file=<noTapeFileName5>
+    stager: stage_putDone file=<noTapeFileName6>
+    stager: stage_putDone file=<noTapeFileName7>
+    stager: stage_putDone file=<noTapeFileName8>
+    stager: stage_putDone file=<noTapeFileName9>
+    stager: Setting euid: <userid>
+    stager: Setting egid: <groupid>
+    stager: Localhost is: <localhost>
+    stager: Creating socket for castor callback - Using port <callback port3>
+    stager: <sending time3> Sending request
+    stager: <uuid3> SND <send duration2> s to send the request
+    stager: Waiting for callback from castor
+    stager: <uuid3> CBK <answer duration3> s before callback from <server ip1> was received
+Received 10 responses
+<noTapeFileName> SUBREQUEST_READY
+<noTapeFileName1> SUBREQUEST_READY
+<noTapeFileName3> SUBREQUEST_READY
+<noTapeFileName2> SUBREQUEST_READY
+<noTapeFileName4> SUBREQUEST_READY
+<noTapeFileName5> SUBREQUEST_READY
+<noTapeFileName6> SUBREQUEST_READY
+<noTapeFileName7> SUBREQUEST_READY
+<noTapeFileName8> SUBREQUEST_READY
+<noTapeFileName9> SUBREQUEST_READY

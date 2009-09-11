@@ -1,0 +1,15 @@
+    **** : trace level set to 3
+    stager: stage_prepareToGet Usertag=NULL
+    stager: Looking up RH host - Using <rhhost>
+    stager: Looking up RH port - Using <rhport>
+    stager: stage_prepareToGet file=<noTapeFileName> proto=rfio
+    stager: Setting euid: <userid>
+    stager: Setting egid: <groupid>
+    stager: Localhost is: <localhost>
+    stager: Creating socket for castor callback - Using port <callback port1>
+    stager: <sending time1> Sending request
+    stager: <uuid3> SND <send duration1> s to send the request
+    stager: Waiting for callback from castor
+    stager: <uuid3> CBK <answer duration3> s before callback from <server ip1> was received
+Received 1 responses
+<noTapeFileName> SUBREQUEST_FAILED 16 File is being written to in another SvcClass

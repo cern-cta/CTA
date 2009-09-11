@@ -1,0 +1,15 @@
+    **** : trace level set to 3
+    stager: Looking up RH host - Using <rhhost>
+    stager: Looking up RH port - Using <rhport>
+    stager: Looking up service class - Using diskonly
+    stager: stage_filequery type=0 param=<noTapeFileName>
+    stager: Setting euid: <userid>
+    stager: Setting egid: <groupid>
+    stager: Localhost is: <localhost>
+    stager: Creating socket for castor callback - Using port <callback port6>
+    stager: <sending time6> Sending request
+    stager: <uuid6> SND <send duration2> s to send the request
+    stager: Waiting for callback from castor
+    stager: <uuid6> CBK <answer duration6> s before callback from <server ip2> was received
+Received 1 responses
+<noTapeFileName> <fileid@ns> INVALID

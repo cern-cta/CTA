@@ -1,0 +1,15 @@
+    **** : trace level set to 3
+    stager: stage_prepareToGet Usertag=NULL
+    stager: Looking up RH host - Using <rhhost>
+    stager: Looking up RH port - Using <rhport>
+    stager: stage_prepareToGet file=<noTapeFileName1> proto=rfio
+    stager: Setting euid: <userid>
+    stager: Setting egid: <groupid>
+    stager: Localhost is: <localhost>
+    stager: Creating socket for castor callback - Using port <callback port3>
+    stager: <sending time3> Sending request
+    stager: <uuid8> SND <send duration1> s to send the request
+    stager: Waiting for callback from castor
+    stager: <uuid8> CBK <answer duration7> s before callback from <server ip> was received
+Received 1 responses
+<noTapeFileName1> SUBREQUEST_FAILED 16 File is being (re)created right now by another user
