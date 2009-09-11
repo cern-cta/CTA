@@ -1,0 +1,62 @@
+#
+# Put a nice header here
+#
+# this is the configuration file for the CASTOR test suite,
+# This is a template for an option file that can be used to
+# configure the test suite. Please read it carefully and
+# fill in the proper values.
+#
+# All lines are commented by default, with the dafault value
+# indicated. To change the default, just edit and uncomment
+#
+# Note that the syntax of this file is the one of the python
+# ConfigParser class. It implements a basic configuration
+# file parser language which provides a structure similar
+# to what you would find on Microsoft Windows INI files.
+#
+
+
+# generic info about the context in which the test suite will run
+[Generic]
+
+# castor directories to use for temporary files created by the test suite
+CastorNoTapeDir = /castor/cern.ch/dev/s/sponcec3/notape
+CastorTapeDir = /castor/cern.ch/dev/s/sponcec3/tape
+
+# Put this to true if you want the test suite to skip tests when resources are missing
+# Default behavior is to fail
+# SkipTestsWhenResourceMissing = false
+
+# Put this to true if you do not want to cleanup temporary files created
+# by the test suite in the CASTOR namespace
+# NoCleanup = false
+
+# the service classes to be used by the test suite
+TapeServiceClasses = default, dev
+DiskOnlyServiceClasses = diskonly
+
+# Remote machine and directory to be used for testing transfers outside CASTOR
+remoteSpace = lxc2disk01.cern.ch:/tmp
+
+
+# Environment to be used for the tests
+# Each line will be translated into an environment variable setting
+[Environment]
+
+# Stager related
+STAGE_HOST = lxcastordev01
+STAGE_PORT = 9002
+STAGER_TRACE = 3
+
+# ROOT related
+ROOTSYS = /afs/cern.ch/sw/lcg/app/releases/ROOT/5.24.00/x86_64-slc5-gcc34-opt/root
+
+
+# values to give to parameters in the .input files of the test suite
+# any <TAG> string (where tag can contain anything but '>') will be
+# replaced by the value of the corresponding entry
+[Tags]
+
+# Local file name to be used as sample data
+localFileName = /etc/group
+
