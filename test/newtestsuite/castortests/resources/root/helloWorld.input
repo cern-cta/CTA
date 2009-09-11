@@ -1,0 +1,1 @@
+echo 'printf("Hello World !\n");' | <rootbin>
