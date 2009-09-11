@@ -16,7 +16,6 @@ import re
 import time
 import os
 import LoggingCommon
-from datetime import datetime as dt
 
 try:
     import cx_Oracle
@@ -442,8 +441,7 @@ class DLFDbDest(LoggingCommon.MsgDestination):
 
     #---------------------------------------------------------------------------
     def finalize( self ):
-        if len( self.__msgQueue ):
-            self.flushQueues()
+        pass
 
     #---------------------------------------------------------------------------
     def insertMsgText( self, message ):
@@ -631,7 +629,7 @@ class DLFDbDest(LoggingCommon.MsgDestination):
             message['nsfileid']   = 0
 
         #-----------------------------------------------------------------------
-        # We have to process timestams as strings because of a garbage
+        # We have to process timestamps as strings because of a garbage
         # collector bug in python 2.3 64 bit not cleaning properly datetime
         # objects
         #-----------------------------------------------------------------------
@@ -884,7 +882,7 @@ class DLFMsgParser:
                 break
 
         if not res:
-            raise ValueError( 'Message: "' + msg[:30] + '..." is malformed' )
+            raise ValueError( 'Message: "' + msg + '" is malformed' )
 
         result = {}
 
@@ -899,8 +897,7 @@ class DLFMsgParser:
                 result[g] = res.group( g )
 
             if result.has_key( 'nsfileid' ) and not result.has_key( 'nshostname' ):
-                raise ValueError( 'Message: "' + msg[:30] +
-                                  '..." is malformed' )
+                raise ValueError( 'Message: "' + msg + '" is malformed' )
 
             #-------------------------------------------------------------------
             # Parse the key-value pairs
