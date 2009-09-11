@@ -1,0 +1,4 @@
+<rfcp> <localFileName> <tmpLocalFileName>
+ls <tmpLocalFileName>
+rfrm <tmpLocalFileName>
+ls <tmpLocalFileName>

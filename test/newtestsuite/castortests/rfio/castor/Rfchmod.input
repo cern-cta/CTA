@@ -1,0 +1,7 @@
+STAGE_SVCCLASS=<diskOnlyServiceClass> <rfcp> <localFileName> <rfioTURL>
+nsls -l <noTapeFileName>
+rfchmod 777 <rfioTURL>
+nsls -l <noTapeFileName>
+rfchmod 600 <rfioTURL>
+nsls -l <noTapeFileName>
+nsrm <noTapeFileName>

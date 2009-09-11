@@ -1,0 +1,4 @@
+<rfcp> <localFileName> <remoteFileName>
+<rfcp> <remoteFileName> <remoteFileName1>
+<rfcp> <remoteFileName1> <tmpLocalFileName>
+diff <localFileName> <tmpLocalFileName>

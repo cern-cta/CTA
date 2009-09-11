@@ -1,0 +1,3 @@
+rfmkdir <tmpLocalFileName>
+ls <tmpLocalFileName>
+rfdir <tmpLocalFileName>

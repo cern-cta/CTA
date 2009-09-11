@@ -1,0 +1,3 @@
+rfmkdir <remoteFileName>
+rfdir <remoteFileName>
+

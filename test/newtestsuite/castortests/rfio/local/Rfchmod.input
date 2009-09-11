@@ -1,0 +1,7 @@
+<rfcp> <localFileName> <tmpLocalFileName>
+ls -l <tmpLocalFileName>
+rfchmod 777 <tmpLocalFileName>
+ls -l <tmpLocalFileName>
+rfchmod 600 <tmpLocalFileName>
+ls -l <tmpLocalFileName>
+rm <tmpLocalFileName>

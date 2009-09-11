@@ -1,0 +1,3 @@
+<rfcp> <localFileName> <remoteFileName>
+rfcat <remoteFileName> > <tmpLocalFileName>
+diff <localFileName> <tmpLocalFileName>
