@@ -1,0 +1,23 @@
+    **** : trace level set to 3
+    stager: Looking up RH host - Using <rhhost>
+    stager: Looking up RH port - Using <rhport>
+    stager: stage_filequery type=2 param=<userTag>
+    stager: Setting euid: <userid>
+    stager: Setting egid: <groupid>
+    stager: Localhost is: <localhost>
+    stager: Creating socket for castor callback - Using port <callback port1>
+    stager: <sending time1> Sending request
+    stager: <uuid3> SND <send duration> s to send the request
+    stager: Waiting for callback from castor
+    stager: <uuid3> CBK <answer duration3> s before callback from <server ip> was received
+Received 10 responses
+<tapeFileName> <fileid@ns> STAGEIN
+<tapeFileName1> <fileid@ns1> STAGEIN
+<tapeFileName2> <fileid@ns2> STAGEIN
+<tapeFileName3> <fileid@ns3> STAGEIN
+<tapeFileName4> <fileid@ns4> STAGEIN
+<tapeFileName5> <fileid@ns5> STAGEIN
+<tapeFileName6> <fileid@ns6> STAGEIN
+<tapeFileName7> <fileid@ns7> STAGEIN
+<tapeFileName8> <fileid@ns8> STAGEIN
+<tapeFileName9> <fileid@ns9> STAGEIN

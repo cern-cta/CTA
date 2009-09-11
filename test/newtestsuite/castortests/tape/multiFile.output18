@@ -1,0 +1,33 @@
+    **** : trace level set to 3
+    stager: stage_prepareToGet Usertag=<userTag>
+    stager: Looking up RH host - Using <rhhost>
+    stager: Looking up RH port - Using <rhport>
+    stager: stage_prepareToGet file=<tapeFileName> proto=rfio
+    stager: stage_prepareToGet file=<tapeFileName1> proto=rfio
+    stager: stage_prepareToGet file=<tapeFileName2> proto=rfio
+    stager: stage_prepareToGet file=<tapeFileName3> proto=rfio
+    stager: stage_prepareToGet file=<tapeFileName4> proto=rfio
+    stager: stage_prepareToGet file=<tapeFileName5> proto=rfio
+    stager: stage_prepareToGet file=<tapeFileName6> proto=rfio
+    stager: stage_prepareToGet file=<tapeFileName7> proto=rfio
+    stager: stage_prepareToGet file=<tapeFileName8> proto=rfio
+    stager: stage_prepareToGet file=<tapeFileName9> proto=rfio
+    stager: Setting euid: <userid>
+    stager: Setting egid: <groupid>
+    stager: Localhost is: <localhost>
+    stager: Creating socket for castor callback - Using port <callback port1>
+    stager: <sending time1> Sending request
+    stager: <uuid5> SND <send duration1> s to send the request
+    stager: Waiting for callback from castor
+    stager: <uuid5> CBK <answer duration1> s before callback from <server ip> was received
+Received 10 responses
+<tapeFileName> SUBREQUEST_READY
+<tapeFileName1> SUBREQUEST_READY
+<tapeFileName2> SUBREQUEST_READY
+<tapeFileName3> SUBREQUEST_READY
+<tapeFileName4> SUBREQUEST_READY
+<tapeFileName5> SUBREQUEST_READY
+<tapeFileName6> SUBREQUEST_READY
+<tapeFileName7> SUBREQUEST_READY
+<tapeFileName8> SUBREQUEST_READY
+<tapeFileName9> SUBREQUEST_READY
