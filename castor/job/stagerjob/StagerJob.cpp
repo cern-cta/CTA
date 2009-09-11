@@ -249,6 +249,29 @@ void switchToCastorSuperuser(castor::job::stagerjob::InputArguments *args)
 }
 
 //------------------------------------------------------------------------------
+// createSocket
+//------------------------------------------------------------------------------
+void createSocket(castor::job::stagerjob::PluginContext &context) 
+  throw (castor::exception::Exception) {
+  // Create the socket
+  context.socket = socket(AF_INET, SOCK_STREAM, 0);
+  if (context.socket < 0) {
+    castor::exception::Exception e(errno);
+    e.getMessage() << "Error caught in call to socket";
+    throw e;
+  }
+  // Set socket options
+  int rcode = 1;
+  int rc = setsockopt(context.socket, SOL_SOCKET, SO_REUSEADDR,
+                      (char *)&rcode, sizeof(rcode));
+  if (rc < 0) {
+    castor::exception::Exception e(errno);
+    e.getMessage() << "Error caught in call to setsockopt";
+    throw e;
+  }
+}
+
+//------------------------------------------------------------------------------
 // bindSocketAndListen
 //------------------------------------------------------------------------------
 void bindSocketAndListen
@@ -284,7 +307,7 @@ void bindSocketAndListen
     // If we reach the maximum allowed port, reset it!
     if (port > range.second) {
       port = range.first;
-      sleep(1);  // sleep between complete loops, prevents CPU thrashing
+      sleep(5);  // sleep between complete loops, prevents CPU thrashing
       continue;
     }
 
@@ -297,6 +320,9 @@ void bindSocketAndListen
         // If the error is "Address already in use" we try and bind again after
         // 5 seconds unless we have already tried 10 times.
         if ((errno == EADDRINUSE) && (attempts <= 10)) {
+          // Close and recreate the socket.
+          close(context.socket);
+          createSocket(context);    
           sleep(5);
           continue;
         } else {
@@ -345,20 +371,7 @@ void process(castor::job::stagerjob::InputArguments* args)
   castor::job::stagerjob::IPlugin* plugin =
     castor::job::stagerjob::getPlugin(args->protocol);
   // Create the socket that the user will connect too
-  context.socket = socket(AF_INET, SOCK_STREAM, 0);
-  if (context.socket < 0) {
-    castor::exception::Exception e(errno);
-    e.getMessage() << "Error caught in call to socket";
-    throw e;
-  }
-  int rcode = 1;
-  int rc = setsockopt(context.socket, SOL_SOCKET, SO_REUSEADDR,
-                      (char *)&rcode, sizeof(rcode));
-  if (rc < 0) {
-    castor::exception::Exception e(errno);
-    e.getMessage() << "Error caught in call to setsockopt";
-    throw e;
-  }
+  createSocket(context);
   // Get available port range for the socket
   std::pair<int,int> portRange = plugin->getPortRange(*args);
   // Bind socket and listen for client connection

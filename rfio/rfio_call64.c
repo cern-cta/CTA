@@ -2037,7 +2037,7 @@ int  sropen64_v3(s, rt, host)
         /* If we reach the maximum allowed port, reset it! */
         if (port > high_port) {
           port = low_port;
-          sleep(1);  /* sleep between complete loops, prevents CPU thrashing */
+          sleep(5);  /* sleep between complete loops, prevents CPU thrashing */
           continue;
         }
 
@@ -2051,6 +2051,13 @@ int  sropen64_v3(s, rt, host)
           if (listen(data_s, 5) == INVALID_SOCKET) {
             if (WSAGetLastError() == WSAEADDRINUSE) {
               log(LOG_DEBUG, "ropen64_v3: listen(%d): %s, attempting another port\n", data_s, geterr());
+              /* close and recreate the socket */
+              close(data_s);
+              data_s = socket(AF_INET, SOCK_STREAM, 0);
+              if( data_s == INVALID_SOCKET )  {
+                log( LOG_ERR, "datasocket(): %s\n", geterr());
+                return(-1);
+              }
               sleep(1);
               continue;
             } else {
@@ -2062,6 +2069,13 @@ int  sropen64_v3(s, rt, host)
           if (listen(data_s, 5) < 0) {
             if (errno == EADDRINUSE) {
               log(LOG_DEBUG, "ropen64_v3: listen(%d): %s, attempting another port\n", data_s, strerror(errno));
+              /* close and recreate the socket */
+              close(data_s);
+              data_s = socket(AF_INET, SOCK_STREAM, 0);
+              if( data_s < 0 )  {
+                log(LOG_ERR, "datasocket(): %s\n", strerror(errno));
+                exit(1);
+              }
               sleep(1);
               continue;
             } else {
