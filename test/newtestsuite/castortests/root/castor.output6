@@ -1,0 +1,32 @@
+    **** : trace level set to 3
+    stager: stage_get Usertag=NULL Protocol=<protocol> File=<noTapeFileName>
+    stager: Looking up RH host - Using <rhhost>
+    stager: Looking up RH port - Using <rhport>
+    stager: Setting euid: <userid>
+    stager: Setting egid: <groupid>
+    stager: Localhost is: <localhost>
+    stager: Creating socket for castor callback - Using port <callback port2>
+    stager: <sending time2> Sending request
+    stager: <uuid2> SND <send duration> s to send the request
+    stager: Waiting for callback from castor
+    stager: <uuid2> CBK <answer duration2> s before callback from <server ip> was received
+TCastorFile**		<variableURL>	
+ TCastorFile*		<variableURL>	
+  KEY: TNtuple	ntuple;1	test
+******************************************************************************
+*Tree    :ntuple    : test                                                   *
+*Entries :        2 : Total =            1918 bytes  File  Size =        <variablesize> *
+*        :          : Tree compression factor =   1.00                       *
+******************************************************************************
+*Br    0 :x         :                                                        *
+*Entries :        2 : Total  Size=        534 bytes  File Size  =         78 *
+*Baskets :        1 : Basket Size=      32000 bytes  Compression=   1.00     *
+*............................................................................*
+*Br    1 :y         :                                                        *
+*Entries :        2 : Total  Size=        534 bytes  File Size  =         78 *
+*Baskets :        1 : Basket Size=      32000 bytes  Compression=   1.00     *
+*............................................................................*
+*Br    2 :z         :                                                        *
+*Entries :        2 : Total  Size=        534 bytes  File Size  =         78 *
+*Baskets :        1 : Basket Size=      32000 bytes  Compression=   1.00     *
+*............................................................................*
