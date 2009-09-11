@@ -1,0 +1,60 @@
+This directory is the place where all test cases should be stored.
+The tests structure should look like the following :
+
+castortests
+ |- testSet1
+ |  | default.resources
+ |  |-subSet11
+ |  |  |- default.resources
+ |  |  |- test111.input
+ |  |  |- test111.output0
+ |  |  |- test111.output1
+ |  |  |- test112.resources
+ |  |  |- test112.input
+ |  |  |- test112.output0
+ |  |  |- README
+ |  |-subSet12
+ |  |  | ...
+ | ... 
+ |- testSet2
+ |  |- test21.input
+ |  |- test21.output0
+ |- resources
+ |  |- resource1
+ |  |  |- resource11.input
+ |  |  |- resource11.output0
+ |  |  |- resource11.info
+ | ...
+
+
+More details on the structure
+
+Top level directory denote particular test sets, except for the special name 'resources'.
+Such sets can be enabled or disabled on the command line using arguments like --testSet1 and --notestSet1.
+
+Inside each top level directory, tests/resources can be freely grouped using extra directory levels.
+
+Each test/resource consists of :
+  - an .input file, listing the set of commands to run
+  - as many .output<n> files as there are commands in the input file, each one containing the expected result of the nth command
+  - an optional .resources file listing required resources, one per line. Note that this allows dependencies among resources
+
+Extra default.resources files can be provided at any level of the directory hierarchy. They list resources needed by all tests/resources in the directory where they reside, including all the subtrees.
+
+Note that other files (including documentation as for this one) can be present at any level. They will be ignored by the test suite.
+
+
+
+Syntax of the input/output files
+
+These are text files where "tags" can be present. A tag is any string within '<' and '>', e.g. "<fileName>".
+In input files, tags will be parsed and replaced by proper values, either coming from the config file, section Tags or from the test suite itself (e.g. filenames will be automatically generated).
+
+In output files, tags are placeholders for varying parts of the output. If input tags are reused, their value will be checked. Similarly, if a tag is used several times in the same file, this means that the same value is expected in the different places.
+
+
+
+Handling of resources
+
+Whenever a resource is needed by a test or another resource, the tests in the corresponding directory under castortests/resources will be executed. The resource is considered provided only if they are all successful. Otherwise, the test/resource needing it will be failed.
+
