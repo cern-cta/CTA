@@ -1,0 +1,11 @@
+rfcp <localFileName> <tapeFileName>
+status=`stager_qry -M <tapeFileName> | tail -1 | awk '{print $NF;}'`; while [[ $status == 'CANBEMIGR' ]]; do sleep 15; status=`stager_qry -M <tapeFileName> | tail -1 | awk '{print $NF;}'` ; done
+stager_qry -M <tapeFileName>
+stager_rm -M <tapeFileName>
+stager_qry -M <tapeFileName>
+stager_get -S <tapeServiceClass> -M <tapeFileName>
+stager_qry -S <tapeServiceClass> -M <tapeFileName>
+stager_rm -S <tapeServiceClass1> -M <tapeFileName>
+stager_qry -S <tapeServiceClass> -M <tapeFileName>
+stager_rm -S <tapeServiceClass> -M <tapeFileName>
+stager_qry -S <tapeServiceClass> -M <tapeFileName>
