@@ -399,6 +399,9 @@ class Setup:
                 # non existing file, i.e. nothing needed, it's all ok
                 pass
         elif os.path.isdir(path):
+            # check for tags.py file and absorb new definitions
+            if os.path.isfile(path+os.sep+'tags.py'):
+                execfile(path+os.sep+'tags.py')
             # check all resources in default.resources file
             self.checkResources(path+os.sep+'default.resources',skip, noRec=True)
         # recursively check parent, if not top level, nor resources
@@ -533,67 +536,7 @@ class Setup:
         return (lambda test : self.getTag(test, 'remoteDir') + os.sep + test + '.' + str(nb))
 
     def getTag_castorTag(self, nb=0):
-        uuid = getUUID()
-        return (lambda test : 'castorTag'+uuid+test+str(nb))
-
-    def getTag_rfioTURL(self, nb=0):
-        global RfioTURLs
-        RfioTURLs = ['',
-                     'rfio:///castor\?path=',
-                     'rfio://'+os.environ['STAGE_HOST']+':'+os.environ['STAGE_PORT']+'/castor\?path=',
-                     'rfio://',
-                     'rfio://'+os.environ['STAGE_HOST']+':'+os.environ['STAGE_PORT'],
-                     'rfio:///',
-                     'rfio://'+os.environ['STAGE_HOST']+':'+os.environ['STAGE_PORT']+'/']
-        snb = ''
-        if nb > 0: snb = str(nb)
-        return (lambda test : map(lambda x : x + self.getTag(test, 'noTapeFileName' + snb), RfioTURLs))
-
-    def getTag_rootRFIOURL(self, nb=0):
-        global RootTURLs
-        RootTURLs = ['rfio:///castor\?path=',
-                     'rfio://'+os.environ['STAGE_HOST']+':'+os.environ['STAGE_PORT']+'/castor\?path=',
-                     'rfio://',
-                     'rfio://'+os.environ['STAGE_HOST']+':'+os.environ['STAGE_PORT'],
-                     'rfio:///',
-                     'rfio://'+os.environ['STAGE_HOST']+':'+os.environ['STAGE_PORT']+'/']
-        snb = ''
-        if nb > 0: snb = str(nb)
-        return (lambda test : map(lambda x : x + self.getTag(test, 'noTapeFileName' + snb), RootTURLs))
-
-    def getTag_rootCastorURL(self, nb=0):
-        global RootTURLs
-        RootTURLs = ['castor:///castor\?path=',
-                     'castor://'+os.environ['STAGE_HOST']+':'+os.environ['STAGE_PORT']+'/castor\?path=',
-                     'castor://',
-                     'castor://'+os.environ['STAGE_HOST']+':'+os.environ['STAGE_PORT'],
-                     'castor:///',
-                     'castor://'+os.environ['STAGE_HOST']+':'+os.environ['STAGE_PORT']+'/']
-        snb = ''
-        if nb > 0: snb = str(nb)
-        return (lambda test : map(lambda x : x + self.getTag(test, 'noTapeFileName' + snb), RootTURLs))
-
-    def getTag_xrootURL(self, nb=0):
-        global XRootTURLs
-        XRootTURLs = ['root://'+os.environ['STAGE_HOST']+'/',
-                      'root://'+os.environ['STAGE_HOST']+'//']
-        snb = ''
-        if nb > 0: snb = str(nb)
-        return (lambda test : map(lambda x : x + self.getTag(test, 'noTapeFileName' + snb) + '?stagerHost='+os.environ['STAGE_HOST'], XRootTURLs))
-
-    def getTag_rfcp(self):
-        return ['rfcp', 'rfcp -v2']
-
-    def getTag_rfcpupd(self):
-        return ['rfcpupd', 'rfcpupd -v2']
-
-    def getTag_rootbin(self):
-        if not os.environ.has_key('ROOTSYS'):
-            raise AssertionError("ROOTSYS environment variable is not defined nor given in test suite configuration")
-        return os.environ['ROOTSYS'] + os.sep + 'bin' + os.sep + 'root -b -l'
-
-    def getTag_userTag(self, nb=0):
-        return (lambda test : 'tag'+getUUID()+test+str(nb))
+        return (lambda test : 'castorTag'+getUUID()+test+str(nb))
 
 ###############################################################
 # funcarg function used by all tests for their setup argument #
