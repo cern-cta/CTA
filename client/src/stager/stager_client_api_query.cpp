@@ -135,6 +135,9 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
         } else {
           (*responses)[i].errorCode = res->errorCode();
           (*responses)[i].errorMessage = strdup(res->errorMessage().c_str());
+          // wipe out other unused pointers
+          (*responses)[i].filename = (*responses)[i].castorfilename = 
+            (*responses)[i].diskserver = (*responses)[i].poolname = 0;
         }
       } else {
         (*responses)[i].errorCode = fr->errorCode();
