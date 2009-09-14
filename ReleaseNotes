@@ -22,6 +22,8 @@
             already invalid
   - #54796: The -R option of the stager_addprivilege and stager_removeprivilege
             man pages is not explained correctly
+  - #55559: stagerjob processes stuck in a 'bind()' loop in the
+            bindSocketAndListen function
 
   CASTOR tape
   -----------
@@ -31,8 +33,6 @@
   - #54009: RFE: schema modification for the TapeGateway
   - #54252: VDQM does not allow a user to delete their own request
   - #54485: rtcpd dumps in error handling on SLC5
-  - #55559: stagerjob processes stuck in a 'bind()' loop in the
-            bindSocketAndListen function
 
   - Replaced the proprietary DLF logging interface by syslog (#53937). The
     benefits of this modification include:
