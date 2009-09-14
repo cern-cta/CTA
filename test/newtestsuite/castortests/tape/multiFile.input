@@ -1,4 +1,4 @@
-stager_put -M <tapeFileName> -M <tapeFileName1> -M <tapeFileName2> -M <tapeFileName3> -M <tapeFileName4> -M <tapeFileName5> -M <tapeFileName6> -M <tapeFileName7> -M <tapeFileName8> -M <tapeFileName9> -U <userTag>
+stager_put -M <tapeFileName> -M <tapeFileName1> -M <tapeFileName2> -M <tapeFileName3> -M <tapeFileName4> -M <tapeFileName5> -M <tapeFileName6> -M <tapeFileName7> -M <tapeFileName8> -M <tapeFileName9> -U <castorTag>
 rfcp <localFileName> <tapeFileName>
 rfcp <localFileName> <tapeFileName1>
 rfcp <localFileName> <tapeFileName2>
@@ -9,14 +9,14 @@ rfcp <localFileName> <tapeFileName6>
 rfcp <localFileName> <tapeFileName7>
 rfcp <localFileName> <tapeFileName8>
 rfcp <localFileName> <tapeFileName9>
-stager_qry -U <userTag>
+stager_qry -U <castorTag>
 stager_putdone -M <tapeFileName> -M <tapeFileName1> -M <tapeFileName2> -M <tapeFileName3> -M <tapeFileName4> -M <tapeFileName5> -M <tapeFileName6> -M <tapeFileName7> -M <tapeFileName8> -M <tapeFileName9>
-stager_qry -U <userTag>
-status=`stager_qry -U <userTag> | grep CANBEMIGR | wc -l`; while [[ $status > 0 ]]; do sleep 15; status=`stager_qry -U <userTag> | grep CANBEMIGR | wc -l` ; done
-stager_qry -U <userTag>
+stager_qry -U <castorTag>
+status=`stager_qry -U <castorTag> | grep CANBEMIGR | wc -l`; while [[ $status > 0 ]]; do sleep 15; status=`stager_qry -U <castorTag> | grep CANBEMIGR | wc -l` ; done
+stager_qry -U <castorTag>
 stager_rm -M <tapeFileName> -M <tapeFileName1> -M <tapeFileName2> -M <tapeFileName3> -M <tapeFileName4> -M <tapeFileName5> -M <tapeFileName6> -M <tapeFileName7> -M <tapeFileName8> -M <tapeFileName9>
-stager_qry -U <userTag>
-stager_get -M <tapeFileName> -M <tapeFileName1> -M <tapeFileName2> -M <tapeFileName3> -M <tapeFileName4> -M <tapeFileName5> -M <tapeFileName6> -M <tapeFileName7> -M <tapeFileName8> -M <tapeFileName9> -U <userTag>
-stager_qry -U <userTag>
-status=`stager_qry -U <userTag> | grep STAGEIN | wc -l`; while [[ $status > 0 ]]; do sleep 15; status=`stager_qry -U <userTag> | grep STAGEIN | wc -l` ; done
-stager_qry -U <userTag>
+stager_qry -U <castorTag>
+stager_get -M <tapeFileName> -M <tapeFileName1> -M <tapeFileName2> -M <tapeFileName3> -M <tapeFileName4> -M <tapeFileName5> -M <tapeFileName6> -M <tapeFileName7> -M <tapeFileName8> -M <tapeFileName9> -U <castorTag>
+stager_qry -U <castorTag>
+status=`stager_qry -U <castorTag> | grep STAGEIN | wc -l`; while [[ $status > 0 ]]; do sleep 15; status=`stager_qry -U <castorTag> | grep STAGEIN | wc -l` ; done
+stager_qry -U <castorTag>

@@ -1,5 +1,5 @@
     **** : trace level set to 3
-    stager: stage_prepareToPut Usertag=<userTag>
+    stager: stage_prepareToPut Usertag=<castorTag>
     stager: Looking up RH host - Using <rhhost>
     stager: Looking up RH port - Using <rhport>
     stager: stage_prepareToPut file=<tapeFileName> proto=rfio size=0 mode=1b6
