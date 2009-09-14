@@ -1,0 +1,5 @@
+nsmkdir <noTapeFileName>
+rfcp <localFileName> <noTapeFileName>
+cp <localFileName> <tmpLocalFileName>
+rfcp <tmpLocalFileName> <noTapeFileName>
+stager_qry -M <noTapeFileName>
