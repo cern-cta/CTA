@@ -1,0 +1,70 @@
+# Modules
+$ModLoad immark.so # provides --MARK-- message capability
+$ModLoad imuxsock  # provides support for local system logging (e.g. via logger command)
+$ModLoad imklog    # kernel logging (formerly provided by rklogd)
+
+# Global options
+$MaxMessageSize 8192                # increase maximum allowed length of a message
+$DynaFileCacheSize 100              # the maximum number of dynamically generated
+                                    # cached file names
+$umask 0000
+$FileCreateMode 0644                # world readable log files
+
+# Templates
+$template DynaFile,"/var/log/castor/%programname%.log"
+
+# Remote logging configuration
+$WorkDirectory /var/spool/rsyslog   # where to place spool files
+$ActionQueueType LinkedList         # run asynchronously
+$ActionQueueFileName forward1       # unique name prefix for spool files
+$ActionQueueSaveOnShutdown on       # save messages to disk on shutdown
+$ActionQueueMaxDiskSpace 1g         # 1gb space limit (use as much as possible)
+
+# Enable high-precision timestamps when forwarding messages
+$ActionForwardDefaultTemplate RSYSLOG_ForwardFormat
+
+# Logging configuration for CASTOR
+local3.*                                    -?DynaFile
+local3.*;local2.info                        @@headnode1.domain.com:514
+$ActionExecOnlyWhenPreviousIsSuspended on
+& @@headnode2.domain.com:514
+& @@headnode3.domain.com:514
+& /var/spool/rsyslog/buffer.log
+$ActionExecOnlyWhenPreviousIsSuspended off
+
+# If the message has been processed by one of the filters above stop
+# any further processing. This avoids duplicate logging!
+& ~
+
+# Standard rsyslog configuration
+
+# The default output file format, syslog style format
+$ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat
+$FileCreateMode 0600
+
+# Log all kernel messages to the console.
+# Logging much else clutters up the screen.
+#kern.*                                                 /dev/console
+
+# Log anything (except mail) of level info or higher.
+# Don't log private authentication messages!
+*.info;mail.none;authpriv.none;cron.none                /var/log/messages
+
+# The authpriv file has restricted access.
+authpriv.*                                              /var/log/secure
+
+# Log all the mail messages in one place.
+mail.*                                                  -/var/log/maillog
+
+
+# Log cron stuff
+cron.*                                                  /var/log/cron
+
+# Everybody gets emergency messages
+*.emerg                                                 *
+
+# Save news errors of level crit and higher in a special file.
+uucp,news.crit                                          /var/log/spooler
+
+# Save boot messages also to boot.log
+local7.*                                                /var/log/boot.log
