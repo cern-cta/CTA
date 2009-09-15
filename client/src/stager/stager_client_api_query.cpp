@@ -406,19 +406,26 @@ EXTERN_C void DLL_DECL stage_delete_diskpoolquery_resp
 //    stage_print_diskpoolquery_resp                     //
 ////////////////////////////////////////////////////////////
 
+void printSizeToBuf(char* buf, unsigned long long int size, int siflag) {
+  if (siflag & (HUMANREADABLE | SIUNITS)) {
+    if (siflag & SIUNITS) {
+      u64tostrsi(size, buf, 0);
+    } else {
+      u64tostru(size, buf, 0);
+    }
+  } else {
+    sprintf(buf, "%llu", size);
+  }
+}
+
 EXTERN_C void DLL_DECL stage_print_diskpoolquery_resp
 (FILE* stream, struct stage_diskpoolquery_resp *response, int siflag) {
   char freeBuf[21];
   char totalBuf[21];
   char freepBuf[21];
   if (0 == response) return;
-  if (siflag) {
-    u64tostrsi(response->freeSpace, freeBuf, 0);
-    u64tostrsi(response->totalSpace, totalBuf, 0);
-  } else {
-    u64tostru(response->freeSpace, freeBuf, 0);
-    u64tostru(response->totalSpace, totalBuf, 0);
-  }
+  printSizeToBuf(freeBuf, response->freeSpace, siflag);
+  printSizeToBuf(totalBuf, response->totalSpace, siflag);
   if (0 == response->totalSpace) {
     strncpy(freepBuf, " -", 3);
   } else {
@@ -429,13 +436,8 @@ EXTERN_C void DLL_DECL stage_print_diskpoolquery_resp
   freepBuf);
   for (int i = 0; i < response->nbDiskServers; i++) {
     struct stage_diskServerDescription& dsd = response->diskServers[i];
-    if (siflag) {
-      u64tostrsi(dsd.freeSpace, freeBuf, 0);
-      u64tostrsi(dsd.totalSpace, totalBuf, 0);
-    } else {
-      u64tostru(dsd.freeSpace, freeBuf, 0);
-      u64tostru(dsd.totalSpace, totalBuf, 0);
-    }
+    printSizeToBuf(freeBuf, response->freeSpace, siflag);
+    printSizeToBuf(totalBuf, response->totalSpace, siflag);
     if (0 == dsd.totalSpace) {
       strncpy(freepBuf, " -", 3);
     } else {
@@ -445,22 +447,17 @@ EXTERN_C void DLL_DECL stage_print_diskpoolquery_resp
     dsd.name,
     stage_diskServerStatusName(dsd.status),
     totalBuf, freeBuf, freepBuf);
-    fprintf(stream, "     %-33s %-23s %-10s    FREE       GCBOUNDS\n", "FileSystems", "STATUS", "CAPACITY");
+    fprintf(stream, "     %-25s %-23s %-16s          FREE           GCBOUNDS\n", "FileSystems", "STATUS", "CAPACITY");
     for (int j = 0; j < dsd.nbFileSystems; j++) {
       struct stage_fileSystemDescription& fsd = dsd.fileSystems[j];
-      if (siflag) {
-	u64tostrsi(fsd.freeSpace, freeBuf, 0);
-	u64tostrsi(fsd.totalSpace, totalBuf, 0);
-      } else {
-	u64tostru(fsd.freeSpace, freeBuf, 0);
-	u64tostru(fsd.totalSpace, totalBuf, 0);
-      }
+      printSizeToBuf(freeBuf, response->freeSpace, siflag);
+      printSizeToBuf(totalBuf, response->totalSpace, siflag);
       if (0 == fsd.totalSpace) {
         strncpy(freepBuf, " -", 3);
       } else {
         snprintf(freepBuf, 3, "%2lld", (100*fsd.freeSpace)/fsd.totalSpace);
       }
-      fprintf(stream, "     %-33s %-23s %-10s %7s(%-2s%%) %4.2f, %4.2f\n",
+      fprintf(stream, "     %-25s %-23s %-16s %16s(%-2s%%) %4.2f, %4.2f\n",
       fsd.mountPoint,
       stage_fileSystemStatusName(fsd.status),
       totalBuf, freeBuf, freepBuf,

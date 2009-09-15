@@ -54,6 +54,9 @@ stager_qry \- query the CASTOR stager for files and requests
 .BI diskPool
 ]
 [
+.BI -H
+]
+[
 .BI -i
 ]
 [
@@ -174,8 +177,13 @@ Specifies the disk pool for which statistics should be displayed. It has to be u
 and takes precedence over
 .BI \-S
 .TP
+.BI \-H,\ \-\-human\-readable
+Print sizes in human readable format (e.g., 1K 234M 2G) using powers of 1024.
+.TP
 .BI \-i,\ \-\-si
-Print size related information in powers of 1000 not 1024.
+Print sizes in human readable format (e.g., 1K 234M 2G) using SI units, e.g. powers of 1000 not 1024.
+Note that this option takes precedence over
+.B \-H
 .TP
 .BI \-h,\ \-\-help
 display command usage help
@@ -235,7 +243,7 @@ Received 1 responses
 /castor/cern.ch/user/t/test2/file 59316770@castorns STAGEOUT
 .fi
 
-$ stager_qry -s
+$ stager_qry -sH
 .fi
 .nf
 POOL default          CAPACITY 893.82G    FREE 889.62G(99%)

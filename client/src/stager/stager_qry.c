@@ -47,6 +47,7 @@ static struct Coptions longopts[] =
     {"svcClass",           REQUIRED_ARGUMENT,  NULL,      'S'},
     {"help",               NO_ARGUMENT,        NULL,      'h'},
     {"si",                 NO_ARGUMENT,        NULL,      'i' },
+    {"human-readable",     NO_ARGUMENT,        NULL,      'H' },
     {NULL,                 0,                  NULL,       0 }
   };
 
@@ -74,6 +75,7 @@ static struct Coptions longopts_diskPoolQuery[] =
     {"diskPool",          REQUIRED_ARGUMENT,  NULL,      'd'},
     {"svcClass",          REQUIRED_ARGUMENT,  NULL,      'S'},
     {"si",                NO_ARGUMENT,        NULL,      'i'},
+    {"human-readable",    NO_ARGUMENT,        NULL,      'H' },
     {NULL,                0,                  NULL,       0 }
   };
 
@@ -426,8 +428,9 @@ int parseCmdLineDiskPoolQuery(int argc, char *argv[],
   Coptind = 1;
   Copterr = 1;
   errflg = 0;
+  *siflag = 0;
   while ((c = Cgetopt_long (argc, argv,
-                            "sd:S:i",
+                            "sd:S:iH",
                             longopts_diskPoolQuery, NULL)) != -1) {
     switch (c) {
     case 'd':
@@ -437,7 +440,10 @@ int parseCmdLineDiskPoolQuery(int argc, char *argv[],
       *svcClass = (char *)strdup(Coptarg);
       break;
     case 'i':
-      *siflag = 1;
+      *siflag |= SIUNITS;
+      break;
+    case 'H':
+      *siflag |= HUMANREADABLE;
       break;
     case 's':
       break;
@@ -464,7 +470,7 @@ int checkAndCountArguments(int argc, char *argv[],
   *count = 0;
   *type = FILEQUERY;
   while ((c = Cgetopt_long
-          (argc, argv, "M:f:F:U:r:nhsd:S:i", longopts, NULL)) != -1) {
+          (argc, argv, "M:f:F:U:r:nhsd:S:iH", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
     case 'F':
@@ -494,6 +500,7 @@ int checkAndCountArguments(int argc, char *argv[],
     case 'i':
     case 'n':
     case 'd':
+    case 'H':
       break;
     case 'h':
     default:
@@ -516,5 +523,5 @@ void usage(char *cmd) {
   fprintf (stderr, "%s",
            "[-M hsmfile [-M ...]] [-f hsmFileList] [-F fileid@nshost] [-S svcClass] [-U usertag] [-r requestid] [-n] [-h]\n");
   fprintf (stderr, "       %s ", cmd);
-  fprintf (stderr, "%s", "-s [-S svcClass] [-d diskPool] [-i] [-h]\n");
+  fprintf (stderr, "%s", "-s [-S svcClass] [-d diskPool] [-H] [-i] [-h]\n");
 }
