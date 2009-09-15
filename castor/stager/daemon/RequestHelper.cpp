@@ -235,7 +235,7 @@ namespace castor{
           castorFile = stagerService->selectCastorFile
             (cnsFileId.fileid, cnsFileId.server, svcClassId, fileClassId,
              stgCnsHelper->cnsFilestat.filesize,
-             subrequest->fileName(), stgCnsHelper->cnsFilestat.ctime);
+             subrequest->fileName(), stgCnsHelper->cnsFilestat.mtime);
 
           subrequest->setCastorFile(castorFile);
           castorFile->setFileClass(fileClass);
