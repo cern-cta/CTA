@@ -978,6 +978,9 @@ EXTERN_C int DLL_DECL stage_listPrivileges _PROTO ((int user,
 
 enum query_type { BY_FILENAME, BY_REQID, BY_USERTAG, BY_FILEID, BY_REQID_GETNEXT, BY_USERTAG_GETNEXT };
 
+/* values for the siflag parameter of stager_qry -s */
+enum output_units { SIUNITS = 01, HUMANREADABLE = 02 };
+
 
 /**
  * Query request input structure
