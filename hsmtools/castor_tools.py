@@ -43,7 +43,7 @@ def getStagerDBConnectParams():
     passwd = ""
     dbname = ""
     for l in open ('/etc/castor/ORASTAGERCONFIG').readlines():
-        if l.strip()[0] == '#':
+        if len(l.strip()) == 0 or l.strip()[0] == '#':
             continue
         try:
             instance, entry, value = l.split()
