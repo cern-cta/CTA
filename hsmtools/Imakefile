@@ -35,7 +35,7 @@ NormalProgramTarget(listPriority,listPriority.Osuf,$(DEPLIB),$(LIBS),755)
 NormalProgramTarget(enterPriority,enterPriority.Osuf,$(DEPLIB),$(LIBS),755)
 NormalProgramTarget(deletePriority,deletePriority.Osuf,$(DEPLIB),$(LIBS),755)
 rfcpupd.c: ../rfio/rfcp.c
-	sed 's/| *O_TRUNC//' $< | sed 's/O_RDONLY/O_RDWR/' | sed 's/O_WRONLY/O_RDWR|O_APPEND/' > $@
+	sed 's/| *O_TRUNC//' $< | sed 's/O_WRONLY/O_RDWR|O_APPEND/' > $@
 rfcpupd.Osuf: rfcpupd.c
 	$(CC) $(DEBUG) -I../h $(MTCCFLAGS) $(RFIOFLAGS) $(ACCTFLAG) -c -o $@ $<
 FilesToClean += rfcpupd.c
