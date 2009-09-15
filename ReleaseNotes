@@ -886,7 +886,7 @@
         xrootd-xcastor2fs and xrootd packages are no longer compatible with
         this release and will also need to be upgraded.
 
-      - It is recommended after applying all database procedures to the stager
+      - It is recommended before applying all database procedures to the stager
         database to ask your DBA to export and reimport the database schema as
         this will effectively SHRINK all tables reclaiming unused disk space.
 
