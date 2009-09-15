@@ -179,6 +179,8 @@ runCommand('make -f Makefile.ini Makefiles',
            'Error while creating Makefiles')
 runCommand('make doxygen',
            'Error while creating doxygen documentation')
+runCommand('cat \'<META HTTP-EQUIV="refresh" CONTENT="CASTOR2/doc/html/index.html">\' > doxygenDoc.html',
+           'Error while linking doxygen documentation from top level')
 
 # cleanup
 shutil.rmtree(workDir)
