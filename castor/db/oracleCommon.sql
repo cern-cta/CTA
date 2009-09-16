@@ -155,6 +155,25 @@ BEGIN
 END;
 /
 
+/* Function to check if a diskserver and its given mountpoints have any files
+ * attached to them.
+ */
+CREATE OR REPLACE
+FUNCTION checkIfFilesExist(diskServerName IN VARCHAR2, mountPointName IN VARCHAR2)
+RETURN NUMBER AS
+  rtn NUMBER;
+BEGIN
+  SELECT count(*) INTO rtn
+    FROM DiskCopy, FileSystem, DiskServer
+   WHERE DiskCopy.fileSystem = FileSystem.id
+     AND FileSystem.diskserver = DiskServer.id
+     AND DiskServer.name = diskServerName
+     AND (FileSystem.mountpoint = mountPointName 
+      OR  length(mountPointName) IS NULL)
+     AND rownum = 1;
+  RETURN rtn;
+END;
+/
 
 /* PL/SQL method deleting tapecopies (and segments) of a castorfile */
 CREATE OR REPLACE PROCEDURE deleteTapeCopies(cfId NUMBER) AS
