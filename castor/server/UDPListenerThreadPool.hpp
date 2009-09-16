@@ -83,6 +83,13 @@ namespace castor {
        */
       virtual void listenLoop();
 
+      /**
+       * Terminates the work to be done when the thread pool is exhausted,
+       * by simply freeing the received object.
+       * @param param user parameter that would have been passed to a thread
+       */
+      virtual void terminate(void* param);
+
     };
 
   } // end of namespace server
