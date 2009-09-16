@@ -56,7 +56,7 @@
 #define DEFAULT_INITTHREADS      5
 #define DEFAULT_MAXTHREADS       20
 #define DEFAULT_THRESHOLD        50
-#define DEFAULT_MAXTASKS         10
+#define DEFAULT_MAXTASKS         50
 
 #define MAX_THREADPOOL_SIZE      512
 
