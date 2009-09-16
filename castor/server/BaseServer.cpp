@@ -147,6 +147,8 @@ void castor::server::BaseServer::dlfInit(castor::dlf::Message messages[])
      { 16, "Exception during wait for signal loop" },
      { 18, "No idle thread in pool to process request" },
      { 19, "Error while dispatching to a thread" },
+     { 20, "Spawning a new thread in pool" },
+     { 21, "Terminating a thread in pool" },
      { -1, "" }};
   castor::dlf::dlf_addMessages(DLF_BASE_FRAMEWORK, frameworkMessages);
 }

@@ -76,6 +76,7 @@ void castor::server::DynamicThreadPool::setNbThreads(unsigned int value)
   if(m_initThreads == m_maxThreads) {
     m_initThreads = m_maxThreads = value;
   } else {
+    // Preserve the current offset between init and max if possible
     m_maxThreads += (int)(value - m_initThreads);
     m_initThreads = value;
     if(m_maxThreads < value) {
@@ -201,7 +202,8 @@ void* castor::server::DynamicThreadPool::_producer(void *arg) {
   try {
     // this is supposed to run forever
     pool->m_producerThread->run(pool);
-  } catch(castor::exception::Exception any) {
+  }
+  catch(castor::exception::Exception any) {
     // "Uncaught exception in a thread from pool"
     castor::dlf::Param params[] =
       {castor::dlf::Param("ThreadPool", pool->m_poolName),
@@ -274,6 +276,11 @@ void* castor::server::DynamicThreadPool::_consumer(void *arg) {
     if ((pool->m_taskQueue.size() < pool->m_threshold) &&
         (pool->m_nbThreads > pool->m_initThreads) &&
         (time(NULL) - pool->m_lastPoolShrink > 10)) {
+      // "Terminating a thread in pool"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("ThreadPool", pool->m_poolName)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+                              DLF_BASE_FRAMEWORK + 21, 1, params);
       pool->m_nbThreads--;
       pool->m_lastPoolShrink = time(NULL);
       
@@ -330,6 +337,11 @@ void castor::server::DynamicThreadPool::addTask(void *data, bool wait)
     rv = pthread_create(&t, &m_attr, (void *(*)(void *))&castor::server::DynamicThreadPool::_consumer, this);
     if (rv == 0) {
       m_nbThreads++;
+      // "Spawning a new thread in pool"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("ThreadPool", m_poolName)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+                              DLF_BASE_FRAMEWORK + 20, 1, params);
     }
   }
   pthread_mutex_unlock(&m_lock);
