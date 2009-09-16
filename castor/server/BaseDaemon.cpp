@@ -149,7 +149,7 @@ void castor::server::BaseDaemon::handleSignals()
           // "Caught signal - GRACEFUL STOP"
           castor::dlf::Param params[] =
             {castor::dlf::Param("Type", "SIGTERM"),
-             castor::dlf::Param("Message", "Shutting down the service")};
+             castor::dlf::Param("Action", "Shutting down the service")};
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
                                   DLF_BASE_FRAMEWORK + 12, 2, params);
           // Wait on all threads/processes to terminate
@@ -157,7 +157,7 @@ void castor::server::BaseDaemon::handleSignals()
           // "Caught signal - GRACEFUL STOP"
           castor::dlf::Param params2[] =
             {castor::dlf::Param("Type", "SIGTERM"),
-             castor::dlf::Param("Message", "Shut down successfully completed")};
+             castor::dlf::Param("Action", "Shut down successfully completed")};
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
                                   DLF_BASE_FRAMEWORK + 12, 2, params2);
           dlf_shutdown();
@@ -176,7 +176,7 @@ void castor::server::BaseDaemon::handleSignals()
                 castor::dlf::Param params[] =
                   {castor::dlf::Param("Signal", "SIGCHLD"),
                    castor::dlf::Param("PID", pid),
-                   castor::dlf::Param("Message", "Terminated normally")};
+                   castor::dlf::Param("Action", "Terminated normally")};
                 castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
                                         DLF_BASE_FRAMEWORK + 14, 3, params);
               } else {
@@ -184,7 +184,7 @@ void castor::server::BaseDaemon::handleSignals()
                 castor::dlf::Param params[] =
                   {castor::dlf::Param("Signal", "SIGCHLD"),
                    castor::dlf::Param("PID", pid),
-                   castor::dlf::Param("Message", "Terminated unexpectedly"),
+                   castor::dlf::Param("Action", "Terminated unexpectedly"),
                    castor::dlf::Param("ExitCode", WTERMSIG(status))};
                 castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
                                         DLF_BASE_FRAMEWORK + 14, 4, params);
@@ -194,7 +194,7 @@ void castor::server::BaseDaemon::handleSignals()
               castor::dlf::Param params[] =
                 {castor::dlf::Param("Signal", "SIGCHLD"),
                  castor::dlf::Param("PID", pid),
-                 castor::dlf::Param("Message", "Exited with signal"),
+                 castor::dlf::Param("Action", "Exited with signal"),
                  castor::dlf::Param("ExitCode", WTERMSIG(status))};
               castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
                                       DLF_BASE_FRAMEWORK + 14, 4, params);
