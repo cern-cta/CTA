@@ -26,6 +26,7 @@
  *****************************************************************************/
 
 // Include files
+#include "castor/monitoring/rmmaster/IRmMasterSvc.hpp"
 #include "castor/monitoring/rmmaster/ora/StatusUpdateHelper.hpp"
 #include "castor/monitoring/ClusterStatus.hpp"
 #include "castor/monitoring/DiskServerStatus.hpp"
@@ -40,7 +41,10 @@
 #include "castor/exception/NoEntry.hpp"
 #include "castor/stager/DiskServer.hpp"
 #include "castor/stager/FileSystem.hpp"
+#include "castor/Services.hpp"
 #include "castor/Constants.hpp"
+#include "castor/IService.hpp"
+#include "castor/db/DbCnvSvc.hpp"
 #include <time.h>
 #include <errno.h>
 
@@ -104,7 +108,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleStateUpdate
     if (production) {
       // "Heartbeat resumed for diskserver, status changed to PRODUCTION"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("DiskServer", state->name())};
+        {castor::dlf::Param("DiskServer", state->name())};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 39, 1, params);
     }
   }
@@ -112,12 +116,12 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleStateUpdate
   // Update status if needed
   if (production) {
     if (it->second.adminStatus() == ADMIN_NONE ||
-	state->adminStatus() != ADMIN_NONE) {
+        state->adminStatus() != ADMIN_NONE) {
       it->second.setStatus(state->status());
       if (state->adminStatus() == ADMIN_FORCE) {
-	it->second.setAdminStatus(ADMIN_FORCE);
+        it->second.setAdminStatus(ADMIN_FORCE);
       } else {
-	it->second.setAdminStatus(ADMIN_NONE);
+        it->second.setAdminStatus(ADMIN_NONE);
       }
     }
   } else {
@@ -143,18 +147,18 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleStateUpdate
     // (other than the one that created the empty string).
     if ((*itFs)->mountPoint().size() == 0) {
       if (production) {
-	// "Ignored state report for filesystem with empty name"
-	castor::dlf::Param params[] =
-	  {castor::dlf::Param("DiskServer", state->name())};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 27, 1, params);
+        // "Ignored state report for filesystem with empty name"
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("DiskServer", state->name())};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 27, 1, params);
       }
       continue;
     }
     // Take care of the FileSystem creation
     castor::monitoring::DiskServerStatus::iterator it2;
     if (!getOrCreateFileSystem(it->second,
-			       (*itFs)->mountPoint(),
-			       it2)) {
+                               (*itFs)->mountPoint(),
+                               it2)) {
       return;
     }
 
@@ -168,13 +172,13 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleStateUpdate
     // Update status if needed
     if (production) {
       if (it2->second.adminStatus() == ADMIN_NONE ||
-	  (*itFs)->adminStatus() != ADMIN_NONE) {
-	it2->second.setStatus((*itFs)->status());
-	if ((*itFs)->adminStatus() == ADMIN_FORCE) {
-	  it2->second.setAdminStatus(ADMIN_FORCE);
-	} else {
-	  it2->second.setAdminStatus(ADMIN_NONE);
-	}
+          (*itFs)->adminStatus() != ADMIN_NONE) {
+        it2->second.setStatus((*itFs)->status());
+        if ((*itFs)->adminStatus() == ADMIN_FORCE) {
+          it2->second.setAdminStatus(ADMIN_FORCE);
+        } else {
+          it2->second.setAdminStatus(ADMIN_NONE);
+        }
       }
     } else {
       it2->second.setStatus((*itFs)->status());
@@ -207,8 +211,8 @@ castor::monitoring::rmmaster::ora::StatusUpdateHelper::getOrCreateDiskServer
       // cast won't work since we need to allocate memory
       const castor::monitoring::SharedMemoryString smName2(name.c_str());
       it = m_clusterStatus->insert
-	(std::make_pair(smName2,
-			castor::monitoring::DiskServerStatus())).first;
+        (std::make_pair(smName2,
+                        castor::monitoring::DiskServerStatus())).first;
     } catch (std::exception e) {
       // "Unable to allocate SharedMemoryString"
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28, 0, 0);
@@ -240,10 +244,10 @@ castor::monitoring::rmmaster::ora::StatusUpdateHelper::getOrCreateFileSystem
       // Here we really have to create a shared memory string, the previous
       // cast won't work
       const castor::monitoring::SharedMemoryString smMountPoint2
-	(mountPoint.c_str());
+        (mountPoint.c_str());
       it2 = dss.insert(std::make_pair
-		       (smMountPoint2,
-			castor::monitoring::FileSystemStatus())).first;
+                       (smMountPoint2,
+                        castor::monitoring::FileSystemStatus())).first;
     } catch (std::exception e) {
       // "Unable to allocate SharedMemoryString"
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28, 0, 0);
@@ -314,8 +318,8 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleMetricsUpdate
     // Take care of the FileSystem creation
     castor::monitoring::DiskServerStatus::iterator it2;
     if (!getOrCreateFileSystem(it->second,
-			       (*itFs)->mountPoint(),
-			       it2)) {
+                               (*itFs)->mountPoint(),
+                               it2)) {
       return;
     }
 
@@ -372,6 +376,31 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleMetricsUpdate
 
 
 //-----------------------------------------------------------------------------
+// CheckIfFilesExist
+//-----------------------------------------------------------------------------
+bool castor::monitoring::rmmaster::ora::StatusUpdateHelper::checkIfFilesExist
+(std::string diskServer, std::string mountPoint)
+  throw (castor::exception::Exception) {
+  // Get the rmMasterService
+  castor::Services* svcs = castor::BaseObject::services();
+  castor::IService* svc = svcs->service("OraRmMasterSvc",
+                                        castor::SVC_ORARMMASTERSVC);
+  castor::monitoring::rmmaster::IRmMasterSvc *rmMasterService =
+    dynamic_cast<castor::monitoring::rmmaster::IRmMasterSvc *>(svc);
+
+  // Call the OraRmMaster service
+  bool rtn = rmMasterService->checkIfFilesExist(diskServer, mountPoint);
+
+  // Now let's free up the database connection, which otherwise remains idle
+  svc = svcs->service("DbCnvSvc", castor::SVC_DBCNV);
+  castor::db::DbCnvSvc* dbSvc = dynamic_cast<castor::db::DbCnvSvc*>(svc);
+  dbSvc->dropConnection();
+
+  return rtn;
+}
+
+
+//-----------------------------------------------------------------------------
 // HandleDiskServerAdminUpdate
 //-----------------------------------------------------------------------------
 void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleDiskServerAdminUpdate
@@ -406,7 +435,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleDiskServerAdmi
   castor::monitoring::ClusterStatus::iterator it =
     m_clusterStatus->find(*smDiskServerName);
   if (it == m_clusterStatus->end()) {
-    // "Ignored admin diskServer report for unknown machine"
+    // "Ignored admin diskserver report for unknown machine"
     castor::dlf::Param params[] =
       {castor::dlf::Param("DiskServer", admin->diskServerName()),
        castor::dlf::Param("IP", castor::dlf::IPAddress(ip))};
@@ -415,8 +444,8 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleDiskServerAdmi
     // Inform user via the exception mechanism
     castor::exception::NoEntry e;
     e.getMessage() << "Unknown machine '"
-		   << admin->diskServerName()
-		   << "'. Please check the name and provide the domain.";
+                   << admin->diskServerName()
+                   << "'. Please check the name and provide the domain.";
     throw e;
   }
 
@@ -427,8 +456,22 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleDiskServerAdmi
       // Inform user via the exception mechanism
       castor::exception::NoEntry e;
       e.getMessage() << "Unknown machine '"
-		     << admin->diskServerName()
-		     << "'. Diskserver has been previously deleted";
+                     << admin->diskServerName()
+                     << "'. Diskserver has been previously deleted.";
+      throw e;
+    }
+  }
+
+  // Throw an error if someone is attempting to delete a diskserver or
+  // filesystem which has files still attached to it.
+  if ((it->second.adminStatus() == ADMIN_NONE ||
+       admin->adminStatus() != ADMIN_NONE)
+      && (admin->adminStatus() == ADMIN_DELETED)) {
+    if (checkIfFilesExist(admin->diskServerName())) {
+      castor::exception::Exception e(EEXIST);
+      e.getMessage() << "Unable to delete diskserver '"
+                     << admin->diskServerName()
+                     << "'. The diskserver is not empty!";
       throw e;
     }
   }
@@ -441,25 +484,25 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleDiskServerAdmi
       it->second.setAdminStatus(ADMIN_DELETED);
       // "Admin change request detected, diskserver DELETED"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("DiskServer", admin->diskServerName()),
-	 castor::dlf::Param("IP", castor::dlf::IPAddress(ip))};
+        {castor::dlf::Param("DiskServer", admin->diskServerName()),
+         castor::dlf::Param("IP", castor::dlf::IPAddress(ip))};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 42, 2, params);
     } else {
       it->second.setStatus(admin->status());
       if (admin->adminStatus() == ADMIN_FORCE) {
-	it->second.setAdminStatus(ADMIN_FORCE);
+        it->second.setAdminStatus(ADMIN_FORCE);
       } else {
-	it->second.setAdminStatus(ADMIN_NONE);
+        it->second.setAdminStatus(ADMIN_NONE);
       }
       // "Admin change request detected for diskserver, setting new status"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("DiskServerName", admin->diskServerName()),
-	 castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
-	 castor::dlf::Param("Status",
-	   castor::stager::DiskServerStatusCodeStrings[admin->status()]),
-	 castor::dlf::Param("AdminStatus",
-	   castor::monitoring::AdminStatusCodesStrings[admin->adminStatus()]),
-	 castor::dlf::Param("Recursive", admin->recursive() ? "yes" : "no")};
+        {castor::dlf::Param("DiskServerName", admin->diskServerName()),
+         castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
+         castor::dlf::Param("Status",
+           castor::stager::DiskServerStatusCodeStrings[admin->status()]),
+         castor::dlf::Param("AdminStatus",
+           castor::monitoring::AdminStatusCodesStrings[admin->adminStatus()]),
+         castor::dlf::Param("Recursive", admin->recursive() ? "yes" : "no")};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 43, 5, params);
     }
   }
@@ -467,32 +510,32 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleDiskServerAdmi
   // Go over the fileSystems if required
   if (admin->recursive()) {
     for (castor::monitoring::DiskServerStatus::iterator it2 =
-	   it->second.begin();
-	 it2 != it->second.end();
-	 it2++) {
+           it->second.begin();
+         it2 != it->second.end();
+         it2++) {
       // Update status if needed
       if (it2->second.adminStatus() == ADMIN_NONE ||
-	  admin->adminStatus() != ADMIN_NONE) {
-	if (admin->adminStatus() == ADMIN_DELETED) {
-	  it2->second.setStatus(castor::stager::FILESYSTEM_DISABLED);
-	  it2->second.setAdminStatus(ADMIN_DELETED);
-	} else {
-	  switch (admin->status()) {
-	  case castor::stager::DISKSERVER_PRODUCTION :
-	    it2->second.setStatus(castor::stager::FILESYSTEM_PRODUCTION);
-	    break;
-	  case castor::stager::DISKSERVER_DRAINING :
-	    it2->second.setStatus(castor::stager::FILESYSTEM_DRAINING);
-	    break;
-	  case castor::stager::DISKSERVER_DISABLED :
-	    it2->second.setStatus(castor::stager::FILESYSTEM_DISABLED);
-	  }
-	  if (admin->adminStatus() == ADMIN_FORCE) {
-	    it2->second.setAdminStatus(ADMIN_FORCE);
-	  } else {
-	    it2->second.setAdminStatus(ADMIN_NONE);
-	  }
-	}
+          admin->adminStatus() != ADMIN_NONE) {
+        if (admin->adminStatus() == ADMIN_DELETED) {
+          it2->second.setStatus(castor::stager::FILESYSTEM_DISABLED);
+          it2->second.setAdminStatus(ADMIN_DELETED);
+        } else {
+          switch (admin->status()) {
+          case castor::stager::DISKSERVER_PRODUCTION :
+            it2->second.setStatus(castor::stager::FILESYSTEM_PRODUCTION);
+            break;
+          case castor::stager::DISKSERVER_DRAINING :
+            it2->second.setStatus(castor::stager::FILESYSTEM_DRAINING);
+            break;
+          case castor::stager::DISKSERVER_DISABLED :
+            it2->second.setStatus(castor::stager::FILESYSTEM_DISABLED);
+          }
+          if (admin->adminStatus() == ADMIN_FORCE) {
+            it2->second.setAdminStatus(ADMIN_FORCE);
+          } else {
+            it2->second.setAdminStatus(ADMIN_NONE);
+          }
+        }
       }
     }
   }
@@ -541,7 +584,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleFileSystemAdmi
   castor::monitoring::ClusterStatus::iterator it =
     m_clusterStatus->find(*smDiskServerName);
   if (it == m_clusterStatus->end()) {
-    // "Ignored admin fileSystem report for unknown machine"
+    // "Ignored admin filesystem report for unknown machine"
     castor::dlf::Param params[] =
       {castor::dlf::Param("DiskServer", admin->diskServerName()),
        castor::dlf::Param("IP", castor::dlf::IPAddress(ip))};
@@ -550,8 +593,8 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleFileSystemAdmi
     // Inform user via the exception mechanism
     castor::exception::NoEntry e;
     e.getMessage() << "Unknown machine '"
-		   << admin->diskServerName()
-		   << "'. Please check the name and provide the domain.";
+                   << admin->diskServerName()
+                   << "'. Please check the name and provide the domain.";
     throw e;
   }
 
@@ -566,7 +609,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleFileSystemAdmi
   castor::monitoring::DiskServerStatus::iterator it2 =
     it->second.find(*smMountPoint);
   if (it2 == it->second.end()) {
-    // "Ignored admin fileSystem report for unknown mountPoint"
+    // "Ignored admin filesystem report for unknown mountpoint"
     castor::dlf::Param params[] =
       {castor::dlf::Param("DiskServer", admin->diskServerName()),
        castor::dlf::Param("MountPoint", admin->mountPoint()),
@@ -575,11 +618,11 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleFileSystemAdmi
 
     // Inform user via the exception mechanism
     castor::exception::NoEntry e;
-    e.getMessage() << "Unknown mountPoint '"
-		   << admin->mountPoint()
-		   << "' on machine '"
-		   << admin->diskServerName()
-		   << "'.";
+    e.getMessage() << "Unknown mountpoint '"
+                   << admin->mountPoint()
+                   << "' on diskserver '"
+                   << admin->diskServerName()
+                   << "'.";
     throw e;
   }
 
@@ -590,23 +633,39 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleFileSystemAdmi
       // Inform user via the exception mechanism
       castor::exception::NoEntry e;
       if (it2->second.adminStatus() == ADMIN_DELETED) {
-	e.getMessage() << "Unknown mountPoint '"
-		       << admin->mountPoint()
-		       << "' on machine '"
-		       << admin->diskServerName()
-		       << "'. Filesystem has been previously deleted.";
+        e.getMessage() << "Unknown mountpoint '"
+                       << admin->mountPoint()
+                       << "' on diskserver '"
+                       << admin->diskServerName()
+                       << "'. Filesystem has been previously deleted.";
       } else {
-	e.getMessage() << "Unknown mountPoint '"
-		       << admin->mountPoint()
-		       << "' on machine '"
-		       << admin->diskServerName()
-		       << "'. Diskserver has been previously deleted.";
+        e.getMessage() << "Unknown mountpoint '"
+                       << admin->mountPoint()
+                       << "' on diskserver '"
+                       << admin->diskServerName()
+                       << "'. Diskserver has been previously deleted.";
       }
       throw e;
     }
   }
 
-  // Update status if needed
+  // Throw an error if someone is attempting to delete a diskserver or
+  // filesystem which has files still attached to it.
+  if ((it2->second.adminStatus() == ADMIN_NONE ||
+       admin->adminStatus() != ADMIN_NONE)
+      && (admin->adminStatus() == ADMIN_DELETED)) {
+    if (checkIfFilesExist(admin->diskServerName(), admin->mountPoint())) {
+      castor::exception::Exception e(EEXIST);
+      e.getMessage() << "Unable to delete mountpoint '"
+                     << admin->mountPoint()
+                     << "' on diskserver '"
+                     << admin->diskServerName()
+                     << "'. The mountpoint is not empty!";
+      throw e;
+    }
+  }
+
+ // Update status if needed
   if (it2->second.adminStatus() == ADMIN_NONE ||
       admin->adminStatus() != ADMIN_NONE) {
     if (admin->adminStatus() == ADMIN_DELETED) {
@@ -614,25 +673,25 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleFileSystemAdmi
       it2->second.setAdminStatus(ADMIN_DELETED);
       // "Admin change request detected, filesystem DELETED"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("DiskServer", admin->diskServerName()),
-	 castor::dlf::Param("MountPoint", admin->mountPoint()),
-	 castor::dlf::Param("IP", castor::dlf::IPAddress(ip))};
+        {castor::dlf::Param("DiskServer", admin->diskServerName()),
+         castor::dlf::Param("MountPoint", admin->mountPoint()),
+         castor::dlf::Param("IP", castor::dlf::IPAddress(ip))};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 40, 3, params);
     } else {
       it2->second.setStatus(admin->status());
       if (admin->adminStatus() == ADMIN_FORCE) {
-	it2->second.setAdminStatus(ADMIN_FORCE);
+        it2->second.setAdminStatus(ADMIN_FORCE);
       } else {
-	it2->second.setAdminStatus(ADMIN_NONE);
+        it2->second.setAdminStatus(ADMIN_NONE);
       }
       // "Admin change request detected for filesystem, setting new status"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("DiskServer", admin->diskServerName()),
-	 castor::dlf::Param("MountPoint", admin->mountPoint()),
-	 castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
-	 castor::dlf::Param("Status",
+        {castor::dlf::Param("DiskServer", admin->diskServerName()),
+         castor::dlf::Param("MountPoint", admin->mountPoint()),
+         castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
+         castor::dlf::Param("Status",
            castor::stager::FileSystemStatusCodesStrings[admin->status()]),
-	 castor::dlf::Param("AdminStatus",
+         castor::dlf::Param("AdminStatus",
            castor::monitoring::AdminStatusCodesStrings[admin->adminStatus()])};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 41, 5, params);
     }

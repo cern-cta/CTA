@@ -59,13 +59,27 @@ namespace castor {
          * Retrieves the last known cluster status from the stager database
          * and updates the passed ClusterStatus
          * @param clusterStatus the ClusterStatus as known by RmMaster
-	 * @param dsDisabled flag to indicate whether the diskservers should
-	 * be added to the shared memory in a disabled state or the state as
-	 * defined in the database
+         * @param dsDisabled flag to indicate whether the diskservers should
+         * be added to the shared memory in a disabled state or the state as
+         * defined in the database
          * @exception Exception in case of error
          */
         virtual void retrieveClusterStatus
         (castor::monitoring::ClusterStatus* clusterStatus, bool dsDisabled)
+          throw (castor::exception::Exception) = 0;
+
+        /**
+         * Check to see if the diskserver and optionally its mountpoint
+         * have files associated to them. If the mountpoint is not provided
+         * the check will be executed for all mountpoints associated to the
+         * diskserver.
+         * @param diskServer the name of the diskServer
+         * @param mountPoint the mountPoint of the fileSystem
+         * @return true if files exists otherwise false.
+         * @exception Exception in case of error
+         */
+        virtual bool checkIfFilesExist
+        (std::string diskServer, std::string mountPoint)
           throw (castor::exception::Exception) = 0;
 
       }; // end of class IRmMasterSvc

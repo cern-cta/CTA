@@ -67,21 +67,29 @@ new castor::SvcFactory<castor::monitoring::rmmaster::ora::OraRmMasterSvc>();
 //-----------------------------------------------------------------------------
 /// SQL statement for storeClusterStatus
 const std::string castor::monitoring::rmmaster::ora::OraRmMasterSvc::s_storeClusterStatusStatementString =
-"BEGIN storeClusterStatus(:1, :2, :3, :4); END;";
+  "BEGIN storeClusterStatus(:1, :2, :3, :4); END;";
 
+/// SQL statement for getDiskServersStatementString
 const std::string castor::monitoring::rmmaster::ora::OraRmMasterSvc::s_getDiskServersStatementString =
-"SELECT id, name, adminStatus, status FROM DiskServer";
+  "SELECT id, name, adminStatus, status FROM DiskServer";
 
+/// SQL statement for getFileSystemsStatementString
 const std::string castor::monitoring::rmmaster::ora::OraRmMasterSvc::s_getFileSystemsStatementString =
-"SELECT mountPoint, adminStatus, status FROM FileSystem WHERE diskServer = :1";
+  "SELECT mountPoint, adminStatus, status FROM FileSystem WHERE diskServer = :1";
+
+/// SQL statement for checkIfFilesExistStatementString
+const std::string castor::monitoring::rmmaster::ora::OraRmMasterSvc::s_checkIfFilesExistStatementString =
+  "SELECT checkIfFilesExist(:1, :2) FROM Dual";
 
 //-----------------------------------------------------------------------------
 // OraRmMasterSvc
 //-----------------------------------------------------------------------------
 castor::monitoring::rmmaster::ora::OraRmMasterSvc::OraRmMasterSvc(const std::string name) :
   OraCommonSvc(name),
-  m_storeClusterStatusStatement(0), m_getDiskServersStatement(0),
-  m_getFileSystemsStatement (0) {}
+  m_storeClusterStatusStatement(0),
+  m_getDiskServersStatement(0),
+  m_getFileSystemsStatement(0),
+  m_checkIfFilesExistStatement(0) {}
 
 //-----------------------------------------------------------------------------
 // ~OraRmMasterSvc
@@ -112,23 +120,29 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::reset() throw() {
   // If something goes wrong, we just ignore it
   OraCommonSvc::reset();
   try {
-    if(m_storeClusterStatusStatement) deleteStatement(m_storeClusterStatusStatement);
-    if(m_getDiskServersStatement) deleteStatement(m_getDiskServersStatement);
-    if(m_getFileSystemsStatement) deleteStatement(m_getFileSystemsStatement);
+    if(m_storeClusterStatusStatement)
+      deleteStatement(m_storeClusterStatusStatement);
+    if(m_getDiskServersStatement)
+      deleteStatement(m_getDiskServersStatement);
+    if(m_getFileSystemsStatement)
+      deleteStatement(m_getFileSystemsStatement);
+    if(m_checkIfFilesExistStatement)
+      deleteStatement(m_checkIfFilesExistStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_storeClusterStatusStatement = 0;
-  m_getDiskServersStatement = 0;
-  m_getFileSystemsStatement = 0;
+  m_getDiskServersStatement     = 0;
+  m_getFileSystemsStatement     = 0;
+  m_checkIfFilesExistStatement  = 0;
 }
 
 //-----------------------------------------------------------------------------
 // fillOracleBuffer
 //-----------------------------------------------------------------------------
 inline void fillOracleBuffer(unsigned char buf[][21],
-			     ub2* lensBuf,
-			     unsigned int index,
-			     oracle::occi::Number value) {
+                             ub2* lensBuf,
+                             unsigned int index,
+                             oracle::occi::Number value) {
   oracle::occi::Bytes b = value.toBytes();
   b.getBytes(buf[index],b.length());
   lensBuf[index] = b.length();
@@ -144,14 +158,14 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
     try {
       // Check whether the statements are ok
       m_storeClusterStatusStatement =
-	createStatement(s_storeClusterStatusStatementString);
+        createStatement(s_storeClusterStatusStatementString);
       m_storeClusterStatusStatement->setAutoCommit(true);
     } catch (oracle::occi::SQLException e) {
       handleException(e);
       castor::exception::Internal ex;
       ex.getMessage()
-	<< "Unable to create statement for storing monitoring data to DB :"
-	<< std::endl << e.getMessage();
+        << "Unable to create statement for storing monitoring data to DB :"
+        << std::endl << e.getMessage();
       throw ex;
     }
   }
@@ -161,7 +175,7 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
   unsigned int diskServersFSL = 0;
   unsigned int fileSystemsL = 0;
   for (castor::monitoring::ClusterStatus::const_iterator it =
-	 clusterStatus->begin();
+         clusterStatus->begin();
        it != clusterStatus->end();
        it++) {
     // Don't send FileSystems for deleted nodes
@@ -186,7 +200,7 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
   unsigned int dfs = 0; // diskserver index within filesystems list
   unsigned int fs = 0;  // filesystem index (diskserver ignored)
   for (castor::monitoring::ClusterStatus::const_iterator it =
-	 clusterStatus->begin();
+         clusterStatus->begin();
        it != clusterStatus->end();
        it++) {
     lensDS[ds] = it->first.length();
@@ -199,12 +213,12 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
       if (lensFS[dfs+fs] > maxFSL) maxFSL = lensFS[dfs+fs];
       dfs++;
       for (castor::monitoring::DiskServerStatus::const_iterator it2
-	     = it->second.begin();
-	   it2 != it->second.end();
-	   it2++) {
-	lensFS[dfs+fs] = it2->first.length();
-	if (lensFS[dfs+fs] > maxFSL) maxFSL = lensFS[dfs+fs];
-	fs++;
+             = it->second.begin();
+           it2 != it->second.end();
+           it2++) {
+        lensFS[dfs+fs] = it2->first.length();
+        if (lensFS[dfs+fs] > maxFSL) maxFSL = lensFS[dfs+fs];
+        fs++;
       }
     }
   }
@@ -230,7 +244,7 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
   unsigned int df = 0; // diskserver index within filesystems list
   unsigned int f = 0;  // filesystem index (diskserver ignored)
   for (castor::monitoring::ClusterStatus::const_iterator it =
-	 clusterStatus->begin();
+         clusterStatus->begin();
        it != clusterStatus->end();
        it++) {
     strncpy(bufferDS+(d*bufferDSCellSize), it->first.c_str(), lensDS[d]);
@@ -241,11 +255,11 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
       strncpy(bufferFS+((df+f)*bufferFSCellSize), it->first.c_str(), lensDS[d-1]);
       df++;
       for (castor::monitoring::DiskServerStatus::const_iterator it2
-	     = it->second.begin();
-	   it2 != it->second.end();
-	   it2++) {
-	strncpy(bufferFS+((df+f)*bufferFSCellSize), it2->first.c_str(), lensFS[df+f]);
-	f++;
+             = it->second.begin();
+           it2 != it->second.end();
+           it2++) {
+        strncpy(bufferFS+((df+f)*bufferFSCellSize), it2->first.c_str(), lensFS[df+f]);
+        f++;
       }
     }
   }
@@ -281,9 +295,9 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
   f = 0;
   try {
     for (castor::monitoring::ClusterStatus::const_iterator it =
-	   clusterStatus->begin();
-	 it != clusterStatus->end();
-	 it++) {
+           clusterStatus->begin();
+         it != clusterStatus->end();
+         it++) {
       const castor::monitoring::DiskServerStatus& dss = it->second;
 
       // Fill buffers
@@ -300,29 +314,29 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
 
       // Don't send FileSystems for deleted nodes
       if (it->second.adminStatus() != castor::monitoring::ADMIN_DELETED) {
-	for (castor::monitoring::DiskServerStatus::const_iterator it2
-	       = it->second.begin();
-	     it2 != dss.end();
-	     it2++) {
-	  const castor::monitoring::FileSystemStatus& fss = it2->second;
+        for (castor::monitoring::DiskServerStatus::const_iterator it2
+               = it->second.begin();
+             it2 != dss.end();
+             it2++) {
+          const castor::monitoring::FileSystemStatus& fss = it2->second;
 
-	  // Fill buffers
-	  fillOracleBuffer(bufferFSP, lensFSP, 14*f, fss.status());
-	  fillOracleBuffer(bufferFSP, lensFSP, (14*f)+1, fss.adminStatus());
-	  fillOracleBuffer(bufferFSP, lensFSP, (14*f)+2, (double)fss.readRate());
-	  fillOracleBuffer(bufferFSP, lensFSP, (14*f)+3, (double)fss.writeRate());
-	  fillOracleBuffer(bufferFSP, lensFSP, (14*f)+4, fss.nbReadStreams());
-	  fillOracleBuffer(bufferFSP, lensFSP, (14*f)+5, fss.nbWriteStreams());
-	  fillOracleBuffer(bufferFSP, lensFSP, (14*f)+6, fss.nbReadWriteStreams());
-	  fillOracleBuffer(bufferFSP, lensFSP, (14*f)+7, fss.nbMigratorStreams());
-	  fillOracleBuffer(bufferFSP, lensFSP, (14*f)+8, fss.nbRecallerStreams());
-	  fillOracleBuffer(bufferFSP, lensFSP, (14*f)+9, (double)fss.freeSpace());
-	  fillOracleBuffer(bufferFSP, lensFSP, (14*f)+10,(double)fss.space());
-	  fillOracleBuffer(bufferFSP, lensFSP, (14*f)+11,(double)fss.minFreeSpace());
-	  fillOracleBuffer(bufferFSP, lensFSP, (14*f)+12,(double)fss.maxFreeSpace());
-	  fillOracleBuffer(bufferFSP, lensFSP, (14*f)+13,(double)fss.minAllowedFreeSpace());
-	  f++;
-	}
+          // Fill buffers
+          fillOracleBuffer(bufferFSP, lensFSP, 14*f, fss.status());
+          fillOracleBuffer(bufferFSP, lensFSP, (14*f)+1, fss.adminStatus());
+          fillOracleBuffer(bufferFSP, lensFSP, (14*f)+2, (double)fss.readRate());
+          fillOracleBuffer(bufferFSP, lensFSP, (14*f)+3, (double)fss.writeRate());
+          fillOracleBuffer(bufferFSP, lensFSP, (14*f)+4, fss.nbReadStreams());
+          fillOracleBuffer(bufferFSP, lensFSP, (14*f)+5, fss.nbWriteStreams());
+          fillOracleBuffer(bufferFSP, lensFSP, (14*f)+6, fss.nbReadWriteStreams());
+          fillOracleBuffer(bufferFSP, lensFSP, (14*f)+7, fss.nbMigratorStreams());
+          fillOracleBuffer(bufferFSP, lensFSP, (14*f)+8, fss.nbRecallerStreams());
+          fillOracleBuffer(bufferFSP, lensFSP, (14*f)+9, (double)fss.freeSpace());
+          fillOracleBuffer(bufferFSP, lensFSP, (14*f)+10,(double)fss.space());
+          fillOracleBuffer(bufferFSP, lensFSP, (14*f)+11,(double)fss.minFreeSpace());
+          fillOracleBuffer(bufferFSP, lensFSP, (14*f)+12,(double)fss.maxFreeSpace());
+          fillOracleBuffer(bufferFSP, lensFSP, (14*f)+13,(double)fss.minAllowedFreeSpace());
+          f++;
+        }
       }
     }
 
@@ -395,22 +409,22 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::retrieveClusterStatus
       handleException(e);
       castor::exception::Internal ex;
       ex.getMessage()
-	<< "Unable to create statements for retrieving monitoring data from DB :"
-	<< std::endl << e.getMessage();
+        << "Unable to create statements for retrieving monitoring data from DB :"
+        << std::endl << e.getMessage();
       throw ex;
     }
   }
 
   // Flag all objects in the shared memory for deletion
   for (castor::monitoring::ClusterStatus::iterator it =
-	 clusterStatus->begin();
+         clusterStatus->begin();
        it != clusterStatus->end() && !dsDisabled;
        it++) {
     it->second.setToBeDeleted(true);
     for (castor::monitoring::DiskServerStatus::iterator it2 =
-	   it->second.begin();
-	 it2 != it->second.end();
-	 it2++) {
+           it->second.begin();
+         it2 != it->second.end();
+         it2++) {
       it2->second.setToBeDeleted(true);
     }
   }
@@ -425,7 +439,7 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::retrieveClusterStatus
     while (oracle::occi::ResultSet::END_OF_FETCH != dsRset->next()) {
       // Create a state report for each diskserver
       castor::monitoring::DiskServerStateReport* dsReport =
-	new castor::monitoring::DiskServerStateReport();
+        new castor::monitoring::DiskServerStateReport();
       dsReport->setName(dsRset->getString(2));
 
       // By default we start with everything disabled, when the node comes up
@@ -439,28 +453,28 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::retrieveClusterStatus
 
       // Make sure an ADMIN_NONE status in db resets anything found before
       castor::monitoring::AdminStatusCodes adStatus =
-	(castor::monitoring::AdminStatusCodes)dsRset->getInt(3);
+        (castor::monitoring::AdminStatusCodes)dsRset->getInt(3);
       if (adStatus == castor::monitoring::ADMIN_NONE)
-	adStatus = castor::monitoring::ADMIN_RELEASE;
+        adStatus = castor::monitoring::ADMIN_RELEASE;
       dsReport->setAdminStatus(adStatus);
 
       // Loop on its FileSystems
       m_getFileSystemsStatement->setDouble(1, dsRset->getDouble(1));
       oracle::occi::ResultSet *fsRset = m_getFileSystemsStatement->executeQuery();
       while (oracle::occi::ResultSet::END_OF_FETCH != fsRset->next()) {
-	castor::monitoring::FileSystemStateReport* fs =
-	  new castor::monitoring::FileSystemStateReport();
-	fs->setMountPoint(fsRset->getString(1));
-	if (dsDisabled == false) {
-	  fs->setStatus((castor::stager::FileSystemStatusCodes)fsRset->getInt(3));
-	} else {
-	  fs->setStatus(castor::stager::FILESYSTEM_DISABLED);
-	}
-	adStatus = (castor::monitoring::AdminStatusCodes)fsRset->getInt(2);
-	if (adStatus == castor::monitoring::ADMIN_NONE)
-	  adStatus = castor::monitoring::ADMIN_RELEASE;
-	fs->setAdminStatus(adStatus);
-	dsReport->addFileSystemStatesReports(fs);
+        castor::monitoring::FileSystemStateReport* fs =
+          new castor::monitoring::FileSystemStateReport();
+        fs->setMountPoint(fsRset->getString(1));
+        if (dsDisabled == false) {
+          fs->setStatus((castor::stager::FileSystemStatusCodes)fsRset->getInt(3));
+        } else {
+          fs->setStatus(castor::stager::FILESYSTEM_DISABLED);
+        }
+        adStatus = (castor::monitoring::AdminStatusCodes)fsRset->getInt(2);
+        if (adStatus == castor::monitoring::ADMIN_NONE)
+          adStatus = castor::monitoring::ADMIN_RELEASE;
+        fs->setAdminStatus(adStatus);
+        dsReport->addFileSystemStatesReports(fs);
       }
       m_getFileSystemsStatement->closeResultSet(fsRset);
 
@@ -474,19 +488,19 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::retrieveClusterStatus
     // Loop over all objects in the shared memory. For those which are flagged
     // for deletion update the objects admin status to ADMIN_DELETED.
     for (castor::monitoring::ClusterStatus::iterator it =
-	   clusterStatus->begin();
-	 it != clusterStatus->end() && !dsDisabled;
-	 it++) {
+           clusterStatus->begin();
+         it != clusterStatus->end() && !dsDisabled;
+         it++) {
       if (it->second.toBeDeleted()) {
-	it->second.setAdminStatus(castor::monitoring::ADMIN_DELETED);
+        it->second.setAdminStatus(castor::monitoring::ADMIN_DELETED);
       }
       for (castor::monitoring::DiskServerStatus::iterator it2 =
-	     it->second.begin();
-	   it2 != it->second.end();
-	   it2++) {
-	if (it2->second.toBeDeleted()) {
-	  it2->second.setAdminStatus(castor::monitoring::ADMIN_DELETED);
-	}
+             it->second.begin();
+           it2 != it->second.end();
+           it2++) {
+        if (it2->second.toBeDeleted()) {
+          it2->second.setAdminStatus(castor::monitoring::ADMIN_DELETED);
+        }
       }
     }
   } catch (oracle::occi::SQLException e) {
@@ -500,4 +514,38 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::retrieveClusterStatus
     throw ex;
   }
   // Forward other exceptions (typically from handleStateUpdate) to the caller
+}
+
+//-----------------------------------------------------------------------------
+// checkIfFilesExist
+//-----------------------------------------------------------------------------
+bool castor::monitoring::rmmaster::ora::OraRmMasterSvc::checkIfFilesExist
+(std::string diskServer, std::string mountPoint)
+  throw (castor::exception::Exception) {
+
+  // Initialize statements
+  try {
+    if (m_checkIfFilesExistStatement == NULL) {
+      m_checkIfFilesExistStatement
+        = createStatement(s_checkIfFilesExistStatementString);
+    }
+
+    // Prepare and execute the statement
+    m_checkIfFilesExistStatement->setString(1, diskServer);
+    m_checkIfFilesExistStatement->setString(2, mountPoint);
+    bool rtn = false;
+    oracle::occi::ResultSet *rs = m_checkIfFilesExistStatement->executeQuery();
+    if (oracle::occi::ResultSet::DATA_AVAILABLE == rs->next()) {
+      rtn = rs->getInt(1);
+    }
+    m_checkIfFilesExistStatement->closeResultSet(rs);
+    return rtn;
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in checkIfFilesExist."
+      << std::endl << e.getMessage();
+    throw ex;
+  }
 }
