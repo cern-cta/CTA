@@ -96,6 +96,13 @@ namespace castor {
     virtual void run() throw (castor::exception::Exception);
 
     /**
+     * Shutdowns the pool by calling the ancestor's shutdown
+     * and by closing the listening socket.
+     * @return true if the pool has stopped.
+     */
+    virtual bool shutdown(bool wait = true) throw();
+      
+    /**
      * Sets the port on which this ThreadPool should listen
      */
     inline void setPort(unsigned int port)

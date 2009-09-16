@@ -78,6 +78,21 @@ void castor::server::ListenerThreadPool::run() throw (castor::exception::Excepti
 }
 
 //------------------------------------------------------------------------------
+// shutdown
+//------------------------------------------------------------------------------
+bool castor::server::ListenerThreadPool::shutdown(bool wait) throw() {
+  bool ret = castor::server::DynamicThreadPool::shutdown(wait);
+  // Also stop accepting connections as we're terminating
+  if(m_sock != 0) {
+    try {
+      m_sock->close();
+    }
+    catch(castor::exception::Exception ignored) {}
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
 // threadAssign
 //------------------------------------------------------------------------------
 void castor::server::ListenerThreadPool::threadAssign(void *param) {
