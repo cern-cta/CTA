@@ -4,7 +4,6 @@
 # this is the core of the CASTOR test suite, based on py.test
 #
 
-from subprocess import Popen, PIPE, STDOUT
 import time, ConfigParser, os, py, tempfile, re, types
 
 ################
@@ -50,6 +49,19 @@ def listTests(testDir, listResources=False):
             tn = tn.replace(os.sep,'_')
             yield ts, tn, fn
 
+# handling of subprocesses, depending on the python version
+try:
+    import subprocess
+    hasSubProcessModule = True
+except Exception:
+    hasSubProcessModule = False
+    
+def Popen(cmd):
+    if hasSubProcessModule:
+        return subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
+    else:
+        return os.popen4(cmd)[1].read()
+
 #################################
 # command line options handling #
 #################################
@@ -63,7 +75,7 @@ def handleAllOption(option, opt, value, parser):
 def pytest_addoption(parser):
     for d in filter(lambda f:os.path.isdir(os.path.join('castortests',f)), os.listdir('castortests')):
         # 'resources' is not really a test suite directory
-        if d == 'resources': continue
+        if d == 'resources' or d[0] == '.': continue
         # create 2 options to set and unset each test suite. By default, nothing is ran
         parser.addoption("--"+d,   action="store_true",  default=False, dest=d, help='Run the '+d+' tests')
         parser.addoption("--no"+d, action="store_false", default=False, dest=d, help='Do not run the '+d+' tests')
@@ -306,7 +318,7 @@ class Setup:
         for entry in ['noTapePath', 'tapePath']:
             if self.tags.has_key(entry) and not self.noCleanup():
                 path = self.tags[entry]
-                output = Popen('nsrm -r ' + path, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT).stdout.read()
+                output = Popen('nsrm -r ' + path)
                 assert len(output) == 0, \
                        'Failed to cleanup working directory ' + path + \
                        '. You may have to do manual cleanup' + os.linesep + \
@@ -324,7 +336,7 @@ class Setup:
         # and get rid of remote files created
         if self.tags.has_key('remoteDir') and not self.noCleanup():
             path = self.tags['remoteDir']
-            output = Popen('yes | rfrm -r ' + path, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT).stdout.read()
+            output = Popen('yes | rfrm -r ' + path)
             # note that there is no way to know whether it worked...
             del self.tags['remoteDir']
 
@@ -430,7 +442,7 @@ class Setup:
                 if len(cmd) > 0:
                     print "executing ", cmd
                     # run the command
-                    output = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT).stdout.read()
+                    output = Popen(cmd)
                     # and check its output
                     compareOutput(self, output, open(fileName+'.output'+str(i)).read(), testName)
                     i = i + 1
@@ -449,8 +461,8 @@ class Setup:
         # create a unique directory name
         p = self.options.get('Generic','CastorNoTapeDir') + os.sep + getUUID()
         # create the directory
-        output = Popen('nsmkdir ' + p, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT).stdout.read()
-        assert len(output) == 0, \
+        output = Popen('nsmkdir ' + p)
+        assert len(output) == 0 or output.find('File exists') > -1, \
                'Failed to create working directory ' + p + os.linesep + "Error :" + os.linesep + output
         print os.linesep+"Working in directory " + p + " for non tape files"
         return p
@@ -459,8 +471,8 @@ class Setup:
         # create a unique directory name
         p = self.options.get('Generic','CastorTapeDir') + os.sep + getUUID()
         # create the directory
-        output = Popen('nsmkdir ' + p, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT).stdout.read()
-        assert len(output) == 0, \
+        output = Popen('nsmkdir ' + p)
+        assert len(output) == 0 or output.find('File exists'), \
                'Failed to create working directory ' + p + os.linesep + "Error :" + os.linesep + output
         print os.linesep+"Working in directory " + p + " for tape files"
         return p
@@ -481,12 +493,12 @@ class Setup:
         os.environ['STAGE_SVCCLASS'] = name
         cmd = 'rfcp ' + self.getTag('IsTapeSvcClass-'+name, 'localFileName') + ' ' + self.getTag('IsTapeSvcClass-'+name, 'tapeFileName')
         print 'executing ' + cmd
-        output = Popen(cmd , shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT).stdout.read()
+        output = Popen(cmd)
         del os.environ['STAGE_SVCCLASS']
         # and check it's status
         cmd = 'stager_qry -S ' + name + ' -M ' + self.getTag('IsTapeSvcClass-'+name, 'tapeFileName')
         print 'executing ' + cmd
-        output = Popen(cmd , shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT).stdout.read()
+        output = Popen(cmd)
         assert(output.strip().endswith(expectedStatus))
 
     def getTag_tapeServiceClassList(self):
@@ -523,7 +535,7 @@ class Setup:
         # create a unique directory name
         p = self.options.get('Generic','remoteSpace') + os.sep + getUUID()
         # create the directory
-        output = Popen('rfmkdir ' + p, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT).stdout.read()
+        output = Popen('rfmkdir ' + p)
         assert len(output) == 0, \
                'Failed to create remote directory ' + p + os.linesep + "Error :" + os.linesep + output
         print os.linesep+"Working in directory " + p + " for remote files"
