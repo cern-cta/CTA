@@ -325,13 +325,10 @@ BEGIN
       EXCEPTION
         WHEN TOO_MANY_ROWS THEN
           raise_application_error
-            (-20101, 'Mountpoint: '||mntPnt||' belongs to multiple service
-                      classes, please specify which service class to use, using
-                      the --svcclass option');
+            (-20101, 'Mountpoint: '||mntPnt||' belongs to multiple service classes, please specify which service class to use, using the --svcclass option');
         WHEN NO_DATA_FOUND THEN
           raise_application_error
-            (-20120, 'Mountpoint: '||mntPnt||' does not belong to any
-                      service class');
+            (-20120, 'Mountpoint: '||mntPnt||' does not belong to any service class');
       END;
     ELSE
       -- Check if the user supplied service class name exists
@@ -348,8 +345,7 @@ BEGIN
            AND SvcClass.name = inSvcClass;
       EXCEPTION WHEN NO_DATA_FOUND THEN
         raise_application_error
-          (-20117, 'Mountpoint: '||mntPnt||' does not belong to the '''||
-                    inSvcClass||''' service class');
+          (-20117, 'Mountpoint: '||mntPnt||' does not belong to the '''||inSvcClass||''' service class');
       END;
     END IF;
     -- If the mountpoint is not in a DRAINING status then the draining process
