@@ -36,7 +36,7 @@ BEGIN
                          SELECT id, svcClassName FROM StagePrepareToUpdateRequest UNION ALL
                          SELECT id, svcClassName FROM StageRepackRequest          UNION ALL
                          SELECT id, svcClassName FROM StageGetRequest) Req
-                          WHERE SubRequest.CastorFile = CastorFile.id
+                          WHERE SubRequest.diskCopy = DC.id
                             AND request = Req.id)              
                    ELSE DC.svcClass END AS svcClass,
                  DC.machine, DC.mountPoint, DC.nbCopyAccesses, CastorFile.lastKnownFileName,
