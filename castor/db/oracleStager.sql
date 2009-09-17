@@ -8,7 +8,7 @@
  *******************************************************************/
 
 /* PL/SQL declaration for the castor package */
-create or replace PACKAGE castor AS
+CREATE OR REPLACE PACKAGE castor AS
   TYPE DiskCopyCore IS RECORD (
     id INTEGER,
     path VARCHAR2(2048),
@@ -568,9 +568,9 @@ BEGIN
   IF (failJobsFlag = 1) THEN
     SELECT count(*), sum(free - totalSize * minAllowedFreeSpace) 
       INTO c, availSpace
-      FROM diskpool2svcclass, FileSystem, DiskServer
-     WHERE diskpool2svcclass.child = svcClassId
-       AND diskpool2svcclass.parent = FileSystem.diskPool
+      FROM DiskPool2SvcClass, FileSystem, DiskServer
+     WHERE DiskPool2SvcClass.child = svcClassId
+       AND DiskPool2SvcClass.parent = FileSystem.diskPool
        AND FileSystem.diskServer = DiskServer.id
        AND FileSystem.status = 0 -- PRODUCTION
        AND DiskServer.status = 0 -- PRODUCTION
@@ -708,6 +708,8 @@ PROCEDURE checkForD2DCopyOrRecall(cfId IN NUMBER, srId IN NUMBER, reuid IN NUMBE
                                   svcClassId IN NUMBER, dcId OUT NUMBER, srcSvcClassId OUT NUMBER) AS
   destSvcClass VARCHAR2(2048);
   authDest NUMBER;
+  userid NUMBER := reuid;
+  groupid NUMBER := regid;
 BEGIN
   -- First check whether we are a disk only pool that is already full.
   -- In such a case, we should fail the request with an ENOSPACE error
@@ -723,11 +725,30 @@ BEGIN
   END IF;
   -- Resolve the destination service class id to a name
   SELECT name INTO destSvcClass FROM SvcClass WHERE id = svcClassId;
+  -- Determine if there are any copies of the file in the same service class
+  -- on DISABLED or DRAINING hardware. If we found something then set the user
+  -- and group id to -1 this effectively disables the later privilege checks
+  -- to see if the user can trigger a d2d or recall. (#55745)
+  BEGIN
+    SELECT -1, -1 INTO userid, groupid
+      FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
+     WHERE DiskCopy.fileSystem = FileSystem.id
+       AND DiskCopy.castorFile = cfId
+       AND DiskCopy.status IN (0, 10)  -- STAGED, CANBEMIGR
+       AND FileSystem.diskPool = DiskPool2SvcClass.parent
+       AND DiskPool2SvcClass.child = svcClassId
+       AND FileSystem.diskServer = DiskServer.id
+       AND (DiskServer.status != 0  -- !PRODUCTION
+        OR  FileSystem.status != 0) -- !PRODUCTION
+       AND ROWNUM < 2;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    NULL;  -- Nothing
+  END; 
   -- If we are in this procedure then we did not find a copy of the
   -- file in the target service class that could be used. So, we check
   -- to see if the user has the rights to create a file in the destination
   -- service class. I.e. check for StagePutRequest access rights
-  checkPermission(destSvcClass, reuid, regid, 40, authDest);
+  checkPermission(destSvcClass, userid, groupid, 40, authDest);
   IF authDest < 0 THEN
     -- Fail the subrequest and notify the client
     dcId := -1;
@@ -740,7 +761,7 @@ BEGIN
     RETURN;
   END IF;
   -- Try to find a diskcopy to replicate
-  getBestDiskCopyToReplicate(cfId, reuid, regid, 0, svcClassId, dcId, srcSvcClassId);
+  getBestDiskCopyToReplicate(cfId, userid, groupid, 0, svcClassId, dcId, srcSvcClassId);
   -- We found at least one, therefore we schedule a disk2disk
   -- copy from the existing diskcopy not available to this svcclass
 EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -778,7 +799,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
        SET status = 7, -- FAILED
            errorCode = CASE
              WHEN dcStatus IN (5, 11) THEN 16 -- WAITFS, WAITFSSCHEDULING, EBUSY
-             WHEN dcStatus = 6 AND fsStatus = 0 and dsStatus = 0 THEN 16 -- STAGEOUT, PRODUCTION, PRODUCTION, EBUSY
+             WHEN dcStatus = 6 AND fsStatus = 0 AND dsStatus = 0 THEN 16 -- STAGEOUT, PRODUCTION, PRODUCTION, EBUSY
              ELSE 1718 -- ESTNOTAVAIL
            END,
            errorMessage = CASE
@@ -794,7 +815,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- Check whether the user has the rights to issue a tape recall to
     -- the destination service class.
-    checkPermission(destSvcClass, reuid, regid, 161, authDest);
+    checkPermission(destSvcClass, userid, groupid, 161, authDest);
     IF authDest < 0 THEN
       -- Fail the subrequest and notify the client
       dcId := -1;

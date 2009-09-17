@@ -20,6 +20,11 @@ CREATE OR REPLACE PROCEDURE checkPermission(isvcClass IN VARCHAR2,
 BEGIN
   -- First resolve the service class
   svcId := checkForValidSvcClass(isvcClass, 1, 0);
+  -- Skip access control checks for special internal users
+  IF ieuid = -1 AND iegid = -1 THEN
+    res := svcId;
+    RETURN;
+  END IF;
   -- Perform the check
   SELECT count(*) INTO c
     FROM WhiteList
@@ -76,10 +81,6 @@ FUNCTION checkPermissionOnSvcClass(reqSvcClass IN VARCHAR2,
 RETURN NUMBER AS
   res NUMBER;
 BEGIN
-  -- Skip access control checks for special internal users
-  IF reqEuid = -1 AND reqEgid = -1 THEN
-    RETURN 0;
-  END IF;
   -- Check the users access rights
   checkPermission(reqSvcClass, reqEuid, reqEgid, reqType, res);
   IF res > 0 THEN
