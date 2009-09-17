@@ -246,11 +246,11 @@ Received 1 responses
 $ stager_qry -sH
 .fi
 .nf
-POOL default          CAPACITY 893.82G    FREE 889.62G(99%)
-  DiskServer lxfsrk462.cern.ch DISKSERVER_PRODUCTION   CAPACITY 893.82G    FREE 889.62G(99%)
+POOL default          CAPACITY 893.82Gi    FREE 889.62Gi(99%)
+  DiskServer lxfsrk462.cern.ch DISKSERVER_PRODUCTION   CAPACITY 893.82Gi    FREE 889.62Gi(99%)
      FileSystems                       STATUS                  CAPACITY      FREE       GCBOUNDS
-     /srv/castor/01/                   FILESYSTEM_PRODUCTION   223.45G    221.36G(99%) 0.10, 0.15
-     /srv/castor/02/                   FILESYSTEM_PRODUCTION   670.36G    668.26G(99%) 0.10, 0.15
+     /srv/castor/01/                   FILESYSTEM_PRODUCTION   223.45Gi    221.36Gi(99%) 0.10, 0.15
+     /srv/castor/02/                   FILESYSTEM_PRODUCTION   670.36Gi    668.26Gi(99%) 0.10, 0.15
 .fi
 
 .SH EXIT STATUS
