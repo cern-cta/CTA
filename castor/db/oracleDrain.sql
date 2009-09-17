@@ -190,7 +190,7 @@ AS
                             DFS.totalBytes) * 100) - 10), -1, 'N/A',
                getInterval(0, trunc(DDCS.bytesRemaining / ((DFS.totalBytes -
                            nvl(DDCS.bytesRemaining, 0)) /
-                           (getTime() - DFS.startTime))))), 'N/A'), 'N/A')) ETC
+                           (getTime() - DFS.startTime))))), 'N/A')), 'N/A') ETC
     FROM (
       SELECT fileSystem,
              max(decode(status, 3, nbFiles, 0)) Running,
