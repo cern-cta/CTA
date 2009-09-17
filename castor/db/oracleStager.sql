@@ -2047,7 +2047,7 @@ BEGIN
            UNION
            (SELECT DC.id     -- all diskcopies in Tape0 pools
               FROM DiskCopy DC, FileSystem, DiskPool2SvcClass D2S, SvcClass, FileClass
-             WHERE DC.castorFile = cfId
+             WHERE DC.castorFile = cfId                         
                AND DC.fileSystem = FileSystem.id
                AND FileSystem.diskPool = D2S.parent
                AND D2S.child = SvcClass.id
@@ -2131,7 +2131,19 @@ BEGIN
        WHERE id = srId;
       RETURN;
     EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- Nothing running
+      -- Nothing running. We still may have found nothing at all...
+      SELECT count(*) INTO nbRes FROM DiskCopy
+       WHERE castorFile = cfId
+         AND status NOT IN (4, 7, 9);  -- anything but FAILED, INVALID, BEINGDELETED
+      IF nbRes = 0 THEN
+        UPDATE SubRequest
+           SET status = 7,  -- FAILED
+               errorCode = 2,  -- ENOENT
+               errorMessage = 'File not found on disk cache'
+         WHERE id = srId;
+        RETURN;
+      END IF;
+      
       deleteTapeCopies(cfId);
       -- Invalidate the DiskCopies
       UPDATE DiskCopy
@@ -2149,7 +2161,7 @@ BEGIN
       SELECT id BULK COLLECT INTO dcsToRm
         FROM DiskCopy
        WHERE castorFile = cfId
-         AND status IN (0, 1, 2, 5, 6, 10, 11);  -- WAITDISK2DISKCOPY, WAITTAPERECALL, STAGED, WAITFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
+         AND status IN (0, 1, 5, 6, 10, 11);  -- STAGED, WAITDISK2DISKCOPY, WAITFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
     END;
   END IF;
 
