@@ -40,7 +40,13 @@ int  DLL_DECL rfio_rmdir(dirpath)           /* Remote rmdir             */
             dirpath,host);
       END_TRACE();
       rfio_errno = 0;
-      if (filename && (strstr(host,"castorns")==host) )
+      // This check is needed to support relative directory pathes
+      // See the implementation of rfio_HsmIf_rmdir and of the
+      // rfio_HsmIf_IsCnsFile method for details. In brief, if
+      // a relative directory path is given and rfchdir was used
+      // before that, rmdir will be able to work. If no chdir was
+      // called, rmdir will fail
+      if (filename && (strstr(filename,"/castor")==filename))
         return rfio_HsmIf_rmdir(filename);
       return(rfio_HsmIf_rmdir(dirpath));
     }
