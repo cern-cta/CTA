@@ -81,10 +81,11 @@ def pytest_addoption(parser):
         parser.addoption("--no"+d, action="store_false", default=False, dest=d, help='Do not run the '+d+' tests')
         mainTestDirs.append(d)
     # add a set of other options
-    parser.addoption("--all",      action="callback",   callback=handleAllOption,       help='Forces all tests to run')
+    parser.addoption("-A", "--all",      action="callback",   callback=handleAllOption,       help='Forces all tests to run')
     parser.addoption("--nocleanup",action="store_true", default=False, dest='noCleanup',help='Prevents the cleanup of temporary files created by the test suite to take place (both in namespace and local disk)')
     parser.addoption("--failnores",action="store_true", default=False, dest='failNoRes',help='Forces to fail when a resource is not available, instead of skipping the tests')
-    #parser.addoption("--upgrade",action="callback",   callback=handleUpgradeOption, help='Selects test suitable to check an instance after an upgrade')
+    #parser.addoption("--fast",action="callback",   callback=handleFastOption, help='Selects test suitable to check an instance after an upgrade, aka fast testsuite')
+    parser.addoption("-C", "--configfile", action="store", default='CastorTestSuite.options', dest='configFile', help='Name of the config file to be used. Defaults to CastorTestSuite.options')
 
 
 ########################
@@ -297,7 +298,9 @@ class Setup:
         # instantiate an option parser with some defaults
         self.options = CastorConfigParser()
         # read the option file
-        self.options.read('CastorTestSuite.options')
+        assert os.path.isfile(self.config.option.configFile), \
+               'Could not find config file : ' + self.config.option.configFile
+        self.options.read(self.config.option.configFile)
         # setup the environment
         for v in ['STAGE_SVCCLASS', 'STAGE_HOST', 'STAGE_PORT', 'STAGER_TRACE']:
             if os.environ.has_key(v): del os.environ[v]
@@ -556,6 +559,12 @@ class Setup:
 
 def pytest_funcarg__setup(request):
     # the setup is cached per session
-    return request.cached_setup(setup=lambda:Setup(request), \
-                                teardown=lambda val: val.cleanupAndReset(), \
-                                scope="session")
+    try:
+        return request.cached_setup(setup=lambda:Setup(request), \
+                                    teardown=lambda val: val.cleanupAndReset(), \
+                                    scope="session")
+    except AssertionError,e:
+        print 'Unable to create Setup\nError was : ' + str(e)
+        # Let's not go through other tests, they will all fail the same way !
+        request.config.option.exitfirst = True
+        raise e
