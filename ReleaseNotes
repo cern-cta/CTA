@@ -97,7 +97,7 @@
       to /var/log/castor/<daemonname>.log
 
     - The rtcpd work directory has been moved from /var/lib/castor/rtcopyd to
-      /var/lib/castor/rtcpcd.
+      /var/lib/castor/rtcpd.
 
     - The sacct file has been moved from /var/spool/sacct to /var/log/castor/.
 
