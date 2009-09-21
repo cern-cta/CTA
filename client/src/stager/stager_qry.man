@@ -169,7 +169,7 @@ or
 options.
 .TP
 .BI \-s,\ \-\-statistic
-display statistics concerning the disk pools
+display statistics concerning the disk pools. Note: Only users with ADMIN privileges are able to see information concerning individual diskservers and filesystems.
 .TP
 .BI \-d,\ \-\-diskPool " diskPool"
 Specifies the disk pool for which statistics should be displayed. It has to be used in conjunction with
