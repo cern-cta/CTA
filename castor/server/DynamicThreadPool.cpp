@@ -145,7 +145,7 @@ void castor::server::DynamicThreadPool::run()
      castor::dlf::Param("Type", "DynamicThreadPool"),
      castor::dlf::Param("InitThreads", m_initThreads),
      castor::dlf::Param("MaxThreads", m_maxThreads)};
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
                           DLF_BASE_FRAMEWORK + 3, 4, params);
 
   // Initialize the underlying producer and consumer user threads.

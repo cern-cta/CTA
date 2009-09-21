@@ -132,7 +132,7 @@ void castor::server::SignalThreadPool::run()
       {castor::dlf::Param("ThreadPool", m_poolName),
        castor::dlf::Param("Type", "SignalThreadPool"),
        castor::dlf::Param("NbThreads", m_nbThreads)};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
                             DLF_BASE_FRAMEWORK + 3, 3, params);
   }
 }
