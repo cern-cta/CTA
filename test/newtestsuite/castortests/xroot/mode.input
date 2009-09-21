@@ -1,0 +1,3 @@
+<xrdcp> <localFileName> <xrdcpURLparam>mode=444
+nsls -l <noTapeFileName>
+nsrm <noTapeFileName>

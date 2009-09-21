@@ -1,0 +1,4 @@
+<xrd> <stageHost> mkdir <noTapeFileName>
+nsls <noTapeFileName>
+<xrd> <stageHost> rmdir <noTapeFileName>
+nsls <noTapeFileName>

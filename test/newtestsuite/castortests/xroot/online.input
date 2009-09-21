@@ -1,0 +1,4 @@
+<xrdcp> <localFileName> <xrdcpURL>
+<xrd> <stageHost> isfileonline <noTapeFileName>
+stager_rm -M <noTapeFileName>
+<xrd> <stageHost> isfileonline <noTapeFileName>

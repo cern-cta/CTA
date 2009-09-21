@@ -1,0 +1,7 @@
+<xrdcp> <localFileName> <xrdcpURL>
+nsls -l <noTapeFileName>
+<xrd> <stageHost> chmod <noTapeFileName> 7 7 7
+nsls -l <noTapeFileName>
+<xrd> <stageHost> chmod <noTapeFileName> 6 0 0
+nsls -l <noTapeFileName>
+nsrm <noTapeFileName>
