@@ -125,8 +125,6 @@
   - Added dynamic thread pool support to the request handler. Now when the
     request handler starts its initial number of threads will be 10 which can
     increase and decrease depending on the load up to a maximum of 20.
-    Note: The -R option to define the exact number of threads is still
-    supported, if used the dynamic thread pool functionality will be disabled.
 
 
   Developer notes
