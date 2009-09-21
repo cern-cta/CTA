@@ -482,7 +482,7 @@ class Setup:
 
     def _getAndCheckSvcClassTag(self, test, tagName, nb, msg):
         l = self.getTag(test, tagName)
-        assert nb < len(l), 'No enough ' + msg + ' service classes declared in option files. Need ' + str(nb) + ', got ' + repr(l)
+        assert nb < len(l), 'Not enough ' + msg + ' service classes declared in option files. Need ' + str(nb+1) + ', got ' + repr(l)
         return l[nb]
 
     def getTag_tapeServiceClass(self, nb=0):
