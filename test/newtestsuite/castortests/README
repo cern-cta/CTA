@@ -20,7 +20,9 @@ castortests
  |  |- test21.input
  |  |- test21.output0
  |- resources
+ |  |- tags.py
  |  |- resource1
+ |  |  |- tags.py
  |  |  |- resource11.input
  |  |  |- resource11.output0
  |  |  |- resource11.info
@@ -40,6 +42,8 @@ Each test/resource consists of :
   - an optional .resources file listing required resources, one per line. Note that this allows dependencies among resources
 
 Extra default.resources files can be provided at any level of the directory hierarchy. They list resources needed by all tests/resources in the directory where they reside, including all the subtrees.
+
+Extra tags.py files can be provided at any level of the resources directory hierarchy. These python files will be executed on the fly, before testing the resources, so that you can define new tags dynamically.
 
 Note that other files (including documentation as for this one) can be present at any level. They will be ignored by the test suite.
 
