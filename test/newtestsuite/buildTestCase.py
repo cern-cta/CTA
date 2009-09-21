@@ -1,13 +1,25 @@
-from subprocess import Popen, PIPE, STDOUT
-import os, re, ConfigParser
+import os, re, ConfigParser, os.path
+
+# handling of subprocesses, depending on the python version
+try:
+    import subprocess
+    hasSubProcessModule = True
+except Exception:
+    hasSubProcessModule = False
+    
+def Popen(cmd):
+    if hasSubProcessModule:
+        return subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
+    else:
+        return os.popen4(cmd)[1].read()
 
 # some methods dealing with particular tags
 def tagForCastorFileName(s):
     try:
         # get the fileclass of the file
-        fileClass = Popen('nsls --class ' + s, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT).stdout.read().split()[0]
+        fileClass = Popen('nsls --class ' + s).split()[0]
         # check the number of tapeCopies in this file class
-        nslistOutput = Popen('nslistclass --id=' + fileClass, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT).stdout.read().split()
+        nslistOutput = Popen('nslistclass --id=' + fileClass).split()
         nbCopies = int(nslistOutput[nslistOutput.index('NBCOPIES')+1])
         # based on this, decide on the tag
         if nbCopies > 0:
@@ -18,15 +30,17 @@ def tagForCastorFileName(s):
         # default to non tape
         return 'noTapeFileName'
 
-def tagForFileName(s):
+def tagForFileName(s, context):
     # is it a castor or a local file ?
     if s.startswith('/castor/'):
         return tagForCastorFileName(s)
-    else:
+    elif s == options.get('Tags','localFileName'):
         return 'localFileName'
+    else:
+        return 'tmpLocalFileName'
 
 isDiskOnlySvcClass = {}
-def tagForSvcClass(s):
+def tagForSvcClass(s, context):
     global isDiskOnlySvcClass
     # Ask the user if we do not now yet
     if not isDiskOnlySvcClass.has_key(s):
@@ -38,40 +52,11 @@ def tagForSvcClass(s):
     else:
         return 'tapeServiceClass'
 
-# regexps identifying the different tags. Each regexp may be
-# associated to a function that takes as single parameter the
-# replaced string and returns the tag to use. If None, the regexp
-# will be replaced with the rule name
-# Note that regexps must have exactly one group matching the part to
-# be replaced
-tagRegexps = {
-    'fileName' : ('[\s=](/\S*)', tagForFileName),
-    'rhhost'   : ('Looking up RH host - Using ([\w.]+)', None),
-    'rhport'   : ('Looking up RH port - Using (\d+)', None),
-    'userid'   : ('Setting euid: (\w+)', None),
-    'groupid'  : ('Setting egid: (\w+)', None),
-    'localhost': ('Localhost is: ([\w.]+)', None),
-    'callback port' : ('Creating socket for castor callback - Using port (\d+)', None),
-    'sending time' : ('stager: ([A-Z][a-z]{2}\s+\d+\s+[\d:]+\s+\(\d+\)) Sending request', None),
-    'uuid'     : ('([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})', None),
-    'send duration' : ('SND ([\d.]+) s to send the request', None),
-    'answer duration' : ('CBK ([\d.]+) s before callback', None),
-    'server ip': ('callback from (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) was received', None),
-    'fileid@ns': ('(\d+@[\w.]+)', None),
-    'castorTag': ('(?:\s+-U\s+|Usertag=|stage_filequery type=2 param=)(?!NULL)(\w+)', None),
-    'svcClass' : ('(?:\s+-S\s+|STAGE_SVCCLASS=)(\w+)', tagForSvcClass),
-    'nb bytes' : ('(\d+)\s+bytes in', None),
-    'time to transfer' : ('bytes in (\d+) seconds through', None),
-    'interface in' : ('seconds through (\w+\s+\(\w+\)) and', None),    
-    'interface out' : ('seconds through (?:\w+\s+\(\w+\)|<interface in>) and (\w+\s+\(\w+\)(?:\s\(\d+\s\w+/sec\))?)', None)
-    }
-
-# regexps of parts of the output that should be dropped
-# Note that regexps must have exactly one group matching the part to
-# be dropped
-suppressRegExps = [
-    'seconds through (?:\w+\s+\(\w+\)) and (?:\w+\s+\(\w+\))(\s\(\d+\s\w+/sec\))'
-]
+def tagForXrootURL(s, context):
+    if context.find('xrdcp') > -1:
+        return 'xrdcpURL'
+    else:
+        return 'xrootURL'
 
 # setup the environment identical to the test suite one
 class CastorConfigParser(ConfigParser.ConfigParser):
@@ -90,6 +75,52 @@ if options.has_section('Environment'):
     for o in options.items('Environment'):
         print "  " + o[0] + ' = ' + o[1]
         os.environ[o[0].upper()] = o[1]
+
+# regexps identifying the different tags. Each regexp may be
+# associated to a function that takes as single parameter the
+# replaced string and returns the tag to use. If None, the regexp
+# will be replaced with the rule name
+# Note that regexps must have exactly one group matching the part to
+# be replaced
+tagRegexps = {
+    'fileName' : ('(?:[\s=]|\A)(/[^ \t\n\r\f\v:\)]*)', tagForFileName),
+    'rhhost'   : ('Looking up RH host - Using ([\w.]+)', None),
+    'rhport'   : ('Looking up RH port - Using (\d+)', None),
+    'userid'   : ('Setting euid: (\w+)', None),
+    'groupid'  : ('Setting egid: (\w+)', None),
+    'localhost': ('Localhost is: ([\w.]+)', None),
+    'callback port' : ('Creating socket for castor callback - Using port (\d+)', None),
+    'sending time' : ('stager: ([A-Z][a-z]{2}\s+\d+\s+[\d:]+\s+\(\d+\)) Sending request', None),
+    'uuid'     : ('([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})', None),
+    'send duration' : ('SND ([\d.]+) s to send the request', None),
+    'answer duration' : ('CBK ([\d.]+) s before callback', None),
+    'server ip': ('callback from (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) was received', None),
+    'fileid@ns': ('(\d+@[\w.]+)', None),
+    'castorTag': ('(?:\s+-U\s+|Usertag=|stage_filequery type=2 param=)(?!NULL)(\w+)', None),
+    'svcClass' : ('(?:\s+-S\s+|STAGE_SVCCLASS=)(\w+)', tagForSvcClass),
+    'nb bytes' : ('(\d+)\s+bytes in', None),
+    'time to transfer' : ('bytes in (\d+) seconds through', None),
+    'interface in' : ('seconds through (\w+\s+\(\w+\)) and', None),    
+    'interface out' : ('seconds through (?:\w+\s+\(\w+\)|<interface in>) and (\w+\s+\(\w+\)(?:\s\(\d+\s\w+/sec\))?)', None),
+    'xrootURL' : ('.*(root://\S*/\S+)', tagForXrootURL),
+    'rfioTURL' : ('(rfio://\S*/\S+)', None),
+    'rootCastorURL' : ('(castor://\S*/\S+)', None),
+    'xrdcp'    : ('((?:\S*/)?xrdcp)\s', None),
+    'xrd'      : ('((?:\S*/)?xrd)\s', None),
+    'rfio'     : ('((?:\S*/)?rfio)\s', None),
+    'transfer speed' : ('\[(?:([0-9\.]+|inf)\s[A-Z]+/s)\]', None),
+    'bytes transfered' : ('\[xrootd] Total ([0-9\.]+\s[A-Z]+)\s', None),
+    'id'       : ('Id:\s(\d+)\s', None),
+    'modtime'  : ('Modtime:\s(\d+)\s', None),
+    'stageHost': ('\s('+options.get('Environment','STAGE_HOST')+')\s', None)
+    }
+
+# regexps of parts of the output that should be dropped
+# Note that regexps must have exactly one group matching the part to
+# be dropped
+suppressRegExps = [
+    'seconds through (?:\w+\s+\(\w+\)) and (?:\w+\s+\(\w+\))(\s\(\d+\s\w+/sec\))'
+]
 
 # welcome message
 print
@@ -110,7 +141,7 @@ while goOn:
     cmds.append(cmd)
     if len(cmd) == 0 or cmd[0] == '#': continue
     # execute it
-    output = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT).stdout.read()
+    output = Popen(cmd)
     outputs.append(output)
     # and print output
     print output
@@ -141,7 +172,7 @@ def handleTagRepl(tag,repl,match):
     # if we do not know it yet, handle the new case and potentially create a new tag
     if needle not in knownRepl.keys():
         if repl != None:
-            newTag = repl(tagValue)
+            newTag = repl(tagValue, needle)
         else:
             newTag = tag
         # In case the tag is known
