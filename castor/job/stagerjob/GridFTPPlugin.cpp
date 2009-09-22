@@ -293,7 +293,7 @@ void castor::job::stagerjob::GridFTPPlugin::postForkHook
                             MOVERNOTEXEC, 3, params, &args.fileId);
   }
   // Call upper level
-  RawMoverPlugin::postForkHook(args, context);
+  RawMoverPlugin::postForkHook(args, context, true); // checksum on
 }
 
 //------------------------------------------------------------------------------
@@ -346,6 +346,11 @@ void castor::job::stagerjob::GridFTPPlugin::execMover
     setenv("ACCESS_MODE","o",1);
     break;
   }
+  char *p;
+  p = getconfent ("GSIFTP", "USE_CKSUM", 0); /* default value is yes */
+  if ((p !=NULL) && (0 == strcasecmp(p, "no"))) setenv("USE_CKSUM","no",1);
+  else setenv("USE_CKSUM","yes",1);
+
   // Build the command line
   std::string progfullpath = env.globus_location + "/sbin/globus-gridftp-server";
   std::string progname = "globus-gridftp-server";
