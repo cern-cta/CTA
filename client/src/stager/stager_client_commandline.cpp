@@ -206,7 +206,9 @@ int DLL_DECL parseCmdLine(int argc, char *argv[], int (*callback)(const char *),
   while ((c = Cgetopt_long (argc, argv, "f:M:S:U:rh", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
-      callback(Coptarg);
+      if (0 != callback) {
+        callback(Coptarg);
+      }
       break;
     case 'f':
       {
@@ -247,6 +249,20 @@ int DLL_DECL parseCmdLine(int argc, char *argv[], int (*callback)(const char *),
 
 }
 
+void printReceivedResponses(int nbresps) {
+  // this piece of code is essentially copied from the stage_trace function
+  // the call to replace this function should be :
+  //   stage_trace(1, "Received %d responses", nbresps);
+  // However, for backward compatibility reasons, the format of
+  // stage_trace is not suitable, so we log by hand, still respecting
+  // the log level
+  struct stager_client_api_thread_info *thip;
+  if (0 == stage_apiInit(&thip)) {
+    if (((int*)thip->trace)[1] >= 1) {
+      fprintf(stdout, "Received %d responses\n", nbresps);
+    }
+  }
+}
 
 int DLL_DECL printFileResponses(int nbresps, struct stage_fileresp *responses) {
   int i;
@@ -256,7 +272,7 @@ int DLL_DECL printFileResponses(int nbresps, struct stage_fileresp *responses) {
   }
 
   int rc = EXIT_SUCCESS;
-  printf("Received %d responses\n", nbresps);
+  printReceivedResponses(nbresps);
 
   for (i=0; i<nbresps; i++) {
     printf("%s %s",
@@ -282,7 +298,7 @@ int DLL_DECL printPrepareResponses(int nbresps, struct stage_prepareToGet_filere
   }
 
   int rc = EXIT_SUCCESS;
-  printf("Received %d responses\n", nbresps);
+  printReceivedResponses(nbresps);
 
   for (i=0; i<nbresps; i++) {
     printf("%s %s",
