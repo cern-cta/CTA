@@ -63,7 +63,10 @@ const char    *name;                  /* environment variable name            */
 		if ((p = getenv(name)) != NULL)       {
 			if (atoi(p) != 0)       {
 				trace_level = atoi(p);
-				print_trace(0, "    **** ", "trace level set to %d", trace_level);
+        // only print the trace level for levels 2 and above
+        if (trace_level > 1) {
+          print_trace(0, "    **** ", "trace level set to %d", trace_level);
+        }
 			}
 		}
 		trace_initialized++;
@@ -128,8 +131,11 @@ const char    *name;                  /* environment variable name            */
 		if ((p = getenv(name)) != NULL)       {
 			if (atoi(p) != 0)       {
 				trace_level = atoi(p);
-				print_trace(0, "    **** ", "trace level set to %d", trace_level);
-			}
+        // only print the trace level for levels 2 and above
+        if (trace_level > 1) {
+          print_trace(0, "    **** ", "trace level set to %d", trace_level);
+        }
+      }
 		}
 		trace_initialized++;
 	}
