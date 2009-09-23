@@ -111,7 +111,7 @@ const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyDoneStatementString
 
 /// SQL statement for disk2DiskCopyFailed
 const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyFailedStatementString =
-  "BEGIN disk2DiskCopyFailed(:1, :2, :3); END;";
+  "BEGIN disk2DiskCopyFailed(:1, :2); END;";
 
 /// SQL statement for prepareForMigration
 const std::string castor::db::ora::OraJobSvc::s_prepareForMigrationStatementString =
@@ -548,8 +548,6 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyFailed
     if (0 == m_disk2DiskCopyFailedStatement) {
       m_disk2DiskCopyFailedStatement =
         createStatement(s_disk2DiskCopyFailedStatementString);
-      m_disk2DiskCopyFailedStatement->registerOutParam
-        (3, oracle::occi::OCCIDOUBLE);
       m_disk2DiskCopyFailedStatement->setAutoCommit(true);
     }
     // execute the statement

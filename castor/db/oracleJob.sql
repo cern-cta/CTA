@@ -505,16 +505,16 @@ END;
 
 /* PL/SQL method implementing disk2DiskCopyFailed */
 CREATE OR REPLACE PROCEDURE disk2DiskCopyFailed
-(dcId IN INTEGER, enoent IN INTEGER, res OUT INTEGER) AS
+(dcId IN INTEGER, enoent IN INTEGER) AS
   fsId    NUMBER;
   cfId    NUMBER;
   ouid    INTEGER;
   ogid    INTEGER;
   srcDcId NUMBER;
   srcFsId NUMBER;
+  srId    NUMBER;
 BEGIN
   fsId := 0;
-  res := 0;
   IF enoent = 1 THEN
     -- Set all diskcopies to FAILED. We're preemptying the NS synchronization here
     UPDATE DiskCopy SET status = 4 -- FAILED
@@ -531,16 +531,16 @@ BEGIN
   END IF;
   BEGIN
     -- Get the corresponding subRequest, if it exists
-    SELECT id INTO res
+    SELECT id INTO srId
       FROM SubRequest
      WHERE diskCopy = dcId
        AND status IN (6, 14); -- READY, BEINGSHCED
     -- Wake up other subrequests waiting on it
     UPDATE SubRequest SET status = 1, -- RESTART
                           parent = 0
-     WHERE parent = res;
+     WHERE parent = srId;
     -- Fail it
-    archiveSubReq(res, 9); -- FAILED_FINISHED
+    archiveSubReq(srId, 9); -- FAILED_FINISHED
     -- If no filesystem was set on the diskcopy then we can safely delete it
     -- without waiting for garbage collection as the transfer was never started
     IF fsId = 0 THEN
@@ -790,6 +790,7 @@ PROCEDURE failSchedulerJob(srSubReqId IN VARCHAR2, srErrorCode IN NUMBER, res OU
   srId NUMBER;
   dcId NUMBER;
 BEGIN
+  res := 1;
   -- Get the necessary information needed about the request and subrequest
   SELECT SubRequest.id, SubRequest.diskcopy, Id2Type.type
     INTO srId, dcId, reqType
@@ -806,7 +807,7 @@ BEGIN
   IF reqType = 40 THEN -- Put
     putFailedProc(srId);
   ELSIF reqType = 133 THEN -- DiskCopyReplica
-    disk2DiskCopyFailed(dcId, 0, res);
+    disk2DiskCopyFailed(dcId, 0);
   ELSE -- Get or Update
     getUpdateFailedProc(srId);
   END IF;
@@ -853,7 +854,6 @@ PROCEDURE jobToSchedule(srId OUT INTEGER, srSubReqId OUT VARCHAR2, srProtocol OU
                         excludedHosts OUT castor.DiskServerList_Cur) AS
   dsId NUMBER;
   cfId NUMBER;
-  unused NUMBER;
 BEGIN
   -- Get the next subrequest to be scheduled.
   UPDATE SubRequest
@@ -927,7 +927,7 @@ BEGIN
       -- could enter the job into LSF. Under this circumstance fail the 
       -- diskcopy transfer. This will restart the subrequest and trigger a tape
       -- recall if possible
-      disk2DiskCopyFailed(reqDestDiskCopy, 0, unused);
+      disk2DiskCopyFailed(reqDestDiskCopy, 0);
       COMMIT;
       RAISE;
     END;
