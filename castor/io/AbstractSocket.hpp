@@ -63,7 +63,7 @@ namespace castor {
        * @exception Exception in case of error
        */
       AbstractSocket(const bool reusable) 
-	throw (castor::exception::Exception);
+        throw (castor::exception::Exception);
 
       /**
        * Constructor building a socket on a given local port
@@ -156,7 +156,7 @@ namespace castor {
        * @param timeout the new timeout value
        */
       void setTimeout(const int timeout) {
-	m_timeout = timeout;
+        m_timeout = timeout;
       }
 
       /**
@@ -164,7 +164,7 @@ namespace castor {
        * @param timeout the new timeout value
        */
       void setConnTimeout(const int timeout) {
-	m_connTimeout = timeout;
+        m_connTimeout = timeout;
       }
 
       /**
