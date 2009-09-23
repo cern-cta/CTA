@@ -290,6 +290,9 @@ def compareOutput(setup, output, gold, testName):
 
 class Setup:
     def __init__(self, request):
+        # export last used setup as a global variable. Used to avoid nasty tracebacks in case of keyboard interupts
+        global gsetup
+        gsetup = self
         self.config = request.config
         # handling of tags. Note values can also be functions generating values depending on the test name
         self.tags = {}
@@ -568,3 +571,11 @@ def pytest_funcarg__setup(request):
         # Let's not go through other tests, they will all fail the same way !
         request.config.option.exitfirst = True
         raise e
+
+
+#################################################
+# avoid being too verbose on keyboard interupts #
+#################################################
+
+def pytest_keyboard_interrupt(excinfo):
+    gsetup.config.option.verbose = False
