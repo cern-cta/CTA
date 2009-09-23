@@ -166,9 +166,10 @@ void castor::db::ora::OraRHSvc::checkPermission
                           req->svcClassName())
                       << "'\n";
       throw ex;
-    } else if("*" != req->svcClassName()) {
+    } else if("*" != req->svcClassName() ||
+              (castor::OBJ_QryRequest != req->type() && castor::OBJ_StageRmRequest != req->type())) {
       // ret == -2 : non existent service class
-      // accept the special case of '*' and refuse the rest
+      // accept the special case of '*' only on stager_rm and stager_qry and refuse the rest
       castor::exception::InvalidArgument ex;
       ex.getMessage() << "Invalid service class '"
                       << req->svcClassName()
