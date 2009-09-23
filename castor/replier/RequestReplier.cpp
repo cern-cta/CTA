@@ -399,7 +399,7 @@ void castor::replier::RequestReplier::deleteConnection(int dfd) throw() {
 void castor::replier::RequestReplier::garbageCollect() throw() {
 
   int t = time(0);
-  const int TIMEOUT = 60;
+  const int TIMEOUT = 10;
   std::stack<int> toremove;
   const char *func = "rr::garbageCollect";
 
@@ -563,11 +563,12 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
           {castor::dlf::Param("Function", func),
            castor::dlf::Param("ClientInfo", cr->toString()),
            castor::dlf::Param("FD", pl[i].fd)};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING,
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
                                 DLF_BASE_STAGERLIB + 28, 3, params);
 
         cr->setStatus(DONE_FAILURE);
         cr->setErrorMessage("Peer dropped the connection!");
+        continue;
       }
 
       if (pl[i].revents & POLLERR) {
