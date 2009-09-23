@@ -204,6 +204,11 @@ namespace castor{
         // check if the service class has been resolved
         dbSvc->fillObj(baseAddr, fileRequest, castor::OBJ_SvcClass, false);
         svcClass = fileRequest->svcClass();
+        if(!svcClass) {
+          castor::exception::Exception e(ENOENT);
+          e.getMessage() << "Invalid service class";
+          throw e;
+        }
         // if defined, this is the forced file class
         dbSvc->fillObj(baseAddr, svcClass, castor::OBJ_FileClass, false);
       }
