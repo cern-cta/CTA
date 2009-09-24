@@ -2508,3 +2508,74 @@ select 'insert into whitelist values (' || nvl2(svcclass, '''' || svcclass ||
 '''','NULL') || ', ' || nvl(to_char(euid), 'NULL') || ', ' ||
 nvl(to_char(egid), 'NULL') || ',' || nvl(to_char(reqtype), 'NULL') || ');'
 from whitelist;
+
+
+How to add 2 new tapes in a new library together with a new tape server
+=======================================================================
+
+The following two tapes are to be added to the tape-development setup:
+
+    T00033
+    T00121
+
+In production the tape operations team have DISABLED the two tapes and put
+them in the tape_dev pool.  To see this one must be logged onto a machine with
+a unix account that sees the production system.  In this example such a login
+is murrayc3@lxplus:
+
+[root@lxcastordev04 doc]# ssh murrayc3@lxplus vmgrlisttape -V T00033
+*******************************************************************************
+*                    The LXPLUS Public Login Unix Service
+*                    *
+* http://cern.ch/ComputingRules : Govern the use of CERN computing facilities
+* *
+*******************************************************************************
+T00033   T00033 SL8600_1 1000GC   aul tape_dev        1000.00GB 20090714 DISABLED
+[root@lxcastordev04 doc]# ssh murrayc3@lxplus vmgrlisttape -V T00121
+*******************************************************************************
+*                    The LXPLUS Public Login Unix Service
+*                    *
+* http://cern.ch/ComputingRules : Govern the use of CERN computing facilities
+* *
+*******************************************************************************
+T00121   T00121 SL8600_1 1000GC   aul tape_dev        1000.00GB 20090616 DISABLED
+[root@lxcastordev04 doc]#
+
+
+The tape-development setup requires a new library definition for the two tapes.
+This definition should have a name similar to the production one in order not
+to cause too much confusion.  We do not use exactly the same name because we
+usually split tape production tape libraries into at least two libraries (an
+'A' and 'B') in the tape-development setup in order for us to better control
+which tapes go to which drives. From the above queries in the production
+system about our two tapes we see that the name of their production library is
+the same and that it is the following:
+
+    SL8600_1
+
+The tape-development setup will have two libraries derived from this one, and
+they will be named as follows:
+
+    SL86001A
+    SL86001B
+
+The above two libraries need to be added to the tape-development setup before
+the two tapes they contain.  To do this one must be logged onto a machine with
+a unix account that sees the tape-development setup.  In this example such a
+login is root@lxcastordev04:
+
+[root@lxcastordev04 doc]# vmgrenterlibrary --name SL86001A --capacity 6600
+[root@lxcastordev04 doc]# vmgrenterlibrary --name SL86001B --capacity 6600
+[root@lxcastordev04 doc]# vmgrlistlibrary | grep SL86001
+SL86001A CAPACITY 6600 FREE 6600 (100.0%) ONLINE
+SL86001B CAPACITY 6600 FREE 6600 (100.0%) ONLINE
+[root@lxcastordev04 doc]#
+
+The models for the two tapes need to be copied from production into the
+tape-development setup before tapes can be added:
+
+TO BE DONE
+
+The two tapes can now be added:
+
+TO BE DONE
