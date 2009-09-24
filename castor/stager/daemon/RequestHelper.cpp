@@ -35,11 +35,9 @@
 #include "castor/stager/IStagerSvc.hpp"
 #include "castor/db/DbCnvSvc.hpp"
 
-
-
-
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/exception/InvalidArgument.hpp"
 #include "castor/Constants.hpp"
 #include "castor/System.hpp"
 
@@ -200,13 +198,16 @@ namespace castor{
         }
       }
 
-      void RequestHelper::resolveSvcClass() throw(castor::exception::Exception){
+      void RequestHelper::resolveSvcClass() throw(castor::exception::Exception) {
         // check if the service class has been resolved
         dbSvc->fillObj(baseAddr, fileRequest, castor::OBJ_SvcClass, false);
         svcClass = fileRequest->svcClass();
         if(!svcClass) {
-          castor::exception::Exception e(ENOENT);
-          e.getMessage() << "Invalid service class";
+          // not resolved: this can happen only with svcClass == '*', which is
+          // valid in a number of cases but not in general. Here we handle the general
+          // case, hence we abort, other cases (e.g. QuerySvc) override this behavior
+          castor::exception::InvalidArgument e;
+          e.getMessage() << "Invalid service class '*'";
           throw e;
         }
         // if defined, this is the forced file class
