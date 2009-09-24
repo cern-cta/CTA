@@ -311,7 +311,7 @@ EXTERN_C int Cns_srv_utime _PROTO((int, char *, const char *, struct Cns_srv_thr
 EXTERN_C int Cns_srv_listclass _PROTO((int, char *, const char *, struct Cns_srv_thread_info *, struct Cns_class_metadata *, int, DBLISTPTR *));
 EXTERN_C int Cns_srv_listlinks _PROTO((int, char *, const char *, struct Cns_srv_thread_info *, struct Cns_symlinks *, int, DBLISTPTR *));
 EXTERN_C int Cns_srv_listtape _PROTO((int, char *, const char *, struct Cns_srv_thread_info *, struct Cns_file_metadata *, struct Cns_seg_metadata *, int, DBLISTPTR *));
-EXTERN_C int Cns_srv_readdir _PROTO((int, char *, const char *, struct Cns_srv_thread_info *, struct Cns_file_metadata *, struct Cns_seg_metadata *, struct Cns_user_metadata *, int, DBLISTPTR *, DBLISTPTR *));
+EXTERN_C int Cns_srv_readdir _PROTO((int, char *, const char *, struct Cns_srv_thread_info *, struct Cns_file_metadata *, struct Cns_seg_metadata *, struct Cns_user_metadata *, int, DBLISTPTR *, DBLISTPTR *, int *));
 EXTERN_C int Cns_srv_startsess _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_starttrans _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 #endif
