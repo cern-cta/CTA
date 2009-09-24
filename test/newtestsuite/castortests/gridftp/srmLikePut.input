@@ -1,0 +1,7 @@
+stager_put -M <noTapeFileName>
+stager_actualput -M <noTapeFileName> -P gsiftp >& <tmpLocalFileName>
+cat <tmpLocalFileName>
+globus-url-copy file:///<localFileName> `tail -1 <tmpLocalFileName>`
+stager_qry -M <noTapeFileName>
+stager_putdone -M <noTapeFileName>
+stager_qry -M <noTapeFileName>
