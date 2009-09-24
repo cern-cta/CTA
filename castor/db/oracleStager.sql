@@ -413,44 +413,42 @@ CREATE OR REPLACE PROCEDURE subRequestFailedToDo(srId OUT INTEGER, srRetryCounte
                                                  srStatus OUT INTEGER, srModeBits OUT INTEGER, srFlags OUT INTEGER,
                                                  srSubReqId OUT VARCHAR2, srErrorCode OUT NUMBER,
                                                  srErrorMessage OUT VARCHAR2) AS
-LockError EXCEPTION;
-PRAGMA EXCEPTION_INIT (LockError, -54);
-InvalidRowid EXCEPTION;
-PRAGMA EXCEPTION_INIT (InvalidRowid, -10632);
-CURSOR c IS
-   SELECT id, answered
-     FROM SubRequest
-    WHERE status = 7  -- FAILED
-      AND ROWNUM < 2
-    FOR UPDATE SKIP LOCKED;
-srAnswered INTEGER;
+  SrLocked EXCEPTION;
+  PRAGMA EXCEPTION_INIT (SrLocked, -54);
+  CURSOR c IS SELECT /*+ FIRST_ROWS(10) */ id, answered
+                FROM SubRequest PARTITION (P_STATUS_7); -- FAILED
+  srAnswered INTEGER;
 BEGIN
   srId := 0;
   OPEN c;
-  FETCH c INTO srId, srAnswered;
-  IF srAnswered = 1 THEN
-    -- already answered, ignore it
-    archiveSubReq(srId, 9);  -- FAILED_FINISHED
-    srId := 0;
-  ELSE
-    UPDATE subrequest SET status = 10 WHERE id = srId   -- FAILED_ANSWERING
-      RETURNING retryCounter, fileName, protocol, xsize, priority, status,
-                modeBits, flags, subReqId, errorCode, errorMessage
-      INTO srRetryCounter, srFileName, srProtocol, srXsize, srPriority, srStatus,
-           srModeBits, srFlags, srSubReqId, srErrorCode, srErrorMessage;
-  END IF;
+  LOOP 
+    FETCH c INTO srId, srAnswered;
+    EXIT WHEN c%NOTFOUND;
+    BEGIN
+      SELECT id INTO srId FROM SubRequest PARTITION (P_STATUS_7) SR WHERE id = srId FOR UPDATE NOWAIT;
+      IF srAnswered = 1 THEN
+        -- already answered, ignore it
+        archiveSubReq(srId, 9);  -- FAILED_FINISHED
+        srId := 0;
+      ELSE
+        -- we got our subrequest
+        UPDATE subrequest SET status = 10 WHERE id = srId   -- FAILED_ANSWERING
+        RETURNING retryCounter, fileName, protocol, xsize, priority, status,
+                  modeBits, flags, subReqId, errorCode, errorMessage
+        INTO srRetryCounter, srFileName, srProtocol, srXsize, srPriority, srStatus,
+             srModeBits, srFlags, srSubReqId, srErrorCode, srErrorMessage;
+        EXIT;
+      END IF;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        -- Go to next candidate, this subrequest was processed already and its status changed
+        NULL;
+      WHEN SrLocked THEN
+        -- Go to next candidate, this subrequest is being processed by another thread
+        NULL;
+    END;
+  END LOOP;
   CLOSE c;
-EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- just return srId = 0, nothing to do
-  NULL;
-WHEN InvalidRowid THEN
-  -- Ignore random ORA-10632 errors (invalid rowid) due to interferences with the online shrinking
-  NULL;
-WHEN LockError THEN
-  -- We have observed ORA-00054 errors (resource busy and acquire with NOWAIT) even with
-  -- the SKIP LOCKED clause. This is a workaround to ignore the error until we understand
-  -- what to do, another thread will pick up the request so we don't do anything.
-  NULL;
 END;
 /
 
@@ -806,7 +804,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
              WHEN dcStatus IN (5, 11) THEN -- WAITFS, WAITFSSCHEDULING
                'File is being (re)created right now by another user'
              WHEN dcStatus = 6 AND fsStatus = 0 and dsStatus = 0 THEN -- STAGEOUT, PRODUCTION, PRODUCTION
-               'File is being written to in another SvcClass'
+               'File is being written to in another service class'
              ELSE
                'All copies of this file are unavailable for now. Please retry later'
            END
