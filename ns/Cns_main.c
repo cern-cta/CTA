@@ -394,6 +394,7 @@ int procdirreq(magic, req_type, req_data, clienthost, thip)
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
 {
+  int bod = 1;
   int c;
   struct Cns_class_metadata class_entry;
   DBLISTPTR dblistptr;
@@ -408,6 +409,10 @@ int procdirreq(magic, req_type, req_data, clienthost, thip)
   DBLISTPTR smdlistptr;
   struct timeval timeval;
   struct Cns_user_metadata umd_entry;
+
+  memset (&class_entry, 0, sizeof(struct Cns_class_metadata));
+  memset (&lnk_entry,   0, sizeof(struct Cns_symlinks));
+  memset (&smd_entry,   0, sizeof(struct Cns_seg_metadata));
 
   memset (&dblistptr, 0, sizeof(DBLISTPTR));
   if (req_type == CNS_OPENDIR) {
@@ -447,7 +452,7 @@ int procdirreq(magic, req_type, req_data, clienthost, thip)
         endlist = 1;
       c = Cns_srv_readdir (magic, req_data2, clienthost, thip,
                            &fmd_entry, &smd_entry, &umd_entry,
-                           endlist, &dblistptr, &smdlistptr);
+                           endlist, &dblistptr, &smdlistptr, &bod);
     } else if (req_type == CNS_LISTCLASS) {
       if (new_req_type != CNS_LISTCLASS)
         endlist = 1;

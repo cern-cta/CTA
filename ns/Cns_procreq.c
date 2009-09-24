@@ -1804,6 +1804,10 @@ int Cns_srv_listclass(magic, req_data, clienthost, thip, class_entry, endlist, d
   unmarshall_WORD (rbp, listentsz);
   unmarshall_WORD (rbp, bol);
 
+  bol = 0;
+  if (! class_entry->classid)
+    bol = 1; /* do not rely on client */
+
   /* return as many entries as possible to the client */
 
   maxsize = LISTBUFSZ;
@@ -1921,6 +1925,10 @@ int Cns_srv_listlinks(magic, req_data, clienthost, thip, lnk_entry, endlist, dbl
   sprintf (logbuf, "listlinks %s %s %s", path, guid, cwdpath);
   Cns_logreq (func, logbuf);
 
+  bol = 0;
+  if (! lnk_entry->fileid)
+    bol = 1; /* do not rely on client */
+  
   if (bol) {
     if (*path) {
       /* check parent directory components for search permission and
@@ -2243,6 +2251,10 @@ int Cns_srv_listtape(magic, req_data, clienthost, thip, fmd_entry, smd_entry, en
   sprintf (logbuf, "listtape %s %d %d", vid, bov, fseq);
   Cns_logreq (func, logbuf);
 
+  bov = 0;
+  if (! smd_entry->s_fileid)
+    bov = 1; /* do not rely on client */
+  
   /* return as many entries as possible to the client */
 
   maxsize = DIRBUFSZ - direntsz;
@@ -2819,7 +2831,7 @@ int Cns_srv_queryclass(magic, req_data, clienthost, thip)
 
 /*      Cns_srv_readdir - read directory entries */
 
-int Cns_srv_readdir(magic, req_data, clienthost, thip, fmd_entry, smd_entry, umd_entry, endlist, dblistptr, smdlistptr)
+int Cns_srv_readdir(magic, req_data, clienthost, thip, fmd_entry, smd_entry, umd_entry, endlist, dblistptr, smdlistptr, beginp)
      int magic;
      char *req_data;
      const char *clienthost;
@@ -2830,6 +2842,7 @@ int Cns_srv_readdir(magic, req_data, clienthost, thip, fmd_entry, smd_entry, umd
      int endlist;
      DBLISTPTR *dblistptr;
      DBLISTPTR *smdlistptr;
+     int *beginp;
 {
   int bod; /* beginning of directory flag */
   int bof; /* beginning of file flag */
@@ -2864,6 +2877,8 @@ int Cns_srv_readdir(magic, req_data, clienthost, thip, fmd_entry, smd_entry, umd
   unmarshall_WORD (rbp, direntsz);
   unmarshall_HYPER (rbp, dir_fileid);
   unmarshall_WORD (rbp, bod);
+  bod = *beginp; /* do not rely on client */
+  *beginp = 0;
   if (getattr == 5 && unmarshall_STRINGN (rbp, se, CA_MAXHOSTNAMELEN+1))
     RETURN (EINVAL);
 
