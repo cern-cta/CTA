@@ -165,9 +165,7 @@ void castor::stager::daemon::ErrorSvcThread::process
     if (0 == subReq->errorCode()) {
       res.setErrorCode(SEINTERNAL);
       std::stringstream ss;
-      ss << "Could not retrieve file.\n"
-         << "Please report error and mention file name and the "
-         << "following request ID : " << req->id();
+      ss << "Internal error, request ID was " << req->id();
       res.setErrorMessage(ss.str());
     } else {
       res.setErrorCode(subReq->errorCode());
