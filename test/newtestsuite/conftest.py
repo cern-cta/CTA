@@ -95,7 +95,8 @@ def pytest_addoption(parser):
     # add a set of other options
     parser.addoption("-A", "--all",      action="callback",   callback=handleAllOption,       help='Forces all tests to run')
     parser.addoption("--nocleanup",action="store_true", default=False, dest='noCleanup',help='Prevents the cleanup of temporary files created by the test suite to take place (both in namespace and local disk)')
-    parser.addoption("--failnores",action="store_true", default=False, dest='failNoRes',help='Forces to fail when a resource is not available, instead of skipping the tests')
+    parser.addoption("--failnores",action="store_true", dest='failNoRes',help='Forces to fail when a resource is not available, instead of skipping the tests')
+    parser.addoption("--skipnores",action="store_false", dest='failNoRes',help='Forces to skip when a resource is not available, instead of failing the tests')
     #parser.addoption("--fast",action="callback",   callback=handleFastOption, help='Selects test suitable to check an instance after an upgrade, aka fast testsuite')
     parser.addoption("-C", "--configfile", action="store", default='CastorTestSuite.options', dest='configFile', help='Name of the config file to be used. Defaults to CastorTestSuite.options')
 
@@ -446,8 +447,9 @@ class Setup:
             py.test.skip(testSet + " tests are skipped. Use --(no)" + testSet + " or --all to change this")
         # check resources, including all defaults
         self.checkResources(fileName+'.resources',
-                            skip=(self.options.getboolean('Generic','SkipTestsWhenResourceMissing') and
-                                  not self.config.option.failNoRes))
+                            skip=(self.config.option.failNoRes == False or
+                                  (self.options.getboolean('Generic','SkipTestsWhenResourceMissing') and
+                                   self.config.option.failNoRes == None)))
         # get the list of commands to run
         # Note that we can have several sets in case some tags can
         # get different values. We will run each set as a separate test
