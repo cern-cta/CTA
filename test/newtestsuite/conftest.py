@@ -59,7 +59,7 @@ except Exception:
 class Timeout(Exception):
     None
     
-def Popen(cmd, timeout=6):
+def Popen(cmd, timeout=600):
     if hasSubProcessModule:
         start = datetime.datetime.now()
         process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -369,7 +369,7 @@ class Setup:
             return self.options.get('Tags',tag)
         else:
             # try to build this tag by calling the appropriate function
-            methodName = 'getTag_' + tag
+            methodName = 'getTag_' + tag.replace('-','_')
             if hasattr(self, methodName):
                 v = getattr(self, methodName)()
                 self.tags[tag] = v
