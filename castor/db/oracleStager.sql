@@ -415,17 +415,20 @@ CREATE OR REPLACE PROCEDURE subRequestFailedToDo(srId OUT INTEGER, srRetryCounte
                                                  srErrorMessage OUT VARCHAR2) AS
   SrLocked EXCEPTION;
   PRAGMA EXCEPTION_INIT (SrLocked, -54);
-  CURSOR c IS SELECT /*+ FIRST_ROWS(10) */ id, answered
-                FROM SubRequest PARTITION (P_STATUS_7); -- FAILED
+  CURSOR c IS
+     SELECT /*+ FIRST_ROWS(10) INDEX(SR I_SubRequest_RT_CT_ID) */ SR.id
+       FROM SubRequest PARTITION (P_STATUS_7) SR; -- FAILED
   srAnswered INTEGER;
 BEGIN
-  srId := 0;
   OPEN c;
-  LOOP 
-    FETCH c INTO srId, srAnswered;
+  LOOP
+	  srId := 0;
+    FETCH c INTO srId;
     EXIT WHEN c%NOTFOUND;
     BEGIN
-      SELECT id INTO srId FROM SubRequest PARTITION (P_STATUS_7) SR WHERE id = srId FOR UPDATE NOWAIT;
+      SELECT answered INTO srAnswered
+	      FROM SubRequest PARTITION (P_STATUS_7) 
+       WHERE id = srId FOR UPDATE NOWAIT;
       IF srAnswered = 1 THEN
         -- already answered, ignore it
         archiveSubReq(srId, 9);  -- FAILED_FINISHED
@@ -494,7 +497,7 @@ END;
 
 /* PL/SQL method to archive a SubRequest */
 CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER, finalStatus IN INTEGER) AS
-  nb INTEGER;
+  unused INTEGER;
   rId INTEGER;
   rname VARCHAR2(100);
   srIds "numList";
@@ -510,13 +513,13 @@ BEGIN
   SELECT Id2Type.id INTO rId
     FROM Id2Type
    WHERE id = rId FOR UPDATE;
-  -- Try to see whether another subrequest in the same
-  -- request is still being processed
-  SELECT count(*) INTO nb FROM SubRequest
-   WHERE request = rId AND status NOT IN (8, 9);  -- all but {FAILED_,}FINISHED
-
-  IF nb = 0 THEN
-    -- all subrequests have finished, we can archive
+  BEGIN
+    -- Try to see whether another subrequest in the same
+    -- request is still being processed
+    SELECT id INTO unused FROM SubRequest
+     WHERE request = rId AND status NOT IN (8, 9) AND ROWNUM < 2;  -- all but {FAILED_,}FINISHED
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- All subrequests have finished, we can archive
     SELECT object INTO rname
       FROM Id2Type, Type2Obj
      WHERE id = rId
@@ -537,7 +540,7 @@ BEGIN
        SET status = 11    -- ARCHIVED
      WHERE request = rId
        AND status = 8;  -- FINISHED
-  END IF;
+  END;
 END;
 /
 
