@@ -12,4 +12,4 @@
     stager: Waiting for callback from castor
     stager: <uuid> CBK <answer duration> s before callback from <server ip> was received
 Received 1 responses
-<noTapeFileName> SUBREQUEST_FAILED 16 File is being written to in another SvcClass
+<noTapeFileName> SUBREQUEST_FAILED 16 File is being written to in another service class

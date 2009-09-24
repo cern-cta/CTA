@@ -348,7 +348,7 @@ class StagerGetCase(unittest.TestCase):
         fi=open(localDir+"ClientGetSvc3","r")
         buffOut=fi.read()
         fi.close()
-        assert buffOut.rfind("File is being written to in another SvcClass") != -1, "stager_get doesn't work with svc class option -S"
+        assert buffOut.rfind("File is being written to in another service class") != -1, "stager_get doesn't work with svc class option -S"
         assert checkSvcClass(buffOut, stagerExtraSvcClass), "stager_get doesn't work with svc class option -S"
 
         fi=open(localDir+"ClientGetSvc5","r")
@@ -408,7 +408,7 @@ class StagerGetCase(unittest.TestCase):
         fi=open(localDir+"ClientGetStageOut4","r")
         buffOut=fi.read()
         fi.close()
-        assert buffOut.rfind("SUBREQUEST_FAILED 16 File is being written to in another SvcClass") != -1, "stager_get on a STAGEOUT file in another SvcClass did not work as expected"
+        assert buffOut.rfind("SUBREQUEST_FAILED 16 File is being written to in another service class") != -1, "stager_get on a STAGEOUT file in another SvcClass did not work as expected"
         assert checkSvcClass(buffOut, stagerExtraSvcClass), "stager_get doesn't work with svc class option -S"
 
 
