@@ -30,6 +30,7 @@
 static char *messages[DLF_MAX_MSGTEXTS];
 static int  initialized = 0;
 static int  maxmsglen   = DEFAULT_SYSLOG_MSGLEN;
+static int  logmask     = 0xff;
 
 
 /*---------------------------------------------------------------------------
@@ -137,6 +138,7 @@ int DLL_DECL dlf_init(const char *ident, int maskpri) {
     /* Use the mask supplied by the user */
     (void)setlogmask(maskpri);
   }
+  logmask = setlogmask(0);
 
   /* Determine the maximum message size that the client syslog server can
    * handle.
@@ -277,6 +279,16 @@ int DLL_DECL dlf_write(Cuuid_t reqid,
     return (-1);
   }
 
+  if (priority > LOG_DEBUG) {
+    errno = EINVAL;
+    return (-1);
+  }
+
+  /* Ignore messages whose priority is not of interest */
+  if ((LOG_MASK(LOG_PRI(priority)) & logmask) == 0) {
+    return (0);
+  }
+
   params = (dlf_write_param_t *)
     malloc(numparams * sizeof(dlf_write_param_t));
   if (params == NULL) {
@@ -394,6 +406,11 @@ int DLL_DECL dlf_writep(Cuuid_t reqid,
   if (priority > LOG_DEBUG) {
     errno = EINVAL;
     return (-1);
+  }
+
+  /* Ignore messages whose priority is not of interest */
+  if ((LOG_MASK(LOG_PRI(priority)) & logmask) == 0) {
+    return (0);
   }
 
   /* Convert the request uuid type to a string */
