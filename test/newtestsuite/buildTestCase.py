@@ -113,14 +113,16 @@ tagRegexps = {
     'id'       : ('Id:\s(\d+)\s', None),
     'modtime'  : ('Modtime:\s(\d+)\s', None),
     'stageHost': ('\s('+options.get('Environment','STAGE_HOST')+')\s', None),
-    'gsiftpURL': ('(?:\s|\A)(gsiftp://[^/]*/\S*)', None)
+    'gsiftpURL': ('(?:\s|\A)(gsiftp://[^/]*/\S*)', None),
+    'protocol' : ('\sProtocol=(\S*)\s', None)
     }
 
 # regexps of parts of the output that should be dropped
 # Note that regexps must have exactly one group matching the part to
 # be dropped
 suppressRegExps = [
-    'seconds through (?:\w+\s+\(\w+\)) and (?:\w+\s+\(\w+\))(\s\(\d+\s\w+/sec\))'
+    'seconds through (?:\w+\s+\(\w+\)) and (?:\w+\s+\(\w+\))(\s\(\d+\s\w+/sec\))',
+    '\n(\s*stager: Looking up service class - Using \S*\s*\n)'
 ]
 
 # welcome message
@@ -149,11 +151,11 @@ while goOn:
     outputs.append(output)
     # and print output
     print output
-readline.write_history_file(historyPath)
 
 # we are over, get test name and place
 testName = raw_input("Very good, what is the name of this test ? ").strip()
 testDir = 'castortests'+os.sep+raw_input("Ok, and where should I put it ? ").strip()
+readline.write_history_file(historyPath)
 
 def resetTags():
     global knownRepl, usedTags
