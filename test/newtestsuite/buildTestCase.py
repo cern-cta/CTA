@@ -1,4 +1,4 @@
-import os, re, ConfigParser, os.path
+import os, re, ConfigParser, os.path, readline
 
 # handling of subprocesses, depending on the python version
 try:
@@ -83,7 +83,7 @@ if options.has_section('Environment'):
 # Note that regexps must have exactly one group matching the part to
 # be replaced
 tagRegexps = {
-    'fileName' : ('(?:[\s=]|\A)(/[^ \t\n\r\f\v:\)]*)', tagForFileName),
+    'fileName' : ('(?:[\s=]|\A|file:///)(/[^ \t\n\r\f\v:\)]*)', tagForFileName),
     'rhhost'   : ('Looking up RH host - Using ([\w.]+)', None),
     'rhport'   : ('Looking up RH port - Using (\d+)', None),
     'userid'   : ('Setting euid: (\w+)', None),
@@ -112,7 +112,8 @@ tagRegexps = {
     'bytes transfered' : ('\[xrootd] Total ([0-9\.]+\s[A-Z]+)\s', None),
     'id'       : ('Id:\s(\d+)\s', None),
     'modtime'  : ('Modtime:\s(\d+)\s', None),
-    'stageHost': ('\s('+options.get('Environment','STAGE_HOST')+')\s', None)
+    'stageHost': ('\s('+options.get('Environment','STAGE_HOST')+')\s', None),
+    'gsiftpURL': ('(?:\s|\A)(gsiftp://[^/]*/\S*)', None)
     }
 
 # regexps of parts of the output that should be dropped
@@ -134,6 +135,9 @@ print
 goOn = True
 cmds = []
 outputs = []
+historyPath = os.path.expanduser("~/.castorBuildTestHist")
+if os.path.exists(historyPath):
+    readline.read_history_file(historyPath)
 while goOn:
     # get command and log it
     cmd = raw_input('> ').strip()
@@ -145,6 +149,7 @@ while goOn:
     outputs.append(output)
     # and print output
     print output
+readline.write_history_file(historyPath)
 
 # we are over, get test name and place
 testName = raw_input("Very good, what is the name of this test ? ").strip()
