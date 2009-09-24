@@ -4,7 +4,7 @@
 # this is the core of the CASTOR test suite, based on py.test
 #
 
-import time, ConfigParser, os, py, tempfile, re, types
+import time, ConfigParser, os, py, tempfile, re, types, datetime, signal
 
 ################
 # some configs #
@@ -55,10 +55,22 @@ try:
     hasSubProcessModule = True
 except Exception:
     hasSubProcessModule = False
+
+class Timeout(Exception):
+    None
     
-def Popen(cmd):
+def Popen(cmd, timeout=6):
     if hasSubProcessModule:
-        return subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
+        start = datetime.datetime.now()
+        process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        while process.poll() is None:
+            time.sleep(0.1)
+            now = datetime.datetime.now()
+            if (now - start).seconds > timeout:
+                os.kill(process.pid, signal.SIGKILL)
+                os.waitpid(-1, os.WNOHANG)
+                raise Timeout()
+        return process.stdout.read()
     else:
         return os.popen4(cmd)[1].read()
 
@@ -447,10 +459,13 @@ class Setup:
                 # skip empty lines in the input file
                 if len(cmd) > 0:
                     print "executing ", cmd
-                    # run the command
-                    output = Popen(cmd)
-                    # and check its output
-                    compareOutput(self, output, open(fileName+'.output'+str(i)).read(), testName)
+                    try:
+                        # run the command
+                        output = Popen(cmd)
+                        # and check its output
+                        compareOutput(self, output, open(fileName+'.output'+str(i)).read(), testName)
+                    except Timeout:
+                        assert False, "Time out"
                     i = i + 1
 
     ###########################
