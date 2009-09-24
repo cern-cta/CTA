@@ -9,8 +9,8 @@
     stager: <uuid> SND <send duration> s to send the request
     stager: Waiting for callback from castor
     stager: <uuid> CBK <answer duration> s before callback from <server ip> was received
-POOL <poolName>          CAPACITY <capacity>   FREE <free>
-  DiskServer <firstDiskServerName> DISKSERVER_<diskState>   CAPACITY <diskCapacity>   FREE <diskFree>
-     FileSystems                       STATUS                  CAPACITY      FREE       GCBOUNDS
-     <moutnPoint>                   FILESYSTEM_<FSState>   <FSSize>    <FSFree> <GCBounds>
+POOL <poolName>          CAPACITY <capacity> FREE <free>
+  DiskServer <firstDiskServerName> DISKSERVER_<diskState>   CAPACITY <diskCapacity> FREE <diskFree>
+     FileSystems               STATUS                  CAPACITY                  FREE           GCBOUNDS
+     <mountPoint>           FILESYSTEM_<FSState>   <FSSize>         <FSFree> <GCBounds>
 <IgnoreRestOfOutput>
