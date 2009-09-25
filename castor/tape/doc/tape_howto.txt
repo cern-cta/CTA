@@ -2646,7 +2646,7 @@ DGNs.  The following shows how to get the DGN used in the production system:
 *                    *
 * http://cern.ch/ComputingRules : Govern the use of CERN computing facilities
 * *
-*******************************************************************************
+e******************************************************************************
 T10KB6 T10000 SL8600_1
 [root@lxcastordev04 tape]#
 
@@ -2654,24 +2654,17 @@ Like with the libraries we will create at least two DGNs in the
 tape-development setup (A and B).  The "A" DGN will be mapped to the "A"
 library and likewise the "B" DGN will be mapped to the "B" library:
 
-[root@lxcastordev04 tape]# vmgrenterdgnmap -g T10K6A --library SL86001A --mo
-T10000
-[root@lxcastordev04 tape]# vmgrenterdgnmap -g T10K6B --library SL86001B --mo
-T10000
-[root@lxcastordev04 tape]# vmgrlistdgnmap | grep T10K6
-T10K6A T10000 SL86001A
-T10K6B T10000 SL86001B
-[root@lxcastordev04 tape]#
-
+[root@lxcastordev04 tape]# vmgrenterdgnmap -g T10B6A --library SL86001A --mo T10000
+[root@lxcastordev04 tape]# vmgrenterdgnmap -g T10B6B --library SL86001B --mo T10000
+[root@lxcastordev04 tape]# vmgrlistdgnmap | grep T10B6
+T10B6A T10000 SL86001A
+T10B6B T10000 SL86001B
 
 The two tapes can now be added to the tape-development setup.  We will put
-them both into the SL86001A library and the repack_spare pool:
+them both into the SL86001B library and the repack_spare pool:
 
-[root@lxcastordev04 tape]# vmgrentertape -V T00033 --mo T10000 --ml T --li
-SL86001A -d 1000GC -l aul --po repack_spare
-[root@lxcastordev04 tape]# vmgrentertape -V T00121 --mo T10000 --ml T --li
-SL86001A -d 1000GC -l aul --po repack_spare
+[root@lxcastordev04 tape]# vmgrentertape -V T00033 --mo T10000 --ml T --li SL86001B -d 1000GC -l aul --po repack_spare
+[root@lxcastordev04 tape]# vmgrentertape -V T00121 --mo T10000 --ml T --li SL86001B -d 1000GC -l aul --po repack_spare
 [root@lxcastordev04 tape]# vmgrlisttape | grep T00
-T00033   T00033 SL86001A 1000GC   aul repack_spare     931.00GiB 00000000
-T00121   T00121 SL86001A 1000GC   aul repack_spare     931.00GiB 00000000
-[root@lxcastordev04 tape]#
+T00033   T00033 SL86001B 1000GC   aul repack_spare     931.00GiB 00000000
+T00121   T00121 SL86001B 1000GC   aul repack_spare     931.00GiB 00000000
