@@ -2510,8 +2510,10 @@ nvl(to_char(egid), 'NULL') || ',' || nvl(to_char(reqtype), 'NULL') || ');'
 from whitelist;
 
 
-How to add 2 new tapes in a new library together with a new tape server
-=======================================================================
+How to add 2 new tapes in a new library together with a new tape server to
+==========================================================================
+the tape-development setup
+==========================
 
 The following two tapes are to be added to the tape-development setup:
 
@@ -2572,10 +2574,104 @@ SL86001B CAPACITY 6600 FREE 6600 (100.0%) ONLINE
 [root@lxcastordev04 doc]#
 
 The models for the two tapes need to be copied from production into the
-tape-development setup before tapes can be added:
+tape-development setup before tapes can be added.  The models of the two tapes
+can be determined as follows:
 
-TO BE DONE
+[root@lxcastordev04 tape]# ssh murrayc3@lxplus vmgrlisttape -x -V T00033 | awk
+'{ print "VID=" $1 " MODEL=" $6; }'
+*******************************************************************************
+*                    The LXPLUS Public Login Unix Service
+*                    *
+* http://cern.ch/ComputingRules : Govern the use of CERN computing facilities
+* *
+*******************************************************************************
+VID=T00033 MODEL=T10000
+[root@lxcastordev04 tape]# ssh murrayc3@lxplus vmgrlisttape -x -V T00121 | awk
+'{ print "VID=" $1 " MODEL=" $6; }'
+*******************************************************************************
+*                    The LXPLUS Public Login Unix Service
+*                    *
+* http://cern.ch/ComputingRules : Govern the use of CERN computing facilities
+* *
+*******************************************************************************
+VID=T00121 MODEL=T10000
+[root@lxcastordev04 tape]#
 
-The two tapes can now be added:
+The above output shows that both tapes are of the same model and that model is:
 
-TO BE DONE
+    T10000
+
+In order to enter the model into the tape-development setup we need to get its
+media letter and media cost:
+
+[root@lxcastordev04 tape]# ssh murrayc3@lxplus vmgrlistmodel --mo T10000
+*******************************************************************************
+*                    The LXPLUS Public Login Unix Service
+*                    *
+* http://cern.ch/ComputingRules : Govern the use of CERN computing facilities
+* *
+*******************************************************************************
+T10000 T  200
+[root@lxcastordev04 tape]#
+  
+The model can now be entered into the tape-development setup:
+
+[root@lxcastordev04 tape]# vmgrentermodel --mo T10000 --ml T --mc 200
+[root@lxcastordev04 tape]# vmgrlistmodel --mo T10000
+T10000 T  200
+
+The density mapping between the model and the density of the two tapes needs
+to be entered into the tape-development setup before the two tapes are
+entered.  The name given to the density is 1000GC and the native (actual)
+capacity is 931G:
+
+[root@lxcastordev04 tape]# vmgrenterdenmap -d 1000GC --mo T10000 --ml T --nc
+931G
+[root@lxcastordev04 tape]# vmgrlistdenmap | grep T10000
+T10000 T  1000GC    931.00Gi
+
+
+The DGN mapping between the new library and tape model needs to be entered
+into the tape-development setup before the two tapes can be entered.  To avoid
+confusion the DGN should look like what exits in production but should not be
+the same in order to protect against the two system interferring with each
+other in the case where by accident one system talks to the VDQM of the other.
+If different DGNs are used in the two systems then the VDQM of one system will
+refuse requests from the other system because it does not recognise their
+DGNs.  The following shows how to get the DGN used in the production system:
+
+[root@lxcastordev04 tape]# ssh murrayc3@lxplus vmgrlistdgnmap | grep SL8600
+*******************************************************************************
+*                    The LXPLUS Public Login Unix Service
+*                    *
+* http://cern.ch/ComputingRules : Govern the use of CERN computing facilities
+* *
+*******************************************************************************
+T10KB6 T10000 SL8600_1
+[root@lxcastordev04 tape]#
+
+Like with the libraries we will create at least two DGNs in the
+tape-development setup (A and B).  The "A" DGN will be mapped to the "A"
+library and likewise the "B" DGN will be mapped to the "B" library:
+
+[root@lxcastordev04 tape]# vmgrenterdgnmap -g T10K6A --library SL86001A --mo
+T10000
+[root@lxcastordev04 tape]# vmgrenterdgnmap -g T10K6B --library SL86001B --mo
+T10000
+[root@lxcastordev04 tape]# vmgrlistdgnmap | grep T10K6
+T10K6A T10000 SL86001A
+T10K6B T10000 SL86001B
+[root@lxcastordev04 tape]#
+
+
+The two tapes can now be added to the tape-development setup.  We will put
+them both into the SL86001A library and the repack_spare pool:
+
+[root@lxcastordev04 tape]# vmgrentertape -V T00033 --mo T10000 --ml T --li
+SL86001A -d 1000GC -l aul --po repack_spare
+[root@lxcastordev04 tape]# vmgrentertape -V T00121 --mo T10000 --ml T --li
+SL86001A -d 1000GC -l aul --po repack_spare
+[root@lxcastordev04 tape]# vmgrlisttape | grep T00
+T00033   T00033 SL86001A 1000GC   aul repack_spare     931.00GiB 00000000
+T00121   T00121 SL86001A 1000GC   aul repack_spare     931.00GiB 00000000
+[root@lxcastordev04 tape]#
