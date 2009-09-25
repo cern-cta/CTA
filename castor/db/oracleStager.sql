@@ -419,27 +419,27 @@ CREATE OR REPLACE PROCEDURE subRequestFailedToDo(srId OUT INTEGER, srRetryCounte
      SELECT /*+ FIRST_ROWS(10) INDEX(SR I_SubRequest_RT_CT_ID) */ SR.id
        FROM SubRequest PARTITION (P_STATUS_7) SR; -- FAILED
   srAnswered INTEGER;
+  srIntId NUMBER;
 BEGIN
   OPEN c;
   LOOP
-	  srId := 0;
-    FETCH c INTO srId;
+    FETCH c INTO srIntId;
     EXIT WHEN c%NOTFOUND;
     BEGIN
       SELECT answered INTO srAnswered
 	      FROM SubRequest PARTITION (P_STATUS_7) 
-       WHERE id = srId FOR UPDATE NOWAIT;
+       WHERE id = srIntId FOR UPDATE NOWAIT;
       IF srAnswered = 1 THEN
         -- already answered, ignore it
-        archiveSubReq(srId, 9);  -- FAILED_FINISHED
-        srId := 0;
+        archiveSubReq(srIntId, 9);  -- FAILED_FINISHED
       ELSE
         -- we got our subrequest
-        UPDATE subrequest SET status = 10 WHERE id = srId   -- FAILED_ANSWERING
+        UPDATE subrequest SET status = 10 WHERE id = srIntId   -- FAILED_ANSWERING
         RETURNING retryCounter, fileName, protocol, xsize, priority, status,
                   modeBits, flags, subReqId, errorCode, errorMessage
         INTO srRetryCounter, srFileName, srProtocol, srXsize, srPriority, srStatus,
              srModeBits, srFlags, srSubReqId, srErrorCode, srErrorMessage;
+        srId := srIntId;
         EXIT;
       END IF;
     EXCEPTION
