@@ -503,16 +503,18 @@ CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER, finalStatus IN INTEGE
   srIds "numList";
   clientId INTEGER;
 BEGIN
-  UPDATE SubRequest
-     SET parent = NULL, diskCopy = NULL,  -- unlink this subrequest as it's dead now
-         lastModificationTime = getTime(),
-         status = finalStatus
-   WHERE id = srId
-  RETURNING request INTO rId;
+  SELECT request INTO rId
+    FROM SubRequest
+   WHERE id = srId;
   -- Lock the access to the Request
   SELECT Id2Type.id INTO rId
     FROM Id2Type
    WHERE id = rId FOR UPDATE;
+  UPDATE SubRequest
+     SET parent = NULL, diskCopy = NULL,  -- unlink this subrequest as it's dead now
+         lastModificationTime = getTime(),
+         status = finalStatus
+   WHERE id = srId;
   BEGIN
     -- Try to see whether another subrequest in the same
     -- request is still being processed
@@ -2277,7 +2279,6 @@ BEGIN
          getNextStatus = decode(newStatus, 6, 1, 8, 1, 9, 1, 0)  -- READY, FINISHED or FAILED_FINISHED -> GETNEXTSTATUS_FILESTAGED
    WHERE id = srId;
   -- Check whether it was the last subrequest in the request
-  result := 1;
   SELECT id INTO result FROM SubRequest
    WHERE request = reqId
      AND status IN (0, 1, 2, 3, 4, 5, 7, 10, 12, 13, 14)   -- all but FINISHED, FAILED_FINISHED, ARCHIVED
