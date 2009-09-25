@@ -2577,8 +2577,7 @@ The models for the two tapes need to be copied from production into the
 tape-development setup before tapes can be added.  The models of the two tapes
 can be determined as follows:
 
-[root@lxcastordev04 tape]# ssh murrayc3@lxplus vmgrlisttape -x -V T00033 | awk
-'{ print "VID=" $1 " MODEL=" $6; }'
+[root@lxcastordev04 tape]# ssh murrayc3@lxplus vmgrlisttape -x -V T00033 | awk '{ print "VID=" $1 " MODEL=" $6; }'
 *******************************************************************************
 *                    The LXPLUS Public Login Unix Service
 *                    *
@@ -2586,8 +2585,7 @@ can be determined as follows:
 * *
 *******************************************************************************
 VID=T00033 MODEL=T10000
-[root@lxcastordev04 tape]# ssh murrayc3@lxplus vmgrlisttape -x -V T00121 | awk
-'{ print "VID=" $1 " MODEL=" $6; }'
+[root@lxcastordev04 tape]# ssh murrayc3@lxplus vmgrlisttape -x -V T00121 | awk '{ print "VID=" $1 " MODEL=" $6; }'
 *******************************************************************************
 *                    The LXPLUS Public Login Unix Service
 *                    *
@@ -2625,8 +2623,7 @@ to be entered into the tape-development setup before the two tapes are
 entered.  The name given to the density is 1000GC and the native (actual)
 capacity is 931G:
 
-[root@lxcastordev04 tape]# vmgrenterdenmap -d 1000GC --mo T10000 --ml T --nc
-931G
+[root@lxcastordev04 tape]# vmgrenterdenmap -d 1000GC --mo T10000 --ml T --nc 931G
 [root@lxcastordev04 tape]# vmgrlistdenmap | grep T10000
 T10000 T  1000GC    931.00Gi
 
@@ -2659,6 +2656,23 @@ library and likewise the "B" DGN will be mapped to the "B" library:
 [root@lxcastordev04 tape]# vmgrlistdgnmap | grep T10B6
 T10B6A T10000 SL86001A
 T10B6B T10000 SL86001B
+
+
+The VDQM should now be synchronised with the VMGR:
+
+[root@lxcastorsrv102 ~]# vdqmDBInit
+Try to update DeviceGroupName table in db...
+New DeviceGroupName row inserted into db: dgName = T10B6A, libraryName =
+SL86001A
+New DeviceGroupName row inserted into db: dgName = T10B6B, libraryName =
+SL86001B
+
+Try to update TapeAccessSpecification table in db...
+New TapeAccessSpecification row inserted into db: accessMode = 0, density =
+1000GC, tapeModel = T10000
+New TapeAccessSpecification row inserted into db: accessMode = 1, density =
+1000GC, tapeModel = T10000
+[root@lxcastorsrv102 ~]#
 
 The two tapes can now be added to the tape-development setup.  We will put
 them both into the SL86001B library and the repack_spare pool:
