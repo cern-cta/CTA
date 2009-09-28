@@ -2682,3 +2682,18 @@ them both into the SL86001B library and the repack_spare pool:
 [root@lxcastordev04 tape]# vmgrlisttape | grep T00
 T00033   T00033 SL86001B 1000GC   aul repack_spare     931.00GiB 00000000
 T00121   T00121 SL86001B 1000GC   aul repack_spare     931.00GiB 00000000
+
+
+How to get a backtrace of all the threads of aggregatord
+========================================================
+
+[root@tpsrv203 ~]# PID=`ps -ef | egrep 'aggregatord$' | awk '{print $2;}'`;
+gdb attach $PID << HERE
+set pagination off
+set logging file /tmp/aggregator_full_stack_trace.log
+set logging overwrite on
+set logging on
+thread apply all bt full
+set logging off
+HERE
+
