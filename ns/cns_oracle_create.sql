@@ -140,7 +140,7 @@ ALTER TABLE Cns_symlinks
 
 -- Create the Cns_version table
 CREATE TABLE Cns_version (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO Cns_version VALUES ('2_1_9_0', '2_1_9_0');
+INSERT INTO Cns_version VALUES ('2_1_9_0', '2_1_9_1');
 
 -- Create indexes on Cns_file_metadata
 CREATE INDEX PARENT_FILEID_IDX ON Cns_file_metadata (parent_fileid);

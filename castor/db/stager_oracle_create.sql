@@ -463,7 +463,7 @@ COMMIT;
 
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_9_0');
+INSERT INTO CastorVersion VALUES ('-', '2_1_9_1');
 
 /*******************************************************************
  *
@@ -1332,6 +1332,25 @@ BEGIN
 END;
 /
 
+/* Function to check if a diskserver and its given mountpoints have any files
+ * attached to them.
+ */
+CREATE OR REPLACE
+FUNCTION checkIfFilesExist(diskServerName IN VARCHAR2, mountPointName IN VARCHAR2)
+RETURN NUMBER AS
+  rtn NUMBER;
+BEGIN
+  SELECT count(*) INTO rtn
+    FROM DiskCopy, FileSystem, DiskServer
+   WHERE DiskCopy.fileSystem = FileSystem.id
+     AND FileSystem.diskserver = DiskServer.id
+     AND DiskServer.name = diskServerName
+     AND (FileSystem.mountpoint = mountPointName 
+      OR  length(mountPointName) IS NULL)
+     AND rownum = 1;
+  RETURN rtn;
+END;
+/
 
 /* PL/SQL method deleting tapecopies (and segments) of a castorfile */
 CREATE OR REPLACE PROCEDURE deleteTapeCopies(cfId NUMBER) AS
@@ -1481,6 +1500,11 @@ CREATE OR REPLACE PROCEDURE checkPermission(isvcClass IN VARCHAR2,
 BEGIN
   -- First resolve the service class
   svcId := checkForValidSvcClass(isvcClass, 1, 0);
+  -- Skip access control checks for special internal users
+  IF ieuid = -1 AND iegid = -1 THEN
+    res := svcId;
+    RETURN;
+  END IF;
   -- Perform the check
   SELECT count(*) INTO c
     FROM WhiteList
@@ -1537,10 +1561,6 @@ FUNCTION checkPermissionOnSvcClass(reqSvcClass IN VARCHAR2,
 RETURN NUMBER AS
   res NUMBER;
 BEGIN
-  -- Skip access control checks for special internal users
-  IF reqEuid = -1 AND reqEgid = -1 THEN
-    RETURN 0;
-  END IF;
   -- Check the users access rights
   checkPermission(reqSvcClass, reqEuid, reqEgid, reqType, res);
   IF res > 0 THEN
@@ -1972,7 +1992,7 @@ END castorBW;
  *******************************************************************/
 
 /* PL/SQL declaration for the castor package */
-create or replace PACKAGE castor AS
+CREATE OR REPLACE PACKAGE castor AS
   TYPE DiskCopyCore IS RECORD (
     id INTEGER,
     path VARCHAR2(2048),
@@ -2377,44 +2397,45 @@ CREATE OR REPLACE PROCEDURE subRequestFailedToDo(srId OUT INTEGER, srRetryCounte
                                                  srStatus OUT INTEGER, srModeBits OUT INTEGER, srFlags OUT INTEGER,
                                                  srSubReqId OUT VARCHAR2, srErrorCode OUT NUMBER,
                                                  srErrorMessage OUT VARCHAR2) AS
-LockError EXCEPTION;
-PRAGMA EXCEPTION_INIT (LockError, -54);
-InvalidRowid EXCEPTION;
-PRAGMA EXCEPTION_INIT (InvalidRowid, -10632);
-CURSOR c IS
-   SELECT id, answered
-     FROM SubRequest
-    WHERE status = 7  -- FAILED
-      AND ROWNUM < 2
-    FOR UPDATE SKIP LOCKED;
-srAnswered INTEGER;
+  SrLocked EXCEPTION;
+  PRAGMA EXCEPTION_INIT (SrLocked, -54);
+  CURSOR c IS
+     SELECT /*+ FIRST_ROWS(10) INDEX(SR I_SubRequest_RT_CT_ID) */ SR.id
+       FROM SubRequest PARTITION (P_STATUS_7) SR; -- FAILED
+  srAnswered INTEGER;
+  srIntId NUMBER;
 BEGIN
-  srId := 0;
   OPEN c;
-  FETCH c INTO srId, srAnswered;
-  IF srAnswered = 1 THEN
-    -- already answered, ignore it
-    archiveSubReq(srId, 9);  -- FAILED_FINISHED
-    srId := 0;
-  ELSE
-    UPDATE subrequest SET status = 10 WHERE id = srId   -- FAILED_ANSWERING
-      RETURNING retryCounter, fileName, protocol, xsize, priority, status,
-                modeBits, flags, subReqId, errorCode, errorMessage
-      INTO srRetryCounter, srFileName, srProtocol, srXsize, srPriority, srStatus,
-           srModeBits, srFlags, srSubReqId, srErrorCode, srErrorMessage;
-  END IF;
+  LOOP
+    FETCH c INTO srIntId;
+    EXIT WHEN c%NOTFOUND;
+    BEGIN
+      SELECT answered INTO srAnswered
+        FROM SubRequest PARTITION (P_STATUS_7) 
+       WHERE id = srIntId FOR UPDATE NOWAIT;
+      IF srAnswered = 1 THEN
+        -- already answered, ignore it
+        archiveSubReq(srIntId, 9);  -- FAILED_FINISHED
+      ELSE
+        -- we got our subrequest
+        UPDATE subrequest SET status = 10 WHERE id = srIntId   -- FAILED_ANSWERING
+        RETURNING retryCounter, fileName, protocol, xsize, priority, status,
+                  modeBits, flags, subReqId, errorCode, errorMessage
+        INTO srRetryCounter, srFileName, srProtocol, srXsize, srPriority, srStatus,
+             srModeBits, srFlags, srSubReqId, srErrorCode, srErrorMessage;
+        srId := srIntId;
+        EXIT;
+      END IF;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        -- Go to next candidate, this subrequest was processed already and its status changed
+        NULL;
+      WHEN SrLocked THEN
+        -- Go to next candidate, this subrequest is being processed by another thread
+        NULL;
+    END;
+  END LOOP;
   CLOSE c;
-EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- just return srId = 0, nothing to do
-  NULL;
-WHEN InvalidRowid THEN
-  -- Ignore random ORA-10632 errors (invalid rowid) due to interferences with the online shrinking
-  NULL;
-WHEN LockError THEN
-  -- We have observed ORA-00054 errors (resource busy and acquire with NOWAIT) even with
-  -- the SKIP LOCKED clause. This is a workaround to ignore the error until we understand
-  -- what to do, another thread will pick up the request so we don't do anything.
-  NULL;
 END;
 /
 
@@ -2460,29 +2481,31 @@ END;
 
 /* PL/SQL method to archive a SubRequest */
 CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER, finalStatus IN INTEGER) AS
-  nb INTEGER;
+  unused INTEGER;
   rId INTEGER;
   rname VARCHAR2(100);
   srIds "numList";
   clientId INTEGER;
 BEGIN
-  UPDATE SubRequest
-     SET parent = NULL, diskCopy = NULL,  -- unlink this subrequest as it's dead now
-         lastModificationTime = getTime(),
-         status = finalStatus
-   WHERE id = srId
-  RETURNING request INTO rId;
+  SELECT request INTO rId
+    FROM SubRequest
+   WHERE id = srId;
   -- Lock the access to the Request
   SELECT Id2Type.id INTO rId
     FROM Id2Type
    WHERE id = rId FOR UPDATE;
-  -- Try to see whether another subrequest in the same
-  -- request is still being processed
-  SELECT count(*) INTO nb FROM SubRequest
-   WHERE request = rId AND status NOT IN (8, 9);  -- all but {FAILED_,}FINISHED
-
-  IF nb = 0 THEN
-    -- all subrequests have finished, we can archive
+  UPDATE SubRequest
+     SET parent = NULL, diskCopy = NULL,  -- unlink this subrequest as it's dead now
+         lastModificationTime = getTime(),
+         status = finalStatus
+   WHERE id = srId;
+  BEGIN
+    -- Try to see whether another subrequest in the same
+    -- request is still being processed
+    SELECT id INTO unused FROM SubRequest
+     WHERE request = rId AND status NOT IN (8, 9) AND ROWNUM < 2;  -- all but {FAILED_,}FINISHED
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- All subrequests have finished, we can archive
     SELECT object INTO rname
       FROM Id2Type, Type2Obj
      WHERE id = rId
@@ -2503,7 +2526,7 @@ BEGIN
        SET status = 11    -- ARCHIVED
      WHERE request = rId
        AND status = 8;  -- FINISHED
-  END IF;
+  END;
 END;
 /
 
@@ -2532,9 +2555,9 @@ BEGIN
   IF (failJobsFlag = 1) THEN
     SELECT count(*), sum(free - totalSize * minAllowedFreeSpace) 
       INTO c, availSpace
-      FROM diskpool2svcclass, FileSystem, DiskServer
-     WHERE diskpool2svcclass.child = svcClassId
-       AND diskpool2svcclass.parent = FileSystem.diskPool
+      FROM DiskPool2SvcClass, FileSystem, DiskServer
+     WHERE DiskPool2SvcClass.child = svcClassId
+       AND DiskPool2SvcClass.parent = FileSystem.diskPool
        AND FileSystem.diskServer = DiskServer.id
        AND FileSystem.status = 0 -- PRODUCTION
        AND DiskServer.status = 0 -- PRODUCTION
@@ -2672,6 +2695,8 @@ PROCEDURE checkForD2DCopyOrRecall(cfId IN NUMBER, srId IN NUMBER, reuid IN NUMBE
                                   svcClassId IN NUMBER, dcId OUT NUMBER, srcSvcClassId OUT NUMBER) AS
   destSvcClass VARCHAR2(2048);
   authDest NUMBER;
+  userid NUMBER := reuid;
+  groupid NUMBER := regid;
 BEGIN
   -- First check whether we are a disk only pool that is already full.
   -- In such a case, we should fail the request with an ENOSPACE error
@@ -2687,11 +2712,30 @@ BEGIN
   END IF;
   -- Resolve the destination service class id to a name
   SELECT name INTO destSvcClass FROM SvcClass WHERE id = svcClassId;
+  -- Determine if there are any copies of the file in the same service class
+  -- on DISABLED or DRAINING hardware. If we found something then set the user
+  -- and group id to -1 this effectively disables the later privilege checks
+  -- to see if the user can trigger a d2d or recall. (#55745)
+  BEGIN
+    SELECT -1, -1 INTO userid, groupid
+      FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
+     WHERE DiskCopy.fileSystem = FileSystem.id
+       AND DiskCopy.castorFile = cfId
+       AND DiskCopy.status IN (0, 10)  -- STAGED, CANBEMIGR
+       AND FileSystem.diskPool = DiskPool2SvcClass.parent
+       AND DiskPool2SvcClass.child = svcClassId
+       AND FileSystem.diskServer = DiskServer.id
+       AND (DiskServer.status != 0  -- !PRODUCTION
+        OR  FileSystem.status != 0) -- !PRODUCTION
+       AND ROWNUM < 2;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    NULL;  -- Nothing
+  END; 
   -- If we are in this procedure then we did not find a copy of the
   -- file in the target service class that could be used. So, we check
   -- to see if the user has the rights to create a file in the destination
   -- service class. I.e. check for StagePutRequest access rights
-  checkPermission(destSvcClass, reuid, regid, 40, authDest);
+  checkPermission(destSvcClass, userid, groupid, 40, authDest);
   IF authDest < 0 THEN
     -- Fail the subrequest and notify the client
     dcId := -1;
@@ -2704,7 +2748,7 @@ BEGIN
     RETURN;
   END IF;
   -- Try to find a diskcopy to replicate
-  getBestDiskCopyToReplicate(cfId, reuid, regid, 0, svcClassId, dcId, srcSvcClassId);
+  getBestDiskCopyToReplicate(cfId, userid, groupid, 0, svcClassId, dcId, srcSvcClassId);
   -- We found at least one, therefore we schedule a disk2disk
   -- copy from the existing diskcopy not available to this svcclass
 EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -2742,14 +2786,14 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
        SET status = 7, -- FAILED
            errorCode = CASE
              WHEN dcStatus IN (5, 11) THEN 16 -- WAITFS, WAITFSSCHEDULING, EBUSY
-             WHEN dcStatus = 6 AND fsStatus = 0 and dsStatus = 0 THEN 16 -- STAGEOUT, PRODUCTION, PRODUCTION, EBUSY
+             WHEN dcStatus = 6 AND fsStatus = 0 AND dsStatus = 0 THEN 16 -- STAGEOUT, PRODUCTION, PRODUCTION, EBUSY
              ELSE 1718 -- ESTNOTAVAIL
            END,
            errorMessage = CASE
              WHEN dcStatus IN (5, 11) THEN -- WAITFS, WAITFSSCHEDULING
                'File is being (re)created right now by another user'
              WHEN dcStatus = 6 AND fsStatus = 0 and dsStatus = 0 THEN -- STAGEOUT, PRODUCTION, PRODUCTION
-               'File is being written to in another SvcClass'
+               'File is being written to in another service class'
              ELSE
                'All copies of this file are unavailable for now. Please retry later'
            END
@@ -2758,7 +2802,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- Check whether the user has the rights to issue a tape recall to
     -- the destination service class.
-    checkPermission(destSvcClass, reuid, regid, 161, authDest);
+    checkPermission(destSvcClass, userid, groupid, 161, authDest);
     IF authDest < 0 THEN
       -- Fail the subrequest and notify the client
       dcId := -1;
@@ -4011,7 +4055,7 @@ BEGIN
            UNION
            (SELECT DC.id     -- all diskcopies in Tape0 pools
               FROM DiskCopy DC, FileSystem, DiskPool2SvcClass D2S, SvcClass, FileClass
-             WHERE DC.castorFile = cfId
+             WHERE DC.castorFile = cfId                         
                AND DC.fileSystem = FileSystem.id
                AND FileSystem.diskPool = D2S.parent
                AND D2S.child = SvcClass.id
@@ -4095,7 +4139,19 @@ BEGIN
        WHERE id = srId;
       RETURN;
     EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- Nothing running
+      -- Nothing running. We still may have found nothing at all...
+      SELECT count(*) INTO nbRes FROM DiskCopy
+       WHERE castorFile = cfId
+         AND status NOT IN (4, 7, 9);  -- anything but FAILED, INVALID, BEINGDELETED
+      IF nbRes = 0 THEN
+        UPDATE SubRequest
+           SET status = 7,  -- FAILED
+               errorCode = 2,  -- ENOENT
+               errorMessage = 'File not found on disk cache'
+         WHERE id = srId;
+        RETURN;
+      END IF;
+      
       deleteTapeCopies(cfId);
       -- Invalidate the DiskCopies
       UPDATE DiskCopy
@@ -4113,7 +4169,7 @@ BEGIN
       SELECT id BULK COLLECT INTO dcsToRm
         FROM DiskCopy
        WHERE castorFile = cfId
-         AND status IN (0, 1, 2, 5, 6, 10, 11);  -- WAITDISK2DISKCOPY, WAITTAPERECALL, STAGED, WAITFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
+         AND status IN (0, 1, 5, 6, 10, 11);  -- STAGED, WAITDISK2DISKCOPY, WAITFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
     END;
   END IF;
 
@@ -4125,8 +4181,8 @@ BEGIN
     FROM SubRequest 	 
    WHERE diskcopy IN
      (SELECT /*+ CARDINALITY(dcidTable 5) */ * 	 
-	      FROM TABLE(dcsToRm) dcidTable) 	 
-	   AND status IN (0, 1, 2, 5, 6, 13); -- START, WAITSUBREQ, READY, READYFORSCHED
+        FROM TABLE(dcsToRm) dcidTable) 	 
+         AND status IN (0, 1, 2, 5, 6, 13); -- START, WAITSUBREQ, READY, READYFORSCHED
   IF srIds.COUNT > 0 THEN
     FOR i IN srIds.FIRST .. srIds.LAST LOOP
       SELECT type INTO srType
@@ -4207,7 +4263,6 @@ BEGIN
          getNextStatus = decode(newStatus, 6, 1, 8, 1, 9, 1, 0)  -- READY, FINISHED or FAILED_FINISHED -> GETNEXTSTATUS_FILESTAGED
    WHERE id = srId;
   -- Check whether it was the last subrequest in the request
-  result := 1;
   SELECT id INTO result FROM SubRequest
    WHERE request = reqId
      AND status IN (0, 1, 2, 3, 4, 5, 7, 10, 12, 13, 14)   -- all but FINISHED, FAILED_FINISHED, ARCHIVED
@@ -4931,16 +4986,16 @@ END;
 
 /* PL/SQL method implementing disk2DiskCopyFailed */
 CREATE OR REPLACE PROCEDURE disk2DiskCopyFailed
-(dcId IN INTEGER, enoent IN INTEGER, res OUT INTEGER) AS
+(dcId IN INTEGER, enoent IN INTEGER) AS
   fsId    NUMBER;
   cfId    NUMBER;
   ouid    INTEGER;
   ogid    INTEGER;
   srcDcId NUMBER;
   srcFsId NUMBER;
+  srId    NUMBER;
 BEGIN
   fsId := 0;
-  res := 0;
   IF enoent = 1 THEN
     -- Set all diskcopies to FAILED. We're preemptying the NS synchronization here
     UPDATE DiskCopy SET status = 4 -- FAILED
@@ -4957,16 +5012,16 @@ BEGIN
   END IF;
   BEGIN
     -- Get the corresponding subRequest, if it exists
-    SELECT id INTO res
+    SELECT id INTO srId
       FROM SubRequest
      WHERE diskCopy = dcId
        AND status IN (6, 14); -- READY, BEINGSHCED
     -- Wake up other subrequests waiting on it
     UPDATE SubRequest SET status = 1, -- RESTART
                           parent = 0
-     WHERE parent = res;
+     WHERE parent = srId;
     -- Fail it
-    archiveSubReq(res, 9); -- FAILED_FINISHED
+    archiveSubReq(srId, 9); -- FAILED_FINISHED
     -- If no filesystem was set on the diskcopy then we can safely delete it
     -- without waiting for garbage collection as the transfer was never started
     IF fsId = 0 THEN
@@ -5216,6 +5271,7 @@ PROCEDURE failSchedulerJob(srSubReqId IN VARCHAR2, srErrorCode IN NUMBER, res OU
   srId NUMBER;
   dcId NUMBER;
 BEGIN
+  res := 1;
   -- Get the necessary information needed about the request and subrequest
   SELECT SubRequest.id, SubRequest.diskcopy, Id2Type.type
     INTO srId, dcId, reqType
@@ -5232,7 +5288,7 @@ BEGIN
   IF reqType = 40 THEN -- Put
     putFailedProc(srId);
   ELSIF reqType = 133 THEN -- DiskCopyReplica
-    disk2DiskCopyFailed(dcId, 0, res);
+    disk2DiskCopyFailed(dcId, 0);
   ELSE -- Get or Update
     getUpdateFailedProc(srId);
   END IF;
@@ -5279,7 +5335,6 @@ PROCEDURE jobToSchedule(srId OUT INTEGER, srSubReqId OUT VARCHAR2, srProtocol OU
                         excludedHosts OUT castor.DiskServerList_Cur) AS
   dsId NUMBER;
   cfId NUMBER;
-  unused NUMBER;
 BEGIN
   -- Get the next subrequest to be scheduled.
   UPDATE SubRequest
@@ -5353,7 +5408,7 @@ BEGIN
       -- could enter the job into LSF. Under this circumstance fail the 
       -- diskcopy transfer. This will restart the subrequest and trigger a tape
       -- recall if possible
-      disk2DiskCopyFailed(reqDestDiskCopy, 0, unused);
+      disk2DiskCopyFailed(reqDestDiskCopy, 0);
       COMMIT;
       RAISE;
     END;
@@ -5412,7 +5467,7 @@ BEGIN
                          SELECT id, svcClassName FROM StagePrepareToUpdateRequest UNION ALL
                          SELECT id, svcClassName FROM StageRepackRequest          UNION ALL
                          SELECT id, svcClassName FROM StageGetRequest) Req
-                          WHERE SubRequest.CastorFile = CastorFile.id
+                          WHERE SubRequest.diskCopy = DC.id
                             AND request = Req.id)              
                    ELSE DC.svcClass END AS svcClass,
                  DC.machine, DC.mountPoint, DC.nbCopyAccesses, CastorFile.lastKnownFileName,
@@ -8463,7 +8518,7 @@ AS
                             DFS.totalBytes) * 100) - 10), -1, 'N/A',
                getInterval(0, trunc(DDCS.bytesRemaining / ((DFS.totalBytes -
                            nvl(DDCS.bytesRemaining, 0)) /
-                           (getTime() - DFS.startTime))))), 'N/A'), 'N/A')) ETC
+                           (getTime() - DFS.startTime))))), 'N/A')), 'N/A') ETC
     FROM (
       SELECT fileSystem,
              max(decode(status, 3, nbFiles, 0)) Running,
@@ -8598,13 +8653,10 @@ BEGIN
       EXCEPTION
         WHEN TOO_MANY_ROWS THEN
           raise_application_error
-            (-20101, 'Mountpoint: '||mntPnt||' belongs to multiple service
-                      classes, please specify which service class to use, using
-                      the --svcclass option');
+            (-20101, 'Mountpoint: '||mntPnt||' belongs to multiple service classes, please specify which service class to use, using the --svcclass option');
         WHEN NO_DATA_FOUND THEN
           raise_application_error
-            (-20120, 'Mountpoint: '||mntPnt||' does not belong to any
-                      service class');
+            (-20120, 'Mountpoint: '||mntPnt||' does not belong to any service class');
       END;
     ELSE
       -- Check if the user supplied service class name exists
@@ -8621,8 +8673,7 @@ BEGIN
            AND SvcClass.name = inSvcClass;
       EXCEPTION WHEN NO_DATA_FOUND THEN
         raise_application_error
-          (-20117, 'Mountpoint: '||mntPnt||' does not belong to the '''||
-                    inSvcClass||''' service class');
+          (-20117, 'Mountpoint: '||mntPnt||' does not belong to the '''||inSvcClass||''' service class');
       END;
     END IF;
     -- If the mountpoint is not in a DRAINING status then the draining process

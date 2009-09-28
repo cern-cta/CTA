@@ -293,7 +293,7 @@ END;
 /
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_9_0');
+INSERT INTO CastorVersion VALUES ('-', '2_1_9_1');
 
 
 /******************************************************************************

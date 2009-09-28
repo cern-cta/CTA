@@ -26,7 +26,7 @@
 
 /* SQL statements for table dlf_version */
 CREATE TABLE dlf_version(schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO dlf_version VALUES ('2_1_9_0', '2_1_9_0');
+INSERT INTO dlf_version VALUES ('2_1_9_0', '2_1_9_1');
 
 /* SQL statement for table dlf_config */
 CREATE TABLE dlf_config(name VARCHAR2(255) CONSTRAINT NN_Config_Name NOT NULL, value VARCHAR2(255), description VARCHAR2(255));

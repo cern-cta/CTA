@@ -9,7 +9,7 @@ CREATE TABLE RepackSubRequest (vid VARCHAR2(2048), xsize INTEGER, filesMigrating
 
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_9_0');
+INSERT INTO CastorVersion VALUES ('-', '2_1_9_1');
 
 /*******************************************************************
  *
