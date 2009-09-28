@@ -427,7 +427,7 @@ BEGIN
     EXIT WHEN c%NOTFOUND;
     BEGIN
       SELECT answered INTO srAnswered
-	      FROM SubRequest PARTITION (P_STATUS_7) 
+        FROM SubRequest PARTITION (P_STATUS_7) 
        WHERE id = srIntId FOR UPDATE NOWAIT;
       IF srAnswered = 1 THEN
         -- already answered, ignore it
@@ -2197,8 +2197,8 @@ BEGIN
     FROM SubRequest 	 
    WHERE diskcopy IN
      (SELECT /*+ CARDINALITY(dcidTable 5) */ * 	 
-	      FROM TABLE(dcsToRm) dcidTable) 	 
-	   AND status IN (0, 1, 2, 5, 6, 13); -- START, WAITSUBREQ, READY, READYFORSCHED
+        FROM TABLE(dcsToRm) dcidTable) 	 
+         AND status IN (0, 1, 2, 5, 6, 13); -- START, WAITSUBREQ, READY, READYFORSCHED
   IF srIds.COUNT > 0 THEN
     FOR i IN srIds.FIRST .. srIds.LAST LOOP
       SELECT type INTO srType
