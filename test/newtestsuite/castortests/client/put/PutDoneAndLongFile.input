@@ -1,5 +1,5 @@
 stager_put -M <noTapeFileName>
-dd bs=1024 count=102400 if=/dev/urandom of=<tmpLocalFileName> | grep -v copied
+dd bs=1024 count=102400 if=/dev/urandom of=<tmpLocalFileName> 2>&1 | grep -v copied
 rfcp <tmpLocalFileName> <noTapeFileName>
 stager_rm -M <noTapeFileName>
 stager_putdone -M <noTapeFileName>
