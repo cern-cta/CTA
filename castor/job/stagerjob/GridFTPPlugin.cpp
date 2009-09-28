@@ -214,6 +214,20 @@ void castor::job::stagerjob::GridFTPPlugin::getEnvironment
   } else {
     env.globus_x509_user_key = globus_x509_user_key;
   }
+
+  // Check whether gridftp internal should generate checksum information
+  bool useCksum = true;
+  const char *useCksumStr = getconfent("GSIFTP", "USE_CKSUM", 0);
+  if (0 != useCksumStr) {
+    useCksum = (strcasecmp(useCksumStr, "YES") == 0);
+    if (!useCksum && (strcasecmp(useCksumStr, "NO") != 0)) {
+      castor::exception::InvalidArgument e;
+      e.getMessage() << "Invalid option for GSIFTP/USE_CKSUM: '" << useCksumStr
+                     << "' - must be 'yes' or 'no'" << std::endl;
+      throw e;
+    }
+  }
+  env.use_cksum = (useCksum ? "yes" : "no");
 }
 
 //------------------------------------------------------------------------------
@@ -293,7 +307,7 @@ void castor::job::stagerjob::GridFTPPlugin::postForkHook
                             MOVERNOTEXEC, 3, params, &args.fileId);
   }
   // Call upper level
-  RawMoverPlugin::postForkHook(args, context, true); // checksum on
+  RawMoverPlugin::postForkHook(args, context, true);
 }
 
 //------------------------------------------------------------------------------
@@ -323,6 +337,7 @@ void castor::job::stagerjob::GridFTPPlugin::execMover
   setenv("GLOBUS_TCP_SOURCE_RANGE", sourcerange.str().c_str(), 1);
   setenv("X509_USER_CERT", env.globus_x509_user_cert.c_str(), 1);
   setenv("X509_USER_KEY", env.globus_x509_user_key.c_str(), 1);
+  setenv("USE_CKSUM", env.use_cksum.c_str(), 1);
   // This variables we will use inside CASTOR2 DSI
   setenv("UUID", args.rawRequestUuid.c_str(), 1);
   std::string path = "";
@@ -346,10 +361,6 @@ void castor::job::stagerjob::GridFTPPlugin::execMover
     setenv("ACCESS_MODE","o",1);
     break;
   }
-  char *p;
-  p = getconfent ("GSIFTP", "USE_CKSUM", 0); /* default value is yes */
-  if ((p !=NULL) && (0 == strcasecmp(p, "no"))) setenv("USE_CKSUM","no",1);
-  else setenv("USE_CKSUM","yes",1);
 
   // Build the command line
   std::string progfullpath = env.globus_location + "/sbin/globus-gridftp-server";
