@@ -227,7 +227,7 @@ void handleFileQuery(int argc, char *argv[], int nbArgs) {
     exit(EXIT_FAILURE);
   }
 
-  printf("Received %d responses\n", nbresps);
+  printReceivedResponses(nbresps);
 
   for (i=0; i<nbresps; i++) {
     if (responses[i].errorCode == 0) {

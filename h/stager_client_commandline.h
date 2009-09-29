@@ -40,5 +40,6 @@ EXTERN_C int DLL_DECL parseCmdLine _PROTO((int argc, char *argv[], int (*cb)(con
                                            char** service_class, char** usertag, int* display_reqid));
 EXTERN_C int DLL_DECL printFileResponses _PROTO((int nbresps, struct stage_fileresp* responses)); 
 EXTERN_C int DLL_DECL printPrepareResponses _PROTO((int nbresps, struct stage_prepareToGet_fileresp *responses));
+EXTERN_C void DLL_DECL printReceivedResponses _PROTO((int nbresps));
 
 #endif  /* STAGER_CLIENT_COMMANDLINE */

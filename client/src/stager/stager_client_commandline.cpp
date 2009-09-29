@@ -17,7 +17,7 @@
 #if !defined(_WIN32)
 #include <unistd.h>
 #else
-#include "pwd.h"	// For getuid(), getgid()
+#include "pwd.h"        // For getuid(), getgid()
 #endif
 
 /* ============= */
@@ -45,9 +45,9 @@
  *******************************************************************************************************************/
 
 int DLL_DECL getDefaultForGlobal(
-				 char** host,
-				 int* port,
-				 char** svc)
+                                 char** host,
+                                 int* port,
+                                 char** svc)
 {
   char *hostMap, *hostDefault, *svcMap, *svcDefault;
   int portDefault, ret;
@@ -88,24 +88,24 @@ int DLL_DECL getDefaultForGlobal(
     hostDefault = aux == NULL ? NULL : strdup(aux);
     if (hostDefault == NULL || strcmp(hostDefault, "") == 0) {
       if (hostDefault != NULL) {
-	free(hostDefault);
-	hostDefault = NULL;
+        free(hostDefault);
+        hostDefault = NULL;
       }
       if (hostMap == NULL || strcmp(hostMap, "") == 0) {
-	aux = (char*)getconfent("STAGER", "HOST", 0);
-	hostDefault = aux == NULL ? NULL : strdup(aux);
-	if (hostDefault == NULL || strcmp(hostDefault,"") == 0) {
-	  if (hostDefault != NULL) {
-	    free(hostDefault);
-	    hostDefault = NULL;
-	  }
-	}
+        aux = (char*)getconfent("STAGER", "HOST", 0);
+        hostDefault = aux == NULL ? NULL : strdup(aux);
+        if (hostDefault == NULL || strcmp(hostDefault,"") == 0) {
+          if (hostDefault != NULL) {
+            free(hostDefault);
+            hostDefault = NULL;
+          }
+        }
       } else {
-	if (hostDefault != NULL) {
-	  free(hostDefault);
-	  hostDefault = NULL;
-	}
-	hostDefault = strdup(hostMap);
+        if (hostDefault != NULL) {
+          free(hostDefault);
+          hostDefault = NULL;
+        }
+        hostDefault = strdup(hostMap);
       }
     }
   }
@@ -119,25 +119,25 @@ int DLL_DECL getDefaultForGlobal(
     svcDefault = aux == NULL ? NULL : strdup(aux);
     if (svcDefault == NULL || strcmp(svcDefault, "") == 0) {
       if (svcDefault != NULL && strcmp(svcDefault, "")) {
-	free(svcDefault);
-	svcDefault = NULL;
+        free(svcDefault);
+        svcDefault = NULL;
       }
       if (svcMap == NULL || strcmp(svcMap, "") == 0) {
-	aux = (char*)getconfent("STAGER", "SVCCLASS", 0);
-	svcDefault = aux == NULL ? NULL : strdup(aux);
-	if (svcDefault == NULL || strcmp(svcDefault, "") == 0) {
-	  if (svcDefault != NULL) {
-	    free(svcDefault);
-	    svcDefault = NULL;
-	  }
-	  svcDefault = strdup(DEFAULT_SVCCLASS);
-	}
+        aux = (char*)getconfent("STAGER", "SVCCLASS", 0);
+        svcDefault = aux == NULL ? NULL : strdup(aux);
+        if (svcDefault == NULL || strcmp(svcDefault, "") == 0) {
+          if (svcDefault != NULL) {
+            free(svcDefault);
+            svcDefault = NULL;
+          }
+          svcDefault = strdup(DEFAULT_SVCCLASS);
+        }
       } else {
-	if (svcDefault != NULL && strcmp(svcDefault, "")) {
-	  free(svcDefault);
-	  svcDefault = NULL;
-	}
-	svcDefault = strdup(svcMap);
+        if (svcDefault != NULL && strcmp(svcDefault, "")) {
+          free(svcDefault);
+          svcDefault = NULL;
+        }
+        svcDefault = strdup(svcMap);
       }
     }
   }
@@ -147,21 +147,21 @@ int DLL_DECL getDefaultForGlobal(
       aux = getenv("STAGE_SEC_PORT");
       portDefault = aux == NULL ? 0 : atoi(aux);
       if (portDefault <= 0) {
-	aux = (char*)getconfent("STAGER", "SEC_PORT", 0);
-	portDefault = aux == NULL ? 0 : atoi(aux);
-	if (portDefault <= 0) {
-	  portDefault = DEFAULT_SEC_PORT;
-	}
+        aux = (char*)getconfent("STAGER", "SEC_PORT", 0);
+        portDefault = aux == NULL ? 0 : atoi(aux);
+        if (portDefault <= 0) {
+          portDefault = DEFAULT_SEC_PORT;
+        }
       }
     } else {
       aux = getenv("STAGE_PORT");
       portDefault = aux == NULL ? 0 : atoi(aux);
       if (portDefault <= 0) {
-	aux = (char*)getconfent("STAGER", "PORT", 0);
-	portDefault = aux == NULL ? 0 : atoi(aux);
-	if (portDefault <= 0) {
-	  portDefault = DEFAULT_PORT;
-	}
+        aux = (char*)getconfent("STAGER", "PORT", 0);
+        portDefault = aux == NULL ? 0 : atoi(aux);
+        if (portDefault <= 0) {
+          portDefault = DEFAULT_PORT;
+        }
       }
     }
   }
@@ -246,10 +246,9 @@ int DLL_DECL parseCmdLine(int argc, char *argv[], int (*callback)(const char *),
 
   return errflg;
 }
-
 }
 
-void printReceivedResponses(int nbresps) {
+void DLL_DECL printReceivedResponses(int nbresps) {
   // this piece of code is essentially copied from the stage_trace function
   // the call to replace this function should be :
   //   stage_trace(1, "Received %d responses", nbresps);
