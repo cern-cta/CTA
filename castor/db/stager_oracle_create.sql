@@ -7637,6 +7637,7 @@ PROCEDURE selectFiles2Delete(diskServerName IN VARCHAR2,
   toBeFreed INTEGER;
   dontGC INTEGER;
   totalCount INTEGER;
+  unused INTEGER;
 BEGIN
   -- First of all, check if we are in a Disk1 pool
   dontGC := 0;
@@ -7705,6 +7706,17 @@ BEGIN
 
     -- Continue processing but with STAGED files
     IF dontGC = 0 THEN
+      -- Do not delete STAGED files from non production hardware
+      BEGIN
+        SELECT FileSystem.id INTO unused
+          FROM DiskServer, FileSystem
+         WHERE FileSystem.id = fs.id
+           AND FileSystem.status = 0  -- PRODUCTION
+           AND FileSystem.diskserver = DiskServer.id
+           AND DiskServer.status = 0; -- PRODUCTION
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        EXIT;
+      END;
       -- Calculate the amount of space that would be freed on the filesystem
       -- if the files selected above were to be deleted.
       IF dcIds.COUNT > 0 THEN
@@ -7725,14 +7737,9 @@ BEGIN
         -- Loop on file deletions. Select only enough files until we reach the
         -- 10000 return limit.
         FOR dc IN (SELECT id, castorFile FROM (
-                     SELECT DiskCopy.id, DiskCopy.castorFile 
-                       FROM DiskCopy, FileSystem, DiskServer
-                      WHERE DiskCopy.filesystem = FileSystem.id
-                        AND FileSystem.id = fs.id
-                        AND FileSystem.status = 0 -- PRODUCTION
-                        AND FileSystem.diskserver = DiskServer.id
-                        AND DiskServer.status = 0 -- PRODUCTION
-                        AND DiskCopy.status = 0 -- STAGED
+                     SELECT id, castorFile FROM DiskCopy
+                      WHERE filesystem = fs.id
+                        AND status = 0 -- STAGED
                         AND NOT EXISTS (
                           SELECT /*+ INDEX(SubRequest I_SubRequest_DiskCopy) */ 'x'
                             FROM SubRequest
