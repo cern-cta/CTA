@@ -3244,14 +3244,14 @@ int Cns_srv_rename(magic, req_data, clienthost, thip)
     if (Cns_delete_fmd_entry (&thip->dbfd, &new_rec_addr))
       RETURN (serrno);
   }
+
+  /* update directory nlink value */
+
   if (old_parent_dir.fileid != new_parent_dir.fileid) {
 
-    /* update 'old' parent directory entry */
+    /* rename across different directories */
 
     old_parent_dir.nlink--;
-
-    /* update 'new' parent directory entry */
-
     if (!new_exists) {
       new_parent_dir.nlink++;
     }
@@ -3259,6 +3259,11 @@ int Cns_srv_rename(magic, req_data, clienthost, thip)
     new_parent_dir.ctime = new_parent_dir.mtime;
     if (Cns_update_fmd_entry (&thip->dbfd, &new_rec_addrp, &new_parent_dir))
       RETURN (serrno);
+  } else if (new_exists) {
+
+    /* rename within the same directory on an existing file */
+
+    old_parent_dir.nlink--;
   }
 
   /* update 'old' basename entry */
