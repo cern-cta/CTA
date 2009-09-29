@@ -196,12 +196,11 @@ extern "C" {
     int uuid_ok = 0;
     if(CASTOR2xroot_handle->use_uuid) {
       uuid_path=stat_info->pathname;
-      if( *uuid_path=='/') {
-        uuid_path++; /* path like  "/uuid" */
-        if(strcmp(uuid_path,CASTOR2xroot_handle->uuid)==0) {
-          pathname = strdup(CASTOR2xroot_handle->fullDestPath);
-          uuid_ok = 1;
-        }
+      /* strip any preceding path to isolate only the uuid part; see also CASTOR2int_handle_open */
+      while (*uuid_path=='/') uuid_path++;
+      if(strcmp(uuid_path,CASTOR2xroot_handle->uuid)==0) {
+        pathname = strdup(CASTOR2xroot_handle->fullDestPath);
+        uuid_ok = 1;
       }
     }
     // uuid check has failed
@@ -339,8 +338,10 @@ extern "C" {
                              "in uuid mode \"%s\" != \"%s\"\n",
                              func, uuid_path,
                              CASTOR2xroot_handle->uuid);
+      errno = ENOENT;
       return (-1);
     }
+    errno = EINVAL;
     return (-1);
   }
 
@@ -488,7 +489,7 @@ extern "C" {
     CASTOR2xroot_handle->fd =
       CASTOR2xroot_handle_open(pathname, flags, 0644, CASTOR2xroot_handle);
     if (CASTOR2xroot_handle->fd < 0) {
-      result=globus_l_gfs_make_error("open/create", CASTOR2xroot_handle->fd);
+      result=globus_l_gfs_make_error("open/create", errno);
       free(pathname);
       globus_gridftp_server_finished_transfer(op, result);
       return;
