@@ -29,8 +29,8 @@ UUID = None
 def getUUID():
     global UUID
     if UUID == None :
-        newTime=time.gmtime()
-        UUID = str(((newTime[7]*24+newTime[3])*60 + newTime[4])*60 +newTime[5])
+        import uuid
+        UUID = str(uuid.uuid4())
     return UUID
 
 def listTests(testDir, listResources=False):
