@@ -364,8 +364,10 @@ int CASTOR2int_handle_open(char *path, int flags, int mode, globus_l_gfs_CASTOR2
 	   }
 	   globus_gfs_log_message(GLOBUS_GFS_LOG_INFO,"%s: client and server uuids do not match in uuid mode \"%s\" != \"%s\"\n",
 		      func, uuid_path,CASTOR2int_handle->uuid);
+	   errno = ENOENT;
 	   return (-1);
 	 }
+   errno = EINVAL;
    return (-1);
 }
 
