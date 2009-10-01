@@ -773,7 +773,7 @@ bash
 `echo -n "tpwrite -V I10487 -F F -q 1-"; i=0; padded=000; while test $i -lt 1000; do if test $i -lt 10; then padded=00$i; elif test $i -lt 100; then padded=0$i; else padded=$i; fi; echo -n " lxc2disk07:/tmp/murrayc3/file${padded}.txt" ; let i=i+1; done; echo`
 
 # Mount the tape
-smc -m -D 5 -l /dev/smc -V I10487
+smc -m -D 5 -h ibmlib3rmc -l /dev/smc -V I10487
 
 # Read all blocks up to and including the two consequtive tape marks at the end
 # of the tape.  First block is block 0
@@ -783,15 +783,15 @@ mt rewind; i=0; while test $i -lt 12; do echo "READING BLOCK $i"; dd if=/dev/nst
 How to see the status of a tape robot
 =====================================
 
-smc -l /dev/smc -q D
+smc -h ibmlib3rmc -l /dev/smc -q D
 
 
 How to mount, unload and then dismount a tape
 =============================================
 
-smc -m -D 5 -l /dev/smc -V I07754
+smc -m -D 5 -h ibmlib3rmc -l /dev/smc -V I07754
 mt -f /dev/nst0 eject
-smc -d -D 5 -l /dev/smc
+smc -d -D 5 -h ibmlib3rmc -l /dev/smc
 
 
 How to set the read priority of tape for a single-mount
@@ -1182,7 +1182,7 @@ How to write to tape at full speed
 ==================================
 
 # Mount the tape
-smc -l /dev/smc -m -D 5 -V I10487
+smc -h ibmlib3rmc -l /dev/smc -m -D 5 -V I10487
 
 # Turn off compression
 mt -f /dev/nst0 compression 0
