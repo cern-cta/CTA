@@ -40,6 +40,32 @@ UPDATE cns_version SET release = '2_1_9_1';
 COMMIT;
 
 
+/* Update and revalidation of PL-SQL code */
+/******************************************/
+
+CREATE OR REPLACE FUNCTION getPathForFileid(fid IN NUMBER) RETURN VARCHAR2 IS
+  CURSOR c IS
+    SELECT /*+ NO_CONNECT_BY_COST_BASED */ name
+      FROM cns_file_metadata
+    START WITH fileid = fid
+    CONNECT BY fileid = PRIOR parent_fileid
+    ORDER BY level DESC;
+  p VARCHAR2(2048) := '';
+BEGIN
+   FOR i in c LOOP
+     p := p ||  '/' || i.name;
+   END LOOP;
+   -- remove first '/'
+   p := replace(p, '///', '/');
+   IF length(p) > 1024 THEN
+     -- the caller will return SENAMETOOLONG
+     raise_application_error(-20001, '');
+   END IF;
+   RETURN p;
+END;
+/
+
+
 /* Recompile all invalid procedures, triggers and functions */
 /************************************************************/
 BEGIN

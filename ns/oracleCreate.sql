@@ -153,7 +153,7 @@ CREATE GLOBAL TEMPORARY TABLE Cns_files_exist_tmp
 -- A function to extract the full path of a file in one go
 CREATE OR REPLACE FUNCTION getPathForFileid(fid IN NUMBER) RETURN VARCHAR2 IS
   CURSOR c IS
-    SELECT name
+    SELECT /*+ NO_CONNECT_BY_COST_BASED */ name
       FROM cns_file_metadata
     START WITH fileid = fid
     CONNECT BY fileid = PRIOR parent_fileid
