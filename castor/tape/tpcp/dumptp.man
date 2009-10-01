@@ -34,8 +34,12 @@ Prints the usage message.
 .TP
 \fB\-s, \-\-server server
 Specifies the tape server to be used, therefore overriding the drive scheduling
-of the VDQM.  If this option is not set then the VDQM will allocate the first
-free drive it finds that is suitable for reading the tape.
+of the VDQM.  The name of the server must match exactly the name given by the
+VDQM showqueues command.  For example if showqueues displays the tape server
+name 'tpsrv123' then specifiying '-s tpsrv123.cern.ch' will not work and the
+VDQM request will remain in the VDQM until it is deleted (this command will
+delete the request when it receives Ctrl-C).  If this option is not set then
+the VDQM will allocate the first free compatible drive.
 .TP
 \fB\-B, \-\-maxbytes n
 The number of bytes per block to be dumped. This should be an unsigned integer
