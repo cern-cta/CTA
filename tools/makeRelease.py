@@ -132,44 +132,16 @@ os.chdir(intReleaseDir)
 runCommand('svn --quiet co svn+ssh://svn/reps/CASTOR/CASTOR2/tags/' + version + ' CASTOR2',
            'Error while checking out release into internal release space')
 
-# create a 'fast' testsuite directory
-print "creating a fast testsuite..."
+# create a testsuite directory and copy the test suite into it
+print "creating the testsuite..."
 os.chdir(intReleaseDir)
-os.mkdir('fastTestSuite')
-os.chdir('fastTestSuite')
-targets = [ ('CLIENT', 'PUT'),
-            ('CLIENT', 'GET'),
-            ('CLIENT', 'UPDV2'),
-            ('CLIENT', 'UPDV3'),
-            ('CLIENT', 'PUTDONE'),
-            ('CLIENT', 'RM'),
-            ('CLIENT', 'EXTRAQRY'),
-            ('CLIENT', 'DISKONLY'),
-            ('CLIENT', 'EXTRATEST'),
-            ('RFIO', 'BASIC_RFCP'),
-            ('ROOT', 'RFIO'),
-            ('ROOT', 'CASTOR') ]
-s = open('../CASTOR2/test/testsuite/CASTORTESTCONFIG').read()
-for t in targets:
-    r = re.compile(t[0]+'(\s+)'+t[1]+'(\s+)NO')
-    m = r.search(s)
-    s = s.replace(m.group(0), t[0]+m.group(1)+t[1]+m.group(2)+'YES')
-f = open('CASTORTESTCONFIG', 'w')
-f.write(s)
-f.close()
-files = ['CastorTestSuite.py',
-         'ClientTest.py',
-         'RfioTest.py',
-         'RootTest.py',
-         'TapeTest.py',
-         'XRootTest.py',
-         'UtilityForCastorTest.py']
-for f in files:
-    cmd = 'cp ../CASTOR2/test/testsuite/' + f + ' .'
-    runCommand(cmd, 'Error while creating fast testsuite')
+os.mkdir('testsuite')
+os.chdir('testsuite')
+runCommand('cp -R ../CASTOR2/test/newtestsuite/* .; rm ./buildTestCase.py', 'Error while coping the testsuite')
+
 # create a tar ball of the test suite
 os.chdir(intReleaseDir)
-cmd = 'tar czf fastTestSuite.tar.gz fastTestSuite'
+cmd = 'tar czf testsuite.tar.gz testsuite'
 runCommand(cmd, 'Error while taring the testsuite')
 
 # and build the doxygen documentation in it
