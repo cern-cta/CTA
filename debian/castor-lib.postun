@@ -1,7 +1,9 @@
-# IP tables modification to allow the castor client to open ports
-if [ -e /etc/sysconfig/iptables ]; then
-    /bin/sed -i.castor -e '/controlled by CASTOR-client RPM/,/end of CASTOR-client RPM modifications/d' /etc/sysconfig/iptables
-    /sbin/service iptables condrestart > /dev/null 2>&1 || :
+if [ "$1" = 0 ]; then
+  # IP tables modification to allow the castor client to open ports
+  if [ -e /etc/sysconfig/iptables ]; then
+      /bin/sed -i.castor -e '/controlled by CASTOR-client RPM/,/end of CASTOR-client RPM modifications/d' /etc/sysconfig/iptables
+      /sbin/service iptables condrestart > /dev/null 2>&1 || :
+  fi
+  # call to ldconfig after we uninstalled libraries
+  /sbin/ldconfig
 fi
-# call to ldconfig after we uninstalled libraries
-/sbin/ldconfig
