@@ -13,4 +13,4 @@ tools/makeProCSqlScripts.sh dlf $tag dlf/scripts/oracle $1
 tools/makeProCSqlScripts.sh cns $tag ns $1
 tools/makeProCSqlScripts.sh upv $tag upv $1
 tools/makeProCSqlScripts.sh vmgr $tag vmgr $1
-tools/makeSqlScripts.sh mon $tag monitoring/procedures_new $1
+tools/makeSqlScripts.sh mon $tag monitoring/procedures $1
