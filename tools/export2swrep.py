@@ -5,10 +5,10 @@ def usage():
     print sys.argv[0] + " <castor version>"
 
 # list of platforms as a tuple (OS, arch)
-platforms = (('SLC4', 'x86_64', 'x86_64_slc4'),
-             ('SLC4', 'i386',   'i386_slc4'),
-             ('SLC5', 'x86_64', 'x86_64_slc5'),
-             ('SLC5', 'i386',   'i386_slc5'))
+platforms = (('SL4', 'x86_64', 'x86_64_slc4'),
+             ('SL4', 'i386',   'i386_slc4'),
+             ('SL5', 'x86_64', 'x86_64_slc5'),
+             ('SL5', 'i386',   'i386_slc5'))
 
 # First check the arguments
 if len(sys.argv) != 2:
@@ -47,6 +47,6 @@ def export2swrep(arch, rpm):
 # export packages
 for p in platforms:
     dir = intReleaseDir + "/" + p[0]
-    if p[1] == "x86_64" and p[0] == "SLC4":
+    if p[1] == "x86_64" and p[0] == "SL4":
 	export2swrep(p[2], dir + "/i386/castor-lib-2* " + dir + "/i386/castor-devel-2*")
     export2swrep(p[2], dir + "/" + p[1] + "/")

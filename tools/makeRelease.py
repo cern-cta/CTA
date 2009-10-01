@@ -2,10 +2,10 @@
 import sys, re, os, shutil, tempfile, socket, time
 
 # list of platforms as a tuple (OS, arch, machine where to build)
-platforms = (('SLC4', 'i386',   'lxc2slc4-i386.cern.ch'),
-             ('SLC4', 'x86_64', 'lxc2slc4-x64.cern.ch'),
-             ('SLC5', 'i386',   'lxc2slc5-i386.cern.ch'),
-             ('SLC5', 'x86_64', 'lxc2slc5-x64.cern.ch'))
+platforms = (('SL4', 'i386',   'lxc2slc4-i386.cern.ch'),
+             ('SL4', 'x86_64', 'lxc2slc4-x64.cern.ch'),
+             ('SL5', 'i386',   'lxc2slc5-i386.cern.ch'),
+             ('SL5', 'x86_64', 'lxc2slc5-x64.cern.ch'))
 
 def usage():
     print sys.argv[0] + " <tag of the release>"

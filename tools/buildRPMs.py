@@ -52,7 +52,7 @@ intReleaseDir = '/afs/cern.ch/project/cndoc/wwwds/HSM/CASTOR/DIST/intReleases/' 
 rpmList = os.listdir(rpmDir)
 for p in rpmList:
     shutil.copyfile(rpmDir + os.sep + p, intReleaseDir + os.sep + targetOs + os.sep + targetArch + os.sep + p)
-if targetOs == 'SLC4' and targetArch == 'i386':
+if targetOs == 'SL4' and targetArch == 'i386':
     print 'Copying source RPM to internal release area ...'
     # here we also copy the source RPM
     shutil.copyfile(rpmDir + '/../../SRPMS/castor-' + fullVersion + '.src.rpm', intReleaseDir + os.sep + 'castor-' + fullVersion + '.src.rpm')
