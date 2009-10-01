@@ -589,8 +589,8 @@ BEGIN
            AND   messages.facility = 4  -- rhd
            AND   messages.msg_no = 10   -- Reply sent to client
            AND   params.name = 'ElapsedTime')
-           -- SRMDaemon
-            OR  (messages.facility = 14 -- SRMDaemon
+           -- srmbed
+            OR  (messages.facility = 14 -- srmbed
            AND   messages.msg_no = 9    -- Processing complete
            AND   params.name = 'ElapsedTime'))
            -- Resolve facility name
