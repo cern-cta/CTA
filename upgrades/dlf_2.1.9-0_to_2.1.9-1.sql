@@ -39,6 +39,10 @@ END;
 UPDATE dlf_version SET release = '2_1_9_1';
 COMMIT;
 
+/* Update SRM facilities in view of SRM 2.9 */
+UPDATE dlf_facilities SET fac_name = 'srmfed' WHERE fac_name = 'SRMServer';
+UPDATE dlf_facilities SET fac_name = 'srmbed' WHERE fac_name = 'SRMDaemon';
+COMMIT;
 
 /* Recompile all invalid procedures, triggers and functions */
 /************************************************************/
