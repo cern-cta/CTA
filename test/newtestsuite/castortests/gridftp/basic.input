@@ -1,9 +1,9 @@
 stager_actualput -M <noTapeFileName> -P gsiftp >& <tmpLocalFileName>
 cat <tmpLocalFileName>
-globus-url-copy file:///<localFileName> `tail -1 <tmpLocalFileName>`
+<globus-url-copy> file:///<localFileName> `tail -1 <tmpLocalFileName>`
 sleep 3
 stager_qry -M <noTapeFileName>
 stager_actualget -M <noTapeFileName> -P gsiftp >& <tmpLocalFileName1>
 cat <tmpLocalFileName1>
-globus-url-copy `tail -1 <tmpLocalFileName1>` file:///<tmpLocalFileName2>
+<globus-url-copy> `tail -1 <tmpLocalFileName1>` file:///<tmpLocalFileName2>
 diff <tmpLocalFileName2> <localFileName>
