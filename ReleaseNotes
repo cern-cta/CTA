@@ -1,9 +1,287 @@
 -----------
+- 2.1.9-1 -
+-----------
+
+  Highlights & Bug Fixes
+  ----------------------
+
+  CASTOR miscellaneous
+  --------------------
+  - #55613: Missing initializations in stage_filequery() API
+  - #55807: RTCPD log files incorrectly renamed after 2.1.9 upgrade
+  - #56338: castor-lib: RPM postinstall for iptables / firewall manipulation is
+            not working
+
+  CASTOR nameserver
+  -----------------
+  - #56036: DoS vulnerability causing thread exhaustion triggered by invalid
+            readdir, listclass, listlinks and listtape headers
+  - #56212: nsrename of files within the same directory results in incorrect
+            nlink value.
+
+  CASTOR stager
+  -------------
+  - #49804: files attached to filesystems not attached to diskserver
+  - #54385: stager_qry - Error 1015/Internal error
+  - #54502: RFE: stager_qry -s add warning or "relink"?
+  - #54702: Memory leak in the rmMasterDaemon
+  - #55293: Castor stager mixing ctime and mtime when creating Castorfiles
+  - #55745: Users without StagePutRequest privileges should not be denied to
+            access files because of DRAINING or DISABLED hardware
+  - #55752: ORA-01722: invalid number in `draindiskserver -q`
+  - #55768: stager_rm -S '*' does not return ENOENT when it should
+  - #55778: Error messages are truncated when issuing
+            `draindiskserver --add -n ...`
+  - #55828: RFE: remove 'Received 1 responses' line from stager_* output
+  - #55871: Idle threads of the request handler do not get destroyed
+  - #55935: Segfault in castor::stager::daemon::RequestHelper::resolveSvcClass
+            caused by svcclass being specified as '*'
+  - #56084: Deadlock in the stager
+
+  CASTOR protocols
+  ----------------
+  - #42702: Gridftp internal should support checksumming
+  - #48664: RFE: gridftp internal using xroot
+  - #51689: please enhance test suite to include missing xroot tests
+
+  - Added support for generating checksums in GridFTP internal. By default this
+    functionality is enabled. Should you wish to disable it, please set the
+    GSIFTP/USE_CKSUM configuration option in castor.conf to NO. (#42702)
+
+  - Added a new plugin to GridFTP to allow transfers to take place using xroot
+    as a protocol. Please refer to the "Installing GridFTP with Xroot" section
+    for deployment instructions. (#48664)
+
+  - Replaced the old test suite with a more powerful py.test version. Please
+    refer to the "Quick start guide to the new test suite" section for more
+    information. (#51689)
+
+  - Changed the default output of `stager_qry -s` to express values in bytes.
+    To display values in powers of 1024 use the -H or --human-readable option.
+    To use SI units, powers of 1000 use the -i or --si option. (#54502)
+
+
+  Package Changes
+  ---------------
+  - Added the castor-gridftp-dsi-xroot package. (#48664)
+
+  - Renamed the SLC4 and SLC5 RPM directories in the savannah release area to
+    SL4 and SL5 respectively.
+
+  - Renamed the fastTestSuite directory to testsuite.
+
+
+  Upgrade Instructions from 2.1.9-0
+  ---------------------------------
+
+    Before upgrading to a 2.1.9-1 instance of CASTOR2 please make sure to read
+    the upgrade instructions fully before proceeding.
+
+    Stager, DLF & Monitoring
+    ------------------------
+
+    The upgrade of the stager database to 2.1.9-1 can be performed online while
+    the system is running. The estimated upgrade time for the database is less
+    than 2 minutes.
+
+      Instructions
+      ------------
+
+       1. Due to a bug in the rmMasterDaemon which loses the state of DRAINING
+          diskservers after a restart you will need to take a note of those
+          diskservers which are in a DRAINING state before the upgrade using the
+          following command: (#47634)
+
+            rmGetNodes | grep -B4 DISKSERVER_DRAINING | grep name | cut -d ':' -f 2 | awk '{ print "rmAdminNode -n "$1" -f Draining" }'
+
+       2. Upgrade the Stager database using the stager_2.1.9-0_to_2.1.9-1.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-1/dbupgrades
+
+       3. Upgrade the DLF database using the dlf_2.1.9-0_to_2.1.9-1.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-1/dbupgrades
+
+       4. If applicable, upgrade the Monitoring database using the mon_2.1.9-0_to_2.1.9-1.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-1/dbupgrades
+
+       5. Upgrade the software on the headnodes and diskservers to 2.1.9-1.
+          Note: all daemons involved in the upgrade will be restarted
+          automatically.
+
+       6. Wait 60 seconds to give time for the diskservers to send a heartbeat
+          message to the rmMasterDaemon.
+
+       7. Apply the commands returned in step 1.
+
+       8. Test the instance by running the test suite available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-1/testsuite
+
+       9. Congratulations you have successfully upgraded to the 2.1.9-1 release
+          of CASTOR stager!!
+
+
+    CNS, CUPV, VMGR, VDQM & Repack
+    ------------------------------
+
+    The upgrade of the CNS, VDQM and Repack databases to 2.1.9-1 can be
+    performed online while the system is running:
+
+    Notes:
+      - Due to a DoS vulnerability in the CASTOR name server it is highly
+        recommended to schedule an upgrade of all name server daemons which
+        could potentially service requests from untrusted sources. I.e. daemons
+        which are accessible by end users. (#56036)
+
+      - If the name server is not upgraded, administrators will experience a
+        failure in the new rfio test suite. The failure comes from the inability
+        to cleanup the test directory after the test has completed with a
+        "Directory not empty" error. In fact the directory is empty but due to a
+        bug updating the directory nlink value the name server believes it
+        isn't. (#56212)
+
+      - All upgrades in this section can be performed transparently with no
+        service downtime required.
+
+      Instructions
+      ------------
+
+      1. Apply the appropriate database upgrade script from:
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-1/dbupgrades
+
+      2. Update the appropriate software to use the 2.1.9-1 RPMS. Note: all
+         daemons involved in the upgrade will be restarted automatically.
+
+      3. Upgrade complete.
+
+
+    Installing GridFTP with Xroot
+    -----------------------------
+
+    The instructions for using GridFTP in internal mode using xroot as a 
+    protocol can be found below.
+
+    Notes:
+      - The new plugin has a dependency on xrootd version 20090629.1236-3 or
+        newer. Unfortunately due to the packaging conventions of xrootd we are
+        unable at this time to express this dependency at the RPM level.
+
+      - Before proceeding with this upgrade please make sure that xrootd is
+        installed and working correctly on the target diskservers.
+
+      - These instructions do not cover the general installation of GridFTP
+        internal and its supporting configuration (e.g. LSF). It assumes that
+        the user is already familiar with running GridFTP in internal mode with
+        rfio.
+
+      Instructions
+      ------------
+
+      1. On all diskservers that you wish to enable GridFTP internal with xroot
+         you will need to make a copy of the host certificate using the commands
+         below:
+
+         mkdir /etc/grid-security/castor-gridftp-dsi-xroot
+         chown stage:st /etc/grid-security/castor-gridftp-dsi-xroot
+         cd /etc/grid-security
+         cp hostcert.pem castor-gridftp-dsi-xroot/castor-gridftp-dsi-xroot-cert.pem
+         cp hostkey.pem castor-gridftp-dsi-xroot/castor-gridftp-dsi-xroot-key.pem
+         chmod 644 castor-gridftp-dsi-xroot/castor-gridftp-dsi-xroot-cert.pem
+         chmod 400 castor-gridftp-dsi-xroot/castor-gridftp-dsi-xroot-key.pem
+         chown stage:st castor-gridftp-dsi-xroot/castor-gridftp-dsi-xroot-cert.pem
+         chown stage:st castor-gridftp-dsi-xroot/castor-gridftp-dsi-xroot-key.pem
+
+      2. Set the GSIFTP/USEXROOT configuration option in castor.conf to YES.
+
+      3. Run the gridftp component of the new test suite to verify that the
+         installation works correctly.
+
+      4. Upgrade complete.
+
+
+    Quick start guide to the new test suite
+    ---------------------------------------
+
+    In this release of CASTOR a new test suite has been developed using the
+    py.test framework which is easier to extend, offers enhanced functionality
+    and provides more extensive output on failures. For more information on the
+    py.test framework please refer to: 
+    http://codespeak.net/py/dist/test/index.html
+
+    Notes:
+      - The new test suite has a dependency on the following packages:
+        - python-py
+        - python-setuptools
+        - python-devel
+
+        For your convenience the python-py and python-setuptools packages can be
+        found in the savannah release area for SL4 and SL5:
+
+        RPMS:
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-1/SL4
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-1/SL5
+
+      - Some functionality provided by py.test such as distributed testing is not
+        available under SL4.
+
+      - To complete the rfio test cases the remoteSpace location in the
+        CastorTestSuite.options file must point to a directory on a remote
+        machine which is writeable by the remote rfiod daemon. By default, in
+        CASTOR the only writeable directories by rfiod are the mountpoints
+        defined in the RmNode/MountPoints option of castor.conf on the remote
+        machine. It is recommended to use /tmp as a storage location for
+        remote files and not a production filesystem! To allow rfiod to write
+        to /tmp you will need add /tmp to the RFIOD/PathWhiteList
+        configuration option on the remote machine.
+
+      - To complete the root test cases you must use root version 5.24.00 or
+        newer.
+
+      Instructions
+      ------------
+
+      1. Extract the contents of testsuite tarball to a directory of your
+         choosing. 
+
+      2. To run the CASTOR tests, change directory to the base directory where
+         the tarball was extracted.
+
+      3. Edit the CastorTestSuite.options file and update the options where
+         appropriate.
+
+      4. Execute the test suite with `py.test --all`. Note: Individual groups
+         of tests can be run by specifying --<group> on the command line. For
+         example, to run the client and rfio test cases but not tape you would
+         use:
+         `py.test --rfio --client --notape`
+
+         For a list of all test groups refer to the `py.test --help` output. In
+         particular the "custom options" section.
+
+      5. Wait for completion.
+
+      Hints & Tips
+      ------------
+
+      1. The tape tests can take a very long time to complete and are dependant
+         on tape drive availability and how often the mighunter daemon runs. If
+         you can not dedicate resources it is suggested to run the test with the
+         additional --notape option.
+
+      2. If you wish to see which tests are being executed you can run the test
+         suite with the --verbose option.
+
+      3. To run the tests executed by the old test suite in *fast* mode use
+         `py.test --verbose --rfio --client --root`
+      
+
+-----------
 - 2.1.9-0 -
 -----------
 
-  Highlights & BugFixes
-  ---------------------
+  Highlights & Bug Fixes
+  ----------------------
 
   CASTOR miscellaneous
   --------------------
@@ -12,7 +290,7 @@
   - #53965: RFE: improvements in the 'Castor framework' classes
 
   CASTOR nameserver
-  ----------------
+  -----------------
   - #45700: Possible deadlock in nameserver in case of concurrent nschclass
 
   CASTOR stager
