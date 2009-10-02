@@ -70,8 +70,8 @@ BEGIN
     END IF;
   END IF;
   -- We do accept '*' as being valid, as it is the wildcard
-  IF SvcClassName = '*' THEN
-    RETURN 1;
+  IF svcClassName = '*' THEN
+    RETURN 0;
   END IF;
   -- Check to see if service class exists by name and return its id
   BEGIN
