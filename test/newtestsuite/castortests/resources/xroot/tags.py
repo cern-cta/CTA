@@ -4,7 +4,11 @@ elif os.name == 'mac':
     pathVar = 'DYLD_LIBRARY_PATH'
 else:
     raise OSError('Unsupported OS : ' + os.name)
-os.environ[pathVar] = os.environ['XROOTSYS'] + os.sep + 'lib' + os.pathsep + os.environ[pathVar]
+
+if not os.environ.has_key('LD_LIBRARY_PATH'):
+    os.environ[pathVar] = os.environ['XROOTSYS'] + os.sep + 'lib'
+else:
+    os.environ[pathVar] = os.environ['XROOTSYS'] + os.sep + 'lib' + os.pathsep + os.environ[pathVar]
 
 def xrootURL(self, nb=0):
     return (lambda test : 'root://'+os.environ['STAGE_HOST']+'/'+self.getTag(test, 'noTapeFileName' + snb)+'?stagerHost='+os.environ['STAGE_HOST'])
