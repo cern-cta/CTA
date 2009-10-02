@@ -133,7 +133,7 @@ runCommand('svn --quiet co svn+ssh://svn/reps/CASTOR/CASTOR2/tags/' + version + 
            'Error while checking out release into internal release space')
 
 # create a testsuite directory and copy the test suite into it
-print "creating the testsuite..."
+print "Creating the testsuite..."
 os.chdir(intReleaseDir)
 os.mkdir('testsuite')
 os.chdir('testsuite')
@@ -151,7 +151,7 @@ runCommand('make -f Makefile.ini Makefiles',
            'Error while creating Makefiles')
 runCommand('make doxygen',
            'Error while creating doxygen documentation')
-runCommand('cat \'<META HTTP-EQUIV="refresh" CONTENT="CASTOR2/doc/html/index.html">\' > doxygenDoc.html',
+runCommand('echo \'<META HTTP-EQUIV="refresh" CONTENT="CASTOR2/doc/html/index.html">\' > doxygenDoc.html',
            'Error while linking doxygen documentation from top level')
 
 # cleanup
