@@ -235,9 +235,6 @@
         to /tmp you will need add /tmp to the RFIOD/PathWhiteList
         configuration option on the remote machine.
 
-      - To complete the root test cases you must use root version 5.24.00 or
-        newer.
-
       Instructions
       ------------
 
