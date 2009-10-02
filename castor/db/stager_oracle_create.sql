@@ -1247,8 +1247,8 @@ BEGIN
     END IF;
   END IF;
   -- We do accept '*' as being valid, as it is the wildcard
-  IF SvcClassName = '*' THEN
-    RETURN 1;
+  IF svcClassName = '*' THEN
+    RETURN 0;
   END IF;
   -- Check to see if service class exists by name and return its id
   BEGIN
@@ -1489,6 +1489,12 @@ END;
 
 
 /* PL/SQL method implementing checkPermission */
+/* The return parameter can have the following values
+ *   a svcClassId   if access is granted
+ *   0              if access is granted on svcClass == '*'
+ *  -1              if access denied
+ *  -2              when svcClass does not exist
+ */
 CREATE OR REPLACE PROCEDURE checkPermission(isvcClass IN VARCHAR2,
                                             ieuid IN NUMBER,
                                             iegid IN NUMBER,
@@ -1537,7 +1543,7 @@ BEGIN
        AND (reqType = ireqType OR reqType IS NULL);
     IF c = 0 THEN
       -- Not Found in Black list -> access
-      -- in this case return the service class id
+      -- In this case return the service class id (0 for '*')
       res := svcId;
     ELSE
       -- Found in Black list -> no access
@@ -1563,10 +1569,11 @@ RETURN NUMBER AS
 BEGIN
   -- Check the users access rights
   checkPermission(reqSvcClass, reqEuid, reqEgid, reqType, res);
-  IF res > 0 THEN
-    RETURN 0;
+  IF res < 0 THEN
+    -- No access. res == 0 means access ok with svcClass == '*'
+    RETURN 1;
   END IF;
-  RETURN 1;
+  RETURN 0;
 END;
 /
 
