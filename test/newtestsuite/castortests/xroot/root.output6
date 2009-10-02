@@ -3,18 +3,18 @@ TXNetFile**		<variableURL>
   KEY: TNtuple	ntuple;1	test
 ******************************************************************************
 *Tree    :ntuple    : test                                                   *
-*Entries :        2 : Total =            1918 bytes  File  Size =        <variablesize> *
+*Entries :        2 : Total =            <total> bytes  File  Size =        <variablesize> *
 *        :          : Tree compression factor =   1.00                       *
 ******************************************************************************
 *Br    0 :x         :                                                        *
-*Entries :        2 : Total  Size=        534 bytes  File Size  =         78 *
-*Baskets :        1 : Basket Size=      32000 bytes  Compression=   1.00     *
+*Entries :        2 : Total  Size=        <size> bytes  <filesize> *
+*Baskets :        <baskets> : Basket Size=      32000 bytes  Compression=   1.00     *
 *............................................................................*
 *Br    1 :y         :                                                        *
-*Entries :        2 : Total  Size=        534 bytes  File Size  =         78 *
-*Baskets :        1 : Basket Size=      32000 bytes  Compression=   1.00     *
+*Entries :        2 : Total  Size=        <size> bytes  <filesize> *
+*Baskets :        <baskets> : Basket Size=      32000 bytes  Compression=   1.00     *
 *............................................................................*
 *Br    2 :z         :                                                        *
-*Entries :        2 : Total  Size=        534 bytes  File Size  =         78 *
-*Baskets :        1 : Basket Size=      32000 bytes  Compression=   1.00     *
+*Entries :        2 : Total  Size=        <size> bytes  <filesize> *
+*Baskets :        <baskets> : Basket Size=      32000 bytes  Compression=   1.00     *
 *............................................................................*
