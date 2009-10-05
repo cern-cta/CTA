@@ -42,7 +42,7 @@
 #define	RETRYI	60
 #define DIRBUFSZ 4096
 #define LISTBUFSZ 4096
-#define LOGBUFSZ 1024
+#define LOGBUFSZ 4096
 #define PRTBUFSZ 180
 #define REPBUFSZ 28100	/* must be >= max name server reply size */
 #define REQBUFSZ 26854	/* must be >= max name server request size */

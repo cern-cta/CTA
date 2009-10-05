@@ -241,7 +241,7 @@ int Cns_srv_access(magic, req_data, clienthost, thip)
   struct Cns_file_metadata fmd_entry;
   char func[16];
   gid_t gid;
-  char logbuf[CA_MAXPATHLEN+13];
+  char logbuf[LOGBUFSZ];
   mode_t mode;
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
@@ -297,7 +297,7 @@ int Cns_srv_chclass(magic, req_data, clienthost, thip)
   struct Cns_file_metadata fmd_entry;
   char func[16];
   gid_t gid;
-  char logbuf[CA_MAXPATHLEN+CA_MAXCLASNAMELEN+16];
+  char logbuf[LOGBUFSZ];
   struct Cns_class_metadata new_class_entry;
   Cns_dbrec_addr new_rec_addrc;
   char path[CA_MAXPATHLEN+1];
@@ -393,7 +393,7 @@ int Cns_srv_chdir(magic, req_data, clienthost, thip)
   struct Cns_file_metadata direntry;
   char func[16];
   gid_t gid;
-  char logbuf[CA_MAXPATHLEN+12];
+  char logbuf[LOGBUFSZ];
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
@@ -447,7 +447,7 @@ int Cns_srv_chmod(magic, req_data, clienthost, thip)
   struct Cns_file_metadata fmd_entry;
   char func[16];
   gid_t gid;
-  char logbuf[CA_MAXPATHLEN+12];
+  char logbuf[LOGBUFSZ];
   mode_t mode;
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
@@ -518,7 +518,7 @@ int Cns_srv_chown(magic, req_data, clienthost, thip)
   char func[16];
   gid_t gid;
   struct group *gr;
-  char logbuf[CA_MAXPATHLEN+19];
+  char logbuf[LOGBUFSZ];
   char **membername;
   int need_p_admin = 0;
   int need_p_expt_admin = 0;
@@ -619,7 +619,7 @@ int Cns_srv_chown(magic, req_data, clienthost, thip)
   RETURN (0);
 }
 
-/*      Cns_internal_dropsegs - internal method dropping all segments from a given file */
+/*      Cns_internal_dropsegs - internal method dropping all segments for a given file */
 
 int Cns_internal_dropsegs(func, thip, filentry)
      char* func;
@@ -631,7 +631,7 @@ int Cns_internal_dropsegs(func, thip, filentry)
   DBLISTPTR dblistptr;
   struct Cns_seg_metadata smd_entry;
   Cns_dbrec_addr rec_addrs; /* segment record address */
-  char logbuf[CA_MAXPATHLEN+8];
+  char logbuf[LOGBUFSZ];
   char tmpbuf[21];
   char tmpbuf2[21];
 
@@ -669,7 +669,7 @@ int Cns_srv_creat(magic, req_data, clienthost, thip)
   char func[16];
   gid_t gid;
   char guid[CA_MAXGUIDLEN+1];
-  char logbuf[CA_MAXPATHLEN+CA_MAXGUIDLEN+18];
+  char logbuf[LOGBUFSZ];
   mode_t mask;
   mode_t mode;
   struct Cns_file_metadata parent_dir;
@@ -806,7 +806,7 @@ int Cns_srv_delcomment(magic, req_data, clienthost, thip)
   struct Cns_file_metadata filentry;
   char func[19];
   gid_t gid;
-  char logbuf[CA_MAXPATHLEN+12];
+  char logbuf[LOGBUFSZ];
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
@@ -872,7 +872,7 @@ int Cns_srv_delete(magic, req_data, clienthost, thip)
   struct Cns_file_metadata filentry;
   char func[16];
   gid_t gid;
-  char logbuf[CA_MAXPATHLEN+8];
+  char logbuf[LOGBUFSZ];
   struct Cns_file_metadata parent_dir;
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
@@ -970,7 +970,7 @@ int Cns_srv_deleteclass(magic, req_data, clienthost, thip)
   DBLISTPTR dblistptr;
   char func[20];
   gid_t gid;
-  char logbuf[CA_MAXCLASNAMELEN+19];
+  char logbuf[LOGBUFSZ];
   char *rbp;
   Cns_dbrec_addr rec_addr;
   Cns_dbrec_addr rec_addrt;
@@ -1095,7 +1095,7 @@ int Cns_srv_du(magic, req_data, clienthost, thip)
   char func[16];
   gid_t gid;
   int Lflag;
-  char logbuf[CA_MAXPATHLEN+4];
+  char logbuf[LOGBUFSZ];
   u_signed64 nbbytes = 0;
   u_signed64 nbentries = 0;
   char path[CA_MAXPATHLEN+1];
@@ -1207,7 +1207,7 @@ int Cns_srv_enterclass(magic, req_data, clienthost, thip)
   char func[19];
   gid_t gid;
   int i;
-  char logbuf[CA_MAXCLASNAMELEN+19];
+  char logbuf[LOGBUFSZ];
   int nbtppools;
   char *rbp;
   struct Cns_tp_pool tppool_entry;
@@ -1279,7 +1279,7 @@ int Cns_srv_getacl(magic, req_data, clienthost, thip)
   char func[16];
   gid_t gid;
   char *iacl;
-  char logbuf[CA_MAXPATHLEN+8];
+  char logbuf[LOGBUFSZ];
   int nentries = 0;
   char *p;
   char path[CA_MAXPATHLEN+1];
@@ -1353,7 +1353,7 @@ int Cns_srv_getcomment(magic, req_data, clienthost, thip)
   struct Cns_file_metadata filentry;
   char func[19];
   gid_t gid;
-  char logbuf[CA_MAXPATHLEN+12];
+  char logbuf[LOGBUFSZ];
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
@@ -1418,7 +1418,7 @@ int Cns_srv_getlinks(magic, req_data, clienthost, thip)
   gid_t gid;
   char guid[CA_MAXGUIDLEN+1];
   struct Cns_symlinks lnk_entry;
-  char logbuf[CA_MAXPATHLEN+CA_MAXGUIDLEN+11];
+  char logbuf[LOGBUFSZ];
   int n;
   char *p;
   char path[CA_MAXPATHLEN+1];
@@ -1559,7 +1559,7 @@ int Cns_srv_getsegattrs(magic, req_data, clienthost, thip)
   struct Cns_file_metadata filentry;
   char func[20];
   gid_t gid;
-  char logbuf[CA_MAXPATHLEN+34];
+  char logbuf[LOGBUFSZ];
   int nbseg = 0;
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
@@ -1661,7 +1661,7 @@ int Cns_srv_lchown(magic, req_data, clienthost, thip)
   char func[16];
   gid_t gid;
   struct group *gr;
-  char logbuf[CA_MAXPATHLEN+20];
+  char logbuf[LOGBUFSZ];
   char **membername;
   int need_p_admin = 0;
   int need_p_expt_admin = 0;
@@ -1895,7 +1895,7 @@ int Cns_srv_listlinks(magic, req_data, clienthost, thip, lnk_entry, endlist, dbl
   gid_t gid;
   char guid[CA_MAXGUIDLEN+1];
   int listentsz; /* size of client machine Cns_linkinfo structure */
-  char logbuf[CA_MAXPATHLEN+CA_MAXGUIDLEN+12];
+  char logbuf[LOGBUFSZ];
   int maxsize;
   int nbentries = 0;
   char outbuf[LISTBUFSZ+4];
@@ -2017,7 +2017,7 @@ int Cns_srv_lastfseq(magic, req_data, clienthost, thip)
   struct Cns_seg_metadata smd_entry;
   char  func[19];
   char  vid[CA_MAXVIDLEN+1];
-  char  logbuf[CA_MAXVIDLEN+12];
+  char  logbuf[LOGBUFSZ];
   char  repbuf[REPBUFSZ];
   char  *rbp;
   char  *sbp;
@@ -2079,7 +2079,7 @@ int Cns_srv_bulkexist(magic, req_data, clienthost, thip)
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
 {
-  char  logbuf[12+21+22];
+  char  logbuf[LOGBUFSZ];
   char  func[19];
   char  *repbuf;
   char  *rbp;
@@ -2158,7 +2158,7 @@ int Cns_srv_tapesum(magic, req_data, clienthost, thip)
 {
   char  func[19];
   char  vid[CA_MAXVIDLEN+1];
-  char  logbuf[CA_MAXVIDLEN+22];
+  char  logbuf[LOGBUFSZ];
   char  repbuf[REPBUFSZ];
   u_signed64 count = 0;
   u_signed64 size = 0;
@@ -2225,7 +2225,7 @@ int Cns_srv_listtape(magic, req_data, clienthost, thip, fmd_entry, smd_entry, en
   char func[17];
   int fseq = 0;   /* file sequence number to filter on */
   gid_t gid;
-  char logbuf[CA_MAXVIDLEN+12+42];
+  char logbuf[LOGBUFSZ];
   int maxsize;
   int nbentries = 0;
   char *p;
@@ -2302,7 +2302,7 @@ int Cns_srv_lstat(magic, req_data, clienthost, thip)
   struct Cns_file_metadata fmd_entry;
   char func[16];
   gid_t gid;
-  char logbuf[CA_MAXPATHLEN+8];
+  char logbuf[LOGBUFSZ];
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
@@ -2375,7 +2375,7 @@ int Cns_srv_mkdir(magic, req_data, clienthost, thip)
   char func[16];
   gid_t gid;
   char guid[CA_MAXGUIDLEN+1];
-  char logbuf[CA_MAXPATHLEN+CA_MAXGUIDLEN+18];
+  char logbuf[LOGBUFSZ];
   mode_t mask;
   mode_t mode;
   struct Cns_file_metadata parent_dir;
@@ -2487,7 +2487,7 @@ int Cns_srv_modifyclass(magic, req_data, clienthost, thip)
   char func[20];
   gid_t gid;
   int i;
-  char logbuf[CA_MAXCLASNAMELEN+19];
+  char logbuf[LOGBUFSZ];
   int maxdrives;
   int max_filesize;
   int max_segsize;
@@ -2650,7 +2650,7 @@ int Cns_srv_opendir(magic, req_data, clienthost, thip)
   char func[16];
   gid_t gid;
   char guid[CA_MAXGUIDLEN+1];
-  char logbuf[CA_MAXPATHLEN+CA_MAXGUIDLEN+10];
+  char logbuf[LOGBUFSZ];
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
@@ -2759,7 +2759,7 @@ int Cns_srv_queryclass(magic, req_data, clienthost, thip)
   DBLISTPTR dblistptr;
   char func[19];
   gid_t gid;
-  char logbuf[CA_MAXCLASNAMELEN+18];
+  char logbuf[LOGBUFSZ];
   int nbtppools = 0;
   char *q;
   char *rbp;
@@ -3029,7 +3029,7 @@ int Cns_srv_readlink(magic, req_data, clienthost, thip)
   char func[17];
   gid_t gid;
   struct Cns_symlinks lnk_entry;
-  char logbuf[CA_MAXPATHLEN+10];
+  char logbuf[LOGBUFSZ];
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
@@ -3092,7 +3092,7 @@ int Cns_srv_rename(magic, req_data, clienthost, thip)
   char func[16];
   gid_t gid;
   struct Cns_symlinks lnk_entry;
-  char logbuf[2*CA_MAXPATHLEN+9];
+  char logbuf[LOGBUFSZ];
   int new_exists = 0;
   struct Cns_file_metadata new_fmd_entry;
   struct Cns_file_metadata new_parent_dir;
@@ -3294,7 +3294,7 @@ int Cns_srv_updateseg_status(magic, req_data, clienthost, thip)
   char *rbp;
   char *user;
   char func[25];
-  char logbuf[CA_MAXPATHLEN+34];
+  char logbuf[LOGBUFSZ];
   char newstatus;
   char oldstatus;
   char tmpbuf[21];
@@ -3393,7 +3393,7 @@ int Cns_srv_updateseg_checksum(magic, req_data, clienthost, thip)
   int fseq;
   char func[30];
   gid_t gid;
-  char logbuf[CA_MAXPATHLEN+34];
+  char logbuf[LOGBUFSZ];
   struct Cns_seg_metadata old_smd_entry;
   char *rbp;
   Cns_dbrec_addr rec_addr;
@@ -3534,7 +3534,7 @@ int Cns_srv_replaceseg(magic, req_data, clienthost, thip)
   int fseq;
   char func[19];
   gid_t gid;
-  char logbuf[CA_MAXPATHLEN+34];
+  char logbuf[LOGBUFSZ];
   struct Cns_seg_metadata old_smd_entry;
   char *rbp;
   Cns_dbrec_addr rec_addr;
@@ -3710,7 +3710,7 @@ int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
 
   char *rbp;
   char func[24];
-  char logbuf[CA_MAXLINELEN+1];
+  char logbuf[LOGBUFSZ];
   char newvid[CA_MAXVIDLEN+1];
   char oldvid[CA_MAXVIDLEN+1];
 
@@ -3921,7 +3921,7 @@ int Cns_srv_rmdir(magic, req_data, clienthost, thip)
   struct Cns_file_metadata direntry;
   char func[16];
   gid_t gid;
-  char logbuf[CA_MAXPATHLEN+7];
+  char logbuf[LOGBUFSZ];
   struct Cns_file_metadata parent_dir;
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
@@ -4018,7 +4018,7 @@ int Cns_srv_setacl(magic, req_data, clienthost, thip)
   gid_t gid;
   int i;
   char *iacl;
-  char logbuf[CA_MAXPATHLEN+8];
+  char logbuf[LOGBUFSZ];
   int nentries;
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
@@ -4148,7 +4148,7 @@ int Cns_srv_setatime(magic, req_data, clienthost, thip)
   struct Cns_file_metadata filentry;
   char func[17];
   gid_t gid;
-  char logbuf[CA_MAXPATHLEN+31];
+  char logbuf[LOGBUFSZ];
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
@@ -4229,7 +4229,7 @@ int Cns_srv_setcomment(magic, req_data, clienthost, thip)
   struct Cns_file_metadata filentry;
   char func[19];
   gid_t gid;
-  char logbuf[CA_MAXPATHLEN+12];
+  char logbuf[LOGBUFSZ];
   struct Cns_user_metadata old_umd_entry;
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
@@ -4309,7 +4309,7 @@ int Cns_srv_setfsize(magic, req_data, clienthost, thip)
   u_signed64 filesize;
   char func[17];
   gid_t gid;
-  char logbuf[CA_MAXLINELEN+1];
+  char logbuf[LOGBUFSZ];
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
@@ -4421,7 +4421,7 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
   u_signed64 filesize;
   char func[19];
   gid_t gid;
-  char logbuf[CA_MAXLINELEN+1];
+  char logbuf[LOGBUFSZ];
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
@@ -4552,7 +4552,7 @@ int Cns_srv_setfsizeg(magic, req_data, clienthost, thip)
   char func[18];
   gid_t gid;
   char guid[CA_MAXGUIDLEN+1];
-  char logbuf[CA_MAXLINELEN+1];
+  char logbuf[LOGBUFSZ];
   char *rbp;
   Cns_dbrec_addr rec_addr;
   char tmpbuf[21];
@@ -4656,7 +4656,7 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
   char func[20];
   gid_t gid;
   int i;
-  char logbuf[CA_MAXPATHLEN+34];
+  char logbuf[LOGBUFSZ];
   int nbseg;
   struct Cns_seg_metadata old_smd_entry;
   char path[CA_MAXPATHLEN+1];
@@ -4915,7 +4915,7 @@ int Cns_srv_startsess(magic, req_data, clienthost, thip)
   char comment[CA_MAXCOMMENTLEN+1];
   char func[18];
   gid_t gid;
-  char logbuf[CA_MAXCOMMENTLEN+13];
+  char logbuf[LOGBUFSZ];
   char *rbp;
   uid_t uid;
   char *user;
@@ -4944,7 +4944,7 @@ int Cns_srv_starttrans(magic, req_data, clienthost, thip)
   char comment[CA_MAXCOMMENTLEN+1];
   char func[19];
   gid_t gid;
-  char logbuf[CA_MAXCOMMENTLEN+14];
+  char logbuf[LOGBUFSZ];
   char *rbp;
   uid_t uid;
   char *user;
@@ -4980,7 +4980,7 @@ int Cns_srv_stat(magic, req_data, clienthost, thip)
   struct Cns_file_metadata fmd_entry;
   char func[16];
   gid_t gid;
-  char logbuf[CA_MAXPATHLEN+6];
+  char logbuf[LOGBUFSZ];
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
@@ -5053,7 +5053,7 @@ int Cns_srv_statcs(magic, req_data, clienthost, thip)
   struct Cns_file_metadata fmd_entry;
   char func[16];
   gid_t gid;
-  char logbuf[CA_MAXPATHLEN+29];
+  char logbuf[LOGBUFSZ];
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
@@ -5128,7 +5128,7 @@ int Cns_srv_statg(magic, req_data, clienthost, thip)
   char func[16];
   gid_t gid;
   char guid[CA_MAXGUIDLEN+1];
-  char logbuf[CA_MAXPATHLEN+CA_MAXGUIDLEN+8];
+  char logbuf[LOGBUFSZ];
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
@@ -5203,7 +5203,7 @@ int Cns_srv_symlink(magic, req_data, clienthost, thip)
   u_signed64 cwd;
   char func[16];
   gid_t gid;
-  char logbuf[2*CA_MAXPATHLEN+10];
+  char logbuf[LOGBUFSZ];
   struct Cns_file_metadata fmd_entry;
   char linkname[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
@@ -5302,7 +5302,7 @@ int Cns_srv_undelete(magic, req_data, clienthost, thip)
   struct Cns_file_metadata filentry;
   char func[17];
   gid_t gid;
-  char logbuf[CA_MAXPATHLEN+10];
+  char logbuf[LOGBUFSZ];
   struct Cns_file_metadata parent_dir;
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
@@ -5400,7 +5400,7 @@ int Cns_srv_unlink(magic, req_data, clienthost, thip)
   char func[16];
   gid_t gid;
   struct Cns_symlinks lnk_entry;
-  char logbuf[CA_MAXPATHLEN+8];
+  char logbuf[LOGBUFSZ];
   struct Cns_file_metadata parent_dir;
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
@@ -5505,7 +5505,7 @@ int Cns_srv_utime(magic, req_data, clienthost, thip)
   struct Cns_file_metadata filentry;
   char func[16];
   gid_t gid;
-  char logbuf[CA_MAXPATHLEN+19];
+  char logbuf[LOGBUFSZ];
   time_t modtime;
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
@@ -5587,7 +5587,7 @@ int Cns_srv_updatefile_checksum(magic, req_data, clienthost, thip)
   struct Cns_file_metadata filentry;
   char func[28];
   gid_t gid;
-  char logbuf[CA_MAXPATHLEN+58];
+  char logbuf[LOGBUFSZ];
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+10];
   char *rbp;
@@ -5730,7 +5730,7 @@ int Cns_srv_entergrpmap(magic, req_data, clienthost, thip)
   char func[20];
   gid_t gid;
   struct Cns_groupinfo group_entry;
-  char logbuf[278];
+  char logbuf[LOGBUFSZ];
   char *rbp;
   gid_t reqgid;
   uid_t uid;
@@ -5779,7 +5779,7 @@ int Cns_srv_enterusrmap(magic, req_data, clienthost, thip)
 {
   char func[20];
   gid_t gid;
-  char logbuf[278];
+  char logbuf[LOGBUFSZ];
   char *rbp;
   uid_t requid;
   uid_t uid;
@@ -5912,7 +5912,7 @@ int Cns_srv_getidmap(magic, req_data, clienthost, thip)
   gid_t *gids;
   char **groupnames = NULL;
   int i;
-  char logbuf[265];
+  char logbuf[LOGBUFSZ];
   int nbgroups;
   char *p;
   char *q;
@@ -5987,7 +5987,7 @@ int Cns_srv_getgrpbygid(magic, req_data, clienthost, thip)
   char func[20];
   gid_t gid;
   struct Cns_groupinfo group_entry;
-  char logbuf[23];
+  char logbuf[LOGBUFSZ];
   char *rbp;
   char repbuf[256];
   gid_t reqgid;
@@ -6029,7 +6029,7 @@ int Cns_srv_getgrpbynam(magic, req_data, clienthost, thip)
   gid_t gid;
   struct Cns_groupinfo group_entry;
   char groupname[256];
-  char logbuf[268];
+  char logbuf[LOGBUFSZ];
   char *rbp;
   char repbuf[4];
   char *sbp;
@@ -6069,7 +6069,7 @@ int Cns_srv_getusrbynam(magic, req_data, clienthost, thip)
 {
   char func[20];
   gid_t gid;
-  char logbuf[268];
+  char logbuf[LOGBUFSZ];
   char *rbp;
   char repbuf[4];
   char *sbp;
@@ -6111,7 +6111,7 @@ int Cns_srv_getusrbyuid(magic, req_data, clienthost, thip)
 {
   char func[20];
   gid_t gid;
-  char logbuf[23];
+  char logbuf[LOGBUFSZ];
   char *rbp;
   char repbuf[256];
   gid_t requid;
@@ -6154,7 +6154,7 @@ int Cns_srv_modgrpmap(magic, req_data, clienthost, thip)
   gid_t gid;
   struct Cns_groupinfo group_entry;
   char groupname[256];
-  char logbuf[277];
+  char logbuf[LOGBUFSZ];
   char *rbp;
   Cns_dbrec_addr rec_addr;
   gid_t reqgid;
@@ -6203,7 +6203,7 @@ int Cns_srv_modusrmap(magic, req_data, clienthost, thip)
 {
   char func[18];
   gid_t gid;
-  char logbuf[277];
+  char logbuf[LOGBUFSZ];
   char *rbp;
   Cns_dbrec_addr rec_addr;
   gid_t requid;
@@ -6256,7 +6256,7 @@ int Cns_srv_rmgrpmap(magic, req_data, clienthost, thip)
   gid_t gid;
   struct Cns_groupinfo group_entry;
   char groupname[256];
-  char logbuf[276];
+  char logbuf[LOGBUFSZ];
   char *rbp;
   Cns_dbrec_addr rec_addr;
   gid_t reqgid;
@@ -6318,7 +6318,7 @@ int Cns_srv_rmusrmap(magic, req_data, clienthost, thip)
 {
   char func[18];
   gid_t gid;
-  char logbuf[276];
+  char logbuf[LOGBUFSZ];
   char *rbp;
   Cns_dbrec_addr rec_addr;
   gid_t requid;
