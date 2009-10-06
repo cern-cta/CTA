@@ -1345,14 +1345,11 @@ BEGIN
   IF nbTCInFC < nbTC THEN
     nbTC := nbTCInFC;
   END IF;
-  -- update all the Repack subRequests for this file. The status REPACK
+  -- update the Repack subRequest for this file. The status REPACK
   -- stays until the migration to the new tape is over.
   UPDATE SubRequest
      SET diskCopy = dcId, status = 12  -- REPACK
-   WHERE SubRequest.castorFile = cfId
-     AND SubRequest.status IN (3, 4)  -- WAITSCHED, WAITTAPERECALL
-     AND SubRequest.request IN
-       (SELECT id FROM StageRepackRequest);   
+   WHERE id = srId;   
   -- get the service class, uid and gid
   SELECT R.svcClass, euid, egid INTO svcClassId, reuid, regid
     FROM StageRepackRequest R, SubRequest
