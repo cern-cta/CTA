@@ -47,8 +47,6 @@ BEGIN
     FORALL i IN srIds.FIRST .. srIds.LAST
       DELETE FROM SubRequest WHERE id = srIds(i);
     CLOSE c;
-    -- Release locks
-    COMMIT;
   END LOOP;
   -- Delete all data related to the filesystem from the draining diskcopy table
   DELETE FROM DrainingDiskCopy
@@ -611,7 +609,7 @@ CREATE OR REPLACE PROCEDURE drainManager AS
 BEGIN
   -- Delete the filesystems which are:
   --  A) in a DELETING state and have no transfers pending in the scheduler.
-  --  B) are COMPLETED and older the 7 days.
+  --  B) are COMPLETED and older than 7 days.
   DELETE FROM DrainingFileSystem
    WHERE (NOT EXISTS (SELECT 'x' FROM DrainingDiskCopy
                        WHERE fileSystem = DrainingFileSystem.fileSystem
