@@ -80,8 +80,10 @@ namespace castor{
           
           case DISKCOPY_WAITTAPERECALL:   // trigger a recall
           {
+            // reset the filesize to the nameserver one, as we don't have anything in the db
+            stgRequestHelper->subrequest->castorFile()->setFileSize(stgCnsHelper->cnsFilestat.filesize);
             // first check the special case of 0 bytes files
-            if (0 == stgRequestHelper->subrequest->castorFile()->fileSize()) {
+            if (0 == stgCnsHelper->cnsFilestat.filesize) {
               stgRequestHelper->stagerService->createEmptyFile(stgRequestHelper->subrequest, false);
               stgRequestHelper->subrequest->setStatus(SUBREQUEST_FINISHED);
               reply = true;

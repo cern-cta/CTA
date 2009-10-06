@@ -151,16 +151,18 @@ namespace castor{
 
           case DISKCOPY_WAITTAPERECALL:   // create a tape copy and corresponding segment objects on stager catalogue
             {
-	      // first check the special case of 0 bytes files
-	      if (0 == stgRequestHelper->subrequest->castorFile()->fileSize()) {
-		stgRequestHelper->stagerService->createEmptyFile(stgRequestHelper->subrequest, true);
-		// Note that all the process of updating the subrequest is done in PL/SQL,
-		// allowing to have a single round trip to the DB
+              // reset the filesize to the nameserver one, as we don't have anything in the db
+              stgRequestHelper->subrequest->castorFile()->setFileSize(stgCnsHelper->cnsFilestat.filesize);
+              // first check the special case of 0 bytes files
+              if (0 == stgCnsHelper->cnsFilestat.filesize) {
+                stgRequestHelper->stagerService->createEmptyFile(stgRequestHelper->subrequest, true);
+                // Note that all the process of updating the subrequest is done in PL/SQL,
+                // allowing to have a single round trip to the DB
                 // and we notify the jobmanager daemon
                 m_notifyJobManager = true;
-		break;
-	      }
-	      // Create recall candidates
+                break;
+              }
+              // Create recall candidates
               castor::stager::Tape *tape = 0;
               result = stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest, stgRequestHelper->svcClass, tape);
               if (result) {

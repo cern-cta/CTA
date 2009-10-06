@@ -39,6 +39,8 @@ namespace castor{
           
           case DISKCOPY_WAITTAPERECALL:
           {
+            // reset the filesize to the nameserver one, as we don't have anything in the db
+            stgRequestHelper->subrequest->castorFile()->setFileSize(stgCnsHelper->cnsFilestat.filesize);
             // trigger recall, the repack migration will be started at the end of it; answer client only if success
             castor::stager::Tape *tape = new Tape();
             tape->setVid(dynamic_cast<castor::stager::StageRepackRequest*>(stgRequestHelper->fileRequest)->repackVid());
