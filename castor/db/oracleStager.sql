@@ -384,7 +384,9 @@ BEGIN
     EXIT WHEN SRcur%NOTFOUND;
     BEGIN
       -- Try to take a lock on the current candidate, and revalidate its status
-      SELECT id INTO srIntId FROM SubRequest PARTITION (P_STATUS_0_1_2) SR WHERE id = srIntId FOR UPDATE NOWAIT;
+      SELECT /*+ index(SR PK_SUBREQUEST_ID) */ id INTO srIntId
+        FROM SubRequest PARTITION (P_STATUS_0_1_2) SR
+       WHERE id = srIntId FOR UPDATE NOWAIT;
       -- Since we are here, we got the lock. We have our winner, let's update it
       UPDATE SubRequest
          SET status = 3, subReqId = nvl(subReqId, uuidGen()) -- WAITSCHED
