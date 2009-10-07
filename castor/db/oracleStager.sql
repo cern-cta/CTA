@@ -384,7 +384,7 @@ BEGIN
     EXIT WHEN SRcur%NOTFOUND;
     BEGIN
       -- Try to take a lock on the current candidate, and revalidate its status
-      SELECT /*+ index(SR PK_SUBREQUEST_ID) */ id INTO srIntId
+      SELECT /*+ INDEX(SR PK_SubRequest_ID) */ id INTO srIntId
         FROM SubRequest PARTITION (P_STATUS_0_1_2) SR
        WHERE id = srIntId FOR UPDATE NOWAIT;
       -- Since we are here, we got the lock. We have our winner, let's update it
@@ -540,7 +540,7 @@ BEGIN
     FORALL i IN srIds.FIRST .. srIds.LAST
       DELETE FROM Id2Type WHERE id = srIds(i);
     -- archive the successful subrequests      
-    UPDATE /*+ SubRequest I_SubRequest_Request */ SubRequest
+    UPDATE /*+ INDEX(SubRequest I_SubRequest_Request) */ SubRequest
        SET status = 11    -- ARCHIVED
      WHERE request = rId
        AND status = 8;  -- FINISHED
