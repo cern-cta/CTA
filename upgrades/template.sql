@@ -24,21 +24,30 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-/* Stop on errors - this only works from sqlplus */
-WHENEVER SQLERROR EXIT FAILURE;
+/* Stop on errors */
+WHENEVER SQLERROR EXIT FAILURE
+BEGIN
+  UPDATE UpgradeLog
+     SET failureCount = failureCount + 1
+   WHERE schemaVersion = 'schemaTag'
+     AND release = 'newRelTag'
+     AND state != 'COMPLETE';
+  COMMIT;
+END;
 
 /* Version cross check and update */
 DECLARE
   unused VARCHAR(100);
 BEGIN
-  SELECT release INTO unused FROM CastorVersion WHERE release LIKE 'prevRelTag%';
+  SELECT release INTO unused FROM CastorVersion
+   WHERE release LIKE 'prevRelTag%';
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- Error, we can't apply this script
   raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts before this one.');
 END;
 /
 
-UPDATE CastorVersion SET release = 'newRelTag';
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('schemaTag', 'newRelTag');
 COMMIT;
 
 /* Job management */
@@ -60,8 +69,15 @@ END;
 /* Schema changes go here */
 /**************************/
 
+
 /* Update and revalidation of PL-SQL code */
 /******************************************/
+
+
+/* Flag the schema upgrade as COMPLETE */
+/***************************************/
+UPDATE UpgradeLog SET endDate = sysdate, state = 'COMPLETE';
+COMMIT;
 
 /* Recompile all invalid procedures, triggers and functions */
 /************************************************************/

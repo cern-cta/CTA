@@ -24,9 +24,6 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-/* Stop on errors - this only works from sqlplus */
-WHENEVER SQLERROR EXIT FAILURE;
-
 /* Determine the DLF schema that the monitoring procedures should run against */
 UNDEF dlfschema
 ACCEPT dlfschema DEFAULT castor_dlf PROMPT 'Enter the DLF schema to run monitoring queries against: (castor_dlf) ';
@@ -49,9 +46,9 @@ BEGIN
     SELECT owner INTO unused
       FROM all_tables
      WHERE owner = upper('&&dlfschema')
-       AND table_name = 'DLF_VERSION';
+       AND table_name = 'CastorVersion';
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    raise_application_error(-20001, 'Unable to access the &dlfschema..dlf_version table. Check that the correct grants have been issued!');
+    raise_application_error(-20001, 'Unable to access the &dlfschema..CastorVersion. Check that the correct grants have been issued!');
   END;
 END;
 /

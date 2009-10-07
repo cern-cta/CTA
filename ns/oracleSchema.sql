@@ -1,5 +1,5 @@
 /*****************************************************************************
- *              oracleCreate.sql
+ *              oracleSchema.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -138,10 +138,6 @@ ALTER TABLE Cns_tp_pool
 ALTER TABLE Cns_symlinks
        ADD CONSTRAINT fk_l_fileid FOREIGN KEY (fileid) REFERENCES Cns_file_metadata (fileid);
 
--- Create the Cns_version table
-CREATE TABLE Cns_version (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO Cns_version VALUES ('2_1_9_0', 'releaseTag');
-
 -- Create indexes on Cns_file_metadata
 CREATE INDEX PARENT_FILEID_IDX ON Cns_file_metadata (parent_fileid);
 CREATE INDEX I_file_metadata_fileclass ON Cns_file_metadata (fileclass);
@@ -149,26 +145,3 @@ CREATE INDEX I_file_metadata_fileclass ON Cns_file_metadata (fileclass);
 -- Temporary table to support Cns_bulkexist calls
 CREATE GLOBAL TEMPORARY TABLE Cns_files_exist_tmp
   (tmpFileId NUMBER) ON COMMIT DELETE ROWS;
-
--- A function to extract the full path of a file in one go
-CREATE OR REPLACE FUNCTION getPathForFileid(fid IN NUMBER) RETURN VARCHAR2 IS
-  CURSOR c IS
-    SELECT /*+ NO_CONNECT_BY_COST_BASED */ name
-      FROM cns_file_metadata
-    START WITH fileid = fid
-    CONNECT BY fileid = PRIOR parent_fileid
-    ORDER BY level DESC;
-  p VARCHAR2(2048) := '';
-BEGIN
-   FOR i in c LOOP
-     p := p ||  '/' || i.name;
-   END LOOP;
-   -- remove first '/'
-   p := replace(p, '///', '/');
-   IF length(p) > 1024 THEN
-     -- the caller will return SENAMETOOLONG
-     raise_application_error(-20001, '');
-   END IF;
-   RETURN p;
-END;
-/

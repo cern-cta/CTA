@@ -1911,7 +1911,7 @@ int Cns_opendb(dbfd)
   char db_srv[CA_MAXLINELEN+1];
   char db_name[CA_MAXLINELEN+1];
   char dbversion[21] = "";
-  char codeversion[21] = "2_1_9_0";
+  char codeversion[21] = "2_1_9_2";
   char *p;
   FILE *fp;
 
@@ -1961,7 +1961,7 @@ int Cns_opendb(dbfd)
   /* check database version: for the time being we only issue a warning if
      a mismatch is found; this is to make mixed deployments and rolling 
      upgrades easier */
-  EXEC SQL SELECT schemaVersion INTO :dbversion FROM Cns_version;
+  EXEC SQL SELECT schemaVersion INTO :dbversion FROM CastorVersion;
   if ((sqlca.sqlcode != 0) || strcmp(dbversion, codeversion)) {
     nslogit (func, "warning: version mismatch between the NS daemon and database schema - "
              "db version: %s versus software version: %s\n", dbversion, codeversion);

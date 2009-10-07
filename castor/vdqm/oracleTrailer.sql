@@ -5,8 +5,8 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
 
-/* Update the schema version number */
-UPDATE CastorVersion SET schemaVersion = '2_1_8_3';
+/* SQL statement to populate the intial schema version */
+UPDATE UpgradeLog SET schemaVersion = '2_1_8_3';
 
 /* Sequence used to generate unique indentifies */
 CREATE SEQUENCE ids_seq CACHE 200;

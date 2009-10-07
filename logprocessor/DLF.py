@@ -98,9 +98,9 @@ class DLFDbDest(LoggingCommon.MsgDestination):
         #-----------------------------------------------------------------------
         # Check the if the database schema version matches the one we expect
         #-----------------------------------------------------------------------
-        self.__curs.execute( "SELECT schemaversion FROM DLF_VERSION" )
+        self.__curs.execute( "SELECT schemaVersion FROM CastorVersion" )
         ver = self.__curs.fetchall()[0][0]
-        if ver != '2_1_9_0':
+        if ver != '2_1_9_2':
             raise RuntimeError( 'Database schema does not match the expected ' +
                                 'one' )
 

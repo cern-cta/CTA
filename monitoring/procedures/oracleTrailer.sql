@@ -1,4 +1,3 @@
-
 /******************************************************************************
  *              oracleTrailer.sql
  *
@@ -25,10 +24,8 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-
-/* Update the schema version */
-UPDATE CastorVersion SET schemaVersion = '2_1_9_0';
-
+/* SQL statement to populate the intial schema version */
+UPDATE UpgradeLog SET schemaVersion = '2_1_9_0';
 
 /***** EXISTING/OLD MONITORING *****/
 

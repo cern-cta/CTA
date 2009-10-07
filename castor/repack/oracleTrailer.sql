@@ -8,8 +8,8 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
 
-/* A small table used to cross check code and DB versions */
-UPDATE CastorVersion SET schemaVersion = '2_1_8_0';
+/* SQL statement to populate the intial schema version */
+UPDATE UpgradeLog SET schemaVersion = '2_1_8_0';
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
