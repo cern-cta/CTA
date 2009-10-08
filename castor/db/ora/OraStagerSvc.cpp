@@ -747,6 +747,7 @@ int castor::db::ora::OraStagerSvc::createRecallCandidate
       cf->addDiskCopies(dc);
       cnvSvc()->createRep(&ad, dc, false);
       cnvSvc()->fillRep(&ad, dc, OBJ_CastorFile, false);
+      cnvSvc()->updateRep(&ad, cf, false);
 
       // Build the path, since we now have the DB id from the DiskCopy;
       // note that this line duplicates the buildPathFromFileId PL/SQL

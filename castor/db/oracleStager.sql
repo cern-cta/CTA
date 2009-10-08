@@ -938,6 +938,8 @@ CREATE OR REPLACE PROCEDURE createEmptyFile
   ogid INTEGER;
   fsPath VARCHAR2(2048);
 BEGIN
+  -- update filesize overriding any previous value
+  UPDATE CastorFile SET fileSize = 0 WHERE id = cfId;
   -- get an id for our new DiskCopy
   SELECT ids_seq.nextval INTO dcId FROM DUAL;
   -- compute the DiskCopy Path
