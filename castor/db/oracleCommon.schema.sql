@@ -161,8 +161,16 @@ CREATE INDEX I_StagePutRequest_ReqId ON StagePutRequest (reqId);
 CREATE INDEX I_StageRepackRequest_ReqId ON StageRepackRequest (reqId);
 
 /* A primary key index for better scan of Stream2TapeCopy */
+ALTER TABLE Stream2TapeCopy MODIFY
+  (parent CONSTRAINT NN_Stream2TapeCopy_Parent NOT NULL,
+   child  CONSTRAINT NN_Stream2TapeCopy_Child NOT NULL);
+
 CREATE UNIQUE INDEX I_Stream2TapeCopy_PC ON Stream2TapeCopy (parent, child);
 
+ALTER TABLE Stream2TapeCopy
+  ADD CONSTRAINTS PK_Stream2TapeCopy_PC PRIMARY KEY (parent, child) USING INDEX;
+
+/* Indexing GCFile by Request */
 CREATE INDEX I_GCFile_Request ON GCFile (request);
 
 /* Indexing Tape by Status */
