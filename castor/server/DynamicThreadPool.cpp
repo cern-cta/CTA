@@ -148,12 +148,9 @@ void castor::server::DynamicThreadPool::run()
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
                           DLF_BASE_FRAMEWORK + 3, 4, params);
 
-  // Initialize the underlying producer and consumer user threads.
-  // For the consumers, we do it here once for the whole pool
-  // instead of once per thread as the threads are all waiting for
-  // the queue to be filled by the producer or via the addTask method.
+  // Initialize the underlying producer thread. The consumer threads
+  // are initialized each time they are created.
   m_producerThread->init();
-  m_thread->init();
 }
 
 //-----------------------------------------------------------------------------
@@ -218,6 +215,7 @@ void* castor::server::DynamicThreadPool::_producer(void *arg) {
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
                             DLF_BASE_FRAMEWORK + 11, 1, params);
   }
+  pthread_exit(0);
   return NULL;
 }
 
@@ -229,6 +227,18 @@ void* castor::server::DynamicThreadPool::_consumer(void *arg) {
   // Variables
   DynamicThreadPool *pool = (DynamicThreadPool *)arg;
   
+  // Thread initialization
+  try {
+    pool->m_thread->init();
+  } catch (castor::exception::Exception any) {
+    // "Thread run error"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Error", sstrerror(any.code())),
+       castor::dlf::Param("Message", any.getMessage().str())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                            DLF_BASE_FRAMEWORK + 5, 2, params);
+  } 
+
   // Task processing loop.
   while (!pool->m_stopped) {
 
@@ -277,24 +287,20 @@ void* castor::server::DynamicThreadPool::_consumer(void *arg) {
     if ((pool->m_taskQueue.size() < pool->m_threshold) &&
         (pool->m_nbThreads > pool->m_initThreads) &&
         (diff > 10)) {
-      // "Terminating a thread in pool"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("ThreadPool", pool->m_poolName),
-         castor::dlf::Param("PendingTasks", pool->m_taskQueue.size())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
-                              DLF_BASE_FRAMEWORK + 21, 2, params);
-      pool->m_nbThreads--;
       pool->m_lastPoolShrink = time(NULL);
-      
       pthread_mutex_unlock(&pool->m_lock);
-      
-      // Notify we're exiting
-      pool->m_thread->stop();
-      pthread_exit(0);
-      return NULL;  // Should not be here
+      // Exit the loop and terminate
+      break;
     }
     pthread_mutex_unlock(&pool->m_lock);
   }
+  
+  // "Terminating a thread in pool"
+  castor::dlf::Param params[] =
+    {castor::dlf::Param("ThreadPool", pool->m_poolName),
+     castor::dlf::Param("PendingTasks", pool->m_taskQueue.size())};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+                          DLF_BASE_FRAMEWORK + 21, 2, params);
   
   // Register thread destruction
   pthread_mutex_lock(&pool->m_lock);
@@ -302,7 +308,16 @@ void* castor::server::DynamicThreadPool::_consumer(void *arg) {
   pthread_mutex_unlock(&pool->m_lock);
   
   // Notify we're exiting
-  pool->m_thread->stop();
+  try {
+    pool->m_thread->stop();
+  } catch (castor::exception::Exception any) {
+    // "Thread run error"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Error", sstrerror(any.code())),
+       castor::dlf::Param("Message", any.getMessage().str())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                            DLF_BASE_FRAMEWORK + 5, 2, params);
+  } 
   pthread_exit(0);
   return NULL;  // Should not be here
 }

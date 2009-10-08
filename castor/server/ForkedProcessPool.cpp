@@ -90,7 +90,6 @@ bool castor::server::ForkedProcessPool::shutdown(bool wait) throw()
   return true;
 }
 
-
 //------------------------------------------------------------------------------
 // init
 //------------------------------------------------------------------------------
@@ -266,11 +265,25 @@ void castor::server::ForkedProcessPool::childRun(castor::io::PipeSocket* ps)
       // we got this far its most likely that the parent has disappeared e.g.
       // via a kill -9 therefore missing the call to the destructor asking the
       // children to stop.
+      try {
+        m_thread->stop();
+      } catch (castor::exception::Exception ignore) {}
       dlf_shutdown();
       exit(EXIT_FAILURE);
     }
   }
 
+  try {
+    m_thread->stop();
+  } catch (castor::exception::Exception any) {
+    // "Thread run error"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Error", sstrerror(any.code())),
+       castor::dlf::Param("Message", any.getMessage().str())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                            DLF_BASE_FRAMEWORK + 5, 2, params);
+  }
   dlf_shutdown();
   exit(EXIT_SUCCESS);
 }
+

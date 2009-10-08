@@ -51,10 +51,9 @@ namespace castor {
 
     /**
      * Initialization of the thread.
-     * This method will be called by each spawned thread at its startup;
-     * however for pools attached to a ListenerThreadPool, this method is
-     * called only once by the dispatcher thread.
-     * @throw any exception thrown here is handled in the BaseThreadPool. 
+     * This method will be called by each spawned thread at its startup.
+     * @throw any exception thrown here is handled in the appropriate
+     * thread pool class.
      */
     virtual void init() = 0;
     
@@ -63,13 +62,14 @@ namespace castor {
      * This method will run on a dedicated thread, so it may
      * contain an infinite loop; however, it is recommended to let it
      * run a chunk of your job and let the pool rerun it when
-     * needed (either a new request coming for ListenerThreadPools
+     * needed (e.g. new request coming for ListenerThreadPools
      * or timeout elapsed/notification got for SignalThreadPools),
      * otherwise upon termination (@see stop) the thread may fail
      * to get notified, thus blocking the whole daemon.
      * @param param any relevant initialization value which
      * will be passed in by the pool.
-     * @throw any exception thrown here is handled in the BaseThreadPool. 
+     * @throw any exception thrown here is handled in the appropriate
+     * thread pool class.
      */
     virtual void run(void *param) = 0;
     
@@ -80,6 +80,8 @@ namespace castor {
      * thread as a result of different attempts to perform the shutdown.
      * It is up to the inherited classes to implement
      * the expected behaviour.
+     * @throw any exception thrown here is handled in the appropriate
+     * thread pool class.
      */
     virtual void stop() = 0;
 	
