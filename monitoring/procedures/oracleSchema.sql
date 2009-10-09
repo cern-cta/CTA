@@ -44,9 +44,9 @@ BEGIN
   -- Check that the correct grants are present
   BEGIN
     SELECT owner INTO unused
-      FROM all_tables
+      FROM all_views
      WHERE owner = upper('&&dlfschema')
-       AND table_name = 'CastorVersion';
+       AND view_name = 'CASTORVERSION';
   EXCEPTION WHEN NO_DATA_FOUND THEN
     raise_application_error(-20001, 'Unable to access the &dlfschema..CastorVersion. Check that the correct grants have been issued!');
   END;
@@ -65,7 +65,7 @@ CREATE TABLE QueueTimeStats (timestamp DATE CONSTRAINT NN_QueueTimeStats_ts NOT 
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statement for table GarbageCollectionStats */
-CREATE TABLE GarbageCollectionStats (timestamp DATE CONSTRAINT NN_GarbageCollectionStats_ts NOT NULL, interval NUMBER, diskserver VARCHAR2(255), requestType VARCHAR2(255), deleted NUMBER(*,3), totalFileSize NUMBER, minFileAge NUMBER(*,0), maxFileAge NUMBER(*,0), avgFileAge NUMBER(*,0), stddevFileAge NUMBER(*,0), medianFileAge NUMBER(*,0), minFileSize NUMBER, maxFileSize NUMBER, avgFileSize NUMBER, stddevFileSize NUMBER, medianFileSize NUMBER)
+CREATE TABLE GarbageCollectionStats (timestamp DATE CONSTRAINT NN_GarbageCollectionStats_ts NOT NULL, interval NUMBER, diskserver VARCHAR2(255), requestType VARCHAR2(255), deleted NUMBER(*,3), totalFileSize NUMBER, minFileAge NUMBER(*,0), maxFileAge NUMBER(*,0), avgFileAge NUMBER(*,0), stddevFileAge NUMBER(*,0), medianFileAge NUMBER(*,0), minFileSize NUMBER(*,0), maxFileSize NUMBER(*,0), avgFileSize NUMBER(*,0), stddevFileSize NUMBER(*,0), medianFileSize NUMBER(*,0))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statement for table RequestStats */
@@ -85,7 +85,7 @@ CREATE TABLE FilesRecalledStats (timestamp DATE CONSTRAINT NN_FilesRecalledStats
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statement for table ReplicationStats */
-CREATE TABLE ReplicationStats (timestamp DATE CONSTRAINT NN_ReplicationStats_ts NOT NULL, interval NUMBER, sourceSvcClass VARCHAR2(255), destSvcClass VARCHAR2(255), transferred NUMBER(*,3), totalFileSize NUMBER, minFileSize NUMBER, maxFileSize NUMBER, avgFileSize NUMBER, stddevFileSize NUMBER, medianFileSize NUMBER)
+CREATE TABLE ReplicationStats (timestamp DATE CONSTRAINT NN_ReplicationStats_ts NOT NULL, interval NUMBER, sourceSvcClass VARCHAR2(255), destSvcClass VARCHAR2(255), transferred NUMBER(*,3), totalFileSize NUMBER, minFileSize NUMBER(*,0), maxFileSize NUMBER(*,0), avgFileSize NUMBER(*,0), stddevFileSize NUMBER(*,0), medianFileSize NUMBER(*,0))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statement for table TapeRecalledStats */
