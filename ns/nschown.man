@@ -14,11 +14,11 @@ sets the owner and optionally the group of a CASTOR directory/file in the name
 server to the values in OWNER and GROUP respectively.
 .LP
 To change the owner ID, if the group ID does not change and if the caller and
-the new owner ID belong to that group, GRP_ADMIN privilege is needed, otherwise
-the caller must have ADMIN privilege in the Cupv database.
+the new owner ID belong to that group, GRP_ADMIN privilege are needed, otherwise
+the caller must have ADMIN privileges in the Cupv database.
 To change the group ID, the effective user ID of the process must match the
 owner ID of the file and the new group must be in the list of groups the caller
-belong to or the caller must have ADMIN privilege in the Cupv database.
+belong to or the caller must have ADMIN privileges in the Cupv database.
 .TP
 .I OWNER
 is either a valid username from the

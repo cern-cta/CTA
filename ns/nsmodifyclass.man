@@ -14,11 +14,11 @@ modifies an existing file class.
 The fileclass can be identified by CLASSID or by CLASSNAME.
 If both are specified, they must point at the same class.
 .LP
-This command requires ADMIN privilege in the Cupv database.
+This command requires ADMIN privileges in the Cupv database.
 .SH OPTIONS
 .TP
 .BI -h,\ \-\-host=HOSTNAME
-specify the name server hostname.  This can also be set through the
+specify the name server hostname. This can also be set through the
 CNS_HOST environment variable.
 .TP
 .BI --flags=FLAGS

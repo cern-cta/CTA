@@ -14,7 +14,7 @@ nsrmgrpmap \- suppress group entry corresponding to a given virtual gid or group
 suppresses the group entry corresponding to a given virtual gid or group name.
 If both are specified, they must point at the same entry.
 .LP
-This command requires ADMIN privilege.
+This command requires ADMIN privileges in the Cupv database.
 .SH OPTIONS
 .TP
 .BI --gid " gid"

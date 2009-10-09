@@ -12,11 +12,11 @@ nsenterclass \- define a new file class
 .B nsenterclass
 defines a new file class.
 .LP
-This command requires ADMIN privilege in the Cupv database.
+This command requires ADMIN privileges in the Cupv database.
 .SH OPTIONS
 .TP
 .BI -h,\ \-\-host=HOSTNAME
-specify the name server hostname.  This can also be set through the
+specify the name server hostname. This can also be set through the
 CNS_HOST environment variable.
 .TP
 .BI --flags=FLAGS

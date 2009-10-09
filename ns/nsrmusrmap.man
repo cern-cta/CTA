@@ -14,7 +14,7 @@ nsrmusrmap \- suppress user entry corresponding to a given virtual uid or user n
 suppresses the user entry corresponding to a given virtual uid or user name.
 If both are specified, they must point at the same entry.
 .LP
-This command requires ADMIN privilege.
+This command requires ADMIN privileges in the Cupv database.
 .SH OPTIONS
 .TP
 .BI --uid " uid"

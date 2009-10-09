@@ -88,7 +88,7 @@ is set appropriately.
 .TP 1.3i
 .B EPERM
 The effective user ID does not match the owner of the file and 
-the caller does not have ADMIN privilege in the Cupv database.
+the caller does not have ADMIN privileges in the Cupv database.
 .TP
 .B ENOENT
 The named file/directory does not exist or is a null pathname.

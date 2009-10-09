@@ -64,7 +64,7 @@ is set appropriately.
 The referenced file does not exist anymore.
 .TP
 .B EACCES
-The caller does not have ADMIN privilege in the Cupv database.
+The caller does not have ADMIN privileges in the Cupv database.
 .TP
 .B ENSFILECHG
 The file has been changed/overwritten by somebody else since the last_mod_time given. Request was thus ignored.

@@ -44,11 +44,11 @@ specifies the logical pathname relative to the current CASTOR directory or
 the full CASTOR pathname.
 .LP
 To change the owner ID, if the group ID does not change and if the caller and
-the new owner ID belong to that group, GRP_ADMIN privilege is needed, otherwise
-the caller must have ADMIN privilege in the Cupv database.
+the new owner ID belong to that group, GRP_ADMIN privileges are needed, otherwise
+the caller must have ADMIN privileges in the Cupv database.
 To change the group ID, the effective user ID of the process must match the
 owner ID of the file and the new group must be in the list of groups the caller
-belong to or the caller must have ADMIN privilege in the Cupv database.
+belong to or the caller must have ADMIN privileges in the Cupv database.
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the operation
 failed. In the latter case,
@@ -58,7 +58,7 @@ is set appropriately.
 .TP 1.3i
 .B EPERM
 The effective user ID does not match the owner of the file and 
-the caller does not have ADMIN privilege in the Cupv database.
+the caller does not have ADMIN privileges in the Cupv database.
 .TP
 .B ENOENT
 The named file/directory does not exist or is a null pathname.

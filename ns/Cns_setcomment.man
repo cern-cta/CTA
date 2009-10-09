@@ -29,7 +29,7 @@ is set appropriately.
 .TP 1.3i
 .B EPERM
 The effective user ID does not match the owner of the directory and
-does not have GRP_ADMIN or ADMIN privilege2 in the Cupv database.
+does not have GRP_ADMIN or ADMIN privileges in the Cupv database.
 .TP
 .B ENOENT
 The named directory does not exist or is a null pathname.

@@ -17,7 +17,7 @@ sets the class of a CASTOR directory(s) in the name server to the value in
 This can be either the classid or the class name.
 .LP
 The effective user ID of the process must match the owner of the directory or
-the caller must have ADMIN privilege in the Cupv database.
+the caller must have ADMIN privileges in the Cupv database.
 .TP
 .I DIRECTORY
 specifies the CASTOR pathname. If DIRECTORY does not start with

@@ -13,7 +13,7 @@ nsmodifyusrmap \- modify user entry corresponding to a given virtual uid
 .B nsmodifyusrmap
 modifies the user entry corresponding to a given virtual uid.
 .LP
-This command requires ADMIN privilege.
+This command requires ADMIN privileges in the Cupv database.
 .SH OPTIONS
 .TP
 .BI --uid " uid"

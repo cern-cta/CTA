@@ -13,7 +13,7 @@ nsmodifygrpmap \- modify group entry corresponding to a given virtual gid
 .B nsmodifygrpmap
 modifies the group entry corresponding to a given virtual gid.
 .LP
-This command requires ADMIN privilege.
+This command requires ADMIN privileges in the Cupv database.
 .SH OPTIONS
 .TP
 .BI --gid " gid"
