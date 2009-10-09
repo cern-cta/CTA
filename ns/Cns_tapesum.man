@@ -10,7 +10,7 @@ Cns_tapesum \- returns the total size and number of files on a volume and larges
 .br
 \fB#include "Cns_api.h"\fR
 .sp
-.BI "int *Cns_tapesum (char *" server ,
+.BI "int Cns_tapesum (char *" server ,
 .BI "const char *" vid ,
 .BI "u_signed64 *" count ,
 .BI "u_signed64 *" size ,
