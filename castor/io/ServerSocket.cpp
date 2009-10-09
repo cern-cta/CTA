@@ -48,12 +48,12 @@
 #include "castor/io/StreamAddress.hpp"
 
 #include <time.h>
+#include <sys/time.h>
 
 // Local Includes
 #include "ServerSocket.hpp"
 
-
-// definition of some constants
+// Definition of some constants
 #define STG_CALLBACK_BACKLOG 2
 
 
@@ -220,9 +220,15 @@ void castor::io::ServerSocket::bind()
     throw ex;
   }
 
+  // Set the seed for the new sequence of pseudo-random numbers to be returned
+  // by subsequent calls to rand()
+  timeval tv;
+  gettimeofday(&tv, NULL);
+  srand(tv.tv_usec * tv.tv_sec);
+
   // randomly select a free port in the allowed port range
   while (0 != rc) {
-    port=(rand() % (m_highPort-m_lowPort+1)) + m_lowPort;
+    port = (rand() % (m_highPort - m_lowPort +1 )) + m_lowPort;
     m_saddr.sin_port = htons(port);
     rc = ::bind(m_socket, (struct sockaddr *)&m_saddr, sizeof(m_saddr));
 
