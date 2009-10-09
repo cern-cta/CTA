@@ -27,15 +27,6 @@
 
 // Include Files
 #include <errno.h>
-#if !defined(_WIN32)
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <sys/poll.h>
-#include <sys/times.h>
-#else
-#include <io.h>
-#include "poll.h"
-#endif
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -123,7 +114,7 @@ void DLL_DECL BaseClient_util_time(time_t then, char *timestr) {
   struct tm tmstruc;
 #endif /* _REENTRANT || _THREAD_SAFE */
   struct tm *tp;
-  
+
 #if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
   localtime_r(&(then),&tmstruc);
   tp = &tmstruc;
@@ -155,16 +146,18 @@ castor::client::BaseClient::BaseClient
   m_hasAuthorizationId(false),
   m_authUid(0),
   m_authGid(0),
-  m_hasSecAuthorization(false) {
+  m_hasSecAuthorization(false),
+  m_nfds(0) {
   setAuthorization();
-  // Check timeout value. Max value * 1000 should fit into an int
-  // as it will be used by poll that wants milliseconds
-  // If the value is too big, it is translated into -1, i.e. infinity
-  // Equally, any negative value is mapped to -1 as some OSs refuse
-  // any other negative value.
+  // Check timeout value. Max value * 1000 should fit into an int as it will be
+  // used by poll that wants milliseconds. If the value is too big, it is
+  // translated into -1, i.e. infinity. Equally, any negative value is mapped to
+  // -1 as some OSs refuse any other negative value.
   if (acceptTimeout > 2147483 || acceptTimeout < 0) {
     acceptTimeout = -1;
   }
+  // Initialize the pollfd structure
+  memset(m_fds, 0 , sizeof(m_fds));
 }
 
 //------------------------------------------------------------------------------
@@ -181,13 +174,22 @@ std::string castor::client::BaseClient::sendRequest
 (castor::stager::Request* req,
  castor::client::IResponseHandler* rh)
   throw(castor::exception::Exception) {
-  
+
   // Build and send the Request with the Client information
   createClientAndSend(req);
-  
+
   // Wait for callbacks
-  pollAnswersFromStager(req, rh);
-  
+  try {
+    pollAnswersFromStager(req, rh);
+  } catch (castor::exception::Exception e) {
+    unsigned int i;
+    for (i = 0; i < m_connected.size(); i++) {
+      if (m_connected[i] != 0) delete m_connected[i];
+    }
+    m_connected.clear();
+    throw e;
+  }
+
   return requestId();
 }
 
@@ -220,18 +222,18 @@ std::string castor::client::BaseClient::internalSendRequest
 (castor::stager::Request& request)
   throw (castor::exception::Exception) {
   std::string requestId;
-  
+
   // The service class has been previously resolved, attach it to the request
   request.setSvcClassName(m_rhSvcClass);
-  
+
   // Tracing the submit time
   char timestr[64];
   castor::io::ClientSocket* s;
   time_t now = time(NULL);
   BaseClient_util_time(now, timestr);
   stage_trace(3, "%s (%u) Sending request", timestr, now);
-  
-  // preparing the timing information
+
+  // Prepare the timing information
   clock_t startTime;
 #if !defined(_WIN32)
   struct tms buf;
@@ -239,15 +241,15 @@ std::string castor::client::BaseClient::internalSendRequest
 #else
   startTime = clock();
 #endif
-  
-  // Creates a socket
+
+  // Create a socket
   if (m_hasSecAuthorization) {
     s = new castor::io::AuthClientSocket(m_rhPort, m_rhHost);
     // If the context cannot be established there will be an exception thrown.
   } else {
     s = new castor::io::ClientSocket(m_rhPort, m_rhHost);
   }
-  
+
   try {
     // Set the timeout for the socket, if not defined DEFAULT_NETTIMEOUT will
     // be used
@@ -255,133 +257,48 @@ std::string castor::client::BaseClient::internalSendRequest
       s->setTimeout(m_transferTimeout);
     }
     s->connect();
-    
+
     // Send the request
     s->sendObject(request);
-    
+
     // Wait for acknowledgment
     IObject* obj = s->readObject();
     castor::MessageAck* ack =
       dynamic_cast<castor::MessageAck*>(obj);
     if (0 == ack) {
-      castor::exception::InvalidArgument e; // XXX To be changed
+      castor::exception::InvalidArgument e;
       e.getMessage() << "No Acknowledgement from the Server";
       throw e;
     }
     requestId = ack->requestId();
     setRequestId(requestId);
     if (!ack->status()) {
-      castor::exception::Exception e(ack->errorCode()); // XXX To be changed
+      castor::exception::Exception e(ack->errorCode());
       e.getMessage() << ack->errorMessage();
       delete ack;
       throw e;
     }
     delete ack;
 #if !defined(_WIN32)
-    clock_t endTime = times(&buf);
+    m_sendAckTime = times(&buf);
 #else
-    clock_t endTime = clock();
+    m_sendAckTime = clock();
 #endif
-    stage_trace(3, "%s SND %.2f s to send the request", 
+    stage_trace(3, "%s SND %.2f s to send the request",
                 requestId.c_str(),
 #if !defined(_WIN32)
-                ((float)(endTime - startTime)) / ((float)sysconf(_SC_CLK_TCK)));
+                ((float)(m_sendAckTime - startTime)) / ((float)sysconf(_SC_CLK_TCK)));
 #else
-    ((float)(endTime - startTime)) / CLOCKS_PER_SEC);
+                ((float)(m_sendAckTime - startTime)) / CLOCKS_PER_SEC);
 #endif
-  delete s;
-  return requestId;
-}
-catch (castor::exception::Exception e) {
-  // forward any exception after closing the socket
-  delete s;
-  throw e;
- }    
-}
-
-//------------------------------------------------------------------------------
-// waitForCallBack
-//------------------------------------------------------------------------------
-// This function blocks until one call back has been made
-castor::io::ServerSocket* castor::client::BaseClient::waitForCallBack()
-  throw (castor::exception::Exception) {
-  
-  stage_trace(3, "Waiting for callback from castor");
-  
-  clock_t startTime;
-#if !defined(_WIN32)
-  struct tms buf;
-  startTime = times(&buf);
-#else
-  startTime = clock();
-#endif
-  
-  // Set the socket to non blocking
-  int rc; 
-#if !defined(_WIN32)
-  int nonblocking = 1;
-  rc = ioctl(m_callbackSocket->socket(), FIONBIO, &nonblocking);
-#else
-  u_long nonblocking = 1;
-  rc = ioctlsocket(m_callbackSocket->socket(), FIONBIO, &nonblocking);
-#endif
-  if (rc == SOCKET_ERROR) {
-    castor::exception::InvalidArgument e;
-    e.getMessage() << "Could not set socket asynchonous";
+    delete s;
+    return requestId;
+  }
+  catch (castor::exception::Exception e) {
+    // forward any exception after closing the socket
+    delete s;
     throw e;
   }
-  
-  struct pollfd pollit;
-  
-  pollit.fd      = m_callbackSocket->socket();
-  pollit.events  = POLLIN;
-  pollit.revents = 0;
-  
-  // Wait for an incoming connection
-  while (1) {
-    rc = poll(&pollit, 1, m_acceptTimeout * 1000);
-    if (rc == 0) {
-      castor::exception::Communication e(requestId(), SETIMEDOUT);
-      e.getMessage() << "Accept timeout";
-      throw e;
-    } else if (rc < 0) {
-      if (errno == EINTR) {
-        continue; // A signal was caught during poll()
-      }
-      castor::exception::Communication e(requestId(), errno);
-      e.getMessage() << "Poll error:" << strerror(errno);
-      throw e;
-    } else {
-      break; // Success
-    }
-  }    
-  
-  // Accept the incoming connection
-  castor::io::ServerSocket* socket = m_callbackSocket->accept();
-  
-  // Log the ip address of the incoming connection
-  unsigned short port;
-  unsigned long ip;
-  socket->getPeerIp(port, ip);
-  
-  std::ostringstream ipToStr;
-  ipToStr << ((ip & 0xFF000000) >> 24) << "." << ((ip & 0x00FF0000) >> 16) << "."
-          << ((ip & 0x0000FF00) >> 8) << "." << ((ip & 0x000000FF));
-#if !defined(_WIN32)
-  clock_t endTime = times(&buf);
-#else
-  clock_t endTime = clock();
-#endif
-  stage_trace(3, "%s CBK %.2f s before callback from %s was received", 
-              requestId().c_str(),
-#if !defined(_WIN32)
-              ((float)(endTime - startTime)) / ((float)sysconf(_SC_CLK_TCK)),
-#else
-              ((float)(endTime - startTime)) / CLOCKS_PER_SEC,
-#endif
-              ipToStr.str().c_str());
-  
-  return socket;
 }
 
 //------------------------------------------------------------------------------
@@ -394,9 +311,9 @@ void castor::client::BaseClient::setRhPort()
 
 void castor::client::BaseClient::setRhPort(int optPort)
   throw (castor::exception::Exception) {
-  
+
   if (optPort > 65535) {
-    castor::exception::Exception e(errno);
+    castor::exception::Exception e(EINVAL);
     e.getMessage() << "Invalid port value : " << optPort
                    << ". Must be < 65535." << std::endl;
     throw e;
@@ -410,17 +327,17 @@ void castor::client::BaseClient::setRhPort(int optPort)
     // or in the castor.conf file. If none is given, default is used
     char* port;
     if (m_hasSecAuthorization) {
-      if ((port = getenv (castor::client::SEC_PORT_ENV)) != 0 
+      if ((port = getenv (castor::client::SEC_PORT_ENV)) != 0
           || (port = getconfent((char *)castor::client::CATEGORY_CONF,
-                                (char *)castor::client::SEC_PORT_CONF,0)) != 0) {
+                                (char *)castor::client::SEC_PORT_CONF, 0)) != 0) {
         m_rhPort = castor::System::porttoi(port);
       } else {
         m_rhPort = CSP_RHSERVER_SEC_PORT;
       }
     } else {
-      if ((port = getenv (castor::client::PORT_ENV)) != 0 
+      if ((port = getenv (castor::client::PORT_ENV)) != 0
           || (port = getconfent((char *)castor::client::CATEGORY_CONF,
-                                (char *)castor::client::PORT_CONF,0)) != 0) {
+                                (char *)castor::client::PORT_CONF, 0)) != 0) {
         m_rhPort = castor::System::porttoi(port);
       } else {
         m_rhPort = CSP_RHSERVER_PORT;
@@ -506,7 +423,7 @@ void castor::client::BaseClient::setOptions(struct stage_options* opts)
     setRhPort(0);
     setRhSvcClass("");
   }
-}       
+}
 
 //------------------------------------------------------------------------------
 // setRequestId
@@ -525,7 +442,7 @@ std::string castor::client::BaseClient::requestId() {
 //------------------------------------------------------------------------------
 // setAutorizationId
 //----------------------------------------------------------------------------
-void castor::client::BaseClient::setAuthorizationId() 
+void castor::client::BaseClient::setAuthorizationId()
   throw(castor::exception::Exception) {
   if (stage_getid(&m_authUid, &m_authGid) < 0) {
     castor::exception::Exception e(serrno);
@@ -533,7 +450,7 @@ void castor::client::BaseClient::setAuthorizationId()
     throw e;
   } else {
     m_hasAuthorizationId = true;
-  } 
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -551,10 +468,10 @@ void castor::client::BaseClient::setAuthorizationId(uid_t uid, gid_t gid) throw(
 void castor::client::BaseClient::setAuthorization() throw(castor::exception::Exception) {
   char *security;
   char *mech;
-  // Check if security env option is set. 
+  // Check if security env option is set.
   if (((security = getenv (castor::client::SECURITY_ENV)) != 0 ||
        (security = getconfent((char *)castor::client::CLIENT_CONF,
-                              (char *)castor::client::SECURITY_CONF,0)) != 0 ) && 
+                              (char *)castor::client::SECURITY_CONF,0)) != 0 ) &&
       strcasecmp(security, "YES") == 0) {
     if (( mech = getenv (castor::client::SEC_MECH_ENV)) != 0) {
       if (strlen(mech) > CA_MAXCSECPROTOLEN) {
@@ -581,21 +498,20 @@ void castor::client::BaseClient::setAuthorization(char *mech, char *id) throw(ca
     e.getMessage() << "Supplied security protocol is too long" << std::endl;
     throw e;
   }
-  
+
   m_Sec_mech = mech;
-  
+
   if (strlen(id) > CA_MAXCSECNAMELEN) {
     serrno = EINVAL;
     castor::exception::Exception e(serrno);
     e.getMessage() << "Supplied authorization id is too long" << std::endl;
     throw e;
   }
-  
+
   m_Csec_auth_id = id;
-  
   m_voname = NULL;
   m_nbfqan = 0;
-  m_fqan = NULL;
+  m_fqan   = NULL;
   m_hasSecAuthorization = true;
   stage_trace(3, "Setting security mechanism: %s", mech);
 }
@@ -608,7 +524,7 @@ std::string castor::client::BaseClient::createClientAndSend
   throw (castor::exception::Exception) {
   // builds the Client (uuid,guid,hostname,etc)
   buildClient(req);
-  
+
   // sends the request
   std::string requestId = internalSendRequest(*req);
   return requestId;
@@ -619,7 +535,7 @@ std::string castor::client::BaseClient::createClientAndSend
 //------------------------------------------------------------------------------
 void castor::client::BaseClient::buildClient(castor::stager::Request* req)
   throw (castor::exception::Exception) {
-  
+
   // Uid
   uid_t euid;
   char *stgeuid = getenv(castor::client::STAGE_EUID);
@@ -634,7 +550,7 @@ void castor::client::BaseClient::buildClient(castor::stager::Request* req)
   }
   stage_trace(3, "Setting euid: %d", euid);
   req->setEuid(euid);
-  
+
   // GID
   uid_t egid;
   char *stgegid = getenv(castor::client::STAGE_EGID);
@@ -649,7 +565,7 @@ void castor::client::BaseClient::buildClient(castor::stager::Request* req)
   }
   stage_trace(3, "Setting egid: %d", egid);
   req->setEgid(egid);
-  
+
   // Username
   errno = 0;
   struct passwd *pw = Cgetpwuid(euid);
@@ -660,15 +576,15 @@ void castor::client::BaseClient::buildClient(castor::stager::Request* req)
   } else {
     req->setUserName(pw->pw_name);
   }
-  
+
   // Mask
   mode_t mask = umask(0);
   umask(mask);
   req->setMask(mask);
-  
+
   // Pid
   req->setPid(getpid());
-  
+
   // Machine
   std::string hostName;
 
@@ -688,24 +604,38 @@ void castor::client::BaseClient::buildClient(castor::stager::Request* req)
                    <<  strerror(errno);
     throw e;
   }
-  
-  // Create a socket for the callback with no port
-  // not to let the client to reuse the port
-  m_callbackSocket = new castor::io::ServerSocket(false); 
-  
+
+  // Create a socket for the callback
+  m_callbackSocket = new castor::io::ServerSocket(false);
+
   // Get the port range to be used
-  int lowPort = LOW_CLIENT_PORT_RANGE;
+  int lowPort  = LOW_CLIENT_PORT_RANGE;
   int highPort = HIGH_CLIENT_PORT_RANGE;
   char* sport;
   if ((sport = getconfent((char *)castor::client::CLIENT_CONF,
-                          (char *)castor::client::LOWPORT_CONF,0)) != 0) {
+                          (char *)castor::client::LOWPORT_CONF, 0)) != 0) {
     lowPort = castor::System::porttoi(sport);
   }
   if ((sport = getconfent((char *)castor::client::CLIENT_CONF,
-                          (char *)castor::client::HIGHPORT_CONF,0)) != 0) {
+                          (char *)castor::client::HIGHPORT_CONF, 0)) != 0) {
     highPort = castor::System::porttoi(sport);
   }
-      
+
+  // Set the socket to non blocking
+  int rc;
+#if !defined(_WIN32)
+  int nonblocking = 1;
+  rc = ioctl(m_callbackSocket->socket(), FIONBIO, &nonblocking);
+#else
+  u_long nonblocking = 1;
+  rc = ioctlsocket(m_callbackSocket->socket(), FIONBIO, &nonblocking);
+#endif
+  if (rc == SOCKET_ERROR) {
+    castor::exception::InvalidArgument e;
+    e.getMessage() << "Could not set socket asynchonous";
+    throw e;
+  }
+
   // Bind the socket
   m_callbackSocket->bind(lowPort, highPort);
   m_callbackSocket->listen();
@@ -713,7 +643,12 @@ void castor::client::BaseClient::buildClient(castor::stager::Request* req)
   unsigned long ip;
   m_callbackSocket->getPortIp(port, ip);
   stage_trace(3, "Creating socket for castor callback - Using port %d", port);
-      
+
+  // Add the listening socket to the pollfd structure
+  m_fds[0].fd = m_callbackSocket->socket();
+  m_fds[0].events = POLLIN;
+  m_nfds++;
+
   // Set the Client
   castor::IClient *cl = createClient();
   req->setClient(cl);
@@ -725,19 +660,19 @@ void castor::client::BaseClient::buildClient(castor::stager::Request* req)
 void castor::client::BaseClient::pollAnswersFromStager
 (castor::stager::Request* req, castor::client::IResponseHandler* rh)
   throw (castor::exception::Exception) {
-  
+
   // Check parameters
   if ((req == NULL) || (req->client() == NULL)) {
     castor::exception::Internal ex;
     ex.getMessage() << "Passed Request is NULL" << std::endl;
     throw ex;
   }
-  
+
   // Determine the number of replies we expect to get from the stager. For
   // requests which are subrequest orientated the responses may come from
   // multiple stagers and be spread over time. As a consequence we should
   // expect 1..N number of callbacks. For requests which are not subrequest
-  // orientated we expect one and only one callback/connection from the 
+  // orientated we expect one and only one callback/connection from the
   // stager with all the responses.
   unsigned int nbReplies = 1;
   castor::stager::FileRequest *fr =
@@ -745,77 +680,191 @@ void castor::client::BaseClient::pollAnswersFromStager
   if (fr != 0) {
     nbReplies = fr->subRequests().size();
   }
-  
+
+  stage_trace(3, "Waiting for callback from castor");
+
   // Loop over the number of replies we expect to get from the stager, once we
   // achieve the correct number of replies we can return control to the calling
   // function.
-  castor::io::ServerSocket *socket = 0;
-  for (unsigned int replies = 0; replies < nbReplies; ) {
-    
-    // Wait for a callback from the request replier of the stager
-    socket = waitForCallBack();
-    socket->setTimeout(900);
-    
-    while ((replies < nbReplies) || (nbReplies == 1)) {
-      
-      // Read object from socket
-      IObject *obj = 0;      
-      try {
-        obj = socket->readObject();
-      } catch (castor::exception::Exception e) {
-        if (e.code() == 1016) {
-          // Reset serrno to 0 as this isn't really an error!
-          serrno = 0;
-          delete socket;
-          socket = 0;
-          break; // Connection closed by remote end
-        }
+  unsigned int replies = 0;
+  unsigned int i, j;
+  bool complete = false;
+
+  do {
+
+    // Wait for a POLLIN event on the list of file descriptors
+    int rc = poll(m_fds, m_nfds, m_acceptTimeout * 1000);
+    if (rc == 0) {
+      castor::exception::Communication e(requestId(), SETIMEDOUT);
+      e.getMessage() << "Accept timeout";
+      throw e;
+    } else if (rc < 0) {
+      if (errno == EINTR) {
+        continue; // A signal was caught during poll()
+      }
+      castor::exception::Communication e(requestId(), errno);
+      e.getMessage() << "Poll error:" << strerror(errno);
+      throw e;
+    }
+
+    // Loop over the file descriptors
+    unsigned int nfds = m_nfds;
+    for (i = 0; i < nfds; i++) {
+      if (m_fds[i].revents == 0) {
+        continue;  // Nothing of interest
+      }
+      // Unexpected result?
+      if (m_fds[i].revents != POLLIN) {
+        castor::exception::Exception e(SEINTERNAL);
+        e.getMessage() << "Unexpected result from poll(): revents: "
+                       << m_fds[i].revents << " should be: POLLIN ("
+                       << POLLIN << ")";
         throw e;
       }
-      
-      // Process the objects data
-      try {
-        if (obj->type() == OBJ_EndResponse) {
+      // Is the listening descriptor readable? If so, this indicates that there
+      // is a new incoming connection
+      if (m_fds[i].fd == m_callbackSocket->socket()) {
+
+        // Accept the incoming connection
+        castor::io::ServerSocket* socket = m_callbackSocket->accept();
+        socket->setTimeout(900);
+
+        // Log the ip address of the incoming connection
+        unsigned short port;
+        unsigned long ip;
+        socket->getPeerIp(port, ip);
+
+        std::ostringstream ipToStr;
+        ipToStr << ((ip & 0xFF000000) >> 24) << "."
+                << ((ip & 0x00FF0000) >> 16) << "."
+                << ((ip & 0x0000FF00) >> 8)  << "."
+                << ((ip & 0x000000FF));
+#if !defined(_WIN32)
+        struct tms buf;
+        clock_t endTime = times(&buf);
+#else
+        clock_t endTime = clock();
+#endif
+        stage_trace(3, "%s CBK %.2f s before callback from %s was received",
+                    requestId().c_str(),
+#if !defined(_WIN32)
+                    ((float)(endTime - m_sendAckTime)) / ((float)sysconf(_SC_CLK_TCK)),
+#else
+                    ((float)(endTime - m_sendAckTime)) / CLOCKS_PER_SEC,
+#endif
+                    ipToStr.str().c_str());
+
+        // Register the new file descriptor in the accepted connections list and
+        // the pollfd structure
+        m_connected.push_back(socket);
+        m_fds[m_nfds].fd = socket->socket();
+        m_fds[m_nfds].events = POLLIN;
+        m_nfds++;
+      } else {
+        // This is not the listening socket therefore we have new data to read.
+        // Locate the socket in the list of accepted connections
+        castor::io::ServerSocket* socket = 0;
+        for (j = 0; j < m_connected.size(); j++) {
+          if (m_fds[i].fd == m_connected[j]->socket()) {
+            socket = m_connected[j];
+            break;
+          }
+        }
+
+        // The socket was found?
+        if (socket == 0) {
+          castor::exception::Exception e(SEINTERNAL);
+          e.getMessage() << "Unexpected exception caught, POLLIN event "
+                         << "received for unknown socket";
+          throw e;
+        }
+
+        // Read object from socket
+        IObject *obj = 0;
+        try {
+          obj = socket->readObject();
+        } catch (castor::exception::Exception e) {
+          // Ignore "Connection closed by remove end" errors. This is just the
+          // request replier of the stager terminating the connection because it
+          // has nothing else to send.
+          if (e.code() == 1016) {
+            serrno = 0;    // Reset serrno to 0
+
+            // Remove the socket from the accepted connections list and set the
+            // file descriptor in the pollfd structures to -1. Later on the
+            // structure will be cleaned up
+            delete socket;
+            m_connected.erase(m_connected.begin() + j);
+            m_fds[i].fd = -1;
+            // If the number of replies is 1 and the connection has been closed
+            // then we are complete
+            if (nbReplies == 1) {
+              complete = true;
+            }
+            break;
+          }
+          throw e;
+        }
+
+        // Process the objects data
+        try {
+          if (obj->type() == OBJ_EndResponse) {
+            delete obj;
+            continue; // Ignored since 2.1.7-7+
+          }
+
+          // Cast response into Response*
+          castor::rh::Response *res =
+            dynamic_cast<castor::rh::Response *>(obj);
+          if (res == 0) {
+            castor::exception::Communication e(requestId(), SEINTERNAL);
+            e.getMessage() << "Received bad response type :" << obj->type();
+            throw e;
+          }
+
+          // Check that the request id sent is what we expected
+          if ((res->reqAssociated().length() != 0) &&
+              (res->reqAssociated() != requestId())) {
+            castor::exception::Communication e(requestId(), SEINTERNAL);
+            e.getMessage() << "Received data for another request: "
+                           << res->reqAssociated();
+            throw e;
+          }
+
+          // Handle the response
+          rh->handleResponse(*res);
+
+          // Cleanup for next iteration
           delete obj;
-          continue; // Ignored since 2.1.7-7+
-        }
-        
-        // Cast response into Response*
-        castor::rh::Response *res =
-          dynamic_cast<castor::rh::Response *>(obj);
-        if (res == 0) {
-          castor::exception::Communication e(requestId(), SEINTERNAL);
-          e.getMessage() << "Receivd bad response type :" << obj->type();
+          replies++;
+        } catch (castor::exception::Exception e) {
+          delete obj;
           throw e;
         }
-        
-        // Check that the request id sent is what we expected
-        if ((res->reqAssociated().length() != 0) &&
-            (res->reqAssociated() != requestId())) {
-          castor::exception::Communication e(requestId(), SEINTERNAL);
-          e.getMessage() << "Receieved data for another request: "
-                         << res->reqAssociated();
-          throw e;
-        }
-          
-        // Handle the response
-        rh->handleResponse(*res);
-          
-        // Cleanup for next iteration
-        delete obj;
-        replies++;
-      } catch (castor::exception::Exception e) {
-        delete obj;
-        delete socket;
-        socket = 0;
-        throw e;
       }
     }
+
+    // Compress the pollfd structure removing entries where the file descriptor
+    // is negative. We do not need to move back the events and revents fields
+    // because the events will always be POLLIN in this case, and revents is
+    // output.
+    for (i = 0; i < m_nfds; i++) {
+      if (m_fds[i].fd == -1) {
+        for (j = i; j < m_nfds; j++) {
+          m_fds[j].fd = m_fds[j + 1].fd;
+        }
+        m_nfds--;
+      }
+    }
+  } while (((replies < nbReplies) && (nbReplies != 1)) ||
+          ((nbReplies == 1) && !complete));
+
+  // Free resources
+  for (i = 0; i < m_connected.size(); i++) {
+    if (m_connected[i] != 0) delete m_connected[i];
   }
-  
-  // Cleanup the client side socket
-  if (socket != 0) delete socket;
-  
+  m_connected.clear();
+
   // If we've got this far it means that we haven't thrown an exception and
   // that all responses have been received so we terminate the response handler
   rh->terminate();

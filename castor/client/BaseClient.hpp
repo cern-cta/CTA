@@ -29,7 +29,17 @@
 #define CLIENTS_BASECLIENT_HPP 1
 
 // Include Files
+#if !defined(_WIN32)
+#include <unistd.h>
+#include <sys/ioctl.h>
+#include <sys/poll.h>
+#include <sys/times.h>
+#else
+#include <io.h>
+#include "poll.h"
+#endif
 #include <string>
+#include "castor/io/ServerSocket.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/stager/Request.hpp"
@@ -49,7 +59,7 @@ namespace castor {
     class ServerSocket;
     class AuthServerSocket;
   }
-  
+
   namespace stager {
     // Forward declaration
     class Request;
@@ -101,8 +111,8 @@ namespace castor {
        * client will allow to transfer data between the recipient and itself.
        * By default infinity
        */
-      BaseClient(int acceptTimeout = 43200, int transferTimeout = -1) 
-	throw();
+      BaseClient(int acceptTimeout = 43200, int transferTimeout = -1)
+        throw();
 
       /**
        * destructor
@@ -125,24 +135,24 @@ namespace castor {
       std::string sendRequest(castor::stager::Request* req,
                               castor::client::IResponseHandler* rh)
         throw(castor::exception::Exception);
-      
+
       /**
        * Get the userid and groupid and set the authorization values.
        */
       void setAuthorizationId() throw(castor::exception::Exception);
-	
+
       /**
        * Sets the authorization ID under which the request should be sent.
        */
       void setAuthorizationId(uid_t uid, gid_t gid) throw();
-       
+
       /**
        * Set the Authorization mechanism.
        */
-      void setAuthorization() 
-	throw (castor::exception::Exception);
-      void setAuthorization(char *mech, char *id) 
-	throw (castor::exception::Exception);
+      void setAuthorization()
+        throw (castor::exception::Exception);
+      void setAuthorization(char *mech, char *id)
+        throw (castor::exception::Exception);
 
       /**
        * gets the request handler port to use and put it
@@ -152,10 +162,10 @@ namespace castor {
        * May be overwritten in case this behavior should be
        * modified.
        */
-      virtual void setRhPort(int optPort) 
-	throw (castor::exception::Exception);
-      virtual void setRhPort() 
-	throw (castor::exception::Exception);
+      virtual void setRhPort(int optPort)
+        throw (castor::exception::Exception);
+      virtual void setRhPort()
+        throw (castor::exception::Exception);
 
       /**
        * gets the request handler host to use and put it
@@ -165,19 +175,19 @@ namespace castor {
        * May be overwritten in case this behavior should be
        * modified.
        */
-      virtual void setRhHost(std::string optHost) 
-	throw (castor::exception::Exception);
-      virtual void setRhHost() 
-	throw (castor::exception::Exception);
+      virtual void setRhHost(std::string optHost)
+        throw (castor::exception::Exception);
+      virtual void setRhHost()
+        throw (castor::exception::Exception);
 
       /**
        * Gets the service class to be used with a similar
        * strategy as above.
        */
-      virtual void setRhSvcClass(std::string optSvcClass) 
-	throw (castor::exception::Exception);
-      virtual void setRhSvcClass() 
-	throw (castor::exception::Exception);
+      virtual void setRhSvcClass(std::string optSvcClass)
+        throw (castor::exception::Exception);
+      virtual void setRhSvcClass()
+        throw (castor::exception::Exception);
 
       /**
        * Gathers options from the parameter and calls the
@@ -194,33 +204,33 @@ namespace castor {
        * Sets the request ID in the base client
        */
       void setRequestId(std::string requestId);
-      
+
       /**
-       * Returns the request id 
+       * Returns the request id
        */
       std::string requestId();
 
       /**
-       * polls the answers from stager after sending a request by 
-       * internalSendRequest.  
+       * polls the answers from stager after sending a request by
+       * internalSendRequest.
        * @param req The StagerRequest the Client is to be added to
-       * @exception in case of an error 
+       * @exception in case of an error
        */
       void pollAnswersFromStager(castor::stager::Request* req,
-				 castor::client::IResponseHandler* rh)
+                                 castor::client::IResponseHandler* rh)
         throw (castor::exception::Exception);
-      
+
       /**
        * calls buildClient and internalSendRequest to create and send the
-       * Request.  
+       * Request.
        * @param req The StagerRequest to be handled
-       * @exception in case of an error 
+       * @exception in case of an error
        */
       std::string createClientAndSend(castor::stager::Request *req)
         throw (castor::exception::Exception);
 
     private:
-      
+
       /**
        * creates a Client object from the callback socket
        * The caller is responsible for deallocating the
@@ -236,25 +246,16 @@ namespace castor {
         throw (castor::exception::Exception);
 
       /**
-       * Waits for a call back from the request replier and
-       * returns the ServerSocket created. No that the caller
-       * is responsible for the deletion of the returned socket.
-       * @return the socket to the requestReplier
-       */
-      castor::io::ServerSocket* waitForCallBack()
-        throw (castor::exception::Exception);
-
-      /**
        * Builds the Client for a Request. The userid, groupid, hostname, etc
        * are set and the Client object added to the Request.
        * @param req The StagerRequest the Client is to be added to
-       * @exception in case of an error 
+       * @exception in case of an error
        */
       void buildClient(castor::stager::Request* req)
         throw (castor::exception::Exception);
-        
+
     public: // protected:
-      
+
       /// The request handler host
       std::string m_rhHost;
 
@@ -278,7 +279,7 @@ namespace castor {
       bool m_hasAuthorizationId;
       uid_t m_authUid;
       gid_t m_authGid;
-      
+
       /// Strong Authentication parameters
       bool m_hasSecAuthorization;
       char *m_Sec_mech;
@@ -286,11 +287,25 @@ namespace castor {
       char *m_voname;
       int  m_nbfqan;
       char **m_fqan;
-      
+
+    private:
+
+      /// The time of the acknowlegdement to the initial send request
+      clock_t m_sendAckTime;
+
+      /// The set of file descriptors to wait on
+      struct pollfd m_fds[1024];
+
+      /// The number of pollfd structures in the m_fds array
+      nfds_t m_nfds;
+
+      /// A vector to hold the list of accepted connections
+      std::vector<castor::io::ServerSocket*> m_connected;
+
     };
 
   } // end of namespace client
-  
+
 } // end of namespace castor
 
 #endif // CLIENTS_BASECLIENT_HPP
