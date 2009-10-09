@@ -17,6 +17,7 @@ debian/castor/usr/share/man/man1/nsping.1castor
 debian/castor/usr/share/man/man1/nsrename.1castor
 debian/castor/usr/share/man/man1/nsrm.1castor
 debian/castor/usr/share/man/man1/nsrmdir.1castor
+debian/castor/usr/share/man/man1/nsrmvid.1castor
 debian/castor/usr/share/man/man1/nssetacl.1castor
 debian/castor/usr/share/man/man1/nssetchecksum.1castor
 debian/castor/usr/share/man/man1/nssetcomment.1castor

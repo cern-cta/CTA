@@ -5492,6 +5492,140 @@ int Cns_srv_unlink(magic, req_data, clienthost, thip)
   RETURN (0);
 }
 
+/*      Cns_srv_unlinkbyvid - remove all file entries on a given volume */
+
+int Cns_srv_unlinkbyvid(magic, req_data, clienthost, thip)
+     int magic;
+     char *req_data;
+     const char *clienthost;
+     struct Cns_srv_thread_info *thip;
+{
+  char  vid[CA_MAXVIDLEN+22];
+  char  func[20];
+  char  logbuf[LOGBUFSZ];
+  char  path[CA_MAXPATHLEN+1];
+  char  *rbp;
+  char  *user;
+  char  *p;
+  gid_t gid;
+  uid_t uid;
+  int   c;
+  int   bov;
+  int   count;
+  struct Cns_seg_metadata  smd_entry;
+  struct Cns_file_metadata fmd_entry;
+  struct Cns_file_metadata dir_entry;
+  struct Cns_user_metadata umd_entry;
+  Cns_dbrec_addr rec_addr;
+  Cns_dbrec_addr rec_addrp;
+  Cns_dbrec_addr rec_addru;
+  DBLISTPTR dblistptr;
+
+  strcpy (func, "Cns_srv_unlinkbyvid");
+
+  /* Extract and log common request attributes */
+  rbp = req_data;
+  unmarshall_LONG (rbp, uid);
+  unmarshall_LONG (rbp, gid);
+  get_client_actual_id (thip, &uid, &gid, &user);
+  nslogit (func, NS092, "unlinkbyvid", user, uid, gid, clienthost);
+  if (rdonly)
+    RETURN (EROFS);
+
+  /* Extract volume id */
+  if (unmarshall_STRINGN(rbp, vid, CA_MAXVIDLEN + 1)) {
+    RETURN (SENAMETOOLONG);
+  }
+  sprintf (logbuf, "unlinkbyvid %s", vid);
+  Cns_logreq (func, logbuf);
+
+  if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+    RETURN (serrno);
+
+  /* Delete the files on the volume */
+  bov   = 1;
+  count = 0;
+  while ((c = Cns_get_smd_by_vid(&thip->dbfd, bov, vid, 0, &smd_entry,
+                                 0, &dblistptr)) == 0) {
+
+    /* Start transaction */
+    START_TRANSACTION;
+
+    /* Lock the file and parent directory entries */
+    bov = 0;
+    if (Cns_get_fmd_by_fileid (&thip->dbfd, smd_entry.s_fileid,
+                               &fmd_entry, 1, &rec_addr) < 0) {
+      if (serrno == ENOENT)
+        continue;
+      RETURN (serrno);
+    }
+    
+    /* Make sure this is a regular file */
+    if ((fmd_entry.filemode & S_IFREG) != S_IFREG)
+      RETURN (SEINTERNAL);
+    if (*fmd_entry.name == '/')
+      RETURN (SEINTERNAL); 
+    
+    if (Cns_get_fmd_by_fileid (&thip->dbfd, fmd_entry.parent_fileid,
+                               &dir_entry, 1, &rec_addrp) < 0) {
+      if (serrno == ENOENT)
+        continue;
+      RETURN (serrno);
+    }
+    
+    /* Resolve fileid to filepath */
+    p = path;
+    if (Cns_getpath_by_fileid (&thip->dbfd, fmd_entry.fileid, &p))
+      RETURNQ (serrno);
+    
+    sprintf (logbuf, "unlinkbyvid %s", p);
+    Cns_logreq (func, logbuf);
+    
+    /* Delete file segments if any */
+    if (Cns_internal_dropsegs(func, thip, &fmd_entry) != 0)
+      RETURN (serrno);
+    
+    /* Delete the comment if it exists */
+    if (Cns_get_umd_by_fileid (&thip->dbfd, fmd_entry.fileid, &umd_entry, 1,
+                               &rec_addru) == 0) {
+      if (Cns_delete_umd_entry (&thip->dbfd, &rec_addru))
+        RETURN (serrno);
+    } else if (serrno != ENOENT)
+      RETURN (serrno);
+
+    /* Delete file entry */
+    if (Cns_delete_fmd_entry (&thip->dbfd, &rec_addr))
+      RETURN (serrno);
+    
+    /* Update parent directory entry */
+    dir_entry.nlink--;
+    dir_entry.mtime = time (0);
+    dir_entry.ctime = dir_entry.mtime;
+    if (Cns_update_fmd_entry (&thip->dbfd, &rec_addrp, &dir_entry))
+      RETURN (serrno);
+
+    /* End transaction */
+    END_TRANSACTION;
+    count++;
+
+    /* Once we reach the deletion of 1000 files return control back to the
+     * client, this allows us to make sure the client is still there and hasn't
+     * hit CTRL-C with the intention of terminating the operation.
+     */
+    if (count >= 1000) {
+      if ((c = Cns_get_smd_by_vid(&thip->dbfd, bov, vid, 0, &smd_entry,
+                                  0, &dblistptr)) == 0) {
+        RETURNQ(0);
+      } else {
+        break;
+      }
+    }
+  }
+  if (c < 0)
+    RETURN (serrno);
+  RETURN (0);
+}
+
 /* Cns_srv_utime - set last access and modification times */
 
 int Cns_srv_utime(magic, req_data, clienthost, thip)

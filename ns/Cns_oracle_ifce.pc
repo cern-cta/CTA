@@ -1302,9 +1302,8 @@ int Cns_get_tapesum_by_vid(dbfd, vid, filter, count, size, maxfileid)
     WHERE vid = :vid;
   switch (sqlca.sqlcode) {
   case 0:
-    if (exists > 0) {
+    if (exists > 0)
       break;
-    }
   case 1403:
     serrno = ENOENT;
     return(-1);
@@ -1353,7 +1352,6 @@ int Cns_get_tapesum_by_vid(dbfd, vid, filter, count, size, maxfileid)
     Cns_oracle_error (func, "SELECT", dbfd, &sqlca);
     return(-1);
   }
-  return(0);
 }
 
 int Cns_get_smd_by_vid(dbfd, bov, vid, fseq, smd_entry, endlist, dblistptr)
@@ -1911,7 +1909,7 @@ int Cns_opendb(dbfd)
   char db_srv[CA_MAXLINELEN+1];
   char db_name[CA_MAXLINELEN+1];
   char dbversion[21] = "";
-  char codeversion[21] = "2_1_9_2";
+  char codeversion[21] = "2_1_9_0";
   char *p;
   FILE *fp;
 
@@ -1961,7 +1959,7 @@ int Cns_opendb(dbfd)
   /* check database version: for the time being we only issue a warning if
      a mismatch is found; this is to make mixed deployments and rolling 
      upgrades easier */
-  EXEC SQL SELECT schemaVersion INTO :dbversion FROM CastorVersion;
+  EXEC SQL SELECT schemaVersion INTO :dbversion FROM Cns_version;
   if ((sqlca.sqlcode != 0) || strcmp(dbversion, codeversion)) {
     nslogit (func, "warning: version mismatch between the NS daemon and database schema - "
              "db version: %s versus software version: %s\n", dbversion, codeversion);

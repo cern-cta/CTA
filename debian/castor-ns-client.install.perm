@@ -17,6 +17,7 @@
 %attr(0755,root,root) usr/bin/nsrename
 %attr(0755,root,root) usr/bin/nsrm
 %attr(0755,root,root) usr/bin/nsrmdir
+%attr(0755,root,root) usr/bin/nsrmvid
 %attr(0755,root,root) usr/bin/nssetchecksum
 %attr(0755,root,root) usr/bin/nssetacl
 %attr(0755,root,root) usr/bin/nssetcomment

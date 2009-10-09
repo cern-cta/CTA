@@ -1,0 +1,64 @@
+.\" @(#)$RCSfile: Cns_unlinkbyvid.man,v $ $Revision: 1.5 $ $Date: 2009/07/09 12:43:40 $ CERN IT-DM/SMD
+.\" Copyright (C) 2003 by CERN
+.\" All rights reserved
+.\"
+.TH CNS_unlinkbyvid 3 "$Date: 2009/07/09 12:43:40 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_unlinkbyvid \- remove all files on a volume
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_unlinkbyvid (char *" server ,
+.BI "const char *" vid )
+.SH DESCRIPTION
+.B Cns_unlinkbyvid
+removes all CASTOR file entries in the name server listed on a given volume.
+.TP
+.I server
+specifies the CASTOR Name Server to be contacted.
+.TP
+.I vid
+is the visual identifier of the volume.
+.LP
+This function requires ADMIN privilege in the Cupv database.
+.RE
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the
+operation failed. In the latter case, 
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The referenced volume does not exist anymore.
+.TP
+.B EFAULT
+.I vid 
+is a null pointer.
+.TP
+.B EINVAL
+The length of
+.I vid
+exceeds
+.BR CA_MAXVIDLEN .
+.TP
+.B SEINTERNAL
+An internal error has occurred.
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

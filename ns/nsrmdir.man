@@ -38,6 +38,7 @@ This program returns 0 if the operation was successful or >0 if the operation
 failed.
 .SH SEE ALSO
 .BR Castor_limits(4) ,
-.BR Cns_rmdir(3) ,
+.BR Cns_rmdir(3)
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
+Q

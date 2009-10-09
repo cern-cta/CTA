@@ -226,7 +226,7 @@ int Cns_main(main_args)
      */
     void *handle = dlopen ("libCsec_plugin_KRB5.so", RTLD_LAZY);
     if (!handle) {
-        fprintf (stderr, "%s\n", dlerror());
+      fprintf (stderr, "%s\n", dlerror());
     }
   } else {
     if ((p = getenv (CNS_PORT_ENV)) || ((p = getconfent (CNS_SCE, "PORT", 0)))) {
@@ -271,27 +271,27 @@ int Cns_main(main_args)
       rqfd = accept (s, (struct sockaddr *) &from, &fromlen);
 #if (defined(SOL_SOCKET) && defined(SO_KEEPALIVE))
       {
-	int on = 1;
-	/* Set socket option */
-	setsockopt(rqfd, SOL_SOCKET, SO_KEEPALIVE,(char *) &on, sizeof(on));
+        int on = 1;
+        /* Set socket option */
+        setsockopt(rqfd, SOL_SOCKET, SO_KEEPALIVE,(char *) &on, sizeof(on));
       }
 #endif
       if ((thread_index = Cpool_next_index (ipool)) < 0) {
-	nslogit (func, NS002, "Cpool_next_index",
-		 sstrerror(serrno));
-	if (serrno == SEWOULDBLOCK) {
-	  sendrep (rqfd, CNS_RC, serrno);
-	  continue;
-	} else
-	  return (SYERR);
+        nslogit (func, NS002, "Cpool_next_index",
+                 sstrerror(serrno));
+        if (serrno == SEWOULDBLOCK) {
+          sendrep (rqfd, CNS_RC, serrno);
+          continue;
+        } else
+          return (SYERR);
       }
       (Cns_srv_thread_info + thread_index)->s = rqfd;
       (Cns_srv_thread_info + thread_index)->secure = security;
       if (Cpool_assign (ipool, &doit,
-			Cns_srv_thread_info + thread_index, 1) < 0) {
-	(Cns_srv_thread_info + thread_index)->s = -1;
-	nslogit (func, NS002, "Cpool_assign", sstrerror(serrno));
-	return (SYERR);
+                        Cns_srv_thread_info + thread_index, 1) < 0) {
+        (Cns_srv_thread_info + thread_index)->s = -1;
+        nslogit (func, NS002, "Cpool_assign", sstrerror(serrno));
+        return (SYERR);
       }
     }
     memcpy (&readfd, &readmask, sizeof(readmask));
@@ -381,7 +381,7 @@ int getreq(thip, magic, req_type, req_data, clienthost)
     else if (l < 0) {
       nslogit (func, NS002, "netread", neterror());
       if (serrno == SETIMEDOUT)
-	return (SETIMEDOUT);
+        return (SETIMEDOUT);
     }
     return (SEINTERNAL);
   }
@@ -637,6 +637,9 @@ int procreq(magic, req_type, req_data, clienthost, thip)
   case CNS_UNLINK:
     c = Cns_srv_unlink (magic, req_data, clienthost, thip);
     break;
+  case CNS_UNLINKBYVID:
+    c = Cns_srv_unlinkbyvid (magic, req_data, clienthost, thip);
+    break;
   case CNS_UTIME:
     c = Cns_srv_utime (magic, req_data, clienthost, thip);
     break;
@@ -788,7 +791,7 @@ doit(arg)
     if (Csec_mapToLocalUser (thip->Csec_mech, thip->Csec_auth_id,
                              username,CA_MAXUSRNAMELEN, &thip->Csec_uid, &thip->Csec_gid) < 0) {
       nslogit (func, "could not map to local user from %s [%d]: %s !\n",
-	       clientip, clientport, sstrerror (serrno));
+               clientip, clientport, sstrerror (serrno));
       sendrep (thip->s, CNS_RC, serrno);
       thip->s = -1;
       return NULL;

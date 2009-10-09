@@ -1,0 +1,38 @@
+.\" @(#)$RCSfile: nsrmvid.man,v $ $Revision: 1.1 $ $Date: 2008/11/03 10:10:24 $ CERN IT-DM
+.\" Copyright (C) 1999-2002 by CERN/IT/DM
+.\" All rights reserved
+.\"
+.TH NSRMVID 1 "$Date: 2008/11/03 10:10:24 $" CASTOR "Cns User Commands"
+.SH NAME
+nsrmvid \- remove all files on a volume
+.SH SYNOPSIS
+.B nsrmvid
+[\fIOPTION\fR]... \fIVID\fR...
+.SH DESCRIPTION
+.B nsrmvid
+removes all CASTOR file entries in the name server listed on a given volume.
+.LP
+This command requires ADMIN privileges in the Cupv database.
+.SH OPTIONS
+ The following options are supported:
+.TP
+.B -v,\ \-\-verbose
+output a diagnostic for every volume processed.
+.TP
+.BI -h,\ \-\-host=HOSTNAME
+specify the name server hostname. This can also be set through the
+CNS_HOST environment variable.
+.TP
+.B \-\-help
+display this help and exit
+.TP
+.I VID
+specifies the CASTOR volume.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_unlinkbyvid(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -43,6 +43,7 @@ debian/castor/usr/share/man/man3/Cns_tapesum.3castor
 debian/castor/usr/share/man/man3/Cns_umask.3castor
 debian/castor/usr/share/man/man3/Cns_undelete.3castor
 debian/castor/usr/share/man/man3/Cns_unlink.3castor
+debian/castor/usr/share/man/man3/Cns_unlinkbyvid.3castor
 debian/castor/usr/share/man/man3/Cns_updateseg_checksum.3castor
 debian/castor/usr/share/man/man3/Cns_updateseg_status.3castor
 debian/castor/usr/share/man/man3/Cns_updatefile_checksum.3castor

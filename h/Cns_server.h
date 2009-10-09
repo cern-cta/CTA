@@ -23,51 +23,69 @@
 
                         /* name server constants and macros */
 
-#define CHECKI	5	/* max interval to check for work to be done */
-#define CNS_MAXNBTHREADS 100	/* maximum number of threads */
+#define CHECKI           5    /* max interval to check for work to be done */
+#define CNS_MAXNBTHREADS 100  /* maximum number of threads */
 #define CNS_NBTHREADS    20
 
 #define LOWER(s) \
-	{ \
-	char * q; \
-	for (q = s; *q; q++) \
-		if (*q >= 'A' && *q <= 'Z') *q = *q + ('a' - 'A'); \
-	}
+  { \
+  char * q; \
+  for (q = s; *q; q++) \
+    if (*q >= 'A' && *q <= 'Z') *q = *q + ('a' - 'A'); \
+  }
 #define RETURN(x) \
-	{ \
-	struct timeval end; \
-	gettimeofday(&end, NULL); \
-	nslogit (func, "returns %d - elapsed: %.3f\n", (x), \
+  { \
+  struct timeval end; \
+  gettimeofday(&end, NULL); \
+  nslogit (func, "returns %d - elapsed: %.3f\n", (x), \
                  (((((double)end.tv_sec * 1000) + \
-		    ((double)end.tv_usec / 1000))) - thip->starttime) * 0.001);	\
-	if (thip->dbfd.tr_started) { \
-		if (x) { \
-			(void) Cns_abort_tr (&thip->dbfd); \
-		} else if (! thip->dbfd.tr_mode) { \
-			(void) Cns_end_tr (&thip->dbfd); \
-		} \
-	} \
-	return ((x)); \
-	}
+                 ((double)end.tv_usec / 1000))) - thip->starttime) * 0.001); \
+  if (thip->dbfd.tr_started) { \
+    if (x) { \
+      (void) Cns_abort_tr (&thip->dbfd); \
+    } else if (! thip->dbfd.tr_mode) { \
+      (void) Cns_end_tr (&thip->dbfd); \
+    } \
+  } \
+  return ((x)); \
+  }
 #define RETURNQ(x) \
-	{ \
-	struct timeval end; \
-	gettimeofday(&end, NULL); \
-	nslogit (func, "returns %d - elapsed: %.3f\n", (x), \
+  { \
+  struct timeval end; \
+  gettimeofday(&end, NULL); \
+  nslogit (func, "returns %d - elapsed: %.3f\n", (x), \
                  (((((double)end.tv_sec * 1000) + \
-		    ((double)end.tv_usec / 1000))) - thip->starttime) * 0.001);	\
-	return ((x)); \
-	}
+                 ((double)end.tv_usec / 1000))) - thip->starttime) * 0.001); \
+  return ((x)); \
+  }
+#define END_TRANSACTION \
+  { \
+  struct timeval end; \
+  gettimeofday(&end, NULL); \
+  nslogit (func, "returns 0 - elapsed: %.3f\n", \
+                 (((((double)end.tv_sec * 1000) + \
+                 ((double)end.tv_usec / 1000))) - thip->starttime) * 0.001); \
+  if (thip->dbfd.tr_started) { \
+    (void) Cns_end_tr (&thip->dbfd); \
+  } \
+  }
+#define START_TRANSACTION \
+  { \
+  struct timeval start; \
+  gettimeofday(&start, NULL); \
+  (void) Cns_start_tr (thip->s, &thip->dbfd); \
+  thip->starttime = ((double)start.tv_sec * 1000) + ((double)start.tv_usec / 1000); \
+  }
 
-			/* name server tables and structures */
+                        /* name server tables and structures */
 
 struct Cns_dbfd {
-	int		idx;		/* index in array of Cns_dbfd */
+        int                idx;                /* index in array of Cns_dbfd */
 #ifdef USE_MYSQL
-	MYSQL		mysql;
+        MYSQL              mysql;
 #endif
-	int		tr_mode;
-	int		tr_started;
+        int                tr_mode;
+        int                tr_started;
 };
 
 #ifdef USE_ORACLE
@@ -81,98 +99,98 @@ typedef MYSQL_RES *DBLISTPTR;
 #endif
 
 struct Cns_class_metadata {
-	int		classid;
-	char		name[CA_MAXCLASNAMELEN+1];
-	uid_t		uid;
-	gid_t		gid;
-	int		min_filesize;	/* in Mbytes */
-	int		max_filesize;	/* in Mbytes */
-	int		flags;
-	int		maxdrives;
-	int		max_segsize;	/* in Mbytes */
-	int		migr_time_interval;
-	int		mintime_beforemigr;
-	int		nbcopies;
-	int		retenp_on_disk;
+        int                classid;
+        char               name[CA_MAXCLASNAMELEN+1];
+        uid_t              uid;
+        gid_t              gid;
+        int                min_filesize;       /* in Mbytes */
+        int                max_filesize;       /* in Mbytes */
+        int                flags;
+        int                maxdrives;
+        int                max_segsize;        /* in Mbytes */
+        int                migr_time_interval;
+        int                mintime_beforemigr;
+        int                nbcopies;
+        int                retenp_on_disk;
 };
 
 struct Cns_file_metadata {
-	u_signed64	fileid;
-	u_signed64	parent_fileid;
-	char		guid[CA_MAXGUIDLEN+1];
-	char		name[CA_MAXNAMELEN+1];
-	mode_t		filemode;
-	int		nlink;		/* number of files in a directory */
-	uid_t		uid;
-	gid_t		gid;
-	u_signed64	filesize;
-	time_t		atime;		/* last access to file */
-	time_t		mtime;		/* last file modification */
-	time_t		ctime;		/* last metadata modification */
-	short		fileclass;	/* 1 --> experiment, 2 --> user */
-	char		status;		/* '-' --> online, 'm' --> migrated */
-	char		csumtype[3];
-	char		csumvalue[CA_MAXCKSUMLEN+1];
-	char		acl[CA_MAXACLENTRIES*13];
+        u_signed64         fileid;
+        u_signed64         parent_fileid;
+        char               guid[CA_MAXGUIDLEN+1];
+        char               name[CA_MAXNAMELEN+1];
+        mode_t             filemode;
+        int                nlink;              /* number of files in a directory */
+        uid_t              uid;
+        gid_t              gid;
+        u_signed64         filesize;
+        time_t             atime;              /* last access to file */
+        time_t             mtime;              /* last file modification */
+        time_t             ctime;              /* last metadata modification */
+        short              fileclass;          /* 1 --> experiment, 2 --> user */
+        char               status;             /* '-' --> online, 'm' --> migrated */
+        char               csumtype[3];
+        char               csumvalue[CA_MAXCKSUMLEN+1];
+        char               acl[CA_MAXACLENTRIES*13];
 };
 
 struct Cns_srv_thread_info {
-	int		s;		/* socket for communication with client */
-	int		db_open_done;
-	struct Cns_dbfd dbfd;
-	char		errbuf[PRTBUFSZ];
+        int                s;                  /* socket for communication with client */
+        int                db_open_done;
+        struct Cns_dbfd dbfd;
+        char               errbuf[PRTBUFSZ];
 #ifdef CSEC
-	Csec_context_t	sec_ctx;
-	uid_t		Csec_uid;
-	gid_t		Csec_gid;
-	char		*Csec_mech;
-	char		*Csec_auth_id;
-	int             secure;         /* flag to indicate whether security is enabled */
+        Csec_context_t     sec_ctx;
+        uid_t              Csec_uid;
+        gid_t              Csec_gid;
+        char               *Csec_mech;
+        char               *Csec_auth_id;
+        int                secure;             /* flag to indicate whether security is enabled */
 #endif
-        u_signed64      starttime;
+        u_signed64         starttime;
 };
 
 struct Cns_seg_metadata {
-	u_signed64	s_fileid;
-	int		copyno;
-	int		fsec;		/* file section number */
-	u_signed64	segsize;	/* file section size */
-	int		compression;	/* compression factor */
-	char		s_status;	/* 'd' --> deleted */
-	char		vid[CA_MAXVIDLEN+1];
-	int		side;
-	int		fseq;		/* file sequence number */
-	unsigned char	blockid[4];	/* for positionning with locate command */
-	char		checksum_name[CA_MAXCKSUMNAMELEN+1];
-	unsigned long	checksum;
+        u_signed64         s_fileid;
+        int                copyno;
+        int                fsec;               /* file section number */
+        u_signed64         segsize;            /* file section size */
+        int                compression;        /* compression factor */
+        char               s_status;           /* 'd' --> deleted */
+        char               vid[CA_MAXVIDLEN+1];
+        int                side;
+        int                fseq;               /* file sequence number */
+        unsigned char      blockid[4];         /* for positionning with locate command */
+        char               checksum_name[CA_MAXCKSUMNAMELEN+1];
+        unsigned long      checksum;
 };
 
 struct Cns_symlinks {
-	u_signed64	fileid;
-	char		linkname[CA_MAXPATHLEN+1];
+        u_signed64         fileid;
+        char               linkname[CA_MAXPATHLEN+1];
 };
 
 struct Cns_tp_pool {
-	int		classid;
-	char		tape_pool[CA_MAXPOOLNAMELEN+1];
+        int                classid;
+        char               tape_pool[CA_MAXPOOLNAMELEN+1];
 };
 
 struct Cns_user_metadata {
-	u_signed64	u_fileid;
-	char		comments[CA_MAXCOMMENTLEN+1];	/* user comments */
+        u_signed64         u_fileid;
+        char               comments[CA_MAXCOMMENTLEN+1];        /* user comments */
 };
 
 struct Cns_groupinfo {
-	gid_t		gid;
-	char		groupname[256];
+        gid_t              gid;
+        char               groupname[256];
 };
 
 struct Cns_userinfo {
-	uid_t		userid;
-	char		username[256];
+        uid_t              userid;
+        char               username[256];
 };
 
-			/* name server function prototypes */
+                        /* name server function prototypes */
 
 EXTERN_C int sendrep _PROTO((int, int, ...));
 EXTERN_C int nslogit _PROTO((char *, char *, ...));
@@ -303,6 +321,7 @@ EXTERN_C int Cns_srv_symlink _PROTO((int, char *, const char *, struct Cns_srv_t
 EXTERN_C int Cns_srv_tapesum _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_undelete _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_unlink _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
+EXTERN_C int Cns_srv_unlinkbyvid _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_updatefile_checksum _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_updateseg_checksum _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_updateseg_status _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));

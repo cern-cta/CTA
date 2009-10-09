@@ -113,6 +113,7 @@ NSLIB_OBJS	=	Cns_aborttrans.Osuf \
                         Cns_umask.Osuf \
                         Cns_undelete.Osuf \
                         Cns_unlink.Osuf \
+                        Cns_unlinkbyvid.Osuf \
                         Cns_updateseg_checksum.Osuf \
                         Cns_updateseg_status.Osuf \
                         Cns_updatefile_checksum.Osuf \
@@ -142,6 +143,7 @@ ClientProgramTarget(nsping,nsping.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIEN
 ClientProgramTarget(nsrename,nsrename.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
 ClientProgramTarget(nsrm,nsrm.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
 ClientProgramTarget(nsrmdir,nsrmdir.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
+ClientProgramTarget(nsrmvid,nsrmvid.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
 ClientProgramTarget(nssetchecksum,nssetchecksum.Osuf,$(NSLIB) $(CLIENTDEPLIB), $(NSLIB) $(CLIENTLIBS),755)
 ClientProgramTarget(nssetacl,nssetacl.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
 ClientProgramTarget(nssetcomment,nssetcomment.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
@@ -206,6 +208,7 @@ LIBMANPAGE(Cns_tapesum)
 LIBMANPAGE(Cns_umask)
 LIBMANPAGE(Cns_undelete)
 LIBMANPAGE(Cns_unlink)
+LIBMANPAGE(Cns_unlinkbyvid)
 LIBMANPAGE(Cns_updateseg_checksum)
 LIBMANPAGE(Cns_updateseg_status)
 LIBMANPAGE(Cns_updatefile_checksum)
@@ -229,6 +232,7 @@ EXEMANPAGE(nsping)
 EXEMANPAGE(nsrename)
 EXEMANPAGE(nsrm)
 EXEMANPAGE(nsrmdir)
+EXEMANPAGE(nsrmvid)
 EXEMANPAGE(nssetchecksum)
 EXEMANPAGE(nssetacl)
 EXEMANPAGE(nssetcomment)

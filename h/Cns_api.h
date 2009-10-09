@@ -324,6 +324,7 @@ EXTERN_C int DLL_DECL Cns_tapesum _PROTO((char *, const char *, u_signed64 *, u_
 EXTERN_C mode_t DLL_DECL Cns_umask _PROTO((mode_t));
 EXTERN_C int DLL_DECL Cns_undelete _PROTO((const char *));
 EXTERN_C int DLL_DECL Cns_unlink _PROTO((const char *));
+EXTERN_C int DLL_DECL Cns_unlinkbyvid _PROTO((char *, const char *));
 EXTERN_C int DLL_DECL Cns_utime _PROTO((const char *, struct utimbuf *));
 EXTERN_C int DLL_DECL send2nsd _PROTO((int *, char *, char *, int, char *, int));
 EXTERN_C int DLL_DECL Cns_setid _PROTO((uid_t, gid_t));
