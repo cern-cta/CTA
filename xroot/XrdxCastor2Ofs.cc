@@ -1,4 +1,4 @@
-//          $Id: XrdxCastor2Ofs.cc,v 1.8 2009/07/06 08:27:11 apeters Exp $
+//          $Id: XrdxCastor2Ofs.cc,v 1.6 2009/04/29 10:15:03 apeters Exp $
 
 #include "XrdOfs/XrdOfsTrace.hh"
 #include "XrdClient/XrdClientAdmin.hh"
@@ -450,6 +450,11 @@ XrdxCastor2OfsFile::open(const char                *path,
     newopaque.erase(triedpos);
   }
 
+  if (newopaque.find("castor2fs.signature=") == STR_NPOS) {
+    // this is a backdoor for the tape to update files
+    firstWrite = false;
+  }
+
   // this prevents 'clever' users faking internal opaque information 
 
   newopaque.replace("ofsgranted=", "notgranted=");
@@ -887,7 +892,7 @@ XrdxCastor2OfsFile::close()
 
   // inform the StagerJob
   if (!IsThirdPartyStreamCopy) {
-    if (!StagerJob->Close(true)) {
+    if (StagerJob && (!StagerJob->Close(true))) {
       // for the moment, we cannot send this back, but soon we will
       ZTRACE(close,"StagerJob close failed: got rc=" << StagerJob->ErrCode << " msg=" <<StagerJob->ErrMsg);
       XrdOfsFS.Emsg(epname,error, StagerJob->ErrCode, StagerJob->ErrMsg.c_str(), "");
@@ -1042,7 +1047,7 @@ XrdxCastor2OfsFile::write(XrdSfsFileOffset   fileOffset,
     }
   }
 
-  if (StagerJob->Connected()) {
+  if (StagerJob && StagerJob->Connected()) {
     // if we have a stagerJob watching, check it is still alive
     if (!StagerJob->StillConnected()) {
       // oh oh, the stagerJob died ... reject any write now
@@ -1119,7 +1124,7 @@ XrdxCastor2OfsFile::write(XrdSfsAio *aioparm)
     }
   }
 
-  if (StagerJob->Connected()) {
+  if (StagerJob && StagerJob->Connected()) {
     if (!StagerJob->StillConnected()) {
       // oh oh, the stagerJob died ... reject any write now
       TRACES("error:write => StagerJob has been canceled");

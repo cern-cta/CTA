@@ -1,7 +1,7 @@
 Summary:     The next generation xrootd@Castor2 interface
 Name: 	     xrootd-xcastor2fs
-Version:     1.0.8
-Release:     6
+Version:     1.0.9
+Release:     1
 License:     none
 Group:       Applications/Castor
 Source0:     %{name}-%{version}.tar.gz
@@ -61,6 +61,10 @@ fi
 %attr(-,stage,st) %dir /var/spool/xroot/core
 
 %changelog
+* Mon Oct 12 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.9-1
+- added support to delete a single replica using "?stagermreplica"
+- fixed door for localhost tape access 
+
 * Mon Jun 29 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.8-6
 - remove x2castorjob script and introduce direct socket communication with stagerjob from the OFS
 - fixed memory leaks in Put and Rm, StagerQry everytime an error is returned or an exception is catched

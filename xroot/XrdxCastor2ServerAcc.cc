@@ -1,4 +1,4 @@
-//          $Id: XrdxCastor2ServerAcc.cc,v 1.3 2009/07/06 08:27:11 apeters Exp $
+//          $Id: XrdxCastor2ServerAcc.cc,v 1.2 2009/05/06 14:37:23 apeters Exp $
 
 #include "XrdxCastor2Fs/XrdxCastor2Trace.hh"
 #include "XrdxCastor2Fs/XrdxCastor2ServerAcc.hh"
@@ -425,7 +425,7 @@ XrdxCastor2ServerAcc::Access(const XrdSecEntity    *Entity,
   // check for localhost host connection
   if (AllowLocalhost) {
     XrdOucString chost = Entity->host;
-    if ((chost == "localhost" || (chost == "localhost.localdomain") || (chost == "127.0.0.0"))) {
+    if ((chost == "localhost" || (chost == "localhost.localdomain") || (chost == "127.0.0.1"))) {
       decodeLock.UnLock();    
       return XrdAccPriv_All;
     }

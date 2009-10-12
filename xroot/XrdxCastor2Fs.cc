@@ -3340,7 +3340,7 @@ int XrdxCastor2Fs::rem(const char             *path,    // In
    
    TIMING(xCastor2FsTrace,"Authorize",&rmtiming);
 
-   if (env.Get("stagerm")) {
+   if (env.Get("stagerm") || env.Get("stagermreplica")) {
      XrdOucString stagevariables="";
      XrdOucString stagehost="";
      XrdOucString serviceclass="";
@@ -3431,13 +3431,17 @@ int XrdxCastor2Fs::rem(const char             *path,    // In
        rmtiming.Print(xCastor2FsTrace);
        return SFS_ERROR;
      } 
-     // the stage_rm worked, let's proceed with the namespace
+     // the stage_rm worked, let's proceed with the namespace if requested
    }
-   
-   int retc = 0;
-   retc = _rem(path,error,&mappedclient,info);
-   
-   TIMING(xCastor2FsTrace,"RemoveNamespace",&rmtiming);
+
+   int retc = 0;   
+   // only if this is a replica removal
+   if (! env.Get("stagermreplica")) {
+     retc = _rem(path,error,&mappedclient,info);
+     
+     TIMING(xCastor2FsTrace,"RemoveNamespace",&rmtiming);
+   }
+
    rmtiming.Print(xCastor2FsTrace);
    return retc;
 }
