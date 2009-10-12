@@ -160,11 +160,25 @@ namespace castor {
       }
 
       /**
+       * Returns the timeout value in seconds for reading and writing data
+       */
+      int timeout() const throw() {
+        return m_timeout;
+      }
+
+      /**
        * Sets the timeout value in seconds for establishing new connections
        * @param timeout the new timeout value
        */
       void setConnTimeout(const int timeout) {
         m_connTimeout = timeout;
+      }
+
+      /**
+       * Returns the timeout value in seconds for establishing new connections
+       */
+      int connTimeout() const throw() {
+        return m_connTimeout;
       }
 
       /**
