@@ -27,6 +27,7 @@
 #include "castor/io/ClientSocket.hpp"
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/ClientTxRx.hpp"
+#include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/LogHelper.hpp"
 #include "castor/tape/aggregator/SynchronizedCounter.hpp"
 #include "castor/tape/tapegateway/DumpNotification.hpp"
@@ -73,46 +74,12 @@ castor::tape::tapegateway::Volume
   request.setMountTransactionId(volReqId);
   request.setUnit(unit);
 
-  // Connect to the client
-  castor::io::ClientSocket sock(clientPort, clientHost);
-  try {
-    sock.connect();
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      ": Failed to connect to client to send VolumeRequest"
-      ": " << ex.getMessage().str());
-  }
-
-  try {
-    // Send the request
-    sock.sendObject(request);
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      ": Failed to send VolumeRequest to client"
-      ": " << ex.getMessage().str());
-  }
-
-  std::auto_ptr<castor::IObject> obj;
-  try {
-    // Receive the reply object wrapping it in an auto pointer so that it is
-    // automatically deallocated when it goes out of scope
-    obj.reset(sock.readObject());
-
-    if(obj.get() == NULL) {
-      TAPE_THROW_EX(castor::exception::Internal,
-        ": ClientSocket::readObject() returned null");
-    }
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      ": Failed to read VolumeRequest reply from client"
-      ": " << ex.getMessage().str());
-  }
-
-  // Close the connection to the client
-  sock.close();
-
-  // Temporary variable used to check for a transaction ID mistatch
-  uint64_t volReqIdFromClient = 0;
+  // Send the request and receive the reply
+  time_t connectDuration  = 0;
+  time_t sendRecvDuration = 0;
+  std::auto_ptr<castor::IObject> obj(sendRequestAndReceiveReply(
+    "VolumeRequest", clientHost, clientPort, CLIENTNETRWTIMEOUT, request,
+    connectDuration, sendRecvDuration));
 
   switch(obj->type()) {
   case OBJ_Volume:
@@ -126,16 +93,11 @@ castor::tape::tapegateway::Volume
           ": Failed to down cast reply object to tapegateway::Volume");
       }
 
-      // If there is a transaction ID mismatch
-      if(reply->mountTransactionId() != volReqId) {
-        TAPE_THROW_CODE(EBADMSG,
-             ": Transaction ID mismatch"
-             ": Expected = " << volReqId
-          << ": Actual = " << reply->mountTransactionId());
-      }
+      checkMountTransactionId(volReqId, reply->mountTransactionId());
 
       LogHelper::logMsg(cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_GOT_VOLUME_FROM_CLIENT, volReqId, -1, *reply);
+        AGGREGATOR_GOT_VOLUME_FROM_CLIENT, *reply, connectDuration,
+        sendRecvDuration);
 
       // Release the reply message from its smart pointer and return it
       obj.release();
@@ -161,42 +123,14 @@ castor::tape::tapegateway::Volume
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
         AGGREGATOR_GOT_NO_MORE_FILES_FROM_CLIENT, params);
 
-      // If there is a transaction ID mismatch
-      if(reply->mountTransactionId() != volReqId) {
-        TAPE_THROW_CODE(EBADMSG,
-             ": Transaction ID mismatch"
-             ": Expected = " << volReqId
-          << ": Actual = " << reply->mountTransactionId());
-      }
+      checkMountTransactionId(volReqId, reply->mountTransactionId());
     }
     return NULL;
 
   case OBJ_EndNotificationErrorReport:
-    {
-      // Down cast the reply to its specific class
-      tapegateway::EndNotificationErrorReport *errorReport =
-        dynamic_cast<tapegateway::EndNotificationErrorReport*>(obj.get());
-
-      if(errorReport == NULL) {
-        TAPE_THROW_EX(castor::exception::Internal,
-          ": Failed to down cast reply object to "
-          "tapegateway::EndNotificationErrorReport");
-      }
-
-      // If there is a transaction ID mismatch
-      if(volReqIdFromClient != volReqId) {
-        TAPE_THROW_CODE(EBADMSG,
-             ": Transaction ID mismatch"
-             ": Expected = " << volReqId
-          << ": Actual = " << volReqIdFromClient);
-      }
-
-      // Translate the reception of the error report into a C++ exception
-      TAPE_THROW_CODE(errorReport->errorCode(),
-         ": Client error report "
-         ": " << errorReport->errorMessage());
-    }
+    throwEndNotificationErrorReport(volReqId, obj.get());
     break;
+
   default:
     {
       TAPE_THROW_CODE(EBADMSG,
@@ -231,46 +165,12 @@ castor::tape::tapegateway::FileToMigrate
   tapegateway::FileToMigrateRequest request;
   request.setMountTransactionId(volReqId);
 
-  // Connect to the client
-  castor::io::ClientSocket sock(clientPort, clientHost);
-  try {
-    sock.connect();
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      ": Failed to connect to client to send FileToMigrateRequest"
-      ": " << ex.getMessage().str());
-  }
-
-  // Send the request
-  try {
-    sock.sendObject(request);
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      ": Failed to send FileToMigrateRequest to client"
-      ": " << ex.getMessage().str());
-  }
-
-  std::auto_ptr<castor::IObject> obj;
-  try {
-    // Receive the reply object wrapping it in an auto pointer so that it is
-    // automatically deallocated when it goes out of scope
-    obj.reset(sock.readObject());
-
-    if(obj.get() == NULL) {
-      TAPE_THROW_EX(castor::exception::Internal,
-        ": ClientSocket::readObject() returned null");
-    }
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      ": Failed to read FileToMigrateRequest reply from client"
-      ": " << ex.getMessage().str());
-  }
-
-  // Close the connection to the client
-  sock.close();
-
-  // Temporary variable used to check for a transaction ID mistatch
-  uint64_t volReqIdFromClient = 0;
+  // Send the request and receive the reply
+  time_t connectDuration  = 0;
+  time_t sendRecvDuration = 0;
+  std::auto_ptr<castor::IObject> obj(sendRequestAndReceiveReply(
+    "FileToMigrateRequest", clientHost, clientPort, CLIENTNETRWTIMEOUT,
+    request, connectDuration, sendRecvDuration));
 
   switch(obj->type()) {
   case OBJ_FileToMigrate:
@@ -284,16 +184,11 @@ castor::tape::tapegateway::FileToMigrate
           ": Failed to down cast reply object to tapegateway::FileToMigrate");
       }
 
-      // If there is a transaction ID mismatch
-      if(reply->mountTransactionId() != volReqId) {
-        TAPE_THROW_CODE(EBADMSG,
-             ": Transaction ID mismatch"
-             ": Expected = " << volReqId
-          << ": Actual = " << reply->mountTransactionId());
-      }
+      checkMountTransactionId(volReqId, reply->mountTransactionId());
 
       LogHelper::logMsg(cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_GOT_FILE_TO_MIGRATE_FROM_CLIENT, volReqId, -1, *reply);
+        AGGREGATOR_GOT_FILE_TO_MIGRATE_FROM_CLIENT, *reply, connectDuration,
+        sendRecvDuration);
 
       // Release the reply message from its smart pointer and return it
       obj.release();
@@ -319,41 +214,12 @@ castor::tape::tapegateway::FileToMigrate
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
         AGGREGATOR_GOT_NO_MORE_FILES_FROM_CLIENT, params);
 
-      // If there is a transaction ID mismatch
-      if(reply->mountTransactionId() != volReqId) {
-        TAPE_THROW_CODE(EBADMSG,
-             ": Transaction ID mismatch"
-             ": Expected = " << volReqId
-          << ": Actual = " << reply->mountTransactionId());
-      }
+      checkMountTransactionId(volReqId, reply->mountTransactionId());
     }
     return NULL;
 
   case OBJ_EndNotificationErrorReport:
-    {
-      // Down cast the reply to its specific class
-      tapegateway::EndNotificationErrorReport *errorReport =
-        dynamic_cast<tapegateway::EndNotificationErrorReport*>(obj.get());
-
-      if(errorReport == NULL) {
-        TAPE_THROW_EX(castor::exception::Internal,
-          ": Failed to down cast reply object to "
-          "tapegateway::EndNotificationErrorReport");
-      }
-
-      // If there is a transaction ID mismatch
-      if(volReqIdFromClient != volReqId) {
-        TAPE_THROW_CODE(EBADMSG,
-             ": Transaction ID mismatch"
-             ": Expected = " << volReqId
-          << ": Actual = " << volReqIdFromClient);
-      }
-
-      // Translate the reception of the error report into a C++ exception
-      TAPE_THROW_CODE(errorReport->errorCode(),
-         ": Client error report "
-         ": " << errorReport->errorMessage());
-    }
+    throwEndNotificationErrorReport(volReqId, obj.get());
     break;
 
   default:
@@ -388,46 +254,12 @@ castor::tape::tapegateway::FileToRecall
   tapegateway::FileToRecallRequest request;
   request.setMountTransactionId(volReqId);
 
-  // Connect to the client
-  castor::io::ClientSocket sock(clientPort, clientHost);
-  try {
-    sock.connect();
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      ": Failed to connect to client to send FileToRecallRequest"
-      ": " << ex.getMessage().str());
-  }
-
-  try {
-    // Send the request
-    sock.sendObject(request);
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      ": Failed to send FileToRecallRequest to client"
-      ": " << ex.getMessage().str());
-  }
-
-  std::auto_ptr<castor::IObject> obj;
-  try {
-    // Receive the reply object wrapping it in an auto pointer so that it is
-    // automatically deallocated when it goes out of scope
-    obj.reset(sock.readObject());
-
-    if(obj.get() == NULL) {
-      TAPE_THROW_EX(castor::exception::Internal,
-        ": ClientSocket::readObject() returned null");
-    }
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      ": Failed to read FileToRecallRequest reply from client"
-      ": " << ex.getMessage().str());
-  }
-
-  // Close the connection to the client
-  sock.close();
-
-  // Temporary variable used to check for a transaction ID mistatch
-  uint64_t volReqIdFromClient = 0;
+  // Send the request and receive the reply
+  time_t connectDuration  = 0;
+  time_t sendRecvDuration = 0;
+  std::auto_ptr<castor::IObject> obj(sendRequestAndReceiveReply(
+    "FileToRecallRequest", clientHost, clientPort, CLIENTNETRWTIMEOUT, request,
+    connectDuration, sendRecvDuration));
 
   switch(obj->type()) {
   case OBJ_FileToRecall:
@@ -441,16 +273,11 @@ castor::tape::tapegateway::FileToRecall
           ": Failed to down cast reply object to tapegateway::FileToRecall");
       }
 
-      // If there is a transaction ID mismatch
-      if(reply->mountTransactionId() != volReqId) {
-        TAPE_THROW_CODE(EBADMSG,
-             ": Transaction ID mismatch"
-             ": Expected = " << volReqId
-          << ": Actual = " << reply->mountTransactionId());
-      }
+      checkMountTransactionId(volReqId, reply->mountTransactionId());
 
       LogHelper::logMsg(cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_GOT_FILE_TO_RECALL_FROM_CLIENT, volReqId, -1, *reply);
+        AGGREGATOR_GOT_FILE_TO_RECALL_FROM_CLIENT, *reply, connectDuration,
+        sendRecvDuration);
 
       // Release the reply message from its smart pointer and return it
       obj.release();
@@ -476,41 +303,12 @@ castor::tape::tapegateway::FileToRecall
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
         AGGREGATOR_GOT_NO_MORE_FILES_FROM_CLIENT, params);
 
-      // If there is a transaction ID mismatch
-      if(reply->mountTransactionId() != volReqId) {
-        TAPE_THROW_CODE(EBADMSG,
-             ": Transaction ID mismatch"
-             ": Expected = " << volReqId
-          << ": Actual = " << reply->mountTransactionId());
-      }
+      checkMountTransactionId(volReqId, reply->mountTransactionId());
     }
     return NULL;
 
   case OBJ_EndNotificationErrorReport:
-    {
-      // Down cast the reply to its specific class
-      tapegateway::EndNotificationErrorReport *errorReport =
-        dynamic_cast<tapegateway::EndNotificationErrorReport*>(obj.get());
-
-      if(errorReport == NULL) {
-        TAPE_THROW_EX(castor::exception::Internal,
-          ": Failed to down cast reply object to "
-          "tapegateway::EndNotificationErrorReport");
-      }
-
-      // If there is a transaction ID mismatch
-      if(volReqIdFromClient != volReqId) {
-        TAPE_THROW_CODE(EBADMSG,
-             ": Transaction ID mismatch"
-             ": Expected = " << volReqId
-          << ": Actual = " << volReqIdFromClient);
-      }
-
-      // Translate the reception of the error report into a C++ exception
-      TAPE_THROW_CODE(errorReport->errorCode(),
-         ": Client error report "
-         ": " << errorReport->errorMessage());
-    }
+    throwEndNotificationErrorReport(volReqId, obj.get());
     break;
 
   default:
@@ -593,109 +391,9 @@ void castor::tape::aggregator::ClientTxRx::notifyFileMigrated(
   request.setFileSize(fileSize);
   request.setCompressedFileSize( compressedFileSize);
 
-  // Connect to the client
-  castor::io::ClientSocket sock(clientPort, clientHost);
-  try {
-    sock.connect();
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      ": Failed to connect to client to send FileMigratedNotification"
-      ": " << ex.getMessage().str());
-  }
-
-  try {
-    // Send the request
-    sock.sendObject(request);
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      ": Failed to send FileMigratedNotification to client"
-      ": " << ex.getMessage().str());
-  }
-
-  std::auto_ptr<castor::IObject> obj;
-  try {
-    // Receive the reply object wrapping it in an auto pointer so that it is
-    // automatically deallocated when it goes out of scope
-    obj.reset(sock.readObject());
-
-    if(obj.get() == NULL) {
-      TAPE_THROW_EX(castor::exception::Internal,
-        ": ClientSocket::readObject() returned null");
-    }
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      ": Failed to read FileMigratedNotification reply from client"
-      ": " << ex.getMessage().str());
-  }
-
-  // Close the connection to the client
-  sock.close();
-
-  // Temporary variable used to check for a transaction ID mistatch
-  uint64_t volReqIdFromClient = 0;
-
-  switch(obj->type()) {
-  case OBJ_NotificationAcknowledge:
-    // Copy the reply information
-    try {
-      tapegateway::NotificationAcknowledge &notificationAcknowledge =
-        dynamic_cast<tapegateway::NotificationAcknowledge&>(*obj);
-      volReqIdFromClient = notificationAcknowledge.mountTransactionId();
-    } catch(std::bad_cast &bc) {
-      TAPE_THROW_EX(castor::exception::Internal,
-        ": Failed to down cast reply object to "
-        "tapegateway::NotificationAcknowledge");
-    }
-
-    // If there is a transaction ID mismatch
-    if(volReqIdFromClient != volReqId) {
-      TAPE_THROW_CODE(EBADMSG,
-           ": Transaction ID mismatch"
-           ": Expected = " << volReqId
-        << ": Actual = " << volReqIdFromClient);
-    }
-    break;
-
-  case OBJ_EndNotificationErrorReport:
-    {
-      int errorCode;
-      std::string errorMessage;
-
-      // Copy the reply information
-      try {
-        tapegateway::EndNotificationErrorReport &errorReport =
-          dynamic_cast<tapegateway::EndNotificationErrorReport&>(*obj);
-        volReqIdFromClient = errorReport.mountTransactionId();
-        errorCode = errorReport.errorCode();
-        errorMessage = errorReport.errorMessage();
-      } catch(std::bad_cast &bc) {
-        TAPE_THROW_EX(castor::exception::Internal,
-          ": Failed to down cast reply object to "
-          "tapegateway::EndNotificationErrorReport");
-      }
-
-      // If there is a transaction ID mismatch
-      if(volReqIdFromClient != volReqId) {
-        TAPE_THROW_CODE(EBADMSG,
-             ": Transaction ID mismatch"
-             ": Expected = " << volReqId
-          << ": Actual = " << volReqIdFromClient);
-      }
-
-      // Translate the reception of the error report into a C++ exception
-      TAPE_THROW_CODE(errorCode,
-         ": Client error report "
-         ": " << errorMessage);
-    }
-    break;
-
-  default:
-    {
-      TAPE_THROW_CODE(EBADMSG,
-        ": Unknown reply type "
-        ": Reply type = " << obj->type());
-    }
-  } // switch(obj->type())
+  const char *requestTypeName = "FileMigratedNotification";
+  notifyClient(cuuid, volReqId, requestTypeName, clientHost, clientPort,
+    CLIENTNETRWTIMEOUT, request);
 
   {
     // 32-bits = 1 x '0' + 1 x 'x' + 8 x hex + 1 x '/0' = 11 byte string
@@ -786,109 +484,9 @@ void castor::tape::aggregator::ClientTxRx::notifyFileRecalled(
   request.setChecksum(checksum);
   request.setFileSize(fileSize);
 
-  // Connect to the client
-  castor::io::ClientSocket sock(clientPort, clientHost);
-  try {
-    sock.connect();
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      ": Failed to connect to client to send FileRecalledNotification"
-      ": " << ex.getMessage().str());
-  }
-
-  try {
-    // Send the request
-    sock.sendObject(request);
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      ": Failed to send FileRecalledNotification to client"
-      ": " << ex.getMessage().str());
-  }
-
-  std::auto_ptr<castor::IObject> obj;
-  try {
-    // Receive the reply object wrapping it in an auto pointer so that it is
-    // automatically deallocated when it goes out of scope
-    obj.reset(sock.readObject());
-
-    if(obj.get() == NULL) {
-      TAPE_THROW_EX(castor::exception::Internal,
-        ": ClientSocket::readObject() returned null");
-    }
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      ": Failed to read FileRecalledNotification reply from client"
-      ": " << ex.getMessage().str());
-  }
-
-  // Close the connection to the client
-  sock.close();
-
-  // Temporary variable used to check for a transaction ID mistatch
-  uint64_t volReqIdFromClient = 0;
-
-  switch(obj->type()) {
-  case OBJ_NotificationAcknowledge:
-    // Copy the reply information
-    try {
-      tapegateway::NotificationAcknowledge &notificationAcknowledge =
-        dynamic_cast<tapegateway::NotificationAcknowledge&>(*obj);
-      volReqIdFromClient = notificationAcknowledge.mountTransactionId();
-    } catch(std::bad_cast &bc) {
-      TAPE_THROW_EX(castor::exception::Internal,
-        ": Failed to down cast reply object to "
-        "tapegateway::NotificationAcknowledge");
-    }
-
-    // If there is a transaction ID mismatch
-    if(volReqIdFromClient != volReqId) {
-      TAPE_THROW_CODE(EBADMSG,
-           ": Transaction ID mismatch"
-           ": Expected = " << volReqId
-        << ": Actual = " << volReqIdFromClient);
-    }
-    break;
-
-  case OBJ_EndNotificationErrorReport:
-    {
-      int errorCode;
-      std::string errorMessage;
-
-      // Copy the reply information
-      try {
-        tapegateway::EndNotificationErrorReport &errorReport =
-          dynamic_cast<tapegateway::EndNotificationErrorReport&>(*obj);
-        volReqIdFromClient = errorReport.mountTransactionId();
-        errorCode = errorReport.errorCode();
-        errorMessage = errorReport.errorMessage();
-      } catch(std::bad_cast &bc) {
-        TAPE_THROW_EX(castor::exception::Internal,
-          ": Failed to down cast reply object to "
-          "tapegateway::EndNotificationErrorReport");
-      }
-
-      // If there is a transaction ID mismatch
-      if(volReqIdFromClient != volReqId) {
-        TAPE_THROW_CODE(EBADMSG,
-             ": Transaction ID mismatch"
-             ": Expected = " << volReqId
-          << ": Actual = " << volReqIdFromClient);
-      }
-
-      // Translate the reception of the error report into a C++ exception
-      TAPE_THROW_CODE(errorCode,
-         ": Client error report "
-         ": " << errorMessage);
-    }
-    break;
-
-  default:
-    {
-      TAPE_THROW_CODE(EBADMSG,
-        ": Unknown reply type "
-        ": Reply type = " << obj->type());
-    }
-  } // switch(obj->type())
+  const char *requestTypeName = "FileRecalledNotification";
+  notifyClient(cuuid, volReqId, requestTypeName, clientHost, clientPort,
+    CLIENTNETRWTIMEOUT, request);
 
   {
     // 32-bits = 1 x '0' + 1 x 'x' + 8 x hex + 1 x '/0' = 11 byte string
@@ -937,109 +535,9 @@ void castor::tape::aggregator::ClientTxRx::notifyEndOfSession(
   tapegateway::EndNotification request;
   request.setMountTransactionId(volReqId);
 
-  // Connect to the client
-  castor::io::ClientSocket sock(clientPort, clientHost);
-  try {
-    sock.connect();
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      ": Failed to connect to client to send EndNotification"
-      ": " << ex.getMessage().str());
-  }
-
-  try {
-    // Send the request
-    sock.sendObject(request);
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      ": Failed to send EndNotification to client"
-      ": " << ex.getMessage().str());
-  }
-
-  std::auto_ptr<castor::IObject> obj;
-  try {
-    // Receive the reply object wrapping it in an auto pointer so that it is
-    // automatically deallocated when it goes out of scope
-    obj.reset(sock.readObject());
-
-    if(obj.get() == NULL) {
-      TAPE_THROW_EX(castor::exception::Internal,
-        ": ClientSocket::readObject() returned null");
-    }
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      ": Failed to read EndNotification reply from client"
-      ": " << ex.getMessage().str());
-  }
-
-  // Close the connection to the client
-  sock.close();
-
-  // Temporary variable used to check for a transaction ID mistatch
-  uint64_t volReqIdFromClient = 0;
-
-  switch(obj->type()) {
-  case OBJ_NotificationAcknowledge:
-    // Copy the reply information
-    try {
-      tapegateway::NotificationAcknowledge &notificationAcknowledge =
-        dynamic_cast<tapegateway::NotificationAcknowledge&>(*obj);
-      volReqIdFromClient = notificationAcknowledge.mountTransactionId();
-    } catch(std::bad_cast &bc) {
-      TAPE_THROW_EX(castor::exception::Internal,
-        ": Failed to down cast reply object to "
-        "tapegateway::NotificationAcknowledge");
-    }
-
-    // If there is a transaction ID mismatch
-    if(volReqIdFromClient != volReqId) {
-      TAPE_THROW_CODE(EBADMSG,
-           ": Transaction ID mismatch"
-           ": Expected = " << volReqId
-        << ": Actual = " << volReqIdFromClient);
-    }
-    break;
-
-  case OBJ_EndNotificationErrorReport:
-    {
-      int errorCode;
-      std::string errorMessage;
-
-      // Copy the reply information
-      try {
-        tapegateway::EndNotificationErrorReport &errorReport =
-          dynamic_cast<tapegateway::EndNotificationErrorReport&>(*obj);
-        volReqIdFromClient = errorReport.mountTransactionId();
-        errorCode = errorReport.errorCode();
-        errorMessage = errorReport.errorMessage();
-      } catch(std::bad_cast &bc) {
-        TAPE_THROW_EX(castor::exception::Internal,
-          ": Failed to down cast reply object to "
-          "tapegateway::EndNotificationErrorReport");
-      }
-
-      // If there is a transaction ID mismatch
-      if(volReqIdFromClient != volReqId) {
-        TAPE_THROW_CODE(EBADMSG,
-             ": Transaction ID mismatch"
-             ": Expected = " << volReqId
-          << ": Actual = " << volReqIdFromClient);
-      }
-
-      // Translate the reception of the error report into a C++ exception
-      TAPE_THROW_CODE(errorCode,
-         ": Client error report "
-         ": " << errorMessage);
-    }
-    break;
-
-  default:
-    {
-      TAPE_THROW_CODE(EBADMSG,
-        ": Unknown reply type "
-        ": Reply type = " << obj->type());
-    }
-  } // switch(obj->type())
+  const char *requestTypeName = "EndNotification";
+  notifyClient(cuuid, volReqId, requestTypeName, clientHost, clientPort,
+    CLIENTNETRWTIMEOUT, request);
 
   {
     castor::dlf::Param params[] = {
@@ -1073,43 +571,12 @@ castor::tape::tapegateway::DumpParameters
   tapegateway::DumpParametersRequest request;
   request.setMountTransactionId(volReqId);
 
-  // Connect to the client
-  castor::io::ClientSocket sock(clientPort, clientHost);
-  try {
-    sock.connect();
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      ": Failed to connect to client to send DumpParametersRequest"
-      ": " << ex.getMessage().str());
-  }
-
-  // Send the request
-  try {
-    sock.sendObject(request);
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      ": Failed to send DumpParametersRequest to client"
-      ": " << ex.getMessage().str());
-  }
-
-  // Receive the reply object wrapping it in an auto pointer so that it is
-  // automatically deallocated when it goes out of scope
-  std::auto_ptr<castor::IObject> obj;
-  try {
-    obj.reset(sock.readObject());
-
-    if(obj.get() == NULL) {
-      TAPE_THROW_EX(castor::exception::Internal,
-        ": ClientSocket::readObject() returned null");
-    }
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      ": Failed to read DumpParametersRequest reply from client"
-      ": " << ex.getMessage().str());
-  }
-
-  // Close the connection to the client
-  sock.close();
+  // Send the request and receive the reply
+  time_t connectDuration  = 0;
+  time_t sendRecvDuration = 0;
+  std::auto_ptr<castor::IObject> obj(sendRequestAndReceiveReply(
+    "DumpParametersRequest", clientHost, clientPort, CLIENTNETRWTIMEOUT,
+    request, connectDuration, sendRecvDuration));
 
   switch(obj->type()) {
   case OBJ_DumpParameters:
@@ -1124,15 +591,10 @@ castor::tape::tapegateway::DumpParameters
       }
 
       LogHelper::logMsg(cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_GOT_DUMP_PARAMETERS_FROM_CLIENT, volReqId, -1, *reply);
+        AGGREGATOR_GOT_DUMP_PARAMETERS_FROM_CLIENT, *reply, connectDuration,
+        sendRecvDuration);
 
-      // If there is a transaction ID mismatch
-      if(reply->mountTransactionId() != volReqId) {
-        TAPE_THROW_CODE(EBADMSG,
-             ": Transaction ID mismatch"
-             ": Expected = " << volReqId
-          << ": Actual = " << reply->mountTransactionId());
-      }
+      checkMountTransactionId(volReqId, reply->mountTransactionId());
 
       // Release the reply message from its smart pointer and return it
       obj.release();
@@ -1140,39 +602,7 @@ castor::tape::tapegateway::DumpParameters
     }
 
   case OBJ_EndNotificationErrorReport:
-    {
-      int errorCode;
-      std::string errorMessage;
-
-      // Temporary variable used to check for a transaction ID mistatch
-      uint64_t volReqIdFromClient = 0;
-
-      // Copy the reply information
-      try {
-        tapegateway::EndNotificationErrorReport &errorReport =
-          dynamic_cast<tapegateway::EndNotificationErrorReport&>(*obj);
-        volReqIdFromClient = errorReport.mountTransactionId();
-        errorCode          = errorReport.errorCode();
-        errorMessage       = errorReport.errorMessage();
-      } catch(std::bad_cast &bc) {
-        TAPE_THROW_EX(castor::exception::Internal,
-          ": Failed to down cast reply object to "
-          "tapegateway::EndNotificationErrorReport");
-      }
-
-      // If there is a transaction ID mismatch
-      if(volReqIdFromClient != volReqId) {
-        TAPE_THROW_CODE(EBADMSG,
-             ": Transaction ID mismatch"
-             ": Expected = " << volReqId
-          << ": Actual = " << volReqIdFromClient);
-      }
-
-      // Translate the reception of the error report into a C++ exception
-      TAPE_THROW_CODE(errorCode,
-         ": Client error report "
-         ": " << errorMessage);
-    }
+    throwEndNotificationErrorReport(volReqId, obj.get());
     break;
 
   default:
@@ -1205,115 +635,14 @@ void castor::tape::aggregator::ClientTxRx::notifyDumpMessage(
       AGGREGATOR_NOTIFY_CLIENT_DUMP_MESSAGE, params);
   }
 
-
   // Prepare the request
   tapegateway::DumpNotification request;
   request.setMountTransactionId(volReqId);
   request.setMessage(message);
 
-  // Connect to the client
-  castor::io::ClientSocket sock(clientPort, clientHost);
-  try {
-    sock.connect();
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      ": Failed to connect to client to send DumpNotification"
-      ": " << ex.getMessage().str());
-  }
-
-  try {
-    // Send the request
-    sock.sendObject(request);
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      ": Failed to send DumpNotification to client"
-      ": " << ex.getMessage().str());
-  }
-
-  std::auto_ptr<castor::IObject> obj;
-  try {
-    // Receive the reply object wrapping it in an auto pointer so that it is
-    // automatically deallocated when it goes out of scope
-    obj.reset(sock.readObject());
-
-    if(obj.get() == NULL) {
-      TAPE_THROW_EX(castor::exception::Internal,
-        ": ClientSocket::readObject() returned null");
-    }
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      ": Failed to read DumpNotification reply from client"
-      ": " << ex.getMessage().str());
-  }
-
-  // Close the connection to the client
-  sock.close();
-
-  // Temporary variable used to check for a transaction ID mistatch
-  uint64_t volReqIdFromClient = 0;
-
-  switch(obj->type()) {
-  case OBJ_NotificationAcknowledge:
-    // Copy the reply information
-    try {
-      tapegateway::NotificationAcknowledge &notificationAcknowledge =
-        dynamic_cast<tapegateway::NotificationAcknowledge&>(*obj);
-      volReqIdFromClient = notificationAcknowledge.mountTransactionId();
-    } catch(std::bad_cast &bc) {
-      TAPE_THROW_EX(castor::exception::Internal,
-        ": Failed to down cast reply object to "
-        "tapegateway::NotificationAcknowledge");
-    }
-
-    // If there is a transaction ID mismatch
-    if(volReqIdFromClient != volReqId) {
-      TAPE_THROW_CODE(EBADMSG,
-           ": Transaction ID mismatch"
-           ": Expected = " << volReqId
-        << ": Actual = " << volReqIdFromClient);
-    }
-    break;
-
-  case OBJ_EndNotificationErrorReport:
-    {
-      int errorCode;
-      std::string errorMessage;
-
-      // Copy the reply information
-      try {
-        tapegateway::EndNotificationErrorReport &errorReport =
-          dynamic_cast<tapegateway::EndNotificationErrorReport&>(*obj);
-        volReqIdFromClient = errorReport.mountTransactionId();
-        errorCode = errorReport.errorCode();
-        errorMessage = errorReport.errorMessage();
-      } catch(std::bad_cast &bc) {
-        TAPE_THROW_EX(castor::exception::Internal,
-          ": Failed to down cast reply object to "
-          "tapegateway::EndNotificationErrorReport");
-      }
-
-      // If there is a transaction ID mismatch
-      if(volReqIdFromClient != volReqId) {
-        TAPE_THROW_CODE(EBADMSG,
-             ": Transaction ID mismatch"
-             ": Expected = " << volReqId
-          << ": Actual = " << volReqIdFromClient);
-      }
-
-      // Translate the reception of the error report into a C++ exception
-      TAPE_THROW_CODE(errorCode,
-         ": Client error report "
-         ": " << errorMessage);
-    }
-    break;
-
-  default:
-    {
-      TAPE_THROW_CODE(EBADMSG,
-        ": Unknown reply type "
-        ": Reply type = " << obj->type());
-    }
-  } // switch(obj->type())
+  const char *requestTypeName = "DumpNotification";
+  notifyClient(cuuid, volReqId, requestTypeName, clientHost, clientPort,
+    CLIENTNETRWTIMEOUT, request);
 
   {
     castor::dlf::Param params[] = {
@@ -1344,116 +673,15 @@ void castor::tape::aggregator::ClientTxRx::notifyEndOfFailedSession(
       AGGREGATOR_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
   }
 
-
   // Prepare the request
   tapegateway::EndNotificationErrorReport request;
   request.setMountTransactionId(volReqId);
   request.setErrorCode(ex.code());
   request.setErrorMessage(ex.getMessage().str());
 
-  // Connect to the client
-  castor::io::ClientSocket sock(clientPort, clientHost);
-  try {
-    sock.connect();
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      ": Failed to connect to client to send EndNotificationErrorReport"
-      ": " << ex.getMessage().str());
-  }
-
-  try {
-    // Send the request
-    sock.sendObject(request);
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      ": Failed to send EndNotificationErrorReport to client"
-      ": " << ex.getMessage().str());
-  }
-
-  std::auto_ptr<castor::IObject> obj;
-  try {
-    // Receive the reply object wrapping it in an auto pointer so that it is
-    // automatically deallocated when it goes out of scope
-    obj.reset(sock.readObject());
-
-    if(obj.get() == NULL) {
-      TAPE_THROW_EX(castor::exception::Internal,
-        ": ClientSocket::readObject() returned null");
-    }
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      ": Failed to read EndNotificationErrorReport reply from client"
-      ": " << ex.getMessage().str());
-  }
-
-  // Close the connection to the client
-  sock.close();
-
-  // Temporary variable used to check for a transaction ID mistatch
-  uint64_t volReqIdFromClient = 0;
-
-  switch(obj->type()) {
-  case OBJ_NotificationAcknowledge:
-    // Copy the reply information
-    try {
-      tapegateway::NotificationAcknowledge &notificationAcknowledge =
-        dynamic_cast<tapegateway::NotificationAcknowledge&>(*obj);
-      volReqIdFromClient = notificationAcknowledge.mountTransactionId();
-    } catch(std::bad_cast &bc) {
-      TAPE_THROW_EX(castor::exception::Internal,
-        ": Failed to down cast reply object to "
-        "tapegateway::NotificationAcknowledge");
-    }
-
-    // If there is a transaction ID mismatch
-    if(volReqIdFromClient != volReqId) {
-      TAPE_THROW_CODE(EBADMSG,
-           ": Transaction ID mismatch"
-           ": Expected = " << volReqId
-        << ": Actual = " << volReqIdFromClient);
-    }
-    break;
-
-  case OBJ_EndNotificationErrorReport:
-    {
-      int errorCode;
-      std::string errorMessage;
-
-      // Copy the reply information
-      try {
-        tapegateway::EndNotificationErrorReport &errorReport =
-          dynamic_cast<tapegateway::EndNotificationErrorReport&>(*obj);
-        volReqIdFromClient = errorReport.mountTransactionId();
-        errorCode = errorReport.errorCode();
-        errorMessage = errorReport.errorMessage();
-      } catch(std::bad_cast &bc) {
-        TAPE_THROW_EX(castor::exception::Internal,
-          ": Failed to down cast reply object to "
-          "tapegateway::EndNotificationErrorReport");
-      }
-
-      // If there is a transaction ID mismatch
-      if(volReqIdFromClient != volReqId) {
-        TAPE_THROW_CODE(EBADMSG,
-             ": Transaction ID mismatch"
-             ": Expected = " << volReqId
-          << ": Actual = " << volReqIdFromClient);
-      }
-
-      // Translate the reception of the error report into a C++ exception
-      TAPE_THROW_CODE(errorCode,
-         ": Client error report "
-         ": " << errorMessage);
-    }
-    break;
-
-  default:
-    {
-      TAPE_THROW_CODE(EBADMSG,
-        ": Unknown reply type "
-        ": Reply type = " << obj->type());
-    }
-  } // switch(obj->type())
+  const char *requestTypeName = "EndNotificationErrorReport";
+  notifyClient(cuuid, volReqId, requestTypeName, clientHost, clientPort,
+    CLIENTNETRWTIMEOUT, request);
 
   {
     castor::dlf::Param params[] = {
@@ -1488,98 +716,129 @@ void castor::tape::aggregator::ClientTxRx::ping(const Cuuid_t &cuuid,
   tapegateway::PingNotification request;
   request.setMountTransactionId(volReqId);
 
+  const char *requestTypeName = "PingNotification";
+  notifyClient(cuuid, volReqId, requestTypeName, clientHost, clientPort,
+    CLIENTNETRWTIMEOUT, request);
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId"  , volReqId  ),
+      castor::dlf::Param("clientHost", clientHost),
+      castor::dlf::Param("clientPort", clientPort)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_PINGED_CLIENT, params);
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// sendRequestAndReceiveReply
+//-----------------------------------------------------------------------------
+castor::IObject
+  *castor::tape::aggregator::ClientTxRx::sendRequestAndReceiveReply(
+  const char           *requestTypeName,
+  const char           *clientHost,
+  const unsigned short clientPort,
+  const int            clientNetRWTimeout,
+  IObject              &request,
+  time_t               &connectDuration,
+  time_t               &sendRecvDuration)
+  throw(castor::exception::Exception) {
+
   // Connect to the client
   castor::io::ClientSocket sock(clientPort, clientHost);
+  sock.setTimeout(clientNetRWTimeout);
   try {
+    const size_t connectStartTime = time(NULL);
     sock.connect();
+    connectDuration = time(NULL) - connectStartTime;
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to connect to client to send PingNotification"
+      ": Failed to connect to client to send " << requestTypeName <<
       ": " << ex.getMessage().str());
   }
 
+  // Send the request
+  const size_t sendAndReceiveStartTime = time(NULL);
   try {
-    // Send the request
     sock.sendObject(request);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to send PingNotification to client"
+      ": Failed to send "  << requestTypeName << " to client"
       ": " << ex.getMessage().str());
   }
 
+  // Receive the reply object wrapping it in an auto pointer so that it is
+  // automatically deallocated when it goes out of scope
   std::auto_ptr<castor::IObject> obj;
-
   try {
-    // Receive the reply object wrapping it in an auto pointer so that it is
-    // automatically deallocated when it goes out of scope
     obj.reset(sock.readObject());
 
     if(obj.get() == NULL) {
       TAPE_THROW_EX(castor::exception::Internal,
         ": ClientSocket::readObject() returned null");
     }
+    sendRecvDuration = time(NULL) - sendAndReceiveStartTime;
   } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      ": Failed to read PingNotification reply from client"
-      ": " << ex.getMessage().str());
+
+    std::stringstream oss;
+
+    oss << ": Failed to read " <<  requestTypeName << " reply from client: "
+      << ex.getMessage().str();
+
+    if(ex.code() == SETIMEDOUT) {
+      oss << ": Timed out after " << sock.timeout() << " seconds";
+    }
+
+    TAPE_THROW_CODE(ex.code(), oss.str());
   }
 
-  // Temporary variable used to check for a transaction ID mistatch
-  uint64_t volReqIdFromClient = 0;
+  // Close the connection to the client
+  sock.close();
+
+  return(obj.release());
+}
+
+
+//-----------------------------------------------------------------------------
+// notifyClient
+//-----------------------------------------------------------------------------
+void  castor::tape::aggregator::ClientTxRx::notifyClient(
+  const Cuuid_t        &cuuid,
+  const uint32_t       volReqId,
+  const char           *requestTypeName,
+  const char           *clientHost,
+  const unsigned short clientPort,
+  const int            clientNetRWTimeout,
+  IObject              &request)
+  throw(castor::exception::Exception) {
+
+  // Send the request and receive the reply
+  time_t connectDuration  = 0;
+  time_t sendRecvDuration = 0;
+  std::auto_ptr<castor::IObject> obj(sendRequestAndReceiveReply(
+    requestTypeName, clientHost, clientPort, CLIENTNETRWTIMEOUT,
+    request, connectDuration, sendRecvDuration));
 
   switch(obj->type()) {
   case OBJ_NotificationAcknowledge:
-    // Copy the reply information
-    try {
-      tapegateway::NotificationAcknowledge &notificationAcknowledge =
-        dynamic_cast<tapegateway::NotificationAcknowledge&>(*obj);
-      volReqIdFromClient = notificationAcknowledge.mountTransactionId();
-    } catch(std::bad_cast &bc) {
-      TAPE_THROW_EX(castor::exception::Internal,
-        ": Failed to down cast reply object to "
-        "tapegateway::NotificationAcknowledge");
-    }
+    {
+      // Down cast the reply to its specific class
+      tapegateway::NotificationAcknowledge *reply =
+        dynamic_cast<tapegateway::NotificationAcknowledge*>(obj.get());
 
-    // If there is a transaction ID mismatch
-    if(volReqIdFromClient != volReqId) {
-      TAPE_THROW_CODE(EBADMSG,
-           ": Transaction ID mismatch"
-           ": Expected = " << volReqId
-        << ": Actual = " << volReqIdFromClient);
+      if(reply == NULL) {
+        TAPE_THROW_EX(castor::exception::Internal,
+          ": Failed to down cast reply object to "
+          "tapegateway::NotificationAcknowledge");
+      }
+
+      checkMountTransactionId(volReqId, reply->mountTransactionId());
     }
     break;
 
   case OBJ_EndNotificationErrorReport:
-    {
-      int errorCode;
-      std::string errorMessage;
-
-      // Copy the reply information
-      try {
-        tapegateway::EndNotificationErrorReport &errorReport =
-          dynamic_cast<tapegateway::EndNotificationErrorReport&>(*obj);
-        volReqIdFromClient = errorReport.mountTransactionId();
-        errorCode = errorReport.errorCode();
-        errorMessage = errorReport.errorMessage();
-      } catch(std::bad_cast &bc) {
-        TAPE_THROW_EX(castor::exception::Internal,
-          ": Failed to down cast reply object to "
-          "tapegateway::EndNotificationErrorReport");
-      }
-
-      // If there is a transaction ID mismatch
-      if(volReqIdFromClient != volReqId) {
-        TAPE_THROW_CODE(EBADMSG,
-             ": Transaction ID mismatch"
-             ": Expected = " << volReqId
-          << ": Actual = " << volReqIdFromClient);
-      }
-
-      // Translate the reception of the error report into a C++ exception
-      TAPE_THROW_CODE(errorCode,
-         ": Client error report "
-         ": " << errorMessage);
-    }
+    throwEndNotificationErrorReport(volReqId, obj.get());
     break;
 
   default:
@@ -1589,13 +848,47 @@ void castor::tape::aggregator::ClientTxRx::ping(const Cuuid_t &cuuid,
         ": Reply type = " << obj->type());
     }
   } // switch(obj->type())
+}
 
-  {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"  , volReqId  ),
-      castor::dlf::Param("clientHost", clientHost),
-      castor::dlf::Param("clientPort", clientPort)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_PINGED_CLIENT, params);
+
+//-----------------------------------------------------------------------------
+// throwEndNotificationErrorReport
+//-----------------------------------------------------------------------------
+void  castor::tape::aggregator::ClientTxRx::throwEndNotificationErrorReport(
+  const uint32_t volReqId, IObject *const obj)
+  throw(castor::exception::Exception) {
+
+  // Down cast the reply to its specific class
+  tapegateway::EndNotificationErrorReport *reply =
+    dynamic_cast<tapegateway::EndNotificationErrorReport*>(obj);
+
+  if(reply == NULL) {
+    TAPE_THROW_EX(castor::exception::Internal,
+      ": Failed to down cast reply object to "
+      "tapegateway::EndNotificationErrorReport");
+  }
+
+  checkMountTransactionId(volReqId, reply->mountTransactionId());
+
+  // Translate the reception of the error report into a C++ exception
+  TAPE_THROW_CODE(reply->errorCode(),
+     ": Client error report "
+     ": " << reply->errorMessage());
+}
+
+
+//-----------------------------------------------------------------------------
+// checkMountTransactionId
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::ClientTxRx::checkMountTransactionId(
+  const uint32_t expectedId, const uint32_t actualId)
+  throw(castor::exception::Exception) {
+
+  // Throw an exception if there is a transaction ID mismatch
+  if(expectedId != actualId) {
+    TAPE_THROW_CODE(EBADMSG,
+      ": Transaction ID mismatch"
+      ": Expected = " <<  expectedId
+      << ": Actual = " << actualId);
   }
 }

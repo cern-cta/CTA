@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/tpcp/Constants.hpp
+ *                      castor/tape/legacymsg/MessageHeader.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,42 +18,48 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- *
- *
+ * 
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TPCP_CONSTANTS_HPP
-#define CASTOR_TAPE_TPCP_CONSTANTS_HPP 1
+#ifndef CASTOR_TAPE_LEGACYMSG_MESSAGEHEADER
+#define CASTOR_TAPE_LEGACYMSG_MESSAGEHEADER
+
+#include "h/Castor_limits.h"
 
 #include <stdint.h>
-#include <stdlib.h>
+#include <string>
 
 
-namespace castor {
-namespace tape   {
-namespace tpcp   {
-  	
-  /**
-   * The number of seconds to stay blocked while waiting for a callback
-   * connection from the aggregator.
-   */
-  const int WAITCALLBACKTIMEOUT = 60;
+namespace castor    {
+namespace tape      {
+namespace legacymsg {
 
   /**
-   * The time format specified using the recognized formatting characters of 
-   * 'std::strftime'.
+   * A message header
    */
-  const char *const TIMEFORMAT = "%b %d %H:%M:%S";
+  struct MessageHeader {
+    /**
+     * The magic number of the message.
+     */
+    uint32_t magic;
 
-  /**
-   * The default blocksize in bytes to be used when dumping a tape.
-   */
-  const int32_t DEFAULTDUMPBLOCKSIZE = 262144;
+    /**
+     * The requets type of the message.
+     */
+    uint32_t reqType;
 
-} // namespace tpcp
+    /**
+     * The length of the message body in bytes if this is the header of any
+     * message other than an acknowledge message.  If this is the header of
+     * an acknowledge message then there is no message body and this field is
+     * used to pass the status of the acknowledge.
+     */
+    uint32_t lenOrStatus;
+  };
+
+} // namespace legacymsg
 } // namespace tape
 } // namespace castor
 
-
-#endif // CASTOR_TAPE_TPCP_CONSTANTS_HPP
+#endif // CASTOR_TAPE_LEGACYMSG_MESSAGEHEADER

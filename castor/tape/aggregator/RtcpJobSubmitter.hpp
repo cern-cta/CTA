@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      RcpJobSubmitter.hpp
+ *                      castor/tape/aggregator/RtcpJobSubmitter.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,10 +22,10 @@
  *
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
-#ifndef _CASTOR_TAPE_AGGREGATOR_RCPJOBSUBMITTER_HPP_
-#define _CASTOR_TAPE_AGGREGATOR_RCPJOBSUBMITTER_HPP_
+#ifndef _CASTOR_TAPE_AGGREGATOR_RTCPJOBSUBMITTER_HPP_
+#define _CASTOR_TAPE_AGGREGATOR_RTCPJOBSUBMITTER_HPP_
 
-#include "castor/tape/aggregator/RcpJobReplyMsgBody.hpp"
+#include "castor/tape/legacymsg/RtcpMarshal.hpp"
 #include "h/net.h"
 
 #include <string>
@@ -46,7 +46,7 @@ namespace aggregator {
    * A helper class for submitting remote copy jobs to either RTCPD or tape
    * aggregator daemons.
    */
-  class RcpJobSubmitter {
+  class RtcpJobSubmitter {
 
   public:
 
@@ -70,19 +70,19 @@ namespace aggregator {
      * @param reply The reply from RTCPD which may be positive or negative.
      */
     static void submit(
-      const std::string  &host,
-      const unsigned int  port,
-      const int           netReadWriteTimeout,
-      const char         *remoteCopyType,
-      const u_signed64    tapeRequestID,
-      const std::string  &clientUserName,
-      const std::string  &clientHost,
-      const int           clientPort,
-      const int           clientEuid,
-      const int           clientEgid,
-      const std::string  &deviceGroupName,
-      const std::string  &driveUnit,
-      RcpJobReplyMsgBody &reply)
+      const std::string              &host,
+      const unsigned int              port,
+      const int                       netReadWriteTimeout,
+      const char                     *remoteCopyType,
+      const u_signed64                tapeRequestID,
+      const std::string              &clientUserName,
+      const std::string              &clientHost,
+      const int                       clientPort,
+      const int                       clientEuid,
+      const int                       clientEgid,
+      const std::string              &deviceGroupName,
+      const std::string              &driveUnit,
+      legacymsg::RtcpJobReplyMsgBody &reply)
       throw(castor::exception::Exception);    
 
       
@@ -101,12 +101,13 @@ namespace aggregator {
      */
     static void readReply(castor::io::AbstractTCPSocket &sock,
       const int netReadWriteTimeout, const char *remoteCopyType,
-      RcpJobReplyMsgBody &reply) throw(castor::exception::Exception);    
+      legacymsg::RtcpJobReplyMsgBody &reply)
+      throw(castor::exception::Exception);    
 
-  }; // class RcpJobSubmitter
+  }; // class RtcpJobSubmitter
 
 } // namespace aggregator
 } // namespace tape
 } // namespace castor      
 
-#endif // _CASTOR_TAPE_AGGREGATOR_RCPJOBSUBMITTER_HPP_
+#endif // _CASTOR_TAPE_AGGREGATOR_RTCPJOBSUBMITTER_HPP_

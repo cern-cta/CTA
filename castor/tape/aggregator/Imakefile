@@ -80,16 +80,20 @@ AGGREGATORBIN_SRCS = \
   BoolFunctor.cpp \
   ClientTxRx.cpp \
   DriveAllocationProtocolEngine.cpp \
+  LegacyTxRx.cpp \
   LogHelper.cpp \
   Packer.cpp \
-  RcpJobSubmitter.cpp \
-  RtcpMarshaller.cpp \
+  RtcpJobSubmitter.cpp \
   RtcpTxRx.cpp \
   SmartFd.cpp \
   SmartFdList.cpp \
   SynchronizedCounter.cpp \
   Unpacker.cpp \
   VdqmRequestHandler.cpp \
+  VmgrTxRx.cpp \
+  ../legacymsg/CommonMarshal.cpp \
+  ../legacymsg/RtcpMarshal.cpp \
+  ../legacymsg/VmgrMarshal.cpp \
   ../net/net.cpp \
   ../utils/utils.cpp \
   $(TAPEGATEWAY_MESSAGES_SRCS) \

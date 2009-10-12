@@ -241,6 +241,82 @@ private:
    */
   ClientTxRx() {}
 
+  /**
+   * Sends the specified request message to the client and receives the reply.
+   *
+   * @param requestTypeName    The name of the type of the request.  This name
+   *                           will be used in logging messages.
+   * @param clientHost         The client host name.
+   * @param clientPort         The client port number.
+   * @param clientNetRWTimeout The timeout in seconds used when sending and
+   *                           receiving client network messages.
+   * @param request            Out parameter: The request to be sent to the
+   *                           client.
+   * @param connectDuration    Out parameter: The number of seconds it took to
+   *                           connect to the client.
+   * @param sendRecvDuration   Out parameter: The number of seconds it took to
+   *                           send the request and receive the reply.
+   * @return                   A pointer to teh reply object.  It is the
+   *                           responsibility of the caller to deallocate the
+   *                           memory of the reply object.
+   */
+  static IObject *sendRequestAndReceiveReply(
+    const char           *requestTypeName,
+    const char           *clientHost,
+    const unsigned short clientPort,
+    const int            clientNetRWTimeout,
+    IObject              &request,
+    time_t               &connectDuration,
+    time_t               &sendRecvDuration)
+    throw(castor::exception::Exception);
+
+  /**
+   * Notifies the client using the specified request message.
+   *
+   * @param cuuid              The ccuid to be used for logging.
+   * @param volReqId           The volume request ID to be sent to the client.
+   * @param requestTypeName    The name of the type of the request.  This name
+   *                           will be used in logging messages.
+   * @param clientHost         The client host name.
+   * @param clientPort         The client port number.
+   * @param clientNetRWTimeout The timeout in seconds used when sending and
+   *                           receiving client network messages.
+   * @param request            Out parameter: The request to be sent to the
+   *                           client.
+   */
+  static void notifyClient(
+    const Cuuid_t        &cuuid,
+    const uint32_t       volReqId,
+    const char           *requestTypeName,
+    const char           *clientHost,
+    const unsigned short clientPort,
+    const int            clientNetRWTimeout,
+    IObject              &request)
+    throw(castor::exception::Exception);
+
+  /**
+   * Translates the specified incoming EndNotificationErrorReport message into
+   * the throwing of the appropriate exception.  This method is not typical
+   * because it throws an exception if it succeeds to carry out its it task.
+   *
+   * @param volReqId The volume request ID of the current mount as known by
+   *                 the aggregator.
+   * @param obj      The received IObject which represents the
+   *                 OBJ_EndNotificationErrorReport message.
+   */
+  static void throwEndNotificationErrorReport(const uint32_t volReqId,
+    IObject *const obj) throw(castor::exception::Exception);
+
+  /**
+   * Throws an exception if here is a mount transaction ID mismatch.  Mount
+   * transaction ID and volume request ID are synonyms.
+   *
+   * @param expectedId The expected ID.
+   * @param actualId   The ID received from the client.
+   */
+  static void checkMountTransactionId(const uint32_t expectedId,
+    const uint32_t actualId) throw(castor::exception::Exception);
+
 }; // class ClientTxRx
 
 } // namespace aggregator

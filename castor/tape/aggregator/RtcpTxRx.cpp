@@ -27,9 +27,8 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
-#include "castor/tape/aggregator/RtcpMarshaller.hpp"
+#include "castor/tape/aggregator/LegacyTxRx.hpp"
 #include "castor/tape/aggregator/RtcpTxRx.hpp"
-#include "castor/tape/aggregator/RcpJobSubmitter.hpp"
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/tapegateway/FileToMigrate.hpp"
 #include "castor/tape/tapegateway/FileToMigrateRequest.hpp"
@@ -51,7 +50,7 @@
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::getRequestInfoFromRtcpd(
   const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, 
-  const int netReadWriteTimeout, RtcpTapeRqstErrMsgBody &reply) 
+  const int netReadWriteTimeout, legacymsg::RtcpTapeRqstErrMsgBody &reply) 
   throw(castor::exception::Exception) {
 
  {
@@ -63,17 +62,17 @@ void castor::tape::aggregator::RtcpTxRx::getRequestInfoFromRtcpd(
   }
 
   // Prepare logical request for volume request ID
-  RtcpTapeRqstErrMsgBody request;
+  legacymsg::RtcpTapeRqstErrMsgBody request;
   utils::setBytes(request, '\0');
 
-  // Marshall the request
+  // Marshal the request
   char buf[RTCPMSGBUFSIZE];
   size_t totalLen = 0;
   try {
-    totalLen = RtcpMarshaller::marshall(buf, request);
+    totalLen = legacymsg::marshal(buf, request);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,
-         ": Failed to marshall request for volume request ID: "
+         ": Failed to marshal request for volume request ID: "
       << ex.getMessage().str());
   }
 
@@ -87,9 +86,9 @@ void castor::tape::aggregator::RtcpTxRx::getRequestInfoFromRtcpd(
   }
 
   // Receive acknowledge from RTCPD
-  MessageHeader ackMsg;
+  legacymsg::MessageHeader ackMsg;
   try {
-    receiveMessageHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
+    LegacyTxRx::receiveMsgHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
       ackMsg);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EPROTO,
@@ -110,8 +109,8 @@ void castor::tape::aggregator::RtcpTxRx::getRequestInfoFromRtcpd(
   // Receive reply from RTCPD
   utils::setBytes(reply, '\0');
   try {
-    MessageHeader header;
-    receiveMessageHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
+    legacymsg::MessageHeader header;
+    LegacyTxRx::receiveMsgHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
       header);
     RtcpTxRx::receiveMsgBody(cuuid, volReqId, socketFd, netReadWriteTimeout,
       header, reply);
@@ -123,7 +122,7 @@ void castor::tape::aggregator::RtcpTxRx::getRequestInfoFromRtcpd(
 
   // Send acknowledge to RTCPD
   try {
-    sendMessageHeader(cuuid, volReqId, socketFd, netReadWriteTimeout, 
+    LegacyTxRx::sendMsgHeader(cuuid, volReqId, socketFd, netReadWriteTimeout, 
       ackMsg);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EPROTO,
@@ -141,20 +140,20 @@ void castor::tape::aggregator::RtcpTxRx::getRequestInfoFromRtcpd(
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::giveVolumeToRtcpd(
   const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, 
-  const int netReadWriteTimeout, RtcpTapeRqstErrMsgBody &request) 
+  const int netReadWriteTimeout, legacymsg::RtcpTapeRqstErrMsgBody &request) 
   throw(castor::exception::Exception) {
 
   LogHelper::logMsgBody(cuuid, DLF_LVL_DEBUG,
     AGGREGATOR_GIVE_VOLUME_TO_RTCPD, volReqId, socketFd, request);
 
-  // Marshall the message
+  // Marshal the message
   char buf[RTCPMSGBUFSIZE];
   size_t totalLen = 0;
   try {
-    totalLen = RtcpMarshaller::marshall(buf, request);
+    totalLen = legacymsg::marshal(buf, request);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,
-         ": Failed to marshall volume message: "
+         ": Failed to marshal volume message: "
       << ex.getMessage().str());
   }
 
@@ -168,9 +167,9 @@ void castor::tape::aggregator::RtcpTxRx::giveVolumeToRtcpd(
   }
 
   // Receive acknowledge from RTCPD
-  MessageHeader ackMsg;
+  legacymsg::MessageHeader ackMsg;
   try {
-    receiveMessageHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
+    LegacyTxRx::receiveMsgHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
       ackMsg);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EPROTO,
@@ -199,7 +198,8 @@ void castor::tape::aggregator::RtcpTxRx::giveVolumeToRtcpd(
 void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
   const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
   const int netReadWriteTimeout, const uint32_t mode,
-  RtcpFileRqstErrMsgBody &request) throw(castor::exception::Exception) {
+  legacymsg::RtcpFileRqstErrMsgBody &request)
+  throw(castor::exception::Exception) {
 
   {
     const int message_no = mode == WRITE_ENABLE ?
@@ -210,14 +210,14 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
       socketFd, request);
   }
 
-  // Marshall the message
+  // Marshal the message
   char buf[RTCPMSGBUFSIZE];
   size_t totalLen = 0;
   try {
-    totalLen = RtcpMarshaller::marshall(buf, request);
+    totalLen = legacymsg::marshal(buf, request);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,
-         ": Failed to marshall file message: "
+         ": Failed to marshal file message: "
       << ex.getMessage().str());
   }
 
@@ -231,9 +231,9 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
   }
 
   // Receive acknowledge from RTCPD
-  MessageHeader ackMsg;
+  legacymsg::MessageHeader ackMsg;
   try {
-    receiveMessageHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
+    LegacyTxRx::receiveMsgHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
       ackMsg);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EPROTO,
@@ -267,20 +267,20 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::tellRtcpdDumpTape(
   const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
-  const int netReadWriteTimeout, RtcpDumpTapeRqstMsgBody &request)
+  const int netReadWriteTimeout, legacymsg::RtcpDumpTapeRqstMsgBody &request)
   throw(castor::exception::Exception) {
 
   LogHelper::logMsgBody(cuuid, DLF_LVL_DEBUG, AGGREGATOR_TELL_RTCPD_DUMP_TAPE,
     volReqId, socketFd, request);
 
-  // Marshall the message
+  // Marshal the message
   char buf[RTCPMSGBUFSIZE];
   size_t totalLen = 0;
   try {
-    totalLen = RtcpMarshaller::marshall(buf, request);
+    totalLen = legacymsg::marshal(buf, request);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,
-         ": Failed to marshall file message: "
+         ": Failed to marshal file message: "
       << ex.getMessage().str());
   }
 
@@ -294,9 +294,9 @@ void castor::tape::aggregator::RtcpTxRx::tellRtcpdDumpTape(
   }
 
   // Receive acknowledge from RTCPD
-  MessageHeader ackMsg;
+  legacymsg::MessageHeader ackMsg;
   try {
-    receiveMessageHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
+    LegacyTxRx::receiveMsgHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
       ackMsg);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EPROTO,
@@ -323,53 +323,6 @@ void castor::tape::aggregator::RtcpTxRx::tellRtcpdDumpTape(
 
 
 //-----------------------------------------------------------------------------
-// sendMessageHeader
-//-----------------------------------------------------------------------------
-void castor::tape::aggregator::RtcpTxRx::sendMessageHeader(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, 
-  const int netReadWriteTimeout, const MessageHeader &header) 
-  throw(castor::exception::Exception) {
-
-  char buf[RTCPMSGBUFSIZE];
-  size_t totalLen = 0;
-
-  try {
-    totalLen = RtcpMarshaller::marshall(buf, header);
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_EX(castor::exception::Internal,
-         ": Failed to marshall RCP acknowledge message: "
-      << ex.getMessage().str());
-  }
-
-  {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", volReqId),
-      castor::dlf::Param("socketFd", socketFd)};
-
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
-      AGGREGATOR_SEND_HEADER_TO_RTCPD, params);
-  }
-
-  try {
-    net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(SECOMERR,
-      ": Failed to send message header to RTCPD"
-      ": " << ex.getMessage().str());
-  }
-
-  {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", volReqId),
-      castor::dlf::Param("socketFd", socketFd)};
-
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
-      AGGREGATOR_SENT_HEADER_TO_RTCPD, params);
-  }
-}
-
-
-//-----------------------------------------------------------------------------
 // pingRtcpd
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::RtcpTxRx::pingRtcpd(const Cuuid_t &cuuid,
@@ -379,17 +332,17 @@ void castor::tape::aggregator::RtcpTxRx::pingRtcpd(const Cuuid_t &cuuid,
   char buf[RTCPMSGBUFSIZE];
   size_t totalLen = 0;
 
-  MessageHeader header;
+  legacymsg::MessageHeader header;
   header.magic       = RTCOPY_MAGIC;
   header.reqType     = RTCP_PING_REQ;
   header.lenOrStatus = 0;
 
   try {
     // The RTCPD message is a bodiless RTCP message
-    totalLen = RtcpMarshaller::marshall(buf, header);
+    totalLen = legacymsg::marshal(buf, header);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,
-         ": Failed to marshall RCPD ping message : "
+         ": Failed to marshal RCPD ping message : "
       << ex.getMessage().str());
   }
 
@@ -436,15 +389,15 @@ void castor::tape::aggregator::RtcpTxRx::tellRtcpdEndOfFileList(
       AGGREGATOR_TELL_RTCPD_END_OF_FILE_LIST, params);
   }
 
-  // Marshall the message
-  RtcpNoMoreRequestsMsgBody body;
+  // Marshal the message
+  legacymsg::RtcpNoMoreRequestsMsgBody body;
   char buf[RTCPMSGBUFSIZE];
   size_t totalLen = 0;
   try {
-    totalLen = RtcpMarshaller::marshall(buf, body);
+    totalLen = legacymsg::marshal(buf, body);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,
-         ": Failed to marshall \"no more requests\" message: "
+         ": Failed to marshal \"no more requests\" message: "
       << ex.getMessage().str());
   }
 
@@ -458,9 +411,9 @@ void castor::tape::aggregator::RtcpTxRx::tellRtcpdEndOfFileList(
   }
 
   // Receive acknowledge from RTCPD
-  MessageHeader ackMsg;
+  legacymsg::MessageHeader ackMsg;
   try {
-    receiveMessageHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
+    LegacyTxRx::receiveMsgHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
       ackMsg);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EPROTO,
@@ -523,15 +476,15 @@ void castor::tape::aggregator::RtcpTxRx::tellRtcpdToAbort(const Cuuid_t &cuuid,
       AGGREGATOR_TELL_RTCPD_TO_ABORT, params);
   }
 
-  // Marshall the message
-  RtcpAbortMsgBody body;
+  // Marshal the message
+  legacymsg::RtcpAbortMsgBody body;
   char buf[RTCPMSGBUFSIZE];
   size_t totalLen = 0;
   try {
-    totalLen = RtcpMarshaller::marshall(buf, body);
+    totalLen = legacymsg::marshal(buf, body);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,
-         ": Failed to marshall \"no more requests\" message: "
+         ": Failed to marshal \"no more requests\" message: "
       << ex.getMessage().str());
   }
 
@@ -545,9 +498,9 @@ void castor::tape::aggregator::RtcpTxRx::tellRtcpdToAbort(const Cuuid_t &cuuid,
   }
 
   // Receive acknowledge from RTCPD
-  MessageHeader ackMsg;
+  legacymsg::MessageHeader ackMsg;
   try {
-    receiveMessageHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
+    LegacyTxRx::receiveMsgHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
       ackMsg);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EPROTO,
@@ -579,11 +532,11 @@ void castor::tape::aggregator::RtcpTxRx::tellRtcpdToAbort(const Cuuid_t &cuuid,
 
 
 //-----------------------------------------------------------------------------
-// receiveRcpJobRqst
+// receiveRtcpJobRqst
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::RtcpTxRx::receiveRcpJobRqst(const Cuuid_t &cuuid,
+void castor::tape::aggregator::RtcpTxRx::receiveRtcpJobRqst(const Cuuid_t &cuuid,
   const int socketFd, const int netReadWriteTimeout,
-  RcpJobRqstMsgBody &request) throw(castor::exception::Exception) {
+  legacymsg::RtcpJobRqstMsgBody &request) throw(castor::exception::Exception) {
 
   castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
     AGGREGATOR_RECEIVE_RCP_JOB_RQST);
@@ -598,15 +551,15 @@ void castor::tape::aggregator::RtcpTxRx::receiveRcpJobRqst(const Cuuid_t &cuuid,
       << ": " << ex.getMessage().str());
   }
 
-  // Unmarshall the messager header
-  MessageHeader header;
+  // Unmarshal the messager header
+  legacymsg::MessageHeader header;
   try {
     const char *p           = headerBuf;
     size_t     remainingLen = sizeof(headerBuf);
-    RtcpMarshaller::unmarshall(p, remainingLen, header);
+    legacymsg::unmarshal(p, remainingLen, header);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EBADMSG,
-      ": Failed to unmarshall message header from RCP job submitter"
+      ": Failed to unmarshal message header from RCP job submitter"
       ": " << ex.getMessage().str());
   }
 
@@ -626,7 +579,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRcpJobRqst(const Cuuid_t &cuuid,
 
   // If the message body is too small
   {
-    // The minimum size of a RcpJobRqstMsgBody is 4 uint32_t's and the
+    // The minimum size of a RtcpJobRqstMsgBody is 4 uint32_t's and the
     // termination characters of 4 strings
     const size_t minimumLen = 4 * sizeof(uint32_t) + 4;
     if(header.lenOrStatus < minimumLen) {
@@ -646,14 +599,14 @@ void castor::tape::aggregator::RtcpTxRx::receiveRcpJobRqst(const Cuuid_t &cuuid,
       << ": "<< ex.getMessage().str());
   }
 
-  // Unmarshall the message body
+  // Unmarshal the message body
   try {
     const char *p           = bodyBuf;
     size_t     remainingLen = header.lenOrStatus;
-    RtcpMarshaller::unmarshall(p, remainingLen, request);
+    legacymsg::unmarshal(p, remainingLen, request);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,
-         ": Failed to unmarshall message body from RCP job submitter"
+         ": Failed to unmarshal message body from RCP job submitter"
       << ": "<< ex.getMessage().str());
   }
 
@@ -679,7 +632,7 @@ void castor::tape::aggregator::RtcpTxRx::askRtcpdToRequestMoreWork(
       AGGREGATOR_ASK_RTCPD_TO_RQST_MORE_RECALL_WORK, params);
   }
 
-  RtcpFileRqstErrMsgBody request;
+  legacymsg::RtcpFileRqstErrMsgBody request;
 
   utils::setBytes(request, '\0');
 
@@ -707,14 +660,14 @@ void castor::tape::aggregator::RtcpTxRx::askRtcpdToRequestMoreWork(
   request.err.maxTpRetry = -1;
   request.err.maxCpRetry = -1;
 
-  // Marshall the message
+  // Marshal the message
   char buf[RTCPMSGBUFSIZE];
   size_t totalLen = 0;
   try {
-    totalLen = RtcpMarshaller::marshall(buf, request);
+    totalLen = legacymsg::marshal(buf, request);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,
-         ": Failed to marshall ask RTCPD to request more "
+         ": Failed to marshal ask RTCPD to request more "
       << (mode == WRITE_ENABLE ? "migrate" : "recall") << " work message: "
       << ex.getMessage().str());
   }
@@ -731,9 +684,9 @@ void castor::tape::aggregator::RtcpTxRx::askRtcpdToRequestMoreWork(
   }
 
   // Receive acknowledge from RTCPD
-  MessageHeader ackMsg;
+  legacymsg::MessageHeader ackMsg;
   try {
-    receiveMessageHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
+    LegacyTxRx::receiveMsgHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
       ackMsg);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EPROTO,
@@ -774,7 +727,7 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
   char (&nameServerHostName)[CA_MAXHOSTNAMELEN+1], const uint64_t castorFileId,
   unsigned char (&blockId)[4]) throw(castor::exception::Exception) {
 
-  RtcpFileRqstErrMsgBody request;
+  legacymsg::RtcpFileRqstErrMsgBody request;
 
 
   // Give file information to RTCPD
@@ -813,69 +766,6 @@ void castor::tape::aggregator::RtcpTxRx::giveFileToRtcpd(
   request.err.maxCpRetry       = -1;
 
   giveFileToRtcpd(cuuid, volReqId, socketFd, RTCPDNETRWTIMEOUT, mode, request);
-}
-
-
-//-----------------------------------------------------------------------------
-// receiveMessageHeader
-//-----------------------------------------------------------------------------
-void castor::tape::aggregator::RtcpTxRx::receiveMessageHeader(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
-  const int netReadWriteTimeout, MessageHeader &header)
-  throw(castor::exception::Exception) {
-
-  // Read in the message header
-  char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
-  try {
-    net::readBytes(socketFd, RTCPDNETRWTIMEOUT, sizeof(headerBuf), headerBuf);
-  } catch (castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(SECOMERR,
-         ": Failed to read message header from RTCPD"
-      << ": " << ex.getMessage().str());
-  }
-
-  // Unmarshall the messager header
-  try {
-    const char *p           = headerBuf;
-    size_t     remainingLen = sizeof(headerBuf);
-    RtcpMarshaller::unmarshall(p, remainingLen, header);
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(EBADMSG,
-       ": Failed to unmarshall message header from RTCPD"
-       ": " << ex.getMessage().str());
-  }
-}
-
-
-//-----------------------------------------------------------------------------
-// receiveMessageHeaderFromCloseableConn
-//-----------------------------------------------------------------------------
-void castor::tape::aggregator::RtcpTxRx::receiveMessageHeaderFromCloseable(
-  const Cuuid_t &cuuid,  bool &connClosed, const uint32_t volReqId, 
-  const int socketFd, const int netReadWriteTimeout, MessageHeader &header)
-  throw(castor::exception::Exception) {
-
-  // Read in the message header
-  char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
-  try {
-    net::readBytesFromCloseable(connClosed, socketFd, RTCPDNETRWTIMEOUT, 
-      sizeof(headerBuf), headerBuf);
-  } catch (castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(SECOMERR,
-         ": Failed to read message header from RTCPD"
-      << ": " << ex.getMessage().str());
-  }
-
-  // Unmarshall the messager header
-  try {
-    const char *p           = headerBuf;
-    size_t     remainingLen = sizeof(headerBuf);
-    RtcpMarshaller::unmarshall(p, remainingLen, header);
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(EBADMSG,
-       ": Failed to unmarshall message header from RTCPD"
-       ": " << ex.getMessage().str());
-  }
 }
 
 

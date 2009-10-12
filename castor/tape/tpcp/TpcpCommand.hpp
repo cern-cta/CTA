@@ -229,11 +229,13 @@ protected:
    * Request a drive from the VDQM to mount the specified tape for the
    * specified access mode (read or write).
    *
-   * @param mode   The access mode, either WRITE_DISABLE or WRITE_ENABLE.
-   * @param server If not NULL then this parameter specifies the tape server to
-   * be used, therefore overriding drive scheduling of the VDQM.
+   * @param accessMode The tape access mode, either WRITE_DISABLE or
+   *                   WRITE_ENABLE.
+   * @param tapeServer If not NULL then this parameter specifies the tape
+   *                   server to be used, therefore overriding the drive
+   *                   scheduling of the VDQM.
    */
-  void requestDriveFromVdqm(const int mode, char *const server)
+  void requestDriveFromVdqm(const int accessMode, char *const tapeServer)
     throw(castor::exception::Exception);
 
   /**
@@ -504,12 +506,6 @@ private:
    * The hostaname of the machine.
    */
   char m_hostname[CA_MAXHOSTNAMELEN+1];
-
-  /**
-   * The IP address of the machine.
-   */
-  char m_hostip[INET_ADDRSTRLEN+1];
-
 
   /**
    * The current working directory where tpcp command is run.

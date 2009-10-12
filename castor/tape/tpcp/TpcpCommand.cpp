@@ -59,8 +59,6 @@
 #include <unistd.h>
 #include <poll.h>
  
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
 //------------------------------------------------------------------------------
 // vmgr_error_buffer
@@ -138,13 +136,8 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
 
   try {
 
-    char Buf [ 200 ] ;
-    struct hostent * Host;
-    gethostname ( Buf , 200 ) ;
-    Host = ( struct hostent * ) gethostbyname ( Buf ) ;
-
     // Get the local hostname
-    strncpy(m_hostname, Host->h_name, sizeof(m_hostname));
+    gethostname(m_hostname, sizeof(m_hostname));    
 
     // Check if the hostname of the machine is set to "localhost"
     if(strcmp(m_hostname, "localhost") == 0) {
@@ -152,17 +145,7 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
                    "\"localhost\"" << std::endl << std::endl;
       return 1;
     }
-
-    // Get the local IP address
-    strncpy(m_hostip, inet_ntoa(*((struct in_addr *)Host->h_addr)), sizeof(m_hostip) );
-
-    // Check if the IP of the machine is set to "127.0.0.1"
-    if(strcmp(m_hostname, "127.0.0.1") == 0) {
-      std::cerr << "tpcp cannot be ran on a machine where hostname is set to "
-                   "\"127.0.0.1\"" << std::endl << std::endl;
-      return 1;
-    }
-
+    
     // Get the Current Working Directory
     getcwd(m_cwd, PATH_MAX);
     if(m_cwd == NULL){
@@ -690,19 +673,19 @@ void castor::tape::tpcp::TpcpCommand::vmgrQueryTape(
   char (&vid)[CA_MAXVIDLEN+1], const int side)
   throw (castor::exception::Exception) {
 
-  int save_serrno = 0;
+  int savedSerrno = 0;
 
   serrno=0;
   const int rc = vmgr_querytape(m_cmdLine.vid, side, &m_vmgrTapeInfo,
     m_dgn);
   
-  save_serrno = serrno;
+  savedSerrno = serrno;
 
   if(rc != 0) {
     char buf[STRERRORBUFLEN];
     sstrerror_r(serrno, buf, sizeof(buf));
     buf[sizeof(buf)-1] = '\0';
-    TAPE_THROW_CODE(save_serrno,
+    TAPE_THROW_CODE(savedSerrno,
       ": Failed vmgr_querytape() call"
       ": " << buf);
   }
@@ -728,32 +711,69 @@ void castor::tape::tpcp::TpcpCommand::setupCallbackSock()
 //------------------------------------------------------------------------------
 // requestDriveFromVdqm 
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::TpcpCommand::requestDriveFromVdqm(const int mode,
-  char *const server) throw(castor::exception::Exception) {
+void castor::tape::tpcp::TpcpCommand::requestDriveFromVdqm(
+  const int accessMode, char *const tapeServer)
+  throw(castor::exception::Exception) {
 
+  // Get the port number and IP of the callback port
   unsigned short port = 0;
   unsigned long  ip   = 0;
   m_callbackSock.getPortIp(port, ip);
 
-  vdqmnw_t *const nw   = NULL;
-  char     *const unit = NULL;
-  const int rc = vdqm_SendAggregatorVolReq(nw, &m_volReqId,
-    m_cmdLine.vid, m_dgn, server, unit, mode, port);
-  const int save_serrno = serrno;
+  int      rc          = 0;
+  int      savedSerrno  = 0;
+  vdqmnw_t *nw         = NULL;
+  int      *reqID      = &m_volReqId;
+  char     *VID        = m_cmdLine.vid;
+  char     *dgn        = m_dgn;
+  char     *server     = tapeServer;
+  char     *unit       = NULL;
+  int      mode        = accessMode;
+  int      client_port = port;
 
-  if(rc == -1) {
-    char buf[STRERRORBUFLEN];
-    sstrerror_r(save_serrno, buf, sizeof(buf));
-    buf[sizeof(buf)-1] = '\0';
+  // Connect to the VDQM
+  rc = vdqm_Connect(&nw);
+  savedSerrno = serrno;
 
-    castor::exception::Exception ex(ECANCELED);
-    ex.getMessage() << "Failed to request drive from VDQM: "
-      << buf;
+  // If successfully connected
+  if(rc != -1) {
 
-    throw ex;
+    // Ask the VDQM to create a request for a drive with an aggregator
+    rc = vdqm_CreateRequestForAggregator(nw, reqID, VID, dgn, server, unit,
+      mode, client_port);
+    savedSerrno = serrno;
+
+    // If the request was sucessfully created
+    if(rc != -1) {
+
+      // Ask the VDQM to queue the newly created request
+      rc = vdqm_QueueRequestForAggregator(nw);
+      savedSerrno = serrno;
+    }
+
+    // If the request was successfully queued
+    if(rc != -1) {
+
+      // Record the fact
+      m_gotVolReqId = true;
+    }
+
+    // Disconnect from the VDQM
+    rc = vdqm_Disconnect(&nw);
+    savedSerrno = serrno;
   }
 
-  m_gotVolReqId = true;
+  // Throw an exception if there was an error
+  if(rc == -1) {
+    char errorBuf[STRERRORBUFLEN];
+    sstrerror_r(savedSerrno, errorBuf, sizeof(errorBuf));
+    errorBuf[sizeof(errorBuf)-1] = '\0';
+
+    castor::exception::Exception ex(savedSerrno);
+
+    ex.getMessage() << errorBuf;
+    throw ex;
+  }
 }
 
 
@@ -1139,15 +1159,12 @@ void castor::tape::tpcp::TpcpCommand::deleteVdqmVolumeRequest()
 void castor::tape::tpcp::TpcpCommand::checkFilenameFormat()
   throw(castor::exception::Exception) {
 
-  // local string containing the hostip + ":"
-  std::string hostip(m_hostip);
-  hostip.append(":");
-
-  // local string containing the hostname 
+  FilenameList::iterator itor = m_filenames.begin();
+  // local string containing the hostname + ":"
   std::string hostname(m_hostname);
+  hostname.append(":");
 
   size_t firstPos;
-  FilenameList::iterator itor = m_filenames.begin();
   while(itor!=m_filenames.end()) {
 
    std::string &line = *itor;
@@ -1176,8 +1193,8 @@ void castor::tape::tpcp::TpcpCommand::checkFilenameFormat()
        line.insert(0, "/");
        line.insert(0, m_cwd);
      }
-     // Prefix it with the Hostip
-     line.insert(0, hostip);
+     // Prefix it with the Hostname
+     line.insert(0, hostname);
 
    } else {
        // if there is at least 1 ":/" -->check the "hostname" entered by the 
@@ -1192,41 +1209,13 @@ void castor::tape::tpcp::TpcpCommand::checkFilenameFormat()
 
          throw ex;
        }
-
-       // Remove the domain from the hostname and from the user entered 
-       // hostname and check if they match. 
-       // if so -> convert the hostname in IP address
-       {
-         size_t pos = hostname.find_first_of(".");
-         std::string hostname_no_domain;
-         // substring position "0" to the first occurrence of the character "."
-         if(pos != std::string::npos){
-           hostname_no_domain = hostname.substr(0, pos);
-         }else{
-           hostname_no_domain = hostname;
-         } 
-
-         pos = str.find_first_of(".");
-         std::string user_hostname_no_domain;
-         // substring position "0" to the first occurrence of the character "."
-         if(pos != std::string::npos){
-           user_hostname_no_domain = str.substr(0, pos);
-         }else{
-           user_hostname_no_domain = str;
-         }
-
-         if(hostname_no_domain.compare(user_hostname_no_domain) == 0){
-           line.replace(0, firstPos+1, hostip);
-         }
-       }
-
-       // if file hostamane == "localhost" or "127.0.0.1"
-       // --> replace it with hostip
+       // if file hostamane == "localhost" or "127.0.0.1"  
+       // --> replace it with hostname
        if (str == "localhost" || str == "127.0.0.1"){
 
-         line.replace(0, firstPos+1, hostip);
+         line.replace(0, firstPos+1, hostname);
        }
-   }//else 
+   } 
 
   ++itor;
   }//for(itor=m_cmdLine.filenames.begin()...
@@ -1255,14 +1244,7 @@ void castor::tape::tpcp::TpcpCommand::rfioStat(const char *const path,
     //               the error is from a remote host, then this function
     //               connects to the host and asks for the maching string)
 
-    // In case of ECONNREFUSED error, most likely is because on the peer host 
-    // there is no "rfiod" running.  
-    const char *err_msg = NULL;
-    if(savedSerrno == ECONNREFUSED){
-      err_msg = "rfiod unreachable";
-    }else{
-      err_msg = rfio_serror();
-    }
+    const char *err_msg = rfio_serror();
 
     castor::exception::Exception ex(savedSerrno);
 

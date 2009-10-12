@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/RtcpTapeRqstMsgBody.hpp
+ *                      castor/tape/legacymsg/RtcpTapeRqstMsgBody.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,10 +22,10 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_RTCPTAPERQSTMSGBODY
-#define CASTOR_TAPE_AGGREGATOR_RTCPTAPERQSTMSGBODY
+#ifndef CASTOR_TAPE_LEGACYMSG_RTCPTAPERQSTMSGBODY
+#define CASTOR_TAPE_LEGACYMSG_RTCPTAPERQSTMSGBODY
 
-#include "castor/tape/aggregator/RtcpErrorAppendix.hpp"
+#include "castor/tape/legacymsg/RtcpErrorAppendix.hpp"
 #include "h/Castor_limits.h"
 #include "h/Cuuid.h"
 
@@ -34,7 +34,7 @@
 
 namespace castor     {
 namespace tape       {
-namespace aggregator {
+namespace legacymsg {
 
   /**
    * An RTCP tape request without error appendix message.
@@ -64,8 +64,8 @@ namespace aggregator {
 
   }; // struct RtcpTapeRqstMsgBody
 
-} // namespace aggregator
+} // namespace legacymsg
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_RTCPTAPERQSTMSGBODY
+#endif // CASTOR_TAPE_LEGACYMSG_RTCPTAPERQSTMSGBODY

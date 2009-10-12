@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/RtcpAbortMsgBody.hpp
+ *                      castor/tape/legacymsg/RtcpFileRqstErrMsgBody.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,21 +22,34 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_RTCPABORTMSGBODY
-#define CASTOR_TAPE_AGGREGATOR_RTCPABORTMSGBODY
+#ifndef CASTOR_TAPE_LEGACYMSG_RTCPFILERQSTERRMSGBODY
+#define CASTOR_TAPE_LEGACYMSG_RTCPFILERQSTERRMSGBODY
+
+#include "castor/tape/legacymsg/RtcpErrorAppendix.hpp"
+#include "castor/tape/legacymsg/RtcpFileRqstMsgBody.hpp"
+#include "castor/tape/legacymsg/RtcpSegmentAttributes.hpp"
+#include "h/Castor_limits.h"
+#include "h/Cuuid.h"
+
+#include <stdint.h>
+
 
 namespace castor     {
 namespace tape       {
-namespace aggregator {
+namespace legacymsg {
 
   /**
-   * An RTCP tape request without error appendix message.
+   * An RTCP file request with error appendix message.
+   *
+   * Please note that the presence of an error appendix does not necessarily
+   * indicate an error.
    */
-  struct RtcpAbortMsgBody {
-  }; // struct RtcpAbortMsgBody
+  struct RtcpFileRqstErrMsgBody : public RtcpFileRqstMsgBody {
+    RtcpErrorAppendix err; // Error reporting
+  }; // struct RtcpFileRqstErrMsgBody
 
-} // namespace aggregator
+} // namespace legacymsg
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_RTCPABORTMSGBODY
+#endif // CASTOR_TAPE_LEGACYMSG_RTCPFILERQSTERRMSGBODY

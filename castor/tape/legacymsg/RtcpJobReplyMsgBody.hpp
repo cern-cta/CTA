@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/tpcp/Constants.hpp
+ *                      castor/tape/legacymsg/RtcpJobReplyMsgBody.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,42 +18,33 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- *
- *
+ * 
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TPCP_CONSTANTS_HPP
-#define CASTOR_TAPE_TPCP_CONSTANTS_HPP 1
+#ifndef CASTOR_TAPE_LEGACYMSG_RTCPJOBREPLYMSGBODY
+#define CASTOR_TAPE_LEGACYMSG_RTCPJOBREPLYMSGBODY
+
+#include "h/Castor_limits.h"
 
 #include <stdint.h>
-#include <stdlib.h>
+#include <string>
 
 
-namespace castor {
-namespace tape   {
-namespace tpcp   {
-  	
-  /**
-   * The number of seconds to stay blocked while waiting for a callback
-   * connection from the aggregator.
-   */
-  const int WAITCALLBACKTIMEOUT = 60;
+namespace castor     {
+namespace tape       {
+namespace legacymsg {
 
   /**
-   * The time format specified using the recognized formatting characters of 
-   * 'std::strftime'.
+   * An RCP job reply message.
    */
-  const char *const TIMEFORMAT = "%b %d %H:%M:%S";
+  struct RtcpJobReplyMsgBody {
+    uint32_t status;
+    char     errorMessage[1024];
+  };
 
-  /**
-   * The default blocksize in bytes to be used when dumping a tape.
-   */
-  const int32_t DEFAULTDUMPBLOCKSIZE = 262144;
-
-} // namespace tpcp
+} // namespace legacymsg
 } // namespace tape
 } // namespace castor
 
-
-#endif // CASTOR_TAPE_TPCP_CONSTANTS_HPP
+#endif // CASTOR_TAPE_LEGACYMSG_RTCPJOBREPLYMSGBODY

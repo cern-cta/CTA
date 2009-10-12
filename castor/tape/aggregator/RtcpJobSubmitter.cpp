@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      RcpJobSubmitter.cpp
+ *                      castor/tape/aggregator/RtcpJobSubmitter.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -27,10 +27,8 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/io/ClientSocket.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
-#include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
-#include "castor/tape/aggregator/RcpJobReplyMsgBody.hpp"
-#include "castor/tape/aggregator/RcpJobSubmitter.hpp"
-#include "castor/tape/aggregator/RtcpMarshaller.hpp"
+#include "castor/tape/aggregator/RtcpJobSubmitter.hpp"
+#include "castor/tape/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/net.h"
@@ -47,23 +45,23 @@
 //------------------------------------------------------------------------------
 // submit
 //------------------------------------------------------------------------------
-void castor::tape::aggregator::RcpJobSubmitter::submit(
-  const std::string  &host,
-  const unsigned int port,
-  const int          netReadWriteTimeout,
-  const char         *remoteCopyType,
-  const u_signed64   volReqId,
-  const std::string  &clientUserName,
-  const std::string  &clientHost,
-  const int          clientPort,
-  const int          clientEuid,
-  const int          clientEgid,
-  const std::string  &deviceGroupName,
-  const std::string  &driveUnit,
-  RcpJobReplyMsgBody &reply)
+void castor::tape::aggregator::RtcpJobSubmitter::submit(
+  const std::string              &host,
+  const unsigned int             port,
+  const int                      netReadWriteTimeout,
+  const char                     *remoteCopyType,
+  const u_signed64               volReqId,
+  const std::string              &clientUserName,
+  const std::string              &clientHost,
+  const int                      clientPort,
+  const int                      clientEuid,
+  const int                      clientEgid,
+  const std::string              &deviceGroupName,
+  const std::string              &driveUnit,
+  legacymsg::RtcpJobReplyMsgBody &reply)
   throw(castor::exception::Exception) {
 
-  RcpJobRqstMsgBody request;
+  legacymsg::RtcpJobRqstMsgBody request;
 
   // Check the validity of the parameters of this function
   if(clientHost.length() > sizeof(request.clientHost) - 1) {
@@ -95,32 +93,33 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
 
   // Prepare the job submission request information ready for marshalling
   // The validity of the string length were check above
-  request.volReqId = volReqId;
-  request.clientPort    = clientPort;
-  request.clientEuid    = clientEuid;
-  request.clientEgid    = clientEgid;
+  request.volReqId   = volReqId;
+  request.clientPort = clientPort;
+  request.clientEuid = clientEuid;
+  request.clientEgid = clientEgid;
   strcpy(request.clientHost     , clientHost.c_str());
   strcpy(request.deviceGroupName, deviceGroupName.c_str());
   strcpy(request.driveUnit      , driveUnit.c_str());
   strcpy(request.clientUserName , clientUserName.c_str());
 
-  // Marshall the job submission request message
+  // Marshal the job submission request message
   char buf[RTCPMSGBUFSIZE];
   size_t totalLen = 0;
 
   try {
-    totalLen = RtcpMarshaller::marshall(buf, request);
+    totalLen = legacymsg::marshal(buf, request);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,
-      ": Failed to marshall RCP job submission request message"
+      ": Failed to marshal RCP job submission request message"
       ": " << ex.getMessage().str());
   }
 
   // Connect to the RTCPD or tape aggregator daemon
-  castor::io::ClientSocket socket(port, host);
+  castor::io::ClientSocket sock(port, host);
+  sock.setTimeout(CLIENTNETRWTIMEOUT);
 
   try {
-    socket.connect();
+    sock.connect();
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ECONNABORTED,
       ": Failed to connect to " << remoteCopyType <<
@@ -132,7 +131,7 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
   // Send the job submission request message to the RTCPD or tape aggregator
   // daemon
   try {
-    net::writeBytes(socket.socket(), netReadWriteTimeout, totalLen, buf);
+    net::writeBytes(sock.socket(), netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
       ": Failed to send the job submission request message to " <<
@@ -141,16 +140,16 @@ void castor::tape::aggregator::RcpJobSubmitter::submit(
   }
 
   // Read the reply from the RTCPD or tape aggregator daemon
-  readReply(socket, netReadWriteTimeout, remoteCopyType, reply);
+  readReply(sock, netReadWriteTimeout, remoteCopyType, reply);
 }
 
 
 //------------------------------------------------------------------------------
 // readReply
 //------------------------------------------------------------------------------
-void castor::tape::aggregator::RcpJobSubmitter::readReply(
+void castor::tape::aggregator::RtcpJobSubmitter::readReply(
   castor::io::AbstractTCPSocket &sock, const int netReadWriteTimeout,
-  const char *remoteCopyType, RcpJobReplyMsgBody &reply)
+  const char *remoteCopyType, legacymsg::RtcpJobReplyMsgBody &reply)
   throw(castor::exception::Exception) {
 
   // Read in the message header
@@ -164,15 +163,15 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
       ": " << ex.getMessage().str());
   }
 
-  // Unmarshall the messager header
-  MessageHeader header;
+  // Unmarshal the messager header
+  legacymsg::MessageHeader header;
   try {
     const char *p           = headerBuf;
     size_t     remainingLen = sizeof(headerBuf);
-    RtcpMarshaller::unmarshall(p, remainingLen, header);
+    legacymsg::unmarshal(p, remainingLen, header);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EBADMSG,
-      ": Failed to unmarshall message header from " << remoteCopyType <<
+      ": Failed to unmarshal message header from " << remoteCopyType <<
       ": " << ex.getMessage().str());
   }
 
@@ -228,14 +227,14 @@ void castor::tape::aggregator::RcpJobSubmitter::readReply(
       ": " << ex.getMessage().str());
   }
 
-  // Unmarshall the job submission reply
+  // Unmarshal the job submission reply
   try {
     const char *p           = bodyBuf;
     size_t     remainingLen = header.lenOrStatus;
-    RtcpMarshaller::unmarshall(p, remainingLen, reply);
+    legacymsg::unmarshal(p, remainingLen, reply);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,
-      ": Failed to unmarshall job submission reply"
+      ": Failed to unmarshal job submission reply"
       ": " << ex.getMessage().str());
   }
 }

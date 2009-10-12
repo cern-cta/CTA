@@ -35,12 +35,6 @@ namespace castor {
 namespace tape   {
 
   /**
-   * The timeout in seconds used when sending and receiving RTCPD network
-   * messages.
-   */
-  const size_t RTCPDNETRWTIMEOUT = 5;
-
-  /**
    * The size in bytes of the error string buffer to be used with the strerror
    * family of commands.
    */

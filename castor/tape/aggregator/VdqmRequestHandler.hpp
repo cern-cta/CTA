@@ -28,9 +28,9 @@
 #include "castor/io/ServerSocket.hpp"
 #include "castor/server/IThread.hpp"
 #include "castor/tape/aggregator/BoolFunctor.hpp"
-#include "castor/tape/aggregator/MessageHeader.hpp"
-#include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
 #include "castor/tape/aggregator/SmartFdList.hpp"
+#include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
+#include "castor/tape/tapegateway/Volume.hpp"
 #include "h/Cuuid.h"
 
 #include <list>
@@ -63,7 +63,10 @@ public:
   virtual void init() throw();
 
   /**
-   * Main work for this thread.
+   * The entry point of this thread.
+   *
+   * @param param Parameter passed in by the CASTOR framework which should be
+   *              the VDQM connection socket.
    */
   virtual void run(void *param) throw();
 
@@ -123,13 +126,53 @@ private:
   StoppingGracefullyFunctor m_stoppingGracefullyFunctor;
 
   /**
+   * The entry point of this thread delegates its work to this method with a
+   * try and catch around the call so that we can throw exceptions.
+   *
+   * @param cuuid      The ccuid to be used for logging.
+   * @param jobRequest The RTCOPY job request from the VDQM.
+   */
+  void exceptionThrowingRun(const Cuuid_t &cuuid,
+    const legacymsg::RtcpJobRqstMsgBody &jobRequest)
+    throw(castor::exception::Exception);
+
+  /**
    * Throws an exception if the peer host associated with the specified
    * socket is not an authorised RCP job submitter.
    *
    * @param socketFd The socket file descriptor.
    */
-  void checkRcpJobSubmitterIsAuthorised(const int socketFd)
+  void checkRtcpJobSubmitterIsAuthorised(const int socketFd)
     throw(castor::exception::Exception);
+
+  /**
+   * Enters the thread into either bridge or aggregator mode.
+   *
+   * @param cuuid                    The ccuid to be used for logging.
+   * @param rtcpdCallbackSockFd      The file descriptor of the listener socket
+   *                                 to be used to accept callback connections
+   *                                 from RTCPD.
+   * @param rtcpdInitialSockFd       The socket file descriptor of initial
+   *                                 RTCPD connection.
+   * @param jobRequest               The RTCOPY job request from the VDQM.
+   * @param volume                   The volume message received from the
+   *                                 client.
+   * @param nbFilesOnDestinationTape If migrating and the client is the tape
+   *                                 gateay, then this must be set to the
+   *                                 current number of files on the tape, else
+   *                                 this parameter is ignored.
+   * @param stoppingGracefully       Functor that returns true if the daemon is
+   *                                 stopping gracefully.
+   */
+  void enterBridgeOrAggregatorMode(
+    const Cuuid_t                       &cuuid,
+    const int                           rtcpdCallbackSockFd,
+    const int                           rtcpdInitialSockFd,
+    const legacymsg::RtcpJobRqstMsgBody &jobRequest,
+    tapegateway::Volume                 &volume,
+    const uint32_t                      nbFilesOnDestinationTape,
+    BoolFunctor                         &stoppingGracefully)
+  throw(castor::exception::Exception);
 
 }; // class VdqmRequestHandler
 

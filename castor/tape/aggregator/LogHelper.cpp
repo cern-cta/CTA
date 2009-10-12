@@ -33,7 +33,7 @@
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
-  const int socketFd, const RcpJobRqstMsgBody &body) throw() {
+  const int socketFd, const legacymsg::RtcpJobRqstMsgBody &body) throw() {
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("volReqId"       , volReqId            ),
@@ -55,7 +55,7 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
-  const int socketFd, const RcpJobReplyMsgBody &body) throw() {
+  const int socketFd, const legacymsg::RtcpJobReplyMsgBody &body) throw() {
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("volReqId"    , volReqId         ),
@@ -71,7 +71,7 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
-  const int socketFd, const RtcpTapeRqstErrMsgBody &body) throw() {
+  const int socketFd, const legacymsg::RtcpTapeRqstErrMsgBody &body) throw() {
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("volReqId"      , volReqId           ),
@@ -112,7 +112,7 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
-  const int socketFd, const RtcpTapeRqstMsgBody &body) throw() {
+  const int socketFd, const legacymsg::RtcpTapeRqstMsgBody &body) throw() {
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("volReqId"      , volReqId           ),
@@ -148,7 +148,7 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
-  const int socketFd, const RtcpFileRqstErrMsgBody &body) throw() {
+  const int socketFd, const legacymsg::RtcpFileRqstErrMsgBody &body) throw() {
 
   // 32-bits = 1 x '0' + 1 x 'x' + 8 x hex + 1 x '/0' = 11 byte string
   char checksumHex[11];
@@ -223,7 +223,7 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
-  const int socketFd, const RtcpFileRqstMsgBody &body) throw() {
+  const int socketFd, const legacymsg::RtcpFileRqstMsgBody &body) throw() {
 
   // 32-bits = 1 x '0' + 1 x 'x' + 8 x hex + 1 x '/0' = 11 byte string
   char checksumHex[11];
@@ -294,7 +294,7 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
-  const int socketFd, const GiveOutpMsgBody &body) throw() {
+  const int socketFd, const legacymsg::GiveOutpMsgBody &body) throw() {
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("volReqId", volReqId    ),
@@ -309,7 +309,8 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
-  const int socketFd, const RtcpNoMoreRequestsMsgBody &body) throw() {
+  const int socketFd, const legacymsg::RtcpNoMoreRequestsMsgBody &body)
+  throw() {
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("volReqId", volReqId),
@@ -323,7 +324,7 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
-  const int socketFd, const RtcpAbortMsgBody &body) throw() {
+  const int socketFd, const legacymsg::RtcpAbortMsgBody &body) throw() {
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("volReqId", volReqId),
@@ -337,7 +338,7 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
-  const int socketFd, const RtcpDumpTapeRqstMsgBody &body) throw() {
+  const int socketFd, const legacymsg::RtcpDumpTapeRqstMsgBody &body) throw() {
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("volReqId"     , volReqId          ),
@@ -355,14 +356,56 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 
 
 //-----------------------------------------------------------------------------
+// logMsgBody
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
+  const int severity, const int message_no, const uint32_t volReqId,
+  const int socketFd, const legacymsg::VmgrTapeInfoMsgBody &body,
+  const time_t connectionDuration, const time_t sendRecvDuration) throw() {
+
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("volReqId"          , volReqId               ),
+    castor::dlf::Param("socketFd"          , socketFd               ),
+    castor::dlf::Param("vsn"               , body.vsn               ),
+    castor::dlf::Param("library"           , body.library           ),
+    castor::dlf::Param("dgn"               , body.dgn               ),
+    castor::dlf::Param("density"           , body.density           ),
+    castor::dlf::Param("labelType"         , body.labelType         ),
+    castor::dlf::Param("model"             , body.model             ),
+    castor::dlf::Param("mediaLetter"       , body.mediaLetter       ),
+    castor::dlf::Param("manufacturer"      , body.manufacturer      ),
+    castor::dlf::Param("serialNumber"      , body.serialNumber      ),
+    castor::dlf::Param("nbSides"           , body.nbSides           ),
+    castor::dlf::Param("eTime"             , body.eTime             ),
+    castor::dlf::Param("side"              , body.side              ),
+    castor::dlf::Param("poolName"          , body.poolName          ),
+    castor::dlf::Param("estimatedFreeSpace", body.estimatedFreeSpace),
+    castor::dlf::Param("nbFiles"           , body.nbFiles           ),
+    castor::dlf::Param("rCount"            , body.rCount            ),
+    castor::dlf::Param("wCount"            , body.wCount            ),
+    castor::dlf::Param("rHost"             , body.rHost             ),
+    castor::dlf::Param("wHost"             , body.wHost             ),
+    castor::dlf::Param("rJid"              , body.rJid              ),
+    castor::dlf::Param("wJid"              , body.wJid              ),
+    castor::dlf::Param("rTime"             , body.rTime             ),
+    castor::dlf::Param("wTime"             , body.wTime             ),
+    castor::dlf::Param("status"            , body.status            )};
+  castor::dlf::dlf_writep(cuuid, severity, message_no, params);
+}
+
+
+//-----------------------------------------------------------------------------
 // logMsg
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::LogHelper::logMsg(const Cuuid_t &cuuid,
-  const int severity, const int message_no, const uint32_t volReqId,
-  const int socketFd, const tapegateway::Volume &msg) throw() {
+  const int severity, const int message_no,
+  const tapegateway::Volume &msg, const time_t connectionDuration,
+  const time_t sendRecvDuration) throw() {
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("mountTransactionId", msg.mountTransactionId()),
+    castor::dlf::Param("connectDuration"   , connectionDuration      ),
+    castor::dlf::Param("sendRecvDuration"  , sendRecvDuration        ),
     castor::dlf::Param("vid"               , msg.vid()               ),
     castor::dlf::Param("density"           , msg.density()           ),
     castor::dlf::Param("label"             , msg.label()             ),
@@ -379,19 +422,22 @@ void castor::tape::aggregator::LogHelper::logMsg(const Cuuid_t &cuuid,
 // logMsg
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::LogHelper::logMsg(const Cuuid_t &cuuid,
-  const int severity, const int message_no, const uint32_t volReqId,
-  const int socketFd, const tapegateway::DumpParameters &msg) throw() {
+  const int severity, const int message_no,
+  const tapegateway::DumpParameters &msg, const time_t connectionDuration,
+  const time_t sendRecvDuration) throw() {
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("mountTransactionId", msg.mountTransactionId()),
-    castor::dlf::Param("maxBytes"          , msg.maxBytes()      ),
-    castor::dlf::Param("blockSize"         , msg.blockSize()     ),
-    castor::dlf::Param("converter"         , msg.converter()     ),
-    castor::dlf::Param("errAction"         , msg.errAction()     ),
-    castor::dlf::Param("startFile"         , msg.startFile()     ),
-    castor::dlf::Param("maxFile"           , msg.maxFile()       ),
-    castor::dlf::Param("fromBlock"         , msg.fromBlock()     ),
-    castor::dlf::Param("toBlock"           , msg.toBlock()       )};
+    castor::dlf::Param("connectDuration"   , connectionDuration      ),
+    castor::dlf::Param("sendRecvDuration"  , sendRecvDuration        ),
+    castor::dlf::Param("maxBytes"          , msg.maxBytes()          ),
+    castor::dlf::Param("blockSize"         , msg.blockSize()         ),
+    castor::dlf::Param("converter"         , msg.converter()         ),
+    castor::dlf::Param("errAction"         , msg.errAction()         ),
+    castor::dlf::Param("startFile"         , msg.startFile()         ),
+    castor::dlf::Param("maxFile"           , msg.maxFile()           ),
+    castor::dlf::Param("fromBlock"         , msg.fromBlock()         ),
+    castor::dlf::Param("toBlock"           , msg.toBlock()           )};
   castor::dlf::dlf_writep(cuuid, severity, message_no, params);
 }
 
@@ -399,13 +445,14 @@ void castor::tape::aggregator::LogHelper::logMsg(const Cuuid_t &cuuid,
 // logMsg
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::LogHelper::logMsg(const Cuuid_t &cuuid,
-  const int severity, const int message_no, const uint32_t volReqId,
-  const int socketFd, const tapegateway::FileToRecall &msg) throw() {
+  const int severity, const int message_no,
+  const tapegateway::FileToRecall &msg, const time_t connectionDuration,
+  const time_t sendRecvDuration) throw() {
     
   castor::dlf::Param params[] = {
-    castor::dlf::Param("volReqId"          , volReqId                ),
-    castor::dlf::Param("socketFd"          , socketFd                ),
     castor::dlf::Param("mountTransactionId", msg.mountTransactionId()),
+    castor::dlf::Param("connectDuration"   , connectionDuration      ),
+    castor::dlf::Param("sendRecvDuration"  , sendRecvDuration        ),
     castor::dlf::Param("fileTransactionId" , msg.fileTransactionId() ),
     castor::dlf::Param("nshost"            , msg.nshost()            ),
     castor::dlf::Param("fileid"            , msg.fileid()            ),
@@ -422,13 +469,14 @@ void castor::tape::aggregator::LogHelper::logMsg(const Cuuid_t &cuuid,
 // logMsg
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::LogHelper::logMsg(const Cuuid_t &cuuid,
-  const int severity, const int message_no, const uint32_t volReqId,
-  const int socketFd, const tapegateway::FileToMigrate &msg) throw() {
+  const int severity, const int message_no,
+  const tapegateway::FileToMigrate &msg, const time_t connectionDuration,
+  const time_t sendRecvDuration) throw() {
 
   castor::dlf::Param params[] = {
-    castor::dlf::Param("volReqId"            , volReqId                  ),
-    castor::dlf::Param("socketFd"            , socketFd                  ),
     castor::dlf::Param("mountTransactionId"  , msg.mountTransactionId()  ),
+    castor::dlf::Param("connectDuration"     , connectionDuration        ),
+    castor::dlf::Param("sendRecvDuration"    , sendRecvDuration          ),
     castor::dlf::Param("fileTransactionId"   , msg.fileTransactionId()   ),
     castor::dlf::Param("nshost"              , msg.nshost()              ),
     castor::dlf::Param("fileid"              , msg.fileid()              ),

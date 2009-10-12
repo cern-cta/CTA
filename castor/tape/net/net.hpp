@@ -130,8 +130,8 @@ void getSockIpPort(const int socketFd, unsigned long& ip,
  * Gets the peer IP and port number of the specified socket.
  *
  * @param socketFd The socket file descriptor.
- * @param ip The IP to be filled.
- * @param port The port to be filled.
+ * @param ip       The IP to be filled.
+ * @param port     The port to be filled.
  */
 void getPeerIpPort(const int socketFd, unsigned long& ip,
   unsigned short& port) throw(castor::exception::Exception);
@@ -140,9 +140,9 @@ void getPeerIpPort(const int socketFd, unsigned long& ip,
  * Gets the locally-bound host name of the specified socket.
  *
  * @param socketFd The socket file descriptor.
- * @param buf The buffer into which the hostname should written to.
- * @param len The length of the buffer into which the host name should be
- * written to.
+ * @param buf      The buffer into which the hostname should written to.
+ * @param len      The length of the buffer into which the host name should be
+ *                 written to.
  */
 void getSockHostName(const int socketFd, char *buf, size_t len)
   throw(castor::exception::Exception);
@@ -151,7 +151,7 @@ void getSockHostName(const int socketFd, char *buf, size_t len)
  * Gets the locally-bound host name of the specified socket.
  *
  * @param socketFd The socket file descriptor.
- * @param buf The buffer into which the hostname should written to.
+ * @param buf      The buffer into which the hostname should written to.
  */
 template<int n> static void getSockHostName(const int socketFd,
   char (&buf)[n]) throw(castor::exception::Exception) {
@@ -162,13 +162,12 @@ template<int n> static void getSockHostName(const int socketFd,
 /**
  * Gets the locally-bound IP, host name and port of the specified socket.
  *
- * @param socketFd The socket file descriptor.
- * @param ip The IP to be filled.
- * @param hostName The buffer into which the hostname should written to.
+ * @param socketFd    The socket file descriptor.
+ * @param ip          The IP to be filled.
+ * @param hostName    The buffer into which the hostname should written to.
  * @param hostNameLen The length of the buffer into which the host name
- * should be written to.
- * @param port The port to be filled.
- * written to.
+ *                    should be written to.
+ * @param port        The port to be filled.
  */
 void getSockIpHostnamePort(const int socketFd,
   unsigned long& ip, char *hostName, size_t hostNameLen,
@@ -178,10 +177,9 @@ void getSockIpHostnamePort(const int socketFd,
  * Gets the locally-bound IP, host name and port of the specified socket.
  *
  * @param socketFd The socket file descriptor.
- * @param ip The IP to be filled.
+ * @param ip       The IP to be filled.
  * @param hostName The buffer into which the hostname should written to.
- * @param port The port to be filled.
- * written to.
+ * @param port     The port to be filled.
  */
 template<int n> static void getSockIpHostnamePort(const int socketFd,
   unsigned long& ip, char (&hostName)[n], unsigned short& port)
@@ -193,9 +191,9 @@ template<int n> static void getSockIpHostnamePort(const int socketFd,
  * Gets the peer host name of the specified connection.
  *
  * @param socketFd The socket file descriptor of the connection.
- * @param buf The buffer into which the hostname should written to.
- * @param len The length of the buffer into which the host name should be
- * written to.
+ * @param buf      The buffer into which the hostname should written to.
+ * @param len      The length of the buffer into which the host name should be
+ *                 written to.
  */
 void getPeerHostName(const int socketFd, char *buf, size_t len)
   throw(castor::exception::Exception);
@@ -204,7 +202,7 @@ void getPeerHostName(const int socketFd, char *buf, size_t len)
  * Gets the peer host name of the specified connection.
  *
  * @param socketFd The socket file descriptor of the connection.
- * @param buf The buffer into which the hostname should written to.
+ * @param buf      The buffer into which the hostname should written to.
  */
 template<int n> static void getPeerHostName(const int socketFd,
   char (&buf)[n]) throw(castor::exception::Exception) {
@@ -224,9 +222,9 @@ void writeIp(std::ostream &os, const unsigned long ip) throw();
  * Writes a textual description of the specified socket to the specified
  * output stream.
  *
- * @param os The output stream to which the string is to be printed.
+ * @param os       The output stream to which the string is to be printed.
  * @param socketFd The file descriptor of the socket whose textual
- * description is to be printed to the stream.
+ *                 description is to be printed to the stream.
  */
 void writeSockDescription(std::ostream &os, const int socketFd)
   throw();

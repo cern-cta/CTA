@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/GiveOutpMsgBody.hpp
+ *                      castor/tape/legacymsg/RtcpSegmentAttributes.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,37 +18,33 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * 
+ *
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_GIVEOUTPMSGBODY
-#define CASTOR_TAPE_AGGREGATOR_GIVEOUTPMSGBODY
+#ifndef CASTOR_TAPE_LEGACYMSG_RTCPSEGMENTATTRIBUTES
+#define CASTOR_TAPE_LEGACYMSG_RTCPSEGMENTATTRIBUTES
 
 #include "h/Castor_limits.h"
-#include "h/Cuuid.h"
 
 #include <stdint.h>
 
-
 namespace castor     {
 namespace tape       {
-namespace aggregator {
+namespace legacymsg {
 
   /**
-   * The message body of a dump tape information message.
+   * Error reporting message embedded within an RTCP tape request message.
    */
-  struct GiveOutpMsgBody {
+  struct RtcpSegmentAttributes {
+    char nameServerHostName[CA_MAXHOSTNAMELEN+1];  // CASTOR name server host name
+    char segmCksumAlgorithm[CA_MAXCKSUMNAMELEN+1]; // Checksum algorithm
+    uint32_t segmCksum;                            // Checksum value
+    uint64_t castorFileId;                         // CASTOR bitfile id
+  }; // struct RtcpSegmentAttributes
 
-    /**
-     * The dump tape message string.
-     */
-    char message[CA_MAXLINELEN+1];
-
-  }; // struct GiveOutpMsgBody
-
-} // namespace aggregator
+} // namespace legacymsg
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_GIVEOUTPMSGBODY
+#endif // CASTOR_TAPE_LEGACYMSG_RTCPSEGMENTATTRIBUTES

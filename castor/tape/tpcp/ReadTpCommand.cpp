@@ -524,7 +524,7 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileRecalledNotification(
         " \"" << fileTransfer.filename << "\""
         " fseq=" << fileTransfer.tapeFseq <<
         " size=" << msg->fileSize() <<
-        " checskum=0x" << std::hex << msg->checksum() << std::dec << std::endl;
+        " checksum=0x" << std::hex << msg->checksum() << std::dec << std::endl;
     }
 
     // The file has been transfer so remove it from the map of pending

@@ -25,15 +25,14 @@
 
 #include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/exception/PermissionDenied.hpp"
 #include "castor/exception/TimeOut.hpp"
 #include "castor/tape/Constants.hpp"
 #include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
 #include "castor/tape/aggregator/BridgeProtocolEngine.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/ClientTxRx.hpp"
-#include "castor/tape/aggregator/GiveOutpMsgBody.hpp"
-#include "castor/tape/aggregator/MessageHeader.hpp"
-#include "castor/tape/aggregator/RtcpDumpTapeRqstMsgBody.hpp"
+#include "castor/tape/aggregator/LegacyTxRx.hpp"
 #include "castor/tape/aggregator/RtcpTxRx.hpp"
 #include "castor/tape/aggregator/SmartFd.hpp"
 #include "castor/tape/aggregator/SmartFdList.hpp"
@@ -52,22 +51,23 @@
 // constructor
 //-----------------------------------------------------------------------------
 castor::tape::aggregator::BridgeProtocolEngine::BridgeProtocolEngine(
-  const Cuuid_t           &cuuid,
-  const int               rtcpdCallbackSockFd,
-  const int               rtcpdInitialSockFd,
-  const RcpJobRqstMsgBody &jobRequest,
-  tapegateway::Volume     &volume,
-  char                    (&vsn)[CA_MAXVSNLEN+1],
-  BoolFunctor             &stoppingGracefully) throw() :
+  const Cuuid_t                       &cuuid,
+  const int                           rtcpdCallbackSockFd,
+  const int                           rtcpdInitialSockFd,
+  const legacymsg::RtcpJobRqstMsgBody &jobRequest,
+  tapegateway::Volume                 &volume,
+  const uint32_t                      nbFilesOnDestinationTape,
+  BoolFunctor                         &stoppingGracefully) throw() :
   m_cuuid(cuuid),
   m_rtcpdCallbackSockFd(rtcpdCallbackSockFd),
   m_rtcpdInitialSockFd(rtcpdInitialSockFd),
   m_jobRequest(jobRequest),
   m_volume(volume),
-  m_vsn(vsn),
+  m_nextDestinationFseq(nbFilesOnDestinationTape + 1),
   m_stoppingGracefully(stoppingGracefully),
   m_nbCallbackConnections(1), // Initial callback connection has already exists
-  m_nbReceivedENDOF_REQs(0) {
+  m_nbReceivedENDOF_REQs(0),
+  m_pendingTransferIds(MAXPENDINGTRANSFERS) {
 
   // Build the map of message body handlers
   m_handlers[createHandlerKey(RTCOPY_MAGIC,       RTCP_FILE_REQ   )] = 
@@ -298,6 +298,13 @@ bool
 
     // Accept the connection
     const int acceptedConnection = acceptRtcpdConnection();
+
+    // Throw an exception if RTCPD callback connection is not from localhost
+    checkPeerIsLocalhost(acceptedConnection);
+
+    // Update the count of callback connections and add the socket descriptor
+    // of the newly accepted callback connection to the list of descriptors to
+    // be processed by the "select loop"
     m_nbCallbackConnections++;
     socketFds.push_back(acceptedConnection);
 
@@ -344,17 +351,17 @@ bool
 
       // Send an RTCP_ENDOF_REQ message to RTCPD via the initial callback
       // connection
-      MessageHeader endofReqMsg;
+      legacymsg::MessageHeader endofReqMsg;
       endofReqMsg.magic       = RTCOPY_MAGIC;
       endofReqMsg.reqType     = RTCP_ENDOF_REQ;
       endofReqMsg.lenOrStatus = 0;
-      RtcpTxRx::sendMessageHeader(m_cuuid, m_jobRequest.volReqId,
+      LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId,
         m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, endofReqMsg);
 
       // Receive the acknowledge of the RTCP_ENDOF_REQ message
-      MessageHeader ackMsg;
+      legacymsg::MessageHeader ackMsg;
       try {
-        RtcpTxRx::receiveMessageHeader(m_cuuid, m_jobRequest.volReqId,
+        LegacyTxRx::receiveMsgHeader(m_cuuid, m_jobRequest.volReqId,
           m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, ackMsg);
       } catch(castor::exception::Exception &ex) {
         TAPE_THROW_CODE(EPROTO,
@@ -443,14 +450,14 @@ castor::tape::aggregator::BridgeProtocolEngine::ProcessRtcpdSockResult
   castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSock(
   const int socketFd) throw(castor::exception::Exception) {
 
-  MessageHeader header;
+  legacymsg::MessageHeader header;
   utils::setBytes(header, '\0');
 
   // Try to receive the message header which may not be possible; The file
   // descriptor may be ready because RTCPD has closed the connection
   bool peerClosed = false;
   {
-    RtcpTxRx::receiveMessageHeaderFromCloseable(m_cuuid, peerClosed,
+    LegacyTxRx::receiveMsgHeaderFromCloseable(m_cuuid, peerClosed,
       m_jobRequest.volReqId, socketFd, RTCPDNETRWTIMEOUT, header);
   }
 
@@ -506,9 +513,9 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
       ClientTxRx::getFileToMigrate(m_cuuid, m_jobRequest.volReqId,
       m_jobRequest.clientHost, m_jobRequest.clientPort));
 
-    // If there is no file to migrate, then notify tape gateway of end of
-    // session and return
+    // If there is no file to migrate
     if(fileFromClient.get() == NULL) {
+      // Notify client of end of session and return
       try {
         ClientTxRx::notifyEndOfSession(m_cuuid, m_jobRequest.volReqId,
           m_jobRequest.clientHost, m_jobRequest.clientPort);
@@ -525,16 +532,35 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
       return;
     }
 
+    // If the client is the tape gateway
+    if(m_volume.clientType() == tapegateway::TAPE_GATEWAY) {
+
+      // If the tape file sequence number from the client is invalid
+      if((uint32_t)fileFromClient->fseq() != m_nextDestinationFseq) {
+        castor::exception::Exception ex(ECANCELED);
+
+        ex.getMessage() <<
+          "Invalid tape file sequence number from client"
+          ": expected=" << (m_nextDestinationFseq) <<
+          ": actual=" << fileFromClient->fseq();
+
+        throw(ex);
+      }
+
+      // Update the next expected tape file sequence number
+      m_nextDestinationFseq++;
+    }
+
     // Remember the file transaction ID and get its unique index to be passed
     // to RTCPD through the "rtcpFileRequest.disk_fseq" message field
     const uint32_t diskFseq =
       m_pendingTransferIds.insert(fileFromClient->fileTransactionId());
 
     // Give volume to RTCPD
-    RtcpTapeRqstErrMsgBody rtcpVolume;
+    legacymsg::RtcpTapeRqstErrMsgBody rtcpVolume;
     utils::setBytes(rtcpVolume, '\0');
     utils::copyString(rtcpVolume.vid    , m_volume.vid().c_str()    );
-    utils::copyString(rtcpVolume.vsn    , m_vsn                     );
+    utils::copyString(rtcpVolume.vsn    , EMPTYVSN                  );
     utils::copyString(rtcpVolume.label  , m_volume.label().c_str()  );
     utils::copyString(rtcpVolume.density, m_volume.density().c_str());
     utils::copyString(rtcpVolume.unit   , m_jobRequest.driveUnit    );
@@ -602,26 +628,13 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
         AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
     }
   } catch(castor::exception::Exception &ex) {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", m_jobRequest.volReqId),
-      castor::dlf::Param("Message" , ex.getMessage().str()),
-      castor::dlf::Param("Code"    , ex.code()            )};
-    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_FAILED_TO_PROCESS_RTCPD_SOCKETS, params);
+    castor::exception::Exception ex2(ex.code());
 
-    try {
-      ClientTxRx::notifyEndOfFailedSession(m_cuuid,
-         m_jobRequest.volReqId, m_jobRequest.clientHost,
-         m_jobRequest.clientPort, ex);
-    } catch(castor::exception::Exception &ex) {
-      // Don't rethrow, just log the exception
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("volReqId", m_jobRequest.volReqId),
-        castor::dlf::Param("Message" , ex.getMessage().str()),
-        castor::dlf::Param("Code"    , ex.code()            )};
-      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
-        AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
-    }
+    ex2.getMessage() <<
+      "Failed to process RTCPD sockets"
+      ": " << ex.getMessage().str();
+
+    throw(ex2);
   }
 }
 
@@ -637,10 +650,10 @@ void castor::tape::aggregator::BridgeProtocolEngine::runRecallSession()
     utils::setBytes(tapePath, '\0');
 
     // Give volume to RTCPD
-    RtcpTapeRqstErrMsgBody rtcpVolume;
+    legacymsg::RtcpTapeRqstErrMsgBody rtcpVolume;
     utils::setBytes(rtcpVolume, '\0');
     utils::copyString(rtcpVolume.vid    , m_volume.vid().c_str()    );
-    utils::copyString(rtcpVolume.vsn    , m_vsn                     );
+    utils::copyString(rtcpVolume.vsn    , EMPTYVSN                  );
     utils::copyString(rtcpVolume.label  , m_volume.label().c_str()  );
     utils::copyString(rtcpVolume.density, m_volume.density().c_str());
     utils::copyString(rtcpVolume.unit   , m_jobRequest.driveUnit    );
@@ -676,26 +689,13 @@ void castor::tape::aggregator::BridgeProtocolEngine::runRecallSession()
         AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
     }
   } catch(castor::exception::Exception &ex) {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", m_jobRequest.volReqId),
-      castor::dlf::Param("Message" , ex.getMessage().str()),
-      castor::dlf::Param("Code"    , ex.code()            )};
-    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_FAILED_TO_PROCESS_RTCPD_SOCKETS, params);
+    castor::exception::Exception ex2(ex.code());
 
-    try {
-      ClientTxRx::notifyEndOfFailedSession(m_cuuid,
-        m_jobRequest.volReqId, m_jobRequest.clientHost,
-        m_jobRequest.clientPort, ex);
-    } catch(castor::exception::Exception &ex) {
-      // Don't rethrow, just log the exception
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("volReqId", m_jobRequest.volReqId),
-        castor::dlf::Param("Message" , ex.getMessage().str()),
-        castor::dlf::Param("Code"    , ex.code()            )};
-      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
-        AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
-    }
+    ex2.getMessage() <<
+      "Failed to process RTCPD sockets"
+      ": " << ex.getMessage().str();
+
+    throw(ex2);
   }
 }
 
@@ -708,10 +708,10 @@ void castor::tape::aggregator::BridgeProtocolEngine::runDumpSession()
 
   try {
     // Give volume to RTCPD
-    RtcpTapeRqstErrMsgBody rtcpVolume;
+    legacymsg::RtcpTapeRqstErrMsgBody rtcpVolume;
     utils::setBytes(rtcpVolume, '\0');
     utils::copyString(rtcpVolume.vid    , m_volume.vid().c_str()    );
-    utils::copyString(rtcpVolume.vsn    , m_vsn                     );
+    utils::copyString(rtcpVolume.vsn    , EMPTYVSN                  );
     utils::copyString(rtcpVolume.label  , m_volume.label().c_str()  );
     utils::copyString(rtcpVolume.density, m_volume.density().c_str());
     utils::copyString(rtcpVolume.unit   , m_jobRequest.driveUnit    );
@@ -730,7 +730,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runDumpSession()
       m_jobRequest.clientHost, m_jobRequest.clientPort));
 
     // Tell RTCPD to dump the tape
-    RtcpDumpTapeRqstMsgBody request;
+    legacymsg::RtcpDumpTapeRqstMsgBody request;
     request.maxBytes      = dumpParameters->maxBytes();
     request.blockSize     = dumpParameters->blockSize();
     request.convert       = dumpParameters->converter();
@@ -761,26 +761,13 @@ void castor::tape::aggregator::BridgeProtocolEngine::runDumpSession()
         AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
     }
   } catch(castor::exception::Exception &ex) {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", m_jobRequest.volReqId),
-      castor::dlf::Param("Message" , ex.getMessage().str()),
-      castor::dlf::Param("Code"    , ex.code()            )};                       
-    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_FAILED_TO_PROCESS_RTCPD_SOCKETS, params);
+    castor::exception::Exception ex2(ex.code());
 
-    try {
-      ClientTxRx::notifyEndOfFailedSession(m_cuuid,
-        m_jobRequest.volReqId, m_jobRequest.clientHost,
-        m_jobRequest.clientPort, ex);
-    } catch(castor::exception::Exception &ex) {
-      // Don't rethrow, just log the exception
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("volReqId", m_jobRequest.volReqId),
-        castor::dlf::Param("Message" , ex.getMessage().str()),
-        castor::dlf::Param("Code"    , ex.code()            )};
-      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
-        AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
-    }
+    ex2.getMessage() <<
+      "Failed to process RTCPD sockets"
+      ": " << ex.getMessage().str();
+
+    throw(ex2);
   }
 }
 
@@ -789,8 +776,8 @@ void castor::tape::aggregator::BridgeProtocolEngine::runDumpSession()
 // processRtcpdRequest
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdRequest(
-  const MessageHeader &header, const int socketFd, bool &receivedENDOF_REQ)
-  throw(castor::exception::Exception) {
+  const legacymsg::MessageHeader &header, const int socketFd, 
+  bool &receivedENDOF_REQ) throw(castor::exception::Exception) {
 
   {
     char magicHex[2 + 17]; // 0 + x + FFFFFFFFFFFFFFFF + '\0'
@@ -839,10 +826,10 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdRequest(
 // rtcpFileReqCallback
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileReqCallback(
-  const MessageHeader &header, const int socketFd, bool &receivedENDOF_REQ)
-  throw(castor::exception::Exception) {
+  const legacymsg::MessageHeader &header, const int socketFd, 
+  bool &receivedENDOF_REQ) throw(castor::exception::Exception) {
 
-  RtcpFileRqstMsgBody body;
+  legacymsg::RtcpFileRqstMsgBody body;
 
   RtcpTxRx::receiveMsgBody(m_cuuid, m_jobRequest.volReqId, socketFd,
     RTCPDNETRWTIMEOUT, header, body);
@@ -855,10 +842,10 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileReqCallback(
 // rtcpFileErrReqCallback
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileErrReqCallback(
-  const MessageHeader &header, const int socketFd, bool &receivedENDOF_REQ)
-  throw(castor::exception::Exception) {
+  const legacymsg::MessageHeader &header, const int socketFd, 
+  bool &receivedENDOF_REQ) throw(castor::exception::Exception) {
 
-  RtcpFileRqstErrMsgBody body;
+  legacymsg::RtcpFileRqstErrMsgBody body;
 
   RtcpTxRx::receiveMsgBody(m_cuuid, m_jobRequest.volReqId, socketFd,
     RTCPDNETRWTIMEOUT, header, body);
@@ -878,17 +865,18 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileErrReqCallback(
 // processRtcpFileReq
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
-  const MessageHeader &header, RtcpFileRqstMsgBody &body, const int socketFd,
-  bool &receivedENDOF_REQ) throw(castor::exception::Exception) {
+  const legacymsg::MessageHeader &header, legacymsg::RtcpFileRqstMsgBody &body,
+  const int socketFd, bool &receivedENDOF_REQ)
+  throw(castor::exception::Exception) {
 
   // If the tape is being dumped
   if(m_volume.mode() == tapegateway::DUMP) {
     // Send an acknowledge to RTCPD
-    MessageHeader ackMsg;
+    legacymsg::MessageHeader ackMsg;
     ackMsg.magic       = header.magic;
     ackMsg.reqType     = header.reqType;
     ackMsg.lenOrStatus = 0;
-    RtcpTxRx::sendMessageHeader(m_cuuid, m_jobRequest.volReqId, socketFd,
+    LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, socketFd,
       RTCPDNETRWTIMEOUT, ackMsg);
 
     return;
@@ -912,6 +900,25 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
         // field
         const int diskFseq =
           m_pendingTransferIds.insert(fileFromClient->fileTransactionId());
+
+        // If the client is the tape gateway
+        if(m_volume.clientType() == tapegateway::TAPE_GATEWAY) {
+
+            // If the tape file sequence number from the client is invalid
+            if((uint32_t)fileFromClient->fseq() != m_nextDestinationFseq) {
+              castor::exception::Exception ex(ECANCELED);
+
+              ex.getMessage() <<
+                "Invalid tape file sequence number from client"
+                ": expected=" << (m_nextDestinationFseq) <<
+                ": actual=" << fileFromClient->fseq();
+
+              throw(ex);
+            }
+
+            // Update the next expected tape file sequence number
+            m_nextDestinationFseq++;
+        }
 
         // Give file to migrate to RTCPD
         {
@@ -1039,11 +1046,11 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
     }
 
     // Send delayed acknowledge of the request for more work
-    MessageHeader ackMsg;
+    legacymsg::MessageHeader ackMsg;
     ackMsg.magic       = header.magic;
     ackMsg.reqType     = header.reqType;
     ackMsg.lenOrStatus = 0;
-    RtcpTxRx::sendMessageHeader(m_cuuid, m_jobRequest.volReqId, socketFd,
+    LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, socketFd,
       RTCPDNETRWTIMEOUT,ackMsg);
 
     {
@@ -1065,11 +1072,11 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
         AGGREGATOR_TAPE_POSITIONED, params);
 
       // Send an acknowledge to RTCPD
-      MessageHeader ackMsg;
+      legacymsg::MessageHeader ackMsg;
       ackMsg.magic       = header.magic;
       ackMsg.reqType     = header.reqType;
       ackMsg.lenOrStatus = 0;
-      RtcpTxRx::sendMessageHeader(m_cuuid, m_jobRequest.volReqId, socketFd,
+      LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, socketFd,
         RTCPDNETRWTIMEOUT, ackMsg);
     }
     break;
@@ -1087,11 +1094,11 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
         AGGREGATOR_FILE_TRANSFERED, params);
 
       // Send an acknowledge to RTCPD
-      MessageHeader ackMsg;
+      legacymsg::MessageHeader ackMsg;
       ackMsg.magic       = header.magic;
       ackMsg.reqType     = header.reqType;
       ackMsg.lenOrStatus = 0;
-      RtcpTxRx::sendMessageHeader(m_cuuid, m_jobRequest.volReqId, socketFd,
+      LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, socketFd,
         RTCPDNETRWTIMEOUT, ackMsg);
 
       // Get the file transaction ID that was sent by the tape gateway
@@ -1138,10 +1145,10 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
 // rtcpTapeReqCallback
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::BridgeProtocolEngine::rtcpTapeReqCallback(
-  const MessageHeader &header, const int socketFd, bool &receivedENDOF_REQ)
-  throw(castor::exception::Exception) {
+  const legacymsg::MessageHeader &header, const int socketFd, 
+  bool &receivedENDOF_REQ) throw(castor::exception::Exception) {
 
-  RtcpTapeRqstMsgBody body;
+  legacymsg::RtcpTapeRqstMsgBody body;
 
   RtcpTxRx::receiveMsgBody(m_cuuid, m_jobRequest.volReqId, socketFd,
     RTCPDNETRWTIMEOUT, header, body);
@@ -1155,10 +1162,10 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpTapeReqCallback(
 //-----------------------------------------------------------------------------
 void
   castor::tape::aggregator::BridgeProtocolEngine::rtcpTapeErrReqCallback(
-  const MessageHeader &header, const int socketFd, bool &receivedENDOF_REQ)
-  throw(castor::exception::Exception) {
+  const legacymsg::MessageHeader &header, const int socketFd, 
+  bool &receivedENDOF_REQ) throw(castor::exception::Exception) {
 
-  RtcpTapeRqstErrMsgBody body;
+  legacymsg::RtcpTapeRqstErrMsgBody body;
 
   RtcpTxRx::receiveMsgBody(m_cuuid, m_jobRequest.volReqId, socketFd,
     RTCPDNETRWTIMEOUT, header, body);
@@ -1182,15 +1189,16 @@ void
 // processRtcpTape
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::BridgeProtocolEngine::processRtcpTape(
-  const MessageHeader &header, RtcpTapeRqstMsgBody &body, const int socketFd,
-  bool &receivedENDOF_REQ) throw(castor::exception::Exception) {
+  const legacymsg::MessageHeader &header, legacymsg::RtcpTapeRqstMsgBody &body,
+  const int socketFd, bool &receivedENDOF_REQ)
+  throw(castor::exception::Exception) {
 
   // Acknowledge tape request
-  MessageHeader ackMsg;
+  legacymsg::MessageHeader ackMsg;
   ackMsg.magic       = RTCOPY_MAGIC;
   ackMsg.reqType     = RTCP_TAPE_REQ;
   ackMsg.lenOrStatus = 0;
-  RtcpTxRx::sendMessageHeader(m_cuuid, m_jobRequest.volReqId, socketFd,
+  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, socketFd,
     RTCPDNETRWTIMEOUT, ackMsg);
 }
 
@@ -1199,17 +1207,17 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpTape(
 // rtcpEndOfReqCallback
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::BridgeProtocolEngine::rtcpEndOfReqCallback(
-  const MessageHeader &header, const int socketFd, bool &receivedENDOF_REQ)
-  throw(castor::exception::Exception) {
+  const legacymsg::MessageHeader &header, const int socketFd, 
+  bool &receivedENDOF_REQ) throw(castor::exception::Exception) {
 
   receivedENDOF_REQ = true;
 
   // Acknowledge RTCP_ENDOF_REQ message
-  MessageHeader ackMsg;
+  legacymsg::MessageHeader ackMsg;
   ackMsg.magic       = RTCOPY_MAGIC;
   ackMsg.reqType     = RTCP_ENDOF_REQ;
   ackMsg.lenOrStatus = 0;
-  RtcpTxRx::sendMessageHeader(m_cuuid, m_jobRequest.volReqId, socketFd,
+  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, socketFd,
     RTCPDNETRWTIMEOUT, ackMsg);
 }
 
@@ -1218,14 +1226,40 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpEndOfReqCallback(
 // giveOutpCallback
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::BridgeProtocolEngine::giveOutpCallback(
-  const MessageHeader &header, const int socketFd, bool &receivedENDOF_REQ)
-  throw(castor::exception::Exception) {
+  const legacymsg::MessageHeader &header, const int socketFd,
+   bool &receivedENDOF_REQ) throw(castor::exception::Exception) {
 
-  GiveOutpMsgBody body;
+  legacymsg::GiveOutpMsgBody body;
 
   RtcpTxRx::receiveMsgBody(m_cuuid, m_jobRequest.volReqId, socketFd,
     RTCPDNETRWTIMEOUT, header, body);
 
   ClientTxRx::notifyDumpMessage(m_cuuid, m_jobRequest.volReqId,
     m_jobRequest.clientHost, m_jobRequest.clientPort, body.message);
+}
+
+
+//-----------------------------------------------------------------------------
+// checkPeerIsLocalhost
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::BridgeProtocolEngine::checkPeerIsLocalhost(
+  const int socketFd) throw(castor::exception::Exception) {
+
+  unsigned long  ip;
+  unsigned short port;
+
+  net::getPeerIpPort(socketFd, ip, port);
+
+  // localhost = 127.0.0.1 = 0x7F000001
+  if(ip != 0x7F000001) {
+    castor::exception::PermissionDenied ex;
+    std::ostream &os = ex.getMessage();
+    os <<
+      "Peer is not local host"
+      ": expected=127.0.0.1"
+      ": actual=";
+    net::writeIp(os, ip);
+
+    throw ex;
+  }
 }

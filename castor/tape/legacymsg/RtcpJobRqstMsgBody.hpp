@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/RtcpDumpTapeRqstMsgBody.hpp
+ *                      castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,31 +22,34 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_RTCPDUMPTAPERQSTMSGBODY
-#define CASTOR_TAPE_AGGREGATOR_RTCPDUMPTAPERQSTMSGBODY
+#ifndef CASTOR_TAPE_LEGACYMSG_RTCPJOBRQSTMSGBODY
+#define CASTOR_TAPE_LEGACYMSG_RTCPJOBRQSTMSGBODY
+
+#include "h/Castor_limits.h"
 
 #include <stdint.h>
 
+
 namespace castor     {
 namespace tape       {
-namespace aggregator {
+namespace legacymsg {
 
   /**
-   * An RTCP dump tape request message.
+   * An RCP job submission request message.
    */
-  struct RtcpDumpTapeRqstMsgBody {
-    int32_t maxBytes;
-    int32_t blockSize;
-    int32_t convert;
-    int32_t tapeErrAction;
-    int32_t startFile;
-    int32_t maxFiles;
-    int32_t fromBlock;
-    int32_t toBlock;
-  }; // struct RtcpDumpTapeRqstMsgBody
+  struct RtcpJobRqstMsgBody {
+    uint32_t volReqId;
+    uint32_t clientPort;
+    uint32_t clientEuid;
+    uint32_t clientEgid;
+    char     clientHost[CA_MAXHOSTNAMELEN+1];
+    char     deviceGroupName[CA_MAXDGNLEN+1];
+    char     driveUnit[CA_MAXUNMLEN+1];
+    char     clientUserName[CA_MAXUSRNAMELEN+1];
+  };
 
-} // namespace aggregator
+} // namespace legacymsg
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_RTCPDUMPTAPERQSTMSGBODY
+#endif // CASTOR_TAPE_LEGACYMSG_RTCPJOBRQSTMSGBODY

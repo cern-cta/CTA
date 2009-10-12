@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/RtcpNoMoreRequestsMsgBody.hpp
+ *                      castor/tape/legacymsg/GiveOutpMsgBody.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,21 +22,33 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_RTCPNOMOREREQUESTSMSGBODY
-#define CASTOR_TAPE_AGGREGATOR_RTCPNOMOREREQUESTSMSGBODY
+#ifndef CASTOR_TAPE_LEGACYMSG_GIVEOUTPMSGBODY
+#define CASTOR_TAPE_LEGACYMSG_GIVEOUTPMSGBODY
+
+#include "h/Castor_limits.h"
+#include "h/Cuuid.h"
+
+#include <stdint.h>
+
 
 namespace castor     {
 namespace tape       {
-namespace aggregator {
+namespace legacymsg {
 
   /**
-   * An RTCP no more request message.
+   * The message body of a dump tape information message.
    */
-  struct RtcpNoMoreRequestsMsgBody {
-  }; // struct RtcpNoMoreRequestsMsgBody
+  struct GiveOutpMsgBody {
 
-} // namespace aggregator
+    /**
+     * The dump tape message string.
+     */
+    char message[CA_MAXLINELEN+1];
+
+  }; // struct GiveOutpMsgBody
+
+} // namespace legacymsg
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_RTCPNOMOREREQUESTSMSGBODY
+#endif // CASTOR_TAPE_LEGACYMSG_GIVEOUTPMSGBODY

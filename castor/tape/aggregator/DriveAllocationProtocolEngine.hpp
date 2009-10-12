@@ -28,9 +28,9 @@
 #include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/io/AbstractTCPSocket.hpp"
-#include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
 #include "castor/tape/aggregator/SmartFd.hpp"
 //#include "castor/tape/fsm/StateMachine.hpp"
+#include "castor/tape/legacymsg/RtcpMarshal.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "h/Castor_limits.h"
 #include "h/common.h"
@@ -56,7 +56,6 @@ public:
    * gateway if an error is detected.
    *
    * @param cuuid               The ccuid to be used for logging.
-   * @param vdqmSock            The socket of the VDQM connection.
    * @param rtcpdCallbackSockFd The file descriptor of the listener socket to
    *                            be used to accept callback connections from
    *                            RTCPD.
@@ -73,13 +72,12 @@ public:
    *                            deallocating the message.
    */
   tapegateway::Volume *run(
-    const Cuuid_t                 &cuuid,
-    castor::io::AbstractTCPSocket &vdqmSock,
-    const int                     rtcpdCallbackSockFd,
-    const char                    *rtcpdCallbackHost,
-    const unsigned short          rtcpdCallbackPort,
-    SmartFd                       &rtcpdInitialSockFd,
-    const RcpJobRqstMsgBody       &jobRequest)
+    const Cuuid_t                       &cuuid,
+    const int                           rtcpdCallbackSockFd,
+    const char                          *rtcpdCallbackHost,
+    const unsigned short                rtcpdCallbackPort,
+    SmartFd                             &rtcpdInitialSockFd,
+    const legacymsg::RtcpJobRqstMsgBody &jobRequest)
     throw(castor::exception::Exception);
 
   /**

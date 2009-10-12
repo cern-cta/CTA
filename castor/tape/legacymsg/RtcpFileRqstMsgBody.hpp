@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/RtcpFileRqstMsgBody.hpp
+ *                      castor/tape/legacymsg/RtcpFileRqstMsgBody.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,11 +22,11 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_RTCPFILERQSTMSGBODY
-#define CASTOR_TAPE_AGGREGATOR_RTCPFILERQSTMSGBODY
+#ifndef CASTOR_TAPE_LEGACYMSG_RTCPFILERQSTMSGBODY
+#define CASTOR_TAPE_LEGACYMSG_RTCPFILERQSTMSGBODY
 
-#include "castor/tape/aggregator/RtcpErrorAppendix.hpp"
-#include "castor/tape/aggregator/RtcpSegmentAttributes.hpp"
+#include "castor/tape/legacymsg/RtcpErrorAppendix.hpp"
+#include "castor/tape/legacymsg/RtcpSegmentAttributes.hpp"
 #include "h/Castor_limits.h"
 #include "h/Cuuid.h"
 
@@ -35,7 +35,7 @@
 
 namespace castor     {
 namespace tape       {
-namespace aggregator {
+namespace legacymsg {
 
   /**
    * An RTCP file request without error appendix message.
@@ -104,8 +104,8 @@ namespace aggregator {
 
   }; // struct RtcpFileRqstMsgBody
 
-} // namespace aggregator
+} // namespace legacymsg
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_RTCPFILERQSTMSGBODY
+#endif // CASTOR_TAPE_LEGACYMSG_RTCPFILERQSTMSGBODY

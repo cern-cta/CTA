@@ -28,10 +28,7 @@
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/DriveAllocationProtocolEngine.hpp"
 #include "castor/tape/aggregator/ClientTxRx.hpp"
-#include "castor/tape/aggregator/RcpJobReplyMsgBody.hpp"
-#include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
-#include "castor/tape/aggregator/RcpJobSubmitter.hpp"
-#include "castor/tape/aggregator/RtcpMarshaller.hpp"
+#include "castor/tape/aggregator/RtcpJobSubmitter.hpp"
 #include "castor/tape/aggregator/RtcpTxRx.hpp"
 //#include "castor/tape/fsm/Callback.hpp"
 #include "castor/tape/net/net.hpp"
@@ -48,13 +45,12 @@
 //-----------------------------------------------------------------------------
 castor::tape::tapegateway::Volume
   *castor::tape::aggregator::DriveAllocationProtocolEngine::run(
-  const Cuuid_t                 &cuuid,
-  castor::io::AbstractTCPSocket &vdqmSock,
-  const int                     rtcpdCallbackSockFd,
-  const char                    *rtcpdCallbackHost,
-  const unsigned short          rtcpdCallbackPort,
-  SmartFd                       &rtcpdInitialSockFd,
-  const RcpJobRqstMsgBody       &jobRequest)
+  const Cuuid_t                       &cuuid,
+  const int                           rtcpdCallbackSockFd,
+  const char                          *rtcpdCallbackHost,
+  const unsigned short                rtcpdCallbackPort,
+  SmartFd                             &rtcpdInitialSockFd,
+  const legacymsg::RtcpJobRqstMsgBody &jobRequest)
   throw(castor::exception::Exception) {
   
   // Pass a modified version of the job request through to RTCPD, setting the
@@ -76,8 +72,8 @@ castor::tape::tapegateway::Volume
       AGGREGATOR_SUBMITTING_JOB_TO_RTCPD, params);
   }
 
-  RcpJobReplyMsgBody rtcpdReply;
-  RcpJobSubmitter::submit(
+  legacymsg::RtcpJobReplyMsgBody rtcpdReply;
+  RtcpJobSubmitter::submit(
     "localhost",               // host
     RTCOPY_PORT,               // port
     RTCPDNETRWTIMEOUT,         // netReadWriteTimeout
@@ -92,45 +88,17 @@ castor::tape::tapegateway::Volume
     jobRequest.driveUnit,
     rtcpdReply);
 
-  // Prepare a positive response for the VDQM which will be overwritten if
-  // RTCPD replied to the tape aggregator with an error message
-  uint32_t    errorStatusForVdqm  = VDQM_CLIENTINFO; // Strange status code
-  std::string errorMessageForVdqm = "";
-
   // If RTCPD returned an error message
   // Checking the size of the error message because the status maybe non-zero
   // even if there is no error
   if(strlen(rtcpdReply.errorMessage) > 0) {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", jobRequest.volReqId),
-      castor::dlf::Param("Message" , rtcpdReply.errorMessage ),
-      castor::dlf::Param("Code"    , rtcpdReply.status       )};
-    CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_RECEIVED_RTCPD_ERROR_MESSAGE, params);
+    castor::exception::Exception ex(rtcpdReply.status);
 
-    // Override positive response with the error message from RTCPD
-    errorStatusForVdqm  = rtcpdReply.status;
-    errorMessageForVdqm = rtcpdReply.errorMessage;
-  }
+    ex.getMessage() <<
+      "Received and error message from RTCPD"
+      ": " << rtcpdReply.errorMessage;
 
-  // Acknowledge the VDQM - maybe positive or negative depending on reply
-  // from RTCPD
-  char vdqmReplyBuf[RTCPMSGBUFSIZE];
-  size_t vdqmReplyLen = 0;
-  vdqmReplyLen = RtcpMarshaller::marshall(vdqmReplyBuf, rtcpdReply);
-  net::writeBytes(vdqmSock.socket(), RTCPDNETRWTIMEOUT, vdqmReplyLen,
-    vdqmReplyBuf);
-
-  // Close the connection to the VDQM
-  // Please note that the destructor of AbstractTCPSocket will not close the
-  // socket a second time
-  vdqmSock.close();
-
-  // If RTCPD returned an error message then it will not make a callback
-  // connection and the aggregator should not continue any further
-  if(strlen(rtcpdReply.errorMessage) > 0) {
-    // A volume was not received from the tape gateway
-    return false;
+    throw(ex);
   }
 
   // Accept the initial incoming RTCPD callback connection.
@@ -162,7 +130,7 @@ castor::tape::tapegateway::Volume
   }
 
   // Get the request informatiom and the drive unit from RTCPD
-  RtcpTapeRqstErrMsgBody rtcpdRequestInfoReply;
+  legacymsg::RtcpTapeRqstErrMsgBody rtcpdRequestInfoReply;
   RtcpTxRx::getRequestInfoFromRtcpd(cuuid, jobRequest.volReqId,
     rtcpdInitialSockFd.get(), RTCPDNETRWTIMEOUT, rtcpdRequestInfoReply);
 

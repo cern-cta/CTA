@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/RtcpFileRqstErrMsgBody.hpp
+ *                      castor/tape/legacymsg/RtcpDumpTapeRqstMsgBody.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,34 +22,31 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_RTCPFILERQSTERRMSGBODY
-#define CASTOR_TAPE_AGGREGATOR_RTCPFILERQSTERRMSGBODY
-
-#include "castor/tape/aggregator/RtcpErrorAppendix.hpp"
-#include "castor/tape/aggregator/RtcpFileRqstMsgBody.hpp"
-#include "castor/tape/aggregator/RtcpSegmentAttributes.hpp"
-#include "h/Castor_limits.h"
-#include "h/Cuuid.h"
+#ifndef CASTOR_TAPE_LEGACYMSG_RTCPDUMPTAPERQSTMSGBODY
+#define CASTOR_TAPE_LEGACYMSG_RTCPDUMPTAPERQSTMSGBODY
 
 #include <stdint.h>
 
-
 namespace castor     {
 namespace tape       {
-namespace aggregator {
+namespace legacymsg {
 
   /**
-   * An RTCP file request with error appendix message.
-   *
-   * Please note that the presence of an error appendix does not necessarily
-   * indicate an error.
+   * An RTCP dump tape request message.
    */
-  struct RtcpFileRqstErrMsgBody : public RtcpFileRqstMsgBody {
-    RtcpErrorAppendix err; // Error reporting
-  }; // struct RtcpFileRqstErrMsgBody
+  struct RtcpDumpTapeRqstMsgBody {
+    int32_t maxBytes;
+    int32_t blockSize;
+    int32_t convert;
+    int32_t tapeErrAction;
+    int32_t startFile;
+    int32_t maxFiles;
+    int32_t fromBlock;
+    int32_t toBlock;
+  }; // struct RtcpDumpTapeRqstMsgBody
 
-} // namespace aggregator
+} // namespace legacymsg
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_RTCPFILERQSTERRMSGBODY
+#endif // CASTOR_TAPE_LEGACYMSG_RTCPDUMPTAPERQSTMSGBODY

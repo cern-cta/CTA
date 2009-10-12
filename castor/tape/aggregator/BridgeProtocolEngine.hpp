@@ -28,11 +28,9 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/aggregator/BoolFunctor.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
-#include "castor/tape/aggregator/MessageHeader.hpp"
-#include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
-#include "castor/tape/aggregator/RtcpFileRqstMsgBody.hpp"
-#include "castor/tape/aggregator/RtcpTapeRqstMsgBody.hpp"
 #include "castor/tape/aggregator/SmartFdList.hpp"
+#include "castor/tape/legacymsg/CommonMarshal.hpp"
+#include "castor/tape/legacymsg/RtcpMarshal.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/utils/IndexedContainer.hpp"
 #include "h/Castor_limits.h"
@@ -55,27 +53,31 @@ public:
   /**
    * Constructor.
    *
-   * @param cuuid               The ccuid to be used for logging.
-   * @param rtcpdCallbackSockFd The file descriptor of the listener socket to
-   *                            be used to accept callback connections from
-   *                            RTCPD.
-   * @param rtcpdInitialSockFd  The socket file descriptor of initial RTCPD
-   *                            connection.
-   * @param jobRequest          The RTCOPY job request from the VDQM.
-   * @param volume              The volume message received from the tape
-   *                            gateway.
-   * @param vsn                 The volume serial number.
-   * @param stoppingGracefully  Functor that returns true if the daemon is
-   *                            stopping gracefully.
+   * @param cuuid                    The ccuid to be used for logging.
+   * @param rtcpdCallbackSockFd      The file descriptor of the listener socket
+   *                                 to be used to accept callback connections
+   *                                 from RTCPD.
+   * @param rtcpdInitialSockFd       The socket file descriptor of initial
+   *                                 RTCPD connection.
+   * @param jobRequest               The RTCOPY job request from the VDQM.
+   * @param volume                   The volume message received from the
+   *                                 client.
+   * @param nbFilesOnDestinationTape If migrating and the client is the tape
+   *                                 gateway then this must be set to the
+   *                                 current number of files on the tape, else
+   *                                 this parameter is ignored.
+   * @param stoppingGracefully       Functor that returns true if the daemon is
+   *                                 stopping gracefully.
    */
   BridgeProtocolEngine(
-    const Cuuid_t           &cuuid,
-    const int               rtcpdCallbackSockFd,
-    const int               rtcpdInitialSockFd,
-    const RcpJobRqstMsgBody &jobRequest,
-    tapegateway::Volume     &volume,
-    char                    (&vsn)[CA_MAXVSNLEN+1],
-    BoolFunctor             &stoppingGracefully) throw();
+    const Cuuid_t                       &cuuid,
+    const int                           rtcpdCallbackSockFd,
+    const int                           rtcpdInitialSockFd,
+    const legacymsg::RtcpJobRqstMsgBody &jobRequest,
+    tapegateway::Volume                 &volume,
+    const uint32_t                      nbFilesOnDestinationTape,
+    BoolFunctor                         &stoppingGracefully)
+  throw();
 
   /**
    * Run a recall/migration session.
@@ -105,7 +107,7 @@ private:
   /**
    * The RTCOPY job request from the VDQM.
    */
-  const RcpJobRqstMsgBody &m_jobRequest;
+  const legacymsg::RtcpJobRqstMsgBody &m_jobRequest;
 
   /**
    * The volume message received from the tape gateway.
@@ -113,9 +115,10 @@ private:
   tapegateway::Volume &m_volume;
 
   /**
-   * The volume serial number.
+   * If migrating and the client is the tape gateway, then this is the next
+   * expected tape file sequence, else this member is ignored.
    */
-  const char (&m_vsn)[CA_MAXVSNLEN+1];
+  uint32_t m_nextDestinationFseq;
 
   /**
    * Functor that returns true if the daemon is stopping gracefully.
@@ -143,7 +146,8 @@ private:
    * if the end of the recall/migration session has been reached.
    */
   typedef void (BridgeProtocolEngine::*MsgBodyCallback)(
-    const MessageHeader &header, const int socketFd, bool &endOfSession);
+    const legacymsg::MessageHeader &header, const int socketFd,
+    bool &endOfSession);
 
   /**
    * Datatype for the map of magic+reqType to message body handler.
@@ -159,7 +163,7 @@ private:
    * Indexed container of the file transaction IDs of all the files currently
    * being transfered either for recall or migration.
    */
-  utils::IndexedContainer<uint64_t, MAXPENDINGTRANSFERS> m_pendingTransferIds;
+  utils::IndexedContainer<uint64_t> m_pendingTransferIds;
 
   /**
    * In-line helper function that returns a 64-bit message body handler key to
@@ -255,8 +259,9 @@ private:
    * @param receivedENDOF_REQ Out parameter: Will be set to true by this
    * function of an RTCP_ENDOF_REQ was received.
    */
-  void processRtcpdRequest(const MessageHeader &header, const int socketFd,
-    bool &receivedENDOF_REQ) throw(castor::exception::Exception);
+  void processRtcpdRequest(const legacymsg::MessageHeader &header,
+    const int socketFd, bool &receivedENDOF_REQ)
+    throw(castor::exception::Exception);
 
   /**
    * Closes the specified RTCPD socket.  After closing the connection this
@@ -272,7 +277,7 @@ private:
    * For full documenation please see the documentation of the type
    * RtcpdBridgeProtocolEngine::MsgBodyCallback.
    */
-  void rtcpFileReqCallback(const MessageHeader &header,
+  void rtcpFileReqCallback(const legacymsg::MessageHeader &header,
     const int socketFd, bool &receivedENDOF_REQ)
     throw(castor::exception::Exception);
 
@@ -282,7 +287,7 @@ private:
    * For full documenation please see the documentation of the type
    * RtcpdBridgeProtocolEngine::MsgBodyCallback.
    */
-  void rtcpFileErrReqCallback(const MessageHeader &header,
+  void rtcpFileErrReqCallback(const legacymsg::MessageHeader &header,
     const int socketFd, bool &receivedENDOF_REQ)
     throw(castor::exception::Exception);
 
@@ -301,9 +306,9 @@ private:
    * @param receivedENDOF_REQ Out parameter: Will be set to true by this
    * function of an RTCP_ENDOF_REQ was received.
    */
-  void processRtcpFileReq(const MessageHeader &header,
-    RtcpFileRqstMsgBody &body, const int socketFd, bool &receivedENDOF_REQ)
-    throw(castor::exception::Exception);
+  void processRtcpFileReq(const legacymsg::MessageHeader &header,
+    legacymsg::RtcpFileRqstMsgBody &body, const int socketFd, 
+    bool &receivedENDOF_REQ) throw(castor::exception::Exception);
 
   /**
    * RTCP_TAPEREQ message body handler.
@@ -311,7 +316,7 @@ private:
    * For full documenation please see the documentation of the type
    * RtcpdBridgeProtocolEngine::MsgBodyCallback.
    */
-  void rtcpTapeReqCallback(const MessageHeader &header,
+  void rtcpTapeReqCallback(const legacymsg::MessageHeader &header,
     const int socketFd, bool &receivedENDOF_REQ)
     throw(castor::exception::Exception);
 
@@ -321,7 +326,7 @@ private:
    * For full documenation please see the documentation of the type
    * RtcpdBridgeProtocolEngine::MsgBodyCallback.
    */
-  void rtcpTapeErrReqCallback(const MessageHeader &header,
+  void rtcpTapeErrReqCallback(const legacymsg::MessageHeader &header,
     const int socketFd, bool &receivedENDOF_REQ)
     throw(castor::exception::Exception);
 
@@ -340,9 +345,9 @@ private:
    * @param receivedENDOF_REQ Out parameter: Will be set to true by this
    * function of an RTCP_ENDOF_REQ was received.
    */
-  void processRtcpTape(const MessageHeader &header,
-    RtcpTapeRqstMsgBody &body, const int socketFd, bool &receivedENDOF_REQ)
-    throw(castor::exception::Exception);
+  void processRtcpTape(const legacymsg::MessageHeader &header,
+    legacymsg::RtcpTapeRqstMsgBody &body, const int socketFd, 
+    bool &receivedENDOF_REQ) throw(castor::exception::Exception);
 
   /**
    * RTCP_ENDOF_REQ message body handler.
@@ -350,7 +355,7 @@ private:
    * For full documenation please see the documentation of the type
    * RtcpdBridgeProtocolEngine::MsgBodyCallback.
    */
-  void rtcpEndOfReqCallback(const MessageHeader &header,
+  void rtcpEndOfReqCallback(const legacymsg::MessageHeader &header,
     const int socketFd, bool &receivedENDOF_REQ)
     throw(castor::exception::Exception);
 
@@ -360,7 +365,7 @@ private:
    * For full documenation please see the documentation of the type
    * RtcpdBridgeProtocolEngine::MsgBodyCallback.
    */
-  void giveOutpCallback(const MessageHeader &header,
+  void giveOutpCallback(const legacymsg::MessageHeader &header,
     const int socketFd, bool &receivedENDOF_REQ)
     throw(castor::exception::Exception);
 
@@ -378,6 +383,15 @@ private:
    * Runs a dump session.
    */
   void runDumpSession() throw(castor::exception::Exception);
+
+  /**
+   * Throws an exception if the peer host associated with the specified
+   * socket is not localhost.
+   *
+   * @param socketFd The socket file descriptor.
+   */
+  void checkPeerIsLocalhost(const int socketFd)
+    throw(castor::exception::Exception);
 };
 
 } // namespace aggregator

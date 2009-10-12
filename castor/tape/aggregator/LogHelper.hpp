@@ -25,22 +25,24 @@
 #ifndef CASTOR_TAPE_AGGREGATOR_LOGHELPER
 #define CASTOR_TAPE_AGGREGATOR_LOGHELPER
 
-#include "castor/tape/aggregator/GiveOutpMsgBody.hpp"
-#include "castor/tape/aggregator/RcpJobReplyMsgBody.hpp"
-#include "castor/tape/aggregator/RcpJobRqstMsgBody.hpp"
-#include "castor/tape/aggregator/RtcpAbortMsgBody.hpp"
-#include "castor/tape/aggregator/RtcpDumpTapeRqstMsgBody.hpp"
-#include "castor/tape/aggregator/RtcpNoMoreRequestsMsgBody.hpp"
-#include "castor/tape/aggregator/RtcpFileRqstMsgBody.hpp"
-#include "castor/tape/aggregator/RtcpFileRqstErrMsgBody.hpp"
-#include "castor/tape/aggregator/RtcpTapeRqstMsgBody.hpp"
-#include "castor/tape/aggregator/RtcpTapeRqstErrMsgBody.hpp"
+#include "castor/tape/legacymsg/GiveOutpMsgBody.hpp"
+#include "castor/tape/legacymsg/RtcpJobReplyMsgBody.hpp"
+#include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
+#include "castor/tape/legacymsg/RtcpAbortMsgBody.hpp"
+#include "castor/tape/legacymsg/RtcpDumpTapeRqstMsgBody.hpp"
+#include "castor/tape/legacymsg/RtcpNoMoreRequestsMsgBody.hpp"
+#include "castor/tape/legacymsg/RtcpFileRqstMsgBody.hpp"
+#include "castor/tape/legacymsg/RtcpFileRqstErrMsgBody.hpp"
+#include "castor/tape/legacymsg/RtcpTapeRqstMsgBody.hpp"
+#include "castor/tape/legacymsg/RtcpTapeRqstErrMsgBody.hpp"
+#include "castor/tape/legacymsg/VmgrTapeInfoMsgBody.hpp"
 #include "castor/tape/tapegateway/DumpParameters.hpp"
 #include "castor/tape/tapegateway/FileToRecall.hpp"
 #include "castor/tape/tapegateway/FileToMigrate.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
-
 #include "h/Cuuid.h"
+
+#include <time.h>
 
 
 namespace castor     {
@@ -65,12 +67,12 @@ public:
    * @param body       The message body.
    */
   static void logMsgBody(
-    const Cuuid_t           &cuuid,
-    const int               severity,
-    const int               message_no,
-    const uint32_t          volReqId,
-    const int               socketFd,
-    const RcpJobRqstMsgBody &body) throw();
+    const Cuuid_t                      &cuuid,
+    const int                          severity,
+    const int                          message_no,
+    const uint32_t                     volReqId,
+    const int                          socketFd,
+    const legacymsg::RtcpJobRqstMsgBody &body) throw();
 
   /**
    * Logs the specified RTCP message body.
@@ -83,12 +85,12 @@ public:
    * @param body       The message body.
    */
   static void logMsgBody(
-    const Cuuid_t            &cuuid,
-    const int                severity,
-    const int                message_no,
-    const uint32_t           volReqId,
-    const int                socketFd,
-    const RcpJobReplyMsgBody &body) throw();
+    const Cuuid_t                       &cuuid,
+    const int                           severity,
+    const int                           message_no,
+    const uint32_t                      volReqId,
+    const int                           socketFd,
+    const legacymsg::RtcpJobReplyMsgBody &body) throw();
 
   /**
    * Logs the specified RTCP message body.
@@ -101,12 +103,12 @@ public:
    * @param body       The message body.
    */
   static void logMsgBody(
-    const Cuuid_t                &cuuid,
-    const int                    severity,
-    const int                    message_no,
-    const uint32_t               volReqId,
-    const int                    socketFd,
-    const RtcpTapeRqstErrMsgBody &body) throw();
+    const Cuuid_t                           &cuuid,
+    const int                               severity,
+    const int                               message_no,
+    const uint32_t                          volReqId,
+    const int                               socketFd,
+    const legacymsg::RtcpTapeRqstErrMsgBody &body) throw();
 
   /**
    * Logs the specified RTCP message body.
@@ -119,12 +121,12 @@ public:
    * @param body       The message body.
    */
   static void logMsgBody(
-    const Cuuid_t             &cuuid,
-    const int                 severity,
-    const int                 message_no,
-    const uint32_t            volReqId,
-    const int                 socketFd,
-    const RtcpTapeRqstMsgBody &body) throw();
+    const Cuuid_t                        &cuuid,
+    const int                            severity,
+    const int                            message_no,
+    const uint32_t                       volReqId,
+    const int                            socketFd,
+    const legacymsg::RtcpTapeRqstMsgBody &body) throw();
 
   /**
    * Logs the specified RTCP message body.
@@ -137,12 +139,12 @@ public:
    * @param body       The message body.
    */
   static void logMsgBody(
-    const Cuuid_t                &cuuid,
-    const int                    severity,
-    const int                    message_no,
-    const uint32_t               volReqId,
-    const int                    socketFd,
-    const RtcpFileRqstErrMsgBody &body) throw();
+    const Cuuid_t                           &cuuid,
+    const int                               severity,
+    const int                               message_no,
+    const uint32_t                          volReqId,
+    const int                               socketFd,
+    const legacymsg::RtcpFileRqstErrMsgBody &body) throw();
 
   /**
    * Logs the specified RTCP message body.
@@ -155,12 +157,12 @@ public:
    * @param body       The message body.
    */
   static void logMsgBody(
-    const Cuuid_t             &cuuid,
-    const int                 severity,
-    const int                 message_no,
-    const uint32_t            volReqId,
-    const int                 socketFd,
-    const RtcpFileRqstMsgBody &body) throw();
+    const Cuuid_t                        &cuuid,
+    const int                            severity,
+    const int                            message_no,
+    const uint32_t                       volReqId,
+    const int                            socketFd,
+    const legacymsg::RtcpFileRqstMsgBody &body) throw();
 
   /**
    * Logs the specified RTCP message body.
@@ -173,12 +175,12 @@ public:
    * @param body       The message body.
    */
   static void logMsgBody(
-    const Cuuid_t         &cuuid,
-    const int             severity,
-    const int             message_no,
-    const uint32_t        volReqId,
-    const int             socketFd,
-    const GiveOutpMsgBody &body) throw();
+    const Cuuid_t                    &cuuid,
+    const int                        severity,
+    const int                        message_no,
+    const uint32_t                   volReqId,
+    const int                        socketFd,
+    const legacymsg::GiveOutpMsgBody &body) throw();
 
   /**
    * Logs the specified RTCP message body.
@@ -191,12 +193,12 @@ public:
    * @param body       The message body.
    */
   static void logMsgBody(
-    const Cuuid_t                   &cuuid,
-    const int                       severity,
-    const int                       message_no,
-    const uint32_t                  volReqId,
-    const int                       socketFd,
-    const RtcpNoMoreRequestsMsgBody &body) throw();
+    const Cuuid_t                              &cuuid,
+    const int                                  severity,
+    const int                                  message_no,
+    const uint32_t                             volReqId,
+    const int                                  socketFd,
+    const legacymsg::RtcpNoMoreRequestsMsgBody &body) throw();
 
   /**
    * Logs the specified RTCP message body.
@@ -209,102 +211,135 @@ public:
    * @param body       The message body.
    */
   static void logMsgBody(
-    const Cuuid_t          &cuuid,
-    const int              severity,
-    const int              message_no,
-    const uint32_t         volReqId,
-    const int              socketFd,
-    const RtcpAbortMsgBody &body) throw();
-
-  /**
-   * Logs the specified RTCP message body.
-   *
-   * @param cuuid      The uuid of the component issuing the message.
-   * @param message_no The message number in the facility.
-   * @param severity   The severity of the message.
-   * @param volReqId   The volume request ID.
-   * @param socketFd   The file descriptor of the associated TCP/IP socket.
-   * @param body       The message body.
-   */
-  static void logMsgBody(
-    const Cuuid_t                 &cuuid,
-    const int                     severity,
-    const int                     message_no,
-    const uint32_t                volReqId,
-    const int                     socketFd,
-    const RtcpDumpTapeRqstMsgBody &body) throw();
-
-  /**
-   * Logs the specified Client message.
-   *
-   * @param cuuid      The uuid of the component issuing the message.
-   * @param message_no The message number in the facility.
-   * @param severity   The severity of the message.
-   * @param volReqId   The volume request ID.
-   * @param socketFd   The file descriptor of the associated TCP/IP socket.
-   * @param msg        The message.
-   */
-  static void logMsg(
-    const Cuuid_t             &cuuid,
-    const int                 severity,
-    const int                 message_no,
-    const uint32_t            volReqId,
-    const int                 socketFd,
-    const tapegateway::Volume &msg) throw();
-
-  /**
-   * Logs the specified Client message.
-   *
-   * @param cuuid      The uuid of the component issuing the message.
-   * @param message_no The message number in the facility.
-   * @param severity   The severity of the message.
-   * @param volReqId   The volume request ID.
-   * @param socketFd   The file descriptor of the associated TCP/IP socket.
-   * @param msg        The message.
-   */
-  static void logMsg(
     const Cuuid_t                     &cuuid,
     const int                         severity,
     const int                         message_no,
     const uint32_t                    volReqId,
     const int                         socketFd,
-    const tapegateway::DumpParameters &msg) throw();
+    const legacymsg::RtcpAbortMsgBody &body) throw();
 
   /**
-   * Logs the specified Client message.
+   * Logs the specified RTCP message body.
    *
    * @param cuuid      The uuid of the component issuing the message.
    * @param message_no The message number in the facility.
    * @param severity   The severity of the message.
    * @param volReqId   The volume request ID.
    * @param socketFd   The file descriptor of the associated TCP/IP socket.
-   * @param msg        The message.
+   * @param body       The message body.
    */
-  static void logMsg(
-    const Cuuid_t  &cuuid,
-    const int      severity, 
-    const int      message_no, 
-    const uint32_t volReqId,
-    const int      socketFd, 
-    const tapegateway::FileToRecall &msg) throw();
+  static void logMsgBody(
+    const Cuuid_t                            &cuuid,
+    const int                                severity,
+    const int                                message_no,
+    const uint32_t                           volReqId,
+    const int                                socketFd,
+    const legacymsg::RtcpDumpTapeRqstMsgBody &body) throw();
+
+  /**
+   * Logs the specified RTCP message body.
+   *
+   * @param cuuid            The uuid of the component issuing the message.
+   * @param message_no       The message number in the facility.
+   * @param severity         The severity of the message.
+   * @param volReqId         The volume request ID.
+   * @param socketFd         The file descriptor of the associated TCP/IP
+   *                         socket.
+   * @param body             The message body.
+   * @param connectDuration  The number of seconds it took to connect to the
+   *                         client.
+   * @param sendRecvDuration The number of seconds it took to send the request
+   *                         and receive the reply.
+   */
+  static void logMsgBody(
+    const Cuuid_t                        &cuuid,
+    const int                            severity,
+    const int                            message_no,
+    const uint32_t                       volReqId,
+    const int                            socketFd,
+    const legacymsg::VmgrTapeInfoMsgBody &body,
+    const time_t                         connectDuration,
+    const time_t                         sendRecvDuration) throw();
 
   /**
    * Logs the specified Client message.
    *
-   * @param cuuid      The uuid of the component issuing the message.
-   * @param message_no The message number in the facility.
-   * @param severity   The severity of the message.
-   * @param volReqId   The volume request ID.
-   * @param socketFd   The file descriptor of the associated TCP/IP socket.
-   * @param msg        The message.
+   * @param cuuid            The uuid of the component issuing the message.
+   * @param message_no       The message number in the facility.
+   * @param severity         The severity of the message.
+   * @param msg              The message.
+   * @param connectDuration  The number of seconds it took to connect to the
+   *                         client.
+   * @param sendRecvDuration The number of seconds it took to send the request
+   *                         and receive the reply.
    */
   static void logMsg(
-    const Cuuid_t  &cuuid,
-    const int      severity, 
-    const int      message_no, 
-    const uint32_t volReqId,
-    const int      socketFd, 
-    const tapegateway::FileToMigrate &msg) throw();
+    const Cuuid_t             &cuuid,
+    const int                 severity,
+    const int                 message_no,
+    const tapegateway::Volume &msg,
+    const time_t              connectDuration,
+    const time_t              sendRecvDuration) throw();
+
+  /**
+   * Logs the specified Client message.
+   *
+   * @param cuuid            The uuid of the component issuing the message.
+   * @param message_no       The message number in the facility.
+   * @param severity         The severity of the message.
+   * @param msg              The message.
+   * @param connectDuration  The number of seconds it took to connect to the
+   *                         client.
+   * @param sendRecvDuration The number of seconds it took to send the request
+   *                         and receive the reply.
+   */
+  static void logMsg(
+    const Cuuid_t                     &cuuid,
+    const int                         severity,
+    const int                         message_no,
+    const tapegateway::DumpParameters &msg,
+    const time_t                      connectDuration,
+    const time_t                      sendRecvDuration) throw();
+
+  /**
+   * Logs the specified Client message.
+   *
+   * @param cuuid            The uuid of the component issuing the message.
+   * @param message_no       The message number in the facility.
+   * @param severity         The severity of the message.
+   * @param msg              The message.
+   * @param connectDuration  The number of seconds it took to connect to the
+   *                         client.
+   * @param sendRecvDuration The number of seconds it took to send the request
+   *                         and receive the reply.
+   */
+  static void logMsg(
+    const Cuuid_t                   &cuuid,
+    const int                       severity, 
+    const int                       message_no, 
+    const tapegateway::FileToRecall &msg,
+    const time_t                    connectDuration,
+    const time_t                    sendRecvDuration) throw();
+
+  /**
+   * Logs the specified Client message.
+   *
+   * @param cuuid            The uuid of the component issuing the message.
+   * @param message_no       The message number in the facility.
+   * @param severity         The severity of the message.
+   * @param msg              The message.
+   * @param connectDuration  The number of seconds it took to connect to the
+   *                         client.
+   * @param sendRecvDuration The number of seconds it took to send the request
+   *                         and receive the reply.
+   */
+  static void logMsg(
+    const Cuuid_t                    &cuuid,
+    const int                        severity, 
+    const int                        message_no, 
+    const tapegateway::FileToMigrate &msg,
+    const time_t                     connectDuration,
+    const time_t                     sendRecvDuration) throw();
 
 };
 

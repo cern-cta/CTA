@@ -26,6 +26,8 @@
 #ifndef CASTOR_TAPE_AGGREGATOR_CONSTANTS_HPP
 #define CASTOR_TAPE_AGGREGATOR_CONSTANTS_HPP 1
 
+#include "h/Castor_limits.h"
+
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -53,10 +55,11 @@ namespace aggregator {
 
   /**
    * The maximum number of pending transfers between the aggregator and RTCPD.
-   * The actual number of outstanding pending transfers is equal to the number
-   * of disk IO when all of the disk IO threads are busy transfering files.
+   * The theoretical maximum number of outstanding pending transfers is equal
+   * to the memory allocated to memory buffers of RTCPD divided by the average
+   * file size.
    */
-  const int MAXPENDINGTRANSFERS = 100;
+  const int MAXPENDINGTRANSFERS = 100000;
 
   /**
    * The maximum size of an RTCOPY message in bytes including both message
@@ -75,22 +78,58 @@ namespace aggregator {
   const char *const RECORDFORMAT = "F";
 
   /**
-   * The timeout in seconds to be used when the network reads and writes of the
-   * RTCOPY protocol.
+   * The timeout in seconds used when sending and receiving RTCPD network
+   * messages.
    */
-  const int RTCPDNETRWTIMEOUT     = 5;
+  const int RTCPDNETRWTIMEOUT = 55;
 
   /**
    * The timeout in seconds for which the aggregator waits for RTCPD to call it
    * back.
    */
-  const int RTCPDCALLBACKTIMEOUT  = 5;
+  const int RTCPDCALLBACKTIMEOUT = 55;
 
   /**
    * The minimum timeout in seconds between sending a ping message from the
    * aggregator to RTCPD.
    */
   const int RTCPDPINGTIMEOUT = 30;
+
+  /**
+   * The timeout in seconds used when sending and receiving client network
+   * messages, where client refers to either tape gateway, readtp, writetp or
+   * dumptp.  A value less than 60 seconds should be used because the default
+   * timeout used by rtcpd when sending and receiving messages to and from the
+   * aggregator is 60 seconds.  The file CASTOR2/h/rtcp_constants.h contains
+   * the following line:
+   * <code>
+   * #define RTCP_NETTIMEOUT (60)
+   * </code>
+   */
+  const int CLIENTNETRWTIMEOUT = 55;
+
+  /**
+   * The maximum size of a VMGR message in bytes including both message header
+   * and message body.
+   */
+  const size_t VMGRMSGBUFSIZE = 4096;
+
+  /**
+   * The timeout in seconds used when sending and receiving VMGR network
+   * messages.  A value less than 60 seconds should be used because the default
+   * timeout used by rtcpd when sending and receiving messages to and from the
+   * aggregator is 60 seconds.  The file CASTOR2/h/rtcp_constants.h contains
+   * the following line:
+   * <code>
+   * #define RTCP_NETTIMEOUT (60)
+   * </code>
+   */
+  const int VMGRNETRWTIMEOUT = 55;
+
+  /**
+   * An empty volume serial number.
+   */
+  const char EMPTYVSN[CA_MAXVSNLEN+1] = "";
 
 } // namespace aggregator
 } // namespace tape

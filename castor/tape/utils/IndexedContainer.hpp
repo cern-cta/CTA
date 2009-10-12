@@ -37,15 +37,14 @@ namespace tape   {
 namespace utils  {
 
 /**
- * An indexed container with a fixed maximum size of NB_ELEMENTS, used to store
- * data of type T.
+ * An indexed container used to store data of type T.
  *
  * This container is designed to provide a "no search" solution for both
  * inserting and getting data pointers.
  *
- * All NB_ELEMENTS elements of the container are allocated when the container
- * is created.  Each element maybe free or in-use. Each element has a next
- * member which allows the element to in an internal list of free elements. All
+ * All the elements of the container are allocated when the container is
+ * created.  Each element maybe free or in-use. Each element has a next member
+ * which allows the element to in an internal list of free elements. All
  * elements are in the list of free elements when the container is created.
  *
  * The insert function inserts a data pointer into the container using the
@@ -59,28 +58,41 @@ namespace utils  {
  * are in array, enables a data pointer to be retrieved based on an array index
  * without the need for a search.
  */
-template <typename T, int NB_ELEMENTS> class IndexedContainer {
+template <typename T> class IndexedContainer {
 
 public:
 
   /**
    * Constructor.
    */
-  IndexedContainer() throw() {
-    for(int i=0; i<NB_ELEMENTS; i++) {
-      Element &element = m_elements[i];
+  IndexedContainer(const int nbElements) throw() : m_nbElements(nbElements) {
 
-      element.index  = i;
-      element.isFree = true;
+    // Allocate the memory for all of the elements
+    m_elements = new Element[m_nbElements];
 
-      if(i == NB_ELEMENTS-1) {
-        element.next = NULL;
+    // Initialise the elements and link them all together to form the list of
+    // free elements
+    for(int i=0; i<m_nbElements; i++) {
+      Element *element = &m_elements[i];
+
+      element->index  = i;
+      element->isFree = true;
+
+      if(i == m_nbElements-1) {
+        element->next = NULL;
       } else {
-        element.next = &m_elements[i+1];
+        element->next = &m_elements[i+1];
       }
     }
 
     m_free = m_elements;
+  }
+
+  /**
+   * Destructor.
+   */
+  ~IndexedContainer() throw() {
+    delete[] m_elements;
   }
 
   /**
@@ -98,21 +110,21 @@ public:
       exception::OutOfMemory ex;
 
       ex.getMessage() << "No more free elements to store data pointer: "
-        "Maximum number of elements=" << NB_ELEMENTS;
+        "Maximum number of elements=" << m_nbElements;
 
       throw(ex);
     }
 
     // Get and remove the free element from the list of free elements
-    Element &element = *m_free;
-    m_free = element.next;
+    Element *element = m_free;
+    m_free = element->next;
 
     // Store the data and update the state of the element
-    element.isFree = false;
-    element.data   = data;
-    element.next   = NULL;
+    element->isFree = false;
+    element->data   = data;
+    element->next   = NULL;
 
-    return element.index;
+    return element->index;
   }
 
   /**
@@ -129,10 +141,10 @@ public:
   T &get(const int index)
     throw(exception::InvalidArgument, exception::NoEntry) {
 
-    Element &element = getElement(index);
+    Element *element = getElement(index);
 
     // Throw an exception if the element is free
-    if(element.isFree) {
+    if(element->isFree) {
       exception::NoEntry ex;
 
       ex.getMessage()
@@ -142,7 +154,7 @@ public:
       throw ex;
     }
 
-    return element.data;
+    return element->data;
   }
 
   /**
@@ -163,10 +175,10 @@ public:
   T &remove(const int index) throw(exception::InvalidArgument,
     exception::NoEntry) {
 
-    Element &element = getElement(index);
+    Element *element = getElement(index);
 
     // Throw an exception if the element is free
-    if(element.isFree) {
+    if(element->isFree) {
       exception::NoEntry ex;
 
       ex.getMessage()
@@ -177,12 +189,12 @@ public:
     }
 
     // Add the element to the list of free elements
-    element.next = m_free;
-    m_free = &element;
+    element->next = m_free;
+    m_free = element;
 
     // Get the data and update the state of the element
-    T &data = element.data;
-    element.isFree  = true;
+    T &data = element->data;
+    element->isFree  = true;
 
     return data;
   }
@@ -197,8 +209,8 @@ public:
 
     os << "m_elements={";
 
-    for(int i=0; i<NB_ELEMENTS; i++) {
-      Element &element = m_elements[i];
+    for(int i=0; i<m_nbElements; i++) {
+      Element *element = &m_elements[i];
 
       // Write a comma if this element is not the first
       if(i>0) {
@@ -206,11 +218,11 @@ public:
       }
 
       os << "{";
-      os << "ADDRESS=" << &element;
-      os << ",index="  << element.index;
-      os << ",isFree=" << boolToString(element.isFree);
-      os << ",data="   << element.data;
-      os << ",next="   << element.next;
+      os << "ADDRESS=" << element;
+      os << ",index="  << element->index;
+      os << ",isFree=" << boolToString(element->isFree);
+      os << ",data="   << element->data;
+      os << ",next="   << element->next;
       os << "}";
     }
 
@@ -235,9 +247,14 @@ private:
   };
 
   /**
+   * The total number of elements, both free and used.
+   */
+  const int m_nbElements;
+
+  /**
    * All of the elements, both free and used.
    */
-  Element m_elements[NB_ELEMENTS];
+  Element *m_elements;
 
   /**
    * Pointer to the first free element or NULL if there are no more free
@@ -253,21 +270,21 @@ private:
    * @param index The array index of the element.
    * @return The data pointer.
    */
-  Element &getElement(const int index) throw(exception::InvalidArgument) {
+  Element *getElement(const int index) throw(exception::InvalidArgument) {
 
     // Throw an exception if the index is invalid
-    if(index < 0 || index >=NB_ELEMENTS) {
+    if(index < 0 || index >=m_nbElements) {
       exception::InvalidArgument ex;
 
       ex.getMessage()
         << "Invalid index"
            ": Actual=" << index
-        << " Minimum=0 Maximum=" << (NB_ELEMENTS-1);
+        << " Minimum=0 Maximum=" << (m_nbElements-1);
 
       throw ex;
     }
 
-    return m_elements[index];
+    return &m_elements[index];
   }
 
 }; // IndexedContainer

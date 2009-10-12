@@ -32,15 +32,15 @@
 #include "castor/tape/aggregator/DriveAllocationProtocolEngine.hpp"
 #include "castor/tape/aggregator/ClientTxRx.hpp"
 #include "castor/tape/aggregator/Packer.hpp"
-#include "castor/tape/aggregator/RcpJobSubmitter.hpp"
+#include "castor/tape/aggregator/RtcpJobSubmitter.hpp"
+#include "castor/tape/aggregator/RtcpTxRx.hpp"
 #include "castor/tape/aggregator/Unpacker.hpp"
-#include "castor/tape/aggregator/RtcpMarshaller.hpp"
-#include "castor/tape/aggregator/RtcpTapeRqstErrMsgBody.hpp"
-#include "castor/tape/aggregator/RtcpFileRqstErrMsgBody.hpp"
 #include "castor/tape/aggregator/SmartFd.hpp"
 #include "castor/tape/aggregator/SmartFdList.hpp"
-#include "castor/tape/aggregator/RtcpTxRx.hpp"
 #include "castor/tape/aggregator/VdqmRequestHandler.hpp"
+#include "castor/tape/aggregator/VmgrTxRx.hpp"
+#include "castor/tape/legacymsg/RtcpMarshal.hpp"
+#include "castor/tape/legacymsg/VmgrMarshal.hpp"
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
@@ -49,6 +49,7 @@
 #include "h/Ctape_constants.h"
 #include "h/rtcp_constants.h"
 #include "h/vdqm_constants.h"
+#include "h/vmgr_constants.h"
 
 #include <memory>
 #include <sys/select.h>
@@ -83,151 +84,267 @@ void castor::tape::aggregator::VdqmRequestHandler::init() throw() {
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
   throw() {
-  Cuuid_t cuuid = nullCuuid;
 
   // Give a Cuuid to the request
+  Cuuid_t cuuid = nullCuuid;
   Cuuid_create(&cuuid);
 
-  // Check the parameter to the run function has been set
-  if(param == NULL) {
-    CASTOR_DLF_WRITEC(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_VDQM_REQUEST_HANDLER_SOCKET_IS_NULL);
-    return;
-  }
-
-  // Wrap the VDQM connection socket within an auto pointer.  When the auto
-  // pointer goes out of scope it will delete the socket.  The destructor of
-  // the socket will in turn close the connection.
-  std::auto_ptr<castor::io::AbstractTCPSocket>
-    vdqmSock((castor::io::AbstractTCPSocket*)param);
-
-  // Log the new connection
   try {
-    unsigned short port = 0; // Client port
-    unsigned long  ip   = 0; // Client IP
-    char           hostName[net::HOSTNAMEBUFLEN];
+    // Check the parameter to the run function has been set
+    if(param == NULL) {
+      TAPE_THROW_EX(castor::exception::InvalidArgument,
+        "VDQM request handler socket is NULL");
+    }
 
-    net::getPeerIpPort(vdqmSock->socket(), ip, port);
-    net::getPeerHostName(vdqmSock->socket(), hostName);
+    // Wrap the VDQM connection socket within an auto pointer.  When the auto
+    // pointer goes out of scope it will delete the socket.  The destructor of
+    // the socket will in turn close the connection.
+    std::auto_ptr<castor::io::AbstractTCPSocket>
+      vdqmSock((castor::io::AbstractTCPSocket*)param);
 
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("IP"      , castor::dlf::IPAddress(ip)),
-      castor::dlf::Param("Port"    , port),
-      castor::dlf::Param("HostName", hostName)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_VDQM_CONNECTION_WITH_INFO, params);
+    // Log the new connection
+    try {
+      unsigned short port = 0; // Client port
+      unsigned long  ip   = 0; // Client IP
+      char           hostName[net::HOSTNAMEBUFLEN];
 
-  } catch(castor::exception::Exception &ex) {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("Message" , ex.getMessage().str()),
-      castor::dlf::Param("Code"    , ex.code())};
-    CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_VDQM_CONNECTION_WITHOUT_INFO, params);
-  }
+      net::getPeerIpPort(vdqmSock->socket(), ip, port);
+      net::getPeerHostName(vdqmSock->socket(), hostName);
 
-  try {
-    // Create, bind and mark a listen socket for RTCPD callback connections
-    // Wrap the socket file descriptor in a smart file descriptor so that it is
-    // guaranteed to be closed when it goes out of scope.
-    const unsigned short lowPort = utils::getPortFromConfig(
-      "AGGREGATORRTCPD", "LOWPORT", AGGREGATORRTCPD_LOWPORT);
-    const unsigned short highPort = utils::getPortFromConfig(
-      "AGGREGATORRTCPD", "HIGHPORT", AGGREGATORRTCPD_HIGHPORT);
-    unsigned short chosenPort = 0;
-    SmartFd rtcpdCallbackSockFd(net::createListenerSock("127.0.0.1", lowPort,
-      highPort,  chosenPort));
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("IP"      , castor::dlf::IPAddress(ip)),
+        castor::dlf::Param("Port"    , port),
+        castor::dlf::Param("HostName", hostName)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_VDQM_CONNECTION_WITH_INFO, params);
 
-    // Get the IP, host name and port of the callback port
-    unsigned long rtcpdCallbackIp = 0;
-    char rtcpdCallbackHost[net::HOSTNAMEBUFLEN];
-    utils::setBytes(rtcpdCallbackHost, '\0');
-    unsigned short rtcpdCallbackPort = 0;
-    net::getSockIpHostnamePort(rtcpdCallbackSockFd.get(),
-    rtcpdCallbackIp, rtcpdCallbackHost, rtcpdCallbackPort);
+    } catch(castor::exception::Exception &ex) {
+      castor::exception::Exception ex2(ex.code());
 
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("IP"      , castor::dlf::IPAddress(rtcpdCallbackIp)),
-      castor::dlf::Param("Port"    , rtcpdCallbackPort),
-      castor::dlf::Param("HostName", rtcpdCallbackHost)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_CREATED_RTCPD_CALLBACK_PORT, params);
+      ex2.getMessage() <<
+        "Failed to log new connection"
+        ": " << ex.getMessage().str();
+
+      throw(ex2);
+    }
+
+    // Check the VDQM (an RTCP job submitter) is authorised
+    checkRtcpJobSubmitterIsAuthorised(vdqmSock->socket());
 
     // Receive the RTCOPY job request from the VDQM
-    RcpJobRqstMsgBody jobRequest;
+    legacymsg::RtcpJobRqstMsgBody jobRequest;
     utils::setBytes(jobRequest, '\0');
-    checkRcpJobSubmitterIsAuthorised(vdqmSock->socket());
-    RtcpTxRx::receiveRcpJobRqst(cuuid, vdqmSock->socket(), RTCPDNETRWTIMEOUT,
+    RtcpTxRx::receiveRtcpJobRqst(cuuid, vdqmSock->socket(), RTCPDNETRWTIMEOUT,
       jobRequest);
 
-    SmartFd rtcpdInitialSockFd;
+    // Send a positive acknowledge to the VDQM
+    {
+      legacymsg::RtcpJobReplyMsgBody rtcpdReply;
+      utils::setBytes(rtcpdReply, '\0');
+      rtcpdReply.status = VDQM_CLIENTINFO; // Strange status code
+      char vdqmReplyBuf[RTCPMSGBUFSIZE];
+      size_t vdqmReplyLen = 0;
+      vdqmReplyLen = legacymsg::marshal(vdqmReplyBuf, rtcpdReply);
+      net::writeBytes(vdqmSock->socket(), RTCPDNETRWTIMEOUT, vdqmReplyLen,
+        vdqmReplyBuf);
+    }
 
-    DriveAllocationProtocolEngine driveAllocationProtocolEngine;
-    std::auto_ptr<tapegateway::Volume>
-      volume(driveAllocationProtocolEngine.run(cuuid, *(vdqmSock.get()),
-      rtcpdCallbackSockFd.get(), rtcpdCallbackHost, rtcpdCallbackPort,
-      rtcpdInitialSockFd, jobRequest));
+    // Close the connection to the VDQM
+    // Please note that the destructor of AbstractTCPSocket will not close the
+    // socket a second time
+    vdqmSock->close();
 
-    // If there is no volume to mount, then notify the client end of session
-    // and return
-    if(volume.get() == NULL) {
+    // Perform the rest of the thread's work, notifying the client if any
+    // exception is thrown
+    try {
+      exceptionThrowingRun(cuuid, jobRequest);
+    } catch(castor::exception::Exception &ex) {
       try {
-        ClientTxRx::notifyEndOfSession(cuuid, jobRequest.volReqId,
-          jobRequest.clientHost, jobRequest.clientPort);
-      } catch(castor::exception::Exception &ex) {
-        // Don't rethrow, just log the exception
         castor::dlf::Param params[] = {
           castor::dlf::Param("volReqId", jobRequest.volReqId  ),
           castor::dlf::Param("Message" , ex.getMessage().str()),
           castor::dlf::Param("Code"    , ex.code()            )};
         castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-          AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
+          AGGREGATOR_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
+
+        ClientTxRx::notifyEndOfFailedSession(cuuid, jobRequest.volReqId,
+          jobRequest.clientHost, jobRequest.clientPort, ex);
+      } catch(castor::exception::Exception &ex2) {
+        // Don't rethrow, just log the exception
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("volReqId", jobRequest.volReqId   ),
+          castor::dlf::Param("Message" , ex2.getMessage().str()),
+          castor::dlf::Param("Code"    , ex2.code()            )};
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+          AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
       }
 
-      return;
-    }
-
-    // If the volume has the aggregation format
-    if(volume->label() == "ALB") {
-
-      // If migrating
-      if(volume->mode() == tapegateway::WRITE) {
-
-        Packer packer;
-        packer.run();
-
-      // Else recalling (READ or DUMP)
-      } else {
-
-        Unpacker unpacker;
-        unpacker.run();
-      }
-
-    // Else the volume does not have the aggregation format
-    } else {
-
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("volReqId", jobRequest.volReqId)};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_ENTERING_BRIDGE_MODE, params);
-
-      char vsn[CA_MAXVSNLEN+1];
-      utils::setBytes(vsn, '\0');
-      BridgeProtocolEngine bridgeProtocolEngine(cuuid,
-        rtcpdCallbackSockFd.get(), rtcpdInitialSockFd.get(), jobRequest,
-        *volume, vsn, m_stoppingGracefullyFunctor);
-      bridgeProtocolEngine.run();
+      // Rethrow the exception thrown by exceptionThrowingRun() so that the
+      // outer try and catch block always logs AGGREGATOR_TRANSFER_FAILED when
+      // a failure has occured
+      throw(ex);
     }
   } catch(castor::exception::Exception &ex) {
 
-    char codeStr[1024];
-    sstrerror_r(ex.code(), codeStr, sizeof(codeStr));
-
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Message"   , ex.getMessage().str()),
-      castor::dlf::Param("Code"      , ex.code()),
-      castor::dlf::Param("CodeString", codeStr)};
+      castor::dlf::Param("Message", ex.getMessage().str()),
+      castor::dlf::Param("Code"   , ex.code()            )};
     CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
       AGGREGATOR_TRANSFER_FAILED, params);
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// exceptionThrowingRun
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::VdqmRequestHandler::exceptionThrowingRun(
+  const Cuuid_t &cuuid, const legacymsg::RtcpJobRqstMsgBody &jobRequest)
+  throw(castor::exception::Exception) {
+
+  // Create, bind and mark a listen socket for RTCPD callback connections
+  // Wrap the socket file descriptor in a smart file descriptor so that it is
+  // guaranteed to be closed when it goes out of scope.
+  const unsigned short lowPort = utils::getPortFromConfig(
+    "AGGREGATORRTCPD", "LOWPORT", AGGREGATORRTCPD_LOWPORT);
+  const unsigned short highPort = utils::getPortFromConfig(
+    "AGGREGATORRTCPD", "HIGHPORT", AGGREGATORRTCPD_HIGHPORT);
+  unsigned short chosenPort = 0;
+  SmartFd rtcpdCallbackSockFd(net::createListenerSock("127.0.0.1", lowPort,
+    highPort,  chosenPort));
+
+  // Get the IP, host name and port of the callback port
+  unsigned long rtcpdCallbackIp = 0;
+  char rtcpdCallbackHost[net::HOSTNAMEBUFLEN];
+  utils::setBytes(rtcpdCallbackHost, '\0');
+  unsigned short rtcpdCallbackPort = 0;
+  net::getSockIpHostnamePort(rtcpdCallbackSockFd.get(),
+    rtcpdCallbackIp, rtcpdCallbackHost, rtcpdCallbackPort);
+
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("IP"      , castor::dlf::IPAddress(rtcpdCallbackIp)),
+    castor::dlf::Param("Port"    , rtcpdCallbackPort),
+    castor::dlf::Param("HostName", rtcpdCallbackHost)};
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+    AGGREGATOR_CREATED_RTCPD_CALLBACK_PORT, params);
+
+  SmartFd rtcpdInitialSockFd;
+  DriveAllocationProtocolEngine driveAllocationProtocolEngine;
+  std::auto_ptr<tapegateway::Volume>
+    volume(driveAllocationProtocolEngine.run(cuuid, rtcpdCallbackSockFd.get(),
+    rtcpdCallbackHost, rtcpdCallbackPort, rtcpdInitialSockFd, jobRequest));
+
+  // If there is no volume to mount, then notify the client end of session
+  // and return
+  if(volume.get() == NULL) {
+    try {
+      ClientTxRx::notifyEndOfSession(cuuid, jobRequest.volReqId,
+        jobRequest.clientHost, jobRequest.clientPort);
+    } catch(castor::exception::Exception &ex) {
+      castor::exception::Exception ex2(ex.code());
+
+      ex2.getMessage() <<
+        "Failed to notify client end of session"
+        ": volReqId=" << jobRequest.volReqId <<
+        ": " << ex.getMessage().str();
+
+      throw(ex2);
+    }
+
+    return;
+  }
+
+  // If migrating
+  if(volume->mode() == tapegateway::WRITE) {
+
+    // Get volume information from the VMGR
+    legacymsg::VmgrTapeInfoMsgBody tapeInfo;
+    utils::setBytes(tapeInfo, '\0');
+    {
+      const uint32_t uid = getuid();
+      const uint32_t gid = getgid();
+
+      try {
+        VmgrTxRx::getTapeInfoFromVmgr(cuuid, jobRequest.volReqId,
+          VMGRNETRWTIMEOUT, uid, gid, volume->vid().c_str(), tapeInfo);
+      } catch(castor::exception::Exception &ex) {
+        castor::exception::Exception ex2(ex.code());
+
+        ex2.getMessage() <<
+          "Failed to get tape information"
+          ": volReqId=" << jobRequest.volReqId <<
+          ": vid=" << volume->vid() <<
+          ": " << ex.getMessage().str();
+
+        throw(ex2);
+      }
+    }
+
+    // If the client is the tape gateway and the volume is not marked as BUSY
+    if(volume->clientType() == tapegateway::TAPE_GATEWAY &&
+      !(tapeInfo.status & TAPE_BUSY)) {
+      castor::exception::Exception ex(ECANCELED);
+
+      ex.getMessage() <<
+        "The tape gateway is the client and the tape to be mounted is not BUSY"
+        ": volReqId=" << jobRequest.volReqId <<
+        ": vid=" << volume->vid();
+
+      throw ex;
+    }
+
+    enterBridgeOrAggregatorMode(cuuid, rtcpdCallbackSockFd.get(),
+      rtcpdInitialSockFd.get(), jobRequest, *volume, tapeInfo.nbFiles,
+      m_stoppingGracefullyFunctor);
+
+  // Else recalling
+  } else {
+    const uint32_t nbFilesOnDestinationTape = 0;
+
+    enterBridgeOrAggregatorMode(cuuid, rtcpdCallbackSockFd.get(),
+      rtcpdInitialSockFd.get(), jobRequest, *volume,
+      nbFilesOnDestinationTape, m_stoppingGracefullyFunctor);
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// enterBridgeOrAggregatorMode
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::VdqmRequestHandler::enterBridgeOrAggregatorMode(
+  const Cuuid_t                       &cuuid,
+  const int                           rtcpdCallbackSockFd,
+  const int                           rtcpdInitialSockFd,
+  const legacymsg::RtcpJobRqstMsgBody &jobRequest,
+  tapegateway::Volume                 &volume,
+  const uint32_t                      nbFilesOnDestinationTape,
+  BoolFunctor                         &stoppingGracefully)
+  throw(castor::exception::Exception) {
+
+  // If the volume has the aggregation format
+  if(volume.label() == "ALB") {
+
+    // Enter aggregator mode
+    if(volume.mode() == tapegateway::WRITE) {
+      Packer packer;
+      packer.run();
+    } else {
+      Unpacker unpacker;
+      unpacker.run();
+    }
+
+  // Else the volume does not have the aggregation format
+  } else {
+
+    // Enter bridge mode
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId", jobRequest.volReqId)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_ENTERING_BRIDGE_MODE, params);
+    BridgeProtocolEngine bridgeProtocolEngine(cuuid, rtcpdCallbackSockFd,
+      rtcpdInitialSockFd, jobRequest, volume, nbFilesOnDestinationTape,
+      m_stoppingGracefullyFunctor);
+    bridgeProtocolEngine.run();
   }
 }
 
@@ -251,10 +368,10 @@ bool castor::tape::aggregator::VdqmRequestHandler::stoppingGracefully()
 
 
 //-----------------------------------------------------------------------------
-// checkRcpJobSubmitterIsAuthorised
+// checkRtcpJobSubmitterIsAuthorised
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::VdqmRequestHandler::
-  checkRcpJobSubmitterIsAuthorised(const int socketFd)
+  checkRtcpJobSubmitterIsAuthorised(const int socketFd)
   throw(castor::exception::Exception) {
 
   char peerHost[CA_MAXHOSTNAMELEN+1];
