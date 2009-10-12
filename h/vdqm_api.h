@@ -50,6 +50,7 @@ EXTERN_C int DLL_DECL vdqm_SendDedicate _PROTO((char*, char*, char*, char*));
 /*
  * Functions that use VDQM magic number: VDQM4
  */
-EXTERN_C int DLL_DECL vdqm_SendAggregatorVolReq _PROTO((vdqmnw_t *, int *, char *, char *, char *, char *, int, int));
+EXTERN_C int DLL_DECL vdqm_CreateRequestForAggregator _PROTO((vdqmnw_t *nw, int *reqID, char *VID, char *dgn, char *server, char *unit, int mode, int client_port));
+EXTERN_C int DLL_DECL vdqm_QueueRequestForAggregator _PROTO((vdqmnw_t *nw));
 
 #endif /* _VDQM_API_H */
