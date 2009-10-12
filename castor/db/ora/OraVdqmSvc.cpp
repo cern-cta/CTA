@@ -2473,12 +2473,19 @@ int castor::db::ora::OraVdqmSvc::translateNewStatus(
   case castor::vdqm::UNIT_UP:
     oldStatus = VDQM_UNIT_UP | VDQM_UNIT_FREE;
     break;
+
+  // S. Murray & N. Bessone 01/09/09
+  //
+  // Both UNIT_STARTING and UNIT_ASSIGNED should appear as START in showqueues,
+  // therefore the VDQM_UNIT_ASSIGN bit is not sent to showqueues when the
+  // drive is assigned, unlike vdqm_UnitStatus which must give the complete
+  // drive status in order for the cleanup logic of rtcpd_Deassign to work
+  // correctly
   case castor::vdqm::UNIT_STARTING:
+  case castor::vdqm::UNIT_ASSIGNED:
     oldStatus = VDQM_UNIT_UP | VDQM_UNIT_BUSY;
     break;
-  case castor::vdqm::UNIT_ASSIGNED:
-    oldStatus = VDQM_UNIT_UP | VDQM_UNIT_ASSIGN | VDQM_UNIT_BUSY;
-    break;
+
   case castor::vdqm::VOL_MOUNTED:
     oldStatus = VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_ASSIGN;
     break;
