@@ -1071,71 +1071,146 @@ int DLL_DECL vdqm_SendDedicate(char *server, char *drive, char *dgn,
     VDQM_API_RETURN(rc);
 }
 
-int DLL_DECL vdqm_SendAggregatorVolReq(vdqmnw_t *nw,
+
+int DLL_DECL vdqm_CreateRequestForAggregator(vdqmnw_t *nw,
                     int  *reqID,
                     char *VID, 
                     char *dgn,
                     char *server, 
                     char *unit, 
-                    int mode,
-                    int client_port) {
-    vdqmVolReq_t volreq;
-    vdqmnw_t *tmpnw = NULL;
-    struct passwd *pw;
-    int save_serrno = 0;
-    int rc = 0;
-    VDQM_API_ENTER(vdqm_SendAggregatorVolReq);
+                    int  mode,
+                    int  client_port) {
+    vdqmVolReq_t  volreq;
+    struct passwd *pw         = NULL;
+    int           save_serrno = 0;
+    int           rc          = 0;
 
-    memset(&volreq,'\0',sizeof(vdqmVolReq_t));
-    if ( (nw != NULL && nw->connect_socket == INVALID_SOCKET) ||
-        VID == NULL || dgn == NULL || client_port < 0 ) {
-        TRACE(1,"vdqm","vdqm_SendAggregatorVolReq() called with invalid socket");
+    VDQM_API_ENTER(vdqm_CreateRequestForAggregator);
+
+    /* Check function parameters are valid */
+    if ( reqID == NULL ) {
+        TRACE(1,"vdqm",
+            "vdqm_CreateRequestForAggregator() called with NULL reqID");
         serrno = EINVAL;
         VDQM_API_RETURN(-1);
     }
     if ( nw == NULL ) {
-        rc = vdqm_Connect(&tmpnw);
-        if ( rc < 0 ) VDQM_API_RETURN(rc);
-    } else tmpnw = nw;
+        TRACE(1,"vdqm",
+            "vdqm_CreateRequestForAggregator() called with nw == NULL");
+
+        serrno = EINVAL;
+        VDQM_API_RETURN(-1);
+    }
+    if ( nw->connect_socket == INVALID_SOCKET ) {
+        TRACE(1,"vdqm",
+            "vdqm_CreateRequestForAggregator() called with invalid socket");
+
+        serrno = EINVAL;
+        VDQM_API_RETURN(-1);
+    }
+    if ( VID == NULL ) {
+        TRACE(1,"vdqm",
+            "vdqm_CreateRequestForAggregator() called with NULL VID");
+        serrno = EINVAL;
+        VDQM_API_RETURN(-1);
+    }
+    if ( dgn == NULL ) {
+        TRACE(1,"vdqm",
+            "vdqm_CreateRequestForAggregator() called with NULL dgn");
+        serrno = EINVAL;
+        VDQM_API_RETURN(-1);
+    }
+    if ( client_port < 0) {
+        TRACE(1,"vdqm",
+          "vdqm_CreateRequestForAggregator() called with negative client port");
+        serrno = EINVAL;
+        VDQM_API_RETURN(-1);
+    }
+
+    /* Clear and then fill the VDQM volume request */
+    memset(&volreq,'\0',sizeof(vdqmVolReq_t));
     strcpy(volreq.volid,VID);
     strcpy(volreq.dgn,dgn);
     volreq.client_port = client_port;
     volreq.mode = mode;
-    if ( unit != NULL ) strcpy(volreq.drive,unit);
-    if ( server != NULL ) strcpy(volreq.server,server);
-    volreq.clientUID = (getenv("VDQM_EUID") != NULL) ? atoi(getenv("VDQM_EUID")) : geteuid();
-    volreq.clientGID = (getenv("VDQM_EGID") != NULL) ? atoi(getenv("VDQM_EGID")) : getegid();
+    if ( unit != NULL ) {
+        strcpy(volreq.drive,unit);
+    }
+    if ( server != NULL ) {
+        strcpy(volreq.server,server);
+    }
+    volreq.clientUID = (getenv("VDQM_EUID") != NULL) ?
+      atoi(getenv("VDQM_EUID")) : geteuid();
+    volreq.clientGID = (getenv("VDQM_EGID") != NULL) ?
+      atoi(getenv("VDQM_EGID")) : getegid();
     pw = Cgetpwuid(volreq.clientUID);
     if ( pw == NULL ) {
-        TRACE(1,"vdqm","vdqm_SendAggregatorVolReq() Cgetpwuid() error: %s\n",
-              sstrerror(serrno));
+        TRACE(1,"vdqm",
+            "vdqm_CreateRequestForAggregator() Cgetpwuid() error: %s\n",
+            sstrerror(serrno));
         VDQM_API_RETURN(-1);
     }
     strcpy(volreq.client_name,pw->pw_name);
-    TRACE(1,"vdqm","vdqm_SendAggregatorVolReq() send request VID %s, drive %s@%s, dgn %s, for %s (%d,%d)",
-          volreq.volid,(*volreq.drive!='\0' ? volreq.drive : "*"),
-          (*volreq.server!='\0' ? volreq.server : "*"),volreq.dgn,
-          volreq.client_name,volreq.clientUID,volreq.clientGID);
-    rc = vdqm_AggregatorVolReq_Send(tmpnw,NULL,&volreq);
-    if ( rc != -1 ) {
-        rc = vdqm_RecvAckn(tmpnw);
-        TRACE(1,"vdqm","vdqm_SendAggregatorVolReq() vdqm_RecvAckn() rc = 0x%x",rc);
-        if ( rc == VDQM_COMMIT ) {
-			memset(&volreq,'\0',sizeof(volreq));
-            rc = vdqm_AggregatorVolReq_Recv(tmpnw,NULL,&volreq);
-            if ( rc != -1 ) {
-                rc = vdqm_AcknCommit(tmpnw);
-                rc = 0;
-            }
-        } else {
-            if ( rc > 0 ) save_serrno = rc;
-            rc = -1;
-        }
+    TRACE(1,"vdqm","vdqm_CreateRequestForAggregator() send request VID %s, drive %s@%s, dgn %s, for %s (%d,%d)",
+        volreq.volid,(*volreq.drive!='\0' ? volreq.drive : "*"),
+        (*volreq.server!='\0' ? volreq.server : "*"),volreq.dgn,
+        volreq.client_name,volreq.clientUID,volreq.clientGID);
+
+    /* Send the VDQM volume request */
+    rc = vdqm_AggregatorVolReq_Send(nw,NULL,&volreq);
+    if (rc == -1 ) {
+      VDQM_API_RETURN(rc);
     }
-    TRACE(1,"vdqm","vdqm_SendAggregatorVolReq() received rc=%d, VolReqID=%d",
-          rc,volreq.VolReqID);
-    if ( nw == NULL ) vdqm_Disconnect(&tmpnw);
-    if ( rc != -1 && reqID != NULL ) *reqID = volreq.VolReqID;
-    if ( rc == -1 && save_serrno != 0 ) serrno = save_serrno;
+
+    /* Receive the acknowledge */
+    rc = vdqm_RecvAckn(nw);
+    TRACE(1,"vdqm",
+        "vdqm_CreateRequestForAggregator() vdqm_RecvAckn() rc = 0x%x",rc);
+    if ( rc != VDQM_COMMIT ) {
+      if ( rc > 0 ) {
+          serrno = rc;
+      }
+      VDQM_API_RETURN(-1);
+    }
+
+    /* Clear the VDQM volume request */
+    memset(&volreq,'\0',sizeof(volreq));
+
+    /* Receive the reply */
+    rc = vdqm_AggregatorVolReq_Recv(nw,NULL,&volreq);
+    save_serrno = serrno;
+    TRACE(1,"vdqm",
+        "vdqm_CreateRequestForAggregator() received rc=%d, VolReqID=%d", rc,
+        volreq.VolReqID);
+    if ( rc == -1 ) {
+        serrno = save_serrno;
+        VDQM_API_RETURN(rc);
+    }
+
+    /* Extract the request ID and return success */
+    *reqID = volreq.VolReqID;
+    VDQM_API_RETURN(0);
+}
+
+
+int DLL_DECL vdqm_QueueRequestForAggregator(vdqmnw_t *nw) {
+    int rc = 0;
+
+    VDQM_API_ENTER(vdqm_ConfirmRequestForAggregator);
+
+    if ( nw == NULL ) {
+        TRACE(1,"vdqm",
+            "vdqm_QueueRequestForAggregator() called with nw == NULL");
+        serrno = EINVAL;
+        VDQM_API_RETURN(-1);
+    }
+    if ( nw->connect_socket == INVALID_SOCKET ) {
+        TRACE(1,"vdqm",
+          "vdqm_QueueRequestForAggregator() called with invalid socket");
+        serrno = EINVAL;
+        VDQM_API_RETURN(-1);
+    }
+
+    rc = vdqm_AcknCommit(nw);
     VDQM_API_RETURN(rc);
 }
