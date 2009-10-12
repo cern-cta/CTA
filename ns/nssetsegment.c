@@ -29,7 +29,7 @@ void usage(int status, char *name) {
     printf ("  -n, --name=CKSUMNAME     the name of the checksum to be stored\n");
     printf ("  -k, --checksum=CKSUM     the value of the checksum to be stored\n");
     printf ("  -u, --update             use the Cns_updateseg_checksum call rather than Cns_replaceseg\n");
-    printf ("      --clear              reset the checksum value to 0\n");
+    printf ("      --clear              remove the checksum value\n");
     printf ("  -e, --enable             enable the tape segment\n");
     printf ("  -d, --disable            disable the tape segment\n");
     printf ("  -x, --segsize=SEGSIZE    the size of the segment in bytes\n");

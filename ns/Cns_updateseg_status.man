@@ -57,6 +57,9 @@ is set appropriately.
 .B ENOENT
 The referenced file does not exist anymore.
 .TP
+.B EPERM
+The file is logically deleted, segment status changes are not permitted.
+.TP
 .B EFAULT
 .I oldsegattrs
 is a NULL pointer

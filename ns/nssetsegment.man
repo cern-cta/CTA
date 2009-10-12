@@ -42,8 +42,7 @@ Value of the checksum to be stored in the name server.
 Use the Cns_updateseg_checksum call rather than Cns_replaceseg.
 .TP
 .B --clear
-Resets the checksum to a NULL name, and a 0 value. Cannot be used in conjunction
-with --name and --checksum nor --update. Requires the ADMIN UPV privileges.
+Remove the checksum value. Cannot be used in conjunction with --name and --checksum nor --update options. Requires the ADMIN UPV privileges.
 .TP
 .B -e,\ \-\-enable
 Enable the tape segment

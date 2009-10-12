@@ -25,7 +25,7 @@ void usage(int status, char *name) {
     printf ("Set or reset a checksum for a file.\n\n");
     printf ("  -n, --name=CKSUMNAME  the name of the checksum to be stored. E.g. adler32\n");
     printf ("  -k, --checksum=CKSUM  the value of the checksum to be stored\n");
-    printf ("      --clear           reset the checksum value to 0\n");
+    printf ("      --clear           remove the checksum value\n");
     printf ("      --help            display this help and exit\n\n");
     printf ("Report bugs to <castor.support@cern.ch>.\n");
   }

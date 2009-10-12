@@ -30,7 +30,7 @@ Name of the checksum to be stored in the name server.
 Value of the checksum to be stored in the name server.
 .TP
 .B --clear
-Resets the checksum to a NULL name, and a 0 value.
+Remove the checksum value.
 .TP
 .B \-\-help
 Display this help and exit

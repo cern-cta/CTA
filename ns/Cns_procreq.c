@@ -3354,6 +3354,11 @@ int Cns_srv_updateseg_status(magic, req_data, clienthost, thip)
   if (filentry.filemode & S_IFDIR)
     RETURN (EISDIR);
 
+  /* check if the segment is allowed to be enabled */
+
+  if (filentry.status == 'D')
+    RETURN (EPERM);
+
   /* get/lock segment metadata entry to be updated */
 
   if (Cns_get_smd_by_fullid (&thip->dbfd, fileid, copyno, fsec,
