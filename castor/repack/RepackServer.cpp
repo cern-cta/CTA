@@ -100,11 +100,11 @@ int main(int argc, char *argv[]) {
 
     /// The Repack File Checker
      server.addThreadPool(
-      new castor::server::SignalThreadPool("Checker",
+      new castor::server::SignalThreadPool("checker",
 					   new castor::repack::RepackFileChecker(&server),
 					   SLEEP_TIME
                                              ));
-     server.getThreadPool('C')->setNbThreads(1);
+     server.getThreadPool('c')->setNbThreads(1);
 
     /// The Repack File Stager Instance
 	  server.addThreadPool(
