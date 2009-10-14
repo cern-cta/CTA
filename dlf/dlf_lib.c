@@ -244,6 +244,10 @@ int DLL_DECL dlf_regtext(unsigned int msgno, const char *message) {
   }
 
   /* Insert the message into the messages array */
+  if (messages[msgno] != NULL) {
+    free(messages[msgno]);
+    messages[msgno] = NULL;
+  }
   messages[msgno] = strdup(message);
   if (messages[msgno] == NULL) {
     return (-1);
