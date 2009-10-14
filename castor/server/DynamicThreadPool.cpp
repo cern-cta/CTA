@@ -66,6 +66,16 @@ castor::server::DynamicThreadPool::DynamicThreadPool
     e.getMessage() << "Failed to pthread_mutex_init(m_lock)";
     throw e;
   }
+
+  // Initialize thread attributes
+  rv = pthread_attr_init(&m_attr);
+  if (rv != 0) {
+    castor::exception::Exception e(errno);
+    e.getMessage() << "Failed to pthread_attr_init(m_attr)";
+    throw e;
+  }
+  pthread_attr_setdetachstate(&m_attr, PTHREAD_CREATE_DETACHED);
+  pthread_attr_setstacksize(&m_attr, DEFAULT_THREAD_STACKSIZE);
 }
 
 //-----------------------------------------------------------------------------
@@ -99,11 +109,6 @@ void castor::server::DynamicThreadPool::run()
     e.getMessage() << "Cannot run a DynamicThreadPool without a producer";
     throw e;
   }
-
-  // Initialize thread attributes
-  pthread_attr_init(&m_attr);
-  pthread_attr_setdetachstate(&m_attr, PTHREAD_CREATE_DETACHED);
-  pthread_attr_setstacksize(&m_attr, DEFAULT_THREAD_STACKSIZE);
     
   if (m_initThreads > 0) {
     // Create the initial pool of threads. The threads themselves just act as
