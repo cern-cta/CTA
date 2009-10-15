@@ -329,37 +329,23 @@ int main(int argc, char **argv) {
   using namespace castor::tape;
 
   std::ostream &os = std::cout;
-  unsigned int nbTests    = 0;
-  unsigned int nbFailed   = 0;
-  int          testResult = 0;
-  int          endResult  = 0;
+  unsigned int nbTests  = 0;
+  unsigned int nbFailed = 0;
 
 
   os << std::endl;
   utils::writeBanner(os, "Test tpcp");
   os << std::endl;
 
-  testResult = testTapeFseqRangeSequence();
+  if(testTapeFseqRangeSequence()) nbFailed++;
   nbTests++;
-  if(testResult != 0) {
-    endResult = testResult;
-    nbFailed++;
-  }
 
-  testResult = testTapeFseqRangeListSequence();
+  if(testTapeFseqRangeListSequence()) nbFailed++;
   nbTests++;
-  if(testResult != 0) {
-    endResult = testResult;
-    nbFailed++;
-  }
   
   std::cout << std::endl;
-  if(endResult == 0) {
-    std::cout << "All " << nbTests << " tests passed" << std::endl;
-  } else {
-    std::cout << nbFailed << " tests failed out of " << nbTests << std::endl;
-  }
+  std::cout << nbFailed << " tests failed out of " << nbTests << std::endl;
+  std::cout << std::endl;
   
-  return endResult;
-
+  return(nbFailed == 0 ? 0 : -1);
 }

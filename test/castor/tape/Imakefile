@@ -24,4 +24,4 @@
 # @author Sebastien Ponce, sebastien.ponce@cern.ch
 #
 
-SUBDIRS = tpcp utils
+SUBDIRS = aggregator tpcp utils

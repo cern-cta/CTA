@@ -12,7 +12,7 @@ int testIndexedContainer() {
   os << std::endl;
   castor::tape::utils::writeBanner(os, __FUNCTION__);
 
-  castor::tape::utils::IndexedContainer<const void *, 3> c;
+  castor::tape::utils::IndexedContainer<const void *> c(3);
 
   os << std::endl;
   os << "Empty c=";
@@ -128,7 +128,7 @@ int testToHex() {
   castor::tape::utils::writeBanner(os, __FUNCTION__);
 
   uint32_t   number          = 3735943886;
-  const char *expectedResult = "DEADFACE";
+  const char *expectedResult = "deadface";
 
   try {
     char buf[8];
@@ -163,32 +163,19 @@ int testToHex() {
 }
 
 int main(int argc, char **argv) {
-  unsigned int nbTests    = 0;
-  unsigned int nbFailed   = 0;
-  int          testResult = 0;
-  int          endResult  = 0;
+  unsigned int nbTests  = 0;
+  unsigned int nbFailed = 0;
 
 
-  testResult = testIndexedContainer();
+  if(testIndexedContainer()) nbFailed++;
   nbTests++;
-  if(testResult != 0) {
-    endResult = testResult;
-    nbFailed++;
-  }
 
-  testResult = testToHex();
+  if(testToHex()) nbFailed++;
   nbTests++;
-  if(testResult != 0) {
-    endResult = testResult;
-    nbFailed++;
-  }
 
   std::cout << std::endl;
-  if(endResult == 0) {
-    std::cout << "All " << nbTests << " tests passed" << std::endl;
-  } else {
-    std::cout << nbFailed << " tests failed out of " << nbTests << std::endl;
-  }
+  std::cout << nbFailed << " tests failed out of " << nbTests << std::endl;
+  std::cout << std::endl;
 
-  return endResult;
+  return(nbFailed == 0 ? 0 : -1);
 }

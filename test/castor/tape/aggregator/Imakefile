@@ -1,0 +1,60 @@
+#
+#                      test/castor/tape/aggregator/Imakefile
+#
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
+#
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+#
+# @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
+#
+
+CPPFLAGS = -pedantic -Wall -Werror -g -O0 -I../../../../h -I../../../.. $(MTCCFLAGS)
+CFLAGS = -O -I../../../../h -I../../../.. $(THREADFLAGS)
+LDFLAGS += $(MTLDFLAGS)
+LD = g++
+
+DependsOnLibrary(../../../castor,castorclient)
+DependsOnLibrary(../../../castor/db/cnv,castorcnvs)
+DependsOnLibrary(../../../common,castorcommon)
+DependsOnLibrary(../../../dlf,castordlf)
+DependsOnLibrary(../../../vdqm,castorvdqm)
+DependsOnLibrary(../../../vmgr,castorvmgr)
+
+TAPE_AGGREGATOR_SRCS = \
+  ../../../../castor/tape/aggregator/LogHelper.cpp \
+  ../../../../castor/tape/aggregator/LegacyTxRx.cpp \
+  ../../../../castor/tape/aggregator/VmgrTxRx.cpp
+
+TAPE_LEGACYMSG_SRCS = \
+  ../../../../castor/tape/legacymsg/CommonMarshal.cpp \
+  ../../../../castor/tape/legacymsg/VmgrMarshal.cpp
+
+TAPE_NET_SRCS = \
+  ../../../../castor/tape/net/net.cpp
+
+TAPE_UTILS_SRCS = \
+  ../../../../castor/tape/utils/utils.cpp
+
+TESTAGGREGATORBIN_SRCS = \
+  TestAggregatorMain.cpp \
+  $(TAPE_AGGREGATOR_SRCS) \
+  $(TAPE_LEGACYMSG_SRCS) \
+  $(TAPE_NET_SRCS) \
+  $(TAPE_UTILS_SRCS)
+
+TESTAGGREGATORBIN_OBJS = $(TESTAGGREGATORBIN_SRCS:.cpp=.Osuf)
+
+NormalProgramTarget(testaggregator,$(TESTAGGREGATORBIN_OBJS),$(DEPLIB),$(LIBS),750)
