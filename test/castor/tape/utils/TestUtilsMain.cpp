@@ -127,7 +127,7 @@ int testToHex() {
   os << std::endl;
   castor::tape::utils::writeBanner(os, __FUNCTION__);
 
-  uint32_t   number          = 3735943886;
+  uint32_t   number          = 0xdeadface;
   const char *expectedResult = "deadface";
 
   try {
