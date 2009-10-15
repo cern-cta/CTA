@@ -63,19 +63,22 @@ my $dbh = DBI->connect('dbi:Oracle:',$castor_conf[0] ,$castor_conf[1]);
 my $dbquery;
 if ($giveFileId) {
   $dbquery .= <<EOF;
-SELECT FileSystem.mountPoint||DiskCopy.path, DiskCopy.status, DiskCopy.id, CastorFile.fileId, CastorFile.lastKnownFileName
-  FROM FileSystem, DiskServer, DiskCopy, CastorFile
+SELECT /*+ index(DC I_DiskCopy_FileSystem) */
+       FileSystem.mountPoint||DC.path, DC.status,
+       DC.id, CastorFile.fileId, CastorFile.lastKnownFileName
+  FROM FileSystem, DiskServer, DiskCopy DC, CastorFile
  WHERE FileSystem.diskServer = DiskServer.id
-   AND DiskCopy.fileSystem = FileSystem.id
-   AND DiskCopy.castorFile = Castorfile.id
+   AND DC.fileSystem = FileSystem.id
+   AND DC.castorFile = Castorfile.id
    AND DiskServer.name = '$ARGV[0]'
 EOF
 } else {
   $dbquery .= <<EOF;
-SELECT FileSystem.mountPoint||DiskCopy.path, DiskCopy.status, DiskCopy.id
-  FROM FileSystem, DiskServer, DiskCopy
+SELECT /*+ index(DC I_DiskCopy_FileSystem) */
+       FileSystem.mountPoint||DC.path, DC.status, DC.id
+  FROM FileSystem, DiskServer, DiskCopy DC
  WHERE FileSystem.diskServer = DiskServer.id
-   AND DiskCopy.fileSystem = FileSystem.id
+   AND DC.fileSystem = FileSystem.id
    AND DiskServer.name = '$ARGV[0]'
 EOF
 }
