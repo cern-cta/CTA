@@ -1,0 +1,11 @@
+echo 'small file' > <tmpLocalFileName>
+echo 'a bigger file, only for few bytes though' > <tmpLocalFileName1>
+ls -l <tmpLocalFileName>
+ls -l <tmpLocalFileName1>
+rfcp <tmpLocalFileName> <noTapeFileName>
+nsln -s <noTapeFileName> <noTapeFileName1>
+nsls -l <noTapeFileName1>
+nsls -l <noTapeFileName>
+rfcp <tmpLocalFileName1> <noTapeFileName1>
+nsls -l <noTapeFileName1>
+nsls -l <noTapeFileName>

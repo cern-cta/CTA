@@ -1,0 +1,12 @@
+rfcp <localFileName> <noTapeFileName>
+nsln -s <noTapeFileName> <noTapeFileName1>
+rfcp <noTapeFileName1> <tmpLocalFileName>
+diff <tmpLocalFileName> <localFileName>
+nsrm <noTapeFileName>
+nsls -l <noTapeFileName1>
+rfcp <noTapeFileName1> <tmpLocalFileName1>
+rfcp <localFileName> <noTapeFileName>
+rfcp <noTapeFileName1> <tmpLocalFileName2>
+diff <tmpLocalFileName2> <localFileName>
+nsrm <noTapeFileName1>
+nsrm <noTapeFileName>
