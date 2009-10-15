@@ -17,6 +17,7 @@
 #include "serrno.h"
 #include "u64subr.h"
 
+static int schemaversion = 0;
 static sql_context ctx[CNS_MAXNBTHREADS];
 
 int Cns_init_dbpkg()
@@ -1224,7 +1225,7 @@ int Cns_count_long_ops(dbfd, count, backup)
   switch (sqlca.sqlcode) {
   case 0:
     return(0);
-  case 942:
+  case -942:
     *count = 0;
     return(0);
   default:
@@ -1909,7 +1910,6 @@ int Cns_opendb(dbfd)
   char db_srv[CA_MAXLINELEN+1];
   char db_name[CA_MAXLINELEN+1];
   char dbversion[21] = "";
-  char codeversion[21] = "2_1_9_0";
   char *p;
   FILE *fp;
 
@@ -1956,13 +1956,22 @@ int Cns_opendb(dbfd)
     sleep (RETRYI);
   }
 
-  /* check database version: for the time being we only issue a warning if
-     a mismatch is found; this is to make mixed deployments and rolling 
-     upgrades easier */
-  EXEC SQL SELECT schemaVersion INTO :dbversion FROM Cns_version;
-  if ((sqlca.sqlcode != 0) || strcmp(dbversion, codeversion)) {
-    nslogit (func, "warning: version mismatch between the NS daemon and database schema - "
-             "db version: %s versus software version: %s\n", dbversion, codeversion);
+  /* check how we should respond to the database schema version */
+  EXEC SQL SELECT schemaVersion, TO_NUMBER(regexp_replace(schemaVersion, '_'))
+             INTO :dbversion, :schemaversion
+             FROM cns_version;
+  if (sqlca.sqlcode == -942) {  /* ORA-00942: table or view does not exist */
+    EXEC SQL SELECT schemaVersion, TO_NUMBER(regexp_replace(schemaVersion, '_'))
+               INTO :dbversion, schemaversion
+               FROM CastorVersion;
+  }
+  switch (sqlca.sqlcode) {
+    case 0:
+      nslogit (func, "schema version: %s\n", dbversion);
+      return 0;
+    default:
+      Cns_oracle_error (func, "CONNECT", dbfd, &sqlca);
+      return -1;
   }
 
   return 0;
@@ -2039,7 +2048,8 @@ int Cns_update_fmd_entry(dbfd, rec_addr, fmd_entry)
   short fileclass_indicator = 0;
 
   // handle the case of NULL fileclasses
-  if (0 == fmd_entry->fileclass) fileclass_indicator = -1;
+  if ((0 == fmd_entry->fileclass) && (schemaversion >= 2190))
+    fileclass_indicator = -1;
   strcpy (func, "Cns_update_fmd_entry");
   memcpy (rowid_value, rec_addr, sizeof(rowid_value));
   (void) u64tostr (fmd_entry->parent_fileid, parent_fileid_str, -1);
