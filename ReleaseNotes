@@ -122,25 +122,13 @@
           of CASTOR stager!!
 
 
-    CNS, CUPV, VMGR, VDQM & Repack
-    ------------------------------
+    Central services (CUPV, VMGR, VDQM & Repack)
+    --------------------------------------------
 
-    The upgrade of the CNS, VDQM and Repack databases to 2.1.9-1 can be
-    performed online while the system is running:
+    The upgrade of the VDQM and Repack databases to 2.1.9-1 can be performed
+    online while the system is running:
 
     Notes:
-      - Due to a DoS vulnerability in the CASTOR name server it is highly
-        recommended to schedule an upgrade of all name server daemons which
-        could potentially service requests from untrusted sources. I.e. daemons
-        which are accessible by end users. (#56036)
-
-      - If the name server is not upgraded, administrators will experience a
-        failure in the new rfio test suite. The failure comes from the inability
-        to cleanup the test directory after the test has completed with a
-        "Directory not empty" error. In fact the directory is empty but due to a
-        bug updating the directory nlink value the name server believes it
-        isn't. (#56212)
-
       - All upgrades in this section can be performed transparently with no
         service downtime required.
 
@@ -154,6 +142,14 @@
          daemons involved in the upgrade will be restarted automatically.
 
       3. Upgrade complete.
+
+
+    Central services (CNS)
+    ----------------------
+
+    Due to backwards incompatibility problems with the name server daemon in
+    this release, it is currently not possible to upgrade the name server
+    software. Please refer to the next release for upgrade instructions.
 
 
     Installing GridFTP with Xroot
@@ -635,32 +631,9 @@
     Central services (CNS)
     ----------------------
 
-    In this release of CASTOR schema changes were introduced to resolve the
-    deadlock issue with nschclass (#45700). You can safely upgrade the name
-    server daemons to 2.1.9-0 but you must NOT apply the PL/SQL upgrade until
-    all name server daemons have been upgraded. Furthermore, as schema changes
-    require table level locks the execution of the database upgrade cannot be
-    performed on a running instance.
-
-    WARNING: Do not apply the schema changes to the CNS database until all
-             name server daemons are running 2.1.9-0!!!!
-
-      Instructions
-      ------------
-
-      --- CAUTION READ STATEMENT ABOVE WITH REGARDS TO THE DATABASE UPGRADE ---
-
-      1. Upgrade the CNS database using the cns_2.1.8-11_to_2.1.9-0.sql upgrade
-         script from:
-         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-0/dbupgrades
-
-      --- CAUTION READ STATEMENT ABOVE WITH REGARDS TO THE DATABASE UPGRADE ---
-
-      2. Update the appropriate software to use the 2.1.9-0 RPMS.
-
-      3. Start the name server daemon(s).
-
-      4. Upgrade complete.
+    Due to backwards incompatibility problems with the name server daemon in
+    this release, it is currently not possible to upgrade the name server
+    software. Please refer to the next release for upgrade instructions.
 
 
     Repack
