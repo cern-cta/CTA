@@ -70,6 +70,8 @@ print "Checking out code into " + workDir
 os.chdir(workDir)
 runCommand('svn --quiet co svn+ssh://svn/reps/CASTOR/CASTOR2/tags/' + version + ' CASTOR2',
            'Error while checking out source code')
+runCommand('find CASTOR2 -name ''.svn'' -type d | xargs rm -rf',
+           'Error while removing .svn directories from checkout')
 
 # Create the tar ball
 print "Building the tar ball"
@@ -129,8 +131,8 @@ for o in outputs:
 # make a fresh checkout in the internal release space for easy debugging using AFS
 print "Creating a fresh checkout in the internal release space"
 os.chdir(intReleaseDir)
-runCommand('svn --quiet co svn+ssh://svn/reps/CASTOR/CASTOR2/tags/' + version + ' CASTOR2',
-           'Error while checking out release into internal release space')
+runCommand('tar -zxvf ' + tarBall + '; mv castor-' + str(majversion) + '.' + str(minversion) + '.' + str(majrelease) + ' CASTOR2',
+           'Error extracting tarball')
 
 # create a testsuite directory and copy the test suite into it
 print "Creating the testsuite..."
