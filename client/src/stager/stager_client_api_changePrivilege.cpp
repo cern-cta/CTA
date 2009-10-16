@@ -52,6 +52,14 @@ void getUserId(std::string name, castor::bwlist::BWUser *u)
     u->setEgid(-1);
     return;
   }
+  // if the user is specified as a number use it as is.
+  char *dp  = NULL;
+  long euid = strtol(name.c_str(), &dp, 10);
+  if (*dp == 0) {
+    u->setEuid(euid);
+    u->setEgid(-1);
+    return;
+  }
   // get user id
   struct passwd *pass = getpwnam(name.c_str());
   if (0 == pass) {
@@ -70,6 +78,13 @@ void getGroupId(std::string name, castor::bwlist::BWUser *u)
   throw (castor::exception::InvalidArgument) {
   // empty group name, just ignore
   if (name.size() == 0) {
+    return;
+  }
+  // if the group is specified as a number use it as is.
+  char *dp  = NULL;
+  long egid = strtol(name.c_str(), &dp, 10);
+  if (*dp == 0) {
+    u->setEgid(egid);
     return;
   }
   // get group id
@@ -104,7 +119,7 @@ int getRequestTypeId(std::string type)
 // parseUsers
 //-----------------------------------------------------------------------------
 void parseUsers(char *susers,
-		castor::bwlist::ChangePrivilege * req,
+                castor::bwlist::ChangePrivilege * req,
                 std::vector<castor::bwlist::BWUser*> &users)
   throw (castor::exception::Exception) {
   // check for empty user list
@@ -129,7 +144,12 @@ void parseUsers(char *susers,
         getUserId(couple, u);
       } else {
         getUserId(couple.substr(0, colonPos), u);
-        getGroupId(couple.substr(colonPos+1), u);
+        getGroupId(couple.substr(colonPos + 1), u);
+      }
+      if (u->euid() && (u->egid() == -1)) {
+        castor::exception::InvalidArgument e;
+        e.getMessage() << "Unable to determine group for uid: " << u->euid();
+        throw e;
       }
       u->setRequest(req);
       users.push_back(u);
@@ -157,7 +177,7 @@ void parseUsers(char *susers,
 // parseRequestTypes
 //-----------------------------------------------------------------------------
 void parseRequestTypes(char *sreqTypes,
-		       castor::bwlist::ChangePrivilege * req,
+                       castor::bwlist::ChangePrivilege * req,
                        std::vector<castor::bwlist::RequestType*> &reqTypes)
   throw (castor::exception::Exception) {
   std::stringstream s(sreqTypes);
@@ -204,7 +224,9 @@ void stage_changePrivilege(char* users,
   int ret = setDefaultOption(opts);
   client.setOptions(opts);
   client.setAuthorizationId();
-  if (ret==-1) { free(opts); }
+  if (ret == -1) {
+    free(opts);
+  }
 
   // create request
   castor::bwlist::ChangePrivilege req;

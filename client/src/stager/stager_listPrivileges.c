@@ -70,29 +70,40 @@ int cmd_parse(int argc,
   Coptind = 1;
   Copterr = 1;
   errflg = 0;
+  char *dp = NULL;
   while ((c = Cgetopt_long
           (argc, argv, "U:G:R:S:h", longopts, NULL)) != -1) {
     switch (c) {
     case 'U':
       {
-        struct passwd *pass = getpwnam(Coptarg);
-        if (0 == pass) {
-          errflg++;
-          fprintf(stderr, "Unknown user %s\n", Coptarg);
-          break;
+        int euid = (int)strtol(Coptarg, &dp, 10);
+        if (*dp == 0) {
+          *user = euid;
+        } else {
+          struct passwd *pass = getpwnam(Coptarg);
+          if (0 == pass) {
+            errflg++;
+            fprintf(stderr, "Unknown user %s\n", Coptarg);
+            break;
+          }
+          *user = pass->pw_uid;
         }
-        *user = pass->pw_uid;
         break;
       }
     case 'G':
       {
-        struct group *grp = getgrnam(Coptarg);
-        if (0 == grp) {
-          errflg++;
-          fprintf(stderr, "Unknown group %s\n", Coptarg);
-          break;
+        int egid = (int)strtol(Coptarg, &dp, 10);
+        if (*dp == 0) {
+          *group = egid;
+        } else {
+          struct group *grp = getgrnam(Coptarg);
+          if (0 == grp) {
+            errflg++;
+            fprintf(stderr, "Unknown group %s\n", Coptarg);
+            break;
+          }
+          *group = grp->gr_gid;
         }
-        *group = grp->gr_gid;
         break;
       }
     case 'R':

@@ -56,11 +56,11 @@ to a user, a group, a requestType, a service class or any combination of those.
 .SH OPTIONS
 
 .TP
-.BI \-U,\ \-\-user " userName"
-reduces the list to entries concerning the given user. This user has to exist in the password file of the local machine.
+.BI \-U,\ \-\-user " [userName|uid]"
+reduces the list to entries concerning the given user. If the user is given as a name the user must exist in the password file of the local machine.
 .TP
-.BI \-G,\ \-\-group " groupName"
-reduces the list to entries concerning the given group. This group has to exist in the group file of the local machine.
+.BI \-G,\ \-\-group " [groupName|gid]"
+reduces the list to entries concerning the given group. If the group is give as a name the group must exist in the group file of the local machine.
 .TP
 .BI \-R,\ \-\-reqType " requestTypeName"
 reduces the list to entries concerning the given request type. Here is a list of useful request types :
