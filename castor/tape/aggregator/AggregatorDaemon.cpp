@@ -35,6 +35,8 @@
 #include "h/Cgetopt.h"
 #include "h/common.h"
 
+#include <memory>
+
 
 //------------------------------------------------------------------------------
 // constructor
@@ -260,13 +262,15 @@ void castor::tape::aggregator::AggregatorDaemon::
 
   const int vdqmListenPort = utils::getPortFromConfig("AGGREGATOR", "VDQMPORT",
     AGGREGATOR_VDQMPORT);
-  server::IThread *iThread =
-    new castor::tape::aggregator::VdqmRequestHandler();
-  server::BaseThreadPool* threadPool =
-    new castor::server::TCPListenerThreadPool("VdqmRequestHandlerPool",
-      iThread, vdqmListenPort);
 
-  addThreadPool(threadPool);
+  std::auto_ptr<server::IThread>
+    thread(new castor::tape::aggregator::VdqmRequestHandler());
+
+  std::auto_ptr<server::BaseThreadPool>
+    threadPool(new castor::server::TCPListenerThreadPool(
+      "VdqmRequestHandlerPool", thread.release(), vdqmListenPort));
+
+  addThreadPool(threadPool.release());
 
   m_vdqmRequestHandlerThreadPool = getThreadPool('V');
 
