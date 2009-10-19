@@ -67,6 +67,7 @@ NSLIB_OBJS	=	Cns_aborttrans.Osuf \
                         Cns_delete.Osuf \
                         Cns_deleteclass.Osuf \
                         Cns_dropsegs.Osuf \
+                        Cns_delsegbycopyno.Osuf \
                         Cns_du.Osuf \
                         Cns_endsess.Osuf \
                         Cns_endtrans.Osuf \
@@ -129,6 +130,7 @@ ClientProgramTarget(nschmod,nschmod.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLI
 ClientProgramTarget(nschown,nschown.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
 ClientProgramTarget(nsdelcomment,nsdelcomment.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
 ClientProgramTarget(nsdeleteclass,nsdeleteclass.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
+ClientProgramTarget(nsdelsegment,nsdelsegment.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
 ClientProgramTarget(nsenterclass,nsenterclass.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
 ClientProgramTarget(nsfind,nsfind.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
 ClientProgramTarget(nsgetacl,nsgetacl.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
@@ -164,6 +166,7 @@ LIBMANPAGE(Cns_delcomment)
 LIBMANPAGE(Cns_delete)
 LIBMANPAGE(Cns_deleteclass)
 LIBMANPAGE(Cns_dropsegs)
+LIBMANPAGE(Cns_delsegbycopyno)
 LIBMANPAGE(Cns_endsess)
 LIBMANPAGE(Cns_endtrans)
 LIBMANPAGE(Cns_enterclass)
@@ -218,6 +221,7 @@ EXEMANPAGE(nschmod)
 EXEMANPAGE(nschown)
 EXEMANPAGE(nsdelcomment)
 EXEMANPAGE(nsdeleteclass)
+EXEMANPAGE(nsdelsegment)
 EXEMANPAGE(nsenterclass)
 EXEMANPAGE(nsfind)
 EXEMANPAGE(nsgetacl)

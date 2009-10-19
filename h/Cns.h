@@ -35,6 +35,7 @@
 #define CNS_MAGIC4	0x030E1304
 #define CNS_MAGIC5	0x030E1305
 #define CNS_MAGIC6	0x030E1306
+#define CNS_MAGIC7	0x030E1307
 #define CNS_DIRTIMEOUT	300	/* timeout while waiting for the next dir sub-req */
 #define CNS_TIMEOUT	5	/* netread timeout while receiving a request */
 #define CNS_TRANSTIMEOUT	60	/* timeout while waiting for the next req in transaction */
@@ -135,6 +136,7 @@
 #define CNS_UPDATESEG_STATUS    86
 #define CNS_DROPSEGS        	87
 #define CNS_UNLINKBYVID         88
+#define CNS_DELSEGBYCOPYNO      89
 
 			/* name server reply types */
 

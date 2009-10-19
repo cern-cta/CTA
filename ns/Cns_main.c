@@ -553,6 +553,12 @@ int procreq(magic, req_type, req_data, clienthost, thip)
   case CNS_DELETE:
     c = Cns_srv_delete (magic, req_data, clienthost, thip);
     break;
+  case CNS_DROPSEGS:
+    c = Cns_srv_dropsegs (magic, req_data, clienthost, thip);
+    break;
+  case CNS_DELSEGBYCOPYNO:
+    c = Cns_srv_delsegbycopyno (magic, req_data, clienthost, thip);
+    break;
   case CNS_ENTCLASS:
     c = Cns_srv_enterclass (magic, req_data, clienthost, thip);
     break;
@@ -618,9 +624,6 @@ int procreq(magic, req_type, req_data, clienthost, thip)
     break;
   case CNS_SETSEGAT:
     c = Cns_srv_setsegattrs (magic, req_data, clienthost, thip);
-    break;
-  case CNS_DROPSEGS:
-    c = Cns_srv_dropsegs (magic, req_data, clienthost, thip);
     break;
   case CNS_STAT:
     c = Cns_srv_stat (magic, req_data, clienthost, thip);
@@ -948,10 +951,10 @@ int proctransreq(magic, req_data, clienthost, thip)
         req_type != CNS_DU && req_type != CNS_GETACL &&
         req_type != CNS_GETCOMMENT && req_type != CNS_GETLINKS &&
         req_type != CNS_GETPATH && req_type != CNS_LSTAT &&
-        req_type != CNS_READLINK && req_type != CNS_STAT && 
-        req_type != CNS_STATCS && req_type != CNS_STATG && 
+        req_type != CNS_READLINK && req_type != CNS_STAT &&
+        req_type != CNS_STATCS && req_type != CNS_STATG &&
         req_type != CNS_GETGRPID && req_type != CNS_GETGRPNAM &&
-        req_type != CNS_GETUSRID && req_type != CNS_GETUSRNAM && 
+        req_type != CNS_GETUSRID && req_type != CNS_GETUSRNAM &&
         req_type != CNS_LASTFSEQ && req_type != CNS_PING &&
         req_type != CNS_BULKEXIST && req_type != CNS_TAPESUM) break;
     sendrep (thip->s, CNS_IRC, rc);

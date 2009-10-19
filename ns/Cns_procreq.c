@@ -619,24 +619,32 @@ int Cns_srv_chown(magic, req_data, clienthost, thip)
   RETURN (0);
 }
 
-/*      Cns_internal_dropsegs - internal method dropping all segments for a given file */
+/*      Cns_internal_deletesegs - internal method deleting file segments */
 
-int Cns_internal_dropsegs(func, thip, filentry)
+int Cns_internal_deletesegs(func, thip, filentry, copyno)
      char* func;
      struct Cns_srv_thread_info *thip;
      struct Cns_file_metadata *filentry;
+     int copyno;
 {
-  int bof = 1;
-  int c;
+  int       found = 0;
+  int       bof = 1;
+  int       c;
+  char      logbuf[LOGBUFSZ];
+  char      tmpbuf[21];
+  char      tmpbuf2[21];
   DBLISTPTR dblistptr;
   struct Cns_seg_metadata smd_entry;
-  Cns_dbrec_addr rec_addrs; /* segment record address */
-  char logbuf[LOGBUFSZ];
-  char tmpbuf[21];
-  char tmpbuf2[21];
+  Cns_dbrec_addr rec_addrs;
 
+  /* Loop over the segments for the file */
   while ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry->fileid,
                                    &smd_entry, 1, &rec_addrs, 0, &dblistptr)) == 0) {
+    bof = 0;
+    if (copyno && (smd_entry.copyno != copyno)) {
+      continue;
+    }
+    found++;
     sprintf (logbuf, "unlinking segment: %s %d %d %s %d %c %s %d %d %02x%02x%02x%02x \"%s\" %lx",
              u64tostr (smd_entry.s_fileid, tmpbuf, 0), smd_entry.copyno,
              smd_entry.fsec, u64tostr (smd_entry.segsize, tmpbuf2, 0),
@@ -647,11 +655,13 @@ int Cns_internal_dropsegs(func, thip, filentry)
     Cns_logreq (func, logbuf);
     if (Cns_delete_smd_entry (&thip->dbfd, &rec_addrs))
       return (serrno);
-    bof = 0;
   }
   (void) Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry->fileid,
                               &smd_entry, 1, &rec_addrs, 1, &dblistptr); /* free res */
   if (c < 0)
+    return (serrno);
+  if (!found)
+    serrno = SEENTRYNFND;
     return (serrno);
   return (0);
 }
@@ -736,8 +746,9 @@ int Cns_srv_creat(magic, req_data, clienthost, thip)
 
     /* delete file segments if any */
 
-    if (Cns_internal_dropsegs(func, thip, &filentry) != 0)
-      RETURN (serrno);
+    if (Cns_internal_deletesegs(func, thip, &filentry, 0) != 0)
+      if (serrno != SEENTRYNFND)
+        RETURN (serrno);
 
     /* update basename entry */
 
@@ -1021,7 +1032,108 @@ int Cns_srv_deleteclass(magic, req_data, clienthost, thip)
   RETURN (0);
 }
 
-/* Cns_srv_du - summarize file space usage */
+/* Cns_srv_delsegbycopyno - delete file segments by copno */
+
+int Cns_srv_delsegbycopyno(magic, req_data, clienthost, thip)
+     int magic;
+     char *req_data;
+     const char *clienthost;
+     struct Cns_srv_thread_info *thip;
+{
+  char       logbuf[LOGBUFSZ];
+  char       func[23];
+  char       *rbp;
+  char       *user;
+  gid_t      gid;
+  uid_t      uid;
+  char       path[CA_MAXPATHLEN+1];
+  char       cwdpath[CA_MAXPATHLEN+10];
+  u_signed64 cwd;
+  u_signed64 fileid = 0;
+  char       tmpbuf[21];
+  int        copyno = 0;
+  int        bof = 1;
+  int        c;
+  struct Cns_file_metadata fmd_entry;
+  struct Cns_seg_metadata  smd_entry;
+  Cns_dbrec_addr rec_addr;
+  DBLISTPTR  dblistptr;
+
+  strcpy (func, "Cns_srv_delsegbycopyno");
+
+  /* Extract and log common request attributes */
+  rbp = req_data;
+  unmarshall_LONG (rbp, uid);
+  unmarshall_LONG (rbp, gid);
+  get_client_actual_id (thip, &uid, &gid, &user);
+  nslogit (func, NS092, "delsegbycopyno", user, uid, gid, clienthost);
+  if (rdonly)
+    RETURN (EROFS);
+  unmarshall_HYPER (rbp, cwd);
+  unmarshall_HYPER (rbp, fileid);
+  if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
+    RETURN (SENAMETOOLONG);
+  unmarshall_LONG (rbp, copyno);
+  if (copyno < 0)
+    RETURN (EINVAL);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "delsegbycopyno %s %s %d %s",
+           u64tostr (fileid, tmpbuf, 0), path, copyno, cwdpath);
+  Cns_logreq (func, logbuf);
+
+  if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+    RETURN (serrno);
+
+  /* Start transaction */
+  (void) Cns_start_tr (thip->s, &thip->dbfd);
+
+  if (fileid) {
+
+    /* Get/lock basename entry */
+    if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid, &fmd_entry, 1, &rec_addr))
+      RETURN (serrno);
+  } else {
+    /* Check parent directory components for search permission and get/lock
+     * basename entry
+     */
+    if (Cns_parsepath (&thip->dbfd, cwd, path, uid, gid, clienthost,
+                       NULL, NULL, &fmd_entry, &rec_addr, CNS_MUST_EXIST))
+      RETURN (serrno);
+  }
+
+  /* Check if the entry is a regular file */
+  if (fmd_entry.filemode & S_IFDIR)
+    RETURN (EISDIR);
+  if ((fmd_entry.filemode & S_IFREG) != S_IFREG)
+    RETURN (SEINTERNAL);
+  if (*fmd_entry.name == '/')
+    RETURN (SEINTERNAL);
+
+  /* Delete file segments */
+  if (Cns_internal_deletesegs(func, thip, &fmd_entry, copyno) != 0)
+    RETURN (serrno);
+
+  /* Count the number of file segments left */
+  while ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof, fmd_entry.fileid,
+                                   &smd_entry, 0, NULL, 0, &dblistptr)) == 0) {
+    bof = 0;
+  }
+  (void) Cns_get_smd_by_pfid (&thip->dbfd, bof, fmd_entry.fileid,
+                              &smd_entry, 0, NULL, 1, &dblistptr);
+  if (c < 0)
+    RETURN (serrno);
+
+  /* If the file has no segments remove the 'm' status */
+  if (bof) {
+    fmd_entry.status = '-';
+    if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &fmd_entry))
+      RETURN (serrno);
+  }
+
+  RETURN (0);
+}
+
+/*     Cns_srv_du - summarize file space usage */
 
 int compute_du4dir (thip, direntry, Lflag, uid, gid, clienthost, nbbytes, nbentries)
      struct Cns_srv_thread_info *thip;
@@ -1928,7 +2040,7 @@ int Cns_srv_listlinks(magic, req_data, clienthost, thip, lnk_entry, endlist, dbl
   bol = 0;
   if (! lnk_entry->fileid)
     bol = 1; /* do not rely on client */
-  
+
   if (bol) {
     if (*path) {
       /* check parent directory components for search permission and
@@ -2254,7 +2366,7 @@ int Cns_srv_listtape(magic, req_data, clienthost, thip, fmd_entry, smd_entry, en
   bov = 0;
   if (! smd_entry->s_fileid)
     bov = 1; /* do not rely on client */
-  
+
   /* return as many entries as possible to the client */
 
   maxsize = DIRBUFSZ - direntsz;
@@ -3219,8 +3331,9 @@ int Cns_srv_rename(magic, req_data, clienthost, thip)
 
     /* delete file segments if any */
 
-    if (Cns_internal_dropsegs(func, thip, &new_fmd_entry) != 0)
-      RETURN (serrno);
+    if (Cns_internal_deletesegs(func, thip, &new_fmd_entry, 0) != 0)
+      if (serrno != SEENTRYNFND)
+        RETURN (serrno);
 
     /* if the existing 'new' entry is a symlink, delete it */
 
@@ -4894,18 +5007,19 @@ int Cns_srv_dropsegs(magic, req_data, clienthost, thip)
                        NULL, NULL, &fmd_entry, &rec_addr, CNS_MUST_EXIST))
       RETURN (serrno);
   }
-  
+
   /* Check if the entry is a regular file */
   if (fmd_entry.filemode & S_IFDIR)
     RETURN (EISDIR);
   if ((fmd_entry.filemode & S_IFREG) != S_IFREG)
     RETURN (SEINTERNAL);
   if (*fmd_entry.name == '/')
-    RETURN (SEINTERNAL); 
+    RETURN (SEINTERNAL);
 
   /* Delete file segments */
-  if (Cns_internal_dropsegs(func, thip, &fmd_entry) != 0)
-    RETURN (serrno);
+  if (Cns_internal_deletesegs(func, thip, &fmd_entry) != 0)
+    if (serrno != SEENTRYNFND)
+      RETURN (serrno);
 
   RETURN (0);
 }
@@ -5470,8 +5584,9 @@ int Cns_srv_unlink(magic, req_data, clienthost, thip)
 
     /* delete file segments if any */
 
-    if (Cns_internal_dropsegs(func, thip, &filentry) != 0)
-      RETURN (serrno);
+    if (Cns_internal_deletesegs(func, thip, &filentry, 0) != 0)
+      if (serrno != SEENTRYNFND)
+        RETURN (serrno);
 
     /* delete the comment if it exists */
 
@@ -5565,32 +5680,33 @@ int Cns_srv_unlinkbyvid(magic, req_data, clienthost, thip)
         continue;
       RETURN (serrno);
     }
-    
+
     /* Make sure this is a regular file */
     if ((fmd_entry.filemode & S_IFREG) != S_IFREG)
       RETURN (SEINTERNAL);
     if (*fmd_entry.name == '/')
-      RETURN (SEINTERNAL); 
-    
+      RETURN (SEINTERNAL);
+
     if (Cns_get_fmd_by_fileid (&thip->dbfd, fmd_entry.parent_fileid,
                                &dir_entry, 1, &rec_addrp) < 0) {
       if (serrno == ENOENT)
         continue;
       RETURN (serrno);
     }
-    
+
     /* Resolve fileid to filepath */
     p = path;
     if (Cns_getpath_by_fileid (&thip->dbfd, fmd_entry.fileid, &p))
       RETURNQ (serrno);
-    
+
     sprintf (logbuf, "unlinkbyvid %s", p);
     Cns_logreq (func, logbuf);
-    
+
     /* Delete file segments if any */
-    if (Cns_internal_dropsegs(func, thip, &fmd_entry) != 0)
-      RETURN (serrno);
-    
+    if (Cns_internal_deletesegs(func, thip, &fmd_entry, 0) != 0)
+      if (serrno != SEENTRYNFND)
+        RETURN (serrno);
+
     /* Delete the comment if it exists */
     if (Cns_get_umd_by_fileid (&thip->dbfd, fmd_entry.fileid, &umd_entry, 1,
                                &rec_addru) == 0) {
@@ -5602,7 +5718,7 @@ int Cns_srv_unlinkbyvid(magic, req_data, clienthost, thip)
     /* Delete file entry */
     if (Cns_delete_fmd_entry (&thip->dbfd, &rec_addr))
       RETURN (serrno);
-    
+
     /* Update parent directory entry */
     dir_entry.nlink--;
     dir_entry.mtime = time (0);

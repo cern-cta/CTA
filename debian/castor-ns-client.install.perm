@@ -3,6 +3,7 @@
 %attr(0755,root,root) usr/bin/nschown
 %attr(0755,root,root) usr/bin/nsdelcomment
 %attr(0755,root,root) usr/bin/nsdeleteclass
+%attr(0755,root,root) usr/bin/nsdelsegment
 %attr(0755,root,root) usr/bin/nsenterclass
 %attr(0755,root,root) usr/bin/nsfind
 %attr(0755,root,root) usr/bin/nsgetacl

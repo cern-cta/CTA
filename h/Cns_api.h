@@ -261,6 +261,8 @@ EXTERN_C int DLL_DECL Cns_creatx _PROTO((const char *, mode_t, struct Cns_fileid
 EXTERN_C int DLL_DECL Cns_delcomment _PROTO((const char *));
 EXTERN_C int DLL_DECL Cns_delete _PROTO((const char *));
 EXTERN_C int DLL_DECL Cns_deleteclass _PROTO((char *, int, char *));
+EXTERN_C int DLL_DECL Cns_dropsegs _PROTO((const char *, struct Cns_fileid *));
+EXTERN_C int DLL_DECL Cns_delsegbycopyno _PROTO((const char *, struct Cns_fileid *, int));
 EXTERN_C int DLL_DECL Cns_du _PROTO((const char *, int, u_signed64 *, u_signed64 *));
 EXTERN_C int DLL_DECL Cns_endsess _PROTO(());
 EXTERN_C int DLL_DECL Cns_endtrans _PROTO(());
@@ -310,7 +312,6 @@ EXTERN_C int DLL_DECL Cns_seterrbuf _PROTO((char *, int));
 EXTERN_C int DLL_DECL Cns_setfsize _PROTO((const char *, struct Cns_fileid *, u_signed64, time_t, time_t));
 EXTERN_C int DLL_DECL Cns_setfsizecs _PROTO((const char *, struct Cns_fileid *, u_signed64, const char *, const char *, time_t, time_t));
 EXTERN_C int DLL_DECL Cns_setsegattrs _PROTO((const char *, struct Cns_fileid *, int, struct Cns_segattrs *, time_t));
-EXTERN_C int DLL_DECL Cns_dropsegs _PROTO((const char *, struct Cns_fileid *));
 EXTERN_C int DLL_DECL Cns_setfsizeg _PROTO((const char *, u_signed64, const char *, char *,time_t,time_t));
 EXTERN_C int DLL_DECL Cns_startsess _PROTO((char *, char *));
 EXTERN_C int DLL_DECL Cns_starttrans _PROTO((char *, char *));

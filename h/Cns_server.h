@@ -272,6 +272,8 @@ EXTERN_C int Cns_srv_creat _PROTO((int, char *, const char *, struct Cns_srv_thr
 EXTERN_C int Cns_srv_delcomment _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_delete _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_deleteclass _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
+EXTERN_C int Cns_srv_delsegbycopyno _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
+EXTERN_C int Cns_srv_dropsegs _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_du _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_endsess _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_endtrans _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
@@ -312,7 +314,6 @@ EXTERN_C int Cns_srv_setfsize _PROTO((int, char *, const char *, struct Cns_srv_
 EXTERN_C int Cns_srv_setfsizecs _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_setfsizeg _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_setsegattrs _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
-EXTERN_C int Cns_srv_dropsegs _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_shutdown _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_stat _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_statcs _PROTO((int, char *, const char *, struct Cns_srv_thread_info *));

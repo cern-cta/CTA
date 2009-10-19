@@ -3,6 +3,7 @@ debian/castor/usr/share/man/man1/nschmod.1castor
 debian/castor/usr/share/man/man1/nschown.1castor
 debian/castor/usr/share/man/man1/nsdelcomment.1castor
 debian/castor/usr/share/man/man1/nsdeleteclass.1castor
+debian/castor/usr/share/man/man1/nsdelsegment.1castor
 debian/castor/usr/share/man/man1/nsenterclass.1castor
 debian/castor/usr/share/man/man1/nsfind.1castor
 debian/castor/usr/share/man/man1/nsgetacl.1castor
