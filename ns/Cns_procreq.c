@@ -4846,64 +4846,65 @@ int Cns_srv_dropsegs(magic, req_data, clienthost, thip)
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
 {
+  char       logbuf[LOGBUFSZ];
+  char       func[17];
+  char       *rbp;
+  char       *user;
+  gid_t      gid;
+  uid_t      uid;
+  char       path[CA_MAXPATHLEN+1];
+  char       cwdpath[CA_MAXPATHLEN+10];
   u_signed64 cwd;
-  struct Cns_file_metadata filentry;
-  char func[17];
-  uid_t uid;
-  gid_t gid;
-  u_signed64 fileid;
-  struct Cns_file_metadata parent_dir;
-  char path[CA_MAXPATHLEN+1];
-  char *rbp;
-  Cns_dbrec_addr rec_addr; /* file record address */
-  char *user;
+  u_signed64 fileid = 0;
+  char       tmpbuf[21];
+  struct Cns_file_metadata fmd_entry;
+  Cns_dbrec_addr rec_addr;
 
   strcpy (func, "Cns_srv_dropsegs");
   rbp = req_data;
   unmarshall_LONG (rbp, uid);
   unmarshall_LONG (rbp, gid);
   get_client_actual_id (thip, &uid, &gid, &user);
-  nslogit (func, NS092, "setsegattrs", user, uid, gid, clienthost);
+  nslogit (func, NS092, "dropsegs", user, uid, gid, clienthost);
   unmarshall_HYPER (rbp, cwd);
   unmarshall_HYPER (rbp, fileid);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
     RETURN (SENAMETOOLONG);
+  get_cwd_path (thip, cwd, cwdpath);
+  sprintf (logbuf, "dropsegs %s %s %s",
+           u64tostr (fileid, tmpbuf, 0), path, cwdpath);
+  Cns_logreq (func, logbuf);
 
-  /* start transaction */
+  if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
+    RETURN (serrno);
+
+  /* Start transaction */
   (void) Cns_start_tr (thip->s, &thip->dbfd);
 
   if (fileid) {
-    /* get/lock basename entry */
-    if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid,
-                               &filentry, 1, &rec_addr))
-      RETURN (serrno);
-    /* check parent directory components for search permission */
-    if (Cns_chkbackperm (&thip->dbfd, filentry.parent_fileid,
-                         S_IEXEC, uid, gid, clienthost))
+
+    /* Get/lock basename entry */
+    if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid, &fmd_entry, 1, &rec_addr))
       RETURN (serrno);
   } else {
-    /* check parent directory components for search permission and
-       get/lock basename entry */
+    /* Check parent directory components for search permission and get/lock
+     * basename entry
+     */
     if (Cns_parsepath (&thip->dbfd, cwd, path, uid, gid, clienthost,
-                       NULL, NULL, &filentry, &rec_addr, CNS_MUST_EXIST))
+                       NULL, NULL, &fmd_entry, &rec_addr, CNS_MUST_EXIST))
       RETURN (serrno);
   }
-  /* check if the entry is a regular file */
-  if (filentry.filemode & S_IFDIR)
+  
+  /* Check if the entry is a regular file */
+  if (fmd_entry.filemode & S_IFDIR)
     RETURN (EISDIR);
-  if ((filentry.filemode & S_IFLNK) == S_IFLNK) {
-    RETURN (ENSISLINK);
-    /* if the parent has the sticky bit set,
-       the user must own the file or the parent or
-       the basename entry must have write permission */
-    if (parent_dir.filemode & S_ISVTX &&
-        uid != parent_dir.uid && uid != filentry.uid &&
-        Cns_chkentryperm (&filentry, S_IWRITE, uid, gid, clienthost))
-      RETURN (EACCES);
-  }
+  if ((fmd_entry.filemode & S_IFREG) != S_IFREG)
+    RETURN (SEINTERNAL);
+  if (*fmd_entry.name == '/')
+    RETURN (SEINTERNAL); 
 
-  /* delete file segments if any */
-  if (Cns_internal_dropsegs(func, thip, &filentry) != 0)
+  /* Delete file segments */
+  if (Cns_internal_dropsegs(func, thip, &fmd_entry) != 0)
     RETURN (serrno);
 
   RETURN (0);

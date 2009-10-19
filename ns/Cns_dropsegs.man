@@ -27,6 +27,8 @@ the full CASTOR pathname.
 .TP
 .I file_uniqueid
 specifies the fileid of the CASTOR file
+.LP
+This function requires ADMIN privileges in the Cupv database.
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the operation
 failed. In the latter case,
