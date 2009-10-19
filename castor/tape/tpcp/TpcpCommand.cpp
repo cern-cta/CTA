@@ -59,6 +59,10 @@
 #include <unistd.h>
 #include <poll.h>
  
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
 
 //------------------------------------------------------------------------------
 // vmgr_error_buffer
@@ -1228,7 +1232,21 @@ void castor::tape::tpcp::TpcpCommand::checkFilenameFormat()
 void castor::tape::tpcp::TpcpCommand::rfioStat(const char *const path,
   struct stat64 &statBuf) throw(castor::exception::Exception) {
 
-  const int rc = rfio_stat64((char *)path, &statBuf);
+  // rfio_stat64 is a smart oparation, in case of a local file, it do not use
+  // the rfio's stat, but the local stat. To forse the use of rfio's stat we
+  // convert the hostname (if equal to local hostname) into the local IP address
+  std::string filename (path);
+
+  if(filename.find(m_hostname)!= std::string::npos){
+    const int firstPos = filename.find(":/");
+    struct hostent *tmpHost;
+    tmpHost = gethostbyname(m_hostname);
+    const std::string ip ( inet_ntoa(*((struct in_addr *)tmpHost->h_addr_list[0])) );
+    filename.replace(0, firstPos, ip);
+    }
+
+  //const int rc = rfio_stat64((char *)path, &statBuf);
+  const int rc = rfio_stat64((char *)filename.c_str(), &statBuf);
   const int savedSerrno = rfio_serrno();
 
   if(rc != 0) {
