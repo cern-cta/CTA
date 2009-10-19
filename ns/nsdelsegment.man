@@ -1,0 +1,42 @@
+.\" @(#)$RCSfile: nsdelsegment.man,v $ $Revision: 1.1 $ $Date: 2008/11/03 10:10:24 $
+.\" Copyright (C) 1999-2002 by CERN
+.\" All rights reserved
+.\"
+.TH NSDELSEGMENT 1 "$Date: 2008/11/03 10:10:24 $" CASTOR "Cns User Commands"
+.SH NAME
+nsdelsegment \- delete file segment by copyno
+.SH SYNOPSIS
+.B nsdelsegment
+[\fIOPTION\fR]... \PATH\fR...
+.SH DESCRIPTION
+.B nsdelsegment
+deletes file segments from the name server by path and copy number.
+.TP
+.I PATH
+specifies the CASTOR pathname or directory.
+If PATH does not start with
+.BR /
+it is prefixed by the content of the
+.B CASTOR_HOME
+environment variable.
+.LP
+This command requires ADMIN privileges in the Cupv database.
+.SH OPTIONS
+ The following options are supported:
+.TP
+.B -c,\ \-\-copyno=COPYNO
+Specifies which copy of the file should be deleted.
+.TP
+.B -a,\ \-\-all
+Delete all segments belonging to the file.
+.TP
+.B \-\-help
+display this help and exit
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_delsegbycopyno(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
