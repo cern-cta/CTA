@@ -23,7 +23,7 @@
  *****************************************************************************/
 
 /* SQL statement to populate the intial schema version */
-UPDATE UpgradeLog SET schemaVersion = '2_1_9_2';
+UPDATE UpgradeLog SET schemaVersion = '2_1_9_3';
 
 /* PL/SQL method implementing createPartition */
 CREATE OR REPLACE PROCEDURE createPartitions

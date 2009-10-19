@@ -23,7 +23,7 @@
  *****************************************************************************/
 
 /* SQL statement to populate the intial schema version */
-UPDATE UpgradeLog SET schemaVersion = '2_1_9_2';
+UPDATE UpgradeLog SET schemaVersion = '2_1_9_3';
 
 /* A function to extract the full path of a file in one go */
 CREATE OR REPLACE FUNCTION getPathForFileid(fid IN NUMBER) RETURN VARCHAR2 IS
