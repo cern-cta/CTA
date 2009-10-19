@@ -146,8 +146,7 @@ castor::client::BaseClient::BaseClient
   m_hasAuthorizationId(false),
   m_authUid(0),
   m_authGid(0),
-  m_hasSecAuthorization(false),
-  m_nfds(0) {
+  m_hasSecAuthorization(false) {
   setAuthorization();
   // Check timeout value. Max value * 1000 should fit into an int as it will be
   // used by poll that wants milliseconds. If the value is too big, it is
@@ -156,8 +155,6 @@ castor::client::BaseClient::BaseClient
   if (acceptTimeout > 2147483 || acceptTimeout < 0) {
     acceptTimeout = -1;
   }
-  // Initialize the pollfd structure
-  memset(m_fds, 0 , sizeof(m_fds));
 }
 
 //------------------------------------------------------------------------------
@@ -647,7 +644,7 @@ void castor::client::BaseClient::buildClient(castor::stager::Request* req)
   // Add the listening socket to the pollfd structure
   m_fds[0].fd = m_callbackSocket->socket();
   m_fds[0].events = POLLIN;
-  m_nfds++;
+  m_nfds = 1;
 
   // Set the Client
   castor::IClient *cl = createClient();
