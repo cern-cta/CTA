@@ -47,6 +47,6 @@ def export2swrep(arch, rpm):
 # export packages
 for p in platforms:
     dir = intReleaseDir + "/" + p[0]
-    if p[1] == "x86_64" and p[0] == "SL4":
+    if p[1] == "x86_64":
 	export2swrep(p[2], dir + "/i386/castor-lib-2* " + dir + "/i386/castor-devel-2*")
     export2swrep(p[2], dir + "/" + p[1] + "/")
