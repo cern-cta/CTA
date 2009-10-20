@@ -3,7 +3,7 @@
  * All rights reserved
  */
 
-/*      Cns_dropsegs - drop all segments of a file */
+/* Cns_dropsegs - drop all segments of a file */
 
 #include <errno.h>
 #include <sys/types.h>

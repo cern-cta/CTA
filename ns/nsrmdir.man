@@ -11,6 +11,14 @@ nsrmdir \- remove empty directories in the name server
 .SH DESCRIPTION
 .B nsrmdir
 removes directories from the CASTOR name server, if they are empty.
+.TP
+.I DIRECTORY
+specifies the CASTOR directory.
+If DIRECTORY does not start with
+.BR / ,
+it is prefixed by the content of the
+.B CASTOR_HOME
+environment variable.
 .SH OPTIONS
  The following options are supported:
 .TP
@@ -25,14 +33,6 @@ remove each component of the path name pointing to the directory in reverse orde
 .TP
 .B \-\-help
 display this help and exit
-.TP
-.I DIRECTORY
-specifies the CASTOR directory.
-If DIRECTORY does not start with
-.BR / ,
-it is prefixed by the content of the
-.B CASTOR_HOME
-environment variable.
 .SH EXIT STATUS
 This program returns 0 if the operation was successful or >0 if the operation
 failed.

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2004 by CERN
+ * Copyright (C) 2000-2004 by CERN/IT/DM
  * All rights reserved
  */
 
@@ -7,7 +7,6 @@
  * file sequence number residing on a volume.
  */
 
-/* headers */
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,7 +25,7 @@
 int DLL_DECL
 Cns_lastfseq(const char *vid, int side, struct Cns_segattrs *segattrs)
 {
-  /* variables */
+  /* Variables */
   char  func[16];
   char  sendbuf[REQBUFSZ];
   char  repbuf[REPBUFSZ];

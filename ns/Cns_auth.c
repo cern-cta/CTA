@@ -11,7 +11,7 @@
 #include "Cns_api.h"
 #include "serrno.h"
 
-/*      Cns_client_getAuthorizationId - get the authorization id from the thread-specific structure */
+/* Cns_client_getAuthorizationId - get the authorization id from the thread-specific structure */
 
 int DLL_DECL
 Cns_client_getAuthorizationId(uid_t *uid, gid_t *gid, char **mech, char **id)
@@ -32,7 +32,7 @@ Cns_client_getAuthorizationId(uid_t *uid, gid_t *gid, char **mech, char **id)
   return (0);
 }
 
-/*      Cns_client_setAuthorizationId - set the authorization id in the thread-specific structure */
+/* Cns_client_setAuthorizationId - set the authorization id in the thread-specific structure */
 
 int DLL_DECL
 Cns_client_setAuthorizationId(uid_t uid, gid_t gid, const char *mech, char *id)

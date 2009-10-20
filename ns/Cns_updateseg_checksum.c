@@ -3,7 +3,7 @@
  * All rights reserved
  */
 
-/*      Cns_updateseg_checksum - updates the segment checksum */
+/* Cns_updateseg_checksum - updates the segment checksum */
 
 #include <errno.h>
 #include <sys/types.h>

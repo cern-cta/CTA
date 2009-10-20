@@ -3,7 +3,7 @@
  * All rights reserved
  */
 
-/*      Cns_modifyusrmap - modify user entry corresponding to a given uid */
+/* Cns_modifyusrmap - modify user entry corresponding to a given uid */
 
 #include <errno.h>
 #include <string.h>

@@ -3,7 +3,7 @@
  * All rights reserved
  */
 
-/*      Cns_updatefile_checksum - updates the file checksum */
+/* Cns_updatefile_checksum - updates the file checksum */
 
 #include <errno.h>
 #include <sys/types.h>

@@ -1,5 +1,5 @@
-.\" @(#)$RCSfile: nstouch.man,v $ $Revision: 1.3 $ $Date: 2009/01/26 09:11:35 $ CERN Castor Dev team
-.\" Copyright (C) 2003  CERN
+.\" @(#)$RCSfile: nstouch.man,v $ $Revision: 1.3 $ $Date: 2009/01/26 09:11:35 $ CERN IT/DM
+.\" Copyright (C) 2003 by CERN/IT/DM
 .\" All rights reserved
 .\"
 .TH NSTOUCH 1 "$Date: 2009/01/26 09:11:35 $" CASTOR "Cns User Commands"

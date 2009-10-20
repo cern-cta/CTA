@@ -3,7 +3,7 @@
  * All rights reserved
  */
 
-/*      Cns_modifygrpmap - modify group entry corresponding to a given gid */
+/* Cns_modifygrpmap - modify group entry corresponding to a given gid */
 
 #include <errno.h>
 #include <string.h>

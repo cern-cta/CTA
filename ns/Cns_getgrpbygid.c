@@ -3,7 +3,7 @@
  * All rights reserved
  */
 
-/*      Cns_getgrpbygid - get group name associated with a given gid */
+/* Cns_getgrpbygid - get group name associated with a given gid */
 
 #include <errno.h>
 #include <string.h>

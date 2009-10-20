@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2004 by CERN
+ * Copyright (C) 1999-2004 by CERN/IT/DM
  * All rights reserved
  */
 

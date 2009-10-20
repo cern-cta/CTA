@@ -3,7 +3,7 @@
  * All rights reserved
  */
 
-/*      Cns_getusrbyuid - get user name associated with a given uid */
+/* Cns_getusrbyuid - get user name associated with a given uid */
 
 #include <errno.h>
 #include <string.h>

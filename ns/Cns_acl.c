@@ -114,7 +114,7 @@ int Cns_acl_compare (const void *acl1, const void *acl2)
   return (0);
 }
 
-/*      Cns_acl_inherit - inherit ACLs from parent default ACL entries */
+/* Cns_acl_inherit - inherit ACLs from parent default ACL entries */
 
 int Cns_acl_inherit (struct Cns_file_metadata *parent_dir, struct Cns_file_metadata *fmd_entry, mode_t mode)
 {
@@ -215,7 +215,7 @@ int Cns_acl_inherit (struct Cns_file_metadata *parent_dir, struct Cns_file_metad
   return (0);
 }
 
-/*      Cns_acl_validate - validate set of ACL entries */
+/* Cns_acl_validate - validate set of ACL entries */
 
 int Cns_acl_validate (struct Cns_acl *acl, int nentries)
 {

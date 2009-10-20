@@ -3,7 +3,7 @@
  * All rights reserved
  */
 
-/*      Cns_getidmap - get uid/gids associated with a given dn/roles */
+/* Cns_getidmap - get uid/gids associated with a given dn/roles */
 
 #include <errno.h>
 #include <string.h>

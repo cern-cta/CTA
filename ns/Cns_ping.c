@@ -3,7 +3,7 @@
  * All rights reserved
  */
 
-/*      Cns_ping - check name server alive and return version number */
+/* Cns_ping - check name server alive and return version number */
 
 #include <errno.h>
 #include <string.h>

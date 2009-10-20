@@ -3,7 +3,7 @@
  * All rights reserved
  */
 
-/*      Cns_setsegattrs - set file segments attributes */
+/* Cns_setsegattrs - set file segments attributes */
 
 #include <errno.h>
 #include <sys/types.h>

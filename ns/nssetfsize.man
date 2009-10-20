@@ -1,5 +1,5 @@
-.\" @(#)$RCSfile: nssetfsize.man,v $ $Revision: 1.1 $ $Date: 2009/03/26 15:00:27 $ CERN Castor Dev team
-.\" Copyright (C) 2003  CERN
+.\" @(#)$RCSfile: nssetfsize.man,v $ $Revision: 1.1 $ $Date: 2009/03/26 15:00:27 $ CERN IT/DM
+.\" Copyright (C) 2003 by CERN/IT/DM
 .\" All rights reserved
 .\"
 .TH NSSETFSIZE 1 "$Date: 2009/03/26 15:00:27 $" CASTOR "Cns User Commands"

@@ -3,7 +3,7 @@
  * All rights reserved
  */
 
-/*      Cns_getsegattrs - get file segments attributes */
+/* Cns_getsegattrs - get file segments attributes */
 
 #include <errno.h>
 #include <stdlib.h>

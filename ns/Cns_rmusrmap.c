@@ -17,7 +17,7 @@
 #include "Cns.h"
 #include "serrno.h"
 
-/*      Cns_rmusrmap - suppress user entry corresponding to a given uid/name */
+/* Cns_rmusrmap - suppress user entry corresponding to a given uid/name */
 
 int DLL_DECL
 Cns_rmusrmap(uid_t uid, char *username)

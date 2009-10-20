@@ -283,7 +283,7 @@ int Cns_srv_access(magic, req_data, clienthost, thip)
   RETURNQ (0);
 }
 
-/*      Cns_srv_chclass - change class on directory */
+/* Cns_srv_chclass - change class on directory */
 
 int Cns_srv_chclass(magic, req_data, clienthost, thip)
      int magic;
@@ -381,7 +381,7 @@ int Cns_srv_chclass(magic, req_data, clienthost, thip)
   RETURN (0);
 }
 
-/*      Cns_srv_chdir - change current working directory */
+/* Cns_srv_chdir - change current working directory */
 
 int Cns_srv_chdir(magic, req_data, clienthost, thip)
      int magic;
@@ -435,7 +435,7 @@ int Cns_srv_chdir(magic, req_data, clienthost, thip)
   RETURN (0);
 }
 
-/*      Cns_srv_chmod - change file/directory permissions */
+/* Cns_srv_chmod - change file/directory permissions */
 
 int Cns_srv_chmod(magic, req_data, clienthost, thip)
      int magic;
@@ -504,7 +504,7 @@ int Cns_srv_chmod(magic, req_data, clienthost, thip)
   RETURN (0);
 }
 
-/*      Cns_srv_chown - change owner and group of a file or a directory */
+/* Cns_srv_chown - change owner and group of a file or a directory */
 
 int Cns_srv_chown(magic, req_data, clienthost, thip)
      int magic;
@@ -619,7 +619,7 @@ int Cns_srv_chown(magic, req_data, clienthost, thip)
   RETURN (0);
 }
 
-/*      Cns_internal_deletesegs - internal method deleting file segments */
+/* Cns_internal_deletesegs - internal method deleting file segments */
 
 int Cns_internal_deletesegs(func, thip, filentry, copyno)
      char* func;
@@ -666,7 +666,7 @@ int Cns_internal_deletesegs(func, thip, filentry, copyno)
   return (0);
 }
 
-/*      Cns_srv_creat - create a file entry */
+/* Cns_srv_creat - create a file entry */
 
 int Cns_srv_creat(magic, req_data, clienthost, thip)
      int magic;
@@ -868,7 +868,7 @@ int Cns_srv_delcomment(magic, req_data, clienthost, thip)
   RETURN (0);
 }
 
-/*      Cns_srv_delete - logically remove a file entry */
+/* Cns_srv_delete - logically remove a file entry */
 
 int Cns_srv_delete(magic, req_data, clienthost, thip)
      int magic;
@@ -1133,7 +1133,7 @@ int Cns_srv_delsegbycopyno(magic, req_data, clienthost, thip)
   RETURN (0);
 }
 
-/*     Cns_srv_du - summarize file space usage */
+/* Cns_srv_du - summarize file space usage */
 
 int compute_du4dir (thip, direntry, Lflag, uid, gid, clienthost, nbbytes, nbentries)
      struct Cns_srv_thread_info *thip;
@@ -1378,7 +1378,7 @@ int Cns_srv_enterclass(magic, req_data, clienthost, thip)
   RETURN (0);
 }
 
-/*      Cns_srv_getacl - get the Access Control List for a file/directory */
+/* Cns_srv_getacl - get the Access Control List for a file/directory */
 
 int Cns_srv_getacl(magic, req_data, clienthost, thip)
      int magic;
@@ -1759,7 +1759,7 @@ int Cns_srv_getsegattrs(magic, req_data, clienthost, thip)
   RETURN (0);
 }
 
-/*      Cns_srv_lchown - change owner and group of a file or a directory */
+/* Cns_srv_lchown - change owner and group of a file or a directory */
 
 int Cns_srv_lchown(magic, req_data, clienthost, thip)
      int magic;
@@ -2474,7 +2474,7 @@ int Cns_srv_lstat(magic, req_data, clienthost, thip)
   RETURNQ (0);
 }
 
-/*      Cns_srv_mkdir - create a directory entry */
+/* Cns_srv_mkdir - create a directory entry */
 
 int Cns_srv_mkdir(magic, req_data, clienthost, thip)
      int magic;
@@ -2749,7 +2749,7 @@ int Cns_srv_modifyclass(magic, req_data, clienthost, thip)
   RETURN (0);
 }
 
-/*      Cns_srv_opendir - open a directory entry */
+/* Cns_srv_opendir - open a directory entry */
 
 int Cns_srv_opendir(magic, req_data, clienthost, thip)
      int magic;
@@ -2824,7 +2824,7 @@ int Cns_srv_opendir(magic, req_data, clienthost, thip)
   RETURN (0);
 }
 
-/*      Cns_srv_ping - check server alive and return version number */
+/* Cns_srv_ping - check server alive and return version number */
 
 int Cns_srv_ping(magic, req_data, clienthost, thip)
      int magic;
@@ -2941,7 +2941,7 @@ int Cns_srv_queryclass(magic, req_data, clienthost, thip)
   RETURN (0);
 }
 
-/*      Cns_srv_readdir - read directory entries */
+/* Cns_srv_readdir - read directory entries */
 
 int Cns_srv_readdir(magic, req_data, clienthost, thip, fmd_entry, smd_entry, umd_entry, endlist, dblistptr, smdlistptr, beginp)
      int magic;
@@ -3191,7 +3191,7 @@ int Cns_srv_readlink(magic, req_data, clienthost, thip)
   RETURNQ (0);
 }
 
-/*      Cns_srv_rename - rename a file or a directory */
+/* Cns_srv_rename - rename a file or a directory */
 
 int Cns_srv_rename(magic, req_data, clienthost, thip)
      int magic;
@@ -4027,7 +4027,7 @@ int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
   RETURN (0);
 }
 
-/*      Cns_srv_rmdir - remove a directory entry */
+/* Cns_srv_rmdir - remove a directory entry */
 
 int Cns_srv_rmdir(magic, req_data, clienthost, thip)
      int magic;
@@ -4120,7 +4120,7 @@ int Cns_srv_rmdir(magic, req_data, clienthost, thip)
   RETURN (0);
 }
 
-/*      Cns_srv_setacl - set the Access Control List for a file/directory */
+/* Cns_srv_setacl - set the Access Control List for a file/directory */
 
 int Cns_srv_setacl(magic, req_data, clienthost, thip)
      int magic;
@@ -4951,7 +4951,7 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
   RETURN (0);
 }
 
-/*      Cns_srv_dropsegs - drops all segments of a file */
+/* Cns_srv_dropsegs - drops all segments of a file */
 
 int Cns_srv_dropsegs(magic, req_data, clienthost, thip)
      int magic;
@@ -5312,7 +5312,7 @@ int Cns_srv_statg(magic, req_data, clienthost, thip)
   RETURNQ (0);
 }
 
-/*      Cns_srv_symlink - make a symbolic link to a file or a directory */
+/* Cns_srv_symlink - make a symbolic link to a file or a directory */
 
 int Cns_srv_symlink(magic, req_data, clienthost, thip)
      int magic;
@@ -5407,7 +5407,7 @@ int Cns_srv_symlink(magic, req_data, clienthost, thip)
   RETURN (0);
 }
 
-/*      Cns_srv_undelete - logically restore a file entry */
+/* Cns_srv_undelete - logically restore a file entry */
 
 int Cns_srv_undelete(magic, req_data, clienthost, thip)
      int magic;
@@ -5507,7 +5507,7 @@ int Cns_srv_undelete(magic, req_data, clienthost, thip)
   RETURN (0);
 }
 
-/*      Cns_srv_unlink - remove a file entry */
+/* Cns_srv_unlink - remove a file entry */
 
 int Cns_srv_unlink(magic, req_data, clienthost, thip)
      int magic;
@@ -5613,7 +5613,7 @@ int Cns_srv_unlink(magic, req_data, clienthost, thip)
   RETURN (0);
 }
 
-/*      Cns_srv_unlinkbyvid - remove all file entries on a given volume */
+/* Cns_srv_unlinkbyvid - remove all file entries on a given volume */
 
 int Cns_srv_unlinkbyvid(magic, req_data, clienthost, thip)
      int magic;

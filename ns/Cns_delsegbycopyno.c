@@ -1,9 +1,9 @@
 /*
- * Copyright (C) 1999-2002 by CERN
+ * Copyright (C) 1999-2002 by CERN/IT/DM
  * All rights reserved
  */
 
-/*      Cns_delsegbycopyno - delete file segment by copyno */
+/* Cns_delsegbycopyno - delete file segment by copyno */
 
 #include <errno.h>
 #include <sys/types.h>

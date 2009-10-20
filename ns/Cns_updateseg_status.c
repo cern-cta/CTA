@@ -3,7 +3,7 @@
  * All rights reserved
  */
 
-/*      Cns_updateseg_status - updates the segment status */
+/* Cns_updateseg_status - updates the segment status */
 
 #include <errno.h>
 #include <sys/types.h>

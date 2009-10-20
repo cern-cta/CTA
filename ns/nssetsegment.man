@@ -17,7 +17,6 @@ option is used, in which case tape segments with an empty checksum can be update
 special privileges.
 .TP
 .I PATH
-.I PATH
 specifies the CASTOR pathname.
 If PATH does not start with
 .BR / ,

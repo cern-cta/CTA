@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2000-2004 by CERN
+ * Copyright (C) 2000-2004 by CERN/IT/DM
  * All rights reserved
  */
 
 /* Cns_tapesum - returns the total size and number of files on a volume */
 
-/* headers */
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,7 +23,7 @@
 int DLL_DECL
 Cns_tapesum(char *server, const char *vid, u_signed64 *count, u_signed64 *size, u_signed64 *maxfileid, int filter)
 {
-  /* variables */
+  /* Variables */
   char  func[16];
   char  sendbuf[REQBUFSZ];
   char  repbuf[REPBUFSZ];

@@ -3,7 +3,7 @@
  * All rights reserved
  */
 
-/*      Cns_replaceseg - replace file segment (used by repack) */
+/* Cns_replaceseg - replace file segment (used by repack) */
 
 #include <errno.h>
 #include <sys/types.h>

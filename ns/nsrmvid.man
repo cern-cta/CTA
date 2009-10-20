@@ -11,6 +11,9 @@ nsrmvid \- remove all files on a volume
 .SH DESCRIPTION
 .B nsrmvid
 removes all CASTOR file entries in the name server listed on a given volume.
+.TP
+.I VID
+specifies the CASTOR volume.
 .LP
 This command requires ADMIN privileges in the Cupv database.
 .SH OPTIONS
@@ -25,9 +28,6 @@ CNS_HOST environment variable.
 .TP
 .B \-\-help
 display this help and exit
-.TP
-.I VID
-specifies the CASTOR volume.
 .SH EXIT STATUS
 This program returns 0 if the operation was successful or >0 if the operation
 failed.

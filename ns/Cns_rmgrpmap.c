@@ -3,7 +3,7 @@
  * All rights reserved
  */
 
-/*      Cns_rmgrpmap - suppress group entry corresponding to a given gid/name */
+/* Cns_rmgrpmap - suppress group entry corresponding to a given gid/name */
 
 #include <errno.h>
 #include <string.h>
