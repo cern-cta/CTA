@@ -313,6 +313,8 @@ int Cns_srv_chclass(magic, req_data, clienthost, thip)
   unmarshall_LONG (rbp, gid);
   get_client_actual_id (thip, &uid, &gid, &user);
   nslogit (func, NS092, "chclass", user, uid, gid, clienthost);
+  if (rdonly)
+    RETURN (EROFS);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
     RETURN (SENAMETOOLONG);
@@ -3112,12 +3114,13 @@ int Cns_srv_readdir(magic, req_data, clienthost, thip, fmd_entry, smd_entry, umd
     (void) Cns_start_tr (thip->s, &thip->dbfd);
 
     /* update directory access time */
-
-    if (Cns_get_fmd_by_fileid (&thip->dbfd, dir_fileid, &direntry, 1, &rec_addr))
-      RETURN (serrno);
-    direntry.atime = time (0);
-    if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &direntry))
-      RETURN (serrno);
+    if (!rdonly) {
+      if (Cns_get_fmd_by_fileid (&thip->dbfd, dir_fileid, &direntry, 1, &rec_addr))
+        RETURN (serrno);
+      direntry.atime = time (0);
+      if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &direntry))
+        RETURN (serrno);
+    }
   }
 
  reply:
