@@ -375,7 +375,7 @@ void shq_display_standard(struct vdqm_reqlist *reqlist, int give_jid) {
                     tmp1->volreq.VolReqID,
                     buf_id,
                     tmp1->volreq.client_host,
-                    (long) (now >= tmp1->drvreq.recvtime ? now - tmp1->volreq.recvtime : 0));
+                    (long) (now >= tmp1->volreq.recvtime ? now - tmp1->volreq.recvtime : 0));
         }
     } CLIST_ITERATE_END(reqlist,tmp1);
 }
