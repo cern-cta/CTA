@@ -598,7 +598,7 @@ globus_l_gfs_CASTOR2int_recv(
     flags = O_WRONLY | O_CREAT;
     if(transfer_info->truncate) flags |= O_TRUNC;
     
-    CASTOR2int_handle->fd = CASTOR2int_handle_open(pathname, flags, 0664, CASTOR2int_handle);
+    CASTOR2int_handle->fd = CASTOR2int_handle_open(pathname, flags, 0644, CASTOR2int_handle);
     
     if(CASTOR2int_handle->fd < 0) {
 	    result=globus_l_gfs_make_error("open/create");
