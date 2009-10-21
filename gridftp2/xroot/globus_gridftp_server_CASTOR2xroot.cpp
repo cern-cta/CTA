@@ -487,7 +487,7 @@ extern "C" {
     if(transfer_info->truncate) flags |= O_TRUNC;
 
     CASTOR2xroot_handle->fd =
-      CASTOR2xroot_handle_open(pathname, flags, 0644, CASTOR2xroot_handle);
+      CASTOR2xroot_handle_open(pathname, flags, 0664, CASTOR2xroot_handle);
     if (CASTOR2xroot_handle->fd < 0) {
       result=globus_l_gfs_make_error("open/create", errno);
       free(pathname);
@@ -571,7 +571,7 @@ extern "C" {
                            "%s: pathname: %s\n",
                            func,pathname);
     CASTOR2xroot_handle->fd =
-      CASTOR2xroot_handle_open(pathname, O_RDONLY, 0644, CASTOR2xroot_handle);
+      CASTOR2xroot_handle_open(pathname, O_RDONLY, 0, CASTOR2xroot_handle);   /* mode is ignored */
 
     if(CASTOR2xroot_handle->fd < 0) {
       result = globus_l_gfs_make_error("open", errno);

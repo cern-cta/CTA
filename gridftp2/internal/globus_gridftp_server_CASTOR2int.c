@@ -598,7 +598,7 @@ globus_l_gfs_CASTOR2int_recv(
     flags = O_WRONLY | O_CREAT;
     if(transfer_info->truncate) flags |= O_TRUNC;
     
-    CASTOR2int_handle->fd = CASTOR2int_handle_open(pathname, flags, 0644,CASTOR2int_handle);
+    CASTOR2int_handle->fd = CASTOR2int_handle_open(pathname, flags, 0664, CASTOR2int_handle);
     
     if(CASTOR2int_handle->fd < 0) {
 	    result=globus_l_gfs_make_error("open/create");
@@ -691,7 +691,7 @@ globus_l_gfs_CASTOR2int_send(
     }
     
     globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: pathname: %s\n",func,pathname);
-    CASTOR2int_handle->fd = CASTOR2int_handle_open(pathname, O_RDONLY, 0644,CASTOR2int_handle);
+    CASTOR2int_handle->fd = CASTOR2int_handle_open(pathname, O_RDONLY, 0, CASTOR2int_handle);  /* mode is ignored */
     
     if(CASTOR2int_handle->fd < 0) {
 	result = globus_l_gfs_make_error("open");
