@@ -57,6 +57,10 @@ XROOTSYS = /opt/xrootd
 # GLOBUS Base directory
 GLOBUSSYS = /opt/globus
 
+# Tape pool name which will be use to test tape functionalities
+# N.B. Tapepoool must exist and must have one and only one tape in it.
+TAPEPOOLNAME = nbessone_dev
+
 # values to give to parameters in the .input files of the test suite
 # any <TAG> string (where tag can contain anything but '>') will be
 # replaced by the value of the corresponding entry
@@ -64,3 +68,4 @@ GLOBUSSYS = /opt/globus
 
 # Local file name to be used as sample data
 localFileName = /etc/group
+
