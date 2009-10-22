@@ -39,7 +39,7 @@ LIBS+= -ldl
 COMM######################### FLAGS ##############################
 
 DFLAGS = -DBIN=\"$(BIN)\" \
-	 -DLOGFILE=\"$(LOGDIR)/taped.log\" \
+	 -DLOGFILE=\"$(LOGDIR)/taped_legacy.log\" \
 	 -DSTAGERSUPERUSER=\"$(STAGERSUPERUSER)\" \
 	 -DTPCONFIG=\"$(TPCONFIG)\" \
 	 -D$(TMS) $(PCTAFLAG) $(ADSTARFLG) $(ACCTFLAG) $(ACCTFILE) \

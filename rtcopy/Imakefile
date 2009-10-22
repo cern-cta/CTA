@@ -13,7 +13,7 @@ COMM
 COMM Define the remote tape copy daemon log file.
 COMM
 LOGDIR = /var/log/castor
-LOGFILE = $(LOGDIR)/rtcpd.log
+LOGFILE = $(LOGDIR)/rtcpd_legacy.log
 
 COMM
 COMM Define the working directory of
