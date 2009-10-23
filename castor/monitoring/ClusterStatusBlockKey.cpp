@@ -27,7 +27,7 @@
 #include "castor/sharedMemory/BlockKey.hpp"
 #include "castor/monitoring/ClusterStatusBlockKey.hpp"
 
-#define SHARED_MEMORY_SIZE 1048576
+#define SHARED_MEMORY_SIZE 10485760
 #define SHARED_MEMORY_KEY 2374
 #define SHARED_MEMORY_ADDRESS 0x30000000
 
