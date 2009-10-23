@@ -1,0 +1,9 @@
+vmgrlisttape -P <tapepool> -x | awk  '{  print $1; }' > <tmpLocalFileName>
+vmgrlisttape -P <tapepool> -x | awk  '{  print $11;}' 
+nslisttape -V `cat <tmpLocalFileName>`
+dd bs=1024 count=10240 if=/dev/urandom of=<tmpLocalFileName1> 2>&1 | grep -v copied
+rfcp <tmpLocalFileName1> <remoteFileName> | grep remote
+tpwrite -V `cat <tmpLocalFileName>` -q 1 -F F -l aul -S tpsrv250 <remoteFileName> 
+tpread  -V `cat <tmpLocalFileName>` -q 1 -F F        -S tpsrv250 <remoteFileName1>
+rfcp <remoteFileName1> <tmpLocalFileName2> | grep remote
+diff <tmpLocalFileName1> <tmpLocalFileName2>

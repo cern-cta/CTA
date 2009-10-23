@@ -1,0 +1,21 @@
+<month> <d> <h>:<m>:<s> tpwrite[<pid>]: selecting tape server ...
+<month1> <d1> <h1>:<m1>:<s1> tpwrite[<pid>]: * <tapesrvW> is a possible tape server.
+<month2> <d2> <h2>:<m2>:<s2> tpwrite[<pid>]: ! selected tape server is <tapesrvW>.
+
+
+ CPDSKTP - TAPE MOUNTED ON UNIT <unit>
+ CPDSKTP - RECORD FORMAT: F
+ CPDSKTP - BLOCK SIZE: <blocksize>
+ CPDSKTP - RECORD LENGTH: <blocksize>
+ CPDSKTP - CHECK SUM: <checksumDec>, <checksumHex>
+ CPDSKTP - END OF TRANSFER
+ CPDSKTP - KBYTES SENT BY HOST      : <kbytesWSent>
+ CPDSKTP - KBYTES WRITTEN TO TAPE   : <kbytesWReceived>
+ CPDSKTP - COMPRESSION RATE ON TAPE : <compressionW>
+
+
+ CPDSKTP - <bytes> BYTES COPIED
+ CPDSKTP - <nb> RECORDS COPIED
+ CPDSKTP - DATA TRANSFER BANDWIDTH (<bandwidth> Kbytes through <eth>): <bandwidth2> KB/sec
+
+<month3> <d3> <h3>:<m3>:<s3> tpwrite[<pid>]: command successful

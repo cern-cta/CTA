@@ -1,0 +1,21 @@
+<month> <d> <h>:<m>:<s> tpread[<pid>]: selecting tape server ...
+<month1> <d1> <h1>:<m1>:<s1> tpread[<pid>]: * <tapesrvR> is a possible tape server.
+<month2> <d2> <h2>:<m2>:<s2> tpread[<pid>]: ! selected tape server is <tapesrvR>.
+
+
+ CPTPDSK - TAPE MOUNTED ON UNIT <unit>
+ CPTPDSK - RECORD FORMAT: F
+ CPTPDSK - BLOCK SIZE: <blocksize>
+ CPTPDSK - RECORD LENGTH: <blocksize>
+ CPTPDSK - CHECK SUM: <checksumDec>, <checksumHex>
+ CPTPDSK - END OF FILE
+ CPTPDSK - KBYTES RECEIVED BY HOST  : <kbytesRSent>
+ CPTPDSK - KBYTES READ BY TAPE DRIVE: <kbytesRReceived>
+ CPTPDSK - COMPRESSION RATE ON TAPE : <compressionR>
+
+
+ CPTPDSK - <bytes> BYTES COPIED
+ CPTPDSK - <nb> RECORDS COPIED
+ CPTPDSK - DATA TRANSFER BANDWIDTH (<bandwidth> Kbytes through <eth>): <bandwidth1> KB/sec
+
+<month3> <d3> <h3>:<m3>:<s3> tpread[<pid>]: command successful
