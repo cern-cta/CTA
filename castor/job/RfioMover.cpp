@@ -130,7 +130,7 @@ void castor::job::RfioMover::destination
   // Open the destination file
   rfio_errno = serrno = 0;
   m_outputFD = rfio_open64((char *)m_outputFile.c_str(),
-			   O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR|S_IWUSR);
+			   O_WRONLY|O_CREAT|O_TRUNC, 0644);
   if (m_outputFD < 0) {
     castor::exception::Exception e(SEINTERNAL);
     e.getMessage() << "Failed to rfio_open64 the destination: "
