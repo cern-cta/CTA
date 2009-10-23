@@ -11,7 +11,9 @@ else:
     os.environ[pathVar] = os.environ['XROOTSYS'] + os.sep + 'lib' + os.pathsep + os.environ[pathVar]
 
 def xrootURL(self, nb=0):
-    return (lambda test : 'root://'+os.environ['STAGE_HOST']+'/'+self.getTag(test, 'noTapeFileName')+'?stagerHost='+os.environ['STAGE_HOST'])
+    snb = ''
+    if nb > 0: snb = str(nb)
+    return (lambda test : 'root://'+os.environ['STAGE_HOST']+'/'+self.getTag(test, 'noTapeFileName' + snb)+'?stagerHost='+os.environ['STAGE_HOST'])
 Setup.getTag_xrootURL = xrootURL
 
 def xrootRootURL(self, nb=0):
