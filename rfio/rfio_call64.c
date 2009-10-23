@@ -784,7 +784,6 @@ int  sropen64(s, rt, host)
         rfio_alrm(rcode,alarmbuf);
       }
 
-
       if (need_user_check &&  ((status=check_user_perm(&uid,&gid,host,&rcode,(((ntohopnflg(flags)) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
           ((status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0) ) {
         if (status == -2)
@@ -804,7 +803,8 @@ int  sropen64(s, rt, host)
           errno = 0;
           fd = -1;
           if (forced_filename!=NULL || !check_path_whitelist(host, pfn, perm_array, ofilename, sizeof(ofilename),1)) {
-            fd = open64((forced_filename!=NULL)?pfn:ofilename, ntohopnflg(flags), mode);
+            fd = open64((forced_filename!=NULL)?pfn:ofilename, ntohopnflg(flags),
+                        ((forced_filename != NULL) && (((ntohopnflg(flags)) & (O_WRONLY|O_RDWR)) != 0)) ? 0644 : mode);
             log(LOG_DEBUG, "sropen64: open64(%s,0%o,0%o) returned %x (hex)\n",
                 CORRECT_FILENAME(filename), flags, mode, fd);
           }
@@ -1897,7 +1897,6 @@ int  sropen64_v3(s, rt, host)
             rfio_alrm(rcode,alarmbuf);
           }
 
-
           /* NOTE(fuji): from now on, flags is in host byte-order... */
           flags = ntohopnflg(flags);
           myinfo.directio = 0;
@@ -1928,7 +1927,8 @@ int  sropen64_v3(s, rt, host)
             strcpy(ofilename, filename);
             fd = -1;
             if (forced_filename!=NULL || !check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
-              fd = open64(CORRECT_FILENAME(ofilename), flags, mode);
+              fd = open64(CORRECT_FILENAME(ofilename), flags,
+                          ((forced_filename != NULL) && ((flags & (O_WRONLY|O_RDWR)) != 0)) ? 0644 : mode);
 #if defined(_WIN32)
               _setmode( fd, _O_BINARY );       /* default is text mode  */
 #endif
@@ -2768,10 +2768,10 @@ int srread64_v3(s, infop, fd)
      SOCKET         s;
 #else    /* WIN32 */
      int srread64_v3(ctrl_sock, infop, fd)
-     int            ctrl_sock;
+          int            ctrl_sock;
 #endif   /* else WIN32 */
-     int            fd;
-     struct rfiostat* infop;
+          int            fd;
+          struct rfiostat* infop;
 {
   int         status;              /* Return code                */
   int         rcode;               /* To send back errno         */
@@ -3614,7 +3614,7 @@ int srwrite64_v3(s, infop, fd)
         iobuffer = iobuffer_p = array[produced64 % daemonv3_wrmt_nbuf].p;
       }
 
-      log(LOG_DEBUG,"rwrite64_v3: iobuffer_p = %X,DISKBUFSIZE_WRITE = %d, data socket = %d\n",
+      log(LOG_DEBUG,"rwrite64_v3: iobuffer_p = %X, DISKBUFSIZE_WRITE = %d, data socket = %d\n",
           iobuffer_p, DISKBUFSIZE_WRITE, data_sock);
 #if defined(_WIN32)
       n = recv(data_sock, iobuffer_p, DISKBUFSIZE_WRITE-byte_in_diskbuffer, 0);
@@ -3696,7 +3696,7 @@ int srwrite64_v3(s, infop, fd)
         return -1;
       }  /* if (status < 0) */
 
-         /* The data has be written on disk  */
+      /* The data has be written on disk  */
       myinfo.wnbr += byte_in_diskbuffer;
       myinfo.writop++;
       byte_in_diskbuffer = 0;

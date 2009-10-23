@@ -356,7 +356,7 @@ void process(castor::job::stagerjob::InputArguments* args)
   // Get full path of the file we handle
   castor::job::stagerjob::PluginContext context;
   context.host = castor::System::getHostName();
-  context.mask = S_IRWXG|S_IRWXO;
+  context.mask = S_IWGRP|S_IWOTH;
   context.jobSvc = jobSvc;
   context.fullDestPath = startAndGetPath(args, context);
   if ("" == context.fullDestPath) {

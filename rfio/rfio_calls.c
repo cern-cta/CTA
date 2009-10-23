@@ -2426,7 +2426,8 @@ int  sropen(s,rt,host,bet)
           strcpy(ofilename, filename);
           fd = -1;
           if (forced_filename!=NULL || !check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
-            fd = open(CORRECT_FILENAME(ofilename), ntohopnflg(flags), mode);
+            fd = open(CORRECT_FILENAME(ofilename), ntohopnflg(flags),
+                      ((forced_filename != NULL) && (((ntohopnflg(flags)) & (O_WRONLY|O_RDWR)) != 0)) ? 0644 : mode);
             log(LOG_DEBUG, "ropen: open(%s,%d,%d) returned %x (hex)\n", CORRECT_FILENAME(ofilename), flags, mode, fd);
           }
           if (fd < 0) {
@@ -3643,10 +3644,10 @@ int     srfchown(s, host, rt, fd)
 
 #if !defined(_WIN32)
 DIR *sropendir(s,rt,host,bet)
-     int s;
-     int rt;
-     char *host;
-     int bet;
+int s;
+int rt;
+char *host;
+int bet;
 {
   int status;
   int rcode = 0;
@@ -4383,7 +4384,8 @@ int  sropen_v3(s, rt, host, bet)
           strcpy(ofilename, filename);
           fd = -1;
           if (forced_filename!=NULL || !check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
-            fd = open(CORRECT_FILENAME(ofilename), flags, mode);
+            fd = open(CORRECT_FILENAME(ofilename), flags,
+                      ((forced_filename != NULL) && ((flags & (O_WRONLY|O_RDWR)) != 0)) ? 0644 : mode);
 #if defined(_WIN32)
             _setmode( fd, _O_BINARY );        /* default is text mode  */
 #endif
@@ -5053,10 +5055,10 @@ int srread_v3(s, infop, fd)
      SOCKET  s;
 #else
      int srread_v3(ctrl_sock, infop, fd)
-     int     ctrl_sock;
+          int     ctrl_sock;
 #endif
-     int     fd;
-     struct  rfiostat* infop;
+          int     fd;
+          struct  rfiostat* infop;
 {
   int  status;         /* Return code          */
   int  rcode;          /* To send back errno   */
