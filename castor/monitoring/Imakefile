@@ -58,6 +58,7 @@ SharedLibraryTarget(castormonitor,$(STGLIB_OBJS),$(DEPLIB),$(LIBS))
 
 RMGETNODESLIBS = SharedLibraryTargetName(castormonitor)
 NormalProgramTarget(rmGetNodes,RmGetNodes.Osuf,$(RMGETNODESLIBS) $(DEPLIB),$(RMGETNODESLIBS) $(LIBS),750)
+NormalProgramTarget(checkSharedMemory,checkSharedMemory.Osuf,$(RMGETNODESLIBS) $(DEPLIB),$(RMGETNODESLIBS) $(LIBS),750)
 
 
 DUMPSHAREDMEMORYLIBS = SharedLibraryTargetName(castormonitor)
