@@ -1,0 +1,9 @@
+vmgrlisttape -P <tapepool> -x | awk  '{  print $1; }' > <tmpLocalFileName>
+vmgrlisttape -P <tapepool> -x | awk  '{  print $11;}' 
+nslisttape -V `cat <tmpLocalFileName>`
+dd bs=1024 count=10240 if=/dev/urandom of=<tmpLocalFileName1> 2>&1 | grep -v copied
+rfcp <tmpLocalFileName1> <remoteFileName> | grep remote
+$CASTOR_CVS/castor/tape/tpcp/writetp `cat <tmpLocalFileName>` EOD -s tpsrv250 <remoteFileName>  | grep Number 
+$CASTOR_CVS/castor/tape/tpcp/readtp  `cat <tmpLocalFileName>` 1   -s tpsrv250 <remoteFileName1> | grep Number
+rfcp <remoteFileName1> <tmpLocalFileName2> | grep remote
+diff <tmpLocalFileName2> <tmpLocalFileName2>

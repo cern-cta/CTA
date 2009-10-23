@@ -1,0 +1,4 @@
+Number of files to be migrated   = <nbFiles>
+Number of migrate requests       = <nbFiles>
+Number of successfull migrations = <nbFiles>
+Number of incomplete transfers   = 0
