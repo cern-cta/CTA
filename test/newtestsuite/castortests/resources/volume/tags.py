@@ -1,5 +1,4 @@
 def tapepool(self):
-#    return os.environ['TAPEPOOLNAME']
    return self.options.get('Environment','TAPEPOOLNAME')
 Setup.getTag_tapepool = tapepool
 
