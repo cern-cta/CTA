@@ -24,14 +24,23 @@
 
 /* Stop on errors */
 WHENEVER SQLERROR EXIT FAILURE
+DECLARE
+  unused VARCHAR2(30);
 BEGIN
-  UPDATE UpgradeLog
-     SET failureCount = failureCount + 1
-   WHERE schemaVersion = '2_1_9_0'
-     AND release = '2_1_9_3'
-     AND state != 'COMPLETE';
+  SELECT table_name INTO unused
+    FROM user_tables
+   WHERE table_name = 'UPGRADELOG';
+  EXECUTE IMMEDIATE
+   'UPDATE UpgradeLog
+       SET failureCount = failureCount + 1
+     WHERE schemaVersion = ''2_1_9_0''
+       AND release = ''2_1_9_3''
+       AND state != ''COMPLETE''';
   COMMIT;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  NULL;
 END;
+/
 
 /* Version cross check and update */
 DECLARE
@@ -67,6 +76,8 @@ ALTER TABLE UpgradeLog
 /* SQL statement to populate the intial release value */
 INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('2_1_9_0', '2_1_9_3');
 COMMIT;
+
+DROP TABLE CastorVersion;
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
