@@ -34,6 +34,7 @@ BEGIN
      AND state != 'COMPLETE';
   COMMIT;
 END;
+/
 
 /* Version cross check and update */
 DECLARE
@@ -74,10 +75,6 @@ END;
 /******************************************/
 
 
-/* Flag the schema upgrade as COMPLETE */
-/***************************************/
-UPDATE UpgradeLog SET endDate = sysdate, state = 'COMPLETE';
-COMMIT;
 
 /* Recompile all invalid procedures, triggers and functions */
 /************************************************************/
@@ -97,3 +94,8 @@ BEGIN
   END LOOP;
 END;
 /
+
+/* Flag the schema upgrade as COMPLETE */
+/***************************************/
+UPDATE UpgradeLog SET endDate = sysdate, state = 'COMPLETE';
+COMMIT;
