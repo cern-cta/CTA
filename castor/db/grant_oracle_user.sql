@@ -50,7 +50,7 @@ BEGIN
              UNION ALL
             SELECT view_name FROM user_views)
   LOOP
-    IF a.table_name IN ('DLF_CONFIG', 'DLF_MONITORING') THEN
+    IF a.table_name IN ('DLF_CONFIG', 'DLF_MONITORING', 'CASTORVERSION') THEN
       EXECUTE IMMEDIATE 'GRANT SELECT ON '||a.table_name||' TO &username WITH GRANT OPTION';
     ELSE
       EXECUTE IMMEDIATE 'GRANT SELECT ON '||a.table_name||' TO &username';
