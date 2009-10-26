@@ -1,3 +1,6 @@
+/* Stop on errors */
+WHENEVER SQLERROR EXIT FAILURE;
+
 /* Type2Obj metatable definition */
 CREATE TABLE Type2Obj (type INTEGER CONSTRAINT PK_Type2Obj_Type PRIMARY KEY, object VARCHAR2(100) CONSTRAINT NN_Type2Obj_Object NOT NULL, svcHandler VARCHAR2(100));
 
@@ -462,8 +465,31 @@ INSERT INTO Type2Obj (type, object) VALUES (185, 'DumpParametersRequest');
 COMMIT;
 
 
-CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_9_1');
+/* SQL statements for table UpgradeLog */
+CREATE TABLE UpgradeLog (Username VARCHAR2(64) DEFAULT sys_context('USERENV', 'OS_USER') CONSTRAINT NN_UpgradeLog_Username NOT NULL, Machine VARCHAR2(64) DEFAULT sys_context('USERENV', 'HOST') CONSTRAINT NN_UpgradeLog_Machine NOT NULL, Program VARCHAR2(48) DEFAULT sys_context('USERENV', 'MODULE') CONSTRAINT NN_UpgradeLog_Program NOT NULL, StartDate TIMESTAMP(6) WITH TIME ZONE DEFAULT sysdate, EndDate TIMESTAMP(6) WITH TIME ZONE, FailureCount NUMBER DEFAULT 0, Type VARCHAR2(20) DEFAULT 'NON TRANSPARENT', State VARCHAR2(20) DEFAULT 'INCOMPLETE', SchemaVersion VARCHAR2(20) CONSTRAINT NN_UpgradeLog_SchemaVersion NOT NULL, Release VARCHAR2(20) CONSTRAINT NN_UpgradeLog_Release NOT NULL);
+
+/* SQL statements for check constraints on the UpgradeLog table */
+ALTER TABLE UpgradeLog
+  ADD CONSTRAINT CK_UpgradeLog_State
+  CHECK (state IN ('COMPLETE', 'INCOMPLETE'));
+  
+ALTER TABLE UpgradeLog
+  ADD CONSTRAINT CK_UpgradeLog_Type
+  CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
+
+/* SQL statement to populate the intial release value */
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_9_3');
+
+/* SQL statement to create the CastorVersion view */
+CREATE OR REPLACE VIEW CastorVersion
+AS
+  SELECT decode(type, 'TRANSPARENT', schemaVersion,
+           decode(state, 'INCOMPLETE', state, schemaVersion)) schemaVersion,
+         decode(type, 'TRANSPARENT', release,
+           decode(state, 'INCOMPLETE', state, release)) release
+    FROM UpgradeLog
+   WHERE startDate =
+     (SELECT max(startDate) FROM UpgradeLog);
 
 /*******************************************************************
  *
@@ -474,8 +500,8 @@ INSERT INTO CastorVersion VALUES ('-', '2_1_9_1');
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
 
-/* A small table used to cross check code and DB versions */
-UPDATE CastorVersion SET schemaVersion = '2_1_9_0';
+/* SQL statement to populate the intial schema version */
+UPDATE UpgradeLog SET schemaVersion = '2_1_9_0';
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -628,8 +654,16 @@ CREATE INDEX I_StagePutRequest_ReqId ON StagePutRequest (reqId);
 CREATE INDEX I_StageRepackRequest_ReqId ON StageRepackRequest (reqId);
 
 /* A primary key index for better scan of Stream2TapeCopy */
+ALTER TABLE Stream2TapeCopy MODIFY
+  (parent CONSTRAINT NN_Stream2TapeCopy_Parent NOT NULL,
+   child  CONSTRAINT NN_Stream2TapeCopy_Child NOT NULL);
+
 CREATE UNIQUE INDEX I_Stream2TapeCopy_PC ON Stream2TapeCopy (parent, child);
 
+ALTER TABLE Stream2TapeCopy
+  ADD CONSTRAINTS PK_Stream2TapeCopy_PC PRIMARY KEY (parent, child) USING INDEX;
+
+/* Indexing GCFile by Request */
 CREATE INDEX I_GCFile_Request ON GCFile (request);
 
 /* Indexing Tape by Status */
@@ -2375,7 +2409,9 @@ BEGIN
     EXIT WHEN SRcur%NOTFOUND;
     BEGIN
       -- Try to take a lock on the current candidate, and revalidate its status
-      SELECT id INTO srIntId FROM SubRequest PARTITION (P_STATUS_0_1_2) SR WHERE id = srIntId FOR UPDATE NOWAIT;
+      SELECT /*+ INDEX(SR PK_SubRequest_ID) */ id INTO srIntId
+        FROM SubRequest PARTITION (P_STATUS_0_1_2) SR
+       WHERE id = srIntId FOR UPDATE NOWAIT;
       -- Since we are here, we got the lock. We have our winner, let's update it
       UPDATE SubRequest
          SET status = 3, subReqId = nvl(subReqId, uuidGen()) -- WAITSCHED
@@ -2529,7 +2565,7 @@ BEGIN
     FORALL i IN srIds.FIRST .. srIds.LAST
       DELETE FROM Id2Type WHERE id = srIds(i);
     -- archive the successful subrequests      
-    UPDATE /*+ SubRequest I_SubRequest_Request */ SubRequest
+    UPDATE /*+ INDEX(SubRequest I_SubRequest_Request) */ SubRequest
        SET status = 11    -- ARCHIVED
      WHERE request = rId
        AND status = 8;  -- FINISHED
@@ -2927,6 +2963,8 @@ CREATE OR REPLACE PROCEDURE createEmptyFile
   ogid INTEGER;
   fsPath VARCHAR2(2048);
 BEGIN
+  -- update filesize overriding any previous value
+  UPDATE CastorFile SET fileSize = 0 WHERE id = cfId;
   -- get an id for our new DiskCopy
   SELECT ids_seq.nextval INTO dcId FROM DUAL;
   -- compute the DiskCopy Path
@@ -3334,14 +3372,11 @@ BEGIN
   IF nbTCInFC < nbTC THEN
     nbTC := nbTCInFC;
   END IF;
-  -- update all the Repack subRequests for this file. The status REPACK
+  -- update the Repack subRequest for this file. The status REPACK
   -- stays until the migration to the new tape is over.
   UPDATE SubRequest
      SET diskCopy = dcId, status = 12  -- REPACK
-   WHERE SubRequest.castorFile = cfId
-     AND SubRequest.status IN (3, 4)  -- WAITSCHED, WAITTAPERECALL
-     AND SubRequest.request IN
-       (SELECT id FROM StageRepackRequest);   
+   WHERE id = srId;   
   -- get the service class, uid and gid
   SELECT R.svcClass, euid, egid INTO svcClassId, reuid, regid
     FROM StageRepackRequest R, SubRequest
@@ -8389,8 +8424,6 @@ BEGIN
     FORALL i IN srIds.FIRST .. srIds.LAST
       DELETE FROM SubRequest WHERE id = srIds(i);
     CLOSE c;
-    -- Release locks
-    COMMIT;
   END LOOP;
   -- Delete all data related to the filesystem from the draining diskcopy table
   DELETE FROM DrainingDiskCopy
@@ -8953,7 +8986,7 @@ CREATE OR REPLACE PROCEDURE drainManager AS
 BEGIN
   -- Delete the filesystems which are:
   --  A) in a DELETING state and have no transfers pending in the scheduler.
-  --  B) are COMPLETED and older the 7 days.
+  --  B) are COMPLETED and older than 7 days.
   DELETE FROM DrainingFileSystem
    WHERE (NOT EXISTS (SELECT 'x' FROM DrainingDiskCopy
                        WHERE fileSystem = DrainingFileSystem.fileSystem
@@ -9442,3 +9475,7 @@ BEGIN
 END;
 /
 
+
+/* Flag the schema creation as COMPLETE */
+UPDATE UpgradeLog SET endDate = sysdate, state = 'COMPLETE';
+COMMIT;

@@ -1,5 +1,8 @@
+/* Stop on errors */
+WHENEVER SQLERROR EXIT FAILURE;
+
 /******************************************************************************
- *              oracleCreate.sql
+ *              oracleSchema.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,21 +22,17 @@
  *
  * @(#)RCSfile: oracleCreate.sql,v  Release: 1.2  Release Date: 2009/08/18 09:42:58  Author: waldron 
  *
- * This script create a new DLF schema
+ * This script creates a new DLF schema
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-/* SQL statements for table dlf_version */
-CREATE TABLE dlf_version(schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO dlf_version VALUES ('2_1_9_0', '2_1_9_1');
+/* SQL statement for ids sequence */
+CREATE SEQUENCE ids_seq INCREMENT BY 1 CACHE 300;
 
 /* SQL statement for table dlf_config */
 CREATE TABLE dlf_config(name VARCHAR2(255) CONSTRAINT NN_Config_Name NOT NULL, value VARCHAR2(255), description VARCHAR2(255));
 ALTER TABLE dlf_config ADD CONSTRAINT UN_Config_Name UNIQUE (name) ENABLE;
-
-/* SQL statement for ids sequence */
-CREATE SEQUENCE ids_seq INCREMENT BY 1 CACHE 300;
 
 /* SQL statements for table dlf_messages */
 CREATE TABLE dlf_messages(id NUMBER, timestamp DATE CONSTRAINT NN_Messages_Timestamp NOT NULL, timeusec NUMBER, reqid CHAR(36), subreqid CHAR(36), hostid NUMBER, facility NUMBER(3), severity NUMBER(3), msg_no NUMBER(5), pid NUMBER(10), tid NUMBER(10), nshostid NUMBER, nsfileid NUMBER, tapevid VARCHAR2(20), userid NUMBER(10), groupid NUMBER(10), sec_type VARCHAR2(20), sec_name VARCHAR2(255))
@@ -149,6 +148,59 @@ INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (27, 'aggregatord');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (28, 'rmcd');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (29, 'tapegatewayd');
 
+
+/* SQL statements for table UpgradeLog */
+CREATE TABLE UpgradeLog (Username VARCHAR2(64) DEFAULT sys_context('USERENV', 'OS_USER') CONSTRAINT NN_UpgradeLog_Username NOT NULL, Machine VARCHAR2(64) DEFAULT sys_context('USERENV', 'HOST') CONSTRAINT NN_UpgradeLog_Machine NOT NULL, Program VARCHAR2(48) DEFAULT sys_context('USERENV', 'MODULE') CONSTRAINT NN_UpgradeLog_Program NOT NULL, StartDate TIMESTAMP(6) WITH TIME ZONE DEFAULT sysdate, EndDate TIMESTAMP(6) WITH TIME ZONE, FailureCount NUMBER DEFAULT 0, Type VARCHAR2(20) DEFAULT 'NON TRANSPARENT', State VARCHAR2(20) DEFAULT 'INCOMPLETE', SchemaVersion VARCHAR2(20) CONSTRAINT NN_UpgradeLog_SchemaVersion NOT NULL, Release VARCHAR2(20) CONSTRAINT NN_UpgradeLog_Release NOT NULL);
+
+/* SQL statements for check constraints on the UpgradeLog table */
+ALTER TABLE UpgradeLog
+  ADD CONSTRAINT CK_UpgradeLog_State
+  CHECK (state IN ('COMPLETE', 'INCOMPLETE'));
+  
+ALTER TABLE UpgradeLog
+  ADD CONSTRAINT CK_UpgradeLog_Type
+  CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
+
+/* SQL statement to populate the intial release value */
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_9_3');
+
+/* SQL statement to create the CastorVersion view */
+CREATE OR REPLACE VIEW CastorVersion
+AS
+  SELECT decode(type, 'TRANSPARENT', schemaVersion,
+           decode(state, 'INCOMPLETE', state, schemaVersion)) schemaVersion,
+         decode(type, 'TRANSPARENT', release,
+           decode(state, 'INCOMPLETE', state, release)) release
+    FROM UpgradeLog
+   WHERE startDate =
+     (SELECT max(startDate) FROM UpgradeLog);
+
+/******************************************************************************
+ *              oracleTrailer.sql
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * @(#)RCSfile: oracleCreate.sql,v  Release: 1.2  Release Date: 2009/08/18 09:42:58  Author: waldron 
+ *
+ * @author Castor Dev team, castor-dev@cern.ch
+ *****************************************************************************/
+
+/* SQL statement to populate the intial schema version */
+UPDATE UpgradeLog SET schemaVersion = '2_1_9_3';
 
 /* PL/SQL method implementing createPartition */
 CREATE OR REPLACE PROCEDURE createPartitions
@@ -349,5 +401,6 @@ BEGIN
 END;
 /
 
-
-/* End-of-File */
+/* Flag the schema creation as COMPLETE */
+UPDATE UpgradeLog SET endDate = sysdate, state = 'COMPLETE';
+COMMIT;

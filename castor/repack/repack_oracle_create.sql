@@ -1,3 +1,6 @@
+/* Stop on errors */
+WHENEVER SQLERROR EXIT FAILURE;
+
 /* SQL statements for type RepackRequest */
 CREATE TABLE RepackRequest (machine VARCHAR2(2048), userName VARCHAR2(2048), creationTime INTEGER, pool VARCHAR2(2048), pid INTEGER, svcclass VARCHAR2(2048), stager VARCHAR2(2048), userId NUMBER, groupId NUMBER, retryMax INTEGER, reclaim NUMBER, finalPool VARCHAR2(2048), id INTEGER CONSTRAINT PK_RepackRequest_Id PRIMARY KEY, command INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
@@ -8,8 +11,31 @@ CREATE TABLE RepackSegment (fileid INTEGER, segsize INTEGER, compression NUMBER,
 CREATE TABLE RepackSubRequest (vid VARCHAR2(2048), xsize INTEGER, filesMigrating NUMBER, filesStaging NUMBER, files NUMBER, filesFailed NUMBER, cuuid VARCHAR2(2048), submitTime INTEGER, filesStaged NUMBER, filesFailedSubmit NUMBER, retryNb INTEGER, id INTEGER CONSTRAINT PK_RepackSubRequest_Id PRIMARY KEY, repackrequest INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 
-CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_9_1');
+/* SQL statements for table UpgradeLog */
+CREATE TABLE UpgradeLog (Username VARCHAR2(64) DEFAULT sys_context('USERENV', 'OS_USER') CONSTRAINT NN_UpgradeLog_Username NOT NULL, Machine VARCHAR2(64) DEFAULT sys_context('USERENV', 'HOST') CONSTRAINT NN_UpgradeLog_Machine NOT NULL, Program VARCHAR2(48) DEFAULT sys_context('USERENV', 'MODULE') CONSTRAINT NN_UpgradeLog_Program NOT NULL, StartDate TIMESTAMP(6) WITH TIME ZONE DEFAULT sysdate, EndDate TIMESTAMP(6) WITH TIME ZONE, FailureCount NUMBER DEFAULT 0, Type VARCHAR2(20) DEFAULT 'NON TRANSPARENT', State VARCHAR2(20) DEFAULT 'INCOMPLETE', SchemaVersion VARCHAR2(20) CONSTRAINT NN_UpgradeLog_SchemaVersion NOT NULL, Release VARCHAR2(20) CONSTRAINT NN_UpgradeLog_Release NOT NULL);
+
+/* SQL statements for check constraints on the UpgradeLog table */
+ALTER TABLE UpgradeLog
+  ADD CONSTRAINT CK_UpgradeLog_State
+  CHECK (state IN ('COMPLETE', 'INCOMPLETE'));
+  
+ALTER TABLE UpgradeLog
+  ADD CONSTRAINT CK_UpgradeLog_Type
+  CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
+
+/* SQL statement to populate the intial release value */
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_9_3');
+
+/* SQL statement to create the CastorVersion view */
+CREATE OR REPLACE VIEW CastorVersion
+AS
+  SELECT decode(type, 'TRANSPARENT', schemaVersion,
+           decode(state, 'INCOMPLETE', state, schemaVersion)) schemaVersion,
+         decode(type, 'TRANSPARENT', release,
+           decode(state, 'INCOMPLETE', state, release)) release
+    FROM UpgradeLog
+   WHERE startDate =
+     (SELECT max(startDate) FROM UpgradeLog);
 
 /*******************************************************************
  *
@@ -21,8 +47,8 @@ INSERT INTO CastorVersion VALUES ('-', '2_1_9_1');
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
 
-/* A small table used to cross check code and DB versions */
-UPDATE CastorVersion SET schemaVersion = '2_1_8_0';
+/* SQL statement to populate the intial schema version */
+UPDATE UpgradeLog SET schemaVersion = '2_1_8_0';
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -412,3 +438,7 @@ EXCEPTION  WHEN NO_DATA_FOUND THEN
   COMMIT;
 END;
 /
+
+/* Flag the schema creation as COMPLETE */
+UPDATE UpgradeLog SET endDate = sysdate, state = 'COMPLETE';
+COMMIT;

@@ -1,3 +1,6 @@
+/* Stop on errors */
+WHENEVER SQLERROR EXIT FAILURE;
+
 /******************************************************************************
  *              oracleSchema.sql
  *
@@ -24,9 +27,6 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-/* Stop on errors - this only works from sqlplus */
-WHENEVER SQLERROR EXIT FAILURE;
-
 /* Determine the DLF schema that the monitoring procedures should run against */
 UNDEF dlfschema
 ACCEPT dlfschema DEFAULT castor_dlf PROMPT 'Enter the DLF schema to run monitoring queries against: (castor_dlf) ';
@@ -47,11 +47,11 @@ BEGIN
   -- Check that the correct grants are present
   BEGIN
     SELECT owner INTO unused
-      FROM all_tables
+      FROM all_views
      WHERE owner = upper('&&dlfschema')
-       AND table_name = 'DLF_VERSION';
+       AND view_name = 'CASTORVERSION';
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    raise_application_error(-20001, 'Unable to access the &dlfschema..dlf_version table. Check that the correct grants have been issued!');
+    raise_application_error(-20001, 'Unable to access the &dlfschema..CastorVersion. Check that the correct grants have been issued!');
   END;
 END;
 /
@@ -68,7 +68,7 @@ CREATE TABLE QueueTimeStats (timestamp DATE CONSTRAINT NN_QueueTimeStats_ts NOT 
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statement for table GarbageCollectionStats */
-CREATE TABLE GarbageCollectionStats (timestamp DATE CONSTRAINT NN_GarbageCollectionStats_ts NOT NULL, interval NUMBER, diskserver VARCHAR2(255), requestType VARCHAR2(255), deleted NUMBER(*,3), totalFileSize NUMBER, minFileAge NUMBER(*,0), maxFileAge NUMBER(*,0), avgFileAge NUMBER(*,0), stddevFileAge NUMBER(*,0), medianFileAge NUMBER(*,0), minFileSize NUMBER, maxFileSize NUMBER, avgFileSize NUMBER, stddevFileSize NUMBER, medianFileSize NUMBER)
+CREATE TABLE GarbageCollectionStats (timestamp DATE CONSTRAINT NN_GarbageCollectionStats_ts NOT NULL, interval NUMBER, diskserver VARCHAR2(255), requestType VARCHAR2(255), deleted NUMBER(*,3), totalFileSize NUMBER, minFileAge NUMBER(*,0), maxFileAge NUMBER(*,0), avgFileAge NUMBER(*,0), stddevFileAge NUMBER(*,0), medianFileAge NUMBER(*,0), minFileSize NUMBER(*,0), maxFileSize NUMBER(*,0), avgFileSize NUMBER(*,0), stddevFileSize NUMBER(*,0), medianFileSize NUMBER(*,0))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statement for table RequestStats */
@@ -88,7 +88,7 @@ CREATE TABLE FilesRecalledStats (timestamp DATE CONSTRAINT NN_FilesRecalledStats
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statement for table ReplicationStats */
-CREATE TABLE ReplicationStats (timestamp DATE CONSTRAINT NN_ReplicationStats_ts NOT NULL, interval NUMBER, sourceSvcClass VARCHAR2(255), destSvcClass VARCHAR2(255), transferred NUMBER(*,3), totalFileSize NUMBER, minFileSize NUMBER, maxFileSize NUMBER, avgFileSize NUMBER, stddevFileSize NUMBER, medianFileSize NUMBER)
+CREATE TABLE ReplicationStats (timestamp DATE CONSTRAINT NN_ReplicationStats_ts NOT NULL, interval NUMBER, sourceSvcClass VARCHAR2(255), destSvcClass VARCHAR2(255), transferred NUMBER(*,3), totalFileSize NUMBER, minFileSize NUMBER(*,0), maxFileSize NUMBER(*,0), avgFileSize NUMBER(*,0), stddevFileSize NUMBER(*,0), medianFileSize NUMBER(*,0))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statement for table TapeRecalledStats */
@@ -292,9 +292,31 @@ BEGIN
 END;
 /
 
-CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_9_1');
+/* SQL statements for table UpgradeLog */
+CREATE TABLE UpgradeLog (Username VARCHAR2(64) DEFAULT sys_context('USERENV', 'OS_USER') CONSTRAINT NN_UpgradeLog_Username NOT NULL, Machine VARCHAR2(64) DEFAULT sys_context('USERENV', 'HOST') CONSTRAINT NN_UpgradeLog_Machine NOT NULL, Program VARCHAR2(48) DEFAULT sys_context('USERENV', 'MODULE') CONSTRAINT NN_UpgradeLog_Program NOT NULL, StartDate TIMESTAMP(6) WITH TIME ZONE DEFAULT sysdate, EndDate TIMESTAMP(6) WITH TIME ZONE, FailureCount NUMBER DEFAULT 0, Type VARCHAR2(20) DEFAULT 'NON TRANSPARENT', State VARCHAR2(20) DEFAULT 'INCOMPLETE', SchemaVersion VARCHAR2(20) CONSTRAINT NN_UpgradeLog_SchemaVersion NOT NULL, Release VARCHAR2(20) CONSTRAINT NN_UpgradeLog_Release NOT NULL);
 
+/* SQL statements for check constraints on the UpgradeLog table */
+ALTER TABLE UpgradeLog
+  ADD CONSTRAINT CK_UpgradeLog_State
+  CHECK (state IN ('COMPLETE', 'INCOMPLETE'));
+  
+ALTER TABLE UpgradeLog
+  ADD CONSTRAINT CK_UpgradeLog_Type
+  CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
+
+/* SQL statement to populate the intial release value */
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_9_3');
+
+/* SQL statement to create the CastorVersion view */
+CREATE OR REPLACE VIEW CastorVersion
+AS
+  SELECT decode(type, 'TRANSPARENT', schemaVersion,
+           decode(state, 'INCOMPLETE', state, schemaVersion)) schemaVersion,
+         decode(type, 'TRANSPARENT', release,
+           decode(state, 'INCOMPLETE', state, release)) release
+    FROM UpgradeLog
+   WHERE startDate =
+     (SELECT max(startDate) FROM UpgradeLog);
 
 /******************************************************************************
  *              oracleTrailer.sql
@@ -322,10 +344,8 @@ INSERT INTO CastorVersion VALUES ('-', '2_1_9_1');
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-
-/* Update the schema version */
-UPDATE CastorVersion SET schemaVersion = '2_1_9_0';
-
+/* SQL statement to populate the intial schema version */
+UPDATE UpgradeLog SET schemaVersion = '2_1_9_0';
 
 /***** EXISTING/OLD MONITORING *****/
 
@@ -1476,3 +1496,7 @@ BEGIN
   createPartitions();
 END;
 /
+
+/* Flag the schema creation as COMPLETE */
+UPDATE UpgradeLog SET endDate = sysdate, state = 'COMPLETE';
+COMMIT;
