@@ -9,9 +9,7 @@ Volume Manager
 .SH SYNOPSIS
 .B vmgrdeletedenmap
 .BI -d " density"
-[
 .BI --ml " media_letter"
-]
 .BI --mo " model"
 .SH DESCRIPTION
 .B vmgrdeletedenmap
