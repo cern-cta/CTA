@@ -112,6 +112,13 @@ END VMGR_INSERT_POOL;
  * This procedure raises application error number -20506 if the specified
  * destination pool does not exist in the VMGR database.
  *
+ * Developers please note that this procedure takes several locks which are and
+ * must be taken in the following order:
+ *
+ * 1. vmgr_tape_info
+ * 2. vmgr_tape_side
+ * 3. vmgr_tape_pool
+ *
  * @param vid_tape_var         The VID of the tape to be moved.
  * @param destination_pool_var The name of the destination tape pool.
  */
@@ -132,7 +139,8 @@ BEGIN
     SELECT density, model, media_letter
       INTO tape_density_var, model_var, media_letter_var
       FROM  vmgr_tape_info
-      WHERE vid = vid_tape_var FOR UPDATE;
+      WHERE vid = vid_tape_var
+      FOR UPDATE;
   EXCEPTION
     WHEN NO_DATA_FOUND THEN
       RAISE_APPLICATION_ERROR(-20503, 'The ' || vid_tape_var || ' tape' ||
