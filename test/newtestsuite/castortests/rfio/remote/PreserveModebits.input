@@ -1,0 +1,14 @@
+echo 'modebit test' > <tmpLocalFileName>
+chmod 644 <tmpLocalFileName>
+<rfcp> <tmpLocalFileName> <remoteFileName>
+rfstat <remoteFileName> | grep Protection
+rfrm <remoteFileName>
+chmod 444 <tmpLocalFileName>
+<rfcp> <tmpLocalFileName> <remoteFileName>
+rfstat <remoteFileName> | grep Protection
+rfrm <remoteFileName>
+chmod 777 <tmpLocalFileName>
+<rfcp> <tmpLocalFileName> <remoteFileName>
+rfstat <remoteFileName> | grep Protection
+rfrm <remoteFileName>
+rm <tmpLocalFileName>

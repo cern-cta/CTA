@@ -1,0 +1,5 @@
+nstouch <noTapeFileName>
+nssetchecksum -n adler32 -k `echo "obase=16; $RANDOM" | bc` <noTapeFileName>
+rfcp <localFileName> <noTapeFileName>
+stager_qry -M <noTapeFileName>
+nsls -l <noTapeFileName>
