@@ -93,10 +93,15 @@ namespace castor {
        */
       void addThreadPool(BaseThreadPool* tpool) throw();
 
-      /**
-       * Gets a pool by its name initial
-       */
-      BaseThreadPool* getThreadPool(const char nameIn) throw();
+      /// Gets a pool by its name initial
+      BaseThreadPool* getThreadPool(const char nameIn) throw() {
+        return m_threadPools[nameIn];
+      };
+      
+      /// Returns this server's name
+      std::string& getServerName() {
+        return m_serverName;
+      }
 
       /**
        * Sends a notification message to the given host,port
@@ -120,14 +125,6 @@ namespace castor {
        * Prints out the online help
        */
       virtual void help(std::string programName);
-
-      /**
-       * gets the message service log stream
-       * Note that the service has to be released after usage
-       * @return a pointer to the message service or 0 if none
-       * is available.
-       */
-      std::ostream& log() throw (castor::exception::Exception);
 
       /**
        * Flag indicating whether the server should

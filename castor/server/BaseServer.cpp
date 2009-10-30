@@ -194,15 +194,6 @@ void castor::server::BaseServer::addThreadPool
 }
 
 //-----------------------------------------------------------------------------
-// getThreadPool
-//-----------------------------------------------------------------------------
-castor::server::BaseThreadPool* castor::server::BaseServer::getThreadPool
-(const char id) throw()
-{
-  return m_threadPools[id];
-}
-
-//-----------------------------------------------------------------------------
 // parseCommandLine
 //-----------------------------------------------------------------------------
 void castor::server::BaseServer::parseCommandLine(int argc, char *argv[])
