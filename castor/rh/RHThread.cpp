@@ -149,9 +149,9 @@ void castor::rh::RHThread::init() {
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 18, 2, params);
     if (firstThreadInit) {
       exit(1);
-      firstThreadInit = false;
     }
   }
+  firstThreadInit = false;
 }
 
 //------------------------------------------------------------------------------
