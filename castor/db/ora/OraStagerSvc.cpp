@@ -786,8 +786,8 @@ int castor::db::ora::OraStagerSvc::createRecallCandidate
     }
     catch(castor::exception::Exception& e) {
       if (tape) {
-	delete tape;
-	tape = 0;
+        delete tape;
+        tape = 0;
       }
       // Should never happen
       castor::exception::Internal ex2;

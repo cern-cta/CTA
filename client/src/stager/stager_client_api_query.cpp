@@ -331,20 +331,20 @@ EXTERN_C int DLL_DECL stage_diskpoolsquery
     for (int i = 0; i < *nbresps; i++) {
 
       if (respvec[i]->errorCode() != 0) {
-	castor::exception::Exception e(respvec[i]->errorCode());
-	e.getMessage() << respvec[i]->errorMessage();
+        castor::exception::Exception e(respvec[i]->errorCode());
+        e.getMessage() << respvec[i]->errorMessage();
         // cleanup previous responses
         for (int j = 0; j < i; j++) {
           stage_delete_diskpoolquery_resp(&((*responses)[j]));
         }
         // cleanup the list
         free(*responses);
-	// free remaining C++ responses
-	for (int j = i; j < *nbresps; j++) {
-	  delete respvec[j];
-	}
-	// throw exception
-	throw e;
+        // free remaining C++ responses
+        for (int j = i; j < *nbresps; j++) {
+          delete respvec[j];
+        }
+        // throw exception
+        throw e;
       }
 
       // Casting the response into a DiskPoolQueryResponse
@@ -357,10 +357,10 @@ EXTERN_C int DLL_DECL stage_diskpoolsquery
         }
         // cleanup the list
         free(*responses);
-	// free remaining C++ responses
-	for (int j = i; j < *nbresps; j++) {
-	  delete respvec[j];
-	}
+        // free remaining C++ responses
+        for (int j = i; j < *nbresps; j++) {
+          delete respvec[j];
+        }
         castor::exception::Exception e(SEINTERNAL);
         e.getMessage() << "Error in dynamic cast, response was NOT a diskpool query response."
 		       << " Type was " << respvec[i]->type();
