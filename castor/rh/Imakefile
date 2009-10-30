@@ -31,7 +31,7 @@ GLOBUS_FLAVOUR=GlobusFlavour##pthr
 #else
 GLOBUS_FLAVOUR=GlobusFlavour/**/pthr
 #endif
-LOBUS_LIBS=-L$(GLOBUS_LOCATION)/lib
+GLOBUS_LIBS=-L$(GLOBUS_LOCATION)/lib
 LIB_CRYPTO=$(shell if [ -r "$(GLOBUS_LOCATION)/lib/libcrypto_$(GLOBUS_FLAVOUR).so" ]; then echo -lcrypto_$(GLOBUS_FLAVOUR); else echo -lcrypto; fi)
 LIBCSEC += $(GLOBUS_LIBS) $(LIB_CRYPTO)
 #endif
@@ -39,6 +39,7 @@ LIBCSEC += $(GLOBUS_LIBS) $(LIB_CRYPTO)
 CPPFLAGS = -g -O0 -I ../../h -I ../.. $(MTCCFLAGS)
 LDFLAGS += $(MTLDFLAGS)
 LD = g++
+LIBS += -lmemcached
 
 DependsOnLibrary(../common,castorcommon)
 DependsOnLibrary(../dlf,castordlf)
@@ -46,7 +47,7 @@ DependsOnLibrary(,castorclient)
 DependsOnLibrary(db/cnv,castorcnvs)
 DependsOnLibrary(../security,castorsecurity)
 
-RHBIN_SRCS = Server.cpp RHThread.cpp
+RHBIN_SRCS = Server.cpp RHThread.cpp RateLimiter.cpp RatingGroup.cpp
 RHBIN_OBJS = $(RHBIN_SRCS:.cpp=.Osuf)
 NormalProgramTarget(rhd,$(RHBIN_OBJS),$(DEPLIB),$(LIBS),750)
 MakeDir(/var/log/castor,0755)

@@ -33,6 +33,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/dlf/Param.hpp"
 #include "castor/rh/IRHSvc.hpp"
+#include "castor/rh/RateLimiter.hpp"
 
 namespace castor {
 
@@ -49,25 +50,38 @@ namespace castor {
        * Constructor
        */
       RHThread() throw (castor::exception::Exception);
-      
+
       /**
        * Destructor. See the cpp file for details.
        */
       virtual ~RHThread() throw();
-      
+
       /**
-       * Init method; empty implementation for the RH
+       * Init method
        */
-      virtual void init() {};
+      virtual void init();
+
+      /**
+       * Stop method
+       */
+      virtual void stop();
 
       /**
        * Method called once per request, where all the code resides
        * @param param the socket obtained from the listener thread
        */
       virtual void run(void *param);
-      
+
     private:
-      
+
+      /**
+       * Return a RateLimiter object from thread local storage
+       * @throw Exception in case of error
+       * @return a RateLimiter object
+       */
+      castor::rh::RateLimiter *getRateLimiterFromTLS()
+        throw (castor::exception::Exception);
+
       /**
        * Handles an incoming request
        * @param fr the request
@@ -76,27 +90,27 @@ namespace castor {
        * @throw Exception in case of error
        * @return the number of subrequests involved
        */
-      unsigned int handleRequest(castor::stager::Request* fr, 
-				 castor::BaseAddress ad,
-				 Cuuid_t cuuid)
+      unsigned int handleRequest(castor::stager::Request* fr,
+                                 castor::BaseAddress ad,
+                                 Cuuid_t cuuid)
         throw (castor::exception::Exception);
-      
+
       /// Stager host
       std::string m_stagerHost;
-      
+
       /// Stager notify port
       unsigned m_stagerPort;
-      
-      /// hash table for mapping requests to svc handlers
+
+      /// Hash table for mapping requests to svc handlers
       std::map<int, std::string> m_svcHandler;
-      
-      /// list of trusted SRM hosts
+
+      /// List of trusted SRM hosts
       std::vector<std::string> m_srmHostList;
-      
+
     }; // class RHThread
-    
+
   } // end of namespace rh
-  
+
 } // end of namespace castor
 
 #endif // RH_RHTHREAD_HPP

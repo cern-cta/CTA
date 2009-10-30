@@ -106,6 +106,9 @@ castor::rh::Server::Server() :
      { 15, "Exception caught : failed to rollback transaction" },
      { 16, "RequestHandler started" },
      { 17, "Security problem" },
+     { 18, "Failed to initialize rate limiter" },
+     { 19, "Too many requests, enforcing rate limit" },
+     { 20, "Exception caught in rate limiter, ignoring" },
      { -1, "" }};
   dlfInit(messages);
 

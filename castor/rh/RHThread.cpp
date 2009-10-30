@@ -47,15 +47,19 @@
 #include "castor/MessageAck.hpp"
 #include "castor/rh/Server.hpp"
 #include "castor/rh/RHThread.hpp"
+#include "Cglobals.h"
+#include "Cthread_api.h"
 
 #include <iostream>
 #include <errno.h>
 #include <sys/time.h>
 #include <unistd.h>
 
+// Flag to indicate whether the first thread has been created.
+static bool firstThreadInit = true;
 
 //------------------------------------------------------------------------------
-// Constructor
+// Cconstructor
 //------------------------------------------------------------------------------
 castor::rh::RHThread::RHThread()
   throw (castor::exception::Exception) :
@@ -116,19 +120,63 @@ castor::rh::RHThread::RHThread()
 }
 
 //------------------------------------------------------------------------------
-// Destructor
+// destructor
 //------------------------------------------------------------------------------
-castor::rh::RHThread::~RHThread() throw ()
-{
+castor::rh::RHThread::~RHThread() throw () {
   /*
-    This empty destructor has to be implemented here and NOT inline,
-    otherwise the following error will happen at linking time:
+     This empty destructor has to be implemented here and NOT inline,
+     otherwise the following error will happen at linking time:
 
-    RHThread.o(.text+0x469): In function `castor::rh::RHThread::RHThread(bool)':
-    .../castor/rh/RHThread.cpp:61: undefined reference to `VTT for castor::rh::RHThread'
+     RHThread.o(.text+0x469): In function `castor::rh::RHThread::RHThread(bool)':
+     .../castor/rh/RHThread.cpp:61: undefined reference to `VTT for castor::rh::RHThread'
 
-    See e.g. http://www.daniweb.com/forums/thread114299.html for more details.
+     See e.g. http://www.daniweb.com/forums/thread114299.html for more details.
   */
+}
+
+//------------------------------------------------------------------------------
+// init
+//------------------------------------------------------------------------------
+void castor::rh::RHThread::init() {
+  try {
+    castor::rh::RateLimiter *rl = getRateLimiterFromTLS();
+    rl->init();
+  } catch (castor::exception::Exception e) {
+    // "Failed to initialize rate limiter"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Standard Message", sstrerror(e.code())),
+       castor::dlf::Param("Precise Message", e.getMessage().str())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 18, 2, params);
+    if (firstThreadInit) {
+      exit(1);
+      firstThreadInit = false;
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+// stop
+//------------------------------------------------------------------------------
+void castor::rh::RHThread::stop() {
+  castor::rh::RateLimiter *rl = getRateLimiterFromTLS();
+  if (rl != 0) {
+    delete rl;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getRateLimiterFromTLS
+//------------------------------------------------------------------------------
+castor::rh::RateLimiter *
+castor::rh::RHThread::getRateLimiterFromTLS()
+  throw (castor::exception::Exception) {
+  void **tls;
+  static int rateLimiter_TLSkey = -1;
+  getTLS(&rateLimiter_TLSkey, (void **)&tls);
+  if (0 == *tls) {
+    *tls = (void *)(new castor::rh::RateLimiter());
+  }
+  return (castor::rh::RateLimiter*) *tls;
 }
 
 //------------------------------------------------------------------------------
@@ -254,6 +302,7 @@ void castor::rh::RHThread::run(void* param) {
       }
       fr->setReqId(uuid);
 
+
       // Log now "New Request Arrival" with the resolved UUID
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 1, 2, peerParams);
 
@@ -269,11 +318,59 @@ void castor::rh::RHThread::run(void* param) {
         client->setSecure(1);
       }
 
-      // Handle the request
-      nbThreads = handleRequest(fr, ad, cuuid);
       ack.setRequestId(uuid);
       ack.setStatus(true);
 
+      // Check if the user has exceeded their maximum number of allowed
+      // requests within a given time period
+      castor::rh::RateLimiter *rl = getRateLimiterFromTLS();
+      if (rl) {
+        try {
+          castor::rh::RatingGroup *ratingGroup =
+            rl->checkAndUpdateLimit(fr->euid(), fr->egid());
+          if (ratingGroup != 0) {
+            std::ostringstream threshold;
+            threshold << ratingGroup->nbRequests() << "/"
+                      << ratingGroup->interval();
+            // "Too many requests, enforcing rate limit"
+            castor::dlf::Param params[] =
+              {castor::dlf::Param("Euid", fr->euid()),
+               castor::dlf::Param("Egid", fr->egid()),
+               castor::dlf::Param("RatingGroup", ratingGroup->groupName()),
+               castor::dlf::Param("Threshold", threshold.str()),
+               castor::dlf::Param("Response", ratingGroup->response())};
+            castor::dlf::dlf_writep(cuuid, DLF_LVL_USER_ERROR, 19, 5, params);
+
+            if (ratingGroup->response() == "close-connection") {
+              // Free resources
+              delete fr;
+              delete sock;  // This will cause the connection to be closed
+              return;
+            } else if (ratingGroup->response() == "reject-with-error") {
+              std::ostringstream msg;
+              msg << "Maximum number of requests exceeded, you are only "
+                  << "permitted to execute "
+                  << ratingGroup->nbRequests() << " " 
+                  << ((ratingGroup->nbRequests() != 1) ? "requests" : "request")
+                  << " in " << ratingGroup->interval() << " seconds";
+              ack.setStatus(false);
+              ack.setErrorCode(EBUSY);
+              ack.setErrorMessage(msg.str());
+            }
+          }
+        } catch (castor::exception::Exception e) {
+          // "Exception caught in rate limiter, ignoring"
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("Standard Message", sstrerror(e.code())),
+             castor::dlf::Param("Precise Message", e.getMessage().str())};
+          castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 20, 2, params);
+        }
+      }
+
+      // Handle the request
+      if (ack.status()) {
+        nbThreads = handleRequest(fr, ad, cuuid);
+      }
     } catch (castor::exception::PermissionDenied e) {
       // "Permission Denied"
       castor::dlf::Param params[] =
