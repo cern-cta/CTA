@@ -185,7 +185,7 @@ void castor::jobmanager::ManagementThread::run(void *param) {
   // Extract the DiskCopyPendingTimeout value which defines how long a disk
   // copy transfer can remain pending in LSF.
   m_diskCopyPendingTimeout = 0;
-  char *value = getconfent("JobManager", "DiskCopyPendingTimeout", 1);
+  char *value = getconfent("JobManager", "DiskCopyPendingTimeout", 0);
   if (value != NULL) {
     m_diskCopyPendingTimeout = std::strtol(value, 0, 10);
   }
