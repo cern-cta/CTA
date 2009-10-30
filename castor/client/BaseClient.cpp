@@ -768,7 +768,7 @@ void castor::client::BaseClient::pollAnswersFromStager
           }
         }
 
-        // The socket was found?
+        // The socket was not found?
         if (socket == 0) {
           castor::exception::Exception e(SEINTERNAL);
           e.getMessage() << "Unexpected exception caught, POLLIN event "
