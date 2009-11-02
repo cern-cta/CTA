@@ -326,8 +326,16 @@ void castor::rh::RHThread::run(void* param) {
       castor::rh::RateLimiter *rl = getRateLimiterFromTLS();
       if (rl) {
         try {
+	  // Determine the number of subrequests involved in the users
+	  // request
+	  uint64_t nbSubReqs = 1;
+	  castor::stager::FileRequest* filreq =
+	    dynamic_cast<castor::stager::FileRequest*>(fr);
+	  if (0 != filreq) {
+	    nbSubReqs = filreq->subRequests().size();
+	  }
           castor::rh::RatingGroup *ratingGroup =
-            rl->checkAndUpdateLimit(fr->euid(), fr->egid());
+            rl->checkAndUpdateLimit(fr->euid(), fr->egid(), nbSubReqs);
           if (ratingGroup != 0) {
             std::ostringstream threshold;
             threshold << ratingGroup->nbRequests() << "/"

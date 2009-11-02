@@ -51,7 +51,7 @@ namespace castor {
        * Default constructor
        */
       RateLimiter()
-      throw(castor::exception::Exception);
+        throw(castor::exception::Exception);
 
       /**
        * Default destructor
@@ -70,8 +70,9 @@ namespace castor {
        * Method used to check if a user has exceeded their maximum number
        * of allowed requests within a given time interval.
        *
-       * @param user  The name of the user
-       * @param group The name of the group to which the user belongs
+       * @param user       The name of the user
+       * @param group      The name of the group to which the user belongs
+       * @param nbRequests The number of requests being executed
        * @return NULL if the user has not exceeded the number of requests
        *         they are allowed to perform or a castor::rh::RatingGroup
        *         object describing the configuration information which caused
@@ -79,18 +80,21 @@ namespace castor {
        * @exception Exception in case of error
        */
       castor::rh::RatingGroup *checkAndUpdateLimit(const std::string user,
-                                                   const std::string group)
-      throw(castor::exception::Exception);
+                                                   const std::string group,
+                                                   const uint64_t nbRequests)
+        throw(castor::exception::Exception);
 
       /**
        * Refer to previous method
-       * @param euid The effective user id of the user
-       * @param egid The effective group if to which the user belongs
+       * @param euid       The effective user id of the user
+       * @param egid       The effective group if to which the user belongs
+       * @param nbRequests The number of requests being executed
        * @exception Exception in case of error
        */
       castor::rh::RatingGroup *checkAndUpdateLimit(const int euid,
-                                                   const int egid)
-      throw(castor::exception::Exception);
+                                                   const int egid,
+                                                   const uint64_t nbRequests)
+        throw(castor::exception::Exception);
 
     private:
 
@@ -102,6 +106,9 @@ namespace castor {
 
       /// A container to hold the rating group configuration information
       std::map<std::string, castor::rh::RatingGroup *> m_config;
+
+      /// Flag to indicate whether initialization was completed
+      bool m_init;
 
     };
 

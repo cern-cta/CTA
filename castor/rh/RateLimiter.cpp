@@ -49,7 +49,8 @@
 castor::rh::RateLimiter::RateLimiter()
   throw(castor::exception::Exception) :
   m_memc(0),
-  m_servers(0) {}
+  m_servers(0),
+  m_init(false) {}
 
 //-----------------------------------------------------------------------------
 // Destructor
@@ -174,6 +175,9 @@ void castor::rh::RateLimiter::init()
     }
     free(results);
   }
+
+  // Initialization complete
+  m_init = true;
 }
 
 //-----------------------------------------------------------------------------
@@ -181,8 +185,14 @@ void castor::rh::RateLimiter::init()
 //-----------------------------------------------------------------------------
 castor::rh::RatingGroup *
 castor::rh::RateLimiter::checkAndUpdateLimit(const std::string user,
-                                             const std::string group)
+                                             const std::string group,
+                                             const uint64_t nbRequests)
   throw (castor::exception::Exception) {
+
+  // Initialized ?
+  if (!m_init) {
+    return NULL;
+  }
 
   // Extract the rating group configuration information associated to the user.
   // We first check to see if we have an explicit user:group entry, then
@@ -217,7 +227,13 @@ castor::rh::RateLimiter::checkAndUpdateLimit(const std::string user,
   // lookup functionality. This is more efficient then looking up keys one by
   // one.
   u_signed64 start = (int)(round((time(NULL) / 10)) * 10);
-  uint64_t totalRequests = 0;
+  uint64_t totalRequests = nbRequests;
+
+  // Check if the number of requests being executed is so large that the
+  // request could be rejected without querying memcache.
+  if (totalRequests > (*it).second->nbRequests()) {
+    return (*it).second;
+  }
 
   std::vector<std::string> keys;
   unsigned int i;
@@ -303,18 +319,13 @@ castor::rh::RateLimiter::checkAndUpdateLimit(const std::string user,
   uint64_t currentRequests = 0;
   memcached_return rc =
     memcached_increment_with_initial(m_memc, key.str().c_str(),
-                                     strlen(key.str().c_str()), 1, 1,
+                                     strlen(key.str().c_str()), nbRequests, 1,
                                      (*it).second->interval(), &currentRequests);
   if (rc != MEMCACHED_SUCCESS) {
     castor::exception::Exception ex(SEINTERNAL);
     ex.getMessage() << "Failure in call to memcached_increment_with_initial: "
                     << memcached_strerror(m_memc, rc);
     throw ex;
-  }
-
-  totalRequests += currentRequests;
-  if (totalRequests > (*it).second->nbRequests()) {
-    return (*it).second;
   }
 
   return NULL;
@@ -325,8 +336,14 @@ castor::rh::RateLimiter::checkAndUpdateLimit(const std::string user,
 //-----------------------------------------------------------------------------
 castor::rh::RatingGroup *
 castor::rh::RateLimiter::checkAndUpdateLimit(const int euid,
-                                             const int egid)
+                                             const int egid,
+                                             const uint64_t nbRequests)
   throw (castor::exception::Exception) {
+
+  // Initialized ?
+  if (!m_init) {
+    return NULL;
+  }
 
   // Resolve the uid to a user name
   passwd *pwd = Cgetpwuid(euid);
@@ -340,5 +357,5 @@ castor::rh::RateLimiter::checkAndUpdateLimit(const int euid,
     return NULL;
   }
 
-  return checkAndUpdateLimit(pwd->pw_name, grp->gr_name);
+  return checkAndUpdateLimit(pwd->pw_name, grp->gr_name, nbRequests);
 }
