@@ -2,7 +2,6 @@
     stager: stage_rm
     stager: Looking up RH host - Using <rhhost>
     stager: Looking up RH port - Using <rhport>
-    stager: Looking up service class - Using diskonly
     stager: Setting euid: <userid>
     stager: Setting egid: <groupid>
     stager: Localhost is: <localhost>

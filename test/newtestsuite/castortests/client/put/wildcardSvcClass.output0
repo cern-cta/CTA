@@ -2,7 +2,6 @@
     stager: stage_prepareToPut Usertag=NULL
     stager: Looking up RH host - Using <rhhost>
     stager: Looking up RH port - Using <rhport>
-    stager: Looking up service class - Using *
     stager: stage_prepareToPut file=<noTapeFileName> proto=<rfio> size=0 mode=1b6
     stager: Setting euid: <userid>
     stager: Setting egid: <groupid>

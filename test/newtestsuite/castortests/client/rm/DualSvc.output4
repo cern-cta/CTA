@@ -1,7 +1,6 @@
     **** : trace level set to 3
     stager: Looking up RH host - Using <rhhost>
     stager: Looking up RH port - Using <rhport>
-    stager: Looking up service class - Using diskonly
     stager: stage_filequery type=0 param=<noTapeFileName>
     stager: Setting euid: <userid>
     stager: Setting egid: <groupid>
