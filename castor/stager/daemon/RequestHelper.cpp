@@ -121,7 +121,7 @@ namespace castor{
             castor::dlf::Param("Filename", subrequest->fileName()),
             castor::dlf::Param("Username", username),
             castor::dlf::Param("Groupname", groupname),
-            castor::dlf::Param("SvcClass", (svcClass ? svcClass->name() : "Unknown")),
+            castor::dlf::Param("SvcClass", fileRequest->svcClassName()),
             castor::dlf::Param("ProcessingTime", procTime * 0.000001)
           };
           castor::dlf::dlf_writep(requestUuid, DLF_LVL_SYSTEM, STAGER_REQ_PROCESSED, 7, params, &cnsFileId);
@@ -363,7 +363,7 @@ namespace castor{
           castor::dlf::Param("Filename", subrequest->fileName()),
           castor::dlf::Param("Username", username),
           castor::dlf::Param("Groupname", groupname),
-          castor::dlf::Param("SvcClass", (svcClass ? svcClass->name() : "Unknown"))
+          castor::dlf::Param("SvcClass", fileRequest->svcClassName())
         };
         castor::dlf::dlf_writep(requestUuid, level, messageNb, 6, params, fid);
       }

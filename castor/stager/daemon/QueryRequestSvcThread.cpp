@@ -645,13 +645,6 @@ void castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
     // Get the StageFileQueryRequest
     // cannot return 0 since we check the type before calling this method
     uReq = dynamic_cast<castor::query::DiskPoolQuery*> (req);
-    // Get the SvcClass associated to the request
-    castor::stager::SvcClass* svcClass = uReq->svcClass();
-    std::string svcClassName;
-    if (0 != svcClass) {
-      svcClassName = svcClass->name();
-    }
-
     // Get the name of the client hostname to pass into the Cupv interface.
     const castor::rh::Client *c =
       dynamic_cast<const castor::rh::Client*>(client);
@@ -678,12 +671,12 @@ void castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
 
       // "Processing DiskPoolQuery by SvcClass"
       castor::dlf::Param params[] =
-        {castor::dlf::Param("SvcClass", svcClassName)};
+        {castor::dlf::Param("SvcClass", uReq->svcClassName())};
       castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_DSQUERY, 1, params);
 
       // Invoking the method
       std::vector<castor::query::DiskPoolQueryResponse*>* result =
-        qrySvc->describeDiskPools(svcClassName, req->euid(), req->egid(), detailed);
+        qrySvc->describeDiskPools(uReq->svcClassName(), req->euid(), req->egid(), detailed);
       if (result == 0) {
         castor::exception::NoEntry e;
         e.getMessage() << " describeDiskPools returned NULL";
@@ -706,12 +699,12 @@ void castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
       // "Processing DiskPoolQuery by DiskPool"
       castor::dlf::Param params[] =
         {castor::dlf::Param("DiskPool", uReq->diskPoolName()),
-         castor::dlf::Param("SvcClass", svcClassName)};
+         castor::dlf::Param("SvcClass", uReq->svcClassName())};
       castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_DDQUERY, 2, params);
 
       // Invoking the method
       castor::query::DiskPoolQueryResponse* result =
-        qrySvc->describeDiskPool(uReq->diskPoolName(), svcClassName, detailed);
+        qrySvc->describeDiskPool(uReq->diskPoolName(), uReq->svcClassName(), detailed);
       if (result == 0) {
         castor::exception::NoEntry e;
         e.getMessage() << " describeDiskPool returned NULL";
