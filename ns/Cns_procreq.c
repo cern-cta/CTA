@@ -662,9 +662,10 @@ int Cns_internal_deletesegs(func, thip, filentry, copyno)
                               &smd_entry, 1, &rec_addrs, 1, &dblistptr); /* free res */
   if (c < 0)
     return (serrno);
-  if (!found)
+  if (!found) {
     serrno = SEENTRYNFND;
     return (serrno);
+  }
   return (0);
 }
 
@@ -5706,9 +5707,10 @@ int Cns_srv_unlinkbyvid(magic, req_data, clienthost, thip)
     Cns_logreq (func, logbuf);
 
     /* Delete file segments if any */
-    if (Cns_internal_deletesegs(func, thip, &fmd_entry, 0) != 0)
+    if (Cns_internal_deletesegs(func, thip, &fmd_entry, 0) != 0) {
       if (serrno != SEENTRYNFND)
         RETURN (serrno);
+    }
 
     /* Delete the comment if it exists */
     if (Cns_get_umd_by_fileid (&thip->dbfd, fmd_entry.fileid, &umd_entry, 1,
