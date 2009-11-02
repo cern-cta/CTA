@@ -855,6 +855,7 @@ castor::db::ora::OraStagerSvc::selectCastorFile
     result->setId((u_signed64)m_selectCastorFileStatement->getDouble(8));
     result->setFileId(fileId);
     result->setNsHost(nsHost);
+    result->setLastKnownFileName(fileName);
     result->setFileSize((u_signed64)m_selectCastorFileStatement->getDouble(9));
     return result;
   } catch (oracle::occi::SQLException e) {
