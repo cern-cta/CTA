@@ -61,6 +61,37 @@ COMMIT;
 /* Schema changes go here */
 /**************************/
 
+DECLARE
+  unused NUMBER;
+BEGIN
+  SELECT data_precision INTO unused
+    FROM user_tab_columns
+   WHERE table_name = 'GARBAGECOLLECTIONSTATS'
+     AND column_name = 'MINFILESIZE'
+     AND data_precision IS NULL;
+  EXECUTE IMMEDIATE 'DROP TABLE GarbageCollectionStats';
+  EXECUTE IMMEDIATE 'CREATE TABLE GarbageCollectionStats (timestamp DATE CONSTRAINT NN_GarbageCollectionStats_ts NOT NULL, interval NUMBER, diskserver VARCHAR2(255), requestType VARCHAR2(255), deleted NUMBER(*,3), totalFileSize NUMBER, minFileAge NUMBER(*,0), maxFileAge NUMBER(*,0), avgFileAge NUMBER(*,0), stddevFileAge NUMBER(*,0), medianFileAge NUMBER(*,0), minFileSize NUMBER(*,0), maxFileSize NUMBER(*,0), avgFileSize NUMBER(*,0), stddevFileSize NUMBER(*,0), medianFileSize NUMBER(*,0))
+  PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE))';
+
+  SELECT data_precision INTO unused
+    FROM user_tab_columns
+   WHERE table_name = 'REPLICATIONSTATS'
+     AND column_name = 'MINFILESIZE'
+     AND data_precision IS NULL;
+  EXECUTE IMMEDIATE 'DROP TABLE ReplicationStats';
+  EXECUTE IMMEDIATE 'CREATE TABLE ReplicationStats (timestamp DATE CONSTRAINT NN_ReplicationStats_ts NOT NULL, interval NUMBER, sourceSvcClass VARCHAR2(255), destSvcClass VARCHAR2(255), transferred NUMBER(*,3), totalFileSize NUMBER, minFileSize NUMBER(*,0), maxFileSize NUMBER(*,0), avgFileSize NUMBER(*,0), stddevFileSize NUMBER(*,0), medianFileSize NUMBER(*,0))
+  PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE))';
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  NULL;  -- Nothing
+END;
+/
+
+/* Trigger partition creation for the new tables */
+BEGIN
+  createPartitions();
+END;
+/
+
 /* SQL statements for table UpgradeLog */
 CREATE TABLE UpgradeLog (Username VARCHAR2(64) DEFAULT sys_context('USERENV', 'OS_USER') CONSTRAINT NN_UpgradeLog_Username NOT NULL, Machine VARCHAR2(64) DEFAULT sys_context('USERENV', 'HOST') CONSTRAINT NN_UpgradeLog_Machine NOT NULL, Program VARCHAR2(48) DEFAULT sys_context('USERENV', 'MODULE') CONSTRAINT NN_UpgradeLog_Program NOT NULL, StartDate TIMESTAMP(6) WITH TIME ZONE DEFAULT sysdate, EndDate TIMESTAMP(6) WITH TIME ZONE, FailureCount NUMBER DEFAULT 0, Type VARCHAR2(20) DEFAULT 'NON TRANSPARENT', State VARCHAR2(20) DEFAULT 'INCOMPLETE', SchemaVersion VARCHAR2(20) CONSTRAINT NN_UpgradeLog_SchemaVersion NOT NULL, Release VARCHAR2(20) CONSTRAINT NN_UpgradeLog_Release NOT NULL);
 
