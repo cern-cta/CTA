@@ -139,7 +139,7 @@ print "Creating the testsuite..."
 os.chdir(intReleaseDir)
 os.mkdir('testsuite')
 os.chdir('testsuite')
-runCommand('cp -R ../CASTOR2/test/newtestsuite/* .; rm ./buildTestCase.py', 'Error while coping the testsuite')
+runCommand('cp -R ../CASTOR2/test/testsuite/* .; rm ./buildTestCase.py', 'Error while coping the testsuite')
 
 # create a tar ball of the test suite
 os.chdir(intReleaseDir)
