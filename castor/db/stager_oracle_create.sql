@@ -4137,19 +4137,6 @@ BEGIN
          WHERE id = srId;
         RETURN;
       END IF;
-      -- check if removal is possible for Disk2DiskCopy
-      SELECT count(*) INTO nbRes FROM DiskCopy
-       WHERE status = 1 -- DISKCOPY_WAITDISK2DISKCOPY
-         AND castorFile = cfId;
-      IF nbRes > 0 THEN
-        -- We found something, thus we cannot remove
-        UPDATE SubRequest
-           SET status = 7,  -- FAILED
-               errorCode = 16,  -- EBUSY
-               errorMessage = 'The file is being replicated'
-         WHERE id = srId;
-        RETURN;
-      END IF;
       -- Stop ongoing recalls if stageRm either everywhere or the only available diskcopy.
       -- This is not entirely clean: a proper operation here should be to
       -- drop the SubRequest waiting for recall but keep the recall if somebody
@@ -4244,8 +4231,9 @@ BEGIN
   -- Set selected DiskCopies to either INVALID or FAILED
   FORALL i IN dcsToRm.FIRST .. dcsToRm.LAST
     UPDATE DiskCopy SET status = 
-           decode(status, 1,4, 2,4, 5,4, 11,4, 7) -- WAITDISK2DISKCOPY,WAITTAPERECALL,WAITFS[_SCHED] -> FAILED, others -> INVALID
-     WHERE id = dcsToRm(i);
+           decode(status, 2,4, 5,4, 11,4, 7) -- WAITTAPERECALL,WAITFS[_SCHED] -> FAILED, others -> INVALID
+     WHERE id = dcsToRm(i)
+       AND status != 1;  -- WAITDISK2DISKCOPY
   ret := 1;  -- ok
 END;
 /
@@ -5038,6 +5026,7 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyFailed
   srId    NUMBER;
 BEGIN
   fsId := 0;
+  srcFsId := -1;
   IF enoent = 1 THEN
     -- Set all diskcopies to FAILED. We're preemptying the NS synchronization here
     UPDATE DiskCopy SET status = 4 -- FAILED
@@ -5053,6 +5042,20 @@ BEGIN
       INTO fsId, cfId, ouid, ogid;
   END IF;
   BEGIN
+    -- Determine the source diskcopy and filesystem involved in the replication
+    SELECT sourceDiskCopy, fileSystem
+      INTO srcDcId, srcFsId
+      FROM DiskCopy, StageDiskCopyReplicaRequest
+     WHERE StageDiskCopyReplicaRequest.sourceDiskCopy = DiskCopy.id
+       AND StageDiskCopyReplicaRequest.destDiskCopy = dcId;
+    -- Restart all entries in the snapshot of files to drain that may be
+    -- waiting on the replication of the source diskcopy.
+    UPDATE DrainingDiskCopy
+       SET status = 1,  -- RESTARTED
+           parent = 0
+     WHERE status = 3  -- RUNNING
+       AND (diskCopy = srcDcId
+        OR  parent = srcDcId);
     -- Get the corresponding subRequest, if it exists
     SELECT id INTO srId
       FROM SubRequest
@@ -5076,31 +5079,15 @@ BEGIN
     IF enoent = 0 THEN
       replicateOnClose(cfId, ouid, ogid);
     END IF;
-    -- Diskserver draining logic
-    BEGIN
-      -- Determine the source diskcopy and filesystem involved in the replication
-      SELECT sourceDiskCopy, fileSystem
-        INTO srcDcId, srcFsId
-        FROM DiskCopy, StageDiskCopyReplicaRequest
-       WHERE StageDiskCopyReplicaRequest.sourceDiskCopy = DiskCopy.id
-         AND StageDiskCopyReplicaRequest.destDiskCopy = dcId;
-      -- Restart all entries in the snapshot of files to drain that may be
-      -- waiting on the replication of the source diskcopy.
-      UPDATE DrainingDiskCopy
-         SET status = 1,  -- RESTARTED
-             parent = 0
-       WHERE status = 3  -- RUNNING
-         AND (diskCopy = srcDcId
-          OR  parent = srcDcId);
-      drainFileSystem(srcFsId);
-    END;
-    -- WARNING: previous call to drainFileSystem has a COMMIT inside. So all
-    -- locks have been released!!
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- SubRequest not found, don't trigger replicateOnClose here
     -- as we may have been restarted
     NULL;
   END;
+  -- Continue draining process
+  drainFileSystem(srcFsId);
+  -- WARNING: previous call to drainFileSystem has a COMMIT inside. So all
+  -- locks have been released!!
 END;
 /
 
