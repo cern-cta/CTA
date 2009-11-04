@@ -2112,19 +2112,6 @@ BEGIN
          WHERE id = srId;
         RETURN;
       END IF;
-      -- check if removal is possible for Disk2DiskCopy
-      SELECT count(*) INTO nbRes FROM DiskCopy
-       WHERE status = 1 -- DISKCOPY_WAITDISK2DISKCOPY
-         AND castorFile = cfId;
-      IF nbRes > 0 THEN
-        -- We found something, thus we cannot remove
-        UPDATE SubRequest
-           SET status = 7,  -- FAILED
-               errorCode = 16,  -- EBUSY
-               errorMessage = 'The file is being replicated'
-         WHERE id = srId;
-        RETURN;
-      END IF;
       -- Stop ongoing recalls if stageRm either everywhere or the only available diskcopy.
       -- This is not entirely clean: a proper operation here should be to
       -- drop the SubRequest waiting for recall but keep the recall if somebody
@@ -2219,8 +2206,9 @@ BEGIN
   -- Set selected DiskCopies to either INVALID or FAILED
   FORALL i IN dcsToRm.FIRST .. dcsToRm.LAST
     UPDATE DiskCopy SET status = 
-           decode(status, 1,4, 2,4, 5,4, 11,4, 7) -- WAITDISK2DISKCOPY,WAITTAPERECALL,WAITFS[_SCHED] -> FAILED, others -> INVALID
-     WHERE id = dcsToRm(i);
+           decode(status, 2,4, 5,4, 11,4, 7) -- WAITTAPERECALL,WAITFS[_SCHED] -> FAILED, others -> INVALID
+     WHERE id = dcsToRm(i)
+       AND status != 1;  -- WAITDISK2DISKCOPY
   ret := 1;  -- ok
 END;
 /
