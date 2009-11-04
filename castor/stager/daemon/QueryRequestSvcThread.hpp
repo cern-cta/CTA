@@ -152,9 +152,9 @@ namespace castor {
          * @param uuid the uuid of the request, for logging purposes
          */
         void handleChangePrivilege(castor::stager::Request* req,
-				   castor::IClient *client,
-				   castor::rh::IRHSvc* rhSvc,
-				   Cuuid_t uuid)
+                                   castor::IClient *client,
+                                   castor::rh::IRHSvc* rhSvc,
+                                   Cuuid_t uuid)
           throw (castor::exception::Exception);
 
         /**
@@ -165,18 +165,20 @@ namespace castor {
          * @param uuid the uuid of the request, for logging purposes
          */
         void handleListPrivileges(castor::stager::Request* req,
-				  castor::IClient *client,
-				  castor::rh::IRHSvc* rhSvc,
-				  Cuuid_t uuid)
+                                  castor::IClient *client,
+                                  castor::rh::IRHSvc* rhSvc,
+                                  Cuuid_t uuid)
           throw (castor::exception::Exception);
 
         /**
          * Handles a VersionQuery and replies to client.
          * @param req the request to handle
          * @param client the client where to send the response
+         * @param uuid the uuid of the request, for logging purposes
          */
         void handleVersionQuery(castor::stager::Request* req,
-                                castor::IClient *client)
+                                castor::IClient *client,
+                                Cuuid_t uuid)
           throw (castor::exception::Exception);
 
         /**

@@ -229,6 +229,9 @@ castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::E
     { STAGER_QRYSVC_RQUERY, "Processing File Query by Request"},
     { STAGER_QRYSVC_DSQUERY, "Processing DiskPoolQuery by SvcClass"},
     { STAGER_QRYSVC_DDQUERY, "Processing DiskPoolQuery by DiskPool"},
+    { STAGER_QRYSVC_VQUERY, "Processing VersionQuery"},
+    { STAGER_QRYSVC_CPRIV, "Processing ChangePrivilege"},
+    { STAGER_QRYSVC_LPRIV, "Processing ListPrivilege"},
 
     /*********/
     /* GcSvc */

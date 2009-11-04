@@ -668,7 +668,6 @@ void castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
 
     // List all DiskPools for a given svcclass
     if ("" == uReq->diskPoolName()) {
-
       // "Processing DiskPoolQuery by SvcClass"
       castor::dlf::Param params[] =
         {castor::dlf::Param("SvcClass", uReq->svcClassName())};
@@ -756,6 +755,8 @@ void castor::stager::daemon::QueryRequestSvcThread::handleChangePrivilege
   castor::bwlist::ChangePrivilege *uReq;
   castor::rh::BasicResponse res;
   try {
+    // "Processing ChangePrivilege"
+    castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_CPRIV);
     // prepare response first in case we fail
     res.setReqAssociated(req->reqId());
     // Get the name of the client hostname to pass into the Cupv interface.
@@ -799,7 +800,7 @@ void castor::stager::daemon::QueryRequestSvcThread::handleChangePrivilege
     castor::replier::RequestReplier::getInstance()->
       sendResponse(client, &res, true);
   } catch (castor::exception::Exception e) {
-    if(typeid(e) == typeid(castor::exception::PermissionDenied)) {
+    if (e.code() == EACCES) {
       castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_USER_PERMISSION, 0);
     } else {
       // "Unexpected exception caught"
@@ -834,6 +835,8 @@ void castor::stager::daemon::QueryRequestSvcThread::handleListPrivileges
   castor::bwlist::ListPrivileges *uReq;
   castor::bwlist::ListPrivilegesResponse res;
   try {
+    // "Processing ListPrivilege"
+    castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_LPRIV);   
     // prepare response first in case we fail
     res.setReqAssociated(req->reqId());
     // Get the ListPrivileges
@@ -877,8 +880,10 @@ void castor::stager::daemon::QueryRequestSvcThread::handleListPrivileges
 // handleVersionQuery
 //-----------------------------------------------------------------------------
 void castor::stager::daemon::QueryRequestSvcThread::handleVersionQuery
-(castor::stager::Request* req, castor::IClient *client)
+(castor::stager::Request* req, castor::IClient *client, Cuuid_t uuid)
   throw (castor::exception::Exception) {
+  // "Processing VersionQuery"
+  castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_VQUERY);
   castor::query::VersionResponse result;
   result.setMajorVersion(MAJORVERSION);
   result.setMinorVersion(MINORVERSION);
@@ -1017,7 +1022,7 @@ void castor::stager::daemon::QueryRequestSvcThread::process
       break;
     case castor::OBJ_VersionQuery:
       castor::stager::daemon::QueryRequestSvcThread::handleVersionQuery
-        (req, client);
+        (req, client, uuid);
       break;
     case OBJ_ChangePrivilege:
       castor::stager::daemon::QueryRequestSvcThread::handleChangePrivilege

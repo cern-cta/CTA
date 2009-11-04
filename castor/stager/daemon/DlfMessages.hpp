@@ -103,6 +103,9 @@ namespace castor{
 	STAGER_QRYSVC_DSQUERY = 101, /* "Processing DiskPoolQuery by SvcClass" */
 	STAGER_QRYSVC_DDQUERY = 102, /* "Processing DiskPoolQuery by DiskPool" */
 	STAGER_QRYSVC_DFAILED = 103, /* "Failed to process DiskPoolQuery" */
+	STAGER_QRYSVC_VQUERY = 149, /* Processing VersionQuery */
+	STAGER_QRYSVC_CPRIV = 150, /* Processing ChangePrivilege */
+	STAGER_QRYSVC_LPRIV = 151, /* Processing ListPrivieleg */
 
 	/*********/
 	/* GcSvc */
