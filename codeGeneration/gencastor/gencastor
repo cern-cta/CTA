@@ -10,10 +10,10 @@
 
 if ("$1" == "-h" || "$1" == "") then
   echo "Usage :"
-  echo "  gencastor [-w castor_workdir] [-c topNamespace] [-h] [-v|--version] XMIFile"
+  echo "  $0 [-w castor_workdir] [-c topNamespace] [-h] [-v|--version] XMIFile"
   exit
 else if ("$1" == "-v" || "$1" == "--version") then
-  /usr/bin/gencastor.bin --version
+  "$0".bin --version
   exit
 else if ("$1" == "-w") then
   set WORKDIR=$2
@@ -40,7 +40,7 @@ rm -rf ${TMPDIR}
 mkdir -p ${TMPDIR}/${TOPNS}/db
 cp ${WORKDIR}/${TOPNS}/db/*.sql ${TMPDIR}/${TOPNS}/db/
 
-(/usr/bin/gencastor.bin -o ${TMPDIR} -c ${TOPNS} --nocrashhandler ${XMIFILE} > /dev/tty) >& /dev/null
+($0.bin -o ${TMPDIR} -c ${TOPNS} --nocrashhandler ${XMIFILE} > /dev/tty) >& /dev/null
 
 if ($? > 0) then
   echo Error during code generation, exiting

@@ -22,8 +22,10 @@ OWNGENRAWOBJS=$(patsubst %.cpp,umbrello/codegenerators/%.o,$(OWNGENSRCS))
 INCLUDES=-I$(DEV)/umbrello -I$(DEV)/umbrello/codegenerators -I$(UMBRELLO) -I$(UMBRELLOOBJBASE) -I$(UMBRELLOOBJ) -I$(UMBRELLO)/codegenerators -I$(UMBRELLOOBJ)/dialogs -I/usr/include/kde -I/usr/include/qt3 -I/usr/lib64/qt-3.3/include/ -I/usr/X11R6/include -DQT_THREAD_SUPPORT -D_REENTRANT
 COMPILEFLAGS= --mode=compile --tag=CXX g++
 LINKFLAGS= --mode=link --tag=CXX g++ -pthread
-LINKDEPS=-lfl -lkdeprint -lkio -lxslt
+LINKDEPS= -lkdeprint -lkio -lxslt
 MACROS=-g -O0 -Wnon-virtual-dtor -Wno-long-long -Wundef -ansi -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -Wcast-align -Wconversion -Wchar-subscripts -Wall -W -Wpointer-arith -Wwrite-strings -DNDEBUG -DNO_DEBUG -Wformat-security -Wmissing-format-attribute -fno-exceptions -fno-check-new -fno-common -DQT_CLEAN_NAMESPACE -DQT_NO_ASCII_CAST -DQT_NO_STL -DQT_NO_COMPAT -DQT_NO_TRANSLATION
+
+VERSION=2.1.9
 
 .PHONY : all install clean
 
@@ -31,9 +33,9 @@ all : gencastor.bin
 
 install : gencastor.bin
 	@echo Installing gencastor
-	@install gencastor $(DESTDIR)/usr/bin
+	@install gencastor $(DESTDIR)/usr/bin/gencastor${VERSION}
 	@install codemerge.py $(DESTDIR)/usr/bin
-	@install gencastor.bin $(DESTDIR)/usr/bin
+	@install gencastor.bin $(DESTDIR)/usr/bin/gencastor${VERSION}.bin
 	@install gencastor.1 $(DESTDIR)/usr/share/man/man1
 	@install -D headers/heading.cpp $(DESTDIR)/etc/castor/gencastor/heading.cpp
 	@install -D headers/heading.h $(DESTDIR)/etc/castor/gencastor/heading.h
