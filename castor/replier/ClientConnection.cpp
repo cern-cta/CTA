@@ -388,19 +388,23 @@ void castor::replier::ClientConnection::send()
     } else {
       delete[] buf;
       // "CC: Write failure"
+      if(!serrno) {
+        // XXX this compensates missing setting of serrno from netwrite_timeout
+        serrno = errno;
+      }
       castor::dlf::Param params[] =
         {castor::dlf::Param("Function", func),
          castor::dlf::Param("ClientInfo", this->toString()),
          castor::dlf::Param("MessageId", message.messageId),
          castor::dlf::Param("IsLast", message.isLast ? "Yes" : "No"),
-         castor::dlf::Param("Error", sstrerror(errno)),
+         castor::dlf::Param("Error", sstrerror(serrno)),
          castor::dlf::Param("Length", buflen)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING,
                               DLF_BASE_STAGERLIB + 6, 6, params);
       setStatus(DONE_FAILURE);
       m_errorMessage = std::string("Error while sending: ")
-        + std::string(strerror(errno));
-      castor::exception::Exception ex(errno);
+        + std::string(strerror(serrno));
+      castor::exception::Exception ex(serrno);
       ex.getMessage() << "Error while sending";
       throw ex;
     }
