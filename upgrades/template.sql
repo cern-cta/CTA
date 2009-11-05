@@ -49,6 +49,8 @@ END;
 /
 
 INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('schemaTag', 'newRelTag');
+/* Uncomment for transparent release */
+--UPDATE UpgradeLog SET type = 'TRANSPARENT';
 COMMIT;
 
 /* Job management */

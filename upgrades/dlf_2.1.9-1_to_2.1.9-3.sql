@@ -75,6 +75,7 @@ ALTER TABLE UpgradeLog
 
 /* SQL statement to populate the intial release value */
 INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('2_1_9_3', '2_1_9_3');
+UPDATE UpgradeLog SET type = 'TRANSPARENT';
 COMMIT;
 
 DROP TABLE dlf_version;

@@ -33,7 +33,7 @@ BEGIN
   EXECUTE IMMEDIATE
    'UPDATE UpgradeLog
        SET failureCount = failureCount + 1
-     WHERE schemaVersion = ''2_1_9_0''
+     WHERE schemaVersion = ''2_1_9_3''
        AND release = ''2_1_9_3''
        AND state != ''COMPLETE''';
   COMMIT;
@@ -54,12 +54,26 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
-UPDATE CastorVersion SET release = '2_1_9_3';
+UPDATE CastorVersion SET release = '2_1_9_3', schemaVersion = '2_1_9_3';
 COMMIT;
 
 
 /* Schema changes go here */
 /**************************/
+
+/* Disable all jobs */
+/********************/
+BEGIN
+  FOR a IN (SELECT * FROM user_scheduler_jobs WHERE enabled = 'TRUE')
+  LOOP
+    -- Stop any running jobs
+    IF a.state = 'RUNNING' THEN
+      dbms_scheduler.stop_job(a.job_name);
+    END IF;
+    dbms_scheduler.disable(a.job_name);
+  END LOOP;
+END;
+/
 
 DECLARE
   unused NUMBER;
@@ -86,6 +100,10 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
+/* SQL statement for table Top10Errors */
+CREATE TABLE Top10Errors (timestamp DATE CONSTRAINT NN_TopTenErrors_ts NOT NULL, interval NUMBER, daemon VARCHAR2(255), nbErrors NUMBER, errorMessage VARCHAR2(512))
+  PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
+
 /* Trigger partition creation for the new tables */
 BEGIN
   createPartitions();
@@ -105,7 +123,8 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('2_1_9_0', '2_1_9_3');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('2_1_9_3', '2_1_9_3');
+UPDATE UpgradeLog SET type = 'TRANSPARENT';
 COMMIT;
 
 DROP TABLE CastorVersion;
@@ -120,6 +139,134 @@ AS
     FROM UpgradeLog
    WHERE startDate =
      (SELECT max(startDate) FROM UpgradeLog);
+
+
+/* Update and revalidation of PL-SQL code */
+/******************************************/
+
+/* PL/SQL method implementing statsTop10Errors
+ *
+ * Provides statistics on top 10 errors broken down by daemon
+ */
+CREATE OR REPLACE PROCEDURE statsTop10Errors (now IN DATE, interval IN NUMBER) AS
+BEGIN
+  -- Stats table: Top10Errors
+  -- Frequency: 5 minutes
+  INSERT INTO Top10Errors (daemon, nbErrors, errorMessage)
+    -- Gather data
+    (SELECT facility, nbErrors, message FROM (
+      -- For each daemon list the top 10 errors + the total of errors for that
+      -- daemon
+      SELECT facility, nbErrors, message,
+             RANK() OVER (PARTITION BY facility ORDER BY facility DESC,
+                          nbErrors DESC) rank
+        FROM (
+          SELECT facilities.fac_name facility, 
+                 nvl(msgtexts.msg_text, '-') message, count(*) nbErrors
+            FROM &dlfschema..dlf_messages   messages,
+                 &dlfschema..dlf_facilities facilities,
+                 &dlfschema..dlf_msg_texts  msgtexts
+           WHERE messages.facility = facilities.fac_no
+             AND (messages.msg_no   = msgtexts.msg_no
+             AND  messages.facility = msgtexts.fac_no)
+             AND messages.severity <= 3
+             AND messages.timestamp >  now - 65/1440
+             AND messages.timestamp <= now - 5/1440
+           GROUP BY GROUPING SETS (facilities.fac_name, msgtexts.msg_text),
+                                  (facilities.fac_name)))
+       WHERE rank < 12);
+END;
+/
+
+/* Scheduler jobs */
+BEGIN
+  -- Remove scheduler jobs before recreation
+  FOR a IN (SELECT job_name FROM user_scheduler_jobs)
+  LOOP
+    DBMS_SCHEDULER.DROP_JOB(a.job_name, TRUE);
+  END LOOP;
+
+  -- Create a db job to be run every day and create new partitions
+  DBMS_SCHEDULER.CREATE_JOB(
+      JOB_NAME        => 'partitionCreationJob',
+      JOB_TYPE        => 'STORED_PROCEDURE',
+      JOB_ACTION      => 'createPartitions',
+      JOB_CLASS       => 'DLF_JOB_CLASS',
+      START_DATE      => TRUNC(SYSDATE) + 1/24,
+      REPEAT_INTERVAL => 'FREQ=DAILY',
+      ENABLED         => TRUE,
+      COMMENTS        => 'Daily partitioning creation');
+
+  -- Create a db job to be run every day and drop old data from the database
+  DBMS_SCHEDULER.CREATE_JOB(
+      JOB_NAME        => 'archiveDataJob',
+      JOB_TYPE        => 'PLSQL_BLOCK',
+      JOB_ACTION      => 'BEGIN
+                            archiveData(-1);
+                            FOR a IN (SELECT table_name FROM user_tables
+                                       WHERE table_name LIKE ''ERR_%'')
+                            LOOP
+                              EXECUTE IMMEDIATE ''TRUNCATE TABLE ''||a.table_name;
+                            END LOOP;
+                          END;',
+      JOB_CLASS       => 'DLF_JOB_CLASS',
+      START_DATE      => TRUNC(SYSDATE) + 2/24,
+      REPEAT_INTERVAL => 'FREQ=DAILY',
+      ENABLED         => TRUE,
+      COMMENTS        => 'Daily data archiving');
+
+  -- Create a job to execute the procedures that create statistical information (OLD)
+  DBMS_SCHEDULER.CREATE_JOB (
+      JOB_NAME        => 'statisticJob',
+      JOB_TYPE        => 'PLSQL_BLOCK',
+      JOB_ACTION      => 'DECLARE
+                            now DATE := SYSDATE;
+                            interval NUMBER := 300;
+                          BEGIN
+                            statsLatency(now, interval);
+                            statsQueueTime(now, interval);
+                            statsGarbageCollection(now, interval);
+                            statsRequest(now, interval);
+                            statsDiskCacheEfficiency(now, interval);
+                            statsMigratedFiles(now, interval);
+                            statsRecalledFiles(now, interval);
+                            statsReplication(now, interval);
+                            statsTapeRecalled(now, interval);
+                            statsProcessingTime(now, interval);
+                            statsClientVersion(now, interval);
+                            statsTapeMounts(now, interval);
+                            statsTop10Errors(now, interval);
+                          END;',
+      JOB_CLASS       => 'DLF_JOB_CLASS',
+      START_DATE      => SYSDATE,
+      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
+      ENABLED         => TRUE,
+      COMMENTS        => 'CASTOR2 Monitoring Statistics (OLD) (5 Minute Frequency)');
+
+  -- Create a job to execute the procedures that create statistical information (NEW)
+  DBMS_SCHEDULER.CREATE_JOB (
+      JOB_NAME        => 'populateJob',
+      JOB_TYPE        => 'PLSQL_BLOCK',
+      JOB_ACTION      => 'DECLARE
+                            now DATE := SYSDATE - 10/1440;
+                          BEGIN
+                            EXECUTE IMMEDIATE ''TRUNCATE TABLE ERR_Requests'';
+                            statsReqs(now);
+                            statsDiskCopy(now);
+                            statsInternalDiskCopy(now);
+                            statsTapeRecall(now);
+                            statsMigs(now);
+                            statsTotalLat(now);
+                            statsGcFiles(now);
+                          END;',
+      JOB_CLASS       => 'DLF_JOB_CLASS',
+      START_DATE      => SYSDATE + 10/1440,
+      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
+      ENABLED         => TRUE,
+      COMMENTS        => 'CASTOR2 Monitoring Statistics (NEW) (5 Minute Frequency)');
+
+END;
+/
 
 
 /* Recompile all invalid procedures, triggers and functions */
