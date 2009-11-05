@@ -174,11 +174,11 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "StageDiskCopyReplicaRequest",
   "RepackResponse",
   "RepackFileQry",
-  "CnsInfoMigrationPolicy",
-  "DbInfoMigrationPolicy",
-  "CnsInfoRecallPolicy",
-  "DbInfoRecallPolicy",
-  "DbInfoStreamPolicy",
+  "DELETED TYPE", 
+  "DELETED TYPE", 
+  "DELETED TYPE", 
+  "DELETED TYPE", 
+  "DELETED TYPE", 
   "PolicyObj",
 
   "NsFilesDeleted",
@@ -213,7 +213,7 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "VolumeRequest",
   "Volume",
   "TapeGatewayRequest",
-  "DbInfoRetryPolicy",
+  "DELETED TYPE", 
   "EndNotification",
   "NoMoreFiles",
   "NotificationAcknowledge",
@@ -227,7 +227,12 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "DumpNotification",
   "PingNotification",
   "DumpParameters",
-  "DumpParametersRequest"
+  "DumpParametersRequest",
+  "RecallPolicyElement",
+  "MigrationPolicyElement",
+  "StreamPolicyElement",
+  "RetryPolicyElement",
+  "VdqmTapeGatewayRequest"
 };
 
 

@@ -229,7 +229,13 @@ namespace castor {
     OBJ_DumpNotification = 182,
     OBJ_PingNotification = 183,
     OBJ_DumpParameters = 184,
-    OBJ_DumpParametersRequest = 185
+    OBJ_DumpParametersRequest = 185,
+    OBJ_RecallPolicyElement = 186,
+    OBJ_MigrationPolicyElement = 187,
+    OBJ_StreamPolicyElement = 188,
+    OBJ_RetryPolicyElement = 189,
+    OBJ_VdqmTapeGatewayRequest = 190
+
   };
 
   /**
@@ -307,7 +313,7 @@ namespace castor {
    * declared outside of any function.
    */
 
-#define OBJECT_IDS_NB 186
+#define OBJECT_IDS_NB 191
 
   static const unsigned int ObjectsIdsNb = OBJECT_IDS_NB;
 
