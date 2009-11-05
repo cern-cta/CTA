@@ -77,8 +77,6 @@ namespace castor {
       /// The Dictionary of the python module
       PyObject *m_pyDict;
       
-      /// Experiment
-      //  PyThreadState *m_pyTid;
 
     };
 

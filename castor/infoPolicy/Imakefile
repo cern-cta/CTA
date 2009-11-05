@@ -31,11 +31,10 @@ LIBS =
 DependsOnLibrary(../common,castorcommon)
 DependsOnLibrary(,castorclient)
 
-POLICYLIB_SRCS = CnsInfoMigrationPolicy.cpp \
-	DbInfoMigrationPolicy.cpp \
-	DbInfoRecallPolicy.cpp \
-	DbInfoStreamPolicy.cpp \
-	DbInfoRetryPolicy.cpp \
+POLICYLIB_SRCS = MigrationPolicyElement.cpp \
+	RecallPolicyElement.cpp \
+	StreamPolicyElement.cpp \
+	RetryPolicyElement.cpp \
 	MigrationPySvc.cpp \
         StreamPySvc.cpp \
 	PolicyObj.cpp \

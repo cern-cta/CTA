@@ -26,8 +26,7 @@
 
 #include "castor/infoPolicy/TapeRetryPySvc.hpp" 
 
-#include "castor/infoPolicy/DbInfoRetryPolicy.hpp"
-#include "castor/infoPolicy/DbInfoPolicy.hpp"
+#include "castor/infoPolicy/RetryPolicyElement.hpp"
 #include "castor/infoPolicy/PolicyObj.hpp"
 #include "castor/stager/TapeCopy.hpp"
 
@@ -41,11 +40,27 @@ int castor::infoPolicy::TapeRetryPySvc::applyPolicy(castor::infoPolicy::PolicyOb
 		    << std::endl;
     throw ex;
   }
-  castor::infoPolicy::DbInfoRetryPolicy* myInfoDb= dynamic_cast<castor::infoPolicy::DbInfoRetryPolicy *> (pObj->dbInfoPolicy()[0]);
+  
 
-  PyObject *inputScript= Py_BuildValue((char*)"(i,i)", (myInfoDb->tapecopy()->errorCode()), (myInfoDb->tapecopy()->nbRetry()));
-  int ret = castor::infoPolicy::PySvc::callPolicyFunction(m_functionName,inputScript);
+  
+  castor::infoPolicy::RetryPolicyElement* elem = dynamic_cast<castor::infoPolicy::RetryPolicyElement *> (pObj);
 
+
+
+  PyObject *inputScript= Py_BuildValue((char*)"(i,i)", (elem->errorCode()), (elem->nbRetry()));
+
+  int ret = 0;
+
+  try {
+    ret=castor::infoPolicy::PySvc::callPolicyFunction(m_functionName,inputScript);
+  } catch (castor::exception::Exception e){
+    if (inputScript)  Py_XDECREF(inputScript);
+    throw e;
+  }
+
+  if (inputScript) Py_XDECREF(inputScript);
+
+  
   return ret;
   
 }

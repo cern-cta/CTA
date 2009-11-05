@@ -26,13 +26,14 @@
 
 #include "castor/infoPolicy/StreamPySvc.hpp" 
 
-#include "castor/infoPolicy/DbInfoStreamPolicy.hpp"
-#include "castor/infoPolicy/DbInfoPolicy.hpp"
+#include "castor/infoPolicy/StreamPolicyElement.hpp"
+
 #include "castor/infoPolicy/PolicyObj.hpp"
 
 
 int castor::infoPolicy::StreamPySvc::applyPolicy(castor::infoPolicy::PolicyObj* pObj) throw(castor::exception::Exception){
-  
+   
+
   // Python initialised correctly
   if (m_pyDict == NULL) {
     castor::exception::Exception ex(SEINTERNAL);
@@ -40,16 +41,26 @@ int castor::infoPolicy::StreamPySvc::applyPolicy(castor::infoPolicy::PolicyObj* 
 		    << std::endl;
     throw ex;
   }
+
  
-  castor::infoPolicy::DbInfoStreamPolicy* dbObj=dynamic_cast <castor::infoPolicy::DbInfoStreamPolicy*> (pObj->dbInfoPolicy()[0]);
+  castor::infoPolicy::StreamPolicyElement* elem=dynamic_cast <castor::infoPolicy::StreamPolicyElement*> (pObj);
 
   // python-Bugs-1308740  Py_BuildValue (C/API): "K" format
   // K must be used for unsigned (feature not documented at all but available)
 
-  PyObject *inputScript;
-  inputScript = Py_BuildValue("(K,K,K,K,K)",dbObj->runningStream(),dbObj->numFiles(),dbObj->numBytes(),dbObj->maxNumStreams(), dbObj->age());
+  PyObject *inputScript = Py_BuildValue("(K,K,K,K,K)",elem->runningStream(),elem->numFiles(),elem->numBytes(),elem->maxNumStreams(), elem->age());
 
-  int ret=callPolicyFunction( pObj->policyName().c_str(), inputScript);
+  int ret=0;
+
+  try {
+    ret=callPolicyFunction( pObj->policyName().c_str(), inputScript);
+  } catch (castor::exception::Exception e){
+    Py_XDECREF(inputScript);
+    throw e;
+  }
+
+  Py_XDECREF(inputScript);
+
   return ret;
 }
 

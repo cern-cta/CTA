@@ -41,10 +41,7 @@ castor::infoPolicy::PySvc::PySvc(std::string module)
 
   // Initialize the embedded python interpreter 
   
-  //if (!Py_IsInitialized()) 
-    Py_Initialize();
-
-    //m_pyTid=Py_NewInterpreter();
+  Py_Initialize();
 
   FILE *fp = fopen(m_moduleFile.c_str(), "r");
   if (fp == NULL) {
@@ -80,6 +77,10 @@ castor::infoPolicy::PySvc::PySvc(std::string module)
 }
 
 
+
+
+
+
 //------------------------------------------------------------------------------// callPolicyFunction
 //------------------------------------------------------------------------------
 int castor::infoPolicy::PySvc::callPolicyFunction(std::string functionName, PyObject* inputObj){
@@ -87,22 +88,31 @@ int castor::infoPolicy::PySvc::callPolicyFunction(std::string functionName, PyOb
   // Attempt to find the function in the Python modules dictionary with the
   // function name. If the function cannot be found revert to the default.
 
+  
   PyObject *pyFunc = PyDict_GetItemString(m_pyDict,(char *)functionName.c_str());
-  //  if (pyFunc == NULL) {
-  //  pyFunc = PyDict_GetItemString(m_pyDict, "default");
-  //  }
+
 
   // Check to make sure the function exists and is callable
-  if (!pyFunc || !PyCallable_Check(pyFunc)) {
+  if (!pyFunc) {
+    
     castor::exception::Exception ex(EINVAL);
-    ex.getMessage() << "Unable to find function '" << functionName.c_str()
-		    << "' or 'default' in Python module, check module syntax - "<< std::endl;
+    ex.getMessage() << "Function " << functionName.c_str()<<" does not exist " <<std::endl;
     throw ex;
   } 
 
+  if (!PyCallable_Check(pyFunc)) {
+
+
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << "Function cannot be called" << functionName.c_str()<< std::endl;
+    throw ex;
+  }
+  
   // Call the function from the Python modules namespace
+  
   PyObject *pyValue = PyObject_CallObject(pyFunc,inputObj);
   if (pyValue == NULL) {
+  
     castor::exception::Exception ex(SEINTERNAL);
     ex.getMessage() << "Failed to execute Python function " << functionName.c_str() << std::endl;
     throw ex;
@@ -110,6 +120,7 @@ int castor::infoPolicy::PySvc::callPolicyFunction(std::string functionName, PyOb
 
   int  ret = PyInt_AsLong(pyValue);
   Py_XDECREF(pyValue);
+
 
   return ret;
 }
@@ -119,7 +130,5 @@ int castor::infoPolicy::PySvc::callPolicyFunction(std::string functionName, PyOb
 // destructor
 //-----------------------------------------------------------------------------
 castor::infoPolicy::PySvc::~PySvc() {
-  // Py_EndInterpreter(m_pyTid);
-  // if (Py_IsInitialized()) 
     Py_Finalize();
 }

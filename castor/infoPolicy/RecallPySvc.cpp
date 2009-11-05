@@ -26,9 +26,8 @@
 
 #include "castor/infoPolicy/RecallPySvc.hpp" 
 
-#include "castor/infoPolicy/DbInfoRecallPolicy.hpp"
-#include "castor/infoPolicy/DbInfoPolicy.hpp"
-//#include "castor/infoPolicy/CnsInfoPolicy.hpp"
+#include "castor/infoPolicy/RecallPolicyElement.hpp"
+
 #include "castor/infoPolicy/PolicyObj.hpp"
 
 
@@ -42,14 +41,26 @@ int castor::infoPolicy::RecallPySvc::applyPolicy(castor::infoPolicy::PolicyObj* 
 		    << std::endl;
     throw ex;
   }
-  castor::infoPolicy::DbInfoRecallPolicy* myInfoDb= dynamic_cast<castor::infoPolicy::DbInfoRecallPolicy *> (pObj->dbInfoPolicy()[0]);
+
+
+  castor::infoPolicy::RecallPolicyElement* elem= dynamic_cast<castor::infoPolicy::RecallPolicyElement *> (pObj);
 
   // python-Bugs-1308740  Py_BuildValue (C/API): "K" format
   // K must be used for unsigned (feature not documented at all but available)
 
-  PyObject *inputScript= Py_BuildValue("(s,K,K,K,K)", (myInfoDb->vid()).c_str(),myInfoDb->numFiles(),myInfoDb->numBytes(),myInfoDb->oldest(),myInfoDb->priority());
+  PyObject *inputScript= Py_BuildValue("(s,K,K,K,K)", (elem->vid()).c_str(),elem->numFiles(),elem->numBytes(),elem->oldest(),elem->priority());
   // the policy return -1 as priority if we don't want to recall at all
-  int ret= castor::infoPolicy::PySvc::callPolicyFunction(m_functionName,inputScript);
+  int ret=0;
+  
+  try {
+    ret=callPolicyFunction(m_functionName,inputScript);
+  
+  } catch (castor::exception::Exception e){
+    if (inputScript)  Py_XDECREF(inputScript);
+    throw e;
+  }
+
+  if (inputScript) Py_XDECREF(inputScript);
 
   return ret;
   

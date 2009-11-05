@@ -26,10 +26,8 @@
 
 #include "castor/infoPolicy/MigrationPySvc.hpp" 
 
-#include "castor/infoPolicy/DbInfoMigrationPolicy.hpp"
-#include "castor/infoPolicy/DbInfoPolicy.hpp"
-#include "castor/infoPolicy/CnsInfoMigrationPolicy.hpp"
-#include "castor/infoPolicy/CnsInfoPolicy.hpp"
+#include "castor/infoPolicy/MigrationPolicyElement.hpp"
+
 #include "castor/infoPolicy/PolicyObj.hpp"
 
 
@@ -42,14 +40,40 @@ int castor::infoPolicy::MigrationPySvc::applyPolicy(castor::infoPolicy::PolicyOb
 		    << std::endl;
     throw ex;
   }
-  castor::infoPolicy::DbInfoMigrationPolicy* myInfoDb= dynamic_cast<castor::infoPolicy::DbInfoMigrationPolicy *> (pObj->dbInfoPolicy()[0]);
-  castor::infoPolicy::CnsInfoMigrationPolicy* myInfoCns= dynamic_cast<castor::infoPolicy::CnsInfoMigrationPolicy *> (pObj->cnsInfoPolicy()[0]);
+
+
+  castor::infoPolicy::MigrationPolicyElement* elem= dynamic_cast<castor::infoPolicy::MigrationPolicyElement *>(pObj);
 
   // python-Bugs-1308740  Py_BuildValue (C/API): "K" format
   // K must be used for unsigned (feature not documented at all but available)
 
-  PyObject *inputScript= Py_BuildValue((char*)"(s,s,K,K,K,K,K,K,K,K,K,l)", (myInfoDb->tapePoolName()).c_str(), (myInfoDb->castorFileName()).c_str(),myInfoDb->copyNb(),myInfoCns->fileId(),myInfoCns->fileSize(),myInfoCns->fileMode(),myInfoCns->uid(),myInfoCns->gid(),myInfoCns->aTime(),myInfoCns->mTime(),myInfoCns->cTime(),myInfoCns->fileClass());
-  int ret = castor::infoPolicy::PySvc::callPolicyFunction(pObj->policyName(),inputScript);
+   PyObject *inputScript= Py_BuildValue((char*)"(s,s,K,K,K,l,K,K,K,K,K,l)", 
+				       (elem->tapePoolName()).c_str(),
+				       (elem->castorFileName()).c_str(),
+				       elem->copyNb(),
+				       elem->fileId(),
+				       elem->fileSize(),
+				       elem->fileMode(),
+				       elem->uid(),
+				       elem->gid(),
+				       elem->aTime(),
+				       elem->mTime(),
+				       elem->cTime(),
+				       elem->fileClass());
+
+  
+
+  int ret =  0;
+  
+  try{
+    ret=callPolicyFunction(pObj->policyName().c_str(),inputScript);
+    
+  }catch (castor::exception::Exception e){
+    if (inputScript)  Py_XDECREF(inputScript);
+    throw e;
+  }
+
+  if (inputScript) Py_XDECREF(inputScript);
 
   return ret;
   
