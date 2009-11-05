@@ -400,6 +400,9 @@ INSERT INTO CastorConfig
 INSERT INTO CastorConfig
   VALUES ('stager', 'nsHost', 'undefined', 'The name of the name server host to set in the CastorFile table overriding the CNS/HOST option defined in castor.conf');
 
+INSERT INTO CastorConfig 
+  VALUES ('tape', 'daemonName', 'rtcpclientd', 'The name of the daemon used to interface to the tape system');
+
 /* Populate the general/owner option of the CastorConfig table */
 BEGIN
   UPDATE CastorConfig 
@@ -544,12 +547,4 @@ END;
 CREATE INDEX I_FileSystem_Rate
     ON FileSystem(fileSystemRate(readRate, writeRate,
 	          nbReadStreams,nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams));
-
-
-/*************************************************/
-/* Entry for tapegateway-rtcpclientd switch-over */
-/*************************************************/
-
-INSERT INTO castorconfig (class, key, value, description) VALUES ('tape', 'daemonName', 'rtcpclientd','name of the daemon use to interface the tape system');
-
 
