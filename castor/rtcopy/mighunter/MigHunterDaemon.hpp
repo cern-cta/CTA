@@ -32,7 +32,7 @@
 // Include Files
 
 #include "castor/server/BaseDaemon.hpp"
-
+#include <list>
 
 namespace castor {
 
@@ -45,7 +45,7 @@ namespace castor {
     class MigHunterDaemon : public castor::server::BaseDaemon{
       u_signed64 m_timeSleep;
       u_signed64 m_byteVolume;
-      std::vector<std::string> m_listSvcClass;
+      std::list<std::string> m_listSvcClass;
       bool m_doClone;
       
     public:
@@ -56,12 +56,12 @@ namespace castor {
       MigHunterDaemon();
       inline u_signed64 timeSleep(){ return m_timeSleep;}
       inline u_signed64 byteVolume(){ return m_byteVolume;}
-      inline std::vector<std::string> listSvcClass(){return m_listSvcClass;}
+      inline const std::list<std::string>& listSvcClass(){return m_listSvcClass;}
       inline bool doClone(){return m_doClone;}
 
       inline void setTimeSleep(u_signed64 time){m_timeSleep=time;}
       inline void setByteVolume(u_signed64 bv){ m_byteVolume=bv;}
-      inline void setListSvcClass(std::vector<std::string> lsvc){m_listSvcClass=lsvc;}
+      inline void setListSvcClass(const std::list<std::string>& lsvc){m_listSvcClass=lsvc;}
       inline void setDoClone(bool dc){m_doClone=dc;}
 
       /**

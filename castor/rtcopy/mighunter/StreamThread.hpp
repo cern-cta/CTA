@@ -1,6 +1,6 @@
 
 /******************************************************************************
- *                      MigHunterThread.hpp
+ *                      StreamThread.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,58 +18,51 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunterThread.hpp,v $ $Author: gtaur $
+ * @(#)$RCSfile: StreamThread.hpp,v $ $Author: gtaur $
  *
  *
  *
  * @author Giulia Taurelli
  *****************************************************************************/
 
-#ifndef MIGHUNTER_THREAD_HPP
-#define MIGHUNTER_THREAD_HPP 1
+#ifndef STREAM_THREAD_HPP
+#define STREAM_THREAD_HPP 1
 
 
 
-#include "castor/infoPolicy/MigrationPySvc.hpp"
+
+#include "castor/infoPolicy/StreamPySvc.hpp"
 #include "castor/server/BaseDbThread.hpp"
-#include "castor/infoPolicy/MigrationPolicyElement.hpp"
 #include <list>
-
-
 namespace castor {
 
   namespace rtcopy{
     namespace mighunter{
 
     /**
-     * MigHunter  tread.
+     * Stream  tread.
      */
     
-      class MigHunterThread :public castor::server::BaseDbThread {
-	u_signed64 m_byteVolume;
+      class StreamThread :public castor::server::BaseDbThread {
+  
+	castor::infoPolicy::StreamPySvc* m_strSvc;
 	std::list<std::string> m_listSvcClass;
-        bool m_doClone;
-	castor::infoPolicy::MigrationPySvc* m_migrSvc;
-
-        
       public:
 
       /**
        * constructor
        * @param maximum numbers of hours that an archived  request can stay in the datebase before being deleted.
        */
-	MigHunterThread(std::list<std::string> svcClassArray, u_signed64 minByte, bool doClone,	castor::infoPolicy::MigrationPySvc* migrPy);
-      
-      void  getInfoFromNs
-      (std::string svcClassName, castor::infoPolicy::MigrationPolicyElement& elem) throw (castor::exception::Exception);
+      StreamThread(std::list<std::string> svcClassArray, castor::infoPolicy::StreamPySvc* StrPy);
+     
       /**
        * destructor
        */
-      virtual ~MigHunterThread() throw() {};
+      virtual ~StreamThread() throw() {};
 
       /*For thread management*/
-	
-	virtual void run(void*);
+
+      virtual void run(void*);
 
     };
 
@@ -78,4 +71,4 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // MIGHUNTER_THREAD_HPP
+#endif // STREAM_THREAD_HPP

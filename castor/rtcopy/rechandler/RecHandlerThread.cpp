@@ -36,7 +36,7 @@
 #include "castor/IService.hpp"
 
 #include "castor/exception/Exception.hpp"
-#include "castor/infoPolicy/DbInfoRecallPolicy.hpp"
+#include "castor/infoPolicy/RecallPolicyElement.hpp"
 #include "castor/infoPolicy/PolicyObj.hpp"
 #include "castor/infoPolicy/RecallPySvc.hpp" 
 
@@ -46,10 +46,11 @@
 
 #include "castor/rtcopy/rechandler/IRecHandlerSvc.hpp"
 
-#include "castor/infoPolicy/DbInfoRecallPolicy.hpp"
-#include "castor/infoPolicy/DbInfoPolicy.hpp"
-#include "castor/infoPolicy/PolicyObj.hpp"
+#include "castor/infoPolicy/RecallPolicyElement.hpp"
+
 #include "castor/rtcopy/rechandler/IRecHandlerSvc.hpp"
+
+#include <list>
 
 // to implement the priority hack
 
@@ -87,158 +88,105 @@ void RecHandlerThread::run(void* par)
     return;
   }
 
-  std::vector<castor::infoPolicy::PolicyObj*>::iterator infoCandidate;
-  std::vector<u_signed64> eligibleTapeIds; // output with Id to resurrect
-  std::vector<castor::infoPolicy::PolicyObj*> infoCandidateTape;
-  castor::infoPolicy::DbInfoRecallPolicy* realInfo=NULL;
+  std::list<castor::infoPolicy::RecallPolicyElement>::iterator infoCandidate;
+  std::list<u_signed64> eligibleTapeIds; // output with Id to resurrect
+  std::list<castor::infoPolicy::RecallPolicyElement> infoCandidateTape;
+ 
   
   try{
 
-      // get information from the db    
-      infoCandidateTape = oraSvc->inputForRecallPolicy();
-      
-      if (infoCandidateTape.empty()) {
-	 castor::dlf::Param params[] =
-	   {
+    // get information from the db    
+    oraSvc->inputForRecallPolicy(infoCandidateTape);
+    
+    if (infoCandidateTape.empty()) {
+      castor::dlf::Param params[] =
+	{
           castor::dlf::Param("message", "No input tapes for the policy")};
-         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 3, 1, params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 3, 1, params);
 
-      }
+    }
 
-      // initialize the pysvc with the policy name
+    // initialize the pysvc with the policy name
 
-      infoCandidate=infoCandidateTape.begin();
-      
-      while ( infoCandidate != infoCandidateTape.end() ){
-        // call the policy for each one
-	if (!((*infoCandidate)->dbInfoPolicy().empty()))
-          realInfo=dynamic_cast<castor::infoPolicy::DbInfoRecallPolicy*>((*infoCandidate)->dbInfoPolicy()[0]);
-        if (realInfo == NULL){
-	      castor::dlf::Param params[] =
-	      {castor::dlf::Param("message", "Error in getting the tape information")};
-	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 7, 1, params);
-	      continue;
-	}
-
-        if (m_recallPolicy != NULL){
-	  castor::dlf::Param params[] =
-	      {castor::dlf::Param("Tape", realInfo->vid()),
-	       castor::dlf::Param("message", "Policy called")};
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 4, 2, params);
-	}
-
-	try {
-          if ( m_recallPolicy == NULL ) {
-	    //no priority sent
-	     eligibleTapeIds.push_back(realInfo->tapeId()); // tape to resurrect
-	    castor::dlf::Param params[] =
-	      {castor::dlf::Param("Tape", realInfo->vid())};
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 5, 1, params);
-	  } else {
-	     int priorityChosen=m_recallPolicy->applyPolicy(*infoCandidate);
-	    
-	     if (priorityChosen >= 0) {
-	       eligibleTapeIds.push_back(realInfo->tapeId()); // tape to resurrect
-	       castor::dlf::Param params[] =
-		 {castor::dlf::Param("Tape", realInfo->vid())};
-	       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 5, 1, params);
-
-	       // call to VDQM with the priority (temporary hack)
-
-	       vdqm_SendVolPriority((char*)realInfo->vid().c_str(),0,priorityChosen,0);
-
-	     } else {
-	       castor::dlf::Param params[] =
-		 {castor::dlf::Param("Tape", realInfo->vid())};
-	       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 11, 1, params);
-	     }
-	  }
-	} catch (castor::exception::Exception e) {
-	  castor::dlf::Param params[] =
-	    {castor::dlf::Param("code", sstrerror(e.code())),
-	     castor::dlf::Param("message", e.getMessage().str())};
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 10, 2, params);
-	  // I allow the recall
-	  if (realInfo)
-	    eligibleTapeIds.push_back(realInfo->tapeId());
- 
-	    castor::dlf::Param params2[] =
-	      {castor::dlf::Param("Tape", realInfo->vid())};
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 5, 1, params2);
-	}
-
+    infoCandidate=infoCandidateTape.begin();
+    
+    while ( infoCandidate != infoCandidateTape.end() ){
+      // call the policy for each one
 	
-
-	// delete the object
-
-	 if (*infoCandidate){
-	   delete *infoCandidate;
-	   *infoCandidate=NULL;
-
-	   if (realInfo) delete realInfo;
-	   realInfo=NULL;
-
-	 }
-
-         infoCandidate++;
+      
+      if (m_recallPolicy != NULL){
+	castor::dlf::Param params[] =
+	  {castor::dlf::Param("Tape", (*infoCandidate).vid()),
+	   castor::dlf::Param("message", "Policy called")};
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 4, 2, params);
       }
 
-      // call the db to put the tape as pending for that svcclass
-      if (!eligibleTapeIds.empty()){
-	 oraSvc->resurrectTapes(eligibleTapeIds);
+      try {
+	if ( m_recallPolicy == NULL ) {
+	  //no priority sent
+	  eligibleTapeIds.push_back((*infoCandidate).tapeId()); // tape to resurrect
+	  castor::dlf::Param params[] =
+	    {castor::dlf::Param("Tape", (*infoCandidate).vid())};
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 5, 1, params);
+	} else {
+	  int priorityChosen=m_recallPolicy->applyPolicy(&(*infoCandidate));
+	  
+	  if (priorityChosen >= 0) {
+	    eligibleTapeIds.push_back((*infoCandidate).tapeId()); // tape to resurrect
+	    castor::dlf::Param params[] =
+	      {castor::dlf::Param("Tape", (*infoCandidate).vid())};
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 5, 1, params);
+	      
+	    // call to VDQM with the priority (temporary hack)
+	    
+	    vdqm_SendVolPriority((char*)(*infoCandidate).vid().c_str(),0,priorityChosen,0);
+	    
+	  } else {
+	    castor::dlf::Param params[] =
+	      {castor::dlf::Param("Tape", (*infoCandidate).vid())};
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 11, 1, params);
+	  }
+	}
+      } catch (castor::exception::Exception e) {
+	castor::dlf::Param params[] =
+	  {castor::dlf::Param("code", sstrerror(e.code())),
+	   castor::dlf::Param("message", e.getMessage().str())};
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 10, 2, params);
+	// I allow the recall
+
+	eligibleTapeIds.push_back((*infoCandidate).tapeId());
+ 
+	castor::dlf::Param params2[] =
+	  {castor::dlf::Param("Tape", (*infoCandidate).vid())};
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 5, 1, params2);
       }
 
-  }
-  catch(castor::exception::Exception e) {
+      infoCandidate++;
+
+    }
+
+    // call the db to put the tape as pending for that svcclass
+    if (!eligibleTapeIds.empty()){
+      oraSvc->resurrectTapes(eligibleTapeIds);
+    }
+
+  } catch(castor::exception::Exception e) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("code", sstrerror(e.code())),
        castor::dlf::Param("message", e.getMessage().str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 7, 2, params);
     
-    // CLEAN UP
-     
-     infoCandidate=infoCandidateTape.begin();
-     while ( infoCandidate != infoCandidateTape.end() ){
-        if (*infoCandidate){
-	  if (!((*infoCandidate)->dbInfoPolicy().empty()))
-	    realInfo=dynamic_cast<castor::infoPolicy::DbInfoRecallPolicy*>((*infoCandidate)->dbInfoPolicy()[0]);
-	  
-	  delete *infoCandidate;
-	  *infoCandidate=NULL;
-
-	  if (realInfo) delete realInfo;
-	  realInfo=NULL;
-
-	}
-        infoCandidate++;
-     }
-
-  
-  }
-  catch (...) {
+  } catch (...) {
     castor::dlf::Param params2[] =
       {castor::dlf::Param("message", "general exception caught")};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 7, 1, params2);
     
-    // CLEAN UP 
-
-     infoCandidate=infoCandidateTape.begin();
-     while ( infoCandidate != infoCandidateTape.end() ){
-        if (*infoCandidate){
-	  if (!((*infoCandidate)->dbInfoPolicy().empty()))
-	    realInfo=dynamic_cast<castor::infoPolicy::DbInfoRecallPolicy*>((*infoCandidate)->dbInfoPolicy()[0]);
-
-	  delete *infoCandidate;
-	  *infoCandidate=NULL;
-	  if (realInfo) delete realInfo;
-	  realInfo=NULL;
-	  delete *infoCandidate;
-	  *infoCandidate=NULL;
-	}
-        infoCandidate++;
-     }
-
   }
+  
+ 
+  eligibleTapeIds.clear();
+  infoCandidateTape.clear();
+
 }   
 
   

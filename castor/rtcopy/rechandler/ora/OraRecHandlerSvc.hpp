@@ -30,9 +30,9 @@
 // Include Files
 #include "castor/BaseSvc.hpp"
 #include "castor/db/newora/OraCommonSvc.hpp"
-#include "castor/infoPolicy/PolicyObj.hpp"
+#include "castor/infoPolicy/RecallPolicyElement.hpp"
 #include "occi.h"
-#include <vector>
+#include <list>
 #include <string>
 #include "castor/rtcopy/rechandler/IRecHandlerSvc.hpp"
 
@@ -83,13 +83,13 @@ namespace castor {
 	 * inputForRecallPolicy 
 	 */
 
-        virtual std::vector<castor::infoPolicy::PolicyObj*>  inputForRecallPolicy() throw (castor::exception::Exception);
+        virtual void  inputForRecallPolicy(std::list<castor::infoPolicy::RecallPolicyElement>& candidates) throw (castor::exception::Exception);
 
         /**
          * Resurrect Tapes
          */
 
-	virtual void resurrectTapes(std::vector<u_signed64> eligibleTapeIds) throw (castor::exception::Exception);
+	virtual void resurrectTapes(const std::list<u_signed64>& eligibleTapeIds) throw (castor::exception::Exception);
 
 
       private:

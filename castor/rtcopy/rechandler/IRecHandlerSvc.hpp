@@ -31,8 +31,8 @@
 #include "castor/Constants.hpp"
 #include "castor/stager/ICommonSvc.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/infoPolicy/PolicyObj.hpp"
-#include <vector>
+#include "castor/infoPolicy/RecallPolicyElement.hpp"
+#include <list>
 #include <string>
 #include <list>
 
@@ -60,13 +60,13 @@ namespace castor {
 	 * inputForRecallPolicy 
 	 */
 
-        virtual std::vector<castor::infoPolicy::PolicyObj*>  inputForRecallPolicy() throw (castor::exception::Exception)=0;
+        virtual void  inputForRecallPolicy(std::list<castor::infoPolicy::RecallPolicyElement>& candidates) throw (castor::exception::Exception)=0;
 
         /**
          * Resurrect Tapes
          */
 
-	virtual void resurrectTapes(std::vector<u_signed64> eligibleTapeIds) throw (castor::exception::Exception)=0;
+	virtual void resurrectTapes(const std::list<u_signed64>& eligibleTapeIds) throw (castor::exception::Exception)=0;
 
 
     }; // end of class IRecHandlerSvc

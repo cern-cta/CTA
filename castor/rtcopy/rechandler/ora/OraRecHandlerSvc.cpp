@@ -45,12 +45,11 @@
 #include "castor/exception/OutOfMemory.hpp"
 #include "occi.h"
 
-#include "castor/infoPolicy/DbInfoRecallPolicy.hpp"
-#include "castor/infoPolicy/DbInfoPolicy.hpp"
+#include "castor/infoPolicy/RecallPolicyElement.hpp"
 
 #include <iostream>
-#include <vector>
-#include <string>
+
+#include <list>
 
 
 // -----------------------------------------------------------------------
@@ -132,9 +131,9 @@ void castor::rtcopy::rechandler::ora::OraRecHandlerSvc::reset() throw() {
 // inputForRecallPolicy
 //---------------------------------------------------------------------
 
-std::vector<castor::infoPolicy::PolicyObj*>  castor::rtcopy::rechandler::ora::OraRecHandlerSvc::inputForRecallPolicy() throw (castor::exception::Exception){
+void  castor::rtcopy::rechandler::ora::OraRecHandlerSvc::inputForRecallPolicy(std::list<castor::infoPolicy::RecallPolicyElement>& candidates) throw (castor::exception::Exception){
 
-  std::vector<castor::infoPolicy::PolicyObj*> result;
+  std::list<castor::infoPolicy::PolicyObj*> result;
   try {
     // Check whether the statements are ok
     if (0 ==  m_inputForRecallPolicyStatement) {
@@ -153,21 +152,19 @@ std::vector<castor::infoPolicy::PolicyObj*>  castor::rtcopy::rechandler::ora::Or
     
     oracle::occi::ResultSet::Status status = rs->next();
     while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
-      castor::infoPolicy::DbInfoRecallPolicy* item = new castor::infoPolicy::DbInfoRecallPolicy();
-      castor::infoPolicy::PolicyObj* resultItem = new castor::infoPolicy::PolicyObj();
-
-      item->setTapeId((u_signed64)rs->getDouble(1));
-      item->setVid(rs->getString(2));
-      item->setNumFiles((u_signed64)rs->getDouble(3));
-      item->setNumBytes((u_signed64)rs->getDouble(4));
-      item->setOldest((u_signed64)rs->getDouble(5));
-      item->setPriority((u_signed64)rs->getDouble(6));     
-
-      resultItem->addDbInfoPolicy(item); 
-      result.push_back(resultItem);
+      castor::infoPolicy::RecallPolicyElement item;
+     
+      item.setTapeId((u_signed64)rs->getDouble(1));
+      item.setVid(rs->getString(2));
+      item.setNumFiles((u_signed64)rs->getDouble(3));
+      item.setNumBytes((u_signed64)rs->getDouble(4));
+      item.setOldest((u_signed64)rs->getDouble(5));
+      item.setPriority((u_signed64)rs->getDouble(6));     
+ 
+      candidates.push_back(item);
       status = rs->next();
     }
-
+    m_inputForRecallPolicyStatement->closeResultSet(rs);
 
   } catch (oracle::occi::SQLException e) {
     handleException(e);
@@ -177,14 +174,14 @@ std::vector<castor::infoPolicy::PolicyObj*>  castor::rtcopy::rechandler::ora::Or
       << std::endl << e.what();
     throw ex;
   }
-  return result;
+ 
         
 }
 //---------------------------------------------------------------------
 //    resurrectTapes 
 //---------------------------------------------------------------------
 
-void castor::rtcopy::rechandler::ora::OraRecHandlerSvc::resurrectTapes(std::vector<u_signed64> eligibleTapeIds)
+void castor::rtcopy::rechandler::ora::OraRecHandlerSvc::resurrectTapes(const std::list<u_signed64>& eligibleTapeIds)
   throw (castor::exception::Exception){
   unsigned char (*buffer)[21] = 0;
   ub2 *lens =0;
@@ -208,11 +205,15 @@ void castor::rtcopy::rechandler::ora::OraRecHandlerSvc::resurrectTapes(std::vect
       throw e;
     }
 
-    for (unsigned int i = 0; i < nb; i++) {
-      oracle::occi::Number n = (double)(eligibleTapeIds.at(i));
+    int i=0;
+    std::list<u_signed64>::const_iterator elem=eligibleTapeIds.begin();
+    while (elem != eligibleTapeIds.end()){
+      oracle::occi::Number n = (double)(*elem);
       oracle::occi::Bytes b = n.toBytes();
       b.getBytes(buffer[i],b.length());
       lens[i] = b.length();
+      elem++;
+      i++;
     }
     ub4 unused = nb;
     m_resurrectTapesStatement->setDataBufferArray

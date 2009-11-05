@@ -31,8 +31,9 @@
 #include "castor/Constants.hpp"
 #include "castor/stager/ICommonSvc.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/infoPolicy/PolicyObj.hpp"
-#include <vector>
+#include "castor/infoPolicy/MigrationPolicyElement.hpp"
+#include "castor/infoPolicy/StreamPolicyElement.hpp"
+
 #include <string>
 #include <list>
 
@@ -59,49 +60,49 @@ namespace castor {
          *  inputForMigrationPolicy
          */
 
-	virtual std::vector<castor::infoPolicy::PolicyObj*> inputForMigrationPolicy(std::string svcClassName, u_signed64* byteThres) throw (castor::exception::Exception)=0;
+      virtual void inputForMigrationPolicy(std::string svcClassName, u_signed64* byteThres,std::list<castor::infoPolicy::MigrationPolicyElement>& candidates  ) throw (castor::exception::Exception)=0;
               
         /**
          * createOrUpdateStream 
          */ 
 
-    virtual int createOrUpdateStream(std::string svcClassId, u_signed64 initialSizeToTransfer, u_signed64 volumeThreashold, u_signed64 initialSizeCeiling,bool doClone, std::vector<castor::infoPolicy::PolicyObj*>  tapeCopyIds) throw (castor::exception::Exception)=0;
+      virtual int createOrUpdateStream(std::string svcClassId, u_signed64 initialSizeToTransfer, u_signed64 volumeThreashold, u_signed64 initialSizeCeiling,bool doClone, int tapeCopyNb) throw (castor::exception::Exception)=0;
 
          /**
          * inputForStreamPolicy,
          */
 
-        virtual std::vector<castor::infoPolicy::PolicyObj*> inputForStreamPolicy(std::string svcClassName)throw (castor::exception::Exception)=0;
+      virtual void inputForStreamPolicy(std::string svcClassName,std::list<castor::infoPolicy::StreamPolicyElement>& candidates  )throw (castor::exception::Exception)=0;
 
           /**
          * startChosenStreams 
          */
 
-	virtual void startChosenStreams(std::vector<castor::infoPolicy::PolicyObj*> outputFromStreamPolicy,u_signed64 initialSize) throw (castor::exception::Exception)=0;
+	virtual void startChosenStreams(const std::list<castor::infoPolicy::StreamPolicyElement>& outputFromStreamPolicy) throw (castor::exception::Exception)=0;
 
           /**
          * stopChosenStreams 
          */
 
-	virtual void stopChosenStreams(std::vector<castor::infoPolicy::PolicyObj*> outputFromStreamPolicy) throw (castor::exception::Exception)=0;
+	virtual void stopChosenStreams(const std::list<castor::infoPolicy::StreamPolicyElement>& outputFromStreamPolicy) throw (castor::exception::Exception)=0;
 
 	/** 
 	 * Attach TapeCopies To Streams
 	 */
 	
-	virtual void  attachTapeCopiesToStreams(std::vector<castor::infoPolicy::PolicyObj*> outputFromMigrationPolicy) throw (castor::exception::Exception)=0;
+	virtual void  attachTapeCopiesToStreams(const std::list<castor::infoPolicy::MigrationPolicyElement>& outputFromMigrationPolicy) throw (castor::exception::Exception)=0;
 
       	/**
 	 * resurrect tape copies 
 	 */
 
-	virtual void resurrectTapeCopies(std::vector<castor::infoPolicy::PolicyObj*> tapeCopiesInfo) throw (castor::exception::Exception)=0;
+	virtual void resurrectTapeCopies(const std::list<castor::infoPolicy::MigrationPolicyElement>& tapeCopiesInfo) throw (castor::exception::Exception)=0;
 
       /** 
        * invalidate tapecopies
        */
 
-        virtual void invalidateTapeCopies(std::vector<castor::infoPolicy::PolicyObj*> tapeCopiesInfo) throw (castor::exception::Exception)=0;
+        virtual void invalidateTapeCopies(const std::list<castor::infoPolicy::MigrationPolicyElement>& tapeCopiesInfo) throw (castor::exception::Exception)=0;
 
       /** 
        * migHunterCleanUp
