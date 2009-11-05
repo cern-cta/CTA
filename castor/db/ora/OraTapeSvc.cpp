@@ -955,6 +955,14 @@ void castor::db::ora::OraTapeSvc::rtcpclientdCleanUp()
     (void)m_rtcpclientdCleanUpStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
+    if (1403 == e.getErrorCode()) {
+      // no data found, I should run the tapegateway instead of rtcpclientd
+      castor::exception::Internal e;
+      e.getMessage()
+	<< "rtcplientd cannot be run with such configuration, use the tapegateway instead"
+	<< std::endl;
+      throw e;
+    }
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in rtcpclientdCleanUp."
