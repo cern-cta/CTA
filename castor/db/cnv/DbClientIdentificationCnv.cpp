@@ -88,7 +88,7 @@ const std::string castor::db::cnv::DbClientIdentificationCnv::s_updateStatementS
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbClientIdentificationCnv::s_storeTypeStatementString =
-"INSERT /* ClientIdentification class */ INTO Id2Type (id, type) VALUES (:1, :2)";
+"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::cnv::DbClientIdentificationCnv::s_deleteTypeStatementString =

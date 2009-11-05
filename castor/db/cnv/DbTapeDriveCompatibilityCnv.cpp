@@ -90,7 +90,7 @@ const std::string castor::db::cnv::DbTapeDriveCompatibilityCnv::s_updateStatemen
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbTapeDriveCompatibilityCnv::s_storeTypeStatementString =
-"INSERT /* TapeDriveCompatibility class */ INTO Id2Type (id, type) VALUES (:1, :2)";
+"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::cnv::DbTapeDriveCompatibilityCnv::s_deleteTypeStatementString =

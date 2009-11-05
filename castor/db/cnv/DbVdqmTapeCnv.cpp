@@ -88,7 +88,7 @@ const std::string castor::db::cnv::DbVdqmTapeCnv::s_updateStatementString =
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbVdqmTapeCnv::s_storeTypeStatementString =
-"INSERT /* VdqmTape class */ INTO Id2Type (id, type) VALUES (:1, :2)";
+"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::cnv::DbVdqmTapeCnv::s_deleteTypeStatementString =
