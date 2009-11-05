@@ -7,7 +7,7 @@ COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.8 $ $Date: 2009/08/18 09:43:
 COMM 	Make SCSI media changer server programs.
 
 LOGDIR = /var/log/castor
-CFLAGS = -I../h $(MTCCFLAGS) -DBIN=\"$(BIN)\" -DLOGFILE=\"$(LOGDIR)/rmcd.log\"
+CFLAGS = -I../h $(MTCCFLAGS) -DBIN=\"$(BIN)\" -DLOGFILE=\"$(LOGDIR)/rmcd_legacy.log\"
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(upv,castorupv)
