@@ -149,9 +149,21 @@ int main(int argc, char *argv[]) {
         usage(progName);
         return 1;
       default:
-        break;
+        return 1;
       }
     }
+
+    argc -= Coptind;
+    argv += Coptind;
+    if (argc > 0) {
+      std::cerr << "Unknown options supplied" << std::endl;
+      return 1;
+    }
+    if (0 == nodeName) {
+      std::cerr << "Missing node name. Please use -n,--node option !" << std::endl;
+      exit(1);
+    }
+
     // Compute the admin state
     castor::monitoring::AdminStatusCodes adminState = castor::monitoring::ADMIN_NONE;
     if (force) {
@@ -165,17 +177,6 @@ int main(int argc, char *argv[]) {
       std::cerr << "Missing option : one of force, release or delete must be given"
 		<< std::endl;
       return -1;
-    }
-
-    // Parse the arguments
-    argc -= Coptind;
-    argv += Coptind;
-    if (argc != 0) {
-      std::cerr << "Error : arguments were given and will be ignored" << std::endl;
-    }
-    if (0 == nodeName) {
-      std::cerr << "Missing node name. Please use -n,--node option !" << std::endl;
-      exit(1);
     }
 
     // RmMaster Port
