@@ -469,9 +469,9 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
   // Terminate the job if the target service classes is a diskonly service class
   // which no longer has any space available.
   if ((m_resReqKill) &&
-      (requestType == OBJ_StageDiskCopyReplicaRequest) ||
-      (requestType == OBJ_StagePutRequest) ||
-      (requestType == OBJ_StageUpdateRequest)) {
+      ((requestType == OBJ_StageDiskCopyReplicaRequest) ||
+       (requestType == OBJ_StagePutRequest) ||
+       (requestType == OBJ_StageUpdateRequest))) {
     std::vector<std::string>::const_iterator it =
       std::find(m_svcClassesWithNoSpace.begin(),
 		m_svcClassesWithNoSpace.end(), svcClass);
