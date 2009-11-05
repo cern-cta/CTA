@@ -261,7 +261,7 @@ CREATE UNIQUE INDEX I_TGRequest_Stream ON TapeGatewayRequest(streamMigration);
 CREATE UNIQUE INDEX I_TGRequest_VdqmVolReqId ON TapeGatewayRequest(vdqmVolReqId);
 
 ALTER TABLE TapeGatewaySubRequest ADD CONSTRAINT FK_TGSubRequest_TC FOREIGN KEY (tapeCopy) REFERENCES TapeCopy (id);
-ALTER TABLE TapeGatewaySubRequest ADD CONSTRAINT FK_TGSubRequest_DC FOREIGN KEY (tapeCopy) REFERENCES DiskCopy (id);
+ALTER TABLE TapeGatewaySubRequest ADD CONSTRAINT FK_TGSubRequest_DC FOREIGN KEY (diskCopy) REFERENCES DiskCopy (id);
 ALTER TABLE TapeGatewaySubRequest ADD CONSTRAINT FK_TGSubRequest_TGR FOREIGN KEY (request) REFERENCES TapeGatewayRequest(id);
 ALTER TABLE TapeGatewayRequest ADD CONSTRAINT FK_TGSubRequest_SM FOREIGN KEY (streamMigration) REFERENCES Stream (id);
 ALTER TABLE TapeGatewayRequest ADD CONSTRAINT FK_TGSubRequest_TR FOREIGN KEY (tapeRecall) REFERENCES Tape (id);
@@ -544,3 +544,12 @@ END;
 CREATE INDEX I_FileSystem_Rate
     ON FileSystem(fileSystemRate(readRate, writeRate,
 	          nbReadStreams,nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams));
+
+
+/*************************************************/
+/* Entry for tapegateway-rtcpclientd switch-over */
+/*************************************************/
+
+INSERT INTO castorconfig (class, key, value, description) VALUES ('tape', 'daemonName', 'rtcpclientd','name of the daemon use to interface the tape system');
+
+

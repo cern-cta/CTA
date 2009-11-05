@@ -459,5 +459,10 @@ INSERT INTO Type2Obj (type, object) VALUES (182, 'DumpNotification');
 INSERT INTO Type2Obj (type, object) VALUES (183, 'PingNotification');
 INSERT INTO Type2Obj (type, object) VALUES (184, 'DumpParameters');
 INSERT INTO Type2Obj (type, object) VALUES (185, 'DumpParametersRequest');
+INSERT INTO Type2Obj (type, object) VALUES (186, 'RecallPolicyElement');
+INSERT INTO Type2Obj (type, object) VALUES (187, 'MigrationPolicyElement');
+INSERT INTO Type2Obj (type, object) VALUES (188, 'StreamPolicyElement');
+INSERT INTO Type2Obj (type, object) VALUES (189, 'RetryPolicyElement');
+INSERT INTO Type2Obj (type, object) VALUES (190, 'VdqmTapeGatewayRequest');
 COMMIT;
 
