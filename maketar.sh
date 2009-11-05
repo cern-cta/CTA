@@ -60,7 +60,7 @@ export PATH
 curdir=`pwd`
 cd ..
 [ -d "castor-${version}" ] && rm -rf castor-${version}
-cp -Lr $curdir castor-${version}
+rsync -aC --exclude '.__afs*' $curdir/ castor-${version}
 rm -rf castor-${version}/xroot
 rm -rf castor-${version}/monitoring/castor-mon-web
 cd castor-${version}
@@ -300,6 +300,5 @@ cd ..
 
 echo "### INFO ### Creating tarball"
 
-tar -zcf castor-${fullversion}.tar.gz castor-${version}
-
-cd castor-${version}
+tar -zcf castor-${fullversion}.tar.gz --exclude '.__afs*' castor-${version}
+rm -rf castor-${version}
