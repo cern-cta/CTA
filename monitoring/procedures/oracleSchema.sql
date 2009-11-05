@@ -104,6 +104,10 @@ CREATE TABLE ClientVersionStats (timestamp DATE CONSTRAINT NN_ClientVersionStats
 CREATE TABLE TapeMountStats (timestamp DATE CONSTRAINT NN_TapeMountStats_ts NOT NULL, interval NUMBER, direction VARCHAR2(20), nbMounts NUMBER, nbFiles NUMBER, totalFileSize NUMBER, avgRunTime NUMBER(*,3), nbFilesPerMount NUMBER(*,0), failures NUMBER)
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
+/* SQL statement for table Top10Errors */
+CREATE TABLE Top10Errors (timestamp DATE CONSTRAINT NN_TopTenErrors_ts NOT NULL, interval NUMBER, daemon VARCHAR2(255), nbErrors NUMBER, errorMessage VARCHAR2(512))
+  PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
+
 /* SQL statement for temporary table CacheEfficiencyHelper */
 CREATE GLOBAL TEMPORARY TABLE CacheEfficiencyHelper (reqid CHAR(36))
   ON COMMIT DELETE ROWS;
