@@ -695,9 +695,9 @@ CREATE OR REPLACE PROCEDURE statsTop10Errors (now IN DATE, interval IN NUMBER) A
 BEGIN
   -- Stats table: Top10Errors
   -- Frequency: 5 minutes
-  INSERT INTO Top10Errors (daemon, nbErrors, errorMessage)
+  INSERT INTO Top10Errors (timestamp, interval, daemon, nbErrors, errorMessage)
     -- Gather data
-    (SELECT facility, nbErrors, message FROM (
+    (SELECT now - 5/1440, interval, facility, nbErrors, message FROM (
       -- For each daemon list the top 10 errors + the total of errors for that
       -- daemon
       SELECT facility, nbErrors, message,
