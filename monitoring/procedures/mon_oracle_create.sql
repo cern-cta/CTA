@@ -107,6 +107,10 @@ CREATE TABLE ClientVersionStats (timestamp DATE CONSTRAINT NN_ClientVersionStats
 CREATE TABLE TapeMountStats (timestamp DATE CONSTRAINT NN_TapeMountStats_ts NOT NULL, interval NUMBER, direction VARCHAR2(20), nbMounts NUMBER, nbFiles NUMBER, totalFileSize NUMBER, avgRunTime NUMBER(*,3), nbFilesPerMount NUMBER(*,0), failures NUMBER)
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
+/* SQL statement for table Top10Errors */
+CREATE TABLE Top10Errors (timestamp DATE CONSTRAINT NN_TopTenErrors_ts NOT NULL, interval NUMBER, daemon VARCHAR2(255), nbErrors NUMBER, errorMessage VARCHAR2(512))
+  PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
+
 /* SQL statement for temporary table CacheEfficiencyHelper */
 CREATE GLOBAL TEMPORARY TABLE CacheEfficiencyHelper (reqid CHAR(36))
   ON COMMIT DELETE ROWS;
@@ -345,7 +349,7 @@ AS
  *****************************************************************************/
 
 /* SQL statement to populate the intial schema version */
-UPDATE UpgradeLog SET schemaVersion = '2_1_9_0';
+UPDATE UpgradeLog SET schemaVersion = '2_1_9_3';
 
 /***** EXISTING/OLD MONITORING *****/
 
@@ -1007,6 +1011,40 @@ BEGIN
 END;
 /
 
+/* PL/SQL method implementing statsTop10Errors
+ *
+ * Provides statistics on top 10 errors broken down by daemon
+ */
+CREATE OR REPLACE PROCEDURE statsTop10Errors (now IN DATE, interval IN NUMBER) AS
+BEGIN
+  -- Stats table: Top10Errors
+  -- Frequency: 5 minutes
+  INSERT INTO Top10Errors (daemon, nbErrors, errorMessage)
+    -- Gather data
+    (SELECT facility, nbErrors, message FROM (
+      -- For each daemon list the top 10 errors + the total of errors for that
+      -- daemon
+      SELECT facility, nbErrors, message,
+             RANK() OVER (PARTITION BY facility ORDER BY facility DESC,
+                          nbErrors DESC) rank
+        FROM (
+          SELECT facilities.fac_name facility, 
+                 nvl(msgtexts.msg_text, '-') message, count(*) nbErrors
+            FROM &dlfschema..dlf_messages   messages,
+                 &dlfschema..dlf_facilities facilities,
+                 &dlfschema..dlf_msg_texts  msgtexts
+           WHERE messages.facility = facilities.fac_no
+             AND (messages.msg_no   = msgtexts.msg_no
+             AND  messages.facility = msgtexts.fac_no)
+             AND messages.severity <= 3
+             AND messages.timestamp >  now - 65/1440
+             AND messages.timestamp <= now - 5/1440
+           GROUP BY GROUPING SETS (facilities.fac_name, msgtexts.msg_text),
+                                  (facilities.fac_name)))
+       WHERE rank < 12);
+END;
+/
+
 
 /***** NEW MONITORING *****/
 
@@ -1458,6 +1496,7 @@ BEGIN
                             statsProcessingTime(now, interval);
                             statsClientVersion(now, interval);
                             statsTapeMounts(now, interval);
+                            statsTop10Errors(now, interval);
                           END;',
       JOB_CLASS       => 'DLF_JOB_CLASS',
       START_DATE      => SYSDATE,
