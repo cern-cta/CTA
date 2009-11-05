@@ -32,7 +32,7 @@
 #include "castor/io/ServerSocket.hpp"
 #include "castor/server/BaseDbThread.hpp"
 
-#include "castor/tape/tapegateway/ITapeGatewaySvc.hpp"
+#include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
 
 

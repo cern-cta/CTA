@@ -38,13 +38,13 @@
 
 #include "castor/stager/TapePool.hpp"
 
-#include "castor/tape/tapegateway/VmgrTapeGatewayHelper.hpp"
+#include "castor/tape/tapegateway/daemon/VmgrTapeGatewayHelper.hpp"
 
 
-castor::stager::Tape* castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream(castor::stager::Stream& streamToResolve, int& startFseq) throw (castor::exception::Exception){
+void castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream(const castor::stager::Stream& streamToResolve, const castor::stager::TapePool& tapepool,int& startFseq,castor:: stager::Tape& tapeToUse ) throw (castor::exception::Exception){
 
-  castor::stager::Tape* tape=NULL;
-  if ( streamToResolve.tapePool() == NULL || streamToResolve.tapePool()->name().empty() || streamToResolve.initialSizeToTransfer() == 0) {
+  
+  if ( tapepool.name().empty() || streamToResolve.initialSizeToTransfer()==0) {
     castor::exception::Exception ex(EINVAL);
     ex.getMessage()
     << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream"
@@ -55,7 +55,7 @@ castor::stager::Tape* castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeF
 
  
   // call to vmgr
-  const char* tpName = streamToResolve.tapePool()->name().c_str();
+  const char* tpName = tapepool.name().c_str();
   u_signed64 estimatedFreeSpace;
   char vid[ CA_MAXVIDLEN + 1];
   *vid = '\0';
@@ -96,17 +96,15 @@ castor::stager::Tape* castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeF
 
   }
 
-  tape = new castor::stager::Tape();
-  tape->setVid(vid);
-  tape->setSide(side);
-  tape->setTpmode(1); // to write
+ 
+  tapeToUse.setVid(vid);
+  tapeToUse.setSide(side);
+  tapeToUse.setTpmode(1); // to write
   
   //Check that the returned start fseq is OK.
     
   if (label == NULL) {
-    resetBusyTape(*tape);
-    delete tape;
-    tape=NULL;
+    resetBusyTape(tapeToUse);
     castor::exception::Exception ex(EINVAL);
     ex.getMessage()
       << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream"
@@ -144,9 +142,8 @@ castor::stager::Tape* castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeF
 
     if (rc<0) {
       
-      resetBusyTape(*tape);
-      delete tape;
-      tape=NULL;
+      resetBusyTape(tapeToUse);
+      
       castor::exception::Exception ex(serrno);
       ex.getMessage()
 	<< "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream"
@@ -154,10 +151,7 @@ castor::stager::Tape* castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeF
       throw ex;
 
     }
-    
-    delete tape;
-    tape=NULL;
-    
+      
     castor::exception::Exception ex(ERTMAXERR);
     ex.getMessage()
       << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream"
@@ -165,12 +159,13 @@ castor::stager::Tape* castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeF
     throw ex;
   }
 
-  return tape;
+  
 }
 
 
 
-void castor::tape::tapegateway::VmgrTapeGatewayHelper::getDataFromVmgr(castor::stager::Tape& tape) throw (castor::exception::Exception){
+void castor::tape::tapegateway::VmgrTapeGatewayHelper::getDataFromVmgr(castor::stager::Tape& tape) 
+  throw (castor::exception::Exception){
 
   struct vmgr_tape_info vmgrTapeInfo;
   memset( &vmgrTapeInfo, 0, sizeof(struct vmgr_tape_info));
@@ -192,7 +187,7 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::getDataFromVmgr(castor::s
 
   while(1){
     serrno=0;
-    int rc = vmgr_querytape((char*)tape.vid().c_str(),tape.side(),&vmgrTapeInfo,dgnBuffer);
+    int rc = vmgr_querytape((char*)tape.vid().c_str(),tape.side(),&vmgrTapeInfo,dgnBuffer); 
     save_serrno = serrno;
 
     // check the status
@@ -239,13 +234,19 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::getDataFromVmgr(castor::s
 
 }
 
-int castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeStatusInVmgr(castor::stager::Tape& tape) throw (castor::exception::Exception) {
+void castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeStatusInVmgr(const castor::stager::Tape& tape, int& tapeStatus) throw (castor::exception::Exception) {
 
   struct vmgr_tape_info vmgrTapeInfo;
   memset(&vmgrTapeInfo,0,sizeof(vmgr_tape_info));
   int save_serrno = 0;
 
-  if ( tape.vid().empty()) return -1; 
+  if ( tape.vid().empty()) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage()
+    << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeStatusInVmgr"
+    << " empty vid";
+    throw ex;
+  }
 
 
   const char* vid=tape.vid().c_str();
@@ -276,7 +277,9 @@ int castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeStatusInVmgr(castor
 	throw ex;
 
       }
-      return vmgrTapeInfo.status; // break and return the status 
+      tapeStatus=vmgrTapeInfo.status;
+      return; // break and return the status
+      
       
     } else {
       // go on looping
@@ -296,7 +299,7 @@ int castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeStatusInVmgr(castor
 }
 
 
-void  castor::tape::tapegateway::VmgrTapeGatewayHelper::resetBusyTape(castor::stager::Tape& tape) throw (castor::exception::Exception){
+void  castor::tape::tapegateway::VmgrTapeGatewayHelper::resetBusyTape(const castor::stager::Tape& tape) throw (castor::exception::Exception){
   
   // in case of error we free the busy tape to be picked by someone else
 
@@ -304,7 +307,9 @@ void  castor::tape::tapegateway::VmgrTapeGatewayHelper::resetBusyTape(castor::st
 
   // Make sure we don't override some important status already set
 
-  int status=getTapeStatusInVmgr(tape);
+  int status=0;
+  getTapeStatusInVmgr(tape,status);
+
   if ( (status & TAPE_BUSY) == 0 ) return;
   status = status & ~TAPE_BUSY;
   serrno=0;
@@ -321,7 +326,7 @@ void  castor::tape::tapegateway::VmgrTapeGatewayHelper::resetBusyTape(castor::st
 }
 
 
-void castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(castor::tape::tapegateway::FileMigratedNotification& file, std::string vid ) throw (castor::exception::Exception){
+void castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(const castor::tape::tapegateway::FileMigratedNotification& file, const std::string& vid ) throw (castor::exception::Exception){
 
   int save_serrno=0;
 
@@ -430,12 +435,13 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr(castor::
 
 }
 
-void castor::tape::tapegateway::VmgrTapeGatewayHelper::setTapeAsFull(castor::stager::Tape& tape) throw (castor::exception::Exception){
+void castor::tape::tapegateway::VmgrTapeGatewayHelper::setTapeAsFull(const castor::stager::Tape& tape) throw (castor::exception::Exception){
   // called if FileErrorReport ENOSPC
 
-  int status = getTapeStatusInVmgr(tape);
+  int status=0;
+  getTapeStatusInVmgr(tape, status);
 
-  if ( (status & (TAPE_FULL|DISABLED|EXPORTED|TAPE_RDONLY|ARCHIVED)) == 0 ) {
+  if ( (status & (DISABLED|EXPORTED|TAPE_RDONLY|ARCHIVED)) == 0 ) {
     status = TAPE_FULL;
     serrno=0;
     int rc= vmgr_modifytape(tape.vid().c_str(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, status); 

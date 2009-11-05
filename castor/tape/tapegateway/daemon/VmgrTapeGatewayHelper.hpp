@@ -32,6 +32,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/Tape.hpp"
+#include "castor/stager/TapePool.hpp"
 
 #include "castor/tape/tapegateway/FileMigratedNotification.hpp"
 
@@ -45,13 +46,13 @@ namespace castor {
       class VmgrTapeGatewayHelper {
         public:
 	
-	castor::stager::Tape* getTapeForStream(castor::stager::Stream& streamToResolve, int& startFseq) throw (castor::exception::Exception);
+	void getTapeForStream(const castor::stager::Stream& streamToResolve, const castor::stager::TapePool& tapepool, int& startFseq, castor::stager::Tape& tapeToUse ) throw (castor::exception::Exception);
 	
 	void getDataFromVmgr(castor::stager::Tape& tape) throw (castor::exception::Exception);
-	int getTapeStatusInVmgr(castor::stager::Tape& tape) throw (castor::exception::Exception);	
-	void resetBusyTape(castor::stager::Tape& tape) throw (castor::exception::Exception);
-	void updateTapeInVmgr(castor::tape::tapegateway::FileMigratedNotification& file, std::string vid) throw (castor::exception::Exception);
-	void setTapeAsFull(castor::stager::Tape& tape) throw (castor::exception::Exception);
+	void getTapeStatusInVmgr(const castor::stager::Tape& tape,int& tapeStatus) throw (castor::exception::Exception);	
+	void resetBusyTape(const castor::stager::Tape& tape) throw (castor::exception::Exception);
+	void updateTapeInVmgr(const castor::tape::tapegateway::FileMigratedNotification& file,const std::string& vid) throw (castor::exception::Exception);
+	void setTapeAsFull(const castor::stager::Tape& tape) throw (castor::exception::Exception);
       };
     
     } // end of namespace tapegateway

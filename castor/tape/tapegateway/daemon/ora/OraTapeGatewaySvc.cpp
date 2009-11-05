@@ -28,7 +28,7 @@
 
 #include <serrno.h>
 #include <string>
-#include <vector>
+#include <list>
 
 #include "errno.h"
 #include "occi.h"
@@ -44,17 +44,20 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/OutOfMemory.hpp"
 
+#include "castor/infoPolicy/RetryPolicyElement.hpp"
+
 #include "castor/stager/StreamStatusCodes.hpp"
 #include "castor/stager/TapeCopyStatusCodes.hpp"
 #include "castor/stager/TapePool.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
 
+#include "castor/tape/tapegateway/daemon/DlfCodes.hpp"
+#include "castor/tape/tapegateway/daemon/NsTapeGatewayHelper.hpp"
+#include "castor/tape/tapegateway/daemon/ora/OraTapeGatewaySvc.hpp"
+#include "castor/tape/tapegateway/daemon/RmMasterTapeGatewayHelper.hpp"
+
 #include "castor/tape/tapegateway/ClientType.hpp"
-#include "castor/tape/tapegateway/DlfCodes.hpp"
-#include "castor/tape/tapegateway/NsTapeGatewayHelper.hpp"
-#include "castor/tape/tapegateway/ora/OraTapeGatewaySvc.hpp"
 #include "castor/tape/tapegateway/PositionCommandCode.hpp"
-#include "castor/tape/tapegateway/RmMasterTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/VolumeMode.hpp"
 
 
@@ -71,14 +74,13 @@ static castor::SvcFactory<castor::tape::tapegateway::ora::OraTapeGatewaySvc>* s_
 
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getStreamsWithoutTapesStatementString= "BEGIN tg_getStreamsWithoutTapes(:1);END;";
 
-
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_attachTapesToStreamsStatementString="BEGIN tg_attachTapesToStreams(:1,:2,:3);END;";
 
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getTapesWithoutDriveReqsStatementString="BEGIN tg_getTapesWithoutDriveReqs(:1);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getTapeWithoutDriveReqStatementString="BEGIN tg_getTapeWithoutDriveReq(:1,:2,:3,:4);END;";
 
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_attachDriveReqsToTapesStatementString="BEGIN tg_attachDriveReqsToTapes(:1,:2,:3,:4,:5);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_attachDriveReqToTapeStatementString="BEGIN tg_attachDriveReqToTape(:1,:2,:3,:4,:5);END;";
 
 
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getTapesWithDriveReqsStatementString="BEGIN tg_getTapesWithDriveReqs(:1,:2);END;";
@@ -90,12 +92,12 @@ const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_restartLo
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getFileToMigrateStatementString="BEGIN tg_getFileToMigrate(:1,:2,:3,:4);END;";
   
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_setFileMigratedStatementString="BEGIN tg_setFileMigrated(:1,:2,:3,:4,:5);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_setFileMigratedStatementString="BEGIN tg_setFileMigrated(:1,:2,:3,:4,:5,:6);END;";
 
 
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getFileToRecallStatementString="BEGIN tg_getFileToRecall(:1,:2,:3,:4);END;";
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_setFileRecalledStatementString="BEGIN tg_setFileRecalled(:1,:2,:3,:4,:5);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_setFileRecalledStatementString="BEGIN tg_setFileRecalled(:1,:2,:3,:4,:5,:6);END;";
 
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getFailedMigrationsStatementString="BEGIN tg_getFailedMigrations(:1);END;";
  
@@ -105,7 +107,7 @@ const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getFailed
    
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_setRecRetryResultStatementString="BEGIN tg_setRecRetryResult(:1,:2);END;";
   
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getRepackVidAndFileInfoStatementString="BEGIN tg_getRepackVidAndFileInfo(:1,:2,:3,:4,:5,:6,:7,:8);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getRepackVidAndFileInfoStatementString="BEGIN tg_getRepackVidAndFileInfo(:1,:2,:3,:4,:5,:6,:7,:8,:9,:10);END;";
 
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_startTapeSessionStatementString="BEGIN tg_startTapeSession(:1,:2,:3,:4,:5,:6);END;";
 
@@ -119,6 +121,9 @@ const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_invalidat
 
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getTapeToReleaseStatementString="BEGIN tg_getTapeToRelease(:1,:2,:3);END;";
 
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_checkConfigurationStatementString ="BEGIN tg_checkConfiguration();END;";
+
+
 //------------------------------------------------------------------------------
 // OraTapeGatewaySvc
 //------------------------------------------------------------------------------
@@ -127,8 +132,8 @@ castor::tape::tapegateway::ora::OraTapeGatewaySvc::OraTapeGatewaySvc(const std::
   OraCommonSvc(name),
   m_getStreamsWithoutTapesStatement(0),
   m_attachTapesToStreamsStatement(0),
-  m_getTapesWithoutDriveReqsStatement(0),
-  m_attachDriveReqsToTapesStatement(0),
+  m_getTapeWithoutDriveReqStatement(0),
+  m_attachDriveReqToTapeStatement(0),
   m_getTapesWithDriveReqsStatement(0),
   m_restartLostReqsStatement(0),
   m_getFileToMigrateStatement(0),
@@ -145,7 +150,8 @@ castor::tape::tapegateway::ora::OraTapeGatewaySvc::OraTapeGatewaySvc(const std::
   m_getSegmentInfoStatement(0),
   m_failFileTransferStatement(0),
   m_invalidateFileStatement(0),
-  m_getTapeToReleaseStatement(0)
+  m_getTapeToReleaseStatement(0),
+  m_checkConfigurationStatement(0)
 {
 }
 
@@ -181,8 +187,8 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
 
     if ( m_getStreamsWithoutTapesStatement ) deleteStatement(m_getStreamsWithoutTapesStatement);
     if ( m_attachTapesToStreamsStatement ) deleteStatement(m_attachTapesToStreamsStatement);
-    if ( m_getTapesWithoutDriveReqsStatement ) deleteStatement(m_getTapesWithoutDriveReqsStatement); 
-    if ( m_attachDriveReqsToTapesStatement ) deleteStatement(m_attachDriveReqsToTapesStatement);
+    if ( m_getTapeWithoutDriveReqStatement ) deleteStatement(m_getTapeWithoutDriveReqStatement); 
+    if ( m_attachDriveReqToTapeStatement ) deleteStatement(m_attachDriveReqToTapeStatement);
     if ( m_getTapesWithDriveReqsStatement ) deleteStatement(m_getTapesWithDriveReqsStatement);
     if ( m_restartLostReqsStatement ) deleteStatement( m_restartLostReqsStatement);
     if ( m_getFileToMigrateStatement ) deleteStatement( m_getFileToMigrateStatement);
@@ -200,7 +206,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
     if ( m_failFileTransferStatement ) deleteStatement(m_failFileTransferStatement);
     if ( m_invalidateFileStatement ) deleteStatement(m_invalidateFileStatement);
     if ( m_getTapeToReleaseStatement ) deleteStatement(m_getTapeToReleaseStatement);
-
+    if ( m_checkConfigurationStatement ) deleteStatement(m_checkConfigurationStatement);
   } catch (oracle::occi::SQLException e) {};
 
   // Now reset all pointers to 0
@@ -208,8 +214,8 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
 
   m_getStreamsWithoutTapesStatement= 0; 
   m_attachTapesToStreamsStatement = 0;
-  m_getTapesWithoutDriveReqsStatement= 0;
-  m_attachDriveReqsToTapesStatement= 0;
+  m_getTapeWithoutDriveReqStatement= 0;
+  m_attachDriveReqToTapeStatement= 0;
   m_getTapesWithDriveReqsStatement = 0;
   m_restartLostReqsStatement = 0;
   m_getFileToMigrateStatement= 0;
@@ -227,17 +233,16 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
   m_failFileTransferStatement= 0;
   m_invalidateFileStatement = 0;
   m_getTapeToReleaseStatement=0;
-
+  m_checkConfigurationStatement=0;
 }
 
 //----------------------------------------------------------------------------
 // getStreamsWithoutTapes
 //----------------------------------------------------------------------------
 
-std::vector<castor::stager::Stream*> castor::tape::tapegateway::ora::OraTapeGatewaySvc::getStreamsWithoutTapes()
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getStreamsWithoutTapes(std::list<castor::stager::Stream>& streams,std::list<castor::stager::TapePool>& tapepools )
   throw (castor::exception::Exception){
 
-  std::vector<castor::stager::Stream*> result;
   try {
     // Check whether the statements are ok
     if (0 == m_getStreamsWithoutTapesStatement) {
@@ -253,30 +258,27 @@ std::vector<castor::stager::Stream*> castor::tape::tapegateway::ora::OraTapeGate
 
     if (0 == nb) {
       cnvSvc()->commit(); 
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "stream to resolve: no stream found";
-      throw ex;
+      return;
     }
 
     oracle::occi::ResultSet *rs =
       m_getStreamsWithoutTapesStatement->getCursor(1);
 
     // Run through the cursor
-    oracle::occi::ResultSet::Status status = rs->next();
-    while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
-      castor::stager::Stream* item =
-        new castor::stager::Stream();
-      item->setId((u_signed64)rs->getDouble(1));
-      item->setInitialSizeToTransfer((u_signed64)rs->getDouble(2));
-      item->setStatus((castor::stager::StreamStatusCodes)rs->getInt(3));
-      castor::stager::TapePool* tp=new castor::stager::TapePool();
-      tp->setId((u_signed64)rs->getDouble(4));
-      tp->setName(rs->getString(5));
-      item->setTapePool(tp);
-      result.push_back(item);
-      status = rs->next();
+   
+    while( rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
+      castor::stager::Stream item;
+      item.setId((u_signed64)rs->getDouble(1));
+      item.setInitialSizeToTransfer((u_signed64)rs->getDouble(2));
+      item.setStatus((castor::stager::StreamStatusCodes)rs->getInt(3));
+      streams.push_back(item);
+
+      castor::stager::TapePool tp;
+      tp.setId((u_signed64)rs->getDouble(4));
+      tp.setName(rs->getString(5));
+      tapepools.push_back(tp);
     }
+
     m_getStreamsWithoutTapesStatement->closeResultSet(rs);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
@@ -286,15 +288,23 @@ std::vector<castor::stager::Stream*> castor::tape::tapegateway::ora::OraTapeGate
       << std::endl << e.what();
     throw ex;
   }
-  return result;
+
 }
 
 //----------------------------------------------------------------------------
 // attachTapesToStreams
 //----------------------------------------------------------------------------
 
-void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachTapesToStreams(std::vector<u_signed64> strIds, std::vector<std::string> vids, std::vector<int> fseqs)
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachTapesToStreams(const std::list<u_signed64>& strIds,const std::list<std::string>& vids, const std::list<int>& fseqs)
           throw (castor::exception::Exception){
+  
+  unsigned char (*bufferFseqs)[21]=NULL;
+  ub2 *lensFseqs=NULL;
+  unsigned char (*bufferStrIds)[21]=NULL;
+  ub2 *lensStrIds=NULL;
+  char * bufferVids=NULL;
+  ub2 *lensVids=NULL;
+    
 
   try {
 
@@ -312,115 +322,132 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachTapesToStreams(std
 
     // input
 
-     ub4 nb=strIds.size();
+    ub4 nb=strIds.size();
 
-     // fseq
-     unsigned char (*bufferFseqs)[21]=(unsigned char(*)[21]) calloc((nb) * 21, sizeof(unsigned char));
-     ub2 *lensFseqs=(ub2 *)malloc (sizeof(ub2)*nb);
+    // fseq
+    bufferFseqs=(unsigned char(*)[21]) calloc((nb) * 21, sizeof(unsigned char));
+    lensFseqs=(ub2 *)malloc (sizeof(ub2)*nb);
 
-     if ( lensFseqs  == 0 || bufferFseqs == 0 ) {
-       if (lensFseqs != 0 ) free(lensFseqs);
-       if (bufferFseqs != 0 ) free(bufferFseqs);
-       castor::exception::OutOfMemory e; 
-       throw e;
-     }
+    if ( lensFseqs  == 0 || bufferFseqs == 0 ) {
+      if (lensFseqs != 0 ) free(lensFseqs);
+      if (bufferFseqs != 0 ) free(bufferFseqs);
+      castor::exception::OutOfMemory e; 
+      throw e;
+    }
      
-     // strId
+    // strId
 
-     unsigned char (*bufferStrIds)[21]=(unsigned char(*)[21]) calloc((nb) * 21, sizeof(unsigned char));
-     ub2 *lensStrIds=(ub2 *)malloc (sizeof(ub2)*nb);
-     if ( lensStrIds  == 0 || bufferStrIds == 0 ) {
-       if (lensStrIds != 0 ) free(lensStrIds);
-       if (bufferStrIds != 0) free(bufferStrIds);
-       if (lensFseqs != 0 ) free(lensFseqs);
-       if (bufferFseqs != 0 ) free(bufferFseqs);
-       castor::exception::OutOfMemory e; 
-       throw e;
-     }
+    bufferStrIds =(unsigned char(*)[21]) calloc((nb) * 21, sizeof(unsigned char));
+    lensStrIds=(ub2 *)malloc (sizeof(ub2)*nb);
+    if ( lensStrIds  == 0 || bufferStrIds == 0 ) {
+      if (lensStrIds != 0 ) free(lensStrIds);
+      if (bufferStrIds != 0) free(bufferStrIds);
+      if (lensFseqs != 0 ) free(lensFseqs);
+      if (bufferFseqs != 0 ) free(bufferFseqs);
+      castor::exception::OutOfMemory e; 
+      throw e;
+    }
 
-     // vids
+    // vids
+    
 
-     char * bufferVids=NULL;
-     ub2 *lensVids=NULL;
-     
+    // get the maximum cell size
+    unsigned int maxLen=0;
+    unsigned int numTapes=0;
+    for (std::list<std::string>::const_iterator vid = vids.begin();
+	 vid != vids.end();
+	 vid++,numTapes++){
+      maxLen=maxLen > (*vid).length()?maxLen:(*vid).length();
+    
+    }
 
-     // get the maximum cell size
-     unsigned int maxLen=0;
-     unsigned int numTapes=0;
-     for (unsigned int i=0;i<vids.size();i++){
-	maxLen=maxLen > vids.at(i).length()?maxLen:vids.at(i).length();
-	numTapes++;
-     }
+    if (maxLen == 0) {
+      if (lensStrIds != 0 ) free(lensStrIds);
+      if (bufferStrIds != 0) free(bufferStrIds);
+      if (lensFseqs != 0 ) free(lensFseqs);
+      if (bufferFseqs != 0 ) free(bufferFseqs);
+      castor::exception::Internal ex;
+      ex.getMessage() << "invalid VID in attachTapesToStreams"
+		      << std::endl;
+      throw ex;
 
-     if (maxLen == 0) {
-       if (lensStrIds != 0 ) free(lensStrIds);
-       if (bufferStrIds != 0) free(bufferStrIds);
-       if (lensFseqs != 0 ) free(lensFseqs);
-       if (bufferFseqs != 0 ) free(bufferFseqs);
-       castor::exception::Internal ex;
-       ex.getMessage() << "invalid VID in attachTapesToStreams"
-		       << std::endl;
-       throw ex;
-
-     }
-     
-
-     unsigned int bufferCellSize = maxLen * sizeof(char);
-     lensVids = (ub2*) malloc(maxLen * sizeof(ub2));
-     bufferVids =
-	(char*) malloc(numTapes * bufferCellSize);
-
-     if ( lensVids  == 0 || bufferVids == 0 ) {
-       if (lensStrIds != 0 ) free(lensStrIds);
-       if (bufferStrIds != 0) free(bufferStrIds);
-       if (lensVids != 0 ) free(lensVids);
-       if (bufferVids != 0) free(bufferVids);
-       if (lensFseqs != 0 ) free(lensFseqs);
-       if (bufferFseqs != 0 ) free(bufferFseqs);
-       castor::exception::OutOfMemory e; 
-       throw e;
-     }
-
-
-
-     // DataBuffer with all the vid (one for each subrequest)
+    }
      
 
-     // Fill in the structure
+    unsigned int bufferCellSize = maxLen * sizeof(char);
+    lensVids = (ub2*) malloc(maxLen * sizeof(ub2));
+    bufferVids =
+      (char*) malloc(numTapes * bufferCellSize);
 
-     for (unsigned int i=0;i<vids.size();i++){
-       // fseq
+    if ( lensVids  == 0 || bufferVids == 0 ) {
+      if (lensStrIds != 0 ) free(lensStrIds);
+      if (bufferStrIds != 0) free(bufferStrIds);
+      if (lensVids != 0 ) free(lensVids);
+      if (bufferVids != 0) free(bufferVids);
+      if (lensFseqs != 0 ) free(lensFseqs);
+      if (bufferFseqs != 0 ) free(bufferFseqs);
+      castor::exception::OutOfMemory e; 
+      throw e;
+    }
 
-       oracle::occi::Number n = (double)(fseqs[i]);
-       oracle::occi::Bytes b = n.toBytes();
-       b.getBytes(bufferFseqs[i],b.length());
-       lensFseqs[i] = b.length();
 
-       // stream Ids
+
+    // DataBuffer with all the vid (one for each subrequest)
+     
+
+    // Fill in the structure
+    
+    std::list<std::string>::const_iterator vid= NULL;
+    std::list<u_signed64>::const_iterator strId = NULL;
+    std::list<int>::const_iterator  fseq = NULL;
+    int i=0;
+
+    for(vid = vids.begin(),
+	  strId = strIds.begin(),
+	  fseq = fseqs.begin();
+	strId != strIds.end();
+	vid++,strId++,fseq++,i++ ){
+      // fseq
+      
+      oracle::occi::Number n = (double)(*fseq);
+      oracle::occi::Bytes b = n.toBytes();
+      b.getBytes(bufferFseqs[i],b.length());
+      lensFseqs[i] = b.length();
        
-       n = (double)(strIds[i]);
-       b = n.toBytes();
-       b.getBytes(bufferStrIds[i],b.length());
-       lensStrIds[i] = b.length();
-        
-       // vids
+      // stream Ids
        
-       lensVids[i]= vids[i].length();
-       strncpy(bufferVids+(bufferCellSize*i),vids[i].c_str(),lensVids[i]);
+      n = (double)(*strId);
+      b = n.toBytes();
+      b.getBytes(bufferStrIds[i],b.length());
+      lensStrIds[i] = b.length();
+      
+      // vids
+       
+      lensVids[i]= (*vid).length();
+      strncpy(bufferVids+(bufferCellSize*i),(*vid).c_str(),lensVids[i]);
+       
 	
-     }
+    }
 
-     ub4 unused=nb;
-     m_attachTapesToStreamsStatement->setDataBufferArray(1,bufferFseqs, oracle::occi::OCCI_SQLT_NUM, nb, &unused, 21, lensFseqs);
-     m_attachTapesToStreamsStatement->setDataBufferArray(2,bufferStrIds, oracle::occi::OCCI_SQLT_NUM, nb, &unused, 21, lensStrIds);
-     ub4 len=nb;
-     m_attachTapesToStreamsStatement->setDataBufferArray(3, bufferVids, oracle::occi::OCCI_SQLT_CHR,len, &len, maxLen, lensVids);
+    ub4 unused=nb;
+    m_attachTapesToStreamsStatement->setDataBufferArray(1,bufferFseqs, oracle::occi::OCCI_SQLT_NUM, nb, &unused, 21, lensFseqs);
+    m_attachTapesToStreamsStatement->setDataBufferArray(2,bufferStrIds, oracle::occi::OCCI_SQLT_NUM, nb, &unused, 21, lensStrIds);
+    ub4 len=nb;
+    m_attachTapesToStreamsStatement->setDataBufferArray(3, bufferVids, oracle::occi::OCCI_SQLT_CHR,len, &len, maxLen, lensVids);
 
-     // execute the statement and see whether we found something
+    // execute the statement and see whether we found something
  
-     m_attachTapesToStreamsStatement->executeUpdate();
+    m_attachTapesToStreamsStatement->executeUpdate();
 
   } catch (oracle::occi::SQLException e) {
+
+    if (lensStrIds != 0 ) free(lensStrIds);
+    if (bufferStrIds != 0) free(bufferStrIds);
+    if (lensVids != 0 ) free(lensVids);
+    if (bufferVids != 0) free(bufferVids);
+    if (lensFseqs != 0 ) free(lensFseqs);
+    if (bufferFseqs != 0 ) free(bufferFseqs);
+
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
@@ -428,238 +455,104 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachTapesToStreams(std
       << std::endl << e.what();
     throw ex;
   }
+
+  if (lensStrIds != 0 ) free(lensStrIds);
+  if (bufferStrIds != 0) free(bufferStrIds);
+  if (lensVids != 0 ) free(lensVids);
+  if (bufferVids != 0) free(bufferVids);
+  if (lensFseqs != 0 ) free(lensFseqs);
+  if (bufferFseqs != 0 ) free(bufferFseqs);
+
 }
 
 
 //----------------------------------------------------------------------------
-// getTapesWithoutDriveReqs 
+// getTapeWithoutDriveReq 
 //----------------------------------------------------------------------------
 
-std::vector<castor::tape::tapegateway::TapeGatewayRequest*> castor::tape::tapegateway::ora::OraTapeGatewaySvc::getTapesWithoutDriveReqs()
-          throw (castor::exception::Exception){
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getTapeWithoutDriveReq(castor::tape::tapegateway::VdqmTapeGatewayRequest& request)
+  throw (castor::exception::Exception){
 
-  std::vector<castor::tape::tapegateway::TapeGatewayRequest*> result;
+
+
   try {
     // Check whether the statements are ok
-    if (0 == m_getTapesWithoutDriveReqsStatement) {
-      m_getTapesWithoutDriveReqsStatement =
-        createStatement(s_getTapesWithoutDriveReqsStatementString);
-      m_getTapesWithoutDriveReqsStatement->registerOutParam
-        (1, oracle::occi::OCCICURSOR);
+    if (0 == m_getTapeWithoutDriveReqStatement) {
+      m_getTapeWithoutDriveReqStatement =
+        createStatement(s_getTapeWithoutDriveReqStatementString);
+
+      m_getTapeWithoutDriveReqStatement->registerOutParam
+        (1, oracle::occi::OCCIDOUBLE);
+
+      m_getTapeWithoutDriveReqStatement->registerOutParam
+        (2, oracle::occi::OCCIDOUBLE);
+
+      m_getTapeWithoutDriveReqStatement->registerOutParam
+        (3, oracle::occi::OCCIINT);
+     
+      m_getTapeWithoutDriveReqStatement->registerOutParam
+        (4, oracle::occi::OCCISTRING, 2048);
+
     }
 
     // execute the statement and see whether we found something
  
-    unsigned int nb = m_getTapesWithoutDriveReqsStatement->executeUpdate();
+    m_getTapeWithoutDriveReqStatement->executeUpdate();
+   
+    u_signed64 reqId=(u_signed64)m_getTapeWithoutDriveReqStatement->getDouble(1);
 
-    if (0 == nb) {
-      cnvSvc()->commit();
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "stream to submit : no stream found";
-      throw ex;
-    }
-
-    oracle::occi::ResultSet *rs =
-      m_getTapesWithoutDriveReqsStatement->getCursor(1);
-
-    // Run through the cursor
-    oracle::occi::ResultSet::Status status = rs->next();
-    while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
-      castor::stager::Tape* tape= new  castor::stager::Tape();
-      tape->setTpmode(rs->getInt(1));
-      tape->setSide(rs->getInt(2));
-      tape->setVid(rs->getString(3));
-      castor::tape::tapegateway::TapeGatewayRequest* item= new  castor::tape::tapegateway::TapeGatewayRequest();
-      item->setId((u_signed64)rs->getDouble(4));
-      if (tape->tpmode() == 0){
-	item->setAccessMode(0);
-	item->setTapeRecall(tape);
-      } else {
-	item->setAccessMode(1);
-	castor::stager::Stream* stream= new castor::stager::Stream();
-	stream->setTape(tape);
-	item->setStreamMigration(stream);
-      }
-      result.push_back(item);
-      status = rs->next();
-    }
-
-    m_getTapesWithoutDriveReqsStatement->closeResultSet(rs);
-
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in getTapesWithoutDriveReqs"
-      << std::endl << e.what();
-    throw ex;
-  }
-  return result;
-}
-
-//----------------------------------------------------------------------------
-// attachDriveReqsToTapes
-//----------------------------------------------------------------------------
-
-void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachDriveReqsToTapes(std::vector<castor::tape::tapegateway::TapeGatewayRequest*> tapeRequests) throw (castor::exception::Exception){ 
-
-  try {
-
-    if ( !tapeRequests.size() ) {
+    if (reqId==0){
       cnvSvc()->commit();
       return;
     }
+    
+    request.setTaperequest(reqId);
+    request.setAccessMode((u_signed64)m_getTapeWithoutDriveReqStatement->getDouble(2));
+    request.setVid(m_getTapeWithoutDriveReqStatement->getString(4));
+  
+
+  } catch (oracle::occi::SQLException e) {
+    
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in getTapeWithoutDriveReq"
+      << std::endl << e.what();
+    throw ex;
+  }
+  
+}
+ 
+//----------------------------------------------------------------------------
+// attachDriveReqToTape
+//----------------------------------------------------------------------------
+
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachDriveReqToTape(const castor::tape::tapegateway::VdqmTapeGatewayRequest& tapeRequest, const castor::stager::Tape& tape) throw (castor::exception::Exception){ 
+  
+  try {
      
     // Check whether the statements are ok
-    if (0 == m_attachDriveReqsToTapesStatement) {
-      m_attachDriveReqsToTapesStatement =
-        createStatement(s_attachDriveReqsToTapesStatementString);
+    if (0 == m_attachDriveReqToTapeStatement) {
+      m_attachDriveReqToTapeStatement =
+        createStatement(s_attachDriveReqToTapeStatementString);
     }
+    
 
-    // input
-     ub4 nb=tapeRequests.size();
-
-
-     // id
-     
-     unsigned char (*bufferIds)[21]=(unsigned char(*)[21]) calloc((nb) * 21, sizeof(unsigned char));
-     ub2 *lensIds=(ub2 *)malloc (sizeof(ub2)*nb);
+    m_attachDriveReqToTapeStatement->setDouble(1, (double)tapeRequest.taperequest());
+    m_attachDriveReqToTapeStatement->setDouble(2, (double)tapeRequest.mountTransactionId());
+    m_attachDriveReqToTapeStatement->setString(3, tape.dgn());
+    m_attachDriveReqToTapeStatement->setString(4, tape.label());
+    m_attachDriveReqToTapeStatement->setString(5, tape.density());
  
-
-      // vdqmId
+    // execute the statement and see whether we found something
+    
+     m_attachDriveReqToTapeStatement->executeUpdate();
      
-     unsigned char (*bufferVdqmIds)[21]=(unsigned char(*)[21]) calloc((nb) * 21, sizeof(unsigned char));
-     ub2 *lensVdqmIds=(ub2 *)malloc (sizeof(ub2)*nb);
-
-     if ( lensIds == 0 || bufferIds == 0 || lensVdqmIds ==0 || bufferVdqmIds == 0 ) {
-       if (lensIds != 0 ) free(lensIds);
-       if (bufferIds != 0) free(bufferIds);
-       if (lensVdqmIds != 0 ) free(lensVdqmIds);
-       if (bufferVdqmIds != 0) free(bufferVdqmIds);
-       castor::exception::OutOfMemory e; 
-       throw e;
-     }
-
-     // dgn
-
-     char * bufferDgns=NULL;
-     ub2 *lensDgns=NULL;
-
-     unsigned int cellSizeDgn = (CA_MAXDGNLEN+1) * sizeof(char);
-     lensDgns = (ub2*) malloc((CA_MAXDGNLEN+1) * sizeof(ub2));
-     bufferDgns = (char*) malloc(nb * cellSizeDgn);
-
-     if ( lensDgns  == 0 || bufferDgns == 0 ) {
-       if (lensIds != 0 ) free(lensIds);
-       if (bufferIds != 0) free(bufferIds);
-       if (lensVdqmIds != 0 ) free(lensVdqmIds);
-       if (bufferVdqmIds != 0) free(bufferVdqmIds);
-       castor::exception::OutOfMemory e; 
-       throw e;
-     }
-
-     // density
-
-     char * bufferDensities=NULL;
-     ub2 *lensDensities=NULL;
-
-     unsigned int cellSizeDen = (CA_MAXDENLEN +1)* sizeof(char);
-     lensDensities = (ub2*) malloc((CA_MAXDENLEN+1) * sizeof(ub2));
-     bufferDensities = (char*) malloc(nb * cellSizeDen);
-
-     if (lensDensities==0 || bufferDensities==0  ){
-       if ( lensDgns  != 0 ) free(lensDgns);
-       if ( bufferDgns != 0 ) free(bufferDgns);
-       if ( lensIds != 0 ) free(lensIds);
-       if ( bufferIds != 0) free(bufferIds);
-       if ( lensVdqmIds != 0 ) free(lensVdqmIds);
-       if ( bufferVdqmIds != 0) free(bufferVdqmIds);
-       castor::exception::OutOfMemory e; 
-       throw e;
-     }
-
-     // label
-
-     char * bufferLabels=NULL;
-     ub2 *lensLabels=NULL;
-
-     unsigned int cellSizeLabel = (CA_MAXLBLTYPLEN+1) * sizeof(char);
-     lensLabels = (ub2*) malloc((CA_MAXLBLTYPLEN+1) * sizeof(ub2));
-     bufferLabels = (char*) malloc(nb * cellSizeLabel);
-
-     if (lensLabels==0 || bufferLabels==0){
-       if (lensDensities!=0 ) free (lensDensities);
-       if (bufferDensities!=0) free (bufferDensities);
-       if ( lensDgns  != 0 ) free(lensDgns);
-       if ( bufferDgns != 0 ) free(bufferDgns);
-       if ( lensIds != 0 ) free(lensIds);
-       if ( bufferIds != 0) free(bufferIds);
-       if ( lensVdqmIds != 0 ) free(lensVdqmIds);
-       if ( bufferVdqmIds != 0) free(bufferVdqmIds);
-       castor::exception::OutOfMemory e; 
-       throw e;
-     }
-
-
-     
-     // Fill in the structure
-
-     for (unsigned int i=0;i<tapeRequests.size();i++){
-
-	
-       // ids
-
-       oracle::occi::Number n = (double)(tapeRequests[i]->id());
-       oracle::occi::Bytes b = n.toBytes();
-       b.getBytes(bufferIds[i],b.length());
-       lensIds[i] = b.length();
-
-       // vdqmIds
-
-       n = (double)(tapeRequests[i]->vdqmVolReqId());
-       b = n.toBytes();
-       b.getBytes(bufferVdqmIds[i],b.length());
-       lensVdqmIds[i] = b.length();  
-
-       castor::stager::Tape* inputTape = NULL;
-       if (tapeRequests[i]->accessMode()) inputTape=tapeRequests[i]->streamMigration()->tape();
-       else inputTape=tapeRequests[i]->tapeRecall();
-
-       //dgn     
-       
-       lensDgns[i]= inputTape->dgn().length();
-       strncpy(bufferDgns+(cellSizeDgn*i),inputTape->dgn().c_str(),lensDgns[i]);
-
-       //label
-
-       lensLabels[i]= inputTape->label().length();
-       strncpy(bufferLabels+(cellSizeLabel*i),inputTape->label().c_str(),lensLabels[i]);
-
-       //density
-
-       lensDensities[i]= inputTape->density().length();
-       strncpy(bufferDensities+(cellSizeDen*i),inputTape->density().c_str(),lensDensities[i]);
-
-     }
-
-     ub4 unused=nb;
-
-     m_attachDriveReqsToTapesStatement->setDataBufferArray(1,bufferIds, oracle::occi::OCCI_SQLT_NUM, nb, &unused, 21, lensIds);
-     m_attachDriveReqsToTapesStatement->setDataBufferArray(2, bufferVdqmIds, oracle::occi::OCCI_SQLT_NUM, nb, &unused, 21, lensVdqmIds);
-     m_attachDriveReqsToTapesStatement->setDataBufferArray(3, bufferDgns, oracle::occi::OCCI_SQLT_CHR,nb, &nb, (CA_MAXDGNLEN+1), lensDgns);
-     m_attachDriveReqsToTapesStatement->setDataBufferArray(4, bufferLabels, oracle::occi::OCCI_SQLT_CHR,nb, &nb, (CA_MAXLBLTYPLEN+1), lensLabels);
-     m_attachDriveReqsToTapesStatement->setDataBufferArray(5, bufferDensities, oracle::occi::OCCI_SQLT_CHR,nb, &nb, (CA_MAXDENLEN+1), lensDensities);
- 
-     // execute the statement and see whether we found something
-
-     m_attachDriveReqsToTapesStatement->executeUpdate();
-
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Error caught in attachDriveReqsToTapes"
+      << "Error caught in attachDriveReqToTape"
       << std::endl << e.what();
     throw ex;
   }
@@ -670,10 +563,10 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachDriveReqsToTapes(s
 // getTapesWithDriveReqs
 //----------------------------------------------------------------------------
 
-std::vector<castor::tape::tapegateway::TapeGatewayRequest*> castor::tape::tapegateway::ora::OraTapeGatewaySvc::getTapesWithDriveReqs(u_signed64 timeOut) 
+void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getTapesWithDriveReqs(std::list<castor::tape::tapegateway::TapeGatewayRequest>& requests,std::list<std::string>& vids, const u_signed64& timeOut) 
   throw (castor::exception::Exception){
 
-  std::vector<tape::tapegateway::TapeGatewayRequest*> result;
+
   try {
     // Check whether the statements are ok
     if (0 == m_getTapesWithDriveReqsStatement) {
@@ -690,43 +583,29 @@ std::vector<castor::tape::tapegateway::TapeGatewayRequest*> castor::tape::tapega
     unsigned int nb = m_getTapesWithDriveReqsStatement->executeUpdate();
 
     if (0 == nb) {
+      // just release the lock no result
       cnvSvc()->commit();
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "tapes to check : no tape found";
-      throw ex;
+      return;
     }
 
     oracle::occi::ResultSet *rs =
       m_getTapesWithDriveReqsStatement->getCursor(2);
 
     // Run through the cursor
-    oracle::occi::ResultSet::Status status = rs->next();
-    while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
-      tape::tapegateway::TapeGatewayRequest* item =
-        new tape::tapegateway::TapeGatewayRequest();
-      item->setAccessMode(rs->getInt(1));
-      item->setId((u_signed64)rs->getDouble(2));
-      item->setStartTime((u_signed64)rs->getDouble(3));
-      item->setLastVdqmPingTime((u_signed64)rs->getDouble(4));
-      item->setVdqmVolReqId((u_signed64)rs->getDouble(5));
-      item->setStatus((TapeRequestStateCode)rs->getInt(6));
-      
-      castor::stager::Tape* tp=new castor::stager::Tape(); 
-      tp->setVid(rs->getString(7));
+    
+    while(rs->next()  == oracle::occi::ResultSet::DATA_AVAILABLE) {
+      tape::tapegateway::TapeGatewayRequest item;
+      item.setAccessMode(rs->getInt(1));
+      item.setId((u_signed64)rs->getDouble(2));
+      item.setStartTime((u_signed64)rs->getDouble(3));
+      item.setLastVdqmPingTime((u_signed64)rs->getDouble(4));
+      item.setVdqmVolReqId((u_signed64)rs->getDouble(5));
+      item.setStatus((TapeRequestStateCode)rs->getInt(6));
+      requests.push_back(item);
 
-      if (item->accessMode() == 0) {
-	// read
-	item->setTapeRecall(tp);
+      std::string vid(rs->getString(7));
+      vids.push_back(vid);
 
-      } else {
-	//write 
-	castor::stager::Stream* str=new castor::stager::Stream();
-	item->setStreamMigration(str);
-	str->setTape(tp);
-      }
-      result.push_back(item);
-      status = rs->next();
     }
 
     m_getTapesWithDriveReqsStatement->closeResultSet(rs);
@@ -739,7 +618,6 @@ std::vector<castor::tape::tapegateway::TapeGatewayRequest*> castor::tape::tapega
       << std::endl << e.what();
     throw ex;
   }
-  return result;
 
 }
  
@@ -749,12 +627,15 @@ std::vector<castor::tape::tapegateway::TapeGatewayRequest*> castor::tape::tapega
 // restartLostReqs 
 //----------------------------------------------------------------------------
 
-void castor::tape::tapegateway::ora::OraTapeGatewaySvc::restartLostReqs(std::vector<castor::tape::tapegateway::TapeGatewayRequest*> tapes)
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::restartLostReqs(const std::list<castor::tape::tapegateway::TapeGatewayRequest>& tapeRequests)
           throw (castor::exception::Exception){
+
+  unsigned char (*bufferTapes)[21]=NULL;
+  ub2 *lensTapes=NULL;
 
   try {
 
-    if ( !tapes.size()) {
+    if ( !tapeRequests.size()) {
       cnvSvc()->commit();
       return;
     }
@@ -764,13 +645,13 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::restartLostReqs(std::vec
       m_restartLostReqsStatement =
         createStatement(s_restartLostReqsStatementString);
     }
-
-    // input
-
-    ub4 nb=tapes.size();
-    unsigned char (*bufferTapes)[21]=(unsigned char(*)[21]) calloc((nb) * 21, sizeof(unsigned char));
     
-    ub2 *lensTapes=(ub2 *)malloc (sizeof(ub2)*nb);
+    // input
+    
+    ub4 nb=tapeRequests.size();
+    bufferTapes=(unsigned char(*)[21]) calloc((nb) * 21, sizeof(unsigned char));
+    
+    lensTapes=(ub2 *)malloc (sizeof(ub2)*nb);
 
     
     if ( lensTapes == 0 || bufferTapes == 0 ) {
@@ -780,16 +661,18 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::restartLostReqs(std::vec
       throw e;
      }
 
-
+    
     // Fill in the structure
+    
+    int i=0;
+    for (std::list<castor::tape::tapegateway::TapeGatewayRequest>::const_iterator tapeRequest=tapeRequests.begin();
+	 tapeRequest != tapeRequests.end();
+	 tapeRequest++,i++){
 
-    for (unsigned int i=0;i<tapes.size();i++){
-
-      oracle::occi::Number n = (double)(tapes[i]->id());
+      oracle::occi::Number n = (double)((*tapeRequest).id());
       oracle::occi::Bytes b = n.toBytes();
       b.getBytes(bufferTapes[i],b.length());
       lensTapes[i] = b.length();
-
     }
 
     ub4 unused=nb;
@@ -798,7 +681,14 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::restartLostReqs(std::vec
  
     m_restartLostReqsStatement->executeUpdate();
 
+    if (lensTapes != 0 ) free(lensTapes);
+    if (bufferTapes != 0) free(bufferTapes);
+
   } catch (oracle::occi::SQLException e) {
+
+    if (lensTapes != 0 ) free(lensTapes);
+    if (bufferTapes != 0) free(bufferTapes);
+
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
@@ -813,14 +703,16 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::restartLostReqs(std::vec
 // getFileToMigrate  
 //----------------------------------------------------------------------------
 
-castor::tape::tapegateway::FileToMigrate* castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToMigrate(castor::tape::tapegateway::FileToMigrateRequest& req) throw (castor::exception::Exception){
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToMigrate(const castor::tape::tapegateway::FileToMigrateRequest& req,castor::tape::tapegateway::FileToMigrate& file) throw (castor::exception::Exception){
   castor::tape::tapegateway::FileToMigrate* result=NULL;
-  std::string diskserver;
-  std::string mountpoint;
+
   try {
 
     while (1) { // until we get a valid file
-    
+     
+      std::string diskserver;
+      std::string mountpoint;
+
       // Check whether the statements are ok
       if (0 == m_getFileToMigrateStatement) {
 	m_getFileToMigrateStatement =
@@ -839,13 +731,25 @@ castor::tape::tapegateway::FileToMigrate* castor::tape::tapegateway::ora::OraTap
       int ret = m_getFileToMigrateStatement->getInt(2);
       if (ret == -1 ) {
 	cnvSvc()->commit();
-	return NULL;
+	return;
       }
 
       if (ret == -2 ) {// UNKNOWN request
 	cnvSvc()->commit();
 	castor::exception::Exception e(EINVAL);
 	throw e;
+      }
+
+
+      if (ret == -3 ) {// no diskserver available
+
+	castor::exception::Internal ex;
+	ex.getMessage()
+	  << "no diskserver available"
+	  << std::endl; 
+	
+	throw ex;
+	
       }
 
       std::string vid=m_getFileToMigrateStatement->getString(3); 
@@ -860,44 +764,41 @@ castor::tape::tapegateway::FileToMigrate* castor::tape::tapegateway::ora::OraTap
       // one at the moment
 
       if  (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
-
-	result= new  castor::tape::tapegateway::FileToMigrate();
       
-	result->setFileid((u_signed64)rs->getDouble(1));
-	result->setNshost(rs->getString(2));
-	result->setLastModificationTime((u_signed64)rs->getDouble(3));
+	file.setFileid((u_signed64)rs->getDouble(1));
+	file.setNshost(rs->getString(2));
+	file.setLastModificationTime((u_signed64)rs->getDouble(3));
 	diskserver=rs->getString(4);
 	mountpoint=rs->getString(5);
-	result->setPath(diskserver.append(":").append(mountpoint).append(rs->getString(6))); 
-	result->setLastKnownFilename(rs->getString(7));
-	result->setFseq(rs->getInt(8));
-	result->setFileSize((u_signed64)rs->getDouble(9));
-	result->setFileTransactionId((u_signed64)rs->getDouble(10));
-
-	result->setMountTransactionId(req.mountTransactionId());
-	result->setPositionCommandCode(TPPOSIT_FSEQ);
+	file.setPath(diskserver.append(":").append(mountpoint).append(rs->getString(6))); 
+	file.setLastKnownFilename(rs->getString(7));
+	file.setFseq(rs->getInt(8));
+	file.setFileSize((u_signed64)rs->getDouble(9));
+	file.setFileTransactionId((u_signed64)rs->getDouble(10));
+	file.setMountTransactionId(req.mountTransactionId());
+	file.setPositionCommandCode(TPPOSIT_FSEQ);
 
 	try {
 	  NsTapeGatewayHelper nsHelper;
-	  nsHelper.checkFileToMigrate(*result,vid);
+	  nsHelper.checkFileToMigrate(file,vid);
 	} catch (castor::exception::Exception e) {
 
 	  struct Cns_fileid castorFileId;
 	  memset(&castorFileId,'\0',sizeof(castorFileId));
 	  strncpy(
 		  castorFileId.server,
-		  result->nshost().c_str(),
+		  file.nshost().c_str(),
 		  sizeof(castorFileId.server)-1
 		  );
-	  castorFileId.fileid = result->fileid();
-
+	  castorFileId.fileid = file.fileid();
+	  
 	  castor::dlf::Param params[] =
 	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
 	     castor::dlf::Param("errorMessage",e.getMessage().str()),
 	     castor::dlf::Param("TPVID", vid)
 	    };
-    
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, ORA_FILE_TO_MIGRATE_NS_ERROR, 3, params, &castorFileId);
+	  
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, ORA_FILE_TO_MIGRATE_NS_ERROR, 3, params, &castorFileId);
 	  
 
 	  try {
@@ -925,16 +826,14 @@ castor::tape::tapegateway::FileToMigrate* castor::tape::tapegateway::ora::OraTap
 	    
 	  }  
 
-	  if (result) delete result;
-	  result=NULL;
 	  m_getFileToMigrateStatement->closeResultSet(rs);
 	  continue; // get another tapecopy
 
 	}
-
+	
 	// we have a valid candidate we send a report to RmMaster stream started
 	try{
-      
+	  
 	  RmMasterTapeGatewayHelper rmMasterHelper;
 	  rmMasterHelper.sendStreamReport(diskserver,mountpoint,castor::monitoring::STREAMDIRECTION_WRITE,true);
 	  
@@ -956,7 +855,8 @@ castor::tape::tapegateway::FileToMigrate* castor::tape::tapegateway::ora::OraTap
 
     }      
     // here we have a valid candidate or NULL
-   
+    cnvSvc()->commit();
+
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -965,17 +865,16 @@ castor::tape::tapegateway::FileToMigrate* castor::tape::tapegateway::ora::OraTap
       << std::endl << e.what();
     throw ex;
   }
-  cnvSvc()->commit();
   // hardcoded umask
-  result->setUmask(022);  
-  return result;
+  file.setUmask(022);  
+ 
 }
 
 //----------------------------------------------------------------------------
 // setFileMigrated  
 //----------------------------------------------------------------------------
   
-void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileMigrated(castor::tape::tapegateway::FileMigratedNotification& resp)
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileMigrated(const castor::tape::tapegateway::FileMigratedNotification& resp)
   throw (castor::exception::Exception){
   std::string diskserver;
   std::string mountpoint;
@@ -988,18 +887,19 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileMigrated(castor::
       m_setFileMigratedStatement =
         createStatement(s_setFileMigratedStatementString);
       m_setFileMigratedStatement->registerOutParam
-        (5, oracle::occi::OCCICURSOR);
+        (6, oracle::occi::OCCICURSOR);
     }
 
     m_setFileMigratedStatement->setDouble(1,(double)resp.mountTransactionId()); // transaction id
     m_setFileMigratedStatement->setDouble(2,(double)resp.fileid());
     m_setFileMigratedStatement->setString(3,resp.nshost());
     m_setFileMigratedStatement->setInt(4,resp.fseq()); 
+    m_setFileMigratedStatement->setInt(5,resp.fileTransactionId()); 
     
     m_setFileMigratedStatement->executeUpdate();
 
     oracle::occi::ResultSet *rs =
-      m_setFileMigratedStatement->getCursor(5);
+      m_setFileMigratedStatement->getCursor(6);
 
     // Run through the cursor 
 
@@ -1009,8 +909,6 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileMigrated(castor::
     if (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
       diskserver = rs->getString(1);
       mountpoint = rs->getString(2);
-    
-      m_setFileMigratedStatement->closeResultSet(rs);
 
     
       // send report to RmMaster stream ended
@@ -1032,6 +930,8 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileMigrated(castor::
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, ORA_IMPOSSIBLE_TO_SEND_RMMASTER_REPORT, 4, params);
       }
     }
+    
+    m_setFileMigratedStatement->closeResultSet(rs);
 
   } catch (oracle::occi::SQLException e) {
    
@@ -1047,20 +947,19 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileMigrated(castor::
 }
 
 //----------------------------------------------------------------------------
-// getFileToRecall
+// getFileToRecall 
 //----------------------------------------------------------------------------
    
-castor::tape::tapegateway::FileToRecall* castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToRecall(castor::tape::tapegateway::FileToRecallRequest& req) throw (castor::exception::Exception)
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToRecall(const castor::tape::tapegateway::FileToRecallRequest& req, castor::tape::tapegateway::FileToRecall& file) throw (castor::exception::Exception)
 {
     
-  castor::tape::tapegateway::FileToRecall* result=NULL;
-  std::string diskserver;
-  std::string mountpoint;
 
   try {
 
     while (1) {
-     
+
+      std::string diskserver;
+      std::string mountpoint;
     
       // Check whether the statements are ok
       if (0 == m_getFileToRecallStatement) {
@@ -1082,41 +981,51 @@ castor::tape::tapegateway::FileToRecall* castor::tape::tapegateway::ora::OraTape
 
       
       int ret = m_getFileToRecallStatement->getInt(2);
-      if (ret == -1 ) return NULL;
+      if (ret == -1 ) return;
      
       if (ret == -2 ) {// UNKNOWN request
-	castor::exception::Exception e(EINVAL);
+
+	castor::exception::Exception e(ENOENT);
 	throw e;
+
       }
-    
+
+      if (ret == -3 ) {// no diskserver available
+
+	castor::exception::Internal ex;
+	ex.getMessage()
+	  << "no diskserver available"
+	  << std::endl; 
+	
+	throw ex;
+	
+      }
 
       std::string vid= m_getFileToRecallStatement->getString(3);
    
       oracle::occi::ResultSet *rs =
 	m_getFileToRecallStatement->getCursor(4);
 
-      // Run through the cursor 
-
-      oracle::occi::ResultSet::Status status = rs->next();
+      
 
       // one at the moment
     
 
-      if  (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
+      if  (rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
 
-	result= new  castor::tape::tapegateway::FileToRecall();
-	result->setFileid((u_signed64)rs->getDouble(1));
-	result->setNshost(rs->getString(2));
+
+	file.setFileid((u_signed64)rs->getDouble(1));
+	file.setNshost(rs->getString(2));
 	diskserver=rs->getString(3);
 	mountpoint=rs->getString(4);
 
-	result->setPath(diskserver.append(":").append(mountpoint).append(rs->getString(5)));
+	file.setPath(diskserver.append(":").append(mountpoint).append(rs->getString(5)));
 
-	result->setFseq(rs->getInt(6));
-	result->setFileTransactionId((u_signed64)rs->getDouble(7));
+	file.setFseq(rs->getInt(6));
+	file.setFileTransactionId((u_signed64)rs->getDouble(7));
 
-	result->setMountTransactionId(req.mountTransactionId());
-	result->setPositionCommandCode(TPPOSIT_BLKID);
+        file.setMountTransactionId(req.mountTransactionId());
+	file.setPositionCommandCode(TPPOSIT_BLKID);
 
 	// it might be changed after the ns check to TPPOSIT_FSEQ
 
@@ -1125,7 +1034,7 @@ castor::tape::tapegateway::FileToRecall* castor::tape::tapegateway::ora::OraTape
 	try {
 	  
 	  NsTapeGatewayHelper nsHelper;
-	  nsHelper.getBlockIdToRecall(*result,vid);
+	  nsHelper.getBlockIdToRecall(file,vid);
 	  break; // found a valid file
 
 	}catch (castor::exception::Exception e) {
@@ -1133,10 +1042,10 @@ castor::tape::tapegateway::FileToRecall* castor::tape::tapegateway::ora::OraTape
 	  memset(&castorFileId,'\0',sizeof(castorFileId));
 	  strncpy(
 		  castorFileId.server,
-		  result->nshost().c_str(),
+		  file.nshost().c_str(),
 		  sizeof(castorFileId.server)-1
 		  );
-	  castorFileId.fileid = result->fileid();
+	  castorFileId.fileid = file.fileid();
 
 	  castor::dlf::Param params[] =
 	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
@@ -1145,14 +1054,14 @@ castor::tape::tapegateway::FileToRecall* castor::tape::tapegateway::ora::OraTape
 	    };
 
 	  
-	  castor::dlf::dlf_writep(nullCuuid,ORA_FILE_TO_RECALL_NS_ERROR, 3, params,&castorFileId);
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, ORA_FILE_TO_RECALL_NS_ERROR, 3, params,&castorFileId);
 
 	  try {
 	    FileErrorReport failure;
-	    failure.setMountTransactionId(result->mountTransactionId()); 
-	    failure.setFileid(result->fileid());
-	    failure.setNshost(result->nshost());
-	    failure.setFseq(result->fseq());
+	    failure.setMountTransactionId(file.mountTransactionId()); 
+	    failure.setFileid(file.fileid());
+	    failure.setNshost(file.nshost());
+	    failure.setFseq(file.fseq());
 	    failure.setErrorCode(e.code());
 	    invalidateFile(failure);
 	    
@@ -1168,7 +1077,7 @@ castor::tape::tapegateway::FileToRecall* castor::tape::tapegateway::ora::OraTape
 	  }
 
 	  
-	  if (result) delete result;
+	  
 	  m_getFileToRecallStatement->closeResultSet(rs);
 
 	  continue; // Let's get another candidate, this one was not valid
@@ -1193,10 +1102,12 @@ castor::tape::tapegateway::FileToRecall* castor::tape::tapegateway::ora::OraTape
 	}
 	
       }
-      // end the loop
+     
       m_getFileToRecallStatement->closeResultSet(rs);
       break;
     }
+    
+    cnvSvc()->commit();
 
   } catch (oracle::occi::SQLException e) {
     handleException(e);
@@ -1206,12 +1117,10 @@ castor::tape::tapegateway::FileToRecall* castor::tape::tapegateway::ora::OraTape
       << std::endl << e.what();
     throw ex;
   }
-
-  cnvSvc()->commit();
  
   // hardcoded umask
-  result->setUmask(077);  
-  return result;
+  file.setUmask(077);  
+ 
 
 }
  
@@ -1219,7 +1128,7 @@ castor::tape::tapegateway::FileToRecall* castor::tape::tapegateway::ora::OraTape
 // setFileRecalled  
 //----------------------------------------------------------------------------
    
-void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileRecalled(castor::tape::tapegateway::FileRecalledNotification& resp) throw (castor::exception::Exception){
+void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileRecalled(const castor::tape::tapegateway::FileRecalledNotification& resp) throw (castor::exception::Exception){
  std::string diskserver;
  std::string mountpoint;
 
@@ -1230,27 +1139,27 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileRecalled(castor:
       m_setFileRecalledStatement =
         createStatement(s_setFileRecalledStatementString);
       m_setFileRecalledStatement->registerOutParam
-	(5, oracle::occi::OCCICURSOR); 
+	(6, oracle::occi::OCCICURSOR); 
     }
 
     m_setFileRecalledStatement->setDouble(1,(double)resp.mountTransactionId());
     m_setFileRecalledStatement->setDouble(2,(double)resp.fileid());
     m_setFileRecalledStatement->setString(3,resp.nshost());
     m_setFileRecalledStatement->setInt(4,resp.fseq());
+    m_setFileRecalledStatement->setInt(5,resp.fileTransactionId());
 
     m_setFileRecalledStatement->executeUpdate();
     
     
     
     oracle::occi::ResultSet *rs =
-      m_setFileRecalledStatement->getCursor(5);
+      m_setFileRecalledStatement->getCursor(6);
 
     // Run through the cursor 
 
-    oracle::occi::ResultSet::Status status = rs->next();
     // just one
 
-    if (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
+    if (rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
 
       diskserver = rs->getString(1);
       mountpoint = rs->getString(2);
@@ -1294,11 +1203,10 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileRecalled(castor:
 // getFailedMigrations
 //----------------------------------------------------------------------------
 
-std::vector<castor::stager::TapeCopy*>  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedMigrations()
+void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedMigrations(std::list<castor::infoPolicy::RetryPolicyElement>& candidates)
 	  throw (castor::exception::Exception)
 {
     
-  std::vector<castor::stager::TapeCopy*> result;
   try {
     // Check whether the statements are ok
     if (0 == m_getFailedMigrationsStatement) {
@@ -1310,24 +1218,26 @@ std::vector<castor::stager::TapeCopy*>  castor::tape::tapegateway::ora::OraTapeG
 
     // execute the statement and see whether we found something
  
-    m_getFailedMigrationsStatement->executeUpdate();
+    unsigned int nb = m_getFailedMigrationsStatement->executeUpdate();
 
-   oracle::occi::ResultSet *rs =
+    if (0 == nb) {
+      cnvSvc()->commit(); 
+      return;
+    }
+
+
+    oracle::occi::ResultSet *rs =
       m_getFailedMigrationsStatement->getCursor(1);
 
     // Run through the cursor 
 
-    oracle::occi::ResultSet::Status status = rs->next();
-    while (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
-      castor::stager::TapeCopy* item= new castor::stager::TapeCopy();
-       item->setCopyNb(rs->getInt(1));
-       item->setId((u_signed64)rs->getDouble(2));
-       // rs->getDouble(3) not needed
-       item->setStatus((castor::stager::TapeCopyStatusCodes)rs->getInt(4));
-       item->setErrorCode(rs->getInt(5));
-       item->setNbRetry(rs->getInt(6));
-       result.push_back(item);
-       status = rs->next();
+   
+    while (rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
+      castor::infoPolicy::RetryPolicyElement item;
+      item.setTapeCopyId((u_signed64)rs->getDouble(2));
+      item.setErrorCode(rs->getInt(5));
+      item.setNbRetry(rs->getInt(6));
+      candidates.push_back(item);
     }
 
     m_getFailedMigrationsStatement->closeResultSet(rs);
@@ -1340,7 +1250,7 @@ std::vector<castor::stager::TapeCopy*>  castor::tape::tapegateway::ora::OraTapeG
       << std::endl << e.what();
     throw ex;
   }
-  return result;
+
 
 }
 
@@ -1349,7 +1259,13 @@ std::vector<castor::stager::TapeCopy*>  castor::tape::tapegateway::ora::OraTapeG
 // setMigRetryResult
 //----------------------------------------------------------------------------
 
-void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setMigRetryResult(std::vector<u_signed64> tcToRetry, std::vector<u_signed64> tcToFail ) throw (castor::exception::Exception) {
+void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setMigRetryResult(const std::list<u_signed64>& tcToRetry, const std::list<u_signed64>&  tcToFail ) throw (castor::exception::Exception) {
+
+  
+ unsigned char (*bufferRetry)[21]=NULL;
+ ub2 *lensRetry=NULL;
+ unsigned char (*bufferFail)[21]=NULL;
+ ub2 *lensFail = NULL;
 
   try { 
     // Check whether the statements are ok
@@ -1362,8 +1278,8 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setMigRetryResult(std::
 
     ub4 nbRetry= tcToRetry.size();
     nbRetry=nbRetry==0?1:nbRetry;
-    unsigned char (*bufferRetry)[21]=(unsigned char(*)[21]) calloc((nbRetry) * 21, sizeof(unsigned char));
-    ub2 *lensRetry=(ub2 *)malloc (sizeof(ub2)*nbRetry);
+    bufferRetry=(unsigned char(*)[21]) calloc((nbRetry) * 21, sizeof(unsigned char));
+    lensRetry=(ub2 *)malloc (sizeof(ub2)*nbRetry);
 
     if ( lensRetry == 0 || bufferRetry == 0 ) {
       if (lensRetry != 0 ) free(lensRetry);
@@ -1372,14 +1288,17 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setMigRetryResult(std::
       throw e;
     }
 
-    for (unsigned int i=0; i<tcToRetry.size();i++){
-      
-	oracle::occi::Number n = (double)(tcToRetry[i]);
+    int i=0;
+    
+    for (std::list<u_signed64>::const_iterator elem= tcToRetry.begin(); 
+	 elem != tcToRetry.end();
+	 elem++, i++){
+	oracle::occi::Number n = (double)(*elem);
 	oracle::occi::Bytes b = n.toBytes();
 	b.getBytes(bufferRetry[i],b.length());
 	lensRetry[i] = b.length();
-
     }
+
     // if there where no successfull tapecopy
     if (tcToRetry.size() == 0){
       //let's put -1
@@ -1396,8 +1315,8 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setMigRetryResult(std::
 
     ub4 nbFail = tcToFail.size();
     nbFail = nbFail == 0 ? 1 : nbFail; 
-    unsigned char (*bufferFail)[21]=(unsigned char(*)[21]) calloc((nbFail) * 21, sizeof(unsigned char));
-    ub2 *lensFail = (ub2 *)malloc (sizeof(ub2)*nbFail);
+    bufferFail=(unsigned char(*)[21]) calloc((nbFail) * 21, sizeof(unsigned char));
+    lensFail = (ub2 *)malloc (sizeof(ub2)*nbFail);
 
     if ( lensFail == 0 || bufferFail == 0 ) {
       if (lensFail != 0 ) free(lensFail);
@@ -1407,10 +1326,14 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setMigRetryResult(std::
       castor::exception::OutOfMemory e; 
       throw e;
     }
+    
+    i=0;
 
-    for (unsigned int i=0; i<tcToFail.size();i++){
+    for (std::list<u_signed64>::const_iterator elem=tcToFail.begin();
+	  elem != tcToFail.end();
+	  elem++,i++){
       
-	oracle::occi::Number n = (double)(tcToFail[i]);
+	oracle::occi::Number n = (double)(*elem);
 	oracle::occi::Bytes b = n.toBytes();
 	b.getBytes(bufferFail[i],b.length());
 	lensFail[i] = b.length();
@@ -1433,6 +1356,12 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setMigRetryResult(std::
     m_setMigRetryResultStatement->executeUpdate();
 
   } catch (oracle::occi::SQLException e) {
+
+    if (lensFail != 0 ) free(lensFail);
+    if (bufferFail != 0) free(bufferFail);
+    if (lensRetry != 0 ) free(lensRetry);
+    if (bufferRetry != 0) free(bufferRetry);
+
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
@@ -1440,6 +1369,12 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setMigRetryResult(std::
       << std::endl << e.what();
     throw ex;
   }
+
+  if (lensFail != 0 ) free(lensFail);
+  if (bufferFail != 0) free(bufferFail);
+  if (lensRetry != 0 ) free(lensRetry);
+  if (bufferRetry != 0) free(bufferRetry);
+
 }
 
 
@@ -1447,10 +1382,10 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setMigRetryResult(std::
 // getFailedRecalls
 //----------------------------------------------------------------------------
 
-std::vector<castor::stager::TapeCopy*>  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedRecalls()
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedRecalls( std::list<castor::infoPolicy::RetryPolicyElement>& candidates)
 	  throw (castor::exception::Exception){
-    
-  std::vector<castor::stager::TapeCopy*> result;
+  
+ 
   try {
     // Check whether the statements are ok
     if (0 == m_getFailedRecallsStatement) {
@@ -1462,24 +1397,26 @@ std::vector<castor::stager::TapeCopy*>  castor::tape::tapegateway::ora::OraTapeG
 
     // execute the statement and see whether we found something
  
-    m_getFailedRecallsStatement->executeUpdate();
+    unsigned int nb = m_getFailedRecallsStatement->executeUpdate();
+
+    if (0 == nb) {
+      cnvSvc()->commit(); 
+      return;
+    }
+
 
    oracle::occi::ResultSet *rs =
       m_getFailedRecallsStatement->getCursor(1);
 
     // Run through the cursor 
 
-    oracle::occi::ResultSet::Status status = rs->next();
-    while (status == oracle::occi::ResultSet::DATA_AVAILABLE) {   
-      castor::stager::TapeCopy* item= new castor::stager::TapeCopy();
-      item->setCopyNb(rs->getInt(1));
-      item->setId((u_signed64)rs->getDouble(2));
-      // rs->getDouble(3)) castorfile not needed 
-      item->setStatus((castor::stager::TapeCopyStatusCodes)rs->getInt(4));
-      item->setErrorCode(rs->getInt(5));
-      item->setNbRetry(rs->getInt(6));
-      result.push_back(item);
-      status = rs->next();
+    while (rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {   
+      castor::infoPolicy::RetryPolicyElement item;
+      item.setTapeCopyId((u_signed64)rs->getDouble(2));
+      item.setErrorCode(rs->getInt(5));
+      item.setNbRetry(rs->getInt(6));
+      candidates.push_back(item);
+     
     }
 
     m_getFailedRecallsStatement->closeResultSet(rs);
@@ -1492,7 +1429,7 @@ std::vector<castor::stager::TapeCopy*>  castor::tape::tapegateway::ora::OraTapeG
       << std::endl << e.what();
     throw ex;
   }
-  return result;
+
 
 }
 
@@ -1500,7 +1437,15 @@ std::vector<castor::stager::TapeCopy*>  castor::tape::tapegateway::ora::OraTapeG
 // setRecRetryResult
 //----------------------------------------------------------------------------
 
-void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setRecRetryResult(std::vector<u_signed64> tcToRetry,std::vector<u_signed64> tcToFail) throw (castor::exception::Exception) {
+void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setRecRetryResult(const std::list<u_signed64>& tcToRetry,const std::list<u_signed64>& tcToFail) throw (castor::exception::Exception) {
+
+
+  unsigned char (*bufferRetry)[21]=NULL;
+  ub2 *lensRetry=NULL;
+  unsigned char (*bufferFail)[21]=NULL;
+  ub2 *lensFail = NULL;
+
+
  
   try {
      
@@ -1514,8 +1459,8 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setRecRetryResult(std::
 
     ub4 nbRetry= tcToRetry.size();
     nbRetry=nbRetry==0?1:nbRetry;
-    unsigned char (*bufferRetry)[21]=(unsigned char(*)[21]) calloc((nbRetry) * 21, sizeof(unsigned char));
-    ub2 *lensRetry=(ub2 *)malloc (sizeof(ub2)*nbRetry);
+    bufferRetry=(unsigned char(*)[21]) calloc((nbRetry) * 21, sizeof(unsigned char));
+    lensRetry=(ub2 *)malloc (sizeof(ub2)*nbRetry);
    
     if ( lensRetry == 0 || bufferRetry == 0 ) {
       if (lensRetry != 0 ) free(lensRetry);
@@ -1524,12 +1469,16 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setRecRetryResult(std::
       throw e;
     }
 
-    for (unsigned int i=0; i<tcToRetry.size();i++){
+    int i=0;
+    for (std::list<u_signed64>::const_iterator elem=tcToRetry.begin();
+	 elem != tcToRetry.end();
+	 elem++, i++){
       
-	oracle::occi::Number n = (double)(tcToRetry[i]);
-	oracle::occi::Bytes b = n.toBytes();
-	b.getBytes(bufferRetry[i],b.length());
-	lensRetry[i] = b.length();
+      oracle::occi::Number n = (double)(*elem);
+      oracle::occi::Bytes b = n.toBytes();
+      b.getBytes(bufferRetry[i],b.length());
+      lensRetry[i] = b.length();
+ 
 
     }
   
@@ -1550,8 +1499,8 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setRecRetryResult(std::
 
     ub4 nbFail= tcToFail.size();
     nbFail=nbFail==0?1:nbFail;
-    unsigned char (*bufferFail)[21]=(unsigned char(*)[21]) calloc((nbFail) * 21, sizeof(unsigned char));
-    ub2 *lensFail=(ub2 *)malloc (sizeof(ub2)*nbFail);
+    bufferFail = (unsigned char(*)[21]) calloc((nbFail) * 21, sizeof(unsigned char));
+    lensFail = (ub2 *)malloc (sizeof(ub2)*nbFail);
 
     
     if ( lensFail == 0 || bufferFail == 0 ) {
@@ -1562,12 +1511,17 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setRecRetryResult(std::
       castor::exception::OutOfMemory e; 
       throw e;
     }
+    
+    i=0;
 
-    for (unsigned int i=0; i<tcToFail.size();i++){
-	oracle::occi::Number n = (double)(tcToFail[i]);
-	oracle::occi::Bytes b = n.toBytes();
-	b.getBytes(bufferFail[i],b.length());
-	lensFail[i] = b.length();
+    for (std::list<u_signed64>::const_iterator elem=tcToFail.begin();
+	 elem != tcToFail.end();
+	 elem++, i++){
+      oracle::occi::Number n = (double)(*elem);
+      oracle::occi::Bytes b = n.toBytes();
+      b.getBytes(bufferFail[i],b.length());
+      lensFail[i] = b.length();
+     
     }
 
     
@@ -1584,6 +1538,12 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setRecRetryResult(std::
     m_setRecRetryResultStatement->executeUpdate();
 
   } catch (oracle::occi::SQLException e) {
+
+    if (lensFail != 0 ) free(lensFail);
+    if (bufferFail != 0) free(bufferFail);
+    if (lensRetry != 0 ) free(lensRetry);
+    if (bufferRetry != 0) free(bufferRetry);
+
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
@@ -1591,6 +1551,13 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setRecRetryResult(std::
       << std::endl << e.what();
     throw ex;
   }
+
+  if (lensFail != 0 ) free(lensFail);
+  if (bufferFail != 0) free(bufferFail);
+  if (lensRetry != 0 ) free(lensRetry);
+  if (bufferRetry != 0) free(bufferRetry);
+
+
 }
 
 
@@ -1598,7 +1565,7 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setRecRetryResult(std::
 // getRepackVidAndFileInfo
 //----------------------------------------------------------------------------
   
-std::string  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getRepackVidAndFileInfo(castor::tape::tapegateway::FileMigratedNotification& resp, std::string& vid, int& copyNumber, u_signed64& lastModificationTime )
+void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getRepackVidAndFileInfo(const castor::tape::tapegateway::FileMigratedNotification& resp, std::string& vid, int& copyNumber, u_signed64& lastModificationTime, std::string& repackVid )
   throw (castor::exception::Exception){
   
   try {
@@ -1608,13 +1575,15 @@ std::string  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getRepackVidAndF
       m_getRepackVidAndFileInfoStatement =
         createStatement(s_getRepackVidAndFileInfoStatementString);
       m_getRepackVidAndFileInfoStatement->registerOutParam
-        (5, oracle::occi::OCCISTRING, 2048 );
-      m_getRepackVidAndFileInfoStatement->registerOutParam
         (6, oracle::occi::OCCISTRING, 2048 );
       m_getRepackVidAndFileInfoStatement->registerOutParam
-        (7, oracle::occi::OCCIINT);
+        (7, oracle::occi::OCCISTRING, 2048 );
       m_getRepackVidAndFileInfoStatement->registerOutParam
-	(8, oracle::occi::OCCIDOUBLE);
+        (8, oracle::occi::OCCIINT);
+      m_getRepackVidAndFileInfoStatement->registerOutParam
+	(9, oracle::occi::OCCIDOUBLE);
+      m_getRepackVidAndFileInfoStatement->registerOutParam
+        (10, oracle::occi::OCCIINT);
     }
 
     m_getRepackVidAndFileInfoStatement->setDouble(1,(double)resp.fileid());
@@ -1623,16 +1592,25 @@ std::string  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getRepackVidAndF
     m_getRepackVidAndFileInfoStatement->setInt(3,resp.fseq());
 
     m_getRepackVidAndFileInfoStatement->setDouble(4,resp.mountTransactionId());
+    m_getRepackVidAndFileInfoStatement->setDouble(5,resp.fileSize());
+    
     // execute the statement 
 
     m_getRepackVidAndFileInfoStatement->executeUpdate();
     
-    std::string repackVid = m_getRepackVidAndFileInfoStatement->getString(5);
-    vid = m_getRepackVidAndFileInfoStatement->getString(6);
-    copyNumber = m_getRepackVidAndFileInfoStatement->getInt(7);
-    lastModificationTime= (u_signed64)m_getRepackVidAndFileInfoStatement->getDouble(8);
+    int ret=m_getRepackVidAndFileInfoStatement->getInt(10);
+    if (ret==-1){
+      //wrong file size
+      castor::exception::Exception ex(ERTWRONGSIZE);
+      ex.getMessage()<<"wrong file size given: "<<resp.fileSize();
+      throw ex;
+    }
+      
+    repackVid = m_getRepackVidAndFileInfoStatement->getString(6);
+    vid = m_getRepackVidAndFileInfoStatement->getString(7);
+    copyNumber = m_getRepackVidAndFileInfoStatement->getInt(8);
+    lastModificationTime= (u_signed64)m_getRepackVidAndFileInfoStatement->getDouble(9);
 
-    return repackVid;
 
   } catch (oracle::occi::SQLException e) {
     handleException(e);
@@ -1642,7 +1620,6 @@ std::string  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getRepackVidAndF
       << std::endl << e.what();
     throw ex;
   }
- return NULL; 
   
 }
 
@@ -1651,10 +1628,8 @@ std::string  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getRepackVidAndF
 //-------------------------------------------------------------------------- 
 	 
 
-castor::tape::tapegateway::Volume* castor::tape::tapegateway::ora::OraTapeGatewaySvc::startTapeSession(castor::tape::tapegateway::VolumeRequest& startRequest) throw (castor::exception::Exception){ 
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::startTapeSession(const castor::tape::tapegateway::VolumeRequest& startRequest, castor::tape::tapegateway::Volume& volume ) throw (castor::exception::Exception){ 
   
-  castor::tape::tapegateway::Volume* result=NULL;  
-
   try {
     // Check whether the statements are ok
     if (0 == m_startTapeSessionStatement) {
@@ -1685,7 +1660,7 @@ castor::tape::tapegateway::Volume* castor::tape::tapegateway::ora::OraTapeGatewa
 
     if (ret==-1) {
       //NOMOREFILES
-      return NULL;
+      return;
     }
     if (ret == -2) {
       // UNKNOWN request
@@ -1693,18 +1668,17 @@ castor::tape::tapegateway::Volume* castor::tape::tapegateway::ora::OraTapeGatewa
       throw e;
     }
    
-    result = new Volume();
-    result->setClientType(TAPE_GATEWAY);
-    result->setVid(m_startTapeSessionStatement->getString(2));
-    result->setMode((castor::tape::tapegateway::VolumeMode)m_startTapeSessionStatement->getInt(3));
-    result->setDensity(m_startTapeSessionStatement->getString(5));
-    result->setLabel(m_startTapeSessionStatement->getString(6));
-    result->setMountTransactionId(startRequest.mountTransactionId());
+    
+    volume.setClientType(TAPE_GATEWAY);
+    volume.setVid(m_startTapeSessionStatement->getString(2));
+    volume.setMode((castor::tape::tapegateway::VolumeMode)m_startTapeSessionStatement->getInt(3));
+    volume.setDensity(m_startTapeSessionStatement->getString(5));
+    volume.setLabel(m_startTapeSessionStatement->getString(6));
+    volume.setMountTransactionId(startRequest.mountTransactionId());
     
 
   } catch (oracle::occi::SQLException e) {
-    if (result) delete result;
-    result=NULL;
+    
 
     handleException(e);
     castor::exception::Internal ex;
@@ -1713,7 +1687,7 @@ castor::tape::tapegateway::Volume* castor::tape::tapegateway::ora::OraTapeGatewa
       << std::endl << e.what();
     throw ex;
   }
-  return result;
+
 
 
 } 
@@ -1722,7 +1696,7 @@ castor::tape::tapegateway::Volume* castor::tape::tapegateway::ora::OraTapeGatewa
 // endTapeSession
 //----------------------------------------------------------------------------
 
-void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::endTapeSession(castor::tape::tapegateway::EndNotification& endRequest) throw (castor::exception::Exception){
+void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::endTapeSession(const castor::tape::tapegateway::EndNotification& endRequest) throw (castor::exception::Exception){
 
   try {
     // Check whether the statements are ok
@@ -1755,7 +1729,7 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::endTapeSession(castor::
 // getSegmentInfo
 //----------------------------------------------------------------------------
 		
-void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getSegmentInfo(FileRecalledNotification &fileRecalled, std::string& vid,int& copyNb ) throw (castor::exception::Exception){
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getSegmentInfo(const FileRecalledNotification &fileRecalled, std::string& vid,int& copyNb ) throw (castor::exception::Exception){
   
  try {
     // Check whether the statements are ok
@@ -1797,7 +1771,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getSegmentInfo(FileRecal
 // failTapeSession
 //----------------------------------------------------------------------------
 
-void castor::tape::tapegateway::ora::OraTapeGatewaySvc::failTapeSession(castor::tape::tapegateway::EndNotificationErrorReport& failure) throw (castor::exception::Exception){
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::failTapeSession(const castor::tape::tapegateway::EndNotificationErrorReport& failure) throw (castor::exception::Exception){
   try {
     // Check whether the statements are ok
 
@@ -1830,7 +1804,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::failTapeSession(castor::
 // failFileTransfer
 //----------------------------------------------------------------------------
 
-void castor::tape::tapegateway::ora::OraTapeGatewaySvc::failFileTransfer(FileErrorReport& failure) throw (castor::exception::Exception){
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::failFileTransfer(const FileErrorReport& failure) throw (castor::exception::Exception){
 
   try {
     // Check whether the statements are ok
@@ -1865,7 +1839,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::failFileTransfer(FileErr
 // invalidateFile
 //----------------------------------------------------------------------------
 
-void castor::tape::tapegateway::ora::OraTapeGatewaySvc::invalidateFile(FileErrorReport& failure) throw (castor::exception::Exception){
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::invalidateFile(const FileErrorReport& failure) throw (castor::exception::Exception){
 
   try {
     // Check whether the statements are ok
@@ -1901,8 +1875,8 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::invalidateFile(FileError
 // getTapeToRelease
 //----------------------------------------------------------------------------
 
-castor::stager::Tape castor::tape::tapegateway::ora::OraTapeGatewaySvc::getTapeToRelease(u_signed64 mountTransactionId) throw (castor::exception::Exception){
-  castor::stager::Tape result;
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getTapeToRelease(const u_signed64& mountTransactionId, castor::stager::Tape& tape ) throw (castor::exception::Exception){
+  
   try {
     // Check whether the statements are ok
 
@@ -1919,8 +1893,8 @@ castor::stager::Tape castor::tape::tapegateway::ora::OraTapeGatewaySvc::getTapeT
     
     m_getTapeToReleaseStatement->executeUpdate();
 
-    result.setVid(m_getTapeToReleaseStatement->getString(2));
-    result.setTpmode(m_getTapeToReleaseStatement->getInt(3));
+    tape.setVid(m_getTapeToReleaseStatement->getString(2));
+    tape.setTpmode(m_getTapeToReleaseStatement->getInt(3));
 
   } catch (oracle::occi::SQLException e) {
    
@@ -1931,7 +1905,49 @@ castor::stager::Tape castor::tape::tapegateway::ora::OraTapeGatewaySvc::getTapeT
       << std::endl << e.what();
     throw ex;
   }
-  return result;
+
 }
 
 
+//----------------------------------------------------------------------------
+// endTransaction
+//----------------------------------------------------------------------------
+
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::endTransaction() throw (castor::exception::Exception){
+  cnvSvc()->commit();
+}
+
+//----------------------------------------------------------------------------
+// checkConfiguration
+//----------------------------------------------------------------------------
+
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::checkConfiguration() throw (castor::exception::Exception){
+
+  try {
+    // Check whether the statements are ok
+    if (0 == m_checkConfigurationStatement) {
+      m_checkConfigurationStatement =
+        createStatement(s_checkConfigurationStatementString);
+      m_checkConfigurationStatement->setAutoCommit(true);
+    }
+    // Execute the statement
+    (void)m_checkConfigurationStatement->executeUpdate();
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    if (1403 == e.getErrorCode()) {
+      // no data found, I should run the tapegateway instead of rtcpclientd
+      castor::exception::Internal e;
+      e.getMessage()
+	<< "the tape gateway cannot be run with such configuration, use rtcpclientd instead"
+	<< std::endl;
+      throw e;
+    }
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in checkConfiguration."
+      << std::endl << e.what();
+    throw ex;
+  }
+
+  
+}

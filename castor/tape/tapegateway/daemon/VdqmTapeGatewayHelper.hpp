@@ -34,6 +34,9 @@
 
 #include "castor/tape/tapegateway/TapeGatewayRequest.hpp"
 
+#include "net.h"
+#include "vdqm.h"
+
 namespace castor {
 
   namespace tape {
@@ -41,10 +44,15 @@ namespace castor {
     namespace tapegateway {
 
       class VdqmTapeGatewayHelper {
+
+	vdqmnw_t* m_connection;
+
         public:
-	
-	int submitTapeToVdqm( castor::stager::Tape* tape, std::string dgn, int port) throw (castor::exception::Exception);
-	void checkVdqmForRequest(TapeGatewayRequest* tapeRequest) throw (castor::exception::Exception);
+	void connectToVdqm()throw (castor::exception::Exception);
+	int submitTapeToVdqm( const castor::stager::Tape& tape, const int& port) throw (castor::exception::Exception);
+	void confirmRequestToVdqm() throw (castor::exception::Exception);
+	void checkVdqmForRequest(const TapeGatewayRequest& tapeRequest) throw (castor::exception::Exception);
+	void disconnectFromVdqm()throw (castor::exception::Exception);
 
       };
     

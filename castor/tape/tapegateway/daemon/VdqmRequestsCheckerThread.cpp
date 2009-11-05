@@ -24,8 +24,9 @@
  * @author Giulia Taurelli
  *****************************************************************************/
 
-#include <sys/types.h>
 #include <stdlib.h>
+#include <sys/time.h>
+#include <sys/types.h>
 #include <unistd.h>
 #include <errno.h>
 
@@ -37,11 +38,12 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/stager/Stream.hpp"
 
-#include "castor/tape/tapegateway/DlfCodes.hpp"
-#include "castor/tape/tapegateway/ITapeGatewaySvc.hpp"
-#include "castor/tape/tapegateway/VdqmRequestsCheckerThread.hpp"
-#include "castor/tape/tapegateway/VdqmTapeGatewayHelper.hpp"
-#include "castor/tape/tapegateway/VmgrTapeGatewayHelper.hpp"
+#include "castor/tape/tapegateway/daemon/DlfCodes.hpp"
+#include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
+#include "castor/tape/tapegateway/daemon/VdqmRequestsCheckerThread.hpp"
+#include "castor/tape/tapegateway/daemon/VdqmTapeGatewayHelper.hpp"
+#include "castor/tape/tapegateway/daemon/VmgrTapeGatewayHelper.hpp"
+
 
 
 //------------------------------------------------------------------------------
@@ -57,14 +59,17 @@ castor::tape::tapegateway::VdqmRequestsCheckerThread::VdqmRequestsCheckerThread(
 void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
 {
 
-  std::vector<castor::tape::tapegateway::TapeGatewayRequest*> tapeRequests;
-  std::vector<castor::stager::Tape*> tapesToReset;
-  std::vector<castor::stager::Tape*>::iterator tapeToReset;
-
+  std::list<castor::tape::tapegateway::TapeGatewayRequest> tapeRequests;
+  
+  std::list<castor::stager::Tape> tapesToReset;
+  std::list<castor::stager::Tape>::iterator tapeToReset;
+  std::list<std::string> vids;
 
  // service to access the database
+
   castor::IService* dbSvc = castor::BaseObject::services()->service("OraTapeGatewaySvc", castor::SVC_ORATAPEGATEWAYSVC);
   castor::tape::tapegateway::ITapeGatewaySvc* oraSvc = dynamic_cast<castor::tape::tapegateway::ITapeGatewaySvc*>(dbSvc);
+
 
 
   if (0 == oraSvc) {
@@ -72,12 +77,15 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
     return;
   }
 
-
+  timeval tvStart,tvEnd;
+  gettimeofday(&tvStart, NULL);
+  
+  
   try {
      // get tapes to check from the db
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,CHECKER_GETTING_TAPES, 0, NULL);
 
-    tapeRequests = oraSvc->getTapesWithDriveReqs(m_timeOut);
+    oraSvc->getTapesWithDriveReqs(tapeRequests,vids,m_timeOut);
 
   } catch (castor::exception::Exception e) {
      // error in getting new tape to submit
@@ -90,20 +98,39 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
     return;
   }
 
-  std::vector<castor::tape::tapegateway::TapeGatewayRequest*> tapesToRetry;
+  if (tapeRequests.empty()){
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,CHECKER_NO_TAPE, 0, NULL);
+    return;
+  }
+  
+  
+  gettimeofday(&tvEnd, NULL);
+  signed64 procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
+
+  castor::dlf::Param params[] =
+    {
+      castor::dlf::Param("ProcessingTime", procTime * 0.000001)
+    };
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, CHECHER_TAPES_FOUND, 1, params);
+
+  std::list<castor::tape::tapegateway::TapeGatewayRequest> tapesToRetry;
 
   // check the tapes to vdqm
-  std::vector<castor::tape::tapegateway::TapeGatewayRequest*>::iterator tapeRequest = tapeRequests.begin();
+  
+  std::list<std::string>::iterator vid=vids.begin();
 
-  while (tapeRequest != tapeRequests.end()){
+  for (std::list<castor::tape::tapegateway::TapeGatewayRequest>::iterator tapeRequest = tapeRequests.begin();
+       tapeRequest != tapeRequests.end();
+       tapeRequest++,vid++){
 
     castor::dlf::Param params[] =
-      {castor::dlf::Param("vdqm request id", (*tapeRequest)->vdqmVolReqId())
+      {castor::dlf::Param("mountTransactionId", (*tapeRequest).vdqmVolReqId()),
+       castor::dlf::Param("TPVID", *vid)
       };
 
     castor::tape::tapegateway::VdqmTapeGatewayHelper vdqmHelper;
 
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,CHECKER_QUERYING_VDQM, 1, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,CHECKER_QUERYING_VDQM, 2, params);
 
     try {
       vdqmHelper.checkVdqmForRequest(*tapeRequest);
@@ -111,22 +138,21 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
     } catch (castor::exception::Exception e) {
 
       castor::dlf::Param params[] =
-	{castor::dlf::Param("vdqm request id", (*tapeRequest)->vdqmVolReqId()),
+	{castor::dlf::Param("mountTransactionId", (*tapeRequest).vdqmVolReqId()),
        castor::dlf::Param("errorCode",sstrerror(e.code())),
 	 castor::dlf::Param("errorMessage",e.getMessage().str()),
       };
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, CHECKER_LOST_VDQM_REQUEST, 3, params);
       if ( e.code() == EPERM ) {
 	tapesToRetry.push_back(*tapeRequest);
-	if ((*tapeRequest)->accessMode() == 1 && (*tapeRequest)->status() == ONGOING ){
-	  castor::stager::Tape* tapeToReset= new 	castor::stager::Tape();
-	  tapeToReset->setTpmode(1);
-	  tapeToReset->setVid((*tapeRequest)->streamMigration()->tape()->vid());
+	if ((*tapeRequest).accessMode() == 1 ){
+	  castor::stager::Tape tapeToReset;
+	  tapeToReset.setTpmode(1);
+	  tapeToReset.setVid(*vid);
 	  tapesToReset.push_back(tapeToReset);
 	}
       }
     }
-    tapeRequest++;
   }
 
 
@@ -135,23 +161,36 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
 
     //  I update vmgr releasing the busy tapes
 
-    tapeToReset = tapesToReset.begin();
-    while (tapeToReset != tapesToReset.end()){
+    for ( tapeToReset = tapesToReset.begin();
+	  tapeToReset != tapesToReset.end();
+	  tapeToReset++){
       castor::tape::tapegateway::VmgrTapeGatewayHelper vmgrHelper;
       try {
-	vmgrHelper.resetBusyTape(**tapeToReset);
+	vmgrHelper.resetBusyTape(*tapeToReset);
 	castor::dlf::Param params[] =
-	  {castor::dlf::Param("VID", (*tapeToReset)->vid())};
+	  {castor::dlf::Param("VID", (*tapeToReset).vid())};
 	castor::dlf::dlf_writep(nullCuuid,DLF_LVL_SYSTEM, CHECKER_RELEASING_UNUSED_TAPE, 1, params);
       } catch (castor::exception::Exception e){
  	castor::dlf::Param params[] =
-	  {castor::dlf::Param("VID", (*tapeToReset)->vid())};
+	  {castor::dlf::Param("VID", (*tapeToReset).vid())};
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, CHECKER_VMGR_ERROR, 1, params);
       }
-      tapeToReset++;
     }
     // update the db to eventually send again some requests
+
+    gettimeofday(&tvStart, NULL);
+    
     oraSvc->restartLostReqs(tapesToRetry);
+
+    gettimeofday(&tvEnd, NULL);
+    signed64 procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
+    castor::dlf::Param paramsReset[] =
+    {
+     castor::dlf::Param("ProcessingTime", procTime * 0.000001)
+    };
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, CHECKER_TAPES_RESURRECTED, 1, paramsReset);
+    
+
 
   } catch (castor::exception::Exception e){
 
@@ -164,26 +203,6 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, CHECKER_CANNOT_UPDATE_DB, 2, params);
 
   }
-
-  // cleanUp
-
-  tapeRequest=tapeRequests.begin();
-  while (tapeRequest != tapeRequests.end()){
-    if (*tapeRequest) delete *tapeRequest;
-    *tapeRequest=NULL;
-    tapeRequest++;
-  }
-
-  tapeToReset=tapesToReset.begin();
-  while (tapeToReset != tapesToReset.end()){
-    if (*tapeToReset) delete *tapeToReset;
-    *tapeToReset=NULL;
-    tapeToReset++;
-  }
-
-  tapeRequests.clear();
-  tapesToRetry.clear();
-  tapesToReset.clear();
 
 }
 

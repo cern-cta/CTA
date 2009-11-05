@@ -30,7 +30,7 @@
 // Include Files
 
 #include <u64subr.h>
-#include <vector>
+#include <list>
 
 #include "occi.h"
 
@@ -38,7 +38,7 @@
 
 #include "castor/db/newora/OraCommonSvc.hpp"
 
-#include "castor/tape/tapegateway/ITapeGatewaySvc.hpp"
+#include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
 
 
 namespace castor {
@@ -91,61 +91,74 @@ namespace castor {
 	 * Get all the pending streams 
 	 */
 
-	virtual std::vector<castor::stager::Stream*> getStreamsWithoutTapes()throw (castor::exception::Exception);
+	virtual void  getStreamsWithoutTapes(std::list<castor::stager::Stream>& streams,
+					     std::list<castor::stager::TapePool>& tapePools )
+	  throw (castor::exception::Exception);
 
         /**
          * Associate to each Stream a Tape
          */
 
-        virtual void attachTapesToStreams(std::vector<u_signed64> strIds, std::vector<std::string> vids, std::vector<int> fseqs)
+        virtual void attachTapesToStreams(const std::list<u_signed64>& strIds,
+					  const std::list<std::string>& vids,
+					  const std::list<int>& fseqs)
           throw (castor::exception::Exception);
 
         /*
-         * Get all the tapes for which we have to send a request to VDQM.     
+         * Get a tape for which we have to send a request to VDQM.     
          */
 
-        virtual std::vector<castor::tape::tapegateway::TapeGatewayRequest*> getTapesWithoutDriveReqs()
-          throw (castor::exception::Exception);
+	virtual void  getTapeWithoutDriveReq (castor::tape::tapegateway::VdqmTapeGatewayRequest& request)
+	  throw (castor::exception::Exception);
+
 
 	/*
          * Update the request that we sent  to VDQM.     
          */
 
-	virtual void  attachDriveReqsToTapes(std::vector<castor::tape::tapegateway::TapeGatewayRequest*> tapeRequests )throw (castor::exception::Exception);
+	virtual void attachDriveReqToTape(const castor::tape::tapegateway::VdqmTapeGatewayRequest& tapeRequest,
+					  const castor::stager::Tape& tape)
+	  throw (castor::exception::Exception); 
+
 
         /**
          * Get all the tapes for which we have to check that VDQM didn't lost 
 	 * our request
          */
 
-        virtual std::vector<castor::tape::tapegateway::TapeGatewayRequest*> getTapesWithDriveReqs(u_signed64 timeOut) 
+        virtual void  getTapesWithDriveReqs(std::list<castor::tape::tapegateway::TapeGatewayRequest>& requests,
+					    std::list<std::string>& vids,
+					    const u_signed64& timeOut) 
           throw (castor::exception::Exception);
+
 
         /**
          * Restart the request lost by VDQM or left around
          */
 
-	virtual void restartLostReqs( std::vector<castor::tape::tapegateway::TapeGatewayRequest*> tapes) 
+	virtual void restartLostReqs(const std::list<castor::tape::tapegateway::TapeGatewayRequest>& tapes) 
 	  throw (castor::exception::Exception);
 
         /**
          * Get the best file to migrate
          */
 
-        virtual castor::tape::tapegateway::FileToMigrate* getFileToMigrate(castor::tape::tapegateway::FileToMigrateRequest& req)
+        virtual void  getFileToMigrate(const castor::tape::tapegateway::FileToMigrateRequest& req,
+				       castor::tape::tapegateway::FileToMigrate& file)
           throw (castor::exception::Exception);
 
         /*
          * Update the db for a file which is migrated successfully 
          */
 
-        virtual  void  setFileMigrated(castor::tape::tapegateway::FileMigratedNotification& resp)
+        virtual  void  setFileMigrated(const castor::tape::tapegateway::FileMigratedNotification& resp)
           throw (castor::exception::Exception);
 
         /*
 	 * Get the best file to recall 
          */
-        virtual castor::tape::tapegateway::FileToRecall* getFileToRecall(castor::tape::tapegateway::FileToRecallRequest&  req)
+        virtual void getFileToRecall(const castor::tape::tapegateway::FileToRecallRequest&  req,
+				     castor::tape::tapegateway::FileToRecall& file )
           throw (castor::exception::Exception);
 
 	
@@ -153,26 +166,29 @@ namespace castor {
          * Update the db for a file which has been recalled successfully 
 	 */
 
-        virtual void  setFileRecalled(castor::tape::tapegateway::FileRecalledNotification& resp) throw (castor::exception::Exception);
+        virtual void  setFileRecalled(const castor::tape::tapegateway::FileRecalledNotification& resp) 
+	  throw (castor::exception::Exception);
 
 	/**
 	 * Get the tapecopies which faced a migration failure
 	 */
 	
-	virtual std::vector<castor::stager::TapeCopy*>  getFailedMigrations()
+	virtual void  getFailedMigrations(std::list<castor::infoPolicy::RetryPolicyElement>& candidates)
 	  throw (castor::exception::Exception);
 
 	/**
 	 * Update the db using the retry migration policy returned values
 	 */
 	
-	virtual void  setMigRetryResult(std::vector<u_signed64> tcToRetry, std::vector<u_signed64> tcToFail ) throw (castor::exception::Exception);
+	virtual void  setMigRetryResult(const std::list<u_signed64>& tcToRetry,
+					const std::list<u_signed64>& tcToFail ) 
+	  throw (castor::exception::Exception);
 
 	/**
 	 * Get the tapecopies which faced a recall failure 
 	 */
 
-	virtual std::vector<castor::stager::TapeCopy*>  getFailedRecalls()
+	virtual void  getFailedRecalls(std::list<castor::infoPolicy::RetryPolicyElement>& candidates)
 	  throw (castor::exception::Exception);
 	
 
@@ -180,40 +196,55 @@ namespace castor {
 	 * Update the db using the retry recall policy returned values
 	 */
 
-        virtual void  setRecRetryResult(std::vector<u_signed64> tcToRetry,std::vector<u_signed64> tcToFail) throw (castor::exception::Exception);
+        virtual void  setRecRetryResult(const std::list<u_signed64>& tcToRetry,
+					const std::list<u_signed64>& tcToFail) 
+	  throw (castor::exception::Exception);
 
 
 	/**
 	 * Access the db to retrieve the information about a completed migration
 	 */
-	
-	virtual std::string getRepackVidAndFileInfo(castor::tape::tapegateway::FileMigratedNotification& file, std::string& vid, int& copyNumber, u_signed64& lastModificationTime )throw (castor::exception::Exception);
+
+	virtual void getRepackVidAndFileInfo(const castor::tape::tapegateway::FileMigratedNotification& file,
+					     std::string& vid,
+					     int& copyNumber,
+					     u_signed64& lastModificationTime,
+					     std::string& repackVid )
+	  throw (castor::exception::Exception);
+
 
 	/*
 	 * Update the database when the tape aggregator allows us to serve a request
 	 */
 
-	virtual castor::tape::tapegateway::Volume*  startTapeSession(castor::tape::tapegateway::VolumeRequest& startReq) throw (castor::exception::Exception); 
+	virtual void  startTapeSession( const castor::tape::tapegateway::VolumeRequest& startReq,
+					castor::tape::tapegateway::Volume& volume) 
+	  throw (castor::exception::Exception); 
 
 
 	/*
 	 * Update the database when the tape request has been served 
 	 */
 
-	virtual void endTapeSession(castor::tape::tapegateway::EndNotification& endRequest) throw (castor::exception::Exception); 
+	virtual void endTapeSession(const castor::tape::tapegateway::EndNotification& endRequest)
+	  throw (castor::exception::Exception); 
 
 	/*
 	 * Access the db to retrieve the information about a completed recall 
 	 */
 
 
-	virtual void getSegmentInfo(FileRecalledNotification &fileRecalled, std::string& vid,int& copyNb)throw (castor::exception::Exception); 
+	virtual void getSegmentInfo(const FileRecalledNotification &fileRecalled,
+				    std::string& vid,
+				    int& copyNb)
+	  throw (castor::exception::Exception); 
 
 	/*
 	 * update the db after a major failure
 	 */
 
-	virtual void failTapeSession(castor::tape::tapegateway::EndNotificationErrorReport& failure)throw (castor::exception::Exception);
+	virtual void failTapeSession(const castor::tape::tapegateway::EndNotificationErrorReport& failure)
+	  throw (castor::exception::Exception);
 
 	
 	/*
@@ -221,19 +252,34 @@ namespace castor {
 	 */
 
 
-	virtual void failFileTransfer(FileErrorReport& failure)throw (castor::exception::Exception);
+	virtual void failFileTransfer(const FileErrorReport& failure)
+	  throw (castor::exception::Exception);
 
 	/*
 	 * invalidate file
 	 */
 
 
-	virtual void invalidateFile(FileErrorReport& failure)throw (castor::exception::Exception);
+	virtual void invalidateFile(const FileErrorReport& failure)
+	  throw (castor::exception::Exception);
 
 
 	/* get tapes to release in vmgr */
 
-	virtual castor::stager::Tape getTapeToRelease(u_signed64 mountTransactionId)throw (castor::exception::Exception);
+	virtual void  getTapeToRelease(const u_signed64& mountTransactionId,
+				       castor::stager::Tape& tape)
+	  throw (castor::exception::Exception);
+
+	/* commit transaction */
+
+	virtual void castor::tape::tapegateway::ora::OraTapeGatewaySvc::endTransaction() 
+	  throw (castor::exception::Exception);
+
+	/* check configuration */
+
+	virtual void checkConfiguration() 
+	  throw (castor::exception::Exception);
+
 
       private:
 
@@ -243,11 +289,11 @@ namespace castor {
 	static const std::string s_attachTapesToStreamsStatementString;
 	oracle::occi::Statement *m_attachTapesToStreamsStatement;
 	
-	static const std::string s_getTapesWithoutDriveReqsStatementString;
-	oracle::occi::Statement *m_getTapesWithoutDriveReqsStatement;
+	static const std::string s_getTapeWithoutDriveReqStatementString;
+	oracle::occi::Statement *m_getTapeWithoutDriveReqStatement;
 
-	static const std::string s_attachDriveReqsToTapesStatementString;
-	oracle::occi::Statement *m_attachDriveReqsToTapesStatement;
+	static const std::string s_attachDriveReqToTapeStatementString;
+	oracle::occi::Statement *m_attachDriveReqToTapeStatement;
 	
 	static const std::string s_getTapesWithDriveReqsStatementString;
 	oracle::occi::Statement *m_getTapesWithDriveReqsStatement;
@@ -299,6 +345,9 @@ namespace castor {
 	
 	static const std::string s_getTapeToReleaseStatementString;
 	oracle::occi::Statement *m_getTapeToReleaseStatement;
+
+	static const std::string s_checkConfigurationStatementString;
+	oracle::occi::Statement *m_checkConfigurationStatement;
 
       }; // end of class OraTapeGateway
 

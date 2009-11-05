@@ -38,14 +38,14 @@ DependsOnLibrary(../db/cnv,castorcnvs)
 DependsOnLibrary(../infoPolicy,castorinfopolicy)
 DependsOnLibrary(../../rfio,castorrfio)
 
-TAPEGATEWAYDBIN_SRCS = TapeGatewayDaemon.cpp WorkerThread.cpp \
-	MigratorErrorHandlerThread.cpp RecallerErrorHandlerThread.cpp \
-	TapeStreamLinkerThread.cpp VdqmRequestsCheckerThread.cpp VdqmRequestsProducerThread.cpp \
-	VmgrTapeGatewayHelper.cpp VdqmTapeGatewayHelper.cpp NsTapeGatewayHelper.cpp \
-	RmMasterTapeGatewayHelper.cpp
+TAPEGATEWAYDBIN_SRCS = daemon/TapeGatewayDaemon.cpp daemon/WorkerThread.cpp \
+	daemon/MigratorErrorHandlerThread.cpp  daemon/RecallerErrorHandlerThread.cpp \
+	daemon/TapeStreamLinkerThread.cpp  daemon/VdqmRequestsCheckerThread.cpp  daemon/VdqmRequestsProducerThread.cpp \
+	daemon/VmgrTapeGatewayHelper.cpp  daemon/VdqmTapeGatewayHelper.cpp  daemon/NsTapeGatewayHelper.cpp \
+	 daemon/RmMasterTapeGatewayHelper.cpp ../utils/utils.cpp ../net/net.cpp  
 
 TAPEGATEWAY_MESSAGES_SRCS = \
-	VolumeRequest.cpp Volume.cpp \
+	VolumeRequest.cpp Volume.cpp VdqmTapeGatewayRequest.cpp \
 	FileToMigrateRequest.cpp FileToMigrate.cpp \
 	FileToRecallRequest.cpp FileToRecall.cpp \
 	FileMigratedNotification.cpp FileRecalledNotification.cpp \
@@ -63,7 +63,7 @@ TAPEGATEWAY_IO_SRCS = \
 	../../io/StreamEndNotificationErrorReportCnv.cpp ../../io/StreamNoMoreFilesCnv.cpp  \
 	../../io/StreamFileErrorReportCnv.cpp
 
-TAPEGATEWAY_DB_SRCS = ../../db/cnv/DbTapeGatewayRequestCnv.cpp ora/OraTapeGatewaySvc.cpp \
+TAPEGATEWAY_DB_SRCS = ../../db/cnv/DbTapeGatewayRequestCnv.cpp  daemon/ora/OraTapeGatewaySvc.cpp \
 	../../db/cnv/DbTapeGatewaySubRequestCnv.cpp
 
 TAPEGATEWAYBIN_SRCS = $(TAPEGATEWAYDBIN_SRCS) $(TAPEGATEWAY_MESSAGES_SRCS) $(TAPEGATEWAY_IO_SRCS) $(TAPEGATEWAY_DB_SRCS)

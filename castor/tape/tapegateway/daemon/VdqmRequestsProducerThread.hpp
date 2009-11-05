@@ -30,7 +30,7 @@
 
 
 
-#include "castor/server/BaseDbThread.hpp"
+#include "castor/server/SelectProcessThread.hpp"
 #include "castor/stager/Tape.hpp"
 
 namespace castor {
@@ -42,15 +42,17 @@ namespace castor {
      *  VdqmRequestsProducer tread.
      */
     
-      class VdqmRequestsProducerThread : public castor::server::BaseDbThread {
+      class VdqmRequestsProducerThread : public castor::server::SelectProcessThread {
 	int m_port;
       public:
 	
       VdqmRequestsProducerThread(int port);
 
       virtual ~VdqmRequestsProducerThread() throw() {};
+	
+      virtual castor::IObject* select() throw();
+      virtual void process(castor::IObject* par)throw();
 
-      virtual void run(void*);
     };
 
     } // end of tapegateway

@@ -24,8 +24,11 @@
  * @author Giulia Taurelli
  *****************************************************************************/
 
-#include <sys/types.h>
+
+#include <errno.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <u64subr.h>
 
@@ -37,10 +40,10 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/stager/TapePool.hpp"
 
-#include "castor/tape/tapegateway/DlfCodes.hpp"
-#include "castor/tape/tapegateway/ITapeGatewaySvc.hpp"
-#include "castor/tape/tapegateway/TapeStreamLinkerThread.hpp"
-#include "castor/tape/tapegateway/VmgrTapeGatewayHelper.hpp"
+#include "castor/tape/tapegateway/daemon/DlfCodes.hpp"
+#include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
+#include "castor/tape/tapegateway/daemon/TapeStreamLinkerThread.hpp"
+#include "castor/tape/tapegateway/daemon/VmgrTapeGatewayHelper.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -55,8 +58,9 @@ castor::tape::tapegateway::TapeStreamLinkerThread::TapeStreamLinkerThread(){
 void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
 {
 
-  std::vector<castor::stager::Stream*> streamsToResolve;
-  std::vector<castor::stager::Stream*>::iterator stream;
+  std::list<castor::stager::Stream> streamsToResolve;
+  std::list<castor::stager::TapePool> tapepools;
+  
 
  // service to access the database
   castor::IService* dbSvc = castor::BaseObject::services()->service("OraTapeGatewaySvc", castor::SVC_ORATAPEGATEWAYSVC);
@@ -68,11 +72,14 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
     return;
   }
 
+  timeval tvStart,tvEnd;
+  gettimeofday(&tvStart, NULL);
 
   // get streams to check from the db
   try {
      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, LINKER_GETTING_STREAMS, 0, NULL);
-    streamsToResolve= oraSvc->getStreamsWithoutTapes();
+     oraSvc->getStreamsWithoutTapes(streamsToResolve, tapepools);
+
   } catch (castor::exception::Exception e) {
     // error in getting new tape to submit
     castor::dlf::Param params[] =
@@ -83,60 +90,93 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
     return;
   }
 
+  if (streamsToResolve.empty()){
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, LINKER_NO_STREAM, 0, NULL);
+    return;
+  }
+  
+  gettimeofday(&tvEnd, NULL);
+  signed64 procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
+
+  castor::dlf::Param paramsTapes[] =
+    {
+     castor::dlf::Param("ProcessingTime", procTime * 0.000001)
+    };
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, LINKER_STREAMS_FOUND, 1, paramsTapes);
+
+  if (streamsToResolve.size() !=  tapepools.size()){
+
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage()
+      << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream"
+      << " invalid input";
+    throw ex;
+
+  }
+
   // ask tapes to vmgr
 
-  std::vector<u_signed64> strIds;
-  std::vector<std::string> vids;
-  std::vector<int> fseqs;
-  std::vector<castor::stager::Tape*> tapesUsed;
-  std::vector<castor::stager::Tape*>::iterator tapeItem;
-  castor::stager::Tape* tapeToUse=NULL;
+
   VmgrTapeGatewayHelper vmgrHelper;
 
-  std::vector<castor::stager::Stream*>::iterator strItem=streamsToResolve.begin();
 
-  while ( strItem != streamsToResolve.end() ) {
+  std::list<u_signed64> strIds;
+  std::list<std::string> vids;
+  std::list<int> fseqs;
+  std::list<castor::stager::Tape> tapesUsed;
+
+  std::list<castor::stager::TapePool>::iterator tapepool=tapepools.begin();
+
+  for (std::list<castor::stager::Stream>::iterator strItem=streamsToResolve.begin();
+       strItem != streamsToResolve.end();
+       strItem++,
+	 tapepool++){
 
     // get tape from vmgr
 
-    castor::dlf::Param params0[] =
-      {castor::dlf::Param("StreamId",(*strItem)->id())
+
+    castor::dlf::Param paramsVmgr[] =
+      {castor::dlf::Param("StreamId",(*strItem).id()),
+       castor::dlf::Param("TapePool",(*tapepool).name())
       };
+    
+
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,LINKER_QUERYING_VMGR, 2, paramsVmgr);
     int lastFseq=-1;
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,LINKER_QUERYING_VMGR, 1, params0);
+    castor::stager::Tape tapeToUse;
+    
     try {
       // last Fseq is the value which should be used for the first file
-      tapeToUse=vmgrHelper.getTapeForStream(**strItem,lastFseq);
+      vmgrHelper.getTapeForStream(*strItem,*tapepool,lastFseq,tapeToUse);
     } catch(castor::exception::Exception e) {
       castor::dlf::Param params[] =
-	{castor::dlf::Param("StreamId",(*strItem)->id()),
+	{castor::dlf::Param("StreamId",(*strItem).id()),
 	 castor::dlf::Param("errorCode",sstrerror(e.code())),
 	 castor::dlf::Param("errorMessage",e.getMessage().str())
 	};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, LINKER_NO_TAPE_AVAILABLE, 3, params);
-      strItem++;
       continue;
       // in case of errors we don't change the status from TO_BE_RESOLVED to TO_BE_SENT_TO_VDQM -- NO NEED OF WAITSPACE status
     }
 
-    if ( tapeToUse != NULL ){
+    if ( !tapeToUse.vid().empty()){
       // got the tape
       castor::dlf::Param params[] =
-	{castor::dlf::Param("StreamId",(*strItem)->id()),
-	 castor::dlf::Param("TPVID",tapeToUse->vid())
+	{castor::dlf::Param("StreamId",(*strItem).id()),
+	 castor::dlf::Param("TPVID",tapeToUse.vid())
 	};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, LINKER_LINKING_TAPE_STREAM, 2, params);
 
-      strIds.push_back((*strItem)->id());
-      vids.push_back(tapeToUse->vid());
+      strIds.push_back((*strItem).id());
+      vids.push_back(tapeToUse.vid());
       fseqs.push_back(lastFseq);
       tapesUsed.push_back(tapeToUse);
 
     }
 
-    strItem++;
-
   }
+
+  gettimeofday(&tvStart, NULL);
 
   // update the db
   try {
@@ -149,47 +189,36 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
       };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, LINKER_CANNOT_UPDATE_DB, 2, params);
 
-    tapeItem=tapesUsed.begin();
-    while (tapeItem!=tapesUsed.end()) {
+    for (std::list<castor::stager::Tape>::iterator tapeItem=tapesUsed.begin();
+	 tapeItem!=tapesUsed.end();
+	 tapeItem++) {
       // release the tape
       castor::dlf::Param params[] =
-	{castor::dlf::Param("TPVID",(*tapeItem)->vid())};
+	{castor::dlf::Param("TPVID",(*tapeItem).vid())};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, LINKER_RELEASED_BUSY_TAPE, 1, params);
       try {
-	vmgrHelper.resetBusyTape(**tapeItem);
+	vmgrHelper.resetBusyTape(*tapeItem);
       } catch (castor::exception::Exception e){
-
+	
 	castor::dlf::Param params[] =
-	  {castor::dlf::Param("TPVID",(*tapeItem)->vid()),
+	  {castor::dlf::Param("TPVID",(*tapeItem).vid()),
 	   castor::dlf::Param("errorCode",sstrerror(e.code())),
 	   castor::dlf::Param("errorMessage",e.getMessage().str())
 	  };
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, LINKER_CANNOT_UPDATE_DB, 3, params);
       }
-      tapeItem++;
     }
   }
 
-  // cleanUp
+  gettimeofday(&tvEnd, NULL);
+  procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
 
-  tapeItem=tapesUsed.begin();
-  while (tapeItem!=tapesUsed.end()) {
-      if (*tapeItem) delete *tapeItem;
-      *tapeItem=NULL;
-      tapeItem++;
-  }
-  tapesUsed.clear();
+  castor::dlf::Param paramsAttached[] =
+    {
+     castor::dlf::Param("ProcessingTime", procTime * 0.000001)
+    };
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, LINKER_TAPES_ATTACHED, 1, paramsAttached);
 
-  strItem=streamsToResolve.begin();
-  while (strItem !=streamsToResolve.end() ){
-    if (*strItem) delete *strItem;
-    *strItem=NULL;
-    strItem++;
-  }
-  streamsToResolve.clear();
-  strIds.clear();
-  vids.clear();
-  fseqs.clear();
 
 }
 

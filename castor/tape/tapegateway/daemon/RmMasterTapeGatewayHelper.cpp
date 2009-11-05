@@ -34,7 +34,7 @@
 #include "castor/monitoring/StreamDirection.hpp"
 #include "castor/monitoring/StreamReport.hpp"
 
-#include "castor/tape/tapegateway/RmMasterTapeGatewayHelper.hpp"
+#include "castor/tape/tapegateway/daemon/RmMasterTapeGatewayHelper.hpp"
 
 
 #define RMMASTER_PORT 15003

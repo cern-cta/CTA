@@ -37,8 +37,10 @@
 
 #include "castor/exception/OutOfMemory.hpp"
 
-#include "castor/tape/tapegateway/NsTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/PositionCommandCode.hpp"
+
+#include "castor/tape/tapegateway/daemon/NsTapeGatewayHelper.hpp"
+
 
 void castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile( tape::tapegateway::FileMigratedNotification& file, int copyNumber, std::string vid, u_signed64 lastModificationTime) throw (castor::exception::Exception){ 
 
@@ -54,12 +56,47 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile( tape::t
   castorFileId.fileid = file.fileid();
 
 
+// get segments for this fileid
+
+  int nbSegs=0;
+  struct Cns_segattrs *nsSegAttrs = NULL;
+  
+  serrno=0;
+  int rc = Cns_getsegattrs(NULL,&castorFileId,&nbSegs,&nsSegAttrs);
+  if ( rc == -1 ) {
+    if (nsSegAttrs != NULL ) free(nsSegAttrs);
+    nsSegAttrs=NULL;
+    castor::exception::Exception ex(serrno);
+    ex.getMessage()
+      << "castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile:"
+      << "impossible to get the file";
+    throw ex;
+  }
+
+  // let's check if there is already a file on that tape 
+
+  for ( int i=0; i< nbSegs ;i++) {
+    if ( strcmp(nsSegAttrs[i].vid , vid.c_str()) == 0 ) { 
+      if (nsSegAttrs != NULL ) free(nsSegAttrs);
+      nsSegAttrs=NULL;
+      castor::exception::Exception ex(EEXIST);
+      ex.getMessage()
+      << "castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile:"
+      << "this file have already a copy on that tape";
+      throw ex;
+    }
+  }
+  
+  if (nsSegAttrs != NULL ) free(nsSegAttrs);
+  nsSegAttrs=NULL;
+
+
   // fill in the information of the tape file to update the nameserver
 
-  int nbSegms = 1; // NEVER more than one segment
+  nbSegs = 1; // NEVER more than one segment
 
-  struct Cns_segattrs * nsSegAttrs = (struct Cns_segattrs *)calloc(
-                                             nbSegms,
+  nsSegAttrs = (struct Cns_segattrs *)calloc(
+                                             nbSegs,
                                              sizeof(struct Cns_segattrs)
                                              );
   if ( nsSegAttrs == NULL ) {
@@ -101,10 +138,10 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile( tape::t
 
   // removed the logic of "retry 5 times to update"
   serrno=0;
-  int rc = Cns_setsegattrs(
+  rc = Cns_setsegattrs(
 		       (char *)NULL, // CASTOR file name 
 		       &castorFileId,
-		       nbSegms,
+		       nbSegs,
 		       nsSegAttrs,
 		       lastModificationTime
 		       );
@@ -225,6 +262,25 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile( tape::t
     throw ex;
 
   } 
+
+
+  // check if there is already a copy of this file in the new tape
+
+  for ( int i=0; i< oldNbSegms ;i++) {
+    if ( strcmp(oldSegattrs[i].vid , vid.c_str()) == 0 ) { 
+
+      if (nsSegAttrs) free (nsSegAttrs);
+      nsSegAttrs = NULL;
+      if (oldSegattrs != NULL ) free(oldSegattrs);
+      oldSegattrs=NULL;
+      castor::exception::Exception ex(EEXIST);
+      ex.getMessage()
+      << "castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile:"
+      << "this file have already a copy on that tape";
+      throw ex;
+    }
+  }
+
 
   int nbSegments=0;
 
@@ -585,7 +641,7 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile(castor::
       if (segattrs != NULL ) free(segattrs);
       segattrs=NULL;
 
-      castor::exception::Exception ex(serrno);
+      castor::exception::Exception ex(SECHECKSUM);
       ex.getMessage()
 	<< "castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile:"
 	<< "wrong checksum";

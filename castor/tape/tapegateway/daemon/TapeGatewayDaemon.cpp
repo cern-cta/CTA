@@ -46,22 +46,22 @@
 #include "castor/server/SignalThreadPool.hpp"
 #include "castor/server/TCPListenerThreadPool.hpp"
 
-#include "castor/tape/tapegateway/DlfCodes.hpp"
-#include "castor/tape/tapegateway/ITapeGatewaySvc.hpp"
-#include "castor/tape/tapegateway/MigratorErrorHandlerThread.hpp"
-#include "castor/tape/tapegateway/RecallerErrorHandlerThread.hpp"
-#include "castor/tape/tapegateway/TapeGatewayDaemon.hpp"
-#include "castor/tape/tapegateway/TapeStreamLinkerThread.hpp"
-#include "castor/tape/tapegateway/VdqmRequestsCheckerThread.hpp"
-#include "castor/tape/tapegateway/VdqmRequestsProducerThread.hpp"
-#include "castor/tape/tapegateway/WorkerThread.hpp"
+#include "castor/tape/tapegateway/daemon/DlfCodes.hpp"
+#include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
+#include "castor/tape/tapegateway/daemon/MigratorErrorHandlerThread.hpp"
+#include "castor/tape/tapegateway/daemon/RecallerErrorHandlerThread.hpp"
+#include "castor/tape/tapegateway/daemon/TapeGatewayDaemon.hpp"
+#include "castor/tape/tapegateway/daemon/TapeStreamLinkerThread.hpp"
+#include "castor/tape/tapegateway/daemon/VdqmRequestsCheckerThread.hpp"
+#include "castor/tape/tapegateway/daemon/VdqmRequestsProducerThread.hpp"
+#include "castor/tape/tapegateway/daemon/WorkerThread.hpp"
 
 
 
 #define  DEFAULT_SLEEP_INTERVAL   10
 #define  VDQM_TIME_OUT_INTERVAL 600 // Timeout between two polls on a VDQM request
-#define  MIN_WORKER_THREADS 5
-#define  MAX_WORKER_THREADS 240
+#define  MIN_WORKER_THREADS 20
+#define  MAX_WORKER_THREADS 20
 
 extern "C" {
   char* getconfent(const char *, const char *, int);
@@ -88,6 +88,16 @@ int main(int argc, char* argv[]){
     std::cerr << "Couldn't load the oracle tapegateway service, check the castor.conf for DynamicLib entries"
 	      << std::endl;
     exit(-1);
+  }
+
+  try {
+    oraSvc->checkConfiguration();
+  } catch (castor::exception::Exception e){
+    std::cerr << "Caught castor exception : "
+     << sstrerror(e.code()) << std::endl
+     << e.getMessage().str() << std::endl;
+    return -1;
+
   }
 
   // create the retry policies
@@ -118,7 +128,7 @@ int main(int argc, char* argv[]){
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT,castor::tape::tapegateway:: NO_RETRY_POLICY_FOUND, 1, params);
     }
 
-
+    
     // get recall retry  policy
 
     if ( (prr = getconfent("Policy","RetryRecall",0)) != NULL ){
@@ -138,18 +148,18 @@ int main(int argc, char* argv[]){
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, castor::tape::tapegateway::NO_RETRY_POLICY_FOUND, 1, params);
     }
 
-
-    castor::infoPolicy::TapeRetryPySvc* retryMigrationSvc=NULL;
-    castor::infoPolicy::TapeRetryPySvc* retryRecallSvc=NULL;
+    std::auto_ptr<castor::infoPolicy::TapeRetryPySvc> retryMigrationSvc;
+    std::auto_ptr<castor::infoPolicy::TapeRetryPySvc> retryRecallSvc;
 
     // migration
-    if (!retryMigrationPolicyName.empty() && !migrationFunctionName.empty())
-      retryMigrationSvc = new castor::infoPolicy::TapeRetryPySvc(retryMigrationPolicyName,migrationFunctionName);
+    if (!retryMigrationPolicyName.empty() && !migrationFunctionName.empty()){
+      retryMigrationSvc.reset(new castor::infoPolicy::TapeRetryPySvc(retryMigrationPolicyName,migrationFunctionName));
+    }
 
     //recaller
-    if (!retryRecallPolicyName.empty() && !recallFunctionName.empty())
-      retryRecallSvc = new castor::infoPolicy::TapeRetryPySvc(retryRecallPolicyName,recallFunctionName);
-
+    if (!retryRecallPolicyName.empty() && !recallFunctionName.empty()){
+      retryRecallSvc.reset(new castor::infoPolicy::TapeRetryPySvc(retryRecallPolicyName,recallFunctionName));
+    }
     // Get the min and max number of thread used by the Worker
 
     int minThreadsNumber = MIN_WORKER_THREADS;
@@ -178,41 +188,46 @@ int main(int argc, char* argv[]){
 
     tgDaemon.runAsStagerSuperuser();
 
-     // send request to vdmq
+         // send request to vdmq
 
-    tgDaemon.addThreadPool(
-			   new castor::server::SignalThreadPool("ProducerOfVdqmRequestsThread", new castor::tape::tapegateway::VdqmRequestsProducerThread(tgDaemon.listenPort()), DEFAULT_SLEEP_INTERVAL)); // port used just to be sent to vdqm
+    std::auto_ptr<castor::tape::tapegateway::VdqmRequestsProducerThread> vpThread(new castor::tape::tapegateway::VdqmRequestsProducerThread(tgDaemon.listenPort()));// port used just to be sent to vdqm
+    std::auto_ptr<castor::server::SignalThreadPool> vpPool(new castor::server::SignalThreadPool("ProducerOfVdqmRequestsThread", vpThread.release(), DEFAULT_SLEEP_INTERVAL));
+    tgDaemon.addThreadPool(vpPool.release()); 
     tgDaemon.getThreadPool('P')->setNbThreads(1);
 
-     // check requests for vdmq
-
-    tgDaemon.addThreadPool(
-			    new castor::server::SignalThreadPool("CheckerOfVdqmRequestsThread", new castor::tape::tapegateway::VdqmRequestsCheckerThread( VDQM_TIME_OUT_INTERVAL), DEFAULT_SLEEP_INTERVAL ));
+     // check requests for vdqm
+    std::auto_ptr<castor::tape::tapegateway::VdqmRequestsCheckerThread> vcThread(new castor::tape::tapegateway::VdqmRequestsCheckerThread(VDQM_TIME_OUT_INTERVAL));
+    std::auto_ptr<castor::server::SignalThreadPool> vcPool(new castor::server::SignalThreadPool("CheckerOfVdqmRequestsThread", vcThread.release(), DEFAULT_SLEEP_INTERVAL));
+    tgDaemon.addThreadPool(vcPool.release());
     tgDaemon.getThreadPool('C')->setNbThreads(1);
 
 
     // query vmgr for tape and tapepools
 
-    tgDaemon.addThreadPool(
-      new castor::server::SignalThreadPool("TapeStreamLinkerThread", new castor::tape::tapegateway::TapeStreamLinkerThread(), DEFAULT_SLEEP_INTERVAL));
-      tgDaemon.getThreadPool('T')->setNbThreads(1);
+    std::auto_ptr<castor::tape::tapegateway::TapeStreamLinkerThread> tsThread(new castor::tape::tapegateway::TapeStreamLinkerThread());
+    std::auto_ptr<castor::server::SignalThreadPool> tsPool(new castor::server::SignalThreadPool("TapeStreamLinkerThread", tsThread.release(), DEFAULT_SLEEP_INTERVAL));
+    tgDaemon.addThreadPool(tsPool.release());
+    tgDaemon.getThreadPool('T')->setNbThreads(1);
 
     // migration error handler
-
-    tgDaemon.addThreadPool(
-      new castor::server::SignalThreadPool("MigrationErrorHandlerThread", new castor::tape::tapegateway::MigratorErrorHandlerThread(retryMigrationSvc),  DEFAULT_SLEEP_INTERVAL));
+    
+    std::auto_ptr<castor::tape::tapegateway::MigratorErrorHandlerThread> mThread(new castor::tape::tapegateway::MigratorErrorHandlerThread(retryMigrationSvc.get()));
+    std::auto_ptr<castor::server::SignalThreadPool> mPool(new castor::server::SignalThreadPool("MigrationErrorHandlerThread", mThread.release(),  DEFAULT_SLEEP_INTERVAL));
+    tgDaemon.addThreadPool(mPool.release());
     tgDaemon.getThreadPool('M')->setNbThreads(1);
-
+    
     // recaller error handler
 
-    tgDaemon.addThreadPool(
-      new castor::server::SignalThreadPool("RecallerErrorHandlerThread", new castor::tape::tapegateway::RecallerErrorHandlerThread(retryRecallSvc), DEFAULT_SLEEP_INTERVAL ));
-      tgDaemon.getThreadPool('R')->setNbThreads(1);
+    std::auto_ptr<castor::tape::tapegateway::RecallerErrorHandlerThread> rThread(new castor::tape::tapegateway::RecallerErrorHandlerThread(retryRecallSvc.get()));
+    std::auto_ptr<castor::server::SignalThreadPool> rPool(new castor::server::SignalThreadPool("RecallerErrorHandlerThread", rThread.release(), DEFAULT_SLEEP_INTERVAL));
+    tgDaemon.addThreadPool(rPool.release());
+    tgDaemon.getThreadPool('R')->setNbThreads(1);
 
     // recaller/migration dynamic thread pool
 
-    tgDaemon.addThreadPool(
-			   new castor::server::TCPListenerThreadPool("WorkerThread", new castor::tape::tapegateway::WorkerThread(),tgDaemon.listenPort(),true, minThreadsNumber, maxThreadsNumber ));
+    std::auto_ptr<castor::tape::tapegateway::WorkerThread> wThread(new castor::tape::tapegateway::WorkerThread());
+    std::auto_ptr<castor::server::TCPListenerThreadPool> wPool(new castor::server::TCPListenerThreadPool("WorkerThread", wThread.release(),tgDaemon.listenPort(),true, minThreadsNumber, maxThreadsNumber));
+    tgDaemon.addThreadPool(wPool.release());
 
     // start the daemon
 
@@ -255,13 +270,15 @@ castor::tape::tapegateway::TapeGatewayDaemon::TapeGatewayDaemon() : castor::serv
       {DAEMON_STOP, "Service shoutdown"},
       {NO_RETRY_POLICY_FOUND, "Incomplete parameters for retry policy"},
       {FATAL_ERROR, "Fatal error"},
-      {PRODUCER_GETTING_TAPES, "VdqmRequestsProducer: getting tapes to submit"},
+      {PRODUCER_GETTING_TAPE, "VdqmRequestsProducer: getting a tape to submit"},
+      {PRODUCER_TAPE_FOUND,"VdqmRequestsProducer: tape retrieved"},
       {PRODUCER_NO_TAPE, "VdqmRequestsProducer: no tape to submit"},
       {PRODUCER_CANNOT_UPDATE_DB,"VdqmRequestsProducer: cannot update db"},
       {PRODUCER_QUERYING_VMGR,"VdqmRequestsProducer: querying vmgr" },
       {PRODUCER_VMGR_ERROR,"VdqmRequestsProducer: vmgr error" },
       {PRODUCER_SUBMITTING_VDQM , "VdqmRequestsProducer: submitting to vdqm"},
       {PRODUCER_VDQM_ERROR,"VdqmRequestsProducer: vdqm error"},
+      {PRODUCER_REQUEST_SAVED,"VdqmRequestsProducer: vdqm request id saved in the db"},
       {CHECKER_GETTING_TAPES, "VdqmRequestsChecker: getting tapes to check"},
       {CHECKER_NO_TAPE, "VdqmRequestsChecker: no tape to check"},
       {CHECKER_QUERYING_VDQM, "VdqmRequestsChecker: querying vdqm"},
@@ -269,25 +286,33 @@ castor::tape::tapegateway::TapeGatewayDaemon::TapeGatewayDaemon() : castor::serv
       {CHECKER_CANNOT_UPDATE_DB, "VdqmRequestsChecker: cannot update db"},
       {CHECKER_RELEASING_UNUSED_TAPE, "VdqmRequestsChecker: releasing BUSY tape"},
       {CHECKER_VMGR_ERROR, "VdqmRequestsChecker: vmgr error, impossible to reset BUSY state"},
+      {CHECHER_TAPES_FOUND,"VdqmRequestsChecker: tapes to check found"}, 
+      {CHECKER_TAPES_RESURRECTED, "VdqmRequestsChecker: tapes resurrected"},
       {LINKER_GETTING_STREAMS,"TapeStreamLinker: getting streams to resolve"},
       {LINKER_NO_STREAM, "TapeStreamLinker: no stream to resolve" },
       {LINKER_QUERYING_VMGR,"TapeStreamLinker: querying vmgr"},
       {LINKER_LINKING_TAPE_STREAM, "TapeStreamLinker: association tape-stream done"},
       {LINKER_CANNOT_UPDATE_DB,"TapeStreamLinker: cannot update db"},
       {LINKER_RELEASED_BUSY_TAPE,"TapeStreamLinker: released BUSY tape"},
-      {LINKER_NO_TAPE_AVAILABLE, "No tape available in such tapepool"},
+      {LINKER_NO_TAPE_AVAILABLE, "TapeStreamLinker:No tape available in such tapepool"},
+      {LINKER_STREAMS_FOUND ,"TapeStreamLinker: streams found"},
+      {LINKER_TAPES_ATTACHED ,"TapeStreamLinker: tapes attached to streams"},
       {MIG_ERROR_GETTING_FILES, "MigratorErrorHandlerThread: getting failed tapecopy"},
       {MIG_ERROR_NO_FILE, "MigratorErrorHandlerThread: no failed tapecopy"},
       {MIG_ERROR_RETRY,"MigratorErrorHandlerThread: retry this migration"},
       {MIG_ERROR_FAILED,"MigratorErrorHandlerThread: fail this migration"},
       {MIG_ERROR_RETRY_BY_DEFAULT, "MigratorErrorHandlerThread: retry this migration without applying the policy"},
       {MIG_ERROR_CANNOT_UPDATE_DB, "MigratorErrorHandlerThread: cannot update db"},
+      {MIG_ERROR_TAPECOPIES_FOUND,"MigratorErrorHandlerThread: tapecopies found"} ,
+      {MIG_ERROR_RESULT_SAVED,"MigratorErrorHandlerThread: result saved"},
       {REC_ERROR_GETTING_FILES,"RecallerErrorHandlerThread: getting failed tapecopy"},
       {REC_ERROR_NO_FILE,"RecallerErrorHandlerThread: no failed tapecopy" },
       {REC_ERROR_RETRY,"RecallerErrorHandlerThread: retry this recall"},
       {REC_ERROR_FAILED,"RecallerErrorHandlerThread: fail this recall"},
       {REC_ERROR_RETRY_BY_DEFAULT,"RecallerErrorHandlerThread: retry this recall without applying the policy" },
       {REC_ERROR_CANNOT_UPDATE_DB,"RecallerErrorHandlerThread: cannot update db" },
+      {REC_ERROR_TAPECOPIES_FOUND,"RecallerErrorHandlerThread: tapecopies found"} ,
+      {REC_ERROR_RESULT_SAVED,"RecallerErrorHandlerThread: result saved"},
       {WORKER_MESSAGE_RECEIVED,"Worker: received a message"},
       {WORKER_UNKNOWN_CLIENT, "Worker: unknown client"},
       {WORKER_INVALID_REQUEST, "Worker: invalid request"},
@@ -347,6 +372,7 @@ castor::tape::tapegateway::TapeGatewayDaemon::TapeGatewayDaemon() : castor::serv
       {ORA_DB_ERROR,  "Worker: OraTapeGatewaySvc: impossible to update db after failure"},
       {ORA_IMPOSSIBLE_TO_SEND_RMMASTER_REPORT, "Worker: OraTapeGatewaySvc: impossible to send rmmaster report"},
       {ORA_FILE_TO_RECALL_NS_ERROR, "Worker: OraTapeGatewaySvc: failed check against the nameserver for file to recall"},
+      
       {-1, ""}
     };
   dlfInit(messages);

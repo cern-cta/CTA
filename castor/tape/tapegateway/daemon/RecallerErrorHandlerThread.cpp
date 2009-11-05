@@ -24,9 +24,9 @@
  * @author Giulia Taurelli
  *****************************************************************************/
 
-
-#include <sys/types.h>
 #include <stdlib.h>
+#include <sys/time.h>
+#include <sys/types.h>
 #include <unistd.h>
 #include <u64subr.h>
 
@@ -35,14 +35,14 @@
 #include "castor/Services.hpp"
 
 #include "castor/exception/Internal.hpp"
-#include "castor/infoPolicy/DbInfoRetryPolicy.hpp"
-#include "castor/infoPolicy/PolicyObj.hpp"
+#include "castor/infoPolicy/RetryPolicyElement.hpp"
 #include "castor/stager/TapeCopy.hpp"
 
-#include "castor/tape/tapegateway/DlfCodes.hpp"
-#include "castor/tape/tapegateway/ITapeGatewaySvc.hpp"
-#include "castor/tape/tapegateway/RecallerErrorHandlerThread.hpp"
+#include "castor/tape/tapegateway/daemon/DlfCodes.hpp"
+#include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
+#include "castor/tape/tapegateway/daemon/RecallerErrorHandlerThread.hpp"
 
+#include <list>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -69,10 +69,14 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void* par)
     return;
   }
 
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, REC_ERROR_GETTING_FILES, 0, NULL);
-  std::vector<castor::stager::TapeCopy*> tcList;
+  timeval tvStart,tvEnd;
+  gettimeofday(&tvStart, NULL);
+
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, REC_ERROR_GETTING_FILES, 0, NULL);
+  std::list<castor::infoPolicy::RetryPolicyElement> tcList;
+
   try {
-    tcList =  oraSvc->getFailedRecalls();
+    oraSvc->getFailedRecalls(tcList);
   }  catch (castor::exception::Exception e){
 
     castor::dlf::Param params[] =
@@ -83,63 +87,88 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void* par)
     return;
   }
 
-  std::vector<u_signed64> tcIdsToRetry;
-  std::vector<u_signed64> tcIdsToFail;
+  if (tcList.empty()) {
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, REC_ERROR_NO_FILE, 0, NULL);
+    return;
+  }
 
-  std::vector<castor::stager::TapeCopy*>::iterator tcItem =tcList.begin();
+  gettimeofday(&tvEnd, NULL);
+  signed64 procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
+
+  castor::dlf::Param paramsDb[] =
+    {
+      castor::dlf::Param("ProcessingTime", procTime * 0.000001)
+    };
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, REC_ERROR_TAPECOPIES_FOUND, 1, paramsDb);
+
+
+  std::list<u_signed64> tcIdsToRetry;
+  std::list<u_signed64> tcIdsToFail;
+
+  std::list<castor::infoPolicy::RetryPolicyElement>::iterator tcItem= tcList.begin();
+
+
+
   while (tcItem != tcList.end()){
 
-    // set the policy object
-    castor::infoPolicy::DbInfoRetryPolicy* dbInfo = new castor::infoPolicy::DbInfoRetryPolicy();
-    dbInfo->setTapecopy(*tcItem);
-    castor::infoPolicy::PolicyObj* policyObj = new castor::infoPolicy::PolicyObj();
-    policyObj->addDbInfoPolicy(dbInfo);
 
     //apply the policy
 
     castor::dlf::Param params[] =
-      {castor::dlf::Param("tapecopyId",(*tcItem)->id())
+      {castor::dlf::Param("tapecopyId",(*tcItem).tapeCopyId())
       };
     try {
-      if (m_retryPySvc==NULL || m_retryPySvc->applyPolicy(policyObj)) {
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, REC_ERROR_RETRY, 1, params);
-	tcIdsToRetry.push_back( (*tcItem)->id());
+      if (m_retryPySvc==NULL || m_retryPySvc->applyPolicy((&(*tcItem)))) {
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, REC_ERROR_RETRY, 1, params);
+	tcIdsToRetry.push_back( (*tcItem).tapeCopyId());
       }    else  {
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, REC_ERROR_FAILED, 1, params);
-	tcIdsToFail.push_back( (*tcItem)->id());
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, REC_ERROR_FAILED, 1, params);
+	tcIdsToFail.push_back( (*tcItem).tapeCopyId());
       }
     } catch (castor::exception::Exception e) {
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, REC_ERROR_RETRY_BY_DEFAULT, 1, params);
-      tcIdsToRetry.push_back( (*tcItem)->id());
+      castor::dlf::Param paramsEx[] =
+	{castor::dlf::Param("tapecopyId",(*tcItem).tapeCopyId()),
+	 castor::dlf::Param("errorCode",sstrerror(e.code())),
+	 castor::dlf::Param("errorMessage",e.getMessage().str())
+	};
+
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, REC_ERROR_RETRY_BY_DEFAULT, 3, paramsEx);
+      tcIdsToRetry.push_back( (*tcItem).tapeCopyId());
     }
 
     tcItem++;
 
   }
 
+  gettimeofday(&tvStart, NULL); 
   // update the db
- try {
-  oraSvc->setRecRetryResult(tcIdsToRetry,tcIdsToFail);
- } catch (castor::exception::Exception e) {
+  try {
+    oraSvc->setRecRetryResult(tcIdsToRetry,tcIdsToFail);
+
+    gettimeofday(&tvEnd, NULL);
+    procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
+
+    castor::dlf::Param paramsDbUpdate[] =
+	{
+	  castor::dlf::Param("ProcessingTime", procTime * 0.000001),
+	  castor::dlf::Param("tapecopies set to be retried",tcIdsToRetry.size()),
+	  castor::dlf::Param("failed tapecopies",tcIdsToFail.size())
+	};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, REC_ERROR_RESULT_SAVED, 3, paramsDbUpdate);
+    
+
+  } catch (castor::exception::Exception e) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
        castor::dlf::Param("errorMessage",e.getMessage().str())
       };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, REC_ERROR_CANNOT_UPDATE_DB, 2, params);
   }
-
- //clean up
-
- tcItem =tcList.begin();
- while (tcItem != tcList.end()){
-   if (*tcItem) delete *tcItem;
-   *tcItem=NULL;
-   tcItem++;
- }
- tcList.clear();
-
- tcIdsToRetry.clear();
- tcIdsToFail.clear();
-
+  
+  tcList.clear();
+  
+  tcIdsToRetry.clear();
+  tcIdsToFail.clear();
+  
 }
 
