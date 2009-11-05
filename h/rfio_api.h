@@ -14,7 +14,9 @@
 #ifndef _RFIO_API_H_INCLUDED_
 #define _RFIO_API_H_INCLUDED_
 
+#ifndef _OSDEP_H_INCLUDED_
 #include <osdep.h>
+#endif /* _OSDEP_H_INCLUDED_ */
 #ifndef _RFIO_CONSTANTS_H_INCLUDED_
 #include <rfio_constants.h>
 #endif /* _RFIO_CONSTANTS_H_INCLUDED_ */
