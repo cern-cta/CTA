@@ -1,4 +1,270 @@
 -----------
+- 2.1.9-3 -
+-----------
+
+  Highlights & Bug Fixes
+  ----------------------
+
+  CASTOR miscellaneous
+  --------------------
+  - #56006: RFE improve support for multiple stagers in the stager client API
+  - #56334: recalls rely on old value of the filesize 
+  - #57003: Incorrect execution plans in diskServer_qry results in FTS on the
+            DiskCopy table
+  - #58294: Inconsistent inclusions in the Castor client API (Updated)
+
+  CASTOR nameserver
+  -----------------
+  - #53573: RFE: Bulk removal of all files from tape
+  - #54669: RFE: Add support for deleting segments
+  - #56848: Cns_srv_updateseg_status should not change the status of segments
+            when a file is logically deleted
+  - #57047: 2.1.9 name server should be backwards compatible with 2.1.8
+            database schemas
+
+  CASTOR protocols
+  ----------------
+  - #57284: Disk checksum check inhibited if mode bits don't allow owner write
+            access
+
+  CASTOR repack2
+  --------------
+  - #56893: Repack requests stuck in START
+
+  CASTOR stager
+  -------------
+  - #49218: RFE: DoS protection: rolling window for rhservers
+  - #53808: No tools to remove B/W lists entries for obsolete users
+  - #56581: ORA-04092: cannot COMMIT in a trigger at
+            TR_DRAININGFILESYSTEM_DELETE
+  - #56585: SubRequestToDo using INDEX SKIP SCAN instead of INDEX UNIQUE SCAN
+  - #56633: PrepareToGet + double Repack request make the stager deadlock
+  - #56649: RFE: Improve the tracking of database upgrades
+  - #57389: Segmentation fault caused by uncaught exception in
+            castor::sharedMemory::Allocator
+  - #58120: Draining diskservers stuck in DELETING
+  - #58297: Incorrect logging of the stager when failing to reply to clients
+
+  CASTOR tape
+  -----------
+  - #55105: showqueues is not distinguishing mounting phase with START state
+  - #53180: VDQM - negative queue waiting time
+  - #55209: The VDQM client library does not support the multi-threaded tape
+            gateway
+  - #57327: MigHunter memory leak
+  - #57408: The legacy logging of the tape components conflicts with DLF
+  - #57716: Misleading vmgrdeletedenmap manual page
+  - #57897: RFE: /usr/bin/tpconfig should be executable by a normal user
+  - #57912: RFE: Decouple the execution of the mighunter logic from the stream
+            logic
+
+  - Fixed a broken hint in archiveSubReq.
+
+  - Added additional tests to the new test suite.
+
+  - Added support for limiting the number of request that users can perform
+    over a given time interval. (#49218)
+
+  - Fixed the repack server where requests were always stuck in START. (#56893)
+
+  - Added two new commands to the castor-ns-client package, 'nsrmvid' and
+    'nsdelsegment'. These commands are aimed at giving ADMIN users the ability
+    to delete all files on a volume and to delete tape segments without deleting
+    the associated files from the name space. Refer to: `man nsrmvid` and
+    `man nsdelsegment` for a full explanation. (#53573, #54669)
+
+  - Added a new Top10Errors table to the monitoring database.
+
+
+  Package Changes
+  ---------------
+  - Added a new administration tool, checkSharedMemory to the castor-hsmtools
+    package to be able to see how much shared memory is still available. As a
+    consequence of this the castor-hsmtools package now depends on
+    castor-lib-monitor. (#57389)
+
+  - Changed the mode bits on the /usr/bin/tpconfig binary from 750 to 755.
+    (#57897)
+
+  - The castor-rh-server package now has a dependency on libmemcached. (#49218)
+
+  - Added the new nsrmvid and nsdelsegment commands to the castor-ns-client
+    package. (#53573, #54669)
+
+  - The legacy logfiles of the tape, rmc and rtcp daemons now log to
+    /var/log/castor/rtcpd_legacy.log, /var/log/castor/rmcd_legacy.log and 
+    /var/log/castor/taped_legacy.log respectively. (#57408)
+
+
+  Upgrade Instructions from 2.1.9-1
+  ---------------------------------
+
+    Before upgrading to a 2.1.9-3 instance of CASTOR2 please make sure to read
+    the upgrade instructions fully before proceeding.
+
+    Stager, DLF, Monitoring & Repack
+    --------------------------------
+
+    The upgrade of the Stager, DLF, Monitoring and Repack databases to 2.1.9-3
+    can be performed online while the system is running. The estimated upgrade
+    time for the database is less than 10 minutes.
+
+    Notes:
+      - Prior to running the Stager, DLF, Repack and Monitoring database
+        upgrades, a DBA must first grant these accounts the privileges to create
+        views:
+
+        GRANT CREATE VIEW TO <user>;
+
+      - The request handler daemon now has a dependancy on libmemcached. The
+        libmemcached RPM for all CASTOR supported architectures and operating
+        systems can be found in the savannah release area:
+
+        RPMS:
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-3/SL4
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-3/SL5
+
+      - For those administrators who wish to use the new rate limiting
+        functionality of the request handler aka DoS (Denial of Service)
+        protection you will need to install the memcached RPM >= 1.4.0.
+        Memcached is already available on Scientific Linux (SL) but at version
+        1.2.X. The newer version of memcached for SL4 and SL5 under x86_64
+        architectures only can be found in the savannah release area:
+
+        RPMS:
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-3/SL4/x86_64
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-3/SL5/x86_64
+
+        For configuration instructions related to this new functionality please
+        refer to castor.conf.
+
+
+      Instructions
+      ------------
+
+       1. Due to a bug in the rmmaster which loses the state of DRAINING
+          diskservers after a restart you will need to take a note of those
+          diskservers which are in a DRAINING state before the upgrade using the
+          following command: (#47634)
+
+            rmGetNodes | grep -B4 DISKSERVER_DRAINING | grep name | cut -d ':' -f 2 | awk '{ print "rmAdminNode -n "$1" -f Draining" }'
+
+       2. Upgrade the Stager database using the stager_2.1.9-1_to_2.1.9-3.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-3/dbupgrades
+
+       3. Upgrade the DLF database using the dlf_2.1.9-1_to_2.1.9-3.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-3/dbupgrades
+
+       4. If applicable, upgrade the Monitoring database using the mon_2.1.9-1_to_2.1.9-3.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-3/dbupgrades
+
+       5. If applicable, upgrade the Repack database using the repack_2.1.9-1_to_2.1.9-3.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-3/dbupgrades
+
+       6. If you have any monitoring scripts/sensors which access the afore
+          mentioned databases through a read account you will need to grant them
+          access to the new CastorVersion database view using the
+          grant_oracle_user script from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-3/dbcreation
+
+       7. Stop LSF on all headnodes which can become LSF masters.
+
+       8. Stop all rmmaster daemons.
+
+       9. Erase the shared memory of the rmmaster daemons using `ipcrm -M 0x946`
+          on all headnodes where this daemon runs.
+
+      10. Install libmemcached on all headnodes where the request handler daemon
+          runs.
+
+      11. Upgrade the software on the headnodes and diskservers to 2.1.9-3.
+          Note: All daemons involved in the upgrade will be restarted
+          automatically.
+
+      12. Start the rmmaster daemons.
+
+      13. Start LSF on all headnodes which can become LSF masters.
+
+      14. Wait 60 seconds to give time for the diskservers to send a heartbeat
+          message to the rmMasterDaemon.
+
+      15. Apply the commands returned in step 1.
+
+      16. Test the instance by running the test suite available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-3/testsuite
+
+      17. Congratulations you have successfully upgraded to the 2.1.9-3 release
+          of CASTOR stager!!
+
+
+    Central services (CUPV, VMGR, VDQM)
+    -----------------------------------
+
+    The upgrade of the CUPV, VMGR and VDQM databases to 2.1.9-3 can be 
+    performed online while the system is running: 
+ 
+    Notes:
+      - Prior to running the CUPV, VMGR and VDQM database upgrades, a DBA
+        must first grant these accounts the privileges to create views:
+
+        GRANT CREATE VIEW TO <user>;
+ 
+      Instructions 
+      ------------ 
+ 
+      1. Apply the appropriate database upgrade script from: 
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-3/dbupgrades 
+ 
+      2. Update the appropriate software to use the 2.1.9-3 RPMS. Note: All 
+         daemons involved in the upgrade will be restarted automatically. 
+ 
+      3. Upgrade complete. 
+
+
+    Central services (CNS)
+    ----------------------
+
+    In this release of CASTOR schema changes were introduced to resolve the 
+    deadlock issues with nschclass (#45700). You can safely upgrade the name 
+    server daemons to 2.1.9-3 but you must NOT apply the PL/SQL upgrade until 
+    all name server daemons have been upgraded. Furthermore, as schema changes 
+    require table level locks the execution of the database upgrade cannot be 
+    performed on a running instance. 
+ 
+    WARNING: Do not apply the schema changes to the CNS database until all 
+             name server daemons are running 2.1.9-3!!!! 
+ 
+    Notes:
+      - Prior to running the CNS database upgrades, a DBA must first grant
+        this account the privileges to create views:
+
+        GRANT CREATE VIEW TO <user>;
+
+      Instructions 
+      ------------ 
+ 
+      --- CAUTION READ STATEMENT ABOVE WITH REGARDS TO THE DATABASE UPGRADE --- 
+ 
+      1. Stop the name server daemons.
+
+      2. Upgrade the CNS database using the cns_2.1.8-13_to_2.1.9-3.sql upgrade 
+         script from: 
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-3/dbupgrades 
+ 
+      3. Start the name server daemons.
+
+      --- CAUTION READ STATEMENT ABOVE WITH REGARDS TO THE DATABASE UPGRADE --- 
+ 
+      4. Update the appropriate software to use the 2.1.9-3 RPMS. 
+ 
+      5. Upgrade complete. 
+
+
+-----------
 - 2.1.9-1 -
 -----------
 
