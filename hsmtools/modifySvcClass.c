@@ -45,6 +45,7 @@
 #include <castor/IObject.h>
 #include <castor/IClient.h>
 #include <castor/Constants.h>
+#include <vmgr_api.h>
 
 int help_flag =0;
 static char *itemDelimiter = ":";
@@ -161,6 +162,45 @@ int splitItemStr(
   free(tmpStr);
   return(0);
 }
+
+/**
+ * Prints an error message to stderr and returns a non-zero value if one or
+ * more of the specified tape pools are not defined in the VMGR.
+ *
+ * @param  pools   The tape pools.
+ * @param  nbPools The number of tape pools.
+ * @return         0 if all of the tape pools exist else non-zero.
+ */   
+static int checkTapePoolsInVmgr(char **pools, int nbPools) {
+  int  rc = 0; /* Start with a function return code of success */
+  int  i  = 0;
+        
+  /* For each tape pool */
+  for(i=0; i<nbPools; i++ ) {
+        
+    /* Check the tape pool is defined in the VMGR */
+    uid_t      uid            = 0;
+    gid_t      gid            = 0;
+    u_signed64 capacity       = 0;
+    u_signed64 tot_free_space = 0;;
+      
+    /* If there is an error querying the VMGR about the tape pool */
+    if(vmgr_querypool(pools[i], &uid, &gid, &capacity, &tot_free_space) < 0) {
+      
+      /* Display the error and remember that it occured */
+      fprintf(stderr, "Error checking tape pool %s: ", pools[i]);
+      if(serrno == ENOENT) {
+        fprintf(stderr, "Tape pool is not defined in the VMGR\n");
+      } else {
+        fprintf(stderr, "Error querying VMGR: %s\n", sstrerror(serrno));
+      } 
+      rc = 1; /* Failure */
+    } 
+  }     
+          
+  return rc;
+}
+
 int findTapePool(
                  tapePoolArray,
                  nbTapePools,
@@ -485,6 +525,24 @@ int main(int argc, char *argv[])
     if ( name == NULL ) fprintf(stderr,"SvcClass 'name' is required\n");
     usage(cmd);
     return(0);
+  }
+
+  /* Display an error mesaage and return if one or more tape pools to be */
+  /* added are not defined in the VMGR                                   */
+  if(addTapePoolsStr != NULL) {
+
+    char **poolNames = NULL;
+    int  nbPools     = 0;
+
+    if(splitItemStr(addTapePoolsStr, &poolNames, &nbPools) == -1) {
+      fprintf(stderr, "Error parsing tape pools string: %s\n",
+        sstrerror(serrno));
+      return(1); /* Failure */
+    }
+    if(checkTapePoolsInVmgr(poolNames, nbPools)) {
+      usage(cmd);
+      return(1); /* Failure */
+    }
   }
 
   rc = Cstager_IStagerSvc_selectSvcClass(stgSvc,&svcClass,name);
