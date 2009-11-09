@@ -21,6 +21,7 @@
 #include "rmc.h"
 #include "serrno.h"
 #include "tplogger_api.h"
+#include <string.h>
 extern int being_shutdown;
 extern struct extended_robot_info extended_robot_info;
 extern char localhost[CA_MAXHOSTNAMELEN+1];
