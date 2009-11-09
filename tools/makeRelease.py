@@ -128,33 +128,19 @@ for o in outputs:
     if o[1].close() != None:
         print "Error during remote build on", o[0]
 
-# make a fresh checkout in the internal release space for easy debugging using AFS
-print "Creating a fresh checkout in the internal release space"
-os.chdir(intReleaseDir)
-runCommand('tar -zxvf ' + tarBall + '; mv castor-' + str(majversion) + '.' + str(minversion) + '.' + str(majrelease) + ' CASTOR2',
-           'Error extracting tarball')
-
 # create a testsuite directory and copy the test suite into it
 print "Creating the testsuite..."
 os.chdir(intReleaseDir)
+runCommand('tar -zxvf ' + tarBall + '; mv castor-' + str(majversion) + '.' + str(minversion) + '.' + str(majrelease) + ' CASTOR2',
+           'Error extracting tarball')
 os.mkdir('testsuite')
 os.chdir('testsuite')
 runCommand('cp -R ../CASTOR2/test/testsuite/* .; rm ./buildTestCase.py', 'Error while coping the testsuite')
 
 # create a tar ball of the test suite
 os.chdir(intReleaseDir)
-cmd = 'tar czf testsuite.tar.gz testsuite'
-runCommand(cmd, 'Error while taring the testsuite')
-
-# and build the doxygen documentation in it
-print "Building doxygen documentation"
-os.chdir(intReleaseDir + os.sep + 'CASTOR2')
-runCommand('make -f Makefile.ini Makefiles',
-           'Error while creating Makefiles')
-runCommand('make doxygen',
-           'Error while creating doxygen documentation')
-runCommand('echo \'<META HTTP-EQUIV="refresh" CONTENT="CASTOR2/doc/html/index.html">\' > doxygenDoc.html',
-           'Error while linking doxygen documentation from top level')
+runCommand('tar -czf testsuite.tar.gz testsuite', 'Error while taring the testsuite')
 
 # cleanup
+runCommand('rm -rf CASTOR2', 'Error removing CASTOR2 directory')
 shutil.rmtree(workDir)
