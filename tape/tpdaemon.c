@@ -2734,11 +2734,11 @@ void wait4child()
 void check_child_exit()
 {
 	int i;
-	int pid, jid;
+	int pid;
 	struct confq *rqp;
 	int status;
 	struct tptab *tunp;
-    struct tprrt *rrtp;
+        struct tprrt *rrtp;
 
 	while ((pid = waitpid (-1, &status, WNOHANG)) > 0) {
         tplogit (func, "process %d exiting with status %x\n",
@@ -2825,7 +2825,7 @@ void check_child_exit()
 
                             rrtp = tpdrrt.next;
                             while (rrtp) {
-                                if (jid == rrtp->jid) break;
+                                if (tunp->jid == rrtp->jid) break;
                                 rrtp = rrtp->next;
                             }
                             if (tunp->rlsrtryctr < maxRetries) {
