@@ -24,6 +24,7 @@
  *****************************************************************************/
 
 #include "castor/tape/fsm/StateMachine.hpp"
+#include <string.h>
 
 #include <errno.h>
 #include <stdlib.h>

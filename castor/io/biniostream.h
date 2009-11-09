@@ -31,6 +31,8 @@
 #include <byteswap.h>
 #include "osdep.h"
 #include "castor/exception/OutOfMemory.hpp"
+#include <string.h>
+#include <stdlib.h>
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 /* The host byte order is the same as the "inverted network byte order",

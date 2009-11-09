@@ -39,6 +39,7 @@
 #define DEFAULT_STAGER_PORT 9002
 
 #include <vector>
+#include <stdlib.h>
 
 
 

@@ -14,6 +14,7 @@
 #include "rfio.h"
 #include <Cglobals.h>
 #include <Cpwd.h>
+#include <string.h>
 
 #if !defined(IRIX64) && !defined(__ia64__) && !defined(__x86_64) && !defined(__ppc64__)
 static int pw_key = -1;

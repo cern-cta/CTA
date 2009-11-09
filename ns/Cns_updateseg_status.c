@@ -17,6 +17,7 @@
 #include "Cns_api.h"
 #include "Cns.h"
 #include "serrno.h"
+#include <string.h>
 
 int DLL_DECL
 Cns_updateseg_status(char *server, u_signed64 fileid, struct Cns_segattrs *oldsegattrs, const char status)

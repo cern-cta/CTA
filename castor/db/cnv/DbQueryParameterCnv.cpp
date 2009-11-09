@@ -44,6 +44,7 @@
 #include "castor/stager/QryRequest.hpp"
 #include "castor/stager/QueryParameter.hpp"
 #include "castor/stager/RequestQueryType.hpp"
+#include <stdlib.h>
 #include <vector>
 
 //------------------------------------------------------------------------------

@@ -38,6 +38,7 @@
 #include "castor/rh/BasicResponse.hpp"
 #include "castor/exception/Internal.hpp"
 #include <vector>
+#include <string.h>
 
 //------------------------------------------------------------------------------
 // ListPrivilegesResponseHandler

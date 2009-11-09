@@ -55,7 +55,7 @@ castor::stager::BaseTapeSvc::BaseTapeSvc()
   m_rmMasterHost = rmMasterHost;
   char* rmMasterPortStr = getconfent("RM","PORT", 0);
   if (rmMasterPortStr){
-    m_rmMasterPort = std::strtol(rmMasterPortStr,0,10);
+    m_rmMasterPort = strtol(rmMasterPortStr,0,10);
     if (0 == m_rmMasterPort) {
       // Go back to default
       m_rmMasterPort = RMMASTER_PORT;

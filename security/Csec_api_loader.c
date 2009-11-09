@@ -16,6 +16,7 @@
 #include <time.h>
 #include <fcntl.h>
 #include <stdarg.h>
+#include <string.h>
 
 #if defined(_WIN32)
 #include <winsock2.h>

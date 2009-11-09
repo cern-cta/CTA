@@ -66,6 +66,7 @@
 #include "expert.h"
 #include "expert_api.h"
 #include "expert_daemon.h"
+#include <string.h>
 
 int DLL_DECL expert_send_request(exp_socket, request)
      int *exp_socket;

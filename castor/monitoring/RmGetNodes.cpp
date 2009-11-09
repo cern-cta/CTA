@@ -31,6 +31,7 @@
 #include "castor/monitoring/DiskServerStatus.hpp"
 #include "castor/exception/Exception.hpp"
 #include "Cgetopt.h"
+#include <string.h>
 
 void help(std::string programName) {
   std::cout << "Usage: " << programName

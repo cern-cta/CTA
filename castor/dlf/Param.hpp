@@ -33,6 +33,8 @@
 #include "castor/stager/TapeVid.hpp"
 #include "castor/dlf/IPAddress.hpp"
 #include "castor/dlf/TimeStamp.hpp"
+#include <string.h>
+#include <stdlib.h>
 
 namespace castor {
 

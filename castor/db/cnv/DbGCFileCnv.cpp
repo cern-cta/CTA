@@ -43,6 +43,7 @@
 #include "castor/exception/OutOfMemory.hpp"
 #include "castor/stager/GCFile.hpp"
 #include "castor/stager/GCFileList.hpp"
+#include <stdlib.h>
 #include <vector>
 
 //------------------------------------------------------------------------------

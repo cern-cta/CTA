@@ -17,6 +17,7 @@
 #include "vmgr_api.h"
 #include "vmgr.h"
 #include "serrno.h"
+#include <string.h>
 
 int vmgr_deletedgnmap(const char *model, char *library)
 {

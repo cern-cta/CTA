@@ -14,6 +14,7 @@
 #if defined(_WIN32)
 #include <winsock2.h>
 #include <io.h>
+#include <string.h>
 extern char *geterr();
 #else /* _WIN32 */
 #include <sys/stat.h>

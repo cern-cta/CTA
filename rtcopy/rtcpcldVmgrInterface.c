@@ -71,6 +71,7 @@ WSADATA wsadata;
 #include <rtcpcld_constants.h>
 #include <rtcpcld_messages.h>
 #include <rtcpcld.h>
+#include <limits.h>
 
 extern char *getconfent _PROTO((char *, char *, int));
 

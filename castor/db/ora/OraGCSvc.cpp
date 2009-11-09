@@ -81,6 +81,7 @@
 #include <vmgr_api.h>
 #include <Ctape_api.h>
 #include <serrno.h>
+#include <string.h>
 
 
 //------------------------------------------------------------------------------

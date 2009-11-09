@@ -25,6 +25,7 @@
  *****************************************************************************/
 
 #include <sys/types.h> // For VMGR
+#include <string.h>
 
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
@@ -341,7 +342,7 @@ castor::vdqm::TapeDrive*
       int flags;
       flags = VMGR_LIST_BEGIN;
       while ((dgnmap = vmgr_listdgnmap (flags, &list)) != NULL) {
-        if ( std::strcmp(dgnmap->dgn, ptr_driveRequest->dgn) == 0 ) {
+        if ( strcmp(dgnmap->dgn, ptr_driveRequest->dgn) == 0 ) {
           driveModel = dgnmap->model;
           break;
         }
@@ -686,7 +687,7 @@ void castor::vdqm::handler::TapeDriveHandler::handleTapeDriveCompatibilities(
    */
   flags = VMGR_LIST_BEGIN;
   while ((dgnmap = vmgr_listdgnmap (flags, &list)) != NULL) {
-    if ( std::strcmp(dgnmap->dgn, dgName->dgName().c_str()) == 0 ) {
+    if ( strcmp(dgnmap->dgn, dgName->dgName().c_str()) == 0 ) {
       tapeAccessSpecs =
         ptr_IVdqmService->selectTapeAccessSpecifications(dgnmap->model);
       

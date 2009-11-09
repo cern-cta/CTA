@@ -31,6 +31,7 @@
 #include "castor/rh/Response.hpp"
 #include "castor/rh/StringResponse.hpp"
 #include "osdep.h"
+#include <string.h>
 
 extern "C" {
 

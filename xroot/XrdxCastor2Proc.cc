@@ -1,6 +1,7 @@
 //          $Id: XrdxCastor2Proc.cc,v 1.1 2008/09/15 10:04:02 apeters Exp $
 
 #include "XrdxCastor2Fs/XrdxCastor2Proc.hh"
+#include <string.h>
 
 bool
 XrdxCastor2ProcFile::Open() {

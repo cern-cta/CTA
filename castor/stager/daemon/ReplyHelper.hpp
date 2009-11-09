@@ -37,11 +37,7 @@ namespace castor{
       
       
       /* forward declaration */
-      class castor::rh::IOResponse;       
-      class castor::replier::RequestReplier;
       class RequestHelper;
-      
-      
       
       class ReplyHelper : public virtual castor::BaseObject{
         

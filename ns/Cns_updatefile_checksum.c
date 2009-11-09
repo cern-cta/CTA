@@ -17,6 +17,7 @@
 #include "Cns_api.h"
 #include "Cns.h"
 #include "serrno.h"
+#include <string.h>
 
 int DLL_DECL
 Cns_updatefile_checksum(const char *path, const char *csumtype, const char *csumvalue)

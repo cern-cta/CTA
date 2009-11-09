@@ -17,6 +17,7 @@
 #include "vmgr_api.h"
 #include "vmgr.h"
 #include "serrno.h"
+#include <string.h>
 
 int vmgr_modifylibrary(const char *library_name, int capacity, int status)
 {

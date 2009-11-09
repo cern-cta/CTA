@@ -35,6 +35,7 @@
 #include "castor/stager/StageGetNextRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
+#include <string.h>
 
 extern "C" {
 

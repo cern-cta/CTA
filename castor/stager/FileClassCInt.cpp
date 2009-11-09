@@ -30,6 +30,7 @@
 #include "castor/IObject.hpp"
 #include "castor/stager/FileClass.hpp"
 #include "osdep.h"
+#include <string.h>
 
 extern "C" {
 

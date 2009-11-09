@@ -23,6 +23,7 @@
 
 #include "rfio.h"               /* remote file I/O definitions          */
 #include <stdlib.h>
+#include <string.h>
 
 extern int DLL_DECL switch_close();
 

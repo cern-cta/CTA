@@ -34,6 +34,8 @@
 #include "castor/stager/FileSystem.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "osdep.h"
+#include <stdlib.h>
+#include <string.h>
 #include <vector>
 
 extern "C" {

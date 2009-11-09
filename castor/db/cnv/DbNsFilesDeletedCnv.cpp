@@ -45,7 +45,9 @@
 #include "castor/stager/GCFile.hpp"
 #include "castor/stager/NsFilesDeleted.hpp"
 #include "castor/stager/SvcClass.hpp"
+#include <algorithm>
 #include <set>
+#include <stdlib.h>
 #include <vector>
 
 //------------------------------------------------------------------------------

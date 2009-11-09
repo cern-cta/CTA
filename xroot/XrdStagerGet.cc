@@ -13,6 +13,7 @@
 #include "XrdClient/XrdClientDebug.hh"
 #include "XrdClient/XrdClientEnv.hh"
 #include "XrdOuc/XrdOucTokenizer.hh"
+#include <string.h>
 
 #include <stdio.h>
 #include <iostream>

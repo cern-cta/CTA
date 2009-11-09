@@ -36,7 +36,6 @@ namespace castor{
       
       class RequestHelper;
       class CnsHelper;
-      class castor::stager::SubRequest;
       
       class RmHandler : public RequestHandler {
         

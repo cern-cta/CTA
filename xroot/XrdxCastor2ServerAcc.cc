@@ -11,6 +11,7 @@
 #include "XrdOuc/XrdOucStream.hh"
 #include "XrdOuc/XrdOucString.hh"
 #include "XrdSys/XrdSysError.hh"
+#include <string.h>
 
 XrdSysError TkEroute(0,"xCastorServerAcc");
 XrdOucTrace TkTrace(&TkEroute);

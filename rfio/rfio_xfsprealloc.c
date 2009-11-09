@@ -3,7 +3,7 @@
 
 /* $Id: rfio_xfsprealloc.c,v 1.4 2008/07/31 07:09:13 sponcec3 Exp $ */
 
-#include <xfs/libxfs.h>
+#include <xfs/xfs.h>
 #include "log.h"
 #include "rfio_xfsprealloc.h"
 

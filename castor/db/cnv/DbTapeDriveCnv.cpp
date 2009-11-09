@@ -49,7 +49,9 @@
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 #include "castor/vdqm/VdqmTape.hpp"
+#include <algorithm>
 #include <set>
+#include <stdlib.h>
 #include <vector>
 
 //------------------------------------------------------------------------------

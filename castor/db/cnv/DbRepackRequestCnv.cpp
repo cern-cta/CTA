@@ -44,7 +44,9 @@
 #include "castor/repack/RepackCommandCode.hpp"
 #include "castor/repack/RepackRequest.hpp"
 #include "castor/repack/RepackSubRequest.hpp"
+#include <algorithm>
 #include <set>
+#include <stdlib.h>
 #include <vector>
 
 //------------------------------------------------------------------------------

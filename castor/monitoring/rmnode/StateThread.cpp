@@ -246,7 +246,7 @@ castor::monitoring::rmnode::StateThread::collectDiskServerState()
   char *value = getconfent("RmNode","MinFreeSpace", 0);
   float minFreeSpace = DEFAULT_MINFREESPACE;
   if (value) {
-    minFreeSpace = std::strtof(value, 0);
+    minFreeSpace = strtof(value, 0);
     if (minFreeSpace > 1 || minFreeSpace < 0) {
       minFreeSpace = DEFAULT_MINFREESPACE;
 
@@ -261,7 +261,7 @@ castor::monitoring::rmnode::StateThread::collectDiskServerState()
   value = getconfent("RmNode","MaxFreeSpace", 0);
   float maxFreeSpace = DEFAULT_MAXFREESPACE;
   if (value) {
-    maxFreeSpace = std::strtof(value, 0);
+    maxFreeSpace = strtof(value, 0);
     if (maxFreeSpace > 1 || maxFreeSpace < 0) {
       maxFreeSpace = DEFAULT_MAXFREESPACE;
 
@@ -276,7 +276,7 @@ castor::monitoring::rmnode::StateThread::collectDiskServerState()
   value = getconfent("RmNode","MinAllowedFreeSpace", 0);
   float minAllowedFreeSpace = DEFAULT_MINALLOWEDFREESPACE;
   if (value) {
-    minAllowedFreeSpace = std::strtof(value, 0);
+    minAllowedFreeSpace = strtof(value, 0);
     if (minAllowedFreeSpace > 1 || minAllowedFreeSpace < 0) {
       minAllowedFreeSpace = DEFAULT_MINALLOWEDFREESPACE;
 

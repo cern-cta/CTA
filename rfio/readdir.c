@@ -10,6 +10,7 @@
 /* readdir.c       Remote File I/O - read  a directory entry            */
 
 #include <syslog.h>             /* system logger    */
+#include <string.h>
 
 /*
  * System remote file I/O definitions

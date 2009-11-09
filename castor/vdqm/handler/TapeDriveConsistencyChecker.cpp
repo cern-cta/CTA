@@ -36,6 +36,7 @@
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 #include "castor/vdqm/VdqmTape.hpp"
 #include "castor/vdqm/handler/TapeDriveConsistencyChecker.hpp"
+#include <string.h>
 
 #include <net.h>
 #include <vdqm_constants.h>

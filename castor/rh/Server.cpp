@@ -30,6 +30,7 @@
 #include "castor/server/AuthListenerThreadPool.hpp"
 #include "castor/rh/RHThread.hpp"
 #include "castor/rh/IRHSvc.hpp"
+#include <string.h>
 
 #include "castor/System.hpp"
 #include "castor/Constants.hpp"

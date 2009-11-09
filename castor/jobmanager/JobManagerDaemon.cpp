@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
     char **results = NULL;
 
     // Errors are ignored here!
-    lsb_init("jobmanagerd");
+    lsb_init((char*)"jobmanagerd");
     clusterInfo *cInfo = ls_clusterinfo(NULL, NULL, results, 0, 0);
     if (cInfo != NULL) {
       clusterName = cInfo[0].clusterName;
@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
     char *value = getconfent("JobManager", "PreforkedWorkers", 0);
     int processes = DEFAULT_PREFORKED_WORKERS;
     if (value) {
-      processes = std::strtol(value, 0, 10);
+      processes = strtol(value, 0, 10);
       if (processes == 0) {
 	processes = DEFAULT_PREFORKED_WORKERS;
       } else if (processes > 200) {
@@ -165,7 +165,7 @@ int main(int argc, char *argv[]) {
     value = getconfent("JobManager", "ManagementInterval", 0);
     int interval = DEFAULT_MANAGEMENT_INTERVAL;
     if (value) {
-      interval = std::strtol(value, 0, 10);
+      interval = strtol(value, 0, 10);
       if ((interval < 10) && (interval != 0)) {
 	castor::exception::Exception e(EINVAL);
 	e.getMessage() << "ManagementInterval value too small: " << interval

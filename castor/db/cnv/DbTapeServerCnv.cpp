@@ -44,7 +44,9 @@
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 #include "castor/vdqm/TapeServerStatusCodes.hpp"
+#include <algorithm>
 #include <set>
+#include <stdlib.h>
 #include <vector>
 
 //------------------------------------------------------------------------------

@@ -44,6 +44,7 @@
 #include "castor/exception/OutOfMemory.hpp"
 #include "castor/stager/GetUpdateFailed.hpp"
 #include "castor/stager/SvcClass.hpp"
+#include <stdlib.h>
 #include <vector>
 
 //------------------------------------------------------------------------------

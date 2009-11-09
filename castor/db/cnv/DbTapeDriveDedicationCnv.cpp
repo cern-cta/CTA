@@ -43,6 +43,7 @@
 #include "castor/exception/OutOfMemory.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeDriveDedication.hpp"
+#include <stdlib.h>
 #include <vector>
 
 //------------------------------------------------------------------------------

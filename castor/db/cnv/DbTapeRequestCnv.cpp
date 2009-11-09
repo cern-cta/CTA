@@ -49,6 +49,7 @@
 #include "castor/vdqm/TapeRequestStatusCodes.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 #include "castor/vdqm/VdqmTape.hpp"
+#include <stdlib.h>
 #include <vector>
 
 //------------------------------------------------------------------------------

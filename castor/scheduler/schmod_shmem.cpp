@@ -41,6 +41,7 @@
 #include "castor/monitoring/DiskServerStatus.hpp"
 #include "castor/monitoring/FileSystemStatus.hpp"
 #include <errno.h>
+#include <algorithm>
 
 // Shared memory pointer
 castor::monitoring::ClusterStatus *clusterStatus = 0;

@@ -33,6 +33,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/job/stagerjob/InputArguments.hpp"
 #include "castor/job/stagerjob/RfioPlugin.hpp"
+#include <string.h>
 
 // Default port range
 #define RFIODMINPORT RFIO_LOW_PORT_RANGE

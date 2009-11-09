@@ -46,6 +46,7 @@
 #include <signal.h>
 #include <float.h>
 #include <fstream>
+#include <algorithm>
 #include <ios>
 
 // Shared memory pointer
@@ -239,7 +240,7 @@ extern "C" {
     // belong too and create the appropriate data structures in the shared
     // memory to reflect this.
 
-    if (lsb_init("schmod_python") < 0) {
+    if (lsb_init((char*)"schmod_python") < 0) {
       // "Failed to initialise LSF batch library interface"
       castor::dlf::Param params[] =
              {castor::dlf::Param("Function", "lsb_init"),

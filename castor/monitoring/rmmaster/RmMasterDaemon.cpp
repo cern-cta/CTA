@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
     char *value = getconfent("RmMaster", "UpdateInterval", 0);
     u_signed64 updateInterval = DEFAULT_UPDATE_INTERVAL;
     if (value) {
-      updateInterval = std::strtol(value, 0, 10);
+      updateInterval = strtol(value, 0, 10);
       if (updateInterval == 0) {
 	updateInterval = DEFAULT_UPDATE_INTERVAL;
 	// "Invalid RmMaster/UpdateInterval option, using default"
@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
     char **results = NULL;
 
     // Errors are ignored here!
-    lsb_init("rmmasterd");
+    lsb_init((char*)"rmmasterd");
     clusterInfo *cInfo = ls_clusterinfo(NULL, NULL, results, 0, 0);
     if (cInfo != NULL) {
       clusterName = cInfo[0].clusterName;

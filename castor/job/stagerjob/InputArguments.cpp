@@ -220,7 +220,7 @@ castor::job::stagerjob::InputArguments::InputArguments(int argc, char** argv)
   char *value = getconfent("Job", "RetryAttempts", 0);
   int attempts = DEFAULT_RETRY_ATTEMPTS;
   if (value) {
-    attempts = std::strtol(value, 0, 10);
+    attempts = strtol(value, 0, 10);
     if (attempts < 1) {
       // "Invalid Job/RetryInterval option, using default"
       castor::dlf::Param params[] =
@@ -237,7 +237,7 @@ castor::job::stagerjob::InputArguments::InputArguments(int argc, char** argv)
   value = getconfent("Job", "RetryInterval", 0);
   int interval = DEFAULT_RETRY_INTERVAL;
   if (value) {
-    interval = std::strtol(value, 0, 10);
+    interval = strtol(value, 0, 10);
     if (interval < 1) {
       // "Invalid Job/RetryAttempts option, using default"
       castor::dlf::Param params[] =

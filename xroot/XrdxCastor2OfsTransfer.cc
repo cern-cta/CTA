@@ -4,6 +4,7 @@
 #include "XrdOfs/XrdOfsTrace.hh"
 #include "XrdOuc/XrdOucEnv.hh"
 #include "XrdTransferManager/XrdTransferManager.hh"
+#include <string.h>
 
 extern XrdOucTrace OfsTrace;
 

@@ -34,6 +34,7 @@
 #include <netinet/tcp.h>
 #include <string>
 #include <sstream>
+#include <string.h>
 
 #include "osdep.h" //for LONGSIZE
 #include "Cnetdb.h"

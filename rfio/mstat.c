@@ -20,6 +20,7 @@
 #include <Cglobals.h>
 #include <Cpwd.h>
 #include <net.h>
+#include <string.h>
 
 typedef struct socks {
   char host[CA_MAXHOSTNAMELEN+1];

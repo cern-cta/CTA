@@ -12,6 +12,7 @@
 #define RFIO_KERNEL     1       /* KERNEL part of the routines          */
 
 #include "rfio.h"               /* Remote File I/O general definitions  */
+#include <string.h>
 
 
 int  DLL_DECL rfio_rmdir(dirpath)           /* Remote rmdir             */

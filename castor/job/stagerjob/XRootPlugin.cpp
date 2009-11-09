@@ -35,6 +35,7 @@
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "getconfent.h"
 #include "socket_timeout.h"
+#include <string.h>
 
 #include <arpa/inet.h>
 #include <errno.h>

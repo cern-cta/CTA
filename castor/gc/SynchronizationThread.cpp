@@ -44,6 +44,7 @@
 #include <string.h>
 #include <vector>
 #include <map>
+#include <algorithm>
 
 // Definitions
 #define DEFAULT_SYNCINTERVAL       1800

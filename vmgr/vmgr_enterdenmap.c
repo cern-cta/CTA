@@ -17,6 +17,7 @@
 #include "vmgr_api.h"
 #include "vmgr.h"
 #include "serrno.h"
+#include <string.h>
 
 int vmgr_enterdenmap(const char *model, char *media_letter, char *density, int native_capacity)
 {

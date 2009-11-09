@@ -11,6 +11,7 @@
 
 #define RFIO_KERNEL 1
 #include "rfio.h"               /* Remote File I/O general definitions  */
+#include <string.h>
 
 int DLL_DECL rfio_statfs(path, statfsbuf)
      char    *path;               /* remote file path                     */

@@ -16,6 +16,7 @@
 #include <sys/param.h>
 #endif
 #include "rfio.h"               /* Remote File I/O general definitions  */
+#include <string.h>
 
 /*
 ** NB This does not implement a rename across hosts

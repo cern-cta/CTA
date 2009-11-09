@@ -7,7 +7,7 @@
 #include <iostream>
 #include <errno.h>
 #include <cstdlib>  // for exit function
-#include <cstdlib>  // for exit function
+#include <typeinfo>
 
 using std::ifstream;
 using std::ofstream;

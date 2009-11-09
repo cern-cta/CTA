@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <time.h>
 #include <dirent.h>
+#include <string.h>
 
 #include "XrdxCastor2Fs/XrdxCastor2Fs.hh"
 #include "XrdxCastor2Fs/XrdxCastor2Trace.hh"

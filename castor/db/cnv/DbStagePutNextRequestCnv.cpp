@@ -45,6 +45,7 @@
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/StagePutNextRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
+#include <stdlib.h>
 #include <vector>
 
 //------------------------------------------------------------------------------

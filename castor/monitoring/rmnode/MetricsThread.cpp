@@ -48,6 +48,8 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <pwd.h>
+#include <string.h>
+#include <algorithm>
 
 // Definitions
 #define PARTITIONS_FILE "/proc/partitions"

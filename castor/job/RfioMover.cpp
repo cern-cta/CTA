@@ -27,10 +27,12 @@
 #include "getconfent.h"
 #include "rfio_api.h"
 #include "Cns_api.h"
+#include <string.h>
 
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <attr/xattr.h>
 
@@ -248,7 +250,7 @@ void castor::job::RfioMover::copyFile()
   char *value = getconfent("RFCP", "BUFFERSIZE", 0);
   int bufsize = RFIO_DEFAULT_BUFFER_SIZE;
   if (value) {
-    bufsize = std::strtol(value, 0, 10);
+    bufsize = strtol(value, 0, 10);
     if (bufsize <= 0) {
       cleanupFile(true, true);
       castor::exception::Exception e(EINVAL);

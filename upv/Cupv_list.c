@@ -18,6 +18,7 @@
 #include "serrno.h"
 #include "Cupv_api.h"
 #include "Cupv.h"
+#include <string.h>
 
 struct Cupv_userpriv *
 Cupv_list(int flags, Cupv_entry_list *listp, struct Cupv_userpriv *filter)

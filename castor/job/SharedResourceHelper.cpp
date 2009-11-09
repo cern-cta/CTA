@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <string.h>
 #include "Castor_limits.h"
 
 
@@ -189,7 +190,7 @@ void castor::job::SharedResourceHelper::setUrl(std::string url)
   if (index != std::string::npos) {
    
     // Initialize the LSF library
-    if (lsb_init("SharedResourceHelper") < 0) {
+    if (lsb_init((char*)"SharedResourceHelper") < 0) {
       
       // "Failed to initialize the LSF batch library (LSBLIB)"
       castor::exception::Exception e(SEINTERNAL);

@@ -30,6 +30,7 @@
 #include "castor/IObject.hpp"
 #include "castor/MessageAck.hpp"
 #include "osdep.h"
+#include <string.h>
 
 extern "C" {
 

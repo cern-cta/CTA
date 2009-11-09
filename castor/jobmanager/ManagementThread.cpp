@@ -34,6 +34,7 @@
 #include "getconfent.h"
 #include "u64subr.h"
 #include <sstream>
+#include <algorithm>
 
 
 //-----------------------------------------------------------------------------
@@ -86,7 +87,7 @@ void castor::jobmanager::ManagementThread::run(void *param) {
     // Initialize the LSF API
     //   - This doesn't actually communicate with the LSF master in any way,
     //     it just sets up the environment for later calls
-    if (lsb_init("JobManager") < 0) {
+    if (lsb_init((char*)"JobManager") < 0) {
 
       // "Failed to initialize the LSF batch library (LSBLIB)"
       castor::dlf::Param params[] =
@@ -187,7 +188,7 @@ void castor::jobmanager::ManagementThread::run(void *param) {
   m_diskCopyPendingTimeout = 0;
   char *value = getconfent("JobManager", "DiskCopyPendingTimeout", 0);
   if (value != NULL) {
-    m_diskCopyPendingTimeout = std::strtol(value, 0, 10);
+    m_diskCopyPendingTimeout = strtol(value, 0, 10);
   }
 
   // The job manager also has the ability to terminate any job in LSF if the
@@ -249,7 +250,7 @@ void castor::jobmanager::ManagementThread::run(void *param) {
   // failure occur there is nothing that can be done apart from trying again
   // later.
   jobInfoEnt *job;
-  if (lsb_openjobinfo(0, NULL, "all", NULL, NULL, ALL_JOB) < 0) {
+  if (lsb_openjobinfo(0, NULL, (char*)"all", NULL, NULL, ALL_JOB) < 0) {
     if (lsberrno == LSBE_NO_JOB) {
       lsb_closejobinfo(); // No matching job found
     } else {
@@ -273,7 +274,7 @@ void castor::jobmanager::ManagementThread::run(void *param) {
   // determine those jobs which have timed out. Why a second call? because
   // lsb_openjobinfo() does not allow the bitwise operation ALL_JOB | CUR_JOB
   // as an option despite saying it does in the documentation, try `bjobs -ap`
-  if (lsb_openjobinfo(0, NULL, "all", NULL, NULL, CUR_JOB) < 0) {
+  if (lsb_openjobinfo(0, NULL, (char*)"all", NULL, NULL, CUR_JOB) < 0) {
    if (lsberrno == LSBE_NO_JOB) {
       lsb_closejobinfo(); // No matching job found
     } else {

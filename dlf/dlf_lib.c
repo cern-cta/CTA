@@ -25,6 +25,7 @@
 /* Include files */
 #include "dlf_lib.h"
 #include "dlf_api.h"
+#include <string.h>
 
 /* Global variables */
 static char *messages[DLF_MAX_MSGTEXTS];

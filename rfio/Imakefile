@@ -56,7 +56,6 @@ LIBS += -ldl
 
 #if UseXFSPrealloc
 CFLAGS += -DUSE_XFSPREALLOC
-XFSLIBS = -lxfs
 #endif
 
 CKSUMLIB = -lz
@@ -169,7 +168,7 @@ SRVOBJS = Csemaphore.Osuf rfio_serv.Osuf rfio_calls.Osuf \
 SRVOBJS += rfio_alignedbuf.Osuf rfio_xfsprealloc.Osuf
 #endif
 
-NormalProgramTarget(rfiod,$(SRVOBJS),$(RFIOLIB) $(DEPLIB), $(MTLDFLAGS) $(RTFLAGS) $(RTLIBS) $(LIBCSEC) $(RFIOLIB) $(LIBS) $(XFSLIBS) $(CKSUMLIB),755)
+NormalProgramTarget(rfiod,$(SRVOBJS),$(RFIOLIB) $(DEPLIB), $(MTLDFLAGS) $(RTFLAGS) $(RTLIBS) $(LIBCSEC) $(RFIOLIB) $(LIBS) $(CKSUMLIB),755)
 LOGROTATE(castor-rfio-server,..,install)
 SYSCONFIG(rfiod,install)
 INITSCRIPT(rfiod,install)

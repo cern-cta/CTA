@@ -49,6 +49,7 @@
 #include <common.h>
 #define DEFAULT_PORT 9002
 #define DEFAULT_SVCCLASS ""
+#include <string.h>
 
 static int tURLPrefixKey = -1;
 static int tURLPrefixLenKey = -1;

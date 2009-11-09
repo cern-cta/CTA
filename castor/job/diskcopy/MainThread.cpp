@@ -121,7 +121,7 @@ void castor::job::diskcopy::MainThread::init() {
   char *value = getconfent("DiskCopy", "RetryAttempts", 0);
   int attempts = DEFAULT_RETRY_ATTEMPTS;
   if (value) {
-    attempts = std::strtol(value, 0, 10);
+    attempts = strtol(value, 0, 10);
     if (attempts == 0) {
       attempts = 1;
     } else if (attempts < 0) {
@@ -140,7 +140,7 @@ void castor::job::diskcopy::MainThread::init() {
   value = getconfent("DiskCopy", "RetryInterval", 0);
   int interval = DEFAULT_RETRY_INTERVAL;
   if (value) {
-    interval = std::strtol(value, 0, 10);
+    interval = strtol(value, 0, 10);
     if (interval < 1) {
       interval = DEFAULT_RETRY_INTERVAL;
 

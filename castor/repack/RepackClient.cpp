@@ -43,6 +43,7 @@
 #include <vector>
 #include <iostream>
 #include <iomanip>
+#include <string.h>
 
 /**
  * By including the Header file, the Factory is automatically active !!

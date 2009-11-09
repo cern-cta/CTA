@@ -45,7 +45,9 @@
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
+#include <algorithm>
 #include <set>
+#include <stdlib.h>
 #include <vector>
 
 //------------------------------------------------------------------------------

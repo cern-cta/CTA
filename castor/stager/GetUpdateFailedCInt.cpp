@@ -33,6 +33,7 @@
 #include "castor/stager/Request.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
+#include <string.h>
 
 extern "C" {
 

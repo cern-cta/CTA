@@ -47,6 +47,7 @@
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SubRequestGetNextStatusCodes.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
+#include <stdlib.h>
 #include <vector>
 
 //------------------------------------------------------------------------------

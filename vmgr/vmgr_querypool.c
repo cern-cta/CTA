@@ -17,6 +17,7 @@
 #include "vmgr_api.h"
 #include "vmgr.h"
 #include "serrno.h"
+#include <string.h>
 
 int vmgr_querypool(const char *pool_name, uid_t *pool_user, gid_t *pool_group, u_signed64 *capacity, u_signed64 *tot_free_space)
 {

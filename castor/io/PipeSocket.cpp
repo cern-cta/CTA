@@ -77,7 +77,7 @@ castor::io::PipeSocket::~PipeSocket() throw()
 //------------------------------------------------------------------------------
 void castor::io::PipeSocket::closeWrite()
 {
-  if(m_mode & castor::io::PIPE_WRITE != 0) {
+  if((m_mode & castor::io::PIPE_WRITE) != 0) {
     CLOSE(m_fdOut);
     m_mode &= !castor::io::PIPE_WRITE;
   }
@@ -88,7 +88,7 @@ void castor::io::PipeSocket::closeWrite()
 //------------------------------------------------------------------------------
 void castor::io::PipeSocket::closeRead()
 {
-  if(m_mode & castor::io::PIPE_READ != 0) {
+  if((m_mode & castor::io::PIPE_READ) != 0) {
     CLOSE(m_fdIn);
     m_mode &= !castor::io::PIPE_READ;
   }
@@ -102,7 +102,7 @@ void castor::io::PipeSocket::sendBuffer(const unsigned int magic,
                                         const char* buf,
                                         const int n)
   throw (castor::exception::Exception) {
-  if (m_mode & castor::io::PIPE_WRITE == 0) {
+  if ((m_mode & castor::io::PIPE_WRITE) == 0) {
     castor::exception::Exception ex(0);
     ex.getMessage() << "Pipe closed for writing";
     throw ex;
@@ -128,7 +128,7 @@ void castor::io::PipeSocket::readBuffer(const unsigned int magic,
                                         char** buf,
                                         int& n)
   throw (castor::exception::Exception) {
-  if (m_mode & castor::io::PIPE_READ == 0) {
+  if ((m_mode & castor::io::PIPE_READ) == 0) {
     castor::exception::Exception ex(0);
     ex.getMessage() << "Pipe closed for reading";
     throw ex;

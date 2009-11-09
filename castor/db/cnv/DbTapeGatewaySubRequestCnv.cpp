@@ -45,6 +45,7 @@
 #include "castor/stager/TapeCopy.hpp"
 #include "castor/tape/tapegateway/TapeGatewayRequest.hpp"
 #include "castor/tape/tapegateway/TapeGatewaySubRequest.hpp"
+#include <stdlib.h>
 #include <vector>
 
 //------------------------------------------------------------------------------

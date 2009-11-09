@@ -31,6 +31,7 @@
 #include "castor/dlf/Param.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/IObject.hpp"
+#include <string.h>
 
 //-----------------------------------------------------------------------------
 // Constructor

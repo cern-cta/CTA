@@ -43,6 +43,7 @@
 #include "castor/exception/OutOfMemory.hpp"
 #include "castor/repack/RepackSegment.hpp"
 #include "castor/repack/RepackSubRequest.hpp"
+#include <stdlib.h>
 #include <vector>
 
 //------------------------------------------------------------------------------

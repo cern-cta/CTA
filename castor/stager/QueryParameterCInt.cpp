@@ -32,6 +32,7 @@
 #include "castor/stager/QueryParameter.hpp"
 #include "castor/stager/RequestQueryType.hpp"
 #include "osdep.h"
+#include <string.h>
 
 extern "C" {
 

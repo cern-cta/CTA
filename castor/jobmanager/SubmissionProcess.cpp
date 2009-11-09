@@ -82,7 +82,7 @@ void castor::jobmanager::SubmissionProcess::init()
   }
 
   // Initialize the LSF API
-  if (lsb_init("jobManager") < 0) {
+  if (lsb_init((char*)"jobManager") < 0) {
 
     // "Failed to initialize the LSF batch library (LSBLIB)"
     castor::dlf::Param params[] =
@@ -96,7 +96,7 @@ void castor::jobmanager::SubmissionProcess::init()
   char *value = getconfent("JobManager", "SubmitRetryAttempts", 0);
   int attempts, interval;
   if (value) {
-    attempts = std::strtol(value, 0, 10);
+    attempts = strtol(value, 0, 10);
     if (attempts == 0) {
       attempts = 1;
     } else if (attempts < 0) {
@@ -116,7 +116,7 @@ void castor::jobmanager::SubmissionProcess::init()
   // necessary, you have been warned!!
   value = getconfent("JobManager", "SubmitRetryInterval", 0);
   if (value) {
-    interval = std::strtol(value, 0, 10);
+    interval = strtol(value, 0, 10);
     if (interval < 1) {
       interval = DEFAULT_RETRY_INTERVAL;
 
@@ -132,7 +132,7 @@ void castor::jobmanager::SubmissionProcess::init()
   // Determine the max run time of a StageDiskCopyReplicaRequest
   value = getconfent("JobManager", "MaxDiskCopyRunTime", 0);
   if (value) {
-    m_maxDiskCopyRunTime = std::strtol(value, 0, 10);
+    m_maxDiskCopyRunTime = strtol(value, 0, 10);
     if (m_maxDiskCopyRunTime < -1) {
       m_maxDiskCopyRunTime = DEFAULT_MAX_DISKCOPY_RUNTIME;
 
@@ -313,9 +313,9 @@ void castor::jobmanager::SubmissionProcess::submitJob
   // Set stdin, stdout and stderr to /dev/null. This will disable job output
   // emails sent by LSF after the job ends.
   m_job.options |= SUB_IN_FILE | SUB_OUT_FILE | SUB_ERR_FILE;
-  m_job.inFile  = "/dev/null";
-  m_job.outFile = "/dev/null";
-  m_job.errFile = "/dev/null";
+  m_job.inFile  = (char*)"/dev/null";
+  m_job.outFile = (char*)"/dev/null";
+  m_job.errFile = (char*)"/dev/null";
 
   // Only change the queue if the job is not meant to run in the default
   // service class. By not defining the queue LSF will but the job into the

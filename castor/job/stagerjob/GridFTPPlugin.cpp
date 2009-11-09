@@ -240,7 +240,7 @@ void castor::job::stagerjob::GridFTPPlugin::preForkHook
   char *value = getconfent("GSIFTP", "TIMEOUT", 0);
   int t = SELECT_TIMEOUT_GSIFTP;
   if (value) {
-    t = std::strtol(value, 0, 10);
+    t = strtol(value, 0, 10);
     if (t < 1) {
       // "Invalid value for GSIFTP/TIMEOUT option, using default"
       castor::dlf::Param params[] =

@@ -10,6 +10,7 @@
 
 #define RFIO_KERNEL     1
 #include "rfio.h"
+#include <string.h>
 
 int DLL_DECL rfio_readlink(path,buf, length)
      char *path ;

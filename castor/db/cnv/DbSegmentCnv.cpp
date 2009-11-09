@@ -45,6 +45,7 @@
 #include "castor/stager/SegmentStatusCodes.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/stager/TapeCopy.hpp"
+#include <stdlib.h>
 #include <vector>
 
 //------------------------------------------------------------------------------

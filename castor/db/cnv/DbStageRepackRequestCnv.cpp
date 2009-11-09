@@ -45,7 +45,9 @@
 #include "castor/stager/StageRepackRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
+#include <algorithm>
 #include <set>
+#include <stdlib.h>
 #include <vector>
 
 //------------------------------------------------------------------------------

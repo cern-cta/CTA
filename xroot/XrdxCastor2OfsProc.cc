@@ -2,6 +2,7 @@
 
 #include "XrdxCastor2Fs/XrdxCastor2Ofs.hh"
 #include "XrdOuc/XrdOucTrace.hh"
+#include <string.h>
 
 extern XrdOucTrace OfsTrace;
 

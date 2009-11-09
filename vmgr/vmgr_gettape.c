@@ -17,6 +17,7 @@
 #include "vmgr_api.h"
 #include "vmgr.h"
 #include "serrno.h"
+#include <string.h>
 
 int vmgr_gettape(const char *poolname, u_signed64 Size, const char *Condition, char *vid, char *vsn, char *dgn, char *density, char *lbltype, char *model, int *side, int *fseq, u_signed64 *estimated_free_space)
 {

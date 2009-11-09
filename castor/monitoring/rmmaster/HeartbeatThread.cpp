@@ -56,7 +56,7 @@ castor::monitoring::rmmaster::HeartbeatThread::HeartbeatThread
   // Extract heartbeat timeout value
   char *value = getconfent("RmMaster", "HeartbeatTimeout", 0);
   if (value) {
-    m_timeout = std::strtol(value, 0, 10);
+    m_timeout = strtol(value, 0, 10);
     if (m_timeout == 0) {
       m_timeout = DEFAULT_TIMEOUT;
       // "Invalid RmMaster/HeartbeatInterval option, using default"

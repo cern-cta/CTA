@@ -32,6 +32,7 @@
 #include "castor/query/DiskPoolQueryResponse.hpp"
 #include "castor/query/DiskServerDescription.hpp"
 #include "castor/query/FileSystemDescription.hpp"
+#include <string.h>
 
 /* ================= */
 /* External routines */

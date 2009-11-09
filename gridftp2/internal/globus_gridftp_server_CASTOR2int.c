@@ -30,6 +30,7 @@
 
 #include <sys/types.h>
 #include <dirent.h>
+#include <string.h>
 
 #include "globus_gridftp_server.h"
 #include "dsi_CASTOR2int.h"

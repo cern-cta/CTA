@@ -41,6 +41,7 @@
 #include "castor/exception/NoEntry.hpp"
 #include "castor/exception/OutOfMemory.hpp"
 #include "castor/stager/GCLocalFile.hpp"
+#include <stdlib.h>
 #include <vector>
 
 //------------------------------------------------------------------------------

@@ -21,6 +21,7 @@
 #include <attr/xattr.h>
 #include "Cns_api.h"
 #include <shift/serrno.h>
+#include <string.h>
 
 class XrdxCastor2Ofs;
 

@@ -63,6 +63,7 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <memory>
 
 //------------------------------------------------------------------------------
 // vmgr_error_buffer

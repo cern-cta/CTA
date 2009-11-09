@@ -28,6 +28,7 @@
 #include <string> 
 #include <vector>
 #include <time.h>
+#include <string.h>
 
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Internal.hpp"

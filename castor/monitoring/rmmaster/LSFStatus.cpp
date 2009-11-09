@@ -47,7 +47,7 @@ castor::monitoring::rmmaster::LSFStatus::LSFStatus()
   m_lastUpdate(0) {
 
   // Initialize the LSF library
-  if (lsb_init("RmMasterDaemon") < 0) {
+    if (lsb_init((char*)"RmMasterDaemon") < 0) {
 
     // "Failed to initialize the LSF batch library (LSBLIB)"
     castor::exception::Exception e(SEINTERNAL);

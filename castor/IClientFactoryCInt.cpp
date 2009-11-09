@@ -28,6 +28,7 @@
 #include "castor/IClientFactory.hpp"
 #include "castor/exception/Exception.hpp"
 #include <string>
+#include <string.h>
 
 extern "C" {
   

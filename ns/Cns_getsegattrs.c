@@ -18,6 +18,7 @@
 #include "Cns_api.h"
 #include "Cns.h"
 #include "serrno.h"
+#include <string.h>
 
 int DLL_DECL
 Cns_getsegattrs(const char *path, struct Cns_fileid *file_uniqueid, int *nbseg, struct Cns_segattrs **segattrs)

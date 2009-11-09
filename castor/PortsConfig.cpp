@@ -74,7 +74,7 @@ int castor::PortsConfig::getConfigPort(const char* configLabel, unsigned default
   int notifyPort = defaultValue;
 
   if ((value = getconfent((char*)configLabel, "NOTIFYPORT", 0))) {
-    notifyPort = std::strtol(value, 0, 10);
+    notifyPort = strtol(value, 0, 10);
     if (notifyPort <= 0 || notifyPort > 65535) {
       castor::exception::InvalidArgument e;
       e.getMessage() << "Invalid value configured for " << configLabel <<

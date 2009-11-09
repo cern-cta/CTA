@@ -27,6 +27,7 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/tape/tpcp/Action.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include <string.h>
 
 
 //------------------------------------------------------------------------------

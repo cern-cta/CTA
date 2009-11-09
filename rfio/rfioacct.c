@@ -19,6 +19,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #endif
+#include <string.h>
 
 #include "rfio.h"
 #include "wsacct.h"

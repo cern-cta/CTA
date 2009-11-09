@@ -35,6 +35,7 @@
 #include "Cgetopt.h"
 #include "getconfent.h"
 #include <sys/time.h>
+#include <string.h>
 
 
 //-----------------------------------------------------------------------------

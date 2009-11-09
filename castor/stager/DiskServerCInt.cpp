@@ -33,6 +33,8 @@
 #include "castor/stager/DiskServerStatusCode.hpp"
 #include "castor/stager/FileSystem.hpp"
 #include "osdep.h"
+#include <stdlib.h>
+#include <string.h>
 #include <vector>
 
 extern "C" {

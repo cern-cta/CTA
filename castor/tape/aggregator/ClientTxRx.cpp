@@ -48,6 +48,7 @@
 #include "castor/tape/utils/utils.hpp"
 
 #include <pthread.h>
+#include <memory>
 
 
 //------------------------------------------------------------------------------

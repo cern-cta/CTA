@@ -10,6 +10,7 @@
 /* access.c       Remote File I/O - get access status    */
 #define RFIO_KERNEL 1
 #include "rfio.h"               /* Remote File I/O general definitions  */
+#include <string.h>
 
 
 int DLL_DECL rfio_access(filepath, mode)       /* Remote file access            */

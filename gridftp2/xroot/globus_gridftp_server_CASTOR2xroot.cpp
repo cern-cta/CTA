@@ -30,6 +30,7 @@
 
 #include <sys/types.h>
 #include <dirent.h>
+#include <string.h>
 
 #include <XrdPosix/XrdPosixXrootd.hh>
 #include <XrdPosix/XrdPosixExtern.hh>
@@ -111,7 +112,7 @@ extern "C" {
                                   globus_gfs_session_info_t *session_info) {
     globus_l_gfs_CASTOR2xroot_handle_t *CASTOR2xroot_handle;
     globus_gfs_finished_info_t finished_info;
-    char *func="globus_l_gfs_CASTOR2xroot_start";
+    const char *func="globus_l_gfs_CASTOR2xroot_start";
 
     GlobusGFSName(globus_l_gfs_CASTOR2xroot_start);
 
@@ -181,7 +182,7 @@ extern "C" {
     int stat_count;
     globus_l_gfs_CASTOR2xroot_handle_t *CASTOR2xroot_handle;
 
-    char *func = "globus_l_gfs_CASTOR2xroot_stat";
+    const char *func = "globus_l_gfs_CASTOR2xroot_stat";
     struct stat statbuf;
     int status = 0;
     globus_result_t result;
@@ -301,7 +302,7 @@ extern "C" {
   (char *path, int flags, int mode,
    globus_l_gfs_CASTOR2xroot_handle_t *CASTOR2xroot_handle) {
     int rc;
-    char *func = "CASTOR2xroot_handle_open";
+    const char *func = "CASTOR2xroot_handle_open";
     char *uuid_path;
     // we will use fullDestPath instead of client "path",
     // and "path" must be in uuid form
@@ -402,7 +403,7 @@ extern "C" {
   (globus_l_gfs_CASTOR2xroot_handle_t *CASTOR2xroot_handle) {
     globus_byte_t *buffer;
     globus_result_t result;
-    char *func = "globus_l_gfs_CASTOR2xroot_read_from_net";
+    const char *func = "globus_l_gfs_CASTOR2xroot_read_from_net";
 
     GlobusGFSName(globus_l_gfs_CASTOR2xroot_read_from_net);
     /* in the read case this number will vary */
@@ -454,7 +455,7 @@ extern "C" {
                                  void *user_arg) {
     globus_l_gfs_CASTOR2xroot_handle_t *CASTOR2xroot_handle;
     globus_result_t result;
-    char *func = "globus_l_gfs_CASTOR2xroot_recv";
+    const char *func = "globus_l_gfs_CASTOR2xroot_recv";
     char *pathname;
     int flags;
 
@@ -540,7 +541,7 @@ extern "C" {
                                  globus_gfs_transfer_info_t *transfer_info,
                                  void *user_arg) {
     globus_l_gfs_CASTOR2xroot_handle_t *CASTOR2xroot_handle;
-    char *func = "globus_l_gfs_CASTOR2xroot_send";
+    const char *func = "globus_l_gfs_CASTOR2xroot_send";
     char *pathname;
     int i;
     globus_bool_t done;
@@ -621,7 +622,7 @@ extern "C" {
     globus_off_t nbread;
     globus_off_t start_offset;
     globus_byte_t *buffer;
-    char *func = "globus_l_gfs_CASTOR2xroot_send_next_to_client";
+    const char *func = "globus_l_gfs_CASTOR2xroot_send_next_to_client";
 
     GlobusGFSName(globus_l_gfs_CASTOR2xroot_send_next_to_client);
 
@@ -644,7 +645,7 @@ extern "C" {
     }
 
     if (CASTOR2xroot_handle->blk_length == -1 ||
-        CASTOR2xroot_handle->blk_length > CASTOR2xroot_handle->block_size) {
+        CASTOR2xroot_handle->blk_length > (globus_off_t)CASTOR2xroot_handle->block_size) {
       read_length = CASTOR2xroot_handle->block_size;
     } else {
       read_length = CASTOR2xroot_handle->blk_length;
@@ -752,7 +753,7 @@ extern "C" {
                             globus_size_t nbytes,
                             void * user_arg) {
     globus_l_gfs_CASTOR2xroot_handle_t *CASTOR2xroot_handle;
-    char *func = "globus_l_gfs_net_write_cb";
+    const char *func = "globus_l_gfs_net_write_cb";
 
     CASTOR2xroot_handle = (globus_l_gfs_CASTOR2xroot_handle_t *) user_arg;
 
@@ -806,7 +807,7 @@ extern "C" {
   /// no need to change this
   GlobusExtensionDefineModule(globus_gridftp_server_CASTOR2xroot) =
   {
-    "globus_gridftp_server_CASTOR2xroot",
+    (char*)"globus_gridftp_server_CASTOR2xroot",
     globus_l_gfs_CASTOR2xroot_activate,
     globus_l_gfs_CASTOR2xroot_deactivate,
     NULL,

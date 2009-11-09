@@ -46,7 +46,9 @@
 #include "castor/stager/DiskCopyStatusCodes.hpp"
 #include "castor/stager/FileSystem.hpp"
 #include "castor/stager/SubRequest.hpp"
+#include <algorithm>
 #include <set>
+#include <stdlib.h>
 #include <vector>
 
 //------------------------------------------------------------------------------

@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dumptape.c,v $ $Revision: 1.3 $ $Date: 2004/02/12 15:59:07 $ CERN IT/ADC Olof Barring";
-#endif /* not lint */
-
 /*
  * dumptape.c - RTCOPY dumptape command line command
  */

@@ -27,6 +27,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <common.h>
+#include <string.h>
 
 #ifndef _WIN32
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)

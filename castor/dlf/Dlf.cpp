@@ -160,13 +160,13 @@ void castor::dlf::dlf_writepc
   dlf_write_param_t* cparams = new dlf_write_param_t[numcparams];
 
   // Fill the context parameters: file, line and function
-  cparams[0].name             = "File";
+  cparams[0].name             = (char*)"File";
   cparams[0].type             = DLF_MSG_PARAM_STR;
   cparams[0].value.par_string = (char *)file;
-  cparams[1].name             = "Line";
+  cparams[1].name             = (char*)"Line";
   cparams[1].type             = DLF_MSG_PARAM_INT;
   cparams[1].value.par_int    = line;
-  cparams[2].name             = "Function";
+  cparams[2].name             = (char*)"Function";
   cparams[2].type             = DLF_MSG_PARAM_STR;
   cparams[2].value.par_string = (char*)function;
 

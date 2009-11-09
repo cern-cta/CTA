@@ -42,6 +42,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "getconfent.h"
+#include <limits.h>
 
 // Local Includes
 #include "AbstractTCPSocket.hpp"
@@ -149,7 +150,7 @@ void castor::io::AbstractTCPSocket::readBuffer(const unsigned int magic,
     const char *value = getconfent("CLIENT", "MAX_NETDATA_SIZE", 0);
     if (0 != value) {
       errno = 0;
-      long bytes = std::strtol(value, 0, 10);
+      long bytes = strtol(value, 0, 10);
       // Check that the string converted to an integer is valid
       if (((bytes == 0) && (errno == ERANGE)) || (bytes > INT_MAX)) {
 	castor::exception::Exception ex(EINVAL);

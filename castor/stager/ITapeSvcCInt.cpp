@@ -31,6 +31,8 @@
 #include <errno.h>
 #include <string>
 #include <fcntl.h>
+#include <string.h>
+#include <stdlib.h>
 
 extern "C" {
 

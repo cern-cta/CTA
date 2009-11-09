@@ -31,6 +31,7 @@
 #include "castor/IAddress.hpp"
 #include "castor/IObject.hpp"
 #include "osdep.h"
+#include <string.h>
 
 extern "C" {
 

@@ -80,6 +80,7 @@
 #include <vmgr_api.h>
 #include <Ctape_api.h>
 #include <serrno.h>
+#include <string.h>
 
 #define NS_SEGMENT_NOTOK (' ')
 

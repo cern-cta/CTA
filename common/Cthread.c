@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <osdep.h>
 #include <signal.h>
+#include <string.h>
 
 #ifdef DEBUG
 #ifndef CTHREAD_DEBUG

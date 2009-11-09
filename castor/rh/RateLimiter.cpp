@@ -41,6 +41,7 @@
 #include <math.h>
 #include <string>
 #include <vector>
+#include <string.h>
 
 
 //-----------------------------------------------------------------------------

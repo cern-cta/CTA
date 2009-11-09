@@ -46,7 +46,9 @@
 #include "castor/stager/FileClass.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "castor/stager/TapeCopy.hpp"
+#include <algorithm>
 #include <set>
+#include <stdlib.h>
 #include <vector>
 
 //------------------------------------------------------------------------------

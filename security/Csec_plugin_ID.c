@@ -20,6 +20,7 @@ static char sccsid[] = "@(#)$RCSfile: Csec_plugin_ID.c,v $ $Revision: 1.12 $ $Da
 #include <time.h>
 #include <fcntl.h>
 #include <stdarg.h>
+#include <string.h>
 
 #if defined(_WIN32)
 #include <winsock2.h>

@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
     value = getconfent("RmNode", "StateUpdateInterval", 0);
     u_signed64 stateInterval = DEFAULT_STATE_INTERVAL;
     if (value) {
-      stateInterval = std::strtol(value, 0, 10);
+      stateInterval = strtol(value, 0, 10);
       if (stateInterval == 0) {
 	stateInterval = DEFAULT_STATE_INTERVAL;
 	// "Invalid RmNode/StateUpdateInterval option, using default"
@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
     value = getconfent("RmNode", "MetricsUpdateInterval", 0);
     u_signed64 metricsInterval = DEFAULT_METRICS_INTERVAL;
     if (value) {
-      metricsInterval = std::strtol(value, 0, 10);
+      metricsInterval = strtol(value, 0, 10);
       if (metricsInterval == 0) {
 	metricsInterval = DEFAULT_METRICS_INTERVAL;
 	// "Invalid RmNode/MetricsUpdateInterval option, using default"

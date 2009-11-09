@@ -27,6 +27,7 @@
 // Include files
 #include "castor/scheduler/Python.hpp"
 #include "stdio.h"
+#include <string.h>
 
 
 //-----------------------------------------------------------------------------

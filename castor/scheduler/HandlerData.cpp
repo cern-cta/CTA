@@ -26,6 +26,7 @@
 #include "castor/scheduler/HandlerData.hpp"
 #include "castor/scheduler/Constants.hpp"
 #include <errno.h>
+#include <string.h>
 
 
 //-----------------------------------------------------------------------------

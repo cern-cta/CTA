@@ -40,6 +40,7 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/exception/OutOfMemory.hpp"
+#include <stdlib.h>
 #include <vector>
 
 //------------------------------------------------------------------------------

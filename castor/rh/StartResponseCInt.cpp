@@ -32,6 +32,7 @@
 #include "castor/rh/StartResponse.hpp"
 #include "castor/stager/DiskCopy.hpp"
 #include "osdep.h"
+#include <string.h>
 
 extern "C" {
 

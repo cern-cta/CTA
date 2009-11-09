@@ -40,6 +40,7 @@
 #include <castor/vdqm/TapeAccessSpecification.hpp>
 #include <h/vmgr_api.h> // For VMGR
 #include <sys/types.h> // For VMGR
+#include <string.h>
 
 
 static struct Coptions longopts[] = {
@@ -151,7 +152,7 @@ void initDB(castor::Services* svcs, castor::vdqm::IVdqmSvc* iVdqmService)
     dgName = iVdqmService->selectDeviceGroupName(dgnmap->dgn);
 
     // MANUAL is not a valid entry for CASTOR
-    if ( dgName == NULL && std::strcmp(dgnmap->dgn, "MANUAL") != 0) {
+    if ( dgName == NULL && strcmp(dgnmap->dgn, "MANUAL") != 0) {
       dgName = new castor::vdqm::DeviceGroupName();
 
       dgName->setDgName(dgnmap->dgn);

@@ -57,17 +57,6 @@ namespace castor{
   namespace stager{
     namespace daemon{
 
-      class castor::stager::IStagerSvc;
-      class castor::db::DbCnvSvc;
-      class castor::BaseAddress;
-      class castor::stager::SubRequest;
-      class castor::stager::FileRequest;
-      class castor::IClient;
-      class castor::stager::SvcClass;
-      class castor::stager::CastorFile;
-      class castor::stager::FileClass;
-      class castor::stager::daemon::CnsHelper;
-
       class RequestHelper : public virtual castor::BaseObject{
 
       public:

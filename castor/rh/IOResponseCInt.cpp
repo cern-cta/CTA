@@ -32,6 +32,7 @@
 #include "castor/rh/IOResponse.hpp"
 #include "castor/rh/Response.hpp"
 #include "osdep.h"
+#include <string.h>
 
 extern "C" {
 

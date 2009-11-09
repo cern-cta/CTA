@@ -17,6 +17,7 @@
 #include "Cns_api.h"
 #include "Cns.h"
 #include "serrno.h"
+#include <string.h>
 
 int DLL_DECL
 Cns_dropsegs(const char *path, struct Cns_fileid *file_uniqueid) {

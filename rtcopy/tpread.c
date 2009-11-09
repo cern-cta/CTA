@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.23 $ $Date: 2008/06/23 22:07:23 $ CERN IT/ADC Olof Barring";
-#endif /* not lint */
-
 /*
  * tpread.c - tpread/tpwrite command line commands
  */

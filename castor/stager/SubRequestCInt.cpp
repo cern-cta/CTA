@@ -35,6 +35,8 @@
 #include "castor/stager/SubRequestGetNextStatusCodes.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "osdep.h"
+#include <stdlib.h>
+#include <string.h>
 #include <vector>
 
 extern "C" {

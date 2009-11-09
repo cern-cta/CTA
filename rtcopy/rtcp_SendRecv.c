@@ -13,6 +13,7 @@
 #include <time.h>
 #if defined(_WIN32)
 #include <winsock2.h>
+#include <string.h>
 extern char *geterr();
 #else /* _WIN32 */
 #include <sys/param.h>

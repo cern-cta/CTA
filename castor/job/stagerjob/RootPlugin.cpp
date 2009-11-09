@@ -138,7 +138,7 @@ void castor::job::stagerjob::RootPlugin::preForkHook
   char *value = getconfent("ROOT", "TIMEOUT", 0);
   int t = SELECT_TIMEOUT_ROOT;
   if (value) {
-    t = std::strtol(value, 0, 10);
+    t = strtol(value, 0, 10);
     if (t < 1) {
       // "Invalid value for ROOT/TIMEOUT option, using default"
       castor::dlf::Param params[] =

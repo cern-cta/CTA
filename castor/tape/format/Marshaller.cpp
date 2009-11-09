@@ -1,5 +1,6 @@
 
 #include "castor/tape/format/Marshaller.hpp"
+#include <string.h>
 
 #include <iostream>
 #include <stdlib.h>

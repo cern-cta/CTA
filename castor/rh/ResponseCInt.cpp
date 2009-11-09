@@ -29,6 +29,7 @@
 // Include Files
 #include "castor/IObject.hpp"
 #include "castor/rh/Response.hpp"
+#include <string.h>
 
 extern "C" {
 

@@ -1,10 +1,12 @@
 
 #include "castor/tape/format/ALB0100Marshaller.hpp"
+#include <string.h>
 
 #include <sys/stat.h>
 #include <fstream>
 #include <iostream>
 #include <errno.h>
+#include <stdlib.h>
 #include <memory>
 
 using std::ifstream;

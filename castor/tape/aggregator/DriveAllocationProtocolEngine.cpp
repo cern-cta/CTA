@@ -36,6 +36,7 @@
 #include "h/Ctape_constants.h"
 #include "h/rtcp_constants.h"
 #include "h/vdqm_constants.h"
+#include <string.h>
 
 #include <iostream>
 

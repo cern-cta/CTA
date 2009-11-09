@@ -44,7 +44,9 @@
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "castor/stager/TapePool.hpp"
+#include <algorithm>
 #include <set>
+#include <stdlib.h>
 #include <vector>
 
 //------------------------------------------------------------------------------

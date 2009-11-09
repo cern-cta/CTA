@@ -47,7 +47,9 @@
 #include "castor/stager/DiskServer.hpp"
 #include "castor/stager/FileSystem.hpp"
 #include "castor/stager/FileSystemStatusCodes.hpp"
+#include <algorithm>
 #include <set>
+#include <stdlib.h>
 #include <vector>
 
 //------------------------------------------------------------------------------

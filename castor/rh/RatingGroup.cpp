@@ -27,6 +27,7 @@
 #include "RatingGroup.hpp"
 #include <errno.h>
 #include <sstream>
+#include <string.h>
 
 
 //-----------------------------------------------------------------------------

@@ -42,6 +42,7 @@
 #include "h/net.h"
 #include "h/rtcp_constants.h" /* RTCOPY_PORT  */
 #include "h/vdqm_constants.h"
+#include <string.h>
 
 
 //------------------------------------------------------------------------------

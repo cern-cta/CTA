@@ -47,6 +47,7 @@
 #include <errno.h>
 #include <net.h>
 #include <string.h>
+#include <memory>
 
 
 // -----------------------------------------------------------------------

@@ -46,7 +46,9 @@
 #include "castor/stager/Tape.hpp"
 #include "castor/stager/TapeCopy.hpp"
 #include "castor/stager/TapePool.hpp"
+#include <algorithm>
 #include <set>
+#include <stdlib.h>
 #include <vector>
 
 //------------------------------------------------------------------------------

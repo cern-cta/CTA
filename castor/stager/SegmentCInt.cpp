@@ -33,6 +33,7 @@
 #include "castor/stager/Tape.hpp"
 #include "castor/stager/TapeCopy.hpp"
 #include "osdep.h"
+#include <string.h>
 
 extern "C" {
 

@@ -18,6 +18,7 @@
 #include "Cupv.h"
 #include "serrno.h"
 #include "getconfent.h"
+#include <string.h>
 
 
 int Cupv_check(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt, int priv)
