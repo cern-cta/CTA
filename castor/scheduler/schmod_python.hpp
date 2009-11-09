@@ -33,7 +33,7 @@
 #include "castor/scheduler/Constants.hpp"
 #include "getconfent.h"
 #include "u64subr.h"
-#include <ext/hash_map>
+#include <map>
 
 
 /**
@@ -125,26 +125,10 @@ namespace castor {
   namespace scheduler {
 
     /**
-     * Functor for the hash function of our internal hash table
-     */
-    class HashFunctor {
-
-    public:
-      /// Compare function
-      bool operator() (const char *s1,
-		       const char *s2) const {
-	return strcmp(s1, s2) == 0;
-      }
-    };
-
-    /**
-     * A hashtable for storing handler related information to be recalled
+     * A map storing handler related information to be recalled
      * at various phases of a jobs lifecycle
      */
-    __gnu_cxx::hash_map<const char *, 
-			castor::scheduler::HandlerData *, 
-			__gnu_cxx::hash<const char *>, 
-			HashFunctor> hashTable;
+    std::map<const char *, castor::scheduler::HandlerData *> hashTable;
 
     /**
      * Gets a integer value from castor.conf
