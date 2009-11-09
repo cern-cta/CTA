@@ -953,7 +953,7 @@ int rtcpcld_checkDualCopies(
 
   /*
    * We need to check, if there is already a tapecopy of a file in the same 
-   * migrator cue. Usually this is avoided by a migration policy, but if there
+   * migrator queue. Usually this is avoided by a migration policy, but if there
    * is none, it can then happen that >1 tapecopies are written to the same
    * tape.This is avoided here.
    */
