@@ -376,6 +376,7 @@ void CCClassWriter::writeSingleAttributeAccessorMethods(QString fieldClassName,
     stream << " new_var) {" << endl;
     m_indent++;
     if (fieldClassName == "const char*") {
+      addInclude("<string.h>");
       stream << getIndent()
              << "std::string snew_var(new_var, strlen(new_var));"
              << endl;
@@ -463,6 +464,7 @@ void CCClassWriter::writeVectorAttributeAccessorMethods (QString fieldClassName,
          << "* instance, " << fieldClassName
          << "** var, int* len) {" << endl;
   m_indent++;
+  addInclude("<stdlib.h>");
   stream << getIndent() << fixTypeName("vector", "", "")
          << "<" << fieldClassName
          << ">& result = instance->" << fieldName
@@ -634,6 +636,7 @@ void CCClassWriter::writeOperations(QPtrList<UMLOperation> &oplist,
     }
     stream << ";" << endl;
     if (isLastTypeVector()) {
+      addInclude("<stdlib.h>");
       stream << getIndent()
              << "*retlen = vecret.size();" << endl
              << getIndent()

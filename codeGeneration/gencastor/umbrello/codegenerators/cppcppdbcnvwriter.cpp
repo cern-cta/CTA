@@ -2027,6 +2027,7 @@ void CppCppDbCnvWriter::writeBasicMultNFillObj(Assoc* as) {
             << "().end();" << endl << getIndent()
             << "     it++) {"  << endl;
   m_indent++;
+  addInclude("<algorithm>");
   *m_stream << getIndent()
             << fixTypeName("vector", "", "")
             << "<u_signed64>::iterator item =" << endl
@@ -2368,6 +2369,7 @@ void CppCppDbCnvWriter::writeCreateBufferForSelect(QString name,
 	      << getIndent()
 	      << "allocMem.push_back(" << name << "Buffer);" << endl;
   } else {
+    addInclude("<stdlib.h>");
     *m_stream << getIndent()
 	      << cTypeName << "* " << name << "Buffer = ("
 	      << cTypeName << "*) malloc(nb * sizeof("
@@ -2383,6 +2385,7 @@ void CppCppDbCnvWriter::writeCreateBufferForSelect(QString name,
 	      << getIndent()
 	      << "allocMem.push_back(" << name << "Buffer);" << endl;
   }
+  addInclude("<stdlib.h>");
   *m_stream << getIndent()
             << "unsigned short* " << name
             << "BufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));"
