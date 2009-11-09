@@ -92,7 +92,7 @@ const std::string castor::db::cnv::DbRepackRequestCnv::s_updateStatementString =
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbRepackRequestCnv::s_storeTypeStatementString =
-"INSERT /* RepackRequest class */ INTO Id2Type (id, type) VALUES (:1, :2)";
+"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::cnv::DbRepackRequestCnv::s_deleteTypeStatementString =
