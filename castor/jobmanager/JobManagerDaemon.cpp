@@ -239,13 +239,13 @@ castor::jobmanager::JobManagerDaemon::JobManagerDaemon():
      { 33, "Job terminated, source filesystem for disk2disk copy is DISABLED, restarting SubRequest" },
      { 34, "Job terminated, svcclass has no filesystems in PRODUCTION" },
      { 35, "Restarting failed scheduling of a disk2disk copy replication request" },
-     { 36, "Job terminated due to scheduling error" },
      { 37, "Exception caught trying get space availability of all diskonly service classes, continuing anyway" },
      { 38, "Failed to execute getSvcClassesWithNoSpace, continuing anyway" },
      { 39, "Job terminated, svcclass no longer has any space available" },
      { 70, "Job terminated, not enough hosts to meet jobs requirements" },
      { 71, "Invoking ProcessJob" },
      { 72, "Invoking TerminateRequest" },
+     { 73, "Abnormal job termination detected" },
 
      // Submission
      { 40, "Invalid JobManager/SubmitRetryAttempts option, using default" },

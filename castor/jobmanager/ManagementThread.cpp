@@ -397,16 +397,6 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
        castor::dlf::Param("Status", job->status),
        castor::dlf::Param(subRequestId)};
 
-    // Check for abnormal termination caused by administrative action such
-    // as a bkill or abnormal termination on the remote execution host.
-    if ((job->status & JOB_STAT_EXIT) && !(job->status & JOB_STAT_DONE) &&
-	!(job->status & JOB_STAT_PDONE)) {
-      if (terminateRequest(0, requestId, subRequestId, fileId, ESTJOBKILLED)) {
-	// "Job terminated by service administrator"
-	castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 26, 5, params, &fileId);
-      }
-    }
-
     // Run the post checks after a job has ended. We do this to catch
     // situations were LSF has attempted to run the job but failed. As a
     // consequence of this we are left with inconsistencies in the stager
@@ -414,9 +404,9 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
     // Note: the name of the method being called here is misleading, we don't
     // want to terminate the request in this particular case just check it
     // went through ok
-    else if (terminateRequest(0, requestId, subRequestId, fileId, ESTSCHEDERR)) {
-      // "Job terminated due to scheduling error"
-      castor::dlf::dlf_writep(requestId, DLF_LVL_ERROR, 36, 5, params, &fileId);
+    if (terminateRequest(0, requestId, subRequestId, fileId, ESTSCHEDERR)) {
+      // "Abnormal job termination detected"
+      castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 73, 5, params, &fileId);
     }
 
     m_processedCache[job->submit.jobName] = time(NULL);
