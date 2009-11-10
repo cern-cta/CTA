@@ -21,7 +21,7 @@
 # @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
 #
 
-CPPFLAGS = -pedantic -Wall -Werror -g -O0 -I../../../h -I../../.. $(MTCCFLAGS)
+CPPFLAGS = -g -O0 -I../../../h -I../../.. $(MTCCFLAGS)
 CFLAGS = -O -I../../../h -I../../.. $(THREADFLAGS)
 LDFLAGS += $(MTLDFLAGS)
 LD = g++
