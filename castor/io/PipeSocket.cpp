@@ -79,7 +79,7 @@ void castor::io::PipeSocket::closeWrite()
 {
   if((m_mode & castor::io::PIPE_WRITE) != 0) {
     CLOSE(m_fdOut);
-    m_mode &= !castor::io::PIPE_WRITE;
+    m_mode &= ~castor::io::PIPE_WRITE;
   }
 }
 
@@ -90,7 +90,7 @@ void castor::io::PipeSocket::closeRead()
 {
   if((m_mode & castor::io::PIPE_READ) != 0) {
     CLOSE(m_fdIn);
-    m_mode &= !castor::io::PIPE_READ;
+    m_mode &= ~castor::io::PIPE_READ;
   }
 }
 
