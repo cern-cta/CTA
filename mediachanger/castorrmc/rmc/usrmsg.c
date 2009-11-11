@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <stdarg.h>
 #include "rmc.h"
+#include <Ctape_api.h>
 
 int usrmsg(char *func, char *msg, ...)
 {
