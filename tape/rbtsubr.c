@@ -85,7 +85,7 @@ int acsdismount( char*, char*, unsigned int );
 int dmcmount( char*, char*, char* );
 int dmcdismount( char*, char*, char*, unsigned int );
 
-/* int smcmount( char*, int, char*, int ); */
+int smcmount( char*, int, char* );
 int smcdismount( char*, char*, int, int );
 
 int send2dmc( int*, DMCrequest_t * );
@@ -1617,11 +1617,10 @@ char *loader;
 	RETURN (0);
 }
 
-int smcmount(vid, side, loader, vsnretry)
+int smcmount(vid, side, loader)
 char *vid;
 int side;
 char *loader;
-int vsnretry;
 {
 	int c;
 	struct smc_element_info element_info;
@@ -1780,31 +1779,13 @@ int vsnretry;
 			sprintf (msg, TP041, "mount", vid, cur_unm,
                                  p ? p + 2 : rmc_errbuf);
                         /* Just send message to operator after two retries*/ 
-                        if (vsnretry > 3 && (serrno == SECOMERR)) {  
-                                usrmsg (func, "%s\n", msg);
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
-                                                    "func",    TL_MSG_PARAM_STR, func,
-                                                    "action",  TL_MSG_PARAM_STR, "mount",
-                                                    "cur_vid", TL_MSG_PARAM_STR, vid,
-                                                    "Drive",   TL_MSG_PARAM_STR, cur_unm,
-                                                    "Message", TL_MSG_PARAM_STR, p ? p + 2 : rmc_errbuf );
-                        } else if (vsnretry <= 3 && (serrno == SECOMERR)) {
-                                tplogit (func, "%s", msg);
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
-                                                    "func",    TL_MSG_PARAM_STR, func,
-                                                    "action",  TL_MSG_PARAM_STR, "mount",
-                                                    "cur_vid", TL_MSG_PARAM_STR, vid,
-                                                    "Drive",   TL_MSG_PARAM_STR, cur_unm,
-                                                    "Message", TL_MSG_PARAM_STR, p ? p + 2 : rmc_errbuf );
-                        } else {
-                                usrmsg (func, "%s\n", msg);
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
-                                                    "func",    TL_MSG_PARAM_STR, func,
-                                                    "action",  TL_MSG_PARAM_STR, "mount",
-                                                    "cur_vid", TL_MSG_PARAM_STR, vid,
-                                                    "Drive",   TL_MSG_PARAM_STR, cur_unm,
-                                                    "Message", TL_MSG_PARAM_STR, p ? p + 2 : rmc_errbuf );
-                        }
+                        tplogit (func, "%s", msg);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "action",  TL_MSG_PARAM_STR, "mount",
+                                            "cur_vid", TL_MSG_PARAM_STR, vid,
+                                            "Drive",   TL_MSG_PARAM_STR, cur_unm,
+                                            "Message", TL_MSG_PARAM_STR, p ? p + 2 : rmc_errbuf );
                         c = (serrno == SECOMERR) ? RBT_FAST_RETRY : serrno - ERMCRBTERR;
                 }
                 RETURN (c);
