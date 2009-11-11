@@ -59,15 +59,15 @@ InstallLink(tofile,fromfile,mode,$(BIN),component)
 #define DepSharedLibraryTargetName(dir,libname)../dir/SharedLibraryName(lib/**/libname)
 #define InstallLibraryTargetNames(deplibs)$(if deplibs,$(addprefix $(DESTDIR)/$(LIBDIR)/,$(subst .$(MAJOR_CASTOR_VERSION),,$(notdir deplibs))))
 
-#define SchModTarget(libname,src,deplibs,libs,dir)                                                                \
-BareSharedLibraryTargetName(libname): src deplibs                                                               @@\
-	$(LD) DYLIBLINKEROPTION -fPIC -o $@ $(CPPFLAGS) src libs                                                          @@\
+#define SchModTarget(libname,obj,deplibs,libs,dir)                                                                \
+BareSharedLibraryTargetName(libname): obj deplibs                                                               @@\
+	$(LD) DYLIBLINKEROPTION -fPIC -o $@ $(CPPFLAGS) obj libs                                                @@\
 $(DESTDIR)/dir/BareSharedLibraryTargetName(libname): BareSharedLibraryTargetName(libname)                       @@\
 	@install -d $(DESTDIR)/dir                                                                              @@\
 	install -m 644 BareSharedLibraryTargetName(libname) $(DESTDIR)/dir/BareSharedLibraryTargetName(libname) @@\
 install: dir $(DESTDIR)/dir/BareSharedLibraryTargetName(libname)                                                @@\
 all: BareSharedLibraryTargetName(libname)                                                                       @@\
-FilesToClean += BareSharedLibraryTargetName(libname)                                                            @@\
+FilesToClean += obj BareSharedLibraryTargetName(libname)                                                            @@\
 FilesToClobber += BareSharedLibraryTargetName(libname)
 
 #define BareSharedLibraryTarget(libname,objects,deplibs,libs,dir,alltgt,installtgt)            \

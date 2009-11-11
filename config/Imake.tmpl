@@ -22,8 +22,8 @@
 #endif
 
 CASTOR_ROOT?=$(shell pwd | sed -e 's=CASTOR2/.*$$=CASTOR2=' -e 's=trunk/.*$$=trunk=' -e 's=\(v2_1_[^/]*\)/.*$$=\1=' -e 's=\(castor-[0-9\-\.]*\)/.*$$=\1=')
-CC += -fPIC -D_LARGEFILE64_SOURCE -Wall -Wno-long-long
-CXX += -fPIC -D_LARGEFILE64_SOURCE -Wall -Wno-long-long
+CC += -fPIC -D_LARGEFILE64_SOURCE -Wall -Werror
+CXX += -fPIC -D_LARGEFILE64_SOURCE -Wall -Werror
 MTCCFLAGS = -pthread -DCTHREAD_POSIX -D_THREAD_SAFE -D_REENTRANT
 MTLDLIBS =
 MTLDFLAGS = -pthread

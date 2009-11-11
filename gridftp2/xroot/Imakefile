@@ -44,5 +44,14 @@ LIBS += -lglobus_ftp_control_$(FLAVOR)
 DependsOnLibrary(../common,castorcommon)
 DependsOnLibrary(../castor,castorclient)
 PlacedSharedLibraryTarget($(DSI_LIBNAME),globus_gridftp_server_CASTOR2xroot.Osuf,$(DEPLIB),$(LIBS),$(DSI_LIBDIR))
+
+COMM We overwrite here the default rule for the compilation of
+COMM globus_gridftp_server_CASTOR2xroot in order to be able to alleviate the -Werror
+COMM present in the standard flags for the case of "right-hand operand of comma has
+COMM no effect". This warning is due to a bad macro from globus and only occurs on
+COMM gcc 3.4, that is SLC4. We will thus be able to drop all this from SLC5 on
+globus_gridftp_server_CASTOR2xroot.o: globus_gridftp_server_CASTOR2xroot.cpp
+	$(COMPILE.cpp) $(OUTPUT_OPTION) -Wno-error $<
+
 LOGROTATE(castor-gridftp-dsi-common,../..,install)
 MakeDir(/var/log,0755)
