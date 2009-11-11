@@ -892,7 +892,7 @@ globus_l_gfs_CASTOR2ext_send_next_to_client(
 	if(res != GLOBUS_SUCCESS) {
 		globus_free(buffer);
 		rfio_close(CASTOR2ext_handle->fd);
-	        CASTOR2ext_handle->cached_res = result;
+	        CASTOR2ext_handle->cached_res = res;
 		CASTOR2ext_handle->done = GLOBUS_TRUE;
 		if (CASTOR2ext_handle->outstanding == 0) globus_gridftp_server_finished_transfer(CASTOR2ext_handle->op, CASTOR2ext_handle->cached_res);
 		return CASTOR2ext_handle->done;

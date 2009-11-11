@@ -732,7 +732,7 @@ extern "C" {
     if (res != GLOBUS_SUCCESS) {
       globus_free(buffer);
       XrdPosix_Close(CASTOR2xroot_handle->fd);
-      CASTOR2xroot_handle->cached_res = result;
+      CASTOR2xroot_handle->cached_res = res;
       CASTOR2xroot_handle->done = GLOBUS_TRUE;
       if (CASTOR2xroot_handle->outstanding == 0) {
         globus_gridftp_server_finished_transfer(CASTOR2xroot_handle->op,

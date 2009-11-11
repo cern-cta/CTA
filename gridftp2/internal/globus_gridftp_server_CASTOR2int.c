@@ -914,10 +914,10 @@ globus_l_gfs_CASTOR2int_send_next_to_client(
 		return CASTOR2int_handle->done;
 	}
 	if(nbread < 0) { /* error */
-		result = globus_l_gfs_make_error("read");; 
+		result = globus_l_gfs_make_error("read"); 
 		globus_free(buffer);
 		close(CASTOR2int_handle->fd);
-	    CASTOR2int_handle->cached_res = result;
+		CASTOR2int_handle->cached_res = result;
 		CASTOR2int_handle->done = GLOBUS_TRUE;
 		if (CASTOR2int_handle->outstanding == 0) { 
 			globus_gridftp_server_finished_transfer(CASTOR2int_handle->op, CASTOR2int_handle->cached_res);
@@ -945,7 +945,7 @@ globus_l_gfs_CASTOR2int_send_next_to_client(
 	if(res != GLOBUS_SUCCESS) {
 		globus_free(buffer);
 		close(CASTOR2int_handle->fd);
-	        CASTOR2int_handle->cached_res = result;
+		CASTOR2int_handle->cached_res = res;
 		CASTOR2int_handle->done = GLOBUS_TRUE;
 		if (CASTOR2int_handle->outstanding == 0) globus_gridftp_server_finished_transfer(CASTOR2int_handle->op, CASTOR2int_handle->cached_res);
 		return CASTOR2int_handle->done;
