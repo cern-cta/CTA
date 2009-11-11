@@ -83,13 +83,6 @@
 /*
  * Names and limits
  */
-#ifndef LOGFILE
-#ifdef DEBUG
-#define LOGFILE "/tmp/testmru.log"
-#else
-#define LOGFILE "/var/log/castor/robot.log
-#endif /*DEBUG */
-#endif /*LOGFILE */
 #define ACCEPT_RETRY_MAX   5    /* Number of accept() max retries       */
 #define ACCEPT_RETRY_DELAY 5    /* Delay between accept() retries       */
 #define DMC_NAME "tl820"
