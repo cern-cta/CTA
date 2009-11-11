@@ -1,0 +1,192 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      vdqmlistpriority
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# *
+# * command line lists the volume access priorities within the VDQM database
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+
+import sys
+import getopt
+import castor_tools
+
+#-------------------------------------------------------------------------------
+# usage function
+#-------------------------------------------------------------------------------
+def usage(exitCode):
+  print '''Usage: vdqmlistpriority [ -a | -l lifespanType | -e ] [ -v ] [ -h ]
+where options can be:
+
+ -a, --all                List all priorities. This is the default.
+ -l, --lifespanType type  List priorities with specified lifespan type.
+                          Valid values are "singleMount" and "unlimited".
+ -e, --effective          List effective priorities.
+ -v, --verbose            Display column heads.
+ -h, --help               Print this help and exit.
+
+Please note that options -a, -l and -e are mutually exclusive
+
+Comments to: Castor.Support@cern.ch'''
+
+  sys.exit(exitCode)
+
+
+#-------------------------------------------------------------------------------
+# connectToVdqm
+#-------------------------------------------------------------------------------
+def connectToVdqm():
+    user, passwd, dbname = castor_tools.getVdqmDBConnectParams()
+    return castor_tools.connectToDB(user, passwd, dbname)
+
+
+#-------------------------------------------------------------------------------
+# getVdqmPriorities
+#-------------------------------------------------------------------------------
+def getVdqmPriorities(rsCursor, listType, lifespanType, verbose):
+  '''Gets vdqm priorities from the DB'''
+
+  if listType == 'ALL' or listType == '':
+    fromWhere = 'FROM VolumePriority'
+  elif listType == 'LIFESPAN_TYPE':
+    fromWhere = 'FROM VolumePriority WHERE lifespanType = '+ str(lifespanType)
+  elif listType == 'EFFECTIVE':
+    fromWhere = 'FROM EffectiveVolumePriority_VIEW' 
+  else:
+    raise Exception, 'Internal error: variable \"listType\" cannot have value=\"' + listType + '\"'
+
+  stmt = '''SELECT 
+      vid, 
+      tpMode, 
+      lifespanType, 
+      priority 
+    ''' + fromWhere + '''
+    ORDER BY 
+      vid, 
+      tpMode, 
+      lifespanType'''
+
+  rsCursor.execute(stmt)
+  rows = rsCursor.fetchall()
+
+  columns = ['VID', 'MODE', 'LIFESPAN', 'PRIORITY']
+  columnSize = [8,8,16,8]
+
+  result = ''
+  if verbose == 'true':
+    #Display the column headings.
+    for i in range(len(columns)):
+        # Concat the column headings padding them to a fix size
+       result += columns[i].ljust(columnSize[i]) + ' '
+    result += '\n'
+
+  # Loop through the result set of the query
+  for row in rows:
+
+    result += (str(row[0])).ljust(columnSize[0]) + ' '
+
+    string = 'UNKNOWN'
+    if row[1] == 0:
+       string = 'read'
+    elif row[1] == 1:
+       string = 'write'
+    result += string.ljust(columnSize[1]) + ' '
+
+    string = 'UNKNOWN'
+    if row[2] == 0:
+       string = 'singleMount'
+    elif row[2] == 1:
+       string = 'unlimited'
+    result += string.ljust(columnSize[2]) + ' '
+
+    result += (str(row[3])).rjust(columnSize[3]) + '\n'
+
+  return result
+
+
+#-------------------------------------------------------------------------------
+# vdqmListPriority
+#-------------------------------------------------------------------------------
+def vdqmListPriority(listType, lifespanType, verbose):
+    '''Lists the volume access priorities within the VDQM database'''
+    try:
+        stconn = connectToVdqm()
+        rsCursor = stconn.cursor()
+        rsCursor.arraysize = 50
+        priorities = getVdqmPriorities(rsCursor, listType, lifespanType, verbose)
+
+        castor_tools.disconnectDB(stconn)
+        return priorities
+    except Exception, e:
+        print e
+        sys.exit(-1)
+
+
+#-------------------------------------------------------------------------------
+# first parse the options
+#-------------------------------------------------------------------------------
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'al:evh', ['all', 
+                              'lifespanType=', 'effective', 'verbose', 'help'])
+except getopt.GetoptError, err:
+    print '\nError: ' + str(err) + '\n'
+    usage(2)
+mux = 0
+listType = ''
+lifespanType = ''
+verbose = 'false'
+for f, v in options:
+    if f in ('-a', '--all'):
+       mux = mux + 1
+       listType = 'ALL'
+    elif f in ('-l', '--lifespanType'):
+       mux = mux + 1
+       listType = 'LIFESPAN_TYPE'
+       if v not in ['singleMount', 'unlimited']:
+         usage(2)
+       if v == 'singleMount':
+         lifespanType = 0
+       else:
+         lifespanType = 1
+    elif f in ('-e', '--effective'):
+       mux = mux + 1
+       listType = 'EFFECTIVE'
+    elif f in ('-v', '--verbose'):
+       verbose = 'true'
+    elif f in ('-h', '--help'):
+        usage(0)
+    else:
+        print '\nError:  Unknown command-line option: ' + f 
+        usage(2)
+    
+    if mux > 1:
+        print '\nError:  Options -a, -l and -e are mutually exclusive'
+        usage(2)
+ 
+# Deal with args
+if len(args) >= 1:
+    errorStr = '\nError:  Unexpected command-line argument(s):'
+    for arg in args:
+      if arg[0] != '-':
+        errorStr = errorStr + " " + arg
+    print errorStr + '\n'
+    usage(2)
+
+print vdqmListPriority(listType, lifespanType, verbose)

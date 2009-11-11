@@ -1,0 +1,164 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      vdqmlistpriority
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# *
+# * command line lists the volume access priorities within the VDQM database
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+
+import sys
+import getopt
+import castor_tools
+import time 
+
+#-------------------------------------------------------------------------------
+# usage function
+#-------------------------------------------------------------------------------
+def usage(exitCode):
+  print '''Usage: vdqmlistrequest [ -v ] [ -h ]
+
+where options can be:
+
+ -v, --verbose Display column heads.
+ -h, --help    Print this help and exit.
+
+Comments to: Castor.Support@cern.ch'''
+
+  sys.exit(exitCode)
+
+
+#-------------------------------------------------------------------------------
+# connectToVdqm
+#-------------------------------------------------------------------------------
+def connectToVdqm():
+    user, passwd, dbname = castor_tools.getVdqmDBConnectParams()
+    return castor_tools.connectToDB(user, passwd, dbname)
+
+
+#-------------------------------------------------------------------------------
+# getVdqmRequests
+#-------------------------------------------------------------------------------
+def getVdqmRequests(rsCursor, verbose):
+  '''Gets vdqm requests from the DB'''
+
+  stmt ='''SELECT
+      id,
+      dgName,
+      vid,
+      accessMode,
+      creationTime,
+      remoteCopyType, 
+      volumePriority
+
+    FROM
+      tapeRequestShowqueues_VIEW 
+
+    ORDER BY
+      accessMode DESC,
+      volumePriority DESC,
+      creationTime ASC'''
+  
+  rsCursor.execute(stmt)
+  rows = rsCursor.fetchall()
+    
+  columns = ['REQID', 'DGN', 'VID', 'MODE', 'CREATED', 'REMOTECOPYTYPE', 'PRIORITY']
+  columnSize = [8,8,8,8,16,16,8]
+
+  result = ''
+  if verbose == 'true':
+     #Display the column headings.
+     for i in range(len(columns)):
+       # Concat the column headings padding them to a fix size
+       result += columns[i].ljust(columnSize[i]) + ' '
+     result += '\n'
+
+  # Loop through the result set of the query  
+  for row in rows:
+
+    result += (str(row[0])).ljust(columnSize[0]) + ' '
+    result += (str(row[1])).ljust(columnSize[1]) + ' '
+    result += (str(row[2])).ljust(columnSize[2]) + ' '
+
+    string = 'UNKNOWN'
+    if row[3] == 0:
+       string = 'read'
+    elif row[3] == 1:
+       string = 'write'
+    result += string.ljust(columnSize[3]) + ' '
+
+    # Convert epoch to human readable date
+    timeStamp = time.asctime( time.localtime(row[4]) )
+    # remove the "day of the week"(string head) and the "year"(string tail)
+    timeStamp = timeStamp[4:19]
+    result += (str(timeStamp)).ljust(columnSize[4]) + ' '
+    result += (   str(row[5])).ljust(columnSize[5]) + ' '
+    result += (   str(row[6])).rjust(columnSize[6]) + ' '
+    result += '\n'
+
+  return result
+
+
+#-------------------------------------------------------------------------------
+# vdqmListRequest
+#-------------------------------------------------------------------------------
+def vdqmListRequest(verbose):
+    '''lists the volume requests within the VDQM database order by their priority'''
+    try:
+        stconn = connectToVdqm()
+        rsCursor = stconn.cursor()
+        rsCursor.arraysize = 50
+        priorities = getVdqmRequests(rsCursor,  verbose)
+
+        castor_tools.disconnectDB(stconn)
+        return priorities
+    except Exception, e:
+        print e
+        sys.exit(-1)
+
+
+#-------------------------------------------------------------------------------
+# first parse the options
+#-------------------------------------------------------------------------------
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'vh', ['verbose', 'help'])
+except getopt.GetoptError, err:
+    print '\nError: ' + str(err)+ '\n'
+    usage(2)
+verbose = 'false'
+for f, v in options:
+    if f in ('-v', '--verbose'):
+       verbose = 'true'
+    elif f in ('-h', '--help'):
+        usage(0)
+    else:
+        print "\nError: Unknown command-line option: " + f
+        usage(2)
+ 
+# Deal with args
+if len(args) >= 1:
+    errorStr = '\nError:  Unexpected command-line argument(s):'
+    for arg in args:
+      if arg[0] != '-':
+        errorStr = errorStr + " " + arg
+    print errorStr + '\n'
+    usage(2)
+
+print vdqmListRequest(verbose)

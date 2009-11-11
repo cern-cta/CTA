@@ -79,6 +79,43 @@ def getNSDBConnectParam(file):
     checkValueFound("DB name", dbname, 'nameserver', file)
     return user, passwd, dbname
 
+
+#-------------------------------------------------------------------------------
+# getVdqmDBConnectParams
+#-------------------------------------------------------------------------------
+def getVdqmDBConnectParams():
+    # find out the instance to use
+    full_name = "DbCnvSvc"
+    inst      = "default"
+    if os.environ.has_key('CASTOR_INSTANCE'):
+        inst = os.environ['CASTOR_INSTANCE']
+        full_name = full_name + '_' + inst
+        inst = "'" + inst + "' vdqm"
+    # go through the lines of ORAVDQMCONFIG
+    user   = ""
+    passwd = ""
+    dbname = ""
+    for l in open ('/etc/castor/ORAVDQMCONFIG').readlines():
+        if len(l.strip()) == 0 or l.strip()[0] == '#':
+            continue
+        try:
+            instance, entry, value = l.split()
+            if instance == full_name:
+                if entry == 'user':
+                    user = value
+                elif entry == 'passwd':
+                    passwd = value
+                elif entry == 'dbName':
+                    dbname = value
+        except ValueError:
+            # ignore line
+            pass
+    checkValueFound("user name", user,   inst, 'ORAVDQMCONFIG')
+    checkValueFound("password",  passwd, inst, 'ORAVDQMCONFIG')
+    checkValueFound("DB name",   dbname, inst, 'ORAVDQMCONFIG')
+    return user, passwd, dbname
+
+
 def importOracle():
     global cx_Oracle
     try:
