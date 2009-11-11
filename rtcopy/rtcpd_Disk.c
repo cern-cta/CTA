@@ -52,6 +52,7 @@ extern char *geterr();
 #include <serrno.h>
 #include <u64subr.h>
 #include "tplogger_api.h"
+#include "rfio_xy.h"
 
 #define DK_STATUS(X) (diskIOstatus->current_activity = (X))
 #define DK_SIZE(X)   (diskIOstatus->nbbytes = (X))
@@ -623,11 +624,11 @@ static int DiskFileOpen(int pool_index,
             rtcpd_SetReqStatus(NULL,file,save_rfio_errno,RTCP_USERR | RTCP_FAILED);
             break;
         default:
-            if (save_errno = EBADF && save_rfio_errno == 0 && save_serrno == 0)
+          if ((save_errno == EBADF) && (save_rfio_errno == 0) && (save_serrno == 0))
                 rtcpd_SetReqStatus(NULL,file,save_rfio_errno,
                                    RTCP_RESELECT_SERV | RTCP_UNERR);
-            else if ( save_serrno = SETIMEDOUT && save_rfio_errno == 0 &&
-                      filereq->err.max_cpretry > 0 ) {
+          else if ( (save_serrno == SETIMEDOUT) && (save_rfio_errno == 0) &&
+                    (filereq->err.max_cpretry > 0) ) {
                 filereq->err.max_cpretry--;
                 rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_RESELECT_SERV|
                                                          RTCP_UNERR);
