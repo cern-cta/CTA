@@ -84,8 +84,10 @@ int main(int argc, char**argv) {
     }
   }
   if (buf == NULL) {
-    (buf = getenv (CNS_HOST_ENV)) ||
-      (buf = getconfent (CNS_SCE, "HOST", 0));
+    buf = getenv (CNS_HOST_ENV);
+  }
+  if (buf == NULL) {
+    buf = getconfent (CNS_SCE, "HOST", 0);
   }
   if (buf == NULL) {
     fprintf(stderr, "unable to determine which host to contact, please use the -h option\n");

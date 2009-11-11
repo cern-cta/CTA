@@ -8,7 +8,7 @@
 #include <Castor_limits.h>
 #include <osdep.h>
 #include <net.h>
-#include <sacct.h>
+#include <wsacct.h>
 #include <log.h>
 #include <Ctape_constants.h>
 #include <Cuuid.h>

@@ -26,6 +26,7 @@
 #include <Ctape_constants.h>
 #include <rtcp_constants.h>
 #include <rtcp.h>
+#include <rtcp_server.h>
 #include <stdlib.h>
 #include <unistd.h>
 extern int rtcp_InitLog(char *, FILE *, FILE *, SOCKET *);

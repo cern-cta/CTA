@@ -132,9 +132,6 @@ EXTERN_C int DLL_DECL findpgrp();
 EXTERN_C int DLL_DECL inquiry       _PROTO((int, char*, unsigned char*));
 EXTERN_C int DLL_DECL inquiry80     _PROTO((int, char*, unsigned char*));
 
-/* tape/lddisplay.c    */
-EXTERN_C int DLL_DECL lddisplay     _PROTO((int, char*, int, char*, char*, int));
-
 /* tape/mircheck.c     */
 EXTERN_C int DLL_DECL is_mir_invalid_load _PROTO((int, char *, char *));
 EXTERN_C int DLL_DECL post_mount_check _PROTO((int, char*, char*));
@@ -150,6 +147,7 @@ EXTERN_C int DLL_DECL posittape     _PROTO((int, char*, char*, int, int, int*, c
 /* EXTERN_C int DLL_DECL rbtdemount    _PROTO((char*, char*, char*, char*, unsigned int, int )); */
 EXTERN_C int DLL_DECL acsmountresp();
 EXTERN_C int DLL_DECL rbtmount      _PROTO((char*, int, char*, char*, int, char*));
+EXTERN_C int DLL_DECL rbtdemount    _PROTO((char*, char*, char*, char*, unsigned int, int));
 EXTERN_C int DLL_DECL wait4acsfinalresp();
 
 /* tape/readlbl.c      */

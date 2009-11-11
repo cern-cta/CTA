@@ -46,6 +46,7 @@
 #include "castor/server/SignalThreadPool.hpp"
 #include "castor/rtcopy/mighunter/IMigHunterSvc.hpp"
 #include <list>
+#include <memory>
 
 extern "C" {
   char* getconfent(const char *, const char *, int);

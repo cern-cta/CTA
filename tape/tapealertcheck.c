@@ -12,11 +12,10 @@
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "serrno.h" 
-
+#include "sendscsicmd.h"
 
 static char *func = "tapealertcheck";
 
-extern int send_scsi_cmd( int, char *, int, char *, int, char *, int, char *, int, int, int, int *, char **);
 
 /* Functions that checks 9840/9940/T10000/LTO/3592 tape flags */
 int
@@ -35,7 +34,7 @@ char *devtype;
 	unsigned char cdb[10];
 	char *msgaddr;
 	int nb_sense_ret;
-	unsigned char sense[256];	/* Sense bytes are returned in this buffer */
+  char sense[256];	/* Sense bytes are returned in this buffer */
     int rc;
     
     tapealerts = 0;

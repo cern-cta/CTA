@@ -3520,7 +3520,8 @@ int rtcpcld_putFailed(
   enum Cstager_SegmentStatusCodes_t segmentStatus;
   enum Cstager_DiskCopyStatusCodes_t diskCopyStatus;
   enum Cstager_TapeCopyStatusCodes_t tapeCopyStatus;
-  int rc, i, nbSegments = 0, nbDiskCopies = 0, copyNb;
+  int rc, i, nbSegments = 0, nbDiskCopies = 0;
+  unsigned int copyNb;
   ID_TYPE key;
 
   if ( _tapeCopy == NULL ) {

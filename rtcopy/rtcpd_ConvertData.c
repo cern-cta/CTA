@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #define _XOPEN_SOURCE
+#define __USE_XOPEN
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>

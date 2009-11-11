@@ -16,8 +16,7 @@
 #include "Ctape_api.h"
 #include "scsictl.h"
 #include "serrno.h"
-
-extern int send_scsi_cmd( int, char *, int, char *, int, char *, int, char *, int, int, int, int *, char **);
+#include "sendscsicmd.h"
 
 int setdens(tapefd, path, devtype, den)
 int tapefd;

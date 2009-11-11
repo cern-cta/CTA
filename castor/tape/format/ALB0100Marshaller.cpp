@@ -5,7 +5,7 @@
 #include <iostream>
 #include <zlib.h>  // needed for the Adler-32
 #include <typeinfo>
-
+#include <stdio.h>
 
 //----------------------------------------------------------------------------
 // destructor

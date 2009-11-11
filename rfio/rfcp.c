@@ -185,7 +185,7 @@ int main(argc, argv)
 #endif
   int c;
   int cfargc;  /* number of arguments in command file */
-  char **cfargv; /* arguments in command file */
+  char **cfargv = 0; /* arguments in command file */
   int cfargvindx; /* argument index in command file */
   char *curargv; /* current argv */
   int  fd1, fd2;

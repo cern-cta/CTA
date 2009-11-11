@@ -11,7 +11,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include "osdep.h"
-#include "sacct.h"
+#include "wsacct.h"
 
 int tapeacct(subtype, uid, gid, jid, dgn, drive, vid, fseq, reason)
 int subtype;

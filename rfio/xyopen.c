@@ -37,6 +37,7 @@
 #include <stdlib.h>
 #include <pwd.h>
 #include <Cpwd.h>
+#include <rfio_xy.h>
 
 RFILE DLL_DECL *ftnlun[MAXFTNLUN];       /* Fortran logical units       */
 

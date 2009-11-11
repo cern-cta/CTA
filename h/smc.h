@@ -77,6 +77,7 @@ EXTERN_C int DLL_DECL smc_move_medium      _PROTO((int, char*, int, int, int));
 EXTERN_C int DLL_DECL smc_lasterror        _PROTO((struct smc_status *, char**));
 EXTERN_C int DLL_DECL smc_read_elem_status _PROTO((int, char*, int, int, int, struct smc_element_info[]));
 EXTERN_C int DLL_DECL smc_find_cartridge   _PROTO((int, char*, char*, int, int, int, struct smc_element_info[]));
+EXTERN_C int DLL_DECL smc_find_cartridge2  _PROTO((int, char*, char*, int, int, int, struct smc_element_info[]));
 
 EXTERN_C int DLL_DECL smc_dismount         _PROTO((int, char*, struct robot_info*, int, char*));
 EXTERN_C int DLL_DECL smc_export           _PROTO((int, char*, struct robot_info*, char*));

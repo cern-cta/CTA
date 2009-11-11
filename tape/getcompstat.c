@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.21 $ $Date: 2007/02/21 16:31:31 $ CERN Fabien Collin/Jean-Philippe Baud/Benjamin Couturier"; */
-#endif /* not lint */
-
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -19,8 +15,8 @@
 #endif
 #include "Ctape_api.h" 
 #include "serrno.h" 
+#include "sendscsicmd.h" 
 
-extern int send_scsi_cmd( int, char *, int, char *, int, char *, int, char *, int, int, int, int *, char **); 
 
 int get_compression_stats(tapefd, path, devtype, comp_stats)
 int tapefd;
@@ -44,7 +40,7 @@ COMPRESSION_STATS *comp_stats;
 	unsigned char cdb[10];
 	char *msgaddr;
 	int nb_sense_ret;
-	unsigned char sense[256];	/* Sense bytes are returned in this buffer */
+	char sense[256];	/* Sense bytes are returned in this buffer */
 #endif
 #if defined(ADSTAR)
 	if (strcmp (devtype, "3590") == 0) {
@@ -83,7 +79,7 @@ COMPRESSION_STATS *comp_stats;
 	}
  
 	if (send_scsi_cmd (tapefd, path, 0, cdb, 10, buffer, sizeof(buffer),
-	    sense, 38, 10000, SCSI_IN, &nb_sense_ret, &msgaddr) < 0)
+                     sense, 38, 10000, SCSI_IN, &nb_sense_ret, &msgaddr) < 0)
 		return (-1);
 
 	p = buffer;
@@ -267,7 +263,7 @@ char *devtype;
 	unsigned char cdb[10];
 	char *msgaddr;
 	int nb_sense_ret;
-	unsigned char sense[256];	/* Sense bytes are returned in this buffer */
+	char sense[256];	/* Sense bytes are returned in this buffer */
 
 	memset (cdb, 0, sizeof(cdb));
 	cdb[0] = 0x4C;	/* LOG SELECT */

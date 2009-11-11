@@ -34,6 +34,7 @@
 #include <Cgetopt.h>
 #include <castor/BaseObject.hpp>
 #include <castor/stager/PriorityMap.hpp>
+#include <stdio.h>
 
 static struct Coptions longopts[] = {
   { "help",     NO_ARGUMENT,       NULL, 'h'},

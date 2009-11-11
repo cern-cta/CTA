@@ -54,11 +54,11 @@ int castor::infoPolicy::TapeRetryPySvc::applyPolicy(castor::infoPolicy::PolicyOb
   try {
     ret=castor::infoPolicy::PySvc::callPolicyFunction(m_functionName,inputScript);
   } catch (castor::exception::Exception e){
-    if (inputScript)  Py_XDECREF(inputScript);
+    if (inputScript) { Py_XDECREF(inputScript); }
     throw e;
   }
 
-  if (inputScript) Py_XDECREF(inputScript);
+  if (inputScript) { Py_XDECREF(inputScript); }
 
   
   return ret;

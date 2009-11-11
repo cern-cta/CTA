@@ -17,11 +17,10 @@
 #include "scsictl.h"
 #include "serrno.h"
 #include "smc.h"
+#include "sendscsicmd.h"
 #define	RBT_XTRA_PROC 10
 static struct smc_status smc_status;
 static char *smc_msgaddr;
-
-extern int send_scsi_cmd( int, char *, int, char *, int, char *, int, char *, int, int, int, int *, char **);
 
 static void
 save_error(rc, nb_sense, sense, msgaddr)
@@ -438,8 +437,8 @@ struct smc_element_info element_info[];
    
        /* IBM library in pause mode  */ 
         while (pause_mode && nretries <= 900) {
-	     rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 12, plist, 40,
-		  sense, 38, 900000, SCSI_OUT, &nb_sense_ret, &msgaddr);
+          rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 12, (unsigned char*)plist, 40,
+                           sense, 38, 900000, SCSI_OUT, &nb_sense_ret, &msgaddr);
             if (rc < 0) {
               if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == 0xFFFFFF85 )) {
                  sleep(60);

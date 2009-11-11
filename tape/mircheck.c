@@ -12,13 +12,12 @@
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "serrno.h" 
+#include "sendscsicmd.h"
 
 #define MIR_INVALID_LOAD 1
 #define MIR_INVALID_UNLOAD 2
 
 static char *func = "mircheck";
-
-extern int send_scsi_cmd( int, char *, int, char *, int, char *, int, char *, int, int, int, int *, char **);
 
 /* Functions that checks whether the 9840/9940/T10000/LTO/3592 tape MIR is valid */
 int
@@ -38,7 +37,7 @@ int checktype;
 	unsigned char cdb[10];
 	char *msgaddr;
 	int nb_sense_ret;
-	unsigned char sense[256];	/* Sense bytes are returned in this buffer */
+  char sense[256];	/* Sense bytes are returned in this buffer */
     int rc;
     
     mir_invalid =  mir_invalid_unload = 0;

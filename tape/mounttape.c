@@ -47,6 +47,7 @@
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
 #include <time.h>
+#include <Ctape_api.h>
 
 char *acctname;
 char *devtype;

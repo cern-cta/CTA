@@ -838,7 +838,7 @@ static int doMigrationRetry(
   struct Cstager_Stream_t **streamArray = NULL;
   struct Cstager_ITapeSvc_t *tpSvc = NULL;
   int rc, nbStreams = 0;
-  ID_TYPE key;
+  ID_TYPE key = 0;
 
   if ( (segment == NULL) || (tapeCopy == NULL) ) {
     serrno = EINVAL;

@@ -682,6 +682,7 @@ static void *signal_handler(void *arg) {
       }
     }
   }
+  return NULL;
 }
 
 static void shutdownService(

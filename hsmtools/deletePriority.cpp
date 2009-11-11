@@ -32,6 +32,7 @@
 #include <castor/BaseObject.hpp>
 #include <pwd.h>
 #include <grp.h>
+#include <stdio.h>
 
 static struct Coptions longopts[] = {
   { "help", NO_ARGUMENT,       NULL, 'h'},

@@ -59,6 +59,7 @@ char rtcp_cmds[][10] = RTCOPY_CMD_STRINGS;
 extern char *getconfent(const char *, const char *, int);
 
 extern char *rtcpd_logfile;
+extern int rtcp_InitLog(char *, FILE *, FILE *, SOCKET *);
 
 extern int Debug;
 int Debug = FALSE;
@@ -2583,7 +2584,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
       (void)rtcpd_AppendClientMsg(tape,NULL,"setuid(%d): %s",
                                   client->uid,sstrerror(save_errno));
     }
-    if ( acctstr != '\0' ) {
+    if ( *acctstr != '\0' ) {
       (void) sprintf(envacct,"ACCOUNT=%s",acctstr);
       if ( putenv(envacct) != 0 ) {
         rtcp_log(LOG_ERR,"putenv(%s) failed\n",envacct);

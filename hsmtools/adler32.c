@@ -38,7 +38,7 @@ void usage(char *cmd)
 int main(int argc, char *argv[]) 
 {
   unsigned long ckSum;
-  char buffer[1024*1024];
+  unsigned char buffer[1024*1024];
   int i, fd, rc;
 
   if ( argc < 2 ) {

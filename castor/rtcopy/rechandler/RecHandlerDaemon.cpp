@@ -39,6 +39,7 @@
 #include <Cgetopt.h>
 #include <u64subr.h>
 #include <string>
+#include <memory>
 
 
 // -----------------------------------------------------------------------

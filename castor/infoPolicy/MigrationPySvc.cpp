@@ -69,11 +69,11 @@ int castor::infoPolicy::MigrationPySvc::applyPolicy(castor::infoPolicy::PolicyOb
     ret=callPolicyFunction(pObj->policyName().c_str(),inputScript);
     
   }catch (castor::exception::Exception e){
-    if (inputScript)  Py_XDECREF(inputScript);
+    if (inputScript) { Py_XDECREF(inputScript); }
     throw e;
   }
 
-  if (inputScript) Py_XDECREF(inputScript);
+  if (inputScript) { Py_XDECREF(inputScript); }
 
   return ret;
   

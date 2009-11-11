@@ -155,9 +155,9 @@ int send_scsi_cmd (tapefd, path, do_not_open, cdb, cdblen, buffer, buflen, sense
 int tapefd;
 char *path;
 int do_not_open;
-char *cdb;
+unsigned char *cdb;
 int cdblen;
-char *buffer;
+unsigned char *buffer;
 int buflen;
 char *sense;
 int senselen;

@@ -40,6 +40,7 @@ extern char *geterr();
 #include <Cuuid.h>
 #include <rtcp_constants.h>
 #include <rtcp.h>
+#include <rtcp_api.h>
 #include <rtcp_server.h>
 #include <serrno.h>
 #include <stdio.h>
@@ -48,6 +49,7 @@ extern char *geterr();
 #define TP_STATUS(X) (proc_stat.tapeIOstatus.current_activity = (X))
 extern processing_status_t proc_stat;
 extern int AbortFlag;
+extern int rtcp_InitLog(char *, FILE *, FILE *, SOCKET *);
 
 void dmp_usrmsg(int dmpmsg_level, char *format, ...) {
     va_list args;

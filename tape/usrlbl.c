@@ -23,6 +23,7 @@
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "serrno.h"
+#include "rtcp_lbl.h"
 
 /*	checkeofeov - check for EOF or EOV */
 /*	return	-1 and serrno set in case of error

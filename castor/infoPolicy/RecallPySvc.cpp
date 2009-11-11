@@ -56,11 +56,11 @@ int castor::infoPolicy::RecallPySvc::applyPolicy(castor::infoPolicy::PolicyObj* 
     ret=callPolicyFunction(m_functionName,inputScript);
   
   } catch (castor::exception::Exception e){
-    if (inputScript)  Py_XDECREF(inputScript);
+    if (inputScript) { Py_XDECREF(inputScript); }
     throw e;
   }
 
-  if (inputScript) Py_XDECREF(inputScript);
+  if (inputScript) { Py_XDECREF(inputScript); }
 
   return ret;
   

@@ -59,7 +59,7 @@ char	**argv;
 	char *dgn;
 	char *domainname;
 	char *drive;
-	char drive_serial_no[13];
+	unsigned char drive_serial_no[13];
 	char fid[CA_MAXFIDLEN+1];
 	int filstat;
 	int flags;
@@ -69,7 +69,7 @@ char	**argv;
 	char hdr1[LBLBUFSZ];
 	char hdr2[LBLBUFSZ];
 	int i;
-	char inq_data[29];
+	unsigned char inq_data[29];
 	int lblcode;
 	int lrecl;
 	int method;
@@ -356,7 +356,7 @@ char	**argv;
 				drive_serial_no[0] = '\0';
 				(void) inquiry80 (tapefd, path, drive_serial_no);
 				builduhl (uhl1, cfseq, blksize, lrecl, domainname,
-				    hostname, inq_data, drive_serial_no);
+                  hostname, (char*)inq_data, (char*)drive_serial_no);
 				uhl1[80] = '\0';
 			} else
 				uhl1[0] = '\0';

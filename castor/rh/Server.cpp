@@ -40,6 +40,7 @@
 
 #include <iostream>
 #include <dlfcn.h>
+#include <stdio.h>
 
 //------------------------------------------------------------------------------
 // String constants

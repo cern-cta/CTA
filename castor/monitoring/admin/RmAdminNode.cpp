@@ -36,6 +36,7 @@
 #include <castor/stager/FileSystemStatusCodes.hpp>
 #include <castor/monitoring/admin/DiskServerAdminReport.hpp>
 #include <castor/monitoring/admin/FileSystemAdminReport.hpp>
+#include <stdio.h>
 
 #define RMMASTER_DEFAULT_PORT 15003
 

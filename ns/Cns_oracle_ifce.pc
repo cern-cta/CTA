@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <stdio.h>
 #include <sqlca.h>
+#include <sqlcpr.h>
 #ifndef USE_ORACLE
 #define USE_ORACLE
 #endif
@@ -37,7 +38,7 @@ Cns_oracle_error(func, sql_method, dbfd, sqlca)
   size_t err_size = sizeof(err_msg);
   size_t err_len;
 
-  sqlglmt(ctx[dbfd->idx], err_msg, &err_size, &err_len);
+  sqlglmt(ctx[dbfd->idx], (unsigned char*)err_msg, &err_size, &err_len);
   if (err_msg[err_len - 1]  == '\n') {
     err_msg[err_len - 1] = '\0';
   }

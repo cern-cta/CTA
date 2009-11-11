@@ -249,6 +249,10 @@ EXTERN_C struct dirent DLL_DECL *rfio_readdir64 _PROTO((DIR *));
 #endif
 #endif /* RFIO_KERNEL */
 
+
+EXTERN_C int DLL_DECL rfio_parse _PROTO((char *, char **, char **));
+                                      /* parse file path                  */
+
 /*
  * Purely internal globals
  */
@@ -260,8 +264,6 @@ EXTERN_C RFILE DLL_DECL *rfilefdt[];      /* Remote file desciptors table */
 
 EXTERN_C int DLL_DECL rfio_connect _PROTO((char *, int *));
                                      /* connect remote rfio server        */
-EXTERN_C int DLL_DECL rfio_parse _PROTO((char *, char **, char **));
-                                      /* parse file path                  */
 EXTERN_C int DLL_DECL rfio_parseln _PROTO((char *, char **, char **, int));
                                       /* parse file path                  */
 #if ! defined(linux) || defined(_LARGEFILE64_SOURCE)

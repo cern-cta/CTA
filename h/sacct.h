@@ -12,6 +12,9 @@
  */
 /* Include file for CASTOR software accounting */
 
+#ifndef H_SACCT_H 
+#define H_SACCT_H 1
+
 #include "Castor_limits.h"
 #include "stage_limits.h"
 #include "osdep.h"
@@ -398,3 +401,5 @@ struct acctstage64 {	/* accounting record for stage 64BITS software */
  * Function prototypes
  */
 EXTERN_C int DLL_DECL tapeacct _PROTO((int, uid_t, gid_t, int, char*, char*, char*, int, int));
+
+#endif // H_SACCT_H

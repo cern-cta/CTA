@@ -16,8 +16,7 @@
 #include "scsictl.h"
 #include "serrno.h"
 #include <stdlib.h>
-
-extern int send_scsi_cmd( int, char *, int, char *, int, char *, int, char *, int, int, int, int *, char **);
+#include "sendscsicmd.h"
 
 int locate(tapefd, path, blockid)
 int tapefd;

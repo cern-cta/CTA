@@ -35,6 +35,7 @@
 #include <sys/time.h>
 #include <signal.h>
 #include <unistd.h>
+#include <stdio.h>
 
 // Include Files
 #include "castor/server/ForkedProcessPool.hpp"

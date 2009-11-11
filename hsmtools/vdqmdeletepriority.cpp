@@ -35,7 +35,7 @@
 #include <iostream>
 #include <string>
 #include <string.h>
-
+#include <stdio.h>
 
 void usage(const std::string programName) {
   std::cerr << "Usage: " << programName <<

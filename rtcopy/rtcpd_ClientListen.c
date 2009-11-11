@@ -41,6 +41,7 @@ extern int AbortFlag;
 extern int SHIFTclient;
 extern int Dumptape;
 static int wait_to_be_joined = FALSE;
+extern int rtcp_InitLog(char *, FILE *, FILE *, SOCKET *);
 
 void *rtcpd_CLThread(void *arg) {
     static SOCKET client_socket;

@@ -99,6 +99,15 @@ EXTERN_C int DLL_DECL rtcp_NewFileList _PROTO((
                                                file_list_t **,
                                                int
                                                ));
+EXTERN_C int DLL_DECL rtcpc_InitDumpTapeReq _PROTO((
+                                                    rtcpDumpTapeRequest_t *
+                                                    ));
+EXTERN_C int DLL_DECL rtcpc_BuildDumpTapeReq _PROTO((
+                                                     tape_list_t **,
+                                                     int,
+                                                     char *[]
+
+                                                     ));
 EXTERN_C int DLL_DECL dumpTapeReq _PROTO((
                                           tape_list_t *
                                           ));

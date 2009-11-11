@@ -24,6 +24,7 @@
 #include "rfio.h"               /* remote file I/O definitions          */
 #include <stdlib.h>
 #include <string.h>
+#include <rfio_xy.h>
 
 extern int DLL_DECL switch_close();
 

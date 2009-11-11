@@ -41,7 +41,7 @@
 #include <h/vmgr_api.h> // For VMGR
 #include <sys/types.h> // For VMGR
 #include <string.h>
-
+#include <stdio.h>
 
 static struct Coptions longopts[] = {
   {"config", REQUIRED_ARGUMENT, NULL, 'c'},

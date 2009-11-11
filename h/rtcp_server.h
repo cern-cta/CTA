@@ -191,18 +191,24 @@ int rtcp_CleanUp  _PROTO((SOCKET **, int));
 #if !defined(_AIX) || defined(__STDC__)
 void rtcpd_AppendClientMsg  _PROTO((tape_list_t *, file_list_t *, char *, ...));
 #endif /* aix */
+int rtcp_SendReq _PROTO((SOCKET *, rtcpHdr_t *,rtcpClientInfo_t *, rtcpTapeRequest_t *, rtcpFileRequest_t *));
 int rtcp_RecvReq  _PROTO((SOCKET *, rtcpHdr_t *, rtcpClientInfo_t *, 
                  rtcpTapeRequest_t *, rtcpFileRequest_t *));
 int rtcp_SendReq  _PROTO((SOCKET *, rtcpHdr_t *, rtcpClientInfo_t *, 
                  rtcpTapeRequest_t *, rtcpFileRequest_t *));
 int rtcp_RecvAckn  _PROTO((SOCKET *, int));
 int rtcp_SendAckn  _PROTO((SOCKET *, int));
+int rtcp_RecvAckn  _PROTO((SOCKET *, int));
+int rtcp_CloseConnection _PROTO((SOCKET *s));
+
 int rtcp_Listen  _PROTO((SOCKET, SOCKET *, int, int));
 int rtcpd_ClientListen  _PROTO((SOCKET));
 int rtcp_RunOld  _PROTO((SOCKET *, rtcpHdr_t *));
 int rtcp_SendOldCAckn _PROTO((SOCKET *, rtcpHdr_t *));
 int rtcp_SendOldCinfo _PROTO((SOCKET *, rtcpHdr_t *, shift_client_t *));
 int rtcp_CloseConnection  _PROTO((SOCKET *));
+int rtcp_Connect _PROTO((SOCKET *, char *, int *, int));
+
 int rtcpd_ConnectToClient  _PROTO((SOCKET *, char *, int *));
 int rtcpd_MainCntl  _PROTO((SOCKET *));
 int rtcpd_CheckClient _PROTO((int, int, char *, char *, int *));
@@ -268,6 +274,8 @@ int rtcpd_WaitCompletion _PROTO((tape_list_t *, file_list_t *));
 int rtcpd_checkMoreWork _PROTO((SOCKET *, tape_list_t *, file_list_t *));
 int rtcpd_waitMoreWork _PROTO((file_list_t *fl));
 int rtcpd_nbFullBufs _PROTO((int));
+int rtcpd_jobID _PROTO((void));
+int rtcpd_SerializeLock _PROTO((int, int*, void*, int*, int*, int**));
 
 #if defined(CTAPE_DUMMIES)
 int  DLL_DECL  stage_setlog _PROTO((void (*) _PROTO((int, char *))));

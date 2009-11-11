@@ -32,6 +32,8 @@
 #include "tplogger_api.h"
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <Ctape_api.h>
+#include "sendscsicmd.h"
 
 /* Forward declaration */
 int getreq(int, int*, char*, char**);
@@ -195,7 +197,7 @@ struct main_args *main_args;
 	memset (plist, 0, sizeof(plist));
 	strcpy (plist, "DUMMY0");
 	c = send_scsi_cmd (extended_robot_info.smc_fd,
-	    extended_robot_info.smc_ldr, 0, cdb, 12, plist, 40,
+                     extended_robot_info.smc_ldr, 0, cdb, 12, (unsigned char*)plist, 40,
 	    sense, 38, 900000, SCSI_OUT, &nb_sense_ret, &msgaddr);
 	if (c < 0) {
 		if (c == -4 && nb_sense_ret >= 14 && (sense[2] & 0xF) == 5 &&

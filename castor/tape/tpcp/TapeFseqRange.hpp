@@ -29,6 +29,7 @@
 #include "castor/exception/NoValue.hpp"
 
 #include <ostream>
+#include <stdint.h>
 
 namespace castor {
 namespace tape   {
