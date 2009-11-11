@@ -154,9 +154,9 @@ EXEMANPAGE(tpstat)
 MakeDir($(LOGDIR),0755)
 TAPED_OBJS = tpdaemon.Osuf checkjobdied.Osuf cvtden.Osuf sendrep.Osuf tplogit.Osuf usrmsg.Osuf
 CONFDRIVE_OBJS = confdrive.Osuf sendrep.Osuf tplogit.Osuf
-MOUNTTAPE_OBJS = mounttape.Osuf asc2ebc.Osuf buildhdrlbl.Osuf buildvollbl.Osuf ebc2asc.Osuf getdrvstatus.Osuf inquiry.Osuf lddisplay.Osuf rbtsubr.Osuf readlbl.Osuf rwndtape.Osuf send2tpd.Osuf sendrep.Osuf sendtmsmount.Osuf setdens.Osuf skiptape.Osuf smcsubr.Osuf tperror.Osuf tplogit.Osuf unldtape.Osuf usrmsg.Osuf writelbl.Osuf wrttpmrk.Osuf mircheck.Osuf
+MOUNTTAPE_OBJS = mounttape.Osuf asc2ebc.Osuf buildhdrlbl.Osuf buildvollbl.Osuf ebc2asc.Osuf getdrvstatus.Osuf inquiry.Osuf rbtsubr.Osuf readlbl.Osuf rwndtape.Osuf send2tpd.Osuf sendrep.Osuf sendtmsmount.Osuf setdens.Osuf skiptape.Osuf smcsubr.Osuf tperror.Osuf tplogit.Osuf unldtape.Osuf usrmsg.Osuf writelbl.Osuf wrttpmrk.Osuf mircheck.Osuf
 POSOVL_OBJS = posovl.Osuf buildhdrlbl.Osuf builduhl.Osuf buildvollbl.Osuf ebc2asc.Osuf getdrvstatus.Osuf inquiry.Osuf locate.Osuf posittape.Osuf readlbl.Osuf rwndtape.Osuf send2tpd.Osuf sendrep.Osuf skiptape.Osuf tperror.Osuf tplogit.Osuf usrmsg.Osuf
-RLSTAPE_OBJS = rlstape.Osuf getdrvstatus.Osuf lddisplay.Osuf rbtsubr.Osuf send2tpd.Osuf smcsubr.Osuf sendrep.Osuf sendtmsmount.Osuf tperror.Osuf tplogit.Osuf usrmsg.Osuf unldtape.Osuf tapealertcheck.Osuf
+RLSTAPE_OBJS = rlstape.Osuf getdrvstatus.Osuf rbtsubr.Osuf send2tpd.Osuf smcsubr.Osuf sendrep.Osuf sendtmsmount.Osuf tperror.Osuf tplogit.Osuf usrmsg.Osuf unldtape.Osuf tapealertcheck.Osuf
 TapeProgramTarget(taped,$(TAPED_OBJS) $(IBMR2_OBJS) $(TAPEACCT), $(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),750)
 TapeProgramTarget(confdrive,$(CONFDRIVE_OBJS) $(TAPEACCT),$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),750)
 TapeProgramTarget(mounttape,$(MOUNTTAPE_OBJS) $(TAPEACCT),$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB) $(LIBCDK),750)
