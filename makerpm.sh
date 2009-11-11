@@ -22,7 +22,7 @@ d=`echo ${MINOR_CASTOR_VERSION} | sed 's/.*\.//g'`
 
 echo "### INFO ### Creating rpms"
 
-rpmbuild -ta castor-${a}.${b}.${c}.tar.gz
+rpmbuild -ta castor-${a}.${b}.${c}.${d}.tar.gz
 thisstatus=$?
 
 exit $thisstatus
