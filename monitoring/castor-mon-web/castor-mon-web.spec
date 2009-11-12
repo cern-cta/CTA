@@ -1,6 +1,6 @@
 %define name 	  castor-mon-web
 %define version   1.0.0
-%define release   1
+%define release   2
 Summary: 	CASTOR Monitoring web-interface
 Name: 		%{name}
 Version: 	%{version}
@@ -11,7 +11,7 @@ URL:            http://cern.ch/castor
 Source: 	%{name}-%{version}.tar.gz
 BuildRoot: 	%{_tmppath}/%{name}-%{version}
 Buildarch:      noarch
-Requires:       php4, httpd, php-oci8, php-gd
+Requires:       php >= 4.0.0, httpd, php-oci8, php-gd
 
 %description
 This web interface provides visualization of some new statistical metrics for CASTOR.
