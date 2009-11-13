@@ -777,7 +777,8 @@ END;
 
 /* get a candidate for migration */
 
-create or replace PROCEDURE tg_getFileToMigrate(transactionId IN NUMBER,
+create or replace
+PROCEDURE tg_getFileToMigrate(transactionId IN NUMBER,
                                                 ret OUT INTEGER,
                                                 outVid OUT NOCOPY VARCHAR2,
                                                 outputFile OUT castorTape.FileToMigrateCore_cur) AS
@@ -788,12 +789,12 @@ create or replace PROCEDURE tg_getFileToMigrate(transactionId IN NUMBER,
   ds VARCHAR2(2048);
   mp VARCHAR2(2048);
   path  VARCHAR2(2048);
-  dcid NUMBER;
+  dcid NUMBER:=0;
   cfId NUMBER;
   fileId NUMBER;
   nsHost VARCHAR2(2048);
   fileSize  INTEGER;
-  tcId  INTEGER;
+  tcId  INTEGER:=0;
   lastUpdateTime NUMBER;
   knownName VARCHAR2(2048);
   newFseq NUMBER;
@@ -858,7 +859,7 @@ BEGIN
     tg_defaultMigrSelPolicy(strId,ds,mp,path,dcid ,cfId, fileId,nsHost, fileSize,tcId, lastUpdateTime);
   END IF;
 
-  IF tcId = 0 THEN
+  IF tcId = 0 OR dcid=0 THEN
     ret := -1; -- the migration selection policy didn't find any candidate
     COMMIT;
     RETURN;
@@ -911,7 +912,6 @@ BEGIN
  END;
 END;
 /
-
 
 
 /* get a candidate for recall */
