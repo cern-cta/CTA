@@ -171,13 +171,13 @@ int main(int argc, char* argv[]){
       {castor::dlf::Param("errorCode",e.code()),
        castor::dlf::Param("errorMessage",e.getMessage().str())
       };
-       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, castor::rtcopy::mighunter::FATAL_ERROR, 2, params0);
+       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, castor::rtcopy::mighunter::FATAL_ERROR, 2, params0);
     return -1;
   }
   catch (...) {
 
     std::cerr << "Caught general exception!" << std::endl;
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, castor::rtcopy::mighunter::FATAL_ERROR, 0, NULL);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, castor::rtcopy::mighunter::FATAL_ERROR, 0, NULL);
     return -1;
 
   }
