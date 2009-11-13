@@ -48,6 +48,7 @@
 
 #include "castor/infoPolicy/RecallPolicyElement.hpp"
 
+#include "castor/rtcopy/rechandler/DlfCodes.hpp"
 #include "castor/rtcopy/rechandler/IRecHandlerSvc.hpp"
 
 #include <list>
@@ -84,7 +85,7 @@ void RecHandlerThread::run(void* par)
   castor::IService* dbSvc = castor::BaseObject::services()->service("OraRecHandlerSvc", castor::SVC_ORARECHANDLERSVC);
   castor::rtcopy::rechandler::IRecHandlerSvc* oraSvc = dynamic_cast<castor::rtcopy::rechandler::IRecHandlerSvc*>(dbSvc);
   if (0 == oraSvc) {
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,7, 0, NULL);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,FATAL_ERROR, 0, NULL);
     return;
   }
 
@@ -95,70 +96,103 @@ void RecHandlerThread::run(void* par)
   
   try{
 
+      
+    timeval tvStart,tvEnd;
+    gettimeofday(&tvStart, NULL);
+
+
+
     // get information from the db    
     oraSvc->inputForRecallPolicy(infoCandidateTape);
     
+    gettimeofday(&tvEnd, NULL);
+    signed64 procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
+    castor::dlf::Param paramsDb[] =
+      {
+	    castor::dlf::Param("ProcessingTime", procTime * 0.000001)
+      };
+    
+    
     if (infoCandidateTape.empty()) {
-      castor::dlf::Param params[] =
-	{
-          castor::dlf::Param("message", "No input tapes for the policy")};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 3, 1, params);
-
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, TAPE_NOT_FOUND, 1, paramsDb);
+      return;
     }
+
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, TAPE_FOUND, 1, paramsDb);
 
     // initialize the pysvc with the policy name
 
     infoCandidate=infoCandidateTape.begin();
-    
+
     while ( infoCandidate != infoCandidateTape.end() ){
-      // call the policy for each one
-	
-      
-      if (m_recallPolicy != NULL){
-	castor::dlf::Param params[] =
-	  {castor::dlf::Param("Tape", (*infoCandidate).vid()),
-	   castor::dlf::Param("message", "Policy called")};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 4, 2, params);
-      }
+      // call the policy for each one	
+      castor::dlf::Param paramsInput[] =
+	{
+	 castor::dlf::Param("TPVID", (*infoCandidate).vid()),
+	 castor::dlf::Param("numFiles", (*infoCandidate).numFiles()),
+	 castor::dlf::Param("numBytes", (*infoCandidate).numBytes()),
+	 castor::dlf::Param("age", (*infoCandidate).oldest()),
+	 castor::dlf::Param("priority", (*infoCandidate).priority())  
+	};
+
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, POLICY_INPUT,5, paramsInput);
+
 
       try {
 	if ( m_recallPolicy == NULL ) {
 	  //no priority sent
+
 	  eligibleTapeIds.push_back((*infoCandidate).tapeId()); // tape to resurrect
 	  castor::dlf::Param params[] =
-	    {castor::dlf::Param("Tape", (*infoCandidate).vid())};
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 5, 1, params);
+	    {castor::dlf::Param("TPVID", (*infoCandidate).vid())};
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,ALLOWED_WITHOUT_POLICY , 1, params);
+
 	} else {
 	  int priorityChosen=m_recallPolicy->applyPolicy(&(*infoCandidate));
 	  
 	  if (priorityChosen >= 0) {
 	    eligibleTapeIds.push_back((*infoCandidate).tapeId()); // tape to resurrect
 	    castor::dlf::Param params[] =
-	      {castor::dlf::Param("Tape", (*infoCandidate).vid())};
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 5, 1, params);
+	      {castor::dlf::Param("TPVID", (*infoCandidate).vid())};
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, ALLOWED_BY_POLICY, 1, params);
 	      
 	    // call to VDQM with the priority (temporary hack)
+	    gettimeofday(&tvStart, NULL);
 	    
 	    vdqm_SendVolPriority((char*)(*infoCandidate).vid().c_str(),0,priorityChosen,0);
 	    
+	    gettimeofday(&tvEnd, NULL);
+	    procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
+	    castor::dlf::Param paramsVdqm[] =
+	      {
+		castor::dlf::Param("TPVID",(*infoCandidate).vid()),
+		castor::dlf::Param("ProcessingTime", procTime * 0.000001),
+		castor::dlf::Param("Priority", priorityChosen)
+	      };
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, PRIORITY_SENT,3, paramsVdqm);
+	     
+     
+
+
+
 	  } else {
 	    castor::dlf::Param params[] =
-	      {castor::dlf::Param("Tape", (*infoCandidate).vid())};
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 11, 1, params);
+	      {castor::dlf::Param("TPVID", (*infoCandidate).vid())};
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, NOT_ALLOWED, 1, params);
 	  }
 	}
       } catch (castor::exception::Exception e) {
 	castor::dlf::Param params[] =
 	  {castor::dlf::Param("code", sstrerror(e.code())),
 	   castor::dlf::Param("message", e.getMessage().str())};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 10, 2, params);
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PYTHON_ERROR , 2, params);
 	// I allow the recall
 
 	eligibleTapeIds.push_back((*infoCandidate).tapeId());
  
 	castor::dlf::Param params2[] =
-	  {castor::dlf::Param("Tape", (*infoCandidate).vid())};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 5, 1, params2);
+	  {castor::dlf::Param("TPVID", (*infoCandidate).vid())};
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, ALLOWED_WITHOUT_POLICY, 1, params2);
       }
 
       infoCandidate++;
@@ -167,19 +201,31 @@ void RecHandlerThread::run(void* par)
 
     // call the db to put the tape as pending for that svcclass
     if (!eligibleTapeIds.empty()){
+
+      gettimeofday(&tvStart, NULL);
       oraSvc->resurrectTapes(eligibleTapeIds);
+      
+      gettimeofday(&tvEnd, NULL);
+      procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
+      castor::dlf::Param paramsDb2[] =
+	{
+	  castor::dlf::Param("ProcessingTime", procTime * 0.000001)
+	};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, RESURRECT_TAPES, 1, paramsDb2);
+	     
+
     }
 
   } catch(castor::exception::Exception e) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("code", sstrerror(e.code())),
        castor::dlf::Param("message", e.getMessage().str())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 7, 2, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR, 2, params);
     
   } catch (...) {
     castor::dlf::Param params2[] =
       {castor::dlf::Param("message", "general exception caught")};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 7, 1, params2);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR, 1, params2);
     
   }
   
