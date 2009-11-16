@@ -344,7 +344,7 @@ How to setup VMGR permissions
 =============================
 
 Tape servers require the CUPV TP_SYSTEM privilege in order for the VMGR to
-allowed them to mount tapes:
+allow them to mount tapes:
 
 Example:
 
@@ -355,16 +355,36 @@ Where:
     '^tpsrv.*.cern.ch' identifies the tape servers
     lxcastorsrv102.cern.ch is the VMGR server
 
-The TP_OPER privilege is required to:
-    * Delete the tag on a volume
-    * Enter a tape
-    * Modify a tape entry
-    * Add/replace the tag on a volume
+
+The TP_OPER privilege is required to use the following command-line tools:
+    * vmgrdeltag
+    * vmgrentertape
+    * vmgrmodifytape
+    * vmgrsettag
 
 Example:
 
     Cupvadd --user developer --group developers --src 'devbox.cern.ch' --tgt lxcastorsrv102.cern.ch --priv TP_OPER
 
+The ADMIN privilege is required to use the following command-line tools:
+    * vmgrdeletedenmap
+    * vmgrdeletedgnmap
+    * vmgrdeletelibrary
+    * vmgrdeletemodel
+    * vmgrdeletepool
+    * vmgrdeletetape
+    * vmgrenterdenmap
+    * vmgrenterdgnmap
+    * vmgrenterlibrary
+    * vmgrentermodel
+    * vmgrenterpool
+    * vmgrmodifylibrary
+    * vmgrmodifypool
+    * reclaim
+
+Example:
+
+    Cupvadd --user root --group root --src 'localhost.localdomain' --tgt 'lxcastordev04.cern.ch' --priv ADMIN
 
 
 How to populate a new VMGR database
