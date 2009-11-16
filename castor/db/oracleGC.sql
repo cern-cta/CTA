@@ -390,7 +390,7 @@ CREATE OR REPLACE PROCEDURE filesDeletedProc
  fileIds OUT castor.FileList_Cur) AS
 BEGIN
   IF dcIds.COUNT > 0 THEN
-    -- list the castorfiles to be cleaned up afterwards
+    -- List the castorfiles to be cleaned up afterwards
     FORALL i IN dcIds.FIRST .. dcIds.LAST
       INSERT INTO filesDeletedProcHelper VALUES
            ((SELECT castorFile FROM DiskCopy
@@ -400,16 +400,17 @@ BEGIN
       DELETE FROM Id2Type WHERE id = dcIds(i);
     FORALL i IN dcIds.FIRST .. dcIds.LAST
       DELETE FROM DiskCopy WHERE id = dcIds(i);
-    -- then use a normal loop to clean castorFiles
-    FOR cf IN (SELECT DISTINCT(cfId) FROM filesDeletedProcHelper) LOOP
+    -- Then use a normal loop to clean castorFiles. Note: We order the list to
+    -- prevent a deadlock
+    FOR cf IN (SELECT DISTINCT(cfId)
+                 FROM filesDeletedProcHelper
+                ORDER BY cfId ASC) LOOP
       DECLARE
         nb NUMBER;
-        LockError EXCEPTION;
-        PRAGMA EXCEPTION_INIT (LockError, -54);
       BEGIN
         -- First try to lock the castorFile
         SELECT id INTO nb FROM CastorFile
-         WHERE id = cf.cfId FOR UPDATE NOWAIT;
+         WHERE id = cf.cfId FOR UPDATE;
         -- See whether it has any DiskCopy
         SELECT count(*) INTO nb FROM DiskCopy
          WHERE castorFile = cf.cfId;
@@ -420,7 +421,7 @@ BEGIN
           -- See whether pending SubRequests exist
           SELECT count(*) INTO nb FROM SubRequest
            WHERE castorFile = cf.cfId
-             AND status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+             AND status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
           IF nb = 0 THEN
             -- No Subrequest, delete the CastorFile
             DECLARE
@@ -433,7 +434,7 @@ BEGIN
               DELETE FROM CastorFile WHERE id = cf.cfId
               RETURNING fileId, nsHost, fileClass
                 INTO fid, nsh, fc;
-              -- check whether this file potentially had TapeCopies
+              -- Check whether this file potentially had TapeCopies
               SELECT nbCopies INTO nb FROM FileClass WHERE id = fc;
               IF nb = 0 THEN
                 -- This castorfile was created with no TapeCopy
@@ -450,14 +451,10 @@ BEGIN
                AND status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14);
           END IF;
         END IF;
-      EXCEPTION
-        WHEN NO_DATA_FOUND THEN
-          -- ignore, this means that the castorFile did not exist.
-          -- There is thus no way to find out whether to remove the
-          -- file from the nameserver. For safety, we thus keep it
-          NULL;
-        WHEN LockError THEN
-          -- ignore, somebody else is dealing with this castorFile, 
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- Ignore, this means that the castorFile did not exist.
+        -- There is thus no way to find out whether to remove the
+        -- file from the nameserver. For safety, we thus keep it
         NULL;
       END;
     END LOOP;
