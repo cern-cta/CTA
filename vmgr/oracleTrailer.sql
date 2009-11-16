@@ -81,6 +81,9 @@ END VMGR_DELETE_POOL;
 /**
  * Inserts the specified new tape pool into the VMGR database.
  *
+ * This procedure raises application error number -20503 if the specified
+ * tape pool already exists in the VMGR database.
+ *
  * @param pool_name_var The name of the new tape pool.
  * @param owner_uid_var The user ID of the owner of the new tape pool.
  * @param owner_gid_var The group ID of the owner of the new tape pool.
@@ -93,6 +96,12 @@ IS
 BEGIN
   INSERT INTO vmgr_tape_pool(name, owner_uid, gid, tot_free_space, capacity)
     VALUES (pool_name_var, owner_uid_var, owner_gid_var, 0, 0);
+EXCEPTION
+  WHEN DUP_VAL_ON_INDEX THEN
+    RAISE_APPLICATION_ERROR (-20503,
+      'The ' || pool_name_var ||
+      ' tape pool cannot be inserted,' ||
+      ' because it already exists in the VMGR database');
 END VMGR_INSERT_POOL;
 /
 
@@ -100,16 +109,16 @@ END VMGR_INSERT_POOL;
 /**
  * Moves the specified tape to the specified destination tape pool.
  *
- * This procedure raises application error number -20503 if the specified
+ * This procedure raises application error number -20504 if the specified
  * tape does not exist in the VMGR database.
  *
- * This procedure raises application error number -20504 if the capacity of the
+ * This procedure raises application error number -20505 if the capacity of the
  * specified tape does not exist in the VMGR database.
  *
- * This procedure raises application error number -20505 if the information
+ * This procedure raises application error number -20506 if the information
  * about the sides of the specified tape does not exist in the VMGR database.
  *
- * This procedure raises application error number -20506 if the specified
+ * This procedure raises application error number -20507 if the specified
  * destination pool does not exist in the VMGR database.
  *
  * Developers please note that this procedure takes several locks which are and
@@ -143,7 +152,7 @@ BEGIN
       FOR UPDATE;
   EXCEPTION
     WHEN NO_DATA_FOUND THEN
-      RAISE_APPLICATION_ERROR(-20503, 'The ' || vid_tape_var || ' tape' ||
+      RAISE_APPLICATION_ERROR(-20504, 'The ' || vid_tape_var || ' tape' ||
         ' cannot be moved, because it does not exist in the VMGR database.'); 
   END;
 
@@ -158,7 +167,7 @@ BEGIN
          md_media_letter = media_letter_var;
   EXCEPTION
     WHEN NO_DATA_FOUND THEN
-      RAISE_APPLICATION_ERROR(-20504, 'The ' || vid_tape_var || ' tape' ||
+      RAISE_APPLICATION_ERROR(-20505, 'The ' || vid_tape_var || ' tape' ||
         ' cannot be moved, because the capacity of the tape does not exist' ||
         ' in the VMGR database.');
   END;
@@ -172,7 +181,7 @@ BEGIN
       FOR UPDATE;
   EXCEPTION
     WHEN NO_DATA_FOUND THEN
-      RAISE_APPLICATION_ERROR(-20505, 'The ' || vid_tape_var || ' tape' ||
+      RAISE_APPLICATION_ERROR(-20506, 'The ' || vid_tape_var || ' tape' ||
         ' cannot be moved, because the information about the sides of the' ||
         ' tape is not in the database.');
   END;
@@ -186,7 +195,7 @@ BEGIN
       FOR UPDATE;
   EXCEPTION
     WHEN NO_DATA_FOUND THEN
-      raise_application_error (-20506, 'The ' || vid_tape_var || ' tape' ||
+      raise_application_error (-20507, 'The ' || vid_tape_var || ' tape' ||
         ' cannot be moved, because the destination pool ' ||
         destination_pool_var ||
         ' does not exist in the VMGR database.');
