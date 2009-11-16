@@ -228,6 +228,9 @@ END;
 /**
  * Updates the owner user ID and group ID of the specified tape pool.
  *
+ * This procedure raises application error number -20508 if the specified
+ * tape pool does not exist in the VMGR database.
+ *
  * @param pool_name_var The name of the tape pool to be updated.
  * @param owner_uid_var The new owner user ID.
  * @param owner_gid_var The new owner group ID.
@@ -242,6 +245,11 @@ BEGIN
       owner_uid = owner_uid_var,
       gid       = owner_gid_var
     WHERE name = pool_name_var;
+
+  IF SQL%NOTFOUND THEN -- Update did not modify any rows
+    RAISE_APPLICATION_ERROR(-20508, 'The ' || pool_name_var || ' tape pool' ||
+      ' cannot be updated, because it does not exist in the VMGR database.');
+  END IF;
 END VMGR_UPDATE_POOL_OWNER;
 /
 
