@@ -46,7 +46,6 @@ SharedLibraryTarget(castorvdqm,$(VDQMLIB_OBJS),$(DEPLIB),DepSharedLibraryTargetN
 VDQMLIB = SharedLibraryTargetName(castorvdqm)
 
 ClientProgramTarget(showqueues,showqueues.Osuf,$(VDQMLIB) $(DEPLIB),$(VDQMLIB) $(LIBS),0755)
-ClientProgramTarget(tpsrv_in_prod,tpsrv_in_prod.Osuf,$(VDQMLIB) $(DEPLIB),$(VDQMLIB) $(LIBS),0750)
 ClientProgramTarget(vdqm_admin,vdqm_admin.Osuf,$(VDQMLIB) $(DEPLIB),$(VDQMLIB) $(LIBS),0755)
 
 LIBMANPAGE(vdqm_Connect)
@@ -58,5 +57,4 @@ LIBMANPAGE(vdqm_NextVol)
 LIBMANPAGE(vdqm_SendVolReq)
 LIBMANPAGE(vdqm_UnitStatus)
 EXEMANPAGE(showqueues)
-EXEMANPAGE(tpsrv_in_prod)
 EXEMANPAGE(vdqm_admin)

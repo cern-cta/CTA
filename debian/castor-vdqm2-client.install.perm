@@ -1,3 +1,2 @@
 %attr(0755,root,root) usr/bin/showqueues
-%attr(0750,root,root) usr/bin/tpsrv_in_prod
 %attr(0755,root,root) usr/bin/vdqm_admin
