@@ -33,9 +33,6 @@ int Cupv_check(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt,
   struct Cupv_api_thread_info *thip;
   uid_t uid;
   int lensrc, lentgt;
-  char **results;
-  int count, i;
-  char tmp[20];
 
   strcpy (func, "Cupv_check");
   if (Cupv_apiinit (&thip))
@@ -88,23 +85,6 @@ int Cupv_check(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt,
   serrno = EPERM;
   return(-1);
 #else
-
-  /* Check to see if the user is trusted and can therefore bypass remote
-   * validation checks.
-   */
-  sprintf(tmp, "%d", priv_uid);
-  if (getconfent_multi("CUPV", "TRUSTED_USERS", 1, &results, &count) == 0) {
-    for (i = 0; i < count; i++) {
-      printf("%s %s\n", results[i], tmp);
-      if (!strcmp(tmp, results[i])) {
-        free(results[i]);
-        free(results);
-        return (0);    /* Trusted user */
-      }
-      free(results[i]);
-    }
-    free(results);
-  }
 
   /* Build request header */
   sbp = sendbuf;
