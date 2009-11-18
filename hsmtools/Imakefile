@@ -44,8 +44,6 @@ NormalProgramTarget(stager_actualget,stager_actualget.Osuf,$(DEPLIB), $(LIBS),75
 NormalProgramTarget(stager_actualput,stager_actualput.Osuf,$(DEPLIB), $(LIBS),755)
 
 NormalProgramTarget(vdqmDBInit,vdqmDBInit.Osuf,$(DEPLIB),$(LIBS),755)
-NormalProgramTarget(vdqmsetpriority,vdqmsetpriority.Osuf,$(DEPLIB),$(LIBS),755)
-NormalProgramTarget(vdqmdeletepriority,vdqmdeletepriority.Osuf,$(DEPLIB),$(LIBS),755)
 
 InstallTarget(cleanLostFiles,755,$(BIN))
 InstallTarget(diskServer_qry,755,$(BIN))
@@ -61,6 +59,8 @@ InstallTarget(draindiskserver,755,$(BIN))
 InstallTarget(migrateNewCopy,755,$(BIN))
 InstallTarget(vdqmlistpriority,755,$(BIN))
 InstallTarget(vdqmlistrequest,755,$(BIN))
+InstallTarget(vdqmsetpriority,755,$(BIN))
+InstallTarget(vdqmdeletepriority,755,$(BIN))
 
 InstallNonExecFile(castor_tools.pm,$(PERLLIBDIR),755)
 InstallNonExecFile(castor_tools.py,$(PYTHONLIBDIR),644)

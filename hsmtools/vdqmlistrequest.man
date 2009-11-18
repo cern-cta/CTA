@@ -14,17 +14,13 @@
 .SH NAME
 vdqmlistrequest \- list volume requests
 .SH SYNOPSIS
-.BI "vdqmlistrequest [ -c config-file ] [ -v ] [ -h ]"
+.BI "vdqmlistrequest [ -v ] [ -h ]"
 
 .SH DESCRIPTION
 .B vdqmlistrequest
 lists the volume requests within the VDQM database order by their priority.
 
 .SH OPTIONS
-.TP
-\fB\-c, \-\-config config-file
-Set the location of the configuration file.  The default is
-\fB/etc/castor/castor.conf\fP
 .TP
 \fB\-v, \-\-verbose
 Verbose.  Display the column headings.

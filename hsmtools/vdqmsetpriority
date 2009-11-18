@@ -1,0 +1,159 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      vdqmsetpriority
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# *
+# * command line lists the volume access priorities within the VDQM database
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+
+import sys, os
+import getopt
+import castor_tools
+
+CA_MAXVIDLEN = 6    # maximum length for a VID  
+
+#-------------------------------------------------------------------------------
+# usage function
+#-------------------------------------------------------------------------------
+def usage(exitCode):
+  print '''Usage: vmgrsetpriority -v VID -a mode [ -l type ] -p priority [ -h ]
+
+where options can be:
+    
+\t-v, --vid VID             Volume visual Identifier
+\t-a, --tapeAccessMode mode Tape access mode. Valid values are \"read\"
+\t                          and \"write\"
+\t-l, --lifespanType type   Lifespan type. Valid values are
+\t                          \"singleMount\" and \"unlimited\".
+\t                          The default value is \"unlimited\".
+\t-p, --priority priority   Volume priority, where 0 is the lowest
+\t-h, --help                Print this help and exit
+\n
+Comments to: Castor.Support@cern.ch'''
+
+  sys.exit(exitCode)
+
+
+#-------------------------------------------------------------------------------
+# connectToVdqm
+#-------------------------------------------------------------------------------
+def connectToVdqm():
+    user, passwd, dbname = castor_tools.getVdqmDBConnectParams()
+    return castor_tools.connectToDB(user, passwd, dbname)
+
+
+#-------------------------------------------------------------------------------
+# setVdqmPriorities
+#-------------------------------------------------------------------------------
+def  setVdqmPriorities(rsCursor, vid, tpMode, lifespanType, priority):
+  '''Sets vdqm priorities on the DB'''
+
+  clientUIDVar = os.geteuid()
+  clientGIDVar = os.getegid()
+  clientHostVar = os.uname()[1]
+
+  rsCursor.callproc('castorVdqm.setVolPriority', (priority, clientUIDVar, clientGIDVar, "\'"+str(clientHostVar)+"\'", vid, tpMode, lifespanType))
+
+
+#-------------------------------------------------------------------------------
+# vdqmSetPriority
+#-------------------------------------------------------------------------------
+def vdqmSetPriority(vid, mode, lifespanType, priority):
+    '''Set a volume priority in the VDQM database'''
+    try:
+        stconn = connectToVdqm()
+        rsCursor = stconn.cursor()
+        rsCursor.arraysize = 50
+        setVdqmPriorities(rsCursor, vid, mode, lifespanType, priority)
+
+        stconn.commit()
+
+    except Exception, e:
+        stconn.rollback()
+        print e
+        sys.exit(-1)
+
+    castor_tools.disconnectDB(stconn)
+
+
+#-------------------------------------------------------------------------------
+# Main
+#-------------------------------------------------------------------------------
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'v:a:l:p:h', ['vid=', 
+                              'mode=', 'lifespanType=', 'priority=', 'help'])
+except getopt.GetoptError, err:
+    print '\nError: ' + str(err) + '\n'
+    usage(2)
+vid = ''
+lifespanType = 1 # Default = unlimited = 1
+mode = -1
+priority = -1
+for f, v in options:
+    if f in ('-v', '--vid'):
+       # check that the vid lenght is <= "CA_MAXVIDLEN"
+       if len(v) > CA_MAXVIDLEN:
+          print "\nError: VID has more than " + str(CA_MAXVIDLEN) + " characters: \n"
+          usage(2)
+       vid = v 
+    elif f in ('-a', '--mode'):
+       if v not in ['read', 'write']:
+         print "\nError: Invalid tape access mode: " + v + "\n"
+         usage(2)
+       if v == 'read':
+         mode = 0
+       else:
+         mode = 1
+    elif f in ('-l', '--lifespanType'):
+       listType = 'LIFESPAN_TYPE'
+       if v not in ['singleMount', 'unlimited']:
+         print "\nError: Invalid lifespanType: " + v + "\n"
+         usage(2)
+       if v == 'singleMount':
+         lifespanType = 0
+       else:
+         lifespanType = 1
+    elif f in ('-p', '--priority'):
+       # check that the priority value is a positive integer
+       if not v.isdigit() or v < 0:
+         print  "\nError: Priority is not a positive integer: " + v + "\n"
+         usage(2)
+       priority = v
+    elif f in ('-h', '--help'):
+       usage(0)
+    else:
+       print '\nError:  Unknown command-line option:' + f  + "\n"
+       usage(2)
+    
+if vid == '' or mode == -1 or priority == -1:
+   print '\nError:  Options -v vid -a mode and -p priority must be set\n'
+   usage(2) 
+ 
+# Deal with args
+if len(args) >= 1:
+    errorStr = '\nError:  Unexpected command-line argument(s):'
+    for arg in args:
+      if arg[0] != '-':
+        errorStr = errorStr + " " + arg
+    print errorStr + '\n'
+    usage(2)
+
+vdqmSetPriority(vid, mode, lifespanType, priority)

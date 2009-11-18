@@ -14,7 +14,7 @@
 .SH NAME
 vdqmdeletepriority \- delete a volume priority
 .SH SYNOPSIS
-.BI "vdqmdeletepriority [ -c config-file ] -v VID -a tapeAccessMode [ -l lifespanType ] [ -h ]"
+.BI "vdqmdeletepriority -v VID -a tapeAccessMode [ -l lifespanType ] [ -h ]"
 
 .SH DESCRIPTION
 .B vdqmdeletepriority
@@ -67,10 +67,6 @@ vdqmdeletepriority
 command deletes an unlimited priority by default.
 
 .SH OPTIONS
-.TP
-\fB\-c, \-\-config config-file
-Set the location of the configuration file.  The default is
-\fB/etc/castor/castor.conf\fP
 .TP
 \fB\-v, \-\-vid VID\fR
 Volume visual identifier

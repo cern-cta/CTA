@@ -140,7 +140,7 @@ def vdqmListPriority(listType, lifespanType, verbose):
 
 
 #-------------------------------------------------------------------------------
-# first parse the options
+# Main
 #-------------------------------------------------------------------------------
 try:
     options, args = getopt.getopt(sys.argv[1:], 'al:evh', ['all', 

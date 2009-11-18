@@ -14,7 +14,7 @@
 .SH NAME
 vdqmsetpriority \- set a volume priority
 .SH SYNOPSIS
-.BI "vdqmsetpriority [ -c config-file ] -v VID -a tapeAccessMode [ -l lifespanType ] -p priority [ -h ]"
+.BI "vdqmsetpriority -v VID -a tapeAccessMode [ -l lifespanType ] -p priority [ -h ]"
 
 .SH DESCRIPTION
 .B vdqmsetpriority
@@ -68,10 +68,6 @@ does not already exist in the database, then a new one will be inserted.  Else
 if the priority already exists, then its priority number will be updated.
 
 .SH OPTIONS
-.TP
-\fB\-c, \-\-config config-file
-Set the location of the configuration file.  The default is
-\fB/etc/castor/castor.conf\fP
 .TP
 \fB\-v, \-\-vid VID\fR
 Volume visual identifier

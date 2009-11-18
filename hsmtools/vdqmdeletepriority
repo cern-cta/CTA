@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #/******************************************************************************
-# *                      vdqmlistpriority
+# *                      vdqmsetpriority
 # *
 # * This file is part of the Castor project.
 # * See http://castor.web.cern.ch/castor
@@ -27,19 +27,25 @@
 import sys
 import getopt
 import castor_tools
-import time 
+
+CA_MAXVIDLEN = 6    # maximum length for a VID  
 
 #-------------------------------------------------------------------------------
 # usage function
 #-------------------------------------------------------------------------------
 def usage(exitCode):
-  print '''Usage: vdqmlistrequest [ -v ] [ -h ]
+  print '''Usage: vmgrdelpriority -v VID -a mode [ -l type ] [ -h ]
 
 where options can be:
-
- -v, --verbose Display column heads.
- -h, --help    Print this help and exit.
-
+    
+\t-v, --vid VID             Volume visual Identifier
+\t-a, --tapeAccessMode mode Tape access mode. Valid values are \"read\"
+\t                          and \"write\"
+\t-l, --lifespanType type   Lifespan type. Valid values are
+\t                          \"singleMount\" and \"unlimited\".
+\t                          The default value is \"unlimited\".
+\t-h, --help                Print this help and exit
+\n
 Comments to: Castor.Support@cern.ch'''
 
   sys.exit(exitCode)
@@ -54,103 +60,91 @@ def connectToVdqm():
 
 
 #-------------------------------------------------------------------------------
-# getVdqmRequests
+# delVdqmPriorities
 #-------------------------------------------------------------------------------
-def getVdqmRequests(rsCursor, verbose):
-  '''Gets vdqm requests from the DB'''
+def  delVdqmPriorities(rsCursor, vid, tpMode, lifespanType):
+  '''Delete vdqm priorities on the DB'''
 
-  stmt ='''SELECT
-      id,
-      dgName,
-      vid,
-      accessMode,
-      creationTime,
-      remoteCopyType, 
-      volumePriority
+  import cx_Oracle  
 
-    FROM
-      tapeRequestShowqueues_VIEW 
+  # prepare the OUTPUT parameters of the SQL procedure
+  returnVar     = rsCursor.var(cx_Oracle.NUMBER)
+  priorityVar   = rsCursor.var(cx_Oracle.NUMBER)
+  clientUIDVar  = rsCursor.var(cx_Oracle.NUMBER)
+  clientGIDVar  = rsCursor.var(cx_Oracle.NUMBER)
+  clientHostVar = rsCursor.var(cx_Oracle.STRING)
+  rsCursor.callproc('castorVdqm.deleteVolPriority', ( vid, tpMode, lifespanType, returnVar, priorityVar, clientUIDVar, clientGIDVar, clientHostVar) )
 
-    ORDER BY
-      accessMode DESC,
-      volumePriority DESC,
-      creationTime ASC'''
-  
-  rsCursor.execute(stmt)
-  rows = rsCursor.fetchall()
-    
-  columns = ['REQID', 'DGN', 'VID', 'MODE', 'CREATED', 'REMOTECOPYTYPE', 'PRIORITY']
-  columnSize = [8,8,8,8,16,16,8]
-
-  result = ''
-  if verbose == 'true':
-     #Display the column headings.
-     for i in range(len(columns)):
-       # Concat the column headings padding them to a fix size
-       result += columns[i].ljust(columnSize[i]) + ' '
-     result += '\n'
-
-  # Loop through the result set of the query  
-  for row in rows:
-
-    result += (str(row[0])).ljust(columnSize[0]) + ' '
-    result += (str(row[1])).ljust(columnSize[1]) + ' '
-    result += (str(row[2])).ljust(columnSize[2]) + ' '
-
-    string = 'UNKNOWN'
-    if row[3] == 0:
-       string = 'read'
-    elif row[3] == 1:
-       string = 'write'
-    result += string.ljust(columnSize[3]) + ' '
-
-    # Convert epoch to human readable date
-    timeStamp = time.asctime( time.localtime(row[4]) )
-    # remove the "day of the week"(string head) and the "year"(string tail)
-    timeStamp = timeStamp[4:19]
-    result += (str(timeStamp)).ljust(columnSize[4]) + ' '
-    result += (   str(row[5])).ljust(columnSize[5]) + ' '
-    result += (   str(row[6])).rjust(columnSize[6]) + ' '
-    result += '\n'
-
-  return result
+  if returnVar.getvalue() == 0:
+     print '\nNo volume priority was deleted\n'
 
 
 #-------------------------------------------------------------------------------
-# vdqmListRequest
+# vdqmDeletePriority
 #-------------------------------------------------------------------------------
-def vdqmListRequest(verbose):
-    '''lists the volume requests within the VDQM database order by their priority'''
+def vdqmDeletePriority(vid, mode, lifespanType):
+    '''Delete a volume priority in the VDQM database'''
     try:
         stconn = connectToVdqm()
         rsCursor = stconn.cursor()
         rsCursor.arraysize = 50
-        priorities = getVdqmRequests(rsCursor,  verbose)
+        delVdqmPriorities(rsCursor, vid, mode, lifespanType)
 
-        castor_tools.disconnectDB(stconn)
-        return priorities
+        stconn.commit()
+
     except Exception, e:
+        stconn.rollback()
         print e
         sys.exit(-1)
 
+    castor_tools.disconnectDB(stconn)
 
 #-------------------------------------------------------------------------------
 # Main
 #-------------------------------------------------------------------------------
 try:
-    options, args = getopt.getopt(sys.argv[1:], 'vh', ['verbose', 'help'])
+    options, args = getopt.getopt(sys.argv[1:], 'v:a:l:h', ['vid=', 
+                              'mode=', 'lifespanType=', 'help'])
 except getopt.GetoptError, err:
-    print '\nError: ' + str(err)+ '\n'
+    print '\nError: ' + str(err) + '\n'
     usage(2)
-verbose = 'false'
+vid = ''
+lifespanType = 1 # Default = unlimited = 1
+mode = -1
+priority = -1
 for f, v in options:
-    if f in ('-v', '--verbose'):
-       verbose = 'true'
+    if f in ('-v', '--vid'):
+       # check that the vid lenght is <= "CA_MAXVIDLEN"
+       if len(v) > CA_MAXVIDLEN:
+          print "\nError: VID has more than " + str(CA_MAXVIDLEN) + " characters: \n"
+          usage(2)
+       vid = v 
+    elif f in ('-a', '--mode'):
+       if v not in ['read', 'write']:
+         print "\nError: Invalid tape access mode: " + v + "\n"
+         usage(2)
+       if v == 'read':
+         mode = 0
+       else:
+         mode = 1
+    elif f in ('-l', '--lifespanType'):
+       listType = 'LIFESPAN_TYPE'
+       if v not in ['singleMount', 'unlimited']:
+         print "\nError: Invalid lifespanType: " + v + "\n"
+         usage(2)
+       if v == 'singleMount':
+         lifespanType = 0
+       else:
+         lifespanType = 1
     elif f in ('-h', '--help'):
-        usage(0)
+       usage(0)
     else:
-        print "\nError: Unknown command-line option: " + f
-        usage(2)
+       print '\nError:  Unknown command-line option:' + f  + "\n"
+       usage(2)
+    
+if vid == '' or mode == -1:
+   print '\nError:  Options -v vid and -a mode must be set\n'
+   usage(2) 
  
 # Deal with args
 if len(args) >= 1:
@@ -161,4 +155,4 @@ if len(args) >= 1:
     print errorStr + '\n'
     usage(2)
 
-print vdqmListRequest(verbose)
+vdqmDeletePriority(vid, mode, lifespanType)

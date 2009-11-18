@@ -14,7 +14,7 @@
 .SH NAME
 vdqmlistpriority \- list volume priorities
 .SH SYNOPSIS
-.BI "vdqmlistpriority [ -c config-file ] [ -a | -l lifespanType | -e ] [ -v ] [ -h ]"
+.BI "vdqmlistpriority [ -a | -l lifespanType | -e ] [ -v ] [ -h ]"
 
 .SH DESCRIPTION
 .B vdqmlistpriority
@@ -76,10 +76,6 @@ will display one of the following four types of list:
 .RE
 
 .SH OPTIONS
-.TP
-\fB\-c, \-\-config config-file
-Set the location of the configuration file.  The default is
-\fB/etc/castor/castor.conf\fP
 .TP
 \fB\-a, \-\-all
 List all priorities.  This is the default.
