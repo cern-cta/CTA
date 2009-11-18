@@ -23,6 +23,6 @@
 #
 
 
-#SUBDIRS = aggregator format fsm tapegateway tpcp
-SUBDIRS = aggregator format fsm tpcp
+SUBDIRS = aggregator format fsm tapegateway tpcp
+
 
