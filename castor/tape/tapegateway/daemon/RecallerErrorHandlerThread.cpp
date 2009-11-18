@@ -24,6 +24,10 @@
  * @author Giulia Taurelli
  *****************************************************************************/
 
+// first because it includes python.h
+#include "castor/tape/tapegateway/daemon/RecallerErrorHandlerThread.hpp"
+
+#include <list>
 #include <stdlib.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -40,9 +44,7 @@
 
 #include "castor/tape/tapegateway/daemon/DlfCodes.hpp"
 #include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
-#include "castor/tape/tapegateway/daemon/RecallerErrorHandlerThread.hpp"
 
-#include <list>
 
 //------------------------------------------------------------------------------
 // constructor
