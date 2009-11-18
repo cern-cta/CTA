@@ -1421,8 +1421,9 @@ CREATE OR REPLACE PROCEDURE removeAllForRepack (inputVid IN VARCHAR2) AS
   segIds "numList";
   tapeIds "numList";
 BEGIN
-  -- look for the request. If not found, raise NO_DATA_FOUND error;
-  -- note that if the request is over (all in 9,11) or not started (0), nothing is done
+ BEGIN
+   -- note that if the request is over (all in 9,11) or not started (0), nothing is done
+ 
   SELECT id INTO reqId 
     FROM StageRepackRequest R 
    WHERE repackVid = inputVid
@@ -1481,7 +1482,10 @@ BEGIN
   FORALL i IN tapeIds.FIRST .. tapeIds.LAST
     UPDATE tape SET status = 0 WHERE id = tapeIds(i);
   -- commit the transation
-  COMMIT;
+ EXCEPTION WHEN NO_DATA_FOUND THEN 
+    null; -- this error is not reported to the user
+ END;
+ COMMIT;
 END;
 /
 
