@@ -36,7 +36,7 @@ EXTERN_C int DLL_DECL stage_version(int *majorVersion,
 
   try {
     // Uses a BaseClient to handle the request
-    castor::client::BaseClient client;
+    castor::client::BaseClient client(stage_getClientTimeout());
     castor::query::VersionQuery req;
     ret=setDefaultOption(opts);
     client.setOptions(opts);
