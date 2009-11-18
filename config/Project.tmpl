@@ -8,8 +8,12 @@ DLFCONF=/var/www/conf/dlf
 
 .PHONY : install clean clobber Makefiles depend checkDESTDIR checkORACLE checkLSF checkGLOBUS checkSTK checkXROOT checkVERSION
 
-all: checkORACLE checkLSF checkGLOBUS checkSTK checkXROOT
+all: checkORACLE checkLSF checkGLOBUS checkXROOT tape client
 	GotoSubdirs($(SUBDIRS))
+
+tape: checkSTK
+
+client:
 
 EXPORTMAN?=$(DESTDIR)/usr/share
 checkDESTDIR:
@@ -45,9 +49,12 @@ checkSTK:
 	@if [ ! -z "${CASTOR_NOSTK}" ]; then \
 	  echo "Compiling without STK support."; \
 	else \
-	  rpm -q stk-ssi-devel >&/dev/null && rpm -q stk-ssi >& /dev/null; \
-	  if [[ $$? -ne 0 ]]; then \
-	    echo "Could not find STK packages. Giving up."; \
+	  if [ ! -e InstallLibDir/CDK/libapi.so -o ! -e InstallLibDir/CDK/libutl.so -o ! -e InstallLibDir/CDK/libipc.so -o ! -e InstallLibDir/CDK/libcl.so ]; then \
+	    echo "Could not find STK libraries. Giving up."; \
+	    exit 1; \
+          fi; \
+	  if [ ! -d /usr/include/CDK ]; then \
+	    echo "Could not find STK development files. Giving up."; \
 	    exit 1; \
           fi; \
 	fi

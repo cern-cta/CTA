@@ -21,15 +21,10 @@ CONFIGFILE = -DCONFIGFILE=\"$(SCONFIGFILE)\"
 TAPEACCT = tapeacct.Osuf
 STAGERSUPERUSER = StagerSuperUser
 TPCONFIG = TapeConfigFile
-#if !CASTOR_NOSTK && HasCDK
-CDK = CDKDir
+#if !CASTOR_NOSTK
 CDKFLG = -DCDK -DLINUX
-CDKINC = -I$(CDK)/include/CDK
-#ifdef __x86_64
-LIBCDK = -L$(CDK)/lib64/CDK -lapi -lutl -lapi -lipc -lcl
-#else
-LIBCDK = -L$(CDK)/lib/CDK -lapi -lutl -lapi -lipc -lcl
-#endif
+CDKINC = -I/usr/include/CDK
+LIBCDK = -LInstallLibDir/CDK -lapi -lutl -lipc -lcl
 #endif
 #if BuildSecureTape
 SECURITYFLAG=-DCSEC

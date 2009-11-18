@@ -32,7 +32,6 @@
 #endif
 
 #define AuthorizedHosts	CONFIGPATH(rtcopy.hosts)
-#define CDKDir	        /usr
 #define CupvConfigFile	CONFIGPATH(CUPVCONFIG)
 #define CupvHost	"castorcupv"
 #define DbConfigFile	CONFIGPATH(DBCONFIG)
@@ -62,7 +61,6 @@
 #define VmgrConfigFile	CONFIGPATH(VMGRCONFIG)
 #define ExpertConfigFile CONFIGPATH(EXPCONFIG)
 
-#define HasCDK                  NO
 #define UseXFSPrealloc	        YES
 
 /* 

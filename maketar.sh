@@ -70,7 +70,7 @@ echo "### INFO ### Customizing build directory"
 #
 ## Force build rules to YES for a lot of things
 #
-for this in HasCDK HasNroff UseGSI UseKRB5 UseXFSPrealloc; do
+for this in HasNroff UseGSI UseKRB5 UseXFSPrealloc; do
     perl -pi -e "s/$this(?: |\t)+.*(YES|NO)/$this\tYES/g" config/site.def
 done
 
