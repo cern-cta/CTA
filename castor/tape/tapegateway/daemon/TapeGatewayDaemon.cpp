@@ -26,6 +26,9 @@
 
 // Include Files
 
+#include "castor/tape/tapegateway/daemon/MigratorErrorHandlerThread.hpp"
+#include "castor/tape/tapegateway/daemon/RecallerErrorHandlerThread.hpp"
+
 #include <Cgetopt.h>
 #include <iostream>
 #include <string>
@@ -48,8 +51,6 @@
 
 #include "castor/tape/tapegateway/daemon/DlfCodes.hpp"
 #include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
-#include "castor/tape/tapegateway/daemon/MigratorErrorHandlerThread.hpp"
-#include "castor/tape/tapegateway/daemon/RecallerErrorHandlerThread.hpp"
 #include "castor/tape/tapegateway/daemon/TapeGatewayDaemon.hpp"
 #include "castor/tape/tapegateway/daemon/TapeStreamLinkerThread.hpp"
 #include "castor/tape/tapegateway/daemon/VdqmRequestsCheckerThread.hpp"
