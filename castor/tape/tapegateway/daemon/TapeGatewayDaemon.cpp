@@ -32,6 +32,7 @@
 #include <Cgetopt.h>
 #include <iostream>
 #include <string>
+#include <memory>
 #include <u64subr.h>
 
 #include "castor/Constants.hpp"

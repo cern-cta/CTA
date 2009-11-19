@@ -29,6 +29,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <u64subr.h>
+#include <memory>
 
 #include "castor/Constants.hpp"
 #include "castor/IService.hpp"

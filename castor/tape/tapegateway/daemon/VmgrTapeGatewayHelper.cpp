@@ -31,6 +31,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <u64subr.h>
+#include <cstring>
+#include <climits>
 
 #include "vmgr_api.h"
 

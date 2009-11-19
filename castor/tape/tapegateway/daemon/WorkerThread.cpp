@@ -31,6 +31,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <u64subr.h>
+#include <memory>
+#include <typeinfo>
 
 #include "Cns_api.h" // for log only
 

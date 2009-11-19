@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <cstring>
 
 #include "castor/Services.hpp"
 #include "vdqm_api.h"

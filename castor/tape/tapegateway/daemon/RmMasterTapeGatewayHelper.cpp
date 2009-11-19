@@ -25,6 +25,7 @@
 // Include Files
 
 #include <string>
+#include <cstdlib>
 
 #include "getconfent.h"
 
