@@ -272,7 +272,7 @@ namespace castor {
 
 	/* commit transaction */
 
-	virtual void castor::tape::tapegateway::ora::OraTapeGatewaySvc::endTransaction() 
+	virtual void  endTransaction() 
 	  throw (castor::exception::Exception);
 
 	/* check configuration */

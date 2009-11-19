@@ -397,9 +397,9 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachTapesToStreams(con
 
     // Fill in the structure
     
-    std::list<std::string>::const_iterator vid= NULL;
-    std::list<u_signed64>::const_iterator strId = NULL;
-    std::list<int>::const_iterator  fseq = NULL;
+    std::list<std::string>::const_iterator vid;
+    std::list<u_signed64>::const_iterator strId;
+    std::list<int>::const_iterator  fseq;
     int i=0;
 
     for(vid = vids.begin(),
