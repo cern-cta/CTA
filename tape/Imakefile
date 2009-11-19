@@ -24,7 +24,7 @@ TPCONFIG = TapeConfigFile
 #if !CASTOR_NOSTK
 CDKFLG = -DCDK -DLINUX
 CDKINC = -I/usr/include/CDK
-LIBCDK = -LInstallLibDir/CDK -lapi -lutl -lipc -lcl
+LIBCDK = -L InstallLibDir/CDK -lapi -lutl -lipc -lcl
 #endif
 #if BuildSecureTape
 SECURITYFLAG=-DCSEC
