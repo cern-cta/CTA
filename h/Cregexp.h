@@ -35,6 +35,5 @@ typedef struct Cregexp Cregexp_t;
 EXTERN_C Cregexp_t DLL_DECL *Cregexp_comp _PROTO((char *));
 EXTERN_C int          DLL_DECL  Cregexp_exec _PROTO((Cregexp_t *, char *));
 EXTERN_C int          DLL_DECL  Cregexp_sub _PROTO((Cregexp_t *, char *, char *, size_t));
-EXTERN_C int          DLL_DECL  Cregexp_dump _PROTO((Cregexp_t *));
 
 #endif /* __Cregexp_h */
