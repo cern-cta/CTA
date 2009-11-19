@@ -125,10 +125,22 @@ namespace castor {
   namespace scheduler {
 
     /**
+     * Functor for the comparison function of our map
+     */
+    class CmpCharsFunctor {
+    public:
+      /// Compare function
+      bool operator() (const char *s1,
+		       const char *s2) const {
+	return strcmp(s1, s2) == 0;
+      }
+    };
+
+    /**
      * A map storing handler related information to be recalled
      * at various phases of a jobs lifecycle
      */
-    std::map<const char *, castor::scheduler::HandlerData *> hashTable;
+    std::map<const char *, castor::scheduler::HandlerData *, CmpCharsFunctor> hashTable;
 
     /**
      * Gets a integer value from castor.conf
