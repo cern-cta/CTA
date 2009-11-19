@@ -26,9 +26,9 @@ public:
 
     char        checksum_algorithm[alb0100::CHECKSUM_ALGORITHM_LEN+1];// 10 bytes original value 32 bit binary
 
-    uint64_t    tape_mark_count;                                      //  8 bytes original value 32/64 bit binary
+    u_signed64  tape_mark_count;                                      //  8 bytes original value 32/64 bit binary
     uint32_t    block_size;                                           //  4 bytes original value 23 bit binary
-    uint64_t    block_count;                                          //  8 bytes original value 32/64 bit binary      // NEED THE FIRST ONE!!!!
+    u_signed64  block_count;                                          //  8 bytes original value 32/64 bit binary      // NEED THE FIRST ONE!!!!
 
     char        stager_version[alb0100::STAGER_VERSION_LEN+1];        // 15 bytes
     char        stager_host[alb0100::STAGER_HOST_LEN+1];              //    TO BE TRUNCATE
@@ -47,24 +47,24 @@ public:
    * Structure used to iniatialize the header with all file specific data
    */
   struct FileHeader: public  Header {
-    uint64_t file_size;
-    uint32_t file_checksum;
-    char     file_ns_host[alb0100::FILE_NS_HOST_LEN+1];
-    uint64_t file_ns_id;
-    char     file_name[alb0100::FILE_NAME_LEN+1];
+    u_signed64 file_size;
+    uint32_t   file_checksum;
+    char       file_ns_host[alb0100::FILE_NS_HOST_LEN+1];
+    u_signed64 file_ns_id;
+    char       file_name[alb0100::FILE_NAME_LEN+1];
   };
 
 
 private:
 
   char          m_headerStamp[HEADER_SIZE+1];  
-  uint64_t      m_block_count;                // 8 bytes 
-  uint64_t      m_file_block_count;           // 4 bytes original value 32 bit binary. Data file offset of the data in this block (0, 255, 510, ...)
+  u_signed64    m_block_count;                // 8 bytes 
+  u_signed64    m_file_block_count;           // 4 bytes original value 32 bit binary. Data file offset of the data in this block (0, 255, 510, ...)
   uint32_t      m_block_size;
   uint32_t      m_file_progressive_checksum;  // 4 bytes original value 32 bit binary
   uint32_t      m_header_checksum;		  
   uint32_t      m_payload_size;
-  uint64_t      m_file_size;
+  u_signed64    m_file_size;
   uint32_t      m_file_checksum;
     
 public:

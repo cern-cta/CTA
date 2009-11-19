@@ -61,7 +61,7 @@ int *tmr;
 	if ((c = readlbl (tapefd, path, hdr2)) < 0) return (c);
 	if (c == 1) {
                 
-                sprintf( badLabelReason, "Read unexpected number of bytes. HDR2 Label corrupted? Length: %ld", 
+                sprintf( badLabelReason, "Read unexpected number of bytes. HDR2 Label corrupted? Length: %zd", 
                          strlen( hdr2 ) );
                 sprintf( badLabelContent, "%s", hdr2 );
 
@@ -87,7 +87,7 @@ int *tmr;
 	if ((c = readlbl (tapefd, path, uhl1)) < 0) return (c);
 	if (c == 1) {
 
-                sprintf( badLabelReason, "Read unexpected number of bytes. UHL1 Label corrupted? Length: %ld", 
+                sprintf( badLabelReason, "Read unexpected number of bytes. UHL1 Label corrupted? Length: %zd", 
                          strlen( uhl1 ) );
                 sprintf( badLabelContent, "%s", uhl1 );
 
@@ -325,7 +325,7 @@ char *vol1, *hdr1, *hdr2, *uhl1;
 
                                 if (1 == c) {
                                         
-                                        sprintf( badLabelReason, "Read unexpected number of bytes. HDR1 Label corrupted? Length: %ld",  
+                                        sprintf( badLabelReason, "Read unexpected number of bytes. HDR1 Label corrupted? Length: %zd",  
                                                  strlen( hdr1 ) );
                                         sprintf( badLabelContent, "%s", hdr1 );
                                         
@@ -373,7 +373,7 @@ char *vol1, *hdr1, *hdr2, *uhl1;
                                 
                                 if (1 == c) {
                                         
-                                        sprintf( badLabelReason, "Read unexpected number of bytes. HDR1 Label corrupted? Length: %ld",   
+                                        sprintf( badLabelReason, "Read unexpected number of bytes. HDR1 Label corrupted? Length: %zd",   
                                                  strlen( hdr1 ) );
                                         sprintf( badLabelContent, "%s", hdr1 );
                                         

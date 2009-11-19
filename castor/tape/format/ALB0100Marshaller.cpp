@@ -6,6 +6,7 @@
 #include <zlib.h>  // needed for the Adler-32
 #include <typeinfo>
 #include <stdio.h>
+#include <stdint.h>
 
 //----------------------------------------------------------------------------
 // destructor
@@ -46,7 +47,7 @@ throw(castor::exception::Exception) {
   sprintf(str,"%u", mig->header_size);
   parseCharData(m_headerStamp, str                    , HEADER_SIZE_LEN                , HEADER_SIZE_OFFSET                , '0');
   parseCharData(m_headerStamp, mig->checksum_algorithm, alb0100::CHECKSUM_ALGORITHM_LEN, alb0100::CHECKSUM_ALGORITHM_OFFSET, ' ');   
-  sprintf(str,"%lu", mig->tape_mark_count);
+  sprintf(str,"%llu", mig->tape_mark_count);
   parseCharData(m_headerStamp, str                    , alb0100::TAPE_MARK_COUNT_LEN   , alb0100::TAPE_MARK_COUNT_OFFSET   , '0');
   m_block_size =  mig->block_size;
   sprintf(str,"%u", mig->block_size);
@@ -89,13 +90,13 @@ throw(castor::exception::Exception) {
   m_file_block_count = 0;
     
   m_file_size = file->file_size;  // Part of the object status
-  sprintf(str,"%lu", file->file_size);
+  sprintf(str,"%llu", file->file_size);
   parseCharData(m_headerStamp, str               , alb0100::FILE_SIZE_LEN    , alb0100::FILE_SIZE_OFFSET    , '0');
   m_file_checksum = file->file_checksum;
   sprintf(str,"%u", file->file_checksum);
   parseCharData(m_headerStamp, str               , alb0100::FILE_CHECKSUM_LEN, alb0100::FILE_CHECKSUM_OFFSET, '0');
   parseCharData(m_headerStamp, file->file_ns_host, alb0100::FILE_NS_HOST_LEN , alb0100::FILE_NS_HOST_OFFSET , ' ');
-  sprintf(str,"%lu", file->file_ns_id);
+  sprintf(str,"%llu", file->file_ns_id);
   parseCharData(m_headerStamp, str               , alb0100::FILE_NS_ID_LEN   , alb0100::FILE_NS_ID_OFFSET   , '0');
   parseCharData(m_headerStamp, file->file_name   , alb0100::FILE_NAME_LEN    , alb0100::FILE_NAME_OFFSET    , ' ');
     
@@ -107,15 +108,15 @@ throw(castor::exception::Exception) {
 void castor::tape::format::ALB0100Marshaller::marshall(char* block){
 
   char     str[21];
-  uint64_t timestamp;
+  u_signed64 timestamp;
        
-  sprintf(str,"%lu", m_block_count);
+  sprintf(str,"%llu", m_block_count);
   parseCharData(m_headerStamp, str, alb0100::BLOCK_COUNT_LEN              , alb0100::BLOCK_COUNT_OFFSET              , '0');
   m_block_count++;
   timestamp = time(NULL);
-  sprintf(str,"%lu", timestamp);
+  sprintf(str,"%llu", timestamp);
   parseCharData(m_headerStamp, str, alb0100::BLOCK_TIME_STAMP_LEN         , alb0100::BLOCK_TIME_STAMP_OFFSET         , '0');
-  sprintf(str,"%lu", m_file_block_count);
+  sprintf(str,"%llu", m_file_block_count);
   parseCharData(m_headerStamp, str, alb0100::FILE_BLOCK_COUNT_LEN         , alb0100::FILE_BLOCK_COUNT_OFFSET         , '0');
   m_file_block_count += m_payload_size;
   // Test for the last block of the file 

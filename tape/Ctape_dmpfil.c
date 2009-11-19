@@ -916,7 +916,7 @@ u_signed64 *Size;
 		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %u %%  OF A LTO3 CARTRIDGE (400GB) *****\n",
                               perc);
         } else if (den == D800G || den == D800GC) {
-                perc = tape_used / 8000000000UL;
+                perc = tape_used / 8000000000ULL;
                 Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %u %%  OF A LTO4 CARTRIDGE (800GB) *****\n",
                               perc); 
 	} else if (den == DDS || den == DDSC) {
