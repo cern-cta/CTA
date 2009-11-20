@@ -108,12 +108,37 @@ def getVdqmDBConnectParams():
                 elif entry == 'dbName':
                     dbname = value
         except ValueError:
-            # ignore line
+            # ignore linei
             pass
     checkValueFound("user name", user,   inst, 'ORAVDQMCONFIG')
     checkValueFound("password",  passwd, inst, 'ORAVDQMCONFIG')
     checkValueFound("DB name",   dbname, inst, 'ORAVDQMCONFIG')
     return user, passwd, dbname
+
+
+#-------------------------------------------------------------------------------
+# connectToVmgr
+#-------------------------------------------------------------------------------
+def connectToVmgr():
+    # find out the instance to use
+    full_name = "DbCnvSvc"
+    inst      = "default"
+    if os.environ.has_key('CASTOR_INSTANCE'):
+        inst = os.environ['CASTOR_INSTANCE']
+        full_name = full_name + '_' + inst
+        inst = "'" + inst + "' vmgr"
+    # go through the lines of VMGRCONFIG
+    for l in open ('/etc/castor/VMGRCONFIG').readlines():
+        if len(l.strip()) == 0 or l.strip()[0] == '#':
+            continue
+        try:
+            importOracle() 
+            conn = cx_Oracle.Connection( l.strip() )
+            break
+        except cx_Oracle.DatabaseError, exc:
+           print 'connectToVmgr Error:  Unexpected error while connecting to the VMGR db'
+           raise
+    return conn
 
 
 def importOracle():

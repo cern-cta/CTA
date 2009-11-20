@@ -14,7 +14,7 @@
 .SH NAME
 vdqmdeletepriority \- delete a volume priority
 .SH SYNOPSIS
-.BI "vdqmdeletepriority -v VID -a tapeAccessMode [ -l lifespanType ] [ -h ]"
+.BI "vdqmdeletepriority -V VID -m mode [ -t type ] [ -h ]"
 
 .SH DESCRIPTION
 .B vdqmdeletepriority
@@ -43,7 +43,7 @@ Either read or write
 .P
 *
 .B
-Lifespan type
+Type
 .br
 Either single-mount or unlimited
 .P
@@ -54,12 +54,9 @@ Priority number
 A positive integer , where 0 is the lowest and default priority
 .RE
 .P
-A volume access priority quadruple is uniquely identified or named by the inner
-triplet of VID, access mode and lifespan type.  The priority number of the
-quadruple is the value of the volume access priority.  This means a given VID
-and access mode can have at most one "single-mount priority" and one "unlimited
-priority".  The effective priority in this case would be the unlimited priority.
-In other words, unlimited priorities overide single-mount priorities.
+If there is a single-mount priority and an unlimited priority for the same
+volume access (VID plus access mode), then the unlimited priority will override
+the single mount priority.
 .P
 The
 .B
@@ -68,13 +65,13 @@ command deletes an unlimited priority by default.
 
 .SH OPTIONS
 .TP
-\fB\-v, \-\-vid VID\fR
+\fB\-V, \-\-vid VID\fR
 Volume visual identifier
 .TP
-\fB\-a, \-\-tapeAccessMode read | write
+\fB\-m, \-\-mode read | write
 tape access mode.  Valid values are "read" and "write".
 .TP
-\fB\-l, \-\-lifespanType singleMount | unlimited (default)
+\fB\-t, \-\-type singleMount | unlimited (default)
 Lifespan type. Valid values are "singleMount" and "unlimited".  The default
 value is "unlimited"
 .TP

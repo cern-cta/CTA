@@ -29,23 +29,24 @@ import getopt
 import castor_tools
 
 CA_MAXVIDLEN = 6    # maximum length for a VID  
+COMMANDNAME  = 'vdqmsetpriority'
 
 #-------------------------------------------------------------------------------
 # usage function
 #-------------------------------------------------------------------------------
 def usage(exitCode):
-  print '''Usage: vmgrsetpriority -v VID -a mode [ -l type ] -p priority [ -h ]
+  print '''Usage: vdqmsetpriority -V VID -m mode [ -t type ] -p priority [ -h ]
 
 where options can be:
     
-\t-v, --vid VID             Volume visual Identifier
-\t-a, --tapeAccessMode mode Tape access mode. Valid values are \"read\"
-\t                          and \"write\"
-\t-l, --lifespanType type   Lifespan type. Valid values are
-\t                          \"singleMount\" and \"unlimited\".
-\t                          The default value is \"unlimited\".
-\t-p, --priority priority   Volume priority, where 0 is the lowest
-\t-h, --help                Print this help and exit
+\t-V, --vid VID            Volume visual Identifier
+\t-m, --mode mode          Tape access mode. Valid values are \"read\"
+\t                         and \"write\"
+\t-t, --type type          Lifespan type. Valid values are
+\t                         \"singleMount\" and \"unlimited\".
+\t                         The default value is \"unlimited\".
+\t-p, --priority priority  Volume priority, where 0 is the lowest
+\t-h, --help               Print this help and exit
 \n
 Comments to: Castor.Support@cern.ch'''
 
@@ -70,7 +71,8 @@ def  setVdqmPriorities(rsCursor, vid, tpMode, lifespanType, priority):
   clientGIDVar = os.getegid()
   clientHostVar = os.uname()[1]
 
-  rsCursor.callproc('castorVdqm.setVolPriority', (priority, clientUIDVar, clientGIDVar, "\'"+str(clientHostVar)+"\'", vid, tpMode, lifespanType))
+  rsCursor.callproc('castorVdqm.setVolPriority', (priority, clientUIDVar, 
+        clientGIDVar, "\'"+str(clientHostVar)+"\'", vid, tpMode, lifespanType))
 
 
 #-------------------------------------------------------------------------------
@@ -78,6 +80,8 @@ def  setVdqmPriorities(rsCursor, vid, tpMode, lifespanType, priority):
 #-------------------------------------------------------------------------------
 def vdqmSetPriority(vid, mode, lifespanType, priority):
     '''Set a volume priority in the VDQM database'''
+
+    stconn = None 
     try:
         stconn = connectToVdqm()
         rsCursor = stconn.cursor()
@@ -87,45 +91,90 @@ def vdqmSetPriority(vid, mode, lifespanType, priority):
         stconn.commit()
 
     except Exception, e:
-        stconn.rollback()
-        print e
-        sys.exit(-1)
+        if stconn != None:
+            stconn.rollback()
+        error, = e.args
+        print COMMANDNAME+' Internal Error: \n'+error.message
 
-    castor_tools.disconnectDB(stconn)
+    if stconn != None:
+        rsCursor.close()
+        castor_tools.disconnectDB(stconn)
+
+
+#-------------------------------------------------------------------------------
+# queryVmgr
+#-------------------------------------------------------------------------------
+def queryVmgr(rsCursor, vid):
+  '''Query the VMGR DB checking if exists a certain VID'''
+
+  # This sintax has been choose because the condition force the sub-query to end
+  # as soon as a vid match is found. 
+  stmt = '''SELECT COUNT(*) FROM dual WHERE EXISTS 
+(SELECT vid FROM VMGR_TAPE_INFO WHERE  vid = \''''+vid+"\')"
+    
+  rsCursor.execute(stmt)
+  exist = rsCursor.fetchone()
+  if exist[0] == 0:
+     print COMMANDNAME+' Error:  VID=\''+vid+'\' does not exist in the VMGR'
+     return exist[0]
+  return exist[0]
+
+
+#-------------------------------------------------------------------------------
+# vmgrQueryVid
+#-------------------------------------------------------------------------------
+def vmgrQueryVid(vid):
+    '''Query the VMGR DB checking if exists a certain VID'''
+    result = 0
+    stconn = None
+    try:
+        stconn = castor_tools.connectToVmgr()
+        rsCursor = stconn.cursor()
+        rsCursor.arraysize = 50
+        result = queryVmgr(rsCursor, vid)
+
+    except Exception, e:
+        error, = e.args
+        print COMMANDNAME+' Internal Error: \n'+error.message
+
+    if stconn != None:
+        rsCursor.close()
+        castor_tools.disconnectDB(stconn)
+    return result
 
 
 #-------------------------------------------------------------------------------
 # Main
 #-------------------------------------------------------------------------------
 try:
-    options, args = getopt.getopt(sys.argv[1:], 'v:a:l:p:h', ['vid=', 
-                              'mode=', 'lifespanType=', 'priority=', 'help'])
+    options, args = getopt.getopt(sys.argv[1:], 'V:m:t:p:h', ['vid=', 
+                              'mode=', 'type=', 'priority=', 'help'])
 except getopt.GetoptError, err:
-    print '\nError: ' + str(err) + '\n'
+    print "\n"+COMMANDNAME+" Error:  " + str(err) + "\n"
     usage(2)
 vid = ''
 lifespanType = 1 # Default = unlimited = 1
 mode = -1
 priority = -1
 for f, v in options:
-    if f in ('-v', '--vid'):
-       # check that the vid lenght is <= "CA_MAXVIDLEN"
+    if f in ('-V', '--vid'):
+       # check that the vid length is <= "CA_MAXVIDLEN"
        if len(v) > CA_MAXVIDLEN:
-          print "\nError: VID has more than " + str(CA_MAXVIDLEN) + " characters: \n"
+          print "\n"+COMMANDNAME+" Error:  VID has more than " + str(CA_MAXVIDLEN) + " characters: \n"
           usage(2)
        vid = v 
-    elif f in ('-a', '--mode'):
+    elif f in ('-m', '--mode'):
        if v not in ['read', 'write']:
-         print "\nError: Invalid tape access mode: " + v + "\n"
+         print "\n"+COMMANDNAME+" Error:  Invalid tape access mode: " + v + "\n"
          usage(2)
        if v == 'read':
          mode = 0
        else:
          mode = 1
-    elif f in ('-l', '--lifespanType'):
+    elif f in ('-t', '--type'):
        listType = 'LIFESPAN_TYPE'
        if v not in ['singleMount', 'unlimited']:
-         print "\nError: Invalid lifespanType: " + v + "\n"
+         print "\n"+COMMANDNAME+" Error:  Invalid priority type: " + v + "\n"
          usage(2)
        if v == 'singleMount':
          lifespanType = 0
@@ -134,26 +183,29 @@ for f, v in options:
     elif f in ('-p', '--priority'):
        # check that the priority value is a positive integer
        if not v.isdigit() or v < 0:
-         print  "\nError: Priority is not a positive integer: " + v + "\n"
+         print  "\n"+COMMANDNAME+" Error:  Priority is not a positive integer: " + v + "\n"
          usage(2)
        priority = v
     elif f in ('-h', '--help'):
        usage(0)
     else:
-       print '\nError:  Unknown command-line option:' + f  + "\n"
+       print "\n"+COMMANDNAME+" Error:  Unknown command-line option:" + f  + "\n"
        usage(2)
     
 if vid == '' or mode == -1 or priority == -1:
-   print '\nError:  Options -v vid -a mode and -p priority must be set\n'
+   print "\n"+COMMANDNAME+" Error:  Options -V vid -m mode and -p priority must be set\n"
    usage(2) 
  
 # Deal with args
 if len(args) >= 1:
-    errorStr = '\nError:  Unexpected command-line argument(s):'
+    errorStr = "\n"+COMMANDNAME+" Error:  Unexpected command-line argument(s):"
     for arg in args:
       if arg[0] != '-':
         errorStr = errorStr + " " + arg
     print errorStr + '\n'
     usage(2)
+
+if vmgrQueryVid(vid) == 0:
+    sys.exit(-1)   
 
 vdqmSetPriority(vid, mode, lifespanType, priority)

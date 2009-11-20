@@ -14,7 +14,7 @@
 .SH NAME
 vdqmlistpriority \- list volume priorities
 .SH SYNOPSIS
-.BI "vdqmlistpriority [ -a | -l lifespanType | -e ] [ -v ] [ -h ]"
+.BI "vdqmlistpriority [ -a | -t type | -e ] [ -v ] [ -h ]"
 
 .SH DESCRIPTION
 .B vdqmlistpriority
@@ -23,9 +23,9 @@ The RecallHandler daemon and the tape operator command-line tools send volume
 access priorities to the VDQM. A volume access priority sent from the
 RecallHandler will exist in the VDQM database for a single-mount of the tape in
 question.  A volume access priority sent from the tape operator command-line
-tools will by default have an unlimited lifespan within the VDQM database.  The
-priority will stay active until it is explicitly removed by the tape operator
-command-line tools.
+tools will by default have an unlimited lifespan type within the VDQM database.  
+The priority will stay active until it is explicitly removed by the tape 
+operator command-line tools.
 A volume access priority is a quadruple of:
 .RS
 .P
@@ -42,7 +42,7 @@ Either read or write
 .P
 *
 .B
-Lifespan type
+Type
 .br
 Either single-mount or unlimited
 .P
@@ -53,12 +53,9 @@ Priority number
 A positive integer, where 0 is the lowest and default priority
 .RE
 .P
-A volume access priority quadruple is uniquely identified or named by the inner
-triplet of VID, access mode and lifespan type.  The priority number of the
-quadruple is the value of the volume access priority.  This means a given VID
-and access mode can have at most one "single-mount priority" and one "unlimited
-priority".  The effective priority in this case would be the unlimited priority.
-In other words, unlimited priorities overide single-mount priorities.
+If there is a single-mount priority and an unlimited priority for the same 
+volume access (VID plus access mode), then the unlimited priority will override 
+the single mount priority.
 .P
 Depending on its command-line options,
 .B vdqmlistpriority
@@ -79,16 +76,16 @@ will display one of the following four types of list:
 .TP
 \fB\-a, \-\-all
 List all priorities.  This is the default.
-Options -a, -l and -e are mutually exclusive.
+Options -a, -t and -e are mutually exclusive.
 .TP
-\fB\-l, \-\-lifespanType singleMount | unlimited
+\fB\-t, \-\-type singleMount | unlimited
 List only priorities with the specified lifespan.  Valid values are
 "singleMount" and "unlimited".
-Options -a, -l and -e are mutually exclusive.
+Options -a, -t and -e are mutually exclusive.
 .TP
 \fB\-e, \-\-effective (default)
 List effective priorities.  This is the default type of list to be displayed.
-Options -a, -l and -e are mutually exclusive.
+Options -a, -t and -e are mutually exclusive.
 .TP
 \fB\-v, \-\-verbose
 Verbose.  Display the column headings.

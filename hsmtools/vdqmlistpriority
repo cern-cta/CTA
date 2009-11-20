@@ -28,21 +28,24 @@ import sys
 import getopt
 import castor_tools
 
+COMMANDNAME = 'vdqmlistpriority'
+
 #-------------------------------------------------------------------------------
 # usage function
 #-------------------------------------------------------------------------------
 def usage(exitCode):
-  print '''Usage: vdqmlistpriority [ -a | -l lifespanType | -e ] [ -v ] [ -h ]
+  print '''Usage: vdqmlistpriority [ -a | -t type | -e ] [ -v ] [ -h ]
+
 where options can be:
 
- -a, --all                List all priorities. This is the default.
- -l, --lifespanType type  List priorities with specified lifespan type.
-                          Valid values are "singleMount" and "unlimited".
- -e, --effective          List effective priorities.
- -v, --verbose            Display column heads.
- -h, --help               Print this help and exit.
+\t-a, --all        List all priorities. This is the default.
+\t-t, --type type  List priorities with specified lifespan type.
+\t                 Valid values are "singleMount" and "unlimited".
+\t-e, --effective  List effective priorities.
+\t-v, --verbose    Display column heads.
+\t-h, --help       Print this help and exit.
 
-Please note that options -a, -l and -e are mutually exclusive
+Please note that options -a, -t and -e are mutually exclusive
 
 Comments to: Castor.Support@cern.ch'''
 
@@ -70,7 +73,7 @@ def getVdqmPriorities(rsCursor, listType, lifespanType, verbose):
   elif listType == 'EFFECTIVE':
     fromWhere = 'FROM EffectiveVolumePriority_VIEW' 
   else:
-    raise Exception, 'Internal error: variable \"listType\" cannot have value=\"' + listType + '\"'
+    raise Exception, COMMANDNAME+':  Internal error: variable \"listType\" cannot have value=\"' + listType + '\"'
 
   stmt = '''SELECT 
       vid, 
@@ -118,7 +121,7 @@ def getVdqmPriorities(rsCursor, listType, lifespanType, verbose):
 
     result += (str(row[3])).rjust(columnSize[3]) + '\n'
 
-  return result
+  return result[:-1]
 
 
 #-------------------------------------------------------------------------------
@@ -126,27 +129,33 @@ def getVdqmPriorities(rsCursor, listType, lifespanType, verbose):
 #-------------------------------------------------------------------------------
 def vdqmListPriority(listType, lifespanType, verbose):
     '''Lists the volume access priorities within the VDQM database'''
+    priorities = 0
+    stconn = None
     try:
         stconn = connectToVdqm()
         rsCursor = stconn.cursor()
         rsCursor.arraysize = 50
         priorities = getVdqmPriorities(rsCursor, listType, lifespanType, verbose)
 
-        castor_tools.disconnectDB(stconn)
-        return priorities
     except Exception, e:
-        print e
-        sys.exit(-1)
+        error, = e.args
+        print COMMANDNAME+' Internal Error: \n'+error.message
+
+    if stconn != None:
+        rsCursor.close()
+        castor_tools.disconnectDB(stconn)
+
+    return priorities
 
 
 #-------------------------------------------------------------------------------
 # Main
 #-------------------------------------------------------------------------------
 try:
-    options, args = getopt.getopt(sys.argv[1:], 'al:evh', ['all', 
-                              'lifespanType=', 'effective', 'verbose', 'help'])
+    options, args = getopt.getopt(sys.argv[1:], 'at:evh', ['all', 
+                              'type=', 'effective', 'verbose', 'help'])
 except getopt.GetoptError, err:
-    print '\nError: ' + str(err) + '\n'
+    print '\n'+COMMANDNAME+' Error: ' + str(err) + '\n'
     usage(2)
 mux = 0
 listType = ''
@@ -156,10 +165,11 @@ for f, v in options:
     if f in ('-a', '--all'):
        mux = mux + 1
        listType = 'ALL'
-    elif f in ('-l', '--lifespanType'):
+    elif f in ('-t', '--type'):
        mux = mux + 1
        listType = 'LIFESPAN_TYPE'
        if v not in ['singleMount', 'unlimited']:
+         print '\n'+COMMANDNAME+' Error:  Invalid priority type: ' + v + '\n'
          usage(2)
        if v == 'singleMount':
          lifespanType = 0
@@ -173,16 +183,16 @@ for f, v in options:
     elif f in ('-h', '--help'):
         usage(0)
     else:
-        print '\nError:  Unknown command-line option: ' + f 
+        print '\n'+COMMANDNAME+' Error:  Unknown command-line option: ' + f +'\n'
         usage(2)
     
     if mux > 1:
-        print '\nError:  Options -a, -l and -e are mutually exclusive'
+        print '\n'+COMMANDNAME+' Error:  Options -a, -t and -e are mutually exclusive\n'
         usage(2)
  
 # Deal with args
 if len(args) >= 1:
-    errorStr = '\nError:  Unexpected command-line argument(s):'
+    errorStr = '\n'+COMMANDNAME+' Error:  Unexpected command-line argument(s):'
     for arg in args:
       if arg[0] != '-':
         errorStr = errorStr + " " + arg

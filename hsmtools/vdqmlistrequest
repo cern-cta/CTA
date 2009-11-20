@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #/******************************************************************************
-# *                      vdqmlistpriority
+# *                      vdqmlistrequest
 # *
 # * This file is part of the Castor project.
 # * See http://castor.web.cern.ch/castor
@@ -29,6 +29,8 @@ import getopt
 import castor_tools
 import time 
 
+COMMANDNAME = 'vdqmlistrequest'
+
 #-------------------------------------------------------------------------------
 # usage function
 #-------------------------------------------------------------------------------
@@ -37,8 +39,8 @@ def usage(exitCode):
 
 where options can be:
 
- -v, --verbose Display column heads.
- -h, --help    Print this help and exit.
+\t-v, --verbose Display column heads.
+\t-h, --help    Print this help and exit.
 
 Comments to: Castor.Support@cern.ch'''
 
@@ -113,7 +115,7 @@ def getVdqmRequests(rsCursor, verbose):
     result += (   str(row[6])).rjust(columnSize[6]) + ' '
     result += '\n'
 
-  return result
+  return result[:-1]
 
 
 #-------------------------------------------------------------------------------
@@ -121,17 +123,22 @@ def getVdqmRequests(rsCursor, verbose):
 #-------------------------------------------------------------------------------
 def vdqmListRequest(verbose):
     '''lists the volume requests within the VDQM database order by their priority'''
+    priorities = 0
+    stconn = None
     try:
         stconn = connectToVdqm()
         rsCursor = stconn.cursor()
         rsCursor.arraysize = 50
         priorities = getVdqmRequests(rsCursor,  verbose)
 
-        castor_tools.disconnectDB(stconn)
-        return priorities
     except Exception, e:
-        print e
-        sys.exit(-1)
+        print COMMANDNAME+' Internal Error: \n'+error.message
+
+    if stconn != None:
+        rsCursor.close()
+        castor_tools.disconnectDB(stconn)
+
+    return priorities
 
 
 #-------------------------------------------------------------------------------
@@ -140,7 +147,7 @@ def vdqmListRequest(verbose):
 try:
     options, args = getopt.getopt(sys.argv[1:], 'vh', ['verbose', 'help'])
 except getopt.GetoptError, err:
-    print '\nError: ' + str(err)+ '\n'
+    print '\n'+COMMANDNAME+' Error:  ' + str(err)+ '\n'
     usage(2)
 verbose = 'false'
 for f, v in options:
@@ -149,15 +156,15 @@ for f, v in options:
     elif f in ('-h', '--help'):
         usage(0)
     else:
-        print "\nError: Unknown command-line option: " + f
+        print '\n'+COMMANDNAME+' Error:  Unknown command-line option: ' + f + '\n'
         usage(2)
  
 # Deal with args
 if len(args) >= 1:
-    errorStr = '\nError:  Unexpected command-line argument(s):'
+    errorStr = '\n'+COMMANDNAME+' Error:  Unexpected command-line argument(s):'
     for arg in args:
       if arg[0] != '-':
-        errorStr = errorStr + " " + arg
+        errorStr +=  " " + arg
     print errorStr + '\n'
     usage(2)
 

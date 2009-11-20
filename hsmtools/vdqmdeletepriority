@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #/******************************************************************************
-# *                      vdqmsetpriority
+# *                      vdqmdeletepriority
 # *
 # * This file is part of the Castor project.
 # * See http://castor.web.cern.ch/castor
@@ -29,22 +29,23 @@ import getopt
 import castor_tools
 
 CA_MAXVIDLEN = 6    # maximum length for a VID  
+COMMANDNAME  = 'vdqmdeletepriority'
 
 #-------------------------------------------------------------------------------
 # usage function
 #-------------------------------------------------------------------------------
 def usage(exitCode):
-  print '''Usage: vmgrdelpriority -v VID -a mode [ -l type ] [ -h ]
+  print '''Usage: vdqmdelpriority -V VID -m mode [ -t type ] [ -h ]
 
 where options can be:
     
-\t-v, --vid VID             Volume visual Identifier
-\t-a, --tapeAccessMode mode Tape access mode. Valid values are \"read\"
-\t                          and \"write\"
-\t-l, --lifespanType type   Lifespan type. Valid values are
-\t                          \"singleMount\" and \"unlimited\".
-\t                          The default value is \"unlimited\".
-\t-h, --help                Print this help and exit
+\t-V, --vid VID   Volume visual Identifier
+\t-m, --mode mode Tape access mode. Valid values are \"read\"
+\t                and \"write\"
+\t-t, --type type Lifespan type. Valid values are
+\t                \"singleMount\" and \"unlimited\".
+\t                The default value is \"unlimited\".
+\t-h, --help      Print this help and exit
 \n
 Comments to: Castor.Support@cern.ch'''
 
@@ -73,10 +74,11 @@ def  delVdqmPriorities(rsCursor, vid, tpMode, lifespanType):
   clientUIDVar  = rsCursor.var(cx_Oracle.NUMBER)
   clientGIDVar  = rsCursor.var(cx_Oracle.NUMBER)
   clientHostVar = rsCursor.var(cx_Oracle.STRING)
-  rsCursor.callproc('castorVdqm.deleteVolPriority', ( vid, tpMode, lifespanType, returnVar, priorityVar, clientUIDVar, clientGIDVar, clientHostVar) )
+  rsCursor.callproc('castorVdqm.deleteVolPriority', ( vid, tpMode, lifespanType, 
+     returnVar, priorityVar, clientUIDVar, clientGIDVar, clientHostVar) )
 
   if returnVar.getvalue() == 0:
-     print '\nNo volume priority was deleted\n'
+     print '\n'+COMMANDNAME+':  No volume priority was deleted\n'
 
 
 #-------------------------------------------------------------------------------
@@ -84,6 +86,8 @@ def  delVdqmPriorities(rsCursor, vid, tpMode, lifespanType):
 #-------------------------------------------------------------------------------
 def vdqmDeletePriority(vid, mode, lifespanType):
     '''Delete a volume priority in the VDQM database'''
+
+    stconn = None
     try:
         stconn = connectToVdqm()
         rsCursor = stconn.cursor()
@@ -93,44 +97,48 @@ def vdqmDeletePriority(vid, mode, lifespanType):
         stconn.commit()
 
     except Exception, e:
-        stconn.rollback()
-        print e
-        sys.exit(-1)
+        if stconn != None:
+            stconn.rollback()
+        error, = e.args
+        print COMMANDNAME+' Internal Error: \n'+error.message
 
-    castor_tools.disconnectDB(stconn)
+    if stconn != None:
+        rsCursor.close()
+        castor_tools.disconnectDB(stconn)
 
 #-------------------------------------------------------------------------------
 # Main
 #-------------------------------------------------------------------------------
 try:
-    options, args = getopt.getopt(sys.argv[1:], 'v:a:l:h', ['vid=', 
-                              'mode=', 'lifespanType=', 'help'])
+    options, args = getopt.getopt(sys.argv[1:], 'V:m:t:h', ['vid=', 
+                              'mode=', 'type=', 'help'])
 except getopt.GetoptError, err:
-    print '\nError: ' + str(err) + '\n'
+    print '\n'+COMMANDNAME+' Error:  ' + str(err) + '\n'
     usage(2)
 vid = ''
 lifespanType = 1 # Default = unlimited = 1
 mode = -1
 priority = -1
 for f, v in options:
-    if f in ('-v', '--vid'):
-       # check that the vid lenght is <= "CA_MAXVIDLEN"
+    if f in ('-V', '--vid'):
+       # check that the vid length is <= "CA_MAXVIDLEN"
        if len(v) > CA_MAXVIDLEN:
-          print "\nError: VID has more than " + str(CA_MAXVIDLEN) + " characters: \n"
+          print '\n'+COMMANDNAME+' Error:  VID has more than \
+' + str(CA_MAXVIDLEN) + ' characters: \n'
           usage(2)
        vid = v 
-    elif f in ('-a', '--mode'):
+    elif f in ('-m', '--mode'):
        if v not in ['read', 'write']:
-         print "\nError: Invalid tape access mode: " + v + "\n"
+         print '\n'+COMMANDNAME+' Error:  Invalid tape access mode: ' + v + '\n'
          usage(2)
        if v == 'read':
          mode = 0
        else:
          mode = 1
-    elif f in ('-l', '--lifespanType'):
+    elif f in ('-t', '--type'):
        listType = 'LIFESPAN_TYPE'
        if v not in ['singleMount', 'unlimited']:
-         print "\nError: Invalid lifespanType: " + v + "\n"
+         print '\n'+COMMANDNAME+' Error:  Invalid priority type: ' + v + '\n'
          usage(2)
        if v == 'singleMount':
          lifespanType = 0
@@ -139,19 +147,19 @@ for f, v in options:
     elif f in ('-h', '--help'):
        usage(0)
     else:
-       print '\nError:  Unknown command-line option:' + f  + "\n"
+       print '\n'+COMMANDNAME+' Error:  Unknown command-line option:' + f  + "\n"
        usage(2)
     
 if vid == '' or mode == -1:
-   print '\nError:  Options -v vid and -a mode must be set\n'
+   print '\n'+COMMANDNAME+' Error:  Options -V vid and -m mode must be set\n'
    usage(2) 
  
 # Deal with args
 if len(args) >= 1:
-    errorStr = '\nError:  Unexpected command-line argument(s):'
+    errorStr = '\n'+COMMANDNAME+' Error:  Unexpected command-line argument(s):'
     for arg in args:
       if arg[0] != '-':
-        errorStr = errorStr + " " + arg
+        errorStr += " " + arg
     print errorStr + '\n'
     usage(2)
 

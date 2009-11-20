@@ -14,7 +14,7 @@
 .SH NAME
 vdqmsetpriority \- set a volume priority
 .SH SYNOPSIS
-.BI "vdqmsetpriority -v VID -a tapeAccessMode [ -l lifespanType ] -p priority [ -h ]"
+.BI "vdqmsetpriority -V VID -m tapeAccessMode [ -t type ] -p priority [ -h ]"
 
 .SH DESCRIPTION
 .B vdqmsetpriority
@@ -24,9 +24,9 @@ The RecallHandler daemon and the tape operator command-line tools send volume
 access priorities to the VDQM. A volume access priority sent from the
 RecallHandler will exist in the VDQM database for a single-mount of the tape in
 question.  A volume access priority sent from the tape operator command-line
-tools will by default have an unlimited lifespan within the VDQM database.  The
-priority will stay active until it is explicitly removed by the tape operator
-command-line tools.
+tools will by default have an unlimited lifespan type within the VDQM database.
+The priority will stay active until it is explicitly removed by the tape 
+operator command-line tools.
 A volume access priority is a quadruple of:
 .RS
 .P
@@ -43,7 +43,7 @@ Either read or write
 .P
 *
 .B
-Lifespan type
+Type
 .br
 Either single-mount or unlimited
 .P
@@ -54,28 +54,29 @@ Priority number
 A positive integer , where 0 is the lowest and default priority
 .RE
 .P
-A volume access priority quadruple is uniquely identified or named by the inner
-triplet of VID, access mode and lifespan type.  The priority number of the
-quadruple is the value of the volume access priority.  This means a given VID
-and access mode can have at most one "single-mount priority" and one "unlimited
-priority".  The effective priority in this case would be the unlimited priority.
-In other words, unlimited priorities overide single-mount priorities.
+If there is a single-mount priority and an unlimited priority for the same 
+volume access (VID plus access mode), then the unlimited priority will override 
+the single mount priority.
 .P
-If a priority set by
+If the 
 .B
-vdqmsetpriority
-does not already exist in the database, then a new one will be inserted.  Else
-if the priority already exists, then its priority number will be updated.
+vdqmsetpriority 
+command is used to set a volume access priority that does 
+not exist in the database, then a new one will be inserted. If the priority 
+already exists, then its value will be updated if the new value is greater than 
+or equal to the old one. The reason to update when both the new and old values 
+are the same is to take the opportunity to update the "last modified" timing 
+information in the database.
 
 .SH OPTIONS
 .TP
-\fB\-v, \-\-vid VID\fR
+\fB\-V, \-\-vid VID\fR
 Volume visual identifier
 .TP
-\fB\-a, \-\-tapeAccessMode read | write
+\fB\-m, \-\-mode read | write
 Tape access mode.  Valid values are "read" and "write".
 .TP
-\fB\-l, \-\-lifespanType singleMount | unlimited (default)
+\fB\-t, \-\-type singleMount | unlimited (default)
 Lifespan type. Valid values are "singleMount" and "unlimited".  The default
 value is "unlimited"
 .TP
