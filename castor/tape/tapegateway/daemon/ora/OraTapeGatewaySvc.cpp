@@ -123,6 +123,10 @@ const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getTapeTo
 
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_checkConfigurationStatementString ="BEGIN tg_checkConfiguration();END;";
 
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_deleteStreamWithBadTapePoolStatementString="BEGIN tg_deleteStream(:1);END;";
+
+
+
 
 //------------------------------------------------------------------------------
 // OraTapeGatewaySvc
@@ -151,7 +155,8 @@ castor::tape::tapegateway::ora::OraTapeGatewaySvc::OraTapeGatewaySvc(const std::
   m_failFileTransferStatement(0),
   m_invalidateFileStatement(0),
   m_getTapeToReleaseStatement(0),
-  m_checkConfigurationStatement(0)
+  m_checkConfigurationStatement(0),
+  m_deleteStreamWithBadTapePoolStatement(0)
 {
 }
 
@@ -207,6 +212,9 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
     if ( m_invalidateFileStatement ) deleteStatement(m_invalidateFileStatement);
     if ( m_getTapeToReleaseStatement ) deleteStatement(m_getTapeToReleaseStatement);
     if ( m_checkConfigurationStatement ) deleteStatement(m_checkConfigurationStatement);
+    if ( m_deleteStreamWithBadTapePoolStatement) deleteStatement(m_deleteStreamWithBadTapePoolStatement);
+    
+
   } catch (oracle::occi::SQLException e) {};
 
   // Now reset all pointers to 0
@@ -234,6 +242,8 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
   m_invalidateFileStatement = 0;
   m_getTapeToReleaseStatement=0;
   m_checkConfigurationStatement=0;
+  m_deleteStreamWithBadTapePoolStatement=0;
+ 
 }
 
 //----------------------------------------------------------------------------
@@ -313,6 +323,13 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachTapesToStreams(con
       cnvSvc()->commit();
       return;
     }
+
+    if (strIds.size() != vids.size() || strIds.size() != fseqs.size()) {
+      // just release the lock no result
+      cnvSvc()->commit();
+      castor::exception::Exception e(EINVAL);
+      throw e;
+    }
      
     // Check whether the statements are ok
     if (0 == m_attachTapesToStreamsStatement) {
@@ -353,10 +370,10 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachTapesToStreams(con
 
     // get the maximum cell size
     unsigned int maxLen=0;
-    unsigned int numTapes=0;
+ 
     for (std::list<std::string>::const_iterator vid = vids.begin();
 	 vid != vids.end();
-	 vid++,numTapes++){
+	 vid++){
       maxLen=maxLen > (*vid).length()?maxLen:(*vid).length();
     
     }
@@ -375,9 +392,9 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachTapesToStreams(con
      
 
     unsigned int bufferCellSize = maxLen * sizeof(char);
-    lensVids = (ub2*) malloc(maxLen * sizeof(ub2));
+    lensVids = (ub2*) malloc(nb * sizeof(ub2));
     bufferVids =
-      (char*) malloc(numTapes * bufferCellSize);
+      (char*) malloc(nb * bufferCellSize);
 
     if ( lensVids  == 0 || bufferVids == 0 ) {
       if (lensStrIds != 0 ) free(lensStrIds);
@@ -742,7 +759,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToMigrate(const c
 
 
       if (ret == -3 ) {// no diskserver available
-
+	cnvSvc()->commit();
 	castor::exception::Internal ex;
 	ex.getMessage()
 	  << "no diskserver available"
@@ -795,7 +812,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToMigrate(const c
 	  castor::dlf::Param params[] =
 	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
 	     castor::dlf::Param("errorMessage",e.getMessage().str()),
-	     castor::dlf::Param("TPVID", vid)
+	     castor::dlf::Param("TPVID", vid.c_str())
 	    };
 	  
 	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, ORA_FILE_TO_MIGRATE_NS_ERROR, 3, params, &castorFileId);
@@ -894,7 +911,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileMigrated(const ca
     m_setFileMigratedStatement->setDouble(2,(double)resp.fileid());
     m_setFileMigratedStatement->setString(3,resp.nshost());
     m_setFileMigratedStatement->setInt(4,resp.fseq()); 
-    m_setFileMigratedStatement->setInt(5,resp.fileTransactionId()); 
+    m_setFileMigratedStatement->setDouble(5,(double)resp.fileTransactionId()); 
     
     m_setFileMigratedStatement->executeUpdate();
 
@@ -1812,6 +1829,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::failFileTransfer(const F
     if (0 == m_failFileTransferStatement) {
       m_failFileTransferStatement =
         createStatement(s_failFileTransferStatementString);
+      m_failFileTransferStatement->setAutoCommit(true);
     }
 
     m_failFileTransferStatement->setDouble(1,(double)failure.mountTransactionId()); 
@@ -1821,7 +1839,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::failFileTransfer(const F
     m_failFileTransferStatement->setInt(5,failure.errorCode());
     
     m_failFileTransferStatement->executeUpdate();
-    cnvSvc()->commit(); 
+   
   } catch (oracle::occi::SQLException e) {
    
     handleException(e);
@@ -1847,6 +1865,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::invalidateFile(const Fil
     if (0 == m_invalidateFileStatement) {
       m_invalidateFileStatement =
         createStatement(s_invalidateFileStatementString);
+      m_invalidateFileStatement->setAutoCommit(true);
     }
 
     m_invalidateFileStatement->setDouble(1,(double)failure.mountTransactionId()); 
@@ -1856,6 +1875,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::invalidateFile(const Fil
     m_invalidateFileStatement->setInt(5,failure.errorCode());
     
     m_invalidateFileStatement->executeUpdate();
+ 
 
   } catch (oracle::occi::SQLException e) {
    
@@ -1951,3 +1971,38 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::checkConfiguration() thr
 
   
 }
+
+//----------------------------------------------------------------------------
+// deleteStreamWithBadTapePool
+//----------------------------------------------------------------------------
+
+
+
+void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::deleteStreamWithBadTapePool(const castor::stager::Stream& stream) 
+  throw (castor::exception::Exception){
+
+  try {
+    // Check whether the statements are ok
+    if (0 == m_deleteStreamWithBadTapePoolStatement) {
+      m_deleteStreamWithBadTapePoolStatement =
+        createStatement(s_deleteStreamWithBadTapePoolStatementString);
+    }
+
+    m_deleteStreamWithBadTapePoolStatement->setDouble(1,(double)stream.id());
+
+    // execute the statement and see whether we found something
+ 
+    m_deleteStreamWithBadTapePoolStatement->executeUpdate();
+
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in deleteStreamWithBadTapePool"
+      << std::endl << e.what();
+    throw ex;
+  }
+
+}
+ 
+
