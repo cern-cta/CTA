@@ -195,18 +195,19 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::getDataFromVmgr(castor::s
     // check the status
         
     if (rc == 0) {
-      // ok call vmgr
+      // ok call vmgr but the status might be invalid
+      save_serrno=EINVAL;
       if ( (vmgrTapeInfo.status & DISABLED) ||
            (vmgrTapeInfo.status & EXPORTED) ||
            (vmgrTapeInfo.status & ARCHIVED)) {
         if ( vmgrTapeInfo.status & DISABLED ) {
-          serrno = ETHELD;
+          save_serrno = ETHELD;
         } else if ( vmgrTapeInfo.status & EXPORTED ) {
-          serrno = ETABSENT;
+          save_serrno = ETABSENT;
         } else if ( vmgrTapeInfo.status & ARCHIVED ) {
-          serrno = ETARCH;
+          save_serrno = ETARCH;
         }
-	castor::exception::Exception ex(serrno);
+	castor::exception::Exception ex(save_serrno);
 	ex.getMessage()
 	  << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getDataFromVmgr"
 	  << " invalid status";
