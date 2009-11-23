@@ -23,6 +23,8 @@
 *
 * @author Giulia Taurelli
 *****************************************************************************/
+//first because contains python.h
+#include "castor/infoPolicy/TapeRetryPySvc.hpp" 
 
 // Include Files
 
@@ -45,8 +47,6 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 
-#include "castor/infoPolicy/TapeRetryPySvc.hpp"
-
 #include "castor/server/SignalThreadPool.hpp"
 #include "castor/server/TCPListenerThreadPool.hpp"
 
@@ -64,6 +64,10 @@
 #define  VDQM_TIME_OUT_INTERVAL 600 // Timeout between two polls on a VDQM request
 #define  MIN_WORKER_THREADS 20
 #define  MAX_WORKER_THREADS 20
+#define  TG_THRESHOLD  50
+#define  TG_MAXTASKS   50
+
+
 
 extern "C" {
   char* getconfent(const char *, const char *, int);
@@ -161,7 +165,8 @@ int main(int argc, char* argv[]){
     //recaller
     if (!retryRecallPolicyName.empty() && !recallFunctionName.empty()){
       retryRecallSvc.reset(new castor::infoPolicy::TapeRetryPySvc(retryRecallPolicyName,recallFunctionName));
-    }
+      }
+
     // Get the min and max number of thread used by the Worker
 
     int minThreadsNumber = MIN_WORKER_THREADS;
@@ -212,7 +217,7 @@ int main(int argc, char* argv[]){
     tgDaemon.getThreadPool('T')->setNbThreads(1);
 
     // migration error handler
-    
+        
     std::auto_ptr<castor::tape::tapegateway::MigratorErrorHandlerThread> mThread(new castor::tape::tapegateway::MigratorErrorHandlerThread(retryMigrationSvc.get()));
     std::auto_ptr<castor::server::SignalThreadPool> mPool(new castor::server::SignalThreadPool("MigrationErrorHandlerThread", mThread.release(),  DEFAULT_SLEEP_INTERVAL));
     tgDaemon.addThreadPool(mPool.release());
@@ -228,7 +233,7 @@ int main(int argc, char* argv[]){
     // recaller/migration dynamic thread pool
 
     std::auto_ptr<castor::tape::tapegateway::WorkerThread> wThread(new castor::tape::tapegateway::WorkerThread());
-    std::auto_ptr<castor::server::TCPListenerThreadPool> wPool(new castor::server::TCPListenerThreadPool("WorkerThread", wThread.release(),tgDaemon.listenPort(),true, minThreadsNumber, maxThreadsNumber));
+    std::auto_ptr<castor::server::TCPListenerThreadPool> wPool(new castor::server::TCPListenerThreadPool("WorkerThread", wThread.release(),tgDaemon.listenPort(),true, minThreadsNumber, maxThreadsNumber,TG_THRESHOLD, TG_MAXTASKS ));
     tgDaemon.addThreadPool(wPool.release());
 
     // start the daemon
@@ -374,7 +379,7 @@ castor::tape::tapegateway::TapeGatewayDaemon::TapeGatewayDaemon() : castor::serv
       {ORA_DB_ERROR,  "Worker: OraTapeGatewaySvc: impossible to update db after failure"},
       {ORA_IMPOSSIBLE_TO_SEND_RMMASTER_REPORT, "Worker: OraTapeGatewaySvc: impossible to send rmmaster report"},
       {ORA_FILE_TO_RECALL_NS_ERROR, "Worker: OraTapeGatewaySvc: failed check against the nameserver for file to recall"},
-      
+      {LINKER_NOT_POOL, "TapeStreamLinker: this tapepool does not exist"},
       {-1, ""}
     };
   dlfInit(messages);
