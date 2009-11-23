@@ -23,7 +23,7 @@
  *
  * @author Giulia Taurelli
  *****************************************************************************/
-
+#include <errno.h>
 #include <stdlib.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -43,6 +43,7 @@
 #include "castor/tape/tapegateway/daemon/VdqmRequestsProducerThread.hpp"
 #include "castor/tape/tapegateway/daemon/VdqmTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/daemon/VmgrTapeGatewayHelper.hpp"
+#include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/VdqmTapeGatewayRequest.hpp"
 
 
@@ -161,13 +162,51 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::process(castor::IObj
 
   } catch (castor::exception::Exception e) {
     
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Standard Message", sstrerror(e.code())),
-       castor::dlf::Param("Precise Message", e.getMessage().str()),
-       castor::dlf::Param("TPVID",tape.vid())
-      };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_VMGR_ERROR, 3, params);
+    
+    try {
+      if ( e.code() == ENOENT ||  
+	   e.code() == EFAULT ||
+	   e.code() == EINVAL ||
+	   e.code() == ETHELD ||
+	   e.code() == ETABSENT ||
+	   e.code() == ETARCH ) {
+	// cancell the operation in the db for this error
+	// tape is in a bad status, no need to un-BUSY it
+	
+	EndNotificationErrorReport failure;
+	failure.setId(request->taperequest());
+	failure.setErrorCode(e.code());
+
+	oraSvc->failTapeSession(failure);
       
+      } else {
+
+	oraSvc->endTransaction(); // try again to submit this tape later
+
+      }
+	
+      gettimeofday(&tvEnd, NULL);
+      signed64 procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
+      
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("Standard Message", sstrerror(e.code())),
+	 castor::dlf::Param("Precise Message", e.getMessage().str()),
+	 castor::dlf::Param("TPVID",tape.vid()),
+	 castor::dlf::Param("ProcessingTime", procTime * 0.000001)
+	};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_VMGR_ERROR, 4, params);
+	
+    } catch (castor::exception::Exception e ){
+      // impossible to update the information of submitted tape
+	  
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("errorCode",sstrerror(e.code())),
+	 castor::dlf::Param("errorMessage",e.getMessage().str()),
+	 castor::dlf::Param("TPVID", tape.vid())
+	};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_CANNOT_UPDATE_DB, 3, params);	    
+    }
+    return;
   }
 
   gettimeofday(&tvEnd, NULL);
@@ -182,29 +221,6 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::process(castor::IObj
       castor::dlf::Param("ProcessingTime", procTime * 0.000001)
     };
 
-
-  if (tape.dgn().empty()){
-    // not valid DGN commit the value in the db
-  
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_VMGR_ERROR, 5, paramsVmgr);
-    
-    try {
-      oraSvc->endTransaction();
-    } catch (castor::exception::Exception e) {
-      castor::dlf::Param params[] =
-	{
-	  castor::dlf::Param("TPVID",tape.vid()),
-	  castor::dlf::Param("errorCode",sstrerror(e.code())),
-	  castor::dlf::Param("errorMessage",e.getMessage().str())
-	};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_CANNOT_UPDATE_DB, 3, params);	   
-    
-    }
-    return;
-  }  
-
-  // we have a valid dgn
-   
   // tape is fine
  
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, PRODUCER_QUERYING_VMGR, 5, paramsVmgr);
