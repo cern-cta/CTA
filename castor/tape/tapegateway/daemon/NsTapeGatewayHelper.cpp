@@ -386,12 +386,63 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate(castor:
     throw ex;
   }
 
+  
+
   // let's check if there is already a file on that tape 
 
   for ( int i=0; i< nbSegs ;i++) {
     if ( strcmp(segArray[i].vid , vid.c_str()) == 0 ) { 
+      // check if it is a sigle copy on tape file
+      // in this case it is not an error.
+
+      char castorFileName[CA_MAXPATHLEN+1];
+      struct Cns_filestat statbuf;
+      memset(&statbuf,'\0',sizeof(statbuf));
+      *castorFileName = '\0';
+      
+      serrno=0;
+      rc = Cns_statx(castorFileName,&castorFileId,&statbuf);
+      if ( rc == -1 ) {
+	if (segArray != NULL ) free(segArray);
+	segArray=NULL;
+	castor::exception::Exception ex(serrno);
+	ex.getMessage()
+	  << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate:"
+	  << "impossible to stat the file";
+	throw ex;
+      }
+      
+      struct Cns_fileclass fileClass;
+      memset(&fileClass,'\0',sizeof(fileClass));
+
+      serrno=0;
+      rc = Cns_queryclass( castorFileId.server,
+			  statbuf.fileclass,
+			  NULL,
+			  &fileClass
+			  );
+      
+      if ( rc == -1 ) {
+	if (segArray != NULL ) free(segArray);
+	segArray=NULL;
+	castor::exception::Exception ex(serrno);
+	ex.getMessage()
+	  << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate:"
+	  << "impossible to get file class";
+	throw ex;
+      }
+      
+      if ( fileClass.nbcopies == 1 ){
+	// stop to loop and it is fine since it is a single copy
+
+	if (segArray != NULL ) free(segArray);
+	segArray=NULL;
+	break;
+      }
+	
       if (segArray != NULL ) free(segArray);
       segArray=NULL;
+
       castor::exception::Exception ex(EEXIST);
       ex.getMessage()
       << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFileToMigrate:"
