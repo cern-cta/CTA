@@ -245,14 +245,6 @@ namespace castor {
 	virtual void failFileTransfer(const FileErrorReport& failure)
 	  throw (castor::exception::Exception)=0;
 
-	/*
-	 * invalidate file
-	 */
-
-
-	virtual void invalidateFile(const FileErrorReport& failure)
-	  throw (castor::exception::Exception)=0;
-
 
 	/* get tapes to release in vmgr */
 
@@ -270,6 +262,10 @@ namespace castor {
 	virtual void checkConfiguration() 
 	  throw (castor::exception::Exception)=0;
 
+	/* delete stream with wrong tapepool */
+
+	virtual void deleteStreamWithBadTapePool(const castor::stager::Stream& stream) 
+	  throw (castor::exception::Exception)=0;
 	
 
       }; // end of class ITapeGatewaySvc
