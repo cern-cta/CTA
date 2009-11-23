@@ -255,14 +255,6 @@ namespace castor {
 	virtual void failFileTransfer(const FileErrorReport& failure)
 	  throw (castor::exception::Exception);
 
-	/*
-	 * invalidate file
-	 */
-
-
-	virtual void invalidateFile(const FileErrorReport& failure)
-	  throw (castor::exception::Exception);
-
 
 	/* get tapes to release in vmgr */
 
@@ -280,8 +272,24 @@ namespace castor {
 	virtual void checkConfiguration() 
 	  throw (castor::exception::Exception);
 
+	/* delete stream with wrong tapepool */
+
+	virtual void deleteStreamWithBadTapePool(const castor::stager::Stream& stream) 
+	  throw (castor::exception::Exception);
+
+
 
       private:
+
+	/*
+	 * invalidate file
+	 */
+
+
+	virtual void invalidateFile(const FileErrorReport& failure)
+	  throw (castor::exception::Exception);
+
+
 
 	static const std::string s_getStreamsWithoutTapesStatementString;
 	oracle::occi::Statement *m_getStreamsWithoutTapesStatement;
@@ -348,6 +356,10 @@ namespace castor {
 
 	static const std::string s_checkConfigurationStatementString;
 	oracle::occi::Statement *m_checkConfigurationStatement;
+
+	static const std::string s_deleteStreamWithBadTapePoolStatementString;
+	oracle::occi::Statement *m_deleteStreamWithBadTapePoolStatement;
+
 
       }; // end of class OraTapeGateway
 
