@@ -130,7 +130,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
   for (std::list<castor::stager::Stream>::iterator strItem=streamsToResolve.begin();
        strItem != streamsToResolve.end();
        strItem++,
-	 tapepool++){
+       tapepool++){
 
     // get tape from vmgr
 
@@ -155,6 +155,26 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
 	 castor::dlf::Param("errorMessage",e.getMessage().str())
 	};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, LINKER_NO_TAPE_AVAILABLE, 3, params);
+
+      // different errors from vmgr
+      
+      if (e.code()== ENOENT){
+
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, LINKER_NOT_POOL, 3, params);
+	//tapepool doesn't exists anymore
+
+	try {
+	  oraSvc->deleteStreamWithBadTapePool(*strItem);
+
+	} catch (castor::exception::Exception e){
+	  castor::dlf::Param params[] =
+	    {castor::dlf::Param("errorCode",sstrerror(e.code())),
+	     castor::dlf::Param("errorMessage",e.getMessage().str())
+	    };
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, LINKER_CANNOT_UPDATE_DB, 2, params);
+	}
+      }
+
       continue;
       // in case of errors we don't change the status from TO_BE_RESOLVED to TO_BE_SENT_TO_VDQM -- NO NEED OF WAITSPACE status
     }
