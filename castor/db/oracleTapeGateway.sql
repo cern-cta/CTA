@@ -902,6 +902,7 @@ BEGIN
       
   EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
    -- there is going to be another copy of the file on this tape.
+   -- UNIQUE constraint violation on the diskcopy column in tapegatewaysubrequest
    -- detach from this stream
      DELETE FROM stream2tapecopy WHERE child= tcid AND parent= strid;
    -- resurrect the candidate if there is no other stream containing the tapecopy
@@ -1715,131 +1716,18 @@ END;
 /
 
 
-/* procedure to be unsed for the mighunter if the tapegateway is run */
+/* delete streams for not existing tapepools */
 
-
-/* Get input for python migration policy */
-
- create or replace PROCEDURE inputForMigrationPolicy
-(svcclassName IN VARCHAR2,
- policyName OUT NOCOPY VARCHAR2,
- svcId OUT NUMBER,
- dbInfo OUT castorTape.DbMigrationInfo_Cur) AS
- tcIds "numList";
- tcIds2 "numList";
+create or replace
+PROCEDURE tg_deleteStream( strId IN NUMBER ) AS
+unused NUMBER;
+tcIds "numList";
 BEGIN
-
-  -- WARNING: tapegateway ONLY version
-
-  -- do the same operation of getMigrCandidate and return the dbInfoMigrationPolicy
-  -- get svcClass and migrator policy
-  SELECT SvcClass.migratorpolicy, SvcClass.id INTO policyName, svcId
-    FROM SvcClass
-   WHERE SvcClass.name = svcClassName;
-
-  -- get all candidates by bunches, separating repack ones from 'normal' ones
-  SELECT /*+ LEADING(R SR TC)
-            INDEX_RS_ASC(SR I_SubRequest_Request) 
-            INDEX_RS_ASC(TC I_TapeCopy_Status) */
-         TC.id BULK COLLECT INTO tcIds
-    FROM TapeCopy TC, SubRequest SR, StageRepackRequest R
-   WHERE R.svcclass = svcId
-     AND SR.request = R.id
-     AND SR.status = 12  -- SUBREQUEST_REPACK
-     AND TC.status IN (0, 1)  -- CREATED, TOBEMIGRATED
-     AND TC.castorFile = SR.castorFile
-     AND ROWNUM <= 20;
-  SELECT /*+ FIRST_ROWS(20) LEADING(TC CF)
-             INDEX_RS_ASC(TC I_TapeCopy_Status) */
-	     TC.id BULK COLLECT INTO tcIds2
-    FROM TapeCopy TC, CastorFile CF
-   WHERE CF.svcClass = svcId
-     AND TC.status IN (0, 1)  -- CREATED, TOBEMIGRATED
-     AND TC.castorFile = CF.id
-     AND ROWNUM <= 20;
-
-  -- update status. Warning! this is thread unsafe!
-  IF tcIds.COUNT > 0 THEN
-    FORALL i IN tcIds.FIRST .. tcIds.LAST
-      UPDATE TapeCopy SET status = 7 -- WAITPOLICY
-       WHERE id = tcIds(i);
-  END IF;
-  IF tcIds2.COUNT > 0 THEN
-    FORALL i IN tcIds2.FIRST .. tcIds2.LAST
-      UPDATE TapeCopy SET status = 7 -- WAITPOLICY
-       WHERE id = tcIds2(i);
-  END IF;
-  COMMIT;
-  
-  -- return the full resultset
-  OPEN dbInfo FOR
-    SELECT TapeCopy.id, TapeCopy.copyNb, CastorFile.lastknownfilename,
-           CastorFile.nsHost, CastorFile.fileid, CastorFile.filesize
-      FROM Tapecopy,CastorFile
-     WHERE CastorFile.id = TapeCopy.castorFile
-       AND TapeCopy.id IN 
-         (SELECT /*+ CARDINALITY(tcidTable 5) */ * 
-            FROM table(tcIds) tcidTable UNION
-          SELECT /*+ CARDINALITY(tcidTable2 5) */ *
-            FROM TABLE(tcIds2) tcidTable2);
+ SELECT id INTO unused FROM Stream WHERE id=strId FOR UPDATE;
+ DELETE FROM stream2tapecopy WHERE parent=child RETURNING child BULK COLLECT INTO tcIds;
+ FORALL i IN tcIds.FIRST .. tcIds.LAST
+    UPDATE tapecopy SET status = 1 WHERE tcIds(i)=id AND NOT EXISTS (SELECT 'x' FROM stream2tapecopy WHERE stream2tapecopy.child=tcIds(i));
 END;
-/
-
-
-/* attach tapecopies to stream */
-
-
-create or replace PROCEDURE attachTapeCopiesToStreams
-(tapeCopyIds IN castor."cnumList",
- tapePoolIds IN castor."cnumList")
-AS
-  streamId NUMBER; -- stream attached to the tapepool
-  counter NUMBER := 0;
-  unused NUMBER;
-  nbStream NUMBER;
-  strIds "numList";
-  nbTapeCopies NUMBER;
-BEGIN
-
- -- WARNING: tapegateway ONLY version
-
--- just for a tapepool
- FOR j IN tapePoolIds.FIRST .. tapePoolIds.LAST LOOP
-  FOR str IN (SELECT id FROM  Stream WHERE tapepool=tapePoolIds(j)) LOOP
-      -- add choosen tapecopies to all Streams associated to the tapepool used by the policy
-         SELECT id INTO streamId FROM stream where id=str.id FOR UPDATE;
-      -- add choosen tapecopies to all Streams associated to the tapepool used by the policy
-      FOR i IN tapeCopyIds.FIRST .. tapeCopyIds.LAST LOOP
-           BEGIN
-              SELECT /*+ index(tapecopy,PK_TAPECOPY_ID)*/ id INTO unused
-                FROM TapeCopy
-                WHERE Status in (2,7) AND id = tapeCopyIds(i) FOR UPDATE;
-              DECLARE CONSTRAINT_VIOLATED EXCEPTION;
-              PRAGMA EXCEPTION_INIT (CONSTRAINT_VIOLATED, -1);
-              BEGIN
-                INSERT INTO stream2tapecopy (parent ,child) VALUES (streamId, tapeCopyIds(i));
-                UPDATE /*+ index(tapecopy,PK_TAPECOPY_ID)*/ TapeCopy SET Status = 2 WHERE status=7 AND id = tapeCopyIds(i); 
-              EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
-               -- if the stream does not exist anymore
-               -- it might also be that the tapecopy does not exist anymore
-               -- already exist the tuple parent-child
-               null;
-              END;
-           EXCEPTION WHEN NO_DATA_FOUND THEN
-            -- Go on the tapecopy has been resurrected or migrated
-              NULL;
-           END;
-      END LOOP;
-      COMMIT;
-    END LOOP; -- loop tapecopies
-  END LOOP;
-  COMMIT;
-END;
-/
-
-
-
-
-
+/	
 
 
