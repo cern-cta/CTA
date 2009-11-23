@@ -209,9 +209,6 @@ void castor::tape::tapegateway::WorkerThread::run(void* arg)
     
   }
 
-  // Deliberately slow down processing times to force thread pool expansion.
-  sleep(1);
-
 }
 
 
@@ -906,10 +903,9 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
 	castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
 	castor::dlf::Param("TPVID",vid),
 	castor::dlf::Param("copyNb",copyNumber),
-	castor::dlf::Param("blockid", blockid),
 	castor::dlf::Param("ProcessingTime", procTime * 0.000001)
       };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_MIGRATION_DB_UPDATE, 8, paramsDbUpdate,&castorFileId);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_MIGRATION_DB_UPDATE, 7, paramsDbUpdate,&castorFileId);
 
 
   } catch (std::bad_cast &ex) {
