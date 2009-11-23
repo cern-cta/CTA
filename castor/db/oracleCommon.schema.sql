@@ -372,9 +372,11 @@ ALTER TABLE StageDiskCopyReplicaRequest MODIFY mask DEFAULT 0;
 ALTER TABLE StageDiskCopyReplicaRequest MODIFY pid DEFAULT 0;
 ALTER TABLE StageDiskCopyReplicaRequest MODIFY machine DEFAULT 'stager';
 
-/* Indexing StageDiskCopyReplicaRequest by source diskcopy id */
+/* Indexing StageDiskCopyReplicaRequest by source and destination diskcopy id */
 CREATE INDEX I_StageDiskCopyReplic_SourceDC 
   ON StageDiskCopyReplicaRequest (sourceDiskCopy);
+CREATE INDEX I_StageDiskCopyReplic_DestDC 
+  ON StageDiskCopyReplicaRequest (destDiskCopy);
 
 /* Define a table for some configuration key-value pairs and populate it */
 CREATE TABLE CastorConfig
