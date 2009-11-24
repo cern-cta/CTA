@@ -191,23 +191,23 @@ BEGIN
     FROM SubRequest sr,
          (SELECT id
             FROM StagePreparetogetRequest
-           WHERE reqid LIKE rid
+           WHERE reqid = rid
           UNION ALL
           SELECT id
             FROM StagePreparetoputRequest
-           WHERE reqid LIKE rid
+           WHERE reqid = rid
           UNION ALL
           SELECT id
             FROM StagePreparetoupdateRequest
-           WHERE reqid LIKE rid
+           WHERE reqid = rid
           UNION ALL
           SELECT id
             FROM stageGetRequest
-           WHERE reqid LIKE rid
+           WHERE reqid = rid
           UNION ALL
           SELECT id
             FROM stagePutRequest
-           WHERE reqid LIKE rid
+           WHERE reqid = rid
           UNION ALL
           SELECT id
             FROM StageRepackRequest
@@ -277,22 +277,22 @@ BEGIN
   SELECT id BULK COLLECT INTO reqs
     FROM (SELECT id
             FROM StagePreparetogetRequest
-           WHERE reqid LIKE rid
+           WHERE reqid = rid
           UNION ALL
           SELECT id
             FROM StagePreparetoupdateRequest
-           WHERE reqid LIKE rid
+           WHERE reqid = rid
           UNION ALL
           SELECT id
             FROM StageRepackRequest
-           WHERE reqid LIKE rid
+           WHERE reqid = rid
           );
   IF reqs.COUNT > 0 THEN
-    FORALL i IN reqs.FIRST..reqs.LAST
-      UPDATE SubRequest SET getNextStatus = 2  -- GETNEXTSTATUS_NOTIFIED
-       WHERE getNextStatus = 1  -- GETNEXTSTATUS_FILESTAGED
-         AND request = reqs(i)
-      RETURNING castorfile BULK COLLECT INTO cfs;
+    UPDATE SubRequest 
+       SET getNextStatus = 2  -- GETNEXTSTATUS_NOTIFIED
+     WHERE getNextStatus = 1  -- GETNEXTSTATUS_FILESTAGED
+       AND request IN (SELECT * FROM TABLE(reqs))
+    RETURNING castorfile BULK COLLECT INTO cfs;
     internalStageQuery(cfs, svcClassId, result);
   ELSE
     notfound := 1;
@@ -322,11 +322,11 @@ BEGIN
            WHERE userTag LIKE tag
           );
   IF reqs.COUNT > 0 THEN
-    FORALL i IN reqs.FIRST..reqs.LAST
-      UPDATE SubRequest SET getNextStatus = 2  -- GETNEXTSTATUS_NOTIFIED
-       WHERE getNextStatus = 1  -- GETNEXTSTATUS_FILESTAGED
-         AND request = reqs(i)
-      RETURNING castorfile BULK COLLECT INTO cfs;
+    UPDATE SubRequest 
+       SET getNextStatus = 2  -- GETNEXTSTATUS_NOTIFIED
+     WHERE getNextStatus = 1  -- GETNEXTSTATUS_FILESTAGED
+       AND request IN (SELECT * FROM TABLE(reqs))
+    RETURNING castorfile BULK COLLECT INTO cfs;
     internalStageQuery(cfs, svcClassId, result);
   ELSE
     notfound := 1;
