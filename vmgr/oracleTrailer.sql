@@ -253,3 +253,80 @@ BEGIN
 END VMGR_UPDATE_POOL_OWNER;
 /
 
+/*
+ * Create and populate the table VMGR_TAPE_STATUS_CODE.
+ * 
+ * The first BEGIN-END block check if the table already exist, an if not
+ * it create the table. The second BEGIN-END block populate the table 
+ * with the vmgr status number (from 0 to 63) and the corresponding
+ * string value generated following this bit set convencion:
+ * 	  DISABLED =  1  (000001)
+ *        EXPORTED =  2  (000010)
+ *        BUSY     =  4  (000100)
+ *        FULL     =  8  (001000)
+ *        RDONLY   = 16  (010000)
+ *        ARCHIVED = 32  (100000)
+ */
+DECLARE
+  nbTable         INTEGER        := 0;
+  createTableStmt VARCHAR2(1024) :=
+    'CREATE TABLE vmgr_tape_status_code (' ||
+    '  status_number NUMBER  NOT NULL, '   ||
+    '  status_string VARCHAR2(100)   , '   ||
+    '  CONSTRAINT PK_VmgrTapeStatusCodes_number PRIMARY KEY (status_number))';
+BEGIN
+  SELECT COUNT(*) INTO nbTable FROM USER_TABLES WHERE TABLE_NAME = 'VMGR_TAPE_STATUS_CODE';
+  -- If the table still do not exist in the DB it will create it
+  IF nbTable = 0 THEN
+    DBMS_OUTPUT.PUT_LINE(createTableStmt);
+    execute immediate createTableStmt;
+  END IF;
+END;
+/
+
+DECLARE
+  bitExponent         INTEGER := 0;
+  bitValue            INTEGER := 0;
+  alreadyFoundASetBit BOOLEAN := FALSE;
+  status_str          VARCHAR2(100);
+  nbTable             INTEGER := 0;
+
+BEGIN
+
+  SELECT COUNT(*) INTO nbTable FROM VMGR_TAPE_STATUS_CODE;
+  -- If the table exist and is empty, then populate it
+  IF nbTable = 0 THEN
+
+    FOR statusNb IN 0..63 LOOP
+      status_str := '';
+      alreadyFoundASetBit := FALSE;
+      FOR bitExponent IN REVERSE 0..5 LOOP
+        bitValue := 2 ** bitExponent;
+
+        -- Mask all other bits except for the one in "bitExponent" position
+        IF BITAND(statusNb, bitValue) > 0 THEN
+          IF alreadyFoundASetBit THEN
+            status_str := status_str || '|';
+          END IF;
+          CASE bitValue
+            WHEN  1 THEN status_str := status_str || 'DISABLED';
+            WHEN  2 THEN status_str := status_str || 'EXPORTED';
+            WHEN  4 THEN status_str := status_str || 'BUSY';
+            WHEN  8 THEN status_str := status_str || 'FULL';
+            WHEN 16 THEN status_str := status_str || 'RDONLY';
+            WHEN 32 THEN status_str := status_str || 'ARCHIVED';
+            ELSE         status_str := status_str || 'UNKNOWN';
+          END CASE;
+          alreadyFoundASetBit := TRUE;
+        END IF;
+      END LOOP;
+      -- User visual feedback
+      DBMS_OUTPUT.PUT_LINE(statusNb ||' '||  status_str);
+      INSERT INTO VMGR_TAPE_STATUS_CODE(STATUS_NUMBER, STATUS_STRING) VALUES(statusNb, status_str);
+    END LOOP;
+    commit;
+
+  END IF;
+END;
+/
+
