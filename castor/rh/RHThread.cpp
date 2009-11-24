@@ -125,13 +125,13 @@ castor::rh::RHThread::RHThread()
 //------------------------------------------------------------------------------
 castor::rh::RHThread::~RHThread() throw () {
   /*
-     This empty destructor has to be implemented here and NOT inline,
-     otherwise the following error will happen at linking time:
+    This empty destructor has to be implemented here and NOT inline,
+    otherwise the following error will happen at linking time:
 
-     RHThread.o(.text+0x469): In function `castor::rh::RHThread::RHThread(bool)':
-     .../castor/rh/RHThread.cpp:61: undefined reference to `VTT for castor::rh::RHThread'
+    RHThread.o(.text+0x469): In function `castor::rh::RHThread::RHThread(bool)':
+    .../castor/rh/RHThread.cpp:61: undefined reference to `VTT for castor::rh::RHThread'
 
-     See e.g. http://www.daniweb.com/forums/thread114299.html for more details.
+    See e.g. http://www.daniweb.com/forums/thread114299.html for more details.
   */
 }
 
@@ -217,8 +217,7 @@ void castor::rh::RHThread::run(void* param) {
   Cuuid2string(uuid, CUUID_STRING_LEN+1, &cuuid);
 
   castor::dlf::Param peerParams[] =
-    {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
-     castor::dlf::Param("Port", port)};
+    {castor::dlf::Param("IP", castor::dlf::IPAddress(ip))};
 
   // If the request comes from a secure connection then establish the context &
   // map the user.
@@ -240,7 +239,7 @@ void castor::rh::RHThread::run(void* param) {
     if (0 == fr) {
       delete obj;
       // "Invalid Request"
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 6, 2, peerParams);
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 6, 1, peerParams);
       ack.setStatus(false);
       ack.setErrorCode(EINVAL);
       ack.setErrorMessage("Invalid Request object sent to server.");
@@ -251,9 +250,8 @@ void castor::rh::RHThread::run(void* param) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("Standard Message", sstrerror(e.code())),
        castor::dlf::Param("Precise Message", e.getMessage().str()),
-       castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
-       castor::dlf::Param("Port", port)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 17, 4, params);
+       castor::dlf::Param("IP", castor::dlf::IPAddress(ip))};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 17, 3, params);
     ack.setStatus(false);
     ack.setErrorCode(e.code());
     ack.setErrorMessage(e.getMessage().str());
@@ -262,9 +260,8 @@ void castor::rh::RHThread::run(void* param) {
     // "Unable to read Request from socket"
     castor::dlf::Param params[] =
       {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
-       castor::dlf::Param("Port", port),
        castor::dlf::Param("Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 7, 3, params);
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 7, 2, params);
     ack.setStatus(false);
     ack.setErrorCode(EINVAL);
     std::ostringstream stst;
@@ -305,7 +302,7 @@ void castor::rh::RHThread::run(void* param) {
 
 
       // Log now "New Request Arrival" with the resolved UUID
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 1, 2, peerParams);
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 1, 1, peerParams);
 
       // Complete its client field
       if (0 == client) {
@@ -327,14 +324,14 @@ void castor::rh::RHThread::run(void* param) {
       castor::rh::RateLimiter *rl = getRateLimiterFromTLS();
       if (rl) {
         try {
-	  // Determine the number of subrequests involved in the users
-	  // request
-	  uint64_t nbSubReqs = 1;
-	  castor::stager::FileRequest* filreq =
-	    dynamic_cast<castor::stager::FileRequest*>(fr);
-	  if (0 != filreq) {
-	    nbSubReqs = filreq->subRequests().size();
-	  }
+          // Determine the number of subrequests involved in the users
+          // request
+          uint64_t nbSubReqs = 1;
+          castor::stager::FileRequest* filreq =
+            dynamic_cast<castor::stager::FileRequest*>(fr);
+          if (0 != filreq) {
+            nbSubReqs = filreq->subRequests().size();
+          }
           castor::rh::RatingGroup *ratingGroup =
             rl->checkAndUpdateLimit(fr->euid(), fr->egid(), nbSubReqs);
           if (ratingGroup != 0) {
@@ -428,9 +425,8 @@ void castor::rh::RHThread::run(void* param) {
     if (fr == 0) {
       castor::dlf::Param params2[] =
         {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
-         castor::dlf::Param("Port", port),
          castor::dlf::Param("ElapsedTime", elapsedTime * 0.000001)};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 10, 3, params2);
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 10, 2, params2);
     } else {
 
       // If possible convert the request type to a string for logging
@@ -462,6 +458,7 @@ void castor::rh::RHThread::run(void* param) {
 
       castor::dlf::Param params2[] =
         {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
+         castor::dlf::Param("CallbackPort", client->port()),
          castor::dlf::Param("Type", type.str()),
          castor::dlf::Param("Euid", fr->euid()),
          castor::dlf::Param("Egid", fr->egid()),
@@ -470,7 +467,7 @@ void castor::rh::RHThread::run(void* param) {
          castor::dlf::Param("ClientVersion", clientVersion.str()),
          castor::dlf::Param("SecurityMechanism", client_mech),
          castor::dlf::Param("ElapsedTime", elapsedTime * 0.000001)};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 10, 9, params2);
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 10, 10, params2);
     }
   } catch (castor::exception::Exception e) {
     // "Unable to send Ack to client"
