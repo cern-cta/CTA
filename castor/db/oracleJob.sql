@@ -788,11 +788,13 @@ PROCEDURE failSchedulerJob(srSubReqId IN VARCHAR2, srErrorCode IN NUMBER, res OU
   reqType NUMBER;
   srId NUMBER;
   dcId NUMBER;
+  cfId NUMBER;
 BEGIN
   res := 1;
   -- Get the necessary information needed about the request and subrequest
-  SELECT SubRequest.id, SubRequest.diskcopy, Id2Type.type
-    INTO srId, dcId, reqType
+  SELECT SubRequest.id, SubRequest.diskcopy,
+         Id2Type.type, SubRequest.castorFile
+    INTO srId, dcId, reqType, cfId
     FROM SubRequest, Id2Type
    WHERE SubRequest.subreqid = srSubReqId
      AND SubRequest.request = Id2Type.id
@@ -801,6 +803,9 @@ BEGIN
   UPDATE SubRequest
      SET errorCode = srErrorCode
    WHERE id = srId;
+  -- Lock the CastorFile
+  SELECT id INTO cfId FROM CastorFile
+   WHERE id = cfId FOR UPDATE;
   -- Call the relevant cleanup procedures for the job, procedures that they
   -- would have called themselves if the job had failed!
   IF reqType = 40 THEN -- Put
