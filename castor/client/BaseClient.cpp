@@ -781,7 +781,7 @@ void castor::client::BaseClient::pollAnswersFromStager
         try {
           obj = socket->readObject();
         } catch (castor::exception::Exception e) {
-          // Ignore "Connection closed by remove end" errors. This is just the
+          // Ignore "Connection closed by remote end" errors. This is just the
           // request replier of the stager terminating the connection because it
           // has nothing else to send.
           if (e.code() == 1016) {
@@ -822,10 +822,8 @@ void castor::client::BaseClient::pollAnswersFromStager
           // Check that the request id sent is what we expected
           if ((res->reqAssociated().length() != 0) &&
               (res->reqAssociated() != requestId())) {
-            castor::exception::Communication e(requestId(), SEINTERNAL);
-            e.getMessage() << "Received data for another request: "
-                           << res->reqAssociated();
-            throw e;
+            delete obj;
+            continue;
           }
 
           // Handle the response
