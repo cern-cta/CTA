@@ -799,13 +799,13 @@ BEGIN
    WHERE SubRequest.subreqid = srSubReqId
      AND SubRequest.request = Id2Type.id
      AND SubRequest.status IN (6, 14); -- READY, BEINGSCHED
+  -- Lock the CastorFile
+  SELECT id INTO cfId FROM CastorFile
+   WHERE id = cfId FOR UPDATE;
   -- Set the error code
   UPDATE SubRequest
      SET errorCode = srErrorCode
    WHERE id = srId;
-  -- Lock the CastorFile
-  SELECT id INTO cfId FROM CastorFile
-   WHERE id = cfId FOR UPDATE;
   -- Call the relevant cleanup procedures for the job, procedures that they
   -- would have called themselves if the job had failed!
   IF reqType = 40 THEN -- Put
