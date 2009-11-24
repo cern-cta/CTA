@@ -153,7 +153,7 @@ castor::client::BaseClient::BaseClient
   // translated into -1, i.e. infinity. Equally, any negative value is mapped to
   // -1 as some OSs refuse any other negative value.
   if (acceptTimeout > 2147483 || acceptTimeout < 0) {
-    acceptTimeout = -1;
+    m_acceptTimeout = -1;
   }
 }
 
@@ -629,7 +629,7 @@ void castor::client::BaseClient::buildClient(castor::stager::Request* req)
 #endif
   if (rc == SOCKET_ERROR) {
     castor::exception::InvalidArgument e;
-    e.getMessage() << "Could not set socket asynchonous";
+    e.getMessage() << "Could not set socket asynchronous";
     throw e;
   }
 
