@@ -59,18 +59,23 @@ public:
    */
   enum SocketType {
     /**
-     * The socket-descriptor of the listen socket used to listen for and accept
-     * RTCPD callback connections.
+     * The listen socket used to listen for and accept RTCPD callback
+     * connections.
      */
     CALLBACK,
 
     /**
-     * The socket-descriptor of an RTCPD connection socket.
+     * The initial rtcpd connection.
      */
-    RTCPD,
+    INITIAL_RTCPD,
 
     /**
-     * The socket-descriptor of a tape gateway connection socket.
+     * An rtcpd disk/tape IO control-connection.
+     */
+    RTCPD_DISK_TAPE_IO_CONTROL,
+
+    /**
+     * A tape gateway connection socket.
      */
     GATEWAY
   };
@@ -85,110 +90,124 @@ public:
    *
    * Besides freeing the resources used by this object, this destructor also
    * closes all of the rtcpd and gateway connections in the catalogue.  This
-   * does not however close the listen socket used to accept rtcpd connections.
+   * destructor does not however close the listen socket used to accept rtcpd
+   * connections.
    */
   ~BridgeSocketCatalogue();
 
   /**
-   * Enters the specified socket-descriptor into the catalogue as that of the
-   * single listen socket used to listen for an accept RTCPD callback
-   * connections.
+   * Adds to the catalogue the listen socket used to listen for and accept
+   * RTCPD callback connections.
    *
    * This method throws an exception if the specifed socket-descriptor is
    * negative.
    *
-   * This method throws an exception if the descriptor of the listen socket
-   * has already been entered into the catalogue.
+   * This method throws an exception if the socket-descriptor of the listen
+   * socket has already been entered into the catalogue.
    *
-   * @param l The socket-descriptor of the listen socket.
+   * @param listenSock The socket-descriptor of the listen socket.
    */
-  void enterCallbackSocket(const int callback)
+  void addListenSocket(const int listenSock)
     throw(castor::exception::Exception);
 
   /**
-   * Adds the specified socket-descriptor to the catalogue as that of an rtcpd
-   * connection.
+   * Adds to the catalogue the initial rtpcd connection.
+   *
+   * This method throws an exception if the specifed socket-descriptor is
+   * negative.
+   *
+   * This method throws an exception if the socket-descriptor of the initial
+   * rtcpd connection has already been entered into the catalogue.
+   *
+   * @param rtcpdSock The socket-descriptor of the initial rtcpd connection.
+   */
+  void addInitialRtcpdSocket(const int rtcpdSock)
+    throw(castor::exception::Exception);
+
+  /**
+   * Adds to the catalogue an rtcpd disk/tape IO control-connection.
    *
    * This method throws an exception if the specifed socket-descriptor is
    * negative.
    *
    * This method throws an exception if the specified socket-descriptor has
-   * already been added to the catalogue as that of an rtcpd connection.
+   * already been added to the catalogue as that of an rtcpd disk or tape IO
+   * control-connection.
    *
-   * @param rtcpd The socket-descriptor of the rtcpd connection.
+   * @param rtcpdSock The socket-descriptor of the rtcpd disk/tape IO
+   *                  control-connection.
    */
-  void addRtcpdConnectionSocket(const int rtcpd)
+  void addRtcpdDiskTapeIOControlSocket(const int rtcpdSock)
     throw(castor::exception::Exception);
 
   /**
-   * Releases the specified rtcpd socket-descriptor from the catalogue together
-   * with its associated tape gateway socket-descriptor.  After the release the
-   * destructor of the catalogue will not close either of the connections.
+   * Releases the specified rtcpd disk/tape IO control-connection from the
+   * catalogue together with its associated tape gateway connection if there is
+   * one.  The release means the destructor of the catalogue will no longer
+   * close the connections.
    *
-   * This method throws an exception if the specifed rtpd socket-descriptor is
+   * This method throws an exception if the specifed socket-descriptor is
    * negative.
    *
    * This method throws an exception if the specified socket-descriptor does
-   * not exist in the catalogue as an rtcpd socket-descriptor.
+   * not exist in the catalogue as an rtcpd disk/tape IO control-connection.
    *
-   * @param rtpcd The socket-descriptor of the rtcpd connection.
-   * @return      The socket-descriptor of the associated tape gateway
-   *              connection or -1 if there isn't one.
+   * @param rtcpdSock The socket-descriptor of the rtcpd disk/tape IO
+   *                  control-connection.
+   * @return          The socket-descriptor of the associated tape gateway
+   *                  connection or -1 if there wasn't one.
    */
-  int releaseRtcpdConnectionSocket(const int rtcpd)
+  int releaseRtcpdDiskTapeIOControlSocket(const int rtcpdSock)
     throw(castor::exception::Exception);
 
   /**
-   * Associates the specified tape gateway socket-descriptor with that of the
-   * specified rtpcd connection.  The association means the specified rtcpd
-   * connection is awaiting a reply from the specified tape gateway
+   * Associates the specified tape gateway connection with that of the
+   * specified rtcpd disk/tape IO control-connection.  The association means
+   * the rtcpd control-connection is awaiting a reply from the tape gateway
    * connection.
    *
-   * This method throws an exception if either the socket-descriptor of the
-   * rtcpd connection or that of the tape gateway connection is negative.
+   * This method throws an exception if either of the specified
+   * socket-descriptors are negative.
    *
    * This method throws an exception if the specified socket-descriptor of
-   * the rtcpd connection is not known to the catalogue.  The socket
-   * descriptor of an rtcpd socket must be added to the catalogue before an
-   * associated tape gateway connection can be added.
+   * the rtcpd disk/tape IO control-connection is not known to the catalogue.
    *
-   * This method throws an exception if the specified rtcpd / tape gateway
-   * association already exists in the catalogue.
+   * This method throws an exception if the specified association already
+   * exists in the catalogue.
    *
-   * @param rtcpd   The socket-descriptor of the rtcpd connection which is
-   *                awaiting a reply from the tape gateway connection.
-   * @param gateway The socket-descriptor of the tape gateway connection from
-   *                a reply is expected.
+   * @param rtpcdSock    The socket-descriptor of the rtcpd disk/tape IO
+   *                     control-connection that is awaiting a reply from the
+   *                     specified tape gateway connection.
+   * @param gatewaySock  The socket-descriptor of the tape gateway connection
+   *                     from which a reply is expected.
    */
-  void associateGatewayConnectionSocket(const int rtcpd, const int gateway)
+  void addGatewaySocket(const int rtcpdSock, const int gatewaySock)
     throw(castor::exception::Exception);
 
   /**
-   * Unassociates the specified tape gateway socket-descriptor from the
-   * specified rtcpd socket-descriptor and releases it from the catalogue.  The
-   * removal of the association means the specified rtcpd connection is no 
-   * longer awaiting a reply from the specified tape gateway connection.  The
-   * fact that the tape gateway socket-descriptor is released means that it
-   * will not be closed by the destructor of the catalogue.
+   * Unassociates the specified tape gateway connection from the specified
+   * rtcpd disk/tape IO control-connection and releases it from the catalogue.
+   * The release means the destructor of the catalogue will no longer close the
+   * tape gateway connection.
    *
-   * This method throws an exception if either the specified socket-descriptor
-   * of the rtcpd connection or that of the tape gateway connection is negative.
+   * This method throws an exception if either of the specified
+   * socket-descriptors are negative.
    *
-   * This method throws an exception if the specified rtcpd / tape gateway
-   * association does not exist in the catalogue.
+   * This method throws an exception if the specified association does not
+   * exist in the catalogue.
    *
-   * @param rtcpd   The socket-descriptor of the rtcpd connection.
-   * @param gateway The socket-descriptor of the tape gateway connection.
+   * @param rtcpdSock   The socket-descriptor of the rtcpd connection.
+   * @param gatewaySock The socket-descriptor of the tape gateway connection.
    */
-  void releaseGatewayConnectionSocket(const int rtcpd, const int gateway)
+  void releaseGatewaySocket(const int rtcpdSock, const int gatewaySock)
     throw(castor::exception::Exception);
 
   /**
-   * Returns the tape gateway socket-descriptor associated with specified rtcpd
-   * socket-descriptor.
+   * Returns the tape gateway connection associated with specified rtcpd
+   * disk/tape IO control-connection,
    *
-   * This method throws an exception if the specified socket-descriptor of the
-   * rtcpd connection is negative.
+   * This method throws an exception if the specified socket-descriptor is
+   * is negative.
    *
    * This method throws an exception if the specified rtcpd socket-descriptor
    * does not exist in the catalogue.
@@ -196,18 +215,20 @@ public:
    * This method throws an exception if there is no associated tape gateway
    * socket-descriptor in the catalogue.
    *
-   * @param rtcpd The socket-descriptor of the rtcpd connection.
-   * @return      The associated tape-gateway socket-descriptor.
+   * @param rtcpdSock The socket-descriptor of the rtcpd connection.
+   * @return          The socket-descriptor of the associated tape-gateway
+   *                  connection.
    */
-  int getAssociatedGatewayConnectionSocket(const int rtcpd)
+  int getGatewaySocket(const int rtcpdSock)
     throw(castor::exception::Exception);
 
   /**
-   * Builds the set of file descriptors to checked for  being  ready to read.
+   * Builds the set of file descriptors to be passed to select() to see if any
+   * of them are ready to read.
    *
    * @param readFdSet Output parameter: The built set of file descriptors.
-   * @param maxFd     Output parameter: The maximum of all of the file
-   *                  descriptors in the set of file descriptors.
+   * @param maxFd     Output parameter: The maximum value of all of the file
+   *                  descriptors in the set.
    */
   void buildReadFdSet(fd_set &readFdSet, int &maxFd) throw();
 
@@ -230,7 +251,13 @@ private:
    * The socket-descriptor of the listen socket used to listen for and accept
    * RTCPD callback connections, or -1 if it has not been set.
    */
-  int m_callback;
+  int m_listenSocket;
+
+  /**
+   * The socket-descriptor of the initial rtcpd connection, or -1 if it has not
+   * been set.
+   */
+  int m_initialRtcpdSocket;
 
   /**
    * The socket-descriptor of an rtcpd connection together with the socket
@@ -247,10 +274,27 @@ private:
   };
 
   /**
-   * List of rtcpd connection socket-descriptors together with their associated
-   * tape gateway connection socket-descriptors from which they expect replies.
+   * List of rtcpd disk/tape IO control-connections together with their
+   * associated tape gateway connections.
+   *
+   * The size of this list is equal to the total number of disk/tape IO
+   * control-connections.  This value is used to control the "good day"
+   * shutdown sequence of an rtcpd session.
+   *
+   * The "good day" shutdown sequence of an rtcpd session is as follows:
+   * <ol>
+   * <li>For each rtcpd disk/tape IO control-connection, rtcpd sends an
+   *     RTCP_ENDOF_REQ message which the aggregator acknowledges and closes
+   *     its end of the connection.
+   * <li>Immediately after the aggregator closes the last rtcpd disk/tape IO
+   *     control-onnection (detected by the size of this this list reaching 0),
+   *     the aggregator sends an RTCP_ENDOF_REQ message to rtcpd using the
+   *     initial rtpcd connection.  The aggregator then receives an acknowledge
+   *     from rtcpd and  closes its end of the initial callback connection.
+   * <li>The rtcpd session is now successfully shutdown.
+   * </ol>
    */
-  std::list<RtcpdGateway> m_rtcpdGateways;
+  std::list<RtcpdGateway> m_rtcpdGatewaySockets;
 
 }; // class BridgeSocketCatalogue
 
