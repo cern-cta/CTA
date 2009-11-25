@@ -1163,7 +1163,7 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileRecalled(const c
     m_setFileRecalledStatement->setDouble(2,(double)resp.fileid());
     m_setFileRecalledStatement->setString(3,resp.nshost());
     m_setFileRecalledStatement->setInt(4,resp.fseq());
-    m_setFileRecalledStatement->setInt(5,resp.fileTransactionId());
+    m_setFileRecalledStatement->setDouble(5,(double)resp.fileTransactionId());
 
     m_setFileRecalledStatement->executeUpdate();
     
