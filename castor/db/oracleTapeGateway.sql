@@ -1747,11 +1747,12 @@ PROCEDURE tg_deleteTapeRequest( reqId IN NUMBER ) AS
 BEGIN
 
    --delete the tape request. subrequests don't exist
-   DELETE FROM TapeGatewayRequest 
+    DELETE FROM TapeGatewayRequest 
       WHERE id=reqId AND status=1  
       RETURNING taperecall, streammigration,accessmode
       INTO tpId, strid, reqMode;
-    
+
+    DELETE FROM id2type WHERE id= reqid;
     IF reqmode = 0 THEN
       SELECT id INTO tpId
         FROM Tape
