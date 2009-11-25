@@ -1,6 +1,6 @@
 %define name 	  castor-mon-web
-%define version   1.0.0
-%define release   2
+%define version   1.0.1
+%define release   1
 Summary: 	CASTOR Monitoring web-interface
 Name: 		%{name}
 Version: 	%{version}
@@ -46,7 +46,7 @@ install -m 644 html/images/* $RPM_BUILD_ROOT/var/www/html/castor-mon-web/images/
 install -m 644 html/lib/* $RPM_BUILD_ROOT/var/www/html/castor-mon-web/lib/
 install -m 644 html/stat/* $RPM_BUILD_ROOT/var/www/html/castor-mon-web/stat/
 install -m 644 html/exp_mon/* $RPM_BUILD_ROOT/var/www/html/castor-mon-web/exp_mon/
-install -m 644 conf/* $RPM_BUILD_ROOT/var/www/conf/castor-mon-web/
+install -m 640 conf/* $RPM_BUILD_ROOT/var/www/conf/castor-mon-web/
 install -m 644 jpgraph-1.27/QPL.txt $RPM_BUILD_ROOT/var/www/html/castor-mon-web/jpgraph-1.27/
 install -m 644 jpgraph-1.27/README $RPM_BUILD_ROOT/var/www/html/castor-mon-web/jpgraph-1.27/
 install -m 644 jpgraph-1.27/VERSION $RPM_BUILD_ROOT/var/www/html/castor-mon-web/jpgraph-1.27/
@@ -59,10 +59,4 @@ install -m 644 jpgraph-1.27/src/lang/* $RPM_BUILD_ROOT/var/www/html/castor-mon-w
 /var/www/html/castor-mon-web/
 /var/www/conf/castor-mon-web/
 %attr(-,apache,apache) /var/www/html/castor-mon-web/tmp/jpgraph_cache
-
-%doc
-
-
-
-%changelog
-
+%attr(-,root,apache) /var/www/conf/castor-mon-web/user.php.example
