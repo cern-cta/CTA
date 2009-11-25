@@ -45,10 +45,12 @@ BEGIN
     raise_application_error(-20000, 'User &username does not exist');
   END;
 
-  -- Grant select on all tables and views excluding temporary ones to username
+  -- Grant select on all tables, views and materialized views
   FOR a IN (SELECT table_name FROM user_tables WHERE temporary = 'N'
              UNION ALL
-            SELECT view_name FROM user_views)
+            SELECT view_name FROM user_views
+             UNION ALL
+            SELECT mview_name FROM user_mviews)
   LOOP
     IF a.table_name IN ('DLF_CONFIG', 'DLF_MONITORING', 'CASTORVERSION') THEN
       EXECUTE IMMEDIATE 'GRANT SELECT ON '||a.table_name||' TO &username WITH GRANT OPTION';
