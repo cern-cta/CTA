@@ -756,6 +756,8 @@ XrdxCastor2Stager::StagerQuery(XrdOucErrInfo &error, uid_t uid, gid_t gid, const
 
   stager_seterrbuf(errbuf, sizeof(errbuf));
 
+  stage_setid(uid,gid);
+
   if (stage_filequery(requests, 1, &resp, &nbresps, &Opts) < 0) {
     if (serrno != 0) {
       TRACES(sstrerror(serrno));
