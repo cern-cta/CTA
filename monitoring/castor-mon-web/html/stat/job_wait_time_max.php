@@ -89,16 +89,16 @@ else
      exit;
    } else {// db functionnality
      if ($qn == 1) {
-       $time_series ="select type, max(maxtime)
+       $time_series ="select requesttype, max(maxlatencytime)
 		        from ".$db_instances[$service]['schema'].".latencystats
 		       where timestamp > sysdate - :period
-		      group by type";
+		      group by requesttype";
      } else if ($qn == 2) {
-       $time_series ="select type, max(maxtime)
+       $time_series ="select requesttype, max(maxlatencytime)
 		        from ".$db_instances[$service]['schema'].".latencystats
 		       where timestamp >= to_date(:from_date,'dd/mm/yyyy HH24:Mi')
 	               and timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi')
-	  	      group by type";
+	  	      group by requesttype";
      } 
      $parsedqry = ociparse($con, $time_series);
      if (!$parsedqry) { 

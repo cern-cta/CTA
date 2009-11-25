@@ -98,8 +98,8 @@ else
        if ($query_svc == 0)
          $time_series =
          "select distinct to_char(trunc(timestamp,:interval), :format) bin,
-	   sum (case when type = 'StageGetRequest' then dispatched else 0 end ) read,
-	   sum (case when type = 'StagePutRequest' then dispatched else 0 end ) write
+	   sum (case when requesttype = 'StageGetRequest' then dispatched else 0 end ) read,
+	   sum (case when requesttype = 'StagePutRequest' then dispatched else 0 end ) write
          from ".$db_instances[$service]['schema'].".queuetimestats
          where timestamp >= trunc(sysdate - :period,:interval)
 	 group by to_char(trunc(timestamp,:interval), :format)
@@ -107,8 +107,8 @@ else
 	else
 	$time_series =
          "select distinct to_char(trunc(timestamp,:interval), :format) bin,
-	   sum (case when type = 'StageGetRequest' then dispatched else 0 end ) read,
-	   sum (case when type = 'StagePutRequest' then dispatched else 0 end ) write
+	   sum (case when requesttype = 'StageGetRequest' then dispatched else 0 end ) read,
+	   sum (case when requesttype = 'StagePutRequest' then dispatched else 0 end ) write
          from ".$db_instances[$service]['schema'].".queuetimestats
          where timestamp >= trunc(sysdate - :period,:interval)
 	 and svcclass = :svcclass
@@ -118,8 +118,8 @@ else
         if ($query_svc == 0) 
 	  $time_series =
          "select distinct to_char(trunc(timestamp,:interval), :format) bin, 
-	   sum (case when type = 'StageGetRequest' then dispatched else 0 end ) read,
-	   sum (case when type = 'StagePutRequest' then dispatched else 0 end ) write
+	   sum (case when requesttype = 'StageGetRequest' then dispatched else 0 end ) read,
+	   sum (case when requesttype = 'StagePutRequest' then dispatched else 0 end ) write
          from ".$db_instances[$service]['schema'].".queuetimestats
          where timestamp >= trunc(to_date(:from_date,'dd/mm/yyyy HH24:Mi'),:interval)
            and timestamp <= trunc(to_date(:to_date,'dd/mm/yyyy HH24:Mi'),:interval)
@@ -128,8 +128,8 @@ else
        else
 	 $time_series =
          "select distinct to_char(trunc(timestamp,:interval), :format) bin, 
-	   sum (case when type = 'StageGetRequest' then dispatched else 0 end ) read,
-	   sum (case when type = 'StagePutRequest' then dispatched else 0 end ) write
+	   sum (case when requesttype = 'StageGetRequest' then dispatched else 0 end ) read,
+	   sum (case when requesttype = 'StagePutRequest' then dispatched else 0 end ) write
          from ".$db_instances[$service]['schema'].".queuetimestats
          where timestamp >= trunc(to_date(:from_date,'dd/mm/yyyy HH24:Mi'),:interval)
          and timestamp <= trunc(to_date(:to_date,'dd/mm/yyyy HH24:Mi'),:interval)

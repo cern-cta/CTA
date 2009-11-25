@@ -58,16 +58,16 @@ else if ($timewindow == "7")
 else if ($timewindow == "30")
 	$period = 30;
 if ($qn == 1) 
-	$query1 = "select svcclass, type, avg(avgtime)
+	$query1 = "select svcclass, requesttype, avg(avgqueuetime)
 		   from ".$db_instances[$service]['schema'].".queuetimestats
 		   where timestamp > sysdate - :period
-		   group by svcclass, type";
+		   group by svcclass, requesttype";
 else if ($qn ==2)
-	$query1 = "select svcclass, type, avg(avgtime)
+	$query1 = "select svcclass, requesttype, avg(avgqueuetime)
 		   from ".$db_instances[$service]['schema'].".queuetimestats
 		   where timestamp >= to_date(:from_date,'dd/mm/yyyy HH24:Mi')
 			and timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi')
-		   group by svcclass, type";
+		   group by svcclass, requesttype";
 
 if (!($parsed1 = OCIParse($conn, $query1))) 
 	{ echo "Error Parsing Query";exit();}

@@ -69,42 +69,42 @@ if(!$conn) {
 if ($qn ==1)
 	$query1 = "select distinct bin, count(bin) over (Partition by bin) reqs 
 		from (
-		select files, case when files = 1  then 1
-		  when files > 1 and files < 5 then 2
-		  when files >= 5 and files < 10 then 3
-		  when files >= 10 and files < 40 then 4
-		  when files >= 40 and files < 80 then 5
-		  when files >= 80 and files < 120 then 6
-		  when files >= 120 and files < 160 then 7
-		  when files >= 160 and files < 200 then 8
-		  when files >= 200 and files < 250 then 9
-		  when files >= 250 and files < 300 then 10
-		  when files >= 300 and files < 400 then 11
-		  when files >= 400 and files < 500 then 12
-		  when files >= 500 and files < 1000 then 13
+		select nbfiles, case when nbfiles = 1  then 1
+		  when nbfiles > 1 and nbfiles < 5 then 2
+		  when nbfiles >= 5 and nbfiles < 10 then 3
+		  when nbfiles >= 10 and nbfiles < 40 then 4
+		  when nbfiles >= 40 and nbfiles < 80 then 5
+		  when nbfiles >= 80 and nbfiles < 120 then 6
+		  when nbfiles >= 120 and nbfiles < 160 then 7
+		  when nbfiles >= 160 and nbfiles < 200 then 8
+		  when nbfiles >= 200 and nbfiles < 250 then 9
+		  when nbfiles >= 250 and nbfiles < 300 then 10
+		  when nbfiles >= 300 and nbfiles < 400 then 11
+		  when nbfiles >= 400 and nbfiles < 500 then 12
+		  when nbfiles >= 500 and nbfiles < 1000 then 13
 		  else 14 end bin
-			from (select files from ".$db_instances[$service]['schema'].".taperecalledstats
+			from (select nbfiles from ".$db_instances[$service]['schema'].".taperecalledstats
 		  	      where timestamp > sysdate - :period
 		  ) )
 		order by bin";
 else if ($qn == 2)
 	$query1 = "select distinct bin, count(bin) over (Partition by bin) reqs 
 	from (
-	select files, case when files = 1  then 1
-	  when files > 1 and files < 5 then 2
-	  when files >= 5 and files < 10 then 3
-	  when files >= 10 and files < 40 then 4
-	  when files >= 40 and files < 80 then 5
-	  when files >= 80 and files < 120 then 6
-	  when files >= 120 and files < 160 then 7
-	  when files >= 160 and files < 200 then 8
-	  when files >= 200 and files < 250 then 9
-	  when files >= 250 and files < 300 then 10
-	  when files >= 300 and files < 400 then 11
-	  when files >= 400 and files < 500 then 12
-	  when files >= 500 and files < 1000 then 13
+	select nbfiles, case when nbfiles = 1  then 1
+	  when nbfiles > 1 and nbfiles < 5 then 2
+	  when nbfiles >= 5 and nbfiles < 10 then 3
+	  when nbfiles >= 10 and nbfiles < 40 then 4
+	  when nbfiles >= 40 and nbfiles < 80 then 5
+	  when nbfiles >= 80 and nbfiles < 120 then 6
+	  when nbfiles >= 120 and nbfiles < 160 then 7
+	  when nbfiles >= 160 and nbfiles < 200 then 8
+	  when nbfiles >= 200 and nbfiles < 250 then 9
+	  when nbfiles >= 250 and nbfiles < 300 then 10
+	  when nbfiles >= 300 and nbfiles < 400 then 11
+	  when nbfiles >= 400 and nbfiles < 500 then 12
+	  when nbfiles >= 500 and nbfiles < 1000 then 13
 	  else 14 end bin
-		from (select files from ".$db_instances[$service]['schema'].".taperecalledstats
+		from (select nbfiles from ".$db_instances[$service]['schema'].".taperecalledstats
 	  	      where timestamp >= to_date(:from_date,'dd/mm/yyyy HH24:Mi')
 	                and timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi')
 	  ) )

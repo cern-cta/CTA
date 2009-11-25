@@ -87,18 +87,18 @@ else {
 	}
 }
 if($qn == 1)
-	$query = "select type, sum(requests) 
+	$query = "select requesttype, sum(requests) 
 		  from ".$db_instances[$service]['schema'].".requeststats 
 		  where timestamp > sysdate - :period
 		    and euid = '-'
-		  group by type";
+		  group by requesttype";
 else if ($qn ==2)
-	$query = "select type, sum(requests)
+	$query = "select requesttype, sum(requests)
 		  from ".$db_instances[$service]['schema'].".requeststats
 		  where timestamp >= to_date(:from_date,'dd/mm/yyyy HH24:Mi')
 		    and timestamp <= to_date(:to_date,'dd/mm/yyyy HH24:Mi')
 		    and euid = '-'
-		  group by type";
+		  group by requesttype";
 
 //Create new graph, enable image cache by setting countdown period(in minutes) 
 //depending on selected period. If the cached image is valid the script immediately 
