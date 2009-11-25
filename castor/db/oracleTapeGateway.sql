@@ -1722,13 +1722,19 @@ create or replace
 PROCEDURE tg_deleteStream( strId IN NUMBER ) AS
 unused NUMBER;
 tcIds "numList";
+trId NUMBER;
 BEGIN
+ DELETE FROM tapegatewayrequest WHERE streammigration=strId RETURNING id INTO trId;
+ DELETE FROM id2type WHERE id=trId;
  SELECT id INTO unused FROM Stream WHERE id=strId FOR UPDATE;
- DELETE FROM stream2tapecopy WHERE parent=child RETURNING child BULK COLLECT INTO tcIds;
+ DELETE FROM stream2tapecopy WHERE parent=strId RETURNING child BULK COLLECT INTO tcIds;
  FORALL i IN tcIds.FIRST .. tcIds.LAST
     UPDATE tapecopy SET status = 1 WHERE tcIds(i)=id AND NOT EXISTS (SELECT 'x' FROM stream2tapecopy WHERE stream2tapecopy.child=tcIds(i));
+ DELETE FROM id2type where id=strId;
+ DELETE FROM stream where id=strId;
 END;
-/	
+/
+	
 
 /* delete taperequest  for not existing tape */
 
