@@ -18,17 +18,17 @@ $new_incoming_reqs = "select nvl(sum(requests),0) reqs
                      where timestamp >= sysdate - 1/24
 		       and timestamp < sysdate
 		       and euid = '-'
-		       and type in ('StagePrepareToGetRequest','StageGetRequest')";
-$dispatched_reqs = "select nvl(sum(dispatched),0) dispatched, round(nvl(avg(avgtime),0),3) avg_queue_time
+		       and requesttype in ('StagePrepareToGetRequest','StageGetRequest')";
+$dispatched_reqs = "select nvl(sum(dispatched),0) dispatched, round(nvl(avg(avgqueuetime),0),3) avg_queue_time
                     from ".$db_instances[$service]['schema'].".queuetimestats
 		    where timestamp >= sysdate - 1/24
 		      and timestamp < sysdate
-		      and type = 'StageGetRequest'";
-$latency_reqs = "select nvl(sum(started),0) reqs, round(nvl(avg(avgtime),0),3) avg_latency_time
+		      and requesttype = 'StageGetRequest'";
+$latency_reqs = "select nvl(sum(started),0) reqs, round(nvl(avg(avglatencytime),0),3) avg_latency_time
                     from ".$db_instances[$service]['schema'].".latencystats
 		    where timestamp >= sysdate - 1/24
 		      and timestamp < sysdate
-		      and type = 'StageGetRequest'";
+		      and requesttype = 'StageGetRequest'";
 
 if (!($parsed_incoming_reqs = OCIParse($conn, $new_incoming_reqs))) 
 	{ echo "Error Parsing Query"; exit();}
@@ -56,11 +56,11 @@ while (OCIFetch($parsed_latency_reqs)) {
 }
 $user_incoming_reqs = "select * from (
 		       select euid, sum(requests) reqs, 
-                              sum(case when type = 'StageGetRequest' then requests else 0 end) get, 
-                              sum(case when type = 'StagePrepareToGetRequest' then requests else 0 end) prepare_get  
+                              sum(case when requesttype = 'StageGetRequest' then requests else 0 end) get, 
+                              sum(case when requesttype = 'StagePrepareToGetRequest' then requests else 0 end) prepare_get  
 		       from ".$db_instances[$service]['schema'].".requeststats
                        where euid <> '-'
-                         and type in ('StagePrepareToGetRequest','StageGetRequest')
+                         and requesttype in ('StagePrepareToGetRequest','StageGetRequest')
                          and timestamp >= sysdate - 1/24
                          and timestamp <= sysdate
                        group by euid

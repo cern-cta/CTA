@@ -20,20 +20,20 @@ $incoming_reqs = "select distinct to_char(trunc(timestamp,'Mi'), 'HH24:Mi') bin,
                   where timestamp >= trunc(sysdate - 4/24,'Mi')
                     and timestamp <= trunc(sysdate,'Mi')
                     and euid = '-'
-                    and type in ('StagePrepareToGetRequest','StageGetRequest')
+                    and requesttype in ('StagePrepareToGetRequest','StageGetRequest')
                   order by bin";
-$dispatched_reqs = "select distinct to_char(trunc(timestamp,'Mi'), 'HH24:Mi') bin, nvl(sum(dispatched),0) dispatched, nvl(round(avg(avgtime),3),0) avg_time
+$dispatched_reqs = "select distinct to_char(trunc(timestamp,'Mi'), 'HH24:Mi') bin, nvl(sum(dispatched),0) dispatched, nvl(round(avg(avgqueuetime),3),0) avg_time
 		    from ".$db_instances[$service]['schema'].".queuetimestats
                     where timestamp >= trunc(sysdate - 4/24,'Mi')
                       and timestamp <= trunc(sysdate,'Mi')
-                      and type = 'StageGetRequest'
+                      and requesttype = 'StageGetRequest'
                     group by trunc(timestamp,'Mi')
                     order by bin";
-$latency_reqs = "select distinct to_char(trunc(timestamp,'Mi'), 'HH24:Mi') bin, nvl(sum(started),0) dispatched, nvl(round(avg(avgtime),3),0) avg_time
+$latency_reqs = "select distinct to_char(trunc(timestamp,'Mi'), 'HH24:Mi') bin, nvl(sum(started),0) dispatched, nvl(round(avg(avglatencytime),3),0) avg_time
 		 from ".$db_instances[$service]['schema'].".latencystats
                  where timestamp >= trunc(sysdate - 4/24,'Mi')
                    and timestamp <= trunc(sysdate,'Mi')
-                   and type = 'StageGetRequest'
+                   and requesttype = 'StageGetRequest'
                  group by trunc(timestamp,'Mi')
                  order by bin";		 
 if (!($parsed_incoming_reqs = OCIParse($conn, $incoming_reqs))) 

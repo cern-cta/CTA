@@ -22,29 +22,29 @@ $new_inc_put_reqs = "select nvl(sum(requests),0) reqs
                      where timestamp >= sysdate - 1/24
 		       and timestamp < sysdate
 		       and euid = '-'
-		       and type  = 'StagePutRequest'";
+		       and requesttype  = 'StagePutRequest'";
 $new_space_reserve_reqs = "select nvl(sum(requests),0) reqs
 			   from ".$db_instances[$service]['schema'].".requeststats
 			   where timestamp >= sysdate - 1/24
 			     and timestamp < sysdate
 			     and euid = '-'
-			     and type  = 'StagePrepareToPutRequest'";
+			     and requesttype  = 'StagePrepareToPutRequest'";
 $put_done_reqs = "select nvl(sum(requests),0) reqs
 		  from ".$db_instances[$service]['schema'].".requeststats
 		  where timestamp >= sysdate - 1/24
 		    and timestamp < sysdate
 		    and euid = '-'
-		    and type  = 'StagePutDoneRequest'";
-$dispatched_reqs = "select nvl(sum(dispatched),0) dispatched, round(nvl(avg(avgtime),0),3) avg_queue_time
+		    and requesttype  = 'StagePutDoneRequest'";
+$dispatched_reqs = "select nvl(sum(dispatched),0) dispatched, round(nvl(avg(avgqueuetime),0),3) avg_queue_time
                     from ".$db_instances[$service]['schema'].".queuetimestats
 		    where timestamp >= sysdate - 1/24
 		      and timestamp < sysdate
-		      and type = 'StagePutRequest'";
-$latency_reqs = "select nvl(sum(started),0) reqs, round(nvl(avg(avgtime),0),3) avg_latency_time
+		      and requesttype = 'StagePutRequest'";
+$latency_reqs = "select nvl(sum(started),0) reqs, round(nvl(avg(avglatencytime),0),3) avg_latency_time
                     from ".$db_instances[$service]['schema'].".latencystats
 		    where timestamp >= sysdate - 1/24
 		      and timestamp < sysdate
-		      and type = 'StagePutRequest'";
+		      and requesttype = 'StagePutRequest'";
 
 if (!($parsed_inc_put_reqs = OCIParse($conn, $new_inc_put_reqs))) 
 	{ echo "Error Parsing Query"; exit();}
@@ -86,12 +86,12 @@ while (OCIFetch($parsed_latency_reqs)) {
 }
 $user_incoming_reqs = "select * from (
 		       select euid, sum(requests) reqs, 
-			sum(case when type = 'StagePutRequest' then requests else 0 end) put, 
-			sum(case when type = 'StagePrepareToPutRequest' then requests else 0 end) prepare_put,
-			sum(case when type = 'StagePutDoneRequest' then requests else 0 end) put_done
+			sum(case when requesttype = 'StagePutRequest' then requests else 0 end) put, 
+			sum(case when requesttype = 'StagePrepareToPutRequest' then requests else 0 end) prepare_put,
+			sum(case when requesttype = 'StagePutDoneRequest' then requests else 0 end) put_done
 		       from ".$db_instances[$service]['schema'].".requeststats
 		       where euid <> '-'
-			and type in ('StagePrepareToPutRequest','StagePutRequest','StagePutDoneRequest')
+			and requesttype in ('StagePrepareToPutRequest','StagePutRequest','StagePutDoneRequest')
 			and timestamp >= sysdate - 1/24
 			and timestamp <= sysdate
 		       group by euid

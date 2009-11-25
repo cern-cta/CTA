@@ -18,14 +18,14 @@ if (!$conn) {
 }
 $incoming_reqs = "select distinct to_char(trunc(timestamp,'Mi'), 'HH24:Mi') bin, 
                          sum(requests) over (Partition by trunc(timestamp,'Mi')) total_req,
-			 sum(case when type = 'StagePutRequest' then requests else 0 end) over (Partition by trunc(timestamp,'Mi')) number_of_put_req,
-			 sum(case when type = 'StagePrepareToPutRequest' then requests else 0 end) over (Partition by trunc(timestamp,'Mi')) number_of_prep_put_req,
-			 sum(case when type = 'StagePreparePutDoneRequest' then requests else 0 end) over (Partition by trunc(timestamp,'Mi')) number_of_put_done_req
+			 sum(case when requesttype = 'StagePutRequest' then requests else 0 end) over (Partition by trunc(timestamp,'Mi')) number_of_put_req,
+			 sum(case when requesttype = 'StagePrepareToPutRequest' then requests else 0 end) over (Partition by trunc(timestamp,'Mi')) number_of_prep_put_req,
+			 sum(case when requesttype = 'StagePreparePutDoneRequest' then requests else 0 end) over (Partition by trunc(timestamp,'Mi')) number_of_put_done_req
                   from ".$db_instances[$service]['schema'].".requeststats
                   where timestamp >= trunc(sysdate - 4/24,'Mi')
                     and timestamp <= trunc(sysdate,'Mi')
                     and euid = :euid
-                    and type in ('StagePrepareToPutRequest','StagePutRequest','StagePutDoneRequest')
+                    and requesttype in ('StagePrepareToPutRequest','StagePutRequest','StagePutDoneRequest')
                   order by bin";
 if (!($parsed_incoming_reqs = OCIParse($conn, $incoming_reqs))) 
 	{ echo "Error Parsing Query"; exit();}

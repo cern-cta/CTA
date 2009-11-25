@@ -19,12 +19,12 @@ if(!$conn) {
 }
 $user_incoming_reqs = "select * from (
 		       select euid, sum(requests) reqs, 
-			sum(case when type = 'StagePutRequest' then requests else 0 end) put, 
-			sum(case when type = 'StagePrepareToPutRequest' then requests else 0 end) prepare_put,
-			sum(case when type = 'StagePutDoneRequest' then requests else 0 end) put_done
+			sum(case when requesttype = 'StagePutRequest' then requests else 0 end) put, 
+			sum(case when requesttype = 'StagePrepareToPutRequest' then requests else 0 end) prepare_put,
+			sum(case when requesttype = 'StagePutDoneRequest' then requests else 0 end) put_done
 		       from ".$db_instances[$service]['schema'].".requeststats
 		       where euid <> '-'
-			and type in ('StagePrepareToPutRequest','StagePutRequest','StagePutDoneRequest')
+			and requesttype in ('StagePrepareToPutRequest','StagePutRequest','StagePutDoneRequest')
 			and timestamp >= sysdate - 1/24
 			and timestamp <= sysdate
 		       group by euid

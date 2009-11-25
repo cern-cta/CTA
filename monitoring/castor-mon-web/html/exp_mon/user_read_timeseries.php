@@ -18,13 +18,13 @@ if (!$conn) {
 }
 $incoming_reqs = "select distinct to_char(trunc(timestamp,'Mi'), 'HH24:Mi') bin, 
                          sum(requests) over (Partition by trunc(timestamp,'Mi')) total_req,
-			 sum(case when type = 'StageGetRequest' then requests else 0 end) over (Partition by trunc(timestamp,'Mi')) number_of_get_req,
-			 sum(case when type = 'StagePrepareToGetRequest' then requests else 0 end) over (Partition by trunc(timestamp,'Mi')) number_of_prep_get_req
+			 sum(case when requesttype = 'StageGetRequest' then requests else 0 end) over (Partition by trunc(timestamp,'Mi')) number_of_get_req,
+			 sum(case when requesttype = 'StagePrepareToGetRequest' then requests else 0 end) over (Partition by trunc(timestamp,'Mi')) number_of_prep_get_req
                   from ".$db_instances[$service]['schema'].".requeststats
                   where timestamp >= trunc(sysdate - 4/24,'Mi')
                     and timestamp <= trunc(sysdate,'Mi')
                     and euid = :euid
-                    and type in ('StagePrepareToGetRequest','StageGetRequest')
+                    and requesttype in ('StagePrepareToGetRequest','StageGetRequest')
                   order by bin";
 if (!($parsed_incoming_reqs = OCIParse($conn, $incoming_reqs))) 
 	{ echo "Error Parsing Query"; exit();}
