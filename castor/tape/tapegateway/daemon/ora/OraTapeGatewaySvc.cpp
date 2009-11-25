@@ -722,7 +722,6 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::restartLostReqs(const st
 //----------------------------------------------------------------------------
 
 void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToMigrate(const castor::tape::tapegateway::FileToMigrateRequest& req,castor::tape::tapegateway::FileToMigrate& file) throw (castor::exception::Exception){
-  castor::tape::tapegateway::FileToMigrate* result=NULL;
 
   try {
 
@@ -823,10 +822,10 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToMigrate(const c
 
 	    
 	    FileErrorReport failure;
-	    failure.setMountTransactionId(result->mountTransactionId()); 
-	    failure.setFileid(result->fileid());
-	    failure.setNshost(result->nshost());
-	    failure.setFseq(result->fseq());
+	    failure.setMountTransactionId(file.mountTransactionId()); 
+	    failure.setFileid(file.fileid());
+	    failure.setNshost(file.nshost());
+	    failure.setFseq(file.fseq());
 	    failure.setErrorCode(e.code());
 	    invalidateFile(failure);
 
