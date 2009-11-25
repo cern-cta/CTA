@@ -54,7 +54,7 @@
 		<!--[if IE]>
 		<style type="text/css" media="screen">	
 		body {
-			behavior: url('../lib/csshover.htc');
+			behavior: url('lib/csshover.htc');
 			font-size: 100%;
 		} 
 		#menu ul li {float: left; width: 100%;}
