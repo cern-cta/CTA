@@ -25,12 +25,12 @@ if(!$conn) {
 	exit;
 }
 
-$query1 = "select type request, sum(requests) total
+$query1 = "select requesttype request, sum(requests) total
 	     from ".$db_instances[$service]['schema'].".requeststats
 	    where timestamp >= sysdate - 15/1440
 	    and timestamp < sysdate - 5/1440
 	    and euid = '-'
-            group by type
+            group by requesttype
 	    order by total desc";
 
 if (!($parsed1 = OCIParse($conn, $query1))) 
