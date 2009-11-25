@@ -108,7 +108,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
 
     castor::exception::Exception ex(EINVAL);
     ex.getMessage()
-      << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream"
+      << "castor::tape::tapegateway::TapeStreamLinkerThread"
       << " invalid input";
     throw ex;
 
@@ -154,16 +154,17 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
 	 castor::dlf::Param("errorCode",sstrerror(e.code())),
 	 castor::dlf::Param("errorMessage",e.getMessage().str())
 	};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, LINKER_NO_TAPE_AVAILABLE, 3, params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, LINKER_NO_TAPE_AVAILABLE, 3, params);
 
       // different errors from vmgr
       
       if (e.code()== ENOENT){
-
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, LINKER_NOT_POOL, 3, params);
+	
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, LINKER_NOT_POOL, 3, params);
 	//tapepool doesn't exists anymore
 
 	try {
+	  
 	  oraSvc->deleteStreamWithBadTapePool(*strItem);
 
 	} catch (castor::exception::Exception e){
