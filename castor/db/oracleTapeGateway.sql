@@ -1730,4 +1730,78 @@ BEGIN
 END;
 /	
 
+/* delete taperequest  for not existing tape */
+
+create or replace
+PROCEDURE tg_deleteTapeRequest( reqId IN NUMBER ) AS
+  CONSTRAINT_VIOLATED EXCEPTION;
+  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -02292);
+  tpId NUMBER;
+  strId NUMBER;
+  reqMode INTEGER;
+  segNum INTEGER;
+  cfId NUMBER;
+  tcIds "numList";
+  srIds "numList";
+ 
+BEGIN
+
+   --delete the tape request. subrequests don't exist
+   DELETE FROM TapeGatewayRequest 
+      WHERE id=reqId AND status=1  
+      RETURNING taperecall, streammigration,accessmode
+      INTO tpId, strid, reqMode;
+    
+    IF reqmode = 0 THEN
+      SELECT id INTO tpId
+        FROM Tape
+        WHERE id =tpId
+        FOR UPDATE;
+        
+      SELECT copy BULK COLLECT INTO tcIds FROM Segment WHERE tape=tpId;
+    
+      FOR i IN tcIds.FIRST .. tcIds.LAST  LOOP
+        -- lock castorFile	
+        SELECT castorFile INTO cfId 
+          FROM TapeCopy,CastorFile
+          WHERE TapeCopy.id = tcIds(i) 
+          AND CastorFile.id = TapeCopy.castorfile 
+          FOR UPDATE OF castorfile.id;
+
+        -- fail diskcopy
+        UPDATE DiskCopy SET status = 4 -- DISKCOPY_FAILED
+          WHERE castorFile = cfId 
+          AND status = 2; -- DISKCOPY_WAITTAPERECALL   
+
+        deleteTapeCopies(cfId);
+        UPDATE SubRequest 
+          SET status = 7, -- SUBREQUEST_FAILED
+              getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED (not strictly correct but the request is over anyway)
+              lastModificationTime = getTime(),
+              errorCode = 1015,  -- SEINTERNAL
+              errorMessage = 'File recall from tape has failed, please try again later',
+              parent = 0
+          WHERE castorFile = cfId 
+          AND status IN (4, 5); -- WAITTAPERECALL, WAITSUBREQ
+    
+      END LOOP;
+    END IF;
+    IF reqmode = 1 THEN
+    -- write
+    -- reset stream
+       BEGIN
+         DELETE FROM Stream WHERE id = strId;
+         DELETE FROM id2type WHERE id=strId;
+
+       EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
+       -- constraint violation and we cannot delete the stream because there is an entry in Stream2TapeCopy
+         UPDATE Stream SET status = 6, tape = null, lastFileSystemChange = null
+           WHERE id = strId;
+       END;
+       -- reset tape
+       UPDATE Tape SET status=0, stream = null WHERE stream = strId;
+  END IF;
+END;
+/
+
 
