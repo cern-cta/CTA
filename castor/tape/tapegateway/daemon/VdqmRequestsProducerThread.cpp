@@ -146,7 +146,6 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::process(castor::IObj
   VmgrTapeGatewayHelper vmgrHelper;
   
   // query vmgr to check the tape status and to retrieve the dgn
-  std::string dgn,label,densiti;
 
   castor::stager::Tape tape;
   tape.setVid(request->vid());
@@ -162,7 +161,6 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::process(castor::IObj
 
   } catch (castor::exception::Exception e) {
     
-    
     try {
       if ( e.code() == ENOENT ||  
 	   e.code() == EFAULT ||
@@ -172,12 +170,8 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::process(castor::IObj
 	   e.code() == ETARCH ) {
 	// cancell the operation in the db for this error
 	// tape is in a bad status, no need to un-BUSY it
-	
-	EndNotificationErrorReport failure;
-	failure.setId(request->taperequest());
-	failure.setErrorCode(e.code());
 
-	oraSvc->failTapeSession(failure);
+	oraSvc->deleteTapeRequest(request->taperequest());
       
       } else {
 

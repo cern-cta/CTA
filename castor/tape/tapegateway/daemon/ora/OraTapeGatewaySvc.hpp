@@ -277,7 +277,9 @@ namespace castor {
 	virtual void deleteStreamWithBadTapePool(const castor::stager::Stream& stream) 
 	  throw (castor::exception::Exception);
 
-
+	/* delete taperequest */
+	virtual void deleteTapeRequest(const u_signed64& tapeRequestId)
+	  throw (castor::exception::Exception);
 
       private:
 
@@ -360,6 +362,8 @@ namespace castor {
 	static const std::string s_deleteStreamWithBadTapePoolStatementString;
 	oracle::occi::Statement *m_deleteStreamWithBadTapePoolStatement;
 
+	static const std::string s_deleteTapeRequestStatementString;
+	oracle::occi::Statement *m_deleteTapeRequestStatement;
 
       }; // end of class OraTapeGateway
 

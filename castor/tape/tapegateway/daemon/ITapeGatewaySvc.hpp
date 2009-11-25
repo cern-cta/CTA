@@ -267,6 +267,11 @@ namespace castor {
 	virtual void deleteStreamWithBadTapePool(const castor::stager::Stream& stream) 
 	  throw (castor::exception::Exception)=0;
 	
+	/* delete tape request associated to a bad tape */
+
+	virtual void deleteTapeRequest(const u_signed64& tapeRequestId)throw (castor::exception::Exception)=0;
+
+
 
       }; // end of class ITapeGatewaySvc
     } // end of namespace tapegateway

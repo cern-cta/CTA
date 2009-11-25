@@ -125,7 +125,7 @@ const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_checkConf
 
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_deleteStreamWithBadTapePoolStatementString="BEGIN tg_deleteStream(:1);END;";
 
-
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_deleteTapeRequestStatementString="BEGIN tg_deleteTapeRequest(:1);END;";
 
 
 //------------------------------------------------------------------------------
@@ -156,7 +156,8 @@ castor::tape::tapegateway::ora::OraTapeGatewaySvc::OraTapeGatewaySvc(const std::
   m_invalidateFileStatement(0),
   m_getTapeToReleaseStatement(0),
   m_checkConfigurationStatement(0),
-  m_deleteStreamWithBadTapePoolStatement(0)
+  m_deleteStreamWithBadTapePoolStatement(0),
+  m_deleteTapeRequestStatement(0)
 {
 }
 
@@ -212,8 +213,8 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
     if ( m_invalidateFileStatement ) deleteStatement(m_invalidateFileStatement);
     if ( m_getTapeToReleaseStatement ) deleteStatement(m_getTapeToReleaseStatement);
     if ( m_checkConfigurationStatement ) deleteStatement(m_checkConfigurationStatement);
-    if ( m_deleteStreamWithBadTapePoolStatement) deleteStatement(m_deleteStreamWithBadTapePoolStatement);
-    
+    if ( m_deleteStreamWithBadTapePoolStatement) deleteStatement(m_deleteStreamWithBadTapePoolStatement);    
+    if ( m_deleteTapeRequestStatement) deleteStatement(m_deleteTapeRequestStatement);
 
   } catch (oracle::occi::SQLException e) {};
 
@@ -243,7 +244,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
   m_getTapeToReleaseStatement=0;
   m_checkConfigurationStatement=0;
   m_deleteStreamWithBadTapePoolStatement=0;
- 
+  m_deleteTapeRequestStatement=0; 
 }
 
 //----------------------------------------------------------------------------
@@ -2005,4 +2006,33 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::deleteStreamWithBadTape
 
 }
  
+//----------------------------------------------------------------------------
+// deleteTapeRequest
+//----------------------------------------------------------------------------
 
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::deleteTapeRequest(const u_signed64& tapeRequestId)throw (castor::exception::Exception){
+
+  try {
+    // Check whether the statements are ok
+    if (0 == m_deleteTapeRequestStatement) {
+      m_deleteTapeRequestStatement =
+        createStatement(s_deleteTapeRequestStatementString);
+    }
+
+    m_deleteTapeRequestStatement->setDouble(1,(double)tapeRequestId);
+
+    // execute the statement and see whether we found something
+ 
+    m_deleteTapeRequestStatement->executeUpdate();
+
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in deleteTapeRequest"
+      << std::endl << e.what();
+    throw ex;
+  }
+
+
+}
