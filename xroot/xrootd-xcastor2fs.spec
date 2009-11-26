@@ -64,6 +64,13 @@ fi
 * Wed Nov 25 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.9-2
 - added stage_setid to the StagerQuery call
 
+* Thu Oct 29 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.8-10
+- preventing bug resulting in infinite loop if user specifies no serviceclass
+
+* Wed Oct 28 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.8-9
+- fixed deadlock Mutex when using GridMap files
+- handling properly gridmap-file mapping with CN=... appended when client uses a proxy certificate
+
 * Mon Oct 12 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.9-1
 - added support to delete a single replica using "?stagermreplica"
 - fixed door for localhost tape access 

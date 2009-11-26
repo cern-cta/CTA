@@ -1,5 +1,5 @@
-//          $Id: XrdxCastor2Fs.cc,v 1.14 2009/07/06 08:27:11 apeters Exp $
-const char *XrdxCastor2FsCVSID = "$Id: XrdxCastor2Fs.cc,v 1.14 2009/07/06 08:27:11 apeters Exp $";
+//          $Id: XrdxCastor2Fs.cc,v 1.12 2009/05/19 19:52:21 apeters Exp $
+const char *XrdxCastor2FsCVSID = "$Id: XrdxCastor2Fs.cc,v 1.12 2009/05/19 19:52:21 apeters Exp $";
 
 #include "XrdVersion.hh"
 #include "XrdClient/XrdClientAdmin.hh"
@@ -121,10 +121,12 @@ STRINGSTORE(const char* __charptr__) {
       } else {                                                           \
         if (!(pw = XrdxCastor2Fs::passwdstore->Find(_client.name))) {    \
           pw = getpwnam(_client.name);                                   \
-          struct passwd* pwdcpy = (struct passwd*) malloc(sizeof(struct passwd));\
-          memcpy(pwdcpy,pw,sizeof(struct passwd));                       \
-          pw = pwdcpy;                                                   \
-          XrdxCastor2Fs::passwdstore->Add(_client.name,pwdcpy,60);       \
+	  if (pw) {\
+	    struct passwd* pwdcpy = (struct passwd*) malloc(sizeof(struct passwd));\
+	    memcpy(pwdcpy,pw,sizeof(struct passwd));                       \
+	    pw = pwdcpy; \
+	    XrdxCastor2Fs::passwdstore->Add(_client.name,pwdcpy,60);       \
+	  }\
         }                                                                \
         if (pw) _uid=pw->pw_uid;                                         \
       }                                                                  \
@@ -144,8 +146,7 @@ STRINGSTORE(const char* __charptr__) {
       XTRACE(authorize, _x, tracestring.c_str());			 \
     }									 \
     XrdxCastor2FS->MapMutex.UnLock();                                    \
-  } while (0);
-
+  } while (0);\
 
 /*----------------------------------------------------------------------------*/
 #define SETACL(_x,_client,_link) \
@@ -197,48 +198,49 @@ STRINGSTORE(const char* __charptr__) {
 
 
 /*----------------------------------------------------------------------------*/
-#define GETALLGROUPS(__name__, __allgroups__, __defaultgroup__)         \
-  do {                                                                  \
-  __allgroups__=":";                                                    \
-  __defaultgroup__="";                                                  \
-  XrdxCastor2FsGroupInfo* ginfo=NULL;                                   \
-  if (ginfo = XrdxCastor2FS->groupinfocache->Find(__name__)) {          \
-    __allgroups__ = ginfo->AllGroups;                                   \
-    __defaultgroup__ = ginfo->DefaultGroup;                             \
-    break;                                                              \
-  }                                                                     \
-  struct group* gr;                                                     \
-  struct passwd* passwdinfo = NULL;                                     \
-  if (!(passwdinfo = XrdxCastor2Fs::passwdstore->Find(__name__))) {     \
-      passwdinfo = getpwnam(__name__);                                  \
-      if (passwdinfo) {                                                 \
-        struct passwd* pwdcpy = (struct passwd*) malloc(sizeof(struct passwd));\
-        memcpy(pwdcpy,passwdinfo,sizeof(struct passwd));                \
-        passwdinfo = pwdcpy;                                            \
-        XrdxCastor2Fs::passwdstore->Add(__name__,pwdcpy,60);            \
-      }                                                                 \
-  }                                                                     \
-  if (!passwdinfo)                                                      \
-    continue;                                                           \
-  setgrent();                                                           \
-  while( (gr = getgrent() ) ) {                                         \
-     int cnt;                                                           \
-     cnt=0;                                                             \
-     if (gr->gr_gid == passwdinfo->pw_gid) {                            \
-       if (!__defaultgroup__.length()) __defaultgroup__+= gr->gr_name;  \
-       __allgroups__+= gr->gr_name; __allgroups__+=":";                 \
-     }                                                                  \
-     while (gr->gr_mem[cnt]) {                                          \
-       if (!strcmp(gr->gr_mem[cnt],__name__)) {                         \
-          __allgroups__+= gr->gr_name; __allgroups__+=":";              \
-       }                                                                \
-       cnt++;                                                           \
-     }                                                                  \
-  }                                                                     \
-  endgrent();                                                           \
-  ginfo = new XrdxCastor2FsGroupInfo(__defaultgroup__.c_str(), __allgroups__.c_str(),passwdinfo);\
-  XrdxCastor2FS->groupinfocache->Add(__name__,ginfo, ginfo->Lifetime);  \
-  } while(0);                                                           \
+void GETALLGROUPS(const char* __name__, XrdOucString& __allgroups__, XrdOucString& __defaultgroup__) {        
+  do {                                                                  
+  __allgroups__=":";                                                    
+  __defaultgroup__="";                                                  
+  XrdxCastor2FsGroupInfo* ginfo=NULL;                                   
+  if (ginfo = XrdxCastor2FS->groupinfocache->Find(__name__)) {          
+    __allgroups__ = ginfo->AllGroups;                                   
+    __defaultgroup__ = ginfo->DefaultGroup;                             
+    break;                                                              
+  }                                                                     
+  struct group* gr;                                                     
+  struct passwd* passwdinfo = NULL;                                     
+  if (!(passwdinfo = XrdxCastor2Fs::passwdstore->Find(__name__))) {     
+      passwdinfo = getpwnam(__name__);                                  
+      if (passwdinfo) {                                                 
+        struct passwd* pwdcpy = (struct passwd*) malloc(sizeof(struct passwd));
+        memcpy(pwdcpy,passwdinfo,sizeof(struct passwd));                
+        passwdinfo = pwdcpy;                                            
+        XrdxCastor2Fs::passwdstore->Add(__name__,pwdcpy,60);            
+      }                                                                 
+  }                                                                     
+  if (!passwdinfo)                                                      
+    continue;                                                           
+  setgrent();                                                           
+  while( (gr = getgrent() ) ) {                                         
+     int cnt;                                                           
+     cnt=0;                                                             
+     if (gr->gr_gid == passwdinfo->pw_gid) {                            
+       if (!__defaultgroup__.length()) __defaultgroup__+= gr->gr_name;  
+       __allgroups__+= gr->gr_name; __allgroups__+=":";                 
+     }                                                                  
+     while (gr->gr_mem[cnt]) {                                          
+       if (!strcmp(gr->gr_mem[cnt],__name__)) {                         
+          __allgroups__+= gr->gr_name; __allgroups__+=":";              
+       }                                                                
+       cnt++;                                                           
+     }                                                                  
+  }                                                                     
+  endgrent();                                                           
+  ginfo = new XrdxCastor2FsGroupInfo(__defaultgroup__.c_str(), __allgroups__.c_str(),passwdinfo);
+  XrdxCastor2FS->groupinfocache->Add(__name__,ginfo, ginfo->Lifetime);  
+  } while(0);                                                           
+}
 
 /*----------------------------------------------------------------------------*/
 
@@ -318,13 +320,19 @@ void ROLEMAP(const XrdSecEntity* _client,const char* _env,XrdSecEntity &_mappedc
 	  _mappedclient.name = STRINGSTORE(certsubject.c_str());       
 	}                                                              
 	certsubject.replace("/CN=proxy","");                           
+	// leave only the first CN=, cut the rest
+	int pos = certsubject.find("CN=");
+	int pos2 = certsubject.find("/",pos);
+	if (pos2>0) certsubject.erase(pos2);
 	XrdOucString* gridmaprole;                                     
-	XrdxCastor2FS->GridMapMutex.Lock();                             
 	if (XrdxCastor2FS->GridMapFile.length()) XrdxCastor2FS->ReloadGridMapFile();
+	XrdxCastor2FS->GridMapMutex.Lock();                             
+
 	if ((gridmaprole = XrdxCastor2FS->gridmapstore->Find(certsubject.c_str()))) { 
 	  _mappedclient.name = STRINGSTORE(gridmaprole->c_str());      
-	  _mappedclient.role = 0;                                      
-	}                                                              
+	  _mappedclient.role = 0;
+	}                                        
+
 	XrdxCastor2FS->GridMapMutex.UnLock();                           
       }                                                                 
     }									
@@ -446,9 +454,14 @@ XrdxCastor2Fs::ReloadGridMapFile()
 	  char usernameout[4096];
 	  int nitems;
 	  // parse it
-	  while ( (nitems = fscanf(mapin,"%s %s", userdnin,usernameout)) == 2) {
+	  while ( (nitems = fscanf(mapin,"\"%[^\"]\" %s\n", userdnin,usernameout)) == 2) {
 	    XrdOucString dn = userdnin;
 	    dn.replace("\"","");
+	    // leave only the first CN=, cut the rest
+	    int pos = dn.find("CN=");
+	    int pos2 = dn.find("/",pos);
+	    if (pos2>0) dn.erase(pos2);
+
 	    if (!gridmapstore->Find(dn.c_str())) {
 	      gridmapstore->Add(dn.c_str(), new XrdOucString(usernameout));
 	      TRACES("GridMapFile Mapping Added: " << dn.c_str() << " |=> " << usernameout);
@@ -501,7 +514,7 @@ XrdxCastor2Fs::ReloadVomsMapFile()
 	  char usernameout[4096];
 	  int nitems;
 	  // parse it
-	  while ( (nitems = fscanf(mapin,"%s %s", userdnin,usernameout)) == 2) {
+	  while ( (nitems = fscanf(mapin,"\"%[^\"]\" %s\n", userdnin,usernameout)) == 2) {
 	    XrdOucString dn = userdnin;
 	    dn.replace("\"","");
 	    if (!vomsmapstore->Find(dn.c_str())) {
@@ -1277,7 +1290,7 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
        bool allowed= false;
        int hasmore=0;
        do {
-	 if ((hasmore=XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass,n, tident))==1) {
+	 if ((hasmore=XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass,n++, tident))==1) {
 	   // select the policy
 	   policy=NULL;
 	   XrdOucString *wildcardpolicy=NULL;
@@ -1301,8 +1314,7 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
 	     break;
 	   }
 	 }
-	 n++;
-       } while((n<999) && (hasmore>=0));
+       } while((n<20) && (hasmore>=0));
        if (!allowed) {
 	 return XrdxCastor2Fs::Emsg(epname, error, EPERM, "write - you are not allowed to do write requests for fn = ", path);	   
        }
@@ -1411,7 +1423,7 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
        int hasmore=0;
        // loop through the possible stager settings to find the file somewhere staged
        do {
-	 if ((hasmore=XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass, n, tident))==1) {
+	 if ((hasmore=XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass, n++, tident))==1) {
 	   // select the policy
 	   policy=NULL;
 	   XrdOucString *wildcardpolicy=NULL;
@@ -1524,7 +1536,6 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
 	     // check if we want transparent staging
 	     if ( policy && ((strstr(policy->c_str(),"nohsm")))) {
 	       opentiming.Print(xCastor2FsTrace);
-	       n++;
 	       continue;
 	     }
 	   }
@@ -1533,7 +1544,6 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
 	   if (!XrdxCastor2Stager::Prepare2Get(error, (uid_t) client_uid, (gid_t) client_gid, path, stagehost.c_str(),serviceclass.c_str(),redirectionhost,redirectionpfn1,stagestatus)) {
 	     TIMING(xCastor2FsTrace,"RETURN",&opentiming);
 	     opentiming.Print(xCastor2FsTrace);
-	     n++;
 	     continue;
 	   }
 	   
@@ -1555,12 +1565,10 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
 	   } else {
 	     TIMING(xCastor2FsTrace,"RETURN",&opentiming);
 	     opentiming.Print(xCastor2FsTrace);
-	     n++;
 	     continue;
 	   }
 	 }
-	 n++;
-       } while ((n<999) && (hasmore>=0));
+       } while ((n<20) && (hasmore>=0));
 
        if (!possible) {
 	 if (!possiblestagehost.length()) {
@@ -3079,7 +3087,7 @@ int XrdxCastor2Fs::stageprepare( const char* path, XrdOucErrInfo &error, const X
     int hasmore=0;
 
     do {
-      if ((hasmore=XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass,n, tident))==1) {
+      if ((hasmore=XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass,n++, tident))==1) {
 	// select the policy
 	XrdOucString *policy=NULL;
 	XrdOucString *wildcardpolicy=NULL;
@@ -3102,8 +3110,7 @@ int XrdxCastor2Fs::stageprepare( const char* path, XrdOucErrInfo &error, const X
 	  break;
 	}
       }
-      n++;
-    } while((n<999) && (hasmore>=0));
+    } while((n<20) && (hasmore>=0));
     if (!allowed) {
       return XrdxCastor2Fs::Emsg(epname, error, EPERM, "do prepare request - you are not allowed to do stage requests fn = ", path);	   
     }
@@ -3340,7 +3347,7 @@ int XrdxCastor2Fs::rem(const char             *path,    // In
    
    TIMING(xCastor2FsTrace,"Authorize",&rmtiming);
 
-   if (env.Get("stagerm") || env.Get("stagermreplica")) {
+   if (env.Get("stagerm")) {
      XrdOucString stagevariables="";
      XrdOucString stagehost="";
      XrdOucString serviceclass="";
@@ -3392,7 +3399,7 @@ int XrdxCastor2Fs::rem(const char             *path,    // In
        int hasmore=0;
        
        do {
-	 if ((hasmore=XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass,n, tident))==1) {
+	 if ((hasmore=XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass,n++, tident))==1) {
 	   // select the policy
 	   XrdOucString *policy=NULL;
 	   XrdOucString *wildcardpolicy=NULL;
@@ -3415,8 +3422,7 @@ int XrdxCastor2Fs::rem(const char             *path,    // In
 	     break;
 	   }
 	 }
-	 n++;
-       } while((n<999) && (hasmore>=0));
+       } while((n<20) && (hasmore>=0));
        if (!allowed) {
 	 return XrdxCastor2Fs::Emsg(epname, error, EPERM, "do stage_rm request - you are not allowed to do stage_rm requests for fn = ", path);	   
        }
@@ -3431,17 +3437,13 @@ int XrdxCastor2Fs::rem(const char             *path,    // In
        rmtiming.Print(xCastor2FsTrace);
        return SFS_ERROR;
      } 
-     // the stage_rm worked, let's proceed with the namespace if requested
+     // the stage_rm worked, let's proceed with the namespace
    }
-
-   int retc = 0;   
-   // only if this is a replica removal
-   if (! env.Get("stagermreplica")) {
-     retc = _rem(path,error,&mappedclient,info);
-     
-     TIMING(xCastor2FsTrace,"RemoveNamespace",&rmtiming);
-   }
-
+   
+   int retc = 0;
+   retc = _rem(path,error,&mappedclient,info);
+   
+   TIMING(xCastor2FsTrace,"RemoveNamespace",&rmtiming);
    rmtiming.Print(xCastor2FsTrace);
    return retc;
 }
@@ -3728,7 +3730,7 @@ int XrdxCastor2Fs::stat(const char              *path,        // In
 	  
       do {
 	stagestatus = "NA";
-	if ((hasmore=XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass,n, tident))==1) {
+	if ((hasmore=XrdxCastor2FS->SetStageVariables(path,info,stagevariables, stagehost, serviceclass,n++, tident))==1) {
 	  // we don't care about policies for stat's 
 	  XrdOucString qrytag="STAGERQUERY-";qrytag+= n;
 	  TIMING(xCastor2FsTrace,qrytag.c_str(),&stattiming);  
@@ -3739,9 +3741,8 @@ int XrdxCastor2Fs::stat(const char              *path,        // In
 	  if ( (stagestatus == "STAGED") || (stagestatus == "CANBEMIGR") || (stagestatus == "STAGEOUT" ) ) {
 	    break;
 	  }
-	  n++;
 	} 
-      } while ((n<999)&&(hasmore>=0));  
+      } while ((n<20)&&(hasmore>=0));  
     }
   }
   if (XrdxCastor2FS->Proc) {
