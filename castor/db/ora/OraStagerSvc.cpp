@@ -1417,6 +1417,7 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
 
   // Log something in case we will trigger extra migrations after the recall
   if (*nbTapeCopies > 0) {
+    // "Missing tape copies detected, this recall will trigger new migration(s)
     castor::dlf::Param params[] = {
       castor::dlf::Param("nbNewCopies", *nbTapeCopies)
     };
