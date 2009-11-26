@@ -13,7 +13,7 @@ packages = ['ns-client', 'upv-client', 'stager-client', 'vdqm2-client', 'rfio-se
 platformConversion = {'SL4' : 'slc4', 'SL5' : 'slc5'}
 oldArchConversion = {'i386' : 'ia32', 'x86_64' : 'amd64'}
 archConversion = {'i386' : 'i686', 'x86_64' : 'x86_64'}
-oldGccVersion = {'SL4' : 'gcc34'}
+oldGccVersion = {'SL4' : ['gcc34', 'gcc43']}
 gccVersions = {'SL5' : ['gcc41-opt', 'gcc34-opt', 'gcc43-opt']}
 
 def buildSFTdir(plat, arch):
