@@ -1657,7 +1657,6 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
    }
    
    // read+ write
-   printf("Cachellokup %d %d\n",nocachelookup,policy); 
    if ( nocachelookup && (policy && (strstr(policy->c_str(),"cache") ) ) ) {
      // update location in cache
      XrdOucString locationfile = XrdxCastor2FS->LocationCacheDir;
