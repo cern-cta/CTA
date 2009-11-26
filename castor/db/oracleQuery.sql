@@ -397,7 +397,7 @@ BEGIN
              DiskPool2SvcClass d2s, SvcClass sc
        WHERE sc.name = svcClassName
          AND sc.id = d2s.child
-         AND checkPermissionOnSvcClass(sc.name, reqEuid, reqEgid, 103) = 0
+         AND checkPermission(sc.name, reqEuid, reqEgid, 103) = 0
          AND d2s.parent = dp.id
          AND dp.id = fs.diskPool
          AND ds.id = fs.diskServer
@@ -417,7 +417,7 @@ BEGIN
   -- here will be used to send an appropriate error message to the client.
   IF result%ROWCOUNT = 0 THEN
     SELECT CASE count(*)
-           WHEN sum(checkPermissionOnSvcClass(sc.name, reqEuid, reqEgid, 103)) THEN -1
+           WHEN sum(checkPermission(sc.name, reqEuid, reqEgid, 103)) THEN -1
            ELSE count(*) END
       INTO res
       FROM DiskPool2SvcClass d2s, SvcClass sc

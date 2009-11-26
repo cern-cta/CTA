@@ -654,7 +654,7 @@ BEGIN
          -- file from the source service class. Note: instead of using a
          -- StageGetRequest type here we use a StagDiskCopyReplicaRequest type
          -- to be able to distinguish between and read and replication requst.
-         AND checkPermissionOnSvcClass(SvcClass.name, reuid, regid, 133) = 0
+         AND checkPermission(SvcClass.name, reuid, regid, 133) = 0
          AND NOT EXISTS (
            -- Don't select source diskcopies which already failed more than 10 times
            SELECT 'x'
@@ -712,7 +712,6 @@ CREATE OR REPLACE
 PROCEDURE checkForD2DCopyOrRecall(cfId IN NUMBER, srId IN NUMBER, reuid IN NUMBER, regid IN NUMBER,
                                   svcClassId IN NUMBER, dcId OUT NUMBER, srcSvcClassId OUT NUMBER) AS
   destSvcClass VARCHAR2(2048);
-  authDest NUMBER;
   userid NUMBER := reuid;
   groupid NUMBER := regid;
 BEGIN
@@ -753,8 +752,7 @@ BEGIN
   -- file in the target service class that could be used. So, we check
   -- to see if the user has the rights to create a file in the destination
   -- service class. I.e. check for StagePutRequest access rights
-  checkPermission(destSvcClass, userid, groupid, 40, authDest);
-  IF authDest < 0 THEN
+  IF checkPermission(destSvcClass, userid, groupid, 40) != 0 THEN
     -- Fail the subrequest and notify the client
     dcId := -1;
     UPDATE SubRequest
@@ -820,8 +818,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- Check whether the user has the rights to issue a tape recall to
     -- the destination service class.
-    checkPermission(destSvcClass, userid, groupid, 161, authDest);
-    IF authDest < 0 THEN
+    IF checkPermission(destSvcClass, userid, groupid, 161) != 0 THEN
       -- Fail the subrequest and notify the client
       dcId := -1;
       UPDATE SubRequest

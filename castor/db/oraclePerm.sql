@@ -8,92 +8,54 @@
  *******************************************************************/
 
 
-/* PL/SQL method implementing checkPermission */
-/* The return parameter can have the following values
- *   a svcClassId   if access is granted
- *   0              if access is granted on svcClass == '*'
- *  -1              if access denied
- *  -2              when svcClass does not exist
+/* PL/SQL method implementing checkPermission
+ * The return value can be
+ *   0 if access is granted
+ *   1 if access denied
  */
-CREATE OR REPLACE PROCEDURE checkPermission(isvcClass IN VARCHAR2,
-                                            ieuid IN NUMBER,
-                                            iegid IN NUMBER,
-                                            ireqType IN NUMBER,
-                                            res OUT NUMBER) AS
+CREATE OR REPLACE FUNCTION checkPermission(reqSvcClass IN VARCHAR2,
+                                           reqEuid IN NUMBER,
+                                           reqEgid IN NUMBER,
+                                           reqTypeI IN NUMBER)
+RETURN NUMBER AS
+  res NUMBER;
   c NUMBER;
-  svcId NUMBER;
-  reqName VARCHAR2(100);
 BEGIN
-  -- First resolve the service class
-  svcId := checkForValidSvcClass(isvcClass, 1, 0);
-  -- Skip access control checks for special internal users
-  IF ieuid = -1 AND iegid = -1 THEN
-    res := svcId;
-    RETURN;
+  -- Skip access control checks for admin/internal users
+  SELECT count(*) INTO c FROM AdminUsers 
+   WHERE egid = reqEgid
+     AND (euid = reqEuid OR euid IS NULL);
+  IF c > 0 THEN
+    -- Admin access, just proceed
+    RETURN 0;
   END IF;
   -- Perform the check
   SELECT count(*) INTO c
     FROM WhiteList
-   WHERE (svcClass = isvcClass OR svcClass IS NULL
-          OR (length(isvcClass) IS NULL AND svcClass = 'default'))
-     AND (egid = iegid OR egid IS NULL)
-     AND (euid = ieuid OR euid IS NULL)
-     AND (reqType = ireqType OR reqType IS NULL);
+   WHERE (svcClass = reqSvcClass OR svcClass IS NULL
+          OR (length(reqSvcClass) IS NULL AND svcClass = 'default'))
+     AND (egid = reqEgid OR egid IS NULL)
+     AND (euid = reqEuid OR euid IS NULL)
+     AND (reqType = reqTypeI OR reqTypeI IS NULL);
   IF c = 0 THEN
     -- Not found in White list -> no access
-    IF svcId > 0 THEN
-      -- Service class exists, we give permission denied
-      res := -1;
-    -- Special case where we accept '*' as a service class for Qry,
-    -- DiskPoolQuery and RM requests.
-    ELSIF isvcClass = '*' AND 
-          (ireqType = 33 OR ireqType = 42 OR ireqType = 103) THEN
-      res := -1;
-    ELSE
-      -- Service class does not exist
-      res := -2;
-    END IF;
+    RETURN 1;
   ELSE
     SELECT count(*) INTO c
       FROM BlackList
-     WHERE (svcClass = isvcClass OR svcClass IS NULL
-            OR (length(isvcClass) IS NULL AND svcClass = 'default'))
-       AND (egid = iegid OR egid IS NULL)
-       AND (euid = ieuid OR euid IS NULL)
-       AND (reqType = ireqType OR reqType IS NULL);
+     WHERE (svcClass = reqSvcClass OR svcClass IS NULL
+            OR (length(reqSvcClass) IS NULL AND svcClass = 'default'))
+       AND (egid = reqEgid OR egid IS NULL)
+       AND (euid = reqEuid OR euid IS NULL)
+       AND (reqType = reqTypeI OR reqType IS NULL);
     IF c = 0 THEN
       -- Not Found in Black list -> access
-      -- In this case return the service class id (0 for '*')
-      res := svcId;
+      RETURN 0;
     ELSE
       -- Found in Black list -> no access
-      res := -1;
+      RETURN 1;
     END IF;
   END IF;
-END;
-/
-
-
-/* Function to wrap the checkPermission procedure so that is can be
- * used within SQL queries. The function returns 0 if the user has
- * access on the service class for the given request type otherwise
- * 1 if access is denied
- */
-CREATE OR REPLACE
-FUNCTION checkPermissionOnSvcClass(reqSvcClass IN VARCHAR2,
-                                   reqEuid IN NUMBER,
-                                   reqEgid IN NUMBER,
-                                   reqType IN NUMBER)
-RETURN NUMBER AS
-  res NUMBER;
-BEGIN
-  -- Check the users access rights
-  checkPermission(reqSvcClass, reqEuid, reqEgid, reqType, res);
-  IF res < 0 THEN
-    -- No access. res == 0 means access ok with svcClass == '*'
-    RETURN 1;
-  END IF;
-  RETURN 0;
 END;
 /
 

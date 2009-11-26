@@ -511,7 +511,7 @@ unsigned int castor::rh::RHThread::handleRequest
  Cuuid_t cuuid)
   throw (castor::exception::Exception) {
 
-  // Check access rights
+  // get RH service
   castor::rh::IRHSvc* m_rhSvc = 0;
   castor::IService* svc =
     castor::BaseObject::services()->service("DbRhSvc", castor::SVC_DBRHSVC);
@@ -521,6 +521,16 @@ unsigned int castor::rh::RHThread::handleRequest
     ex.getMessage() << "Couldn't load the request handler service, check the castor.conf for DynamicLib entries" << std::endl;
     throw ex;
   }
+
+  // Check service class, and get its id
+  u_signed64 svcId = m_rhSvc->checkSvcClass(fr->svcClassName());
+  if (svcId > 0) {  // 0 means ok, but service class is '*'
+    stager::SvcClass* sc = new stager::SvcClass();
+    sc->setId(svcId);
+    fr->setSvcClass(sc);
+  }
+
+  // Check access rights
   m_rhSvc->checkPermission(fr);
 
   // Number of subrequests (when applicable)

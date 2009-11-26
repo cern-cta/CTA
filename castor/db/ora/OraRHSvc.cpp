@@ -51,9 +51,13 @@ static castor::SvcFactory<castor::db::ora::OraRHSvc>* s_factoryOraRHSvc =
 // Static constants initialization
 //------------------------------------------------------------------------------
 
+/// SQL statement for checkSvcClass
+const std::string castor::db::ora::OraRHSvc::s_checkSvcClassStatementString =
+"BEGIN :1 := checkForValidSvcClass(:2, 1, 0); END;";
+
 /// SQL statement for checkPermission
 const std::string castor::db::ora::OraRHSvc::s_checkPermissionStatementString =
-"BEGIN checkPermission(:1, :2, :3, :4, :5); END;";
+"BEGIN :1 := checkPermission(:2, :3, :4, :5); END;";
 
 /// SQL statement for addPrivilege
 const std::string castor::db::ora::OraRHSvc::s_addPrivilegeStatementString =
@@ -72,6 +76,7 @@ const std::string castor::db::ora::OraRHSvc::s_listPrivilegesStatementString =
 //------------------------------------------------------------------------------
 castor::db::ora::OraRHSvc::OraRHSvc(const std::string name) :
   OraCommonSvc(name),
+  m_checkSvcClassStatement(0),
   m_checkPermissionStatement(0),
   m_addPrivilegeStatement(0),
   m_removePrivilegeStatement(0),
@@ -107,12 +112,14 @@ void castor::db::ora::OraRHSvc::reset() throw() {
   // If something goes wrong, we just ignore it
   OraCommonSvc::reset();
   try {
+    if (m_checkSvcClassStatement) deleteStatement(m_checkSvcClassStatement);
     if (m_checkPermissionStatement) deleteStatement(m_checkPermissionStatement);
     if (m_addPrivilegeStatement) deleteStatement(m_addPrivilegeStatement);
     if (m_removePrivilegeStatement) deleteStatement(m_removePrivilegeStatement);
     if (m_listPrivilegesStatement) deleteStatement(m_listPrivilegesStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
+  m_checkSvcClassStatement = 0;
   m_checkPermissionStatement = 0;
   m_addPrivilegeStatement = 0;
   m_removePrivilegeStatement = 0;
@@ -120,10 +127,43 @@ void castor::db::ora::OraRHSvc::reset() throw() {
 }
 
 //------------------------------------------------------------------------------
+// checkSvcClass
+//------------------------------------------------------------------------------
+u_signed64 castor::db::ora::OraRHSvc::checkSvcClass
+(const std::string& serviceClassName) throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_checkSvcClassStatement) {
+      m_checkSvcClassStatement =
+        createStatement(s_checkSvcClassStatementString);
+      m_checkSvcClassStatement->registerOutParam
+        (1, oracle::occi::OCCIDOUBLE);
+    }
+    // execute the statement and see whether we found something
+    m_checkSvcClassStatement->setString(2,serviceClassName);
+    unsigned int nb = m_checkSvcClassStatement->executeUpdate();
+    if (0 == nb) {
+      castor::exception::Internal ex;
+      ex.getMessage() << "checkSvcClass did not return any result.";
+      throw ex;
+    }
+    // signed because the return value can be negative for errors
+    return (u_signed64)m_checkSvcClassStatement->getDouble(1);
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in checkPermission."
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
 // checkPermission
 //------------------------------------------------------------------------------
 void castor::db::ora::OraRHSvc::checkPermission
-(castor::stager::Request* req)
+(const castor::stager::Request* req)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
@@ -131,13 +171,13 @@ void castor::db::ora::OraRHSvc::checkPermission
       m_checkPermissionStatement =
         createStatement(s_checkPermissionStatementString);
       m_checkPermissionStatement->registerOutParam
-        (5, oracle::occi::OCCIDOUBLE);
+        (1, oracle::occi::OCCIDOUBLE);
     }
     // execute the statement and see whether we found something
-    m_checkPermissionStatement->setString(1, req->svcClassName());
-    m_checkPermissionStatement->setInt(2, req->euid());
-    m_checkPermissionStatement->setInt(3, req->egid());
-    m_checkPermissionStatement->setInt(4, req->type());
+    m_checkPermissionStatement->setString(2, req->svcClassName());
+    m_checkPermissionStatement->setInt(3, req->euid());
+    m_checkPermissionStatement->setInt(4, req->egid());
+    m_checkPermissionStatement->setInt(5, req->type());
     unsigned int nb = m_checkPermissionStatement->executeUpdate();
     if (0 == nb) {
       castor::exception::Internal ex;
@@ -146,17 +186,8 @@ void castor::db::ora::OraRHSvc::checkPermission
       throw ex;
     }
     // signed because the return value can be negative for errors
-    signed64 ret = (signed64)m_checkPermissionStatement->getDouble(5);
-    if (ret > 0) {
-      // access granted, ret is the svcClass id. We keep it in an object
-      // so to let the RH create the link later on. Note that this has
-      // the side effect of allocating an object in memory, which needs
-      // to be deallocated by the caller.
-      stager::SvcClass* sc = new stager::SvcClass();
-      sc->setId(ret);
-      req->setSvcClass(sc);
-    }
-    else if (ret == -1) {
+    signed64 ret = (signed64)m_checkPermissionStatement->getDouble(1);
+    if (ret != 0) {
       // no access, throw exception
       castor::exception::PermissionDenied ex;
       ex.getMessage() << "Insufficient user privileges to make a request of type "
@@ -164,14 +195,6 @@ void castor::db::ora::OraRHSvc::checkPermission
                       << " in service class '"
                       << (0 == req->svcClassName().size() ? "default" :
                           req->svcClassName())
-                      << "'\n";
-      throw ex;
-    } else if("*" != req->svcClassName()) {
-      // ret == -2 : non existent service class; accept the special case of '*'
-      // (the stager will check if it is valid or not) and refuse the rest
-      castor::exception::InvalidArgument ex;
-      ex.getMessage() << "Invalid service class '"
-                      << req->svcClassName()
                       << "'\n";
       throw ex;
     }

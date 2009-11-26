@@ -53,13 +53,22 @@ namespace castor {
     public:
 
       /**
+       * checks validity of a given service class and returns its id.
+       * throws an InvalidArgument exception in case the service class does not exist
+       * @param serviceClassName the service class name
+       * @exception throws Exception in case the service class does not exist
+       */
+      virtual u_signed64 checkSvcClass(const std::string& serviceClassName)
+        throw (castor::exception::Exception) = 0;
+
+      /**
        * checks permission for a given request to be processed.
-       * Just returns nothing in case permission is granted 
-       * and throw a permission denied exception otherwise
+       * Returns nothing in case permission is granted but
+       * throws a permission denied exception otherwise
        * @param req the user request object
        * @exception throws Exception in case of permission denial
        */
-      virtual void checkPermission(castor::stager::Request* req)
+      virtual void checkPermission(const castor::stager::Request* req)
         throw (castor::exception::Exception) = 0;
 
       /**
