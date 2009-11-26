@@ -62,6 +62,7 @@ GLOBUSSYS = /opt/globus
 # which must be writable. 
 TAPEPOOLNAME = nbessone_dev
 
+
 # values to give to parameters in the .input files of the test suite
 # any <TAG> string (where tag can contain anything but '>') will be
 # replaced by the value of the corresponding entry
@@ -70,3 +71,17 @@ TAPEPOOLNAME = nbessone_dev
 # Local file name to be used as sample data
 localFileName = /etc/group
 
+
+# Control of which test to run when no flags is given for a given set
+# If any flag is given on the command line, this part is ignored for the corresponding set
+# Entries should be in the form
+#  <testName> = <boolean value> 
+# Test names are of the form SetName[_SubDir]*_LocalTestName.
+# They can be truncated to match all tests starting with the given string
+# recognized boolean values are 1, yes, true, on, 0, no, false, off
+# and all alternates cases for these values
+# If several options apply to a given file, the most precise one wins
+# Here is an example of how to run all rfio tests, but for the remote ones :
+# rfio_remote = false
+# rfio = true
+[TestsToRun]

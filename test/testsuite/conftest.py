@@ -89,8 +89,8 @@ def pytest_addoption(parser):
         # 'resources' is not really a test suite directory
         if d == 'resources' or d[0] == '.': continue
         # create 2 options to set and unset each test suite. By default, nothing is ran
-        parser.addoption("--"+d,   action="store_true",  default=False, dest=d, help='Run the '+d+' tests')
-        parser.addoption("--no"+d, action="store_false", default=False, dest=d, help='Do not run the '+d+' tests')
+        parser.addoption("--"+d,   action="store_true",  dest=d, help='Run the '+d+' tests')
+        parser.addoption("--no"+d, action="store_false", dest=d, help='Do not run the '+d+' tests')
         mainTestDirs.append(d)
     # add a set of other options
     parser.addoption("-A", "--all",      action="callback",   callback=handleAllOption,       help='Forces all tests to run')
@@ -441,10 +441,24 @@ class Setup:
             if len(parent) != 0:
                 self.checkResources(parent,skip)
 
+    def isTestEnabled(self, set, name):
+        # check options
+        opt = getattr(self.config.option,set)
+        if opt != None: return opt
+        # no command line option, go to default behavior defined in config file
+        shouldrun = False
+        matchlen = 0
+        for o in self.options.items('TestsToRun'):
+            # most precise one wins
+            if name.startswith(o[0]) and len(o[0]) > matchlen:
+                matchlen = len(o[0])
+                shouldrun = self.options.getboolean('TestsToRun', o[0])
+        return shouldrun
+
     def runTest(self, testSet, testName, fileName):
         # check whether the test should be skipped or not
-        if testSet != 'resources' and not getattr(self.config.option,testSet): 
-            py.test.skip(testSet + " tests are skipped. Use --(no)" + testSet + " or --all to change this")
+        if testSet != 'resources' and not self.isTestEnabled(testSet, testName):
+            py.test.skip(testSet + " tests are skipped. Use --(no)" + testSet + " or --all to change this or adapt your config file")
         # check resources, including all defaults
         self.checkResources(fileName+'.resources',
                             skip=(self.config.option.failNoRes == False or
