@@ -92,18 +92,18 @@ DROP INDEX UN_Severities_Sev_No;
 DROP INDEX UN_Severities_Sev_Name;
 CREATE UNIQUE INDEX UN_Severities_Sev_NoName ON dlf_severities (sev_no, sev_name);
 ALTER TABLE dlf_severities ADD CONSTRAINT UN_Severities_Sev_NoName UNIQUE (sev_no, sev_name) ENABLE;
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('1',  'Emerg');
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('2',  'Alert');
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('3',  'Error');
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('4',  'Warn');
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('5',  'Notice'); /* Auth */
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('6',  'Notice'); /* Security */
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('7',  'Debug');  /* Usage */
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('8',  'Info');   /* System */
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('10', 'Info');   /* Monitoring */
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('11', 'Debug');
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('12', 'Notice'); /* User Error */
-INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('13', 'Crit');
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES (1,  'Emerg');
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES (2,  'Alert');
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES (3,  'Error');
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES (4,  'Warn');
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES (5,  'Notice'); /* Auth */
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES (6,  'Notice'); /* Security */
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES (7,  'Debug');  /* Usage */
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES (8,  'Info');   /* System */
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES (10, 'Info');   /* Monitoring */
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES (11, 'Debug');
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES (12, 'Notice'); /* User Error */
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES (13, 'Crit');
 
 COMMIT;
 
