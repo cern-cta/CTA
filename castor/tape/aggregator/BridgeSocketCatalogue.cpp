@@ -22,6 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
+#include "castor/exception/Internal.hpp"
 #include "castor/tape/aggregator/BridgeSocketCatalogue.hpp"
 #include "castor/tape/utils/utils.hpp"
 
@@ -41,32 +42,31 @@ castor::tape::aggregator::BridgeSocketCatalogue::BridgeSocketCatalogue() :
 //-----------------------------------------------------------------------------
 castor::tape::aggregator::BridgeSocketCatalogue::~BridgeSocketCatalogue() {
 
-  // Note the destructor does NOT close the listen socket
+  // Note this destructor does NOT close the listen socket used to accept rtcpd
+  // connections.  This is the responsibility of the VdqmRequestHandler.
 
-  // Close the initial rtcpd socket if it is set
-  if(m_initialRtcpdSock != -1) {
-    close(m_initialRtcpdSock);
-  }
+  // Note this destructor does NOT close the initial rtcpd connection.  This is
+  // the responsibility of the VdqmRequestHandler.
 
-  // For each rtcpd / tape-gateway socket association
-  for(RtcpdGatewayList::const_iterator itor = m_rtcpdGatewaySockets.begin();
-    itor != m_rtcpdGatewaySockets.end(); itor++) {
+  // For each rtcpd-connection
+  for(RtcpdConnectionList::const_iterator itor = m_rtcpdConnections.begin();
+    itor != m_rtcpdConnections.end(); itor++) {
 
     // Close the rtcpd connection
     close(itor->rtcpdSock);
 
-    // If there is an associated tape-gateway connection, then close it
-    if(itor->gatewaySock != -1) {
-      close(itor->gatewaySock);
+    // If there is an associated client connection, then close it
+    if(itor->clientSock != -1) {
+      close(itor->clientSock);
     }
   }
 }
 
 
 //-----------------------------------------------------------------------------
-// addListenSocket
+// addListenSock
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::BridgeSocketCatalogue::addListenSocket(
+void castor::tape::aggregator::BridgeSocketCatalogue::addListenSock(
   const int listenSock) throw(castor::exception::Exception) {
 
   if(listenSock < 0) {
@@ -88,9 +88,9 @@ void castor::tape::aggregator::BridgeSocketCatalogue::addListenSocket(
 
 
 //-----------------------------------------------------------------------------
-// addInitialRtcpdSocket
+// addInitialRtcpdConn
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::BridgeSocketCatalogue::addInitialRtcpdSocket(
+void castor::tape::aggregator::BridgeSocketCatalogue::addInitialRtcpdConn(
   const int initialRtcpdSock) throw(castor::exception::Exception) {
 
   if(initialRtcpdSock < 0) {
@@ -112,10 +112,10 @@ void castor::tape::aggregator::BridgeSocketCatalogue::addInitialRtcpdSocket(
 
 
 //-----------------------------------------------------------------------------
-// addRtcpdDiskTapeIOControlSocket
+// addRtcpdDiskTapeIOControlConn
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::BridgeSocketCatalogue::
-  addRtcpdDiskTapeIOControlSocket(const int rtcpdSock)
+  addRtcpdDiskTapeIOControlConn(const int rtcpdSock)
   throw(castor::exception::Exception) {
 
   if(rtcpdSock < 0) {
@@ -125,9 +125,9 @@ void castor::tape::aggregator::BridgeSocketCatalogue::
       ": rtcpdSock=" << rtcpdSock);
   }
 
-  // For each rtcpd / tape-gateway socket association
-  for(RtcpdGatewayList::const_iterator itor = m_rtcpdGatewaySockets.begin();
-    itor != m_rtcpdGatewaySockets.end(); itor++) {
+  // For each rtcpd-connection
+  for(RtcpdConnectionList::const_iterator itor = m_rtcpdConnections.begin();
+    itor != m_rtcpdConnections.end(); itor++) {
 
     // Throw an exception if the association is already in the catalogue
     if(itor->rtcpdSock == rtcpdSock) {
@@ -138,16 +138,20 @@ void castor::tape::aggregator::BridgeSocketCatalogue::
   }
 
   // Add the descriptor to the catalogue
-  const int gatewaySock = -1; // There is no associated gateway connection
-  m_rtcpdGatewaySockets.push_back(RtcpdGateway(rtcpdSock, gatewaySock));
+  m_rtcpdConnections.push_back(RtcpdConnection(rtcpdSock));
 }
 
 
 //-----------------------------------------------------------------------------
-// addGatewaySocket
+// addClientConn
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::BridgeSocketCatalogue::addGatewaySocket(
-  const int rtcpdSock, const int gatewaySock)
+void castor::tape::aggregator::BridgeSocketCatalogue::addClientConn(
+  const int                  rtcpdSock,
+  const uint32_t             rtcpdReqMagic,
+  const uint32_t             rtcpdReqType,
+  const char                 (&rtcpdReqTapePath)[CA_MAXPATHLEN+1],
+  const int                  clientSock,
+  const ClientConnectionType clientType)
   throw(castor::exception::Exception) {
 
   if(rtcpdSock < 0) {
@@ -157,47 +161,128 @@ void castor::tape::aggregator::BridgeSocketCatalogue::addGatewaySocket(
       ": rtcpdSock=" << rtcpdSock);
   }
 
-  if(gatewaySock < 0) {
+  if(clientSock < 0) {
     TAPE_THROW_EX(castor::exception::InvalidArgument,
-      ": Invalid tape-gateway socket-descriptor"
+      ": Invalid client socket-descriptor"
       ": Value is negative"
-      ": gatewaySock=" << gatewaySock);
+      ": clientSock=" << clientSock);
   }
 
-  // For each rtcpd / tape-gateway socket association
-  for(RtcpdGatewayList::iterator itor = m_rtcpdGatewaySockets.begin();
-    itor != m_rtcpdGatewaySockets.end(); itor++) {
+  // For each rtcpd-connection
+  for(RtcpdConnectionList::iterator itor = m_rtcpdConnections.begin();
+    itor != m_rtcpdConnections.end(); itor++) {
 
     // If the specified rtcpd disk/tape IO control-connection has been found
     if(itor->rtcpdSock == rtcpdSock) {
 
-      // Throw an exception if there is already an associated gateway connection
-      if(itor->gatewaySock != -1) {
+      // Throw an exception if there is already an associated client connection
+      if(itor->clientSock != -1) {
         TAPE_THROW_CODE(ECANCELED,
-          ": There is already an associated gateway connection"
-          ": current gatewaySock=" << itor->gatewaySock <<
-          ": new gatewaySock=" << gatewaySock);
+          ": There is already an associated client connection"
+          ": current clientSock=" << itor->clientSock <<
+          ": new clientSock=" << clientSock);
       }
 
-      // Store the tape-gateway connection and return
-      itor->gatewaySock = gatewaySock;
+      // Determine the next rtcpd-connection state based on the
+      // client-connection type
+      RtcpdConnectionStatus nextState = IDLE; // Dummy initial value
+      switch(clientType) {
+      case FILE_TO_MIGRATE_REPLY: nextState = WAIT_FILE_TO_MIGRATE     ; break;
+      case FILE_TO_RECALL_REPLY : nextState = WAIT_FILE_TO_RECALL      ; break;
+      case ACK_OF_FILE_MIGRATED : nextState = WAIT_ACK_OF_FILE_MIGRATED; break;
+      case ACK_OF_FILE_RECALLED : nextState = WAIT_ACK_OF_FILE_RECALLED; break;
+      default:
+        TAPE_THROW_EX(exception::Internal,
+          ": Unknown client-connection type"
+          ": type=0x" << std::hex << clientType << std::dec)
+      }
+
+      // Throw an exception if the rtcpd-connection state transistion is invalid
+      if(itor->rtcpdStatus != IDLE) {
+        castor::exception::Exception ce(ECANCELED);
+
+        ce.getMessage() <<
+          "Invalid rtpcd-connection state-transition"
+          ": current=" << rtcpdSockStatusToStr(itor->rtcpdStatus) <<
+          ": next=" << rtcpdSockStatusToStr(nextState);
+
+        throw(ce);
+      }
+
+      // Set the status of the rtpcd socket
+      itor->rtcpdStatus = nextState;
+
+      // Store the magic number and request type of the rtcpd request
+      itor->rtcpdReqMagic = rtcpdReqMagic;
+      itor->rtcpdReqType  = rtcpdReqType;
+
+      // Store the tape path
+      if(rtcpdReqTapePath != NULL) {
+        itor->rtcpdReqHasTapePath = true;
+        utils::copyString(itor->rtcpdReqTapePath, rtcpdReqTapePath);
+      } else {
+        itor->rtcpdReqHasTapePath = false;
+        itor->rtcpdReqTapePath[0]    = '\0';
+      }
+
+      // Store the client-connection
+      itor->clientSock = clientSock;
+
+      // Determine and store the client request timestamp
+      gettimeofday(&(itor->clientReqTimeStamp), NULL);
+
+      // Return because the client-connection has been added to the catalogue
       return;
     }
   }
 
   // If this line has been reached, then the specified rtcpd disk/tape IO
   // control-connection does not exist in the catalogue
-  TAPE_THROW_CODE(ECANCELED,
+  TAPE_THROW_CODE(ENOENT,
     ": Rtcpd socket-descriptor does not exist in the catalogue"
     ": rtcpdSock=" << rtcpdSock);
 }
 
 
 //-----------------------------------------------------------------------------
-// releaseRtcpdDiskTapeIOControlSocket
+// getListenSock
+//-----------------------------------------------------------------------------
+int castor::tape::aggregator::BridgeSocketCatalogue::getListenSock()
+  throw(castor::exception::Exception) {
+
+  // Throw an exception if the socket-descriptor of the listen socket does not
+  // exist in the catalogue
+  if(m_listenSock == -1) {
+    TAPE_THROW_CODE(ENOENT,
+      ": Listen socket-descriptor does not exist in the catalogue");
+  }
+
+  return m_listenSock;
+}
+
+
+//-----------------------------------------------------------------------------
+// getInitialRtcpdConn
+//-----------------------------------------------------------------------------
+int castor::tape::aggregator::BridgeSocketCatalogue::getInitialRtcpdConn()
+  throw(castor::exception::Exception) {
+
+  // Throw an exception if the socket-descriptor of the initial rtcpd
+  // connection does not exist in the catalogue
+  if(m_initialRtcpdSock == -1) {
+    TAPE_THROW_CODE(ENOENT,
+      ": Initial rtcpd socket-descriptor does not exist in the catalogue");
+  }
+
+  return m_initialRtcpdSock;
+}
+
+
+//-----------------------------------------------------------------------------
+// releaseRtcpdDiskTapeIOControlConn
 //-----------------------------------------------------------------------------
 int castor::tape::aggregator::BridgeSocketCatalogue::
-  releaseRtcpdDiskTapeIOControlSocket(const int rtcpdSock)
+  releaseRtcpdDiskTapeIOControlConn(const int rtcpdSock)
   throw(castor::exception::Exception) {
 
   if(rtcpdSock < 0) {
@@ -207,40 +292,40 @@ int castor::tape::aggregator::BridgeSocketCatalogue::
       ": rtcpdSock=" << rtcpdSock);
   }
 
-  // For each rtcpd / tape-gateway socket association
-  for(RtcpdGatewayList::iterator itor = m_rtcpdGatewaySockets.begin();
-    itor != m_rtcpdGatewaySockets.end(); itor++) {
+  // For each rtcpd-connection
+  for(RtcpdConnectionList::iterator itor = m_rtcpdConnections.begin();
+    itor != m_rtcpdConnections.end(); itor++) {
 
     // If the rtcpd socket-descriptor has been found
     if(itor->rtcpdSock == rtcpdSock) {
 
-      // Throw an exception if there is an associated tape-gateway connection
-      if(itor->gatewaySock != -1) {
+      // Throw an exception if there is an associated client connection
+      if(itor->clientSock != -1) {
         TAPE_THROW_CODE(ECANCELED,
-          ": Rtcpd socket-descriptor has an associated tape-gateway connection"
+          ": Rtcpd socket-descriptor has an associated client connection"
           ": rtcpdSock=" << rtcpdSock <<
-          ": gatewaySock=" << itor->gatewaySock);
+          ": clientSock=" << itor->clientSock);
       }
 
       // Erase the association from the list and return the release socket
-      m_rtcpdGatewaySockets.erase(itor);
+      m_rtcpdConnections.erase(itor);
       return rtcpdSock;
     }
   }
 
   // If this line has been reached, then the specified rtcpd socket-descriptor
   // does not exist in the catalogue
-  TAPE_THROW_CODE(ECANCELED,
+  TAPE_THROW_CODE(ENOENT,
     ": Rtcpd socket-descriptor does not exist in the catalogue"
     ": rtcpdSock=" << rtcpdSock);
 }
 
 
 //-----------------------------------------------------------------------------
-// releaseGatewaySocket
+// releaseClientConn
 //-----------------------------------------------------------------------------
-int castor::tape::aggregator::BridgeSocketCatalogue::releaseGatewaySocket(
-  const int rtcpdSock, const int gatewaySock)
+int castor::tape::aggregator::BridgeSocketCatalogue::releaseClientConn(
+  const int rtcpdSock, const int clientSock)
   throw(castor::exception::Exception) {
 
   if(rtcpdSock < 0) {
@@ -250,65 +335,107 @@ int castor::tape::aggregator::BridgeSocketCatalogue::releaseGatewaySocket(
       ": rtcpdSock=" << rtcpdSock);
   }
 
-  if(gatewaySock < 0) {
+  if(clientSock < 0) {
     TAPE_THROW_EX(castor::exception::InvalidArgument,
-      ": Invalid tape-gateway socket-descriptor"
+      ": Invalid client socket-descriptor"
       ": Value is negative"
-      ": gatewaySock=" << gatewaySock);
+      ": clientSock=" << clientSock);
   }
 
-  // For each rtcpd / tape-gateway socket association
-  for(RtcpdGatewayList::iterator itor = m_rtcpdGatewaySockets.begin();
-    itor != m_rtcpdGatewaySockets.end(); itor++) {
+  // For each rtcpd-connection
+  for(RtcpdConnectionList::iterator itor = m_rtcpdConnections.begin();
+    itor != m_rtcpdConnections.end(); itor++) {
 
-    // If the association has been found, then remove and return the gateway
+    // If the association has been found, then remove and return the client
     // connection
-    if(itor->rtcpdSock == rtcpdSock && itor->gatewaySock == gatewaySock) {
-      itor->gatewaySock = -1;
-      return gatewaySock;
+    if(itor->rtcpdSock == rtcpdSock && itor->clientSock == clientSock) {
+
+      // Throw an exception if the neccesary rtcpd-connection state-transistion
+      // is invalid
+      if(itor->rtcpdStatus == IDLE) {
+        castor::exception::Exception ce(ECANCELED);
+
+        ce.getMessage() <<
+          "Invalid state transition"
+          ": current=IDLE"
+          ": next=IDLE";
+
+        throw(ce);
+      }
+
+      // Update the state of the rtcpd-connection
+      itor->rtcpdStatus == IDLE;
+
+      // Reset the magic number and request type of the rtcpd request
+      itor->rtcpdReqMagic = 0;
+      itor->rtcpdReqType  = 0;
+
+      // Release the socket-descriptor of the client-connection
+      itor->clientSock = -1;
+
+      // Reset the time stamp of the client reply to 0
+      itor->clientReqTimeStamp.tv_sec  = 0;
+      itor->clientReqTimeStamp.tv_usec = 0;
+
+      // Return the socket-descriptor of the client-connection
+      return clientSock;
     }
   }
 
   // If this line has been reached, then the specified association does not
   // exist in the catalogue
-  TAPE_THROW_CODE(ECANCELED,
+  TAPE_THROW_CODE(ENOENT,
     ": The associateion does not exist in the catalogue"
     ": rtcpdSock=" << rtcpdSock <<
-    ": gatewaySock=" << gatewaySock);
+    ": clientSock=" << clientSock);
 }
 
 
 //-----------------------------------------------------------------------------
-// getRtcpdSocket
+// getRtcpdConn
 //-----------------------------------------------------------------------------
-int castor::tape::aggregator::BridgeSocketCatalogue::getRtcpdSocket(
-  const int gatewaySock) throw(castor::exception::Exception) {
+void castor::tape::aggregator::BridgeSocketCatalogue::getRtcpdConn(
+  const int             clientSock,
+  int                   &rtcpdSock,
+  RtcpdConnectionStatus &rtcpdStatus,
+  uint32_t              &rtcpdReqMagic,
+  uint32_t              &rtcpdReqType,
+  const char            *rtcpdReqTapePath,
+  struct timeval        &clientReqTimeStamp)
+  throw(castor::exception::Exception) {
 
-  if(gatewaySock < 0) {
+  if(clientSock < 0) {
     TAPE_THROW_EX(castor::exception::InvalidArgument,
-      ": Invalid tape-gateway socket-descriptor"
+      ": Invalid client socket-descriptor"
       ": Value is negative"
-      ": gatewaySock=" << gatewaySock);
+      ": clientSock=" << clientSock);
   }
 
-  // For each rtcpd / tape-gateway socket association
-  for(RtcpdGatewayList::iterator itor = m_rtcpdGatewaySockets.begin();
-    itor != m_rtcpdGatewaySockets.end(); itor++) {
+  // For each rtcpd-connection
+  for(RtcpdConnectionList::iterator itor = m_rtcpdConnections.begin();
+    itor != m_rtcpdConnections.end(); itor++) {
 
-    // If the association has been found, then return the rtcpd
-    // socket-descriptor
-    if(itor->gatewaySock == gatewaySock) {
-      return(itor->rtcpdSock);
+    // If the association has been found, then set the output parameters and
+    // return
+    if(itor->clientSock == clientSock) {
+
+      rtcpdSock          = itor->rtcpdSock;
+      rtcpdStatus        = itor->rtcpdStatus;
+      rtcpdReqMagic      = itor->rtcpdReqMagic;
+      rtcpdReqType       = itor->rtcpdReqType;
+      rtcpdReqTapePath   = itor->rtcpdReqHasTapePath ?
+                             itor->rtcpdReqTapePath : NULL;
+      clientReqTimeStamp = itor->clientReqTimeStamp;
+
+      return;
     }
   }
 
-  // If this line has been reached, then the specified tape-gateway
-  //  socket-descriptor does not exist in the catalogue
-  TAPE_THROW_CODE(ECANCELED,
-    ": Tape-gateway socket-descriptor does not exist in the catalogue"
-    ": gatewaySock=" << gatewaySock);
-
-  return 0;
+  // If this line has been reached, then the specified client
+  // socket-descriptor does not exist in the catalogue
+  TAPE_THROW_CODE(ENOENT,
+    ": Client socket-descriptor does not exist in the catalogue"
+    ": clientSock=" << clientSock);
 }
 
 
@@ -337,9 +464,9 @@ void castor::tape::aggregator::BridgeSocketCatalogue::buildReadFdSet(
     }
   }
 
-  // For each rtcpd / tape-gateway socket association
-  for(RtcpdGatewayList::iterator itor = m_rtcpdGatewaySockets.begin();
-    itor != m_rtcpdGatewaySockets.end(); itor++) {
+  // For each rtcpd-connection
+  for(RtcpdConnectionList::iterator itor = m_rtcpdConnections.begin();
+    itor != m_rtcpdConnections.end(); itor++) {
 
     // Add the rtcpd socket-descriptor to the descriptor set and update maxFd
     // accordingly
@@ -348,12 +475,12 @@ void castor::tape::aggregator::BridgeSocketCatalogue::buildReadFdSet(
       maxFd = itor->rtcpdSock;
     }
 
-    // If there is an associated tape-gateway socket-descriptor, then add it to
+    // If there is an associated client socket-descriptor, then add it to
     // the descriptor set and update maxFd accordingly
-    if(itor->gatewaySock != -1) {
-      FD_SET(itor->gatewaySock, &readFdSet);
-      if(itor->gatewaySock > maxFd) {
-        maxFd = itor->gatewaySock;
+    if(itor->clientSock != -1) {
+      FD_SET(itor->clientSock, &readFdSet);
+      if(itor->clientSock > maxFd) {
+        maxFd = itor->clientSock;
       }
     }
   }
@@ -361,9 +488,9 @@ void castor::tape::aggregator::BridgeSocketCatalogue::buildReadFdSet(
 
 
 //-----------------------------------------------------------------------------
-// getAPendingSocket
+// getAPendingSock
 //-----------------------------------------------------------------------------
-int castor::tape::aggregator::BridgeSocketCatalogue::getAPendingSocket(
+int castor::tape::aggregator::BridgeSocketCatalogue::getAPendingSock(
   fd_set &readFdSet, SocketType &sockType) throw() {
 
   // If the listen socket is pending, then set the socket type output parameter
@@ -380,9 +507,9 @@ int castor::tape::aggregator::BridgeSocketCatalogue::getAPendingSocket(
     return m_initialRtcpdSock;
   }
 
-  // For each rtcpd / tape-gateway socket association
-  for(RtcpdGatewayList::iterator itor = m_rtcpdGatewaySockets.begin();
-    itor != m_rtcpdGatewaySockets.end(); itor++) {
+  // For each rtcpd-connection
+  for(RtcpdConnectionList::iterator itor = m_rtcpdConnections.begin();
+    itor != m_rtcpdConnections.end(); itor++) {
 
     // If the rtcpd socket-descriptor is pending, then set the socket type
     // output parameter and return the socket
@@ -391,13 +518,13 @@ int castor::tape::aggregator::BridgeSocketCatalogue::getAPendingSocket(
       return itor->rtcpdSock;
     }
 
-    // If there is an associated tape-gateway socket-descriptor
-    if(itor->gatewaySock != -1) {
+    // If there is an associated client socket-descriptor
+    if(itor->clientSock != -1) {
       // If the rtcpd socket-descriptor is pending, then set the socket type
       // output parameter and return the socket
-      if(FD_ISSET(itor->gatewaySock, &readFdSet)) {
-        sockType = GATEWAY;
-        return itor->gatewaySock;
+      if(FD_ISSET(itor->clientSock, &readFdSet)) {
+        sockType = CLIENT;
+        return itor->clientSock;
       }
     }
   }
@@ -405,4 +532,31 @@ int castor::tape::aggregator::BridgeSocketCatalogue::getAPendingSocket(
   // If this line has been reached, then there are no pending
   // socket-descriptors known to the catalogue
   return -1;
+}
+
+
+//-----------------------------------------------------------------------------
+// getNbDiskTapeIOControlConnections
+//-----------------------------------------------------------------------------
+int castor::tape::aggregator::BridgeSocketCatalogue::
+  getNbDiskTapeIOControlConns() {
+
+  return m_rtcpdConnections.size();
+}
+
+
+//-----------------------------------------------------------------------------
+// rtcpdSockStatusToStr
+//-----------------------------------------------------------------------------
+const char
+  *castor::tape::aggregator::BridgeSocketCatalogue::rtcpdSockStatusToStr(
+  const RtcpdConnectionStatus status) throw() {
+  switch(status) {
+  case IDLE                     : return "IDLE";
+  case WAIT_FILE_TO_MIGRATE     : return "WAIT_FILE_TO_MIGRATE";
+  case WAIT_FILE_TO_RECALL      : return "WAIT_FILE_TO_RECALL";
+  case WAIT_ACK_OF_FILE_MIGRATED: return "WAIT_ACK_OF_FILE_MIGRATED";
+  case WAIT_ACK_OF_FILE_RECALLED: return "WAIT_ACK_OF_FILE_RECALLED";
+  default                       : return "UNKNOWN";
+  }
 }
