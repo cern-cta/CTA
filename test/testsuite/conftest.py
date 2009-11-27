@@ -493,11 +493,34 @@ class Setup:
              
     def getTag_tapeFileName(self, nb=0):
         return (lambda test : self.getTag(test, 'tapePath')+os.sep+test+str(nb))
+
+    def _checkPath(self, name, isTape):
+        try:
+            print "checking whether " + name + " has proper fileclass"
+            # get the fileclass of the path
+            fileClass = Popen('nsls --class ' + name).split()[0]
+            # check the number of tapeCopies in this file class
+            nslistOutput = Popen('nslistclass --id=' + fileClass).split()
+            nbCopies = int(nslistOutput[nslistOutput.index('NBCOPIES')+1])
+            # Check whether it is consistent with what is expected
+            if isTape:
+                assert nbCopies > 0, \
+                       name + ' should have a tape fileclass, but has fileclass ' + \
+                       fileClass + ' that has nbCopies = 0'
+            else:
+                assert nbCopies == 0, \
+                       name + ' should have a no tape fileclass, but has fileclass ' + \
+                       fileClass + ' that has nbCopies = ' + str(nbCopies)
+        except ValueError:
+            assert False, "Invalid nbCopies got for fileclass " + fileClass + \
+                   " when checking path " + name
              
     def getTag_noTapePath(self):
-        # create a unique directory name
-        p = self.options.get('Generic','CastorNoTapeDir') + os.sep + getUUID()
-        # create the directory
+        # get the noTape path and check it
+        notapepath = self.options.get('Generic','CastorNoTapeDir')
+        self._checkPath(notapepath, False)
+        # create a unique directory
+        p = notapepath + os.sep + getUUID()
         output = Popen('nsmkdir ' + p)
         assert len(output) == 0 or output.find('File exists') > -1, \
                'Failed to create working directory ' + p + os.linesep + "Error :" + os.linesep + output
@@ -505,9 +528,11 @@ class Setup:
         return p
 
     def getTag_tapePath(self):
-        # create a unique directory name
-        p = self.options.get('Generic','CastorTapeDir') + os.sep + getUUID()
-        # create the directory
+        # get the tape path and check it
+        tapepath = self.options.get('Generic','CastorTapeDir')
+        self._checkPath(tapepath, True)
+        # create a unique directory
+        p = tapepath + os.sep + getUUID()
         output = Popen('nsmkdir ' + p)
         assert len(output) == 0 or output.find('File exists'), \
                'Failed to create working directory ' + p + os.linesep + "Error :" + os.linesep + output
