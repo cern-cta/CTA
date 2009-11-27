@@ -1,12 +1,12 @@
-.\" @(#)$RCSfile: dumptape.man,v $ $Revision: 1.6 $ $Date: 2003/10/14 07:17:16 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: tpdump.man,v $ $Revision: 1.6 $ $Date: 2003/10/14 07:17:16 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH DUMPTAPE 1 "$Date: 2003/10/14 07:17:16 $" CASTOR "Ctape User Commands"
+.TH TPDUMP 1 "$Date: 2003/10/14 07:17:16 $" CASTOR "Ctape User Commands"
 .SH NAME
-dumptape \- dump a tape and analyze its contents
+tpdump \- dump a tape and analyze its contents
 .SH SYNOPSIS
-.B dumptape
+.B tpdump
 [
 .BI -B " maxbyte"
 ] [
@@ -32,7 +32,7 @@ dumptape \- dump a tape and analyze its contents
 ] 
 .BI -V " visual_identifier"
 .SH DESCRIPTION
-.B dumptape
+.B tpdump
 finds out if the tape is labelled or not; if the tape is labelled, it finds out
 if the label is ASCII or EBCDIC.
 It also dumps the blocks content in hexadecimal and in ASCII or EBCDIC.
@@ -155,15 +155,12 @@ Specifies the tape magnetic label
 .LP
 All options can be given in any order.
 The space between option name and option value is optional.
-.SH NOTES
-When the remote version of dumptape is used, i.e. dumptape is not executed on
-the tape server itself, the output is written to stderr.
 .SH EXAMPLES
 
-dumptape -V 12345A
+tpdump -V 12345A
 	will dump a maximum of 320 bytes from the first block of every file.
 
-dumptape -B 0 -F 1 -N 4,5 -V 12345A
+tpdump -B 0 -F 1 -N 4,5 -V 12345A
 	will dump all bytes in block 4 and 5 from first file.
 
 .SH EXIT STATUS

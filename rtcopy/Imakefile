@@ -125,18 +125,10 @@ RTCPLIBS = SharedLibraryTargetName(castorrtcopy)
 
 tpread.Osuf:		tpread.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
 	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I../h tpread.c
-dumptape.Osuf:		dumptape.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
-	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I../h dumptape.c
 ClientProgramTarget(tpread,tpread.Osuf,$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(LIBS),0755)
 LinkFile(tpwrite,tpread,755,client)
-NormalProgramTarget(dumptape,dumptape.Osuf,$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(MTLDFLAGS) $(LIBS),0755)
 EXEMANPAGE(tpread)
 EXEMANPAGE(tpwrite)
-EXEMANPAGE(dumptape)
-COMM Because nroff does not like to change hierachy of dir we copy the man page sourced by dumptape
-dumptape.man: DepSourceName(tape,dumptape.man)
-	RemoveFiles(dumptape.man)
-	$(CP) $? $@
 
 RTCPCLD_MT_OBJS = rtcpcldcommon_mt.Osuf
 RTCPCLD_OBJS =	rtcpcldcommon.Osuf rtcpcldCatalogueInterface.Osuf rtcpcldVmgrInterface.Osuf rtcpcldNsInterface.Osuf

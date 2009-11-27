@@ -7,7 +7,6 @@ COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.22 $ $Date: 2009/08/18 09:43
 COMM 	Make tape daemon programs.
 
 INCLUDES = ../h
-MANDUMP = $(MANDIR)/dumptape.$(MANSUFFIX)
 TMS = NOTMS
 VMGRFLG = -DVMGR
 VDQMFLG = -DVDQM
@@ -160,12 +159,10 @@ TapeProgramTarget(rlstape,$(RLSTAPE_OBJS) $(TAPEACCT), $(TAPELIB) $(DEPLIB),$(LI
 TapeProgramTarget(smc,smc.Osuf,$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),6755)
 TapeProgramTarget(tpdump,tpdump.Osuf,$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),755)
 TapeProgramTarget(tplabel,tplabel.Osuf,$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),755)
-LinkFile(dumptape,tpdump,755,tape)
-FilesToClobber += dumptape
 ADMMANPAGE(taped)
 EXEMANPAGE(smc)
 EXEMANPAGE(tplabel)
-EXEMANPAGE(dumptape)
+EXEMANPAGE(tpdump)
 EXEMANPAGE(tape_oper)
 LOGROTATE(castor-tape-server,..,installtape)
 LOGROTATE(castor-sacct,..,installtape)

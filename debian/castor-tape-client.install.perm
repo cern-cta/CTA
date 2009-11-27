@@ -1,4 +1,3 @@
-%attr(0755,root,root) usr/bin/dumptape
 %attr(0755,root,root) usr/bin/tpconfig
 %attr(0755,root,root) usr/bin/tpread
 %attr(0755,root,root) usr/bin/tprstat
