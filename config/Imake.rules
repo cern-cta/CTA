@@ -110,6 +110,9 @@ $(DESTDIR)/$(LIBDIR)/BareSharedLibraryTargetName(libname): @@\
 	  (DealWithSubdirs($@, $$i)); \
 	done;
 
+#define ClientInstallNonExecFile(file,dest,mode) \
+InternalInstallTarget(file,mode,dest,installclient,)
+
 #define InstallNonExecFile(file,dest,mode) \
 InternalInstallTarget(file,mode,dest,install,)
 
