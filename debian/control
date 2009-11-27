@@ -3,7 +3,7 @@ Build-Depends: make, perl, stk-ssi-devel, lsf-master
 Build-Depends: xfslibs-dev
 Section: science
 Priority: optional
-Maintainer: Jean-Damien Durand <Jean-Damien.Durand@cern.ch>
+Maintainer: CERN castor team <castor.support@cern.ch>
 Build-Depends: debhelper (>= 4.0.0)
 Standards-Version: 3.6.1
 
@@ -24,6 +24,7 @@ Package: castor-devel
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib
 Recommends: castor-devel-oracle
+Group: Client
 Description: castor (Cern Advanced STORage system)
  API
 
@@ -73,6 +74,7 @@ Package: castor-lib
 Architecture: any
 Obsoletes: castor-sysconfig, castor-rtcopy-client, castor-lib-compat, castor-dlf-server, castor-doc, castor-commands, CASTOR-client, castor-stager-clientold, castor-rtcopy-messages
 Depends: ${shlibs:Depends}, ${misc:Depends}
+Group: Client
 Description: castor (Cern Advanced STORage system)
  Static and shared libraries for end-users
 
@@ -92,6 +94,7 @@ Description: castor (Cern Advanced STORage system)
 Package: castor-ns-client
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
+Group: Client
 Description: castor (Cern Advanced STORage system)
  Name server clients
 
@@ -111,6 +114,7 @@ Description: castor (Cern Advanced STORage system)
 Package: castor-rfio-client
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
+Group: Client
 Description: castor (Cern Advanced STORage system)
  RFIO clients
 
@@ -179,6 +183,7 @@ Description: castor (Cern Advanced STORage system)
 Package: castor-stager-client
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
+Group: Client
 Description: castor (Cern Advanced STORage system)
  Stager clients
 
@@ -191,6 +196,7 @@ Description: castor (Cern Advanced STORage system)
 Package: castor-tape-client
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
+Group: Client
 Description: castor (Cern Advanced STORage system)
  Tape clients
 
@@ -203,6 +209,7 @@ Description: castor (Cern Advanced STORage system)
 Package: castor-upv-client
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
+Group: Client
 Description: castor (Cern Advanced STORage system)
  User Privilege clients
 
@@ -216,6 +223,7 @@ Package: castor-vdqm2-client
 Architecture: any
 Obsoletes: castor-vdqm-client
 Depends: ${shlibs:Depends}, ${misc:Depends}
+Group: Client
 Description: castor (Cern Advanced STORage system)
  Volume Drive and Queue Manager clients version 2
 
@@ -235,6 +243,7 @@ Description: castor (Cern Advanced STORage system)
 Package: castor-vmgr-client
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
+Group: Client
 Description: castor (Cern Advanced STORage system)
  Volume Manager clients
 

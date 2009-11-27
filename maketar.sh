@@ -160,6 +160,24 @@ for this in `grep Package: debian/control | awk '{print $NF}'` castor-tape-serve
 	echo "%else" >> CASTOR.spec # compiling_notstk if
         package="castor-tape-server"
     fi
+
+    #
+    ## get package group if any
+    #
+    group=`cat debian/control | perl -e '
+      $package=shift;
+      $what=shift;
+      $this = do { local $/; <> };
+      $this =~ s/.*Package: $package[^\w\-]//sg;
+      $this =~ s/Package:.*//sg;
+      map {if (/([^:]+):(.+)/) {$this{$1}=$2};} split("\n",$this);
+      if (defined($this{$what})) {
+        print "$this{$what}\n";
+      }' $package Group |
+      sed 's/ //g' | sed 's/\${[^{},]*}//g' | sed 's/^,*//g' | sed 's/,,*/,/g'`
+    if [ "${group}" != "Client" ]; then
+	echo "%if ! %compiling_client" >> CASTOR.spec # no a client package
+    fi
     echo "%package -n $actualPackage" >> CASTOR.spec
     echo "Summary: Cern Advanced mass STORage" >> CASTOR.spec
     echo "Group: Application/Castor" >> CASTOR.spec
@@ -291,6 +309,9 @@ for this in `grep Package: debian/control | awk '{print $NF}'` castor-tape-serve
     if [ -s "debian/$package.postun" ]; then
         echo "%postun -n $actualPackage" >> CASTOR.spec
         cat debian/$package.postun >> CASTOR.spec
+    fi
+    if [ "${group}" != "Client" ]; then
+	echo "%endif" >> CASTOR.spec # end of client compilation if
     fi
     echo >> CASTOR.spec
 done
