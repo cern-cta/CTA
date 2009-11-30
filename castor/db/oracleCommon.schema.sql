@@ -218,6 +218,10 @@ ALTER TABLE SvcClass ADD CONSTRAINT UN_SvcClass_Name UNIQUE (NAME);
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 /
 
+/* Custom type to handle strings returned by pipelined functions */
+CREATE OR REPLACE TYPE strListTable AS TABLE OF VARCHAR2(2048);
+/
+
 /* Default policy for migration */
 ALTER TABLE TapePool MODIFY (migrSelectPolicy DEFAULT 'defaultMigrSelPolicy');
 
@@ -353,45 +357,6 @@ ALTER TABLE PriorityMap ADD CONSTRAINT UN_Priority_euid_egid UNIQUE (euid, egid)
 CREATE TABLE AdminUsers (euid NUMBER, egid NUMBER);
 CREATE TABLE WhiteList (svcClass VARCHAR2(2048), euid NUMBER, egid NUMBER, reqType NUMBER);
 CREATE TABLE BlackList (svcClass VARCHAR2(2048), euid NUMBER, egid NUMBER, reqType NUMBER);
-
-INSERT INTO AdminUsers VALUES (0,0);   -- root/root, to be removed
-INSERT INTO AdminUsers VALUES (-1,-1); -- internal requests
-PROMPT Configuration of the admin part of the B/W list
-UNDEF stageUid
-ACCEPT stageUid NUMBER PROMPT 'Enter the stage user id: ';
-UNDEF stGid
-ACCEPT stGid NUMBER PROMPT 'Enter the st group id: ';
-INSERT INTO AdminUsers VALUES (&stageUid,&stGid);
-PROMPT In order to define admins that will be exempt of B/W list checks,
-PROMPT (e.g. c3 group at CERN), please give a space separated list of
-PROMPT <userid>:<groupid> pairs. userid can be empty, meaning any user
-PROMPT in the specified group.
-UNDEF adminList
-ACCEPT adminList CHAR PROMPT 'List of admins: ';
-DECLARE
-  adminUserId NUMBER;
-  adminGroupId NUMBER;
-  ind NUMBER;
-  errmsg VARCHAR(2048);
-BEGIN
-  FOR admin IN (SELECT column_value AS s FROM TABLE(strTokenizer('&adminList',' '))) LOOP
-    BEGIN
-      ind := INSTR(admin.s, ':');
-      IF ind = 0 THEN
-        errMsg := 'Invalid <userid>:<groupid> ' || admin.s || ', ignoring';
-        RAISE INVALID_NUMBER;
-      END IF;
-      errMsg := 'Invalid userid ' || SUBSTR(admin.s, 1, ind-1) || ', ignoring';
-      adminUserId := TO_NUMBER(SUBSTR(admin.s, 1, ind-1));
-      errMsg := 'Invalid groupid ' || SUBSTR(admin.s, ind) || ', ignoring';
-      adminGroupId := TO_NUMBER(SUBSTR(admin.s, ind+1));
-      INSERT INTO AdminUsers VALUES (adminUserId,adminGroupId);
-    EXCEPTION WHEN INVALID_NUMBER THEN
-      dbms_output.put_line(errMsg);
-    END;
-  END LOOP;
-END;
-/
 
 /* Define the service handlers for the appropriate sets of stage request objects */
 UPDATE Type2Obj SET svcHandler = 'JobReqSvc' WHERE type IN (35, 40, 44);

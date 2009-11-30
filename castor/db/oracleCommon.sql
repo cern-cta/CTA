@@ -7,7 +7,6 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
 
-
 /* Get current time as a time_t. Not that easy in ORACLE */
 CREATE OR REPLACE FUNCTION getTime RETURN NUMBER IS
   epoch            TIMESTAMP WITH TIME ZONE;
@@ -32,7 +31,6 @@ BEGIN
 END;
 /
 
-
 /* Generate a universally unique id (UUID) */
 CREATE OR REPLACE FUNCTION uuidGen RETURN VARCHAR2 IS
   ret VARCHAR2(36);
@@ -43,7 +41,6 @@ BEGIN
   RETURN lower(regexp_replace(sys_guid(), '(.{8})(.{4})(.{4})(.{4})(.{12})', '\1-\2-\3-\4-\5'));
 END;
 /
-
 
 /* Function to check if a service class exists by name. This function can return
  * the id of the named service class or raise an application error if it does
@@ -88,7 +85,6 @@ BEGIN
 END;
 /
 
-
 /* Function to return a comma separate list of service classes that a
  * filesystem belongs to.
  */
@@ -114,7 +110,6 @@ BEGIN
 END;
 /
 
-
 /* Function to extract a configuration option from the castor config
  * table.
  */
@@ -131,6 +126,30 @@ BEGIN
   RETURN returnValue;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   RETURN returnValue;
+END;
+/
+
+/* Function to tokenize a string using a specified delimiter. If no delimiter
+ * is specified the default is ','. The results are returned as a table e.g.
+ * SELECT * FROM TABLE (strTokenizer(inputValue, delimiter))
+ */
+CREATE OR REPLACE FUNCTION strTokenizer(p_list VARCHAR2, p_del VARCHAR2 := ',')
+  RETURN strListTable pipelined IS
+  l_idx   INTEGER;
+  l_list  VARCHAR2(32767) := p_list;
+  l_value VARCHAR2(32767);
+BEGIN
+  LOOP
+    l_idx := instr(l_list, p_del);
+    IF l_idx > 0 THEN
+      PIPE ROW(ltrim(rtrim(substr(l_list, 1, l_idx - 1))));
+      l_list := substr(l_list, l_idx + length(p_del));
+    ELSE
+      PIPE ROW(ltrim(rtrim(l_list)));
+      EXIT;
+    END IF;
+  END LOOP;
+  RETURN;
 END;
 /
 
