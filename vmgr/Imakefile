@@ -18,6 +18,7 @@ LIBS+= -ldl
 #endif
 CFLAGS = -g -I../h $(MTCCFLAGS) -DBIN=\"$(BIN)\" -DLOGFILE=\"$(LOGFILE)\" -DVMGRCONFIG=\"$(VMGRCONFIG)\" $(RDSFLG) $(ORAFLG) $(RDSINC) $(ORAINC) $(SECURITYFLAG)
 
+DependsOnLibrary(ns,castorns)
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(upv,castorupv)
 
