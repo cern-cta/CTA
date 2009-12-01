@@ -48,29 +48,91 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('X_schemaTag_X', 'X_newRelTag_X');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('schemaTag', 'newRelTag');
 /* Uncomment for transparent release */
 UPDATE UpgradeLog SET type = 'TRANSPARENT';
 COMMIT;
 
-/* Job management */
+/* Schema changes go here */
+/**************************/
+
+/*
+ * Create and populate the table VMGR_TAPE_STATUS_CODE.
+ * 
+ * The first BEGIN-END block check if the table already exist, an if not
+ * it create the table. The second BEGIN-END block populate the table 
+ * with the vmgr status number (from 0 to 63) and the corresponding
+ * string value generated following this bit set convencion:
+ * 	  DISABLED =  1  (000001)
+ *        EXPORTED =  2  (000010)
+ *        BUSY     =  4  (000100)
+ *        FULL     =  8  (001000)
+ *        RDONLY   = 16  (010000)
+ *        ARCHIVED = 32  (100000)
+ */
+DECLARE
+  nbTable         INTEGER        := 0;
+  createTableStmt VARCHAR2(1024) :=
+    'CREATE TABLE vmgr_tape_status_code (' ||
+    '  status_number NUMBER  NOT NULL, '   ||
+    '  status_string VARCHAR2(100)   , '   ||
+    '  CONSTRAINT PK_VmgrTapeStatusCodes_number PRIMARY KEY (status_number))';
 BEGIN
-  FOR a IN (SELECT * FROM user_scheduler_jobs)
-  LOOP
-    -- Stop any running jobs
-    IF a.state = 'RUNNING' THEN
-      dbms_scheduler.stop_job(a.job_name);
-    END IF;
-    -- Schedule the start date of the job to 15 minutes from now. This
-    -- basically pauses the job for 15 minutes so that the upgrade can
-    -- go through as quickly as possible.
-    dbms_scheduler.set_attribute(a.job_name, 'START_DATE', SYSDATE + 15/1440);
-  END LOOP;
+  SELECT COUNT(*) INTO nbTable FROM USER_TABLES
+   WHERE TABLE_NAME = 'VMGR_TAPE_STATUS_CODE';
+  -- If the table still do not exist in the DB it will create it
+  IF nbTable = 0 THEN
+    DBMS_OUTPUT.PUT_LINE(createTableStmt);
+    EXECUTE IMMEDIATE createTableStmt;
+  END IF;
 END;
 /
 
-/* Schema changes go here */
-/**************************/
+DECLARE
+  bitExponent         INTEGER := 0;
+  bitValue            INTEGER := 0;
+  alreadyFoundASetBit BOOLEAN := FALSE;
+  status_str          VARCHAR2(100);
+  nbTable             INTEGER := 0;
+BEGIN
+
+  SELECT COUNT(*) INTO nbTable FROM VMGR_TAPE_STATUS_CODE;
+  -- If the table exist and is empty, then populate it
+  IF nbTable = 0 THEN
+
+    FOR statusNb IN 0..63 LOOP
+      status_str := '';
+      alreadyFoundASetBit := FALSE;
+      FOR bitExponent IN REVERSE 0..5 LOOP
+        bitValue := 2 ** bitExponent;
+
+        -- Mask all other bits except for the one in "bitExponent" position
+        IF BITAND(statusNb, bitValue) > 0 THEN
+          IF alreadyFoundASetBit THEN
+            status_str := status_str || '|';
+          END IF;
+          CASE bitValue
+            WHEN  1 THEN status_str := status_str || 'DISABLED';
+            WHEN  2 THEN status_str := status_str || 'EXPORTED';
+            WHEN  4 THEN status_str := status_str || 'BUSY';
+            WHEN  8 THEN status_str := status_str || 'FULL';
+            WHEN 16 THEN status_str := status_str || 'RDONLY';
+            WHEN 32 THEN status_str := status_str || 'ARCHIVED';
+            ELSE         status_str := status_str || 'UNKNOWN';
+          END CASE;
+          alreadyFoundASetBit := TRUE;
+        END IF;
+      END LOOP;
+      -- User visual feedback
+      DBMS_OUTPUT.PUT_LINE(statusNb ||' '||  status_str);
+      INSERT INTO VMGR_TAPE_STATUS_CODE(STATUS_NUMBER, STATUS_STRING)
+      VALUES(statusNb, status_str);
+    END LOOP;
+    COMMIT;
+
+  END IF;
+END;
+/
 
 
 /* Update and revalidation of PL-SQL code */
@@ -324,76 +386,3 @@ END;
 /***************************************/
 UPDATE UpgradeLog SET endDate = sysdate, state = 'COMPLETE';
 COMMIT;
-
-
-/* Create and populate the VMGR_TAPE_STATUS_CODE table (ex. STATUS_VALUE) */
-/**************************************************************************/
-DECLARE
-  nbTable         INTEGER        := 0;
-  createTableStmt VARCHAR2(1024) :=
-    'CREATE TABLE vmgr_tape_status_code (' ||
-    '  status_number NUMBER  NOT NULL, '   ||
-    '  status_string VARCHAR2(100)   , '   ||
-    '  CONSTRAINT PK_VmgrTapeStatusCodes_number PRIMARY KEY (status_number))';
-BEGIN
-  SELECT COUNT(*) INTO nbTable FROM USER_TABLES WHERE TABLE_NAME = 'VMGR_TAPE_STATUS_CODE';
-  -- If the table still do not exist in the DB it will create it
-  IF nbTable = 0 THEN
-    DBMS_OUTPUT.PUT_LINE(createTableStmt);
-    execute immediate createTableStmt;
-  END IF;
-END;
-/
-
-DECLARE
-  bitExponent         INTEGER := 0;
-  bitValue            INTEGER := 0;
-  alreadyFoundASetBit BOOLEAN := FALSE;
-  status_str          VARCHAR2(100);
-  nbTable             INTEGER := 0;
-
-BEGIN
-
-  SELECT COUNT(*) INTO nbTable FROM VMGR_TAPE_STATUS_CODE;
-  -- If the table exist and is empty, then populate it
-  IF nbTable = 0 THEN
-
-    FOR statusNb IN 0..63 LOOP
-      status_str := '';
-      alreadyFoundASetBit := FALSE;
-      FOR bitExponent IN REVERSE 0..5 LOOP
-        bitValue := 2 ** bitExponent;
-
-        -- Mask all other bits except for the one in "bitExponent" position
-        IF BITAND(statusNb, bitValue) > 0 THEN
-          IF alreadyFoundASetBit THEN
-            status_str := status_str || '|';
-          END IF;
-          CASE bitValue
-            WHEN  1 THEN status_str := status_str || 'DISABLED';
-            WHEN  2 THEN status_str := status_str || 'EXPORTED';
-            WHEN  4 THEN status_str := status_str || 'BUSY';
-            WHEN  8 THEN status_str := status_str || 'FULL';
-            WHEN 16 THEN status_str := status_str || 'RDONLY';
-            WHEN 32 THEN status_str := status_str || 'ARCHIVED';
-            ELSE         status_str := status_str || 'UNKNOWN';
-          END CASE;
-          alreadyFoundASetBit := TRUE;
-        END IF;
-      END LOOP;
-      -- User visual feedback
-      DBMS_OUTPUT.PUT_LINE(statusNb ||' '||  status_str);
-      INSERT INTO VMGR_TAPE_STATUS_CODE(STATUS_NUMBER, STATUS_STRING) VALUES(statusNb, status_str);
-    END LOOP;
-    COMMIT;
-  
-  ELSE
-    DBMS_OUTPUT.PUT_LINE(
-      'Table VMGR_TAPE_STATUS_CODE not populated because already exist in the DB and already contains ' || 
-      nbTable || ' row(s).');
-
-  END IF;
-  
-END;
-/
-
