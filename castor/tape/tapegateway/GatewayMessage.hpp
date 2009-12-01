@@ -93,9 +93,27 @@ namespace castor {
           m_mountTransactionId = new_var;
         }
 
+        /**
+         * Get the value of m_aggregatorTransactionId
+         * @return the value of m_aggregatorTransactionId
+         */
+        u_signed64 aggregatorTransactionId() const {
+          return m_aggregatorTransactionId;
+        }
+
+        /**
+         * Set the value of m_aggregatorTransactionId
+         * @param new_var the new value of m_aggregatorTransactionId
+         */
+        void setAggregatorTransactionId(u_signed64 new_var) {
+          m_aggregatorTransactionId = new_var;
+        }
+
       private:
 
         u_signed64 m_mountTransactionId;
+
+        u_signed64 m_aggregatorTransactionId;
 
       }; /* end of class GatewayMessage */
 

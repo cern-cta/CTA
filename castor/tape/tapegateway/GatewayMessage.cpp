@@ -37,7 +37,8 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::GatewayMessage::GatewayMessage() throw() :
-  m_mountTransactionId(0) {
+  m_mountTransactionId(0),
+  m_aggregatorTransactionId(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -60,6 +61,7 @@ void castor::tape::tapegateway::GatewayMessage::print(std::ostream& stream,
   }
   // Output of all members
   stream << indent << "mountTransactionId : " << m_mountTransactionId << std::endl;
+  stream << indent << "aggregatorTransactionId : " << m_aggregatorTransactionId << std::endl;
   alreadyPrinted.insert(this);
 }
 
