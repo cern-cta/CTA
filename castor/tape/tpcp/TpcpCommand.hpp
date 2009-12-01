@@ -305,12 +305,18 @@ protected:
    * method tries to send an EndNotificationErrorReport messages to the
    * aggregator and fails silently in the case it cannot.
    *
-   * @param errorCode    The error code.
-   * @param errorMessage The error message.
-   * @param sock         The socket on which to reply to the aggregator.
+   * @param aggregatorTransactionId The aggregator transaction ID.
+   * @param errorCode               The error code.
+   * @param errorMessage            The error message.
+   * @param sock                    The socket on which to reply to the
+   *                                aggregator.
    */
-  void sendEndNotificationErrorReport(const int errorCode,
-    const std::string &errorMessage, castor::io::AbstractSocket &sock) throw();
+  void sendEndNotificationErrorReport(
+    const uint64_t             aggregatorTransactionId,
+    const int                  errorCode,
+    const std::string          &errorMessage,
+    castor::io::AbstractSocket &sock)
+    throw();
 
   /**
    * Convenience method that casts the specified CASTOR framework object into
@@ -337,7 +343,9 @@ protected:
         ": Actual=" << utils::objectTypeToString(obj->type()) <<
         " Expected=" << utils::objectTypeToString(T().type());
 
-      sendEndNotificationErrorReport(SEINTERNAL, oss.str(), sock);
+      const uint64_t aggregatorTransactionId = 0; // Transaction Id unknown
+      sendEndNotificationErrorReport(aggregatorTransactionId, SEINTERNAL,
+        oss.str(), sock);
 
       TAPE_THROW_EX(castor::exception::Internal, oss.str());
     }

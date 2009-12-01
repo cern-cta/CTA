@@ -53,6 +53,7 @@
 #include <getopt.h>
 #include <iostream>
 #include <list>
+#include <stdint.h>
 #include <string.h>
 #include <sys/unistd.h>
 #include <time.h>
@@ -616,6 +617,8 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
     }
     volumeMsg.setLabel(m_vmgrTapeInfo.lbltype);
     volumeMsg.setMountTransactionId(m_volReqId);
+    volumeMsg.setAggregatorTransactionId(
+      volumeRequest->aggregatorTransactionId());
     volumeMsg.setDensity(m_vmgrTapeInfo.density);
 
     // Send the volume message to the aggregator
@@ -870,10 +873,12 @@ bool castor::tape::tpcp::TpcpCommand::waitForAndDispatchMessage()
 
       oss <<
         "Unexpected object type" <<
-        ": Actual=" << utils::objectTypeToString(obj->type()) <<
-        " Expected=Subclass of GatewayMessage";
+        ": actual=" << utils::objectTypeToString(obj->type()) <<
+        " expected=Subclass of GatewayMessage";
 
-      sendEndNotificationErrorReport(SEINTERNAL, oss.str(), sock);
+      const uint64_t aggregatorTransactionId = 0; // Unknown transaction ID
+      sendEndNotificationErrorReport(aggregatorTransactionId, SEINTERNAL,
+        oss.str(), sock);
 
       TAPE_THROW_EX(castor::exception::Internal, oss.str());
     }
@@ -884,10 +889,11 @@ bool castor::tape::tpcp::TpcpCommand::waitForAndDispatchMessage()
 
       oss <<
         "Mount transaction ID mismatch" <<
-        ": Actual=" << msg->mountTransactionId() <<
-        " Expected=" << m_volReqId;
+        ": actual=" << msg->mountTransactionId() <<
+        " expected=" << m_volReqId;
 
-      sendEndNotificationErrorReport(EBADMSG, oss.str(), sock);
+      sendEndNotificationErrorReport(msg->aggregatorTransactionId(), EBADMSG,
+        oss.str(), sock);
 
       castor::exception::Exception ex(EBADMSG);
       ex.getMessage() << oss.str();
@@ -904,7 +910,9 @@ bool castor::tape::tpcp::TpcpCommand::waitForAndDispatchMessage()
       "Received unexpected aggregator message"
       ": Message type = " << utils::objectTypeToString(obj->type());
 
-    sendEndNotificationErrorReport(EBADMSG, oss.str(), sock);
+    const uint64_t aggregatorTransactionId = 0; // Unknown transaction ID
+    sendEndNotificationErrorReport(aggregatorTransactionId, EBADMSG, oss.str(),
+      sock);
 
     TAPE_THROW_CODE(EBADMSG,
          ": Received unexpected aggregator message "
@@ -937,6 +945,7 @@ bool castor::tape::tpcp::TpcpCommand::handlePingNotification(
   // Create the NotificationAcknowledge message for the aggregator
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
   acknowledge.setMountTransactionId(m_volReqId);
+  acknowledge.setAggregatorTransactionId(msg->aggregatorTransactionId());
 
   // Send the NotificationAcknowledge message to the aggregator
   sock.sendObject(acknowledge);
@@ -962,6 +971,7 @@ bool castor::tape::tpcp::TpcpCommand::handleEndNotification(
   // Create the NotificationAcknowledge message for the aggregator
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
   acknowledge.setMountTransactionId(m_volReqId);
+  acknowledge.setAggregatorTransactionId(msg->aggregatorTransactionId());
 
   // Send the NotificationAcknowledge message to the aggregator
   sock.sendObject(acknowledge);
@@ -1006,6 +1016,7 @@ bool castor::tape::tpcp::TpcpCommand::handleEndNotificationErrorReport(
   // Create the NotificationAcknowledge message for the aggregator
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
   acknowledge.setMountTransactionId(m_volReqId);
+  acknowledge.setAggregatorTransactionId(msg->aggregatorTransactionId());
 
   // Send the NotificationAcknowledge message to the aggregator
   sock.sendObject(acknowledge);
@@ -1097,6 +1108,8 @@ void castor::tape::tpcp::TpcpCommand::acknowledgeEndOfSession()
   // Create the NotificationAcknowledge message for the aggregator
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
   acknowledge.setMountTransactionId(m_volReqId);
+  acknowledge.setAggregatorTransactionId(
+    endNotification->aggregatorTransactionId());
 
   // Send the volume message to the aggregator
   sock.sendObject(acknowledge);
@@ -1112,12 +1125,16 @@ void castor::tape::tpcp::TpcpCommand::acknowledgeEndOfSession()
 // sendEndNotificationErrorReport
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TpcpCommand::sendEndNotificationErrorReport(
-  const int errorCode, const std::string &errorMessage,
-  castor::io::AbstractSocket &sock) throw() {
+  const uint64_t             aggregatorTransactionId,
+  const int                  errorCode,
+  const std::string          &errorMessage,
+  castor::io::AbstractSocket &sock)
+  throw() {
 
   try {
     // Create the message
     tapegateway::EndNotificationErrorReport errorReport;
+    errorReport.setAggregatorTransactionId(aggregatorTransactionId);
     errorReport.setErrorCode(errorCode);
     errorReport.setErrorMessage(errorMessage);
 

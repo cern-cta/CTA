@@ -375,6 +375,7 @@ bool castor::tape::tpcp::DumpTpCommand::handleDumpParametersRequest(
   // Create DumpParameters message for the aggregator
   tapegateway::DumpParameters dumpParameters;
   dumpParameters.setMountTransactionId(m_volReqId);
+  dumpParameters.setAggregatorTransactionId(msg->aggregatorTransactionId());
   dumpParameters.setMaxBytes(m_cmdLine.dumpTapeMaxBytes);
   dumpParameters.setBlockSize(m_cmdLine.dumpTapeBlockSize);
   dumpParameters.setConverter(m_cmdLine.dumpTapeConverter);
@@ -412,6 +413,7 @@ bool castor::tape::tpcp::DumpTpCommand::handleDumpNotification(
   // Create the NotificationAcknowledge message for the aggregator
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
   acknowledge.setMountTransactionId(m_volReqId);
+  acknowledge.setAggregatorTransactionId(msg->aggregatorTransactionId());
 
   // Send the NotificationAcknowledge message to the aggregator
   sock.sendObject(acknowledge);

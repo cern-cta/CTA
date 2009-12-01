@@ -415,7 +415,8 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileToRecallRequest(
     } catch(castor::exception::Exception &ex) {
 
       // Notify the aggregator about the exception and rethrow
-      sendEndNotificationErrorReport(ex.code(), ex.getMessage().str(), sock);
+      sendEndNotificationErrorReport(msg->aggregatorTransactionId(), ex.code(),
+        ex.getMessage().str(), sock);
       throw(ex);
     }
 
@@ -425,6 +426,7 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileToRecallRequest(
     // Create FileToRecall message for the aggregator
     tapegateway::FileToRecall fileToRecall;
     fileToRecall.setMountTransactionId(m_volReqId);
+    fileToRecall.setAggregatorTransactionId(msg->aggregatorTransactionId());
     fileToRecall.setFileTransactionId(m_fileTransactionId);
     fileToRecall.setNshost("tpcp\0");
     fileToRecall.setFileid(0);
@@ -468,6 +470,7 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileToRecallRequest(
     // Create the NoMoreFiles message for the aggregator
     castor::tape::tapegateway::NoMoreFiles noMore;
     noMore.setMountTransactionId(m_volReqId);
+    noMore.setAggregatorTransactionId(msg->aggregatorTransactionId());
 
     // Send the NoMoreFiles message to the aggregator
     sock.sendObject(noMore);
@@ -504,7 +507,8 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileRecalledNotification(
         "Received unknown file transaction ID from the aggregator"
         ": fileTransactionId=" << msg->fileTransactionId();
 
-      sendEndNotificationErrorReport(EBADMSG, oss.str(), sock);
+      sendEndNotificationErrorReport(msg->aggregatorTransactionId(), EBADMSG,
+        oss.str(), sock);
 
       castor::exception::Exception ex(ECANCELED);
 
@@ -540,6 +544,7 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileRecalledNotification(
   // Create the NotificationAcknowledge message for the aggregator
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
   acknowledge.setMountTransactionId(m_volReqId);
+  acknowledge.setAggregatorTransactionId(msg->aggregatorTransactionId());
 
   // Send the NotificationAcknowledge message to the aggregator
   sock.sendObject(acknowledge);
