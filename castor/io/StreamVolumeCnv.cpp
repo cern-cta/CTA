@@ -91,6 +91,7 @@ void castor::io::StreamVolumeCnv::createRep(castor::IAddress* address,
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
   ad->stream() << obj->mountTransactionId();
+  ad->stream() << obj->aggregatorTransactionId();
   ad->stream() << obj->vid();
   ad->stream() << obj->density();
   ad->stream() << obj->label();
@@ -112,6 +113,9 @@ castor::IObject* castor::io::StreamVolumeCnv::createObj(castor::IAddress* addres
   u_signed64 mountTransactionId;
   ad->stream() >> mountTransactionId;
   object->setMountTransactionId(mountTransactionId);
+  u_signed64 aggregatorTransactionId;
+  ad->stream() >> aggregatorTransactionId;
+  object->setAggregatorTransactionId(aggregatorTransactionId);
   std::string vid;
   ad->stream() >> vid;
   object->setVid(vid);

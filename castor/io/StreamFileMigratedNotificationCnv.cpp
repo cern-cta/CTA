@@ -94,6 +94,7 @@ void castor::io::StreamFileMigratedNotificationCnv::createRep(castor::IAddress* 
   ad->stream() << obj->fileid();
   ad->stream() << obj->fseq();
   ad->stream() << obj->mountTransactionId();
+  ad->stream() << obj->aggregatorTransactionId();
   ad->stream() << obj->fileSize();
   ad->stream() << obj->checksumName();
   ad->stream() << obj->checksum();
@@ -131,6 +132,9 @@ castor::IObject* castor::io::StreamFileMigratedNotificationCnv::createObj(castor
   u_signed64 mountTransactionId;
   ad->stream() >> mountTransactionId;
   object->setMountTransactionId(mountTransactionId);
+  u_signed64 aggregatorTransactionId;
+  ad->stream() >> aggregatorTransactionId;
+  object->setAggregatorTransactionId(aggregatorTransactionId);
   u_signed64 fileSize;
   ad->stream() >> fileSize;
   object->setFileSize(fileSize);

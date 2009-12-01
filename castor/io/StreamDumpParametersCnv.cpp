@@ -88,6 +88,7 @@ void castor::io::StreamDumpParametersCnv::createRep(castor::IAddress* address,
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
   ad->stream() << obj->mountTransactionId();
+  ad->stream() << obj->aggregatorTransactionId();
   ad->stream() << obj->maxBytes();
   ad->stream() << obj->blockSize();
   ad->stream() << obj->converter();
@@ -112,6 +113,9 @@ castor::IObject* castor::io::StreamDumpParametersCnv::createObj(castor::IAddress
   u_signed64 mountTransactionId;
   ad->stream() >> mountTransactionId;
   object->setMountTransactionId(mountTransactionId);
+  u_signed64 aggregatorTransactionId;
+  ad->stream() >> aggregatorTransactionId;
+  object->setAggregatorTransactionId(aggregatorTransactionId);
   int maxBytes;
   ad->stream() >> maxBytes;
   object->setMaxBytes(maxBytes);

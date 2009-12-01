@@ -88,6 +88,7 @@ void castor::io::StreamNotificationAcknowledgeCnv::createRep(castor::IAddress* a
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
   ad->stream() << obj->mountTransactionId();
+  ad->stream() << obj->aggregatorTransactionId();
   ad->stream() << obj->id();
 }
 
@@ -104,6 +105,9 @@ castor::IObject* castor::io::StreamNotificationAcknowledgeCnv::createObj(castor:
   u_signed64 mountTransactionId;
   ad->stream() >> mountTransactionId;
   object->setMountTransactionId(mountTransactionId);
+  u_signed64 aggregatorTransactionId;
+  ad->stream() >> aggregatorTransactionId;
+  object->setAggregatorTransactionId(aggregatorTransactionId);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

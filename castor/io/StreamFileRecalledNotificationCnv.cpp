@@ -94,6 +94,7 @@ void castor::io::StreamFileRecalledNotificationCnv::createRep(castor::IAddress* 
   ad->stream() << obj->fileid();
   ad->stream() << obj->fseq();
   ad->stream() << obj->mountTransactionId();
+  ad->stream() << obj->aggregatorTransactionId();
   ad->stream() << obj->path();
   ad->stream() << obj->checksumName();
   ad->stream() << obj->checksum();
@@ -127,6 +128,9 @@ castor::IObject* castor::io::StreamFileRecalledNotificationCnv::createObj(castor
   u_signed64 mountTransactionId;
   ad->stream() >> mountTransactionId;
   object->setMountTransactionId(mountTransactionId);
+  u_signed64 aggregatorTransactionId;
+  ad->stream() >> aggregatorTransactionId;
+  object->setAggregatorTransactionId(aggregatorTransactionId);
   std::string path;
   ad->stream() >> path;
   object->setPath(path);

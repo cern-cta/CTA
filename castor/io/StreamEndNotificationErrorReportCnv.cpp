@@ -89,6 +89,7 @@ void castor::io::StreamEndNotificationErrorReportCnv::createRep(castor::IAddress
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
   ad->stream() << obj->mountTransactionId();
+  ad->stream() << obj->aggregatorTransactionId();
   ad->stream() << obj->errorCode();
   ad->stream() << obj->errorMessage();
   ad->stream() << obj->id();
@@ -107,6 +108,9 @@ castor::IObject* castor::io::StreamEndNotificationErrorReportCnv::createObj(cast
   u_signed64 mountTransactionId;
   ad->stream() >> mountTransactionId;
   object->setMountTransactionId(mountTransactionId);
+  u_signed64 aggregatorTransactionId;
+  ad->stream() >> aggregatorTransactionId;
+  object->setAggregatorTransactionId(aggregatorTransactionId);
   int errorCode;
   ad->stream() >> errorCode;
   object->setErrorCode(errorCode);

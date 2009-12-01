@@ -94,6 +94,7 @@ void castor::io::StreamFileToRecallCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->fileid();
   ad->stream() << obj->fseq();
   ad->stream() << obj->mountTransactionId();
+  ad->stream() << obj->aggregatorTransactionId();
   ad->stream() << obj->path();
   ad->stream() << obj->blockId0();
   ad->stream() << obj->blockId1();
@@ -129,6 +130,9 @@ castor::IObject* castor::io::StreamFileToRecallCnv::createObj(castor::IAddress* 
   u_signed64 mountTransactionId;
   ad->stream() >> mountTransactionId;
   object->setMountTransactionId(mountTransactionId);
+  u_signed64 aggregatorTransactionId;
+  ad->stream() >> aggregatorTransactionId;
+  object->setAggregatorTransactionId(aggregatorTransactionId);
   std::string path;
   ad->stream() >> path;
   object->setPath(path);

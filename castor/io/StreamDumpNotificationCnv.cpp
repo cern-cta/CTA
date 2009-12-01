@@ -89,6 +89,7 @@ void castor::io::StreamDumpNotificationCnv::createRep(castor::IAddress* address,
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
   ad->stream() << obj->mountTransactionId();
+  ad->stream() << obj->aggregatorTransactionId();
   ad->stream() << obj->message();
   ad->stream() << obj->id();
 }
@@ -106,6 +107,9 @@ castor::IObject* castor::io::StreamDumpNotificationCnv::createObj(castor::IAddre
   u_signed64 mountTransactionId;
   ad->stream() >> mountTransactionId;
   object->setMountTransactionId(mountTransactionId);
+  u_signed64 aggregatorTransactionId;
+  ad->stream() >> aggregatorTransactionId;
+  object->setAggregatorTransactionId(aggregatorTransactionId);
   std::string message;
   ad->stream() >> message;
   object->setMessage(message);
