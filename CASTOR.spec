@@ -24,6 +24,8 @@ URL: http://cern.ch/castor
 License: http://cern.ch/castor/DIST/CONDITIONS
 Group: Application/Castor
 BuildRoot: %{_builddir}/%{name}-%{version}-root
+ExclusiveOs: linux
+ExclusiveArch: i386 x86_64
 
 # RPM specific definitions
 #-------------------------
