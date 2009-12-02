@@ -1168,18 +1168,21 @@ while($disk_file_size <= $tape_file_size) {
 How to configure rtcpd
 ======================
 
+Add the following entries to /etc/castor/castor.conf:
+
 RTCOPYD BUFSZ 5242880
 RTCOPYD MOUNT_TIME 900
 RTCOPYD NB_BUFS 573
 RTCOPYD SELF_MONITOR YES
 
-#RTCOPYD BUFSZ 104857600
-#RTCOPYD MOUNT_TIME 900
-#RTCOPYD NB_BUFS 2
-#RTCOPYD SELF_MONITOR YES
-#RTCOPYD THREAD_POOL 2
-#RTCOPYD DEBUG 1
-#RTCOPYD LOGLEVEL 7
+
+How to turn on the logging of rtcpd DEBUG messages
+==================================================
+
+Add the following entries to /etc/castor/castor.conf:
+
+RTCOPY DEBUG 1
+RTCOPY LOGLEVEL 7
 
 
 How to turn on and off the compression of an IBM 3295 drive
