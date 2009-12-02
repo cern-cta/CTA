@@ -33,10 +33,10 @@
 
 // LSF headers
 extern "C" {
-  #ifndef LSBATCH_H
-    #include "lsf/lssched.h"
-    #include "lsf/lsbatch.h"
-  #endif
+#ifndef LSBATCH_H
+#include "lsf/lssched.h"
+#include "lsf/lsbatch.h"
+#endif
 }
 
 namespace castor {
@@ -74,7 +74,7 @@ namespace castor {
        * @exception Exception in case of error
        */
       virtual void init()
-	throw(castor::exception::Exception);
+        throw(castor::exception::Exception);
 
       /**
        * Method called by the forked process pool dispatcher when processing
@@ -93,17 +93,17 @@ namespace castor {
        * @exception Exception in case of error
        */
       virtual void submitJob
-      (castor::jobmanager::JobSubmissionRequest *request)
-	throw(castor::exception::Exception);
+      (castor::jobmanager::JobRequest *request)
+        throw(castor::exception::Exception);
 
       /**
-       * Terminate the subrequest associated with the LSF job in the database
+       * Faile the subrequest associated with the LSF job in the database
        * using the given errorCode.
        * @param request The submission request information
-       * @param errorCode The error code to use when terminating the job
+       * @param errorCode The error code to use when failing the job
        */
-      virtual void terminateRequest
-      (castor::jobmanager::JobSubmissionRequest *request, int errorCode);
+      virtual void failRequest
+      (castor::jobmanager::JobRequest *request, int errorCode);
 
     private:
 

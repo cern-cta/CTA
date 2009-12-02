@@ -27,16 +27,17 @@
 
 // Include files
 #include "castor/jobmanager/IJobManagerSvc.hpp"
+#include "castor/jobmanager/JobRequest.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/server/IThread.hpp"
 #include <map>
 
 // LSF headers
 extern "C" {
-  #ifndef LSBATCH_H
-    #include "lsf/lssched.h"
-    #include "lsf/lsbatch.h"
-  #endif
+#ifndef LSBATCH_H
+#include "lsf/lssched.h"
+#include "lsf/lsbatch.h"
+#endif
 }
 
 namespace castor {
@@ -53,15 +54,8 @@ namespace castor {
       /**
        * Default constructor
        */
-      ManagementThread();
-
-      /**
-       * Constructor which initializes the jobmanager service
-       * @param timeout The threads timeout interval
-       * @exception Exception in case of error
-       */
-      ManagementThread(int timeout)
-	throw(castor::exception::Exception);
+      ManagementThread()
+      throw(castor::exception::Exception);
 
       /**
        * Default destructor
@@ -81,44 +75,54 @@ namespace castor {
       virtual void stop() {};
 
       /**
-       * Process an LSF job to determine whether it exited the queue abnormally
-       * timed out or has resource requirements that can no longer by fulfilled
-       * @param job The LSF job structure
+       * Get a list of all LSF jobs.
+       * @return A map where the key is the job name (SubReq UUID) and the
+       * value, a JobRequest object providing information about the job.
        */
-      virtual void processJob(jobInfoEnt *job);
+      std::map<std::string, castor::jobmanager::JobRequest> getSchedulerJobs()
+        throw(castor::exception::Exception);
 
       /**
-       * Terminate a LSF job and the subrequest associated with it using the
-       * provided error code.
-       * @param jobId The job id to terminate in LSF. If 0 only the subrequest
-       * will be terminated.
-       * @param requestId The jobs request Id
-       * @param subRequestId The jobs sub request Id
-       * @param fileId The Cns invariant
-       * @param errorCode The error code to use when terminating the job
+       * Method used to return a JobRequest object whose attributes have been
+       * set based on the contents of a jobs external scheduler options.
+       * @param job The LSF job structure
+       * @return The jobRequest object
+       * @note Not all fields of the jobRequest object are filled, only those
+       * relevant to process the job later.
        */
-      virtual bool terminateRequest(LS_LONG_INT jobId,
-				    Cuuid_t requestId,
-				    Cuuid_t subRequestId,
-				    Cns_fileid fileId,
-				    int errorCode);
+      castor::jobmanager::JobRequest extractJobInfo(const jobInfoEnt *job)
+        throw(castor::exception::Exception);
+
+      /**
+       * Process an LSF job to determine whether it exited the queue abnormally
+       * timed out or has resource requirements that can no longer by fulfilled
+       * @param job A job request object providing information about the job
+       * being processed
+       * @param noSpace A flag to indicate that the job should be terminated
+       * as no space is available in the target service class.
+       * @param noFsAvail A flag to indicate that the job should be terminated
+       * because the requested filesystems are not available.
+       * @return 0 if no operation was performed or error code (errno value)
+       * which provides the reason for the termination.
+       */
+      int processJob(const castor::jobmanager::JobRequest job,
+                     const bool noSpace,
+                     const bool noFsAvail);
+
+      /**
+       * bkill a job in LSF.
+       * @param jobId The job id to terminate in LSF
+       * @return true if the job was terminated otherwise false
+       */
+      bool killJob(const LS_LONG_INT jobId);
 
     private:
 
       /// Jobmanager service to call oracle procedures
       castor::jobmanager::IJobManagerSvc *m_jobManagerService;
 
-      /// The LSF CleanPeriod value obtained from lsb.params
-      int m_cleanPeriod;
-
       /// The default queue in LSF
       std::string m_defaultQueue;
-
-      /// The threads timeout interval
-      int m_timeout;
-
-      /// The LSF_API has been initialized ?
-      bool m_initialized;
 
       /// Kill jobs if all requested filesystems are no longer available?
       bool m_resReqKill;
@@ -129,16 +133,6 @@ namespace castor {
       /// A container holding the timeout values for all service classes
       std::map<std::string, u_signed64> m_pendingTimeouts;
 
-      /// A container holding a list of jobs already processed
-      std::map<std::string, u_signed64> m_processedCache;
-
-      /// A container holding the resources available for scheduling
-      std::map<std::string, castor::jobmanager::DiskServerResource *> 
-      m_schedulerResources;
-
-      /// A containter holding the names of the service classes which no longer
-      /// have any space available.
-      std::vector<std::string> m_svcClassesWithNoSpace;
     };
 
   } // End of namespace jobmanager

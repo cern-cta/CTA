@@ -28,7 +28,7 @@
 
 // Include files
 #include "castor/jobmanager/SubmissionProcess.hpp"
-#include "castor/jobmanager/JobSubmissionRequest.hpp"
+#include "castor/jobmanager/JobRequest.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/Constants.hpp"
@@ -66,7 +66,7 @@ void castor::jobmanager::SubmissionProcess::init()
   // Initialize the oracle job manager service.
   castor::IService *orasvc =
     castor::BaseObject::services()->service("OraJobManagerSvc",
-					    castor::SVC_ORAJOBMANAGERSVC);
+                                            castor::SVC_ORAJOBMANAGERSVC);
   if (orasvc == NULL) {
     castor::exception::Internal e;
     e.getMessage() << "Unable to get OraJobManagerSVC for SubmissionProcess";
@@ -77,7 +77,7 @@ void castor::jobmanager::SubmissionProcess::init()
   if (m_jobManagerService == NULL) {
     castor::exception::Internal e;
     e.getMessage() << "Could not convert newly retrieved service into "
-		   << "IJobManagerSvc for SubmissionProcess" << std::endl;
+                   << "IJobManagerSvc for SubmissionProcess" << std::endl;
     throw e;
   }
 
@@ -104,7 +104,7 @@ void castor::jobmanager::SubmissionProcess::init()
 
       // "Invalid JobManager/SubmitRetryAttempts option, using default"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Default", attempts)};
+        {castor::dlf::Param("Default", attempts)};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 40, 1, params);
     }
     m_submitRetryAttempts = attempts;
@@ -123,7 +123,7 @@ void castor::jobmanager::SubmissionProcess::init()
       // "Invalid JobManager/SubmitRetryInterval option, value too small.
       // Using default"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Default", interval)};
+        {castor::dlf::Param("Default", interval)};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 41, 1, params);
     }
     m_submitRetryInterval = interval;
@@ -139,7 +139,7 @@ void castor::jobmanager::SubmissionProcess::init()
       // "Invalid JobManager/MaxDiskCopyRunTime option, value too small.
       // Using default"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Default", m_maxDiskCopyRunTime)};
+        {castor::dlf::Param("Default", m_maxDiskCopyRunTime)};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 57, 1, params);
     }
   }
@@ -150,8 +150,8 @@ void castor::jobmanager::SubmissionProcess::init()
 // Run
 //-----------------------------------------------------------------------------
 void castor::jobmanager::SubmissionProcess::run(void *param) {
-  castor::jobmanager::JobSubmissionRequest *request =
-    (castor::jobmanager::JobSubmissionRequest *)param;
+  castor::jobmanager::JobRequest *request =
+    (castor::jobmanager::JobRequest *)param;
 
   // At this point we are running in one of the preforked worker processes and
   // as such we can modify the uid and gid of the process as needed by the LSF
@@ -207,7 +207,7 @@ void castor::jobmanager::SubmissionProcess::run(void *param) {
        castor::dlf::Param("ID", request->id()),
        castor::dlf::Param(m_subRequestUuid)};
     castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_ERROR, 42, 5, params, &m_fileId);
-    terminateRequest(request, errorCode);
+    failRequest(request, errorCode);
     return;
   }
 
@@ -221,7 +221,7 @@ void castor::jobmanager::SubmissionProcess::run(void *param) {
       {castor::dlf::Param("Username", request->username()),
        castor::dlf::Param("SvcClass", request->svcClass())};
     castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_ERROR, 51, 2, params, &m_fileId);
-    terminateRequest(request, SEINTERNAL);
+    failRequest(request, SEINTERNAL);
     return;
   }
 
@@ -238,7 +238,7 @@ void castor::jobmanager::SubmissionProcess::run(void *param) {
        castor::dlf::Param("ID", request->id()),
        castor::dlf::Param(m_subRequestUuid)};
     castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_ERROR, 43, 4, params, &m_fileId);
-    terminateRequest(request, SEINTERNAL);
+    failRequest(request, SEINTERNAL);
     return;
   }
 
@@ -291,7 +291,7 @@ void castor::jobmanager::SubmissionProcess::run(void *param) {
 // SubmitJob
 //-----------------------------------------------------------------------------
 void castor::jobmanager::SubmissionProcess::submitJob
-(castor::jobmanager::JobSubmissionRequest *request)
+(castor::jobmanager::JobRequest *request)
   throw(castor::exception::Exception) {
 
   // Initialize the LSF submit and submitReply structures
@@ -347,12 +347,12 @@ void castor::jobmanager::SubmissionProcess::submitJob
   char resReq[MAXLINELEN];
   if (request->requestType() == OBJ_StageDiskCopyReplicaRequest) {
     strncpy(resReq,
-	    "span[ptile=1] type==any && select[defined(diskcopy)] rusage[diskcopy=1]]",
-	    MAXLINELEN);
+            "span[ptile=1] type==any && select[defined(diskcopy)] rusage[diskcopy=1]]",
+            MAXLINELEN);
   } else {
     snprintf(resReq, MAXLINELEN,
-	     "type==any && select[defined(%s)] rusage[%s=1]]",
-	     request->protocol().c_str(), request->protocol().c_str());
+             "type==any && select[defined(%s)] rusage[%s=1]]",
+             request->protocol().c_str(), request->protocol().c_str());
   }
   m_job.resReq = resReq;
 
@@ -365,10 +365,10 @@ void castor::jobmanager::SubmissionProcess::submitJob
 
       // "Memory allocation failure, job submission cancelled"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Error", strerror(errno)),
-	 castor::dlf::Param(m_subRequestUuid)};
+        {castor::dlf::Param("Error", strerror(errno)),
+         castor::dlf::Param(m_subRequestUuid)};
       castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_ERROR, 53, 2, params, &m_fileId);
-      terminateRequest(request, SEINTERNAL);
+      failRequest(request, SEINTERNAL);
       return;
     }
 
@@ -377,7 +377,7 @@ void castor::jobmanager::SubmissionProcess::submitJob
     std::string host;
     while (std::getline(iss, host, ' ')) {
       castor::dlf::Param params[] = {
-	castor::dlf::Param("Host", host)};
+        castor::dlf::Param("Host", host)};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 99, 1, params);
       m_job.askedHosts[m_job.numAskedHosts] = strdup(host.c_str());
       m_job.numAskedHosts++;
@@ -420,40 +420,40 @@ void castor::jobmanager::SubmissionProcess::submitJob
   std::ostringstream cmd;
   if (request->requestType() == OBJ_StageDiskCopyReplicaRequest) {
     cmd << "lsgrun -p -m \"$LSB_HOSTS\" /usr/bin/d2dtransfer"
-	<< " -r " << request->reqId()
-	<< " -s " << request->subReqId()
-	<< " -F " << request->fileId()
-	<< " -H " << request->nsHost()
-	<< " -D " << request->destDiskCopyId()
-	<< " -X " << request->sourceDiskCopyId()
-	<< " -S " << request->svcClass()
-	<< " -t " << request->requestCreationTime()
-	<< " -R " << m_sharedLSFResource << "/$LSB_JOBID";
+        << " -r " << request->reqId()
+        << " -s " << request->subReqId()
+        << " -F " << request->fileId()
+        << " -H " << request->nsHost()
+        << " -D " << request->destDiskCopyId()
+        << " -X " << request->sourceDiskCopyId()
+        << " -S " << request->svcClass()
+        << " -t " << request->requestCreationTime()
+        << " -R " << m_sharedLSFResource << "/$LSB_JOBID";
   } else {
     cmd << "/usr/bin/stagerjob"
-	<< " -r " << request->reqId()
-	<< " -s " << request->subReqId()
-	<< " -F " << request->fileId()
-	<< " -H " << request->nsHost()
-	<< " -p " << request->protocol()
-	<< " -i " << request->id()
-	<< " -T " << request->requestType()
-	<< " -m " << request->openFlags()
+        << " -r " << request->reqId()
+        << " -s " << request->subReqId()
+        << " -F " << request->fileId()
+        << " -H " << request->nsHost()
+        << " -p " << request->protocol()
+        << " -i " << request->id()
+        << " -T " << request->requestType()
+        << " -m " << request->openFlags()
 
-        // The client's identification as a string. This consists of the
-        // client's object type, IP address and port
-	<< " -C \"" <<  request->clientType() << ":"
-	<< ((request->ipAddress() & 0xFF000000) >> 24) << "."
-	<< ((request->ipAddress() & 0x00FF0000) >> 16) << "."
-	<< ((request->ipAddress() & 0x0000FF00) >> 8)  << "."
-	<< ((request->ipAddress() & 0x000000FF))
-	<< ":" << request->port() << "\""
+      // The client's identification as a string. This consists of the
+      // client's object type, IP address and port
+        << " -C \"" <<  request->clientType() << ":"
+        << ((request->ipAddress() & 0xFF000000) >> 24) << "."
+        << ((request->ipAddress() & 0x00FF0000) >> 16) << "."
+        << ((request->ipAddress() & 0x0000FF00) >> 8)  << "."
+        << ((request->ipAddress() & 0x000000FF))
+        << ":" << request->port() << "\""
 
-	<< " -u " << request->euid()
-	<< " -g " << request->egid()
-	<< " -X " << request->clientSecure()
-	<< " -t " << request->requestCreationTime()
-	<< " -R " << m_sharedLSFResource << "/$LSB_JOBID";
+        << " -u " << request->euid()
+        << " -g " << request->egid()
+        << " -X " << request->clientSecure()
+        << " -t " << request->requestCreationTime()
+        << " -R " << m_sharedLSFResource << "/$LSB_JOBID";
   }
   strncpy(command, cmd.str().c_str(), MAX_CMD_DESC_LEN);
   m_job.command = command;
@@ -467,52 +467,52 @@ void castor::jobmanager::SubmissionProcess::submitJob
       timeval tv;
       gettimeofday(&tv, NULL);
       signed64 submissionTime =
-	(((tv.tv_sec * 1000000) + tv.tv_usec) - request->submitStartTime());
+        (((tv.tv_sec * 1000000) + tv.tv_usec) - request->submitStartTime());
 
       // "Job successfully submitted into LSF"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("JobId", (u_signed64)jobId),
-	 castor::dlf::Param("Type", castor::ObjectsIdStrings[request->requestType()]),
-	 castor::dlf::Param("Username", request->username()),
-	 castor::dlf::Param("SvcClass", request->svcClass()),
-	 castor::dlf::Param("MaxRunTime", m_job.rLimits[LSF_RLIMIT_RUN]),
-	 castor::dlf::Param("AskedHosts",
-			    request->requestType() == 40 ? 0 : m_job.numAskedHosts),
-	 castor::dlf::Param("SourceDiskCopyId", request->sourceDiskCopyId()),
-	 castor::dlf::Param("SubmissionTime",
-			    submissionTime != 0 ? submissionTime * 0.000001 : 0),
-	 castor::dlf::Param(m_subRequestUuid)};
+        {castor::dlf::Param("JobId", (u_signed64)jobId),
+         castor::dlf::Param("Type", castor::ObjectsIdStrings[request->requestType()]),
+         castor::dlf::Param("Username", request->username()),
+         castor::dlf::Param("SvcClass", request->svcClass()),
+         castor::dlf::Param("MaxRunTime", m_job.rLimits[LSF_RLIMIT_RUN]),
+         castor::dlf::Param("AskedHosts",
+                            request->requestType() == 40 ? 0 : m_job.numAskedHosts),
+         castor::dlf::Param("SourceDiskCopyId", request->sourceDiskCopyId()),
+         castor::dlf::Param("SubmissionTime",
+                            submissionTime != 0 ? submissionTime * 0.000001 : 0),
+         castor::dlf::Param(m_subRequestUuid)};
       castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_SYSTEM, 45, 9, params, &m_fileId);
 
       // Update the subrequest to SUBREQUEST_READY
       m_jobManagerService->updateSchedulerJob(request,
-	castor::stager::SUBREQUEST_READY);
+                                              castor::stager::SUBREQUEST_READY);
       break;
     }
 
     // Any error apart from transient ones are consider fatal
     if ((lsberrno != LSBE_MBATCHD)       || // Mbatchd internal error
-	(lsberrno != LSBE_SBATCHD)       || // Sbatchd internal error
-	(lsberrno != LSBE_TIME_OUT)      || // Timeout in contacting mbatchd
-	(lsberrno != LSBE_CONN_TIMEOUT)  || // Timeout on connect() call
-	(lsberrno != LSBE_CONN_REFUSED)  || // Connection refused by server
-	(lsberrno != LSBE_CONN_EXIST)    || // server connection already exists
-	(lsberrno != LSBE_CONN_NONEXIST) || // server is not connected
-	(lsberrno != LSBE_SBD_UNREACH)   || // sbd cannot be reached
-	(lsberrno != LSBE_OP_RETRY)) {      // Operation cannot be performed
+        (lsberrno != LSBE_SBATCHD)       || // Sbatchd internal error
+        (lsberrno != LSBE_TIME_OUT)      || // Timeout in contacting mbatchd
+        (lsberrno != LSBE_CONN_TIMEOUT)  || // Timeout on connect() call
+        (lsberrno != LSBE_CONN_REFUSED)  || // Connection refused by server
+        (lsberrno != LSBE_CONN_EXIST)    || // server connection already exists
+        (lsberrno != LSBE_CONN_NONEXIST) || // server is not connected
+        (lsberrno != LSBE_SBD_UNREACH)   || // sbd cannot be reached
+        (lsberrno != LSBE_OP_RETRY)) {      // Operation cannot be performed
 
       // "Failed to submit job into LSF, fatal error encountered"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Error", lsberrno ? lsb_sysmsg() : "no message"),
-	 castor::dlf::Param("BadHosts",
-           m_jobReply.badReqIndx >= m_job.numAskedHosts ? "None" :
-	   m_job.askedHosts[m_jobReply.badReqIndx]),
-	 castor::dlf::Param("ResReq", m_job.resReq),
-	 castor::dlf::Param(m_subRequestUuid)};
+        {castor::dlf::Param("Error", lsberrno ? lsb_sysmsg() : "no message"),
+         castor::dlf::Param("BadHosts",
+                            m_jobReply.badReqIndx >= m_job.numAskedHosts ? "None" :
+                            m_job.askedHosts[m_jobReply.badReqIndx]),
+         castor::dlf::Param("ResReq", m_job.resReq),
+         castor::dlf::Param(m_subRequestUuid)};
       castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_ERROR, 48, 4, params, &m_fileId);
 
       // Try and give a meaningful message
-      terminateRequest(request, ESTSCHEDERR);
+      failRequest(request, ESTSCHEDERR);
       break;
     }
 
@@ -521,11 +521,11 @@ void castor::jobmanager::SubmissionProcess::submitJob
 
       // "Exceeded maximum number of attempts trying to submit a job into LSF"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Error", lsberrno ? lsb_sysmsg() : "no message"),
-	 castor::dlf::Param("MaxAttempts", m_submitRetryAttempts),
-	 castor::dlf::Param(m_subRequestUuid)};
+        {castor::dlf::Param("Error", lsberrno ? lsb_sysmsg() : "no message"),
+         castor::dlf::Param("MaxAttempts", m_submitRetryAttempts),
+         castor::dlf::Param(m_subRequestUuid)};
       castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_ERROR, 47, 3, params, &m_fileId);
-      terminateRequest(request, SEINTERNAL);
+      failRequest(request, SEINTERNAL);
       break;
     }
 
@@ -541,14 +541,19 @@ void castor::jobmanager::SubmissionProcess::submitJob
 
 
 //-----------------------------------------------------------------------------
-// TerminateRequest
+// FailRequest
 //-----------------------------------------------------------------------------
-void castor::jobmanager::SubmissionProcess::terminateRequest
-(castor::jobmanager::JobSubmissionRequest *request, int errorCode) {
+void castor::jobmanager::SubmissionProcess::failRequest
+(castor::jobmanager::JobRequest *request, int errorCode) {
 
   // Fail the submission of the job
   try {
-    m_jobManagerService->failSchedulerJob(request->subReqId(), errorCode);
+    // A container to hold a list of jobs which have to be failed and the
+    // reason why
+    std::vector<std::pair<std::string, int> > failedJobs;
+    failedJobs.push_back
+      (std::pair<std::string, int>(request->subReqId(), errorCode));
+    m_jobManagerService->jobFailed(failedJobs);
   } catch (castor::exception::Exception e) {
 
     // "Exception caught when trying to fail scheduler job"
@@ -559,10 +564,10 @@ void castor::jobmanager::SubmissionProcess::terminateRequest
     castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_ERROR, 55, 3, params, &m_fileId);
   } catch (...) {
 
-    // "Failed to execute failSchedulerJob procedure"
+    // "Failed to execute jobFailed procedure"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", "General exception caught"),
        castor::dlf::Param(m_subRequestUuid)};
-    castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_ERROR, 56, 2, params, &m_fileId);
+    castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_ERROR, 76, 2, params, &m_fileId);
   }
 }

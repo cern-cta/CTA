@@ -26,8 +26,10 @@
 
 // Include files
 #include "castor/jobmanager/ora/OraJobManagerSvc.hpp"
+#include "castor/jobmanager/ManagementThread.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/exception/OutOfMemory.hpp"
 #include "castor/Constants.hpp"
 #include "castor/SvcFactory.hpp"
 #include "castor/IFactory.hpp"
@@ -41,17 +43,13 @@
 // Instantiation of a static factory class
 //-----------------------------------------------------------------------------
 static castor::SvcFactory<castor::jobmanager::ora::OraJobManagerSvc>
-  *s_factoryOraJobManagerSvc =
-new castor::SvcFactory<castor::jobmanager::ora::OraJobManagerSvc>();
+*s_factoryOraJobManagerSvc =
+  new castor::SvcFactory<castor::jobmanager::ora::OraJobManagerSvc>();
 
 
 //-----------------------------------------------------------------------------
 // Static constants initialization
 //-----------------------------------------------------------------------------
-
-/// SQL statement for function failSchedulerJob
-const std::string castor::jobmanager::ora::OraJobManagerSvc::s_failSchedulerJobString =
-  "BEGIN failSchedulerJob(:1, :2, :3); END;";
 
 /// SQL statement for function jobToSchedule
 const std::string castor::jobmanager::ora::OraJobManagerSvc::s_jobToScheduleString =
@@ -61,17 +59,13 @@ const std::string castor::jobmanager::ora::OraJobManagerSvc::s_jobToScheduleStri
 const std::string castor::jobmanager::ora::OraJobManagerSvc::s_updateSchedulerJobString =
   "UPDATE SubRequest SET status = :1 WHERE status = 14 AND id = :2";
 
-/// SQL statement for function getSchedulerResources
-const std::string castor::jobmanager::ora::OraJobManagerSvc::s_getSchedulerResourcesString =
-  "BEGIN getSchedulerResources(:1); END;";
+/// SQL statement for function getRunningTransfers
+const std::string castor::jobmanager::ora::OraJobManagerSvc::s_getRunningTransfersString =
+  "BEGIN getRunningTransfers(:1); END;";
 
-/// SQL statement for function postJobChecks
-const std::string castor::jobmanager::ora::OraJobManagerSvc::s_postJobChecksString =
-  "BEGIN postJobChecks(:1, :2, :3); END;";
-
-/// SQL statement for function getSvcClassesWithNoSpace
-const std::string castor::jobmanager::ora::OraJobManagerSvc::s_getSvcClassesWithNoSpaceString =
-  "SELECT name FROM SvcClass WHERE checkFailJobsWhenNoSpace(id) = 1";
+/// SQL statement for function jobFailedProc
+const std::string castor::jobmanager::ora::OraJobManagerSvc::s_jobFailedString =
+  "BEGIN jobFailed(:1, :2); END;";
 
 
 //-----------------------------------------------------------------------------
@@ -80,16 +74,14 @@ const std::string castor::jobmanager::ora::OraJobManagerSvc::s_getSvcClassesWith
 castor::jobmanager::ora::OraJobManagerSvc::OraJobManagerSvc
 (const std::string name) :
   OraCommonSvc(name),
-  m_failSchedulerJobStatement(0),
   m_jobToScheduleStatement(0),
   m_updateSchedulerJobStatement(0),
-  m_getSchedulerResourcesStatement(0),
-  m_postJobChecksStatement(0),
-  m_getSvcClassesWithNoSpaceStatement(0) {}
+  m_getRunningTransfersStatement(0),
+  m_jobFailedStatement(0) {}
 
 
 //-----------------------------------------------------------------------------
-// destructor
+// Destructor
 //-----------------------------------------------------------------------------
 castor::jobmanager::ora::OraJobManagerSvc::~OraJobManagerSvc() throw() {
   reset();
@@ -97,7 +89,7 @@ castor::jobmanager::ora::OraJobManagerSvc::~OraJobManagerSvc() throw() {
 
 
 //-----------------------------------------------------------------------------
-// id
+// Id
 //-----------------------------------------------------------------------------
 const unsigned int castor::jobmanager::ora::OraJobManagerSvc::id() const {
   return ID();
@@ -113,82 +105,37 @@ const unsigned int castor::jobmanager::ora::OraJobManagerSvc::ID() {
 
 
 //-----------------------------------------------------------------------------
-// reset
+// Reset
 //-----------------------------------------------------------------------------
 void castor::jobmanager::ora::OraJobManagerSvc::reset() throw() {
   // Here we attempt to delete the statements correctly. If something goes
   // wrong, we just ignore it
   OraCommonSvc::reset();
   try {
-    if (m_failSchedulerJobStatement)
-      deleteStatement(m_failSchedulerJobStatement);
     if (m_jobToScheduleStatement)
       deleteStatement(m_jobToScheduleStatement);
     if (m_updateSchedulerJobStatement)
       deleteStatement(m_updateSchedulerJobStatement);
-    if (m_getSchedulerResourcesStatement)
-      deleteStatement(m_getSchedulerResourcesStatement);
-    if (m_postJobChecksStatement)
-      deleteStatement(m_postJobChecksStatement);
-    if (m_getSvcClassesWithNoSpaceStatement)
-      deleteStatement(m_getSvcClassesWithNoSpaceStatement);
+    if (m_getRunningTransfersStatement)
+      deleteStatement(m_getRunningTransfersStatement);
+    if (m_jobFailedStatement)
+      deleteStatement(m_jobFailedStatement);
   } catch (oracle::occi::SQLException e) {
     // Do nothing
   }
 
   // Now reset all pointers to 0
-  m_failSchedulerJobStatement         = 0;
-  m_jobToScheduleStatement            = 0;
-  m_updateSchedulerJobStatement       = 0;
-  m_getSchedulerResourcesStatement    = 0;
-  m_postJobChecksStatement            = 0;
-  m_getSvcClassesWithNoSpaceStatement = 0;
+  m_jobToScheduleStatement       = 0;
+  m_updateSchedulerJobStatement  = 0;
+  m_getRunningTransfersStatement = 0;
+  m_jobFailedStatement           = 0;
 }
 
 
 //-----------------------------------------------------------------------------
-// failSchedulerJob
+// JobToSchedule
 //-----------------------------------------------------------------------------
-bool castor::jobmanager::ora::OraJobManagerSvc::failSchedulerJob
-(const std::string subReqId, const int errorCode)
-  throw(castor::exception::Exception) {
-
-  // Initialize statements
-  try {
-    if (m_failSchedulerJobStatement == NULL) {
-      m_failSchedulerJobStatement = createStatement(s_failSchedulerJobString);
-      m_failSchedulerJobStatement->registerOutParam
-	(3, oracle::occi::OCCIDOUBLE);
-      m_failSchedulerJobStatement->setAutoCommit(true);
-    }
-
-    // Prepare and execute the statement
-    m_failSchedulerJobStatement->setString(1, subReqId);
-    m_failSchedulerJobStatement->setInt(2, errorCode);
-    m_failSchedulerJobStatement->executeUpdate();
-
-    // Return the result of the output parameter, this is an indicator to
-    // notify the callee as to whether or not the job was cancelled i.e.
-    // a change was made to the subrequest table.
-    if (m_failSchedulerJobStatement->getDouble(3) > 0) {
-      return true;
-    }
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in failSchedulerJob."
-      << std::endl << e.getMessage();
-    throw ex;
-  }
-  return false;
-}
-
-
-//-----------------------------------------------------------------------------
-// jobToSchedule
-//-----------------------------------------------------------------------------
-castor::jobmanager::JobSubmissionRequest
+castor::jobmanager::JobRequest
 *castor::jobmanager::ora::OraJobManagerSvc::jobToSchedule()
   throw(castor::exception::Exception) {
 
@@ -197,55 +144,55 @@ castor::jobmanager::JobSubmissionRequest
     if (m_jobToScheduleStatement == NULL) {
       m_jobToScheduleStatement = createStatement(s_jobToScheduleString);
       m_jobToScheduleStatement->registerOutParam
-	(1, oracle::occi::OCCIDOUBLE);
+        (1, oracle::occi::OCCIDOUBLE);
       m_jobToScheduleStatement->registerOutParam
-	(2, oracle::occi::OCCISTRING, 2048);
+        (2, oracle::occi::OCCISTRING, 2048);
       m_jobToScheduleStatement->registerOutParam
-	(3, oracle::occi::OCCISTRING, 2048);
+        (3, oracle::occi::OCCISTRING, 2048);
       m_jobToScheduleStatement->registerOutParam
-	(4, oracle::occi::OCCIDOUBLE);
+        (4, oracle::occi::OCCIDOUBLE);
       m_jobToScheduleStatement->registerOutParam
-	(5, oracle::occi::OCCISTRING, 2048);
+        (5, oracle::occi::OCCISTRING, 2048);
       m_jobToScheduleStatement->registerOutParam
-	(6, oracle::occi::OCCISTRING, 2048);
+        (6, oracle::occi::OCCISTRING, 2048);
       m_jobToScheduleStatement->registerOutParam
-	(7, oracle::occi::OCCIDOUBLE);
+        (7, oracle::occi::OCCIDOUBLE);
       m_jobToScheduleStatement->registerOutParam
-	(8, oracle::occi::OCCISTRING, 2048);
+        (8, oracle::occi::OCCISTRING, 2048);
       m_jobToScheduleStatement->registerOutParam
-	(9, oracle::occi::OCCISTRING, 2048);
+        (9, oracle::occi::OCCISTRING, 2048);
       m_jobToScheduleStatement->registerOutParam
-	(10, oracle::occi::OCCIINT);
+        (10, oracle::occi::OCCIINT);
       m_jobToScheduleStatement->registerOutParam
-	(11, oracle::occi::OCCIINT);
+        (11, oracle::occi::OCCIINT);
       m_jobToScheduleStatement->registerOutParam
-	(12, oracle::occi::OCCIINT);
+        (12, oracle::occi::OCCIINT);
       m_jobToScheduleStatement->registerOutParam
-	(13, oracle::occi::OCCISTRING, 2048);
+        (13, oracle::occi::OCCISTRING, 2048);
       m_jobToScheduleStatement->registerOutParam
-	(14, oracle::occi::OCCISTRING, 10);
+        (14, oracle::occi::OCCISTRING, 10);
       m_jobToScheduleStatement->registerOutParam
-	(15, oracle::occi::OCCIINT);
+        (15, oracle::occi::OCCIINT);
       m_jobToScheduleStatement->registerOutParam
-	(16, oracle::occi::OCCIINT);
+        (16, oracle::occi::OCCIINT);
       m_jobToScheduleStatement->registerOutParam
-	(17, oracle::occi::OCCIDOUBLE);
+        (17, oracle::occi::OCCIDOUBLE);
       m_jobToScheduleStatement->registerOutParam
-	(18, oracle::occi::OCCIDOUBLE);
+        (18, oracle::occi::OCCIDOUBLE);
       m_jobToScheduleStatement->registerOutParam
-	(19, oracle::occi::OCCIDOUBLE);
+        (19, oracle::occi::OCCIDOUBLE);
       m_jobToScheduleStatement->registerOutParam
-	(20, oracle::occi::OCCIDOUBLE);
-       m_jobToScheduleStatement->registerOutParam
-	(21, oracle::occi::OCCIINT);
+        (20, oracle::occi::OCCIDOUBLE);
       m_jobToScheduleStatement->registerOutParam
-	(22, oracle::occi::OCCISTRING, 2048);
+        (21, oracle::occi::OCCIINT);
       m_jobToScheduleStatement->registerOutParam
-	(23, oracle::occi::OCCIDOUBLE);
+        (22, oracle::occi::OCCISTRING, 2048);
       m_jobToScheduleStatement->registerOutParam
-	(24, oracle::occi::OCCIDOUBLE);
+        (23, oracle::occi::OCCIDOUBLE);
       m_jobToScheduleStatement->registerOutParam
-	(25, oracle::occi::OCCICURSOR);
+        (24, oracle::occi::OCCIDOUBLE);
+      m_jobToScheduleStatement->registerOutParam
+        (25, oracle::occi::OCCICURSOR);
       m_jobToScheduleStatement->setAutoCommit(true);
     }
 
@@ -262,9 +209,9 @@ castor::jobmanager::JobSubmissionRequest
       return 0;  // Nothing to do
     }
 
-    // Return a new JobSubmissionRequest object for scheduling
-    castor::jobmanager::JobSubmissionRequest *result =
-      new castor::jobmanager::JobSubmissionRequest();
+    // Return a new JobRequest object for scheduling
+    castor::jobmanager::JobRequest *result =
+      new castor::jobmanager::JobRequest();
     result->setId(srId);
     result->setSubReqId(m_jobToScheduleStatement->getString(2));
     result->setProtocol(m_jobToScheduleStatement->getString(3));
@@ -297,36 +244,36 @@ castor::jobmanager::JobSubmissionRequest
       // only contain one entry! The diskserver and mountpoint of the source
       // file to be copied.
       if (result->requestType() == OBJ_StageDiskCopyReplicaRequest) {
-	if (!std::getline(iss, buf, ':')) {
-	  castor::exception::Internal ex;
-	  ex.getMessage() << "No Requested FileSystems defined for DiskCopy "
-			  << "replication request";
-	  throw ex;
-	}
+        if (!std::getline(iss, buf, ':')) {
+          castor::exception::Internal ex;
+          ex.getMessage() << "No Requested FileSystems defined for DiskCopy "
+                          << "replication request";
+          throw ex;
+        }
 
-	// Append an exclamation mark to the end of the execution hostname. This
-	// instructs LSF that the requested/asked host is a 'headnode' and that
-	// the job must start on this host before any other.
-	result->setAskedHosts(buf + "! ");
-	result->setNumAskedHosts(result->numAskedHosts() + 1);
+        // Append an exclamation mark to the end of the execution hostname. This
+        // instructs LSF that the requested/asked host is a 'headnode' and that
+        // the job must start on this host before any other.
+        result->setAskedHosts(buf + "! ");
+        result->setNumAskedHosts(result->numAskedHosts() + 1);
       }
       // Non StageDiskCopyReplicaRequest's can have 1..N number of requested
       // filesystems.
       else {
-	while (std::getline(iss, buf, ':')) {
-	  result->setAskedHosts(result->askedHosts().append(buf + " "));
-	  result->setNumAskedHosts(result->numAskedHosts() + 1);
-	  std::getline(iss, buf, '|');
-	}
+        while (std::getline(iss, buf, ':')) {
+          result->setAskedHosts(result->askedHosts().append(buf + " "));
+          result->setNumAskedHosts(result->numAskedHosts() + 1);
+          std::getline(iss, buf, '|');
+        }
       }
     }
 
     // Append the host group to the list of required hosts, only for
     // StageDiskCopyReplicaRequests and PUT requests
     if ((result->requestType() == OBJ_StageDiskCopyReplicaRequest) ||
-	(result->requestedFileSystems() == "")) {
+        (result->requestedFileSystems() == "")) {
       result->setAskedHosts
-	(result->askedHosts().append(result->svcClass() + "Group"));
+        (result->askedHosts().append(result->svcClass() + "Group"));
       result->setNumAskedHosts(result->numAskedHosts() + 1);
     }
 
@@ -339,12 +286,12 @@ castor::jobmanager::JobSubmissionRequest
     if (result->requestType() == OBJ_StageDiskCopyReplicaRequest) {
       oracle::occi::ResultSet *rs = m_jobToScheduleStatement->getCursor(25);
       while (oracle::occi::ResultSet::END_OF_FETCH != rs->next()) {
-	result->setExcludedHosts(result->excludedHosts().append(rs->getString(1) + "|"));
+        result->setExcludedHosts(result->excludedHosts().append(rs->getString(1) + "|"));
       }
       // Remove trailing '|'
       if (result->excludedHosts() != "") {
-	result->setExcludedHosts(result->excludedHosts().substr(0,
-                                 result->excludedHosts().length() - 1));
+        result->setExcludedHosts(result->excludedHosts().substr(0,
+                                                                result->excludedHosts().length() - 1));
       }
       m_jobToScheduleStatement->closeResultSet(rs);
     }
@@ -374,10 +321,10 @@ castor::jobmanager::JobSubmissionRequest
 
 
 //-----------------------------------------------------------------------------
-// updateSchedulerJob
+// UpdateSchedulerJob
 //-----------------------------------------------------------------------------
 void castor::jobmanager::ora::OraJobManagerSvc::updateSchedulerJob
-(const castor::jobmanager::JobSubmissionRequest *request,
+(const castor::jobmanager::JobRequest *request,
  const castor::stager::SubRequestStatusCodes status)
   throw(castor::exception::Exception) {
 
@@ -411,150 +358,150 @@ void castor::jobmanager::ora::OraJobManagerSvc::updateSchedulerJob
 
 
 //-----------------------------------------------------------------------------
-// getSchedulerResources
+// GetRunningTransfers
 //-----------------------------------------------------------------------------
-std::map<std::string, castor::jobmanager::DiskServerResource *>
-castor::jobmanager::ora::OraJobManagerSvc::getSchedulerResources()
+std::map<std::string, std::pair<bool, bool> >
+castor::jobmanager::ora::OraJobManagerSvc::getRunningTransfers()
   throw(castor::exception::Exception) {
 
-  // Initialize statements
-  std::map<std::string, castor::jobmanager::DiskServerResource *> result;
   try {
-    if (m_getSchedulerResourcesStatement == NULL) {
-      m_getSchedulerResourcesStatement = createStatement(s_getSchedulerResourcesString);
-      m_getSchedulerResourcesStatement->registerOutParam
-	(1, oracle::occi::OCCICURSOR);
-      m_getSchedulerResourcesStatement->setAutoCommit(true);
+    // Initialize statements
+    if (m_getRunningTransfersStatement == NULL) {
+      m_getRunningTransfersStatement = 
+        createStatement(s_getRunningTransfersString);
+      m_getRunningTransfersStatement->registerOutParam
+        (1, oracle::occi::OCCICURSOR);
     }
+
+    // Execute the query
+    m_getRunningTransfersStatement->executeUpdate();
+
+    // Loop over the results
+    std::map<std::string, std::pair<bool, bool> > databaseJobs;
+    oracle::occi::ResultSet *rset =
+      m_getRunningTransfersStatement->getCursor(1);
+    while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+      databaseJobs[rset->getString(1)] =
+        std::pair<bool, bool>(rset->getInt(2), rset->getInt(3));  
+    }
+
+    // Release resources
+    m_getRunningTransfersStatement->closeResultSet(rset);
+    return databaseJobs;
+
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage() 
+      << "Error caught in synchLSFAndStager."
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// JobFailed
+//-----------------------------------------------------------------------------
+void castor::jobmanager::ora::OraJobManagerSvc::jobFailed
+(const std::vector<std::pair<std::string, int> > jobs)
+  throw(castor::exception::Exception) {
+
+  // If there are no jobs to fail return immediately!
+  int nb = jobs.size();
+  if (nb == 0) {
+    return;
+  }
+
+  // Container to hold pointers to memory to be freed
+  std::vector<void *> allocPtrs;
+
+  try {
+    // Initialize statements
+    if (m_jobFailedStatement == NULL) {
+      m_jobFailedStatement = createStatement(s_jobFailedString);
+      m_jobFailedStatement->setAutoCommit(true);
+    }
+
+    // Build the buffers for the SubRequest uuid
+    unsigned int subReqUuidMaxLen = 0;
+    for (int i = 0; i < nb; i++) {
+      if (jobs[i].first.length() > subReqUuidMaxLen)
+        subReqUuidMaxLen = jobs[i].first.length();
+    }
+    char *subReqUuidBuffer = 
+      (char *)calloc(nb, subReqUuidMaxLen * sizeof(char));
+    if (subReqUuidBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocPtrs.push_back(subReqUuidBuffer);
+    ub2 *subReqUuidBufLens = (ub2 *)malloc(nb * sizeof(ub2));
+    if (subReqUuidBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocPtrs.push_back(subReqUuidBufLens);
+
+    // Build the buffers to hold the error code
+    unsigned int errorCodeMaxLen = 21;
+    unsigned char (*errorCodeBuffer)[21] =
+      (unsigned char(*)[21]) calloc(nb * errorCodeMaxLen,
+                                    sizeof(unsigned char));
+    if (errorCodeBuffer == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocPtrs.push_back(errorCodeBuffer);
+    ub2 *errorCodeBufLens = (ub2 *)malloc(nb * sizeof(ub2));
+    if (errorCodeBufLens == 0) {
+      castor::exception::OutOfMemory e;
+      throw e;
+    }
+    allocPtrs.push_back(errorCodeBufLens);
+
+    // Fill the SubRequest uuid and error code buffers
+    for (int i = 0; i < nb; i++) {
+      // SubRequest uuid
+      strncpy(subReqUuidBuffer + (i * subReqUuidMaxLen),
+              jobs[i].first.c_str(), subReqUuidMaxLen);
+      subReqUuidBufLens[i] = jobs[i].first.length();
+
+      // Error code
+      oracle::occi::Number n = (double)(jobs[i].second);
+      oracle::occi::Bytes b = n.toBytes();
+      b.getBytes(errorCodeBuffer[i], b.length());
+      errorCodeBufLens[i] = b.length();
+    }
+
+    // Set the data buffer arrays
+    ub4 subReqUuidArraySize = nb;
+    ub4 errorCodeArraySize  = nb;
+    m_jobFailedStatement->setDataBufferArray
+      (1, subReqUuidBuffer, oracle::occi::OCCI_SQLT_CHR, subReqUuidArraySize,
+       &subReqUuidArraySize, subReqUuidMaxLen, subReqUuidBufLens);
+    m_jobFailedStatement->setDataBufferArray
+      (2, errorCodeBuffer, oracle::occi::OCCI_SQLT_NUM, errorCodeArraySize,
+       &errorCodeArraySize, errorCodeMaxLen, errorCodeBufLens);
 
     // Execute the statement
-    unsigned int nb = m_getSchedulerResourcesStatement->executeUpdate();
-    if (nb == 0) {
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "getSchedulerResources did not do anything.";
-      throw ex;
+    m_jobFailedStatement->execute();
+
+    // Free resources
+    for (unsigned int i = 0; i < allocPtrs.size(); i++) {
+      free(allocPtrs[i]);
     }
-
-    oracle::occi::ResultSet *rs = m_getSchedulerResourcesStatement->getCursor(1);
-    while (oracle::occi::ResultSet::END_OF_FETCH != rs->next()) {
-
-      // Attempt to find the diskserver in the map. If it doesn't exist then
-      // a new diskserver needs to be created.
-      std::map<std::string, castor::jobmanager::DiskServerResource *>::const_iterator it =
-	result.find(rs->getString(1));
-
-      // New diskserver ?
-      if (it == result.end()) {
-	castor::jobmanager::DiskServerResource *ds =
-	  new castor::jobmanager::DiskServerResource();
-	ds->setDiskServerName(rs->getString(1));
-	ds->setStatus((castor::stager::DiskServerStatusCode)rs->getInt(2));
-	ds->setAdminStatus((castor::monitoring::AdminStatusCodes)rs->getInt(3));
-	result.insert(std::make_pair(ds->diskServerName(), ds));
-	it = result.find(ds->diskServerName());
-      }
-
-      // Add the filesystem
-      castor::jobmanager::FileSystemResource *fs =
-	new castor::jobmanager::FileSystemResource();
-      fs->setMountPoint(rs->getString(4));
-      fs->setStatus((castor::stager::FileSystemStatusCodes)rs->getInt(5));
-      fs->setAdminStatus((castor::monitoring::AdminStatusCodes)rs->getInt(6));
-      fs->setSvcClassName(rs->getString(7));
-      it->second->addFileSystems(fs);
-    }
-    m_getSchedulerResourcesStatement->closeResultSet(rs);
-    return result;
 
   } catch (oracle::occi::SQLException e) {
-    result.clear();
+    // Free resources
+    for (unsigned int i = 0; i < allocPtrs.size(); i++) {
+      free(allocPtrs[i]);
+    }
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Error caught in getSchedulerResources."
+      << "Error caught in jobFailed."
       << std::endl << e.getMessage();
     throw ex;
   }
-  return result;
-}
-
-
-//-----------------------------------------------------------------------------
-// postJobChecks
-//-----------------------------------------------------------------------------
-bool castor::jobmanager::ora::OraJobManagerSvc::postJobChecks
-(const std::string subReqId, const int errorCode)
-  throw(castor::exception::Exception) {
-
-  // Initialize statements
-  try {
-    if (m_postJobChecksStatement == NULL) {
-      m_postJobChecksStatement = createStatement(s_postJobChecksString);
-      m_postJobChecksStatement->registerOutParam
-	(3, oracle::occi::OCCIDOUBLE);
-      m_postJobChecksStatement->setAutoCommit(true);
-    }
-
-    // Prepare and execute the statement
-    m_postJobChecksStatement->setString(1, subReqId);
-    m_postJobChecksStatement->setInt(2, errorCode);
-    m_postJobChecksStatement->executeUpdate();
-
-    // Return the result of the output parameter, this is an indicator to
-    // notify the callee as to whether or not the procedure did anthing
-    if (m_postJobChecksStatement->getDouble(3) > 0) {
-      return true;
-    }
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    // Ignore ORA-01403: no data found
-    if (e.getErrorCode() == 1403) {
-      return false;
-    }
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in postJobChecks."
-      << std::endl << e.getMessage();
-    throw ex;
-  }
-  return false;
-}
-
-
-//-----------------------------------------------------------------------------
-// getSvcClassesWithNoSpace
-//-----------------------------------------------------------------------------
-std::vector<std::string>
-castor::jobmanager::ora::OraJobManagerSvc::getSvcClassesWithNoSpace()
-  throw(castor::exception::Exception) {
-
-  // Initialize statements
-  std::vector<std::string> result;
-  try {
-    if (m_getSvcClassesWithNoSpaceStatement == NULL) {
-      m_getSvcClassesWithNoSpaceStatement =
-	createStatement(s_getSvcClassesWithNoSpaceString);
-      m_getSvcClassesWithNoSpaceStatement->setAutoCommit(true);
-    }
-
-    // Loop over results
-    oracle::occi::ResultSet *rs =
-      m_getSvcClassesWithNoSpaceStatement->executeQuery();
-    while (oracle::occi::ResultSet::END_OF_FETCH != rs->next()) {
-      result.push_back(rs->getString(1));
-    }
-    m_getSvcClassesWithNoSpaceStatement->closeResultSet(rs);
-    return result;
-
-  } catch (oracle::occi::SQLException e) {
-    result.clear();
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in getSvcClassesWithNoSpace."
-      << std::endl << e.getMessage();
-    throw ex;
-  }
-  return result;
 }

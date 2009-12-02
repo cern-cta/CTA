@@ -36,7 +36,7 @@ DependsOnLibrary(,castorclient)
 DependsOnLibrary(db/newora,castorcommonora)
 DependsOnLibrary(db/cnv,castorcnvs)
 
-JOBMANAGERD_SRCS = JobManagerDaemon.cpp ManagementThread.cpp DispatchThread.cpp SubmissionProcess.cpp JobSubmissionRequest.cpp DiskServerResource.cpp FileSystemResource.cpp ../io/StreamJobSubmissionRequestCnv.cpp ora/OraJobManagerSvc.cpp
+JOBMANAGERD_SRCS = JobManagerDaemon.cpp ManagementThread.cpp DispatchThread.cpp SubmissionProcess.cpp JobRequest.cpp ../io/StreamJobRequestCnv.cpp ora/OraJobManagerSvc.cpp
 JOBMANAGERD_OBJS = $(JOBMANAGERD_SRCS:.cpp=.Osuf)
 NormalProgramTarget(jobmanagerd,$(JOBMANAGERD_OBJS),$(DEPLIB),$(LIBS),750)
 MakeDir(/var/log/castor,0755)

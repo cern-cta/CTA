@@ -67,15 +67,11 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE IDRecord_Cur IS REF CURSOR RETURN IDRecord;
   TYPE DiskServerName IS RECORD (diskServer VARCHAR(2048));
   TYPE DiskServerList_Cur IS REF CURSOR RETURN DiskServerName;
-  TYPE SchedulerResourceLine IS RECORD (
-    diskServerName VARCHAR(2048),
-    diskServerStatus INTEGER,
-    diskServerAdminStatus INTEGER,
-    fileSystemMountPoint VARCHAR(2048),
-    fileSystemStatus INTEGER,
-    fileSystemAdminStatus INTEGER,
-    fileSystemSvcClassName VARCHAR(2048));
-  TYPE SchedulerResources_Cur IS REF CURSOR RETURN SchedulerResourceLine;
+  TYPE RunningTransferLine IS RECORD (
+    subReqId VARCHAR(2048),
+    noSpace INTEGER,
+    noFSAvail INTEGER);
+  TYPE RunningTransfers_Cur IS REF CURSOR RETURN RunningTransferLine;
   TYPE FileEntry IS RECORD (
     fileid INTEGER,
     nshost VARCHAR2(2048));

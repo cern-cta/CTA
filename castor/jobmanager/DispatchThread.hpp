@@ -54,7 +54,7 @@ namespace castor {
        * @exception Exception in case of error
        */
       DispatchThread(castor::server::ForkedProcessPool *processPool)
-	throw(castor::exception::Exception);
+        throw(castor::exception::Exception);
 
       /// Initialization of the thread
       virtual void init();

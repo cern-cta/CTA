@@ -763,83 +763,136 @@ END;
 /
 
 
-/* PL/SQL method implementing getSchedulerResources */
-CREATE OR REPLACE
-PROCEDURE getSchedulerResources(resources OUT castor.SchedulerResources_Cur) AS
+/* PL/SQL function implementing checkAvailOfSchedulerRFS, this function can be
+ * used to determine if any of the requested filesystems specified by a
+ * transfer are available. Returns 0 if at least one requested filesystem is
+ * available otherwise 1.
+ */
+CREATE OR REPLACE FUNCTION checkAvailOfSchedulerRFS
+  (rfs IN VARCHAR2, svcId IN NUMBER, reqType IN NUMBER)
+RETURN NUMBER IS
+  rtn NUMBER;
 BEGIN
-  -- Provide a list of all scheduler resources. For the moment this is just
-  -- the status of all diskservers, their associated filesystems and the
-  -- service class they are in.
-  OPEN resources
-    FOR SELECT DiskServer.name, DiskServer.status, DiskServer.adminstatus,
-               Filesystem.mountpoint, FileSystem.status, FileSystem.adminstatus,
-	       SvcClass.name
-          FROM DiskServer, FileSystem, DiskPool2SvcClass, SvcClass
-         WHERE FileSystem.diskServer = DiskServer.id
-           AND FileSystem.diskPool = DiskPool2SvcClass.parent
-           AND DiskPool2SvcClass.child = SvcClass.id;
-END;
-/
-
-
-/* PL/SQL method implementing failSchedulerJob */
-CREATE OR REPLACE
-PROCEDURE failSchedulerJob(srSubReqId IN VARCHAR2, srErrorCode IN NUMBER, res OUT INTEGER) AS
-  reqType NUMBER;
-  srId NUMBER;
-  dcId NUMBER;
-  cfId NUMBER;
-BEGIN
-  res := 1;
-  -- Get the necessary information needed about the request and subrequest
-  SELECT SubRequest.id, SubRequest.diskcopy,
-         Id2Type.type, SubRequest.castorFile
-    INTO srId, dcId, reqType, cfId
-    FROM SubRequest, Id2Type
-   WHERE SubRequest.subreqid = srSubReqId
-     AND SubRequest.request = Id2Type.id
-     AND SubRequest.status IN (6, 14); -- READY, BEINGSCHED
-  -- Lock the CastorFile
-  SELECT id INTO cfId FROM CastorFile
-   WHERE id = cfId FOR UPDATE;
-  -- Set the error code
-  UPDATE SubRequest
-     SET errorCode = srErrorCode
-   WHERE id = srId;
-  -- Call the relevant cleanup procedures for the job, procedures that they
-  -- would have called themselves if the job had failed!
-  IF reqType = 40 THEN -- Put
-    putFailedProc(srId);
-  ELSIF reqType = 133 THEN -- DiskCopyReplica
-    disk2DiskCopyFailed(dcId, 0);
-  ELSE -- Get or Update
-    getUpdateFailedProc(srId);
+  -- If there are no requested filesystems this is a PUT request so we check
+  -- that at least one filesystem is available
+  IF rfs IS NULL THEN
+    SELECT count(*) INTO rtn
+      FROM DiskServer, FileSystem, DiskPool2SvcClass
+     WHERE DiskServer.id = FileSystem.diskServer
+       AND DiskServer.status = 0  -- DISKSERVER_PRODUCTION
+       AND FileSystem.diskPool = DiskPool2SvcClass.parent
+       AND FileSystem.status = 0  -- FILESYSTEM_PRODUCTION
+       AND DiskPool2SvcClass.child = svcId;
+  ELSE
+    -- Count the number of requested filesystems which are available
+    SELECT count(*) INTO rtn
+      FROM DiskServer, FileSystem 
+     WHERE DiskServer.id = FileSystem.diskServer
+       AND DiskServer.name || ':' || FileSystem.mountPoint IN
+         (SELECT /*+ CARDINALITY(rfsTable 10) */ * 
+            FROM TABLE (strTokenizer(rfs, '|')) rfsTable)
+       -- For a requested filesystem to be available the following criteria
+       -- must be meet:
+       --  - The diskserver must not be in a DISABLED state
+       --  - For StageDiskCopyReplicaRequests and StageGetRequests the
+       --    filesystem must be in a DRAINING or PRODUCTION status
+       --  - For all other requests the diskserver and filesystem must be in
+       --    PRODUCTION
+       AND decode(DiskServer.status, 2, 1,
+             decode(reqType, 133, decode(FileSystem.status, 2, 1, 0),
+               decode(reqType, 35, decode(FileSystem.status, 2, 1, 0),
+                 decode(FileSystem.status + DiskServer.status, 0, 0, 1)))) = 0;
   END IF;
-EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- The subrequest may have been removed, nothing to be done
-  res := 0;
-  RETURN;
+  IF rtn > 0 THEN
+    RETURN 0;  -- We found some available requested filesystems
+  END IF;
+  RETURN 1;
 END;
 /
 
 
-/* PL/SQL method implementing postJobChecks */
-CREATE OR REPLACE
-PROCEDURE postJobChecks(srSubReqId IN VARCHAR2, srErrorCode IN NUMBER, res OUT INTEGER) AS
-  unused NUMBER;
+/* PL/SQL method implementing getRunningTransfers. This method lists all known
+ * running transfers and whether they should be terminated because no space
+ * exists in the target service class or none of the requested filesystems are
+ * available.
+ */
+CREATE OR REPLACE PROCEDURE getRunningTransfers
+  (transfers OUT castor.RunningTransfers_Cur) AS
 BEGIN
-  -- Check to see if the subrequest status is SUBREQUEST_READY
-  SELECT status INTO unused FROM SubRequest
-   WHERE subreqid = srSubReqId
-     AND status = 6; -- READY
-  -- The job status is incorrect so terminate the scheduler job
-  failSchedulerJob(srSubReqId, srErrorCode, res);
-EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- The subrequest has the correct status because A) the job was successfully
-  -- scheduled in LSF or B) a postJobChecks call has already been performed by
-  -- another jobmanager daemon
-  res := 0;
-  RETURN;
+  OPEN transfers FOR
+    SELECT SR.subReqId, checkFailJobsWhenNoSpace(Request.svcClass) NoSpace,
+           checkAvailOfSchedulerRFS(SR.requestedFileSystems, Request.svcClass,
+                                    Id2Type.type) NoFSAvail
+      FROM DiskCopy DC, SubRequest SR, Id2Type,
+        (SELECT id, svcClass FROM StagePutRequest UNION ALL
+         SELECT id, svcClass FROM StageDiskCopyReplicaRequest) Request
+     WHERE DC.id = SR.diskCopy
+       AND SR.status = 6  -- READY
+       AND SR.request = Request.id
+       AND DC.status IN (1, 5, 6)  -- WAITDISK2DISKCOPY, WAITFS, STAGEOUT
+       AND DC.creationTime < getTime() - 60
+       AND Request.id = Id2Type.id
+     UNION ALL
+    SELECT SR.subReqId, checkFailJobsWhenNoSpace(Request.svcClass),
+           checkAvailOfSchedulerRFS(SR.requestedFileSystems, Request.svcClass,
+                                    Id2Type.type)
+      FROM SubRequest SR, Id2Type,
+        (SELECT id, svcClass FROM StageGetRequest UNION ALL
+         SELECT id, svcClass FROM StageUpdateRequest) Request
+     WHERE SR.request = Request.id
+       AND SR.status = 6  -- READY
+       AND SR.requestedFileSystems IS NOT NULL
+       AND SR.creationTime < getTime() - 60
+       AND Request.id = Id2Type.id;
+END;
+/
+
+/* PL/SQL method implementing jobFailed, providing bulk termination of file
+ * transfers.
+ */
+CREATE OR REPLACE
+PROCEDURE jobFailed(subReqIds IN castor."strList", errnos IN castor."cnumList")
+AS
+  srId  NUMBER;
+  dcId  NUMBER;
+  cfId  NUMBER;
+  rType NUMBER;
+BEGIN
+  -- Loop over all jobs to fail
+  FOR i IN subReqIds.FIRST .. subReqIds.LAST LOOP
+    BEGIN
+      -- Get the necessary information needed about the request.
+      SELECT SubRequest.id, SubRequest.diskCopy,
+             Id2Type.type, SubRequest.castorFile
+        INTO srId, dcId, rType, cfId
+        FROM SubRequest, Id2Type
+       WHERE SubRequest.subReqId = subReqIds(i)
+         AND SubRequest.status IN (6, 14)  -- READY, BEINGSCHED
+         AND SubRequest.request = Id2Type.id;
+       -- Lock the CastorFile.
+       SELECT id INTO cfId FROM CastorFile
+        WHERE id = cfId FOR UPDATE;
+       -- Confirm SubRequest status hasn't changed after acquisition of lock
+       SELECT id INTO srId FROM SubRequest
+        WHERE id = srId AND status IN (6, 14);  -- READY, BEINGSCHED
+       -- Update the reason for termination.
+       UPDATE SubRequest SET errorCode = errnos(i)
+        WHERE id = srId;
+       -- Call the relevant cleanup procedure for the job, procedures that
+       -- would have been called if the job failed on the remote execution host.
+       IF rType = 40 THEN      -- StagePutRequest
+         putFailedProc(srId);
+       ELSIF rType = 133 THEN  -- StageDiskCopyReplicaRequest
+         disk2DiskCopyFailed(dcId, 0);
+       ELSE                    -- StageGetRequest or StageUpdateRequest
+         getUpdateFailedProc(srId);
+       END IF;
+       -- Release locks
+       COMMIT;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      NULL;  -- The SubRequest may have be removed, nothing to be done.
+    END;
+  END LOOP;
 END;
 /
 
@@ -856,7 +909,6 @@ PROCEDURE jobToSchedule(srId OUT INTEGER, srSubReqId OUT VARCHAR2, srProtocol OU
                         clientSecure OUT INTEGER, reqSourceSvcClass OUT VARCHAR2,
                         reqCreationTime OUT INTEGER, reqDefaultFileSize OUT INTEGER,
                         excludedHosts OUT castor.DiskServerList_Cur) AS
-  dsId NUMBER;
   cfId NUMBER;
 BEGIN
   -- Get the next subrequest to be scheduled.
@@ -914,8 +966,7 @@ BEGIN
     -- source disk copy. The scheduler plugin needs this information to correctly
     -- schedule access to the filesystem.
     BEGIN
-      SELECT CONCAT(CONCAT(DiskServer.name, ':'), FileSystem.mountpoint), DiskServer.id
-        INTO srRfs, dsId
+      SELECT DiskServer.name || ':' || FileSystem.mountpoint INTO srRfs
         FROM DiskServer, FileSystem, DiskCopy, DiskPool2SvcClass, SvcClass
        WHERE DiskCopy.id = reqSourceDiskCopy
          AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
@@ -926,6 +977,8 @@ BEGIN
          AND FileSystem.diskPool = DiskPool2SvcClass.parent
          AND DiskPool2SvcClass.child = SvcClass.id
          AND SvcClass.name = reqSourceSvcClass;
+      UPDATE SubRequest SET requestedFileSystems = srRfs
+       WHERE id = srId;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- The source diskcopy has been removed before the job manager daemon 
       -- could enter the job into LSF. Under this circumstance fail the 

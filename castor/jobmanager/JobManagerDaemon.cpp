@@ -80,12 +80,12 @@ int main(int argc, char *argv[]) {
     if (value) {
       processes = strtol(value, 0, 10);
       if (processes == 0) {
-	processes = DEFAULT_PREFORKED_WORKERS;
+        processes = DEFAULT_PREFORKED_WORKERS;
       } else if (processes > 200) {
-	castor::exception::Exception e(EINVAL);
-	e.getMessage() << "Too many PreforkedWorkers configured: " << processes
-		       << "- must be < 200" << std::endl;
-	throw e;
+        castor::exception::Exception e(EINVAL);
+        e.getMessage() << "Too many PreforkedWorkers configured: " << processes
+                       << "- must be < 200" << std::endl;
+        throw e;
       }
     }
 
@@ -97,12 +97,12 @@ int main(int argc, char *argv[]) {
     bool reverseUidLookups = true;
     if (value) {
       if (!strcasecmp(value, "no")) {
-	reverseUidLookups = false;
+        reverseUidLookups = false;
       } else if (strcasecmp(value, "yes")) {
-	castor::exception::Exception e(EINVAL);
-	e.getMessage() << "Invalid option for ReverseUidLookups: " << value
-		       << " - must be 'yes' or 'no'" << std::endl;
-	throw e;
+        castor::exception::Exception e(EINVAL);
+        e.getMessage() << "Invalid option for ReverseUidLookups: " << value
+                       << " - must be 'yes' or 'no'" << std::endl;
+        throw e;
       }
     }
 
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
     if (!value) {
       castor::exception::Exception e(EINVAL);
       e.getMessage() << "Missing configuration option "
-		     << "JobManager/SharedLSFResource" << std::endl;
+                     << "JobManager/SharedLSFResource" << std::endl;
       throw e;
     }
 
@@ -122,8 +122,8 @@ int main(int argc, char *argv[]) {
     if (strncmp(value, "http://", 7) && strncmp(value, "file://", 7)) {
       castor::exception::Exception e(EINVAL);
       e.getMessage() << "Invalid syntax for JobManager/SharedLSFResource: "
-		     << value << " - must start with file:// or http://"
-		     << std::endl;
+                     << value << " - must start with file:// or http://"
+                     << std::endl;
       throw e;
     }
 
@@ -131,7 +131,7 @@ int main(int argc, char *argv[]) {
     daemon.addThreadPool
       (new castor::server::ForkedProcessPool
        ("ForkedProcessPool",
-	 new castor::jobmanager::SubmissionProcess(reverseUidLookups, value)));
+        new castor::jobmanager::SubmissionProcess(reverseUidLookups, value)));
     daemon.getThreadPool('F')->setNbThreads(processes);
 
     // Determine the notification port for the job dispatch thread. The port
@@ -140,12 +140,12 @@ int main(int argc, char *argv[]) {
     int notifyPort = DEFAULT_NOTIFICATION_PORT;
     if ((value = getconfent("JOBMANAGER", "NOTIFYPORT", 0))) {
       try {
-	notifyPort = castor::System::porttoi(value);
+        notifyPort = castor::System::porttoi(value);
       } catch (castor::exception::Exception ex) {
-	castor::exception::Exception e(EINVAL);
-	e.getMessage() << "Invalid JOBMANAGER/NOTIFYPORT value: "
-		       << ex.getMessage() << std::endl;
-	throw e;
+        castor::exception::Exception e(EINVAL);
+        e.getMessage() << "Invalid JOBMANAGER/NOTIFYPORT value: "
+                       << ex.getMessage() << std::endl;
+        throw e;
       }
     }
 
@@ -153,9 +153,9 @@ int main(int argc, char *argv[]) {
     daemon.addThreadPool
       (new castor::server::SignalThreadPool
        ("DispatchThread",
-	new castor::jobmanager::DispatchThread
-	(dynamic_cast<castor::server::ForkedProcessPool*>
-	 (daemon.getThreadPool('F'))), DEFAULT_DISPATCH_INTERVAL));
+        new castor::jobmanager::DispatchThread
+        (dynamic_cast<castor::server::ForkedProcessPool*>
+         (daemon.getThreadPool('F'))), DEFAULT_DISPATCH_INTERVAL));
     daemon.getThreadPool('D')->setNbThreads(1);
     daemon.addNotifierThreadPool(notifyPort);
 
@@ -167,10 +167,10 @@ int main(int argc, char *argv[]) {
     if (value) {
       interval = strtol(value, 0, 10);
       if ((interval < 10) && (interval != 0)) {
-	castor::exception::Exception e(EINVAL);
-	e.getMessage() << "ManagementInterval value too small: " << interval
-		       << "- must be > 10" << std::endl;
-	throw e;
+        castor::exception::Exception e(EINVAL);
+        e.getMessage() << "ManagementInterval value too small: " << interval
+                       << "- must be > 10" << std::endl;
+        throw e;
       }
     }
 
@@ -178,7 +178,7 @@ int main(int argc, char *argv[]) {
     daemon.addThreadPool
       (new castor::server::SignalThreadPool
        ("ManagementThread",
-	new castor::jobmanager::ManagementThread(interval), interval));
+        new castor::jobmanager::ManagementThread(), interval));
     if (interval > 0) {
       daemon.getThreadPool('M')->setNbThreads(1);
     } else {
@@ -192,8 +192,8 @@ int main(int argc, char *argv[]) {
 
   } catch (castor::exception::Exception e) {
     std::cerr << "Caught exception: "
-	      << sstrerror(e.code()) << std::endl
-	      << e.getMessage().str() << std::endl;
+              << sstrerror(e.code()) << std::endl
+              << e.getMessage().str() << std::endl;
 
     // "Exception caught when starting JobManager"
     castor::dlf::Param params[] =
@@ -217,62 +217,50 @@ castor::jobmanager::JobManagerDaemon::JobManagerDaemon():
   // Now with predefined messages
   castor::dlf::Message messages[] = {
 
-     // General
-     {  1, "JobManager Daemon started" },
-     {  2, "Failed to initialize the LSF batch library (LSBLIB)" },
-     {  3, "Exception caught when starting JobManager" },
+    // General
+    {  1, "JobManager Daemon started" },
+    {  2, "Failed to initialize the LSF batch library (LSBLIB)" },
+    {  3, "Exception caught when starting JobManager" },
 
-     // Management
-     { 20, "Invalid JobManager/PendingTimeout option, ignoring entry" },
-     { 21, "Failed to retrieve historical LSF job information from batch master" },
-     { 22, "Failed to retrieve current LSF job information from batch master" },
-     { 23, "Failed to extract CLEAN_PERIOD and DEFAULT_QUEUE value from lsb.params, using default" },
-     { 24, "Failed to terminate LSF job" },
-     { 25, "Job terminated, timeout occurred" },
-     { 26, "Job terminated by service administrator" },
-     { 27, "Management thread interval is greater than CLEAN_PERIOD in lsb.params, detection of abnormally EXITING jobs disabled" },
-     { 28, "Exception caught trying to run post job checks" },
-     { 29, "Failed to execute postJobChecks procedure" },
-     { 30, "Exception caught trying to get scheduler resources, continuing anyway" },
-     { 31, "Failed to execute getSchedulerResources procedure, continuing anyway" },
-     { 32, "Job terminated, all requested filesystems are DRAINING or DISABLED" },
-     { 33, "Job terminated, source filesystem for disk2disk copy is DISABLED, restarting SubRequest" },
-     { 34, "Job terminated, svcclass has no filesystems in PRODUCTION" },
-     { 35, "Restarting failed scheduling of a disk2disk copy replication request" },
-     { 37, "Exception caught trying get space availability of all diskonly service classes, continuing anyway" },
-     { 38, "Failed to execute getSvcClassesWithNoSpace, continuing anyway" },
-     { 39, "Job terminated, svcclass no longer has any space available" },
-     { 70, "Job terminated, not enough hosts to meet jobs requirements" },
-     { 71, "Invoking ProcessJob" },
-     { 72, "Invoking TerminateRequest" },
-     { 73, "Abnormal job termination detected" },
+    // Management
+    { 20, "Invalid JobManager/PendingTimeout option, ignoring entry" },
+    { 23, "Failed to extract the DEFAULT_QUEUE value from lsb.params, using default" },
+    { 24, "Failed to terminate LSF job" },
+    { 25, "Job terminated, timeout occurred" },
+    { 32, "Job terminated, all requested filesystems are DRAINING or DISABLED" },
+    { 33, "Job terminated, source filesystem for disk2disk copy is DISABLED, restarting SubRequest" },
+    { 34, "Job terminated, svcclass has no filesystems in PRODUCTION" },
+    { 39, "Job terminated, svcclass no longer has any space available" },
+    { 74, "Exception caught trying to get a list of running transfers from the stager database" },
+    { 75, "Failed to execute getRunningTransfers" },
+    { 77, "Executing cleanup for job" },
+    { 78, "Exception caught trying to get list of LSF jobs" },
 
-     // Submission
-     { 40, "Invalid JobManager/SubmitRetryAttempts option, using default" },
-     { 41, "Invalid JobManager/SubmitRetryInterval option, value too small. Using default" },
-     { 42, "Reverse UID lookup failure. User credentials are invalid, job will not be scheduled" },
-     { 43, "Failed to change real and effective user id of process using setreuid, job cannot be submitted into the scheduler as user root " },
-     { 44, "Failed to reset the real and effective user id back to root. Terminating further processing through this worker process" },
-     { 45, "Job successfully submitted into LSF" },
-     { 46, "Failed to submit job into LSF, will try again" },
-     { 47, "Exceeded maximum number of attempts trying to submit a job into LSF" },
-     { 48, "Failed to submit job into LSF, fatal error encountered" },
-     { 49, "Exception caught trying to submit a job into LSF" },
-     { 50, "Failed to execute lsfSubmit in SubmissionProcess::run" },
-     { 51, "Cannot submit job into LSF, svcclass/queue name is a reserved word" },
-     { 53, "Memory allocation failure, job submission cancelled" },
-     { 54, "Invalid diskCopySource syntax, job submission cancelled" },
-     { 55, "Exception caught when trying to fail scheduler job" },
-     { 56, "Failed to execute failSchedulerJob procedure" },
-     { 57, "Invalid JobManager/MaxDiskCopyRunTime option, value too small. Using default" },
+    // Submission
+    { 40, "Invalid JobManager/SubmitRetryAttempts option, using default" },
+    { 41, "Invalid JobManager/SubmitRetryInterval option, value too small. Using default" },
+    { 42, "Reverse UID lookup failure. User credentials are invalid, job will not be scheduled" },
+    { 43, "Failed to change real and effective user id of process using setreuid, job cannot be submitted into the scheduler as user root " },
+    { 44, "Failed to reset the real and effective user id back to root. Terminating further processing through this worker process" },
+    { 45, "Job successfully submitted into LSF" },
+    { 46, "Failed to submit job into LSF, will try again" },
+    { 47, "Exceeded maximum number of attempts trying to submit a job into LSF" },
+    { 48, "Failed to submit job into LSF, fatal error encountered" },
+    { 49, "Exception caught trying to submit a job into LSF" },
+    { 50, "Failed to execute lsfSubmit in SubmissionProcess::run" },
+    { 51, "Cannot submit job into LSF, svcclass/queue name is a reserved word" },
+    { 53, "Memory allocation failure, job submission cancelled" },
+    { 55, "Exception caught when trying to fail scheduler job" },
+    { 57, "Invalid JobManager/MaxDiskCopyRunTime option, value too small. Using default" },
+    { 76, "Failed to execute jobFailed procedure" },
 
-     // Dispatch
-     { 60, "Job received" },
-     { 61, "Exception caught selecting a new job to schedule in DispatchThread::select" },
-     { 62, "Failed to execute jobToSchedule procedure in DispatchThread::select" },
-     { 63, "Exception caught trying to restart a job in DispatchThread::process, job will remain incorrectly in SUBREQUEST_BEINGSCHED" },
-     { 64, "Failed to execute updateSchedulerJob in DispatchThread::process, job will remain incorrectly in SUBREQUEST_BEINGSCHED" },
+    // Dispatch
+    { 60, "Job received" },
+    { 61, "Exception caught selecting a new job to schedule in DispatchThread::select" },
+    { 62, "Failed to execute jobToSchedule procedure in DispatchThread::select" },
+    { 63, "Exception caught trying to restart a job in DispatchThread::process, job will remain incorrectly in SUBREQUEST_BEINGSCHED" },
+    { 64, "Failed to execute updateSchedulerJob in DispatchThread::process, job will remain incorrectly in SUBREQUEST_BEINGSCHED" },
 
-     { -1, "" }};
+    { -1, "" }};
   dlfInit(messages);
 }

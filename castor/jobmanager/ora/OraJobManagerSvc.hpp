@@ -31,10 +31,18 @@
 #include "castor/BaseSvc.hpp"
 #include "castor/db/newora/OraCommonSvc.hpp"
 #include "castor/jobmanager/IJobManagerSvc.hpp"
-#include "castor/jobmanager/JobSubmissionRequest.hpp"
+#include "castor/jobmanager/JobRequest.hpp"
 #include "occi.h"
 #include <map>
 #include <vector>
+
+// LSF headers
+extern "C" {
+#ifndef LSBATCH_H
+#include "lsf/lssched.h"
+#include "lsf/lsbatch.h"
+#endif
+}
 
 namespace castor {
 
@@ -46,146 +54,112 @@ namespace castor {
        * Implementation of the IJobManagerSvc for Oracle
        */
       class OraJobManagerSvc: public castor::db::ora::OraCommonSvc,
-			      public virtual castor::jobmanager::IJobManagerSvc {
+                              public virtual castor::jobmanager::IJobManagerSvc {
 
       public:
 
-	/**
-	 * Default constructor
-	 */
-	OraJobManagerSvc(const std::string name);
+        /**
+         * Default constructor
+         */
+        OraJobManagerSvc(const std::string name);
 
-	/**
-	 * Default destructor
-	 */
-	virtual ~OraJobManagerSvc() throw();
+        /**
+         * Default destructor
+         */
+        virtual ~OraJobManagerSvc() throw();
 
-	/**
-	 * Get the service id
-	 */
-	virtual inline const unsigned int id() const;
+        /**
+         * Get the service id
+         */
+        virtual inline const unsigned int id() const;
 
-	/**
-	 * Get the service id
-	 */
-	static const unsigned int ID();
+        /**
+         * Get the service id
+         */
+        static const unsigned int ID();
 
-	/**
-	 * Reset the converter statements
-	 */
-	void reset() throw();
+        /**
+         * Reset the converter statements
+         */
+        void reset() throw();
 
-	/**
-	 * Fail a scheduler job in the stager database. This involves failing
-	 * the subrequest and calling the necessary cleanup procedures
-	 * on behalf of the job.
-	 * The stager error service will then pick up the subrequest and
-	 * notify the client of the termination. This method will only modify
-	 * subrequests that are in a SUBREQUEST_READY or SUBREQEST_BEINGSCHED
-	 * status.
-	 * @param subReqId The SubRequest id to update
-	 * @param errorCode The error code associated with the failure
-	 * @exception Exception in case of error
-	 */
-	virtual bool failSchedulerJob
-	(const std::string subReqId, const int errorCode)
-	  throw(castor::exception::Exception);
+        /**
+         * Retrieve the next job to be scheduled from the database with
+         * status SUBREQUEST_READYFORSCHED.
+         * @exception Exception in case of error
+         */
+        virtual castor::jobmanager::JobRequest *jobToSchedule()
+          throw(castor::exception::Exception);
 
-	/**
-	 * Retrieve the next job to be scheduled from the database with
-	 * status SUBREQUEST_READYFORSCHED.
-       	 * @exception Exception in case of error
-	 */
-	virtual castor::jobmanager::JobSubmissionRequest *jobToSchedule()
-	  throw(castor::exception::Exception);
+        /**
+         * Update the status of a subrequest in the database to the value
+         * defined in the status parameter. This method will only modify
+         * subrequests that are in a SUBREQEST_BEINGSCHED status.
+         * @param request the request to update
+         * @param status the new status of the subrequest
+         * @exception Exception in case of error
+         */
+        virtual void updateSchedulerJob
+        (const castor::jobmanager::JobRequest *request,
+         const castor::stager::SubRequestStatusCodes status)
+          throw(castor::exception::Exception);
 
-       	/**
-	 * Update the status of a subrequest in the database to the value
-	 * defined in the status parameter. This method will only modify
-	 * subrequests that are in a SUBREQEST_BEINGSCHED status.
-	 * @param request the request to update
-	 * @param status the new status of the subrequest
-	 * @exception Exception in case of error
-	 */
-	virtual void updateSchedulerJob
-	(const castor::jobmanager::JobSubmissionRequest *request,
-	 const castor::stager::SubRequestStatusCodes status)
-	  throw(castor::exception::Exception);
-
-	/**
-	 * Get a list of all diskservers, their associated filesystems and
-	 * the service class they are in.
-	 * @exception Exception in case of error
-	 */
-	virtual std::map
-	<std::string, castor::jobmanager::DiskServerResource *>
-	getSchedulerResources()
-	  throw(castor::exception::Exception);
-
-	/**
-	 * Run post job checks on an exited or terminated job. We run these
-	 * checks for two reasons:
-	 * A) to make sure that the subrequest and waiting subrequests are
-	 * updated accordingly when a job is terminated/killed and
-	 * B) to make sure that the status of the subrequest is not
-	 * SUBREQUEST_READY after a job has successfully ended. If this is
-	 * the case then it is an indication that LSF failed to schedule the
-	 * job and gave up. As a consequence of LSF giving up the stager
-	 * database is left in an inconsistent state which this method
-	 * attempts to rectify.
-	 * @param subReqId The SubRequest id to update
-	 * @param errorCode The error code associated with the failure
-	 * @exception Exception in case of error
-	 */
-	virtual bool postJobChecks
-	(const std::string subReqId, const int errorCode)
-	  throw(castor::exception::Exception);
-
-	/**
-	 * Get a list of all service classes which are classified as having
-	 * diskonly behaviour and no longer have space available.
-	 * @exception Exception in case of error
-	 */
-	virtual std::vector<std::string> getSvcClassesWithNoSpace()
-	  throw(castor::exception::Exception);
-
+        /**
+         * Method to return a list of running transfers from the stager
+         * database along with any potential reason why a transfer should be
+         * terminated.
+         * @return A map where the key is the job name (SubReq UUID) and the
+         * value is a std::pair which contains two Booleans. The first Boolean 
+         * indicates if space is still available in the target service class.
+         * The second Boolean indicates if none of the requested filesystems
+         * are currently available.
+         * @exception Exception in case of error
+         */
+        virtual std::map<std::string, std::pair<bool, bool> >
+        getRunningTransfers()
+          throw(castor::exception::Exception);
+        
+        /**
+         * Fail a scheduler job in the stager database. This involves failing
+         * the SubRequest and calling the necessary cleanup procedures on behalf
+         * of the job.
+         * The stager error service will then pick up the subrequest and
+         * notify the client of the termination. This method will only modify
+         * subrequests that are in a SUBREQUEST_READY or SUBREQEST_BEINGSCHED
+         * status
+         * @param A vector of std::pairs detailing the list of SubRequest uuid's
+         * to fail and the reason why.
+         * @exception Exception in case of error
+         */
+        virtual void jobFailed
+        (const std::vector<std::pair<std::string, int> > jobs)
+          throw(castor::exception::Exception);
+        
       private:
 
-	/// SQL statement for function failSchedulerJob
-	static const std::string s_failSchedulerJobString;
+        /// SQL statement for function jobToSchedule
+        static const std::string s_jobToScheduleString;
 
-	/// SQL statement object for failSchedulerJob
-	oracle::occi::Statement *m_failSchedulerJobStatement;
+        /// SQL statement object for jobToSchedule
+        oracle::occi::Statement *m_jobToScheduleStatement;
 
-	/// SQL statement for function jobToSchedule
-	static const std::string s_jobToScheduleString;
+        /// SQL statement for function updateSchedulerJob
+        static const std::string s_updateSchedulerJobString;
 
-	/// SQL statement object for jobToSchedule
-	oracle::occi::Statement *m_jobToScheduleStatement;
+        /// SQL statement object for updateSchedulerJob
+        oracle::occi::Statement *m_updateSchedulerJobStatement;
 
-	/// SQL statement for function updateSchedulerJob
-	static const std::string s_updateSchedulerJobString;
+        /// SQL statement for function getRunningTransfers
+        static const std::string s_getRunningTransfersString;
 
-	/// SQL statement object for updateSchedulerJob
-	oracle::occi::Statement *m_updateSchedulerJobStatement;
+        /// SQL statement object for getRunningTransfers
+        oracle::occi::Statement *m_getRunningTransfersStatement;
 
-	/// SQL statement for function getSchedulerResources
-	static const std::string s_getSchedulerResourcesString;
+        /// SQL statement for function jobFailed
+        static const std::string s_jobFailedString;
 
-	/// SQL statement object for getSchedulerResources
-	oracle::occi::Statement *m_getSchedulerResourcesStatement;
-
-	/// SQL statement for function postJobChecks
-	static const std::string s_postJobChecksString;
-
-	/// SQL statement object for postJobChecks
-	oracle::occi::Statement *m_postJobChecksStatement;
-
-	/// SQL statement for function getSvcClassesWithNoSpace
-	static const std::string s_getSvcClassesWithNoSpaceString;
-
-	/// SQL statement object for getSvcClassesWithNoSpace
-	oracle::occi::Statement *m_getSvcClassesWithNoSpaceStatement;
+        /// SQL statement object for jobFailed
+        oracle::occi::Statement *m_jobFailedStatement;
 
       };
 

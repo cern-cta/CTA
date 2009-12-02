@@ -19,8 +19,8 @@
  *
  * @(#)$RCSfile: ManagementThread.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2009/03/25 13:23:30 $ $Author: waldron $
  *
- * Cancellation thread used to cancel jobs in the LSF with have been in a
- * PENDING status for too long
+ * Management thread used to handle processing of jobs that have been PENDING
+ * for too long in LSF + synchronization of exiting jobs in LSF.
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -40,25 +40,23 @@
 //-----------------------------------------------------------------------------
 // Constructor
 //-----------------------------------------------------------------------------
-castor::jobmanager::ManagementThread::ManagementThread(int timeout)
+castor::jobmanager::ManagementThread::ManagementThread()
   throw(castor::exception::Exception) :
-  m_cleanPeriod(3600),
-  m_defaultQueue("castor"),
-  m_timeout(timeout),
-  m_initialized(false),
-  m_resReqKill(true),
-  m_diskCopyPendingTimeout(0) {}
+  m_defaultQueue("castor") {}
+
 
 //-----------------------------------------------------------------------------
-// init
+// Init
 //-----------------------------------------------------------------------------
 void castor::jobmanager::ManagementThread::init() {
+
   // Initialize the oracle job manager service.
   castor::IService *orasvc =
-    castor::BaseObject::services()->service("OraJobManagerSvc", castor::SVC_ORAJOBMANAGERSVC);
+    castor::BaseObject::services()->service
+    ("OraJobManagerSvc", castor::SVC_ORAJOBMANAGERSVC);
   if (orasvc == NULL) {
     castor::exception::Internal e;
-    e.getMessage() << "Unable to get OraJobManagerSVC for CancellationThread";
+    e.getMessage() << "Unable to get OraJobManagerSVC for ManagementThread";
     throw e;
   }
 
@@ -67,8 +65,34 @@ void castor::jobmanager::ManagementThread::init() {
   if (m_jobManagerService == NULL) {
     castor::exception::Internal e;
     e.getMessage() << "Could not convert newly retrieved service into "
-		   << "IJobManagerSvc for CancellationThread" << std::endl;
+                   << "IJobManagerSvc for ManagementThread" << std::endl;
     throw e;
+  }
+
+  // Initialize the LSF API
+  //   - This doesn't actually communicate with the LSF master in any way,
+  //     it just sets up the environment for later calls
+  if (lsb_init((char*)"jobmanagerd") < 0) {
+    
+    // "Failed to initialize the LSF batch library (LSBLIB)"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Function", "lsb_init"),
+       castor::dlf::Param("Error", lsberrno ? lsb_sysmsg() : "no message")};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2, 2, params);
+  }
+  
+  // Determine the value of DEFAULT_QUEUE as defined in lsb.params. This will
+  // be used later to clean up the notification cache.
+  parameterInfo *paramInfo = lsb_parameterinfo(NULL, NULL, 0);
+  if (paramInfo == NULL) {
+    
+    // "Failed to extract the DEFAULT_QUEUE value from lsb.params, using
+    // defaults"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("DefaultQueue", m_defaultQueue)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 23, 1, params);
+  } else {
+    m_defaultQueue = paramInfo->defaultQueues;
   }
 }
 
@@ -78,86 +102,12 @@ void castor::jobmanager::ManagementThread::init() {
 //-----------------------------------------------------------------------------
 void castor::jobmanager::ManagementThread::run(void *param) {
 
-  // Initialization is required ?
-  //   - Ideally it would be nice to initialise the LSF API in the constructor.
-  //     However the instant that a fork() is called for daemonization the API
-  //     becomes invalid.
-  if (m_initialized == false) {
-
-    // Initialize the LSF API
-    //   - This doesn't actually communicate with the LSF master in any way,
-    //     it just sets up the environment for later calls
-    if (lsb_init((char*)"JobManager") < 0) {
-
-      // "Failed to initialize the LSF batch library (LSBLIB)"
-      castor::dlf::Param params[] =
-	{castor::dlf::Param("Function", "lsb_init"),
-	 castor::dlf::Param("Error", lsberrno ? lsb_sysmsg() : "no message")};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2, 2, params);
-    }
-
-    // Determine the value of CLEAN_PERIOD as defined in lsb.params. This will
-    // be used later to cleanup the notification cache.
-    parameterInfo *paramInfo = lsb_parameterinfo(NULL, NULL, 0);
-    if (paramInfo == NULL) {
-
-      // "Failed to extract CLEAN_PERIOD and DEFAULT_QUEUE values from
-      // lsb.params, using defaults"
-      castor::dlf::Param params[] =
-	{castor::dlf::Param("CleanPeriod", m_cleanPeriod),
-	 castor::dlf::Param("DefaultQueue", m_defaultQueue)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 23, 2, params);
-    } else {
-      m_cleanPeriod  = paramInfo->cleanPeriod + (m_timeout * 2);
-      m_defaultQueue = paramInfo->defaultQueues;
-    }
-
-    // If the frequency of the thread, its 'interval' is greater than the
-    // CLEAN_PERIOD we will never catch jobs which have exited abnormally as
-    // those jobs will never appear in the LSF queues output.
-    if (m_timeout > m_cleanPeriod) {
-
-      // "Cancellation thread interval is greater than CLEAN_PERIOD in
-      // lsb.params, detection of abnormally EXITING jobs disabled"
-      castor::dlf::Param params[] =
-	{castor::dlf::Param("Thread Interval", m_timeout),
-	 castor::dlf::Param("LSF Clean Period", m_cleanPeriod)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 27, 2, params);
-    }
-    m_initialized = true;
-  }
-
-  // Reset configuration variables
-  m_pendingTimeouts.clear();
-  for (std::map<std::string,
-	 castor::jobmanager::DiskServerResource *>::const_iterator it =
-	 m_schedulerResources.begin();
-       it != m_schedulerResources.end();
-       it++) {
-    DiskServerResource *ds = (*it).second;
-    delete ds;
-  }
-  m_schedulerResources.clear();
-  m_svcClassesWithNoSpace.clear();
-
-  // Remove all entries in the processed cache whose timestamp has exceeded
-  // the CLEAN_PERIOD in lsb.params.
-  for (std::map<std::string, u_signed64>::iterator it =
-	 m_processedCache.begin();
-       it != m_processedCache.end(); ) {
-    if ((m_cleanPeriod > 0) &&
-	((time(NULL) - (*it).second) > (u_signed64)m_cleanPeriod)) {
-      m_processedCache.erase(it++);
-    } else {
-      it++;
-    }
-  }
-
   // LSF doesn't have a built in mechanism to automatically remove jobs from
   // the queue if they spend too much time in a PENDING status. So we must
   // issue an external kill command to achieve this.
   char **results;
   int  count, i;
+  m_pendingTimeouts.clear();
   if (!getconfent_multi("JobManager", "PendingTimeouts", 1, &results, &count)) {
     for (i = 0; i < count; i++) {
       std::istringstream iss(results[i]);
@@ -170,13 +120,13 @@ void castor::jobmanager::ManagementThread::run(void *param) {
       iss >> timeout;
 
       if (iss.fail()) {
-	// "Invalid JobManager/PendingTimeouts option, ignoring entry"
-	castor::dlf::Param params[] =
-	  {castor::dlf::Param("Value", results[i]),
-	   castor::dlf::Param("Index", i + 1)};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 20, 2, params);
+        // "Invalid JobManager/PendingTimeouts option, ignoring entry"
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("Value", results[i]),
+           castor::dlf::Param("Index", i + 1)};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 20, 2, params);
       } else {
-	m_pendingTimeouts[svcclass] = timeout;
+        m_pendingTimeouts[svcclass] = timeout;
       }
       free(results[i]);
     }
@@ -188,7 +138,7 @@ void castor::jobmanager::ManagementThread::run(void *param) {
   m_diskCopyPendingTimeout = 0;
   char *value = getconfent("JobManager", "DiskCopyPendingTimeout", 0);
   if (value != NULL) {
-    m_diskCopyPendingTimeout = strtol(value, 0, 10);
+    m_diskCopyPendingTimeout = std::strtol(value, 0, 10);
   }
 
   // The job manager also has the ability to terminate any job in LSF if the
@@ -202,128 +152,159 @@ void castor::jobmanager::ManagementThread::run(void *param) {
     }
   }
 
-  // Extract the available scheduler resources from the stager database.
+  // Get a list of all jobs known to the stager database and possible reasons
+  // for termination
+  std::map<std::string, std::pair<bool, bool> > databaseJobs;
   try {
-    if (m_resReqKill) {
-      m_schedulerResources = m_jobManagerService->getSchedulerResources();
-    }
+    databaseJobs = m_jobManagerService->getRunningTransfers();
   } catch (castor::exception::Exception e) {
 
-    // "Exception caught trying to get scheduler resources, continuing anyway"
+    // "Exception caught trying to get a list of running transfers from the "
+    // stager database"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Type", sstrerror(e.code())),
        castor::dlf::Param("Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 30, 2, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 74, 2, params);
+    return;
   } catch (...) {
 
-    // "Failed to execute getSchedulerResources procedure, continuing anyway"
+    // "Failed to execute getRunningTransfers"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", "General exception caught")};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 31, 1, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 75, 1, params);
+    return;
   }
 
-  // Extract the list of diskonly service classes which no longer have any
-  // available space from the stager database.
+  // Get a list of all jobs known to the scheduler
+  std::map<std::string, castor::jobmanager::JobRequest> lsfJobs;
   try {
-    if (m_resReqKill) {
-      m_svcClassesWithNoSpace = m_jobManagerService->getSvcClassesWithNoSpace();
+    lsfJobs = getSchedulerJobs();
+  } catch (castor::exception::Exception e) {
+    // "Exception caught trying to get list of LSF jobs"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Message", e.getMessage().str())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 78, 1, params);
+    return;
+  }
+
+  // A container to hold a list of jobs which have finished or been
+  // terminated and the reason why
+  std::vector<std::pair<std::string, int> > exitedJobs;
+
+  // Compare the list of jobs known to the stager and LSF to determine those
+  // which require termination and cleanup
+  for (std::map<std::string, std::pair<bool, bool> >::const_iterator it =
+         databaseJobs.begin();
+       it != databaseJobs.end();
+       it++) {
+    std::string subReqId = (*it).first;
+    std::map<std::string, castor::jobmanager::JobRequest>::const_iterator
+      it2 = lsfJobs.find(subReqId);
+    int error = 0;
+    if (it2 != lsfJobs.end()) {
+      // Process the job
+      error = processJob((*it2).second,
+                         (*it).second.first,
+                         (*it).second.second);
+    } else {
+      // We have a job in the database which is not in LSF, we assume a
+      // scheduling error has occurred
+      error = ESTSCHEDERR;
     }
+    if (error) {
+      exitedJobs.push_back
+        (std::pair<std::string, int>(subReqId, error));
+      
+      // Convert the string representations of the SubRequest uuid to a 
+      // Cuuid_t structure
+      Cuuid_t subRequestId;
+      string2Cuuid(&subRequestId, (char *)subReqId.c_str());
+      
+      // "Executing cleanup for job"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Error", sstrerror(error)),
+         castor::dlf::Param(subRequestId)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 77, 2, params);
+    } 
+  }
+
+  // Bulk terminate the jobs that exited or were terminated
+  try {
+    m_jobManagerService->jobFailed(exitedJobs);
   } catch (castor::exception::Exception e) {
 
-    // "Exception caught trying get space availability of all diskonly service
-    // classes, continuing anyway"
+    // "Exception caught when trying to fail scheduler job"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Type", sstrerror(e.code())),
        castor::dlf::Param("Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 37, 2, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 55, 2, params);
   } catch (...) {
-
-    // "Failed to execute getSvcClassesWithNoSpace, continuing anyway"
+    
+    // "Failed to execute jobFailed procedure"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", "General exception caught")};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 38, 1, params);
-  }
-
-  // Retrieve a list of all LSF jobs recently finished. This will allow us to
-  // determine those jobs which have exited abnormally. As this is a call to
-  // mbatch (LSF batch master) a response cannot be guaranteed. Should a
-  // failure occur there is nothing that can be done apart from trying again
-  // later.
-  jobInfoEnt *job;
-  if (lsb_openjobinfo(0, NULL, (char*)"all", NULL, NULL, ALL_JOB) < 0) {
-    if (lsberrno == LSBE_NO_JOB) {
-      lsb_closejobinfo(); // No matching job found
-    } else {
-
-      // "Failed to retrieve historical LSF job information from batch master"
-      castor::dlf::Param params[] =
-	{castor::dlf::Param("Function", "lsb_openjobinfo"),
-	 castor::dlf::Param("Error", lsberrno ? lsb_sysmsg() : "no message")};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 21, 2, params);
-    }
-  }
-  else {
-    // Loop over all jobs
-    while ((job = lsb_readjobinfo(NULL)) != NULL) {
-      processJob(job);
-    }
-    lsb_closejobinfo();
-  }
-
-  // Now retrieve a list of all unfinished jobs. This will allow use to
-  // determine those jobs which have timed out. Why a second call? because
-  // lsb_openjobinfo() does not allow the bitwise operation ALL_JOB | CUR_JOB
-  // as an option despite saying it does in the documentation, try `bjobs -ap`
-  if (lsb_openjobinfo(0, NULL, (char*)"all", NULL, NULL, CUR_JOB) < 0) {
-   if (lsberrno == LSBE_NO_JOB) {
-      lsb_closejobinfo(); // No matching job found
-    } else {
-
-      // "Failed to retrieve current LSF job information from batch master"
-      castor::dlf::Param params[] =
-	{castor::dlf::Param("Function", "lsb_openjobinfo"),
-	 castor::dlf::Param("Error", lsberrno ? lsb_sysmsg() : "no message")};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 22, 2, params);
-    }
-  }
-  else {
-    // Loop over all jobs
-    while ((job = lsb_readjobinfo(NULL)) != NULL) {
-      processJob(job);
-    }
-    lsb_closejobinfo();
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 76, 1, params);
   }
 }
 
 
 //-----------------------------------------------------------------------------
-// ProcessJob
+// GetSchedulerJobs
 //-----------------------------------------------------------------------------
-void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
+std::map<std::string, castor::jobmanager::JobRequest> 
+castor::jobmanager::ManagementThread::getSchedulerJobs()
+  throw(castor::exception::Exception) {
 
-  // The job has been processed previously ? In this case we are waiting
-  // for the job to be removed from the LSF output after CLEAN_PERIOD seconds
-  std::map<std::string, u_signed64>::const_iterator iter =
-    m_processedCache.find(job->submit.jobName);
-  if (iter != m_processedCache.end()) {
-    return;
+  // Retrieve a list of all jobs
+  std::map<std::string, castor::jobmanager::JobRequest> lsfJobs;
+  jobInfoEnt *job;
+  if (lsb_openjobinfo(0, NULL, (char *)"all", NULL, NULL, CUR_JOB) < 0) {
+    if (lsberrno == LSBE_NO_JOB) {
+      lsb_closejobinfo(); // No matching job found
+    } else {
+      lsb_closejobinfo();
+      castor::exception::Internal e;
+      e.getMessage() << "Failed to retrieve LSF job information from batch "
+                     << "master: "
+                     << lsberrno ? lsb_sysmsg() : "no message";
+      throw e;
+    }
+  } else {
+    
+    // Loop over all jobs
+    while ((job = lsb_readjobinfo(NULL)) != NULL) {
+      try {
+        lsfJobs[job->submit.jobName] = extractJobInfo(job);
+      } catch (castor::exception::Exception e) {
+        // An exception in the extractJobInfo method indicates that the LSF
+        // job being read is not a valid CASTOR job so we skip it!
+      }
+    }
+    lsb_closejobinfo();
   }
+  return lsfJobs;
+}
+
+
+//-----------------------------------------------------------------------------
+// ExtractJobInfo
+//-----------------------------------------------------------------------------
+castor::jobmanager::JobRequest 
+castor::jobmanager::ManagementThread::extractJobInfo(const jobInfoEnt *job)
+  throw (castor::exception::Exception) {
 
   // Parse the jobs external scheduler options to extract the needed key value
   // pairs to process the job further.
   if (job->submit.extsched == NULL) {
-    return;
+    castor::exception::Internal e;
+    e.getMessage() << "Invalid job, no external scheduler options";
+    throw e;
   }
 
-  // Logging variables
+  // Process the key value pairs.
   std::istringstream extsched(job->submit.extsched);
   std::string buf, key, value;
-  std::vector<std::string> rfs, excludedHosts;
-  u_signed64 requestType;
-
-  Cuuid_t requestId = nullCuuid, subRequestId = nullCuuid;
-  Cns_fileid fileId;
-  memset(&fileId, 0, sizeof(fileId));
+  castor::jobmanager::JobRequest request;
 
   while (std::getline(extsched, buf, ';')) {
     std::istringstream iss(buf);
@@ -331,99 +312,64 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
     iss >> value;
     if (!iss.fail()) {
       if (key == "REQUESTID") {
-	string2Cuuid(&requestId, (char *)value.c_str());
+        request.setReqId(value);
       } else if (key == "SUBREQUESTID") {
-	string2Cuuid(&subRequestId, (char *)value.c_str());
+        request.setSubReqId(value);
       } else if (key == "FILEID") {
-	fileId.fileid = strutou64(value.c_str());
+        request.setFileId(strutou64((char *)value.c_str()));
       } else if (key == "NSHOST") {
-	strncpy(fileId.server, value.c_str(), CA_MAXHOSTNAMELEN);
-	fileId.server[CA_MAXHOSTNAMELEN] = '\0';
+        request.setNsHost(value);
       } else if (key == "TYPE") {
-	requestType = strtou64(value.c_str());
+        request.setRequestType(strtou64((char *)value.c_str()));
       } else if (key == "RFS") {
-	// Tokenize the requested filesystems using '|' as a delimiter
-	std::istringstream requestedFileSystems(value);
-	while (std::getline(requestedFileSystems, buf, '|')) {
-	  rfs.push_back(buf);
-	}
-      } else if (key == "EXCLUDEDHOSTS") {
-	// Tokenize the excluded hosts using '|' as a delimiter
-	std::istringstream excludedHostsInput(value);
-	while (std::getline(excludedHostsInput, buf, '|')) {
-	  excludedHosts.push_back(buf);
-	}
-
-	// Add the source diskserver to the exclusion list
-	if (rfs.size()) {
-	  std::istringstream iss(rfs[0]);
-	  std::getline(iss, buf, ':');
-	  excludedHosts.push_back(buf);
-	}
+        request.setRequestedFileSystems(value);
       }
     }
   }
 
-  // Check that all required parameters where extracted. If this fails we
-  // assume the job was not entered by the submission daemon and ignore it.
-  if (!Cuuid_compare(&requestId, &nullCuuid) ||
-      !Cuuid_compare(&subRequestId, &nullCuuid) ||
-      (fileId.fileid == 0) ||
-      (fileId.server[0] == '\0')) {
-    return;
-  }
+  // Extract the job id, username and submission time.
+  request.setId(job->jobId);
+  request.setUsername(job->user);
+  request.setSubmitStartTime(job->submitTime);
 
   // Determine the name of the service class being used.
-  std::string svcClass = job->submit.queue;
-  if (!strcasecmp(job->submit.queue, m_defaultQueue.c_str())) {
-    svcClass = "default";
+  request.setSvcClass(job->submit.queue);
+  if (request.svcClass() == m_defaultQueue) {
+    request.setSvcClass("default");
   }
 
-  // "Invoking ProcessJob"
-  castor::dlf::Param params2[] =
-    {castor::dlf::Param("JobId", (int)job->jobId),
-     castor::dlf::Param("Status", job->status),
-     castor::dlf::Param(subRequestId)};
-  castor::dlf::dlf_writep(requestId, DLF_LVL_DEBUG, 71, 3, params2, &fileId);
-
-  // Processing for jobs which have finished
-  if (IS_FINISH(job->status)) {
-
-    // Common logging parameters
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("JobId", (int)job->jobId),
-       castor::dlf::Param("Username", job->user),
-       castor::dlf::Param("Type", castor::ObjectsIdStrings[requestType]),
-       castor::dlf::Param("Status", job->status),
-       castor::dlf::Param(subRequestId)};
-
-    // Run the post checks after a job has ended. We do this to catch
-    // situations were LSF has attempted to run the job but failed. As a
-    // consequence of this we are left with inconsistencies in the stager
-    // database such as SUBREQUEST's stuck in a SUBREQUEST_READY state.
-    // Note: the name of the method being called here is misleading, we don't
-    // want to terminate the request in this particular case just check it
-    // went through ok
-    if (terminateRequest(0, requestId, subRequestId, fileId, ESTSCHEDERR)) {
-      // "Abnormal job termination detected"
-      castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 73, 5, params, &fileId);
-    }
-
-    m_processedCache[job->submit.jobName] = time(NULL);
-    return;
+  // Check that all the required parameters were extracted.
+  if (!request.nsHost().length() || !request.fileId() ||
+      !request.reqId().length()  || !request.subReqId().length() ||
+      !request.requestType()) {
+    castor::exception::Internal e;
+    e.getMessage() << "Invalid job, mandatory job parameters missing";
+    throw e;
   }
+  
+  return request;
+}
 
-  // No furthur processing is required unless the job is in a PEND'ing state
-  if (!IS_PEND(job->status)) {
-    return;
-  }
 
-  // Check if the job is a candidate for termination (kill) if it has
-  // exceeded its maximum amount of time in the queue in a PENDING state
-  u_signed64 timeout = 0;
-  if (requestType != OBJ_StageDiskCopyReplicaRequest) {
+//-----------------------------------------------------------------------------
+// ProcessJob
+//-----------------------------------------------------------------------------
+int castor::jobmanager::ManagementThread::processJob
+(const castor::jobmanager::JobRequest job,
+ const bool noSpace,
+ const bool noFSAvail) {
+
+  // Logging variables
+  Cuuid_t requestId, subRequestId;
+  Cns_fileid fileId;
+  memset(&fileId, 0, sizeof(fileId));
+  
+  // Check if the job is a candidate for termination if it has exceeded its
+  // maximum amount of time in the queue in a PENDING state
+  u_signed64 timeout = time(NULL);
+  if (job.requestType() != OBJ_StageDiskCopyReplicaRequest) {
     std::map<std::string, u_signed64>::const_iterator it =
-      m_pendingTimeouts.find(svcClass);
+      m_pendingTimeouts.find(job.svcClass());
 
     // If no svcclass entry can be found in the PendingTimeout option check for
     // a default signified by an "all" svcclass name.
@@ -437,278 +383,113 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
     timeout = m_diskCopyPendingTimeout;
   }
 
+  // Convert the string representations of the uuids to Cuuid_t structures
+  string2Cuuid(&requestId,    (char *)job.reqId().c_str());
+  string2Cuuid(&subRequestId, (char *)job.subReqId().c_str());
+  
+  // Populate the ns invariant
+  strncpy(fileId.server, job.nsHost().c_str(), CA_MAXHOSTNAMELEN);
+  fileId.server[CA_MAXHOSTNAMELEN] = '\0';
+  fileId.fileid = job.fileId();
+
   // A timeout was defined ?
-  if (timeout) {
-    if ((u_signed64)(time(NULL) - job->submitTime) > timeout) {
-      if (terminateRequest(job->jobId, requestId, subRequestId, fileId, ESTJOBTIMEDOUT)) {
+  if ((timeout > 0) && 
+      ((u_signed64)(time(NULL) - job.submitStartTime()) > timeout)) {
 
-	// "Job terminated, timeout occurred"
-	castor::dlf::Param params[] =
-	  {castor::dlf::Param("JobId", (int)job->jobId),
-	   castor::dlf::Param("Username", job->user),
-	   castor::dlf::Param("Type", castor::ObjectsIdStrings[requestType]),
-	   castor::dlf::Param("Timeout", timeout),
-	   castor::dlf::Param("SvcClass", svcClass),
-	   castor::dlf::Param(subRequestId)};
-	castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 25, 6, params, &fileId);
-      }
-      m_processedCache[job->submit.jobName] = time(NULL);
-      return;
+    // "Job terminated, timeout occurred"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("JobId", job.id()),
+       castor::dlf::Param("Username", job.username()),
+       castor::dlf::Param("Type", castor::ObjectsIdStrings[job.requestType()]),
+       castor::dlf::Param("Timeout", timeout),
+       castor::dlf::Param("SvcClass", job.svcClass()),
+       castor::dlf::Param(subRequestId)};
+    castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 25, 6, params, &fileId);
+    if (killJob(job.id())) {
+      return ESTJOBTIMEDOUT;
     }
+    return 0;
   }
 
-  // Terminate the job if the target service classes is a diskonly service class
-  // which no longer has any space available.
-  if ((m_resReqKill) &&
-      ((requestType == OBJ_StageDiskCopyReplicaRequest) ||
-       (requestType == OBJ_StagePutRequest) ||
-       (requestType == OBJ_StageUpdateRequest))) {
-    std::vector<std::string>::const_iterator it =
-      std::find(m_svcClassesWithNoSpace.begin(),
-		m_svcClassesWithNoSpace.end(), svcClass);
-    if (it != m_svcClassesWithNoSpace.end()) {
-      if (terminateRequest(job->jobId, requestId, subRequestId, fileId, ENOSPC)) {
-	// "Job terminated, svcclass no longer has any space available"
-	castor::dlf::Param params[] =
-	  {castor::dlf::Param("JobId", (int)job->jobId),
-	   castor::dlf::Param("Username", job->user),
-	   castor::dlf::Param("Type", castor::ObjectsIdStrings[requestType]),
-	   castor::dlf::Param("SvcClass", svcClass),
-	   castor::dlf::Param(subRequestId)};
-	castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 39, 5, params, &fileId);
-      }
-      m_processedCache[job->submit.jobName] = time(NULL);
-      return;
-    }
+  // All further processing requires resource killing to be active.
+  if (!m_resReqKill) {
+    return 0;
   }
 
-  // All further processing requires the scheduler resources to be defined.
-  if (!m_schedulerResources.size() || !m_resReqKill) {
-    return;
+  // Terminate the job if the target service classes is a diskonly service
+  // class which no longer has any space available.
+  if ((noSpace) && 
+      ((job.requestType() == OBJ_StageDiskCopyReplicaRequest) ||
+       (job.requestType() == OBJ_StagePutRequest) ||
+       (job.requestType() == OBJ_StageUpdateRequest))) {
+
+    // "Job terminated, svcclass no longer has any space available"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("JobId", job.id()),
+       castor::dlf::Param("Username", job.username()),
+       castor::dlf::Param("Type", castor::ObjectsIdStrings[job.requestType()]),
+       castor::dlf::Param("SvcClass", job.svcClass()),
+       castor::dlf::Param(subRequestId)};
+    castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 39, 5, params, &fileId);
+    if (killJob(job.id())) {
+      return ENOSPC;
+    }
+    return 0;
   }
 
-  // Check to see if at least one of the jobs requested filesystems is still
-  // available. If not we terminate the job too prevent it remaining in LSF
-  // waiting for a resource that may never return.
-  if (rfs.size()) {
-
-    // Look for the diskserver and filesystem in the scheduler resources map.
-    unsigned long disabled = 0;
-    for (std::vector<std::string>::const_iterator it = rfs.begin();
-	 it != rfs.end();
-	 it++) {
-      std::istringstream iss(*it);
-      std::string diskServer, fileSystem;
-      std::getline(iss, diskServer, ':');
-      std::getline(iss, fileSystem);
-
-      // This should never fail!! If it does then the submission was in error
-      // or someone modified the jobs submission criteria
-      if (iss.fail()) {
-	continue;
-      }
-
-      // Diskserver and or requested filesystem is disabled ?
-      std::map<std::string,
-	castor::jobmanager::DiskServerResource *>::const_iterator it =
-	m_schedulerResources.find(diskServer);
-      if (it != m_schedulerResources.end()) {
-	DiskServerResource *ds = (*it).second;
-	for (unsigned int i = 0; i < ds->fileSystems().size(); i++) {
-	  FileSystemResource *fs = ds->fileSystems()[i];
-	  if (ds->status() == castor::stager::DISKSERVER_DISABLED) {
-	    disabled = rfs.size();
-	    break;
-	  } else if (fs->mountPoint() != fileSystem) {
-	    continue;
-	  } else if (requestType == OBJ_StageDiskCopyReplicaRequest) {
-	    if (fs->status() == castor::stager::FILESYSTEM_DISABLED) {
-	      disabled++;
-	    }
-	  } else if ((fs->status() != castor::stager::FILESYSTEM_PRODUCTION) ||
-		     (ds->status() != castor::stager::DISKSERVER_PRODUCTION )){
-	    disabled++;
-	  }
-	}
-      }
+  int msg_no = 0;
+  if (noFSAvail) {
+    if (job.requestType() == OBJ_StageDiskCopyReplicaRequest) {
+      // "Job terminated, source filesystem for disk2disk copy is DISABLED, "
+      // restarting SubRequest"
+      msg_no = 33;
+    } else if (job.requestType() == OBJ_StagePutRequest) {
+      // "Job terminated, svcclass has no filesystems in PRODUCTION"
+      msg_no = 34;
+    } else {
+      // "Job terminated, all requested filesystems are DRAINING or DISABLED"
+      msg_no = 32;
     }
-
-    // Termination of the job is required ?
-    if (disabled == rfs.size()) {
-      if (terminateRequest(job->jobId, requestId, subRequestId, fileId, ESTNOTAVAIL)) {
-	if (requestType != OBJ_StageDiskCopyReplicaRequest) {
-	  // "Job terminated, all requested filesystems are DRAINING or
-	  // DISABLED"
-	  castor::dlf::Param params[] =
-	    {castor::dlf::Param("JobId", (int)job->jobId),
-	     castor::dlf::Param("Username", job->user),
-	     castor::dlf::Param("Type", castor::ObjectsIdStrings[requestType]),
-	     castor::dlf::Param("SvcClass", svcClass),
-	     castor::dlf::Param(subRequestId)};
-	  castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 32, 5, params, &fileId);
-	} else {
-	  // "Job terminated, source filesystem for disk2disk copy is
-	  // DISABLED, restarting SubRequest"
-	  castor::dlf::Param params[] =
-	    {castor::dlf::Param("JobId", (int)job->jobId),
-	     castor::dlf::Param("Username", job->user),
-	     castor::dlf::Param("Type", castor::ObjectsIdStrings[requestType]),
-	     castor::dlf::Param("RequestedFileSystem", rfs[0]),
-	     castor::dlf::Param("SvcClass", svcClass),
-	     castor::dlf::Param(subRequestId)};
-	  castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 33, 6, params, &fileId);
-	}
-      }
-      m_processedCache[job->submit.jobName] = time(NULL);
-      return;
+    // Log message
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("JobId", job.id()),
+       castor::dlf::Param("Username", job.username()),
+       castor::dlf::Param("Type", castor::ObjectsIdStrings[job.requestType()]),
+       castor::dlf::Param("SvcClass", job.svcClass()),
+       castor::dlf::Param(subRequestId)};
+    castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, msg_no, 5, params, &fileId);
+    if (killJob(job.id())) {
+      return ESTNOTAVAIL;
     }
+    return 0;
   }
 
-  // Handle cases whereby the diskpool/svcclass has no enabled filesystems
-  // for requests which do not force a set of requested filesystems. e.g. PUTs
-  if ((!rfs.size()) || (requestType == OBJ_StageDiskCopyReplicaRequest)) {
-
-    // If we don't find any filesystems belonging to the svclass in PRODUCTION
-    // fail the request
-    bool terminateJob = true;
-    for (std::map<std::string,
-	   castor::jobmanager::DiskServerResource *>::const_iterator it =
-	   m_schedulerResources.begin();
-	 it != m_schedulerResources.end();
-	 it++) {
-      DiskServerResource *ds = (*it).second;
-      for (unsigned int i = 0; i < ds->fileSystems().size(); i++) {
-	FileSystemResource *fs = ds->fileSystems()[i];
-	if ((ds->status() == castor::stager::DISKSERVER_PRODUCTION) &&
-	    (fs->status() == castor::stager::FILESYSTEM_PRODUCTION) &&
-	    (fs->svcClassName() == svcClass)) {
-	  terminateJob = false;
-	  break;
-	}
-      }
-    }
-
-    if (terminateJob) {
-      if (terminateRequest(job->jobId, requestId, subRequestId, fileId, ESTSVCCLASSNOFS)) {
-	// "Job terminated, svcclass has no filesystems in PRODUCTION"
-	castor::dlf::Param params[] =
-	  {castor::dlf::Param("JobId", (int)job->jobId),
-	   castor::dlf::Param("Username", job->user),
-	   castor::dlf::Param("Type", castor::ObjectsIdStrings[requestType]),
-	   castor::dlf::Param("SvcClass", svcClass),
-	   castor::dlf::Param(subRequestId)};
-	castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 34, 5, params, &fileId);
-      }
-      m_processedCache[job->submit.jobName] = time(NULL);
-      return;
-    }
-  }
-
-  // Handle cases where all diskservers in a service class for a
-  // StageDiskCopyReplicaRequest are excluded as candidate hosts to run the job
-  // as they already contain a copy of the file. The most common reason for
-  // this is a misconfigured service class where the number of diskservers
-  // is less than the maxReplicaNb
-  if (requestType == OBJ_StageDiskCopyReplicaRequest) {
-
-    unsigned long excluded = 0, total = 0;
-    for (std::map<std::string,
-	   castor::jobmanager::DiskServerResource *>::const_iterator it =
-	   m_schedulerResources.begin();
-	 it != m_schedulerResources.end();
-	 it++) {
-      DiskServerResource *ds = (*it).second;
-      for (unsigned int i = 0; i < ds->fileSystems().size(); i++) {
-	FileSystemResource *fs = ds->fileSystems()[i];
-	if (fs->svcClassName() != svcClass) {
-	  continue;
-	}
-
-	// Check to see if the diskserver is in the exclusion host list
-	std::vector<std::string>::const_iterator it2 =
-	  std::find(excludedHosts.begin(),
-		    excludedHosts.end(), ds->diskServerName());
-       	if (it2 != excludedHosts.end()) {
-	  excluded++;
-	}
-	total++;
-	break;
-      }
-    }
-
-    // Terminate the job if all diskservers in the service class are excluded
-    if (total == excluded) {
-      if (terminateRequest(job->jobId, requestId, subRequestId, fileId, ESTSCHEDERR)) {
-	// "Job terminated, not enough hosts to meet jobs requirements"
-	castor::dlf::Param params[] =
-	  {castor::dlf::Param("JobId", (int)job->jobId),
-	   castor::dlf::Param("Username", job->user),
-	   castor::dlf::Param("Type", castor::ObjectsIdStrings[requestType]),
-	   castor::dlf::Param("SvcClass", svcClass),
-	   castor::dlf::Param(subRequestId)};
-	castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 70, 5, params, &fileId);
-      }
-      m_processedCache[job->submit.jobName] = time(NULL);
-      return;
-    }
-  }
+  return 0;
 }
 
 
 //-----------------------------------------------------------------------------
-// TerminateRequest
+// KillJob
 //-----------------------------------------------------------------------------
-bool castor::jobmanager::ManagementThread::terminateRequest
-(LS_LONG_INT jobId, Cuuid_t requestId, Cuuid_t subRequestId, Cns_fileid fileId, int errorCode) {
-
-  // "Invoking TerminateRequest"
-  castor::dlf::Param params2[] =
-    {castor::dlf::Param("JobId", (int)jobId),
-     castor::dlf::Param(subRequestId)};
-  castor::dlf::dlf_writep(requestId, DLF_LVL_DEBUG, 72, 2, params2, &fileId);
+bool castor::jobmanager::ManagementThread::killJob(const LS_LONG_INT jobId) {
 
   // LSF has the capacity to kill jobs on bulk (lsb_killbulkjobs). However
   // testing has shown that this call fails to invoke the deletion hook of the
   // scheduler plugin and results in a memory leak in the plugin. (Definitely
   // a LSF bug!)
-  if (jobId > 0) {
-    if (lsb_forcekilljob(jobId) < 0) {
-      if ((lsberrno == LSBE_NO_JOB) || (lsberrno == LSBE_JOB_FINISH)) {
-	// No matching job found, most likely killed by another daemon
-	return false;
-      }
-
-      // "Failed to terminate LSF job"
-      castor::dlf::Param params[] =
-	{castor::dlf::Param("Function", "lsb_forcekilljob"),
-	 castor::dlf::Param("Error", lsberrno ? lsb_sysmsg() : "no message"),
-	 castor::dlf::Param("JobId", (int)jobId),
-	 castor::dlf::Param(subRequestId)};
-      castor::dlf::dlf_writep(requestId, DLF_LVL_ERROR, 24, 4, params, &fileId);
+  if (lsb_forcekilljob(jobId) < 0) {
+    if ((lsberrno == LSBE_NO_JOB) || (lsberrno == LSBE_JOB_FINISH)) {
+      // No matching job found, most likely killed by another daemon
       return false;
     }
-  }
 
-  // Run the post checks for the job, this will perform the necessary cleanups
-  try {
-    char jobName[CUUID_STRING_LEN + 1];
-    Cuuid2string(jobName, CUUID_STRING_LEN + 1, &subRequestId);
-    return m_jobManagerService->postJobChecks(jobName, errorCode);
-  } catch (castor::exception::Exception e) {
-
-    // "Exception caught trying to run post job checks"
+    // "Failed to terminate LSF job"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("Type", sstrerror(e.code())),
-       castor::dlf::Param("Message", e.getMessage().str()),
-       castor::dlf::Param(subRequestId)};
-    castor::dlf::dlf_writep(requestId, DLF_LVL_ERROR, 28, 3, params, &fileId);
-  } catch (...) {
-
-    // "Failed to execute postJobChecks procedure"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Message", "General exception caught"),
-       castor::dlf::Param(subRequestId)};
-    castor::dlf::dlf_writep(requestId, DLF_LVL_ERROR, 29, 2, params, &fileId);
+      {castor::dlf::Param("Function", "lsb_forcekilljob"),
+       castor::dlf::Param("Error", lsberrno ? lsb_sysmsg() : "no message"),
+       castor::dlf::Param("JobId", (int)jobId)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 24, 3, params);
+    return false;
   }
-  return false;
+  return true;
 }

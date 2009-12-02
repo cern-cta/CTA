@@ -31,9 +31,7 @@
 #include "castor/stager/ICommonSvc.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/jobmanager/JobSubmissionRequest.hpp"
-#include "castor/jobmanager/DiskServerResource.hpp"
-#include "castor/jobmanager/FileSystemResource.hpp"
+#include "castor/jobmanager/JobRequest.hpp"
 #include <map>
 
 
@@ -49,28 +47,13 @@ namespace castor {
     public:
 
       /**
-       * Fail a scheduler job in the stager database. This involves failing
-       * the subrequest and calling the necessary cleanup procedures
-       * on behalf of the job.
-       * The stager error service will then pick up the subrequest and
-       * notify the client of the termination. This method will only modify
-       * subrequests that are in a SUBREQUEST_READY or SUBREQEST_BEINGSCHED
-       * status.
-       * @param subReqId The SubRequest id to update
-       * @param errorCode The error code associated with the failure
-       * @exception Exception in case of error
-       */
-      virtual bool failSchedulerJob
-      (const std::string subReqId, const int errorCode)
-	throw(castor::exception::Exception) = 0;
-
-      /**
        * Retrieve the next job to be scheduled from the database with
        * status SUBREQUEST_READYFORSCHED.
+       * @return A job request object
        * @exception Exception in case of error
        */
-      virtual castor::jobmanager::JobSubmissionRequest *jobToSchedule()
-	throw(castor::exception::Exception) = 0;
+      virtual castor::jobmanager::JobRequest *jobToSchedule()
+        throw(castor::exception::Exception) = 0;
 
       /**
        * Update the status of a subrequest in the database to the value
@@ -81,47 +64,41 @@ namespace castor {
        * @exception Exception in case of error
        */
       virtual void updateSchedulerJob
-      (const castor::jobmanager::JobSubmissionRequest *request,
+      (const castor::jobmanager::JobRequest *request,
        const castor::stager::SubRequestStatusCodes status)
-	throw(castor::exception::Exception) = 0;
+        throw(castor::exception::Exception) = 0;
 
       /**
-       * Get a list of all diskservers, their associated filesystems and
-       * the service class they are in.
+       * Method to return a list of running transfers from the stager
+       * database along with any potential reason why a transfer should be
+       * terminated.
+       * @return A map where the key is the job name (SubReq UUID) and the
+       * value is a pair which contains two Booleans. The first Boolean 
+       * indicates if space is still available in the target service class.
+       * The second Boolean indicates if none of the requested filesystems
+       * are currently available.
        * @exception Exception in case of error
        */
-      virtual std::map
-      <std::string, castor::jobmanager::DiskServerResource *>
-      getSchedulerResources()
-	throw(castor::exception::Exception) = 0;
+      virtual std::map<std::string, std::pair<bool, bool> >
+      getRunningTransfers()
+        throw(castor::exception::Exception) = 0;
 
       /**
-       * Run post job checks on an exited or terminated job. We run these
-       * checks for two reasons:
-       * A) to make sure that the subrequest and waiting subrequests are
-       * updated accordingly when a job is terminated/killed and
-       * B) to make sure that the status of the subrequest is not
-       * SUBREQUEST_READY after a job has successfully ended. If this is
-       * the case then it is an indication that LSF failed to schedule the
-       * job and gave up. As a consequence of LSF giving up the stager
-       * database is left in an inconsistent state which this method
-       * attempts to rectify.
-       * @param subReqId The SubRequest id to update
-       * @param errorCode The error code associated with the failure
+       * Fail a scheduler job in the stager database. This involves failing
+       * the SubRequest and calling the necessary cleanup procedures on behalf
+       * of the job.
+       * The stager error service will then pick up the subrequest and
+       * notify the client of the termination. This method will only modify
+       * subrequests that are in a SUBREQUEST_READY or SUBREQEST_BEINGSCHED
+       * status
+       * @param A vector of std::pairs detailing the list of SubRequest uuid's
+       * to fail and the reason why.
        * @exception Exception in case of error
        */
-      virtual bool postJobChecks
-      (const std::string subReqId, const int errorCode)
-	throw(castor::exception::Exception) = 0;
+      virtual void jobFailed
+      (const std::vector<std::pair<std::string, int> > jobs)
+        throw(castor::exception::Exception) = 0;
 
-      /**
-       * Get a list of all service classes which are classified as having
-       * diskonly behaviour and no longer have space available.
-       * @exception Exception in case of error
-       */
-      virtual std::vector<std::string> getSvcClassesWithNoSpace()
-	throw(castor::exception::Exception) = 0;
-      
     };
 
   } // End of namespace jobmanager
