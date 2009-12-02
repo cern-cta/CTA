@@ -586,9 +586,9 @@ http://isscvs.cern.ch/cgi-bin/viewcvs-all.cgi/CASTOR2/castor/db/castor_oracle_cr
 
 ssh murrayc3@lxadm
 cdbop
-get prod/services/castordev/service/castordev04
-!vi prod/services/castordev/service/castordev04.tpl
-up prod/services/castordev/service/castordev04.tpl
+get prod/cluster/castordev/instance/dev04
+!vi prod/cluster/castordev/instance/dev04.tpl
+up prod/cluster/castordev/instance/dev04.tpl
 com
 exit
 exit
