@@ -312,7 +312,7 @@ EXTERN_C int DLL_DECL Cns_seterrbuf _PROTO((char *, int));
 EXTERN_C int DLL_DECL Cns_setfsize _PROTO((const char *, struct Cns_fileid *, u_signed64, time_t, time_t));
 EXTERN_C int DLL_DECL Cns_setfsizecs _PROTO((const char *, struct Cns_fileid *, u_signed64, const char *, const char *, time_t, time_t));
 EXTERN_C int DLL_DECL Cns_setsegattrs _PROTO((const char *, struct Cns_fileid *, int, struct Cns_segattrs *, time_t));
-EXTERN_C int DLL_DECL Cns_setfsizeg _PROTO((const char *, u_signed64, const char *, char *,time_t,time_t));
+EXTERN_C int DLL_DECL Cns_setfsizeg _PROTO((const char *, u_signed64, const char *, const char *, time_t, time_t));
 EXTERN_C int DLL_DECL Cns_startsess _PROTO((char *, char *));
 EXTERN_C int DLL_DECL Cns_starttrans _PROTO((char *, char *));
 EXTERN_C int DLL_DECL Cns_stat _PROTO((const char *, struct Cns_filestat *));

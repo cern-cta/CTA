@@ -101,7 +101,7 @@ Cns_setfsize(const char *path, struct Cns_fileid *file_uniqueid,
 
 int DLL_DECL
 Cns_setfsizeg(const char *guid, u_signed64 filesize, const char *csumtype,
-              char *csumvalue, time_t new_mod_time,
+              const char *csumvalue, time_t new_mod_time,
               time_t last_mod_time)
 {
   int c;
