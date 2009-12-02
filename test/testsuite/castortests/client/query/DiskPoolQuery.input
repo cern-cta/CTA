@@ -1,0 +1,2 @@
+stager_qry -s -S <tapeServiceClass>
+stager_qry -s -S '*'
