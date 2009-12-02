@@ -779,9 +779,10 @@ END;
 
 create or replace
 PROCEDURE tg_getFileToMigrate(transactionId IN NUMBER,
-                                                ret OUT INTEGER,
-                                                outVid OUT NOCOPY VARCHAR2,
-                                                outputFile OUT castorTape.FileToMigrateCore_cur) AS
+                              ret OUT INTEGER,
+                              outVid OUT NOCOPY VARCHAR2,
+                              outputFile OUT castorTape.FileToMigrateCore_cur)
+ AS
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
   strId NUMBER;
@@ -877,9 +878,7 @@ BEGIN
   SELECT lastknownfilename INTO knownName
     FROM CastorFile
    WHERE id = cfId; -- we rely on the check done before
-   
-  DECLARE 
-  
+
   BEGIN
     INSERT INTO TapeGatewaySubRequest
       (fseq, id, tapecopy, request,diskcopy)
@@ -901,15 +900,15 @@ BEGIN
       WHERE id = srId;
       
   EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
-   -- there is going to be another copy of the file on this tape.
-   -- UNIQUE constraint violation on the diskcopy column in tapegatewaysubrequest
-   -- detach from this stream
-     DELETE FROM stream2tapecopy WHERE child= tcid AND parent= strid;
-   -- resurrect the candidate if there is no other stream containing the tapecopy
-     UPDATE tapecopy SET status=1 WHERE id = tcId AND NOT EXISTS (SELECT 'x' FROM stream2tapecopy WHERE child=tcId);
-     COMMIT;
-   -- get another candidate
-      tg_getFileToMigrate(transactionId, ret, outVid, outputFile);
+    -- detach from this stream
+    -- resurrect the candidate if there is no other stream containing the tapecopy
+    DELETE FROM stream2tapecopy WHERE child= tcid AND parent= strid;
+    UPDATE tapecopy SET status=1 WHERE id = tcId AND NOT EXISTS (SELECT 'x' FROM stream2tapecopy WHERE child=tcId);
+     
+    -- I don't retry to avoid problems with recursion
+    ret := -1; -- the migration selection policy didn't find any candidate
+    COMMIT;
+    RETURN;
  END;
 END;
 /
