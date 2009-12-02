@@ -1,25 +1,24 @@
 #!/bin/sh
 
-if test "x$CASTOR_CVS" = x; then
-  echo "Error: The environment variable CASTOR_CVS is not set"
+if test "x$CASTOR_SRC" = x; then
+  echo "Error: The environment variable CASTOR_SRC is not set"
   echo
-  echo "CASTOR_CVS should be the full path to the CASTOR source code up to and"
-  echo "including CASTOR2, e.g."
+  echo "CASTOR_SRC should be the full path to the CASTOR source code"
   echo
-  echo "    export CASTOR_CVS=/usr/local/src/CASTOR2"
-  echo
-  exit -1
-fi
-
-if test ! -d $CASTOR_CVS; then
-  echo "Error: The directory specified by CASTOR_CVS does not exist"
-  echo
-  echo "CASTOR_CVS=\"$CASTOR_CVS\""
+  echo "    export CASTOR_SRC=/usr/local/src/CASTOR_SVN_CO/trunk"
   echo
   exit -1
 fi
 
-SEQUENCE_DIR="$CASTOR_CVS/castor/tape/doc/sequence_diagrams"
+if test ! -d $CASTOR_SRC; then
+  echo "Error: The directory specified by CASTOR_SRC does not exist"
+  echo
+  echo "CASTOR_SRC=\"$CASTOR_SRC\""
+  echo
+  exit -1
+fi
+
+SEQUENCE_DIR="$CASTOR_SRC/castor/tape/doc/sequence_diagrams"
 
 if test ! -d $SEQUENCE_DIR; then
   echo "Error: The following directory does not exist"
@@ -41,8 +40,8 @@ if test ! -e $SEQUENCE_PIC; then
   echo "wget 'http://www.umlgraph.org/UMLGraph-5.2.tar.gz'"
   echo "tar -xvzf UMLGraph-5.2.tar.gz"
   echo
-  echo "CASTOR_CVS=/usr/local/src/CASTOR2"
-  echo "ln -s \$UMLGRAPH_DIR/UMLGraph-5.2/src/sequence.pic \$CASTOR_CVS/castor/tape/doc/sequence_diagrams/sequence.pic"
+  echo "CASTOR_SRC=/usr/local/src/CASTOR2"
+  echo "ln -s \$UMLGRAPH_DIR/UMLGraph-5.2/src/sequence.pic \$CASTOR_SRC/castor/tape/doc/sequence_diagrams/sequence.pic"
   echo
   exit -1
 fi
