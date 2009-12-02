@@ -255,10 +255,24 @@ static int parseCmdLine(int argc, char *argv[], ParsedCmdLine *parsedCmdLine) {
       break;
     case MaxReplicaNb:
       parsedCmdLine->maxReplicaNb.value = atoi(Coptarg);
+      if(parsedCmdLine->maxReplicaNb.value < 0) {
+        fprintf(stderr,
+          "Error parsing maxReplicaNb"
+          ": Value must be 0 or positive"
+          ": value= %d\n", parsedCmdLine->maxReplicaNb.value);
+        return(1); /* Failure */
+      }
       parsedCmdLine->maxReplicaNb.set   = 1;
       break;
     case NbDrives:
       parsedCmdLine->nbDrives.value = atoi(Coptarg);
+      if(parsedCmdLine->nbDrives.value < 0) {
+        fprintf(stderr,
+          "Error parsing nbDrives"
+          ": Value must be 0 or positive"
+          ": value= %d\n", parsedCmdLine->nbDrives.value);
+        return(1); /* Failure */
+      }
       parsedCmdLine->nbDrives.set   = 1;
       break;
     case GcPolicy:
@@ -451,6 +465,8 @@ int main(int argc, char *argv[]) {
   /* Create a memory resident version of the service class */
   Cstager_SvcClass_create(&svcClass);
 
+  Cstager_SvcClass_setMaxReplicaNb(svcClass, defaultReplicaNb);
+
   /* Set the attributes of the service class */
   Cstager_SvcClass_setFailJobsWhenNoSpace(svcClass, 1);  /* by default */
   Cstager_SvcClass_setName(svcClass, parsedCmdLine.name.value);
@@ -459,12 +475,8 @@ int main(int argc, char *argv[]) {
       parsedCmdLine.defaultFileSize.value);
   }
   if(parsedCmdLine.maxReplicaNb.set) {
-    if(parsedCmdLine.maxReplicaNb.value >= 0) {
-      Cstager_SvcClass_setMaxReplicaNb(svcClass,
-        parsedCmdLine.maxReplicaNb.value);
-    } else {
-      Cstager_SvcClass_setMaxReplicaNb(svcClass, defaultReplicaNb);
-    }
+    Cstager_SvcClass_setMaxReplicaNb(svcClass,
+      parsedCmdLine.maxReplicaNb.value);
   }
   if(parsedCmdLine.nbDrives.set) {
     Cstager_SvcClass_setNbDrives(svcClass, parsedCmdLine.nbDrives.value);
