@@ -406,6 +406,7 @@ AS
   ouid       NUMBER;
   ogid       NUMBER;
   autoDelete NUMBER;
+  fileMask   NUMBER;
 BEGIN
   -- As this procedure is called recursively we release the previous calls
   -- locks. This prevents the procedure from locking too many castorfile
@@ -419,7 +420,7 @@ BEGIN
      SET lastUpdateTime = getTime()
    WHERE fileSystem = fsId
      AND status = 2  -- RUNNING
-  RETURNING svcclass, autoDelete INTO svcId, autoDelete;
+  RETURNING svcclass, autoDelete, fileMask INTO svcId, autoDelete, fileMask;
   IF svcId = 0 THEN
     RETURN;  -- Do nothing
   END IF;
@@ -465,19 +466,20 @@ BEGIN
     -- Determine the castorfile id
     SELECT castorFile INTO cfId FROM DiskCopy WHERE id = dcId;
     -- Lock the castorfile
-    SELECT id INTO cfId
-      FROM CastorFile WHERE id = cfId FOR UPDATE;
-    -- Check that the status of the diskcopy is STAGED or CANBEMIGR. If the
-    -- diskcopy is not in one of these states then it is no longer a candidate
-    -- to be replicated. For example, it may have been deleted, resulting in the
-    -- diskcopy being invalidated and dropped by the garbage collector.
+    SELECT id INTO cfId FROM CastorFile
+     WHERE id = cfId FOR UPDATE;
+    -- Check that the status of the diskcopy matches what was specified in the
+    -- filemask for the filesystem. If the diskcopy is not in the expected
+    -- status then it is no longer a candidate to be replicated.
     SELECT ownerUid, ownerGid INTO ouid, ogid
       FROM DiskCopy
      WHERE id = dcId
-       AND status IN (0, 10);  -- STAGED, CANBEMIGR
+       AND ((status = 0        AND fileMask = 0)    -- STAGED
+        OR  (status = 10       AND fileMask = 1)    -- CANBEMIGR
+        OR  (status IN (0, 10) AND fileMask = 2));  -- ALL
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- The diskcopy no longer exists so we delete it from the snapshot of files
-    -- to be processed.
+    -- The diskcopy no longer exists or is not of interest so we delete it from
+    -- the snapshot of files to be processed.
     DELETE FROM DrainingDiskCopy
       WHERE diskCopy = dcId AND fileSystem = fsId;
     drainFileSystem(fsId);
