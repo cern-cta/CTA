@@ -2024,17 +2024,20 @@ BEGIN
          AND FileSystem.diskPool = DP2SC.parent
          AND DP2SC.child = scId)
     UNION ALL (
-      -- and then diskcopies resulting from previous PrepareToPut|recall|replica requests
+      -- and then diskcopies resulting from ongoing requests, for which the previous
+      -- query wouldn't return any entry because of e.g. missing filesystem
       SELECT DC.id
-        FROM (SELECT id, svcClass FROM StagePrepareToPutRequest UNION ALL
-              SELECT id, svcClass FROM StagePrepareToUpdateRequest UNION ALL
-              SELECT id, svcClass FROM StagePrepareToGetRequest UNION ALL
-              SELECT id, svcClass FROM StageRepackRequest UNION ALL
-              SELECT id, svcClass FROM StageDiskCopyReplicaRequest) PrepareRequest,
+        FROM (SELECT id FROM StagePrepareToPutRequest WHERE svcClass = scId UNION ALL
+              SELECT id FROM StagePrepareToGetRequest WHERE svcClass = scId UNION ALL
+              SELECT id FROM StagePrepareToUpdateRequest WHERE svcClass = scId UNION ALL
+              SELECT id FROM StageRepackRequest WHERE svcClass = scId UNION ALL
+              SELECT id FROM StagePutRequest WHERE svcClass = scId UNION ALL
+              SELECT id FROM StageGetRequest WHERE svcClass = scId UNION ALL
+              SELECT id FROM StageUpdateRequest WHERE svcClass = scId UNION ALL
+              SELECT id FROM StageDiskCopyReplicaRequest WHERE svcClass = scId) Request,
              SubRequest, DiskCopy DC
        WHERE SubRequest.diskCopy = DC.id
-         AND PrepareRequest.id = SubRequest.request
-         AND PrepareRequest.svcClass = scId
+         AND Request.id = SubRequest.request
          AND DC.castorFile = cfId
          AND DC.status IN (1, 2, 5, 11)  -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, WAITFS_SCHEDULING
       );
@@ -2174,12 +2177,13 @@ BEGIN
   -- mark all get/put requests for those diskcopies
   -- and the ones waiting on them as failed
   -- so that clients eventually get an answer
-  SELECT id BULK COLLECT INTO srIds
-    FROM SubRequest 	 
+  SELECT /*+ INDEX(SR I_SubRequest_DiskCopy) */ id
+    BULK COLLECT INTO srIds
+    FROM SubRequest SR
    WHERE diskcopy IN
      (SELECT /*+ CARDINALITY(dcidTable 5) */ * 	 
         FROM TABLE(dcsToRm) dcidTable) 	 
-         AND status IN (0, 1, 2, 5, 6, 13); -- START, WAITSUBREQ, READY, READYFORSCHED
+     AND status IN (0, 1, 2, 5, 6, 13); -- START, WAITSUBREQ, READY, READYFORSCHED
   IF srIds.COUNT > 0 THEN
     FOR i IN srIds.FIRST .. srIds.LAST LOOP
       SELECT type INTO srType
