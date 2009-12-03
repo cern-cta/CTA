@@ -358,11 +358,11 @@ CREATE OR REPLACE PROCEDURE describeDiskPools
 (svcClassName IN VARCHAR2, reqEuid IN INTEGER, reqEgid IN INTEGER,
  res OUT NUMBER, result OUT castor.DiskPoolsQueryLine_Cur) AS
 BEGIN
-  -- We use here analytic functions and the grouping sets functionnality to
+  -- We use here analytic functions and the grouping sets functionality to
   -- get both the list of filesystems and a summary per diskserver and per
   -- diskpool. The grouping analytic function also allows to mark the summary
   -- lines for easy detection in the C++ code
-  IF svcClassName IS NULL THEN
+  IF svcClassName = '*' THEN
     OPEN result FOR
       SELECT grouping(ds.name) AS IsDSGrouped,
              grouping(fs.mountPoint) AS IsFSGrouped,
@@ -422,7 +422,7 @@ BEGIN
       INTO res
       FROM DiskPool2SvcClass d2s, SvcClass sc
      WHERE d2s.child = sc.id
-       AND (sc.name = svcClassName OR svcClassName IS NULL);
+       AND (sc.name = svcClassName OR svcClassName = '*');
   END IF;
 END;
 /
@@ -440,7 +440,7 @@ BEGIN
   -- get both the list of filesystems and a summary per diskserver and per
   -- diskpool. The grouping analytic function also allows to mark the summary
   -- lines for easy detection in the C++ code
-  IF svcClassName IS NULL THEN
+  IF svcClassName = '*' THEN
     OPEN result FOR
       SELECT grouping(ds.name) AS IsDSGrouped,
              grouping(fs.mountPoint) AS IsGrouped,
@@ -500,7 +500,7 @@ BEGIN
      WHERE d2s.child = sc.id
        AND d2s.parent = dp.id
        AND dp.name = diskPoolName
-       AND (sc.name = svcClassName OR svcClassName IS NULL);
+       AND (sc.name = svcClassName OR svcClassName = '*');
   END IF;
 END;
 /
