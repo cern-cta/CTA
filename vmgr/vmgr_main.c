@@ -419,7 +419,9 @@ void procreq(magic, req_type, req_data, clienthost, thip)
 
   switch (req_type) {
   case VMGR_DELTAPE:
-    c = vmgr_srv_deletetape (magic, req_data, clienthost, thip);
+    sendrep (thip->s, MSG_ERR, VMG02, "vmgrdeletetape", 
+     "VMGR is not compatible with this version of VMGRDELTAPE: please use a version equal or greater then v2.1.9-4");
+     c = SEINTERNAL;
     break;
   case VMGR_ENTTAPE:
     c = vmgr_srv_entertape (magic, req_data, clienthost, thip);
@@ -506,6 +508,9 @@ void procreq(magic, req_type, req_data, clienthost, thip)
     break;
   case VMGR_SETTAG:
     c = vmgr_srv_settag (magic, req_data, clienthost, thip);
+    break;
+  case VMGR_DELTAPEAFTERCHK:
+    c = vmgr_srv_deletetape (magic, req_data, clienthost, thip);
     break;
   default:
     sendrep (thip->s, MSG_ERR, VMG03, req_type);

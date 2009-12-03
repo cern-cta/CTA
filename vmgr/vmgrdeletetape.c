@@ -178,7 +178,7 @@ int main(int argc, char **argv) {
   }
 
   /* Delete the tape from the vmgr */
-  if(vmgr_deletetape(vid) < 0) { 
+  if(vmgr_deletetape(vid) < 0) {
     fprintf(stderr, "%s %s:", argv[0], vid);
 
     if(serrno == ENOENT) {
@@ -188,16 +188,16 @@ int main(int argc, char **argv) {
       fprintf(stderr, "%s\n", sstrerror(serrno));
       return(serrno);
     }
+  } else {
+    printf("vmgrdeletetape succesfully deleted tape:\n%s %s %s %s %s %s %s\n",
+            tape_info.vid,
+            tape_info.library,
+            tape_info.density,
+            tape_info.lbltype,
+            tape_info.model,
+            tape_info.media_letter,
+            tape_info.poolname);
   }
-
-  printf("vmgrdeletetape succesfully deleted tape:\n%s %s %s %s %s %s %s\n",
-          tape_info.vid,
-          tape_info.library,
-          tape_info.density,
-          tape_info.lbltype,
-          tape_info.model,
-          tape_info.media_letter,
-          tape_info.poolname);
 
   return(0); /* Success */
 }

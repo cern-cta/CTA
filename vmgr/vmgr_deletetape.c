@@ -58,7 +58,7 @@ int vmgr_deletetape(const char *vid)
 
 	sbp = sendbuf;
 	marshall_LONG (sbp, VMGR_MAGIC);
-	marshall_LONG (sbp, VMGR_DELTAPE);
+	marshall_LONG (sbp, VMGR_DELTAPEAFTERCHK);
 	q = sbp;        /* save pointer. The next field will be updated */
 	msglen = 3 * LONGSIZE;
 	marshall_LONG (sbp, msglen);
