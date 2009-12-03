@@ -44,10 +44,6 @@ resulted of the draining process will have the GcType: 'Draining filesystem'.
 .TP
 .B --file-mask=[\fISTAGED|CANBEMIGR|ALL\fR]
 Mask used to decide which files need to be replicated. (Default: CANBEMIGR)
-.TP
-.B --force
-Force the addition of the new filesystems to the list to be drained even if
-already present.
 
 .TP
 Query options (with \fB\-q\fR or \fB\-\-query\fR):
