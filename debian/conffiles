@@ -1,4 +1,5 @@
 /etc/logrotate.d/castor-aggregator-server
+/etc/logrotate.d/castor-tapegateway-server
 /etc/logrotate.d/castor-dlf-server
 /etc/logrotate.d/castor-expert-server
 /etc/logrotate.d/castor-gc-server

@@ -1,0 +1,6 @@
+/var/log/tape/tapegateway /var/spool/tape/tapegateway/log {
+    compress
+    daily
+    missingok
+    rotate 90
+}

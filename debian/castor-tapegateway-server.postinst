@@ -1,0 +1,2 @@
+/sbin/chkconfig --add tapegatewayd
+/sbin/service tapegatewayd condrestart > /dev/null 2>&1 || :

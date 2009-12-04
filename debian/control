@@ -331,3 +331,11 @@ Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, cx_Oracle
 Description: castor (Cern Advanced STORage system)
  Log Processor Daemon
+
+Package: castor-tapegateway-server
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-policy
+Description: castor (Cern Advanced STORage system)
+ Tape Gateway  Daemon
+
+
