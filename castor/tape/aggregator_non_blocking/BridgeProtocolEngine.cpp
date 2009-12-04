@@ -433,7 +433,7 @@ bool castor::tape::aggregator::BridgeProtocolEngine::processAPendingSocket(
       // client-connection
       int remainingClientTimeout = CLIENTNETRWTIMEOUT -
         (now.tv_sec - clientReqTimeStamp.tv_sec);
-      if(remainingClientTimeout < 0) {
+      if(remainingClientTimeout <= 0) {
         remainingClientTimeout = 1;
       }
 
