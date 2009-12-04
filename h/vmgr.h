@@ -32,44 +32,45 @@
 
 			/* volume manager request types */
 
-#define VMGR_DELTAPE	 0
-#define VMGR_ENTTAPE	 1
-#define VMGR_GETTAPE	 2
-#define VMGR_MODTAPE	 3
-#define VMGR_QRYTAPE	 4
-#define VMGR_UPDTAPE	 5
-#define VMGR_SHUTDOWN	 6 /* deprecated */
-#define VMGR_DELMODEL	 7
-#define VMGR_ENTMODEL	 8
-#define VMGR_MODMODEL	 9
-#define VMGR_QRYMODEL	 10
-#define VMGR_DELPOOL	 11
-#define VMGR_ENTPOOL	 12
-#define VMGR_MODPOOL	 13
-#define VMGR_QRYPOOL	 14
-#define VMGR_TPMOUNTED	 15
-#define VMGR_DELDENMAP	 16
-#define VMGR_ENTDENMAP	 17
-#define VMGR_LISTDENMAP	 18
-#define VMGR_LISTMODEL	 19
-#define VMGR_LISTPOOL	 20
-#define VMGR_LISTTAPE	 21
-#define VMGR_ENDLIST	 22
-#define VMGR_RECLAIM	 23
-#define VMGR_DELLIBRARY  24
-#define VMGR_ENTLIBRARY  25
-#define VMGR_LISTLIBRARY 26
-#define VMGR_MODLIBRARY  27
-#define VMGR_QRYLIBRARY  28
-#define VMGR_DELDGNMAP	 29
-#define VMGR_ENTDGNMAP	 30
-#define VMGR_LISTDGNMAP	 31
-#define VMGR_DELTAG	 32
-#define VMGR_GETTAG	 33
-#define VMGR_SETTAG	 34
-#define VMGR_MODWEIGHT   35
-#define VMGR_QRYWEIGHT   36
-#define VMGR_LISTWEIGHT  37
+#define VMGR_DELTAPE	     0 /* replaced in v2.1.9-4 by VMGR_DELTAPEAFTERCHK */
+#define VMGR_ENTTAPE	     1
+#define VMGR_GETTAPE	     2
+#define VMGR_MODTAPE	     3
+#define VMGR_QRYTAPE	     4
+#define VMGR_UPDTAPE	     5
+#define VMGR_SHUTDOWN	     6 /* deprecated */
+#define VMGR_DELMODEL	     7
+#define VMGR_ENTMODEL	     8
+#define VMGR_MODMODEL	     9
+#define VMGR_QRYMODEL	     10
+#define VMGR_DELPOOL	     11
+#define VMGR_ENTPOOL	     12
+#define VMGR_MODPOOL	     13
+#define VMGR_QRYPOOL	     14
+#define VMGR_TPMOUNTED	     15
+#define VMGR_DELDENMAP	     16
+#define VMGR_ENTDENMAP	     17
+#define VMGR_LISTDENMAP	     18
+#define VMGR_LISTMODEL	     19
+#define VMGR_LISTPOOL	     20
+#define VMGR_LISTTAPE	     21
+#define VMGR_ENDLIST	     22
+#define VMGR_RECLAIM	     23
+#define VMGR_DELLIBRARY      24
+#define VMGR_ENTLIBRARY      25
+#define VMGR_LISTLIBRARY     26
+#define VMGR_MODLIBRARY      27
+#define VMGR_QRYLIBRARY      28
+#define VMGR_DELDGNMAP	     29
+#define VMGR_ENTDGNMAP	     30
+#define VMGR_LISTDGNMAP	     31
+#define VMGR_DELTAG	     32
+#define VMGR_GETTAG	     33
+#define VMGR_SETTAG	     34
+#define VMGR_MODWEIGHT       35
+#define VMGR_QRYWEIGHT       36
+#define VMGR_LISTWEIGHT      37
+#define VMGR_DELTAPEAFTERCHK 38
 
 			/* volume manager reply types */
 
