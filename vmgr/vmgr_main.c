@@ -420,7 +420,7 @@ void procreq(magic, req_type, req_data, clienthost, thip)
   switch (req_type) {
   case VMGR_DELTAPE:
     sendrep (thip->s, MSG_ERR, VMG02, "vmgrdeletetape", 
-     "VMGR is not compatible with this version of VMGRDELTAPE: please use a version equal or greater then v2.1.9-4");
+     "VMGR is not compatible with this version of VMGRDELTAPE: please use a version equal to or greater than v2.1.9-4");
      c = SEINTERNAL;
     break;
   case VMGR_ENTTAPE:
