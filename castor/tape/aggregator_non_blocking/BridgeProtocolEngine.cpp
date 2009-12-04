@@ -1,0 +1,1266 @@
+/******************************************************************************
+ *                      BridgeProtocolEngine.cpp
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ *
+ *
+ *
+ * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
+ *****************************************************************************/
+
+#include "castor/dlf/Dlf.hpp"
+#include "castor/exception/Internal.hpp"
+#include "castor/exception/PermissionDenied.hpp"
+#include "castor/exception/TimeOut.hpp"
+#include "castor/tape/Constants.hpp"
+#include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
+#include "castor/tape/aggregator/BridgeProtocolEngine.hpp"
+#include "castor/tape/aggregator/Constants.hpp"
+#include "castor/tape/aggregator/ClientTxRx.hpp"
+#include "castor/tape/aggregator/LegacyTxRx.hpp"
+#include "castor/tape/aggregator/RtcpTxRx.hpp"
+#include "castor/tape/aggregator/SmartFd.hpp"
+#include "castor/tape/aggregator/SmartFdList.hpp"
+#include "castor/tape/net/net.hpp"
+#include "castor/tape/tapegateway/FileToMigrate.hpp"
+#include "castor/tape/tapegateway/FileToRecall.hpp"
+#include "castor/tape/utils/utils.hpp"
+#include "h/Ctape_constants.h"
+#include "h/rtcp_constants.h"
+
+#include <list>
+#include <memory>
+#include <algorithm>
+
+
+//-----------------------------------------------------------------------------
+// constructor
+//-----------------------------------------------------------------------------
+castor::tape::aggregator::BridgeProtocolEngine::BridgeProtocolEngine(
+  const Cuuid_t                       &cuuid,
+  const int                           rtcpdCallbackSockFd,
+  const int                           rtcpdInitialSockFd,
+  const legacymsg::RtcpJobRqstMsgBody &jobRequest,
+  tapegateway::Volume                 &volume,
+  const uint32_t                      nbFilesOnDestinationTape,
+  BoolFunctor                         &stoppingGracefully) throw() :
+  m_cuuid(cuuid),
+  m_rtcpdCallbackSockFd(rtcpdCallbackSockFd),
+  m_rtcpdInitialSockFd(rtcpdInitialSockFd),
+  m_jobRequest(jobRequest),
+  m_volume(volume),
+  m_nextDestinationFseq(nbFilesOnDestinationTape + 1),
+  m_stoppingGracefully(stoppingGracefully),
+  m_nbCallbackConnections(1), // Initial callback connection has already exists
+  m_nbReceivedENDOF_REQs(0),
+  m_pendingTransferIds(MAXPENDINGTRANSFERS) {
+
+  // Build the map of message body handlers
+  m_handlers[createHandlerKey(RTCOPY_MAGIC,       RTCP_FILE_REQ   )] = 
+    &BridgeProtocolEngine::rtcpFileReqCallback;
+
+  m_handlers[createHandlerKey(RTCOPY_MAGIC,       RTCP_FILEERR_REQ)] = 
+    &BridgeProtocolEngine::rtcpFileErrReqCallback;
+
+  m_handlers[createHandlerKey(RTCOPY_MAGIC,       RTCP_TAPE_REQ   )] = 
+    &BridgeProtocolEngine::rtcpTapeReqCallback;
+
+  m_handlers[createHandlerKey(RTCOPY_MAGIC,       RTCP_TAPEERR_REQ)] = 
+    &BridgeProtocolEngine::rtcpTapeErrReqCallback;
+
+  m_handlers[createHandlerKey(RTCOPY_MAGIC,       RTCP_ENDOF_REQ  )] = 
+    &BridgeProtocolEngine::rtcpEndOfReqCallback;
+
+  m_handlers[createHandlerKey(RTCOPY_MAGIC_SHIFT, GIVE_OUTP       )] = 
+    &BridgeProtocolEngine::giveOutpCallback;
+}
+
+
+//-----------------------------------------------------------------------------
+// acceptRtcpdConnection
+//-----------------------------------------------------------------------------
+int castor::tape::aggregator::BridgeProtocolEngine::acceptRtcpdConnection()
+  throw(castor::exception::Exception) {
+
+  SmartFd connectedSockFd;
+  const int timeout = 5; // Seconds
+
+  bool connectionAccepted = false;
+  for(int i=0; i<timeout && !connectionAccepted; i++) {
+    try {
+      connectedSockFd.reset(net::acceptConnection(m_rtcpdCallbackSockFd, 1));
+      connectionAccepted = true;
+    } catch(castor::exception::TimeOut &ex) {
+      // Do nothing
+    }
+
+    // Throw an exception if the daemon is stopping gracefully
+    if(m_stoppingGracefully()) {
+      castor::exception::Exception ex(ECANCELED);
+
+      ex.getMessage() << "Stopping gracefully";
+      throw(ex);
+    }
+  }
+
+  // Throw an exception if the RTCPD connection could not be accepted
+  if(!connectionAccepted) {
+    castor::exception::TimeOut ex;
+
+    ex.getMessage() <<
+      "Failed to accept RTCPD connection after " << timeout << " seconds";
+    throw ex;
+  }
+
+  try {
+    unsigned short port = 0; // Client port
+    unsigned long  ip   = 0; // Client IP
+    char           hostName[net::HOSTNAMEBUFLEN];
+
+    net::getPeerIpPort(connectedSockFd.get(), ip, port);
+    net::getPeerHostName(connectedSockFd.get(), hostName);
+
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId"       , m_jobRequest.volReqId     ),
+      castor::dlf::Param("IP"             , castor::dlf::IPAddress(ip)),
+      castor::dlf::Param("Port"           , port                      ),
+      castor::dlf::Param("HostName"       , hostName                  ),
+      castor::dlf::Param("socketFd"       , connectedSockFd.get()   ),
+      castor::dlf::Param("nbCallbackConns", m_nbCallbackConnections   )};
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_RTCPD_CALLBACK_WITH_INFO, params);
+  } catch(castor::exception::Exception &ex) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId"       , m_jobRequest.volReqId  ),
+      castor::dlf::Param("nbCallbackConns", m_nbCallbackConnections)};
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_RTCPD_CALLBACK_WITHOUT_INFO, params);
+  }
+
+  return connectedSockFd.release();
+}
+
+
+//-----------------------------------------------------------------------------
+// processRtcpdSocks
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSocks()
+  throw(castor::exception::Exception) {
+
+  int          selectRc            = 0;
+  int          selectErrno         = 0;
+  int          maxFd               = 0;
+  unsigned int nbOneSecondTimeouts = 0;
+  timeval      timeout;
+  SmartFdList  readFds;   // List of read file descriptors to be checked
+  fd_set       readFdSet; // The read file descriptor set used with select()
+
+  // Append the socket descriptors of the RTCPD callback port and the initial
+  // connection from RTCPD to the list of read file descriptors
+  readFds.push_back(m_rtcpdCallbackSockFd);
+  readFds.push_back(m_rtcpdInitialSockFd);
+  if(m_rtcpdCallbackSockFd > m_rtcpdInitialSockFd) {
+    maxFd = m_rtcpdCallbackSockFd;
+  } else {
+    maxFd = m_rtcpdInitialSockFd;
+  }
+
+  // Select loop
+  bool continueRtcopySession = true;
+  while(continueRtcopySession) {
+    // Throw an exception if the daemon is stopping gracefully
+    if(m_stoppingGracefully()) {
+      castor::exception::Exception ex(ECANCELED);
+
+      ex.getMessage() << "Stopping gracefully";
+      throw(ex);
+    }
+
+    // Build the file descriptor set ready for the select call
+    FD_ZERO(&readFdSet);
+    for(std::list<int>::iterator itor = readFds.begin();
+      itor != readFds.end(); itor++) {
+
+      FD_SET(*itor, &readFdSet);
+
+      if(*itor > maxFd) {
+        maxFd = *itor;
+      }
+    }
+
+    timeout.tv_sec  = 1; // 1 second
+    timeout.tv_usec = 0;
+
+    // See if any of the read file descriptors are ready waiting up to 1 second
+    selectRc = select(maxFd + 1, &readFdSet, NULL, NULL, &timeout);
+    selectErrno = errno;
+
+    switch(selectRc) {
+    case 0: // Select timed out
+
+      nbOneSecondTimeouts++;
+
+      // Ping RTCPD if the RTCPDPINGTIMEOUT has been reached
+      if(nbOneSecondTimeouts % RTCPDPINGTIMEOUT == 0) {
+        RtcpTxRx::pingRtcpd(m_cuuid, m_jobRequest.volReqId,
+        m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT);
+      }
+
+      // Ping the client if the ping timeout has been reached and the client is
+      // readtp, writetp or dumptp
+      if(
+        (nbOneSecondTimeouts % CLIENTPINGTIMEOUT == 0) &&
+        (m_volume.clientType() == tapegateway::READ_TP  ||
+         m_volume.clientType() == tapegateway::WRITE_TP ||
+         m_volume.clientType() == tapegateway::DUMP_TP)) {
+
+        try {
+          ClientTxRx::ping(m_cuuid, m_jobRequest.volReqId,
+            m_jobRequest.clientHost, m_jobRequest.clientPort);
+        } catch(castor::exception::Exception &ex) {
+          castor::exception::Exception ex2(ex.code());
+
+          ex2.getMessage() <<
+            "Failed to ping client"
+            ": clientType=" <<
+            utils::volumeClientTypeToString(m_volume.clientType()) <<
+            ": " << ex.getMessage().str();
+
+          throw(ex2);
+        }
+      }
+
+      break;
+
+    case -1: // Select encountered an error
+
+      // If the select was interrupted
+      if(selectErrno == EINTR) {
+
+        // Write a log message
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("volReqId", m_jobRequest.volReqId)};
+        castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+          AGGREGATOR_SELECT_INTR, params);
+
+      // Else select encountered an error other than an interruption
+      } else {
+
+        // Convert the error into an exception
+        char strerrorBuf[STRERRORBUFLEN];
+        char *const errorStr = strerror_r(selectErrno, strerrorBuf,
+          sizeof(strerrorBuf));
+
+        TAPE_THROW_CODE(selectErrno,
+          ": Select encountered an error other than an interruption"
+          ": " << errorStr);
+      }
+      break;
+
+    default: // One or more select file descriptors require attention
+
+      continueRtcopySession = processAPendingRtcpdSocket(readFds, &readFdSet);
+
+    } // switch(selectRc)
+  } // while(continueRtcopySession)
+}
+
+
+//------------------------------------------------------------------------------
+// processAPendingRtcpdSocket
+//------------------------------------------------------------------------------
+bool
+  castor::tape::aggregator::BridgeProtocolEngine::processAPendingRtcpdSocket(
+  SmartFdList &socketFds, fd_set *fdSet) throw(castor::exception::Exception) {
+
+  const int socketFd = findPendingFd(socketFds, fdSet);
+  if(socketFd == -1) {
+    TAPE_THROW_EX(exception::Internal,
+      ": Lost pending file descriptor");
+  }
+
+  // Accept the new connection if the read file descriptor is the callback port
+  if(socketFd == m_rtcpdCallbackSockFd) {
+
+    // Accept the connection
+    const int acceptedConnection = acceptRtcpdConnection();
+
+    // Throw an exception if RTCPD callback connection is not from localhost
+    checkPeerIsLocalhost(acceptedConnection);
+
+    // Update the count of callback connections and add the socket descriptor
+    // of the newly accepted callback connection to the list of descriptors to
+    // be processed by the "select loop"
+    m_nbCallbackConnections++;
+    socketFds.push_back(acceptedConnection);
+
+    return true; // Continue the RTCOPY session
+  }
+
+  const ProcessRtcpdSockResult result = processRtcpdSock(socketFd);
+
+  switch(result) {
+  case MSG_PROCESSED:
+    return true; // Continue the RTCOPY session
+  case PEER_CLOSED:
+    closeNonInitialRtcpdSocket(socketFds, socketFd);
+    return true; // Continue the RTCOPY session
+  case END_RECEIVED:
+    m_nbReceivedENDOF_REQs++;
+
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId"            , m_jobRequest.volReqId ),
+        castor::dlf::Param("socketFd"            , socketFd              ),
+        castor::dlf::Param("nbReceivedENDOF_REQs", m_nbReceivedENDOF_REQs)};
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_RECEIVED_RTCP_ENDOF_REQ, params);
+    }
+
+    closeNonInitialRtcpdSocket(socketFds, socketFd);
+
+    // If only the initial callback connection is open, then send an
+    // RTCP_ENDOF_REQ message to RTCPD and close the connection
+    if(m_nbCallbackConnections == 1) {
+
+      // Try to find the socket file descriptor of the initial callback
+      // connection is the list of open connections
+      SmartFdList::iterator itor = std::find(socketFds.begin(),
+        socketFds.end(), m_rtcpdInitialSockFd);
+
+      // If the file descriptor cannot be found
+      if(itor == socketFds.end()) {
+        TAPE_THROW_EX(castor::exception::Internal,
+          ": The initial callback connection (fd=" << m_rtcpdInitialSockFd
+          <<")is not the last one open. Found fd= " << *itor);
+      }
+
+      // Send an RTCP_ENDOF_REQ message to RTCPD via the initial callback
+      // connection
+      legacymsg::MessageHeader endofReqMsg;
+      endofReqMsg.magic       = RTCOPY_MAGIC;
+      endofReqMsg.reqType     = RTCP_ENDOF_REQ;
+      endofReqMsg.lenOrStatus = 0;
+      LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId,
+        m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, endofReqMsg);
+
+      // Receive the acknowledge of the RTCP_ENDOF_REQ message
+      legacymsg::MessageHeader ackMsg;
+      try {
+        LegacyTxRx::receiveMsgHeader(m_cuuid, m_jobRequest.volReqId,
+          m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, ackMsg);
+      } catch(castor::exception::Exception &ex) {
+        TAPE_THROW_CODE(EPROTO,
+          ": Failed to receive acknowledge of RTCP_ENDOF_REQ from RTCPD: "
+          << ex.getMessage().str());
+      }
+
+      // Close the initial callback connection
+      close(socketFds.release(m_rtcpdInitialSockFd));
+      m_nbCallbackConnections--;
+      {
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("volReqId"       , m_jobRequest.volReqId  ),
+          castor::dlf::Param("socketFd"       , m_rtcpdInitialSockFd   ),
+          castor::dlf::Param("nbCallbackConns", m_nbCallbackConnections)};
+        castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+          AGGREGATOR_CLOSED_INITIAL_CALLBACK_CONNECTION, params);
+      }
+
+      return false; // End the RTCOPY session
+    }
+
+    return true; // Continue the RTCOPY session
+
+  default:
+    TAPE_THROW_EX(exception::Internal,
+      ": Unknown result type"
+      ": result=" << result);
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// closeNonInitialRtcpdSocket
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::BridgeProtocolEngine::
+  closeNonInitialRtcpdSocket(SmartFdList &socketFds, const int socketFd)
+  throw(castor::exception::Exception) {
+
+  close(socketFds.release(socketFd));
+  m_nbCallbackConnections--;
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId"       , m_jobRequest.volReqId  ),
+      castor::dlf::Param("socketFd"       , socketFd               ),
+      castor::dlf::Param("nbCallbackConns", m_nbCallbackConnections)};
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_CONNECTION_CLOSED_BY_RTCPD, params);
+  }
+
+  // Throw an exception if the socket is that of the initial callback connection
+  if(socketFd == m_rtcpdInitialSockFd) {
+    castor::exception::Exception ex(ECANCELED);
+
+    ex.getMessage() << "Initial callback connection socket unexpectedly closed";
+
+    throw(ex);
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// findPendingFd
+//-----------------------------------------------------------------------------
+int castor::tape::aggregator::BridgeProtocolEngine::findPendingFd(
+  const std::list<int> &fds, fd_set *fdSet) throw() {
+
+  // Find a file descriptor requiring attention
+  for(std::list<int>::const_iterator itor = fds.begin(); itor != fds.end();
+    itor++) {
+
+    // If the read file descriptor is ready
+    if(FD_ISSET(*itor, fdSet)) {
+      return *itor;
+    }
+  }
+
+  return -1;
+}
+
+
+//-----------------------------------------------------------------------------
+// processRtcpdSock
+//-----------------------------------------------------------------------------
+castor::tape::aggregator::BridgeProtocolEngine::ProcessRtcpdSockResult
+  castor::tape::aggregator::BridgeProtocolEngine::processRtcpdSock(
+  const int socketFd) throw(castor::exception::Exception) {
+
+  legacymsg::MessageHeader header;
+  utils::setBytes(header, '\0');
+
+  // Try to receive the message header which may not be possible; The file
+  // descriptor may be ready because RTCPD has closed the connection
+  bool peerClosed = false;
+  {
+    LegacyTxRx::receiveMsgHeaderFromCloseable(m_cuuid, peerClosed,
+      m_jobRequest.volReqId, socketFd, RTCPDNETRWTIMEOUT, header);
+  }
+
+  // If the peer closed its side of the connection
+  if(peerClosed) {
+    return PEER_CLOSED;
+  }
+
+  bool end = false;
+  processRtcpdRequest(header, socketFd, end);
+
+  if(end) {
+    return END_RECEIVED;
+  }
+
+  return MSG_PROCESSED;
+}
+
+
+//-----------------------------------------------------------------------------
+// run
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::BridgeProtocolEngine::run()
+  throw(castor::exception::Exception) {
+
+  switch(m_volume.mode()) {
+  case tapegateway::READ:
+    runRecallSession();
+    break;
+  case tapegateway::WRITE:
+    runMigrationSession();
+    break;
+  case tapegateway::DUMP:
+    runDumpSession();
+    break;
+  default:
+    TAPE_THROW_EX(castor::exception::Internal,
+      ": Unknown VolumeMode"
+      ": Actual=" << m_volume.mode());
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// runMigrationSession
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
+  throw(castor::exception::Exception) {
+
+  try {
+    // Get first file to migrate from client
+    std::auto_ptr<tapegateway::FileToMigrate> fileFromClient(
+      ClientTxRx::getFileToMigrate(m_cuuid, m_jobRequest.volReqId,
+      m_jobRequest.clientHost, m_jobRequest.clientPort));
+
+    // If there is no file to migrate
+    if(fileFromClient.get() == NULL) {
+      // Notify client of end of session and return
+      try {
+        ClientTxRx::notifyEndOfSession(m_cuuid, m_jobRequest.volReqId,
+          m_jobRequest.clientHost, m_jobRequest.clientPort);
+      } catch(castor::exception::Exception &ex) {
+        // Don't rethrow, just log the exception
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("volReqId", m_jobRequest.volReqId           ),
+          castor::dlf::Param("Message" , ex.getMessage().str()),
+          castor::dlf::Param("Code"    , ex.code()            )};
+        castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
+          AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
+      }
+
+      return;
+    }
+
+    // If the client is the tape gateway
+    if(m_volume.clientType() == tapegateway::TAPE_GATEWAY) {
+
+      // If the tape file sequence number from the client is invalid
+      if((uint32_t)fileFromClient->fseq() != m_nextDestinationFseq) {
+        castor::exception::Exception ex(ECANCELED);
+
+        ex.getMessage() <<
+          "Invalid tape file sequence number from client"
+          ": expected=" << (m_nextDestinationFseq) <<
+          ": actual=" << fileFromClient->fseq();
+
+        throw(ex);
+      }
+
+      // Update the next expected tape file sequence number
+      m_nextDestinationFseq++;
+    }
+
+    // Remember the file transaction ID and get its unique index to be passed
+    // to RTCPD through the "rtcpFileRequest.disk_fseq" message field
+    const uint32_t diskFseq =
+      m_pendingTransferIds.insert(fileFromClient->fileTransactionId());
+
+    // Give volume to RTCPD
+    legacymsg::RtcpTapeRqstErrMsgBody rtcpVolume;
+    utils::setBytes(rtcpVolume, '\0');
+    utils::copyString(rtcpVolume.vid    , m_volume.vid().c_str()    );
+    utils::copyString(rtcpVolume.vsn    , EMPTYVSN                  );
+    utils::copyString(rtcpVolume.label  , m_volume.label().c_str()  );
+    utils::copyString(rtcpVolume.density, m_volume.density().c_str());
+    utils::copyString(rtcpVolume.unit   , m_jobRequest.driveUnit    );
+    rtcpVolume.volReqId       = m_jobRequest.volReqId;
+    rtcpVolume.mode           = WRITE_ENABLE;
+    rtcpVolume.tStartRequest  = time(NULL);
+    rtcpVolume.err.severity   =  1;
+    rtcpVolume.err.maxTpRetry = -1;
+    rtcpVolume.err.maxCpRetry = -1;
+    RtcpTxRx::giveVolumeToRtcpd(m_cuuid, m_jobRequest.volReqId,
+      m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, rtcpVolume);
+
+    // Give file to migrate to RTCPD
+    {
+      char migrationTapeFileId[CA_MAXPATHLEN+1];
+      utils::toHex((uint64_t)fileFromClient->fileid(), migrationTapeFileId);
+      unsigned char blockId[4];
+      utils::setBytes(blockId, '\0');
+      char nshost[CA_MAXHOSTNAMELEN+1];
+      utils::copyString(nshost, fileFromClient->nshost().c_str());
+
+      RtcpTxRx::giveFileToRtcpd(
+        m_cuuid,
+        m_jobRequest.volReqId,
+        m_rtcpdInitialSockFd,
+        RTCPDNETRWTIMEOUT,
+        rtcpVolume.mode,
+        fileFromClient->path().c_str(),
+        fileFromClient->fileSize(),
+        "",
+        RECORDFORMAT,
+        migrationTapeFileId,
+        RTCOPYCONSERVATIVEUMASK,
+        (int32_t)fileFromClient->positionCommandCode(),
+        (int32_t)fileFromClient->fseq(),
+        diskFseq,
+        nshost,
+        (uint64_t)fileFromClient->fileid(),
+        blockId);
+    }
+
+    char tapePath[CA_MAXPATHLEN+1];
+    utils::setBytes(tapePath, '\0');
+
+    // Ask RTCPD to request more work
+    RtcpTxRx::askRtcpdToRequestMoreWork(m_cuuid, m_jobRequest.volReqId,
+      tapePath, m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, WRITE_ENABLE);
+
+    // Tell RTCPD end of file list
+    RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_jobRequest.volReqId,
+      m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT);
+
+    processRtcpdSocks();
+
+    try {
+      ClientTxRx::notifyEndOfSession(m_cuuid, m_jobRequest.volReqId,
+        m_jobRequest.clientHost, m_jobRequest.clientPort);
+    } catch(castor::exception::Exception &ex) {
+      // Don't rethrow, just log the exception
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", m_jobRequest.volReqId),
+        castor::dlf::Param("Message" , ex.getMessage().str()),
+        castor::dlf::Param("Code"    , ex.code()            )};
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
+        AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
+    }
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Exception ex2(ex.code());
+
+    ex2.getMessage() <<
+      "Failed to process RTCPD sockets"
+      ": " << ex.getMessage().str();
+
+    throw(ex2);
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// runRecallSession
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::BridgeProtocolEngine::runRecallSession()
+  throw(castor::exception::Exception) {
+
+  try {
+    char tapePath[CA_MAXPATHLEN+1];
+    utils::setBytes(tapePath, '\0');
+
+    // Give volume to RTCPD
+    legacymsg::RtcpTapeRqstErrMsgBody rtcpVolume;
+    utils::setBytes(rtcpVolume, '\0');
+    utils::copyString(rtcpVolume.vid    , m_volume.vid().c_str()    );
+    utils::copyString(rtcpVolume.vsn    , EMPTYVSN                  );
+    utils::copyString(rtcpVolume.label  , m_volume.label().c_str()  );
+    utils::copyString(rtcpVolume.density, m_volume.density().c_str());
+    utils::copyString(rtcpVolume.unit   , m_jobRequest.driveUnit    );
+    rtcpVolume.volReqId       = m_jobRequest.volReqId;
+    rtcpVolume.mode           = WRITE_DISABLE;
+    rtcpVolume.tStartRequest  = time(NULL);
+    rtcpVolume.err.severity   =  1;
+    rtcpVolume.err.maxTpRetry = -1;
+    rtcpVolume.err.maxCpRetry = -1;
+    RtcpTxRx::giveVolumeToRtcpd(m_cuuid, m_jobRequest.volReqId,
+      m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, rtcpVolume);
+
+    // Ask RTCPD to request more work
+    RtcpTxRx::askRtcpdToRequestMoreWork(m_cuuid, m_jobRequest.volReqId,
+      tapePath, m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, WRITE_DISABLE);
+
+    // Tell RTCPD end of file list
+    RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_jobRequest.volReqId,
+      m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT);
+
+    processRtcpdSocks();
+
+    try {
+      ClientTxRx::notifyEndOfSession(m_cuuid, m_jobRequest.volReqId,
+        m_jobRequest.clientHost, m_jobRequest.clientPort);
+    } catch(castor::exception::Exception &ex) {
+      // Don't rethrow, just log the exception
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", m_jobRequest.volReqId),
+        castor::dlf::Param("Message" , ex.getMessage().str()),
+        castor::dlf::Param("Code"    , ex.code()            )};
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
+        AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
+    }
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Exception ex2(ex.code());
+
+    ex2.getMessage() <<
+      "Failed to process RTCPD sockets"
+      ": " << ex.getMessage().str();
+
+    throw(ex2);
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// runDumpSession
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::BridgeProtocolEngine::runDumpSession()
+  throw(castor::exception::Exception) {
+
+  try {
+    // Give volume to RTCPD
+    legacymsg::RtcpTapeRqstErrMsgBody rtcpVolume;
+    utils::setBytes(rtcpVolume, '\0');
+    utils::copyString(rtcpVolume.vid    , m_volume.vid().c_str()    );
+    utils::copyString(rtcpVolume.vsn    , EMPTYVSN                  );
+    utils::copyString(rtcpVolume.label  , m_volume.label().c_str()  );
+    utils::copyString(rtcpVolume.density, m_volume.density().c_str());
+    utils::copyString(rtcpVolume.unit   , m_jobRequest.driveUnit    );
+    rtcpVolume.volReqId       = m_jobRequest.volReqId;
+    rtcpVolume.mode           = WRITE_DISABLE;
+    rtcpVolume.tStartRequest  = time(NULL);
+    rtcpVolume.err.severity   =  1;
+    rtcpVolume.err.maxTpRetry = -1;
+    rtcpVolume.err.maxCpRetry = -1;
+    RtcpTxRx::giveVolumeToRtcpd(m_cuuid, m_jobRequest.volReqId,
+      m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, rtcpVolume);
+
+    // Get dump parameters message from client an wrap it in an auto_ptr
+    std::auto_ptr<tapegateway::DumpParameters> dumpParameters(
+      ClientTxRx::getDumpParameters(m_cuuid, m_jobRequest.volReqId,
+      m_jobRequest.clientHost, m_jobRequest.clientPort));
+
+    // Tell RTCPD to dump the tape
+    legacymsg::RtcpDumpTapeRqstMsgBody request;
+    request.maxBytes      = dumpParameters->maxBytes();
+    request.blockSize     = dumpParameters->blockSize();
+    request.convert       = dumpParameters->converter();
+    request.tapeErrAction = dumpParameters->errAction();
+    request.startFile     = dumpParameters->startFile();
+    request.maxFiles      = dumpParameters->maxFile();
+    request.fromBlock     = dumpParameters->fromBlock();
+    request.toBlock       = dumpParameters->toBlock();
+    RtcpTxRx::tellRtcpdDumpTape(m_cuuid, m_jobRequest.volReqId,
+      m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT, request);
+
+    // Tell RTCPD end of file list
+    RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_jobRequest.volReqId,
+      m_rtcpdInitialSockFd, RTCPDNETRWTIMEOUT);
+
+    processRtcpdSocks();
+
+    try {
+      ClientTxRx::notifyEndOfSession(m_cuuid, m_jobRequest.volReqId,
+        m_jobRequest.clientHost, m_jobRequest.clientPort);
+    } catch(castor::exception::Exception &ex) {
+      // Don't rethrow, just log the exception
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", m_jobRequest.volReqId),
+        castor::dlf::Param("Message" , ex.getMessage().str()),
+        castor::dlf::Param("Code"    , ex.code()            )};
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
+        AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
+    }
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Exception ex2(ex.code());
+
+    ex2.getMessage() <<
+      "Failed to process RTCPD sockets"
+      ": " << ex.getMessage().str();
+
+    throw(ex2);
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// processRtcpdRequest
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdRequest(
+  const legacymsg::MessageHeader &header, const int socketFd, 
+  bool &receivedENDOF_REQ) throw(castor::exception::Exception) {
+
+  {
+    char magicHex[2 + 17]; // 0 + x + FFFFFFFFFFFFFFFF + '\0'
+    magicHex[0] = '0';
+    magicHex[1] = 'x';
+    utils::toHex(header.magic, &(magicHex[2]), 17);
+
+    const char *magicName = utils::magicToString(header.magic);
+
+    char reqTypeHex[2 + 17]; // 0 + x + FFFFFFFFFFFFFFFF + '\0'
+    reqTypeHex[0] = '0';
+    reqTypeHex[1] = 'x';
+    utils::toHex(header.reqType, &(reqTypeHex[2]), 17);
+
+    const char *reqTypeName = utils::rtcopyReqTypeToString(header.reqType);
+
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("volReqId"   , m_jobRequest.volReqId),
+      castor::dlf::Param("socketFd"   , socketFd             ),
+      castor::dlf::Param("magic"      , magicHex             ),
+      castor::dlf::Param("magicName"  , magicName            ),
+      castor::dlf::Param("reqType"    , reqTypeHex           ),
+      castor::dlf::Param("reqTypeName", reqTypeName          ),
+      castor::dlf::Param("len"        , header.lenOrStatus   )};
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_PROCESSING_TAPE_DISK_RQST, params);
+  }
+
+  // Find the message type's corresponding handler
+  MsgBodyCallbackMap::iterator itor = m_handlers.find(
+    createHandlerKey(header.magic, header.reqType));
+  if(itor == m_handlers.end()) {
+    TAPE_THROW_CODE(EBADMSG,
+      ": Unknown magic and request type combination"
+      ": magic=0x"   << std::hex << header.magic <<
+      ": reqType=0x" << header.reqType << std::dec);
+  }
+  const MsgBodyCallback handler = itor->second;
+
+  // Invoke the handler
+  return (this->*handler)(header, socketFd, receivedENDOF_REQ);
+}
+
+
+//-----------------------------------------------------------------------------
+// rtcpFileReqCallback
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileReqCallback(
+  const legacymsg::MessageHeader &header, const int socketFd, 
+  bool &receivedENDOF_REQ) throw(castor::exception::Exception) {
+
+  legacymsg::RtcpFileRqstMsgBody body;
+
+  RtcpTxRx::receiveMsgBody(m_cuuid, m_jobRequest.volReqId, socketFd,
+    RTCPDNETRWTIMEOUT, header, body);
+
+  processRtcpFileReq(header, body, socketFd, receivedENDOF_REQ);
+}
+
+
+//-----------------------------------------------------------------------------
+// rtcpFileErrReqCallback
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileErrReqCallback(
+  const legacymsg::MessageHeader &header, const int socketFd, 
+  bool &receivedENDOF_REQ) throw(castor::exception::Exception) {
+
+  legacymsg::RtcpFileRqstErrMsgBody body;
+
+  RtcpTxRx::receiveMsgBody(m_cuuid, m_jobRequest.volReqId, socketFd,
+    RTCPDNETRWTIMEOUT, header, body);
+
+  // If RTCPD has reported an error
+  if(body.err.errorCode != 0) {
+
+    TAPE_THROW_CODE(body.err.errorCode,
+      ": Received an error from RTCPD: " << body.err.errorMsg);
+  }
+  
+  processRtcpFileReq(header, body, socketFd, receivedENDOF_REQ);
+}
+
+
+//-----------------------------------------------------------------------------
+// processRtcpFileReq
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
+  const legacymsg::MessageHeader &header, legacymsg::RtcpFileRqstMsgBody &body,
+  const int socketFd, bool &receivedENDOF_REQ)
+  throw(castor::exception::Exception) {
+
+  // If the tape is being dumped
+  if(m_volume.mode() == tapegateway::DUMP) {
+    // Send an acknowledge to RTCPD
+    legacymsg::MessageHeader ackMsg;
+    ackMsg.magic       = header.magic;
+    ackMsg.reqType     = header.reqType;
+    ackMsg.lenOrStatus = 0;
+    LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, socketFd,
+      RTCPDNETRWTIMEOUT, ackMsg);
+
+    return;
+  }
+
+  switch(body.procStatus) {
+  case RTCP_REQUEST_MORE_WORK:
+    // If migrating
+    if(m_volume.mode() == tapegateway::WRITE) {
+
+      // Get file to migrate from client
+      std::auto_ptr<tapegateway::FileToMigrate> fileFromClient(
+        ClientTxRx::getFileToMigrate(m_cuuid, m_jobRequest.volReqId,
+        m_jobRequest.clientHost, m_jobRequest.clientPort));
+
+      // If there is a file to migrate
+      if(fileFromClient.get() != NULL) {
+
+        // Remember the file transaction ID and get its unique index to be
+        // passed to RTCPD through the "rtcpFileRequest.disk_fseq" message
+        // field
+        const int diskFseq =
+          m_pendingTransferIds.insert(fileFromClient->fileTransactionId());
+
+        // If the client is the tape gateway
+        if(m_volume.clientType() == tapegateway::TAPE_GATEWAY) {
+
+            // If the tape file sequence number from the client is invalid
+            if((uint32_t)fileFromClient->fseq() != m_nextDestinationFseq) {
+              castor::exception::Exception ex(ECANCELED);
+
+              ex.getMessage() <<
+                "Invalid tape file sequence number from client"
+                ": expected=" << (m_nextDestinationFseq) <<
+                ": actual=" << fileFromClient->fseq();
+
+              throw(ex);
+            }
+
+            // Update the next expected tape file sequence number
+            m_nextDestinationFseq++;
+        }
+
+        // Give file to migrate to RTCPD
+        {
+          char migrationTapeFileId[CA_MAXPATHLEN+1];
+          utils::toHex((uint64_t)fileFromClient->fileid(), migrationTapeFileId);
+          unsigned char blockId[4];
+          utils::setBytes(blockId, '\0');
+          char nshost[CA_MAXHOSTNAMELEN+1];
+          utils::copyString(nshost, fileFromClient->nshost().c_str());
+
+          RtcpTxRx::giveFileToRtcpd(
+            m_cuuid,
+            m_jobRequest.volReqId,
+            socketFd,
+            RTCPDNETRWTIMEOUT,
+            WRITE_ENABLE,
+            fileFromClient->path().c_str(),
+            fileFromClient->fileSize(),
+            "",
+            RECORDFORMAT,
+            migrationTapeFileId,
+            RTCOPYCONSERVATIVEUMASK,
+            (int32_t)fileFromClient->positionCommandCode(),
+            (int32_t)fileFromClient->fseq(),
+            diskFseq,
+            nshost,
+            (uint64_t)fileFromClient->fileid(),
+            blockId);
+        }
+
+        char tapePath[CA_MAXPATHLEN+1];
+        utils::setBytes(tapePath, '\0');
+
+        // Ask RTCPD to request more work
+        RtcpTxRx::askRtcpdToRequestMoreWork(m_cuuid, m_jobRequest.volReqId,
+          tapePath, socketFd, RTCPDNETRWTIMEOUT, WRITE_ENABLE);
+
+        // Tell RTCPD end of file list
+        RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_jobRequest.volReqId,
+          socketFd, RTCPDNETRWTIMEOUT);
+
+      // Else there is no file to migrate
+      } else {
+
+        // Tell RTCPD there is no file by sending an empty file list
+        RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_jobRequest.volReqId,
+          socketFd, RTCPDNETRWTIMEOUT);
+      }
+
+    // Else recalling (READ or DUMP)
+    } else {
+
+      // Get file to recall from client
+      std::auto_ptr<tapegateway::FileToRecall> fileFromClient(
+        ClientTxRx::getFileToRecall(m_cuuid, m_jobRequest.volReqId,
+        m_jobRequest.clientHost, m_jobRequest.clientPort));
+
+      // If there is a file to recall
+      if(fileFromClient.get() != NULL) {
+
+        // Remember the file transaction ID and get its unique index to be
+        // passed to RTCPD through the "rtcpFileRequest.disk_fseq" message
+        // field
+        const int diskFseq =
+          m_pendingTransferIds.insert(fileFromClient->fileTransactionId());
+
+        // Give file to recall to RTCPD
+        {
+          char tapeFileId[CA_MAXPATHLEN+1];
+          utils::setBytes(tapeFileId, '\0');
+          unsigned char blockId[4] = {
+            fileFromClient->blockId0(),
+            fileFromClient->blockId1(),
+            fileFromClient->blockId2(),
+            fileFromClient->blockId3()};
+          char nshost[CA_MAXHOSTNAMELEN+1];
+          utils::copyString(nshost, fileFromClient->nshost().c_str());
+
+          // The file size is not specified when recalling
+          const uint64_t fileSize = 0;
+
+          RtcpTxRx::giveFileToRtcpd(
+            m_cuuid,
+            m_jobRequest.volReqId,
+            socketFd,
+            RTCPDNETRWTIMEOUT,
+            WRITE_DISABLE,
+            fileFromClient->path().c_str(),
+            fileSize,
+            body.tapePath,
+            RECORDFORMAT,
+            tapeFileId,
+            (uint32_t)fileFromClient->umask(),
+            (int32_t)fileFromClient->positionCommandCode(),
+            (int32_t)fileFromClient->fseq(),
+            diskFseq,
+            nshost,
+            (uint64_t)fileFromClient->fileid(),
+            blockId);
+        }
+
+        // Ask RTCPD to request more work
+        RtcpTxRx::askRtcpdToRequestMoreWork(m_cuuid, m_jobRequest.volReqId,
+          body.tapePath, socketFd, RTCPDNETRWTIMEOUT, WRITE_DISABLE);
+
+        // Tell RTCPD end of file list
+        RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_jobRequest.volReqId,
+          socketFd, RTCPDNETRWTIMEOUT);
+
+      // Else there is no file to recall
+      } else {
+
+        // Tell RTCPD there is no file by sending an empty file list
+        RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_jobRequest.volReqId,
+          socketFd, RTCPDNETRWTIMEOUT);
+      }
+    } // Else recalling
+
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", m_jobRequest.volReqId),
+        castor::dlf::Param("socketFd", socketFd             )};
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG,
+        AGGREGATOR_SEND_DELAYED_REQUEST_MORE_WORK_ACK_TO_RTCPD, params);
+    }
+
+    // Send delayed acknowledge of the request for more work
+    legacymsg::MessageHeader ackMsg;
+    ackMsg.magic       = header.magic;
+    ackMsg.reqType     = header.reqType;
+    ackMsg.lenOrStatus = 0;
+    LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, socketFd,
+      RTCPDNETRWTIMEOUT,ackMsg);
+
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", m_jobRequest.volReqId),
+        castor::dlf::Param("socketFd", socketFd             )};
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_SENT_DELAYED_REQUEST_MORE_WORK_ACK_TO_RTCPD, params);
+    }
+
+    break;
+  case RTCP_POSITIONED:
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", m_jobRequest.volReqId),
+        castor::dlf::Param("filePath", body.filePath        ),
+        castor::dlf::Param("tapePath", body.tapePath        )};
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_TAPE_POSITIONED, params);
+
+      // Send an acknowledge to RTCPD
+      legacymsg::MessageHeader ackMsg;
+      ackMsg.magic       = header.magic;
+      ackMsg.reqType     = header.reqType;
+      ackMsg.lenOrStatus = 0;
+      LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, socketFd,
+        RTCPDNETRWTIMEOUT, ackMsg);
+    }
+    break;
+  case RTCP_FINISHED:
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("volReqId", m_jobRequest.volReqId),
+        castor::dlf::Param("filePath", body.filePath        ),
+        castor::dlf::Param("tapePath", body.tapePath        ),
+        castor::dlf::Param("tapeFseq", body.tapeFseq        ),
+        castor::dlf::Param("diskFseq", body.diskFseq        ),
+        castor::dlf::Param("bytesIn" , body.bytesIn         ),
+        castor::dlf::Param("bytesOut", body.bytesOut        )};
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_FILE_TRANSFERED, params);
+
+      // Send an acknowledge to RTCPD
+      legacymsg::MessageHeader ackMsg;
+      ackMsg.magic       = header.magic;
+      ackMsg.reqType     = header.reqType;
+      ackMsg.lenOrStatus = 0;
+      LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, socketFd,
+        RTCPDNETRWTIMEOUT, ackMsg);
+
+      // Get the file transaction ID that was sent by the tape gateway
+      const uint64_t fileTransactonId =
+        m_pendingTransferIds.remove(body.diskFseq);
+
+      // Notify the tape gateway
+      // If migrating
+      if(m_volume.mode() == tapegateway::WRITE) {
+        const uint64_t fileSize           = body.bytesIn; // "in" to the tape
+        const uint64_t compressedFileSize = fileSize; // Ignore compression
+
+        ClientTxRx::notifyFileMigrated(m_cuuid, m_jobRequest.volReqId,
+          m_jobRequest.clientHost, m_jobRequest.clientPort, fileTransactonId,
+          body.segAttr.nameServerHostName, body.segAttr.castorFileId,
+          body.tapeFseq, body.blockId, body.positionMethod,
+          body.segAttr.segmCksumAlgorithm, body.segAttr.segmCksum, fileSize,
+          compressedFileSize);
+
+      // Else recall (READ or DUMP)
+      } else {
+        const uint64_t fileSize = body.bytesOut; // "out" from the tape
+
+        ClientTxRx::notifyFileRecalled(m_cuuid, m_jobRequest.volReqId,
+          m_jobRequest.clientHost, m_jobRequest.clientPort, fileTransactonId,
+          body.segAttr.nameServerHostName, body.segAttr.castorFileId,
+          body.tapeFseq, body.filePath, body.positionMethod,
+          body.segAttr.segmCksumAlgorithm, body.segAttr.segmCksum, fileSize);
+      }
+    }
+    break;
+  default:
+    {
+      TAPE_THROW_CODE(EBADMSG,
+           ": Received unexpected file request process status 0x"
+        << std::hex << body.procStatus
+        << "(" << utils::procStatusToString(body.procStatus) << ")");
+    }
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// rtcpTapeReqCallback
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::BridgeProtocolEngine::rtcpTapeReqCallback(
+  const legacymsg::MessageHeader &header, const int socketFd, 
+  bool &receivedENDOF_REQ) throw(castor::exception::Exception) {
+
+  legacymsg::RtcpTapeRqstMsgBody body;
+
+  RtcpTxRx::receiveMsgBody(m_cuuid, m_jobRequest.volReqId, socketFd,
+    RTCPDNETRWTIMEOUT, header, body);
+
+  return(processRtcpTape(header, body, socketFd, receivedENDOF_REQ));
+}
+
+
+//-----------------------------------------------------------------------------
+// rtcpTapeErrReqCallback
+//-----------------------------------------------------------------------------
+void
+  castor::tape::aggregator::BridgeProtocolEngine::rtcpTapeErrReqCallback(
+  const legacymsg::MessageHeader &header, const int socketFd, 
+  bool &receivedENDOF_REQ) throw(castor::exception::Exception) {
+
+  legacymsg::RtcpTapeRqstErrMsgBody body;
+
+  RtcpTxRx::receiveMsgBody(m_cuuid, m_jobRequest.volReqId, socketFd,
+    RTCPDNETRWTIMEOUT, header, body);
+
+  if(body.err.errorCode != 0) {
+    char codeStr[STRERRORBUFLEN];
+    sstrerror_r(body.err.errorCode, codeStr, sizeof(codeStr));
+
+    TAPE_THROW_CODE(body.err.errorCode,
+      ": Received an error from RTCPD"
+      ": errorCode=" << body.err.errorCode <<
+      ": errorMsg=" << body.err.errorMsg  <<
+      ": sstrerror_r=" << codeStr);
+  }
+
+  return(processRtcpTape(header, body, socketFd, receivedENDOF_REQ));
+}
+
+
+//-----------------------------------------------------------------------------
+// processRtcpTape
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::BridgeProtocolEngine::processRtcpTape(
+  const legacymsg::MessageHeader &header, legacymsg::RtcpTapeRqstMsgBody &body,
+  const int socketFd, bool &receivedENDOF_REQ)
+  throw(castor::exception::Exception) {
+
+  // Acknowledge tape request
+  legacymsg::MessageHeader ackMsg;
+  ackMsg.magic       = RTCOPY_MAGIC;
+  ackMsg.reqType     = RTCP_TAPE_REQ;
+  ackMsg.lenOrStatus = 0;
+  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, socketFd,
+    RTCPDNETRWTIMEOUT, ackMsg);
+}
+
+
+//-----------------------------------------------------------------------------
+// rtcpEndOfReqCallback
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::BridgeProtocolEngine::rtcpEndOfReqCallback(
+  const legacymsg::MessageHeader &header, const int socketFd, 
+  bool &receivedENDOF_REQ) throw(castor::exception::Exception) {
+
+  receivedENDOF_REQ = true;
+
+  // Acknowledge RTCP_ENDOF_REQ message
+  legacymsg::MessageHeader ackMsg;
+  ackMsg.magic       = RTCOPY_MAGIC;
+  ackMsg.reqType     = RTCP_ENDOF_REQ;
+  ackMsg.lenOrStatus = 0;
+  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, socketFd,
+    RTCPDNETRWTIMEOUT, ackMsg);
+}
+
+
+//-----------------------------------------------------------------------------
+// giveOutpCallback
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::BridgeProtocolEngine::giveOutpCallback(
+  const legacymsg::MessageHeader &header, const int socketFd,
+   bool &receivedENDOF_REQ) throw(castor::exception::Exception) {
+
+  legacymsg::GiveOutpMsgBody body;
+
+  RtcpTxRx::receiveMsgBody(m_cuuid, m_jobRequest.volReqId, socketFd,
+    RTCPDNETRWTIMEOUT, header, body);
+
+  ClientTxRx::notifyDumpMessage(m_cuuid, m_jobRequest.volReqId,
+    m_jobRequest.clientHost, m_jobRequest.clientPort, body.message);
+}
+
+
+//-----------------------------------------------------------------------------
+// checkPeerIsLocalhost
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::BridgeProtocolEngine::checkPeerIsLocalhost(
+  const int socketFd) throw(castor::exception::Exception) {
+
+  unsigned long  ip;
+  unsigned short port;
+
+  net::getPeerIpPort(socketFd, ip, port);
+
+  // localhost = 127.0.0.1 = 0x7F000001
+  if(ip != 0x7F000001) {
+    castor::exception::PermissionDenied ex;
+    std::ostream &os = ex.getMessage();
+    os <<
+      "Peer is not local host"
+      ": expected=127.0.0.1"
+      ": actual=";
+    net::writeIp(os, ip);
+
+    throw ex;
+  }
+}

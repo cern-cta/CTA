@@ -1,0 +1,108 @@
+#
+#                      castor/tape/aggregator/Imakefile
+#
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
+#
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+#
+# @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
+#
+
+CPPFLAGS = -g -O0 -I../../../h -I../../.. $(MTCCFLAGS)
+CFLAGS = -O -I../../../h -I../../.. $(THREADFLAGS)
+LDFLAGS += $(MTLDFLAGS)
+LD = g++
+
+DependsOnLibrary(../../common,castorcommon)
+DependsOnLibrary(../../dlf,castordlf)
+DependsOnLibrary(..,castorclient)
+DependsOnLibrary(../db/cnv,castorcnvs)
+
+TAPEGATEWAY_MESSAGES_SRCS = \
+  ../tapegateway/BaseFileInfo.cpp \
+  ../tapegateway/DumpNotification.cpp \
+  ../tapegateway/DumpParameters.cpp \
+  ../tapegateway/DumpParametersRequest.cpp \
+  ../tapegateway/EndNotification.cpp \
+  ../tapegateway/EndNotificationErrorReport.cpp \
+  ../tapegateway/FileMigratedNotification.cpp \
+  ../tapegateway/FileRecalledNotification.cpp \
+  ../tapegateway/FileToMigrate.cpp \
+  ../tapegateway/FileToMigrateRequest.cpp \
+  ../tapegateway/FileToRecall.cpp \
+  ../tapegateway/FileToRecallRequest.cpp \
+  ../tapegateway/GatewayMessage.cpp \
+  ../tapegateway/NoMoreFiles.cpp \
+  ../tapegateway/NotificationAcknowledge.cpp \
+  ../tapegateway/PingNotification.cpp \
+  ../tapegateway/PositionCommandCode.cpp \
+  ../tapegateway/Volume.cpp \
+  ../tapegateway/VolumeMode.cpp \
+  ../tapegateway/ClientType.cpp \
+  ../tapegateway/VolumeRequest.cpp
+
+TAPEGATEWAY_IO_SRCS = \
+  ../../io/StreamDumpNotificationCnv.cpp \
+  ../../io/StreamDumpParametersCnv.cpp \
+  ../../io/StreamDumpParametersRequestCnv.cpp \
+  ../../io/StreamEndNotificationCnv.cpp \
+  ../../io/StreamEndNotificationErrorReportCnv.cpp \
+  ../../io/StreamFileMigratedNotificationCnv.cpp \
+  ../../io/StreamFileRecalledNotificationCnv.cpp \
+  ../../io/StreamFileToMigrateCnv.cpp \
+  ../../io/StreamFileToMigrateRequestCnv.cpp \
+  ../../io/StreamFileToRecallCnv.cpp \
+  ../../io/StreamFileToRecallRequestCnv.cpp \
+  ../../io/StreamNoMoreFilesCnv.cpp \
+  ../../io/StreamNotificationAcknowledgeCnv.cpp \
+  ../../io/StreamPingNotificationCnv.cpp \
+  ../../io/StreamVolumeCnv.cpp \
+  ../../io/StreamVolumeRequestCnv.cpp
+
+AGGREGATORBIN_SRCS = \
+  AggregatorDlfMessageStrings.cpp \
+  AggregatorDaemon.cpp \
+  AggregatorMain.cpp \
+  BridgeProtocolEngine.cpp \
+  BoolFunctor.cpp \
+  ClientTxRx.cpp \
+  DriveAllocationProtocolEngine.cpp \
+  LegacyTxRx.cpp \
+  LogHelper.cpp \
+  Packer.cpp \
+  RtcpJobSubmitter.cpp \
+  RtcpTxRx.cpp \
+  SmartFd.cpp \
+  SmartFdList.cpp \
+  SynchronizedCounter.cpp \
+  Unpacker.cpp \
+  VdqmRequestHandler.cpp \
+  VmgrTxRx.cpp \
+  ../legacymsg/CommonMarshal.cpp \
+  ../legacymsg/RtcpMarshal.cpp \
+  ../legacymsg/VmgrMarshal.cpp \
+  ../net/net.cpp \
+  ../utils/utils.cpp \
+  $(TAPEGATEWAY_MESSAGES_SRCS) \
+  $(TAPEGATEWAY_IO_SRCS)
+AGGREGATORBIN_OBJS = $(AGGREGATORBIN_SRCS:.cpp=.Osuf)
+
+NormalProgramTarget(aggregatord,$(AGGREGATORBIN_OBJS),$(DEPLIB),$(LIBS),750)
+MakeDir(/var/spool/tape/aggregatord,0755)
+ADMMANPAGE(aggregatord)
+LOGROTATE(castor-aggregator-server,../../..,install)
+SYSCONFIG(aggregatord,install)
+INITSCRIPT(aggregatord,install)
