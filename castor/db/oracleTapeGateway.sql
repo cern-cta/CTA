@@ -1607,16 +1607,19 @@ END;
 
 /* update the db when a tape session is started */
 
-CREATE OR REPLACE PROCEDURE  tg_startTapeSession ( inputVdqmReqId IN NUMBER, 
-                                                   outVid OUT NOCOPY VARCHAR2, 
-                                                   outMode OUT INTEGER, 
-                                                   ret OUT INTEGER, 
-                                                   outDensity OUT NOCOPY VARCHAR2, 
-                                                   outLabel OUT NOCOPY VARCHAR2 ) AS
+create or replace
+PROCEDURE  tg_startTapeSession ( inputVdqmReqId IN NUMBER, 
+                                 outVid OUT NOCOPY VARCHAR2, 
+                                 outMode OUT INTEGER, 
+                                 ret OUT INTEGER, 
+                                 outDensity OUT NOCOPY VARCHAR2, 
+                                 outLabel OUT NOCOPY VARCHAR2 ) AS
  reqId NUMBER;
  tpId NUMBER;
  segToDo INTEGER;
  tcToDo INTEGER;
+ strId NUMBER;
+ unused NUMBER;
 
 BEGIN
 
@@ -1625,7 +1628,7 @@ BEGIN
   UPDATE TapeGatewayRequest SET status=3 
     WHERE vdqmVolreqid = inputVdqmReqId  
     AND status =2 
-    RETURNING id, accessmode INTO reqId, outMode;
+    RETURNING id, accessmode, streammigration, taperecall INTO reqId, outMode,strId, tpId;
   
   IF reqId IS NULL THEN
   
@@ -1635,66 +1638,55 @@ BEGIN
  
     IF outMode = 0 THEN
       -- read tape mounted
-      SELECT count(*) INTO segToDo 
-        FROM Segment 
-        WHERE status=0 
-        AND tape = 
-           (SELECT taperecall 
-              FROM TapeGatewayRequest 
-              WHERE id=reqId);
- 
-      IF segToDo = 0 THEN
-
+      
+       BEGIN  
+        SELECT 1 INTO unused FROM dual 
+         WHERE EXISTS (SELECT 'x' FROM Segment 
+                          WHERE tape = tpId);
+      EXCEPTION WHEN NO_DATA_FOUND THEN
         UPDATE TapeGatewayRequest SET lastvdqmpingtime=0 
           WHERE id=reqId; -- to force the cleanup
         ret:=-1; --NO MORE FILES
+        COMMIT;
+        RETURN;
 
-      ELSE
+      END;
 
-        UPDATE Tape SET status=4 
-          WHERE id = 
-             (SELECT taperecall 
-                FROM TapeGatewayRequest 
-                WHERE id=reqId) 
+      UPDATE Tape SET status=4 
+          WHERE id = tpId
           AND tpmode=0  
           RETURNING vid, label, density INTO outVid, outLabel, outDensity; -- tape is MOUNTED 
         
-        ret:=0;
-      
-      END IF;
+      ret:=0;
     ELSE 
       -- write
-      SELECT COUNT(*) INTO tcToDo 
-        FROM Stream2TapeCopy 
-        WHERE parent IN 
-          ( SELECT streammigration 
-              FROM TapeGatewayRequest 
-              WHERE id=reqId );
-
-      IF tcToDo = 0 THEN
-
+      BEGIN  
+        SELECT 1 INTO unused FROM dual 
+         WHERE EXISTS (SELECT 'x' FROM Stream2TapeCopy 
+                          WHERE parent=strId);
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- no more files
         UPDATE TapeGatewayRequest SET lastvdqmpingtime=0 
           WHERE id=reqId; -- to force the cleanup
 
         ret:=-1; --NO MORE FILES
         outVid:=NULL;
+        COMMIT;
+        RETURN;
+      END;
       
-      ELSE
-      
-        UPDATE Stream SET status=3 
-          WHERE id = 
-             ( SELECT streammigration 
-                 FROM TapeGatewayRequest 
-                 WHERE id=reqId ) 
-          RETURNING tape INTO tpId; -- RUNNING
+      UPDATE Stream SET status=3 
+       WHERE id = 
+         ( SELECT streammigration 
+             FROM TapeGatewayRequest 
+             WHERE id=reqId ) 
+             RETURNING tape INTO tpId; -- RUNNING
 
-        UPDATE Tape SET status=4  
-          WHERE id = tpId 
-          RETURNING vid, label, density INTO outVid, outLabel, outDensity; -- MOUNTED
+      UPDATE Tape SET status=4  
+        WHERE id = tpId 
+        RETURNING vid, label, density INTO outVid, outLabel, outDensity; -- MOUNTED
 
-        ret:=0;
-
-      END IF;    
+     ret:=0;
 
     END IF; 
 
@@ -1702,7 +1694,6 @@ BEGIN
   COMMIT;
 END;
 /
-
 
 /* Check configuration */
 
