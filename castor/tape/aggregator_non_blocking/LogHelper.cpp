@@ -24,7 +24,7 @@
  *****************************************************************************/
 
 #include "castor/dlf/Dlf.hpp"
-#include "castor/tape/aggregator/LogHelper.hpp"
+#include "castor/tape/aggregator_non_blocking/LogHelper.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 

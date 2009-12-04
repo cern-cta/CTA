@@ -23,8 +23,8 @@
  *****************************************************************************/
 
 #include "castor/exception/Internal.hpp"
-#include "castor/tape/aggregator/BridgeSocketCatalogue.hpp"
-#include "castor/tape/aggregator/Constants.hpp"
+#include "castor/tape/aggregator_non_blocking/BridgeSocketCatalogue.hpp"
+#include "castor/tape/aggregator_non_blocking/Constants.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <errno.h>

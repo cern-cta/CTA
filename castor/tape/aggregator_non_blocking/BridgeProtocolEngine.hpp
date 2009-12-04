@@ -26,11 +26,11 @@
 #define CASTOR_TAPE_AGGREGATOR_BRIDGEPROTOCOLENGINE
 
 #include "castor/exception/Exception.hpp"
-#include "castor/tape/aggregator/BoolFunctor.hpp"
-#include "castor/tape/aggregator/BridgeSocketCatalogue.hpp"
-#include "castor/tape/aggregator/Constants.hpp"
-#include "castor/tape/aggregator/Counter.hpp"
-#include "castor/tape/aggregator/SmartFdList.hpp"
+#include "castor/tape/aggregator_non_blocking/BoolFunctor.hpp"
+#include "castor/tape/aggregator_non_blocking/BridgeSocketCatalogue.hpp"
+#include "castor/tape/aggregator_non_blocking/Constants.hpp"
+#include "castor/tape/aggregator_non_blocking/Counter.hpp"
+#include "castor/tape/aggregator_non_blocking/SmartFdList.hpp"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"

@@ -23,8 +23,8 @@
  *****************************************************************************/
 
 #include "castor/exception/Internal.hpp"
-#include "castor/tape/aggregator/Constants.hpp"
-#include "castor/tape/aggregator/SynchronizedCounter.hpp"
+#include "castor/tape/aggregator_non_blocking/Constants.hpp"
+#include "castor/tape/aggregator_non_blocking/SynchronizedCounter.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <sstream>
