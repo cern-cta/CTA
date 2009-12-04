@@ -28,6 +28,7 @@
 #include "castor/io/ServerSocket.hpp"
 #include "castor/server/IThread.hpp"
 #include "castor/tape/aggregator/BoolFunctor.hpp"
+#include "castor/tape/aggregator/Counter.hpp"
 #include "castor/tape/aggregator/SmartFdList.hpp"
 #include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
@@ -46,11 +47,6 @@ namespace aggregator {
 class VdqmRequestHandler : public castor::server::IThread {
 
 public:
-
-  /**
-   * Constructor.
-   */
-  VdqmRequestHandler() throw();
 
   /**
    * Destructor
@@ -75,18 +71,13 @@ public:
    */
   virtual void stop() throw();
 
-  /**
-   * Returns true if the daemon is stopping gracefully.
-   */
-  bool stoppingGracefully() throw();
-
 
 private:
 
   /**
    * True if the daemon is stopping gracefully.
    */
-  bool m_stoppingGracefully;
+  static bool s_stoppingGracefully;
 
   /**
    * Functor that returns true if the daemon is stopping gracefully.
@@ -95,45 +86,32 @@ private:
   public:
 
     /**
-     * Constructor.
-     *
-     * @param daemon The daemon on which this functor calls
-     *               BaseDaemon::stoppingGracefully().
-     */
-    StoppingGracefullyFunctor(VdqmRequestHandler &vdqmRequestHandler) :
-      m_vdqmRequestHandler(vdqmRequestHandler) {
-      // Do nothing
-    }
-
-    /**
-     * Returns true if the daemon is sotpping gracefully.
+     * Returns true if the daemon is stopping gracefully.
      */
     bool operator()() {
-      return m_vdqmRequestHandler.stoppingGracefully();
+      return s_stoppingGracefully;
     }
-
-  private:
-
-    /**
-     * The daemon on which this functor calls BaseDaemon::stoppingGracefully().
-     */
-    VdqmRequestHandler &m_vdqmRequestHandler;
   };
 
   /**
    * Functor that returns true if the daemon is stopping gracefully.
    */
-  StoppingGracefullyFunctor m_stoppingGracefullyFunctor;
+  static StoppingGracefullyFunctor s_stoppingGracefullyFunctor;
 
   /**
    * The entry point of this thread delegates its work to this method with a
    * try and catch around the call so that we can throw exceptions.
    *
-   * @param cuuid      The ccuid to be used for logging.
-   * @param jobRequest The RTCOPY job request from the VDQM.
+   * @param cuuid                    The ccuid to be used for logging.
+   * @param jobRequest               The RTCOPY job request from the VDQM.
+   * @param aggregatorTransactionCounter The counter used to generate
+   *                                 aggregator transaction IDs.  These are the
+   *                                 IDs used in requests to the clients.
    */
-  void exceptionThrowingRun(const Cuuid_t &cuuid,
-    const legacymsg::RtcpJobRqstMsgBody &jobRequest)
+  static void exceptionThrowingRun(
+    const Cuuid_t                       &cuuid,
+    const legacymsg::RtcpJobRqstMsgBody &jobRequest,
+    Counter<uint64_t>                   &aggregatorTransactionCounter)
     throw(castor::exception::Exception);
 
   /**
@@ -142,7 +120,7 @@ private:
    *
    * @param socketFd The socket file descriptor.
    */
-  void checkRtcpJobSubmitterIsAuthorised(const int socketFd)
+  static void checkRtcpJobSubmitterIsAuthorised(const int socketFd)
     throw(castor::exception::Exception);
 
   /**
@@ -163,15 +141,19 @@ private:
    *                                 this parameter is ignored.
    * @param stoppingGracefully       Functor that returns true if the daemon is
    *                                 stopping gracefully.
+   * @param aggregatorTransactionCounter The counter used to generate
+   *                                 aggregator transaction IDs.  These are the
+   *                                 IDs used in requests to the clients.
    */
-  void enterBridgeOrAggregatorMode(
+  static void enterBridgeOrAggregatorMode(
     const Cuuid_t                       &cuuid,
     const int                           rtcpdCallbackSockFd,
     const int                           rtcpdInitialSockFd,
     const legacymsg::RtcpJobRqstMsgBody &jobRequest,
     tapegateway::Volume                 &volume,
     const uint32_t                      nbFilesOnDestinationTape,
-    BoolFunctor                         &stoppingGracefully)
+    BoolFunctor                         &stoppingGracefully,
+    Counter<uint64_t>                   &aggregatorTransactionCounter)
   throw(castor::exception::Exception);
 
 }; // class VdqmRequestHandler

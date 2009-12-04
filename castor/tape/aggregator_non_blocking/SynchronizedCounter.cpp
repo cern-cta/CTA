@@ -114,7 +114,8 @@ int32_t castor::tape::aggregator::SynchronizedCounter::next(
       ": Failed to lock counter mutex: " << strerrbuf);
   }
 
-  const int32_t result = ++m_count;
+  m_count += increment;
+  const int32_t result = m_count;
 
   rc = pthread_mutex_unlock(&m_mutex);
   if(rc) {

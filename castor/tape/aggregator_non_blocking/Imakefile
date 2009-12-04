@@ -77,6 +77,7 @@ AGGREGATORBIN_SRCS = \
   AggregatorDaemon.cpp \
   AggregatorMain.cpp \
   BridgeProtocolEngine.cpp \
+  BridgeSocketCatalogue.cpp \
   BoolFunctor.cpp \
   ClientTxRx.cpp \
   DriveAllocationProtocolEngine.cpp \

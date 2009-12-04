@@ -133,8 +133,8 @@ public:
    * @param mode The access mode.
    */ 
   static void askRtcpdToRequestMoreWork(const Cuuid_t &cuuid,
-    const uint32_t volReqId, char (&tapePath)[CA_MAXPATHLEN+1], 
-    const int socketFd, const int netReadWriteTimeout, const uint32_t mode)
+    const uint32_t volReqId, const char *tapePath, const int socketFd,
+    const int netReadWriteTimeout, const uint32_t mode)
     throw(castor::exception::Exception);
 
   /**
@@ -246,7 +246,7 @@ public:
         ": "<< ex.getMessage().str());
     }
 
-    LogHelper::logMsgBody(cuuid, DLF_LVL_SYSTEM,
+    LogHelper::logMsgBody(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_RECEIVED_MSGBODY_FROM_RTCPD, volReqId, socketFd, body);
   }
 

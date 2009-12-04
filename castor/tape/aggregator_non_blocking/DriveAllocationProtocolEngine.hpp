@@ -28,6 +28,7 @@
 #include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/io/AbstractTCPSocket.hpp"
+#include "castor/tape/aggregator/Counter.hpp"
 #include "castor/tape/aggregator/SmartFd.hpp"
 //#include "castor/tape/fsm/StateMachine.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
@@ -47,6 +48,16 @@ namespace aggregator {
  */
 class DriveAllocationProtocolEngine {
 public:
+
+  /**
+   * Constructor.
+   *
+   * @param aggregatorTransactionCounter The counter used to generate aggregator
+   *                                     transaction IDs.  These are the IDS
+   *                                     used in requests to the clients.
+   */
+  DriveAllocationProtocolEngine(Counter<uint64_t> &aggregatorTransactionCounter)
+    throw();
 
   /**
    * Execute the drive allocation protocol which will result in the volume
@@ -87,6 +98,12 @@ public:
 
 
 private:
+
+  /**
+   * The counter used to generate the next aggregator transaction ID to be used
+   * in a request to the client.
+   */
+  Counter<uint64_t> &m_aggregatorTransactionCounter;
 
   /**
    * State machine responsible for controlling the dynamic behaviour of this

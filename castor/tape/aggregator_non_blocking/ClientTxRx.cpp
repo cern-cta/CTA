@@ -55,24 +55,30 @@
 // getVolume
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::Volume
-  *castor::tape::aggregator::ClientTxRx::getVolume(const Cuuid_t &cuuid,
-  const uint32_t volReqId, const char *clientHost,
-  const unsigned short clientPort, const char (&unit)[CA_MAXUNMLEN+1])
+  *castor::tape::aggregator::ClientTxRx::getVolume(
+  const Cuuid_t        &cuuid,
+  const uint32_t       mountTransactionId,
+  const uint64_t       aggregatorTransactionId,
+  const char           *clientHost,
+  const unsigned short clientPort,
+  const char (&unit)[CA_MAXUNMLEN+1])
   throw(castor::exception::Exception) {
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"  , volReqId  ),
-      castor::dlf::Param("clientHost", clientHost),
-      castor::dlf::Param("clientPort", clientPort),
-      castor::dlf::Param("unit"      , unit      )};
+      castor::dlf::Param("mountTransactionId"     , mountTransactionId     ),
+      castor::dlf::Param("aggregatorTransactionId", aggregatorTransactionId),
+      castor::dlf::Param("clientHost"             , clientHost             ),
+      castor::dlf::Param("clientPort"             , clientPort             ),
+      castor::dlf::Param("unit"                   , unit                   )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_GET_VOLUME_FROM_CLIENT, params);
   }
 
   // Prepare the request
   tapegateway::VolumeRequest request;
-  request.setMountTransactionId(volReqId);
+  request.setMountTransactionId(mountTransactionId);
+  request.setAggregatorTransactionId(aggregatorTransactionId);
   request.setUnit(unit);
 
   // Send the request and receive the reply
@@ -94,7 +100,9 @@ castor::tape::tapegateway::Volume
           ": Failed to down cast reply object to tapegateway::Volume");
       }
 
-      checkMountTransactionId(volReqId, reply->mountTransactionId());
+      checkTransactionIds("Volume",
+        mountTransactionId     , reply->mountTransactionId(),
+        aggregatorTransactionId, reply->aggregatorTransactionId());
 
       LogHelper::logMsg(cuuid, DLF_LVL_SYSTEM,
         AGGREGATOR_GOT_VOLUME_FROM_CLIENT, *reply, connectDuration,
@@ -117,19 +125,23 @@ castor::tape::tapegateway::Volume
       }
 
       castor::dlf::Param params[] = {
-        castor::dlf::Param("volReqId"  , volReqId  ),
-        castor::dlf::Param("clientHost", clientHost),
-        castor::dlf::Param("clientPort", clientPort),
-        castor::dlf::Param("unit"      , unit      )};
+        castor::dlf::Param("mountTransactionId"     , mountTransactionId     ),
+        castor::dlf::Param("aggregatorTransactionId", aggregatorTransactionId),
+        castor::dlf::Param("clientHost"             , clientHost             ),
+        castor::dlf::Param("clientPort"             , clientPort             ),
+        castor::dlf::Param("unit"                   , unit                   )};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
         AGGREGATOR_GOT_NO_MORE_FILES_FROM_CLIENT, params);
 
-      checkMountTransactionId(volReqId, reply->mountTransactionId());
+      checkTransactionIds("NoMoreFiles",
+        mountTransactionId     , reply->mountTransactionId(),
+        aggregatorTransactionId, reply->aggregatorTransactionId());
     }
     return NULL;
 
   case OBJ_EndNotificationErrorReport:
-    throwEndNotificationErrorReport(volReqId, obj.get());
+    throwEndNotificationErrorReport(mountTransactionId,
+      aggregatorTransactionId, obj.get());
     break;
 
   default:
@@ -146,32 +158,49 @@ castor::tape::tapegateway::Volume
 
 
 //-----------------------------------------------------------------------------
-// getFileToMigrate
+// sendFileToMigrateRequest
 //-----------------------------------------------------------------------------
-castor::tape::tapegateway::FileToMigrate
-  *castor::tape::aggregator::ClientTxRx::getFileToMigrate(const Cuuid_t &cuuid,
-  const uint32_t volReqId, const char *clientHost,
-  const unsigned short clientPort) throw(castor::exception::Exception) {
-
-  {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"  , volReqId  ),
-      castor::dlf::Param("clientHost", clientHost),
-      castor::dlf::Param("clientPort", clientPort)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
-      AGGREGATOR_GET_FILE_TO_MIGRATE_FROM_CLIENT, params);
-  }
+int castor::tape::aggregator::ClientTxRx::sendFileToMigrateRequest(
+  const uint32_t       mountTransactionId,
+  const uint64_t       aggregatorTransactionId,
+  const char           *clientHost,
+  const unsigned short clientPort,
+  time_t               &connectDuration)
+  throw(castor::exception::Exception) {
 
   // Prepare the request
   tapegateway::FileToMigrateRequest request;
-  request.setMountTransactionId(volReqId);
+  request.setMountTransactionId(mountTransactionId);
+  request.setAggregatorTransactionId(aggregatorTransactionId);
 
-  // Send the request and receive the reply
-  time_t connectDuration  = 0;
-  time_t sendRecvDuration = 0;
-  std::auto_ptr<castor::IObject> obj(sendRequestAndReceiveReply(
-    "FileToMigrateRequest", clientHost, clientPort, CLIENTNETRWTIMEOUT,
-    request, connectDuration, sendRecvDuration));
+  // Send the request and return the socket-descriptor of the connection
+  try {
+    return sendMessage(clientHost, clientPort, CLIENTNETRWTIMEOUT, request,
+      connectDuration);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Exception ce(ECANCELED);
+
+    ce.getMessage() <<
+      "Failed to send FileToMigrateRequest"
+      ": " << ex.getMessage().str();
+
+    throw(ce);
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// receiveFileToMigrateReplyAndClose
+//-----------------------------------------------------------------------------
+castor::tape::tapegateway::FileToMigrate
+  *castor::tape::aggregator::ClientTxRx::receiveFileToMigrateReplyAndClose(
+  const uint32_t mountTransactionId,
+  const uint64_t aggregatorTransactionId,
+  const int      clientSock)
+  throw(castor::exception::Exception) {
+
+  std::auto_ptr<castor::IObject> obj(receiveReplyAndClose(clientSock,
+    CLIENTNETRWTIMEOUT));
 
   switch(obj->type()) {
   case OBJ_FileToMigrate:
@@ -185,11 +214,9 @@ castor::tape::tapegateway::FileToMigrate
           ": Failed to down cast reply object to tapegateway::FileToMigrate");
       }
 
-      checkMountTransactionId(volReqId, reply->mountTransactionId());
-
-      LogHelper::logMsg(cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_GOT_FILE_TO_MIGRATE_FROM_CLIENT, *reply, connectDuration,
-        sendRecvDuration);
+      checkTransactionIds("FileToMigrate",
+        mountTransactionId     , reply->mountTransactionId(),
+        aggregatorTransactionId, reply->aggregatorTransactionId());
 
       // Release the reply message from its smart pointer and return it
       obj.release();
@@ -208,19 +235,15 @@ castor::tape::tapegateway::FileToMigrate
           ": Failed to down cast reply object to tapegateway::NoMoreFiles");
       }
 
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("volReqId"  , volReqId  ),
-        castor::dlf::Param("clientHost", clientHost),
-        castor::dlf::Param("clientPort", clientPort)};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_GOT_NO_MORE_FILES_FROM_CLIENT, params);
-
-      checkMountTransactionId(volReqId, reply->mountTransactionId());
+      checkTransactionIds("NoMoreFiles",
+        mountTransactionId     , reply->mountTransactionId(),
+        aggregatorTransactionId, reply->aggregatorTransactionId());
     }
     return NULL;
 
   case OBJ_EndNotificationErrorReport:
-    throwEndNotificationErrorReport(volReqId, obj.get());
+    throwEndNotificationErrorReport(mountTransactionId,
+      aggregatorTransactionId, obj.get());
     break;
 
   default:
@@ -237,30 +260,49 @@ castor::tape::tapegateway::FileToMigrate
 
 
 //-----------------------------------------------------------------------------
-// getFileToRecall
+// sendFileToRecallRequest
 //-----------------------------------------------------------------------------
-castor::tape::tapegateway::FileToRecall
-  *castor::tape::aggregator::ClientTxRx::getFileToRecall(const Cuuid_t &cuuid,
-  const uint32_t volReqId, const char *clientHost,
-  const unsigned short clientPort) throw(castor::exception::Exception) {
-
-  castor::dlf::Param params[] = {
-    castor::dlf::Param("volReqId"  , volReqId  ),
-    castor::dlf::Param("clientHost", clientHost),
-    castor::dlf::Param("clientPort", clientPort)};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
-    AGGREGATOR_GET_FILE_TO_RECALL_FROM_CLIENT, params);
+int castor::tape::aggregator::ClientTxRx::sendFileToRecallRequest(
+  const uint32_t       mountTransactionId,
+  const uint64_t       aggregatorTransactionId,
+  const char           *clientHost,
+  const unsigned short clientPort,
+  time_t               &connectDuration)
+  throw(castor::exception::Exception) {
 
   // Prepare the request
   tapegateway::FileToRecallRequest request;
-  request.setMountTransactionId(volReqId);
+  request.setMountTransactionId(mountTransactionId);
+  request.setAggregatorTransactionId(aggregatorTransactionId);
 
-  // Send the request and receive the reply
-  time_t connectDuration  = 0;
-  time_t sendRecvDuration = 0;
-  std::auto_ptr<castor::IObject> obj(sendRequestAndReceiveReply(
-    "FileToRecallRequest", clientHost, clientPort, CLIENTNETRWTIMEOUT, request,
-    connectDuration, sendRecvDuration));
+  // Send the request and return the socket-descriptor of the connection
+  try {
+    return sendMessage(clientHost, clientPort, CLIENTNETRWTIMEOUT, request,
+      connectDuration);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Exception ce(ECANCELED);
+
+    ce.getMessage() <<
+      "Failed to send FileToRecallRequest"
+      ": " << ex.getMessage().str();
+
+    throw(ce);
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// receiveFileToRecallReplyAndClose
+//-----------------------------------------------------------------------------
+castor::tape::tapegateway::FileToRecall
+  *castor::tape::aggregator::ClientTxRx::receiveFileToRecallReplyAndClose(
+  const uint32_t mountTransactionId,
+  const uint64_t aggregatorTransactionId,
+  const int      clientSock)
+  throw(castor::exception::Exception) {
+
+  std::auto_ptr<castor::IObject> obj(receiveReplyAndClose(clientSock,
+    CLIENTNETRWTIMEOUT));
 
   switch(obj->type()) {
   case OBJ_FileToRecall:
@@ -274,11 +316,9 @@ castor::tape::tapegateway::FileToRecall
           ": Failed to down cast reply object to tapegateway::FileToRecall");
       }
 
-      checkMountTransactionId(volReqId, reply->mountTransactionId());
-
-      LogHelper::logMsg(cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_GOT_FILE_TO_RECALL_FROM_CLIENT, *reply, connectDuration,
-        sendRecvDuration);
+      checkTransactionIds("FileToRecall",
+        mountTransactionId     , reply->mountTransactionId(),
+        aggregatorTransactionId, reply->aggregatorTransactionId());
 
       // Release the reply message from its smart pointer and return it
       obj.release();
@@ -297,19 +337,15 @@ castor::tape::tapegateway::FileToRecall
           ": Failed to down cast reply object to tapegateway::NoMoreFiles");
       }
 
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("volReqId"  , volReqId  ),
-        castor::dlf::Param("clientHost", clientHost),
-        castor::dlf::Param("clientPort", clientPort)};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_GOT_NO_MORE_FILES_FROM_CLIENT, params);
-
-      checkMountTransactionId(volReqId, reply->mountTransactionId());
+      checkTransactionIds("NoMoreFiles",
+        mountTransactionId     , reply->mountTransactionId(),
+        aggregatorTransactionId, reply->aggregatorTransactionId());
     }
     return NULL;
 
   case OBJ_EndNotificationErrorReport:
-    throwEndNotificationErrorReport(volReqId, obj.get());
+    throwEndNotificationErrorReport(mountTransactionId,
+      aggregatorTransactionId, obj.get());
     break;
 
   default:
@@ -326,13 +362,14 @@ castor::tape::tapegateway::FileToRecall
 
 
 //-----------------------------------------------------------------------------
-// notifyFileMigrated
+// sendFileMigratedNotification
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::ClientTxRx::notifyFileMigrated(
-  const Cuuid_t        &cuuid,
-  const uint32_t       volReqId,
+int castor::tape::aggregator::ClientTxRx::sendFileMigratedNotification(
+  const uint32_t       mountTransactionId,
+  const uint64_t       aggregatorTransactionId,
   const char           *clientHost,
   const unsigned short clientPort,
+  time_t               &connectDuration,
   const uint64_t       fileTransactionId,
   const char           (&nsHost)[CA_MAXHOSTNAMELEN+1],
   const uint64_t       fileId,
@@ -345,97 +382,51 @@ void castor::tape::aggregator::ClientTxRx::notifyFileMigrated(
   const uint64_t       compressedFileSize)
   throw(castor::exception::Exception) {
 
-  {
-    // 32-bits = 1 x '0' + 1 x 'x' + 8 x hex + 1 x '/0' = 11 byte string
-    char checksumHex[11];
-    checksumHex[0] = '0';
-    checksumHex[1] = 'x';
-    utils::toHex(checksum, &checksumHex[2], 9);
-
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"           , volReqId           ),
-      castor::dlf::Param("clientHost"         , clientHost         ),
-      castor::dlf::Param("clientPort"         , clientPort         ),
-      castor::dlf::Param("fileTransactionId"  , fileTransactionId  ),
-      castor::dlf::Param("nsHost"             , nsHost             ),
-      castor::dlf::Param("fileId"             , fileId             ),
-      castor::dlf::Param("tapeFileSeq"        , tapeFileSeq        ),
-      castor::dlf::Param("blockId[0]"         , blockId[0]         ),
-      castor::dlf::Param("blockId[1]"         , blockId[1]         ),
-      castor::dlf::Param("blockId[2]"         , blockId[2]         ),
-      castor::dlf::Param("blockId[3]"         , blockId[3]         ),
-      castor::dlf::Param("positionCommandCode", positionCommandCode),
-      castor::dlf::Param("checksumAlgorithm"  , checksumAlgorithm  ),
-      castor::dlf::Param("checksum"           , checksumHex        ),
-      castor::dlf::Param("fileSize"           , fileSize           ),
-      castor::dlf::Param("compressedFileSize" , compressedFileSize )};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
-      AGGREGATOR_NOTIFY_CLIENT_FILE_MIGRATED, params);
-  }
-
-  // Prepare the request
-  tapegateway::FileMigratedNotification request;
-
-  request.setMountTransactionId(volReqId);
-  request.setFileTransactionId(fileTransactionId);
-  request.setNshost(nsHost);
-  request.setFileid(fileId);
-  request.setBlockId0(blockId[0]); // block ID=4 integers (little indian order)
-  request.setBlockId1(blockId[1]);
-  request.setBlockId2(blockId[2]);
-  request.setBlockId3(blockId[3]);
-  request.setFseq(tapeFileSeq);
-  request.setPositionCommandCode(
+  // Prepare the notification
+  tapegateway::FileMigratedNotification notification;
+  notification.setMountTransactionId(mountTransactionId);
+  notification.setAggregatorTransactionId(aggregatorTransactionId);
+  notification.setFileTransactionId(fileTransactionId);
+  notification.setNshost(nsHost);
+  notification.setFileid(fileId);
+  notification.setBlockId0(blockId[0]); // block ID=4 integers
+                                        // (little indian order)
+  notification.setBlockId1(blockId[1]);
+  notification.setBlockId2(blockId[2]);
+  notification.setBlockId3(blockId[3]);
+  notification.setFseq(tapeFileSeq);
+  notification.setPositionCommandCode(
     (tapegateway::PositionCommandCode)positionCommandCode);
-  request.setChecksumName(checksumAlgorithm);
-  request.setChecksum(checksum);
-  request.setFileSize(fileSize);
-  request.setCompressedFileSize( compressedFileSize);
+  notification.setChecksumName(checksumAlgorithm);
+  notification.setChecksum(checksum);
+  notification.setFileSize(fileSize);
+  notification.setCompressedFileSize( compressedFileSize);
 
-  const char *requestTypeName = "FileMigratedNotification";
-  notifyClient(cuuid, volReqId, requestTypeName, clientHost, clientPort,
-    CLIENTNETRWTIMEOUT, request);
+  // Send the notification and return the socket-descriptor of the connection
+  try {
+    return sendMessage(clientHost, clientPort, CLIENTNETRWTIMEOUT,
+      notification, connectDuration);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Exception ce(ECANCELED);
 
-  {
-    // 32-bits = 1 x '0' + 1 x 'x' + 8 x hex + 1 x '/0' = 11 byte string
-    char checksumHex[11];
-    checksumHex[0] = '0';
-    checksumHex[1] = 'x';
-    utils::toHex(checksum, &checksumHex[2], 9);
+    ce.getMessage() <<
+      "Failed to send FileMigratedNotification"
+      ": " << ex.getMessage().str();
 
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"           , volReqId           ),
-      castor::dlf::Param("clientHost"         , clientHost         ),
-      castor::dlf::Param("clientPort"         , clientPort         ),
-      castor::dlf::Param("fileTransactionId"  , fileTransactionId  ),
-      castor::dlf::Param("nsHost"             , nsHost             ),
-      castor::dlf::Param("fileId"             , fileId             ),
-      castor::dlf::Param("tapeFileSeq"        , tapeFileSeq        ),
-      castor::dlf::Param("blockId[0]"         , blockId[0]         ),
-      castor::dlf::Param("blockId[1]"         , blockId[1]         ),
-      castor::dlf::Param("blockId[2]"         , blockId[2]         ),
-      castor::dlf::Param("blockId[3]"         , blockId[3]         ),
-      castor::dlf::Param("positionCommandCode", positionCommandCode),
-      castor::dlf::Param("checksumAlgorithm"  , checksumAlgorithm  ),
-      castor::dlf::Param("checksum"           , checksumHex        ),
-      castor::dlf::Param("fileSize"           , fileSize           ),
-      castor::dlf::Param("compressedFileSize" , compressedFileSize )};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_NOTIFIED_CLIENT_FILE_MIGRATED, params);
+    throw(ce);
   }
 }
 
 
-
-
 //-----------------------------------------------------------------------------
-// notifyFileRecalled
+// sendFileRecalledNotification
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::ClientTxRx::notifyFileRecalled(
-  const Cuuid_t        &cuuid,
-  const uint32_t       volReqId,
+int castor::tape::aggregator::ClientTxRx::sendFileRecalledNotification(
+  const uint32_t       mountTransactionId,
+  const uint64_t       aggregatorTransactionId,
   const char           *clientHost,
   const unsigned short clientPort,
+  time_t               &connectDuration,
   const uint64_t       fileTransactionId,
   const char           (&nsHost)[CA_MAXHOSTNAMELEN+1],
   const uint64_t       fileId,
@@ -447,104 +438,73 @@ void castor::tape::aggregator::ClientTxRx::notifyFileRecalled(
   const uint64_t       fileSize)
   throw(castor::exception::Exception) {
 
-  {
-    // 32-bits = 1 x '0' + 1 x 'x' + 8 x hex + 1 x '/0' = 11 byte string
-    char checksumHex[11];
-    checksumHex[0] = '0';
-    checksumHex[1] = 'x';
-    utils::toHex(checksum, &checksumHex[2], 9);
-
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"           , volReqId           ),
-      castor::dlf::Param("clientHost"         , clientHost         ),
-      castor::dlf::Param("clientPort"         , clientPort         ),
-      castor::dlf::Param("fileTransactionId"  , fileTransactionId  ),
-      castor::dlf::Param("nsHost"             , nsHost             ),
-      castor::dlf::Param("fileId"             , fileId             ),
-      castor::dlf::Param("tapeFileSeq"        , tapeFileSeq        ),
-      castor::dlf::Param("positionCommandCode", positionCommandCode),
-      castor::dlf::Param("checksumAlgorithm"  , checksumAlgorithm  ),
-      castor::dlf::Param("checksum"           , checksumHex        ),
-      castor::dlf::Param("filePath"           , filePath           ),
-      castor::dlf::Param("fileSize"           , fileSize           )};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
-      AGGREGATOR_NOTIFY_CLIENT_FILE_RECALLED, params);
-  }
-
-  // Prepare the request
-  tapegateway::FileRecalledNotification request;
-  request.setMountTransactionId(volReqId);
-  request.setFileTransactionId(fileTransactionId);
-  request.setNshost(nsHost);
-  request.setFileid(fileId);
-  request.setFseq(tapeFileSeq);
-  request.setPath(filePath);
-  request.setPositionCommandCode(
+  // Prepare the notification
+  tapegateway::FileRecalledNotification notification;
+  notification.setMountTransactionId(mountTransactionId);
+  notification.setAggregatorTransactionId(aggregatorTransactionId);
+  notification.setFileTransactionId(fileTransactionId);
+  notification.setNshost(nsHost);
+  notification.setFileid(fileId);
+  notification.setFseq(tapeFileSeq);
+  notification.setPath(filePath);
+  notification.setPositionCommandCode(
     (tapegateway::PositionCommandCode)positionCommandCode);
-  request.setChecksumName(checksumAlgorithm);
-  request.setChecksum(checksum);
-  request.setFileSize(fileSize);
+  notification.setChecksumName(checksumAlgorithm);
+  notification.setChecksum(checksum);
+  notification.setFileSize(fileSize);
 
-  const char *requestTypeName = "FileRecalledNotification";
-  notifyClient(cuuid, volReqId, requestTypeName, clientHost, clientPort,
-    CLIENTNETRWTIMEOUT, request);
+  // Send the notification and return the socket-descriptor of the connection
+  try {
+    return sendMessage(clientHost, clientPort, CLIENTNETRWTIMEOUT,
+      notification, connectDuration);
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Exception ce(ECANCELED);
 
-  {
-    // 32-bits = 1 x '0' + 1 x 'x' + 8 x hex + 1 x '/0' = 11 byte string
-    char checksumHex[11];
-    checksumHex[0] = '0';
-    checksumHex[1] = 'x';
-    utils::toHex(checksum, &checksumHex[2], 9);
+    ce.getMessage() <<
+      "Failed to send FileRecalledNotification"
+      ": " << ex.getMessage().str();
 
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"           , volReqId           ),
-      castor::dlf::Param("clientHost"         , clientHost         ),
-      castor::dlf::Param("clientPort"         , clientPort         ),
-      castor::dlf::Param("fileTransactionId"  , fileTransactionId  ),
-      castor::dlf::Param("nsHost"             , nsHost             ),
-      castor::dlf::Param("fileId"             , fileId             ),
-      castor::dlf::Param("tapeFileSeq"        , tapeFileSeq        ),
-      castor::dlf::Param("positionCommandCode", positionCommandCode),
-      castor::dlf::Param("checksumAlgorithm"  , checksumAlgorithm  ),
-      castor::dlf::Param("checksum"           , checksumHex        ),
-      castor::dlf::Param("fileSize"           , fileSize           )};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_NOTIFIED_CLIENT_FILE_RECALLED, params);
+    throw(ce);
   }
 }
-
 
 
 //-----------------------------------------------------------------------------
 // notifyEndOfSession
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::ClientTxRx::notifyEndOfSession(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const char *clientHost,
+  const Cuuid_t        &cuuid,
+  const uint32_t       mountTransactionId,
+  const uint64_t       aggregatorTransactionId,
+  const char           *clientHost,
   const unsigned short clientPort)
   throw(castor::exception::Exception) {
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"  , volReqId  ),
-      castor::dlf::Param("clientHost", clientHost),
-      castor::dlf::Param("clientPort", clientPort)};
+      castor::dlf::Param("mountTransactionId"     , mountTransactionId     ),
+      castor::dlf::Param("aggregatorTransactionId", aggregatorTransactionId),
+      castor::dlf::Param("clientHost"             , clientHost             ),
+      castor::dlf::Param("clientPort"             , clientPort             )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_NOTIFY_CLIENT_END_OF_SESSION, params);
   }
 
   // Prepare the request
   tapegateway::EndNotification request;
-  request.setMountTransactionId(volReqId);
+  request.setMountTransactionId(mountTransactionId);
+  request.setAggregatorTransactionId(aggregatorTransactionId);
 
   const char *requestTypeName = "EndNotification";
-  notifyClient(cuuid, volReqId, requestTypeName, clientHost, clientPort,
-    CLIENTNETRWTIMEOUT, request);
+  notifyClient(cuuid, mountTransactionId, aggregatorTransactionId,
+    requestTypeName, clientHost, clientPort, CLIENTNETRWTIMEOUT, request);
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"  , volReqId  ),
-      castor::dlf::Param("clientHost", clientHost),
-      castor::dlf::Param("clientPort", clientPort)};
+      castor::dlf::Param("mountTransactionId"     , mountTransactionId     ),
+      castor::dlf::Param("aggregatorTransactionId", aggregatorTransactionId),
+      castor::dlf::Param("clientHost"             , clientHost             ),
+      castor::dlf::Param("clientPort"             , clientPort             )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_NOTIFIED_CLIENT_END_OF_SESSION, params);
   }
@@ -556,21 +516,27 @@ void castor::tape::aggregator::ClientTxRx::notifyEndOfSession(
 //-----------------------------------------------------------------------------
 castor::tape::tapegateway::DumpParameters
   *castor::tape::aggregator::ClientTxRx::getDumpParameters(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const char *clientHost,
-  const unsigned short clientPort) throw(castor::exception::Exception) {
+  const Cuuid_t        &cuuid,
+  const uint32_t       mountTransactionId,
+  const uint64_t       aggregatorTransactionId,
+  const char           *clientHost,
+  const unsigned short clientPort)
+  throw(castor::exception::Exception) {
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"  , volReqId  ),
-      castor::dlf::Param("clientHost", clientHost),
-      castor::dlf::Param("clientPort", clientPort)};
+      castor::dlf::Param("mountTransactionId"     , mountTransactionId     ),
+      castor::dlf::Param("aggregatorTransactionId", aggregatorTransactionId),
+      castor::dlf::Param("clientHost"             , clientHost             ),
+      castor::dlf::Param("clientPort"             , clientPort             )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_GET_DUMP_PARAMETERS_FROM_CLIENT, params);
   }
 
   // Prepare the request
   tapegateway::DumpParametersRequest request;
-  request.setMountTransactionId(volReqId);
+  request.setMountTransactionId(mountTransactionId);
+  request.setAggregatorTransactionId(aggregatorTransactionId);
 
   // Send the request and receive the reply
   time_t connectDuration  = 0;
@@ -595,7 +561,9 @@ castor::tape::tapegateway::DumpParameters
         AGGREGATOR_GOT_DUMP_PARAMETERS_FROM_CLIENT, *reply, connectDuration,
         sendRecvDuration);
 
-      checkMountTransactionId(volReqId, reply->mountTransactionId());
+      checkTransactionIds("DumpParameters",
+        mountTransactionId     , reply->mountTransactionId(),
+        aggregatorTransactionId, reply->aggregatorTransactionId());
 
       // Release the reply message from its smart pointer and return it
       obj.release();
@@ -603,7 +571,8 @@ castor::tape::tapegateway::DumpParameters
     }
 
   case OBJ_EndNotificationErrorReport:
-    throwEndNotificationErrorReport(volReqId, obj.get());
+    throwEndNotificationErrorReport(mountTransactionId,
+      aggregatorTransactionId, obj.get());
     break;
 
   default:
@@ -622,35 +591,42 @@ castor::tape::tapegateway::DumpParameters
 // notifyDumpMessage
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::ClientTxRx::notifyDumpMessage(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const char *clientHost,
-  const unsigned short clientPort, const char (&message)[CA_MAXLINELEN+1])
+  const Cuuid_t        &cuuid,
+  const uint32_t       mountTransactionId,
+  const uint64_t       aggregatorTransactionId,
+  const char           *clientHost,
+  const unsigned short clientPort,
+  const char           (&message)[CA_MAXLINELEN+1])
   throw(castor::exception::Exception) {
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"  , volReqId  ),
-      castor::dlf::Param("clientHost", clientHost),
-      castor::dlf::Param("clientPort", clientPort),
-      castor::dlf::Param("message"   , message   )};
+      castor::dlf::Param("mountTransactionId"     , mountTransactionId     ),
+      castor::dlf::Param("aggregatorTransactionId", aggregatorTransactionId),
+      castor::dlf::Param("clientHost"             , clientHost             ),
+      castor::dlf::Param("clientPort"             , clientPort             ),
+      castor::dlf::Param("message"                , message                )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_NOTIFY_CLIENT_DUMP_MESSAGE, params);
   }
 
   // Prepare the request
   tapegateway::DumpNotification request;
-  request.setMountTransactionId(volReqId);
+  request.setMountTransactionId(mountTransactionId);
+  request.setAggregatorTransactionId(aggregatorTransactionId);
   request.setMessage(message);
 
   const char *requestTypeName = "DumpNotification";
-  notifyClient(cuuid, volReqId, requestTypeName, clientHost, clientPort,
-    CLIENTNETRWTIMEOUT, request);
+  notifyClient(cuuid, mountTransactionId, aggregatorTransactionId,
+    requestTypeName, clientHost, clientPort, CLIENTNETRWTIMEOUT, request);
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"  , volReqId  ),
-      castor::dlf::Param("clientHost", clientHost),
-      castor::dlf::Param("clientPort", clientPort),
-      castor::dlf::Param("message"    , message  )};
+      castor::dlf::Param("mountTransactionId"     , mountTransactionId     ),
+      castor::dlf::Param("aggregatorTransactionId", aggregatorTransactionId),
+      castor::dlf::Param("clientHost"             , clientHost             ),
+      castor::dlf::Param("clientPort"             , clientPort             ),
+      castor::dlf::Param("message"                , message                )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_NOTIFIED_CLIENT_DUMP_MESSAGE, params);
   }
@@ -661,36 +637,43 @@ void castor::tape::aggregator::ClientTxRx::notifyDumpMessage(
 // notifyEndOfFailedSession
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::ClientTxRx::notifyEndOfFailedSession(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const char *clientHost,
-  const unsigned short clientPort, castor::exception::Exception &ex)
+  const Cuuid_t                &cuuid,
+  const uint32_t               mountTransactionId,
+  const uint64_t               aggregatorTransactionId,
+  const char                   *clientHost,
+  const unsigned short         clientPort,
+  castor::exception::Exception &ex)
   throw(castor::exception::Exception) {
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"  , volReqId  ),
-      castor::dlf::Param("clientHost", clientHost),
-      castor::dlf::Param("clientPort", clientPort)};
+      castor::dlf::Param("mountTransactionId"     , mountTransactionId     ),
+      castor::dlf::Param("aggregatorTransactionId", aggregatorTransactionId),
+      castor::dlf::Param("clientHost"             , clientHost             ),
+      castor::dlf::Param("clientPort"             , clientPort             )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
   }
 
   // Prepare the request
   tapegateway::EndNotificationErrorReport request;
-  request.setMountTransactionId(volReqId);
+  request.setMountTransactionId(mountTransactionId);
+  request.setAggregatorTransactionId(aggregatorTransactionId);
   request.setErrorCode(ex.code());
   request.setErrorMessage(ex.getMessage().str());
 
   const char *requestTypeName = "EndNotificationErrorReport";
-  notifyClient(cuuid, volReqId, requestTypeName, clientHost, clientPort,
-    CLIENTNETRWTIMEOUT, request);
+  notifyClient(cuuid, mountTransactionId, aggregatorTransactionId,
+    requestTypeName, clientHost, clientPort, CLIENTNETRWTIMEOUT, request);
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"          , volReqId             ),
-      castor::dlf::Param("clientHost"        , clientHost           ),
-      castor::dlf::Param("clientPort"        , clientPort           ),
-      castor::dlf::Param("errorCode"         , ex.code()            ),
-      castor::dlf::Param("errorrMessage"     , ex.getMessage().str())};
+      castor::dlf::Param("mountTransactionId"     , mountTransactionId     ),
+      castor::dlf::Param("aggregatorTransactionId", aggregatorTransactionId),
+      castor::dlf::Param("clientHost"             , clientHost             ),
+      castor::dlf::Param("clientPort"             , clientPort             ),
+      castor::dlf::Param("errorCode"              , ex.code()              ),
+      castor::dlf::Param("errorrMessage"          , ex.getMessage().str()  )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_NOTIFIED_CLIENT_END_OF_FAILED_SESSION, params);
   }
@@ -701,34 +684,127 @@ void castor::tape::aggregator::ClientTxRx::notifyEndOfFailedSession(
 // ping
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::ClientTxRx::ping(const Cuuid_t &cuuid,
-  const uint32_t volReqId, const char *clientHost,
-  const unsigned short clientPort) throw(castor::exception::Exception) {
+  const uint32_t       mountTransactionId,
+  const uint64_t       aggregatorTransactionId,
+  const char           *clientHost,
+  const unsigned short clientPort)
+  throw(castor::exception::Exception) {
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"  , volReqId  ),
-      castor::dlf::Param("clientHost", clientHost),
-      castor::dlf::Param("clientPort", clientPort)};
+      castor::dlf::Param("mountTransactionId"     , mountTransactionId     ),
+      castor::dlf::Param("aggregatorTransactionId", aggregatorTransactionId),
+      castor::dlf::Param("clientHost"             , clientHost             ),
+      castor::dlf::Param("clientPort"             , clientPort             )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_PING_CLIENT, params);
   }
 
   // Prepare the request
   tapegateway::PingNotification request;
-  request.setMountTransactionId(volReqId);
+  request.setMountTransactionId(mountTransactionId);
+  request.setAggregatorTransactionId(aggregatorTransactionId);
 
   const char *requestTypeName = "PingNotification";
-  notifyClient(cuuid, volReqId, requestTypeName, clientHost, clientPort,
-    CLIENTNETRWTIMEOUT, request);
+  notifyClient(cuuid, mountTransactionId, aggregatorTransactionId,
+    requestTypeName, clientHost, clientPort, CLIENTNETRWTIMEOUT, request);
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"  , volReqId  ),
-      castor::dlf::Param("clientHost", clientHost),
-      castor::dlf::Param("clientPort", clientPort)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      castor::dlf::Param("mountTransactionId"     , mountTransactionId     ),
+      castor::dlf::Param("aggregatorTransactionId", aggregatorTransactionId),
+      castor::dlf::Param("clientHost"             , clientHost             ),
+      castor::dlf::Param("clientPort"             , clientPort             )};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_PINGED_CLIENT, params);
   }
+}
+
+
+//-----------------------------------------------------------------------------
+// sendMessage
+//-----------------------------------------------------------------------------
+int castor::tape::aggregator::ClientTxRx::sendMessage(
+  const char           *clientHost,
+  const unsigned short clientPort,
+  const int            clientNetRWTimeout,
+  IObject              &message,
+  time_t               &connectDuration)
+  throw(castor::exception::Exception) {
+
+  // Connect to the client
+  castor::io::ClientSocket sock(clientPort, clientHost);
+  sock.setTimeout(clientNetRWTimeout);
+  try {
+    const size_t connectStartTime = time(NULL);
+    sock.connect();
+    connectDuration = time(NULL) - connectStartTime;
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ex.code(),
+      ": Failed to connect to client"
+      ": clientHost=" << clientHost <<
+      ": clientPort=" << clientPort <<
+      ": clientNetRWTimeout=" << clientNetRWTimeout <<
+      ": " << ex.getMessage().str());
+  }
+
+  // Send the message
+  try {
+    sock.sendObject(message);
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ex.code(),
+      ": Failed to send request to client"
+      ": clientHost=" << clientHost <<
+      ": clientPort=" << clientPort <<
+      ": clientNetRWTimeout=" << clientNetRWTimeout <<
+      ": " << ex.getMessage().str());
+  }
+
+  // Release the socket-descriptor from the castor::io::ClientSocket object so
+  // that it is not closed by its destructor
+  const int socketDescriptor = sock.socket();
+  sock.resetSocket();
+
+  // Return the socket-descriptor
+  return(socketDescriptor);
+}
+
+
+//-----------------------------------------------------------------------------
+// receiveReplyAndClose
+//-----------------------------------------------------------------------------
+castor::IObject *castor::tape::aggregator::ClientTxRx::receiveReplyAndClose(
+  const int clientSock, const int clientNetRWTimeout)
+  throw(castor::exception::Exception) {
+
+  // Receive the reply object
+  castor::io::AbstractTCPSocket sock(clientSock);
+  sock.setTimeout(clientNetRWTimeout);
+  std::auto_ptr<castor::IObject> obj;
+  try {
+    obj.reset(sock.readObject());
+
+    if(obj.get() == NULL) {
+      TAPE_THROW_EX(castor::exception::Internal,
+        ": ClientSocket::readObject() returned null");
+    }
+  } catch(castor::exception::Exception &ex) {
+
+    std::stringstream oss;
+
+    oss << ": Failed to read reply from client: " << ex.getMessage().str();
+
+    if(ex.code() == SETIMEDOUT) {
+      oss << ": Timed out after " << sock.timeout() << " seconds";
+    }
+
+    TAPE_THROW_CODE(ex.code(), oss.str());
+  }
+
+  // Close the connection to the client
+  sock.close();
+
+  return(obj.release());
 }
 
 
@@ -802,11 +878,58 @@ castor::IObject
 
 
 //-----------------------------------------------------------------------------
+// receiveNotificationReplyAndClose
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::ClientTxRx::receiveNotificationReplyAndClose(
+  const uint32_t mountTransactionId,
+  const uint64_t aggregatorTransactionId,
+  const int      clientSock)
+  throw(castor::exception::Exception) {
+
+  std::auto_ptr<castor::IObject> obj(receiveReplyAndClose(clientSock,
+    CLIENTNETRWTIMEOUT));
+
+  switch(obj->type()) {
+  case OBJ_NotificationAcknowledge:
+    {
+      // Down cast the reply to its specific class
+      tapegateway::NotificationAcknowledge *reply =
+        dynamic_cast<tapegateway::NotificationAcknowledge*>(obj.get());
+
+      if(reply == NULL) {
+        TAPE_THROW_EX(castor::exception::Internal,
+          ": Failed to down cast reply object to "
+          "tapegateway::NotificationAcknowledge");
+      }
+
+      checkTransactionIds("NotificationAcknowledge",
+        mountTransactionId     , reply->mountTransactionId(),
+        aggregatorTransactionId, reply->aggregatorTransactionId());
+    }
+    break;
+
+  case OBJ_EndNotificationErrorReport:
+    throwEndNotificationErrorReport(mountTransactionId,
+      aggregatorTransactionId, obj.get());
+    break;
+
+  default:
+    {
+      TAPE_THROW_CODE(EBADMSG,
+        ": Unknown reply type "
+        ": Reply type = " << obj->type());
+    }
+  } // switch(obj->type())
+}
+
+
+//-----------------------------------------------------------------------------
 // notifyClient
 //-----------------------------------------------------------------------------
-void  castor::tape::aggregator::ClientTxRx::notifyClient(
+void castor::tape::aggregator::ClientTxRx::notifyClient(
   const Cuuid_t        &cuuid,
-  const uint32_t       volReqId,
+  const uint32_t       mountTransactionId,
+  const uint64_t       aggregatorTransactionId,
   const char           *requestTypeName,
   const char           *clientHost,
   const unsigned short clientPort,
@@ -834,12 +957,15 @@ void  castor::tape::aggregator::ClientTxRx::notifyClient(
           "tapegateway::NotificationAcknowledge");
       }
 
-      checkMountTransactionId(volReqId, reply->mountTransactionId());
+      checkTransactionIds("NotificationAcknowledge",
+        mountTransactionId     , reply->mountTransactionId(),
+        aggregatorTransactionId, reply->aggregatorTransactionId());
     }
     break;
 
   case OBJ_EndNotificationErrorReport:
-    throwEndNotificationErrorReport(volReqId, obj.get());
+    throwEndNotificationErrorReport(mountTransactionId,
+      aggregatorTransactionId, obj.get());
     break;
 
   default:
@@ -856,7 +982,9 @@ void  castor::tape::aggregator::ClientTxRx::notifyClient(
 // throwEndNotificationErrorReport
 //-----------------------------------------------------------------------------
 void  castor::tape::aggregator::ClientTxRx::throwEndNotificationErrorReport(
-  const uint32_t volReqId, IObject *const obj)
+  const uint32_t mountTransactionId,
+  const uint64_t aggregatorTransactionId,
+  IObject *const obj)
   throw(castor::exception::Exception) {
 
   // Down cast the reply to its specific class
@@ -869,8 +997,6 @@ void  castor::tape::aggregator::ClientTxRx::throwEndNotificationErrorReport(
       "tapegateway::EndNotificationErrorReport");
   }
 
-  checkMountTransactionId(volReqId, reply->mountTransactionId());
-
   // Translate the reception of the error report into a C++ exception
   TAPE_THROW_CODE(reply->errorCode(),
      ": Client error report "
@@ -879,17 +1005,38 @@ void  castor::tape::aggregator::ClientTxRx::throwEndNotificationErrorReport(
 
 
 //-----------------------------------------------------------------------------
-// checkMountTransactionId
+// checkTransactionIds
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::ClientTxRx::checkMountTransactionId(
-  const uint32_t expectedId, const uint32_t actualId)
+void castor::tape::aggregator::ClientTxRx::checkTransactionIds(
+  const char *const messageTypeName,
+  const uint32_t    expectedMountTransactionId,
+  const uint32_t    actualMountTransactionId,
+  const uint64_t    expectedAggregatorTransactionId,
+  const uint64_t    actualAggregatorTransactionId)
   throw(castor::exception::Exception) {
 
-  // Throw an exception if there is a transaction ID mismatch
-  if(expectedId != actualId) {
+  int nbErrors = 0;
+  std::stringstream errorMessage;
+
+  if(expectedMountTransactionId != actualMountTransactionId) {
+    nbErrors++;
+    errorMessage <<
+      ": " << messageTypeName <<
+      " message contains a mount transaction ID mismatch"
+      ": expectedMountTransactionId=" << expectedMountTransactionId <<
+      ": actualMountTransactionId=" << actualMountTransactionId;
+  }
+
+  if(expectedAggregatorTransactionId != actualAggregatorTransactionId) {
+    nbErrors++;
+    errorMessage <<
+      ": " << messageTypeName <<
+      " message contains an aggregator transaction ID mismatch"
+      ": expectedAggregatorTransactionId=" << expectedAggregatorTransactionId <<
+      ": actualAggregatorTransactionId=" << actualAggregatorTransactionId;
+  }
+  if(nbErrors > 0) {
     TAPE_THROW_CODE(EBADMSG,
-      ": Transaction ID mismatch"
-      ": Expected = " <<  expectedId
-      << ": Actual = " << actualId);
+      errorMessage.str());
   }
 }

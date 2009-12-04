@@ -27,7 +27,9 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/aggregator/BoolFunctor.hpp"
+#include "castor/tape/aggregator/BridgeSocketCatalogue.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
+#include "castor/tape/aggregator/Counter.hpp"
 #include "castor/tape/aggregator/SmartFdList.hpp"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
@@ -44,7 +46,7 @@ namespace tape       {
 namespace aggregator {
 
 /**
- * Acts as a bridge between the tape gatway and RTCPD.
+ * Acts as a bridge between the tape gatway and rtcpd.
  */
 class BridgeProtocolEngine {
 
@@ -54,11 +56,11 @@ public:
    * Constructor.
    *
    * @param cuuid                    The ccuid to be used for logging.
-   * @param rtcpdCallbackSockFd      The file descriptor of the listener socket
+   * @param listenSock               The socket-descriptor of the listen socket
    *                                 to be used to accept callback connections
-   *                                 from RTCPD.
-   * @param rtcpdInitialSockFd       The socket file descriptor of initial
-   *                                 RTCPD connection.
+   *                                 from rtcpd.
+   * @param initialRtcpdSock         The socket-descriptor of the initial rtcpd
+   *                                 connection.
    * @param jobRequest               The RTCOPY job request from the VDQM.
    * @param volume                   The volume message received from the
    *                                 client.
@@ -68,15 +70,19 @@ public:
    *                                 this parameter is ignored.
    * @param stoppingGracefully       Functor that returns true if the daemon is
    *                                 stopping gracefully.
+   * @param aggregatorTransactionCounter  The counter used to generate
+   *                                 aggregator transaction IDs.  These are the
+   *                                 IDS used in requests to the clients.
    */
   BridgeProtocolEngine(
     const Cuuid_t                       &cuuid,
-    const int                           rtcpdCallbackSockFd,
-    const int                           rtcpdInitialSockFd,
+    const int                           rtcpdListenSock,
+    const int                           initialRtcpdSock,
     const legacymsg::RtcpJobRqstMsgBody &jobRequest,
     tapegateway::Volume                 &volume,
     const uint32_t                      nbFilesOnDestinationTape,
-    BoolFunctor                         &stoppingGracefully)
+    BoolFunctor                         &stoppingGracefully,
+    Counter<uint64_t>                   &aggregatorTransactionCounter)
   throw();
 
   /**
@@ -93,16 +99,20 @@ private:
   const Cuuid_t &m_cuuid;
 
   /**
-   * The file descriptor of the listener socket
-   * to be used to accept callback connections from RTCPD.
+   * The catalogue of all the rtcpd and tapegateway connections used by the
+   * bridge protocol engine.
+   *
+   * The catalogue behaves like a smart pointer for the rtcpd disk/tape IO
+   * control-connections and the client connections in that its destructor will
+   * close them if they are still open.
+   *
+   * The catalogue will not close the listen socket used to accept rtcpd
+   * connections.  This is the responsibility of the VdqmRequestHandler.
+   *
+   * The catalogue will not close the initial rtcpd connection.  This is the
+   * responsibility of the VdqmRequestHandler.
    */
-  const int m_rtcpdCallbackSockFd;
-
-  /**
-   * The socket file descriptor of initial RTCPD
-   * connection.
-   */
-  const int m_rtcpdInitialSockFd;
+  BridgeSocketCatalogue m_sockCatalogue;
 
   /**
    * The RTCOPY job request from the VDQM.
@@ -110,12 +120,12 @@ private:
   const legacymsg::RtcpJobRqstMsgBody &m_jobRequest;
 
   /**
-   * The volume message received from the tape gateway.
+   * The volume message received from the client.
    */
   tapegateway::Volume &m_volume;
 
   /**
-   * If migrating and the client is the tape gateway, then this is the next
+   * If migrating and the client is the tape-gateway, then this is the next
    * expected tape file sequence, else this member is ignored.
    */
   uint32_t m_nextDestinationFseq;
@@ -126,9 +136,10 @@ private:
   BoolFunctor &m_stoppingGracefully;
 
   /**
-   * The number of callback connections.
+   * The counter used to generate the next aggregator transaction ID to be used
+   * in a request to the client.
    */
-  uint32_t m_nbCallbackConnections;
+  Counter<uint64_t> &m_aggregatorTransactionCounter;
 
   /**
    * The number of received RTCP_ENDOF_REQ messages.
@@ -136,28 +147,28 @@ private:
   uint32_t m_nbReceivedENDOF_REQs;
 
   /**
-   * Pointer to a message body handler function, where the handler function
-   * is a member of this class.
+   * Pointer to an rtcpd message body handler function, where the handler
+   * function is a member of this class.
    *
-   * @param header The header of the RTCPD request.
+   * @param header The header of the rtcpd request.
    * @param socketFd The file descriptor of the socket from which the message
    * should be read from.
    * @param endOfSession Out parameter: Will be set to true by this function
    * if the end of the recall/migration session has been reached.
    */
-  typedef void (BridgeProtocolEngine::*MsgBodyCallback)(
+  typedef void (BridgeProtocolEngine::*RtcpdMsgBodyCallback)(
     const legacymsg::MessageHeader &header, const int socketFd,
     bool &endOfSession);
 
   /**
-   * Datatype for the map of magic+reqType to message body handler.
+   * Datatype for the map of magic+reqType to rtcpd message-body handler.
    */
-  typedef std::map<uint64_t, MsgBodyCallback> MsgBodyCallbackMap;
+  typedef std::map<uint64_t, RtcpdMsgBodyCallback> RtcpdCallbackMap;
 
   /**
-   * Map of magic+reqType to message body handler.
+   * Map of magic+reqType to rtcpd message-body handler.
    */
-  MsgBodyCallbackMap m_handlers;
+  RtcpdCallbackMap m_rtcpdHandlers;
 
   /**
    * Indexed container of the file transaction IDs of all the files currently
@@ -166,17 +177,17 @@ private:
   utils::IndexedContainer<uint64_t> m_pendingTransferIds;
 
   /**
-   * In-line helper function that returns a 64-bit message body handler key to
-   * be used in the m_handler map.
+   * In-line helper function that returns a 64-bit rtcpd message body handler
+   * key to be used in the m_rtcpdHandler map.
    *
    * The 64-bit key is generated by combining the specified 32-bit magic
    * number with the specified 32-bit request type.
    *
    * @param magic   The magic number.
    * @param reqType The request type.
-   * @return The 64-bit key.
+   * @return        The 64-bit key.
    */
-  uint64_t createHandlerKey(uint32_t magic, uint32_t reqType) throw() {
+  uint64_t createRtcpdHandlerKey(uint32_t magic, uint32_t reqType) throw() {
 
     struct TwoUint32 {
       uint32_t a;
@@ -193,67 +204,83 @@ private:
   }
 
   /**
-   * Processes the RTCPD sockets.
+   * Pointer to a client message handler function, where the handler function
+   * is a member of this class.
+   *
+   * @param clientSock         The socket-descriptor of the client-connection
+   *                           which has already been released from the socket
+   *                           catalogue and has already been closed.  The
+   *                           value of this parameter is only used for logging
+   *                           and the creation of error messages.
+   * @param obj                The message object received from the client.
+   * @param rtcpdSock          The file descriptor of the rtcpd socket which is
+   *                           awaiting a reply.
+   * @param rtcpdStatus        The status of the rtcpd disk/tape IO
+   *                           control-connection.
+   * @param rtcpdMagic         The magic number of the initiating rtcpd request.
+   *                           This magic number will be used in any acknowledge
+   *                           message to be sent to rtcpd.
+   * @param rtcpdReqType       The request type of the initiating rtcpd
+   *                           request. This request type will be used in any
+   *                           acknowledge message to be sent to rtcpd.
+   * @param rtcpdTapePath      The tape path associated with the initiating
+   *                           rtcpd request.  If there is no such tape path,
+   *                           then the value of this parameter should be set
+   *                           to NULL.
+   * @param aggregatorTransactionId The aggregator transaction ID associated
+   *                           with the request sent to the client.  If no
+   *                           request was sent then this parameter should be
+   *                           set to 0.
+   * @param clientReqTimeStamp The time at which the client request was sent.
    */
-  void processRtcpdSocks() throw(castor::exception::Exception);
+  typedef void (BridgeProtocolEngine::*ClientMsgCallback)(
+    const int                                    clientSock,
+    const IObject                                *obj,
+    const int                                    rtcpdSock,
+    BridgeSocketCatalogue::RtcpdConnectionStatus rtcpdStatus,
+    const uint32_t                               rtcpdMagic,
+    const uint32_t                               rtcpdReqType,
+    const char                                   *rtcpdTapePath,
+    const uint64_t                               aggregatorTransactionId,
+    const struct timeval                         clientReqTimeStamp);
 
   /**
-   * Accepts an RTCPD connection using the specified listener socket.
+   * Datatype for the map of IObject types to client message handler.
+   */
+  typedef std::map<int, ClientMsgCallback> ClientCallbackMap;
+
+  /**
+   * Map of client message handlers.
+   */
+  ClientCallbackMap m_clientHandlers;
+
+  /**
+   * Processes the rtcpd and client sockets.
+   */
+  void processSocks() throw(castor::exception::Exception);
+
+  /**
+   * Accepts an rtcpd connection using the specified listener socket.
    */
   int acceptRtcpdConnection() throw(castor::exception::Exception);
 
   /**
-   * Processes a pending RTCPD socket given the list of read file descriptors
-   * to be checked and the result of calling select().
+   * Processes a pending socket the result of calling select().
    *
-   * Please note that this method will modify the list of read file descriptors
-   * as necessary.  For example closed connection will be removed and newly
-   * accepted connections will be added.
+   * Please note that this method will modify the catalogue of
+   * socket-descriptors as necessary.  For example closed connections will be
+   * released from the catalogue and newly accepted connections added.
    *
-   * @param socketFds The read file descriptors to be checked.
-   * @param fdSet     The file descriptor set from calling select().
+   * @param readFdSet The read file-descriptor set from calling select().
    * @return          True if the RTCOPY session should continue else false.
    */
-  bool processAPendingRtcpdSocket(SmartFdList &socketFds, fd_set *fdSet)
+  bool processAPendingSocket(fd_set &readFdSet)
     throw (castor::exception::Exception);
 
   /**
-   * Finds a file descriptor in a select() file descriptor set that requires
-   * attention.
+   * Processes the specified rtcpd request.
    *
-   * @param fds   The file descriptors to be checked.
-   * @param fdSet The file descriptor set from calling select().
-   * @return      The file descriptor requiring attention or -1 if none was
-   *              found.
-   */
-  int findPendingFd(const std::list<int> &fds, fd_set *fdSet) throw();
-
-  /**
-   * The possible return values of processRtcpdSock.  For documentation please
-   * see the documentation of processRtcpdSock().
-   */
-  enum ProcessRtcpdSockResult {
-    MSG_PROCESSED,
-    PEER_CLOSED,
-    END_RECEIVED
-  };
-
-  /**
-   * Processes the specified RTCPD socket.
-   *
-   * @param socketFd The file descriptor of the socket to be processed.
-   * @return         Returns MSG_PROCESSED if a message was succesfully received
-   *                 and processed and it was not the ENDOF_REQ message.
-   *                 Returns PEER_CLOSED if the peerc losed the connection.
-   *                 Returns END_RECEIVED if the ENDOF_REQ message was received.
-   */
-  ProcessRtcpdSockResult processRtcpdSock(const int socketFd)
-    throw(castor::exception::Exception);
-
-  /**
-   * Processes the specified RTCPD request.
-   *
-   * @param header The header of the RTCPD request.
+   * @param header The header of the rtcpd request.
    * @param socketFd The file descriptor of the socket from which the message
    * should be read from.
    * @param receivedENDOF_REQ Out parameter: Will be set to true by this
@@ -264,77 +291,71 @@ private:
     throw(castor::exception::Exception);
 
   /**
-   * Closes the specified RTCPD socket.  After closing the connection this
-   * method throws an exception if the specified socket is that of the initial
-   * callback connection.
-   */
-  void closeNonInitialRtcpdSocket(SmartFdList &socketFds, const int socketFd)
-    throw(castor::exception::Exception);
-
-  /**
-   * RTCP_FILE_REQ message body handler.
+   * RTCP_FILE_REQ rtcpd message-body handler.
    *
    * For full documenation please see the documentation of the type
    * RtcpdBridgeProtocolEngine::MsgBodyCallback.
    */
-  void rtcpFileReqCallback(const legacymsg::MessageHeader &header,
+  void rtcpFileReqRtcpdCallback(const legacymsg::MessageHeader &header,
     const int socketFd, bool &receivedENDOF_REQ)
     throw(castor::exception::Exception);
 
   /**
-   * RTCP_FILEERR_REQ message body handler.
+   * RTCP_FILEERR_REQ rtcpd message-body handler.
    *
    * For full documenation please see the documentation of the type
    * RtcpdBridgeProtocolEngine::MsgBodyCallback.
    */
-  void rtcpFileErrReqCallback(const legacymsg::MessageHeader &header,
+  void rtcpFileErrReqRtcpdCallback(const legacymsg::MessageHeader &header,
     const int socketFd, bool &receivedENDOF_REQ)
     throw(castor::exception::Exception);
 
   /**
    * Processes the specified RTCP file request.
    *
-   * This function implements the common logic of the rtcpFileReqCallback and
-   * rtcpFileErrReqCallback functions.
+   * This function implements the common logic of the rtcpFileReqRtcpdCallback
+   * and rtcpFileErrReqRtcpdCallback functions.
    *
-   * @param header The header of the request.
-   * @param body The body of the request which maybe either of type
-   * RtcpFileRqstMsgBody or RtcpFileRqstErrMsgBody, as RtcpFileRqstErrMsgBody
-   * inherits from RtcpFileRqstMsgBody.
-   * @param socketFd The file descriptor of the socket from which both the
-   * header and the body of the message have already been read from.
+   * @param header            The header of the request.
+   * @param body              The body of the request which maybe either of type
+   *                          RtcpFileRqstMsgBody or RtcpFileRqstErrMsgBody, as
+   *                          RtcpFileRqstErrMsgBody inherits from
+   *                          RtcpFileRqstMsgBody.
+   * @param rtcpdSock         The file descriptor of the socket from which both
+   *                          the header and the body of the message have
+   *                          already been read from.
    * @param receivedENDOF_REQ Out parameter: Will be set to true by this
-   * function of an RTCP_ENDOF_REQ was received.
+   *                          function of an RTCP_ENDOF_REQ was received.
    */
   void processRtcpFileReq(const legacymsg::MessageHeader &header,
-    legacymsg::RtcpFileRqstMsgBody &body, const int socketFd, 
+    legacymsg::RtcpFileRqstMsgBody &body, const int rtcpdSock, 
     bool &receivedENDOF_REQ) throw(castor::exception::Exception);
 
   /**
-   * RTCP_TAPEREQ message body handler.
+   * RTCP_TAPEREQ rtcpd message-body handler.
    *
    * For full documenation please see the documentation of the type
    * RtcpdBridgeProtocolEngine::MsgBodyCallback.
    */
-  void rtcpTapeReqCallback(const legacymsg::MessageHeader &header,
+  void rtcpTapeReqRtcpdCallback(const legacymsg::MessageHeader &header,
     const int socketFd, bool &receivedENDOF_REQ)
     throw(castor::exception::Exception);
 
   /**
-   * RTCP_TAPEERR message body handler.
+   * RTCP_TAPEERR rtcpd message-body handler.
    *
    * For full documenation please see the documentation of the type
    * RtcpdBridgeProtocolEngine::MsgBodyCallback.
    */
-  void rtcpTapeErrReqCallback(const legacymsg::MessageHeader &header,
+  void rtcpTapeErrReqRtcpdCallback(const legacymsg::MessageHeader &header,
     const int socketFd, bool &receivedENDOF_REQ)
     throw(castor::exception::Exception);
 
   /**
    * Processes the specified RTCP tape request.
    *
-   * This function implements the common logic of the rtcpTapeReqCallback and
-   * rtcpTapeErrReqCallback functions.
+   * This function implements the common logic of the rtcpTapeReqRtcpdCallback
+   * and rtcpTapeErrReqRtcpdCallback functions.
    *
    * @param header The header of the request.
    * @param body The body of the request which maybe either of type
@@ -350,22 +371,22 @@ private:
     bool &receivedENDOF_REQ) throw(castor::exception::Exception);
 
   /**
-   * RTCP_ENDOF_REQ message body handler.
+   * RTCP_ENDOF_REQ rtcpd message-body handler.
    *
    * For full documenation please see the documentation of the type
    * RtcpdBridgeProtocolEngine::MsgBodyCallback.
    */
-  void rtcpEndOfReqCallback(const legacymsg::MessageHeader &header,
+  void rtcpEndOfReqRtcpdCallback(const legacymsg::MessageHeader &header,
     const int socketFd, bool &receivedENDOF_REQ)
     throw(castor::exception::Exception);
 
   /**
-   * GIVE_OUTP message body handler.
+   * GIVE_OUTP rtcpd message-body handler.
    *
    * For full documenation please see the documentation of the type
    * RtcpdBridgeProtocolEngine::MsgBodyCallback.
    */
-  void giveOutpCallback(const legacymsg::MessageHeader &header,
+  void giveOutpRtcpdCallback(const legacymsg::MessageHeader &header,
     const int socketFd, bool &receivedENDOF_REQ)
     throw(castor::exception::Exception);
 
@@ -392,7 +413,98 @@ private:
    */
   void checkPeerIsLocalhost(const int socketFd)
     throw(castor::exception::Exception);
-};
+
+  /**
+   * FileToMigrate client message handler.
+   *
+   * For full documenation please see the documentation of the type
+   * RtcpdBridgeProtocolEngine::ClientMsgCallback.
+   */
+  void fileToMigrateClientCallback(
+    const int                                    clientSock,
+    const IObject                                *obj,
+    const int                                    rtcpdSock,
+    BridgeSocketCatalogue::RtcpdConnectionStatus rtcpdStatus,
+    const uint32_t                               rtcpdMagic,
+    const uint32_t                               rtcpdReqType,
+    const char                                   *rtcpdTapePath,
+    const uint64_t                               aggregatorTransactionId,
+    struct timeval                               clientReqTimeStamp)
+    throw(castor::exception::Exception);
+
+  /**
+   * FileToRecall client message handler.
+   *
+   * For full documenation please see the documentation of the type
+   * RtcpdBridgeProtocolEngine::ClientMsgCallback.
+   */
+  void fileToRecallClientCallback(
+    const int                                    clientSock,
+    const IObject                                *obj,
+    const int                                    rtcpdSock,
+    BridgeSocketCatalogue::RtcpdConnectionStatus rtcpdStatus,
+    const uint32_t                               rtcpdMagic,
+    const uint32_t                               rtcpdReqType,
+    const char                                   *rtcpdTapePath,
+    const uint64_t                               aggregatorTransactionId,
+    struct timeval                               clientReqTimeStamp)
+    throw(castor::exception::Exception);
+
+  /**
+   * NoMoreFiles client message handler.
+   *
+   * For full documenation please see the documentation of the type
+   * RtcpdBridgeProtocolEngine::ClientMsgCallback.
+   */
+  void noMoreFilesClientCallback(
+    const int                                    clientSock,
+    const IObject                                *obj,
+    const int                                    rtcpdSock,
+    BridgeSocketCatalogue::RtcpdConnectionStatus rtcpdStatus,
+    const uint32_t                               rtcpdMagic,
+    const uint32_t                               rtcpdReqType,
+    const char                                   *rtcpdTapePath,
+    const uint64_t                               aggregatorTransactionId,
+    struct timeval                               clientReqTimeStamp)
+    throw(castor::exception::Exception);
+
+  /**
+   * EndNotificationErrorReport client message handler.
+   *
+   * For full documenation please see the documentation of the type
+   * RtcpdBridgeProtocolEngine::ClientMsgCallback.
+   */
+  void endNotificationErrorReportClientCallback(
+    const int                                    clientSock,
+    const IObject                                *obj,
+    const int                                    rtcpdSock,
+    BridgeSocketCatalogue::RtcpdConnectionStatus rtcpdStatus,
+    const uint32_t                               rtcpdMagic,
+    const uint32_t                               rtcpdReqType,
+    const char                                   *rtcpdTapePath,
+    const uint64_t                               aggregatorTransactionId,
+    struct timeval                               clientReqTimeStamp)
+    throw(castor::exception::Exception);
+
+  /**
+   * NotificationAcknowledge client message handler.
+   *
+   * For full documenation please see the documentation of the type
+   * RtcpdBridgeProtocolEngine::ClientMsgCallback.
+   */
+  void notificationAcknowledge(
+    const int                                    clientSock,
+    const IObject                                *obj,
+    const int                                    rtcpdSock,
+    BridgeSocketCatalogue::RtcpdConnectionStatus rtcpdStatus,
+    const uint32_t                               rtcpdMagic,
+    const uint32_t                               rtcpdReqType,
+    const char                                   *rtcpdTapePath,
+    const uint64_t                               aggregatorTransactionId,
+    struct timeval                               clientReqTimeStamp)
+    throw(castor::exception::Exception);
+
+}; // class BridgeProtocolEngine
 
 } // namespace aggregator
 } // namespace tape

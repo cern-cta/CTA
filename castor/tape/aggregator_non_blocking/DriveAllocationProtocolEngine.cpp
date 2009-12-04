@@ -42,6 +42,15 @@
 
 
 //-----------------------------------------------------------------------------
+// constructor
+//-----------------------------------------------------------------------------
+castor::tape::aggregator::DriveAllocationProtocolEngine::
+  DriveAllocationProtocolEngine(Counter<uint64_t> &aggregatorTransactionCounter)
+  throw() : m_aggregatorTransactionCounter(aggregatorTransactionCounter) {
+}
+
+
+//-----------------------------------------------------------------------------
 // run
 //-----------------------------------------------------------------------------
 castor::tape::tapegateway::Volume
@@ -124,10 +133,11 @@ castor::tape::tapegateway::Volume
       castor::dlf::Param("HostName", hostName                    ),
       castor::dlf::Param("socketFd", rtcpdInitialSockFd.get()  )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_INITIAL_RTCPD_CALLBACK_WITH_INFO, params);
+      AGGREGATOR_INITIAL_RTCPD_CALLBACK, params);
   } catch(castor::exception::Exception &ex) {
-    CASTOR_DLF_WRITEC(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_INITIAL_RTCPD_CALLBACK_WITHOUT_INFO);
+    TAPE_THROW_CODE(ECANCELED,
+      ": Failed to get IP, port and host name"
+      ": volReqId=" << jobRequest.volReqId);
   }
 
   // Get the request informatiom and the drive unit from RTCPD
@@ -155,7 +165,8 @@ castor::tape::tapegateway::Volume
 
   // Get the volume from the tape gateway
   return ClientTxRx::getVolume(cuuid, jobRequest.volReqId,
-    jobRequest.clientHost, jobRequest.clientPort, jobRequest.driveUnit);
+    m_aggregatorTransactionCounter.next(), jobRequest.clientHost,
+    jobRequest.clientPort, jobRequest.driveUnit);
 }
 
 

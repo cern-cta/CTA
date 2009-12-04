@@ -24,6 +24,7 @@
 
 #include "castor/exception/Internal.hpp"
 #include "castor/tape/aggregator/BridgeSocketCatalogue.hpp"
+#include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <errno.h>
@@ -151,7 +152,8 @@ void castor::tape::aggregator::BridgeSocketCatalogue::addClientConn(
   const uint32_t             rtcpdReqType,
   const char                 (&rtcpdReqTapePath)[CA_MAXPATHLEN+1],
   const int                  clientSock,
-  const ClientConnectionType clientType)
+  const ClientConnectionType clientType,
+  const uint64_t             aggregatorTransactionId)
   throw(castor::exception::Exception) {
 
   if(rtcpdSock < 0) {
@@ -183,34 +185,104 @@ void castor::tape::aggregator::BridgeSocketCatalogue::addClientConn(
           ": new clientSock=" << clientSock);
       }
 
-      // Determine the next rtcpd-connection state based on the
-      // client-connection type
-      RtcpdConnectionStatus nextState = IDLE; // Dummy initial value
-      switch(clientType) {
-      case FILE_TO_MIGRATE_REPLY: nextState = WAIT_FILE_TO_MIGRATE     ; break;
-      case FILE_TO_RECALL_REPLY : nextState = WAIT_FILE_TO_RECALL      ; break;
-      case ACK_OF_FILE_MIGRATED : nextState = WAIT_ACK_OF_FILE_MIGRATED; break;
-      case ACK_OF_FILE_RECALLED : nextState = WAIT_ACK_OF_FILE_RECALLED; break;
-      default:
-        TAPE_THROW_EX(exception::Internal,
-          ": Unknown client-connection type"
-          ": type=0x" << std::hex << clientType << std::dec)
+      // Move to the next state or throw an exception if the transition is
+      // invalid
+      {
+        bool invalidClientRequestType = false;
+        switch(itor->rtcpdStatus) {
+        case IDLE:
+          switch(clientType) {
+          case FILE_TO_MIGRATE_REPLY:
+            itor->rtcpdStatus = WAIT_FILE_TO_MIGRATE;
+            break;
+          case FILE_TO_RECALL_REPLY:
+            itor->rtcpdStatus = WAIT_FILE_TO_RECALL;
+            break;
+          case ACK_OF_FILE_MIGRATED:
+            itor->rtcpdStatus = WAIT_ACK_OF_FILE_MIGRATED;
+            break;
+          case ACK_OF_FILE_RECALLED:
+            itor->rtcpdStatus = WAIT_ACK_OF_FILE_RECALLED;
+            break;
+          default:
+            TAPE_THROW_EX(exception::Internal,
+              ": Unknown client-connection type"
+              ": type=0x" << std::hex << clientType << std::dec)
+          }
+          break;
+        case WAIT_FILE_TO_MIGRATE:
+          switch(clientType) {
+          case FILE_TO_MIGRATE_REPLY:
+            itor->rtcpdStatus = WAIT_FILE_TO_MIGRATE;
+            break;
+          case FILE_TO_RECALL_REPLY:
+          case ACK_OF_FILE_MIGRATED:
+          case ACK_OF_FILE_RECALLED:
+            invalidClientRequestType = true;
+            break;
+          default:
+            TAPE_THROW_EX(exception::Internal,
+              ": Unknown client-connection type"
+              ": type=0x" << std::hex << clientType << std::dec)
+          }
+          break;
+        case WAIT_FILE_TO_RECALL:
+          switch(clientType) {
+          case FILE_TO_RECALL_REPLY:
+            itor->rtcpdStatus = WAIT_FILE_TO_RECALL;
+            break;
+          case FILE_TO_MIGRATE_REPLY:
+          case ACK_OF_FILE_MIGRATED:
+          case ACK_OF_FILE_RECALLED:
+            invalidClientRequestType = true;
+            break;
+          default:
+            TAPE_THROW_EX(exception::Internal,
+              ": Unknown client-connection type"
+              ": type=0x" << std::hex << clientType << std::dec)
+          }
+          break;
+        case WAIT_ACK_OF_FILE_MIGRATED:
+          switch(clientType) {
+          case FILE_TO_MIGRATE_REPLY:
+          case FILE_TO_RECALL_REPLY:
+          case ACK_OF_FILE_MIGRATED:
+          case ACK_OF_FILE_RECALLED:
+            invalidClientRequestType = true;
+            break;
+          default:
+            TAPE_THROW_EX(exception::Internal,
+              ": Unknown client-connection type"
+              ": type=0x" << std::hex << clientType << std::dec)
+          }
+          break;
+        case WAIT_ACK_OF_FILE_RECALLED:
+          switch(clientType) {
+          case FILE_TO_MIGRATE_REPLY:
+          case FILE_TO_RECALL_REPLY:
+          case ACK_OF_FILE_MIGRATED:
+          case ACK_OF_FILE_RECALLED:
+            invalidClientRequestType = true;
+            break;
+          default:
+            TAPE_THROW_EX(exception::Internal,
+              ": Unknown client-connection type"
+              ": type=0x" << std::hex << clientType << std::dec)
+          }
+          break;
+        default:
+          TAPE_THROW_EX(exception::Internal,
+          ": Unknown rtcpd-connection state type"
+          ": type=0x" << std::hex << itor->rtcpdStatus << std::dec)
+        }
+
+        if(invalidClientRequestType) {
+          TAPE_THROW_CODE(ECANCELED,
+            ": Invalid client request type for rtcpdStatus"
+            ": rtcpdStatus=" << rtcpdSockStatusToStr(itor->rtcpdStatus) <<
+            ": clientType=0x" << std::hex << clientType << std::dec);
+        }
       }
-
-      // Throw an exception if the rtcpd-connection state transistion is invalid
-      if(itor->rtcpdStatus != IDLE) {
-        castor::exception::Exception ce(ECANCELED);
-
-        ce.getMessage() <<
-          "Invalid rtpcd-connection state-transition"
-          ": current=" << rtcpdSockStatusToStr(itor->rtcpdStatus) <<
-          ": next=" << rtcpdSockStatusToStr(nextState);
-
-        throw(ce);
-      }
-
-      // Set the status of the rtpcd socket
-      itor->rtcpdStatus = nextState;
 
       // Store the magic number and request type of the rtcpd request
       itor->rtcpdReqMagic = rtcpdReqMagic;
@@ -228,8 +300,173 @@ void castor::tape::aggregator::BridgeSocketCatalogue::addClientConn(
       // Store the client-connection
       itor->clientSock = clientSock;
 
+      // Store the aggregator transaction ID asscoiated with the request sent
+      // to the client
+      itor->aggregatorTransactionId = aggregatorTransactionId;
+
       // Determine and store the client request timestamp
       gettimeofday(&(itor->clientReqTimeStamp), NULL);
+
+      // Store an entry in the client request history
+      m_clientReqHistory.push_back(ClientReqHistoryElement(clientSock,
+        itor->clientReqTimeStamp));
+
+      // Return because the client-connection has been added to the catalogue
+      return;
+    }
+  }
+
+  // If this line has been reached, then the specified rtcpd disk/tape IO
+  // control-connection does not exist in the catalogue
+  TAPE_THROW_CODE(ENOENT,
+    ": Rtcpd socket-descriptor does not exist in the catalogue"
+    ": rtcpdSock=" << rtcpdSock);
+}
+
+
+//-----------------------------------------------------------------------------
+// sentRequestToClient
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::BridgeSocketCatalogue::sentRequestToClient(
+  const int      rtcpdSock,
+  const uint32_t rtcpdReqMagic,
+  const uint32_t rtcpdReqType,
+  const char     (&rtcpdReqTapePath)[CA_MAXPATHLEN+1],
+  const int      clientSock,
+  const int      clientRequestType,
+  const uint64_t aggregatorTransactionId)
+  throw(castor::exception::Exception) {
+
+  if(rtcpdSock < 0) {
+    TAPE_THROW_EX(castor::exception::InvalidArgument,
+      ": Invalid rtcpd socket-descriptor"
+      ": Value is negative"
+      ": rtcpdSock=" << rtcpdSock);
+  }
+
+  if(clientSock < 0) {
+    TAPE_THROW_EX(castor::exception::InvalidArgument,
+      ": Invalid client socket-descriptor"
+      ": Value is negative"
+      ": clientSock=" << clientSock);
+  }
+
+  // For each rtcpd-connection
+  for(RtcpdConnectionList::iterator itor = m_rtcpdConnections.begin();
+    itor != m_rtcpdConnections.end(); itor++) {
+
+    // If the specified rtcpd disk/tape IO control-connection has been found
+    if(itor->rtcpdSock == rtcpdSock) {
+
+      // Throw an exception if there is already an associated client connection
+      if(itor->clientSock != -1) {
+        TAPE_THROW_CODE(ECANCELED,
+          ": There is already an associated client connection"
+          ": current clientSock=" << itor->clientSock <<
+          ": new clientSock=" << clientSock);
+      }
+
+      // Move to the next state or throw an exception if the type of the
+      // request sent to the client is unexpected
+/*
+      {
+        bool unexpectedClientRequestType = false;
+        switch(itor->rtcpdStatus) {
+        case IDLE:
+          switch(clientRequestType) {
+          case OBJ_FileToMigrateRequest:
+            itor->rtcpdStatus = WAIT_FILE_TO_MIGRATE;
+            break;
+          case OBJ_FileToRecallRequest:
+            itor->rtcpdStatus = WAIT_FILE_TO_RECALL;
+            break;
+          case OBJ_FileMigratedNotification:
+            itor->rtcpdStatus = WAIT_ACK_OF_FILE_MIGRATED;
+            break;
+          case OBJ_FileRecalledNotification:
+            itor->rtcpdStatus = WAIT_ACK_OF_FILE_RECALLED;
+            break;
+          default:
+            unexpectedClientRequestType = true;
+          }
+          break;
+        case WAIT_FILE_TO_MIGRATE:
+          switch(clientRequestType) {
+          case OBJ_FileToMigrateRequest:
+            itor->rtcpdStatus = WAIT_FILE_TO_MIGRATE;
+            break;
+          default:
+            unexpectedClientRequestType = true;
+          }
+          break;
+        case WAIT_FILE_TO_RECALL:
+          switch(clientRequestType) {
+          case OBJ_FileToRecallRequest:
+            itor->rtcpdStatus = WAIT_FILE_TO_RECALL;
+            break;
+          default:
+            unexpectedClientRequestType = true;
+          }
+          break;
+        case WAIT_ACK_OF_FILE_MIGRATED:
+          unexpectedClientRequestType = true;
+          break;
+        case WAIT_ACK_OF_FILE_RECALLED:
+          switch(clientType) {
+          case FILE_TO_MIGRATE_REPLY:
+          case FILE_TO_RECALL_REPLY:
+          case ACK_OF_FILE_MIGRATED:
+          case ACK_OF_FILE_RECALLED:
+            invalidClientRequestType = true;
+            break;
+          default:
+            TAPE_THROW_EX(exception::Internal,
+              ": Unknown client-connection type"
+              ": type=0x" << std::hex << clientType << std::dec)
+          }
+          break;
+        default:
+          TAPE_THROW_EX(exception::Internal,
+            ": Unexpected client request type"
+            ": clientRequestType=0x" << std::hex << clientRequestType <<
+              << std::dec);
+        }
+
+        if(invalidClientRequestType) {
+          TAPE_THROW_CODE(ECANCELED,
+            ": Invalid client request type for rtcpdStatus"
+            ": rtcpdStatus=" << rtcpdSockStatusToStr(itor->rtcpdStatus) <<
+            ": clientType=0x" << std::hex << clientType << std::dec);
+        }
+      }
+*/
+
+      // Store the magic number and request type of the rtcpd request
+      itor->rtcpdReqMagic = rtcpdReqMagic;
+      itor->rtcpdReqType  = rtcpdReqType;
+
+      // Store the tape path
+      if(rtcpdReqTapePath != NULL) {
+        itor->rtcpdReqHasTapePath = true;
+        utils::copyString(itor->rtcpdReqTapePath, rtcpdReqTapePath);
+      } else {
+        itor->rtcpdReqHasTapePath = false;
+        itor->rtcpdReqTapePath[0]    = '\0';
+      }
+
+      // Store the client-connection
+      itor->clientSock = clientSock;
+
+      // Store the aggregator transaction ID asscoiated with the request sent
+      // to the client
+      itor->aggregatorTransactionId = aggregatorTransactionId;
+
+      // Determine and store the client request timestamp
+      gettimeofday(&(itor->clientReqTimeStamp), NULL);
+
+      // Store an entry in the client request history
+      m_clientReqHistory.push_back(ClientReqHistoryElement(clientSock,
+        itor->clientReqTimeStamp));
 
       // Return because the client-connection has been added to the catalogue
       return;
@@ -350,7 +587,7 @@ int castor::tape::aggregator::BridgeSocketCatalogue::releaseClientConn(
     // connection
     if(itor->rtcpdSock == rtcpdSock && itor->clientSock == clientSock) {
 
-      // Throw an exception if the neccesary rtcpd-connection state-transistion
+      // Throw an exception if the neccesary rtcpd-connection state-transition
       // is invalid
       if(itor->rtcpdStatus == IDLE) {
         castor::exception::Exception ce(ECANCELED);
@@ -363,19 +600,36 @@ int castor::tape::aggregator::BridgeSocketCatalogue::releaseClientConn(
         throw(ce);
       }
 
-      // Update the state of the rtcpd-connection
-      itor->rtcpdStatus == IDLE;
+      // Remove the client request from the client request history
+      {
+        bool requestRemovedFromHistory = false;
 
-      // Reset the magic number and request type of the rtcpd request
-      itor->rtcpdReqMagic = 0;
-      itor->rtcpdReqType  = 0;
+        for(ClientReqHistoryList::iterator itor = m_clientReqHistory.begin();
+          itor != m_clientReqHistory.end(); itor++) {
+
+          // If the history element has been found, then remove it and break out
+          // of the loop
+          if(itor->clientSock == clientSock) {
+            m_clientReqHistory.erase(itor);
+            requestRemovedFromHistory = true;
+            break;
+          }
+        }
+
+        if(!requestRemovedFromHistory) {
+          castor::exception::Internal ie;
+
+          ie.getMessage() <<
+           "Failed to remove client request from the client request history"
+           ": Client socket-descriptor could not be found"
+           ": clientSock=" << clientSock;
+
+          throw(ie);
+        }
+      }
 
       // Release the socket-descriptor of the client-connection
       itor->clientSock = -1;
-
-      // Reset the time stamp of the client reply to 0
-      itor->clientReqTimeStamp.tv_sec  = 0;
-      itor->clientReqTimeStamp.tv_usec = 0;
 
       // Return the socket-descriptor of the client-connection
       return clientSock;
@@ -385,9 +639,74 @@ int castor::tape::aggregator::BridgeSocketCatalogue::releaseClientConn(
   // If this line has been reached, then the specified association does not
   // exist in the catalogue
   TAPE_THROW_CODE(ENOENT,
-    ": The associateion does not exist in the catalogue"
+    ": The association does not exist in the catalogue"
     ": rtcpdSock=" << rtcpdSock <<
     ": clientSock=" << clientSock);
+}
+
+
+//-----------------------------------------------------------------------------
+// fileTransferAcknowledged
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::BridgeSocketCatalogue::fileTransferAcknowledged(
+  const int rtcpdSock) throw(castor::exception::Exception) {
+
+  if(rtcpdSock < 0) {
+    TAPE_THROW_EX(castor::exception::InvalidArgument,
+      ": Invalid rtcpd socket-descriptor"
+      ": Value is negative"
+      ": rtcpdSock=" << rtcpdSock);
+  }
+
+  // For each rtcpd-connection
+  for(RtcpdConnectionList::iterator itor = m_rtcpdConnections.begin();
+    itor != m_rtcpdConnections.end(); itor++) {
+
+    // If the association has been found
+    if(itor->rtcpdSock == rtcpdSock) {
+
+      // Throw an exception if the rtcpd-connection state transition is invalid
+      if(itor->rtcpdStatus != WAIT_ACK_OF_FILE_RECALLED &&
+        itor->rtcpdStatus != WAIT_ACK_OF_FILE_MIGRATED) {
+        TAPE_THROW_CODE(ECANCELED,
+          ": Invalid rtpcd-connection state-transition"
+          ": current=" << rtcpdSockStatusToStr(itor->rtcpdStatus) <<
+          ": next=IDLE");
+      }
+
+      // Throw an exception if the socket-descriptor of the client connection
+      // has not already been released
+      if(itor->clientSock != -1) {
+        castor::exception::Exception ce(ECANCELED);
+
+        ce.getMessage() <<
+          "Client-connection should have already been released"
+          ": clientSock= " << itor->clientSock;
+
+        throw ce;
+      }
+
+      // Update the state of the rtcpd-connection
+      itor->rtcpdStatus == IDLE;
+
+      // Reset the magic number and request type of the rtcpd request
+      itor->rtcpdReqMagic = 0;
+      itor->rtcpdReqType  = 0;
+
+      // Reset the aggregator transaction ID associated with the client request
+      itor->aggregatorTransactionId = 0;
+
+      // Reset the time stamp of the client request to 0
+      itor->clientReqTimeStamp.tv_sec  = 0;
+      itor->clientReqTimeStamp.tv_usec = 0;
+    }
+  }
+
+  // If this line has been reached, then the specified rtcpd disk/tape IO
+  // control-connection does not exist in the catalogue
+  TAPE_THROW_CODE(ENOENT,
+    ": Rtcpd socket-descriptor does not exist in the catalogue"
+    ": rtcpdSock=" << rtcpdSock);
 }
 
 
@@ -400,7 +719,8 @@ void castor::tape::aggregator::BridgeSocketCatalogue::getRtcpdConn(
   RtcpdConnectionStatus &rtcpdStatus,
   uint32_t              &rtcpdReqMagic,
   uint32_t              &rtcpdReqType,
-  const char            *rtcpdReqTapePath,
+  char                  *&rtcpdReqTapePath,
+  uint64_t              &aggregatorTransactionId,
   struct timeval        &clientReqTimeStamp)
   throw(castor::exception::Exception) {
 
@@ -419,13 +739,14 @@ void castor::tape::aggregator::BridgeSocketCatalogue::getRtcpdConn(
     // return
     if(itor->clientSock == clientSock) {
 
-      rtcpdSock          = itor->rtcpdSock;
-      rtcpdStatus        = itor->rtcpdStatus;
-      rtcpdReqMagic      = itor->rtcpdReqMagic;
-      rtcpdReqType       = itor->rtcpdReqType;
-      rtcpdReqTapePath   = itor->rtcpdReqHasTapePath ?
-                             itor->rtcpdReqTapePath : NULL;
-      clientReqTimeStamp = itor->clientReqTimeStamp;
+      rtcpdSock               = itor->rtcpdSock;
+      rtcpdStatus             = itor->rtcpdStatus;
+      rtcpdReqMagic           = itor->rtcpdReqMagic;
+      rtcpdReqType            = itor->rtcpdReqType;
+      rtcpdReqTapePath        = itor->rtcpdReqHasTapePath ?
+                                  itor->rtcpdReqTapePath : NULL;
+      aggregatorTransactionId = itor->aggregatorTransactionId;
+      clientReqTimeStamp      = itor->clientReqTimeStamp;
 
       return;
     }
@@ -558,5 +879,41 @@ const char
   case WAIT_ACK_OF_FILE_MIGRATED: return "WAIT_ACK_OF_FILE_MIGRATED";
   case WAIT_ACK_OF_FILE_RECALLED: return "WAIT_ACK_OF_FILE_RECALLED";
   default                       : return "UNKNOWN";
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// checkForTimeout
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::BridgeSocketCatalogue::checkForTimeout()
+  throw(castor::exception::TimeOut) {
+
+  if(!m_clientReqHistory.empty()) {
+
+    // Get the current time
+    struct timeval now = {0, 0};
+    
+    gettimeofday(&now, NULL);
+
+    // Get the oldest client request
+    ClientReqHistoryElement &clientRequest = m_clientReqHistory.front();
+
+    // Calculate the age in seconds
+    const int ageSecs = clientRequest.clientReqTimeStamp.tv_sec - now.tv_sec;
+
+    // Throw an exception if the oldest client-request has been around too long
+    if(ageSecs > CLIENTNETRWTIMEOUT) {
+
+      castor::exception::TimeOut te;
+
+      te.getMessage() <<
+        "Timed out waiting for client reply"
+        ": clientSock=" << clientRequest.clientSock <<
+        ": ageSecs=" << ageSecs <<
+        ": clientNetRWTimeout=" << CLIENTNETRWTIMEOUT;
+
+      throw(te);
+    }
   }
 }

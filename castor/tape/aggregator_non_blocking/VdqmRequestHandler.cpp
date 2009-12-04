@@ -52,16 +52,19 @@
 #include "h/vmgr_constants.h"
 
 #include <memory>
-#include <sys/select.h>
 
 
 //-----------------------------------------------------------------------------
-// constructor
+// s_stoppingGracefully
 //-----------------------------------------------------------------------------
-castor::tape::aggregator::VdqmRequestHandler::VdqmRequestHandler() throw() :
-  m_stoppingGracefully(false),
-  m_stoppingGracefullyFunctor(*this) {
-}
+bool castor::tape::aggregator::VdqmRequestHandler::s_stoppingGracefully = false;
+
+
+//-----------------------------------------------------------------------------
+// s_stoppingGracefullyFunctor
+//-----------------------------------------------------------------------------
+castor::tape::aggregator::VdqmRequestHandler::StoppingGracefullyFunctor
+  castor::tape::aggregator::VdqmRequestHandler::s_stoppingGracefullyFunctor;
 
 
 //-----------------------------------------------------------------------------
@@ -154,27 +157,37 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
     // socket a second time
     vdqmSock->close();
 
+    // Create the aggregator transaction ID
+    Counter<uint64_t> aggregatorTransactionCounter(0);
+
     // Perform the rest of the thread's work, notifying the client if any
     // exception is thrown
     try {
-      exceptionThrowingRun(cuuid, jobRequest);
+      exceptionThrowingRun(cuuid, jobRequest, aggregatorTransactionCounter);
     } catch(castor::exception::Exception &ex) {
+      const uint64_t aggregatorTransactionId =
+        aggregatorTransactionCounter.next();
       try {
         castor::dlf::Param params[] = {
-          castor::dlf::Param("volReqId", jobRequest.volReqId  ),
-          castor::dlf::Param("Message" , ex.getMessage().str()),
-          castor::dlf::Param("Code"    , ex.code()            )};
+          castor::dlf::Param("mountTransactionId", jobRequest.volReqId  ),
+          castor::dlf::Param("aggregatorTransactionId",
+            aggregatorTransactionId),
+          castor::dlf::Param("Message"           , ex.getMessage().str()),
+          castor::dlf::Param("Code"              , ex.code()            )};
         castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
           AGGREGATOR_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
 
         ClientTxRx::notifyEndOfFailedSession(cuuid, jobRequest.volReqId,
-          jobRequest.clientHost, jobRequest.clientPort, ex);
+          aggregatorTransactionId, jobRequest.clientHost,
+          jobRequest.clientPort, ex);
       } catch(castor::exception::Exception &ex2) {
         // Don't rethrow, just log the exception
         castor::dlf::Param params[] = {
-          castor::dlf::Param("volReqId", jobRequest.volReqId   ),
-          castor::dlf::Param("Message" , ex2.getMessage().str()),
-          castor::dlf::Param("Code"    , ex2.code()            )};
+          castor::dlf::Param("mountTransactionId", jobRequest.volReqId   ),
+          castor::dlf::Param("aggregatorTransactionId",
+            aggregatorTransactionId),
+          castor::dlf::Param("Message"           , ex2.getMessage().str()),
+          castor::dlf::Param("Code"              , ex2.code()            )};
         castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
           AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
       }
@@ -199,7 +212,9 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
 // exceptionThrowingRun
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::VdqmRequestHandler::exceptionThrowingRun(
-  const Cuuid_t &cuuid, const legacymsg::RtcpJobRqstMsgBody &jobRequest)
+  const Cuuid_t                       &cuuid,
+  const legacymsg::RtcpJobRqstMsgBody &jobRequest,
+  Counter<uint64_t>                   &aggregatorTransactionCounter)
   throw(castor::exception::Exception) {
 
   // Create, bind and mark a listen socket for RTCPD callback connections
@@ -210,7 +225,7 @@ void castor::tape::aggregator::VdqmRequestHandler::exceptionThrowingRun(
   const unsigned short highPort = utils::getPortFromConfig(
     "AGGREGATORRTCPD", "HIGHPORT", AGGREGATORRTCPD_HIGHPORT);
   unsigned short chosenPort = 0;
-  SmartFd rtcpdCallbackSockFd(net::createListenerSock("127.0.0.1", lowPort,
+  SmartFd listenSock(net::createListenerSock("127.0.0.1", lowPort,
     highPort,  chosenPort));
 
   // Get the IP, host name and port of the callback port
@@ -218,7 +233,7 @@ void castor::tape::aggregator::VdqmRequestHandler::exceptionThrowingRun(
   char rtcpdCallbackHost[net::HOSTNAMEBUFLEN];
   utils::setBytes(rtcpdCallbackHost, '\0');
   unsigned short rtcpdCallbackPort = 0;
-  net::getSockIpHostnamePort(rtcpdCallbackSockFd.get(),
+  net::getSockIpHostnamePort(listenSock.get(),
     rtcpdCallbackIp, rtcpdCallbackHost, rtcpdCallbackPort);
 
   castor::dlf::Param params[] = {
@@ -228,24 +243,28 @@ void castor::tape::aggregator::VdqmRequestHandler::exceptionThrowingRun(
   castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
     AGGREGATOR_CREATED_RTCPD_CALLBACK_PORT, params);
 
-  SmartFd rtcpdInitialSockFd;
-  DriveAllocationProtocolEngine driveAllocationProtocolEngine;
+  SmartFd initialRtcpdSock;
+  DriveAllocationProtocolEngine
+    driveAllocationProtocolEngine(aggregatorTransactionCounter);
   std::auto_ptr<tapegateway::Volume>
-    volume(driveAllocationProtocolEngine.run(cuuid, rtcpdCallbackSockFd.get(),
-    rtcpdCallbackHost, rtcpdCallbackPort, rtcpdInitialSockFd, jobRequest));
+    volume(driveAllocationProtocolEngine.run(cuuid, listenSock.get(),
+    rtcpdCallbackHost, rtcpdCallbackPort, initialRtcpdSock, jobRequest));
 
   // If there is no volume to mount, then notify the client end of session
   // and return
   if(volume.get() == NULL) {
+    const uint64_t aggregatorTransactionId =
+      aggregatorTransactionCounter.next();
     try {
       ClientTxRx::notifyEndOfSession(cuuid, jobRequest.volReqId,
-        jobRequest.clientHost, jobRequest.clientPort);
+        aggregatorTransactionId, jobRequest.clientHost, jobRequest.clientPort);
     } catch(castor::exception::Exception &ex) {
       castor::exception::Exception ex2(ex.code());
 
       ex2.getMessage() <<
         "Failed to notify client end of session"
-        ": volReqId=" << jobRequest.volReqId <<
+        ": mountTransactionId=" << jobRequest.volReqId <<
+        ": aggregatorTransactionId=" << aggregatorTransactionId <<
         ": " << ex.getMessage().str();
 
       throw(ex2);
@@ -293,17 +312,18 @@ void castor::tape::aggregator::VdqmRequestHandler::exceptionThrowingRun(
       throw ex;
     }
 
-    enterBridgeOrAggregatorMode(cuuid, rtcpdCallbackSockFd.get(),
-      rtcpdInitialSockFd.get(), jobRequest, *volume, tapeInfo.nbFiles,
-      m_stoppingGracefullyFunctor);
+    enterBridgeOrAggregatorMode(cuuid, listenSock.get(),
+      initialRtcpdSock.get(), jobRequest, *volume, tapeInfo.nbFiles,
+      s_stoppingGracefullyFunctor, aggregatorTransactionCounter);
 
   // Else recalling
   } else {
     const uint32_t nbFilesOnDestinationTape = 0;
 
-    enterBridgeOrAggregatorMode(cuuid, rtcpdCallbackSockFd.get(),
-      rtcpdInitialSockFd.get(), jobRequest, *volume,
-      nbFilesOnDestinationTape, m_stoppingGracefullyFunctor);
+    enterBridgeOrAggregatorMode(cuuid, listenSock.get(),
+      initialRtcpdSock.get(), jobRequest, *volume,
+      nbFilesOnDestinationTape, s_stoppingGracefullyFunctor,
+      aggregatorTransactionCounter);
   }
 }
 
@@ -313,12 +333,13 @@ void castor::tape::aggregator::VdqmRequestHandler::exceptionThrowingRun(
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::VdqmRequestHandler::enterBridgeOrAggregatorMode(
   const Cuuid_t                       &cuuid,
-  const int                           rtcpdCallbackSockFd,
-  const int                           rtcpdInitialSockFd,
+  const int                           listenSock,
+  const int                           initialRtcpdSock,
   const legacymsg::RtcpJobRqstMsgBody &jobRequest,
   tapegateway::Volume                 &volume,
   const uint32_t                      nbFilesOnDestinationTape,
-  BoolFunctor                         &stoppingGracefully)
+  BoolFunctor                         &stoppingGracefully,
+  Counter<uint64_t>                   &aggregatorTransactionCounter)
   throw(castor::exception::Exception) {
 
   // If the volume has the aggregation format
@@ -341,9 +362,9 @@ void castor::tape::aggregator::VdqmRequestHandler::enterBridgeOrAggregatorMode(
       castor::dlf::Param("volReqId", jobRequest.volReqId)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_ENTERING_BRIDGE_MODE, params);
-    BridgeProtocolEngine bridgeProtocolEngine(cuuid, rtcpdCallbackSockFd,
-      rtcpdInitialSockFd, jobRequest, volume, nbFilesOnDestinationTape,
-      m_stoppingGracefullyFunctor);
+    BridgeProtocolEngine bridgeProtocolEngine(cuuid, listenSock,
+      initialRtcpdSock, jobRequest, volume, nbFilesOnDestinationTape,
+      s_stoppingGracefullyFunctor, aggregatorTransactionCounter);
     bridgeProtocolEngine.run();
   }
 }
@@ -354,16 +375,7 @@ void castor::tape::aggregator::VdqmRequestHandler::enterBridgeOrAggregatorMode(
 //-----------------------------------------------------------------------------
 void castor::tape::aggregator::VdqmRequestHandler::stop()
   throw() {
-  m_stoppingGracefully = true;
-}
-
-
-//-----------------------------------------------------------------------------
-// stoppingGracefully
-//-----------------------------------------------------------------------------
-bool castor::tape::aggregator::VdqmRequestHandler::stoppingGracefully()
-  throw() {
-  return m_stoppingGracefully;
+  s_stoppingGracefully = true;
 }
 
 

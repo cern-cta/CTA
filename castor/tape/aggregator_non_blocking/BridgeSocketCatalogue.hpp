@@ -26,6 +26,7 @@
 #define CASTOR_TAPE_AGGREGATOR_BRIDGESOCKETCATALOGUE
 
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/TimeOut.hpp"
 #include "h/Castor_limits.h"
 
 #include <list>
@@ -175,7 +176,7 @@ public:
    * exists in the catalogue.
    *
    * @param rtpcdSock        The socket-descriptor of the rtcpd disk/tape IO
-   *                         control-connection that is awaiting a reply fromi
+   *                         control-connection that is awaiting a reply from
    *                         the specified client connection.
    * @param rtcpdReqMagic    The magic number of the rtcpd request.  This magic
    *                         number will be used in any acknowledge message to
@@ -189,6 +190,8 @@ public:
    * @param clientSock       The socket-descriptor of the client connection
    *                         from which a reply is expected.
    * @param clientType       The type of the client socket.
+   * @param aggregatorTransactionId The aggregator transaction ID associated
+   *                         with the client request.
    */
   void addClientConn(
     const int                  rtcpdSock,
@@ -196,7 +199,18 @@ public:
     const uint32_t             rtcpdReqType,
     const char                 (&rtcpdReqTapePath)[CA_MAXPATHLEN+1],
     const int                  clientSock,
-    const ClientConnectionType clientType)
+    const ClientConnectionType clientType,
+    const uint64_t             aggregatorTransactionId)
+    throw(castor::exception::Exception);
+
+  void sentRequestToClient(
+    const int      rtcpdSock,
+    const uint32_t rtcpdReqMagic,
+    const uint32_t rtcpdReqType,
+    const char     (&rtcpdReqTapePath)[CA_MAXPATHLEN+1],
+    const int      clientSock,
+    const int      clientRequestType,
+    const uint64_t aggregatorTransactionId)
     throw(castor::exception::Exception);
 
   /**
@@ -243,6 +257,9 @@ public:
    * The release means the destructor of the catalogue will no longer close the
    * client connection.
    *
+   * The status of the rtcpd disk/tape IO control-connection is not changed by
+   * this method.
+   *
    * This method throws an exception if either of the specified
    * socket-descriptors are negative.
    *
@@ -255,6 +272,36 @@ public:
    *                   connection.
    */
   int releaseClientConn(const int rtcpdSock, const int clientSock)
+    throw(castor::exception::Exception);
+
+  /**
+   * Tells the socket catalogue that the acknowledge of a file transfer
+   * (migration or recall) has been received from the client and successfully
+   * relayed to rtcpd.  In return the socket catalogue will reset the status
+   * of the specified rtcpd disk/tape IO control-connection to IDLE.
+   *
+   * This method throws an exception if the specified socket-descriptor is
+   * negative.
+   *
+   * This method throws an exception if the state of the specified rtcpd
+   * disk/tape IO control-connection is neither WAIT_ACK_OF_FILE_RECALLED nor
+   * WAIT_ACK_OF_FILE_MIGRATED.
+   *
+   * This method throws an exception if the associated client-connection has
+   * not already been released.  This should have been done by a call to
+   * releaseClientConn() just before the client message was read in and the
+   * client-connection closed by a call to clientTxRx::receiveReplyAndClose().
+   * The CASTOR framework class castor::io::AbstractSocket owns the
+   * socket-descriptor it uses for marshalling an unmarshalling, and this is
+   * why the socket catalogue is asked to release the client-socket before
+   * calling clientTxRx::receiveReplyAndClose().
+   *
+   * This method throws an exception if the specified rtcpd disk/tape IO
+   * control-connection does not exist in the catalogue.
+   *
+   * @param rtcpdSock The socket-descriptor of the rtcpd connection.
+   */
+  void fileTransferAcknowledged(const int rtcpdSock)
     throw(castor::exception::Exception);
 
   /**
@@ -284,6 +331,9 @@ public:
    *                           the initiating rtcpd request.  If there is no
    *                           such tape path, then this parameter is set to
    *                           NULL.
+   * @param aggregatorTransactionId Output parameter: The aggregator
+   *                           transaction ID associated with the request sent
+   *                           to the client.
    * @param clientReqTimeStamp Output parameter: The time at which the request
    *                           was sent to the client.
    */
@@ -293,7 +343,8 @@ public:
     RtcpdConnectionStatus &rtcpdStatus,
     uint32_t              &rtcpdReqMagic,
     uint32_t              &rtcpdReqType,
-    const char            *rtcpdReqTapePath,
+    char                  *&rtcpdReqTapePath,
+    uint64_t              &aggregatorTransactionId,
     struct timeval        &clientReqTimeStamp)
     throw(castor::exception::Exception);
 
@@ -347,11 +398,18 @@ public:
    */
   int getAPendingSock(fd_set &readFdSet, SocketType &sockType) throw();
 
-
   /**
    * Returns the total number of disk/tape IO control-conenction.
    */
   int getNbDiskTapeIOControlConns();
+
+  /**
+   * Checks the socket catalogue to see if an rtcpd disk/tape IO
+   * control-connections has timed out waiting for a reply from the client.
+   *
+   * This method throws a TimeOut exception if a timeout is found.
+   */
+  void checkForTimeout() throw(castor::exception::TimeOut);
 
 
 private:
@@ -433,8 +491,16 @@ private:
     int clientSock;
 
     /**
-     * The absolute time when the last request was sent to the client or all
-     * zeros if no request was sent.
+     * If a request has been resent to the client, then this is the aggregator
+     * transaction ID associated with that request.  If no message has been
+     * sent, then the value of this member is 0.
+     */
+    uint64_t aggregatorTransactionId;
+
+    /**
+     * If a request has been resent to the client, then this is the absolute
+     * time when the request was sent.  If no message has been sent, then the
+     * value of this member is all zeros.
      */
     struct timeval clientReqTimeStamp;
 
@@ -450,7 +516,8 @@ private:
       rtcpdReqMagic(0),
       rtcpdReqType(0),
       rtcpdReqHasTapePath(false),
-      clientSock(-1) {
+      clientSock(-1),
+      aggregatorTransactionId(0) {
       rtcpdReqTapePath[0] = '\0';
       clientReqTimeStamp.tv_sec  = 0;
       clientReqTimeStamp.tv_usec = 0;
@@ -484,6 +551,39 @@ private:
    * </ol>
    */
   RtcpdConnectionList m_rtcpdConnections;
+
+  /**
+   * Information about a single client request to be used to create a history
+   * about sent and pending client requests.
+   */
+  struct ClientReqHistoryElement {
+    const int            clientSock;
+    const struct timeval clientReqTimeStamp;
+
+    /**
+     * Constructor.
+     */
+    ClientReqHistoryElement(
+      const int            cSock,
+      const struct timeval cReqTimeStamp) :
+      clientSock(cSock),
+      clientReqTimeStamp(cReqTimeStamp) {
+    }
+  };
+
+  /**
+   * Type used to define a list of client request history elements.
+   */
+  typedef std::list<ClientReqHistoryElement> ClientReqHistoryList;
+
+  /**
+   * The history of pending client requests implemented as a time-ordered FIFO,
+   * where the oldest request is at the front and the youngest at the back.
+   *
+   * This history is used to efficiently determine if an rtcpd-connection has
+   * timed out waiting for a reply from a client.
+   */
+  ClientReqHistoryList m_clientReqHistory;
 
 }; // class BridgeSocketCatalogue
 
