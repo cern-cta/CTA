@@ -200,7 +200,7 @@ char **msgaddr;
 
 	if (sizeof(struct sg_header) + cdblen + buflen > sg_big_buff_val) {
 #if defined(TAPE)
-		sprintf (tp_err_msgbuf, "blocksize too large (max %ld)\n",
+		sprintf (tp_err_msgbuf, "blocksize too large (max %zd)\n",
 		    sg_big_buff_val - sizeof(struct sg_header) - cdblen);
 		*msgaddr = tp_err_msgbuf;
 #else
