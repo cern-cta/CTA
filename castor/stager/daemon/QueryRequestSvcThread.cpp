@@ -645,6 +645,10 @@ void castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
     // Get the StageFileQueryRequest
     // cannot return 0 since we check the type before calling this method
     uReq = dynamic_cast<castor::query::DiskPoolQuery*> (req);
+    // Consider an empty service class as '*'
+    if ("" == uReq->svcClassName()) {
+      uReq->setSvcClassName("*");
+    }
     // Get the name of the client hostname to pass into the Cupv interface.
     const castor::rh::Client *c =
       dynamic_cast<const castor::rh::Client*>(client);
