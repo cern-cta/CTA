@@ -777,12 +777,10 @@ END;
 
 /* get a candidate for migration */
 
-create or replace
-PROCEDURE tg_getFileToMigrate(transactionId IN NUMBER,
-                              ret OUT INTEGER,
-                              outVid OUT NOCOPY VARCHAR2,
-                              outputFile OUT castorTape.FileToMigrateCore_cur)
- AS
+create or replace PROCEDURE tg_getFileToMigrate(transactionId IN NUMBER,
+                                                ret OUT INTEGER,
+                                                outVid OUT NOCOPY VARCHAR2,
+                                                outputFile OUT castorTape.FileToMigrateCore_cur) AS
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
   strId NUMBER;
@@ -904,12 +902,10 @@ BEGIN
     -- resurrect the candidate if there is no other stream containing the tapecopy
     DELETE FROM stream2tapecopy WHERE child= tcid AND parent= strid;
     UPDATE tapecopy SET status=1 WHERE id = tcId AND NOT EXISTS (SELECT 'x' FROM stream2tapecopy WHERE child=tcId);
-     
-    -- I don't retry to avoid problems with recursion
-    ret := -1; -- the migration selection policy didn't find any candidate
-    COMMIT;
-    RETURN;
+    -- recursion to avoid extra mount
+    tg_getFileToMigrate(transactionId,ret,outVid,outputFile);
  END;
+ COMMIT;
 END;
 /
 
