@@ -556,7 +556,7 @@ XrdxCastor2Fs::VomsMapGroups(const XrdSecEntity* client, XrdSecEntity& mappedcli
     int ntoken=0;
     XrdOucString* vomsmaprole;                                     
     while( (stoken = vomsgroups.GetLine())) {
-      //      printf("Verifying |%s|\n",stoken);
+      // exact match
       if ((vomsmaprole = XrdxCastor2FS->vomsmapstore->Find(stoken))) { 
 	allgroups += vomsmaprole->c_str();
 	allgroups += ":";
@@ -564,6 +564,25 @@ XrdxCastor2Fs::VomsMapGroups(const XrdSecEntity* client, XrdSecEntity& mappedcli
 	  defaultgroup = vomsmaprole->c_str();
 	}
 	ntoken++;
+      }  else {
+	// scan for a wildcard rule
+	XrdOucString vomsattribute = stoken;
+	int rpos=STR_NPOS;
+	while ((rpos = vomsattribute.rfind("/",rpos))!=STR_NPOS) {
+	   rpos--;
+	   XrdOucString wildcardattribute = vomsattribute;
+	   wildcardattribute.erase(rpos+2);
+	   wildcardattribute += "*";
+	   if ((vomsmaprole = XrdxCastor2FS->vomsmapstore->Find(wildcardattribute.c_str()))) {
+	     allgroups += vomsmaprole->c_str();
+	     allgroups += ":";
+	     if (ntoken == 0) {
+	       defaultgroup = vomsmaprole->c_str();
+	     }
+	     ntoken++;
+	     break; // leave the wildcard loop
+	   }
+	}
       }
     }
     mappedclient.role = STRINGSTORE(defaultgroup.c_str());                                       
