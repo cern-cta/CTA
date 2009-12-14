@@ -299,7 +299,9 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker( cas
       noMore->setAggregatorTransactionId(startRequest.aggregatorTransactionId());
       return noMore;
     }
-
+    
+    response->setAggregatorTransactionId(startRequest.aggregatorTransactionId());
+   
     gettimeofday(&tvEnd, NULL);
     signed64 procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
 
@@ -1047,7 +1049,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(
       noMore->setAggregatorTransactionId(fileToRecall.aggregatorTransactionId());
       return noMore;
     }
-
+    response->setAggregatorTransactionId(fileToRecall.aggregatorTransactionId());
     gettimeofday(&tvEnd, NULL);
     signed64 procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
   
@@ -1144,7 +1146,9 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleMigrationMoreWor
       delete response;
       return noMore;
     }
-    
+
+    response->setAggregatorTransactionId(fileToMigrate.aggregatorTransactionId());
+
     gettimeofday(&tvEnd, NULL);
     signed64 procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
 

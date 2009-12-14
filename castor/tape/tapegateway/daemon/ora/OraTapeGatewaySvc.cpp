@@ -729,7 +729,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToMigrate(const c
      
       std::string diskserver;
       std::string mountpoint;
-
+      file.setMountTransactionId(0);
       // Check whether the statements are ok
       if (0 == m_getFileToMigrateStatement) {
 	m_getFileToMigrateStatement =
@@ -977,7 +977,8 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFileToRecall(const ca
 
       std::string diskserver;
       std::string mountpoint;
-    
+      file.setMountTransactionId(0);
+
       // Check whether the statements are ok
       if (0 == m_getFileToRecallStatement) {
 	m_getFileToRecallStatement =
