@@ -1137,28 +1137,34 @@ END;
 
 /* GenericInputForMigrationPolicy */
 
-CREATE OR REPLACE PROCEDURE inputForMigrationPolicy
+create or replace
+PROCEDURE inputForMigrationPolicy
 (svcclassName IN VARCHAR2,
  policyName OUT NOCOPY VARCHAR2,
  svcId OUT NUMBER,
  dbInfo OUT castorTape.DbMigrationInfo_Cur) AS
- unused VARCHAR2(2048);
+ dname VARCHAR2(2048);
 BEGIN
- SELECT value INTO unused
+ BEGIN
+   SELECT value INTO dname
     FROM CastorConfig
    WHERE class = 'tape'
      AND KEY = 'daemonName'
      AND value = 'tapegatewayd';
-     
+ EXCEPTION WHEN NO_DATA_FOUND THEN
+    dname:='rtcpclientd';
+ END;
+ IF dname like 'tapegatewayd' THEN
   -- tapegateway behavior 
     inputMigrPolicyGateway(svcclassName,policyName,svcId,dbInfo);
-
-EXCEPTION WHEN NO_DATA_FOUND THEN
+    return;
+ END IF;
+ IF dname like 'rtcpclientd' THEN
     -- use rtcpclientd
-    inputMigrPolicyRtcp(svcclassName,policyName,svcId,dbInfo);    
+    inputMigrPolicyRtcp(svcclassName,policyName,svcId,dbInfo);  
+ END IF;
 END;
 /
-
 
 
 /* Get input for python Stream Policy */
@@ -1421,10 +1427,11 @@ BEGIN
 -- just for a tapepool
  FOR j IN tapePoolIds.FIRST .. tapePoolIds.LAST LOOP
   FOR str IN (SELECT id FROM  Stream WHERE tapepool=tapePoolIds(j)) LOOP
+     BEGIN
       -- add choosen tapecopies to all Streams associated to the tapepool used by the policy
-         SELECT id INTO streamId FROM stream where id=str.id FOR UPDATE;
+       SELECT id INTO streamId FROM stream where id=str.id FOR UPDATE;
       -- add choosen tapecopies to all Streams associated to the tapepool used by the policy
-      FOR i IN tapeCopyIds.FIRST .. tapeCopyIds.LAST LOOP
+        FOR i IN tapeCopyIds.FIRST .. tapeCopyIds.LAST LOOP
            BEGIN
               SELECT /*+ index(tapecopy,PK_TAPECOPY_ID)*/ id INTO unused
                 FROM TapeCopy
@@ -1446,6 +1453,10 @@ BEGIN
            END;
       END LOOP;
       COMMIT;
+     EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- no stream anymore
+      null;
+     END;
     END LOOP; -- loop tapecopies
   END LOOP;
   COMMIT;
@@ -1454,6 +1465,37 @@ END;
 
 
 /* generic attach tapecopies to stream */
+
+create or replace
+PROCEDURE attachTapeCopiesToStreams 
+(tapeCopyIds IN castor."cnumList",
+ tapePoolIds IN castor."cnumList")
+ AS
+ dname VARCHAR2(2048);
+BEGIN
+  BEGIN
+   SELECT value INTO dname
+     FROM CastorConfig
+     WHERE class = 'tape'
+     AND KEY = 'daemonName'
+     AND value = 'tapegatewayd';
+   EXCEPTION WHEN NO_DATA_FOUND THEN
+     dname:='rtcpclientd';
+   END;
+   
+   IF dname like 'tapegatewayd' THEN
+     -- tapegateway behavior 
+     attachTCGateway(tapeCopyIds, tapePoolIds);
+     return;
+   END IF;
+   IF dname like 'rtcpclientd' THEN
+    -- use rtcpclientd
+     attachTCRtcp(tapeCopyIds, tapePoolIds);  
+   END IF;
+END;
+/
+
+
 
 CREATE OR REPLACE PROCEDURE attachTapeCopiesToStreams 
 (tapeCopyIds IN castor."cnumList",
