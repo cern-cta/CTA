@@ -281,12 +281,17 @@ END;
 
 /* PL/SQL method implementing resurrectTapesOnHold */
 
-CREATE OR REPLACE PROCEDURE  resurrectTapesOnHold (maxFiles IN INTEGER, maxTapes IN INTEGER)AS
+
+create or replace
+PROCEDURE  resurrectTapesOnHold (maxFiles IN INTEGER, maxTapes IN INTEGER)AS
 filesOnGoing INTEGER;
 tapesOnGoing INTEGER;
 newFiles NUMBER;
 BEGIN
 	SELECT count(vid), sum(filesStaging) + sum(filesMigrating) INTO  tapesOnGoing, filesOnGoing FROM RepackSubrequest WHERE  status IN (1,2); -- TOBESTAGED ONGOING
+  IF filesongoing IS NULL THEN
+   filesongoing:=0;
+  END IF;
 -- Set the subrequest to TOBESTAGED FROM ON-HOLD if there is no ongoing repack for any of the files on the tape
   FOR sr IN (SELECT RepackSubRequest.id FROM RepackSubRequest,RepackRequest WHERE  RepackRequest.id=RepackSubrequest.repackrequest AND RepackSubRequest.status=9 ORDER BY RepackRequest.creationTime ) LOOP
 			UPDATE RepackSubRequest SET status=1 WHERE id=sr.id AND status=9
@@ -307,7 +312,6 @@ BEGIN
    END LOOP;
 END;
 /
-
 
 /* PL/SQL method implementing storeRequest */
 
