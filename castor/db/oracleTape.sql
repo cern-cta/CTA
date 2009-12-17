@@ -987,6 +987,7 @@ END;
 /** Functions for the MigHunterDaemon **/
 
 /** Cleanup before starting a new MigHunterDaemon **/
+
 CREATE OR REPLACE PROCEDURE migHunterCleanUp(svcName IN VARCHAR2)
 AS
   svcId NUMBER;
@@ -1019,8 +1020,7 @@ END;
 
 /* Get input for python migration policy for the tapegateway */
 
-
- create or replace PROCEDURE inputMigrPolicyGateway
+create or replace PROCEDURE inputMigrPolicyGateway
 (svcclassName IN VARCHAR2,
  policyName OUT NOCOPY VARCHAR2,
  svcId OUT NUMBER,
@@ -1038,7 +1038,7 @@ BEGIN
    WHERE SvcClass.name = svcClassName;
 
   -- get all candidates by bunches, separating repack ones from 'normal' ones
-  SELECT /*+ LEADING(R SR TC)
+  SELECT /*+ LEADING(R SR TC) USE_HASH(SR TC)
             INDEX_RS_ASC(SR I_SubRequest_Request) 
             INDEX_RS_ASC(TC I_TapeCopy_Status) */
          TC.id BULK COLLECT INTO tcIds
@@ -1050,7 +1050,8 @@ BEGIN
      AND TC.castorFile = SR.castorFile
      AND ROWNUM <= 20;
   SELECT /*+ FIRST_ROWS(20) LEADING(TC CF)
-             INDEX_RS_ASC(TC I_TapeCopy_Status) */
+             INDEX_RS_ASC(TC I_TapeCopy_Status)
+             INDEX_RS_ASC(CF I_CastorFile_SvcClass) */
 	     TC.id BULK COLLECT INTO tcIds2
     FROM TapeCopy TC, CastorFile CF
    WHERE CF.svcClass = svcId

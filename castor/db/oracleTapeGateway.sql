@@ -1009,8 +1009,8 @@ END;
 /* get the information from the db for a successful migration */
 
 
-
-create or replace PROCEDURE tg_getRepackVidAndFileInfo( inputFileId IN NUMBER,
+create or replace
+PROCEDURE tg_getRepackVidAndFileInfo( inputFileId IN NUMBER,
                                       inputNsHost IN VARCHAR2,
                                       inFseq IN INTEGER,
                                       transactionId IN NUMBER, 
@@ -1057,12 +1057,10 @@ BEGIN
    --REPACK case
     -- Get the repackvid field from the existing request (if none, then we are not in a repack process
      SELECT StageRepackRequest.repackvid INTO outRepackVid
-       FROM SubRequest, DiskCopy,StageRepackRequest
+       FROM SubRequest, StageRepackRequest
        WHERE StageRepackRequest.id = SubRequest.request
-       AND DiskCopy.id = SubRequest.diskcopy
-       AND DiskCopy.status = 10 -- CANBEMIGR
        AND SubRequest.status = 12 -- SUBREQUEST_REPACK
-       AND DiskCopy.castorfile = cfId
+       AND SubRequest.castorFile = cfId
        AND ROWNUM < 2;
   EXCEPTION WHEN NO_DATA_FOUND THEN
    -- standard migration
@@ -1352,6 +1350,40 @@ BEGIN
 END;
 /
 
+/* repack start the migration phase */
+
+create or replace PROCEDURE tg_startRepackMigration
+(srId IN INTEGER, cfId IN INTEGER, dcId IN INTEGER,
+ reuid OUT INTEGER, regid OUT INTEGER) AS
+  fs NUMBER;
+  svcClassId NUMBER;
+BEGIN
+  UPDATE DiskCopy SET status = 6  -- DISKCOPY_STAGEOUT
+   WHERE id = dcId RETURNING diskCopySize INTO fs;
+  -- update the Repack subRequest for this file. The status REPACK
+  -- stays until the migration to the new tape is over.
+  UPDATE SubRequest
+     SET diskCopy = dcId, status = 12  -- REPACK
+   WHERE id = srId;   
+  -- get the service class, uid and gid
+  SELECT R.svcClass, euid, egid INTO svcClassId, reuid, regid
+    FROM StageRepackRequest R, SubRequest
+   WHERE SubRequest.request = R.id
+     AND SubRequest.id = srId;
+  -- create the required number of tapecopies for the files
+  -- one tapecopy by definition because we cannot repack the same file more than once at the same time.
+  internalPutDoneFunc(cfId, fs, 0, 1, svcClassId);
+  -- set svcClass in the CastorFile for the migration
+  UPDATE CastorFile SET svcClass = svcClassId WHERE id = cfId;
+  -- update remaining STAGED diskcopies to CANBEMIGR too
+  -- we may have them as result of disk2disk copies, and so far
+  -- we only dealt with dcId
+  UPDATE DiskCopy SET status = 10  -- DISKCOPY_CANBEMIGR
+   WHERE castorFile = cfId AND status = 0;  -- DISKCOPY_STAGED
+END;
+/
+
+
 
 /* update the db after a successful recall */
 
@@ -1435,7 +1467,7 @@ BEGIN
     WHERE id = dcid;
   
   IF reqType = 119 THEN  -- OBJ_StageRepackRequest
-    startRepackMigration(subRequestId, cfId, dcid, ouid, ogid);
+    tg_startRepackMigration(subRequestId, cfId, dcid, ouid, ogid);
   ELSE
     -- restart this subrequest if it's not a repack one
     UPDATE SubRequest
