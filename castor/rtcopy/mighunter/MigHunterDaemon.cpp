@@ -56,8 +56,8 @@ extern "C" {
 // default values
 
 #define MIN_BYTE_VOLUME   1     // bytes
-#define SLEEP_TIME        7200  // seconds (2 hours)
-
+#define STR_SLEEP_TIME        7200  // seconds (2 hours)
+#define MIG_SLEEP_TIME 1
 
 //------------------------------------------------------------------------------
 // main method
@@ -87,11 +87,23 @@ int main(int argc, char* argv[]){
   
   castor::infoPolicy::MigrationPySvc* migrSvc = NULL;
   castor::infoPolicy::StreamPySvc* strSvc = NULL;
-
+  u_signed64 migSleepTime=MIG_SLEEP_TIME;
+  
   
   // create the policy
   try{
   
+    // get sleep time for mighunterthread
+
+    char* tmp=NULL;
+    if ( (tmp= getconfent("MIGHUNTER","MIG_SLEEP",0)) != NULL ){
+      char* dp = tmp;
+      migSleepTime= strtoul(tmp, &dp, 0);
+      if (*dp != 0 || migSleepTime <=0 ) {
+        migSleepTime = MIG_SLEEP_TIME;
+      }
+    }
+
     
     // get migration policy name
 
@@ -130,7 +142,7 @@ int main(int argc, char* argv[]){
     migHunter.parseCommandLine(argc, argv);
 
     u_signed64 minByteVolume=migHunter.byteVolume();
-    u_signed64 sleepTime=migHunter.timeSleep();
+    u_signed64 strSleepTime=migHunter.timeSleep();
     bool doClone=migHunter.doClone();
 
     std::list<std::string>::const_iterator svcClassName = migHunter.listSvcClass().begin(); 
@@ -145,14 +157,15 @@ int main(int argc, char* argv[]){
     // mighunter
     
     std::auto_ptr<castor::rtcopy::mighunter::MigHunterThread> migThread(new castor::rtcopy::mighunter::MigHunterThread(migHunter.listSvcClass(),minByteVolume,doClone,migrSvc));
-    std::auto_ptr<castor::server::SignalThreadPool> migPool(new castor::server::SignalThreadPool("MigHunterThread",migThread.release(),sleepTime));
+ 
+    std::auto_ptr<castor::server::SignalThreadPool> migPool(new castor::server::SignalThreadPool("MigHunterThread",migThread.release(),migSleepTime));
     migHunter.addThreadPool(migPool.release());
     migHunter.getThreadPool('M')->setNbThreads(1);
     
     //stream
 
     std::auto_ptr<castor::rtcopy::mighunter::StreamThread> strThread( new castor::rtcopy::mighunter::StreamThread( migHunter.listSvcClass(), strSvc));
-    std::auto_ptr<castor::server::SignalThreadPool> strPool(new castor::server::SignalThreadPool("StreamThread",strThread.release(),sleepTime));
+    std::auto_ptr<castor::server::SignalThreadPool> strPool(new castor::server::SignalThreadPool("StreamThread",strThread.release(),strSleepTime));
     migHunter.addThreadPool(strPool.release());
     migHunter.getThreadPool('S')->setNbThreads(1);
     
@@ -195,7 +208,7 @@ int main(int argc, char* argv[]){
 
 castor::rtcopy::mighunter::MigHunterDaemon::MigHunterDaemon() : castor::server::BaseDaemon("mighunterd")
 {
-    m_timeSleep= SLEEP_TIME;
+    m_timeSleep= STR_SLEEP_TIME;
     m_byteVolume= MIN_BYTE_VOLUME;
     m_doClone=false;
 
