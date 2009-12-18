@@ -280,7 +280,10 @@ namespace castor {
     SVC_ORAREPACKSVC = 44,
     SVC_ORATAPEGATEWAYSVC = 45,
     SVC_ORAMIGHUNTERSVC = 46,
-    SVC_ORARECHANDLERSVC = 47
+    SVC_ORARECHANDLERSVC = 47,
+
+    SVC_ORASRMDAEMONSVC = 48
+
   };
 
   /**
@@ -325,7 +328,7 @@ namespace castor {
    * declared outside of any function.
    */
 
-#define SERVICES_IDS_NB 48
+#define SERVICES_IDS_NB 49
   static const unsigned int ServicesIdsNb = SERVICES_IDS_NB;
 
 

@@ -292,7 +292,10 @@ const char* castor::ServicesIdStrings[ServicesIdsNb] = {
   "ORAREPACKSVC" ,
   "ORATAPEGATEWAYSVC",
   "ORAMIGHUNTERSVC",
-  "ORARECHANDLERSVC"
+  "ORARECHANDLERSVC",
+
+  "ORASRMDAEMONSVC",
+
 };
 
 //=============================================================================
