@@ -355,10 +355,9 @@ void castor::rtcopy::mighunter::ora::OraMigHunterSvc::attachTapeCopiesToStreams(
   throw (castor::exception::Exception){
 
   unsigned char (*bufferTapeCopyId)[21] = 0;
-  unsigned char (*bufferTapePoolId)[21] = 0;
+  
   ub2 *lens1=NULL;
-  ub2 *lens2=NULL;
-
+ 
   if (outputFromMigrationPolicy.size() == 0){
     // no tapecopy to attach
     return;
@@ -378,49 +377,53 @@ void castor::rtcopy::mighunter::ora::OraMigHunterSvc::attachTapeCopiesToStreams(
     unsigned int nb = outputFromMigrationPolicy.size();
 
     bufferTapeCopyId=(unsigned char(*)[21]) calloc((nb) * 21, sizeof(unsigned char));
-    bufferTapePoolId=(unsigned char(*)[21]) calloc((nb) * 21, sizeof(unsigned char));
+   
     lens1=(ub2 *)malloc (sizeof(ub2)*nb);
-    lens2=(ub2 *)malloc (sizeof(ub2)*nb);
-
-    if ( bufferTapeCopyId == 0 || bufferTapePoolId == 0 || lens1 == 0 || lens2 == 0  ) {
+   
+    if ( bufferTapeCopyId == 0  || lens1 == 0  ) {
        if (bufferTapeCopyId != 0) free(bufferTapeCopyId);
-       if (bufferTapePoolId != 0) free(bufferTapePoolId);
        if (lens1 != 0) free(lens1);
-       if (lens2 != 0) free(lens2);
+     
        castor::exception::OutOfMemory e; 
        throw e;
     }
     
     std::list<castor::infoPolicy::MigrationPolicyElement>::const_iterator elem=outputFromMigrationPolicy.begin();
 
+    u_signed64 tapePoolId=(*elem).tapePoolId();
+
     int i =0;
     while (elem != outputFromMigrationPolicy.end()) {
 
+      if (tapePoolId != (*elem).tapePoolId()) {
+	castor::exception::Internal ex;
+	ex.getMessage()
+	  << "Wrong value tapepool id should be "<<tapePoolId
+	  <<" but it is "<<(*elem).tapePoolId()
+	  << std::endl;
+	throw ex;
+      }
+      
       oracle::occi::Number n1 = (double)((*elem).tapeCopyId());
       oracle::occi::Bytes b1 = n1.toBytes();
       b1.getBytes(bufferTapeCopyId[i],b1.length());
       lens1[i] = b1.length();
-
-      oracle::occi::Number n2 = (double)((*elem).tapePoolId());
-      oracle::occi::Bytes b2 = n2.toBytes();
-      b2.getBytes(bufferTapePoolId[i],b2.length());
-      lens2[i] = b2.length();
       elem++;
       i++;
     }
+
     ub4 unused = nb;
     m_attachTapeCopiesToStreamsStatement->setDataBufferArray
       (1, bufferTapeCopyId, oracle::occi::OCCI_SQLT_NUM,nb, &unused, 21, lens1);
-    m_attachTapeCopiesToStreamsStatement->setDataBufferArray
-      (2, bufferTapePoolId, oracle::occi::OCCI_SQLT_NUM,nb, &unused, 21, lens2);
-    
+   
+    m_attachTapeCopiesToStreamsStatement->setDouble(2, (double)tapePoolId);
+
     m_attachTapeCopiesToStreamsStatement->executeUpdate();
 
     //free allocated memory needed because of oracle unfriendly interface
     if (lens1) {free(lens1);lens1=0;}
     if (bufferTapeCopyId){free(bufferTapeCopyId);bufferTapeCopyId=0;}
-    if (lens2)  {free(lens2);lens2=0;}
-    if (bufferTapePoolId){free(bufferTapePoolId);bufferTapePoolId=0;}
+   
     
 
   } catch (oracle::occi::SQLException e) {
@@ -428,8 +431,7 @@ void castor::rtcopy::mighunter::ora::OraMigHunterSvc::attachTapeCopiesToStreams(
     //free allocated memory needed because of oracle unfriendly interface
     if (lens1) {free(lens1);lens1=0;}
     if (bufferTapeCopyId){free(bufferTapeCopyId);bufferTapeCopyId=0;}
-    if (lens2)  {free(lens2);lens2=0;}
-    if (bufferTapePoolId){free(bufferTapePoolId);bufferTapePoolId=0;}
+    
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()

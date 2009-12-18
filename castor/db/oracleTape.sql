@@ -1357,9 +1357,9 @@ END;
 
 /* attach tapecopies to streams for rtcpclientd */
 
-CREATE OR REPLACE PROCEDURE  attachTCRtcp
+create or replace PROCEDURE  attachTCRtcp
 (tapeCopyIds IN castor."cnumList",
- tapePoolIds IN castor."cnumList")
+ tapePoolId IN NUMBER)
 AS
   streamId NUMBER; -- stream attached to the tapepool
   counter NUMBER := 0;
@@ -1370,14 +1370,14 @@ BEGIN
   FOR i IN tapeCopyIds.FIRST .. tapeCopyIds.LAST LOOP
     BEGIN
       SELECT count(id) INTO nbStream FROM Stream
-       WHERE Stream.tapepool = tapePoolIds(i);
+       WHERE Stream.tapepool = tapePoolId;
       IF nbStream <> 0 THEN
         -- we have at least a stream for that tapepool
         SELECT id INTO unused
           FROM TapeCopy
          WHERE status IN (2,7) AND id = tapeCopyIds(i) FOR UPDATE;
         -- let's attach it to the different streams
-        FOR streamId IN (SELECT id FROM Stream WHERE Stream.tapepool = tapePoolIds(i)) LOOP
+        FOR streamId IN (SELECT id FROM Stream WHERE Stream.tapepool = tapePoolId ) LOOP
           UPDATE TapeCopy SET status = 2
            WHERE status = 7 AND id = tapeCopyIds(i);
           DECLARE CONSTRAINT_VIOLATED EXCEPTION;
@@ -1413,27 +1413,22 @@ END;
 
 create or replace PROCEDURE attachTCGateway
 (tapeCopyIds IN castor."cnumList",
- tapePoolIds IN castor."cnumList")
+ tapePoolId IN NUMBER)
 AS
-  streamId NUMBER; -- stream attached to the tapepool
-  counter NUMBER := 0;
   unused NUMBER;
-  nbStream NUMBER;
-  strIds "numList";
+  streamId NUMBER; -- stream attached to the tapepool
   nbTapeCopies NUMBER;
 BEGIN
-
+ 
  -- WARNING: tapegateway ONLY version
-
--- just for a tapepool
- FOR j IN tapePoolIds.FIRST .. tapePoolIds.LAST LOOP
-  FOR str IN (SELECT id FROM  Stream WHERE tapepool=tapePoolIds(j)) LOOP
+  FOR str IN (SELECT id FROM  Stream WHERE tapepool=tapePoolId) LOOP
      BEGIN
       -- add choosen tapecopies to all Streams associated to the tapepool used by the policy
        SELECT id INTO streamId FROM stream where id=str.id FOR UPDATE;
       -- add choosen tapecopies to all Streams associated to the tapepool used by the policy
         FOR i IN tapeCopyIds.FIRST .. tapeCopyIds.LAST LOOP
            BEGIN
+             
               SELECT /*+ index(tapecopy,PK_TAPECOPY_ID)*/ id INTO unused
                 FROM TapeCopy
                 WHERE Status in (2,7) AND id = tapeCopyIds(i) FOR UPDATE;
@@ -1452,25 +1447,22 @@ BEGIN
             -- Go on the tapecopy has been resurrected or migrated
               NULL;
            END;
-      END LOOP;
+      END LOOP; -- loop tapecopies
       COMMIT;
      EXCEPTION WHEN NO_DATA_FOUND THEN
       -- no stream anymore
       null;
      END;
-    END LOOP; -- loop tapecopies
-  END LOOP;
+    END LOOP; -- loop streams
   COMMIT;
 END;
 /
 
-
 /* generic attach tapecopies to stream */
 
-create or replace
-PROCEDURE attachTapeCopiesToStreams 
+create or replace PROCEDURE attachTapeCopiesToStreams 
 (tapeCopyIds IN castor."cnumList",
- tapePoolIds IN castor."cnumList")
+ tapePoolId IN NUMBER)
  AS
  dname VARCHAR2(2048);
 BEGIN
@@ -1486,36 +1478,13 @@ BEGIN
    
    IF dname like 'tapegatewayd' THEN
      -- tapegateway behavior 
-     attachTCGateway(tapeCopyIds, tapePoolIds);
+     attachTCGateway(tapeCopyIds, tapePoolId);
      return;
    END IF;
    IF dname like 'rtcpclientd' THEN
     -- use rtcpclientd
-     attachTCRtcp(tapeCopyIds, tapePoolIds);  
+     attachTCRtcp(tapeCopyIds, tapePoolId);  
    END IF;
-END;
-/
-
-
-
-CREATE OR REPLACE PROCEDURE attachTapeCopiesToStreams 
-(tapeCopyIds IN castor."cnumList",
- tapePoolIds IN castor."cnumList")
- AS
- unused VARCHAR2(2048);
-BEGIN
- SELECT value INTO unused
-    FROM CastorConfig
-   WHERE class = 'tape'
-     AND KEY = 'daemonName'
-     AND value = 'tapegatewayd';
-     
-  -- tapegateway behavior 
-     attachTCGateway(tapeCopyIds, tapePoolIds);
-
-EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- use rtcpclientd
-     attachTCRtcp(tapeCopyIds, tapePoolIds);    
 END;
 /
 
