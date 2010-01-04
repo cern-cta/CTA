@@ -2765,4 +2765,25 @@ BEGIN
 END;
 /
 
+
+How to add a tape server directly to the VDQM database
+======================================================
+
+Only do this if you really know what you are doing.  This infomation is
+usually added by a tape server starting or stopping for the first time.
+
+DECLARE
+  serverIdVar   NUMBER         := 0;
+  serverNameVar VARCHAR2(2048) := 'tpsrv250';
+  actingModeVar NUMBER         := 0;
+BEGIN
+  INSERT INTO TapeServer(id, serverName, actingMode)
+    VALUES(ids_seq.nextval, serverNameVar, actingModeVar)
+    RETURNING id INTO serverIdVar;
+
+  INSERT INTO Id2Type (id, type)
+    VALUES(serverIdVar, 86); -- OBJ_TapeServer = 86
+END;
+/
+
 commit;
