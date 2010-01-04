@@ -235,6 +235,8 @@ castor::jobmanager::JobManagerDaemon::JobManagerDaemon():
     { 75, "Failed to execute getRunningTransfers" },
     { 77, "Executing cleanup for job" },
     { 78, "Exception caught trying to get list of LSF jobs" },
+    { 79, "Execution time statistics" },
+    { 80, "Job terminated, transfer aborted" },
 
     // Submission
     { 40, "Invalid JobManager/SubmitRetryAttempts option, using default" },

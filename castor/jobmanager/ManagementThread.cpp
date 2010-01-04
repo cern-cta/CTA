@@ -154,9 +154,18 @@ void castor::jobmanager::ManagementThread::run(void *param) {
 
   // Get a list of all jobs known to the stager database and possible reasons
   // for termination
+  timeval tv;
+  gettimeofday(&tv, NULL);
+
+  signed64 startTime     = ((tv.tv_sec * 1000000) + tv.tv_usec);
+  signed64 elapsedTime   = 0;
+  signed64 dbExtractTime = tv.tv_sec;
+
   std::map<std::string, std::pair<bool, bool> > databaseJobs;
   try {
     databaseJobs = m_jobManagerService->getRunningTransfers();
+    gettimeofday(&tv, NULL);
+    elapsedTime = (((tv.tv_sec * 1000000) + tv.tv_usec) - startTime);
   } catch (castor::exception::Exception e) {
 
     // "Exception caught trying to get a list of running transfers from the "
@@ -175,22 +184,45 @@ void castor::jobmanager::ManagementThread::run(void *param) {
     return;
   }
 
+  // "Execution time statistics"
+  castor::dlf::Param params2[] =
+    {castor::dlf::Param("Function", "getRunnningTransfers"),
+     castor::dlf::Param("ContainerSize", databaseJobs.size()),
+     castor::dlf::Param("ElapsedTime", elapsedTime * 0.000001)};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 79, 3, params2);
+
   // Get a list of all jobs known to the scheduler
+  gettimeofday(&tv, NULL);
+  startTime = ((tv.tv_sec * 1000000) + tv.tv_usec);  
+
   std::map<std::string, castor::jobmanager::JobRequest> lsfJobs;
   try {
     lsfJobs = getSchedulerJobs();
+    gettimeofday(&tv, NULL);
+    elapsedTime = (((tv.tv_sec * 1000000) + tv.tv_usec) - startTime);
   } catch (castor::exception::Exception e) {
-    // "Exception caught trying to get list of LSF jobs"
+    // "Exception caught trying to get list of Pending LSF jobs"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", e.getMessage().str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 78, 1, params);
     return;
   }
 
+  // "Execution time statistics"
+  castor::dlf::Param params3[] =
+    {castor::dlf::Param("Function", "getPendingSchedulerJobs"),
+     castor::dlf::Param("ContainerSize", lsfJobs.size()),
+     castor::dlf::Param("ElapsedTime", elapsedTime * 0.000001)};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 79, 3, params3);
+
   // A container to hold a list of jobs which have finished or been
   // terminated and the reason why
   std::vector<std::pair<std::string, int> > exitedJobs;
 
+  // For logging purposes
+  Cuuid_t subRequestId;
+  Cuuid_t requestId;
+      
   // Compare the list of jobs known to the stager and LSF to determine those
   // which require termination and cleanup
   for (std::map<std::string, std::pair<bool, bool> >::const_iterator it =
@@ -217,7 +249,6 @@ void castor::jobmanager::ManagementThread::run(void *param) {
       
       // Convert the string representations of the SubRequest uuid to a 
       // Cuuid_t structure
-      Cuuid_t subRequestId;
       string2Cuuid(&subRequestId, (char *)subReqId.c_str());
       
       // "Executing cleanup for job"
@@ -226,6 +257,45 @@ void castor::jobmanager::ManagementThread::run(void *param) {
          castor::dlf::Param(subRequestId)};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 77, 2, params);
     } 
+  }
+
+  // Terminate jobs which appear in LSF but not in the database
+  for (std::map<std::string, castor::jobmanager::JobRequest>::const_iterator it =
+	 lsfJobs.begin();
+       it != lsfJobs.end();
+       it++) {
+    std::string subReqId = (*it).first;
+    castor::jobmanager::JobRequest job = (*it).second;
+
+    std::map<std::string, std::pair<bool, bool> >::const_iterator it2 =
+      databaseJobs.find(subReqId);
+    if (it2 != databaseJobs.end()) {
+      continue; // Job exists in the stager database
+    }
+    if ((signed64)job.submitStartTime() > (dbExtractTime - 90)) {
+      continue; // Database listing is too old
+    }
+    if (!killJob(job.id())) {
+      continue; // No job was killed in LSF
+    }
+
+    // Convert the string representations of the uuids to Cuuid_t
+    // structures
+    string2Cuuid(&requestId,    (char *)job.reqId().c_str());
+    string2Cuuid(&subRequestId, (char *)job.subReqId().c_str());
+    
+    // Job terminated, transfer aborted
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("JobId", job.id()),
+       castor::dlf::Param("Username", job.username()),
+       castor::dlf::Param("Type", castor::ObjectsIdStrings[job.requestType()]),
+	 castor::dlf::Param("SvcClass", job.svcClass()),
+       castor::dlf::Param(subRequestId)};
+    castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 80, 5, params);
+    
+    // Note: We assume that the SubRequest was already terminated in the
+    // database hence the error code is 0
+    exitedJobs.push_back(std::pair<std::string, int>(subReqId, 0));
   }
 
   // Bulk terminate the jobs that exited or were terminated
@@ -258,7 +328,7 @@ castor::jobmanager::ManagementThread::getSchedulerJobs()
   // Retrieve a list of all jobs
   std::map<std::string, castor::jobmanager::JobRequest> lsfJobs;
   jobInfoEnt *job;
-  if (lsb_openjobinfo(0, NULL, (char *)"all", NULL, NULL, CUR_JOB) < 0) {
+  if (lsb_openjobinfo(0, NULL, (char *)"all", NULL, NULL, PEND_JOB) < 0) {
     if (lsberrno == LSBE_NO_JOB) {
       lsb_closejobinfo(); // No matching job found
     } else {
@@ -472,6 +542,13 @@ int castor::jobmanager::ManagementThread::processJob
 // KillJob
 //-----------------------------------------------------------------------------
 bool castor::jobmanager::ManagementThread::killJob(const LS_LONG_INT jobId) {
+
+  // Verify that the job to be killed is in a pending state
+  if (lsb_openjobinfo(jobId, NULL, NULL, NULL, NULL, PEND_JOB) <= 0) {
+    lsb_closejobinfo(); // No matching job found, it must be running or exited
+    return false;
+  }
+  lsb_closejobinfo();
 
   // LSF has the capacity to kill jobs on bulk (lsb_killbulkjobs). However
   // testing has shown that this call fails to invoke the deletion hook of the

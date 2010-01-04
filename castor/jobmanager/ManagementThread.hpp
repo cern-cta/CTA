@@ -110,7 +110,7 @@ namespace castor {
                      const bool noFsAvail);
 
       /**
-       * bkill a job in LSF.
+       * bkill a pending job in LSF.
        * @param jobId The job id to terminate in LSF
        * @return true if the job was terminated otherwise false
        */

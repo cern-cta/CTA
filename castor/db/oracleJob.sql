@@ -847,6 +847,7 @@ BEGIN
 END;
 /
 
+
 /* PL/SQL method implementing jobFailed, providing bulk termination of file
  * transfers.
  */
@@ -876,7 +877,8 @@ BEGIN
        SELECT id INTO srId FROM SubRequest
         WHERE id = srId AND status IN (6, 14);  -- READY, BEINGSCHED
        -- Update the reason for termination.
-       UPDATE SubRequest SET errorCode = errnos(i)
+       UPDATE SubRequest 
+          SET errorCode = decode(errnos(i), 0, errorCode, errnos(i))
         WHERE id = srId;
        -- Call the relevant cleanup procedure for the job, procedures that
        -- would have been called if the job failed on the remote execution host.
