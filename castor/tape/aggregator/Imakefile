@@ -29,6 +29,7 @@ LD = g++
 DependsOnLibrary(../../common,castorcommon)
 DependsOnLibrary(../../dlf,castordlf)
 DependsOnLibrary(../db/cnv,castorcnvs)
+DependsOnLibrary(..,castorclient)
 
 TAPEGATEWAY_MESSAGES_SRCS = \
   ../tapegateway/BaseFileInfo.cpp \
