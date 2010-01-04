@@ -66,35 +66,6 @@ class BridgeSocketCatalogue {
 public:
 
   /**
-   * The status of an rtcpd disk/tape IO control-connection.
-   */
-  enum RtcpdConnectionStatus {
-    IDLE,
-    WAIT_FILE_TO_MIGRATE,
-    WAIT_FILE_TO_RECALL,
-    WAIT_ACK_OF_FILE_MIGRATED,
-    WAIT_ACK_OF_FILE_RECALLED
-  };
-
-  /**
-   * Returns the string representation of the specified rcpd disk/tape IO
-   * control-connection.  If the status value is unknown then the string
-   * representation "UNKNOWN is returned.
-   */
-  static const char *rtcpdSockStatusToStr(const RtcpdConnectionStatus status)
-    throw();
-
-  /**
-   * The different types of client-connection.
-   */
-  enum ClientConnectionType {
-    FILE_TO_MIGRATE_REPLY,
-    FILE_TO_RECALL_REPLY,
-    ACK_OF_FILE_MIGRATED,
-    ACK_OF_FILE_RECALLED
-  };
-
-  /**
    * Constructor.
    */
   BridgeSocketCatalogue();
@@ -189,27 +160,15 @@ public:
    *                         sent to rtcpd.
    * @param clientSock       The socket-descriptor of the client connection
    *                         from which a reply is expected.
-   * @param clientType       The type of the client socket.
    * @param aggregatorTransactionId The aggregator transaction ID associated
    *                         with the client request.
    */
   void addClientConn(
-    const int                  rtcpdSock,
-    const uint32_t             rtcpdReqMagic,
-    const uint32_t             rtcpdReqType,
-    const char                 (&rtcpdReqTapePath)[CA_MAXPATHLEN+1],
-    const int                  clientSock,
-    const ClientConnectionType clientType,
-    const uint64_t             aggregatorTransactionId)
-    throw(castor::exception::Exception);
-
-  void sentRequestToClient(
     const int      rtcpdSock,
     const uint32_t rtcpdReqMagic,
     const uint32_t rtcpdReqType,
     const char     (&rtcpdReqTapePath)[CA_MAXPATHLEN+1],
     const int      clientSock,
-    const int      clientRequestType,
     const uint64_t aggregatorTransactionId)
     throw(castor::exception::Exception);
 
@@ -275,36 +234,6 @@ public:
     throw(castor::exception::Exception);
 
   /**
-   * Tells the socket catalogue that the acknowledge of a file transfer
-   * (migration or recall) has been received from the client and successfully
-   * relayed to rtcpd.  In return the socket catalogue will reset the status
-   * of the specified rtcpd disk/tape IO control-connection to IDLE.
-   *
-   * This method throws an exception if the specified socket-descriptor is
-   * negative.
-   *
-   * This method throws an exception if the state of the specified rtcpd
-   * disk/tape IO control-connection is neither WAIT_ACK_OF_FILE_RECALLED nor
-   * WAIT_ACK_OF_FILE_MIGRATED.
-   *
-   * This method throws an exception if the associated client-connection has
-   * not already been released.  This should have been done by a call to
-   * releaseClientConn() just before the client message was read in and the
-   * client-connection closed by a call to clientTxRx::receiveReplyAndClose().
-   * The CASTOR framework class castor::io::AbstractSocket owns the
-   * socket-descriptor it uses for marshalling an unmarshalling, and this is
-   * why the socket catalogue is asked to release the client-socket before
-   * calling clientTxRx::receiveReplyAndClose().
-   *
-   * This method throws an exception if the specified rtcpd disk/tape IO
-   * control-connection does not exist in the catalogue.
-   *
-   * @param rtcpdSock The socket-descriptor of the rtcpd connection.
-   */
-  void fileTransferAcknowledged(const int rtcpdSock)
-    throw(castor::exception::Exception);
-
-  /**
    * Gets the rtcpd disk/tape IO control-connection associated with the
    * specified client connection.
    *
@@ -317,8 +246,6 @@ public:
    * @param clientSock         The socket-descriptor of the client-connection.
    * @param rtcpdSock          Output parameter: The socket-descriptor of the
    *                           rtcpd disk/tape IO control-connection.
-   * @param rtcpdStatus        Output parameter: The status of the rtcpd
-   *                           disk/tape IO control-connection.
    * @param rtcpdReqMagic      Output parameter: The magic number of the
    *                           initiating rtcpd request.  This magic number
    *                           will be used in any acknowledge message to be
@@ -340,7 +267,6 @@ public:
   void getRtcpdConn(
     const int             clientSock,
     int                   &rtcpdSock,
-    RtcpdConnectionStatus &rtcpdStatus,
     uint32_t              &rtcpdReqMagic,
     uint32_t              &rtcpdReqType,
     char                  *&rtcpdReqTapePath,
@@ -438,11 +364,6 @@ private:
     const int rtcpdSock;
 
     /**
-     * The status of the rtcpd-connection 
-     */
-    RtcpdConnectionStatus rtcpdStatus;
-
-    /**
      * The magic number of the rtcpd request message awaiting a reply from the
      * client.  If there is no such rtcpd request message, then the value of
      * this member will be 0.
@@ -512,7 +433,6 @@ private:
      */
     RtcpdConnection(const int rSock) :
       rtcpdSock(rSock),
-      rtcpdStatus(IDLE),
       rtcpdReqMagic(0),
       rtcpdReqType(0),
       rtcpdReqHasTapePath(false),

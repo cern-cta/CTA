@@ -215,8 +215,6 @@ private:
    * @param obj                The message object received from the client.
    * @param rtcpdSock          The file descriptor of the rtcpd socket which is
    *                           awaiting a reply.
-   * @param rtcpdStatus        The status of the rtcpd disk/tape IO
-   *                           control-connection.
    * @param rtcpdMagic         The magic number of the initiating rtcpd request.
    *                           This magic number will be used in any acknowledge
    *                           message to be sent to rtcpd.
@@ -234,15 +232,14 @@ private:
    * @param clientReqTimeStamp The time at which the client request was sent.
    */
   typedef void (BridgeProtocolEngine::*ClientMsgCallback)(
-    const int                                    clientSock,
-    const IObject                                *obj,
-    const int                                    rtcpdSock,
-    BridgeSocketCatalogue::RtcpdConnectionStatus rtcpdStatus,
-    const uint32_t                               rtcpdMagic,
-    const uint32_t                               rtcpdReqType,
-    const char                                   *rtcpdTapePath,
-    const uint64_t                               aggregatorTransactionId,
-    const struct timeval                         clientReqTimeStamp);
+    const int            clientSock,
+    const IObject        *obj,
+    const int            rtcpdSock,
+    const uint32_t       rtcpdMagic,
+    const uint32_t       rtcpdReqType,
+    const char           *rtcpdTapePath,
+    const uint64_t       aggregatorTransactionId,
+    const struct timeval clientReqTimeStamp);
 
   /**
    * Datatype for the map of IObject types to client message handler.
@@ -421,15 +418,14 @@ private:
    * RtcpdBridgeProtocolEngine::ClientMsgCallback.
    */
   void fileToMigrateClientCallback(
-    const int                                    clientSock,
-    const IObject                                *obj,
-    const int                                    rtcpdSock,
-    BridgeSocketCatalogue::RtcpdConnectionStatus rtcpdStatus,
-    const uint32_t                               rtcpdMagic,
-    const uint32_t                               rtcpdReqType,
-    const char                                   *rtcpdTapePath,
-    const uint64_t                               aggregatorTransactionId,
-    struct timeval                               clientReqTimeStamp)
+    const int      clientSock,
+    const IObject  *obj,
+    const int      rtcpdSock,
+    const uint32_t rtcpdMagic,
+    const uint32_t rtcpdReqType,
+    const char     *rtcpdTapePath,
+    const uint64_t aggregatorTransactionId,
+    struct timeval clientReqTimeStamp)
     throw(castor::exception::Exception);
 
   /**
@@ -439,15 +435,14 @@ private:
    * RtcpdBridgeProtocolEngine::ClientMsgCallback.
    */
   void fileToRecallClientCallback(
-    const int                                    clientSock,
-    const IObject                                *obj,
-    const int                                    rtcpdSock,
-    BridgeSocketCatalogue::RtcpdConnectionStatus rtcpdStatus,
-    const uint32_t                               rtcpdMagic,
-    const uint32_t                               rtcpdReqType,
-    const char                                   *rtcpdTapePath,
-    const uint64_t                               aggregatorTransactionId,
-    struct timeval                               clientReqTimeStamp)
+    const int      clientSock,
+    const IObject  *obj,
+    const int      rtcpdSock,
+    const uint32_t rtcpdMagic,
+    const uint32_t rtcpdReqType,
+    const char     *rtcpdTapePath,
+    const uint64_t aggregatorTransactionId,
+    struct timeval clientReqTimeStamp)
     throw(castor::exception::Exception);
 
   /**
@@ -457,15 +452,14 @@ private:
    * RtcpdBridgeProtocolEngine::ClientMsgCallback.
    */
   void noMoreFilesClientCallback(
-    const int                                    clientSock,
-    const IObject                                *obj,
-    const int                                    rtcpdSock,
-    BridgeSocketCatalogue::RtcpdConnectionStatus rtcpdStatus,
-    const uint32_t                               rtcpdMagic,
-    const uint32_t                               rtcpdReqType,
-    const char                                   *rtcpdTapePath,
-    const uint64_t                               aggregatorTransactionId,
-    struct timeval                               clientReqTimeStamp)
+    const int      clientSock,
+    const IObject  *obj,
+    const int      rtcpdSock,
+    const uint32_t rtcpdMagic,
+    const uint32_t rtcpdReqType,
+    const char     *rtcpdTapePath,
+    const uint64_t aggregatorTransactionId,
+    struct timeval clientReqTimeStamp)
     throw(castor::exception::Exception);
 
   /**
@@ -475,15 +469,14 @@ private:
    * RtcpdBridgeProtocolEngine::ClientMsgCallback.
    */
   void endNotificationErrorReportClientCallback(
-    const int                                    clientSock,
-    const IObject                                *obj,
-    const int                                    rtcpdSock,
-    BridgeSocketCatalogue::RtcpdConnectionStatus rtcpdStatus,
-    const uint32_t                               rtcpdMagic,
-    const uint32_t                               rtcpdReqType,
-    const char                                   *rtcpdTapePath,
-    const uint64_t                               aggregatorTransactionId,
-    struct timeval                               clientReqTimeStamp)
+    const int      clientSock,
+    const IObject  *obj,
+    const int      rtcpdSock,
+    const uint32_t rtcpdMagic,
+    const uint32_t rtcpdReqType,
+    const char     *rtcpdTapePath,
+    const uint64_t aggregatorTransactionId,
+    struct timeval clientReqTimeStamp)
     throw(castor::exception::Exception);
 
   /**
@@ -493,15 +486,14 @@ private:
    * RtcpdBridgeProtocolEngine::ClientMsgCallback.
    */
   void notificationAcknowledge(
-    const int                                    clientSock,
-    const IObject                                *obj,
-    const int                                    rtcpdSock,
-    BridgeSocketCatalogue::RtcpdConnectionStatus rtcpdStatus,
-    const uint32_t                               rtcpdMagic,
-    const uint32_t                               rtcpdReqType,
-    const char                                   *rtcpdTapePath,
-    const uint64_t                               aggregatorTransactionId,
-    struct timeval                               clientReqTimeStamp)
+    const int      clientSock,
+    const IObject  *obj,
+    const int      rtcpdSock,
+    const uint32_t rtcpdMagic,
+    const uint32_t rtcpdReqType,
+    const char     *rtcpdTapePath,
+    const uint64_t aggregatorTransactionId,
+    struct timeval clientReqTimeStamp)
     throw(castor::exception::Exception);
 
 }; // class BridgeProtocolEngine

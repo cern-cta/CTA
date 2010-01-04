@@ -411,15 +411,13 @@ bool castor::tape::aggregator::BridgeProtocolEngine::processAPendingSocket(
       // Get information about the rtcpd disk/tape IO control-connection that
       // is waiting for the reply from the pending client-connection
       int            rtcpdSock               = 0;
-      BridgeSocketCatalogue::RtcpdConnectionStatus
-                     rtcpdStatus             = BridgeSocketCatalogue::IDLE;
       uint32_t       rtcpdReqMagic           = 0;
       uint32_t       rtcpdReqType            = 0;
       char           *rtcpdReqTapePath       = NULL;
       uint64_t       aggregatorTransactionId = 0;
       struct timeval clientReqTimeStamp      = {0, 0};
-      m_sockCatalogue.getRtcpdConn(pendingSock, rtcpdSock, rtcpdStatus,
-        rtcpdReqMagic, rtcpdReqType, rtcpdReqTapePath, aggregatorTransactionId,
+      m_sockCatalogue.getRtcpdConn(pendingSock, rtcpdSock, rtcpdReqMagic,
+        rtcpdReqType, rtcpdReqTapePath, aggregatorTransactionId,
         clientReqTimeStamp);
 
       // Release the client-connection from the catalogue
@@ -451,9 +449,9 @@ bool castor::tape::aggregator::BridgeProtocolEngine::processAPendingSocket(
 
       // Invoke the handler
       try {
-        (this->*handler)(pendingSock, obj.get(), rtcpdSock, rtcpdStatus,
-          rtcpdReqMagic, rtcpdReqType, rtcpdReqTapePath,
-          aggregatorTransactionId, clientReqTimeStamp);
+        (this->*handler)(pendingSock, obj.get(), rtcpdSock, rtcpdReqMagic,
+          rtcpdReqType, rtcpdReqTapePath, aggregatorTransactionId,
+          clientReqTimeStamp);
       } catch(castor::exception::Exception &ex) {
         TAPE_THROW_CODE(ECANCELED,
           ": Client message handler failed"
@@ -973,9 +971,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
       // Add the client connection to the socket catalogue so that the
       // association with the rtcpd connection is made
       m_sockCatalogue.addClientConn(rtcpdSock, header.magic, header.reqType,
-        body.tapePath, clientSock.release(),
-        BridgeSocketCatalogue::FILE_TO_MIGRATE_REPLY,
-        aggregatorTransactionId);
+        body.tapePath, clientSock.release(), aggregatorTransactionId);
 
     // Else recalling (READ or DUMP)
     } else {
@@ -1003,9 +999,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
       // Add the client connection to the socket catalogue so that the
       // association with the rtcpd connection is made
       m_sockCatalogue.addClientConn(rtcpdSock, header.magic, header.reqType,
-        body.tapePath, clientSock.release(),
-        BridgeSocketCatalogue::FILE_TO_RECALL_REPLY,
-        aggregatorTransactionId);
+        body.tapePath, clientSock.release(), aggregatorTransactionId);
     }
     break;
   case RTCP_POSITIONED:
@@ -1297,7 +1291,6 @@ void
   const int                                    clientSock,
   const IObject                                *obj,
   const int                                    rtcpdSock,
-  BridgeSocketCatalogue::RtcpdConnectionStatus rtcpdStatus,
   const uint32_t                               rtcpdReqMagic,
   const uint32_t                               rtcpdReqType,
   const char                                   *rtcpdReqTapePath,
@@ -1329,15 +1322,6 @@ void
   ClientTxRx::checkTransactionIds("FileToMigrate",
     m_jobRequest.volReqId  , reply->mountTransactionId(),
     aggregatorTransactionId, reply->aggregatorTransactionId());
-
-  // Throw an exception if the state of the rtcpd disk/tape IO
-  // control-connection is incompatible with the type of the client message
-  if(rtcpdStatus != BridgeSocketCatalogue::WAIT_FILE_TO_MIGRATE) {
-    TAPE_THROW_CODE(ECANCELED,
-      ": Reception of FileToMigrate from client is incompatible with"
-      " rtcpd-connection status"
-      ": status=" << BridgeSocketCatalogue::rtcpdSockStatusToStr(rtcpdStatus));
-  }
 
   // Remember the file transaction ID and get its unique index to be
   // passed to rtcpd through the "rtcpFileRequest.disk_fseq" message
@@ -1436,15 +1420,14 @@ void
 //-----------------------------------------------------------------------------
 void
   castor::tape::aggregator::BridgeProtocolEngine::fileToRecallClientCallback(
-  const int                                    clientSock,
-  const IObject                                *obj,
-  const int                                    rtcpdSock,
-  BridgeSocketCatalogue::RtcpdConnectionStatus rtcpdStatus,
-  const uint32_t                               rtcpdReqMagic,
-  const uint32_t                               rtcpdReqType,
-  const char                                   *rtcpdReqTapePath,
-  const uint64_t                               aggregatorTransactionId,
-  struct timeval                               clientReqTimeStamp)
+  const int      clientSock,
+  const IObject  *obj,
+  const int      rtcpdSock,
+  const uint32_t rtcpdReqMagic,
+  const uint32_t rtcpdReqType,
+  const char     *rtcpdReqTapePath,
+  const uint64_t aggregatorTransactionId,
+  struct timeval clientReqTimeStamp)
   throw(castor::exception::Exception) {
 
   // Down cast the reply to its specific class
@@ -1471,15 +1454,6 @@ void
   ClientTxRx::checkTransactionIds("FileToRecall",
      m_jobRequest.volReqId  , reply->mountTransactionId(),
      aggregatorTransactionId, reply->aggregatorTransactionId());
-
-  // Throw an exception if the state of the rtcpd disk/tape IO
-  // control-connection is incompatible with the type of the client message
-  if(rtcpdStatus != BridgeSocketCatalogue::WAIT_FILE_TO_RECALL) {
-    TAPE_THROW_CODE(ECANCELED,
-      ": Reception of FileToRecall from client is incompatible with"
-      " rtcpd-connection status"
-      ": status=" << BridgeSocketCatalogue::rtcpdSockStatusToStr(rtcpdStatus));
-  }
 
   // Throw an exception if there is no tape path associated with the
   // initiating rtcpd request
@@ -1572,15 +1546,14 @@ void
 //-----------------------------------------------------------------------------
 void
   castor::tape::aggregator::BridgeProtocolEngine::noMoreFilesClientCallback(
-  const int                                    clientSock,
-  const IObject                                *obj,
-  const int                                    rtcpdSock,
-  BridgeSocketCatalogue::RtcpdConnectionStatus rtcpdStatus,
-  const uint32_t                               rtcpdReqMagic,
-  const uint32_t                               rtcpdReqType,
-  const char                                   *rtcpdReqTapePath,
-  const uint64_t                               aggregatorTransactionId,
-  struct timeval                               clientReqTimeStamp)
+  const int      clientSock,
+  const IObject  *obj,
+  const int      rtcpdSock,
+  const uint32_t rtcpdReqMagic,
+  const uint32_t rtcpdReqType,
+  const char     *rtcpdReqTapePath,
+  const uint64_t aggregatorTransactionId,
+  struct timeval clientReqTimeStamp)
   throw(castor::exception::Exception) {
 
   // Down cast the reply to its specific class
@@ -1605,16 +1578,6 @@ void
   ClientTxRx::checkTransactionIds("NoMoreFiles",
     m_jobRequest.volReqId  , reply->mountTransactionId(),
     aggregatorTransactionId, reply->aggregatorTransactionId());
-
-  // Throw an exception if the state of the rtcpd disk/tape IO
-  // control-connection is incompatible with the type of the client message
-  if(rtcpdStatus != BridgeSocketCatalogue::WAIT_FILE_TO_MIGRATE &&
-    rtcpdStatus != BridgeSocketCatalogue::WAIT_FILE_TO_RECALL) {
-    TAPE_THROW_CODE(ECANCELED,
-      ": Reception of NoMoreFiles from client is incompatible with"
-      " rtcpd-connection status"
-      ": status=" << BridgeSocketCatalogue::rtcpdSockStatusToStr(rtcpdStatus));
-  }
 
   // Tell RTCPD there is no file by sending an empty file list
   RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_jobRequest.volReqId, rtcpdSock,
@@ -1644,15 +1607,14 @@ void
 void
   castor::tape::aggregator::BridgeProtocolEngine::
   endNotificationErrorReportClientCallback(
-  const int                                    clientSock,
-  const IObject                                *obj,
-  const int                                    rtcpdSock,
-  BridgeSocketCatalogue::RtcpdConnectionStatus rtcpdStatus,
-  const uint32_t                               rtcpdReqMagic,
-  const uint32_t                               rtcpdReqType,
-  const char                                   *rtcpdReqTapePath,
-  const uint64_t                               aggregatorTransactionId,
-  struct timeval                               clientReqTimeStamp)
+  const int      clientSock,
+  const IObject  *obj,
+  const int      rtcpdSock,
+  const uint32_t rtcpdReqMagic,
+  const uint32_t rtcpdReqType,
+  const char     *rtcpdReqTapePath,
+  const uint64_t aggregatorTransactionId,
+  struct timeval clientReqTimeStamp)
   throw(castor::exception::Exception) {
 
   // Down cast the reply to its specific class
@@ -1689,15 +1651,14 @@ void
 //-----------------------------------------------------------------------------
 void
   castor::tape::aggregator::BridgeProtocolEngine::notificationAcknowledge(
-  const int                                    clientSock,
-  const IObject                                *obj,
-  const int                                    rtcpdSock,
-  BridgeSocketCatalogue::RtcpdConnectionStatus rtcpdStatus,
-  const uint32_t                               rtcpdReqMagic,
-  const uint32_t                               rtcpdReqType,
-  const char                                   *rtcpdReqTapePath,
-  const uint64_t                               aggregatorTransactionId,
-  struct timeval                               clientReqTimeStamp)
+  const int      clientSock,
+  const IObject  *obj,
+  const int      rtcpdSock,
+  const uint32_t rtcpdReqMagic,
+  const uint32_t rtcpdReqType,
+  const char     *rtcpdReqTapePath,
+  const uint64_t aggregatorTransactionId,
+  struct timeval clientReqTimeStamp)
   throw(castor::exception::Exception) {
 
   // Down cast the reply to its specific class
@@ -1723,20 +1684,4 @@ void
   ClientTxRx::checkTransactionIds("NotificationAcknowledge",
     m_jobRequest.volReqId  , reply->mountTransactionId(),
     aggregatorTransactionId, reply->aggregatorTransactionId());
-
-  // Throw an exception if the state of the rtcpd disk/tape IO
-  // control-connection is incompatible with the type of the client message
-  if(rtcpdStatus != BridgeSocketCatalogue::WAIT_ACK_OF_FILE_MIGRATED &&
-    rtcpdStatus != BridgeSocketCatalogue::WAIT_ACK_OF_FILE_RECALLED) {
-    TAPE_THROW_CODE(ECANCELED,
-      ": Reception of NotificationAcknowledge from client is incompatible with"
-      " rtcpd-connection status"
-      ": status=" << BridgeSocketCatalogue::rtcpdSockStatusToStr(rtcpdStatus));
-  }
-
-  // Reset the status of the rtcpd disk/tape IO control-connection in the
-  // socket catalogue to IDLE by telling the catalogue the acknowledge of the
-  // file transfer (migration or recall) has been received from the client and
-  // successfully relayed to rtcpd
-  m_sockCatalogue.fileTransferAcknowledged(rtcpdSock);
 }
