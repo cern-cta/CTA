@@ -2787,3 +2787,55 @@ END;
 /
 
 commit;
+
+
+How to add a tape drive directly to the VDQM database
+======================================================
+
+Only do this if you really know what you are doing.  This infomation is
+usually added by a tape server starting or stopping for the first time.
+
+DECLARE
+  driveIdVar           NUMBER         := 0;
+  jobIdVar             NUMBER         := 0;
+  modificationTimeVar  NUMBER         := 0;
+  resetTimeVar         NUMBER         := 0;
+  useCountVar          NUMBER         := 0;
+  errCountVar          NUMBER         := 0;
+  transferredMBVar     NUMBER         := 0;
+  totalMBVar           NUMBER         := 0;
+  driveNameVar         VARCHAR2(2048) := '35923005';
+  tapeVar              NUMBER         := NULL;
+  runningTapeReqVar    NUMBER         := NULL;
+  deviceGroupNameVar   VARCHAR2(2048) := '359B3B';
+  deviceGroupNameIdVar NUMBER         := NULL;
+  statusVar            NUMBER         := 0; -- UNIT_UP = 0
+  tapeServerNameVar    VARCHAR2(2048) := 'tpsrv250';
+  tapeServerIdVar      NUMBER         := NULL;
+BEGIN
+
+  SELECT id INTO deviceGroupNameIdVar
+    FROM DeviceGroupName
+    WHERE dgName = deviceGroupNameVar;
+
+  SELECT id INTO tapeServerIdVar
+    FROM TapeServer
+    WHERE serverName = tapeServerNameVar;
+
+  INSERT INTO TapeDrive(id, jobId, modificationTime, resetTime,
+    useCount, errCount, transferredMB, totalMB, driveName,
+    tape, runningTapeReq, deviceGroupName, status,
+    tapeServer)
+    VALUES(ids_seq.nextval, jobIdVar, modificationTimeVar, resetTimeVar,
+    useCountVar, errCountVar, transferredMBVar, totalMBVar, driveNameVar,
+    tapeVar, runningTapeReqVar, deviceGroupNameIdVar, statusVar,
+    tapeServerIdVar)
+    RETURNING id INTO driveIdVar;
+
+  INSERT INTO Id2Type (id, type)
+    VALUES(driveIdVar, 87); -- OBJ_TapeDrive = 87
+END;
+/
+
+commit;
+
