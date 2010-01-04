@@ -22,7 +22,6 @@
 # @author Sebastien Ponce, sebastien.ponce@cern.ch
 #
 
-
 SUBDIRS = aggregator format fsm tapegateway tpcp
 
 
