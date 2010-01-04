@@ -166,10 +166,9 @@ BEGIN
      :new.status = 0 THEN       -- PRODUCTION
     checkFsBackInProd(:old.id);
   END IF;
-  -- Cancel any ongoing draining operations if the filesystem is no longer in
-  -- a DRAINING state.
-  IF :old.status = 1 AND        -- DRAINING
-     :new.status IN (0, 2) THEN -- PRODUCTION, DISABLED
+  -- Cancel any ongoing draining operations if the filesystem is now in a
+  -- PRODUCTION state
+  IF :new.status = 0 THEN  -- PRODUCTION
     UPDATE DrainingFileSystem
        SET status = 3  -- INTERRUPTED
      WHERE fileSystem = :new.id
