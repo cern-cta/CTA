@@ -899,33 +899,79 @@ END;
 
 /* PL/SQL method implementing jobToSchedule */
 CREATE OR REPLACE
-PROCEDURE jobToSchedule(srId OUT INTEGER, srSubReqId OUT VARCHAR2, srProtocol OUT VARCHAR2,
-                        srXsize OUT INTEGER, srRfs OUT VARCHAR2, reqId OUT VARCHAR2,
-                        cfFileId OUT INTEGER, cfNsHost OUT VARCHAR2, reqSvcClass OUT VARCHAR2,
-                        reqType OUT INTEGER, reqEuid OUT INTEGER, reqEgid OUT INTEGER,
-                        reqUsername OUT VARCHAR2, srOpenFlags OUT VARCHAR2, clientIp OUT INTEGER,
-                        clientPort OUT INTEGER, clientVersion OUT INTEGER, clientType OUT INTEGER,
+PROCEDURE jobToSchedule(srId OUT INTEGER,              srSubReqId OUT VARCHAR2,
+                        srProtocol OUT VARCHAR2,       srXsize OUT INTEGER,
+                        srRfs OUT VARCHAR2,            reqId OUT VARCHAR2,
+                        cfFileId OUT INTEGER,          cfNsHost OUT VARCHAR2,
+                        reqSvcClass OUT VARCHAR2,      reqType OUT INTEGER,
+                        reqEuid OUT INTEGER,           reqEgid OUT INTEGER,
+                        reqUsername OUT VARCHAR2,      srOpenFlags OUT VARCHAR2,
+                        clientIp OUT INTEGER,          clientPort OUT INTEGER,
+                        clientVersion OUT INTEGER,     clientType OUT INTEGER,
                         reqSourceDiskCopy OUT INTEGER, reqDestDiskCopy OUT INTEGER,
-                        clientSecure OUT INTEGER, reqSourceSvcClass OUT VARCHAR2,
-                        reqCreationTime OUT INTEGER, reqDefaultFileSize OUT INTEGER,
+                        clientSecure OUT INTEGER,      reqSourceSvcClass OUT VARCHAR2,
+                        reqCreationTime OUT INTEGER,   reqDefaultFileSize OUT INTEGER,
                         excludedHosts OUT castor.DiskServerList_Cur) AS
   cfId NUMBER;
+  -- Cursor to select the next candidate for submission to the scheduler orderd
+  -- by creation time.
+  CURSOR c IS
+    SELECT /*+ FIRST_ROWS(10) INDEX(SR I_SubRequest_RT_CT_ID) */ SR.id
+      FROM SubRequest
+ PARTITION (P_STATUS_3_13_14) SR  -- RESTART, READYFORSCHED, BEINGSCHED
+     WHERE SR.status IN (13, 14)  -- READYFORSCHED, BEINGSCHED
+     ORDER BY SR.creationTime ASC;
+  SrLocked EXCEPTION;
+  PRAGMA EXCEPTION_INIT (SrLocked, -54);
 BEGIN
-  -- Get the next subrequest to be scheduled.
-  UPDATE SubRequest
-     SET status = 14, lastModificationTime = getTime() -- BEINGSCHED
-   WHERE status = 13 -- READYFORSCHED
-     AND rownum < 2
- RETURNING id, subReqId, protocol, xsize, requestedFileSystems
-    INTO srId, srSubReqId, srProtocol, srXsize, srRfs;
+  -- Loop on all candidates for submission into LSF
+  OPEN c;
+  LOOP
+    -- Retrieve the next candidate
+    FETCH c INTO srId;
+    IF c%NOTFOUND THEN
+      -- There are no candidates available, throw a NO_DATA_FOUND exception
+      -- which indicates to the job manager to retry in 10 seconds time
+      RAISE NO_DATA_FOUND;
+    END IF; 
+    BEGIN
+      -- Try to lock the current candidate, verify that the status is valid. A
+      -- valid subrequest is either in READYFORSCHED or has been stuck in
+      -- BEINGSCHED for more than 1800 seconds (30 mins)
+      SELECT /*+ INDEX(SR PK_SubRequest_ID) */ id INTO srId
+        FROM SubRequest PARTITION (P_STATUS_3_13_14) SR
+       WHERE id = srId
+         AND ((status = 13)  -- READYFORSCHED
+          OR  (status = 14   -- BEINGSCHED
+         AND lastModificationTime < getTime() - 1800))
+         FOR UPDATE;
+      -- We have successfully acquired the lock, so we update the subrequest
+      -- status and modification time
+      UPDATE SubRequest
+         SET status = 14,  -- BEINGSHCED
+             lastModificationTime = getTime()
+       WHERE id = srId
+      RETURNING id, subReqId, protocol, xsize, requestedFileSystems
+        INTO srId, srSubReqId, srProtocol, srXsize, srRfs;
+      EXIT;
+    EXCEPTION
+      -- Try again, either we failed to accquire the lock on the subrequest or
+      -- the subrequest being processed is not the correct state 
+      WHEN NO_DATA_FOUND THEN
+        NULL;
+      WHEN SrLocked THEN
+        NULL;
+    END;
+  END LOOP;
+  CLOSE c;
 
   -- Extract the rest of the information required to submit a job into the
   -- scheduler through the job manager.
   SELECT CastorFile.id, CastorFile.fileId, CastorFile.nsHost, SvcClass.name,
          Id2type.type, Request.reqId, Request.euid, Request.egid, Request.username,
-	 Request.direction, Request.sourceDiskCopy, Request.destDiskCopy,
+         Request.direction, Request.sourceDiskCopy, Request.destDiskCopy,
          Request.sourceSvcClass, Client.ipAddress, Client.port, Client.version,
-	 (SELECT type
+         (SELECT type
             FROM Id2type
            WHERE id = Client.id) clientType, Client.secure, Request.creationTime,
          decode(SvcClass.defaultFileSize, 0, 2000000000, SvcClass.defaultFileSize)
@@ -935,18 +981,18 @@ BEGIN
          reqDefaultFileSize
     FROM SubRequest, CastorFile, SvcClass, Id2type, Client,
          (SELECT id, username, euid, egid, reqid, client, creationTime,
-                 'w' direction, svcClass, NULL sourceDiskCopy, NULL destDiskCopy,
-                 NULL sourceSvcClass
+                 'w' direction, svcClass, NULL sourceDiskCopy,
+                 NULL destDiskCopy, NULL sourceSvcClass
             FROM StagePutRequest
            UNION ALL
           SELECT id, username, euid, egid, reqid, client, creationTime,
-                 'r' direction, svcClass, NULL sourceDiskCopy, NULL destDiskCopy,
-                 NULL sourceSvcClass
+                 'r' direction, svcClass, NULL sourceDiskCopy,
+                 NULL destDiskCopy, NULL sourceSvcClass
             FROM StageGetRequest
            UNION ALL
           SELECT id, username, euid, egid, reqid, client, creationTime,
-                 'o' direction, svcClass, NULL sourceDiskCopy, NULL destDiskCopy,
-                 NULL sourceSvcClass
+                 'o' direction, svcClass, NULL sourceDiskCopy,
+                 NULL destDiskCopy, NULL sourceSvcClass
             FROM StageUpdateRequest
            UNION ALL
           SELECT id, username, euid, egid, reqid, client, creationTime,
@@ -963,13 +1009,13 @@ BEGIN
   -- Extract additional information required for StageDiskCopyReplicaRequest's
   IF reqType = 133 THEN
     -- Set the requested filesystem for the job to the mountpoint of the
-    -- source disk copy. The scheduler plugin needs this information to correctly
-    -- schedule access to the filesystem.
+    -- source disk copy. The scheduler plugin needs this information to
+    -- correctly schedule access to the filesystem.
     BEGIN
       SELECT DiskServer.name || ':' || FileSystem.mountpoint INTO srRfs
         FROM DiskServer, FileSystem, DiskCopy, DiskPool2SvcClass, SvcClass
        WHERE DiskCopy.id = reqSourceDiskCopy
-         AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
+         AND DiskCopy.status IN (0, 10)  -- STAGED, CANBEMIGR
          AND DiskCopy.filesystem = FileSystem.id
          AND FileSystem.status IN (0, 1)  -- PRODUCTION, DRAINING
          AND FileSystem.diskserver = DiskServer.id
