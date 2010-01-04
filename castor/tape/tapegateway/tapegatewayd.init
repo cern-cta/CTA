@@ -46,7 +46,7 @@ start() {
         # Run daemon
         echo -n $"Starting $prog: "
 
-        cd /var/spool/tape/tapegateway
+        cd /var/log/castor
         daemon /usr/bin/$prog $TAPEGATEWAYD_OPTIONS
 
         # Write the pid to a file.
