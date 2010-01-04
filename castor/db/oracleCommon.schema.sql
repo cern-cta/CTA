@@ -8,7 +8,7 @@
  *******************************************************************/
 
 /* SQL statement to populate the intial schema version */
-UPDATE UpgradeLog SET schemaVersion = '2_1_9_0';
+UPDATE UpgradeLog SET schemaVersion = '2_1_9_4';
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -354,9 +354,30 @@ ALTER TABLE PriorityMap ADD CONSTRAINT UN_Priority_euid_egid UNIQUE (euid, egid)
  * The permissions can also have a request type. Default is null, that is everything.
  * By default anybody can do anything
  */
-CREATE TABLE AdminUsers (euid NUMBER, egid NUMBER);
 CREATE TABLE WhiteList (svcClass VARCHAR2(2048), euid NUMBER, egid NUMBER, reqType NUMBER);
 CREATE TABLE BlackList (svcClass VARCHAR2(2048), euid NUMBER, egid NUMBER, reqType NUMBER);
+
+/* Create the AdminUsers table */
+CREATE TABLE AdminUsers (euid NUMBER, egid NUMBER);
+ALTER TABLE AdminUsers ADD CONSTRAINT UN_AdminUsers_euid_egid UNIQUE (euid, egid);
+INSERT INTO AdminUsers VALUES (0, 0);   -- root/root, to be removed
+INSERT INTO AdminUsers VALUES (-1, -1); -- internal requests
+
+/* Prompt for stage:st account */
+PROMPT Configuration of the admin part of the B/W list
+UNDEF stageUid
+ACCEPT stageUid NUMBER PROMPT 'Enter the stage user id: ';
+UNDEF stageGid
+ACCEPT stageGid NUMBER PROMPT 'Enter the st group id: ';
+INSERT INTO AdminUsers VALUES (&stageUid, &stageGid);
+
+/* Prompt for additional administrators */
+PROMPT In order to define admins that will be exempt of B/W list checks,
+PROMPT (e.g. c3 group at CERN), please give a space separated list of
+PROMPT <userid>:<groupid> pairs. userid can be empty, meaning any user
+PROMPT in the specified group.
+UNDEF adminList
+ACCEPT adminList CHAR PROMPT 'List of admins: ';
 
 /* Define the service handlers for the appropriate sets of stage request objects */
 UPDATE Type2Obj SET svcHandler = 'JobReqSvc' WHERE type IN (35, 40, 44);
@@ -408,13 +429,8 @@ INSERT INTO CastorConfig
   VALUES ('tape', 'daemonName', 'rtcpclientd', 'The name of the daemon used to interface to the tape system');
 
 /* Populate the general/owner option of the CastorConfig table */
-BEGIN
-  UPDATE CastorConfig 
-     SET value = sys_context('USERENV', 'CURRENT_USER')
-   WHERE class = 'general'
-     AND key = 'owner';
-END;
-/
+UPDATE CastorConfig SET value = sys_context('USERENV', 'CURRENT_USER')
+ WHERE class = 'general' AND key = 'owner';
 
 /* Drop the tapegateway tables created in the oracleSchema until such a time
  * that the tables are needed by a release

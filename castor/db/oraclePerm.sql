@@ -7,25 +7,9 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
 
-/* Populate the AdminUsers table */
-INSERT INTO AdminUsers VALUES (0, 0);   -- root/root, to be removed
-INSERT INTO AdminUsers VALUES (-1, -1); -- internal requests
-
-/* Prompt for stage:st account */
-PROMPT Configuration of the admin part of the B/W list
-UNDEF stageUid
-ACCEPT stageUid NUMBER PROMPT 'Enter the stage user id: ';
-UNDEF stGid
-ACCEPT stGid NUMBER PROMPT 'Enter the st group id: ';
-INSERT INTO AdminUsers VALUES (&stageUid,&stGid);
-
-/* Prompt for additional administrators */
-PROMPT In order to define admins that will be exempt of B/W list checks,
-PROMPT (e.g. c3 group at CERN), please give a space separated list of
-PROMPT <userid>:<groupid> pairs. userid can be empty, meaning any user
-PROMPT in the specified group.
-UNDEF adminList
-ACCEPT adminList CHAR PROMPT 'List of admins: ';
+/* Process the adminList provided by the user in oracleCommon.schema
+ * if the AdminUsers table is empty
+ */
 DECLARE
   adminUserId NUMBER;
   adminGroupId NUMBER;
@@ -33,18 +17,19 @@ DECLARE
   errmsg VARCHAR(2048);
 BEGIN
   FOR admin IN (SELECT column_value AS s
-                  FROM TABLE(strTokenizer('&adminList',' '))) LOOP
+                  FROM TABLE(strTokenizer('&adminList',' '))
+                 WHERE (SELECT count(*) FROM AdminUsers) = 0) LOOP
     BEGIN
       ind := INSTR(admin.s, ':');
       IF ind = 0 THEN
         errMsg := 'Invalid <userid>:<groupid> ' || admin.s || ', ignoring';
         RAISE INVALID_NUMBER;
       END IF;
-      errMsg := 'Invalid userid ' || SUBSTR(admin.s, 1, ind-1) || ', ignoring';
-      adminUserId := TO_NUMBER(SUBSTR(admin.s, 1, ind-1));
+      errMsg := 'Invalid userid ' || SUBSTR(admin.s, 1, ind - 1) || ', ignoring';
+      adminUserId := TO_NUMBER(SUBSTR(admin.s, 1, ind - 1));
       errMsg := 'Invalid groupid ' || SUBSTR(admin.s, ind) || ', ignoring';
       adminGroupId := TO_NUMBER(SUBSTR(admin.s, ind+1));
-      INSERT INTO AdminUsers VALUES (adminUserId,adminGroupId);
+      INSERT INTO AdminUsers VALUES (adminUserId, adminGroupId);
     EXCEPTION WHEN INVALID_NUMBER THEN
       dbms_output.put_line(errMsg);
     END;
