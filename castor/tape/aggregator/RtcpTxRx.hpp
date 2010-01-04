@@ -27,8 +27,8 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/io/ClientSocket.hpp"
-#include "castor/tape/aggregator_non_blocking/Constants.hpp"
-#include "castor/tape/aggregator_non_blocking/LogHelper.hpp"
+#include "castor/tape/aggregator/Constants.hpp"
+#include "castor/tape/aggregator/LogHelper.hpp"
 #include "castor/tape/legacymsg/RtcpDumpTapeRqstMsgBody.hpp"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"

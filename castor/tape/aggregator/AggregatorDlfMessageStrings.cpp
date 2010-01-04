@@ -25,8 +25,8 @@
  * @author Steven Murray Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/aggregator_non_blocking/AggregatorDlfMessageConstants.hpp"
-#include "castor/tape/aggregator_non_blocking/AggregatorDaemon.hpp"
+#include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
+#include "castor/tape/aggregator/AggregatorDaemon.hpp"
 
 castor::dlf::Message castor::tape::aggregator::AggregatorDaemon::s_dlfMessages[] = {
 {AGGREGATOR_NULL, " - "},

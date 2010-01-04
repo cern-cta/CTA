@@ -27,9 +27,9 @@
 
 #include "castor/io/ServerSocket.hpp"
 #include "castor/server/IThread.hpp"
-#include "castor/tape/aggregator_non_blocking/BoolFunctor.hpp"
-#include "castor/tape/aggregator_non_blocking/Counter.hpp"
-#include "castor/tape/aggregator_non_blocking/SmartFdList.hpp"
+#include "castor/tape/aggregator/BoolFunctor.hpp"
+#include "castor/tape/aggregator/Counter.hpp"
+#include "castor/tape/aggregator/SmartFdList.hpp"
 #include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "h/Cuuid.h"

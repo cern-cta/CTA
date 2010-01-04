@@ -24,12 +24,12 @@
  *****************************************************************************/
 
 #include "castor/exception/Internal.hpp"
-#include "castor/tape/aggregator_non_blocking/AggregatorDlfMessageConstants.hpp"
-#include "castor/tape/aggregator_non_blocking/Constants.hpp"
-#include "castor/tape/aggregator_non_blocking/DriveAllocationProtocolEngine.hpp"
-#include "castor/tape/aggregator_non_blocking/ClientTxRx.hpp"
-#include "castor/tape/aggregator_non_blocking/RtcpJobSubmitter.hpp"
-#include "castor/tape/aggregator_non_blocking/RtcpTxRx.hpp"
+#include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
+#include "castor/tape/aggregator/Constants.hpp"
+#include "castor/tape/aggregator/DriveAllocationProtocolEngine.hpp"
+#include "castor/tape/aggregator/ClientTxRx.hpp"
+#include "castor/tape/aggregator/RtcpJobSubmitter.hpp"
+#include "castor/tape/aggregator/RtcpTxRx.hpp"
 //#include "castor/tape/fsm/Callback.hpp"
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/utils/utils.hpp"

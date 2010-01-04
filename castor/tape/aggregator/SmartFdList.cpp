@@ -23,7 +23,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/aggregator_non_blocking/SmartFdList.hpp"
+#include "castor/tape/aggregator/SmartFdList.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <algorithm>

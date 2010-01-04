@@ -23,7 +23,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/aggregator_non_blocking/Packer.hpp"
+#include "castor/tape/aggregator/Packer.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 
