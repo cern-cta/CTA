@@ -334,8 +334,8 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-tapegateway-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-policy
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-policy, castor-lib-oracle
 Description: castor (Cern Advanced STORage system)
- Tape Gateway  Daemon
+ Tape Gateway Daemon
 
 
