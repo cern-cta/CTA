@@ -1,5 +1,11 @@
+# Move old log files to /var/log/castor
 if [ -d /var/spool/sacct ]; then
     /bin/mkdir /var/log/castor 2>/dev/null
     /bin/mv /var/spool/sacct/sacct* /var/log/castor/ 2>/dev/null
-    /bin/rmdir /var/spool/sacct 2>/dev/null || :
+    # Correct the selinux context of the new log files
+    if [ -x /usr/bin/chcon ]; then
+      /usr/bin/chcon -R --reference=/var/log/castor /var/log/castor > /dev/null 2>&1
+    fi
+    # Remove old log directory
+    /bin/rm -rf /var/spool/sacct 2>/dev/null || :
 fi

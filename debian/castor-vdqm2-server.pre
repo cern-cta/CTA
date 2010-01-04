@@ -1,6 +1,7 @@
 if [ -f /etc/rc.d/init.d/vdqmserver ]; then
     /sbin/service vdqmserver stop > /dev/null 2>&1 || :
 fi
+# Move old log files to /var/log/castor
 if [ -d /var/spool/vdqm ]; then
     /bin/mkdir /var/log/castor 2>/dev/null
     for src in `ls /var/spool/vdqm/log.*.gz 2>/dev/null`; do
@@ -9,5 +10,10 @@ if [ -d /var/spool/vdqm ]; then
     done
     /bin/mv /var/spool/vdqm/log /var/log/castor/vdqmd.log 2>/dev/null
     /bin/chmod 644 /var/log/castor/vdqm.* 2>/dev/null
-    /bin/rmdir /var/spool/vdqm 2>/dev/null || :
+    # Correct the selinux context of the new log files
+    if [ -x /usr/bin/chcon ]; then
+      /usr/bin/chcon -R --reference=/var/log/castor /var/log/castor > /dev/null 2>&1
+    fi
+    # Remove old log directory
+    /bin/rm -rf /var/spool/vdqm 2>/dev/null || :
 fi

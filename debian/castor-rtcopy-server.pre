@@ -1,3 +1,4 @@
+# Move old log files to /var/log/castor
 if [ -d /var/spool/rtcopy ]; then
     /bin/mkdir /var/log/castor 2>/dev/null
     for src in `ls /var/spool/rtcopy/rtcopyd.*.gz 2>/dev/null`; do
@@ -6,5 +7,10 @@ if [ -d /var/spool/rtcopy ]; then
     done
     /bin/mv /var/spool/rtcopy/rtcopyd.log /var/log/castor/rtcpd.log 2>/dev/null
     /bin/chmod 644 /var/log/castor/rtcpd.* 2>/dev/null
-    /bin/rmdir /var/spool/rtcopy 2>/dev/null || :
+    # Correct the selinux context of the new log files
+    if [ -x /usr/bin/chcon ]; then
+      /usr/bin/chcon -R --reference=/var/log/castor /var/log/castor > /dev/null 2>&1
+    fi
+    # Remove old log directory
+    /bin/rm -rf /var/spool/rtcopy 2>/dev/null || :
 fi
