@@ -687,7 +687,7 @@ void castor::tape::aggregator::BridgeSocketCatalogue::fileTransferAcknowledged(
       }
 
       // Update the state of the rtcpd-connection
-      itor->rtcpdStatus == IDLE;
+      itor->rtcpdStatus = IDLE;
 
       // Reset the magic number and request type of the rtcpd request
       itor->rtcpdReqMagic = 0;
