@@ -717,7 +717,6 @@ int castor::db::ora::OraStagerSvc::createRecallCandidate
   ad.setCnvSvcType(castor::SVC_DBCNV);
   ad.setTarget(subreq->id());
   castor::stager::DiskCopy *dc = 0;
-  //tape = 0;
 
   try {
       castor::stager::CastorFile* cf = subreq->castorFile();
@@ -1308,15 +1307,14 @@ int validateNsSegments(struct Cns_segattrs *nsSegments,
       validCopies.erase(it2);
     }
   }
-  // update the number of missing copies if we have less copies then expected
 
+  // Update the number of missing copies if we have less copies than expected
   *nbTapeCopies -= validCopies.size();
   
-  // if we have more copies than expected we do nothing
-
-  if (*nbTapeCopies<0)
-    *nbTapeCopies=0;
-  
+  // If we have more copies than expected we do nothing
+  if (*nbTapeCopies < 0) {
+    *nbTapeCopies = 0;
+  } 
 
   // Reduce the list of valid copies by droping temporarily invalid ones
   // Note that this can be dropped when multi segment files are gone
