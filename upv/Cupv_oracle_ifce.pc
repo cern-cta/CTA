@@ -97,7 +97,12 @@ int Cupv_opendb(dbfd)
     Cupvlogit(func, CUP23, cupvconfigfile);
     return (-1);
   }
-  if (fgets(buf, sizeof(buf), fp) && strlen(buf) >= 5) {
+  while (fgets(buf, sizeof(buf), fp)) {
+    if (buf[0] == '#') {
+      continue; /* ignore comments */
+    }
+    /* parse content */
+    db_user[0] = db_pwd[0] = db_srv[0] = '\0';
     if ((p = strtok(buf, "/\n")) != NULL)
       strcpy (db_user, p);
     if ((p = strtok(NULL, "@\n")) != NULL)
@@ -107,13 +112,19 @@ int Cupv_opendb(dbfd)
     if ((p = strtok(NULL, "\n")) != NULL)
       strcpy (db_name, p);
     else
-      strcpy(db_name, "Cupv_db");
-  } else {
+      strcpy(db_name, "Cns_db");
+  }
+  fclose(fp);
+
+  if ((db_user[0] == '\0') ||
+      (db_pwd[0]  == '\0') ||
+      (db_srv[0]  == '\0') ||
+      (db_name[0] == '\0')) {
     Cupvlogit(func, CUP09, cupvconfigfile, "incorrect");
     return (-1);
   }
-  fclose(fp);
-  
+
+  /* connect */
   while (1) {
     if (strlen(db_srv) > 0) {
       sprintf(db_connect, "%s/%s@%s", db_user, db_pwd, db_srv);

@@ -1923,7 +1923,12 @@ int Cns_opendb(dbfd)
     nslogit(func, NS023, nsconfigfile);
     return (-1);
   }
-  if (fgets(buf, sizeof(buf), fp) && strlen(buf) >= 5) {
+  while (fgets(buf, sizeof(buf), fp)) {
+    if (buf[0] == '#') {
+      continue; /* ignore comments */
+    }
+    /* parse content */
+    db_user[0] = db_pwd[0] = db_srv[0] = '\0';
     if ((p = strtok(buf, "/\n")) != NULL)
       strcpy (db_user, p);
     if ((p = strtok(NULL, "@\n")) != NULL)
@@ -1934,11 +1939,16 @@ int Cns_opendb(dbfd)
       strcpy (db_name, p);
     else
       strcpy(db_name, "Cns_db");
-  } else {
+  }
+  fclose(fp);
+
+  if ((db_user[0] == '\0') ||
+      (db_pwd[0]  == '\0') ||
+      (db_srv[0]  == '\0') ||
+      (db_name[0] == '\0')) {
     nslogit(func, NS009, nsconfigfile, "incorrect");
     return (-1);
   }
-  fclose(fp);
 
   /* connect */
   while (1) {
