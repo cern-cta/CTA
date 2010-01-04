@@ -2720,3 +2720,22 @@ thread apply all bt full
 set logging off
 HERE
 
+
+How to add a DGN to the VDQM database
+=====================================
+
+Only do this if you really know what you are doing:
+
+DECLARE
+  dgnIdVar       NUMBER         := 0;
+  dgNameVar      VARCHAR2(2048) := '359B3B';
+  libraryNameVar VARCHAR2(2048) := 'IBMLIB3B';
+BEGIN
+  INSERT INTO DeviceGroupName(id, dgName, libraryName)
+    VALUES(ids_seq.nextval, dgNameVar, libraryNameVar)
+    RETURNING id INTO dgnIdVar;
+
+  INSERT INTO Id2Type (id, type)
+    VALUES(dgnIdVar, 88); -- OBJ_DeviceGroupName = 88
+END;
+/
