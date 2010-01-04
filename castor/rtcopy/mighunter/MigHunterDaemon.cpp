@@ -96,7 +96,7 @@ int main(int argc, char* argv[]){
     // get sleep time for mighunterthread
 
     char* tmp=NULL;
-    if ( (tmp= getconfent("MIGHUNTER","MIG_SLEEP",0)) != NULL ){
+    if ( (tmp= getconfent("MigHunter","MIG_SLEEP",0)) != NULL ){
       char* dp = tmp;
       migSleepTime= strtoul(tmp, &dp, 0);
       if (*dp != 0 || migSleepTime <=0 ) {
