@@ -2721,10 +2721,11 @@ set logging off
 HERE
 
 
-How to add a DGN to the VDQM database
-=====================================
+How to add a DGN directly to the VDQM database
+==============================================
 
-Only do this if you really know what you are doing:
+Only do this if you really know what you are doing.  This infomation is
+usually added to the VDQM database using the vdqmDBInit command-line tool.
 
 DECLARE
   dgnIdVar       NUMBER         := 0;
@@ -2739,3 +2740,29 @@ BEGIN
     VALUES(dgnIdVar, 88); -- OBJ_DeviceGroupName = 88
 END;
 /
+
+commit;
+
+
+How to add a tape access specification directly to the VDQM database
+====================================================================
+
+Only do this if you really know what you are doing.  This infomation is
+usually added to the VDQM database using the vdqmDBInit command-line tool.
+
+DECLARE
+  specIdVar     NUMBER         := 0;
+  accessModeVar NUMBER         := 1;
+  densityVar    VARCHAR2(2048) := '1000GC';
+  tapeModelVar  VARCHAR2(2048) := '3592';
+BEGIN
+  INSERT INTO TapeAccessSpecification(id, accessMode, density, tapeModel)
+    VALUES(ids_seq.nextval, accessModeVar, densityVar, tapeModelVar)
+    RETURNING id INTO specIdVar;
+
+  INSERT INTO Id2Type (id, type)
+    VALUES(specIdVar, 91); -- OBJ_TapeAccessSpecification = 91
+END;
+/
+
+commit;
