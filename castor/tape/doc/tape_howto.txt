@@ -2843,6 +2843,27 @@ commit;
 How to determine the path, mount point an disk server of a castor file
 ======================================================================
 
+The easy way:
+
+SQL> SELECT * FROM TABLE (getdcs(399131859));
+
+        ID DISKPOOL LOCATION A     STATUS CREATIONTIME           GCWEIGHT
+---------- -------- -------- - ---------- -------------------- ----------
+1010785562 default  lxfsre43 Y          0 21-DEC-2009 09:57:35 1261389898
+                    04.cern.
+                    ch:/srv/
+                    castor/0
+                    5/59/399
+                    131859@c
+                    astorns.
+                    10107855
+                    62
+
+
+SQL>
+
+The not-so-easy way:
+
 SQL> select path from diskcopy where castorfile = (select id from castorfile
 where fileid=399131859);
 
