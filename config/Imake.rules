@@ -155,7 +155,7 @@ ProgramTarget(program,objects,deplibs,libs,mode,tape,tape)
 #define BuildRPathcastorupv commonRPath
 #define BuildRPathcastorsecurity commonRPath
 #define BuildRPathcastordlf commonRPath
-#define BuildRPathcastorcnvs commonRPath
+#define BuildRPathcastorcnvs commonRPath castorRPath dlfRPath nsRPath securityRPath
 #define BuildRPathcastorvdqm commonRPath
 #define BuildRPathcastorvmgr commonRPath upvRPath
 #define BuildRPathcastorns commonRPath securityRPath upvRPath
