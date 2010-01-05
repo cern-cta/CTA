@@ -2839,3 +2839,42 @@ END;
 
 commit;
 
+
+How to determine the path, mount point an disk server of a castor file
+======================================================================
+
+SQL> select path from diskcopy where castorfile = (select id from castorfile
+where fileid=399131859);
+
+PATH
+--------------------------------------------------------------------------------
+59/399131859@castorns.1010785562
+
+SQL> select mountpoint from filesystem where id = (select filesystem from
+diskcopy where castorfile = (select id from castorfile where
+fileid=399131859));
+
+MOUNTPOINT
+--------------------------------------------------------------------------------
+/srv/castor/05/
+
+SQL> select name from diskserver where id = (select diskserver from filesystem
+where id = (select filesystem from diskcopy where castorfile = (select id from
+castorfile where fileid=399131859)));
+
+NAME
+--------------------------------------------------------------------------------
+lxfsre4304.cern.ch
+
+SQL>
+
+
+How to display the checksum extended file system attribute of a disk file
+=========================================================================
+
+[root@lxfsre4304 59]# getfattr -d 399131859@castorns.1010785562 
+# file: 399131859@castorns.1010785562 
+user.castor.checksum.type="ADLER32" 
+user.castor.checksum.value="99653f32" 
+[root@lxfsre4304 59]# 
+
