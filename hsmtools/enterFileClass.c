@@ -19,8 +19,6 @@
  *
  * @(#)$RCSfile: enterFileClass.c,v $ $Revision: 1.11 $ $Release$ $Date: 2009/07/13 06:22:09 $ $Author: waldron $
  *
- *
- *
  * @author Olof Barring
  *****************************************************************************/
 
@@ -167,7 +165,6 @@ int main(int argc, char *argv[])
   }
 
   fprintf(stdout,"Adding FileClass: %s\n",name);
-  Cstager_FileClass_print(fileClass);
 
   rc = C_BaseAddress_create(&baseAddr);
   if ( rc == -1 ) return(-1);
@@ -184,6 +181,11 @@ int main(int argc, char *argv[])
     return(1);
   }
   C_Services_delete(svcs);
+
+  rc = Cstager_IStagerSvc_selectFileClass(fsSvc,&fileClassOld,name);
+  if ( (rc == 0) && (fileClassOld != NULL) ) {
+    Cstager_FileClass_print(fileClass);
+  }
 
   return(0);
 }

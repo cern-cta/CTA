@@ -19,8 +19,6 @@
  *
  * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.20 $ $Release$ $Date: 2009/07/13 06:22:09 $ $Author: waldron $
  *
- *
- *
  * @author Olof Barring
  *****************************************************************************/
 
@@ -257,9 +255,9 @@ static int parseCmdLine(int argc, char *argv[], ParsedCmdLine *parsedCmdLine) {
       parsedCmdLine->maxReplicaNb.value = atoi(Coptarg);
       if(parsedCmdLine->maxReplicaNb.value < 0) {
         fprintf(stderr,
-          "Error parsing maxReplicaNb"
-          ": Value must be 0 or positive"
-          ": value= %d\n", parsedCmdLine->maxReplicaNb.value);
+                "Error parsing maxReplicaNb"
+                ": Value must be 0 or positive"
+                ": value= %d\n", parsedCmdLine->maxReplicaNb.value);
         return(1); /* Failure */
       }
       parsedCmdLine->maxReplicaNb.set   = 1;
@@ -268,9 +266,9 @@ static int parseCmdLine(int argc, char *argv[], ParsedCmdLine *parsedCmdLine) {
       parsedCmdLine->nbDrives.value = atoi(Coptarg);
       if(parsedCmdLine->nbDrives.value < 0) {
         fprintf(stderr,
-          "Error parsing nbDrives"
-          ": Value must be 0 or positive"
-          ": value= %d\n", parsedCmdLine->nbDrives.value);
+                "Error parsing nbDrives"
+                ": Value must be 0 or positive"
+                ": value= %d\n", parsedCmdLine->nbDrives.value);
         return(1); /* Failure */
       }
       parsedCmdLine->nbDrives.set   = 1;
@@ -289,18 +287,18 @@ static int parseCmdLine(int argc, char *argv[], ParsedCmdLine *parsedCmdLine) {
       break;
     case TapePools:
       if(splitItemStr(Coptarg, &parsedCmdLine->tapePools.values,
-        &parsedCmdLine->tapePools.nbValues) == -1) {
+                      &parsedCmdLine->tapePools.nbValues) == -1) {
         fprintf(stderr, "Error parsing tape pools string: %s\n",
-          sstrerror(serrno));
+                sstrerror(serrno));
         return(1); /* Failure */
       }
       parsedCmdLine->tapePools.set   = 1;
       break;
     case DiskPools:
       if(splitItemStr(Coptarg, &parsedCmdLine->diskPools.values,
-        &parsedCmdLine->diskPools.nbValues) == -1) {
+                      &parsedCmdLine->diskPools.nbValues) == -1) {
         fprintf(stderr, "Error parsing disk pools string: %s\n",
-          sstrerror(serrno));
+                sstrerror(serrno));
         return(1); /* Failure */
       }
       parsedCmdLine->diskPools.set   = 1;
@@ -314,7 +312,7 @@ static int parseCmdLine(int argc, char *argv[], ParsedCmdLine *parsedCmdLine) {
         parsedCmdLine->disk1Behavior.set   = 1;
       } else {
         fprintf(stderr,
-          "Invalid option for Disk1Behavior, value must be 'yes' or 'no'\n");
+                "Invalid option for Disk1Behavior, value must be 'yes' or 'no'\n");
         return(1); /* Failure */
       }
       break;
@@ -327,8 +325,8 @@ static int parseCmdLine(int argc, char *argv[], ParsedCmdLine *parsedCmdLine) {
         parsedCmdLine->failJobsWhenNoSpace.set   = 0;
       } else {
         fprintf(stderr,
-          "Invalid option for FailJobsWhenNoSpace,"
-          " value must be 'yes' or 'no'\n");
+                "Invalid option for FailJobsWhenNoSpace,"
+                " value must be 'yes' or 'no'\n");
         return(1); /* Failure */
       }
       break;
@@ -349,7 +347,7 @@ static int parseCmdLine(int argc, char *argv[], ParsedCmdLine *parsedCmdLine) {
         parsedCmdLine->replicateOnClose.set   = 0;
       } else {
         fprintf(stderr,
-          "Invalid option for ReplicateOnClose, value must be 'yes' or 'no'\n");
+                "Invalid option for ReplicateOnClose, value must be 'yes' or 'no'\n");
         return(1); /* Failure */
       }
       break;
@@ -417,6 +415,7 @@ int main(int argc, char *argv[]) {
   struct C_IService_t         *iSvc            = NULL;
   struct Cstager_FileClass_t  *fileClass       = NULL;
   struct Cstager_SvcClass_t   *svcClass        = NULL;
+  struct Cstager_SvcClass_t   *svcClassOld     = NULL;
   ParsedCmdLine               parsedCmdLine;
 
   /* Parse the command-line                                            */
@@ -442,8 +441,8 @@ int main(int argc, char *argv[]) {
   /* Display an error mesaage and return if one or more tape pools have been */
   /* specified that are not defined in the VMGR                              */
   if(parsedCmdLine.tapePools.set &&
-    checkTapePoolsInVmgr(parsedCmdLine.tapePools.values,
-      parsedCmdLine.tapePools.nbValues)) {
+     checkTapePoolsInVmgr(parsedCmdLine.tapePools.values,
+                          parsedCmdLine.tapePools.nbValues)) {
     usage(cmd);
     return(1); /* Failure */
   }
@@ -472,11 +471,11 @@ int main(int argc, char *argv[]) {
   Cstager_SvcClass_setName(svcClass, parsedCmdLine.name.value);
   if(parsedCmdLine.defaultFileSize.set) {
     Cstager_SvcClass_setDefaultFileSize(svcClass,
-      parsedCmdLine.defaultFileSize.value);
+                                        parsedCmdLine.defaultFileSize.value);
   }
   if(parsedCmdLine.maxReplicaNb.set) {
     Cstager_SvcClass_setMaxReplicaNb(svcClass,
-      parsedCmdLine.maxReplicaNb.value);
+                                     parsedCmdLine.maxReplicaNb.value);
   }
   if(parsedCmdLine.nbDrives.set) {
     Cstager_SvcClass_setNbDrives(svcClass, parsedCmdLine.nbDrives.value);
@@ -486,11 +485,11 @@ int main(int argc, char *argv[]) {
   }
   if(parsedCmdLine.migratorPolicy.set) {
     Cstager_SvcClass_setMigratorPolicy(svcClass,
-      parsedCmdLine.migratorPolicy.value);
+                                       parsedCmdLine.migratorPolicy.value);
   }
   if(parsedCmdLine.recallerPolicy.set) {
     Cstager_SvcClass_setRecallerPolicy(svcClass,
-    parsedCmdLine.recallerPolicy.value);
+                                       parsedCmdLine.recallerPolicy.value);
   }
   if(parsedCmdLine.disk1Behavior.set) {
     if(parsedCmdLine.disk1Behavior.value) {
@@ -509,16 +508,16 @@ int main(int argc, char *argv[]) {
   }
   if(parsedCmdLine.forcedFileClass.set) {
     if(Cstager_IStagerSvc_selectFileClass(fsSvc, &fileClass,
-      parsedCmdLine.forcedFileClass.value) == -1) {
+                                          parsedCmdLine.forcedFileClass.value) == -1) {
       fprintf(stderr,"Cstager_IStagerSvc_selectFileClass(%s): %s, %s\n",
-        parsedCmdLine.name.value, sstrerror(serrno),
-        Cstager_IStagerSvc_errorMsg(fsSvc));
+              parsedCmdLine.name.value, sstrerror(serrno),
+              Cstager_IStagerSvc_errorMsg(fsSvc));
       return(1); /* Failure */
     }
 
     if(fileClass == NULL) {
       fprintf(stderr, "FileClass %s does not exist\n",
-        parsedCmdLine.forcedFileClass.value);
+              parsedCmdLine.forcedFileClass.value);
       return(1); /* Failure */
     }
 
@@ -526,7 +525,7 @@ int main(int argc, char *argv[]) {
   }
   if(parsedCmdLine.streamPolicy.set) {
     Cstager_SvcClass_setStreamPolicy(svcClass,
-      parsedCmdLine.streamPolicy.value);
+                                     parsedCmdLine.streamPolicy.value);
   }
   if(parsedCmdLine.replicateOnClose.set) {
     if(parsedCmdLine.replicateOnClose.value) {
@@ -537,23 +536,19 @@ int main(int argc, char *argv[]) {
   }
 
   /* Display an error message and return if the service class already exists */
-  {
-    struct Cstager_SvcClass_t *svcClassOld = NULL;
-    int rc = Cstager_IStagerSvc_selectSvcClass(fsSvc, &svcClassOld,
-      parsedCmdLine.name.value);
-    if ( (rc == 0) && (svcClassOld != NULL) ) {
-      fprintf(stderr,
-        "SvcClass %s already exists, please use 'modifySvcClass' command\n"
-        "to change any attribute of an existing SvcClass\n",
-        parsedCmdLine.name.value);
-      Cstager_SvcClass_print(svcClassOld);
-      return(1);
-    }
+  int rc = Cstager_IStagerSvc_selectSvcClass(fsSvc, &svcClassOld,
+                                             parsedCmdLine.name.value);
+  if ( (rc == 0) && (svcClassOld != NULL) ) {
+    fprintf(stderr,
+            "SvcClass %s already exists, please use 'modifySvcClass' command\n"
+            "to change any attribute of an existing SvcClass\n",
+            parsedCmdLine.name.value);
+    Cstager_SvcClass_print(svcClassOld);
+    return(1);
   }
 
   /* Display the direct attributes of the service class */
   fprintf(stdout,"Adding SvcClass: %s\n", parsedCmdLine.name.value);
-  Cstager_SvcClass_print(svcClass);
 
   if(C_BaseAddress_create(&baseAddr) == -1) {
     fprintf(stderr,"C_BaseAddress_create(): Unknown error\n");
@@ -585,12 +580,12 @@ int main(int argc, char *argv[]) {
       poolName  = parsedCmdLine.tapePools.values[i];
 
       fprintf(stdout, "Adding tape pool %s to SvcClass %s\n", poolName,
-        parsedCmdLine.name.value);
+              parsedCmdLine.name.value);
 
       pool = NULL;
       if(Cstager_IStagerSvc_selectTapePool(fsSvc, &pool, poolName) == -1) {
         fprintf(stderr,"Cstager_IStagerSvc_selectTapePool(%s): %s, %s\n",
-          poolName, sstrerror(serrno), Cstager_IStagerSvc_errorMsg(fsSvc));
+                poolName, sstrerror(serrno), Cstager_IStagerSvc_errorMsg(fsSvc));
         return(1);  /* Failure */
       }
       if(pool == NULL ) {
@@ -624,12 +619,12 @@ int main(int argc, char *argv[]) {
       poolName = parsedCmdLine.diskPools.values[i];
 
       fprintf(stdout,"Adding disk pool %s to SvcClass %s\n", poolName,
-        parsedCmdLine.name.value);
+              parsedCmdLine.name.value);
 
       pool = NULL;
       if(Cstager_IStagerSvc_selectDiskPool(fsSvc, &pool, poolName) == -1) {
         fprintf(stderr,"Cstager_IStagerSvc_selectDiskPool(%s): %s, %s\n",
-          poolName, sstrerror(serrno), Cstager_IStagerSvc_errorMsg(fsSvc));
+                poolName, sstrerror(serrno), Cstager_IStagerSvc_errorMsg(fsSvc));
         return(1); /* Failure */
       }
       if(pool == NULL ) {
@@ -645,22 +640,29 @@ int main(int argc, char *argv[]) {
     }
     if(C_Services_fillRep(svcs, iAddr, iObj, OBJ_DiskPool, 0) == -1) {
       fprintf(stderr,"C_Services_fillRep(svcClass,OBJ_DiskPool): %s, %s\n",
-        sstrerror(serrno), C_Services_errorMsg(svcs));
+              sstrerror(serrno), C_Services_errorMsg(svcs));
       return(1); /* Failure */
     }
   }
 
   if(fileClass != NULL  &&
-    C_Services_fillRep(svcs, iAddr, iObj, OBJ_FileClass, 0) == -1) {
+     C_Services_fillRep(svcs, iAddr, iObj, OBJ_FileClass, 0) == -1) {
     fprintf(stderr,"C_Services_fillRep(svcClass,OBJ_FileClass): %s, %s\n",
-      sstrerror(serrno), C_Services_errorMsg(svcs));
+            sstrerror(serrno), C_Services_errorMsg(svcs));
     return(1); /* Failure */
   }
 
   if(C_Services_commit(svcs,iAddr) == -1) {
     fprintf(stderr,"C_Services_fillRep(svcClass,OBJ_DiskPool): %s, %s\n",
-      sstrerror(serrno), C_Services_errorMsg(svcs));
+            sstrerror(serrno), C_Services_errorMsg(svcs));
     return(1); /* Failure */
+  }
+
+  /* Print the svcclass sttributes */
+  rc = Cstager_IStagerSvc_selectSvcClass(fsSvc, &svcClassOld,
+                                         parsedCmdLine.name.value);
+  if ( (rc == 0) && (svcClassOld != NULL) ) {
+    Cstager_SvcClass_print(svcClassOld);
   }
 
   return(0); /* Success */
