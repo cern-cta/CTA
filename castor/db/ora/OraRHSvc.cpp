@@ -153,7 +153,7 @@ u_signed64 castor::db::ora::OraRHSvc::checkSvcClass
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Error caught in checkPermission."
+      << "Error caught in checkSvcClass."
       << std::endl << e.what();
     throw ex;
   }
