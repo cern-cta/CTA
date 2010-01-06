@@ -66,7 +66,7 @@ BEGIN
           OR (length(reqSvcClass) IS NULL AND svcClass = 'default'))
      AND (egid = reqEgid OR egid IS NULL)
      AND (euid = reqEuid OR euid IS NULL)
-     AND (reqType = reqTypeI OR reqTypeI IS NULL);
+     AND (reqType = reqTypeI OR reqType IS NULL);
   IF c = 0 THEN
     -- Not found in White list -> no access
     RETURN 1;
