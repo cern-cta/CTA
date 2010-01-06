@@ -137,10 +137,10 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
     if (cuser == 0) {
       castor::exception::InvalidArgument e;
       e.getMessage() << "Failed to connect to database. Missing " << nameVal
-		     << "/user configuration option from " << confFile.c_str()
-		     << ".";
+                     << "/user configuration option from " << confFile.c_str()
+                     << ".";
       if (serrno == SENOCONFIG) {
-	e.getMessage() << " The file could not be opened.";
+        e.getMessage() << " The file could not be opened.";
       }
       throw e;
     } else {
@@ -151,10 +151,10 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
     if (cpasswd == 0) {
       castor::exception::InvalidArgument e;
       e.getMessage() << "Failed to connect to database. Missing " << nameVal
-		     << "/passwd configuration option from " << confFile.c_str()
-		     << ".";
+                     << "/passwd configuration option from " << confFile.c_str()
+                     << ".";
       if (serrno == SENOCONFIG) {
-	e.getMessage() << " The file could not be opened.";
+        e.getMessage() << " The file could not be opened.";
       }
       throw e;
     } else {
@@ -165,10 +165,10 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
     if (cdbName == 0) {
       castor::exception::InvalidArgument e;
       e.getMessage() << "Failed to connect to database. Missing " << nameVal
-		     << "/dbName configuration option from " << confFile.c_str()
-		     << ".";
+                     << "/dbName configuration option from " << confFile.c_str()
+                     << ".";
       if (serrno == SENOCONFIG) {
-	e.getMessage() << " The file could not be opened.";
+        e.getMessage() << " The file could not be opened.";
       }
       throw e;
     } else {
@@ -270,7 +270,7 @@ void castor::db::ora::OraCnvSvc::dropConnection() throw() {
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", e.what())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-			    DLF_BASE_ORACLELIB + 26, 1, params);
+                            DLF_BASE_ORACLELIB + 26, 1, params);
   } catch (...) {};
   // reset all whatever the state is
   m_connection  = 0;
@@ -375,10 +375,11 @@ void castor::db::ora::OraCnvSvc::closeStatement(castor::db::IDbStatement* stmt)
 //-------------------------------------------------------------------------------
 void castor::db::ora::OraCnvSvc::handleException(std::exception& e) {
   int errcode = ((oracle::occi::SQLException&)e).getErrorCode();
-  if (errcode == 28 || errcode == 3113 || errcode == 3114 || errcode == 32102
-      || errcode == 3135 || errcode == 12170 || errcode == 12541 || errcode == 1012
-      || errcode == 1003 || errcode == 12571 || errcode == 1033
-      || errcode == 1089 || errcode == 12537) {
+  if (errcode == 28    || errcode == 3113 || errcode == 3114  ||
+      errcode == 32102 || errcode == 3135 || errcode == 12170 ||
+      errcode == 12541 || errcode == 1012 || errcode == 1003  ||
+      errcode == 12571 || errcode == 1033 || errcode == 1089  ||
+      errcode == 12537 || (errcode >= 25401 && errcode <= 25409)) {
     // here we lost the connection due to an Oracle restart or network glitch
     // and this is the current list of errors acknowledged as a lost connection.
     // Notes:
@@ -391,16 +392,5 @@ void castor::db::ora::OraCnvSvc::handleException(std::exception& e) {
     // - error #32102 'invalid OCI handle' seems to happen after an uncaught
     // Oracle side error, and a priori should act as a catch-all case.
     dropConnection();  // reset values and drop the connection
-  }
-  else if(errcode >= 25401 && errcode <= 25409) {
-    // error #25402 'transaction must roll back' has been observed after a
-    // lost connection event and requires the client to rollback;
-    // see service request #106643 for more details. Similarly for the
-    // other errors in this range, as suggested by Nilo.
-    try {
-      rollback();
-    } catch (castor::exception::Exception any) {
-      dropConnection();
-    }
   }
 }
