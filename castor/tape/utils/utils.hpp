@@ -386,12 +386,24 @@ namespace utils  {
     throw (castor::exception::Exception);
 
   /**
-   * Trims the leading and trailing white space from the specified string.
-   * White space is either a space ' ' or a tab '\t'.
+   * Creates and returns an std::string which is the result of the stripping
+   * the leading and trailing white space from the specified string.  White
+   * space is a contiguous sequence of space ' ' and/or a tab '\t' characters.
    *
    * @param str The string to be trimmed.
+   * @return    The newly created trimmed string.
    */
-  void trimString(std::string &str) throw();
+  std::string trimString(const std::string &str) throw();
+
+  /**
+   * Creates and returns an std::string which is the result of replacing each
+   * occurance of whitespace (a collection of on or more space and tab
+   * characters) with a single space character.
+   *
+   * @param str The original string.
+   * @return    The newly created string with single spaces.
+   */
+  std::string singleSpaceString(const std::string &str) throw();
 
   /**
    * Writes a banner with the specified title text to the specified stream.
@@ -412,6 +424,55 @@ namespace utils  {
   unsigned short getPortFromConfig(const char *const category,
     const char *const entryName, const unsigned short defaultPort)
     throw(exception::InvalidConfigEntry, castor::exception::Exception);
+
+  /**
+   * The data stored in a data-line (as opposed to a comment-line) from a
+   * TPCONFIG file (/etc/castor/TPCONFIG).
+   */
+  struct TpconfigLine {
+    const std::string mUnitName;
+    const std::string mDeviceGroup;
+    const std::string mSystemDevice;
+    const std::string mDensity;
+    const std::string mInitialStatus;
+    const std::string mControlMethod;
+    const std::string mDevType;
+
+    /**
+     * Constructor.
+     */
+    TpconfigLine(
+      std::string &unitName,
+      std::string &deviceGroup,
+      std::string &systemDevice,
+      std::string &density,
+      std::string &initialStatus,
+      std::string &controlMethod,
+      std::string &devType) :
+      mUnitName(unitName),
+      mDeviceGroup(deviceGroup),
+      mSystemDevice(systemDevice),
+      mDensity(density),
+      mInitialStatus(initialStatus),
+      mControlMethod(controlMethod),
+      mDevType(devType) {
+    }
+  };
+
+  /**
+   * A list of TPCONFIG data-lines.
+   */
+  typedef std::list<TpconfigLine> TpconfigLines;
+
+  /**
+   * Parses the specified TPCONFIG file.
+   *
+   * @param filename The filename of the TPCONFIG file.
+   * @param lines    Output parameter: The list of data-lines parsed from the
+   *                 TPCONFIG file.
+   */
+  void parseTpconfig(const char *const filename, TpconfigLines &lines)
+    throw (castor::exception::Exception);
 
 } // namespace utils
 } // namespace tape

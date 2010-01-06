@@ -117,7 +117,7 @@ int testIndexedContainer() {
 
   os << std::endl;
 
-  return 0;
+  return(0);
 }
 
 
@@ -159,8 +159,75 @@ int testToHex() {
     return(-1); // Test failed
   }
 
-  return 0;
+  return(0);
 }
+
+
+int testParseTpconfig() {
+  std::ostream &os = std::cout;
+
+  os << std::endl;
+  castor::tape::utils::writeBanner(os, __FUNCTION__);
+
+  castor::tape::utils::TpconfigLines lines;
+
+  os << std::endl;
+  os << "utils::parseTpconfig(\"/SillyPath\", lines);" << std::endl;
+
+  try {
+    castor::tape::utils::parseTpconfig("/SillyPath", lines);
+
+    os << std::endl;
+    os << "Did not catch expected castor::exception::Exception" << std::endl;
+    return(-1); // Test failed
+
+  } catch(castor::exception::Exception &ex) {
+    os << std::endl;
+    os << "Correctly caught castor::exception::Exception: "
+          "ex.code()=" << ex.code()
+       << " ex.getMessage().str()=\"" << ex.getMessage().str() << "\"";
+    os << std::endl;
+  }
+
+  os << std::endl;
+  os << "utils::parseTpconfig(\"" << castor::tape::TPCONFIGPATH <<
+    "\", lines);" << std::endl;
+
+  try {
+    castor::tape::utils::parseTpconfig(castor::tape::TPCONFIGPATH, lines);
+  } catch(castor::exception::Exception &ex) {
+    os << std::endl;
+    os <<
+      "Caught an unexpected exception"
+      ": " << ex.getMessage().str() <<
+      std::endl;
+
+    return(-1); // Test failed
+  }
+
+  // Display the parsed lines
+  for(castor::tape::utils::TpconfigLines::const_iterator itor = lines.begin();
+    itor != lines.end(); itor++) {
+    std::cout << std::endl;
+    std::cout << "mUnitName     =\"" << itor->mUnitName      << "\"" <<
+      std::endl;
+    std::cout << "mDeviceGroup  =\"" << itor->mDeviceGroup   << "\"" <<
+      std::endl;
+    std::cout << "mSystemDevice =\"" << itor->mSystemDevice  << "\"" <<
+      std::endl;
+    std::cout << "mDensity      =\"" << itor->mDensity       << "\"" <<
+      std::endl;
+    std::cout << "mInitialStatus=\"" << itor->mInitialStatus << "\"" <<
+      std::endl;
+    std::cout << "mControlMethod=\"" << itor->mControlMethod << "\"" <<
+      std::endl;
+    std::cout << "mDevType      =\"" << itor->mDevType       << "\"" <<
+      std::endl;
+  }
+
+  return(0);
+}
+
 
 int main(int argc, char **argv) {
   unsigned int nbTests  = 0;
@@ -171,6 +238,9 @@ int main(int argc, char **argv) {
   nbTests++;
 
   if(testToHex()) nbFailed++;
+  nbTests++;
+
+  if(testParseTpconfig()) nbFailed++;
   nbTests++;
 
   std::cout << std::endl;

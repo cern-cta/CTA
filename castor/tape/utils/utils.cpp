@@ -35,6 +35,8 @@
 #include <arpa/inet.h>
 #include <fstream>
 #include <iostream>
+#include <sstream>
+#include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <time.h>
@@ -512,7 +514,7 @@ void castor::tape::utils::parseFileList(const char *filename,
     std::string &line = *itor;
 
     // Left and right trim the line
-    trimString(line);
+    line = trimString(line);
 
     // Remove the line if it is an empty string or if it starts with the shell
     // comment character '#'
@@ -528,7 +530,7 @@ void castor::tape::utils::parseFileList(const char *filename,
 //------------------------------------------------------------------------------
 // trimString
 //------------------------------------------------------------------------------
-void castor::tape::utils::trimString(std::string &str) throw() {
+std::string castor::tape::utils::trimString(const std::string &str) throw() {
   const char *whitespace = " \t";
 
   std::string::size_type start = str.find_first_not_of(whitespace);
@@ -537,11 +539,56 @@ void castor::tape::utils::trimString(std::string &str) throw() {
   // If all the characters of the string are whitespace
   if(start == std::string::npos) {
     // The result is an empty string
-    str = "";
+    return std::string("");
   } else {
     // The result is what is in the middle
-    str = str.substr(start, end - start + 1);
+    return str.substr(start, end - start + 1);
   }
+}
+
+
+//------------------------------------------------------------------------------
+// singleSpaceString
+//------------------------------------------------------------------------------
+std::string castor::tape::utils::singleSpaceString(
+  const std::string &str) throw() {
+
+  bool inWhitespace = false;
+
+  // Output string stream used to construct the new string
+  std::ostringstream oss;
+
+  // For each character in the original string
+  for(std::string::const_iterator itor = str.begin(); itor != str.end();
+    itor++) {
+
+    // If the character is a space or a tab
+    if(*itor == ' ' || *itor == '\t') {
+
+      // Remember we are in whitespace
+      inWhitespace = true;
+
+    // Else the character is not a tab
+    } else {
+
+      // If we are leaving whitespace
+      if(inWhitespace) {
+
+        // Remember we have left whitespace
+        inWhitespace = false;
+
+        // Insert a single space into the output string stream
+        oss << " ";
+      }
+
+      // Insert the character into the output string stream
+      oss << *itor;
+
+    }
+  }
+
+  // Return the new string
+  return oss.str();
 }
 
 
@@ -610,4 +657,106 @@ unsigned short castor::tape::utils::getPortFromConfig(
   }
 
   return port;
+}
+
+
+//------------------------------------------------------------------------------
+// parseTpconfig
+//------------------------------------------------------------------------------
+void castor::tape::utils::parseTpconfig(const char *const filename,
+  TpconfigLines &lines) throw (castor::exception::Exception) {
+
+  // The expected number of data columns in a TPCONFIG data-line
+  const unsigned int NBCOLUMNS = 7;
+
+  // Open the TPCONFIG file for reading
+  FILE *const file = fopen(filename, "r");
+  {
+    const int savedErrno = errno;
+
+    // Throw an exception if the file could not be opened
+    if(file == NULL) {
+      TAPE_THROW_CODE(savedErrno,
+        "Failed to open TPCONFIG file"
+        ": filename=" << filename <<
+        ": " << sstrerror(savedErrno));
+    }
+  }
+
+  // Line buffer
+  char lineBuf[1024];
+
+  // The error number recorded immediately after fgets is called
+  int fgetsErrno = 0;
+
+  // For each line was read
+  for(int lineNb = 1; fgets(lineBuf, sizeof(lineBuf), file); lineNb++) {
+    fgetsErrno = errno;
+
+    // Create a std::string version of the line
+    std::string line(lineBuf);
+
+    // Remove the newline character if there is one
+    {
+      const std::string::size_type newlinePos = line.find("\n");
+      if(newlinePos != std::string::npos) {
+        line = line.substr(0, newlinePos);
+      }
+    }
+
+    // If there is a comment, then remove it from the line
+    {
+      const std::string::size_type startOfComment = line.find("#");
+      if(startOfComment != std::string::npos) {
+        line = line.substr(0, startOfComment);
+      }
+    }
+
+    // Left and right trim the line of whitespace
+    line = trimString(std::string(line));
+
+    // If the line is not empty
+    if(line != "") {
+
+      // Replace each occurance of whitespace with a single space
+      line = singleSpaceString(line);
+
+      // Split the line into its component data-columns
+      std::vector<std::string> columns;
+      splitString(line, ' ', columns);
+
+      // Throw an exception if the number of data-columns is invalid
+      if(columns.size() != NBCOLUMNS) {
+        castor::exception::InvalidArgument ex;
+
+        ex.getMessage() <<
+          "Invalid number of data columns in TPCONFIG line"
+          ": filename=" << filename <<
+          ": expectedNbColumns=" << NBCOLUMNS <<
+          ": actualNbColumns=" << columns.size() <<
+          ": lineNb=" << lineNb;
+
+        throw(ex);
+      }
+
+      // Store the value of the data-coulmns in the output list parameter
+      lines.push_back(TpconfigLine(
+        columns[0], // unitName
+        columns[1], // deviceGroup
+        columns[2], // systemDevice
+        columns[3], // density
+        columns[4], // initialStatus
+        columns[5], // controlMethod
+        columns[6]  // devType
+      ));
+    }
+  }
+
+  // Throw an exception if there was error whilst reading the file
+  if(ferror(file)) {
+    TAPE_THROW_CODE(fgetsErrno,
+      "Failed to read TPCONFIG file"
+      ": filename=" << filename <<
+      ": " << sstrerror(fgetsErrno));
+  }
 }
