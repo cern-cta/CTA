@@ -152,6 +152,8 @@ void castor::job::stagerjob::RawMoverPlugin::postForkHook
   } else {
     childFailed = moverStatus;
   }
+  // No longer waiting for any mover processes
+  context.childPid = 0;
   // Inform CASTOR
   if (args.accessMode == ReadOnly ||
       args.accessMode == ReadWrite) {

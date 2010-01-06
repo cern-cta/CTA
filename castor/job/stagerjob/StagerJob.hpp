@@ -98,6 +98,8 @@ namespace castor {
         MOVERFORK =       29, /* Mover fork uses the following command line */
         ACCEPTCONN =      30, /* Client connected */
         JOBFAILEDNOANS =  31, /* Job failed before it could send an answer to client */
+        TERMINATEMOVER =  68, /* Mover process still running, sending signal */
+        KILLMOVER =       69, /* Mover process still running after 10 seconds, killing process */
 
         // Errors
         STAT64FAIL =      40, /* stat64 error */

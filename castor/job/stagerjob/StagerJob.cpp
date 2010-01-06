@@ -31,6 +31,7 @@
 #include <sys/stat.h>
 #include <attr/xattr.h>
 #include <sstream>
+#include <signal.h>
 #include <fcntl.h>
 #include "common.h"
 #include "getconfent.h"
@@ -347,17 +348,18 @@ void bindSocketAndListen
 //------------------------------------------------------------------------------
 // process
 //------------------------------------------------------------------------------
-void process(castor::job::stagerjob::InputArguments* args)
+void process(castor::job::stagerjob::PluginContext &context,
+             castor::job::stagerjob::InputArguments* args)
   throw (castor::exception::Exception) {
   // First switch to stage:st privileges
   switchToCastorSuperuser(args);
   // Get an instance of the job service
   castor::stager::IJobSvc* jobSvc = getJobSvc();
   // Get full path of the file we handle
-  castor::job::stagerjob::PluginContext context;
   context.host = castor::System::getHostName();
   context.mask = S_IWGRP|S_IWOTH;
   context.jobSvc = jobSvc;
+  context.childPid = 0;
   context.fullDestPath = startAndGetPath(args, context);
   if ("" == context.fullDestPath) {
     // No DiskCopy return, nothing should be done
@@ -452,6 +454,52 @@ void castor::job::stagerjob::sendResponse
 }
 
 //------------------------------------------------------------------------------
+// terminateMover
+//------------------------------------------------------------------------------
+void terminateMover(castor::job::stagerjob::PluginContext &context,
+                    castor::job::stagerjob::InputArguments* args,
+                    int signal) {
+
+  // If the callee supplies a custom signal use it and don't perform any
+  // further processing
+  if (signal) {
+    kill(context.childPid, signal);
+    return;
+  }
+
+  // Send a SIGTERM signal to the mover, hopefully this will trigger a
+  // graceful shutdown
+  int rv = kill(context.childPid, SIGTERM);
+  if (rv < 0) {
+    return;  // Signal failed, probably the process doesn't exist
+  }
+  
+  // Wait for the process to terminate for up to 10 seconds
+  std::string procFile = "/proc/";
+  procFile += context.childPid;
+  for (unsigned int i = 0; i < 10; i++) {
+    struct stat s;
+    if ((stat(procFile.c_str(), &s) < 0) && (errno == ENOENT)) {
+      return;  // No process running
+    }
+    sleep(1);
+  }
+  
+  // "Mover process still running after 10 seconds, killing process"
+  castor::dlf::Param params[] =
+    {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
+     castor::dlf::Param("PID", context.childPid),
+     castor::dlf::Param("Signal", "SIGKILL"),
+     castor::dlf::Param(args->subRequestUuid)};
+  castor::dlf::dlf_writep
+    (args->requestUuid, DLF_LVL_DEBUG, castor::job::stagerjob::KILLMOVER,
+     4, params, &args->fileId);
+  
+  // After 10 seconds the mover is still running so kill it!
+  kill(context.childPid, SIGKILL);
+}
+
+//------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
 int main(int argc, char** argv) {
@@ -465,6 +513,7 @@ int main(int argc, char** argv) {
   // because of network [write] error
   signal(SIGPIPE,SIG_IGN);
   castor::job::stagerjob::InputArguments* arguments = 0;
+  castor::job::stagerjob::PluginContext context;
 
   try {
     // Initializing logging
@@ -502,6 +551,8 @@ int main(int argc, char** argv) {
       { MOVERFORK,       "Mover fork uses the following command line" },
       { ACCEPTCONN,      "Client connected" },
       { JOBFAILEDNOANS,  "Job failed before it could send an answer to client" },
+      { TERMINATEMOVER,  "Mover process still running, sending signal" },
+      { KILLMOVER,       "Mover process still running after 10 seconds, killing process" },
 
       // Errors
       { STAT64FAIL,      "stat64 error" },
@@ -603,7 +654,7 @@ int main(int argc, char** argv) {
        castor::job::stagerjob::JOBSTARTED, 5, params, &arguments->fileId);
 
     // Call stagerJobProcess
-    process(arguments);
+    process(context, arguments);
 
     // Calculate statistics
     gettimeofday(&tv, NULL);
@@ -624,9 +675,9 @@ int main(int argc, char** argv) {
 
   } catch (castor::exception::Exception e) {
     if (e.code() == ESTREQCANCELED) {
-      // "manually" catch the RequestCanceled exception
-      // these are converted to regular Exception objects
-      // by the internal remote procedure call mechanism
+      // "manually" catch the RequestCanceled exception these are converted
+      // to regular Exception objects by the internal remote procedure call
+      // mechanism
       castor::dlf::Param params[] =
         {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
          castor::dlf::Param(arguments->subRequestUuid)};
@@ -660,6 +711,22 @@ int main(int argc, char** argv) {
           (arguments->requestUuid, DLF_LVL_ERROR,
            castor::job::stagerjob::NOANSWERSENT, 4, params, &arguments->fileId);
       }
+      // If the child process is still running kill it gracefully. This makes
+      // sure that the LSF job slot is liberated quickly and does not wait
+      // (#61085). Note: we ignore errors!
+      if (context.childPid != 0) {
+        // "Mover process still running, sending signal"
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
+           castor::dlf::Param("PID", context.childPid),
+           castor::dlf::Param("Signal", "SIGTERM"),
+           castor::dlf::Param(arguments->subRequestUuid)};
+        castor::dlf::dlf_writep
+          (arguments->requestUuid, DLF_LVL_DEBUG,
+           castor::job::stagerjob::TERMINATEMOVER, 4, params,
+           &arguments->fileId);
+        terminateMover(context, arguments, SIGKILL);
+      }
     }
     // Memory cleanup
     if (0 != arguments) delete arguments;
@@ -669,3 +736,4 @@ int main(int argc, char** argv) {
   dlf_shutdown();
   return 0;
 }
+

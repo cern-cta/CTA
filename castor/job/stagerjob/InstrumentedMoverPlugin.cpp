@@ -81,6 +81,8 @@ void castor::job::stagerjob::InstrumentedMoverPlugin::waitChildAndInformStager
   throw(castor::exception::Exception) {
   // Wait for children
   bool childFailed = waitForChild(args);
+  // No longer waiting for any mover processes
+  context.childPid = 0;
   // If all was fine, just return
   if (!childFailed) return;
   // else inform CASTOR
