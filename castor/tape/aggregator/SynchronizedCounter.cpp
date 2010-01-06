@@ -39,13 +39,8 @@ castor::tape::aggregator::SynchronizedCounter::SynchronizedCounter(
   const int rc = pthread_mutex_init(&m_mutex, NULL);
 
   if(rc) {
-    char strerrbuf[STRERRORBUFLEN];
-    utils::setBytes(strerrbuf, '\0');
-    strerror_r(rc, strerrbuf, sizeof(strerrbuf));
-    strerrbuf[sizeof(strerrbuf)-1] = '\0';
-
     TAPE_THROW_EX(castor::exception::Internal,
-      ": Failed to initialize mutex: " << strerrbuf);
+      ": Failed to initialize mutex: " << sstrerror(rc));
   }
 
   reset(count);
@@ -61,26 +56,16 @@ void castor::tape::aggregator::SynchronizedCounter::reset(
 
   rc = pthread_mutex_lock(&m_mutex);
   if(rc) {
-    char strerrbuf[STRERRORBUFLEN];
-    utils::setBytes(strerrbuf, '\0');
-    strerror_r(rc, strerrbuf, sizeof(strerrbuf));
-    strerrbuf[sizeof(strerrbuf)-1] = '\0';
-
     TAPE_THROW_EX(castor::exception::Internal,
-      ": Failed to lock counter mutex: " << strerrbuf);
+      ": Failed to lock counter mutex: " << sstrerror(rc));
   }
 
   m_count = count;
 
   rc = pthread_mutex_unlock(&m_mutex);
   if(rc) {
-    char strerrbuf[STRERRORBUFLEN];
-    utils::setBytes(strerrbuf, '\0');
-    strerror_r(rc, strerrbuf, sizeof(strerrbuf));
-    strerrbuf[sizeof(strerrbuf)-1] = '\0';
-
     TAPE_THROW_EX(castor::exception::Internal,
-      ": Failed to unlock counter mutex: " << strerrbuf);
+      ": Failed to unlock counter mutex: " << sstrerror(rc));
   }
 }
 
@@ -105,13 +90,8 @@ int32_t castor::tape::aggregator::SynchronizedCounter::next(
 
   rc = pthread_mutex_lock(&m_mutex);
   if(rc) {
-    char strerrbuf[STRERRORBUFLEN];
-    utils::setBytes(strerrbuf, '\0');
-    strerror_r(rc, strerrbuf, sizeof(strerrbuf));
-    strerrbuf[sizeof(strerrbuf)-1] = '\0';
-
     TAPE_THROW_EX(castor::exception::Internal,
-      ": Failed to lock counter mutex: " << strerrbuf);
+      ": Failed to lock counter mutex: " << sstrerror(rc));
   }
 
   m_count += increment;
@@ -119,13 +99,8 @@ int32_t castor::tape::aggregator::SynchronizedCounter::next(
 
   rc = pthread_mutex_unlock(&m_mutex);
   if(rc) {
-    char strerrbuf[STRERRORBUFLEN];
-    utils::setBytes(strerrbuf, '\0');
-    strerror_r(rc, strerrbuf, sizeof(strerrbuf));
-    strerrbuf[sizeof(strerrbuf)-1] = '\0';
-
     TAPE_THROW_EX(castor::exception::Internal,
-      ": Failed to unlock counter mutex: " << strerrbuf);
+      ": Failed to unlock counter mutex: " << sstrerror(rc));
   }
 
   return(result);

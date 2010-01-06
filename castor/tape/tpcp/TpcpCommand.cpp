@@ -94,15 +94,11 @@ castor::tape::tpcp::TpcpCommand::TpcpCommand() throw () :
   if(sigfillset(&m_sigintAction.sa_mask) < 0) { // Mask all signals
     const int savedErrno = errno;
 
-    char strerrorBuf[STRERRORBUFLEN];
-    char *const errorStr = strerror_r(savedErrno, strerrorBuf,
-      sizeof(strerrorBuf));
-
     castor::exception::Exception ex(savedErrno);
 
     TAPE_THROW_CODE(savedErrno,
       "Failed to initialize signal mask using sigfillset"
-      ": " << errorStr);
+      ": " << sstrerror(savedErrno));
   }
   m_sigintAction.sa_flags = 0; // No flags
 
@@ -110,15 +106,9 @@ castor::tape::tpcp::TpcpCommand::TpcpCommand() throw () :
   if(sigaction(SIGINT, &m_sigintAction, 0) < 0){
     const int savedErrno = errno;
 
-    char strerrorBuf[STRERRORBUFLEN];
-    char *const errorStr = strerror_r(savedErrno, strerrorBuf,
-      sizeof(strerrorBuf));
-
-    castor::exception::Exception ex(savedErrno);
-
     TAPE_THROW_CODE(savedErrno,
       "Failed to set the SIGINT signal handler using sigaction"
-      ": " << errorStr);
+      ": " << sstrerror(savedErrno));
   }
 
   utils::setBytes(m_vmgrTapeInfo, '\0');
@@ -681,23 +671,17 @@ void castor::tape::tpcp::TpcpCommand::vmgrQueryTape(
   char (&vid)[CA_MAXVIDLEN+1], const int side)
   throw (castor::exception::Exception) {
 
-  int savedSerrno = 0;
-
   serrno=0;
-  const int rc = vmgr_querytape(m_cmdLine.vid, side, &m_vmgrTapeInfo,
-    m_dgn);
-  
-  savedSerrno = serrno;
+  const int rc = vmgr_querytape(m_cmdLine.vid, side, &m_vmgrTapeInfo, m_dgn);
+  const int savedSerrno = serrno;
 
   if(rc != 0) {
-    char buf[STRERRORBUFLEN];
-    sstrerror_r(serrno, buf, sizeof(buf));
-    buf[sizeof(buf)-1] = '\0';
     TAPE_THROW_CODE(savedSerrno,
-      ": Failed vmgr_querytape() call"
-      ": " << buf);
+      ": Failed call to vmgr_querytape()"
+      ": " << sstrerror(savedSerrno));
   }
 }
+
 
 //------------------------------------------------------------------------------
 // setupCallbackSock
@@ -773,13 +757,10 @@ void castor::tape::tpcp::TpcpCommand::requestDriveFromVdqm(
 
   // Throw an exception if there was an error
   if(rc == -1) {
-    char errorBuf[STRERRORBUFLEN];
-    sstrerror_r(savedSerrno, errorBuf, sizeof(errorBuf));
-    errorBuf[sizeof(errorBuf)-1] = '\0';
-
     castor::exception::Exception ex(savedSerrno);
 
-    ex.getMessage() << errorBuf;
+    ex.getMessage() << sstrerror(savedSerrno);
+
     throw ex;
   }
 }
@@ -996,10 +977,6 @@ bool castor::tape::tpcp::TpcpCommand::handleEndNotificationErrorReport(
 
   // Command-line user feedback
   {
-    char errorBuf[STRERRORBUFLEN];
-    sstrerror_r(msg->errorCode(), errorBuf, sizeof(errorBuf));
-    errorBuf[sizeof(errorBuf)-1] = '\0';
-
     std::ostream &os = std::cout;
     const time_t now = time(NULL);
 
@@ -1008,7 +985,8 @@ bool castor::tape::tpcp::TpcpCommand::handleEndNotificationErrorReport(
       " Aggregator encountered the following error:" << std::endl <<
       std::endl <<
       "Error code        = "   << msg->errorCode()            << std::endl <<
-      "Error code string = \"" << errorBuf            << "\"" << std::endl <<
+      "Error code string = \"" << sstrerror(msg->errorCode()) << "\"" <<
+      std::endl <<
       "Error message     = \"" << msg->errorMessage() << "\"" << std::endl <<
       std::endl;
   }
@@ -1167,10 +1145,9 @@ void castor::tape::tpcp::TpcpCommand::deleteVdqmVolumeRequest()
   const int savedSerrno = serrno;
 
   if(rc < 0) {
-    castor::exception::Exception ex(savedSerrno);
-
-    ex.getMessage() << sstrerror(savedSerrno);
-    throw(ex);
+    TAPE_THROW_CODE(savedSerrno,
+      "Failed call to vdqm_DelVolumeReq()"
+      ": " << sstrerror(savedSerrno));
   }
 }
 

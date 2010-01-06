@@ -375,15 +375,13 @@ ssize_t castor::tape::utils::drainFile(const int fd)
 
   do {
     rc = read((int)fd, buf, sizeof(buf));
+    const int savedErrno = errno;
 
     if(rc == -1) {
-      char codeStr[STRERRORBUFLEN];
-      strerror_r(errno, codeStr, sizeof(codeStr));
-
       TAPE_THROW_EX(castor::exception::Internal,
         ": Failed to drain file"
         ": fd=" << fd <<
-        ": Error=" << codeStr);
+        ": Error=" << sstrerror(savedErrno));
     } else {
       total += rc;
     }

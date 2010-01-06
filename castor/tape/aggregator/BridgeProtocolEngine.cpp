@@ -258,13 +258,9 @@ void castor::tape::aggregator::BridgeProtocolEngine::processSocks()
       } else {
 
         // Convert the error into an exception
-        char strerrorBuf[STRERRORBUFLEN];
-        char *const errorStr = strerror_r(selectErrno, strerrorBuf,
-          sizeof(strerrorBuf));
-
         TAPE_THROW_CODE(selectErrno,
           ": Select encountered an error other than an interruption"
-          ": " << errorStr);
+          ": " << sstrerror(selectErrno));
       }
       break;
 
@@ -1182,14 +1178,11 @@ void
     RTCPDNETRWTIMEOUT, header, body);
 
   if(body.err.errorCode != 0) {
-    char codeStr[STRERRORBUFLEN];
-    sstrerror_r(body.err.errorCode, codeStr, sizeof(codeStr));
-
     TAPE_THROW_CODE(body.err.errorCode,
       ": Received an error from rtcpd"
       ": errorCode=" << body.err.errorCode <<
       ": errorMsg=" << body.err.errorMsg  <<
-      ": sstrerror_r=" << codeStr);
+      ": sstrerror=" << sstrerror(body.err.errorCode));
   }
 
   return(processRtcpTape(header, body, socketFd, receivedENDOF_REQ));

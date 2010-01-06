@@ -23,6 +23,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
+#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/net/net.hpp"
@@ -50,17 +51,9 @@ int castor::tape::net::createListenerSock(const char *addr,
   if ((socketFd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
     const int savedErrno = errno;
 
-    char strerrorBuf[STRERRORBUFLEN];
-    char *const errorStr = strerror_r(savedErrno, strerrorBuf,
-      sizeof(strerrorBuf));
-
-    castor::exception::Communication ex(strerrorBuf, savedErrno);
-
-    ex.getMessage() <<
+    TAPE_THROW_EX(castor::exception::Internal,
       ": Failed to create listener socket"
-      ": " << errorStr;
-
-    throw(ex);
+      ": " << sstrerror(savedErrno));
   }
 
   utils::setBytes(address, '\0');
@@ -71,33 +64,17 @@ int castor::tape::net::createListenerSock(const char *addr,
   if(bind(socketFd, (struct sockaddr *) &address, sizeof(address)) < 0) {
     const int savedErrno = errno;
 
-    char strerrorBuf[STRERRORBUFLEN];
-    char *const errorStr = strerror_r(savedErrno, strerrorBuf,
-      sizeof(strerrorBuf));
-
-    castor::exception::Communication ex(strerrorBuf, savedErrno);
-
-    ex.getMessage() <<
+    TAPE_THROW_EX(castor::exception::Internal,
       ": Failed to bind listener socket"
-      ": " << errorStr;
-
-    throw(ex);
+      ": " << sstrerror(savedErrno));
   }
 
   if(listen(socketFd, LISTENBACKLOG) < 0) {
     const int savedErrno = errno;
 
-    char strerrorBuf[STRERRORBUFLEN];
-    char *const errorStr = strerror_r(savedErrno, strerrorBuf,
-      sizeof(strerrorBuf));
-
-    castor::exception::Communication ex(strerrorBuf, savedErrno);
-
-    ex.getMessage() <<
+    TAPE_THROW_EX(castor::exception::Internal,
       ": Failed to mark socket as being a listener"
-      ": " << errorStr;
-
-    throw(ex);
+      ": " << sstrerror(savedErrno));
   }
 
   return socketFd;
@@ -168,16 +145,12 @@ int castor::tape::net::acceptConnection(const int listensocketFd)
 
   const int connectedsocketFd = accept(listensocketFd,
     (struct sockaddr *)&peerAddress, &peerAddressLen);
-  const int acceptErrno = errno;
+  const int savedErrno = errno;
 
   if(connectedsocketFd < 0) {
-    char strerrorBuf[STRERRORBUFLEN];
-    char *const errorStr = strerror_r(acceptErrno, strerrorBuf,
-      sizeof(strerrorBuf));
-
-    TAPE_THROW_CODE(acceptErrno,
+    TAPE_THROW_CODE(savedErrno,
       ": Failed to accept connection"
-      ": Accept failed: " << errorStr);
+      ": Accept failed: " << sstrerror(savedErrno));
   }
 
   return connectedsocketFd;
@@ -215,20 +188,16 @@ int castor::tape::net::acceptConnection(const int listensocketFd,
     break;
   case -1: // Select encountered an error
     // If select was interrupted
-    if(errno == EINTR) {
+    if(selectErrno == EINTR) {
       const time_t remainingTime = timeout - (time(NULL) - startTime);
 
       castor::exception::TapeNetAcceptInterrupted ex(remainingTime);
 
       throw(ex);
     } else {
-      char strerrorBuf[STRERRORBUFLEN];
-      char *const errorStr = strerror_r(selectErrno, strerrorBuf,
-        sizeof(strerrorBuf));
-
       TAPE_THROW_CODE(selectErrno,
         ": Failed to accept connection"
-        ": Select failed: " << errorStr);
+        ": Select failed: " << sstrerror(selectErrno));
     }
     break;
   default: // Select found a file descriptor awaiting attention
@@ -248,13 +217,9 @@ int castor::tape::net::acceptConnection(const int listensocketFd,
   const int acceptErrno = errno;
 
   if(connectedsocketFd < 0) {
-    char strerrorBuf[STRERRORBUFLEN];
-    char *const errorStr = strerror_r(acceptErrno, strerrorBuf,
-      sizeof(strerrorBuf));
-
     TAPE_THROW_CODE(acceptErrno,
       ": Failed to accept connection"
-      ": Accept failed: " << errorStr);
+      ": Accept failed: " << sstrerror(acceptErrno));
   }
 
   return connectedsocketFd;
@@ -272,15 +237,11 @@ void castor::tape::net::getSockIpPort(const int socketFd,
   socklen_t addressLen = sizeof(address);
 
   if(getsockname(socketFd, (struct sockaddr*)&address, &addressLen) < 0) {
-    const int getsocknameErrno = errno;
+    const int savedErrno = errno;
 
-    char strerrorBuf[STRERRORBUFLEN];
-    char *const errorStr = strerror_r(getsocknameErrno, strerrorBuf,
-      sizeof(strerrorBuf));
-
-    TAPE_THROW_CODE(getsocknameErrno,
+    TAPE_THROW_CODE(savedErrno,
       ": Failed to get socket name"
-      ": " << errorStr);
+      ": " << sstrerror(savedErrno));
   }
 
   ip   = ntohl(address.sin_addr.s_addr);
@@ -299,15 +260,11 @@ void castor::tape::net::getPeerIpPort(const int socketFd,
   socklen_t addressLen = sizeof(address);
 
   if(getpeername(socketFd, (struct sockaddr*)&address, &addressLen) < 0) {
-    const int getpeernameErrno = errno;
+    const int savedErrno = errno;
 
-    char strerrorBuf[STRERRORBUFLEN];
-    char *const errorStr = strerror_r(getpeernameErrno, strerrorBuf,
-      sizeof(strerrorBuf));
-
-    TAPE_THROW_CODE(getpeernameErrno,
+    TAPE_THROW_CODE(savedErrno,
       ": Failed to get peer name"
-      ": " << errorStr);
+      ": " << sstrerror(savedErrno));
   }
 
   ip   = ntohl(address.sin_addr.s_addr);
@@ -325,15 +282,11 @@ void castor::tape::net::getSockHostName(const int socketFd,
   socklen_t addressLen = sizeof(address);
 
   if(getsockname(socketFd, (struct sockaddr*)&address, &addressLen) < 0) {
-    const int getsocknameErrno = errno;
+    const int savedErrno = errno;
 
-    char strerrorBuf[STRERRORBUFLEN];
-    char *const errorStr = strerror_r(getsocknameErrno, strerrorBuf,
-      sizeof(strerrorBuf));
-
-    TAPE_THROW_CODE(getsocknameErrno,
+    TAPE_THROW_CODE(savedErrno,
       ": Failed to get socket name"
-      ": " << errorStr);
+      ": " << sstrerror(savedErrno));
   }
 
   char hostName[HOSTNAMEBUFLEN];
@@ -362,28 +315,26 @@ void castor::tape::net::getSockIpHostnamePort(const int socketFd,
   socklen_t addressLen = sizeof(address);
 
   if(getsockname(socketFd, (struct sockaddr*)&address, &addressLen) < 0) {
-    const int getsocknameErrno = errno;
+    const int savedErrno = errno;
 
-    char strerrorBuf[STRERRORBUFLEN];
-    char *const errorStr = strerror_r(getsocknameErrno, strerrorBuf,
-      sizeof(strerrorBuf));
-
-    TAPE_THROW_CODE(getsocknameErrno,
+    TAPE_THROW_CODE(savedErrno,
       ": Failed to get socket name"
-      ": " << errorStr);
+      ": " << sstrerror(savedErrno));
   }
 
   ip   = ntohl(address.sin_addr.s_addr);
   port = ntohs(address.sin_port);
 
-  char serviceName[SERVICENAMEBUFLEN];
-  const int error = getnameinfo((const struct sockaddr*)&address, addressLen,
-    hostName, hostNameLen, serviceName, sizeof(serviceName), 0);
+  {
+    char serviceName[SERVICENAMEBUFLEN];
+    const int rc = getnameinfo((const struct sockaddr*)&address, addressLen,
+      hostName, hostNameLen, serviceName, sizeof(serviceName), 0);
 
-  if(error != 0) {
-    TAPE_THROW_CODE(SENOSHOST,
-      ": Failed to get host information by address"
-      ": " << gai_strerror(error));
+    if(rc != 0) {
+      TAPE_THROW_CODE(SENOSHOST,
+        ": Failed to get host information by address"
+        ": " << gai_strerror(rc));
+    }
   }
 }
 
@@ -398,29 +349,27 @@ void castor::tape::net::getPeerHostName(const int socketFd,
   socklen_t addressLen = sizeof(address);
 
   if(getpeername(socketFd, (struct sockaddr*)&address, &addressLen) < 0) {
-    const int getpeernameErrno = errno;
+    const int savedErrno = errno;
 
-    char strerrorBuf[STRERRORBUFLEN];
-    char *const errorStr = strerror_r(getpeernameErrno, strerrorBuf,
-      sizeof(strerrorBuf));
-
-    TAPE_THROW_CODE(getpeernameErrno,
+    TAPE_THROW_CODE(savedErrno,
       ": Failed to get peer name"
-      ": " << errorStr);
+      ": " << sstrerror(savedErrno));
   }
 
-  char hostName[HOSTNAMEBUFLEN];
-  char serviceName[SERVICENAMEBUFLEN];
-  const int error = getnameinfo((const struct sockaddr*)&address, addressLen,
-    hostName, sizeof(hostName), serviceName, sizeof(serviceName), 0);
+  {
+    char hostName[HOSTNAMEBUFLEN];
+    char serviceName[SERVICENAMEBUFLEN];
+    const int rc = getnameinfo((const struct sockaddr*)&address, addressLen,
+      hostName, sizeof(hostName), serviceName, sizeof(serviceName), 0);
 
-  if(error != 0) {
-    TAPE_THROW_CODE(SENOSHOST,
-      ": Failed to get host information by address"
-      ": " << gai_strerror(error));
+    if(rc != 0) {
+      TAPE_THROW_CODE(SENOSHOST,
+        ": Failed to get host information by address"
+        ": " << gai_strerror(rc));
+    }
+
+    utils::copyString(buf, hostName, len);
   }
-
-  utils::copyString(buf, hostName, len);
 }
 
 
