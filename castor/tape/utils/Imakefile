@@ -1,5 +1,5 @@
 #
-#                      castor/tape/Imakefile
+#                      castor/tape/utils/Imakefile
 #
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
@@ -18,10 +18,21 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
 #
+# @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
 #
-# @author Sebastien Ponce, sebastien.ponce@cern.ch
-#
 
-SUBDIRS = aggregator format tapegateway tpcp utils
+INCLUDES = -I../../../h -I../../..
+CPPFLAGS = -g -O0 $(INCLUDES) $(MTCCFLAGS)
+LDFLAGS += $(MTLDFLAGS)
+LD = g++
 
+TAPEUTILSLIB_SRCS = \
+  SmartFILEPtr.cpp \
+  SmartFd.cpp \
+  SmartFdList.cpp \
+  utils.cpp
 
+TAPEUTILSLIB_OBJS = $(TAPEUTILSLIB_SRCS:.cpp=.Osuf)
+
+DependsOnLibrary(..,castorclient)
+SharedLibraryTarget(castortapeutils,$(TAPEUTILSLIB_OBJS),$(DEPLIB),$(LIBS))

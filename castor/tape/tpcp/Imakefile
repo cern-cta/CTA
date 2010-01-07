@@ -28,6 +28,7 @@ LD = g++
 
 DependsOnLibrary(..,castorclient)
 DependsOnLibrary(../db/cnv,castorcnvs)
+DependsOnLibrary(../tape/utils,castortapeutils)
 DependsOnLibrary(../../common,castorcommon)
 DependsOnLibrary(../../dlf,castordlf)
 DependsOnLibrary(../../rfio,castorrfio)
@@ -77,7 +78,6 @@ TAPEGATEWAY_IO_SRCS = \
 
 DUMPTPBIN_SRCS = \
   ../net/net.cpp \
-  ../utils/utils.cpp \
   Action.cpp \
   DumpTpCommand.cpp \
   DumpTpMain.cpp \
@@ -95,7 +95,6 @@ DUMPTPBIN_OBJS = $(DUMPTPBIN_SRCS:.cpp=.Osuf)
 
 READTPBIN_SRCS = \
   ../net/net.cpp \
-  ../utils/utils.cpp \
   Action.cpp \
   Helper.cpp \
   ReadTpCommand.cpp \
@@ -113,7 +112,6 @@ READTPBIN_OBJS = $(READTPBIN_SRCS:.cpp=.Osuf)
 
 WRITETPBIN_SRCS = \
   ../net/net.cpp \
-  ../utils/utils.cpp \
   Action.cpp \
   Helper.cpp \
   StreamHelper.cpp \

@@ -36,13 +36,14 @@ DependsOnLibrary(..,castorclient)
 DependsOnLibrary(../db/newora,castorcommonora)
 DependsOnLibrary(../db/cnv,castorcnvs)
 DependsOnLibrary(../infoPolicy,castorinfopolicy)
+DependsOnLibrary(../tape/utils,castortapeutils)
 DependsOnLibrary(../../rfio,castorrfio)
 
 TAPEGATEWAYDBIN_SRCS = daemon/TapeGatewayDaemon.cpp daemon/WorkerThread.cpp \
 	daemon/MigratorErrorHandlerThread.cpp  daemon/RecallerErrorHandlerThread.cpp \
 	daemon/TapeStreamLinkerThread.cpp  daemon/VdqmRequestsCheckerThread.cpp  daemon/VdqmRequestsProducerThread.cpp \
 	daemon/VmgrTapeGatewayHelper.cpp  daemon/VdqmTapeGatewayHelper.cpp  daemon/NsTapeGatewayHelper.cpp \
-	 daemon/RmMasterTapeGatewayHelper.cpp ../utils/utils.cpp ../net/net.cpp  
+	 daemon/RmMasterTapeGatewayHelper.cpp ../net/net.cpp  
 
 TAPEGATEWAY_MESSAGES_SRCS = \
 	VolumeRequest.cpp Volume.cpp VdqmTapeGatewayRequest.cpp \

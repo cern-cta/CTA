@@ -29,6 +29,7 @@ LD = g++
 DependsOnLibrary(../../common,castorcommon)
 DependsOnLibrary(../../dlf,castordlf)
 DependsOnLibrary(../db/cnv,castorcnvs)
+DependsOnLibrary(../tape/utils,castortapeutils)
 
 TAPEGATEWAY_MESSAGES_SRCS = \
   ../tapegateway/BaseFileInfo.cpp \
@@ -93,10 +94,6 @@ AGGREGATORBIN_SRCS = \
   ../legacymsg/RtcpMarshal.cpp \
   ../legacymsg/VmgrMarshal.cpp \
   ../net/net.cpp \
-  ../utils/SmartFd.cpp \
-  ../utils/SmartFdList.cpp \
-  ../utils/SmartFILEPtr.cpp \
-  ../utils/utils.cpp \
   $(TAPEGATEWAY_MESSAGES_SRCS) \
   $(TAPEGATEWAY_IO_SRCS)
 AGGREGATORBIN_OBJS = $(AGGREGATORBIN_SRCS:.cpp=.Osuf)

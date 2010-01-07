@@ -98,9 +98,9 @@ int castor::tape::aggregator::AggregatorDaemon::main(const int argc,
       utils::parseTpconfig(TPCONFIGPATH, m_tpconfigLines);
     } catch (castor::exception::Exception &ex) {
       castor::dlf::Param params[] = {
-        castor::dlf::Param("filename"     , TPCONFIGPATH         ),
-        castor::dlf::Param("errorCode"    , ex.code()            ),
-        castor::dlf::Param("errorrMessage", ex.getMessage().str())};
+        castor::dlf::Param("filename"     , TPCONFIGPATH        ),
+        castor::dlf::Param("errorCode"    , ex.code()           ),
+        castor::dlf::Param("errorMessage", ex.getMessage().str())};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
         AGGREGATOR_FAILED_TO_PARSE_TPCONFIG, params);
 
@@ -108,6 +108,28 @@ int castor::tape::aggregator::AggregatorDaemon::main(const int argc,
         << ex.getMessage().str() << std::endl;
 
       return 1;
+    }
+
+    // Log the result of successfully parsing the TPCONFIG file
+    {
+      std::stringstream unitNames;
+
+      for(utils::TpconfigLines::const_iterator itor = m_tpconfigLines.begin();
+        itor != m_tpconfigLines.end(); itor++) {
+
+        if(itor != m_tpconfigLines.begin()) {
+          unitNames << ",";
+        }
+
+        unitNames << itor->mUnitName;
+      }
+
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("filename" , TPCONFIGPATH          ),
+        castor::dlf::Param("nbDrives" , m_tpconfigLines.size()),
+        castor::dlf::Param("unitNames", unitNames.str()       )};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_PARSED_TPCONFIG, params);
     }
 
     createVdqmRequestHandlerPool();

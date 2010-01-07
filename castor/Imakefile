@@ -36,7 +36,7 @@ STAGERSUPERGROUP0 = st
 STAGERSUPERUSER  = -DSTAGERSUPERUSER=\"$(STAGERSUPERUSER0)\"
 STAGERSUPERGROUP = -DSTAGERSUPERGROUP=\"$(STAGERSUPERGROUP0)\"
 
-SUBDIRS = db rh vdqm gc repack monitoring stager jobmanager job infoPolicy scheduler rtcopy
+SUBDIRS = db rh vdqm gc repack monitoring stager jobmanager job infoPolicy scheduler rtcopy tape
 DEBUG  = -g -O0
 STAGEFLAGS = -DSTAGEMAP=\"StageMapFile\"
 CFLAGS = $(DEBUG) -I ../h -I .. $(MTCCFLAGS) $(STAGEFLAGS)
