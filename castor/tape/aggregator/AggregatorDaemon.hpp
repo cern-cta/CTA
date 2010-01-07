@@ -29,9 +29,10 @@
 #include "castor/exception/InvalidConfigEntry.hpp"
 #include "castor/server/BaseDaemon.hpp"
 #include "castor/server/BaseThreadPool.hpp"
-#include "castor/tape/utils/utils.hpp"
 
 #include <iostream>
+#include <list>
+#include <string>
 
 
 namespace castor     {
@@ -123,9 +124,9 @@ private:
   static castor::dlf::Message s_dlfMessages[];
 
   /**
-   * The data-lines parsed from the TPCONFIG file
+   * The unit names of the drives parsed from the TPCONFIG file.
    */
-  utils::TpconfigLines m_tpconfigLines;
+  std::list<std::string> m_driveUnitNames;
 
 }; // class AggregatorDaemon
 

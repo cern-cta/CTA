@@ -35,6 +35,7 @@
 #include "h/Cgetopt.h"
 #include "h/common.h"
 
+#include <algorithm>
 #include <memory>
 
 
@@ -94,8 +95,9 @@ int castor::tape::aggregator::AggregatorDaemon::main(const int argc,
     }
 
     // Parse the TPCONFIG file
+    utils::TpconfigLines tpconfigLines;
     try {
-      utils::parseTpconfig(TPCONFIGPATH, m_tpconfigLines);
+      utils::parseTpconfig(TPCONFIGPATH, tpconfigLines);
     } catch (castor::exception::Exception &ex) {
       castor::dlf::Param params[] = {
         castor::dlf::Param("filename"     , TPCONFIGPATH        ),
@@ -110,27 +112,32 @@ int castor::tape::aggregator::AggregatorDaemon::main(const int argc,
       return 1;
     }
 
-    // Log the result of successfully parsing the TPCONFIG file
-    {
-      std::stringstream unitNames;
+    // For each parsed TPCONFIG data-line
+    std::stringstream driveUnitNamesStream; // For logging
+    for(utils::TpconfigLines::const_iterator itor = tpconfigLines.begin();
+      itor != tpconfigLines.end(); itor++) {
 
-      for(utils::TpconfigLines::const_iterator itor = m_tpconfigLines.begin();
-        itor != m_tpconfigLines.end(); itor++) {
+      // If the drive unit name of the data-line is not already in the
+      // aggregator's list of drive-unit names, then add it
+      if(std::find(m_driveUnitNames.begin(), m_driveUnitNames.end(),
+        itor->mUnitName) == m_driveUnitNames.end()) {
+        m_driveUnitNames.push_back(itor->mUnitName);
 
-        if(itor != m_tpconfigLines.begin()) {
-          unitNames << ",";
+        // Prepare for the AGGREGATOR_PARSED_TPCONFIG log message
+        if(m_driveUnitNames.size() > 1) {
+          driveUnitNamesStream << ",";
         }
-
-        unitNames << itor->mUnitName;
+        driveUnitNamesStream << itor->mUnitName;
       }
-
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("filename" , TPCONFIGPATH          ),
-        castor::dlf::Param("nbDrives" , m_tpconfigLines.size()),
-        castor::dlf::Param("unitNames", unitNames.str()       )};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_PARSED_TPCONFIG, params);
     }
+
+    // Log the result of successfully parsing the TPCONFIG file
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("filename" , TPCONFIGPATH              ),
+      castor::dlf::Param("nbDrives" , m_driveUnitNames.size()   ),
+      castor::dlf::Param("unitNames", driveUnitNamesStream.str())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_PARSED_TPCONFIG, params);
 
     createVdqmRequestHandlerPool();
 
