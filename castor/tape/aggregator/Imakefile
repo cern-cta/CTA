@@ -95,6 +95,7 @@ AGGREGATORBIN_SRCS = \
   ../net/net.cpp \
   ../utils/SmartFd.cpp \
   ../utils/SmartFdList.cpp \
+  ../utils/SmartFILEPtr.cpp \
   ../utils/utils.cpp \
   $(TAPEGATEWAY_MESSAGES_SRCS) \
   $(TAPEGATEWAY_IO_SRCS)

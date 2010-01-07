@@ -88,14 +88,7 @@ castor::tape::utils::SmartFd::~SmartFd() {
 //-----------------------------------------------------------------------------
 // get
 //-----------------------------------------------------------------------------
-int castor::tape::utils::SmartFd::get()
-  throw(castor::exception::Exception) {
-
-  // If this SmartFd does not own a file descriptor
-  if(m_fd < 0) {
-    TAPE_THROW_CODE(EPERM,
-      ": Smart file descriptor does not own a basic file descriptor");
-  }
+int castor::tape::utils::SmartFd::get() throw() {
 
   return m_fd;
 }

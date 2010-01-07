@@ -34,6 +34,7 @@ DependsOnLibrary(../../../vdqm,castorvdqm)
 DependsOnLibrary(../../../vmgr,castorvmgr)
 
 TAPE_UTILS_SRCS = \
+  ../../../../castor/tape/utils/SmartFILEPtr.cpp \
   ../../../../castor/tape/utils/utils.cpp
 
 TESTUTILSBIN_SRCS = \

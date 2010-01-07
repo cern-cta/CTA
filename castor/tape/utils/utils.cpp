@@ -27,6 +27,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/tape/Constants.hpp"
+#include "castor/tape/utils/SmartFILEPtr.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/Castor_limits.h"
 #include "h/getconfent.h"
@@ -670,12 +671,12 @@ void castor::tape::utils::parseTpconfig(const char *const filename,
   const unsigned int NBCOLUMNS = 7;
 
   // Open the TPCONFIG file for reading
-  FILE *const file = fopen(filename, "r");
+  utils::SmartFILEPtr file(fopen(filename, "r"));
   {
     const int savedErrno = errno;
 
     // Throw an exception if the file could not be opened
-    if(file == NULL) {
+    if(file.get() == NULL) {
       castor::exception::Exception ex(savedErrno);
 
       ex.getMessage() <<
@@ -694,7 +695,7 @@ void castor::tape::utils::parseTpconfig(const char *const filename,
   int fgetsErrno = 0;
 
   // For each line was read
-  for(int lineNb = 1; fgets(lineBuf, sizeof(lineBuf), file); lineNb++) {
+  for(int lineNb = 1; fgets(lineBuf, sizeof(lineBuf), file.get()); lineNb++) {
     fgetsErrno = errno;
 
     // Create a std::string version of the line
@@ -757,7 +758,7 @@ void castor::tape::utils::parseTpconfig(const char *const filename,
   }
 
   // Throw an exception if there was error whilst reading the file
-  if(ferror(file)) {
+  if(ferror(file.get())) {
     castor::exception::Exception ex(fgetsErrno);
 
     ex.getMessage() <<

@@ -53,7 +53,7 @@ namespace utils  {
      *
      * @param file The FILE pointer to be owned by the smart FILE pointer.
      */
-    SmartFILEPtr(const FILE *const file);
+    SmartFILEPtr(FILE *const file);
 
     /**
      * Take ownership of the specified FILE pointer, closing the previously
@@ -64,7 +64,7 @@ namespace utils  {
      *             specified, where NULL means this SmartFILEPtr does not own
      *             anything.
      */
-    void reset(const FILE *const file) throw();
+    void reset(FILE *const file) throw();
 
     /**
      * SmartFILEPtr assignment operator.
@@ -87,18 +87,19 @@ namespace utils  {
     ~SmartFILEPtr();
 
     /**
-     * Returns the owned FILE pointer.
+     * Returns the owned FILE pointer or NULL if this smartFILEPtr does not own
+     * FILE pointer.
      *
      * @return The owned FILE pointer.
      */
-    int get() throw(castor::exception::Exception);
+    FILE *get() throw();
 
     /**
      * Releases the owned FILE pointer.
      *
      * @return The released FILE pointer.
      */
-    int release() throw(castor::exception::Exception);
+    FILE *release() throw(castor::exception::Exception);
 
 
   private:
@@ -107,7 +108,7 @@ namespace utils  {
      * The owned FILE pointer.  A value of NULL means this SmartFILEPtr does
      * not own anything.
      */ 
-    const FILE *m_file;
+    FILE *m_file;
 
   };
 

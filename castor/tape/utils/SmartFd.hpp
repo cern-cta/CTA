@@ -62,7 +62,7 @@ namespace utils  {
      *
      * @param fd The file descriptor to be owned, defaults to -1 if not
      *           specified, where a negative number means this SmartFd does not
-     *           own anything.
+     *           own a file descriptor.
      */
     void reset(const int fd) throw();
 
@@ -87,11 +87,12 @@ namespace utils  {
     ~SmartFd();
 
     /**
-     * Returns the owned file descriptor.
+     * Returns the owned file descriptor or a negative number if this SmartFd
+     * does not own a file descriptor.
      *
      * @return The owned file desccriptor.
      */
-    int get() throw(castor::exception::Exception);
+    int get() throw();
 
     /**
      * Releases the owned file descriptor.
@@ -104,8 +105,8 @@ namespace utils  {
   private:
 
     /**
-     * The owned file descriptor.  A value less than zero means this SmartFd
-     * does not own anything.
+     * The owned file descriptor.  A negtaive value means this SmartFd does not
+     * own a file descriptor..
      */
     int m_fd;
 

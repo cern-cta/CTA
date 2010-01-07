@@ -41,7 +41,7 @@ castor::tape::utils::SmartFILEPtr::SmartFILEPtr() :
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::utils::SmartFILEPtr::SmartFILEPtr(const FILE *const file) :
+castor::tape::utils::SmartFILEPtr::SmartFILEPtr(FILE *const file) :
   m_file(file) {
 }
 
@@ -49,14 +49,14 @@ castor::tape::utils::SmartFILEPtr::SmartFILEPtr(const FILE *const file) :
 //-----------------------------------------------------------------------------
 // reset
 //-----------------------------------------------------------------------------
-void castor::tape::utils::SmartFILEPtr::reset(const FILE *const file = NULL)
+void castor::tape::utils::SmartFILEPtr::reset(FILE *const file = NULL)
    throw() {
   // If the new FILE pointer is not the one already owned
   if(file != m_file) {
 
     // If this SmartFILEPtr still owns a FILE pointer, then close it
     if(m_file != NULL) {
-      close(m_file);
+      fclose(m_file);
     }
 
     // Take ownership of the new FILE pointer
@@ -89,14 +89,7 @@ castor::tape::utils::SmartFILEPtr::~SmartFILEPtr() {
 //-----------------------------------------------------------------------------
 // get
 //-----------------------------------------------------------------------------
-int castor::tape::utils::SmartFILEPtr::get()
-  throw(castor::exception::Exception) {
-
-  // If this SmartFILEPtr does not own a FILE pointer
-  if(m_file == NULL) {
-    TAPE_THROW_CODE(EPERM,
-      ": Smart FILE pointer does not own a basic FILE pointer");
-  }
+FILE *castor::tape::utils::SmartFILEPtr::get() throw() {
 
   return m_file;
 }
@@ -105,7 +98,7 @@ int castor::tape::utils::SmartFILEPtr::get()
 //-----------------------------------------------------------------------------
 // release
 //-----------------------------------------------------------------------------
-int castor::tape::utils::SmartFILEPtr::release()
+FILE *castor::tape::utils::SmartFILEPtr::release()
   throw(castor::exception::Exception) {
 
   // If this SmartFILEPtr does not own a FILE pointer
@@ -115,7 +108,7 @@ int castor::tape::utils::SmartFILEPtr::release()
   }
 
 
-  const int tmpFile = m_file;
+  FILE *const tmpFile = m_file;
 
   // A NULL value indicates this SmartFILEPtr does not own a FILE pointer
   m_file = NULL;
