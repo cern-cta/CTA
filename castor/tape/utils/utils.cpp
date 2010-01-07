@@ -666,7 +666,7 @@ unsigned short castor::tape::utils::getPortFromConfig(
 void castor::tape::utils::parseTpconfig(const char *const filename,
   TpconfigLines &lines) throw (castor::exception::Exception) {
 
-  // The expected number of data columns in a TPCONFIG data-line
+  // The expected number of data-columns in a TPCONFIG data-line
   const unsigned int NBCOLUMNS = 7;
 
   // Open the TPCONFIG file for reading
@@ -676,10 +676,14 @@ void castor::tape::utils::parseTpconfig(const char *const filename,
 
     // Throw an exception if the file could not be opened
     if(file == NULL) {
-      TAPE_THROW_CODE(savedErrno,
+      castor::exception::Exception ex(savedErrno);
+
+      ex.getMessage() <<
         "Failed to open TPCONFIG file"
         ": filename=" << filename <<
-        ": " << sstrerror(savedErrno));
+        ": " << sstrerror(savedErrno);
+
+      throw(ex);
     }
   }
 
@@ -754,9 +758,13 @@ void castor::tape::utils::parseTpconfig(const char *const filename,
 
   // Throw an exception if there was error whilst reading the file
   if(ferror(file)) {
-    TAPE_THROW_CODE(fgetsErrno,
+    castor::exception::Exception ex(fgetsErrno);
+
+    ex.getMessage() <<
       "Failed to read TPCONFIG file"
       ": filename=" << filename <<
-      ": " << sstrerror(fgetsErrno));
+      ": " << sstrerror(fgetsErrno);
+
+    throw(ex);
   }
 }

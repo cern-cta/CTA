@@ -23,7 +23,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/aggregator/SmartFdList.hpp"
+#include "castor/tape/utils/SmartFdList.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <algorithm>
@@ -34,7 +34,7 @@
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-castor::tape::aggregator::SmartFdList::~SmartFdList() {
+castor::tape::utils::SmartFdList::~SmartFdList() {
 
   for(SmartFdList::iterator itor = begin(); itor != end(); itor++) {
     close(*itor);
@@ -45,7 +45,7 @@ castor::tape::aggregator::SmartFdList::~SmartFdList() {
 //-----------------------------------------------------------------------------
 // push_back
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::SmartFdList::push_back(const int &fd)
+void castor::tape::utils::SmartFdList::push_back(const int &fd)
   throw(castor::exception::Exception) {
 
   // Search the list for the file descriptor
@@ -66,7 +66,7 @@ void castor::tape::aggregator::SmartFdList::push_back(const int &fd)
 //-----------------------------------------------------------------------------
 // release
 //-----------------------------------------------------------------------------
-int castor::tape::aggregator::SmartFdList::release(const int fd)
+int castor::tape::utils::SmartFdList::release(const int fd)
   throw(castor::exception::Exception) {
 
   // Search the list for the file descriptor

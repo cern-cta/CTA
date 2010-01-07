@@ -30,7 +30,6 @@
 #include "castor/tape/aggregator/ClientTxRx.hpp"
 #include "castor/tape/aggregator/RtcpJobSubmitter.hpp"
 #include "castor/tape/aggregator/RtcpTxRx.hpp"
-//#include "castor/tape/fsm/Callback.hpp"
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/Ctape_constants.h"
@@ -59,7 +58,7 @@ castor::tape::tapegateway::Volume
   const int                           rtcpdCallbackSockFd,
   const char                          *rtcpdCallbackHost,
   const unsigned short                rtcpdCallbackPort,
-  SmartFd                             &rtcpdInitialSockFd,
+  utils::SmartFd                      &rtcpdInitialSockFd,
   const legacymsg::RtcpJobRqstMsgBody &jobRequest)
   throw(castor::exception::Exception) {
   
@@ -168,106 +167,3 @@ castor::tape::tapegateway::Volume
     m_aggregatorTransactionCounter.next(), jobRequest.clientHost,
     jobRequest.clientPort, jobRequest.driveUnit);
 }
-
-
-//-----------------------------------------------------------------------------
-// testFsm
-//-----------------------------------------------------------------------------
-void castor::tape::aggregator::DriveAllocationProtocolEngine::testFsm() {
-/*
-  std::cout << std::endl;                         
-  std::cout << "=========================================" << std::endl;
-  std::cout << "castor::tape::aggregator::FsmTest::doit()" << std::endl;
-  std::cout << "=========================================" << std::endl;
-  std::cout << std::endl;                                               
-
-
-  //---------------------------------------------
-  // Define and set the state machine transitions
-  //---------------------------------------------
-
-  typedef fsm::Callback<DriveAllocationProtocolEngine> Callback;
-  Callback getReqFromRtcpd(*this,
-    &DriveAllocationProtocolEngine::getReqFromRtcpd);
-  Callback getVolFromTGate(*this,
-    &DriveAllocationProtocolEngine::getVolFromTGate);
-  Callback error(*this, &DriveAllocationProtocolEngine::error);
-
-  fsm::Transition transitions[] = {
-  // from state       , to state        , event , action
-    {"INIT"           , "WAIT_RTCPD_REQ", "INIT", &getReqFromRtcpd},
-    {"WAIT_RTCPD_REQ" , "WAIT_TGATE_VOL", "REQ" , &getVolFromTGate},
-    {"WAIT_TGATE_VOL" , "SUCCEEDED"     , "VOL" , NULL            },
-    {NULL             , NULL            , NULL  , NULL            }};
-
-  m_fsm.setTransitions(transitions);
-
-
-  //------------------------
-  // Set the state hierarchy
-  //------------------------
-
-  fsm::ChildToParentState hierarchy[] = {
-  // child           , parent            
-    {"WAIT_RTCPD_REQ", "RTCPD_CONNECTED"},
-    {"WAIT_TGATE_VOL", "RTCPD_CONNECTED"},
-    {NULL            , NULL             }
-  };
-
-  m_fsm.setStateHierarchy(hierarchy);
-
-
-  //-------------------------------------------
-  // Set the initial state of the state machine
-  //-------------------------------------------
-
-  m_fsm.setState("INIT");
-
-
-  //----------------------------------------------------------
-  // Execute the state machine with debugging print statements
-  //----------------------------------------------------------
-
-  const char *event = "INIT";
-
-  // While no more automatic state transitions
-  while(event != NULL) {
-
-    std::cout << "From state        = " << m_fsm.getState() << std::endl;
-    std::cout << "Dispatching event = " << event            << std::endl;
-
-    event = m_fsm.dispatch(event);
-
-    if(event != NULL) {
-      std::cout << "Internally generated event for an automatic state "
-        "transition" << std::endl;
-    }
-  }
-
-  std::cout << std::endl;
-*/
-}
-
-
-const char *castor::tape::aggregator::DriveAllocationProtocolEngine::
-  getVolFromTGate() {
-  std::cout << "getVolFromTGate()" << std::endl;
-  sleep(1);                                     
-  return "VOL";                                 
-}                                               
-
-
-const char *castor::tape::aggregator::DriveAllocationProtocolEngine::
-  getReqFromRtcpd() {
-  std::cout << "getReqFromRtcpd()" << std::endl;
-  sleep(1);                                     
-  return "REQ";                                 
-}                                               
-
-
-const char *castor::tape::aggregator::DriveAllocationProtocolEngine::
-  error() {
-  std::cout << "error()" << std::endl;
-  sleep(1);                           
-  return NULL;                        
-}                                     

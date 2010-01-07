@@ -29,8 +29,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/io/AbstractTCPSocket.hpp"
 #include "castor/tape/aggregator/Counter.hpp"
-#include "castor/tape/aggregator/SmartFd.hpp"
-//#include "castor/tape/fsm/StateMachine.hpp"
+#include "castor/tape/utils/SmartFd.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "h/Castor_limits.h"
@@ -87,14 +86,9 @@ public:
     const int                           rtcpdCallbackSockFd,
     const char                          *rtcpdCallbackHost,
     const unsigned short                rtcpdCallbackPort,
-    SmartFd                             &rtcpdInitialSockFd,
+    utils::SmartFd                      &rtcpdInitialSockFd,
     const legacymsg::RtcpJobRqstMsgBody &jobRequest)
     throw(castor::exception::Exception);
-
-  /**
-   * Temporary test routine to help determine the FSTN of the state machine.
-   */
-  void testFsm();
 
 
 private:
@@ -105,17 +99,6 @@ private:
    */
   Counter<uint64_t> &m_aggregatorTransactionCounter;
 
-  /**
-   * State machine responsible for controlling the dynamic behaviour of this
-   * protocol engine.
-   */
-  //fsm::StateMachine m_fsm;
-
-  const char *getReqFromRtcpd();
-
-  const char *getVolFromTGate();
-
-  const char *error();
 };
 
 } // namespace aggregator

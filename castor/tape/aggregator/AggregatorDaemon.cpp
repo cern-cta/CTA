@@ -89,6 +89,24 @@ int castor::tape::aggregator::AggregatorDaemon::main(const int argc,
       castor::tape::aggregator::AggregatorDaemon::usage(std::cerr,
         AGGREGATORPROGRAMNAME);
       std::cerr << std::endl;
+
+      return 1;
+    }
+
+    // Parse the TPCONFIG file
+    try {
+      utils::parseTpconfig(TPCONFIGPATH, m_tpconfigLines);
+    } catch (castor::exception::Exception &ex) {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("filename"     , TPCONFIGPATH         ),
+        castor::dlf::Param("errorCode"    , ex.code()            ),
+        castor::dlf::Param("errorrMessage", ex.getMessage().str())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+        AGGREGATOR_FAILED_TO_PARSE_TPCONFIG, params);
+
+      std::cerr << std::endl << "Failed to parse TPCONFIG: "
+        << ex.getMessage().str() << std::endl;
+
       return 1;
     }
 

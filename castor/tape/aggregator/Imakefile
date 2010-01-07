@@ -85,8 +85,6 @@ AGGREGATORBIN_SRCS = \
   Packer.cpp \
   RtcpJobSubmitter.cpp \
   RtcpTxRx.cpp \
-  SmartFd.cpp \
-  SmartFdList.cpp \
   SynchronizedCounter.cpp \
   Unpacker.cpp \
   VdqmRequestHandler.cpp \
@@ -95,6 +93,8 @@ AGGREGATORBIN_SRCS = \
   ../legacymsg/RtcpMarshal.cpp \
   ../legacymsg/VmgrMarshal.cpp \
   ../net/net.cpp \
+  ../utils/SmartFd.cpp \
+  ../utils/SmartFdList.cpp \
   ../utils/utils.cpp \
   $(TAPEGATEWAY_MESSAGES_SRCS) \
   $(TAPEGATEWAY_IO_SRCS)

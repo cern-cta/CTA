@@ -30,11 +30,11 @@
 #include "castor/tape/aggregator/BridgeSocketCatalogue.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/Counter.hpp"
-#include "castor/tape/aggregator/SmartFdList.hpp"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/utils/IndexedContainer.hpp"
+#include "castor/tape/utils/SmartFdList.hpp"
 #include "h/Castor_limits.h"
 #include "h/Cuuid.h"
 

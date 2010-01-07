@@ -35,14 +35,14 @@
 #include "castor/tape/aggregator/ClientTxRx.hpp"
 #include "castor/tape/aggregator/LegacyTxRx.hpp"
 #include "castor/tape/aggregator/RtcpTxRx.hpp"
-#include "castor/tape/aggregator/SmartFd.hpp"
-#include "castor/tape/aggregator/SmartFdList.hpp"
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/FileToMigrate.hpp"
 #include "castor/tape/tapegateway/FileToRecall.hpp"
 #include "castor/tape/tapegateway/NoMoreFiles.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
+#include "castor/tape/utils/SmartFd.hpp"
+#include "castor/tape/utils/SmartFdList.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/Ctape_constants.h"
 #include "h/rtcp_constants.h"
@@ -111,7 +111,7 @@ castor::tape::aggregator::BridgeProtocolEngine::BridgeProtocolEngine(
 int castor::tape::aggregator::BridgeProtocolEngine::acceptRtcpdConnection()
   throw(castor::exception::Exception) {
 
-  SmartFd connectedSock;
+  utils::SmartFd connectedSock;
   const int timeout = 5; // Seconds
 
   bool connectionAccepted = false;
@@ -499,7 +499,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
   time_t connectDuration = 0;
   const uint64_t aggregatorTransactionId =
     m_aggregatorTransactionCounter.next();
-  SmartFd clientSock(ClientTxRx::sendFileToMigrateRequest(
+  utils::SmartFd clientSock(ClientTxRx::sendFileToMigrateRequest(
     m_jobRequest.volReqId, aggregatorTransactionId, m_jobRequest.clientHost,
     m_jobRequest.clientPort, connectDuration));
   {
@@ -948,7 +948,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
       time_t connectDuration = 0;
       const uint64_t aggregatorTransactionId =
         m_aggregatorTransactionCounter.next();
-      SmartFd clientSock(ClientTxRx::sendFileToMigrateRequest(
+      utils::SmartFd clientSock(ClientTxRx::sendFileToMigrateRequest(
         m_jobRequest.volReqId, aggregatorTransactionId,
         m_jobRequest.clientHost, m_jobRequest.clientPort, connectDuration));
       {
@@ -976,7 +976,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
       time_t connectDuration = 0;
       const uint64_t aggregatorTransactionId =
         m_aggregatorTransactionCounter.next();
-      SmartFd clientSock(ClientTxRx::sendFileToRecallRequest(
+      utils::SmartFd clientSock(ClientTxRx::sendFileToRecallRequest(
         m_jobRequest.volReqId, aggregatorTransactionId,
         m_jobRequest.clientHost, m_jobRequest.clientPort, connectDuration));
       {
@@ -1050,7 +1050,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
         time_t connectDuration = 0;
         const uint64_t aggregatorTransactionId =
           m_aggregatorTransactionCounter.next();
-        SmartFd clientSock(ClientTxRx::sendFileMigratedNotification(
+        utils::SmartFd clientSock(ClientTxRx::sendFileMigratedNotification(
           m_jobRequest.volReqId, aggregatorTransactionId,
           m_jobRequest.clientHost, m_jobRequest.clientPort, connectDuration,
           fileTransactonId, body.segAttr.nameServerHostName,
@@ -1095,7 +1095,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
         time_t connectDuration = 0;
         const uint64_t aggregatorTransactionId =
           m_aggregatorTransactionCounter.next();
-        SmartFd clientSock(ClientTxRx::sendFileRecalledNotification(
+        utils::SmartFd clientSock(ClientTxRx::sendFileRecalledNotification(
           m_jobRequest.volReqId, aggregatorTransactionId,
           m_jobRequest.clientHost, m_jobRequest.clientPort, connectDuration,
           fileTransactonId, body.segAttr.nameServerHostName,

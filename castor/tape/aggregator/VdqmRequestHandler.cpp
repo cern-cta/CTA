@@ -35,8 +35,6 @@
 #include "castor/tape/aggregator/RtcpJobSubmitter.hpp"
 #include "castor/tape/aggregator/RtcpTxRx.hpp"
 #include "castor/tape/aggregator/Unpacker.hpp"
-#include "castor/tape/aggregator/SmartFd.hpp"
-#include "castor/tape/aggregator/SmartFdList.hpp"
 #include "castor/tape/aggregator/VdqmRequestHandler.hpp"
 #include "castor/tape/aggregator/VmgrTxRx.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
@@ -44,6 +42,8 @@
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
+#include "castor/tape/utils/SmartFd.hpp"
+#include "castor/tape/utils/SmartFdList.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/common.h"
 #include "h/Ctape_constants.h"
@@ -225,7 +225,7 @@ void castor::tape::aggregator::VdqmRequestHandler::exceptionThrowingRun(
   const unsigned short highPort = utils::getPortFromConfig(
     "AGGREGATORRTCPD", "HIGHPORT", AGGREGATORRTCPD_HIGHPORT);
   unsigned short chosenPort = 0;
-  SmartFd listenSock(net::createListenerSock("127.0.0.1", lowPort,
+  utils::SmartFd listenSock(net::createListenerSock("127.0.0.1", lowPort,
     highPort,  chosenPort));
 
   // Get the IP, host name and port of the callback port
@@ -243,7 +243,7 @@ void castor::tape::aggregator::VdqmRequestHandler::exceptionThrowingRun(
   castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
     AGGREGATOR_CREATED_RTCPD_CALLBACK_PORT, params);
 
-  SmartFd initialRtcpdSock;
+  utils::SmartFd initialRtcpdSock;
   DriveAllocationProtocolEngine
     driveAllocationProtocolEngine(aggregatorTransactionCounter);
   std::auto_ptr<tapegateway::Volume>

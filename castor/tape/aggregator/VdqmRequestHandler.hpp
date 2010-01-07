@@ -29,9 +29,9 @@
 #include "castor/server/IThread.hpp"
 #include "castor/tape/aggregator/BoolFunctor.hpp"
 #include "castor/tape/aggregator/Counter.hpp"
-#include "castor/tape/aggregator/SmartFdList.hpp"
 #include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
+#include "castor/tape/utils/SmartFdList.hpp"
 #include "h/Cuuid.h"
 
 #include <list>

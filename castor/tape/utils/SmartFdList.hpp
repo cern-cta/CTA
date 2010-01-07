@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/SmartFdList.hpp
+ *                      castor/tape/utils/SmartFdList.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,17 +22,17 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_SMARTFDLIST
-#define CASTOR_TAPE_AGGREGATOR_SMARTFDLIST
+#ifndef CASTOR_TAPE_UTILS_SMARTFDLIST
+#define CASTOR_TAPE_UTILS_SMARTFDLIST
 
 #include "castor/exception/Exception.hpp"
 
 #include <list>
 
 
-namespace castor     {
-namespace tape       {
-namespace aggregator {
+namespace castor {
+namespace tape   {
+namespace utils  {
 
   /**
    * A smart file descriptor list that owns a list of basic file descriptors.
@@ -68,8 +68,8 @@ namespace aggregator {
     int release(const int fd) throw(castor::exception::Exception);
   };
 
-} // namespace aggregator
+} // namespace utils
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_SMARTFDLIST
+#endif // CASTOR_TAPE_UTILS_SMARTFDLIST

@@ -23,7 +23,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/aggregator/SmartFd.hpp"
+#include "castor/tape/utils/SmartFd.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <errno.h>
@@ -33,7 +33,7 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::aggregator::SmartFd::SmartFd() :
+castor::tape::utils::SmartFd::SmartFd() :
   m_fd(-1) {
 }
 
@@ -41,7 +41,7 @@ castor::tape::aggregator::SmartFd::SmartFd() :
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::aggregator::SmartFd::SmartFd(const int fd) :
+castor::tape::utils::SmartFd::SmartFd(const int fd) :
   m_fd(fd) {
 }
 
@@ -49,7 +49,7 @@ castor::tape::aggregator::SmartFd::SmartFd(const int fd) :
 //-----------------------------------------------------------------------------
 // reset
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::SmartFd::reset(const int fd = -1) throw() {
+void castor::tape::utils::SmartFd::reset(const int fd = -1) throw() {
   // If the new file descriptor is not the one already owned
   if(fd != m_fd) {
 
@@ -67,8 +67,8 @@ void castor::tape::aggregator::SmartFd::reset(const int fd = -1) throw() {
 //-----------------------------------------------------------------------------
 // SmartFd assignment operator
 //-----------------------------------------------------------------------------
-castor::tape::aggregator::SmartFd
-  &castor::tape::aggregator::SmartFd::operator=(SmartFd& obj) throw() {
+castor::tape::utils::SmartFd
+  &castor::tape::utils::SmartFd::operator=(SmartFd& obj) throw() {
   
   reset(obj.release());
 
@@ -79,7 +79,7 @@ castor::tape::aggregator::SmartFd
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-castor::tape::aggregator::SmartFd::~SmartFd() {
+castor::tape::utils::SmartFd::~SmartFd() {
 
   reset();
 }
@@ -88,7 +88,7 @@ castor::tape::aggregator::SmartFd::~SmartFd() {
 //-----------------------------------------------------------------------------
 // get
 //-----------------------------------------------------------------------------
-int castor::tape::aggregator::SmartFd::get()
+int castor::tape::utils::SmartFd::get()
   throw(castor::exception::Exception) {
 
   // If this SmartFd does not own a file descriptor
@@ -104,7 +104,7 @@ int castor::tape::aggregator::SmartFd::get()
 //-----------------------------------------------------------------------------
 // release
 //-----------------------------------------------------------------------------
-int castor::tape::aggregator::SmartFd::release()
+int castor::tape::utils::SmartFd::release()
   throw(castor::exception::Exception) {
 
   // If this SmartFd does not own a file descriptor

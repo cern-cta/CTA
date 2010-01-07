@@ -29,12 +29,13 @@
 #include "castor/exception/InvalidConfigEntry.hpp"
 #include "castor/server/BaseDaemon.hpp"
 #include "castor/server/BaseThreadPool.hpp"
+#include "castor/tape/utils/utils.hpp"
 
 #include <iostream>
 
 
-namespace castor {
-namespace tape {
+namespace castor     {
+namespace tape       {
 namespace aggregator {
 
 /**
@@ -120,6 +121,11 @@ private:
    * DLF message strings.
    */
   static castor::dlf::Message s_dlfMessages[];
+
+  /**
+   * The data-lines parsed from the TPCONFIG file
+   */
+  utils::TpconfigLines m_tpconfigLines;
 
 }; // class AggregatorDaemon
 
