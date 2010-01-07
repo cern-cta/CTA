@@ -169,11 +169,10 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
         aggregatorTransactionCounter.next();
       try {
         castor::dlf::Param params[] = {
-          castor::dlf::Param("mountTransactionId", jobRequest.volReqId  ),
-          castor::dlf::Param("aggregatorTransactionId",
-            aggregatorTransactionId),
-          castor::dlf::Param("Message"           , ex.getMessage().str()),
-          castor::dlf::Param("Code"              , ex.code()            )};
+          castor::dlf::Param("mountTransactionId", jobRequest.volReqId    ),
+          castor::dlf::Param("aggregatorTransId" , aggregatorTransactionId),
+          castor::dlf::Param("Message"           , ex.getMessage().str()  ),
+          castor::dlf::Param("Code"              , ex.code()              )};
         castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
           AGGREGATOR_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
 
@@ -183,11 +182,10 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
       } catch(castor::exception::Exception &ex2) {
         // Don't rethrow, just log the exception
         castor::dlf::Param params[] = {
-          castor::dlf::Param("mountTransactionId", jobRequest.volReqId   ),
-          castor::dlf::Param("aggregatorTransactionId",
-            aggregatorTransactionId),
-          castor::dlf::Param("Message"           , ex2.getMessage().str()),
-          castor::dlf::Param("Code"              , ex2.code()            )};
+          castor::dlf::Param("mountTransactionId", jobRequest.volReqId    ),
+          castor::dlf::Param("aggregatorTransId" , aggregatorTransactionId),
+          castor::dlf::Param("Message"           , ex2.getMessage().str() ),
+          castor::dlf::Param("Code"              , ex2.code()             )};
         castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
           AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
       }

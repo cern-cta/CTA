@@ -504,12 +504,12 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
     m_jobRequest.clientPort, connectDuration));
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId"     , m_jobRequest.volReqId    ),
-      castor::dlf::Param("aggregatorTransactionId", aggregatorTransactionId),
-      castor::dlf::Param("clientSock"             , clientSock.get()         ),
-      castor::dlf::Param("clientHost"             , m_jobRequest.clientHost  ),
-      castor::dlf::Param("clientPort"             , m_jobRequest.clientPort  ),
-      castor::dlf::Param("connectDuration"        , connectDuration          )};
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("aggregatorTransId" , aggregatorTransactionId),
+      castor::dlf::Param("clientSock"        , clientSock.get()       ),
+      castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+      castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+      castor::dlf::Param("connectDuration"   , connectDuration        )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_SENT_FILETOMIGRATEREQUEST, params);
   }
@@ -524,7 +524,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
     castor::dlf::Param params[] = {
       castor::dlf::Param("mountTransactionId",
         fileFromClient->mountTransactionId()),
-      castor::dlf::Param("aggregatorTransactionId", 
+      castor::dlf::Param("aggregatorTransId", 
         fileFromClient->aggregatorTransactionId()),
       castor::dlf::Param("clientSock", closedClientSock       ),
       castor::dlf::Param("clientHost", m_jobRequest.clientHost),
@@ -557,10 +557,10 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
     } catch(castor::exception::Exception &ex) {
       // Don't rethrow, just log the exception
       castor::dlf::Param params[] = {
-        castor::dlf::Param("mountTransactionId"     , m_jobRequest.volReqId  ),
-        castor::dlf::Param("aggregatorTransactionId", aggregatorTransactionId),
-        castor::dlf::Param("Message"                , ex.getMessage().str()  ),
-        castor::dlf::Param("Code"                   , ex.code()              )};
+        castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+        castor::dlf::Param("aggregatorTransId" , aggregatorTransactionId),
+        castor::dlf::Param("Message"           , ex.getMessage().str()  ),
+        castor::dlf::Param("Code"              , ex.code()              )};
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
         AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
     }
@@ -721,11 +721,10 @@ void castor::tape::aggregator::BridgeProtocolEngine::runRecallSession()
       } catch(castor::exception::Exception &ex) {
         // Don't rethrow, just log the exception
         castor::dlf::Param params[] = {
-          castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId),
-          castor::dlf::Param("aggregatorTransactionId",
-            aggregatorTransactionId),
-          castor::dlf::Param("Message"           , ex.getMessage().str()),
-          castor::dlf::Param("Code"              , ex.code()            )};
+          castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+          castor::dlf::Param("aggregatorTransId" , aggregatorTransactionId),
+          castor::dlf::Param("Message"           , ex.getMessage().str()  ),
+          castor::dlf::Param("Code"              , ex.code()              )};
         castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
           AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
       }
@@ -804,11 +803,10 @@ void castor::tape::aggregator::BridgeProtocolEngine::runDumpSession()
       } catch(castor::exception::Exception &ex) {
         // Don't rethrow, just log the exception
         castor::dlf::Param params[] = {
-          castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId),
-          castor::dlf::Param("aggregatorTransactionId",
-            aggregatorTransactionId),
-          castor::dlf::Param("Message"           , ex.getMessage().str()),
-          castor::dlf::Param("Code"              , ex.code()            )};
+          castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+          castor::dlf::Param("aggregatorTransId" , aggregatorTransactionId),
+          castor::dlf::Param("Message"           , ex.getMessage().str()  ),
+          castor::dlf::Param("Code"              , ex.code()              )};
         castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
           AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
       }
@@ -954,8 +952,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
       {
         castor::dlf::Param params[] = {
           castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
-          castor::dlf::Param("aggregatorTransactionId",
-            aggregatorTransactionId),
+          castor::dlf::Param("aggregatorTransId" , aggregatorTransactionId),
           castor::dlf::Param("clientSock"        , clientSock.get()       ),
           castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
           castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
@@ -982,8 +979,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
       {
         castor::dlf::Param params[] = {
           castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
-          castor::dlf::Param("aggregatorTransactionId",
-            aggregatorTransactionId),
+          castor::dlf::Param("aggregatorTransId" , aggregatorTransactionId),
           castor::dlf::Param("clientSock"        , clientSock.get()       ),
           castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
           castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
@@ -1060,8 +1056,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
         {
           castor::dlf::Param params[] = {
             castor::dlf::Param("mountTransActionId", m_jobRequest.volReqId  ),
-            castor::dlf::Param("aggregatorTransactionId",
-              aggregatorTransactionId),
+            castor::dlf::Param("aggregatorTransId" , aggregatorTransactionId),
             castor::dlf::Param("clientSock"        , clientSock.get()       ),
             castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
             castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
@@ -1077,8 +1072,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
         {
           castor::dlf::Param params[] = {
             castor::dlf::Param("mountTransActionId", m_jobRequest.volReqId  ),
-            castor::dlf::Param("aggregatorTransactionId",
-              aggregatorTransactionId),
+            castor::dlf::Param("aggregatorTransId" , aggregatorTransactionId),
             castor::dlf::Param("clientSock"        , closedClientSock       ),
             castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
             castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
@@ -1105,8 +1099,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
         {
           castor::dlf::Param params[] = {
             castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
-            castor::dlf::Param("aggregatorTransactionId",
-              aggregatorTransactionId),
+            castor::dlf::Param("aggregatorTransId" , aggregatorTransactionId),
             castor::dlf::Param("clientSock"        , clientSock.get()       ),
             castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
             castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
@@ -1122,8 +1115,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
         {
           castor::dlf::Param params[] = {
             castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
-            castor::dlf::Param("aggregatorTransactionId",
-              aggregatorTransactionId),
+            castor::dlf::Param("aggregatorTransId" , aggregatorTransactionId),
             castor::dlf::Param("clientSock"        , closedClientSock       ),
             castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
             castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
@@ -1301,14 +1293,13 @@ void
   }
 
   castor::dlf::Param params[] = {
-    castor::dlf::Param("mountTransactionId"     , reply->mountTransactionId()),
-    castor::dlf::Param("aggregatorTransactionId",
-      reply->aggregatorTransactionId()),
-    castor::dlf::Param("clientSock"             , clientSock                 ),
-    castor::dlf::Param("clientHost"             , m_jobRequest.clientHost    ),
-    castor::dlf::Param("clientPort"             , m_jobRequest.clientPort    ),
-    castor::dlf::Param("fileTransactionId"      , reply->fileTransactionId() ),
-    castor::dlf::Param("path"                   , reply->path()              )};
+    castor::dlf::Param("mountTransactionId", reply->mountTransactionId()     ),
+    castor::dlf::Param("aggregatorTransId" , reply->aggregatorTransactionId()),
+    castor::dlf::Param("clientSock"        , clientSock                      ),
+    castor::dlf::Param("clientHost"        , m_jobRequest.clientHost         ),
+    castor::dlf::Param("clientPort"        , m_jobRequest.clientPort         ),
+    castor::dlf::Param("fileTransactionId" , reply->fileTransactionId()      ),
+    castor::dlf::Param("path"              , reply->path()                   )};
   castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
     AGGREGATOR_RECEIVED_FILETOMIGRATE, params);
 
@@ -1433,14 +1424,13 @@ void
   }
 
   castor::dlf::Param params[] = {
-    castor::dlf::Param("mountTransactionId"     , reply->mountTransactionId()),
-    castor::dlf::Param("aggregatorTransactionId",
-      reply->aggregatorTransactionId()),
-    castor::dlf::Param("clientSock"             , clientSock                 ),
-    castor::dlf::Param("clientHost"             , m_jobRequest.clientHost    ),
-    castor::dlf::Param("clientPort"             , m_jobRequest.clientPort    ),
-    castor::dlf::Param("fileTransactionId"      , reply->fileTransactionId() ),
-    castor::dlf::Param("path"                   , reply->path()              )};
+    castor::dlf::Param("mountTransactionId", reply->mountTransactionId()     ),
+    castor::dlf::Param("aggregatorTransd"  , reply->aggregatorTransactionId()),
+    castor::dlf::Param("clientSock"        , clientSock                      ),
+    castor::dlf::Param("clientHost"        , m_jobRequest.clientHost         ),
+    castor::dlf::Param("clientPort"        , m_jobRequest.clientPort         ),
+    castor::dlf::Param("fileTransactionId" , reply->fileTransactionId()      ),
+    castor::dlf::Param("path"              , reply->path()                   )};
   castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
     AGGREGATOR_RECEIVED_FILETORECALL, params);
 
@@ -1559,12 +1549,11 @@ void
   }
 
   castor::dlf::Param params[] = {
-    castor::dlf::Param("mountTransactionId"     , reply->mountTransactionId()),
-    castor::dlf::Param("aggregatorTransactionId",
-      reply->aggregatorTransactionId()),
-    castor::dlf::Param("clientSock"             , clientSock                 ),
-    castor::dlf::Param("clientHost"             , m_jobRequest.clientHost    ),
-    castor::dlf::Param("clientPort"             , m_jobRequest.clientPort    )};
+    castor::dlf::Param("mountTransactionId", reply->mountTransactionId()     ),
+    castor::dlf::Param("aggregatorTransId" , reply->aggregatorTransactionId()),
+    castor::dlf::Param("clientSock"        , clientSock                      ),
+    castor::dlf::Param("clientHost"        , m_jobRequest.clientHost         ),
+    castor::dlf::Param("clientPort"        , m_jobRequest.clientPort         )};
   castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
     AGGREGATOR_RECEIVED_NOMOREFILES, params);
 
@@ -1621,14 +1610,13 @@ void
   }
 
   castor::dlf::Param params[] = {
-    castor::dlf::Param("mountTransactionId"     , reply->mountTransactionId()),
-    castor::dlf::Param("aggregatorTransactionId",
-      reply->aggregatorTransactionId()),
-    castor::dlf::Param("clientSock"             , clientSock                 ),
-    castor::dlf::Param("clientHost"             , m_jobRequest.clientHost    ),
-    castor::dlf::Param("clientPort"             , m_jobRequest.clientPort    ),
-    castor::dlf::Param("errorCode"              , reply->errorCode()         ),
-    castor::dlf::Param("errorMessage"           , reply->errorMessage()      )};
+    castor::dlf::Param("mountTransactionId", reply->mountTransactionId()     ),
+    castor::dlf::Param("aggregatorTransId" , reply->aggregatorTransactionId()),
+    castor::dlf::Param("clientSock"        , clientSock                      ),
+    castor::dlf::Param("clientHost"        , m_jobRequest.clientHost         ),
+    castor::dlf::Param("clientPort"        , m_jobRequest.clientPort         ),
+    castor::dlf::Param("errorCode"         , reply->errorCode()              ),
+    castor::dlf::Param("errorMessage"      , reply->errorMessage()           )};
   castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
     AGGREGATOR_RECEIVED_ENDNOTIFCATIONERRORREPORT, params);
 
@@ -1665,12 +1653,11 @@ void
   }
 
   castor::dlf::Param params[] = {
-    castor::dlf::Param("mountTransactionId"     , reply->mountTransactionId()),
-    castor::dlf::Param("aggregatorTransactionId",
-      reply->aggregatorTransactionId()),
-    castor::dlf::Param("clientSock"             , clientSock                 ),
-    castor::dlf::Param("clientHost"             , m_jobRequest.clientHost    ),
-    castor::dlf::Param("clientPort"             , m_jobRequest.clientPort    )};
+    castor::dlf::Param("mountTransactionId", reply->mountTransactionId()     ),
+    castor::dlf::Param("aggregatorTransId" , reply->aggregatorTransactionId()),
+    castor::dlf::Param("clientSock"        , clientSock                      ),
+    castor::dlf::Param("clientHost"        , m_jobRequest.clientHost         ),
+    castor::dlf::Param("clientPort"        , m_jobRequest.clientPort         )};
   castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
     AGGREGATOR_RECEIVED_NOTIFCATIONACKNOWLEDGE, params);
 

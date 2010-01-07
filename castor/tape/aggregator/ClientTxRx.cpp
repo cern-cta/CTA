@@ -66,11 +66,11 @@ castor::tape::tapegateway::Volume
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId"     , mountTransactionId     ),
-      castor::dlf::Param("aggregatorTransactionId", aggregatorTransactionId),
-      castor::dlf::Param("clientHost"             , clientHost             ),
-      castor::dlf::Param("clientPort"             , clientPort             ),
-      castor::dlf::Param("unit"                   , unit                   )};
+      castor::dlf::Param("mountTransactionId", mountTransactionId     ),
+      castor::dlf::Param("aggregatorTransId" , aggregatorTransactionId),
+      castor::dlf::Param("clientHost"        , clientHost             ),
+      castor::dlf::Param("clientPort"        , clientPort             ),
+      castor::dlf::Param("unit"              , unit                   )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_GET_VOLUME_FROM_CLIENT, params);
   }
@@ -125,11 +125,11 @@ castor::tape::tapegateway::Volume
       }
 
       castor::dlf::Param params[] = {
-        castor::dlf::Param("mountTransactionId"     , mountTransactionId     ),
-        castor::dlf::Param("aggregatorTransactionId", aggregatorTransactionId),
-        castor::dlf::Param("clientHost"             , clientHost             ),
-        castor::dlf::Param("clientPort"             , clientPort             ),
-        castor::dlf::Param("unit"                   , unit                   )};
+        castor::dlf::Param("mountTransactionId", mountTransactionId     ),
+        castor::dlf::Param("aggregatorTransId" , aggregatorTransactionId),
+        castor::dlf::Param("clientHost"        , clientHost             ),
+        castor::dlf::Param("clientPort"        , clientPort             ),
+        castor::dlf::Param("unit"              , unit                   )};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
         AGGREGATOR_GOT_NO_MORE_FILES_FROM_CLIENT, params);
 
@@ -482,10 +482,10 @@ void castor::tape::aggregator::ClientTxRx::notifyEndOfSession(
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId"     , mountTransactionId     ),
-      castor::dlf::Param("aggregatorTransactionId", aggregatorTransactionId),
-      castor::dlf::Param("clientHost"             , clientHost             ),
-      castor::dlf::Param("clientPort"             , clientPort             )};
+      castor::dlf::Param("mountTransactionId", mountTransactionId     ),
+      castor::dlf::Param("aggregatorTransId" , aggregatorTransactionId),
+      castor::dlf::Param("clientHost"        , clientHost             ),
+      castor::dlf::Param("clientPort"        , clientPort             )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_NOTIFY_CLIENT_END_OF_SESSION, params);
   }
@@ -501,10 +501,10 @@ void castor::tape::aggregator::ClientTxRx::notifyEndOfSession(
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId"     , mountTransactionId     ),
-      castor::dlf::Param("aggregatorTransactionId", aggregatorTransactionId),
-      castor::dlf::Param("clientHost"             , clientHost             ),
-      castor::dlf::Param("clientPort"             , clientPort             )};
+      castor::dlf::Param("mountTransactionId", mountTransactionId     ),
+      castor::dlf::Param("aggregatorTransId" , aggregatorTransactionId),
+      castor::dlf::Param("clientHost"        , clientHost             ),
+      castor::dlf::Param("clientPort"        , clientPort             )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_NOTIFIED_CLIENT_END_OF_SESSION, params);
   }
@@ -525,10 +525,10 @@ castor::tape::tapegateway::DumpParameters
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId"     , mountTransactionId     ),
-      castor::dlf::Param("aggregatorTransactionId", aggregatorTransactionId),
-      castor::dlf::Param("clientHost"             , clientHost             ),
-      castor::dlf::Param("clientPort"             , clientPort             )};
+      castor::dlf::Param("mountTransactionId", mountTransactionId     ),
+      castor::dlf::Param("aggregatorTransId" , aggregatorTransactionId),
+      castor::dlf::Param("clientHost"        , clientHost             ),
+      castor::dlf::Param("clientPort"        , clientPort             )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_GET_DUMP_PARAMETERS_FROM_CLIENT, params);
   }
@@ -601,11 +601,11 @@ void castor::tape::aggregator::ClientTxRx::notifyDumpMessage(
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId"     , mountTransactionId     ),
-      castor::dlf::Param("aggregatorTransactionId", aggregatorTransactionId),
-      castor::dlf::Param("clientHost"             , clientHost             ),
-      castor::dlf::Param("clientPort"             , clientPort             ),
-      castor::dlf::Param("message"                , message                )};
+      castor::dlf::Param("mountTransactionId", mountTransactionId     ),
+      castor::dlf::Param("aggregatorTransId" , aggregatorTransactionId),
+      castor::dlf::Param("clientHost"        , clientHost             ),
+      castor::dlf::Param("clientPort"        , clientPort             ),
+      castor::dlf::Param("message"           , message                )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_NOTIFY_CLIENT_DUMP_MESSAGE, params);
   }
@@ -622,11 +622,11 @@ void castor::tape::aggregator::ClientTxRx::notifyDumpMessage(
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId"     , mountTransactionId     ),
-      castor::dlf::Param("aggregatorTransactionId", aggregatorTransactionId),
-      castor::dlf::Param("clientHost"             , clientHost             ),
-      castor::dlf::Param("clientPort"             , clientPort             ),
-      castor::dlf::Param("message"                , message                )};
+      castor::dlf::Param("mountTransactionId", mountTransactionId     ),
+      castor::dlf::Param("aggregatorTransId" , aggregatorTransactionId),
+      castor::dlf::Param("clientHost"        , clientHost             ),
+      castor::dlf::Param("clientPort"        , clientPort             ),
+      castor::dlf::Param("message"           , message                )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_NOTIFIED_CLIENT_DUMP_MESSAGE, params);
   }
@@ -647,10 +647,10 @@ void castor::tape::aggregator::ClientTxRx::notifyEndOfFailedSession(
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId"     , mountTransactionId     ),
-      castor::dlf::Param("aggregatorTransactionId", aggregatorTransactionId),
-      castor::dlf::Param("clientHost"             , clientHost             ),
-      castor::dlf::Param("clientPort"             , clientPort             )};
+      castor::dlf::Param("mountTransactionId", mountTransactionId     ),
+      castor::dlf::Param("aggregatorTransId" , aggregatorTransactionId),
+      castor::dlf::Param("clientHost"        , clientHost             ),
+      castor::dlf::Param("clientPort"        , clientPort             )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
   }
@@ -668,12 +668,12 @@ void castor::tape::aggregator::ClientTxRx::notifyEndOfFailedSession(
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId"     , mountTransactionId     ),
-      castor::dlf::Param("aggregatorTransactionId", aggregatorTransactionId),
-      castor::dlf::Param("clientHost"             , clientHost             ),
-      castor::dlf::Param("clientPort"             , clientPort             ),
-      castor::dlf::Param("errorCode"              , ex.code()              ),
-      castor::dlf::Param("errorrMessage"          , ex.getMessage().str()  )};
+      castor::dlf::Param("mountTransactionId", mountTransactionId     ),
+      castor::dlf::Param("aggregatorTransd"  , aggregatorTransactionId),
+      castor::dlf::Param("clientHost"        , clientHost             ),
+      castor::dlf::Param("clientPort"        , clientPort             ),
+      castor::dlf::Param("errorCode"         , ex.code()              ),
+      castor::dlf::Param("errorrMessage"     , ex.getMessage().str()  )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       AGGREGATOR_NOTIFIED_CLIENT_END_OF_FAILED_SESSION, params);
   }
@@ -692,10 +692,10 @@ void castor::tape::aggregator::ClientTxRx::ping(const Cuuid_t &cuuid,
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId"     , mountTransactionId     ),
-      castor::dlf::Param("aggregatorTransactionId", aggregatorTransactionId),
-      castor::dlf::Param("clientHost"             , clientHost             ),
-      castor::dlf::Param("clientPort"             , clientPort             )};
+      castor::dlf::Param("mountTransactionId", mountTransactionId     ),
+      castor::dlf::Param("aggregatorTransId" , aggregatorTransactionId),
+      castor::dlf::Param("clientHost"        , clientHost             ),
+      castor::dlf::Param("clientPort"        , clientPort             )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_PING_CLIENT, params);
   }
@@ -711,10 +711,10 @@ void castor::tape::aggregator::ClientTxRx::ping(const Cuuid_t &cuuid,
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId"     , mountTransactionId     ),
-      castor::dlf::Param("aggregatorTransactionId", aggregatorTransactionId),
-      castor::dlf::Param("clientHost"             , clientHost             ),
-      castor::dlf::Param("clientPort"             , clientPort             )};
+      castor::dlf::Param("mountTransactionId", mountTransactionId     ),
+      castor::dlf::Param("aggregatorTransId" , aggregatorTransactionId),
+      castor::dlf::Param("clientHost"        , clientHost             ),
+      castor::dlf::Param("clientPort"        , clientPort             )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
       AGGREGATOR_PINGED_CLIENT, params);
   }
