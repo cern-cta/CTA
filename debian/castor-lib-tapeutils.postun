@@ -1,0 +1,2 @@
+# call to ldconfig after we uninstalled libraries
+/sbin/ldconfig

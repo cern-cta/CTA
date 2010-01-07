@@ -265,6 +265,12 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib
 Description: castor (Cern Advanced STORage system)
  Shared libraries for monitoring framework
 
+Package: castor-lib-tapeutils
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib
+Description: castor (Cern Advanced STORage system)
+ Shared utilities library for castor tape servers and command-line tools
+
 Package: castor-gridftp-dsi-common
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
@@ -316,13 +322,13 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-aggregator-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-oracle
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-oracle, castor-lib-tapeutils
 Description: castor (Cern Advanced STORage system)
  Tape Aggregator Daemon
 
 Package: castor-aggregator-client
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-tapeutils
 Description: castor (Cern Advanced STORage system)
  Tape Aggregator Clients
 
@@ -334,7 +340,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-tapegateway-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-policy, castor-lib-oracle
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-policy, castor-lib-oracle, castor-lib-tapeutils
 Description: castor (Cern Advanced STORage system)
  Tape Gateway Daemon
 
