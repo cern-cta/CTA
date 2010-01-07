@@ -21,7 +21,7 @@
  *
  *
  *
- * @author Giuseppe Lo Presti
+ * @author castor-dev team
  *****************************************************************************/
 
 // Include Files
@@ -32,8 +32,10 @@
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::metrics::InternalCounter::InternalCounter(castor::server::BaseThreadPool& tp,
-  std::string unit, castor::server::BaseThreadPool::MetricGetter metricGetter) :
+castor::metrics::InternalCounter::InternalCounter(
+  castor::server::BaseThreadPool& tp,
+  std::string unit,
+  castor::server::BaseThreadPool::MetricGetter metricGetter) :
   Counter(tp.getName(), unit), m_threadPool(tp), m_metricGetter(metricGetter)
 {}
 

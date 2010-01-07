@@ -21,7 +21,7 @@
  *
  *
  *
- * @author Giuseppe Lo Presti
+ * @author castor-dev team
  *****************************************************************************/
 
 #ifndef CASTOR_METRICS_HISTOGRAM_HPP
@@ -36,7 +36,7 @@
 #include "castor/metrics/Counter.hpp"
 
 namespace castor {
-
+  
   namespace metrics {
 
     typedef std::map<std::string, Counter*>::iterator CountersIter; 
@@ -51,7 +51,7 @@ namespace castor {
       /**
        * Default constructor
        * @param name Name of this histogram
-       * @param instantiator a function pointer to add counters
+       * @param instantiator A function pointer to add counters
        * to this histogram when no match was found. The type is defined as:
        * typedef Counter* (*CounterInstantiator)(castor::IObject* obj);
        */
@@ -61,17 +61,13 @@ namespace castor {
       virtual ~Histogram();
       
       /**
-       * Add a new counter to this histogram
-       * @throw exception in case of mutex errors
-       */
-      void addCounter(castor::metrics::Counter* c)
-        throw (castor::exception::Exception);
-  
-      /**
        * This method is called whenever no counters
-       * matched the value passed as argument for this histogram.
-       * The default implementation adds a new counter for this value by
-       * calling the instantiator passed to the constructor
+       * matched the passed value for this histogram.
+       * The default implementation checks that there's indeed no
+       * matching counter in a thread-safe way and eventually
+       * adds a new counter for this value by calling
+       * the internal instantiator.
+       * @param obj The value that should be counted 
        * @throw exception in case of mutex errors
        */
       virtual void notifyNewValue(castor::IObject* obj)
@@ -79,7 +75,7 @@ namespace castor {
       
       /**
        * Returns an XML representation of this histogram
-       * @param counterName the counter to be included, '*' for all
+       * @param counterName The counter to be included, '*' for all
        * @throw castor::exception::Exception(ENOENT) when counter not found
        */      
       std::string printXml(std::string counterName)
@@ -108,7 +104,21 @@ namespace castor {
         return 0;
       }
       
+      /**
+       * Add a new counter to this histogram. This method
+       * is not protected by the mutex and it is deprecated
+       * to use it from any user application code: users should
+       * rely on the notifyNewValue method.
+       * @param c The Counter to be added to this histogram
+       */
+      void addCounter(castor::metrics::Counter* c) {
+        if(c) {
+          m_counters[c->getName()] = c;
+        }
+      }        
+  
     protected:
+
       /// Name of this histogram
       std::string m_name;
       

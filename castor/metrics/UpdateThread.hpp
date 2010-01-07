@@ -19,9 +19,10 @@
  *
  * @(#)$RCSfile: UpdateThread.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/06/03 15:54:42 $ $Author: waldron $
  *
+ * A thread used by the MetricsCollector container/thread pool 
+ * to update all collected metric values.
  *
- *
- * @author Giuseppe Lo Presti
+ * @author castor-dev team
  *****************************************************************************/
 
 #ifndef CASTOR_METRICS_UPDATETHREAD_HPP
@@ -38,8 +39,7 @@ namespace castor {
     const int DEFAULT_SAMPLING_INTERVAL = 30;
     
     /**
-     * A thread used by the MetricsCollector container/threadpool 
-     * to update all collected metric values.
+     * The metrics updater thread
      */
     class UpdateThread : public castor::server::IThread {
   

@@ -21,7 +21,7 @@
  *
  *
  *
- * @author Giuseppe Lo Presti
+ * @author castor-dev team
  *****************************************************************************/
 
 #ifndef CASTOR_METRICS_METRICSCOLLECTOR_HPP
@@ -61,7 +61,9 @@ namespace castor {
         throw (castor::exception::Exception);
   
       /// Add a new histogram to the system
-      void addHistogram(castor::metrics::Histogram* h);
+      void addHistogram(castor::metrics::Histogram* h) {
+         m_histograms[h->getName()] = h;
+      }
       
       /**
        * Prints an XML representation of the requested histogram/counter
@@ -121,6 +123,9 @@ namespace castor {
       
       /// Startup time of the daemon
       time_t m_startupTime;
+      
+      /// Role of this daemon, for multi-role daemons (e.g. RH)
+      std::string m_role;
     };
 
   } // end of namespace metrics

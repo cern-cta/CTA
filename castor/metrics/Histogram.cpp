@@ -21,7 +21,7 @@
  *
  *
  *
- * @author Giuseppe Lo Presti
+ * @author castor-dev team
  *****************************************************************************/
 
 // Include Files
@@ -48,45 +48,39 @@ castor::metrics::Histogram::~Histogram()
 }
 
 //------------------------------------------------------------------------------
-// addCounter
-//------------------------------------------------------------------------------
-void castor::metrics::Histogram::addCounter(castor::metrics::Counter* c)
-  throw (castor::exception::Exception)
-{
-  // Take a lock so that the same counter can't be added twice
-  try {
-    m_mutex.lock();
-    if(m_counters.find(c->getName()) != cEnd()) {
-      // another counter already exists with this name, merge the two;
-      // note that this may happen due to a race condition between multiple
-      // threads all trying to add the same counter
-      m_counters[c->getName()]->inc(c->getValue());
-      // delete the argument as otherwise we leak memory; warning:
-      // due to this the caller can't safely use the argument after this call!
-      delete c;
-    }
-    else
-      m_counters[c->getName()] = c;
-    m_mutex.release();
-  }
-  catch (castor::exception::Exception& e) {
-    // An exception here is most likely a problem with mutexes. Try to release
-    // our mutex before rethrowing
-    try {
-      m_mutex.release();
-    } catch (castor::exception::Exception ignore) {}
-    throw e;
-  }
-}
-
-//------------------------------------------------------------------------------
 // notifyNewValue
 //------------------------------------------------------------------------------
 void castor::metrics::Histogram::notifyNewValue(castor::IObject* obj)
   throw (castor::exception::Exception)
 {
   if(m_instantiator != 0) {
-    addCounter((*m_instantiator)(obj));
+    try {
+      // Take a lock so that the same counter can't be added twice
+      m_mutex.lock();
+      CountersIter ci;
+      for(ci = cBegin(); ci != cEnd(); ci++) {
+        if(int i = ci->second->match(obj)) {
+          // another counter already exists with this name, merge the two;
+          // note that this may happen due to a race condition between multiple
+          // threads all trying to add the same counter
+          ci->second->inc(i);
+          break;
+        }
+      }
+      if(ci == cEnd()) {
+        // the counter does not exist indeed, instantiate it and add to the map
+        addCounter((*m_instantiator)(obj));
+      }
+      m_mutex.release();
+    }
+    catch (castor::exception::Exception& e) {
+      // An exception here is most likely a problem with mutexes. Try to release
+      // our mutex before rethrowing
+      try {
+        m_mutex.release();
+      } catch (castor::exception::Exception ignored) {}
+      throw e;
+    }
   }
 }
 

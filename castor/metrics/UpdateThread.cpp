@@ -19,9 +19,10 @@
  *
  * @(#)BaseClient.cpp,v 1.37 $Release$ 2006/02/16 15:56:58 sponcec3
  *
+ * A thread used by the MetricsCollector container/thread pool 
+ * to update all collected metric values.
  *
- *
- * @author Giuseppe Lo Presti
+ * @author castor-dev team
  *****************************************************************************/
 
 // Local includes
@@ -37,8 +38,7 @@ castor::metrics::UpdateThread::UpdateThread()
   m_sampling = DEFAULT_SAMPLING_INTERVAL;
   char* sampling = getconfent("Metrics", "SamplingInterval", 0);
   if(sampling) {
-    m_sampling = atol(sampling);
-    delete sampling;
+    m_sampling = atoi(sampling);
   }
   if(m_sampling < 10) {
     m_sampling = 10;   // this is the minimum allowed
@@ -50,7 +50,8 @@ castor::metrics::UpdateThread::UpdateThread()
 //------------------------------------------------------------------------------
 void castor::metrics::UpdateThread::init()
 {
-  m_t0 = time(0);
+  // make sure the first run dumps the data
+  m_t0 = time(0) - m_sampling - 1;
 }
 
 //------------------------------------------------------------------------------

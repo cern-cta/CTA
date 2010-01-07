@@ -21,7 +21,7 @@
  *
  *
  *
- * @author Giuseppe Lo Presti
+ * @author castor-dev team
  *****************************************************************************/
 
 // Local includes

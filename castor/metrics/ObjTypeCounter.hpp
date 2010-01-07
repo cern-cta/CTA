@@ -21,7 +21,7 @@
  *
  *
  *
- * @author Giuseppe Lo Presti
+ * @author castor-dev team
  *****************************************************************************/
 
 #ifndef CASTOR_METRICS_OBJTYPECOUNTER_HPP

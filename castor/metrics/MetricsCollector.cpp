@@ -21,7 +21,7 @@
  *
  *
  *
- * @author Giuseppe Lo Presti
+ * @author castor-dev team
  *****************************************************************************/
 
 // Include files
@@ -69,20 +69,21 @@ castor::metrics::MetricsCollector::MetricsCollector(castor::server::BaseDaemon& 
   }
   else {
     ss << buf << "/";
-    delete buf;
   }
   ss << m_daemon.getServerName();
   buf = getenv("CASTOR_ROLE");
   if(buf != 0) {
+    m_role = buf;
     ss << "." << buf;
-    delete buf;
   }
-  ss << ".procinfo";
+  else
+    m_role = "";
+  ss << ".xml";
   m_dumpFileLocation = ss.str().c_str();
   m_startupTime = time(NULL);
   
   // add empty histograms for internal metrics. Note they don't have a counter instantiator,
-  // as the thread pools register theirselves to the histograms at init time
+  // as the thread pools register themselves to the histograms at init time
   addHistogram(new Histogram("AvgTaskTime", 0));
   addHistogram(new Histogram("AvgQueuingTime", 0));
   addHistogram(new Histogram("ActivityFactor", 0));
@@ -108,13 +109,9 @@ void castor::metrics::MetricsCollector::updateHistograms(castor::IObject* obj)
   for(HistogramsIter h = histBegin(); h != histEnd(); h++) {
     CountersIter c;
     for(c = h->second->cBegin(); c != h->second->cEnd(); c++) {
-      // skip internal counters
-      if(typeid(c->second) == typeid(castor::metrics::InternalCounter)) {
-        break;
-      }
       if(int i = c->second->match(obj)) {
         c->second->inc(i);
-        // only one match is counted
+        // we can't have other matching counters, stop here
         break;
       }
     }
@@ -126,14 +123,6 @@ void castor::metrics::MetricsCollector::updateHistograms(castor::IObject* obj)
       h->second->notifyNewValue(obj);
     }
   }
-}
-
-//------------------------------------------------------------------------------
-// addHistogram
-//------------------------------------------------------------------------------
-void castor::metrics::MetricsCollector::addHistogram(castor::metrics::Histogram* h)
-{
-  m_histograms[h->getName()] = h;
 }
 
 //------------------------------------------------------------------------------
@@ -149,23 +138,25 @@ std::string castor::metrics::MetricsCollector::printXml(std::string histName, st
   // get timing information
   time_t upTime = t - m_startupTime;
   strftime(currTime, 20, "%Y-%m-%dT%H:%M:%S", localtime(&t));
-  int s, m, h, d;
+  int s, m, h;
   s = upTime % 60;
   upTime /= 60;
   m = upTime % 60;
   upTime /= 60;
   h = upTime % 24;
-  upTime /= 24;
-  d = upTime % 30;
-  upTime /= 30;
+  upTime /= 24;   // upTime == days
   
   // print some header info
   ss << "<metrics>\n"
-     << "<daemon name='" << m_daemon.getServerName() << "' PID='" << getpid() << "'/>\n"
+     << "<daemon name='" << m_daemon.getServerName();
+  if(m_role != "") {
+    ss << "' role='" << m_role;
+  }
+  ss << "' PID='" << getpid() << "'/>\n"
      << "<time upTime='";
-  if(upTime > 0) { ss << upTime << "m "; }
-  if(d > 0)      { ss << d << "d "; }
-  ss << (h < 10 ? "0" : "") << h << (m < 10 ? ":0" : ":") << m
+  ss << (upTime < 10 ? "0" : "") << upTime
+     << (h < 10 ? "d 0" : "d ") << h
+     << (m < 10 ? ":0" : ":") << m
      << (s < 10 ? ":0" : ":") << s
      << "' currTime='" << currTime
      << "' timestamp='" << t << "'/>\n";
