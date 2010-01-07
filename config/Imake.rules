@@ -167,7 +167,7 @@ ProgramTarget(program,objects,deplibs,libs,mode,tape,tape)
 #define BuildRPathcastormonitor commonRPath castorRPath
 #define BuildRPathcastorcommonora commonRPath cnvRPath dlfRPath vmgrRPath upvRPath
 #define BuildRPathcastorinfopolicy commonRPath castorRPath oraRPath cnvRPath
-#define BuildRPathcastortapefsm
+#define BuildRPathcastortapeutils commonRPath securityRPath nsRPath dlfRPath castorRPath
 
 #define DependsOnLibrary(dir,libname)                                   \
 DEPLIB += DepSharedLibraryTargetName(dir,libname)                     @@\
