@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/utils/SmartFd.hpp
+ *                      castor/tape/utils/SmartFILEPtr.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,10 +22,12 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_UTILS_SMARTFD
-#define CASTOR_TAPE_UTILS_SMARTFD
+#ifndef CASTOR_TAPE_UTILS_SMARTFILEPTR
+#define CASTOR_TAPE_UTILS_SMARTFILEPTR
 
 #include "castor/exception/Exception.hpp"
+
+#include <stdio.h>
 
 
 namespace castor {
@@ -33,11 +35,10 @@ namespace tape   {
 namespace utils  {
 
   /**
-   * A smart file descriptor that owns a basic file descriptor.  When the smart
-   * file descriptor goes out of scope, it will close the file descriptor it
-   * owns.
+   * A smart FILE pointer that owns a basic FILE pointer.  When the smart FILE
+   * pointer goes out of scope, it will close the FILE pointer it owns.
    */
-  class SmartFd {
+  class SmartFILEPtr {
 
   public:
 
@@ -45,58 +46,57 @@ namespace utils  {
      * Constructor.
      *
      */
-    SmartFd();
+    SmartFILEPtr();
 
     /**
      * Constructor.
      *
-     * @param fd The file descriptor to be owned by the smart file
-     *           descriptor.
+     * @param file The FILE pointer to be owned by the smart FILE pointer.
      */
-    SmartFd(const int fd);
+    SmartFILEPtr(const FILE *const file);
 
     /**
-     * Take ownership of the specified file descriptor, closing the previously
-     * owned file descriptor if there is one and it is not the same as the one
+     * Take ownership of the specified FILE pointer, closing the previously
+     * owned FILE pointer if there is one and it is not the same as the one
      * specified.
      *
-     * @param fd The file descriptor to be owned, defaults to -1 if not
-     *           specified, where a negative number means this SmartFd does not
-     *           own anything.
+     * @param file The FILE pointer to be owned, defaults to NULL if not
+     *             specified, where NULL means this SmartFILEPtr does not own
+     *             anything.
      */
-    void reset(const int fd) throw();
+    void reset(const FILE *const file) throw();
 
     /**
-     * SmartFd assignment operator.
+     * SmartFILEPtr assignment operator.
      *
      * This function does the following:
      * <ul>
      * <li> Calls release on the previous owner (obj);
-     * <li> Closes the file descriptor of this object if it already owns one.
-     * <li> Makes this object the owner of the file descriptor released from
-     *      the previous owner (obj).
+     * <li> Closes the FILE pointer of this object if it already owns one.
+     * <li> Makes this object the owner of the FILE pointer released from the
+     *      previous owner (obj).
      * </ul>
      */
-    SmartFd &operator=(SmartFd& obj) throw();
+    SmartFILEPtr &operator=(SmartFILEPtr& obj) throw();
 
     /**
      * Destructor.
      *
-     * Closes the owned file descriptor if there is one.
+     * Closes the owned FILE pointer if there is one.
      */
-    ~SmartFd();
+    ~SmartFILEPtr();
 
     /**
-     * Returns the owned file descriptor.
+     * Returns the owned FILE pointer.
      *
-     * @return The owned file desccriptor.
+     * @return The owned FILE pointer.
      */
     int get() throw(castor::exception::Exception);
 
     /**
-     * Releases the owned file descriptor.
+     * Releases the owned FILE pointer.
      *
-     * @return The released file descriptor.
+     * @return The released FILE pointer.
      */
     int release() throw(castor::exception::Exception);
 
@@ -104,10 +104,10 @@ namespace utils  {
   private:
 
     /**
-     * The owned file descriptor.  A value less than zero means this SmartFd
-     * does not own anything.
-     */
-    int m_fd;
+     * The owned FILE pointer.  A value of NULL means this SmartFILEPtr does
+     * not own anything.
+     */ 
+    const FILE *m_file;
 
   };
 
@@ -115,4 +115,4 @@ namespace utils  {
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_UTILS_SMARTFD
+#endif // CASTOR_TAPE_UTILS_SMARTFILEPTR

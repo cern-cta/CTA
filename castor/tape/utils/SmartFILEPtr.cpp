@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/utils/SmartFd.cpp
+ *                      castor/tape/utils/SmartFILEPtr.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -23,7 +23,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/utils/SmartFd.hpp"
+#include "castor/tape/utils/SmartFILEPtr.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <errno.h>
@@ -33,42 +33,43 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::utils::SmartFd::SmartFd() :
-  m_fd(-1) {
+castor::tape::utils::SmartFILEPtr::SmartFILEPtr() :
+  m_file(NULL) {
 }
 
 
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::utils::SmartFd::SmartFd(const int fd) :
-  m_fd(fd) {
+castor::tape::utils::SmartFILEPtr::SmartFILEPtr(const FILE *const file) :
+  m_file(file) {
 }
 
 
 //-----------------------------------------------------------------------------
 // reset
 //-----------------------------------------------------------------------------
-void castor::tape::utils::SmartFd::reset(const int fd = -1) throw() {
-  // If the new file descriptor is not the one already owned
-  if(fd != m_fd) {
+void castor::tape::utils::SmartFILEPtr::reset(const FILE *const file = NULL)
+   throw() {
+  // If the new FILE pointer is not the one already owned
+  if(file != m_file) {
 
-    // If this SmartFd still owns a file descriptor, then close it
-    if(m_fd >= 0) {
-      close(m_fd);
+    // If this SmartFILEPtr still owns a FILE pointer, then close it
+    if(m_file != NULL) {
+      close(m_file);
     }
 
-    // Take ownership of the new file descriptor
-    m_fd = fd;
+    // Take ownership of the new FILE pointer
+    m_file = file;
   }
 }
 
 
 //-----------------------------------------------------------------------------
-// SmartFd assignment operator
+// SmartFILEPtr assignment operator
 //-----------------------------------------------------------------------------
-castor::tape::utils::SmartFd
-  &castor::tape::utils::SmartFd::operator=(SmartFd& obj) throw() {
+castor::tape::utils::SmartFILEPtr
+  &castor::tape::utils::SmartFILEPtr::operator=(SmartFILEPtr& obj) throw() {
   
   reset(obj.release());
 
@@ -79,7 +80,7 @@ castor::tape::utils::SmartFd
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-castor::tape::utils::SmartFd::~SmartFd() {
+castor::tape::utils::SmartFILEPtr::~SmartFILEPtr() {
 
   reset();
 }
@@ -88,36 +89,36 @@ castor::tape::utils::SmartFd::~SmartFd() {
 //-----------------------------------------------------------------------------
 // get
 //-----------------------------------------------------------------------------
-int castor::tape::utils::SmartFd::get()
+int castor::tape::utils::SmartFILEPtr::get()
   throw(castor::exception::Exception) {
 
-  // If this SmartFd does not own a file descriptor
-  if(m_fd < 0) {
+  // If this SmartFILEPtr does not own a FILE pointer
+  if(m_file == NULL) {
     TAPE_THROW_CODE(EPERM,
-      ": Smart file descriptor does not own a basic file descriptor");
+      ": Smart FILE pointer does not own a basic FILE pointer");
   }
 
-  return m_fd;
+  return m_file;
 }
 
 
 //-----------------------------------------------------------------------------
 // release
 //-----------------------------------------------------------------------------
-int castor::tape::utils::SmartFd::release()
+int castor::tape::utils::SmartFILEPtr::release()
   throw(castor::exception::Exception) {
 
-  // If this SmartFd does not own a file descriptor
-  if(m_fd < 0) {
+  // If this SmartFILEPtr does not own a FILE pointer
+  if(m_file == NULL) {
     TAPE_THROW_CODE(EPERM,
-      ": Smart file descriptor does not own a basic file descriptor");
+      ": Smart FILE pointer does not own a basic FILE pointer");
   }
 
 
-  const int tmpFd = m_fd;
+  const int tmpFile = m_file;
 
-  // A negative number indicates this SmartFd does not own a file descriptor
-  m_fd = -1;
+  // A NULL value indicates this SmartFILEPtr does not own a FILE pointer
+  m_file = NULL;
 
-  return tmpFd;
+  return tmpFile;
 }
