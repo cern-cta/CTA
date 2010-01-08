@@ -474,6 +474,20 @@ namespace utils  {
   void parseTpconfig(const char *const filename, TpconfigLines &lines)
     throw (castor::exception::Exception);
 
+  /**
+   * Extracts the drive-unit names from the specified list of parsed TPCONFIG
+   * data-lines.
+   *
+   * This method clears the list of drive-unit names before starting extracting
+   * the names from the list of parsed TPCONFIG data-lines.
+   *
+   * @param tpconfigLines The list of parsed TCONFIG data-lines.
+   * @param driveNames    Output parameter: The list of extracted drive-unit
+   *                      names.
+   */
+  void extractTpconfigDriveNames(const TpconfigLines &tpconfigLines,
+    std::list<std::string> &driveNames) throw();
+
 } // namespace utils
 } // namespace tape
 } // namespace castor

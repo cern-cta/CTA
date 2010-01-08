@@ -769,3 +769,27 @@ void castor::tape::utils::parseTpconfig(const char *const filename,
     throw(ex);
   }
 }
+
+
+//------------------------------------------------------------------------------
+// extractTpconfigDriveNames
+//------------------------------------------------------------------------------
+void castor::tape::utils::extractTpconfigDriveNames(
+  const TpconfigLines &tpconfigLines, std::list<std::string> &driveNames)
+  throw() {
+
+  // Clear the list of drive unit names
+  driveNames.clear();
+
+  // For each parsed TPCONFIG data-line
+  for(TpconfigLines::const_iterator itor = tpconfigLines.begin();
+    itor != tpconfigLines.end(); itor++) {
+
+    // If the drive unit name of the data-line is not already in the list of
+    // drive-unit names, then add it
+    if(std::find(driveNames.begin(), driveNames.end(), itor->mUnitName) ==
+      driveNames.end()) {
+      driveNames.push_back(itor->mUnitName);
+    }
+  }
+}
