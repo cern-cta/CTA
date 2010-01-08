@@ -121,7 +121,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_9_1');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_9_4');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -411,11 +411,12 @@ DECLARE
     '  status_string VARCHAR2(100)   , '   ||
     '  CONSTRAINT PK_VmgrTapeStatusCodes_number PRIMARY KEY (status_number))';
 BEGIN
-  SELECT COUNT(*) INTO nbTable FROM USER_TABLES WHERE TABLE_NAME = 'VMGR_TAPE_STATUS_CODE';
+  SELECT COUNT(*) INTO nbTable FROM USER_TABLES
+   WHERE TABLE_NAME = 'VMGR_TAPE_STATUS_CODE';
   -- If the table still do not exist in the DB it will create it
   IF nbTable = 0 THEN
     DBMS_OUTPUT.PUT_LINE(createTableStmt);
-    execute immediate createTableStmt;
+    EXECUTE IMMEDIATE createTableStmt;
   END IF;
 END;
 /
@@ -426,7 +427,6 @@ DECLARE
   alreadyFoundASetBit BOOLEAN := FALSE;
   status_str          VARCHAR2(100);
   nbTable             INTEGER := 0;
-
 BEGIN
 
   SELECT COUNT(*) INTO nbTable FROM VMGR_TAPE_STATUS_CODE;
@@ -458,9 +458,10 @@ BEGIN
       END LOOP;
       -- User visual feedback
       DBMS_OUTPUT.PUT_LINE(statusNb ||' '||  status_str);
-      INSERT INTO VMGR_TAPE_STATUS_CODE(STATUS_NUMBER, STATUS_STRING) VALUES(statusNb, status_str);
+      INSERT INTO VMGR_TAPE_STATUS_CODE(STATUS_NUMBER, STATUS_STRING)
+      VALUES(statusNb, status_str);
     END LOOP;
-    commit;
+    COMMIT;
 
   END IF;
 END;
