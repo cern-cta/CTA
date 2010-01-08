@@ -20,7 +20,6 @@
 #include <fcntl.h>
 #include <attr/xattr.h>
 #include "Cns_api.h"
-#include "Cthread_api.h"
 #include <shift/serrno.h>
 #include <string.h>
 

@@ -27,6 +27,7 @@ const char *XrdxCastor2FsCVSID = "$Id: XrdxCastor2Fs.cc,v 1.12 2009/05/19 19:52:
 #define RFIO_NOREDEFINE
 #include <shift.h>
 #include "Cns_api.h"
+#include "Cthread_api.h"
  
 #ifdef AIX
 #include <sys/mode.h>
