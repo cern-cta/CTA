@@ -32,6 +32,7 @@
 #include "castor/Constants.hpp"
 #include "castor/IService.hpp"
 #include "castor/Services.hpp"
+#include "castor/metrics/MetricsCollector.hpp"
 
 
 //-----------------------------------------------------------------------------
@@ -119,6 +120,13 @@ void castor::jobmanager::DispatchThread::process(castor::IObject *param)
     {castor::dlf::Param("ID", request->id()),
      castor::dlf::Param(m_subRequestUuid)};
   castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_SYSTEM, 60, 2, params, &m_fileId);
+
+  // Update counters
+  castor::metrics::MetricsCollector* mc =
+    castor::metrics::MetricsCollector::getInstance();
+  if(mc) {
+    mc->updateHistograms(request);
+  }
 
   try {
     m_processPool->dispatch(*param);

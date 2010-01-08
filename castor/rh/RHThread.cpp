@@ -28,6 +28,7 @@
 #include "castor/Constants.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/Services.hpp"
+#include "castor/metrics/MetricsCollector.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/PermissionDenied.hpp"
@@ -195,6 +196,7 @@ void castor::rh::RHThread::run(void* param) {
   // We know it's a ServerSocket
   castor::io::ServerSocket* sock = (castor::io::ServerSocket*) param;
   castor::stager::Request* fr = 0;
+  castor::IObject* obj = 0;
 
   // Retrieve info on the client
   unsigned short port;
@@ -234,10 +236,11 @@ void castor::rh::RHThread::run(void* param) {
     }
 
     // Get the incoming request
-    castor::IObject* obj = sock->readObject();
+    obj = sock->readObject();
     fr = dynamic_cast<castor::stager::Request*>(obj);
     if (0 == fr) {
       delete obj;
+      obj = 0;
       // "Invalid Request"
       castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 6, 1, peerParams);
       ack.setStatus(false);
@@ -255,6 +258,7 @@ void castor::rh::RHThread::run(void* param) {
     ack.setStatus(false);
     ack.setErrorCode(e.code());
     ack.setErrorMessage(e.getMessage().str());
+    if(obj) delete obj;
   }
   catch (castor::exception::Exception e) {
     // "Unable to read Request from socket"
@@ -268,6 +272,7 @@ void castor::rh::RHThread::run(void* param) {
     stst << "Unable to read Request object from socket."
          << std::endl << e.getMessage().str();
     ack.setErrorMessage(stst.str());
+    if(obj) delete obj;
   }
 
   // If the request comes from a secure connection then set Client values in
@@ -428,6 +433,13 @@ void castor::rh::RHThread::run(void* param) {
          castor::dlf::Param("ElapsedTime", elapsedTime * 0.000001)};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 10, 2, params2);
     } else {
+      
+      // Update counters if metrics collection is enabled
+      castor::metrics::MetricsCollector* mc =
+        castor::metrics::MetricsCollector::getInstance();
+      if(mc) {
+        mc->updateHistograms(fr);
+      }
 
       // If possible convert the request type to a string for logging
       // purposes

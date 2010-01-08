@@ -28,6 +28,10 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/server/TCPListenerThreadPool.hpp"
 #include "castor/server/AuthListenerThreadPool.hpp"
+#include "castor/metrics/MetricsCollector.hpp"
+#include "castor/metrics/ObjTypeCounter.hpp"
+#include "castor/rh/UserCounter.hpp"
+#include "castor/rh/SvcClassCounter.hpp"
 #include "castor/rh/RHThread.hpp"
 #include "castor/rh/IRHSvc.hpp"
 #include <string.h>
@@ -149,12 +153,13 @@ void castor::rh::Server::help(std::string programName)
     "where options can be:\n"
     "\n"
     "\t--foreground            or -f           \tForeground\n"
-    "\t--help                  or -h           \tThis help\n"
     "\t--secure                or -s           \tRun the daemon in secure mode\n"
     "\t--config <config-file>  or -c           \tConfiguration file\n"
     "\t--port                  or -p {integer} \tPort to be used\n"
     "\t--no-wait               or -n           \tDon't wait to dispatch requests when all threads are busy\n"
+    "\t--metrics               or -m           \tEnable metrics collection\n"
     "\t--Rthreads              or -R {integer} \tNumber of Request Handler threads\n"
+    "\t--help                  or -h           \tPrint this help and exit\n"
     "\n"
     "Comments to: Castor.Support@cern.ch\n";
 }
@@ -173,6 +178,7 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
       {"Rthreads",   REQUIRED_ARGUMENT, NULL, 'R'},
       {"port",       REQUIRED_ARGUMENT, NULL, 'p'},
       {"nowait",     NO_ARGUMENT,       NULL, 'n'},
+      {"metrics",    NO_ARGUMENT,       NULL, 'm'},
       {NULL,         0,                 NULL,  0 }
     };
   Coptind = 1;
@@ -181,8 +187,9 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
   char *sport;
   int iport = -1;
   int nbThreads = -1;
+  bool metrics = false;
 
-  while ((c = Cgetopt_long(argc, argv, "fhsR:p:c:n", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long(argc, argv, "fsR:p:c:nmh", longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
       m_foreground = true;
@@ -213,6 +220,9 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
       break;
     case 'n':
       m_waitIfBusy = false;
+      break;
+    case 'm':
+      metrics = true;
       break;
     default:
       help(argv[0]);
@@ -262,4 +272,16 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
     castor::server::BaseThreadPool* p = m_threadPools['R'];
     p->setNbThreads(nbThreads);
   }
+  
+  if(metrics) {
+    // initialize the metrics collector thread and add custom metrics
+    castor::metrics::MetricsCollector* mc =
+      castor::metrics::MetricsCollector::getInstance(this);
+    mc->addHistogram(new castor::metrics::Histogram(
+      "IncomingRequests", &castor::metrics::ObjTypeCounter::instantiate));
+    mc->addHistogram(new castor::metrics::Histogram(
+      "SvcClasses", &castor::rh::SvcClassCounter::instantiate));
+    mc->addHistogram(new castor::metrics::Histogram(
+      "Users", &castor::rh::UserCounter::instantiate));
+  }    
 }

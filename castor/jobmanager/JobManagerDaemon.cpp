@@ -30,6 +30,9 @@
 #include "castor/server/SignalThreadPool.hpp"
 #include "castor/server/NotifierThread.hpp"
 #include "castor/server/ForkedProcessPool.hpp"
+#include "castor/metrics/MetricsCollector.hpp"
+#include "castor/jobmanager/SvcClassCounter.hpp"
+#include "castor/jobmanager/UserCounter.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/Constants.hpp"
 #include "castor/System.hpp"
@@ -184,9 +187,21 @@ int main(int argc, char *argv[]) {
     } else {
       daemon.getThreadPool('M')->setNbThreads(0);
     }
+    
+    // Now parse the cmd line
+    daemon.parseCommandLine(argc, argv);
+
+    // Initialize internal metrics if requested
+    castor::metrics::MetricsCollector* mc =
+      castor::metrics::MetricsCollector::getInstance();
+    if(mc) {
+      mc->addHistogram(new castor::metrics::Histogram(
+        "Pools", &castor::jobmanager::SvcClassCounter::instantiate));
+      mc->addHistogram(new castor::metrics::Histogram(
+        "Users", &castor::jobmanager::UserCounter::instantiate));
+    }
 
     // Start daemon
-    daemon.parseCommandLine(argc, argv);
     daemon.start();
     return 0;
 
