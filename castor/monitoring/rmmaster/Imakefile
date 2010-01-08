@@ -40,6 +40,7 @@ RMMASTERDAEMONBIN_SRCS = RmMasterDaemon.cpp CollectorThread.cpp DatabaseActuator
 RMMASTERDAEMONBIN_OBJS = $(RMMASTERDAEMONBIN_SRCS:.cpp=.Osuf)
 NormalProgramTarget(rmmasterd,$(RMMASTERDAEMONBIN_OBJS),$(DEPLIB),$(LIBS),750)
 MakeDir(/var/log/castor,0755)
+MakeDir(/var/spool/castor,0755)
 LOGROTATE(castor-rmmaster-server,../../..,install)
 SYSCONFIG(rmmasterd,install)
 INITSCRIPT(rmmasterd,install)
