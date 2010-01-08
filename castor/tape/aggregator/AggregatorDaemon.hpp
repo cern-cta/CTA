@@ -123,11 +123,6 @@ private:
    */
   static castor::dlf::Message s_dlfMessages[];
 
-  /**
-   * The unit names of the drives parsed from the TPCONFIG file.
-   */
-  std::list<std::string> m_driveUnitNames;
-
 }; // class AggregatorDaemon
 
 } // namespace aggregator
