@@ -576,17 +576,18 @@ CREATE TABLE SubRequest
   ENABLE ROW MOVEMENT
   PARTITION BY LIST (STATUS)
    (
-    PARTITION P_STATUS_0_1_2   VALUES (0, 1, 2),      -- *START
-    PARTITION P_STATUS_3_13_14 VALUES (3, 13, 14),    -- *SCHED
-    PARTITION P_STATUS_4       VALUES (4),
-    PARTITION P_STATUS_5       VALUES (5),
-    PARTITION P_STATUS_6       VALUES (6),
-    PARTITION P_STATUS_7       VALUES (7),
-    PARTITION P_STATUS_8       VALUES (8),
-    PARTITION P_STATUS_9_10    VALUES (9, 10),        -- FAILED_*
-    PARTITION P_STATUS_11      VALUES (11),
-    PARTITION P_STATUS_12      VALUES (12),
-    PARTITION P_STATUS_OTHER   VALUES (DEFAULT)
+    PARTITION P_STATUS_0_1_2 VALUES (0, 1, 2),      -- *START
+    PARTITION P_STATUS_3     VALUES (3),
+    PARTITION P_STATUS_4     VALUES (4),
+    PARTITION P_STATUS_5     VALUES (5),
+    PARTITION P_STATUS_6     VALUES (6),
+    PARTITION P_STATUS_7     VALUES (7),
+    PARTITION P_STATUS_8     VALUES (8),
+    PARTITION P_STATUS_9_10  VALUES (9, 10),        -- FAILED_*
+    PARTITION P_STATUS_11    VALUES (11),
+    PARTITION P_STATUS_12    VALUES (12),
+    PARTITION P_STATUS_13_14 VALUES (13, 14),       -- *SCHED
+    PARTITION P_STATUS_OTHER VALUES (DEFAULT)
    );
 
 /* SQL statements for constraints on the SubRequest table */
@@ -594,7 +595,7 @@ ALTER TABLE SubRequest
   ADD CONSTRAINT PK_SubRequest_Id PRIMARY KEY (ID);
 CREATE INDEX I_SubRequest_RT_CT_ID ON SubRequest(svcHandler, creationTime, id) LOCAL
  (PARTITION P_STATUS_0_1_2,
-  PARTITION P_STATUS_3_13_14,
+  PARTITION P_STATUS_3,
   PARTITION P_STATUS_4,
   PARTITION P_STATUS_5,
   PARTITION P_STATUS_6,
@@ -603,7 +604,8 @@ CREATE INDEX I_SubRequest_RT_CT_ID ON SubRequest(svcHandler, creationTime, id) L
   PARTITION P_STATUS_9_10,
   PARTITION P_STATUS_11,
   PARTITION P_STATUS_12,
-  PARTITION P_STATUS_OTHER);  
+  PARTITION P_STATUS_13_14,
+  PARTITION P_STATUS_OTHER);
 
 /* Redefinition of table TapeCopy to make it partitioned by status */
 ALTER TABLE Stream2TapeCopy DROP CONSTRAINT FK_Stream2TapeCopy_C;
@@ -5467,8 +5469,7 @@ PROCEDURE jobToSchedule(srId OUT INTEGER,              srSubReqId OUT VARCHAR2,
   CURSOR c IS
     SELECT /*+ FIRST_ROWS(10) INDEX(SR I_SubRequest_RT_CT_ID) */ SR.id
       FROM SubRequest
- PARTITION (P_STATUS_3_13_14) SR  -- RESTART, READYFORSCHED, BEINGSCHED
-     WHERE SR.status IN (13, 14)  -- READYFORSCHED, BEINGSCHED
+ PARTITION (P_STATUS_13_14) SR  -- RESTART, READYFORSCHED, BEINGSCHED
      ORDER BY SR.creationTime ASC;
   SrLocked EXCEPTION;
   PRAGMA EXCEPTION_INIT (SrLocked, -54);
@@ -5488,7 +5489,7 @@ BEGIN
       -- valid subrequest is either in READYFORSCHED or has been stuck in
       -- BEINGSCHED for more than 1800 seconds (30 mins)
       SELECT /*+ INDEX(SR PK_SubRequest_ID) */ id INTO srId
-        FROM SubRequest PARTITION (P_STATUS_3_13_14) SR
+        FROM SubRequest PARTITION (P_STATUS_13_14) SR
        WHERE id = srId
          AND ((status = 13)  -- READYFORSCHED
           OR  (status = 14   -- BEINGSCHED
@@ -6299,7 +6300,7 @@ CREATE OR REPLACE PROCEDURE defaultMigrSelPolicy(streamId IN INTEGER,
   PRAGMA EXCEPTION_INIT (LockError, -54);
 BEGIN
   tapeCopyId := 0;
-  -- First try to see whether we should resuse the same filesystem as last time
+  -- First try to see whether we should reuse the same filesystem as last time
   SELECT lastFileSystemChange, lastFileSystemUsed, lastButOneFileSystemUsed
     INTO lastFSChange, lastFSUsed, lastButOneFSUsed
     FROM Stream WHERE id = streamId;
@@ -6448,7 +6449,7 @@ CREATE OR REPLACE PROCEDURE drainDiskMigrSelPolicy(streamId IN INTEGER,
   PRAGMA EXCEPTION_INIT (LockError, -54);
 BEGIN
   tapeCopyId := 0;
-  -- First try to see whether we should resuse the same filesystem as last time
+  -- First try to see whether we should reuse the same filesystem as last time
   SELECT lastFileSystemChange, lastFileSystemUsed, lastButOneFileSystemUsed
     INTO lastFSChange, lastFSUsed, lastButOneFSUsed
     FROM Stream WHERE id = streamId;
@@ -8034,7 +8035,7 @@ BEGIN
              AND SubRequest.status IN (4, 5, 6, 12, 13, 14)) -- being processed (WAIT*, READY, *SCHED)
        AND NOT EXISTS
          -- Ignore diskcopies with active replications
-         (SELECT * FROM StageDiskCopyReplicaRequest, DiskCopy D
+         (SELECT 'x' FROM StageDiskCopyReplicaRequest, DiskCopy D
            WHERE StageDiskCopyReplicaRequest.destDiskCopy = D.id
              AND StageDiskCopyReplicaRequest.sourceDiskCopy = DiskCopy.id
              AND D.status = 1)  -- WAITD2D
