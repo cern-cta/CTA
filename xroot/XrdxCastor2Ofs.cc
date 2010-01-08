@@ -20,6 +20,7 @@
 #include <fcntl.h>
 #include <attr/xattr.h>
 #include "Cns_api.h"
+#include "Cthread_api.h"
 #include <shift/serrno.h>
 #include <string.h>
 
@@ -117,6 +118,9 @@ XrdSfsFileSystem *XrdSfsGetFileSystem(XrdSfsFileSystem *native_fs,
 // Initialize the target storage system
 //
    if (!(XrdOfsOss = (XrdOssSys*) XrdOssGetSS(lp, configfn, XrdOfsFS.OssLib))) return 0;
+
+// Initialize the CASTOR Cthread library
+   Cthread_init();
 
 // All done, we can return the callout vector to these routines.
 //
