@@ -191,7 +191,7 @@ CREATE OR REPLACE PROCEDURE defaultMigrSelPolicy(streamId IN INTEGER,
   PRAGMA EXCEPTION_INIT (LockError, -54);
 BEGIN
   tapeCopyId := 0;
-  -- First try to see whether we should resuse the same filesystem as last time
+  -- First try to see whether we should reuse the same filesystem as last time
   SELECT lastFileSystemChange, lastFileSystemUsed, lastButOneFileSystemUsed
     INTO lastFSChange, lastFSUsed, lastButOneFSUsed
     FROM Stream WHERE id = streamId;

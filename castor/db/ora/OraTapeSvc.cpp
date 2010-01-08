@@ -524,7 +524,7 @@ castor::db::ora::OraTapeSvc::bestTapeCopyForStream
          it++) {
       cnvSvc()->fillObj(&ad, *it, OBJ_Tape);
     }
-    // Make rmMaster aware of the stream that will be createdis now gone
+    // Make rmMaster aware of the stream that will be created is now gone
     sendStreamReport(result->diskServer(),
 		     result->mountPoint(),
 		     castor::monitoring::STREAMDIRECTION_READ,
