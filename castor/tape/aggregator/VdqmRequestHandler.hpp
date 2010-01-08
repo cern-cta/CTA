@@ -29,6 +29,7 @@
 #include "castor/server/IThread.hpp"
 #include "castor/tape/aggregator/BoolFunctor.hpp"
 #include "castor/tape/aggregator/Counter.hpp"
+#include "castor/tape/aggregator/TapeSessionCatalogue.hpp"
 #include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/utils/SmartFdList.hpp"
@@ -47,6 +48,11 @@ namespace aggregator {
 class VdqmRequestHandler : public castor::server::IThread {
 
 public:
+
+  /**
+   * Constructor
+   */
+  VdqmRequestHandler(TapeSessionCatalogue &tapeSessionCatalogue) throw();
 
   /**
    * Destructor
@@ -73,6 +79,13 @@ public:
 
 
 private:
+
+  /**
+   * Thread-safe catalogue of on-going tape-sessions, where a tape-session is
+   * the data transfer activity applied to a tape during the time it is
+   * mounted.
+   */
+  TapeSessionCatalogue &m_tapeSessionCatalogue;
 
   /**
    * True if the daemon is stopping gracefully.

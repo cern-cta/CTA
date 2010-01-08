@@ -68,6 +68,15 @@ castor::tape::aggregator::VdqmRequestHandler::StoppingGracefullyFunctor
 
 
 //-----------------------------------------------------------------------------
+// constructor
+//-----------------------------------------------------------------------------
+castor::tape::aggregator::VdqmRequestHandler::VdqmRequestHandler(
+  TapeSessionCatalogue &tapeSessionCatalogue) throw() :
+  m_tapeSessionCatalogue(tapeSessionCatalogue) {
+}
+
+
+//-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
 castor::tape::aggregator::VdqmRequestHandler::~VdqmRequestHandler()
@@ -213,6 +222,11 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
         throw(ex);
       }
     }
+
+    // Try to add the new tape session to the catalogue of on-going tape
+    // session
+    m_tapeSessionCatalogue.addTapeSession(jobRequest.volReqId,
+      jobRequest.driveUnit);
 
     // Create the aggregator transaction ID
     Counter<uint64_t> aggregatorTransactionCounter(0);

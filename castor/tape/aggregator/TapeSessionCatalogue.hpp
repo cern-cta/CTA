@@ -39,8 +39,8 @@ namespace tape       {
 namespace aggregator {
 
 /**
- * Catalogue of on-going tape-sessions, where a tape-session is the data
- * transfer activity applied to a tape during the time it is mounted.
+ * Thread-safe catalogue of on-going tape-sessions, where a tape-session is the
+ * data transfer activity applied to a tape during the time it is mounted.
  */
 class TapeSessionCatalogue {
 
