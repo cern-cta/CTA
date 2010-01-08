@@ -61,7 +61,7 @@ fi
 %attr(-,stage,st) %dir /var/spool/xroot/core
 
 %changelog
-* Fri Jan 08 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.9-5
+* Fri Jan 08 2010 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.9-5
 - adding initialization of Cthread library in xCastor2Fs
 
 * Tue Dec 15 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.9-4
