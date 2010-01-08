@@ -235,6 +235,14 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
     // exception is thrown
     try {
       exceptionThrowingRun(cuuid, jobRequest, aggregatorTransactionCounter);
+
+      // Ensure the tape session is removed from the catalogue of on-going
+      // tape sessions
+      try {
+        m_tapeSessionCatalogue.removeTapeSession(jobRequest.volReqId);
+      } catch(...) {
+        // Do nothing
+      }
     } catch(castor::exception::Exception &ex) {
       const uint64_t aggregatorTransactionId =
         aggregatorTransactionCounter.next();
@@ -433,7 +441,8 @@ void castor::tape::aggregator::VdqmRequestHandler::enterBridgeOrAggregatorMode(
       AGGREGATOR_ENTERING_BRIDGE_MODE, params);
     BridgeProtocolEngine bridgeProtocolEngine(cuuid, listenSock,
       initialRtcpdSock, jobRequest, volume, nbFilesOnDestinationTape,
-      s_stoppingGracefullyFunctor, aggregatorTransactionCounter);
+      s_stoppingGracefullyFunctor, aggregatorTransactionCounter,
+      m_tapeSessionCatalogue);
     bridgeProtocolEngine.run();
   }
 }

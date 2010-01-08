@@ -30,6 +30,7 @@
 #include "castor/tape/aggregator/BridgeSocketCatalogue.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/aggregator/Counter.hpp"
+#include "castor/tape/aggregator/TapeSessionCatalogue.hpp"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
@@ -73,6 +74,7 @@ public:
    * @param aggregatorTransactionCounter  The counter used to generate
    *                                 aggregator transaction IDs.  These are the
    *                                 IDS used in requests to the clients.
+   * @param tapeSessionCatalogue     The catalogue of on-going tape sessions.
    */
   BridgeProtocolEngine(
     const Cuuid_t                       &cuuid,
@@ -82,7 +84,8 @@ public:
     tapegateway::Volume                 &volume,
     const uint32_t                      nbFilesOnDestinationTape,
     BoolFunctor                         &stoppingGracefully,
-    Counter<uint64_t>                   &aggregatorTransactionCounter)
+    Counter<uint64_t>                   &aggregatorTransactionCounter,
+    TapeSessionCatalogue                &tapeSessionCatalogue)
   throw();
 
   /**
@@ -140,6 +143,11 @@ private:
    * in a request to the client.
    */
   Counter<uint64_t> &m_aggregatorTransactionCounter;
+
+  /**
+   * The catalogue of on-going tape sessions.
+   */
+  TapeSessionCatalogue &m_tapeSessionCatalogue;
 
   /**
    * The number of received RTCP_ENDOF_REQ messages.

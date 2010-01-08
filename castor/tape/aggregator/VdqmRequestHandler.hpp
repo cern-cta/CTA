@@ -121,7 +121,7 @@ private:
    *                                 aggregator transaction IDs.  These are the
    *                                 IDs used in requests to the clients.
    */
-  static void exceptionThrowingRun(
+  void exceptionThrowingRun(
     const Cuuid_t                       &cuuid,
     const legacymsg::RtcpJobRqstMsgBody &jobRequest,
     Counter<uint64_t>                   &aggregatorTransactionCounter)
@@ -158,7 +158,7 @@ private:
    *                                 aggregator transaction IDs.  These are the
    *                                 IDs used in requests to the clients.
    */
-  static void enterBridgeOrAggregatorMode(
+  void enterBridgeOrAggregatorMode(
     const Cuuid_t                       &cuuid,
     const int                           rtcpdCallbackSockFd,
     const int                           rtcpdInitialSockFd,

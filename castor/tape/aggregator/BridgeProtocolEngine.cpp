@@ -64,13 +64,15 @@ castor::tape::aggregator::BridgeProtocolEngine::BridgeProtocolEngine(
   tapegateway::Volume                 &volume,
   const uint32_t                      nbFilesOnDestinationTape,
   BoolFunctor                         &stoppingGracefully,
-  Counter<uint64_t>                   &aggregatorTransactionCounter) throw() :
+  Counter<uint64_t>                   &aggregatorTransactionCounter,
+  TapeSessionCatalogue                &tapeSessionCatalogue) throw() :
   m_cuuid(cuuid),
   m_jobRequest(jobRequest),
   m_volume(volume),
   m_nextDestinationFseq(nbFilesOnDestinationTape + 1),
   m_stoppingGracefully(stoppingGracefully),
   m_aggregatorTransactionCounter(aggregatorTransactionCounter),
+  m_tapeSessionCatalogue(tapeSessionCatalogue),
   m_nbReceivedENDOF_REQs(0),
   m_pendingTransferIds(MAXPENDINGTRANSFERS) {
 
@@ -1211,6 +1213,9 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpEndOfReqRtcpdCallback(
   throw(castor::exception::Exception) {
 
   receivedENDOF_REQ = true;
+
+  // Remove the tape session from the catalogue of on-going tape sessions
+  m_tapeSessionCatalogue.removeTapeSession(m_jobRequest.volReqId);
 
   // Acknowledge RTCP_ENDOF_REQ message
   legacymsg::MessageHeader ackMsg;
