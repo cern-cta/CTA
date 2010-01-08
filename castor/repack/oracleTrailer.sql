@@ -281,9 +281,8 @@ END;
 
 /* PL/SQL method implementing resurrectTapesOnHold */
 
-
-create or replace
-PROCEDURE  resurrectTapesOnHold (maxFiles IN INTEGER, maxTapes IN INTEGER)AS
+CREATE OR REPLACE
+PROCEDURE resurrectTapesOnHold (maxFiles IN INTEGER, maxTapes IN INTEGER)AS
 filesOnGoing INTEGER;
 tapesOnGoing INTEGER;
 newFiles NUMBER;

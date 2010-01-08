@@ -1013,7 +1013,7 @@ END;
 /* GenericInputForMigrationPolicy */
 
 /* Get input for python migration policy for the tapegateway */
-create or replace PROCEDURE inputMigrPolicyGateway
+CREATE OR REPLACE PROCEDURE inputMigrPolicyGateway
 (svcclassName IN VARCHAR2,
  policyName OUT NOCOPY VARCHAR2,
  svcId OUT NUMBER,
