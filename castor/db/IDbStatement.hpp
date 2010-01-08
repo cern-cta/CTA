@@ -64,17 +64,17 @@ namespace castor {
       virtual void setNull(int pos) = 0;
         
       virtual void setDataBuffer(int pos, void* buffer, unsigned dbType, unsigned size, void* bufLens)
-	throw (castor::exception::SQLError) = 0;
+        throw (castor::exception::SQLError) = 0;
         
       virtual void setDataBufferArray(int pos, void* buffer, unsigned dbType, 
 				      unsigned size, unsigned elementSize, void* bufLens)
-	throw (castor::exception::SQLError) = 0;
+        throw (castor::exception::SQLError) = 0;
 
       virtual void setDataBufferUInt64Array(int pos, std::vector<u_signed64> data)
-	throw (castor::exception::SQLError) = 0;
+        throw (castor::exception::SQLError) = 0;
 
       virtual void registerOutParam(int pos, unsigned dbType)
-	throw (castor::exception::SQLError) = 0;
+        throw (castor::exception::SQLError) = 0;
     
       virtual int getInt(int pos) throw (castor::exception::SQLError) = 0;
       virtual signed64 getInt64(int pos) throw (castor::exception::SQLError) = 0;
@@ -89,13 +89,13 @@ namespace castor {
        * 
        */
       virtual castor::db::IDbResultSet* executeQuery()
-	throw (castor::exception::SQLError) = 0;
+        throw (castor::exception::SQLError) = 0;
     
       /**
        * 
        */
       virtual int execute(int count = 1)
-	throw (castor::exception::SQLError) = 0;
+        throw (castor::exception::SQLError) = 0;
     
     };
 
