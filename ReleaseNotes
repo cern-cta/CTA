@@ -43,6 +43,7 @@
   - #61085: stagerjob callback failures can block LSF job slots for up to 300
             seconds
   - #61101: enterFileClass does not return correct ID
+  - #61146: RFE: internal monitoring metrics
 
   CASTOR tape
   -----------
@@ -57,6 +58,7 @@
   - #59007: Fix error handling logic of the RTCPD disk IO thread
   - #59015: The main RTCPD control thread is setting the ACCOUNT environment
             variable to "" when it should not
+  - #59386: RFE: Aggregator should not wait for tape gateway to process requests
   - #60613: create recall candidate for repack doesn't use the suggested vid
 
   CASTOR uncategorized
