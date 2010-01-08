@@ -47,6 +47,7 @@ extern char *geterr();
 #include <Ctape_api.h>
 #include <Cuuid.h>
 #include <rtcp_constants.h>
+#include <rtcpd_constants.h>
 #include <rtcp.h>
 #include <rtcp_server.h>
 #include <serrno.h>
@@ -1962,11 +1963,7 @@ int rtcpd_InitDiskIO(int *poolsize) {
     } else if ( ( p = getconfent("RTCPD","THREAD_POOL",0)) != (char *)NULL ) {
         *poolsize = atoi(p);
     } else {
-#if defined(RTCPD_THREAD_POOL)
         *poolsize = RTCPD_THREAD_POOL;
-#else /* VDQM_THREAD_POOL */
-        *poolsize = 3;         /* Set some reasonable default */
-#endif /* VDQM_TRHEAD_POOL */
     }
     
     rc = Cpool_create(*poolsize,poolsize);

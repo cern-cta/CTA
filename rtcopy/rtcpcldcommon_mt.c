@@ -60,6 +60,7 @@ WSADATA wsadata;
 #include <Cpool_api.h>
 #include <dlf_api.h>
 #include <rtcp_constants.h>
+#include <rtcpd_constants.h>
 #include <vdqm_api.h>
 #include <Cnetdb.h>
 #include <castor/stager/TapeStatusCodes.h>
@@ -272,11 +273,7 @@ int rtcpcld_initThreadPool(
     }
   }
   if ( poolsize < 0 ) {
-#if defined(RTCPD_THREAD_POOL)
     poolsize = RTCPD_THREAD_POOL;
-#else /* RTCPD_THREAD_POOL */
-    poolsize = 3;         /* Set some reasonable default */
-#endif /* RTCPD_TRHEAD_POOL */
   }
   
   callbackThreadPool = Cpool_create(poolsize,&poolsize);
