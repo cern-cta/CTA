@@ -157,6 +157,63 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
     // socket a second time
     vdqmSock->close();
 
+    // Check the drive unit name given by the VDQM exists in the TPCONFIG file
+    {
+      utils::TpconfigLines tpconfigLines;
+      try {
+        utils::parseTpconfig(TPCONFIGPATH, tpconfigLines);
+      } catch (castor::exception::Exception &ex) {
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("filename"     , TPCONFIGPATH        ),
+          castor::dlf::Param("errorCode"    , ex.code()           ),
+          castor::dlf::Param("errorMessage", ex.getMessage().str())};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+          AGGREGATOR_FAILED_TO_PARSE_TPCONFIG, params);
+
+        castor::exception::Exception ex2(ex.code());
+        ex2.getMessage() <<
+          "Failed to parse TPCONFIG file"
+          ": " << ex.getMessage().str();
+        throw(ex2);
+      }
+
+      // Extract the drive units names
+      std::list<std::string> driveNames;
+      utils::extractTpconfigDriveNames(tpconfigLines, driveNames);
+      std::stringstream driveNamesStream;
+      for(std::list<std::string>::const_iterator itor = driveNames.begin();
+        itor != driveNames.end(); itor++) {
+
+        if(itor != driveNames.begin()) {
+          driveNamesStream << ",";
+        }
+
+        driveNamesStream << *itor;
+      }
+
+      // Log the result of successfully parsing the TPCONFIG file
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("filename" , TPCONFIGPATH          ),
+        castor::dlf::Param("nbDrives" , driveNames.size()     ),
+        castor::dlf::Param("unitNames", driveNamesStream.str())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_PARSED_TPCONFIG, params);
+
+      // Throw an exception if the drive-unit name given by the VDQM is not
+      // in the list of names extracted from the TPCONFIG file
+      if(std::find(driveNames.begin(), driveNames.end(), jobRequest.driveUnit)
+        == driveNames.end()) {
+
+        castor::exception::Exception ex(ECANCELED);
+        ex.getMessage() <<
+          "Drive unit name does not exist in the TPCONFIG file"
+          ": filename="      << TPCONFIGPATH <<
+          ": driveUnitName=" << jobRequest.driveUnit;
+
+        throw(ex);
+      }
+    }
+
     // Create the aggregator transaction ID
     Counter<uint64_t> aggregatorTransactionCounter(0);
 
@@ -226,14 +283,13 @@ void castor::tape::aggregator::VdqmRequestHandler::exceptionThrowingRun(
   utils::SmartFd listenSock(net::createListenerSock("127.0.0.1", lowPort,
     highPort,  chosenPort));
 
-  // Get the IP, host name and port of the callback port
+  // Get and log the IP, host name and port of the callback port
   unsigned long rtcpdCallbackIp = 0;
   char rtcpdCallbackHost[net::HOSTNAMEBUFLEN];
   utils::setBytes(rtcpdCallbackHost, '\0');
   unsigned short rtcpdCallbackPort = 0;
   net::getSockIpHostnamePort(listenSock.get(),
     rtcpdCallbackIp, rtcpdCallbackHost, rtcpdCallbackPort);
-
   castor::dlf::Param params[] = {
     castor::dlf::Param("IP"      , castor::dlf::IPAddress(rtcpdCallbackIp)),
     castor::dlf::Param("Port"    , rtcpdCallbackPort),
@@ -241,6 +297,7 @@ void castor::tape::aggregator::VdqmRequestHandler::exceptionThrowingRun(
   castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
     AGGREGATOR_CREATED_RTCPD_CALLBACK_PORT, params);
 
+  // Execute the drive allocation part of the RTCOPY protocol
   utils::SmartFd initialRtcpdSock;
   DriveAllocationProtocolEngine
     driveAllocationProtocolEngine(aggregatorTransactionCounter);

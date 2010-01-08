@@ -94,48 +94,6 @@ int castor::tape::aggregator::AggregatorDaemon::main(const int argc,
       return 1;
     }
 
-    // Check the TPCONFIG file exits and can be parsed
-    {
-      utils::TpconfigLines tpconfigLines;
-      try {
-        utils::parseTpconfig(TPCONFIGPATH, tpconfigLines);
-      } catch (castor::exception::Exception &ex) {
-        castor::dlf::Param params[] = {
-          castor::dlf::Param("filename"     , TPCONFIGPATH        ),
-          castor::dlf::Param("errorCode"    , ex.code()           ),
-          castor::dlf::Param("errorMessage", ex.getMessage().str())};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-          AGGREGATOR_FAILED_TO_PARSE_TPCONFIG, params);
-
-        std::cerr << std::endl << "Failed to parse TPCONFIG: "
-          << ex.getMessage().str() << std::endl;
-
-        return 1;
-      }
-
-      // Extract the drive units names ready to make a log message
-      std::list<std::string> driveNames;
-      utils::extractTpconfigDriveNames(tpconfigLines, driveNames);
-      std::stringstream driveNamesStream;
-      for(std::list<std::string>::const_iterator itor = driveNames.begin();
-        itor != driveNames.end(); itor++) {
-
-        if(itor != driveNames.begin()) {
-          driveNamesStream << ",";
-        }
-
-        driveNamesStream << *itor;
-      }
-
-      // Log the result of successfully parsing the TPCONFIG file
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("filename" , TPCONFIGPATH          ),
-        castor::dlf::Param("nbDrives" , driveNames.size()     ),
-        castor::dlf::Param("unitNames", driveNamesStream.str())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_PARSED_TPCONFIG, params);
-    }
-
     createVdqmRequestHandlerPool();
 
     // Start the threads
