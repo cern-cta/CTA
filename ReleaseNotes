@@ -1,4 +1,176 @@
 -----------
+- 2.1.9-4 -
+-----------
+
+  Highlights & Bug Fixes
+  ----------------------
+
+  CASTOR miscellaneous
+  --------------------
+  - #58996: Comments not supported in /etc/castor/[CUPV|VMGR|NS]CONFIG
+  - #61022: Incorrect SELinux security context prevents logging through syslog
+            (SL5 only)
+  - #61118: "ORA-25408: can not safely replay call" errors should result in
+            database reconnection
+
+  CASTOR repack2
+  --------------
+  - #60650: tape onhold without reason
+
+  CASTOR stager
+  -------------
+  - #56541: RFE: 'basic' entries for B/W lists / admin privileges
+  - #58882: Race condition in filesDeletedProc can result in orphaned CastorFile
+            entries
+  - #59083: stage_version API does not respect STAGER/TIMEOUT conf value
+  - #59326: Missing index on StageDiskCopyReplicaRequest results in FTS in
+            processPrepareRequest
+  - #59338: RFE: logging of callback port in RequestHandler
+  - #59367: Deadlock between stageRm and postJobChecks
+  - #59378: Jobmanager management thread unable to handle bulk bkill's
+  - #59417: BaseClient should ignore responses for requests it does not know
+            about
+  - #59435: stager_qry -r -n may forget some files
+  - #59982: DiskPoolQuery incorrectly returns 'No Diskpools found for service
+            class '*'
+  - #60002: RFE: Draining diskserver logic should avoid replicating STAGED files
+            when the file-mask is CANBEMIGR
+  - #60064: stager_rm by service class does not cancel Put/Get requests if they
+            have not yet been scheduled
+  - #60614: missing tapecopies value assumes negative number
+  - #61024: RFE: Job submissions into LSF should be processed using FIFO
+  - #61026: RFE: Termination of LSF jobs on stager_rm
+  - #61085: stagerjob callback failures can block LSF job slots for up to 300
+            seconds
+  - #61101: enterFileClass does not return correct ID
+
+  CASTOR tape
+  -----------
+  - #50718: RFE: Add TPMS procedures to VMGR database schema
+  - #58384: RFE: enterSvcClass and modifySvcClass should check that tape pools
+            exist
+  - #58689: RFE: Remove the unused, redundant and broken tpsrv_in_prod command
+  - #58929: RFE: Make the STATUS_VALUES tape status table officially part of the
+            VMGR database schema
+  - #58937: RFE: Re-implement the VDQM direct-to-database admin tools in Python
+  - #58794: RFE: Make vmgrdeletetape name server safe
+  - #59007: Fix error handling logic of the RTCPD disk IO thread
+  - #59015: The main RTCPD control thread is setting the ACCOUNT environment
+            variable to "" when it should not
+  - #60613: create recall candidate for repack doesn't use the suggested vid
+
+  CASTOR uncategorized
+  --------------------
+  - Dropped the unused CUPV/TRUSTED_USERS functionality from castor.conf which
+    was used as a workaround for bypassing CUPV checks to prevent overloading
+    the CUPV server. Now that the number of CUPV threads can be configured, this
+    workaround is no longer required. Refer to:
+
+    + #48342: RFE: Add support for changing the number of threads in the
+              Cupvdaemon
+
+  - Removed the workaround for the oracle BigId problem from the repack server
+    now that an official patch is available from Oracle. (SR #106879)
+
+  - Ported the code to compile under GCC 4.4.
+
+
+  Package Changes
+  ---------------
+  - Removed the dumptape command from the castor-tape-client package as it was
+    identical to tpdump.
+
+  - Added a new castor-lib-tapeutils package to allow for continued testing and
+    development of the tapegateway and aggregator daemons.
+
+
+  Upgrade Instructions from 2.1.9-3
+  ---------------------------------
+
+    Before upgrading to a 2.1.9-4 instance of CASTOR2 please make sure to read
+    the upgrade instructions fully before proceeding.
+
+    Stager, DLF, Monitoring & Repack
+    --------------------------------
+
+    The upgrade of the DLF, Monitoring and Repack databases to 2.1.9-4 can be
+    performed online while the system is running. For the stager upgrade the
+    instance must be stopped! The expected downtime is less than 10 minutes.
+
+      Instructions
+      ------------
+
+       1. Due to a bug in the rmmaster which loses the state of DRAINING
+          diskservers after a restart you will need to take a note of those
+          diskservers which are in a DRAINING state before the upgrade using the
+          following command: (#47634)
+
+            rmGetNodes | grep -B4 DISKSERVER_DRAINING | grep name | cut -d ':' -f 2 | awk '{ print "rmAdminNode -n "$1" -f Draining" }'
+
+       2. Stop all daemons on stager headnodes which have direct connections to
+          the stager database. This includes: rhd, stagerd, jobmanagerd,
+          rtcpclientd, mighunterd, rechandlerd, expertd and rmmasterd.
+
+          Note: It is not necessary to stop any services/daemons on the
+                diskservers themselves.
+
+       3. Upgrade the Stager database using the stager_2.1.9-3_to_2.1.9-4.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-4/dbupgrades
+
+          During the upgrade process the script will prompt for the uid and gid
+          of the stage:st account and a list of all user accounts which should
+          be classified as system administrators.
+
+       4. Upgrade the DLF database using the dlf_2.1.9-3_to_2.1.9-4.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-4/dbupgrades
+
+       5. If applicable, upgrade the Monitoring database using the mon_2.1.9-3_to_2.1.9-4.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-4/dbupgrades
+
+       6. If applicable, upgrade the Repack database using the repack_2.1.9-3_to_2.1.9-4.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-4/dbupgrades
+
+       7. Upgrade the software on the headnodes and diskservers to 2.1.9-4.
+          Note: All daemons involved in the upgrade will be restarted
+          automatically.
+
+       8. Start all the daemons which were stopped in step 2.
+
+       9. Wait 60 seconds to give time for the diskservers to send a heartbeat
+          message to the rmmaster daemon.
+
+      10. Apply the commands returned in step 1.
+
+      11. Test the instance by running the test suite available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-4/testsuite
+
+      12. Congratulations you have successfully upgraded to the 2.1.9-4 release
+          of CASTOR stager!!
+
+
+    Central services (CNS, CUPV, VMGR, VDQM)
+    ----------------------------------------
+
+    The upgrade of the CNS, CUPV, VMGR and VDQM databases to 2.1.9-4 can be 
+    performed online while the system is running: 
+  
+      Instructions 
+      ------------ 
+ 
+      1. Apply the appropriate database upgrade script from: 
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-4/dbupgrades 
+ 
+      2. Update the appropriate software to use the 2.1.9-4 RPMS. Note: All 
+         daemons involved in the upgrade will be restarted automatically. 
+ 
+      3. Upgrade complete. 
+
+
+-----------
 - 2.1.9-3 -
 -----------
 
@@ -190,7 +362,7 @@
       13. Start LSF on all headnodes which can become LSF masters.
 
       14. Wait 60 seconds to give time for the diskservers to send a heartbeat
-          message to the rmMasterDaemon.
+          message to the rmmaster daemon.
 
       15. Apply the commands returned in step 1.
 
