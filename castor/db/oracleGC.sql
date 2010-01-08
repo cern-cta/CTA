@@ -272,7 +272,7 @@ BEGIN
              AND SubRequest.status IN (4, 5, 6, 12, 13, 14)) -- being processed (WAIT*, READY, *SCHED)
        AND NOT EXISTS
          -- Ignore diskcopies with active replications
-         (SELECT * FROM StageDiskCopyReplicaRequest, DiskCopy D
+         (SELECT 'x' FROM StageDiskCopyReplicaRequest, DiskCopy D
            WHERE StageDiskCopyReplicaRequest.destDiskCopy = D.id
              AND StageDiskCopyReplicaRequest.sourceDiskCopy = DiskCopy.id
              AND D.status = 1)  -- WAITD2D
