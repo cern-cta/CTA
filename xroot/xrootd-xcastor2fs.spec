@@ -1,7 +1,7 @@
 Summary:     The next generation xrootd@Castor2 interface
 Name: 	     xrootd-xcastor2fs
 Version:     1.0.9
-Release:     3
+Release:     5
 License:     none
 Group:       Applications/Castor
 Source0:     %{name}-%{version}.tar.gz
@@ -61,6 +61,12 @@ fi
 %attr(-,stage,st) %dir /var/spool/xroot/core
 
 %changelog
+* Fri Jan 08 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.9-5
+- adding initialization of Cthread library in xCastor2Fs
+
+* Tue Dec 15 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.9-4
+- adding protection against 'infinite' loop when looking for a VOMS mapping which has no matching rule
+
 * Tue Dec 09 2009 root <root@pcitsmd01.cern.ch> - xcastor2-1.0.9-3
 - adding wildcard support for VOMS group mapping e.g. /atlas/* => zg
 

@@ -119,9 +119,6 @@ XrdSfsFileSystem *XrdSfsGetFileSystem(XrdSfsFileSystem *native_fs,
 //
    if (!(XrdOfsOss = (XrdOssSys*) XrdOssGetSS(lp, configfn, XrdOfsFS.OssLib))) return 0;
 
-// Initialize the CASTOR Cthread library
-   Cthread_init();
-
 // All done, we can return the callout vector to these routines.
 //
    return &XrdOfsFS;

@@ -870,6 +870,10 @@ XrdSfsFileSystem *XrdSfsGetFileSystem(XrdSfsFileSystem *native_fs,
   if (!XrdxCastor2FS->ServerAcc) {
     return 0;
   }
+
+  // Initialize the CASTOR Cthread library
+  Cthread_init();
+
   return &myFS;
 }
 
