@@ -31,6 +31,22 @@ LIBS =
 DependsOnLibrary(../common,castorcommon)
 DependsOnLibrary(,castorclient)
 
+COMM We overwrite here the default rule for the compilation of schmod_python in order
+COMM to be able to alleviate the -Werror present in the standard flags for the case
+COMM of "conversion from string constant to 'char*'". The reason is that some python
+COMM headers have changed in python 2.5 from char* to const char*. This produces a
+COMM warning that should not be considered as an error. Note that we can (and should)
+COMM change our code to pass a const char* but this breaks compatibility with python
+COMM 2.3 and 2.4 which are the standards at CERN today (Jan 2010)
+COMM the initial rule was :
+COMM  $(COMPILE.cpp) $(OUTPUT_OPTION) -Wno-error=write-strings $<
+COMM but gcc 3.4 (SLC4) and gcc 4.1 (SLC5) did not recognize the option used
+COMM We thus had to go back to -Wno-error for this file
+StreamPySvc.o: StreamPySvc.cpp
+	$(COMPILE.cpp) $(OUTPUT_OPTION) -Wno-error $<
+RecallPySvc.o: RecallPySvc.cpp
+	$(COMPILE.cpp) $(OUTPUT_OPTION) -Wno-error $<
+
 POLICYLIB_SRCS = MigrationPolicyElement.cpp \
 	RecallPolicyElement.cpp \
 	StreamPolicyElement.cpp \
