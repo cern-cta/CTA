@@ -23,8 +23,11 @@
  *****************************************************************************/
 
 // Include files
-#include "castor/server/DynamicThreadPool.hpp"
 #include <unistd.h>
+#include <sys/time.h>
+#include "castor/metrics/MetricsCollector.hpp"
+#include "castor/metrics/InternalCounter.hpp"
+#include "castor/server/DynamicThreadPool.hpp"
 
 //-----------------------------------------------------------------------------
 // Constructor
@@ -79,6 +82,20 @@ castor::server::DynamicThreadPool::DynamicThreadPool
 }
 
 //-----------------------------------------------------------------------------
+// Destructor
+//-----------------------------------------------------------------------------
+castor::server::DynamicThreadPool::~DynamicThreadPool() throw() {
+  // Destroy the producer thread 
+  delete m_producerThread;
+
+  // Destroy global mutexes
+  pthread_mutex_destroy(&m_lock);              
+  
+  // Destroy thread attributes
+  pthread_attr_destroy(&m_attr);
+}
+
+//-----------------------------------------------------------------------------
 // setNbThreads
 //-----------------------------------------------------------------------------
 void castor::server::DynamicThreadPool::setNbThreads(unsigned int value) {
@@ -92,6 +109,27 @@ void castor::server::DynamicThreadPool::setNbThreads(unsigned int value) {
       m_maxThreads = value;
       m_threshold = 0;
     }
+  }
+}
+
+//-----------------------------------------------------------------------------
+// init
+//-----------------------------------------------------------------------------
+void castor::server::DynamicThreadPool::init()
+  throw (castor::exception::Exception) {
+  
+  castor::server::BaseThreadPool::init();
+  
+  // Enable internal monitoring if the metrics collector has already
+  // been instantiated by the user application
+  castor::metrics::MetricsCollector* mc = castor::metrics::MetricsCollector::getInstance(0);
+  if(mc) {
+    mc->getHistogram("BacklogFactor")->addCounter(
+      new castor::metrics::InternalCounter(*this, "%",
+        &castor::server::BaseThreadPool::getBacklogFactor));
+    mc->getHistogram("AvgQueuingTime")->addCounter(
+      new castor::metrics::InternalCounter(*this, "ms",
+        &castor::server::BaseThreadPool::getAvgQueuingTime));
   }
 }
 
@@ -152,24 +190,6 @@ void castor::server::DynamicThreadPool::run()
      castor::dlf::Param("MaxThreads", m_maxThreads)};
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
                           DLF_BASE_FRAMEWORK + 3, 4, params);
-
-  // Initialize the underlying producer thread. The consumer threads
-  // are initialized each time they are created.
-  m_producerThread->init();
-}
-
-//-----------------------------------------------------------------------------
-// Destructor
-//-----------------------------------------------------------------------------
-castor::server::DynamicThreadPool::~DynamicThreadPool() throw() {
-  // Destroy the producer thread 
-  delete m_producerThread;
-
-  // Destroy global mutexes
-  pthread_mutex_destroy(&m_lock);              
-  
-  // Destroy thread attributes
-  pthread_attr_destroy(&m_attr);
 }
 
 //-----------------------------------------------------------------------------
@@ -194,6 +214,16 @@ bool castor::server::DynamicThreadPool::shutdown(bool wait) throw() {
   return (m_nbThreads == 0);
 }
 
+//------------------------------------------------------------------------------
+// resetMetrics
+//------------------------------------------------------------------------------
+void castor::server::DynamicThreadPool::resetMetrics()
+{
+  // see comments in the ancestor
+  castor::server::BaseThreadPool::resetMetrics();
+  m_queueTime = 0;
+}
+
 //-----------------------------------------------------------------------------
 // Producer
 //-----------------------------------------------------------------------------
@@ -202,7 +232,10 @@ void* castor::server::DynamicThreadPool::_producer(void *arg) {
   DynamicThreadPool *pool = (DynamicThreadPool *)arg;
 
   try {
-    // this is supposed to run forever
+    // Initialize the producer thread
+    pool->m_producerThread->init();
+
+    // Run it: this is supposed to run forever
     pool->m_producerThread->run(pool);
   }
   catch(castor::exception::Exception any) {
@@ -228,9 +261,10 @@ void* castor::server::DynamicThreadPool::_producer(void *arg) {
 // Consumer
 //-----------------------------------------------------------------------------
 void* castor::server::DynamicThreadPool::_consumer(void *arg) {
-  
   // Variables
   DynamicThreadPool *pool = (DynamicThreadPool *)arg;
+  timeval tv1, tv2;
+  double activeTime = 0, idleTime = 0, queueTime = 0;
   
   // Thread initialization
   try {
@@ -244,14 +278,17 @@ void* castor::server::DynamicThreadPool::_consumer(void *arg) {
                             DLF_BASE_FRAMEWORK + 5, 2, params);
   } 
 
+  gettimeofday(&tv2, NULL);
+  
   // Task processing loop.
   while (!pool->m_stopped) {
 
     // Wait for a task to be available from the queue.
-    void *args = 0;
+    QueueElement qe;
+    qe.param = 0;
     try {
-      args = pool->m_taskQueue.pop
-        ((pool->m_nbThreads == pool->m_initThreads));
+      pool->m_taskQueue.pop(
+        (pool->m_nbThreads == pool->m_initThreads), qe);
     } catch (castor::exception::Exception e) {
       if (e.code() == EPERM) {
         break;          // Queue terminated, destroy thread
@@ -266,8 +303,34 @@ void* castor::server::DynamicThreadPool::_consumer(void *arg) {
     
     // Invoke the user code
     try {
-      if (args != 0) {
-        pool->m_thread->run(args);
+      if (qe.param != 0) {
+        // First update counters
+        pthread_mutex_lock(&pool->m_lock);
+        pool->m_nbActiveThreads++;
+        pthread_mutex_unlock(&pool->m_lock);
+        gettimeofday(&tv1, NULL);
+        idleTime = tv1.tv_sec - tv2.tv_sec + (tv1.tv_usec - tv2.tv_usec)/1000000.0;
+        queueTime = tv1.tv_sec - qe.qTime.tv_sec + (tv1.tv_usec - qe.qTime.tv_usec)/1000000.0;
+
+        // User processing
+        pool->m_thread->run(qe.param);
+        
+        // Re-update timing and counters
+        gettimeofday(&tv2, NULL);
+        activeTime = tv2.tv_sec - tv1.tv_sec + (tv2.tv_usec - tv1.tv_usec)/1000000.0;
+
+        pthread_mutex_lock(&pool->m_lock);
+        pool->m_nbActiveThreads--;
+        pool->m_runsCount++;
+        pthread_mutex_unlock(&pool->m_lock);
+
+        // "Task processed"         
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("ThreadPool", pool->m_poolName),
+           castor::dlf::Param("ProcessingTime", activeTime),
+           castor::dlf::Param("QueuingTime", queueTime)};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                                DLF_BASE_FRAMEWORK + 22, 3, params);
       }
     } catch(castor::exception::Exception any) {
       // "Uncaught exception in a thread from pool"
@@ -288,7 +351,11 @@ void* castor::server::DynamicThreadPool::_consumer(void *arg) {
     // Destroy any threads over the initial thread limit if the number of tasks
     // in the task queue has dropped to acceptable limits.
     pthread_mutex_lock(&pool->m_lock);
-    signed64 diff = time(NULL) - pool->m_lastPoolShrink;
+    u_signed64 diff = time(NULL) - pool->m_lastPoolShrink;
+    // update shared timers
+    pool->m_activeTime += activeTime;
+    pool->m_idleTime += idleTime;
+    pool->m_queueTime += queueTime;
     if ((pool->m_taskQueue.size() < pool->m_threshold) &&
         (pool->m_nbThreads > pool->m_initThreads) &&
         (diff > 10)) {

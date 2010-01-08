@@ -59,7 +59,7 @@ castor::server::BaseServer::BaseServer(const std::string serverName) :
   m_serverName(serverName)
 {
   m_cmdLineParams.clear();
-  m_cmdLineParams << "fc:h";
+  m_cmdLineParams << "fc:mh";
 }
 
 //-----------------------------------------------------------------------------
@@ -149,6 +149,7 @@ void castor::server::BaseServer::dlfInit(castor::dlf::Message messages[])
      { 19, "Error while dispatching to a thread" },
      { 20, "Spawning a new thread in pool" },
      { 21, "Terminating a thread in pool" },
+     { 22, "Task processed" },
      { -1, "" }};
   castor::dlf::dlf_addMessages(DLF_BASE_FRAMEWORK, frameworkMessages);
 }
@@ -194,85 +195,16 @@ void castor::server::BaseServer::addThreadPool
 }
 
 //-----------------------------------------------------------------------------
-// parseCommandLine
+// resetAllMetrics
 //-----------------------------------------------------------------------------
-void castor::server::BaseServer::parseCommandLine(int argc, char *argv[])
+void castor::server::BaseServer::resetAllMetrics() throw()
 {
-  Coptions_t* longopts = new Coptions_t[m_threadPools.size() + 4];
-  char tparam[] = "Xthreads";
-
-  longopts[0].name = "foreground";
-  longopts[0].has_arg = NO_ARGUMENT;
-  longopts[0].flag = NULL;
-  longopts[0].val = 'f';
-  longopts[1].name = "config";
-  longopts[1].has_arg = REQUIRED_ARGUMENT;
-  longopts[1].flag = NULL;
-  longopts[1].val = 'c';
-  longopts[2].name = "help";
-  longopts[2].has_arg = NO_ARGUMENT;
-  longopts[2].flag = NULL;
-  longopts[2].val = 'h';
-
-
   std::map<const char, castor::server::BaseThreadPool*>::const_iterator tp;
-  unsigned i = 3;
-  for(tp = m_threadPools.begin(); tp != m_threadPools.end(); tp++, i++) {
-    tparam[0] = tp->first;
-    longopts[i].name = strdup(tparam);
-    longopts[i].has_arg = REQUIRED_ARGUMENT;
-    longopts[i].flag = NULL;
-    longopts[i].val = tp->first;
-  };
-  longopts[i].name = 0;
-
-  Coptind = 1;
-  Copterr = 0;
-  Coptreset = 1;
-
-  char c;
-  while ((c = Cgetopt_long(argc, argv, (char*)m_cmdLineParams.str().c_str(), longopts, NULL)) != -1) {
-    switch (c) {
-    case 'f':
-      m_foreground = true;
-      break;
-    case 'c':
-      setenv("PATH_CONFIG", Coptarg, 1);
-      std::cout << "Using configuration file " << Coptarg << std::endl;
-      break;
-    case 'h':
-      help(argv[0]);
-      exit(0);
-      break;
-    default:
-      tp = m_threadPools.find(c);
-      if(tp != m_threadPools.end()) {
-        tp->second->setNbThreads(atoi(Coptarg));
-      }
-      break;
-    }
+  for (tp = m_threadPools.begin(); tp != m_threadPools.end(); tp++) {
+    try {
+      tp->second->resetMetrics();
+    } catch (castor::exception::Exception ignore) {}
   }
-  // free memory
-  for(unsigned j = 3; j < i;j++) {
-    free((char*)longopts[j].name);
-  };
-  delete[] longopts;
-}
-
-//-----------------------------------------------------------------------------
-// help
-//-----------------------------------------------------------------------------
-void castor::server::BaseServer::help(std::string programName)
-{
-  std::cout << "Usage: " << programName << " [options]\n"
-    "\n"
-    "where options can be:\n"
-    "\n"
-    "\t--foreground            or -f         \tRemain in the Foreground\n"
-    "\t--config <config-file>  or -c         \tConfiguration file\n"
-    "\t--help                  or -h         \tPrint this help and exit\n"
-    "\n"
-    "Comments to: Castor.Support@cern.ch\n";
 }
 
 //-----------------------------------------------------------------------------
@@ -297,4 +229,3 @@ void castor::server::BaseServer::sendNotification
     // this is a best effort service, ignore any failure
   }
 }
-

@@ -27,6 +27,7 @@
 // Include Files
 #include "castor/server/SignalThreadPool.hpp"
 #include "castor/exception/Internal.hpp"
+#include <sys/time.h>
 
 extern "C" {
   char* getconfent (const char *, const char *, int);
@@ -44,28 +45,13 @@ castor::server::SignalThreadPool::SignalThreadPool(const std::string poolName,
   throw(castor::exception::Exception) :
   BaseThreadPool(poolName, thread, nbThreads),
   m_poolMutex(-1, (unsigned)timeout), m_notified(startingThreads)
-{
-  // number of threads currently running the service
-  m_nbActiveThreads = 0;
-}
+{}
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 castor::server::SignalThreadPool::~SignalThreadPool() throw()
 {}
-
-//------------------------------------------------------------------------------
-// init
-//------------------------------------------------------------------------------
-void castor::server::SignalThreadPool::init()
-  throw (castor::exception::Exception)
-{
-  if(m_notified > (int)m_nbThreads) {
-    m_notified = m_nbThreads;
-  }
-  // Note: if m_nbThreads == 0, this thread pool will just stay idle
-}
 
 //------------------------------------------------------------------------------
 // shutdown
@@ -116,7 +102,7 @@ void castor::server::SignalThreadPool::run()
   // create pool of detached threads
   for (unsigned i = 0; i < m_nbThreads; i++) {
     if (Cthread_create_detached(
-                                (void *(*)(void *))&SignalThreadPool::_runner, this) >= 0) {
+          (void *(*)(void *))&SignalThreadPool::_runner, this) >= 0) {
       ++n;
     }
   }
@@ -127,6 +113,9 @@ void castor::server::SignalThreadPool::run()
   }
   else {
     m_nbThreads = n;
+    if(m_notified > (int)n) {
+      m_notified = n;
+    }
     // "Thread pool started"
     castor::dlf::Param params[] =
       {castor::dlf::Param("ThreadPool", m_poolName),
@@ -167,31 +156,17 @@ void castor::server::SignalThreadPool::waitSignalOrTimeout()
 
 
 //------------------------------------------------------------------------------
-// commitRelease
-//------------------------------------------------------------------------------
-void castor::server::SignalThreadPool::commitRelease()
-  throw (castor::exception::Exception)
-{
-  try {
-    m_poolMutex.lock();
-    m_nbActiveThreads--;
-  }
-  catch (castor::exception::Exception e) {
-    m_nbActiveThreads--;   // unsafe
-    throw e;
-  }
-  m_poolMutex.release();
-}
-
-
-//------------------------------------------------------------------------------
 // _runner
 //------------------------------------------------------------------------------
-void* castor::server::SignalThreadPool::_runner(void* param) {
+void* castor::server::SignalThreadPool::_runner(void* param)
+{
   SignalThreadPool* pool = (SignalThreadPool*)param;
+  timeval tv1, tv2;
+  double activeTime = 0, idleTime = 0;
+  gettimeofday(&tv2, NULL);
 
   try {
-    // Perform user initialization
+    // Thread initialization
     pool->m_thread->init();
 
     while (!pool->m_stopped) {
@@ -207,9 +182,22 @@ void* castor::server::SignalThreadPool::_runner(void* param) {
 
         // do the user job and catch any exception for logging purposes
         try {
+          gettimeofday(&tv1, NULL);
+          idleTime = tv1.tv_sec - tv2.tv_sec + (tv1.tv_usec - tv2.tv_usec)/1000000.0;
+
           // we pass the pool itself as parameter to allow e.g.
           // SelectProcessThreads to call our stopped() method
           pool->m_thread->run(pool);
+          
+          gettimeofday(&tv2, NULL);
+          activeTime = tv2.tv_sec - tv1.tv_sec + (tv2.tv_usec - tv1.tv_usec)/1000000.0;
+
+          // "Task processed"         
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("ThreadPool", pool->m_poolName),
+             castor::dlf::Param("ProcessingTime", activeTime)};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                                  DLF_BASE_FRAMEWORK + 22, 2, params);
         }
         catch (castor::exception::Exception e) {
           // "Exception caught in the user thread"
@@ -221,8 +209,20 @@ void* castor::server::SignalThreadPool::_runner(void* param) {
         }
       }
 
-      // notify that we are not anymore a running service
-      pool->commitRelease();
+      // we are not anymore a running service
+      try {
+        pool->m_poolMutex.lock();
+        pool->m_nbActiveThreads--;
+        // update shared timers
+        pool->m_activeTime += activeTime;
+        pool->m_idleTime += idleTime;
+        pool->m_runsCount++;
+      }
+      catch (castor::exception::Exception e) {
+        pool->m_nbActiveThreads--;   // unsafe
+        throw e;
+      }
+      pool->m_poolMutex.release();
 
       // and continue forever until shutdown() is called
     }

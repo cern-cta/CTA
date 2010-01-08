@@ -29,8 +29,9 @@
  * already been reached. If the number of pending tasks is below the threshold
  * then a thread will be destroyed every 10 seconds until either the threshold
  * or initial number of threads is reached.
- * Note: this thread pool is not suitable for database interaction because 
- * dropping and recreating db connections creates too much overhead on Oracle.
+ * Note: special care should be taken in using this thread pool with database
+ * interaction because dropping and recreating db connections too often
+ * creates a substantial overhead on Oracle.
  *
  * The base implementation is adapted from the following two projects:
  * @see apr_thread_pool.h (Apache Portable Runtime Utils)
@@ -39,8 +40,8 @@
  * @author Dennis Waldron
  *****************************************************************************/
 
-#ifndef DYNAMIC_THREAD_POOL_HPP
-#define DYNAMIC_THREAD_POOL_HPP 1
+#ifndef CASTOR_SERVER_DYNAMICTHREADPOOL_HPP
+#define CASTOR_SERVER_DYNAMICTHREADPOOL_HPP 1
 
 // Include files
 #include "castor/server/BaseThreadPool.hpp"
@@ -116,10 +117,16 @@ namespace castor {
       virtual ~DynamicThreadPool() throw();
 
       /**
-       * Pre-daemonization initialization. Empty for this pool.
+       * Initializes the pool. This function is called before
+       * any forking may take place.
        */
-      virtual void init() throw (castor::exception::Exception) {};
+      virtual void init() throw (castor::exception::Exception);
 
+      /**
+       * Creates and starts the threads
+       */
+      virtual void run() throw (castor::exception::Exception);
+      
       /**
        * Shutdowns the pool by terminating the task queue.
        * @return true if the pool has stopped.
@@ -130,6 +137,11 @@ namespace castor {
        * Sets the number of threads
        */
       virtual void setNbThreads(unsigned int value);
+
+      /**
+       * Resets internal counters for calculating monitoring metrics
+       */
+      virtual void resetMetrics();
 
       /**
        * Add a task to the thread pool
@@ -147,9 +159,18 @@ namespace castor {
         throw(castor::exception::Exception);
         
       /**
-       * Starts the threads in suspended mode
+       * Functions returning queue related metrics
        */
-      virtual void run() throw (castor::exception::Exception);
+      virtual u_signed64 getBacklogFactor() {
+        // percentage value in the range 0..100
+        return (u_signed64)(m_taskQueue.size() * 100.0 / m_taskQueue.maxSize());
+      }
+      
+      virtual u_signed64 getAvgQueuingTime() {
+        // average queuing time in ms
+        return (u_signed64)(m_runsCount > 0 ?
+          m_queueTime * 1000 / m_runsCount : 0);
+      }
 
     private:
 
@@ -193,10 +214,14 @@ namespace castor {
 
       /// The last time in seconds since EPOCH that a thread was destroyed.
       u_signed64 m_lastPoolShrink;
+      
+      /// Queueing time for the submitted tasks, i.e. time interval between
+      /// addTask() and pop() from the queue.
+      double m_queueTime;
     };
 
   } // End of namespace server
 
 } // End of namespace castor
 
-#endif // DYNAMIC_THREAD_POOL_HPP
+#endif // CASTOR_SERVER_DYNAMICTHREADPOOL_HPP

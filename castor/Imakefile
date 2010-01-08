@@ -36,7 +36,7 @@ STAGERSUPERGROUP0 = st
 STAGERSUPERUSER  = -DSTAGERSUPERUSER=\"$(STAGERSUPERUSER0)\"
 STAGERSUPERGROUP = -DSTAGERSUPERGROUP=\"$(STAGERSUPERGROUP0)\"
 
-SUBDIRS = db rh vdqm gc repack monitoring stager jobmanager job infoPolicy scheduler rtcopy tape
+SUBDIRS = db rh vdqm gc repack monitoring stager jobmanager job infoPolicy scheduler rtcopy
 DEBUG  = -g -O0
 STAGEFLAGS = -DSTAGEMAP=\"StageMapFile\"
 CFLAGS = $(DEBUG) -I ../h -I .. $(MTCCFLAGS) $(STAGEFLAGS)
@@ -198,7 +198,8 @@ STGLIB_SRCS = IAddressCInt.cpp \
               monitoring/AdminStatusCodes.cpp \
               monitoring/StreamDirection.cpp \
               monitoring/StreamReport.cpp \
-              stager/BaseTapeSvc.cpp \
+              server/BaseDaemon.cpp \
+              server/BaseServer.cpp \
               server/AuthListenerThreadPool.cpp \
               server/BaseThreadPool.cpp \
               server/ListenerThreadPool.cpp \
@@ -211,6 +212,13 @@ STGLIB_SRCS = IAddressCInt.cpp \
               server/ThreadNotification.cpp \
               server/DynamicThreadPool.cpp \
               server/Queue.cpp \
+              metrics/Counter.cpp \
+              metrics/InternalCounter.cpp \
+              metrics/Histogram.cpp \
+              metrics/MetricsCollector.cpp \
+              metrics/UpdateThread.cpp \
+              metrics/ObjTypeCounter.cpp \
+              stager/BaseTapeSvc.cpp \
               stager/CastorFile.cpp \
               stager/CastorFileCInt.cpp \
               stager/DiskCopy.cpp \
@@ -378,8 +386,6 @@ STGLIB_SRCS = IAddressCInt.cpp \
               sharedMemory/BlockKey.cpp \
               sharedMemory/BlockDict.cpp \
               sharedMemory/DLFInit.cpp \
-              server/BaseDaemon.cpp \
-              server/BaseServer.cpp \
 
 
 STAGERLIB_OBJS = \

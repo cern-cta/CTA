@@ -68,7 +68,7 @@ namespace castor {
       /**
        * Parses a command line to set the server options
        */
-      virtual void parseCommandLine(int argc, char *argv[]);
+      virtual void parseCommandLine(int argc, char *argv[]) {};
 
       /**
        * Sets the foreground flag
@@ -92,6 +92,11 @@ namespace castor {
        * Adds a thread pool to this server
        */
       void addThreadPool(BaseThreadPool* tpool) throw();
+      
+      /**
+       * Calls resetMetrics on all registered thread pools
+       */
+      void resetAllMetrics() throw();
 
       /// Gets a pool by its name initial
       BaseThreadPool* getThreadPool(const char nameIn) throw() {
@@ -124,7 +129,7 @@ namespace castor {
       /**
        * Prints out the online help
        */
-      virtual void help(std::string programName);
+       virtual void help(std::string programName) {};
 
       /**
        * Flag indicating whether the server should

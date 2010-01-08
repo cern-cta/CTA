@@ -73,7 +73,8 @@ namespace castor {
     virtual ~BaseThreadPool() throw();
 
     /**
-     * Initializes the pool. This implementation throws an error.
+     * Initializes the pool. This function is called before
+     * any forking may take place.
      */
     virtual void init() throw (castor::exception::Exception);
 
@@ -81,8 +82,9 @@ namespace castor {
      * Runs the pool. This function is supposed to spawn
      * the threads and immediately return.
      * Specialized pools implement it according to their needs,
+     * this implementation throws an exception.
      */
-    virtual void run() throw (castor::exception::Exception) {};
+    virtual void run() throw (castor::exception::Exception);
     
     /**
      * Performs a graceful shutdown of the pool. This method is
@@ -111,10 +113,17 @@ namespace castor {
     }
 
     /**
-     * Gets the the pool name initial as identifier for this pool
+     * Gets the pool name initial as identifier for this pool
      */
     const char getPoolId() {
       return m_poolName[0];
+    }
+    
+    /**
+     * Gets the pool name
+     */
+    const std::string getName() {
+      return m_poolName;
     }
     
     /**
@@ -131,6 +140,47 @@ namespace castor {
     const bool stopped() {
       return m_stopped;
     }
+    
+    /**
+     * Resets internal counters for calculating monitoring metrics
+     */
+    virtual void resetMetrics();
+    
+    /**
+     * Pointer to a generic method returning a monitoring metric
+     */
+    typedef u_signed64 (BaseThreadPool::*MetricGetter)();
+    
+    /**
+     * Methods returning internal monitoring metrics
+     */
+    u_signed64 getAvgTaskTime() {
+      // average time to process a task in ms
+      return (u_signed64)(m_runsCount > 0 ?
+        m_activeTime * 1000 / m_runsCount : 0);
+    }
+     
+    virtual u_signed64 getActivityFactor() {
+      // percentage value in the range 0..100
+      return (u_signed64)(m_activeTime + m_idleTime > 0 ?
+        m_activeTime * 100 / (m_activeTime + m_idleTime) : 0);
+    }
+    
+    virtual u_signed64 getLoadFactor() {
+      // percentage value in the range 0..100
+      return (u_signed64)(m_nbThreads > 0 ?
+        m_nbActiveThreads * 100.0 / m_nbThreads : 0);
+    }
+    
+    virtual u_signed64 getBacklogFactor() {
+      // placeholder, DynamicThreadPool implements it
+      return 0;
+    }
+    
+    virtual u_signed64 getAvgQueuingTime() {
+      // placeholder, DynamicThreadPool implements it
+      return 0;
+    }
 
   protected:
 
@@ -145,6 +195,16 @@ namespace castor {
     
     /// Flag to indicate whether the thread pool is stopped
     bool m_stopped;
+    
+    /// count of the current number of busy threads in the pool
+    unsigned int m_nbActiveThreads;
+    
+    /// time counters to measure total idle and active time
+    /// of all threads in this pool
+    double m_idleTime, m_activeTime;
+    
+    /// total count of the executed runs for all threads in the pool
+    u_signed64 m_runsCount;
 
   };
 

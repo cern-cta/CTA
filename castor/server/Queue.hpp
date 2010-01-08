@@ -31,6 +31,7 @@
 #define QUEUE_HPP 1
 
 // Include files
+#include <sys/time.h>
 #include <castor/exception/Exception.hpp>
 #include <pthread.h>
 #include <errno.h>
@@ -43,6 +44,15 @@
 namespace castor {
 
   namespace server {
+    
+    /**
+     * A queue entry. It contains a generic parameter
+     * and a timestamp for the queuing time.
+     */
+    struct QueueElement {
+      void* param;
+      timeval qTime;
+    };
 
     /**
      * Thread Safe FIFO bounded queue
@@ -57,7 +67,7 @@ namespace castor {
        * @exception Exception in case of error.
        */
       Queue(unsigned int size = DEFAULT_QUEUE_BOUNDS)
-	throw(castor::exception::Exception);
+        throw(castor::exception::Exception);
 
       /**
        * Default Destructor
@@ -82,7 +92,7 @@ namespace castor {
        * allocated to the object. If not, memory leaks will be observed.
        */
       void push(void *data, bool wait = true)
-	throw(castor::exception::Exception);
+        throw(castor::exception::Exception);
       
       /**
        * Retrieve an element from the front of the queue
@@ -97,15 +107,23 @@ namespace castor {
        *           be non-blocking.
        *   EINTR:  The blocking was interrupted (try again)
        */
-      void* pop(bool wait = true)
-	throw(castor::exception::Exception);
+      void pop(bool wait, QueueElement& qe)
+        throw(castor::exception::Exception);
 
       /**
        * Returns the number of elements in the queue
-       * @return The number of elements in the queue, -1 if the queue is in the
+       * @return The number of elements in the queue, 0 if the queue is in the
        * process of being terminated.
        */
       unsigned int size();
+      
+      /**
+       * Returns the maximum size of the queue
+       * @return The maximum size of the queue
+       */
+       unsigned int maxSize() {
+         return m_bounds;
+       }
 
       /**
        * Terminate the queue, sending an interrupt to all threads waiting on
@@ -116,7 +134,7 @@ namespace castor {
     private:
 
       /// Standard STL queue.
-      std::queue<void *> m_queue;
+      std::queue<QueueElement> m_queue;
 
       /// Maximum number of elements in the queue
       unsigned int m_bounds;

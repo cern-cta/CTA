@@ -118,17 +118,20 @@ void castor::server::Queue::push(void *data, bool wait)
     if (m_queue.size() == m_bounds) {
       pthread_mutex_unlock(&m_lock);
       if (m_terminated) {
-	castor::exception::Exception e(EPERM); // Operation not permitted
-	throw e;
+        castor::exception::Exception e(EPERM); // Operation not permitted
+        throw e;
       } else {
-	castor::exception::Exception e(EINTR); // Interrupted
-	throw e;
+        castor::exception::Exception e(EINTR); // Interrupted
+        throw e;
       }
     }
   }
 
   // Push data to the STL queue container
-  m_queue.push(data);
+  QueueElement qe;
+  gettimeofday(&qe.qTime, NULL);
+  qe.param = data;
+  m_queue.push(qe);
 
   // If we have readers waiting on the queue then we wake one of them up
   if (m_nbReaders) {
@@ -141,7 +144,7 @@ void castor::server::Queue::push(void *data, bool wait)
 //-----------------------------------------------------------------------------
 // Pop
 //-----------------------------------------------------------------------------
-void* castor::server::Queue::pop(bool wait)
+void castor::server::Queue::pop(bool wait, QueueElement& qe)
   throw(castor::exception::Exception) {
   
   // Check if the queue has been terminated
@@ -170,17 +173,17 @@ void* castor::server::Queue::pop(bool wait)
     if (m_queue.empty()) {
       pthread_mutex_unlock(&m_lock);
       if (m_terminated) {
-	castor::exception::Exception e(EPERM); // Operation not permitted
-	throw e;	
+        castor::exception::Exception e(EPERM); // Operation not permitted
+        throw e;
       } else {
-	castor::exception::Exception e(EINTR); // Interrupted
-	throw e;
+        castor::exception::Exception e(EINTR); // Interrupted
+	      throw e;
       }
     }
   }
   
   // Extract the first element from the STL queue container
-  void *data = m_queue.front();
+  qe = m_queue.front();
   m_queue.pop();
 
   // If we have writers waiting on the queue then we wake one of them up
@@ -188,8 +191,6 @@ void* castor::server::Queue::pop(bool wait)
     pthread_cond_signal(&m_writers);
   }
   pthread_mutex_unlock(&m_lock);
-
-  return data;
 }
 
 
@@ -203,13 +204,9 @@ unsigned int castor::server::Queue::size() {
   if (m_terminated) {
     return 0;
   }
-  
-  // Return the number of elements in the queue
-  pthread_mutex_lock(&m_lock);
-  unsigned int size = m_queue.size();
-  pthread_mutex_unlock(&m_lock);
 
-  return size;
+  // Return the number of elements in the queue
+  return m_queue.size();
 }
 
 

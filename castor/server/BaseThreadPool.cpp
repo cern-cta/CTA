@@ -36,6 +36,8 @@
 #include "castor/server/BaseThreadPool.hpp"
 #include "castor/Services.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/metrics/MetricsCollector.hpp"
+#include "castor/metrics/InternalCounter.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -48,7 +50,12 @@ throw (castor::exception::Exception) :
   m_nbThreads(nbThreads),
   m_poolName(poolName),
   m_thread(thread),
-  m_stopped(false) {
+  m_stopped(false),
+  m_nbActiveThreads(0),
+  m_idleTime(0),
+  m_activeTime(0),
+  m_runsCount(0)
+{
   if (m_thread == 0) {
     castor::exception::Exception e(EINVAL);
     e.getMessage() << "A valid thread must be specified";
@@ -62,16 +69,34 @@ throw (castor::exception::Exception) :
 castor::server::BaseThreadPool::~BaseThreadPool() throw()
 {
   shutdown();
-  if(m_thread != 0) {
-    delete m_thread;
-    m_thread = 0;
-  }
+  delete m_thread;
 }
 
 //------------------------------------------------------------------------------
 // init
 //------------------------------------------------------------------------------
 void castor::server::BaseThreadPool::init() throw (castor::exception::Exception)
+{
+  // Enable internal monitoring if the metrics collector has already
+  // been instantiated by the user application
+  castor::metrics::MetricsCollector* mc = castor::metrics::MetricsCollector::getInstance();
+  if(mc) {
+    mc->getHistogram("AvgTaskTime")->addCounter(
+      new castor::metrics::InternalCounter(*this, "ms",
+        &castor::server::BaseThreadPool::getAvgTaskTime));
+    mc->getHistogram("ActivityFactor")->addCounter(
+      new castor::metrics::InternalCounter(*this, "%",
+        &castor::server::BaseThreadPool::getActivityFactor));
+    mc->getHistogram("LoadFactor")->addCounter(
+      new castor::metrics::InternalCounter(*this, "%",
+        &castor::server::BaseThreadPool::getLoadFactor));
+  }
+}
+
+//------------------------------------------------------------------------------
+// run
+//------------------------------------------------------------------------------
+void castor::server::BaseThreadPool::run() throw (castor::exception::Exception)
 {
   castor::exception::Internal notImpl;
   notImpl.getMessage() <<
@@ -96,3 +121,21 @@ void castor::server::BaseThreadPool::setNbThreads(unsigned int value)
 {
   m_nbThreads = value;
 }
+
+//------------------------------------------------------------------------------
+// resetMetrics
+//------------------------------------------------------------------------------
+void castor::server::BaseThreadPool::resetMetrics()
+{
+  /*
+  Reset internal counters. Note we're not taking a lock on the mutex to not
+  slow down the pool's mainstream activity: the consequence is only a less
+  accurate accounting if a thread is modifying those values at the same time.
+  Anyway, the metrics collector thread won't risk to run into a div-by-zero
+  exception as it calls resetMetrics() *after* having collected all metrics.
+  */
+  m_activeTime = 0;
+  m_idleTime = 0;
+  m_runsCount = 0;
+}
+

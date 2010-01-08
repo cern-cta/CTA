@@ -96,11 +96,6 @@ namespace castor {
     virtual ~SignalThreadPool() throw();
 
     /**
-     * Initializes the pool
-     */
-    virtual void init() throw (castor::exception::Exception);
-
-    /**
      * Creates and runs the pool starting the threads in detached mode.
      */
     virtual void run() throw (castor::exception::Exception);
@@ -131,19 +126,8 @@ namespace castor {
     void waitSignalOrTimeout()
       throw (castor::exception::Exception);
 
-    /**
-     * Release a thread from the list of active threads
-     * for this pool. Uses the internal mutex to be thread-safe.
-     * @throw Exception if a mutex call fails
-     */
-    void commitRelease()
-      throw (castor::exception::Exception);
-
     /// mutex used by the threads to safely access this class' fields
     Mutex m_poolMutex;
-    
-    /// count of the current number of busy threads in the pool
-    int m_nbActiveThreads;
     
     /// if > 0, nb of threads that need to be signaled
     int m_notified;

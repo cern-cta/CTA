@@ -79,6 +79,11 @@ namespace castor {
     void addNotifierThreadPool(int port);
     
     /**
+     * Parses a command line to set the server options
+     */
+    virtual void parseCommandLine(int argc, char *argv[]);
+      
+    /**
      * Starts the thread pools in detached mode.
      * Then starts also the signal thread (one per daemon) and waits
      * for incoming signals forever.
@@ -97,6 +102,11 @@ namespace castor {
      * Initializes the server as daemon
      */
     virtual void init() throw (castor::exception::Exception);
+
+    /**
+     * Prints out the online help
+     */
+    virtual void help(std::string programName);
 
     /**
      * Sends a shutdown message to all thread pools, then

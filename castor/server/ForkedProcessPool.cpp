@@ -97,6 +97,8 @@ bool castor::server::ForkedProcessPool::shutdown(bool wait) throw()
 void castor::server::ForkedProcessPool::init()
   throw (castor::exception::Exception)
 {
+  castor::server::BaseThreadPool::init();
+
   // don't do anything if nbThreads = 0
   if(m_nbThreads == 0) {
     return;
@@ -199,7 +201,7 @@ void castor::server::ForkedProcessPool::dispatch(castor::IObject& obj)
     throw e;
   }
 
-  // get the idle child
+  // get an idle child
   for (unsigned child = 0; child < m_nbThreads; child++) {
     if (FD_ISSET(m_childPipe[child]->getFdWrite(), &writepipes)) {
       // dispatch the object to the child (this can throw exceptions)
