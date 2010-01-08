@@ -62,6 +62,9 @@ start() {
         # Start rhds
         for i in ${ROLES}; do
 
+                # Export the role name to make the daemon aware of it
+                export CASTOR_ROLE=$i
+
                 # Load the appropriate sysconfig file for role
                 if [ -f /etc/sysconfig/$prog.$i ]; then
                         . /etc/sysconfig/$prog.$i
