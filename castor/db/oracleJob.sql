@@ -920,8 +920,7 @@ PROCEDURE jobToSchedule(srId OUT INTEGER,              srSubReqId OUT VARCHAR2,
   CURSOR c IS
     SELECT /*+ FIRST_ROWS(10) INDEX(SR I_SubRequest_RT_CT_ID) */ SR.id
       FROM SubRequest
- PARTITION (P_STATUS_3_13_14) SR  -- RESTART, READYFORSCHED, BEINGSCHED
-     WHERE SR.status IN (13, 14)  -- READYFORSCHED, BEINGSCHED
+ PARTITION (P_STATUS_13_14) SR  -- RESTART, READYFORSCHED, BEINGSCHED
      ORDER BY SR.creationTime ASC;
   SrLocked EXCEPTION;
   PRAGMA EXCEPTION_INIT (SrLocked, -54);
@@ -941,7 +940,7 @@ BEGIN
       -- valid subrequest is either in READYFORSCHED or has been stuck in
       -- BEINGSCHED for more than 1800 seconds (30 mins)
       SELECT /*+ INDEX(SR PK_SubRequest_ID) */ id INTO srId
-        FROM SubRequest PARTITION (P_STATUS_3_13_14) SR
+        FROM SubRequest PARTITION (P_STATUS_13_14) SR
        WHERE id = srId
          AND ((status = 13)  -- READYFORSCHED
           OR  (status = 14   -- BEINGSCHED
