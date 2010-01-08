@@ -1,5 +1,5 @@
 /******************************************************************************
- *              prevRelease_to_newRelease.sql
+ *              vmgr_2.1.9-3_to_2.1.9-4.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,7 +19,7 @@
  *
  * @(#)$RCSfile: template.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/02/16 09:13:00 $ $Author: waldron $
  *
- * This script upgrades a CASTOR vprevRelease DBNAME database into vnewRelease
+ * This script upgrades a CASTOR v2.1.9-3 VMGR database to v2.1.9-4
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -29,8 +29,8 @@ WHENEVER SQLERROR EXIT FAILURE
 BEGIN
   UPDATE UpgradeLog
      SET failureCount = failureCount + 1
-   WHERE schemaVersion = 'schemaTag'
-     AND release = 'newRelTag'
+   WHERE schemaVersion = '2_1_9_0'
+     AND release = '2_1_9_4'
      AND state != 'COMPLETE';
   COMMIT;
 END;
@@ -41,15 +41,14 @@ DECLARE
   unused VARCHAR(100);
 BEGIN
   SELECT release INTO unused FROM CastorVersion
-   WHERE release LIKE '2_1_9_3';
+   WHERE release LIKE '2_1_9_3%';
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- Error, we can't apply this script
   raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts before this one.');
 END;
 /
 
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('schemaTag', 'newRelTag');
-/* Uncomment for transparent release */
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('2_1_9_0', '2_1_9_4');
 UPDATE UpgradeLog SET type = 'TRANSPARENT';
 COMMIT;
 

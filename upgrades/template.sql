@@ -19,7 +19,7 @@
  *
  * @(#)$RCSfile: template.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/02/16 09:13:00 $ $Author: waldron $
  *
- * This script upgrades a CASTOR vprevRelease DBNAME database into vnewRelease
+ * This script upgrades a CASTOR vprevRelease DBNAME database to vnewRelease
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
