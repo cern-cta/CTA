@@ -39,6 +39,9 @@ castor::metrics::UpdateThread::UpdateThread()
   char* sampling = getconfent("Metrics", "SamplingInterval", 0);
   if(sampling) {
     m_sampling = atoi(sampling);
+    if(m_sampling == 0) {
+      m_sampling = DEFAULT_SAMPLING_INTERVAL;
+    }
   }
   if(m_sampling < 10) {
     m_sampling = 10;   // this is the minimum allowed
