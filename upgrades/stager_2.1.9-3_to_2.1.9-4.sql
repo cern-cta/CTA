@@ -127,6 +127,33 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
+/* Change partitions of the SubRequest table */
+ALTER TABLE SubRequest 
+MODIFY PARTITION P_STATUS_3_13_14
+ DROP VALUES (3);
+
+ALTER TABLE SubRequest RENAME PARTITION P_STATUS_3_13_14 TO P_STATUS_13_14;
+
+ALTER TABLE SubRequest
+ SPLIT PARTITION P_STATUS_OTHER VALUES (3)
+  INTO (PARTITION P_STATUS_3, PARTITION P_STATUS_OTHER)
+UPDATE GLOBAL INDEXES;
+
+DROP INDEX I_SubRequest_RT_CT_ID;
+CREATE INDEX I_SubRequest_RT_CT_ID ON SubRequest(svcHandler, creationTime, id) LOCAL
+ (PARTITION P_STATUS_0_1_2,
+  PARTITION P_STATUS_3,
+  PARTITION P_STATUS_4,
+  PARTITION P_STATUS_5,
+  PARTITION P_STATUS_6,
+  PARTITION P_STATUS_7,
+  PARTITION P_STATUS_8,
+  PARTITION P_STATUS_9_10,
+  PARTITION P_STATUS_11,
+  PARTITION P_STATUS_12,
+  PARTITION P_STATUS_13_14,
+  PARTITION P_STATUS_OTHER);
+
 /* Remove unused objects */
 DROP FUNCTION CheckPermissionOnSvcClass;
 DROP PROCEDURE CheckPermission;
@@ -1295,8 +1322,7 @@ PROCEDURE jobToSchedule(srId OUT INTEGER,              srSubReqId OUT VARCHAR2,
   CURSOR c IS
     SELECT /*+ FIRST_ROWS(10) INDEX(SR I_SubRequest_RT_CT_ID) */ SR.id
       FROM SubRequest
- PARTITION (P_STATUS_3_13_14) SR  -- RESTART, READYFORSCHED, BEINGSCHED
-     WHERE SR.status IN (13, 14)  -- READYFORSCHED, BEINGSCHED
+ PARTITION (P_STATUS_13_14) SR  -- RESTART, READYFORSCHED, BEINGSCHED
      ORDER BY SR.creationTime ASC;
   SrLocked EXCEPTION;
   PRAGMA EXCEPTION_INIT (SrLocked, -54);
@@ -1316,7 +1342,7 @@ BEGIN
       -- valid subrequest is either in READYFORSCHED or has been stuck in
       -- BEINGSCHED for more than 1800 seconds (30 mins)
       SELECT /*+ INDEX(SR PK_SubRequest_ID) */ id INTO srId
-        FROM SubRequest PARTITION (P_STATUS_3_13_14) SR
+        FROM SubRequest PARTITION (P_STATUS_13_14) SR
        WHERE id = srId
          AND ((status = 13)  -- READYFORSCHED
           OR  (status = 14   -- BEINGSCHED
@@ -2337,6 +2363,503 @@ BEGIN
       NULL;  -- The SubRequest may have be removed, nothing to be done.
     END;
   END LOOP;
+END;
+/
+
+
+/* drain disk migration candidate selection policy */
+CREATE OR REPLACE PROCEDURE drainDiskMigrSelPolicy(streamId IN INTEGER,
+                                                   diskServerName OUT NOCOPY VARCHAR2, mountPoint OUT NOCOPY VARCHAR2,
+                                                   path OUT NOCOPY VARCHAR2, dci OUT INTEGER,
+                                                   castorFileId OUT INTEGER, fileId OUT INTEGER,
+                                                   nsHost OUT NOCOPY VARCHAR2, fileSize OUT INTEGER,
+                                                   tapeCopyId OUT INTEGER, lastUpdateTime OUT INTEGER) AS
+  fileSystemId INTEGER := 0;
+  diskServerId NUMBER;
+  fsDiskServer NUMBER;
+  lastFSChange NUMBER;
+  lastFSUsed NUMBER;
+  lastButOneFSUsed NUMBER;
+  findNewFS NUMBER := 1;
+  nbMigrators NUMBER := 0;
+  unused NUMBER;
+  LockError EXCEPTION;
+  PRAGMA EXCEPTION_INIT (LockError, -54);
+BEGIN
+  tapeCopyId := 0;
+  -- First try to see whether we should reuse the same filesystem as last time
+  SELECT lastFileSystemChange, lastFileSystemUsed, lastButOneFileSystemUsed
+    INTO lastFSChange, lastFSUsed, lastButOneFSUsed
+    FROM Stream WHERE id = streamId;
+  IF getTime() < lastFSChange + 1800 THEN
+    SELECT (SELECT count(*) FROM stream WHERE lastFileSystemUsed = lastFSUsed)
+      INTO nbMigrators FROM DUAL;
+    -- only go if we are the only migrator on the box
+    IF nbMigrators = 1 THEN
+      BEGIN
+        -- check states of the diskserver and filesystem and get mountpoint and diskserver name
+        SELECT diskserver.id, name, mountPoint, FileSystem.id
+          INTO diskServerId, diskServerName, mountPoint, fileSystemId
+          FROM FileSystem, DiskServer
+         WHERE FileSystem.diskServer = DiskServer.id
+           AND FileSystem.id = lastFSUsed
+           AND FileSystem.status IN (0, 1)  -- PRODUCTION, DRAINING
+           AND DiskServer.status IN (0, 1); -- PRODUCTION, DRAINING
+        -- we are within the time range, so we try to reuse the filesystem
+        SELECT /*+ ORDERED USE_NL(D T) INDEX(T I_TapeCopy_CF_Status_2)
+                   INDEX(ST I_Stream2TapeCopy_PC) */
+               D.path, D.diskcopy_id, D.castorfile, T.id
+          INTO path, dci, castorFileId, tapeCopyId
+          FROM (SELECT /*+ INDEX(DK I_DiskCopy_FS_Status_10) */
+                       DK.path path, DK.id diskcopy_id, DK.castorfile
+                  FROM DiskCopy DK
+                 WHERE decode(DK.status, 10, DK.status, NULL) = 10 -- CANBEMIGR
+                   AND DK.filesystem = lastFSUsed) D, TapeCopy T, Stream2TapeCopy ST
+         WHERE T.castorfile = D.castorfile
+           AND ST.child = T.id
+           AND ST.parent = streamId
+           AND decode(T.status, 2, T.status, NULL) = 2 -- WAITINSTREAMS
+           AND ROWNUM < 2 FOR UPDATE OF T.id NOWAIT;   
+        SELECT C.fileId, C.nsHost, C.fileSize, C.lastUpdateTime
+          INTO fileId, nsHost, fileSize, lastUpdateTime
+          FROM castorfile C
+         WHERE castorfileId = C.id;
+        -- we found one, no need to go for new filesystem
+        findNewFS := 0;
+      EXCEPTION WHEN NO_DATA_FOUND OR LockError THEN
+        -- found no tapecopy or diskserver, filesystem are down. We'll go through the normal selection
+        NULL;
+      END;
+    END IF;
+  END IF;
+  IF findNewFS = 1 THEN
+    -- We try first to reuse the diskserver of the lastFSUsed, even if we change filesystem
+    FOR f IN (
+      SELECT FileSystem.id AS FileSystemId, DiskServer.id AS DiskServerId, DiskServer.name, FileSystem.mountPoint
+        FROM FileSystem, DiskServer
+       WHERE FileSystem.diskServer = DiskServer.id
+         AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
+         AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
+         AND DiskServer.id = lastButOneFSUsed) LOOP
+       BEGIN
+         -- lock the complete diskServer as we will update all filesystems
+         SELECT id INTO unused FROM DiskServer
+          WHERE id = f.DiskServerId FOR UPDATE NOWAIT;
+         SELECT /*+ FIRST_ROWS(1) LEADING(D T StT C) */
+                f.diskServerId, f.name, f.mountPoint, f.fileSystemId, D.path, D.id, D.castorfile, C.fileId, C.nsHost, C.fileSize, T.id, C.lastUpdateTime
+           INTO diskServerId, diskServerName, mountPoint, fileSystemId, path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
+           FROM DiskCopy D, TapeCopy T, Stream2TapeCopy StT, Castorfile C
+          WHERE decode(D.status, 10, D.status, NULL) = 10 -- CANBEMIGR
+            AND D.filesystem = f.fileSystemId
+            AND StT.parent = streamId
+            AND T.status = 2 -- WAITINSTREAMS
+            AND StT.child = T.id
+            AND T.castorfile = D.castorfile
+            AND C.id = D.castorfile
+            AND ROWNUM < 2;
+         -- found something on this filesystem, no need to go on
+         diskServerId := f.DiskServerId;
+         fileSystemId := f.fileSystemId;
+         EXIT;
+       EXCEPTION WHEN NO_DATA_FOUND OR lockError THEN
+         -- either the filesystem is already locked or we found nothing,
+         -- let's go to the next one
+         NULL;
+       END;
+    END LOOP;
+  END IF;
+  IF tapeCopyId = 0 THEN
+    -- Then we go for all potential filesystems. Note the duplication of code, due to the fact that ORACLE cannot order unions
+    FOR f IN (
+      SELECT FileSystem.id AS FileSystemId, DiskServer.id AS DiskServerId, DiskServer.name, FileSystem.mountPoint
+        FROM Stream, SvcClass2TapePool, DiskPool2SvcClass, FileSystem, DiskServer
+       WHERE Stream.id = streamId
+         AND Stream.TapePool = SvcClass2TapePool.child
+         AND SvcClass2TapePool.parent = DiskPool2SvcClass.child
+         AND DiskPool2SvcClass.parent = FileSystem.diskPool
+         AND FileSystem.diskServer = DiskServer.id
+         AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
+         AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
+       ORDER BY -- first prefer diskservers where no migrator runs and filesystems with no recalls
+                DiskServer.nbMigratorStreams ASC, FileSystem.nbRecallerStreams ASC,
+                -- then order by rate as defined by the function
+                fileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams, FileSystem.nbWriteStreams,
+                               FileSystem.nbReadWriteStreams, FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC,
+                -- finally use randomness to avoid preferring always the same FS
+                DBMS_Random.value) LOOP
+       BEGIN
+         -- lock the complete diskServer as we will update all filesystems
+         SELECT id INTO unused FROM DiskServer WHERE id = f.DiskServerId FOR UPDATE NOWAIT;
+         SELECT /*+ FIRST_ROWS(1) LEADING(D T StT C) */
+                f.diskServerId, f.name, f.mountPoint, f.fileSystemId, D.path, D.id, D.castorfile, C.fileId, C.nsHost, C.fileSize, T.id, C.lastUpdateTime
+           INTO diskServerId, diskServerName, mountPoint, fileSystemId, path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
+           FROM DiskCopy D, TapeCopy T, Stream2TapeCopy StT, Castorfile C
+          WHERE decode(D.status, 10, D.status, NULL) = 10 -- CANBEMIGR
+            AND D.filesystem = f.fileSystemId
+            AND StT.parent = streamId
+            AND T.status = 2 -- WAITINSTREAMS
+            AND StT.child = T.id
+            AND T.castorfile = D.castorfile
+            AND C.id = D.castorfile
+            AND ROWNUM < 2;
+         -- found something on this filesystem, no need to go on
+         diskServerId := f.DiskServerId;
+         fileSystemId := f.fileSystemId;
+         EXIT;
+       EXCEPTION WHEN NO_DATA_FOUND OR lockError THEN
+         -- either the filesystem is already locked or we found nothing,
+         -- let's go to the next one
+         NULL;
+       END;
+    END LOOP;
+  END IF;
+
+  IF tapeCopyId = 0 THEN
+    -- Nothing found, reset last filesystems used and exit
+    UPDATE Stream
+       SET lastFileSystemUsed = 0, lastButOneFileSystemUsed = 0
+     WHERE id = streamId;
+    RETURN;
+  END IF;
+
+  -- Here we found a tapeCopy and we process it
+  -- update status of selected tapecopy and stream
+  UPDATE TapeCopy SET status = 3 -- SELECTED
+   WHERE id = tapeCopyId;
+  IF findNewFS = 1 THEN
+    UPDATE Stream
+       SET status = 3, -- RUNNING
+           lastFileSystemUsed = fileSystemId,
+           lastButOneFileSystemUsed = lastFileSystemUsed,
+           lastFileSystemChange = getTime()
+     WHERE id = streamId AND status IN (2,3);
+  ELSE
+    -- only update status
+    UPDATE Stream
+       SET status = 3 -- RUNNING
+     WHERE id = streamId AND status IN (2,3);
+  END IF;
+  -- detach the tapecopy from the stream now that it is SELECTED;
+  DELETE FROM Stream2TapeCopy
+   WHERE child = tapeCopyId;
+
+  -- Update Filesystem state
+  updateFSMigratorOpened(fsDiskServer, fileSystemId, 0);
+END;
+/
+
+
+/* default migration candidate selection policy */
+CREATE OR REPLACE PROCEDURE defaultMigrSelPolicy(streamId IN INTEGER,
+                                                 diskServerName OUT NOCOPY VARCHAR2, mountPoint OUT NOCOPY VARCHAR2,
+                                                 path OUT NOCOPY VARCHAR2, dci OUT INTEGER,
+                                                 castorFileId OUT INTEGER, fileId OUT INTEGER,
+                                                 nsHost OUT NOCOPY VARCHAR2, fileSize OUT INTEGER,
+                                                 tapeCopyId OUT INTEGER, lastUpdateTime OUT INTEGER) AS
+  fileSystemId INTEGER := 0;
+  diskServerId NUMBER;
+  lastFSChange NUMBER;
+  lastFSUsed NUMBER;
+  lastButOneFSUsed NUMBER;
+  findNewFS NUMBER := 1;
+  nbMigrators NUMBER := 0;
+  unused NUMBER;
+  LockError EXCEPTION;
+  PRAGMA EXCEPTION_INIT (LockError, -54);
+BEGIN
+  tapeCopyId := 0;
+  -- First try to see whether we should reuse the same filesystem as last time
+  SELECT lastFileSystemChange, lastFileSystemUsed, lastButOneFileSystemUsed
+    INTO lastFSChange, lastFSUsed, lastButOneFSUsed
+    FROM Stream WHERE id = streamId;
+  IF getTime() < lastFSChange + 900 THEN
+    SELECT (SELECT count(*) FROM stream WHERE lastFileSystemUsed = lastButOneFSUsed) +
+           (SELECT count(*) FROM stream WHERE lastButOneFileSystemUsed = lastButOneFSUsed)
+      INTO nbMigrators FROM DUAL;
+    -- only go if we are the only migrator on the box
+    IF nbMigrators = 1 THEN
+      BEGIN
+        -- check states of the diskserver and filesystem and get mountpoint and diskserver name
+        SELECT name, mountPoint, FileSystem.id INTO diskServerName, mountPoint, fileSystemId
+          FROM FileSystem, DiskServer
+         WHERE FileSystem.diskServer = DiskServer.id
+           AND FileSystem.id = lastButOneFSUsed
+           AND FileSystem.status IN (0, 1)  -- PRODUCTION, DRAINING
+           AND DiskServer.status IN (0, 1); -- PRODUCTION, DRAINING
+        -- we are within the time range, so we try to reuse the filesystem
+        SELECT /*+ FIRST_ROWS(1)  LEADING(D T ST) */
+               D.path, D.id, D.castorfile, T.id
+          INTO path, dci, castorFileId, tapeCopyId
+          FROM DiskCopy D, TapeCopy T, Stream2TapeCopy ST
+         WHERE decode(D.status, 10, D.status, NULL) = 10 -- CANBEMIGR
+           AND D.filesystem = lastButOneFSUsed
+           AND ST.parent = streamId
+           AND T.status = 2 -- WAITINSTREAMS
+           AND ST.child = T.id
+           AND T.castorfile = D.castorfile
+           AND ROWNUM < 2 FOR UPDATE OF t.id NOWAIT;
+        SELECT CastorFile.FileId, CastorFile.NsHost, CastorFile.FileSize,
+               CastorFile.lastUpdateTime
+          INTO fileId, nsHost, fileSize, lastUpdateTime
+          FROM CastorFile
+         WHERE Id = castorFileId;
+        -- we found one, no need to go for new filesystem
+        findNewFS := 0;
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- found no tapecopy or diskserver, filesystem are down. We'll go through the normal selection
+        NULL;
+      WHEN LockError THEN
+        -- We have observed ORA-00054 errors (resource busy and acquire with
+        -- NOWAIT) even with the SKIP LOCKED clause. This is a workaround to
+        -- ignore the error until we understand what to do, another thread will
+        -- pick up the request so we don't do anything.
+        NULL;
+      END;
+    END IF;
+    
+  END IF;
+  IF findNewFS = 1 THEN
+    FOR f IN (
+    SELECT FileSystem.id AS FileSystemId, DiskServer.id AS DiskServerId, DiskServer.name, FileSystem.mountPoint
+       FROM Stream, SvcClass2TapePool, DiskPool2SvcClass, FileSystem, DiskServer
+      WHERE Stream.id = streamId
+        AND Stream.TapePool = SvcClass2TapePool.child
+        AND SvcClass2TapePool.parent = DiskPool2SvcClass.child
+        AND DiskPool2SvcClass.parent = FileSystem.diskPool
+        AND FileSystem.diskServer = DiskServer.id
+        AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
+        AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
+      ORDER BY -- first prefer diskservers where no migrator runs and filesystems with no recalls
+               DiskServer.nbMigratorStreams ASC, FileSystem.nbRecallerStreams ASC,
+               -- then order by rate as defined by the function
+               fileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams, FileSystem.nbWriteStreams,
+                              FileSystem.nbReadWriteStreams, FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC,
+               -- finally use randomness to avoid preferring always the same FS
+               DBMS_Random.value) LOOP
+       BEGIN
+         -- lock the complete diskServer as we will update all filesystems
+         SELECT id INTO unused FROM DiskServer WHERE id = f.DiskServerId FOR UPDATE NOWAIT;
+         SELECT /*+ FIRST_ROWS(1) LEADING(D T StT C) */
+                f.diskServerId, f.name, f.mountPoint, f.fileSystemId, D.path, D.id, D.castorfile, C.fileId, C.nsHost, C.fileSize, T.id, C.lastUpdateTime
+           INTO diskServerId, diskServerName, mountPoint, fileSystemId, path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId, lastUpdateTime
+           FROM DiskCopy D, TapeCopy T, Stream2TapeCopy StT, Castorfile C
+          WHERE decode(D.status, 10, D.status, NULL) = 10 -- CANBEMIGR
+            AND D.filesystem = f.fileSystemId
+            AND StT.parent = streamId
+            AND T.status = 2 -- WAITINSTREAMS
+            AND StT.child = T.id
+            AND T.castorfile = D.castorfile
+            AND C.id = D.castorfile
+            AND ROWNUM < 2;
+         -- found something on this filesystem, no need to go on
+         diskServerId := f.DiskServerId;
+         fileSystemId := f.fileSystemId;
+         EXIT;
+       EXCEPTION WHEN NO_DATA_FOUND OR lockError THEN
+         -- either the filesystem is already locked or we found nothing,
+         -- let's go to the next one
+         NULL;
+       END;
+    END LOOP;
+  END IF;
+
+  IF tapeCopyId = 0 THEN
+    -- Nothing found, reset last filesystems used and exit
+    UPDATE Stream
+       SET lastFileSystemUsed = 0, lastButOneFileSystemUsed = 0
+     WHERE id = streamId;
+    RETURN;
+  END IF;
+
+  -- Here we found a tapeCopy and we process it
+  -- update status of selected tapecopy and stream
+  UPDATE TapeCopy SET status = 3 -- SELECTED
+   WHERE id = tapeCopyId;
+  IF findNewFS = 1 THEN
+    UPDATE Stream
+       SET status = 3, -- RUNNING
+           lastFileSystemUsed = fileSystemId,
+           lastButOneFileSystemUsed = lastFileSystemUsed,
+           lastFileSystemChange = getTime()
+     WHERE id = streamId AND status IN (2,3);
+  ELSE
+    -- only update status
+    UPDATE Stream
+       SET status = 3 -- RUNNING
+     WHERE id = streamId AND status IN (2,3);
+  END IF;
+  -- detach the tapecopy from the stream now that it is SELECTED;
+  DELETE FROM Stream2TapeCopy
+   WHERE child = tapeCopyId;
+
+  -- Update Filesystem state
+  updateFSMigratorOpened(diskServerId, fileSystemId, 0);
+END;
+/
+
+
+/* PL/SQL method implementing selectFiles2Delete
+   This is the standard garbage collector: it sorts STAGED
+   diskcopies by gcWeight and selects them for deletion up to
+   the desired free space watermark */
+CREATE OR REPLACE
+PROCEDURE selectFiles2Delete(diskServerName IN VARCHAR2,
+                             files OUT castorGC.SelectFiles2DeleteLine_Cur) AS
+  dcIds "numList";
+  freed INTEGER;
+  deltaFree INTEGER;
+  toBeFreed INTEGER;
+  dontGC INTEGER;
+  totalCount INTEGER;
+  unused INTEGER;
+BEGIN
+  -- First of all, check if we are in a Disk1 pool
+  dontGC := 0;
+  FOR sc IN (SELECT disk1Behavior
+               FROM SvcClass, DiskPool2SvcClass D2S, DiskServer, FileSystem
+              WHERE SvcClass.id = D2S.child
+                AND D2S.parent = FileSystem.diskPool
+                AND FileSystem.diskServer = DiskServer.id
+                AND DiskServer.name = diskServerName) LOOP
+    -- If any of the service classes to which we belong (normally a single one)
+    -- say this is Disk1, we don't GC STAGED files.
+    IF sc.disk1Behavior = 1 THEN
+      dontGC := 1;
+      EXIT;
+    END IF;
+  END LOOP;
+
+  -- Loop on all concerned fileSystems in a random order.
+  totalCount := 0;
+  FOR fs IN (SELECT FileSystem.id
+               FROM FileSystem, DiskServer
+              WHERE FileSystem.diskServer = DiskServer.id
+                AND DiskServer.name = diskServerName
+             ORDER BY dbms_random.value) LOOP
+
+    -- Count the number of diskcopies on this filesystem that are in a
+    -- BEINGDELETED state. These need to be reselected in any case.
+    freed := 0;
+    SELECT totalCount + count(*), nvl(sum(DiskCopy.diskCopySize), 0)
+      INTO totalCount, freed
+      FROM DiskCopy
+     WHERE DiskCopy.fileSystem = fs.id
+       AND decode(DiskCopy.status, 9, DiskCopy.status, NULL) = 9; -- BEINGDELETED
+
+    -- Process diskcopies that are in an INVALID state.
+    UPDATE DiskCopy
+       SET status = 9, -- BEINGDELETED
+           gcType = decode(gcType, NULL, 1, gcType) -- USER
+     WHERE fileSystem = fs.id
+       AND status = 7  -- INVALID
+       AND NOT EXISTS
+         -- Ignore diskcopies with active subrequests
+         (SELECT /*+ INDEX(SubRequest I_SubRequest_DiskCopy) */ 'x'
+            FROM SubRequest
+           WHERE SubRequest.diskcopy = DiskCopy.id
+             AND SubRequest.status IN (4, 5, 6, 12, 13, 14)) -- being processed (WAIT*, READY, *SCHED)
+       AND NOT EXISTS
+         -- Ignore diskcopies with active replications
+         (SELECT 'x' FROM StageDiskCopyReplicaRequest, DiskCopy D
+           WHERE StageDiskCopyReplicaRequest.destDiskCopy = D.id
+             AND StageDiskCopyReplicaRequest.sourceDiskCopy = DiskCopy.id
+             AND D.status = 1)  -- WAITD2D
+       AND rownum <= 10000 - totalCount
+    RETURNING id BULK COLLECT INTO dcIds;
+    COMMIT;
+
+    -- If we have more than 10,000 files to GC, exit the loop. There is no point
+    -- processing more as the maximum sent back to the client in one call is
+    -- 10,000. This protects the garbage collector from being overwhelmed with
+    -- requests and reduces the stager DB load. Furthermore, if too much data is
+    -- sent back to the client, the transfer time between the stager and client
+    -- becomes very long and the message may timeout or may not even fit in the
+    -- clients receive buffer!!!!
+    totalCount := totalCount + dcIds.COUNT();
+    EXIT WHEN totalCount >= 10000;
+
+    -- Continue processing but with STAGED files
+    IF dontGC = 0 THEN
+      -- Do not delete STAGED files from non production hardware
+      BEGIN
+        SELECT FileSystem.id INTO unused
+          FROM DiskServer, FileSystem
+         WHERE FileSystem.id = fs.id
+           AND FileSystem.status = 0  -- PRODUCTION
+           AND FileSystem.diskserver = DiskServer.id
+           AND DiskServer.status = 0; -- PRODUCTION
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        EXIT;
+      END;
+      -- Calculate the amount of space that would be freed on the filesystem
+      -- if the files selected above were to be deleted.
+      IF dcIds.COUNT > 0 THEN
+        SELECT freed + sum(diskCopySize) INTO freed
+          FROM DiskCopy
+         WHERE DiskCopy.id IN
+             (SELECT /*+ CARDINALITY(fsidTable 5) */ *
+                FROM TABLE(dcIds) dcidTable);
+      END IF;
+      -- Get the amount of space to be liberated
+      SELECT decode(sign(maxFreeSpace * totalSize - free), -1, 0, maxFreeSpace * totalSize - free)
+        INTO toBeFreed
+        FROM FileSystem
+       WHERE id = fs.id;
+      -- If space is still required even after removal of INVALID files, consider
+      -- removing STAGED files until we are below the free space watermark
+      IF freed < toBeFreed THEN
+        -- Loop on file deletions. Select only enough files until we reach the
+        -- 10000 return limit.
+        FOR dc IN (SELECT id, castorFile FROM (
+                     SELECT id, castorFile FROM DiskCopy
+                      WHERE filesystem = fs.id
+                        AND status = 0 -- STAGED
+                        AND NOT EXISTS (
+                          SELECT /*+ INDEX(SubRequest I_SubRequest_DiskCopy) */ 'x'
+                            FROM SubRequest
+                           WHERE SubRequest.diskcopy = DiskCopy.id
+                             AND SubRequest.status IN (4, 5, 6, 12, 13, 14)) -- being processed (WAIT*, READY, *SCHED)
+                        ORDER BY gcWeight ASC)
+                   WHERE rownum <= 10000 - totalCount) LOOP
+          -- Mark the DiskCopy
+          UPDATE DiskCopy
+             SET status = 9, -- BEINGDELETED
+                 gcType = 0  -- AUTO
+           WHERE id = dc.id RETURNING diskCopySize INTO deltaFree;
+          totalCount := totalCount + 1;
+          -- Update freed space
+          freed := freed + deltaFree;
+          -- Shall we continue ?
+          IF toBeFreed <= freed THEN
+            EXIT;
+          END IF;
+        END LOOP;
+      END IF;
+      COMMIT;
+    END IF;
+    -- We have enough files to exit the loop ?
+    EXIT WHEN totalCount >= 10000;
+  END LOOP;
+
+  -- Now select all the BEINGDELETED diskcopies in this diskserver for the GC daemon
+  OPEN files FOR
+    SELECT /*+ INDEX(CastorFile PK_CastorFile_ID) */ FileSystem.mountPoint || DiskCopy.path,
+           DiskCopy.id,
+           Castorfile.fileid, Castorfile.nshost,
+           DiskCopy.lastAccessTime, DiskCopy.nbCopyAccesses, DiskCopy.gcWeight,
+           CASE WHEN DiskCopy.gcType = 0 THEN 'Automatic'
+                WHEN DiskCopy.gcType = 1 THEN 'User Requested'
+                WHEN DiskCopy.gcType = 2 THEN 'Too many replicas'
+                WHEN DiskCopy.gcType = 3 THEN 'Draining filesystem'
+                ELSE 'Unknown' END,
+           getSvcClassList(FileSystem.id)
+      FROM CastorFile, DiskCopy, FileSystem, DiskServer
+     WHERE decode(DiskCopy.status, 9, DiskCopy.status, NULL) = 9 -- BEINGDELETED
+       AND DiskCopy.castorfile = CastorFile.id
+       AND DiskCopy.fileSystem = FileSystem.id
+       AND FileSystem.diskServer = DiskServer.id
+       AND DiskServer.name = diskServerName
+       AND rownum <= 10000;
 END;
 /
 
