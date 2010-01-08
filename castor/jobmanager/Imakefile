@@ -40,6 +40,7 @@ JOBMANAGERD_SRCS = JobManagerDaemon.cpp ManagementThread.cpp DispatchThread.cpp 
 JOBMANAGERD_OBJS = $(JOBMANAGERD_SRCS:.cpp=.Osuf)
 NormalProgramTarget(jobmanagerd,$(JOBMANAGERD_OBJS),$(DEPLIB),$(LIBS),750)
 MakeDir(/var/log/castor,0755)
+MakeDir(/var/spool/castor,0755)
 ADMMANPAGE(jobmanagerd)
 LOGROTATE(castor-jobmanager-server,../..,install)
 SYSCONFIG(jobmanagerd,install)

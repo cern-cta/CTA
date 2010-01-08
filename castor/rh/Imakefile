@@ -51,6 +51,7 @@ RHBIN_SRCS = Server.cpp RHThread.cpp RateLimiter.cpp RatingGroup.cpp
 RHBIN_OBJS = $(RHBIN_SRCS:.cpp=.Osuf)
 NormalProgramTarget(rhd,$(RHBIN_OBJS),$(DEPLIB),$(LIBS),750)
 MakeDir(/var/log/castor,0755)
+MakeDir(/var/spool/castor,0755)
 ADMMANPAGE(rhd)
 LOGROTATE(castor-rh-server,../..,install)
 SYSCONFIG(rhd,install)
