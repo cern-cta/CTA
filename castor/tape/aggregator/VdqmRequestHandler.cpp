@@ -215,9 +215,10 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
 
         castor::exception::Exception ex(ECANCELED);
         ex.getMessage() <<
-          "Drive unit name does not exist in the TPCONFIG file"
-          ": filename="      << TPCONFIGPATH <<
-          ": driveUnitName=" << jobRequest.driveUnit;
+          "Drive unit name from VDQM does not exist in the TPCONFIG file"
+          ": tpconfigFilename="  << TPCONFIGPATH <<
+          ": vdqmDriveUnitName=" << jobRequest.driveUnit <<
+          ": tpconfigUnitNames=" << driveNamesStream.str();;
 
         throw(ex);
       }
