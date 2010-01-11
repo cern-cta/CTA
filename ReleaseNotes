@@ -76,6 +76,9 @@
 
   - Ported the code to compile under GCC 4.4.
 
+  - Added a TestsToRun section to the test suite configuration file, now tests
+    can be enabled by configuration options and not only on the command line.
+
 
   Package Changes
   ---------------
@@ -147,10 +150,13 @@
 
       10. Apply the commands returned in step 1.
 
-      11. Test the instance by running the test suite available from:
+      11. Remove the entries for root:root, stage:st and any admin accounts
+          specified in step 3 using the stager_removeprivilege command.
+
+      12. Test the instance by running the test suite available from:
           - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-4/testsuite
 
-      12. Congratulations you have successfully upgraded to the 2.1.9-4 release
+      13. Congratulations you have successfully upgraded to the 2.1.9-4 release
           of CASTOR stager!!
 
 
