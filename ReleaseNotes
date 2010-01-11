@@ -79,6 +79,9 @@
   - Added a TestsToRun section to the test suite configuration file, now tests
     can be enabled by configuration options and not only on the command line.
 
+  - Added a role based initd script for the logprocessor daemon. Now multiple
+    log processor daemons can run on the same machine.
+
 
   Package Changes
   ---------------

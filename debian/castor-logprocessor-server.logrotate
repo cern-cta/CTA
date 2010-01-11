@@ -1,11 +1,11 @@
-/var/log/castor/logprocessord.log.dlf-syslog-to-db {
+/var/log/castor/logprocessord.log.*dlf-syslog-to-db {
     compress
     daily
     missingok
     rotate 120
 }
 
-/var/log/dlf/syslog.input {
+/var/log/dlf/syslog.*input {
     compress
     daily
     missingok

@@ -2,6 +2,7 @@
 %attr(0644,root,root) usr/lib/log-processor/DLF.py
 %attr(0644,root,root) usr/lib/log-processor/LoggingCommon.py
 %attr(0755,root,root) etc/init.d/logprocessord
+%attr(0644,root,root) etc/sysconfig/logprocessord.example
 %attr(0644,root,root) etc/logrotate.d/castor-logprocessor-server
 %attr(0640,root,root) etc/castor/DLFCONFIG.example
 %attr(0640,root,root) etc/castor/logprocessord.conf.example

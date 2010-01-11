@@ -1,0 +1,12 @@
+# Arguments for the logprocessord
+#   -c <file>      configuration file
+#
+# Options to pass to the logprocessor daemon
+#LOGPROCESSORDD_OPTIONS=
+
+# What roles should the logprocessor run for. For each role you can
+# overwrite the default options using a dedicate sysconfig file
+# e.g. /etc/sysconfig/logprocessord.<role>. The role based mechanism
+# allows for multiple logprocessord's running with different options
+# to be controlled via the same initd script
+#ROLES=
