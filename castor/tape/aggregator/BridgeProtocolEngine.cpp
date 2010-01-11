@@ -45,7 +45,9 @@
 #include "castor/tape/utils/SmartFdList.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/Ctape_constants.h"
+#include "h/getconfent.h"
 #include "h/rtcp_constants.h"
+#include "h/rtcpd_constants.h"
 
 #include <algorithm>
 #include <list>
@@ -303,6 +305,42 @@ bool castor::tape::aggregator::BridgeProtocolEngine::processAPendingSocket(
 
       // Throw an exception if connection is not from localhost
       checkPeerIsLocalhost(acceptedConnection);
+
+      // Determine the number of RTCPD disk IO threads
+      int nbRtcpdDiskIOThreads = RTCPD_THREAD_POOL; // Compile-time default
+      char *p = NULL;
+      if((p = getenv("RTCPD_THREAD_POOL")) ||
+         (p = getconfent("RTCPD", "THREAD_POOL", 0))) {
+        if(!utils::isValidUInt(p)) {
+          castor::exception::InvalidArgument ex;
+
+          ex.getMessage() <<
+            "RTCPD THREAD_POOL value is not a valid unsigned integer"
+            ": value=" << p;
+
+          throw(ex);
+        }
+
+        nbRtcpdDiskIOThreads = atoi(p);
+      }
+
+      // Determine maximum number of RTCPD disk/tape IO control connections
+      // This is the number of disk IO threads plus 1 for the tape IO thread
+      const int maxNbDiskTapeIOControlConns = nbRtcpdDiskIOThreads + 1;
+
+      // Throw an exception if the expected maximum number of disk/tape IO
+      // control connections has been exceeded
+      if(m_sockCatalogue.getNbDiskTapeIOControlConns() >
+        maxNbDiskTapeIOControlConns) {
+        castor::exception::Exception ex(ECANCELED);
+
+        ex.getMessage() <<
+          "Maximum number of disk/tape IO control connections exceeded"
+          ": maxNbDiskTapeIOControlConns=" << maxNbDiskTapeIOControlConns <<
+          ": actual=" << m_sockCatalogue.getNbDiskTapeIOControlConns();
+
+        throw(ex);
+      }
     }
     return true; // Continue the RTCOPY session
   case BridgeSocketCatalogue::INITIAL_RTCPD:

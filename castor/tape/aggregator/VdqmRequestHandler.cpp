@@ -241,8 +241,10 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
 
     // Perform the rest of the thread's work, notifying the client if any
     // exception is thrown
+    bool exceptionThrowingRunThrewAnException = true;
     try {
       exceptionThrowingRun(cuuid, jobRequest, aggregatorTransactionCounter);
+      exceptionThrowingRunThrewAnException = false;
     } catch(castor::exception::Exception &ex) {
 
       // Ensure the tape session is removed from the catalogue of on-going
@@ -287,6 +289,21 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
       // outer try and catch block always logs AGGREGATOR_TRANSFER_FAILED when
       // a failure has occured
       throw(ex);
+    }
+
+    if(exceptionThrowingRunThrewAnException) {
+      // Ensure the tape session is removed from the catalogue of on-going tape
+      // sessions
+      try {
+        m_tapeSessionCatalogue.removeTapeSession(jobRequest.volReqId);
+
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("mountTransactionId", jobRequest.volReqId)};
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+          AGGREGATOR_REMOVED_TAPE_SESSION_FROM_CATALOGUE, params);
+      } catch(...) {
+        // Do nothing
+      }
     }
   } catch(castor::exception::Exception &ex) {
 
