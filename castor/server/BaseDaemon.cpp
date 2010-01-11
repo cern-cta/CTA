@@ -194,7 +194,7 @@ void castor::server::BaseDaemon::parseCommandLine(int argc, char *argv[])
   }
 
   // free memory
-  for(unsigned j = 3; j < i;j++) {
+  for (unsigned j = 4; j < i; j++) {
     free((char*)longopts[j].name);
   };
   delete[] longopts;
