@@ -46,13 +46,6 @@ fi
 start() {
         # Run daemon
         echo -n $"Starting $prog: "
-
-        # Check for roles
-        if [ -n "$1" ]; then
-                ROLES=$1
-        elif [ -z "${ROLES}" ]; then
-                ROLES="public"
-        fi
         echo
 
         # Set location of globus libraries
@@ -132,10 +125,6 @@ stop() {
 }
 
 status() {
-        # Check for roles
-        if [ -z "${ROLES}" ]; then
-                ROLES="public"
-        fi
         # Loop over rhds
         for i in ${ROLES}; do
                 # Check if the rhd associated to this role running
