@@ -61,7 +61,6 @@ curdir=`pwd`
 cd ..
 [ -d "castor-${version}" ] && rm -rf castor-${version}
 rsync -aC --exclude '.__afs*' $curdir/ castor-${version}
-rm -rf castor-${version}/xroot
 rm -rf castor-${version}/monitoring/castor-mon-web
 cd castor-${version}
 
