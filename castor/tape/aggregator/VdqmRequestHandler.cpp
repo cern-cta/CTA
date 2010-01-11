@@ -235,6 +235,7 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
     // exception is thrown
     try {
       exceptionThrowingRun(cuuid, jobRequest, aggregatorTransactionCounter);
+    } catch(castor::exception::Exception &ex) {
 
       // Ensure the tape session is removed from the catalogue of on-going
       // tape sessions
@@ -243,7 +244,7 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
       } catch(...) {
         // Do nothing
       }
-    } catch(castor::exception::Exception &ex) {
+
       const uint64_t aggregatorTransactionId =
         aggregatorTransactionCounter.next();
       try {
