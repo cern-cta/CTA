@@ -1,6 +1,0 @@
-# Time Interval to wait between differential monitoring updates
-export X2CASTORMONINTERVAL = 2
-# Define the variable to get debug information into the logfile
-unset X2CASTORMONDEBUG 
-# Define to change the connection string where to send the db information
-unset X2CASTORMONDBSTRING
