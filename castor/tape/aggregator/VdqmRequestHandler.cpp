@@ -294,6 +294,16 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
       castor::dlf::Param("Code"   , ex.code()            )};
     CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
       AGGREGATOR_TRANSFER_FAILED, params);
+  } catch(std::exception &stdEx) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Message", stdEx.what())};
+    CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
+      AGGREGATOR_TRANSFER_FAILED, params);
+  } catch(...) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Message", "Uknown exception")};
+    CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
+      AGGREGATOR_TRANSFER_FAILED, params);
   }
 }
 
