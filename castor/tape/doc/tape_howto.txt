@@ -2899,3 +2899,11 @@ user.castor.checksum.type="ADLER32"
 user.castor.checksum.value="99653f32" 
 [root@lxfsre4304 59]# 
 
+
+How to find the VDQM production server
+======================================
+
+The VDQM production server runs on the following two nodes:
+
+    castorsrv203
+    castorsrv303
