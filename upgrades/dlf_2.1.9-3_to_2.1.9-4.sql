@@ -54,6 +54,9 @@ INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('2_1_9_3', '2_1_9_4');
 UPDATE UpgradeLog SET type = 'TRANSPARENT';
 COMMIT;
 
+/* Add operations facility */
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (30, 'operations');
+COMMIT;
 
 /* Recompile all invalid procedures, triggers and functions */
 /************************************************************/
