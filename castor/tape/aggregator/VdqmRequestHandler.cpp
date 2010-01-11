@@ -227,6 +227,13 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
     // session
     m_tapeSessionCatalogue.addTapeSession(jobRequest.volReqId,
       jobRequest.driveUnit);
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("mountTransactionId", jobRequest.volReqId ),
+        castor::dlf::Param("driveUnit"         , jobRequest.driveUnit)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+        AGGREGATOR_ADDED_TAPE_SESSION_TO_CATLAOGUE, params);
+    }
 
     // Create the aggregator transaction ID
     Counter<uint64_t> aggregatorTransactionCounter(0);
@@ -241,6 +248,11 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
       // tape sessions
       try {
         m_tapeSessionCatalogue.removeTapeSession(jobRequest.volReqId);
+
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("mountTransactionId", jobRequest.volReqId)};
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+          AGGREGATOR_REMOVED_TAPE_SESSION_FROM_CATALOGUE, params);
       } catch(...) {
         // Do nothing
       }
@@ -253,7 +265,7 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
           castor::dlf::Param("aggregatorTransId" , aggregatorTransactionId),
           castor::dlf::Param("Message"           , ex.getMessage().str()  ),
           castor::dlf::Param("Code"              , ex.code()              )};
-        castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
           AGGREGATOR_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
 
         ClientTxRx::notifyEndOfFailedSession(cuuid, jobRequest.volReqId,

@@ -1217,6 +1217,13 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpEndOfReqRtcpdCallback(
   // Remove the tape session from the catalogue of on-going tape sessions
   m_tapeSessionCatalogue.removeTapeSession(m_jobRequest.volReqId);
 
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId)};
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_REMOVED_TAPE_SESSION_FROM_CATALOGUE, params);
+  }
+
   // Acknowledge RTCP_ENDOF_REQ message
   legacymsg::MessageHeader ackMsg;
   ackMsg.magic       = RTCOPY_MAGIC;
