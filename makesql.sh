@@ -7,7 +7,7 @@ tag=`echo $ver | sed 's/\./_/g' | sed 's/-/_/g'`
 # generate creation scripts for the db-based CASTOR components
 # if $1 != NULL, it is interpreted as destination directory where to install the generated script
 tools/makeSqlScripts.sh cns $tag ns $1
-tools/makeSqlScripts.sh dlf $tag dlf/scripts/oracle $1
+tools/makeSqlScripts.sh dlf $tag dlf $1
 tools/makeSqlScripts.sh mon $tag monitoring/procedures $1
 tools/makeSqlScripts.sh repack $tag castor/repack $1
 tools/makeSqlScripts.sh stager $tag castor/db $1

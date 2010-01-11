@@ -98,8 +98,7 @@ shutil.copyfile(workDir + os.sep + 'CASTOR2' + os.sep + 'ReleaseNotes', intRelea
 updDir = workDir + os.sep + 'CASTOR2' + os.sep + 'upgrades'
 for f in findUpdates(updDir):
     shutil.copyfile(updDir + os.sep + f, intReleaseDir + os.sep + 'dbupgrades' + os.sep + f)
-for f in findGrantAndDropScripts(workDir + os.sep + 'CASTOR2', 
-                                 ['castor/db', 'castor/repack', 'dlf/scripts/oracle']):
+for f in findGrantAndDropScripts(workDir + os.sep + 'CASTOR2', ['castor/db']):
     shutil.copy(f, intReleaseDir + os.sep + 'dbcreation' + os.sep)
 os.chdir(workDir + os.sep + 'CASTOR2')
 runCommand('./makesql.sh ' + intReleaseDir + os.sep + 'dbcreation', 'Could not publish SQL scripts')
