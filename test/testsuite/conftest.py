@@ -321,7 +321,7 @@ class Setup:
         for v in ['STAGE_SVCCLASS', 'STAGE_HOST', 'STAGE_PORT', 'STAGER_TRACE']:
             if os.environ.has_key(v): del os.environ[v]
         if self.options.has_section('Environment'):
-            print os.linesep+"setting environment :"
+            print os.linesep+"Setting environment :"
             for o in self.options.items('Environment'):
                 print "  " + o[0] + ' = ' + o[1]
                 os.environ[o[0].upper()] = o[1]
@@ -474,7 +474,7 @@ class Setup:
             for cmd in cmds.split(os.linesep):
                 # skip empty lines in the input file
                 if len(cmd) > 0:
-                    print "executing ", cmd
+                    print "Executing ", cmd
                     try:
                         # run the command
                         output = Popen(cmd)
@@ -494,11 +494,11 @@ class Setup:
     def getTag_tapeFileName(self, nb=0):
         return (lambda test : self.getTag(test, 'tapePath')+os.sep+test+str(nb))
 
-    def _checkPath(self, name, isTape):
+    def _checkDirPath(self, name, isTape):
         try:
-            print "checking whether " + name + " has proper fileclass"
+            print "Checking whether " + name + " has proper fileclass"
             # get the fileclass of the path
-            fileClass = Popen('nsls --class ' + name).split()[0]
+            fileClass = Popen('nsls --class -d ' + name).split()[0]
             # check the number of tapeCopies in this file class
             nslistOutput = Popen('nslistclass --id=' + fileClass).split()
             nbCopies = int(nslistOutput[nslistOutput.index('NBCOPIES')+1])
@@ -518,7 +518,7 @@ class Setup:
     def getTag_noTapePath(self):
         # get the noTape path and check it
         notapepath = self.options.get('Generic','CastorNoTapeDir')
-        self._checkPath(notapepath, False)
+        self._checkDirPath(notapepath, False)
         # create a unique directory
         p = notapepath + os.sep + getUUID()
         output = Popen('nsmkdir ' + p)
@@ -530,7 +530,7 @@ class Setup:
     def getTag_tapePath(self):
         # get the tape path and check it
         tapepath = self.options.get('Generic','CastorTapeDir')
-        self._checkPath(tapepath, True)
+        self._checkDirPath(tapepath, True)
         # create a unique directory
         p = tapepath + os.sep + getUUID()
         output = Popen('nsmkdir ' + p)
@@ -554,12 +554,12 @@ class Setup:
         # write a small file
         os.environ['STAGE_SVCCLASS'] = name
         cmd = 'rfcp ' + self.getTag('IsTapeSvcClass-'+name, 'localFileName') + ' ' + self.getTag('IsTapeSvcClass-'+name, 'tapeFileName')
-        print 'executing ' + cmd
+        print 'Executing ' + cmd
         output = Popen(cmd)
         del os.environ['STAGE_SVCCLASS']
         # and check it's status
         cmd = 'stager_qry -S ' + name + ' -M ' + self.getTag('IsTapeSvcClass-'+name, 'tapeFileName')
-        print 'executing ' + cmd
+        print 'Executing ' + cmd
         output = Popen(cmd)
         assert(output.strip().endswith(expectedStatus))
 
@@ -568,7 +568,7 @@ class Setup:
         l = map(lambda s: s.strip(), self.options.get('Generic','TapeServiceClasses').split(','))
         # check that they are tape enabled
         for sc in l:
-            print os.linesep+'testing Service Class ' + sc
+            print os.linesep+'Testing Service Class ' + sc
             try:
                 self._checkServiceClass(sc, 'CANBEMIGR')
                 print os.linesep+'Service Class ' + sc + ' is ok'
