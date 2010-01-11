@@ -669,7 +669,7 @@ void castor::tape::aggregator::ClientTxRx::notifyEndOfFailedSession(
   {
     castor::dlf::Param params[] = {
       castor::dlf::Param("mountTransactionId", mountTransactionId     ),
-      castor::dlf::Param("aggregatorTransd"  , aggregatorTransactionId),
+      castor::dlf::Param("aggregatorTransId" , aggregatorTransactionId),
       castor::dlf::Param("clientHost"        , clientHost             ),
       castor::dlf::Param("clientPort"        , clientPort             ),
       castor::dlf::Param("errorCode"         , ex.code()              ),

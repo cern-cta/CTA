@@ -57,11 +57,12 @@ void castor::tape::aggregator::TapeSessionCatalogue::addTapeSession(
   throw(castor::exception::InvalidArgument) {
 
   bool sessionAlreadyOnGoing = false;
-  bool sameDriveUnitName     = false;
+  bool driveAlreadyInUse = false;
 
   utils::ScopedLock scopedLock(m_mutex);
 
-  // For each maplet
+  // Determine if the session is already on-going and/or the drive unit is
+  // already in-use
   for(TransIdToDriveNameMap::const_iterator itor =
     m_transIdToDriveNameMap.begin(); itor != m_transIdToDriveNameMap.end();
     itor++) {
@@ -71,13 +72,13 @@ void castor::tape::aggregator::TapeSessionCatalogue::addTapeSession(
     }
 
     if(itor->second == driveName) {
-      sameDriveUnitName = true;
+      driveAlreadyInUse = true;
     }
   }
 
-  // Throw an exception if the session is already on-going or the drive is
-  // already in use
-  if(sessionAlreadyOnGoing || sameDriveUnitName) {
+  // Throw an exception if the session is already on-going and/or the drive
+  // unit is already in use
+  if(sessionAlreadyOnGoing || driveAlreadyInUse) {
     castor::exception::InvalidArgument ex;
 
     ex.getMessage() <<
@@ -89,12 +90,15 @@ void castor::tape::aggregator::TapeSessionCatalogue::addTapeSession(
       ex.getMessage() << ": session is already on-going";
     }
 
-    if(sameDriveUnitName) {
+    if(driveAlreadyInUse) {
       ex.getMessage() << ": The drive is already in use";
     }
 
     throw(ex);
   }
+
+  // Add the tape session to the catalogue
+  m_transIdToDriveNameMap[mountTransactionId] = driveName;
 }
 
 

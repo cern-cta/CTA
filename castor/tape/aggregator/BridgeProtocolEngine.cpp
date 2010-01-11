@@ -366,6 +366,15 @@ bool castor::tape::aggregator::BridgeProtocolEngine::processAPendingSocket(
       // RTCP_ENDOF_REQ message to rtcpd and close the connection
       if(m_sockCatalogue.getNbDiskTapeIOControlConns() == 0) {
 
+        // Remove the tape session from the catalogue of on-going tape sessions
+        m_tapeSessionCatalogue.removeTapeSession(m_jobRequest.volReqId);
+        {
+          castor::dlf::Param params[] = {
+            castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId)};
+          castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+            AGGREGATOR_REMOVED_TAPE_SESSION_FROM_CATALOGUE, params);
+        }
+
         // Send an RTCP_ENDOF_REQ message to rtcpd via the initial callback
         // connection
         legacymsg::MessageHeader endofReqMsg;
@@ -1214,16 +1223,6 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpEndOfReqRtcpdCallback(
 
   receivedENDOF_REQ = true;
 
-  // Remove the tape session from the catalogue of on-going tape sessions
-  m_tapeSessionCatalogue.removeTapeSession(m_jobRequest.volReqId);
-
-  {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId)};
-    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_REMOVED_TAPE_SESSION_FROM_CATALOGUE, params);
-  }
-
   // Acknowledge RTCP_ENDOF_REQ message
   legacymsg::MessageHeader ackMsg;
   ackMsg.magic       = RTCOPY_MAGIC;
@@ -1437,7 +1436,7 @@ void
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("mountTransactionId", reply->mountTransactionId()     ),
-    castor::dlf::Param("aggregatorTransd"  , reply->aggregatorTransactionId()),
+    castor::dlf::Param("aggregatorTransId" , reply->aggregatorTransactionId()),
     castor::dlf::Param("clientSock"        , clientSock                      ),
     castor::dlf::Param("clientHost"        , m_jobRequest.clientHost         ),
     castor::dlf::Param("clientPort"        , m_jobRequest.clientPort         ),
