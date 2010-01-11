@@ -116,6 +116,14 @@ void free_checksum_list(checksum_block_list_t *checksum_list)
     globus_free(checksum_list_p);
 }
 
+// comparison of 2 checksum_block_list_t* on their offset for the use of qsort
+int offsetComparison(const void *first, const void *second) {
+  checksum_block_list_t** f = (checksum_block_list_t**)first;
+  checksum_block_list_t** s = (checksum_block_list_t**)second;
+  return (*f)->offset - (*s)->offset;
+}
+
+
 /* a replacement for zlib adler32_combine for SLC4  */
 #define BASE 65521UL    /* largest prime smaller than 65536 */
 #define MOD(a) a %= BASE
@@ -388,7 +396,7 @@ globus_l_gfs_file_net_read_cb(
 	globus_l_gfs_CASTOR2int_handle_t *     CASTOR2int_handle;
 	globus_size_t                       bytes_written;
 	unsigned long                       adler;
-    checksum_block_t *                  checksum_array;
+    checksum_block_list_t**             checksum_array;
     checksum_block_list_t *             checksum_list_pp;
     unsigned long                       index;
     unsigned long                       i;
@@ -454,7 +462,7 @@ globus_l_gfs_file_net_read_cb(
 		else if(CASTOR2int_handle->outstanding == 0){
 		    if (CASTOR2int_handle->useCksum) {
                 /* checksum calculation */
-                checksum_array=(checksum_block_t*)globus_calloc(CASTOR2int_handle->number_of_blocks,sizeof(checksum_block_t));
+                checksum_array=(checksum_block_list_t**)globus_calloc(CASTOR2int_handle->number_of_blocks,sizeof(checksum_block_list_t*));
                 if (checksum_array==NULL){
                     free_checksum_list(CASTOR2int_handle->checksum_list);
                     CASTOR2int_handle->cached_res = GLOBUS_FAILURE;
@@ -466,16 +474,17 @@ globus_l_gfs_file_net_read_cb(
                 }
                 checksum_list_pp=CASTOR2int_handle->checksum_list;
                 /* sorting of the list to the array */
+                index = 0;
                 while (checksum_list_pp->next != NULL) { /* the latest block is always empty and has next pointer as NULL */
-                  index = checksum_list_pp->offset/CASTOR2int_handle->block_size;
-                  checksum_array[index].csumvalue = checksum_list_pp->csumvalue;
-                  checksum_array[index].size = checksum_list_pp->size;
+                  checksum_array[index] = checksum_list_pp;
                   checksum_list_pp=checksum_list_pp->next;
+                  index++;
                 }
+                qsort(checksum_array, index, sizeof(checksum_block_list_t*), offsetComparison);
                 /* combine here  */
-                file_checksum=checksum_array[0].csumvalue;
+                file_checksum=checksum_array[0]->csumvalue;
                 for (i=1;i<CASTOR2int_handle->number_of_blocks;i++) {
-                  file_checksum=adler32_combine_(file_checksum,checksum_array[i].csumvalue,checksum_array[i].size);
+                  file_checksum=adler32_combine_(file_checksum,checksum_array[i]->csumvalue,checksum_array[i]->size);
                 }
                 globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: checksum for %s : AD 0x%lx\n",func,CASTOR2int_handle->fullDestPath,file_checksum);
                 globus_free(checksum_array);
@@ -753,7 +762,7 @@ globus_l_gfs_CASTOR2int_send_next_to_client(
 	globus_off_t                        start_offset;
 	globus_byte_t *                     buffer;
     unsigned long                       adler;
-	checksum_block_t *                  checksum_array;
+	checksum_block_list_t**                  checksum_array;
     checksum_block_list_t *             checksum_list_pp;
     unsigned long                       index;
     unsigned long                       i;
@@ -841,7 +850,7 @@ globus_l_gfs_CASTOR2int_send_next_to_client(
 		
 		if (CASTOR2int_handle->useCksum) {
             /* checksum calculation */
-            checksum_array=(checksum_block_t*)globus_calloc(CASTOR2int_handle->number_of_blocks,sizeof(checksum_block_t));
+            checksum_array=(checksum_block_list_t**)globus_calloc(CASTOR2int_handle->number_of_blocks,sizeof(checksum_block_list_t*));
             if (checksum_array==NULL){
                 free_checksum_list(CASTOR2int_handle->checksum_list);
                 CASTOR2int_handle->cached_res = GLOBUS_FAILURE;
@@ -854,17 +863,18 @@ globus_l_gfs_CASTOR2int_send_next_to_client(
             }
             checksum_list_pp=CASTOR2int_handle->checksum_list;
             /* sorting of the list to the array */
+            index = 0;
             while (checksum_list_pp->next != NULL) { /* the latest block is always empty and has next pointer as NULL */
-              index = checksum_list_pp->offset/CASTOR2int_handle->block_size;
-              checksum_array[index].csumvalue = checksum_list_pp->csumvalue;
-              checksum_array[index].size = checksum_list_pp->size;
+              checksum_array[index] = checksum_list_pp;
               checksum_list_pp=checksum_list_pp->next;
+              index++;
             }
+            qsort(checksum_array, index, sizeof(checksum_block_list_t*), offsetComparison);
             /* combine here  */
             /* ************* */
-            file_checksum=checksum_array[0].csumvalue;
+            file_checksum=checksum_array[0]->csumvalue;
             for (i=1;i<CASTOR2int_handle->number_of_blocks;i++) {
-              file_checksum=adler32_combine_(file_checksum,checksum_array[i].csumvalue,checksum_array[i].size);
+              file_checksum=adler32_combine_(file_checksum,checksum_array[i]->csumvalue,checksum_array[i]->size);
             }
             globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: checksum for %s : AD 0x%lx\n",func,CASTOR2int_handle->fullDestPath,file_checksum);
             globus_free(checksum_array);

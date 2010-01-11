@@ -36,14 +36,10 @@ typedef struct checksum_block_list_s
   unsigned long csumvalue; /* only for 32bit checksums as Adler32 or CRC32 */
   struct checksum_block_list_s *next;
   } checksum_block_list_t;   
-  
-typedef struct checksum_block_s 
-  {
-  unsigned long size;
-  unsigned long csumvalue; /* only for 32bit checksums as Adler32 or CRC32 */
-  } checksum_block_t;
-  
 
+// comparison of 2 checksum_block_list_t* on their offset for the use of qsort
+int offsetComparison(const void *first, const void *second);
+  
 typedef struct globus_l_gfs_CASTOR2int_handle_s
    {
    globus_mutex_t		mutex;
