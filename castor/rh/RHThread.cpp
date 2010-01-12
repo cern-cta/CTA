@@ -295,6 +295,13 @@ void castor::rh::RHThread::run(void* param) {
   }
   if (ack.status()) {
     try {
+      // Update counters if metrics collection is enabled
+      castor::metrics::MetricsCollector* mc =
+        castor::metrics::MetricsCollector::getInstance();
+      if(mc) {
+        mc->updateHistograms(fr);
+      }
+
       // Look for the client host: if it is SRM, then
       // try to reuse the user tag as a UUID. This enables full tracing
       // of requests coming from SRM. In any case ignore any failure.
@@ -433,14 +440,6 @@ void castor::rh::RHThread::run(void* param) {
          castor::dlf::Param("ElapsedTime", elapsedTime * 0.000001)};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 10, 2, params2);
     } else {
-      
-      // Update counters if metrics collection is enabled
-      castor::metrics::MetricsCollector* mc =
-        castor::metrics::MetricsCollector::getInstance();
-      if(mc) {
-        mc->updateHistograms(fr);
-      }
-
       // If possible convert the request type to a string for logging
       // purposes
       std::ostringstream type;
