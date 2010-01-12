@@ -127,7 +127,7 @@ setcookie("style", $_GET['style']);
     $query .= $clause." ((t1.timestamp >= TO_DATE(:begin, 'DD/MM/YYYY HH24:MI:SS')) AND
                          (t1.timestamp <  TO_DATE(:end, 'DD/MM/YYYY HH24:MI:SS'))) ";
   } else if ($filters == 0) {
-    echo "Querying everying with no filters is not allowed";
+    echo "Querying everything with no filters is not allowed";
     exit(0);
   }
 	
