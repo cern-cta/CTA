@@ -92,7 +92,7 @@ const std::string castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::s_updateStatem
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::s_storeTypeStatementString =
-"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
+"INSERT /* Disk2DiskCopyDoneRequest class */ INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::s_deleteTypeStatementString =

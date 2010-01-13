@@ -92,7 +92,7 @@ const std::string castor::db::cnv::DbGetUpdateStartRequestCnv::s_updateStatement
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbGetUpdateStartRequestCnv::s_storeTypeStatementString =
-"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
+"INSERT /* GetUpdateStartRequest class */ INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::cnv::DbGetUpdateStartRequestCnv::s_deleteTypeStatementString =

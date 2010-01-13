@@ -89,7 +89,7 @@ const std::string castor::db::cnv::DbDeviceGroupNameCnv::s_updateStatementString
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbDeviceGroupNameCnv::s_storeTypeStatementString =
-"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
+"INSERT /* DeviceGroupName class */ INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::cnv::DbDeviceGroupNameCnv::s_deleteTypeStatementString =

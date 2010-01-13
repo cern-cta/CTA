@@ -95,7 +95,7 @@ const std::string castor::db::cnv::DbDiskServerCnv::s_updateStatementString =
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbDiskServerCnv::s_storeTypeStatementString =
-"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
+"INSERT /* DiskServer class */ INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::cnv::DbDiskServerCnv::s_deleteTypeStatementString =
