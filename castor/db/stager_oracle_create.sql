@@ -407,7 +407,7 @@ INSERT INTO Type2Obj (type, object) VALUES (126, 'StreamReport');
 INSERT INTO Type2Obj (type, object) VALUES (127, 'FileSystemStateAck');
 INSERT INTO Type2Obj (type, object) VALUES (128, 'MonitorMessageAck');
 INSERT INTO Type2Obj (type, object) VALUES (129, 'Client');
-INSERT INTO Type2Obj (type, object) VALUES (130, 'JobRequest');
+INSERT INTO Type2Obj (type, object) VALUES (130, 'JobSubmissionRequest');
 INSERT INTO Type2Obj (type, object) VALUES (131, 'VersionQuery');
 INSERT INTO Type2Obj (type, object) VALUES (132, 'VersionResponse');
 INSERT INTO Type2Obj (type, object) VALUES (133, 'StageDiskCopyReplicaRequest');
@@ -2136,11 +2136,12 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE IDRecord_Cur IS REF CURSOR RETURN IDRecord;
   TYPE DiskServerName IS RECORD (diskServer VARCHAR(2048));
   TYPE DiskServerList_Cur IS REF CURSOR RETURN DiskServerName;
-  TYPE RunningTransferLine IS RECORD (
+  TYPE SchedulerJobLine IS RECORD (
     subReqId VARCHAR(2048),
+    reqId VARCHAR(2048),
     noSpace INTEGER,
     noFSAvail INTEGER);
-  TYPE RunningTransfers_Cur IS REF CURSOR RETURN RunningTransferLine;
+  TYPE SchedulerJobs_Cur IS REF CURSOR RETURN SchedulerJobLine;
   TYPE FileEntry IS RECORD (
     fileid INTEGER,
     nshost VARCHAR2(2048));
@@ -2648,13 +2649,10 @@ BEGIN
       RETURN 1;
     END IF;
     SELECT sum(xsize) INTO reservedSpace
-      FROM SubRequest, StagePutRequest R, DiskCopy
-     WHERE SubRequest.request = R.id
-       AND SubRequest.diskCopy = DiskCopy.id
+      FROM SubRequest, StagePutRequest
+     WHERE SubRequest.request = StagePutRequest.id
        AND SubRequest.status = 6  -- READY
-       AND DiskCopy.status IN (5, 6, 11)  -- WAITFS[_SCHEDULING], STAGEOUT
-       AND DiskCopy.fileSystem = 0  -- not yet scheduled
-       AND R.svcClass = svcClassId;
+       AND StagePutRequest.svcClass = svcClassId;
     IF availSpace < reservedSpace THEN
       RETURN 1;
     END IF;
@@ -5320,40 +5318,28 @@ END;
  * available otherwise 1.
  */
 CREATE OR REPLACE FUNCTION checkAvailOfSchedulerRFS
-  (rfs IN VARCHAR2, svcId IN NUMBER, reqType IN NUMBER)
+  (rfs IN VARCHAR2, reqType IN NUMBER)
 RETURN NUMBER IS
   rtn NUMBER;
 BEGIN
-  -- If there are no requested filesystems this is a PUT request so we check
-  -- that at least one filesystem is available
-  IF rfs IS NULL THEN
-    SELECT count(*) INTO rtn
-      FROM DiskServer, FileSystem, DiskPool2SvcClass
-     WHERE DiskServer.id = FileSystem.diskServer
-       AND DiskServer.status = 0  -- DISKSERVER_PRODUCTION
-       AND FileSystem.diskPool = DiskPool2SvcClass.parent
-       AND FileSystem.status = 0  -- FILESYSTEM_PRODUCTION
-       AND DiskPool2SvcClass.child = svcId;
-  ELSE
-    -- Count the number of requested filesystems which are available
-    SELECT count(*) INTO rtn
-      FROM DiskServer, FileSystem 
-     WHERE DiskServer.id = FileSystem.diskServer
-       AND DiskServer.name || ':' || FileSystem.mountPoint IN
-         (SELECT /*+ CARDINALITY(rfsTable 10) */ * 
-            FROM TABLE (strTokenizer(rfs, '|')) rfsTable)
-       -- For a requested filesystem to be available the following criteria
-       -- must be meet:
-       --  - The diskserver must not be in a DISABLED state
-       --  - For StageDiskCopyReplicaRequests and StageGetRequests the
-       --    filesystem must be in a DRAINING or PRODUCTION status
-       --  - For all other requests the diskserver and filesystem must be in
-       --    PRODUCTION
-       AND decode(DiskServer.status, 2, 1,
-             decode(reqType, 133, decode(FileSystem.status, 2, 1, 0),
-               decode(reqType, 35, decode(FileSystem.status, 2, 1, 0),
-                 decode(FileSystem.status + DiskServer.status, 0, 0, 1)))) = 0;
-  END IF;
+  -- Count the number of requested filesystems which are available
+  SELECT count(*) INTO rtn
+    FROM DiskServer, FileSystem 
+   WHERE DiskServer.id = FileSystem.diskServer
+     AND DiskServer.name || ':' || FileSystem.mountPoint IN
+       (SELECT /*+ CARDINALITY(rfsTable 10) */ * 
+          FROM TABLE (strTokenizer(rfs, '|')) rfsTable)
+     -- For a requested filesystem to be available the following criteria
+     -- must be meet:
+     --  - The diskserver must not be in a DISABLED state
+     --  - For StageDiskCopyReplicaRequests and StageGetRequests the
+     --    filesystem must be in a DRAINING or PRODUCTION status
+     --  - For all other requests the diskserver and filesystem must be in
+     --    PRODUCTION
+     AND decode(DiskServer.status, 2, 1,
+           decode(reqType, 133, decode(FileSystem.status, 2, 1, 0),
+             decode(reqType, 35, decode(FileSystem.status, 2, 1, 0),
+               decode(FileSystem.status + DiskServer.status, 0, 0, 1)))) = 0;
   IF rtn > 0 THEN
     RETURN 0;  -- We found some available requested filesystems
   END IF;
@@ -5362,39 +5348,54 @@ END;
 /
 
 
-/* PL/SQL method implementing getRunningTransfers. This method lists all known
- * running transfers and whether they should be terminated because no space
- * exists in the target service class or none of the requested filesystems are
+/* PL/SQL method implementing getSchedulerJobs. This method lists all known
+ * transfers and whether they should be terminated because no space exists
+ * in the target service class or none of the requested filesystems are
  * available.
  */
-CREATE OR REPLACE PROCEDURE getRunningTransfers
-  (transfers OUT castor.RunningTransfers_Cur) AS
+CREATE OR REPLACE PROCEDURE getSchedulerJobs
+  (transfers OUT castor.SchedulerJobs_Cur) AS
 BEGIN
   OPEN transfers FOR
-    SELECT SR.subReqId, checkFailJobsWhenNoSpace(Request.svcClass) NoSpace,
-           checkAvailOfSchedulerRFS(SR.requestedFileSystems, Request.svcClass,
-                                    Id2Type.type) NoFSAvail
-      FROM DiskCopy DC, SubRequest SR, Id2Type,
-        (SELECT id, svcClass FROM StagePutRequest UNION ALL
-         SELECT id, svcClass FROM StageDiskCopyReplicaRequest) Request
-     WHERE DC.id = SR.diskCopy
-       AND SR.status = 6  -- READY
+    -- Use the NO_MERGE hint to prevent Oracle from executing the
+    -- checkFailJobsWhenNoSpace function for every row in the output. In
+    -- situations where there are many PENDING transfers in the scheduler
+    -- this can be extremely inefficient and expensive.
+    SELECT /*+ NO_MERGE(NSSvc) */
+           SR.subReqId, Request.reqId, NSSvc.NoSpace,
+           -- If there are no requested filesystems, refer to the NFSSvc
+           -- output otherwise call the checkAvailOfSchedulerRFS function
+           decode(SR.requestedFileSystems, NULL, NFSSvc.NoFSAvail,
+             checkAvailOfSchedulerRFS(SR.requestedFileSystems,
+                                      Request.reqType)) NoFSAvail
+      FROM SubRequest SR,
+        -- Union of all requests that could result in scheduler transfers
+        (SELECT id, svcClass, reqid, 40  AS reqType
+           FROM StagePutRequest                     UNION ALL
+         SELECT id, svcClass, reqid, 144 AS reqType
+           FROM StageDiskCopyReplicaRequest         UNION ALL
+         SELECT id, svcClass, reqid, 35  AS reqType
+           FROM StageGetRequest                     UNION ALL
+         SELECT id, svcClass, reqid, 44  AS reqType
+           FROM StageUpdateRequest) Request,
+        -- Table of all service classes with a boolean flag to indicate
+        -- if space is available
+        (SELECT id, checkFailJobsWhenNoSpace(id) NoSpace
+           FROM SvcClass) NSSvc,
+        -- Table of all service classes with a boolean flag to indicate
+        -- if there are any filesystems in PRODUCTION
+        (SELECT DP2Svc.child, decode(count(*), 0, 1, 0) NoFSAvail
+           FROM DiskServer DS, FileSystem FS, DiskPool2SvcClass DP2Svc
+          WHERE DS.id = FS.diskServer
+            AND DS.status = 0  -- DISKSERVER_PRODUCTION
+            AND FS.diskPool = DP2Svc.parent
+            AND FS.status = 0  -- FILESYSTEM_PRODUCTION
+          GROUP BY DP2Svc.child) NFSSvc
+     WHERE SR.status = 6  -- READY
        AND SR.request = Request.id
-       AND DC.status IN (1, 5, 6)  -- WAITDISK2DISKCOPY, WAITFS, STAGEOUT
-       AND DC.creationTime < getTime() - 60
-       AND Request.id = Id2Type.id
-     UNION ALL
-    SELECT SR.subReqId, checkFailJobsWhenNoSpace(Request.svcClass),
-           checkAvailOfSchedulerRFS(SR.requestedFileSystems, Request.svcClass,
-                                    Id2Type.type)
-      FROM SubRequest SR, Id2Type,
-        (SELECT id, svcClass FROM StageGetRequest UNION ALL
-         SELECT id, svcClass FROM StageUpdateRequest) Request
-     WHERE SR.request = Request.id
-       AND SR.status = 6  -- READY
-       AND SR.requestedFileSystems IS NOT NULL
        AND SR.creationTime < getTime() - 60
-       AND Request.id = Id2Type.id;
+       AND NSSvc.id = Request.svcClass
+       AND NFSSvc.child = Request.svcClass;
 END;
 /
 
