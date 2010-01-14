@@ -99,6 +99,6 @@ END;
 
 /* Flag the schema upgrade as COMPLETE */
 /***************************************/
-UPDATE UpgradeLog SET endDate = sysdate, state = 'COMPLETE';
+UPDATE UpgradeLog SET endDate = sysdate, state = 'COMPLETE'
  WHERE release = 'newRelTag';
 COMMIT;
