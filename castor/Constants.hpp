@@ -150,7 +150,7 @@ namespace castor {
 
     OBJ_Client = 129,
 
-    OBJ_JobRequest = 130,
+    OBJ_JobSubmissionRequest = 130,
     OBJ_VersionQuery = 131,
     OBJ_VersionResponse = 132,
     OBJ_StageDiskCopyReplicaRequest = 133,

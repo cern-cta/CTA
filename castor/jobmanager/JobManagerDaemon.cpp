@@ -187,7 +187,7 @@ int main(int argc, char *argv[]) {
     } else {
       daemon.getThreadPool('M')->setNbThreads(0);
     }
-    
+
     // Now parse the cmd line
     daemon.parseCommandLine(argc, argv);
 
@@ -247,10 +247,9 @@ castor::jobmanager::JobManagerDaemon::JobManagerDaemon():
     { 34, "Job terminated, svcclass has no filesystems in PRODUCTION" },
     { 39, "Job terminated, svcclass no longer has any space available" },
     { 74, "Exception caught trying to get a list of running transfers from the stager database" },
-    { 75, "Failed to execute getRunningTransfers" },
+    { 75, "Failed to execute getSchedulerJobsFromDB" },
     { 77, "Executing cleanup for job" },
     { 78, "Exception caught trying to get list of LSF jobs" },
-    { 79, "Execution time statistics" },
     { 80, "Job terminated, transfer aborted" },
 
     // Submission

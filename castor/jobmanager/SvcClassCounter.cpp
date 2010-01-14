@@ -28,7 +28,7 @@
 #include <errno.h>
 #include "Cpwd.h"
 #include "Cgrp.h"
-#include "castor/jobmanager/JobRequest.hpp"
+#include "castor/jobmanager/JobSubmissionRequest.hpp"
 #include "castor/jobmanager/SvcClassCounter.hpp"
 
 
@@ -46,16 +46,16 @@ castor::metrics::Counter* castor::jobmanager::SvcClassCounter::instantiate(casto
 castor::jobmanager::SvcClassCounter::SvcClassCounter(castor::IObject* obj) :
   castor::metrics::Counter("")
 {
-  castor::jobmanager::JobRequest* r;
-  r = dynamic_cast<castor::jobmanager::JobRequest*>(obj);
+  castor::jobmanager::JobSubmissionRequest* r;
+  r = dynamic_cast<castor::jobmanager::JobSubmissionRequest*>(obj);
   if (r == 0) {
     castor::exception::Exception ex(EINVAL);
-    ex.getMessage() << "This counter must be initialized with a valid JobRequest object";
+    ex.getMessage() << "This counter must be initialized with a valid JobSubmissionRequest object";
     throw ex;
   }
-  
+
   m_name = r->svcClass();
-  m_value = 1;    // set the initial value 
+  m_value = 1;    // set the initial value
 }
 
 //------------------------------------------------------------------------------
@@ -63,8 +63,8 @@ castor::jobmanager::SvcClassCounter::SvcClassCounter(castor::IObject* obj) :
 //------------------------------------------------------------------------------
 int castor::jobmanager::SvcClassCounter::match(castor::IObject* obj)
 {
-  castor::jobmanager::JobRequest* r =
-    dynamic_cast<castor::jobmanager::JobRequest*>(obj);
+  castor::jobmanager::JobSubmissionRequest* r =
+    dynamic_cast<castor::jobmanager::JobSubmissionRequest*>(obj);
   if(r != 0 && r->svcClass() == m_name) {
       return 1;
   }

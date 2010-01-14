@@ -28,7 +28,7 @@
 
 // Include files
 #include "castor/jobmanager/SubmissionProcess.hpp"
-#include "castor/jobmanager/JobRequest.hpp"
+#include "castor/jobmanager/JobSubmissionRequest.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/Constants.hpp"
@@ -150,8 +150,8 @@ void castor::jobmanager::SubmissionProcess::init()
 // Run
 //-----------------------------------------------------------------------------
 void castor::jobmanager::SubmissionProcess::run(void *param) {
-  castor::jobmanager::JobRequest *request =
-    (castor::jobmanager::JobRequest *)param;
+  castor::jobmanager::JobSubmissionRequest *request =
+    (castor::jobmanager::JobSubmissionRequest *)param;
 
   // At this point we are running in one of the preforked worker processes and
   // as such we can modify the uid and gid of the process as needed by the LSF
@@ -291,7 +291,7 @@ void castor::jobmanager::SubmissionProcess::run(void *param) {
 // SubmitJob
 //-----------------------------------------------------------------------------
 void castor::jobmanager::SubmissionProcess::submitJob
-(castor::jobmanager::JobRequest *request)
+(castor::jobmanager::JobSubmissionRequest *request)
   throw(castor::exception::Exception) {
 
   // Initialize the LSF submit and submitReply structures
@@ -544,7 +544,7 @@ void castor::jobmanager::SubmissionProcess::submitJob
 // FailRequest
 //-----------------------------------------------------------------------------
 void castor::jobmanager::SubmissionProcess::failRequest
-(castor::jobmanager::JobRequest *request, int errorCode) {
+(castor::jobmanager::JobSubmissionRequest *request, int errorCode) {
 
   // Fail the submission of the job
   try {

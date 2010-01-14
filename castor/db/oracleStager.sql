@@ -67,11 +67,12 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE IDRecord_Cur IS REF CURSOR RETURN IDRecord;
   TYPE DiskServerName IS RECORD (diskServer VARCHAR(2048));
   TYPE DiskServerList_Cur IS REF CURSOR RETURN DiskServerName;
-  TYPE RunningTransferLine IS RECORD (
+  TYPE SchedulerJobLine IS RECORD (
     subReqId VARCHAR(2048),
+    reqId VARCHAR(2048),
     noSpace INTEGER,
     noFSAvail INTEGER);
-  TYPE RunningTransfers_Cur IS REF CURSOR RETURN RunningTransferLine;
+  TYPE SchedulerJobs_Cur IS REF CURSOR RETURN SchedulerJobLine;
   TYPE FileEntry IS RECORD (
     fileid INTEGER,
     nshost VARCHAR2(2048));
@@ -579,13 +580,10 @@ BEGIN
       RETURN 1;
     END IF;
     SELECT sum(xsize) INTO reservedSpace
-      FROM SubRequest, StagePutRequest R, DiskCopy
-     WHERE SubRequest.request = R.id
-       AND SubRequest.diskCopy = DiskCopy.id
+      FROM SubRequest, StagePutRequest
+     WHERE SubRequest.request = StagePutRequest.id
        AND SubRequest.status = 6  -- READY
-       AND DiskCopy.status IN (5, 6, 11)  -- WAITFS[_SCHEDULING], STAGEOUT
-       AND DiskCopy.fileSystem = 0  -- not yet scheduled
-       AND R.svcClass = svcClassId;
+       AND StagePutRequest.svcClass = svcClassId;
     IF availSpace < reservedSpace THEN
       RETURN 1;
     END IF;

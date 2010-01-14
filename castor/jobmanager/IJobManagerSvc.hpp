@@ -31,7 +31,8 @@
 #include "castor/stager/ICommonSvc.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/jobmanager/JobRequest.hpp"
+#include "castor/jobmanager/JobSubmissionRequest.hpp"
+#include "castor/jobmanager/JobInfo.hpp"
 #include <map>
 
 
@@ -52,7 +53,7 @@ namespace castor {
        * @return A job request object
        * @exception Exception in case of error
        */
-      virtual castor::jobmanager::JobRequest *jobToSchedule()
+      virtual castor::jobmanager::JobSubmissionRequest *jobToSchedule()
         throw(castor::exception::Exception) = 0;
 
       /**
@@ -64,23 +65,19 @@ namespace castor {
        * @exception Exception in case of error
        */
       virtual void updateSchedulerJob
-      (const castor::jobmanager::JobRequest *request,
+      (const castor::jobmanager::JobSubmissionRequest *request,
        const castor::stager::SubRequestStatusCodes status)
         throw(castor::exception::Exception) = 0;
 
       /**
-       * Method to return a list of running transfers from the stager
-       * database along with any potential reason why a transfer should be
-       * terminated.
+       * Method to return a list of transfers from the stager database along
+       * with any potential reason why the transfers should be terminated.
        * @return A map where the key is the job name (SubReq UUID) and the
-       * value is a pair which contains two Booleans. The first Boolean 
-       * indicates if space is still available in the target service class.
-       * The second Boolean indicates if none of the requested filesystems
-       * are currently available.
+       * value is a JobInfo object
        * @exception Exception in case of error
        */
-      virtual std::map<std::string, std::pair<bool, bool> >
-      getRunningTransfers()
+      virtual std::map<std::string, castor::jobmanager::JobInfo>
+      getSchedulerJobsFromDB()
         throw(castor::exception::Exception) = 0;
 
       /**

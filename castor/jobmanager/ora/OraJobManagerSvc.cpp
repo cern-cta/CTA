@@ -59,9 +59,9 @@ const std::string castor::jobmanager::ora::OraJobManagerSvc::s_jobToScheduleStri
 const std::string castor::jobmanager::ora::OraJobManagerSvc::s_updateSchedulerJobString =
   "UPDATE SubRequest SET status = :1 WHERE status = 14 AND id = :2";
 
-/// SQL statement for function getRunningTransfers
-const std::string castor::jobmanager::ora::OraJobManagerSvc::s_getRunningTransfersString =
-  "BEGIN getRunningTransfers(:1); END;";
+/// SQL statement for function getSchedulerJobsFromDB
+const std::string castor::jobmanager::ora::OraJobManagerSvc::s_getSchedulerJobsFromDBString =
+  "BEGIN getSchedulerJobs(:1); END;";
 
 /// SQL statement for function jobFailedProc
 const std::string castor::jobmanager::ora::OraJobManagerSvc::s_jobFailedString =
@@ -76,7 +76,7 @@ castor::jobmanager::ora::OraJobManagerSvc::OraJobManagerSvc
   OraCommonSvc(name),
   m_jobToScheduleStatement(0),
   m_updateSchedulerJobStatement(0),
-  m_getRunningTransfersStatement(0),
+  m_getSchedulerJobsFromDBStatement(0),
   m_jobFailedStatement(0) {}
 
 
@@ -116,8 +116,8 @@ void castor::jobmanager::ora::OraJobManagerSvc::reset() throw() {
       deleteStatement(m_jobToScheduleStatement);
     if (m_updateSchedulerJobStatement)
       deleteStatement(m_updateSchedulerJobStatement);
-    if (m_getRunningTransfersStatement)
-      deleteStatement(m_getRunningTransfersStatement);
+    if (m_getSchedulerJobsFromDBStatement)
+      deleteStatement(m_getSchedulerJobsFromDBStatement);
     if (m_jobFailedStatement)
       deleteStatement(m_jobFailedStatement);
   } catch (oracle::occi::SQLException e) {
@@ -125,17 +125,17 @@ void castor::jobmanager::ora::OraJobManagerSvc::reset() throw() {
   }
 
   // Now reset all pointers to 0
-  m_jobToScheduleStatement       = 0;
-  m_updateSchedulerJobStatement  = 0;
-  m_getRunningTransfersStatement = 0;
-  m_jobFailedStatement           = 0;
+  m_jobToScheduleStatement          = 0;
+  m_updateSchedulerJobStatement     = 0;
+  m_getSchedulerJobsFromDBStatement = 0;
+  m_jobFailedStatement              = 0;
 }
 
 
 //-----------------------------------------------------------------------------
 // JobToSchedule
 //-----------------------------------------------------------------------------
-castor::jobmanager::JobRequest
+castor::jobmanager::JobSubmissionRequest
 *castor::jobmanager::ora::OraJobManagerSvc::jobToSchedule()
   throw(castor::exception::Exception) {
 
@@ -209,9 +209,9 @@ castor::jobmanager::JobRequest
       return 0;  // Nothing to do
     }
 
-    // Return a new JobRequest object for scheduling
-    castor::jobmanager::JobRequest *result =
-      new castor::jobmanager::JobRequest();
+    // Return a new JobSubmissionRequest object for scheduling
+    castor::jobmanager::JobSubmissionRequest *result =
+      new castor::jobmanager::JobSubmissionRequest();
     result->setId(srId);
     result->setSubReqId(m_jobToScheduleStatement->getString(2));
     result->setProtocol(m_jobToScheduleStatement->getString(3));
@@ -324,7 +324,7 @@ castor::jobmanager::JobRequest
 // UpdateSchedulerJob
 //-----------------------------------------------------------------------------
 void castor::jobmanager::ora::OraJobManagerSvc::updateSchedulerJob
-(const castor::jobmanager::JobRequest *request,
+(const castor::jobmanager::JobSubmissionRequest *request,
  const castor::stager::SubRequestStatusCodes status)
   throw(castor::exception::Exception) {
 
@@ -358,41 +358,45 @@ void castor::jobmanager::ora::OraJobManagerSvc::updateSchedulerJob
 
 
 //-----------------------------------------------------------------------------
-// GetRunningTransfers
+// GetSchedulerJobsFromDB
 //-----------------------------------------------------------------------------
-std::map<std::string, std::pair<bool, bool> >
-castor::jobmanager::ora::OraJobManagerSvc::getRunningTransfers()
+std::map<std::string, castor::jobmanager::JobInfo>
+castor::jobmanager::ora::OraJobManagerSvc::getSchedulerJobsFromDB()
   throw(castor::exception::Exception) {
 
   try {
     // Initialize statements
-    if (m_getRunningTransfersStatement == NULL) {
-      m_getRunningTransfersStatement = 
-        createStatement(s_getRunningTransfersString);
-      m_getRunningTransfersStatement->registerOutParam
+    if (m_getSchedulerJobsFromDBStatement == NULL) {
+      m_getSchedulerJobsFromDBStatement =
+        createStatement(s_getSchedulerJobsFromDBString);
+      m_getSchedulerJobsFromDBStatement->registerOutParam
         (1, oracle::occi::OCCICURSOR);
     }
 
     // Execute the query
-    m_getRunningTransfersStatement->executeUpdate();
+    m_getSchedulerJobsFromDBStatement->executeUpdate();
 
     // Loop over the results
-    std::map<std::string, std::pair<bool, bool> > databaseJobs;
+    std::map<std::string, castor::jobmanager::JobInfo> databaseJobs;
     oracle::occi::ResultSet *rset =
-      m_getRunningTransfersStatement->getCursor(1);
+      m_getSchedulerJobsFromDBStatement->getCursor(1);
     while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-      databaseJobs[rset->getString(1)] =
-        std::pair<bool, bool>(rset->getInt(2), rset->getInt(3));  
+      castor::jobmanager::JobInfo job;
+      job.setSubReqId(rset->getString(1));
+      job.setReqId(rset->getString(2));
+      job.setNoSpace(rset->getInt(3));
+      job.setNoFileSystems(rset->getInt(4));
+      databaseJobs[rset->getString(1)] = job;
     }
 
     // Release resources
-    m_getRunningTransfersStatement->closeResultSet(rset);
+    m_getSchedulerJobsFromDBStatement->closeResultSet(rset);
     return databaseJobs;
 
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
-    ex.getMessage() 
+    ex.getMessage()
       << "Error caught in synchLSFAndStager."
       << std::endl << e.getMessage();
     throw ex;
@@ -429,7 +433,7 @@ void castor::jobmanager::ora::OraJobManagerSvc::jobFailed
       if (jobs[i].first.length() > subReqUuidMaxLen)
         subReqUuidMaxLen = jobs[i].first.length();
     }
-    char *subReqUuidBuffer = 
+    char *subReqUuidBuffer =
       (char *)calloc(nb, subReqUuidMaxLen * sizeof(char));
     if (subReqUuidBuffer == 0) {
       castor::exception::OutOfMemory e;

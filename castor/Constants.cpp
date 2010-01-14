@@ -168,7 +168,7 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
 
   "Client",
 
-  "JobRequest",
+  "JobSubmissionRequest",
   "VersionQuery",
   "VersionResponse",
   "StageDiskCopyReplicaRequest",

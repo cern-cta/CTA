@@ -93,17 +93,17 @@ namespace castor {
        * @exception Exception in case of error
        */
       virtual void submitJob
-      (castor::jobmanager::JobRequest *request)
+      (castor::jobmanager::JobSubmissionRequest *request)
         throw(castor::exception::Exception);
 
       /**
-       * Faile the subrequest associated with the LSF job in the database
+       * Fail the subrequest associated with the LSF job in the database
        * using the given errorCode.
        * @param request The submission request information
        * @param errorCode The error code to use when failing the job
        */
       virtual void failRequest
-      (castor::jobmanager::JobRequest *request, int errorCode);
+      (castor::jobmanager::JobSubmissionRequest *request, int errorCode);
 
     private:
 

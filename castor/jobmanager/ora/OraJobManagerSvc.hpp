@@ -31,7 +31,7 @@
 #include "castor/BaseSvc.hpp"
 #include "castor/db/newora/OraCommonSvc.hpp"
 #include "castor/jobmanager/IJobManagerSvc.hpp"
-#include "castor/jobmanager/JobRequest.hpp"
+#include "castor/jobmanager/JobSubmissionRequest.hpp"
 #include "occi.h"
 #include <map>
 #include <vector>
@@ -88,7 +88,7 @@ namespace castor {
          * status SUBREQUEST_READYFORSCHED.
          * @exception Exception in case of error
          */
-        virtual castor::jobmanager::JobRequest *jobToSchedule()
+        virtual castor::jobmanager::JobSubmissionRequest *jobToSchedule()
           throw(castor::exception::Exception);
 
         /**
@@ -100,25 +100,21 @@ namespace castor {
          * @exception Exception in case of error
          */
         virtual void updateSchedulerJob
-        (const castor::jobmanager::JobRequest *request,
+        (const castor::jobmanager::JobSubmissionRequest *request,
          const castor::stager::SubRequestStatusCodes status)
           throw(castor::exception::Exception);
 
         /**
-         * Method to return a list of running transfers from the stager
-         * database along with any potential reason why a transfer should be
-         * terminated.
+         * Method to return a list of transfers from the stager database along
+         * with any potential reason why the transfers should be terminated.
          * @return A map where the key is the job name (SubReq UUID) and the
-         * value is a std::pair which contains two Booleans. The first Boolean 
-         * indicates if space is still available in the target service class.
-         * The second Boolean indicates if none of the requested filesystems
-         * are currently available.
+         * value is a JobInfo object
          * @exception Exception in case of error
          */
-        virtual std::map<std::string, std::pair<bool, bool> >
-        getRunningTransfers()
+        virtual std::map<std::string, castor::jobmanager::JobInfo>
+        getSchedulerJobsFromDB()
           throw(castor::exception::Exception);
-        
+
         /**
          * Fail a scheduler job in the stager database. This involves failing
          * the SubRequest and calling the necessary cleanup procedures on behalf
@@ -134,7 +130,7 @@ namespace castor {
         virtual void jobFailed
         (const std::vector<std::pair<std::string, int> > jobs)
           throw(castor::exception::Exception);
-        
+
       private:
 
         /// SQL statement for function jobToSchedule
@@ -149,11 +145,11 @@ namespace castor {
         /// SQL statement object for updateSchedulerJob
         oracle::occi::Statement *m_updateSchedulerJobStatement;
 
-        /// SQL statement for function getRunningTransfers
-        static const std::string s_getRunningTransfersString;
+        /// SQL statement for function getSchedulerJobsFromDB
+        static const std::string s_getSchedulerJobsFromDBString;
 
-        /// SQL statement object for getRunningTransfers
-        oracle::occi::Statement *m_getRunningTransfersStatement;
+        /// SQL statement object for getSchedulerJobsFromDB
+        oracle::occi::Statement *m_getSchedulerJobsFromDBStatement;
 
         /// SQL statement for function jobFailed
         static const std::string s_jobFailedString;

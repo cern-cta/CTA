@@ -404,7 +404,7 @@ INSERT INTO Type2Obj (type, object) VALUES (126, 'StreamReport');
 INSERT INTO Type2Obj (type, object) VALUES (127, 'FileSystemStateAck');
 INSERT INTO Type2Obj (type, object) VALUES (128, 'MonitorMessageAck');
 INSERT INTO Type2Obj (type, object) VALUES (129, 'Client');
-INSERT INTO Type2Obj (type, object) VALUES (130, 'JobRequest');
+INSERT INTO Type2Obj (type, object) VALUES (130, 'JobSubmissionRequest');
 INSERT INTO Type2Obj (type, object) VALUES (131, 'VersionQuery');
 INSERT INTO Type2Obj (type, object) VALUES (132, 'VersionResponse');
 INSERT INTO Type2Obj (type, object) VALUES (133, 'StageDiskCopyReplicaRequest');

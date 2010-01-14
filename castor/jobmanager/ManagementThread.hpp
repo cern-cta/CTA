@@ -27,7 +27,7 @@
 
 // Include files
 #include "castor/jobmanager/IJobManagerSvc.hpp"
-#include "castor/jobmanager/JobRequest.hpp"
+#include "castor/jobmanager/JobSubmissionRequest.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/server/IThread.hpp"
 #include <map>
@@ -66,8 +66,8 @@ namespace castor {
       virtual void init();
 
       /**
-       * Method called periodically to check if actions need to be taken on
-       * behalf of a job in LSF
+       * Method called periodically to perform maintenance operations and
+       * maintain LSF <-> Database consistency.
        */
       virtual void run(void *param);
 
@@ -75,39 +75,34 @@ namespace castor {
       virtual void stop() {};
 
       /**
-       * Get a list of all LSF jobs.
+       * Get a list of all jobs present in LSF.
        * @return A map where the key is the job name (SubReq UUID) and the
-       * value, a JobRequest object providing information about the job.
+       * value a JobInfo object providing information about the job.
        */
-      std::map<std::string, castor::jobmanager::JobRequest> getSchedulerJobs()
+      std::map<std::string, castor::jobmanager::JobInfo>
+      getSchedulerJobsFromLSF()
         throw(castor::exception::Exception);
 
       /**
-       * Method used to return a JobRequest object whose attributes have been
-       * set based on the contents of a jobs external scheduler options.
+       * Method used to return a JobInfo object where the attributes have
+       * been initialized based on the contents of the jobs external scheduler
+       * options.
        * @param job The LSF job structure
-       * @return The jobRequest object
-       * @note Not all fields of the jobRequest object are filled, only those
-       * relevant to process the job later.
+       * @return The jobInfo object
        */
-      castor::jobmanager::JobRequest extractJobInfo(const jobInfoEnt *job)
+      castor::jobmanager::JobInfo extractJobInfo(const jobInfoEnt *job)
         throw(castor::exception::Exception);
 
       /**
-       * Process an LSF job to determine whether it exited the queue abnormally
-       * timed out or has resource requirements that can no longer by fulfilled
-       * @param job A job request object providing information about the job
-       * being processed
-       * @param noSpace A flag to indicate that the job should be terminated
-       * as no space is available in the target service class.
-       * @param noFsAvail A flag to indicate that the job should be terminated
-       * because the requested filesystems are not available.
+       * Method to process a LSF job to determine whether it exited the queue
+       * abnormally, timed out or has resource requirements that can no longer
+       * be fulfilled
+       * @param job A JobInfo object providing information about the job being
+       * processed
        * @return 0 if no operation was performed or error code (errno value)
        * which provides the reason for the termination.
        */
-      int processJob(const castor::jobmanager::JobRequest job,
-                     const bool noSpace,
-                     const bool noFsAvail);
+      int processJob(const castor::jobmanager::JobInfo);
 
       /**
        * bkill a pending job in LSF.

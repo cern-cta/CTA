@@ -73,12 +73,12 @@ void castor::jobmanager::DispatchThread::init() {
 //-----------------------------------------------------------------------------
 castor::IObject *castor::jobmanager::DispatchThread::select() throw() {
   try {
-    castor::jobmanager::JobRequest *result =
+    castor::jobmanager::JobSubmissionRequest *result =
       m_jobManagerService->jobToSchedule();
     return result;
   } catch (castor::exception::Exception e) {
 
-    // "Exception caught selecting a new job to schedule in 
+    // "Exception caught selecting a new job to schedule in
     // DispatchThread::select"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Type", sstrerror(e.code())),
@@ -105,8 +105,8 @@ void castor::jobmanager::DispatchThread::process(castor::IObject *param)
   // pool fails or the process pool is in the process of being shut down.
   // Under these circumstances we need to restart the job otherwise it will
   // remain in a SUBREQUEST_BEINGSCHED status indefinitely!
-  castor::jobmanager::JobRequest *request =
-    dynamic_cast<castor::jobmanager::JobRequest *>(param);
+  castor::jobmanager::JobSubmissionRequest *request =
+    dynamic_cast<castor::jobmanager::JobSubmissionRequest *>(param);
 
   // Needed for logging purposes
   string2Cuuid(&m_requestUuid, (char *)request->reqId().c_str());
