@@ -164,6 +164,9 @@ void castor::rh::RHThread::stop() {
   if (rl != 0) {
     delete rl;
   }
+  // Call the upper level stop method so that the database connection can be
+  // dropped
+  castor::server::BaseDbThread::stop();
 }
 
 //------------------------------------------------------------------------------
