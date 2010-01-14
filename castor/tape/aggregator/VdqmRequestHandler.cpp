@@ -348,7 +348,8 @@ void castor::tape::aggregator::VdqmRequestHandler::exceptionThrowingRun(
   utils::SmartFd listenSock(net::createListenerSock("127.0.0.1", lowPort,
     highPort,  chosenPort));
 
-  // Get and log the IP, host name and port of the callback port
+  // Get and log the IP, host name, port and socket file-descriptor of the
+  // callback socket
   unsigned long rtcpdCallbackIp = 0;
   char rtcpdCallbackHost[net::HOSTNAMEBUFLEN];
   utils::setBytes(rtcpdCallbackHost, '\0');
@@ -356,9 +357,11 @@ void castor::tape::aggregator::VdqmRequestHandler::exceptionThrowingRun(
   net::getSockIpHostnamePort(listenSock.get(),
     rtcpdCallbackIp, rtcpdCallbackHost, rtcpdCallbackPort);
   castor::dlf::Param params[] = {
-    castor::dlf::Param("IP"      , castor::dlf::IPAddress(rtcpdCallbackIp)),
-    castor::dlf::Param("Port"    , rtcpdCallbackPort),
-    castor::dlf::Param("HostName", rtcpdCallbackHost)};
+    castor::dlf::Param("mountTransactionId", jobRequest.volReqId            ),
+    castor::dlf::Param("IP"                , dlf::IPAddress(rtcpdCallbackIp)),
+    castor::dlf::Param("Port"              , rtcpdCallbackPort              ),
+    castor::dlf::Param("HostName"          , rtcpdCallbackHost              ),
+    castor::dlf::Param("socketFd"          , listenSock.get()               )};
   castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
     AGGREGATOR_CREATED_RTCPD_CALLBACK_PORT, params);
 
