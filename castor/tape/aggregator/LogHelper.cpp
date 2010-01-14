@@ -36,16 +36,17 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int socketFd, const legacymsg::RtcpJobRqstMsgBody &body) throw() {
 
   castor::dlf::Param params[] = {
-    castor::dlf::Param("volReqId"       , volReqId            ),
-    castor::dlf::Param("socketFd"       , socketFd            ),
-    castor::dlf::Param("volReqId"       , body.volReqId       ),
-    castor::dlf::Param("clientPort"     , body.clientPort     ),
-    castor::dlf::Param("clientEuid"     , body.clientEuid     ),
-    castor::dlf::Param("clientEgid"     , body.clientEgid     ),
-    castor::dlf::Param("clientHost"     , body.clientHost     ),
-    castor::dlf::Param("deviceGroupName", body.deviceGroupName),
-    castor::dlf::Param("driveUnit"      , body.driveUnit      ),
-    castor::dlf::Param("clientUserName" , body.clientUserName )};
+    castor::dlf::Param("mountTransactionId", volReqId            ),
+    castor::dlf::Param("volReqId"          , volReqId            ),
+    castor::dlf::Param("socketFd"          , socketFd            ),
+    castor::dlf::Param("volReqId"          , body.volReqId       ),
+    castor::dlf::Param("clientPort"        , body.clientPort     ),
+    castor::dlf::Param("clientEuid"        , body.clientEuid     ),
+    castor::dlf::Param("clientEgid"        , body.clientEgid     ),
+    castor::dlf::Param("clientHost"        , body.clientHost     ),
+    castor::dlf::Param("deviceGroupName"   , body.deviceGroupName),
+    castor::dlf::Param("driveUnit"         , body.driveUnit      ),
+    castor::dlf::Param("clientUserName"    , body.clientUserName )};
   castor::dlf::dlf_writep(cuuid, severity, message_no, params);
 }
 
@@ -58,10 +59,11 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int socketFd, const legacymsg::RtcpJobReplyMsgBody &body) throw() {
 
   castor::dlf::Param params[] = {
-    castor::dlf::Param("volReqId"    , volReqId         ),
-    castor::dlf::Param("socketFd"    , socketFd         ),
-    castor::dlf::Param("status"      , body.status      ),
-    castor::dlf::Param("errorMessage", body.errorMessage)};
+    castor::dlf::Param("mountTransactionId", volReqId         ),
+    castor::dlf::Param("volReqId"          , volReqId         ),
+    castor::dlf::Param("socketFd"          , socketFd         ),
+    castor::dlf::Param("status"            , body.status      ),
+    castor::dlf::Param("errorMessage"      , body.errorMessage)};
   castor::dlf::dlf_writep(cuuid, severity, message_no, params);
 }
 
@@ -74,34 +76,35 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int socketFd, const legacymsg::RtcpTapeRqstErrMsgBody &body) throw() {
 
   castor::dlf::Param params[] = {
-    castor::dlf::Param("volReqId"      , volReqId           ),
-    castor::dlf::Param("socketFd"      , socketFd           ),
-    castor::dlf::Param("vid"           , body.vid           ),
-    castor::dlf::Param("vsn"           , body.vsn           ),
-    castor::dlf::Param("label"         , body.label         ),
-    castor::dlf::Param("devtype"       , body.devtype       ),
-    castor::dlf::Param("density"       , body.density       ),
-    castor::dlf::Param("unit"          , body.unit          ),
-    castor::dlf::Param("volReqId"      , body.volReqId      ),
-    castor::dlf::Param("jobId"         , body.jobId         ),
-    castor::dlf::Param("mode"          , body.mode          ),
-    castor::dlf::Param("start_file"    , body.start_file    ),
-    castor::dlf::Param("end_file"      , body.end_file      ),
-    castor::dlf::Param("side"          , body.side          ),
-    castor::dlf::Param("tprc"          , body.tprc          ),
-    castor::dlf::Param("tStartRequest" , body.tStartRequest ),
-    castor::dlf::Param("tEndRequest"   , body.tEndRequest   ),
-    castor::dlf::Param("tStartRtcpd"   , body.tStartRtcpd   ),
-    castor::dlf::Param("tStartMount"   , body.tStartMount   ),
-    castor::dlf::Param("tEndMount"     , body.tEndMount     ),
-    castor::dlf::Param("tStartUnmount" , body.tStartUnmount ),
-    castor::dlf::Param("tEndUnmount"   , body.tEndUnmount   ),
-    castor::dlf::Param("rtcpReqId"     , body.rtcpReqId     ),
-    castor::dlf::Param("err.errorMsg"  , body.err.errorMsg  ),
-    castor::dlf::Param("err.severity"  , body.err.severity  ),
-    castor::dlf::Param("err.errorCode" , body.err.errorCode ),
-    castor::dlf::Param("err.maxTpRetry", body.err.maxTpRetry),
-    castor::dlf::Param("err.maxCpRetry", body.err.maxCpRetry)};
+    castor::dlf::Param("mountTransactionId", volReqId           ),
+    castor::dlf::Param("volReqId"          , volReqId           ),
+    castor::dlf::Param("socketFd"          , socketFd           ),
+    castor::dlf::Param("vid"               , body.vid           ),
+    castor::dlf::Param("vsn"               , body.vsn           ),
+    castor::dlf::Param("label"             , body.label         ),
+    castor::dlf::Param("devtype"           , body.devtype       ),
+    castor::dlf::Param("density"           , body.density       ),
+    castor::dlf::Param("unit"              , body.unit          ),
+    castor::dlf::Param("volReqId"          , body.volReqId      ),
+    castor::dlf::Param("jobId"             , body.jobId         ),
+    castor::dlf::Param("mode"              , body.mode          ),
+    castor::dlf::Param("start_file"        , body.start_file    ),
+    castor::dlf::Param("end_file"          , body.end_file      ),
+    castor::dlf::Param("side"              , body.side          ),
+    castor::dlf::Param("tprc"              , body.tprc          ),
+    castor::dlf::Param("tStartRequest"     , body.tStartRequest ),
+    castor::dlf::Param("tEndRequest"       , body.tEndRequest   ),
+    castor::dlf::Param("tStartRtcpd"       , body.tStartRtcpd   ),
+    castor::dlf::Param("tStartMount"       , body.tStartMount   ),
+    castor::dlf::Param("tEndMount"         , body.tEndMount     ),
+    castor::dlf::Param("tStartUnmount"     , body.tStartUnmount ),
+    castor::dlf::Param("tEndUnmount"       , body.tEndUnmount   ),
+    castor::dlf::Param("rtcpReqId"         , body.rtcpReqId     ),
+    castor::dlf::Param("err.errorMsg"      , body.err.errorMsg  ),
+    castor::dlf::Param("err.severity"      , body.err.severity  ),
+    castor::dlf::Param("err.errorCode"     , body.err.errorCode ),
+    castor::dlf::Param("err.maxTpRetry"    , body.err.maxTpRetry),
+    castor::dlf::Param("err.maxCpRetry"    , body.err.maxCpRetry)};
 
   castor::dlf::dlf_writep(cuuid, severity, message_no, params);
 }
@@ -115,29 +118,30 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int socketFd, const legacymsg::RtcpTapeRqstMsgBody &body) throw() {
 
   castor::dlf::Param params[] = {
-    castor::dlf::Param("volReqId"      , volReqId           ),
-    castor::dlf::Param("socketFd"      , socketFd           ),
-    castor::dlf::Param("vid"           , body.vid           ),
-    castor::dlf::Param("vsn"           , body.vsn           ),
-    castor::dlf::Param("label"         , body.label         ),
-    castor::dlf::Param("devtype"       , body.devtype       ),
-    castor::dlf::Param("density"       , body.density       ),
-    castor::dlf::Param("unit"          , body.unit          ),
-    castor::dlf::Param("volReqId"      , body.volReqId      ),
-    castor::dlf::Param("jobId"         , body.jobId         ),
-    castor::dlf::Param("mode"          , body.mode          ),
-    castor::dlf::Param("start_file"    , body.start_file    ),
-    castor::dlf::Param("end_file"      , body.end_file      ),
-    castor::dlf::Param("side"          , body.side          ),
-    castor::dlf::Param("tprc"          , body.tprc          ),
-    castor::dlf::Param("tStartRequest" , body.tStartRequest ),
-    castor::dlf::Param("tEndRequest"   , body.tEndRequest   ),
-    castor::dlf::Param("tStartRtcpd"   , body.tStartRtcpd   ),
-    castor::dlf::Param("tStartMount"   , body.tStartMount   ),
-    castor::dlf::Param("tEndMount"     , body.tEndMount     ),
-    castor::dlf::Param("tStartUnmount" , body.tStartUnmount ),
-    castor::dlf::Param("tEndUnmount"   , body.tEndUnmount   ),
-    castor::dlf::Param("rtcpReqId"     , body.rtcpReqId     )};
+    castor::dlf::Param("mountTransactionId", volReqId           ),
+    castor::dlf::Param("volReqId"          , volReqId           ),
+    castor::dlf::Param("socketFd"          , socketFd           ),
+    castor::dlf::Param("vid"               , body.vid           ),
+    castor::dlf::Param("vsn"               , body.vsn           ),
+    castor::dlf::Param("label"             , body.label         ),
+    castor::dlf::Param("devtype"           , body.devtype       ),
+    castor::dlf::Param("density"           , body.density       ),
+    castor::dlf::Param("unit"              , body.unit          ),
+    castor::dlf::Param("volReqId"          , body.volReqId      ),
+    castor::dlf::Param("jobId"             , body.jobId         ),
+    castor::dlf::Param("mode"              , body.mode          ),
+    castor::dlf::Param("start_file"        , body.start_file    ),
+    castor::dlf::Param("end_file"          , body.end_file      ),
+    castor::dlf::Param("side"              , body.side          ),
+    castor::dlf::Param("tprc"              , body.tprc          ),
+    castor::dlf::Param("tStartRequest"     , body.tStartRequest ),
+    castor::dlf::Param("tEndRequest"       , body.tEndRequest   ),
+    castor::dlf::Param("tStartRtcpd"       , body.tStartRtcpd   ),
+    castor::dlf::Param("tStartMount"       , body.tStartMount   ),
+    castor::dlf::Param("tEndMount"         , body.tEndMount     ),
+    castor::dlf::Param("tStartUnmount"     , body.tStartUnmount ),
+    castor::dlf::Param("tEndUnmount"       , body.tEndUnmount   ),
+    castor::dlf::Param("rtcpReqId"         , body.rtcpReqId     )};
 
   castor::dlf::dlf_writep(cuuid, severity, message_no, params);
 }
@@ -157,6 +161,7 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   utils::toHex(body.segAttr.segmCksum, &checksumHex[2], 9);
 
   castor::dlf::Param params[] = {
+    castor::dlf::Param("mountTransactionId"  , volReqId                 ),
     castor::dlf::Param("volReqId"            , volReqId                 ),
     castor::dlf::Param("socketFd"            , socketFd                 ),
     castor::dlf::Param("filePath"            , body.filePath            ),
@@ -232,6 +237,7 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   utils::toHex(body.segAttr.segmCksum, &checksumHex[2], 9);
 
   castor::dlf::Param params[] = {
+    castor::dlf::Param("mountTransactionId"  , volReqId                 ),
     castor::dlf::Param("volReqId"            , volReqId                 ),
     castor::dlf::Param("socketFd"            , socketFd                 ),
     castor::dlf::Param("filePath"            , body.filePath            ),
@@ -297,9 +303,10 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int socketFd, const legacymsg::GiveOutpMsgBody &body) throw() {
 
   castor::dlf::Param params[] = {
-    castor::dlf::Param("volReqId", volReqId    ),
-    castor::dlf::Param("socketFd", socketFd    ),
-    castor::dlf::Param("message" , body.message)};
+    castor::dlf::Param("mountTransactionId", volReqId    ),
+    castor::dlf::Param("volReqId"          , volReqId    ),
+    castor::dlf::Param("socketFd"          , socketFd    ),
+    castor::dlf::Param("message"           , body.message)};
   castor::dlf::dlf_writep(cuuid, severity, message_no, params);
 }
 
@@ -313,8 +320,9 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   throw() {
 
   castor::dlf::Param params[] = {
-    castor::dlf::Param("volReqId", volReqId),
-    castor::dlf::Param("socketFd", socketFd)};
+    castor::dlf::Param("mountTransactionId", volReqId),
+    castor::dlf::Param("volReqId"          , volReqId),
+    castor::dlf::Param("socketFd"          , socketFd)};
   castor::dlf::dlf_writep(cuuid, severity, message_no, params);
 }
 
@@ -327,8 +335,9 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int socketFd, const legacymsg::RtcpAbortMsgBody &body) throw() {
 
   castor::dlf::Param params[] = {
-    castor::dlf::Param("volReqId", volReqId),
-    castor::dlf::Param("socketFd", socketFd)};
+    castor::dlf::Param("mountTransactionId", volReqId),
+    castor::dlf::Param("volReqId"          , volReqId),
+    castor::dlf::Param("socketFd"          , socketFd)};
   castor::dlf::dlf_writep(cuuid, severity, message_no, params);
 }
 
@@ -341,16 +350,17 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int socketFd, const legacymsg::RtcpDumpTapeRqstMsgBody &body) throw() {
 
   castor::dlf::Param params[] = {
-    castor::dlf::Param("volReqId"     , volReqId          ),
-    castor::dlf::Param("socketFd"     , socketFd          ),
-    castor::dlf::Param("maxBytes"     , body.maxBytes     ),
-    castor::dlf::Param("blockSize"    , body.blockSize    ),
-    castor::dlf::Param("convert"      , body.convert      ),
-    castor::dlf::Param("tapeErrAction", body.tapeErrAction),
-    castor::dlf::Param("startFile"    , body.startFile    ),
-    castor::dlf::Param("maxFiles"     , body.maxFiles     ),
-    castor::dlf::Param("fromBlock"    , body.fromBlock    ),
-    castor::dlf::Param("toBlock"      , body.toBlock      )};
+    castor::dlf::Param("mountTransactionId", volReqId          ),
+    castor::dlf::Param("volReqId"          , volReqId          ),
+    castor::dlf::Param("socketFd"          , socketFd          ),
+    castor::dlf::Param("maxBytes"          , body.maxBytes     ),
+    castor::dlf::Param("blockSize"         , body.blockSize    ),
+    castor::dlf::Param("convert"           , body.convert      ),
+    castor::dlf::Param("tapeErrAction"     , body.tapeErrAction),
+    castor::dlf::Param("startFile"         , body.startFile    ),
+    castor::dlf::Param("maxFiles"          , body.maxFiles     ),
+    castor::dlf::Param("fromBlock"         , body.fromBlock    ),
+    castor::dlf::Param("toBlock"           , body.toBlock      )};
   castor::dlf::dlf_writep(cuuid, severity, message_no, params);
 }
 
@@ -364,6 +374,7 @@ void castor::tape::aggregator::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const time_t connectionDuration, const time_t sendRecvDuration) throw() {
 
   castor::dlf::Param params[] = {
+    castor::dlf::Param("mountTransactionId", volReqId               ),
     castor::dlf::Param("volReqId"          , volReqId               ),
     castor::dlf::Param("socketFd"          , socketFd               ),
     castor::dlf::Param("vsn"               , body.vsn               ),
