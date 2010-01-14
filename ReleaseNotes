@@ -5,6 +5,10 @@
   Highlights & Bug Fixes
   ----------------------
 
+  CASTOR protocols
+  ----------------
+  - #61272: "internal" 2.1.9-3 gridftp computes bad checksums?
+
   CASTOR miscellaneous
   --------------------
   - #58996: Comments not supported in /etc/castor/[CUPV|VMGR|NS]CONFIG
@@ -71,8 +75,8 @@
     + #48342: RFE: Add support for changing the number of threads in the
               Cupvdaemon
 
-  - Removed the workaround for the oracle BigId problem from the repack server
-    now that an official patch is available from Oracle. (SR #106879)
+  - Added back the workaround for the Oracle BigId problem after reports that
+    the problem has resurfaced.
 
   - Ported the code to compile under GCC 4.4.
 
