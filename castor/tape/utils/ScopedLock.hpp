@@ -60,6 +60,12 @@ namespace utils  {
   private:
 
     /**
+     * Private copy constructor to prevent users from trying to copy a
+     * ScopedLock.
+     */
+    ScopedLock(const ScopedLock &s) throw();
+
+    /**
      * Private assignment operator to prevent users from trying to copy a
      * ScopedLock.
      */
@@ -68,7 +74,7 @@ namespace utils  {
     /**
      * The mutex on which the lock has been taken.
      */
-    pthread_mutex_t &m_mutex;
+    pthread_mutex_t *m_mutex;
 
   };
 

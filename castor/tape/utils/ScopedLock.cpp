@@ -36,7 +36,8 @@
 //-----------------------------------------------------------------------------
 castor::tape::utils::ScopedLock::ScopedLock(pthread_mutex_t &mutex)
   throw(castor::exception::Exception) :
-  m_mutex(mutex) {
+  m_mutex(&mutex) {
+
   const int rc = pthread_mutex_lock(&mutex);
 
   // Throw an exception if the mutex could not be locked
@@ -49,6 +50,17 @@ castor::tape::utils::ScopedLock::ScopedLock(pthread_mutex_t &mutex)
 
     throw(ex);
   }
+}
+
+
+//-----------------------------------------------------------------------------
+// copy constructor
+//-----------------------------------------------------------------------------
+castor::tape::utils::ScopedLock::ScopedLock(const ScopedLock &s) throw() :
+  m_mutex(NULL) {
+  
+  // This code is never executed because the ScopedLock assignment operator is
+  // private
 }
 
 
@@ -69,5 +81,7 @@ castor::tape::utils::ScopedLock
 //-----------------------------------------------------------------------------
 castor::tape::utils::ScopedLock::~ScopedLock() throw() {
 
-  pthread_mutex_unlock(&m_mutex);
+  if(m_mutex != NULL) {
+    pthread_mutex_unlock(m_mutex);
+  }
 }
