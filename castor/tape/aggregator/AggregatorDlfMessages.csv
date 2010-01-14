@@ -2,7 +2,7 @@
 1,AGGREGATOR_STARTED,"aggregatord started"
 2,AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE,"Failed to parse the command line"
 3,AGGREGATOR_FAILED_TO_INIT_DB_SERVICE,"Failed to initialise database service"
-4,AGGREGATOR_VDQM_CONNECTION_WITH_INFO,"Received a connection from VDQM"
+4,AGGREGATOR_RECEIVED_VDQM_CONNECTION,"Received a connection from VDQM"
 5,AGGREGATOR_HANDLE_VDQM_REQUEST_EXCEPT,"Exception raised when handling a request from the VDQM"
 6,AGGREGATOR_FAILED_TO_READ_MESSAGE_HEADER,"Failed to read message header"
 7,AGGREGATOR_UNKNOWN_MAGIC,"Unknown magic number"

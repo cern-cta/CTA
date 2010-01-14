@@ -125,10 +125,11 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
 
       castor::dlf::Param params[] = {
         castor::dlf::Param("IP"      , castor::dlf::IPAddress(ip)),
-        castor::dlf::Param("Port"    , port),
-        castor::dlf::Param("HostName", hostName)};
+        castor::dlf::Param("Port"    , port                      ),
+        castor::dlf::Param("HostName", hostName                  ),
+        castor::dlf::Param("socketFd", vdqmSock->socket()        )};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_VDQM_CONNECTION_WITH_INFO, params);
+        AGGREGATOR_RECEIVED_VDQM_CONNECTION, params);
 
     } catch(castor::exception::Exception &ex) {
       castor::exception::Exception ex2(ex.code());
