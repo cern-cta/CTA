@@ -835,18 +835,21 @@ BEGIN
            FROM SvcClass) NSSvc,
         -- Table of all service classes with a boolean flag to indicate
         -- if there are any filesystems in PRODUCTION
-        (SELECT DP2Svc.child, decode(count(*), 0, 1, 0) NoFSAvail
-           FROM DiskServer DS, FileSystem FS, DiskPool2SvcClass DP2Svc
-          WHERE DS.id = FS.diskServer
-            AND DS.status = 0  -- DISKSERVER_PRODUCTION
-            AND FS.diskPool = DP2Svc.parent
-            AND FS.status = 0  -- FILESYSTEM_PRODUCTION
-          GROUP BY DP2Svc.child) NFSSvc
+        (SELECT id, nvl(NoFSAvail, 1) NoFSAvail FROM SvcClass
+           LEFT JOIN 
+             (SELECT DP2Svc.CHILD, decode(count(*), 0, 1, 0) NoFSAvail
+                FROM DiskServer DS, FileSystem FS, DiskPool2SvcClass DP2Svc
+               WHERE DS.ID = FS.diskServer
+                 AND DS.status = 0  -- DISKSERVER_PRODUCTION
+                 AND FS.diskPool = DP2Svc.parent
+                 AND FS.status = 0  -- FILESYSTEM_PRODUCTION
+               GROUP BY DP2Svc.child) results
+             ON SvcClass.id = results.child) NFSSvc
      WHERE SR.status = 6  -- READY
        AND SR.request = Request.id
        AND SR.creationTime < getTime() - 60
        AND NSSvc.id = Request.svcClass
-       AND NFSSvc.child = Request.svcClass;
+       AND NFSSvc.id = Request.svcClass;
 END;
 /
 
