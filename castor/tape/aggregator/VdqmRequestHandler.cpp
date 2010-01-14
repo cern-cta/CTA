@@ -51,6 +51,7 @@
 #include "h/vdqm_constants.h"
 #include "h/vmgr_constants.h"
 
+#include <algorithm>
 #include <memory>
 
 

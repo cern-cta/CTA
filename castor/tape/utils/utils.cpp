@@ -41,6 +41,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <time.h>
+#include <algorithm>
 #include <unistd.h>
 #include <locale>
 
