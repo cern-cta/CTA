@@ -42,10 +42,21 @@ namespace utils  {
   public:
 
     /**
+     * A pointer to a callback function that will called by the Smart
+     * immediately after the SmartFd has closed the file-descriptor it owns.
+     *
+     * Please note that any exception thrown by this function will be ignored
+     * because this function maybe called by the destructor of SmartFd.
+     *
+     * @param closedfd The value of the file descriptor that was closed.
+     */
+    typedef void (*ClosedCallback)(int closedfd);
+
+    /**
      * Constructor.
      *
      */
-    SmartFd();
+    SmartFd() throw();
 
     /**
      * Constructor.
@@ -53,7 +64,28 @@ namespace utils  {
      * @param fd The file descriptor to be owned by the smart file
      *           descriptor.
      */
-    SmartFd(const int fd);
+    SmartFd(const int fd) throw();
+
+    /**
+     * Sets the function to be called back by the SmartFd immediately after
+     * the SmartFd has closed the file-descriptor it owns.
+     *
+     * Setting the callback function to NULL means that no function will be
+     * called.
+     *
+     * Please note any exception thrown by the callback function will be
+     * ignored because the callback function maybe called by the destructor of
+     * SmartFd.
+     *
+     * @param fd             The file descriptor to be owned by the smart file
+     *                       descriptor.
+     * @param closedCallback This function will be called immediately after
+     *                       the SmartFd has closed the file-descriptor it owns.
+     *                       Please note that any exception thrown by this
+     *                       function will be ignored because this function
+     *                       maybe called by the destructor of SmartFd.
+     */
+    void setClosedCallback(const int fd, ClosedCallback closedCallback) throw();
 
     /**
      * Take ownership of the specified file descriptor, closing the previously
@@ -105,10 +137,16 @@ namespace utils  {
   private:
 
     /**
-     * The owned file descriptor.  A negtaive value means this SmartFd does not
+     * The owned file descriptor.  A negative value means this SmartFd does not
      * own a file descriptor..
      */
     int m_fd;
+
+    /**
+     * The function to be called immediately after the SmartFd has closed its
+     * file-descriptor.  A value of null means no function will be called.
+     */
+    ClosedCallback m_closedCallback;
 
   };
 

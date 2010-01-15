@@ -156,12 +156,12 @@ int castor::tape::aggregator::BridgeProtocolEngine::acceptRtcpdConnection()
     net::getPeerHostName(connectedSock.get(), hostName);
 
     castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId"       , m_jobRequest.volReqId     ),
-      castor::dlf::Param("IP"             , castor::dlf::IPAddress(ip)),
-      castor::dlf::Param("Port"           , port                      ),
-      castor::dlf::Param("HostName"       , hostName                  ),
-      castor::dlf::Param("socketFd"       , connectedSock.get()       ),
-      castor::dlf::Param("nbDiskTapeConns",
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId     ),
+      castor::dlf::Param("IP"                , castor::dlf::IPAddress(ip)),
+      castor::dlf::Param("Port"              , port                      ),
+      castor::dlf::Param("HostName"          , hostName                  ),
+      castor::dlf::Param("socketFd"          , connectedSock.get()       ),
+      castor::dlf::Param("nbDiskTapeConns"   ,
         m_sockCatalogue.getNbDiskTapeIOControlConns())};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, AGGREGATOR_RTCPD_CALLBACK,
       params);
@@ -249,12 +249,12 @@ void castor::tape::aggregator::BridgeProtocolEngine::processSocks()
 
     case -1: // Select encountered an error
 
-      // If the select was interrupted
+      // If select was interrupted
       if(selectErrno == EINTR) {
 
         // Write a log message
         castor::dlf::Param params[] = {
-          castor::dlf::Param("volReqId", m_jobRequest.volReqId)};
+          castor::dlf::Param("mountTransActionId", m_jobRequest.volReqId)};
         castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
           AGGREGATOR_SELECT_INTR, params);
 
@@ -369,6 +369,13 @@ bool castor::tape::aggregator::BridgeProtocolEngine::processAPendingSocket(
         // session
         if(peerClosed) {
           close(m_sockCatalogue.releaseRtcpdDiskTapeIOControlConn(pendingSock));
+
+          castor::dlf::Param params[] = {
+            castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId),
+            castor::dlf::Param("socketFd"          , pendingSock          )};
+          castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+            AGGREGATOR_CLOSED_RTCPD_DISK_TAPE_CONNECTION_DUE_TO_PEER, params);
+
           return true; // Continue the RTCOPY session
         }
       }

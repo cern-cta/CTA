@@ -33,16 +33,26 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::utils::SmartFd::SmartFd() :
-  m_fd(-1) {
+castor::tape::utils::SmartFd::SmartFd() throw():
+  m_fd(-1), m_closedCallback(NULL) {
 }
 
 
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::utils::SmartFd::SmartFd(const int fd) :
-  m_fd(fd) {
+castor::tape::utils::SmartFd::SmartFd(const int fd) throw():
+  m_fd(fd), m_closedCallback(NULL) {
+}
+
+
+//-----------------------------------------------------------------------------
+// setClosedCallback
+//-----------------------------------------------------------------------------
+void castor::tape::utils::SmartFd::setClosedCallback(const int fd,
+  ClosedCallback closedCallback) throw() {
+
+  m_closedCallback = closedCallback;
 }
 
 
@@ -56,6 +66,15 @@ void castor::tape::utils::SmartFd::reset(const int fd = -1) throw() {
     // If this SmartFd still owns a file descriptor, then close it
     if(m_fd >= 0) {
       close(m_fd);
+      if(m_closedCallback) {
+        try {
+           (*m_closedCallback)(m_fd);
+        } catch(...) {
+           // Ignore any exception thrown my the m_closedCallback function
+           // because this reset function maybe called by the destructor of
+           // SmartFd
+        }
+      }
     }
 
     // Take ownership of the new file descriptor

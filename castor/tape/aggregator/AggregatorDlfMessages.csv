@@ -114,3 +114,4 @@
 113,AGGREGATOR_PARSED_TPCONFIG,"Parsed TPCONFIG"
 114,AGGREGATOR_ADDED_TAPE_SESSION_TO_CATLAOGUE,"Added tape session to catalogue"
 115,AGGREGATOR_REMOVED_TAPE_SESSION_FROM_CATALOGUE,"Removed tape session from catalogue"
+116,AGGREGATOR_CLOSED_RTCPD_DISK_TAPE_CONNECTION_DUE_TO_PEER,"Closed rtcpd disk/tape IO control connection due to rtcpd closing its end"
