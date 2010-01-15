@@ -113,6 +113,5 @@ void castor::server::TCPListenerThreadPool::terminate(void* param) {
   // Here a proper implementation is to answer the client to try again later on.
   // As the standard castor clients have no retry mechanism, we simply close the
   // connection, which will make them fail (the process would have failed anyway).
-  s->close();
-  delete s;
+  delete s;    // internally calls close
 }

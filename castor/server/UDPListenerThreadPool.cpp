@@ -87,8 +87,8 @@ void castor::server::UDPListenerThreadPool::listenLoop() {
 // terminate
 //------------------------------------------------------------------------------
 void castor::server::UDPListenerThreadPool::terminate(void* param) {
-    castor::IObject* obj = (castor::IObject*)param;
-    // UDP is best-effort, don't bother contacting the client but free allocated memory
-    delete obj;
+  castor::IObject* obj = (castor::IObject*)param;
+  // UDP is best-effort, don't bother contacting the client but free allocated memory
+  delete obj;
 }
 
