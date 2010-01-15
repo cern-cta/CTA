@@ -43,7 +43,7 @@ namespace aggregator {
   /**
    * Remote copy job submitter.
    *
-   * A helper class for submitting remote copy jobs to either RTCPD or tape
+   * A helper class for submitting remote-copy jobs to either RTCPD or tape
    * aggregator daemons.
    */
   class RtcpJobSubmitter {
@@ -51,13 +51,13 @@ namespace aggregator {
   public:
 
     /**
-     * Submits a remote copy job to either a RTCPD or tape aggregator daemon.
+     * Submits a remote-copy job to either a RTCPD or tape aggregator daemon.
      * 
      * @param host The hostname of the RTCPD or tape aggregator daemon.
      * @param port The port number of the RTCPD or tape aggregator daemon.
      * @param netReadWriteTimeout The timeout to be used when performing
      * network reads and writes.
-     * @param remoteCopyType The remote copy type to be used for exception
+     * @param remoteCopyType The remote-copy type to be used for exception
      * messages
      * @param tapeRequestID The tape request ID.
      * @param clientUserName The client user name.
@@ -95,7 +95,7 @@ namespace aggregator {
      * aggregator daemon.
      * @param netReadWriteTimeout The timeout to be used when performing
      * network reads and writes.
-     * @param remoteCopyType The remote copy type to be used for exception
+     * @param remoteCopyType The remote-copy type to be used for exception
      * messages.
      * @param reply The reply from RTCPD.
      */
