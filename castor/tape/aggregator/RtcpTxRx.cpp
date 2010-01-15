@@ -338,11 +338,11 @@ void castor::tape::aggregator::RtcpTxRx::pingRtcpd(const Cuuid_t &cuuid,
   header.lenOrStatus = 0;
 
   try {
-    // The RTCPD message is a bodiless RTCP message
+    // The ping message is bodiless
     totalLen = legacymsg::marshal(buf, header);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,
-         ": Failed to marshal RCPD ping message : "
+         ": Failed to marshal rtcpd ping message : "
       << ex.getMessage().str());
   }
 
@@ -359,7 +359,7 @@ void castor::tape::aggregator::RtcpTxRx::pingRtcpd(const Cuuid_t &cuuid,
     net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
-      ": Failed to send the RCPD ping message to RTCPD"
+      ": Failed to send the rtcpd ping message"
       ": " << ex.getMessage().str());
   }
 
@@ -539,7 +539,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpJobRqst(const Cuuid_t &cuuid
   legacymsg::RtcpJobRqstMsgBody &request) throw(castor::exception::Exception) {
 
   castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
-    AGGREGATOR_RECEIVE_RCP_JOB_RQST);
+    AGGREGATOR_RECEIVE_RTCOPY_JOB);
 
   // Read in the message header
   char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
@@ -547,7 +547,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpJobRqst(const Cuuid_t &cuuid
     net::readBytes(socketFd, RTCPDNETRWTIMEOUT, sizeof(headerBuf), headerBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
-         ": Failed to read message header from RCP job submitter"
+         ": Failed to read message header from remote-copy job submitter"
       << ": " << ex.getMessage().str());
   }
 
@@ -559,7 +559,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpJobRqst(const Cuuid_t &cuuid
     legacymsg::unmarshal(p, remainingLen, header);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EBADMSG,
-      ": Failed to unmarshal message header from RCP job submitter"
+      ": Failed to unmarshal message header from remote-copy job submitter"
       ": " << ex.getMessage().str());
   }
 
@@ -572,7 +572,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpJobRqst(const Cuuid_t &cuuid
   // If the message body is too large
   if(header.lenOrStatus > sizeof(bodyBuf)) {
     TAPE_THROW_CODE(EMSGSIZE,
-         ": Message body from RCP job submitter is too large"
+         ": Message body from remote-copy job submitter is too large"
          ": Maximum: " << sizeof(bodyBuf)
       << ": Received: " << header.lenOrStatus);
   }
@@ -584,7 +584,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpJobRqst(const Cuuid_t &cuuid
     const size_t minimumLen = 4 * sizeof(uint32_t) + 4;
     if(header.lenOrStatus < minimumLen) {
       TAPE_THROW_CODE(EMSGSIZE,
-           ": Message body from RCP job submitter is too small"
+           ": Message body from remote-copy job submitter is too small"
            ": Minimum: " << minimumLen
         << ": Received: " << header.lenOrStatus);
     }
@@ -595,7 +595,7 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpJobRqst(const Cuuid_t &cuuid
     net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.lenOrStatus, bodyBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EIO,
-         ": Failed to read message body from RCP job submitter"
+         ": Failed to read message body from remote-copy job submitter"
       << ": "<< ex.getMessage().str());
   }
 
@@ -606,12 +606,12 @@ void castor::tape::aggregator::RtcpTxRx::receiveRtcpJobRqst(const Cuuid_t &cuuid
     legacymsg::unmarshal(p, remainingLen, request);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,
-         ": Failed to unmarshal message body from RCP job submitter"
+         ": Failed to unmarshal message body from remote-copy job submitter"
       << ": "<< ex.getMessage().str());
   }
 
   LogHelper::logMsgBody(cuuid, DLF_LVL_SYSTEM,
-    AGGREGATOR_RECEIVED_RCP_JOB_RQST, request.volReqId, socketFd, request);
+    AGGREGATOR_RECEIVED_RTCOPY_JOB, request.volReqId, socketFd, request);
 }
 
 //-----------------------------------------------------------------------------

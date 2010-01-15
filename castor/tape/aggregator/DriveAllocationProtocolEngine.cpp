@@ -78,7 +78,7 @@ castor::tape::tapegateway::Volume
       castor::dlf::Param("deviceGroupName", jobRequest.deviceGroupName),
       castor::dlf::Param("driveUnit"      , jobRequest.driveUnit      )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_SUBMITTING_JOB_TO_RTCPD, params);
+      AGGREGATOR_SUBMITTING_RTCOPY_JOB_TO_RTCPD, params);
   }
 
   legacymsg::RtcpJobReplyMsgBody rtcpdReply;
