@@ -102,6 +102,9 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
   Cuuid_t cuuid = nullCuuid;
   Cuuid_create(&cuuid);
 
+  // The remote-copy job request to be read from the VDQM
+  legacymsg::RtcpJobRqstMsgBody jobRequest;
+
   try {
     // Check the parameter to the run function has been set
     if(param == NULL) {
@@ -109,10 +112,20 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
         "VDQM request handler socket is NULL");
     }
 
-    legacymsg::RtcpJobRqstMsgBody jobRequest;
-    getRtcpJobAndCloseConn(cuuid, (castor::io::ServerSocket*)param,
-      jobRequest);
+    getRtcpJobAndCloseConn(cuuid, (castor::io::ServerSocket*)param, jobRequest);
+  } catch(castor::exception::Exception &ex) {
 
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Message", ex.getMessage().str()),
+      castor::dlf::Param("Code"   , ex.code()            )};
+    CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
+      AGGREGATOR_TRANSFER_FAILED, params);
+
+    // Return
+    return;
+  }
+
+  try {
     // Check the drive unit name given by the VDQM exists in the TPCONFIG file
     {
       utils::TpconfigLines tpconfigLines;
@@ -188,10 +201,8 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
 
     // Perform the rest of the thread's work, notifying the client if any
     // exception is thrown
-    bool exceptionThrowingRunThrewAnException = true;
     try {
       exceptionThrowingRun(cuuid, jobRequest, aggregatorTransactionCounter);
-      exceptionThrowingRunThrewAnException = false;
     } catch(castor::exception::Exception &ex) {
 
       // Ensure the tape session is removed from the catalogue of on-going
@@ -200,7 +211,10 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
         m_tapeSessionCatalogue.removeTapeSession(jobRequest.volReqId);
 
         castor::dlf::Param params[] = {
-          castor::dlf::Param("mountTransactionId", jobRequest.volReqId)};
+          castor::dlf::Param("mountTransactionId", jobRequest.volReqId   ),
+          castor::dlf::Param("reason"            , "Encountered an error"),
+          castor::dlf::Param("Message"           , ex.getMessage().str() ),
+          castor::dlf::Param("Code"              , ex.code()             )};
         castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
           AGGREGATOR_REMOVED_TAPE_SESSION_FROM_CATALOGUE, params);
       } catch(...) {
@@ -237,36 +251,24 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
       // a failure has occured
       throw(ex);
     }
-
-    if(exceptionThrowingRunThrewAnException) {
-      // Ensure the tape session is removed from the catalogue of on-going tape
-      // sessions
-      try {
-        m_tapeSessionCatalogue.removeTapeSession(jobRequest.volReqId);
-
-        castor::dlf::Param params[] = {
-          castor::dlf::Param("mountTransactionId", jobRequest.volReqId)};
-        castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-          AGGREGATOR_REMOVED_TAPE_SESSION_FROM_CATALOGUE, params);
-      } catch(...) {
-        // Do nothing
-      }
-    }
   } catch(castor::exception::Exception &ex) {
 
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Message", ex.getMessage().str()),
-      castor::dlf::Param("Code"   , ex.code()            )};
+      castor::dlf::Param("mountTransactionId", jobRequest.volReqId  ),
+      castor::dlf::Param("Message"           , ex.getMessage().str()),
+      castor::dlf::Param("Code"              , ex.code()            )};
     CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
       AGGREGATOR_TRANSFER_FAILED, params);
   } catch(std::exception &stdEx) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Message", stdEx.what())};
+      castor::dlf::Param("mountTransactionId", jobRequest.volReqId),
+      castor::dlf::Param("Message"           , stdEx.what()       )};
     CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
       AGGREGATOR_TRANSFER_FAILED, params);
   } catch(...) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Message", "Uknown exception")};
+      castor::dlf::Param("mountTransactionId", jobRequest.volReqId),
+      castor::dlf::Param("Message"           , "Unknown exception")};
     CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
       AGGREGATOR_TRANSFER_FAILED, params);
   }

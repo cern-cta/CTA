@@ -415,7 +415,8 @@ bool castor::tape::aggregator::BridgeProtocolEngine::processAPendingSocket(
         m_tapeSessionCatalogue.removeTapeSession(m_jobRequest.volReqId);
         {
           castor::dlf::Param params[] = {
-            castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId)};
+            castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId ),
+            castor::dlf::Param("reason"            , "Closing tape-session")};
           castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
             AGGREGATOR_REMOVED_TAPE_SESSION_FROM_CATALOGUE, params);
         }
