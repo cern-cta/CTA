@@ -248,7 +248,7 @@ castor::jobmanager::JobManagerDaemon::JobManagerDaemon():
     { 39, "Job terminated, svcclass no longer has any space available" },
     { 74, "Exception caught trying to get a list of running transfers from the stager database" },
     { 75, "Failed to execute getSchedulerJobsFromDB" },
-    { 77, "Executing cleanup for job" },
+    { 77, "Executed cleanup for job" },
     { 78, "Exception caught trying to get list of LSF jobs" },
     { 80, "Job terminated, transfer aborted" },
 

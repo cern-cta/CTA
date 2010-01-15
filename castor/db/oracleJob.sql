@@ -858,13 +858,16 @@ END;
  * transfers.
  */
 CREATE OR REPLACE
-PROCEDURE jobFailed(subReqIds IN castor."strList", errnos IN castor."cnumList")
+PROCEDURE jobFailed(subReqIds IN castor."strList", errnos IN castor."cnumList",
+                    failedSubReqs OUT castor.JobFailedSubReqList_Cur)
 AS
   srId  NUMBER;
   dcId  NUMBER;
   cfId  NUMBER;
   rType NUMBER;
 BEGIN
+  -- Clear the temporary table
+  DELETE FROM JobFailedProcHelper;
   -- Loop over all jobs to fail
   FOR i IN subReqIds.FIRST .. subReqIds.LAST LOOP
     BEGIN
@@ -895,12 +898,18 @@ BEGIN
        ELSE                    -- StageGetRequest or StageUpdateRequest
          getUpdateFailedProc(srId);
        END IF;
+       -- Record in the JobFailedProcHelper temporary table that an action was
+       -- taken
+       INSERT INTO JobFailedProcHelper VALUES (subReqIds(i));
        -- Release locks
        COMMIT;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       NULL;  -- The SubRequest may have be removed, nothing to be done.
     END;
   END LOOP;
+  -- Return the list of terminated jobs
+  OPEN failedSubReqs FOR
+    SELECT subReqId FROM JobFailedProcHelper;
 END;
 /
 

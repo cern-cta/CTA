@@ -73,6 +73,7 @@ CREATE OR REPLACE PACKAGE castor AS
     noSpace INTEGER,
     noFSAvail INTEGER);
   TYPE SchedulerJobs_Cur IS REF CURSOR RETURN SchedulerJobLine;
+  TYPE JobFailedSubReqList_Cur IS REF CURSOR RETURN JobFailedProcHelper%ROWTYPE;
   TYPE FileEntry IS RECORD (
     fileid INTEGER,
     nshost VARCHAR2(2048));

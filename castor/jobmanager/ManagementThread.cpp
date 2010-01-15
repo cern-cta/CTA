@@ -216,20 +216,10 @@ void castor::jobmanager::ManagementThread::run(void *param) {
       // We have a job in the database which is not in LSF, we assume a
       // scheduling error has occurred
       error = ESTSCHEDERR;
-
-      // "Executing cleanup for job"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Error", sstrerror(error)),
-         castor::dlf::Param(subRequestId)};
-      castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 77, 2, params);
     }
     if (error) {
       exitedJobs.push_back
         (std::pair<std::string, int>(jobinfo.subReqId(), error));
-
-      // Convert the string representations of the uuids to Cuuid_t structures
-      string2Cuuid(&requestId,    (char *)jobinfo.reqId().c_str());
-      string2Cuuid(&subRequestId, (char *)jobinfo.subReqId().c_str());
     }
   }
 
@@ -276,7 +266,29 @@ void castor::jobmanager::ManagementThread::run(void *param) {
 
   // Bulk terminate the jobs that exited or were terminated
   try {
-    m_jobManagerService->jobFailed(exitedJobs);
+    std::vector<std::string> failedSubReqs =
+      m_jobManagerService->jobFailed(exitedJobs);
+
+    // Loop over the failed SubRequests to log that a cleanup was performed
+    for (std::vector<std::string>::const_iterator it = failedSubReqs.begin();
+           it != failedSubReqs.end();
+         it++) {
+      std::map<std::string, castor::jobmanager::JobInfo>::iterator
+        it2 = databaseJobs.find((*it));
+      if (it2 == databaseJobs.end()) {
+        continue; // Shouldn't be here!
+      }
+      castor::jobmanager::JobInfo jobinfo = (*it2).second;
+
+      // Convert the string representations of the uuids to Cuuid_t structures
+      string2Cuuid(&requestId,    (char *)jobinfo.reqId().c_str());
+      string2Cuuid(&subRequestId, (char *)jobinfo.subReqId().c_str());
+
+      // "Executed cleanup for job"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param(subRequestId)};
+      castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 77, 1, params);
+    }
   } catch (castor::exception::Exception e) {
 
     // "Exception caught when trying to fail scheduler job"

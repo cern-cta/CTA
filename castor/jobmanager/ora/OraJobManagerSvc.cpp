@@ -65,7 +65,7 @@ const std::string castor::jobmanager::ora::OraJobManagerSvc::s_getSchedulerJobsF
 
 /// SQL statement for function jobFailedProc
 const std::string castor::jobmanager::ora::OraJobManagerSvc::s_jobFailedString =
-  "BEGIN jobFailed(:1, :2); END;";
+  "BEGIN jobFailed(:1, :2, :3); END;";
 
 
 //-----------------------------------------------------------------------------
@@ -213,25 +213,44 @@ castor::jobmanager::JobSubmissionRequest
     castor::jobmanager::JobSubmissionRequest *result =
       new castor::jobmanager::JobSubmissionRequest();
     result->setId(srId);
-    result->setSubReqId(m_jobToScheduleStatement->getString(2));
-    result->setProtocol(m_jobToScheduleStatement->getString(3));
-    result->setXsize((u_signed64)m_jobToScheduleStatement->getDouble(4));
-    result->setRequestedFileSystems(m_jobToScheduleStatement->getString(5));
-    result->setReqId(m_jobToScheduleStatement->getString(6));
-    result->setFileId((u_signed64)m_jobToScheduleStatement->getDouble(7));
-    result->setNsHost(m_jobToScheduleStatement->getString(8));
-    result->setSvcClass(m_jobToScheduleStatement->getString(9));
-    result->setRequestType(m_jobToScheduleStatement->getInt(10));
-    result->setEuid(m_jobToScheduleStatement->getInt(11));
-    result->setEgid(m_jobToScheduleStatement->getInt(12));
-    result->setUsername(m_jobToScheduleStatement->getString(13));
-    result->setOpenFlags(m_jobToScheduleStatement->getString(14));
-    result->setIpAddress(m_jobToScheduleStatement->getInt(15));
-    result->setPort(m_jobToScheduleStatement->getInt(16));
-    result->setClientVersion((u_signed64)m_jobToScheduleStatement->getDouble(17));
-    result->setClientType((u_signed64)m_jobToScheduleStatement->getDouble(18));
-    result->setSourceDiskCopyId((u_signed64)m_jobToScheduleStatement->getDouble(19));
-    result->setDestDiskCopyId((u_signed64)m_jobToScheduleStatement->getDouble(20));
+    result->setSubReqId
+      (m_jobToScheduleStatement->getString(2));
+    result->setProtocol
+      (m_jobToScheduleStatement->getString(3));
+    result->setXsize
+      ((u_signed64)m_jobToScheduleStatement->getDouble(4));
+    result->setRequestedFileSystems
+      (m_jobToScheduleStatement->getString(5));
+    result->setReqId
+      (m_jobToScheduleStatement->getString(6));
+    result->setFileId
+      ((u_signed64)m_jobToScheduleStatement->getDouble(7));
+    result->setNsHost
+      (m_jobToScheduleStatement->getString(8));
+    result->setSvcClass
+      (m_jobToScheduleStatement->getString(9));
+    result->setRequestType
+      (m_jobToScheduleStatement->getInt(10));
+    result->setEuid
+      (m_jobToScheduleStatement->getInt(11));
+    result->setEgid
+      (m_jobToScheduleStatement->getInt(12));
+    result->setUsername
+      (m_jobToScheduleStatement->getString(13));
+    result->setOpenFlags
+      (m_jobToScheduleStatement->getString(14));
+    result->setIpAddress
+      (m_jobToScheduleStatement->getInt(15));
+    result->setPort
+      (m_jobToScheduleStatement->getInt(16));
+    result->setClientVersion
+      ((u_signed64)m_jobToScheduleStatement->getDouble(17));
+    result->setClientType
+      ((u_signed64)m_jobToScheduleStatement->getDouble(18));
+    result->setSourceDiskCopyId
+      ((u_signed64)m_jobToScheduleStatement->getDouble(19));
+    result->setDestDiskCopyId
+      ((u_signed64)m_jobToScheduleStatement->getDouble(20));
 
     // Append the hosts from the requested filesystems attribute to the asked
     // hosts list.
@@ -279,19 +298,22 @@ castor::jobmanager::JobSubmissionRequest
 
     result->setClientSecure(m_jobToScheduleStatement->getInt(21));
     result->setSourceSvcClass(m_jobToScheduleStatement->getString(22));
-    result->setRequestCreationTime((u_signed64)m_jobToScheduleStatement->getDouble(23));
-    result->setDefaultFileSize((u_signed64)m_jobToScheduleStatement->getDouble(24));
+    result->setRequestCreationTime
+      ((u_signed64)m_jobToScheduleStatement->getDouble(23));
+    result->setDefaultFileSize
+      ((u_signed64)m_jobToScheduleStatement->getDouble(24));
 
     // Construct the list of excluded hosts
     if (result->requestType() == OBJ_StageDiskCopyReplicaRequest) {
       oracle::occi::ResultSet *rs = m_jobToScheduleStatement->getCursor(25);
       while (oracle::occi::ResultSet::END_OF_FETCH != rs->next()) {
-        result->setExcludedHosts(result->excludedHosts().append(rs->getString(1) + "|"));
+        result->setExcludedHosts
+          (result->excludedHosts().append(rs->getString(1) + "|"));
       }
       // Remove trailing '|'
       if (result->excludedHosts() != "") {
-        result->setExcludedHosts(result->excludedHosts().substr(0,
-                                                                result->excludedHosts().length() - 1));
+        result->setExcludedHosts
+          (result->excludedHosts().substr(0, result->excludedHosts().length() - 1));
       }
       m_jobToScheduleStatement->closeResultSet(rs);
     }
@@ -407,14 +429,15 @@ castor::jobmanager::ora::OraJobManagerSvc::getSchedulerJobsFromDB()
 //-----------------------------------------------------------------------------
 // JobFailed
 //-----------------------------------------------------------------------------
-void castor::jobmanager::ora::OraJobManagerSvc::jobFailed
+std::vector<std::string> castor::jobmanager::ora::OraJobManagerSvc::jobFailed
 (const std::vector<std::pair<std::string, int> > jobs)
   throw(castor::exception::Exception) {
 
   // If there are no jobs to fail return immediately!
+  std::vector<std::string> failedJobs;
   int nb = jobs.size();
   if (nb == 0) {
-    return;
+    return failedJobs;
   }
 
   // Container to hold pointers to memory to be freed
@@ -424,6 +447,7 @@ void castor::jobmanager::ora::OraJobManagerSvc::jobFailed
     // Initialize statements
     if (m_jobFailedStatement == NULL) {
       m_jobFailedStatement = createStatement(s_jobFailedString);
+      m_jobFailedStatement->registerOutParam(3, oracle::occi::OCCICURSOR);
       m_jobFailedStatement->setAutoCommit(true);
     }
 
@@ -495,6 +519,17 @@ void castor::jobmanager::ora::OraJobManagerSvc::jobFailed
     for (unsigned int i = 0; i < allocPtrs.size(); i++) {
       free(allocPtrs[i]);
     }
+
+    // Loop over the results
+    oracle::occi::ResultSet *rset =
+      m_jobFailedStatement->getCursor(3);
+    while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+      failedJobs.push_back(rset->getString(1));
+    }
+
+    // Release resources
+    m_jobFailedStatement->closeResultSet(rset);
+    return failedJobs;
 
   } catch (oracle::occi::SQLException e) {
     // Free resources

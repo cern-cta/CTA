@@ -553,7 +553,8 @@ void castor::jobmanager::SubmissionProcess::failRequest
     std::vector<std::pair<std::string, int> > failedJobs;
     failedJobs.push_back
       (std::pair<std::string, int>(request->subReqId(), errorCode));
-    m_jobManagerService->jobFailed(failedJobs);
+    std::vector<std::string> failedSubReqs =
+      m_jobManagerService->jobFailed(failedJobs);
   } catch (castor::exception::Exception e) {
 
     // "Exception caught when trying to fail scheduler job"

@@ -57,6 +57,11 @@ COMMIT;
 /* Schema changes go here */
 /**************************/
 
+/* Global temporary table to handle output of the jobFailed procedure */
+CREATE GLOBAL TEMPORARY TABLE JobFailedProcHelper
+  (subReqId VARCHAR2(2048))
+  ON COMMIT PRESERVE ROWS;
+
 /* Custom type to handle strings returned by pipelined functions */
 CREATE OR REPLACE TYPE strListTable AS TABLE OF VARCHAR2(2048);
 /
@@ -354,6 +359,7 @@ CREATE OR REPLACE PACKAGE castor AS
     noSpace INTEGER,
     noFSAvail INTEGER);
   TYPE SchedulerJobs_Cur IS REF CURSOR RETURN SchedulerJobLine;
+  TYPE JobFailedSubReqList_Cur IS REF CURSOR RETURN JobFailedProcHelper%ROWTYPE;
   TYPE FileEntry IS RECORD (
     fileid INTEGER,
     nshost VARCHAR2(2048));
@@ -2403,13 +2409,16 @@ END;
  * transfers.
  */
 CREATE OR REPLACE
-PROCEDURE jobFailed(subReqIds IN castor."strList", errnos IN castor."cnumList")
+PROCEDURE jobFailed(subReqIds IN castor."strList", errnos IN castor."cnumList",
+                    failedSubReqs OUT castor.JobFailedSubReqList_Cur)
 AS
   srId  NUMBER;
   dcId  NUMBER;
   cfId  NUMBER;
   rType NUMBER;
 BEGIN
+  -- Clear the temporary table
+  DELETE FROM JobFailedProcHelper;
   -- Loop over all jobs to fail
   FOR i IN subReqIds.FIRST .. subReqIds.LAST LOOP
     BEGIN
@@ -2440,12 +2449,18 @@ BEGIN
        ELSE                    -- StageGetRequest or StageUpdateRequest
          getUpdateFailedProc(srId);
        END IF;
+       -- Record in the JobFailedProcHelper temporary table that an action was
+       -- taken
+       INSERT INTO JobFailedProcHelper VALUES (subReqIds(i));
        -- Release locks
        COMMIT;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       NULL;  -- The SubRequest may have be removed, nothing to be done.
     END;
   END LOOP;
+  -- Return the list of terminated jobs
+  OPEN failedSubReqs FOR
+    SELECT subReqId FROM JobFailedProcHelper;
 END;
 /
 

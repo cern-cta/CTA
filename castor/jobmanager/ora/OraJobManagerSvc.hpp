@@ -125,9 +125,10 @@ namespace castor {
          * status
          * @param A vector of std::pairs detailing the list of SubRequest uuid's
          * to fail and the reason why.
+         * @return A list of SubRequest uuids that were failed.
          * @exception Exception in case of error
          */
-        virtual void jobFailed
+        virtual std::vector<std::string> jobFailed
         (const std::vector<std::pair<std::string, int> > jobs)
           throw(castor::exception::Exception);
 

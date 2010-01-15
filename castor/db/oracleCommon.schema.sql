@@ -297,6 +297,11 @@ CREATE GLOBAL TEMPORARY TABLE StgFilesDeletedOrphans
   (diskCopyId NUMBER)
   ON COMMIT DELETE ROWS;
 
+/* Global temporary table to handle output of the jobFailed procedure */
+CREATE GLOBAL TEMPORARY TABLE JobFailedProcHelper
+  (subReqId VARCHAR2(2048))
+  ON COMMIT PRESERVE ROWS;
+
 /* Tables to log the activity performed by the cleanup job */
 CREATE TABLE CleanupJobLog
   (fileId NUMBER CONSTRAINT NN_CleanupJobLog_FileId NOT NULL, 
