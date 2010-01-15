@@ -144,17 +144,25 @@ int castor::tape::net::acceptConnection(const int listenSocketFd)
   struct sockaddr_in peerAddress;
   unsigned int       peerAddressLen = sizeof(peerAddress);
 
-  const int connectedsocketFd = accept(listenSocketFd,
+  const int connectedSocketFd = accept(listenSocketFd,
     (struct sockaddr *)&peerAddress, &peerAddressLen);
   const int savedErrno = errno;
 
-  if(connectedsocketFd < 0) {
-    TAPE_THROW_CODE(savedErrno,
-      ": Failed to accept connection"
-      ": Accept failed: " << sstrerror(savedErrno));
+  if(connectedSocketFd < 0) {
+    std::stringstream reason;
+
+    reason << ": Accept failed";
+
+    if(savedErrno == EINVAL) {
+      reason << ": Socket is not listening for connections";
+    } else {
+      reason << ": " << sstrerror(savedErrno);
+    }
+
+    TAPE_THROW_CODE(savedErrno, reason.str());
   }
 
-  return connectedsocketFd;
+  return connectedSocketFd;
 }
 
 
@@ -220,18 +228,25 @@ int castor::tape::net::acceptConnection(const int listenSocketFd,
   struct sockaddr_in peerAddress;
   unsigned int       peerAddressLen = sizeof(peerAddress);
 
-  const int connectedsocketFd = accept(listenSocketFd,
+  const int connectedSocketFd = accept(listenSocketFd,
     (struct sockaddr *)&peerAddress, &peerAddressLen);
   const int acceptErrno = errno;
 
-  if(connectedsocketFd < 0) {
-    TAPE_THROW_CODE(acceptErrno,
-      ": Failed to accept connection"
-      ": Accept failed"
-      ": " << sstrerror(acceptErrno));
+  if(connectedSocketFd < 0) {
+    std::stringstream reason;
+
+    reason << ": Accept failed";
+
+    if(acceptErrno == EINVAL) {
+      reason << ": Socket is not listening for connections";
+    } else {
+      reason << ": " << sstrerror(acceptErrno);
+    }
+
+    TAPE_THROW_CODE(acceptErrno, reason.str());
   }
 
-  return connectedsocketFd;
+  return connectedSocketFd;
 }
 
 
