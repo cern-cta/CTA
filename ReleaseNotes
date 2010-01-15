@@ -48,6 +48,7 @@
             seconds
   - #61101: enterFileClass does not return correct ID
   - #61146: RFE: internal monitoring metrics
+  - #61451: Database session leak in request handler daemon
 
   CASTOR tape
   -----------
