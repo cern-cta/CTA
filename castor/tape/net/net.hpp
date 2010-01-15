@@ -53,7 +53,7 @@ namespace net    {
  * @return     The socket file descriptor.
  */
 int createListenerSock(const char *addr, const unsigned short port)
-  throw(castor::exception::Communication);
+  throw(castor::exception::Exception);
 
 /**
  * Creates a listener socket with a port number within the specified range.

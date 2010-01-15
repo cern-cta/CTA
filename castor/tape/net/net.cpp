@@ -43,7 +43,7 @@
 // createListenerSock
 //-----------------------------------------------------------------------------
 int castor::tape::net::createListenerSock(const char *addr,
-  const unsigned short port) throw(castor::exception::Communication) {
+  const unsigned short port) throw(castor::exception::Exception) {
 
   int    socketFd = 0;
   struct sockaddr_in address;
