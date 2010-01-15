@@ -42,17 +42,6 @@ namespace castor {
 namespace tape   {
 namespace net    {
 	
-/**
- * Creates a listener socket including, creation, binding and marking as a
- * listener socket.
- *
- * @param addr The IP address in dotted quad notation to be used by
- *             inet_addr().
- * @param port The port number to listen on or 0 if one should be allocated.
- * @return     The socket file descriptor.
- */
-int createListenerSock(const char *addr, const unsigned short port)
-  throw(castor::exception::Exception);
 
 /**
  * Creates a listener socket with a port number within the specified range.

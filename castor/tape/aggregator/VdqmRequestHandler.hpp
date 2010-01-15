@@ -112,6 +112,20 @@ private:
   static StoppingGracefullyFunctor s_stoppingGracefullyFunctor;
 
   /**
+   * Gets the RTCOPY job from the specified VDQM connection socket and then
+   * deletes the socket object causing it to close the underlying connection.
+   *
+   * @param cuuid      The ccuid to be used for logging.
+   * @param sock       The VDQM connection socket.
+   * @param jobRequest Outpur parameter: The RTCOPY job request from the VDQM.
+   */
+  void getRtcpJobAndCloseConn(
+    const Cuuid_t                 &cuuid,
+    io::ServerSocket*             sock,
+    legacymsg::RtcpJobRqstMsgBody &jobRequest)
+    throw(castor::exception::Exception);
+
+  /**
    * The entry point of this thread delegates its work to this method with a
    * try and catch around the call so that we can throw exceptions.
    *

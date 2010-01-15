@@ -109,64 +109,9 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
         "VDQM request handler socket is NULL");
     }
 
-    // Wrap the VDQM connection socket within an auto pointer.  When the auto
-    // pointer goes out of scope it will delete the socket.  The destructor of
-    // the socket will in turn close the connection.
-    std::auto_ptr<castor::io::AbstractTCPSocket>
-      vdqmSock((castor::io::AbstractTCPSocket*)param);
-
-    // Log the new connection
-    try {
-      unsigned short port = 0; // Client port
-      unsigned long  ip   = 0; // Client IP
-      char           hostName[net::HOSTNAMEBUFLEN];
-
-      net::getPeerIpPort(vdqmSock->socket(), ip, port);
-      net::getPeerHostName(vdqmSock->socket(), hostName);
-
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("IP"      , castor::dlf::IPAddress(ip)),
-        castor::dlf::Param("Port"    , port                      ),
-        castor::dlf::Param("HostName", hostName                  ),
-        castor::dlf::Param("socketFd", vdqmSock->socket()        )};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_RECEIVED_VDQM_CONNECTION, params);
-
-    } catch(castor::exception::Exception &ex) {
-      castor::exception::Exception ex2(ex.code());
-
-      ex2.getMessage() <<
-        "Failed to log new connection"
-        ": " << ex.getMessage().str();
-
-      throw(ex2);
-    }
-
-    // Check the VDQM (an RTCP job submitter) is authorised
-    checkRtcpJobSubmitterIsAuthorised(vdqmSock->socket());
-
-    // Receive the RTCOPY job request from the VDQM
     legacymsg::RtcpJobRqstMsgBody jobRequest;
-    utils::setBytes(jobRequest, '\0');
-    RtcpTxRx::receiveRtcpJobRqst(cuuid, vdqmSock->socket(), RTCPDNETRWTIMEOUT,
+    getRtcpJobAndCloseConn(cuuid, (castor::io::ServerSocket*)param,
       jobRequest);
-
-    // Send a positive acknowledge to the VDQM
-    {
-      legacymsg::RtcpJobReplyMsgBody rtcpdReply;
-      utils::setBytes(rtcpdReply, '\0');
-      rtcpdReply.status = VDQM_CLIENTINFO; // Strange status code
-      char vdqmReplyBuf[RTCPMSGBUFSIZE];
-      size_t vdqmReplyLen = 0;
-      vdqmReplyLen = legacymsg::marshal(vdqmReplyBuf, rtcpdReply);
-      net::writeBytes(vdqmSock->socket(), RTCPDNETRWTIMEOUT, vdqmReplyLen,
-        vdqmReplyBuf);
-    }
-
-    // Close the connection to the VDQM
-    // Please note that the destructor of AbstractTCPSocket will not close the
-    // socket a second time
-    vdqmSock->close();
 
     // Check the drive unit name given by the VDQM exists in the TPCONFIG file
     {
@@ -324,6 +269,69 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
       castor::dlf::Param("Message", "Uknown exception")};
     CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
       AGGREGATOR_TRANSFER_FAILED, params);
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// getRtcpJobFromVdqmAndCloseConn
+//-----------------------------------------------------------------------------
+void castor::tape::aggregator::VdqmRequestHandler::getRtcpJobAndCloseConn(
+  const Cuuid_t                 &cuuid,
+  io::ServerSocket*             sock,
+  legacymsg::RtcpJobRqstMsgBody &jobRequest)
+  throw(castor::exception::Exception) {
+
+  // Wrap the VDQM connection socket within an auto pointer.  When the auto
+  // pointer goes out of scope it will delete the socket.  The destructor of
+  // the socket will in turn close the connection.
+  std::auto_ptr<castor::io::ServerSocket> vdqmSock(sock);
+
+  // Log the new connection
+  try {
+    unsigned short port = 0; // Client port
+    unsigned long  ip   = 0; // Client IP
+    char           hostName[net::HOSTNAMEBUFLEN];
+
+    net::getPeerIpPort(vdqmSock->socket(), ip, port);
+    net::getPeerHostName(vdqmSock->socket(), hostName);
+
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("IP"      , castor::dlf::IPAddress(ip)),
+      castor::dlf::Param("Port"    , port                      ),
+      castor::dlf::Param("HostName", hostName                  ),
+      castor::dlf::Param("socketFd", vdqmSock->socket()        )};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      AGGREGATOR_RECEIVED_VDQM_CONNECTION, params);
+
+  } catch(castor::exception::Exception &ex) {
+    castor::exception::Exception ex2(ex.code());
+
+    ex2.getMessage() <<
+      "Failed to log new connection"
+      ": " << ex.getMessage().str();
+
+    throw(ex2);
+  }
+
+  // Check the VDQM (an RTCP job submitter) is authorised
+  checkRtcpJobSubmitterIsAuthorised(vdqmSock->socket());
+
+  // Receive the RTCOPY job request from the VDQM
+  utils::setBytes(jobRequest, '\0');
+  RtcpTxRx::receiveRtcpJobRqst(cuuid, vdqmSock->socket(), RTCPDNETRWTIMEOUT,
+    jobRequest);
+
+  // Send a positive acknowledge to the VDQM
+  {
+    legacymsg::RtcpJobReplyMsgBody rtcpdReply;
+    utils::setBytes(rtcpdReply, '\0');
+    rtcpdReply.status = VDQM_CLIENTINFO; // Strange status code
+    char vdqmReplyBuf[RTCPMSGBUFSIZE];
+    size_t vdqmReplyLen = 0;
+    vdqmReplyLen = legacymsg::marshal(vdqmReplyBuf, rtcpdReply);
+    net::writeBytes(vdqmSock->socket(), RTCPDNETRWTIMEOUT, vdqmReplyLen,
+      vdqmReplyBuf);
   }
 }
 

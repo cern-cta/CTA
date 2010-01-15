@@ -28,6 +28,7 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/net/net.hpp"
+#include "castor/tape/utils/SmartFd.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/serrno.h"
 #include "h/socket_timeout.h"
@@ -38,48 +39,6 @@
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <time.h>
-
-
-//-----------------------------------------------------------------------------
-// createListenerSock
-//-----------------------------------------------------------------------------
-int castor::tape::net::createListenerSock(const char *addr,
-  const unsigned short port) throw(castor::exception::Exception) {
-
-  int    socketFd = 0;
-  struct sockaddr_in address;
-
-  if ((socketFd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-    const int savedErrno = errno;
-
-    TAPE_THROW_EX(castor::exception::Internal,
-      ": Failed to create listener socket"
-      ": " << sstrerror(savedErrno));
-  }
-
-  utils::setBytes(address, '\0');
-  address.sin_family = AF_INET;
-  address.sin_addr.s_addr = inet_addr(addr);
-  address.sin_port = htons(port);
-
-  if(bind(socketFd, (struct sockaddr *) &address, sizeof(address)) < 0) {
-    const int savedErrno = errno;
-
-    TAPE_THROW_CODE(savedErrno,
-      ": Failed to bind listener socket"
-      ": " << sstrerror(savedErrno));
-  }
-
-  if(listen(socketFd, LISTENBACKLOG) < 0) {
-    const int savedErrno = errno;
-
-    TAPE_THROW_EX(castor::exception::Internal,
-      ": Failed to mark socket as being a listener"
-      ": " << sstrerror(savedErrno));
-  }
-
-  return socketFd;
-}
 
 
 //-----------------------------------------------------------------------------
@@ -109,24 +68,59 @@ int castor::tape::net::createListenerSock(
       ": lowPort=" << lowPort << " highPort=" << highPort);
   }
 
+  // Create a socket
+  utils::SmartFd sock(socket(PF_INET, SOCK_STREAM, IPPROTO_TCP));
+  if(sock.get() < 0) {
+    const int savedErrno = errno;
+
+    TAPE_THROW_EX(castor::exception::Internal,
+      ": Failed to create socket"
+      ": " << sstrerror(savedErrno));
+  }
+
+  // Address structure to be used to bind the socket
+  struct sockaddr_in address;
+
   // For each port in the range
-  for(unsigned short p=lowPort; p<=highPort; ++p) {
-    try{
-      const int rc = createListenerSock(addr, p);
-      chosenPort = p;
-      return rc;
-    } catch(castor::exception::Exception &ex) {
-      // Rethow all exceptions except for address in use
-      if(ex.code() != EADDRINUSE) {
-        throw(ex);
+  for(unsigned short port=lowPort; port<=highPort; ++port) {
+
+    // Try to bind the socket to the port
+    utils::setBytes(address, '\0');
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = inet_addr(addr);
+    address.sin_port = htons(port);
+
+    const int rc = bind(sock.get(), (struct sockaddr *) &address,
+      sizeof(address));
+    const int savedErrno = errno;
+
+    // If the bind was successful, then release and return the socket descriptor
+    if(rc == 0) {
+
+      return(sock.release());
+
+    // Else the bind failed
+    } else {
+
+      // If the bind failed because the address was in use, then continue
+      if(savedErrno == EADDRINUSE) {
+        continue;
+
+      // Else throw an exception
+      } else {
+
+        TAPE_THROW_CODE(savedErrno,
+          ": Failed to bind listener socket"
+          ": " << sstrerror(savedErrno));
       }
     }
   }
 
-  // Failed to bind to a port within  the specified range
-  castor::exception::NoPortInRange ex(lowPort, highPort);
+  // If this line is reached then all ports in the specified range are in use
 
-  ex.getMessage() << "Failed to bind a port within the specified range"
+  // Throw an exception
+  castor::exception::NoPortInRange ex(lowPort, highPort);
+  ex.getMessage() << "All ports within the specified range are in use"
     ": lowPort=" << lowPort << " highPort=" << highPort;
 
   throw(ex);
