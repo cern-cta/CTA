@@ -64,7 +64,7 @@ int castor::tape::net::createListenerSock(const char *addr,
   if(bind(socketFd, (struct sockaddr *) &address, sizeof(address)) < 0) {
     const int savedErrno = errno;
 
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_CODE(savedErrno,
       ": Failed to bind listener socket"
       ": " << sstrerror(savedErrno));
   }
@@ -89,8 +89,7 @@ int castor::tape::net::createListenerSock(
   const unsigned short lowPort,
   const unsigned short highPort,
   unsigned short       &chosenPort)
-  throw(castor::exception::InvalidArgument, castor::exception::NoPortInRange,
-    castor::exception::Communication) {
+  throw(castor::exception::Exception) {
 
   // Check range validity
   if(lowPort < 1) {
@@ -115,8 +114,8 @@ int castor::tape::net::createListenerSock(
       const int rc = createListenerSock(addr, p);
       chosenPort = p;
       return rc;
-    } catch(castor::exception::Communication &ex) {
-      // Rethow all communication exceptions except for address in use
+    } catch(castor::exception::Exception &ex) {
+      // Rethow all exceptions except for address in use
       if(ex.code() != EADDRINUSE) {
         throw(ex);
       }

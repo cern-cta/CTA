@@ -26,7 +26,6 @@
 #ifndef CASTOR_TAPE_NET_NET_HPP
 #define CASTOR_TAPE_NET_NET_HPP 1
 
-#include "castor/exception/Communication.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoPortInRange.hpp"
@@ -65,9 +64,6 @@ int createListenerSock(const char *addr, const unsigned short port)
  * This method raises a castor::exception::NoPortInRange exception if it cannot
  * find a free port to bind to within the specified range.
  *
- * This method raises a castor::exception::Communication exception if it
- * encounters an unexpected communication error.
- *
  * @param addr       The IP address in dotted quad notation to be used by
  *                   inet_addr().
  * @param lowPort    The inclusive low port of the port number range.  This
@@ -80,8 +76,7 @@ int createListenerSock(const char *addr, const unsigned short port)
  */
 int createListenerSock(const char *addr, const unsigned short lowPort,
   const unsigned short highPort, unsigned short &chosenPort)
-  throw(castor::exception::InvalidArgument, castor::exception::NoPortInRange,
-    castor::exception::Communication);
+  throw(castor::exception::Exception);
 
 /**
  * Accepts a connection on the specified listener socket and returns the
