@@ -86,32 +86,44 @@ int castor::tape::net::createListenerSock(
 
     // Try to bind the socket to the port
     utils::setBytes(address, '\0');
-    address.sin_family = AF_INET;
+    address.sin_family      = AF_INET;
     address.sin_addr.s_addr = inet_addr(addr);
-    address.sin_port = htons(port);
+    address.sin_port        = htons(port);
 
-    const int rc = bind(sock.get(), (struct sockaddr *) &address,
+    const int bindRc = bind(sock.get(), (struct sockaddr *) &address,
       sizeof(address));
-    const int savedErrno = errno;
+    const int bindErrno = errno;
 
-    // If the bind was successful, then release and return the socket descriptor
-    if(rc == 0) {
+    // If the bind was successful
+    if(bindRc == 0) {
 
+      // Mark the socket as being a listener
+      if(listen(sock.get(), LISTENBACKLOG) < 0) {
+        const int listenErrno = errno;
+
+        TAPE_THROW_EX(castor::exception::Internal,
+          ": Failed to mark socket as being a listener"
+          ": listenSocketFd=" << sock.get() <<
+          ": " << sstrerror(listenErrno));
+      }
+
+      // Release and return the socket descriptor
       return(sock.release());
 
     // Else the bind failed
     } else {
 
       // If the bind failed because the address was in use, then continue
-      if(savedErrno == EADDRINUSE) {
+      if(bindErrno == EADDRINUSE) {
         continue;
 
       // Else throw an exception
       } else {
 
-        TAPE_THROW_CODE(savedErrno,
+        TAPE_THROW_CODE(bindErrno,
           ": Failed to bind listener socket"
-          ": " << sstrerror(savedErrno));
+          ": listenSocketFd=" << sock.get() <<
+          ": " << sstrerror(bindErrno));
       }
     }
   }
@@ -120,8 +132,11 @@ int castor::tape::net::createListenerSock(
 
   // Throw an exception
   castor::exception::NoPortInRange ex(lowPort, highPort);
-  ex.getMessage() << "All ports within the specified range are in use"
-    ": lowPort=" << lowPort << " highPort=" << highPort;
+  ex.getMessage() <<
+    "All ports within the specified range are in use"
+    ": listenSocketFd=" << sock.get() <<
+    ": lowPort=" << lowPort <<
+    ": highPort=" << highPort;
 
   throw(ex);
 }
@@ -137,8 +152,8 @@ int castor::tape::net::acceptConnection(const int listenSocketFd)
   // Throw an exception if listenSocketFd is invalid
   if(listenSocketFd < 0) {
     TAPE_THROW_EX(exception::InvalidArgument,
-      "Invalid listen socket file-descriptor"
-      ":value=" << listenSocketFd);
+      ": Invalid listen socket file-descriptor"
+      ": listenSocketFd=" << listenSocketFd);
   }
 
   struct sockaddr_in peerAddress;
@@ -179,7 +194,7 @@ int castor::tape::net::acceptConnection(const int listenSocketFd,
   if(listenSocketFd < 0) {
     TAPE_THROW_EX(exception::InvalidArgument,
       "Invalid listen socket file-descriptor"
-      ":value=" << listenSocketFd);
+      ": listenSocketFd=" << listenSocketFd);
   }
 
   const time_t startTime = time(NULL);
@@ -261,6 +276,13 @@ void castor::tape::net::getSockIpPort(const int socketFd,
   unsigned long& ip, unsigned short& port)
   throw(castor::exception::Exception) {
 
+  // Throw an exception if socketFd is invalid
+  if(socketFd < 0) {
+    TAPE_THROW_EX(exception::InvalidArgument,
+      "Invalid socket file-descriptor"
+      ": socketFd=" << socketFd);
+  }
+
   struct sockaddr_in address;
   socklen_t addressLen = sizeof(address);
 
@@ -269,6 +291,7 @@ void castor::tape::net::getSockIpPort(const int socketFd,
 
     TAPE_THROW_CODE(savedErrno,
       ": Failed to get socket name"
+      ": socketFd=" << socketFd <<
       ": " << sstrerror(savedErrno));
   }
 
@@ -284,6 +307,13 @@ void castor::tape::net::getPeerIpPort(const int socketFd,
   unsigned long& ip, unsigned short& port)
   throw(castor::exception::Exception) {
 
+  // Throw an exception if socketFd is invalid
+  if(socketFd < 0) {
+    TAPE_THROW_EX(exception::InvalidArgument,
+      "Invalid socket file-descriptor"
+      ": socketFd=" << socketFd);
+  }
+
   struct sockaddr_in address;
   socklen_t addressLen = sizeof(address);
 
@@ -292,6 +322,7 @@ void castor::tape::net::getPeerIpPort(const int socketFd,
 
     TAPE_THROW_CODE(savedErrno,
       ": Failed to get peer name"
+      ": socketFd=" << socketFd <<
       ": " << sstrerror(savedErrno));
   }
 
@@ -306,6 +337,13 @@ void castor::tape::net::getPeerIpPort(const int socketFd,
 void castor::tape::net::getSockHostName(const int socketFd,
   char *buf, size_t len) throw(castor::exception::Exception) {
 
+  // Throw an exception if socketFd is invalid
+  if(socketFd < 0) {
+    TAPE_THROW_EX(exception::InvalidArgument,
+      "Invalid socket file-descriptor"
+      ": socketFd=" << socketFd);
+  }
+
   struct sockaddr_in address;
   socklen_t addressLen = sizeof(address);
 
@@ -314,6 +352,7 @@ void castor::tape::net::getSockHostName(const int socketFd,
 
     TAPE_THROW_CODE(savedErrno,
       ": Failed to get socket name"
+      ": socketFd=" << socketFd <<
       ": " << sstrerror(savedErrno));
   }
 
@@ -325,6 +364,7 @@ void castor::tape::net::getSockHostName(const int socketFd,
   if(error != 0) {
     TAPE_THROW_CODE(SENOSHOST,
       ": Failed to get host information by address"
+      ": socketFd=" << socketFd <<
       ": " << gai_strerror(error));
   }
 
@@ -339,6 +379,13 @@ void castor::tape::net::getSockIpHostnamePort(const int socketFd,
   unsigned long& ip, char *hostName, size_t hostNameLen,
   unsigned short& port) throw(castor::exception::Exception) {
 
+  // Throw an exception if socketFd is invalid
+  if(socketFd < 0) {
+    TAPE_THROW_EX(exception::InvalidArgument,
+      "Invalid socket file-descriptor"
+      ": socketFd=" << socketFd);
+  }
+
   struct sockaddr_in address;
   socklen_t addressLen = sizeof(address);
 
@@ -347,6 +394,7 @@ void castor::tape::net::getSockIpHostnamePort(const int socketFd,
 
     TAPE_THROW_CODE(savedErrno,
       ": Failed to get socket name"
+      ": socketFd=" << socketFd <<
       ": " << sstrerror(savedErrno));
   }
 
@@ -361,6 +409,7 @@ void castor::tape::net::getSockIpHostnamePort(const int socketFd,
     if(rc != 0) {
       TAPE_THROW_CODE(SENOSHOST,
         ": Failed to get host information by address"
+        ": socketFd=" << socketFd <<
         ": " << gai_strerror(rc));
     }
   }
@@ -373,6 +422,13 @@ void castor::tape::net::getSockIpHostnamePort(const int socketFd,
 void castor::tape::net::getPeerHostName(const int socketFd,
   char *buf, size_t len) throw(castor::exception::Exception) {
 
+  // Throw an exception if socketFd is invalid
+  if(socketFd < 0) {
+    TAPE_THROW_EX(exception::InvalidArgument,
+      "Invalid socket file-descriptor"
+      ": socketFd=" << socketFd);
+  }
+
   struct sockaddr_in address;
   socklen_t addressLen = sizeof(address);
 
@@ -381,6 +437,7 @@ void castor::tape::net::getPeerHostName(const int socketFd,
 
     TAPE_THROW_CODE(savedErrno,
       ": Failed to get peer name"
+      ": socketFd=" << socketFd <<
       ": " << sstrerror(savedErrno));
   }
 
@@ -393,6 +450,7 @@ void castor::tape::net::getPeerHostName(const int socketFd,
     if(rc != 0) {
       TAPE_THROW_CODE(SENOSHOST,
         ": Failed to get host information by address"
+        ": socketFd=" << socketFd <<
         ": " << gai_strerror(rc));
     }
 
@@ -418,6 +476,14 @@ void castor::tape::net::writeIp(std::ostream &os,
 //------------------------------------------------------------------------------
 void castor::tape::net::writeSockDescription(std::ostream &os,
   const int socketFd) throw() {
+
+  // Throw an exception if socketFd is invalid
+  if(socketFd < 0) {
+    TAPE_THROW_EX(exception::InvalidArgument,
+      "Invalid socket file-descriptor"
+      ": socketFd=" << socketFd);
+  }
+
   unsigned long  localIp   = 0;
   unsigned short localPort = 0;
   unsigned long  peerIp    = 0;
@@ -453,6 +519,13 @@ void castor::tape::net::writeSockDescription(std::ostream &os,
 void castor::tape::net::readBytes(const int socketFd, const int timeout,
   const int nbBytes, char *buf) throw(castor::exception::Exception) {
 
+  // Throw an exception if socketFd is invalid
+  if(socketFd < 0) {
+    TAPE_THROW_EX(exception::InvalidArgument,
+      "Invalid socket file-descriptor"
+      ": socketFd=" << socketFd);
+  }
+
   bool connClosed = false;
 
   readBytesFromCloseable(connClosed, socketFd, timeout, nbBytes, buf);
@@ -474,6 +547,13 @@ void castor::tape::net::readBytes(const int socketFd, const int timeout,
 void castor::tape::net::readBytesFromCloseable(bool &connClosed, 
   const int socketFd, const int timeout, const int nbBytes, char *buf)
   throw(castor::exception::Exception) {
+
+  // Throw an exception if socketFd is invalid
+  if(socketFd < 0) {
+    TAPE_THROW_EX(exception::InvalidArgument,
+      "Invalid socket file-descriptor"
+      ": socketFd=" << socketFd);
+  }
 
   connClosed = false;
   const int rc = netread_timeout(socketFd, buf, nbBytes, timeout);
@@ -520,6 +600,13 @@ void castor::tape::net::readBytesFromCloseable(bool &connClosed,
 //------------------------------------------------------------------------------
 void castor::tape::net::writeBytes(const int socketFd, const int timeout,
   const int nbBytes, char *const buf) throw(castor::exception::Exception) {
+
+  // Throw an exception if socketFd is invalid
+  if(socketFd < 0) {
+    TAPE_THROW_EX(exception::InvalidArgument,
+      "Invalid socket file-descriptor"
+      ": socketFd=" << socketFd);
+  }
 
   const int rc = netwrite_timeout(socketFd, buf, nbBytes, timeout);
   const int savedSerrno = serrno;
