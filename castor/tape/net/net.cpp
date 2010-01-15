@@ -131,13 +131,20 @@ int castor::tape::net::createListenerSock(
 //-----------------------------------------------------------------------------
 // acceptConnection
 //-----------------------------------------------------------------------------
-int castor::tape::net::acceptConnection(const int listensocketFd)
+int castor::tape::net::acceptConnection(const int listenSocketFd)
   throw(castor::exception::Exception) {
+
+  // Throw an exception if listenSocketFd is invalid
+  if(listenSocketFd < 0) {
+    TAPE_THROW_EX(exception::InvalidArgument,
+      "Invalid listen socket file-descriptor"
+      ":value=" << listenSocketFd);
+  }
 
   struct sockaddr_in peerAddress;
   unsigned int       peerAddressLen = sizeof(peerAddress);
 
-  const int connectedsocketFd = accept(listensocketFd,
+  const int connectedsocketFd = accept(listenSocketFd,
     (struct sockaddr *)&peerAddress, &peerAddressLen);
   const int savedErrno = errno;
 
@@ -154,21 +161,28 @@ int castor::tape::net::acceptConnection(const int listensocketFd)
 //-----------------------------------------------------------------------------
 // acceptConnection
 //-----------------------------------------------------------------------------
-int castor::tape::net::acceptConnection(const int listensocketFd,
+int castor::tape::net::acceptConnection(const int listenSocketFd,
   const time_t timeout) throw(castor::exception::TimeOut,
   castor::exception::TapeNetAcceptInterrupted, castor::exception::Exception) {
 
-  const time_t startTime   = time(NULL);
+  // Throw an exception if listenSocketFd is invalid
+  if(listenSocketFd < 0) {
+    TAPE_THROW_EX(exception::InvalidArgument,
+      "Invalid listen socket file-descriptor"
+      ":value=" << listenSocketFd);
+  }
+
+  const time_t startTime = time(NULL);
   fd_set       fdSet;
   timeval      selectTimeout;
 
   FD_ZERO(&fdSet);
-  FD_SET(listensocketFd, &fdSet);
+  FD_SET(listenSocketFd, &fdSet);
 
   selectTimeout.tv_sec  = timeout;
   selectTimeout.tv_usec = 0;
 
-  const int selectRc = select(listensocketFd + 1, &fdSet, NULL, NULL,
+  const int selectRc = select(listenSocketFd + 1, &fdSet, NULL, NULL,
     &selectTimeout);
   const int selectErrno = errno;
 
@@ -196,7 +210,7 @@ int castor::tape::net::acceptConnection(const int listensocketFd,
     break;
   default: // Select found a file descriptor awaiting attention
     // If it is not the expected connection request
-    if(!FD_ISSET(listensocketFd, &fdSet)) {
+    if(!FD_ISSET(listenSocketFd, &fdSet)) {
       TAPE_THROW_CODE(selectErrno,
         ": Failed to accept connection "
         ": Invalid file descriptor set");
@@ -206,14 +220,15 @@ int castor::tape::net::acceptConnection(const int listensocketFd,
   struct sockaddr_in peerAddress;
   unsigned int       peerAddressLen = sizeof(peerAddress);
 
-  const int connectedsocketFd = accept(listensocketFd,
+  const int connectedsocketFd = accept(listenSocketFd,
     (struct sockaddr *)&peerAddress, &peerAddressLen);
   const int acceptErrno = errno;
 
   if(connectedsocketFd < 0) {
     TAPE_THROW_CODE(acceptErrno,
       ": Failed to accept connection"
-      ": Accept failed: " << sstrerror(acceptErrno));
+      ": Accept failed"
+      ": " << sstrerror(acceptErrno));
   }
 
   return connectedsocketFd;
