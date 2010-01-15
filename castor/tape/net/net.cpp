@@ -151,7 +151,9 @@ int castor::tape::net::acceptConnection(const int listenSocketFd)
   if(connectedSocketFd < 0) {
     std::stringstream reason;
 
-    reason << ": Accept failed";
+    reason <<
+      ": Accept failed"
+      ": listenSocketFd=" << listenSocketFd;
 
     if(savedErrno == EINVAL) {
       reason << ": Socket is not listening for connections";
@@ -235,7 +237,9 @@ int castor::tape::net::acceptConnection(const int listenSocketFd,
   if(connectedSocketFd < 0) {
     std::stringstream reason;
 
-    reason << ": Accept failed";
+    reason <<
+      ": Accept failed"
+      ": listenSocketFd=" << listenSocketFd;
 
     if(acceptErrno == EINVAL) {
       reason << ": Socket is not listening for connections";
