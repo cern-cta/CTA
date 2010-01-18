@@ -42,6 +42,7 @@
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
+#include "castor/stager/CastorFile.hpp"
 #include "castor/rh/BasicResponse.hpp"
 #include "castor/rh/IOResponse.hpp"
 #include "castor/replier/RequestReplier.hpp"
@@ -123,12 +124,14 @@ void castor::stager::daemon::ErrorSvcThread::process
     string2Cuuid(&suuid, (char*)subReq->subreqId().c_str());
     // Getting the request
     svcs->fillObj(&ad, subReq, castor::OBJ_FileRequest);
+    svcs->fillObj(&ad, subReq, castor::OBJ_CastorFile);
     req = subReq->request();
-    if (0 == req) {
-      // "No request associated with subrequest ! Cannot answer !"
+    if (0 == req || 0 == subReq->castorFile()) {
+      // "No request/castorFile associated with subrequest ! Cannot answer !"
       castor::dlf::Param params[] =
-	{castor::dlf::Param(suuid)};
-      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_ERRSVC_NOREQ, 1, params);
+       {castor::dlf::Param(suuid)};
+       castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR,
+         req == 0 ? STAGER_ERRSVC_NOREQ : STAGER_ERRSVC_NOFILE, 1, params);
     } else {
       string2Cuuid(&uuid, (char*)req->reqId().c_str());
       // Getting the client
@@ -137,7 +140,7 @@ void castor::stager::daemon::ErrorSvcThread::process
       if (0 == client) {
         // "No client associated with request ! Cannot answer !"
         castor::dlf::Param params[] =
-	  {castor::dlf::Param(suuid)};
+         {castor::dlf::Param(suuid)};
         castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_ERRSVC_NOCLI, 1, params);
       }
     }
@@ -154,7 +157,7 @@ void castor::stager::daemon::ErrorSvcThread::process
   }
 
   // At this point we are able to reply to the client
-  // Set the SubRequest in FINISH_FAILED status
+  // Set the SubRequest in FAILED_FINISHED status
   subReq->setStatus(castor::stager::SUBREQUEST_FAILED_FINISHED);
 
   // Build response
@@ -176,7 +179,8 @@ void castor::stager::daemon::ErrorSvcThread::process
       }
     }
     res.setStatus(castor::stager::SUBREQUEST_FAILED);
-    res.setCastorFileName(subReq->fileName());
+    res.setCastorFileName(subReq->castorFile()->lastKnownFileName());
+    res.setFileId(subReq->castorFile()->fileId());
     res.setSubreqId(subReq->subreqId());
     res.setReqAssociated(req->reqId());
     // Reply to client
@@ -188,7 +192,10 @@ void castor::stager::daemon::ErrorSvcThread::process
         castor::dlf::Param params[] =
           {castor::dlf::Param("ErrorMessage", res.errorMessage()),
            castor::dlf::Param(suuid)};
-        castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, 2, params);
+        struct Cns_fileid nsid;
+        nsid.fileid = subReq->castorFile()->fileId();
+        strncpy(nsid.server, subReq->castorFile()->nsHost().c_str(), sizeof(nsid.server));
+        castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, 2, params, &nsid);
       } catch (castor::exception::Exception e) {
         // "Unexpected exception caught"
         castor::dlf::Param params[] =
@@ -232,7 +239,10 @@ void castor::stager::daemon::ErrorSvcThread::process
     }
   }
   // Cleanup
-  if (subReq) delete subReq;
+  if (subReq) {
+    if(subReq->castorFile()) delete subReq->castorFile();
+    delete subReq;
+  }
   if (req) delete req;
   if (stgSvc) stgSvc->release();
   return;

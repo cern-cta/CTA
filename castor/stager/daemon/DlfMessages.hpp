@@ -121,7 +121,7 @@ namespace castor{
 	STAGER_GCSVC_FNSDEL = 120, /* "File deleted since it disappeared from nameserver" */
 	STAGER_GCSVC_STGFILDEL = 125, /* "Invoking stgFilesDeleted" */
 	STAGER_GCSVC_FSTGDEL = 126 , /* "File to be unlinked since it dissapeared from the stager" */
-        STAGER_GCSVC_CLEANUPDONE = 127, /* "Dump of the cleanup log completed, dropping db connection" */
+	STAGER_GCSVC_CLEANUPDONE = 127, /* "Dump of the cleanup log completed, dropping db connection" */
 
 	/************/
 	/* ErrorSvc */
@@ -129,6 +129,7 @@ namespace castor{
 	STAGER_ERRSVC_EXCEPT = 122, /* "Unexpected exception caught" */
 	STAGER_ERRSVC_NOREQ = 123, /* "No request associated with subrequest ! Cannot answer !" */
 	STAGER_ERRSVC_NOCLI = 124, /* "No client associated with request ! Cannot answer !" */
+	STAGER_ERRSVC_NOFILE = 125, /* "No castorFile associated with request ! Cannot answer !" */
 
 	/**********/
 	/* JobSvc */

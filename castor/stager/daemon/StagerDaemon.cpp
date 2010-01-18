@@ -255,6 +255,7 @@ castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::E
     { STAGER_ERRSVC_EXCEPT,  "Unexpected exception caught"},
     { STAGER_ERRSVC_NOREQ,   "No request associated with subrequest ! Cannot answer !"},
     { STAGER_ERRSVC_NOCLI,   "No client associated with request ! Cannot answer !"},
+    { STAGER_ERRSVC_NOFILE,  "No castorFile associated with request ! Cannot answer !"},
 
     /**********/
     /* JobSvc */
