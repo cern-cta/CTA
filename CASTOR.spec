@@ -95,4 +95,8 @@ make install DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man
 
 %if ! %compiling_nostk
 
+%clean
+rm -rf $RPM_BUILD_ROOT
+rm -rf $RPM_BUILD_DIR/%{name}-%{version}
+
 # The following will be filled dynamically with the rule: make rpm, or make tar
