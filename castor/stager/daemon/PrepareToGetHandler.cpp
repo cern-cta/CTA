@@ -57,9 +57,9 @@ namespace castor{
         bool reply = false;
         int result = stgRequestHelper->stagerService->processPrepareRequest(stgRequestHelper->subrequest);
         switch(result) {
-          case -2:
-          stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, &(stgCnsHelper->cnsFileid));
+          case -2:                         // this happens for repacks that need to wait on other requests
           stgRequestHelper->subrequest->setStatus(SUBREQUEST_WAITSUBREQ);
+          stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, &(stgCnsHelper->cnsFileid));
           reply = true;
           break;
           
@@ -68,13 +68,14 @@ namespace castor{
           break;
           
           case DISKCOPY_STAGED:             // nothing to do, just log it
-          case DISKCOPY_WAITDISK2DISKCOPY:
           stgRequestHelper->subrequest->setStatus(SUBREQUEST_FINISHED);
-          if(result == DISKCOPY_STAGED)
-            stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_ARCHIVE_SUBREQ, &(stgCnsHelper->cnsFileid));
-          else
-            stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_PREPARETOGET_DISK2DISKCOPY, &(stgCnsHelper->cnsFileid));
+          stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_ARCHIVE_SUBREQ, &(stgCnsHelper->cnsFileid));
+          reply = true;
+          break;
           
+          case DISKCOPY_WAITDISK2DISKCOPY:    // nothing to do (the db is already updated), log that a replication is about to happen
+          stgRequestHelper->subrequest->setStatus(SUBREQUEST_WAITSUBREQ);
+          stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_PREPARETOGET_DISK2DISKCOPY, &(stgCnsHelper->cnsFileid));
           reply = true;
           break;
           

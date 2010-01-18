@@ -1485,13 +1485,8 @@ BEGIN
   -- we may have to schedule a disk to disk copy or trigger a recall
   checkForD2DCopyOrRecall(cfId, srId, reuid, regid, svcClassId, srcDcId, srvSvcClassId);
   IF srcDcId > 0 THEN  -- disk to disk copy
-    IF repack = 1 THEN
-      createDiskCopyReplicaRequest(srId, srcDcId, srvSvcClassId, svcClassId, reuid, regid);
-      result := -2;  -- Repack waits on the disk to disk copy
-    ELSE
-      createDiskCopyReplicaRequest(0, srcDcId, srvSvcClassId, svcClassId, reuid, regid);
-      result := 1;  -- DISKCOPY_WAITDISK2DISKCOPY, for logging purposes
-    END IF;
+    createDiskCopyReplicaRequest(srId, srcDcId, srvSvcClassId, svcClassId, reuid, regid);
+    result := 1;  -- DISKCOPY_WAITDISK2DISKCOPY, for logging purposes
   ELSIF srcDcId = 0 THEN  -- recall
     BEGIN
       -- check whether there's already a recall, and get its svcClass
