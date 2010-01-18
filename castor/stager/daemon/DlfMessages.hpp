@@ -129,7 +129,6 @@ namespace castor{
 	STAGER_ERRSVC_EXCEPT = 122, /* "Unexpected exception caught" */
 	STAGER_ERRSVC_NOREQ = 123, /* "No request associated with subrequest ! Cannot answer !" */
 	STAGER_ERRSVC_NOCLI = 124, /* "No client associated with request ! Cannot answer !" */
-	STAGER_ERRSVC_NOFILE = 125, /* "No castorFile associated with request ! Cannot answer !" */
 
 	/**********/
 	/* JobSvc */

@@ -126,12 +126,11 @@ void castor::stager::daemon::ErrorSvcThread::process
     svcs->fillObj(&ad, subReq, castor::OBJ_FileRequest);
     svcs->fillObj(&ad, subReq, castor::OBJ_CastorFile);
     req = subReq->request();
-    if (0 == req || 0 == subReq->castorFile()) {
-      // "No request/castorFile associated with subrequest ! Cannot answer !"
+    if (0 == req) {
+      // "No request associated with subrequest ! Cannot answer !"
       castor::dlf::Param params[] =
        {castor::dlf::Param(suuid)};
-       castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR,
-         req == 0 ? STAGER_ERRSVC_NOREQ : STAGER_ERRSVC_NOFILE, 1, params);
+       castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_ERRSVC_NOREQ, 1, params);
     } else {
       string2Cuuid(&uuid, (char*)req->reqId().c_str());
       // Getting the client
@@ -179,8 +178,15 @@ void castor::stager::daemon::ErrorSvcThread::process
       }
     }
     res.setStatus(castor::stager::SUBREQUEST_FAILED);
-    res.setCastorFileName(subReq->castorFile()->lastKnownFileName());
-    res.setFileId(subReq->castorFile()->fileId());
+    if(subReq->castorFile()) {
+      res.setCastorFileName(subReq->castorFile()->lastKnownFileName());
+      res.setFileId(subReq->castorFile()->fileId());
+    } else {
+      // Not in all cases the castorFile is properly filled (typically
+      // failures of stageRm or putDone don't update the subReq's castorFile link),
+      // thus in general we rely on the subreq.filename
+      res.setCastorFileName(subReq->fileName());
+    }
     res.setSubreqId(subReq->subreqId());
     res.setReqAssociated(req->reqId());
     // Reply to client
@@ -192,10 +198,14 @@ void castor::stager::daemon::ErrorSvcThread::process
         castor::dlf::Param params[] =
           {castor::dlf::Param("ErrorMessage", res.errorMessage()),
            castor::dlf::Param(suuid)};
-        struct Cns_fileid nsid;
-        nsid.fileid = subReq->castorFile()->fileId();
-        strncpy(nsid.server, subReq->castorFile()->nsHost().c_str(), sizeof(nsid.server));
-        castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, 2, params, &nsid);
+        if(subReq->castorFile()) {
+          struct Cns_fileid nsid;
+          nsid.fileid = subReq->castorFile()->fileId();
+          strncpy(nsid.server, subReq->castorFile()->nsHost().c_str(), sizeof(nsid.server));
+          castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, 2, params, &nsid);
+        } else {
+          castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, 2, params);
+        }
       } catch (castor::exception::Exception e) {
         // "Unexpected exception caught"
         castor::dlf::Param params[] =
