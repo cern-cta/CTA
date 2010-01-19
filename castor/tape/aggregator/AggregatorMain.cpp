@@ -32,7 +32,7 @@
 //------------------------------------------------------------------------------
 int main(int argc, char **argv) {
 
-  castor::tape::aggregator::AggregatorDaemon daemon;
+  using namespace castor::tape::aggregator;
 
-  return daemon.main(argc, argv);
+  return AggregatorDaemon::instance().main(argc, argv);
 }

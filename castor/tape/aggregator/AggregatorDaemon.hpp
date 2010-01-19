@@ -49,11 +49,11 @@ class AggregatorDaemon : public castor::server::BaseDaemon {
 public:
 
   /**
-   * Constructor.
-   *
-   * @param daemonName The name of the daemon.
+   * Returns a reference to the single instance of the daemon.
    */
-  AggregatorDaemon() throw(castor::exception::Exception);
+  static AggregatorDaemon &instance() throw() {
+    return s_instance;
+  }
 
   /**
    * Destructor.
@@ -67,6 +67,18 @@ public:
 
 
 private:
+
+  /**
+   * Private static member used to implement the singleton pattern without
+   * using the heap.
+   */
+  static AggregatorDaemon s_instance;
+
+  /**
+   * Private constructor to enforce only one instance of the daemon can be
+   * instantiate via the instance() method of the singleton patten.
+   */
+  AggregatorDaemon() throw(castor::exception::Exception);
 
   /**
    * Exception throwing main() function which basically implements the
