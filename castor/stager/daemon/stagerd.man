@@ -11,8 +11,10 @@ stagerd \- start the CASTOR Stager daemon
 .BI -h
 ]
 [
-.BI -c
-.BI <config-file>
+.BI -c " <config-file>"
+]
+[
+.BI -m
 ]
 [
 .BI -J
@@ -64,8 +66,11 @@ runs in foreground mode (no daemonization).
 displays command usage help.
 .TP
 .BI \-c,\ \-\-config\ <config-file>
-specified the location of the configuration file to use. The default value
+specifies the location of the configuration file to use. The default value
 is /etc/castor/castor.conf.
+.TP
+.BI \-m,\ \-\-metrics
+enables internal metrics collection, usually into \fI/var/spool/castor/stagerd.xml\fR.
 .TP
 .BI \-J,\ \-\-Jthreads\ <nb\ threads>
 specifies the number of threads for user job oriented requests. Default is 10.

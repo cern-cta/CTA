@@ -14,12 +14,16 @@ rhd \- start the CASTOR Request Handler daemon
 .BI -s
 ]
 [
-.BI -c
-.BI <config-file>
+.BI -c " <config-file>"
 ]
 [
-.BI -p
-.BI <port>
+.BI -p " <port>"
+]
+[
+.BI -n
+]
+[
+.BI -m
 ]
 [
 .BI -R
@@ -46,11 +50,8 @@ displays command usage help.
 runs the daemon in secure mode
 .TP
 .BI \-c,\ \-\-config\ <config-file>
-specified the location of the configuration file to use. The default value
+specifies the location of the configuration file to use. The default value
 is /etc/castor/castor.conf.
-.TP
-.BI \-R,\ \-\-Rthreads\ <nb\ threads>
-specifies the number of threads to use to handle client requests. Default is 20.
 .TP
 .BI \-p,\ \-\-port\ <port>
 specifies the port on which to listen for client request. The default port for the
@@ -58,13 +59,17 @@ unsecure daemon is 9002 and for the secure is 9007.
 The port can also be overwritten using the RH_PORT enviroment variable or
 by having a RH/PORT entry in the /etc/castor/castor.conf file.
 .TP
-.BI \-b,\ \-\-bw
-specifies whether black and white list support is enabled.
+.BI \-n,\ \-\-no-wait
+when no thread is available to process incoming requests, the Request Handler's
+listener normally waits for a thread to become idle; this may result in the service
+refusing further connections. By specifying --no-wait, in such cases the listener
+immediately terminates the incoming connections and logs a warning message.
+.TP
+.BI \-m,\ \-\-metrics
+enables internal metrics collection, usually into \fI/var/spool/castor/rhd.<role>.xml\fR.
+.TP
+.BI \-R,\ \-\-Rthreads\ <nb\ threads>
+specifies the number of threads to use to handle client requests. Default is 20.
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
-
-
-
-
-
