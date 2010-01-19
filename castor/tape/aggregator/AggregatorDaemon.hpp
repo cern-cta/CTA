@@ -65,7 +65,16 @@ public:
    */
   int main(const int argc, char **argv);
 
+
 private:
+
+  /**
+   * Exception throwing main() function which basically implements the
+   * non-exception throwing main() function except for the initialisation of
+   * DLF and the "exception catch and log" logic.
+   */
+  int exceptionThrowingMain(const int argc, char **argv)
+    throw(castor::exception::Exception);
 
   /**
    * Logs the start of the daemon.

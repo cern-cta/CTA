@@ -61,51 +61,84 @@ castor::tape::aggregator::AggregatorDaemon::~AggregatorDaemon() throw() {
 int castor::tape::aggregator::AggregatorDaemon::main(const int argc,
   char **argv) {
 
+  // Try to initialize the DLF logging system, quitting with an error message
+  // to stderr if the initialization fails
   try {
 
-    // Initialize the DLF logging
     castor::server::BaseServer::dlfInit(s_dlfMessages);
 
-    // Log the start of the daemon
-    logStart(argc, argv);
+  } catch(castor::exception::Exception &ex) {
+    std::cerr << std::endl <<
+      "Failed to start daemon"
+      ": Failed to initialize DLF"
+      ": " << ex.getMessage().str() << std::endl << std::endl;
 
-    // Parse the command line
-    try {
-      parseCommandLine(argc, argv);
+    return 1;
+  }
 
-      // Pass the foreground option to the super class BaseDaemon
-      m_foreground = m_parsedCommandLine.foregroundOptionSet;
+  // Try to start the daemon, quitting with an error message to stderr and DLF
+  // if the start fails
+  try {
 
-      // Display usage message and exit if help option found on command-line
-      if(m_parsedCommandLine.helpOptionSet) {
-        std::cout << std::endl;
-        castor::tape::aggregator::AggregatorDaemon::usage(std::cout,
-          AGGREGATORPROGRAMNAME);
-        std::cout << std::endl;
-        return 0;
-      }
-    } catch (castor::exception::Exception &ex) {
-      std::cerr << std::endl << "Failed to parse the command-line: "
-        << ex.getMessage().str() << std::endl;
-      castor::tape::aggregator::AggregatorDaemon::usage(std::cerr,
-        AGGREGATORPROGRAMNAME);
-      std::cerr << std::endl;
-
-      return 1;
-    }
-
-    createVdqmRequestHandlerPool();
-
-    // Start the threads
-    start();
+    exceptionThrowingMain(argc, argv);
 
   } catch (castor::exception::Exception &ex) {
     std::cerr << std::endl << "Failed to start daemon: "
       << ex.getMessage().str() << std::endl << std::endl;
     usage(std::cerr, AGGREGATORPROGRAMNAME);
     std::cerr << std::endl;
+
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Message", ex.getMessage().str()),
+      castor::dlf::Param("Code"   , ex.code()            )};
+    CASTOR_DLF_WRITEPC(nullCuuid, DLF_LVL_ERROR,
+      AGGREGATOR_FAILED_TO_START, params);
+
     return 1;
   }
+
+  return 0;
+}
+
+
+//------------------------------------------------------------------------------
+// exceptionThrowingMain
+//------------------------------------------------------------------------------
+int castor::tape::aggregator::AggregatorDaemon::exceptionThrowingMain(
+  const int argc, char **argv) throw(castor::exception::Exception) {
+
+  // Log the start of the daemon
+  logStart(argc, argv);
+
+  // Parse the command line
+  try {
+    parseCommandLine(argc, argv);
+  } catch (castor::exception::Exception &ex) {
+    castor::exception::InvalidArgument ex2;
+
+    ex2.getMessage() <<
+      "Failed to parse the command-line"
+      ": " << ex.getMessage().str();
+
+    throw(ex2);
+  }
+
+  // Display usage message and exit if help option found on command-line
+  if(m_parsedCommandLine.helpOptionSet) {
+    std::cout << std::endl;
+    castor::tape::aggregator::AggregatorDaemon::usage(std::cout,
+      AGGREGATORPROGRAMNAME);
+    std::cout << std::endl;
+    return 0;
+  }
+
+  // Pass the foreground option to the super class BaseDaemon
+  m_foreground = m_parsedCommandLine.foregroundOptionSet;
+
+  createVdqmRequestHandlerPool();
+
+  // Start the threads
+  start();
 
   return 0;
 }
@@ -180,14 +213,10 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
         std::stringstream oss;
         oss << "Unknown command-line option: " << (char)Coptopt;
 
-        // Log and throw an exception
-        castor::dlf::Param params[] = {
-          castor::dlf::Param("Function", __FUNCTION__),
-          castor::dlf::Param("Reason"  , oss.str())};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USER_ERROR,
-          AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, params);
-        TAPE_THROW_EX(castor::exception::InvalidArgument,
-          ": " << oss.str());
+        // Throw an exception
+        castor::exception::InvalidArgument ex;
+        ex.getMessage() << oss.str();
+        throw(ex);
       }
       break;
     case ':':
@@ -195,14 +224,10 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
         std::stringstream oss;
         oss << "An option is missing a parameter";
 
-        // Log and throw an exception
-        castor::dlf::Param params[] = {
-          castor::dlf::Param("Function", __FUNCTION__),
-          castor::dlf::Param("Reason"  , oss.str())};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USER_ERROR,
-          AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, params);
-        TAPE_THROW_EX(castor::exception::InvalidArgument,
-          ": " << oss.str());
+        // Throw an exception
+        castor::exception::InvalidArgument ex;
+        ex.getMessage() << oss.str();
+        throw(ex);
       }
       break;
     default:
@@ -211,12 +236,7 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
         oss << "Cgetopt_long returned the following unknown value: 0x"
           << std::hex << (int)c;
 
-        // Log and throw an exception
-        castor::dlf::Param params[] = {
-          castor::dlf::Param("Function", __FUNCTION__),
-          castor::dlf::Param("Reason"  , oss.str())};
-        CASTOR_DLF_WRITEPC(nullCuuid, DLF_LVL_ERROR,
-          AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, params);
+        // Throw an exception
         TAPE_THROW_EX(castor::exception::Internal,
           ": " << oss.str());
       }
@@ -227,12 +247,7 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
     std::stringstream oss;
       oss << "Internal error.  Invalid value for Coptind: " << Coptind;
 
-    // Log and throw an exception
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("Function", __FUNCTION__),
-      castor::dlf::Param("Reason", oss.str())};
-    CASTOR_DLF_WRITEPC(nullCuuid, DLF_LVL_ERROR,
-      AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, params);
+    // Throw an exception
     TAPE_THROW_EX(castor::exception::Internal,
       ": " << oss.str());
   }
@@ -244,14 +259,10 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
       oss << "Unexpected command-line argument: " << argv[Coptind]
       << std::endl;
 
-    // Log and throw an exception
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("Function", __FUNCTION__),
-      castor::dlf::Param("Reason"  , oss.str())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USER_ERROR,
-      AGGREGATOR_FAILED_TO_PARSE_COMMAND_LINE, params);
-    TAPE_THROW_EX(castor::exception::InvalidArgument,
-      ": " << oss.str());
+    // Throw an exception
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << oss.str();
+    throw(ex);
   }
 }
 
