@@ -49,10 +49,12 @@ void castor::metrics::InternalCounter::updateRates(int si)
   if(m_metricGetter == 0) {
     return;
   }
-  m_value = (m_threadPool.*m_metricGetter)();
+  // the si/60 correction factor makes sure we compute a direct average,
+  // not a rate (cf. below).
+  m_value = (m_threadPool.*m_metricGetter)() * si/60; 
   
-  // reset last value: internal metrics are not ever growing, hence we want
-  // to compute direct averages, not averages on deltas (cf. Counter).
+  // reset last value: internal metrics are not ever growing and we
+  // compute direct averages, not averages on deltas (cf. Counter).
   m_lastValue = 0;
   
   // update rates as per inherited logic
