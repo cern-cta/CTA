@@ -85,8 +85,10 @@ castor::server::DynamicThreadPool::DynamicThreadPool
 // Destructor
 //-----------------------------------------------------------------------------
 castor::server::DynamicThreadPool::~DynamicThreadPool() throw() {
-  // Destroy the producer thread 
-  delete m_producerThread;
+  // Destroy the producer thread
+  if(m_producerThread) {
+    delete m_producerThread;
+  }
 
   // Destroy global mutexes
   pthread_mutex_destroy(&m_lock);              
@@ -141,13 +143,6 @@ void castor::server::DynamicThreadPool::run()
   pthread_t t;
   int       rv;
   
-  if (0 == m_producerThread) {
-    // This is not acceptable
-    castor::exception::Exception e(EINVAL);
-    e.getMessage() << "Cannot run a DynamicThreadPool without a producer";
-    throw e;
-  }
-    
   if (m_initThreads > 0) {
     // Create the initial pool of threads. The threads themselves just act as
     // consumers of the task queue and wait for tasks to process.
@@ -163,7 +158,6 @@ void castor::server::DynamicThreadPool::run()
     // so that any threads that were created successfully destroy themselves.
     if (rv != 0) {
       m_stopped = true;
-      
       // Throw exception
       castor::exception::Exception e(errno);
       e.getMessage() << "Failed to create " << m_initThreads << " initial "
@@ -172,14 +166,16 @@ void castor::server::DynamicThreadPool::run()
     }
   }
     
-  // Initialize producer thread
-  rv = pthread_create(&t, &m_attr, (void *(*)(void *))&DynamicThreadPool::_producer, this);
-  if (rv != 0) {
-    // Same as above
-    m_stopped = true;
-    castor::exception::Exception e(errno);
-    e.getMessage() << "Failed to create the producer thread";
-    throw e;
+  // Initialize producer thread if requested
+  if (0 != m_producerThread) {
+    rv = pthread_create(&t, &m_attr, (void *(*)(void *))&DynamicThreadPool::_producer, this);
+    if (rv != 0) {
+      // Same as above
+      m_stopped = true;
+      castor::exception::Exception e(errno);
+      e.getMessage() << "Failed to create the producer thread";
+      throw e;
+    }
   }    
 
   // Threads have been created
@@ -200,7 +196,9 @@ bool castor::server::DynamicThreadPool::shutdown(bool wait) throw() {
   m_stopped = true;
   
   // Notify the producer and the consumer threads (via the task queue) to stop
-  m_producerThread->stop();
+  if(m_producerThread) {
+    m_producerThread->stop();
+  }
   m_taskQueue.terminate();
 
   if (wait) {
