@@ -47,7 +47,7 @@ int castor::infoPolicy::MigrationPySvc::applyPolicy(castor::infoPolicy::PolicyOb
   // python-Bugs-1308740  Py_BuildValue (C/API): "K" format
   // K must be used for unsigned (feature not documented at all but available)
 
-   PyObject *inputScript= Py_BuildValue((char*)"(s,s,K,K,K,l,K,K,K,K,K,l)", 
+  PyObject *inputScript= Py_BuildValue((char*)"(s,s,K,K,K,K,K,K,K,K,K,K)",
 				       (elem->tapePoolName()).c_str(),
 				       (elem->castorFileName()).c_str(),
 				       elem->copyNb(),
