@@ -32,7 +32,7 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::utils::SmartFILEPtr::SmartFILEPtr() :
+castor::tape::utils::SmartFILEPtr::SmartFILEPtr() throw() :
   m_file(NULL) {
 }
 
@@ -40,7 +40,7 @@ castor::tape::utils::SmartFILEPtr::SmartFILEPtr() :
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::utils::SmartFILEPtr::SmartFILEPtr(FILE *const file) :
+castor::tape::utils::SmartFILEPtr::SmartFILEPtr(FILE *const file) throw() :
   m_file(file) {
 }
 
@@ -88,7 +88,7 @@ castor::tape::utils::SmartFILEPtr::~SmartFILEPtr() {
 //-----------------------------------------------------------------------------
 // get
 //-----------------------------------------------------------------------------
-FILE *castor::tape::utils::SmartFILEPtr::get() throw() {
+FILE *castor::tape::utils::SmartFILEPtr::get() const throw() {
 
   return m_file;
 }

@@ -44,16 +44,15 @@ public:
 
   /**
    * Constructor.
-   *
    */
-  SmartFILEPtr();
+  SmartFILEPtr() throw();
 
   /**
    * Constructor.
    *
    * @param file The FILE pointer to be owned by the smart pointer.
    */
-  SmartFILEPtr(FILE *const file);
+  SmartFILEPtr(FILE *const file) throw();
 
   /**
    * Take ownership of the specified FILE pointer, closing the previously
@@ -91,7 +90,7 @@ public:
    *
    * @return The owned FILE pointer.
    */
-  FILE *get() throw();
+  FILE *get() const throw();
 
   /**
    * Releases the owned FILE pointer.
