@@ -24,7 +24,6 @@
  *****************************************************************************/
 
 #include "castor/tape/utils/SmartFILEPtr.hpp"
-#include "castor/tape/utils/utils.hpp"
 
 #include <errno.h>
 #include <unistd.h>
@@ -103,8 +102,12 @@ FILE *castor::tape::utils::SmartFILEPtr::release()
 
   // If this SmartFILEPtr does not own a FILE pointer
   if(m_file == NULL) {
-    TAPE_THROW_CODE(EPERM,
-      ": Smart FILE pointer does not own a basic FILE pointer");
+    castor::exception::Exception ex(EPERM);
+
+    ex.getMessage() <<
+      "Smart FILE pointer does not own a basic FILE pointer";
+
+    throw(ex);
   }
 
 

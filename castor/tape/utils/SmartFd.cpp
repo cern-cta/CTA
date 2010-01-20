@@ -24,7 +24,6 @@
  *****************************************************************************/
 
 #include "castor/tape/utils/SmartFd.hpp"
-#include "castor/tape/utils/utils.hpp"
 
 #include <errno.h>
 #include <unistd.h>
@@ -121,10 +120,13 @@ int castor::tape::utils::SmartFd::release()
 
   // If this SmartFd does not own a file descriptor
   if(m_fd < 0) {
-    TAPE_THROW_CODE(EPERM,
-      ": Smart file descriptor does not own a basic file descriptor");
-  }
+    castor::exception::Exception ex(EPERM);
 
+    ex.getMessage() <<
+      "Smart file descriptor does not own a basic file descriptor";
+
+    throw(ex);
+  }
 
   const int tmpFd = m_fd;
 

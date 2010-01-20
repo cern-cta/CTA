@@ -23,8 +23,8 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
+#include "castor/exception/InvalidArgument.hpp"
 #include "castor/tape/utils/SmartFdList.hpp"
-#include "castor/tape/utils/utils.hpp"
 
 #include <algorithm>
 #include <errno.h>
@@ -53,9 +53,13 @@ void castor::tape::utils::SmartFdList::push_back(const int &fd)
 
   // If the file descriptor is already in the list, then throw an exception
   if(itor != end()) {
-    TAPE_THROW_CODE(EINVAL,
-      ": File descriptor is already in the list"
-      ": fd=" << fd);
+    castor::exception::InvalidArgument ex;
+
+    ex.getMessage() <<
+      "File descriptor is already in the list"
+      ": fd=" << fd;
+
+    throw(ex);
   }
 
   // Append a copy of the file descriptor to the end of the list
@@ -74,9 +78,13 @@ int castor::tape::utils::SmartFdList::release(const int fd)
 
   // If the smart file descriptor list does not own the file descriptor
   if(itor == end()) {
-    TAPE_THROW_CODE(EPERM,
-      ": Smart file descriptor does not own file descriptor"
-      ": fd=" << fd);
+    castor::exception::Exception ex(EPERM);
+
+    ex.getMessage() <<
+      "Smart file descriptor does not own file descriptor"
+      ": fd=" << fd;
+
+    throw(ex);
   }
 
   // Remove the file descriptor from this list so that the destructor will not
