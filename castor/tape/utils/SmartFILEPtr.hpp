@@ -35,8 +35,8 @@ namespace tape   {
 namespace utils  {
 
 /**
- * A smart FILE pointer that owns a basic FILE pointer.  When the smart FILE
- * pointer goes out of scope, it will close the FILE pointer it owns.
+ * A smart pointer that owns a FILE pointer.  When the smart pointer goes out
+ * of scope, it will fclose the FILE pointer it owns.
  */
 class SmartFILEPtr {
 

@@ -50,15 +50,15 @@ castor::tape::utils::SmartFILEPtr::SmartFILEPtr(FILE *const file) throw() :
 //-----------------------------------------------------------------------------
 void castor::tape::utils::SmartFILEPtr::reset(FILE *const file = NULL)
    throw() {
-  // If the new FILE pointer is not the one already owned
+  // If the new pointer is not the one already owned
   if(file != m_file) {
 
-    // If this SmartFILEPtr still owns a FILE pointer, then close it
+    // If this smart pointer still owns a pointer, then fclose it
     if(m_file != NULL) {
       fclose(m_file);
     }
 
-    // Take ownership of the new FILE pointer
+    // Take ownership of the new pointer
     m_file = file;
   }
 }
@@ -100,21 +100,21 @@ FILE *castor::tape::utils::SmartFILEPtr::get() const throw() {
 FILE *castor::tape::utils::SmartFILEPtr::release()
   throw(castor::exception::Exception) {
 
-  // If this SmartFILEPtr does not own a FILE pointer
+  // If this smart pointer does not own a pointer
   if(m_file == NULL) {
     castor::exception::Exception ex(EPERM);
 
     ex.getMessage() <<
-      "Smart FILE pointer does not own a basic FILE pointer";
+      "Smart pointer does not own a FILE pointer";
 
     throw(ex);
   }
 
 
-  FILE *const tmpFile = m_file;
+  FILE *const tmp = m_file;
 
-  // A NULL value indicates this SmartFILEPtr does not own a FILE pointer
+  // A NULL value indicates this smart pointer does not own a pointer
   m_file = NULL;
 
-  return tmpFile;
+  return tmp;
 }
