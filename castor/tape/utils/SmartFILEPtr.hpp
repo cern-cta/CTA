@@ -34,83 +34,82 @@ namespace castor {
 namespace tape   {
 namespace utils  {
 
+/**
+ * A smart FILE pointer that owns a basic FILE pointer.  When the smart FILE
+ * pointer goes out of scope, it will close the FILE pointer it owns.
+ */
+class SmartFILEPtr {
+
+public:
+
   /**
-   * A smart FILE pointer that owns a basic FILE pointer.  When the smart FILE
-   * pointer goes out of scope, it will close the FILE pointer it owns.
+   * Constructor.
+   *
    */
-  class SmartFILEPtr {
+  SmartFILEPtr();
 
-  public:
+  /**
+   * Constructor.
+   *
+   * @param file The FILE pointer to be owned by the smart pointer.
+   */
+  SmartFILEPtr(FILE *const file);
 
-    /**
-     * Constructor.
-     *
-     */
-    SmartFILEPtr();
+  /**
+   * Take ownership of the specified FILE pointer, closing the previously
+   * owned FILE pointer if there is one and it is not the same as the one
+   * specified.
+   *
+   * @param file The FILE pointer to be owned, defaults to NULL if not
+   *             specified, where NULL means this smart pointer will not own a
+   *             pointer after the reset() method returns.
+   */
+  void reset(FILE *const file) throw();
 
-    /**
-     * Constructor.
-     *
-     * @param file The FILE pointer to be owned by the smart FILE pointer.
-     */
-    SmartFILEPtr(FILE *const file);
+  /**
+   * SmartFILEPtr assignment operator.
+   *
+   * This function does the following:
+   * <ul>
+   * <li> Calls release on the previous owner (obj);
+   * <li> Closes the FILE pointer of this object if it already owns one.
+   * <li> Makes this object the owner of the FILE pointer released from the
+   *      previous owner (obj).
+   * </ul>
+   */
+  SmartFILEPtr &operator=(SmartFILEPtr& obj) throw();
 
-    /**
-     * Take ownership of the specified FILE pointer, closing the previously
-     * owned FILE pointer if there is one and it is not the same as the one
-     * specified.
-     *
-     * @param file The FILE pointer to be owned, defaults to NULL if not
-     *             specified, where NULL means this SmartFILEPtr does not own
-     *             anything.
-     */
-    void reset(FILE *const file) throw();
+  /**
+   * Destructor.
+   *
+   * Closes the owned FILE pointer if there is one.
+   */
+  ~SmartFILEPtr();
 
-    /**
-     * SmartFILEPtr assignment operator.
-     *
-     * This function does the following:
-     * <ul>
-     * <li> Calls release on the previous owner (obj);
-     * <li> Closes the FILE pointer of this object if it already owns one.
-     * <li> Makes this object the owner of the FILE pointer released from the
-     *      previous owner (obj).
-     * </ul>
-     */
-    SmartFILEPtr &operator=(SmartFILEPtr& obj) throw();
+  /**
+   * Returns the owned pointer or NULL if this smart pointer does not own one.
+   *
+   * @return The owned FILE pointer.
+   */
+  FILE *get() throw();
 
-    /**
-     * Destructor.
-     *
-     * Closes the owned FILE pointer if there is one.
-     */
-    ~SmartFILEPtr();
-
-    /**
-     * Returns the owned FILE pointer or NULL if this smartFILEPtr does not own
-     * FILE pointer.
-     *
-     * @return The owned FILE pointer.
-     */
-    FILE *get() throw();
-
-    /**
-     * Releases the owned FILE pointer.
-     *
-     * @return The released FILE pointer.
-     */
-    FILE *release() throw(castor::exception::Exception);
+  /**
+   * Releases the owned FILE pointer.
+   *
+   * @return The released FILE pointer.
+   */
+  FILE *release() throw(castor::exception::Exception);
 
 
-  private:
+private:
 
-    /**
-     * The owned FILE pointer.  A value of NULL means this SmartFILEPtr does
-     * not own anything.
-     */ 
-    FILE *m_file;
+  /**
+   * The owned pointer.  A value of NULL means this smart pointer does not own
+   * a pointer.
+   */ 
+  FILE *m_file;
 
-  };
+}; // class SmartFILEPtr
 
 } // namespace utils
 } // namespace tape
