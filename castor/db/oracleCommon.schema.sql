@@ -198,8 +198,11 @@ ALTER TABLE FileSystem
   MODIFY (diskServer CONSTRAINT NN_FileSystem_DiskServer NOT NULL);
 
 /* DiskServer constraints */
-ALTER TABLE DiskServer
-  MODIFY (status CONSTRAINT NN_DiskServer_Status NOT NULL);
+ALTER TABLE DiskServer MODIFY
+  (status CONSTRAINT NN_DiskServer_Status NOT NULL,
+   name CONSTRAINT NN_DiskServer_Name NOT NULL);
+
+ALTER TABLE DiskServer ADD CONSTRAINT UN_DiskServer_Name UNIQUE (name);
 
 /* An index to speed up queries in FileQueryRequest, FindRequestRequest, RequestQueryRequest */
 CREATE INDEX I_QueryParameter_Query ON QueryParameter (query);
