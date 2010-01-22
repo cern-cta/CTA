@@ -19,7 +19,7 @@ Summary: Cern Advanced mass STORage
 Name: %{name}
 Version: %{version}
 Release: %{release}
-Source0: %{name}-%{version}.%{release}.tar.gz
+Source: %{name}-%{version}-%{release}.tar.gz
 URL: http://cern.ch/castor
 License: http://cern.ch/castor/DIST/CONDITIONS
 Group: Application/Castor

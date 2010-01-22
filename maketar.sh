@@ -46,7 +46,7 @@ b=`echo ${MAJOR_CASTOR_VERSION} | sed 's/.*\.//g'`
 c=`echo ${MINOR_CASTOR_VERSION} | sed 's/\..*//g'`
 d=`echo ${MINOR_CASTOR_VERSION} | sed 's/.*\.//g'`
 version=${a}.${b}.${c}
-fullversion=${version}.${d}
+fullversion=${version}-${d}
 
 echo "### INFO ### Making build directory"
 
