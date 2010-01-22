@@ -11,7 +11,12 @@ mighunterd \- default migration candidate hunter
 [
 .BI -t
 ] [
-.BI sleepTime
+.BI streamSleepTime
+]
+[
+.BI -u
+] [
+.BI migrationSleepTime
 ]
 [
 .BI -v
@@ -27,11 +32,8 @@ mighunterd \- default migration candidate hunter
 is the default stream creator and migration candidate hunter provided with the CASTOR
 stager.
 .SH OPTIONS
-At least one service class has to be specified at the end of the command line.
-If no other option is given, the program will start in foreground and make
-.I one
-iteration (select candidates, create streams, start streams) and exit. Information and
-error messages are logged to stdout/stderr.
+If no service class names are specified on the command-line then the service class name "default" will be used.
+Information and error messages are logged to stdout/stderr.
 .TP
 .BI \-C
 switch instructs the
@@ -41,8 +43,13 @@ with the service class. The stream cloning can give a load-balancing advantage w
 streams are added to a service class. Be aware, however, that it is an heavy operation
 if the existing stream has many (1000s) of migration candidates.
 .TP
-.BI \-t " sleepTime"
-specifies the time between two database lookups. 
+.BI \-t " streamSleepTime"
+specifies the time in seconds between two stream-policy database lookups. If
+this option is not given then the default value of 7200 seconds (2 hours) will be used.
+.TP
+.BI \-u " migrationSleepTime"
+specifies the time in seconds between two migration-policy database lookups. If
+this option is not given then the default value of 1 second will be used. Please only use this option if you really know what you are doing.
 .TP
 .BI \-f
 To run in foreground

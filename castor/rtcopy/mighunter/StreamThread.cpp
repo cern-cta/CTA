@@ -24,250 +24,371 @@
  * @author Giulia Taurelli
  *****************************************************************************/
 
-#include "castor/rtcopy/mighunter/DlfCodes.hpp"
-#include "castor/rtcopy/mighunter/StreamThread.hpp"
+// Include Python.h before any standard headers because Python.h may define
+// some pre-processor definitions which affect the standard headers
+#include <Python.h>
 
-
-#include "castor/infoPolicy/StreamPolicyElement.hpp"
+#include "castor/Constants.hpp"
+#include "castor/IService.hpp"
+#include "castor/Services.hpp"
+#include "castor/exception/Internal.hpp"
+#include "castor/exception/InvalidArgument.hpp"
 #include "castor/infoPolicy/PolicyObj.hpp"
+#include "castor/infoPolicy/StreamPolicyElement.hpp"
+#include "castor/rtcopy/mighunter/IMigHunterSvc.hpp"
+#include "castor/rtcopy/mighunter/MigHunterDlfMessageConstants.hpp"
+#include "castor/rtcopy/mighunter/ScopedPythonLock.hpp"
+#include "castor/rtcopy/mighunter/SmartPyObjectPtr.hpp"
+#include "castor/rtcopy/mighunter/StreamThread.hpp"
+#include "castor/stager/SvcClass.hpp"
+#include "h/Cns_api.h"
+#include "h/getconfent.h"
+#include "h/u64subr.h"
 
+#include <list>
 #include <sys/types.h>
 #include <stdlib.h>
 #include <sys/time.h>
 #include <unistd.h>
 
-#include "castor/Services.hpp"
-#include "castor/Constants.hpp"
-#include "castor/IService.hpp"
-#include "castor/stager/SvcClass.hpp"
-#include "castor/exception/Internal.hpp"
-#include "castor/rtcopy/mighunter/IMigHunterSvc.hpp"
-#include <Cns_api.h>
-#include <getconfent.h>
-#include <u64subr.h>
-#include <list>
 
-  
-
-
-  
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::rtcopy::mighunter::StreamThread::StreamThread(std::list<std::string> svcClassArray, castor::infoPolicy::StreamPySvc* strPy ){
-  m_listSvcClass=svcClassArray;
-  m_strSvc=strPy;
+castor::rtcopy::mighunter::StreamThread::StreamThread(
+  const std::list<std::string> &svcClassArray,
+  PyObject *const              streamPolicyDict) throw() :
+  m_listSvcClass(svcClassArray),
+  m_streamPolicyDict(streamPolicyDict) {
 }
 
+
 //------------------------------------------------------------------------------
-// runs the thread
+// run
 //------------------------------------------------------------------------------
-void castor::rtcopy::mighunter::StreamThread::run(void* par)
-{
+void castor::rtcopy::mighunter::StreamThread::run(void *arg) {
 
-  // create service 
+ try {
 
-  // service to access the database
-  castor::IService* dbSvc = castor::BaseObject::services()->service("OraMigHunterSvc", castor::SVC_ORAMIGHUNTERSVC); 
-  castor::rtcopy::mighunter::IMigHunterSvc* oraSvc = dynamic_cast<castor::rtcopy::mighunter::IMigHunterSvc*>(dbSvc);
+    exceptionThrowingRun(arg);
 
+  } catch(castor::exception::Exception &ex) {
 
-  if (0 == oraSvc) {
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR, 0, NULL);
-    return;
+    // Log the exception
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Message", ex.getMessage().str()),
+      castor::dlf::Param("Code"   , ex.code()            )};
+    CASTOR_DLF_WRITEPC(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR, params);
   }
-  
-  for(std::list<std::string>::iterator svcClassName=m_listSvcClass.begin(); 
-      svcClassName != m_listSvcClass.end();
-      svcClassName++){
+}
 
-    std::list<castor::infoPolicy::StreamPolicyElement> infoCandidateStreams;
-    std::list<castor::infoPolicy::StreamPolicyElement> eligibleStreams;
-    std::list<castor::infoPolicy::StreamPolicyElement> streamsToRestore;
-    std::list<castor::infoPolicy::StreamPolicyElement>::iterator infoCandidateStream;
 
+//------------------------------------------------------------------------------
+// exceptionThrowingRun
+//------------------------------------------------------------------------------
+void castor::rtcopy::mighunter::StreamThread::exceptionThrowingRun(
+  void *arg) throw(castor::exception::Exception) {
+
+  // Get a handle on the service to access the database
+  const char *const oraSvcName = "OraMigHunterSvc";
+  castor::IService* dbSvc = castor::BaseObject::services()->service(oraSvcName,
+    castor::SVC_ORAMIGHUNTERSVC);
+  castor::rtcopy::mighunter::IMigHunterSvc* oraSvc = 
+    dynamic_cast<castor::rtcopy::mighunter::IMigHunterSvc*>(dbSvc);
+
+  // Throw an exception if the Oracle database service could not
+  // be obtained
+  if (oraSvc == NULL) {
+    castor::exception::Internal ex;
+    ex.getMessage() <<
+      "Failed to get " << oraSvcName << " Oracle database service";
+    throw(ex);
+  }
+
+  // For each service-class name
+  for(
+    std::list<std::string>::const_iterator svcClassName=m_listSvcClass.begin();
+    svcClassName != m_listSvcClass.end();
+    svcClassName++) {
+
+    StreamPolicyElementList infoCandidateStreams;
+    StreamPolicyElementList eligibleStreams;
+    StreamPolicyElementList streamsToRestore;
 
     try { // to catch exceptions specific of a svcclass
 
-	
-	// retrieve information from the db to know which stream should be started and attach the eligible tapecopy
-      
-	timeval tvStart,tvEnd;
-	gettimeofday(&tvStart, NULL);
+      // Retrieve information from the db to know which stream should be
+      // started and attach the eligible tapecopy
 
-	oraSvc->inputForStreamPolicy(*svcClassName,infoCandidateStreams);
-	
-	gettimeofday(&tvEnd, NULL);
-	signed64 procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
-  
-	castor::dlf::Param paramsDb[] =
-	  {
-	    castor::dlf::Param("SvcClass", *svcClassName),
-	    castor::dlf::Param("ProcessingTime", procTime * 0.000001)
-	  };
-      
-	if  (infoCandidateStreams.empty()) {
-	  // log error and continue with the next svc class
+      timeval tvStart;
+      gettimeofday(&tvStart, NULL);
 
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, NO_STREAM, 2, paramsDb);
-	 
-	  continue;
-        } else {
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, STREAMS_FOUND, 2, paramsDb);
-	}
+      oraSvc->inputForStreamPolicy(*svcClassName,infoCandidateStreams);
 
-	// call the policy for the different stream
-	u_signed64 nbDrives=0;
-	u_signed64 runningStreams=0;
-	infoCandidateStream=infoCandidateStreams.begin();
+      timeval tvEnd;
+      gettimeofday(&tvEnd, NULL);
+      signed64 procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) -
+        ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
 
-	if (infoCandidateStream != infoCandidateStreams.end()){
+      castor::dlf::Param paramsDb[] = {
+        castor::dlf::Param("SvcClass", *svcClassName),
+        castor::dlf::Param("ProcessingTime", procTime * 0.000001)};
 
-	  // the following information are always the same in all the candidates for the same svcclass
-	  nbDrives=(*infoCandidateStream).maxNumStreams();
-	  runningStreams=(*infoCandidateStream).runningStream();
-	}
+      // Skip this service class if there are no candidate streams
+      if (infoCandidateStreams.empty()) {
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, NO_STREAM, paramsDb);
+        continue; // For each service-class name
+      } else {
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, STREAMS_FOUND,
+        paramsDb);
+      }
+
+      // call the policy for the different stream
+      u_signed64 nbDrives=0;
+      u_signed64 runningStreams=0;
+
+      if (infoCandidateStreams.begin() != infoCandidateStreams.end()){
+
+        // the following information are always the same in all the
+        // candidates for the same svcclass
+        nbDrives=infoCandidateStreams.begin()->maxNumStreams();
+        runningStreams=infoCandidateStreams.begin()->runningStream();
+      }
+
+      // counters for logging
+      int policyYes=0;
+      int policyNo=0;
+      int withoutPolicy=0;
+
+      gettimeofday(&tvStart, NULL);
+
+      // For each infoCandidateStream
+      for (
+        StreamPolicyElementList::iterator infoCandidateStream =
+          infoCandidateStreams.begin();
+         infoCandidateStream != infoCandidateStreams.end();
+         infoCandidateStream++) {
  
-        // counters for logging 
+        // Get new potential value
+        infoCandidateStream->setRunningStream(runningStreams);
 
-	int policyYes=0;
-	int policyNo=0;
-        int withoutPolicy=0;
-	
-	gettimeofday(&tvStart, NULL);
+        // If there are no candidates then there is no point to call the policy,
+        // therefore skip this infoCandidateStream
+        if (infoCandidateStream->numBytes()==0) {
+          streamsToRestore.push_back(*infoCandidateStream);
+          continue; // For each infoCandidateStream
+        }
 
-	for (infoCandidateStream=infoCandidateStreams.begin();
-	     infoCandidateStream != infoCandidateStreams.end();
-	     infoCandidateStream++){
-	  
+        castor::dlf::Param paramsInput[] = {
+          castor::dlf::Param("SvcClass", *svcClassName),
+          castor::dlf::Param("stream id",
+            infoCandidateStream->streamId()),
+          castor::dlf::Param("running streams",
+            infoCandidateStream->runningStream()),
+          castor::dlf::Param("bytes attached",
+            infoCandidateStream->numBytes()),
+          castor::dlf::Param("number of files",
+            infoCandidateStream->numFiles()),
+          castor::dlf::Param("max number of streams", 
+            infoCandidateStream->maxNumStreams()),
+          castor::dlf::Param("age", infoCandidateStream->age())};
 
-	  (*infoCandidateStream).setRunningStream(runningStreams); // new potential value
-	  
-	  // if there are no candidates there is no point to call the policy 
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, STREAM_INPUT, 
+          paramsInput);
 
-	  if ((*infoCandidateStream).numBytes()==0) {
-	     streamsToRestore.push_back(*infoCandidateStream);
-	     continue;
-	  }
+        castor::dlf::Param paramsOutput[] = {
+          castor::dlf::Param("SvcClass", *svcClassName),
+          castor::dlf::Param("stream id", infoCandidateStream->streamId())};
 
+        // policy called for each tape copy for each tape pool
+        try {
+          // Attach the stream if there is no policy
+          if (m_streamPolicyDict == NULL ||
+            infoCandidateStream->policyName().empty()){
 
-	  castor::dlf::Param paramsInput[] =
-	      { 
-		castor::dlf::Param("SvcClass", *svcClassName),
-		castor::dlf::Param("stream id", (*infoCandidateStream).streamId()),
-		castor::dlf::Param("running streams", (*infoCandidateStream).runningStream()),
-		castor::dlf::Param("bytes attached", (*infoCandidateStream).numBytes()),
-		castor::dlf::Param("number of files", (*infoCandidateStream).numFiles()),
-		castor::dlf::Param("max number of streams", (*infoCandidateStream).maxNumStreams()),
-		castor::dlf::Param("age", (*infoCandidateStream).age())
-	      };
-	  
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, STREAM_INPUT, 7, paramsInput);
+            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+              START_WITHOUT_POLICY, paramsOutput);
 
-	  castor::dlf::Param paramsOutput[] =
-	      { 
-		castor::dlf::Param("SvcClass", *svcClassName),
-		castor::dlf::Param("stream id", (*infoCandidateStream).streamId())
-	      };
+            eligibleStreams.push_back(*infoCandidateStream);
 
+            runningStreams++;
+            withoutPolicy++;
 
-          // start to apply the policy
-  
-	  try {
-	    if (m_strSvc == NULL ||((*infoCandidateStream).policyName()).empty()){
-	      //no policy
-	      
-	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, START_WITHOUT_POLICY, 2, paramsOutput);
-	      eligibleStreams.push_back(*infoCandidateStream);
-	      
-	      runningStreams++;
-	      withoutPolicy++;
-	     
-	    } else {
-	      //apply the policy
-	      if (m_strSvc->applyPolicy(&(*infoCandidateStream))) {
-		// policy yes
-		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, ALLOWED_BY_POLICY, 2, paramsOutput);
-		
-		eligibleStreams.push_back(*infoCandidateStream);
-		runningStreams++;
-		policyYes++;
+          // Else apply the policy
+          } else {
 
-	      } else {
-		// policy no
-		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, NOT_ALLOWED, 2, paramsOutput);
-		streamsToRestore.push_back(*infoCandidateStream);
-		policyNo++;
-	      }
-	    }
+            // Apply stream the policy
+            int policyResult = 0;
+            try {
+              ScopedPythonLock scopedPythonLoc;
+              policyResult = applyStreamPolicy(*infoCandidateStream);
+            } catch(castor::exception::Exception &ex) {
+              castor::exception::Exception ex2(ex.code());
 
+              ex2.getMessage() <<
+                "Failed to apply the stream policy"
+                ": " << ex.getMessage();
 
-	  }catch (castor::exception::Exception e){
-	    castor::dlf::Param params[] =
-	      { castor::dlf::Param("policy","Stream Policy"),
-		castor::dlf::Param("code", sstrerror(e.code())),
-		castor::dlf::Param("stream",(*infoCandidateStream).streamId()),
-		castor::dlf::Param("message", e.getMessage().str())};
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR, 4, params);
-	    exit(-1);
+              throw(ex2);
+            }
 
-	  }
-	 
-	}
-	
-	gettimeofday(&tvEnd, NULL);
+            // Start the stream if this is the result of applying the policy
+            if (policyResult) {
 
-	gettimeofday(&tvEnd, NULL);
-	procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
- 
-        // log in the dlf with the summary
-	castor::dlf::Param paramsPolicy[]={  
-          castor::dlf::Param("SvcClass",(*svcClassName)),
-	  castor::dlf::Param("allowed",withoutPolicy),
-	  castor::dlf::Param("allowedByPolicy",policyYes),
-	  castor::dlf::Param("notAllowed",policyNo),
-	  castor::dlf::Param("runningStreams",runningStreams),
-	  castor::dlf::Param("ProcessingTime", procTime * 0.000001)
-	  };
+              castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 
+                ALLOWED_BY_POLICY, paramsOutput);
 
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, STREAM_POLICY_RESULT,6 , paramsPolicy);
+              eligibleStreams.push_back(*infoCandidateStream);
 
-	gettimeofday(&tvStart, NULL);
- 
-	// start streams
+              runningStreams++;
+              policyYes++;
 
-	oraSvc->startChosenStreams(eligibleStreams);
-	gettimeofday(&tvEnd, NULL);
-	procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
- 
-	castor::dlf::Param paramsStart[]={  
-          castor::dlf::Param("SvcClass",(*svcClassName)),
-	  castor::dlf::Param("ProcessingTime", procTime * 0.000001)
-	};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, STARTED_STREAMS,2 , paramsStart);
+            // Else do not start the stream
+            } else {
 
-	// stop streams
-	
-	gettimeofday(&tvStart, NULL);
+              castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, NOT_ALLOWED, 
+                paramsOutput);
+              streamsToRestore.push_back(*infoCandidateStream);
+              policyNo++;
 
-	oraSvc->stopChosenStreams(streamsToRestore);
+            }
+          } // Else apply the policy
 
-	gettimeofday(&tvEnd, NULL);
-	procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
- 
-	castor::dlf::Param paramsStop[]={  
-          castor::dlf::Param("SvcClass",(*svcClassName)),
-	  castor::dlf::Param("ProcessingTime", procTime * 0.000001)
-	};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, STOP_STREAMS,2 , paramsStop);
+        } catch (castor::exception::Exception &e) {
+          castor::dlf::Param params[] = {
+            castor::dlf::Param("policy","Stream Policy"),
+            castor::dlf::Param("code", sstrerror(e.code())),
+            castor::dlf::Param("stream",infoCandidateStream->streamId()),
+            castor::dlf::Param("message", e.getMessage().str())};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR,
+             params);
+          exit(-1);
+        }
 
+      } // For each infoCandidateStream
 
-      } catch (castor::exception::Exception e){
-	// exception due to problems specific to the service class
-      } catch (...){}
-	 
+      gettimeofday(&tvEnd, NULL);
+      gettimeofday(&tvEnd, NULL);
+      procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - 
+        ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
+
+      // log in the dlf with the summary
+      castor::dlf::Param paramsPolicy[]={
+        castor::dlf::Param("SvcClass",(*svcClassName)),
+        castor::dlf::Param("allowed",withoutPolicy),
+        castor::dlf::Param("allowedByPolicy",policyYes),
+        castor::dlf::Param("notAllowed",policyNo),
+        castor::dlf::Param("runningStreams",runningStreams),
+        castor::dlf::Param("ProcessingTime", procTime * 0.000001)
+        };
+
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, STREAM_POLICY_RESULT,
+         paramsPolicy);
+
+      gettimeofday(&tvStart, NULL);
+
+      // start streams
+
+      oraSvc->startChosenStreams(eligibleStreams);
+      gettimeofday(&tvEnd, NULL);
+      procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - 
+        ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
+
+      castor::dlf::Param paramsStart[]={
+        castor::dlf::Param("SvcClass",(*svcClassName)),
+        castor::dlf::Param("ProcessingTime", procTime * 0.000001)
+      };
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, STARTED_STREAMS,
+         paramsStart);
+
+      // stop streams
+
+      gettimeofday(&tvStart, NULL);
+
+      oraSvc->stopChosenStreams(streamsToRestore);
+
+      gettimeofday(&tvEnd, NULL);
+      procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - 
+        ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
+
+      castor::dlf::Param paramsStop[]={
+        castor::dlf::Param("SvcClass",(*svcClassName)),
+        castor::dlf::Param("ProcessingTime", procTime * 0.000001)
+      };
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, STOP_STREAMS,
+        paramsStop);
+
+    } catch (castor::exception::Exception e){
+        // exception due to problems specific to the service class
+    } catch (...){
+      // Do nothing
+    }
+
   } // loop for svcclass
 }
 
 
+//------------------------------------------------------------------------------
+// applyStreamPolicy
+//------------------------------------------------------------------------------
+int castor::rtcopy::mighunter::StreamThread::applyStreamPolicy(
+  castor::infoPolicy::StreamPolicyElement &elem)
+  throw(castor::exception::Exception) {
 
+  // Create the input tuple for the stream-policy Python-function
+  //
+  // python-Bugs-1308740  Py_BuildValue (C/API): "K" format
+  // K must be used for unsigned (feature not documented at all but available)
+  SmartPyObjectPtr inputObj(Py_BuildValue(
+    (char *)"(K,K,K,K,K)",
+    elem.runningStream(),
+    elem.numFiles(),
+    elem.numBytes(),
+    elem.maxNumStreams(),
+    elem.age()));
+
+  // Get a pointer to the stream-policy Python-function
+  const char *const functionName = elem.policyName().c_str();
+  PyObject *pyFunc = PyDict_GetItemString((PyObject *)m_streamPolicyDict,
+    functionName);
+
+  // Throw an exception if the stream-policy Python-function does not exist
+  if(pyFunc == NULL) {
+    castor::exception::InvalidArgument ex;
+
+    ex.getMessage() <<
+      "Python function does not exist"
+      ": functionName=" << functionName;
+
+    throw ex;
+  }
+
+  // Throw an exception if the stream-policy Python-function is not callable
+  if (!PyCallable_Check(pyFunc)) {
+    castor::exception::InvalidArgument ex;
+
+    ex.getMessage() <<
+      "Python function cannot be called"
+      ": functionName=" << functionName;
+
+    throw ex;
+  }
+
+  // Call the stream-policy Python-function
+  SmartPyObjectPtr resultObj(PyObject_CallObject(pyFunc, inputObj.get()));
+
+  // Throw an exception if the stream-policy Python-function call failed
+  if(resultObj.get() == NULL) {
+    castor::exception::Internal ex;
+
+    ex.getMessage() <<
+      "Failed to execute stream-policy Python-function" <<
+      ": functionName=" <<  functionName;
+
+    throw ex;
+  }
+
+  // Return the result of the Python function
+  const int resultInt = PyInt_AsLong(resultObj.get());
+  return resultInt;
+}

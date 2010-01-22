@@ -1,0 +1,7 @@
+}; // enum MighunterDlfMessages
+} // namespace mighunter
+} // namespace rtcopy
+} // namespace castor
+
+
+#endif // CASTOR_RTCOPY_MIGHUNTER_MIGHUNTERDLFMESSAGECONSTANTS_HPP

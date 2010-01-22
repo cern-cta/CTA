@@ -29,53 +29,162 @@
 #ifndef MIGHUNTER_DAEMON_HPP
 #define MIGHUNTER_DAEMON_HPP 1
 
-// Include Files
+// Include Python.h before any standard headers because Python.h may define
+// some pre-processor definitions which affect the standard headers
+#include <Python.h>
 
+#include "castor/rtcopy/mighunter/Constants.hpp"
 #include "castor/server/BaseDaemon.hpp"
+
 #include <list>
+#include <pthread.h>
+#include <stdint.h>
 
-namespace castor {
+namespace castor    {
+namespace rtcopy    {
+namespace mighunter {
 
-  namespace rtcopy{
-    namespace mighunter{
+/**
+ * MigHunter daemon.
+ */
+class MigHunterDaemon : public castor::server::BaseDaemon {
+private:
 
-    /**
-     * MigHunter daemon.
-     */
-    class MigHunterDaemon : public castor::server::BaseDaemon{
-      u_signed64 m_timeSleep;
-      u_signed64 m_byteVolume;
-      std::list<std::string> m_listSvcClass;
-      bool m_doClone;
-      
-    public:
+  /**
+   * DLF message strings.
+   */
+  static castor::dlf::Message s_dlfMessages[];
 
-      /**
-       * constructor
-       */
-      MigHunterDaemon();
-      inline u_signed64 timeSleep(){ return m_timeSleep;}
-      inline u_signed64 byteVolume(){ return m_byteVolume;}
-      inline const std::list<std::string>& listSvcClass(){return m_listSvcClass;}
-      inline bool doClone(){return m_doClone;}
+  /**
+   * Private static member used to implement the singleton pattern without
+   * using the heap.
+   */
+  static MigHunterDaemon s_instance;
 
-      inline void setTimeSleep(u_signed64 time){m_timeSleep=time;}
-      inline void setByteVolume(u_signed64 bv){ m_byteVolume=bv;}
-      inline void setListSvcClass(const std::list<std::string>& lsvc){m_listSvcClass=lsvc;}
-      inline void setDoClone(bool dc){m_doClone=dc;}
+  /**
+   * The time in seconds between two stream-policy database lookups.
+   */
+  int m_streamSleepTime;
 
-      /**
-       * destructor
-       */
-      virtual ~MigHunterDaemon() throw() {};
-      void usage();
-      void parseCommandLine(int argc, char* argv[]);
+  /**
+   * The time in seconds between two migration-policy database
+   */
+  int m_migrationSleepTime;
 
-    };
+  /**
+   * The minimum amount of data in bytes required for starting a new migration.
+   * This value has no effect if there are already running streams for the
+   * service class in question.
+   */
+  uint64_t m_migrationDataThreshold;
 
-    } //end of namespace mighunter
-  } // end of namespace cleaning
+  /**
+   * The service classes specified on the command-line which the
+   * MigHunterDaemon will work on.
+   */
+  std::list<std::string> m_listSvcClass;
 
-} // end of namespace castor
+  /**
+   * Specifies whether or not the MigHunterDaemon should apply stream cloning.
+   */
+  bool m_doClone;
+
+  /**
+   * Logs the start of the daemon.
+   */
+  void logStart(const int argc, const char *const *const argv) throw();
+
+  /**
+   * Private constructor to enforce only one instance of the daemon can be
+   * instantiate via the instance() method of the singleton patten.
+   */
+  MigHunterDaemon() throw();
+
+  /**
+   * Exception throwing main() function which basically implements the
+   * non-exception throwing main() function except for the initialisation of
+   * DLF and the "exception catch and log" logic.
+   */
+  int exceptionThrowingMain(const int argc, char **argv)
+    throw(castor::exception::Exception);
+
+  /**
+   * Throws an exception if the file corresponding to the specified
+   * stream-policy or migration-policy Python-module does not exist in the
+   *  CASTOR_POLICIES_DIRECTORY directory.
+   *
+   * @param moduleName The name of the stream-policy or migration-policy
+   *                   Python-module.
+   */
+  void checkPolicyModuleFileExists(const char *moduleName)
+    throw(castor::exception::Exception);
+
+
+public:
+
+  /**
+   * Returns a reference to the single instance of the daemon.
+   *
+   * One of the reasons there can only be one instance of the MigHunterDaemon,
+   * is because the MigHunterDaemon is responsible for managing the main Python
+   * embedded interpreter.
+   */
+  static MigHunterDaemon &instance() throw() {
+    return s_instance;
+  }
+
+  /**
+   * Destructor
+   */
+  virtual ~MigHunterDaemon() throw() {
+    // Do nothing
+  };
+
+  /**
+   * The main entry function of the mighunter daemon.
+   *
+   * Please not that this method must be called by the main thread of the
+   * application.
+   *
+   * @param argc Argument count from the executable's entry function: main().
+   * @param argv Argument vector from the executable's entry function: main().
+   */
+  int main(const int argc, char **argv);
+
+  /**
+   * Writes the command-line usage message of the daemon to standard out.
+   */
+  void usage();
+
+  /**
+   * Parses the command-line arguments.
+   *
+   * @param argc Argument count from the executable's entry function: main().
+   * @param argv Argument vector from the executable's entry function: main().
+   */
+  void parseCommandLine(int argc, char* argv[]);
+
+  /**
+   * Appends the specified directory to the value of the PYTHONPATH environment
+   * variable.
+   *
+   * @param directory The full pathname of the directory to be appended to the
+   *                  value of the PYTHONPATH environment variable.
+   */
+  void appendDirectoryToPYTHONPATH(const char *const directory) throw();
+
+  /**
+   * Imports the specified module into the embedded Python interpreter.
+   *
+   * @param moduleName The name of the Python module to be imported.
+   */
+  PyObject *importPythonModule(const char *const moduleName)
+    throw(castor::exception::Exception);
+
+}; // class MigHunterDaemon
+
+} // namespace mighunter
+} // namespace cleaning
+} // namespace castor
 
 #endif // MIGHUNTER_DAEMON_HPP

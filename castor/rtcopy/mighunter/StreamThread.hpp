@@ -28,47 +28,96 @@
 #ifndef STREAM_THREAD_HPP
 #define STREAM_THREAD_HPP 1
 
-
-
+// Include Python.h before any standard headers because Python.h may define
+// some pre-processor definitions which affect the standard headers
+#include <Python.h>
 
 #include "castor/infoPolicy/StreamPySvc.hpp"
 #include "castor/server/BaseDbThread.hpp"
+
 #include <list>
+
 namespace castor {
+namespace rtcopy{
+namespace mighunter{
 
-  namespace rtcopy{
-    namespace mighunter{
+/**
+ * Stream  thread.
+ */
+class StreamThread : public castor::server::BaseDbThread {
 
-    /**
-     * Stream  tread.
-     */
-    
-      class StreamThread :public castor::server::BaseDbThread {
-  
-	castor::infoPolicy::StreamPySvc* m_strSvc;
-	std::list<std::string> m_listSvcClass;
-      public:
+private:  
 
-      /**
-       * constructor
-       * @param maximum numbers of hours that an archived  request can stay in the datebase before being deleted.
-       */
-      StreamThread(std::list<std::string> svcClassArray, castor::infoPolicy::StreamPySvc* StrPy);
+  /**
+   * Datatype used to create lists of StreamPolicyElements.
+   */
+  typedef std::list<castor::infoPolicy::StreamPolicyElement>
+    StreamPolicyElementList;
+
+  /**
+   * The service classes specified on the command-line which the
+   * MigHunterDaemon will work on.
+   */
+  const std::list<std::string> &m_listSvcClass;
+
+  /**
+   * The Python dictionary object associated with the stream policy module.
+   */
+  const PyObject *const m_streamPolicyDict;
+
+  /**
+   * The indirect exception throw entry point for stream threads that is
+   * called by run();
+   *
+   * @param arg The argument to be passed to the thread.
+   */
+  void exceptionThrowingRun(void *arg) throw(castor::exception::Exception);
+
+  /**
+   * Run the stream policy using the specified policy element as input.
+   *
+   * Please note that this method does not obtain a lock on the Python
+   * interpreter.
+   *
+   * @param elem The policy element to be passed to the stream policy.
+   */
+  int applyStreamPolicy(castor::infoPolicy::StreamPolicyElement &elem)
+    throw(castor::exception::Exception);
+
+public:
+
+  /**
+   * Constructor
+   *
+   * @param svcClassList     The service classes specified on the command-line
+   *                         which the MigHunterDaemon will work on.
+   * @param streamPolicyDict The Python dictionary object associated with the
+   *                         migration policy module.  This parameter must be
+   *                         set to NULL if there is no stream-policy
+   *                         Python-module.
+   */
+  StreamThread(
+    const std::list<std::string> &svcClassArray,
+    PyObject *const              streamPolicyDict) throw();
      
-      /**
-       * destructor
-       */
-      virtual ~StreamThread() throw() {};
+  /**
+   * Destructor
+   */
+  virtual ~StreamThread() throw() {
+    // Do nothing
+  };
 
-      /*For thread management*/
+  /**
+   * The entry point for stream threads.
+   *
+   * @param arg The argument to be passed to the thread.
+   */
+  virtual void run(void *arg);
 
-      virtual void run(void*);
+}; // class StreamThread
 
-    };
-
-    } // end of mighunter
-  } // end of namespace rtcopy
-
-} // end of namespace castor
+} // namespace mighunter
+} // namespace rtcopy
+} // namespace castor
 
 #endif // STREAM_THREAD_HPP

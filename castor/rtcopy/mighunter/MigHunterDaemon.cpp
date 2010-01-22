@@ -24,238 +24,238 @@
 * @author Giulia Taurelli
 *****************************************************************************/
 
-// Include Files
-#include "castor/rtcopy/mighunter/MigHunterThread.hpp"
-#include "castor/rtcopy/mighunter/MigHunterDaemon.hpp"
-#include "castor/rtcopy/mighunter/StreamThread.hpp"
-#include "castor/rtcopy/mighunter/DlfCodes.hpp"
+// Include Python.h before any standard headers because Python.h may define
+// some pre-processor definitions which affect the standard headers
+#include <Python.h>
 
-#include <iostream>
-#include <string>
+#include "castor/Constants.hpp"
+#include "castor/Services.hpp"
+#include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
-#include "castor/dlf/Dlf.hpp"
-#include "castor/Constants.hpp"
-#include "castor/Services.hpp"
-#include <Cgetopt.h>
-#include <u64subr.h>
-
-#include "castor/Constants.hpp"
-#include "castor/exception/Exception.hpp"
-#include "castor/server/SignalThreadPool.hpp"
+#include "castor/rtcopy/mighunter/Constants.hpp"
 #include "castor/rtcopy/mighunter/IMigHunterSvc.hpp"
+#include "castor/rtcopy/mighunter/MigHunterDaemon.hpp"
+#include "castor/rtcopy/mighunter/MigHunterDlfMessageConstants.hpp"
+#include "castor/rtcopy/mighunter/MigHunterThread.hpp"
+#include "castor/rtcopy/mighunter/ScopedPythonLock.hpp"
+#include "castor/rtcopy/mighunter/SmartFILEPtr.hpp"
+#include "castor/rtcopy/mighunter/SmartPyObjectPtr.hpp"
+#include "castor/rtcopy/mighunter/StreamThread.hpp"
+#include "castor/server/SignalThreadPool.hpp"
+#include "h/Cgetopt.h"
+#include "h/u64subr.h"
+
+#include <iostream>
 #include <list>
 #include <memory>
+#include <string>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 extern "C" {
   char* getconfent(const char *, const char *, int);
 }
 
 
-// default values
+//------------------------------------------------------------------------------
+// s_instance
+//------------------------------------------------------------------------------
+castor::rtcopy::mighunter::MigHunterDaemon
+  castor::rtcopy::mighunter::MigHunterDaemon::s_instance;
 
-#define MIN_BYTE_VOLUME   1     // bytes
-#define STR_SLEEP_TIME        7200  // seconds (2 hours)
-#define MIG_SLEEP_TIME 1
 
 //------------------------------------------------------------------------------
-// main method
+// constructor
 //------------------------------------------------------------------------------
+castor::rtcopy::mighunter::MigHunterDaemon::MigHunterDaemon()
+  throw() :
+  castor::server::BaseDaemon("mighunterd"),
+  m_streamSleepTime(STREAM_SLEEP_TIME),
+  m_migrationSleepTime(MIGRATION_SLEEP_TIME),
+  m_migrationDataThreshold(MIGRATION_DATA_THRESHOLD),
+  m_doClone(false) {
+}
 
-int main(int argc, char* argv[]){
 
- // service to access the database
- // now I just check that everything is ok
-  
-  castor::IService* orasvc = castor::BaseObject::services()->service("OraMigHunterSvc", castor::SVC_ORAMIGHUNTERSVC);
-  castor::rtcopy::mighunter::IMigHunterSvc* mySvc = dynamic_cast<castor::rtcopy::mighunter::IMigHunterSvc*>(orasvc);
+//------------------------------------------------------------------------------
+// main
+//------------------------------------------------------------------------------
+int castor::rtcopy::mighunter::MigHunterDaemon::main(const int argc,
+  char **argv) {
 
+  // Try to initialize the DLF logging system, quitting with an error message
+  // to stderr if the initialization fails
+  try {
 
-  if (0 == mySvc) {
-    // we don't have DLF yet, and this is a major fault, so log to stderr and exit
-    std::cerr << "Couldn't load the policy  service, check the castor.conf for DynamicLib entries" << std::endl;
-    return -1;
-  }
-  
-  // new BaseDaemon as Server
+    castor::server::BaseServer::dlfInit(s_dlfMessages);
 
-  castor::rtcopy::mighunter::MigHunterDaemon migHunter; //dlf available now
+  } catch(castor::exception::Exception &ex) {
+    std::cerr << std::endl <<
+      "Failed to start daemon"
+      ": Failed to initialize DLF"
+      ": " << ex.getMessage().str() << std::endl << std::endl;
 
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, castor::rtcopy::mighunter::DAEMON_START, 0,NULL);
-  
-  
-  castor::infoPolicy::MigrationPySvc* migrSvc = NULL;
-  castor::infoPolicy::StreamPySvc* strSvc = NULL;
-  u_signed64 migSleepTime=MIG_SLEEP_TIME;
-  
-  
-  // create the policy
-  try{
-  
-    // get sleep time for mighunterthread
-
-    char* tmp=NULL;
-    if ( (tmp= getconfent("MigHunter","MIG_SLEEP",0)) != NULL ){
-      char* dp = tmp;
-      migSleepTime= strtoul(tmp, &dp, 0);
-      if (*dp != 0 || migSleepTime <=0 ) {
-        migSleepTime = MIG_SLEEP_TIME;
-      }
-    }
-
-    
-    // get migration policy name
-
-    char* pm = getconfent("Policy","Migration",0);
-   
-    
-    if (pm==NULL) {
-
-       castor::dlf::Param params[] =
-	  {castor::dlf::Param("message","No policy for migration in castor.conf")};
-       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, castor::rtcopy::mighunter::NO_POLICY, 1, params);
-
-       
-    } else {
-
-      migrSvc = new castor::infoPolicy::MigrationPySvc(pm); 
-
-    }
-
-    // get stream policy name
-
-    char* ps = getconfent("Policy","Stream",0);
-   
-    
-    if (ps == NULL){
-      castor::dlf::Param params[] =
-	{castor::dlf::Param("message","No policy for stream in castor.conf")};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, castor::rtcopy::mighunter::NO_POLICY, 1, params);
-
-    } else {
-      strSvc = new castor::infoPolicy::StreamPySvc(ps);
-      
-    };
- 
-    
-    migHunter.parseCommandLine(argc, argv);
-
-    u_signed64 minByteVolume=migHunter.byteVolume();
-    u_signed64 strSleepTime=migHunter.timeSleep();
-    bool doClone=migHunter.doClone();
-
-    std::list<std::string>::const_iterator svcClassName = migHunter.listSvcClass().begin(); 
-    
-    // clean up the database
-    while (svcClassName != migHunter.listSvcClass().end()){
-          mySvc->migHunterCleanUp(*svcClassName);
-      svcClassName++;
-    }
-
-    // create thread pools
-    // mighunter
-    
-    std::auto_ptr<castor::rtcopy::mighunter::MigHunterThread> migThread(new castor::rtcopy::mighunter::MigHunterThread(migHunter.listSvcClass(),minByteVolume,doClone,migrSvc));
- 
-    std::auto_ptr<castor::server::SignalThreadPool> migPool(new castor::server::SignalThreadPool("MigHunterThread",migThread.release(),migSleepTime));
-    migHunter.addThreadPool(migPool.release());
-    migHunter.getThreadPool('M')->setNbThreads(1);
-    
-    //stream
-
-    std::auto_ptr<castor::rtcopy::mighunter::StreamThread> strThread( new castor::rtcopy::mighunter::StreamThread( migHunter.listSvcClass(), strSvc));
-    std::auto_ptr<castor::server::SignalThreadPool> strPool(new castor::server::SignalThreadPool("StreamThread",strThread.release(),strSleepTime));
-    migHunter.addThreadPool(strPool.release());
-    migHunter.getThreadPool('S')->setNbThreads(1);
-    
-    
-    migHunter.start();
-
-    
-
-  }// end try block
-  catch (castor::exception::Exception e) {
-    std::cerr << "Caught castor exception : "
-     << sstrerror(e.code()) << std::endl
-     << e.getMessage().str() << std::endl;
-
-    castor::dlf::Param params0[] =
-      {castor::dlf::Param("errorCode",e.code()),
-       castor::dlf::Param("errorMessage",e.getMessage().str())
-      };
-       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, castor::rtcopy::mighunter::FATAL_ERROR, 2, params0);
-    return -1;
-  }
-  catch (...) {
-
-    std::cerr << "Caught general exception!" << std::endl;
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, castor::rtcopy::mighunter::FATAL_ERROR, 0, NULL);
-    return -1;
-
+    return 1;
   }
 
-  
-  if (migrSvc) delete migrSvc;
-  if (strSvc) delete strSvc;
+  // Try to start the daemon, quitting with an error message to stderr and DLF
+  // if the start fails
+  try {
+
+    exceptionThrowingMain(argc, argv);
+
+  } catch (castor::exception::Exception &ex) {
+    std::cerr << std::endl << "Failed to start daemon: "
+      << ex.getMessage().str() << std::endl << std::endl;
+
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Message", ex.getMessage().str()),
+      castor::dlf::Param("Code"   , ex.code()            )};
+    CASTOR_DLF_WRITEPC(nullCuuid, DLF_LVL_ERROR,
+      MIGHUNTER_FAILED_TO_START, params);
+
+    return 1;
+  }
+
   return 0;
 }
 
+
 //------------------------------------------------------------------------------
-// MigHunterDaemon Constructor
-// also initialises the logging facility
+// exceptionThrowingMain
 //------------------------------------------------------------------------------
+int castor::rtcopy::mighunter::MigHunterDaemon::exceptionThrowingMain(int argc,
+  char **argv) throw(castor::exception::Exception) {
 
-castor::rtcopy::mighunter::MigHunterDaemon::MigHunterDaemon() : castor::server::BaseDaemon("mighunterd")
-{
-    m_timeSleep= STR_SLEEP_TIME;
-    m_byteVolume= MIN_BYTE_VOLUME;
-    m_doClone=false;
+  // Log the start of the daemon
+  logStart(argc, argv);
 
-  // Initializes the DLF logging. This includes
-  // registration of the predefined messages
-  // Initializes the DLF logging. This includes
-  // defining the predefined messages
+  // Check the service to access the database can be obtained
+  const char *orasvcName = "OraMigHunterSvc";
+  castor::IService* orasvc = castor::BaseObject::services()->service(
+    orasvcName, castor::SVC_ORAMIGHUNTERSVC);
+  castor::rtcopy::mighunter::IMigHunterSvc* mySvc =
+    dynamic_cast<castor::rtcopy::mighunter::IMigHunterSvc*>(orasvc);
 
-  castor::dlf::Message messages[] =
+  // Throw an exception if the Oracle database service could not
+  // be obtained
+  if (mySvc == NULL) {
+    castor::exception::Internal ex;
+    ex.getMessage() <<
+      "Failed to get " << orasvcName << " Oracle database service";
+    throw(ex);
+  }
+
+  // Append the CASTOR policies directory to the end of the PYTHONPATH
+  // environment variable so the PyImport_ImportModule() function can find the
+  // stream and migration policy modules
+  appendDirectoryToPYTHONPATH(CASTOR_POLICIES_DIRECTORY);
+
+  // Initialize Python
+  Py_Initialize();
+
+  // Initialize thread support
+  //
+  // Please note that PyEval_InitThreads() takes a lock on the global Python
+  // interpreter
+  PyEval_InitThreads();
+
+  // Load in the stream policy Python module if one has been specified in
+  // castor.conf and get a handle on its associated Python dictionary object
+  SmartPyObjectPtr streamPolicyModule;
+  PyObject *streamPolicyDict = NULL;
   {
+    const char *const streamPolicyModuleName =
+      getconfent("Policy", "Stream", 0);
+    if(streamPolicyModuleName != NULL) {
+      checkPolicyModuleFileExists(streamPolicyModuleName);
+      streamPolicyModule.reset(importPythonModule(streamPolicyModuleName));
+      streamPolicyDict = PyModule_GetDict(streamPolicyModule.get());
+    }
+  }
 
-    {DAEMON_START, "Service shutdown"} ,
-    {DAEMON_STOP, "Service shutdown"} ,
-    {FATAL_ERROR, "Fatal Error"}, 
-    {NO_POLICY, "No Policy file available"},
-    {PARSING_OPTIONS,"parameters option parsed"},
-    {NO_TAPECOPIES, "No tapecopy found"},
-    {TAPECOPIES_FOUND, "No migration candidate found"},
-    {NO_TAPEPOOLS, "No tapepool found"} , 
-    {NOT_ENOUGH, "not enough data to create streams"},
-    {NO_DRIVES, "no drive assigned to this service class"}, 
-    {POLICY_INPUT ,"input to call the migration policy"}, 
-    {ALLOWED_WITHOUT_POLICY,"allowed without policy"},
-    {ALLOWED_BY_POLICY ,"allowed by policy"}, 
-    {NOT_ALLOWED , "not allowed"},
-    {POLICY_RESULT ,"summary of migration policy results"},
-    {ATTACHED_TAPECOPIES , "attaching tapecopies to streams"},
-    {DB_ERROR , "db error"},
-    {RESURRECT_TAPECOPIES, "resurrecting tapecopies" },
-    {INVALIDATE_TAPECOPIES, "invalidating tapecopies"},
-    {NS_ERROR,"Error retrieving the file stat from the nameserver"},
-    {NO_STREAM, "No stream found"},
-    {STREAMS_FOUND, "Streams found"},
-    {STREAM_INPUT , "input to call stream policy"},
-    {START_WITHOUT_POLICY, "started without policy"},
-    {START_BY_POLICY, "started by policy"}, 
-    {NOT_STARTED , "stopped"},
-    {STREAM_POLICY_RESULT ,"summary of stream policy results"},
-    {STARTED_STREAMS, "stream started"},
-    {STOP_STREAMS, "stream stopped"}, 
-    {-1, ""}
-  };
-  dlfInit(messages);
+  // Load in the migration policy Python module if one has been specified in
+  // castor.conf and get a handle on its associated Python dictionary object
+  SmartPyObjectPtr migrationPolicyModule;
+  PyObject *migrationPolicyDict = NULL;
+  {
+    const char *const migrationPolicyModuleName =
+      getconfent("Policy", "Migration", 0);
+    if(migrationPolicyModuleName != NULL) {
+      checkPolicyModuleFileExists(migrationPolicyModuleName);
+      migrationPolicyModule.reset(importPythonModule(
+        migrationPolicyModuleName));
+      migrationPolicyDict = PyModule_GetDict(migrationPolicyModule.get());
+    }
+  }
+
+  // Parse the command-line
+  parseCommandLine(argc, argv);
+
+  // Clean up the mighunter data in the database
+  for(std::list<std::string>::const_iterator svcClassName =
+    m_listSvcClass.begin(); svcClassName != m_listSvcClass.end(); 
+    svcClassName++) {
+    mySvc->migHunterCleanUp(*svcClassName);
+  }
+
+  // Create the mighunter thread pool
+  std::auto_ptr<castor::rtcopy::mighunter::MigHunterThread> migHunterThread(
+    new MigHunterThread(m_listSvcClass, m_migrationDataThreshold, m_doClone,
+    migrationPolicyDict));
+  std::auto_ptr<castor::server::SignalThreadPool> migHunterPool(
+    new server::SignalThreadPool("MigHunterThread", migHunterThread.release(),
+    m_migrationSleepTime));
+  addThreadPool(migHunterPool.release());
+  getThreadPool('M')->setNbThreads(1);
+
+  // Create the stream thread pool
+  std::auto_ptr<StreamThread> streamThread(new StreamThread(m_listSvcClass,
+    streamPolicyDict));
+  std::auto_ptr<server::SignalThreadPool> streamPool(
+    new server::SignalThreadPool("StreamThread", streamThread.release(),
+    m_streamSleepTime));
+  addThreadPool(streamPool.release());
+  getThreadPool('S')->setNbThreads(1);
+
+  // start the threads
+  start();
+
+  return 0;
 }
 
 
-void castor::rtcopy::mighunter::MigHunterDaemon::parseCommandLine(int argc, char* argv[]){
+//------------------------------------------------------------------------------
+// logStart
+//------------------------------------------------------------------------------
+void castor::rtcopy::mighunter::MigHunterDaemon::logStart(const int argc,
+  const char *const *const argv) throw() {
+  std::string concatenatedArgs;
+
+  // Concatenate all of the command-line arguments into one string
+  for(int i=0; i < argc; i++) {
+    if(i != 0) {
+      concatenatedArgs += " ";
+    }
+
+    concatenatedArgs += argv[i];
+  }
+
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("argv", concatenatedArgs)};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, DAEMON_START, params);
+}
+
+
+//------------------------------------------------------------------------------
+// parseCommandLine
+//------------------------------------------------------------------------------
+void castor::rtcopy::mighunter::MigHunterDaemon::parseCommandLine(int argc,
+  char* argv[]){
+
   if (argc < 1 ) {
     usage();
     return;
@@ -266,7 +266,7 @@ void castor::rtcopy::mighunter::MigHunterDaemon::parseCommandLine(int argc, char
 
   std::string optionStr="Option used: ";
 
-  while ( (c = Cgetopt(argc,argv,"Ct:v:fh")) != -1 ) {
+  while ( (c = Cgetopt(argc,argv,"Ct:u:v:fh")) != -1 ) {
     switch (c) {
     case 'C':
       optionStr+=" -C ";
@@ -275,12 +275,16 @@ void castor::rtcopy::mighunter::MigHunterDaemon::parseCommandLine(int argc, char
     case 't':
       optionStr+=" -t ";
       optionStr+=Coptarg;
-      m_timeSleep = strutou64(Coptarg);
+      m_streamSleepTime = strutou64(Coptarg);
       break;
+    case 'u':
+      optionStr+=" -u ";
+      optionStr+=Coptarg;
+      m_migrationSleepTime = strutou64(Coptarg);
     case 'v':
       optionStr+=" -v ";
       optionStr+=Coptarg;
-      m_byteVolume = strutou64(Coptarg);
+      m_migrationDataThreshold = strutou64(Coptarg);
       break;
     case 'f':
       optionStr+=" -f ";
@@ -309,17 +313,110 @@ void castor::rtcopy::mighunter::MigHunterDaemon::parseCommandLine(int argc, char
     svcClassesStr+=" default ";
   }
 
-  castor::dlf::Param params[] = {castor::dlf::Param("message", optionStr.c_str()),
-				 castor::dlf::Param("message", svcClassesStr.c_str())};
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, PARSING_OPTIONS, 2, params);
-
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("option"    , optionStr.c_str()    ),
+    castor::dlf::Param("svcClasses", svcClassesStr.c_str())};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, PARSING_OPTIONS, 2,
+    params);
 }
 
+
+//------------------------------------------------------------------------------
+// usage
+//------------------------------------------------------------------------------
 void castor::rtcopy::mighunter::MigHunterDaemon::usage(){
-  std::cout << "\nUsage: " << "MigHunterDaemon"
-            << "[options] svcClass1 svcClass2 svcClass3 ...\n"
-            << "-C  : clone tapecopies from existing to new streams (very slow!)\n"
-            << "-f     : to run in foreground\n"
-            << "-t sleepTime(seconds)  : sleep time (in seconds) between two checks. Default= 7200 \n"
-            << "-v volume(bytes)       : data volume threshold below migration will not start\n"<<std::endl;
+  std::cout <<
+    "\nUsage: MigHunterDaemon [options] svcClass1 svcClass2 svcClass3 ...\n"
+    "\n"
+    "-C          : clone tapecopies from existing to new streams (very slow!)\n"
+    "-f          : to run in foreground\n"
+    "-t sleepTime: sleep time (in seconds) between two checks. Default= 7200\n"
+    "-v volume   : data volume threshold in bytes below which a migration\n"
+    "              will not start\n" << std::endl;
+}
+
+
+//------------------------------------------------------------------------------
+// appendDirectoryToPYTHONPATH
+//------------------------------------------------------------------------------
+void castor::rtcopy::mighunter::MigHunterDaemon::appendDirectoryToPYTHONPATH(
+  const char *const directory) throw() {
+  // Get the current value of PYTHONPATH (there may not be one)
+  const char *const currentPath = getenv("PYTHONPATH");
+
+  // Construct the new value of PYTHONPATH
+  std::string newPath;
+  if(currentPath == NULL) {
+    newPath = directory;
+  } else {
+    newPath  = currentPath;
+    newPath += ":";
+    newPath += directory;
+  }
+
+  // Set PYTHONPATH to the new value
+  const int overwrite = 1;
+  setenv("PYTHONPATH", newPath.c_str(), overwrite);
+}
+
+
+//------------------------------------------------------------------------------
+// importPythonModule
+//------------------------------------------------------------------------------
+PyObject *castor::rtcopy::mighunter::MigHunterDaemon::importPythonModule(
+  const char *const moduleName) throw(castor::exception::Exception) {
+
+  PyObject *const module = PyImport_ImportModule((char *)moduleName);
+
+  if(module == NULL) {
+    castor::exception::Exception ex(ECANCELED);
+
+    ex.getMessage() <<
+      "PyImport_ImportModule() call failed"
+      ": moduleName=" << moduleName;
+
+    throw(ex);
+  }
+
+  return module;
+}
+
+
+//------------------------------------------------------------------------------
+// checkPolicyModuleFileExists
+//------------------------------------------------------------------------------
+void castor::rtcopy::mighunter::MigHunterDaemon::checkPolicyModuleFileExists(
+  const char *moduleName) throw(castor::exception::Exception) {
+
+  std::string fullPathname(CASTOR_POLICIES_DIRECTORY);
+
+  fullPathname += "/";
+  fullPathname += moduleName;
+  fullPathname += ".py";
+
+  struct stat buf;
+  const int rc = stat(fullPathname.c_str(), &buf);
+  const int savedErrno = errno;
+
+  // Throw an exception if the stat() call failed
+  if(rc != 0) {
+    castor::exception::Exception ex(savedErrno);
+
+    ex.getMessage() <<
+      "stat() call failed"
+      ": filename=" << fullPathname <<
+      ": " << sstrerror(savedErrno);
+
+    throw(ex);
+  }
+
+  // Throw an exception if the file is not a regular file
+  if(!S_ISREG(buf.st_mode)) {
+    castor::exception::Exception ex(savedErrno);
+
+    ex.getMessage() <<
+      fullPathname << " is not a regular file";
+
+    throw(ex);
+  }
 }

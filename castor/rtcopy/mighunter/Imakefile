@@ -36,8 +36,19 @@ DependsOnLibrary(../db/newora,castorcommonora)
 DependsOnLibrary(../db/cnv,castorcnvs)
 DependsOnLibrary(../infoPolicy,castorinfopolicy)
 
-MIGHUNTERDAEMONBIN_SRCS = MigHunterDaemon.cpp MigHunterThread.cpp StreamThread.cpp ora/OraMigHunterSvc.cpp
+MIGHUNTERDAEMONBIN_SRCS = \
+  MigHunterDaemon.cpp \
+  MigHunterDlfMessageStrings.cpp \
+  MigHunterMain.cpp \
+  MigHunterThread.cpp \
+  ScopedPythonLock.cpp \
+  SmartFILEPtr.cpp \
+  SmartPyObjectPtr.cpp \
+  StreamThread.cpp \
+  ora/OraMigHunterSvc.cpp
+
 MIGHUNTERDAEMONBIN_OBJS = $(MIGHUNTERDAEMONBIN_SRCS:.cpp=.Osuf)
+
 NormalProgramTarget(mighunterd,$(MIGHUNTERDAEMONBIN_OBJS),$(DEPLIB),$(LIBS),750)
 MakeDir(/var/log/castor,0755)
 ADMMANPAGE(mighunterd)
