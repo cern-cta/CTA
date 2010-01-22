@@ -696,8 +696,11 @@ ALTER TABLE FileSystem
   MODIFY (diskServer CONSTRAINT NN_FileSystem_DiskServer NOT NULL);
 
 /* DiskServer constraints */
-ALTER TABLE DiskServer
-  MODIFY (status CONSTRAINT NN_DiskServer_Status NOT NULL);
+ALTER TABLE DiskServer MODIFY
+  (status CONSTRAINT NN_DiskServer_Status NOT NULL,
+   name CONSTRAINT NN_DiskServer_Name NOT NULL);
+
+ALTER TABLE DiskServer ADD CONSTRAINT UN_DiskServer_Name UNIQUE (name);
 
 /* An index to speed up queries in FileQueryRequest, FindRequestRequest, RequestQueryRequest */
 CREATE INDEX I_QueryParameter_Query ON QueryParameter (query);
@@ -3559,13 +3562,8 @@ BEGIN
   -- we may have to schedule a disk to disk copy or trigger a recall
   checkForD2DCopyOrRecall(cfId, srId, reuid, regid, svcClassId, srcDcId, srvSvcClassId);
   IF srcDcId > 0 THEN  -- disk to disk copy
-    IF repack = 1 THEN
-      createDiskCopyReplicaRequest(srId, srcDcId, srvSvcClassId, svcClassId, reuid, regid);
-      result := -2;  -- Repack waits on the disk to disk copy
-    ELSE
-      createDiskCopyReplicaRequest(0, srcDcId, srvSvcClassId, svcClassId, reuid, regid);
-      result := 1;  -- DISKCOPY_WAITDISK2DISKCOPY, for logging purposes
-    END IF;
+    createDiskCopyReplicaRequest(srId, srcDcId, srvSvcClassId, svcClassId, reuid, regid);
+    result := 1;  -- DISKCOPY_WAITDISK2DISKCOPY, for logging purposes
   ELSIF srcDcId = 0 THEN  -- recall
     BEGIN
       -- check whether there's already a recall, and get its svcClass
@@ -4834,7 +4832,6 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   --    was scheduled. Bad luck, we restart from scratch
   --  + or we are an update creating a file and there is a diskcopy in WAITFS
   --    or WAITFS_SCHEDULING associated to us. Then we have to call putStart
-  --  + or we are recalling a 0-size file
   -- So we first check the update hypothesis
   IF isUpd = 1 AND dcIdInReq IS NOT NULL THEN
     DECLARE
@@ -4848,8 +4845,6 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
       END IF;
     END;
   END IF;
-  -- Now we check the 0-size file hypothesis
-  -- XXX this is currently broken, to be fixed later
   -- It was not an update creating a file, so we restart
   UPDATE SubRequest SET status = 1 WHERE id = srId;
   dci := 0;
@@ -4994,6 +4989,7 @@ BEGIN
                           lastModificationTime = getTime()
      WHERE diskCopy = dcId RETURNING id INTO srId;
     UPDATE SubRequest SET status = 1,
+                          getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED
                           lastModificationTime = getTime(),
                           parent = 0
      WHERE parent = srId; -- SUBREQUEST_RESTART
@@ -5013,7 +5009,6 @@ BEGIN
   -- Otherwise, we can validate the new diskcopy
   -- update SubRequest and get data
   UPDATE SubRequest SET status = 6, -- SUBREQUEST_READY
-                        getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED
                         lastModificationTime = getTime()
    WHERE diskCopy = dcId RETURNING id, protocol, request
     INTO srId, proto, reqId;
@@ -5036,6 +5031,7 @@ BEGIN
     INTO cfId, ouid, ogid;
   -- Wake up waiting subrequests
   UPDATE SubRequest SET status = 1,  -- SUBREQUEST_RESTART
+                        getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED
                         lastModificationTime = getTime(),
                         parent = 0
    WHERE parent = srId;

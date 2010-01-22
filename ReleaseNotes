@@ -49,6 +49,10 @@
   - #61101: enterFileClass does not return correct ID
   - #61146: RFE: internal monitoring metrics
   - #61451: Database session leak in request handler daemon
+  - #61468: The stager may not fill the fileId in error responses
+  - #61552: broken stager_qry -n -r (i.e. query per reqId, with getNext flag)
+            for prepareToGets
+  - #61707: Missing constraints on NAME column for DISKSERVER table
 
   CASTOR tape
   -----------
@@ -60,7 +64,6 @@
             VMGR database schema
   - #58937: RFE: Re-implement the VDQM direct-to-database admin tools in Python
   - #58794: RFE: Make vmgrdeletetape name server safe
-  - #59007: Fix error handling logic of the RTCPD disk IO thread
   - #59015: The main RTCPD control thread is setting the ACCOUNT environment
             variable to "" when it should not
   - #59386: RFE: Aggregator should not wait for tape gateway to process requests

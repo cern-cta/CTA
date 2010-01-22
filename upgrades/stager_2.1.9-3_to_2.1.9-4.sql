@@ -57,6 +57,12 @@ COMMIT;
 /* Schema changes go here */
 /**************************/
 
+/* #61707 - Missing constraints on NAME column for DISKSERVER table */
+ALTER TABLE DiskServer MODIFY
+  (name CONSTRAINT NN_DiskServer_Name NOT NULL);
+
+ALTER TABLE DiskServer ADD CONSTRAINT UN_DiskServer_Name UNIQUE (name);
+
 /* Global temporary table to handle output of the jobFailed procedure */
 CREATE GLOBAL TEMPORARY TABLE JobFailedProcHelper
   (subReqId VARCHAR2(2048))
@@ -489,6 +495,184 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   NULL;
 END;
 /
+
+
+/* PL/SQL method implementing processPrepareRequest */
+/* the result output is a DiskCopy status for STAGED, DISK2DISKCOPY or RECALL,
+   -1 for user failure, -2 for subrequest put in WAITSUBREQ */
+CREATE OR REPLACE PROCEDURE processPrepareRequest
+        (srId IN INTEGER, result OUT INTEGER) AS
+  nbDCs INTEGER;
+  svcClassId NUMBER;
+  srvSvcClassId NUMBER;
+  repack INTEGER;
+  cfId NUMBER;
+  srcDcId NUMBER;
+  recSvcClass NUMBER;
+  recDcId NUMBER;
+  recRepack INTEGER;
+  reuid NUMBER;
+  regid NUMBER;
+BEGIN
+  -- retrieve the castorfile, the svcclass and the reqId for this subrequest
+  SELECT SubRequest.castorFile, Request.euid, Request.egid, Request.svcClass, Request.repack
+    INTO cfId, reuid, regid, svcClassId, repack
+    FROM (SELECT id, euid, egid, svcClass, 0 repack FROM StagePrepareToGetRequest UNION ALL
+          SELECT id, euid, egid, svcClass, 1 repack FROM StageRepackRequest UNION ALL
+          SELECT id, euid, egid, svcClass, 0 repack FROM StagePrepareToUpdateRequest) Request,
+         SubRequest
+   WHERE Subrequest.request = Request.id
+     AND Subrequest.id = srId;
+  -- lock the castor file to be safe in case of two concurrent subrequest
+  SELECT id INTO cfId FROM CastorFile WHERE id = cfId FOR UPDATE;
+
+  -- Look for available diskcopies. Note that we never wait on other requests
+  -- and we include WAITDISK2DISKCOPY as they are going to be available.
+  SELECT COUNT(DiskCopy.id) INTO nbDCs
+    FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
+   WHERE DiskCopy.castorfile = cfId
+     AND DiskCopy.fileSystem = FileSystem.id
+     AND FileSystem.diskpool = DiskPool2SvcClass.parent
+     AND DiskPool2SvcClass.child = svcClassId
+     AND FileSystem.status = 0 -- PRODUCTION
+     AND FileSystem.diskserver = DiskServer.id
+     AND DiskServer.status = 0 -- PRODUCTION
+     AND DiskCopy.status IN (0, 1, 6, 10);  -- STAGED, WAITDISK2DISKCOPY, STAGEOUT, CANBEMIGR
+
+  -- For DiskCopyReplicaRequests which are waiting to be scheduled, the filesystem
+  -- link in the diskcopy table is set to 0. As a consequence of this it is not
+  -- possible to determine the service class via the filesystem -> diskpool -> svcclass
+  -- relationship, as assumed in the previous query. Instead the service class of
+  -- the replication request must be used!!!
+  IF nbDCs = 0 THEN
+    SELECT COUNT(DiskCopy.id) INTO nbDCs
+      FROM DiskCopy, StageDiskCopyReplicaRequest
+     WHERE DiskCopy.id = StageDiskCopyReplicaRequest.destDiskCopy
+       AND StageDiskCopyReplicaRequest.svcclass = svcClassId
+       AND DiskCopy.castorfile = cfId
+       AND DiskCopy.status = 1; -- WAITDISK2DISKCOPY
+  END IF;
+
+  IF nbDCs > 0 THEN
+    -- Yes, we have some
+    result := 0;  -- DISKCOPY_STAGED
+    IF repack = 1 THEN
+      BEGIN
+        -- In case of Repack, start the repack migration on one diskCopy
+        SELECT DiskCopy.id INTO srcDcId
+          FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
+         WHERE DiskCopy.castorfile = cfId
+           AND DiskCopy.fileSystem = FileSystem.id
+           AND FileSystem.diskpool = DiskPool2SvcClass.parent
+           AND DiskPool2SvcClass.child = svcClassId
+           AND FileSystem.status = 0 -- PRODUCTION
+           AND FileSystem.diskserver = DiskServer.id
+           AND DiskServer.status = 0 -- PRODUCTION
+           AND DiskCopy.status = 0  -- STAGED
+           AND ROWNUM < 2;
+        startRepackMigration(srId, cfId, srcDcId, reuid, regid);
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- no data found here means that either the file
+        -- is being written/migrated or there's a disk-to-disk
+        -- copy going on: for this case we should actually wait
+        BEGIN
+          SELECT DiskCopy.id INTO srcDcId
+            FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
+           WHERE DiskCopy.castorfile = cfId
+             AND DiskCopy.fileSystem = FileSystem.id
+             AND FileSystem.diskpool = DiskPool2SvcClass.parent
+             AND DiskPool2SvcClass.child = svcClassId
+             AND FileSystem.status = 0 -- PRODUCTION
+             AND FileSystem.diskserver = DiskServer.id
+             AND DiskServer.status = 0 -- PRODUCTION
+             AND DiskCopy.status = 1  -- WAITDISK2DISKCOPY
+             AND ROWNUM < 2;
+          -- found it, we wait on it
+          makeSubRequestWait(srId, srcDcId);
+          result := -2;
+        EXCEPTION WHEN NO_DATA_FOUND THEN
+          -- the file is being written/migrated. This may happen in two cases:
+          -- either there's another repack going on for the same file, or another
+          -- user is overwriting the file.
+          -- In the first case, if this request comes for a tape other
+          -- than the one being repacked, i.e. the file has a double tape copy,
+          -- then we should make the request wait on the first repack (it may be
+          -- for a different service class than the one being used right now).
+          -- In the second case, we just have to fail this request.
+          -- However at the moment it's not easy to restart a waiting repack after
+          -- a migration (relevant db callback should be put in rtcpcld_updcFileMigrated(),
+          -- rtcpcldCatalogueInterface.c:3300), so we simply fail this repack
+          -- request and rely for the time being on Repack to submit
+          -- such double tape repacks one by one.
+          UPDATE SubRequest
+             SET status = 7,  -- FAILED
+                 errorCode = 16,  -- EBUSY
+                 errorMessage = 'File is currently being written or migrated'
+           WHERE id = srId;
+          COMMIT;
+          result := -1;  -- user error
+        END;
+      END;
+    END IF;
+    RETURN;
+  END IF;
+
+  -- No diskcopies available for this service class:
+  -- we may have to schedule a disk to disk copy or trigger a recall
+  checkForD2DCopyOrRecall(cfId, srId, reuid, regid, svcClassId, srcDcId, srvSvcClassId);
+  IF srcDcId > 0 THEN  -- disk to disk copy
+    createDiskCopyReplicaRequest(srId, srcDcId, srvSvcClassId, svcClassId, reuid, regid);
+    result := 1;  -- DISKCOPY_WAITDISK2DISKCOPY, for logging purposes
+  ELSIF srcDcId = 0 THEN  -- recall
+    BEGIN
+      -- check whether there's already a recall, and get its svcClass
+      SELECT Request.svcClass, DiskCopy.id, repack
+        INTO recSvcClass, recDcId, recRepack
+        FROM (SELECT id, svcClass, 0 repack FROM StagePrepareToGetRequest UNION ALL
+              SELECT id, svcClass, 0 repack FROM StageGetRequest UNION ALL
+              SELECT id, svcClass, 1 repack FROM StageRepackRequest UNION ALL
+              SELECT id, svcClass, 0 repack FROM StageUpdateRequest UNION ALL
+              SELECT id, svcClass, 0 repack FROM StagePrepareToUpdateRequest) Request,
+             SubRequest, DiskCopy
+       WHERE SubRequest.request = Request.id
+         AND SubRequest.castorFile = cfId
+         AND DiskCopy.castorFile = cfId
+         AND DiskCopy.status = 2  -- WAITTAPERECALL
+         AND SubRequest.status = 4;  -- WAITTAPERECALL
+      -- we found one: we need to wait if either we are in a different svcClass
+      -- so that afterwards a disk-to-disk copy is triggered, or in case of
+      -- Repack so to trigger the repack migration. We also protect ourselves
+      -- from a double repack request on the same file.
+      IF repack = 1 AND recRepack = 1 THEN
+        -- we are not able to handle a double repack, see the detailed comment above
+        UPDATE SubRequest
+           SET status = 7,  -- FAILED
+               errorCode = 16,  -- EBUSY
+               errorMessage = 'File is currently being repacked'
+         WHERE id = srId;
+        COMMIT;
+        result := -1;  -- user error
+        RETURN;
+      END IF;
+      IF svcClassId <> recSvcClass OR repack = 1 THEN
+        -- make this request wait on the existing WAITTAPERECALL diskcopy
+        makeSubRequestWait(srId, recDcId);
+        result := -2;
+      ELSE
+        -- this is a PrepareToGet, and another request is recalling the file
+        -- on our svcClass, so we can archive this one
+        result := 0;  -- DISKCOPY_STAGED
+      END IF;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- let the stager trigger the recall
+      result := 2;  -- DISKCOPY_WAITTAPERECALL
+    END;
+  ELSE
+    result := -1;  -- user error
+  END IF;
+END;
+/
+
 
 /* PL/SQL method implementing checkForD2DCopyOrRecall
  * dcId is the DiskCopy id of the best candidate for replica, 0 if none is found (tape recall), -1 in case of user error
@@ -2461,6 +2645,231 @@ BEGIN
   -- Return the list of terminated jobs
   OPEN failedSubReqs FOR
     SELECT subReqId FROM JobFailedProcHelper;
+END;
+/
+
+
+/* PL/SQL method implementing disk2DiskCopyDone */
+CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
+(dcId IN INTEGER, srcDcId IN INTEGER) AS
+  srId       INTEGER;
+  cfId       INTEGER;
+  srcStatus  INTEGER;
+  srcFsId    NUMBER;
+  proto      VARCHAR2(2048);
+  reqId      NUMBER;
+  svcClassId NUMBER;
+  gcwProc    VARCHAR2(2048);
+  gcw        NUMBER;
+  fileSize   NUMBER;
+  ouid       INTEGER;
+  ogid       INTEGER;
+BEGIN
+  -- Lock the CastorFile
+  SELECT castorFile INTO cfId
+    FROM DiskCopy
+   WHERE id = dcId;
+  SELECT id INTO cfId FROM CastorFile WHERE id = cfId FOR UPDATE;
+  -- Try to get the source diskcopy status
+  BEGIN
+    SELECT status, gcWeight, diskCopySize, fileSystem
+      INTO srcStatus, gcw, fileSize, srcFsId
+      FROM DiskCopy
+     WHERE id = srcDcId
+       AND status IN (0, 10);  -- STAGED, CANBEMIGR
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- If no diskcopy was returned it means that the source has either:
+    --   A) Been GCed while the copying was taking place or
+    --   B) The diskcopy is no longer in a STAGED or CANBEMIGR state.
+    -- As we do not know which status to put the new copy in and/or cannot
+    -- trust that the file was not modified mid transfer, we invalidate the
+    -- new copy.
+    UPDATE DiskCopy SET status = 7 WHERE id = dcId -- INVALID
+    RETURNING CastorFile INTO cfId;
+    -- Restart the SubRequests waiting for the copy
+    UPDATE SubRequest SET status = 1, -- SUBREQUEST_RESTART
+                          lastModificationTime = getTime()
+     WHERE diskCopy = dcId RETURNING id INTO srId;
+    UPDATE SubRequest SET status = 1,
+                          getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED
+                          lastModificationTime = getTime(),
+                          parent = 0
+     WHERE parent = srId; -- SUBREQUEST_RESTART
+    -- Archive the diskCopy replica request
+    archiveSubReq(srId, 8);  -- FINISHED
+    -- Restart all entries in the snapshot of files to drain that may be
+    -- waiting on the replication of the source diskcopy.
+    UPDATE DrainingDiskCopy
+       SET status = 1,  -- RESTARTED
+           parent = 0
+     WHERE status = 3  -- RUNNING
+       AND (diskCopy = srcDcId
+        OR  parent = srcDcId);
+    drainFileSystem(srcFsId);
+    RETURN;
+  END;
+  -- Otherwise, we can validate the new diskcopy
+  -- update SubRequest and get data
+  UPDATE SubRequest SET status = 6, -- SUBREQUEST_READY
+                        lastModificationTime = getTime()
+   WHERE diskCopy = dcId RETURNING id, protocol, request
+    INTO srId, proto, reqId;
+  SELECT SvcClass.id INTO svcClassId
+    FROM SvcClass, StageDiskCopyReplicaRequest Req, SubRequest
+   WHERE SubRequest.id = srId
+     AND SubRequest.request = Req.id
+     AND Req.svcClass = SvcClass.id;
+  -- Compute gcWeight
+  gcwProc := castorGC.getCopyWeight(svcClassId);
+  EXECUTE IMMEDIATE
+    'BEGIN :newGcw := ' || gcwProc || '(:size, :status, :gcw); END;'
+    USING OUT gcw, IN fileSize, srcStatus, gcw;
+  -- Update status
+  UPDATE DiskCopy
+     SET status = srcStatus,
+         gcWeight = gcw
+   WHERE id = dcId
+  RETURNING castorFile, owneruid, ownergid
+    INTO cfId, ouid, ogid;
+  -- Wake up waiting subrequests
+  UPDATE SubRequest SET status = 1,  -- SUBREQUEST_RESTART
+                        getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED
+                        lastModificationTime = getTime(),
+                        parent = 0
+   WHERE parent = srId;
+  -- Archive the diskCopy replica request
+  archiveSubReq(srId, 8);  -- FINISHED
+  -- Trigger the creation of additional copies of the file, if necessary.
+  replicateOnClose(cfId, ouid, ogid);
+  -- Restart all entries in the snapshot of files to drain that may be
+  -- waiting on the replication of the source diskcopy.
+  UPDATE DrainingDiskCopy
+     SET status = 1,  -- RESTARTED
+         parent = 0
+   WHERE status = 3  -- RUNNING
+     AND (diskCopy = srcDcId
+      OR  parent = srcDcId);
+  drainFileSystem(srcFsId);
+  -- WARNING: previous call to drainFileSystem has a COMMIT inside. So all
+  -- locks have been released!!
+END;
+/
+
+
+/* PL/SQL method implementing getUpdateStart */
+CREATE OR REPLACE PROCEDURE getUpdateStart
+        (srId IN INTEGER, selectedDiskServer IN VARCHAR2, selectedMountPoint IN VARCHAR2,
+         dci OUT INTEGER, rpath OUT VARCHAR2, rstatus OUT NUMBER, reuid OUT INTEGER,
+         regid OUT INTEGER, diskCopySize OUT NUMBER) AS
+  cfid INTEGER;
+  fid INTEGER;
+  dcId INTEGER;
+  fsId INTEGER;
+  dcIdInReq INTEGER;
+  nh VARCHAR2(2048);
+  fileSize INTEGER;
+  srSvcClass INTEGER;
+  proto VARCHAR2(2048);
+  isUpd NUMBER;
+  nbAc NUMBER;
+  gcw NUMBER;
+  gcwProc VARCHAR2(2048);
+  cTime NUMBER;
+BEGIN
+  -- Get data
+  SELECT euid, egid, svcClass, upd, diskCopy
+    INTO reuid, regid, srSvcClass, isUpd, dcIdInReq
+    FROM SubRequest,
+        (SELECT id, euid, egid, svcClass, 0 AS upd FROM StageGetRequest UNION ALL
+         SELECT id, euid, egid, svcClass, 1 AS upd FROM StageUpdateRequest) Request
+   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
+  -- Take a lock on the CastorFile. Associated with triggers,
+  -- this guarantees we are the only ones dealing with its copies
+  SELECT CastorFile.fileSize, CastorFile.id
+    INTO fileSize, cfId
+    FROM CastorFile, SubRequest
+   WHERE CastorFile.id = SubRequest.castorFile
+     AND SubRequest.id = srId FOR UPDATE;
+  -- Check to see if the proposed diskserver and filesystem selected by the
+  -- scheduler to run the job is in the correct service class.
+  BEGIN
+    SELECT FileSystem.id INTO fsId
+      FROM DiskServer, FileSystem, DiskPool2SvcClass
+     WHERE FileSystem.diskserver = DiskServer.id
+       AND FileSystem.diskPool = DiskPool2SvcClass.parent
+       AND DiskPool2SvcClass.child = srSvcClass
+       AND DiskServer.name = selectedDiskServer
+       AND FileSystem.mountPoint = selectedMountPoint;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    raise_application_error(-20114, 'Job scheduled to the wrong service class. Giving up.');
+  END;
+  -- Try to find local DiskCopy
+  SELECT /*+ INDEX(DiskCopy I_DiskCopy_Castorfile) */ id, nbCopyAccesses, gcWeight, creationTime
+    INTO dcId, nbac, gcw, cTime
+    FROM DiskCopy
+   WHERE DiskCopy.castorfile = cfId
+     AND DiskCopy.filesystem = fsId
+     AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
+     AND ROWNUM < 2;
+  -- We found it, so we are settled and we'll use the local copy.
+  -- It might happen that we have more than one, because LSF may have
+  -- scheduled a replication on a fileSystem which already had a previous diskcopy.
+  -- We don't care and we randomly took the first one.
+  -- First we will compute the new gcWeight of the diskcopy
+  IF nbac = 0 THEN
+    gcwProc := castorGC.getFirstAccessHook(srSvcClass);
+    IF gcwProc IS NOT NULL THEN
+      EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:oldGcw, :cTime); END;'
+        USING OUT gcw, IN gcw, IN cTime;
+    END IF;
+  ELSE
+    gcwProc := castorGC.getAccessHook(srSvcClass);
+    IF gcwProc IS NOT NULL THEN
+      EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:oldGcw, :cTime, :nbAc); END;'
+        USING OUT gcw, IN gcw, IN cTime, IN nbac;
+    END IF;
+  END IF;
+  -- Here we also update the gcWeight taking into account the new lastAccessTime
+  -- and the weightForAccess from our svcClass: this is added as a bonus to
+  -- the selected diskCopy.
+  UPDATE DiskCopy
+     SET gcWeight = gcw,
+         lastAccessTime = getTime(),
+         nbCopyAccesses = nbCopyAccesses + 1
+   WHERE id = dcId
+  RETURNING id, path, status, diskCopySize INTO dci, rpath, rstatus, diskCopySize;
+  -- Let's update the SubRequest and set the link with the DiskCopy
+  UPDATE SubRequest SET DiskCopy = dci WHERE id = srId RETURNING protocol INTO proto;
+  -- In case of an update, if the protocol used does not support
+  -- updates properly (via firstByteWritten call), we should
+  -- call firstByteWritten now and consider that the file is being
+  -- modified.
+  IF isUpd = 1 THEN
+    handleProtoNoUpd(srId, proto);
+  END IF;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- No disk copy found on selected FileSystem. This can happen in 3 cases :
+  --  + either a diskcopy was available and got disabled before this job
+  --    was scheduled. Bad luck, we restart from scratch
+  --  + or we are an update creating a file and there is a diskcopy in WAITFS
+  --    or WAITFS_SCHEDULING associated to us. Then we have to call putStart
+  -- So we first check the update hypothesis
+  IF isUpd = 1 AND dcIdInReq IS NOT NULL THEN
+    DECLARE
+      stat NUMBER;
+    BEGIN
+      SELECT status INTO stat FROM DiskCopy WHERE id = dcIdInReq;
+      IF stat IN (5, 11) THEN -- WAITFS, WAITFS_SCHEDULING
+        -- it is an update creating a file, let's call putStart
+        putStart(srId, selectedDiskServer, selectedMountPoint, dci, rstatus, rpath);
+        RETURN;
+      END IF;
+    END;
+  END IF;
+  -- It was not an update creating a file, so we restart
+  UPDATE SubRequest SET status = 1 WHERE id = srId;
+  dci := 0;
+  rpath := '';
 END;
 /
 
