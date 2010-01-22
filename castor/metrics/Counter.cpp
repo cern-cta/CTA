@@ -49,14 +49,15 @@ void castor::metrics::Counter::inc(int value) throw (castor::exception::Exceptio
 //------------------------------------------------------------------------------
 void castor::metrics::Counter::updateRates(int si)
 {
-  // force calculation in floating point to handle negative numbers
+  // force calculation in f.p. to handle negative numbers and get better precision
   double v = m_value;
   
   // exponential moving averages, see e.g. http://en.wikipedia.org/wiki/Moving_average
-  // the 60/si factor is to make the averages dimensionally equivalent to [Hz] but per minute 
-  m_avg1m = 60.0/si * (exp(-si/60.0)*m_avg1m + (1-exp(-si/60.0))*(v - m_lastValue));
-  m_avg10m = 60.0/si * (exp(-si/600.0)*m_avg10m + (1-exp(-si/600.0))*(v - m_lastValue));
-  m_avg1h = 60.0/si * (exp(-si/3600.0)*m_avg1h + (1-exp(-si/3600.0))*(v - m_lastValue));
+  // the 60/si factor is to make the averages dimensionally equivalent
+  // to rates per minute 
+  m_avg1m = exp(-si/60.0)*m_avg1m + 60.0/si*(1-exp(-si/60.0))*(v - m_lastValue);
+  m_avg10m = exp(-si/600.0)*m_avg10m + 60.0/si*(1-exp(-si/600.0))*(v - m_lastValue);
+  m_avg1h = exp(-si/3600.0)*m_avg1h + 60.0/si*(1-exp(-si/3600.0))*(v - m_lastValue);
   /*
   // adopting another standard formula:
   m_avg1m = m_avg1m*(60 - si)/60 + (v - m_lastValue)*si/60;
@@ -68,13 +69,12 @@ void castor::metrics::Counter::updateRates(int si)
     char* slWin = getconfent(m_slWinConfCategory.c_str(),
                              m_slWinConfName.c_str(), 0);
     if(slWin) {
-      m_avgForSlWin = 60.0/si * (exp(-si*1.0/atol(slWin))*m_avgForSlWin + 
-        (1-exp(-si*1.0/atol(slWin)))*(v - m_lastValue));
+      m_avgForSlWin = exp(-si*1.0/atol(slWin))*m_avgForSlWin + 
+        60/si*(1-exp(-si*1.0/atol(slWin)))*(v - m_lastValue);
     }
   }
   
-  // store current value for next calculation, so that averages
-  // are dimensionally equivalent to rates
+  // store current value for next calculation
   m_lastValue = m_value;
 }
 

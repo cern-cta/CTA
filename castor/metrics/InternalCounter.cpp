@@ -59,4 +59,7 @@ void castor::metrics::InternalCounter::updateRates(int si)
   
   // update rates as per inherited logic
   castor::metrics::Counter::updateRates(si);
+  
+  // restore the correct value for later reporting
+  m_value = m_value * 60/si;
 }
