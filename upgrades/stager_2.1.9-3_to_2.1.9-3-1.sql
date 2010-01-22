@@ -967,5 +967,6 @@ END;
 
 /* Flag the schema upgrade as COMPLETE */
 /***************************************/
-UPDATE UpgradeLog SET endDate = sysdate, state = 'COMPLETE';
+UPDATE UpgradeLog SET endDate = sysdate, state = 'COMPLETE'
+ WHERE release = '2_1_9_4';
 COMMIT;
