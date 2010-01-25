@@ -28,3 +28,5 @@
 27,STARTED_STREAMS,"stream started"
 28,STOP_STREAMS,"stream stopped"
 29,MIGHUNTER_FAILED_TO_START,"mighunterd failed to start"
+30,FAILED_TO_APPLY_MIGRATION_POLICY,"Failed to apply migration policy, attaching tape copy"
+31,FAILED_TO_APPLY_STREAM_POLICY,"Failed to apply stream policy, starting stream"

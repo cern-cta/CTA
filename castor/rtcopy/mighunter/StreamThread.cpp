@@ -210,7 +210,6 @@ void castor::rtcopy::mighunter::StreamThread::exceptionThrowingRun(
               START_WITHOUT_POLICY, paramsOutput);
 
             eligibleStreams.push_back(*infoCandidateStream);
-
             runningStreams++;
             withoutPolicy++;
 
@@ -220,16 +219,25 @@ void castor::rtcopy::mighunter::StreamThread::exceptionThrowingRun(
             // Apply stream the policy
             int policyResult = 0;
             try {
+
               ScopedPythonLock scopedPythonLoc;
               policyResult = applyStreamPolicy(*infoCandidateStream);
+
             } catch(castor::exception::Exception &ex) {
-              castor::exception::Exception ex2(ex.code());
 
-              ex2.getMessage() <<
-                "Failed to apply the stream policy"
-                ": " << ex.getMessage();
+              castor::dlf::Param params[] = {
+                castor::dlf::Param("code"   , sstrerror(ex.code()) ),
+                castor::dlf::Param("message", ex.getMessage().str())};
+              castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                FAILED_TO_APPLY_STREAM_POLICY, params);
 
-              throw(ex2);
+              // Treat an exception in the same way as there being no policy
+              eligibleStreams.push_back(*infoCandidateStream);
+              runningStreams++;
+              withoutPolicy++;
+
+              // Skip to the next canditate
+              continue; // For each infoCandidateStream
             }
 
             // Start the stream if this is the result of applying the policy

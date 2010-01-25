@@ -291,16 +291,26 @@ void castor::rtcopy::mighunter::MigHunterThread::exceptionThrowingRun(
             // Apply the migration policy
             int policyResult = 0;
             try {
+
               ScopedPythonLock scopedPythonLock;
               policyResult = applyMigrationPolicy(*infoCandidate);
+
             } catch(castor::exception::Exception &ex) {
-              castor::exception::Exception ex2(ex.code());
 
-              ex2.getMessage() <<
-                "Failed to apply the migration policy"
-                ": " << ex.getMessage().str();
+              castor::dlf::Param params[] = {
+                castor::dlf::Param("code"   , sstrerror(ex.code()) ),
+                castor::dlf::Param("message", ex.getMessage().str())};
+              castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                FAILED_TO_APPLY_MIGRATION_POLICY, params, &castorFileId);
 
-              throw(ex2);
+              // Treat an exception in the same way as there being no policy
+              eligibleCandidates[infoCandidate->tapePoolId()].push_back(
+                *infoCandidate);
+
+              withoutPolicy++;
+
+              // Skip to the next canditate
+              continue; // For each infoCandidate
             }
 
             // Attach the tape copy if this is the result of applying the policy

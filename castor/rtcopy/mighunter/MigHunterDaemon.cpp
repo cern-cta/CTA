@@ -217,7 +217,6 @@ int castor::rtcopy::mighunter::MigHunterDaemon::exceptionThrowingMain(int argc,
   getThreadPool('M')->setNbThreads(1);
 
   // Create the stream thread pool
-/*
   std::auto_ptr<StreamThread> streamThread(new StreamThread(m_listSvcClass,
     streamPolicyDict));
   std::auto_ptr<server::SignalThreadPool> streamPool(
@@ -225,7 +224,7 @@ int castor::rtcopy::mighunter::MigHunterDaemon::exceptionThrowingMain(int argc,
     m_streamSleepTime));
   addThreadPool(streamPool.release());
   getThreadPool('S')->setNbThreads(1);
-*/
+
   // start the threads
   start();
 
