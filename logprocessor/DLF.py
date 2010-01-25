@@ -557,7 +557,7 @@ class DLFDbDest(LoggingCommon.MsgDestination):
         #-----------------------------------------------------------------------
         # Update the host cache
         #-----------------------------------------------------------------------
-        reloadHostCache()
+        self.reloadHostCache()
         return self.__hostmap[host]
 
     #---------------------------------------------------------------------------
@@ -597,7 +597,7 @@ class DLFDbDest(LoggingCommon.MsgDestination):
         #-----------------------------------------------------------------------
         # Update the host cache
         #-----------------------------------------------------------------------
-        reloadNsHostCache()
+        self.reloadNsHostCache()
         return self.__nshostmap[host]
 
     #---------------------------------------------------------------------------
