@@ -46,7 +46,7 @@ namespace mighunter {
   /**
    * The default time in seconds between two migration-policy database lookups.
    */
-  const int MIGRATION_SLEEP_TIME = 1;
+  const int MIGRATION_SLEEP_TIME = 7200;
 
   /**
    * The location of the stream and migration Python policy modules.

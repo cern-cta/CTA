@@ -291,14 +291,14 @@ void castor::rtcopy::mighunter::MigHunterThread::exceptionThrowingRun(
             // Apply the migration policy
             int policyResult = 0;
             try {
-              ScopedPythonLock scopedPythonLoc;
+              ScopedPythonLock scopedPythonLock;
               policyResult = applyMigrationPolicy(*infoCandidate);
             } catch(castor::exception::Exception &ex) {
               castor::exception::Exception ex2(ex.code());
 
               ex2.getMessage() <<
                 "Failed to apply the migration policy"
-                ": " << ex.getMessage();
+                ": " << ex.getMessage().str();
 
               throw(ex2);
             }

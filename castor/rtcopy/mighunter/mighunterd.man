@@ -4,26 +4,28 @@ mighunterd \- default migration candidate hunter
 .SH SYNOPSIS
 .B mighunterd
 [
-.BI -C
+.BI -f
 ]
 [
-.BI -f
-[
+.BI -C
+] [ [
 .BI -t
-] [
+.BI sleepTime
+] | [ [
+.BI -s
 .BI streamSleepTime
 ]
 [
-.BI -u
-] [
+.BI -m
 .BI migrationSleepTime
-]
+] ]
 [
 .BI -v
-] [
 .BI dataThreshold
 ]
+[
 .BI svcClass1
+]
 [
 .BI svcClass2 ...
 ]
@@ -35,28 +37,58 @@ stager.
 If no service class names are specified on the command-line then the service class name "default" will be used.
 Information and error messages are logged to stdout/stderr.
 .TP
+.BI \-f
+Run the daemon in the foreground.
+.TP
 .BI \-C
-switch instructs the
+This switch instructs the
 .B mighunterd
 when creating new streams to always clone an existing stream if it finds one associated
 with the service class. The stream cloning can give a load-balancing advantage when new
 streams are added to a service class. Be aware, however, that it is an heavy operation
 if the existing stream has many (1000s) of migration candidates.
 .TP
-.BI \-t " streamSleepTime"
-specifies the time in seconds between two stream-policy database lookups. If
-this option is not given then the default value of 7200 seconds (2 hours) will be used.
+.BI \-t " sleepTime"
+Specifies the single value in seconds to be used for both the sleep time
+between two stream-policy database lookups and the sleep time between two
+migration-policy database lookups.
+If this option is not given then the default value of 7200 seconds (2 hours)
+will be used.
+The
+.BI \-t
+option cannot be used in
+conjunction with the
+.BI \-s
+or
+.BI \-m
+options which allow the stream-policy and migration-policy database lookup
+periods to be set independently.
 .TP
-.BI \-u " migrationSleepTime"
-specifies the time in seconds between two migration-policy database lookups. If
-this option is not given then the default value of 1 second will be used. Please only use this option if you really know what you are doing.
+.BI \-s " streamSleepTime"
+Specifies the sleep time in seconds between two stream-policy database lookups.
+If this option is not given then the default value of 7200 seconds (2 hours)
+will be used.
+The
+.BI \-s
+option cannot be used in conjunction with the
+.BI \-t
+option.
 .TP
-.BI \-f
-To run in foreground
+.BI \-m " migrationSleepTime"
+Specifies the sleep time in seconds between two migration-policy database
+lookups.  If this option is not given then the default value of 7200 second
+will be used. 
+Please only use this option if you really know what you are doing.
+The
+.BI \-m
+option cannot be used in conjunction with the
+.BI \-t
+option.
 .TP
-.B \-v " dataThreshold"
-specifies the minimum amount of data required for starting a new migration. Note that
-this option has no effect if there are already running streams for the service class.
+.BI \-v " dataThreshold"
+Specifies the minimum amount of data required for starting a new migration.
+Note that this option has no effect if there are already running streams for
+the service class.
 
 Two parameters in the 
 .B /etc/castor/castor.conf 

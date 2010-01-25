@@ -192,6 +192,10 @@ int castor::rtcopy::mighunter::MigHunterDaemon::exceptionThrowingMain(int argc,
     }
   }
 
+  // Release the lock on the Python global interpreter that was taken by the
+  // preceding PyEval_InitThreads() call
+  PyEval_ReleaseLock();
+
   // Parse the command-line
   parseCommandLine(argc, argv);
 
@@ -213,6 +217,7 @@ int castor::rtcopy::mighunter::MigHunterDaemon::exceptionThrowingMain(int argc,
   getThreadPool('M')->setNbThreads(1);
 
   // Create the stream thread pool
+/*
   std::auto_ptr<StreamThread> streamThread(new StreamThread(m_listSvcClass,
     streamPolicyDict));
   std::auto_ptr<server::SignalThreadPool> streamPool(
@@ -220,7 +225,7 @@ int castor::rtcopy::mighunter::MigHunterDaemon::exceptionThrowingMain(int argc,
     m_streamSleepTime));
   addThreadPool(streamPool.release());
   getThreadPool('S')->setNbThreads(1);
-
+*/
   // start the threads
   start();
 
@@ -260,35 +265,50 @@ void castor::rtcopy::mighunter::MigHunterDaemon::parseCommandLine(int argc,
     usage();
     return;
   }
-  Coptind = 1;
-  Copterr = 1;
-  int c; // ????
 
   std::string optionStr="Option used: ";
 
-  while ( (c = Cgetopt(argc,argv,"Ct:u:v:fh")) != -1 ) {
+  // Booleans used to enforce the rule that the -t option must not be used in
+  // conjunction with the -s or -m options.
+  bool tOptionSet = false;
+  bool sOptionSet = false;
+  bool mOptionSet = false;
+
+  Coptind = 1;
+  Copterr = 1;
+  int c = 0;
+  while ( (c = Cgetopt(argc,argv,"fCt:s:m:v:h")) != -1 ) {
     switch (c) {
+    case 'f':
+      optionStr+=" -f ";
+      m_foreground = true;
+      break;
     case 'C':
       optionStr+=" -C ";
       m_doClone = true;
       break;
     case 't':
+      tOptionSet = true;
       optionStr+=" -t ";
+      optionStr+=Coptarg;
+      m_streamSleepTime    = strutou64(Coptarg);
+      m_migrationSleepTime = m_streamSleepTime;
+      break;
+    case 's':
+      sOptionSet = true;
+      optionStr+=" -s ";
       optionStr+=Coptarg;
       m_streamSleepTime = strutou64(Coptarg);
       break;
-    case 'u':
-      optionStr+=" -u ";
+    case 'm':
+      mOptionSet = true;
+      optionStr+=" -m ";
       optionStr+=Coptarg;
       m_migrationSleepTime = strutou64(Coptarg);
     case 'v':
       optionStr+=" -v ";
       optionStr+=Coptarg;
       m_migrationDataThreshold = strutou64(Coptarg);
-      break;
-    case 'f':
-      optionStr+=" -f ";
-      m_foreground = true;
       break;
     case 'h':
       optionStr+=" -h ";
@@ -298,6 +318,17 @@ void castor::rtcopy::mighunter::MigHunterDaemon::parseCommandLine(int argc,
       usage();
       exit(0);
     }
+  }
+
+  // Enforce the rule that the -t option must not be used in
+  // conjunction with the -s or -m options.
+  if(tOptionSet && (sOptionSet || mOptionSet)) {
+    std::cerr <<
+      "The -t option cannot been specified in conjunction with the -s or -m\n"
+      "options\n" << std::endl;
+
+    usage();
+    exit(0);
   }
 
   std::string svcClassesStr="Used the following Svc Classes: ";
@@ -328,11 +359,21 @@ void castor::rtcopy::mighunter::MigHunterDaemon::usage(){
   std::cout <<
     "\nUsage: MigHunterDaemon [options] svcClass1 svcClass2 svcClass3 ...\n"
     "\n"
-    "-C          : clone tapecopies from existing to new streams (very slow!)\n"
-    "-f          : to run in foreground\n"
-    "-t sleepTime: sleep time (in seconds) between two checks. Default= 7200\n"
-    "-v volume   : data volume threshold in bytes below which a migration\n"
-    "              will not start\n" << std::endl;
+    "-f       : Run the daemon in the foreground\n"
+    "-C       : Clone tapecopies from existing to new streams (very slow!)\n"
+    "-t time  : Single value in seconds to be used for both the sleep time\n"
+    "           between two stream-policy database lookups and the sleep\n"
+    "           time between two migration-policy database lookups. If this\n"
+    "           option is not specified then the default value of 7200\n"
+    "           seconds will be used\n"
+    "-s time  : Sleep time in seconds between two stream-policy database\n"
+    "           lookups. If this option is not specified then the default\n"
+    "           value of 7200 seconds will be used\n"
+    "-m time  : Sleep time in seconds between two migration-policy database\n"
+    "           lookups. If this option is not specified then the default\n"
+    "           value of 7200 seconds will be used\n"
+    "-v volume: Data volume threshold in bytes below which a migration will\n"
+    "           not start\n" << std::endl;
 }
 
 
@@ -403,7 +444,7 @@ void castor::rtcopy::mighunter::MigHunterDaemon::checkPolicyModuleFileExists(
     castor::exception::Exception ex(savedErrno);
 
     ex.getMessage() <<
-      "stat() call failed"
+      "Failed to stat() policy module-file"
       ": filename=" << fullPathname <<
       ": " << sstrerror(savedErrno);
 
