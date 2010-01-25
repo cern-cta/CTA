@@ -53,6 +53,7 @@
   - #61552: broken stager_qry -n -r (i.e. query per reqId, with getNext flag)
             for prepareToGets
   - #61707: Missing constraints on NAME column for DISKSERVER table
+  - #61831: NameError: global name 'reloadNsHostCache' is not defined
 
   CASTOR tape
   -----------
