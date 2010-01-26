@@ -30,7 +30,7 @@
 // main
 //------------------------------------------------------------------------------
 int main(int argc, char **argv) {
-  using namespace castor::rtcopy::mighunter;
+  castor::rtcopy::mighunter::MigHunterDaemon daemon;
 
-  return MigHunterDaemon::instance().main(argc, argv);
+  return daemon.main(argc, argv);
 }

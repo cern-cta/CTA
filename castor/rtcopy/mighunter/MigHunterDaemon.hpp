@@ -56,12 +56,6 @@ private:
   static castor::dlf::Message s_dlfMessages[];
 
   /**
-   * Private static member used to implement the singleton pattern without
-   * using the heap.
-   */
-  static MigHunterDaemon s_instance;
-
-  /**
    * The time in seconds between two stream-policy database lookups.
    */
   int m_streamSleepTime;
@@ -95,12 +89,6 @@ private:
   void logStart(const int argc, const char *const *const argv) throw();
 
   /**
-   * Private constructor to enforce only one instance of the daemon can be
-   * instantiate via the instance() method of the singleton patten.
-   */
-  MigHunterDaemon() throw();
-
-  /**
    * Exception throwing main() function which basically implements the
    * non-exception throwing main() function except for the initialisation of
    * DLF and the "exception catch and log" logic.
@@ -123,15 +111,9 @@ private:
 public:
 
   /**
-   * Returns a reference to the single instance of the daemon.
-   *
-   * One of the reasons there can only be one instance of the MigHunterDaemon,
-   * is because the MigHunterDaemon is responsible for managing the main Python
-   * embedded interpreter.
+   * Constructor.
    */
-  static MigHunterDaemon &instance() throw() {
-    return s_instance;
-  }
+  MigHunterDaemon() throw();
 
   /**
    * Destructor
