@@ -190,6 +190,28 @@
       3. Upgrade complete. 
 
 
+    Tape
+    ----
+
+    The fix of "bug #61787: mighunterd core dumps due to invalid use of the
+    Python C/API" has meant that the stream-policy and migration-policy
+    Python-scripts are now loaded into CASTOR as fully-fledged Python modules.
+    This change means that the following castor.conf entries have been changed:
+
+    2.1.9-3
+      Policy Migration /etc/castor/policies/migration.py
+      Policy Stream    /etc/castor/policies/stream.py
+
+    2.1.9-4
+      Policy Migration migration
+      Policy Stream    stream  
+
+    In version 2.1.9-4, the full path must not be provided, just the name of
+    the module.  The physical file must be located in the /etc/castor/policies
+    directory as this directory has been added to the module search path of the
+    embedded Python interpreter.
+
+
 -----------
 - 2.1.9-3 -
 -----------
