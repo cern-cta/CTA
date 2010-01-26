@@ -30,3 +30,7 @@
 29,MIGHUNTER_FAILED_TO_START,"mighunterd failed to start"
 30,FAILED_TO_APPLY_MIGRATION_POLICY,"Failed to apply migration policy, attaching tape copy"
 31,FAILED_TO_APPLY_STREAM_POLICY,"Failed to apply stream policy, starting stream"
+32,ALLOWED_BY_MIGRATION_POLICY,"Allowed by migration policy"
+33,NOT_ALLOWED_BY_MIGRATION_POLICY,"Not allowed by migration policy"
+34,ALLOWED_BY_STREAM_POLICY,"Allowed by stream policy"
+35,NOT_ALLOWED_BY_STREAM_POLICY,"Not allowed by stream policy"

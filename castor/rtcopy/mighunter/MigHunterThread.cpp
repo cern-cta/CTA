@@ -317,7 +317,7 @@ void castor::rtcopy::mighunter::MigHunterThread::exceptionThrowingRun(
             if (policyResult) {
 
               castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
-                ALLOWED_BY_POLICY, paramsOutput, &castorFileId);
+                ALLOWED_BY_MIGRATION_POLICY, paramsOutput, &castorFileId);
 
               eligibleCandidates[infoCandidate->tapePoolId()].push_back(
                 *infoCandidate);
@@ -327,8 +327,8 @@ void castor::rtcopy::mighunter::MigHunterThread::exceptionThrowingRun(
             // Else do not attach the tape copy
             } else {
 
-              castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, NOT_ALLOWED,
-                paramsOutput,&castorFileId);
+              castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                NOT_ALLOWED_BY_MIGRATION_POLICY, paramsOutput,&castorFileId);
               policyNo++;
 
             }

@@ -244,7 +244,7 @@ void castor::rtcopy::mighunter::StreamThread::exceptionThrowingRun(
             if (policyResult) {
 
               castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 
-                ALLOWED_BY_POLICY, paramsOutput);
+                ALLOWED_BY_STREAM_POLICY, paramsOutput);
 
               eligibleStreams.push_back(*infoCandidateStream);
 
@@ -254,8 +254,8 @@ void castor::rtcopy::mighunter::StreamThread::exceptionThrowingRun(
             // Else do not start the stream
             } else {
 
-              castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, NOT_ALLOWED, 
-                paramsOutput);
+              castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+                NOT_ALLOWED_BY_STREAM_POLICY, paramsOutput);
               streamsToRestore.push_back(*infoCandidateStream);
               policyNo++;
 
