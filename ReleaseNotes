@@ -54,6 +54,8 @@
             for prepareToGets
   - #61707: Missing constraints on NAME column for DISKSERVER table
   - #61831: NameError: global name 'reloadNsHostCache' is not defined
+  - #61937: stager_qry -s reports incorrect values for diskserver and filesystem
+            capacities
 
   CASTOR tape
   -----------
@@ -69,6 +71,7 @@
             variable to "" when it should not
   - #59386: RFE: Aggregator should not wait for tape gateway to process requests
   - #60613: create recall candidate for repack doesn't use the suggested vid
+  - #61787: mighunterd core dumps due to invalid use of the Python C/API
 
   CASTOR uncategorized
   --------------------
@@ -151,24 +154,41 @@
           upgrade script available from:
           - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-4/dbupgrades
 
-       7. Upgrade the software on the headnodes and diskservers to 2.1.9-4.
+       7. Due to fixes related to bug "#61787: mighunterd core dumps due to
+          invalid use of the Python C/API" the Policy/Migration and
+          Policy/Stream configuration options need to be modified in
+          castor.conf. Now only the name of the Python module must be
+          specified not its full path. For example,
+
+          In 2.1.9-3 the values were:
+            Policy Migration /etc/castor/policies/migration.py
+            Policy Stream    /etc/castor/policies/stream.py
+
+          In 2.1.9-4 they become:
+            Policy Migration migration
+            Policy Stream    stream
+
+          The policy files themselves should still be located in:
+          /etc/castor/policies
+
+       8. Upgrade the software on the headnodes and diskservers to 2.1.9-4.
           Note: All daemons involved in the upgrade will be restarted
           automatically.
 
-       8. Start all the daemons which were stopped in step 2.
+       9. Start all the daemons which were stopped in step 2.
 
-       9. Wait 60 seconds to give time for the diskservers to send a heartbeat
+      10. Wait 60 seconds to give time for the diskservers to send a heartbeat
           message to the rmmaster daemon.
 
-      10. Apply the commands returned in step 1.
+      11. Apply the commands returned in step 1.
 
-      11. Remove the entries for root:root, stage:st and any admin accounts
+      12. Remove the entries for root:root, stage:st and any admin accounts
           specified in step 3 using the stager_removeprivilege command.
 
-      12. Test the instance by running the test suite available from:
+      13. Test the instance by running the test suite available from:
           - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-4/testsuite
 
-      13. Congratulations you have successfully upgraded to the 2.1.9-4 release
+      14. Congratulations you have successfully upgraded to the 2.1.9-4 release
           of CASTOR stager!!
 
 
@@ -188,28 +208,6 @@
          daemons involved in the upgrade will be restarted automatically. 
  
       3. Upgrade complete. 
-
-
-    Tape
-    ----
-
-    The fix of "bug #61787: mighunterd core dumps due to invalid use of the
-    Python C/API" has meant that the stream-policy and migration-policy
-    Python-scripts are now loaded into CASTOR as fully-fledged Python modules.
-    This change means that the following castor.conf entries have been changed:
-
-    2.1.9-3
-      Policy Migration /etc/castor/policies/migration.py
-      Policy Stream    /etc/castor/policies/stream.py
-
-    2.1.9-4
-      Policy Migration migration
-      Policy Stream    stream  
-
-    In version 2.1.9-4, the full path must not be provided, just the name of
-    the module.  The physical file must be located in the /etc/castor/policies
-    directory as this directory has been added to the module search path of the
-    embedded Python interpreter.
 
 
 -----------
