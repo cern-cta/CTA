@@ -1651,7 +1651,7 @@ BEGIN
 EXCEPTION WHEN NO_DATA_FOUND THEN 
   COMMIT;
 END;
-
+/
 
 /*
 Restart the (recall) segments that are recognized as stuck.
@@ -1664,7 +1664,21 @@ TAPE status:    (0)TAPE_UNUSED, (1)TAPE_PENDING, (2)TAPE_WAITDRIVE,
 SEGMENT status: (0)SEGMENT_UNPROCESSED, (7)SEGMENT_SELECTED
 */
 CREATE OR REPLACE PROCEDURE restartStuckRecalls AS
+  unused VARCHAR2(2048);
 BEGIN
+  -- Do nothing and return if the tape gateway is running
+  BEGIN
+    SELECT value INTO unused
+      FROM CastorConfig
+     WHERE class = 'tape'
+       AND key   = 'daemonName'
+       AND value = 'tapegatewayd';
+     RETURN;
+  EXCEPTION WHEN NO_DATA_FOUND THEN  -- rtcpclientd
+    -- Do nothing and continue
+    NULL;
+  END;
+
   -- Notes for query readability:
   -- TAPE status:    (0)TAPE_UNUSED, (1)TAPE_PENDING, (2)TAPE_WAITDRIVE, 
   --                 (3)TAPE_WAITMOUNT, (6)TAPE_FAILED
@@ -1691,8 +1705,11 @@ BEGIN
     SELECT tape FROM segment WHERE status IN (0, 7));
 
   COMMIT;
-END;
+END restartStuckRecalls;
+/
 
+-- Create a db job to be run every hour executing the restartStuckRecalls 
+-- workaround procedure
 BEGIN
   -- Remove database jobs before recreating them
   FOR j IN (SELECT job_name FROM user_scheduler_jobs
@@ -1701,8 +1718,6 @@ BEGIN
     DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
   END LOOP;
 
-  -- Create a db job to be run every hour executing the restartStuckRecalls 
-  -- workaround procedure
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'restartStuckRecallsJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
@@ -1712,6 +1727,5 @@ BEGIN
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=60',
       ENABLED         => TRUE,
       COMMENTS        => 'Workaround to restart stuck recalls');
-
 END;
 /
