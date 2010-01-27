@@ -437,8 +437,8 @@ EXTERN_C void DLL_DECL stage_print_diskpoolquery_resp
   freepBuf);
   for (int i = 0; i < response->nbDiskServers; i++) {
     struct stage_diskServerDescription& dsd = response->diskServers[i];
-    printSizeToBuf(freeBuf, response->freeSpace, siflag);
-    printSizeToBuf(totalBuf, response->totalSpace, siflag);
+    printSizeToBuf(freeBuf, dsd.freeSpace, siflag);
+    printSizeToBuf(totalBuf, dsd.totalSpace, siflag);
     if (0 == dsd.totalSpace) {
       strncpy(freepBuf, " -", 3);
     } else {
@@ -451,8 +451,8 @@ EXTERN_C void DLL_DECL stage_print_diskpoolquery_resp
     fprintf(stream, "     %-25s %-23s %-16s          FREE           GCBOUNDS\n", "FileSystems", "STATUS", "CAPACITY");
     for (int j = 0; j < dsd.nbFileSystems; j++) {
       struct stage_fileSystemDescription& fsd = dsd.fileSystems[j];
-      printSizeToBuf(freeBuf, response->freeSpace, siflag);
-      printSizeToBuf(totalBuf, response->totalSpace, siflag);
+      printSizeToBuf(freeBuf, fsd.freeSpace, siflag);
+      printSizeToBuf(totalBuf, fsd.totalSpace, siflag);
       if (0 == fsd.totalSpace) {
         strncpy(freepBuf, " -", 3);
       } else {
