@@ -1651,4 +1651,67 @@ BEGIN
 EXCEPTION WHEN NO_DATA_FOUND THEN 
   COMMIT;
 END;
+
+
+/*
+Restart the (recall) segments that are recognized as stuck.
+This workaround (sr #112306: locking issue in CMS stager)
+will be dropped as soon as the TapeGateway will be used in production.
+
+Notes for query readability:
+TAPE status:    (0)TAPE_UNUSED, (1)TAPE_PENDING, (2)TAPE_WAITDRIVE, 
+                (3)TAPE_WAITMOUNT, (6)TAPE_FAILED
+SEGMENT status: (0)SEGMENT_UNPROCESSED, (7)SEGMENT_SELECTED
+*/
+CREATE OR REPLACE PROCEDURE restartStuckRecalls AS
+BEGIN
+  -- Notes for query readability:
+  -- TAPE status:    (0)TAPE_UNUSED, (1)TAPE_PENDING, (2)TAPE_WAITDRIVE, 
+  --                 (3)TAPE_WAITMOUNT, (6)TAPE_FAILED
+  -- SEGMENT status: (0)SEGMENT_UNPROCESSED, (7)SEGMENT_SELECTED
+
+  -- Mark as unused all of the recall tapes whose state maybe stuck due to an
+  -- rtcpclientd crash. Such tapes will be pending, waiting for a drive, or
+  -- waiting for a mount, and will be associated with segments that are neither
+  -- un-processed nor selected.
+  UPDATE tape SET status=0 WHERE tpmode = 0 AND status IN (1,2,3)
+    AND id NOT IN (
+     SELECT tape FROM segment WHERE status IN (0,7));
+
+  -- Mark as unprocessed all recall segments that are marked as being selected
+  -- and are associated with unused or failed recall tapes that have 1 or more
+  -- unprocessed or selected segments.
+  UPDATE segment SET status = 0 WHERE status = 7 and tape IN (
+    SELECT id FROM tape WHERE tpmode = 0 AND status IN (0, 6) AND id IN (
+      SELECT tape FROM segment WHERE status IN (0, 7) ) );
+
+  -- Mark as pending all recall tapes that are unused or failed, and have
+  -- unprocessed and selected segments.
+  UPDATE tape SET status = 1 WHERE tpmode = 0 AND status IN (0, 6) AND id IN (
+    SELECT tape FROM segment WHERE status IN (0, 7));
+
+  COMMIT;
+END;
+
+BEGIN
+  -- Remove database jobs before recreating them
+  FOR j IN (SELECT job_name FROM user_scheduler_jobs
+             WHERE job_name IN ('RESTARTSTUCKRECALLSJOB'))
+  LOOP
+    DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
+  END LOOP;
+
+  -- Create a db job to be run every hour executing the restartStuckRecalls 
+  -- workaround procedure
+  DBMS_SCHEDULER.CREATE_JOB(
+      JOB_NAME        => 'restartStuckRecallsJob',
+      JOB_TYPE        => 'PLSQL_BLOCK',
+      JOB_ACTION      => 'BEGIN restartStuckRecalls(); END;',
+      JOB_CLASS       => 'CASTOR_JOB_CLASS',
+      START_DATE      => SYSDATE + 60/1440,
+      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=60',
+      ENABLED         => TRUE,
+      COMMENTS        => 'Workaround to restart stuck recalls');
+
+END;
 /

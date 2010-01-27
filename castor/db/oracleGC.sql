@@ -790,21 +790,6 @@ BEGIN
 END;
 /
 
-
-/* Deal with stuck recalls - this workaround should be dropped
-   after rtcpclientd is reviewed */
-CREATE OR REPLACE PROCEDURE restartStuckRecalls AS
-BEGIN
-  UPDATE Segment SET status = 0 WHERE status = 7 and tape IN
-    (SELECT id from Tape WHERE tpmode = 0 AND status IN (0, 6) AND id IN
-      (SELECT tape FROM Segment WHERE status = 7));
-  UPDATE Tape SET status = 1 WHERE tpmode = 0 AND status IN (0, 6) AND id IN
-    (SELECT tape FROM Segment WHERE status in (0, 7));
-  COMMIT;
-END;
-/
-
-
 /* Runs cleanup operations */
 CREATE OR REPLACE PROCEDURE cleanup AS
   t INTEGER;
@@ -844,7 +829,6 @@ BEGIN
              WHERE job_name IN ('HOUSEKEEPINGJOB',
                                 'CLEANUPJOB',
                                 'BULKCHECKFSBACKINPRODJOB',
-                                'RESTARTSTUCKRECALLSJOB',
                                 'ACCOUNTINGJOB'))
   LOOP
     DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
@@ -882,17 +866,6 @@ BEGIN
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
       ENABLED         => TRUE,
       COMMENTS        => 'Bulk operation to processing filesystem state changes');
-
-  -- Create a db job to be run every hour executing the restartStuckRecalls workaround procedure
-  DBMS_SCHEDULER.CREATE_JOB(
-      JOB_NAME        => 'restartStuckRecallsJob',
-      JOB_TYPE        => 'PLSQL_BLOCK',
-      JOB_ACTION      => 'BEGIN restartStuckRecalls(); END;',
-      JOB_CLASS       => 'CASTOR_JOB_CLASS',
-      START_DATE      => SYSDATE + 60/1440,
-      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=60',
-      ENABLED         => TRUE,
-      COMMENTS        => 'Workaround to restart stuck recalls');
 
   -- Create a db job to be run every hour that generates the accounting information
   DBMS_SCHEDULER.CREATE_JOB(
