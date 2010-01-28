@@ -156,7 +156,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'` castor-tape-serve
     ## Do we have an %if dependency ?
     #
     if [ "$package" = "castor-tape-server-nostk" ]; then
-	echo "%else" >> CASTOR.spec # compiling_notstk if
+        echo "%else" >> CASTOR.spec # compiling_notstk if
         package="castor-tape-server"
     fi
 
@@ -175,7 +175,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'` castor-tape-serve
       }' $package Group |
       sed 's/ //g' | sed 's/\${[^{},]*}//g' | sed 's/^,*//g' | sed 's/,,*/,/g'`
     if [ "${group}" != "Client" ]; then
-	echo "%if ! %compiling_client" >> CASTOR.spec # no a client package
+        echo "%if ! %compiling_client" >> CASTOR.spec # no a client package
     fi
     echo "%package -n $actualPackage" >> CASTOR.spec
     echo "Summary: Cern Advanced mass STORage" >> CASTOR.spec
@@ -205,7 +205,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'` castor-tape-serve
       }' $package Depends |
       sed 's/ //g' | sed 's/\${[^{},]*}//g' | sed 's/^,*//g' | sed 's/,,*/,/g'`
     if [ -n "${requires}" ]; then
-	echo "Requires: ${requires}" >> CASTOR.spec
+        echo "Requires: ${requires}" >> CASTOR.spec
     fi
     #
     ## Get provides
@@ -222,7 +222,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'` castor-tape-serve
       }' $package Provides |
       sed 's/ //g'`
     if [ -n "${provides}" ]; then
-	echo "Provides: ${provides}" >> CASTOR.spec
+        echo "Provides: ${provides}" >> CASTOR.spec
     fi
     #
     ## Get conflicts
@@ -239,7 +239,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'` castor-tape-serve
       }' $package Conflicts |
       sed 's/ //g'`
     if [ -n "${conflicts}" ]; then
-	echo "Conflicts: ${conflicts}" >> CASTOR.spec
+        echo "Conflicts: ${conflicts}" >> CASTOR.spec
     fi
     #
     ## Get Obsoletes
@@ -278,15 +278,19 @@ for this in `grep Package: debian/control | awk '{print $NF}'` castor-tape-serve
     echo "%defattr(-,root,root)" >> CASTOR.spec
     ## deal with manpages
     if [ -s "debian/$package.manpages" ]; then
-	for man in `cat debian/$package.manpages | sed 's/debian\/castor\///g'`; do
-	    echo "%attr(0644,root,bin) %doc /$man" >> CASTOR.spec
-	done
+        for man in `cat debian/$package.manpages | sed 's/debian\/castor\///g'`; do
+            echo "%attr(0644,root,bin) %doc /$man" >> CASTOR.spec
+        done
     fi
     ## deal with directories
     if [ -s "debian/$package.dirs" ]; then
-	for dir in `cat debian/$package.dirs`; do
-	    echo "%attr(-,root,bin) %dir /$dir" >> CASTOR.spec
-	done
+        cat debian/$package.dirs | while read dir; do
+            if [ `echo $dir | grep -c %attr` -lt 1 ]; then
+                echo "%attr(-,root,bin) %dir /$dir" >> CASTOR.spec
+            else
+                echo $dir | sed -e "s/) /) %dir \//" >> CASTOR.spec
+            fi
+        done
     fi
     ## deal with files
     if [ -s "debian/$package.install.perm" ]; then
@@ -310,7 +314,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'` castor-tape-serve
         cat debian/$package.postun >> CASTOR.spec
     fi
     if [ "${group}" != "Client" ]; then
-	echo "%endif" >> CASTOR.spec # end of client compilation if
+        echo "%endif" >> CASTOR.spec # end of client compilation if
     fi
     echo >> CASTOR.spec
 done
