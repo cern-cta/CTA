@@ -3425,28 +3425,6 @@ BEGIN
 END restartStuckRecalls;
 /
 
--- Create a db job to be run every hour executing the restartStuckRecalls
--- workaround procedure
-BEGIN
-  -- Remove database jobs before recreating them
-  FOR j IN (SELECT job_name FROM user_scheduler_jobs
-             WHERE job_name IN ('RESTARTSTUCKRECALLSJOB'))
-  LOOP
-    DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
-  END LOOP;
-
-  DBMS_SCHEDULER.CREATE_JOB(
-      JOB_NAME        => 'restartStuckRecallsJob',
-      JOB_TYPE        => 'PLSQL_BLOCK',
-      JOB_ACTION      => 'BEGIN restartStuckRecalls(); END;',
-      JOB_CLASS       => 'CASTOR_JOB_CLASS',
-      START_DATE      => SYSDATE + 60/1440,
-      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=60',
-      ENABLED         => TRUE,
-      COMMENTS        => 'Workaround to restart stuck recalls');
-END;
-/
-
 
 /* Recompile all invalid procedures, triggers and functions */
 /************************************************************/
