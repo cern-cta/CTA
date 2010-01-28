@@ -72,8 +72,8 @@ castor::tape::aggregator::VdqmRequestHandler::StoppingGracefullyFunctor
 // constructor
 //-----------------------------------------------------------------------------
 castor::tape::aggregator::VdqmRequestHandler::VdqmRequestHandler(
-  TapeSessionCatalogue &tapeSessionCatalogue) throw() :
-  m_tapeSessionCatalogue(tapeSessionCatalogue) {
+  const uint32_t nbDrives, TapeSessionCatalogue &tapeSessionCatalogue) throw() :
+  m_nbDrives(nbDrives), m_tapeSessionCatalogue(tapeSessionCatalogue) {
 }
 
 
@@ -127,6 +127,9 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
 
   try {
     // Check the drive unit name given by the VDQM exists in the TPCONFIG file
+    // and that there are not more drives attached to the tape server than
+    // there were just before the VdqmRequestHandlerPool thread-pool was
+    // created.
     {
       utils::TpconfigLines tpconfigLines;
       try {
@@ -181,6 +184,18 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
           ": tpconfigUnitNames=" << driveNamesStream.str();;
 
         throw(ex);
+      }
+
+      // Log an error if there are more drives attached to the tape server than
+      // there were just before the VdqmRequestHandlerPool thread-pool was
+      // created.
+      if(driveNames.size() > m_nbDrives) {
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("filename"         , TPCONFIGPATH     ),
+          castor::dlf::Param("expectedNbDrives" , m_nbDrives       ),
+          castor::dlf::Param("actualNbDrives"   , driveNames.size())};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+          AGGREGATOR_TOO_MANY_DRIVES_IN_TPCONFIG, params);
       }
     }
 

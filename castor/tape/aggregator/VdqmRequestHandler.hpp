@@ -36,6 +36,7 @@
 #include "h/Cuuid.h"
 
 #include <list>
+#include <stdint.h>
 
 
 namespace castor {
@@ -51,8 +52,15 @@ public:
 
   /**
    * Constructor
+   *
+   * @param nbDrives             The number of tape drives attached to the tape
+   *                             server on which aggregatord is running.
+   * @param tapeSessionCatalogue The thread-safe catalogue of on-going
+   *                             tape-sessions.
+   *
    */
-  VdqmRequestHandler(TapeSessionCatalogue &tapeSessionCatalogue) throw();
+  VdqmRequestHandler(const uint32_t nbDrives,
+    TapeSessionCatalogue &tapeSessionCatalogue) throw();
 
   /**
    * Destructor
@@ -79,6 +87,18 @@ public:
 
 
 private:
+
+  /**
+   * The number of tape drives that were attached to the tape server just
+   * before the VdqmRequestHandlerPool thread-pool was created.
+   *
+   * This constant will be set by the main thread and will be read by one or
+   * more threads which may or may not include the main thread.
+   *
+   * This constant is used to log an error message when a tape operator adds
+   * a set of new drive entires into TPCONFIG without restarting aggregatord.
+   */
+  const uint32_t m_nbDrives;
 
   /**
    * Thread-safe catalogue of on-going tape-sessions, where a tape-session is
