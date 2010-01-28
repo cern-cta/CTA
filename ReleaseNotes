@@ -72,6 +72,8 @@
   - #59386: RFE: Aggregator should not wait for tape gateway to process requests
   - #60613: create recall candidate for repack doesn't use the suggested vid
   - #61787: mighunterd core dumps due to invalid use of the Python C/API
+  - #61976: RFE: restartStuckRecalls should cover the same cases as
+            retryTapeRecall.pl
 
   CASTOR uncategorized
   --------------------
@@ -94,6 +96,7 @@
   - Added a role based initd script for the logprocessor daemon. Now multiple
     log processor daemons can run on the same machine.
 
+  - Increased logrotation for the /var/log/gridftp.log file from 60 to 120 days.
 
   Package Changes
   ---------------
