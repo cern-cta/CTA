@@ -49,11 +49,6 @@ namespace aggregator {
   const size_t HDRBUFSIZ = 3 * sizeof(uint32_t);
 
   /**
-   * The maximum number of tape drives a single aggregator can cope with.
-   */
-  const int MAXDRIVES = 4;
-
-  /**
    * The maximum number of pending transfers between the aggregator and RTCPD.
    * The theoretical maximum number of outstanding pending transfers is equal
    * to the memory allocated to memory buffers of RTCPD divided by the average

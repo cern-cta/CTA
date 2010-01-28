@@ -135,7 +135,46 @@ int castor::tape::aggregator::AggregatorDaemon::exceptionThrowingMain(
   // Pass the foreground option to the super class BaseDaemon
   m_foreground = m_parsedCommandLine.foregroundOptionSet;
 
-  createVdqmRequestHandlerPool();
+  // Parse the TPCONFIG file
+  utils::TpconfigLines tpconfigLines;
+  try {
+    utils::parseTpconfig(TPCONFIGPATH, tpconfigLines);
+  } catch (castor::exception::Exception &ex) {
+    castor::exception::Exception ex2(ex.code());
+
+    ex2.getMessage() <<
+      "Failed to parse TPCONFIG file"
+      ": " << ex.getMessage().str();
+
+    throw(ex2);
+  }
+
+  // Extract the drive units names
+  std::list<std::string> driveNames;
+  utils::extractTpconfigDriveNames(tpconfigLines, driveNames);
+
+  // Put the drive names into a string stream ready to make a log message
+  std::stringstream driveNamesStream;
+  for(std::list<std::string>::const_iterator itor = driveNames.begin();
+    itor != driveNames.end(); itor++) {
+
+    if(itor != driveNames.begin()) {
+      driveNamesStream << ",";
+    }
+
+    driveNamesStream << *itor;
+  }
+
+  // Log the result of parsing the TPCONFIG file to extract the drive unit
+  // names 
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("filename" , TPCONFIGPATH          ),
+    castor::dlf::Param("nbDrives" , driveNames.size()     ),
+    castor::dlf::Param("unitNames", driveNamesStream.str())};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+    AGGREGATOR_PARSED_TPCONFIG, params);
+
+  createVdqmRequestHandlerPool(driveNames.size());
 
   // Start the threads
   start();
@@ -271,7 +310,8 @@ void castor::tape::aggregator::AggregatorDaemon::parseCommandLine(
 // createVdqmRequestHandlerPool
 //------------------------------------------------------------------------------
 void castor::tape::aggregator::AggregatorDaemon::
-  createVdqmRequestHandlerPool() throw(castor::exception::Exception) {
+  createVdqmRequestHandlerPool(const uint32_t nbDrives)
+  throw(castor::exception::Exception) {
 
   const int vdqmListenPort = utils::getPortFromConfig("AGGREGATOR", "VDQMPORT",
     AGGREGATOR_VDQMPORT);
@@ -293,5 +333,5 @@ void castor::tape::aggregator::AggregatorDaemon::
      ": Failed to get VdqmRequestHandlerPool");
   }
 
-  m_vdqmRequestHandlerThreadPool->setNbThreads(MAXDRIVES);
+  m_vdqmRequestHandlerThreadPool->setNbThreads(nbDrives);
 }

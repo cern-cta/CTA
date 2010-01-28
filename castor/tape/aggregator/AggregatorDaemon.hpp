@@ -130,8 +130,11 @@ private:
 
   /**
    * Creates the VDQM request handler thread pool.
+   *
+   * @param nbDrives The number of tape drives attached to the tape server
+   *                 aggregatord is running on.
    */
-  void createVdqmRequestHandlerPool()
+  void createVdqmRequestHandlerPool(const uint32_t nbDrives)
     throw (castor::exception::Exception);
 
   /**
