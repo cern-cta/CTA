@@ -68,7 +68,7 @@ void castor::metrics::Counter::updateRates(int si)
     // configurable sliding window average
     char* slWin = getconfent(m_slWinConfCategory.c_str(),
                              m_slWinConfName.c_str(), 0);
-    if(slWin) {
+    if(slWin && atol(slWin)) {
       m_avgForSlWin = exp(-si*1.0/atol(slWin))*m_avgForSlWin + 
         60/si*(1-exp(-si*1.0/atol(slWin)))*(v - m_lastValue);
     }
