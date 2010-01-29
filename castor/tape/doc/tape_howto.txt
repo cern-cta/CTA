@@ -2925,3 +2925,13 @@ The VDQM production server runs on the following two nodes:
 
     castorsrv203
     castorsrv303
+
+
+How to install, upgrade and use repack
+======================================
+
+The instructions on how to install, upgrade and use repack can be found at the
+following web url:
+
+https://twiki.cern.ch/twiki/bin/view/FIOgroup/CastorV2HowToUseRepack
+
