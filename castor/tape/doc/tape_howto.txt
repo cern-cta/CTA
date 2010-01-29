@@ -24,11 +24,28 @@ Tape pools:
   vdqm2_special
 
 
-How to find SLC4 rpms
-=====================
+How to find the CASTOR 64-bit SLC4 rpms
+=======================================
+
+Here are 3 methods to find the CASTOR 64-bit SLC4 rpms:
+
+Method 1
+--------
 
 ssh lxservb04
 cd /var/www/html/swrep/x86_64_slc4
+
+
+Method 3
+--------
+
+lynx http://swrepsrv.cern.ch/swrep/x86_64_slc4/
+
+
+Method 4
+--------
+
+cd /afs/cern.ch/project/castor/www/DIST/CERN/savannah/CASTOR.pkg/2.1.9-3/SL4/x86_64
 
 
 How to build the castor rpms
