@@ -685,21 +685,22 @@ How to restart the CASTOR servers within a stager
 /etc/init.d/mighunterd restart default
 
 
-How to create files full of random data
-=======================================
+How to create files full of random data in a castor-disk-server mount-point
+===========================================================================
 
-dd if=/dev/urandom of=/tmp/murrayc3/twoGFile bs=1G count=2
-dd if=/dev/urandom of=/tmp/murrayc3/oneGFile bs=1M count=1024
+sudo -u stage sh
+dd if=/dev/urandom of=/srv/castor/01/00/oneGFile bs=1M count=1024
+dd if=/dev/urandom of=/srv/castor/01/00/twoGFile bs=1M count=2048
 
 
 How to write a file to the end of a tape using tpwrite
 ======================================================
 
-sudo -u stage tpwrite -V I10547 -l aul -F F -q n1 lxc2disk07:/tmp/murrayc3/oneGFile
-sudo -u stage tpwrite -V I10548 -l aul -F F -q n1 lxc2disk07:/tmp/murrayc3/oneGFile
-sudo -u stage tpwrite -V I10549 -l aul -F F -q n1 lxc2disk07:/tmp/murrayc3/oneGFile
-sudo -u stage tpwrite -V I10550 -l aul -F F -q n1 lxc2disk07:/tmp/murrayc3/oneGFile
-sudo -u stage tpwrite -V I10551 -l aul -F F -q n1 lxc2disk07:/tmp/murrayc3/oneGFile
+sudo -u stage tpwrite -V I10547 -l aul -F F -q n1 lxc2disk07:/srv/castor/01/00/oneGFile
+sudo -u stage tpwrite -V I10548 -l aul -F F -q n1 lxc2disk07:/srv/castor/01/00/oneGFile
+sudo -u stage tpwrite -V I10549 -l aul -F F -q n1 lxc2disk07:/srv/castor/01/00/oneGFile
+sudo -u stage tpwrite -V I10550 -l aul -F F -q n1 lxc2disk07:/srv/castor/01/00/oneGFile
+sudo -u stage tpwrite -V I10551 -l aul -F F -q n1 lxc2disk07:/srv/castor/01/00/oneGFile
 
 
 How to test the drive down with more request for other tapes
@@ -747,7 +748,7 @@ rfcp twoGFile $filename; let i=i+1; done;
 How to write many times the same file to several tapes
 ======================================================
 
-export VDQM_HOST=lxcastordev04; tapes=`vmgrlisttape -P vdqm2_test | grep  ul| egrep -v "READ-ONLY|DISABLED" | awk '{print $1;}'` ; for tape in $tapes ; do i=0 ; while test $i -lt 10 ; do file=/tmp/murrayc3/oneGFile; cmd="sudo -u stage tpwrite -V $tape -F F -q n1 $file" ; echo $cmd; sh -c "$cmd &" ; let i=i+1 ; done ; done
+export VDQM_HOST=lxcastordev04; tapes=`vmgrlisttape -P vdqm2_test | grep  ul| egrep -v "READ-ONLY|DISABLED" | awk '{print $1;}'` ; for tape in $tapes ; do i=0 ; while test $i -lt 10 ; do file=/srv/castor/01/00/oneGFile; cmd="sudo -u stage tpwrite -V $tape -F F -q n1 $file" ; echo $cmd; sh -c "$cmd &" ; let i=i+1 ; done ; done
 
 
 How to read several times the first segment from each of serveral tapes
@@ -764,16 +765,16 @@ How to read twice, read and then write, write twice, write and then read
 ========================================================================
 
 # Read twice
-export TAPE=I10554; export DISKFILE=lxc2disk07:/tmp/murrayc3/test; ssh root@lxcastordev04 'echo -e "\n\n"`date`" : read read test\n\n" >> /var/spool/vdqm/log'; sh -c "sudo -u stage tpread -V $TAPE -q 1 -FF $DISKFILE &"; sleep 5; sh -c "sudo -u stage tpread -V $TAPE -q 1 -FF $DISKFILE &"
+export TAPE=I10554; export DISKFILE=lxc2disk07:/srv/castor/01/00/test; ssh root@lxcastordev04 'echo -e "\n\n"`date`" : read read test\n\n" >> /var/spool/vdqm/log'; sh -c "sudo -u stage tpread -V $TAPE -q 1 -FF $DISKFILE &"; sleep 5; sh -c "sudo -u stage tpread -V $TAPE -q 1 -FF $DISKFILE &"
 
 # Read then write
-export TAPE=I10554; export DISKFILE=lxc2disk07:/tmp/murrayc3/test; ssh root@lxcastordev04 'echo -e "\n\n"`date`" : read write test\n\n" >> /var/spool/vdqm/log'; sh -c "sudo -u stage tpread -V $TAPE -q 1 -FF $DISKFILE &"; sleep 5; sh -c "sudo -u stage tpwrite -V $TAPE -F F -q n1 $DISKFILE &"
+export TAPE=I10554; export DISKFILE=lxc2disk07:/srv/castor/01/00/test; ssh root@lxcastordev04 'echo -e "\n\n"`date`" : read write test\n\n" >> /var/spool/vdqm/log'; sh -c "sudo -u stage tpread -V $TAPE -q 1 -FF $DISKFILE &"; sleep 5; sh -c "sudo -u stage tpwrite -V $TAPE -F F -q n1 $DISKFILE &"
 
 # Write twice
-export TAPE=I10554; export DISKFILE=lxc2disk07:/tmp/murrayc3/test; ssh root@lxcastordev04 'echo -e "\n\n"`date`" : write write test\n\n" >> /var/spool/vdqm/log'; sh -c "sudo -u stage tpwrite -V $TAPE -F F -q n1 $DISKFILE &" ; sleep 5; sh -c "sudo -u stage tpwrite -V $TAPE -F F -q n1 $DISKFILE &"
+export TAPE=I10554; export DISKFILE=lxc2disk07:/srv/castor/01/00/test; ssh root@lxcastordev04 'echo -e "\n\n"`date`" : write write test\n\n" >> /var/spool/vdqm/log'; sh -c "sudo -u stage tpwrite -V $TAPE -F F -q n1 $DISKFILE &" ; sleep 5; sh -c "sudo -u stage tpwrite -V $TAPE -F F -q n1 $DISKFILE &"
 
 # Write then read
-export TAPE=I10554; export DISKFILE=lxc2disk07:/tmp/murrayc3/test; ssh root@lxcastordev04 'echo -e "\n\n"`date`" : write read test\n\n" >> /var/spool/vdqm/log'; sh -c "sudo -u stage tpwrite -V $TAPE -F F -q n1 $DISKFILE &" ; sleep 5; sh -c "sudo -u stage tpread -V $TAPE -q 1 -FF $DISKFILE &"
+export TAPE=I10554; export DISKFILE=lxc2disk07:/srv/castor/01/00/test; ssh root@lxcastordev04 'echo -e "\n\n"`date`" : write read test\n\n" >> /var/spool/vdqm/log'; sh -c "sudo -u stage tpwrite -V $TAPE -F F -q n1 $DISKFILE &" ; sleep 5; sh -c "sudo -u stage tpread -V $TAPE -q 1 -FF $DISKFILE &"
 
 
 How to remove all drives from the VDQM
@@ -807,7 +808,7 @@ i=0; padded=000; while test $i -lt 1000; do if test $i -lt 10; then padded=00$i;
 # Tpwrite the files
 su stage
 bash
-`echo -n "tpwrite -V I10487 -F F -q 1-"; i=0; padded=000; while test $i -lt 1000; do if test $i -lt 10; then padded=00$i; elif test $i -lt 100; then padded=0$i; else padded=$i; fi; echo -n " lxc2disk07:/tmp/murrayc3/file${padded}.txt" ; let i=i+1; done; echo`
+`echo -n "tpwrite -V I10487 -F F -q 1-"; i=0; padded=000; while test $i -lt 1000; do if test $i -lt 10; then padded=00$i; elif test $i -lt 100; then padded=0$i; else padded=$i; fi; echo -n " lxc2disk07:/srv/castor/01/00/file${padded}.txt" ; let i=i+1; done; echo`
 
 # Mount the tape
 smc -m -D 5 -h ibmlib3rmc -l /dev/smc -V I10487
@@ -858,7 +859,7 @@ vdqm_admin -dedicate -dgn 3592B1 -drive 35921001 -server tpsrv202 -match host=pi
 
 # Launch read requests
 
-unset DISPLAY; tapes="I10550 I10554"; i=0; while test $i -lt 10; do let i=i+1; for tape in $tapes; do cmd="ssh root@lxc2disk07 sudo -u stage tpread -V $tape -q 1 -FF lxc2disk07:/tmp/murrayc3/test1"; sh -c "$cmd &"; cmd="ssh root@lxc2disk08 sudo -u stage tpread -V $tape -q 1 -FF lxc2disk08:/tmp/murrayc3/test2"; sh -c "$cmd &"; done; done
+unset DISPLAY; tapes="I10550 I10554"; i=0; while test $i -lt 10; do let i=i+1; for tape in $tapes; do cmd="ssh root@lxc2disk07 sudo -u stage tpread -V $tape -q 1 -FF lxc2disk07:/srv/castor/01/00/test1"; sh -c "$cmd &"; cmd="ssh root@lxc2disk08 sudo -u stage tpread -V $tape -q 1 -FF lxc2disk08:/srv/castor/01/00/test2"; sh -c "$cmd &"; done; done
 
 # Initial VID
 
@@ -882,7 +883,7 @@ ssh root@lxc2disk07 killall -2 tpread; ssh root@lxc2disk08 killall -2 tpread
 
 # Launch read and write requests
 
-unset DISPLAY; tapes="I10553 I10554"; i=0; while test $i -lt 10; do let i=i+1; for tape in $tapes; do cmd="ssh root@lxc2disk07 sudo -u stage tpread -V $tape -q 1 -FF /dev/null"; sh -c "$cmd &"; cmd="ssh root@lxc2disk08 sudo -u stage tpread -V $tape -q 1 -FF /dev/null"; sh -c "$cmd &"; cmd="ssh root@lxc2disk07 sudo -u stage tpwrite -V $tape -l aul -F F -q n1 /tmp/murrayc3/oneGFile"; sh -c "$cmd &"; cmd="ssh root@lxc2disk08 sudo -u stage tpwrite -V $tape -l aul -F F -q n1 /tmp/murrayc3/oneGFile"; sh -c "$cmd &"; done; done
+unset DISPLAY; tapes="I10553 I10554"; i=0; while test $i -lt 10; do let i=i+1; for tape in $tapes; do cmd="ssh root@lxc2disk07 sudo -u stage tpread -V $tape -q 1 -FF /dev/null"; sh -c "$cmd &"; cmd="ssh root@lxc2disk08 sudo -u stage tpread -V $tape -q 1 -FF /dev/null"; sh -c "$cmd &"; cmd="ssh root@lxc2disk07 sudo -u stage tpwrite -V $tape -l aul -F F -q n1 /srv/castor/01/00/oneGFile"; sh -c "$cmd &"; cmd="ssh root@lxc2disk08 sudo -u stage tpwrite -V $tape -l aul -F F -q n1 /srv/castor/01/00/oneGFile"; sh -c "$cmd &"; done; done
 
 # Initial access modes
 
@@ -2205,10 +2206,10 @@ lbltype=aul
 mounttape: TP062 - tape I10554 to be prelabelled has vsn I10554
 tplabel: tape labeled.
 [root@lxcastordev04 tpcp]# ssh lxc2disk07 dd if=/dev/urandom
-of=/tmp/murrayc3/f bs=1M count=100
+of=/srv/castor/01/00/f bs=1M count=100
 [root@lxcastordev04 tpcp]# `(NB_FILES=1000; echo -n "sudo -u stage tpwrite -V
 I10554 -l aul -F F -q n$NB_FILES"; x=0; while test $x -lt $NB_FILES; do echo
--n " lxc2disk07:/tmp/murrayc3/f"; let x=x+1; done; echo)`
+-n " lxc2disk07:/srv/castor/01/00/f"; let x=x+1; done; echo)`
 Jun 27 15:20:15 tpwrite[12164]: selecting tape server ...
 Jun 27 15:20:15 tpwrite[12164]: * tpsrv202 is a possible tape server.
 Jun 27 15:20:15 tpwrite[12164]: ! selected tape server is tpsrv202.
@@ -2221,7 +2222,7 @@ With your favourite text editor create an executable shell script with the
 name trace_rtcp.sh and enter the following contents.  Once created, run the
 script with an entire tpread, tpwrite or dumptape command as the script's
 command-line arguments.  For example "trace_rtcp.sh tpwrite -V I02025 -l aul -F
- F -q n3 lxc2disk07:/tmp/murrayc3/test" or "trace_rtcp.sh dumptape -V I02025".
+ F -q n3 lxc2disk07:/srv/castor/01/00/test" or "trace_rtcp.sh dumptape -V I02025".
 The script will create a trace file with a name of the form
 "/tmp/trace_PROGRAM.DATE.output", where PROGRAM is either tpread, tpwrite or
 dumptape and DATE is the current date accurate to the nearest second. Please
