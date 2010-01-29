@@ -103,8 +103,9 @@
   - Removed the dumptape command from the castor-tape-client package as it was
     identical to tpdump.
 
-  - Added a new castor-lib-tapeutils package to allow for continued testing and
-    development of the tapegateway and aggregator daemons.
+  - Added two new packages, castor-lib-tapeutils and castor-tapegateway-server 
+    to allow for continued testing and development of the tapegateway and
+    aggregator daemons.
 
 
   Upgrade Instructions from 2.1.9-3
