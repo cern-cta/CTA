@@ -173,14 +173,12 @@ class FileSource(MsgSource):
     def __init__( self  ):
         MsgSource.__init__( self )
         self.transform = lambda x: {}
-        self.numMsgs   = 0
 
     #---------------------------------------------------------------------------
     def getMessage( self ):
         line = self.__file.readline()
         if not line:
             return None
-        self.numMsgs += 1
         return self.transform( line )
 
     #---------------------------------------------------------------------------
@@ -202,8 +200,8 @@ class PipeSource(MsgSource):
     """
     #---------------------------------------------------------------------------
     def __init__( self ):
-        self.numMsgs   = 0
         self.transform = lambda x: {}
+        self.prevline  = ''
 
     #---------------------------------------------------------------------------
     def notify( self ):
@@ -213,16 +211,18 @@ class PipeSource(MsgSource):
 
     #---------------------------------------------------------------------------
     def getMessageNoDynfiles( self ):
-        line = self.__file.readline()
-        if not line:
-            while True:
-                time.sleep( 0.25 )
-                line = self.__file.readline()
-                if line:
-                    self.numMsgs += 1
-                    return self.transform( line )
-        self.numMsgs += 1
-	return self.transform( line )
+        while True:
+            line = self.__file.readline()
+            if not line:
+                 time.sleep ( 0.25 )
+                 continue
+            if self.prevline:
+                 line = self.prevline + line
+                 self.prevline = ''
+            if line.endswith( '\n' ):
+                 return self.transform (line)
+            else:
+                 self.prevline = line
 
     #---------------------------------------------------------------------------
     def getMessageDynfiles( self ):
@@ -235,13 +235,11 @@ class PipeSource(MsgSource):
                 time.sleep( 0.25 )
                 line = self.__file.readline()
                 if line:
-                    self.numMsgs += 1
                     return self.transform( line )
                 else:
                     if self.__openDate < date.today():
                         self.__file.close()
                         self.waitForFile()
-        self.numMsgs += 1
 	return self.transform( line )
 
     #---------------------------------------------------------------------------
