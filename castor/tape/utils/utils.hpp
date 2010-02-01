@@ -41,6 +41,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <vector>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 
 /**
@@ -472,7 +474,7 @@ namespace utils  {
    *                 TPCONFIG file.
    */
   void parseTpconfig(const char *const filename, TpconfigLines &lines)
-    throw (castor::exception::Exception);
+    throw(castor::exception::Exception);
 
   /**
    * Extracts the drive-unit names from the specified list of parsed TPCONFIG
@@ -487,6 +489,20 @@ namespace utils  {
    */
   void extractTpconfigDriveNames(const TpconfigLines &tpconfigLines,
     std::list<std::string> &driveNames) throw();
+
+  /**
+   * C++ wrapper for the standard C function stat().
+   *
+   * This wrapper throws an exception if the underlying C function encounters
+   * an error.
+   *
+   * @param filename The name of the file for which information should be
+   *                 returned.
+   * @param buf      Output parameter: The infromation returned about the
+   *                 specified file.
+   */
+  void statFile(const char *const filename, struct stat &buf)
+    throw(castor::exception::Exception);
 
 } // namespace utils
 } // namespace tape

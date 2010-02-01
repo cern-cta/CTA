@@ -794,3 +794,26 @@ void castor::tape::utils::extractTpconfigDriveNames(
     }
   }
 }
+
+
+//------------------------------------------------------------------------------
+// statFile
+//------------------------------------------------------------------------------
+void castor::tape::utils::statFile(const char *const filename,
+  struct stat &buf) throw(castor::exception::Exception) {
+
+  const int rc         = stat(filename, &buf);
+  const int savedErrno = errno;
+
+  // Throw an exception if the stat() call failed
+  if(rc != 0) {
+    castor::exception::Exception ex(savedErrno);
+
+    ex.getMessage() <<
+      "stat() call failed"
+      ": filename=" << filename <<
+      ": " << sstrerror(savedErrno);
+
+    throw(ex);
+  }
+}
