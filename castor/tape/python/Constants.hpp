@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/python/PythonUtils.hpp
+ *                      castor/tape/python/Constants.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,43 +18,25 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * 
+ *
  * @author Giulia Taurelli
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_PYTHON_PYTHON_UTILS
-#define CASTOR_TAPE_PYTHON_PYTHON_UTILS
+#ifndef CASTOR_TAPE_PYTHON_CONSTANTS_HPP
+#define CASTOR_TAPE_PYTHON_CONSTANTS_HPP 1
 
-#include <Python.h>
-
-#include "castor/exception/Exception.hpp"
-
-
-namespace castor  {
-namespace tape    {
-namespace python  {
-
-  const char *const CASTOR_POLICIES_DIRECTORY = "/etc/castor/policies";
-  
-  void startThreadSupportInit();
-
-  PyObject* loadPythonPolicy(const char *const policyModuleName) 
-      throw(castor::exception::Exception);
-
-  void endThreadSupportInit();
-
-  PyObject*  getPythonFunction(PyObject* pyDict,const char *const functionName)throw(castor::exception::Exception);
-
-  void appendDirectoryToPYTHONPATH(const char *const directory)throw();
-    
-  PyObject* importPythonModule(const char *const moduleName)
-      throw(castor::exception::Exception);
-  
-  void checkPolicyModuleFileExists(const char *moduleName)
-      throw(castor::exception::Exception);
+namespace castor {
+namespace tape   {
+namespace python {
+  	
+/**
+ * The directory that contains the CASTOR policies implemented as Python
+ * modules.
+ */
+const char *const CASTOR_POLICIES_DIRECTORY = "/etc/castor/policies";
 
 } // namespace python
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_PYTHON_PYTHON_UTILS
+#endif // CASTOR_TAPE_PYTHON_CONSTANTS_HPP

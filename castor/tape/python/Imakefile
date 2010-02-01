@@ -1,5 +1,5 @@
 #
-#                      castor/tape/pythonUtils/Imakefile
+#                      castor/tape/python/Imakefile
 #
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
 #
-# @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
+# @author Giulia Taurelli
 #
 
 INCLUDES = -I../../../h -I../../..
@@ -28,12 +28,12 @@ LD = g++
 LIBS = $(PYTHONLIBS)
 
 
-TAPEUTILSLIB_SRCS = \
-  Utils.cpp \
+TAPEPYTHONLIB_SRCS = \
+  python.cpp \
   ScopedPythonLock.cpp \
   SmartPyObjectPtr.cpp 
 
-TAPEUTILSLIB_OBJS = $(TAPEUTILSLIB_SRCS:.cpp=.Osuf)
+TAPEPYTHONLIB_OBJS = $(TAPEPYTHONLIB_SRCS:.cpp=.Osuf)
 
 DependsOnLibrary(..,castorclient)
-SharedLibraryTarget(castorpythonutils,$(PYTHONUTILSLIB_OBJS),$(DEPLIB),$(LIBS))
+SharedLibraryTarget(castorpython,$(TAPEPYTHONLIB_OBJS),$(DEPLIB),$(LIBS))
