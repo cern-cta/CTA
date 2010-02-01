@@ -18,7 +18,7 @@ RMCD_OBJS = rmc_serv.Osuf rmc_procreq.Osuf rmclogit.Osuf sendrep.Osuf usrmsg.Osu
 OPSGRP = OperatorGid
 TapeProgramTarget(rmcd,$(RMCD_OBJS),$(DEPLIB),$(LIBS),750)
 ADMMANPAGE(rmcd)
-MakeDir($(LOGDIR),0755)
+TapeMakeDir($(LOGDIR),0755)
 LOGROTATE(castor-rmc-server,..,installtape)
 SYSCONFIG(rmcd,installtape)
 INITSCRIPT(rmcd,installtape)
