@@ -78,21 +78,21 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
--- Constraint to prevent a NULL file class on non symlink entries
+/* Set all file class entries for symlinks to NULL */
+UPDATE Cns_file_metadata SET fileclass = NULL
+ WHERE bitand(filemode, 40960) = 40960;
+COMMIT;
+
+/* Constraint to prevent a NULL file class on non symlink entries */
 ALTER TABLE Cns_file_metadata
   ADD CONSTRAINT CK_FileMetadata_FileClass
   CHECK ((bitand(filemode, 40960) = 40960  AND fileclass IS NULL)
      OR  (bitand(filemode, 40960) != 40960 AND fileclass IS NOT NULL));
 
--- Constraint to prevent negative nlinks
+/* Constraint to prevent negative nlinks */
 ALTER TABLE Cns_file_metadata 
   ADD CONSTRAINT CK_FileMetadata_Nlink
   CHECK (nlink >= 0 AND nlink IS NOT NULL);
-
-/* Set all file class entries for symlinks to NULL */
-UPDATE Cns_file_metadata SET fileclass = NULL
- WHERE bitand(filemode, 40960) = 40960;
-COMMIT;
 
 /* New foreign key constraint: #45700 */
 ALTER TABLE Cns_file_metadata
