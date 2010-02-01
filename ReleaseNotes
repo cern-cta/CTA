@@ -138,7 +138,12 @@
           Note: It is not necessary to stop any services/daemons on the
                 diskservers themselves.
 
-       3. Upgrade the Stager database using the stager_2.1.9-3_to_2.1.9-4.sql
+       3. Fail any SubRequests in the Stager database in
+          SUBREQUEST_WAITSCHED (3), using:
+            UPDATE SubRequest SET status = 7 WHERE status = 3;
+            COMMIT;
+
+       4. Upgrade the Stager database using the stager_2.1.9-3_to_2.1.9-4.sql
           upgrade script available from:
           - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-4/dbupgrades
 
@@ -146,19 +151,19 @@
           of the stage:st account and a list of all user accounts which should
           be classified as system administrators.
 
-       4. Upgrade the DLF database using the dlf_2.1.9-3_to_2.1.9-4.sql
+       5. Upgrade the DLF database using the dlf_2.1.9-3_to_2.1.9-4.sql
           upgrade script available from:
           - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-4/dbupgrades
 
-       5. If applicable, upgrade the Monitoring database using the mon_2.1.9-3_to_2.1.9-4.sql
+       6. If applicable, upgrade the Monitoring database using the mon_2.1.9-3_to_2.1.9-4.sql
           upgrade script available from:
           - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-4/dbupgrades
 
-       6. If applicable, upgrade the Repack database using the repack_2.1.9-3_to_2.1.9-4.sql
+       7. If applicable, upgrade the Repack database using the repack_2.1.9-3_to_2.1.9-4.sql
           upgrade script available from:
           - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-4/dbupgrades
 
-       7. Due to fixes related to bug "#61787: mighunterd core dumps due to
+       8. Due to fixes related to bug "#61787: mighunterd core dumps due to
           invalid use of the Python C/API" the Policy/Migration and
           Policy/Stream configuration options need to be modified in
           castor.conf. Now only the name of the Python module must be
@@ -175,26 +180,26 @@
           The policy files themselves should still be located in:
           /etc/castor/policies
 
-       8. Upgrade the software on the headnodes and diskservers to 2.1.9-4.
+       9. Upgrade the software on the headnodes and diskservers to 2.1.9-4.
           Note: All daemons involved in the upgrade will be restarted
           automatically.
 
-       9. Restart the logprocessor daemon.
+      10. Restart the logprocessor daemon.
 
-      10. Start all the daemons which were stopped in step 2.
+      11. Start all the daemons which were stopped in step 2.
 
-      11. Wait 60 seconds to give time for the diskservers to send a heartbeat
+      12. Wait 60 seconds to give time for the diskservers to send a heartbeat
           message to the rmmaster daemon.
 
-      12. Apply the commands returned in step 1.
+      13. Apply the commands returned in step 1.
 
-      13. Remove the entries for root:root, stage:st and any admin accounts
+      14. Remove the entries for root:root, stage:st and any admin accounts
           specified in step 3 using the stager_removeprivilege command.
 
-      14. Test the instance by running the test suite available from:
+      15. Test the instance by running the test suite available from:
           - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-4/testsuite
 
-      15. Congratulations you have successfully upgraded to the 2.1.9-4 release
+      16. Congratulations you have successfully upgraded to the 2.1.9-4 release
           of CASTOR stager!!
 
 
