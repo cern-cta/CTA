@@ -236,11 +236,7 @@ PyObject * castor::tape::python::importPolicyPythonModule(
     throw(ex);
   }
 
-  PyObject *const pyDict = PyModule_GetDict(module.get());
-
-  module.release();
-
-  return(pyDict);
+  return(PyModule_GetDict(module.get()));
 }
 
 
