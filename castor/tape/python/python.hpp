@@ -19,7 +19,7 @@
  *
  *
  * 
- * @author Giulia Taurelli
+ * @author Giulia Taurelli, Nicola Bessone and Steven Murray
  *****************************************************************************/
 
 #ifndef CASTOR_TAPE_PYTHON_PYTHON_HPP
@@ -35,7 +35,7 @@
 namespace castor {
 namespace tape   {
 namespace python {
-  
+
 /**
  * Initializes the embedded Python interpreter for multi-threaded use and
  * append the CASTOR_POLICIES_DIRECTORY to the PYTHONPATH environment
@@ -49,7 +49,16 @@ namespace python {
  * lock using a ScopedPythonLock object before acsessing the API of the
  * embedded Python interpreter.
  */
-void initPython() throw(castor::exception::Exception);
+void initializePython() throw(castor::exception::Exception);
+
+/**
+ * Releases the resources used by the embedded Python interpreter.
+ *
+ * Please note that this method does not guarantee that all the resources used
+ * by the embedded Python interpreter are release, therefore this function not
+ * be used in a initialize and finalise loop.
+ */
+void finalizePython() throw();
 
 /**
  * Appends the specified directory to the value of the PYTHONPATH environment

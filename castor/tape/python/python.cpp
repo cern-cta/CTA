@@ -36,9 +36,10 @@
 
 
 //---------------------------------------------------------------------------
-// initPython
+// initializePython
 //---------------------------------------------------------------------------
-void castor::tape::python::initPython() throw(castor::exception::Exception) {
+void castor::tape::python::initializePython()
+  throw(castor::exception::Exception) {
 
   // Append the CASTOR policies directory to the end of the PYTHONPATH
   // environment variable so the PyImport_ImportModule() function can find the
@@ -84,6 +85,14 @@ void castor::tape::python::initPython() throw(castor::exception::Exception) {
 
     throw ex;
   }
+}
+
+
+//---------------------------------------------------------------------------
+// finalizePython
+//---------------------------------------------------------------------------
+void castor::tape::python::finalizePython() throw() {
+  Py_Finalize();
 }
 
 
