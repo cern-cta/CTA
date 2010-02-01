@@ -79,7 +79,7 @@ os.chdir('CASTOR2')
 runCommand('make -f Makefile.ini Makefiles', 'Could not create makefiles')
 runCommand('make tar', 'Could not create tar ball')
 os.chdir(workDir)
-tarBall = 'castor-' + str(majversion) + '.' + str(minversion) + '.' + str(majrelease) + '.' + str(minrelease) + '.tar.gz'
+tarBall = 'castor-' + str(majversion) + '.' + str(minversion) + '.' + str(majrelease) + '-' + str(minrelease) + '.tar.gz'
 os.chmod(tarBall, 0664)
 
 # Prepare internal Release space

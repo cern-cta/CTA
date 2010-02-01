@@ -137,7 +137,7 @@ NormalProgramTarget(recaller,recaller.Osuf $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS),$(
 NormalProgramTarget(migrator,migrator.Osuf $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS),$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(MTLDFLAGS) $(LIBS),0750)
 NormalProgramTarget(tperrhandler,TapeErrorHandler.Osuf $(RTCPCLD_OBJS),$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(LIBS),0750)
 EXEMANPAGE(rtcpclientd)
-MakeDir($(LOGDIR),0755)
+TapeMakeDir($(LOGDIR),0755)
 LOGROTATE(castor-rtcopy-clientserver,..,install)
 SYSCONFIG(rtcpclientd,install)
 INITSCRIPT(rtcpclientd,install)

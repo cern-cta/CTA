@@ -120,6 +120,10 @@ InternalInstallTarget(file,mode,dest,install,)
 $(DESTDIR)/dirname:                           @@\
 	install -d $(DESTDIR)/dirname -m mode @@\
 install: $(DESTDIR)/dirname
+#define TapeMakeDir(dirname,mode)   \
+$(DESTDIR)/dirname:                           @@\
+	install -d $(DESTDIR)/dirname -m mode @@\
+installtape: $(DESTDIR)/dirname
 #define MakeDirWithOwnership(dirname,owner,group,mode)   \
 $(DESTDIR)/dirname:                           @@\
 	if [ "`whoami`" = "root" ]; then install -d $(DESTDIR)dirname -o owner -g group -m mode; else install -d $(DESTDIR)dirname -m mode; fi @@\
