@@ -61,15 +61,6 @@ void initializePython() throw(castor::exception::Exception);
 void finalizePython() throw();
 
 /**
- * Appends the specified directory to the value of the PYTHONPATH environment
- * variable.
- *
- * @param directory The full pathname of the directory to be appended to the
- *                  value of the PYTHONPATH environment variable.
- */
-void appendDirectoryToPYTHONPATH(const char *const directory) throw();
-
-/**
  * Imports a CASTOR-policy implemented as a Python module from the
  * Python-module search path which includes the
  * castor::tape::python::CASTOR_POLICIES_DIRECTORY directory.
@@ -86,22 +77,6 @@ void appendDirectoryToPYTHONPATH(const char *const directory) throw();
 PyObject* importPolicyPythonModule(const char *const moduleName) 
   throw(castor::exception::Exception);
     
-/**
- * Imports the specified module into the embedded Python interpreter and
- * returns its associated Python dictionary object.
- *
- * Please note that initPython() must be called before this function is called.
- *
- * @param moduleName The name of the Python module to be imported.
- * @return           The Python dictionary object of the imported library.  The
- *                   documentation of the embedded Python-interpreter describes
- *                   the return value as being a "borrowed reference".  This
- *                   means the caller does not need to call Py_XDECREF when the
- *                   dictionary is no longer required.
- */
-PyObject* importPythonModule(const char *const moduleName)
-  throw(castor::exception::Exception);
-
 /**
  * Get the Python function object for the specified function within the
  * specified Python dictionary.

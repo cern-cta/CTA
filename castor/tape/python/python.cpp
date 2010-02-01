@@ -28,11 +28,33 @@
 
 #include "castor/tape/python/Constants.hpp"
 #include "castor/tape/python/SmartPyObjectPtr.hpp"
+#include "castor/tape/utils/ScopedLock.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/serrno.h"
 
 #include <errno.h>
+#include <pthread.h>
 #include <unistd.h>
+
+
+namespace castor {
+namespace tape   {
+namespace python {
+
+/**
+ * Mutex used to serialise access to the internal data shared between the
+ * functions of the castor::tape::python package.
+ */
+static pthread_mutex_t functionDataMutex;
+
+/**
+ * True if the initializedPython() function has been called, else false.
+ */
+static bool initializedPythonCalled = false;
+
+} // namesapce python
+} // namespace tape
+} // namespace castor
 
 
 //---------------------------------------------------------------------------
@@ -41,10 +63,43 @@
 void castor::tape::python::initializePython()
   throw(castor::exception::Exception) {
 
+  utils::ScopedLock scopedLock(functionDataMutex);
+
+  // Throw an exception if the initializePython() function has already been
+  // called
+  if(initializedPythonCalled) {
+    castor::exception::Exception ex(ECANCELED);
+
+    ex.getMessage() <<
+      "initializePython() has already been called";
+
+    throw(ex);
+  }
+
+  // Remember the initializePython() function has been called
+  initializedPythonCalled = true;
+
   // Append the CASTOR policies directory to the end of the PYTHONPATH
   // environment variable so the PyImport_ImportModule() function can find the
   // stream and migration policy modules
-  appendDirectoryToPYTHONPATH(CASTOR_POLICIES_DIRECTORY);
+  {
+    // Get the current value of PYTHONPATH (there may not be one)
+    const char *const currentPath = getenv("PYTHONPATH");
+
+    // Construct the new value of PYTHONPATH
+    std::string newPath;
+    if(currentPath == NULL) {
+      newPath = CASTOR_POLICIES_DIRECTORY;
+    } else {
+      newPath  = currentPath;
+      newPath += ":";
+      newPath += CASTOR_POLICIES_DIRECTORY;
+    }
+
+    // Set PYTHONPATH to the new value
+    const int overwrite = 1;
+    setenv("PYTHONPATH", newPath.c_str(), overwrite);
+  }
 
   // Initialize Python throwing an exception if a Python error occurs
   Py_Initialize();
@@ -92,32 +147,20 @@ void castor::tape::python::initializePython()
 // finalizePython
 //---------------------------------------------------------------------------
 void castor::tape::python::finalizePython() throw() {
-  Py_Finalize();
-}
 
+  utils::ScopedLock scopedLock(functionDataMutex);
 
-//------------------------------------------------------------------------------
-// appendDirectoryToPYTHONPATH
-//------------------------------------------------------------------------------
-void castor::tape::python::appendDirectoryToPYTHONPATH(
-  const char *const directory) throw() {
+  // Throw an exception if the initializePython() function has not been called
+  if(!initializedPythonCalled) {
+    castor::exception::Exception ex(ECANCELED);
 
-  // Get the current value of PYTHONPATH (there may not be one)
-  const char *const currentPath = getenv("PYTHONPATH");
+    ex.getMessage() <<
+      "initializePython() has not been called";
 
-  // Construct the new value of PYTHONPATH
-  std::string newPath;
-  if(currentPath == NULL) {
-    newPath = directory;
-  } else {
-    newPath  = currentPath;
-    newPath += ":";
-    newPath += directory;
+    throw(ex);
   }
 
-  // Set PYTHONPATH to the new value
-  const int overwrite = 1;
-  setenv("PYTHONPATH", newPath.c_str(), overwrite);
+  Py_Finalize();
 }
 
 
@@ -126,6 +169,27 @@ void castor::tape::python::appendDirectoryToPYTHONPATH(
 //---------------------------------------------------------------------------
 PyObject * castor::tape::python::importPolicyPythonModule(
   const char *const moduleName) throw(castor::exception::Exception) {
+
+  utils::ScopedLock scopedLock(functionDataMutex);
+
+  // Throw an exception if the initializePython() function has not been called
+  if(!initializedPythonCalled) {
+    castor::exception::Exception ex(ECANCELED);
+
+    ex.getMessage() <<
+      "initializePython() has not been called";
+
+    throw(ex);
+  }
+
+  if(moduleName == NULL) {
+    castor::exception::InvalidArgument ex;
+
+    ex.getMessage() <<
+      "moduleName parameter is NULL";
+
+    throw(ex);
+  }
 
   // Check the module file exists in the CASTOR_POLICIES_DIRECTORY as it is
   // difficult to obtain errors from the embedded Python interpreter
@@ -158,28 +222,6 @@ PyObject * castor::tape::python::importPolicyPythonModule(
     }
   }
 
-  // Load in the CASTOR-policy Python-module and return its associated Python
-  // dictionary object
-  return importPythonModule(moduleName);
-}
-
-
-
-//------------------------------------------------------------------------------
-// importPythonModule
-//------------------------------------------------------------------------------
-PyObject *castor::tape::python::importPythonModule(const char *const moduleName)
-  throw(castor::exception::Exception) {
-
-  if(moduleName == NULL) {
-    castor::exception::InvalidArgument ex;
-
-    ex.getMessage() <<
-      "moduleName parameter is NULL";
-
-    throw(ex);
-  }
-
   castor::tape::python::SmartPyObjectPtr
     module(PyImport_ImportModule((char *)moduleName));
 
@@ -207,6 +249,18 @@ PyObject *castor::tape::python::importPythonModule(const char *const moduleName)
 PyObject * castor::tape::python::getPythonFunction(PyObject *const pyDict,
   const char *const functionName)
   throw(castor::exception::Exception){
+
+  utils::ScopedLock scopedLock(functionDataMutex);
+
+  // Throw an exception if the initializePython() function has not been called
+  if(!initializedPythonCalled) {
+    castor::exception::Exception ex(ECANCELED);
+
+    ex.getMessage() <<
+      "initializePython() has not been called";
+
+    throw(ex);
+  }
 
   if(pyDict == NULL) {
     castor::exception::InvalidArgument ex;
