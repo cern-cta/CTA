@@ -146,7 +146,8 @@ void castor::tape::python::initializePython()
 //---------------------------------------------------------------------------
 // finalizePython
 //---------------------------------------------------------------------------
-void castor::tape::python::finalizePython() throw() {
+void castor::tape::python::finalizePython()
+  throw(castor::exception::Exception) {
 
   utils::ScopedLock scopedLock(functionDataMutex);
 

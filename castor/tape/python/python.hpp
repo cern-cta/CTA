@@ -58,7 +58,7 @@ void initializePython() throw(castor::exception::Exception);
  * by the embedded Python interpreter are release, therefore this function not
  * be used in a initialize and finalise loop.
  */
-void finalizePython() throw();
+void finalizePython() throw(castor::exception::Exception);
 
 /**
  * Imports a CASTOR-policy implemented as a Python module from the
