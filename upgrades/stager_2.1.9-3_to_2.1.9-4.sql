@@ -58,10 +58,20 @@ COMMIT;
 /**************************/
 
 /* #61707 - Missing constraints on NAME column for DISKSERVER table */
-ALTER TABLE DiskServer MODIFY
-  (name CONSTRAINT NN_DiskServer_Name NOT NULL);
-
-ALTER TABLE DiskServer ADD CONSTRAINT UN_DiskServer_Name UNIQUE (name);
+DECLARE
+  unused VARCHAR2(30);
+BEGIN
+  SELECT constraint_name INTO unused
+    FROM user_constraints
+   WHERE table_name = 'DISKSERVER'
+     AND constraint_name = 'NN_DISKSERVER_NAME';
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  EXECUTE IMMEDIATE 'ALTER TABLE DiskServer MODIFY
+    (name CONSTRAINT NN_DiskServer_Name NOT NULL)';
+  EXECUTE IMMEDIATE 'ALTER TABLE DiskServer ADD
+    CONSTRAINT UN_DiskServer_Name UNIQUE (name)';
+END;
+/
 
 /* Global temporary table to handle output of the jobFailed procedure */
 CREATE GLOBAL TEMPORARY TABLE JobFailedProcHelper
@@ -166,31 +176,40 @@ END;
 /
 
 /* Change partitions of the SubRequest table */
-ALTER TABLE SubRequest 
-MODIFY PARTITION P_STATUS_3_13_14
- DROP VALUES (3);
-
-ALTER TABLE SubRequest RENAME PARTITION P_STATUS_3_13_14 TO P_STATUS_13_14;
-
-ALTER TABLE SubRequest
- SPLIT PARTITION P_STATUS_OTHER VALUES (3)
-  INTO (PARTITION P_STATUS_3, PARTITION P_STATUS_OTHER)
-UPDATE GLOBAL INDEXES;
-
-DROP INDEX I_SubRequest_RT_CT_ID;
-CREATE INDEX I_SubRequest_RT_CT_ID ON SubRequest(svcHandler, creationTime, id) LOCAL
- (PARTITION P_STATUS_0_1_2,
-  PARTITION P_STATUS_3,
-  PARTITION P_STATUS_4,
-  PARTITION P_STATUS_5,
-  PARTITION P_STATUS_6,
-  PARTITION P_STATUS_7,
-  PARTITION P_STATUS_8,
-  PARTITION P_STATUS_9_10,
-  PARTITION P_STATUS_11,
-  PARTITION P_STATUS_12,
-  PARTITION P_STATUS_13_14,
-  PARTITION P_STATUS_OTHER);
+DECLARE
+  unused VARCHAR2(30);
+BEGIN
+  SELECT partition_name INTO unused
+    FROM user_tab_partitions
+   WHERE table_name = 'SUBREQUEST'
+     AND partition_name = 'P_STATUS_13_14';
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  EXECUTE IMMEDIATE 'ALTER TABLE SubRequest 
+    MODIFY PARTITION P_STATUS_3_13_14
+     DROP VALUES (3)';
+  EXECUTE IMMEDIATE 'ALTER TABLE SubRequest RENAME
+    PARTITION P_STATUS_3_13_14 TO P_STATUS_13_14';
+  EXECUTE IMMEDIATE 'ALTER TABLE SubRequest
+    SPLIT PARTITION P_STATUS_OTHER VALUES (3)
+     INTO (PARTITION P_STATUS_3, PARTITION P_STATUS_OTHER)
+   UPDATE GLOBAL INDEXES';
+  EXECUTE IMMEDIATE 'DROP INDEX I_SubRequest_RT_CT_ID';
+  EXECUTE IMMEDIATE 'CREATE INDEX I_SubRequest_RT_CT_ID ON
+    SubRequest(svcHandler, creationTime, id) LOCAL
+     (PARTITION P_STATUS_0_1_2,
+      PARTITION P_STATUS_3,
+      PARTITION P_STATUS_4,
+      PARTITION P_STATUS_5,
+      PARTITION P_STATUS_6,
+      PARTITION P_STATUS_7,
+      PARTITION P_STATUS_8,
+      PARTITION P_STATUS_9_10,
+      PARTITION P_STATUS_11,
+      PARTITION P_STATUS_12,
+      PARTITION P_STATUS_13_14,
+      PARTITION P_STATUS_OTHER)';
+END;
+/
 
 /* Remove unused objects */
 DROP FUNCTION CheckPermissionOnSvcClass;
@@ -3370,13 +3389,14 @@ BEGIN
 END;
 /
 
+
 /*
 Restart the (recall) segments that are recognized as stuck.
 This workaround (sr #112306: locking issue in CMS stager)
 will be dropped as soon as the TapeGateway will be used in production.
 
 Notes for query readability:
-TAPE status:    (0)TAPE_UNUSED, (1)TAPE_PENDING, (2)TAPE_WAITDRIVE,
+TAPE status:    (0)TAPE_UNUSED, (1)TAPE_PENDING, (2)TAPE_WAITDRIVE, 
                 (3)TAPE_WAITMOUNT, (6)TAPE_FAILED
 SEGMENT status: (0)SEGMENT_UNPROCESSED, (7)SEGMENT_SELECTED
 */
@@ -3397,7 +3417,7 @@ BEGIN
   END;
 
   -- Notes for query readability:
-  -- TAPE status:    (0)TAPE_UNUSED, (1)TAPE_PENDING, (2)TAPE_WAITDRIVE,
+  -- TAPE status:    (0)TAPE_UNUSED, (1)TAPE_PENDING, (2)TAPE_WAITDRIVE, 
   --                 (3)TAPE_WAITMOUNT, (6)TAPE_FAILED
   -- SEGMENT status: (0)SEGMENT_UNPROCESSED, (7)SEGMENT_SELECTED
 
@@ -3423,6 +3443,46 @@ BEGIN
 
   COMMIT;
 END restartStuckRecalls;
+/
+
+
+/* PL/SQL method implementing selectCastorFile */
+CREATE OR REPLACE PROCEDURE selectCastorFile (fId IN INTEGER,
+                                              nh IN VARCHAR2,
+                                              sc IN INTEGER,
+                                              fc IN INTEGER,
+                                              fs IN INTEGER,
+                                              fn IN VARCHAR2,
+                                              lut IN NUMBER,
+                                              rid OUT INTEGER,
+                                              rfs OUT INTEGER) AS
+  CONSTRAINT_VIOLATED EXCEPTION;
+  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
+  nsHostName VARCHAR2(2048);
+BEGIN
+  -- Get the stager/nsHost configuration option
+  nsHostName := getConfigOption('stager', 'nsHost', nh);
+  BEGIN
+    -- try to find an existing file and lock it
+    SELECT id, fileSize INTO rid, rfs FROM CastorFile
+     WHERE fileId = fid AND nsHost = nsHostName FOR UPDATE;
+    -- update lastAccess time
+    UPDATE CastorFile SET lastAccessTime = getTime(),
+                          lastKnownFileName = normalizePath(fn)
+     WHERE id = rid;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- insert new row
+    INSERT INTO CastorFile (id, fileId, nsHost, svcClass, fileClass, fileSize,
+                            creationTime, lastAccessTime, lastUpdateTime, lastKnownFileName)
+      VALUES (ids_seq.nextval, fId, nsHostName, sc, fc, fs, getTime(), getTime(), lut, normalizePath(fn))
+      RETURNING id, fileSize INTO rid, rfs;
+    INSERT INTO Id2Type (id, type) VALUES (rid, 2); -- OBJ_CastorFile
+  END;
+EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
+  -- retry the select since a creation was done in between
+  SELECT id, fileSize INTO rid, rfs FROM CastorFile
+    WHERE fileId = fid AND nsHost = nsHostName FOR UPDATE;
+END;
 /
 
 
