@@ -68,11 +68,11 @@ void appendDirectoryToPYTHONPATH(const char *const directory) throw();
  * Please note that initPython() must be called before this function is called.
  *
  * @param moduleName The name of the CASTOR-policy Python-module.
- * @return           The dictionary object of the imported library.  In the
- *                   terms of the embedded Python interpreter the returned
- *                   library is a "borrowed reference" return value.  This
- *                   means the caller does not need to call Py_XDECREF on the
- *                   dictionary when it is no longer required.
+ * @return           The Python dictionary object of the imported library.  The
+ *                   documentation of the embedded Python-interpreter describes
+ *                   the return value as being a "borrowed reference".  This
+ *                   means the caller does not need to call Py_XDECREF when the
+ *                   dictionary is no longer required.
  */
 PyObject* importPolicyPythonModule(const char *const moduleName) 
   throw(castor::exception::Exception);
@@ -84,11 +84,11 @@ PyObject* importPolicyPythonModule(const char *const moduleName)
  * Please note that initPython() must be called before this function is called.
  *
  * @param moduleName The name of the Python module to be imported.
- * @return           The dictionary object of the imported library.  In the
- *                   terms of the embedded Python interpreter the returned
- *                   library is a "borrowed reference" return value.  This
- *                   means the caller does not need to call Py_XDECREF on the
- *                   dictionary when it is no longer required.
+ * @return           The Python dictionary object of the imported library.  The
+ *                   documentation of the embedded Python-interpreter describes
+ *                   the return value as being a "borrowed reference".  This
+ *                   means the caller does not need to call Py_XDECREF when the
+ *                   dictionary is no longer required.
  */
 PyObject* importPythonModule(const char *const moduleName)
   throw(castor::exception::Exception);
@@ -103,8 +103,12 @@ PyObject* importPythonModule(const char *const moduleName)
  *                     to be found.
  * @param functionName The name of the Python function.
  * @return             The Python function object representing the specified
- *                     function or NULL if the named function cannot be found
- *                     in the specified dictionary.
+ *                     function or NULL if the named function is not in the
+ *                     specified dictionary.  The documentation of the embedded
+ *                     Python-interpreter describes the return value as being a
+ *                     "borrowed reference".  This means the caller does not
+ *                     need to call Py_XDECREF when the function is no longer
+ *                     required.
  */
 PyObject* getPythonFunction(PyObject *const pyDict,
   const char *const functionName) throw(castor::exception::Exception);
