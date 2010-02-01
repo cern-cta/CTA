@@ -179,20 +179,22 @@
           Note: All daemons involved in the upgrade will be restarted
           automatically.
 
-       9. Start all the daemons which were stopped in step 2.
+       9. Restart the logprocessor daemon.
 
-      10. Wait 60 seconds to give time for the diskservers to send a heartbeat
+      10. Start all the daemons which were stopped in step 2.
+
+      11. Wait 60 seconds to give time for the diskservers to send a heartbeat
           message to the rmmaster daemon.
 
-      11. Apply the commands returned in step 1.
+      12. Apply the commands returned in step 1.
 
-      12. Remove the entries for root:root, stage:st and any admin accounts
+      13. Remove the entries for root:root, stage:st and any admin accounts
           specified in step 3 using the stager_removeprivilege command.
 
-      13. Test the instance by running the test suite available from:
+      14. Test the instance by running the test suite available from:
           - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.9-*/2.1.9-4/testsuite
 
-      14. Congratulations you have successfully upgraded to the 2.1.9-4 release
+      15. Congratulations you have successfully upgraded to the 2.1.9-4 release
           of CASTOR stager!!
 
 
