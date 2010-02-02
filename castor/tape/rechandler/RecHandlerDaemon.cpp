@@ -114,7 +114,7 @@ int castor::tape::rechandler::RecHandlerDaemon::main(int argc, char* argv[]) {
 
   // Finalize Python
 
-  Py_Finalize();
+  castor::tape::python::finalizePython();
 
   return 0;
 }

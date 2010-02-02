@@ -234,8 +234,8 @@ int castor::tape::mighunter::MigHunterDaemon::exceptionThrowingMain(int argc,
   start();
 
   // Finalize Python
-  Py_Finalize();
-
+  castor::tape::python::finalizePython();
+  
   return 0;
 }
 

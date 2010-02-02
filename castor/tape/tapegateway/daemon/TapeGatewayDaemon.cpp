@@ -292,7 +292,7 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
 
     // Finalize Python
 
-    Py_Finalize();
+    castor::tape::python::finalizePython();
 
     return 0;
     
