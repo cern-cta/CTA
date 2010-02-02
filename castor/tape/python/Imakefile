@@ -36,4 +36,4 @@ TAPEPYTHONLIB_SRCS = \
 TAPEPYTHONLIB_OBJS = $(TAPEPYTHONLIB_SRCS:.cpp=.Osuf)
 
 DependsOnLibrary(..,castorclient)
-SharedLibraryTarget(castorpython,$(TAPEPYTHONLIB_OBJS),$(DEPLIB),$(LIBS))
+SharedLibraryTarget(castortapepython,$(TAPEPYTHONLIB_OBJS),$(DEPLIB),$(LIBS))
