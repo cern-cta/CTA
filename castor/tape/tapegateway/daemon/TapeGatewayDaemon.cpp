@@ -166,7 +166,7 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
   }
 
   char* recallPolicyName=NULL;
-  recallPolicyName = getconfent("Policy","RetryMigration",0);
+  recallPolicyName = getconfent("Policy","RetryRecall",0);
   
   if (recallPolicyName == NULL){
     castor::dlf::Param params[] =
