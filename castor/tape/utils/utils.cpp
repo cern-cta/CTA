@@ -32,6 +32,7 @@
 #include "h/Castor_limits.h"
 #include "h/getconfent.h"
 #include "h/rtcp_constants.h"
+#include "h/serrno.h"
 
 #include <arpa/inet.h>
 #include <fstream>
@@ -813,6 +814,50 @@ void castor::tape::utils::statFile(const char *const filename,
       "stat() call failed"
       ": filename=" << filename <<
       ": " << sstrerror(savedErrno);
+
+    throw(ex);
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// pthreadCreate
+//------------------------------------------------------------------------------
+void castor::tape::utils::pthreadCreate(
+  pthread_t *const thread,
+  const pthread_attr_t *const attr,
+  void *(*const startRoutine)(void*),
+  void *const arg)
+  throw(castor::exception::Exception) {
+
+  const int rc = pthread_create(thread, attr, startRoutine, arg);
+
+  if(rc != 0) {
+    castor::exception::Exception ex(rc);
+
+    ex.getMessage() <<
+      "pthread_create() call failed" <<
+      ": " << sstrerror(rc);
+
+    throw(ex);
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// pthreadJoin
+//------------------------------------------------------------------------------
+void pthreadJoin(pthread_t thread, void **const valuePtr)
+  throw(castor::exception::Exception) {
+
+  const int rc = pthread_join(thread, valuePtr);
+
+  if(rc != 0) {
+    castor::exception::Exception ex(rc);
+
+    ex.getMessage() <<
+      "pthread_join() call failed" <<
+      ": " << sstrerror(rc);
 
     throw(ex);
   }
