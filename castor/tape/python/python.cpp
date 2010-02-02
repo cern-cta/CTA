@@ -110,7 +110,16 @@ void castor::tape::python::initializePython()
 // finalizePython
 //---------------------------------------------------------------------------
 void castor::tape::python::finalizePython() throw() {
+
+  // Get a lock on the global embedded Python interpreter using
+  // PyGILState_Ensure() so that the Py_Finalize() function which will be
+  // called next, can internally get a hold of the current thread's state via
+  // PyThreadState_Get().  A ScopedPythonLock object cannot be used because its
+  // destructor would call the PyGILState_Release() function which would fail
+  // because it would be called after the Py_Finalize() function.
   PyGILState_Ensure();
+
+  // Finalize the embedded Python interpreter
   Py_Finalize();
 }
 
