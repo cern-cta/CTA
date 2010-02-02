@@ -107,16 +107,6 @@ void castor::tape::python::initializePython()
 
 
 //---------------------------------------------------------------------------
-// finalizePython
-//---------------------------------------------------------------------------
-void castor::tape::python::finalizePython()
-  throw(castor::exception::Exception) {
-
-  Py_Finalize();
-}
-
-
-//---------------------------------------------------------------------------
 // importPolicyPythonModule
 //---------------------------------------------------------------------------
 PyObject * castor::tape::python::importPolicyPythonModule(

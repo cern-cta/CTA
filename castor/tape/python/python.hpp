@@ -52,15 +52,6 @@ namespace python {
 void initializePython() throw(castor::exception::Exception);
 
 /**
- * Releases the resources used by the embedded Python interpreter.
- *
- * Please note that this method does not guarantee that all the resources used
- * by the embedded Python interpreter are release, therefore this function not
- * be used in a initialize and finalise loop.
- */
-void finalizePython() throw(castor::exception::Exception);
-
-/**
  * Imports a CASTOR-policy implemented as a Python module from the
  * Python-module search path which includes the
  * castor::tape::python::CASTOR_POLICIES_DIRECTORY directory.
