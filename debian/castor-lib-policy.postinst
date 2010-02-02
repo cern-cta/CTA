@@ -1,2 +1,0 @@
-# call to ldconfig after we installed new libraries
-/sbin/ldconfig
