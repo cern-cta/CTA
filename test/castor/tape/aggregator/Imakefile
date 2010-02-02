@@ -28,6 +28,7 @@ LD = g++
 
 DependsOnLibrary(../../../castor,castorclient)
 DependsOnLibrary(../../../castor/db/cnv,castorcnvs)
+DependsOnLibrary(../../../castor/tape/utils,castortapeutils)
 DependsOnLibrary(../../../common,castorcommon)
 DependsOnLibrary(../../../dlf,castordlf)
 DependsOnLibrary(../../../vdqm,castorvdqm)
@@ -45,19 +46,11 @@ TAPE_LEGACYMSG_SRCS = \
 TAPE_NET_SRCS = \
   ../../../../castor/tape/net/net.cpp
 
-TAPE_UTILS_SRCS = \
-  ../../../../castor/tape/utils/ScopedLock.cpp \
-  ../../../../castor/tape/utils/SmartFd.cpp \
-  ../../../../castor/tape/utils/SmartFdList.cpp \
-  ../../../../castor/tape/utils/SmartFILEPtr.cpp \
-  ../../../../castor/tape/utils/utils.cpp
-
 TESTAGGREGATORBIN_SRCS = \
   TestAggregatorMain.cpp \
   $(TAPE_AGGREGATOR_SRCS) \
   $(TAPE_LEGACYMSG_SRCS) \
-  $(TAPE_NET_SRCS) \
-  $(TAPE_UTILS_SRCS)
+  $(TAPE_NET_SRCS)
 
 TESTAGGREGATORBIN_OBJS = $(TESTAGGREGATORBIN_SRCS:.cpp=.Osuf)
 

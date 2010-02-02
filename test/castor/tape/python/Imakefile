@@ -21,22 +21,24 @@
 # @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
 #
 
-CPPFLAGS = -g -O0 -I../../../../h -I../../../.. $(MTCCFLAGS)
+CPPFLAGS = -g -O0 -I../../../../h -I../../../.. $(PYTHONINC) $(MTCCFLAGS)
 CFLAGS = -O -I../../../../h -I../../../.. $(THREADFLAGS)
 LDFLAGS += $(MTLDFLAGS)
 LD = g++
+LIBS = $(PYTHONLIBS)
 
 DependsOnLibrary(../../../castor,castorclient)
 DependsOnLibrary(../../../castor/db/cnv,castorcnvs)
+DependsOnLibrary(../../../castor/tape/python,castortapepython)
 DependsOnLibrary(../../../castor/tape/utils,castortapeutils)
 DependsOnLibrary(../../../common,castorcommon)
 DependsOnLibrary(../../../dlf,castordlf)
 DependsOnLibrary(../../../vdqm,castorvdqm)
 DependsOnLibrary(../../../vmgr,castorvmgr)
 
-TESTUTILSBIN_SRCS = \
-  TestUtilsMain.cpp
+TESTTAPEPYTHONBIN_SRCS = \
+  TestPythonMain.cpp
 
-TESTUTILSBIN_OBJS = $(TESTUTILSBIN_SRCS:.cpp=.Osuf)
+TESTTAPEPYTHONBIN_OBJS = $(TESTTAPEPYTHONBIN_SRCS:.cpp=.Osuf)
 
-NormalProgramTarget(testutils,$(TESTUTILSBIN_OBJS),$(DEPLIB),$(LIBS),750)
+NormalProgramTarget(testpython,$(TESTTAPEPYTHONBIN_OBJS),$(DEPLIB),$(LIBS),750)
