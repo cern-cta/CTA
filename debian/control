@@ -271,6 +271,12 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib
 Description: castor (Cern Advanced STORage system)
  Shared utilities library for castor tape servers and command-line tools
 
+Package: castor-lib-tapepython
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib
+Description: castor (Cern Advanced STORage system)
+ Shared utilities library for castor python policies
+
 Package: castor-gridftp-dsi-common
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
@@ -295,21 +301,15 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib, vdt_globus_data_server,
 Description: castor (Cern Advanced STORage system)
  External CASTOR2 gridftp2 DSI module with xroot support
 
-Package: castor-lib-policy
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib
-Description: castor (Cern Advanced STORage system)
- Shared libraries for the policy framework
-
 Package: castor-mighunter-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-policy
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-tapepython
 Description: castor (Cern Advanced STORage system)
  Migration Hunter Daemon
 
 Package: castor-rechandler-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-policy
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-tapepython
 Description: castor (Cern Advanced STORage system)
  Recall Handler Daemon
 
@@ -340,7 +340,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-tapegateway-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-policy, castor-lib-oracle, castor-lib-tapeutils
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-tapepython, castor-lib-oracle, castor-lib-tapeutils
 Description: castor (Cern Advanced STORage system)
  Tape Gateway Daemon
 
