@@ -110,8 +110,8 @@ END;
 CREATE TABLE AdminUsers (euid NUMBER, egid NUMBER);
 ALTER TABLE AdminUsers
   ADD CONSTRAINT UN_AdminUsers_euid_egid UNIQUE (euid, egid);
-INSERT INTO AdminUsers VALUES (0, 0);   -- root/root, to be removed
-INSERT INTO AdminUsers VALUES (-1, -1); -- internal requests
+INSERT INTO AdminUsers VALUES (0, 0);
+INSERT INTO AdminUsers VALUES (-1, -1);
 COMMIT;
 
 /* Get user input to populate the AdminUsers table */
