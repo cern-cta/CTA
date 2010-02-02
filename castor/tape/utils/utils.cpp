@@ -847,7 +847,7 @@ void castor::tape::utils::pthreadCreate(
 //------------------------------------------------------------------------------
 // pthreadJoin
 //------------------------------------------------------------------------------
-void pthreadJoin(pthread_t thread, void **const valuePtr)
+void castor::tape::utils::pthreadJoin(pthread_t thread, void **const valuePtr)
   throw(castor::exception::Exception) {
 
   const int rc = pthread_join(thread, valuePtr);
