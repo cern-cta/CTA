@@ -38,7 +38,8 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/stager/Stream.hpp"
 
-#include "castor/tape/tapegateway/daemon/DlfCodes.hpp"
+#include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
+
 #include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
 #include "castor/tape/tapegateway/daemon/VdqmRequestsCheckerThread.hpp"
 #include "castor/tape/tapegateway/daemon/VdqmTapeGatewayHelper.hpp"
@@ -94,7 +95,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
        castor::dlf::Param("errorMessage",e.getMessage().str())
       };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,CHECKER_NO_TAPE, 2, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,CHECKER_NO_TAPE, params);
     return;
   }
 
@@ -111,7 +112,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
     {
       castor::dlf::Param("ProcessingTime", procTime * 0.000001)
     };
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, CHECHER_TAPES_FOUND, 1, params);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, CHECHER_TAPES_FOUND, params);
 
   std::list<castor::tape::tapegateway::TapeGatewayRequest> tapesToRetry;
 
@@ -130,7 +131,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
 
     castor::tape::tapegateway::VdqmTapeGatewayHelper vdqmHelper;
 
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,CHECKER_QUERYING_VDQM, 2, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,CHECKER_QUERYING_VDQM, params);
 
     try {
       vdqmHelper.checkVdqmForRequest(*tapeRequest);
@@ -142,7 +143,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
        castor::dlf::Param("errorCode",sstrerror(e.code())),
 	 castor::dlf::Param("errorMessage",e.getMessage().str()),
       };
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, CHECKER_LOST_VDQM_REQUEST, 3, params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, CHECKER_LOST_VDQM_REQUEST, params);
       if ( e.code() == EPERM ) {
 	tapesToRetry.push_back(*tapeRequest);
 	if ((*tapeRequest).accessMode() == 1 ){
@@ -169,11 +170,11 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
 	vmgrHelper.resetBusyTape(*tapeToReset);
 	castor::dlf::Param params[] =
 	  {castor::dlf::Param("VID", (*tapeToReset).vid())};
-	castor::dlf::dlf_writep(nullCuuid,DLF_LVL_SYSTEM, CHECKER_RELEASING_UNUSED_TAPE, 1, params);
+	castor::dlf::dlf_writep(nullCuuid,DLF_LVL_SYSTEM, CHECKER_RELEASING_UNUSED_TAPE, params);
       } catch (castor::exception::Exception e){
  	castor::dlf::Param params[] =
 	  {castor::dlf::Param("VID", (*tapeToReset).vid())};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, CHECKER_VMGR_ERROR, 1, params);
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, CHECKER_VMGR_ERROR, params);
       }
     }
     // update the db to eventually send again some requests
@@ -188,7 +189,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
     {
      castor::dlf::Param("ProcessingTime", procTime * 0.000001)
     };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, CHECKER_TAPES_RESURRECTED, 1, paramsReset);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, CHECKER_TAPES_RESURRECTED, paramsReset);
     
 
 
@@ -200,7 +201,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
        castor::dlf::Param("errorMessage",e.getMessage().str())
       };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, CHECKER_CANNOT_UPDATE_DB, 2, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, CHECKER_CANNOT_UPDATE_DB, params);
 
   }
 

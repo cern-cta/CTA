@@ -31,6 +31,7 @@
 #include <list>
 
 #include "errno.h"
+
 #include "occi.h"
 
 #include "castor/BaseAddress.hpp"
@@ -44,21 +45,20 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/OutOfMemory.hpp"
 
-#include "castor/infoPolicy/RetryPolicyElement.hpp"
-
 #include "castor/stager/StreamStatusCodes.hpp"
 #include "castor/stager/TapeCopyStatusCodes.hpp"
 #include "castor/stager/TapePool.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
 
-#include "castor/tape/tapegateway/daemon/DlfCodes.hpp"
+#include "castor/tape/tapegateway/ClientType.hpp"
+#include "castor/tape/tapegateway/PositionCommandCode.hpp"
+#include "castor/tape/tapegateway/RetryPolicyElement.hpp"
+#include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
+#include "castor/tape/tapegateway/VolumeMode.hpp"
+
 #include "castor/tape/tapegateway/daemon/NsTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/daemon/ora/OraTapeGatewaySvc.hpp"
 #include "castor/tape/tapegateway/daemon/RmMasterTapeGatewayHelper.hpp"
-
-#include "castor/tape/tapegateway/ClientType.hpp"
-#include "castor/tape/tapegateway/PositionCommandCode.hpp"
-#include "castor/tape/tapegateway/VolumeMode.hpp"
 
 
 //------------------------------------------------------------------------------
@@ -1221,7 +1221,7 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileRecalled(const c
 // getFailedMigrations
 //----------------------------------------------------------------------------
 
-void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedMigrations(std::list<castor::infoPolicy::RetryPolicyElement>& candidates)
+void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedMigrations(std::list<castor::tape::tapegateway::RetryPolicyElement>& candidates)
 	  throw (castor::exception::Exception)
 {
     
@@ -1251,10 +1251,10 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedMigrations(std
 
    
     while (rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
-      castor::infoPolicy::RetryPolicyElement item;
-      item.setTapeCopyId((u_signed64)rs->getDouble(2));
-      item.setErrorCode(rs->getInt(5));
-      item.setNbRetry(rs->getInt(6));
+      castor::tape::tapegateway::RetryPolicyElement item;
+      item.tapeCopyId=(u_signed64)rs->getDouble(2);
+      item.errorCode=rs->getInt(5);
+      item.nbRetry=rs->getInt(6);
       candidates.push_back(item);
     }
 
@@ -1400,7 +1400,7 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setMigRetryResult(const
 // getFailedRecalls
 //----------------------------------------------------------------------------
 
-void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedRecalls( std::list<castor::infoPolicy::RetryPolicyElement>& candidates)
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedRecalls( std::list<castor::tape::tapegateway::RetryPolicyElement>& candidates)
 	  throw (castor::exception::Exception){
   
  
@@ -1429,10 +1429,10 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedRecalls( std::l
     // Run through the cursor 
 
     while (rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {   
-      castor::infoPolicy::RetryPolicyElement item;
-      item.setTapeCopyId((u_signed64)rs->getDouble(2));
-      item.setErrorCode(rs->getInt(5));
-      item.setNbRetry(rs->getInt(6));
+      castor::tape::tapegateway::RetryPolicyElement item;
+      item.tapeCopyId=(u_signed64)rs->getDouble(2);
+      item.errorCode=rs->getInt(5);
+      item.nbRetry=rs->getInt(6);
       candidates.push_back(item);
      
     }

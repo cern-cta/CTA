@@ -1,6 +1,5 @@
-
 /******************************************************************************
- *                      RecallerErrorHandlerThread.hpp
+ *                castor/tape/rechandler/IRecHandlerSvc.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,58 +17,61 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RecallerErrorHandlerThread.hpp,v $ $Author: gtaur $
+ * @(#)$RCSfile: IRecHandlerSvc.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2009/01/19 17:27:46 $ $Author: gtaur $
  *
- *
+ * This class provides methods related to tape handling
  *
  * @author Giulia Taurelli
  *****************************************************************************/
 
-#ifndef RECALLERERRORHANDLER_THREAD_HPP
-#define RECALLERERRORHANDLER_THREAD_HPP  1
+#ifndef IRECHANDLERSVC_HPP
+#define IRECHANDLERSVC_HPP 1
 
-// Include Python.h before any standard headers because Python.h may define
-// some pre-processor definitions which affect the standard headers
-#include <Python.h>
+// Include Files
 
-#include "castor/tape/tapegateway/RetryPolicyElement.hpp"
+#include <list>
 
-#include "castor/server/BaseDbThread.hpp"
+#include "castor/Constants.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/stager/ICommonSvc.hpp"
+
+#include "castor/tape/rechandler/RecallPolicyElement.hpp"
+
+
 
 namespace castor     {
 namespace tape       {
-namespace tapegateway{
+namespace rechandler {
+
 
     /**
-     * RecallerErrorHandler tread.
+     * This class provides methods used by rechandler
      */
-    
-      class RecallerErrorHandlerThread :public castor::server::BaseDbThread {
-	PyObject* m_pyFunction; 
-	bool applyRetryRecallPolicy(const RetryPolicyElement& elem)
-	  throw (castor::exception::Exception );
-        
-      public:
 
-      /**
-       * constructor
-       */
+    class IRecHandlerSvc : public virtual castor::stager::ICommonSvc {
 
-      RecallerErrorHandlerThread(PyObject* pyFunction);
+    public:
      
-      /**
-       * destructor
-       */
-      virtual ~RecallerErrorHandlerThread() throw() {};
 
-      /*For thread management*/
+	/**                    
+	 * inputForRecallPolicy 
+	 */
 
-      virtual void run(void*);
+        virtual void  inputForRecallPolicy(std::list<RecallPolicyElement>& candidates) 
+	  throw (castor::exception::Exception)=0;
 
-    };
+        /**
+         * Resurrect Tapes
+         */
 
-} // end of tapegateway
+	virtual void resurrectTapes(const std::list<u_signed64>& eligibleTapeIds) 
+	  throw (castor::exception::Exception)=0;
+
+
+    }; // end of class IRecHandlerSvc
+    
+} // end of namespace rechandler
 } // end of namespace tape
 } // end of namespace castor
 
-#endif //  RECALLERERRORHANDLER_THREAD_HPP
+#endif // IRECHANDLERSVC_HPP

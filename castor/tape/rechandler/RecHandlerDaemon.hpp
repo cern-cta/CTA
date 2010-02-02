@@ -1,6 +1,6 @@
 
 /******************************************************************************
- *                      TapeGatewayDaemon.hpp
+ *                      RecHandlerDaemon.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeGatewayDaemon.hpp,v $ $ $Author: gtaur $
+ * @(#)$RCSfile: RecHandlerDaemon.hpp,v $ $ $Author: gtaur $
  *
  *
  *
@@ -26,75 +26,60 @@
  *****************************************************************************/
 
 
-#ifndef TAPEGATEWAY_DAEMON_HPP
-#define TAPEGATEWAY_DAEMON_HPP 1
+#ifndef RECHANDLER_DAEMON_HPP
+#define RECHANDLER_DAEMON_HPP 1
 
 // Include Files
 
+
 #include "castor/server/BaseDaemon.hpp"
 
-
-namespace castor {
-  namespace tape{
-    namespace tapegateway{
+namespace castor     {
+namespace tape       {
+namespace rechandler {
 
     /**
-     * TapeGateway daemon.
+     * Castor RecHandler daemon.
      */
-    class TapeGatewayDaemon : public castor::server::BaseDaemon{
-      
-      /**
-       * port to accept connections (environment)     
-       */
+    class RecHandlerDaemon : public castor::server::BaseDaemon{
 
-      int m_listenPort;
-      
       /**
        * DLF message strings.
        */
-      
       static castor::dlf::Message s_dlfMessages[];
-     
-    
+
       /**
-       * Exception throwing main() function which basically implements the
-       * non-exception throwing main() function except for the initialisation of
-       * DLF and the "exception catch and log" logic.
+       * The time in seconds between two recall-policy database lookups.
        */
-
-
-      int exceptionThrowingMain(int argc,char **argv) 
-	throw(castor::exception::Exception);
-
+      u_signed64 m_sleepTime;
 
       /**
        * Logs the start of the daemon.
        */
       void logStart(const int argc, const char *const *const argv) throw();
 
-      
       /**
-       * Writes the command-line usage message of the daemon to standard out.
+       * Exception throwing main() function which basically implements the
+       * non-exception throwing main() function except for the initialisation of
+       * DLF and the "exception catch and log" logic.
        */
-      void usage();
+      int exceptionThrowingMain(const int argc, char **argv)
+	throw(castor::exception::Exception);
 
-      /**
-       * Parses the command-line arguments.
-       *
-       * @param argc Argument count from the executable's entry function: main().
-       * @param argv Argument vector from the executable's entry function: main().
-       */
-      
-      void parseCommandLine(int argc, char* argv[]);
-  
+
     public:
-
+    
       /**
        * constructor
        */
+      RecHandlerDaemon() throw ();
 
-      TapeGatewayDaemon();
+
       
+      /**
+       * Destructor
+       */
+      virtual ~RecHandlerDaemon() throw(){};
 
       /**
        * The main entry function of the mighunter daemon.
@@ -105,23 +90,26 @@ namespace castor {
        * @param argc Argument count from the executable's entry function: main().
        * @param argv Argument vector from the executable's entry function: main().
        */
-
       int main(const int argc, char **argv);
       
-
       /**
-       * destructor
+       * Writes the command-line usage message of the daemon to standard out.
        */
-      virtual ~TapeGatewayDaemon() throw() {};
+      void usage();
+      
+      /**
+       * Parses the command-line arguments.
+       *
+       * @param argc Argument count from the executable's entry function: main().
+       * @param argv Argument vector from the executable's entry function: main().
+       */
+      void parseCommandLine(int argc, char* argv[]);
 
 
-      /** to access the value of the port which is used  */
-      inline int listenPort(){ return m_listenPort; }
-         
     };
 
-    } //end of namespace tapegateway
-  } // end of namespace tape
+} // end of namespace rechandler
+} // end of namespace tape
 } // end of namespace castor
 
-#endif // TAPEGATEWAY_DAEMON_HPP
+#endif // RECHANDLER_DAEMON_HPP

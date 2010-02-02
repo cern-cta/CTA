@@ -1,6 +1,5 @@
-
 /******************************************************************************
- *                     VdqmRequestsProducerThread.hpp
+ *                      castor/tape/mighunter/MigrationPolicyElement.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,45 +17,64 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: VdqmRequestsProducerThread.hpp,v $ $Author: gtaur $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
- *
+ * 
  *
  * @author Giulia Taurelli
  *****************************************************************************/
 
-#ifndef VDQMREQUESTSPRODUCER_THREAD_HPP
-#define VDQMREQUESTSPRODUCER_THREAD_HPP 1
+#ifndef CASTOR_TAPE_MIGHUNTER_MIGRATIONPOLICYELEMENT_HPP
+#define CASTOR_TAPE_MIGHUNTER_MIGRATIONPOLICYELEMENT_HPP
 
 
+namespace castor {
+namespace tape {
+  namespace mighunter {
 
-#include "castor/server/SelectProcessThread.hpp"
+    struct MigrationPolicyElement {
 
-#include "castor/stager/Tape.hpp"
+      std::string policyName;
 
-namespace castor     {
-namespace tape       {
-namespace tapegateway{
+      std::string svcClassName;
 
-    /**
-     *  VdqmRequestsProducer tread.
-     */
-    
-  class VdqmRequestsProducerThread : 
-    public castor::server::SelectProcessThread {
-    int m_port;
-  public:
-	
-    VdqmRequestsProducerThread(int port);
+      u_signed64 tapeCopyId;
 
-    virtual ~VdqmRequestsProducerThread() throw() {};
-    virtual castor::IObject* select() throw();
-    virtual void process(castor::IObject* par)throw();
+      u_signed64 copyNb;
 
-  };
+      std::string castorFileName;
 
-} // end of tapegateway
-} // end of namespace tape
-} // end of namespace castor
+      u_signed64 fileId;
 
-#endif // VDQMREQUESTSPRODUCER_THREAD_HPP
+      std::string tapePoolName;
+
+      std::string nsHost;
+
+      u_signed64 tapePoolId;
+
+      int fileMode;
+
+      int nlink;
+
+      u_signed64 uid;
+
+      u_signed64 gid;
+
+      u_signed64 fileSize;
+
+      u_signed64 aTime;
+
+      u_signed64 mTime;
+
+      u_signed64 cTime;
+
+      int fileClass;
+
+      unsigned char status;
+
+    }; 
+  }  /* end of namespace mighunter */
+} /* end of namespace tape */
+} /* end of namespace castor */
+
+#endif // CASTOR_TAPE_MIGHUNTER_MIGRATIONPOLICYELEMENT_HPP

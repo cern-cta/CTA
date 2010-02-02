@@ -27,7 +27,6 @@ LDFLAGS += $(MTLDFLAGS)
 LD = g++
 LIBS = $(PYTHONLIBS)
 
-
 TAPEPYTHONLIB_SRCS = \
   python.cpp \
   ScopedPythonLock.cpp \

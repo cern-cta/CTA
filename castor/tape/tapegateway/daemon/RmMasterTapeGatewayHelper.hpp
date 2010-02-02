@@ -62,7 +62,7 @@ namespace castor {
 	virtual void sendStreamReport(const std::string diskServer,
 				      const std::string fileSystem,
 				      const castor::monitoring::StreamDirection direction,
-				      const bool created) throw();
+				      const bool created) throw(castor::exception::Exception);
 
 	virtual ~RmMasterTapeGatewayHelper(){};
 	

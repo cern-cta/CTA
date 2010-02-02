@@ -1,6 +1,5 @@
-
 /******************************************************************************
- *                     VdqmRequestsProducerThread.hpp
+ *              castor/tape/rechandler/Constants.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,45 +17,31 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: VdqmRequestsProducerThread.hpp,v $ $Author: gtaur $
- *
  *
  *
  * @author Giulia Taurelli
  *****************************************************************************/
 
-#ifndef VDQMREQUESTSPRODUCER_THREAD_HPP
-#define VDQMREQUESTSPRODUCER_THREAD_HPP 1
 
+#ifndef CONSTANTS_HPP
+#define CONSTANTS_HPP 1
 
-
-#include "castor/server/SelectProcessThread.hpp"
-
-#include "castor/stager/Tape.hpp"
+#include <stdint.h>
 
 namespace castor     {
 namespace tape       {
-namespace tapegateway{
+namespace rechandler {
 
-    /**
-     *  VdqmRequestsProducer tread.
-     */
-    
-  class VdqmRequestsProducerThread : 
-    public castor::server::SelectProcessThread {
-    int m_port;
-  public:
-	
-    VdqmRequestsProducerThread(int port);
 
-    virtual ~VdqmRequestsProducerThread() throw() {};
-    virtual castor::IObject* select() throw();
-    virtual void process(castor::IObject* par)throw();
+  /**
+   * The default time in seconds between two recall-policy database lookups.
+   */
+  const int SLEEP_TIME = 48; 
 
-  };
+ 
 
-} // end of tapegateway
-} // end of namespace tape
-} // end of namespace castor
+} // namespace rechandler
+} // namespace tape
+} // namespace castor
 
-#endif // VDQMREQUESTSPRODUCER_THREAD_HPP
+#endif // CONSTANTS_HPP

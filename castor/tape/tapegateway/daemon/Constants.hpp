@@ -1,6 +1,5 @@
-
 /******************************************************************************
- *                     VdqmRequestsProducerThread.hpp
+ *              castor/tape/tapegateway/daemon/Constants.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,45 +17,44 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: VdqmRequestsProducerThread.hpp,v $ $Author: gtaur $
- *
  *
  *
  * @author Giulia Taurelli
  *****************************************************************************/
 
-#ifndef VDQMREQUESTSPRODUCER_THREAD_HPP
-#define VDQMREQUESTSPRODUCER_THREAD_HPP 1
+
+#ifndef GATEWAY_CONSTANTS_HPP
+#define GATEWAY_CONSTANTS_HPP 1
 
 
+namespace castor      {
+namespace tape        {
+namespace tapegateway {
 
-#include "castor/server/SelectProcessThread.hpp"
+  /**
+   * The default time in seconds between two execution of threads
+   */
 
-#include "castor/stager/Tape.hpp"
+  const uint64_t  DEFAULT_SLEEP_INTERVAL=10;
 
-namespace castor     {
-namespace tape       {
-namespace tapegateway{
+  /**
+   * The default time in seconds between two polls on a VDQM request
+   */
 
-    /**
-     *  VdqmRequestsProducer tread.
-     */
-    
-  class VdqmRequestsProducerThread : 
-    public castor::server::SelectProcessThread {
-    int m_port;
-  public:
-	
-    VdqmRequestsProducerThread(int port);
+  const uint64_t VDQM_TIME_OUT_INTERVAL=600;
+  
+  /**
+   * Default parameters to initialize the Dynamic Thread pool
+   */
 
-    virtual ~VdqmRequestsProducerThread() throw() {};
-    virtual castor::IObject* select() throw();
-    virtual void process(castor::IObject* par)throw();
+  const uint64_t MIN_WORKER_THREADS = 20;
+  const uint64_t MAX_WORKER_THREADS = 20;
+  const uint64_t TG_THRESHOLD = 50;
+  const uint64_t TG_MAXTASKS = 50;
 
-  };
 
-} // end of tapegateway
-} // end of namespace tape
-} // end of namespace castor
+} // namespace tapegateway
+} // namespace tape
+} // namespace castor
 
-#endif // VDQMREQUESTSPRODUCER_THREAD_HPP
+#endif // GATEWAY_CONSTANTS_HPP

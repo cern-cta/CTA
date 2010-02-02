@@ -23,6 +23,7 @@
  *
  * @author Giulia Taurelli
  *****************************************************************************/
+
 #include <errno.h>
 #include <stdlib.h>
 #include <sys/time.h>
@@ -38,13 +39,14 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 
-#include "castor/tape/tapegateway/daemon/DlfCodes.hpp"
+#include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
+#include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
+#include "castor/tape/tapegateway/VdqmTapeGatewayRequest.hpp"
+
 #include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
 #include "castor/tape/tapegateway/daemon/VdqmRequestsProducerThread.hpp"
 #include "castor/tape/tapegateway/daemon/VdqmTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/daemon/VmgrTapeGatewayHelper.hpp"
-#include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
-#include "castor/tape/tapegateway/VdqmTapeGatewayRequest.hpp"
 
 
 //------------------------------------------------------------------------------
@@ -69,7 +71,7 @@ castor::IObject* castor::tape::tapegateway::VdqmRequestsProducerThread::select()
 
 
   if (0 == oraSvc) {
-   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR , 0, NULL);
+   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR ,0, NULL);
    return 0;
   }
 
@@ -81,7 +83,7 @@ castor::IObject* castor::tape::tapegateway::VdqmRequestsProducerThread::select()
   try {
 
   // get all the tapes to send from the db
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,PRODUCER_GETTING_TAPE, 0, NULL);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,PRODUCER_GETTING_TAPE, 0,  NULL);
 
     oraSvc->getTapeWithoutDriveReq(*request);
 
@@ -92,14 +94,14 @@ castor::IObject* castor::tape::tapegateway::VdqmRequestsProducerThread::select()
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
        castor::dlf::Param("errorMessage",e.getMessage().str())
       };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_NO_TAPE, 2, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_NO_TAPE, params);
     if (request) delete request;
     return 0;
   }
 
   if (request->vid().empty()) {
     
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, PRODUCER_NO_TAPE, 0,NULL);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, PRODUCER_NO_TAPE, 0, NULL);
     delete request;
     return 0;
     
@@ -115,7 +117,7 @@ castor::IObject* castor::tape::tapegateway::VdqmRequestsProducerThread::select()
       castor::dlf::Param("request id", request->taperequest()),
       castor::dlf::Param("ProcessingTime", procTime * 0.000001)
     };
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, PRODUCER_TAPE_FOUND, 4, params);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, PRODUCER_TAPE_FOUND,params);
 
   return request;
 
@@ -135,7 +137,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::process(castor::IObj
 
 
   if (0 == oraSvc) {
-   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR , 0, NULL);
+   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR, 0, NULL);
    return;
   }
 
@@ -188,7 +190,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::process(castor::IObj
 	 castor::dlf::Param("TPVID",tape.vid()),
 	 castor::dlf::Param("ProcessingTime", procTime * 0.000001)
 	};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_VMGR_ERROR, 4, params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_VMGR_ERROR, params);
 	
     } catch (castor::exception::Exception e ){
       // impossible to update the information of submitted tape
@@ -198,7 +200,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::process(castor::IObj
 	 castor::dlf::Param("errorMessage",e.getMessage().str()),
 	 castor::dlf::Param("TPVID", tape.vid())
 	};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_CANNOT_UPDATE_DB, 3, params);	    
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_CANNOT_UPDATE_DB, params);	    
     }
     return;
   }
@@ -217,7 +219,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::process(castor::IObj
 
   // tape is fine
  
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, PRODUCER_QUERYING_VMGR, 5, paramsVmgr);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, PRODUCER_QUERYING_VMGR,paramsVmgr);
   
   VdqmTapeGatewayHelper vdqmHelper;
   int vdqmReqId=0;
@@ -246,7 +248,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::process(castor::IObj
 
 
       // submition went fine
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, PRODUCER_SUBMITTING_VDQM, 4, paramsVdqm);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, PRODUCER_SUBMITTING_VDQM, paramsVdqm);
 	
       gettimeofday(&tvStart, NULL);
 
@@ -266,7 +268,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::process(castor::IObj
 	    castor::dlf::Param("request id", request->taperequest()),
 	    castor::dlf::Param("ProcessingTime", procTime * 0.000001)
 	  };
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, PRODUCER_REQUEST_SAVED, 4, paramsDb);
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, PRODUCER_REQUEST_SAVED, paramsDb);
 
 
 	// confirm to vdqm
@@ -279,7 +281,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::process(castor::IObj
 	     castor::dlf::Param("TPVID", tape.vid()),
 	     castor::dlf::Param("mountTransactionId",vdqmReqId)
 	    };
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_VDQM_ERROR, 4, params);	   
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_VDQM_ERROR, params);	   
 	    
 	}
       } catch (castor::exception::Exception e) {
@@ -291,7 +293,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::process(castor::IObj
 	     castor::dlf::Param("TPVID", tape.vid()),
 	     castor::dlf::Param("mountTransactionId",vdqmReqId)
 	    };
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_CANNOT_UPDATE_DB, 4, params);	   
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_CANNOT_UPDATE_DB, params);	   
       }
 
     } catch (castor::exception::Exception e) {
@@ -314,7 +316,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::process(castor::IObj
 	 castor::dlf::Param("TPVID", tape.vid()),
 	 castor::dlf::Param("mountTransactionId",vdqmReqId)
 	};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_VDQM_ERROR, 4, params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_VDQM_ERROR,params);
 
       try {
 	oraSvc->endTransaction();
@@ -323,7 +325,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::process(castor::IObj
 	  {castor::dlf::Param("errorCode",sstrerror(e.code())),
 	   castor::dlf::Param("errorMessage",e.getMessage().str())
 	  };
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_CANNOT_UPDATE_DB, 2, params);	   
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_CANNOT_UPDATE_DB, params);	   
 	
       }
 	   

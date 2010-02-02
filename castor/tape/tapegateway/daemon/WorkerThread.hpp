@@ -29,87 +29,62 @@
 #define WORKER_THREAD_HPP 1
 
 #include "castor/exception/Internal.hpp"
+
 #include "castor/io/ServerSocket.hpp"
+
 #include "castor/server/BaseDbThread.hpp"
 
 #include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
-#include "castor/tape/tapegateway/VolumeRequest.hpp"
 
 
+namespace castor     {
+namespace tape       {
+namespace tapegateway{
 
-namespace castor {
-
-  namespace tape{
-    namespace tapegateway{
-
-    /**
-     * Worker  tread.
-     */
-    
-      class WorkerThread :public castor::server::BaseDbThread {
-	
-      public:
-
-      /**
-       * constructor
-       */
-
-	WorkerThread();
-
-	/**
-	 * Not implemented
-	 */
+  /**
+   * Worker  tread.
+   */
   
-	virtual void init() {};
-
-	/**
-	 * Basic run method called by a for example a TCPListenerThread or Signal
-	 * Thread when something needs to be processed.
-	 *
-	 * Here the arg should simply be pushed into thread pool for later
-	 * processing
-	 */
-
-	virtual void run(void *arg);
+  class WorkerThread :
+    public castor::server::BaseDbThread {
 	
-	/**
-	 * destructor
-	 */
+  public:
+
+    WorkerThread();
+    virtual void init() {};
+    virtual void run(void *arg);
+    virtual ~WorkerThread() throw() {};
+
+  private:
 	
-	virtual ~WorkerThread() throw() {};
+    // handlers used with the different message types
 
-      private:
-	
-	// handlers used with the different message types
+    castor::IObject* handleStartWorker(castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
+    
+    castor::IObject* handleRecallUpdate( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc  ) throw();
 
-	castor::IObject* handleStartWorker(castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
+    castor::IObject* handleMigrationUpdate( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
 
-	castor::IObject* handleRecallUpdate( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc  ) throw();
+    castor::IObject* handleRecallMoreWork( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
 
-	castor::IObject* handleMigrationUpdate( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
+    castor::IObject* handleMigrationMoreWork( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
 
-	castor::IObject* handleRecallMoreWork( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
+    castor::IObject* handleEndWorker( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
 
-	castor::IObject* handleMigrationMoreWork( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
-
-	castor::IObject* handleEndWorker( castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
-
-	castor::IObject* handleFailWorker( castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
+    castor::IObject* handleFailWorker( castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc ) throw();
 
 
-	// map to deal with the different request types
+    // map to deal with the different request types
 
-	typedef castor::IObject* (WorkerThread::*Handler) (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc );
+    typedef castor::IObject* (WorkerThread::*Handler) (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc );
 
-	typedef std::map<u_signed64, Handler> HandlerMap;
-	HandlerMap m_handlerMap;
+    typedef std::map<u_signed64, Handler> HandlerMap;
+    HandlerMap m_handlerMap;
 
-      };
-
-    } // end of tapegateway
-
-  } // end of namespace tape
-
+  };
+  
+} // end of tapegateway  
+} // end of namespace tape
 } // end of namespace castor
 
 #endif // WORKER_THREAD_HPP

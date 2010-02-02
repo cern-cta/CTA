@@ -28,44 +28,34 @@
 #ifndef MIGRATORERRORHANDLER_THREAD_HPP
 #define MIGRATORERRORHANDLER_THREAD_HPP  1
 
-
-
-#include "castor/infoPolicy/TapeRetryPySvc.hpp"
 #include "castor/server/BaseDbThread.hpp"
+#include "castor/tape/tapegateway/RetryPolicyElement.hpp"
 
-namespace castor {
 
-  namespace tape{
-    namespace tapegateway{
+namespace castor     {
+namespace tape       {
+namespace tapegateway{
 
     /**
      * MigratorErrorHandler tread.
      */
-    
-      class MigratorErrorHandlerThread :public castor::server::BaseDbThread {
-	castor::infoPolicy::TapeRetryPySvc* m_retryPySvc;
+
+  class MigratorErrorHandlerThread :
+    public castor::server::BaseDbThread {
+    PyObject* m_pyFunction;
         
-      public:
+    bool applyRetryMigrationPolicy(const RetryPolicyElement& elem)
+      throw (castor::exception::Exception );
+  public:
 
-      /**
-       * constructor
-       */
+    MigratorErrorHandlerThread( PyObject* pyFunction );
+    virtual ~MigratorErrorHandlerThread() throw() {};
+    virtual void run(void*);
+    
+  };
 
-     MigratorErrorHandlerThread( castor::infoPolicy::TapeRetryPySvc* retryPySvc);
-     
-      /**
-       * destructor
-       */
-      virtual ~MigratorErrorHandlerThread() throw() {};
-
-      /*For thread management*/
-
-      virtual void run(void*);
-
-    };
-
-    } // end of tapegateway
-  } // end of namespace tape
+} // end of tapegateway
+} // end of namespace tape
 } // end of namespace castor
 
 #endif //  MIGRATORERRORHANDLER_THREAD_HPP

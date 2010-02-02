@@ -24,8 +24,9 @@
  * @author Giulia Taurelli
  *****************************************************************************/
 
-// first because it includes python.h
-#include "castor/tape/tapegateway/daemon/RecallerErrorHandlerThread.hpp"
+// Include Python.h before any standard headers because Python.h may define
+// some pre-processor definitions which affect the standard headers
+#include "castor/tape/python/python.hpp"
 
 #include <list>
 #include <stdlib.h>
@@ -39,18 +40,22 @@
 #include "castor/Services.hpp"
 
 #include "castor/exception/Internal.hpp"
-#include "castor/infoPolicy/RetryPolicyElement.hpp"
+
+#include "castor/tape/python/SmartPyObjectPtr.hpp"
+#include "castor/tape/python/ScopedPythonLock.hpp"
+
 #include "castor/stager/TapeCopy.hpp"
 
-#include "castor/tape/tapegateway/daemon/DlfCodes.hpp"
+#include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
 #include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
+#include  "castor/tape/tapegateway/daemon/RecallerErrorHandlerThread.hpp"
 
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapegateway::RecallerErrorHandlerThread::RecallerErrorHandlerThread(castor::infoPolicy::TapeRetryPySvc* retryPySvc ){
-  m_retryPySvc=retryPySvc;
+castor::tape::tapegateway::RecallerErrorHandlerThread::RecallerErrorHandlerThread(PyObject* pyFunction){
+  m_pyFunction=pyFunction;
 }
 
 //------------------------------------------------------------------------------
@@ -75,7 +80,7 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void* par)
   gettimeofday(&tvStart, NULL);
 
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, REC_ERROR_GETTING_FILES, 0, NULL);
-  std::list<castor::infoPolicy::RetryPolicyElement> tcList;
+  std::list<RetryPolicyElement> tcList;
 
   try {
     oraSvc->getFailedRecalls(tcList);
@@ -85,7 +90,7 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void* par)
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
        castor::dlf::Param("errorMessage",e.getMessage().str())
       };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, REC_ERROR_NO_FILE, 2, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, REC_ERROR_NO_FILE, params);
     return;
   }
 
@@ -101,13 +106,13 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void* par)
     {
       castor::dlf::Param("ProcessingTime", procTime * 0.000001)
     };
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, REC_ERROR_TAPECOPIES_FOUND, 1, paramsDb);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, REC_ERROR_TAPECOPIES_FOUND, paramsDb);
 
 
   std::list<u_signed64> tcIdsToRetry;
   std::list<u_signed64> tcIdsToFail;
 
-  std::list<castor::infoPolicy::RetryPolicyElement>::iterator tcItem= tcList.begin();
+  std::list<RetryPolicyElement>::iterator tcItem= tcList.begin();
 
 
 
@@ -117,25 +122,31 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void* par)
     //apply the policy
 
     castor::dlf::Param params[] =
-      {castor::dlf::Param("tapecopyId",(*tcItem).tapeCopyId())
+      {castor::dlf::Param("tapecopyId",(*tcItem).tapeCopyId)
       };
+    
     try {
-      if (m_retryPySvc==NULL || m_retryPySvc->applyPolicy((&(*tcItem)))) {
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, REC_ERROR_RETRY, 1, params);
-	tcIdsToRetry.push_back( (*tcItem).tapeCopyId());
+
+      //apply the policy using a scoped lock as protection
+
+      castor::tape::python::ScopedPythonLock scopedPythonLock;
+
+      if ( applyRetryRecallPolicy(*tcItem)) {
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, REC_ERROR_RETRY, params);
+	tcIdsToRetry.push_back( (*tcItem).tapeCopyId);
       }    else  {
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, REC_ERROR_FAILED, 1, params);
-	tcIdsToFail.push_back( (*tcItem).tapeCopyId());
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, REC_ERROR_FAILED, params);
+	tcIdsToFail.push_back( (*tcItem).tapeCopyId);
       }
     } catch (castor::exception::Exception e) {
       castor::dlf::Param paramsEx[] =
-	{castor::dlf::Param("tapecopyId",(*tcItem).tapeCopyId()),
+	{castor::dlf::Param("tapecopyId",(*tcItem).tapeCopyId),
 	 castor::dlf::Param("errorCode",sstrerror(e.code())),
 	 castor::dlf::Param("errorMessage",e.getMessage().str())
 	};
 
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, REC_ERROR_RETRY_BY_DEFAULT, 3, paramsEx);
-      tcIdsToRetry.push_back( (*tcItem).tapeCopyId());
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, REC_ERROR_RETRY_BY_DEFAULT, paramsEx);
+      tcIdsToRetry.push_back( (*tcItem).tapeCopyId);
     }
 
     tcItem++;
@@ -156,7 +167,7 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void* par)
 	  castor::dlf::Param("tapecopies set to be retried",tcIdsToRetry.size()),
 	  castor::dlf::Param("failed tapecopies",tcIdsToFail.size())
 	};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, REC_ERROR_RESULT_SAVED, 3, paramsDbUpdate);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, REC_ERROR_RESULT_SAVED, paramsDbUpdate);
     
 
   } catch (castor::exception::Exception e) {
@@ -164,7 +175,7 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void* par)
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
        castor::dlf::Param("errorMessage",e.getMessage().str())
       };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, REC_ERROR_CANNOT_UPDATE_DB, 2, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, REC_ERROR_CANNOT_UPDATE_DB, params);
   }
   
   tcList.clear();
@@ -174,3 +185,36 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void* par)
   
 }
 
+bool castor::tape::tapegateway::RecallerErrorHandlerThread::applyRetryRecallPolicy(const RetryPolicyElement& elem)
+  throw (castor::exception::Exception ){
+
+  // if we don't have any function available we always retry to recall the tapecopy
+
+  if (m_pyFunction == NULL)
+    return true;
+
+  // Create the input tuple for retry migration policy Python-function
+  //
+  // python-Bugs-1308740  Py_BuildValue (C/API): "K" format
+  // K must be used for unsigned (feature not documented at all but available)
+
+  castor::tape::python::SmartPyObjectPtr inputObj(Py_BuildValue((char*)"(i,i)", elem.errorCode, elem.nbRetry));
+  
+  // Call the retry_migration-policy Python-function
+  castor::tape::python::SmartPyObjectPtr resultObj(PyObject_CallObject(m_pyFunction, inputObj.get()));
+
+  // Throw an exception if the recall-policy Python-function call failed
+  if(resultObj.get() == NULL) {
+    castor::exception::Internal ex;
+    ex.getMessage() <<
+      "Failed to execute recall-policy Python-function";
+
+    throw ex;
+  }
+
+  // Return the result of the Python function
+  const int resultInt = PyInt_AsLong(resultObj.get());
+  return resultInt;
+
+
+}

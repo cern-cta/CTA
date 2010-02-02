@@ -26,46 +26,78 @@
 CPPFLAGS = -g -O0 -I $(ORACLE_HOME)/rdbms/public -I ../../../h -I ../../.. $(PYTHONINC) $(MTCCFLAGS)
 LDFLAGS += $(MTLDFLAGS)
 LD = g++
-LIBS = -L$(ORACLE_HOME)/lib -locci -lclntsh $(PYTHONLIBS)
+LIBS = -L$(ORACLE_HOME)/lib -locci -lclntsh 
 
+DependsOnLibrary(..,castorclient)
+DependsOnLibrary(../db/cnv,castorcnvs)
 DependsOnLibrary(../../common,castorcommon)
+DependsOnLibrary(../db/newora,castorcommonora)
 DependsOnLibrary(../../dlf,castordlf)
+DependsOnLibrary(../../rfio,castorrfio)
+DependsOnLibrary(../tape/python,castortapepython)
+DependsOnLibrary(../tape/utils,castortapeutils)
 DependsOnLibrary(../../vdqm,castorvdqm)
 DependsOnLibrary(../../vmgr,castorvmgr)
-DependsOnLibrary(..,castorclient)
-DependsOnLibrary(../db/newora,castorcommonora)
-DependsOnLibrary(../db/cnv,castorcnvs)
-DependsOnLibrary(../infoPolicy,castorinfopolicy)
-DependsOnLibrary(../tape/utils,castortapeutils)
-DependsOnLibrary(../../rfio,castorrfio)
 
-TAPEGATEWAYDBIN_SRCS = daemon/TapeGatewayDaemon.cpp daemon/WorkerThread.cpp \
-	daemon/MigratorErrorHandlerThread.cpp  daemon/RecallerErrorHandlerThread.cpp \
-	daemon/TapeStreamLinkerThread.cpp  daemon/VdqmRequestsCheckerThread.cpp  daemon/VdqmRequestsProducerThread.cpp \
-	daemon/VmgrTapeGatewayHelper.cpp  daemon/VdqmTapeGatewayHelper.cpp  daemon/NsTapeGatewayHelper.cpp \
-	 daemon/RmMasterTapeGatewayHelper.cpp ../net/net.cpp  
+TAPEGATEWAYDBIN_SRCS = \
+  	TapeGatewayDlfMessageStrings.cpp \
+  	daemon/MigratorErrorHandlerThread.cpp \
+	daemon/NsTapeGatewayHelper.cpp \
+	daemon/RecallerErrorHandlerThread.cpp \
+	daemon/RmMasterTapeGatewayHelper.cpp \
+	daemon/TapeGatewayDaemon.cpp \
+	daemon/TapeGatewayMain.cpp \
+	daemon/TapeStreamLinkerThread.cpp  \
+	daemon/VdqmRequestsCheckerThread.cpp  \
+	daemon/VdqmRequestsProducerThread.cpp \
+	daemon/VdqmTapeGatewayHelper.cpp  \
+	daemon/VmgrTapeGatewayHelper.cpp  \
+	daemon/WorkerThread.cpp \
+	daemon/ora/OraTapeGatewaySvc.cpp \
+	../net/net.cpp  
 
 TAPEGATEWAY_MESSAGES_SRCS = \
-	VolumeRequest.cpp Volume.cpp VdqmTapeGatewayRequest.cpp \
-	FileToMigrateRequest.cpp FileToMigrate.cpp \
-	FileToRecallRequest.cpp FileToRecall.cpp \
-	FileMigratedNotification.cpp FileRecalledNotification.cpp \
-	EndNotification.cpp NotificationAcknowledge.cpp EndNotificationErrorReport.cpp\
-	NoMoreFiles.cpp  GatewayMessage.cpp \
-	BaseFileInfo.cpp PositionCommandCode.cpp FileErrorReport.cpp ClientType.cpp \
-	TapeGatewayRequest.cpp TapeRequestStateCode.cpp TapeGatewaySubRequest.cpp VolumeMode.cpp
+	BaseFileInfo.cpp \
+	ClientType.cpp \
+	EndNotification.cpp \
+	EndNotificationErrorReport.cpp\
+	FileErrorReport.cpp \
+	FileMigratedNotification.cpp \
+	FileRecalledNotification.cpp \
+	FileToMigrate.cpp \
+	FileToMigrateRequest.cpp \
+	FileToRecall.cpp \
+	FileToRecallRequest.cpp \
+	GatewayMessage.cpp \
+	NoMoreFiles.cpp  \
+	NotificationAcknowledge.cpp \
+	PositionCommandCode.cpp \
+	TapeGatewayRequest.cpp \
+	TapeGatewaySubRequest.cpp \
+	TapeRequestStateCode.cpp \
+	VolumeRequest.cpp \
+	Volume.cpp \
+	VolumeMode.cpp \
+	VdqmTapeGatewayRequest.cpp 
 
 TAPEGATEWAY_IO_SRCS = \
-	../../io/StreamVolumeRequestCnv.cpp ../../io/StreamVolumeCnv.cpp \
-	../../io/StreamFileToMigrateRequestCnv.cpp ../../io/StreamFileToMigrateCnv.cpp \
-	../../io/StreamFileToRecallRequestCnv.cpp ../../io/StreamFileToRecallCnv.cpp \
-	../../io/StreamFileMigratedNotificationCnv.cpp ../../io/StreamFileRecalledNotificationCnv.cpp \
-	../../io/StreamEndNotificationCnv.cpp ../../io/StreamNotificationAcknowledgeCnv.cpp \
-	../../io/StreamEndNotificationErrorReportCnv.cpp ../../io/StreamNoMoreFilesCnv.cpp  \
-	../../io/StreamFileErrorReportCnv.cpp
+	../../io/StreamEndNotificationCnv.cpp \
+	../../io/StreamFileErrorReportCnv.cpp \
+	../../io/StreamFileMigratedNotificationCnv.cpp \
+	../../io/StreamFileRecalledNotificationCnv.cpp \
+	../../io/StreamFileToMigrateCnv.cpp \
+	../../io/StreamFileToMigrateRequestCnv.cpp \
+	../../io/StreamFileToRecallCnv.cpp \
+	../../io/StreamFileToRecallRequestCnv.cpp \
+	../../io/StreamNoMoreFilesCnv.cpp  \
+	../../io/StreamNotificationAcknowledgeCnv.cpp \
+	../../io/StreamVolumeCnv.cpp \
+	../../io/StreamVolumeRequestCnv.cpp 
 
-TAPEGATEWAY_DB_SRCS = ../../db/cnv/DbTapeGatewayRequestCnv.cpp  daemon/ora/OraTapeGatewaySvc.cpp \
-	../../db/cnv/DbTapeGatewaySubRequestCnv.cpp
+
+TAPEGATEWAY_DB_SRCS = \
+	../../db/cnv/DbTapeGatewaySubRequestCnv.cpp \
+	../../db/cnv/DbTapeGatewayRequestCnv.cpp  
 
 TAPEGATEWAYBIN_SRCS = $(TAPEGATEWAYDBIN_SRCS) $(TAPEGATEWAY_MESSAGES_SRCS) $(TAPEGATEWAY_IO_SRCS) $(TAPEGATEWAY_DB_SRCS)
 
@@ -75,3 +107,5 @@ ADMMANPAGE(tapegatewayd)
 SYSCONFIG(tapegatewayd,install)
 INITSCRIPT(tapegatewayd,install)
 LOGROTATE(castor-tapegateway-server,../../..,install)
+
+

@@ -30,32 +30,31 @@
 
 
 #include "castor/server/BaseDbThread.hpp"
+
 #include "castor/stager/Stream.hpp"
 
-namespace castor {
-
-  namespace tape{
-    namespace tapegateway{
+namespace castor     {
+namespace tape       {
+namespace tapegateway{
 
     /**
      *   TapeStreamLinkerThread tread.
      */
     
-      class  TapeStreamLinkerThread : public castor::server::BaseDbThread {
-      
-      public:
-	
-      TapeStreamLinkerThread();
+  class  TapeStreamLinkerThread : public castor::server::BaseDbThread {
+    
+  public:
+    
+    TapeStreamLinkerThread();
 
-      virtual ~TapeStreamLinkerThread() throw() {};
+    virtual ~TapeStreamLinkerThread() throw() {};
+    
+    virtual void run(void*);
 
-      virtual void run(void*);
+  };
 
-    };
-
-    } // end of tapegateway
-  } // end of namespace tape
-
+} // end of tapegateway
+} // end of namespace tape
 } // end of namespace castor
 
 #endif //TAPESTREAMLINKER_THREAD_HPP

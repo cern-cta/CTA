@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/stager/ITapeGatewaySvc.hpp
+ *                castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -29,17 +29,10 @@
 
 // Include Files
 #include "castor/Constants.hpp"
-#include "castor/stager/ICommonSvc.hpp"
 #include "castor/exception/Exception.hpp"
-
-#include <string>
-#include <list>
-
-
-#include "castor/exception/Exception.hpp"
-#include "castor/infoPolicy/RetryPolicyElement.hpp"
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/Tape.hpp"
+#include "castor/stager/ICommonSvc.hpp"
 #include "castor/stager/TapeCopy.hpp"
 
 #include "castor/tape/tapegateway/EndNotification.hpp"
@@ -53,17 +46,18 @@
 #include "castor/tape/tapegateway/FileToRecallRequest.hpp"
 #include "castor/tape/tapegateway/NoMoreFiles.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
+#include "castor/tape/tapegateway/RetryPolicyElement.hpp"
 #include "castor/tape/tapegateway/TapeGatewayRequest.hpp" 
 #include "castor/tape/tapegateway/VdqmTapeGatewayRequest.hpp" 
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
 
+#include <list>
+#include <string>
 
-
-
-namespace castor {
-  namespace tape {
-    namespace tapegateway {
+namespace castor      {
+namespace tape        {
+namespace tapegateway {
 
  
     /**
@@ -73,8 +67,6 @@ namespace castor {
       class ITapeGatewaySvc : public virtual castor::stager::ICommonSvc {
       
       public:
-
-
 
 
 	/**
@@ -163,7 +155,7 @@ namespace castor {
 	 * Get the tapecopies which faced a migration failure
 	 */
 	
-	virtual void  getFailedMigrations(std::list<castor::infoPolicy::RetryPolicyElement>& candidates)
+	virtual void  getFailedMigrations(std::list<castor::tape::tapegateway::RetryPolicyElement>& candidates)
 	  throw (castor::exception::Exception)=0;
 
 	/**
@@ -178,7 +170,7 @@ namespace castor {
 	 * Get the tapecopies which faced a recall failure 
 	 */
 
-	virtual void  getFailedRecalls(std::list<castor::infoPolicy::RetryPolicyElement>& candidates)
+	virtual void  getFailedRecalls(std::list<castor::tape::tapegateway::RetryPolicyElement>& candidates)
 	  throw (castor::exception::Exception)=0;
 	
 
@@ -274,8 +266,9 @@ namespace castor {
 
 
       }; // end of class ITapeGatewaySvc
-    } // end of namespace tapegateway
-  } // end of namespace tape
+
+} // end of namespace tapegateway
+} // end of namespace tape
 } // end of namespace castor
 
 #endif // STAGER_ITAPEGATEWAYSVC_HPP

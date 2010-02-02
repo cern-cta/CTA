@@ -31,33 +31,31 @@
 #include <u64subr.h>
 
 #include "castor/server/BaseDbThread.hpp"
+
 #include "castor/tape/tapegateway/TapeGatewayRequest.hpp"
 
 
-namespace castor {
-
-  namespace tape{
-    namespace tapegateway{
-
+namespace castor     {
+namespace tape       {
+namespace tapegateway{
+  
     /**
      *  VdqmRequestsChecker tread.
      */
     
-      class VdqmRequestsCheckerThread :public castor::server::BaseDbThread { 
-	u_signed64 m_timeOut;
-      public:
+  class VdqmRequestsCheckerThread :
+    public castor::server::BaseDbThread { 
+    u_signed64 m_timeOut;
+  public:
 	
-      VdqmRequestsCheckerThread(u_signed64 timeOut);
+    VdqmRequestsCheckerThread(u_signed64 timeOut);
+    virtual ~VdqmRequestsCheckerThread() throw() {};
+    virtual void run(void*);
 
-      virtual ~VdqmRequestsCheckerThread() throw() {};
+  };
 
-      virtual void run(void*);
-
-    };
-
-    } // end of tapegateway
-  } // end of namespace tape
-
+} // end of tapegateway
+} // end of namespace tape
 } // end of namespace castor
 
 #endif // VDQMREQUESTSCHECKER_THREAD_HPP

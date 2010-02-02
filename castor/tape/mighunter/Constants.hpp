@@ -1,6 +1,5 @@
-
 /******************************************************************************
- *                     VdqmRequestsProducerThread.hpp
+ *              castor/tape/mighunter/Constants.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,45 +17,44 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: VdqmRequestsProducerThread.hpp,v $ $Author: gtaur $
  *
  *
- *
- * @author Giulia Taurelli
+ * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef VDQMREQUESTSPRODUCER_THREAD_HPP
-#define VDQMREQUESTSPRODUCER_THREAD_HPP 1
 
+#ifndef CONSTANTS_HPP
+#define CONSTANTS_HPP 1
 
+#include <stdint.h>
 
-#include "castor/server/SelectProcessThread.hpp"
+namespace castor    {
+namespace tape    {
+namespace mighunter {
 
-#include "castor/stager/Tape.hpp"
+  /**
+   * The default minimum amount of data in bytes required for starting a new
+   * migration.
+   */
+  const uint64_t MIGRATION_DATA_THRESHOLD = 1; // bytes
 
-namespace castor     {
-namespace tape       {
-namespace tapegateway{
+  /**
+   * The default time in seconds between two stream-policy database lookups.
+   */
+  const int STREAM_SLEEP_TIME = 7200;
 
-    /**
-     *  VdqmRequestsProducer tread.
-     */
-    
-  class VdqmRequestsProducerThread : 
-    public castor::server::SelectProcessThread {
-    int m_port;
-  public:
-	
-    VdqmRequestsProducerThread(int port);
+  /**
+   * The default time in seconds between two migration-policy database lookups.
+   */
+  const int MIGRATION_SLEEP_TIME = 7200;
 
-    virtual ~VdqmRequestsProducerThread() throw() {};
-    virtual castor::IObject* select() throw();
-    virtual void process(castor::IObject* par)throw();
+  /**
+   * The location of the stream and migration Python policy modules.
+   */
+  const char *const CASTOR_POLICIES_DIRECTORY = "/etc/castor/policies";
 
-  };
+} // namespace mighunter
+} // namespace tape
+} // namespace castor
 
-} // end of tapegateway
-} // end of namespace tape
-} // end of namespace castor
-
-#endif // VDQMREQUESTSPRODUCER_THREAD_HPP
+#endif // CONSTANTS_HPP

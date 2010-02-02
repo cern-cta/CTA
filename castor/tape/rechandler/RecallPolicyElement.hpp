@@ -1,6 +1,5 @@
-
 /******************************************************************************
- *                     VdqmRequestsProducerThread.hpp
+ *                      castor/tape/rechandler/RecallPolicyElement.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,45 +17,44 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: VdqmRequestsProducerThread.hpp,v $ $Author: gtaur $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
- *
+ * 
  *
  * @author Giulia Taurelli
  *****************************************************************************/
 
-#ifndef VDQMREQUESTSPRODUCER_THREAD_HPP
-#define VDQMREQUESTSPRODUCER_THREAD_HPP 1
+#ifndef CASTOR_TAPE_RECHANDLER_RECALLPOLICYELEMENT_HPP
+#define CASTOR_TAPE_RECHANDLER_RECALLPOLICYELEMENT_HPP
 
 
-
-#include "castor/server/SelectProcessThread.hpp"
-
-#include "castor/stager/Tape.hpp"
 
 namespace castor     {
 namespace tape       {
-namespace tapegateway{
+namespace rechandler {
 
-    /**
-     *  VdqmRequestsProducer tread.
-     */
-    
-  class VdqmRequestsProducerThread : 
-    public castor::server::SelectProcessThread {
-    int m_port;
-  public:
-	
-    VdqmRequestsProducerThread(int port);
+  struct RecallPolicyElement {
 
-    virtual ~VdqmRequestsProducerThread() throw() {};
-    virtual castor::IObject* select() throw();
-    virtual void process(castor::IObject* par)throw();
+      std::string policyName;
 
-  };
+      std::string svcClassName;
 
-} // end of tapegateway
-} // end of namespace tape
-} // end of namespace castor
+      u_signed64 numBytes;
 
-#endif // VDQMREQUESTSPRODUCER_THREAD_HPP
+      u_signed64 numFiles;
+
+      u_signed64 oldest;
+
+      std::string vid;
+
+      u_signed64 tapeId;
+
+      u_signed64 priority;
+
+    }; /* end of class RecallPolicyElement */
+
+} /* end of namespace rechandler */
+} /* end of namespace tape */
+} /* end of namespace castor */
+
+#endif // CASTOR_TAPE_RECHANDLER_RECALLPOLICYELEMENT_HPP

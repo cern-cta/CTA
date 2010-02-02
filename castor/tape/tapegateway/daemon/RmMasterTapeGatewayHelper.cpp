@@ -30,13 +30,14 @@
 #include "getconfent.h"
 
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/io/UDPSocket.hpp"
 #include "castor/monitoring/StreamDirection.hpp"
 #include "castor/monitoring/StreamReport.hpp"
+#include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
 
 #include "castor/tape/tapegateway/daemon/RmMasterTapeGatewayHelper.hpp"
-
 
 #define RMMASTER_PORT 15003
 
@@ -64,10 +65,10 @@ castor::tape::tapegateway::RmMasterTapeGatewayHelper::RmMasterTapeGatewayHelper(
       // Go back to default
       m_rmMasterPort = RMMASTER_PORT;
       // "Bad rmmaster port value in configuration file"
-      castor::dlf::Param initParams[] =
-	{castor::dlf::Param("Message", "Bad rmmaster port value in configuration file, default used"),
-	 castor::dlf::Param("Given value", rmMasterPortStr)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 0, 2, initParams);
+
+      castor::exception::NoEntry e;
+      e.getMessage() <<"Bad rmmaster port value in configuration file";
+      throw e;
     }
   }
 }
@@ -79,7 +80,7 @@ void castor::tape::tapegateway::RmMasterTapeGatewayHelper::sendStreamReport
 (const std::string diskServer,
  const std::string fileSystem,
  const castor::monitoring::StreamDirection direction,
- const bool created) throw () {
+ const bool created) throw (castor::exception::Exception) {
   try {
     castor::io::UDPSocket s(m_rmMasterPort, m_rmMasterHost);
     castor::monitoring::StreamReport sr;
@@ -89,9 +90,9 @@ void castor::tape::tapegateway::RmMasterTapeGatewayHelper::sendStreamReport
     sr.setCreated(created);
     s.sendObject(sr);
   } catch (castor::exception::Exception ex) {
-    castor::dlf::Param initParams[] =
-      {castor::dlf::Param("Message", "Failed to send StreamReport to rmmaster daemon via UDP. Exception Caught."),
-       castor::dlf::Param("Original Error", ex.getMessage().str())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 0, 2, initParams);
+    
+    castor::exception::Internal e;
+    e.getMessage() <<"Failed to send StreamReport to rmmaster daemon via UDP. Exception Caught"<<ex.getMessage().str();
+    throw e;
   }
 }
