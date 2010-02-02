@@ -107,6 +107,15 @@ void castor::tape::python::initializePython()
 
 
 //---------------------------------------------------------------------------
+// finalizePython
+//---------------------------------------------------------------------------
+void castor::tape::python::finalizePython() throw() {
+  PyGILState_Ensure();
+  Py_Finalize();
+}
+
+
+//---------------------------------------------------------------------------
 // importPolicyPythonModule
 //---------------------------------------------------------------------------
 PyObject * castor::tape::python::importPolicyPythonModule(

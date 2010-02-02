@@ -52,11 +52,23 @@ namespace python {
 void initializePython() throw(castor::exception::Exception);
 
 /**
+ * Finalizes the embedded Python interpreter.
+ *
+ * Please note that the calling thread must NOT have a lock on the global
+ * Python interpreter.
+ */
+void finalizePython() throw();
+
+/**
  * Imports a CASTOR-policy implemented as a Python module from the
  * Python-module search path which includes the
  * castor::tape::python::CASTOR_POLICIES_DIRECTORY directory.
  *
  * Please note that initPython() must be called before this function is called.
+ *
+ * Please not that the calling thread MUST have a lock on the global Python
+ * interpreter through a call to PyGILState_Ensure() or through the strongly
+ * recommended use of a ScopedPythonLock object.
  *
  * @param moduleName The name of the CASTOR-policy Python-module.
  * @return           The Python dictionary object of the imported library.  The
@@ -73,6 +85,10 @@ PyObject* importPolicyPythonModule(const char *const moduleName)
  * specified Python dictionary.
  *
  * Please note that initPython() must be called before this function is called.
+ *
+ * Please not that the calling thread MUST have a lock on the global Python
+ * interpreter through a call to PyGILState_Ensure() or through the strongly
+ * recommended use of a ScopedPythonLock object.
  *
  * @param pyDict       The Python dictionary in which the specified function is
  *                     to be found.
