@@ -146,22 +146,27 @@ int castor::tape::rechandler::RecHandlerDaemon::exceptionThrowingMain(int argc,
 
   //Retrive the retry policies
 
-  char* recallPolicyName=NULL;
-  recallPolicyName = getconfent("Policy","Recall",0);
-  if (recallPolicyName==NULL){
+  std::string recallPolicyName;
+  char* tmpStr=NULL;
+  tmpStr = getconfent("Policy","Recall",0);
+  if (tmpStr==NULL){
     castor::dlf::Param params[] =
       {castor::dlf::Param("message","No policy for migration retry in castor.conf")};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, castor::tape::rechandler::NO_POLICY, params);
+  } else {
+    recallPolicyName=tmpStr;
   }
-  char* recallFunctionName=NULL;
-  recallFunctionName= getconfent("Policy","RecallFunction",0);
-  if (recallFunctionName == NULL ){
+
+  std::string recallFunctionName;
+
+  tmpStr = getconfent("Policy","RecallFunction",0);
+  if (tmpStr == NULL ){
     castor::dlf::Param params[] =
       {castor::dlf::Param("message","No global function name for recall policy for recall in castor.conf")};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, castor::tape::rechandler::NO_POLICY, params);
+  } else {
+    recallFunctionName=tmpStr;
   }
-
-
 
   // Initialize Python
 
@@ -176,9 +181,9 @@ int castor::tape::rechandler::RecHandlerDaemon::exceptionThrowingMain(int argc,
 
   PyObject* recallDict = NULL;
 
-  if (recallPolicyName){
+  if (!recallPolicyName.empty()){
 
-    recallDict = castor::tape::python::importPolicyPythonModule(recallPolicyName);
+    recallDict = castor::tape::python::importPolicyPythonModule(recallPolicyName.c_str());
 
   }
   
@@ -187,9 +192,9 @@ int castor::tape::rechandler::RecHandlerDaemon::exceptionThrowingMain(int argc,
     
   PyObject * recallFunction=NULL;
 
-  if (recallDict && recallFunctionName) {
+  if (recallDict && !recallFunctionName.empty()) {
 
-    recallFunction = castor::tape::python::getPythonFunction(recallDict,recallFunctionName);
+    recallFunction = castor::tape::python::getPythonFunction(recallDict,recallFunctionName.c_str());
 
   }
 

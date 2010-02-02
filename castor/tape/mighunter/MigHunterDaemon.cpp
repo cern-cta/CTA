@@ -150,26 +150,31 @@ int castor::tape::mighunter::MigHunterDaemon::exceptionThrowingMain(int argc,
     throw(ex);
   }
 
+  char *tmpStr = NULL;
+
   // get the policy migration policy name
 
-  char * migrationPolicyModuleName = NULL;
-  
-  migrationPolicyModuleName = getconfent("Policy","Migration",0);
-  if (migrationPolicyModuleName==NULL){
+  std::string migrationPolicyModuleName;
+  tmpStr = getconfent("Policy","Migration",0);
+  if (tmpStr==NULL){
     castor::dlf::Param params[] =
       {castor::dlf::Param("message","No migration policy in castor.conf")};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, NO_POLICY, params);
+  } else {
+    migrationPolicyModuleName = tmpStr;
   }
 
   // get the policy stream policy name
 
-  char * streamPolicyModuleName = NULL;
+  std::string streamPolicyModuleName;
   
-  streamPolicyModuleName = getconfent("Policy","Stream",0);
-  if (streamPolicyModuleName==NULL){
+  tmpStr = getconfent("Policy","Stream",0);
+  if (tmpStr==NULL){
     castor::dlf::Param params[] =
       {castor::dlf::Param("message","No stream  policy in castor.conf")};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, NO_POLICY, params);
+  } else {
+    streamPolicyModuleName= tmpStr;
   }
 
   // Initialize Python
@@ -182,17 +187,17 @@ int castor::tape::mighunter::MigHunterDaemon::exceptionThrowingMain(int argc,
 
   PyObject* migrationPolicyDict = NULL;
 
-  if (migrationPolicyModuleName){
+  if (!migrationPolicyModuleName.empty()){
     // we get the dictionary just if we have a module name set in the castor.conf
-    migrationPolicyDict = castor::tape::python::importPolicyPythonModule(migrationPolicyModuleName);
+    migrationPolicyDict = castor::tape::python::importPolicyPythonModule(migrationPolicyModuleName.c_str());
     
   }
 
   PyObject* streamPolicyDict = NULL;
 
-  if (streamPolicyModuleName){
+  if (!streamPolicyModuleName.empty()){
     // we get the dictionary just if we have a module name set in the castor.conf
-    streamPolicyDict = castor::tape::python::importPolicyPythonModule(streamPolicyModuleName);
+    streamPolicyDict = castor::tape::python::importPolicyPythonModule(streamPolicyModuleName.c_str());
 
   }
 

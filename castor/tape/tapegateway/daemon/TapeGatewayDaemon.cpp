@@ -157,22 +157,27 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
  
   //Retrive the retry policies
 
-  char* migrationPolicyName=NULL;
-  migrationPolicyName = getconfent("Policy","MigrationRetry",0);
-  if (migrationPolicyName==NULL){
+  std::string migrationPolicyName;
+  char* tmpStr=NULL;
+  tmpStr = getconfent("Policy","MigrationRetry",0);
+  if (tmpStr==NULL){
     castor::dlf::Param params[] =
       {castor::dlf::Param("message","No policy for migration retry in castor.conf")};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, castor::tape::tapegateway::NO_RETRY_POLICY_FOUND, params);
+  } else {
+    migrationPolicyName = tmpStr;
   }
 
-  char* recallPolicyName=NULL;
-  recallPolicyName = getconfent("Policy","RecallRetry",0);
+  std::string recallPolicyName;
+  tmpStr = getconfent("Policy","RecallRetry",0);
   
-  if (recallPolicyName == NULL){
+  if (tmpStr == NULL){
     castor::dlf::Param params[] =
       {castor::dlf::Param("message","No policy for recall retry in castor.conf")};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, castor::tape::tapegateway::NO_RETRY_POLICY_FOUND, params);
     
+  } else {
+    recallPolicyName = tmpStr;
   }
 
   // Initialize Python
@@ -185,17 +190,17 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
 
   PyObject* migrationDict = NULL;
   
-  if (migrationPolicyName){
+  if (!migrationPolicyName.empty()){
   
-    migrationDict = castor::tape::python::importPolicyPythonModule(migrationPolicyName);
+    migrationDict = castor::tape::python::importPolicyPythonModule(migrationPolicyName.c_str());
 
   }
 
   PyObject* recallDict = NULL;
 
-  if (recallPolicyName){
+  if (!recallPolicyName.empty()){
 
-    recallDict = castor::tape::python::importPolicyPythonModule(recallPolicyName);
+    recallDict = castor::tape::python::importPolicyPythonModule(recallPolicyName.c_str());
 
   }
 
@@ -204,13 +209,13 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
     
   PyObject * migrationFunction=NULL;
 
-  if (migrationDict && migrationPolicyName)
-    migrationFunction = castor::tape::python::getPythonFunction(migrationDict,migrationPolicyName);
+  if (migrationDict && !migrationPolicyName.empty())
+    migrationFunction = castor::tape::python::getPythonFunction(migrationDict,migrationPolicyName.c_str());
 
   PyObject * recallFunction=NULL;
 
-  if (recallDict && recallPolicyName)
-    recallFunction = castor::tape::python::getPythonFunction(recallDict,recallPolicyName);
+  if (recallDict && !recallPolicyName.empty())
+    recallFunction = castor::tape::python::getPythonFunction(recallDict,recallPolicyName.c_str());
 
 
   // Get the min and max number of thread used by the Worker
