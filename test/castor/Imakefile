@@ -25,4 +25,4 @@
 #
 
 #SUBDIRS = db io dbC stgSvc monitoring dstage tape
-SUBDIRS = tape
+#SUBDIRS = tape
