@@ -28,7 +28,6 @@
 
 #include "castor/tape/python/Constants.hpp"
 #include "castor/tape/python/SmartPyObjectPtr.hpp"
-#include "castor/tape/utils/ScopedLock.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/serrno.h"
 
@@ -37,47 +36,11 @@
 #include <unistd.h>
 
 
-namespace castor {
-namespace tape   {
-namespace python {
-
-/**
- * Mutex used to serialise access to the internal data shared between the
- * functions of the castor::tape::python package.
- */
-static pthread_mutex_t functionDataMutex;
-
-/**
- * True if the initializedPython() function has been called, else false.
- */
-static bool initializedPythonCalled = false;
-
-} // namesapce python
-} // namespace tape
-} // namespace castor
-
-
 //---------------------------------------------------------------------------
 // initializePython
 //---------------------------------------------------------------------------
 void castor::tape::python::initializePython()
   throw(castor::exception::Exception) {
-
-  utils::ScopedLock scopedLock(functionDataMutex);
-
-  // Throw an exception if the initializePython() function has already been
-  // called
-  if(initializedPythonCalled) {
-    castor::exception::Exception ex(ECANCELED);
-
-    ex.getMessage() <<
-      "initializePython() has already been called";
-
-    throw(ex);
-  }
-
-  // Remember the initializePython() function has been called
-  initializedPythonCalled = true;
 
   // Append the CASTOR policies directory to the end of the PYTHONPATH
   // environment variable so the PyImport_ImportModule() function can find the
@@ -149,18 +112,6 @@ void castor::tape::python::initializePython()
 void castor::tape::python::finalizePython()
   throw(castor::exception::Exception) {
 
-  utils::ScopedLock scopedLock(functionDataMutex);
-
-  // Throw an exception if the initializePython() function has not been called
-  if(!initializedPythonCalled) {
-    castor::exception::Exception ex(ECANCELED);
-
-    ex.getMessage() <<
-      "initializePython() has not been called";
-
-    throw(ex);
-  }
-
   Py_Finalize();
 }
 
@@ -170,18 +121,6 @@ void castor::tape::python::finalizePython()
 //---------------------------------------------------------------------------
 PyObject * castor::tape::python::importPolicyPythonModule(
   const char *const moduleName) throw(castor::exception::Exception) {
-
-  utils::ScopedLock scopedLock(functionDataMutex);
-
-  // Throw an exception if the initializePython() function has not been called
-  if(!initializedPythonCalled) {
-    castor::exception::Exception ex(ECANCELED);
-
-    ex.getMessage() <<
-      "initializePython() has not been called";
-
-    throw(ex);
-  }
 
   if(moduleName == NULL) {
     castor::exception::InvalidArgument ex;
@@ -246,18 +185,6 @@ PyObject * castor::tape::python::importPolicyPythonModule(
 PyObject * castor::tape::python::getPythonFunction(PyObject *const pyDict,
   const char *const functionName)
   throw(castor::exception::Exception){
-
-  utils::ScopedLock scopedLock(functionDataMutex);
-
-  // Throw an exception if the initializePython() function has not been called
-  if(!initializedPythonCalled) {
-    castor::exception::Exception ex(ECANCELED);
-
-    ex.getMessage() <<
-      "initializePython() has not been called";
-
-    throw(ex);
-  }
 
   if(pyDict == NULL) {
     castor::exception::InvalidArgument ex;
