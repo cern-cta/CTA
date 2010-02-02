@@ -158,7 +158,7 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
   //Retrive the retry policies
 
   char* migrationPolicyName=NULL;
-  migrationPolicyName = getconfent("Policy","RetryMigration",0);
+  migrationPolicyName = getconfent("Policy","MigrationRetry",0);
   if (migrationPolicyName==NULL){
     castor::dlf::Param params[] =
       {castor::dlf::Param("message","No policy for migration retry in castor.conf")};
@@ -166,7 +166,7 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
   }
 
   char* recallPolicyName=NULL;
-  recallPolicyName = getconfent("Policy","RetryRecall",0);
+  recallPolicyName = getconfent("Policy","RecallRetry",0);
   
   if (recallPolicyName == NULL){
     castor::dlf::Param params[] =
