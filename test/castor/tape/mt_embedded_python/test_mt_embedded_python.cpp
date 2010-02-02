@@ -702,7 +702,7 @@ void *migrThreadRoutine(void *arg) {
  * converts the return value indicating an error into the throw of a
  * castor::exception::Exception.
  */
-int pthreadCreate(pthread_t *thread, const pthread_attr_t *attr,
+void pthreadCreate(pthread_t *thread, const pthread_attr_t *attr,
   void *(*start_routine)(void*), void *arg)
   throw(castor::exception::Exception) {
 
@@ -724,7 +724,7 @@ int pthreadCreate(pthread_t *thread, const pthread_attr_t *attr,
  * converts the return value indicating an error into the throw of a
  * castor::exception::Exception.
  */
-int pthreadJoin(pthread_t thread, void **value_ptr)
+void pthreadJoin(pthread_t thread, void **value_ptr)
   throw(castor::exception::Exception) {
 
   const int rc = pthread_join(thread, value_ptr);

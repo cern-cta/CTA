@@ -8,3 +8,5 @@ $(PROGRAM_NAME).o: $(PROGRAM_NAME).cpp
 
 clean:
 	rm -f $(PROGRAM_NAME) $(PROGRAM_NAME).o
+
+clobber: clean
