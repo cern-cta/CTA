@@ -131,12 +131,8 @@ PyObject * castor::tape::python::importPolicyPythonModule(
   const char *const moduleName) throw(castor::exception::Exception) {
 
   if(moduleName == NULL) {
-    castor::exception::InvalidArgument ex;
-
-    ex.getMessage() <<
-      "moduleName parameter is NULL";
-
-    throw(ex);
+    TAPE_THROW_EX(castor::exception::InvalidArgument,
+      ": moduleName parameter is NULL");
   }
 
   // Check the module file exists in the CASTOR_POLICIES_DIRECTORY as it is
@@ -195,21 +191,13 @@ PyObject * castor::tape::python::getPythonFunction(PyObject *const pyDict,
   throw(castor::exception::Exception){
 
   if(pyDict == NULL) {
-    castor::exception::InvalidArgument ex;
-
-    ex.getMessage() <<
-      "pyDict parameter is NULL";
-
-    throw(ex);
+    TAPE_THROW_EX(castor::exception::InvalidArgument,
+      ": pyDict parameter is NULL");
   }
 
   if(functionName == NULL) {
-    castor::exception::InvalidArgument ex;
-
-    ex.getMessage() <<
-      "functionName parameter is NULL";
-
-    throw(ex);
+    TAPE_THROW_EX(castor::exception::InvalidArgument,
+      ": functionName parameter is NULL");
   }
 
   // Get a pointer to the Python-function object
