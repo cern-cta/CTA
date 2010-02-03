@@ -3,5 +3,6 @@ nssetchecksum -n adler32 -k `echo "obase=16; $RANDOM" | bc` <noTapeFileName>
 stager_actualput -M <noTapeFileName> -P gsiftp >& <tmpLocalFileName>
 cat <tmpLocalFileName>
 <globus-url-copy> file://<localFileName> `tail -1 <tmpLocalFileName>`
-status=`stager_qry -M <noTapeFileName> | tail -1 | awk '{print $2;}' | cut -d / -f 1`; while [[ $status != '2' ]]; do sleep 15; status=`stager_qry -M <noTapeFileName> | tail -1 | awk '{print $2;}' | cut -d / -f 1` ; done
+sleep 5
+stager_qry -M <noTapeFileName>
 nsls -l <noTapeFileName>
