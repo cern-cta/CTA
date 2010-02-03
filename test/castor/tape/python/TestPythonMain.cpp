@@ -119,9 +119,19 @@ int exceptionThrowingMain(int argc, char **argv)
 
     return 1;
   } catch(castor::exception::Exception &ex) {
-    std::cout <<
-      "Succeeded to detect non-existant module" <<
-      std::endl;
+
+    if(ex.code() == ENOENT) {
+      std::cout <<
+        "Succeeded to detect non-existant module file" <<
+        std::endl;
+    } else {
+      std::cerr <<
+        "Test failed because importPolicyPythonModule() threw the wrong"
+        " exception" <<
+        std::endl;
+
+      return 1;
+    }
   }
 
   {
