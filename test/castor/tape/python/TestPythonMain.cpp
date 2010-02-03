@@ -87,6 +87,7 @@ int exceptionThrowingMain(int argc, char **argv)
 
   python::initializePython();
 
+  // Import a valid module and get a valid function
   PyObject * pyFunc = NULL;
   {
     python::ScopedPythonLock scopedPythonLock;
@@ -103,6 +104,24 @@ int exceptionThrowingMain(int argc, char **argv)
 
       return 1;
     }
+  }
+
+  // Import a non-existant module
+  try {
+    python::ScopedPythonLock scopedPythonLock;
+
+    python::importPolicyPythonModule("doesnotexist");
+
+    std::cerr <<
+      "Test failed because the importing of non-existant module apparently"
+      " worked" <<
+      std::endl;
+
+    return 1;
+  } catch(castor::exception::Exception &ex) {
+    std::cout <<
+      "Succeeded to detect non-existant module" <<
+      std::endl;
   }
 
   {

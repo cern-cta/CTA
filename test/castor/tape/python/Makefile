@@ -197,7 +197,54 @@ TestPythonMain.o: /usr/include/sys/cdefs.h /usr/include/gnu/stubs.h
 TestPythonMain.o: /usr/include/bits/types.h /usr/include/bits/wordsize.h
 TestPythonMain.o: /usr/lib/gcc/x86_64-redhat-linux/3.4.6/include/stddef.h
 TestPythonMain.o: /usr/include/bits/typesizes.h /usr/include/time.h
-TestPythonMain.o: /usr/include/pthread.h /usr/include/sched.h
-TestPythonMain.o: /usr/include/bits/sched.h /usr/include/signal.h
-TestPythonMain.o: /usr/include/bits/sigset.h /usr/include/bits/pthreadtypes.h
+TestPythonMain.o: /usr/local/src/CASTOR_SVN_CO/trunk/castor/tape/python/ScopedPythonLock.hpp
+TestPythonMain.o: /usr/local/src/CASTOR_SVN_CO/trunk/castor/tape/python/SmartPyObjectPtr.hpp
+TestPythonMain.o: /usr/local/src/CASTOR_SVN_CO/trunk/castor/tape/utils/utils.hpp
+TestPythonMain.o: /usr/local/src/CASTOR_SVN_CO/trunk/castor/exception/InvalidArgument.hpp
+TestPythonMain.o: /usr/local/src/CASTOR_SVN_CO/trunk/castor/exception/InvalidConfigEntry.hpp
+TestPythonMain.o: /usr/local/src/CASTOR_SVN_CO/trunk/castor/io/ServerSocket.hpp
+TestPythonMain.o: /usr/local/src/CASTOR_SVN_CO/trunk/h/net.h
+TestPythonMain.o: /usr/local/src/CASTOR_SVN_CO/trunk/h/socket_timeout.h
+TestPythonMain.o: /usr/include/sys/socket.h /usr/include/sys/uio.h
+TestPythonMain.o: /usr/include/bits/uio.h /usr/include/bits/socket.h
+TestPythonMain.o: /usr/include/limits.h
+TestPythonMain.o: /usr/lib/gcc/x86_64-redhat-linux/3.4.6/include/limits.h
+TestPythonMain.o: /usr/include/bits/sockaddr.h /usr/include/asm/socket.h
+TestPythonMain.o: /usr/include/asm-x86_64/socket.h /usr/include/asm/sockios.h
+TestPythonMain.o: /usr/include/asm-x86_64/sockios.h /usr/include/netinet/in.h
+TestPythonMain.o: /usr/include/stdint.h /usr/include/bits/wchar.h
+TestPythonMain.o: /usr/include/bits/in.h /usr/include/endian.h
+TestPythonMain.o: /usr/include/bits/endian.h /usr/include/bits/byteswap.h
+TestPythonMain.o: /usr/local/src/CASTOR_SVN_CO/trunk/castor/BaseObject.hpp
+TestPythonMain.o: /usr/local/src/CASTOR_SVN_CO/trunk/castor/dlf/Dlf.hpp
+TestPythonMain.o: /usr/local/src/CASTOR_SVN_CO/trunk/h/dlf_api.h
+TestPythonMain.o: /usr/include/syslog.h /usr/include/sys/syslog.h
+TestPythonMain.o: /usr/lib/gcc/x86_64-redhat-linux/3.4.6/include/stdarg.h
+TestPythonMain.o: /usr/local/src/CASTOR_SVN_CO/trunk/h/Cuuid.h
+TestPythonMain.o: /usr/local/src/CASTOR_SVN_CO/trunk/h/Cns_api.h
+TestPythonMain.o: /usr/include/utime.h
+TestPythonMain.o: /usr/local/src/CASTOR_SVN_CO/trunk/h/Cns_constants.h
+TestPythonMain.o: /usr/local/src/CASTOR_SVN_CO/trunk/h/Castor_limits.h
+TestPythonMain.o: /usr/local/src/CASTOR_SVN_CO/trunk/h/Cns_struct.h
+TestPythonMain.o: /usr/local/src/CASTOR_SVN_CO/trunk/castor/dlf/Message.hpp
+TestPythonMain.o: /usr/local/src/CASTOR_SVN_CO/trunk/castor/dlf/Param.hpp
+TestPythonMain.o: /usr/local/src/CASTOR_SVN_CO/trunk/castor/IObject.hpp
+TestPythonMain.o: /usr/local/src/CASTOR_SVN_CO/trunk/castor/stager/TapeVid.hpp
+TestPythonMain.o: /usr/local/src/CASTOR_SVN_CO/trunk/castor/dlf/IPAddress.hpp
+TestPythonMain.o: /usr/local/src/CASTOR_SVN_CO/trunk/castor/dlf/TimeStamp.hpp
+TestPythonMain.o: /usr/include/string.h /usr/include/stdlib.h
+TestPythonMain.o: /usr/local/src/CASTOR_SVN_CO/trunk/castor/io/AbstractTCPSocket.hpp
+TestPythonMain.o: /usr/local/src/CASTOR_SVN_CO/trunk/castor/io/AbstractSocket.hpp
+TestPythonMain.o: /usr/local/src/CASTOR_SVN_CO/trunk/castor/tape/Constants.hpp
+TestPythonMain.o: /usr/local/src/CASTOR_SVN_CO/trunk/castor/tape/tapegateway/ClientType.hpp
+TestPythonMain.o: /usr/local/src/CASTOR_SVN_CO/trunk/castor/tape/tapegateway/VolumeMode.hpp
+TestPythonMain.o: /usr/include/errno.h /usr/include/bits/errno.h
+TestPythonMain.o: /usr/include/linux/errno.h /usr/include/asm/errno.h
+TestPythonMain.o: /usr/include/asm-x86_64/errno.h /usr/include/pthread.h
+TestPythonMain.o: /usr/include/sched.h /usr/include/bits/sched.h
+TestPythonMain.o: /usr/include/signal.h /usr/include/bits/sigset.h
+TestPythonMain.o: /usr/include/bits/pthreadtypes.h
 TestPythonMain.o: /usr/include/bits/initspin.h /usr/include/bits/sigthread.h
+TestPythonMain.o: /usr/include/unistd.h /usr/include/bits/posix_opt.h
+TestPythonMain.o: /usr/include/bits/confname.h /usr/include/sys/stat.h
+TestPythonMain.o: /usr/include/bits/stat.h
