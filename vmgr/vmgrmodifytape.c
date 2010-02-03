@@ -141,7 +141,8 @@ char **argv;
     if(serrno == EEXIST){
       fprintf (stderr, "vmgrmodifytape %s:"
        " There are physical files on the tape."
-       " Please reclaim the tape before modify the density or the lable.\n", vid);
+       " Please reclaim the tape before modify the density or the label.\n",
+       vid);
     }
     else {
       fprintf (stderr, "vmgrmodifytape %s: %s\n", vid,
