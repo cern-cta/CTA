@@ -2935,3 +2935,27 @@ following web url:
 
 https://twiki.cern.ch/twiki/bin/view/FIOgroup/CastorV2HowToUseRepack
 
+
+How to modify version 2.1.9-0 of the stager database ready for the tape gateway
+===============================================================================
+
+Add the TapeGatewayRequest and TapeGatewaySubRequest tables to the stager
+database by running the corresponding "CREATE TABLE" statements from the
+following file:
+
+    castor/db/oracleSchema.sql
+
+Add the possible states of a TapeGatewayRequest object to the ObjStatus table
+by executing the necessary SQL inserts also found in the above file.
+
+Add the database indicies and constraints of the TapeGatewayRequest and
+TapeGatewaySubRequest tables by executing the necessary SQL statements from
+the following file:
+
+    castor/db/oracleCommon.schema.sql
+
+Create the PL/SQL procedures used by the tape gateway by executing the entirety
+of the following file:
+
+    castor/db/oracleTapeGateway.sql
+
