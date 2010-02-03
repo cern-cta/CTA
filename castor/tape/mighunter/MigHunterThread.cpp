@@ -52,6 +52,8 @@
 #include "castor/tape/python/ScopedPythonLock.hpp"
 #include "castor/tape/python/SmartPyObjectPtr.hpp"
 
+#include "castor/tape/utils/utils.hpp"
+
 #include "h/Cns_api.h"
 #include "h/getconfent.h"
 
@@ -125,7 +127,7 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(
     MigrationPolicyElementList candidatesToRestore;
     MigrationPolicyElementList invalidTapeCopies;
 
-    std::map<u_signed64, std::list<MigrationPolicyElement> >      eligibleCandidates;
+    std::map<u_signed64, std::list<MigrationPolicyElement> > eligibleCandidates;
 
     try { // to catch exceptions specific of a svcclass
 
@@ -277,9 +279,32 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(
         // policy called for each tape copy for each tape pool
         try {
 
-          // Attach the tape copy if there is no policy
-          if ( m_migrationPolicyDict == NULL ||
-            infoCandidate->policyName.empty() ) {
+          // Get a lock on the embedded Python-interpreter
+          castor::tape::python::ScopedPythonLock scopedPythonLock;
+
+          // Try to get a handle on the migration-policy Python-function
+          PyObject *migrationPolicyFunc = NULL;
+          if(m_migrationPolicyDict != NULL &&
+            !infoCandidate->policyName.empty()) {
+
+            migrationPolicyFunc = python::getPythonFunction(
+              m_migrationPolicyDict, infoCandidate->policyName.c_str());
+
+            // Log an alert if the function does not exist in the Python-module
+            if(migrationPolicyFunc == NULL) {
+              castor::dlf::Param params[] = {
+                castor::dlf::Param("SvcClass"    ,*svcClassName            ),
+                castor::dlf::Param("tapecopy id" ,infoCandidate->tapeCopyId),
+                castor::dlf::Param("functionName",infoCandidate->policyName)};
+
+              castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT,
+                MIGRATION_POLICY_FUNCTION_NOT_IN_MODULE, params, &castorFileId);
+            }
+          }
+
+          // Attach the tape-copy if there is no migration-policy
+          // Python-function
+          if(migrationPolicyFunc == NULL) {
 
             castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
               START_WITHOUT_POLICY, paramsOutput, &castorFileId);
@@ -296,7 +321,8 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(
             int policyResult = 0;
             try {
 
-              policyResult = applyMigrationPolicy(*infoCandidate);
+              policyResult = applyMigrationPolicy(migrationPolicyFunc,
+                *infoCandidate);
 
             } catch(castor::exception::Exception &ex) {
 
@@ -306,7 +332,8 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(
               castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
                 FAILED_TO_APPLY_MIGRATION_POLICY, params, &castorFileId);
 
-              // Treat an exception in the same way as there being no policy
+              // Treat an exception in the same way as there being no policy,
+              // i.e. attach the tape-copy
               eligibleCandidates[infoCandidate->tapePoolId].push_back(
                 *infoCandidate);
 
@@ -338,6 +365,7 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(
           } 
 
         } catch (castor::exception::Exception &e) {
+          // An exception here is fatal.  Log a message and exit
           struct Cns_fileid castorFileId;
           memset(&castorFileId,'\0',sizeof(castorFileId));
           strncpy(
@@ -503,14 +531,16 @@ void castor::tape::mighunter::MigHunterThread::getInfoFromNs(
 //------------------------------------------------------------------------------
 // applyMigrationPolicy
 //------------------------------------------------------------------------------
-int castor::tape::mighunter::MigHunterThread::applyMigrationPolicy(MigrationPolicyElement &elem)
+int castor::tape::mighunter::MigHunterThread::applyMigrationPolicy(
+  PyObject *const                                 pyFunc,
+  castor::tape::mighunter::MigrationPolicyElement &elem)
   throw(castor::exception::Exception) {
 
-  // get the lock
+  if(pyFunc == NULL) {
+    TAPE_THROW_EX(castor::exception::InvalidArgument,
+     ": pyFunc parameter is NULL");
+  }
 
-
-  castor::tape::python::ScopedPythonLock scopedPythonLock;
-  
   // Create the input tuple for the migration-policy Python-function
   //
   // python-Bugs-1308740  Py_BuildValue (C/API): "K" format
@@ -530,13 +560,9 @@ int castor::tape::mighunter::MigHunterThread::applyMigrationPolicy(MigrationPoli
     elem.cTime,
     elem.fileClass));
 
-
-  // Get a pointer to the migration-policy Python-function
-
-  PyObject* pyFunc = castor::tape::python::getPythonFunction( (PyObject*)m_migrationPolicyDict,
-							      (char*)elem.policyName.c_str());
   // Call the migration-policy Python-function
-  castor::tape::python::SmartPyObjectPtr resultObj(PyObject_CallObject(pyFunc, inputObj.get()));
+  castor::tape::python::SmartPyObjectPtr resultObj(PyObject_CallObject(pyFunc,
+    inputObj.get()));
 
   // Throw an exception if the migration-policy Python-function call failed
   if(resultObj.get() == NULL) {
@@ -550,6 +576,5 @@ int castor::tape::mighunter::MigHunterThread::applyMigrationPolicy(MigrationPoli
   }
 
   // Return the result of the Python function
-  const int resultInt = PyInt_AsLong(resultObj.get());
-  return resultInt;
+  return PyInt_AsLong(resultObj.get());
 }

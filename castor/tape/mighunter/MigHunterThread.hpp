@@ -78,7 +78,7 @@ private:
   /**
    * The Python dictionary object associated with the migration policy module.
    */
-  const PyObject *const m_migrationPolicyDict;
+  PyObject *const m_migrationPolicyDict;
 
   /**
    * The indirect exception throw entry point for MigHunter threads that is
@@ -88,6 +88,10 @@ private:
    */
   void exceptionThrowingRun(void *arg) throw(castor::exception::Exception);
 
+  /**
+   * Get the values of the attributes stored in the name server for the
+   * specified candiate.
+   */
   void getInfoFromNs(const std::string &svcClassName,
     castor::tape::mighunter::MigrationPolicyElement &elem) const
     throw (castor::exception::Exception);
@@ -98,9 +102,13 @@ private:
    * Please note that this method does not obtain a lock on the Python
    * interpreter.
    *
-   * @param elem The policy element to be passed to the migration policy.
+   * @param pyFunc The migration-policy Python-function.
+   * @param elem   The policy element to be passed to the migration-policy
+   *               Python-function.
    */
-  int applyMigrationPolicy(castor::tape::mighunter::MigrationPolicyElement &elem)
+  int applyMigrationPolicy(
+    PyObject *const                                 pyFunc,
+    castor::tape::mighunter::MigrationPolicyElement &elem)
     throw(castor::exception::Exception);
         
 public:

@@ -61,7 +61,7 @@ private:
   /**
    * The Python dictionary object associated with the stream policy module.
    */
-  const PyObject *const m_streamPolicyDict;
+  PyObject *const m_streamPolicyDict;
 
   /**
    * The indirect exception throw entry point for stream threads that is
@@ -77,9 +77,13 @@ private:
    * Please note that this method does not obtain a lock on the Python
    * interpreter.
    *
-   * @param elem The policy element to be passed to the stream policy.
+   * @param pyFunc The stream-policy Python-function.
+   * @param elem   The policy element to be passed to the stream-policy
+   *               Python-function.
    */
-  int applyStreamPolicy(castor::tape::mighunter::StreamPolicyElement &elem)
+  int applyStreamPolicy(
+    PyObject *const                              pyFunc,
+    castor::tape::mighunter::StreamPolicyElement &elem)
     throw(castor::exception::Exception);
 
 public:

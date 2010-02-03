@@ -51,6 +51,8 @@
 #include "castor/tape/python/ScopedPythonLock.hpp"
 #include "castor/tape/python/SmartPyObjectPtr.hpp"
 
+#include "castor/tape/utils/utils.hpp"
+
 #include "h/Cns_api.h"
 #include "h/getconfent.h"
 #include "h/u64subr.h"
@@ -206,9 +208,32 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(
 
         // policy called for each tape copy for each tape pool
         try {
-          // Attach the stream if there is no policy
-          if (m_streamPolicyDict == NULL ||
-            infoCandidateStream->policyName.empty()){
+
+          // Get a lock on the embedded Python-interpreter
+          castor::tape::python::ScopedPythonLock scopedPythonLock;
+
+          // Try to get a handle on the stream-policy Python-function
+          PyObject *streamPolicyFunc = NULL;
+          if(m_streamPolicyDict != NULL &&
+            !infoCandidateStream->policyName.empty()) {
+
+            streamPolicyFunc = python::getPythonFunction(
+              m_streamPolicyDict, infoCandidateStream->policyName.c_str());
+
+            // Log an alert if the function does not exist in the Python-module
+            if(streamPolicyFunc == NULL) {
+              castor::dlf::Param params[] = {
+                castor::dlf::Param("SvcClass",*svcClassName),
+                castor::dlf::Param("stream id",infoCandidateStream->streamId),
+                castor::dlf::Param("functionName",infoCandidateStream->policyName)};
+
+              castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT,
+                STREAM_POLICY_FUNCTION_NOT_IN_MODULE, params);
+            }
+          }
+
+          // Attach the stream if there is no stream-policy Python-function
+          if(streamPolicyFunc == NULL) {
 
             castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
               START_WITHOUT_POLICY, paramsOutput);
@@ -224,7 +249,8 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(
             int policyResult = 0;
             try {
 
-              policyResult = applyStreamPolicy(*infoCandidateStream);
+              policyResult = applyStreamPolicy(streamPolicyFunc,
+                *infoCandidateStream);
 
             } catch(castor::exception::Exception &ex) {
 
@@ -234,7 +260,8 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(
               castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
                 FAILED_TO_APPLY_STREAM_POLICY, params);
 
-              // Treat an exception in the same way as there being no policy
+              // Treat an exception in the same way as there being no policy,
+              // i.e. attach the stream
               eligibleStreams.push_back(*infoCandidateStream);
               runningStreams++;
               withoutPolicy++;
@@ -266,6 +293,7 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(
           }
 
         } catch (castor::exception::Exception &e) {
+          // An exception here is fatal.  Log a message and exit
           castor::dlf::Param params[] = {
             castor::dlf::Param("policy","Stream Policy"),
             castor::dlf::Param("code", sstrerror(e.code())),
@@ -343,11 +371,14 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(
 // applyStreamPolicy
 //------------------------------------------------------------------------------
 int castor::tape::mighunter::StreamThread::applyStreamPolicy(
+  PyObject *const                              pyFunc,
   castor::tape::mighunter::StreamPolicyElement &elem)
   throw(castor::exception::Exception) {
 
-  // get the lock
-  castor::tape::python::ScopedPythonLock scopedPythonLock;
+  if(pyFunc == NULL) {
+    TAPE_THROW_EX(castor::exception::InvalidArgument,
+     ": pyFunc parameter is NULL");
+  }
   
   // Create the input tuple for the stream-policy Python-function
   //
@@ -361,13 +392,9 @@ int castor::tape::mighunter::StreamThread::applyStreamPolicy(
     elem.maxNumStreams,
     elem.age));
 
-  // Get a pointer to the stream-policy Python-function
-
-  PyObject* pyFunc = castor::tape::python::getPythonFunction((PyObject*)m_streamPolicyDict,
-								  (char*)elem.policyName.c_str());
-
   // Call the stream-policy Python-function
-  castor::tape::python::SmartPyObjectPtr resultObj(PyObject_CallObject(pyFunc, inputObj.get()));
+  castor::tape::python::SmartPyObjectPtr resultObj(PyObject_CallObject(pyFunc,
+    inputObj.get()));
 
   // Throw an exception if the stream-policy Python-function call failed
   if(resultObj.get() == NULL) {
@@ -381,6 +408,5 @@ int castor::tape::mighunter::StreamThread::applyStreamPolicy(
   }
 
   // Return the result of the Python function
-  const int resultInt = PyInt_AsLong(resultObj.get());
-  return resultInt;
+  return PyInt_AsLong(resultObj.get());
 }
