@@ -148,11 +148,13 @@ PyObject * castor::tape::python::importPolicyPythonModule(
     try {
       utils::statFile(fullPathname.c_str(), buf);
     } catch(castor::exception::Exception &ex) {
-      castor::exception::Exception ex1(ex.code());
+      castor::exception::Exception ex2(ex.code());
 
-      ex.getMessage() <<
+      ex2.getMessage() <<
         "Failed to get information about the CASTOR-policy Python-module"
         ": " << ex.getMessage().str();
+
+      throw(ex2);
     }
 
     // Throw an exception if the module file is not a regular file
