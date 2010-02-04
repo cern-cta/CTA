@@ -64,6 +64,14 @@ void finalizePython() throw();
  * Python-module search path which includes the
  * castor::tape::python::CASTOR_POLICIES_DIRECTORY directory.
  *
+ * The CASTOR-policy must be implemented by a '*.py' file in the
+ * castor::tape::python::CASTOR_POLICIES_DIRECTORY directory.  A '*.pyc' by
+ * itself will be rejected.  In this sense the importPolicyPythonModule()
+ * function is stricter than the underlying PyImport_ImportModule() method
+ * which would work if only a '*.pyc' file was present.  The reason for this
+ * enforced strictness is that CASTOR operators should be able to see in a
+ * human-readbale form the logic implementing a CASTOR-policy.
+ *
  * Please note that initPython() must be called before this function is called.
  *
  * Please not that the calling thread MUST have a lock on the global Python
