@@ -78,7 +78,7 @@ int castor::tape::tapegateway::TapeGatewayDaemon::main(int argc, char* argv[]){
 // Try to initialize the DLF logging system, quitting with an error message
   // to stderr if the initialization fails
   try {
-
+    
     castor::server::BaseServer::dlfInit(s_dlfMessages);
 
   } catch(castor::exception::Exception &ex) {
@@ -157,7 +157,7 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
  
   //Retrive the retry policies
 
-  std::string migrationPolicyName;
+  std::string migrationPolicyName("migrationRetry");
   char* tmpStr=NULL;
   tmpStr = getconfent("Policy","MigrationRetry",0);
   if (tmpStr==NULL){
@@ -168,9 +168,8 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
     migrationPolicyName = tmpStr;
   }
 
-  std::string recallPolicyName;
+  std::string recallPolicyName("recallRetry");
   tmpStr = getconfent("Policy","RecallRetry",0);
-  
   if (tmpStr == NULL){
     castor::dlf::Param params[] =
       {castor::dlf::Param("message","No policy for recall retry in castor.conf")};
@@ -179,14 +178,15 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
   } else {
     recallPolicyName = tmpStr;
   }
-
+  
   // Initialize Python
 
   castor::tape::python::initializePython();
 
+  // Load the policies
+
   castor::tape::python::ScopedPythonLock scopedLock;
 
-  // Load the policies
 
   PyObject* migrationDict = NULL;
   
@@ -211,7 +211,7 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
 
   if (migrationDict && !migrationPolicyName.empty())
     migrationFunction = castor::tape::python::getPythonFunction(migrationDict,migrationPolicyName.c_str());
-
+  
   PyObject * recallFunction=NULL;
 
   if (recallDict && !recallPolicyName.empty())
