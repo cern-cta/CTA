@@ -11,7 +11,8 @@
 
 /* trigger recall */
 
-CREATE OR REPLACE TRIGGER tr_Tape_Pending
+create or replace
+TRIGGER tr_Tape_Pending
 AFTER UPDATE of status ON Tape
 FOR EACH ROW
 WHEN (new.status = 1 and new.tpmode=0)
@@ -22,25 +23,40 @@ DECLARE
 
 BEGIN
   BEGIN
+      SELECT value INTO unused
+        FROM CastorConfig
+      WHERE class = 'tape'
+         AND key   = 'daemonName'
+        AND value = 'tapegatewayd';
+    EXCEPTION WHEN NO_DATA_FOUND THEN  
+      -- rtcpclientd is running the trigger 
+      -- should not do anything
+      RETURN;
+    END;
+  -- tapegateway is running and the trigger
+  -- can execute its operations
+   BEGIN
 
-    SELECT id INTO unused 
-        FROM TapeGatewayRequest 
-      	WHERE taperecall=:new.id;
+      SELECT id INTO unused 
+          FROM TapeGatewayRequest 
+        	WHERE taperecall=:new.id;
  
-  EXCEPTION WHEN NO_DATA_FOUND THEN
+    EXCEPTION WHEN NO_DATA_FOUND THEN
 
-    INSERT INTO TapeGatewayRequest
-	(accessmode, starttime, lastvdqmpingtime, vdqmvolreqid, id, streammigration, taperecall, status) 
-	VALUES (0,null,null,null,ids_seq.nextval,null,:new.id,1)  RETURNING id into reqId;
-    INSERT INTO id2type (id,type) VALUES (reqId,172); 
+      INSERT INTO TapeGatewayRequest
+    (accessmode, starttime, lastvdqmpingtime, vdqmvolreqid, id, streammigration, taperecall, status) 
+    VALUES (0,null,null,null,ids_seq.nextval,null,:new.id,1)  RETURNING id into reqId;
+      INSERT INTO id2type (id,type) VALUES (reqId,172); 
 
-  END; 
+   END; 
 END;
 /
 
+
 /* trigger migration */
 
-CREATE OR REPLACE TRIGGER tr_Stream_Pending
+create or replace
+TRIGGER tr_Stream_Pending
 AFTER UPDATE of status ON Stream
 FOR EACH ROW
 WHEN (new.status = 0 )
@@ -50,9 +66,22 @@ DECLARE
   unused NUMBER;
 
 BEGIN 
+  BEGIN
+    SELECT value INTO unused
+      FROM CastorConfig
+     WHERE class = 'tape'
+       AND key   = 'daemonName'
+       AND value = 'tapegatewayd';
+  EXCEPTION WHEN NO_DATA_FOUND THEN  
+    -- rtcpclientd is running the trigger 
+    -- should not do anything
+    RETURN;
+  END;
+
+  -- tapegateway is running and the trigger
+  -- can execute its operations
 
   BEGIN
-
     SELECT id INTO unused 
 	FROM TapeGatewayRequest 
 	WHERE streammigration=:new.id;
@@ -68,6 +97,7 @@ BEGIN
 
 END;
 /
+
 
 /* PROCEDURE */
 
