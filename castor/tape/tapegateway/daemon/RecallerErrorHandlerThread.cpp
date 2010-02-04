@@ -127,10 +127,6 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void* par)
     
     try {
 
-      //apply the policy using a scoped lock as protection
-
-      castor::tape::python::ScopedPythonLock scopedPythonLock;
-
       if ( applyRetryRecallPolicy(*tcItem)) {
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, REC_ERROR_RETRY, params);
 	tcIdsToRetry.push_back( (*tcItem).tapeCopyId);
@@ -164,8 +160,8 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void* par)
     castor::dlf::Param paramsDbUpdate[] =
 	{
 	  castor::dlf::Param("ProcessingTime", procTime * 0.000001),
-	  castor::dlf::Param("tapecopies set to be retried",tcIdsToRetry.size()),
-	  castor::dlf::Param("failed tapecopies",tcIdsToFail.size())
+	  castor::dlf::Param("tapecopies to retry",tcIdsToRetry.size()),
+	  castor::dlf::Param("tapecopies to fail",tcIdsToFail.size())
 	};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, REC_ERROR_RESULT_SAVED, paramsDbUpdate);
     
@@ -188,10 +184,15 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void* par)
 bool castor::tape::tapegateway::RecallerErrorHandlerThread::applyRetryRecallPolicy(const RetryPolicyElement& elem)
   throw (castor::exception::Exception ){
 
-  // if we don't have any function available we always retry to recall the tapecopy
+  // if the function is null, I allow the retry
+
 
   if (m_pyFunction == NULL)
     return true;
+
+
+  castor::tape::python::ScopedPythonLock scopedPythonLock;
+  // if we don't have any function available we always retry to recall the tapecopy
 
   // Create the input tuple for retry migration policy Python-function
   //

@@ -196,6 +196,7 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
 
   }
 
+
   PyObject* recallDict = NULL;
 
   if (!recallPolicyName.empty()){
@@ -204,6 +205,7 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
 
   }
 
+
   // Get the functions from the dictionaries to be used by the threads
   // name of the function is the same as the module
     
@@ -211,11 +213,35 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
 
   if (migrationDict && !migrationPolicyName.empty())
     migrationFunction = castor::tape::python::getPythonFunction(migrationDict,migrationPolicyName.c_str());
+
+  if (migrationFunction == NULL){
+
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("message", "No migration retry function found in the python module"),
+       castor::dlf::Param("functionName",migrationPolicyName.c_str())
+      };
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, castor::tape::tapegateway::NO_RETRY_POLICY_FOUND, params);
+
+  }
+
+
   
   PyObject * recallFunction=NULL;
 
   if (recallDict && !recallPolicyName.empty())
     recallFunction = castor::tape::python::getPythonFunction(recallDict,recallPolicyName.c_str());
+
+
+  if (recallFunction == NULL){
+
+      castor::dlf::Param params[] =
+      {castor::dlf::Param("message", "No recall retry function found in the python module"),
+       castor::dlf::Param("functionName",recallPolicyName.c_str())
+      };
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, castor::tape::tapegateway::NO_RETRY_POLICY_FOUND, params);
+  }
+
+
 
 
   // Get the min and max number of thread used by the Worker
