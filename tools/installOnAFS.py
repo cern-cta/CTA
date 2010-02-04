@@ -18,13 +18,9 @@ gccVersions = {'SL5' : ['gcc41-opt', 'gcc34-opt', 'gcc43-opt']}
 
 def buildSFTdir(plat, arch):
     if plat == 'SL4':   # old conventions
-        return [afsdir + version + '/' + platformConversion[plat] + '_' + oldArchConversion[arch] + '_' + oldGccVersion[plat]]
+        return [afsdir + version + '/' + platformConversion[plat] + '_' + oldArchConversion[arch] + '_' + gccversion for gccversion in oldGccVersion[plat]]
     else:
-        base = afsdir + version + '/' + archConversion[arch] + '-' + platformConversion[plat] + '-'
-        ret = []
-        for v in gccVersions[plat]:
-            ret.append(base + v)
-        return ret
+        return [afsdir + version + '/' + archConversion[arch] + '-' + platformConversion[plat] + '-' + gccversion for gccversion in gccVersions[plat]]
 
 for plat in ('SL4', 'SL5'):
     for arch in ('i386', 'x86_64'):
