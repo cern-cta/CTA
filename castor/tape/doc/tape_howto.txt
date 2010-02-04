@@ -2959,3 +2959,36 @@ of the following file:
 
     castor/db/oracleTapeGateway.sql
 
+
+How to create and reset a group of tape copies ready for testing the migunter
+=============================================================================
+
+With a stager database containing no tape copies, stop the rtcpclientd
+daemon:
+
+/etc/init.d/rtcpclientd stop
+
+Create a relatively small source file on a local disk which will be copied into
+CASTOR a 100 times to create 100 tape copies:
+
+dd if=/dev/urandom of=/tmp/100M
+
+Create a destination directory in your CASTOR namespace:
+
+nsmkdir /castor/cern.ch/dev/m/murrayc3/mighuntertest
+
+Execute 100 rfcp commands to create 100 tape copies in the stager database
+
+for I in `seq 100`; do DEST=/castor/cern.ch/dev/m/murrayc3/mighuntertest/100M_$I; echo $DEST; rfcp /tmp/100M $DEST; done
+
+The database is now ready for testing the mighunter.  After a test is complete
+the database can be "reset" by deleting all of the rows in the stream2tapecopy
+table, then deleting all of the rows in the stream table together with the
+associated rows in the id2type table and then reseting the status column of all
+the rows in the tapecopy table to 0 (TAPECOPY_CREATED).
+
+delete from stream2tapecopy;
+delete from id2type where id in (select id from stream);
+delete from stream;
+update tapecopy set status = 0;
+
