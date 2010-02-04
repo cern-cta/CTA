@@ -77,7 +77,7 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void* par)
   gettimeofday(&tvStart, NULL);
 
   std::list<RetryPolicyElement> tcList;
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,MIG_ERROR_GETTING_FILES, 0, NULL);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,MIG_ERROR_GETTING_FILES, 0, NULL);
 
   try {
     oraSvc->getFailedMigrations(tcList);
@@ -87,12 +87,12 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void* par)
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
        castor::dlf::Param("errorMessage",e.getMessage().str())
       };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,MIG_ERROR_NO_FILE, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,MIG_ERROR_NO_TAPECOPY, params);
     return;
   }
 
   if (tcList.empty()){
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,MIG_ERROR_NO_FILE, 0, NULL);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,MIG_ERROR_NO_TAPECOPY, 0, NULL);
     return;
 
   }

@@ -79,7 +79,7 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void* par)
   timeval tvStart,tvEnd;
   gettimeofday(&tvStart, NULL);
 
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, REC_ERROR_GETTING_FILES, 0, NULL);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, REC_ERROR_GETTING_FILES, 0, NULL);
   std::list<RetryPolicyElement> tcList;
 
   try {
@@ -90,12 +90,12 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void* par)
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
        castor::dlf::Param("errorMessage",e.getMessage().str())
       };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, REC_ERROR_NO_FILE, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, REC_ERROR_NO_TAPECOPY, params);
     return;
   }
 
   if (tcList.empty()) {
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, REC_ERROR_NO_FILE, 0, NULL);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, REC_ERROR_NO_TAPECOPY, 0, NULL);
     return;
   }
 
