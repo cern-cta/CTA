@@ -1710,13 +1710,36 @@ END restartStuckRecalls;
 
 
 /*
+ Create a db job to be run every hour executing the restartStuckRecalls
+ workaround procedure
+*/
+BEGIN
+  -- Remove database jobs before recreating them
+  FOR j IN (SELECT job_name FROM user_scheduler_jobs
+             WHERE job_name IN ('RESTARTSTUCKRECALLSJOB'))
+  LOOP
+    DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
+  END LOOP;
+
+  DBMS_SCHEDULER.CREATE_JOB(
+      JOB_NAME        => 'RESTARTSTUCKRECALLSJOB',
+      JOB_TYPE        => 'PLSQL_BLOCK',
+      JOB_ACTION      => 'BEGIN restartStuckRecalls(); END;',
+      JOB_CLASS       => 'CASTOR_JOB_CLASS',
+      START_DATE      => SYSDATE + 60/1440,
+      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=60',
+      ENABLED         => TRUE,
+      COMMENTS        => 'Workaround to restart stuck recalls');
+END;
+/
+
+
+/*
  Trigger used to handle the swtichover between tapegatewayd and rtcpclientd.
  When the entry in castorconfig with class='tape' and key='daemonName' will change its
  value the database will be modified to be compatible with the new daemon running
  which will be the tapegatewayd or rtcpcliend. 
 */
-
-
 create or replace
 TRIGGER tr_tapegateway_switchover
 AFTER UPDATE of value ON castorconfig
@@ -1731,8 +1754,7 @@ DECLARE
   
 BEGIN
 
-  -- Remove database jobs
-  -- they will be recreated just if rtcpclientd is going to run 
+  -- Remove the RESTARTSTUCKRECALLSJOB database jobs
 
   FOR j IN (SELECT job_name FROM user_scheduler_jobs
              WHERE job_name IN ('RESTARTSTUCKRECALLSJOB'))
@@ -1740,22 +1762,51 @@ BEGIN
     DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
   END LOOP;
 
- IF :new.value = 'rtcpclientd' THEN
+  IF :new.value = 'rtcpclientd' THEN
   
-  -- we stop the tapegateway and we start rtcpclientd
+    -- we stop the tapegateway and we start rtcpclientd
 
-  DELETE FROM TapeGatewaySubRequest RETURNING id BULK COLLECT INTO idsList;  
-  FORALL i IN idsList.FIRST ..  idsList.LAST 
-	DELETE FROM id2type WHERE  id= idsList(i);
-  DELETE FROM TapeGatewayRequest RETURNING id BULK COLLECT INTO idsList;  
-  FORALL i IN idsList.FIRST ..  idsList.LAST 
-	DELETE FROM id2type WHERE  id= idsList(i);
+    DELETE FROM TapeGatewaySubRequest RETURNING id BULK COLLECT INTO idsList;  
+    FORALL i IN idsList.FIRST ..  idsList.LAST 
+      DELETE FROM id2type WHERE  id= idsList(i);
+    DELETE FROM TapeGatewayRequest RETURNING id BULK COLLECT INTO idsList;  
+    FORALL i IN idsList.FIRST ..  idsList.LAST 
+      DELETE FROM id2type WHERE  id= idsList(i);
   
-  -- Recreate a db job to be run every hour executing the restartStuckRecalls 
-  -- workaround procedure for rtcpclientd
-
+  END IF; -- IF :new.value = 'rtcpclientd' THEN
+ 
+  IF :new.value = 'tapegatewayd' THEN
+ 
+    -- we stop rtcpclientd and we start the tapegateway
+ 
+    -- Deal with Migrations
+    -- 1) Ressurect tapecopies for migration
+    UPDATE TapeCopy SET status = 1 WHERE status = 3;
+    -- 2) Clean up the streams
+    UPDATE Stream SET status = 0 
+      WHERE status NOT IN (0, 5, 6, 7) --PENDING, CREATED, STOPPED, WAITPOLICY
+      RETURNING tape BULK COLLECT INTO tpIds;
+    UPDATE Stream SET tape = NULL WHERE tape != 0;
+    -- 3) Reset the tape for migration
+    FORALL i IN tpIds.FIRST .. tpIds.LAST  
+      UPDATE tape SET stream = 0, status = 0
+        WHERE status IN (2, 3, 4) AND id = tpIds(i);
+    -- Deal with Recalls
+    UPDATE Segment SET status = 0
+      WHERE status = 7; -- Resurrect SELECTED segment
+    UPDATE Tape SET status = 1
+      WHERE tpmode = 0 AND status IN (2, 3, 4); -- Resurrect the tapes running for recall
+    UPDATE Tape A SET status = 8 
+      WHERE status IN (0, 6, 7) AND EXISTS
+        (SELECT id FROM Segment WHERE status = 0 AND tape = A.id);
+  END IF; -- IF :new.value = 'tapegatewayd'
+  
+  -- Recreate the RESTARTSTUCKRECALLSJOB db job
+  --
+  -- Please not that this procedure safely does nothing if the tape gateway is
+  -- running
   DBMS_SCHEDULER.CREATE_JOB(
-      JOB_NAME        => 'restartStuckRecallsJob',
+      JOB_NAME        => 'RESTARTSTUCKRECALLSJOB',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN restartStuckRecalls(); END;',
       JOB_CLASS       => 'CASTOR_JOB_CLASS',
@@ -1763,33 +1814,5 @@ BEGIN
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=60',
       ENABLED         => TRUE,
       COMMENTS        => 'Workaround to restart stuck recalls');
-  
- END IF;
- 
- 
- IF :new.value = 'tapegatewayd' THEN
- 
- -- we stop rtcpclientd and we start the tapegateway
- 
-   -- Deal with Migrations
-  -- 1) Ressurect tapecopies for migration
-  UPDATE TapeCopy SET status = 1 WHERE status = 3;
-  -- 2) Clean up the streams
-  UPDATE Stream SET status = 0 
-   WHERE status NOT IN (0, 5, 6, 7) --PENDING, CREATED, STOPPED, WAITPOLICY
-  RETURNING tape BULK COLLECT INTO tpIds;
-  UPDATE Stream SET tape = NULL WHERE tape != 0;
-  -- 3) Reset the tape for migration
-  FORALL i IN tpIds.FIRST .. tpIds.LAST  
-    UPDATE tape SET stream = 0, status = 0 WHERE status IN (2, 3, 4) AND id = tpIds(i);
-  -- Deal with Recalls
-  UPDATE Segment SET status = 0 WHERE status = 7; -- Resurrect SELECTED segment
-  UPDATE Tape SET status = 1 WHERE tpmode = 0 AND status IN (2, 3, 4); -- Resurrect the tapes running for recall
-  UPDATE Tape A SET status = 8 
-   WHERE status IN (0, 6, 7) AND EXISTS
-    (SELECT id FROM Segment WHERE status = 0 AND tape = A.id);
- END IF;
-  -- no need to restart the job we stopped
-
 END;
 /
