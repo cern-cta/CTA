@@ -442,12 +442,6 @@ INSERT INTO CastorConfig
 UPDATE CastorConfig SET value = sys_context('USERENV', 'CURRENT_USER')
  WHERE class = 'general' AND key = 'owner';
 
-/* Drop the tapegateway tables created in the oracleSchema until such a time
- * that the tables are needed by a release
- */
-DROP TABLE TapeGatewaySubRequest;
-DROP TABLE TapeGatewayRequest;
-
 COMMIT;
 
 
