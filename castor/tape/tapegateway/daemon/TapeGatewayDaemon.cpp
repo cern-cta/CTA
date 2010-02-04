@@ -159,7 +159,7 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
 
   std::string migrationPolicyName;
   char* tmpStr=NULL;
-  tmpStr = getconfent("Policy","MigrationRetry",0);
+  tmpStr = getconfent("TAPEGATEWAY","MIG_RETRY_POLICY",0);
   if (tmpStr==NULL){
     castor::dlf::Param params[] =
       {castor::dlf::Param("message","No policy for migration retry in castor.conf")};
@@ -169,7 +169,7 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
   }
 
   std::string recallPolicyName;
-  tmpStr = getconfent("Policy","RecallRetry",0);
+  tmpStr = getconfent("TAPEGATEWAY","REC_RETRY_POLICY",0);
   if (tmpStr == NULL){
     castor::dlf::Param params[] =
       {castor::dlf::Param("message","No policy for recall retry in castor.conf")};

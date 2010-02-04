@@ -155,7 +155,7 @@ int castor::tape::mighunter::MigHunterDaemon::exceptionThrowingMain(int argc,
   // get the policy migration policy name
 
   std::string migrationPolicyModuleName;
-  tmpStr = getconfent("Policy","Migration",0);
+  tmpStr = getconfent("MIGHUNTER","MIGRATION_POLICY",0);
   if (tmpStr==NULL){
     castor::dlf::Param params[] =
       {castor::dlf::Param("message","No migration policy in castor.conf")};
@@ -168,7 +168,7 @@ int castor::tape::mighunter::MigHunterDaemon::exceptionThrowingMain(int argc,
 
   std::string streamPolicyModuleName;
   
-  tmpStr = getconfent("Policy","Stream",0);
+  tmpStr = getconfent("MIGHUNTER","STREAM_POLICY",0);
   if (tmpStr==NULL){
     castor::dlf::Param params[] =
       {castor::dlf::Param("message","No stream  policy in castor.conf")};

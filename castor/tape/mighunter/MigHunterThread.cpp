@@ -162,7 +162,7 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(
       // input for stream operation
       char* p=NULL;
       u_signed64 initialSizeCeiling = 10UL*1024UL*1024UL*1024UL; // 10G
-      if ( (p = getconfent("MigHunter","SIZECEILING",0)) != NULL ) {
+      if ( (p = getconfent("MIGHUNTER","SIZECEILING",0)) != NULL ) {
         initialSizeCeiling = strutou64(p);
       }
 

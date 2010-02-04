@@ -148,7 +148,7 @@ int castor::tape::rechandler::RecHandlerDaemon::exceptionThrowingMain(int argc,
 
   std::string recallPolicyName;
   char* tmpStr=NULL;
-  tmpStr = getconfent("Policy","Recall",0);
+  tmpStr = getconfent("RECHANDLER","RECALL_POLICY",0);
   if (tmpStr==NULL){
     castor::dlf::Param params[] =
       {castor::dlf::Param("message","No policy for migration retry in castor.conf")};
@@ -159,7 +159,7 @@ int castor::tape::rechandler::RecHandlerDaemon::exceptionThrowingMain(int argc,
 
   std::string recallFunctionName;
 
-  tmpStr = getconfent("Policy","RecallFunction",0);
+  tmpStr = getconfent("RECHANDLER","RECALL_POLICY_FUN",0);
   if (tmpStr == NULL ){
     castor::dlf::Param params[] =
       {castor::dlf::Param("message","No global function name for recall policy for recall in castor.conf")};
