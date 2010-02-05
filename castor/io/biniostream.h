@@ -28,11 +28,17 @@
 #define IO_BINIOSTREAM_H 1
 
 #include <sstream>
-#include <byteswap.h>
 #include "osdep.h"
 #include "castor/exception/OutOfMemory.hpp"
 #include <string.h>
 #include <stdlib.h>
+
+#ifdef __APPLE__
+#define __bswap_16(x) ((((x) >> 8) & 0xff) | (((x) & 0xff) << 8))
+#define __bswap_32(x) ((((x) & 0xff000000) >> 24) | (((x) & 0x00ff0000) >>  8) | (((x) & 0x0000ff00) <<  8) | (((x) & 0x000000ff) << 24))
+#else
+#include <byteswap.h>
+#endif
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 /* The host byte order is the same as the "inverted network byte order",

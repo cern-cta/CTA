@@ -236,8 +236,8 @@ COMPRESSION_STATS *comp_stats;
 	comp_stats->to_tape = kbytes_to_tape;
 	comp_stats->from_tape = kbytes_from_tape;
 	comp_stats->to_host = kbytes_to_host;  
-	return (0);
 #endif
+	return (0);
 }
 
 int clear_compression_stats(tapefd, path, devtype)
@@ -274,7 +274,7 @@ char *devtype;
 	    sense, 38, 10000, SCSI_NONE, &nb_sense_ret, &msgaddr) < 0)
 		return (-1);
 
+#endif
+#endif
 	return (0);
-#endif
-#endif
 }

@@ -216,7 +216,7 @@ int rfio_open64_ext(filepath, flags, mode,uid,gid,passwd,reqhost)
     return(-1);
   }
   tolen=sizeof(to);
-  if (getpeername(rfp->s,(struct sockaddr *)&to, &tolen)<0)        {
+  if (getpeername(rfp->s,(struct sockaddr *)&to, (socklen_t*)&tolen)<0)        {
     syslog(LOG_ALERT, "rfio: open64: getpeername: %s\n",strerror(errno));
   }
   if ((hp = gethostbyaddr((char *) (&to.sin_addr), sizeof(struct in_addr), to.sin_family)) == NULL){

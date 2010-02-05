@@ -26,6 +26,9 @@
 #include "dlf_lib.h"
 #include "dlf_api.h"
 #include <string.h>
+#ifdef __APPLE__
+#include <mach/mach.h>
+#endif
 
 /* Global variables */
 static char *messages[DLF_MAX_MSGTEXTS];
@@ -426,7 +429,12 @@ int DLL_DECL dlf_writep(Cuuid_t reqid,
 
   buffer[0] = '\0';
   len = snprintf(buffer, maxmsglen - len, "LVL=%s TID=%d MSG=\"%s\" ",
-                 prioritylist[priority].text, (int)syscall(__NR_gettid),
+                 prioritylist[priority].text,
+#ifdef __APPLE__
+                 (int)mach_thread_self(),
+#else
+                 (int)syscall(__NR_gettid),
+#endif
                  messages[msgno]);
 
   /* Append the request uuid if defined */
