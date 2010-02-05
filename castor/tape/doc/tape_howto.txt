@@ -2992,3 +2992,9 @@ delete from id2type where id in (select id from stream);
 delete from stream;
 update tapecopy set status = 0;
 
+
+How to make stager_oracle_create.sql work on Oracle Express Edition
+===================================================================
+
+Remove all PARTITION and LOCAL clauses.  Remove all JOB_CLASS job attributes.
+
