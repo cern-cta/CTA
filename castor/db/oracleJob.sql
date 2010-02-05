@@ -780,15 +780,14 @@ BEGIN
           FROM TABLE (strTokenizer(rfs, '|')) rfsTable)
      -- For a requested filesystem to be available the following criteria
      -- must be meet:
-     --  - The diskserver must not be in a DISABLED state
-     --  - For StageDiskCopyReplicaRequests and StageGetRequests the
-     --    filesystem must be in a DRAINING or PRODUCTION status
+     --  - The diskserver and filesystem must not be in a DISABLED state
+     --  - For StageDiskCopyReplicaRequests all other states are accepted
      --  - For all other requests the diskserver and filesystem must be in
      --    PRODUCTION
-     AND decode(DiskServer.status, 2, 1,
-           decode(reqType, 133, decode(FileSystem.status, 2, 1, 0),
-             decode(reqType, 35, decode(FileSystem.status, 2, 1, 0),
-               decode(FileSystem.status + DiskServer.status, 0, 0, 1)))) = 0;
+     AND decode(DiskServer.status, 2, 1,    -- Exclude DISABLED Diskservers
+           decode(FileSystem.status, 2, 1,  -- Exclude DISABLED Filesystems
+             decode(reqType, 133, 0,
+                 decode(FileSystem.status + DiskServer.status, 0, 0, 1)))) = 0;
   IF rtn > 0 THEN
     RETURN 0;  -- We found some available requested filesystems
   END IF;
@@ -821,7 +820,7 @@ BEGIN
         -- Union of all requests that could result in scheduler transfers
         (SELECT id, svcClass, reqid, 40  AS reqType
            FROM StagePutRequest                     UNION ALL
-         SELECT id, svcClass, reqid, 144 AS reqType
+         SELECT id, svcClass, reqid, 133 AS reqType
            FROM StageDiskCopyReplicaRequest         UNION ALL
          SELECT id, svcClass, reqid, 35  AS reqType
            FROM StageGetRequest                     UNION ALL
