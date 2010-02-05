@@ -28,7 +28,7 @@
 # modules
 import sys
 import getopt
-import castor_tools;
+import castor_tools
 
 #
 # Usage
@@ -43,6 +43,9 @@ def usage(status):
         print 'Supported operations:                                                        '
         print '  -a, --add                    Add a new filesystem or diskserver to the list'
         print '                               of those to be drained.                       '
+        print '      --restart                Restart the draining process of a given       '
+        print '                               filesystem or diskserver with the previously  '
+        print '                               defined options.                              '
         print '  -d, --delete                 Delete/Cancel the draining process of a given '
         print '                               filesystem or diskserver.                     '
         print '  -q, --query                  Query the filesystems currently being drained.'
@@ -109,7 +112,8 @@ def main(argv):
              'InSvcClass':     None,
              'InFileMask':     1,
              'InAutoDelete':   0,
-             'InMaxTransfers': 50 }
+             'InMaxTransfers': 50,
+             'InRestart':      0 }
 
     # Parse command line arguments
     try:
@@ -118,7 +122,7 @@ def main(argv):
                                        'nodename=', 'mountpoint=', 'svcclass=',
                                        'file-mask=', 'auto-delete', 'transfers=',
                                        'config', 'failures', 'script',
-                                       'running'])
+                                       'running', 'restart'])
         # Any positional arguments left over after parsing?
         if len(args):
             usage(1)
@@ -137,13 +141,13 @@ def main(argv):
             elif opt in ('-d', '--delete'):
                 operations['delete'] = None
             elif opt in ('-q', '--query'):
-                operations['query']   = None
+                operations['query']  = None
             elif opt in ('-n', '--nodename'):
-                bind['InNodeName'] = arg
+                bind['InNodeName']   = arg
             elif opt in ('-m', '--mountpoint'):
                 bind['InMountPoint'] = arg
             elif opt in ('-S', '--svcclass'):
-                bind['InSvcClass'] = arg
+                bind['InSvcClass']   = arg
             elif opt == '--file-mask':
                 # Check that the user supplied filemask argument is valid
                 values = { 'STAGED':    0,
@@ -151,7 +155,7 @@ def main(argv):
                            'ALL':       2 }
                 if not values.has_key(arg.upper()):
                     raise InvalidInput, 'invalid option for --file-mask, must be one of STAGED, CANBEMIGR or ALL'
-                bind['InFileMask'] = values[arg.upper()]
+                bind['InFileMask']   = values[arg.upper()]
             elif opt == '--auto-delete':
                 bind['InAutoDelete'] = 1
             elif opt in ('-t', '--transfers'):
@@ -173,17 +177,20 @@ def main(argv):
                 querystyle = 'script'
             elif opt in ('-r', '--running'):
                 queryfilter = 'RUNNING'
+            elif opt == '--restart':
+                operations['restart'] = None
+                bind['InRestart']     = 1
 
         # Check for mutual exclusivity on the operation to be performed
         if len(operations) == 0:
-            raise InvalidInput, 'missing operation, must specify one of --add, --delete or --query'
+            raise InvalidInput, 'missing operation, must specify one of --add, --delete, --restart or --query'
         elif len(operations) > 1:
-            raise InvalidInput, 'options --add, --delete and --query are mutually exclusive'
+            raise InvalidInput, 'options --add, --delete, --restart and --query are mutually exclusive'
         operation = operations.keys()[0]
 
-        # Check that all arguments required for add and delete operations are
-        # supplied by the user
-        if operation in ('add', 'delete'):
+        # Check that all arguments required for add, delete and restart 
+        # operations are supplied by the user
+        if operation in ('add', 'delete', 'restart'):
             if bind['InNodeName'] == None:
                 raise InvalidInput, 'missing -n, --nodename option'
 
@@ -191,7 +198,7 @@ def main(argv):
         # and --failures options
         if operation == 'query':
             if queryfilter and querytype in ('config', 'failures'):
-                raise InvalidInput, 'option --running cannot be used when specifying the --config or --failures options'
+                raise InvalidInput, 'option --running cannot be used when specifying the --config or --failures options'          
 
     except InvalidInput, e:
         print >> sys.stderr, sys.argv[0] + ': ' + str(e)
@@ -199,18 +206,24 @@ def main(argv):
 
     # Connect to the stager database and do some magic!
     try:
-        connection = castor_tools.connectToStager();
+        connection = castor_tools.connectToStager()
         cursor = connection.cursor()
         cursor.arraysize = 50
 
         if operation == 'add':
-            startDraining(cursor, bind)
-        elif operation == 'delete':
-            stopDraining(cursor, { 'InNodeName':   bind['InNodeName'],
-                                   'InMountPoint': bind['InMountPoint'] } )
+            startDraining(cursor, { 'InNodeName':     bind['InNodeName'],
+                                    'InMountPoint':   bind['InMountPoint'],
+                                    'InSvcClass':     bind['InSvcClass'],
+                                    'InFileMask':     bind['InFileMask'],
+                                    'InAutoDelete':   bind['InAutoDelete'],
+                                    'InMaxTransfers': bind['InMaxTransfers'] } )
+        elif operation in ('delete', 'restart'):
+            stopDraining(cursor,  { 'InNodeName':     bind['InNodeName'],
+                                    'InMountPoint':   bind['InMountPoint'],
+                                    'InRestart':      bind['InRestart'] } )
         elif operation == 'query':
-            queryDraining(cursor, { 'InNodeName':   bind['InNodeName'],
-                                    'InMountPoint': bind['InMountPoint'] },
+            queryDraining(cursor, { 'InNodeName':     bind['InNodeName'],
+                                    'InMountPoint':   bind['InMountPoint'] },
                           querytype, queryfilter, querystyle)
 
         # Close the cursor and commit any pending changes
@@ -252,7 +265,8 @@ def startDraining(c, bindvars):
 def stopDraining(c, bindvars):
     c.execute('''BEGIN
                    stopDraining(InNodeName   => :InNodeName,
-                                InMountPoint => :InMountPoint);
+                                InMountPoint => :InMountPoint,
+                                InRestart    => :InRestart);
                  END;''', bindvars)
 
 

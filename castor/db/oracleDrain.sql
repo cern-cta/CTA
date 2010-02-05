@@ -12,49 +12,6 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
 
-/* SQL statement for the delete trigger on the DrainingFileSystem table */
-CREATE OR REPLACE TRIGGER tr_DrainingFileSystem_Delete
-BEFORE DELETE ON DrainingFileSystem
-FOR EACH ROW
-DECLARE
-  CURSOR c IS
-    SELECT STDCRR.id, SR.id subrequest, STDCRR.client
-      FROM StageDiskCopyReplicaRequest STDCRR, DrainingDiskCopy DDC,
-           SubRequest SR
-     WHERE STDCRR.sourceDiskCopy = DDC.diskCopy
-       AND SR.request = STDCRR.id
-       AND decode(DDC.status, 4, DDC.status, NULL) = 4  -- FAILED
-       AND SR.status = 9  -- FAILED_FINISHED
-       AND DDC.fileSystem = :old.fileSystem;
-  reqIds    "numList";
-  clientIds "numList";
-  srIds     "numList";
-BEGIN
-  -- Remove failed transfers requests from the StageDiskCopyReplicaRequest
-  -- table. If we do not do this files which failed due to "Maximum number of
-  -- attempts exceeded" cannot be resubmitted to the system.
-  -- (see getBestDiskCopyToReplicate)
-  LOOP
-    OPEN c;
-    FETCH c BULK COLLECT INTO reqIds, srIds, clientIds LIMIT 10000;
-    -- Break out of the loop when the cursor returns no results
-    EXIT WHEN reqIds.count = 0;
-    -- Delete data
-    FORALL i IN reqIds.FIRST .. reqIds.LAST
-      DELETE FROM Id2Type WHERE id IN (reqIds(i), clientIds(i), srIds(i));
-    FORALL i IN clientIds.FIRST .. clientIds.LAST
-      DELETE FROM Client WHERE id = clientIds(i);
-    FORALL i IN srIds.FIRST .. srIds.LAST
-      DELETE FROM SubRequest WHERE id = srIds(i);
-    CLOSE c;
-  END LOOP;
-  -- Delete all data related to the filesystem from the draining diskcopy table
-  DELETE FROM DrainingDiskCopy
-   WHERE fileSystem = :old.fileSystem;
-END;
-/
-
-
 /* Function to convert seconds into a time string using the format:
  * DD-MON-YYYY HH24:MI:SS. If seconds is not defined then the current time
  * will be returned.
@@ -159,7 +116,8 @@ AS
                    3, 'INTERRUPTED',
                    4, 'FAILED',
                    5, 'COMPLETED',
-                   6, 'DELETING', 'UNKNOWN') Status,
+                   6, 'DELETING',
+                   7, 'RESTART', 'UNKNOWN') Status,
          nvl(DDCS.filesRemaining, 0) FilesRemaining,
          sizeOfFmtSI(nvl(DDCS.bytesRemaining, 0)) SizeRemaining,
          nvl(DDCS.running, 0) Running,
@@ -172,9 +130,9 @@ AS
              getInterval(DFS.startTime, gettime()),
                getInterval(DFS.startTime, DFS.lastUpdateTime))) RunTime,
          -- Calculate how far the process has gotten as a percentage of the data
-         -- already transferred. If the process is in a CREATED, INITIALIZING or
-         -- DELETING status N/A will be returned.
-         decode(DFS.status, 0, 'N/A', 1, 'N/A', 6, 'N/A',
+         -- already transferred. If the process is in a CREATED, INITIALIZING,
+         -- DELETING or RESTART status N/A will be returned.
+         decode(DFS.status, 0, 'N/A', 1, 'N/A', 6, 'N/A', 7, 'N/A',
            decode(DFS.totalBytes, 0, '100%',
              concat(to_char(
                floor(((DFS.totalBytes - nvl(DDCS.bytesRemaining, 0)) /
@@ -230,14 +188,59 @@ AS
    ORDER BY DS.name, FS.mountPoint, DC.path;
 
 
+
+/* SQL statement for the removeFailedDrainingTransfers procedure */
+CREATE OR REPLACE PROCEDURE removeFailedDrainingTransfers(fsId IN NUMBER)
+AS
+  CURSOR c IS
+    SELECT STDCRR.id, SR.id subrequest, STDCRR.client
+      FROM StageDiskCopyReplicaRequest STDCRR, DrainingDiskCopy DDC,
+           SubRequest SR
+     WHERE STDCRR.sourceDiskCopy = DDC.diskCopy
+       AND SR.request = STDCRR.id
+       AND decode(DDC.status, 4, DDC.status, NULL) = 4  -- FAILED
+       AND SR.status = 9  -- FAILED_FINISHED
+       AND DDC.fileSystem = fsId;
+  reqIds    "numList";
+  clientIds "numList";
+  srIds     "numList";
+BEGIN
+  -- Remove failed transfers requests from the StageDiskCopyReplicaRequest
+  -- table. If we do not do this files which failed due to "Maximum number of
+  -- attempts exceeded" cannot be resubmitted to the system.
+  -- (see getBestDiskCopyToReplicate)
+  LOOP
+    OPEN c;
+    FETCH c BULK COLLECT INTO reqIds, srIds, clientIds LIMIT 10000;
+    -- Break out of the loop when the cursor returns no results
+    EXIT WHEN reqIds.count = 0;
+    -- Delete data
+    FORALL i IN reqIds.FIRST .. reqIds.LAST
+      DELETE FROM Id2Type WHERE id IN (reqIds(i), clientIds(i), srIds(i));
+    FORALL i IN clientIds.FIRST .. clientIds.LAST
+      DELETE FROM Client WHERE id = clientIds(i);
+    FORALL i IN srIds.FIRST .. srIds.LAST
+      DELETE FROM SubRequest WHERE id = srIds(i);
+    CLOSE c;
+  END LOOP;
+  -- Delete all data related to the filesystem from the draining diskcopy table
+  DELETE FROM DrainingDiskCopy
+   WHERE fileSystem = fsId;
+END;
+/
+
+
 /* Procedure responsible for stopping the draining process for a diskserver
  * or filesystem. In no filesystem is specified then all filesystems
  * associated to the diskserver will be stopped.
  */
 CREATE OR REPLACE PROCEDURE stopDraining(inNodeName   IN VARCHAR,
-                                         inMountPoint IN VARCHAR2 DEFAULT NULL)
+                                         inMountPoint IN VARCHAR2 DEFAULT NULL,
+                                         inRestart    IN NUMBER DEFAULT 0)
 AS
-  fsIds "numList";
+  fsIds  "numList";
+  unused NUMBER;
+  mntPnt VARCHAR2(2048);
 BEGIN
   -- Check that the nodename and mountpoint input options are valid
   SELECT FileSystem.id BULK COLLECT INTO fsIds
@@ -255,14 +258,35 @@ BEGIN
         (-20015, 'Diskserver and mountpoint does not exist');
     END IF;
   END IF;
-  -- Update the filesystem entries to DELETING. The drainManager job will
-  -- finalize the deletion of the entry once all outstanding transfers have
-  -- terminated.
-  UPDATE DrainingFileSystem
-     SET status = 6  -- DELETING
-   WHERE fileSystem IN
-     (SELECT /*+ CARDINALITY(fsIdTable 5) */ *
-        FROM TABLE (fsIds) fsIdTable);
+  -- Update the filesystem entries to DELETING or RESTART depending in the
+  -- inRestart option. The drainManager job will take care of actually doing
+  -- the work.
+  FOR i IN fsIds.FIRST .. fsIds.LAST
+  LOOP
+    -- Check to see if the mountpoint and diskserver combination allow for a
+    -- draining operation to begin.
+    BEGIN
+      SELECT mountPoint INTO mntPnt
+        FROM FileSystem WHERE id = fsIds(i);
+      -- If restarting verify that the diskserver and filesystem are in a 
+      -- valid state, code copied from startDraining.
+      IF inRestart = 1 THEN
+        SELECT FS.diskPool INTO unused
+          FROM FileSystem FS, DiskServer DS
+         WHERE FS.diskServer = DS.id
+           AND FS.id = fsIds(i)
+           AND (FS.status = 1 OR DS.status = 1)
+           AND FS.status != 2
+           AND DS.status != 2;
+      END IF;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      raise_application_error
+        (-20116, 'Mountpoint: Restart not possible '||mntPnt||' is not in a DRAINING state or diskserver is DISABLED');
+    END;
+    UPDATE DrainingFileSystem
+       SET status = decode(inRestart, 1, 7, 6)
+     WHERE fileSystem = fsIds(i);
+  END LOOP;
 END;
 /
 
@@ -346,17 +370,19 @@ BEGIN
           (-20117, 'Mountpoint: '||mntPnt||' does not belong to the '''||inSvcClass||''' service class');
       END;
     END IF;
-    -- If the mountpoint is not in a DRAINING status then the draining process
-    -- cannot proceed.
+    -- Check to see if the mountpoint and diskserver combination allow for a
+    -- draining operation to begin.
     BEGIN
       SELECT FS.diskPool INTO unused
         FROM FileSystem FS, DiskServer DS
        WHERE FS.diskServer = DS.id
          AND FS.id = fsIds(i)
-         AND decode(FS.status, 0, DS.status, FS.status) = 1;
+         AND (FS.status = 1 OR DS.status = 1)
+         AND FS.status != 2
+         AND DS.status != 2;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       raise_application_error
-        (-20116, 'Mountpoint: '||mntPnt||' is not in a DRAINING state');
+        (-20116, 'Mountpoint: '||mntPnt||' is not in a DRAINING state or diskserver is DISABLED');
     END;
     -- Check to see if the mountpoint is already being drained. Note: we do not
     -- allow the resubmission of a mountpoint without a prior DELETION unless
@@ -370,6 +396,7 @@ BEGIN
         (-20118, 'Mountpoint: '||mntPnt||' is already being drained');
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- Cleanup
+      removeFailedDrainingTransfers(fsIds(i));
       DELETE FROM DrainingFileSystem
        WHERE fileSystem = fsIds(i);
       -- Insert the new mountpoint into the list of those to be drained. The
@@ -609,15 +636,30 @@ END;
 CREATE OR REPLACE PROCEDURE drainManager AS
   fsIds "numList";
 BEGIN
-  -- Delete the filesystems which are:
+  -- Delete (and restart if necessary) the filesystems which are:
   --  A) in a DELETING state and have no transfers pending in the scheduler.
   --  B) are COMPLETED and older than 7 days.
-  DELETE FROM DrainingFileSystem
-   WHERE (NOT EXISTS (SELECT 'x' FROM DrainingDiskCopy
-                       WHERE fileSystem = DrainingFileSystem.fileSystem
-                         AND status = 3)  -- WAITD2D
-          AND status = 6)  -- DELETING
-      OR (status = 5 AND lastUpdateTime < getTime() - (7 * 86400));
+  FOR A IN (SELECT fileSystem, status FROM DrainingFileSystem
+             WHERE (NOT EXISTS
+               (SELECT 'x' FROM DrainingDiskCopy
+                 WHERE fileSystem = DrainingFileSystem.fileSystem
+                   AND status = 3)  -- WAITD2D
+               AND status IN (6, 7))  -- DELETING, RESTART
+                OR (status = 5 AND lastUpdateTime < getTime() - (7 * 86400)))
+  LOOP
+    -- If the status is RESTART, reset the draining filesystem entry to
+    -- its default values and set its status to CREATED, otherwise delete it!
+    removeFailedDrainingTransfers(a.fileSystem);
+    IF a.status = 7 THEN
+      UPDATE DrainingFileSystem
+         SET creationTime = getTime(), startTime = 0, lastUpdateTime = 0,
+             status = 0, totalFiles = 0, totalBytes = 0
+       WHERE fileSystem = a.fileSystem;        
+    ELSE
+      DELETE FROM DrainingFileSystem
+       WHERE fileSystem = a.fileSystem;
+    END IF;
+  END LOOP;
   -- Process filesystems which in a CREATED state
   UPDATE DrainingFileSystem
      SET status = 1  -- INITIALIZING

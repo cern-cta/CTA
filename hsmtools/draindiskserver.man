@@ -17,6 +17,10 @@ Supported operations:
 .B -a,\ \-\-add
 Add a new filesystem or diskserver to the list of those to be drained.
 .TP
+.B \-\-restart
+Restart the draining process of a given filesystem or diskserver with the
+previously defined options.
+.TP
 .B -d,\ \-\-delete
 Delete/Cancel the draining process of a given filesystem or diskserver.
 .TP
@@ -101,8 +105,8 @@ Note: N/A will be displayed until at least 10% of the data has been replicated.
 .TP
 .B Status
 The status of the draining process. One of: \fBCREATED\fR, \fBINITIALIZING\fR,
-\fBRUNNING\fR, \fBSTALLED\fR, \fBINTERRUPTED\fR, \fBFAILED\fR, \fBCOMPLETED\fR
-and \fB	DELETING\fR
+\fBRUNNING\fR, \fBSTALLED\fR, \fBINTERRUPTED\fR, \fBFAILED\fR, \fBCOMPLETED\fR,
+\fBDELETING\fR and \fBRESTART\fR
 .RE
 
 .TP

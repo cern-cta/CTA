@@ -160,7 +160,7 @@ END;
 /* SQL statement for the update trigger on the FileSystem table */
 CREATE OR REPLACE TRIGGER tr_FileSystem_Update
 BEFORE UPDATE OF status ON FileSystem
-FOR EACH ROW
+FOR EACH ROW WHEN (old.status != new.status)
 BEGIN
   -- If the filesystem is coming back into PRODUCTION, initiate a consistency
   -- check for the diskcopies which reside on the filesystem.
@@ -168,13 +168,13 @@ BEGIN
      :new.status = 0 THEN       -- PRODUCTION
     checkFsBackInProd(:old.id);
   END IF;
-  -- Cancel any ongoing draining operations if the filesystem is now in a
-  -- PRODUCTION state
-  IF :new.status = 0 THEN  -- PRODUCTION
+  -- Cancel any ongoing draining operations if the filesystem is not in a
+  -- DRAINING state
+  IF :new.status != 1 THEN  -- DRAINING
     UPDATE DrainingFileSystem
        SET status = 3  -- INTERRUPTED
      WHERE fileSystem = :new.id
-       AND status IN (0, 1, 2);  -- CREATED, INITIALIZING, RUNNING
+       AND status IN (0, 1, 2, 7);  -- CREATED, INITIALIZING, RUNNING, RESTART
   END IF;
 END;
 /
@@ -183,7 +183,7 @@ END;
 /* SQL statement for the update trigger on the DiskServer table */
 CREATE OR REPLACE TRIGGER tr_DiskServer_Update
 BEFORE UPDATE OF status ON DiskServer
-FOR EACH ROW
+FOR EACH ROW WHEN (old.status != new.status)
 BEGIN
   -- If the diskserver is coming back into PRODUCTION, initiate a consistency
   -- check for all the diskcopies on its associated filesystems which are in
@@ -197,21 +197,26 @@ BEGIN
       checkFsBackInProd(fs.id);
     END LOOP;
   END IF;
-  -- Cancel any ongoing draining operations if:
-  --  A) The diskserver is going into a DISABLED state      or
-  --  B) The diskserver is going into PRODUCTION but its associated filesystems
-  --     are not in DRAINING.
-  IF :old.status = 1 AND        -- DRAINING
-     :new.status IN (0, 2) THEN -- PRODUCTION, DISABLED
-   UPDATE DrainingFileSystem
-      SET status = 3  -- INTERRUPTED
-    WHERE fileSystem IN
-      (SELECT id FROM FileSystem
-        WHERE diskServer = :old.id
-          AND (status != 1  --  FILESYSTEM_DRAINING
-           OR  :new.status = 2))  -- DISKSERVER_DISABLED
-      AND status IN (0, 1, 2);  -- CREATED, INITIALIZING, RUNNING
+  -- Cancel all draining operations if the diskserver is disabled.
+  IF :new.status = 2 THEN  -- DISABLED
+    UPDATE DrainingFileSystem
+       SET status = 3  -- INTERRUPTED
+     WHERE fileSystem IN
+       (SELECT FileSystem.id FROM FileSystem
+         WHERE FileSystem.diskServer = :new.id)
+       AND status IN (0, 1, 2, 7);  -- CREATED, INITIALIZING, RUNNING, RESTART
   END IF;
+  -- If the diskserver is in PRODUCTION cancel the draining operation of 
+  -- filesystems not in DRAINING.
+  IF :new.status = 0 THEN  -- PRODUCTION
+    UPDATE DrainingFileSystem
+       SET status = 3  -- INTERRUPTED
+     WHERE fileSystem IN
+       (SELECT FileSystem.id FROM FileSystem
+         WHERE FileSystem.diskServer = :new.ID
+           AND FileSystem.status != 1)  -- DRAINING
+       AND status IN (0, 1, 2, 7);  -- CREATED, INITIALIZING, RUNNING, RESTART
+  END IF; 
 END;
 /
 

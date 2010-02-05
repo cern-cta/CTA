@@ -21,6 +21,7 @@ CREATE TABLE DrainingFileSystem
     *   4 -- FAILED
     *   5 -- COMPLETED
     *   6 -- DELETING
+    *   7 -- RESTART
     */
    status         NUMBER DEFAULT 0,
    svcClass       NUMBER CONSTRAINT NN_DrainingFs_SvcClass NOT NULL,
@@ -52,7 +53,7 @@ ALTER TABLE DrainingFileSystem
 /* SQL statements for check constraints on the DrainingFileSystem table */
 ALTER TABLE DrainingFileSystem
   ADD CONSTRAINT CK_DrainingFs_Status
-  CHECK (status IN (0, 1, 2, 3, 4, 5, 6));
+  CHECK (status IN (0, 1, 2, 3, 4, 5, 6, 7));
 
 ALTER TABLE DrainingFileSystem
   ADD CONSTRAINT CK_DrainingFs_FileMask
