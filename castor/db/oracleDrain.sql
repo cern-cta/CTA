@@ -451,16 +451,13 @@ BEGIN
   IF svcId = 0 THEN
     RETURN;  -- Do nothing
   END IF;
-  -- Extract the next diskcopy to be processed. Note: this is identical to the
-  -- way that subrequests are picked up in the SubRequestToDo procedure. The N
-  -- levels of SELECTS and hints allow us to process the entries in the
-  -- DrainingDiskCopy snapshot in an ordered way.
+  -- Extract the next diskcopy to be processed.
   dcId := 0;
   UPDATE DrainingDiskCopy
      SET status = 2  -- PROCESSING
    WHERE diskCopy = (
      SELECT diskCopy FROM (
-       SELECT /*+ INDEX(DC I_DrainingDCs_PC) */ DDC.diskCopy
+       SELECT DDC.diskCopy
          FROM DrainingDiskCopy DDC
         WHERE DDC.fileSystem = fsId
           AND DDC.status IN (0, 1)  -- CREATED, RESTARTED
@@ -688,6 +685,14 @@ BEGIN
            OR  (DC.status = decode(DC.status, 10, DC.status, NULL)
                 AND DFS.fileMask = 1)                          -- CANBEMIGR
            OR  (DC.status IN (0, 10)  AND DFS.fileMask = 2))); -- ALL
+  -- Regenerate the statistics for the DrainingDiskCopy table
+  DBMS_STATS.GATHER_TABLE_STATS
+    (OWNNAME          => sys_context('USERENV', 'CURRENT_SCHEMA'),
+     TABNAME          =>'DRAININGDISKCOPY',
+     ESTIMATE_PERCENT => 100,
+     METHOD_OPT       => 'FOR ALL COLUMNS SIZE 100',
+     NO_INVALIDATE    => FALSE,
+     FORCE            => TRUE);
   -- Update the DrainingFileSystem counters
   FOR a IN (SELECT fileSystem, count(*) files, sum(DDC.fileSize) bytes
               FROM DrainingDiskCopy DDC
