@@ -51,15 +51,7 @@ cd /afs/cern.ch/project/castor/www/DIST/CERN/savannah/CASTOR.pkg/2.1.9-3/SL4/x86
 How to build the castor rpms
 ============================
 
-mkdir tmp
-
-cd tmp
-
-export CVSROOT=:gserver:isscvs.cern.ch/local/reps/castor
-
-cvs checkout -r v2_1_8_4 CASTOR2
-
-cd CASTOR2
+Enter the following:
 
 export ORACLE_HOME="/afs/cern.ch/project/oracle/@sys/10203"
 export ORACLE_LIB="$ORACLE_HOME/lib"
@@ -67,19 +59,21 @@ export ORACLE_BIN="$ORACLE_HOME/bin"
 # /usr/bin/X11 is in the path for the makedepend command
 export PATH="$ORACLE_BIN:/usr/bin/X11:${PATH}"
 export MAJOR_CASTOR_VERSION=2.1
-export MINOR_CASTOR_VERSION=8.4
+export MINOR_CASTOR_VERSION=9.5
 
-./maketar.sh
+mkdir tmp
 
-cd ..
+cd tmp
 
-rpmbuild -ta castor-2.1.8.tar.gz
+svn co svn+ssh://murrayc3@svn.cern.ch/reps/CASTOR/CASTOR2/trunk
+
+cd trunk
+
+./makerpm.sh
 
 You should get the output in:
 
-site.def: /usr/src/redhat/BUILD/castor-2.1.8/config/site.def
-
-binaries: /usr/src/redhat/BUILD/castor-2.1.8-root/
+/usr/src/redhat/RPMS/x86_64/
 
 
 How to update an installed rpm
