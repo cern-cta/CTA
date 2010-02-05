@@ -2998,3 +2998,26 @@ How to make stager_oracle_create.sql work on Oracle Express Edition
 
 Remove all PARTITION and LOCAL clauses.  Remove all JOB_CLASS job attributes.
 
+
+How to make a castor rpm
+========================
+
+Go into the CASTOR debian directory:
+
+cd trunk/debian
+
+create the following files as needed:
+
+hyphenated-rpm-name.dirs
+hyphenated-rpm-name.install.perm
+hyphenated-rpm-name.logrotate
+hyphenated-rpm-name.manpages
+hyphenated-rpm-name.postinst
+hyphenated-rpm-name.postun
+hyphenated-rpm-name.pre
+hyphenated-rpm-name.preun
+
+add the name, description and dependencies of the new rpm to the following file:
+
+trunk/debian/control
+
