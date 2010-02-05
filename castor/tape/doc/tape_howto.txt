@@ -3015,3 +3015,146 @@ add the name, description and dependencies of the new rpm to the following file:
 
 trunk/debian/control
 
+
+How to install a test version of the tapegateway on c2itdc
+==========================================================
+
+c2itdc has two head nodes.  The rtcpclientd daemon runs on the following head
+node:
+
+    c2itdcsrv102
+
+This is where the tapegateway daemon will run when it replaces rtcpclientd.
+
+The software packages installed on the c2itdc headnodes and "worker" disk
+servers are managed by the quattor system.  Quattor needs to be told the
+following:
+
+  * The CASTOR version of the test tapegateway software
+  * Any new rpms required by the the tapegateway software
+  * Any rpms that must be unistalled
+
+The quattor system will not be able to install the test version rpms because
+they will not be in the CERN software repository, however quattor must agree
+with their presence on c2itdcsrv102 otherwise it will remove them.
+
+The c2itdcsrv102 profile template must be modified so that it includes the
+following two new rpms:
+
+    castor-lib-tape-W.X.Y-Z.x86_64.rpm
+    castor-tapegateway-server-W.X.Y-Z.x86_64.rpm
+
+The c2itdcsrv102 profile template must be modified so that it does not include
+the following rpm:
+
+    castor-lib-policy-W.X.Y-Z.x86_64.rpm
+
+The castoritdc service template must be modified so that the version of CASTOR
+to be installed on c2itdcsrv102 is the test version, for example 2.1.9-5
+
+Do the following in order to modify the c2itdcsrv102i-profile and
+castoritdc- service templates:
+
+Logon to a machine in the lxadm cluster:
+
+ssh lxadm
+
+Make a directory to work in, for example:
+
+mkdir cdbop
+
+Enter the directory and run cdbop to open its console:
+
+[lxadm05] /afs/cern.ch/user/m/murrayc3 > cd cdbop
+[lxadm05] /afs/cern.ch/user/m/murrayc3/cdbop > cdbop
+quattor CDB CLI: Version 2.2.0
+Connecting to https://cdbserv.cern.ch...
+Welcome to CDB Command Line Interface
+Opening session...
+[INFO] session opened with ID <uC9x9w3hML>
+Type 'help' for more info
+<cdbop@cdbserv.cern.ch: ~/cdbop>
+
+Add the two new rpms and remove the unwanted rpm by adding the following 4
+lines to the c2itdcsrv102 profile template:
+
+  # Tape Gateway Software
+  "/software/packages" = pkg_add("castor-lib-tape", castorversion, ELFMS_ARCH);
+  "/software/packages" = pkg_add("castor-tapegateway-server", castorversion, ELFMS_ARCH);
+  "/software/packages" = pkg_del("castor-lib-policy");
+
+For example enter the following in the cdbop console:
+
+<cdbop@cdbserv.cern.ch: ~/cdbop> get -f profiles/profile_c2itdcsrv102
+[INFO] 'profiles/profile_c2itdcsrv102.tpl': received
+<cdbop@cdbserv.cern.ch: ~/cdbop> !vi profiles/profile_c2itdcsrv102.tpl
+<cdbop@cdbserv.cern.ch: ~/cdbop>
+
+Replace the castorversion variable in the castoritdc service template with the
+following 9 linesi ("worker" means disk server):
+
+  variable castorversion = {
+    if (role == "worker") {
+      "2.1.9-4";
+    } else if (value("/system/network/hostname") == "c2itdcsrv102") {
+      "2.1.9-5";
+    } else {
+      "2.1.9-4";
+    };
+  };
+
+For example enter the following in the cdbop console:
+
+<cdbop@cdbserv.cern.ch: ~/cdbop> get -f prod/services/castor/service/castoritdc
+[INFO] 'prod/services/castor/service/castoritdc.tpl': received
+<cdbop@cdbserv.cern.ch: ~/cdbop> !vi prod/services/castor/service/castoritdc.tpl
+<cdbop@cdbserv.cern.ch: ~/cdbop>
+
+Upload the two modified templates.  For example enter the following in the
+cdbop console:
+
+<cdbop@cdbserv.cern.ch: ~/cdbop> up
+prod/services/castor/service/castoritdc.tpl profiles/profile_c2itdcsrv102.tpl
+[INFO] '/prod/services/castor/service/castoritdc': scheduled to be updated
+[INFO] '/profiles/profile_c2itdcsrv102': scheduled to be updated
+<cdbop@cdbserv.cern.ch: ~/cdbop> 
+
+Commit the changes and quit.  For example enter the following in the cdbop
+console:
+
+<cdbop@cdbserv.cern.ch: ~/cdbop> com -f
+[INFO] '/prod/services/castor/service/castoritdc': will be updated
+[INFO] '/profiles/profile_c2itdcsrv102': will be updated
+Comment: Upgrade c2itdcsrv102 to 2.1.9-5
+[INFO] please wait...
+[INFO] commit OK
+cdbop@cdbserv.cern.ch: ~/cdbop> quit
+
+Run the spma_wrapper.sh command on c2itdcsrv102.  Warning this will
+intentionally display many errors as the test rpms will not exist in the
+CERN software repository:
+
+[root@c2itdcsrv102 ~]# spma_wrapper.sh
+...
+[INFO] Please be patient... 31 operation(s) to verify/execute.
+[WARN] rpmt STDERR output produced:
+[WARN] IOError with package
+http://lxc1rk25/swrep/x86_64_slc4//castor-config-2.1.9-5.x86_64.rpm :
+ HTTP Error 404: Not Found
+
+[ERROR] rpmt failed to run, exit status: 256
+[ERROR] SPMA finished. with exit status 1
+[root@c2itdcsrv102 ~]#
+
+Still logged into c2itdcsrv102, manually install the two new rpms:
+
+rpm -Uvh --force /afs/cern.ch/user/m/murrayc3/public/castor/RPMS/castor-lib-tape-2.1.9-5.x86_64.rpm
+rpm -Uvh --force /afs/cern.ch/user/m/murrayc3/public/castor/RPMS/castor-tapegateway-server-2.1.9-5.x86_64.rpm
+
+Still logged into c2itdcsrv102, manually update all of the already installed
+CASTOR rpms:
+
+[root@c2itdcsrv102 ~]# rpm -qa | grep castor | grep 2.1.9-4 | grep -v castor-lib-policy | sed 's/2.1.9-4/2.1.9-5/' | awk '{ print "/afs/cern.ch/user/m/murrayc3/public/castor/RPMS/"$1".x86_64.rpm" }' | xargs rpm -Uvh --force
+
+Run spma_wrapper to check everything is OK.  The spma_wrapper console output
+should report it erased the castor-lib-policy rpm.
