@@ -138,9 +138,9 @@ LIBMANPAGE(wrttpmrk)
 
 TAPELIB = SharedLibraryTargetName(castortape)
 
-ClientProgramTarget(tpconfig,tpconfig.Osuf,$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),755)
-ClientProgramTarget(tprstat,tprstat.Osuf,$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),755)
-ClientProgramTarget(tpstat,tpstat.Osuf,$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),755)
+TapeProgramTarget(tpconfig,tpconfig.Osuf,$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),755)
+TapeProgramTarget(tprstat,tprstat.Osuf,$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),755)
+TapeProgramTarget(tpstat,tpstat.Osuf,$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),755)
 EXEMANPAGE(tpconfig)
 EXEMANPAGE(tprstat)
 EXEMANPAGE(tpstat)
