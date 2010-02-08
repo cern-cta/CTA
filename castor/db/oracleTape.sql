@@ -1780,39 +1780,39 @@ BEGIN
   -- Create the tr_Tape_Pending trigger which automatically inserts a
   -- row into the TapeGatewayRequest table when a recall-tape is pending
   EXECUTE IMMEDIATE
-    'CREATE OR REPLACE TRIGGER tr_Tape_Pending' ||
-    '  AFTER UPDATE of status ON Tape' ||
-    '  FOR EACH ROW WHEN (new.status = 1 and new.tpmode=0)' ||
-    'DECLARE' ||
-    '  unused NUMBER;' ||
-    'BEGIN' ||
-    '  SELECT id INTO unused' ||
-    '    FROM TapeGatewayRequest' ||
-    '    WHERE taperecall=:new.id;' ||
-    'EXCEPTION WHEN NO_DATA_FOUND THEN' ||
-    '  INSERT INTO TapeGatewayRequest (accessmode, starttime,' ||
-    '    lastvdqmpingtime, vdqmvolreqid, id, streammigration, taperecall,' ||
-    '    status)' ||
-    '    VALUES (0,null,null,null,ids_seq.nextval,null,:new.id,1);' ||
+    'CREATE OR REPLACE TRIGGER tr_Tape_Pending ' ||
+    '  AFTER UPDATE of status ON Tape ' ||
+    '  FOR EACH ROW WHEN (new.status = 1 and new.tpmode=0) ' ||
+    'DECLARE ' ||
+    '  unused NUMBER; ' ||
+    'BEGIN ' ||
+    '  SELECT id INTO unused ' ||
+    '    FROM TapeGatewayRequest ' ||
+    '    WHERE taperecall=:new.id; ' ||
+    'EXCEPTION WHEN NO_DATA_FOUND THEN ' ||
+    '  INSERT INTO TapeGatewayRequest (accessmode, starttime, ' ||
+    '    lastvdqmpingtime, vdqmvolreqid, id, streammigration, taperecall, ' ||
+    '    status) ' ||
+    '    VALUES (0,null,null,null,ids_seq.nextval,null,:new.id,1); ' ||
     'END tr_Tape_Pending';
 
   -- Create the tr_Stream_Pending trigger which automatically inserts a
   -- row into the TapeGatewayRequest table when a recall-tape is pending
   EXECUTE IMMEDIATE
-    'CREATE OR REPLACE TRIGGER tr_Stream_Pending' ||
-    '  AFTER UPDATE of status ON Stream' ||
-    '  FOR EACH ROW WHEN (new.status = 0 )' ||
-    'DECLARE' ||
-    '  unused NUMBER;' ||
-    'BEGIN' ||
-    '  SELECT id INTO unused' ||
-    '    FROM TapeGatewayRequest' ||
-    '    WHERE streammigration=:new.id;' ||
-    'EXCEPTION WHEN NO_DATA_FOUND THEN' ||
-    '  INSERT INTO TapeGatewayRequest (accessMode, startTime,' ||
-    '    lastVdqmPingTime, vdqmVolReqId, id, streamMigration, TapeRecall,' ||
-    '    Status)' ||
-    '    VALUES (1,null,null,null,ids_seq.nextval,:new.id,null,0);' ||
+    'CREATE OR REPLACE TRIGGER tr_Stream_Pending ' ||
+    '  AFTER UPDATE of status ON Stream ' ||
+    '  FOR EACH ROW WHEN (new.status = 0 ) ' ||
+    'DECLARE ' ||
+    '  unused NUMBER; ' ||
+    'BEGIN ' ||
+    '  SELECT id INTO unused ' ||
+    '    FROM TapeGatewayRequest ' ||
+    '    WHERE streammigration=:new.id; ' ||
+    'EXCEPTION WHEN NO_DATA_FOUND THEN ' ||
+    '  INSERT INTO TapeGatewayRequest (accessMode, startTime, ' ||
+    '    lastVdqmPingTime, vdqmVolReqId, id, streamMigration, TapeRecall, ' ||
+    '    Status) ' ||
+    '    VALUES (1,null,null,null,ids_seq.nextval,:new.id,null,0); ' ||
     'END tr_Stream_Pending';
 
   -- Deal with Migrations
