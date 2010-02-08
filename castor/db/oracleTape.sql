@@ -1754,14 +1754,6 @@ DECLARE
   
 BEGIN
 
-  -- Remove the RESTARTSTUCKRECALLSJOB database jobs
-
-  FOR j IN (SELECT job_name FROM user_scheduler_jobs
-             WHERE job_name IN ('RESTARTSTUCKRECALLSJOB'))
-  LOOP
-    DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
-  END LOOP;
-
   IF :new.value = 'rtcpclientd' THEN
   
     -- we stop the tapegateway and we start rtcpclientd
@@ -1801,18 +1793,5 @@ BEGIN
         (SELECT id FROM Segment WHERE status = 0 AND tape = A.id);
   END IF; -- IF :new.value = 'tapegatewayd'
   
-  -- Recreate the RESTARTSTUCKRECALLSJOB db job
-  --
-  -- Please not that this procedure safely does nothing if the tape gateway is
-  -- running
-  DBMS_SCHEDULER.CREATE_JOB(
-      JOB_NAME        => 'RESTARTSTUCKRECALLSJOB',
-      JOB_TYPE        => 'PLSQL_BLOCK',
-      JOB_ACTION      => 'BEGIN restartStuckRecalls(); END;',
-      JOB_CLASS       => 'CASTOR_JOB_CLASS',
-      START_DATE      => SYSDATE + 60/1440,
-      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=60',
-      ENABLED         => TRUE,
-      COMMENTS        => 'Workaround to restart stuck recalls');
 END;
 /
