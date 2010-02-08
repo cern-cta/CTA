@@ -2970,9 +2970,10 @@ of the following file:
 
     castor/db/oracleTapeGateway.sql
 
-Create the restartStuckRecallsJob if it does not already exist and create the
-tr_tapegateway_switchover trigger.  The code for both of these can be found
-in the following file:
+Create the restartStuckRecalls PL/SQL procedure if it does not already exist.
+Also create the restartStuckRecallsJob if it too does not exist.  Create the
+tr_tapegateway_switchover trigger, again if it does not already exist.  The
+code for all three of these can be found in the following file:
 
     castor/db/oracleTape.sql
 
