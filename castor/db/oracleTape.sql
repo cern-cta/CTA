@@ -1768,6 +1768,7 @@ BEGIN
     WHERE
       class = 'tape' AND
       key   = 'daemonName';
+  COMMIT;
 
   -- Remove the restartStuckRecallsJob as this job will not exist in the
   -- future tape gateway only schema
@@ -1848,13 +1849,13 @@ BEGIN
       ENABLED         => TRUE,
       COMMENTS        => 'Workaround to restart stuck recalls');
 
-
   -- The database is now compatible with the tapegatewayd daemon
   UPDATE CastorConfig
     SET value = 'tapegatewayd'
     WHERE
       class = 'tape' AND
       key   = 'daemonName';
+  COMMIT;
 
 END switchToTapegatewayd;
 /
@@ -1889,6 +1890,7 @@ BEGIN
     WHERE
       class = 'tape' AND
       key   = 'daemonName';
+  COMMIT;
 
   -- Drop the tr_Tape_Pending and tr_Stream_Pending triggers as they are
   -- specific to the tape gateway and have no place in an rtcpclientd schema
@@ -1911,5 +1913,6 @@ BEGIN
     WHERE
       class = 'tape' AND
       key   = 'daemonName';
+  COMMIT;
 END switchToRtcpclientd;
 /
