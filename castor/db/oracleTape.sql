@@ -1654,6 +1654,9 @@ END;
 /
 
 /*
+restartStuckRecalls is a wrokaround procedure required by the rtcpclientd
+daemon.
+
 Restart the (recall) segments that are recognized as stuck.
 This workaround (sr #112306: locking issue in CMS stager)
 will be dropped as soon as the TapeGateway will be used in production.
@@ -1710,8 +1713,10 @@ END restartStuckRecalls;
 
 
 /*
- Create a db job to be run every hour executing the restartStuckRecalls
- workaround procedure
+The default state of the stager database is to be compatible with the
+rtcpclientd daemon as opposed to the tape gateway daemon.  Therefore create the
+restartStuckRecallsJob which will call the restartStuckRecalls workaround
+procedure every hour.
 */
 BEGIN
   -- Remove database jobs before recreating them
@@ -1735,63 +1740,176 @@ END;
 
 
 /*
- Trigger used to handle the swtichover between tapegatewayd and rtcpclientd.
- When the entry in castorconfig with class='tape' and key='daemonName' will change its
- value the database will be modified to be compatible with the new daemon running
- which will be the tapegatewayd or rtcpcliend. 
+Procedure used to switch the stager database from being compatible with the
+rtcpclientd daemon, to being compatible with the tapegatewayd daemon.
 */
-create or replace
-TRIGGER tr_tapegateway_switchover
-AFTER UPDATE of value ON castorconfig
-FOR EACH ROW
-WHEN ( new.class='tape' AND new.key='daemonName')
-DECLARE
- 
-  reqId NUMBER;
-  unused NUMBER;
-  idsList "numList";
+CREATE OR REPLACE PROCEDURE switchToTapegatewayd AS
   tpIds "numList";
-  
+  unused VARCHAR2(2048);
 BEGIN
+  -- Do nothing and return if the database is already compatible with the
+  -- tapegatewayd daemon
+  BEGIN
+    SELECT value INTO unused
+     FROM CastorConfig
+     WHERE class = 'tape'
+       AND key   = 'daemonName'
+       AND value = 'tapegatewayd';
+     RETURN;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- Do nothing and continue
+    NULL;
+  END;
 
-  IF :new.value = 'rtcpclientd' THEN
-  
-    -- we stop the tapegateway and we start rtcpclientd
+  -- The database is about to be modified and is therefore not compatible with
+  -- either the rtcpclientd daemon or the tape gateway daemon
+  UPDATE CastorConfig
+    SET value = NULL
+    WHERE
+      class = 'tape' AND
+      key   = 'daemonName';
 
-    DELETE FROM TapeGatewaySubRequest RETURNING id BULK COLLECT INTO idsList;  
-    FORALL i IN idsList.FIRST ..  idsList.LAST 
-      DELETE FROM id2type WHERE  id= idsList(i);
-    DELETE FROM TapeGatewayRequest RETURNING id BULK COLLECT INTO idsList;  
-    FORALL i IN idsList.FIRST ..  idsList.LAST 
-      DELETE FROM id2type WHERE  id= idsList(i);
-  
-  END IF; -- IF :new.value = 'rtcpclientd' THEN
- 
-  IF :new.value = 'tapegatewayd' THEN
- 
-    -- we stop rtcpclientd and we start the tapegateway
- 
-    -- Deal with Migrations
-    -- 1) Ressurect tapecopies for migration
-    UPDATE TapeCopy SET status = 1 WHERE status = 3;
-    -- 2) Clean up the streams
-    UPDATE Stream SET status = 0 
-      WHERE status NOT IN (0, 5, 6, 7) --PENDING, CREATED, STOPPED, WAITPOLICY
-      RETURNING tape BULK COLLECT INTO tpIds;
-    UPDATE Stream SET tape = NULL WHERE tape != 0;
-    -- 3) Reset the tape for migration
-    FORALL i IN tpIds.FIRST .. tpIds.LAST  
-      UPDATE tape SET stream = 0, status = 0
-        WHERE status IN (2, 3, 4) AND id = tpIds(i);
-    -- Deal with Recalls
-    UPDATE Segment SET status = 0
-      WHERE status = 7; -- Resurrect SELECTED segment
-    UPDATE Tape SET status = 1
-      WHERE tpmode = 0 AND status IN (2, 3, 4); -- Resurrect the tapes running for recall
-    UPDATE Tape A SET status = 8 
-      WHERE status IN (0, 6, 7) AND EXISTS
-        (SELECT id FROM Segment WHERE status = 0 AND tape = A.id);
-  END IF; -- IF :new.value = 'tapegatewayd'
-  
-END;
+  -- Remove the restartStuckRecallsJob as this job will not exist in the
+  -- future tape gateway only schema
+  FOR j IN (SELECT job_name FROM user_scheduler_jobs
+             WHERE job_name IN ('RESTARTSTUCKRECALLSJOB'))
+  LOOP
+    DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
+  END LOOP;
+
+  -- Create the tr_Tape_Pending trigger which automatically inserts a
+  -- row into the TapeGatewayRequest table when a recall-tape is pending
+  EXECUTE IMMEDIATE
+    'CREATE OR REPLACE TRIGGER tr_Tape_Pending' ||
+    '  AFTER UPDATE of status ON Tape' ||
+    '  FOR EACH ROW WHEN (new.status = 1 and new.tpmode=0)' ||
+    'DECLARE' ||
+    '  unused NUMBER;' ||
+    'BEGIN' ||
+    '  SELECT id INTO unused' ||
+    '    FROM TapeGatewayRequest' ||
+    '    WHERE taperecall=:new.id;' ||
+    'EXCEPTION WHEN NO_DATA_FOUND THEN' ||
+    '  INSERT INTO TapeGatewayRequest (accessmode, starttime,' ||
+    '    lastvdqmpingtime, vdqmvolreqid, id, streammigration, taperecall,' ||
+    '    status)' ||
+    '    VALUES (0,null,null,null,ids_seq.nextval,null,:new.id,1);' ||
+    'END tr_Tape_Pending';
+
+  -- Create the tr_Stream_Pending trigger which automatically inserts a
+  -- row into the TapeGatewayRequest table when a recall-tape is pending
+  EXECUTE IMMEDIATE
+    'CREATE OR REPLACE TRIGGER tr_Stream_Pending' ||
+    '  AFTER UPDATE of status ON Stream' ||
+    '  FOR EACH ROW WHEN (new.status = 0 )' ||
+    'DECLARE' ||
+    '  unused NUMBER;' ||
+    'BEGIN' ||
+    '  SELECT id INTO unused' ||
+    '    FROM TapeGatewayRequest' ||
+    '    WHERE streammigration=:new.id;' ||
+    'EXCEPTION WHEN NO_DATA_FOUND THEN' ||
+    '  INSERT INTO TapeGatewayRequest (accessMode, startTime,' ||
+    '    lastVdqmPingTime, vdqmVolReqId, id, streamMigration, TapeRecall,' ||
+    '    Status)' ||
+    '    VALUES (1,null,null,null,ids_seq.nextval,:new.id,null,0);' ||
+    'END tr_Stream_Pending';
+
+  -- Deal with Migrations
+  -- 1) Ressurect tapecopies for migration
+  UPDATE TapeCopy SET status = 1 WHERE status = 3;
+  -- 2) Clean up the streams
+  UPDATE Stream SET status = 0
+    WHERE status NOT IN (0, 5, 6, 7) --PENDING, CREATED, STOPPED, WAITPOLICY
+    RETURNING tape BULK COLLECT INTO tpIds;
+  UPDATE Stream SET tape = NULL WHERE tape != 0;
+  -- 3) Reset the tape for migration
+  FORALL i IN tpIds.FIRST .. tpIds.LAST
+    UPDATE tape SET stream = 0, status = 0
+      WHERE status IN (2, 3, 4) AND id = tpIds(i);
+
+  -- Deal with Recalls
+  UPDATE Segment SET status = 0
+    WHERE status = 7; -- Resurrect SELECTED segment
+  UPDATE Tape SET status = 1
+    WHERE tpmode = 0 AND status IN (2, 3, 4); -- Resurrect the tapes running for recall
+  UPDATE Tape A SET status = 8
+    WHERE status IN (0, 6, 7) AND EXISTS
+    (SELECT id FROM Segment WHERE status = 0 AND tape = A.id);
+
+  -- Start the restartSuckRecallsJob
+  DBMS_SCHEDULER.CREATE_JOB(
+      JOB_NAME        => 'RESTARTSTUCKRECALLSJOB',
+      JOB_TYPE        => 'PLSQL_BLOCK',
+      JOB_ACTION      => 'BEGIN restartStuckRecalls(); END;',
+      JOB_CLASS       => 'CASTOR_JOB_CLASS',
+      START_DATE      => SYSDATE + 60/1440,
+      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=60',
+      ENABLED         => TRUE,
+      COMMENTS        => 'Workaround to restart stuck recalls');
+
+
+  -- The databse is now compatible with the tapegatewayd daemon
+  UPDATE CastorConfig
+    SET value = 'tapegatewayd'
+    WHERE
+      class = 'tape' AND
+      key   = 'daemonName';
+
+END switchToTapegatewayd;
+/
+
+
+/*
+Procedure used to switch the stager database from being compatible with the
+tapegatewayd daemon, to being compatible with the rtcpclientd daemon.
+*/
+CREATE OR REPLACE PROCEDURE switchToRtcpclientd AS
+  idsList "numList";
+  unused VARCHAR2(2048);
+BEGIN
+  -- Do nothing and return if the database is already compatible with the
+  -- rtcpclientd daemon
+  BEGIN
+    SELECT value INTO unused
+     FROM CastorConfig
+     WHERE class = 'tape'
+       AND key   = 'daemonName'
+       AND value = 'rtcpclientd';
+     RETURN;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- Do nothing and continue
+    NULL;
+  END;
+
+  -- The database is about to be modified and is therefore not compatible with
+  -- either the rtcpclientd daemon or the tape gateway daemon
+  UPDATE CastorConfig
+    SET value = NULL
+    WHERE
+      class = 'tape' AND
+      key   = 'daemonName';
+
+  -- Drop the tr_Tape_Pending and tr_Stream_Pending triggers as they are
+  -- specific to the tape gateway and have no place in an rtcpclientd schema
+  EXECUTE IMMEDIATE 'DROP TRIGGER tr_Tape_Pending';
+  EXECUTE IMMEDIATE 'DROP TRIGGER tr_Stream_Pending';
+
+  DELETE FROM TapeGatewaySubRequest RETURNING id BULK COLLECT INTO idsList;  
+
+  FORALL i IN idsList.FIRST ..  idsList.LAST 
+    DELETE FROM id2type WHERE  id= idsList(i);
+
+  DELETE FROM TapeGatewayRequest RETURNING id BULK COLLECT INTO idsList;  
+
+  FORALL i IN idsList.FIRST ..  idsList.LAST 
+    DELETE FROM id2type WHERE  id= idsList(i);
+
+  -- The databse is now compatible with the rtcpclientd daemon
+  UPDATE CastorConfig
+    SET value = 'rtcpclientd'
+    WHERE
+      class = 'tape' AND
+      key   = 'daemonName';
+END switchToRtcpclientd;
 /
