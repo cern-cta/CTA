@@ -18,38 +18,36 @@ FOR EACH ROW
 WHEN (new.status = 1 and new.tpmode=0)
 DECLARE
  
-  reqId NUMBER;
   unused NUMBER;
 
 BEGIN
   BEGIN
-      SELECT value INTO unused
-        FROM CastorConfig
+    SELECT value INTO unused
+      FROM CastorConfig
       WHERE class = 'tape'
-         AND key   = 'daemonName'
+        AND key   = 'daemonName'
         AND value = 'tapegatewayd';
-    EXCEPTION WHEN NO_DATA_FOUND THEN  
-      -- rtcpclientd is running the trigger 
-      -- should not do anything
-      RETURN;
-    END;
+  EXCEPTION WHEN NO_DATA_FOUND THEN  
+    -- rtcpclientd is running the trigger 
+    -- should not do anything
+    RETURN;
+  END;
+
   -- tapegateway is running and the trigger
   -- can execute its operations
-   BEGIN
-
-      SELECT id INTO unused 
-          FROM TapeGatewayRequest 
-        	WHERE taperecall=:new.id;
+  BEGIN
+    SELECT id INTO unused 
+      FROM TapeGatewayRequest 
+      WHERE taperecall=:new.id;
  
-    EXCEPTION WHEN NO_DATA_FOUND THEN
+  EXCEPTION WHEN NO_DATA_FOUND THEN
 
-      INSERT INTO TapeGatewayRequest
-    (accessmode, starttime, lastvdqmpingtime, vdqmvolreqid, id, streammigration, taperecall, status) 
-    VALUES (0,null,null,null,ids_seq.nextval,null,:new.id,1)  RETURNING id into reqId;
-      INSERT INTO id2type (id,type) VALUES (reqId,172); 
+    INSERT INTO TapeGatewayRequest (accessmode, starttime, lastvdqmpingtime,
+      vdqmvolreqid, id, streammigration, taperecall, status) 
+      VALUES (0,null,null,null,ids_seq.nextval,null,:new.id,1);
 
-   END; 
-END;
+  END; 
+END tr_Tape_Pending;
 /
 
 
@@ -62,7 +60,6 @@ FOR EACH ROW
 WHEN (new.status = 0 )
 DECLARE 
 
-  reqId NUMBER;
   unused NUMBER;
 
 BEGIN 
@@ -83,19 +80,17 @@ BEGIN
 
   BEGIN
     SELECT id INTO unused 
-	FROM TapeGatewayRequest 
-	WHERE streammigration=:new.id;
+      FROM TapeGatewayRequest 
+      WHERE streammigration=:new.id;
  
   EXCEPTION WHEN NO_DATA_FOUND THEN
 
-    INSERT INTO TapeGatewayRequest 
-	(accessMode, startTime, lastVdqmPingTime, vdqmVolReqId, id, streamMigration, TapeRecall, Status) 
-	VALUES (1,null,null,null,ids_seq.nextval,:new.id,null,0) RETURNING id INTO reqId;
-    INSERT INTO id2type (id,type) VALUES (reqId,172);
-
+    INSERT INTO TapeGatewayRequest (accessMode, startTime, lastVdqmPingTime,
+      vdqmVolReqId, id, streamMigration, TapeRecall, Status) 
+      VALUES (1,null,null,null,ids_seq.nextval,:new.id,null,0);
   END;
 
-END;
+END tr_Stream_Pending;
 /
 
 
