@@ -2965,8 +2965,8 @@ the following file:
 
     castor/db/oracleCommon.schema.sql
 
-Create the PL/SQL procedures used by the tape gateway by executing the entirety
-of the following file:
+Create the PL/SQL procedures and triggers used by the tape gateway by executing
+the entirety of the following file:
 
     castor/db/oracleTapeGateway.sql
 
