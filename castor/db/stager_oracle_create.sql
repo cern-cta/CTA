@@ -518,45 +518,7 @@ CREATE TABLE Id2Type (id INTEGER CONSTRAINT PK_Id2Type_Id PRIMARY KEY, type NUMB
 /* Partitioning enables faster response (more than indexing) for the most frequent queries - credits to Nilo Segura */
 CREATE TABLE newRequests (type NUMBER(38) CONSTRAINT NN_NewRequests_Type NOT NULL, id NUMBER(38) CONSTRAINT NN_NewRequests_Id NOT NULL, creation DATE CONSTRAINT NN_NewRequests_Creation NOT NULL, CONSTRAINT PK_NewRequests_Type_Id PRIMARY KEY (type, id))
 ORGANIZATION INDEX
-COMPRESS
-PARTITION BY LIST (type)
- (
-  PARTITION type_16 VALUES (16)  TABLESPACE stager_data,
-  PARTITION type_21 VALUES (21)  TABLESPACE stager_data,
-  PARTITION type_33 VALUES (33)  TABLESPACE stager_data,
-  PARTITION type_34 VALUES (34)  TABLESPACE stager_data,
-  PARTITION type_35 VALUES (35)  TABLESPACE stager_data,
-  PARTITION type_36 VALUES (36)  TABLESPACE stager_data,
-  PARTITION type_37 VALUES (37)  TABLESPACE stager_data,
-  PARTITION type_38 VALUES (38)  TABLESPACE stager_data,
-  PARTITION type_39 VALUES (39)  TABLESPACE stager_data,
-  PARTITION type_40 VALUES (40)  TABLESPACE stager_data,
-  PARTITION type_41 VALUES (41)  TABLESPACE stager_data,
-  PARTITION type_42 VALUES (42)  TABLESPACE stager_data,
-  PARTITION type_43 VALUES (43)  TABLESPACE stager_data,
-  PARTITION type_44 VALUES (44)  TABLESPACE stager_data,
-  PARTITION type_45 VALUES (45)  TABLESPACE stager_data,
-  PARTITION type_46 VALUES (46)  TABLESPACE stager_data,
-  PARTITION type_48 VALUES (48)  TABLESPACE stager_data,
-  PARTITION type_49 VALUES (49)  TABLESPACE stager_data,
-  PARTITION type_50 VALUES (50)  TABLESPACE stager_data,
-  PARTITION type_51 VALUES (51)  TABLESPACE stager_data,
-  PARTITION type_60 VALUES (60)  TABLESPACE stager_data,
-  PARTITION type_64 VALUES (64)  TABLESPACE stager_data,
-  PARTITION type_65 VALUES (65)  TABLESPACE stager_data,
-  PARTITION type_66 VALUES (66)  TABLESPACE stager_data,
-  PARTITION type_67 VALUES (67)  TABLESPACE stager_data,
-  PARTITION type_78 VALUES (78)  TABLESPACE stager_data,
-  PARTITION type_79 VALUES (79)  TABLESPACE stager_data,
-  PARTITION type_80 VALUES (80)  TABLESPACE stager_data,
-  PARTITION type_84 VALUES (84)  TABLESPACE stager_data,
-  PARTITION type_90 VALUES (90)  TABLESPACE stager_data,
-  PARTITION type_142 VALUES (142)  TABLESPACE stager_data,
-  PARTITION type_144 VALUES (144)  TABLESPACE stager_data,
-  PARTITION type_147 VALUES (147)  TABLESPACE stager_data,
-  PARTITION type_149 VALUES (149)  TABLESPACE stager_data,
-  PARTITION notlisted VALUES (default) TABLESPACE stager_data
- );
+COMPRESS;
 
 /* Redefinition of table SubRequest to make it partitioned by status */
 /* Unfortunately it has already been defined, so we drop and recreate it */
@@ -573,39 +535,12 @@ CREATE TABLE SubRequest
    svcHandler VARCHAR2(2048) CONSTRAINT NN_SubRequest_SvcHandler NOT NULL
   )
   PCTFREE 50 PCTUSED 40 INITRANS 50
-  ENABLE ROW MOVEMENT
-  PARTITION BY LIST (STATUS)
-   (
-    PARTITION P_STATUS_0_1_2 VALUES (0, 1, 2),      -- *START
-    PARTITION P_STATUS_3     VALUES (3),
-    PARTITION P_STATUS_4     VALUES (4),
-    PARTITION P_STATUS_5     VALUES (5),
-    PARTITION P_STATUS_6     VALUES (6),
-    PARTITION P_STATUS_7     VALUES (7),
-    PARTITION P_STATUS_8     VALUES (8),
-    PARTITION P_STATUS_9_10  VALUES (9, 10),        -- FAILED_*
-    PARTITION P_STATUS_11    VALUES (11),
-    PARTITION P_STATUS_12    VALUES (12),
-    PARTITION P_STATUS_13_14 VALUES (13, 14),       -- *SCHED
-    PARTITION P_STATUS_OTHER VALUES (DEFAULT)
-   );
+  ENABLE ROW MOVEMENT;
 
 /* SQL statements for constraints on the SubRequest table */
 ALTER TABLE SubRequest
   ADD CONSTRAINT PK_SubRequest_Id PRIMARY KEY (ID);
-CREATE INDEX I_SubRequest_RT_CT_ID ON SubRequest(svcHandler, creationTime, id) LOCAL
- (PARTITION P_STATUS_0_1_2,
-  PARTITION P_STATUS_3,
-  PARTITION P_STATUS_4,
-  PARTITION P_STATUS_5,
-  PARTITION P_STATUS_6,
-  PARTITION P_STATUS_7,
-  PARTITION P_STATUS_8,
-  PARTITION P_STATUS_9_10,
-  PARTITION P_STATUS_11,
-  PARTITION P_STATUS_12,
-  PARTITION P_STATUS_13_14,
-  PARTITION P_STATUS_OTHER);
+CREATE INDEX I_SubRequest_RT_CT_ID ON SubRequest(svcHandler, creationTime, id);
 
 /* Redefinition of table TapeCopy to make it partitioned by status */
 ALTER TABLE Stream2TapeCopy DROP CONSTRAINT FK_Stream2TapeCopy_C;
@@ -615,11 +550,7 @@ CREATE TABLE TapeCopy
    id INTEGER CONSTRAINT PK_TapeCopy_Id PRIMARY KEY CONSTRAINT NN_TapeCopy_Id NOT NULL,
    castorFile INTEGER, status INTEGER)
   PCTFREE 50 PCTUSED 40 INITRANS 50
-  ENABLE ROW MOVEMENT
-  PARTITION BY LIST (STATUS)
-   (PARTITION P_STATUS_0_1   VALUES (0, 1),
-    PARTITION P_STATUS_OTHER VALUES (DEFAULT)
-  );
+  ENABLE ROW MOVEMENT;
 
 /* Recreate foreign key constraint between Stream2TapeCopy and TapeCopy */
 ALTER TABLE Stream2TapeCopy
@@ -639,9 +570,9 @@ CREATE INDEX I_DiskCopy_GCWeight ON DiskCopy (gcWeight);
 CREATE INDEX I_DiskCopy_FS_Status_10 ON DiskCopy (fileSystem,decode(status,10,status,NULL));
 CREATE INDEX I_DiskCopy_Status_9 ON DiskCopy (decode(status,9,status,NULL));
 
-CREATE INDEX I_TapeCopy_Castorfile ON TapeCopy (castorFile) LOCAL;
-CREATE INDEX I_TapeCopy_Status ON TapeCopy (status) LOCAL;
-CREATE INDEX I_TapeCopy_CF_Status_2 ON TapeCopy (castorFile,decode(status,2,status,null)) LOCAL;
+CREATE INDEX I_TapeCopy_Castorfile ON TapeCopy (castorFile);
+CREATE INDEX I_TapeCopy_Status ON TapeCopy (status);
+CREATE INDEX I_TapeCopy_CF_Status_2 ON TapeCopy (castorFile,decode(status,2,status,null));
 
 CREATE INDEX I_FileSystem_DiskPool ON FileSystem (diskPool);
 CREATE INDEX I_FileSystem_DiskServer ON FileSystem (diskServer);
@@ -651,7 +582,7 @@ CREATE INDEX I_SubRequest_DiskCopy ON SubRequest (diskCopy);
 CREATE INDEX I_SubRequest_Request ON SubRequest (request);
 CREATE INDEX I_SubRequest_Parent ON SubRequest (parent);
 CREATE INDEX I_SubRequest_SubReqId ON SubRequest (subReqId);
-CREATE INDEX I_SubRequest_LastModTime ON SubRequest (lastModificationTime) LOCAL;
+CREATE INDEX I_SubRequest_LastModTime ON SubRequest (lastModificationTime);
 
 CREATE INDEX I_StagePTGRequest_ReqId ON StagePrepareToGetRequest (reqId);
 CREATE INDEX I_StagePTPRequest_ReqId ON StagePrepareToPutRequest (reqId);
@@ -940,12 +871,6 @@ INSERT INTO CastorConfig
 UPDATE CastorConfig SET value = sys_context('USERENV', 'CURRENT_USER')
  WHERE class = 'general' AND key = 'owner';
 
-/* Drop the tapegateway tables created in the oracleSchema until such a time
- * that the tables are needed by a release
- */
-DROP TABLE TapeGatewaySubRequest;
-DROP TABLE TapeGatewayRequest;
-
 COMMIT;
 
 
@@ -1099,6 +1024,7 @@ CREATE TABLE DrainingFileSystem
     *   4 -- FAILED
     *   5 -- COMPLETED
     *   6 -- DELETING
+    *   7 -- RESTART
     */
    status         NUMBER DEFAULT 0,
    svcClass       NUMBER CONSTRAINT NN_DrainingFs_SvcClass NOT NULL,
@@ -1130,7 +1056,7 @@ ALTER TABLE DrainingFileSystem
 /* SQL statements for check constraints on the DrainingFileSystem table */
 ALTER TABLE DrainingFileSystem
   ADD CONSTRAINT CK_DrainingFs_Status
-  CHECK (status IN (0, 1, 2, 3, 4, 5, 6));
+  CHECK (status IN (0, 1, 2, 3, 4, 5, 6, 7));
 
 ALTER TABLE DrainingFileSystem
   ADD CONSTRAINT CK_DrainingFs_FileMask
@@ -2237,7 +2163,7 @@ END;
 /* SQL statement for the update trigger on the FileSystem table */
 CREATE OR REPLACE TRIGGER tr_FileSystem_Update
 BEFORE UPDATE OF status ON FileSystem
-FOR EACH ROW
+FOR EACH ROW WHEN (old.status != new.status)
 BEGIN
   -- If the filesystem is coming back into PRODUCTION, initiate a consistency
   -- check for the diskcopies which reside on the filesystem.
@@ -2245,13 +2171,13 @@ BEGIN
      :new.status = 0 THEN       -- PRODUCTION
     checkFsBackInProd(:old.id);
   END IF;
-  -- Cancel any ongoing draining operations if the filesystem is now in a
-  -- PRODUCTION state
-  IF :new.status = 0 THEN  -- PRODUCTION
+  -- Cancel any ongoing draining operations if the filesystem is not in a
+  -- DRAINING state
+  IF :new.status != 1 THEN  -- DRAINING
     UPDATE DrainingFileSystem
        SET status = 3  -- INTERRUPTED
      WHERE fileSystem = :new.id
-       AND status IN (0, 1, 2);  -- CREATED, INITIALIZING, RUNNING
+       AND status IN (0, 1, 2, 7);  -- CREATED, INITIALIZING, RUNNING, RESTART
   END IF;
 END;
 /
@@ -2260,7 +2186,7 @@ END;
 /* SQL statement for the update trigger on the DiskServer table */
 CREATE OR REPLACE TRIGGER tr_DiskServer_Update
 BEFORE UPDATE OF status ON DiskServer
-FOR EACH ROW
+FOR EACH ROW WHEN (old.status != new.status)
 BEGIN
   -- If the diskserver is coming back into PRODUCTION, initiate a consistency
   -- check for all the diskcopies on its associated filesystems which are in
@@ -2274,21 +2200,26 @@ BEGIN
       checkFsBackInProd(fs.id);
     END LOOP;
   END IF;
-  -- Cancel any ongoing draining operations if:
-  --  A) The diskserver is going into a DISABLED state      or
-  --  B) The diskserver is going into PRODUCTION but its associated filesystems
-  --     are not in DRAINING.
-  IF :old.status = 1 AND        -- DRAINING
-     :new.status IN (0, 2) THEN -- PRODUCTION, DISABLED
-   UPDATE DrainingFileSystem
-      SET status = 3  -- INTERRUPTED
-    WHERE fileSystem IN
-      (SELECT id FROM FileSystem
-        WHERE diskServer = :old.id
-          AND (status != 1  --  FILESYSTEM_DRAINING
-           OR  :new.status = 2))  -- DISKSERVER_DISABLED
-      AND status IN (0, 1, 2);  -- CREATED, INITIALIZING, RUNNING
+  -- Cancel all draining operations if the diskserver is disabled.
+  IF :new.status = 2 THEN  -- DISABLED
+    UPDATE DrainingFileSystem
+       SET status = 3  -- INTERRUPTED
+     WHERE fileSystem IN
+       (SELECT FileSystem.id FROM FileSystem
+         WHERE FileSystem.diskServer = :new.id)
+       AND status IN (0, 1, 2, 7);  -- CREATED, INITIALIZING, RUNNING, RESTART
   END IF;
+  -- If the diskserver is in PRODUCTION cancel the draining operation of 
+  -- filesystems not in DRAINING.
+  IF :new.status = 0 THEN  -- PRODUCTION
+    UPDATE DrainingFileSystem
+       SET status = 3  -- INTERRUPTED
+     WHERE fileSystem IN
+       (SELECT FileSystem.id FROM FileSystem
+         WHERE FileSystem.diskServer = :new.ID
+           AND FileSystem.status != 1)  -- DRAINING
+       AND status IN (0, 1, 2, 7);  -- CREATED, INITIALIZING, RUNNING, RESTART
+  END IF; 
 END;
 /
 
@@ -2443,7 +2374,7 @@ CREATE OR REPLACE PROCEDURE subRequestToDo(service IN VARCHAR2,
                                            srStatus OUT INTEGER, srModeBits OUT INTEGER, srFlags OUT INTEGER,
                                            srSubReqId OUT VARCHAR2, srAnswered OUT INTEGER, srSvcHandler OUT VARCHAR2) AS
   CURSOR SRcur IS SELECT /*+ FIRST_ROWS(10) INDEX(SR I_SubRequest_RT_CT_ID) */ SR.id
-                    FROM SubRequest PARTITION (P_STATUS_0_1_2) SR
+                    FROM SubRequest SR
                    WHERE SR.svcHandler = service
                    ORDER BY SR.creationTime ASC;
   SrLocked EXCEPTION;
@@ -2459,7 +2390,7 @@ BEGIN
     BEGIN
       -- Try to take a lock on the current candidate, and revalidate its status
       SELECT /*+ INDEX(SR PK_SubRequest_ID) */ id INTO srIntId
-        FROM SubRequest PARTITION (P_STATUS_0_1_2) SR
+        FROM SubRequest SR
        WHERE id = srIntId FOR UPDATE NOWAIT;
       -- Since we are here, we got the lock. We have our winner, let's update it
       UPDATE SubRequest
@@ -2493,7 +2424,7 @@ CREATE OR REPLACE PROCEDURE subRequestFailedToDo(srId OUT INTEGER, srRetryCounte
   PRAGMA EXCEPTION_INIT (SrLocked, -54);
   CURSOR c IS
      SELECT /*+ FIRST_ROWS(10) INDEX(SR I_SubRequest_RT_CT_ID) */ SR.id
-       FROM SubRequest PARTITION (P_STATUS_7) SR; -- FAILED
+       FROM SubRequest SR; -- FAILED
   srAnswered INTEGER;
   srIntId NUMBER;
 BEGIN
@@ -2503,7 +2434,7 @@ BEGIN
     EXIT WHEN c%NOTFOUND;
     BEGIN
       SELECT answered INTO srAnswered
-        FROM SubRequest PARTITION (P_STATUS_7) 
+        FROM SubRequest
        WHERE id = srIntId FOR UPDATE NOWAIT;
       IF srAnswered = 1 THEN
         -- already answered, ignore it
@@ -5333,15 +5264,14 @@ BEGIN
           FROM TABLE (strTokenizer(rfs, '|')) rfsTable)
      -- For a requested filesystem to be available the following criteria
      -- must be meet:
-     --  - The diskserver must not be in a DISABLED state
-     --  - For StageDiskCopyReplicaRequests and StageGetRequests the
-     --    filesystem must be in a DRAINING or PRODUCTION status
+     --  - The diskserver and filesystem must not be in a DISABLED state
+     --  - For StageDiskCopyReplicaRequests all other states are accepted
      --  - For all other requests the diskserver and filesystem must be in
      --    PRODUCTION
-     AND decode(DiskServer.status, 2, 1,
-           decode(reqType, 133, decode(FileSystem.status, 2, 1, 0),
-             decode(reqType, 35, decode(FileSystem.status, 2, 1, 0),
-               decode(FileSystem.status + DiskServer.status, 0, 0, 1)))) = 0;
+     AND decode(DiskServer.status, 2, 1,    -- Exclude DISABLED Diskservers
+           decode(FileSystem.status, 2, 1,  -- Exclude DISABLED Filesystems
+             decode(reqType, 133, 0,
+                 decode(FileSystem.status + DiskServer.status, 0, 0, 1)))) = 0;
   IF rtn > 0 THEN
     RETURN 0;  -- We found some available requested filesystems
   END IF;
@@ -5374,7 +5304,7 @@ BEGIN
         -- Union of all requests that could result in scheduler transfers
         (SELECT id, svcClass, reqid, 40  AS reqType
            FROM StagePutRequest                     UNION ALL
-         SELECT id, svcClass, reqid, 144 AS reqType
+         SELECT id, svcClass, reqid, 133 AS reqType
            FROM StageDiskCopyReplicaRequest         UNION ALL
          SELECT id, svcClass, reqid, 35  AS reqType
            FROM StageGetRequest                     UNION ALL
@@ -5485,8 +5415,7 @@ PROCEDURE jobToSchedule(srId OUT INTEGER,              srSubReqId OUT VARCHAR2,
   -- by creation time.
   CURSOR c IS
     SELECT /*+ FIRST_ROWS(10) INDEX(SR I_SubRequest_RT_CT_ID) */ SR.id
-      FROM SubRequest
- PARTITION (P_STATUS_13_14) SR  -- RESTART, READYFORSCHED, BEINGSCHED
+      FROM SubRequest SR  -- RESTART, READYFORSCHED, BEINGSCHED
      ORDER BY SR.creationTime ASC;
   SrLocked EXCEPTION;
   PRAGMA EXCEPTION_INIT (SrLocked, -54);
@@ -5506,7 +5435,7 @@ BEGIN
       -- valid subrequest is either in READYFORSCHED or has been stuck in
       -- BEINGSCHED for more than 1800 seconds (30 mins)
       SELECT /*+ INDEX(SR PK_SubRequest_ID) */ id INTO srId
-        FROM SubRequest PARTITION (P_STATUS_13_14) SR
+        FROM SubRequest SR
        WHERE id = srId
          AND ((status = 13)  -- READYFORSCHED
           OR  (status = 14   -- BEINGSCHED
@@ -7780,6 +7709,9 @@ END;
 /
 
 /*
+restartStuckRecalls is a wrokaround procedure required by the rtcpclientd
+daemon.
+
 Restart the (recall) segments that are recognized as stuck.
 This workaround (sr #112306: locking issue in CMS stager)
 will be dropped as soon as the TapeGateway will be used in production.
@@ -7834,8 +7766,13 @@ BEGIN
 END restartStuckRecalls;
 /
 
--- Create a db job to be run every hour executing the restartStuckRecalls 
--- workaround procedure
+
+/*
+The default state of the stager database is to be compatible with the
+rtcpclientd daemon as opposed to the tape gateway daemon.  Therefore create the
+restartStuckRecallsJob which will call the restartStuckRecalls workaround
+procedure every hour.
+*/
 BEGIN
   -- Remove database jobs before recreating them
   FOR j IN (SELECT job_name FROM user_scheduler_jobs
@@ -7845,15 +7782,189 @@ BEGIN
   END LOOP;
 
   DBMS_SCHEDULER.CREATE_JOB(
-      JOB_NAME        => 'restartStuckRecallsJob',
+      JOB_NAME        => 'RESTARTSTUCKRECALLSJOB',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN restartStuckRecalls(); END;',
-      JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 60/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=60',
       ENABLED         => TRUE,
       COMMENTS        => 'Workaround to restart stuck recalls');
 END;
+/
+
+
+/*
+Procedure used to switch the stager database from being compatible with the
+rtcpclientd daemon, to being compatible with the tapegatewayd daemon.
+*/
+CREATE OR REPLACE PROCEDURE switchToTapegatewayd AS
+  tpIds "numList";
+  unused VARCHAR2(2048);
+BEGIN
+  -- Do nothing and return if the database is already compatible with the
+  -- tapegatewayd daemon
+  BEGIN
+    SELECT value INTO unused
+     FROM CastorConfig
+     WHERE class = 'tape'
+       AND key   = 'daemonName'
+       AND value = 'tapegatewayd';
+     RETURN;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- Do nothing and continue
+    NULL;
+  END;
+
+  -- The database is about to be modified and is therefore not compatible with
+  -- either the rtcpclientd daemon or the tape gateway daemon
+  UPDATE CastorConfig
+    SET value = NULL
+    WHERE
+      class = 'tape' AND
+      key   = 'daemonName';
+
+  -- Remove the restartStuckRecallsJob as this job will not exist in the
+  -- future tape gateway only schema
+  FOR j IN (SELECT job_name FROM user_scheduler_jobs
+             WHERE job_name IN ('RESTARTSTUCKRECALLSJOB'))
+  LOOP
+    DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
+  END LOOP;
+
+  -- Create the tr_Tape_Pending trigger which automatically inserts a
+  -- row into the TapeGatewayRequest table when a recall-tape is pending
+  EXECUTE IMMEDIATE
+    'CREATE OR REPLACE TRIGGER tr_Tape_Pending' ||
+    '  AFTER UPDATE of status ON Tape' ||
+    '  FOR EACH ROW WHEN (new.status = 1 and new.tpmode=0)' ||
+    'DECLARE' ||
+    '  unused NUMBER;' ||
+    'BEGIN' ||
+    '  SELECT id INTO unused' ||
+    '    FROM TapeGatewayRequest' ||
+    '    WHERE taperecall=:new.id;' ||
+    'EXCEPTION WHEN NO_DATA_FOUND THEN' ||
+    '  INSERT INTO TapeGatewayRequest (accessmode, starttime,' ||
+    '    lastvdqmpingtime, vdqmvolreqid, id, streammigration, taperecall,' ||
+    '    status)' ||
+    '    VALUES (0,null,null,null,ids_seq.nextval,null,:new.id,1);' ||
+    'END tr_Tape_Pending';
+
+  -- Create the tr_Stream_Pending trigger which automatically inserts a
+  -- row into the TapeGatewayRequest table when a recall-tape is pending
+  EXECUTE IMMEDIATE
+    'CREATE OR REPLACE TRIGGER tr_Stream_Pending' ||
+    '  AFTER UPDATE of status ON Stream' ||
+    '  FOR EACH ROW WHEN (new.status = 0 )' ||
+    'DECLARE' ||
+    '  unused NUMBER;' ||
+    'BEGIN' ||
+    '  SELECT id INTO unused' ||
+    '    FROM TapeGatewayRequest' ||
+    '    WHERE streammigration=:new.id;' ||
+    'EXCEPTION WHEN NO_DATA_FOUND THEN' ||
+    '  INSERT INTO TapeGatewayRequest (accessMode, startTime,' ||
+    '    lastVdqmPingTime, vdqmVolReqId, id, streamMigration, TapeRecall,' ||
+    '    Status)' ||
+    '    VALUES (1,null,null,null,ids_seq.nextval,:new.id,null,0);' ||
+    'END tr_Stream_Pending';
+
+  -- Deal with Migrations
+  -- 1) Ressurect tapecopies for migration
+  UPDATE TapeCopy SET status = 1 WHERE status = 3;
+  -- 2) Clean up the streams
+  UPDATE Stream SET status = 0
+    WHERE status NOT IN (0, 5, 6, 7) --PENDING, CREATED, STOPPED, WAITPOLICY
+    RETURNING tape BULK COLLECT INTO tpIds;
+  UPDATE Stream SET tape = NULL WHERE tape != 0;
+  -- 3) Reset the tape for migration
+  FORALL i IN tpIds.FIRST .. tpIds.LAST
+    UPDATE tape SET stream = 0, status = 0
+      WHERE status IN (2, 3, 4) AND id = tpIds(i);
+
+  -- Deal with Recalls
+  UPDATE Segment SET status = 0
+    WHERE status = 7; -- Resurrect SELECTED segment
+  UPDATE Tape SET status = 1
+    WHERE tpmode = 0 AND status IN (2, 3, 4); -- Resurrect the tapes running for recall
+  UPDATE Tape A SET status = 8
+    WHERE status IN (0, 6, 7) AND EXISTS
+    (SELECT id FROM Segment WHERE status = 0 AND tape = A.id);
+
+  -- Start the restartSuckRecallsJob
+  DBMS_SCHEDULER.CREATE_JOB(
+      JOB_NAME        => 'RESTARTSTUCKRECALLSJOB',
+      JOB_TYPE        => 'PLSQL_BLOCK',
+      JOB_ACTION      => 'BEGIN restartStuckRecalls(); END;',
+      START_DATE      => SYSDATE + 60/1440,
+      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=60',
+      ENABLED         => TRUE,
+      COMMENTS        => 'Workaround to restart stuck recalls');
+
+
+  -- The databse is now compatible with the tapegatewayd daemon
+  UPDATE CastorConfig
+    SET value = 'tapegatewayd'
+    WHERE
+      class = 'tape' AND
+      key   = 'daemonName';
+
+END switchToTapegatewayd;
+/
+
+
+/*
+Procedure used to switch the stager database from being compatible with the
+tapegatewayd daemon, to being compatible with the rtcpclientd daemon.
+*/
+CREATE OR REPLACE PROCEDURE switchToRtcpclientd AS
+  idsList "numList";
+  unused VARCHAR2(2048);
+BEGIN
+  -- Do nothing and return if the database is already compatible with the
+  -- rtcpclientd daemon
+  BEGIN
+    SELECT value INTO unused
+     FROM CastorConfig
+     WHERE class = 'tape'
+       AND key   = 'daemonName'
+       AND value = 'rtcpclientd';
+     RETURN;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- Do nothing and continue
+    NULL;
+  END;
+
+  -- The database is about to be modified and is therefore not compatible with
+  -- either the rtcpclientd daemon or the tape gateway daemon
+  UPDATE CastorConfig
+    SET value = NULL
+    WHERE
+      class = 'tape' AND
+      key   = 'daemonName';
+
+  -- Drop the tr_Tape_Pending and tr_Stream_Pending triggers as they are
+  -- specific to the tape gateway and have no place in an rtcpclientd schema
+  EXECUTE IMMEDIATE 'DROP TRIGGER tr_Tape_Pending';
+  EXECUTE IMMEDIATE 'DROP TRIGGER tr_Stream_Pending';
+
+  DELETE FROM TapeGatewaySubRequest RETURNING id BULK COLLECT INTO idsList;  
+
+  FORALL i IN idsList.FIRST ..  idsList.LAST 
+    DELETE FROM id2type WHERE  id= idsList(i);
+
+  DELETE FROM TapeGatewayRequest RETURNING id BULK COLLECT INTO idsList;  
+
+  FORALL i IN idsList.FIRST ..  idsList.LAST 
+    DELETE FROM id2type WHERE  id= idsList(i);
+
+  -- The databse is now compatible with the rtcpclientd daemon
+  UPDATE CastorConfig
+    SET value = 'rtcpclientd'
+    WHERE
+      class = 'tape' AND
+      key   = 'daemonName';
+END switchToRtcpclientd;
 /
 /*******************************************************************
  *
@@ -8696,7 +8807,6 @@ BEGIN
       JOB_NAME        => 'houseKeepingJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN deleteTerminatedRequests(); END;',
-      JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 60/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=20',
       ENABLED         => TRUE,
@@ -8707,7 +8817,6 @@ BEGIN
       JOB_NAME        => 'cleanupJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN cleanup(); END;',
-      JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 60/1440,
       REPEAT_INTERVAL => 'FREQ=HOURLY; INTERVAL=12',
       ENABLED         => TRUE,
@@ -8718,7 +8827,6 @@ BEGIN
       JOB_NAME        => 'bulkCheckFSBackInProdJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN bulkCheckFSBackInProd(); END;',
-      JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 60/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
       ENABLED         => TRUE,
@@ -8738,7 +8846,6 @@ BEGIN
                                   AND DiskCopy.ownergid IS NOT NULL
                                 GROUP BY owneruid, fileSystem);
                           END;',
-      JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 60/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=60',
       ENABLED         => TRUE,
@@ -8759,49 +8866,6 @@ END;
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
-
-/* SQL statement for the delete trigger on the DrainingFileSystem table */
-CREATE OR REPLACE TRIGGER tr_DrainingFileSystem_Delete
-BEFORE DELETE ON DrainingFileSystem
-FOR EACH ROW
-DECLARE
-  CURSOR c IS
-    SELECT STDCRR.id, SR.id subrequest, STDCRR.client
-      FROM StageDiskCopyReplicaRequest STDCRR, DrainingDiskCopy DDC,
-           SubRequest SR
-     WHERE STDCRR.sourceDiskCopy = DDC.diskCopy
-       AND SR.request = STDCRR.id
-       AND decode(DDC.status, 4, DDC.status, NULL) = 4  -- FAILED
-       AND SR.status = 9  -- FAILED_FINISHED
-       AND DDC.fileSystem = :old.fileSystem;
-  reqIds    "numList";
-  clientIds "numList";
-  srIds     "numList";
-BEGIN
-  -- Remove failed transfers requests from the StageDiskCopyReplicaRequest
-  -- table. If we do not do this files which failed due to "Maximum number of
-  -- attempts exceeded" cannot be resubmitted to the system.
-  -- (see getBestDiskCopyToReplicate)
-  LOOP
-    OPEN c;
-    FETCH c BULK COLLECT INTO reqIds, srIds, clientIds LIMIT 10000;
-    -- Break out of the loop when the cursor returns no results
-    EXIT WHEN reqIds.count = 0;
-    -- Delete data
-    FORALL i IN reqIds.FIRST .. reqIds.LAST
-      DELETE FROM Id2Type WHERE id IN (reqIds(i), clientIds(i), srIds(i));
-    FORALL i IN clientIds.FIRST .. clientIds.LAST
-      DELETE FROM Client WHERE id = clientIds(i);
-    FORALL i IN srIds.FIRST .. srIds.LAST
-      DELETE FROM SubRequest WHERE id = srIds(i);
-    CLOSE c;
-  END LOOP;
-  -- Delete all data related to the filesystem from the draining diskcopy table
-  DELETE FROM DrainingDiskCopy
-   WHERE fileSystem = :old.fileSystem;
-END;
-/
-
 
 /* Function to convert seconds into a time string using the format:
  * DD-MON-YYYY HH24:MI:SS. If seconds is not defined then the current time
@@ -8907,7 +8971,8 @@ AS
                    3, 'INTERRUPTED',
                    4, 'FAILED',
                    5, 'COMPLETED',
-                   6, 'DELETING', 'UNKNOWN') Status,
+                   6, 'DELETING',
+                   7, 'RESTART', 'UNKNOWN') Status,
          nvl(DDCS.filesRemaining, 0) FilesRemaining,
          sizeOfFmtSI(nvl(DDCS.bytesRemaining, 0)) SizeRemaining,
          nvl(DDCS.running, 0) Running,
@@ -8920,9 +8985,9 @@ AS
              getInterval(DFS.startTime, gettime()),
                getInterval(DFS.startTime, DFS.lastUpdateTime))) RunTime,
          -- Calculate how far the process has gotten as a percentage of the data
-         -- already transferred. If the process is in a CREATED, INITIALIZING or
-         -- DELETING status N/A will be returned.
-         decode(DFS.status, 0, 'N/A', 1, 'N/A', 6, 'N/A',
+         -- already transferred. If the process is in a CREATED, INITIALIZING,
+         -- DELETING or RESTART status N/A will be returned.
+         decode(DFS.status, 0, 'N/A', 1, 'N/A', 6, 'N/A', 7, 'N/A',
            decode(DFS.totalBytes, 0, '100%',
              concat(to_char(
                floor(((DFS.totalBytes - nvl(DDCS.bytesRemaining, 0)) /
@@ -8978,14 +9043,59 @@ AS
    ORDER BY DS.name, FS.mountPoint, DC.path;
 
 
+
+/* SQL statement for the removeFailedDrainingTransfers procedure */
+CREATE OR REPLACE PROCEDURE removeFailedDrainingTransfers(fsId IN NUMBER)
+AS
+  CURSOR c IS
+    SELECT STDCRR.id, SR.id subrequest, STDCRR.client
+      FROM StageDiskCopyReplicaRequest STDCRR, DrainingDiskCopy DDC,
+           SubRequest SR
+     WHERE STDCRR.sourceDiskCopy = DDC.diskCopy
+       AND SR.request = STDCRR.id
+       AND decode(DDC.status, 4, DDC.status, NULL) = 4  -- FAILED
+       AND SR.status = 9  -- FAILED_FINISHED
+       AND DDC.fileSystem = fsId;
+  reqIds    "numList";
+  clientIds "numList";
+  srIds     "numList";
+BEGIN
+  -- Remove failed transfers requests from the StageDiskCopyReplicaRequest
+  -- table. If we do not do this files which failed due to "Maximum number of
+  -- attempts exceeded" cannot be resubmitted to the system.
+  -- (see getBestDiskCopyToReplicate)
+  LOOP
+    OPEN c;
+    FETCH c BULK COLLECT INTO reqIds, srIds, clientIds LIMIT 10000;
+    -- Break out of the loop when the cursor returns no results
+    EXIT WHEN reqIds.count = 0;
+    -- Delete data
+    FORALL i IN reqIds.FIRST .. reqIds.LAST
+      DELETE FROM Id2Type WHERE id IN (reqIds(i), clientIds(i), srIds(i));
+    FORALL i IN clientIds.FIRST .. clientIds.LAST
+      DELETE FROM Client WHERE id = clientIds(i);
+    FORALL i IN srIds.FIRST .. srIds.LAST
+      DELETE FROM SubRequest WHERE id = srIds(i);
+    CLOSE c;
+  END LOOP;
+  -- Delete all data related to the filesystem from the draining diskcopy table
+  DELETE FROM DrainingDiskCopy
+   WHERE fileSystem = fsId;
+END;
+/
+
+
 /* Procedure responsible for stopping the draining process for a diskserver
  * or filesystem. In no filesystem is specified then all filesystems
  * associated to the diskserver will be stopped.
  */
 CREATE OR REPLACE PROCEDURE stopDraining(inNodeName   IN VARCHAR,
-                                         inMountPoint IN VARCHAR2 DEFAULT NULL)
+                                         inMountPoint IN VARCHAR2 DEFAULT NULL,
+                                         inRestart    IN NUMBER DEFAULT 0)
 AS
-  fsIds "numList";
+  fsIds  "numList";
+  unused NUMBER;
+  mntPnt VARCHAR2(2048);
 BEGIN
   -- Check that the nodename and mountpoint input options are valid
   SELECT FileSystem.id BULK COLLECT INTO fsIds
@@ -9003,14 +9113,35 @@ BEGIN
         (-20015, 'Diskserver and mountpoint does not exist');
     END IF;
   END IF;
-  -- Update the filesystem entries to DELETING. The drainManager job will
-  -- finalize the deletion of the entry once all outstanding transfers have
-  -- terminated.
-  UPDATE DrainingFileSystem
-     SET status = 6  -- DELETING
-   WHERE fileSystem IN
-     (SELECT /*+ CARDINALITY(fsIdTable 5) */ *
-        FROM TABLE (fsIds) fsIdTable);
+  -- Update the filesystem entries to DELETING or RESTART depending in the
+  -- inRestart option. The drainManager job will take care of actually doing
+  -- the work.
+  FOR i IN fsIds.FIRST .. fsIds.LAST
+  LOOP
+    -- Check to see if the mountpoint and diskserver combination allow for a
+    -- draining operation to begin.
+    BEGIN
+      SELECT mountPoint INTO mntPnt
+        FROM FileSystem WHERE id = fsIds(i);
+      -- If restarting verify that the diskserver and filesystem are in a 
+      -- valid state, code copied from startDraining.
+      IF inRestart = 1 THEN
+        SELECT FS.diskPool INTO unused
+          FROM FileSystem FS, DiskServer DS
+         WHERE FS.diskServer = DS.id
+           AND FS.id = fsIds(i)
+           AND (FS.status = 1 OR DS.status = 1)
+           AND FS.status != 2
+           AND DS.status != 2;
+      END IF;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      raise_application_error
+        (-20116, 'Mountpoint: Restart not possible '||mntPnt||' is not in a DRAINING state or diskserver is DISABLED');
+    END;
+    UPDATE DrainingFileSystem
+       SET status = decode(inRestart, 1, 7, 6)
+     WHERE fileSystem = fsIds(i);
+  END LOOP;
 END;
 /
 
@@ -9094,17 +9225,19 @@ BEGIN
           (-20117, 'Mountpoint: '||mntPnt||' does not belong to the '''||inSvcClass||''' service class');
       END;
     END IF;
-    -- If the mountpoint is not in a DRAINING status then the draining process
-    -- cannot proceed.
+    -- Check to see if the mountpoint and diskserver combination allow for a
+    -- draining operation to begin.
     BEGIN
       SELECT FS.diskPool INTO unused
         FROM FileSystem FS, DiskServer DS
        WHERE FS.diskServer = DS.id
          AND FS.id = fsIds(i)
-         AND decode(FS.status, 0, DS.status, FS.status) = 1;
+         AND (FS.status = 1 OR DS.status = 1)
+         AND FS.status != 2
+         AND DS.status != 2;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       raise_application_error
-        (-20116, 'Mountpoint: '||mntPnt||' is not in a DRAINING state');
+        (-20116, 'Mountpoint: '||mntPnt||' is not in a DRAINING state or diskserver is DISABLED');
     END;
     -- Check to see if the mountpoint is already being drained. Note: we do not
     -- allow the resubmission of a mountpoint without a prior DELETION unless
@@ -9118,6 +9251,7 @@ BEGIN
         (-20118, 'Mountpoint: '||mntPnt||' is already being drained');
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- Cleanup
+      removeFailedDrainingTransfers(fsIds(i));
       DELETE FROM DrainingFileSystem
        WHERE fileSystem = fsIds(i);
       -- Insert the new mountpoint into the list of those to be drained. The
@@ -9344,7 +9478,6 @@ BEGIN
       JOB_NAME        => 'drainManagerJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN DrainManager(); END;',
-      JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 5/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=1',
       ENABLED         => TRUE,
@@ -9357,15 +9490,30 @@ END;
 CREATE OR REPLACE PROCEDURE drainManager AS
   fsIds "numList";
 BEGIN
-  -- Delete the filesystems which are:
+  -- Delete (and restart if necessary) the filesystems which are:
   --  A) in a DELETING state and have no transfers pending in the scheduler.
   --  B) are COMPLETED and older than 7 days.
-  DELETE FROM DrainingFileSystem
-   WHERE (NOT EXISTS (SELECT 'x' FROM DrainingDiskCopy
-                       WHERE fileSystem = DrainingFileSystem.fileSystem
-                         AND status = 3)  -- WAITD2D
-          AND status = 6)  -- DELETING
-      OR (status = 5 AND lastUpdateTime < getTime() - (7 * 86400));
+  FOR A IN (SELECT fileSystem, status FROM DrainingFileSystem
+             WHERE (NOT EXISTS
+               (SELECT 'x' FROM DrainingDiskCopy
+                 WHERE fileSystem = DrainingFileSystem.fileSystem
+                   AND status = 3)  -- WAITD2D
+               AND status IN (6, 7))  -- DELETING, RESTART
+                OR (status = 5 AND lastUpdateTime < getTime() - (7 * 86400)))
+  LOOP
+    -- If the status is RESTART, reset the draining filesystem entry to
+    -- its default values and set its status to CREATED, otherwise delete it!
+    removeFailedDrainingTransfers(a.fileSystem);
+    IF a.status = 7 THEN
+      UPDATE DrainingFileSystem
+         SET creationTime = getTime(), startTime = 0, lastUpdateTime = 0,
+             status = 0, totalFiles = 0, totalBytes = 0
+       WHERE fileSystem = a.fileSystem;        
+    ELSE
+      DELETE FROM DrainingFileSystem
+       WHERE fileSystem = a.fileSystem;
+    END IF;
+  END LOOP;
   -- Process filesystems which in a CREATED state
   UPDATE DrainingFileSystem
      SET status = 1  -- INITIALIZING
@@ -9840,7 +9988,6 @@ BEGIN
                             castorMon.waitTapeMigrationStats(interval);
                             castorMon.waitTapeRecallStats(interval);
                           END;',
-      JOB_CLASS       => 'CASTOR_MON_JOB_CLASS',
       START_DATE      => SYSDATE + 60/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=60',
       ENABLED         => TRUE,

@@ -1764,7 +1764,7 @@ BEGIN
   -- The database is about to be modified and is therefore not compatible with
   -- either the rtcpclientd daemon or the tape gateway daemon
   UPDATE CastorConfig
-    SET value = NULL
+    SET value = 'NONE'
     WHERE
       class = 'tape' AND
       key   = 'daemonName';
@@ -1849,7 +1849,7 @@ BEGIN
       COMMENTS        => 'Workaround to restart stuck recalls');
 
 
-  -- The databse is now compatible with the tapegatewayd daemon
+  -- The database is now compatible with the tapegatewayd daemon
   UPDATE CastorConfig
     SET value = 'tapegatewayd'
     WHERE
@@ -1885,7 +1885,7 @@ BEGIN
   -- The database is about to be modified and is therefore not compatible with
   -- either the rtcpclientd daemon or the tape gateway daemon
   UPDATE CastorConfig
-    SET value = NULL
+    SET value = 'NONE'
     WHERE
       class = 'tape' AND
       key   = 'daemonName';
@@ -1905,7 +1905,7 @@ BEGIN
   FORALL i IN idsList.FIRST ..  idsList.LAST 
     DELETE FROM id2type WHERE  id= idsList(i);
 
-  -- The databse is now compatible with the rtcpclientd daemon
+  -- The database is now compatible with the rtcpclientd daemon
   UPDATE CastorConfig
     SET value = 'rtcpclientd'
     WHERE
