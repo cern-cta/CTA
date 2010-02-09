@@ -24,7 +24,7 @@ $ActionForwardDefaultTemplate RSYSLOG_ForwardFormat
 
 # Logging configuration for CASTOR
 local3.*                                    -?DynaFile
-local3.*;local2.info                        @@headnode1.domain.com:514
+local3.*;local3.!=debug;local2.info         @@headnode1.domain.com:514
 $ActionExecOnlyWhenPreviousIsSuspended on
 & @@headnode2.domain.com:514
 & @@headnode3.domain.com:514
