@@ -32,7 +32,7 @@ BEGIN
     SELECT value INTO unused
      FROM CastorConfig
      WHERE class = 'tape'
-       AND key   = 'daemonName'
+       AND key   = 'interfaceDaemon'
        AND value = 'rtcpclientd';
      RETURN;
   EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -46,7 +46,7 @@ BEGIN
     SET value = 'NONE'
     WHERE
       class = 'tape' AND
-      key   = 'daemonName';
+      key   = 'interfaceDaemon';
   COMMIT;
 
   -- Drop the tr_Tape_Pending and tr_Stream_Pending triggers as they are
@@ -69,7 +69,7 @@ BEGIN
     SET value = 'rtcpclientd'
     WHERE
       class = 'tape' AND
-      key   = 'daemonName';
+      key   = 'interfaceDaemon';
   COMMIT;
 END;
 /

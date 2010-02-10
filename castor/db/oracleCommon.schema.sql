@@ -436,7 +436,7 @@ INSERT INTO CastorConfig
   VALUES ('stager', 'nsHost', 'undefined', 'The name of the name server host to set in the CastorFile table overriding the CNS/HOST option defined in castor.conf');
 
 INSERT INTO CastorConfig 
-  VALUES ('tape', 'daemonName', 'rtcpclientd', 'The name of the daemon used to interface to the tape system');
+  VALUES ('tape', 'interfaceDaemon', 'rtcpclientd', 'The name of the daemon used to interface to the tape system');
 
 /* Populate the general/owner option of the CastorConfig table */
 UPDATE CastorConfig SET value = sys_context('USERENV', 'CURRENT_USER')

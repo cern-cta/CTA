@@ -1667,7 +1667,7 @@ create or replace
 PROCEDURE tg_checkConfiguration AS
 unused VARCHAR2(2048);
 BEGIN
- SELECT value INTO unused FROM castorconfig WHERE class='tape' AND key='daemonName' AND value='tapegatewayd';
+ SELECT value INTO unused FROM castorconfig WHERE class='tape' AND key='interfaceDaemon' AND value='tapegatewayd';
 END;
 /
 
