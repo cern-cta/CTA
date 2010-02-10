@@ -51,6 +51,34 @@ CppCastorWriter::CppCastorWriter(UMLDoc* parent, const char *name) :
   m_ignoreButForDB.insert(QString("nbCopyAccesses"));
   m_ignoreButForDB.insert(QString("gcType"));
   m_ignoreButForDB.insert(QString("migrSelectPolicy"));
+  // List of types still needing a C wrapper. To be reduce and dropped
+  m_cWrappedTypes.insert(QString("CastorFile"));
+  m_cWrappedTypes.insert(QString("SetFileGCWeight"));
+  m_cWrappedTypes.insert(QString("FileClass"));
+  m_cWrappedTypes.insert(QString("FileRequest"));
+  m_cWrappedTypes.insert(QString("DiskCopyForRecall"));
+  m_cWrappedTypes.insert(QString("Segment"));
+  m_cWrappedTypes.insert(QString("IStagerSvc"));
+  m_cWrappedTypes.insert(QString("DiskPool"));
+  m_cWrappedTypes.insert(QString("FileSystem"));
+  m_cWrappedTypes.insert(QString("DiskCopy"));
+  m_cWrappedTypes.insert(QString("TapePool"));
+  m_cWrappedTypes.insert(QString("Request"));
+  m_cWrappedTypes.insert(QString("TapeCopy"));
+  m_cWrappedTypes.insert(QString("DiskServer"));
+  m_cWrappedTypes.insert(QString("Stream"));
+  m_cWrappedTypes.insert(QString("SubRequest"));
+  m_cWrappedTypes.insert(QString("SvcClass"));
+  m_cWrappedTypes.insert(QString("TapeCopyForMigration"));
+  m_cWrappedTypes.insert(QString("Tape"));
+  m_cWrappedTypes.insert(QString("IClient"));
+  m_cWrappedTypes.insert(QString("IAddress"));
+  m_cWrappedTypes.insert(QString("IObject"));
+  m_cWrappedTypes.insert(QString("Client"));
+  m_cWrappedTypes.insert(QString("FileResponse"));
+  m_cWrappedTypes.insert(QString("Response"));
+  m_cWrappedTypes.insert(QString("IOResponse"));
+  m_cWrappedTypes.insert(QString("BaseAddress")); 
 }
 
 //=============================================================================

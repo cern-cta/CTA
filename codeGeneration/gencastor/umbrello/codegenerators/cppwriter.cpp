@@ -196,10 +196,12 @@ void CppWriter::writeClass(UMLClassifier *c) {
 
   // write Header file
   runGenerator(hppw, fileName + ".hpp", c);
-  if (m_castorTypes.find(c->getName()) == m_castorTypes.end()) {
+  if (m_castorTypes.find(c->getName()) == m_castorTypes.end() &&
+      m_cWrappedTypes.find(c->getName()) != m_cWrappedTypes.end()) {
+    // Write C implementation only when needed
+    // These C implementatiosn are supposed to disappear as soon as possible
+    // so we hardcoded the list of objects still needing it
     runGenerator(hw, fileName + ".h", c);
-    // Write C implementation.
-    // Needed even when the CPP one does not exist, except for enums
     if (!CppBaseWriter::isEnum(c)) {
       QString fileNameC = fileName;
       runGenerator(cw, fileNameC + "CInt.cpp", c);
