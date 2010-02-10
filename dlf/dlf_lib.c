@@ -428,14 +428,15 @@ int DLL_DECL dlf_writep(Cuuid_t reqid,
   }
 
   buffer[0] = '\0';
-  len = snprintf(buffer, maxmsglen - len, "LVL=%s TID=%d MSG=\"%s\" ",
-                 prioritylist[priority].text,
 #ifdef __APPLE__
-                 (int)mach_thread_self(),
-#else
-                 (int)syscall(__NR_gettid),
-#endif
+  len = snprintf(buffer, maxmsglen - len, "LVL=%s TID=%d MSG=\"%s\" ",
+                 prioritylist[priority].text,(int)mach_thread_self(),
                  messages[msgno]);
+#else
+  len = snprintf(buffer, maxmsglen - len, "LVL=%s TID=%d MSG=\"%s\" ",
+                 prioritylist[priority].text,(int)syscall(__NR_gettid),
+                 messages[msgno]);
+#endif
 
   /* Append the request uuid if defined */
   if (Cuuid_compare(&reqid, &nullCuuid)) {
