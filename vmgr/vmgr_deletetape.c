@@ -22,7 +22,7 @@
 int vmgr_deletetape(const char *vid)
 {
 	int c;
-	char func[15];
+	char func[16];
 	gid_t gid;
 	int msglen;
 	char *q;

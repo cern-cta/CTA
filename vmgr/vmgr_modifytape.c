@@ -21,7 +21,7 @@
 int vmgr_modifytape(const char *vid, char *vsn, char *library, char *density, char *lbltype, char *manufacturer, char *sn, char *poolname, int status)
 {
   int c;
-  char func[15];
+  char func[16];
   gid_t gid;
   int msglen;
   char *q;
