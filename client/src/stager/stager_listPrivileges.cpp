@@ -35,7 +35,7 @@
 #include "serrno.h"
 #include "Cgetopt.h"
 #include "stager_client_commandline.h"
-#include "castor/Constants.h"
+#include "castor/Constants.hpp"
 
 /**
  * list of command line options
@@ -109,20 +109,15 @@ int cmd_parse(int argc,
     case 'R':
       {
         // find out the request type
-        int t;
-        for (t = 1; t < ObjectsIdsNb; t++) {
-	  const char* s = C_ObjectsIdsStrings(t);
-	  if (0 == s) {
-	    errflg++;
-	    fprintf(stderr, "Internal error : unknown type id %d\n", t);
-	    break;
-	  }
+        unsigned int t;
+        for (t = 1; t < castor::ObjectsIdsNb; t++) {
+	  const char* s = castor::ObjectsIdStrings[t];
           if (0 == strcmp(s, Coptarg)) {
             *reqType = t;
             break;
           }
         }
-        if (ObjectsIdsNb == t) {
+        if (castor::ObjectsIdsNb == t) {
           errflg++;
           fprintf(stderr, "Unknown request type %s\n", Coptarg);
         }
@@ -236,7 +231,7 @@ int main(int argc, char *argv[]) {
 	      user,
 	      group,
 	      privileges[i].requestType == 0 ? "*" :
-	      C_ObjectsIdsStrings(privileges[i].requestType),
+	      castor::ObjectsIdStrings[privileges[i].requestType],
 	      privileges[i].isGranted ? "Granted" : "Denied");
     }
   }
