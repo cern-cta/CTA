@@ -518,7 +518,45 @@ CREATE TABLE Id2Type (id INTEGER CONSTRAINT PK_Id2Type_Id PRIMARY KEY, type NUMB
 /* Partitioning enables faster response (more than indexing) for the most frequent queries - credits to Nilo Segura */
 CREATE TABLE newRequests (type NUMBER(38) CONSTRAINT NN_NewRequests_Type NOT NULL, id NUMBER(38) CONSTRAINT NN_NewRequests_Id NOT NULL, creation DATE CONSTRAINT NN_NewRequests_Creation NOT NULL, CONSTRAINT PK_NewRequests_Type_Id PRIMARY KEY (type, id))
 ORGANIZATION INDEX
-COMPRESS;
+COMPRESS
+PARTITION BY LIST (type)
+ (
+  PARTITION type_16 VALUES (16)  TABLESPACE stager_data,
+  PARTITION type_21 VALUES (21)  TABLESPACE stager_data,
+  PARTITION type_33 VALUES (33)  TABLESPACE stager_data,
+  PARTITION type_34 VALUES (34)  TABLESPACE stager_data,
+  PARTITION type_35 VALUES (35)  TABLESPACE stager_data,
+  PARTITION type_36 VALUES (36)  TABLESPACE stager_data,
+  PARTITION type_37 VALUES (37)  TABLESPACE stager_data,
+  PARTITION type_38 VALUES (38)  TABLESPACE stager_data,
+  PARTITION type_39 VALUES (39)  TABLESPACE stager_data,
+  PARTITION type_40 VALUES (40)  TABLESPACE stager_data,
+  PARTITION type_41 VALUES (41)  TABLESPACE stager_data,
+  PARTITION type_42 VALUES (42)  TABLESPACE stager_data,
+  PARTITION type_43 VALUES (43)  TABLESPACE stager_data,
+  PARTITION type_44 VALUES (44)  TABLESPACE stager_data,
+  PARTITION type_45 VALUES (45)  TABLESPACE stager_data,
+  PARTITION type_46 VALUES (46)  TABLESPACE stager_data,
+  PARTITION type_48 VALUES (48)  TABLESPACE stager_data,
+  PARTITION type_49 VALUES (49)  TABLESPACE stager_data,
+  PARTITION type_50 VALUES (50)  TABLESPACE stager_data,
+  PARTITION type_51 VALUES (51)  TABLESPACE stager_data,
+  PARTITION type_60 VALUES (60)  TABLESPACE stager_data,
+  PARTITION type_64 VALUES (64)  TABLESPACE stager_data,
+  PARTITION type_65 VALUES (65)  TABLESPACE stager_data,
+  PARTITION type_66 VALUES (66)  TABLESPACE stager_data,
+  PARTITION type_67 VALUES (67)  TABLESPACE stager_data,
+  PARTITION type_78 VALUES (78)  TABLESPACE stager_data,
+  PARTITION type_79 VALUES (79)  TABLESPACE stager_data,
+  PARTITION type_80 VALUES (80)  TABLESPACE stager_data,
+  PARTITION type_84 VALUES (84)  TABLESPACE stager_data,
+  PARTITION type_90 VALUES (90)  TABLESPACE stager_data,
+  PARTITION type_142 VALUES (142)  TABLESPACE stager_data,
+  PARTITION type_144 VALUES (144)  TABLESPACE stager_data,
+  PARTITION type_147 VALUES (147)  TABLESPACE stager_data,
+  PARTITION type_149 VALUES (149)  TABLESPACE stager_data,
+  PARTITION notlisted VALUES (default) TABLESPACE stager_data
+ );
 
 /* Redefinition of table SubRequest to make it partitioned by status */
 /* Unfortunately it has already been defined, so we drop and recreate it */
@@ -535,12 +573,39 @@ CREATE TABLE SubRequest
    svcHandler VARCHAR2(2048) CONSTRAINT NN_SubRequest_SvcHandler NOT NULL
   )
   PCTFREE 50 PCTUSED 40 INITRANS 50
-  ENABLE ROW MOVEMENT;
+  ENABLE ROW MOVEMENT
+  PARTITION BY LIST (STATUS)
+   (
+    PARTITION P_STATUS_0_1_2 VALUES (0, 1, 2),      -- *START
+    PARTITION P_STATUS_3     VALUES (3),
+    PARTITION P_STATUS_4     VALUES (4),
+    PARTITION P_STATUS_5     VALUES (5),
+    PARTITION P_STATUS_6     VALUES (6),
+    PARTITION P_STATUS_7     VALUES (7),
+    PARTITION P_STATUS_8     VALUES (8),
+    PARTITION P_STATUS_9_10  VALUES (9, 10),        -- FAILED_*
+    PARTITION P_STATUS_11    VALUES (11),
+    PARTITION P_STATUS_12    VALUES (12),
+    PARTITION P_STATUS_13_14 VALUES (13, 14),       -- *SCHED
+    PARTITION P_STATUS_OTHER VALUES (DEFAULT)
+   );
 
 /* SQL statements for constraints on the SubRequest table */
 ALTER TABLE SubRequest
   ADD CONSTRAINT PK_SubRequest_Id PRIMARY KEY (ID);
-CREATE INDEX I_SubRequest_RT_CT_ID ON SubRequest(svcHandler, creationTime, id);
+CREATE INDEX I_SubRequest_RT_CT_ID ON SubRequest(svcHandler, creationTime, id) LOCAL
+ (PARTITION P_STATUS_0_1_2,
+  PARTITION P_STATUS_3,
+  PARTITION P_STATUS_4,
+  PARTITION P_STATUS_5,
+  PARTITION P_STATUS_6,
+  PARTITION P_STATUS_7,
+  PARTITION P_STATUS_8,
+  PARTITION P_STATUS_9_10,
+  PARTITION P_STATUS_11,
+  PARTITION P_STATUS_12,
+  PARTITION P_STATUS_13_14,
+  PARTITION P_STATUS_OTHER);
 
 /* Redefinition of table TapeCopy to make it partitioned by status */
 ALTER TABLE Stream2TapeCopy DROP CONSTRAINT FK_Stream2TapeCopy_C;
@@ -550,7 +615,11 @@ CREATE TABLE TapeCopy
    id INTEGER CONSTRAINT PK_TapeCopy_Id PRIMARY KEY CONSTRAINT NN_TapeCopy_Id NOT NULL,
    castorFile INTEGER, status INTEGER)
   PCTFREE 50 PCTUSED 40 INITRANS 50
-  ENABLE ROW MOVEMENT;
+  ENABLE ROW MOVEMENT
+  PARTITION BY LIST (STATUS)
+   (PARTITION P_STATUS_0_1   VALUES (0, 1),
+    PARTITION P_STATUS_OTHER VALUES (DEFAULT)
+  );
 
 /* Recreate foreign key constraint between Stream2TapeCopy and TapeCopy */
 ALTER TABLE Stream2TapeCopy
@@ -570,9 +639,9 @@ CREATE INDEX I_DiskCopy_GCWeight ON DiskCopy (gcWeight);
 CREATE INDEX I_DiskCopy_FS_Status_10 ON DiskCopy (fileSystem,decode(status,10,status,NULL));
 CREATE INDEX I_DiskCopy_Status_9 ON DiskCopy (decode(status,9,status,NULL));
 
-CREATE INDEX I_TapeCopy_Castorfile ON TapeCopy (castorFile);
-CREATE INDEX I_TapeCopy_Status ON TapeCopy (status);
-CREATE INDEX I_TapeCopy_CF_Status_2 ON TapeCopy (castorFile,decode(status,2,status,null));
+CREATE INDEX I_TapeCopy_Castorfile ON TapeCopy (castorFile) LOCAL;
+CREATE INDEX I_TapeCopy_Status ON TapeCopy (status) LOCAL;
+CREATE INDEX I_TapeCopy_CF_Status_2 ON TapeCopy (castorFile,decode(status,2,status,null)) LOCAL;
 
 CREATE INDEX I_FileSystem_DiskPool ON FileSystem (diskPool);
 CREATE INDEX I_FileSystem_DiskServer ON FileSystem (diskServer);
@@ -582,7 +651,7 @@ CREATE INDEX I_SubRequest_DiskCopy ON SubRequest (diskCopy);
 CREATE INDEX I_SubRequest_Request ON SubRequest (request);
 CREATE INDEX I_SubRequest_Parent ON SubRequest (parent);
 CREATE INDEX I_SubRequest_SubReqId ON SubRequest (subReqId);
-CREATE INDEX I_SubRequest_LastModTime ON SubRequest (lastModificationTime);
+CREATE INDEX I_SubRequest_LastModTime ON SubRequest (lastModificationTime) LOCAL;
 
 CREATE INDEX I_StagePTGRequest_ReqId ON StagePrepareToGetRequest (reqId);
 CREATE INDEX I_StagePTPRequest_ReqId ON StagePrepareToPutRequest (reqId);
@@ -865,7 +934,7 @@ INSERT INTO CastorConfig
   VALUES ('stager', 'nsHost', 'undefined', 'The name of the name server host to set in the CastorFile table overriding the CNS/HOST option defined in castor.conf');
 
 INSERT INTO CastorConfig 
-  VALUES ('tape', 'daemonName', 'rtcpclientd', 'The name of the daemon used to interface to the tape system');
+  VALUES ('tape', 'interfaceDaemon', 'rtcpclientd', 'The name of the daemon used to interface to the tape system');
 
 /* Populate the general/owner option of the CastorConfig table */
 UPDATE CastorConfig SET value = sys_context('USERENV', 'CURRENT_USER')
@@ -2374,7 +2443,7 @@ CREATE OR REPLACE PROCEDURE subRequestToDo(service IN VARCHAR2,
                                            srStatus OUT INTEGER, srModeBits OUT INTEGER, srFlags OUT INTEGER,
                                            srSubReqId OUT VARCHAR2, srAnswered OUT INTEGER, srSvcHandler OUT VARCHAR2) AS
   CURSOR SRcur IS SELECT /*+ FIRST_ROWS(10) INDEX(SR I_SubRequest_RT_CT_ID) */ SR.id
-                    FROM SubRequest SR
+                    FROM SubRequest PARTITION (P_STATUS_0_1_2) SR
                    WHERE SR.svcHandler = service
                    ORDER BY SR.creationTime ASC;
   SrLocked EXCEPTION;
@@ -2390,7 +2459,7 @@ BEGIN
     BEGIN
       -- Try to take a lock on the current candidate, and revalidate its status
       SELECT /*+ INDEX(SR PK_SubRequest_ID) */ id INTO srIntId
-        FROM SubRequest SR
+        FROM SubRequest PARTITION (P_STATUS_0_1_2) SR
        WHERE id = srIntId FOR UPDATE NOWAIT;
       -- Since we are here, we got the lock. We have our winner, let's update it
       UPDATE SubRequest
@@ -2424,7 +2493,7 @@ CREATE OR REPLACE PROCEDURE subRequestFailedToDo(srId OUT INTEGER, srRetryCounte
   PRAGMA EXCEPTION_INIT (SrLocked, -54);
   CURSOR c IS
      SELECT /*+ FIRST_ROWS(10) INDEX(SR I_SubRequest_RT_CT_ID) */ SR.id
-       FROM SubRequest SR; -- FAILED
+       FROM SubRequest PARTITION (P_STATUS_7) SR; -- FAILED
   srAnswered INTEGER;
   srIntId NUMBER;
 BEGIN
@@ -2434,7 +2503,7 @@ BEGIN
     EXIT WHEN c%NOTFOUND;
     BEGIN
       SELECT answered INTO srAnswered
-        FROM SubRequest
+        FROM SubRequest PARTITION (P_STATUS_7) 
        WHERE id = srIntId FOR UPDATE NOWAIT;
       IF srAnswered = 1 THEN
         -- already answered, ignore it
@@ -5415,7 +5484,8 @@ PROCEDURE jobToSchedule(srId OUT INTEGER,              srSubReqId OUT VARCHAR2,
   -- by creation time.
   CURSOR c IS
     SELECT /*+ FIRST_ROWS(10) INDEX(SR I_SubRequest_RT_CT_ID) */ SR.id
-      FROM SubRequest SR  -- RESTART, READYFORSCHED, BEINGSCHED
+      FROM SubRequest
+ PARTITION (P_STATUS_13_14) SR  -- RESTART, READYFORSCHED, BEINGSCHED
      ORDER BY SR.creationTime ASC;
   SrLocked EXCEPTION;
   PRAGMA EXCEPTION_INIT (SrLocked, -54);
@@ -5435,7 +5505,7 @@ BEGIN
       -- valid subrequest is either in READYFORSCHED or has been stuck in
       -- BEINGSCHED for more than 1800 seconds (30 mins)
       SELECT /*+ INDEX(SR PK_SubRequest_ID) */ id INTO srId
-        FROM SubRequest SR
+        FROM SubRequest PARTITION (P_STATUS_13_14) SR
        WHERE id = srId
          AND ((status = 13)  -- READYFORSCHED
           OR  (status = 14   -- BEINGSCHED
@@ -7007,7 +7077,7 @@ BEGIN
   SELECT value INTO unused
     FROM CastorConfig
    WHERE class = 'tape'
-     AND KEY = 'daemonName'
+     AND KEY = 'interfaceDaemon'
      AND value = 'rtcpclientd';
   -- JUST rtcpclientd
   -- Deal with Migrations
@@ -7193,7 +7263,7 @@ BEGIN
     SELECT value INTO unused
       FROM CastorConfig
      WHERE class = 'tape'
-       AND key   = 'daemonName'
+       AND key   = 'interfaceDaemon'
        AND value = 'tapegatewayd';
   EXCEPTION WHEN NO_DATA_FOUND THEN  -- rtcpclientd
     inputMigrPolicyRtcp(svcclassName, policyName, svcId, dbInfo);  
@@ -7511,7 +7581,7 @@ BEGIN
     SELECT value INTO unused
       FROM CastorConfig
      WHERE class = 'tape'
-       AND key   = 'daemonName'
+       AND key   = 'interfaceDaemon'
        AND value = 'tapegatewayd';
   EXCEPTION WHEN NO_DATA_FOUND THEN  -- rtcpclientd
     attachTCRtcp(tapeCopyIds, tapePoolId);
@@ -7729,7 +7799,7 @@ BEGIN
     SELECT value INTO unused
       FROM CastorConfig
      WHERE class = 'tape'
-       AND key   = 'daemonName'
+       AND key   = 'interfaceDaemon'
        AND value = 'tapegatewayd';
      RETURN;
   EXCEPTION WHEN NO_DATA_FOUND THEN  -- rtcpclientd
@@ -7785,6 +7855,7 @@ BEGIN
       JOB_NAME        => 'RESTARTSTUCKRECALLSJOB',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN restartStuckRecalls(); END;',
+      JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 60/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=60',
       ENABLED         => TRUE,
@@ -7807,7 +7878,7 @@ BEGIN
     SELECT value INTO unused
      FROM CastorConfig
      WHERE class = 'tape'
-       AND key   = 'daemonName'
+       AND key   = 'interfaceDaemon'
        AND value = 'tapegatewayd';
      RETURN;
   EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -7818,10 +7889,11 @@ BEGIN
   -- The database is about to be modified and is therefore not compatible with
   -- either the rtcpclientd daemon or the tape gateway daemon
   UPDATE CastorConfig
-    SET value = NULL
+    SET value = 'NONE'
     WHERE
       class = 'tape' AND
-      key   = 'daemonName';
+      key   = 'interfaceDaemon';
+  COMMIT;
 
   -- Remove the restartStuckRecallsJob as this job will not exist in the
   -- future tape gateway only schema
@@ -7835,39 +7907,39 @@ BEGIN
   -- row into the TapeGatewayRequest table when a recall-tape is pending
   EXECUTE IMMEDIATE
     'CREATE OR REPLACE TRIGGER tr_Tape_Pending' ||
-    '  AFTER UPDATE of status ON Tape' ||
-    '  FOR EACH ROW WHEN (new.status = 1 and new.tpmode=0)' ||
+    '  AFTER UPDATE OF status ON Tape' ||
+    '  FOR EACH ROW WHEN (new.status = 1 and new.tpmode=0) ' ||
     'DECLARE' ||
-    '  unused NUMBER;' ||
+    '  unused NUMBER; ' ||
     'BEGIN' ||
     '  SELECT id INTO unused' ||
     '    FROM TapeGatewayRequest' ||
-    '    WHERE taperecall=:new.id;' ||
-    'EXCEPTION WHEN NO_DATA_FOUND THEN' ||
+    '    WHERE taperecall=:new.id; ' ||
+    'EXCEPTION WHEN NO_DATA_FOUND THEN ' ||
     '  INSERT INTO TapeGatewayRequest (accessmode, starttime,' ||
     '    lastvdqmpingtime, vdqmvolreqid, id, streammigration, taperecall,' ||
     '    status)' ||
-    '    VALUES (0,null,null,null,ids_seq.nextval,null,:new.id,1);' ||
-    'END tr_Tape_Pending';
+    '    VALUES (0,null,null,null,ids_seq.nextval,null,:new.id,1); ' ||
+    'END tr_Tape_Pending;';
 
   -- Create the tr_Stream_Pending trigger which automatically inserts a
   -- row into the TapeGatewayRequest table when a recall-tape is pending
   EXECUTE IMMEDIATE
     'CREATE OR REPLACE TRIGGER tr_Stream_Pending' ||
     '  AFTER UPDATE of status ON Stream' ||
-    '  FOR EACH ROW WHEN (new.status = 0 )' ||
+    '  FOR EACH ROW WHEN (new.status = 0 ) ' ||
     'DECLARE' ||
-    '  unused NUMBER;' ||
+    '  unused NUMBER; ' ||
     'BEGIN' ||
     '  SELECT id INTO unused' ||
     '    FROM TapeGatewayRequest' ||
-    '    WHERE streammigration=:new.id;' ||
+    '    WHERE streammigration=:new.id; ' ||
     'EXCEPTION WHEN NO_DATA_FOUND THEN' ||
-    '  INSERT INTO TapeGatewayRequest (accessMode, startTime,' ||
-    '    lastVdqmPingTime, vdqmVolReqId, id, streamMigration, TapeRecall,' ||
-    '    Status)' ||
-    '    VALUES (1,null,null,null,ids_seq.nextval,:new.id,null,0);' ||
-    'END tr_Stream_Pending';
+    '  INSERT INTO TapeGatewayRequest (accessMode, startTime, ' ||
+    '    lastVdqmPingTime, vdqmVolReqId, id, streamMigration, TapeRecall, ' ||
+    '    Status) ' ||
+    '    VALUES (1,null,null,null,ids_seq.nextval,:new.id,null,0); ' ||
+    'END tr_Stream_Pending;';
 
   -- Deal with Migrations
   -- 1) Ressurect tapecopies for migration
@@ -7896,18 +7968,19 @@ BEGIN
       JOB_NAME        => 'RESTARTSTUCKRECALLSJOB',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN restartStuckRecalls(); END;',
+      JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 60/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=60',
       ENABLED         => TRUE,
       COMMENTS        => 'Workaround to restart stuck recalls');
 
-
-  -- The databse is now compatible with the tapegatewayd daemon
+  -- The database is now compatible with the tapegatewayd daemon
   UPDATE CastorConfig
     SET value = 'tapegatewayd'
     WHERE
       class = 'tape' AND
-      key   = 'daemonName';
+      key   = 'interfaceDaemon';
+  COMMIT;
 
 END switchToTapegatewayd;
 /
@@ -7927,7 +8000,7 @@ BEGIN
     SELECT value INTO unused
      FROM CastorConfig
      WHERE class = 'tape'
-       AND key   = 'daemonName'
+       AND key   = 'interfaceDaemon'
        AND value = 'rtcpclientd';
      RETURN;
   EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -7938,10 +8011,11 @@ BEGIN
   -- The database is about to be modified and is therefore not compatible with
   -- either the rtcpclientd daemon or the tape gateway daemon
   UPDATE CastorConfig
-    SET value = NULL
+    SET value = 'NONE'
     WHERE
       class = 'tape' AND
-      key   = 'daemonName';
+      key   = 'interfaceDaemon';
+  COMMIT;
 
   -- Drop the tr_Tape_Pending and tr_Stream_Pending triggers as they are
   -- specific to the tape gateway and have no place in an rtcpclientd schema
@@ -7958,12 +8032,13 @@ BEGIN
   FORALL i IN idsList.FIRST ..  idsList.LAST 
     DELETE FROM id2type WHERE  id= idsList(i);
 
-  -- The databse is now compatible with the rtcpclientd daemon
+  -- The database is now compatible with the rtcpclientd daemon
   UPDATE CastorConfig
     SET value = 'rtcpclientd'
     WHERE
       class = 'tape' AND
-      key   = 'daemonName';
+      key   = 'interfaceDaemon';
+  COMMIT;
 END switchToRtcpclientd;
 /
 /*******************************************************************
@@ -8807,6 +8882,7 @@ BEGIN
       JOB_NAME        => 'houseKeepingJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN deleteTerminatedRequests(); END;',
+      JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 60/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=20',
       ENABLED         => TRUE,
@@ -8817,6 +8893,7 @@ BEGIN
       JOB_NAME        => 'cleanupJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN cleanup(); END;',
+      JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 60/1440,
       REPEAT_INTERVAL => 'FREQ=HOURLY; INTERVAL=12',
       ENABLED         => TRUE,
@@ -8827,6 +8904,7 @@ BEGIN
       JOB_NAME        => 'bulkCheckFSBackInProdJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN bulkCheckFSBackInProd(); END;',
+      JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 60/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
       ENABLED         => TRUE,
@@ -8846,6 +8924,7 @@ BEGIN
                                   AND DiskCopy.ownergid IS NOT NULL
                                 GROUP BY owneruid, fileSystem);
                           END;',
+      JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 60/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=60',
       ENABLED         => TRUE,
@@ -9478,6 +9557,7 @@ BEGIN
       JOB_NAME        => 'drainManagerJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN DrainManager(); END;',
+      JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 5/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=1',
       ENABLED         => TRUE,
@@ -9988,6 +10068,7 @@ BEGIN
                             castorMon.waitTapeMigrationStats(interval);
                             castorMon.waitTapeRecallStats(interval);
                           END;',
+      JOB_CLASS       => 'CASTOR_MON_JOB_CLASS',
       START_DATE      => SYSDATE + 60/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=60',
       ENABLED         => TRUE,
