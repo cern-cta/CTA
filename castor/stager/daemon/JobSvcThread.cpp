@@ -55,7 +55,6 @@
 #include "castor/stager/GetUpdateFailed.hpp"
 #include "castor/stager/PutFailed.hpp"
 #include "castor/stager/PutStartRequest.hpp"
-#include "castor/stager/PutDoneStart.hpp"
 #include "castor/stager/Disk2DiskCopyDoneRequest.hpp"
 #include "castor/stager/Disk2DiskCopyStartRequest.hpp"
 #include "castor/stager/MoverCloseRequest.hpp"
