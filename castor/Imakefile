@@ -42,30 +42,22 @@ STAGEFLAGS = -DSTAGEMAP=\"StageMapFile\"
 CFLAGS = $(DEBUG) -I ../h -I .. $(MTCCFLAGS) $(STAGEFLAGS)
 CPPFLAGS = $(DEBUG) -I ../h -I .. $(MTCCFLAGS) $(STAGERSUPERUSER) $(STAGERSUPERGROUP)
 
-STGLIB_SRCS = IAddressCInt.cpp \
-              BaseAddress.cpp \
+STGLIB_SRCS = BaseAddress.cpp \
               VectorAddress.cpp \
-              BaseAddressCInt.cpp \
               BaseCnvSvc.cpp \
               BaseObject.cpp \
               BaseSvc.cpp \
               Constants.cpp \
-              ConstantsCInt.cpp \
               Converters.cpp \
               Factories.cpp \
               IObject.cpp \
               IClient.cpp \
-              IClientCInt.cpp \
               IClientFactory.cpp \
-              IClientFactoryCInt.cpp \
-              IObjectCInt.cpp \
               MessageAck.cpp \
-              MessageAckCInt.cpp \
               ObjectCatalog.cpp \
               ObjectSet.cpp \
               PortsConfig.cpp \
               Services.cpp \
-              ServicesCInt.cpp \
               System.cpp \
               bwlist/Privilege.cpp \
               bwlist/ChangePrivilege.cpp \
@@ -124,7 +116,6 @@ STGLIB_SRCS = IAddressCInt.cpp \
               io/StreamDisk2DiskCopyStartRequestCnv.cpp \
               io/StreamDisk2DiskCopyStartResponseCnv.cpp \
               io/StreamBasicResponseCnv.cpp \
-              io/StreamPutDoneStartCnv.cpp \
               io/StreamSegmentCnv.cpp \
               io/StreamSetFileGCWeightCnv.cpp \
               io/StreamStreamReportCnv.cpp \
@@ -171,30 +162,18 @@ STGLIB_SRCS = IAddressCInt.cpp \
               replier/ClientConnection.cpp \
               replier/RequestReplier.cpp \
               rh/Client.cpp \
-              rh/ClientCInt.cpp \
               rh/StartResponse.cpp \
-              rh/StartResponseCInt.cpp \
               rh/EndResponse.cpp \
-              rh/EndResponseCInt.cpp \
               rh/FileResponse.cpp \
-              rh/FileResponseCInt.cpp \
               rh/GetUpdateStartResponse.cpp \
-              rh/GetUpdateStartResponseCInt.cpp \
               rh/Disk2DiskCopyStartResponse.cpp \
               rh/GCFilesResponse.cpp \
-              rh/GCFilesResponseCInt.cpp \
               rh/Response.cpp \
-              rh/ResponseCInt.cpp \
               rh/StringResponse.cpp \
-              rh/StringResponseCInt.cpp \
               rh/AbortResponse.cpp \
-              rh/AbortResponseCInt.cpp \
               rh/FileQryResponse.cpp \
-              rh/FileQryResponseCInt.cpp \
               rh/IOResponse.cpp \
-              rh/IOResponseCInt.cpp \
               rh/BasicResponse.cpp \
-              rh/BasicResponseCInt.cpp \
               monitoring/AdminStatusCodes.cpp \
               monitoring/StreamDirection.cpp \
               monitoring/StreamReport.cpp \
@@ -220,29 +199,20 @@ STGLIB_SRCS = IAddressCInt.cpp \
               metrics/ObjTypeCounter.cpp \
               stager/BaseTapeSvc.cpp \
               stager/CastorFile.cpp \
-              stager/CastorFileCInt.cpp \
               stager/DiskCopy.cpp \
-              stager/DiskCopyCInt.cpp \
               stager/DiskCopyInfo.cpp \
               stager/DiskCopyForRecall.cpp \
-              stager/DiskCopyForRecallCInt.cpp \
               stager/DiskCopyStatusCodes.cpp \
               stager/DiskFile.cpp \
-              stager/DiskFileCInt.cpp \
               stager/DiskPool.cpp \
-              stager/DiskPoolCInt.cpp \
               stager/DiskServer.cpp \
-              stager/DiskServerCInt.cpp \
               stager/DiskServerStatusCode.cpp \
               stager/Disk2DiskCopyDoneRequest.cpp \
               stager/Disk2DiskCopyStartRequest.cpp \
               stager/DLFInit.cpp \
               stager/FileClass.cpp \
-              stager/FileClassCInt.cpp \
               stager/FileRequest.cpp \
-              stager/FileRequestCInt.cpp \
               stager/FileSystem.cpp \
-              stager/FileSystemCInt.cpp \
               stager/FileSystemStatusCodes.cpp \
               stager/Files2Delete.cpp \
               stager/FilesDeleted.cpp \
@@ -253,91 +223,52 @@ STGLIB_SRCS = IAddressCInt.cpp \
               stager/FilesDeletionFailed.cpp \
               stager/FirstByteWritten.cpp \
               stager/GetUpdateDone.cpp \
-              stager/GetUpdateDoneCInt.cpp \
               stager/GetUpdateFailed.cpp \
-              stager/GetUpdateFailedCInt.cpp \
               stager/GetUpdateStartRequest.cpp \
-              stager/GetUpdateStartRequestCInt.cpp \
               stager/GCLocalFile.cpp \
               stager/GCTypeCodes.cpp \
               stager/GCFile.cpp \
               stager/GCFileList.cpp \
-              stager/IJobSvcCInt.cpp \
-              stager/IStagerSvcCInt.cpp \
-              stager/ITapeSvcCInt.cpp \
               stager/MoverCloseRequest.cpp \
-              stager/MoverCloseRequestCInt.cpp \
               stager/PriorityMap.cpp \
               stager/PutStartRequest.cpp \
-              stager/PutStartRequestCInt.cpp \
               stager/QryRequest.cpp \
-              stager/QryRequestCInt.cpp \
-              stager/PutDoneStart.cpp \
-              stager/PutDoneStartCInt.cpp \
               stager/PutFailed.cpp \
-              stager/PutFailedCInt.cpp \
               stager/ReqIdRequest.cpp \
-              stager/ReqIdRequestCInt.cpp \
               stager/Request.cpp \
-              stager/RequestCInt.cpp \
               stager/RequestQueryType.cpp \
               stager/RemoteGCSvc.cpp \
               stager/RemoteJobSvc.cpp \
               stager/StartRequest.cpp \
-              stager/StartRequestCInt.cpp \
               stager/SvcClass.cpp \
-              stager/SvcClassCInt.cpp \
               stager/QueryParameter.cpp \
-              stager/QueryParameterCInt.cpp \
               stager/Segment.cpp \
-              stager/SegmentCInt.cpp \
               stager/SegmentStatusCodes.cpp \
               stager/SetFileGCWeight.cpp \
-              stager/SetFileGCWeightCInt.cpp \
               stager/StageAbortRequest.cpp \
-              stager/StageAbortRequestCInt.cpp \
               stager/StageFileQueryRequest.cpp \
-              stager/StageFileQueryRequestCInt.cpp \
               stager/StageGetNextRequest.cpp \
-              stager/StageGetNextRequestCInt.cpp \
               stager/StageGetRequest.cpp \
-              stager/StageGetRequestCInt.cpp \
               stager/StagePrepareToGetRequest.cpp \
-              stager/StagePrepareToGetRequestCInt.cpp \
               stager/StagePrepareToPutRequest.cpp \
-              stager/StagePrepareToPutRequestCInt.cpp \
               stager/StagePrepareToUpdateRequest.cpp \
-              stager/StagePrepareToUpdateRequestCInt.cpp \
               stager/StageRepackRequest.cpp \
               stager/StagePutDoneRequest.cpp \
-              stager/StagePutDoneRequestCInt.cpp \
               stager/StagePutNextRequest.cpp \
-              stager/StagePutNextRequestCInt.cpp \
               stager/StagePutRequest.cpp \
-              stager/StagePutRequestCInt.cpp \
               stager/StageReleaseFilesRequest.cpp \
-              stager/StageReleaseFilesRequestCInt.cpp \
               stager/StageRmRequest.cpp \
-              stager/StageRmRequestCInt.cpp \
               stager/StageUpdateNextRequest.cpp \
-              stager/StageUpdateNextRequestCInt.cpp \
               stager/StageUpdateRequest.cpp \
-              stager/StageUpdateRequestCInt.cpp \
               stager/Stream.cpp \
-              stager/StreamCInt.cpp \
               stager/StreamStatusCodes.cpp \
               stager/SubRequest.cpp \
-              stager/SubRequestCInt.cpp \
               stager/SubRequestStatusCodes.cpp \
               stager/SubRequestGetNextStatusCodes.cpp \
               stager/Tape.cpp \
-              stager/TapeCInt.cpp \
               stager/TapeCopy.cpp \
-              stager/TapeCopyCInt.cpp \
               stager/TapeCopyForMigration.cpp \
-              stager/TapeCopyForMigrationCInt.cpp \
               stager/TapePool.cpp \
-              stager/TapePoolCInt.cpp \
               stager/TapeStatusCodes.cpp \
               stager/TapeCopyStatusCodes.cpp \
               stager/TapeVid.cpp \
@@ -386,6 +317,28 @@ STGLIB_SRCS = IAddressCInt.cpp \
               sharedMemory/BlockKey.cpp \
               sharedMemory/BlockDict.cpp \
               sharedMemory/DLFInit.cpp \
+              \
+              IAddressCInt.cpp \
+              BaseAddressCInt.cpp \
+              ServicesCInt.cpp \
+              stager/CastorFileCInt.cpp \
+              stager/DiskCopyCInt.cpp \
+              stager/DiskCopyForRecallCInt.cpp \
+              stager/DiskPoolCInt.cpp \
+              stager/DiskServerCInt.cpp \
+              stager/FileClassCInt.cpp \
+              stager/FileSystemCInt.cpp \
+              stager/IJobSvcCInt.cpp \
+              stager/IStagerSvcCInt.cpp \
+              stager/ITapeSvcCInt.cpp \
+              stager/SvcClassCInt.cpp \
+              stager/SegmentCInt.cpp \
+              stager/StreamCInt.cpp \
+              stager/SubRequestCInt.cpp \
+              stager/TapeCInt.cpp \
+              stager/TapeCopyCInt.cpp \
+              stager/TapeCopyForMigrationCInt.cpp \
+              stager/TapePoolCInt.cpp
 
 
 STAGERLIB_OBJS = \
