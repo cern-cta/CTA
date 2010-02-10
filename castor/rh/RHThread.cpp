@@ -99,7 +99,6 @@ castor::rh::RHThread::RHThread()
   m_svcHandler[OBJ_GetUpdateDone] = "j";
   m_svcHandler[OBJ_GetUpdateFailed] = "j";
   m_svcHandler[OBJ_PutFailed] = "j";
-  m_svcHandler[OBJ_PutDoneStart] = "j";
   m_svcHandler[OBJ_FirstByteWritten] = "j";
   m_svcHandler[OBJ_Files2Delete] = "G";
   m_svcHandler[OBJ_FilesDeleted] = "G";

@@ -109,7 +109,6 @@ namespace castor {
     OBJ_TapeAccessSpecification = 91,
     OBJ_TapeDriveCompatibility = 92,
 
-    OBJ_PutDoneStart = 93,
     OBJ_SetFileGCWeight = 95,
     OBJ_RepackRequest = 96,
     OBJ_RepackSubRequest = 97,

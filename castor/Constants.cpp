@@ -126,7 +126,7 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "TapeAccessSpecification",
   "TapeDriveCompatibility",
 
-  "PutDoneStart",
+  "DELETED TYPE",
   "DELETED TYPE",
   "SetFileGCWeight",
   "RepackRequest",
