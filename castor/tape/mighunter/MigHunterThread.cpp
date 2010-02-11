@@ -393,13 +393,12 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(
 
       // log in the dlf with the summary
       castor::dlf::Param paramsPolicy[] = {
-        castor::dlf::Param("SvcClass"              , (*svcClassName)         ),
-        castor::dlf::Param("migrPolicyModuleStatus",
-                                                m_migrationPolicyModuleStatus),
-        castor::dlf::Param("nbAllowedWithoutPolicy", nbAllowedWithoutPolicy  ),
-        castor::dlf::Param("nbAllowedByPolicy"     , nbAllowedByPolicy       ),
-        castor::dlf::Param("nbNotAllowedByPolicy"  , nbNotAllowedByPolicy    ),
-        castor::dlf::Param("ProcessingTime"        , procTime * 0.000001     )};
+        castor::dlf::Param("SvcClass"            , (*svcClassName)         ),
+        castor::dlf::Param("policyModuleStatus", m_migrationPolicyModuleStatus),
+        castor::dlf::Param("allowedWithoutPolicy", nbAllowedWithoutPolicy  ),
+        castor::dlf::Param("allowedByPolicy"     , nbAllowedByPolicy       ),
+        castor::dlf::Param("notAllowedByPolicy"  , nbNotAllowedByPolicy    ),
+        castor::dlf::Param("ProcessingTime"      , procTime * 0.000001     )};
 
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, POLICY_RESULT,
         paramsPolicy);
