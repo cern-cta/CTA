@@ -117,7 +117,7 @@ Also note that you may have more files listed here than in the nameserver in cas
 .TP
 .BI \-f,\ \-\-hsm_filelist " hsmFileList"
 specifies a file containing a list of CASTOR HSM file(s) to be queried, one per line.
-This can be used to avoid the command line restrictions when many files should be removed at once.
+This can be used to avoid the command line restrictions when many files should be queried at once.
 Note that lines starting with a '/' will be considered as containing file names while others will
 be considered as containing a fileid[@nshost] expression
 .TP
