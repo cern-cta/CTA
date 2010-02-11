@@ -303,11 +303,6 @@ namespace castor {
 #define SEND_REQUEST_MAGIC 0x1e10131
 
   /**
-   * RH server port
-   */
-#define RHSERVER_PORT 9002
-
-  /**
    * Nb of objectIds currently existing
    *
    * Note that both a macro and a constant are required because the C compiler,
