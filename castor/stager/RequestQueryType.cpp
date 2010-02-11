@@ -32,12 +32,13 @@
 //------------------------------------------------------------------------------
 // RequestQueryTypeStrings
 //------------------------------------------------------------------------------
-const char* castor::stager::RequestQueryTypeStrings[6] = {
+const char* castor::stager::RequestQueryTypeStrings[7] = {
   "REQUESTQUERYTYPE_FILENAME",
   "REQUESTQUERYTYPE_REQID",
   "REQUESTQUERYTYPE_USERTAG",
   "REQUESTQUERYTYPE_FILEID",
   "REQUESTQUERYTYPE_REQID_GETNEXT",
-  "REQUESTQUERYTYPE_USERTAG_GETNEXT"
+  "REQUESTQUERYTYPE_USERTAG_GETNEXT",
+  "REQUESTQUERYTYPE_FILENAME_ALLSC"
 };
 

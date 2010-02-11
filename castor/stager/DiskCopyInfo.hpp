@@ -98,7 +98,7 @@ namespace castor {
       /*********************************/
       /**
        * Get the value of m_diskCopyPath
-       * Path of the DiskCopy described
+       * Physical path where the described diskCopy resides
        * @return the value of m_diskCopyPath
        */
       std::string diskCopyPath() const {
@@ -107,7 +107,7 @@ namespace castor {
 
       /**
        * Set the value of m_diskCopyPath
-       * Path of the DiskCopy described
+       * Physical path where the described diskCopy resides
        * @param new_var the new value of m_diskCopyPath
        */
       void setDiskCopyPath(std::string new_var) {
@@ -405,6 +405,24 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_hwStatus
+       * Status of the hardware where the described diskCopy resides.
+       * @return the value of m_hwStatus
+       */
+      int hwStatus() const {
+        return m_hwStatus;
+      }
+
+      /**
+       * Set the value of m_hwStatus
+       * Status of the hardware where the described diskCopy resides.
+       * @param new_var the new value of m_hwStatus
+       */
+      void setHwStatus(int new_var) {
+        m_hwStatus = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -424,7 +442,7 @@ namespace castor {
 
     private:
 
-      /// Path of the DiskCopy described
+      /// Physical path where the described diskCopy resides
       std::string m_diskCopyPath;
 
       /// Size of the underlying CastorFile
@@ -474,6 +492,9 @@ namespace castor {
 
       /// The last access time of the diskcopy
       u_signed64 m_lastAccessTime;
+
+      /// Status of the hardware where the described diskCopy resides.
+      int m_hwStatus;
 
       /// The id of this object
       u_signed64 m_id;

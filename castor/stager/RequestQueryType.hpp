@@ -45,14 +45,15 @@ namespace castor {
       REQUESTQUERYTYPE_USERTAG = 2,
       REQUESTQUERYTYPE_FILEID = 3,
       REQUESTQUERYTYPE_REQID_GETNEXT = 4,
-      REQUESTQUERYTYPE_USERTAG_GETNEXT = 5
+      REQUESTQUERYTYPE_USERTAG_GETNEXT = 5,
+      REQUESTQUERYTYPE_FILENAME_ALLSC = 6
     }; /* end of enum RequestQueryType */
 
     /**
      * Names of the differents representations, used to display
      * correctly the RequestQueryType enum
      */
-    extern const char* RequestQueryTypeStrings[6];
+    extern const char* RequestQueryTypeStrings[7];
 
 #ifdef __cplusplus
   } /* end of namespace stager */
