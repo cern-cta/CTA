@@ -148,7 +148,7 @@ FREE_STRUCT_LIST(query_req)
 FREE_STRUCT_LIST(filequery_resp)
 
 
-#define STATUS_NA "NA"
+#define STATUS_NA "UNKNOWN"
 
 EXTERN_C char *stage_statusName(int statusCode) {
   return (char *)castor::stager::SubRequestStatusCodesStrings[statusCode];
@@ -166,16 +166,19 @@ EXTERN_C char *stage_requestStatusName(int statusCode) {
   return ret;
 }
 
-#define NB_FILE_STATUS 8
+#define NB_FILE_STATUS 10
 static const char* stage_fileStatusNameStr[NB_FILE_STATUS] = {
   "INVALID",
   "STAGEOUT",
   "STAGEIN",
   "STAGED",
   "CANBEMIGR",
-  "WAITINGMIGR",
-  "BEINGMIGR",
-  "PUT_FAILED"};
+  "WAITINGMIGR",  // deprecated
+  "BEINGMIGR",    // deprecated   
+  "PUTFAILED",    // deprecated
+  "STAGED",
+  "CANBEMIGR"
+};
 
 EXTERN_C char *stage_fileStatusName(int statusCode) {
   char *ret = (char*)STATUS_NA;

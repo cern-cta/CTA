@@ -976,7 +976,7 @@ EXTERN_C int DLL_DECL stage_listPrivileges _PROTO ((int user,
  *    stage_filequery                                     *
  **********************************************************/
 
-enum query_type { BY_FILENAME, BY_REQID, BY_USERTAG, BY_FILEID, BY_REQID_GETNEXT, BY_USERTAG_GETNEXT };
+enum query_type { BY_FILENAME, BY_REQID, BY_USERTAG, BY_FILEID, BY_REQID_GETNEXT, BY_USERTAG_GETNEXT, BY_FILENAME_ALLSC };
 
 /* values for the siflag parameter of stager_qry -s */
 enum output_units { SIUNITS = 01, HUMANREADABLE = 02 };
@@ -1464,14 +1464,16 @@ EXTERN_C char* DLL_DECL stage_requestStatusName _PROTO((int statusCode));
  * Possible file status codes
  */
 enum stage_fileStatus {
-  FILE_INVALID_STATUS=0,
-  FILE_STAGEOUT=1,
-  FILE_STAGEIN=2,
-  FILE_STAGED=3,
-  FILE_CANBEMIGR=4,
-  FILE_WAITINGMIGR=5,
-  FILE_BEINGMIGR=6,
-  FILE_PUTFAILED=7
+  FILE_INVALID_STATUS = 0,
+  FILE_STAGEOUT = 1,
+  FILE_STAGEIN = 2,
+  FILE_STAGED = 3,
+  FILE_CANBEMIGR = 4,
+  FILE_WAITINGMIGR = 5,  /* deprecated */
+  FILE_BEINGMIGR = 6,    /* deprecated */
+  FILE_PUTFAILED = 7,    /* deprecated */
+  FILE_STAGED_DRAINING = 8,
+  FILE_CANBEMIGR_DRAINING = 9
 };
 
 /**
