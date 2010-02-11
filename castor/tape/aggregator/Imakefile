@@ -87,7 +87,6 @@ AGGREGATORBIN_SRCS = \
   RtcpJobSubmitter.cpp \
   RtcpTxRx.cpp \
   SynchronizedCounter.cpp \
-  TapeSessionCatalogue.cpp \
   Unpacker.cpp \
   VdqmRequestHandler.cpp \
   VmgrTxRx.cpp \

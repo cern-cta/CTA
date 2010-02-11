@@ -66,15 +66,13 @@ castor::tape::aggregator::BridgeProtocolEngine::BridgeProtocolEngine(
   tapegateway::Volume                 &volume,
   const uint32_t                      nbFilesOnDestinationTape,
   BoolFunctor                         &stoppingGracefully,
-  Counter<uint64_t>                   &aggregatorTransactionCounter,
-  TapeSessionCatalogue                &tapeSessionCatalogue) throw() :
+  Counter<uint64_t>                   &aggregatorTransactionCounter) throw() :
   m_cuuid(cuuid),
   m_jobRequest(jobRequest),
   m_volume(volume),
   m_nextDestinationFseq(nbFilesOnDestinationTape + 1),
   m_stoppingGracefully(stoppingGracefully),
   m_aggregatorTransactionCounter(aggregatorTransactionCounter),
-  m_tapeSessionCatalogue(tapeSessionCatalogue),
   m_nbReceivedENDOF_REQs(0),
   m_pendingTransferIds(MAXPENDINGTRANSFERS) {
 
@@ -410,16 +408,6 @@ bool castor::tape::aggregator::BridgeProtocolEngine::processAPendingSocket(
       // If only the initial callback connection is open, then send an
       // RTCP_ENDOF_REQ message to rtcpd and close the connection
       if(m_sockCatalogue.getNbDiskTapeIOControlConns() == 0) {
-
-        // Remove the tape session from the catalogue of on-going tape sessions
-        m_tapeSessionCatalogue.removeTapeSession(m_jobRequest.volReqId);
-        {
-          castor::dlf::Param params[] = {
-            castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId ),
-            castor::dlf::Param("reason"            , "Closing tape-session")};
-          castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-            AGGREGATOR_REMOVED_TAPE_SESSION_FROM_CATALOGUE, params);
-        }
 
         // Send an RTCP_ENDOF_REQ message to rtcpd via the initial callback
         // connection

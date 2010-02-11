@@ -25,7 +25,6 @@
 #ifndef CASTOR_TAPE_AGGREGATOR_AGGREGATORDAEMON_HPP
 #define CASTOR_TAPE_AGGREGATOR_AGGREGATORDAEMON_HPP 1
 
-#include "castor/tape/aggregator/TapeSessionCatalogue.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidConfigEntry.hpp"
 #include "castor/server/BaseDaemon.hpp"
@@ -91,13 +90,6 @@ private:
       helpOptionSet(false) {
     }
   };
-
-  /**
-   * Thread-safe catalogue of on-going tape-sessions, where a tape-session is
-   * the data transfer activity applied to a tape during the time it is
-   * mounted.
-   */
-  TapeSessionCatalogue m_tapeSessionCatalogue;
 
   /**
    * The results of parsing the command-line.

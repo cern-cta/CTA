@@ -29,7 +29,6 @@
 #include "castor/server/IThread.hpp"
 #include "castor/tape/aggregator/BoolFunctor.hpp"
 #include "castor/tape/aggregator/Counter.hpp"
-#include "castor/tape/aggregator/TapeSessionCatalogue.hpp"
 #include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/utils/SmartFdList.hpp"
@@ -53,14 +52,11 @@ public:
   /**
    * Constructor
    *
-   * @param nbDrives             The number of tape drives attached to the tape
-   *                             server on which aggregatord is running.
-   * @param tapeSessionCatalogue The thread-safe catalogue of on-going
-   *                             tape-sessions.
+   * @param nbDrives The number of tape drives attached to the tape server on
+   *                 which aggregatord is running.
    *
    */
-  VdqmRequestHandler(const uint32_t nbDrives,
-    TapeSessionCatalogue &tapeSessionCatalogue) throw();
+  VdqmRequestHandler(const uint32_t nbDrives) throw();
 
   /**
    * Destructor
@@ -99,13 +95,6 @@ private:
    * a set of new drive entires into TPCONFIG without restarting aggregatord.
    */
   const uint32_t m_nbDrives;
-
-  /**
-   * Thread-safe catalogue of on-going tape-sessions, where a tape-session is
-   * the data transfer activity applied to a tape during the time it is
-   * mounted.
-   */
-  TapeSessionCatalogue &m_tapeSessionCatalogue;
 
   /**
    * True if the daemon is stopping gracefully.

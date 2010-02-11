@@ -317,8 +317,7 @@ void castor::tape::aggregator::AggregatorDaemon::
     AGGREGATOR_VDQMPORT);
 
   std::auto_ptr<server::IThread>
-    thread(new castor::tape::aggregator::VdqmRequestHandler(nbDrives,
-      m_tapeSessionCatalogue));
+    thread(new castor::tape::aggregator::VdqmRequestHandler(nbDrives));
 
   std::auto_ptr<server::BaseThreadPool>
     threadPool(new castor::server::TCPListenerThreadPool(

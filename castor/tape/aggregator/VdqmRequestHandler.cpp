@@ -72,8 +72,7 @@ castor::tape::aggregator::VdqmRequestHandler::StoppingGracefullyFunctor
 // constructor
 //-----------------------------------------------------------------------------
 castor::tape::aggregator::VdqmRequestHandler::VdqmRequestHandler(
-  const uint32_t nbDrives, TapeSessionCatalogue &tapeSessionCatalogue) throw() :
-  m_nbDrives(nbDrives), m_tapeSessionCatalogue(tapeSessionCatalogue) {
+  const uint32_t nbDrives) throw() : m_nbDrives(nbDrives) {
 }
 
 
@@ -199,18 +198,6 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
       }
     }
 
-    // Try to add the new tape session to the catalogue of on-going tape
-    // session
-    m_tapeSessionCatalogue.addTapeSession(jobRequest.volReqId,
-      jobRequest.driveUnit);
-    {
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("mountTransactionId", jobRequest.volReqId ),
-        castor::dlf::Param("driveUnit"         , jobRequest.driveUnit)};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_ADDED_TAPE_SESSION_TO_CATLAOGUE, params);
-    }
-
     // Create the aggregator transaction ID
     Counter<uint64_t> aggregatorTransactionCounter(0);
 
@@ -219,22 +206,6 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
     try {
       exceptionThrowingRun(cuuid, jobRequest, aggregatorTransactionCounter);
     } catch(castor::exception::Exception &ex) {
-
-      // Ensure the tape session is removed from the catalogue of on-going
-      // tape sessions
-      try {
-        m_tapeSessionCatalogue.removeTapeSession(jobRequest.volReqId);
-
-        castor::dlf::Param params[] = {
-          castor::dlf::Param("mountTransactionId", jobRequest.volReqId   ),
-          castor::dlf::Param("reason"            , "Encountered an error"),
-          castor::dlf::Param("Message"           , ex.getMessage().str() ),
-          castor::dlf::Param("Code"              , ex.code()             )};
-        castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-          AGGREGATOR_REMOVED_TAPE_SESSION_FROM_CATALOGUE, params);
-      } catch(...) {
-        // Do nothing
-      }
 
       const uint64_t aggregatorTransactionId =
         aggregatorTransactionCounter.next();
@@ -512,8 +483,7 @@ void castor::tape::aggregator::VdqmRequestHandler::enterBridgeOrAggregatorMode(
       AGGREGATOR_ENTERING_BRIDGE_MODE, params);
     BridgeProtocolEngine bridgeProtocolEngine(cuuid, listenSock,
       initialRtcpdSock, jobRequest, volume, nbFilesOnDestinationTape,
-      s_stoppingGracefullyFunctor, aggregatorTransactionCounter,
-      m_tapeSessionCatalogue);
+      s_stoppingGracefullyFunctor, aggregatorTransactionCounter);
     bridgeProtocolEngine.run();
   }
 }
