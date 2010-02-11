@@ -17,6 +17,15 @@ import time
 import os
 import LoggingCommon
 
+# Constants
+MAX_PARAM_NAME_LEN  = 20
+MAX_PARAM_VALUE_LEN = 2048
+MAX_TAPEVID_LEN     = 20
+MAX_STYPE_LEN       = 20
+MAX_SNAME_LEN       = 255
+MAX_UUID_LEN        = 36
+MAX_HOSTNAME_LEN    = 64
+
 try:
     import cx_Oracle
 except ImportError:
@@ -324,7 +333,7 @@ class DLFDbDest(LoggingCommon.MsgDestination):
                     self.reconnect()
                     continue
                 else:
-                    raise RuntimeError( 'Unable to get message identifiers'
+                    raise RuntimeError( 'Unable to get message identifiers: '
                                         + str(e) )
 
         #-----------------------------------------------------------------------
@@ -436,7 +445,7 @@ class DLFDbDest(LoggingCommon.MsgDestination):
                     self.__intQueue = []
                     self.__strQueue = []
                     self.__conn.rollback()
-                    raise RuntimeError( 'Unable to flush message queues'
+                    raise RuntimeError( 'Unable to flush message queues: '
                                         + str(e) )
 
     #---------------------------------------------------------------------------
@@ -646,6 +655,11 @@ class DLFDbDest(LoggingCommon.MsgDestination):
             hostname += '.'
             hostname += self.domainName
 
+        if len( hostname ) > MAX_HOSTNAME_LEN:
+            raise ValueError( 'Malformed message: hostname value exceeds ' +
+                              str(MAX_HOSTNAME_LEN) + ' characters in ' +
+                              'length')
+
         if not self.__hostmap.has_key( hostname ):
             hostid = self.insertHost( hostname )
         else:
@@ -715,6 +729,11 @@ class DLFDbDest(LoggingCommon.MsgDestination):
                 nshostname += '.'
                 nshostname += self.domainName
 
+            if len( nshostname ) > MAX_HOSTNAME_LEN:
+                raise ValueError( 'Malformed message: NSHOSTNAME attribute ' +
+                                  'exceeds ' + str(MAX_HOSTNAME_LEN) + 
+                                  ' characters in length: ' + str(message))
+
             if not self.__nshostmap.has_key( nshostname ):
                 nshostid = self.insertNsHost( nshostname )
             else:
@@ -727,6 +746,10 @@ class DLFDbDest(LoggingCommon.MsgDestination):
         # Reqid
         #-----------------------------------------------------------------------
         if message['reqid']:
+            if len( message['reqid'] ) > MAX_UUID_LEN:
+                raise ValueError( 'Malformed message: REQID attribute ' +
+                                  'exceeds ' + str(MAX_UUID_LEN) + 
+                                  ' characters in length: ' + str(message))
             msg['reqid'] = message['reqid']
 
         #-----------------------------------------------------------------------
@@ -738,16 +761,32 @@ class DLFDbDest(LoggingCommon.MsgDestination):
         kvdict = message['key-value']
         for kv in kvdict:
             if kv == 'TPVID':
-                msg['tapevid'] = kvdict[kv]
+                if len( kvdict[kv] ) > MAX_TAPEVID_LEN:
+                    raise ValueError( 'Malformed message: TPVID attribute ' +
+                                      'exceeds ' + str(MAX_TAPEVID_LEN) + 
+                                      ' characters in lengt: ' + str(message))
+                msg['tapevid']  = kvdict[kv]
             elif kv == 'UID':
-                msg['userid'] = kvdict[kv]
+                msg['userid']   = kvdict[kv]
             elif kv == 'GID':
-                msg['groupid'] = kvdict[kv]
+                msg['groupid']  = kvdict[kv]
             elif kv == 'SNAME':
+                if len( kvdict[kv] ) > MAX_SNAME_LEN:
+                    raise ValueError( 'Malformed message: SNAME attribute ' +
+                                      'exceeds ' + str(MAX_SNAME_LEN) + 
+                                      ' characters in length: ' + str(message))
                 msg['sec_name'] = kvdict[kv]
             elif kv == 'STYPE':
+                if len( kvdict[kv] ) > MAX_STYPE_LEN:
+                    raise ValueError( 'Malformed message: STYPE attribute ' +
+                                      'exceeds ' + str(MAX_STYPE_LEN) + 
+                                      ' characters in length: ' + str(message))
                 msg['sec_type'] = kvdict[kv]
             elif kv == 'SUBREQID':
+                if len( kvdict[kv] ) > MAX_UUID_LEN:
+                    raise ValueError( 'Malformed message: SUBREQID attribute ' +
+                                      'exceeds ' + str(MAX_UUID_LEN) + 
+                                      ' characters in length: ' + str(message))
                 msg['subreqid'] = kvdict[kv]
             else:
                 intval = None
@@ -756,6 +795,9 @@ class DLFDbDest(LoggingCommon.MsgDestination):
                 rec['timestamp'] = msg['timestamp']
                 rec['name']      = kv
 
+                if len( rec['name'] ) > MAX_PARAM_NAME_LEN:
+                    continue
+
                 if kvdict[kv] == None:
                     rec['value'] = ""
                     kv_str.append( rec )
@@ -763,22 +805,24 @@ class DLFDbDest(LoggingCommon.MsgDestination):
 
                 # Integers
                 try:
-                   rec['value'] = int( kvdict[kv] )
-                   kv_int.append( rec )
-                   continue
+                    rec['value'] = int( kvdict[kv] )
+                    kv_int.append( rec )
+                    continue
                 except ValueError:
-                   pass
+                    pass
 
                 # Floats
                 try:
-                   rec['value'] = float( kvdict[kv] )
-                   kv_int.append( rec )
-                   continue
+                    rec['value'] = float( kvdict[kv] )
+                    kv_int.append( rec )
+                    continue
                 except ValueError:
-                   pass
+                    pass
 
                 # Strings
                 rec['value'] = kvdict[kv]
+                if len( rec['value'] ) > MAX_PARAM_VALUE_LEN:
+                    continue
                 kv_str.append( rec )
 
         self.__strQueue += kv_str
