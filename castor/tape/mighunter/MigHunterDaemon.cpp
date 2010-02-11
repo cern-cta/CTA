@@ -31,6 +31,7 @@
 #include <iostream>
 #include <list>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -150,31 +151,53 @@ int castor::tape::mighunter::MigHunterDaemon::exceptionThrowingMain(int argc,
     throw(ex);
   }
 
-  char *tmpStr = NULL;
+  // The status of the migration-policy Python-module as a text message which
+  // can be logged so that operators know what needs to be done in order to get
+  // a user-defined policy loaded.  The possible string values are
+  // "Not configured", "Not loaded" and "Loaded".
+  const char *migrationPolicyModuleStatus = "Not configured";
 
-  // get the policy migration policy name
-
+  // Get the policy migration policy name
   std::string migrationPolicyModuleName;
-  tmpStr = getconfent("MIGHUNTER","MIGRATION_POLICY",0);
-  if (tmpStr==NULL){
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("message","No migration policy in castor.conf")};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, NO_POLICY, params);
-  } else {
-    migrationPolicyModuleName = tmpStr;
+  {
+    const char *const category = "MIGHUNTER";
+    const char *const name     = "MIGRATION_POLICY";
+    const char *const tmpStr   = getconfent(category, name, 0);
+
+    if(tmpStr != NULL) {
+      migrationPolicyModuleName   = tmpStr;
+      migrationPolicyModuleStatus = "Not loaded";
+    } else {
+      std::ostringstream oss;
+
+      oss << category << " " << name << " not specified in castor.conf";
+
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("message", oss.str())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT,
+        MIGRATION_POLICY_NOT_CONFIGURED, params);
+    }
   }
 
-  // get the policy stream policy name
-
+  // Get the policy stream policy name
   std::string streamPolicyModuleName;
-  
-  tmpStr = getconfent("MIGHUNTER","STREAM_POLICY",0);
-  if (tmpStr==NULL){
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("message","No stream  policy in castor.conf")};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, NO_POLICY, params);
-  } else {
-    streamPolicyModuleName= tmpStr;
+  {
+    const char *const category = "MIGHUNTER";
+    const char *const name     = "STREAM_POLICY";
+    const char *const tmpStr   = getconfent(category, name, 0);
+ 
+    if(tmpStr != NULL) {
+      streamPolicyModuleName= tmpStr;
+    } else {
+      std::ostringstream oss;
+
+      oss << category << " " << name << " not specified in castor.conf";
+
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("message", oss.str())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT,
+        STREAM_POLICY_NOT_CONFIGURED, params);
+    }
   }
 
   // Initialize Python
@@ -187,18 +210,23 @@ int castor::tape::mighunter::MigHunterDaemon::exceptionThrowingMain(int argc,
 
   PyObject* migrationPolicyDict = NULL;
 
+  // Get the dictionary just if there is a module name set in castor.conf
   if (!migrationPolicyModuleName.empty()){
-    // we get the dictionary just if we have a module name set in the castor.conf
-    migrationPolicyDict = castor::tape::python::importPolicyPythonModule(migrationPolicyModuleName.c_str());
-    
+    migrationPolicyDict = castor::tape::python::importPolicyPythonModule(
+      migrationPolicyModuleName.c_str());
+  }
+
+  // Update the status string of the migration-policy Python-module
+  if(migrationPolicyDict != NULL) {
+    migrationPolicyModuleStatus = "Loaded";
   }
 
   PyObject* streamPolicyDict = NULL;
 
+  // Get the dictionary just if there is a module name set in castor.conf
   if (!streamPolicyModuleName.empty()){
-    // we get the dictionary just if we have a module name set in the castor.conf
-    streamPolicyDict = castor::tape::python::importPolicyPythonModule(streamPolicyModuleName.c_str());
-
+    streamPolicyDict = castor::tape::python::importPolicyPythonModule(
+      streamPolicyModuleName.c_str());
   }
 
   // Parse the command-line
@@ -214,7 +242,7 @@ int castor::tape::mighunter::MigHunterDaemon::exceptionThrowingMain(int argc,
   // Create the mighunter thread pool
   std::auto_ptr<castor::tape::mighunter::MigHunterThread> migHunterThread(
     new MigHunterThread(m_listSvcClass, m_migrationDataThreshold, m_doClone,
-    migrationPolicyDict));
+    migrationPolicyDict, migrationPolicyModuleStatus));
   std::auto_ptr<castor::server::SignalThreadPool> migHunterPool(
     new server::SignalThreadPool("MigHunterThread", migHunterThread.release(),
     m_migrationSleepTime));

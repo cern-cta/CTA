@@ -36,3 +36,5 @@
 35,NOT_ALLOWED_BY_STREAM_POLICY,"Not allowed by stream policy"
 36,MIGRATION_POLICY_FUNCTION_NOT_IN_MODULE,"Migration-policy Python-function not in migration-policy Python-module"
 37,STREAM_POLICY_FUNCTION_NOT_IN_MODULE,"Stream-policy Python-function not in stream-policy Python-module"
+38,MIGRATION_POLICY_NOT_CONFIGURED,"Migration policy not configured"
+39,STREAM_POLICY_NOT_CONFIGURED,"Stream policy not configured"

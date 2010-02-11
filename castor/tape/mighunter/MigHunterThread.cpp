@@ -65,12 +65,14 @@ castor::tape::mighunter::MigHunterThread::MigHunterThread(
   const std::list<std::string> &svcClassList,
   const uint64_t               migrationDataThreshold,
   const bool                   doClone,
-  PyObject *const              migrationPolicyDict) throw() :
+  PyObject *const              migrationPolicyDict,
+  const char *const            migrationPolicyModuleStatus) throw() :
 
   m_listSvcClass(svcClassList),
   m_migrationDataThreshold(migrationDataThreshold),
   m_doClone(doClone),
-  m_migrationPolicyDict(migrationPolicyDict) {
+  m_migrationPolicyDict(migrationPolicyDict),
+  m_migrationPolicyModuleStatus(migrationPolicyModuleStatus) {
 }
 
 
@@ -216,9 +218,9 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(
 
       // call the policy foreach tape copy
 
-      u_signed64 policyYes=0;
-      u_signed64 policyNo=0;
-      u_signed64 withoutPolicy=0;
+      u_signed64 nbAllowedByPolicy      = 0;
+      u_signed64 nbNotAllowedByPolicy   = 0;
+      u_signed64 nbAllowedWithoutPolicy = 0;
 
       gettimeofday(&tvStart, NULL);
 
@@ -312,7 +314,7 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(
             eligibleCandidates[infoCandidate->tapePoolId].push_back(
               *infoCandidate);
 
-            withoutPolicy++;
+            nbAllowedWithoutPolicy++;
 
           // Else apply the policy
           } else {
@@ -337,7 +339,7 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(
               eligibleCandidates[infoCandidate->tapePoolId].push_back(
                 *infoCandidate);
 
-              withoutPolicy++;
+              nbAllowedWithoutPolicy++;
 
               // Skip to the next canditate
               continue; // For each infoCandidate
@@ -352,14 +354,14 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(
               eligibleCandidates[infoCandidate->tapePoolId].push_back(
                 *infoCandidate);
 
-              policyYes++;
+              nbAllowedByPolicy++;
 
             // Else do not attach the tape copy
             } else {
 
               castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
                 NOT_ALLOWED_BY_MIGRATION_POLICY, paramsOutput,&castorFileId);
-              policyNo++;
+              nbNotAllowedByPolicy++;
 
             }
           } 
@@ -391,11 +393,13 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(
 
       // log in the dlf with the summary
       castor::dlf::Param paramsPolicy[] = {
-        castor::dlf::Param("SvcClass",(*svcClassName)),
-        castor::dlf::Param("allowed",withoutPolicy),
-        castor::dlf::Param("allowedByPolicy",policyYes),
-        castor::dlf::Param("notAllowed",policyNo),
-        castor::dlf::Param("ProcessingTime", procTime * 0.000001)};
+        castor::dlf::Param("SvcClass"              , (*svcClassName)         ),
+        castor::dlf::Param("migrPolicyModuleStatus",
+                                                m_migrationPolicyModuleStatus),
+        castor::dlf::Param("nbAllowedWithoutPolicy", nbAllowedWithoutPolicy  ),
+        castor::dlf::Param("nbAllowedByPolicy"     , nbAllowedByPolicy       ),
+        castor::dlf::Param("nbNotAllowedByPolicy"  , nbNotAllowedByPolicy    ),
+        castor::dlf::Param("ProcessingTime"        , procTime * 0.000001     )};
 
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, POLICY_RESULT,
         paramsPolicy);
