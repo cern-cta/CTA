@@ -451,6 +451,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
         }
         break;
       case REQUESTQUERYTYPE_FILENAME:
+      case REQUESTQUERYTYPE_FILENAME_ALLSC:
       case REQUESTQUERYTYPE_REQID:
       case REQUESTQUERYTYPE_USERTAG:
       case REQUESTQUERYTYPE_REQID_GETNEXT:
