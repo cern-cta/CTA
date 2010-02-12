@@ -92,6 +92,21 @@ void castor::tape::mighunter::MigHunterThread::run(void* arg) {
       castor::dlf::Param("Message", ex.getMessage().str()),
       castor::dlf::Param("Code"   , ex.code()            )};
     CASTOR_DLF_WRITEPC(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR, params);
+
+  } catch(std::exception &ex) {
+
+    // Log the exception
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Message", ex.what())};
+    CASTOR_DLF_WRITEPC(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR, params);
+
+  } catch(...) {
+
+    // Log the exception
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Message", "Uknown exception")};
+    CASTOR_DLF_WRITEPC(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR, params);
+
   }
 }
 
@@ -99,8 +114,7 @@ void castor::tape::mighunter::MigHunterThread::run(void* arg) {
 //------------------------------------------------------------------------------
 // exceptionThrowingRun
 //------------------------------------------------------------------------------
-void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(
-  void *arg) throw(castor::exception::Exception) {
+void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
 
   // Get a handle on the service to access the database
   const char *const oraSvcName = "OraMigHunterSvc";
@@ -569,11 +583,20 @@ int castor::tape::mighunter::MigHunterThread::applyMigrationPolicy(
 
   // Throw an exception if the migration-policy Python-function call failed
   if(resultObj.get() == NULL) {
+
+    // Try to determine the Python exception if there was aPython error
+    PyObject *const pyEx = PyErr_Occurred();
+    const char *pyExStr = python::stdPythonExceptionToStr(pyEx);
+    if(pyEx != NULL) {
+      PyErr_Clear();
+    }
+
     castor::exception::Internal ex;
 
     ex.getMessage() <<
       "Failed to execute migration-policy Python-function" <<
-      ": functionName=" << elem.policyName.c_str() ;
+      ": functionName=" << elem.policyName.c_str() <<
+      ": pythonException=" << pyExStr;
 
     throw ex;
   }

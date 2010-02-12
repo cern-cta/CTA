@@ -63,9 +63,11 @@
 //------------------------------------------------------------------------------
 castor::tape::mighunter::StreamThread::StreamThread(
   const std::list<std::string> &svcClassArray,
-  PyObject *const              streamPolicyDict) throw() :
+  PyObject *const              streamPolicyDict,
+  const char *const            streamPolicyModuleStatus) throw() :
   m_listSvcClass(svcClassArray),
-  m_streamPolicyDict(streamPolicyDict) {
+  m_streamPolicyDict(streamPolicyDict),
+  m_streamPolicyModuleStatus(streamPolicyModuleStatus) {
 }
 
 
@@ -162,9 +164,9 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(
       }
 
       // counters for logging
-      int policyYes=0;
-      int policyNo=0;
-      int withoutPolicy=0;
+      u_signed64 nbAllowedByPolicy      = 0;
+      u_signed64 nbNotAllowedByPolicy   = 0;
+      u_signed64 nbAllowedWithoutPolicy = 0;
 
       gettimeofday(&tvStart, NULL);
 
@@ -240,7 +242,7 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(
 
             eligibleStreams.push_back(*infoCandidateStream);
             runningStreams++;
-            withoutPolicy++;
+            nbAllowedWithoutPolicy++;
 
           // Else apply the policy
           } else {
@@ -264,7 +266,7 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(
               // i.e. attach the stream
               eligibleStreams.push_back(*infoCandidateStream);
               runningStreams++;
-              withoutPolicy++;
+              nbAllowedWithoutPolicy++;
 
               // Skip to the next canditate
               continue; // For each infoCandidateStream
@@ -279,7 +281,7 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(
               eligibleStreams.push_back(*infoCandidateStream);
 
               runningStreams++;
-              policyYes++;
+              nbAllowedByPolicy++;
 
             // Else do not start the stream
             } else {
@@ -287,7 +289,7 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(
               castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
                 NOT_ALLOWED_BY_STREAM_POLICY, paramsOutput);
               streamsToRestore.push_back(*infoCandidateStream);
-              policyNo++;
+              nbNotAllowedByPolicy++;
 
             }
           }
@@ -312,14 +314,14 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(
         ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
 
       // log in the dlf with the summary
-      castor::dlf::Param paramsPolicy[]={
-        castor::dlf::Param("SvcClass",(*svcClassName)),
-        castor::dlf::Param("allowed",withoutPolicy),
-        castor::dlf::Param("allowedByPolicy",policyYes),
-        castor::dlf::Param("notAllowed",policyNo),
-        castor::dlf::Param("runningStreams",runningStreams),
-        castor::dlf::Param("ProcessingTime", procTime * 0.000001)
-        };
+      castor::dlf::Param paramsPolicy[] = {
+        castor::dlf::Param("SvcClass"            , (*svcClassName)           ),
+        castor::dlf::Param("policyModuleStatus"  , m_streamPolicyModuleStatus),
+        castor::dlf::Param("allowedWithoutPolicy", nbAllowedWithoutPolicy    ),
+        castor::dlf::Param("allowedByPolicy"     , nbAllowedByPolicy         ),
+        castor::dlf::Param("notAllowedByPolicy"  , nbNotAllowedByPolicy      ),
+        castor::dlf::Param("runningStreams"      , runningStreams            ),
+        castor::dlf::Param("ProcessingTime"      , procTime * 0.000001       )};
 
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, STREAM_POLICY_RESULT,
          paramsPolicy);

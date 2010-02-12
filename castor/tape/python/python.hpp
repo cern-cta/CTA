@@ -18,7 +18,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * 
+ *
  * @author Giulia Taurelli, Nicola Bessone and Steven Murray
  *****************************************************************************/
 
@@ -85,9 +85,9 @@ void finalizePython() throw();
  *                   means the caller does not need to call Py_XDECREF when the
  *                   dictionary is no longer required.
  */
-PyObject* importPolicyPythonModule(const char *const moduleName) 
+PyObject* importPolicyPythonModule(const char *const moduleName)
   throw(castor::exception::Exception);
-    
+
 /**
  * Get the Python function object for the specified function within the
  * specified Python dictionary.
@@ -111,7 +111,26 @@ PyObject* importPolicyPythonModule(const char *const moduleName)
  */
 PyObject* getPythonFunction(PyObject *const pyDict,
   const char *const functionName) throw(castor::exception::Exception);
-  
+
+/**
+ * Returns a string representation of the specified Python exception.  This
+ * function only knows the standard Python exceptions that were documented at
+ * the time the function was written.
+ *
+ * If a NULL pointer is passed as the Python exception, then this function will
+ * return a pointer the string literal "NULL".  If the specified Python
+ * exception is unknown, then this function will return a pointer to the string
+ * literal "UNKNOWN";
+ *
+ * The caller of this function must not try to free the memory used by a
+ * returned string.  All of the values returned by this function are pointers
+ * to string literals.
+ *
+ * @param pyEx Python exception or NULL if there isn't one.
+ * @return     String representation of the specified Python exception.
+ */
+const char *stdPythonExceptionToStr(PyObject *const pyDict) throw();
+
 } // namespace python
 } // namespace tape
 } // namespace castor

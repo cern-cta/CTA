@@ -179,6 +179,12 @@ int castor::tape::mighunter::MigHunterDaemon::exceptionThrowingMain(int argc,
     }
   }
 
+  // The status of the stream-policy Python-module as a text message which
+  // can be logged so that operators know what needs to be done in order to get
+  // a user-defined policy loaded.  The possible string values are
+  // "Not configured", "Not loaded" and "Loaded".
+  const char *streamPolicyModuleStatus = "Not configured";
+
   // Get the policy stream policy name
   std::string streamPolicyModuleName;
   {
@@ -187,7 +193,8 @@ int castor::tape::mighunter::MigHunterDaemon::exceptionThrowingMain(int argc,
     const char *const tmpStr   = getconfent(category, name, 0);
  
     if(tmpStr != NULL) {
-      streamPolicyModuleName= tmpStr;
+      streamPolicyModuleName   = tmpStr;
+      streamPolicyModuleStatus = "Not loaded";
     } else {
       std::ostringstream oss;
 
@@ -229,6 +236,11 @@ int castor::tape::mighunter::MigHunterDaemon::exceptionThrowingMain(int argc,
       streamPolicyModuleName.c_str());
   }
 
+  // Update the status string of the stream-policy Python-module
+  if(migrationPolicyDict != NULL) {
+    streamPolicyModuleStatus = "Loaded";
+  }
+
   // Parse the command-line
   parseCommandLine(argc, argv);
 
@@ -251,7 +263,7 @@ int castor::tape::mighunter::MigHunterDaemon::exceptionThrowingMain(int argc,
 
   // Create the stream thread pool
   std::auto_ptr<StreamThread> streamThread(new StreamThread(m_listSvcClass,
-    streamPolicyDict));
+    streamPolicyDict, streamPolicyModuleStatus));
   std::auto_ptr<server::SignalThreadPool> streamPool(
     new server::SignalThreadPool("StreamThread", streamThread.release(),
     m_streamSleepTime));

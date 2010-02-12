@@ -90,9 +90,12 @@ private:
    * The indirect exception throw entry point for MigHunter threads that is
    * called by run();
    *
+   * This method has no exception clause in order to allow it to throw
+   * anything.
+   *
    * @param arg The argument to be passed to the thread.
    */
-  void exceptionThrowingRun(void *arg) throw(castor::exception::Exception);
+  void exceptionThrowingRun(void *arg);
 
   /**
    * Get the values of the attributes stored in the name server for the

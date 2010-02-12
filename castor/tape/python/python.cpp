@@ -188,9 +188,8 @@ PyObject * castor::tape::python::importPolicyPythonModule(
 //---------------------------------------------------------------------------
 // getPythonFunction
 //---------------------------------------------------------------------------
-PyObject * castor::tape::python::getPythonFunction(PyObject *const pyDict,
-  const char *const functionName)
-  throw(castor::exception::Exception){
+PyObject *castor::tape::python::getPythonFunction(PyObject *const pyDict,
+  const char *const functionName) throw(castor::exception::Exception) {
 
   if(pyDict == NULL) {
     TAPE_THROW_EX(castor::exception::InvalidArgument,
@@ -230,6 +229,74 @@ PyObject * castor::tape::python::getPythonFunction(PyObject *const pyDict,
 
     throw ex;
   }
-  
+
   return pyFunc;
+}
+
+
+//---------------------------------------------------------------------------
+// pythonExceptionToStr
+//---------------------------------------------------------------------------
+const char *castor::tape::python::stdPythonExceptionToStr(PyObject *const pyEx)
+  throw() {
+
+  if(pyEx == NULL) {
+    return "NULL";
+  } else if(PyErr_GivenExceptionMatches(pyEx, PyExc_AssertionError)) {
+    return "AssertionError";
+  } else if(PyErr_GivenExceptionMatches(pyEx, PyExc_AttributeError)) {
+    return "AttributeError";
+  } else if(PyErr_GivenExceptionMatches(pyEx, PyExc_EOFError)) {
+    return "EOFError";
+  } else if(PyErr_GivenExceptionMatches(pyEx, PyExc_FloatingPointError)) {
+    return "FloatingPointError";
+  } else if(PyErr_GivenExceptionMatches(pyEx, PyExc_IOError)) {
+    return "IOError";
+  } else if(PyErr_GivenExceptionMatches(pyEx, PyExc_ImportError)) {
+    return "ImportError";
+  } else if(PyErr_GivenExceptionMatches(pyEx, PyExc_IndexError)) {
+    return "IndexError";
+  } else if(PyErr_GivenExceptionMatches(pyEx, PyExc_KeyError)) {
+    return  "KeyError";
+  } else if(PyErr_GivenExceptionMatches(pyEx, PyExc_KeyboardInterrupt)) {
+    return "KeyboardInterrupt";
+  } else if(PyErr_GivenExceptionMatches(pyEx, PyExc_MemoryError)) {
+    return "MemoryError";
+  } else if(PyErr_GivenExceptionMatches(pyEx, PyExc_NameError)) {
+    return "NameError";
+  } else if(PyErr_GivenExceptionMatches(pyEx, PyExc_NotImplementedError)) {
+    return "NotImplementedError";
+  } else if(PyErr_GivenExceptionMatches(pyEx, PyExc_OSError)) {
+    return "OSError";
+  } else if(PyErr_GivenExceptionMatches(pyEx, PyExc_OverflowError)) {
+    return "OverflowError";
+  } else if(PyErr_GivenExceptionMatches(pyEx, PyExc_ReferenceError)) {
+    return "ReferenceError";
+  } else if(PyErr_GivenExceptionMatches(pyEx, PyExc_RuntimeError)) {
+    return "RuntimeError";
+  } else if(PyErr_GivenExceptionMatches(pyEx, PyExc_SyntaxError)) {
+    return "SyntaxError";
+  } else if(PyErr_GivenExceptionMatches(pyEx, PyExc_SystemError)) {
+    return "SystemError";
+  } else if(PyErr_GivenExceptionMatches(pyEx, PyExc_SystemExit)) {
+    return "SystemExit";
+  } else if(PyErr_GivenExceptionMatches(pyEx, PyExc_TypeError)) {
+    return "TypeError";
+  } else if(PyErr_GivenExceptionMatches(pyEx, PyExc_ValueError)) {
+    return "ValueError";
+  } else if(PyErr_GivenExceptionMatches(pyEx, PyExc_ZeroDivisionError)) {
+    return "ZeroDivisionError";
+  } else if(PyErr_GivenExceptionMatches(pyEx, PyExc_StandardError)) {
+    return "StandardError";
+  } else if(PyErr_GivenExceptionMatches(pyEx, PyExc_ArithmeticError)) {
+    return "ArithmeticError";
+  } else if(PyErr_GivenExceptionMatches(pyEx, PyExc_LookupError)) {
+    return "LookupError";
+  } else if(PyErr_GivenExceptionMatches(pyEx, PyExc_EnvironmentError)) {
+    return "EnvironmentError";
+  } else if(PyErr_GivenExceptionMatches(pyEx, PyExc_Exception)) {
+    return "Exception";
+  } else {
+    return "UNKNOWN";
+  }
 }
