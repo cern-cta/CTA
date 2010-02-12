@@ -1428,6 +1428,12 @@ Concerning the user list, an empty list means all users and all groups are conce
         <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="KRNIVOTwI2T9" aggregation="none" type="1192" name="castorFile" multiplicity="1" />
        </UML:Association.connection>
       </UML:Association>
+      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="2124" name="" >
+       <UML:Association.connection>
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="SjsVvrKjjQ09" aggregation="aggregate" type="1196" name="fileSystem" multiplicity="1" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="kDmleZSDBO0I" aggregation="none" type="1195" name="copies" multiplicity="0..n" />
+       </UML:Association.connection>
+      </UML:Association>
       <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="2177" name="" >
        <UML:Association.connection>
         <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="2uPCHhDObu7t" aggregation="aggregate" type="1192" name="castorFile" multiplicity="1" />
@@ -2194,12 +2200,6 @@ Concerning the user list, an empty list means all users and all groups are conce
       <UML:Generalization isSpecification="false" child="zOogYpE5st4r" visibility="public" namespace="1" xmi.id="f03hzYw1KkEi" parent="zOogYpE5st4r" discriminator="" name="" />
       <UML:Generalization isSpecification="false" child="zOogYpE5st4r" visibility="public" namespace="1" xmi.id="VYUpGhXuG1O7" parent="zOogYpE5st4r" discriminator="" name="" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="z5coEZtojUmW" client="IHLv7w8xTAwB" name="" supplier="960" />
-      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="2124" name="" >
-       <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="SjsVvrKjjQ09" aggregation="aggregate" type="1196" name="fileSystem" multiplicity="1" />
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="kDmleZSDBO0I" aggregation="none" type="1195" name="copies" multiplicity="0..n" />
-       </UML:Association.connection>
-      </UML:Association>
      </UML:Namespace.ownedElement>
      <XMI.extension xmi.extender="umbrello" >
       <diagrams>
