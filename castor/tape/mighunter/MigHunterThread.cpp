@@ -587,6 +587,8 @@ int castor::tape::mighunter::MigHunterThread::applyMigrationPolicy(
     // Try to determine the Python exception if there was aPython error
     PyObject *const pyEx = PyErr_Occurred();
     const char *pyExStr = python::stdPythonExceptionToStr(pyEx);
+
+    // Clear the Python error if there was one
     if(pyEx != NULL) {
       PyErr_Clear();
     }

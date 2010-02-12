@@ -74,9 +74,11 @@ private:
    * The indirect exception throw entry point for stream threads that is
    * called by run();
    *
+   * This method has no throw clause so that it can throw anything.
+   *
    * @param arg The argument to be passed to the thread.
    */
-  void exceptionThrowingRun(void *arg) throw(castor::exception::Exception);
+  void exceptionThrowingRun(void *arg);
 
   /**
    * Run the stream policy using the specified policy element as input.
