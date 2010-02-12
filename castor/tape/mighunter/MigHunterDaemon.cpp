@@ -170,11 +170,11 @@ int castor::tape::mighunter::MigHunterDaemon::exceptionThrowingMain(int argc,
     } else {
       std::ostringstream oss;
 
-      oss << category << " " << name << " not specified in castor.conf";
+      oss << category << "/" << name << " not specified in castor.conf";
 
       castor::dlf::Param params[] = {
         castor::dlf::Param("message", oss.str())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT,
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING,
         MIGRATION_POLICY_NOT_CONFIGURED, params);
     }
   }
@@ -191,11 +191,11 @@ int castor::tape::mighunter::MigHunterDaemon::exceptionThrowingMain(int argc,
     } else {
       std::ostringstream oss;
 
-      oss << category << " " << name << " not specified in castor.conf";
+      oss << category << "/" << name << " not specified in castor.conf";
 
       castor::dlf::Param params[] = {
         castor::dlf::Param("message", oss.str())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT,
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING,
         STREAM_POLICY_NOT_CONFIGURED, params);
     }
   }
