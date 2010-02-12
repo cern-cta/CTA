@@ -1,4 +1,4 @@
-0,DAEMON_START,"Service shutdown"
+0,NOT_USED_1,"Service shutdown"
 1,DAEMON_STOP,"Service shutdown"
 2,FATAL_ERROR,"Fatal Error"
 3,NO_POLICY,"No Policy file available"
@@ -39,3 +39,4 @@
 38,MIGRATION_POLICY_NOT_CONFIGURED,"Migration policy not configured"
 39,STREAM_POLICY_NOT_CONFIGURED,"Stream policy not configured"
 40,MIGHUNTERTHREAD_SKIPPING_SRVCCLASS,"MigHunter thread skipping service class because there are no candidate tape copies"
+41,DAEMON_START,"mighunterd started"
