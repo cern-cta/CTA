@@ -3182,3 +3182,27 @@ CASTOR rpms:
 
 Run spma_wrapper to check everything is OK.  The spma_wrapper console output
 should report it erased the castor-lib-policy rpm.
+
+
+Here they are the db queries that I am using to see the migration situation.
+
+How to see the status of the tape copies in the stager database
+===============================================================
+
+select status,count(*) from tapecopy group by status;
+
+status:
+0-1 => not picked by the mighunter
+2   => attached to a stream
+7   => the mighunter is analyzing them
+3   => detached from the stream and sent to the aggregator  
+
+
+How to see the status of the streams in the stager database
+===========================================================
+
+select parent,count(*) from stream2tapecopy group by parent;
+
+The parent is the stream id and like this you can see how many tapecopies can
+be migrated from that stream.
+
