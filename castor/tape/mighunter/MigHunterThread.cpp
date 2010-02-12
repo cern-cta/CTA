@@ -169,6 +169,12 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
       if (infoCandidateTapeCopies.empty()){
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, NO_TAPECOPIES,
           paramsDb);
+
+        castor::dlf::Param params[] = {
+          castor::dlf::Param("SvcClass", *svcClassName)};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+          MIGHUNTERTHREAD_SKIPPING_SRVCCLASS, params);
+
         continue; // For each service-class name
       } else {
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, TAPECOPIES_FOUND,
