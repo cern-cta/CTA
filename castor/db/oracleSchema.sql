@@ -162,7 +162,7 @@ INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeCopy'
 CREATE TABLE CastorFile (fileId INTEGER, nsHost VARCHAR2(2048), fileSize INTEGER, creationTime INTEGER, lastAccessTime INTEGER, lastKnownFileName VARCHAR2(2048), lastUpdateTime INTEGER, id INTEGER CONSTRAINT PK_CastorFile_Id PRIMARY KEY, svcClass INTEGER, fileClass INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type DiskCopy */
-CREATE TABLE DiskCopy (path VARCHAR2(2048), gcWeight NUMBER, creationTime INTEGER, lastAccessTime INTEGER, diskCopySize INTEGER, nbCopyAccesses NUMBER, owneruid NUMBER, ownergid NUMBER, id INTEGER CONSTRAINT PK_DiskCopy_Id PRIMARY KEY, gcType INTEGER, castorFile INTEGER, fileSystem INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE DiskCopy (path VARCHAR2(2048), gcWeight NUMBER, creationTime INTEGER, lastAccessTime INTEGER, diskCopySize INTEGER, nbCopyAccesses NUMBER, owneruid NUMBER, ownergid NUMBER, id INTEGER CONSTRAINT PK_DiskCopy_Id PRIMARY KEY, gcType INTEGER, fileSystem INTEGER, castorFile INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DiskCopy', 'gcType', 0, 'GCTYPE_AUTO');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DiskCopy', 'gcType', 1, 'GCTYPE_USER');
@@ -275,17 +275,6 @@ CREATE TABLE RequestType (reqType NUMBER, id INTEGER CONSTRAINT PK_RequestType_I
 /* SQL statements for type ListPrivileges */
 CREATE TABLE ListPrivileges (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, userId NUMBER, groupId NUMBER, requestType NUMBER, id INTEGER CONSTRAINT PK_ListPrivileges_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
-/* SQL statements for type TapeGatewayRequest */
-CREATE TABLE TapeGatewayRequest (accessMode NUMBER, startTime INTEGER, lastVdqmPingTime INTEGER, vdqmVolReqId NUMBER, nbRetry NUMBER, lastFseq NUMBER, id INTEGER CONSTRAINT PK_TapeGatewayRequest_Id PRIMARY KEY, streamMigration INTEGER, tapeRecall INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 0, 'TO_BE_RESOLVED');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 1, 'TO_BE_SENT_TO_VDQM');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 2, 'WAITING_TAPESERVER');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 3, 'ONGOING');
-
-/* SQL statements for type TapeGatewaySubRequest */
-CREATE TABLE TapeGatewaySubRequest (fseq NUMBER, id INTEGER CONSTRAINT PK_TapeGatewaySubRequest_Id PRIMARY KEY, tapecopy INTEGER, request INTEGER, diskcopy INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
 /* SQL statements for constraints on SvcClass */
 ALTER TABLE SvcClass2TapePool
   ADD CONSTRAINT FK_SvcClass2TapePool_P FOREIGN KEY (Parent) REFERENCES SvcClass (id)
@@ -383,7 +372,6 @@ INSERT INTO Type2Obj (type, object) VALUES (106, 'StringResponse');
 INSERT INTO Type2Obj (type, object) VALUES (107, 'Response');
 INSERT INTO Type2Obj (type, object) VALUES (108, 'IOResponse');
 INSERT INTO Type2Obj (type, object) VALUES (109, 'AbortResponse');
-INSERT INTO Type2Obj (type, object) VALUES (111, 'FileQueryResponse');
 INSERT INTO Type2Obj (type, object) VALUES (113, 'GetUpdateStartResponse');
 INSERT INTO Type2Obj (type, object) VALUES (114, 'BasicResponse');
 INSERT INTO Type2Obj (type, object) VALUES (115, 'StartResponse');

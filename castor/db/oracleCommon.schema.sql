@@ -261,6 +261,14 @@ ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_FileClass
 ALTER TABLE Stream ADD CONSTRAINT FK_Stream_TapePool
   FOREIGN KEY (tapePool) REFERENCES TapePool (id);
 
+/* TapeGateway tables */
+CREATE TABLE TapeGatewayRequest (accessMode NUMBER, startTime INTEGER, lastVdqmPingTime INTEGER, vdqmVolReqId NUMBER, nbRetry NUMBER, lastFseq NUMBER, id INTEGER CONSTRAINT PK_TapeGatewayRequest_Id PRIMARY KEY, streamMigration INTEGER, tapeRecall INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE TapeGatewaySubRequest (fseq NUMBER, id INTEGER CONSTRAINT PK_TapeGatewaySubRequest_Id PRIMARY KEY, tapecopy INTEGER, request INTEGER, diskcopy INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 0, 'TO_BE_RESOLVED');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 1, 'TO_BE_SENT_TO_VDQM');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 2, 'WAITING_TAPESERVER');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 3, 'ONGOING');
+
 /* Index and Constraints for the tapegateway tables */
 CREATE INDEX I_TGSubRequest_Request ON TapeGatewaySubRequest(request);
 CREATE UNIQUE INDEX I_TGSubRequest_TapeCopy ON TapeGatewaySubRequest(tapeCopy);

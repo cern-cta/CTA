@@ -46,9 +46,6 @@ CREATE TABLE MoverCloseRequest (flags INTEGER, userName VARCHAR2(2048), euid NUM
 /* SQL statements for type PutStartRequest */
 CREATE TABLE PutStartRequest (subreqId INTEGER, diskServer VARCHAR2(2048), fileSystem VARCHAR2(2048), fileId INTEGER, nsHost VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_PutStartRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
-/* SQL statements for type PutDoneStart */
-CREATE TABLE PutDoneStart (subreqId INTEGER, diskServer VARCHAR2(2048), fileSystem VARCHAR2(2048), fileId INTEGER, nsHost VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_PutDoneStart_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
 /* SQL statements for type GetUpdateStartRequest */
 CREATE TABLE GetUpdateStartRequest (subreqId INTEGER, diskServer VARCHAR2(2048), fileSystem VARCHAR2(2048), fileId INTEGER, nsHost VARCHAR2(2048), flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_GetUpdateStartRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
@@ -61,6 +58,7 @@ INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('QueryPara
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('QueryParameter', 'queryType', 3, 'REQUESTQUERYTYPE_FILEID');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('QueryParameter', 'queryType', 4, 'REQUESTQUERYTYPE_REQID_GETNEXT');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('QueryParameter', 'queryType', 5, 'REQUESTQUERYTYPE_USERTAG_GETNEXT');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('QueryParameter', 'queryType', 6, 'REQUESTQUERYTYPE_FILENAME_ALLSC');
 
 /* SQL statements for type StagePrepareToGetRequest */
 CREATE TABLE StagePrepareToGetRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StagePrepareToGetRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
@@ -280,17 +278,6 @@ CREATE TABLE RequestType (reqType NUMBER, id INTEGER CONSTRAINT PK_RequestType_I
 /* SQL statements for type ListPrivileges */
 CREATE TABLE ListPrivileges (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, userId NUMBER, groupId NUMBER, requestType NUMBER, id INTEGER CONSTRAINT PK_ListPrivileges_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
-/* SQL statements for type TapeGatewayRequest */
-CREATE TABLE TapeGatewayRequest (accessMode NUMBER, startTime INTEGER, lastVdqmPingTime INTEGER, vdqmVolReqId NUMBER, nbRetry NUMBER, lastFseq NUMBER, id INTEGER CONSTRAINT PK_TapeGatewayRequest_Id PRIMARY KEY, streamMigration INTEGER, tapeRecall INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 0, 'TO_BE_RESOLVED');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 1, 'TO_BE_SENT_TO_VDQM');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 2, 'WAITING_TAPESERVER');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 3, 'ONGOING');
-
-/* SQL statements for type TapeGatewaySubRequest */
-CREATE TABLE TapeGatewaySubRequest (fseq NUMBER, id INTEGER CONSTRAINT PK_TapeGatewaySubRequest_Id PRIMARY KEY, tapecopy INTEGER, request INTEGER, diskcopy INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
 /* SQL statements for constraints on SvcClass */
 ALTER TABLE SvcClass2TapePool
   ADD CONSTRAINT FK_SvcClass2TapePool_P FOREIGN KEY (Parent) REFERENCES SvcClass (id)
@@ -374,7 +361,6 @@ INSERT INTO Type2Obj (type, object) VALUES (89, 'ErrorHistory');
 INSERT INTO Type2Obj (type, object) VALUES (90, 'TapeDriveDedication');
 INSERT INTO Type2Obj (type, object) VALUES (91, 'TapeAccessSpecification');
 INSERT INTO Type2Obj (type, object) VALUES (92, 'TapeDriveCompatibility');
-INSERT INTO Type2Obj (type, object) VALUES (93, 'PutDoneStart');
 INSERT INTO Type2Obj (type, object) VALUES (95, 'SetFileGCWeight');
 INSERT INTO Type2Obj (type, object) VALUES (96, 'RepackRequest');
 INSERT INTO Type2Obj (type, object) VALUES (97, 'RepackSubRequest');
@@ -389,7 +375,6 @@ INSERT INTO Type2Obj (type, object) VALUES (106, 'StringResponse');
 INSERT INTO Type2Obj (type, object) VALUES (107, 'Response');
 INSERT INTO Type2Obj (type, object) VALUES (108, 'IOResponse');
 INSERT INTO Type2Obj (type, object) VALUES (109, 'AbortResponse');
-INSERT INTO Type2Obj (type, object) VALUES (111, 'FileQueryResponse');
 INSERT INTO Type2Obj (type, object) VALUES (113, 'GetUpdateStartResponse');
 INSERT INTO Type2Obj (type, object) VALUES (114, 'BasicResponse');
 INSERT INTO Type2Obj (type, object) VALUES (115, 'StartResponse');
@@ -758,6 +743,14 @@ ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_FileClass
 /* Stream constraints */
 ALTER TABLE Stream ADD CONSTRAINT FK_Stream_TapePool
   FOREIGN KEY (tapePool) REFERENCES TapePool (id);
+
+/* TapeGateway tables */
+CREATE TABLE TapeGatewayRequest (accessMode NUMBER, startTime INTEGER, lastVdqmPingTime INTEGER, vdqmVolReqId NUMBER, nbRetry NUMBER, lastFseq NUMBER, id INTEGER CONSTRAINT PK_TapeGatewayRequest_Id PRIMARY KEY, streamMigration INTEGER, tapeRecall INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE TapeGatewaySubRequest (fseq NUMBER, id INTEGER CONSTRAINT PK_TapeGatewaySubRequest_Id PRIMARY KEY, tapecopy INTEGER, request INTEGER, diskcopy INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 0, 'TO_BE_RESOLVED');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 1, 'TO_BE_SENT_TO_VDQM');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 2, 'WAITING_TAPESERVER');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 3, 'ONGOING');
 
 /* Index and Constraints for the tapegateway tables */
 CREATE INDEX I_TGSubRequest_Request ON TapeGatewaySubRequest(request);
@@ -9385,16 +9378,13 @@ BEGIN
   IF svcId = 0 THEN
     RETURN;  -- Do nothing
   END IF;
-  -- Extract the next diskcopy to be processed. Note: this is identical to the
-  -- way that subrequests are picked up in the SubRequestToDo procedure. The N
-  -- levels of SELECTS and hints allow us to process the entries in the
-  -- DrainingDiskCopy snapshot in an ordered way.
+  -- Extract the next diskcopy to be processed.
   dcId := 0;
   UPDATE DrainingDiskCopy
      SET status = 2  -- PROCESSING
    WHERE diskCopy = (
      SELECT diskCopy FROM (
-       SELECT /*+ INDEX(DC I_DrainingDCs_PC) */ DDC.diskCopy
+       SELECT DDC.diskCopy
          FROM DrainingDiskCopy DDC
         WHERE DDC.fileSystem = fsId
           AND DDC.status IN (0, 1)  -- CREATED, RESTARTED
@@ -9622,6 +9612,14 @@ BEGIN
            OR  (DC.status = decode(DC.status, 10, DC.status, NULL)
                 AND DFS.fileMask = 1)                          -- CANBEMIGR
            OR  (DC.status IN (0, 10)  AND DFS.fileMask = 2))); -- ALL
+  -- Regenerate the statistics for the DrainingDiskCopy table
+  DBMS_STATS.GATHER_TABLE_STATS
+    (OWNNAME          => sys_context('USERENV', 'CURRENT_SCHEMA'),
+     TABNAME          =>'DRAININGDISKCOPY',
+     ESTIMATE_PERCENT => 100,
+     METHOD_OPT       => 'FOR ALL COLUMNS SIZE 100',
+     NO_INVALIDATE    => FALSE,
+     FORCE            => TRUE);
   -- Update the DrainingFileSystem counters
   FOR a IN (SELECT fileSystem, count(*) files, sum(DDC.fileSize) bytes
               FROM DrainingDiskCopy DDC
