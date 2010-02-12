@@ -145,7 +145,7 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "IOResponse",
   "AbortResponse",
   "DELETED TYPE",
-  "FileQueryResponse",
+  "DELETED TYPE",
   "DELETED TYPE",
   "GetUpdateStartResponse",
   "BasicResponse",

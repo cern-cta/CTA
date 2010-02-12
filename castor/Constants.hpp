@@ -126,7 +126,6 @@ namespace castor {
     OBJ_Response = 107,
     OBJ_IOResponse = 108,
     OBJ_AbortResponse = 109,
-    OBJ_FileQueryResponse = 111,
     OBJ_GetUpdateStartResponse = 113,
     OBJ_BasicResponse = 114,
     OBJ_StartResponse = 115,
