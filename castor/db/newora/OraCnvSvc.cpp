@@ -108,15 +108,16 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
 
   // No connection available, try to build one
   // get the parameters service to resolve the schema version and the config file
-  castor::IService* s =
-    castor::BaseObject::sharedServices()->service("DbParamsSvc", SVC_DBPARAMSSVC);
-  castor::db::DbParamsSvc* params = dynamic_cast<castor::db::DbParamsSvc*>(s);
+  // when different from the default/hardcoded ones
+  castor::IService* psvc =
+    castor::BaseObject::sharedServices()->service("DbParamsSvc", 0);
+  castor::db::DbParamsSvc* params = dynamic_cast<castor::db::DbParamsSvc*>(psvc);
   if (params == 0) {
-    castor::exception::Internal e;
-    e.getMessage() << "Fail to instantiate a DbParamsSvc, cannot connect to database.";
-    throw e;
+    // We didn't find it, locally allocate a default instance of the service
+    params = new castor::db::DbParamsSvc("DbParamsSvc");
+    psvc = 0;
   }
-
+  
   // If the CASTOR_INSTANCE environment variable exists, append it the name
   // of the configuration option to lookup in the config file.
   std::string nameVal = name();
@@ -237,6 +238,11 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
     ex.getMessage() << "Not able to find the version of castor in the database"
                     << " Original error was " << e.what();
     throw ex;
+  }
+  
+  if(psvc == 0) {
+    // Delete the locally allocated instance of the params service
+    delete params;
   }
 
   // "Created new Oracle connection"
