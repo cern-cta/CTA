@@ -29,48 +29,8 @@ LD = g++
 DependsOnLibrary(../../common,castorcommon)
 DependsOnLibrary(../../dlf,castordlf)
 DependsOnLibrary(../db/cnv,castorcnvs)
+DependsOnLibrary(../tape/gatewayprotocol,castortapegatewayprotocol)
 DependsOnLibrary(../tape/utils,castortapeutils)
-
-TAPEGATEWAY_MESSAGES_SRCS = \
-  ../tapegateway/BaseFileInfo.cpp \
-  ../tapegateway/DumpNotification.cpp \
-  ../tapegateway/DumpParameters.cpp \
-  ../tapegateway/DumpParametersRequest.cpp \
-  ../tapegateway/EndNotification.cpp \
-  ../tapegateway/EndNotificationErrorReport.cpp \
-  ../tapegateway/FileMigratedNotification.cpp \
-  ../tapegateway/FileRecalledNotification.cpp \
-  ../tapegateway/FileToMigrate.cpp \
-  ../tapegateway/FileToMigrateRequest.cpp \
-  ../tapegateway/FileToRecall.cpp \
-  ../tapegateway/FileToRecallRequest.cpp \
-  ../tapegateway/GatewayMessage.cpp \
-  ../tapegateway/NoMoreFiles.cpp \
-  ../tapegateway/NotificationAcknowledge.cpp \
-  ../tapegateway/PingNotification.cpp \
-  ../tapegateway/PositionCommandCode.cpp \
-  ../tapegateway/Volume.cpp \
-  ../tapegateway/VolumeMode.cpp \
-  ../tapegateway/ClientType.cpp \
-  ../tapegateway/VolumeRequest.cpp
-
-TAPEGATEWAY_IO_SRCS = \
-  ../../io/StreamDumpNotificationCnv.cpp \
-  ../../io/StreamDumpParametersCnv.cpp \
-  ../../io/StreamDumpParametersRequestCnv.cpp \
-  ../../io/StreamEndNotificationCnv.cpp \
-  ../../io/StreamEndNotificationErrorReportCnv.cpp \
-  ../../io/StreamFileMigratedNotificationCnv.cpp \
-  ../../io/StreamFileRecalledNotificationCnv.cpp \
-  ../../io/StreamFileToMigrateCnv.cpp \
-  ../../io/StreamFileToMigrateRequestCnv.cpp \
-  ../../io/StreamFileToRecallCnv.cpp \
-  ../../io/StreamFileToRecallRequestCnv.cpp \
-  ../../io/StreamNoMoreFilesCnv.cpp \
-  ../../io/StreamNotificationAcknowledgeCnv.cpp \
-  ../../io/StreamPingNotificationCnv.cpp \
-  ../../io/StreamVolumeCnv.cpp \
-  ../../io/StreamVolumeRequestCnv.cpp
 
 AGGREGATORBIN_SRCS = \
   AggregatorDlfMessageStrings.cpp \
