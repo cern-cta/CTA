@@ -34,6 +34,7 @@ DependsOnLibrary(../../common,castorcommon)
 DependsOnLibrary(../db/newora,castorcommonora)
 DependsOnLibrary(../../dlf,castordlf)
 DependsOnLibrary(../../rfio,castorrfio)
+DependsOnLibrary(../tape/gatewayprotocol,castortapegatewayprotocol)
 DependsOnLibrary(../tape/python,castortapepython)
 DependsOnLibrary(../tape/utils,castortapeutils)
 DependsOnLibrary(../../vdqm,castorvdqm)
@@ -41,6 +42,10 @@ DependsOnLibrary(../../vmgr,castorvmgr)
 
 TAPEGATEWAYDBIN_SRCS = \
   	TapeGatewayDlfMessageStrings.cpp \
+	TapeGatewaySubRequest.cpp \
+	TapeRequestStateCode.cpp \
+	TapeGatewayRequest.cpp \
+	VdqmTapeGatewayRequest.cpp \
   	daemon/MigratorErrorHandlerThread.cpp \
 	daemon/NsTapeGatewayHelper.cpp \
 	daemon/RecallerErrorHandlerThread.cpp \
@@ -56,46 +61,8 @@ TAPEGATEWAYDBIN_SRCS = \
 	daemon/ora/OraTapeGatewaySvc.cpp \
 	../net/net.cpp  
 
-TAPEGATEWAY_MESSAGES_SRCS = \
-	BaseFileInfo.cpp \
-	ClientType.cpp \
-	EndNotification.cpp \
-	EndNotificationErrorReport.cpp\
-	FileErrorReport.cpp \
-	FileMigratedNotification.cpp \
-	FileRecalledNotification.cpp \
-	FileToMigrate.cpp \
-	FileToMigrateRequest.cpp \
-	FileToRecall.cpp \
-	FileToRecallRequest.cpp \
-	GatewayMessage.cpp \
-	NoMoreFiles.cpp  \
-	NotificationAcknowledge.cpp \
-	PositionCommandCode.cpp \
-	TapeGatewayRequest.cpp \
-	TapeGatewaySubRequest.cpp \
-	TapeRequestStateCode.cpp \
-	VolumeRequest.cpp \
-	Volume.cpp \
-	VolumeMode.cpp \
-	VdqmTapeGatewayRequest.cpp 
 
-TAPEGATEWAY_IO_SRCS = \
-	../../io/StreamEndNotificationCnv.cpp \
-	../../io/StreamFileErrorReportCnv.cpp \
-	../../io/StreamFileMigratedNotificationCnv.cpp \
-	../../io/StreamFileRecalledNotificationCnv.cpp \
-	../../io/StreamFileToMigrateCnv.cpp \
-	../../io/StreamFileToMigrateRequestCnv.cpp \
-	../../io/StreamFileToRecallCnv.cpp \
-	../../io/StreamFileToRecallRequestCnv.cpp \
-	../../io/StreamNoMoreFilesCnv.cpp  \
-	../../io/StreamNotificationAcknowledgeCnv.cpp \
-	../../io/StreamVolumeCnv.cpp \
-	../../io/StreamVolumeRequestCnv.cpp 
-
-
-TAPEGATEWAYBIN_SRCS = $(TAPEGATEWAYDBIN_SRCS) $(TAPEGATEWAY_MESSAGES_SRCS) $(TAPEGATEWAY_IO_SRCS)
+TAPEGATEWAYBIN_SRCS = $(TAPEGATEWAYDBIN_SRCS)
 
 TAPEGATEWAYBIN_OBJS = $(TAPEGATEWAYBIN_SRCS:.cpp=.Osuf)
 NormalProgramTarget(tapegatewayd,$(TAPEGATEWAYBIN_OBJS),$(DEPLIB),$(LIBS),750)
