@@ -30,6 +30,7 @@
 #include "castor/server/BaseDaemon.hpp"
 #include "castor/server/BaseThreadPool.hpp"
 
+#include <stdint.h>
 #include <iostream>
 #include <list>
 #include <map>
