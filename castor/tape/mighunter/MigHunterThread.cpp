@@ -143,6 +143,8 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
     MigrationPolicyElementList candidatesToRestore;
     MigrationPolicyElementList invalidTapeCopies;
 
+    // The eligible canditates organized by tape pool so that the database
+    // locking logic can take a lock on the tape pools one at a time
     std::map<u_signed64, std::list<MigrationPolicyElement> > eligibleCandidates;
 
     try { // to catch exceptions specific of a svcclass
