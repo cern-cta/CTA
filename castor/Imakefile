@@ -90,6 +90,7 @@ STGLIB_SRCS = BaseAddress.cpp \
               io/StreamCnvSvc.cpp \
               io/StreamDiskCopyCnv.cpp \
               io/StreamDiskCopyForRecallCnv.cpp \
+	      io/StreamDiskCopyInfoCnv.cpp \
               io/StreamEndResponseCnv.cpp \
               io/StreamFileResponseCnv.cpp\
               io/StreamFileSystemCnv.cpp \
