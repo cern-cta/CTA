@@ -514,6 +514,12 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyFailed
 BEGIN
   fsId := 0;
   srcFsId := -1;
+  -- Lock the CastorFile
+  SELECT id INTO cfId FROM CastorFile
+   WHERE id = 
+    (SELECT castorFile 
+       FROM DiskCopy
+      WHERE id = dcId) FOR UPDATE;
   IF enoent = 1 THEN
     -- Set all diskcopies to FAILED. We're preemptying the NS synchronization here
     UPDATE DiskCopy SET status = 4 -- FAILED
@@ -745,10 +751,10 @@ BEGIN
     UPDATE SubRequest SET status = 1, parent = 0 -- RESTART
      WHERE id IN
       (SELECT SubRequest.id
-        FROM StagePutDoneRequest, SubRequest
-       WHERE SubRequest.CastorFile = cfId
-         AND StagePutDoneRequest.id = SubRequest.request
-         AND SubRequest.status = 5); -- WAITSUBREQ
+         FROM StagePutDoneRequest, SubRequest
+        WHERE SubRequest.CastorFile = cfId
+          AND StagePutDoneRequest.id = SubRequest.request
+          AND SubRequest.status = 5); -- WAITSUBREQ
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- This means we are a standalone put
     -- thus cleanup DiskCopy and maybe the CastorFile
