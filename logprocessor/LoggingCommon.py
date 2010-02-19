@@ -219,32 +219,23 @@ class PipeSource(MsgSource):
             #-------------------------------------------------------------------
             if not line:
                 #---------------------------------------------------------------
-                # We have been notified about the input logfile rotation
+                # We have been notified about the input logfile rotation and
+                # the file exist
                 #---------------------------------------------------------------
-                if self.__inputRotated:
-                    #-----------------------------------------------------------
-                    # The new file exists, so rsyslog started writing there
-                    # already
-                    #-----------------------------------------------------------
-                    if os.path.exists( self.__path ):
-                        self.__file.close()
-                        self.__file = open( self.__path, 'r' )
-                        self.__inputRotated = False
-
-                    #-----------------------------------------------------------
-                    # No new file, so we may still have something to read from
-                    # the old descriptor
-                    #------------------------------------------------------------
-                    else:
-                        time.sleep ( 0.25 )
-                        continue
+                if self.__inputRotated and os.path.exists( self.__path ):
+                    self.__file.close()
+                    self.__file = open( self.__path, 'r' )
+                    self.__inputRotated = False
 
                 #---------------------------------------------------------------
-                # No rotation so take a nap and decide later
+                # Just no new data or the old file has been logrotated and
+                # the new one has not been created yet, so take a nap
+                # and decide later
                 #---------------------------------------------------------------
                 else:
-                    time.sleep ( 0.25 )
-                    continue
+                    time.sleep( 0.25 )
+
+                continue
 
             #-------------------------------------------------------------------
             # We have encountered a line that is not really a full line and
