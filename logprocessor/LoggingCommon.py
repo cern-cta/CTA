@@ -202,27 +202,61 @@ class PipeSource(MsgSource):
     def __init__( self ):
         self.transform = lambda x: {}
         self.prevline  = ''
+        self.__inputRotated = False
 
     #---------------------------------------------------------------------------
     def notify( self ):
         if not self.__dynfiles:
-            self.__file.close()
-            self.__file = open( self.__path, 'r' )            
+            self.__inputRotated = True
 
     #---------------------------------------------------------------------------
     def getMessageNoDynfiles( self ):
         while True:
             line = self.__file.readline()
+
+            #-------------------------------------------------------------------
+            # Nothing else left in the file
+            #-------------------------------------------------------------------
             if not line:
-                 time.sleep ( 0.25 )
-                 continue
+                #---------------------------------------------------------------
+                # We have been notified about the input logfile rotation
+                #---------------------------------------------------------------
+                if self.__inputRotated:
+                    #-----------------------------------------------------------
+                    # The new file exists, so rsyslog started writing there
+                    # already
+                    #-----------------------------------------------------------
+                    if os.path.exists( self.__path ):
+                        self.__file.close()
+                        self.__file = open( self.__path, 'r' )
+                        self.__inputRotated = False
+
+                    #-----------------------------------------------------------
+                    # No new file, so we may still have something to read from
+                    # the old descriptor
+                    #------------------------------------------------------------
+                    else:
+                        time.sleep ( 0.25 )
+                        continue
+
+                #---------------------------------------------------------------
+                # No rotation so take a nap and decide later
+                #---------------------------------------------------------------
+                else:
+                    time.sleep ( 0.25 )
+                    continue
+
+            #-------------------------------------------------------------------
+            # We have encountered a line that is not really a full line and
+            # have to compensate
+            #-------------------------------------------------------------------
             if self.prevline:
-                 line = self.prevline + line
-                 self.prevline = ''
+                line = self.prevline + line
+                self.prevline = ''
             if line.endswith( '\n' ):
-                 return self.transform (line)
+                return self.transform (line)
             else:
-                 self.prevline = line
+                self.prevline = line
 
     #---------------------------------------------------------------------------
     def getMessageDynfiles( self ):
