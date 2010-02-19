@@ -238,7 +238,7 @@ void castor::jobmanager::ManagementThread::run(void *param) {
     if (!IS_PEND(jobinfo.jobStatus())) {
       continue; // Not in a PENDING state
     }
-    if ((signed64)jobinfo.submitTime() > (dbExtractTime - 90)) {
+    if ((signed64)jobinfo.submitTime() > (dbExtractTime - 300)) {
       continue; // Database listing is too old
     }
     if (!killJob(jobinfo.jobId())) {

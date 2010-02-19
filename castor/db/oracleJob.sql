@@ -850,7 +850,7 @@ BEGIN
              ON SvcClass.id = results.child) NFSSvc
      WHERE SR.status = 6  -- READY
        AND SR.request = Request.id
-       AND SR.creationTime < getTime() - 60
+       AND SR.lastModificationTime < getTime() - 60
        AND NSSvc.id = Request.svcClass
        AND NFSSvc.id = Request.svcClass;
 END;

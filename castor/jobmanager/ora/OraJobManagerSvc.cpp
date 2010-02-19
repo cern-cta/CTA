@@ -57,7 +57,7 @@ const std::string castor::jobmanager::ora::OraJobManagerSvc::s_jobToScheduleStri
 
 /// SQL statement for function updateSchedulerJob
 const std::string castor::jobmanager::ora::OraJobManagerSvc::s_updateSchedulerJobString =
-  "UPDATE SubRequest SET status = :1 WHERE status = 14 AND id = :2";
+  "UPDATE SubRequest SET status = :1, lastModificationTime = getTime() WHERE status = 14 AND id = :2";
 
 /// SQL statement for function getSchedulerJobsFromDB
 const std::string castor::jobmanager::ora::OraJobManagerSvc::s_getSchedulerJobsFromDBString =
