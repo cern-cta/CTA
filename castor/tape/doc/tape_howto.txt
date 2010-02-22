@@ -3206,3 +3206,20 @@ select parent,count(*) from stream2tapecopy group by parent;
 The parent is the stream id and like this you can see how many tapecopies can
 be migrated from that stream.
 
+
+How to locate a castor file in the disk cache using the stager database
+=======================================================================
+
+SQL> select diskserver.name "server", filesystem.mountpoint, diskcopy.path,
+diskcopy.diskcopysize from diskcopy inner join filesystem on
+diskcopy.filesystem = filesystem.id inner join diskserver on
+filesystem.diskserver = diskserver.id where castorfile=7168148768;
+
+server               MOUNTPOINT           PATH
+DISKCOPYSIZE
+-------------------- --------------------
+---------------------------------------- ------------
+lxfsre1907.cern.ch   /srv/castor/02/      64/397637364@castorns.7168148769
+609671751
+
+SQL>
