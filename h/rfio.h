@@ -266,7 +266,7 @@ struct rfiostat	{
 #endif /* rewinddir */
 #define rewinddir       rfio_rewinddir
 
-#if !(defined(__alpha) && defined(__osf__)) && !defined(_WIN32)
+#if !(defined(__alpha) && defined(__osf__)) && !defined(_WIN32) && !defined(__APPLE__)
 #define fopen64         rfio_fopen64
 #define fseeko64        rfio_fseeko64
 #define fstat64         rfio_fstat64
