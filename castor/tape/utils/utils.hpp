@@ -418,14 +418,14 @@ void writeBanner(std::ostream &os, const char *const title) throw();
 
 /**
  * Gets and returns the specified port number using getconfent or returns the
- * default if getconfent cannot find it.
+ * specified default if getconfent cannot find it.
  *
- * @param catagory   The category of the configuration entry.
- * @param entryName  The name of the configuration entry.
- * @param entryValue The (invalid) value of the configuration entry.
+ * @param catagory    The category of the configuration entry.
+ * @param name        The name of the configuration entry.
+ * @param defaultPort The default port number.
  */
 unsigned short getPortFromConfig(const char *const category,
-  const char *const entryName, const unsigned short defaultPort)
+  const char *const name, const unsigned short defaultPort)
   throw(exception::InvalidConfigEntry, castor::exception::Exception);
 
 /**

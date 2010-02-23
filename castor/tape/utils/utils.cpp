@@ -624,36 +624,36 @@ void castor::tape::utils::writeBanner(std::ostream &os,
 // getPortFromConfig
 //------------------------------------------------------------------------------
 unsigned short castor::tape::utils::getPortFromConfig(
-  const char *const category, const char *const entryName,
+  const char *const category, const char *const name,
   const unsigned short defaultPort)
   throw(exception::InvalidConfigEntry, castor::exception::Exception) {
 
-  unsigned short    port       = defaultPort;
-  const char *const entryValue = getconfent(category, entryName, 0);
+  unsigned short    port  = defaultPort;
+  const char *const value = getconfent(category, name, 0);
 
-  if(entryValue != NULL) {
-    if(utils::isValidUInt(entryValue)) {
-      port = atoi(entryValue);
+  if(value != NULL) {
+    if(utils::isValidUInt(value)) {
+      port = atoi(value);
     } else {
-      exception::InvalidConfigEntry ex(category, entryName, entryValue);
+      exception::InvalidConfigEntry ex(category, name, value);
 
       ex.getMessage() <<
-        ": Invalid \"" << category << " " << entryName <<
+        ": Invalid \"" << category << " " << name <<
         "\" configuration entry"
         ": Value should be an unsigned integer greater than 0"
-        ": Value=\"" << entryValue << "\"";
+        ": Value=\"" << value << "\"";
 
       throw(ex);
     }
 
     if(port == 0) {
-      exception::InvalidConfigEntry ex(category, entryName, entryValue);
+      exception::InvalidConfigEntry ex(category, name, value);
 
       ex.getMessage() <<
-        ": Invalid \"" << category << " " << entryName <<
+        ": Invalid \"" << category << " " << name <<
         "\" configuration entry"
         ": Value should be an unsigned integer greater than 0"
-        ": Value=\"" << entryValue << "\"";
+        ": Value=\"" << value << "\"";
 
       throw(ex);
     }
