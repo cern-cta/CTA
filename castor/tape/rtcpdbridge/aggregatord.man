@@ -1,0 +1,73 @@
+.\" Copyright (C) 2003  CERN
+.\" This program is free software; you can redistribute it and/or
+.\" modify it under the terms of the GNU General Public License
+.\" as published by the Free Software Foundation; either version 2
+.\" of the License, or (at your option) any later version.
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program; if not, write to the Free Software
+.\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+.TH AGGREGATORD 8 "$Date: 2009/08/18 09:42:55 $" CASTOR "CASTOR"
+.SH NAME
+aggregatord \- Tape aggregator daemon
+.SH SYNOPSIS
+.BI "aggregatord [OPTIONS]"
+
+.SH DESCRIPTION
+\fBaggregatord\fP is the tape server daemon responsible for aggregating small
+disk files into larger tape files and for acting as a bridge between
+Tape Gateway daemons and the RTCPD daemon running on the same tape server as
+the tape aggreagtor daemon.
+.P
+When \fBaggregatord\fP is executed it immediately forks with the parent
+terminating and the child running in the background.  If required the
+\fB\-f, \-\-foreground\fP option can be used to stop \fBaggregatord\fP from
+forking and keep the parent process in the foreground.
+
+.SH OPTIONS
+.TP
+\fB\-f, \-\-foreground
+Remain in the foreground.
+.TP
+\fB\-c, \-\-config config-file
+Overides the default location of the CASTOR configuration file.  The default
+is /etc/castor/castor.conf
+.TP
+\fB\-h, \-\-help
+Prints the usage message
+
+
+.SH CASTOR CONFIGURATION PARAMETERS
+The tape aggregator daemon reads and uses the following CASTOR configuration
+parameters which are specified using environment variables or within the CASTOR
+configuration file (the default location is /etc/castor/castor.conf).
+.TP
+\fBAGGREGATOR VDQMPORT
+The port on which the aggregator will listen for RTCOPY jobs from the VDQM.
+The default is 5070.  This configuration parameter should \fBNOT\fP normally be
+set and the default should be used.
+.TP
+\fBAGGREGATORRTCPD LOWPORT
+The inclusive low port of the aggregator's RTCPD callback port number range.
+The default is 300101.
+.TP
+\fBAGGREGATORRTCPD HIGHPORT
+The inclusive high port of the aggregator's RTCPD callback port number range.
+The default is 300200.
+.TP
+\fBaggregatord LOGSTANDARD XXXX
+Sets the location of the \fBaggregatord\fP log file to be \fBXXXX\fP.
+
+.SH FILES
+.TP
+.B /etc/castor/castor.conf
+Default location of the CASTOR configuration file.
+.TP
+.B /var/log/castor/aggregatord.log
+Default location of the tape aggregator log file.
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
