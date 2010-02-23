@@ -174,7 +174,7 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
 
         castor::dlf::Param params[] = {
           castor::dlf::Param("SvcClass", *svcClassName)};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
           MIGHUNTERTHREAD_SKIPPING_SRVCCLASS, params);
 
         continue; // For each service-class name
