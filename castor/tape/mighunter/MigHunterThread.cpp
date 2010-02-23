@@ -143,6 +143,10 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
     MigrationPolicyElementList candidatesToRestore;
     MigrationPolicyElementList invalidTapeCopies;
 
+    u_signed64 allowedByPolicy      = 0;
+    u_signed64 notAllowedByPolicy   = 0;
+    u_signed64 allowedWithoutPolicy = 0;
+
     // The eligible canditates organized by tape pool so that the database
     // locking logic can take a lock on the tape pools one at a time
     std::map<u_signed64, std::list<MigrationPolicyElement> > eligibleCandidates;
@@ -160,12 +164,14 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
 
       timeval tvEnd;
       gettimeofday(&tvEnd, NULL);
-      signed64 procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) -
+      const signed64 inputForMigrationPolicyProcTime =
+        ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) -
         ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
 
       castor::dlf::Param paramsDb[] = {
         castor::dlf::Param("SvcClass", *svcClassName),
-        castor::dlf::Param("ProcessingTime", procTime * 0.000001)};
+        castor::dlf::Param("ProcessingTime",
+          inputForMigrationPolicyProcTime * 0.000001)};
 
       // Skip this service class if there are no candidate tape copies
       if (infoCandidateTapeCopies.empty()){
@@ -190,8 +196,6 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
         initialSizeCeiling = strutou64(p);
       }
 
-      gettimeofday(&tvStart, NULL);
-
       int ret = oraSvc->createOrUpdateStream((*svcClassName),
         initialSizeToTransfer, m_migrationDataThreshold, initialSizeCeiling,
         m_doClone, infoCandidateTapeCopies.size());
@@ -202,13 +206,8 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
         // Resurrect candidates
         oraSvc->resurrectTapeCopies(infoCandidateTapeCopies);
 
-        gettimeofday(&tvEnd, NULL);
-        procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) -
-          ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
-
         castor::dlf::Param paramsNoStreams[]= {
-          castor::dlf::Param("SVCCLASS", *svcClassName),
-          castor::dlf::Param("ProcessingTime", procTime * 0.000001)};
+          castor::dlf::Param("SVCCLASS", *svcClassName)};
 
         // Log the error if it known on DLF for the stream
         switch(ret) {
@@ -217,8 +216,8 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
             paramsNoStreams);
           break;
         case -2:
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, NOT_ENOUGH,
-            paramsNoStreams);
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING,
+            NOT_ENOUGH_DATA_TO_CREATE_STREAMS, paramsNoStreams);
           break;
         case -3:
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, NO_DRIVES,
@@ -239,12 +238,6 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
       } // If the createOrUpdateStream() call failed
 
       // call the policy foreach tape copy
-
-      u_signed64 nbAllowedByPolicy      = 0;
-      u_signed64 nbNotAllowedByPolicy   = 0;
-      u_signed64 nbAllowedWithoutPolicy = 0;
-
-      gettimeofday(&tvStart, NULL);
 
       // For each infoCandidate
       for (
@@ -293,8 +286,8 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
           castor::dlf::Param("status", infoCandidate->status),
         };
 
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, POLICY_INPUT,
-          paramsInput, &castorFileId);
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
+          MIGRATION_POLICY_INPUT, paramsInput, &castorFileId);
 
         castor::dlf::Param paramsOutput[] = {
           castor::dlf::Param("SvcClass", *svcClassName),
@@ -336,7 +329,7 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
             eligibleCandidates[infoCandidate->tapePoolId].push_back(
               *infoCandidate);
 
-            nbAllowedWithoutPolicy++;
+            allowedWithoutPolicy++;
 
           // Else apply the policy
           } else {
@@ -361,7 +354,7 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
               eligibleCandidates[infoCandidate->tapePoolId].push_back(
                 *infoCandidate);
 
-              nbAllowedWithoutPolicy++;
+              allowedWithoutPolicy++;
 
               // Skip to the next canditate
               continue; // For each infoCandidate
@@ -376,14 +369,14 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
               eligibleCandidates[infoCandidate->tapePoolId].push_back(
                 *infoCandidate);
 
-              nbAllowedByPolicy++;
+              allowedByPolicy++;
 
             // Else do not attach the tape copy
             } else {
 
               castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
                 NOT_ALLOWED_BY_MIGRATION_POLICY, paramsOutput,&castorFileId);
-              nbNotAllowedByPolicy++;
+              notAllowedByPolicy++;
 
             }
           } 
@@ -409,20 +402,15 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
         }
       } // For each infoCandidate
 
-      gettimeofday(&tvEnd, NULL);
-      procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) -
-        ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
-
       // log in the dlf with the summary
       castor::dlf::Param paramsPolicy[] = {
-        castor::dlf::Param("SvcClass"            , (*svcClassName)         ),
+        castor::dlf::Param("SvcClass"            , (*svcClassName)     ),
         castor::dlf::Param("policyModuleStatus", m_migrationPolicyModuleStatus),
-        castor::dlf::Param("allowedWithoutPolicy", nbAllowedWithoutPolicy  ),
-        castor::dlf::Param("allowedByPolicy"     , nbAllowedByPolicy       ),
-        castor::dlf::Param("notAllowedByPolicy"  , nbNotAllowedByPolicy    ),
-        castor::dlf::Param("ProcessingTime"      , procTime * 0.000001     )};
+        castor::dlf::Param("allowedWithoutPolicy", allowedWithoutPolicy),
+        castor::dlf::Param("allowedByPolicy"     , allowedByPolicy     ),
+        castor::dlf::Param("notAllowedByPolicy"  , notAllowedByPolicy  )};
 
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
         MIGRATION_POLICY_RESULT, paramsPolicy);
 
       // For each eligibleCandidate
@@ -441,16 +429,17 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
           oraSvc->attachTapeCopiesToStreams((*eligibleCandidate).second);
 
           gettimeofday(&tvEnd, NULL);
-          procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) -
+          const signed64 attachTapeCopiesToStreamsProcTime =
+            ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) -
             ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
-
 
           castor::dlf::Param paramsDbUpdate[] = {
             castor::dlf::Param("SvcClass",(*svcClassName)),
             castor::dlf::Param("tapepool", (*eligibleCandidate).first),
-            castor::dlf::Param("ProcessingTime", procTime * 0.000001)};
+            castor::dlf::Param("ProcessingTime",
+              attachTapeCopiesToStreamsProcTime * 0.000001)};
 
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
             ATTACHED_TAPECOPIES, paramsDbUpdate);
 
         } catch(castor::exception::Exception e) {
@@ -469,30 +458,34 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
       oraSvc->resurrectTapeCopies(candidatesToRestore);
 
       gettimeofday(&tvEnd, NULL);
-      procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) -
+      const signed64 resurrectTapeCopiesProcTime =
+        ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) -
         ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
 
       castor::dlf::Param paramsResurrect[] = {
         castor::dlf::Param("SvcClass",(*svcClassName)),
         castor::dlf::Param("nb tapecopies",candidatesToRestore.size()),
-        castor::dlf::Param("ProcessingTime", procTime * 0.000001)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, RESURRECT_TAPECOPIES,
+        castor::dlf::Param("ProcessingTime",
+          resurrectTapeCopiesProcTime * 0.000001)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, RESURRECT_TAPECOPIES,
         paramsResurrect);
 
       // delete tapecopies which refers to files which are not in the nameserver
-
       gettimeofday(&tvStart, NULL);
+
       oraSvc->invalidateTapeCopies(invalidTapeCopies);
 
       gettimeofday(&tvEnd, NULL);
-      procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) -
+      const signed64 invalidateTapeCopiesProcTime =
+        ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) -
         ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
 
       castor::dlf::Param paramsInvalidate[] = {
         castor::dlf::Param("SvcClass",(*svcClassName)),
         castor::dlf::Param("nb tapecopies",invalidTapeCopies.size()),
-        castor::dlf::Param("ProcessingTime", procTime * 0.000001)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, INVALIDATE_TAPECOPIES,
+        castor::dlf::Param("ProcessingTime",
+          invalidateTapeCopiesProcTime * 0.000001)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, INVALIDATE_TAPECOPIES,
         paramsInvalidate);
 
     } catch (castor::exception::Exception e){
@@ -501,7 +494,18 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
       // Do nothing
     }
 
-    // added in the svclass loop
+    // Log summary
+    castor::dlf::Param paramsPolicy[] = {
+      castor::dlf::Param("SvcClass"            , (*svcClassName)           ),
+      castor::dlf::Param("policyModuleStatus"  , m_migrationPolicyModuleStatus),
+      castor::dlf::Param("allowedWithoutPolicy", allowedWithoutPolicy      ),
+      castor::dlf::Param("allowedByPolicy"     , allowedByPolicy           ),
+      castor::dlf::Param("notAllowedByPolicy"  , notAllowedByPolicy        ),
+      castor::dlf::Param("resurrected"         , candidatesToRestore.size()),
+      castor::dlf::Param("invalidated"         , invalidTapeCopies.size()  )};
+
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+      MIGRATION_POLICY_RESULT, paramsPolicy);
 
   } // For each service-class name
 }
