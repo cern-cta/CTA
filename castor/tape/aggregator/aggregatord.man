@@ -50,11 +50,11 @@ The port on which the aggregator will listen for RTCOPY jobs from the VDQM.
 The default is 5070.  This configuration parameter should \fBNOT\fP normally be
 set and the default should be used.
 .TP
-\fBAGGREGATORRTCPD LOWPORT
+\fBAGGREGATOR RTCPDLOWPORT
 The inclusive low port of the aggregator's RTCPD callback port number range.
 The default is 300101.
 .TP
-\fBAGGREGATORRTCPD HIGHPORT
+\fBAGGREGATOR RTCPDHIGHPORT
 The inclusive high port of the aggregator's RTCPD callback port number range.
 The default is 300200.
 .TP
