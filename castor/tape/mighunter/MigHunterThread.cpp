@@ -422,8 +422,8 @@ void castor::tape::mighunter::MigHunterThread::exceptionThrowingRun(void *arg) {
         castor::dlf::Param("notAllowedByPolicy"  , nbNotAllowedByPolicy    ),
         castor::dlf::Param("ProcessingTime"      , procTime * 0.000001     )};
 
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, POLICY_RESULT,
-        paramsPolicy);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+        MIGRATION_POLICY_RESULT, paramsPolicy);
 
       // For each eligibleCandidate
       for (

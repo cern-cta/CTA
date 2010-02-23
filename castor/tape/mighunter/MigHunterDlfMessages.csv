@@ -12,7 +12,7 @@
 11,ALLOWED_WITHOUT_POLICY,"allowed without policy"
 12,ALLOWED_BY_POLICY,"allowed by policy"
 13,NOT_ALLOWED,"not allowed"
-14,POLICY_RESULT,"summary of migration policy results"
+14,MIGRATION_POLICY_RESULT,"summary of migration policy results"
 15,ATTACHED_TAPECOPIES,"attaching tapecopies to streams"
 16,DB_ERROR,"db error"
 17,RESURRECT_TAPECOPIES,"resurrecting tapecopies"
