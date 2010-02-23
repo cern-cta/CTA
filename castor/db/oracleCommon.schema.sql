@@ -162,6 +162,9 @@ CREATE INDEX I_StageGetRequest_ReqId ON StageGetRequest (reqId);
 CREATE INDEX I_StagePutRequest_ReqId ON StagePutRequest (reqId);
 CREATE INDEX I_StageRepackRequest_ReqId ON StageRepackRequest (reqId);
 
+/* Improve query execution in the checkFailJobsWhenNoSpace function */
+CREATE INDEX I_StagePutRequest_SvcClass ON StagePutRequest (svcClass);
+
 /* A primary key index for better scan of Stream2TapeCopy */
 ALTER TABLE Stream2TapeCopy MODIFY
   (parent CONSTRAINT NN_Stream2TapeCopy_Parent NOT NULL,
