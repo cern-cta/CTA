@@ -194,11 +194,13 @@ CREATE INDEX I_Stream_TapePool ON Stream (tapePool);
 ALTER TABLE FileSystem ADD CONSTRAINT FK_FileSystem_DiskServer 
   FOREIGN KEY (diskServer) REFERENCES DiskServer(id);
 
-ALTER TABLE FileSystem
-  MODIFY (status CONSTRAINT NN_FileSystem_Status NOT NULL);
+ALTER TABLE FileSystem MODIFY
+  (status     CONSTRAINT NN_FileSystem_Status NOT NULL,
+   diskServer CONSTRAINT NN_FileSystem_DiskServer NOT NULL,
+   mountPoint CONSTRAINT NN_FileSystem_MountPoint NOT NULL);
 
-ALTER TABLE FileSystem
-  MODIFY (diskServer CONSTRAINT NN_FileSystem_DiskServer NOT NULL);
+ALTER TABLE FileSystem ADD CONSTRAINT UN_FileSystem_DSMountPoint
+   UNIQUE (diskServer, mountPoint);
 
 /* DiskServer constraints */
 ALTER TABLE DiskServer MODIFY
