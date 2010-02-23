@@ -108,7 +108,7 @@ void castor::monitoring::rmmaster::LSFStatus::getLSFStatus
     clusterInfo *cInfo = ls_clusterinfo(NULL, NULL, results, 0, 0);
     if (cInfo == NULL) {
       castor::exception::Exception e(SEINTERNAL);
-      e.getMessage() << lsb_sysmsg();
+      e.getMessage() << "LSF reported : " << lsb_sysmsg();
       throw e;
     }
 

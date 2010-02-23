@@ -98,9 +98,8 @@ void castor::monitoring::rmmaster::DatabaseActuatorThread::run(void* par)
   } catch (castor::exception::Exception e) {
     // "Failed to determine the status of LSF, skipping database synchronization"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("Type", sstrerror(e.code())),
-       castor::dlf::Param("Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 46, 2, params);
+      {castor::dlf::Param("Details", e.getMessage().str())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 46, 1, params);
     return;
   }
 
