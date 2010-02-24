@@ -31,6 +31,7 @@
 #include "castor/metrics/MetricsCollector.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/PermissionDenied.hpp"
 #include "castor/BaseAddress.hpp"
 #include "castor/PortsConfig.hpp"
@@ -398,6 +399,16 @@ void castor::rh::RHThread::run(void* param) {
          castor::dlf::Param("Egid", fr->egid()),
          castor::dlf::Param("Reason", e.getMessage().str())};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_AUTH, 14, 3, params);
+      ack.setStatus(false);
+      ack.setErrorCode(e.code());
+      ack.setErrorMessage(e.getMessage().str());
+    } catch (castor::exception::InvalidArgument e) {
+      // "Invalid Request"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Euid", fr->euid()),
+         castor::dlf::Param("Egid", fr->egid()),
+         castor::dlf::Param("Reason", e.getMessage().str())};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_USER_ERROR, 6, 3, params);
       ack.setStatus(false);
       ack.setErrorCode(e.code());
       ack.setErrorMessage(e.getMessage().str());

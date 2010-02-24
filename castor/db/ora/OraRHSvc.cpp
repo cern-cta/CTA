@@ -53,7 +53,7 @@ static castor::SvcFactory<castor::db::ora::OraRHSvc>* s_factoryOraRHSvc =
 
 /// SQL statement for checkSvcClass
 const std::string castor::db::ora::OraRHSvc::s_checkSvcClassStatementString =
-"BEGIN :1 := checkForValidSvcClass(:2, 1, 0); END;";
+"BEGIN :1 := checkForValidSvcClass(:2, 1, 1); END;";
 
 /// SQL statement for checkPermission
 const std::string castor::db::ora::OraRHSvc::s_checkPermissionStatementString =
@@ -140,22 +140,30 @@ u_signed64 castor::db::ora::OraRHSvc::checkSvcClass
         (1, oracle::occi::OCCIDOUBLE);
     }
     // execute the statement and see whether we found something
-    m_checkSvcClassStatement->setString(2,serviceClassName);
+    m_checkSvcClassStatement->setString(2, serviceClassName);
     unsigned int nb = m_checkSvcClassStatement->executeUpdate();
     if (0 == nb) {
       castor::exception::Internal ex;
       ex.getMessage() << "checkSvcClass did not return any result.";
       throw ex;
     }
-    // signed because the return value can be negative for errors
     return (u_signed64)m_checkSvcClassStatement->getDouble(1);
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in checkSvcClass."
-      << std::endl << e.what();
-    throw ex;
+    if(e.getErrorCode() == 20113) {
+      std::string msg = e.what();
+      castor::exception::InvalidArgument ex;
+      // extract the original message sent by the PL/SQL code
+      // from the surrounding oracle additions
+      ex.getMessage() << msg.substr(11,msg.find('\n')-11) << "\n";
+      throw ex;
+    } else {
+      handleException(e);
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "Error caught in checkSvcClass."
+        << std::endl << e.what();
+      throw ex;
+    }
   }
 }
 
