@@ -274,9 +274,9 @@ BEGIN
     handleProtoNoUpd(srId, proto);
   END IF;
 EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- No disk copy found on selected FileSystem. This can happen in 3 cases :
+  -- No disk copy found on selected FileSystem. This can happen in 2 cases :
   --  + either a diskcopy was available and got disabled before this job
-  --    was scheduled. Bad luck, we restart from scratch
+  --    was scheduled. Bad luck, we fail the request, the user will have to retry
   --  + or we are an update creating a file and there is a diskcopy in WAITFS
   --    or WAITFS_SCHEDULING associated to us. Then we have to call putStart
   -- So we first check the update hypothesis
@@ -292,10 +292,8 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
       END IF;
     END;
   END IF;
-  -- It was not an update creating a file, so we restart
-  UPDATE SubRequest SET status = 1 WHERE id = srId;
-  dci := 0;
-  rpath := '';
+  -- It was not an update creating a file, so we fail
+  raise_application_error(-20114, 'File invalidated while queuing in the scheduler, please try again');
 END;
 /
 
