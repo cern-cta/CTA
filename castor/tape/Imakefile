@@ -22,6 +22,6 @@
 # @author Sebastien Ponce, sebastien.ponce@cern.ch
 #
 
-SUBDIRS = aggregator format gatewayprotocol python tapegateway tpcp utils mighunter rechandler
+SUBDIRS = format gatewayprotocol python tapegateway tpcp utils mighunter rechandler tapeserver
 
 

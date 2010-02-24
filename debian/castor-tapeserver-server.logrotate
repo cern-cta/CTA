@@ -1,4 +1,4 @@
-/var/log/castor/aggregatord*.log {
+/var/log/castor/tapeserverd*.log {
     compress
     daily
     missingok

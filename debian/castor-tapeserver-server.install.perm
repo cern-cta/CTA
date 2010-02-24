@@ -1,0 +1,4 @@
+%attr(0750,root,root) usr/bin/tapeserverd
+%attr(0644,root,root) etc/sysconfig/tapeserverd.example
+%attr(0755,root,root) etc/init.d/tapeserverd
+%attr(0644,root,root) etc/logrotate.d/castor-tapeserver-server

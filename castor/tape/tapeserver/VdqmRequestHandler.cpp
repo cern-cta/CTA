@@ -337,9 +337,9 @@ void castor::tape::tapeserver::VdqmRequestHandler::exceptionThrowingRun(
   // Wrap the socket file descriptor in a smart file descriptor so that it is
   // guaranteed to be closed when it goes out of scope.
   const unsigned short lowPort = utils::getPortFromConfig(
-    "TAPESERVER", "RTCPDLOWPORT", AGGREGATOR_RTCPDLOWPORT);
+    "TAPESERVER", "RTCPDLOWPORT", TAPESERVER_RTCPDLOWPORT);
   const unsigned short highPort = utils::getPortFromConfig(
-    "TAPESERVER", "RTCPDHIGHPORT", AGGREGATOR_RTCPDHIGHPORT);
+    "TAPESERVER", "RTCPDHIGHPORT", TAPESERVER_RTCPDHIGHPORT);
   unsigned short chosenPort = 0;
   utils::SmartFd listenSock(net::createListenerSock("127.0.0.1", lowPort,
     highPort,  chosenPort));

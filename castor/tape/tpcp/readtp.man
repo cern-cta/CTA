@@ -80,13 +80,13 @@ The \fBreadtp\fP command reads and uses the following CASTOR configuration
 parameters which are specified using environment variables or within the CASTOR
 configuration file (the default location is /etc/castor/castor.conf).
 .TP
-\fBAGGREGATORCLIENT LOWPORT
-The inclusive low port of the aggregator client callback port number range.
-The default is 300201.
+\fBTAPESERVERCLIENT LOWPORT
+The inclusive low port of the tapeserver client callback port number range.
+The default is 30201.
 .TP
-\fBAGGREGATORCLIENT HIGHPORT
-The inclusive high port of the aggregator client callback port number range.
-The default is 300300.
+\fBTAPESERVERCLIENT HIGHPORT
+The inclusive high port of the tapeserver client callback port number range.
+The default is 30300.
 .TP
 \fBVDQM HOST
 The name of the host on which the VDQM daemon is running.

@@ -28,34 +28,34 @@
 namespace castor {
 
   /**
-   * The default port on which the tape aggregator listens for connections from
+   * The default port on which the tape tapeserver listens for connections from
    * the VDQM.
    */
-  static const unsigned int AGGREGATOR_VDQMPORT = 5070;
+  static const unsigned int TAPESERVER_VDQMPORT = 5070;
 
   /**
-   * The default inclusive low port of the aggregator client callback port
+   * The default inclusive low port of the tapeserver client callback port
    * number range.
    */
-  const unsigned short AGGREGATORCLIENT_LOWPORT = 30201;
+  const unsigned short TAPESERVERCLIENT_LOWPORT = 30201;
 
   /**
-   * The default inclusive high port of the aggregator client callback port
+   * The default inclusive high port of the tapeserver client callback port
    * number range.
    */
-  const unsigned short AGGREGATORCLIENT_HIGHPORT = 30300;
+  const unsigned short TAPESERVERCLIENT_HIGHPORT = 30300;
 
   /**
-   * The default inclusive low port of the aggregator's RTCPD callback port
+   * The default inclusive low port of the tapeserver's RTCPD callback port
    * number range.
    */
-  const unsigned short AGGREGATOR_RTCPDLOWPORT = 30101;
+  const unsigned short TAPESERVER_RTCPDLOWPORT = 30101;
 
   /**
-   * The default inclusive high port of the aggregator's RTCPD callback port
+   * The default inclusive high port of the tapeserver's RTCPD callback port
    * number range.
    */
-  const unsigned short AGGREGATOR_RTCPDHIGHPORT = 30200;
+  const unsigned short TAPESERVER_RTCPDHIGHPORT = 30200;
 
   /**
    * The default port on which the job manager listenes for notifications.

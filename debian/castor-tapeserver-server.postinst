@@ -1,0 +1,2 @@
+/sbin/chkconfig --add tapeserverd
+/sbin/service tapeserverd condrestart > /dev/null 2>&1 || :
