@@ -50,11 +50,11 @@ set and the default should be used.
 .TP
 \fBTAPESERVER RTCPDLOWPORT
 The inclusive low port of the tapeserver's RTCPD callback port number range.
-The default is 300101.
+The default is 30101.
 .TP
 \fBTAPESERVER RTCPDHIGHPORT
 The inclusive high port of the tapeserver's RTCPD callback port number range.
-The default is 300200.
+The default is 30200.
 .TP
 \fBtapeserverd LOGSTANDARD XXXX
 Sets the location of the \fBtapeserverd\fP log file to be \fBXXXX\fP.
