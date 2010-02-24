@@ -52,11 +52,11 @@ set and the default should be used.
 .TP
 \fBAGGREGATOR RTCPDLOWPORT
 The inclusive low port of the aggregator's RTCPD callback port number range.
-The default is 300101.
+The default is 30101.
 .TP
 \fBAGGREGATOR RTCPDHIGHPORT
 The inclusive high port of the aggregator's RTCPD callback port number range.
-The default is 300200.
+The default is 30200.
 .TP
 \fBaggregatord LOGSTANDARD XXXX
 Sets the location of the \fBaggregatord\fP log file to be \fBXXXX\fP.
