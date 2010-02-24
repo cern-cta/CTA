@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/aggregator/RtcpdIOConnState.hpp
+ *                 castor/tape/tapeserver/RtcpdIOConnState.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_RTCPDIOCONNSTATE_HPP
-#define CASTOR_TAPE_AGGREGATOR_RTCPDIOCONNSTATE_HPP 1
+#ifndef CASTOR_TAPE_TAPESERVER_RTCPDIOCONNSTATE_HPP
+#define CASTOR_TAPE_TAPESERVER_RTCPDIOCONNSTATE_HPP 1
 
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
@@ -31,7 +31,7 @@
 
 namespace castor     {
 namespace tape       {
-namespace aggregator {
+namespace tapeserver {
 
 /**
  * Enumeration class representing the different states of an RTCPD disk/tape IO
@@ -156,9 +156,9 @@ private:
 
 }; // class RtcpdIOConnState
 
-} // namespace aggregator
+} // namespace tapeserver
 } // namespace tape
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_AGGREGATOR_RTCPDIOCONNSTATE_HPP
+#endif // CASTOR_TAPE_TAPESERVER_RTCPDIOCONNSTATE_HPP

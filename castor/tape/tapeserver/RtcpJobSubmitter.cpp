@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/RtcpJobSubmitter.cpp
+ *                      castor/tape/tapeserver/RtcpJobSubmitter.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -26,8 +26,8 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/io/ClientSocket.hpp"
-#include "castor/tape/aggregator/Constants.hpp"
-#include "castor/tape/aggregator/RtcpJobSubmitter.hpp"
+#include "castor/tape/tapeserver/Constants.hpp"
+#include "castor/tape/tapeserver/RtcpJobSubmitter.hpp"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/utils/utils.hpp"
@@ -45,7 +45,7 @@
 //------------------------------------------------------------------------------
 // submit
 //------------------------------------------------------------------------------
-void castor::tape::aggregator::RtcpJobSubmitter::submit(
+void castor::tape::tapeserver::RtcpJobSubmitter::submit(
   const std::string              &host,
   const unsigned int             port,
   const int                      netReadWriteTimeout,
@@ -114,7 +114,7 @@ void castor::tape::aggregator::RtcpJobSubmitter::submit(
       ": " << ex.getMessage().str());
   }
 
-  // Connect to the RTCPD or tape aggregator daemon
+  // Connect to the RTCPD or tape tapeserver daemon
   castor::io::ClientSocket sock(port, host);
   sock.setTimeout(CLIENTNETRWTIMEOUT);
 
@@ -128,7 +128,7 @@ void castor::tape::aggregator::RtcpJobSubmitter::submit(
       ": " << ex.getMessage().str());
   }
 
-  // Send the job submission request message to the RTCPD or tape aggregator
+  // Send the job submission request message to the RTCPD or tape tapeserver
   // daemon
   try {
     net::writeBytes(sock.socket(), netReadWriteTimeout, totalLen, buf);
@@ -139,7 +139,7 @@ void castor::tape::aggregator::RtcpJobSubmitter::submit(
       ": " << ex.getMessage().str());
   }
 
-  // Read the reply from the RTCPD or tape aggregator daemon
+  // Read the reply from the RTCPD or tape tapeserver daemon
   readReply(sock, netReadWriteTimeout, remoteCopyType, reply);
 }
 
@@ -147,7 +147,7 @@ void castor::tape::aggregator::RtcpJobSubmitter::submit(
 //------------------------------------------------------------------------------
 // readReply
 //------------------------------------------------------------------------------
-void castor::tape::aggregator::RtcpJobSubmitter::readReply(
+void castor::tape::tapeserver::RtcpJobSubmitter::readReply(
   castor::io::AbstractTCPSocket &sock, const int netReadWriteTimeout,
   const char *remoteCopyType, legacymsg::RtcpJobReplyMsgBody &reply)
   throw(castor::exception::Exception) {

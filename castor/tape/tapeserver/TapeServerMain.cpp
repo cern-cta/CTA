@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/aggregator/AggregatorMain.cpp
+ *                 castor/tape/tapeserver/TapeServerMain.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -24,7 +24,7 @@
  
 
 
-#include "castor/tape/aggregator/AggregatorDaemon.hpp"
+#include "castor/tape/tapeserver/TapeServerDaemon.hpp"
 
 
 //------------------------------------------------------------------------------
@@ -32,7 +32,7 @@
 //------------------------------------------------------------------------------
 int main(int argc, char **argv) {
 
-  castor::tape::aggregator::AggregatorDaemon daemon;
+  castor::tape::tapeserver::TapeServerDaemon daemon;
 
   return daemon.main(argc, argv);
 }

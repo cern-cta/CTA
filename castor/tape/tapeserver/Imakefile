@@ -1,5 +1,5 @@
 #
-#                      castor/tape/aggregator/Imakefile
+#                      castor/tape/tapeserver/Imakefile
 #
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
@@ -33,13 +33,11 @@ DependsOnLibrary(../tape/gatewayprotocol,castortapegatewayprotocol)
 DependsOnLibrary(../tape/utils,castortapeutils)
 
 AGGREGATORBIN_SRCS = \
-  AggregatorDlfMessageStrings.cpp \
-  AggregatorDaemon.cpp \
-  AggregatorMain.cpp \
   BridgeProtocolEngine.cpp \
   BridgeSocketCatalogue.cpp \
   BoolFunctor.cpp \
   ClientTxRx.cpp \
+  DlfMessageStrings.cpp \
   DriveAllocationProtocolEngine.cpp \
   LegacyTxRx.cpp \
   LogHelper.cpp \
@@ -47,6 +45,8 @@ AGGREGATORBIN_SRCS = \
   RtcpJobSubmitter.cpp \
   RtcpTxRx.cpp \
   SynchronizedCounter.cpp \
+  TapeServerDaemon.cpp \
+  TapeServerMain.cpp \
   Unpacker.cpp \
   VdqmRequestHandler.cpp \
   VmgrTxRx.cpp \
@@ -58,9 +58,9 @@ AGGREGATORBIN_SRCS = \
   $(TAPEGATEWAY_IO_SRCS)
 AGGREGATORBIN_OBJS = $(AGGREGATORBIN_SRCS:.cpp=.Osuf)
 
-NormalProgramTarget(aggregatord,$(AGGREGATORBIN_OBJS),$(DEPLIB),$(LIBS),750)
+NormalProgramTarget(tapeserverd,$(AGGREGATORBIN_OBJS),$(DEPLIB),$(LIBS),750)
 MakeDir(/var/log/castor,0755)
-ADMMANPAGE(aggregatord)
-LOGROTATE(castor-aggregator-server,../../..,install)
-SYSCONFIG(aggregatord,install)
-INITSCRIPT(aggregatord,install)
+ADMMANPAGE(tapeserverd)
+LOGROTATE(castor-tapeserver-server,../../..,install)
+SYSCONFIG(tapeserverd,install)
+INITSCRIPT(tapeserverd,install)

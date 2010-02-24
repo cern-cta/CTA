@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/aggregator/VdqmRequestHandler.cpp
+ *                castor/tape/tapeserver/VdqmRequestHandler.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -26,17 +26,17 @@
 #include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
-#include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
-#include "castor/tape/aggregator/BridgeProtocolEngine.hpp"
-#include "castor/tape/aggregator/Constants.hpp"
-#include "castor/tape/aggregator/DriveAllocationProtocolEngine.hpp"
-#include "castor/tape/aggregator/ClientTxRx.hpp"
-#include "castor/tape/aggregator/Packer.hpp"
-#include "castor/tape/aggregator/RtcpJobSubmitter.hpp"
-#include "castor/tape/aggregator/RtcpTxRx.hpp"
-#include "castor/tape/aggregator/Unpacker.hpp"
-#include "castor/tape/aggregator/VdqmRequestHandler.hpp"
-#include "castor/tape/aggregator/VmgrTxRx.hpp"
+#include "castor/tape/tapeserver/DlfMessageConstants.hpp"
+#include "castor/tape/tapeserver/BridgeProtocolEngine.hpp"
+#include "castor/tape/tapeserver/Constants.hpp"
+#include "castor/tape/tapeserver/DriveAllocationProtocolEngine.hpp"
+#include "castor/tape/tapeserver/ClientTxRx.hpp"
+#include "castor/tape/tapeserver/Packer.hpp"
+#include "castor/tape/tapeserver/RtcpJobSubmitter.hpp"
+#include "castor/tape/tapeserver/RtcpTxRx.hpp"
+#include "castor/tape/tapeserver/Unpacker.hpp"
+#include "castor/tape/tapeserver/VdqmRequestHandler.hpp"
+#include "castor/tape/tapeserver/VmgrTxRx.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
 #include "castor/tape/legacymsg/VmgrMarshal.hpp"
 #include "castor/tape/net/net.hpp"
@@ -58,20 +58,20 @@
 //-----------------------------------------------------------------------------
 // s_stoppingGracefully
 //-----------------------------------------------------------------------------
-bool castor::tape::aggregator::VdqmRequestHandler::s_stoppingGracefully = false;
+bool castor::tape::tapeserver::VdqmRequestHandler::s_stoppingGracefully = false;
 
 
 //-----------------------------------------------------------------------------
 // s_stoppingGracefullyFunctor
 //-----------------------------------------------------------------------------
-castor::tape::aggregator::VdqmRequestHandler::StoppingGracefullyFunctor
-  castor::tape::aggregator::VdqmRequestHandler::s_stoppingGracefullyFunctor;
+castor::tape::tapeserver::VdqmRequestHandler::StoppingGracefullyFunctor
+  castor::tape::tapeserver::VdqmRequestHandler::s_stoppingGracefullyFunctor;
 
 
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::aggregator::VdqmRequestHandler::VdqmRequestHandler(
+castor::tape::tapeserver::VdqmRequestHandler::VdqmRequestHandler(
   const uint32_t nbDrives) throw() : m_nbDrives(nbDrives) {
 }
 
@@ -79,7 +79,7 @@ castor::tape::aggregator::VdqmRequestHandler::VdqmRequestHandler(
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-castor::tape::aggregator::VdqmRequestHandler::~VdqmRequestHandler()
+castor::tape::tapeserver::VdqmRequestHandler::~VdqmRequestHandler()
   throw() {
 }
 
@@ -87,14 +87,14 @@ castor::tape::aggregator::VdqmRequestHandler::~VdqmRequestHandler()
 //-----------------------------------------------------------------------------
 // init
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::VdqmRequestHandler::init() throw() {
+void castor::tape::tapeserver::VdqmRequestHandler::init() throw() {
 }
 
 
 //-----------------------------------------------------------------------------
 // run
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
+void castor::tape::tapeserver::VdqmRequestHandler::run(void *param)
   throw() {
 
   // Give a Cuuid to the request
@@ -118,7 +118,7 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
       castor::dlf::Param("Message", ex.getMessage().str()),
       castor::dlf::Param("Code"   , ex.code()            )};
     CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_TRANSFER_FAILED, params);
+      TAPESERVER_TRANSFER_FAILED, params);
 
     // Return
     return;
@@ -139,7 +139,7 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
           castor::dlf::Param("errorCode"    , ex.code()           ),
           castor::dlf::Param("errorMessage", ex.getMessage().str())};
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-          AGGREGATOR_FAILED_TO_PARSE_TPCONFIG, params);
+          TAPESERVER_FAILED_TO_PARSE_TPCONFIG, params);
 
         castor::exception::Exception ex2(ex.code());
         ex2.getMessage() <<
@@ -168,7 +168,7 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
         castor::dlf::Param("nbDrives" , driveNames.size()     ),
         castor::dlf::Param("unitNames", driveNamesStream.str())};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_PARSED_TPCONFIG, params);
+        TAPESERVER_PARSED_TPCONFIG, params);
 
       // Throw an exception if the drive-unit name given by the VDQM is not
       // in the list of names extracted from the TPCONFIG file
@@ -194,21 +194,21 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
           castor::dlf::Param("expectedNbDrives" , m_nbDrives       ),
           castor::dlf::Param("actualNbDrives"   , driveNames.size())};
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-          AGGREGATOR_TOO_MANY_DRIVES_IN_TPCONFIG, params);
+          TAPESERVER_TOO_MANY_DRIVES_IN_TPCONFIG, params);
       }
     }
 
-    // Create the aggregator transaction ID
-    Counter<uint64_t> aggregatorTransactionCounter(0);
+    // Create the tapeserver transaction ID
+    Counter<uint64_t> tapeserverTransactionCounter(0);
 
     // Perform the rest of the thread's work, notifying the client if any
     // exception is thrown
     try {
-      exceptionThrowingRun(cuuid, jobRequest, aggregatorTransactionCounter);
+      exceptionThrowingRun(cuuid, jobRequest, tapeserverTransactionCounter);
     } catch(castor::exception::Exception &ex) {
 
       const uint64_t aggregatorTransactionId =
-        aggregatorTransactionCounter.next();
+        tapeserverTransactionCounter.next();
       try {
         castor::dlf::Param params[] = {
           castor::dlf::Param("mountTransactionId", jobRequest.volReqId    ),
@@ -216,7 +216,7 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
           castor::dlf::Param("Message"           , ex.getMessage().str()  ),
           castor::dlf::Param("Code"              , ex.code()              )};
         castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
-          AGGREGATOR_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
+          TAPESERVER_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
 
         ClientTxRx::notifyEndOfFailedSession(cuuid, jobRequest.volReqId,
           aggregatorTransactionId, jobRequest.clientHost,
@@ -229,11 +229,11 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
           castor::dlf::Param("Message"           , ex2.getMessage().str() ),
           castor::dlf::Param("Code"              , ex2.code()             )};
         castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
-          AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
+          TAPESERVER_FAILED_TO_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
       }
 
       // Rethrow the exception thrown by exceptionThrowingRun() so that the
-      // outer try and catch block always logs AGGREGATOR_TRANSFER_FAILED when
+      // outer try and catch block always logs TAPESERVER_TRANSFER_FAILED when
       // a failure has occured
       throw(ex);
     }
@@ -244,19 +244,19 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
       castor::dlf::Param("Message"           , ex.getMessage().str()),
       castor::dlf::Param("Code"              , ex.code()            )};
     CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_TRANSFER_FAILED, params);
+      TAPESERVER_TRANSFER_FAILED, params);
   } catch(std::exception &stdEx) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("mountTransactionId", jobRequest.volReqId),
       castor::dlf::Param("Message"           , stdEx.what()       )};
     CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_TRANSFER_FAILED, params);
+      TAPESERVER_TRANSFER_FAILED, params);
   } catch(...) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("mountTransactionId", jobRequest.volReqId),
       castor::dlf::Param("Message"           , "Unknown exception")};
     CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
-      AGGREGATOR_TRANSFER_FAILED, params);
+      TAPESERVER_TRANSFER_FAILED, params);
   }
 }
 
@@ -264,7 +264,7 @@ void castor::tape::aggregator::VdqmRequestHandler::run(void *param)
 //-----------------------------------------------------------------------------
 // getRtcpJobFromVdqmAndCloseConn
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::VdqmRequestHandler::getRtcpJobAndCloseConn(
+void castor::tape::tapeserver::VdqmRequestHandler::getRtcpJobAndCloseConn(
   const Cuuid_t                 &cuuid,
   io::ServerSocket*             sock,
   legacymsg::RtcpJobRqstMsgBody &jobRequest)
@@ -290,7 +290,7 @@ void castor::tape::aggregator::VdqmRequestHandler::getRtcpJobAndCloseConn(
       castor::dlf::Param("HostName", hostName                  ),
       castor::dlf::Param("socketFd", vdqmSock->socket()        )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_RECEIVED_VDQM_CONNECTION, params);
+      TAPESERVER_RECEIVED_VDQM_CONNECTION, params);
 
   } catch(castor::exception::Exception &ex) {
     castor::exception::Exception ex2(ex.code());
@@ -327,19 +327,19 @@ void castor::tape::aggregator::VdqmRequestHandler::getRtcpJobAndCloseConn(
 //-----------------------------------------------------------------------------
 // exceptionThrowingRun
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::VdqmRequestHandler::exceptionThrowingRun(
+void castor::tape::tapeserver::VdqmRequestHandler::exceptionThrowingRun(
   const Cuuid_t                       &cuuid,
   const legacymsg::RtcpJobRqstMsgBody &jobRequest,
-  Counter<uint64_t>                   &aggregatorTransactionCounter)
+  Counter<uint64_t>                   &tapeserverTransactionCounter)
   throw(castor::exception::Exception) {
 
   // Create, bind and mark a listen socket for RTCPD callback connections
   // Wrap the socket file descriptor in a smart file descriptor so that it is
   // guaranteed to be closed when it goes out of scope.
   const unsigned short lowPort = utils::getPortFromConfig(
-    "AGGREGATOR", "RTCPDLOWPORT", AGGREGATOR_RTCPDLOWPORT);
+    "TAPESERVER", "RTCPDLOWPORT", AGGREGATOR_RTCPDLOWPORT);
   const unsigned short highPort = utils::getPortFromConfig(
-    "AGGREGATOR", "RTCPDHIGHPORT", AGGREGATOR_RTCPDHIGHPORT);
+    "TAPESERVER", "RTCPDHIGHPORT", AGGREGATOR_RTCPDHIGHPORT);
   unsigned short chosenPort = 0;
   utils::SmartFd listenSock(net::createListenerSock("127.0.0.1", lowPort,
     highPort,  chosenPort));
@@ -359,12 +359,12 @@ void castor::tape::aggregator::VdqmRequestHandler::exceptionThrowingRun(
     castor::dlf::Param("HostName"          , rtcpdCallbackHost              ),
     castor::dlf::Param("socketFd"          , listenSock.get()               )};
   castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-    AGGREGATOR_CREATED_RTCPD_CALLBACK_PORT, params);
+    TAPESERVER_CREATED_RTCPD_CALLBACK_PORT, params);
 
   // Execute the drive allocation part of the RTCOPY protocol
   utils::SmartFd initialRtcpdSock;
   DriveAllocationProtocolEngine
-    driveAllocationProtocolEngine(aggregatorTransactionCounter);
+    driveAllocationProtocolEngine(tapeserverTransactionCounter);
   std::auto_ptr<tapegateway::Volume>
     volume(driveAllocationProtocolEngine.run(cuuid, listenSock.get(),
     rtcpdCallbackHost, rtcpdCallbackPort, initialRtcpdSock, jobRequest));
@@ -373,7 +373,7 @@ void castor::tape::aggregator::VdqmRequestHandler::exceptionThrowingRun(
   // and return
   if(volume.get() == NULL) {
     const uint64_t aggregatorTransactionId =
-      aggregatorTransactionCounter.next();
+      tapeserverTransactionCounter.next();
     try {
       ClientTxRx::notifyEndOfSession(cuuid, jobRequest.volReqId,
         aggregatorTransactionId, jobRequest.clientHost, jobRequest.clientPort);
@@ -431,26 +431,26 @@ void castor::tape::aggregator::VdqmRequestHandler::exceptionThrowingRun(
       throw ex;
     }
 
-    enterBridgeOrAggregatorMode(cuuid, listenSock.get(),
+    enterBridgeOrTapeServerMode(cuuid, listenSock.get(),
       initialRtcpdSock.get(), jobRequest, *volume, tapeInfo.nbFiles,
-      s_stoppingGracefullyFunctor, aggregatorTransactionCounter);
+      s_stoppingGracefullyFunctor, tapeserverTransactionCounter);
 
   // Else recalling
   } else {
     const uint32_t nbFilesOnDestinationTape = 0;
 
-    enterBridgeOrAggregatorMode(cuuid, listenSock.get(),
+    enterBridgeOrTapeServerMode(cuuid, listenSock.get(),
       initialRtcpdSock.get(), jobRequest, *volume,
       nbFilesOnDestinationTape, s_stoppingGracefullyFunctor,
-      aggregatorTransactionCounter);
+      tapeserverTransactionCounter);
   }
 }
 
 
 //-----------------------------------------------------------------------------
-// enterBridgeOrAggregatorMode
+// enterBridgeOrTapeServerMode
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::VdqmRequestHandler::enterBridgeOrAggregatorMode(
+void castor::tape::tapeserver::VdqmRequestHandler::enterBridgeOrTapeServerMode(
   const Cuuid_t                       &cuuid,
   const int                           listenSock,
   const int                           initialRtcpdSock,
@@ -458,13 +458,13 @@ void castor::tape::aggregator::VdqmRequestHandler::enterBridgeOrAggregatorMode(
   tapegateway::Volume                 &volume,
   const uint32_t                      nbFilesOnDestinationTape,
   BoolFunctor                         &stoppingGracefully,
-  Counter<uint64_t>                   &aggregatorTransactionCounter)
+  Counter<uint64_t>                   &tapeserverTransactionCounter)
   throw(castor::exception::Exception) {
 
   // If the volume has the aggregation format
   if(volume.label() == "ALB") {
 
-    // Enter aggregator mode
+    // Enter tapeserver mode
     if(volume.mode() == tapegateway::WRITE) {
       Packer packer;
       packer.run();
@@ -480,10 +480,10 @@ void castor::tape::aggregator::VdqmRequestHandler::enterBridgeOrAggregatorMode(
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId", jobRequest.volReqId)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_ENTERING_BRIDGE_MODE, params);
+      TAPESERVER_ENTERING_BRIDGE_MODE, params);
     BridgeProtocolEngine bridgeProtocolEngine(cuuid, listenSock,
       initialRtcpdSock, jobRequest, volume, nbFilesOnDestinationTape,
-      s_stoppingGracefullyFunctor, aggregatorTransactionCounter);
+      s_stoppingGracefullyFunctor, tapeserverTransactionCounter);
     bridgeProtocolEngine.run();
   }
 }
@@ -492,7 +492,7 @@ void castor::tape::aggregator::VdqmRequestHandler::enterBridgeOrAggregatorMode(
 //-----------------------------------------------------------------------------
 // stop
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::VdqmRequestHandler::stop()
+void castor::tape::tapeserver::VdqmRequestHandler::stop()
   throw() {
   s_stoppingGracefully = true;
 }
@@ -501,7 +501,7 @@ void castor::tape::aggregator::VdqmRequestHandler::stop()
 //-----------------------------------------------------------------------------
 // checkRtcpJobSubmitterIsAuthorised
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::VdqmRequestHandler::
+void castor::tape::tapeserver::VdqmRequestHandler::
   checkRtcpJobSubmitterIsAuthorised(const int socketFd)
   throw(castor::exception::Exception) {
 

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/aggregator/Counter.hpp
+ *                castor/tape/tapeserver/Counter.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,13 +22,13 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_COUNTER_HPP
-#define CASTOR_TAPE_AGGREGATOR_COUNTER_HPP 1
+#ifndef CASTOR_TAPE_TAPESERVER_COUNTER_HPP
+#define CASTOR_TAPE_TAPESERVER_COUNTER_HPP 1
 
 
 namespace castor     {
 namespace tape       {
-namespace aggregator {
+namespace tapeserver {
 
 /**
  * A templated counter class.
@@ -82,8 +82,8 @@ public:
   }
 };
 
-} // namespace aggregator
+} // namespace tapeserver
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_COUNTER_HPP
+#endif // CASTOR_TAPE_TAPESERVER_COUNTER_HPP

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/Unpacker.hpp
+ *                      castor/tape/tapeserver/Unpacker.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,15 +22,15 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_UNPACKER
-#define CASTOR_TAPE_AGGREGATOR_UNPACKER
+#ifndef CASTOR_TAPE_TAPESERVER_UNPACKER
+#define CASTOR_TAPE_TAPESERVER_UNPACKER
 
 #include "castor/exception/Exception.hpp"
 
 
 namespace castor     {
 namespace tape       {
-namespace aggregator {
+namespace tapeserver {
 
 /**
  * Unpacks one or more disk files from tape.  To unpack does not mean to
@@ -48,8 +48,8 @@ public:
   void run() throw(castor::exception::Exception);
 };
 
-} // namespace aggregator
+} // namespace tapeserver
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_UNPACKER
+#endif // CASTOR_TAPE_TAPESERVER_UNPACKER

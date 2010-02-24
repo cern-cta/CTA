@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/Packer.cpp
+ *                      castor/tape/tapeserver/Packer.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -23,14 +23,14 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/aggregator/Packer.hpp"
+#include "castor/tape/tapeserver/Packer.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 
 //-----------------------------------------------------------------------------
 // run
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Packer::run()
+void castor::tape::tapeserver::Packer::run()
   throw(castor::exception::Exception) {
 
   TAPE_THROW_CODE(ECANCELED,

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/RtcpJobSubmitter.hpp
+ *                      castor/tape/tapeserver/RtcpJobSubmitter.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  *
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
-#ifndef _CASTOR_TAPE_AGGREGATOR_RTCPJOBSUBMITTER_HPP_
-#define _CASTOR_TAPE_AGGREGATOR_RTCPJOBSUBMITTER_HPP_
+#ifndef _CASTOR_TAPE_TAPESERVER_RTCPJOBSUBMITTER_HPP_
+#define _CASTOR_TAPE_TAPESERVER_RTCPJOBSUBMITTER_HPP_
 
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
 #include "h/net.h"
@@ -38,23 +38,23 @@ namespace io {
 }
 
 namespace tape {
-namespace aggregator {
+namespace tapeserver {
     
   /**
    * Remote copy job submitter.
    *
    * A helper class for submitting remote-copy jobs to either RTCPD or tape
-   * aggregator daemons.
+   * tapeserver daemons.
    */
   class RtcpJobSubmitter {
 
   public:
 
     /**
-     * Submits a remote-copy job to either a RTCPD or tape aggregator daemon.
+     * Submits a remote-copy job to either a RTCPD or tape tapeserver daemon.
      * 
-     * @param host The hostname of the RTCPD or tape aggregator daemon.
-     * @param port The port number of the RTCPD or tape aggregator daemon.
+     * @param host The hostname of the RTCPD or tape tapeserver daemon.
+     * @param port The port number of the RTCPD or tape tapeserver daemon.
      * @param netReadWriteTimeout The timeout to be used when performing
      * network reads and writes.
      * @param remoteCopyType The remote-copy type to be used for exception
@@ -89,10 +89,10 @@ namespace aggregator {
   private:
       
     /**
-     * Reads the reply of the RTCOPY or tape aggregator daemon.
+     * Reads the reply of the RTCOPY or tape tapeserver daemon.
      * 
      * @param sock The socket of the connection to the RTCOPY or tape
-     * aggregator daemon.
+     * tapeserver daemon.
      * @param netReadWriteTimeout The timeout to be used when performing
      * network reads and writes.
      * @param remoteCopyType The remote-copy type to be used for exception
@@ -106,8 +106,8 @@ namespace aggregator {
 
   }; // class RtcpJobSubmitter
 
-} // namespace aggregator
+} // namespace tapeserver
 } // namespace tape
 } // namespace castor      
 
-#endif // _CASTOR_TAPE_AGGREGATOR_RTCPJOBSUBMITTER_HPP_
+#endif // _CASTOR_TAPE_TAPESERVER_RTCPJOBSUBMITTER_HPP_

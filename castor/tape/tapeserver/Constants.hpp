@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/Constants.hpp
+ *                      castor/tape/tapeserver/Constants.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -23,8 +23,8 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_CONSTANTS_HPP
-#define CASTOR_TAPE_AGGREGATOR_CONSTANTS_HPP 1
+#ifndef CASTOR_TAPE_TAPESERVER_CONSTANTS_HPP
+#define CASTOR_TAPE_TAPESERVER_CONSTANTS_HPP 1
 
 #include "h/Castor_limits.h"
 
@@ -34,10 +34,10 @@
 
 namespace castor     {
 namespace tape       {
-namespace aggregator {
+namespace tapeserver {
   	
   /**
-   * The minumim timeout in seconds between pings to the aggregator clients.
+   * The minumim timeout in seconds between pings to the tapeserver clients.
    * Please note that the tape gateway is not pinged.
    */
   const int CLIENTPINGTIMEOUT = 5;
@@ -49,7 +49,7 @@ namespace aggregator {
   const size_t HDRBUFSIZ = 3 * sizeof(uint32_t);
 
   /**
-   * The maximum number of pending transfers between the aggregator and RTCPD.
+   * The maximum number of pending transfers between the tapeserver and RTCPD.
    * The theoretical maximum number of outstanding pending transfers is equal
    * to the memory allocated to memory buffers of RTCPD divided by the average
    * file size.
@@ -63,9 +63,9 @@ namespace aggregator {
   const size_t RTCPMSGBUFSIZE = 4096;
 
   /**
-   * The program name of the aggregator daemon.
+   * The program name of the tapeserver daemon.
    */
-  const char *const AGGREGATORPROGRAMNAME = "aggregatord";
+  const char *const TAPESERVERPROGRAMNAME = "tapeserverd";
 
   /**
    * The tape record format.
@@ -79,14 +79,14 @@ namespace aggregator {
   const int RTCPDNETRWTIMEOUT = 55;
 
   /**
-   * The timeout in seconds for which the aggregator waits for RTCPD to call it
+   * The timeout in seconds for which the tapeserver waits for RTCPD to call it
    * back.
    */
   const int RTCPDCALLBACKTIMEOUT = 55;
 
   /**
    * The minimum timeout in seconds between sending a ping message from the
-   * aggregator to RTCPD.
+   * tapeserver to RTCPD.
    */
   const int RTCPDPINGTIMEOUT = 30;
 
@@ -95,7 +95,7 @@ namespace aggregator {
    * messages, where client refers to either tape gateway, readtp, writetp or
    * dumptp.  A value less than 60 seconds should be used because the default
    * timeout used by rtcpd when sending and receiving messages to and from the
-   * aggregator is 60 seconds.  The file CASTOR2/h/rtcp_constants.h contains
+   * tapeserver is 60 seconds.  The file CASTOR2/h/rtcp_constants.h contains
    * the following line:
    * <code>
    * #define RTCP_NETTIMEOUT (60)
@@ -113,7 +113,7 @@ namespace aggregator {
    * The timeout in seconds used when sending and receiving VMGR network
    * messages.  A value less than 60 seconds should be used because the default
    * timeout used by rtcpd when sending and receiving messages to and from the
-   * aggregator is 60 seconds.  The file CASTOR2/h/rtcp_constants.h contains
+   * tapeserver is 60 seconds.  The file CASTOR2/h/rtcp_constants.h contains
    * the following line:
    * <code>
    * #define RTCP_NETTIMEOUT (60)
@@ -126,9 +126,9 @@ namespace aggregator {
    */
   const char EMPTYVSN[CA_MAXVSNLEN+1] = "";
 
-} // namespace aggregator
+} // namespace tapeserver
 } // namespace tape
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_AGGREGATOR_CONSTANTS_HPP
+#endif // CASTOR_TAPE_TAPESERVER_CONSTANTS_HPP

@@ -1,5 +1,5 @@
 /******************************************************************************
- *             castor/tape/aggregator/AggregatorDlfMessageConstants.hpp
+ *             castor/tape/tapeserver/DlfMessageConstants.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,11 +22,11 @@
  * @author Steven Murray Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_AGGREGATORDLFMESSAGECONSTANTS_HPP
-#define CASTOR_TAPE_AGGREGATOR_AGGREGATORDLFMESSAGECONSTANTS_HPP 1
+#ifndef CASTOR_TAPE_TAPESERVER_TAPESERVERDLFMESSAGECONSTANTS_HPP
+#define CASTOR_TAPE_TAPESERVER_TAPESERVERDLFMESSAGECONSTANTS_HPP 1
 
 
 namespace castor {
 namespace tape {
-namespace aggregator {
-enum AggregatorDlfMessages {
+namespace tapeserver {
+enum TapeServerDlfMessages {

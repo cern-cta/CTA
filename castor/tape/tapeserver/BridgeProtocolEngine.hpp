@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/BridgeProtocolEngine.hpp
+ *                      castor/tape/tapeserver/BridgeProtocolEngine.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,14 +22,14 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_BRIDGEPROTOCOLENGINE
-#define CASTOR_TAPE_AGGREGATOR_BRIDGEPROTOCOLENGINE
+#ifndef CASTOR_TAPE_TAPESERVER_BRIDGEPROTOCOLENGINE
+#define CASTOR_TAPE_TAPESERVER_BRIDGEPROTOCOLENGINE
 
 #include "castor/exception/Exception.hpp"
-#include "castor/tape/aggregator/BoolFunctor.hpp"
-#include "castor/tape/aggregator/BridgeSocketCatalogue.hpp"
-#include "castor/tape/aggregator/Constants.hpp"
-#include "castor/tape/aggregator/Counter.hpp"
+#include "castor/tape/tapeserver/BoolFunctor.hpp"
+#include "castor/tape/tapeserver/BridgeSocketCatalogue.hpp"
+#include "castor/tape/tapeserver/Constants.hpp"
+#include "castor/tape/tapeserver/Counter.hpp"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
@@ -43,7 +43,7 @@
 
 namespace castor     {
 namespace tape       {
-namespace aggregator {
+namespace tapeserver {
 
 /**
  * Acts as a bridge between the tape gatway and rtcpd.
@@ -70,8 +70,8 @@ public:
    *                                 this parameter is ignored.
    * @param stoppingGracefully       Functor that returns true if the daemon is
    *                                 stopping gracefully.
-   * @param aggregatorTransactionCounter  The counter used to generate
-   *                                 aggregator transaction IDs.  These are the
+   * @param tapeserverTransactionCounter  The counter used to generate
+   *                                 tapeserver transaction IDs.  These are the
    *                                 IDS used in requests to the clients.
    */
   BridgeProtocolEngine(
@@ -82,7 +82,7 @@ public:
     tapegateway::Volume                 &volume,
     const uint32_t                      nbFilesOnDestinationTape,
     BoolFunctor                         &stoppingGracefully,
-    Counter<uint64_t>                   &aggregatorTransactionCounter) throw();
+    Counter<uint64_t>                   &tapeserverTransactionCounter) throw();
 
   /**
    * Run a recall/migration session.
@@ -135,10 +135,10 @@ private:
   BoolFunctor &m_stoppingGracefully;
 
   /**
-   * The counter used to generate the next aggregator transaction ID to be used
+   * The counter used to generate the next tapeserver transaction ID to be used
    * in a request to the client.
    */
-  Counter<uint64_t> &m_aggregatorTransactionCounter;
+  Counter<uint64_t> &m_tapeserverTransactionCounter;
 
   /**
    * The number of received RTCP_ENDOF_REQ messages.
@@ -224,7 +224,7 @@ private:
    *                           rtcpd request.  If there is no such tape path,
    *                           then the value of this parameter should be set
    *                           to NULL.
-   * @param aggregatorTransactionId The aggregator transaction ID associated
+   * @param aggregatorTransactionId The tapeserver transaction ID associated
    *                           with the request sent to the client.  If no
    *                           request was sent then this parameter should be
    *                           set to 0.
@@ -497,8 +497,8 @@ private:
 
 }; // class BridgeProtocolEngine
 
-} // namespace aggregator
+} // namespace tapeserver
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_BRIDGEPROTOCOLENGINE
+#endif // CASTOR_TAPE_TAPESERVER_BRIDGEPROTOCOLENGINE

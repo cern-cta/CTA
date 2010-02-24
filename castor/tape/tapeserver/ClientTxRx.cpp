@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/aggregator/ClientTxRx.cpp
+ *                castor/tape/tapeserver/ClientTxRx.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -25,11 +25,11 @@
 #include "castor/Constants.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/io/ClientSocket.hpp"
-#include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
-#include "castor/tape/aggregator/ClientTxRx.hpp"
-#include "castor/tape/aggregator/Constants.hpp"
-#include "castor/tape/aggregator/LogHelper.hpp"
-#include "castor/tape/aggregator/SynchronizedCounter.hpp"
+#include "castor/tape/tapeserver/DlfMessageConstants.hpp"
+#include "castor/tape/tapeserver/ClientTxRx.hpp"
+#include "castor/tape/tapeserver/Constants.hpp"
+#include "castor/tape/tapeserver/LogHelper.hpp"
+#include "castor/tape/tapeserver/SynchronizedCounter.hpp"
 #include "castor/tape/tapegateway/DumpNotification.hpp"
 #include "castor/tape/tapegateway/DumpParametersRequest.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
@@ -55,7 +55,7 @@
 // getVolume
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::Volume
-  *castor::tape::aggregator::ClientTxRx::getVolume(
+  *castor::tape::tapeserver::ClientTxRx::getVolume(
   const Cuuid_t        &cuuid,
   const uint32_t       mountTransactionId,
   const uint64_t       aggregatorTransactionId,
@@ -72,7 +72,7 @@ castor::tape::tapegateway::Volume
       castor::dlf::Param("clientPort"        , clientPort             ),
       castor::dlf::Param("unit"              , unit                   )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
-      AGGREGATOR_GET_VOLUME_FROM_CLIENT, params);
+      TAPESERVER_GET_VOLUME_FROM_CLIENT, params);
   }
 
   // Prepare the request
@@ -105,7 +105,7 @@ castor::tape::tapegateway::Volume
         aggregatorTransactionId, reply->aggregatorTransactionId());
 
       LogHelper::logMsg(cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_GOT_VOLUME_FROM_CLIENT, *reply, connectDuration,
+        TAPESERVER_GOT_VOLUME_FROM_CLIENT, *reply, connectDuration,
         sendRecvDuration);
 
       // Release the reply message from its smart pointer and return it
@@ -131,7 +131,7 @@ castor::tape::tapegateway::Volume
         castor::dlf::Param("clientPort"        , clientPort             ),
         castor::dlf::Param("unit"              , unit                   )};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_GOT_NO_MORE_FILES_FROM_CLIENT, params);
+        TAPESERVER_GOT_NO_MORE_FILES_FROM_CLIENT, params);
 
       checkTransactionIds("NoMoreFiles",
         mountTransactionId     , reply->mountTransactionId(),
@@ -160,7 +160,7 @@ castor::tape::tapegateway::Volume
 //-----------------------------------------------------------------------------
 // sendFileToMigrateRequest
 //-----------------------------------------------------------------------------
-int castor::tape::aggregator::ClientTxRx::sendFileToMigrateRequest(
+int castor::tape::tapeserver::ClientTxRx::sendFileToMigrateRequest(
   const uint32_t       mountTransactionId,
   const uint64_t       aggregatorTransactionId,
   const char           *clientHost,
@@ -193,7 +193,7 @@ int castor::tape::aggregator::ClientTxRx::sendFileToMigrateRequest(
 // receiveFileToMigrateReplyAndClose
 //-----------------------------------------------------------------------------
 castor::tape::tapegateway::FileToMigrate
-  *castor::tape::aggregator::ClientTxRx::receiveFileToMigrateReplyAndClose(
+  *castor::tape::tapeserver::ClientTxRx::receiveFileToMigrateReplyAndClose(
   const uint32_t mountTransactionId,
   const uint64_t aggregatorTransactionId,
   const int      clientSock)
@@ -262,7 +262,7 @@ castor::tape::tapegateway::FileToMigrate
 //-----------------------------------------------------------------------------
 // sendFileToRecallRequest
 //-----------------------------------------------------------------------------
-int castor::tape::aggregator::ClientTxRx::sendFileToRecallRequest(
+int castor::tape::tapeserver::ClientTxRx::sendFileToRecallRequest(
   const uint32_t       mountTransactionId,
   const uint64_t       aggregatorTransactionId,
   const char           *clientHost,
@@ -295,7 +295,7 @@ int castor::tape::aggregator::ClientTxRx::sendFileToRecallRequest(
 // receiveFileToRecallReplyAndClose
 //-----------------------------------------------------------------------------
 castor::tape::tapegateway::FileToRecall
-  *castor::tape::aggregator::ClientTxRx::receiveFileToRecallReplyAndClose(
+  *castor::tape::tapeserver::ClientTxRx::receiveFileToRecallReplyAndClose(
   const uint32_t mountTransactionId,
   const uint64_t aggregatorTransactionId,
   const int      clientSock)
@@ -364,7 +364,7 @@ castor::tape::tapegateway::FileToRecall
 //-----------------------------------------------------------------------------
 // sendFileMigratedNotification
 //-----------------------------------------------------------------------------
-int castor::tape::aggregator::ClientTxRx::sendFileMigratedNotification(
+int castor::tape::tapeserver::ClientTxRx::sendFileMigratedNotification(
   const uint32_t       mountTransactionId,
   const uint64_t       aggregatorTransactionId,
   const char           *clientHost,
@@ -421,7 +421,7 @@ int castor::tape::aggregator::ClientTxRx::sendFileMigratedNotification(
 //-----------------------------------------------------------------------------
 // sendFileRecalledNotification
 //-----------------------------------------------------------------------------
-int castor::tape::aggregator::ClientTxRx::sendFileRecalledNotification(
+int castor::tape::tapeserver::ClientTxRx::sendFileRecalledNotification(
   const uint32_t       mountTransactionId,
   const uint64_t       aggregatorTransactionId,
   const char           *clientHost,
@@ -472,7 +472,7 @@ int castor::tape::aggregator::ClientTxRx::sendFileRecalledNotification(
 //-----------------------------------------------------------------------------
 // notifyEndOfSession
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::ClientTxRx::notifyEndOfSession(
+void castor::tape::tapeserver::ClientTxRx::notifyEndOfSession(
   const Cuuid_t        &cuuid,
   const uint32_t       mountTransactionId,
   const uint64_t       aggregatorTransactionId,
@@ -487,7 +487,7 @@ void castor::tape::aggregator::ClientTxRx::notifyEndOfSession(
       castor::dlf::Param("clientHost"        , clientHost             ),
       castor::dlf::Param("clientPort"        , clientPort             )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
-      AGGREGATOR_NOTIFY_CLIENT_END_OF_SESSION, params);
+      TAPESERVER_NOTIFY_CLIENT_END_OF_SESSION, params);
   }
 
   // Prepare the request
@@ -506,7 +506,7 @@ void castor::tape::aggregator::ClientTxRx::notifyEndOfSession(
       castor::dlf::Param("clientHost"        , clientHost             ),
       castor::dlf::Param("clientPort"        , clientPort             )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_NOTIFIED_CLIENT_END_OF_SESSION, params);
+      TAPESERVER_NOTIFIED_CLIENT_END_OF_SESSION, params);
   }
 }
 
@@ -515,7 +515,7 @@ void castor::tape::aggregator::ClientTxRx::notifyEndOfSession(
 // getDumpParameters
 //-----------------------------------------------------------------------------
 castor::tape::tapegateway::DumpParameters
-  *castor::tape::aggregator::ClientTxRx::getDumpParameters(
+  *castor::tape::tapeserver::ClientTxRx::getDumpParameters(
   const Cuuid_t        &cuuid,
   const uint32_t       mountTransactionId,
   const uint64_t       aggregatorTransactionId,
@@ -530,7 +530,7 @@ castor::tape::tapegateway::DumpParameters
       castor::dlf::Param("clientHost"        , clientHost             ),
       castor::dlf::Param("clientPort"        , clientPort             )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
-      AGGREGATOR_GET_DUMP_PARAMETERS_FROM_CLIENT, params);
+      TAPESERVER_GET_DUMP_PARAMETERS_FROM_CLIENT, params);
   }
 
   // Prepare the request
@@ -558,7 +558,7 @@ castor::tape::tapegateway::DumpParameters
       }
 
       LogHelper::logMsg(cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_GOT_DUMP_PARAMETERS_FROM_CLIENT, *reply, connectDuration,
+        TAPESERVER_GOT_DUMP_PARAMETERS_FROM_CLIENT, *reply, connectDuration,
         sendRecvDuration);
 
       checkTransactionIds("DumpParameters",
@@ -590,7 +590,7 @@ castor::tape::tapegateway::DumpParameters
 //-----------------------------------------------------------------------------
 // notifyDumpMessage
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::ClientTxRx::notifyDumpMessage(
+void castor::tape::tapeserver::ClientTxRx::notifyDumpMessage(
   const Cuuid_t        &cuuid,
   const uint32_t       mountTransactionId,
   const uint64_t       aggregatorTransactionId,
@@ -607,7 +607,7 @@ void castor::tape::aggregator::ClientTxRx::notifyDumpMessage(
       castor::dlf::Param("clientPort"        , clientPort             ),
       castor::dlf::Param("message"           , message                )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
-      AGGREGATOR_NOTIFY_CLIENT_DUMP_MESSAGE, params);
+      TAPESERVER_NOTIFY_CLIENT_DUMP_MESSAGE, params);
   }
 
   // Prepare the request
@@ -628,7 +628,7 @@ void castor::tape::aggregator::ClientTxRx::notifyDumpMessage(
       castor::dlf::Param("clientPort"        , clientPort             ),
       castor::dlf::Param("message"           , message                )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
-      AGGREGATOR_NOTIFIED_CLIENT_DUMP_MESSAGE, params);
+      TAPESERVER_NOTIFIED_CLIENT_DUMP_MESSAGE, params);
   }
 }
 
@@ -636,7 +636,7 @@ void castor::tape::aggregator::ClientTxRx::notifyDumpMessage(
 //-----------------------------------------------------------------------------
 // notifyEndOfFailedSession
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::ClientTxRx::notifyEndOfFailedSession(
+void castor::tape::tapeserver::ClientTxRx::notifyEndOfFailedSession(
   const Cuuid_t                &cuuid,
   const uint32_t               mountTransactionId,
   const uint64_t               aggregatorTransactionId,
@@ -652,7 +652,7 @@ void castor::tape::aggregator::ClientTxRx::notifyEndOfFailedSession(
       castor::dlf::Param("clientHost"        , clientHost             ),
       castor::dlf::Param("clientPort"        , clientPort             )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
-      AGGREGATOR_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
+      TAPESERVER_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
   }
 
   // Prepare the request
@@ -675,7 +675,7 @@ void castor::tape::aggregator::ClientTxRx::notifyEndOfFailedSession(
       castor::dlf::Param("errorCode"         , ex.code()              ),
       castor::dlf::Param("errorrMessage"     , ex.getMessage().str()  )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_NOTIFIED_CLIENT_END_OF_FAILED_SESSION, params);
+      TAPESERVER_NOTIFIED_CLIENT_END_OF_FAILED_SESSION, params);
   }
 }
 
@@ -683,7 +683,7 @@ void castor::tape::aggregator::ClientTxRx::notifyEndOfFailedSession(
 //-----------------------------------------------------------------------------
 // ping
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::ClientTxRx::ping(const Cuuid_t &cuuid,
+void castor::tape::tapeserver::ClientTxRx::ping(const Cuuid_t &cuuid,
   const uint32_t       mountTransactionId,
   const uint64_t       aggregatorTransactionId,
   const char           *clientHost,
@@ -697,7 +697,7 @@ void castor::tape::aggregator::ClientTxRx::ping(const Cuuid_t &cuuid,
       castor::dlf::Param("clientHost"        , clientHost             ),
       castor::dlf::Param("clientPort"        , clientPort             )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
-      AGGREGATOR_PING_CLIENT, params);
+      TAPESERVER_PING_CLIENT, params);
   }
 
   // Prepare the request
@@ -716,7 +716,7 @@ void castor::tape::aggregator::ClientTxRx::ping(const Cuuid_t &cuuid,
       castor::dlf::Param("clientHost"        , clientHost             ),
       castor::dlf::Param("clientPort"        , clientPort             )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
-      AGGREGATOR_PINGED_CLIENT, params);
+      TAPESERVER_PINGED_CLIENT, params);
   }
 }
 
@@ -724,7 +724,7 @@ void castor::tape::aggregator::ClientTxRx::ping(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 // sendMessage
 //-----------------------------------------------------------------------------
-int castor::tape::aggregator::ClientTxRx::sendMessage(
+int castor::tape::tapeserver::ClientTxRx::sendMessage(
   const char           *clientHost,
   const unsigned short clientPort,
   const int            clientNetRWTimeout,
@@ -773,7 +773,7 @@ int castor::tape::aggregator::ClientTxRx::sendMessage(
 //-----------------------------------------------------------------------------
 // receiveReplyAndClose
 //-----------------------------------------------------------------------------
-castor::IObject *castor::tape::aggregator::ClientTxRx::receiveReplyAndClose(
+castor::IObject *castor::tape::tapeserver::ClientTxRx::receiveReplyAndClose(
   const int clientSock, const int clientNetRWTimeout)
   throw(castor::exception::Exception) {
 
@@ -812,7 +812,7 @@ castor::IObject *castor::tape::aggregator::ClientTxRx::receiveReplyAndClose(
 // sendRequestAndReceiveReply
 //-----------------------------------------------------------------------------
 castor::IObject
-  *castor::tape::aggregator::ClientTxRx::sendRequestAndReceiveReply(
+  *castor::tape::tapeserver::ClientTxRx::sendRequestAndReceiveReply(
   const char           *requestTypeName,
   const char           *clientHost,
   const unsigned short clientPort,
@@ -880,7 +880,7 @@ castor::IObject
 //-----------------------------------------------------------------------------
 // receiveNotificationReplyAndClose
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::ClientTxRx::receiveNotificationReplyAndClose(
+void castor::tape::tapeserver::ClientTxRx::receiveNotificationReplyAndClose(
   const uint32_t mountTransactionId,
   const uint64_t aggregatorTransactionId,
   const int      clientSock)
@@ -926,7 +926,7 @@ void castor::tape::aggregator::ClientTxRx::receiveNotificationReplyAndClose(
 //-----------------------------------------------------------------------------
 // notifyClient
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::ClientTxRx::notifyClient(
+void castor::tape::tapeserver::ClientTxRx::notifyClient(
   const Cuuid_t        &cuuid,
   const uint32_t       mountTransactionId,
   const uint64_t       aggregatorTransactionId,
@@ -981,7 +981,7 @@ void castor::tape::aggregator::ClientTxRx::notifyClient(
 //-----------------------------------------------------------------------------
 // throwEndNotificationErrorReport
 //-----------------------------------------------------------------------------
-void  castor::tape::aggregator::ClientTxRx::throwEndNotificationErrorReport(
+void  castor::tape::tapeserver::ClientTxRx::throwEndNotificationErrorReport(
   const uint32_t mountTransactionId,
   const uint64_t aggregatorTransactionId,
   IObject *const obj)
@@ -1007,12 +1007,12 @@ void  castor::tape::aggregator::ClientTxRx::throwEndNotificationErrorReport(
 //-----------------------------------------------------------------------------
 // checkTransactionIds
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::ClientTxRx::checkTransactionIds(
+void castor::tape::tapeserver::ClientTxRx::checkTransactionIds(
   const char *const messageTypeName,
   const uint32_t    expectedMountTransactionId,
   const uint32_t    actualMountTransactionId,
-  const uint64_t    expectedAggregatorTransactionId,
-  const uint64_t    actualAggregatorTransactionId)
+  const uint64_t    expectedTapeServerTransactionId,
+  const uint64_t    actualTapeServerTransactionId)
   throw(castor::exception::Exception) {
 
   int nbErrors = 0;
@@ -1027,13 +1027,13 @@ void castor::tape::aggregator::ClientTxRx::checkTransactionIds(
       ": actualMountTransactionId=" << actualMountTransactionId;
   }
 
-  if(expectedAggregatorTransactionId != actualAggregatorTransactionId) {
+  if(expectedTapeServerTransactionId != actualTapeServerTransactionId) {
     nbErrors++;
     errorMessage <<
       ": " << messageTypeName <<
-      " message contains an aggregator transaction ID mismatch"
-      ": expectedAggregatorTransactionId=" << expectedAggregatorTransactionId <<
-      ": actualAggregatorTransactionId=" << actualAggregatorTransactionId;
+      " message contains an tapeserver transaction ID mismatch"
+      ": expectedTapeServerTransactionId=" << expectedTapeServerTransactionId <<
+      ": actualTapeServerTransactionId=" << actualTapeServerTransactionId;
   }
   if(nbErrors > 0) {
     TAPE_THROW_CODE(EBADMSG,

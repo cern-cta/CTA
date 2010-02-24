@@ -1,5 +1,5 @@
 /******************************************************************************
- *           castor/tape/aggregator/AggregatorDlfMessageStrings.cpp
+ *           castor/tape/tapeserver/TapeServerDlfMessageStrings.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,7 +22,7 @@
  * @author Steven Murray Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
-#include "castor/tape/aggregator/AggregatorDaemon.hpp"
+#include "castor/tape/tapeserver/DlfMessageConstants.hpp"
+#include "castor/tape/tapeserver/TapeServerDaemon.hpp"
 
-castor::dlf::Message castor::tape::aggregator::AggregatorDaemon::s_dlfMessages[] = {
+castor::dlf::Message castor::tape::tapeserver::TapeServerDaemon::s_dlfMessages[] = {

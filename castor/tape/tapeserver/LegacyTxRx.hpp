@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/aggregator/LegacyTxRx.hpp
+ *                castor/tape/tapeserver/LegacyTxRx.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,13 +22,13 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_LEGACYTXRX_HPP
-#define CASTOR_TAPE_AGGREGATOR_LEGACYTXRX_HPP 1
+#ifndef CASTOR_TAPE_TAPESERVER_LEGACYTXRX_HPP
+#define CASTOR_TAPE_TAPESERVER_LEGACYTXRX_HPP 1
 
 #include "castor/exception/Exception.hpp"
 #include "castor/io/ClientSocket.hpp"
-#include "castor/tape/aggregator/Constants.hpp"
-#include "castor/tape/aggregator/LogHelper.hpp"
+#include "castor/tape/tapeserver/Constants.hpp"
+#include "castor/tape/tapeserver/LogHelper.hpp"
 #include "castor/tape/legacymsg/RtcpDumpTapeRqstMsgBody.hpp"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
@@ -43,7 +43,7 @@
 
 namespace castor     {
 namespace tape       {
-namespace aggregator {
+namespace tapeserver {
 
 /**
  * Provides common functions for sending and receiving the messages of the
@@ -119,8 +119,8 @@ private:
 
 }; // class LegacyTxRx
 
-} // namespace aggregator
+} // namespace tapeserver
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_LEGACYTXRX_HPP
+#endif // CASTOR_TAPE_TAPESERVER_LEGACYTXRX_HPP

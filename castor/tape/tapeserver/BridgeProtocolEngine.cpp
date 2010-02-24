@@ -29,12 +29,12 @@
 #include "castor/exception/PermissionDenied.hpp"
 #include "castor/exception/TimeOut.hpp"
 #include "castor/tape/Constants.hpp"
-#include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
-#include "castor/tape/aggregator/BridgeProtocolEngine.hpp"
-#include "castor/tape/aggregator/Constants.hpp"
-#include "castor/tape/aggregator/ClientTxRx.hpp"
-#include "castor/tape/aggregator/LegacyTxRx.hpp"
-#include "castor/tape/aggregator/RtcpTxRx.hpp"
+#include "castor/tape/tapeserver/DlfMessageConstants.hpp"
+#include "castor/tape/tapeserver/BridgeProtocolEngine.hpp"
+#include "castor/tape/tapeserver/Constants.hpp"
+#include "castor/tape/tapeserver/ClientTxRx.hpp"
+#include "castor/tape/tapeserver/LegacyTxRx.hpp"
+#include "castor/tape/tapeserver/RtcpTxRx.hpp"
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/FileToMigrate.hpp"
@@ -58,7 +58,7 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::aggregator::BridgeProtocolEngine::BridgeProtocolEngine(
+castor::tape::tapeserver::BridgeProtocolEngine::BridgeProtocolEngine(
   const Cuuid_t                       &cuuid,
   const int                           listenSock,
   const int                           initialRtcpdSock,
@@ -66,13 +66,13 @@ castor::tape::aggregator::BridgeProtocolEngine::BridgeProtocolEngine(
   tapegateway::Volume                 &volume,
   const uint32_t                      nbFilesOnDestinationTape,
   BoolFunctor                         &stoppingGracefully,
-  Counter<uint64_t>                   &aggregatorTransactionCounter) throw() :
+  Counter<uint64_t>                   &tapeserverTransactionCounter) throw() :
   m_cuuid(cuuid),
   m_jobRequest(jobRequest),
   m_volume(volume),
   m_nextDestinationFseq(nbFilesOnDestinationTape + 1),
   m_stoppingGracefully(stoppingGracefully),
-  m_aggregatorTransactionCounter(aggregatorTransactionCounter),
+  m_tapeserverTransactionCounter(tapeserverTransactionCounter),
   m_nbReceivedENDOF_REQs(0),
   m_pendingTransferIds(MAXPENDINGTRANSFERS) {
 
@@ -110,7 +110,7 @@ castor::tape::aggregator::BridgeProtocolEngine::BridgeProtocolEngine(
 //-----------------------------------------------------------------------------
 // acceptRtcpdConnection
 //-----------------------------------------------------------------------------
-int castor::tape::aggregator::BridgeProtocolEngine::acceptRtcpdConnection()
+int castor::tape::tapeserver::BridgeProtocolEngine::acceptRtcpdConnection()
   throw(castor::exception::Exception) {
 
   utils::SmartFd connectedSock;
@@ -161,7 +161,7 @@ int castor::tape::aggregator::BridgeProtocolEngine::acceptRtcpdConnection()
       castor::dlf::Param("socketFd"          , connectedSock.get()       ),
       castor::dlf::Param("nbDiskTapeConns"   ,
         m_sockCatalogue.getNbDiskTapeIOControlConns())};
-    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, AGGREGATOR_RTCPD_CALLBACK,
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, TAPESERVER_RTCPD_CALLBACK,
       params);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ECANCELED,
@@ -177,7 +177,7 @@ int castor::tape::aggregator::BridgeProtocolEngine::acceptRtcpdConnection()
 //-----------------------------------------------------------------------------
 // processSocks
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::BridgeProtocolEngine::processSocks()
+void castor::tape::tapeserver::BridgeProtocolEngine::processSocks()
   throw(castor::exception::Exception) {
 
   int          selectRc            = 0;
@@ -228,7 +228,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processSocks()
 
         try {
           ClientTxRx::ping(m_cuuid, m_jobRequest.volReqId,
-            m_aggregatorTransactionCounter.next(), m_jobRequest.clientHost,
+            m_tapeserverTransactionCounter.next(), m_jobRequest.clientHost,
             m_jobRequest.clientPort);
         } catch(castor::exception::Exception &ex) {
           castor::exception::Exception ex2(ex.code());
@@ -254,7 +254,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processSocks()
         castor::dlf::Param params[] = {
           castor::dlf::Param("mountTransActionId", m_jobRequest.volReqId)};
         castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-          AGGREGATOR_SELECT_INTR, params);
+          TAPESERVER_SELECT_INTR, params);
 
       // Else select encountered an error other than an interruption
       } else {
@@ -282,7 +282,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processSocks()
 //------------------------------------------------------------------------------
 // processAPendingSocket
 //------------------------------------------------------------------------------
-bool castor::tape::aggregator::BridgeProtocolEngine::processAPendingSocket(
+bool castor::tape::tapeserver::BridgeProtocolEngine::processAPendingSocket(
   fd_set &readFdSet) throw(castor::exception::Exception) {
 
   BridgeSocketCatalogue::SocketType sockType = BridgeSocketCatalogue::LISTEN;
@@ -372,7 +372,7 @@ bool castor::tape::aggregator::BridgeProtocolEngine::processAPendingSocket(
             castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId),
             castor::dlf::Param("socketFd"          , pendingSock          )};
           castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-            AGGREGATOR_CLOSED_RTCPD_DISK_TAPE_CONNECTION_DUE_TO_PEER, params);
+            TAPESERVER_CLOSED_RTCPD_DISK_TAPE_CONNECTION_DUE_TO_PEER, params);
 
           return true; // Continue the RTCOPY session
         }
@@ -400,7 +400,7 @@ bool castor::tape::aggregator::BridgeProtocolEngine::processAPendingSocket(
           castor::dlf::Param("socketFd"            , pendingSock           ),
           castor::dlf::Param("nbReceivedENDOF_REQs", m_nbReceivedENDOF_REQs)};
         castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-          AGGREGATOR_RECEIVED_RTCP_ENDOF_REQ, params);
+          TAPESERVER_RECEIVED_RTCP_ENDOF_REQ, params);
       }
 
       close(m_sockCatalogue.releaseRtcpdDiskTapeIOControlConn(pendingSock));
@@ -426,7 +426,7 @@ bool castor::tape::aggregator::BridgeProtocolEngine::processAPendingSocket(
               m_sockCatalogue.getInitialRtcpdConn()                          ),
             castor::dlf::Param("nbReceivedENDOF_REQs", m_nbReceivedENDOF_REQs)};
           castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-            AGGREGATOR_SEND_END_OF_SESSION_TO_RTCPD, params);
+            TAPESERVER_SEND_END_OF_SESSION_TO_RTCPD, params);
         }
 
         // Receive the acknowledge of the RTCP_ENDOF_REQ message
@@ -513,7 +513,7 @@ bool castor::tape::aggregator::BridgeProtocolEngine::processAPendingSocket(
 //-----------------------------------------------------------------------------
 // run
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::BridgeProtocolEngine::run()
+void castor::tape::tapeserver::BridgeProtocolEngine::run()
   throw(castor::exception::Exception) {
 
   switch(m_volume.mode()) {
@@ -537,13 +537,13 @@ void castor::tape::aggregator::BridgeProtocolEngine::run()
 //-----------------------------------------------------------------------------
 // runMigrationSession
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
+void castor::tape::tapeserver::BridgeProtocolEngine::runMigrationSession()
   throw(castor::exception::Exception) {
 
   // Send the request for the first file to migrate to the client
   time_t connectDuration = 0;
   const uint64_t aggregatorTransactionId =
-    m_aggregatorTransactionCounter.next();
+    m_tapeserverTransactionCounter.next();
   utils::SmartFd clientSock(ClientTxRx::sendFileToMigrateRequest(
     m_jobRequest.volReqId, aggregatorTransactionId, m_jobRequest.clientHost,
     m_jobRequest.clientPort, connectDuration));
@@ -556,7 +556,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
       castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
       castor::dlf::Param("connectDuration"   , connectDuration        )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_SENT_FILETOMIGRATEREQUEST, params);
+      TAPESERVER_SENT_FILETOMIGRATEREQUEST, params);
   }
 
   // Receive the reply
@@ -578,7 +578,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
         fileFromClient->fileTransactionId()                   ),
       castor::dlf::Param("path"      , fileFromClient->path() )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_RECEIVED_FILETOMIGRATE, params);
+      TAPESERVER_RECEIVED_FILETOMIGRATE, params);
   } else {
     castor::dlf::Param params[] = {
       castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
@@ -586,13 +586,13 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
       castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
       castor::dlf::Param("clientPort"        , m_jobRequest.clientPort)};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG,
-      AGGREGATOR_RECEIVED_NOMOREFILES, params);
+      TAPESERVER_RECEIVED_NOMOREFILES, params);
   }
 
   // If there is no file to migrate
   if(fileFromClient.get() == NULL) {
     const uint64_t aggregatorTransactionId =
-      m_aggregatorTransactionCounter.next();
+      m_tapeserverTransactionCounter.next();
 
     // Notify client of end of session and return
     try {
@@ -607,7 +607,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
         castor::dlf::Param("Message"           , ex.getMessage().str()  ),
         castor::dlf::Param("Code"              , ex.code()              )};
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
-        AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
+        TAPESERVER_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
     }
 
     return;
@@ -699,7 +699,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
 
   {
     const uint64_t aggregatorTransactionId =
-      m_aggregatorTransactionCounter.next();
+      m_tapeserverTransactionCounter.next();
     try {
       ClientTxRx::notifyEndOfSession(m_cuuid, m_jobRequest.volReqId,
         aggregatorTransactionId, m_jobRequest.clientHost,
@@ -708,11 +708,11 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
       // Don't rethrow, just log the exception
       castor::dlf::Param params[] = {
         castor::dlf::Param("mountTransActionId"     , m_jobRequest.volReqId  ),
-        castor::dlf::Param("aggregatorTransActionId", aggregatorTransactionId),
+        castor::dlf::Param("aggregatorTransactionId", aggregatorTransactionId),
         castor::dlf::Param("Message"                , ex.getMessage().str()  ),
         castor::dlf::Param("Code"                   , ex.code()              )};
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
-        AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
+        TAPESERVER_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
     }
   }
 }
@@ -721,7 +721,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runMigrationSession()
 //-----------------------------------------------------------------------------
 // runRecallSession
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::BridgeProtocolEngine::runRecallSession()
+void castor::tape::tapeserver::BridgeProtocolEngine::runRecallSession()
   throw(castor::exception::Exception) {
 
   try {
@@ -758,7 +758,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runRecallSession()
 
     {
       const uint64_t aggregatorTransactionId =
-        m_aggregatorTransactionCounter.next();
+        m_tapeserverTransactionCounter.next();
       try {
         ClientTxRx::notifyEndOfSession(m_cuuid, m_jobRequest.volReqId,
           aggregatorTransactionId, m_jobRequest.clientHost,
@@ -771,7 +771,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runRecallSession()
           castor::dlf::Param("Message"           , ex.getMessage().str()  ),
           castor::dlf::Param("Code"              , ex.code()              )};
         castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
-          AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
+          TAPESERVER_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
       }
     }
   } catch(castor::exception::Exception &ex) {
@@ -789,7 +789,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runRecallSession()
 //-----------------------------------------------------------------------------
 // runDumpSession
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::BridgeProtocolEngine::runDumpSession()
+void castor::tape::tapeserver::BridgeProtocolEngine::runDumpSession()
   throw(castor::exception::Exception) {
 
   try {
@@ -813,7 +813,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runDumpSession()
     // Get dump parameters message
     std::auto_ptr<tapegateway::DumpParameters> dumpParameters(
       ClientTxRx::getDumpParameters(m_cuuid, m_jobRequest.volReqId,
-      m_aggregatorTransactionCounter.next(), m_jobRequest.clientHost,
+      m_tapeserverTransactionCounter.next(), m_jobRequest.clientHost,
       m_jobRequest.clientPort));
 
     // Tell rtcpd to dump the tape
@@ -839,7 +839,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runDumpSession()
 
     {
       const uint64_t aggregatorTransactionId =
-        m_aggregatorTransactionCounter.next();
+        m_tapeserverTransactionCounter.next();
 
       try {
         ClientTxRx::notifyEndOfSession(m_cuuid, m_jobRequest.volReqId,
@@ -853,7 +853,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runDumpSession()
           castor::dlf::Param("Message"           , ex.getMessage().str()  ),
           castor::dlf::Param("Code"              , ex.code()              )};
         castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
-          AGGREGATOR_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
+          TAPESERVER_FAILED_TO_NOTIFY_CLIENT_END_OF_SESSION, params);
       }
     }
   } catch(castor::exception::Exception &ex) {
@@ -871,7 +871,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::runDumpSession()
 //-----------------------------------------------------------------------------
 // processRtcpdRequest
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdRequest(
+void castor::tape::tapeserver::BridgeProtocolEngine::processRtcpdRequest(
   const legacymsg::MessageHeader &header, const int socketFd, 
   bool &receivedENDOF_REQ) throw(castor::exception::Exception) {
 
@@ -899,7 +899,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdRequest(
       castor::dlf::Param("reqTypeName", reqTypeName          ),
       castor::dlf::Param("len"        , header.lenOrStatus   )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG,
-      AGGREGATOR_PROCESSING_TAPE_DISK_RQST, params);
+      TAPESERVER_PROCESSING_TAPE_DISK_RQST, params);
   }
 
   // Find the message type's corresponding handler
@@ -921,7 +921,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpdRequest(
 //-----------------------------------------------------------------------------
 // rtcpFileReqRtcpdCallback
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileReqRtcpdCallback(
+void castor::tape::tapeserver::BridgeProtocolEngine::rtcpFileReqRtcpdCallback(
   const legacymsg::MessageHeader &header, const int socketFd, 
   bool &receivedENDOF_REQ) throw(castor::exception::Exception) {
 
@@ -938,7 +938,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpFileReqRtcpdCallback(
 // rtcpFileErrReqRtcpdCallback
 //-----------------------------------------------------------------------------
 void
-  castor::tape::aggregator::BridgeProtocolEngine::rtcpFileErrReqRtcpdCallback(
+  castor::tape::tapeserver::BridgeProtocolEngine::rtcpFileErrReqRtcpdCallback(
   const legacymsg::MessageHeader &header,
   const int                      socketFd, 
   bool                           &receivedENDOF_REQ)
@@ -963,7 +963,7 @@ void
 //-----------------------------------------------------------------------------
 // processRtcpFileReq
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
+void castor::tape::tapeserver::BridgeProtocolEngine::processRtcpFileReq(
   const legacymsg::MessageHeader &header,
   legacymsg::RtcpFileRqstMsgBody &body,
   const int                      rtcpdSock,
@@ -990,7 +990,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
       // Send a FileToMigrateRequest to the client
       time_t connectDuration = 0;
       const uint64_t aggregatorTransactionId =
-        m_aggregatorTransactionCounter.next();
+        m_tapeserverTransactionCounter.next();
       utils::SmartFd clientSock(ClientTxRx::sendFileToMigrateRequest(
         m_jobRequest.volReqId, aggregatorTransactionId,
         m_jobRequest.clientHost, m_jobRequest.clientPort, connectDuration));
@@ -1003,7 +1003,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
           castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
           castor::dlf::Param("connectDuration"   , connectDuration        )};
         castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-          AGGREGATOR_SENT_FILETOMIGRATEREQUEST, params);
+          TAPESERVER_SENT_FILETOMIGRATEREQUEST, params);
       }
 
       // Add the client connection to the socket catalogue so that the
@@ -1017,7 +1017,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
       // Send a FileToRecallRequest to the client
       time_t connectDuration = 0;
       const uint64_t aggregatorTransactionId =
-        m_aggregatorTransactionCounter.next();
+        m_tapeserverTransactionCounter.next();
       utils::SmartFd clientSock(ClientTxRx::sendFileToRecallRequest(
         m_jobRequest.volReqId, aggregatorTransactionId,
         m_jobRequest.clientHost, m_jobRequest.clientPort, connectDuration));
@@ -1030,7 +1030,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
           castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
           castor::dlf::Param("connectDuration"   , connectDuration        )};
         castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-          AGGREGATOR_SENT_FILETORECALLREQUEST, params);
+          TAPESERVER_SENT_FILETORECALLREQUEST, params);
       }
 
       // Add the client connection to the socket catalogue so that the
@@ -1046,7 +1046,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
         castor::dlf::Param("filePath", body.filePath        ),
         castor::dlf::Param("tapePath", body.tapePath        )};
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_TAPE_POSITIONED, params);
+        TAPESERVER_TAPE_POSITIONED, params);
 
       // Send an acknowledge to rtcpd
       legacymsg::MessageHeader ackMsg;
@@ -1068,7 +1068,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
         castor::dlf::Param("bytesIn" , body.bytesIn         ),
         castor::dlf::Param("bytesOut", body.bytesOut        )};
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-        AGGREGATOR_FILE_TRANSFERED, params);
+        TAPESERVER_FILE_TRANSFERED, params);
 
       // Send an acknowledge to rtcpd
       legacymsg::MessageHeader ackMsg;
@@ -1090,7 +1090,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
 
         time_t connectDuration = 0;
         const uint64_t aggregatorTransactionId =
-          m_aggregatorTransactionCounter.next();
+          m_tapeserverTransactionCounter.next();
         utils::SmartFd clientSock(ClientTxRx::sendFileMigratedNotification(
           m_jobRequest.volReqId, aggregatorTransactionId,
           m_jobRequest.clientHost, m_jobRequest.clientPort, connectDuration,
@@ -1108,7 +1108,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
             castor::dlf::Param("connectDuration"   , connectDuration        ),
             castor::dlf::Param("fileTransactionId" , fileTransactonId       )};
           castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-            AGGREGATOR_SENT_FILEMIGRATEDNOTIFICATION, params);
+            TAPESERVER_SENT_FILEMIGRATEDNOTIFICATION, params);
         }
 
         int closedClientSock = 0;
@@ -1124,7 +1124,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
             castor::dlf::Param("connectDuration"   , connectDuration        ),
             castor::dlf::Param("fileTransactionId" , fileTransactonId       )};
           castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-            AGGREGATOR_RECEIVED_ACK_OF_NOTIFICATION, params);
+            TAPESERVER_RECEIVED_ACK_OF_NOTIFICATION, params);
         }
 
       // Else recall (READ or DUMP)
@@ -1133,7 +1133,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
 
         time_t connectDuration = 0;
         const uint64_t aggregatorTransactionId =
-          m_aggregatorTransactionCounter.next();
+          m_tapeserverTransactionCounter.next();
         utils::SmartFd clientSock(ClientTxRx::sendFileRecalledNotification(
           m_jobRequest.volReqId, aggregatorTransactionId,
           m_jobRequest.clientHost, m_jobRequest.clientPort, connectDuration,
@@ -1151,7 +1151,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
             castor::dlf::Param("connectDuration"   , connectDuration        ),
             castor::dlf::Param("fileTransactionId" , fileTransactonId       )};
           castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-            AGGREGATOR_SENT_FILERECALLEDNOTIFICATION, params);
+            TAPESERVER_SENT_FILERECALLEDNOTIFICATION, params);
         }
 
         int closedClientSock = 0;
@@ -1167,7 +1167,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
             castor::dlf::Param("connectDuration"   , connectDuration        ),
             castor::dlf::Param("fileTransactionId" , fileTransactonId       )};
           castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-            AGGREGATOR_RECEIVED_ACK_OF_NOTIFICATION, params);
+            TAPESERVER_RECEIVED_ACK_OF_NOTIFICATION, params);
         }
       }
     }
@@ -1186,7 +1186,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpFileReq(
 //-----------------------------------------------------------------------------
 // rtcpTapeReqRtcpdCallback
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::BridgeProtocolEngine::rtcpTapeReqRtcpdCallback(
+void castor::tape::tapeserver::BridgeProtocolEngine::rtcpTapeReqRtcpdCallback(
   const legacymsg::MessageHeader &header, const int socketFd, 
   bool &receivedENDOF_REQ) throw(castor::exception::Exception) {
 
@@ -1203,7 +1203,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpTapeReqRtcpdCallback(
 // rtcpTapeErrReqRtcpdCallback
 //-----------------------------------------------------------------------------
 void
-  castor::tape::aggregator::BridgeProtocolEngine::rtcpTapeErrReqRtcpdCallback(
+  castor::tape::tapeserver::BridgeProtocolEngine::rtcpTapeErrReqRtcpdCallback(
   const legacymsg::MessageHeader &header,
   const int                      socketFd, 
   bool                           &receivedENDOF_REQ)
@@ -1229,7 +1229,7 @@ void
 //-----------------------------------------------------------------------------
 // processRtcpTape
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::BridgeProtocolEngine::processRtcpTape(
+void castor::tape::tapeserver::BridgeProtocolEngine::processRtcpTape(
   const legacymsg::MessageHeader &header,
   legacymsg::RtcpTapeRqstMsgBody &body,
   const int                      socketFd,
@@ -1249,7 +1249,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::processRtcpTape(
 //-----------------------------------------------------------------------------
 // rtcpEndOfReqRtcpdCallback
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::BridgeProtocolEngine::rtcpEndOfReqRtcpdCallback(
+void castor::tape::tapeserver::BridgeProtocolEngine::rtcpEndOfReqRtcpdCallback(
   const legacymsg::MessageHeader &header,
   const int                      socketFd, 
   bool                           &receivedENDOF_REQ)
@@ -1270,7 +1270,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::rtcpEndOfReqRtcpdCallback(
 //-----------------------------------------------------------------------------
 // giveOutpRtcpdCallback
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::BridgeProtocolEngine::giveOutpRtcpdCallback(
+void castor::tape::tapeserver::BridgeProtocolEngine::giveOutpRtcpdCallback(
   const legacymsg::MessageHeader &header,
   const int                      socketFd,
   bool                           &receivedENDOF_REQ)
@@ -1282,7 +1282,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::giveOutpRtcpdCallback(
     RTCPDNETRWTIMEOUT, header, body);
 
   ClientTxRx::notifyDumpMessage(m_cuuid, m_jobRequest.volReqId,
-    m_aggregatorTransactionCounter.next(), m_jobRequest.clientHost,
+    m_tapeserverTransactionCounter.next(), m_jobRequest.clientHost,
     m_jobRequest.clientPort, body.message);
 }
 
@@ -1290,7 +1290,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::giveOutpRtcpdCallback(
 //-----------------------------------------------------------------------------
 // checkPeerIsLocalhost
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::BridgeProtocolEngine::checkPeerIsLocalhost(
+void castor::tape::tapeserver::BridgeProtocolEngine::checkPeerIsLocalhost(
   const int socketFd) throw(castor::exception::Exception) {
 
   unsigned long  ip;
@@ -1317,7 +1317,7 @@ void castor::tape::aggregator::BridgeProtocolEngine::checkPeerIsLocalhost(
 // fileToMigrateClientCallback
 //-----------------------------------------------------------------------------
 void
-  castor::tape::aggregator::BridgeProtocolEngine::fileToMigrateClientCallback(
+  castor::tape::tapeserver::BridgeProtocolEngine::fileToMigrateClientCallback(
   const int                                    clientSock,
   const IObject                                *obj,
   const int                                    rtcpdSock,
@@ -1346,7 +1346,7 @@ void
     castor::dlf::Param("fileTransactionId" , reply->fileTransactionId()      ),
     castor::dlf::Param("path"              , reply->path()                   )};
   castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-    AGGREGATOR_RECEIVED_FILETOMIGRATE, params);
+    TAPESERVER_RECEIVED_FILETOMIGRATE, params);
 
   ClientTxRx::checkTransactionIds("FileToMigrate",
     m_jobRequest.volReqId  , reply->mountTransactionId(),
@@ -1423,7 +1423,7 @@ void
       castor::dlf::Param("volReqId", m_jobRequest.volReqId),
       castor::dlf::Param("rtcpdSock", rtcpdSock             )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG,
-      AGGREGATOR_SEND_DELAYED_REQUEST_MORE_WORK_ACK_TO_RTCPD, params);
+      TAPESERVER_SEND_DELAYED_REQUEST_MORE_WORK_ACK_TO_RTCPD, params);
   }
 
   // Send delayed acknowledge of the request for more work
@@ -1439,7 +1439,7 @@ void
       castor::dlf::Param("volReqId", m_jobRequest.volReqId),
       castor::dlf::Param("rtcpdSock", rtcpdSock             )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_SENT_DELAYED_REQUEST_MORE_WORK_ACK_TO_RTCPD, params);
+      TAPESERVER_SENT_DELAYED_REQUEST_MORE_WORK_ACK_TO_RTCPD, params);
   }
 }
 
@@ -1448,7 +1448,7 @@ void
 // fileToRecallClientCallback
 //-----------------------------------------------------------------------------
 void
-  castor::tape::aggregator::BridgeProtocolEngine::fileToRecallClientCallback(
+  castor::tape::tapeserver::BridgeProtocolEngine::fileToRecallClientCallback(
   const int      clientSock,
   const IObject  *obj,
   const int      rtcpdSock,
@@ -1477,7 +1477,7 @@ void
     castor::dlf::Param("fileTransactionId" , reply->fileTransactionId()      ),
     castor::dlf::Param("path"              , reply->path()                   )};
   castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-    AGGREGATOR_RECEIVED_FILETORECALL, params);
+    TAPESERVER_RECEIVED_FILETORECALL, params);
 
   ClientTxRx::checkTransactionIds("FileToRecall",
      m_jobRequest.volReqId  , reply->mountTransactionId(),
@@ -1548,7 +1548,7 @@ void
       castor::dlf::Param("volReqId", m_jobRequest.volReqId),
       castor::dlf::Param("rtcpdSock", rtcpdSock             )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG,
-      AGGREGATOR_SEND_DELAYED_REQUEST_MORE_WORK_ACK_TO_RTCPD, params);
+      TAPESERVER_SEND_DELAYED_REQUEST_MORE_WORK_ACK_TO_RTCPD, params);
   }
 
   // Send delayed acknowledge of the request for more work
@@ -1564,7 +1564,7 @@ void
       castor::dlf::Param("volReqId", m_jobRequest.volReqId),
       castor::dlf::Param("rtcpdSock", rtcpdSock             )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_SENT_DELAYED_REQUEST_MORE_WORK_ACK_TO_RTCPD, params);
+      TAPESERVER_SENT_DELAYED_REQUEST_MORE_WORK_ACK_TO_RTCPD, params);
   }
 }
 
@@ -1573,7 +1573,7 @@ void
 // noMoreFilesClientCallback
 //-----------------------------------------------------------------------------
 void
-  castor::tape::aggregator::BridgeProtocolEngine::noMoreFilesClientCallback(
+  castor::tape::tapeserver::BridgeProtocolEngine::noMoreFilesClientCallback(
   const int      clientSock,
   const IObject  *obj,
   const int      rtcpdSock,
@@ -1600,7 +1600,7 @@ void
     castor::dlf::Param("clientHost"        , m_jobRequest.clientHost         ),
     castor::dlf::Param("clientPort"        , m_jobRequest.clientPort         )};
   castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-    AGGREGATOR_RECEIVED_NOMOREFILES, params);
+    TAPESERVER_RECEIVED_NOMOREFILES, params);
 
   ClientTxRx::checkTransactionIds("NoMoreFiles",
     m_jobRequest.volReqId  , reply->mountTransactionId(),
@@ -1623,7 +1623,7 @@ void
       castor::dlf::Param("volReqId", m_jobRequest.volReqId),
       castor::dlf::Param("rtcpdSock", rtcpdSock             )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_SENT_DELAYED_REQUEST_MORE_WORK_ACK_TO_RTCPD, params);
+      TAPESERVER_SENT_DELAYED_REQUEST_MORE_WORK_ACK_TO_RTCPD, params);
   }
 }
 
@@ -1632,7 +1632,7 @@ void
 // endNotificationErrorReportClientCallback
 //-----------------------------------------------------------------------------
 void
-  castor::tape::aggregator::BridgeProtocolEngine::
+  castor::tape::tapeserver::BridgeProtocolEngine::
   endNotificationErrorReportClientCallback(
   const int      clientSock,
   const IObject  *obj,
@@ -1663,7 +1663,7 @@ void
     castor::dlf::Param("errorCode"         , reply->errorCode()              ),
     castor::dlf::Param("errorMessage"      , reply->errorMessage()           )};
   castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-    AGGREGATOR_RECEIVED_ENDNOTIFCATIONERRORREPORT, params);
+    TAPESERVER_RECEIVED_ENDNOTIFCATIONERRORREPORT, params);
 
   // Translate the reception of the error report into a C++ exception
   TAPE_THROW_CODE(reply->errorCode(),
@@ -1676,7 +1676,7 @@ void
 // notificationAcknowledge
 //-----------------------------------------------------------------------------
 void
-  castor::tape::aggregator::BridgeProtocolEngine::notificationAcknowledge(
+  castor::tape::tapeserver::BridgeProtocolEngine::notificationAcknowledge(
   const int      clientSock,
   const IObject  *obj,
   const int      rtcpdSock,
@@ -1704,7 +1704,7 @@ void
     castor::dlf::Param("clientHost"        , m_jobRequest.clientHost         ),
     castor::dlf::Param("clientPort"        , m_jobRequest.clientPort         )};
   castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-    AGGREGATOR_RECEIVED_NOTIFCATIONACKNOWLEDGE, params);
+    TAPESERVER_RECEIVED_NOTIFCATIONACKNOWLEDGE, params);
 
   ClientTxRx::checkTransactionIds("NotificationAcknowledge",
     m_jobRequest.volReqId  , reply->mountTransactionId(),

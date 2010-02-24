@@ -23,14 +23,14 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/aggregator/Unpacker.hpp"
+#include "castor/tape/tapeserver/Unpacker.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 
 //-----------------------------------------------------------------------------
 // run
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::Unpacker::run()
+void castor::tape::tapeserver::Unpacker::run()
   throw(castor::exception::Exception) {
 
   TAPE_THROW_CODE(ECANCELED,

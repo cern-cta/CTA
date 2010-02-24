@@ -2,12 +2,12 @@
 
 use strict;
 
-my $constants_filename="AggregatorDlfMessageConstants.hpp";
-my $constants_head_filename="AggregatorDlfMessageConstantsHeader.txt";
-my $messages_filename="AggregatorDlfMessages.csv";
-my $constants_tail_filename="AggregatorDlfMessageConstantsTrailer.txt";
-my $strings_filename="AggregatorDlfMessageStrings.cpp";
-my $strings_head_filename="AggregatorDlfMessageStringsHeader.txt";
+my $constants_filename      = "DlfMessageConstants.hpp";
+my $constants_head_filename = "DlfMessageConstantsHeader.txt";
+my $messages_filename       = "DlfMessages.csv";
+my $constants_tail_filename = "DlfMessageConstantsTrailer.txt";
+my $strings_filename        = "DlfMessageStrings.cpp";
+my $strings_head_filename   = "DlfMessageStringsHeader.txt";
 
 
 sub writeConstantsFile {

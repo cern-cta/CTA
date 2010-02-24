@@ -10,21 +10,19 @@
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-.TH AGGREGATORD 8 "$Date: 2009/08/18 09:42:55 $" CASTOR "CASTOR"
+.TH TAPESERVERD 8 "$Date: 2009/08/18 09:42:55 $" CASTOR "CASTOR"
 .SH NAME
-aggregatord \- Tape aggregator daemon
+tapeserverd \- Tape tapeserver daemon
 .SH SYNOPSIS
-.BI "aggregatord [OPTIONS]"
+.BI "tapeserverd [OPTIONS]"
 
 .SH DESCRIPTION
-\fBaggregatord\fP is the tape server daemon responsible for aggregating small
-disk files into larger tape files and for acting as a bridge between
-Tape Gateway daemons and the RTCPD daemon running on the same tape server as
-the tape aggreagtor daemon.
+\fBtapeserverd\fP is the tape server daemon responsible for acting as a bridge
+between the tape gateway daemons and the RTCPD daemon.
 .P
-When \fBaggregatord\fP is executed it immediately forks with the parent
+When \fBtapeserverd\fP is executed it immediately forks with the parent
 terminating and the child running in the background.  If required the
-\fB\-f, \-\-foreground\fP option can be used to stop \fBaggregatord\fP from
+\fB\-f, \-\-foreground\fP option can be used to stop \fBtapeserverd\fP from
 forking and keep the parent process in the foreground.
 
 .SH OPTIONS
@@ -41,33 +39,33 @@ Prints the usage message
 
 
 .SH CASTOR CONFIGURATION PARAMETERS
-The tape aggregator daemon reads and uses the following CASTOR configuration
+The tape tapeserver daemon reads and uses the following CASTOR configuration
 parameters which are specified using environment variables or within the CASTOR
 configuration file (the default location is /etc/castor/castor.conf).
 .TP
-\fBAGGREGATOR VDQMPORT
-The port on which the aggregator will listen for RTCOPY jobs from the VDQM.
+\fBTAPESERVER VDQMPORT
+The port on which the tapeserver will listen for RTCOPY jobs from the VDQM.
 The default is 5070.  This configuration parameter should \fBNOT\fP normally be
 set and the default should be used.
 .TP
-\fBAGGREGATOR RTCPDLOWPORT
-The inclusive low port of the aggregator's RTCPD callback port number range.
+\fBTAPESERVER RTCPDLOWPORT
+The inclusive low port of the tapeserver's RTCPD callback port number range.
 The default is 300101.
 .TP
-\fBAGGREGATOR RTCPDHIGHPORT
-The inclusive high port of the aggregator's RTCPD callback port number range.
+\fBTAPESERVER RTCPDHIGHPORT
+The inclusive high port of the tapeserver's RTCPD callback port number range.
 The default is 300200.
 .TP
-\fBaggregatord LOGSTANDARD XXXX
-Sets the location of the \fBaggregatord\fP log file to be \fBXXXX\fP.
+\fBtapeserverd LOGSTANDARD XXXX
+Sets the location of the \fBtapeserverd\fP log file to be \fBXXXX\fP.
 
 .SH FILES
 .TP
 .B /etc/castor/castor.conf
 Default location of the CASTOR configuration file.
 .TP
-.B /var/log/castor/aggregatord.log
-Default location of the tape aggregator log file.
+.B /var/log/castor/tapeserverd.log
+Default location of the tape tapeserver log file.
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

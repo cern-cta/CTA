@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/aggregator/SynchronizedCounter.cpp
+ *                castor/tape/tapeserver/SynchronizedCounter.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -23,8 +23,8 @@
  *****************************************************************************/
 
 #include "castor/exception/Internal.hpp"
-#include "castor/tape/aggregator/Constants.hpp"
-#include "castor/tape/aggregator/SynchronizedCounter.hpp"
+#include "castor/tape/tapeserver/Constants.hpp"
+#include "castor/tape/tapeserver/SynchronizedCounter.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <sstream>
@@ -34,7 +34,7 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::aggregator::SynchronizedCounter::SynchronizedCounter(
+castor::tape::tapeserver::SynchronizedCounter::SynchronizedCounter(
   const int32_t count) throw(castor::exception::Exception) : m_count(count) {
   const int rc = pthread_mutex_init(&m_mutex, NULL);
 
@@ -50,7 +50,7 @@ castor::tape::aggregator::SynchronizedCounter::SynchronizedCounter(
 //-----------------------------------------------------------------------------
 // reset
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::SynchronizedCounter::reset(
+void castor::tape::tapeserver::SynchronizedCounter::reset(
   const int32_t count) throw(castor::exception::Exception) {
   int rc = 0;
 
@@ -73,7 +73,7 @@ void castor::tape::aggregator::SynchronizedCounter::reset(
 //-----------------------------------------------------------------------------
 // next
 //-----------------------------------------------------------------------------
-int32_t castor::tape::aggregator::SynchronizedCounter::next()
+int32_t castor::tape::tapeserver::SynchronizedCounter::next()
   throw(castor::exception::Exception) {
 
   return next(1);
@@ -83,7 +83,7 @@ int32_t castor::tape::aggregator::SynchronizedCounter::next()
 //-----------------------------------------------------------------------------
 // next
 //-----------------------------------------------------------------------------
-int32_t castor::tape::aggregator::SynchronizedCounter::next(
+int32_t castor::tape::tapeserver::SynchronizedCounter::next(
   const int32_t increment) throw(castor::exception::Exception) {
 
   int rc = 0;

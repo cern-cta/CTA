@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/aggregator/AggregatorDaemon.hpp
+ *                 castor/tape/tapeserver/TapeServerDaemon.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_AGGREGATORDAEMON_HPP
-#define CASTOR_TAPE_AGGREGATOR_AGGREGATORDAEMON_HPP 1
+#ifndef CASTOR_TAPE_TAPESERVER_TAPESERVERDAEMON_HPP
+#define CASTOR_TAPE_TAPESERVER_TAPESERVERDAEMON_HPP 1
 
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidConfigEntry.hpp"
@@ -39,27 +39,27 @@
 
 namespace castor     {
 namespace tape       {
-namespace aggregator {
+namespace tapeserver {
 
 /**
- * The aggregator daemon.
+ * The tapeserver daemon.
  */
-class AggregatorDaemon : public castor::server::BaseDaemon {
+class TapeServerDaemon : public castor::server::BaseDaemon {
 
 public:
 
   /**
    * Constructor.
    */
-  AggregatorDaemon() throw(castor::exception::Exception);
+  TapeServerDaemon() throw(castor::exception::Exception);
 
   /**
    * Destructor.
    */
-  ~AggregatorDaemon() throw();
+  ~TapeServerDaemon() throw();
 
   /**
-   * The main entry function of the aggregator daemon.
+   * The main entry function of the tapeserver daemon.
    */
   int main(const int argc, char **argv);
 
@@ -113,7 +113,7 @@ private:
     throw(castor::exception::Exception);
 
   /**
-   * Writes the command-line usage message of the aggregator daemon onto the
+   * Writes the command-line usage message of the tapeserver daemon onto the
    * specified output stream.
    *
    * @param os Output stream to be written to.
@@ -125,7 +125,7 @@ private:
    * Creates the VDQM request handler thread pool.
    *
    * @param nbDrives The number of tape drives attached to the tape server
-   *                 aggregatord is running on.
+   *                 tapeserverd is running on.
    */
   void createVdqmRequestHandlerPool(const uint32_t nbDrives)
     throw (castor::exception::Exception);
@@ -135,11 +135,11 @@ private:
    */
   static castor::dlf::Message s_dlfMessages[];
 
-}; // class AggregatorDaemon
+}; // class TapeServerDaemon
 
-} // namespace aggregator
+} // namespace tapeserver
 } // namespace tape
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_AGGREGATOR_AGGREGATORDAEMON_HPP
+#endif // CASTOR_TAPE_TAPESERVER_TAPESERVERDAEMON_HPP

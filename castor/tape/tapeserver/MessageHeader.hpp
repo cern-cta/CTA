@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/MessageHeader.hpp
+ *                      castor/tape/tapeserver/MessageHeader.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_MESSAGEHEADER
-#define CASTOR_TAPE_AGGREGATOR_MESSAGEHEADER
+#ifndef CASTOR_TAPE_TAPESERVER_MESSAGEHEADER
+#define CASTOR_TAPE_TAPESERVER_MESSAGEHEADER
 
 #include "h/Castor_limits.h"
 
@@ -33,7 +33,7 @@
 
 namespace castor     {
 namespace tape       {
-namespace aggregator {
+namespace tapeserver {
 
   /**
    * A message header
@@ -58,8 +58,8 @@ namespace aggregator {
     uint32_t lenOrStatus;
   };
 
-} // namespace aggregator
+} // namespace tapeserver
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_MESSAGEHEADER
+#endif // CASTOR_TAPE_TAPESERVER_MESSAGEHEADER

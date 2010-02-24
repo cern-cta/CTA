@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/BridgeSocketCatalogue.hpp
+ *                      castor/tape/tapeserver/BridgeSocketCatalogue.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -23,8 +23,8 @@
  *****************************************************************************/
 
 #include "castor/exception/Internal.hpp"
-#include "castor/tape/aggregator/BridgeSocketCatalogue.hpp"
-#include "castor/tape/aggregator/Constants.hpp"
+#include "castor/tape/tapeserver/BridgeSocketCatalogue.hpp"
+#include "castor/tape/tapeserver/Constants.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <errno.h>
@@ -33,7 +33,7 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::aggregator::BridgeSocketCatalogue::BridgeSocketCatalogue() :
+castor::tape::tapeserver::BridgeSocketCatalogue::BridgeSocketCatalogue() :
   m_listenSock(-1), m_initialRtcpdSock(-1) {
 }
 
@@ -41,7 +41,7 @@ castor::tape::aggregator::BridgeSocketCatalogue::BridgeSocketCatalogue() :
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-castor::tape::aggregator::BridgeSocketCatalogue::~BridgeSocketCatalogue() {
+castor::tape::tapeserver::BridgeSocketCatalogue::~BridgeSocketCatalogue() {
 
   // Note this destructor does NOT close the listen socket used to accept rtcpd
   // connections.  This is the responsibility of the VdqmRequestHandler.
@@ -67,7 +67,7 @@ castor::tape::aggregator::BridgeSocketCatalogue::~BridgeSocketCatalogue() {
 //-----------------------------------------------------------------------------
 // addListenSock
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::BridgeSocketCatalogue::addListenSock(
+void castor::tape::tapeserver::BridgeSocketCatalogue::addListenSock(
   const int listenSock) throw(castor::exception::Exception) {
 
   if(listenSock < 0) {
@@ -91,7 +91,7 @@ void castor::tape::aggregator::BridgeSocketCatalogue::addListenSock(
 //-----------------------------------------------------------------------------
 // addInitialRtcpdConn
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::BridgeSocketCatalogue::addInitialRtcpdConn(
+void castor::tape::tapeserver::BridgeSocketCatalogue::addInitialRtcpdConn(
   const int initialRtcpdSock) throw(castor::exception::Exception) {
 
   if(initialRtcpdSock < 0) {
@@ -115,7 +115,7 @@ void castor::tape::aggregator::BridgeSocketCatalogue::addInitialRtcpdConn(
 //-----------------------------------------------------------------------------
 // addRtcpdDiskTapeIOControlConn
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::BridgeSocketCatalogue::
+void castor::tape::tapeserver::BridgeSocketCatalogue::
   addRtcpdDiskTapeIOControlConn(const int rtcpdSock)
   throw(castor::exception::Exception) {
 
@@ -146,7 +146,7 @@ void castor::tape::aggregator::BridgeSocketCatalogue::
 //-----------------------------------------------------------------------------
 // addClientConn
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::BridgeSocketCatalogue::addClientConn(
+void castor::tape::tapeserver::BridgeSocketCatalogue::addClientConn(
   const int      rtcpdSock,
   const uint32_t rtcpdReqMagic,
   const uint32_t rtcpdReqType,
@@ -200,7 +200,7 @@ void castor::tape::aggregator::BridgeSocketCatalogue::addClientConn(
       // Store the client-connection
       itor->clientSock = clientSock;
 
-      // Store the aggregator transaction ID asscoiated with the request sent
+      // Store the tapeserver transaction ID asscoiated with the request sent
       // to the client
       itor->aggregatorTransactionId = aggregatorTransactionId;
 
@@ -227,7 +227,7 @@ void castor::tape::aggregator::BridgeSocketCatalogue::addClientConn(
 //-----------------------------------------------------------------------------
 // getListenSock
 //-----------------------------------------------------------------------------
-int castor::tape::aggregator::BridgeSocketCatalogue::getListenSock()
+int castor::tape::tapeserver::BridgeSocketCatalogue::getListenSock()
   throw(castor::exception::Exception) {
 
   // Throw an exception if the socket-descriptor of the listen socket does not
@@ -244,7 +244,7 @@ int castor::tape::aggregator::BridgeSocketCatalogue::getListenSock()
 //-----------------------------------------------------------------------------
 // getInitialRtcpdConn
 //-----------------------------------------------------------------------------
-int castor::tape::aggregator::BridgeSocketCatalogue::getInitialRtcpdConn()
+int castor::tape::tapeserver::BridgeSocketCatalogue::getInitialRtcpdConn()
   throw(castor::exception::Exception) {
 
   // Throw an exception if the socket-descriptor of the initial rtcpd
@@ -261,7 +261,7 @@ int castor::tape::aggregator::BridgeSocketCatalogue::getInitialRtcpdConn()
 //-----------------------------------------------------------------------------
 // releaseRtcpdDiskTapeIOControlConn
 //-----------------------------------------------------------------------------
-int castor::tape::aggregator::BridgeSocketCatalogue::
+int castor::tape::tapeserver::BridgeSocketCatalogue::
   releaseRtcpdDiskTapeIOControlConn(const int rtcpdSock)
   throw(castor::exception::Exception) {
 
@@ -304,7 +304,7 @@ int castor::tape::aggregator::BridgeSocketCatalogue::
 //-----------------------------------------------------------------------------
 // releaseClientConn
 //-----------------------------------------------------------------------------
-int castor::tape::aggregator::BridgeSocketCatalogue::releaseClientConn(
+int castor::tape::tapeserver::BridgeSocketCatalogue::releaseClientConn(
   const int rtcpdSock, const int clientSock)
   throw(castor::exception::Exception) {
 
@@ -378,7 +378,7 @@ int castor::tape::aggregator::BridgeSocketCatalogue::releaseClientConn(
 //-----------------------------------------------------------------------------
 // getRtcpdConn
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::BridgeSocketCatalogue::getRtcpdConn(
+void castor::tape::tapeserver::BridgeSocketCatalogue::getRtcpdConn(
   const int      clientSock,
   int            &rtcpdSock,
   uint32_t       &rtcpdReqMagic,
@@ -426,7 +426,7 @@ void castor::tape::aggregator::BridgeSocketCatalogue::getRtcpdConn(
 //-----------------------------------------------------------------------------
 // buildReadFdSet
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::BridgeSocketCatalogue::buildReadFdSet(
+void castor::tape::tapeserver::BridgeSocketCatalogue::buildReadFdSet(
   fd_set &readFdSet, int &maxFd) throw() {
 
   // Clear the file-descriptor set
@@ -474,7 +474,7 @@ void castor::tape::aggregator::BridgeSocketCatalogue::buildReadFdSet(
 //-----------------------------------------------------------------------------
 // getAPendingSock
 //-----------------------------------------------------------------------------
-int castor::tape::aggregator::BridgeSocketCatalogue::getAPendingSock(
+int castor::tape::tapeserver::BridgeSocketCatalogue::getAPendingSock(
   fd_set &readFdSet, SocketType &sockType) throw() {
 
   // If the listen socket is pending, then set the socket type output parameter
@@ -522,7 +522,7 @@ int castor::tape::aggregator::BridgeSocketCatalogue::getAPendingSock(
 //-----------------------------------------------------------------------------
 // getNbDiskTapeIOControlConnections
 //-----------------------------------------------------------------------------
-int castor::tape::aggregator::BridgeSocketCatalogue::
+int castor::tape::tapeserver::BridgeSocketCatalogue::
   getNbDiskTapeIOControlConns() {
 
   return m_rtcpdConnections.size();
@@ -532,7 +532,7 @@ int castor::tape::aggregator::BridgeSocketCatalogue::
 //-----------------------------------------------------------------------------
 // checkForTimeout
 //-----------------------------------------------------------------------------
-void castor::tape::aggregator::BridgeSocketCatalogue::checkForTimeout()
+void castor::tape::tapeserver::BridgeSocketCatalogue::checkForTimeout()
   throw(castor::exception::TimeOut) {
 
   if(!m_clientReqHistory.empty()) {

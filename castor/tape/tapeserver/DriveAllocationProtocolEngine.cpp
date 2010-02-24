@@ -24,12 +24,12 @@
  *****************************************************************************/
 
 #include "castor/exception/Internal.hpp"
-#include "castor/tape/aggregator/AggregatorDlfMessageConstants.hpp"
-#include "castor/tape/aggregator/Constants.hpp"
-#include "castor/tape/aggregator/DriveAllocationProtocolEngine.hpp"
-#include "castor/tape/aggregator/ClientTxRx.hpp"
-#include "castor/tape/aggregator/RtcpJobSubmitter.hpp"
-#include "castor/tape/aggregator/RtcpTxRx.hpp"
+#include "castor/tape/tapeserver/DlfMessageConstants.hpp"
+#include "castor/tape/tapeserver/Constants.hpp"
+#include "castor/tape/tapeserver/DriveAllocationProtocolEngine.hpp"
+#include "castor/tape/tapeserver/ClientTxRx.hpp"
+#include "castor/tape/tapeserver/RtcpJobSubmitter.hpp"
+#include "castor/tape/tapeserver/RtcpTxRx.hpp"
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/Ctape_constants.h"
@@ -43,9 +43,9 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::aggregator::DriveAllocationProtocolEngine::
-  DriveAllocationProtocolEngine(Counter<uint64_t> &aggregatorTransactionCounter)
-  throw() : m_aggregatorTransactionCounter(aggregatorTransactionCounter) {
+castor::tape::tapeserver::DriveAllocationProtocolEngine::
+  DriveAllocationProtocolEngine(Counter<uint64_t> &tapeserverTransactionCounter)
+  throw() : m_tapeserverTransactionCounter(tapeserverTransactionCounter) {
 }
 
 
@@ -53,7 +53,7 @@ castor::tape::aggregator::DriveAllocationProtocolEngine::
 // run
 //-----------------------------------------------------------------------------
 castor::tape::tapegateway::Volume
-  *castor::tape::aggregator::DriveAllocationProtocolEngine::run(
+  *castor::tape::tapeserver::DriveAllocationProtocolEngine::run(
   const Cuuid_t                       &cuuid,
   const int                           rtcpdCallbackSockFd,
   const char                          *rtcpdCallbackHost,
@@ -63,7 +63,7 @@ castor::tape::tapegateway::Volume
   throw(castor::exception::Exception) {
   
   // Pass a modified version of the job request through to RTCPD, setting the
-  // clientHost and clientPort parameters to identify the tape aggregator as
+  // clientHost and clientPort parameters to identify the tape tapeserver as
   // being a proxy for RTCPClientD
   {
     castor::dlf::Param params[] = {
@@ -78,7 +78,7 @@ castor::tape::tapegateway::Volume
       castor::dlf::Param("deviceGroupName", jobRequest.deviceGroupName),
       castor::dlf::Param("driveUnit"      , jobRequest.driveUnit      )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_SUBMITTING_RTCOPY_JOB_TO_RTCPD, params);
+      TAPESERVER_SUBMITTING_RTCOPY_JOB_TO_RTCPD, params);
   }
 
   legacymsg::RtcpJobReplyMsgBody rtcpdReply;
@@ -132,7 +132,7 @@ castor::tape::tapegateway::Volume
       castor::dlf::Param("HostName", hostName                    ),
       castor::dlf::Param("socketFd", rtcpdInitialSockFd.get()  )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      AGGREGATOR_INITIAL_RTCPD_CALLBACK, params);
+      TAPESERVER_INITIAL_RTCPD_CALLBACK, params);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ECANCELED,
       ": Failed to get IP, port and host name"
@@ -164,6 +164,6 @@ castor::tape::tapegateway::Volume
 
   // Get the volume from the tape gateway
   return ClientTxRx::getVolume(cuuid, jobRequest.volReqId,
-    m_aggregatorTransactionCounter.next(), jobRequest.clientHost,
+    m_tapeserverTransactionCounter.next(), jobRequest.clientHost,
     jobRequest.clientPort, jobRequest.driveUnit);
 }

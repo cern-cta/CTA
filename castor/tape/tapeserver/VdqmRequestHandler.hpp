@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/aggregator/VdqmRequestHandler.hpp
+ *                castor/tape/tapeserver/VdqmRequestHandler.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,13 +22,13 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_VDQMREQUESTHANDLER_HPP
-#define CASTOR_TAPE_AGGREGATOR_VDQMREQUESTHANDLER_HPP 1
+#ifndef CASTOR_TAPE_TAPESERVER_VDQMREQUESTHANDLER_HPP
+#define CASTOR_TAPE_TAPESERVER_VDQMREQUESTHANDLER_HPP 1
 
 #include "castor/io/ServerSocket.hpp"
 #include "castor/server/IThread.hpp"
-#include "castor/tape/aggregator/BoolFunctor.hpp"
-#include "castor/tape/aggregator/Counter.hpp"
+#include "castor/tape/tapeserver/BoolFunctor.hpp"
+#include "castor/tape/tapeserver/Counter.hpp"
 #include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/utils/SmartFdList.hpp"
@@ -40,7 +40,7 @@
 
 namespace castor {
 namespace tape {
-namespace aggregator {
+namespace tapeserver {
 
 /**
  * Handles the requests from the VDQM server.
@@ -53,7 +53,7 @@ public:
    * Constructor
    *
    * @param nbDrives The number of tape drives attached to the tape server on
-   *                 which aggregatord is running.
+   *                 which tapeserverd is running.
    *
    */
   VdqmRequestHandler(const uint32_t nbDrives) throw();
@@ -92,7 +92,7 @@ private:
    * more threads which may or may not include the main thread.
    *
    * This constant is used to log an error message when a tape operator adds
-   * a set of new drive entires into TPCONFIG without restarting aggregatord.
+   * a set of new drive entires into TPCONFIG without restarting tapeserverd.
    */
   const uint32_t m_nbDrives;
 
@@ -140,14 +140,14 @@ private:
    *
    * @param cuuid                    The ccuid to be used for logging.
    * @param jobRequest               The RTCOPY job request from the VDQM.
-   * @param aggregatorTransactionCounter The counter used to generate
-   *                                 aggregator transaction IDs.  These are the
+   * @param tapeserverTransactionCounter The counter used to generate
+   *                                 tapeserver transaction IDs.  These are the
    *                                 IDs used in requests to the clients.
    */
   void exceptionThrowingRun(
     const Cuuid_t                       &cuuid,
     const legacymsg::RtcpJobRqstMsgBody &jobRequest,
-    Counter<uint64_t>                   &aggregatorTransactionCounter)
+    Counter<uint64_t>                   &tapeserverTransactionCounter)
     throw(castor::exception::Exception);
 
   /**
@@ -160,7 +160,7 @@ private:
     throw(castor::exception::Exception);
 
   /**
-   * Enters the thread into either bridge or aggregator mode.
+   * Enters the thread into either bridge or tapeserver mode.
    *
    * @param cuuid                    The ccuid to be used for logging.
    * @param rtcpdCallbackSockFd      The file descriptor of the listener socket
@@ -177,11 +177,11 @@ private:
    *                                 this parameter is ignored.
    * @param stoppingGracefully       Functor that returns true if the daemon is
    *                                 stopping gracefully.
-   * @param aggregatorTransactionCounter The counter used to generate
-   *                                 aggregator transaction IDs.  These are the
+   * @param tapeserverTransactionCounter The counter used to generate
+   *                                 tapeserver transaction IDs.  These are the
    *                                 IDs used in requests to the clients.
    */
-  void enterBridgeOrAggregatorMode(
+  void enterBridgeOrTapeServerMode(
     const Cuuid_t                       &cuuid,
     const int                           rtcpdCallbackSockFd,
     const int                           rtcpdInitialSockFd,
@@ -189,13 +189,13 @@ private:
     tapegateway::Volume                 &volume,
     const uint32_t                      nbFilesOnDestinationTape,
     BoolFunctor                         &stoppingGracefully,
-    Counter<uint64_t>                   &aggregatorTransactionCounter)
+    Counter<uint64_t>                   &tapeserverTransactionCounter)
   throw(castor::exception::Exception);
 
 }; // class VdqmRequestHandler
 
-} // namespace aggregator
+} // namespace tapeserver
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_AGGREGATOR_VDQMREQUESTHANDLER_HPP
+#endif // CASTOR_TAPE_TAPESERVER_VDQMREQUESTHANDLER_HPP
