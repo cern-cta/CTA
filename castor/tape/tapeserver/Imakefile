@@ -32,7 +32,7 @@ DependsOnLibrary(../db/cnv,castorcnvs)
 DependsOnLibrary(../tape/gatewayprotocol,castortapegatewayprotocol)
 DependsOnLibrary(../tape/utils,castortapeutils)
 
-AGGREGATORBIN_SRCS = \
+TAPESERVERBIN_SRCS = \
   BridgeProtocolEngine.cpp \
   BridgeSocketCatalogue.cpp \
   BoolFunctor.cpp \
@@ -56,9 +56,9 @@ AGGREGATORBIN_SRCS = \
   ../net/net.cpp \
   $(TAPEGATEWAY_MESSAGES_SRCS) \
   $(TAPEGATEWAY_IO_SRCS)
-AGGREGATORBIN_OBJS = $(AGGREGATORBIN_SRCS:.cpp=.Osuf)
+TAPESERVERBIN_OBJS = $(TAPESERVERBIN_SRCS:.cpp=.Osuf)
 
-NormalProgramTarget(tapeserverd,$(AGGREGATORBIN_OBJS),$(DEPLIB),$(LIBS),750)
+NormalProgramTarget(tapeserverd,$(TAPESERVERBIN_OBJS),$(DEPLIB),$(LIBS),750)
 MakeDir(/var/log/castor,0755)
 ADMMANPAGE(tapeserverd)
 LOGROTATE(castor-tapeserver-server,../../..,install)

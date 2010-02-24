@@ -1,9 +1,9 @@
-# Arguments for the aggregator daemon
+# Arguments for the TapeServer daemon
 #   -f             keep process in the foreground, do not fork
 #   -h             display help and exit
 #   -c             config file location (castor.conf)
 #
-#AGGRETATORD_OPTIONS=
+#TAPESERVERD_OPTIONS=
 
 # Should we run with another limit on the core file size other than the default?
 DAEMON_COREFILE_LIMIT=unlimited
