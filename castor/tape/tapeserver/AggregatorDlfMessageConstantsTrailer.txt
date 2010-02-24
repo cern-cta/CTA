@@ -1,0 +1,7 @@
+}; // enum AggregatorDlfMessages
+} // namespace aggregator
+} // namespace tape
+} // namespace castor
+
+
+#endif // CASTOR_TAPE_AGGREGATOR_AGGREGATORDLFMESSAGECONSTANTS_HPP
