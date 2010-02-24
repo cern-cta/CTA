@@ -124,10 +124,11 @@ namespace castor {
          * first time and returns pointers to it for all
          * subsequent calls. The does thus not own the connection
          * @return the newly created connection
-         * @exception SQLException thrown by Oracle
+         * @exception a Castor exception including the Oracle error
+         * when the connection couldn't be established
          */
         oracle::occi::Connection* getConnection()
-          throw (oracle::occi::SQLException, castor::exception::Exception);
+          throw (castor::exception::Exception);
         
         /**
          * Closes a prepared statement wrapped with the

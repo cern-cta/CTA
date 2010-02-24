@@ -102,7 +102,7 @@ const unsigned int castor::db::ora::OraCnvSvc::getPhysRepType() const {
 // getConnection
 //------------------------------------------------------------------------------
 oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
-  throw (oracle::occi::SQLException, castor::exception::Exception) {
+  throw (castor::exception::Exception) {
   // Quick answer if connection available
   if (0 != m_connection) return m_connection;
 
@@ -126,91 +126,97 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
     nameVal += "_";
     nameVal += instance;
   }
-
-  if ("" == m_user || "" == m_dbName) {
-    // get the config file name. Defaults to ORASTAGERCONFIG
-    std::string confFile = params->getDbAccessConfFile();
-    if (confFile == "") {
-      confFile = std::string(ORASTAGERCONFIGFILE);
-    }
-    // get the new values
-    char* cuser = getconfent_fromfile(confFile.c_str(), nameVal.c_str(), "user", 0);
-    if (cuser == 0) {
-      castor::exception::InvalidArgument e;
-      e.getMessage() << "Failed to connect to database. Missing " << nameVal
-                     << "/user configuration option from " << confFile.c_str()
-                     << ".";
-      if (serrno == SENOCONFIG) {
-        e.getMessage() << " The file could not be opened.";
-      }
-      throw e;
-    } else {
-      m_user = std::string(cuser);
-    }
-
-    char* cpasswd = getconfent_fromfile(confFile.c_str(), nameVal.c_str(), "passwd", 0);
-    if (cpasswd == 0) {
-      castor::exception::InvalidArgument e;
-      e.getMessage() << "Failed to connect to database. Missing " << nameVal
-                     << "/passwd configuration option from " << confFile.c_str()
-                     << ".";
-      if (serrno == SENOCONFIG) {
-        e.getMessage() << " The file could not be opened.";
-      }
-      throw e;
-    } else {
-      m_passwd = std::string(cpasswd);
-    }
-
-    char* cdbName = getconfent_fromfile(confFile.c_str(), nameVal.c_str(), "dbName", 0);
-    if (cdbName == 0) {
-      castor::exception::InvalidArgument e;
-      e.getMessage() << "Failed to connect to database. Missing " << nameVal
-                     << "/dbName configuration option from " << confFile.c_str()
-                     << ".";
-      if (serrno == SENOCONFIG) {
-        e.getMessage() << " The file could not be opened.";
-      }
-      throw e;
-    } else {
-      m_dbName = std::string(cdbName);
-    }
-
+  
     if ("" == m_user || "" == m_dbName) {
-      // If still empty, try to avoid connecting with empty string, since
-      // ORACLE would core dump !
-      castor::exception::InvalidArgument e;
-      e.getMessage() << "Empty user name or db name, cannot connect to database.";
-      throw e;
+      // get the config file name. Defaults to ORASTAGERCONFIG
+      std::string confFile = params->getDbAccessConfFile();
+      if (confFile == "") {
+        confFile = std::string(ORASTAGERCONFIGFILE);
+      }
+      // get the new values
+      char* cuser = getconfent_fromfile(confFile.c_str(), nameVal.c_str(), "user", 0);
+      if (cuser == 0) {
+        castor::exception::InvalidArgument e;
+        e.getMessage() << "Failed to connect to database. Missing " << nameVal
+                       << "/user configuration option from " << confFile.c_str()
+                       << ".";
+        if (serrno == SENOCONFIG) {
+          e.getMessage() << " The file could not be opened.";
+        }
+        throw e;
+      } else {
+        m_user = std::string(cuser);
+      }
+  
+      char* cpasswd = getconfent_fromfile(confFile.c_str(), nameVal.c_str(), "passwd", 0);
+      if (cpasswd == 0) {
+        castor::exception::InvalidArgument e;
+        e.getMessage() << "Failed to connect to database. Missing " << nameVal
+                       << "/passwd configuration option from " << confFile.c_str()
+                       << ".";
+        if (serrno == SENOCONFIG) {
+          e.getMessage() << " The file could not be opened.";
+        }
+        throw e;
+      } else {
+        m_passwd = std::string(cpasswd);
+      }
+  
+      char* cdbName = getconfent_fromfile(confFile.c_str(), nameVal.c_str(), "dbName", 0);
+      if (cdbName == 0) {
+        castor::exception::InvalidArgument e;
+        e.getMessage() << "Failed to connect to database. Missing " << nameVal
+                       << "/dbName configuration option from " << confFile.c_str()
+                       << ".";
+        if (serrno == SENOCONFIG) {
+          e.getMessage() << " The file could not be opened.";
+        }
+        throw e;
+      } else {
+        m_dbName = std::string(cdbName);
+      }
+  
+      if ("" == m_user || "" == m_dbName) {
+        // If still empty, try to avoid connecting with empty string, since
+        // ORACLE would core dump !
+        castor::exception::InvalidArgument e;
+        e.getMessage() << "Empty user name or db name, cannot connect to database.";
+        throw e;
+      }
     }
-  }
 
   // Setup Oracle connection
-  if (0 == m_environment) {
-    m_environment = oracle::occi::Environment::createEnvironment
-      (oracle::occi::Environment::THREADED_MUTEXED);
-  }
-  m_connection =
-    m_environment->createConnection(m_user, m_passwd, m_dbName);
+  try {
+    if (0 == m_environment) {
+      m_environment = oracle::occi::Environment::createEnvironment
+        (oracle::occi::Environment::THREADED_MUTEXED);
+    }
+    m_connection =
+      m_environment->createConnection(m_user, m_passwd, m_dbName);
+  } catch (oracle::occi::SQLException &orae) {
+    castor::exception::SQLError e;
+    e.getMessage() << orae.what();
+    throw e;    
+  }    
 
   // get the schema version. No hardcoded default here, but DbParamsSvc contains
   // the Castor hardcoded value for it.
   std::string codeVersion = params->getSchemaVersion();
-  std::string DBVersion = "";
+  std::string dbVersion = "";
   oracle::occi::Statement* stmt = 0;
   try {
     oracle::occi::Statement* stmt = m_connection->createStatement
       ("SELECT schemaVersion FROM CastorVersion");
     oracle::occi::ResultSet *rset = stmt->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-      DBVersion = rset->getString(1);
+      dbVersion = rset->getString(1);
     }
     m_connection->terminateStatement(stmt);
-    if (codeVersion != DBVersion) {
+    if (codeVersion != dbVersion) {
       dropConnection();
       castor::exception::BadVersion e;
       e.getMessage() << "Version mismatch between the database and the software : \""
-                     << DBVersion << "\" versus \""
+                     << dbVersion << "\" versus \""
                      << codeVersion << "\"";
       throw e;
     }
@@ -230,14 +236,14 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
     //m_connection->terminateStatement(stmt);
     //m_connection->commit();
   }
-  catch (oracle::occi::SQLException e) {
+  catch (oracle::occi::SQLException &orae) {
     // No CastorVersion table ?? This means bad version
     dropConnection();
+    castor::exception::SQLError e;
+    e.getMessage() << "Not able to find the version of castor in the database"
+                   << " Original error was " << orae.what();
     if (0 != stmt) m_connection->terminateStatement(stmt);
-    castor::exception::BadVersion ex;
-    ex.getMessage() << "Not able to find the version of castor in the database"
-                    << " Original error was " << e.what();
-    throw ex;
+    throw e;
   }
   
   if(psvc == 0) {
