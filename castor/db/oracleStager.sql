@@ -2198,24 +2198,21 @@ BEGIN
        WHERE id = srIds(i) OR parent = srIds(i);
     END LOOP;
   END IF;
-  -- Set selected DiskCopies to either INVALID or FAILED, skipping WAITDISK2DISKCOPY for now
-  FORALL i IN dcsToRm.FIRST .. dcsToRm.LAST
-    UPDATE DiskCopy SET status = 
-           decode(status, 2,4, 5,4, 11,4, 7) -- WAITTAPERECALL,WAITFS[_SCHED] -> FAILED, others -> INVALID
-     WHERE id = dcsToRm(i)
-       AND status != 1;  -- WAITDISK2DISKCOPY
-  -- Now deal with disk-to-disk copies: here we explicitly fail
-  -- the replication process to take care of e.g. draining activities
-  DECLARE
-    d2dId INTEGER;
-  BEGIN
-    SELECT id INTO d2dId
+  -- Set selected DiskCopies to either INVALID or FAILED;
+  -- WAITDISK2DISKCOPY's have a dedicated handling (see bug #63348)
+  FOR i IN dcsToRm.FIRST .. dcsToRm.LAST LOOP
+    SELECT status INTO dcStatus
       FROM DiskCopy
-     WHERE castorFile = cfId AND status = 1;  -- WAITDISK2DISKCOPY
-    disk2DiskCopyFailed(d2dId, 0);
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    NULL;  -- no disk-to-disk copy ongoing
-  END;
+     WHERE id = dcsToRm(i);
+    IF dcStatus = 1 THEN  -- WAITDISK2DISKCOPY
+      disk2DiskCopyFailed(dcsToRm(i), 0);
+    ELSE
+      UPDATE DiskCopy
+         -- WAITTAPERECALL,WAITFS[_SCHED] -> FAILED, others -> INVALID
+         SET status = decode(status, 2,4, 5,4, 11,4, 7)
+       WHERE id = dcsToRm(i);
+    END IF;
+  END LOOP;
   ret := 1;  -- ok
 END;
 /
