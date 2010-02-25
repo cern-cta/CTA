@@ -1,0 +1,5 @@
+stager_qry -S bogusSvcClass -M <noTapeFileName>
+stager_get -S bogusSvcClass -M <noTapeFileName>
+stager_put -S bogusSvcClass -M <noTapeFileName>
+stager_update -S bogusSvcClass -M <noTapeFileName>
+stager_rm -S bogusSvcClass -M <noTapeFileName>

@@ -1,0 +1,11 @@
+    **** : trace level set to 3
+    stager: stage_prepareToUpdate Usertag=NULL
+    stager: Looking up RH host - Using <rhhost>
+    stager: Looking up RH port - Using <rhport>
+    stager: Setting euid: <userid>
+    stager: Setting egid: <groupid>
+    stager: Localhost is: <localhost>
+    stager: Creating socket for castor callback - Using port <callback port3>
+    stager: <sending time3> Sending request
+Error: Invalid argument
+stage_prepareToUpdate: Invalid service class 'bogusSvcClass'
