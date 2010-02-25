@@ -314,7 +314,7 @@ void castor::tape::tapeserver::TapeServerDaemon::
   throw(castor::exception::Exception) {
 
   const int vdqmListenPort = utils::getPortFromConfig("TAPESERVER", "VDQMPORT",
-    TAPESERVER_VDQMPORT);
+    TAPEBRIDGE_VDQMPORT);
 
   std::auto_ptr<server::IThread>
     thread(new castor::tape::tapeserver::VdqmRequestHandler(nbDrives));

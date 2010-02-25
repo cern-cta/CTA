@@ -406,7 +406,7 @@ void castor::vdqm::RTCPJobSubmitterThread::submitJob(const Cuuid_t &cuuid,
   if(remoteCopyType == "RTCPD") {
     port = RTCOPY_PORT;
   } else if(remoteCopyType == "AGGREGATOR") {
-    port = TAPESERVER_VDQMPORT;
+    port = TAPEBRIDGE_VDQMPORT;
   } else {
     castor::exception::Internal ie;
 

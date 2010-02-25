@@ -690,9 +690,9 @@ void castor::tape::tpcp::TpcpCommand::setupCallbackSock()
   throw(castor::exception::Exception) {
 
   const unsigned short lowPort = utils::getPortFromConfig(
-    "TAPESERVERCLIENT", "LOWPORT", TAPESERVERCLIENT_LOWPORT);
+    "TAPESERVERCLIENT", "LOWPORT", TAPEBRIDGECLIENT_LOWPORT);
   const unsigned short highPort = utils::getPortFromConfig(
-    "TAPESERVERCLIENT", "HIGHPORT", TAPESERVERCLIENT_HIGHPORT);
+    "TAPESERVERCLIENT", "HIGHPORT", TAPEBRIDGECLIENT_HIGHPORT);
 
   // Bind the aggregator callback socket
   m_callbackSock.bind(lowPort, highPort);

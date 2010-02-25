@@ -596,7 +596,7 @@ void castor::vdqm::ProtocolFacade::handleVdqmMagic4Request(
 
   try {
     switch(header.reqtype) {
-    case VDQM4_TAPESERVER_VOL_REQ:
+    case VDQM4_TAPEBRIDGE_VOL_REQ:
     {
       protInterpreter.readAggregatorVolReq(header.len, volReq);
 

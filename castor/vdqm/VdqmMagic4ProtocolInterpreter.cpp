@@ -180,7 +180,7 @@ void castor::vdqm::VdqmMagic4ProtocolInterpreter::sendAggregatorVolReqToClient(
 
   // Marshall the message header
   int          magic   = VDQM_MAGIC4;
-  int          reqtype = VDQM4_TAPESERVER_VOL_REQ;
+  int          reqtype = VDQM4_TAPEBRIDGE_VOL_REQ;
   vdqmVolReq_t *msgPtr = &msg;
   int          len     = VDQM_VOLREQLEN(msgPtr);
   char hdrbuf[VDQM_HDRBUFSIZ];
