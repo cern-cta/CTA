@@ -28,32 +28,32 @@
 namespace castor {
 
   /**
-   * The default port on which the tape tapeserver listens for connections from
-   * the VDQM.
+   * The default port on which the tape-bridge daemon listens for connections
+   * from the VDQM.
    */
   static const unsigned int TAPEBRIDGE_VDQMPORT = 5070;
 
   /**
-   * The default inclusive low port of the tapeserver client callback port
-   * number range.
+   * The default inclusive low port of the client-callback port-range of the
+   * tape-bridge daemon.
    */
   const unsigned short TAPEBRIDGECLIENT_LOWPORT = 30201;
 
   /**
-   * The default inclusive high port of the tapeserver client callback port
-   * number range.
+   * The default inclusive high port of the client-callback port-range of the
+   * tape-bridge daemon.
    */
   const unsigned short TAPEBRIDGECLIENT_HIGHPORT = 30300;
 
   /**
-   * The default inclusive low port of the tapeserver's RTCPD callback port
-   * number range.
+   * The default inclusive low port of the RTCPD callback port-range of the
+   * tape-bridge daemon.
    */
   const unsigned short TAPEBRIDGE_RTCPDLOWPORT = 30101;
 
   /**
-   * The default inclusive high port of the tapeserver's RTCPD callback port
-   * number range.
+   * The default inclusive high port of the RTCPD callback port-range of the
+   * tape-bridge daemon.
    */
   const unsigned short TAPEBRIDGE_RTCPDHIGHPORT = 30200;
 
