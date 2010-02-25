@@ -1250,7 +1250,7 @@ static int vdqm_AggregatorVolReq_Transfer(vdqmnw_t *nw, vdqmHdr_t *hdr,
         }
     }
     if ( whereto == SendTo ) {
-        reqtype = VDQM4_AGGREGATOR_VOL_REQ;
+        reqtype = VDQM4_TAPESERVER_VOL_REQ;
         if ( *servername != '\0' && *volreq->client_host == '\0' ) {
             strcpy(volreq->client_host,servername);
         }
