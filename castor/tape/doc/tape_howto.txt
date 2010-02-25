@@ -3223,3 +3223,38 @@ lxfsre1907.cern.ch   /srv/castor/02/      64/397637364@castorns.7168148769
 609671751
 
 SQL>
+
+
+How to build CASTOR rpms for SLC5 from the trunk of the svn repository
+======================================================================
+
+1. Log on to an SLC5 build machine using your developer account, for example
+   lxc2build04.cern.ch
+
+2. Create a .rpmmacros file in your home directory with the following content:
+
+%_topdir /tmp/murrayc3_build
+%_tmppath /tmp/murrayc3_build
+%_buildroot %{_tmppath}/%{name}-build
+
+3. Create the rpm build directory structure with:
+
+BUILD_DIR=/tmp/murrayc3_build
+mkdir -p $BUILD_DIR/RPMS/i386
+mkdir -p $BUILD_DIR/RPMS/x86_64
+mkdir -p $BUILD_DIR/RPMS/noarch
+mkdir -p $BUILD_DIR/SRPMS
+mkdir -p $BUILD_DIR/SPECS
+mkdir -p $BUILD_DIR/BUILD
+mkdir -p $BUILD_DIR/SOURCES
+
+4. Check out the castor source
+
+cd $BUILD_DIR
+svn co svn+ssh://murrayc3@svn.cern.ch/reps/CASTOR/CASTOR2/trunk
+
+5. Build the rpms
+
+cd $BUILD_DIR/trunk
+./makerpm.sh
+
