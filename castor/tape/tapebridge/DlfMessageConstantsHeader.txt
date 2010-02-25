@@ -1,5 +1,5 @@
 /******************************************************************************
- *             castor/tape/tapeserver/DlfMessageConstants.hpp
+ *             castor/tape/tapebridge/DlfMessageConstants.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,11 +22,11 @@
  * @author Steven Murray Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPESERVER_TAPESERVERDLFMESSAGECONSTANTS_HPP
-#define CASTOR_TAPE_TAPESERVER_TAPESERVERDLFMESSAGECONSTANTS_HPP 1
+#ifndef CASTOR_TAPE_TAPEBRIDGE_TAPEBRIDGEDLFMESSAGECONSTANTS_HPP
+#define CASTOR_TAPE_TAPEBRIDGE_TAPEBRIDGEDLFMESSAGECONSTANTS_HPP 1
 
 
 namespace castor {
 namespace tape {
-namespace tapeserver {
-enum TapeServerDlfMessages {
+namespace tapebridge {
+enum TapeBridgeDlfMessages {

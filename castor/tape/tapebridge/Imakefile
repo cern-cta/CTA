@@ -1,5 +1,5 @@
 #
-#                      castor/tape/tapeserver/Imakefile
+#                      castor/tape/tapebridge/Imakefile
 #
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
@@ -32,7 +32,7 @@ DependsOnLibrary(../db/cnv,castorcnvs)
 DependsOnLibrary(../tape/gatewayprotocol,castortapegatewayprotocol)
 DependsOnLibrary(../tape/utils,castortapeutils)
 
-TAPESERVERBIN_SRCS = \
+TAPEBRIDGEBIN_SRCS = \
   BridgeProtocolEngine.cpp \
   BridgeSocketCatalogue.cpp \
   BoolFunctor.cpp \
@@ -45,8 +45,8 @@ TAPESERVERBIN_SRCS = \
   RtcpJobSubmitter.cpp \
   RtcpTxRx.cpp \
   SynchronizedCounter.cpp \
-  TapeServerDaemon.cpp \
-  TapeServerMain.cpp \
+  TapeBridgeDaemon.cpp \
+  TapeBridgeMain.cpp \
   Unpacker.cpp \
   VdqmRequestHandler.cpp \
   VmgrTxRx.cpp \
@@ -56,11 +56,11 @@ TAPESERVERBIN_SRCS = \
   ../net/net.cpp \
   $(TAPEGATEWAY_MESSAGES_SRCS) \
   $(TAPEGATEWAY_IO_SRCS)
-TAPESERVERBIN_OBJS = $(TAPESERVERBIN_SRCS:.cpp=.Osuf)
+TAPEBRIDGEBIN_OBJS = $(TAPEBRIDGEBIN_SRCS:.cpp=.Osuf)
 
-NormalProgramTarget(tapeserverd,$(TAPESERVERBIN_OBJS),$(DEPLIB),$(LIBS),750)
+NormalProgramTarget(tapebridged,$(TAPEBRIDGEBIN_OBJS),$(DEPLIB),$(LIBS),750)
 MakeDir(/var/log/castor,0755)
-ADMMANPAGE(tapeserverd)
-LOGROTATE(castor-tapeserver-server,../../..,install)
-SYSCONFIG(tapeserverd,install)
-INITSCRIPT(tapeserverd,install)
+ADMMANPAGE(tapebridged)
+LOGROTATE(castor-tapebridge-server,../../..,install)
+SYSCONFIG(tapebridged,install)
+INITSCRIPT(tapebridged,install)

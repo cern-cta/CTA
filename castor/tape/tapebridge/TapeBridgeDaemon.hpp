@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/tapeserver/TapeServerDaemon.hpp
+ *                 castor/tape/tapebridge/TapeBridgeDaemon.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPESERVER_TAPESERVERDAEMON_HPP
-#define CASTOR_TAPE_TAPESERVER_TAPESERVERDAEMON_HPP 1
+#ifndef CASTOR_TAPE_TAPEBRIDGE_TAPEBRIDGEDAEMON_HPP
+#define CASTOR_TAPE_TAPEBRIDGE_TAPEBRIDGEDAEMON_HPP 1
 
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidConfigEntry.hpp"
@@ -39,27 +39,28 @@
 
 namespace castor     {
 namespace tape       {
-namespace tapeserver {
+namespace tapebridge {
 
 /**
- * The tapeserver daemon.
+ * The daemon which acts as a protocol bridge between the tape-gateway daemon
+ * and the legacy rtcpd daemon.
  */
-class TapeServerDaemon : public castor::server::BaseDaemon {
+class TapeBridgeDaemon : public castor::server::BaseDaemon {
 
 public:
 
   /**
    * Constructor.
    */
-  TapeServerDaemon() throw(castor::exception::Exception);
+  TapeBridgeDaemon() throw(castor::exception::Exception);
 
   /**
    * Destructor.
    */
-  ~TapeServerDaemon() throw();
+  ~TapeBridgeDaemon() throw();
 
   /**
-   * The main entry function of the tapeserver daemon.
+   * The main entry function of the tapebridge daemon.
    */
   int main(const int argc, char **argv);
 
@@ -113,7 +114,7 @@ private:
     throw(castor::exception::Exception);
 
   /**
-   * Writes the command-line usage message of the tapeserver daemon onto the
+   * Writes the command-line usage message of the tapebridge daemon onto the
    * specified output stream.
    *
    * @param os Output stream to be written to.
@@ -125,7 +126,7 @@ private:
    * Creates the VDQM request handler thread pool.
    *
    * @param nbDrives The number of tape drives attached to the tape server
-   *                 tapeserverd is running on.
+   *                 tapebridged is running on.
    */
   void createVdqmRequestHandlerPool(const uint32_t nbDrives)
     throw (castor::exception::Exception);
@@ -135,11 +136,11 @@ private:
    */
   static castor::dlf::Message s_dlfMessages[];
 
-}; // class TapeServerDaemon
+}; // class TapeBridgeDaemon
 
-} // namespace tapeserver
+} // namespace tapebridge
 } // namespace tape
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_TAPESERVER_TAPESERVERDAEMON_HPP
+#endif // CASTOR_TAPE_TAPEBRIDGE_TAPEBRIDGEDAEMON_HPP

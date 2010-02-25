@@ -23,12 +23,12 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/tapeserver/BoolFunctor.hpp"
+#include "castor/tape/tapebridge/BoolFunctor.hpp"
 
 
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-castor::tape::tapeserver::BoolFunctor::~BoolFunctor() throw() {
+castor::tape::tapebridge::BoolFunctor::~BoolFunctor() throw() {
   // Do nothing
 }

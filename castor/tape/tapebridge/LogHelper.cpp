@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/tapeserver/LogHelper.cpp
+ *                      castor/tape/tapebridge/LogHelper.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -24,14 +24,14 @@
  *****************************************************************************/
 
 #include "castor/dlf/Dlf.hpp"
-#include "castor/tape/tapeserver/LogHelper.hpp"
+#include "castor/tape/tapebridge/LogHelper.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 
 //-----------------------------------------------------------------------------
 // logMsgBody
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::LogHelper::logMsgBody(const Cuuid_t &cuuid,
+void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
   const int socketFd, const legacymsg::RtcpJobRqstMsgBody &body) throw() {
 
@@ -54,7 +54,7 @@ void castor::tape::tapeserver::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 // logMsgBody
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::LogHelper::logMsgBody(const Cuuid_t &cuuid,
+void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
   const int socketFd, const legacymsg::RtcpJobReplyMsgBody &body) throw() {
 
@@ -71,7 +71,7 @@ void castor::tape::tapeserver::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 // logMsgBody
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::LogHelper::logMsgBody(const Cuuid_t &cuuid,
+void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
   const int socketFd, const legacymsg::RtcpTapeRqstErrMsgBody &body) throw() {
 
@@ -113,7 +113,7 @@ void castor::tape::tapeserver::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 // logMsgBody
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::LogHelper::logMsgBody(const Cuuid_t &cuuid,
+void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
   const int socketFd, const legacymsg::RtcpTapeRqstMsgBody &body) throw() {
 
@@ -150,7 +150,7 @@ void castor::tape::tapeserver::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 // logMsgBody
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::LogHelper::logMsgBody(const Cuuid_t &cuuid,
+void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
   const int socketFd, const legacymsg::RtcpFileRqstErrMsgBody &body) throw() {
 
@@ -226,7 +226,7 @@ void castor::tape::tapeserver::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 // logMsgBody
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::LogHelper::logMsgBody(const Cuuid_t &cuuid,
+void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
   const int socketFd, const legacymsg::RtcpFileRqstMsgBody &body) throw() {
 
@@ -298,7 +298,7 @@ void castor::tape::tapeserver::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 // logMsgBody
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::LogHelper::logMsgBody(const Cuuid_t &cuuid,
+void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
   const int socketFd, const legacymsg::GiveOutpMsgBody &body) throw() {
 
@@ -314,7 +314,7 @@ void castor::tape::tapeserver::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 // logMsgBody
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::LogHelper::logMsgBody(const Cuuid_t &cuuid,
+void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
   const int socketFd, const legacymsg::RtcpNoMoreRequestsMsgBody &body)
   throw() {
@@ -330,7 +330,7 @@ void castor::tape::tapeserver::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 // logMsgBody
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::LogHelper::logMsgBody(const Cuuid_t &cuuid,
+void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
   const int socketFd, const legacymsg::RtcpAbortMsgBody &body) throw() {
 
@@ -345,7 +345,7 @@ void castor::tape::tapeserver::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 // logMsgBody
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::LogHelper::logMsgBody(const Cuuid_t &cuuid,
+void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
   const int socketFd, const legacymsg::RtcpDumpTapeRqstMsgBody &body) throw() {
 
@@ -368,7 +368,7 @@ void castor::tape::tapeserver::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 // logMsgBody
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::LogHelper::logMsgBody(const Cuuid_t &cuuid,
+void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
   const int socketFd, const legacymsg::VmgrTapeInfoMsgBody &body,
   const time_t connectionDuration, const time_t sendRecvDuration) throw() {
@@ -408,7 +408,7 @@ void castor::tape::tapeserver::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 // logMsg
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::LogHelper::logMsg(const Cuuid_t &cuuid,
+void castor::tape::tapebridge::LogHelper::logMsg(const Cuuid_t &cuuid,
   const int severity, const int message_no,
   const tapegateway::Volume &msg, const time_t connectionDuration,
   const time_t sendRecvDuration) throw() {
@@ -432,7 +432,7 @@ void castor::tape::tapeserver::LogHelper::logMsg(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 // logMsg
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::LogHelper::logMsg(const Cuuid_t &cuuid,
+void castor::tape::tapebridge::LogHelper::logMsg(const Cuuid_t &cuuid,
   const int severity, const int message_no,
   const tapegateway::DumpParameters &msg, const time_t connectionDuration,
   const time_t sendRecvDuration) throw() {
@@ -455,7 +455,7 @@ void castor::tape::tapeserver::LogHelper::logMsg(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 // logMsg
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::LogHelper::logMsg(const Cuuid_t &cuuid,
+void castor::tape::tapebridge::LogHelper::logMsg(const Cuuid_t &cuuid,
   const int severity, const int message_no,
   const tapegateway::FileToRecall &msg, const time_t connectionDuration,
   const time_t sendRecvDuration) throw() {
@@ -479,7 +479,7 @@ void castor::tape::tapeserver::LogHelper::logMsg(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 // logMsg
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::LogHelper::logMsg(const Cuuid_t &cuuid,
+void castor::tape::tapebridge::LogHelper::logMsg(const Cuuid_t &cuuid,
   const int severity, const int message_no,
   const tapegateway::FileToMigrate &msg, const time_t connectionDuration,
   const time_t sendRecvDuration) throw() {

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/tapeserver/TapeServerDaemon.cpp
+ *                 castor/tape/tapebridge/TapeBridgeDaemon.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -27,11 +27,11 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/server/TCPListenerThreadPool.hpp"
-#include "castor/tape/tapeserver/DlfMessageConstants.hpp"
-#include "castor/tape/tapeserver/TapeServerDaemon.hpp"
-#include "castor/tape/tapeserver/Constants.hpp"
+#include "castor/tape/tapebridge/DlfMessageConstants.hpp"
+#include "castor/tape/tapebridge/TapeBridgeDaemon.hpp"
+#include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/utils/utils.hpp"
-#include "castor/tape/tapeserver/VdqmRequestHandler.hpp"
+#include "castor/tape/tapebridge/VdqmRequestHandler.hpp"
 #include "h/Cgetopt.h"
 #include "h/common.h"
 
@@ -42,23 +42,23 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::TapeServerDaemon::TapeServerDaemon()
+castor::tape::tapebridge::TapeBridgeDaemon::TapeBridgeDaemon()
   throw(castor::exception::Exception) :
-  castor::server::BaseDaemon("tapeserverd") {
+  castor::server::BaseDaemon("tapebridged") {
 }
 
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::TapeServerDaemon::~TapeServerDaemon() throw() {
+castor::tape::tapebridge::TapeBridgeDaemon::~TapeBridgeDaemon() throw() {
 }
 
 
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int castor::tape::tapeserver::TapeServerDaemon::main(const int argc,
+int castor::tape::tapebridge::TapeBridgeDaemon::main(const int argc,
   char **argv) {
 
   // Try to initialize the DLF logging system, quitting with an error message
@@ -85,14 +85,14 @@ int castor::tape::tapeserver::TapeServerDaemon::main(const int argc,
   } catch (castor::exception::Exception &ex) {
     std::cerr << std::endl << "Failed to start daemon: "
       << ex.getMessage().str() << std::endl << std::endl;
-    usage(std::cerr, TAPESERVERPROGRAMNAME);
+    usage(std::cerr, TAPEBRIDGEPROGRAMNAME);
     std::cerr << std::endl;
 
     castor::dlf::Param params[] = {
       castor::dlf::Param("Message", ex.getMessage().str()),
       castor::dlf::Param("Code"   , ex.code()            )};
     CASTOR_DLF_WRITEPC(nullCuuid, DLF_LVL_ERROR,
-      TAPESERVER_FAILED_TO_START, params);
+      TAPEBRIDGE_FAILED_TO_START, params);
 
     return 1;
   }
@@ -104,7 +104,7 @@ int castor::tape::tapeserver::TapeServerDaemon::main(const int argc,
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-int castor::tape::tapeserver::TapeServerDaemon::exceptionThrowingMain(
+int castor::tape::tapebridge::TapeBridgeDaemon::exceptionThrowingMain(
   const int argc, char **argv) throw(castor::exception::Exception) {
 
   // Log the start of the daemon
@@ -126,8 +126,8 @@ int castor::tape::tapeserver::TapeServerDaemon::exceptionThrowingMain(
   // Display usage message and exit if help option found on command-line
   if(m_parsedCommandLine.helpOptionSet) {
     std::cout << std::endl;
-    castor::tape::tapeserver::TapeServerDaemon::usage(std::cout,
-      TAPESERVERPROGRAMNAME);
+    castor::tape::tapebridge::TapeBridgeDaemon::usage(std::cout,
+      TAPEBRIDGEPROGRAMNAME);
     std::cout << std::endl;
     return 0;
   }
@@ -172,7 +172,7 @@ int castor::tape::tapeserver::TapeServerDaemon::exceptionThrowingMain(
     castor::dlf::Param("nbDrives" , driveNames.size()     ),
     castor::dlf::Param("unitNames", driveNamesStream.str())};
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
-    TAPESERVER_PARSED_TPCONFIG, params);
+    TAPEBRIDGE_PARSED_TPCONFIG, params);
 
   createVdqmRequestHandlerPool(driveNames.size());
 
@@ -186,7 +186,7 @@ int castor::tape::tapeserver::TapeServerDaemon::exceptionThrowingMain(
 //------------------------------------------------------------------------------
 // usage
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::TapeServerDaemon::usage(std::ostream &os,
+void castor::tape::tapebridge::TapeBridgeDaemon::usage(std::ostream &os,
   const char *const programName) throw() {
   os << "\nUsage: "<< programName << " [options]\n"
     "\n"
@@ -203,7 +203,7 @@ void castor::tape::tapeserver::TapeServerDaemon::usage(std::ostream &os,
 //------------------------------------------------------------------------------
 // logStart
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::TapeServerDaemon::logStart(const int argc,
+void castor::tape::tapebridge::TapeBridgeDaemon::logStart(const int argc,
   const char *const *const argv) throw() {
   std::string concatenatedArgs;
 
@@ -218,7 +218,7 @@ void castor::tape::tapeserver::TapeServerDaemon::logStart(const int argc,
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("argv"         , concatenatedArgs)};
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, TAPESERVER_STARTED,
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, TAPEBRIDGE_STARTED,
     params);
 }
 
@@ -226,7 +226,7 @@ void castor::tape::tapeserver::TapeServerDaemon::logStart(const int argc,
 //------------------------------------------------------------------------------
 // parseCommandLine
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::TapeServerDaemon::parseCommandLine(
+void castor::tape::tapebridge::TapeBridgeDaemon::parseCommandLine(
   const int argc, char **argv) throw(castor::exception::Exception) {
 
   static struct Coptions longopts[] = {
@@ -309,15 +309,15 @@ void castor::tape::tapeserver::TapeServerDaemon::parseCommandLine(
 //------------------------------------------------------------------------------
 // createVdqmRequestHandlerPool
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::TapeServerDaemon::
+void castor::tape::tapebridge::TapeBridgeDaemon::
   createVdqmRequestHandlerPool(const uint32_t nbDrives)
   throw(castor::exception::Exception) {
 
-  const int vdqmListenPort = utils::getPortFromConfig("TAPESERVER", "VDQMPORT",
+  const int vdqmListenPort = utils::getPortFromConfig("TAPEBRIDGE", "VDQMPORT",
     TAPEBRIDGE_VDQMPORT);
 
   std::auto_ptr<server::IThread>
-    thread(new castor::tape::tapeserver::VdqmRequestHandler(nbDrives));
+    thread(new castor::tape::tapebridge::VdqmRequestHandler(nbDrives));
 
   std::auto_ptr<server::BaseThreadPool>
     threadPool(new castor::server::TCPListenerThreadPool(

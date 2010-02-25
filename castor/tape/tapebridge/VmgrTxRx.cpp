@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/tapeserver/VmgrTxRx.cpp
+ *                castor/tape/tapebridge/VmgrTxRx.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -24,11 +24,11 @@
 
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
-#include "castor/tape/tapeserver/DlfMessageConstants.hpp"
-#include "castor/tape/tapeserver/Constants.hpp"
-#include "castor/tape/tapeserver/LogHelper.hpp"
-#include "castor/tape/tapeserver/LegacyTxRx.hpp"
-#include "castor/tape/tapeserver/VmgrTxRx.hpp"
+#include "castor/tape/tapebridge/DlfMessageConstants.hpp"
+#include "castor/tape/tapebridge/Constants.hpp"
+#include "castor/tape/tapebridge/LogHelper.hpp"
+#include "castor/tape/tapebridge/LegacyTxRx.hpp"
+#include "castor/tape/tapebridge/VmgrTxRx.hpp"
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/io/ClientSocket.hpp"
@@ -41,7 +41,7 @@
 //-----------------------------------------------------------------------------
 // getTapeInfoFromVmgr
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::VmgrTxRx::getTapeInfoFromVmgr(
+void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
   const Cuuid_t                  &cuuid,
   const uint32_t                 volReqId,
   const int                      netReadWriteTimeout,
@@ -270,7 +270,7 @@ void castor::tape::tapeserver::VmgrTxRx::getTapeInfoFromVmgr(
       }
 
       LogHelper::logMsgBody(cuuid, DLF_LVL_SYSTEM,
-        TAPESERVER_RECEIVED_TAPE_INFO_FROM_VMGR, volReqId, sock.socket(),
+        TAPEBRIDGE_RECEIVED_TAPE_INFO_FROM_VMGR, volReqId, sock.socket(),
         reply, connectDuration, sendRecvDuration);
     }
     break;

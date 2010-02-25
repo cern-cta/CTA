@@ -1,5 +1,5 @@
 /******************************************************************************
- *            castor/tape/tapeserver/DriveAllocationProtocolEngine.hpp
+ *            castor/tape/tapebridge/DriveAllocationProtocolEngine.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,13 +22,13 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPESERVER_DRIVEALLOCARIONPROTOCOLENGINE
-#define CASTOR_TAPE_TAPESERVER_DRIVEALLOCARIONPROTOCOLENGINE
+#ifndef CASTOR_TAPE_TAPEBRIDGE_DRIVEALLOCARIONPROTOCOLENGINE
+#define CASTOR_TAPE_TAPEBRIDGE_DRIVEALLOCARIONPROTOCOLENGINE
 
 #include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/io/AbstractTCPSocket.hpp"
-#include "castor/tape/tapeserver/Counter.hpp"
+#include "castor/tape/tapebridge/Counter.hpp"
 #include "castor/tape/utils/SmartFd.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
@@ -39,10 +39,10 @@
 
 namespace castor     {
 namespace tape       {
-namespace tapeserver {
+namespace tapebridge {
 
 /**
- * Class responsible for the vdqm/tapeserver/rtpcd/tapeserver protocol when
+ * Class responsible for the vdqm/tapebridge/rtpcd/tapebridge protocol when
  * a free drive is allocated to tape mount request.
  */
 class DriveAllocationProtocolEngine {
@@ -51,11 +51,11 @@ public:
   /**
    * Constructor.
    *
-   * @param tapeserverTransactionCounter The counter used to generate tapeserver
+   * @param tapebridgeTransactionCounter The counter used to generate tapebridge
    *                                     transaction IDs.  These are the IDS
    *                                     used in requests to the clients.
    */
-  DriveAllocationProtocolEngine(Counter<uint64_t> &tapeserverTransactionCounter)
+  DriveAllocationProtocolEngine(Counter<uint64_t> &tapebridgeTransactionCounter)
     throw();
 
   /**
@@ -94,15 +94,15 @@ public:
 private:
 
   /**
-   * The counter used to generate the next tapeserver transaction ID to be used
+   * The counter used to generate the next tapebridge transaction ID to be used
    * in a request to the client.
    */
-  Counter<uint64_t> &m_tapeserverTransactionCounter;
+  Counter<uint64_t> &m_tapebridgeTransactionCounter;
 
 };
 
-} // namespace tapeserver
+} // namespace tapebridge
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPESERVER_DRIVEALLOCARIONPROTOCOLENGINE
+#endif // CASTOR_TAPE_TAPEBRIDGE_DRIVEALLOCARIONPROTOCOLENGINE

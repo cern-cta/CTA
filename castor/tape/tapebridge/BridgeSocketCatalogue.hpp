@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/tapeserver/BridgeSocketCatalogue.hpp
+ *                      castor/tape/tapebridge/BridgeSocketCatalogue.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPESERVER_BRIDGESOCKETCATALOGUE
-#define CASTOR_TAPE_TAPESERVER_BRIDGESOCKETCATALOGUE
+#ifndef CASTOR_TAPE_TAPEBRIDGE_BRIDGESOCKETCATALOGUE
+#define CASTOR_TAPE_TAPEBRIDGE_BRIDGESOCKETCATALOGUE
 
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/TimeOut.hpp"
@@ -37,7 +37,7 @@
 
 namespace castor     {
 namespace tape       {
-namespace tapeserver {
+namespace tapebridge {
 
 /**
  * The BridgeProtocolEngine is implemented as a single thread spinning in a
@@ -160,7 +160,7 @@ public:
    *                         sent to rtcpd.
    * @param clientSock       The socket-descriptor of the client connection
    *                         from which a reply is expected.
-   * @param aggregatorTransactionId The tapeserver transaction ID associated
+   * @param aggregatorTransactionId The tapebridge transaction ID associated
    *                         with the client request.
    */
   void addClientConn(
@@ -258,7 +258,7 @@ public:
    *                           the initiating rtcpd request.  If there is no
    *                           such tape path, then this parameter is set to
    *                           NULL.
-   * @param aggregatorTransactionId Output parameter: The tapeserver
+   * @param aggregatorTransactionId Output parameter: The tapebridge
    *                           transaction ID associated with the request sent
    *                           to the client.
    * @param clientReqTimeStamp Output parameter: The time at which the request
@@ -368,7 +368,7 @@ private:
      * client.  If there is no such rtcpd request message, then the value of
      * this member will be 0.
      *
-     * The primary goal of this member is to enable the tapeserver to send
+     * The primary goal of this member is to enable the tapebridge to send
      * acknowledgement messages to rtcpd with the correct magic number, i.e.
      * the same magic number as the initiating rtcpd request message.
      */
@@ -379,7 +379,7 @@ private:
      * If there is no such rtcpd request message, then the value of this member
      * will be 0.
      *
-     * The primary goal of this member is to enable the tapeserver to send
+     * The primary goal of this member is to enable the tapebridge to send
      * acknowledgement messages to rtcpd with the correct request type, i.e.
      * the same request type as the initiating rtcpd request message.
      */
@@ -412,7 +412,7 @@ private:
     int clientSock;
 
     /**
-     * If a request has been resent to the client, then this is the tapeserver
+     * If a request has been resent to the client, then this is the tapebridge
      * transaction ID associated with that request.  If no message has been
      * sent, then the value of this member is 0.
      */
@@ -460,12 +460,12 @@ private:
    * The "good day" shutdown sequence of an rtcpd session is as follows:
    * <ol>
    * <li>For each rtcpd disk/tape IO control-connection, rtcpd sends an
-   *     RTCP_ENDOF_REQ message which the tapeserver acknowledges and closes
+   *     RTCP_ENDOF_REQ message which the tapebridge acknowledges and closes
    *     its end of the connection.
-   * <li>Immediately after the tapeserver closes the last rtcpd disk/tape IO
+   * <li>Immediately after the tapebridge closes the last rtcpd disk/tape IO
    *     control-onnection (detected by the size of this this list reaching 0),
-   *     the tapeserver sends an RTCP_ENDOF_REQ message to rtcpd using the
-   *     initial rtpcd connection.  The tapeserver then receives an acknowledge
+   *     the tapebridge sends an RTCP_ENDOF_REQ message to rtcpd using the
+   *     initial rtpcd connection.  The tapebridge then receives an acknowledge
    *     from rtcpd and  closes its end of the initial callback connection.
    * <li>The rtcpd session is now successfully shutdown.
    * </ol>
@@ -507,9 +507,9 @@ private:
 
 }; // class BridgeSocketCatalogue
 
-} // namespace tapeserver
+} // namespace tapebridge
 } // namespace tape
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_TAPESERVER_BRIDGESOCKETCATALOGUE
+#endif // CASTOR_TAPE_TAPEBRIDGE_BRIDGESOCKETCATALOGUE

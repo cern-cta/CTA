@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/tapeserver/SynchronizedCounter.hpp
+ *                castor/tape/tapebridge/SynchronizedCounter.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPESERVER_SYNCHRONIZEDCOUNTER_HPP
-#define CASTOR_TAPE_TAPESERVER_SYNCHRONIZEDCOUNTER_HPP 1
+#ifndef CASTOR_TAPE_TAPEBRIDGE_SYNCHRONIZEDCOUNTER_HPP
+#define CASTOR_TAPE_TAPEBRIDGE_SYNCHRONIZEDCOUNTER_HPP 1
 
 #include "castor/exception/Exception.hpp"
 
@@ -33,7 +33,7 @@
 
 namespace castor     {
 namespace tape       {
-namespace tapeserver {
+namespace tapebridge {
 
 /**
  * Thread-safe counter.
@@ -81,8 +81,8 @@ public:
   int32_t next(const int32_t increment) throw(castor::exception::Exception);
 };
 
-} // namespace tapeserver
+} // namespace tapebridge
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPESERVER_SYNCHRONIZEDCOUNTER_HPP
+#endif // CASTOR_TAPE_TAPEBRIDGE_SYNCHRONIZEDCOUNTER_HPP

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/tapeserver/Packer.hpp
+ *                      castor/tape/tapebridge/Packer.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,15 +22,15 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPESERVER_PACKER
-#define CASTOR_TAPE_TAPESERVER_PACKER
+#ifndef CASTOR_TAPE_TAPEBRIDGE_PACKER
+#define CASTOR_TAPE_TAPEBRIDGE_PACKER
 
 #include "castor/exception/Exception.hpp"
 
 
 namespace castor     {
 namespace tape       {
-namespace tapeserver {
+namespace tapebridge {
 
 /**
  * Packs many disk files into one aggregate tape file and migrates it to tape.
@@ -46,8 +46,8 @@ public:
   void run() throw(castor::exception::Exception);
 };
 
-} // namespace tapeserver
+} // namespace tapebridge
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPESERVER_PACKER
+#endif // CASTOR_TAPE_TAPEBRIDGE_PACKER

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/tapeserver/RtcpTxRx.hpp
+ *                castor/tape/tapebridge/RtcpTxRx.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,13 +22,13 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPESERVER_RTCPTXRX_HPP
-#define CASTOR_TAPE_TAPESERVER_RTCPTXRX_HPP 1
+#ifndef CASTOR_TAPE_TAPEBRIDGE_RTCPTXRX_HPP
+#define CASTOR_TAPE_TAPEBRIDGE_RTCPTXRX_HPP 1
 
 #include "castor/exception/Exception.hpp"
 #include "castor/io/ClientSocket.hpp"
-#include "castor/tape/tapeserver/Constants.hpp"
-#include "castor/tape/tapeserver/LogHelper.hpp"
+#include "castor/tape/tapebridge/Constants.hpp"
+#include "castor/tape/tapebridge/LogHelper.hpp"
 #include "castor/tape/legacymsg/RtcpDumpTapeRqstMsgBody.hpp"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
@@ -43,7 +43,7 @@
 
 namespace castor     {
 namespace tape       {
-namespace tapeserver {
+namespace tapebridge {
 
 /**
  * Provides functions for sending and receiving the messages of the RTCOPY
@@ -156,7 +156,7 @@ public:
    * @param positionMethod The position method.
    * @param tapeFseq The tape file sequence.
    * @param diskFseq The disk file sequence which has been overloaded to mean
-   * the file transaction ID between the tapeserver and rtcpd.
+   * the file transaction ID between the tapebridge and rtcpd.
    * @param nameServerHostName The host name of the name server.
    * @param castorFileId The CASTOR file ID.
    * @param blockId The block ID.
@@ -223,7 +223,7 @@ public:
         castor::dlf::Param("socketFd", socketFd)};
 
       castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
-        TAPESERVER_RECEIVE_MSGBODY_FROM_RTCPD, params);
+        TAPEBRIDGE_RECEIVE_MSGBODY_FROM_RTCPD, params);
     }
 
     // Read the message body
@@ -247,7 +247,7 @@ public:
     }
 
     LogHelper::logMsgBody(cuuid, DLF_LVL_DEBUG,
-      TAPESERVER_RECEIVED_MSGBODY_FROM_RTCPD, volReqId, socketFd, body);
+      TAPEBRIDGE_RECEIVED_MSGBODY_FROM_RTCPD, volReqId, socketFd, body);
   }
 
   /**
@@ -355,8 +355,8 @@ private:
 
 }; // class RtcpTxRx
 
-} // namespace tapeserver
+} // namespace tapebridge
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPESERVER_RTCPTXRX_HPP
+#endif // CASTOR_TAPE_TAPEBRIDGE_RTCPTXRX_HPP

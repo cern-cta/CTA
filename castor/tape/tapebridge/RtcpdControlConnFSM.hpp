@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/tapeserver/RtcpdControlConnFSM.hpp
+ *                      castor/tape/tapebridge/RtcpdControlConnFSM.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,12 +22,12 @@
  *
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
-#ifndef _CASTOR_TAPE_TAPESERVER_RTCPDCONTROLCONNFSM_HPP_
-#define _CASTOR_TAPE_TAPESERVER_RTCPDCONTROLCONNFSM_HPP_
+#ifndef _CASTOR_TAPE_TAPEBRIDGE_RTCPDCONTROLCONNFSM_HPP_
+#define _CASTOR_TAPE_TAPEBRIDGE_RTCPDCONTROLCONNFSM_HPP_
 
 namespace castor     {
 namespace tape       {
-namespace tapeserver {
+namespace tapebridge {
     
 /**
  */
@@ -57,8 +57,8 @@ public:
 
 }; // class RtcpdControlConnFSM
 
-} // namespace tapeserver
+} // namespace tapebridge
 } // namespace tape
 } // namespace castor      
 
-#endif // _CASTOR_TAPE_TAPESERVER_RTCPDCONTROLCONNFSM_HPP_
+#endif // _CASTOR_TAPE_TAPEBRIDGE_RTCPDCONTROLCONNFSM_HPP_

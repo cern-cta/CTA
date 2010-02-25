@@ -10,19 +10,19 @@
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-.TH TAPESERVERD 8 "$Date: 2009/08/18 09:42:55 $" CASTOR "CASTOR"
+.TH TAPEBRDIGED 8 "$Date: 2009/08/18 09:42:55 $" CASTOR "CASTOR"
 .SH NAME
-tapeserverd \- Tape tapeserver daemon
+tapebridged \- Tape bridge daemon
 .SH SYNOPSIS
-.BI "tapeserverd [OPTIONS]"
+.BI "tapebridged [OPTIONS]"
 
 .SH DESCRIPTION
-\fBtapeserverd\fP is the tape server daemon responsible for acting as a bridge
-between the tape gateway daemons and the RTCPD daemon.
+\fBtapebridged\fP is the daemon responsible for acting as a protocol bridge
+between the tape gateway-daemons and the legacy rtcpd daemon.
 .P
-When \fBtapeserverd\fP is executed it immediately forks with the parent
+When \fBtapebridged\fP is executed it immediately forks with the parent
 terminating and the child running in the background.  If required the
-\fB\-f, \-\-foreground\fP option can be used to stop \fBtapeserverd\fP from
+\fB\-f, \-\-foreground\fP option can be used to stop \fBtapebridged\fP from
 forking and keep the parent process in the foreground.
 
 .SH OPTIONS
@@ -39,33 +39,33 @@ Prints the usage message
 
 
 .SH CASTOR CONFIGURATION PARAMETERS
-The tape tapeserver daemon reads and uses the following CASTOR configuration
+The tapebridge daemon reads and uses the following CASTOR configuration
 parameters which are specified using environment variables or within the CASTOR
 configuration file (the default location is /etc/castor/castor.conf).
 .TP
-\fBTAPESERVER VDQMPORT
-The port on which the tapeserver will listen for RTCOPY jobs from the VDQM.
+\fBTAPEBRDIGE VDQMPORT
+The port on which the tapebridge will listen for RTCOPY jobs from the VDQM.
 The default is 5070.  This configuration parameter should \fBNOT\fP normally be
 set and the default should be used.
 .TP
-\fBTAPESERVER RTCPDLOWPORT
-The inclusive low port of the tapeserver's RTCPD callback port number range.
+\fBTAPEBRDIGE RTCPDLOWPORT
+The inclusive low port of the tapebridge's RTCPD callback port number range.
 The default is 30101.
 .TP
-\fBTAPESERVER RTCPDHIGHPORT
-The inclusive high port of the tapeserver's RTCPD callback port number range.
+\fBTAPEBRDIGE RTCPDHIGHPORT
+The inclusive high port of the tapebridge's RTCPD callback port number range.
 The default is 30200.
 .TP
-\fBtapeserverd LOGSTANDARD XXXX
-Sets the location of the \fBtapeserverd\fP log file to be \fBXXXX\fP.
+\fBtapebridged LOGSTANDARD XXXX
+Sets the location of the \fBtapebridged\fP log file to be \fBXXXX\fP.
 
 .SH FILES
 .TP
 .B /etc/castor/castor.conf
 Default location of the CASTOR configuration file.
 .TP
-.B /var/log/castor/tapeserverd.log
-Default location of the tape tapeserver log file.
+.B /var/log/castor/tapebridged.log
+Default location of the tape tapebridge log file.
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

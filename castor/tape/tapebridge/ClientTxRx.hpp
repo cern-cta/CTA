@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/tapeserver/ClientTxRx.hpp
+ *                castor/tape/tapebridge/ClientTxRx.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPESERVER_CLIENTTXRX_HPP
-#define CASTOR_TAPE_TAPESERVER_CLIENTTXRX_HPP 1
+#ifndef CASTOR_TAPE_TAPEBRIDGE_CLIENTTXRX_HPP
+#define CASTOR_TAPE_TAPEBRIDGE_CLIENTTXRX_HPP 1
 
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/tapegateway/DumpParameters.hpp"
@@ -38,11 +38,11 @@
 
 namespace castor     {
 namespace tape       {
-namespace tapeserver {
+namespace tapebridge {
 
 
 /**
- * Provides functions for sending and receiving messages to and from tapeserver
+ * Provides functions for sending and receiving messages to and from tapebridge
  * clients (tape-gateway, tpread, tpwrite and tpdump).
  */
 class ClientTxRx {
@@ -55,7 +55,7 @@ public:
    * @param cuuid              The ccuid to be used for logging.
    * @param mountTransactionId The mount transaction ID to be sent to the
    *                           client.
-   * @param aggregatorTransactionId The tapeserver transaction ID to be sent to
+   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
    *                           the client.
    * @param clientHost         The client host name.
    * @param clientPort         The client port number.
@@ -81,7 +81,7 @@ public:
    *
    * @param mountTransactionId The mount transaction ID to be sent to the
    *                           client.
-   * @param aggregatorTransactionId The tapeserver transaction ID to be sent to
+   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
    *                           the client.
    * @param clientHost         The client host name.
    * @param clientPort         The client port number.
@@ -105,7 +105,7 @@ public:
    *
    * @param mountTransactionId The mount transaction ID to be sent to the
    *                           client.
-   * @param aggregatorTransactionId The tapeserver transaction ID to be sent to
+   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
    *                           the client.
    * @param clientSock         The socket-descriptor of the client connection.
    * @return                   A pointer to the file to migrate message
@@ -127,7 +127,7 @@ public:
    *
    * @param mountTransactionId The mount transaction ID to be sent to the
    *                           client.
-   * @param aggregatorTransactionId The tapeserver transaction ID to be sent to
+   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
    *                           the client.
    * @param clientHost         The client host name.
    * @param clientPort         The client port number.
@@ -151,7 +151,7 @@ public:
    *
    * @param mountTransactionId The mount transaction ID to be sent to the
    *                           client.
-   * @param aggregatorTransactionId The tapeserver transaction ID to be sent to
+   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
    *                           the client.
    * @param clientSock         The socket-descriptor of the client connection.
    * @return                   A pointer to the file to recall message received
@@ -173,7 +173,7 @@ public:
    *
    * @param mountTransactionId  The mount transaction ID to be sent to the
    *                            client.
-   * @param aggregatorTransactionId The tapeserver transaction ID to be sent to
+   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
    *                            the client.
    * @param clientHost          The client host name.
    * @param clientPort          The client port number.
@@ -218,7 +218,7 @@ public:
    *
    * @param mountTransactionId  The mount transaction ID to be sent to the
    *                            client.
-   * @param aggregatorTransactionId The tapeserver transaction ID to be sent to
+   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
    *                            the client.
    * @param clientHost          The client host name.
    * @param clientPort          The client port number.
@@ -259,7 +259,7 @@ public:
    *
    * @param mountTransactionId  The mount transaction ID to be sent to the
    *                            client.
-   * @param aggregatorTransactionId The tapeserver transaction ID to be sent to
+   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
    *                            the client.
    * @param clientSock          The socket-descriptor of the client connection.
    */
@@ -275,7 +275,7 @@ public:
    * @param cuuid               The ccuid to be used for logging.
    * @param mountTransactionId  The mount transaction ID to be sent to the
    *                            client.
-   * @param aggregatorTransactionId The tapeserver transaction ID to be sent to
+   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
    *                            the client.
    * @param clientHost          The client host name.
    * @param clientPort          The client port number.
@@ -294,7 +294,7 @@ public:
    * @param cuuid               The ccuid to be used for logging.
    * @param mountTransactionId  The mount transaction ID to be sent to the
    *                            client.
-   * @param aggregatorTransactionId The tapeserver transaction ID to be sent to
+   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
    *                            the client.
    * @param clientHost          The client host name.
    * @param clientPort          The client port number.
@@ -315,7 +315,7 @@ public:
    * @param cuuid               The ccuid to be used for logging.
    * @param mountTransactionId  The mount transaction ID to be sent to the
    *                            client.
-   * @param aggregatorTransactionId The tapeserver transaction ID to be sent to
+   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
    *                            the client.
    * @param clientHost          The client host name.
    * @param clientPort          The client port number.
@@ -337,7 +337,7 @@ public:
    * @param cuuid               The ccuid to be used for logging.
    * @param mountTransactionId  The mount transaction ID to be sent to the
    *                            client.
-   * @param aggregatorTransactionId The tapeserver transaction ID to be sent to
+   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
    *                            the client.
    * @param clientHost          The client host name.
    * @param clientPor        t  The client port number.
@@ -358,7 +358,7 @@ public:
    * @param cuuid               The ccuid to be used for logging.
    * @param mountTransactionId  The mount transaction ID to be sent to the
    *                            client.
-   * @param aggregatorTransactionId The tapeserver transaction ID to be sent to
+   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
    *                            the client.
    * @param clientHost          The client host name.
    * @param clientPort          The client port number.
@@ -389,21 +389,21 @@ public:
 
   /**
    * Throws an exception if there is a mount transaction ID mismatch and/or
-   * an tapeserver transaction ID mismatch.
+   * an tapebridge transaction ID mismatch.
    *
    * @param messageTypeName                 The type name of the client message.
    * @param expectedMountTransactionId      The expected mount transaction ID.
    * @param actualMountTransactionIdA       The actual mount transaction ID.
-   * @param expectedTapeServerTransactionId The expected tapeserver transaction
+   * @param expectedTapeBridgeTransactionId The expected tapebridge transaction
    *                                         ID.
-   * @param actualTapeServerTransactionId   The actualtapeserver transaction ID.
+   * @param actualTapeBridgeTransactionId   The actualtapebridge transaction ID.
    */
   static void checkTransactionIds(
     const char *const messageTypeName,
     const uint32_t    expectedMountTransactionId,
     const uint32_t    actualMountTransactionId,
-    const uint64_t    expectedTapeServerTransactionId,
-    const uint64_t    actualTapeServerTransactionId)
+    const uint64_t    expectedTapeBridgeTransactionId,
+    const uint64_t    actualTapeBridgeTransactionId)
     throw(castor::exception::Exception);
 
 
@@ -472,7 +472,7 @@ private:
    * @param cuuid               The ccuid to be used for logging.
    * @param mountTransactionId  The mount transaction ID to be sent to the
    *                            client.
-   * @param aggregatorTransactionId The tapeserver transaction ID to be sent to
+   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
    *                            the client.
    * @param requestTypeName     The name of the type of the request.  This name
    *                            will be used in logging messages.
@@ -500,8 +500,8 @@ private:
    * because it throws an exception if it succeeds to carry out its it task.
    *
    * @param mountTransactionId The mount transaction request ID of the current
-   *                           mount as known by the tapeserver.
-   * @param aggregatorTransactionId The tapeserver transaction ID.
+   *                           mount as known by the tapebridge.
+   * @param aggregatorTransactionId The tapebridge transaction ID.
    * @param obj                The received IObject which represents the
    *                           OBJ_EndNotificationErrorReport message.
    */
@@ -513,8 +513,8 @@ private:
 
 }; // class ClientTxRx
 
-} // namespace tapeserver
+} // namespace tapebridge
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPESERVER_CLIENTTXRX_HPP
+#endif // CASTOR_TAPE_TAPEBRIDGE_CLIENTTXRX_HPP

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/tapeserver/LogHelper.hpp
+ *                      castor/tape/tapebridge/LogHelper.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPESERVER_LOGHELPER
-#define CASTOR_TAPE_TAPESERVER_LOGHELPER
+#ifndef CASTOR_TAPE_TAPEBRIDGE_LOGHELPER
+#define CASTOR_TAPE_TAPEBRIDGE_LOGHELPER
 
 #include "castor/tape/legacymsg/GiveOutpMsgBody.hpp"
 #include "castor/tape/legacymsg/RtcpJobReplyMsgBody.hpp"
@@ -47,7 +47,7 @@
 
 namespace castor     {
 namespace tape       {
-namespace tapeserver {
+namespace tapebridge {
 
 /**
  * Collection of static methods to facilitate logging.
@@ -343,8 +343,8 @@ public:
 
 };
 
-} // namespace tapeserver
+} // namespace tapebridge
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPESERVER_LOGHELPER
+#endif // CASTOR_TAPE_TAPEBRIDGE_LOGHELPER

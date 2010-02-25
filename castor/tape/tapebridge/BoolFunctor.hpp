@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/tapeserver/BoolFunctor.hpp
+ *                      castor/tape/tapebridge/BoolFunctor.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,12 +22,12 @@
  *
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
-#ifndef _CASTOR_TAPE_TAPESERVER_BOOLFUNCTOR_HPP_
-#define _CASTOR_TAPE_TAPESERVER_BOOLFUNCTOR_HPP_
+#ifndef _CASTOR_TAPE_TAPEBRIDGE_BOOLFUNCTOR_HPP_
+#define _CASTOR_TAPE_TAPEBRIDGE_BOOLFUNCTOR_HPP_
 
 namespace castor     {
 namespace tape       {
-namespace tapeserver {
+namespace tapebridge {
     
   /**
    * Abstract class specifiying the interface to be followed by functors that
@@ -48,8 +48,8 @@ namespace tapeserver {
 
   }; // class BoolFunctor
 
-} // namespace tapeserver
+} // namespace tapebridge
 } // namespace tape
 } // namespace castor      
 
-#endif // _CASTOR_TAPE_TAPESERVER_BOOLFUNCTOR_HPP_
+#endif // _CASTOR_TAPE_TAPEBRIDGE_BOOLFUNCTOR_HPP_

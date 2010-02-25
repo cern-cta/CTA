@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/tapeserver/VmgrTxRx.hpp
+ *                castor/tape/tapebridge/VmgrTxRx.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPESERVER_VMGRTXRX_HPP
-#define CASTOR_TAPE_TAPESERVER_VMGRTXRX_HPP 1
+#ifndef CASTOR_TAPE_TAPEBRIDGE_VMGRTXRX_HPP
+#define CASTOR_TAPE_TAPEBRIDGE_VMGRTXRX_HPP 1
 
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/legacymsg/VmgrMarshal.hpp"
@@ -35,7 +35,7 @@
 
 namespace castor     {
 namespace tape       {
-namespace tapeserver {
+namespace tapebridge {
 
 
 /**
@@ -72,8 +72,8 @@ public:
 
 }; // class VmgrTxRx
 
-} // namespace tapeserver
+} // namespace tapebridge
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPESERVER_VMGRTXRX_HPP
+#endif // CASTOR_TAPE_TAPEBRIDGE_VMGRTXRX_HPP

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/tapeserver/LegacyTxRx.cpp
+ *                castor/tape/tapebridge/LegacyTxRx.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -25,9 +25,9 @@
 #include "castor/Constants.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Internal.hpp"
-#include "castor/tape/tapeserver/DlfMessageConstants.hpp"
-#include "castor/tape/tapeserver/Constants.hpp"
-#include "castor/tape/tapeserver/LegacyTxRx.hpp"
+#include "castor/tape/tapebridge/DlfMessageConstants.hpp"
+#include "castor/tape/tapebridge/Constants.hpp"
+#include "castor/tape/tapebridge/LegacyTxRx.hpp"
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/common.h"
@@ -39,7 +39,7 @@
 //-----------------------------------------------------------------------------
 // sendMsgHeader
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::LegacyTxRx::sendMsgHeader(
+void castor::tape::tapebridge::LegacyTxRx::sendMsgHeader(
   const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
   const int netReadWriteTimeout, const legacymsg::MessageHeader &header)
   throw(castor::exception::Exception) {
@@ -61,7 +61,7 @@ void castor::tape::tapeserver::LegacyTxRx::sendMsgHeader(
       castor::dlf::Param("socketFd", socketFd)};
 
     castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
-      TAPESERVER_SEND_HEADER_TO_RTCPD, params);
+      TAPEBRIDGE_SEND_HEADER_TO_RTCPD, params);
   }
 
   try {
@@ -78,7 +78,7 @@ void castor::tape::tapeserver::LegacyTxRx::sendMsgHeader(
       castor::dlf::Param("socketFd", socketFd)};
 
     castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
-      TAPESERVER_SENT_HEADER_TO_RTCPD, params);
+      TAPEBRIDGE_SENT_HEADER_TO_RTCPD, params);
   }
 }
 
@@ -86,7 +86,7 @@ void castor::tape::tapeserver::LegacyTxRx::sendMsgHeader(
 //-----------------------------------------------------------------------------
 // receiveMsgHeader
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::LegacyTxRx::receiveMsgHeader(
+void castor::tape::tapebridge::LegacyTxRx::receiveMsgHeader(
   const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
   const int netReadWriteTimeout, legacymsg::MessageHeader &header)
   throw(castor::exception::Exception) {
@@ -117,7 +117,7 @@ void castor::tape::tapeserver::LegacyTxRx::receiveMsgHeader(
 //-----------------------------------------------------------------------------
 // receiveMsgHeaderFromCloseableConn
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::LegacyTxRx::receiveMsgHeaderFromCloseable(
+void castor::tape::tapebridge::LegacyTxRx::receiveMsgHeaderFromCloseable(
   const Cuuid_t &cuuid,  bool &connClosed, const uint32_t volReqId, 
   const int socketFd, const int netReadWriteTimeout,
   legacymsg::MessageHeader &header) throw(castor::exception::Exception) {
