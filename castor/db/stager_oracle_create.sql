@@ -645,6 +645,9 @@ CREATE INDEX I_StageGetRequest_ReqId ON StageGetRequest (reqId);
 CREATE INDEX I_StagePutRequest_ReqId ON StagePutRequest (reqId);
 CREATE INDEX I_StageRepackRequest_ReqId ON StageRepackRequest (reqId);
 
+/* Improve query execution in the checkFailJobsWhenNoSpace function */
+CREATE INDEX I_StagePutRequest_SvcClass ON StagePutRequest (svcClass);
+
 /* A primary key index for better scan of Stream2TapeCopy */
 ALTER TABLE Stream2TapeCopy MODIFY
   (parent CONSTRAINT NN_Stream2TapeCopy_Parent NOT NULL,
@@ -674,11 +677,13 @@ CREATE INDEX I_Stream_TapePool ON Stream (tapePool);
 ALTER TABLE FileSystem ADD CONSTRAINT FK_FileSystem_DiskServer 
   FOREIGN KEY (diskServer) REFERENCES DiskServer(id);
 
-ALTER TABLE FileSystem
-  MODIFY (status CONSTRAINT NN_FileSystem_Status NOT NULL);
+ALTER TABLE FileSystem MODIFY
+  (status     CONSTRAINT NN_FileSystem_Status NOT NULL,
+   diskServer CONSTRAINT NN_FileSystem_DiskServer NOT NULL,
+   mountPoint CONSTRAINT NN_FileSystem_MountPoint NOT NULL);
 
-ALTER TABLE FileSystem
-  MODIFY (diskServer CONSTRAINT NN_FileSystem_DiskServer NOT NULL);
+ALTER TABLE FileSystem ADD CONSTRAINT UN_FileSystem_DSMountPoint
+   UNIQUE (diskServer, mountPoint);
 
 /* DiskServer constraints */
 ALTER TABLE DiskServer MODIFY
@@ -4263,12 +4268,21 @@ BEGIN
        WHERE id = srIds(i) OR parent = srIds(i);
     END LOOP;
   END IF;
-  -- Set selected DiskCopies to either INVALID or FAILED
-  FORALL i IN dcsToRm.FIRST .. dcsToRm.LAST
-    UPDATE DiskCopy SET status = 
-           decode(status, 2,4, 5,4, 11,4, 7) -- WAITTAPERECALL,WAITFS[_SCHED] -> FAILED, others -> INVALID
-     WHERE id = dcsToRm(i)
-       AND status != 1;  -- WAITDISK2DISKCOPY
+  -- Set selected DiskCopies to either INVALID or FAILED;
+  -- WAITDISK2DISKCOPY's have a dedicated handling (see bug #63348)
+  FOR i IN dcsToRm.FIRST .. dcsToRm.LAST LOOP
+    SELECT status INTO dcStatus
+      FROM DiskCopy
+     WHERE id = dcsToRm(i);
+    IF dcStatus = 1 THEN  -- WAITDISK2DISKCOPY
+      disk2DiskCopyFailed(dcsToRm(i), 0);
+    ELSE
+      UPDATE DiskCopy
+         -- WAITTAPERECALL,WAITFS[_SCHED] -> FAILED, others -> INVALID
+         SET status = decode(status, 2,4, 5,4, 11,4, 7)
+       WHERE id = dcsToRm(i);
+    END IF;
+  END LOOP;
   ret := 1;  -- ok
 END;
 /
@@ -4820,9 +4834,9 @@ BEGIN
     handleProtoNoUpd(srId, proto);
   END IF;
 EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- No disk copy found on selected FileSystem. This can happen in 3 cases :
+  -- No disk copy found on selected FileSystem. This can happen in 2 cases :
   --  + either a diskcopy was available and got disabled before this job
-  --    was scheduled. Bad luck, we restart from scratch
+  --    was scheduled. Bad luck, we fail the request, the user will have to retry
   --  + or we are an update creating a file and there is a diskcopy in WAITFS
   --    or WAITFS_SCHEDULING associated to us. Then we have to call putStart
   -- So we first check the update hypothesis
@@ -4838,10 +4852,8 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
       END IF;
     END;
   END IF;
-  -- It was not an update creating a file, so we restart
-  UPDATE SubRequest SET status = 1 WHERE id = srId;
-  dci := 0;
-  rpath := '';
+  -- It was not an update creating a file, so we fail
+  raise_application_error(-20114, 'File invalidated while queuing in the scheduler, please try again');
 END;
 /
 
@@ -5060,6 +5072,12 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyFailed
 BEGIN
   fsId := 0;
   srcFsId := -1;
+  -- Lock the CastorFile
+  SELECT id INTO cfId FROM CastorFile
+   WHERE id = 
+    (SELECT castorFile 
+       FROM DiskCopy
+      WHERE id = dcId) FOR UPDATE;
   IF enoent = 1 THEN
     -- Set all diskcopies to FAILED. We're preemptying the NS synchronization here
     UPDATE DiskCopy SET status = 4 -- FAILED
@@ -5291,10 +5309,10 @@ BEGIN
     UPDATE SubRequest SET status = 1, parent = 0 -- RESTART
      WHERE id IN
       (SELECT SubRequest.id
-        FROM StagePutDoneRequest, SubRequest
-       WHERE SubRequest.CastorFile = cfId
-         AND StagePutDoneRequest.id = SubRequest.request
-         AND SubRequest.status = 5); -- WAITSUBREQ
+         FROM StagePutDoneRequest, SubRequest
+        WHERE SubRequest.CastorFile = cfId
+          AND StagePutDoneRequest.id = SubRequest.request
+          AND SubRequest.status = 5); -- WAITSUBREQ
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- This means we are a standalone put
     -- thus cleanup DiskCopy and maybe the CastorFile
@@ -5390,7 +5408,7 @@ BEGIN
              ON SvcClass.id = results.child) NFSSvc
      WHERE SR.status = 6  -- READY
        AND SR.request = Request.id
-       AND SR.creationTime < getTime() - 60
+       AND SR.lastModificationTime < getTime() - 60
        AND NSSvc.id = Request.svcClass
        AND NFSSvc.id = Request.svcClass;
 END;

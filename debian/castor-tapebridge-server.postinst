@@ -1,0 +1,2 @@
+/sbin/chkconfig --add tapebridged
+/sbin/service tapebridged condrestart > /dev/null 2>&1 || :

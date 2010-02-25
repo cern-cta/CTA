@@ -1,0 +1,4 @@
+%attr(0750,root,root) usr/bin/tapebridged
+%attr(0644,root,root) etc/sysconfig/tapebridged.example
+%attr(0755,root,root) etc/init.d/tapebridged
+%attr(0644,root,root) etc/logrotate.d/castor-tapebridge-server

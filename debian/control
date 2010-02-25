@@ -314,17 +314,17 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib, vdt_globus_essentials, 
 Description: castor (Cern Advanced STORage system)
  Csec library
 
-Package: castor-tapeserver-server
+Package: castor-tapebridge-server
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-oracle, castor-lib-tape
 Description: castor (Cern Advanced STORage system)
- Tape Server Daemon
+ Tape Bridge Daemon
 
-Package: castor-tapeserver-client
+Package: castor-tapebridge-client
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-tape
 Description: castor (Cern Advanced STORage system)
- Tape Server Clients
+ Tape Bridge Clients
 
 Package: castor-logprocessor-server
 Architecture: any
