@@ -197,14 +197,14 @@ ALTER TABLE TapeAccessSpecification
     CHECK ((accessMode=0) OR (accessMode=1));
 
 -- The remoteCopyType column of the TapeRequest table has 3 possible
--- values: 'RTCPD', 'AGGREGATOR' or 'TAPESERVER'
--- The value 'AGGREGATOR' is deprecated
+-- values: 'RTCPD', 'AGGREGATOR' or 'TAPEBRIDGE'
+-- The value 'AGGREGATOR' is deprecated by the value 'TAPEBRIDGE'
 ALTER TABLE TapeRequest
   ADD CONSTRAINT CH_TapeRequest_remoteCopyType
     CHECK (
       (remoteCopyType='RTCPD')      OR
       (remoteCopyType='AGGREGATOR') OR
-      (remoteCopyType='TAPESERVER'));
+      (remoteCopyType='TAPEBRIDGE'));
 
 -- The tpMode column of the VolumePriority table has 2 possible
 -- values: 0=write-disabled or 1=write-enabled
