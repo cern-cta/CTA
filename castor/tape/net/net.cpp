@@ -26,7 +26,6 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
-#include "castor/tape/aggregator/Constants.hpp"
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/utils/SmartFd.hpp"
 #include "castor/tape/utils/utils.hpp"
