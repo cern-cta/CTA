@@ -1,0 +1,7 @@
+}; // enum TapeServerDlfMessages
+} // namespace tapeserver
+} // namespace tape
+} // namespace castor
+
+
+#endif // CASTOR_TAPE_TAPESERVER_TAPESERVERDLFMESSAGECONSTANTS_HPP

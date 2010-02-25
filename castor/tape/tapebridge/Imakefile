@@ -1,0 +1,66 @@
+#
+#                      castor/tape/tapeserver/Imakefile
+#
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
+#
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+#
+# @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
+#
+
+CPPFLAGS = -g -O0 -I../../../h -I../../.. $(MTCCFLAGS)
+CFLAGS = -O -I../../../h -I../../.. $(THREADFLAGS)
+LDFLAGS += $(MTLDFLAGS)
+LD = g++
+
+DependsOnLibrary(../../common,castorcommon)
+DependsOnLibrary(../../dlf,castordlf)
+DependsOnLibrary(../db/cnv,castorcnvs)
+DependsOnLibrary(../tape/gatewayprotocol,castortapegatewayprotocol)
+DependsOnLibrary(../tape/utils,castortapeutils)
+
+TAPESERVERBIN_SRCS = \
+  BridgeProtocolEngine.cpp \
+  BridgeSocketCatalogue.cpp \
+  BoolFunctor.cpp \
+  ClientTxRx.cpp \
+  DlfMessageStrings.cpp \
+  DriveAllocationProtocolEngine.cpp \
+  LegacyTxRx.cpp \
+  LogHelper.cpp \
+  Packer.cpp \
+  RtcpJobSubmitter.cpp \
+  RtcpTxRx.cpp \
+  SynchronizedCounter.cpp \
+  TapeServerDaemon.cpp \
+  TapeServerMain.cpp \
+  Unpacker.cpp \
+  VdqmRequestHandler.cpp \
+  VmgrTxRx.cpp \
+  ../legacymsg/CommonMarshal.cpp \
+  ../legacymsg/RtcpMarshal.cpp \
+  ../legacymsg/VmgrMarshal.cpp \
+  ../net/net.cpp \
+  $(TAPEGATEWAY_MESSAGES_SRCS) \
+  $(TAPEGATEWAY_IO_SRCS)
+TAPESERVERBIN_OBJS = $(TAPESERVERBIN_SRCS:.cpp=.Osuf)
+
+NormalProgramTarget(tapeserverd,$(TAPESERVERBIN_OBJS),$(DEPLIB),$(LIBS),750)
+MakeDir(/var/log/castor,0755)
+ADMMANPAGE(tapeserverd)
+LOGROTATE(castor-tapeserver-server,../../..,install)
+SYSCONFIG(tapeserverd,install)
+INITSCRIPT(tapeserverd,install)
