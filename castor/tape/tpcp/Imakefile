@@ -27,7 +27,6 @@ LDFLAGS += $(MTLDFLAGS)
 LD = g++
 
 DependsOnLibrary(..,castorclient)
-DependsOnLibrary(../db/cnv,castorcnvs)
 DependsOnLibrary(../tape/gatewayprotocol,castortapegatewayprotocol)
 DependsOnLibrary(../tape/utils,castortapeutils)
 DependsOnLibrary(../../common,castorcommon)
