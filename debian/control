@@ -316,7 +316,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-tapebridge-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-oracle, castor-lib-tape
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-tape
 Description: castor (Cern Advanced STORage system)
  Tape Bridge Daemon
 
