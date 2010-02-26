@@ -1,7 +1,7 @@
 #! /bin/sh
 #
 #/******************************************************************************
-#                      tapebrdiged.init
+#                      tapebridged.init
 #
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
@@ -30,7 +30,7 @@
 . /etc/rc.d/init.d/functions
 
 # Variables
-prog="tapebrdiged"
+prog="tapebridged"
 RETVAL=0
 
 # Source sysconfig files
