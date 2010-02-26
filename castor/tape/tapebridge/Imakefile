@@ -26,11 +26,11 @@ CFLAGS = -O -I../../../h -I../../.. $(THREADFLAGS)
 LDFLAGS += $(MTLDFLAGS)
 LD = g++
 
-DependsOnLibrary(../../common,castorcommon)
-DependsOnLibrary(../../dlf,castordlf)
-DependsOnLibrary(../db/cnv,castorcnvs)
+DependsOnLibrary(..,castorclient)
 DependsOnLibrary(../tape/gatewayprotocol,castortapegatewayprotocol)
 DependsOnLibrary(../tape/utils,castortapeutils)
+DependsOnLibrary(../../common,castorcommon)
+DependsOnLibrary(../../dlf,castordlf)
 
 TAPEBRIDGEBIN_SRCS = \
   BridgeProtocolEngine.cpp \
