@@ -212,7 +212,7 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
       try {
         castor::dlf::Param params[] = {
           castor::dlf::Param("mountTransactionId", jobRequest.volReqId    ),
-          castor::dlf::Param("aggregatorTransId" , aggregatorTransactionId),
+          castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
           castor::dlf::Param("Message"           , ex.getMessage().str()  ),
           castor::dlf::Param("Code"              , ex.code()              )};
         castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
@@ -225,7 +225,7 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
         // Don't rethrow, just log the exception
         castor::dlf::Param params[] = {
           castor::dlf::Param("mountTransactionId", jobRequest.volReqId    ),
-          castor::dlf::Param("aggregatorTransId" , aggregatorTransactionId),
+          castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
           castor::dlf::Param("Message"           , ex2.getMessage().str() ),
           castor::dlf::Param("Code"              , ex2.code()             )};
         castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR,
