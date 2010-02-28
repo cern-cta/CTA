@@ -155,6 +155,7 @@ int castor::tape::tapebridge::BridgeProtocolEngine::acceptRtcpdConnection()
 
     castor::dlf::Param params[] = {
       castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId     ),
+      castor::dlf::Param("TPVID"             , m_volume.vid()            ),
       castor::dlf::Param("IP"                , castor::dlf::IPAddress(ip)),
       castor::dlf::Param("Port"              , port                      ),
       castor::dlf::Param("HostName"          , hostName                  ),
@@ -370,6 +371,7 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::processAPendingSocket(
 
           castor::dlf::Param params[] = {
             castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId),
+            castor::dlf::Param("TPVID"             , m_volume.vid()       ),
             castor::dlf::Param("socketFd"          , pendingSock          )};
           castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
             TAPEBRIDGE_CLOSED_RTCPD_DISK_TAPE_CONNECTION_DUE_TO_PEER, params);
@@ -550,6 +552,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::runMigrationSession()
   {
     castor::dlf::Param params[] = {
       castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("TPVID"             , m_volume.vid()         ),
       castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
       castor::dlf::Param("clientSock"        , clientSock.get()       ),
       castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
@@ -569,6 +572,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::runMigrationSession()
     castor::dlf::Param params[] = {
       castor::dlf::Param("mountTransactionId",
         fileFromClient->mountTransactionId()),
+      castor::dlf::Param("TPVID"     , m_volume.vid()         ),
       castor::dlf::Param("tapebridgeTransId", 
         fileFromClient->aggregatorTransactionId()),
       castor::dlf::Param("clientSock", closedClientSock       ),
@@ -582,6 +586,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::runMigrationSession()
   } else {
     castor::dlf::Param params[] = {
       castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("TPVID"             , m_volume.vid()         ),
       castor::dlf::Param("clientSock"        , closedClientSock       ),
       castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
       castor::dlf::Param("clientPort"        , m_jobRequest.clientPort)};
@@ -603,6 +608,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::runMigrationSession()
       // Don't rethrow, just log the exception
       castor::dlf::Param params[] = {
         castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+        castor::dlf::Param("TPVID"             , m_volume.vid()         ),
         castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
         castor::dlf::Param("Message"           , ex.getMessage().str()  ),
         castor::dlf::Param("Code"              , ex.code()              )};
@@ -767,6 +773,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::runRecallSession()
         // Don't rethrow, just log the exception
         castor::dlf::Param params[] = {
           castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+          castor::dlf::Param("TPVID"             , m_volume.vid()         ),
           castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
           castor::dlf::Param("Message"           , ex.getMessage().str()  ),
           castor::dlf::Param("Code"              , ex.code()              )};
@@ -849,6 +856,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::runDumpSession()
         // Don't rethrow, just log the exception
         castor::dlf::Param params[] = {
           castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+          castor::dlf::Param("TPVID"             , m_volume.vid()         ),
           castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
           castor::dlf::Param("Message"           , ex.getMessage().str()  ),
           castor::dlf::Param("Code"              , ex.code()              )};
@@ -997,6 +1005,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpFileReq(
       {
         castor::dlf::Param params[] = {
           castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+          castor::dlf::Param("TPVID"             , m_volume.vid()         ),
           castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
           castor::dlf::Param("clientSock"        , clientSock.get()       ),
           castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
@@ -1024,6 +1033,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpFileReq(
       {
         castor::dlf::Param params[] = {
           castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+          castor::dlf::Param("TPVID"             , m_volume.vid()         ),
           castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
           castor::dlf::Param("clientSock"        , clientSock.get()       ),
           castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
@@ -1144,6 +1154,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpFileReq(
         {
           castor::dlf::Param params[] = {
             castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+            castor::dlf::Param("TPVID"             , m_volume.vid()         ),
             castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
             castor::dlf::Param("clientSock"        , clientSock.get()       ),
             castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
@@ -1160,6 +1171,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpFileReq(
         {
           castor::dlf::Param params[] = {
             castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+            castor::dlf::Param("TPVID"             , m_volume.vid()         ),
             castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
             castor::dlf::Param("clientSock"        , closedClientSock       ),
             castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
@@ -1339,6 +1351,7 @@ void
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("mountTransactionId", reply->mountTransactionId()     ),
+    castor::dlf::Param("TPVID"             , m_volume.vid()                  ),
     castor::dlf::Param("tapebridgeTransId" , reply->aggregatorTransactionId()),
     castor::dlf::Param("clientSock"        , clientSock                      ),
     castor::dlf::Param("clientHost"        , m_jobRequest.clientHost         ),
@@ -1470,6 +1483,7 @@ void
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("mountTransactionId", reply->mountTransactionId()     ),
+    castor::dlf::Param("TPVID"             , m_volume.vid()                  ),
     castor::dlf::Param("tapebridgeTransId" , reply->aggregatorTransactionId()),
     castor::dlf::Param("clientSock"        , clientSock                      ),
     castor::dlf::Param("clientHost"        , m_jobRequest.clientHost         ),
@@ -1595,6 +1609,7 @@ void
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("mountTransactionId", reply->mountTransactionId()     ),
+    castor::dlf::Param("TPVID"             , m_volume.vid()                  ),
     castor::dlf::Param("tapebridgeTransId" , reply->aggregatorTransactionId()),
     castor::dlf::Param("clientSock"        , clientSock                      ),
     castor::dlf::Param("clientHost"        , m_jobRequest.clientHost         ),
@@ -1656,6 +1671,7 @@ void
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("mountTransactionId", reply->mountTransactionId()     ),
+    castor::dlf::Param("TPVID"             , m_volume.vid()                  ),
     castor::dlf::Param("tapebridgeTransId" , reply->aggregatorTransactionId()),
     castor::dlf::Param("clientSock"        , clientSock                      ),
     castor::dlf::Param("clientHost"        , m_jobRequest.clientHost         ),
@@ -1699,6 +1715,7 @@ void
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("mountTransactionId", reply->mountTransactionId()     ),
+    castor::dlf::Param("TPVID"             , m_volume.vid()                  ),
     castor::dlf::Param("tapebridgeTransId" , reply->aggregatorTransactionId()),
     castor::dlf::Param("clientSock"        , clientSock                      ),
     castor::dlf::Param("clientHost"        , m_jobRequest.clientHost         ),
