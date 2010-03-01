@@ -632,6 +632,7 @@ END;
 /* Procedure responsible for managing the draining process */
 CREATE OR REPLACE PROCEDURE drainManager AS
   fsIds "numList";
+  dcIds "numList";
 BEGIN
   -- Delete (and restart if necessary) the filesystems which are:
   --  A) in a DELETING state and have no transfers pending in the scheduler.
@@ -657,6 +658,21 @@ BEGIN
        WHERE fileSystem = a.fileSystem;
     END IF;
   END LOOP;
+  -- If the draining filesystem is in a DELETING state and there are still
+  -- running transfers for which the diskcopy they were waiting on has
+  -- disappeared delete them. SR #112993
+  SELECT DDC.diskCopy BULK COLLECT INTO dcIds
+    FROM DrainingDiskCopy DDC, DrainingFileSystem DFS
+   WHERE DDC.fileSystem = DFS.fileSystem
+     AND DDC.status = 3  -- WAITD2D
+     AND DFS.status = 6  -- DELETING
+     AND NOT EXISTS
+       (SELECT 'x' FROM DiskCopy WHERE id = DDC.diskCopy);
+  DELETE FROM DrainingDiskCopy
+   WHERE status = 3
+     AND diskCopy IN
+       (SELECT /*+ CARDINALITY(dcIdTable 5) */ *
+          FROM TABLE (dcIds) dcIdTable);
   -- Process filesystems which in a CREATED state
   UPDATE DrainingFileSystem
      SET status = 1  -- INITIALIZING
