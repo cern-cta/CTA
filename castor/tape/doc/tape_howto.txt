@@ -3253,7 +3253,24 @@ mkdir -p $BUILD_DIR/SOURCES
 cd $BUILD_DIR
 svn co svn+ssh://murrayc3@svn.cern.ch/reps/CASTOR/CASTOR2/trunk
 
-5. Build the rpms
+5. Set environment variables for using Oracle and makedepend
+
+# Set environment variables for using Oracle
+export ORACLE_HOME="/afs/cern.ch/project/oracle/@sys/10203"
+export ORACLE_LIB="${ORACLE_HOME}/lib"
+export ORACLE_BIN="${ORACLE_HOME}/bin"
+export PATH="${ORACLE_BIN}:${PATH}"
+export LD_LIBRARY_PATH="${ORACLE_LIB}:${LD_LIBRARY_PATH}"
+
+# Set environment variables for using makedepend which is in /usr/bin/X11
+export PATH="/usr/bin/X11:${PATH}"
+
+6. Set environment variables for the version of CASTOR
+
+export MAJOR_CASTOR_VERSION="2.1"
+export MINOR_CASTOR_VERSION="9.5"
+
+7. Build the rpms
 
 cd $BUILD_DIR/trunk
 ./makerpm.sh
