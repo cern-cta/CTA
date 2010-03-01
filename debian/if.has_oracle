@@ -1,7 +1,6 @@
 #
 ## List of packages to do only if oracle is available
 #
-castor-aggregator-server
 castor-tapegateway-server
 castor-dbtools
 castor-devel-oracle
