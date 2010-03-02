@@ -141,7 +141,7 @@ INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (23, 'd2dtransfer');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (24, 'mighunterd');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (25, 'rechandlerd');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (26, 'stagerjob');
-INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (27, 'aggregatord');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (27, 'tapebridged');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (28, 'rmcd');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (29, 'tapegatewayd');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (30, 'operations');
