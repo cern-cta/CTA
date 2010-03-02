@@ -131,8 +131,8 @@ private:
   /**
    * FileToRecallRequest message handler.
    *
-   * @param obj  The aggregator message to be processed.
-   * @param sock The socket on which to reply to the aggregator.
+   * @param obj  The tapebridge message to be processed.
+   * @param sock The socket on which to reply to the tapebridge.
    * @return     True if there is more work to be done else false.
    */
   bool handleFileToRecallRequest(castor::IObject *obj,
@@ -141,8 +141,8 @@ private:
   /**
    * FileRecalledNotification message handler.
    *
-   * @param obj  The aggregator message to be processed.
-   * @param sock The socket on which to reply to the aggregator.
+   * @param obj  The tapebridge message to be processed.
+   * @param sock The socket on which to reply to the tapebridge.
    * @return     True if there is more work to be done else false.
    */
   bool handleFileRecalledNotification(castor::IObject *obj,
@@ -151,8 +151,8 @@ private:
   /**
    * EndNotification message handler.
    *
-   * @param obj  The aggregator message to be processed.
-   * @param sock The socket on which to reply to the aggregator.
+   * @param obj  The tapebridge message to be processed.
+   * @param sock The socket on which to reply to the tapebridge.
    * @return     True if there is more work to be done else false.
    */
   bool handleEndNotification(castor::IObject *obj,
@@ -161,8 +161,8 @@ private:
   /**
    * EndNotificationErrorReport message handler.
    *
-   * @param obj  The aggregator message to be processed.
-   * @param sock The socket on which to reply to the aggregator.
+   * @param obj  The tapebridge message to be processed.
+   * @param sock The socket on which to reply to the tapebridge.
    * @return     True if there is more work to be done else false.
    */
   bool handleEndNotificationErrorReport(castor::IObject *obj,
@@ -171,8 +171,8 @@ private:
   /**
    * PingNotification message handler.
    *
-   * @param obj  The aggregator message to be processed.
-   * @param sock The socket on which to reply to the aggregator.
+   * @param obj  The tapebridge message to be processed.
+   * @param sock The socket on which to reply to the tapebridge.
    * @return     True if there is more work to be done else false.
    */
   bool handlePingNotification(castor::IObject *obj,

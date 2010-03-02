@@ -52,7 +52,7 @@
 castor::tape::tpcp::WriteTpCommand::WriteTpCommand() throw() :
   m_nbMigratedFiles(0) {
 
-  // Register the Aggregator message handler member functions
+  // Register the Tapebridge message handler member functions
   registerMsgHandler(OBJ_FileToMigrateRequest,
     &WriteTpCommand::handleFileToMigrateRequest, this);
   registerMsgHandler(OBJ_FileMigratedNotification,
@@ -369,13 +369,13 @@ bool castor::tape::tpcp::WriteTpCommand::handleFileToMigrateRequest(
       rfioStat(filename.c_str(), statBuf);
     } catch(castor::exception::Exception &ex) {
 
-      // Notify the aggregator about the exception and rethrow
+      // Notify the tapebridge about the exception and rethrow
       sendEndNotificationErrorReport(msg->aggregatorTransactionId(),
         ex.code(), ex.getMessage().str(), sock);
       throw(ex);
     }
 
-    // Create FileToMigrate message for the aggregator
+    // Create FileToMigrate message for the tapebridge
     tapegateway::FileToMigrate fileToMigrate;
     fileToMigrate.setMountTransactionId(m_volReqId);
     fileToMigrate.setAggregatorTransactionId(msg->aggregatorTransactionId());
@@ -405,7 +405,7 @@ bool castor::tape::tpcp::WriteTpCommand::handleFileToMigrateRequest(
       m_fileTransactionId++;
     }
 
-    // Send the FileToMigrate message to the aggregator
+    // Send the FileToMigrate message to the tapebridge
     sock.sendObject(fileToMigrate);
 
     Helper::displaySentMsgIfDebug(fileToMigrate, m_cmdLine.debugSet);
@@ -424,12 +424,12 @@ bool castor::tape::tpcp::WriteTpCommand::handleFileToMigrateRequest(
   // Else no more files
   } else {
 
-    // Create the NoMoreFiles message for the aggregator
+    // Create the NoMoreFiles message for the tapebridge
     castor::tape::tapegateway::NoMoreFiles noMore;
     noMore.setMountTransactionId(m_volReqId);
     noMore.setAggregatorTransactionId(msg->aggregatorTransactionId());
 
-    // Send the NoMoreFiles message to the aggregator
+    // Send the NoMoreFiles message to the tapebridge
     sock.sendObject(noMore);
 
     Helper::displaySentMsgIfDebug(noMore, m_cmdLine.debugSet);
@@ -461,7 +461,7 @@ bool castor::tape::tpcp::WriteTpCommand::handleFileMigratedNotification(
       std::stringstream oss;
 
       oss <<
-        "Received unknown file transaction ID from the aggregator"
+        "Received unknown file transaction ID from the tapebridge"
         ": fileTransactionId=" << msg->fileTransactionId();
 
       sendEndNotificationErrorReport(msg->aggregatorTransactionId(), EBADMSG,
@@ -493,12 +493,12 @@ bool castor::tape::tpcp::WriteTpCommand::handleFileMigratedNotification(
   // Update the count of successfull recalls
   m_nbMigratedFiles++;
 
-  // Create the NotificationAcknowledge message for the aggregator
+  // Create the NotificationAcknowledge message for the tapebridge
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
   acknowledge.setMountTransactionId(m_volReqId);
   acknowledge.setAggregatorTransactionId(msg->aggregatorTransactionId());
 
-  // Send the NotificationAcknowledge message to the aggregator
+  // Send the NotificationAcknowledge message to the tapebridge
   sock.sendObject(acknowledge);
 
   Helper::displaySentMsgIfDebug(acknowledge, m_cmdLine.debugSet);

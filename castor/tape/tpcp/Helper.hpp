@@ -55,7 +55,7 @@ public:
 
       os <<
         "Received " << utils::objectTypeToString(msg.type()) <<
-        " from aggregator" << std::endl <<
+        " from tapebridge" << std::endl <<
         msg << std::endl;
     }
   }
@@ -73,7 +73,7 @@ public:
 
       os <<
         "Sent " << utils::objectTypeToString(msg.type()) <<
-        " to aggregator" << std::endl <<
+        " to tapebridge" << std::endl <<
         msg << std::endl;
     }
   }

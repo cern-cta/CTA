@@ -60,7 +60,7 @@ castor::tape::tpcp::ReadTpCommand::ReadTpCommand() throw() :
   // Restore original umask
   umask(m_umask);
 
-  // Register the Aggregator message handler member functions
+  // Register the Tapebridge message handler member functions
   registerMsgHandler(OBJ_FileToRecallRequest,
     &ReadTpCommand::handleFileToRecallRequest, this);
   registerMsgHandler(OBJ_FileRecalledNotification,
@@ -414,7 +414,7 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileToRecallRequest(
       rfioStat(filepath.c_str(), statBuf);
     } catch(castor::exception::Exception &ex) {
 
-      // Notify the aggregator about the exception and rethrow
+      // Notify the tapebridge about the exception and rethrow
       sendEndNotificationErrorReport(msg->aggregatorTransactionId(), ex.code(),
         ex.getMessage().str(), sock);
       throw(ex);
@@ -423,7 +423,7 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileToRecallRequest(
     // Get the tape file sequence number and RFIO filename
     const uint32_t tapeFseq = m_tapeFseqSequence.next();
 
-    // Create FileToRecall message for the aggregator
+    // Create FileToRecall message for the tapebridge
     tapegateway::FileToRecall fileToRecall;
     fileToRecall.setMountTransactionId(m_volReqId);
     fileToRecall.setAggregatorTransactionId(msg->aggregatorTransactionId());
@@ -447,7 +447,7 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileToRecallRequest(
       m_fileTransactionId++;
     }
 
-    // Send the FileToRecall message to the aggregator
+    // Send the FileToRecall message to the tapebridge
     sock.sendObject(fileToRecall);
 
     {
@@ -467,12 +467,12 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileToRecallRequest(
   // Else no more files
   } else {
 
-    // Create the NoMoreFiles message for the aggregator
+    // Create the NoMoreFiles message for the tapebridge
     castor::tape::tapegateway::NoMoreFiles noMore;
     noMore.setMountTransactionId(m_volReqId);
     noMore.setAggregatorTransactionId(msg->aggregatorTransactionId());
 
-    // Send the NoMoreFiles message to the aggregator
+    // Send the NoMoreFiles message to the tapebridge
     sock.sendObject(noMore);
 
     Helper::displaySentMsgIfDebug(noMore, m_cmdLine.debugSet);
@@ -504,7 +504,7 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileRecalledNotification(
       std::stringstream oss;
 
       oss <<
-        "Received unknown file transaction ID from the aggregator"
+        "Received unknown file transaction ID from the tapebridge"
         ": fileTransactionId=" << msg->fileTransactionId();
 
       sendEndNotificationErrorReport(msg->aggregatorTransactionId(), EBADMSG,
@@ -541,12 +541,12 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileRecalledNotification(
   // Update the count of successfull recalls
   m_nbRecalledFiles++;
 
-  // Create the NotificationAcknowledge message for the aggregator
+  // Create the NotificationAcknowledge message for the tapebridge
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
   acknowledge.setMountTransactionId(m_volReqId);
   acknowledge.setAggregatorTransactionId(msg->aggregatorTransactionId());
 
-  // Send the NotificationAcknowledge message to the aggregator
+  // Send the NotificationAcknowledge message to the tapebridge
   sock.sendObject(acknowledge);
 
   Helper::displaySentMsgIfDebug(acknowledge, m_cmdLine.debugSet);

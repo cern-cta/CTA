@@ -57,10 +57,10 @@ namespace tpcp   {
  * <ul>
  * <li>Delegates to a sub-class the parsing of the command-line.
  * <li>Gets the DGN of the tape to be used from the VMGR.
- * <li>Creates the aggregator callback socket.
+ * <li>Creates the Tapebridge callback socket.
  * <li>Sends the request for a drive to the VDQM.
- * <li>Waits for the callback from the aggregator on the chosen tape server.
- * <li>Receives and replies to the volume request from the aggregator.
+ * <li>Waits for the callback from the Tapebridge on the chosen tape server.
+ * <li>Receives and replies to the volume request from the Tapebridge.
  * <li>Delegates the tape transfer action (DUMP, READ, WRITE or VERIFY) to a
  *     sub-class.
  * </ul>
@@ -79,7 +79,7 @@ namespace tpcp   {
  * </ul>
  *
  * Please note that TpcpCommand checks the mount transaction ID of all
- * incomming aggregator messages.  Sub-classes therefore do not need to check
+ * incomming Tapebridge messages.  Sub-classes therefore do not need to check
  * the mount transaction ID in their message handler methods.
  */
 class TpcpCommand : public castor::BaseObject {
@@ -186,7 +186,7 @@ protected:
   char m_dgn[CA_MAXDGNLEN + 1];
 
   /**
-   * TCP/IP aggregator callback socket.
+   * TCP/IP Tapebridge callback socket.
    */
   castor::io::ServerSocket m_callbackSock;
 
@@ -221,7 +221,7 @@ protected:
 
   /**
    * Creates, binds and sets to listening the callback socket to be used for
-   * callbacks from the aggregator daemon.
+   * callbacks from the Tapebridge daemon.
    */
   void setupCallbackSock() throw(castor::exception::Exception);
 
@@ -239,11 +239,11 @@ protected:
     throw(castor::exception::Exception);
 
   /**
-   * Registers the specified Aggregator message handler member function.
+   * Registers the specified Tapebridge message handler member function.
    *
-   * @param messageType The type of Aggregator message.
-   * @param func        The member function to handle the Aggregator message.
-   * @param obj         The object to handler the Aggregator message.
+   * @param messageType The type of Tapebridge message.
+   * @param func        The member function to handle the Tapebridge message.
+   * @param obj         The object to handler the Tapebridge message.
    */
   template<class T> void registerMsgHandler(
     const int messageType,
@@ -254,8 +254,8 @@ protected:
   }
 
   /**
-   * Waits for and accepts an incoming aggregator connection, reads in the
-   * aggregator message and then dispatches it to appropriate message handler
+   * Waits for and accepts an incoming Tapebridge connection, reads in the
+   * Tapebridge message and then dispatches it to appropriate message handler
    * member function.
    *
    * @return True if there is more work to be done, else false.
@@ -265,8 +265,8 @@ protected:
   /**
    * PingNotification message handler.
    *
-   * @param obj  The aggregator message to be processed.
-   * @param sock The socket on which to reply to the aggregator.
+   * @param obj  The Tapebridge message to be processed.
+   * @param sock The socket on which to reply to the Tapebridge.
    * @return     True if there is more work to be done else false.
    */
   bool handlePingNotification(castor::IObject *obj,
@@ -275,8 +275,8 @@ protected:
   /**
    * EndNotification message handler.
    *
-   * @param obj  The aggregator message to be processed.
-   * @param sock The socket on which to reply to the aggregator.
+   * @param obj  The Tapebridge message to be processed.
+   * @param sock The socket on which to reply to the Tapebridge.
    * @return     True if there is more work to be done else false.
    */
   bool handleEndNotification(castor::IObject *obj,
@@ -285,34 +285,34 @@ protected:
   /**
    * EndNotificationErrorReport message handler.
    *
-   * @param obj  The aggregator message to be processed.
-   * @param sock The socket on which to reply to the aggregator.
+   * @param obj  The Tapebridge message to be processed.
+   * @param sock The socket on which to reply to the Tapebridge.
    * @return     True if there is more work to be done else false.
    */
   bool handleEndNotificationErrorReport(castor::IObject *obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
-   * Acknowledges the end of the session to the aggregator.
+   * Acknowledges the end of the session to the Tapebridge.
    */
   void acknowledgeEndOfSession() throw(castor::exception::Exception);
 
   /**
    * Convenience method for sending EndNotificationErrorReport messages to the
-   * aggregator.
+   * Tapebridge.
    *
    * Note that this method intentionally does not throw any exceptions.  The
    * method tries to send an EndNotificationErrorReport messages to the
-   * aggregator and fails silently in the case it cannot.
+   * Tapebridge and fails silently in the case it cannot.
    *
-   * @param aggregatorTransactionId The aggregator transaction ID.
+   * @param Tapebridge The Tapebridge transaction ID.
    * @param errorCode               The error code.
    * @param errorMessage            The error message.
    * @param sock                    The socket on which to reply to the
-   *                                aggregator.
+   *                                Tapebridge.
    */
   void sendEndNotificationErrorReport(
-    const uint64_t             aggregatorTransactionId,
+    const uint64_t             tapebridgeTransactionId,
     const int                  errorCode,
     const std::string          &errorMessage,
     castor::io::AbstractSocket &sock)
@@ -328,7 +328,7 @@ protected:
    * @param obj  The CASTOR framework object.
    * @param msg  Out parameter. The pointer to the Gateway massage that will be
    *             set by this method.
-   * @param sock The socket on which to reply to the aggregator with an
+   * @param sock The socket on which to reply to the Tapebridge with an
    *             EndNotificationErrorReport message if the cast fails.
    */
   template<class T> void castMessage(castor::IObject *obj, T *&msg,
@@ -343,8 +343,8 @@ protected:
         ": Actual=" << utils::objectTypeToString(obj->type()) <<
         " Expected=" << utils::objectTypeToString(T().type());
 
-      const uint64_t aggregatorTransactionId = 0; // Transaction Id unknown
-      sendEndNotificationErrorReport(aggregatorTransactionId, SEINTERNAL,
+      const uint64_t tapebridgeTransactionId = 0; // Transaction Id unknown
+      sendEndNotificationErrorReport(tapebridgeTransactionId, SEINTERNAL,
         oss.str(), sock);
 
       TAPE_THROW_EX(castor::exception::Internal, oss.str());
@@ -384,7 +384,7 @@ private:
   void deleteVdqmVolumeRequest() throw (castor::exception::Exception);
 
   /**
-   * An abstract functor to handle incomming Aggregator messages.
+   * An abstract functor to handle incomming Tapebridge messages.
    */
   class AbstractMsgHandler {
   public:
@@ -392,8 +392,8 @@ private:
     /**
      * operator().
      *
-     * @param obj The aggregator message to be processed.
-     * @param sock The socket on which to reply to the aggregator.
+     * @param obj The Tapebridge message to be processed.
+     * @param sock The socket on which to reply to the Tapebridge.
      * @return True if there is more work to be done else false.
      */
     virtual bool operator()(castor::IObject *obj,
@@ -409,7 +409,7 @@ private:
   };
 
   /**
-   * Concrete Aggregator message handler template functor.
+   * Concrete Tapebridge message handler template functor.
    */
   template<class T> class MsgHandler : public AbstractMsgHandler {
   public:
@@ -426,8 +426,8 @@ private:
     /**
      * operator().
      *
-     * @param obj The aggregator message to be processed.
-     * @param sock The socket on which to reply to the aggregator.
+     * @param obj The Tapebridge message to be processed.
+     * @param sock The socket on which to reply to the Tapebridge.
      * @return True if there is more work to be done else false.
      */
     virtual bool operator()(castor::IObject *obj,

@@ -36,7 +36,7 @@ namespace tpcp   {
   	
   /**
    * The number of seconds to stay blocked while waiting for a callback
-   * connection from the aggregator.
+   * connection from the Tapebridge.
    */
   const int WAITCALLBACKTIMEOUT = 60;
 

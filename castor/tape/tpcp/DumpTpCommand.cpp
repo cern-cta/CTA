@@ -41,7 +41,7 @@
 //------------------------------------------------------------------------------
 castor::tape::tpcp::DumpTpCommand::DumpTpCommand() throw() {
 
-  // Register the Aggregator message handler member functions
+  // Register the Tapebridge message handler member functions
   registerMsgHandler(OBJ_DumpParametersRequest,
     &DumpTpCommand::handleDumpParametersRequest, this);
   registerMsgHandler(OBJ_DumpNotification,
@@ -372,7 +372,7 @@ bool castor::tape::tpcp::DumpTpCommand::handleDumpParametersRequest(
   castMessage(obj, msg, sock);
   Helper::displayRcvdMsgIfDebug(*msg, m_cmdLine.debugSet);
 
-  // Create DumpParameters message for the aggregator
+  // Create DumpParameters message for the tapebridge
   tapegateway::DumpParameters dumpParameters;
   dumpParameters.setMountTransactionId(m_volReqId);
   dumpParameters.setAggregatorTransactionId(msg->aggregatorTransactionId());
@@ -385,7 +385,7 @@ bool castor::tape::tpcp::DumpTpCommand::handleDumpParametersRequest(
   dumpParameters.setFromBlock(m_cmdLine.dumpTapeFromBlock);
   dumpParameters.setToBlock(m_cmdLine.dumpTapeToBlock);
 
-  // Send the DumpParameters message to the aggregator
+  // Send the DumpParameters message to the tapebridge
   sock.sendObject(dumpParameters);
 
   Helper::displaySentMsgIfDebug(dumpParameters, m_cmdLine.debugSet);
@@ -410,12 +410,12 @@ bool castor::tape::tpcp::DumpTpCommand::handleDumpNotification(
   std::ostream &os = std::cout;
   os << msg->message();
 
-  // Create the NotificationAcknowledge message for the aggregator
+  // Create the NotificationAcknowledge message for the tapebridge
   castor::tape::tapegateway::NotificationAcknowledge acknowledge;
   acknowledge.setMountTransactionId(m_volReqId);
   acknowledge.setAggregatorTransactionId(msg->aggregatorTransactionId());
 
-  // Send the NotificationAcknowledge message to the aggregator
+  // Send the NotificationAcknowledge message to the tapebridge
   sock.sendObject(acknowledge);
 
   Helper::displaySentMsgIfDebug(acknowledge, m_cmdLine.debugSet);
