@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/utils.cpp
+ *                      castor/tape/utils.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor

@@ -90,7 +90,7 @@ castor::tape::tapegateway::WorkerThread::WorkerThread():BaseDbThread(){
 void castor::tape::tapegateway::WorkerThread::run(void* arg)
 {
 
-  // to comunicate with the tape aggregator
+  // to comunicate with the tape Tapebridge
   // service to access the database
   castor::IService* dbSvc = castor::BaseObject::services()->service("OraTapeGatewaySvc", castor::SVC_ORATAPEGATEWAYSVC);
   castor::tape::tapegateway::ITapeGatewaySvc* oraSvc = dynamic_cast<castor::tape::tapegateway::ITapeGatewaySvc*>(dbSvc);

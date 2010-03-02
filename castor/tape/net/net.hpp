@@ -260,7 +260,7 @@ void readBytesFromCloseable(bool &connClosed, const int socketFd,
 void writeBytes(const int socketFd, const int timeout, const int nbBytes,
   char *const buf) throw(castor::exception::Exception);
 
-} // namespace aggregator
+} // namespace net
 } // namespace tape
 } // namespace castor
 

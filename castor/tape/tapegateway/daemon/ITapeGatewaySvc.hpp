@@ -196,7 +196,7 @@ namespace tapegateway {
 
 
 	/*
-	 * Update the database when the tape aggregator allows us to serve a request
+	 * Update the database when the Tapegateway allows us to serve a request
 	 */
 
 	virtual void  startTapeSession( const castor::tape::tapegateway::VolumeRequest& startReq,

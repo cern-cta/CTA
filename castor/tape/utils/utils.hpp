@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/aggregator/utils.hpp
+ *                      castor/tape/utils.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -23,8 +23,8 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_AGGREGATOR_UTILS_UTILS_HPP
-#define CASTOR_TAPE_AGGREGATOR_UTILS_UTILS_HPP 1
+#ifndef CASTOR_TAPE_TAPEBRIDGE_UTILS_UTILS_HPP
+#define CASTOR_TAPE_TAPEBRIDGE_UTILS_UTILS_HPP 1
 
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidArgument.hpp"
@@ -284,7 +284,7 @@ const char *rtcopyReqTypeToString(const uint32_t reqType) throw();
 const char *procStatusToString(const uint32_t procStatus) throw();
 
 /**
- * Returns the string representation of the specified aggregator client type
+ * Returns the string representation of the specified tapebridge client type
  * from a tapegateay::Volume message (READ, WRITE or DUMP).
  */
 const char *volumeClientTypeToString(const tapegateway::ClientType mode)
@@ -543,4 +543,4 @@ void pthreadJoin(pthread_t thread, void **const valuePtr)
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_AGGREGATOR_UTILS_UTILS_HPP
+#endif // CASTOR_TAPE_TAPEBRIDGE_UTILS_UTILS_HPP

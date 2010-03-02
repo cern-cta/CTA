@@ -156,7 +156,7 @@ namespace ora         {
 	       std::string& repackVid )
       throw (castor::exception::Exception);
 
-    // To update the database when the tape aggregator allows
+    // To update the database when the tapebridge allows
     // us to serve a request
     virtual void  startTapeSession( 
 		     const castor::tape::tapegateway::VolumeRequest& startReq,
