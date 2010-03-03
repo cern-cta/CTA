@@ -1,12 +1,4 @@
-%attr(-,root,root) usr/lib/libCsec_plugin_GSI.so.__MAJOR_CASTOR_VERSION__
-%attr(-,root,root) usr/lib/libCsec_plugin_GSI.so.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__
-%attr(-,root,root) usr/lib/libCsec_plugin_GSI.so
-%attr(-,root,root) usr/lib/libCsec_plugin_GSI_thread.so.__MAJOR_CASTOR_VERSION__
-%attr(-,root,root) usr/lib/libCsec_plugin_GSI_thread.so.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__
-%attr(-,root,root) usr/lib/libCsec_plugin_GSI_thread.so
-%attr(-,root,root) usr/lib/libCsec_plugin_ID.so.__MAJOR_CASTOR_VERSION__
-%attr(-,root,root) usr/lib/libCsec_plugin_ID.so.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__
-%attr(-,root,root) usr/lib/libCsec_plugin_ID.so
-%attr(-,root,root) usr/lib/libCsec_plugin_KRB5.so.__MAJOR_CASTOR_VERSION__
-%attr(-,root,root) usr/lib/libCsec_plugin_KRB5.so.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__
-%attr(-,root,root) usr/lib/libCsec_plugin_KRB5.so
+%attr(-,root,root) usr/lib/libCsec_plugin_GSI.so*
+%attr(-,root,root) usr/lib/libCsec_plugin_GSI_thread.so*
+%attr(-,root,root) usr/lib/libCsec_plugin_ID.so*
+%attr(-,root,root) usr/lib/libCsec_plugin_KRB5.so*

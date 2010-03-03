@@ -33,7 +33,7 @@ checkORACLE:
 	fi
 
 checkLSF:
-	@if [ ! -e InstallLibDir/liblsf.so -o ! -d /usr/include/lsf ]; then \
+	@if [ ! -e $(LIBDIR)/liblsf.so -o ! -d /usr/include/lsf ]; then \
 	  echo "Could not find LSF installation. Giving up."; \
 	  exit 1; \
 	fi
@@ -49,7 +49,7 @@ checkSTK:
 	@if [ ! -z "${CASTOR_NOSTK}" ]; then \
 	  echo "Compiling without STK support."; \
 	else \
-	  if [ ! -e InstallLibDir/CDK/libapi.so -o ! -e InstallLibDir/CDK/libutl.so -o ! -e InstallLibDir/CDK/libipc.so -o ! -e InstallLibDir/CDK/libcl.so ]; then \
+	  if [ ! -e $(LIBDIR)/CDK/libapi.so -o ! -e $(LIBDIR)/CDK/libutl.so -o ! -e $(LIBDIR)/CDK/libipc.so -o ! -e $(LIBDIR)/CDK/libcl.so ]; then \
 	    echo "Could not find STK libraries. Giving up."; \
 	    exit 1; \
           fi; \

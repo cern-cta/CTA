@@ -82,8 +82,8 @@ done
 #
 ## Change __MAJOR_CASTOR_VERSION and __MINOR_CASTOR_VERSION everywhere it has to be changed
 #
-perl -pi -e s/\__MAJOR_CASTOR_VERSION__/${MAJOR_CASTOR_VERSION}/g */Imakefile debian/*.install.perm CASTOR.spec
-perl -pi -e s/\__MINOR_CASTOR_VERSION__/${MINOR_CASTOR_VERSION}/g */Imakefile debian/*.install.perm CASTOR.spec
+perl -pi -e s/\__MAJOR_CASTOR_VERSION__/${MAJOR_CASTOR_VERSION}/g */Imakefile CASTOR.spec
+perl -pi -e s/\__MINOR_CASTOR_VERSION__/${MINOR_CASTOR_VERSION}/g */Imakefile CASTOR.spec
 #
 # Make spec file in sync
 #
@@ -112,11 +112,14 @@ cd ..
 echo "### INFO ### Customizing spec file"
 
 function copyInstallPermInternal {
-    file=$1
-    for f in `cat debian/conffiles`; do
-        g=`echo $f | sed 's/\\//\\\\\\//g'`
-        sed -i "s/$g\$/%config(noreplace) $g/" $file
-    done
+    package=$1
+    file=$2
+    if [ -s "debian/$package.conffiles" ]; then
+      for f in `cat debian/$package.conffiles`; do
+          g=`echo $f | sed 's/\\//\\\\\\//g'`
+          sed -i "s/$g\$/%config(noreplace) $g/" $file
+      done
+    fi
     cat $file >> CASTOR.spec
 }
 
@@ -130,16 +133,16 @@ function copyInstallPerm {
     #   - except for /usr/lib/perl
     #   - except for /usr/lib/log
     #   - replace gcc32dbg by gcc64dbg (gridFTP specific)
-    perl -p -e 's/usr\/lib/usr\/lib64/g;s/usr\/lib64\/perl/usr\/lib\/perl/g;s/usr\/lib64\/log/usr\/lib\/log/g;s/gcc32dbg/gcc64dbg/g' debian/$package.install.perm.tmp > debian/$package.install.perm.64.tmp
+    perl -p -e 's/usr\/lib/usr\/lib64/g;s/usr\/lib64\/perl/usr\/lib\/perl/g;s/usr\/lib64\/python/usr\/lib\/python/g;s/usr\/lib64\/log/usr\/lib\/log/g;s/gcc32dbg/gcc64dbg/g' debian/$package.install.perm.tmp > debian/$package.install.perm.64.tmp
     # check whether to bother with 64 bits specific code
     diff -q debian/$package.install.perm.tmp debian/$package.install.perm.64.tmp > /dev/null
     if [ $? -eq 0 ]; then
-      copyInstallPermInternal debian/$package.install.perm.tmp
+      copyInstallPermInternal $package debian/$package.install.perm.tmp
     else
       echo "%ifarch x86_64" >> CASTOR.spec
-      copyInstallPermInternal debian/$package.install.perm.64.tmp
+      copyInstallPermInternal $package debian/$package.install.perm.64.tmp
       echo "%else" >> CASTOR.spec
-      copyInstallPermInternal debian/$package.install.perm.tmp
+      copyInstallPermInternal $package debian/$package.install.perm.tmp
       echo "%endif" >> CASTOR.spec
     fi
     #rm -f debian/$package.install.perm.tmp debian/$package.install.perm.64.tmp
@@ -172,7 +175,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'` castor-tape-serve
       map {if (/([^:]+):(.+)/) {$this{$1}=$2};} split("\n",$this);
       if (defined($this{$what})) {
         print "$this{$what}\n";
-      }' $package Group |
+      }' $package XBS-Group |
       sed 's/ //g' | sed 's/\${[^{},]*}//g' | sed 's/^,*//g' | sed 's/,,*/,/g'`
     if [ "${group}" != "Client" ]; then
         echo "%if ! %compiling_client" >> CASTOR.spec # no a client package
@@ -203,7 +206,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'` castor-tape-serve
       if (defined($this{$what})) {
         print "$this{$what}\n";
       }' $package Depends |
-      sed 's/ //g' | sed 's/\${[^{},]*}//g' | sed 's/^,*//g' | sed 's/,,*/,/g'`
+      sed 's/ //g' | sed 's/\${[^{},]*}//g' | sed 's/^,*//g' | sed 's/,,*/,/g' | sed 's/cx-Oracle/cx_Oracle/g' | sed 's/vdt-globus-essentials/vdt_globus_essentials/g' | sed 's/vdt-globus-data-server/vdt_globus_data_server/g'`
     if [ -n "${requires}" ]; then
         echo "Requires: ${requires}" >> CASTOR.spec
     fi
@@ -253,7 +256,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'` castor-tape-serve
       map {if (/([^:]+):(.+)/) {$this{$1}=$2};} split("\n",$this);
       if (defined($this{$what})) {
         print "$this{$what}\n";
-      }' $package Obsoletes |
+      }' $package XBS-Obsoletes |
       sed 's/ //g'`
     if [ -n "${obsoletes}" ]; then
         echo "Obsoletes: ${obsoletes}" >> CASTOR.spec

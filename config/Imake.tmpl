@@ -39,7 +39,11 @@ PYTHONLIBDIR = $(shell python -c "from distutils import sysconfig; print sysconf
 
 ACCTFLAG=-DSACCT
 BIN = InstallBinDir
-LIBDIR = InstallLibDir
+ifeq ($(shell ls /etc/debian_version),/etc/debian_version)
+  LIBDIR = /usr/lib
+else
+  LIBDIR = InstallLibDir
+endif
 CONFIGDIR = InstallConfigDir
 CP = cp
 LD = cc

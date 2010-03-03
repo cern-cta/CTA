@@ -1,130 +1,36 @@
 #!/usr/bin/make -f
-# -*- makefile -*-
-# Sample debian/rules that uses debhelper.
-# This file was originally written by Joey Hess and Craig Small.
-# As a special exception, when this file is copied by dh-make into a
-# dh-make output file, you may use that output file without restriction.
-# This special exception was added by Craig Small in version 0.37 of dh-make.
 
-# Uncomment this to turn on verbose mode.
-#export DH_VERBOSE=1
+# Always exclude version control directories so that we can build from a checkout
+export DH_ALWAYS_EXCLUDE=.svn:.git
 
-# Always exclude CVS so that we can build from a cvs workdir
-export DH_ALWAYS_EXCLUDE=CVS
-
-
-# Compat stuff with previous versions of dpkg
-DEB_HOST_ARCH_CPU := $(shell dpkg-architecture -qDEB_HOST_ARCH_CPU 2>/dev/null)
-DEB_HOST_ARCH_OS := $(shell dpkg-architecture -qDEB_HOST_ARCH_OS 2>/dev/null)
-
-# Take account of old dpkg-architecture output.
-ifeq ($(DEB_HOST_ARCH_CPU),)
-  DEB_HOST_ARCH_CPU := $(shell dpkg-architecture -qDEB_HOST_GNU_CPU)
-  ifeq ($(DEB_HOST_ARCH_CPU),x86_64)
-    DEB_HOST_ARCH_CPU := amd64
-  endif
-endif
-ifeq ($(DEB_HOST_ARCH_OS),)
-  DEB_HOST_ARCH_OS := $(subst -gnu,,$(shell dpkg-architecture -qDEB_HOST_GNU_SYSTEM))
-  ifeq ($(DEB_HOST_ARCH_OS),gnu)
-    DEB_HOST_ARCH_OS := hurd
-  endif
-endif
-
-CFLAGS = -Wall -g
-
-ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
-	CFLAGS += -O0
-else
-	CFLAGS += -O2
-endif
-
-configure: configure-stamp
-configure-stamp:
+configure:
 	dh_testdir
-	# Add here commands to configure the package.
 	echo "Building *.install from *.install.perm files"
 	(cd debian; for i in *.install.perm; do awk '{print $$2}' $${i} > `echo $${i} | sed 's/\.perm//g'`; done)
-ifeq ($(DEB_HOST_ARCH_CPU),amd64)
-	# For amd64 some files are in lib64 instead of lib, castor-db-tools is an exception
-	(cd debian; for i in *.install; [ "$${i}" != "castor-dbtools" ] && perl -pi -e 's/\/lib\//\/lib64\//g' $${i}; done)
-endif
-	find . -type f -exec touch {} \;
-	$(MAKE) -f Makefile.ini Makefiles
-	(PATH=$${PATH}:/usr/X11R6/bin; export PATH; which makedepend >& /dev/null; [ $$? -eq 0 ] && $(MAKE) depend)
-	touch configure-stamp
+	MAJOR_CASTOR_VERSION=$(shell echo ${source:Version} | sed 's/\.[0-9]*-[0-9]*$//')
+	MINOR_CASTOR_VERSION=$(shell echo ${source:Version} | sed 's/[0-9]\.[0-9]\.//' | sed 's/-/./')
+	export MAJOR_CASTOR_VERSION
+	export MINOR_CASTOR_VERSION
+	$(MAKE) -f Makefile.ini
 
-
-build: build-stamp
-
-build-stamp: configure-stamp 
+build: configure
 	dh_testdir
-
-	# Add here commands to compile the package.
-	$(MAKE)
-	#docbook-to-man debian/castor.sgml > castor.1
-
-	touch build-stamp
+	$(MAKE) -j $(shell grep processor /proc/cpuinfo | wc -l | xargs echo '2*' | bc); $(MAKE)
 
 clean:
 	dh_testdir
 	dh_testroot
-	rm -f build-stamp configure-stamp
-
-	# Add here commands to clean up after the build process.
-	-$(MAKE) -f Makefile.ini Makefiles
-	-$(MAKE) clobber
+	$(MAKE) clobber
 	rm -rf $(CURDIR)/debian/castor
-	dh_clean 
+	rm -rf $(CURDIR)/debian/*.install
+	dh_clean
 
 install: build
 	dh_testdir
 	dh_testroot
 	dh_clean -k 
 	dh_installdirs
-
-	# Add here commands to install the package into debian/castor.
-	mkdir -p $(CURDIR)/debian/castor/usr/bin
-	mkdir -p $(CURDIR)/debian/castor/usr/sbin
-ifeq ($(DEB_HOST_ARCH_CPU),amd64)
-	mkdir -p $(CURDIR)/debian/castor/usr/lib64/rtcopy
-	mkdir -p $(CURDIR)/debian/castor/usr/lsf/lib64
-else
-	mkdir -p $(CURDIR)/debian/castor/usr/lib/rtcopy
-	mkdir -p $(CURDIR)/debian/castor/var/lib/castor
-	mkdir -p $(CURDIR)/debian/castor/usr/lsf/lib
-endif
-	mkdir -p $(CURDIR)/debian/castor/usr/lib/perl/CASTOR
-	mkdir -p $(CURDIR)/debian/castor/usr/include/shift
-	mkdir -p $(CURDIR)/debian/castor/usr/share/man/man1
-	mkdir -p $(CURDIR)/debian/castor/usr/share/man/man3
-	mkdir -p $(CURDIR)/debian/castor/usr/share/man/man4
-	mkdir -p $(CURDIR)/debian/castor/etc/castor
-	mkdir -p $(CURDIR)/debian/castor/etc/castor/expert
-	mkdir -p $(CURDIR)/debian/castor/etc/init.d
-	mkdir -p $(CURDIR)/debian/castor/etc/sysconfig
-	mkdir -p $(CURDIR)/debian/castor/usr/lsf/etc
-	mkdir -p $(CURDIR)/debian/castor/var/www/html/dlf
-	# Install CASTOR
-	$(MAKE) install DESTDIR=$(CURDIR)/debian/castor
-	$(MAKE) exportman DESTDIR=$(CURDIR)/debian/castor EXPORTMAN=$(CURDIR)/debian/castor/usr/share/man
-	# Install policies
-	(cd clips; ../imake/imake -I../config DESTDIR=$(CURDIR)/debian/castor; make install DESTDIR=$(CURDIR)/debian/castor)
-	# Install example configuration files
-	for i in $(CURDIR)/debian/*CONFIG; do install -o root -g st -m 640 $${i} $(CURDIR)/debian/castor/etc/castor/`basename $${i}`.example; done
-	# Install example sysconfig files
-	for i in `find $(CURDIR) -name "*.sysconfig"`; do install -o root -g bin -m 644 $${i} $(CURDIR)/debian/castor/etc/sysconfig/`basename $${i} | sed 's/\.sysconfig//g'`.example; done
-	# Install the debian+redhat init script
-	for i in $(CURDIR)/debian/*.init; do install -o root -g bin -m 755 $${i} $(CURDIR)/debian/castor/etc/init.d/`basename $${i} | sed 's/\.init//g'`; done
-	# Install the debian+redhat generic package scriptlets (package castor-scriptlets, that's why this scripts are not called
-	# castor-scriptlets.postinst and al. to prevent dpkg thinking they have to be executed at install/upgrade/remove/configure/etc...)
-	install -o root -g bin -m 755 $(CURDIR)/debian/castor-service.postinst $(CURDIR)/debian/castor/usr/sbin/castor-service.postinst
-	install -o root -g bin -m 755 $(CURDIR)/debian/castor-service.postrm $(CURDIR)/debian/castor/usr/sbin/castor-service.postrm
-	install -o root -g bin -m 755 $(CURDIR)/debian/castor-service.prerm $(CURDIR)/debian/castor/usr/sbin/castor-service.prerm
-	# Install the sample castor.conf
-	install -o root -g bin -m 644 $(CURDIR)/debian/castor.conf $(CURDIR)/debian/castor/etc/castor/castor.conf.example
-        # Install the sample policies file
-	install -o root -g bin -m 644 $(CURDIR)/debian/policies.conf $(CURDIR)/debian/castor/etc/castor/policies.conf.example
+	$(MAKE) install DESTDIR=$(CURDIR)/debian/castor EXPORTMAN=$(CURDIR)/debian/castor/usr/share/man
 
 # Build architecture-independent files here.
 binary-indep: build install
@@ -135,7 +41,7 @@ binary-arch: build install
 	dh_testdir
 	dh_testroot
 	dh_installchangelogs 
-	dh_installdocs
+#	dh_installdocs
 #	dh_installexamples
 	dh_install --sourcedir=$(CURDIR)/debian/castor
 #	dh_installmenu
@@ -145,7 +51,7 @@ binary-arch: build install
 #	dh_installpam
 #	dh_installmime
 	dh_installinit --noscripts
-	dh_installcron
+#	dh_installcron
 #	dh_installinfo
 	dh_installman
 	dh_link
@@ -156,11 +62,7 @@ binary-arch: build install
 #	dh_python
 	dh_makeshlibs
 	dh_installdeb
-ifeq ($(DEB_HOST_ARCH_CPU),amd64)
-	dh_shlibdeps -l$(CURDIR)/debian/castor/usr/lib64
-else
-	dh_shlibdeps -l$(CURDIR)/debian/castor/usr/lib
-endif
+#	dh_shlibdeps -l$(CURDIR)/debian/castor/usr/lib
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb

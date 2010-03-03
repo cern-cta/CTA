@@ -1,6 +1,0 @@
-#
-## List of packages to do only if globus is available
-#
-castor-gridftp-dsi-int
-castor-gridftp-dsi-ext
-castor-gridftp-dsi-common

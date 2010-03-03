@@ -9,10 +9,6 @@
 %{expand:%define compiling_nostk  %(if [ -z $CASTOR_NOSTK ]; then echo 0; else echo 1; fi)}
 %{expand:%define compiling_client %(if [ -z $CASTOR_CLIENT ]; then echo 0; else echo 1; fi)}
 
-# Python definitions
-#-------------------
-%define _python_lib %(python -c "from distutils import sysconfig; print sysconfig.get_python_lib()")
-
 # General settings
 #-----------------
 Summary: Cern Advanced mass STORage

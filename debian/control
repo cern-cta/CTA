@@ -1,180 +1,170 @@
 Source: castor
-Build-Depends: make, perl, stk-ssi-devel, lsf-master
-Build-Depends: xfslibs-dev
+Build-Depends: make, perl, stk-ssi-devel, xfslibs-dev, debhelper, vdt-globus-sdk, vdt-compile-globus-core, glite-security-voms-api
 Section: science
 Priority: optional
 Maintainer: CERN castor team <castor.support@cern.ch>
-Build-Depends: debhelper (>= 4.0.0)
-Standards-Version: 3.6.1
 
 Package: castor-sacct
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: logrotate
 Description: castor (Cern Advanced STORage system)
  Contains a logrotate for accounting files
 
 Package: castor-config
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
 Recommends: castor-lib, castor-lib-oracle
 Description: castor (Cern Advanced STORage system)
  castor.conf example
 
 Package: castor-devel
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib
+Depends: castor-lib
 Recommends: castor-devel-oracle
-Group: Client
+XBS-Group: Client
 Description: castor (Cern Advanced STORage system)
  API
 
 Package: castor-devel-oracle
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib-oracle
+Depends: castor-lib-oracle
 Description: castor (Cern Advanced STORage system)
  Oracle API
 
 Package: castor-expert-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: logrotate
 Description: castor (Cern Advanced STORage system)
  Expert server, used to trigger policies
 
 Package: castor-gc-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: logrotate
 Description: castor (Cern Advanced STORage system)
  Garbage collector, running on every worker node
 
 Package: castor-hsmtools
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, cx_Oracle
+Depends: cx-Oracle
 Description: castor (Cern Advanced STORage system)
  HSM Administration tools e.g. reclaim
 
 Package: castor-dbtools
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: castor (Cern Advanced STORage system)
  DB Administration tools
 
 Package: castor-job
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: logrotate
 Description: castor (Cern Advanced STORage system)
  The job giving user access to data on the worder nodes
 
 Package: castor-jobmanager-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: logrotate
 Description: castor (Cern Advanced STORage system)
  The Job Manager server used to submit jobs into the scheduler
 
 Package: castor-lib
 Architecture: any
-Obsoletes: castor-sysconfig, castor-rtcopy-client, castor-lib-compat, castor-dlf-server, castor-doc, castor-commands, CASTOR-client, castor-stager-clientold, castor-rtcopy-messages
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Group: Client
+XBS-Obsoletes: castor-sysconfig, castor-rtcopy-client, castor-lib-compat, castor-dlf-server, castor-doc, castor-commands, CASTOR-client, castor-stager-clientold, castor-rtcopy-messages
+XBS-Group: Client
 Description: castor (Cern Advanced STORage system)
  Static and shared libraries for end-users
 
 Package: castor-lsf-plugin
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, python, logrotate
+Depends: python, logrotate
 Description: castor (Cern Advanced STORage system)
  Scheduler plugin for LSF (6.1 minimum) framework
 
 Package: castor-lib-oracle
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
 Suggests: castor-db-config
 Description: castor (Cern Advanced STORage system)
  Static and shared libraries for Oracle access
 
 Package: castor-ns-client
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Group: Client
+XBS-Group: Client
 Description: castor (Cern Advanced STORage system)
  Name server clients
 
 Package: castor-ns-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, vdt_globus_essentials
+Depends: logrotate, vdt-globus-essentials
 Description: castor (Cern Advanced STORage system)
  Name server daemon
 
 Package: castor-policies
 Architecture: any
 Suggests: perl
-Depends: ${shlibs:Depends}, ${misc:Depends}, perl
+Depends: perl
 Description: castor (Cern Advanced STORage system)
  Policies used by the expert system
 
 Package: castor-rfio-client
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Group: Client
+XBS-Group: Client
 Description: castor (Cern Advanced STORage system)
  RFIO clients
 
 Package: castor-rfio-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, vdt_globus_essentials
+Depends: logrotate, vdt-globus-essentials
 Description: castor (Cern Advanced STORage system)
  RFIO server
 
 Package: castor-rh-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-oracle, vdt_globus_essentials
+Depends: logrotate, castor-lib-oracle, vdt-globus-essentials
 Description: castor (Cern Advanced STORage system)
  Request Handler server
 
 Package: castor-repack-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-oracle
+Depends: logrotate, castor-lib-oracle
 Description: castor (Cern Advanced STORage system)
  Repack server
 
 Package: castor-repack-client
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: castor (Cern Advanced STORage system)
  Repack client
 
 Package: castor-rmc-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: logrotate
 Description: castor (Cern Advanced STORage system)
  Remote Media Controller server
 
 Package: castor-rmmaster-client
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib-monitor
+Depends: castor-lib-monitor
 Description: castor (Cern Advanced STORage system)
  Resource Monitoring Master clients
 
 Package: castor-rmmaster-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-monitor
+Depends: logrotate, castor-lib-monitor
 Description: castor (Cern Advanced STORage system)
  Resource Monitoring Master server
 
 Package: castor-rmnode-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-monitor
+Depends: logrotate, castor-lib-monitor
 Description: castor (Cern Advanced STORage system)
  Resource Monitoring running on each worker node
 
 Package: castor-rtcopy-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: logrotate
 Description: castor (Cern Advanced STORage system)
  Remote Tape Copy server running on a tape server
 
 Package: castor-rtcopy-clientserver
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-oracle
+Depends: logrotate, castor-lib-oracle
 Description: castor (Cern Advanced STORage system)
  Remote Tape Copy Client Server running on top of a database.
  This will generate raw RTCOPY commands understood by the rtcopy-server
@@ -182,159 +172,152 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-stager-client
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Group: Client
+XBS-Group: Client
 Description: castor (Cern Advanced STORage system)
  Stager clients
 
 Package: castor-stager-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-oracle
+Depends: logrotate, castor-lib-oracle
 Description: castor (Cern Advanced STORage system)
  Stager server
 
 Package: castor-tape-client
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Group: Client
+XBS-Group: Client
 Description: castor (Cern Advanced STORage system)
  Tape clients
 
 Package: castor-tape-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: logrotate
 Description: castor (Cern Advanced STORage system)
  Tape server
 
 Package: castor-upv-client
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Group: Client
+XBS-Group: Client
 Description: castor (Cern Advanced STORage system)
  User Privilege clients
 
 Package: castor-upv-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: logrotate
 Description: castor (Cern Advanced STORage system)
  User Privilege server
 
 Package: castor-vdqm2-client
 Architecture: any
-Obsoletes: castor-vdqm-client
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Group: Client
+XBS-Obsoletes: castor-vdqm-client
+XBS-Group: Client
 Description: castor (Cern Advanced STORage system)
  Volume Drive and Queue Manager clients version 2
 
 Package: castor-vdqm2-server
 Architecture: any
-Obsoletes: castor-vdqm-server
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-oracle, castor-vdqm2-lib-oracle
+XBS-Obsoletes: castor-vdqm-server
+Depends: logrotate, castor-lib-oracle, castor-vdqm2-lib-oracle
 Description: castor (Cern Advanced STORage system)
  Volume Drive and Queue Manager server version 2
 
 Package: castor-vdqm2-lib-oracle
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: logrotate
 Description: castor (Cern Advanced STORage system)
  Volume Drive and Queue Manager server version 2 library
 
 Package: castor-vmgr-client
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Group: Client
+XBS-Group: Client
 Description: castor (Cern Advanced STORage system)
  Volume Manager clients
 
 Package: castor-vmgr-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
+Depends: logrotate
 Description: castor (Cern Advanced STORage system)
  Volume Manager server
 
 Package: castor-dlf-web
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, php-oci8
+Depends: php-oci8
 Description: castor (Cern Advanced STORage system)
  Distributed Logging Facility Web Interface
 
 Package: castor-lib-monitor
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib
+Depends: castor-lib
 Description: castor (Cern Advanced STORage system)
  Shared libraries for monitoring framework
 
 Package: castor-lib-tape
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib
+Depends: castor-lib
 Description: castor (Cern Advanced STORage system)
  Shared utilities library for castor tape servers and command-line tools
 
 Package: castor-gridftp-dsi-common
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: castor (Cern Advanced STORage system)
  Commonnalities between internal and external CASTOR2 gridftp2 DSI module
 
 Package: castor-gridftp-dsi-int
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, vdt_globus_data_server, vdt_globus_essentials, castor-gridftp-dsi-common
+Depends: vdt-globus-data-server, vdt-globus-essentials, castor-gridftp-dsi-common
 Description: castor (Cern Advanced STORage system)
  Internal CASTOR2 gridftp2 DSI module
 
 Package: castor-gridftp-dsi-ext
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib, xinetd, vdt_globus_data_server, vdt_globus_essentials, castor-gridftp-dsi-common
+Depends: castor-lib, xinetd, castor-gridftp-dsi-common, vdt-globus-data-server, vdt-globus-essentials
 Description: castor (Cern Advanced STORage system)
  External CASTOR2 gridftp2 DSI module
 
 Package: castor-gridftp-dsi-xroot
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib, vdt_globus_data_server, vdt_globus_essentials, castor-gridftp-dsi-common, xrootd
+Depends: castor-lib, castor-gridftp-dsi-common, xrootd, vdt-globus-data-server, vdt-globus-essentials
 Description: castor (Cern Advanced STORage system)
  External CASTOR2 gridftp2 DSI module with xroot support
 
 Package: castor-mighunter-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-tape
+Depends: logrotate, castor-lib-tape
 Description: castor (Cern Advanced STORage system)
  Migration Hunter Daemon
 
 Package: castor-rechandler-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-tape
+Depends: logrotate, castor-lib-tape
 Description: castor (Cern Advanced STORage system)
  Recall Handler Daemon
 
 Package: castor-csec
 Architecture: any
-Build-Depends: vdt_globus_sdk, vdt_compile_globus_core, glite-security-voms-api,
-Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib, vdt_globus_essentials, glite-security-voms-api-c
+Depends: castor-lib, vdt-globus-essentials, glite-security-voms-api-c
 Description: castor (Cern Advanced STORage system)
  Csec library
 
 Package: castor-tapebridge-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-tape
+Depends: logrotate, castor-lib-tape
 Description: castor (Cern Advanced STORage system)
  Tape Bridge Daemon
 
 Package: castor-tapebridge-client
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-tape
+Depends: logrotate, castor-lib-tape
 Description: castor (Cern Advanced STORage system)
  Tape Bridge Clients
 
 Package: castor-logprocessor-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, cx_Oracle
+Depends: logrotate, cx-Oracle
 Description: castor (Cern Advanced STORage system)
  Log Processor Daemon
 
 Package: castor-tapegateway-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-lib-oracle, castor-lib-tape
+Depends: logrotate, castor-lib-oracle, castor-lib-tape
 Description: castor (Cern Advanced STORage system)
  Tape Gateway Daemon
 

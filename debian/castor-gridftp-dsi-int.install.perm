@@ -1,3 +1,1 @@
-%attr(0755,root,root) opt/globus/lib/libglobus_gridftp_server_CASTOR2int_gcc32dbg.so
-%attr(0755,root,root) opt/globus/lib/libglobus_gridftp_server_CASTOR2int_gcc32dbg.so.__MAJOR_CASTOR_VERSION__
-%attr(0755,root,root) opt/globus/lib/libglobus_gridftp_server_CASTOR2int_gcc32dbg.so.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__
+%attr(0755,root,root) opt/globus/lib/libglobus_gridftp_server_CASTOR2int_gcc32dbg.so*
