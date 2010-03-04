@@ -28,7 +28,6 @@
 #include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
-#include "castor/exception/TimeOut.hpp"
 #include "castor/job/stagerjob/InputArguments.hpp"
 #include "castor/job/stagerjob/XRootPlugin.hpp"
 #include "castor/rh/IOResponse.hpp"
@@ -160,7 +159,7 @@ void castor::job::stagerjob::XRootPlugin::preForkHook
   rc = select(context.socket + 1, &read_set,
               (fd_set *)NULL, (fd_set *)NULL, &timeval);
   if (rc == 0) {
-    castor::exception::TimeOut ex;
+    castor::exception::Internal ex;
     ex.getMessage() << "Timeout waiting for xrootd callback";
     throw ex;
   } else if (rc < 0) {

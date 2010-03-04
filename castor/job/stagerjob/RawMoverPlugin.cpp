@@ -43,6 +43,7 @@
 #include "castor/stager/IJobSvc.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/TimeOut.hpp"
+#include "castor/exception/NoValue.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
@@ -171,12 +172,12 @@ void castor::job::stagerjob::RawMoverPlugin::postForkHook
     if (stat64((char*)context.fullDestPath.c_str(), &statbuf) == 0) {
       // deal with the case of an empty file when the child failed
       if (childFailed && (0 == statbuf.st_size)) {
-        // log an error
+        // "No data transfered"
         castor::dlf::Param params[] =
           {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
            castor::dlf::Param("Path", context.fullDestPath),
            castor::dlf::Param(args.subRequestUuid)};
-        castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
+        castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_USER_ERROR,
                                 NODATAWRITTEN, 3, params, &args.fileId);
         // try to drop the file
         errno = 0;
@@ -192,7 +193,7 @@ void castor::job::stagerjob::RawMoverPlugin::postForkHook
         // and call putFailed
         context.jobSvc->putFailed
           (args.subRequestId, args.fileId.fileid, args.fileId.server);
-        castor::exception::Internal e;
+        castor::exception::NoValue e;
         e.getMessage() << "No data transfered";
         throw e;
       }

@@ -111,6 +111,7 @@ namespace castor {
         NOANSWERSENT =    52, /* Could not send answer to client */
         GETATTRFAILED =   53, /* Failed to get checksum information from extended attributes */
         CSTYPENOTSOP =    54, /* Unsupported checksum type, ignoring checksum information */
+        CLEANUPFAILED =   70, /* Unable to clean up stager DB for failed job */
 
         // Protocol specific. Should not be here if the plugins
         // were properly packaged in separate libs

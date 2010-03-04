@@ -351,47 +351,77 @@ void bindSocketAndListen
 void process(castor::job::stagerjob::PluginContext &context,
              castor::job::stagerjob::InputArguments* args)
   throw (castor::exception::Exception) {
-  // First switch to stage:st privileges
-  switchToCastorSuperuser(args);
-  // Get an instance of the job service
-  castor::stager::IJobSvc* jobSvc = getJobSvc();
-  // Get full path of the file we handle
-  context.host = castor::System::getHostName();
-  context.mask = S_IWGRP|S_IWOTH;
-  context.jobSvc = jobSvc;
-  context.childPid = 0;
-  context.fullDestPath = startAndGetPath(args, context);
-  if ("" == context.fullDestPath) {
-    // No DiskCopy return, nothing should be done
-    // The job was scheduled for nothing
-    // This happens in particular when a diskCopy gets invalidated
-    // while the job waits in the scheduler queue
-    // we've already logged, so just quit
-    return;
+  castor::job::stagerjob::IPlugin* plugin = 0;
+  try {
+    // First switch to stage:st privileges
+    switchToCastorSuperuser(args);
+    // Get an instance of the job service
+    castor::stager::IJobSvc* jobSvc = getJobSvc();
+    // Get full path of the file we handle
+    context.host = castor::System::getHostName();
+    context.mask = S_IWGRP|S_IWOTH;
+    context.jobSvc = jobSvc;
+    context.childPid = 0;
+    context.fullDestPath = startAndGetPath(args, context);
+    if ("" == context.fullDestPath) {
+      // No DiskCopy return, nothing should be done
+      // The job was scheduled for nothing
+      // This happens in particular when a diskCopy gets invalidated
+      // while the job waits in the scheduler queue
+      // we've already logged, so just quit
+      return;
+    }
+    // Get proper plugin
+    plugin = castor::job::stagerjob::getPlugin(args->protocol);
+    // Create the socket that the user will connect too
+    createSocket(context);
+    // Get available port range for the socket
+    std::pair<int,int> portRange = plugin->getPortRange(*args);
+    // Bind socket and listen for client connection
+    bindSocketAndListen(context, args, portRange);
+    // "Mover will use the following port"
+    std::ostringstream sPortRange;
+    sPortRange << portRange.first << ":" << portRange.second;
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Protocol", args->protocol),
+       castor::dlf::Param("Port range", sPortRange.str()),
+       castor::dlf::Param("Port used", context.port),
+       castor::dlf::Param("JobId", getenv("LSB_JOBID")),
+       castor::dlf::Param(args->subRequestUuid)};
+    castor::dlf::dlf_writep
+      (args->requestUuid, DLF_LVL_DEBUG,
+       castor::job::stagerjob::MOVERPORT, 5, params, &args->fileId);
+    // Prefork hook for the different movers
+    plugin->preForkHook(*args, context);
+  } catch (castor::exception::Exception e) {
+    // If we got an exception before the fork, we need to cleanup
+    // before letting the exception go further
+    try {
+      // Distinguish get from puts
+      if (args->accessMode == castor::job::stagerjob::ReadOnly ||
+          args->accessMode == castor::job::stagerjob::ReadWrite) {
+        context.jobSvc->getUpdateFailed
+          (args->subRequestId, args->fileId.fileid, args->fileId.server);
+      } else {
+        context.jobSvc->putFailed
+          (args->subRequestId, args->fileId.fileid, args->fileId.server);
+      }
+    } catch (castor::exception::Exception e2) {
+      // cleanup failed, log it
+      // Unable to clean up stager DB for failed job
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
+         castor::dlf::Param(args->subRequestUuid),
+         castor::dlf::Param("ErrorCode", e2.code()),
+         castor::dlf::Param("ErrorMessage", e2.getMessage().str())};
+      castor::dlf::dlf_writep
+        (args->requestUuid, DLF_LVL_ERROR,
+         castor::job::stagerjob::CLEANUPFAILED, 2, params, &args->fileId);
+    }
+    // rethrow original exception. It will be caught in the main procedure,
+    // logged properly and the client will be answered
+    throw e;
   }
-  // Get proper plugin
-  castor::job::stagerjob::IPlugin* plugin =
-    castor::job::stagerjob::getPlugin(args->protocol);
-  // Create the socket that the user will connect too
-  createSocket(context);
-  // Get available port range for the socket
-  std::pair<int,int> portRange = plugin->getPortRange(*args);
-  // Bind socket and listen for client connection
-  bindSocketAndListen(context, args, portRange);
-  // "Mover will use the following port"
-  std::ostringstream sPortRange;
-  sPortRange << portRange.first << ":" << portRange.second;
-  castor::dlf::Param params[] =
-    {castor::dlf::Param("Protocol", args->protocol),
-     castor::dlf::Param("Port range", sPortRange.str()),
-     castor::dlf::Param("Port used", context.port),
-     castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-     castor::dlf::Param(args->subRequestUuid)};
-  castor::dlf::dlf_writep
-    (args->requestUuid, DLF_LVL_DEBUG,
-     castor::job::stagerjob::MOVERPORT, 5, params, &args->fileId);
-  // Prefork hook for the different movers
-  plugin->preForkHook(*args, context);
   // Set our mask to the most restrictive mode
   umask(context.mask);
   // chdir into something else but the root system...
@@ -564,6 +594,7 @@ int main(int argc, char** argv) {
       { NOANSWERSENT,    "Could not send answer to client" },
       { GETATTRFAILED,   "Failed to get checksum information from extended attributes" },
       { CSTYPENOTSOP,    "Unsupported checksum type, ignoring checksum information" },
+      { CLEANUPFAILED,   "Unable to clean up stager DB for failed job" },
 
       // Protocol specific. Should not be here if the plugins
       // were properly packaged in separate libs
@@ -674,7 +705,11 @@ int main(int argc, char** argv) {
     delete arguments;
 
   } catch (castor::exception::Exception e) {
-    if (e.code() == ESTREQCANCELED) {
+    if (e.code() == SENOVALUE) {
+      // "manually" catch the NoValue exception
+      // Nothing to be done in such a case, an error was already logged
+      // and the error service will answer automatically to the client
+    } else if (e.code() == ESTREQCANCELED) {
       // "manually" catch the RequestCanceled exception these are converted
       // to regular Exception objects by the internal remote procedure call
       // mechanism
@@ -691,8 +726,18 @@ int main(int argc, char** argv) {
          castor::dlf::Param("Message", e.getMessage().str()),
          castor::dlf::Param("JobId", getenv("LSB_JOBID")),
          castor::dlf::Param(arguments->subRequestUuid)};
+      // A priori, we log an error
+      int loglevel = DLF_LVL_ERROR;
+      // But in some cases, it's actually a use error
+      if (e.code() == ECONNREFUSED || // in case we can not connect to the client
+          e.code() == SETIMEDOUT   || // in case the client never answered
+          e.code() == EHOSTUNREACH || // the client is not visible
+          e.code() == SENOVALUE    || // no data was transfered
+          e.code() == ENOENT) {       // file was removed while being modified
+        loglevel = DLF_LVL_USER_ERROR;
+      }
       castor::dlf::dlf_writep
-        (arguments->requestUuid, DLF_LVL_ERROR,
+        (arguments->requestUuid, loglevel,
          castor::job::stagerjob::JOBFAILED, 4, params, &arguments->fileId);
       // Try to answer the client
       try {
@@ -708,7 +753,7 @@ int main(int argc, char** argv) {
            castor::dlf::Param("JobId", getenv("LSB_JOBID")),
            castor::dlf::Param(arguments->subRequestUuid)};
         castor::dlf::dlf_writep
-          (arguments->requestUuid, DLF_LVL_ERROR,
+          (arguments->requestUuid, DLF_LVL_USER_ERROR,
            castor::job::stagerjob::NOANSWERSENT, 4, params, &arguments->fileId);
       }
       // If the child process is still running kill it gracefully. This makes
