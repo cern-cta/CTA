@@ -23,9 +23,8 @@
 #
 # @author Castor Dev team, castor-dev@cern.ch
 
-MANPAGES = FileName($(MANDIR),jobmanagerd.$(MANSUFFIX))
-EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),jobmanagerd.$(MANSUFFIX)))
-CPPFLAGS = -g -O0 -I $(ORACLE_HOME)/rdbms/public -I ../../h -I ../.. $(MTCCFLAGS) -DSTAGERSUPERUSER=\"stage\" -DSTAGERSUPERGROUP=\"st\"
+CXXFLAGS += -I $(ORACLE_HOME)/rdbms/public $(MTCCFLAGS)
+CPPFLAGS += -DSTAGERSUPERUSER=\"stage\" -DSTAGERSUPERGROUP=\"st\"
 LIBS = -ldl -lbat -llsf -llsbstream -L$(ORACLE_HOME)/lib -locci -lclntsh
 LDFLAGS += $(MTLDFLAGS)
 LD = g++

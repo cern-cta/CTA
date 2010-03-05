@@ -24,7 +24,7 @@
 # @author Castor Dev team, castor-dev@cern.ch
 #
 
-CPPFLAGS = -g -O0 -I $(ORACLE_HOME)/rdbms/public -I ../../../h -I ../../.. $(PYTHONINC) $(MTCCFLAGS)
+CXXFLAGS += -I $(ORACLE_HOME)/rdbms/public $(PYTHONINC) $(MTCCFLAGS)
 LDFLAGS += $(MTLDFLAGS)
 LD = g++
 LIBS = -L$(ORACLE_HOME)/lib -locci -lclntsh 

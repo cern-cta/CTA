@@ -23,8 +23,7 @@
 #
 # @author Castor Dev team, castor-dev@cern.ch
 
-INCLUDES = -I ../../../h -I ../../..
-CPPFLAGS = -g -O0 $(INCLUDES) $(MTCCFLAGS)
+CXXFLAGS += $(MTCCFLAGS)
 LD = g++
 
 CNVSLIB_SRCS = DbBaseAddressCnv.cpp \

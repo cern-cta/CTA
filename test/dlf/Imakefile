@@ -17,10 +17,10 @@ COMM  USA.                                                                      
 COMM                                                                                                      #
 COMM -----------------------------------------------------------------------------------------------------#
 
-CFLAGS  = -pedantic -Wno-long-long -I../../h -I../../dlf/
+CFLAGS += -I$(CASTOR_ROOT)/dlf
 LDFLAGS = $(MTLDFLAGS)
 
 DependsOnLibrary(../common,castorcommon)
 DependsOnLibrary(../dlf,castordlf)
 
-NormalProgramTarget(dlftest,dlftest.Osuf,$(DEPLIBS),$(LIBS) $(MTLDLIBS),755)
+NormalProgramTarget(dlftest,dlftest.Osuf,$(DEPLIBS),$(LIBS),755)

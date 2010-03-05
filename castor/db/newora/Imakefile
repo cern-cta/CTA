@@ -24,8 +24,8 @@
 # @author Castor Dev team, castor-dev@cern.ch
 #
 
-INCLUDES = -I $(ORACLE_HOME)/rdbms/public -I ../../../h -I ../../..
-CPPFLAGS = -g -O0 $(INCLUDES) $(MTCCFLAGS) -DORASTAGERCONFIGFILE=\"OraStagerConfigFile\"
+CXXFLAGS += -I $(ORACLE_HOME)/rdbms/public $(MTCCFLAGS)
+CPPFLAGS += -DORASTAGERCONFIGFILE=\"OraStagerConfigFile\"
 LIBS = -L$(ORACLE_HOME)/lib -locci -lclntsh
 LD = g++
 

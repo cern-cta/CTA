@@ -21,8 +21,7 @@
 # @author Giulia Taurelli
 #
 
-INCLUDES = -I../../../h -I../../..
-CPPFLAGS = -g -O0 $(INCLUDES) $(PYTHONINC) $(MTCCFLAGS)
+CXXFLAGS += $(PYTHONINC) $(MTCCFLAGS)
 LDFLAGS += $(MTLDFLAGS)
 LD = g++
 LIBS = $(PYTHONLIBS)

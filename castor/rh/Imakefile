@@ -36,7 +36,7 @@ LIB_CRYPTO=$(shell if [ -r "$(GLOBUS_LOCATION)/lib/libcrypto_$(GLOBUS_FLAVOUR).s
 LIBCSEC += $(GLOBUS_LIBS) $(LIB_CRYPTO)
 #endif
 
-CPPFLAGS = -g -O0 -I ../../h -I ../.. $(MTCCFLAGS)
+CXXFLAGS += $(MTCCFLAGS)
 LDFLAGS += $(MTLDFLAGS)
 LD = g++
 LIBS += -lmemcached

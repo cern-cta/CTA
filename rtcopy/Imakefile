@@ -43,7 +43,6 @@ NS_ROOT = NsRoot
 COMM
 COMM Set this flag to -O for optimization, or -g for debug
 COMM
-CCOPTIM = -g
 
 VDQMFLG = -DVDQM
 CTAPEFLG = -DCTAPE
@@ -75,18 +74,17 @@ RTCPCLDGROUP = st
 RTCPCLDFLAGS = -DRTCPCLD_NOTIFY_HOST=\"$(RTCPCLDHOST)\" -DRTCPCLD_USER=\"$(RTCPCLDUSER)\" -DRTCPCLD_GROUP=\"$(RTCPCLDGROUP)\"
 THREADFLAGS = $(MTCCFLAGS)
 CKSUMLIB = -lz
-RTCPFLAG=-DRTCP_SERVER
 
 #if BuildSecureRtcopy
 SECURITYFLAG=-DCSEC
-LIBS = -ldl
+LIBS += -ldl
 #endif
 
-DFLAGS = -DBIN=\"$(BIN)\" -DRTCOPY_LOGFILE=\"$(LOGFILE)\" -DNOMORETAPES=\"$(NOMORETAPES)\" \
-	 -DAUTH_HOSTS=\"$(AUTHORIZEDHOSTS)\" -DWORKDIR=\"$(RTCOPYWORKDIR)\" \
-	 -DNS_ROOT=\"$(NS_ROOT)\" $(ACCTON) $(CONFIGFILE) $(TPCONFIG) \
-	 $(RTCPFLAG) -DVMGR $(VDQMFLG) $(CTAPEFLG) $(ACCTFLAG) $(ACCTFILE) $(RTCPCLDFLAGS)
-CFLAGS = $(CCOPTIM) -I../h -I.. $(THREADFLAGS) $(DFLAGS) $(SECURITYFLAG)
+CPPFLAGS += -DBIN=\"$(BIN)\" -DRTCOPY_LOGFILE=\"$(LOGFILE)\" -DNOMORETAPES=\"$(NOMORETAPES)\" \
+	    -DAUTH_HOSTS=\"$(AUTHORIZEDHOSTS)\" -DWORKDIR=\"$(RTCOPYWORKDIR)\" \
+	    -DNS_ROOT=\"$(NS_ROOT)\" $(ACCTON) $(CONFIGFILE) $(TPCONFIG) \
+	    -DRTCP_SERVER -DVMGR $(VDQMFLG) $(CTAPEFLG) $(ACCTFLAG) $(ACCTFILE) $(RTCPCLDFLAGS)
+CFLAGS += $(THREADFLAGS) $(SECURITYFLAG)
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(dlf,castordlf)
@@ -109,22 +107,20 @@ rtcpc_CallVMGR.c:	DepSourceName(rtcopy,rtcp_CallVMGR.c)
 rtcpc_CheckReq.c:	DepSourceName(rtcopy,rtcp_CheckReq.c)
 			RemoveFiles(rtcpc_CheckReq.c)
 			$(CP) rtcp_CheckReq.c rtcpc_CheckReq.c
-rtcpc_SendRecv.Osuf:	rtcpc_SendRecv.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
-	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I../h rtcpc_SendRecv.c
-rtcpc_log.Osuf:		rtcpc_log.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
-	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I../h rtcpc_log.c
-rtcpc_CallVMGR.Osuf:	rtcpc_CallVMGR.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
-	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I../h -DVMGR rtcpc_CallVMGR.c
-rtcpc_CheckReq.Osuf:	rtcpc_CheckReq.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
-	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I../h rtcpc_CheckReq.c
+rtcpc_SendRecv.Osuf: rtcpc_SendRecv.c
+	$(COMPILE.c) $(OUTPUT_OPTION) -URTCP_SERVER $<
+rtcpc_log.Osuf: rtcpc_log.c
+	$(COMPILE.c) $(OUTPUT_OPTION) -URTCP_SERVER $<
+rtcpc_CallVMGR.Osuf: rtcpc_CallVMGR.c
+	$(COMPILE.c) $(OUTPUT_OPTION) -URTCP_SERVER $<
+rtcpc_CheckReq.Osuf: rtcpc_CheckReq.c
+	$(COMPILE.c) $(OUTPUT_OPTION) -URTCP_SERVER $<
 FileToClean += rtcpc_log.c rtcpc_SendRecv.c rtcpc_CallVMGR.c rtcpc_CheckReq.c
 
 RTCPLIB_OBJS =	rtcpc_SendRecv.Osuf rtcp_InitNW.Osuf rtcpc_log.Osuf rtcpc_CallVMGR.Osuf rtcp_Listen.Osuf rtcpapi.Osuf rtcpc_BuildReq.Osuf rtcp_RetvalSHIFT.Osuf rtcpc_CheckReq.Osuf
 SharedLibraryTarget(castorrtcopy,$(RTCPLIB_OBJS),$(DEPLIB),$(LIBS))
 RTCPLIBS = SharedLibraryTargetName(castorrtcopy)
 
-tpread.Osuf:		tpread.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
-	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I../h tpread.c
 TapeProgramTarget(tpread,tpread.Osuf,$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(LIBS),0755)
 LinkFile(tpwrite,tpread,755,tape)
 EXEMANPAGE(tpread)

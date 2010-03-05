@@ -23,7 +23,8 @@
 #
 # @author Castor Dev team, castor-dev@cern.ch
 
-CPPFLAGS = -g -O0 -I ../../../h -I ../../.. $(MTCCFLAGS) -DSTAGERSUPERUSER=\"stage\" -DSTAGERSUPERGROUP=\"st\" `curl-config --cflags`
+CPPFLAGS += -DSTAGERSUPERUSER=\"stage\" -DSTAGERSUPERGROUP=\"st\"
+CXXFLASG += $(MTCCFLAGS) `curl-config --cflags`
 LIBS = -ldl -lbat -llsf -llsbstream -lnsl `curl-config --libs`
 LDFLAGS += $(MTLDFLAGS)
 LD = g++

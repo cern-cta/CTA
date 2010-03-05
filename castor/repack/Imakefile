@@ -24,8 +24,8 @@
 # @author Castor Dev team, castor-dev@cern.ch
 #
 
-INCLUDES = -I $(ORACLE_HOME)/rdbms/public -I ../../h -I ../..
-CPPFLAGS = -g -O0 $(INCLUDES) $(MTCCFLAGS) -DDEFAULT_CNS=castorns -DORAREPACKCONFIGFILE=\"/etc/castor/ORAREPACKCONFIG\"
+CXXFLAGS += -I $(ORACLE_HOME)/rdbms/public $(MTCCFLAGS)
+CPPFLAGS += -DDEFAULT_CNS=castorns -DORAREPACKCONFIGFILE=\"/etc/castor/ORAREPACKCONFIG\"
 LDFLAGS += $(MTLDFLAGS)
 LD = g++
 SERVDEPLIB = DepSharedLibraryTargetName(db/newora,castorcommonora)

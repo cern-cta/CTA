@@ -23,7 +23,7 @@
 #
 
 
-CPPFLAGS = -g -O0 -I $(ORACLE_HOME)/rdbms/public -I ../../../h -I ../../.. $(PYTHONINC) $(MTCCFLAGS)
+CXXFLAGS += -I $(ORACLE_HOME)/rdbms/public $(PYTHONINC) $(MTCCFLAGS)
 LDFLAGS += $(MTLDFLAGS)
 LD = g++
 LIBS = -L$(ORACLE_HOME)/lib -locci -lclntsh 
@@ -41,12 +41,12 @@ DependsOnLibrary(../../vdqm,castorvdqm)
 DependsOnLibrary(../../vmgr,castorvmgr)
 
 TAPEGATEWAYDBIN_SRCS = \
-  	TapeGatewayDlfMessageStrings.cpp \
+	TapeGatewayDlfMessageStrings.cpp \
 	TapeGatewaySubRequest.cpp \
 	TapeRequestStateCode.cpp \
 	TapeGatewayRequest.cpp \
 	VdqmTapeGatewayRequest.cpp \
-  	daemon/MigratorErrorHandlerThread.cpp \
+	daemon/MigratorErrorHandlerThread.cpp \
 	daemon/NsTapeGatewayHelper.cpp \
 	daemon/RecallerErrorHandlerThread.cpp \
 	daemon/RmMasterTapeGatewayHelper.cpp \

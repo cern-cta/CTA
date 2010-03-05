@@ -23,8 +23,9 @@
 # @author Castor Dev team, castor-dev@cern.ch
 #
 
-CPPFLAGS = -DORAVDQMCONFIGFILE=\"/etc/castor/ORAVDQMCONFIG\" -g -O0 -I ../.. -I ../../h $(MTCCFLAGS)
-CFLAGS = -O -I ../.. -I ../../h $(THREADFLAGS)
+CPPFLAGS += -DORAVDQMCONFIGFILE=\"/etc/castor/ORAVDQMCONFIG\"
+CXXFLAGS += $(MTCCFLAGS)
+CFLAGS += $(THREADFLAGS)
 LDFLAGS += $(MTLDFLAGS)
 LD = g++
 

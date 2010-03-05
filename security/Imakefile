@@ -6,8 +6,6 @@ COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.22 $ $Date: 2009/06/03 09:26
  
 COMM    Make CASTOR Security package
 
-INCLUDES = ../h
-
 #if UseGSI
 #define GSIMech GSI
 #endif
@@ -18,7 +16,8 @@ INCLUDES = ../h
 
 #define CSEC_Mechlist KRB5Mech GSIMech ID
 CSEC_MECHLIST=CSEC_Mechlist
-CFLAGS = $(DFLAGS) $(MTCCFLAGS) -g -DCSEC_DEFAULT_MECHS="\"$(CSEC_MECHLIST)\"" -I$(INCLUDES) 
+CFLAGS += $(MTCCFLAGS)
+CPPFLAGS += -g -DCSEC_DEFAULT_MECHS="\"$(CSEC_MECHLIST)\""
 
 SECLIB_OBJS = Csec_api_loader.Osuf Csec_protocol_policy.Osuf Csec_api.Osuf Csec_errmsg.Osuf Csec_apiinit.Osuf Csec_common.Osuf
 DependsOnLibrary(common,castorcommon)
@@ -57,16 +56,16 @@ GSILIB = SecLibsGSI -lc -lpthread -ldl
 SharedLibraryTarget(Csec_plugin_GSI,$(GSILIB_OBJS),,$(GSILIB))
 
 Csec_plugin_GSI.Osuf: Csec_plugin_GSS.c
-	$(CC) $(CFLAGS) SecAuthMechGSI SecIncludeDirGSI	-o $@ -c Csec_plugin_GSS.c
+	$(COMPILE.c) $(OUTPUT_OPTION) SecAuthMechGSI SecIncludeDirGSI $<
 
 Csec_plugin_GSI_mapper.Osuf:  Csec_plugin_GSS_mapper.c
-	$(CC) $(CFLAGS) SecAuthMechGSI SecIncludeDirGSI	-o $@ -c Csec_plugin_GSS_mapper.c
+	$(COMPILE.c) $(OUTPUT_OPTION) SecAuthMechGSI SecIncludeDirGSI $<
 
 Csec_plugin_GSI_pthr.Osuf: Csec_plugin_GSS.c
-	$(CC) $(CFLAGS) -Dwith_pthr_suffix SecAuthMechGSI SecIncludeDirGSIpthr	-o $@ -c Csec_plugin_GSS.c
+	$(COMPILE.c) $(OUTPUT_OPTION) -Dwith_pthr_suffix SecAuthMechGSI SecIncludeDirGSIpthr $<
 
 Csec_plugin_GSI_pthr_mapper.Osuf:  Csec_plugin_GSS_mapper.c
-	$(CC) $(CFLAGS) -Dwith_pthr_suffix SecAuthMechGSI SecIncludeDirGSIpthr	-o $@ -c Csec_plugin_GSS_mapper.c
+	$(COMPILE.c) $(OUTPUT_OPTION) -Dwith_pthr_suffix SecAuthMechGSI SecIncludeDirGSIpthr $<
 #endif
 
 #if UseKRB5
@@ -82,10 +81,10 @@ KRB5LIB = SecLibsKRB5 -lc -lpthread -ldl
 SharedLibraryTarget(Csec_plugin_KRB5,$(KRB5LIB_OBJS),,$(KRB5LIB))
 
 Csec_plugin_KRB5.Osuf: Csec_plugin_GSS.c
-	$(CC) $(CFLAGS) SecAuthMechKRB5 SecIncludeDirKRB5	-o $@ -c Csec_plugin_GSS.c
+	$(COMPILE.c) $(OUTPUT_OPTION) SecAuthMechKRB5 SecIncludeDirKRB5 $<
 
 Csec_plugin_KRB5_mapper.Osuf:  Csec_plugin_GSS_mapper.c
-	$(CC) $(CFLAGS) SecAuthMechKRB5 SecIncludeDirKRB5	-o $@ -c Csec_plugin_GSS_mapper.c
+	$(COMPILE.c) $(OUTPUT_OPTION) SecAuthMechKRB5 SecIncludeDirKRB5 $<
 #endif
 
 IDLIB_OBJS = Csec_plugin_ID.Osuf

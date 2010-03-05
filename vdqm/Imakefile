@@ -23,21 +23,20 @@
 #
 # @author Castor Dev team, castor-dev@cern.ch
 
-LIBS = $(LDFLAGS) $(MTLDFLAGS) $(MTLDLIBS)
+LIBS += $(LDFLAGS) $(MTLDFLAGS)
 #if BuildSecureVdqm
 SECURITYFLAG=-DCSEC
 LDLIBS+= -ldl
 #endif  
 VDQM_HOST = VdqmHost
-CFLAGS = -g -O -I../h $(MTCCFLAGS) -DVDQM_HOST=\"$(VDQM_HOST)\" $(SECURITYFLAG)
+CFLAGS += $(MTCCFLAGS)
+CPPFLAGS += -DVDQM_HOST=\"$(VDQM_HOST)\" $(SECURITYFLAG)
 
 DependsOnLibrary(common,castorcommon)
 
 vdqmc_SendRecv.c:	vdqm_SendRecv.c
 	RemoveFiles(vdqmc_SendRecv.c)
 	$(CP) vdqm_SendRecv.c vdqmc_SendRecv.c
-vdqmc_SendRecv.Osuf: vdqmc_SendRecv.c 
-	$(CC) -c -I../h $(MTCCFLAGS) vdqmc_SendRecv.c
 FilesToClean += vdqmc_SendRecv.c
 
 VDQMLIB_OBJS = vdqmapi.Osuf vdqmc_SendRecv.Osuf

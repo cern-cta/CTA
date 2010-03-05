@@ -23,7 +23,7 @@
 #
 # @author Castor Dev team, castor-dev@cern.ch
 
-CPPFLAGS = -g -O0 -I ../../h -I ../.. $(PYTHONINC) $(MTCCFLAGS)
+CXXFLAGS += $(PYTHONINC) $(MTCCFLAGS)
 LIBS = -lbat -llsf -llsbstream -lm
 
 DependsOnLibrary(../common,castorcommon)

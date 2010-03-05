@@ -6,10 +6,9 @@ COMM       @(#)Imakefile,v 1.24 2005/12/06 10:52:56 CERN IT-PDP/DM Jean-Philippe
 
 COMM    Make HSM admin tools.
 
-CKSUMLIB = -lz
-DFLAGS = -DORAVDQMCONFIGFILE=\"/etc/castor/ORAVDQMCONFIG\" -g -pthread
-CPPFLAGS = -I../h -I.. $(DFLAGS)
-CFLAGS = $(CPPFLAGS)
+CPPFLAGS += -DORAVDQMCONFIGFILE=\"/etc/castor/ORAVDQMCONFIG\" -pthread
+CFLAGS += -pthread
+CXXFLAGS += -pthread
 LD = g++
 
 RFIOFLAGS=$(STAGERSUPERUSER) $(STAGERSUPERGROUP)
@@ -29,7 +28,7 @@ NormalProgramTarget(modifyFileClass,modifyFileClass.Osuf,$(DEPLIB),$(LIBS),755)
 NormalProgramTarget(modifySvcClass,modifySvcClass.Osuf,$(DEPLIB),$(LIBS),755)
 NormalProgramTarget(deleteFileClass,deleteFileClass.Osuf,$(DEPLIB),$(LIBS),755)
 NormalProgramTarget(deleteSvcClass,deleteSvcClass.Osuf,$(DEPLIB),$(LIBS),755)
-NormalProgramTarget(adler32,adler32.Osuf,$(DEPLIB),$(LIBS) $(CKSUMLIB),755)
+NormalProgramTarget(adler32,adler32.Osuf,$(DEPLIB),$(LIBS) -lz,755)
 NormalProgramTarget(c2probe,c2probe.Osuf,$(DEPLIB),-pthread $(LIBS),755)
 NormalProgramTarget(listPriority,listPriority.Osuf,$(DEPLIB),$(LIBS),755)
 NormalProgramTarget(enterPriority,enterPriority.Osuf,$(DEPLIB),$(LIBS),755)

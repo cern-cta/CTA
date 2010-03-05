@@ -24,9 +24,9 @@
 # @author Sebastien Ponce, sebastien.ponce@cern.ch
 #
 
-CPPFLAGS = -g -O0 -I../../../h -I../../.. $(MTCCFLAGS)
+CXXFLAGS += $(MTCCFLAGS)
 LIBS+= -ldl
-LDFLAGS = -L ../../../shlib $(MTCCFLAGS)
+LDFLAGS += $(MTCCFLAGS)
 LD = g++
 
 DependsOnLibrary(castor,castorclient)

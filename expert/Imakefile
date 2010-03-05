@@ -8,7 +8,8 @@ COMM    Make expert programs.
 LOGDIR = /var/log/castor
 LOGFILE = $(LOGDIR)/expertd.log
 EXPERT_CONFIG = ExpertConfigFile
-CFLAGS = -I../h $(MTCCFLAGS) -DBIN=\"$(BIN)\" -DLOGFILE=\"$(LOGFILE)\" -DEXPERT_CONFIG=\"$(EXPERT_CONFIG)\"
+CFLAGS += $(MTCCFLAGS)
+CPPFLAGS += -DBIN=\"$(BIN)\" -DLOGFILE=\"$(LOGFILE)\" -DEXPERT_CONFIG=\"$(EXPERT_CONFIG)\"
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(upv,castorupv)

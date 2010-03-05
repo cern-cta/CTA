@@ -22,8 +22,8 @@
 #
 
 CKSUMLIB = -lz
-CPPFLAGS = -g -O0 -I../../../h -I../../..  $(MTCCFLAGS)
-CFLAGS = -O -I../../../h -I../../.. $(THREADFLAGS)
+CXXFLAGS += $(MTCCFLAGS)
+CFLAGS += $(THREADFLAGS)
 LDFLAGS += $(MTLDFLAGS)
 LD = g++
 

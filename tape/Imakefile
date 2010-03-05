@@ -6,17 +6,12 @@ COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.22 $ $Date: 2009/08/18 09:43
 
 COMM 	Make tape daemon programs.
 
-INCLUDES = ../h
 TMS = NOTMS
-VMGRFLG = -DVMGR
-VDQMFLG = -DVDQM
 OPSGRP = OperatorGid
 LOGDIR = /var/log/castor
 SACCTDIR = SacctDir
 SACCTFILE = SacctDir/sacct
-ACCTFILE = -DACCTFILE=\"$(SACCTFILE)\"
 SCONFIGFILE = ShiftConfigFile
-CONFIGFILE = -DCONFIGFILE=\"$(SCONFIGFILE)\"
 TAPEACCT = tapeacct.Osuf
 STAGERSUPERUSER = StagerSuperUser
 TPCONFIG = TapeConfigFile
@@ -32,14 +27,14 @@ LIBS+= -ldl
 
 COMM######################### FLAGS ##############################
 
-DFLAGS = -DBIN=\"$(BIN)\" \
-	 -DLOGFILE=\"$(LOGDIR)/taped_legacy.log\" \
-	 -DSTAGERSUPERUSER=\"$(STAGERSUPERUSER)\" \
-	 -DTPCONFIG=\"$(TPCONFIG)\" \
-	 -D$(TMS) $(PCTAFLAG) $(ADSTARFLG) $(ACCTFLAG) $(ACCTFILE) \
-	 $(CONFIGFILE) $(CDKFLG) $(VDQMFLG) $(VMGRFLG)
+CPPFLAGS += -DBIN=\"$(BIN)\" \
+	    -DLOGFILE=\"$(LOGDIR)/taped_legacy.log\" \
+	    -DSTAGERSUPERUSER=\"$(STAGERSUPERUSER)\" \
+	    -DTPCONFIG=\"$(TPCONFIG)\" \
+	    -D$(TMS) $(PCTAFLAG) $(ADSTARFLG) $(ACCTFLAG) -DACCTFILE=\"$(SACCTFILE)\" \
+	    -DCONFIGFILE=\"$(SCONFIGFILE)\" $(CDKFLG) -DVDQM -DVMGR
 
-CFLAGS = -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS) $(CDKINC) $(SECURITYFLAG)
+CFLAGS += $(MTCCFLAGS) $(CDKINC) $(SECURITYFLAG)
 
 sendscsicmd.c:	DepSourceName(common,sendscsicmd.c)
 	RemoveFiles(sendscsicmd.c)
@@ -77,36 +72,34 @@ usrwrttpmrk.c:	wrttpmrk.c
 
 FilesToClean += sendscsicmd.c usrlocate.c usrreadlbl.c usrrwndtape.c usrskiptape.c usrsmcsubr.c usrsmcsubr2.c usrtperror.c usrusrmsg.c usrwritelbl.c usrwrttpmrk.c
 
-sendscsicmd.Osuf:	sendscsicmd.c ../h/Ctape.h ../h/scsictl.h
+sendscsicmd.Osuf: sendscsicmd.c
 	@if [ -f "/usr/src/linux/include/scsi/sg.h" ] ;\
 	then \
-		echo $(CC) -c -I$(INCLUDES) $(MTCCFLAGS) -DTAPE -DSCSIINC="\"/usr/src/linux/include/scsi/sg.h\"" sendscsicmd.c ;\
-		$(CC) -c -I$(INCLUDES) $(MTCCFLAGS) -DTAPE -DSCSIINC="\"/usr/src/linux/include/scsi/sg.h\"" sendscsicmd.c ;\
+		$(COMPILE.c) $(OUTPUT_OPTION) -DTAPE -DSCSIINC="\"/usr/src/linux/include/scsi/sg.h\"" $< ;\
 	else \
-		echo $(CC) -c -I$(INCLUDES) $(MTCCFLAGS) -DTAPE -DSCSIINC="\"/usr/include/scsi/sg.h\"" sendscsicmd.c ;\
-		$(CC) -c -I$(INCLUDES) $(MTCCFLAGS) -DTAPE -DSCSIINC="\"/usr/include/scsi/sg.h\"" sendscsicmd.c ;\
+		$(COMPILE.c) $(OUTPUT_OPTION) -DTAPE -DSCSIINC="\"/usr/include/scsi/sg.h\"" $< ;\
 	fi
 
-usrlocate.Osuf:	usrlocate.c ../h/Ctape.h ../h/serrno.h
-	$(CC) -c -I$(INCLUDES) $(MTCCFLAGS) -DNOTRACE usrlocate.c
-usrreadlbl.Osuf:	usrreadlbl.c ../h/Ctape.h ../h/serrno.h
-	$(CC) -c -I$(INCLUDES) $(MTCCFLAGS) -DNOTRACE $(PCTAFLAG) $(ADSTARFLG) usrreadlbl.c
-usrrwndtape.Osuf:	usrrwndtape.c ../h/Ctape.h
-	$(CC) -c -I$(INCLUDES) $(MTCCFLAGS) -DNOTRACE usrrwndtape.c
-usrskiptape.Osuf:	usrskiptape.c ../h/Ctape.h
-	$(CC) -c -I$(INCLUDES) $(MTCCFLAGS) -DNOTRACE usrskiptape.c
-usrsmcsubr.Osuf:	usrsmcsubr.c ../h/Ctape.h ../h/scsictl.h ../h/smc.h
-	$(CC) -c -I$(INCLUDES) $(MTCCFLAGS) -DNOTRACE usrsmcsubr.c
-usrsmcsubr2.Osuf:	usrsmcsubr2.c ../h/Ctape.h ../h/smc.h
-	$(CC) -c -I$(INCLUDES) $(MTCCFLAGS) -DNOTRACE usrsmcsubr2.c
-usrtperror.Osuf:	usrtperror.c ../h/Ctape.h ../h/serrno.h
-	$(CC) -c -I$(INCLUDES) $(MTCCFLAGS) -DNOTRACE usrtperror.c
+usrlocate.Osuf: usrlocate.c ../h/Ctape.h ../h/serrno.h
+	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
+usrreadlbl.Osuf: usrreadlbl.c ../h/Ctape.h ../h/serrno.h
+	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
+usrrwndtape.Osuf: usrrwndtape.c ../h/Ctape.h
+	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
+usrskiptape.Osuf: usrskiptape.c ../h/Ctape.h
+	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
+usrsmcsubr.Osuf: usrsmcsubr.c ../h/Ctape.h ../h/scsictl.h ../h/smc.h
+	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
+usrsmcsubr2.Osuf: usrsmcsubr2.c ../h/Ctape.h ../h/smc.h
+	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
+usrtperror.Osuf: usrtperror.c ../h/Ctape.h ../h/serrno.h
+	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
 usrusrmsg.Osuf:	usrusrmsg.c ../h/Ctape.h
-	$(CC) -c -I$(INCLUDES) $(MTCCFLAGS) -DNOTRACE usrusrmsg.c
-usrwritelbl.Osuf:	usrwritelbl.c ../h/Ctape.h
-	$(CC) -c -I$(INCLUDES) $(MTCCFLAGS) -DNOTRACE usrwritelbl.c
-usrwrttpmrk.Osuf:	usrwrttpmrk.c ../h/Ctape.h
-	$(CC) -c -I$(INCLUDES) $(MTCCFLAGS) -DNOTRACE usrwrttpmrk.c
+	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
+usrwritelbl.Osuf: usrwritelbl.c ../h/Ctape.h
+	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
+usrwrttpmrk.Osuf: usrwrttpmrk.c ../h/Ctape.h
+	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(vdqm,castorvdqm)

@@ -10,13 +10,12 @@ OPSGRP = OperatorGid
 LOGDIR = /var/log/castor
 LOGFILE = $(LOGDIR)/vmgrd.log
 VMGRCONFIG = VmgrConfigFile
-ORAFLG = -DUSE_ORACLE
-ORAINC = -I$(ORACLE_HOME)/precomp/public
 #if BuildSecureVmgr
 SECURITYFLAG=-DCSEC
-LIBS+= -ldl
+LIBS += -ldl
 #endif
-CFLAGS = -g -I../h $(MTCCFLAGS) -DBIN=\"$(BIN)\" -DLOGFILE=\"$(LOGFILE)\" -DVMGRCONFIG=\"$(VMGRCONFIG)\" $(RDSFLG) $(ORAFLG) $(RDSINC) $(ORAINC) $(SECURITYFLAG)
+CFLAGS += $(MTCCFLAGS)
+CPPFLAGS += -DBIN=\"$(BIN)\" -DLOGFILE=\"$(LOGFILE)\" -DVMGRCONFIG=\"$(VMGRCONFIG)\" -DUSE_ORACLE -I$(ORACLE_HOME)/precomp/public $(SECURITYFLAG)
 
 DependsOnLibrary(ns,castorns)
 DependsOnLibrary(common,castorcommon)

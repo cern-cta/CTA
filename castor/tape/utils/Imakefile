@@ -21,8 +21,7 @@
 # @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
 #
 
-INCLUDES = -I../../../h -I../../..
-CPPFLAGS = -g -O0 $(INCLUDES) $(MTCCFLAGS)
+CXXFLAGS += $(MTCCFLAGS)
 LDFLAGS += $(MTLDFLAGS)
 LD = g++
 

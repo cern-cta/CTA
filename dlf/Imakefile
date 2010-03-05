@@ -24,10 +24,9 @@
 # @author Castor Dev team, castor-dev@cern.ch
 
 SUBDIRS   = web
-INCLUDES  = ../h
 MANSUBDIR = doc/man/
 
-CFLAGS    = -pedantic -Wno-long-long -g -I$(INCLUDES) $(MTCCFLAGS)
+CFLAGS += $(MTCCFLAGS)
 
 DependsOnLibrary(common,castorcommon)
 

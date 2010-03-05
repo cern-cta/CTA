@@ -24,7 +24,7 @@
 # @author Castor Dev team, castor-dev@cern.ch
 #
 
-CPPFLAGS = -g -O0 -I ../../../h -I ../../.. $(MTCCFLAGS)
+CXXFLAGS += $(MTCCFLAGS)
 LDFLAGS += $(MTLDFLAGS)
 LD = g++
 

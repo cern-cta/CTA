@@ -24,8 +24,8 @@
 # @author Sebastien Ponce, sebastien.ponce@cern.ch
 #
 
-CPPFLAGS = -g -O0 -I../../../h -I../../.. $(MTCCFLAGS)
-LDFLAGS = -pthread
+CXXFLAGS += $(MTCCFLAGS)
+LDFLAGS += -pthread
 LD = g++
 
 DependsOnLibrary(castor,castorclient)
