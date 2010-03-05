@@ -105,7 +105,6 @@ void castor::io::StreamDiskCopyInfoCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->csumValue();
   ad->stream() << obj->creationTime();
   ad->stream() << obj->lastAccessTime();
-  ad->stream() << obj->hwStatus();
   ad->stream() << obj->id();
 }
 
@@ -170,9 +169,6 @@ castor::IObject* castor::io::StreamDiskCopyInfoCnv::createObj(castor::IAddress* 
   u_signed64 lastAccessTime;
   ad->stream() >> lastAccessTime;
   object->setLastAccessTime(lastAccessTime);
-  int hwStatus;
-  ad->stream() >> hwStatus;
-  object->setHwStatus(hwStatus);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

@@ -232,7 +232,9 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "MigrationPolicyElement",
   "StreamPolicyElement",
   "RetryPolicyElement",
-  "VdqmTapeGatewayRequest"
+  "VdqmTapeGatewayRequest",
+
+  "StageQueryResult"
 };
 
 

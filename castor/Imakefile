@@ -256,6 +256,7 @@ STGLIB_SRCS = BaseAddress.cpp \
               stager/StagePutDoneRequest.cpp \
               stager/StagePutNextRequest.cpp \
               stager/StagePutRequest.cpp \
+	      stager/StageQueryResult.cpp \
               stager/StageReleaseFilesRequest.cpp \
               stager/StageRmRequest.cpp \
               stager/StageUpdateNextRequest.cpp \
