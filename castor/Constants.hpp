@@ -232,7 +232,9 @@ namespace castor {
     OBJ_MigrationPolicyElement = 187,
     OBJ_StreamPolicyElement = 188,
     OBJ_RetryPolicyElement = 189,
-    OBJ_VdqmTapeGatewayRequest = 190
+    OBJ_VdqmTapeGatewayRequest = 190,
+
+    OBJ_StageQueryResult = 191
 
   };
 
@@ -309,7 +311,7 @@ namespace castor {
    * declared outside of any function.
    */
 
-#define OBJECT_IDS_NB 191
+#define OBJECT_IDS_NB 192
 
   static const unsigned int ObjectsIdsNb = OBJECT_IDS_NB;
 
