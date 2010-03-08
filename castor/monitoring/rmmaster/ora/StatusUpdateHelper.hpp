@@ -72,10 +72,15 @@ namespace castor {
            * Handles state updates; this method is public because
            * it is also used by OraRmMasterSvc.retrieveClusterStatus
            * @param state the new state
+           * @param flag to indicate that this is the initialisation
+           * phase of the rmmaster daemon and as a consequence the
+           * lastStateUpdate attributes in the shared memory should
+           * be set to 0.
            * @exception Exception in case of error
            */
           void handleStateUpdate
-          (castor::monitoring::DiskServerStateReport* state)
+          (castor::monitoring::DiskServerStateReport* state,
+           const bool init = false)
             throw (castor::exception::Exception);
 
           /**

@@ -479,7 +479,7 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::retrieveClusterStatus
       m_getFileSystemsStatement->closeResultSet(fsRset);
 
       // "send" the report to update the cluster status
-      updater->handleStateUpdate(dsReport);
+      updater->handleStateUpdate(dsReport, true);
       delete dsReport;
     }
     m_getDiskServersStatement->closeResultSet(dsRset);

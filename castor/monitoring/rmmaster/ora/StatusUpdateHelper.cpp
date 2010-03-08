@@ -62,7 +62,7 @@ castor::monitoring::rmmaster::ora::StatusUpdateHelper::StatusUpdateHelper
 // HandleStateUpdate
 //-----------------------------------------------------------------------------
 void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleStateUpdate
-(castor::monitoring::DiskServerStateReport* state)
+(castor::monitoring::DiskServerStateReport* state, const bool init)
   throw (castor::exception::Exception) {
 
   // Get the information about who is the current resource monitoring master
@@ -130,7 +130,9 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleStateUpdate
   }
 
   // Update lastUpdate
-  it->second.setLastStateUpdate(time(0));
+  if (init == false) {
+    it->second.setLastStateUpdate(time(0));
+  }
 
   // Update FileSystems
   for (std::vector<castor::monitoring::FileSystemStateReport*>::const_iterator
@@ -186,7 +188,9 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleStateUpdate
     }
 
     // Update lastUpdate
-    it2->second.setLastStateUpdate(time(0));
+    if (init == false) {
+      it2->second.setLastStateUpdate(time(0));
+    }
   }
 }
 
@@ -294,6 +298,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleMetricsUpdate
   unsigned int totalNbReadWriteStreams = 0;
   unsigned int totalNbMigratorStreams = 0;
   unsigned int totalNbRecallerStreams = 0;
+
   // Update FileSystems
   for (std::vector<castor::monitoring::FileSystemMetricsReport*>::const_iterator
          itFs = metrics->fileSystemMetricsReports().begin();
