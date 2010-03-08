@@ -65,6 +65,8 @@
 #include "castor/stager/daemon/QueryRequestSvcThread.hpp"
 #include "castor/stager/daemon/DlfMessages.hpp"
 #include "castor/stager/daemon/NsOverride.hpp"
+#include "castor/bwlist/BWUser.hpp"
+#include "castor/bwlist/RequestType.hpp"
 #include "castor/bwlist/ChangePrivilege.hpp"
 #include "castor/bwlist/ListPrivileges.hpp"
 #include "castor/bwlist/ListPrivilegesResponse.hpp"
@@ -757,11 +759,33 @@ void castor::stager::daemon::QueryRequestSvcThread::handleChangePrivilege
  castor::rh::IRHSvc* rhSvc,
  Cuuid_t uuid)
   throw (castor::exception::Exception) {
-  castor::bwlist::ChangePrivilege *uReq;
+  // Get the ChangePrivilege
+  // cannot return 0 since we check the type before calling this method
+  castor::bwlist::ChangePrivilege *uReq =
+    dynamic_cast<castor::bwlist::ChangePrivilege*> (req);
   castor::rh::BasicResponse res;
   try {
+    std::ostringstream users;
+    for (std::vector<castor::bwlist::BWUser*>::const_iterator it = uReq->users().begin();
+         it != uReq->users().end();
+         it++) {
+      if (it != uReq->users().begin()) users << ',';
+      users << (*it)->euid() << ":" << (*it)->egid();
+    }
+    std::ostringstream requestTypes;
+    for (std::vector<castor::bwlist::RequestType*>::const_iterator it = uReq->requestTypes().begin();
+         it != uReq->requestTypes().end();
+         it++) {
+      if (it != uReq->requestTypes().begin()) requestTypes << ',';
+      requestTypes << castor::ObjectsIdStrings[(*it)->reqType()];
+    }
     // "Processing ChangePrivilege"
-    castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_CPRIV);
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("SvcClass", uReq->svcClassName()),
+       castor::dlf::Param("Users", users.str()),
+       castor::dlf::Param("RequestTypes", requestTypes.str()),
+       castor::dlf::Param("IsGrant", uReq->isGranted())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_CPRIV, 4, params);
     // prepare response first in case we fail
     res.setReqAssociated(req->reqId());
     // Get the name of the client hostname to pass into the Cupv interface.
@@ -795,9 +819,6 @@ void castor::stager::daemon::QueryRequestSvcThread::handleChangePrivilege
         throw e;
       }
     }
-    // Get the ChangePrivilege
-    // cannot return 0 since we check the type before calling this method
-    uReq = dynamic_cast<castor::bwlist::ChangePrivilege*> (req);
     // call method
     rhSvc->changePrivilege(uReq->svcClassName(), uReq->users(),
                            uReq->requestTypes(),uReq->isGranted());
