@@ -21,8 +21,6 @@
 # @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
 #
 
-CXXFLAGS += $(MTCCFLAGS)
-LDFLAGS += $(MTLDFLAGS)
 LD = g++
 
 TAPEUTILSLIB_SRCS = \

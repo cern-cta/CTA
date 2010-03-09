@@ -19,7 +19,7 @@ SECURITYFLAG=-DCSEC
 CPPFLAGS += -DBIN=\"$(BIN)\" -DCUPV_HOST=\"$(CUPV_HOST)\" $(USE_CUPV) \
             -DLOGFILE=\"$(LOGFILE)\" -DCUPVCONFIG=\"$(CUPVCONFIG)\" \
             -DUSE_ORACLE $(SECURITYFLAG)
-CFLAGS += $(MTCCFLAGS) -I$(ORACLE_HOME)/precomp/public
+CFLAGS += -I$(ORACLE_HOME)/precomp/public
 
 DependsOnLibrary(common,castorcommon)
 CUPVLIB_OBJS = Cupv_apiinit.Osuf Cupv_errmsg.Osuf send2Cupv.Osuf Cupv_delete.Osuf Cupv_list.Osuf Cupv_util.Osuf Cupv_check.Osuf Cupv_modify.Osuf Cupv_add.Osuf
@@ -54,7 +54,7 @@ FilesToClean += Cupv_oracle_ifce.c Cupv_oracle_ifce.lis
 CUPVD_OBJS = Cupv_main.Osuf Cupv_oracle_ifce.Osuf Cupv_procreq.Osuf sendrep.Osuf Cupv_util.Osuf Cupvlogit.Osuf
 MakeDir($(LOGDIR),0755)
 ORALIBS= -L$(ORACLE_HOME)/lib -lclntsh
-NormalProgramTarget(cupvd,$(CUPVD_OBJS), $(DEPLIB), $(ORALIBS) $(MTLDFLAGS) $(LIBS),750)
+NormalProgramTarget(cupvd,$(CUPVD_OBJS), $(DEPLIB), $(ORALIBS) $(LIBS),750)
 ADMMANPAGE(cupvd)
 LOGROTATE(castor-upv-server,..,install)
 SYSCONFIG(cupvd,install)

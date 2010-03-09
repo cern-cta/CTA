@@ -21,10 +21,7 @@
 # @author Steven Murray, Steven.Murray@cern.ch; Nicola Bessone, Nicola.Bessone@cern.ch 
 #
 
-CKSUMLIB = -lz
-CXXFLAGS += $(MTCCFLAGS)
-CFLAGS += $(THREADFLAGS)
-LDFLAGS += $(MTLDFLAGS)
+LIBS += -lz
 LD = g++
 
 DependsOnLibrary(../../castor,castorclient)
@@ -35,7 +32,7 @@ TAPEFORMAT_SRCS = \
      Marshaller.cpp \
      Unmarshaller.cpp
 TAPEFORMATLIB_OBJS = $(TAPEFORMAT_SRCS:.cpp=.Osuf)
-SharedLibraryTarget(castortapeformat,$(TAPEFORMATLIB_OBJS),$(DEPLIB),$(LIBS) $(CKSUMLIB))
+SharedLibraryTarget(castortapeformat,$(TAPEFORMATLIB_OBJS),$(DEPLIB),$(LIBS))
 
 NSLIB = SharedLibraryTargetName(castortapeformat)
 
@@ -43,13 +40,13 @@ NEWTPWRITE_SRCS = \
      ALBWriter.cpp \
      $(TAPEFORMAT_SRCS)  
 NEWTPWRITEBIN_OBJS = $(NEWTPWRITE_SRCS:.cpp=.Osuf)
-NormalProgramTarget(albwriter,$(NEWTPWRITEBIN_OBJS),$(NSLIB) $(DEPLIB),$(LIBS) $(CKSUMLIB),750)
+NormalProgramTarget(albwriter,$(NEWTPWRITEBIN_OBJS),$(NSLIB) $(DEPLIB),$(LIBS),750)
 EXEMANPAGE(albwriter)
 
 NEWTPREAD = \
      ALBReader.cpp \
      $(TAPEFORMAT_SRCS)
 NEWTPREADBIN_OBJS = $(NEWTPREAD:.cpp=.Osuf)
-NormalProgramTarget(albreader, $(NEWTPREADBIN_OBJS), $(NSLIB) $(DEPLIB),$(LIBS) $(CKSUMLIB),750)
+NormalProgramTarget(albreader, $(NEWTPREADBIN_OBJS), $(NSLIB) $(DEPLIB),$(LIBS),750)
 EXEMANPAGE(albreader)
 

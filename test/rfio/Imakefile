@@ -6,9 +6,6 @@ COMM
 
 COMM		Make CASTOR tests for "rfio" directory
 
-CFLAGS += $(MTCCFLAGS)
-LDFLAGS = $(MTLDFLAGS)
-
 DependsOnLibrary(../common,castorcommon)
 DependsOnLibrary(../rfio,castorrfio)
 DependsOnLibrary(../ns,castorns)

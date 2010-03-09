@@ -24,7 +24,6 @@
 # @author Ben Couturier, ben.couturier@cern.ch
 #
 
-CXXFLAGS += $(MTCCFLAGS)
 LD = g++
 
 DependsOnLibrary(castor,castorclient)

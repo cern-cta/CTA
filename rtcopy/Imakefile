@@ -72,8 +72,6 @@ RTCPCLDGROUP = st
 #endif
 
 RTCPCLDFLAGS = -DRTCPCLD_NOTIFY_HOST=\"$(RTCPCLDHOST)\" -DRTCPCLD_USER=\"$(RTCPCLDUSER)\" -DRTCPCLD_GROUP=\"$(RTCPCLDGROUP)\"
-THREADFLAGS = $(MTCCFLAGS)
-CKSUMLIB = -lz
 
 #if BuildSecureRtcopy
 SECURITYFLAG=-DCSEC
@@ -83,8 +81,8 @@ LIBS += -ldl
 CPPFLAGS += -DBIN=\"$(BIN)\" -DRTCOPY_LOGFILE=\"$(LOGFILE)\" -DNOMORETAPES=\"$(NOMORETAPES)\" \
 	    -DAUTH_HOSTS=\"$(AUTHORIZEDHOSTS)\" -DWORKDIR=\"$(RTCOPYWORKDIR)\" \
 	    -DNS_ROOT=\"$(NS_ROOT)\" $(ACCTON) $(CONFIGFILE) $(TPCONFIG) \
-	    -DRTCP_SERVER -DVMGR $(VDQMFLG) $(CTAPEFLG) $(ACCTFLAG) $(ACCTFILE) $(RTCPCLDFLAGS)
-CFLAGS += $(THREADFLAGS) $(SECURITYFLAG)
+	    -DRTCP_SERVER -DVMGR $(VDQMFLG) $(CTAPEFLG) -DSACCT $(ACCTFILE) $(RTCPCLDFLAGS)
+CFLAGS += $(SECURITYFLAG)
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(dlf,castordlf)
@@ -129,8 +127,8 @@ EXEMANPAGE(tpwrite)
 RTCPCLD_MT_OBJS = rtcpcldcommon_mt.Osuf
 RTCPCLD_OBJS =	rtcpcldcommon.Osuf rtcpcldCatalogueInterface.Osuf rtcpcldVmgrInterface.Osuf rtcpcldNsInterface.Osuf
 NormalProgramTarget(rtcpclientd,rtcpclientd.Osuf $(RTCPCLD_OBJS),$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(LIBS),0750)
-NormalProgramTarget(recaller,recaller.Osuf $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS),$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(MTLDFLAGS) $(LIBS),0750)
-NormalProgramTarget(migrator,migrator.Osuf $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS),$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(MTLDFLAGS) $(LIBS),0750)
+NormalProgramTarget(recaller,recaller.Osuf $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS),$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(LIBS),0750)
+NormalProgramTarget(migrator,migrator.Osuf $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS),$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(LIBS),0750)
 NormalProgramTarget(tperrhandler,TapeErrorHandler.Osuf $(RTCPCLD_OBJS),$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(LIBS),0750)
 EXEMANPAGE(rtcpclientd)
 TapeMakeDir($(LOGDIR),0755)
@@ -147,8 +145,8 @@ RTCPD_OBJS =	rtcpd.Osuf rtcp_CallVMGR.Osuf rtcp_CheckReq.Osuf \
 		rtcpd_ConvertData.Osuf \
 		rtcpc_BuildReq.Osuf rtcpapi.Osuf rtcp_RetvalSHIFT.Osuf \
 		rtcpd_tpdump.Osuf Ctape_dummies.Osuf rtcp_accounting.Osuf
-TapeProgramTarget(rtcpd,$(RTCPD_OBJS),$(DEPLIB),$(MTLDFLAGS) $(LIBS) $(CKSUMLIB),0750)
-TapeProgramTarget(killjid,killjid.Osuf,$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(MTLDFLAGS) $(LIBS),0750)
+TapeProgramTarget(rtcpd,$(RTCPD_OBJS),$(DEPLIB),$(LIBS) -lz,0750)
+TapeProgramTarget(killjid,killjid.Osuf,$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(LIBS),0750)
 EXEMANPAGE(rtcpd)
 EXEMANPAGE(killjid)
 LOGROTATE(castor-rtcopy-server,..,installtape)

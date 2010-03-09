@@ -14,7 +14,6 @@ VMGRCONFIG = VmgrConfigFile
 SECURITYFLAG=-DCSEC
 LIBS += -ldl
 #endif
-CFLAGS += $(MTCCFLAGS)
 CPPFLAGS += -DBIN=\"$(BIN)\" -DLOGFILE=\"$(LOGFILE)\" -DVMGRCONFIG=\"$(VMGRCONFIG)\" -DUSE_ORACLE -I$(ORACLE_HOME)/precomp/public $(SECURITYFLAG)
 
 DependsOnLibrary(ns,castorns)
@@ -33,7 +32,7 @@ vmgr_oracle_ifce.o: vmgr_oracle_ifce.c
 FilesToClean += vmgr_oracle_ifce.c vmgr_oracle_ifce.lis
 VMGRD_OBJS = vmgr_main.Osuf vmgr_oracle_ifce.Osuf vmgr_procreq.Osuf sendrep.Osuf vmgrlogit.Osuf
 ORALIBS= -L$(ORACLE_HOME)/lib -lclntsh
-NormalProgramTarget(vmgrd,$(VMGRD_OBJS), $(DEPLIB), $(ORALIBS) $(MTLDFLAGS) $(LIBS),750)
+NormalProgramTarget(vmgrd,$(VMGRD_OBJS), $(DEPLIB), $(ORALIBS) $(LIBS),750)
 ADMMANPAGE(vmgrd)
 LOGROTATE(castor-vmgr-server,..,install)
 SYSCONFIG(vmgrd,install)

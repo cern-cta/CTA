@@ -18,18 +18,7 @@ CNS_ROOT_DIR = NsRoot
 RFIO_ALRM= RfioSpool/RfioAlarmFile
 NFSROOT0 = NfsRoot
 
-#ifdef StagerSuperUser
-STAGERSUPERUSER0 = StagerSuperUser
-STAGERSUPERUSER  = -DSTAGERSUPERUSER=\"$(STAGERSUPERUSER0)\"
-#endif
-#ifdef StagerSuperGroup
-STAGERSUPERGROUP0 = StagerSuperGroup
-STAGERSUPERGROUP = -DSTAGERSUPERGROUP=\"$(STAGERSUPERGROUP0)\"
-#endif
-
-
-CFLAGS += $(MTCCFLAGS)
-CPPFLAGS += $(ACCTFLAG) -DNOMORERFIO=\"$(NOMORERFIO)\" -DLOGFILE=\"$(LOGFILE)\" \
+CPPFLAGS += -DSACCT -DNOMORERFIO=\"$(NOMORERFIO)\" -DLOGFILE=\"$(LOGFILE)\" \
 	    -DRFIO_ALRM=\"$(RFIO_ALRM)\" -DCNS_ROOT=\"$(CNS_ROOT_DIR)\" \
 	    $(STAGERSUPERUSER) $(STAGERSUPERGROUP) -DNFSROOT=\"$(NFSROOT0)\" \
             -DFORTRAN
@@ -164,7 +153,7 @@ SRVOBJS = Csemaphore.Osuf rfio_serv.Osuf rfio_calls.Osuf \
 SRVOBJS += rfio_alignedbuf.Osuf rfio_xfsprealloc.Osuf
 #endif
 
-NormalProgramTarget(rfiod,$(SRVOBJS),$(RFIOLIB) $(DEPLIB), $(MTLDFLAGS) $(RTFLAGS) $(RTLIBS) $(LIBCSEC) $(RFIOLIB) $(LIBS) $(CKSUMLIB),755)
+NormalProgramTarget(rfiod,$(SRVOBJS),$(RFIOLIB) $(DEPLIB),$(RTFLAGS) $(RTLIBS) $(LIBCSEC) $(RFIOLIB) $(LIBS) $(CKSUMLIB),755)
 LOGROTATE(castor-rfio-server,..,install)
 SYSCONFIG(rfiod,install)
 INITSCRIPT(rfiod,install)

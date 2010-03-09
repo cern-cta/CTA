@@ -16,8 +16,7 @@ COMM    Make CASTOR Security package
 
 #define CSEC_Mechlist KRB5Mech GSIMech ID
 CSEC_MECHLIST=CSEC_Mechlist
-CFLAGS += $(MTCCFLAGS)
-CPPFLAGS += -g -DCSEC_DEFAULT_MECHS="\"$(CSEC_MECHLIST)\""
+CPPFLAGS += -DCSEC_DEFAULT_MECHS="\"$(CSEC_MECHLIST)\""
 
 SECLIB_OBJS = Csec_api_loader.Osuf Csec_protocol_policy.Osuf Csec_api.Osuf Csec_errmsg.Osuf Csec_apiinit.Osuf Csec_common.Osuf
 DependsOnLibrary(common,castorcommon)

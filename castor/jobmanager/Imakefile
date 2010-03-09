@@ -23,10 +23,9 @@
 #
 # @author Castor Dev team, castor-dev@cern.ch
 
-CXXFLAGS += -I $(ORACLE_HOME)/rdbms/public $(MTCCFLAGS)
-CPPFLAGS += -DSTAGERSUPERUSER=\"stage\" -DSTAGERSUPERGROUP=\"st\"
+CXXFLAGS += -I $(ORACLE_HOME)/rdbms/public
+CPPFLAGS += $(STAGERSUPERUSER) $(STAGERSUPERGROUP)
 LIBS = -ldl -lbat -llsf -llsbstream -L$(ORACLE_HOME)/lib -locci -lclntsh
-LDFLAGS += $(MTLDFLAGS)
 LD = g++
 
 DependsOnLibrary(../common,castorcommon)

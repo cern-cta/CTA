@@ -18,7 +18,6 @@ COMM                                                                            
 COMM -----------------------------------------------------------------------------------------------------#
 
 CFLAGS += -I$(CASTOR_ROOT)/dlf
-LDFLAGS = $(MTLDFLAGS)
 
 DependsOnLibrary(../common,castorcommon)
 DependsOnLibrary(../dlf,castordlf)

@@ -27,9 +27,8 @@ CC += -fPIC -D_LARGEFILE64_SOURCE -Wall -Werror
 CXX += -fPIC -D_LARGEFILE64_SOURCE -Wall -Werror
 CXXFLAGS = -I$(CASTOR_ROOT) -I$(CASTOR_ROOT)/h $(DEBUG)
 CFLAGS = $(CXXFLAGS)
-MTCCFLAGS = -pthread -DCTHREAD_POSIX -D_THREAD_SAFE -D_REENTRANT
-MTLDFLAGS = -pthread
-SHLIBLDFLAGS = -shared
+CPPFLAGS = -pthread -DCTHREAD_POSIX -D_THREAD_SAFE -D_REENTRANT
+LDFLAGS = -pthread
 SHLIBREQLIBS = -lc -lpthread `g++ -print-file-name=libstdc++.so` -ldl
 
 PERLLIBDIR = /usr/lib/perl/CASTOR
@@ -39,9 +38,8 @@ PYTHONINC = `python ${CASTOR_ROOT}/config/pycompile.py --inc`
 PYTHONCFLAGS = `python ${CASTOR_ROOT}/config/pycompile.py --cflags`
 PYTHONLIBDIR = $(shell python -c "from distutils import sysconfig; print sysconfig.get_python_lib()")
 
-ACCTFLAG=-DSACCT
 BIN = InstallBinDir
-ifeq ($(shell ls /etc/debian_version),/etc/debian_version)
+ifneq ($(wildcard /etc/debian_version),)
   LIBDIR = /usr/lib
 else
   LIBDIR = InstallLibDir
@@ -51,6 +49,15 @@ CP = cp
 LD = cc
 LN = ln
 SHELL = /bin/sh
+
+#ifdef StagerSuperUser
+STAGERSUPERUSER0 = StagerSuperUser
+STAGERSUPERUSER  = -DSTAGERSUPERUSER=\"$(STAGERSUPERUSER0)\"
+#endif
+#ifdef StagerSuperGroup
+STAGERSUPERGROUP0 = StagerSuperGroup
+STAGERSUPERGROUP = -DSTAGERSUPERGROUP=\"$(STAGERSUPERGROUP0)\"
+#endif
 
 #ifndef Osuf
 #define Osuf o

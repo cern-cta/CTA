@@ -24,20 +24,7 @@
 # @author Castor Dev team, castor-dev@cern.ch
 #
 
-#ifdef StagerSuperUser
-STAGERSUPERUSER0 = StagerSuperUser
-#else
-STAGERSUPERUSER0 = stage
-#endif
-#ifdef StagerSuperGroup
-STAGERSUPERGROUP0 = StagerSuperGroup
-#else
-STAGERSUPERGROUP0 = st
-#endif
-
-CPPFLAGS += -DSTAGERSUPERUSER=\"$(STAGERSUPERUSER0)\" -DSTAGERSUPERGROUP=\"$(STAGERSUPERGROUP0)\"
-CXXFLAGS += $(MTCCFLAGS)
-LDFLAGS += $(MTLDFLAGS)
+CPPFLAGS += $(STAGERSUPERUSER) $(STAGERSUPERGROUP)
 LD = g++
 
 DependsOnLibrary(../../common,castorcommon)

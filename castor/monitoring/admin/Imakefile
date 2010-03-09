@@ -24,8 +24,6 @@
 # @author Castor Dev team, castor-dev@cern.ch
 #
 
-CXXFLAGS += $(MTCCFLAGS)
-LDFLAGS += $(MTLDFLAGS)
 LD = g++
 
 DependsOnLibrary(../../common,castorcommon)

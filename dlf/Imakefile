@@ -26,8 +26,6 @@
 SUBDIRS   = web
 MANSUBDIR = doc/man/
 
-CFLAGS += $(MTCCFLAGS)
-
 DependsOnLibrary(common,castorcommon)
 
 DLFLIB_OBJS = dlf_lib.Osuf

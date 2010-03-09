@@ -21,8 +21,7 @@
 # @author Giulia Taurelli
 #
 
-CXXFLAGS += $(PYTHONINC) $(MTCCFLAGS)
-LDFLAGS += $(MTLDFLAGS)
+CXXFLAGS += $(PYTHONINC)
 LD = g++
 LIBS = $(PYTHONLIBS)
 

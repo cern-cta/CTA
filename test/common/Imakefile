@@ -6,9 +6,6 @@ COMM
 
 COMM		Make CASTOR tests for "common" directory
 
-CFLAGS += $(MTCCFLAGS)
-LDFLAGS += $(MTLDFLAGS)
-
 DependsOnLibrary(../common,castorcommon)
 NormalProgramTarget(Csched_test,Csched_test.Osuf,$(DEPLIBS),$(DEPLIBS),755)
 NormalProgramTarget(Cpool_test,Cpool_test.Osuf,$(DEPLIBS),$(DEPLIBS),755)

@@ -24,9 +24,6 @@
 #
 
 CPPFLAGS += -DORAVDQMCONFIGFILE=\"/etc/castor/ORAVDQMCONFIG\"
-CXXFLAGS += $(MTCCFLAGS)
-CFLAGS += $(THREADFLAGS)
-LDFLAGS += $(MTLDFLAGS)
 LD = g++
 
 DependsOnLibrary(../common,castorcommon)

@@ -24,9 +24,7 @@
 # @author Sebastien Ponce, sebastien.ponce@cern.ch
 #
 
-CXXFLAGS += $(MTCCFLAGS)
 LIBS+= -ldl
-LDFLAGS += $(MTCCFLAGS)
 LD = g++
 
 DependsOnLibrary(castor,castorclient)

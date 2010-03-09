@@ -23,21 +23,9 @@
 #
 # @author Castor Dev team, castor-dev@cern.ch
 
-#ifdef StagerSuperUser
-STAGERSUPERUSER0 = StagerSuperUser
-#else
-STAGERSUPERUSER0 = stage
-#endif
-#ifdef StagerSuperGroup
-STAGERSUPERGROUP0 = StagerSuperGroup
-#else
-STAGERSUPERGROUP0 = st
-#endif
-
+LD = g++
 SUBDIRS = db rh vdqm gc repack monitoring stager jobmanager job scheduler tape
-CFLAGS += $(MTCCFLAGS)
-CXXFLAGS += $(MTCCFLAGS)
-CPPFLAGS += -DSTAGEMAP=\"StageMapFile\" -DSTAGERSUPERUSER=\"$(STAGERSUPERUSER0)\" -DSTAGERSUPERGROUP=\"$(STAGERSUPERGROUP0)\"
+CPPFLAGS += $(STAGERSUPERUSER) $(STAGERSUPERGROUP) -DSTAGEMAP=\"StageMapFile\"
 
 STGLIB_SRCS = BaseAddress.cpp \
               VectorAddress.cpp \
@@ -356,9 +344,6 @@ STAGERLIB_OBJS = \
 		../client/src/stager/stager_client_api_listPrivileges.Osuf \
 		../client/src/stager/stager_errmsg.Osuf \
 		../client/src/stager/stager_mapper.Osuf
-
-LDFLAGS += $(DEBUG) $(MTLDFLAGS)
-LD = g++
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(ns,castorns)

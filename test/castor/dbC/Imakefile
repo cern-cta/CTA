@@ -24,8 +24,6 @@
 # @author Sebastien Ponce, sebastien.ponce@cern.ch
 #
 
-CXXFLAGS += $(MTCCFLAGS)
-
 DependsOnLibrary(castor,castorclient)
 DependsOnLibrary(castor/db/newora,castorcommonora)
 

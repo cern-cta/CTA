@@ -24,9 +24,8 @@
 # @author Castor Dev team, castor-dev@cern.ch
 #
 
-CXXFLAGS += -I $(ORACLE_HOME)/rdbms/public $(MTCCFLAGS)
+CXXFLAGS += -I $(ORACLE_HOME)/rdbms/public
 CPPFLAGS += -DDEFAULT_CNS=castorns -DORAREPACKCONFIGFILE=\"/etc/castor/ORAREPACKCONFIG\"
-LDFLAGS += $(MTLDFLAGS)
 LD = g++
 SERVDEPLIB = DepSharedLibraryTargetName(db/newora,castorcommonora)
 SERVLIBS = $(SERVDEPLIB) -Wl,-rpath-link,../../shlib -L$(ORACLE_HOME)/lib -locci -lclntsh

@@ -21,9 +21,7 @@
 # @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
 #
 
-CXXFLAGS += $(PYTHONINC) $(MTCCFLAGS)
-CFLAGS += $(THREADFLAGS)
-LDFLAGS += $(MTLDFLAGS)
+CXXFLAGS += $(PYTHONINC)
 LD = g++
 LIBS = $(PYTHONLIBS)
 

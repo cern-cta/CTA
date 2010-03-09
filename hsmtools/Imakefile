@@ -6,12 +6,8 @@ COMM       @(#)Imakefile,v 1.24 2005/12/06 10:52:56 CERN IT-PDP/DM Jean-Philippe
 
 COMM    Make HSM admin tools.
 
-CPPFLAGS += -DORAVDQMCONFIGFILE=\"/etc/castor/ORAVDQMCONFIG\" -pthread
-CFLAGS += -pthread
-CXXFLAGS += -pthread
+CPPFLAGS += -DORAVDQMCONFIGFILE=\"/etc/castor/ORAVDQMCONFIG\"
 LD = g++
-
-RFIOFLAGS=$(STAGERSUPERUSER) $(STAGERSUPERGROUP)
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(dlf,castordlf)
@@ -36,7 +32,7 @@ NormalProgramTarget(deletePriority,deletePriority.Osuf,$(DEPLIB),$(LIBS),755)
 rfcpupd.c: ../rfio/rfcp.c
 	sed 's/| *O_TRUNC//' $< | sed 's/O_WRONLY/O_RDWR|O_APPEND/' > $@
 rfcpupd.Osuf: rfcpupd.c
-	$(CC) $(DEBUG) -I../h $(MTCCFLAGS) $(RFIOFLAGS) $(ACCTFLAG) -c -o $@ $<
+	$(COMPILE.c) $(OUTPUT_OPTION) -DSACCT $(STAGERSUPERUSER) $(STAGERSUPERGROUP) $<
 FilesToClean += rfcpupd.c
 NormalProgramTarget(rfcpupd,rfcpupd.Osuf,$(DEPLIB), $(LIBS),755)
 NormalProgramTarget(stager_actualget,stager_actualget.Osuf,$(DEPLIB), $(LIBS),755)

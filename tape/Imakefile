@@ -13,7 +13,6 @@ SACCTDIR = SacctDir
 SACCTFILE = SacctDir/sacct
 SCONFIGFILE = ShiftConfigFile
 TAPEACCT = tapeacct.Osuf
-STAGERSUPERUSER = StagerSuperUser
 TPCONFIG = TapeConfigFile
 #if !CASTOR_NOSTK
 CDKFLG = -DCDK -DLINUX
@@ -27,14 +26,12 @@ LIBS+= -ldl
 
 COMM######################### FLAGS ##############################
 
-CPPFLAGS += -DBIN=\"$(BIN)\" \
-	    -DLOGFILE=\"$(LOGDIR)/taped_legacy.log\" \
-	    -DSTAGERSUPERUSER=\"$(STAGERSUPERUSER)\" \
-	    -DTPCONFIG=\"$(TPCONFIG)\" \
-	    -D$(TMS) $(PCTAFLAG) $(ADSTARFLG) $(ACCTFLAG) -DACCTFILE=\"$(SACCTFILE)\" \
+CPPFLAGS += -DBIN=\"$(BIN)\" -DLOGFILE=\"$(LOGDIR)/taped_legacy.log\" \
+	    $(STAGERSUPERUSER) -DTPCONFIG=\"$(TPCONFIG)\" \
+	    -D$(TMS) $(PCTAFLAG) $(ADSTARFLG) -DSACCT -DACCTFILE=\"$(SACCTFILE)\" \
 	    -DCONFIGFILE=\"$(SCONFIGFILE)\" $(CDKFLG) -DVDQM -DVMGR
 
-CFLAGS += $(MTCCFLAGS) $(CDKINC) $(SECURITYFLAG)
+CFLAGS += $(CDKINC) $(SECURITYFLAG)
 
 sendscsicmd.c:	DepSourceName(common,sendscsicmd.c)
 	RemoveFiles(sendscsicmd.c)

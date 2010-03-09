@@ -31,7 +31,7 @@ ifeq ($(shell uname -m), x86_64)
   MOPTION=-m64
 endif
 
-CFLAGS += $(MTCCFLAGS) -I$(GLOBUS_LOCATION)/include/$(FLAVOR) $(MOPTION) -fPIC
+CFLAGS += -I$(GLOBUS_LOCATION)/include/$(FLAVOR) $(MOPTION) -fPIC
 LDFLAGS += -L$(GLOBUS_LOCATION)/lib $(MOPTION) -shared -lz
 
 DSI_LIBDIR = $(GLOBUS_LOCATION)/lib

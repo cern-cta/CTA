@@ -24,8 +24,7 @@
 # @author Castor Dev team, castor-dev@cern.ch
 #
 
-CXXFLAGS += -I $(ORACLE_HOME)/rdbms/public $(PYTHONINC) $(MTCCFLAGS)
-LDFLAGS += $(MTLDFLAGS)
+CXXFLAGS += -I $(ORACLE_HOME)/rdbms/public $(PYTHONINC)
 LD = g++
 LIBS = -L$(ORACLE_HOME)/lib -locci -lclntsh 
 

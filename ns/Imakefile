@@ -40,7 +40,7 @@ CPPFLAGS += -DBIN=\"$(BIN)\" -DCNS_HOST=\"$(CNS_HOST)\" \
             -DNSCONFIG=\"$(NSCONFIG)\" \
             $(RDSFLG) -DUSE_ORACLE -DCSEC
 
-CFLAGS += $(MTCCFLAGS) -I$(ORACLE_HOME)/precomp/public
+CFLAGS += -I$(ORACLE_HOME)/precomp/public
 
 NSD_OBJS	=	Cns_main.Osuf \
 			Cns_acl.Osuf \
@@ -257,7 +257,7 @@ FilesToClean += Cns_oracle_ifce.c Cns_oracle_ifce.lis
 MakeDir($(LOGDIR),0755)
 ORALIBS= -L$(ORACLE_HOME)/lib -lclntsh
 
-NormalProgramTarget(nsd,$(NSD_OBJS), $(DEPLIB), $(ORALIBS) $(MTLDFLAGS) $(LIBS) $(LIBCSEC),750)
+NormalProgramTarget(nsd,$(NSD_OBJS), $(DEPLIB), $(ORALIBS) $(LIBS) $(LIBCSEC),750)
 ADMMANPAGE(nsd)
 LOGROTATE(castor-ns-server,..,install)
 SYSCONFIG(nsd,install)

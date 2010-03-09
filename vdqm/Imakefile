@@ -23,13 +23,11 @@
 #
 # @author Castor Dev team, castor-dev@cern.ch
 
-LIBS += $(LDFLAGS) $(MTLDFLAGS)
 #if BuildSecureVdqm
 SECURITYFLAG=-DCSEC
 LDLIBS+= -ldl
 #endif  
 VDQM_HOST = VdqmHost
-CFLAGS += $(MTCCFLAGS)
 CPPFLAGS += -DVDQM_HOST=\"$(VDQM_HOST)\" $(SECURITYFLAG)
 
 DependsOnLibrary(common,castorcommon)
