@@ -47,3 +47,13 @@ SQL> oradebug setospid PID   -- where PID is the process id at the server level
 
 SQL> oradebug trace name context forever, level 12;
 SQL> oradebug trace name context off;
+
+-- To find which rows are locked when many sessions are waiting on TX:enq events
+
+SQL> select * from ...table...
+      where rowid in (
+       select dbms_rowid.rowid_create (1, ROW_WAIT_OBJ#, ROW_WAIT_FILE#, ROW_WAIT_BLOCK#, ROW_WAIT_ROW#)
+         from v$session
+        where username='...'
+          and event='enq: TX - row lock contention');
+
