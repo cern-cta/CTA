@@ -212,8 +212,8 @@ namespace castor {
       /// threads are created
       unsigned int m_threshold;
 
-      /// The last time in seconds since EPOCH that a thread was destroyed.
-      u_signed64 m_lastPoolShrink;
+      /// The last time in seconds since EPOCH that a thread was created or destroyed.
+      u_signed64 m_lastPoolChange;
       
       /// Queueing time for the submitted tasks, i.e. time interval between
       /// addTask() and pop() from the queue.

@@ -44,7 +44,7 @@ castor::server::DynamicThreadPool::DynamicThreadPool
   BaseThreadPool(poolName, consumerThread, 0),
   m_taskQueue(maxTasks),
   m_producerThread(producerThread),
-  m_lastPoolShrink(0) {
+  m_lastPoolChange(0) {
 
   int rv;
 
@@ -349,15 +349,15 @@ void* castor::server::DynamicThreadPool::_consumer(void *arg) {
     // Destroy any threads over the initial thread limit if the number of tasks
     // in the task queue has dropped to acceptable limits.
     pthread_mutex_lock(&pool->m_lock);
-    u_signed64 diff = time(NULL) - pool->m_lastPoolShrink;
+    u_signed64 diff = time(NULL) - pool->m_lastPoolChange;
     // update shared timers
     pool->m_activeTime += activeTime;
     pool->m_idleTime += idleTime;
     pool->m_queueTime += queueTime;
     if ((pool->m_taskQueue.size() < pool->m_threshold) &&
         (pool->m_nbThreads > pool->m_initThreads) &&
-        (diff > 10)) {
-      pool->m_lastPoolShrink = time(NULL);
+        (diff > 30)) {
+      pool->m_lastPoolChange = time(NULL);
       pthread_mutex_unlock(&pool->m_lock);
       // Exit the loop and terminate
       break;
@@ -424,8 +424,7 @@ void castor::server::DynamicThreadPool::addTask(void *data, bool wait)
     rv = pthread_create(&t, &m_attr, (void *(*)(void *))&castor::server::DynamicThreadPool::_consumer, this);
     if (rv == 0) {
       m_nbThreads++;
-      // If we are creating threads make sure we don't destroy them too quickly!
-      m_lastPoolShrink = time(NULL) + 50;
+      m_lastPoolChange = time(NULL);
       // "Spawning a new thread in pool"
       castor::dlf::Param params[] =
         {castor::dlf::Param("ThreadPool", m_poolName),
