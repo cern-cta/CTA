@@ -3527,7 +3527,9 @@ void CppCppDbCnvWriter::printSQLError(QString name,
         *m_stream << endl << getIndent()
                   << "                << \"  "
                   << as->remotePart.name << " : \" << obj->"
-                  << as->remotePart.name << "() << std::endl";
+                  << as->remotePart.name
+                  << (isEnum(as->remotePart.typeName) ? "()" : "()->id()")
+                  << " << std::endl";
       }
     }
   } else if (name == "bulkInsert") {
