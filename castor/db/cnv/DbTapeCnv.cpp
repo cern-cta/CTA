@@ -555,7 +555,7 @@ void castor::db::cnv::DbTapeCnv::createRep(castor::IAddress* address,
                     << "  density : " << obj->density() << std::endl
                     << "  devtype : " << obj->devtype() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  stream : " << obj->stream() << std::endl
+                    << "  stream : " << obj->stream()->id() << std::endl
                     << "  status : " << obj->status() << std::endl;
     throw ex;
   }

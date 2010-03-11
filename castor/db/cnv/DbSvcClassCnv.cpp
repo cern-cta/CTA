@@ -629,7 +629,7 @@ void castor::db::cnv::DbSvcClassCnv::createRep(castor::IAddress* address,
                     << "  replicateOnClose : " << obj->replicateOnClose() << std::endl
                     << "  failJobsWhenNoSpace : " << obj->failJobsWhenNoSpace() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  forcedFileClass : " << obj->forcedFileClass() << std::endl;
+                    << "  forcedFileClass : " << obj->forcedFileClass()->id() << std::endl;
     throw ex;
   }
 }

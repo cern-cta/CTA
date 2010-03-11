@@ -347,7 +347,7 @@ void castor::db::cnv::DbRequestTypeCnv::createRep(castor::IAddress* address,
                     << " and parameters' values were :" << std::endl
                     << "  reqType : " << obj->reqType() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  request : " << obj->request() << std::endl;
+                    << "  request : " << obj->request()->id() << std::endl;
     throw ex;
   }
 }

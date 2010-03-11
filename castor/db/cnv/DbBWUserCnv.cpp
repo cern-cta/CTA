@@ -349,7 +349,7 @@ void castor::db::cnv::DbBWUserCnv::createRep(castor::IAddress* address,
                     << "  euid : " << obj->euid() << std::endl
                     << "  egid : " << obj->egid() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  request : " << obj->request() << std::endl;
+                    << "  request : " << obj->request()->id() << std::endl;
     throw ex;
   }
 }

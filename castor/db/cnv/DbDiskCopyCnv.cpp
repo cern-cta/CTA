@@ -588,8 +588,8 @@ void castor::db::cnv::DbDiskCopyCnv::createRep(castor::IAddress* address,
                     << "  owneruid : " << obj->owneruid() << std::endl
                     << "  ownergid : " << obj->ownergid() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  fileSystem : " << obj->fileSystem() << std::endl
-                    << "  castorFile : " << obj->castorFile() << std::endl
+                    << "  fileSystem : " << obj->fileSystem()->id() << std::endl
+                    << "  castorFile : " << obj->castorFile()->id() << std::endl
                     << "  status : " << obj->status() << std::endl;
     throw ex;
   }

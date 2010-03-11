@@ -716,8 +716,8 @@ void castor::db::cnv::DbCastorFileCnv::createRep(castor::IAddress* address,
                     << "  lastKnownFileName : " << obj->lastKnownFileName() << std::endl
                     << "  lastUpdateTime : " << obj->lastUpdateTime() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  svcClass : " << obj->svcClass() << std::endl
-                    << "  fileClass : " << obj->fileClass() << std::endl;
+                    << "  svcClass : " << obj->svcClass()->id() << std::endl
+                    << "  fileClass : " << obj->fileClass()->id() << std::endl;
     throw ex;
   }
 }

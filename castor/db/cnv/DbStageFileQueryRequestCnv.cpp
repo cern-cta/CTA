@@ -585,8 +585,8 @@ void castor::db::cnv::DbStageFileQueryRequestCnv::createRep(castor::IAddress* ad
                     << "  lastModificationTime : " << obj->lastModificationTime() << std::endl
                     << "  fileName : " << obj->fileName() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  svcClass : " << obj->svcClass() << std::endl
-                    << "  client : " << obj->client() << std::endl;
+                    << "  svcClass : " << obj->svcClass()->id() << std::endl
+                    << "  client : " << obj->client()->id() << std::endl;
     throw ex;
   }
 }

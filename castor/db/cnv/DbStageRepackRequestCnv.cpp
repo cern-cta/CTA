@@ -572,8 +572,8 @@ void castor::db::cnv::DbStageRepackRequestCnv::createRep(castor::IAddress* addre
                     << "  lastModificationTime : " << obj->lastModificationTime() << std::endl
                     << "  repackVid : " << obj->repackVid() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  svcClass : " << obj->svcClass() << std::endl
-                    << "  client : " << obj->client() << std::endl;
+                    << "  svcClass : " << obj->svcClass()->id() << std::endl
+                    << "  client : " << obj->client()->id() << std::endl;
     throw ex;
   }
 }

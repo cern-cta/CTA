@@ -325,7 +325,7 @@ void castor::db::cnv::DbQueryParameterCnv::createRep(castor::IAddress* address,
                     << " and parameters' values were :" << std::endl
                     << "  value : " << obj->value() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  query : " << obj->query() << std::endl
+                    << "  query : " << obj->query()->id() << std::endl
                     << "  queryType : " << obj->queryType() << std::endl;
     throw ex;
   }

@@ -640,9 +640,9 @@ void castor::db::cnv::DbStagePutDoneRequestCnv::createRep(castor::IAddress* addr
                     << "  lastModificationTime : " << obj->lastModificationTime() << std::endl
                     << "  parentUuid : " << obj->parentUuid() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  svcClass : " << obj->svcClass() << std::endl
-                    << "  client : " << obj->client() << std::endl
-                    << "  parent : " << obj->parent() << std::endl;
+                    << "  svcClass : " << obj->svcClass()->id() << std::endl
+                    << "  client : " << obj->client()->id() << std::endl
+                    << "  parent : " << obj->parent()->id() << std::endl;
     throw ex;
   }
 }

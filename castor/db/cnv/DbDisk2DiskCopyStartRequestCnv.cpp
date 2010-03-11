@@ -460,8 +460,8 @@ void castor::db::cnv::DbDisk2DiskCopyStartRequestCnv::createRep(castor::IAddress
                     << "  fileId : " << obj->fileId() << std::endl
                     << "  nsHost : " << obj->nsHost() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  svcClass : " << obj->svcClass() << std::endl
-                    << "  client : " << obj->client() << std::endl;
+                    << "  svcClass : " << obj->svcClass()->id() << std::endl
+                    << "  client : " << obj->client()->id() << std::endl;
     throw ex;
   }
 }

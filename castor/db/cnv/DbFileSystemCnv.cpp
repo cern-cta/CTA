@@ -604,8 +604,8 @@ void castor::db::cnv::DbFileSystemCnv::createRep(castor::IAddress* address,
                     << "  nbMigratorStreams : " << obj->nbMigratorStreams() << std::endl
                     << "  nbRecallerStreams : " << obj->nbRecallerStreams() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  diskPool : " << obj->diskPool() << std::endl
-                    << "  diskserver : " << obj->diskserver() << std::endl
+                    << "  diskPool : " << obj->diskPool()->id() << std::endl
+                    << "  diskserver : " << obj->diskserver()->id() << std::endl
                     << "  status : " << obj->status() << std::endl
                     << "  adminStatus : " << obj->adminStatus() << std::endl;
     throw ex;
