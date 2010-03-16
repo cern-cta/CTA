@@ -56,11 +56,12 @@ castor::stager::daemon::NsOverride* castor::stager::daemon::NsOverride::getInsta
 // constructor
 //-----------------------------------------------------------------------------
 castor::stager::daemon::NsOverride::NsOverride() throw () {
-  m_cnsHost = getconfent("CNS", "HOST", 0);
-  if(m_cnsHost.length() == 0) {
+  char* cnsHost = getconfent("CNS", "HOST", 0);
+  if (cnsHost == 0 || *cnsHost == 0) {
     // no override in place
     return;
   }
+  m_cnsHost = cnsHost;
   try {
     // get the stager service. Note that we use one of the thread specific
     // instances of Services, but there's no risk of db connection mixing
