@@ -1,0 +1,6 @@
+echo 'ab' > <tmpLocalFileName>
+nstouch <noTapeFileName>
+nssetchecksum -n adler32 -k 0x1f400ce <noTapeFileName>
+nsls --checksum <noTapeFileName>
+rfcp <tmpLocalFileName> <noTapeFileName>
+nsls --checksum <noTapeFileName>
