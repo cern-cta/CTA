@@ -5858,6 +5858,8 @@ int Cns_srv_updatefile_checksum(magic, req_data, clienthost, thip)
   char csumtype[3];
   char csumvalue[CA_MAXCKSUMLEN+1];
   int notAdmin = 1;
+  unsigned int checksum = 0;
+  char *dp   = NULL;
 
   strcpy (func, "Cns_srv_updatefile_checksum");
   rbp = req_data;
@@ -5881,6 +5883,9 @@ int Cns_srv_updatefile_checksum(magic, req_data, clienthost, thip)
       strcmp (csumtype, "PA") &&
       strcmp (csumtype, "AD"))
     RETURN (EINVAL);
+  if (((checksum = strtoul (csumvalue, &dp, 16)) < 0) || (*dp != '\0')) {
+    RETURN (EINVAL);
+  }
 
   /* start transaction */
 
@@ -5919,7 +5924,7 @@ int Cns_srv_updatefile_checksum(magic, req_data, clienthost, thip)
   if (*csumtype == '\0') {
     strcpy (filentry.csumvalue, ""); /* reset value for empty types */
   } else {
-    strcpy (filentry.csumvalue, csumvalue);
+    sprintf(filentry.csumvalue, "%x", checksum);
   }
   if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &filentry))
     RETURN (serrno);
