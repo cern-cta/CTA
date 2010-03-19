@@ -711,7 +711,7 @@ void castor::client::BaseClient::pollAnswersFromStager
         continue;  // Nothing of interest
       }
       // Unexpected result?
-      if (m_fds[i].revents != POLLIN) {
+      if (m_fds[i].revents & POLLIN != POLLIN) {
         castor::exception::Exception e(SEINTERNAL);
         e.getMessage() << "Unexpected result from poll(): revents: "
                        << m_fds[i].revents << " should be: POLLIN ("
