@@ -76,7 +76,8 @@ for tape recall.
 .BI \-\-DefaultFileSize " defaultFileSize"
 The default file size allocation for
 .IR 'stagePut'
-requests not specifying any filesize.
+requests not specifying any filesize expressed in a human readable format
+(e.g, 1K, 234M, 2G) using powers of 1024.
 .TP
 .BI \-\-MaxReplicaNb " maxReplicaNb"
 Specifies the maximum number of disk resident replicas for a given CASTOR file
