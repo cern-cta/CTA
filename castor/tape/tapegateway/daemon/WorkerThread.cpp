@@ -887,7 +887,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
 	  castor::dlf::Param("errorCode",sstrerror(e.code())),
 	  castor::dlf::Param("errorMessage",e.getMessage().str())
 	};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_MIGRATION_NS_FAILURE, params,&castorFileId);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_MIGRATION_NS_FAILURE, params,&castorFileId);
 
       try {
 
