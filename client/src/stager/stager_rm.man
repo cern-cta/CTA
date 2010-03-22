@@ -55,7 +55,7 @@ can be used to check permissions.
 
 .TP
 .BI \-S,\ \-\-svcClass " svcClass"
-specifies the service class where to remove the file replicas. If \-S is not specified, the query will be ran accross all service classes. Note that in such a case, the STAGE_SVCCLASS environment variable and the stagemap file will be taken into account, possibly restricting the query to a given service class. In order to force querying accross all service classes, the special value '*' can be used.
+specifies the service class where to remove the file replicas. If \-S is not specified, the command will be ran against the 'default' service classes. Note that in such a case, the STAGE_SVCCLASS environment variable and the stagemap file will be taken into account. In order to run the command accross all service classes, the special value '*' can be used.
 .TP
 .BI \-a,\ \-\-all
 explicitly specifies to remove all available replicas of the files
