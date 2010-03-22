@@ -1,46 +1,54 @@
 .TH RECHANDLERD 8 "2006/02/28 12:00:00 CERN IT-FIO" CASTOR "recall handler daemon"
 .SH NAME
-rechandlerd \- start the recall handler daemon
+rechandlerd \- the recall handler daemon
 .SH SYNOPSIS
-.B rechandlerd [-f] [-t time] 
+.B rechandlerd [-f] [-t time delay in seconds] 
 .SH DESCRIPTION
 .LP
-The 
-.B rechandlerd 
-command starts the rechandler daemon
-which trigger the recall from tape periodically.
-The tapes involed in the process are the one in STOPPED. 
-
+The recall handler daemon periodically triggers recalls from tape based on the
+result of a policy function written in Python.  The location of the function is
+specified in the CASTOR configuration file (see below).  The tapes involved are
+those whose status is STOPPED.  If no Python policy-function is specified or
+the function generates an error, then the recall in question is started.
 .LP
-A parameter in the 
-.B /etc/castor/castor.conf 
-specify the location of the file where all the policy function are declared. 
+The recall handler daemon logs messages using the Distributed Logging Facility
+(DLF).
 
-e.g.:
-.B Policy Recall /etc/castor/policies/recallPolicies.py
+.SH OPTIONS
+.TP
+\fB\-f
+Remain in the foreground.
+.TP
+\fB\-t time delay in seconds
+Sets the time delay in seconds between each invocation of the Python
+policy-function for recalls.  By default the recall handler daemon executes its
+actions every 48 seconds.
 
-Then for each svcclass we specify in the database the function that we want to execute between the ones declared in the file.
-If no function is specified we set the tape as pending and we start to recall from it as soon as possible.
-The same we do if anything goes wrong in calling the policy for a tape.
-  
-.LP
-The recallHandler daemon execute its actions every 48 seconds by default but this option can be changed using -t comand line option.
-e.g. 
-.B rechandlerd -t 120
+.SH CASTOR CONFIGURATION PARAMETERS
+The recall handler daemon reads and uses the following CASTOR configuration
+parameters which are specified within the CASTOR configuration file (the
+default location is /etc/castor/castor.conf).
+.TP
+\fBRECHANDLER RECALL_POLICY\fR
+Used to specifiy the name of the Python module used by the rechandler daemon to 
+decide when to start recalling files from a tape.  The module should contain
+the function specified by the "RECHANDLER RECALL_POLICY_FUN" configuration
+parameter.
+The Python-interpreter embedded within the rechandler daemon has the
+"/etc/castor/policies" directory in its default search path for module files
+(PYTHONPATH).  Therefore the embedded Python-interpreter will effectively
+append the extention ".py" to the end of the value of
+"RECHANDLER RECALL_POLICY" and will look for the resulting filename in the
+"/etc/castor/policies/" directory.  For example, the value "rechandler" will
+cause the embedded Python-interpreter to load the file
+"/etc/castor/policies/rechandler.py".
+.TP
+\fBRECHANDLER RECALL_POLICY_FUN
+Used to specify the name of the Python function called by the rechandler daemon
+to decide when to start recalling files from a tape.  The function must exist
+in the Python module specified by the "RECHANDLER  RECALL_POLICY_FUN"
+configuration parameter.
 
-.LP
-All 
-.B rechandlerd
-activity is logged using the Distributed Logging Facility (DLF).
-.LP 
-.B rechandlerd -f
-starts the daemon 
-in foreground mode. Should not be used normally.  
 .LP
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
-
-
-
-
-
