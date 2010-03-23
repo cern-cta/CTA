@@ -24,13 +24,11 @@
 # @author Castor Dev team, castor-dev@cern.ch
 #
 
-LD = g++
-
-DependsOnLibrary(../../common,castorcommon)
-DependsOnLibrary(../../upv,castorupv)
-DependsOnLibrary(../../dlf,castordlf)
-DependsOnLibrary(..,castorclient)
-DependsOnLibrary(../db/cnv,castorcnvs)
+DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(upv,castorupv)
+DependsOnLibrary(dlf,castordlf)
+DependsOnLibrary(castor,castorclient)
+DependsOnLibrary(castor/db/cnv,castorcnvs)
 
 DBSERVICEDAEMONBIN_SRCS = \
 	CnsHelper.cpp \
@@ -59,11 +57,11 @@ DBSERVICEDAEMONBIN_SRCS = \
         JobSvcThread.cpp \
 	CleaningThread.cpp \
 	NsOverride.cpp
-DBSERVICEDAEMONBIN_OBJS = $(DBSERVICEDAEMONBIN_SRCS:.cpp=.Osuf)
-NormalProgramTarget(stagerd,$(DBSERVICEDAEMONBIN_OBJS),$(DEPLIB),$(LIBS),750)
+DBSERVICEDAEMONBIN_OBJS = $(DBSERVICEDAEMONBIN_SRCS:.cpp=.o)
+NormalProgramTarget(stagerd,$(DBSERVICEDAEMONBIN_OBJS),,,750)
 MakeDir(/var/log/castor,0755)
 MakeDirWithOwnership(/var/spool/castor,stage,st,0755)
 ADMMANPAGE(stagerd)
-LOGROTATE(castor-stager-server,../../..,install)
+LOGROTATE(castor-stager-server,$(CASTOR_ROOT),install)
 SYSCONFIG(stagerd,install)
 INITSCRIPT(stagerd,install)

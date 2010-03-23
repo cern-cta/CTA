@@ -56,12 +56,12 @@ InstallLink(tofile,fromfile,mode,$(BIN),component)
 #define SharedLibraryName(libname)BareSharedLibraryTargetName(libname).$(MAJOR_CASTOR_VERSION)
 #define SharedLibraryFullName(libname)SharedLibraryName(libname).$(MINOR_CASTOR_VERSION)
 #define SharedLibraryTargetName(libname)SharedLibraryName(lib/**/libname)
-#define DepSharedLibraryTargetName(dir,libname)../dir/SharedLibraryName(lib/**/libname)
+#define DepSharedLibraryTargetName(dir,libname)$(CASTOR_ROOT)/dir/SharedLibraryName(lib/**/libname)
 #define InstallLibraryTargetNames(deplibs)$(if deplibs,$(addprefix $(DESTDIR)/$(LIBDIR)/,$(subst .$(MAJOR_CASTOR_VERSION),,$(notdir deplibs))))
 
 #define SchModTarget(libname,obj,deplibs,libs,dir)                                                                \
 BareSharedLibraryTargetName(libname): obj deplibs                                                               @@\
-	$(LD) DYLIBLINKEROPTION -fPIC -o $@ $(CPPFLAGS) obj libs                                                @@\
+	$(CC) DYLIBLINKEROPTION -fPIC -o $@ $(CPPFLAGS) obj libs                                                @@\
 $(DESTDIR)/dir/BareSharedLibraryTargetName(libname): BareSharedLibraryTargetName(libname)                       @@\
 	@install -d $(DESTDIR)/dir                                                                              @@\
 	install -m 644 BareSharedLibraryTargetName(libname) $(DESTDIR)/dir/BareSharedLibraryTargetName(libname) @@\
@@ -72,8 +72,8 @@ FilesToClobber += BareSharedLibraryTargetName(libname)
 
 #define BareSharedLibraryTarget(libname,objects,deplibs,libs,dir,alltgt,installtgt)            \
 SharedLibraryName(libname): objects deplibs                                                  @@\
-	$(LD) DYLIBLINKEROPTION --no-undefined -o $@ $(LDFLAGS) -Wl,SONAMELINKEROPTION,SharedLibraryName(libname) objects libs @@\
-$(DESTDIR)/dir/BareSharedLibraryTargetName(libname): SharedLibraryName(libname) InstallLibraryTargetNames(deplibs)             @@\
+	$(CC) DYLIBLINKEROPTION --no-undefined -o $@ $(LDFLAGS) -Wl,SONAMELINKEROPTION,SharedLibraryName(libname) objects libs                          @@\
+$(DESTDIR)/dir/BareSharedLibraryTargetName(libname): SharedLibraryName(libname) InstallLibraryTargetNames(deplibs) InstallLibraryTargetNames(deplibs) @@\
 	@install -d $(DESTDIR)/dir                                                           @@\
 	install $< $(DESTDIR)/dir/SharedLibraryFullName(libname)                             @@\
 	rm -f $(DESTDIR)/dir/SharedLibraryName(libname) $@                                   @@\
@@ -84,16 +84,16 @@ alltgt: SharedLibraryName(libname)                                              
 FilesToClean += objects                                                                      @@\
 FilesToClobber += SharedLibraryName(libname)
 
-#define SharedLibraryTarget(libname,objects,deplibs,libs) BareSharedLibraryTarget(lib/**/libname,objects,deplibs,libs,$(LIBDIR),all,install)
-#define PlacedSharedLibraryTarget(libname,objects,deplibs,libs,dir) BareSharedLibraryTarget(lib/**/libname,objects,deplibs,libs,dir,all,install)
-#define ClientSharedLibraryTarget(libname,objects,deplibs,libs) BareSharedLibraryTarget(lib/**/libname,objects,deplibs,libs,$(LIBDIR),client,installclient)
-#define TapeSharedLibraryTarget(libname,objects,deplibs,libs) BareSharedLibraryTarget(lib/**/libname,objects,deplibs,libs,$(LIBDIR),tape,installtape)
+#define SharedLibraryTarget(libname,objects,deplibs,libs) BareSharedLibraryTarget(lib/**/libname,objects,$(COMMONDEPLIB) $(DEPLIB) deplibs,$(COMMONLIBS) $(LIBS) libs,$(LIBDIR),all,install)
+#define PlacedSharedLibraryTarget(libname,objects,deplibs,libs,dir) BareSharedLibraryTarget(lib/**/libname,objects,$(COMMONDEPLIB) $(DEPLIB) deplibs,$(COMMONLIBS) $(LIBS) libs,dir,all,install)
+#define ClientSharedLibraryTarget(libname,objects,deplibs,libs) BareSharedLibraryTarget(lib/**/libname,objects,$(COMMONDEPLIB) $(CLIENTDEPLIB) deplibs,$(COMMONLIBS) $(CLIENTLIBS) libs,$(LIBDIR),client,installclient)
+#define TapeSharedLibraryTarget(libname,objects,deplibs,libs) BareSharedLibraryTarget(lib/**/libname,objects,$(COMMONDEPLIB) $(TAPEDEPLIB) deplibs,$(COMMONLIBS) $(TAPELIBS) libs,$(LIBDIR),tape,installtape)
 
 #define MakeDepSharedLibrary(dir,libname)                    \
-../dir/SharedLibraryName(libname):		           @@\
-	cd ../dir ; $(MAKE) SharedLibraryName(libname)     @@\
+$(CASTOR_ROOT)/dir/SharedLibraryName(libname):		           @@\
+	cd $(CASTOR_ROOT)/dir ; $(MAKE) SharedLibraryName(libname)     @@\
 $(DESTDIR)/$(LIBDIR)/BareSharedLibraryTargetName(libname): @@\
-	cd ../dir ; $(MAKE) $@
+	cd $(CASTOR_ROOT)/dir ; $(MAKE) $@
 
 #define DealWithSubdirs(cmd,dir)             \
 	if [ -d dir ] ;                      \
@@ -131,20 +131,20 @@ install: $(DESTDIR)/dirname
 
 #define ProgramTarget(program,objects,deplibs,libs,mode,alltarget,installtarget) \
 program: objects deplibs		      @@\
-	$(LD) -o $@ $(LDFLAGS) objects libs   @@\
+	$(CC) -o $@ $(LDFLAGS) objects libs   @@\
 alltarget: program                            @@\
 InternalInstallTarget(program,mode,$(BIN),install/**/installtarget,InstallLibraryTargetNames(deplibs)) @@\
 FilesToClean += objects                       @@\
 FilesToClobber += program
 
 #define NormalProgramTarget(program,objects,deplibs,libs,mode) \
-ProgramTarget(program,objects,deplibs,libs,mode,all,)
+ProgramTarget(program,objects,$(COMMONDEPLIB) $(DEPLIB) deplibs,$(COMMONLIBS) $(LIBS) libs,mode,all,)
 
 #define ClientProgramTarget(program,objects,deplibs,libs,mode) \
-ProgramTarget(program,objects,deplibs,libs,mode,client,client)
+ProgramTarget(program,objects,$(COMMONDEPLIB) $(CLIENTDEPLIB) deplibs,$(COMMONLIBS) $(CLIENTLIBS) libs,mode,client,client)
 
 #define TapeProgramTarget(program,objects,deplibs,libs,mode) \
-ProgramTarget(program,objects,deplibs,libs,mode,tape,tape)
+ProgramTarget(program,objects,$(COMMONDEPLIB) $(TAPEDEPLIB) deplibs,$(COMMONLIBS) $(TAPELIBS) libs,mode,tape,tape)
 
 
 /* manual list of dependencies to solve the -rpath issue. Not very nice */
@@ -186,7 +186,19 @@ MakeDepSharedLibrary(dir,lib/**/libname)
 
 #define ClientDependsOnLibrary(dir,libname)                                   \
 CLIENTDEPLIB += DepSharedLibraryTargetName(dir,libname)                     @@\
-CLIENTLIBS += DepSharedLibraryTargetName(dir,libname) BuildRPath/**/libname
+CLIENTLIBS += DepSharedLibraryTargetName(dir,libname) BuildRPath/**/libname @@\
+MakeDepSharedLibrary(dir,lib/**/libname)
+
+#define TapeDependsOnLibrary(dir,libname)                                   \
+TAPEDEPLIB += DepSharedLibraryTargetName(dir,libname)                     @@\
+TAPELIBS += DepSharedLibraryTargetName(dir,libname) BuildRPath/**/libname @@\
+MakeDepSharedLibrary(dir,lib/**/libname)
+
+#define CommonDependsOnLibrary(dir,libname)                                   \
+COMMONDEPLIB += DepSharedLibraryTargetName(dir,libname)                     @@\
+COMMONLIBS += DepSharedLibraryTargetName(dir,libname) BuildRPath/**/libname @@\
+MakeDepSharedLibrary(dir,lib/**/libname)
+
 
 #define LOGROTATE(file,rootdir,tgt)                              \
 $(DESTDIR)/etc/logrotate.d/file: rootdir/debian/file.logrotate @@\

@@ -23,8 +23,6 @@
 #
 # @author Castor Dev team, castor-dev@cern.ch
 
-LD = g++
-
 CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
      DbBaseCnv.cpp \
      DbCastorFileCnv.cpp \
@@ -94,9 +92,9 @@ CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
      ../DbParamsSvc.cpp \
      ../../server/SelectProcessThread.cpp \
      ../../server/BaseDbThread.cpp
-CNVSLIB_OBJS = $(CNVSLIB_SRCS:.cpp=.Osuf)
+CNVSLIB_OBJS = $(CNVSLIB_SRCS:.cpp=.o)
 
-DependsOnLibrary(..,castorclient)
-DependsOnLibrary(../../dlf,castordlf)
-SharedLibraryTarget(castorcnvs,$(CNVSLIB_OBJS),$(DEPLIB),$(LIBS))
+DependsOnLibrary(castor,castorclient)
+DependsOnLibrary(dlf,castordlf)
+SharedLibraryTarget(castorcnvs,$(CNVSLIB_OBJS),,)
 

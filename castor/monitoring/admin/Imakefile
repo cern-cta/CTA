@@ -24,12 +24,10 @@
 # @author Castor Dev team, castor-dev@cern.ch
 #
 
-LD = g++
+DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(dlf,castordlf)
+DependsOnLibrary(castor,castorclient)
+DependsOnLibrary(castor/monitoring,castormonitor)
 
-DependsOnLibrary(../../common,castorcommon)
-DependsOnLibrary(../../dlf,castordlf)
-DependsOnLibrary(..,castorclient)
-DependsOnLibrary(,castormonitor)
-
-NormalProgramTarget(rmAdminNode,RmAdminNode.Osuf,$(DEPLIB),$(LIBS),755)
+NormalProgramTarget(rmAdminNode,RmAdminNode.o,,,755)
 EXEMANPAGE(rmAdminNode)

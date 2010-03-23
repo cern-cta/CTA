@@ -21,8 +21,6 @@
 # @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
 #
 
-LD = g++
-
 TAPEUTILSLIB_SRCS = \
   ScopedLock.cpp \
   SmartFILEPtr.cpp \
@@ -30,7 +28,7 @@ TAPEUTILSLIB_SRCS = \
   SmartFdList.cpp \
   utils.cpp
 
-TAPEUTILSLIB_OBJS = $(TAPEUTILSLIB_SRCS:.cpp=.Osuf)
+TAPEUTILSLIB_OBJS = $(TAPEUTILSLIB_SRCS:.cpp=.o)
 
-DependsOnLibrary(..,castorclient)
-SharedLibraryTarget(castortapeutils,$(TAPEUTILSLIB_OBJS),$(DEPLIB),$(LIBS))
+DependsOnLibrary(castor,castorclient)
+SharedLibraryTarget(castortapeutils,$(TAPEUTILSLIB_OBJS),,)

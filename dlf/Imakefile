@@ -26,10 +26,10 @@
 SUBDIRS   = web
 MANSUBDIR = doc/man/
 
-DependsOnLibrary(common,castorcommon)
+ClientDependsOnLibrary(common,castorcommon)
 
-DLFLIB_OBJS = dlf_lib.Osuf
-ClientSharedLibraryTarget(castordlf,$(DLFLIB_OBJS),$(DEPLIB),$(LIBS))
+DLFLIB_OBJS = dlf_lib.o
+ClientSharedLibraryTarget(castordlf,$(DLFLIB_OBJS),,)
 
 LIBMANPAGE(dlf_init)
 LIBMANPAGE(dlf_isinitialized)

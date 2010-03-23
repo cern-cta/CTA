@@ -24,16 +24,14 @@
 # @author Castor Dev team, castor-dev@cern.ch
 #
 
-LD = g++
-
-DependsOnLibrary(../common,castorcommon)
-DependsOnLibrary(../dlf,castordlf)
-DependsOnLibrary(../ns,castorns)
-DependsOnLibrary(,castorclient)
+DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(dlf,castordlf)
+DependsOnLibrary(ns,castorns)
+DependsOnLibrary(castor,castorclient)
 
 GCBIN_SRCS = GcDaemon.cpp DeletionThread.cpp SynchronizationThread.cpp
-GCBIN_OBJS = $(GCBIN_SRCS:.cpp=.Osuf)
-NormalProgramTarget(gcd,$(GCBIN_OBJS),$(DEPLIB),$(LIBS),0755)
+GCBIN_OBJS = $(GCBIN_SRCS:.cpp=.o)
+NormalProgramTarget(gcd,$(GCBIN_OBJS),,,0755)
 MakeDir(/var/log/castor,0755)
 MakeDirWithOwnership(/var/spool/castor,stage,st,0755)
 ADMMANPAGE(gcd)

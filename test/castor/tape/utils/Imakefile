@@ -21,19 +21,17 @@
 # @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
 #
 
-LD = g++
-
-DependsOnLibrary(../../../castor,castorclient)
-DependsOnLibrary(../../../castor/db/cnv,castorcnvs)
-DependsOnLibrary(../../../castor/tape/utils,castortapeutils)
-DependsOnLibrary(../../../common,castorcommon)
-DependsOnLibrary(../../../dlf,castordlf)
-DependsOnLibrary(../../../vdqm,castorvdqm)
-DependsOnLibrary(../../../vmgr,castorvmgr)
+DependsOnLibrary(castor,castorclient)
+DependsOnLibrary(castor/db/cnv,castorcnvs)
+DependsOnLibrary(castor/tape/utils,castortapeutils)
+DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(dlf,castordlf)
+DependsOnLibrary(vdqm,castorvdqm)
+DependsOnLibrary(vmgr,castorvmgr)
 
 TESTUTILSBIN_SRCS = \
   TestUtilsMain.cpp
 
-TESTUTILSBIN_OBJS = $(TESTUTILSBIN_SRCS:.cpp=.Osuf)
+TESTUTILSBIN_OBJS = $(TESTUTILSBIN_SRCS:.cpp=.o)
 
-NormalProgramTarget(testutils,$(TESTUTILSBIN_OBJS),$(DEPLIB),$(LIBS),750)
+NormalProgramTarget(testutils,$(TESTUTILSBIN_OBJS),,,750)

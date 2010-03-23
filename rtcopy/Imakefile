@@ -75,7 +75,7 @@ RTCPCLDFLAGS = -DRTCPCLD_NOTIFY_HOST=\"$(RTCPCLDHOST)\" -DRTCPCLD_USER=\"$(RTCPC
 
 #if BuildSecureRtcopy
 SECURITYFLAG=-DCSEC
-LIBS += -ldl
+LDFLAGS += -ldl
 #endif
 
 CPPFLAGS += -DBIN=\"$(BIN)\" -DRTCOPY_LOGFILE=\"$(LOGFILE)\" -DNOMORETAPES=\"$(NOMORETAPES)\" \
@@ -84,52 +84,52 @@ CPPFLAGS += -DBIN=\"$(BIN)\" -DRTCOPY_LOGFILE=\"$(LOGFILE)\" -DNOMORETAPES=\"$(N
 	    -DRTCP_SERVER -DVMGR $(VDQMFLG) $(CTAPEFLG) -DSACCT $(ACCTFILE) $(RTCPCLDFLAGS)
 CFLAGS += $(SECURITYFLAG)
 
-DependsOnLibrary(common,castorcommon)
-DependsOnLibrary(dlf,castordlf)
-DependsOnLibrary(castor,castorclient)
-DependsOnLibrary(ns,castorns)
-DependsOnLibrary(vmgr,castorvmgr)
-DependsOnLibrary(vdqm,castorvdqm)
-DependsOnLibrary(tape,castortape)
-DependsOnLibrary(expert,castorexpert)
+CommonDependsOnLibrary(common,castorcommon)
+CommonDependsOnLibrary(dlf,castordlf)
+CommonDependsOnLibrary(castor,castorclient)
+CommonDependsOnLibrary(ns,castorns)
+CommonDependsOnLibrary(vmgr,castorvmgr)
+CommonDependsOnLibrary(vdqm,castorvdqm)
+CommonDependsOnLibrary(tape,castortape)
+CommonDependsOnLibrary(expert,castorexpert)
 
 rtcpc_SendRecv.c:	DepSourceName(rtcopy,rtcp_SendRecv.c)
 			RemoveFiles(rtcpc_SendRecv.c)
-			$(CP) rtcp_SendRecv.c rtcpc_SendRecv.c
+			cp rtcp_SendRecv.c rtcpc_SendRecv.c
 rtcpc_log.c:		DepSourceName(rtcopy,rtcp_log.c)
 			RemoveFiles(rtcpc_log.c)
-			$(CP) rtcp_log.c rtcpc_log.c
+			cp rtcp_log.c rtcpc_log.c
 rtcpc_CallVMGR.c:	DepSourceName(rtcopy,rtcp_CallVMGR.c)
 			RemoveFiles(rtcpc_CallVMGR.c)
-			$(CP) rtcp_CallVMGR.c rtcpc_CallVMGR.c
+			cp rtcp_CallVMGR.c rtcpc_CallVMGR.c
 rtcpc_CheckReq.c:	DepSourceName(rtcopy,rtcp_CheckReq.c)
 			RemoveFiles(rtcpc_CheckReq.c)
-			$(CP) rtcp_CheckReq.c rtcpc_CheckReq.c
-rtcpc_SendRecv.Osuf: rtcpc_SendRecv.c
+			cp rtcp_CheckReq.c rtcpc_CheckReq.c
+rtcpc_SendRecv.o: rtcpc_SendRecv.c
 	$(COMPILE.c) $(OUTPUT_OPTION) -URTCP_SERVER $<
-rtcpc_log.Osuf: rtcpc_log.c
+rtcpc_log.o: rtcpc_log.c
 	$(COMPILE.c) $(OUTPUT_OPTION) -URTCP_SERVER $<
-rtcpc_CallVMGR.Osuf: rtcpc_CallVMGR.c
+rtcpc_CallVMGR.o: rtcpc_CallVMGR.c
 	$(COMPILE.c) $(OUTPUT_OPTION) -URTCP_SERVER $<
-rtcpc_CheckReq.Osuf: rtcpc_CheckReq.c
+rtcpc_CheckReq.o: rtcpc_CheckReq.c
 	$(COMPILE.c) $(OUTPUT_OPTION) -URTCP_SERVER $<
 FileToClean += rtcpc_log.c rtcpc_SendRecv.c rtcpc_CallVMGR.c rtcpc_CheckReq.c
 
-RTCPLIB_OBJS =	rtcpc_SendRecv.Osuf rtcp_InitNW.Osuf rtcpc_log.Osuf rtcpc_CallVMGR.Osuf rtcp_Listen.Osuf rtcpapi.Osuf rtcpc_BuildReq.Osuf rtcp_RetvalSHIFT.Osuf rtcpc_CheckReq.Osuf
-SharedLibraryTarget(castorrtcopy,$(RTCPLIB_OBJS),$(DEPLIB),$(LIBS))
+RTCPLIB_OBJS =	rtcpc_SendRecv.o rtcp_InitNW.o rtcpc_log.o rtcpc_CallVMGR.o rtcp_Listen.o rtcpapi.o rtcpc_BuildReq.o rtcp_RetvalSHIFT.o rtcpc_CheckReq.o
+SharedLibraryTarget(castorrtcopy,$(RTCPLIB_OBJS),,)
 RTCPLIBS = SharedLibraryTargetName(castorrtcopy)
 
-TapeProgramTarget(tpread,tpread.Osuf,$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(LIBS),0755)
+TapeProgramTarget(tpread,tpread.o,$(RTCPLIBS),$(RTCPLIBS),0755)
 LinkFile(tpwrite,tpread,755,tape)
 EXEMANPAGE(tpread)
 EXEMANPAGE(tpwrite)
 
-RTCPCLD_MT_OBJS = rtcpcldcommon_mt.Osuf
-RTCPCLD_OBJS =	rtcpcldcommon.Osuf rtcpcldCatalogueInterface.Osuf rtcpcldVmgrInterface.Osuf rtcpcldNsInterface.Osuf
-NormalProgramTarget(rtcpclientd,rtcpclientd.Osuf $(RTCPCLD_OBJS),$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(LIBS),0750)
-NormalProgramTarget(recaller,recaller.Osuf $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS),$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(LIBS),0750)
-NormalProgramTarget(migrator,migrator.Osuf $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS),$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(LIBS),0750)
-NormalProgramTarget(tperrhandler,TapeErrorHandler.Osuf $(RTCPCLD_OBJS),$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(LIBS),0750)
+RTCPCLD_MT_OBJS = rtcpcldcommon_mt.o
+RTCPCLD_OBJS =	rtcpcldcommon.o rtcpcldCatalogueInterface.o rtcpcldVmgrInterface.o rtcpcldNsInterface.o
+NormalProgramTarget(rtcpclientd,rtcpclientd.o $(RTCPCLD_OBJS),$(RTCPLIBS),$(RTCPLIBS),0750)
+NormalProgramTarget(recaller,recaller.o $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS),$(RTCPLIBS),$(RTCPLIBS),0750)
+NormalProgramTarget(migrator,migrator.o $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS),$(RTCPLIBS),$(RTCPLIBS),0750)
+NormalProgramTarget(tperrhandler,TapeErrorHandler.o $(RTCPCLD_OBJS),$(RTCPLIBS),$(RTCPLIBS),0750)
 EXEMANPAGE(rtcpclientd)
 TapeMakeDir($(LOGDIR),0755)
 LOGROTATE(castor-rtcopy-clientserver,..,install)
@@ -137,16 +137,16 @@ SYSCONFIG(rtcpclientd,install)
 INITSCRIPT(rtcpclientd,install)
 
 MakeDir($(RTCOPYWORKDIR),777)
-RTCPD_OBJS =	rtcpd.Osuf rtcp_CallVMGR.Osuf rtcp_CheckReq.Osuf \
-		rtcp_Listen.Osuf rtcp_SendRecv.Osuf rtcp_log.Osuf \
-		rtcpd_ClientListen.Osuf rtcpd_Ctape.Osuf rtcpd_Disk.Osuf \
-		rtcpd_MainCntl.Osuf rtcpd_SelfMonitor.Osuf rtcpd_Tape.Osuf \
-		rtcpd_TapeIO.Osuf rtcp_InitNW.Osuf \
-		rtcpd_ConvertData.Osuf \
-		rtcpc_BuildReq.Osuf rtcpapi.Osuf rtcp_RetvalSHIFT.Osuf \
-		rtcpd_tpdump.Osuf Ctape_dummies.Osuf rtcp_accounting.Osuf
-TapeProgramTarget(rtcpd,$(RTCPD_OBJS),$(DEPLIB),$(LIBS) -lz,0750)
-TapeProgramTarget(killjid,killjid.Osuf,$(RTCPLIBS) $(DEPLIB),$(RTCPLIBS) $(LIBS),0750)
+RTCPD_OBJS =	rtcpd.o rtcp_CallVMGR.o rtcp_CheckReq.o \
+		rtcp_Listen.o rtcp_SendRecv.o rtcp_log.o \
+		rtcpd_ClientListen.o rtcpd_Ctape.o rtcpd_Disk.o \
+		rtcpd_MainCntl.o rtcpd_SelfMonitor.o rtcpd_Tape.o \
+		rtcpd_TapeIO.o rtcp_InitNW.o \
+		rtcpd_ConvertData.o \
+		rtcpc_BuildReq.o rtcpapi.o rtcp_RetvalSHIFT.o \
+		rtcpd_tpdump.o Ctape_dummies.o rtcp_accounting.o
+TapeProgramTarget(rtcpd,$(RTCPD_OBJS),,-lz,0750)
+TapeProgramTarget(killjid,killjid.o,$(RTCPLIBS),$(RTCPLIBS),0750)
 EXEMANPAGE(rtcpd)
 EXEMANPAGE(killjid)
 LOGROTATE(castor-rtcopy-server,..,installtape)

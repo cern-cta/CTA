@@ -22,15 +22,14 @@
 #
 
 CXXFLAGS += $(PYTHONINC)
-LD = g++
-LIBS = $(PYTHONLIBS)
+LDFLAGS += $(PYTHONLIBS)
 
 TAPEPYTHONLIB_SRCS = \
   python.cpp \
   ScopedPythonLock.cpp \
   SmartPyObjectPtr.cpp 
 
-TAPEPYTHONLIB_OBJS = $(TAPEPYTHONLIB_SRCS:.cpp=.Osuf)
+TAPEPYTHONLIB_OBJS = $(TAPEPYTHONLIB_SRCS:.cpp=.o)
 
-DependsOnLibrary(..,castorclient)
-SharedLibraryTarget(castortapepython,$(TAPEPYTHONLIB_OBJS),$(DEPLIB),$(LIBS))
+DependsOnLibrary(castor,castorclient)
+SharedLibraryTarget(castortapepython,$(TAPEPYTHONLIB_OBJS),,)

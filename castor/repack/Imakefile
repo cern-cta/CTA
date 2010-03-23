@@ -26,15 +26,14 @@
 
 CXXFLAGS += -I $(ORACLE_HOME)/rdbms/public
 CPPFLAGS += -DDEFAULT_CNS=castorns -DORAREPACKCONFIGFILE=\"/etc/castor/ORAREPACKCONFIG\"
-LD = g++
-SERVDEPLIB = DepSharedLibraryTargetName(db/newora,castorcommonora)
+SERVDEPLIB = DepSharedLibraryTargetName(castor/db/newora,castorcommonora)
 SERVLIBS = $(SERVDEPLIB) -Wl,-rpath-link,../../shlib -L$(ORACLE_HOME)/lib -locci -lclntsh
 
-DependsOnLibrary(../common,castorcommon)
-DependsOnLibrary(../dlf,castordlf)
-DependsOnLibrary(,castorclient)
-DependsOnLibrary(../vmgr,castorvmgr)
-DependsOnLibrary(db/cnv,castorcnvs)
+DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(dlf,castordlf)
+DependsOnLibrary(castor,castorclient)
+DependsOnLibrary(vmgr,castorvmgr)
+DependsOnLibrary(castor/db/cnv,castorcnvs)
 
 REPACKCOMMON_SRC = ../io/StreamRepackRequestCnv.cpp \
 		../io/StreamRepackSubRequestCnv.cpp \
@@ -64,9 +63,9 @@ REPACKDBIN_SRCS =  RepackServer.cpp \
 		../db/cnv/DbRepackSegmentCnv.cpp \
 		../db/cnv/DbRepackSubRequestCnv.cpp \
 		$(REPACKCOMMON_SRC)
-REPACKDBIN_OBJS = $(REPACKDBIN_SRCS:.cpp=.Osuf)
+REPACKDBIN_OBJS = $(REPACKDBIN_SRCS:.cpp=.o)
 MakeDepSharedLibrary(db/newora,castorcommonora)
-NormalProgramTarget(repackd,$(REPACKDBIN_OBJS),$(DEPLIB) $(SERVDEPLIB),$(LIBS) $(SERVLIBS),750)
+NormalProgramTarget(repackd,$(REPACKDBIN_OBJS),$(SERVDEPLIB),$(SERVLIBS),750)
 MakeDir(/var/log/castor,0755)
 LOGROTATE(castor-repack-server,../..,install)
 SYSCONFIG(repackd,install)
@@ -74,8 +73,8 @@ INITSCRIPT(repackd,install)
 CONFIGFILE(ORAREPACK,../..,install)
 
 REPACKBIN_SRCS =  RepackClient.cpp ../io/ClientSocket.cpp $(REPACKCOMMON_SRC)
-REPACKBIN_OBJS = $(REPACKBIN_SRCS:.cpp=.Osuf)
-NormalProgramTarget(repack,$(REPACKBIN_OBJS),$(DEPLIB),$(LIBS),755)
+REPACKBIN_OBJS = $(REPACKBIN_SRCS:.cpp=.o)
+NormalProgramTarget(repack,$(REPACKBIN_OBJS),,,755)
 
 EXEMANPAGE(repack)
 ADMMANPAGE(repackd)

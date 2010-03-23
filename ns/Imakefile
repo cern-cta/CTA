@@ -11,7 +11,7 @@ SCNS_HOST = SNsHost
 CNSHOSTPFX = NsHostPfx
 SCNSHOSTPFX = SNsHostPfx
 
-LIBS = -luuid
+LDFLAGS += -luuid
 NSLIB = SharedLibraryTargetName(castorns)
 LOGDIR = /var/log/castor
 LOGFILE = $(LOGDIR)/nsd.log
@@ -42,113 +42,113 @@ CPPFLAGS += -DBIN=\"$(BIN)\" -DCNS_HOST=\"$(CNS_HOST)\" \
 
 CFLAGS += -I$(ORACLE_HOME)/precomp/public
 
-NSD_OBJS	=	Cns_main.Osuf \
-			Cns_acl.Osuf \
-			Cns_chkperm.Osuf \
-			Cns_oracle_ifce.Osuf \
-			Cns_procreq.Osuf \
-			sendrep.Osuf \
-			nslogit.Osuf
-NSLIB_OBJS	=	Cns_aborttrans.Osuf \
-                        Cns_access.Osuf \
-                        Cns_apiinit.Osuf \
-                        Cns_auth.Osuf \
-                        Cns_bulkexist.Osuf \
-                        Cns_chclass.Osuf \
-                        Cns_chdir.Osuf \
-                        Cns_chmod.Osuf \
-                        Cns_chown.Osuf \
-                        Cns_closedir.Osuf \
-                        Cns_creat.Osuf \
-                        Cns_delcomment.Osuf \
-                        Cns_delete.Osuf \
-                        Cns_deleteclass.Osuf \
-                        Cns_dropsegs.Osuf \
-                        Cns_delsegbycopyno.Osuf \
-                        Cns_du.Osuf \
-                        Cns_endsess.Osuf \
-                        Cns_endtrans.Osuf \
-                        Cns_enterclass.Osuf \
-                        Cns_errmsg.Osuf \
-                        Cns_getacl.Osuf \
-                        Cns_getcomment.Osuf \
-                        Cns_getcwd.Osuf \
-                        Cns_getlinks.Osuf \
-                        Cns_getpath.Osuf \
-                        Cns_getsegattrs.Osuf \
-                        Cns_lastfseq.Osuf \
-                        Cns_listclass.Osuf \
-                        Cns_listtape.Osuf \
-                        Cns_listlinks.Osuf \
-                        Cns_mkdir.Osuf \
-                        Cns_modifyclass.Osuf \
-                        Cns_opendir.Osuf \
-                        Cns_ping.Osuf \
-                        Cns_queryclass.Osuf \
-                        Cns_readdir.Osuf \
-                        Cns_readdirc.Osuf \
-                        Cns_readdirg.Osuf \
-                        Cns_readdirx.Osuf \
-                        Cns_readdirxc.Osuf \
-                        Cns_readdirxt.Osuf \
-                        Cns_readlink.Osuf \
-                        Cns_rename.Osuf \
-                        Cns_rewinddir.Osuf \
-                        Cns_replaceseg.Osuf \
-                        Cns_replacetapecopy.Osuf \
-                        Cns_rmdir.Osuf \
-                        Cns_selectsrvr.Osuf \
-                        Cns_setacl.Osuf \
-                        Cns_setatime.Osuf \
-                        Cns_setcomment.Osuf \
-                        Cns_setfsize.Osuf \
-                        Cns_setsegattrs.Osuf \
-                        Cns_startsess.Osuf \
-                        Cns_starttrans.Osuf \
-                        Cns_stat.Osuf \
-                        Cns_symlink.Osuf \
-                        Cns_tapesum.Osuf \
-                        Cns_umask.Osuf \
-                        Cns_undelete.Osuf \
-                        Cns_unlink.Osuf \
-                        Cns_unlinkbyvid.Osuf \
-                        Cns_updateseg_checksum.Osuf \
-                        Cns_updateseg_status.Osuf \
-                        Cns_updatefile_checksum.Osuf \
-                        Cns_utime.Osuf \
-                        send2nsd.Osuf
+NSD_OBJS	=	Cns_main.o \
+			Cns_acl.o \
+			Cns_chkperm.o \
+			Cns_oracle_ifce.o \
+			Cns_procreq.o \
+			sendrep.o \
+			nslogit.o
+NSLIB_OBJS	=	Cns_aborttrans.o \
+                        Cns_access.o \
+                        Cns_apiinit.o \
+                        Cns_auth.o \
+                        Cns_bulkexist.o \
+                        Cns_chclass.o \
+                        Cns_chdir.o \
+                        Cns_chmod.o \
+                        Cns_chown.o \
+                        Cns_closedir.o \
+                        Cns_creat.o \
+                        Cns_delcomment.o \
+                        Cns_delete.o \
+                        Cns_deleteclass.o \
+                        Cns_dropsegs.o \
+                        Cns_delsegbycopyno.o \
+                        Cns_du.o \
+                        Cns_endsess.o \
+                        Cns_endtrans.o \
+                        Cns_enterclass.o \
+                        Cns_errmsg.o \
+                        Cns_getacl.o \
+                        Cns_getcomment.o \
+                        Cns_getcwd.o \
+                        Cns_getlinks.o \
+                        Cns_getpath.o \
+                        Cns_getsegattrs.o \
+                        Cns_lastfseq.o \
+                        Cns_listclass.o \
+                        Cns_listtape.o \
+                        Cns_listlinks.o \
+                        Cns_mkdir.o \
+                        Cns_modifyclass.o \
+                        Cns_opendir.o \
+                        Cns_ping.o \
+                        Cns_queryclass.o \
+                        Cns_readdir.o \
+                        Cns_readdirc.o \
+                        Cns_readdirg.o \
+                        Cns_readdirx.o \
+                        Cns_readdirxc.o \
+                        Cns_readdirxt.o \
+                        Cns_readlink.o \
+                        Cns_rename.o \
+                        Cns_rewinddir.o \
+                        Cns_replaceseg.o \
+                        Cns_replacetapecopy.o \
+                        Cns_rmdir.o \
+                        Cns_selectsrvr.o \
+                        Cns_setacl.o \
+                        Cns_setatime.o \
+                        Cns_setcomment.o \
+                        Cns_setfsize.o \
+                        Cns_setsegattrs.o \
+                        Cns_startsess.o \
+                        Cns_starttrans.o \
+                        Cns_stat.o \
+                        Cns_symlink.o \
+                        Cns_tapesum.o \
+                        Cns_umask.o \
+                        Cns_undelete.o \
+                        Cns_unlink.o \
+                        Cns_unlinkbyvid.o \
+                        Cns_updateseg_checksum.o \
+                        Cns_updateseg_status.o \
+                        Cns_updatefile_checksum.o \
+                        Cns_utime.o \
+                        send2nsd.o
 
-ClientDependsOnLibrary(common,castorcommon)
-ClientDependsOnLibrary(security,castorsecurity)
-ClientSharedLibraryTarget(castorns,$(NSLIB_OBJS),$(CLIENTDEPLIB),$(CLIENTLIBS))
+CommonDependsOnLibrary(common,castorcommon)
+CommonDependsOnLibrary(security,castorsecurity)
+ClientSharedLibraryTarget(castorns,$(NSLIB_OBJS),,)
 
-ClientProgramTarget(nschclass,nschclass.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
-ClientProgramTarget(nschmod,nschmod.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
-ClientProgramTarget(nschown,nschown.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
-ClientProgramTarget(nsdelcomment,nsdelcomment.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
-ClientProgramTarget(nsdeleteclass,nsdeleteclass.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
-ClientProgramTarget(nsdelsegment,nsdelsegment.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
-ClientProgramTarget(nsenterclass,nsenterclass.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
-ClientProgramTarget(nsfind,nsfind.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
-ClientProgramTarget(nsgetacl,nsgetacl.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
-ClientProgramTarget(nsgetpath,nsgetpath.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
-ClientProgramTarget(nslistclass,nslistclass.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
-ClientProgramTarget(nslisttape,nslisttape.Osuf,$(NSLIB) $(CLIENTDEPLIB), $(NSLIB) $(CLIENTLIBS),755)
-ClientProgramTarget(nsln,nsln.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
-ClientProgramTarget(nsls,nsls.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
-ClientProgramTarget(nsmkdir,nsmkdir.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
-ClientProgramTarget(nsmodifyclass,nsmodifyclass.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
-ClientProgramTarget(nsping,nsping.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
-ClientProgramTarget(nsrename,nsrename.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
-ClientProgramTarget(nsrm,nsrm.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
-ClientProgramTarget(nsrmdir,nsrmdir.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
-ClientProgramTarget(nsrmvid,nsrmvid.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
-ClientProgramTarget(nssetchecksum,nssetchecksum.Osuf,$(NSLIB) $(CLIENTDEPLIB), $(NSLIB) $(CLIENTLIBS),755)
-ClientProgramTarget(nssetacl,nssetacl.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
-ClientProgramTarget(nssetcomment,nssetcomment.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
-ClientProgramTarget(nssetfsize,nssetfsize.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
-ClientProgramTarget(nssetsegment,nssetsegment.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
-ClientProgramTarget(nstouch,nstouch.Osuf,$(NSLIB) $(CLIENTDEPLIB),$(NSLIB) $(CLIENTLIBS),755)
+ClientProgramTarget(nschclass,nschclass.o,$(NSLIB),$(NSLIB),755)
+ClientProgramTarget(nschmod,nschmod.o,$(NSLIB),$(NSLIB),755)
+ClientProgramTarget(nschown,nschown.o,$(NSLIB),$(NSLIB),755)
+ClientProgramTarget(nsdelcomment,nsdelcomment.o,$(NSLIB),$(NSLIB),755)
+ClientProgramTarget(nsdeleteclass,nsdeleteclass.o,$(NSLIB),$(NSLIB),755)
+ClientProgramTarget(nsdelsegment,nsdelsegment.o,$(NSLIB),$(NSLIB),755)
+ClientProgramTarget(nsenterclass,nsenterclass.o,$(NSLIB),$(NSLIB),755)
+ClientProgramTarget(nsfind,nsfind.o,$(NSLIB),$(NSLIB),755)
+ClientProgramTarget(nsgetacl,nsgetacl.o,$(NSLIB),$(NSLIB),755)
+ClientProgramTarget(nsgetpath,nsgetpath.o,$(NSLIB),$(NSLIB),755)
+ClientProgramTarget(nslistclass,nslistclass.o,$(NSLIB),$(NSLIB),755)
+ClientProgramTarget(nslisttape,nslisttape.o,$(NSLIB), $(NSLIB),755)
+ClientProgramTarget(nsln,nsln.o,$(NSLIB),$(NSLIB),755)
+ClientProgramTarget(nsls,nsls.o,$(NSLIB),$(NSLIB),755)
+ClientProgramTarget(nsmkdir,nsmkdir.o,$(NSLIB),$(NSLIB),755)
+ClientProgramTarget(nsmodifyclass,nsmodifyclass.o,$(NSLIB),$(NSLIB),755)
+ClientProgramTarget(nsping,nsping.o,$(NSLIB),$(NSLIB),755)
+ClientProgramTarget(nsrename,nsrename.o,$(NSLIB),$(NSLIB),755)
+ClientProgramTarget(nsrm,nsrm.o,$(NSLIB),$(NSLIB),755)
+ClientProgramTarget(nsrmdir,nsrmdir.o,$(NSLIB),$(NSLIB),755)
+ClientProgramTarget(nsrmvid,nsrmvid.o,$(NSLIB),$(NSLIB),755)
+ClientProgramTarget(nssetchecksum,nssetchecksum.o,$(NSLIB), $(NSLIB),755)
+ClientProgramTarget(nssetacl,nssetacl.o,$(NSLIB),$(NSLIB),755)
+ClientProgramTarget(nssetcomment,nssetcomment.o,$(NSLIB),$(NSLIB),755)
+ClientProgramTarget(nssetfsize,nssetfsize.o,$(NSLIB),$(NSLIB),755)
+ClientProgramTarget(nssetsegment,nssetsegment.o,$(NSLIB),$(NSLIB),755)
+ClientProgramTarget(nstouch,nstouch.o,$(NSLIB),$(NSLIB),755)
 
 LIBMANPAGE(Cns_aborttrans)
 LIBMANPAGE(Cns_access)
@@ -241,9 +241,7 @@ EXEMANPAGE(nssetfsize)
 EXEMANPAGE(nssetsegment)
 EXEMANPAGE(nstouch)
 
-DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(upv,castorupv)
-DependsOnLibrary(security,castorsecurity)
 DependsOnLibrary(dlf,castordlf)
 
 Cns_oracle_ifce.c: Cns_oracle_ifce.pc
@@ -257,7 +255,7 @@ FilesToClean += Cns_oracle_ifce.c Cns_oracle_ifce.lis
 MakeDir($(LOGDIR),0755)
 ORALIBS= -L$(ORACLE_HOME)/lib -lclntsh
 
-NormalProgramTarget(nsd,$(NSD_OBJS), $(DEPLIB), $(ORALIBS) $(LIBS) $(LIBCSEC),750)
+NormalProgramTarget(nsd,$(NSD_OBJS),,$(ORALIBS) $(LIBCSEC),750)
 ADMMANPAGE(nsd)
 LOGROTATE(castor-ns-server,..,install)
 SYSCONFIG(nsd,install)

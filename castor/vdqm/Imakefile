@@ -24,14 +24,13 @@
 #
 
 CPPFLAGS += -DORAVDQMCONFIGFILE=\"/etc/castor/ORAVDQMCONFIG\"
-LD = g++
 
-DependsOnLibrary(../common,castorcommon)
-DependsOnLibrary(../dlf,castordlf)
-DependsOnLibrary(,castorclient)
-DependsOnLibrary(db/cnv,castorcnvs)
-DependsOnLibrary(../upv,castorupv)
-DependsOnLibrary(../vmgr,castorvmgr)
+DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(dlf,castordlf)
+DependsOnLibrary(castor,castorclient)
+DependsOnLibrary(castor/db/cnv,castorcnvs)
+DependsOnLibrary(upv,castorupv)
+DependsOnLibrary(vmgr,castorvmgr)
 
 VDQMBIN_SRCS = CDevTools.cpp \
                DatabaseHelper.cpp \
@@ -60,8 +59,8 @@ VDQMBIN_SRCS = CDevTools.cpp \
                handler/VdqmMagic2RequestHandler.cpp \
                handler/VdqmMagic3RequestHandler.cpp \
                handler/VdqmMagic4RequestHandler.cpp
-VDQMBIN_OBJS = $(VDQMBIN_SRCS:.cpp=.Osuf)
-NormalProgramTarget(vdqmd,$(VDQMBIN_OBJS),$(DEPLIB),$(LIBS),750)
+VDQMBIN_OBJS = $(VDQMBIN_SRCS:.cpp=.o)
+NormalProgramTarget(vdqmd,$(VDQMBIN_OBJS),,,750)
 MakeDir(/var/log/castor,0755)
 ADMMANPAGE(vdqmd)
 LOGROTATE(castor-vdqm2-server,../..,install)

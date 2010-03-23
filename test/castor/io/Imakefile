@@ -24,11 +24,10 @@
 # @author Sebastien Ponce, sebastien.ponce@cern.ch
 #
 
-LIBS += -ldl
-LD = g++
+LDFLAGS += -ldl
 
 DependsOnLibrary(castor,castorclient)
 
-NormalProgramTarget(testio,testio.Osuf,$(DEPLIB),$(LIBS),755)
-NormalProgramTarget(testSocket,testSocket.Osuf,$(DEPLIB),$(LIBS),755)
-NormalProgramTarget(testAuthSocket,testAuthSocket.Osuf,$(DEPLIB),$(LIBS),755)
+NormalProgramTarget(testio,testio.o,,,755)
+NormalProgramTarget(testSocket,testSocket.o,,,755)
+NormalProgramTarget(testAuthSocket,testAuthSocket.o,,,755)

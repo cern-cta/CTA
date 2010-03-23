@@ -25,16 +25,15 @@
 #
 
 CPPFLAGS += $(STAGERSUPERUSER) $(STAGERSUPERGROUP)
-LD = g++
 
-DependsOnLibrary(../../common,castorcommon)
-DependsOnLibrary(../../dlf,castordlf)
-DependsOnLibrary(..,castorclient)
-DependsOnLibrary(,castormonitor)
+DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(dlf,castordlf)
+DependsOnLibrary(castor,castorclient)
+DependsOnLibrary(castor/monitoring,castormonitor)
 
 RMNODEDBIN_SRCS = MetricsThread.cpp StateThread.cpp RmNodeDaemon.cpp
-RMNODEDBIN_OBJS = $(RMNODEDBIN_SRCS:.cpp=.Osuf)
-NormalProgramTarget(rmnoded,$(RMNODEDBIN_OBJS),$(DEPLIB),$(LIBS),750)
+RMNODEDBIN_OBJS = $(RMNODEDBIN_SRCS:.cpp=.o)
+NormalProgramTarget(rmnoded,$(RMNODEDBIN_OBJS),,,750)
 MakeDir(/var/log/castor,0755)
 MakeDirWithOwnership(/var/spool/castor,stage,st,0755)
 LOGROTATE(castor-rmnode-server,../../..,install)

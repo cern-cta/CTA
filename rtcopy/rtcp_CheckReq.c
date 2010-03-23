@@ -799,6 +799,10 @@ int rtcp_CheckReqStructures(SOCKET *client_socket,
     rtcpFileRequest_t *filereq = NULL;
     char errmsgtxt[CA_MAXLINELEN+1];
 
+#if !defined(RTCP_SERVER)
+    (void)client_socket;
+    (void)client;
+#endif
     if ( tape == NULL ) {
         serrno = EINVAL;
         return(-1);

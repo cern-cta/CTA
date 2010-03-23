@@ -24,13 +24,12 @@
 # @author Castor Dev team, castor-dev@cern.ch
 
 CXXFLAGS += `curl-config --cflags`
-LIBS = -ldl -lbat -llsf -llsbstream -lnsl `curl-config --libs`
-LD = g++
+LDFLAGS += -ldl -lbat -llsf -llsbstream -lnsl `curl-config --libs`
 
-DependsOnLibrary(../../common,castorcommon)
-DependsOnLibrary(../../dlf,castordlf)
-DependsOnLibrary(..,castorclient)
-DependsOnLibrary(../../rfio,castorrfio)
+DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(dlf,castordlf)
+DependsOnLibrary(castor,castorclient)
+DependsOnLibrary(rfio,castorrfio)
 
 JOB_SRCS = StagerJob.cpp \
            InputArguments.cpp \
@@ -42,7 +41,7 @@ JOB_SRCS = StagerJob.cpp \
            XRootPlugin.cpp \
            GridFTPPlugin.cpp \
            ../SharedResourceHelper.cpp
-JOBS_OBJS = $(JOB_SRCS:.cpp=.Osuf)
-NormalProgramTarget(stagerjob,$(JOBS_OBJS),$(DEPLIB),$(LIBS),6755)
+JOBS_OBJS = $(JOB_SRCS:.cpp=.o)
+NormalProgramTarget(stagerjob,$(JOBS_OBJS),,,6755)
 MakeDir(/var/log/castor,0755)
 LOGROTATE(castor-job,../../..,install)

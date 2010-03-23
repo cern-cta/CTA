@@ -24,9 +24,8 @@
 # @author Sebastien Ponce, sebastien.ponce@cern.ch
 #
 
-LIBS+= -ldl
-LD = g++
+LDFLAGS += -ldl
 
 DependsOnLibrary(castor,castorclient)
 
-NormalProgramTarget(hammerUDP,hammerUDP.Osuf,$(DEPLIB),$(LIBS),755)
+NormalProgramTarget(hammerUDP,hammerUDP.o,,,755)

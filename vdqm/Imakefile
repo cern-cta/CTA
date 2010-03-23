@@ -24,26 +24,26 @@
 # @author Castor Dev team, castor-dev@cern.ch
 
 #if BuildSecureVdqm
-SECURITYFLAG=-DCSEC
-LDLIBS+= -ldl
+SECURITYFLAG = -DCSEC
+LDLIBS += -ldl
 #endif  
 VDQM_HOST = VdqmHost
 CPPFLAGS += -DVDQM_HOST=\"$(VDQM_HOST)\" $(SECURITYFLAG)
 
-DependsOnLibrary(common,castorcommon)
+CommonDependsOnLibrary(common,castorcommon)
 
 vdqmc_SendRecv.c:	vdqm_SendRecv.c
 	RemoveFiles(vdqmc_SendRecv.c)
-	$(CP) vdqm_SendRecv.c vdqmc_SendRecv.c
+	cp vdqm_SendRecv.c vdqmc_SendRecv.c
 FilesToClean += vdqmc_SendRecv.c
 
-VDQMLIB_OBJS = vdqmapi.Osuf vdqmc_SendRecv.Osuf
-SharedLibraryTarget(castorvdqm,$(VDQMLIB_OBJS),$(DEPLIB),DepSharedLibraryTargetName(common,castorcommon))
+VDQMLIB_OBJS = vdqmapi.o vdqmc_SendRecv.o
+SharedLibraryTarget(castorvdqm,$(VDQMLIB_OBJS),,DepSharedLibraryTargetName(common,castorcommon))
 
 VDQMLIB = SharedLibraryTargetName(castorvdqm)
 
-ClientProgramTarget(showqueues,showqueues.Osuf,$(VDQMLIB) $(DEPLIB),$(VDQMLIB) $(LIBS),0755)
-ClientProgramTarget(vdqm_admin,vdqm_admin.Osuf,$(VDQMLIB) $(DEPLIB),$(VDQMLIB) $(LIBS),0755)
+ClientProgramTarget(showqueues,showqueues.o,$(VDQMLIB),$(VDQMLIB),0755)
+ClientProgramTarget(vdqm_admin,vdqm_admin.o,$(VDQMLIB),$(VDQMLIB),0755)
 
 LIBMANPAGE(vdqm_Connect)
 LIBMANPAGE(vdqm_DelDrive)

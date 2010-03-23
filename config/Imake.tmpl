@@ -23,13 +23,12 @@
 
 DEBUG = -O0 -g
 CASTOR_ROOT?=$(shell pwd | sed -e 's=CASTOR2/.*$$=CASTOR2=' -e 's=trunk/.*$$=trunk=' -e 's=\(v2_1_[^/]*\)/.*$$=\1=' -e 's=\(castor-[0-9\-\.]*\)/.*$$=\1=')
-CC += -fPIC -D_LARGEFILE64_SOURCE -Wall -Werror
-CXX += -fPIC -D_LARGEFILE64_SOURCE -Wall -Werror
-CXXFLAGS = -I$(CASTOR_ROOT) -I$(CASTOR_ROOT)/h $(DEBUG)
-CFLAGS = $(CXXFLAGS)
-CPPFLAGS = -pthread -DCTHREAD_POSIX -D_THREAD_SAFE -D_REENTRANT
-LDFLAGS = -pthread
-SHLIBREQLIBS = -lc -lpthread `g++ -print-file-name=libstdc++.so` -ldl
+CC += -fPIC -D_LARGEFILE64_SOURCE -Wall -Wextra -Werror
+CXX += -fPIC -D_LARGEFILE64_SOURCE -Wall -Wextra -Werror
+CXXFLAGS += -I$(CASTOR_ROOT) -I$(CASTOR_ROOT)/h $(DEBUG)
+CFLAGS += $(CXXFLAGS)
+CPPFLAGS += -pthread -DCTHREAD_POSIX -D_THREAD_SAFE -D_REENTRANT
+LDFLAGS += -pthread
 
 PERLLIBDIR = /usr/lib/perl/CASTOR
 
@@ -44,11 +43,6 @@ ifneq ($(wildcard /etc/debian_version),)
 else
   LIBDIR = InstallLibDir
 endif
-CONFIGDIR = InstallConfigDir
-CP = cp
-LD = cc
-LN = ln
-SHELL = /bin/sh
 
 #ifdef StagerSuperUser
 STAGERSUPERUSER0 = StagerSuperUser
@@ -57,10 +51,6 @@ STAGERSUPERUSER  = -DSTAGERSUPERUSER=\"$(STAGERSUPERUSER0)\"
 #ifdef StagerSuperGroup
 STAGERSUPERGROUP0 = StagerSuperGroup
 STAGERSUPERGROUP = -DSTAGERSUPERGROUP=\"$(STAGERSUPERGROUP0)\"
-#endif
-
-#ifndef Osuf
-#define Osuf o
 #endif
 
 #include <Imake.rules>

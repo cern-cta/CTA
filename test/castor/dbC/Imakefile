@@ -27,4 +27,4 @@
 DependsOnLibrary(castor,castorclient)
 DependsOnLibrary(castor/db/newora,castorcommonora)
 
-NormalProgramTarget(testdbC,testdbC.Osuf,$(DEPLIB),$(LIBS),755)
+NormalProgramTarget(testdbC,testdbC.o,,,755)

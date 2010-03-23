@@ -23,7 +23,7 @@ CPPFLAGS += -DSACCT -DNOMORERFIO=\"$(NOMORERFIO)\" -DLOGFILE=\"$(LOGFILE)\" \
 	    $(STAGERSUPERUSER) $(STAGERSUPERGROUP) -DNFSROOT=\"$(NFSROOT0)\" \
             -DFORTRAN
 
-FIOO=fio.Osuf
+FIOO=fio.o
 RFIOLIB = SharedLibraryTargetName(castorrfio)
 
 #if UseGSI
@@ -37,7 +37,7 @@ GLOBUS_LIBS=-L$(GLOBUS_LOCATION)/lib
 LIB_CRYPTO=$(shell if [ -r "$(GLOBUS_LOCATION)/lib/libcrypto_$(GLOBUS_FLAVOUR).so" ]; then echo -lcrypto_$(GLOBUS_FLAVOUR); else echo -lcrypto; fi)
 LIBCSEC += $(GLOBUS_LIBS) $(LIB_CRYPTO)
 #endif
-LIBS = -ldl
+LDFLAGS += -ldl
 
 #if UseXFSPrealloc
 CFLAGS += -DUSE_XFSPREALLOC
@@ -45,39 +45,39 @@ CFLAGS += -DUSE_XFSPREALLOC
 
 CKSUMLIB = -lz
 
-DependsOnLibrary(common,castorcommon)
-DependsOnLibrary(ns,castorns)
-DependsOnLibrary(dlf,castordlf)
-DependsOnLibrary(security,castorsecurity)
-DependsOnLibrary(castor,castorclient)
+CommonDependsOnLibrary(common,castorcommon)
+CommonDependsOnLibrary(ns,castorns)
+CommonDependsOnLibrary(dlf,castordlf)
+CommonDependsOnLibrary(security,castorsecurity)
+CommonDependsOnLibrary(castor,castorclient)
 
-RFIOLIB_OBJS = access.Osuf alrm.Osuf chdir.Osuf checkkey.Osuf chmod.Osuf \
-		chown.Osuf close.Osuf closedir.Osuf connect.Osuf error.Osuf \
-		fchmod.Osuf fchown.Osuf fclose.Osuf feof.Osuf ferror.Osuf \
-		fflush.Osuf fileno.Osuf $(FIOO) fopen.Osuf \
-		fread.Osuf fseek.Osuf fstat.Osuf ftell.Osuf \
-		fwrite.Osuf getc.Osuf getcwd.Osuf lockf.Osuf \
-		lseek.Osuf lstat.Osuf lun2fn.Osuf misc.Osuf \
-		mkdir.Osuf mstat.Osuf msymlink.Osuf munlink.Osuf open.Osuf opendir.Osuf parse.Osuf  \
-		pclose.Osuf popen.Osuf pread.Osuf preseek.Osuf pwrite.Osuf \
-		read.Osuf readdir.Osuf readlink.Osuf rename.Osuf rewinddir.Osuf \
-		rfio_HsmIf.Osuf rfio_rdirfdt.Osuf rfio_rfilefdt.Osuf \
-		rfstatfs.Osuf rmdir.Osuf setopt.Osuf stat.Osuf statfs.Osuf stream.Osuf \
-		switch_req.Osuf symlink.Osuf unlink.Osuf write.Osuf xyclose.Osuf xyopen.Osuf \
-		xyread.Osuf xywrite.Osuf \
-		fopen64.Osuf fseeko64.Osuf fstat64.Osuf ftello64.Osuf \
-		lockf64.Osuf lseek64.Osuf open64.Osuf \
-		preseek64.Osuf read64.Osuf stream64.Osuf write64.Osuf RfioTURL.Osuf
-ClientSharedLibraryTarget(castorrfio,$(RFIOLIB_OBJS),$(DEPLIB),$(LIBS))
+RFIOLIB_OBJS = access.o alrm.o chdir.o checkkey.o chmod.o \
+		chown.o close.o closedir.o connect.o error.o \
+		fchmod.o fchown.o fclose.o feof.o ferror.o \
+		fflush.o fileno.o $(FIOO) fopen.o \
+		fread.o fseek.o fstat.o ftell.o \
+		fwrite.o getc.o getcwd.o lockf.o \
+		lseek.o lstat.o lun2fn.o misc.o \
+		mkdir.o mstat.o msymlink.o munlink.o open.o opendir.o parse.o  \
+		pclose.o popen.o pread.o preseek.o pwrite.o \
+		read.o readdir.o readlink.o rename.o rewinddir.o \
+		rfio_HsmIf.o rfio_rdirfdt.o rfio_rfilefdt.o \
+		rfstatfs.o rmdir.o setopt.o stat.o statfs.o stream.o \
+		switch_req.o symlink.o unlink.o write.o xyclose.o xyopen.o \
+		xyread.o xywrite.o \
+		fopen64.o fseeko64.o fstat64.o ftello64.o \
+		lockf64.o lseek64.o open64.o \
+		preseek64.o read64.o stream64.o write64.o RfioTURL.o
+ClientSharedLibraryTarget(castorrfio,$(RFIOLIB_OBJS),,)
 
-ClientProgramTarget(rfcat,rfcat.Osuf, $(RFIOLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),755)
-ClientProgramTarget(rfchmod,rfchmod.Osuf, $(RFIOLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),755)
-ClientProgramTarget(rfcp,rfcp.Osuf, $(RFIOLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),755)
-ClientProgramTarget(rfstat,rfstat.Osuf, $(RFIOLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),755)
-ClientProgramTarget(rfrm,rfrm.Osuf, $(RFIOLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),755)
-ClientProgramTarget(rfdir,rfdir.Osuf, $(RFIOLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),755)
-ClientProgramTarget(rfmkdir,rfmkdir.Osuf, $(RFIOLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),755)
-ClientProgramTarget(rfrename,rfrename.Osuf, $(RFIOLIB) $(DEPLIB), $(RFIOLIB) $(LIBS),755)
+ClientProgramTarget(rfcat,rfcat.o, $(RFIOLIB), $(RFIOLIB),755)
+ClientProgramTarget(rfchmod,rfchmod.o, $(RFIOLIB), $(RFIOLIB),755)
+ClientProgramTarget(rfcp,rfcp.o, $(RFIOLIB), $(RFIOLIB),755)
+ClientProgramTarget(rfstat,rfstat.o, $(RFIOLIB), $(RFIOLIB),755)
+ClientProgramTarget(rfrm,rfrm.o, $(RFIOLIB), $(RFIOLIB),755)
+ClientProgramTarget(rfdir,rfdir.o, $(RFIOLIB), $(RFIOLIB),755)
+ClientProgramTarget(rfmkdir,rfmkdir.o, $(RFIOLIB), $(RFIOLIB),755)
+ClientProgramTarget(rfrename,rfrename.o, $(RFIOLIB), $(RFIOLIB),755)
 
 EXEMANPAGE(rfcat)
 EXEMANPAGE(rfchmod)
@@ -143,17 +143,17 @@ LIBMANPAGE(rfioreadopt)
 LIBMANPAGE(rfiosetopt)
 
 MakeDir($(LOGDIR),0755)
-SRVOBJS = Csemaphore.Osuf rfio_serv.Osuf rfio_calls.Osuf \
-		rfio_call64.Osuf rfio_fcalls.Osuf rfio_callhandlers.Osuf switch_req.Osuf \
-		checkkey.Osuf $(FIOO) rfstatfs.Osuf alrm.Osuf \
-		rfioacct.Osuf RemoteJobSvc.Osuf stager_catalogInterface.Osuf \
-		stager_util.Osuf stager_messages.Osuf stager_extern_globals.Osuf \
-		stager_uuid.Osuf
+SRVOBJS = Csemaphore.o rfio_serv.o rfio_calls.o \
+		rfio_call64.o rfio_fcalls.o rfio_callhandlers.o switch_req.o \
+		checkkey.o $(FIOO) rfstatfs.o alrm.o \
+		rfioacct.o RemoteJobSvc.o stager_catalogInterface.o \
+		stager_util.o stager_messages.o stager_extern_globals.o \
+		stager_uuid.o
 #if UseXFSPrealloc
-SRVOBJS += rfio_alignedbuf.Osuf rfio_xfsprealloc.Osuf
+SRVOBJS += rfio_alignedbuf.o rfio_xfsprealloc.o
 #endif
 
-NormalProgramTarget(rfiod,$(SRVOBJS),$(RFIOLIB) $(DEPLIB),$(RTFLAGS) $(RTLIBS) $(LIBCSEC) $(RFIOLIB) $(LIBS) $(CKSUMLIB),755)
+NormalProgramTarget(rfiod,$(SRVOBJS),$(RFIOLIB),$(RTFLAGS) $(RTLIBS) $(LIBCSEC) $(RFIOLIB) $(CKSUMLIB),755)
 LOGROTATE(castor-rfio-server,..,install)
 SYSCONFIG(rfiod,install)
 INITSCRIPT(rfiod,install)

@@ -24,20 +24,19 @@
 
 
 CXXFLAGS += -I $(ORACLE_HOME)/rdbms/public $(PYTHONINC)
-LD = g++
-LIBS = -L$(ORACLE_HOME)/lib -locci -lclntsh 
+LDFLAGS += -L$(ORACLE_HOME)/lib -locci -lclntsh 
 
-DependsOnLibrary(..,castorclient)
-DependsOnLibrary(../db/cnv,castorcnvs)
-DependsOnLibrary(../../common,castorcommon)
-DependsOnLibrary(../db/newora,castorcommonora)
-DependsOnLibrary(../../dlf,castordlf)
-DependsOnLibrary(../../rfio,castorrfio)
-DependsOnLibrary(../tape/gatewayprotocol,castortapegatewayprotocol)
-DependsOnLibrary(../tape/python,castortapepython)
-DependsOnLibrary(../tape/utils,castortapeutils)
-DependsOnLibrary(../../vdqm,castorvdqm)
-DependsOnLibrary(../../vmgr,castorvmgr)
+DependsOnLibrary(castor,castorclient)
+DependsOnLibrary(castor/db/cnv,castorcnvs)
+DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(castor/db/newora,castorcommonora)
+DependsOnLibrary(dlf,castordlf)
+DependsOnLibrary(rfio,castorrfio)
+DependsOnLibrary(castor/tape/gatewayprotocol,castortapegatewayprotocol)
+DependsOnLibrary(castor/tape/python,castortapepython)
+DependsOnLibrary(castor/tape/utils,castortapeutils)
+DependsOnLibrary(vdqm,castorvdqm)
+DependsOnLibrary(vmgr,castorvmgr)
 
 TAPEGATEWAYDBIN_SRCS = \
 	TapeGatewayDlfMessageStrings.cpp \
@@ -63,8 +62,8 @@ TAPEGATEWAYDBIN_SRCS = \
 
 TAPEGATEWAYBIN_SRCS = $(TAPEGATEWAYDBIN_SRCS)
 
-TAPEGATEWAYBIN_OBJS = $(TAPEGATEWAYBIN_SRCS:.cpp=.Osuf)
-NormalProgramTarget(tapegatewayd,$(TAPEGATEWAYBIN_OBJS),$(DEPLIB),$(LIBS),750)
+TAPEGATEWAYBIN_OBJS = $(TAPEGATEWAYBIN_SRCS:.cpp=.o)
+NormalProgramTarget(tapegatewayd,$(TAPEGATEWAYBIN_OBJS),,,750)
 ADMMANPAGE(tapegatewayd)
 SYSCONFIG(tapegatewayd,install)
 INITSCRIPT(tapegatewayd,install)

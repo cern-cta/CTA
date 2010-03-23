@@ -24,8 +24,6 @@
 # @author Sebastien Ponce, sebastien.ponce@cern.ch
 #
 
-LD = g++
-
 DependsOnLibrary(castor,castorclient)
 
-NormalProgramTarget(testdb,testdb.Osuf,$(DEPLIB),$(LIBS),755)
+NormalProgramTarget(testdb,testdb.o,,,755)

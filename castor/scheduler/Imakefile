@@ -24,17 +24,17 @@
 # @author Castor Dev team, castor-dev@cern.ch
 
 CXXFLAGS += $(PYTHONINC)
-LIBS += -lbat -llsf -llsbstream -lm
+LDFLAGS += -lbat -llsf -llsbstream -lm
 
-DependsOnLibrary(../common,castorcommon)
-DependsOnLibrary(../dlf,castordlf)
-DependsOnLibrary(monitoring,castormonitor)
+DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(dlf,castordlf)
+DependsOnLibrary(castor/monitoring,castormonitor)
 
 SCHMOD_SHMEM_OBJS = schmod_shmem.o HandlerData.o
-SchModTarget(schmod_shmem,$(SCHMOD_SHMEM_OBJS),$(DEPLIB),$(LIBS),$(LIBDIR))
+SchModTarget(schmod_shmem,$(SCHMOD_SHMEM_OBJS),,,$(LIBDIR))
 
 SCHMOD_PYTHON_OBJS = schmod_python.o HandlerData.o Python.o
-SchModTarget(schmod_python,$(SCHMOD_PYTHON_OBJS),$(DEPLIB),$(LIBS) $(PYTHONLIBS),$(LIBDIR))
+SchModTarget(schmod_python,$(SCHMOD_PYTHON_OBJS),, $(PYTHONLIBS),$(LIBDIR))
 
 COMM We overwrite here the default rule for the compilation of schmod_python in order
 COMM to be able to alleviate the -Werror present in the standard flags for the case

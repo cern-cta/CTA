@@ -21,32 +21,31 @@
 # @author Steven Murray, Steven.Murray@cern.ch; Nicola Bessone, Nicola.Bessone@cern.ch 
 #
 
-LIBS += -lz
-LD = g++
+LDFLAGS += -lz
 
-DependsOnLibrary(../../castor,castorclient)
+DependsOnLibrary(castor,castorclient)
 
 TAPEFORMAT_SRCS = \
      ALB0100Marshaller.cpp \
      ALB0100Unmarshaller.cpp \
      Marshaller.cpp \
      Unmarshaller.cpp
-TAPEFORMATLIB_OBJS = $(TAPEFORMAT_SRCS:.cpp=.Osuf)
-SharedLibraryTarget(castortapeformat,$(TAPEFORMATLIB_OBJS),$(DEPLIB),$(LIBS))
+TAPEFORMATLIB_OBJS = $(TAPEFORMAT_SRCS:.cpp=.o)
+SharedLibraryTarget(castortapeformat,$(TAPEFORMATLIB_OBJS),,)
 
 NSLIB = SharedLibraryTargetName(castortapeformat)
 
 NEWTPWRITE_SRCS = \
      ALBWriter.cpp \
      $(TAPEFORMAT_SRCS)  
-NEWTPWRITEBIN_OBJS = $(NEWTPWRITE_SRCS:.cpp=.Osuf)
-NormalProgramTarget(albwriter,$(NEWTPWRITEBIN_OBJS),$(NSLIB) $(DEPLIB),$(LIBS),750)
+NEWTPWRITEBIN_OBJS = $(NEWTPWRITE_SRCS:.cpp=.o)
+NormalProgramTarget(albwriter,$(NEWTPWRITEBIN_OBJS),$(NSLIB),,750)
 EXEMANPAGE(albwriter)
 
 NEWTPREAD = \
      ALBReader.cpp \
      $(TAPEFORMAT_SRCS)
-NEWTPREADBIN_OBJS = $(NEWTPREAD:.cpp=.Osuf)
-NormalProgramTarget(albreader, $(NEWTPREADBIN_OBJS), $(NSLIB) $(DEPLIB),$(LIBS),750)
+NEWTPREADBIN_OBJS = $(NEWTPREAD:.cpp=.o)
+NormalProgramTarget(albreader,$(NEWTPREADBIN_OBJS),$(NSLIB),,750)
 EXEMANPAGE(albreader)
 

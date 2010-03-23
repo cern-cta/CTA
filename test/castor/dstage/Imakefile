@@ -24,14 +24,12 @@
 # @author Ben Couturier, ben.couturier@cern.ch
 #
 
-LD = g++
-
 DependsOnLibrary(castor,castorclient)
 DependsOnLibrary(castor/db/newora,castorcommonora)
 
-RRTEST_SRCS = RrTest.Osuf \
-              ../../../castor/replier/RequestReplier.Osuf \
-              ../../../castor/replier/ClientConnection.Osuf
-RRTEST_OBJS = $(RRTEST_SRCS:.cpp=.Osuf)
+RRTEST_SRCS = RrTest.o \
+              ../../../castor/replier/RequestReplier.o \
+              ../../../castor/replier/ClientConnection.o
+RRTEST_OBJS = $(RRTEST_SRCS:.cpp=.o)
 
-NormalProgramTarget(RrTest,$(RRTEST_OBJS),$(DEPLIB),$(LIBS),755)
+NormalProgramTarget(RrTest,$(RRTEST_OBJS),,,755)

@@ -25,19 +25,18 @@
 #
 
 CXXFLAGS += -I $(ORACLE_HOME)/rdbms/public
-LD = g++
-LIBS = -lbat -llsf -llsbstream -L$(ORACLE_HOME)/lib -locci -lclntsh
+LDFLAGS += -lbat -llsf -llsbstream -L$(ORACLE_HOME)/lib -locci -lclntsh
 
-DependsOnLibrary(../../common,castorcommon)
-DependsOnLibrary(../../dlf,castordlf)
-DependsOnLibrary(..,castorclient)
-DependsOnLibrary(,castormonitor)
-DependsOnLibrary(../db/newora,castorcommonora)
-DependsOnLibrary(../db/cnv,castorcnvs)
+DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(dlf,castordlf)
+DependsOnLibrary(castor,castorclient)
+DependsOnLibrary(castor/monitoring,castormonitor)
+DependsOnLibrary(castor/db/newora,castorcommonora)
+DependsOnLibrary(castor/db/cnv,castorcnvs)
 
 RMMASTERDAEMONBIN_SRCS = RmMasterDaemon.cpp CollectorThread.cpp DatabaseActuatorThread.cpp UpdateThread.cpp HeartbeatThread.cpp LSFStatus.cpp ora/OraRmMasterSvc.cpp ora/StatusUpdateHelper.cpp
-RMMASTERDAEMONBIN_OBJS = $(RMMASTERDAEMONBIN_SRCS:.cpp=.Osuf)
-NormalProgramTarget(rmmasterd,$(RMMASTERDAEMONBIN_OBJS),$(DEPLIB),$(LIBS),750)
+RMMASTERDAEMONBIN_OBJS = $(RMMASTERDAEMONBIN_SRCS:.cpp=.o)
+NormalProgramTarget(rmmasterd,$(RMMASTERDAEMONBIN_OBJS),,,750)
 MakeDir(/var/log/castor,0755)
 MakeDirWithOwnership(/var/spool/castor,stage,st,0755)
 LOGROTATE(castor-rmmaster-server,../../..,install)

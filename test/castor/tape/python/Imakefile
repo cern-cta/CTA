@@ -22,21 +22,20 @@
 #
 
 CXXFLAGS += $(PYTHONINC)
-LD = g++
-LIBS = $(PYTHONLIBS)
+LDFLAGS += $(PYTHONLIBS)
 
-DependsOnLibrary(../../../castor,castorclient)
-DependsOnLibrary(../../../castor/db/cnv,castorcnvs)
-DependsOnLibrary(../../../castor/tape/python,castortapepython)
-DependsOnLibrary(../../../castor/tape/utils,castortapeutils)
-DependsOnLibrary(../../../common,castorcommon)
-DependsOnLibrary(../../../dlf,castordlf)
-DependsOnLibrary(../../../vdqm,castorvdqm)
-DependsOnLibrary(../../../vmgr,castorvmgr)
+DependsOnLibrary(castor,castorclient)
+DependsOnLibrary(castor/db/cnv,castorcnvs)
+DependsOnLibrary(castor/tape/python,castortapepython)
+DependsOnLibrary(castor/tape/utils,castortapeutils)
+DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(dlf,castordlf)
+DependsOnLibrary(vdqm,castorvdqm)
+DependsOnLibrary(vmgr,castorvmgr)
 
 TESTTAPEPYTHONBIN_SRCS = \
   TestPythonMain.cpp
 
-TESTTAPEPYTHONBIN_OBJS = $(TESTTAPEPYTHONBIN_SRCS:.cpp=.Osuf)
+TESTTAPEPYTHONBIN_OBJS = $(TESTTAPEPYTHONBIN_SRCS:.cpp=.o)
 
-NormalProgramTarget(testpython,$(TESTTAPEPYTHONBIN_OBJS),$(DEPLIB),$(LIBS),750)
+NormalProgramTarget(testpython,$(TESTTAPEPYTHONBIN_OBJS),,,750)

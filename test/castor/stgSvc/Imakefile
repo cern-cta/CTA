@@ -24,10 +24,8 @@
 # @author Sebastien Ponce, sebastien.ponce@cern.ch
 #
 
-LD = g++
-
 DependsOnLibrary(castor,castorclient)
 DependsOnLibrary(castor/db/newora,castorcommonora)
 
-NormalProgramTarget(teststgsvc,teststgsvc.Osuf,$(DEPLIB),$(LIBS),755)
-NormalProgramTarget(testRemStgSvc,testRemStgSvc.Osuf,$(DEPLIB),$(LIBS),755)
+NormalProgramTarget(teststgsvc,teststgsvc.o,,,755)
+NormalProgramTarget(testRemStgSvc,testRemStgSvc.o,,,755)

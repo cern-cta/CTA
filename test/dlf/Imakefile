@@ -19,7 +19,7 @@ COMM ---------------------------------------------------------------------------
 
 CFLAGS += -I$(CASTOR_ROOT)/dlf
 
-DependsOnLibrary(../common,castorcommon)
-DependsOnLibrary(../dlf,castordlf)
+DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(dlf,castordlf)
 
-NormalProgramTarget(dlftest,dlftest.Osuf,$(DEPLIBS),$(LIBS),755)
+NormalProgramTarget(dlftest,dlftest.o,,,755)

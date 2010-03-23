@@ -21,8 +21,6 @@
 # @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
 #
 
-LD = g++
-
 TAPEGATEWAY_MESSAGES_SRCS = \
   ../tapegateway/BaseFileInfo.cpp \
   ../tapegateway/DumpNotification.cpp \
@@ -70,7 +68,7 @@ TAPEGATEWAYPROTOCOLLIB_SRCS = \
   $(TAPEGATEWAY_MESSAGES_SRCS) \
   $(TAPEGATEWAY_IO_SRCS)
 
-TAPEGATEWAYPROTOCOLLIB_OBJS = $(TAPEGATEWAYPROTOCOLLIB_SRCS:.cpp=.Osuf)
+TAPEGATEWAYPROTOCOLLIB_OBJS = $(TAPEGATEWAYPROTOCOLLIB_SRCS:.cpp=.o)
 
-DependsOnLibrary(..,castorclient)
-SharedLibraryTarget(castortapegatewayprotocol,$(TAPEGATEWAYPROTOCOLLIB_OBJS),$(DEPLIB),$(LIBS))
+DependsOnLibrary(castor,castorclient)
+SharedLibraryTarget(castortapegatewayprotocol,$(TAPEGATEWAYPROTOCOLLIB_OBJS),,)

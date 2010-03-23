@@ -21,13 +21,11 @@
 # @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
 #
 
-LD = g++
-
-DependsOnLibrary(..,castorclient)
-DependsOnLibrary(../tape/gatewayprotocol,castortapegatewayprotocol)
-DependsOnLibrary(../tape/utils,castortapeutils)
-DependsOnLibrary(../../common,castorcommon)
-DependsOnLibrary(../../dlf,castordlf)
+DependsOnLibrary(castor,castorclient)
+DependsOnLibrary(castor/tape/gatewayprotocol,castortapegatewayprotocol)
+DependsOnLibrary(castor/tape/utils,castortapeutils)
+DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(dlf,castordlf)
 
 TAPEBRIDGEBIN_SRCS = \
   BridgeProtocolEngine.cpp \
@@ -53,9 +51,9 @@ TAPEBRIDGEBIN_SRCS = \
   ../net/net.cpp \
   $(TAPEGATEWAY_MESSAGES_SRCS) \
   $(TAPEGATEWAY_IO_SRCS)
-TAPEBRIDGEBIN_OBJS = $(TAPEBRIDGEBIN_SRCS:.cpp=.Osuf)
+TAPEBRIDGEBIN_OBJS = $(TAPEBRIDGEBIN_SRCS:.cpp=.o)
 
-NormalProgramTarget(tapebridged,$(TAPEBRIDGEBIN_OBJS),$(DEPLIB),$(LIBS),750)
+NormalProgramTarget(tapebridged,$(TAPEBRIDGEBIN_OBJS),,,750)
 MakeDir(/var/log/castor,0755)
 ADMMANPAGE(tapebridged)
 LOGROTATE(castor-tapebridge-server,../../..,install)

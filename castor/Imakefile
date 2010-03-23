@@ -23,9 +23,9 @@
 #
 # @author Castor Dev team, castor-dev@cern.ch
 
-LD = g++
 SUBDIRS = db rh vdqm gc repack monitoring stager jobmanager job scheduler tape
 CPPFLAGS += $(STAGERSUPERUSER) $(STAGERSUPERGROUP) -DSTAGEMAP=\"StageMapFile\"
+LDFLAGS += -lstdc++
 
 STGLIB_SRCS = BaseAddress.cpp \
               VectorAddress.cpp \
@@ -328,28 +328,28 @@ STGLIB_SRCS = BaseAddress.cpp \
 
 
 STAGERLIB_OBJS = \
-		../client/src/stager/stager_client_api_common.Osuf \
-		../client/src/stager/stager_client_commandline.Osuf \
-		../client/src/stager/stager_client_changePrivilege.Osuf \
-		../client/src/stager/stager_client_api_get.Osuf \
-		../client/src/stager/stager_client_api_put.Osuf \
-		../client/src/stager/stager_client_api_update.Osuf \
-		../client/src/stager/stager_client_api_open.Osuf \
-		../client/src/stager/stager_client_api_query.Osuf \
-		../client/src/stager/stager_client_api_rm.Osuf \
-		../client/src/stager/stager_client_api_setFileGCWeight.Osuf \
-		../client/src/stager/stager_client_api_next.Osuf \
-		../client/src/stager/stager_client_api_version.Osuf \
-		../client/src/stager/stager_client_api_changePrivilege.Osuf \
-		../client/src/stager/stager_client_api_listPrivileges.Osuf \
-		../client/src/stager/stager_errmsg.Osuf \
-		../client/src/stager/stager_mapper.Osuf
+		../client/src/stager/stager_client_api_common.o \
+		../client/src/stager/stager_client_commandline.o \
+		../client/src/stager/stager_client_changePrivilege.o \
+		../client/src/stager/stager_client_api_get.o \
+		../client/src/stager/stager_client_api_put.o \
+		../client/src/stager/stager_client_api_update.o \
+		../client/src/stager/stager_client_api_open.o \
+		../client/src/stager/stager_client_api_query.o \
+		../client/src/stager/stager_client_api_rm.o \
+		../client/src/stager/stager_client_api_setFileGCWeight.o \
+		../client/src/stager/stager_client_api_next.o \
+		../client/src/stager/stager_client_api_version.o \
+		../client/src/stager/stager_client_api_changePrivilege.o \
+		../client/src/stager/stager_client_api_listPrivileges.o \
+		../client/src/stager/stager_errmsg.o \
+		../client/src/stager/stager_mapper.o
 
-DependsOnLibrary(common,castorcommon)
-DependsOnLibrary(ns,castorns)
-DependsOnLibrary(dlf,castordlf)
+ClientDependsOnLibrary(common,castorcommon)
+ClientDependsOnLibrary(ns,castorns)
+ClientDependsOnLibrary(dlf,castordlf)
 
-STGLIB_OBJS = $(STGLIB_SRCS:.cpp=.Osuf)
-ClientSharedLibraryTarget(castorclient,$(STGLIB_OBJS) $(STAGERLIB_OBJS),$(DEPLIB),$(LIBS))
+STGLIB_OBJS = $(STGLIB_SRCS:.cpp=.o)
+ClientSharedLibraryTarget(castorclient,$(STGLIB_OBJS) $(STAGERLIB_OBJS),,)
 
 EXAMPLEFILE(castor.conf,../debian,/etc/castor,install)

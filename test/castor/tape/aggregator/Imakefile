@@ -21,15 +21,13 @@
 # @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
 #
 
-LD = g++
-
-DependsOnLibrary(../../../castor,castorclient)
-DependsOnLibrary(../../../castor/db/cnv,castorcnvs)
-DependsOnLibrary(../../../castor/tape/utils,castortapeutils)
-DependsOnLibrary(../../../common,castorcommon)
-DependsOnLibrary(../../../dlf,castordlf)
-DependsOnLibrary(../../../vdqm,castorvdqm)
-DependsOnLibrary(../../../vmgr,castorvmgr)
+DependsOnLibrary(castor,castorclient)
+DependsOnLibrary(castor/db/cnv,castorcnvs)
+DependsOnLibrary(castor/tape/utils,castortapeutils)
+DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(dlf,castordlf)
+DependsOnLibrary(vdqm,castorvdqm)
+DependsOnLibrary(vmgr,castorvmgr)
 
 TAPE_AGGREGATOR_SRCS = \
   ../../../../castor/tape/aggregator/LogHelper.cpp \
@@ -49,6 +47,6 @@ TESTAGGREGATORBIN_SRCS = \
   $(TAPE_LEGACYMSG_SRCS) \
   $(TAPE_NET_SRCS)
 
-TESTAGGREGATORBIN_OBJS = $(TESTAGGREGATORBIN_SRCS:.cpp=.Osuf)
+TESTAGGREGATORBIN_OBJS = $(TESTAGGREGATORBIN_SRCS:.cpp=.o)
 
-NormalProgramTarget(testaggregator,$(TESTAGGREGATORBIN_OBJS),$(DEPLIB),$(LIBS),750)
+NormalProgramTarget(testaggregator,$(TESTAGGREGATORBIN_OBJS),,,750)

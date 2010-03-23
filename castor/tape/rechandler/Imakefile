@@ -25,17 +25,16 @@
 #
 
 CXXFLAGS += -I $(ORACLE_HOME)/rdbms/public $(PYTHONINC)
-LD = g++
-LIBS = -L$(ORACLE_HOME)/lib -locci -lclntsh 
+LDFLAGS = -L$(ORACLE_HOME)/lib -locci -lclntsh 
 
-DependsOnLibrary(..,castorclient)
-DependsOnLibrary(../db/cnv,castorcnvs)
-DependsOnLibrary(../../common,castorcommon)
-DependsOnLibrary(../db/newora,castorcommonora)
-DependsOnLibrary(../../dlf,castordlf)
-DependsOnLibrary(../tape/python,castortapepython)
-DependsOnLibrary(../tape/utils,castortapeutils)
-DependsOnLibrary(../../vdqm,castorvdqm)
+DependsOnLibrary(castor,castorclient)
+DependsOnLibrary(castor/db/cnv,castorcnvs)
+DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(castor/db/newora,castorcommonora)
+DependsOnLibrary(dlf,castordlf)
+DependsOnLibrary(castor/tape/python,castortapepython)
+DependsOnLibrary(castor/tape/utils,castortapeutils)
+DependsOnLibrary(vdqm,castorvdqm)
 
 RECHANDLERDAEMONBIN_SRCS = \
 	RecHandlerDaemon.cpp \
@@ -44,8 +43,8 @@ RECHANDLERDAEMONBIN_SRCS = \
 	RecHandlerThread.cpp \
 	ora/OraRecHandlerSvc.cpp   
 
-RECHANDLERDAEMONBIN_OBJS = $(RECHANDLERDAEMONBIN_SRCS:.cpp=.Osuf)
-NormalProgramTarget(rechandlerd,$(RECHANDLERDAEMONBIN_OBJS),$(DEPLIB),$(LIBS),750)
+RECHANDLERDAEMONBIN_OBJS = $(RECHANDLERDAEMONBIN_SRCS:.cpp=.o)
+NormalProgramTarget(rechandlerd,$(RECHANDLERDAEMONBIN_OBJS),,,750)
 MakeDir(/var/log/castor,0755)
 ADMMANPAGE(rechandlerd)
 LOGROTATE(castor-rechandler-server,../../..,install)

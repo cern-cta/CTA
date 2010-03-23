@@ -25,10 +25,8 @@
 
 SUBDIRS = rmmaster rmnode admin
 
-LD = g++
-
-DependsOnLibrary(../common,castorcommon)
-DependsOnLibrary(,castorclient)
+DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(castor,castorclient)
 
 STGLIB_SRCS = ClusterStatus.cpp \
               DiskServerStatus.cpp \
@@ -51,13 +49,13 @@ STGLIB_SRCS = ClusterStatus.cpp \
               ../io/StreamFileSystemStateReportCnv.cpp \
               ../io/StreamFileSystemStateAckCnv.cpp \
               ../io/StreamMonitorMessageAckCnv.cpp
-STGLIB_OBJS = $(STGLIB_SRCS:.cpp=.Osuf)
-SharedLibraryTarget(castormonitor,$(STGLIB_OBJS),$(DEPLIB),$(LIBS))
+STGLIB_OBJS = $(STGLIB_SRCS:.cpp=.o)
+SharedLibraryTarget(castormonitor,$(STGLIB_OBJS),,)
 
 RMGETNODESLIBS = SharedLibraryTargetName(castormonitor)
-NormalProgramTarget(rmGetNodes,RmGetNodes.Osuf,$(RMGETNODESLIBS) $(DEPLIB),$(RMGETNODESLIBS) $(LIBS),750)
-NormalProgramTarget(checkSharedMemory,checkSharedMemory.Osuf,$(RMGETNODESLIBS) $(DEPLIB),$(RMGETNODESLIBS) $(LIBS),750)
+NormalProgramTarget(rmGetNodes,RmGetNodes.o,$(RMGETNODESLIBS),$(RMGETNODESLIBS),750)
+NormalProgramTarget(checkSharedMemory,checkSharedMemory.o,$(RMGETNODESLIBS),$(RMGETNODESLIBS),750)
 
 
 DUMPSHAREDMEMORYLIBS = SharedLibraryTargetName(castormonitor)
-NormalProgramTarget(dumpSharedMemory,DumpSharedMemory.Osuf,$(DUMPSHAREDMEMORYLIBS) $(DEPLIB),$(DUMPSHAREDMEMORYLIBS) $(LIBS),750)
+NormalProgramTarget(dumpSharedMemory,DumpSharedMemory.o,$(DUMPSHAREDMEMORYLIBS),$(DUMPSHAREDMEMORYLIBS),750)

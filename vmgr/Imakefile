@@ -12,13 +12,13 @@ LOGFILE = $(LOGDIR)/vmgrd.log
 VMGRCONFIG = VmgrConfigFile
 #if BuildSecureVmgr
 SECURITYFLAG=-DCSEC
-LIBS += -ldl
+LDFLAGS += -ldl
 #endif
 CPPFLAGS += -DBIN=\"$(BIN)\" -DLOGFILE=\"$(LOGFILE)\" -DVMGRCONFIG=\"$(VMGRCONFIG)\" -DUSE_ORACLE -I$(ORACLE_HOME)/precomp/public $(SECURITYFLAG)
 
-DependsOnLibrary(ns,castorns)
-DependsOnLibrary(common,castorcommon)
-DependsOnLibrary(upv,castorupv)
+CommonDependsOnLibrary(ns,castorns)
+CommonDependsOnLibrary(common,castorcommon)
+CommonDependsOnLibrary(upv,castorupv)
 
 MakeDir($(LOGDIR),0755)
 vmgr_oracle_ifce.c: vmgr_oracle_ifce.pc
@@ -30,17 +30,17 @@ vmgr_oracle_ifce.o: vmgr_oracle_ifce.c
 	$(COMPILE.c) $(OUTPUT_OPTION) -Wno-error $<
 
 FilesToClean += vmgr_oracle_ifce.c vmgr_oracle_ifce.lis
-VMGRD_OBJS = vmgr_main.Osuf vmgr_oracle_ifce.Osuf vmgr_procreq.Osuf sendrep.Osuf vmgrlogit.Osuf
+VMGRD_OBJS = vmgr_main.o vmgr_oracle_ifce.o vmgr_procreq.o sendrep.o vmgrlogit.o
 ORALIBS= -L$(ORACLE_HOME)/lib -lclntsh
-NormalProgramTarget(vmgrd,$(VMGRD_OBJS), $(DEPLIB), $(ORALIBS) $(LIBS),750)
+NormalProgramTarget(vmgrd,$(VMGRD_OBJS),,$(ORALIBS),750)
 ADMMANPAGE(vmgrd)
 LOGROTATE(castor-vmgr-server,..,install)
 SYSCONFIG(vmgrd,install)
 INITSCRIPT(vmgrd,install)
 CONFIGFILE(VMGR,..,install)
 
-VMGRLIB_OBJS = vmgr_apiinit.Osuf vmgr_deletedenmap.Osuf vmgr_deletedgnmap.Osuf vmgr_deletelibrary.Osuf vmgr_deletemodel.Osuf vmgr_deletepool.Osuf vmgr_deletetape.Osuf vmgr_deltag.Osuf vmgr_enterdenmap.Osuf vmgr_enterdgnmap.Osuf vmgr_enterlibrary.Osuf vmgr_entermodel.Osuf vmgr_enterpool.Osuf vmgr_entertape.Osuf vmgr_errmsg.Osuf vmgr_gettag.Osuf vmgr_gettape.Osuf vmgr_listdenmap.Osuf vmgr_listdgnmap.Osuf vmgr_listlibrary.Osuf vmgr_listmodel.Osuf vmgr_listpool.Osuf vmgr_listtape.Osuf vmgr_modifylibrary.Osuf vmgr_modifymodel.Osuf vmgr_modifypool.Osuf vmgr_modifytape.Osuf vmgr_querylibrary.Osuf vmgr_querymodel.Osuf vmgr_querypool.Osuf vmgr_querytape.Osuf vmgr_reclaim.Osuf vmgr_settag.Osuf vmgr_tpmounted.Osuf vmgr_updatetape.Osuf send2vmgr.Osuf vmgrcheck.Osuf
-ClientSharedLibraryTarget(castorvmgr,$(VMGRLIB_OBJS),$(DEPLIB),$(LIBS))
+VMGRLIB_OBJS = vmgr_apiinit.o vmgr_deletedenmap.o vmgr_deletedgnmap.o vmgr_deletelibrary.o vmgr_deletemodel.o vmgr_deletepool.o vmgr_deletetape.o vmgr_deltag.o vmgr_enterdenmap.o vmgr_enterdgnmap.o vmgr_enterlibrary.o vmgr_entermodel.o vmgr_enterpool.o vmgr_entertape.o vmgr_errmsg.o vmgr_gettag.o vmgr_gettape.o vmgr_listdenmap.o vmgr_listdgnmap.o vmgr_listlibrary.o vmgr_listmodel.o vmgr_listpool.o vmgr_listtape.o vmgr_modifylibrary.o vmgr_modifymodel.o vmgr_modifypool.o vmgr_modifytape.o vmgr_querylibrary.o vmgr_querymodel.o vmgr_querypool.o vmgr_querytape.o vmgr_reclaim.o vmgr_settag.o vmgr_tpmounted.o vmgr_updatetape.o send2vmgr.o vmgrcheck.o
+ClientSharedLibraryTarget(castorvmgr,$(VMGRLIB_OBJS),,)
 
 LIBMANPAGE(vmgr_deletedenmap)
 LIBMANPAGE(vmgr_deletedgnmap)
@@ -78,30 +78,30 @@ LIBMANPAGE(vmgr_tpmounted)
 LIBMANPAGE(vmgr_updatetape)
 
 VMGRLIB = SharedLibraryTargetName(castorvmgr)
-ClientProgramTarget(vmgrdeletedenmap,vmgrdeletedenmap.Osuf,$(VMGRLIB) $(DEPLIB),$(VMGRLIB) $(LIBS),755)
-ClientProgramTarget(vmgrdeletedgnmap,vmgrdeletedgnmap.Osuf,$(VMGRLIB) $(DEPLIB),$(VMGRLIB) $(LIBS),755)
-ClientProgramTarget(vmgrdeletelibrary,vmgrdeletelibrary.Osuf,$(VMGRLIB) $(DEPLIB),$(VMGRLIB) $(LIBS),755)
-ClientProgramTarget(vmgrdeletemodel,vmgrdeletemodel.Osuf,$(VMGRLIB) $(DEPLIB),$(VMGRLIB) $(LIBS),755)
-ClientProgramTarget(vmgrdeletepool,vmgrdeletepool.Osuf,$(VMGRLIB) $(DEPLIB),$(VMGRLIB) $(LIBS),755)
-ClientProgramTarget(vmgrdeletetape,vmgrdeletetape.Osuf,$(VMGRLIB) $(DEPLIB),$(VMGRLIB) $(LIBS),755)
-ClientProgramTarget(vmgrdeltag,vmgrdeltag.Osuf,$(VMGRLIB) $(DEPLIB),$(VMGRLIB) $(LIBS),755)
-ClientProgramTarget(vmgrenterdenmap,vmgrenterdenmap.Osuf,$(VMGRLIB) $(DEPLIB),$(VMGRLIB) $(LIBS),755)
-ClientProgramTarget(vmgrenterdgnmap,vmgrenterdgnmap.Osuf,$(VMGRLIB) $(DEPLIB),$(VMGRLIB) $(LIBS),755)
-ClientProgramTarget(vmgrenterlibrary,vmgrenterlibrary.Osuf,$(VMGRLIB) $(DEPLIB),$(VMGRLIB) $(LIBS),755)
-ClientProgramTarget(vmgrentermodel,vmgrentermodel.Osuf,$(VMGRLIB) $(DEPLIB),$(VMGRLIB) $(LIBS),755)
-ClientProgramTarget(vmgrenterpool,vmgrenterpool.Osuf,$(VMGRLIB) $(DEPLIB),$(VMGRLIB) $(LIBS),755)
-ClientProgramTarget(vmgrentertape,vmgrentertape.Osuf,$(VMGRLIB) $(DEPLIB),$(VMGRLIB) $(LIBS),755)
-ClientProgramTarget(vmgrgettag,vmgrgettag.Osuf,$(VMGRLIB) $(DEPLIB),$(VMGRLIB) $(LIBS),755)
-ClientProgramTarget(vmgrlistdenmap,vmgrlistdenmap.Osuf,$(VMGRLIB) $(DEPLIB),$(VMGRLIB) $(LIBS),755)
-ClientProgramTarget(vmgrlistdgnmap,vmgrlistdgnmap.Osuf,$(VMGRLIB) $(DEPLIB),$(VMGRLIB) $(LIBS),755)
-ClientProgramTarget(vmgrlistlibrary,vmgrlistlibrary.Osuf,$(VMGRLIB) $(DEPLIB),$(VMGRLIB) $(LIBS),755)
-ClientProgramTarget(vmgrlistmodel,vmgrlistmodel.Osuf,$(VMGRLIB) $(DEPLIB),$(VMGRLIB) $(LIBS),755)
-ClientProgramTarget(vmgrlistpool,vmgrlistpool.Osuf,$(VMGRLIB) $(DEPLIB),$(VMGRLIB) $(LIBS),755)
-ClientProgramTarget(vmgrlisttape,vmgrlisttape.Osuf,$(VMGRLIB) $(DEPLIB),$(VMGRLIB) $(LIBS),755)
-ClientProgramTarget(vmgrmodifylibrary,vmgrmodifylibrary.Osuf,$(VMGRLIB) $(DEPLIB),$(VMGRLIB) $(LIBS),755)
-ClientProgramTarget(vmgrmodifypool,vmgrmodifypool.Osuf,$(VMGRLIB) $(DEPLIB),$(VMGRLIB) $(LIBS),755)
-ClientProgramTarget(vmgrmodifytape,vmgrmodifytape.Osuf,$(VMGRLIB) $(DEPLIB),$(VMGRLIB) $(LIBS),755)
-ClientProgramTarget(vmgrsettag,vmgrsettag.Osuf,$(VMGRLIB) $(DEPLIB),$(VMGRLIB) $(LIBS),755)
+ClientProgramTarget(vmgrdeletedenmap,vmgrdeletedenmap.o,$(VMGRLIB),$(VMGRLIB),755)
+ClientProgramTarget(vmgrdeletedgnmap,vmgrdeletedgnmap.o,$(VMGRLIB),$(VMGRLIB),755)
+ClientProgramTarget(vmgrdeletelibrary,vmgrdeletelibrary.o,$(VMGRLIB),$(VMGRLIB),755)
+ClientProgramTarget(vmgrdeletemodel,vmgrdeletemodel.o,$(VMGRLIB),$(VMGRLIB),755)
+ClientProgramTarget(vmgrdeletepool,vmgrdeletepool.o,$(VMGRLIB),$(VMGRLIB),755)
+ClientProgramTarget(vmgrdeletetape,vmgrdeletetape.o,$(VMGRLIB),$(VMGRLIB),755)
+ClientProgramTarget(vmgrdeltag,vmgrdeltag.o,$(VMGRLIB),$(VMGRLIB),755)
+ClientProgramTarget(vmgrenterdenmap,vmgrenterdenmap.o,$(VMGRLIB),$(VMGRLIB),755)
+ClientProgramTarget(vmgrenterdgnmap,vmgrenterdgnmap.o,$(VMGRLIB),$(VMGRLIB),755)
+ClientProgramTarget(vmgrenterlibrary,vmgrenterlibrary.o,$(VMGRLIB),$(VMGRLIB),755)
+ClientProgramTarget(vmgrentermodel,vmgrentermodel.o,$(VMGRLIB),$(VMGRLIB),755)
+ClientProgramTarget(vmgrenterpool,vmgrenterpool.o,$(VMGRLIB),$(VMGRLIB),755)
+ClientProgramTarget(vmgrentertape,vmgrentertape.o,$(VMGRLIB),$(VMGRLIB),755)
+ClientProgramTarget(vmgrgettag,vmgrgettag.o,$(VMGRLIB),$(VMGRLIB),755)
+ClientProgramTarget(vmgrlistdenmap,vmgrlistdenmap.o,$(VMGRLIB),$(VMGRLIB),755)
+ClientProgramTarget(vmgrlistdgnmap,vmgrlistdgnmap.o,$(VMGRLIB),$(VMGRLIB),755)
+ClientProgramTarget(vmgrlistlibrary,vmgrlistlibrary.o,$(VMGRLIB),$(VMGRLIB),755)
+ClientProgramTarget(vmgrlistmodel,vmgrlistmodel.o,$(VMGRLIB),$(VMGRLIB),755)
+ClientProgramTarget(vmgrlistpool,vmgrlistpool.o,$(VMGRLIB),$(VMGRLIB),755)
+ClientProgramTarget(vmgrlisttape,vmgrlisttape.o,$(VMGRLIB),$(VMGRLIB),755)
+ClientProgramTarget(vmgrmodifylibrary,vmgrmodifylibrary.o,$(VMGRLIB),$(VMGRLIB),755)
+ClientProgramTarget(vmgrmodifypool,vmgrmodifypool.o,$(VMGRLIB),$(VMGRLIB),755)
+ClientProgramTarget(vmgrmodifytape,vmgrmodifytape.o,$(VMGRLIB),$(VMGRLIB),755)
+ClientProgramTarget(vmgrsettag,vmgrsettag.o,$(VMGRLIB),$(VMGRLIB),755)
 EXEMANPAGE(vmgrdeletedenmap)
 EXEMANPAGE(vmgrdeletedgnmap)
 EXEMANPAGE(vmgrdeletelibrary)

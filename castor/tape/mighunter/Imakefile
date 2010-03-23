@@ -25,16 +25,15 @@
 #
 
 CXXFLAGS += -I $(ORACLE_HOME)/rdbms/public $(PYTHONINC)
-LD = g++
-LIBS = -L$(ORACLE_HOME)/lib -locci -lclntsh 
+LDFLAGS += -L$(ORACLE_HOME)/lib -locci -lclntsh 
 
-DependsOnLibrary(..,castorclient)
-DependsOnLibrary(../db/cnv,castorcnvs)
-DependsOnLibrary(../../common,castorcommon)
-DependsOnLibrary(../db/newora,castorcommonora)
-DependsOnLibrary(../../dlf,castordlf)
-DependsOnLibrary(../tape/python,castortapepython)
-DependsOnLibrary(../tape/utils,castortapeutils)
+DependsOnLibrary(castor,castorclient)
+DependsOnLibrary(castor/db/cnv,castorcnvs)
+DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(castor/db/newora,castorcommonora)
+DependsOnLibrary(dlf,castordlf)
+DependsOnLibrary(castor/tape/python,castortapepython)
+DependsOnLibrary(castor/tape/utils,castortapeutils)
 
 MIGHUNTERDAEMONBIN_SRCS = \
   MigHunterDaemon.cpp \
@@ -44,9 +43,9 @@ MIGHUNTERDAEMONBIN_SRCS = \
   StreamThread.cpp \
   ora/OraMigHunterSvc.cpp
 
-MIGHUNTERDAEMONBIN_OBJS = $(MIGHUNTERDAEMONBIN_SRCS:.cpp=.Osuf)
+MIGHUNTERDAEMONBIN_OBJS = $(MIGHUNTERDAEMONBIN_SRCS:.cpp=.o)
 
-NormalProgramTarget(mighunterd,$(MIGHUNTERDAEMONBIN_OBJS),$(DEPLIB),$(LIBS),750)
+NormalProgramTarget(mighunterd,$(MIGHUNTERDAEMONBIN_OBJS),,,750)
 MakeDir(/var/log/castor,0755)
 ADMMANPAGE(mighunterd)
 LOGROTATE(castor-mighunter-server,../../..,install)

@@ -7,7 +7,6 @@ COMM       @(#)Imakefile,v 1.24 2005/12/06 10:52:56 CERN IT-PDP/DM Jean-Philippe
 COMM    Make HSM admin tools.
 
 CPPFLAGS += -DORAVDQMCONFIGFILE=\"/etc/castor/ORAVDQMCONFIG\"
-LD = g++
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(dlf,castordlf)
@@ -17,28 +16,28 @@ DependsOnLibrary(castor,castorclient)
 DependsOnLibrary(vmgr,castorvmgr)
 DependsOnLibrary(rfio,castorrfio)
 
-NormalProgramTarget(reclaim,reclaim.Osuf,$(DEPLIB),$(LIBS),755)
-NormalProgramTarget(enterFileClass,enterFileClass.Osuf,$(DEPLIB),$(LIBS),755)
-NormalProgramTarget(enterSvcClass,enterSvcClass.Osuf,$(DEPLIB),$(LIBS),755)
-NormalProgramTarget(modifyFileClass,modifyFileClass.Osuf,$(DEPLIB),$(LIBS),755)
-NormalProgramTarget(modifySvcClass,modifySvcClass.Osuf,$(DEPLIB),$(LIBS),755)
-NormalProgramTarget(deleteFileClass,deleteFileClass.Osuf,$(DEPLIB),$(LIBS),755)
-NormalProgramTarget(deleteSvcClass,deleteSvcClass.Osuf,$(DEPLIB),$(LIBS),755)
-NormalProgramTarget(adler32,adler32.Osuf,$(DEPLIB),$(LIBS) -lz,755)
-NormalProgramTarget(c2probe,c2probe.Osuf,$(DEPLIB),-pthread $(LIBS),755)
-NormalProgramTarget(listPriority,listPriority.Osuf,$(DEPLIB),$(LIBS),755)
-NormalProgramTarget(enterPriority,enterPriority.Osuf,$(DEPLIB),$(LIBS),755)
-NormalProgramTarget(deletePriority,deletePriority.Osuf,$(DEPLIB),$(LIBS),755)
+NormalProgramTarget(reclaim,reclaim.o,,,755)
+NormalProgramTarget(enterFileClass,enterFileClass.o,,,755)
+NormalProgramTarget(enterSvcClass,enterSvcClass.o,,,755)
+NormalProgramTarget(modifyFileClass,modifyFileClass.o,,,755)
+NormalProgramTarget(modifySvcClass,modifySvcClass.o,,,755)
+NormalProgramTarget(deleteFileClass,deleteFileClass.o,,,755)
+NormalProgramTarget(deleteSvcClass,deleteSvcClass.o,,,755)
+NormalProgramTarget(adler32,adler32.o,, -lz,755)
+NormalProgramTarget(c2probe,c2probe.o,,-pthread,755)
+NormalProgramTarget(listPriority,listPriority.o,,,755)
+NormalProgramTarget(enterPriority,enterPriority.o,,,755)
+NormalProgramTarget(deletePriority,deletePriority.o,,,755)
 rfcpupd.c: ../rfio/rfcp.c
 	sed 's/| *O_TRUNC//' $< | sed 's/O_WRONLY/O_RDWR|O_APPEND/' > $@
-rfcpupd.Osuf: rfcpupd.c
+rfcpupd.o: rfcpupd.c
 	$(COMPILE.c) $(OUTPUT_OPTION) -DSACCT $(STAGERSUPERUSER) $(STAGERSUPERGROUP) $<
 FilesToClean += rfcpupd.c
-NormalProgramTarget(rfcpupd,rfcpupd.Osuf,$(DEPLIB), $(LIBS),755)
-NormalProgramTarget(stager_actualget,stager_actualget.Osuf,$(DEPLIB), $(LIBS),755)
-NormalProgramTarget(stager_actualput,stager_actualput.Osuf,$(DEPLIB), $(LIBS),755)
+NormalProgramTarget(rfcpupd,rfcpupd.o,,,755)
+NormalProgramTarget(stager_actualget,stager_actualget.o,,,755)
+NormalProgramTarget(stager_actualput,stager_actualput.o,,,755)
 
-NormalProgramTarget(vdqmDBInit,vdqmDBInit.Osuf,$(DEPLIB),$(LIBS),755)
+NormalProgramTarget(vdqmDBInit,vdqmDBInit.o,,,755)
 
 InstallTarget(cleanLostFiles,755,$(BIN))
 InstallTarget(diskServer_qry,755,$(BIN))

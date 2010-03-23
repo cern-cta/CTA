@@ -12,7 +12,7 @@ LOGDIR = /var/log/castor
 SACCTDIR = SacctDir
 SACCTFILE = SacctDir/sacct
 SCONFIGFILE = ShiftConfigFile
-TAPEACCT = tapeacct.Osuf
+TAPEACCT = tapeacct.o
 TPCONFIG = TapeConfigFile
 #if !CASTOR_NOSTK
 CDKFLG = -DCDK -DLINUX
@@ -21,7 +21,7 @@ LIBCDK = -L InstallLibDir/CDK -lapi -lutl -lipc -lcl
 #endif
 #if BuildSecureTape
 SECURITYFLAG=-DCSEC
-LIBS+= -ldl
+LDFLAGS += -ldl
 #endif
 
 COMM######################### FLAGS ##############################
@@ -66,7 +66,7 @@ usrwrttpmrk.c:	wrttpmrk.c
 
 FilesToClean += usrlocate.c usrreadlbl.c usrrwndtape.c usrskiptape.c usrsmcsubr.c usrsmcsubr2.c usrtperror.c usrusrmsg.c usrwritelbl.c usrwrttpmrk.c
 
-sendscsicmd.Osuf: sendscsicmd.c
+sendscsicmd.o: sendscsicmd.c
 	@if [ -f "/usr/src/linux/include/scsi/sg.h" ] ;\
 	then \
 		$(COMPILE.c) $(OUTPUT_OPTION) -DTAPE -DSCSIINC="\"/usr/src/linux/include/scsi/sg.h\"" $< ;\
@@ -74,37 +74,37 @@ sendscsicmd.Osuf: sendscsicmd.c
 		$(COMPILE.c) $(OUTPUT_OPTION) -DTAPE -DSCSIINC="\"/usr/include/scsi/sg.h\"" $< ;\
 	fi
 
-usrlocate.Osuf: usrlocate.c ../h/Ctape.h ../h/serrno.h
+usrlocate.o: usrlocate.c ../h/Ctape.h ../h/serrno.h
 	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
-usrreadlbl.Osuf: usrreadlbl.c ../h/Ctape.h ../h/serrno.h
+usrreadlbl.o: usrreadlbl.c ../h/Ctape.h ../h/serrno.h
 	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
-usrrwndtape.Osuf: usrrwndtape.c ../h/Ctape.h
+usrrwndtape.o: usrrwndtape.c ../h/Ctape.h
 	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
-usrskiptape.Osuf: usrskiptape.c ../h/Ctape.h
+usrskiptape.o: usrskiptape.c ../h/Ctape.h
 	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
-usrsmcsubr.Osuf: usrsmcsubr.c ../h/Ctape.h ../h/scsictl.h ../h/smc.h
+usrsmcsubr.o: usrsmcsubr.c ../h/Ctape.h ../h/scsictl.h ../h/smc.h
 	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
-usrsmcsubr2.Osuf: usrsmcsubr2.c ../h/Ctape.h ../h/smc.h
+usrsmcsubr2.o: usrsmcsubr2.c ../h/Ctape.h ../h/smc.h
 	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
-usrtperror.Osuf: usrtperror.c ../h/Ctape.h ../h/serrno.h
+usrtperror.o: usrtperror.c ../h/Ctape.h ../h/serrno.h
 	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
-usrusrmsg.Osuf:	usrusrmsg.c ../h/Ctape.h
+usrusrmsg.o:	usrusrmsg.c ../h/Ctape.h
 	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
-usrwritelbl.Osuf: usrwritelbl.c ../h/Ctape.h
+usrwritelbl.o: usrwritelbl.c ../h/Ctape.h
 	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
-usrwrttpmrk.Osuf: usrwrttpmrk.c ../h/Ctape.h
+usrwrttpmrk.o: usrwrttpmrk.c ../h/Ctape.h
 	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
 
-DependsOnLibrary(common,castorcommon)
-DependsOnLibrary(vdqm,castorvdqm)
-DependsOnLibrary(vmgr,castorvmgr)
-DependsOnLibrary(dlf,castordlf)
-DependsOnLibrary(rfio,castorrfio)
-DependsOnLibrary(upv,castorupv)
+TapeDependsOnLibrary(common,castorcommon)
+TapeDependsOnLibrary(vdqm,castorvdqm)
+TapeDependsOnLibrary(vmgr,castorvmgr)
+TapeDependsOnLibrary(dlf,castordlf)
+TapeDependsOnLibrary(rfio,castorrfio)
+TapeDependsOnLibrary(upv,castorupv)
 
-TPLIB_OBJS = Ctape_config.Osuf Ctape_devinfo.Osuf Ctape_dmpfil.Osuf Ctape_drvinfo.Osuf Ctape_errmsg.Osuf Ctape_info.Osuf Ctape_kill.Osuf Ctape_label.Osuf Ctape_mount.Osuf Ctape_position.Osuf Ctape_reserve.Osuf Ctape_rls.Osuf Ctape_rstatus.Osuf Ctape_status.Osuf asc2ebc.Osuf chkdirw.Osuf cvtden.Osuf ebc2asc.Osuf findpgrp.Osuf getcompstat.Osuf initlabel.Osuf send2tpd.Osuf tmscheck.Osuf usrlbl.Osuf usrlocate.Osuf usrreadlbl.Osuf usrrwndtape.Osuf usrskiptape.Osuf usrsmcsubr.Osuf usrsmcsubr2.Osuf usrtperror.Osuf usrusrmsg.Osuf usrwritelbl.Osuf usrwrttpmrk.Osuf tplogger.Osuf tplogger_messages.Osuf sendscsicmd.Osuf
-RMCLIB_OBJS = ../rmc/rmc_dismount.Osuf ../rmc/rmc_errmsg.Osuf ../rmc/rmc_export.Osuf ../rmc/rmc_find_cartridge.Osuf ../rmc/rmc_get_geometry.Osuf ../rmc/rmc_import.Osuf ../rmc/rmc_mount.Osuf ../rmc/rmc_read_elem_status.Osuf ../rmc/send2rmc.Osuf
-TapeSharedLibraryTarget(castortape,$(TPLIB_OBJS) $(RMCLIB_OBJS) $(IBMR2_OBJS),$(DEPLIB),$(LIBS))
+TPLIB_OBJS = Ctape_config.o Ctape_devinfo.o Ctape_dmpfil.o Ctape_drvinfo.o Ctape_errmsg.o Ctape_info.o Ctape_kill.o Ctape_label.o Ctape_mount.o Ctape_position.o Ctape_reserve.o Ctape_rls.o Ctape_rstatus.o Ctape_status.o asc2ebc.o chkdirw.o cvtden.o ebc2asc.o findpgrp.o getcompstat.o initlabel.o send2tpd.o tmscheck.o usrlbl.o usrlocate.o usrreadlbl.o usrrwndtape.o usrskiptape.o usrsmcsubr.o usrsmcsubr2.o usrtperror.o usrusrmsg.o usrwritelbl.o usrwrttpmrk.o tplogger.o tplogger_messages.o sendscsicmd.o
+RMCLIB_OBJS = ../rmc/rmc_dismount.o ../rmc/rmc_errmsg.o ../rmc/rmc_export.o ../rmc/rmc_find_cartridge.o ../rmc/rmc_get_geometry.o ../rmc/rmc_import.o ../rmc/rmc_mount.o ../rmc/rmc_read_elem_status.o ../rmc/send2rmc.o
+TapeSharedLibraryTarget(castortape,$(TPLIB_OBJS) $(RMCLIB_OBJS) $(IBMR2_OBJS),,)
 
 LIBMANPAGE(Ctape_dmpfil)
 LIBMANPAGE(Ctape_info)
@@ -125,27 +125,27 @@ LIBMANPAGE(wrttpmrk)
 
 TAPELIB = SharedLibraryTargetName(castortape)
 
-TapeProgramTarget(tpconfig,tpconfig.Osuf,$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),755)
-TapeProgramTarget(tprstat,tprstat.Osuf,$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),755)
-TapeProgramTarget(tpstat,tpstat.Osuf,$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),755)
+TapeProgramTarget(tpconfig,tpconfig.o,$(TAPELIB),$(TAPELIB),755)
+TapeProgramTarget(tprstat,tprstat.o,$(TAPELIB),$(TAPELIB),755)
+TapeProgramTarget(tpstat,tpstat.o,$(TAPELIB),$(TAPELIB),755)
 EXEMANPAGE(tpconfig)
 EXEMANPAGE(tprstat)
 EXEMANPAGE(tpstat)
 
 TapeMakeDir($(LOGDIR),0755)
-TAPED_OBJS = tpdaemon.Osuf checkjobdied.Osuf cvtden.Osuf sendrep.Osuf tplogit.Osuf usrmsg.Osuf
-CONFDRIVE_OBJS = confdrive.Osuf sendrep.Osuf tplogit.Osuf
-MOUNTTAPE_OBJS = mounttape.Osuf asc2ebc.Osuf buildhdrlbl.Osuf buildvollbl.Osuf ebc2asc.Osuf getdrvstatus.Osuf inquiry.Osuf rbtsubr.Osuf readlbl.Osuf rwndtape.Osuf send2tpd.Osuf sendrep.Osuf sendtmsmount.Osuf setdens.Osuf skiptape.Osuf smcsubr.Osuf tperror.Osuf tplogit.Osuf unldtape.Osuf usrmsg.Osuf writelbl.Osuf wrttpmrk.Osuf mircheck.Osuf
-POSOVL_OBJS = posovl.Osuf buildhdrlbl.Osuf builduhl.Osuf buildvollbl.Osuf ebc2asc.Osuf getdrvstatus.Osuf inquiry.Osuf locate.Osuf posittape.Osuf readlbl.Osuf rwndtape.Osuf send2tpd.Osuf sendrep.Osuf skiptape.Osuf tperror.Osuf tplogit.Osuf usrmsg.Osuf
-RLSTAPE_OBJS = rlstape.Osuf getdrvstatus.Osuf rbtsubr.Osuf send2tpd.Osuf smcsubr.Osuf sendrep.Osuf sendtmsmount.Osuf tperror.Osuf tplogit.Osuf usrmsg.Osuf unldtape.Osuf tapealertcheck.Osuf
-TapeProgramTarget(taped,$(TAPED_OBJS) $(IBMR2_OBJS) $(TAPEACCT), $(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),750)
-TapeProgramTarget(confdrive,$(CONFDRIVE_OBJS) $(TAPEACCT),$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),750)
-TapeProgramTarget(mounttape,$(MOUNTTAPE_OBJS) $(TAPEACCT),$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB) $(LIBCDK),750)
-TapeProgramTarget(posovl,$(POSOVL_OBJS) $(TAPEACCT),$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),750)
-TapeProgramTarget(rlstape,$(RLSTAPE_OBJS) $(TAPEACCT), $(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB) $(LIBCDK),750)
-TapeProgramTarget(smc,smc.Osuf,$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),6755)
-TapeProgramTarget(tpdump,tpdump.Osuf,$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),755)
-TapeProgramTarget(tplabel,tplabel.Osuf,$(TAPELIB) $(DEPLIB),$(LIBS) $(TAPELIB),755)
+TAPED_OBJS = tpdaemon.o checkjobdied.o cvtden.o sendrep.o tplogit.o usrmsg.o
+CONFDRIVE_OBJS = confdrive.o sendrep.o tplogit.o
+MOUNTTAPE_OBJS = mounttape.o asc2ebc.o buildhdrlbl.o buildvollbl.o ebc2asc.o getdrvstatus.o inquiry.o rbtsubr.o readlbl.o rwndtape.o send2tpd.o sendrep.o sendtmsmount.o setdens.o skiptape.o smcsubr.o tperror.o tplogit.o unldtape.o usrmsg.o writelbl.o wrttpmrk.o mircheck.o
+POSOVL_OBJS = posovl.o buildhdrlbl.o builduhl.o buildvollbl.o ebc2asc.o getdrvstatus.o inquiry.o locate.o posittape.o readlbl.o rwndtape.o send2tpd.o sendrep.o skiptape.o tperror.o tplogit.o usrmsg.o
+RLSTAPE_OBJS = rlstape.o getdrvstatus.o rbtsubr.o send2tpd.o smcsubr.o sendrep.o sendtmsmount.o tperror.o tplogit.o usrmsg.o unldtape.o tapealertcheck.o
+TapeProgramTarget(taped,$(TAPED_OBJS) $(IBMR2_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB),750)
+TapeProgramTarget(confdrive,$(CONFDRIVE_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB),750)
+TapeProgramTarget(mounttape,$(MOUNTTAPE_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB) $(LIBCDK),750)
+TapeProgramTarget(posovl,$(POSOVL_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB),750)
+TapeProgramTarget(rlstape,$(RLSTAPE_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB) $(LIBCDK),750)
+TapeProgramTarget(smc,smc.o,$(TAPELIB),$(TAPELIB),6755)
+TapeProgramTarget(tpdump,tpdump.o,$(TAPELIB),$(TAPELIB),755)
+TapeProgramTarget(tplabel,tplabel.o,$(TAPELIB),$(TAPELIB),755)
 ADMMANPAGE(taped)
 EXEMANPAGE(smc)
 EXEMANPAGE(tplabel)

@@ -6,11 +6,11 @@ COMM
 
 COMM 		Make CASTOR shared libraries           GENERIC
 
-DependsOnLibrary(common,castorcommon)
-DependsOnLibrary(dlf,castordlf)
-DependsOnLibrary(upv,castorupv)
-DependsOnLibrary(ns,castorns)
-DependsOnLibrary(security,castorsecurity)
-DependsOnLibrary(rfio,castorrfio)
-DependsOnLibrary(castor,castorclient)
-ClientSharedLibraryTarget(shift,,$(DEPLIB),$(LIBS))
+ClientDependsOnLibrary(common,castorcommon)
+ClientDependsOnLibrary(dlf,castordlf)
+ClientDependsOnLibrary(upv,castorupv)
+ClientDependsOnLibrary(ns,castorns)
+ClientDependsOnLibrary(security,castorsecurity)
+ClientDependsOnLibrary(rfio,castorrfio)
+ClientDependsOnLibrary(castor,castorclient)
+ClientSharedLibraryTarget(shift,,,)

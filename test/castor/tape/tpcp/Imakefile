@@ -21,15 +21,13 @@
 # @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
 #
 
-LD = g++
-
-DependsOnLibrary(../../../castor,castorclient)
-DependsOnLibrary(../../../castor/db/cnv,castorcnvs)
-DependsOnLibrary(../../../castor/tape/utils,castortapeutils)
-DependsOnLibrary(../../../common,castorcommon)
-DependsOnLibrary(../../../dlf,castordlf)
-DependsOnLibrary(../../../vdqm,castorvdqm)
-DependsOnLibrary(../../../vmgr,castorvmgr)
+DependsOnLibrary(castor,castorclient)
+DependsOnLibrary(castor/db/cnv,castorcnvs)
+DependsOnLibrary(castor/tape/utils,castortapeutils)
+DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(dlf,castordlf)
+DependsOnLibrary(vdqm,castorvdqm)
+DependsOnLibrary(vmgr,castorvmgr)
 
 TAPE_TPCP_SRCS = \
   ../../../../castor/tape/tpcp/TapeFseqRange.cpp\
@@ -40,6 +38,6 @@ TESTTPCPBIN_SRCS = \
   TestTpcpMain.cpp \
   $(TAPE_TPCP_SRCS)
 
-TESTTPCPBIN_OBJS = $(TESTTPCPBIN_SRCS:.cpp=.Osuf)
+TESTTPCPBIN_OBJS = $(TESTTPCPBIN_SRCS:.cpp=.o)
 
-NormalProgramTarget(testtpcp,$(TESTTPCPBIN_OBJS),$(DEPLIB),$(LIBS),750)
+NormalProgramTarget(testtpcp,$(TESTTPCPBIN_OBJS),,,750)

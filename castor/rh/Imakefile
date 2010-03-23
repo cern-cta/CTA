@@ -36,18 +36,17 @@ LIB_CRYPTO=$(shell if [ -r "$(GLOBUS_LOCATION)/lib/libcrypto_$(GLOBUS_FLAVOUR).s
 LIBCSEC += $(GLOBUS_LIBS) $(LIB_CRYPTO)
 #endif
 
-LD = g++
-LIBS += -lmemcached
+LDFLAGS += -lmemcached -lstdc++
 
-DependsOnLibrary(../common,castorcommon)
-DependsOnLibrary(../dlf,castordlf)
-DependsOnLibrary(,castorclient)
-DependsOnLibrary(db/cnv,castorcnvs)
-DependsOnLibrary(../security,castorsecurity)
+DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(dlf,castordlf)
+DependsOnLibrary(castor,castorclient)
+DependsOnLibrary(castor/db/cnv,castorcnvs)
+DependsOnLibrary(security,castorsecurity)
 
 RHBIN_SRCS = Server.cpp RHThread.cpp RateLimiter.cpp RatingGroup.cpp UserCounter.cpp SvcClassCounter.cpp
-RHBIN_OBJS = $(RHBIN_SRCS:.cpp=.Osuf)
-NormalProgramTarget(rhd,$(RHBIN_OBJS),$(DEPLIB),$(LIBS),750)
+RHBIN_OBJS = $(RHBIN_SRCS:.cpp=.o)
+NormalProgramTarget(rhd,$(RHBIN_OBJS),,,750)
 MakeDir(/var/log/castor,0755)
 MakeDirWithOwnership(/var/spool/castor,stage,st,0755)
 ADMMANPAGE(rhd)

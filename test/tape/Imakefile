@@ -6,10 +6,10 @@ COMM
 
 COMM		Make CASTOR tests for "tape" directory
 
-DependsOnLibrary(../common, castorcommon)
-DependsOnLibrary(../dlf, castordlf)
-DependsOnLibrary(../vmgr, castorvmgr)
-DependsOnLibrary(../tape, castortape)
+DependsOnLibrary(common, castorcommon)
+DependsOnLibrary(dlf, castordlf)
+DependsOnLibrary(vmgr, castorvmgr)
+DependsOnLibrary(tape, castortape)
 
-NormalProgramTarget(tplogger_test,tplogger_test.Osuf,$(GLOBLIB),$(LIBS),755)
-NormalProgramTarget(Ctape_test1,Ctape_test1.Osuf,$(GLOBLIB),$(LIBS),755)
+NormalProgramTarget(tplogger_test,tplogger_test.o,$(GLOBLIB),$(LIBS),755)
+NormalProgramTarget(Ctape_test1,Ctape_test1.o,$(GLOBLIB),$(LIBS),755)
