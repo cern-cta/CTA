@@ -9,14 +9,14 @@ COMM 	Make SCSI media changer server programs.
 LOGDIR = /var/log/castor
 CPPFLAGS += -DBIN=\"$(BIN)\" -DLOGFILE=\"$(LOGDIR)/rmcd_legacy.log\"
 
-DependsOnLibrary(common,castorcommon)
-DependsOnLibrary(upv,castorupv)
-DependsOnLibrary(dlf,castordlf)
-DependsOnLibrary(tape,castortape)
+TapeDependsOnLibrary(common,castorcommon)
+TapeDependsOnLibrary(upv,castorupv)
+TapeDependsOnLibrary(dlf,castordlf)
+TapeDependsOnLibrary(tape,castortape)
 
-RMCD_OBJS = rmc_serv.Osuf rmc_procreq.Osuf rmclogit.Osuf sendrep.Osuf usrmsg.Osuf
+RMCD_OBJS = rmc_serv.o rmc_procreq.o rmclogit.o sendrep.o usrmsg.o
 OPSGRP = OperatorGid
-TapeProgramTarget(rmcd,$(RMCD_OBJS),$(DEPLIB),$(LIBS),750)
+TapeProgramTarget(rmcd,$(RMCD_OBJS),,,750)
 ADMMANPAGE(rmcd)
 TapeMakeDir($(LOGDIR),0755)
 LOGROTATE(castor-rmc-server,..,installtape)
