@@ -64,14 +64,14 @@ castor::io::StreamClientIdentificationCnv::~StreamClientIdentificationCnv() thro
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamClientIdentificationCnv::ObjType() {
+unsigned int castor::io::StreamClientIdentificationCnv::ObjType() {
   return castor::vdqm::ClientIdentification::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamClientIdentificationCnv::objType() const {
+unsigned int castor::io::StreamClientIdentificationCnv::objType() const {
   return ObjType();
 }
 
@@ -80,8 +80,8 @@ const unsigned int castor::io::StreamClientIdentificationCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamClientIdentificationCnv::createRep(castor::IAddress* address,
                                                           castor::IObject* object,
-                                                          bool endTransaction,
-                                                          unsigned int type)
+                                                          bool,
+                                                          unsigned int)
   throw (castor::exception::Exception) {
   castor::vdqm::ClientIdentification* obj = 
     dynamic_cast<castor::vdqm::ClientIdentification*>(object);

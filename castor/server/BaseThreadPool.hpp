@@ -115,7 +115,7 @@ namespace castor {
     /**
      * Gets the pool name initial as identifier for this pool
      */
-    const char getPoolId() {
+    char getPoolId() {
       return m_poolName[0];
     }
     
@@ -129,7 +129,7 @@ namespace castor {
     /**
      * Gets the number of threads belonging to this pool
      */
-    const unsigned int getNbThreads() {
+    unsigned int getNbThreads() {
       return m_nbThreads;
     }
 
@@ -137,7 +137,7 @@ namespace castor {
      * Tells whether the pool has been terminated
      * @return the value of the m_stopped flag
      */
-    const bool stopped() {
+    bool stopped() {
       return m_stopped;
     }
     

@@ -66,6 +66,12 @@ char	**argv;
 #endif
 	ENTRY (confdrive);
 
+  if (11 != argc) {
+    printf("Wrong number of arguments\n");
+    exit(-1);
+  }
+  
+
         p = getconfent ("TAPE", "TPLOGGER", 0);
         if (p && (0 == strcasecmp(p, "SYSLOG"))) {
                 tl_init_handle( &tl_tpdaemon, "syslog" ); 
@@ -95,16 +101,6 @@ char	**argv;
 			c = errno;
 		} else {
 			if (tapefd >= 0) {
-#if defined(_AIX) && defined(RS6000PCTA)
-				if (strncmp (dvrname, "mtdd", 4) == 0)
-					if (ioctl (tapefd, MTASSIGN, 0) < 0)
-						c = errno;
-#endif
-#if defined(_AIX) && defined(ADSTAR)
-				if (strcmp (dvrname, "Atape") == 0)
-					if (ioctl (tapefd, SIOC_RESERVE, 0) < 0)
-						c = errno;
-#endif
 #if defined(linux)
                                 /* set st parameters (moved here from kernel patches) */
                                 mt_cmd.mt_op = MTSETDRVBUFFER;
@@ -261,20 +257,6 @@ char	**argv;
 			tapeacct (TPCONFUP, 0, 0, jid, dgn, drive, "", 0, reason);
 #endif
 	} else {
-#if defined(_AIX) && defined(RS6000PCTA)
-		if (strncmp (dvrname, "mtdd", 4) == 0)
-			if ((tapefd = open (dvn, O_RDONLY|O_NDELAY)) >= 0) {
-				ioctl (tapefd, MTUNASSIGN, 0);
-				close (tapefd);
-			}
-#endif
-#if defined(ADSTAR)
-		if (strcmp (dvrname, "Atape") == 0)
-			if ((tapefd = open (dvn, O_RDONLY|O_NDELAY)) >= 0) {
-				ioctl (tapefd, SIOC_RELEASE, 0);
-				close (tapefd);
-			}
-#endif
 #if SACCT
 		tapeacct (TPCONFDN, 0, 0, jid, dgn, drive, "", 0, reason);
 #endif

@@ -41,14 +41,14 @@ castor::db::cnv::DbBaseCnv::DbBaseCnv(castor::ICnvSvc* cs) :
 // -----------------------------------------------------------------------
 // repType
 // -----------------------------------------------------------------------
-inline const unsigned int castor::db::cnv::DbBaseCnv::repType() const {
+inline unsigned int castor::db::cnv::DbBaseCnv::repType() const {
   return cnvSvc()->repType();
 }
 
 // -----------------------------------------------------------------------
 // RepType
 // -----------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbBaseCnv::RepType() {
+unsigned int castor::db::cnv::DbBaseCnv::RepType() {
   return castor::REP_DATABASE;
 }
 

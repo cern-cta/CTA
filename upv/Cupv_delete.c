@@ -43,12 +43,6 @@ int Cupv_delete(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt
   }
 #endif
 
-  if (priv_uid < 0 || priv_gid < 0) {
-    serrno = EINVAL;
-    return (-1);
-  }
-
-
   if (src == NULL || tgt == NULL) {
     serrno = EINVAL;
     return(-1);

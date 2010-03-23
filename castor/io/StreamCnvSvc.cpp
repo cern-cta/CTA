@@ -57,28 +57,28 @@ castor::io::StreamCnvSvc::~StreamCnvSvc() throw() {}
 // -----------------------------------------------------------------------
 // id
 // -----------------------------------------------------------------------
-const unsigned int castor::io::StreamCnvSvc::id() const {
+unsigned int castor::io::StreamCnvSvc::id() const {
   return ID();
 }
 
 // -----------------------------------------------------------------------
 // ID
 // -----------------------------------------------------------------------
-const unsigned int castor::io::StreamCnvSvc::ID() {
+unsigned int castor::io::StreamCnvSvc::ID() {
   return castor::SVC_STREAMCNV;
 }
 
 // -----------------------------------------------------------------------
 // repType
 // -----------------------------------------------------------------------
-const unsigned int castor::io::StreamCnvSvc::repType() const {
+unsigned int castor::io::StreamCnvSvc::repType() const {
   return REPTYPE();
 }
 
 // -----------------------------------------------------------------------
 // REPTYPE
 // -----------------------------------------------------------------------
-const unsigned int castor::io::StreamCnvSvc::REPTYPE() {
+unsigned int castor::io::StreamCnvSvc::REPTYPE() {
   return castor::REP_STREAM;
 }
 
@@ -87,8 +87,8 @@ const unsigned int castor::io::StreamCnvSvc::REPTYPE() {
 // -----------------------------------------------------------------------
 void castor::io::StreamCnvSvc::createRep(castor::IAddress* address,
                                          castor::IObject* object,
-                                         bool endTransaction,
-                                         unsigned int type)
+                                         bool,
+                                         unsigned int)
   throw (castor::exception::Exception) {
   castor::io::StreamAddress* ad =
     dynamic_cast <castor::io::StreamAddress*>(address);

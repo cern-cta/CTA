@@ -68,14 +68,14 @@ castor::io::StreamStageAbortRequestCnv::~StreamStageAbortRequestCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamStageAbortRequestCnv::ObjType() {
+unsigned int castor::io::StreamStageAbortRequestCnv::ObjType() {
   return castor::stager::StageAbortRequest::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamStageAbortRequestCnv::objType() const {
+unsigned int castor::io::StreamStageAbortRequestCnv::objType() const {
   return ObjType();
 }
 
@@ -84,8 +84,8 @@ const unsigned int castor::io::StreamStageAbortRequestCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamStageAbortRequestCnv::createRep(castor::IAddress* address,
                                                        castor::IObject* object,
-                                                       bool endTransaction,
-                                                       unsigned int type)
+                                                       bool,
+                                                       unsigned int)
   throw (castor::exception::Exception) {
   castor::stager::StageAbortRequest* obj = 
     dynamic_cast<castor::stager::StageAbortRequest*>(object);

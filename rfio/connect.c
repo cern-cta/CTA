@@ -399,8 +399,8 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
   Cglobals_get(&last_host_key, (void**)&last_host, last_host_len);
   strcpy(last_host, cp); /* remember to fetch back remote errs     */
   TRACE(2, "rfio", "rfio_connect: connected");
-  TRACE(2, "rfio", "rfio_connect: calling setnetio(%d)", s);
-  if (setnetio(s) < 0) {
+  TRACE(2, "rfio", "rfio_connect: calling setnetio()");
+  if (setnetio() < 0) {
     close(s);
     END_TRACE();
     return(-1);

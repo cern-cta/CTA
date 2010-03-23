@@ -148,7 +148,7 @@ void castor::tape::tapebridge::RtcpJobSubmitter::submit(
 // readReply
 //------------------------------------------------------------------------------
 void castor::tape::tapebridge::RtcpJobSubmitter::readReply(
-  castor::io::AbstractTCPSocket &sock, const int netReadWriteTimeout,
+  castor::io::AbstractTCPSocket &sock, const int,
   const char *remoteCopyType, legacymsg::RtcpJobReplyMsgBody &reply)
   throw(castor::exception::Exception) {
 

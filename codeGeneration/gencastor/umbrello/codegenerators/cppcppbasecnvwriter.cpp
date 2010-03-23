@@ -48,7 +48,7 @@ void CppCppBaseCnvWriter::writeFactory() {
 void CppCppBaseCnvWriter::writeObjType() {
   // Static method
   writeWideHeaderComment("ObjType", getIndent(), *m_stream);
-  *m_stream << getIndent() << "const unsigned int "
+  *m_stream << getIndent() << "unsigned int "
             << m_classInfo->fullPackageName << m_prefix
             << m_classInfo->className
             << "Cnv::ObjType() {" << endl;
@@ -59,7 +59,7 @@ void CppCppBaseCnvWriter::writeObjType() {
   m_indent--;
   *m_stream << "}" << endl << endl;
   writeWideHeaderComment("objType", getIndent(), *m_stream);
-  *m_stream << getIndent() << "const unsigned int "
+  *m_stream << getIndent() << "unsigned int "
             << m_classInfo->fullPackageName << m_prefix
             << m_classInfo->className
             << "Cnv::objType() const {" << endl;
@@ -75,21 +75,34 @@ void CppCppBaseCnvWriter::writeObjType() {
 // writeCreateRep
 //=============================================================================
 void CppCppBaseCnvWriter::writeCreateRep() {
+  // First prewrite the content to know which parameters are used
+  bool addressUsed = false;
+  bool endTransUsed = false;
+  bool typeUsed = false;
+  QString buffer;
+  QTextStream stream(&buffer, IO_WriteOnly);
+  m_indent++;
+  writeCreateRepContent(stream, addressUsed, endTransUsed, typeUsed);
+  m_indent--;
   // Header
   writeWideHeaderComment("createRep", getIndent(), *m_stream);
   QString str = QString("void ") + m_classInfo->packageName + "::" +
     m_prefix + m_classInfo->className + "Cnv::createRep(";
   *m_stream << getIndent() << str
-            << fixTypeName ("IAddress*", "castor", m_classInfo->packageName)
-            << " address," << endl;
+            << fixTypeName ("IAddress*", "castor", m_classInfo->packageName);
+  if (addressUsed) *m_stream << " address";
+  *m_stream << "," << endl;
   str.replace(QRegExp("."), " ");
   *m_stream << getIndent() << str
             << fixTypeName("IObject*", "castor", m_classInfo->packageName)
             << " object,"
             << endl << getIndent() << str
-            << "bool endTransaction,"
-            << endl << getIndent() << str
-            << "unsigned int type)" << endl
+            << "bool";
+  if (endTransUsed) *m_stream << " endTransaction";
+  *m_stream << "," << endl << getIndent() << str
+            << "unsigned int";
+  if (typeUsed) *m_stream << " type";
+  *m_stream << ")" << endl
             << getIndent() << "  throw ("
             << fixTypeName ("Exception",
                             "castor.exception",
@@ -104,7 +117,7 @@ void CppCppBaseCnvWriter::writeCreateRep() {
             << m_classInfo->className << "*>(object);"
             << endl;
   // Write the content of the method
-  writeCreateRepContent();
+  *m_stream << buffer;
   // End of the method
   m_indent--;
   *m_stream << "}" << endl << endl;
@@ -114,13 +127,22 @@ void CppCppBaseCnvWriter::writeCreateRep() {
 // writeBulkCreateRep
 //=============================================================================
 void CppCppBaseCnvWriter::writeBulkCreateRep() {
+  // First prewrite the content to know which parameters are used
+  bool addressUsed = false;
+  bool typeUsed = false;
+  QString buffer;
+  QTextStream stream(&buffer, IO_WriteOnly);
+  m_indent++;
+  writeBulkCreateRepContent(stream, addressUsed, typeUsed);
+  m_indent--;
   // Header
   writeWideHeaderComment("bulkCreateRep", getIndent(), *m_stream);
   QString str = QString("void ") + m_classInfo->packageName + "::" +
     m_prefix + m_classInfo->className + "Cnv::bulkCreateRep(";
   *m_stream << getIndent() << str
-            << fixTypeName ("IAddress*", "castor", m_classInfo->packageName)
-            << " address," << endl;
+            << fixTypeName ("IAddress*", "castor", m_classInfo->packageName);
+  if (addressUsed) *m_stream << " address";
+  *m_stream << "," << endl;
   str.replace(QRegExp("."), " ");
   *m_stream << getIndent() << str
             << fixTypeName("vector", "", "")
@@ -131,7 +153,9 @@ void CppCppBaseCnvWriter::writeBulkCreateRep() {
             << endl << getIndent() << str
             << "bool endTransaction,"
             << endl << getIndent() << str
-            << "unsigned int type)" << endl
+            << "unsigned int";
+  if (typeUsed) *m_stream << " type";
+  *m_stream << ")" << endl
             << getIndent() << "  throw ("
             << fixTypeName ("Exception",
                             "castor.exception",
@@ -139,7 +163,7 @@ void CppCppBaseCnvWriter::writeBulkCreateRep() {
             << ") {" << endl;
   m_indent++;
   // Write the content of the method
-  writeBulkCreateRepContent();
+  *m_stream << buffer;
   // End of the method
   m_indent--;
   *m_stream << "}" << endl << endl;
@@ -149,13 +173,21 @@ void CppCppBaseCnvWriter::writeBulkCreateRep() {
 // writeUpdateRep
 //=============================================================================
 void CppCppBaseCnvWriter::writeUpdateRep() {
+  // First prewrite the content to know which parameters are used
+  bool addressUsed = false;
+  QString buffer;
+  QTextStream stream(&buffer, IO_WriteOnly);
+  m_indent++;
+  writeUpdateRepContent(stream, addressUsed);
+  m_indent--;
   // Header
   writeWideHeaderComment("updateRep", getIndent(), *m_stream);
   QString str = QString("void ") + m_classInfo->packageName + "::" +
     m_prefix + m_classInfo->className + "Cnv::updateRep(";
   *m_stream << getIndent() << str
-            << fixTypeName ("IAddress*", "castor", m_classInfo->packageName)
-            << " address," << endl;
+            << fixTypeName ("IAddress*", "castor", m_classInfo->packageName);
+  if (addressUsed) *m_stream << " address";
+  *m_stream << "," << endl;
   str.replace(QRegExp("."), " ");
   *m_stream << getIndent() << str
             << fixTypeName("IObject*", "castor", m_classInfo->packageName)
@@ -169,7 +201,7 @@ void CppCppBaseCnvWriter::writeUpdateRep() {
             << ") {" << endl;
   m_indent++;
   // Write the content of the method
-  writeUpdateRepContent();
+  *m_stream << buffer;
   // End of the method
   m_indent--;
   *m_stream << "}" << endl << endl;
@@ -179,13 +211,21 @@ void CppCppBaseCnvWriter::writeUpdateRep() {
 // writeDeleteRep
 //=============================================================================
 void CppCppBaseCnvWriter::writeDeleteRep() {
+  // First prewrite the content to know which parameters are used
+  bool addressUsed = false;
+  QString buffer;
+  QTextStream stream(&buffer, IO_WriteOnly);
+  m_indent++;
+  writeDeleteRepContent(stream, addressUsed);
+  m_indent--;
   // Header
   writeWideHeaderComment("deleteRep", getIndent(), *m_stream);
   QString str = QString("void ") + m_classInfo->packageName + "::" +
     m_prefix + m_classInfo->className + "Cnv::deleteRep(";
   *m_stream << getIndent() << str
-            << fixTypeName ("IAddress*", "castor", m_classInfo->packageName)
-            << " address," << endl;
+            << fixTypeName ("IAddress*", "castor", m_classInfo->packageName);
+  if (addressUsed) *m_stream << " address";
+  *m_stream << "," << endl;
   str.replace(QRegExp("."), " ");
   *m_stream << getIndent() << str
             << fixTypeName("IObject*", "castor", m_classInfo->packageName)
@@ -199,7 +239,7 @@ void CppCppBaseCnvWriter::writeDeleteRep() {
             << ") {" << endl;
   m_indent++;
   // Write the content of the method
-  writeDeleteRepContent();
+  *m_stream << buffer;
   // End of the method
   m_indent--;
   *m_stream << getIndent() << "}" << endl << endl;

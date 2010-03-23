@@ -62,6 +62,7 @@ EXTERN_C char *getconfent _PROTO(());   /* CASTOR /etc/castor.conf util */
 
 
 void rfio_stglog(int type, char *msg) {
+  (void)type;
   TRACE(3,"rfio","rfio_stglog: %s",msg);
   return;
 }
@@ -188,6 +189,7 @@ int DLL_DECL rfio_HsmIf_chown(const char *path, uid_t new_uid, gid_t new_gid) {
 }
 
 int DLL_DECL rfio_HsmIf_close(int fd) {
+  (void)fd;
   return 0;
 }
 
@@ -483,6 +485,8 @@ int DLL_DECL rfio_HsmIf_stat64(const char *path, struct stat64 *st) {
 }
 
 int DLL_DECL rfio_HsmIf_read(int fd, void *buffer, int size) {
+  (void)fd;
+  (void)buffer;
   int rc = -1;
   // For CASTOR HSM this is a no-op.
   rc = size;
@@ -563,6 +567,8 @@ int DLL_DECL rfio_HsmIf_unlink(const char *path) {
 }
 
 int DLL_DECL rfio_HsmIf_write(int fd, void *buffer, int size) {
+  (void)fd;
+  (void)buffer;
   int rc = -1;
   // For CASTOR HSM this is a no-op.
   rc = size;
@@ -570,6 +576,8 @@ int DLL_DECL rfio_HsmIf_write(int fd, void *buffer, int size) {
 }
 
 int DLL_DECL rfio_HsmIf_FirstWrite(int fd, void *buffer, int size) {
+  (void)fd;
+  (void)buffer;
   if ( size < 0 ) {
     serrno = EINVAL;
     return (-1);
@@ -578,6 +586,8 @@ int DLL_DECL rfio_HsmIf_FirstWrite(int fd, void *buffer, int size) {
 }
 
 int DLL_DECL rfio_HsmIf_IOError(int fd, int errorcode) {
+  (void)fd;
+  (void)errorcode;
   int rc = -1;
   // Should handle ENOSPC on write here
   rc = 0;

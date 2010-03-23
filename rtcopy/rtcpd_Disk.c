@@ -1994,7 +1994,7 @@ int rtcpd_InitDiskIO(int *poolsize) {
     return(rc);
 }
 
-int rtcpd_CleanUpDiskIO(int poolID, int poolsize) {
+int rtcpd_CleanUpDiskIO(int poolsize) {
     int thIndex;
     for ( thIndex = 0; thIndex < poolsize; thIndex++ ) {
         tellClient(&thargs[thIndex].client_socket,NULL,NULL,0);

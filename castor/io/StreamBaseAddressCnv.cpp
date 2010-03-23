@@ -64,14 +64,14 @@ castor::io::StreamBaseAddressCnv::~StreamBaseAddressCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamBaseAddressCnv::ObjType() {
+unsigned int castor::io::StreamBaseAddressCnv::ObjType() {
   return castor::BaseAddress::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamBaseAddressCnv::objType() const {
+unsigned int castor::io::StreamBaseAddressCnv::objType() const {
   return ObjType();
 }
 
@@ -80,8 +80,8 @@ const unsigned int castor::io::StreamBaseAddressCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamBaseAddressCnv::createRep(castor::IAddress* address,
                                                  castor::IObject* object,
-                                                 bool endTransaction,
-                                                 unsigned int type)
+                                                 bool,
+                                                 unsigned int)
   throw (castor::exception::Exception) {
   castor::BaseAddress* obj = 
     dynamic_cast<castor::BaseAddress*>(object);

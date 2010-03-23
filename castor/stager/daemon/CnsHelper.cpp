@@ -79,17 +79,6 @@ namespace castor{
           ex.getMessage() << "Failed to set the user for the Name Server";
           throw ex;
         }
-
-        if (Cns_umask(fileRequest->mask()) < 0) {
-          castor::dlf::Param params[]={
-            castor::dlf::Param("Function","Cns_umask"),
-            castor::dlf::Param("Error", sstrerror(serrno))};
-          castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 2, params);
-
-          castor::exception::Exception ex(SEINTERNAL);
-          ex.getMessage() << "Failed to set the mask for the Name Server";
-          throw ex;
-        }
       }
 
       /****************************************************************************************************************/

@@ -61,13 +61,13 @@ namespace castor {
          * gets the representation type, that is the type of
          * the representation this conversion service can deal with
          */
-        virtual const unsigned int repType() const;
+        virtual unsigned int repType() const;
 
         /**
          * gets the representation type, that is the type of
          * the representation this conversion service can deal with
          */
-        static const unsigned int RepType();
+        static unsigned int RepType();
 
         /**
          * create C++ object from foreign representation.
@@ -118,7 +118,7 @@ namespace castor {
          * Default implementation does nothing
          * @param e the database exception
          */
-        virtual void handleException(std::exception e) {};
+        virtual void handleException(std::exception) {};
        
 
         /**
@@ -140,14 +140,14 @@ namespace castor {
          * concrete class, that is the database type
          * to which this conversion service is connected.
          */
-        virtual const unsigned int getPhysRepType() const = 0;
+        virtual unsigned int getPhysRepType() const = 0;
 
       protected:
 
         /**
          * retrieves the type of an object given by its id
          */
-        const unsigned int getTypeFromId(const u_signed64 id)
+        unsigned int getTypeFromId(const u_signed64 id)
           throw (castor::exception::Exception);
 
       private:

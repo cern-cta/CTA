@@ -52,12 +52,12 @@ public:
   /**
    * Returns the inclusive low port of the port number range.
    */
-  const unsigned short getLowPort() throw();
+  unsigned short getLowPort() throw();
 
   /**
    * Returns the inclusive high port of the port number range.
    */
-  const unsigned short getHighPort() throw();
+  unsigned short getHighPort() throw();
 
 
 private:

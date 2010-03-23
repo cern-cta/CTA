@@ -65,14 +65,14 @@ castor::io::StreamFileToMigrateCnv::~StreamFileToMigrateCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamFileToMigrateCnv::ObjType() {
+unsigned int castor::io::StreamFileToMigrateCnv::ObjType() {
   return castor::tape::tapegateway::FileToMigrate::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamFileToMigrateCnv::objType() const {
+unsigned int castor::io::StreamFileToMigrateCnv::objType() const {
   return ObjType();
 }
 
@@ -81,8 +81,8 @@ const unsigned int castor::io::StreamFileToMigrateCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamFileToMigrateCnv::createRep(castor::IAddress* address,
                                                    castor::IObject* object,
-                                                   bool endTransaction,
-                                                   unsigned int type)
+                                                   bool,
+                                                   unsigned int)
   throw (castor::exception::Exception) {
   castor::tape::tapegateway::FileToMigrate* obj = 
     dynamic_cast<castor::tape::tapegateway::FileToMigrate*>(object);

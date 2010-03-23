@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamThreadNotificationCnv.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/03/14 10:40:28 $ $Author: sponcec3 $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
  * 
  *
@@ -71,13 +71,13 @@ namespace castor {
        * Gets the object type.
        * That is the type of object this converter can convert
        */
-      static const unsigned int ObjType();
+      static unsigned int ObjType();
 
       /**
        * Gets the object type.
        * That is the type of object this converter can convert
        */
-      virtual const unsigned int objType() const;
+      virtual unsigned int objType() const;
 
       /**
        * Creates foreign representation from a C++ Object.
@@ -89,7 +89,7 @@ namespace castor {
        * @param type if not OBJ_INVALID, the ids representing
        * the links to objects of this type will not set to 0
        * as is the default.
-       * @exception Exception throws an Exception in cas of error
+       * @exception Exception throws an Exception in case of error
        */
       virtual void createRep(castor::IAddress* address,
                              castor::IObject* object,
@@ -104,7 +104,7 @@ namespace castor {
        * @return the C++ object created from its reprensentation
        * or 0 if unsuccessful. Note that the caller is responsible
        * for the deallocation of the newly created object
-       * @exception Exception throws an Exception in cas of error
+       * @exception Exception throws an Exception in case of error
        */
       virtual castor::IObject* createObj(castor::IAddress* address)
         throw (castor::exception::Exception);

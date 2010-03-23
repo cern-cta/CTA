@@ -191,7 +191,7 @@ const castor::tape::format::ALB0100Unmarshaller::Header* castor::tape::format::A
 //==============================================================================
 //                      Print Header
 //==============================================================================
-void castor::tape::format::ALB0100Unmarshaller::printHeader(ALB0100Header &header){
+void castor::tape::format::ALB0100Unmarshaller::printHeader(ALB0100Header&){
 
   using std::cout;
   using std::endl;

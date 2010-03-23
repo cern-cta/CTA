@@ -69,14 +69,14 @@ castor::io::StreamStagePutRequestCnv::~StreamStagePutRequestCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamStagePutRequestCnv::ObjType() {
+unsigned int castor::io::StreamStagePutRequestCnv::ObjType() {
   return castor::stager::StagePutRequest::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamStagePutRequestCnv::objType() const {
+unsigned int castor::io::StreamStagePutRequestCnv::objType() const {
   return ObjType();
 }
 
@@ -85,8 +85,8 @@ const unsigned int castor::io::StreamStagePutRequestCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamStagePutRequestCnv::createRep(castor::IAddress* address,
                                                      castor::IObject* object,
-                                                     bool endTransaction,
-                                                     unsigned int type)
+                                                     bool,
+                                                     unsigned int)
   throw (castor::exception::Exception) {
   castor::stager::StagePutRequest* obj = 
     dynamic_cast<castor::stager::StagePutRequest*>(object);

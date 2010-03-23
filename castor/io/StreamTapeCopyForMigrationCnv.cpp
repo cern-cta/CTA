@@ -69,14 +69,14 @@ castor::io::StreamTapeCopyForMigrationCnv::~StreamTapeCopyForMigrationCnv() thro
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamTapeCopyForMigrationCnv::ObjType() {
+unsigned int castor::io::StreamTapeCopyForMigrationCnv::ObjType() {
   return castor::stager::TapeCopyForMigration::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamTapeCopyForMigrationCnv::objType() const {
+unsigned int castor::io::StreamTapeCopyForMigrationCnv::objType() const {
   return ObjType();
 }
 
@@ -85,8 +85,8 @@ const unsigned int castor::io::StreamTapeCopyForMigrationCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamTapeCopyForMigrationCnv::createRep(castor::IAddress* address,
                                                           castor::IObject* object,
-                                                          bool endTransaction,
-                                                          unsigned int type)
+                                                          bool,
+                                                          unsigned int)
   throw (castor::exception::Exception) {
   castor::stager::TapeCopyForMigration* obj = 
     dynamic_cast<castor::stager::TapeCopyForMigration*>(object);

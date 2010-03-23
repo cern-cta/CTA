@@ -49,7 +49,7 @@ size_t  ifnamelen;
     char    buf[BUFSIZ];            /* A buffer                     */
     struct  sockaddr_in addr;       /* Internet address             */
     socklen_t addrlen;              /* Internet address length      */
-    long    binaddr;                /* Store address                */
+    unsigned long binaddr;          /* Store address                */
     int     n;                      /* # of interfaces              */
     int     found=0;                /* Found the interface ?        */
     SOCKET  s_s;                    /* A socket to get interfaces   */

@@ -63,14 +63,14 @@ castor::io::StreamNotificationAcknowledgeCnv::~StreamNotificationAcknowledgeCnv(
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamNotificationAcknowledgeCnv::ObjType() {
+unsigned int castor::io::StreamNotificationAcknowledgeCnv::ObjType() {
   return castor::tape::tapegateway::NotificationAcknowledge::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamNotificationAcknowledgeCnv::objType() const {
+unsigned int castor::io::StreamNotificationAcknowledgeCnv::objType() const {
   return ObjType();
 }
 
@@ -79,8 +79,8 @@ const unsigned int castor::io::StreamNotificationAcknowledgeCnv::objType() const
 //------------------------------------------------------------------------------
 void castor::io::StreamNotificationAcknowledgeCnv::createRep(castor::IAddress* address,
                                                              castor::IObject* object,
-                                                             bool endTransaction,
-                                                             unsigned int type)
+                                                             bool,
+                                                             unsigned int)
   throw (castor::exception::Exception) {
   castor::tape::tapegateway::NotificationAcknowledge* obj = 
     dynamic_cast<castor::tape::tapegateway::NotificationAcknowledge*>(object);

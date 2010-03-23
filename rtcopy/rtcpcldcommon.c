@@ -1161,6 +1161,7 @@ static int initTapeReq(
      char *vid, *dgn, *density, *label, *unit;
      int side, vdqmVolReqID, tStartRequest;
 {
+  (void)side;
   if ( (tape == NULL) || (vid == NULL) ) {
     serrno = EINVAL;
     return(-1);

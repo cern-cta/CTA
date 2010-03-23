@@ -73,7 +73,7 @@ extern "C" {
   //---------------------------------------------------------------------------
   // sched_init
   //---------------------------------------------------------------------------
-  int sched_init(void *param) {
+  int sched_init(void*) {
 
     // Ignore SIGXFSZ signal which is raised when the maximum file size is
     // exceeded as configured by ulimit(1)
@@ -403,7 +403,7 @@ extern "C" {
   //---------------------------------------------------------------------------
   // sched_version
   //---------------------------------------------------------------------------
-  int sched_version(void *param) {
+  int sched_version(void*) {
     return 0;
   }
 

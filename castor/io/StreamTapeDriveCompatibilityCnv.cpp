@@ -65,14 +65,14 @@ castor::io::StreamTapeDriveCompatibilityCnv::~StreamTapeDriveCompatibilityCnv() 
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamTapeDriveCompatibilityCnv::ObjType() {
+unsigned int castor::io::StreamTapeDriveCompatibilityCnv::ObjType() {
   return castor::vdqm::TapeDriveCompatibility::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamTapeDriveCompatibilityCnv::objType() const {
+unsigned int castor::io::StreamTapeDriveCompatibilityCnv::objType() const {
   return ObjType();
 }
 
@@ -81,8 +81,8 @@ const unsigned int castor::io::StreamTapeDriveCompatibilityCnv::objType() const 
 //------------------------------------------------------------------------------
 void castor::io::StreamTapeDriveCompatibilityCnv::createRep(castor::IAddress* address,
                                                             castor::IObject* object,
-                                                            bool endTransaction,
-                                                            unsigned int type)
+                                                            bool,
+                                                            unsigned int)
   throw (castor::exception::Exception) {
   castor::vdqm::TapeDriveCompatibility* obj = 
     dynamic_cast<castor::vdqm::TapeDriveCompatibility*>(object);

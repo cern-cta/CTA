@@ -318,8 +318,8 @@ int send2nsdx(socketp, host, reqp, reql, user_repbuf, user_repbuf_len, repbuf2, 
         li = (struct Cns_linkinfo *) *repbuf2;
       }
       while (p < repbuf + c) {
-        if ((char *)li - (char *)(*repbuf2) +
-            sizeof(struct Cns_linkinfo) > repbuf2sz) {
+        if ((int)((char *)li - (char *)(*repbuf2) +
+            sizeof(struct Cns_linkinfo)) > repbuf2sz) {
           repbuf2sz += 4096;
           if ((q = realloc (*repbuf2, repbuf2sz)) == NULL) {
             errflag++;

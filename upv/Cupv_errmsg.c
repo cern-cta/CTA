@@ -43,7 +43,7 @@ int Cupv_errmsg(char *func, char *msg, ...) {
     *prtbuf = '\0';
   vsprintf (prtbuf + strlen(prtbuf), msg, args);
   if (thip->errbufp) {
-    if (strlen (prtbuf) < thip->errbuflen) {
+    if ((int)strlen (prtbuf) < thip->errbuflen) {
       strcpy (thip->errbufp, prtbuf);
     } else {
       strncpy (thip->errbufp, prtbuf, thip->errbuflen - 2);

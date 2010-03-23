@@ -43,7 +43,7 @@ castor::exception::NoPortInRange::NoPortInRange(
 //------------------------------------------------------------------------------
 // getLowPort()
 //------------------------------------------------------------------------------
-const unsigned short castor::exception::NoPortInRange::getLowPort() throw() {
+unsigned short castor::exception::NoPortInRange::getLowPort() throw() {
   return m_lowPort;
 }
 
@@ -51,6 +51,6 @@ const unsigned short castor::exception::NoPortInRange::getLowPort() throw() {
 //------------------------------------------------------------------------------
 // getHighPort()
 //------------------------------------------------------------------------------
-const unsigned short castor::exception::NoPortInRange::getHighPort() throw() {
+unsigned short castor::exception::NoPortInRange::getHighPort() throw() {
   return m_highPort;
 }

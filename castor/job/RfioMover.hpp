@@ -87,9 +87,7 @@ namespace castor {
        * immediate (i.e. non gracefully)
        * @exception Exception in case of error
        */
-      virtual void stop
-      (bool immediate)
-     	throw(castor::exception::Exception) {};
+      virtual void stop(bool) throw(castor::exception::Exception) {};
       
       /**
        * Method responsible for reading data from the source/destination and

@@ -33,35 +33,49 @@ int use_castor2_api() {
   return 1;
 }
 
-int DLL_DECL stage_setoutbuf(buffer, buflen)
-     char *buffer;
-     int buflen;
-{ return -1; }
+int DLL_DECL stage_setoutbuf(char* buffer, int buflen) { 
+  (void)buffer;
+  (void)buflen;
+  return -1;
+ }
 
-int DLL_DECL stage_seterrbuf(buffer, buflen)
-     char *buffer;
-     int buflen;
-{ return -1; }
+int DLL_DECL stage_seterrbuf(char* buffer, int buflen) {
+  (void) buffer;
+  (void) buflen;
+  return -1;
+}
 
-int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,
-                        pooluser,nstcp_input,stcp_input,nstcp_output,
-                        stcp_output,nstpp_input,stpp_input)
-     int req_type;
-     char t_or_d;
-     u_signed64 flags;
-     int openflags;
-     mode_t openmode;
-     char *hostname;
-     char *pooluser;
-     int nstcp_input;
-     struct stgcat_entry *stcp_input;
-     int *nstcp_output;
-     struct stgcat_entry **stcp_output;
-     int nstpp_input;
-     struct stgpath_entry *stpp_input;
-{ return -1; }
+int DLL_DECL stage_iowc(int req_type,
+                        char t_or_d,
+                        u_signed64 flags,
+                        int openflags,
+                        mode_t openmode,
+                        char *hostname,
+                        char *pooluser,
+                        int nstcp_input,
+                        struct stgcat_entry *stcp_input,
+                        int *nstcp_output,
+                        struct stgcat_entry **stcp_output,
+                        int nstpp_input,
+                        struct stgpath_entry *stpp_input) {
+  (void)req_type;
+  (void)t_or_d;
+  (void)flags;
+  (void)openflags;
+  (void)openmode;
+  (void)hostname;
+  (void)pooluser;
+  (void)nstcp_input;
+  (void)stcp_input;
+  (void)nstcp_output;
+  (void)stcp_output;
+  (void)nstpp_input;
+  (void)stpp_input;
+  return -1;
+}
 
-int DLL_DECL stage_updc_filchg(stghost,hsmstruct)
-     char *stghost;
-     stage_hsm_t *hsmstruct;
-{ return -1; }
+int DLL_DECL stage_updc_filchg(char *stghost,
+                               stage_hsm_t *hsmstruct) {
+  (void)stghost;
+  (void)hsmstruct;
+ return -1; }

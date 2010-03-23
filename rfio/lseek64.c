@@ -164,7 +164,7 @@ off64_t DLL_DECL rfio_lseek64(s, offset, how)
               END_TRACE() ;
               return -1 ;
             }
-            if ( status != rfilefdt[s_index]->_iobuf.dsize  ) {
+            if ( status != (int)rfilefdt[s_index]->_iobuf.dsize  ) {
               rfilefdt[s_index]->eof= 1 ;
               rfilefdt[s_index]->readissued= 0 ;
             }
@@ -414,7 +414,7 @@ static off64_t rfio_forcelseek64(s, offset, how)
        * to receive data which is going to be thrown away.
        */
       if ( temp == 0 ) {
-        if ( rfilefdt[s_index]->_iobuf.base==NULL || rfilefdt[s_index]->_iobuf.dsize<msgsiz ) {
+        if ( rfilefdt[s_index]->_iobuf.base==NULL || (int)rfilefdt[s_index]->_iobuf.dsize<msgsiz ) {
           temp= 1 ;
           TRACE(3,"rfio","rfio_forcelseek64: allocating momentary buffer of size %d",msgsiz) ;
           if ( (trp= ( char *) malloc(msgsiz)) == NULL ) {

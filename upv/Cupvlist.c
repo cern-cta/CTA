@@ -136,15 +136,15 @@ int main(int argc,char **argv)
   }
 
 
-  if (gid == -1 && grp[0] != 0) {
-    if ( (gid = Cupv_getgid(grp) ) == -1 ) {
+  if ((int)gid == -1 && grp[0] != 0) {
+    if ( (int)(gid = Cupv_getgid(grp) ) == -1 ) {
       fprintf (stderr, "%s: %s\n", argv[0], sstrerror(serrno));
       exit(USERR);
     }
   }
 
-  if (uid == -1 && usr[0] != 0) {
-    if ( (uid = Cupv_getuid(usr) ) == -1 ) {
+  if ((int)uid == -1 && usr[0] != 0) {
+    if ( (int)(uid = Cupv_getuid(usr) ) == -1 ) {
       fprintf (stderr, "%s: %s\n", argv[0], sstrerror(serrno));
       exit(USERR);
     }

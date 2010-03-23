@@ -72,7 +72,8 @@ class CppCppDbCnvWriter : public CppCppBaseCnvWriter {
   void writeBasicMultNFillObj(Assoc* as);
 
   /// writes the check statements part of the (bulk)createRep method
-  void writeCreateRepCheckStatements(MemberList &members,
+  void writeCreateRepCheckStatements(QTextStream &stream,
+                                     MemberList &members,
                                      AssocList &assocs);
 
   /// writes the check statements part of the (bulk)createObj method
@@ -86,7 +87,9 @@ class CppCppDbCnvWriter : public CppCppBaseCnvWriter {
                                       AssocList& assocs);
 
   /// writes the buffer creation code for one member in bulkCreateRep
-  void writeCreateBufferForSelect(QString name,
+  void writeCreateBufferForSelect(QTextStream &stream,
+                                  bool &typeUsed,
+                                  QString name,
                                   QString typeName,
                                   int n,
                                   QString stmt,
@@ -95,16 +98,20 @@ class CppCppDbCnvWriter : public CppCppBaseCnvWriter {
                                   QString remoteTypeName = "");
 
   /// writes createRep method's content
-  void writeCreateRepContent();
+  void writeCreateRepContent(QTextStream &stream, bool &addressUsed,
+                             bool &endTransUsed, bool &typeUsed);
     
   /// writes bulkCreateRep method's content
-  void writeBulkCreateRepContent();
+  void writeBulkCreateRepContent(QTextStream &stream, bool &addressUsed,
+                                 bool &typeUsed);
     
   /// writes updateRep method's content
-  void writeUpdateRepContent();
-    
+  void writeUpdateRepContent(QTextStream &stream,
+                             bool &addressUsed);
+
   /// writes deleteRep method's content
-  void writeDeleteRepContent();
+  void writeDeleteRepContent(QTextStream &stream,
+                             bool &addressUsed);
     
   /// writes createObj method's content
   void writeCreateObjContent();
@@ -117,12 +124,14 @@ class CppCppDbCnvWriter : public CppCppBaseCnvWriter {
 
   /**
    * write a call to set*** for attribute.
+   * @param stream the stream into which the code should be written
    * @param statement the statement name, ie "insert" or "update"
    * @param attr the attribute given by the pair name, type
    * @param n the number of this attribute
    * @param isEnum whether this attribute is an enumeration type
    */
-  void writeSingleSetIntoStatement(QString statement,
+  void writeSingleSetIntoStatement(QTextStream &stream,
+                                   QString statement,
                                    Member pair,
                                    int n,
                                    bool isEnum = false);
@@ -172,7 +181,8 @@ class CppCppDbCnvWriter : public CppCppBaseCnvWriter {
   /**
    * Writes code to display an SQL error with all details
    */
-  void printSQLError(QString name,
+  void printSQLError(QTextStream &stream,
+                     QString name,
                      MemberList& members,
                      AssocList& assocs,
                      bool useAutoCommit);

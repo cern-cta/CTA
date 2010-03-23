@@ -67,14 +67,14 @@ castor::io::StreamMoverCloseRequestCnv::~StreamMoverCloseRequestCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamMoverCloseRequestCnv::ObjType() {
+unsigned int castor::io::StreamMoverCloseRequestCnv::ObjType() {
   return castor::stager::MoverCloseRequest::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamMoverCloseRequestCnv::objType() const {
+unsigned int castor::io::StreamMoverCloseRequestCnv::objType() const {
   return ObjType();
 }
 
@@ -83,8 +83,8 @@ const unsigned int castor::io::StreamMoverCloseRequestCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamMoverCloseRequestCnv::createRep(castor::IAddress* address,
                                                        castor::IObject* object,
-                                                       bool endTransaction,
-                                                       unsigned int type)
+                                                       bool,
+                                                       unsigned int)
   throw (castor::exception::Exception) {
   castor::stager::MoverCloseRequest* obj = 
     dynamic_cast<castor::stager::MoverCloseRequest*>(object);

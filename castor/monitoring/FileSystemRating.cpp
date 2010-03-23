@@ -45,7 +45,7 @@ castor::monitoring::FileSystemRating::FileSystemRating() :
 // print
 //-----------------------------------------------------------------------------
 void castor::monitoring::FileSystemRating::print
-(std::ostream& out, const std::string& indentation, const bool showAll) const
+(std::ostream& out, const std::string& indentation, const bool) const
   throw() {
   out << indentation << std::setw(24)
       << "readRating" << ": " << m_readRating << "\n"

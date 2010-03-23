@@ -63,14 +63,14 @@ castor::io::StreamDumpParametersCnv::~StreamDumpParametersCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamDumpParametersCnv::ObjType() {
+unsigned int castor::io::StreamDumpParametersCnv::ObjType() {
   return castor::tape::tapegateway::DumpParameters::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamDumpParametersCnv::objType() const {
+unsigned int castor::io::StreamDumpParametersCnv::objType() const {
   return ObjType();
 }
 
@@ -79,8 +79,8 @@ const unsigned int castor::io::StreamDumpParametersCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamDumpParametersCnv::createRep(castor::IAddress* address,
                                                     castor::IObject* object,
-                                                    bool endTransaction,
-                                                    unsigned int type)
+                                                    bool,
+                                                    unsigned int)
   throw (castor::exception::Exception) {
   castor::tape::tapegateway::DumpParameters* obj = 
     dynamic_cast<castor::tape::tapegateway::DumpParameters*>(object);

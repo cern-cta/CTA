@@ -94,7 +94,7 @@ namespace utils  {
  *
  * @param array The array whose size is to be determined.
  */
-template<class T, int n> static int arraySize(T (&array)[n]) {
+template<class T, int n> static int arraySize(T (&)[n]) {
   return n;
 }
 

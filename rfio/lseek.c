@@ -145,7 +145,7 @@ off_t DLL_DECL rfio_lseek(s, offset, how)
          * Data should be in the next message.
          */
         else
-          if (rfilefdt[s_index]->readissued && (offset-rfilefdt[s_index]->offset)<=(rfilefdt[s_index]->_iobuf.count+rfilefdt[s_index]->_iobuf.dsize)){
+          if (rfilefdt[s_index]->readissued && (offset-rfilefdt[s_index]->offset)<=(off_t)(rfilefdt[s_index]->_iobuf.count+rfilefdt[s_index]->_iobuf.dsize)){
             /*
              * Getting next message.
              */
@@ -158,7 +158,7 @@ off_t DLL_DECL rfio_lseek(s, offset, how)
               END_TRACE() ;
               return -1 ;
             }
-            if ( status != rfilefdt[s_index]->_iobuf.dsize  ) {
+            if ( status != (int)rfilefdt[s_index]->_iobuf.dsize  ) {
               rfilefdt[s_index]->eof= 1 ;
               rfilefdt[s_index]->readissued= 0 ;
             }
@@ -176,7 +176,7 @@ off_t DLL_DECL rfio_lseek(s, offset, how)
           }
       }
       else  {
-        if ((rfilefdt[s_index]->offset-offset)<=(rfilefdt[s_index]->_iobuf.dsize-rfilefdt[s_index]->_iobuf.count) &&
+        if ((rfilefdt[s_index]->offset-offset)<=(off_t)(rfilefdt[s_index]->_iobuf.dsize-rfilefdt[s_index]->_iobuf.count) &&
             ( rfilefdt[s_index]->offset - offset ) <=  ( rfilefdt[s_index]->_iobuf.ptr - rfilefdt[s_index]->_iobuf.base) ) {
           rfilefdt[s_index]->_iobuf.count += rfilefdt[s_index]->offset - offset ;
           rfilefdt[s_index]->_iobuf.ptr -= rfilefdt[s_index]->offset - offset ;
@@ -387,7 +387,7 @@ static int rfio_forcelseek(s, offset, how)
     int  msgsiz ;
 
     TRACE(2, "rfio", "rfio_forcelseek: reading %d bytes",rfilefdt[s_index]->_iobuf.hsize) ;
-    if (netread_timeout(s,rfio_buf,rfilefdt[s_index]->_iobuf.hsize,RFIO_DATA_TIMEOUT) != rfilefdt[s_index]->_iobuf.hsize) {
+    if (netread_timeout(s,rfio_buf,rfilefdt[s_index]->_iobuf.hsize,RFIO_DATA_TIMEOUT) != (ssize_t)rfilefdt[s_index]->_iobuf.hsize) {
       TRACE(2,"rfio","rfio_forcelseek: read(): ERROR occured (errno=%d)",errno) ;
       if ( temp ) (void) free(trp) ;
       END_TRACE() ;
@@ -413,7 +413,7 @@ static int rfio_forcelseek(s, offset, how)
        * to receive data which is going to be thrown away.
        */
       if ( temp == 0 ) {
-        if ( rfilefdt[s_index]->_iobuf.base==NULL || rfilefdt[s_index]->_iobuf.dsize<msgsiz ) {
+        if ( rfilefdt[s_index]->_iobuf.base==NULL || (int)rfilefdt[s_index]->_iobuf.dsize<msgsiz ) {
           temp= 1 ;
           TRACE(3,"rfio","rfio_forcelseek: allocating momentary buffer of size %d",msgsiz) ;
           if ( (trp= ( char *) malloc(msgsiz)) == NULL ) {

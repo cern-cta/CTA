@@ -461,7 +461,7 @@ int castor::vdqm::handler::TapeRequestHandler::getQueuePosition(
 void castor::vdqm::handler::TapeRequestHandler::sendTapeRequestQueue(
   vdqmHdr_t *const header, vdqmVolReq_t *const volumeRequest,
   castor::vdqm::OldProtocolInterpreter *const oldProtInterpreter,
-  const Cuuid_t cuuid) throw (castor::exception::Exception) {
+  const Cuuid_t) throw (castor::exception::Exception) {
 
   std::string dgn    = "";
   std::string server = "";

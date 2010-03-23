@@ -40,8 +40,8 @@ char **argv;
         while ((c = Cgetopt_long (argc, argv, "P:", longopts, NULL)) != EOF) {
                 switch (c) {
 		case OPT_POOL_GID:
-			if ((pool_gid = strtol (Coptarg, &dp, 10)) < 0 ||
-			    *dp != '\0') {
+      pool_gid = strtol (Coptarg, &dp, 10);
+			if (*dp != '\0') {
 				fprintf (stderr,
 				    "invalid pool_gid %s\n", Coptarg);
 				errflg++;
@@ -56,8 +56,8 @@ char **argv;
 				pool_gid = gr->gr_gid;
 			break;
 		case OPT_POOL_UID:
-			if ((pool_uid = strtol (Coptarg, &dp, 10)) < 0 ||
-			    *dp != '\0') {
+      pool_uid = strtol (Coptarg, &dp, 10);
+			if (*dp != '\0') {
 				fprintf (stderr,
 				    "invalid pool_uid %s\n", Coptarg);
 				errflg++;

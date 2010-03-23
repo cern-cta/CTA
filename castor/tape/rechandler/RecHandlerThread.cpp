@@ -72,7 +72,7 @@ castor::tape::rechandler::RecHandlerThread::RecHandlerThread(PyObject* pyFunctio
 //------------------------------------------------------------------------------
 // runs the thread
 //------------------------------------------------------------------------------
-void castor::tape::rechandler::RecHandlerThread::run(void* par)
+void castor::tape::rechandler::RecHandlerThread::run(void*)
 {
 
   //get  the db svc

@@ -82,7 +82,7 @@ castor::monitoring::rmnode::StateThread::~StateThread() throw() {
 //-----------------------------------------------------------------------------
 // Run
 //-----------------------------------------------------------------------------
-void castor::monitoring::rmnode::StateThread::run(void *param)
+void castor::monitoring::rmnode::StateThread::run(void*)
   throw(castor::exception::Exception) {
 
   // "State thread running"

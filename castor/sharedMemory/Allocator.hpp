@@ -125,7 +125,7 @@ namespace castor {
 template<class T, class BK>
 T* castor::sharedMemory::Allocator<T, BK>::allocate
 (std::allocator<void>::size_type numObjects,
- std::allocator<void>::const_pointer hint)
+ std::allocator<void>::const_pointer)
   throw(std::exception) {
   try {
     return static_cast<T*>

@@ -67,8 +67,8 @@ namespace castor {
          * @param context the current context (localhost, port, etc...)
          */
         virtual void preForkHook
-        (castor::job::stagerjob::InputArguments &args,
-         castor::job::stagerjob::PluginContext &context)
+        (castor::job::stagerjob::InputArguments&,
+         castor::job::stagerjob::PluginContext&)
           throw (castor::exception::Exception) {};
 
       protected:

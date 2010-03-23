@@ -161,7 +161,7 @@ int DLL_DECL stager_errmsg(const char *func, const char *msg, ...) {
 		logfunction(STAGER_MSG_ERR, prtbuf);
 	} else {
 		if (errbufp != NULL && errbuflen > 0) {
-			if (strlen (prtbuf) < errbuflen) {
+			if ((int)strlen (prtbuf) < errbuflen) {
 				strcpy (errbufp, prtbuf);
 			} else {
 				strncpy (errbufp, prtbuf, errbuflen - 1);
@@ -212,7 +212,7 @@ int DLL_DECL stager_outmsg(const char *func, const char *msg, ...) {
 		logfunction(STAGER_MSG_OUT, prtbuf);
 	} else {
 		if (outbufp != NULL && outbuflen > 0) {
-			if (strlen (prtbuf) < outbuflen) {
+			if ((int)strlen (prtbuf) < outbuflen) {
 				strcpy (outbufp, prtbuf);
 			} else {
 				strncpy (outbufp, prtbuf, outbuflen - 1);

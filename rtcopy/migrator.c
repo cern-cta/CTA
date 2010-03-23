@@ -439,11 +439,7 @@ int migratorCallbackFileCopied(
   return(0);
 }
 
-int migratorCallbackMoreWork(
-                             tapereq,
-                             filereq
-                             )
-     rtcpTapeRequest_t *tapereq;
+int migratorCallbackMoreWork(filereq)
      rtcpFileRequest_t *filereq;
 {
   file_list_t *fl;
@@ -615,10 +611,7 @@ int migratorCallback(
     msgNo = RTCPCLD_MSG_CALLBACK_GETW;
     func = "processGetMoreWorkCallback";
     if ( filereq->cprc == 0 ) {
-      rc = migratorCallbackMoreWork(
-                                    tapereq,
-                                    filereq
-                                    );
+      rc = migratorCallbackMoreWork(filereq);
     }
     if ( filereq->proc_status == RTCP_REQUEST_MORE_WORK ) {
       msgNo = RTCPCLD_MSG_CALLBACK_ADDGETW;

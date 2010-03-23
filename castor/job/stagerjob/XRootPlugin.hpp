@@ -72,8 +72,8 @@ namespace castor {
         /**
          *
          */
-        virtual void execMover(InputArguments &args,
-                               PluginContext &context)
+        virtual void execMover(InputArguments&,
+                               PluginContext&)
           throw (castor::exception::Exception) {};
 
       private:

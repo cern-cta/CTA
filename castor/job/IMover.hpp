@@ -90,14 +90,14 @@ namespace castor {
        * difference to the size reported for the castorfile in the stager. 
        * Note: it is not mandatory for the mover to provide this information.
        */      
-      virtual const u_signed64 fileSize() = 0;
+      virtual u_signed64 fileSize() = 0;
 
       /**
        * Returns the number of bytes transferred from the client to the source/
        * destination of a disk2disk copy. Note: it is not mandatory for the
        * mover to provide this information.
        */
-      virtual const u_signed64 bytesTransferred() = 0;
+      virtual u_signed64 bytesTransferred() = 0;
 
     };
     

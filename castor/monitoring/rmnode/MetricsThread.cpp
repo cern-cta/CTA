@@ -87,7 +87,7 @@ castor::monitoring::rmnode::MetricsThread::~MetricsThread() throw() {
 //-----------------------------------------------------------------------------
 // Run
 //-----------------------------------------------------------------------------
-void castor::monitoring::rmnode::MetricsThread::run(void *param)
+void castor::monitoring::rmnode::MetricsThread::run(void*)
   throw(castor::exception::Exception) {
 
   // "Metrics thread running"

@@ -67,14 +67,14 @@ castor::io::StreamPutFailedCnv::~StreamPutFailedCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamPutFailedCnv::ObjType() {
+unsigned int castor::io::StreamPutFailedCnv::ObjType() {
   return castor::stager::PutFailed::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamPutFailedCnv::objType() const {
+unsigned int castor::io::StreamPutFailedCnv::objType() const {
   return ObjType();
 }
 
@@ -83,8 +83,8 @@ const unsigned int castor::io::StreamPutFailedCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamPutFailedCnv::createRep(castor::IAddress* address,
                                                castor::IObject* object,
-                                               bool endTransaction,
-                                               unsigned int type)
+                                               bool,
+                                               unsigned int)
   throw (castor::exception::Exception) {
   castor::stager::PutFailed* obj = 
     dynamic_cast<castor::stager::PutFailed*>(object);

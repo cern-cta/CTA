@@ -57,13 +57,13 @@ namespace castor {
      * gets the object type, that is the type of
      * object this converter can convert
      */
-    virtual const unsigned int objType() const = 0;
+    virtual unsigned int objType() const = 0;
 
     /**
      * gets the representation type, that is the type of
      * the representation this converter can deal with
      */
-    virtual const unsigned int repType() const = 0;
+    virtual unsigned int repType() const = 0;
 
     /**
      * create foreign representation from a C++ Object

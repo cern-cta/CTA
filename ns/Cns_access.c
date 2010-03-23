@@ -20,7 +20,7 @@
 #include "serrno.h"
 
 static int
-Cns_access_internal(const char* func, const char *path, int amode, uid_t uid, gid_t gid)
+Cns_access_internal(const char *path, int amode, uid_t uid, gid_t gid)
 {
   char *actual_path;
   int c;
@@ -33,13 +33,6 @@ Cns_access_internal(const char* func, const char *path, int amode, uid_t uid, gi
 
   if (Cns_apiinit (&thip))
     return (-1);
-#if defined(_WIN32)
-  if (uid < 0 || gid < 0) {
-    Cns_errmsg (func, NS053);
-    serrno = SENOMAPFND;
-    return (-1);
-  }
-#endif
 
   if (! path) {
     serrno = EFAULT;
@@ -85,17 +78,14 @@ Cns_access(const char *path, int amode)
 {
   gid_t gid;
   uid_t uid;
-  char* func = "Cns_access";
   Cns_getrealid(&uid, &gid);
 
-  return Cns_access_internal(func, path, amode, uid, gid);
+  return Cns_access_internal(path, amode, uid, gid);
 }
 
 
 int DLL_DECL
 Cns_accessUser(const char *path, int amode, uid_t uid, gid_t gid)
 {
-  char* func = "Cns_accessUser";
-
-  return Cns_access_internal(func, path, amode, uid, gid);
+  return Cns_access_internal(path, amode, uid, gid);
 }

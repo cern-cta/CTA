@@ -112,7 +112,7 @@ namespace castor {
      * Gets this thread pool's active threads count.
      * @return int m_nbActiveThreads
      */
-    const int getActiveThreads() {
+    int getActiveThreads() {
       return m_nbActiveThreads;
     }
 

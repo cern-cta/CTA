@@ -108,6 +108,11 @@ char	**argv;
         }
         tl_tpdaemon.tl_init( &tl_tpdaemon, 0 );
 
+  if (33 != argc) {
+    printf("Wrong number of arguments\n");
+    exit(-1);
+  }
+
 	drive = argv[1];
 	vid = argv[2];
 	rpfd = atoi(argv[3]);

@@ -66,14 +66,14 @@ castor::io::StreamDiskServerAdminReportCnv::~StreamDiskServerAdminReportCnv() th
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamDiskServerAdminReportCnv::ObjType() {
+unsigned int castor::io::StreamDiskServerAdminReportCnv::ObjType() {
   return castor::monitoring::admin::DiskServerAdminReport::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamDiskServerAdminReportCnv::objType() const {
+unsigned int castor::io::StreamDiskServerAdminReportCnv::objType() const {
   return ObjType();
 }
 
@@ -82,8 +82,8 @@ const unsigned int castor::io::StreamDiskServerAdminReportCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamDiskServerAdminReportCnv::createRep(castor::IAddress* address,
                                                            castor::IObject* object,
-                                                           bool endTransaction,
-                                                           unsigned int type)
+                                                           bool,
+                                                           unsigned int)
   throw (castor::exception::Exception) {
   castor::monitoring::admin::DiskServerAdminReport* obj = 
     dynamic_cast<castor::monitoring::admin::DiskServerAdminReport*>(object);

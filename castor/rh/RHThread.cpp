@@ -532,7 +532,7 @@ void castor::rh::RHThread::run(void* param) {
 unsigned int castor::rh::RHThread::handleRequest
 (castor::stager::Request* fr,
  castor::BaseAddress ad,
- Cuuid_t cuuid)
+ Cuuid_t)
   throw (castor::exception::Exception) {
 
   // get RH service

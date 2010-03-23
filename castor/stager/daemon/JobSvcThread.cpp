@@ -206,9 +206,9 @@ void castor::stager::daemon::JobSvcThread::handleStartRequest
 void castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyStartRequest
 (castor::stager::Request* req,
  castor::IClient *client,
- castor::Services* svcs,
+ castor::Services*,
  castor::stager::IJobSvc* jobSvc,
- castor::BaseAddress &ad,
+ castor::BaseAddress&,
  Cuuid_t uuid) throw() {
   // Useful Variables
   castor::stager::Disk2DiskCopyStartRequest *uReq;
@@ -305,9 +305,9 @@ void castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyStartRequest
 void castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyDoneRequest
 (castor::stager::Request* req,
  castor::IClient *client,
- castor::Services* svcs,
+ castor::Services*,
  castor::stager::IJobSvc* jobSvc,
- castor::BaseAddress &ad,
+ castor::BaseAddress&,
  Cuuid_t uuid) throw() {
   // Useful Variables
   castor::stager::Disk2DiskCopyDoneRequest *uReq;
@@ -479,9 +479,9 @@ void castor::stager::daemon::JobSvcThread::handleMoverCloseRequest
 void castor::stager::daemon::JobSvcThread::handleGetUpdateDoneRequest
 (castor::stager::Request* req,
  castor::IClient *client,
- castor::Services* svcs,
+ castor::Services*,
  castor::stager::IJobSvc* jobSvc,
- castor::BaseAddress &ad,
+ castor::BaseAddress&,
  Cuuid_t uuid) throw() {
   // Useful Variables
   castor::stager::GetUpdateDone *uReq;
@@ -535,9 +535,9 @@ void castor::stager::daemon::JobSvcThread::handleGetUpdateDoneRequest
 void castor::stager::daemon::JobSvcThread::handleGetUpdateFailedRequest
 (castor::stager::Request* req,
  castor::IClient *client,
- castor::Services* svcs,
+ castor::Services*,
  castor::stager::IJobSvc* jobSvc,
- castor::BaseAddress &ad,
+ castor::BaseAddress&,
  Cuuid_t uuid) throw() {
   // Useful Variables
   castor::stager::GetUpdateFailed *uReq;
@@ -591,9 +591,9 @@ void castor::stager::daemon::JobSvcThread::handleGetUpdateFailedRequest
 void castor::stager::daemon::JobSvcThread::handlePutFailedRequest
 (castor::stager::Request* req,
  castor::IClient *client,
- castor::Services* svcs,
+ castor::Services*,
  castor::stager::IJobSvc* jobSvc,
- castor::BaseAddress &ad,
+ castor::BaseAddress&,
  Cuuid_t uuid) throw() {
   // Useful Variables
   castor::stager::PutFailed *uReq;
@@ -647,9 +647,9 @@ void castor::stager::daemon::JobSvcThread::handlePutFailedRequest
 void castor::stager::daemon::JobSvcThread::handleFirstByteWrittenRequest
 (castor::stager::Request* req,
  castor::IClient *client,
- castor::Services* svcs,
+ castor::Services*,
  castor::stager::IJobSvc* jobSvc,
- castor::BaseAddress &ad,
+ castor::BaseAddress&,
  Cuuid_t uuid) throw() {
   // Useful Variables
   castor::stager::FirstByteWritten *uReq;

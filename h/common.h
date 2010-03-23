@@ -41,7 +41,7 @@
 
 EXTERN_C char DLL_DECL *getconfent_r _PROTO((const char *, const char *, int, char *, int));
 EXTERN_C char DLL_DECL *getconfent _PROTO((const char *, const char *, int));
-EXTERN_C int DLL_DECL setnetio _PROTO((int));
+EXTERN_C int DLL_DECL setnetio _PROTO(());
 EXTERN_C int DLL_DECL solveln _PROTO((char *, char *, int));
 EXTERN_C int DLL_DECL seelink _PROTO((char *, char *, int));
 EXTERN_C int DLL_DECL isremote _PROTO((struct in_addr, char *));

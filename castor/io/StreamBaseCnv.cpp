@@ -57,24 +57,24 @@ castor::io::StreamBaseCnv::~StreamBaseCnv() throw() {}
 // -----------------------------------------------------------------------
 // RepType
 // -----------------------------------------------------------------------
-const unsigned int castor::io::StreamBaseCnv::RepType() {
+unsigned int castor::io::StreamBaseCnv::RepType() {
   return castor::REP_STREAM;
 }
 
 // -----------------------------------------------------------------------
 // repType
 // -----------------------------------------------------------------------
-inline const unsigned int castor::io::StreamBaseCnv::repType() const {
+inline unsigned int castor::io::StreamBaseCnv::repType() const {
   return RepType();
 }
 
 //------------------------------------------------------------------------------
 // bulkCreateRep
 //------------------------------------------------------------------------------
-void castor::io::StreamBaseCnv::bulkCreateRep(castor::IAddress* address,
-					      std::vector<castor::IObject*> &objects,
-					      bool endTransaction,
-					      unsigned int type)
+void castor::io::StreamBaseCnv::bulkCreateRep(castor::IAddress*,
+					      std::vector<castor::IObject*> &,
+					      bool,
+					      unsigned int)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
   ex.getMessage() << "Bulk operations are not supported for streaming."
@@ -85,9 +85,9 @@ void castor::io::StreamBaseCnv::bulkCreateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // updateRep
 //------------------------------------------------------------------------------
-void castor::io::StreamBaseCnv::updateRep(castor::IAddress* address,
-                                          castor::IObject* object,
-                                          bool endTransaction)
+void castor::io::StreamBaseCnv::updateRep(castor::IAddress*,
+                                          castor::IObject*,
+                                          bool)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
   ex.getMessage() << "Cannot update representation in case of streaming."
@@ -98,9 +98,9 @@ void castor::io::StreamBaseCnv::updateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // deleteRep
 //------------------------------------------------------------------------------
-void castor::io::StreamBaseCnv::deleteRep(castor::IAddress* address,
-                                          castor::IObject* object,
-                                          bool endTransaction)
+void castor::io::StreamBaseCnv::deleteRep(castor::IAddress*,
+                                          castor::IObject*,
+                                          bool)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
   ex.getMessage() << "Cannot delete representation in case of streaming."
@@ -112,7 +112,7 @@ void castor::io::StreamBaseCnv::deleteRep(castor::IAddress* address,
 // bulkCreateObj
 //------------------------------------------------------------------------------
 std::vector<castor::IObject*>
-castor::io::StreamBaseCnv::bulkCreateObj(castor::IAddress* address)
+castor::io::StreamBaseCnv::bulkCreateObj(castor::IAddress*)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
   ex.getMessage() << "Bulk operations are not supported for streaming."
@@ -123,7 +123,7 @@ castor::io::StreamBaseCnv::bulkCreateObj(castor::IAddress* address)
 //------------------------------------------------------------------------------
 // updateObj
 //------------------------------------------------------------------------------
-void castor::io::StreamBaseCnv::updateObj(castor::IObject* obj)
+void castor::io::StreamBaseCnv::updateObj(castor::IObject*)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
   ex.getMessage() << "Cannot update object in case of streaming."
@@ -134,10 +134,10 @@ void castor::io::StreamBaseCnv::updateObj(castor::IObject* obj)
 //------------------------------------------------------------------------------
 // fillRep
 //------------------------------------------------------------------------------
-void castor::io::StreamBaseCnv::fillRep(castor::IAddress* address,
-                                        castor::IObject* object,
-                                        unsigned int type,
-                                        bool endTransaction)
+void castor::io::StreamBaseCnv::fillRep(castor::IAddress*,
+                                        castor::IObject*,
+                                        unsigned int,
+                                        bool)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
   ex.getMessage() << "fillRep should never be called in case of streaming."
@@ -148,10 +148,10 @@ void castor::io::StreamBaseCnv::fillRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
-void castor::io::StreamBaseCnv::fillObj(castor::IAddress* address,
-                                        castor::IObject* object,
-                                        unsigned int type,
-                                        bool endTransaction)
+void castor::io::StreamBaseCnv::fillObj(castor::IAddress*,
+                                        castor::IObject*,
+                                        unsigned int,
+                                        bool)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
   ex.getMessage() << "fillObj should never be called in case of streaming."

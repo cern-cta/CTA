@@ -191,21 +191,21 @@ void castor::db::cnv::DbStageReleaseFilesRequestCnv::reset() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbStageReleaseFilesRequestCnv::ObjType() {
+unsigned int castor::db::cnv::DbStageReleaseFilesRequestCnv::ObjType() {
   return castor::stager::StageReleaseFilesRequest::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbStageReleaseFilesRequestCnv::objType() const {
+unsigned int castor::db::cnv::DbStageReleaseFilesRequestCnv::objType() const {
   return ObjType();
 }
 
 //------------------------------------------------------------------------------
 // fillRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbStageReleaseFilesRequestCnv::fillRep(castor::IAddress* address,
+void castor::db::cnv::DbStageReleaseFilesRequestCnv::fillRep(castor::IAddress*,
                                                              castor::IObject* object,
                                                              unsigned int type,
                                                              bool endTransaction)
@@ -344,7 +344,7 @@ void castor::db::cnv::DbStageReleaseFilesRequestCnv::fillRepIClient(castor::stag
 //------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbStageReleaseFilesRequestCnv::fillObj(castor::IAddress* address,
+void castor::db::cnv::DbStageReleaseFilesRequestCnv::fillObj(castor::IAddress*,
                                                              castor::IObject* object,
                                                              unsigned int type,
                                                              bool endTransaction)
@@ -504,7 +504,7 @@ void castor::db::cnv::DbStageReleaseFilesRequestCnv::fillObjIClient(castor::stag
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbStageReleaseFilesRequestCnv::createRep(castor::IAddress* address,
+void castor::db::cnv::DbStageReleaseFilesRequestCnv::createRep(castor::IAddress*,
                                                                castor::IObject* object,
                                                                bool endTransaction,
                                                                unsigned int type)
@@ -579,7 +579,7 @@ void castor::db::cnv::DbStageReleaseFilesRequestCnv::createRep(castor::IAddress*
 //------------------------------------------------------------------------------
 // bulkCreateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbStageReleaseFilesRequestCnv::bulkCreateRep(castor::IAddress* address,
+void castor::db::cnv::DbStageReleaseFilesRequestCnv::bulkCreateRep(castor::IAddress*,
                                                                    std::vector<castor::IObject*> &objects,
                                                                    bool endTransaction,
                                                                    unsigned int type)
@@ -963,7 +963,7 @@ void castor::db::cnv::DbStageReleaseFilesRequestCnv::bulkCreateRep(castor::IAddr
 //------------------------------------------------------------------------------
 // updateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbStageReleaseFilesRequestCnv::updateRep(castor::IAddress* address,
+void castor::db::cnv::DbStageReleaseFilesRequestCnv::updateRep(castor::IAddress*,
                                                                castor::IObject* object,
                                                                bool endTransaction)
   throw (castor::exception::Exception) {
@@ -1011,7 +1011,7 @@ void castor::db::cnv::DbStageReleaseFilesRequestCnv::updateRep(castor::IAddress*
 //------------------------------------------------------------------------------
 // deleteRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbStageReleaseFilesRequestCnv::deleteRep(castor::IAddress* address,
+void castor::db::cnv::DbStageReleaseFilesRequestCnv::deleteRep(castor::IAddress*,
                                                                castor::IObject* object,
                                                                bool endTransaction)
   throw (castor::exception::Exception) {

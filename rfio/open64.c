@@ -59,8 +59,8 @@ static void rfio_setup64_ext(iop,uid,gid,passwd)
   else
     iop->mapping=1;
   iop->passwd=passwd; /* used only if mapping == 0 */
-  iop->uid = (uid==0 ? geteuid(): uid);
-  iop->gid = (gid==0 ? getegid(): gid);
+  iop->uid = (uid==0 ? geteuid(): (uid_t)uid);
+  iop->gid = (gid==0 ? getegid(): (gid_t)gid);
   INIT_TRACE("RFIO_TRACE");
   TRACE ( 1,"rfio","rfio_setup64_ext(%d,%d,%d)",iop,uid,gid);
   TRACE ( 2,"rfio","rfio_setup64_ext: owner s uid is %d",iop->uid);

@@ -101,8 +101,8 @@ int main(int argc,char **argv)
 
   /*    printf("%d/%s  %d/%s\n", uid, usr, gid, grp); */
 
-  if (Coptind < argc  ||  ( uid == -1 && usr[0] == 0)
-      || (gid == -1 && grp[0] == 0) || src[0] == 0 || tgt[0] == 0) {
+  if (Coptind < argc  ||  ( (int)uid == -1 && usr[0] == 0)
+      || ((int)gid == -1 && grp[0] == 0) || src[0] == 0 || tgt[0] == 0) {
     errflg++;
   }
 
@@ -112,15 +112,15 @@ int main(int argc,char **argv)
     exit (USERR);
   }
 
-  if (gid == -1) {
-    if ( (gid = Cupv_getgid(grp) ) == -1 ) {
+  if ((int)gid == -1) {
+    if ( (int)(gid = Cupv_getgid(grp) ) == -1 ) {
       fprintf (stderr, "%s: %s\n", argv[0], sstrerror(serrno));
       exit(USERR);
     }
   }
 
-  if (uid == -1) {
-    if ( (uid = Cupv_getuid(usr) ) == -1 ) {
+  if ((int)uid == -1) {
+    if ( (int)(uid = Cupv_getuid(usr) ) == -1 ) {
       fprintf (stderr, "%s: %s\n", argv[0], sstrerror(serrno));
       exit(USERR);
     }

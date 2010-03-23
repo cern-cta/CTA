@@ -64,14 +64,14 @@ castor::io::StreamEndNotificationErrorReportCnv::~StreamEndNotificationErrorRepo
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamEndNotificationErrorReportCnv::ObjType() {
+unsigned int castor::io::StreamEndNotificationErrorReportCnv::ObjType() {
   return castor::tape::tapegateway::EndNotificationErrorReport::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamEndNotificationErrorReportCnv::objType() const {
+unsigned int castor::io::StreamEndNotificationErrorReportCnv::objType() const {
   return ObjType();
 }
 
@@ -80,8 +80,8 @@ const unsigned int castor::io::StreamEndNotificationErrorReportCnv::objType() co
 //------------------------------------------------------------------------------
 void castor::io::StreamEndNotificationErrorReportCnv::createRep(castor::IAddress* address,
                                                                 castor::IObject* object,
-                                                                bool endTransaction,
-                                                                unsigned int type)
+                                                                bool,
+                                                                unsigned int)
   throw (castor::exception::Exception) {
   castor::tape::tapegateway::EndNotificationErrorReport* obj = 
     dynamic_cast<castor::tape::tapegateway::EndNotificationErrorReport*>(object);

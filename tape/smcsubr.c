@@ -100,7 +100,7 @@ int type;
  	     rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 12, buf, 16,
  		  sense, 38, 900000, SCSI_IN, &nb_sense_ret, &msgaddr);
              if (rc < 0) {
-               if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == 0xFFFFFF85 )) {
+               if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == -0X7B )) {
                  sleep(60);
                  pause_mode = 1;
                } else  {
@@ -186,7 +186,7 @@ struct smc_element_info element_info[];
 	     rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 12, data, len,
 		  sense, 38, 900000, SCSI_IN, &nb_sense_ret, &msgaddr);
              if (rc < 0) {
-               if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == 0xFFFFFF85 )) {
+               if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == -0X7B )) {
                  sleep(60);
                  pause_mode = 1;
                } else  {
@@ -264,7 +264,7 @@ struct robot_info *robot_info;
 	    rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 6, buf, 36,
 		sense, 38, 900000, SCSI_IN, &nb_sense_ret, &msgaddr);
             if (rc < 0) {
-              if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == 0xFFFFFF85 )) {
+              if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == -0X7B )) {
                  sleep(60);
                  pause_mode = 1;
               } else  {
@@ -294,7 +294,7 @@ struct robot_info *robot_info;
 	     rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 6, buf, 24,
 		 sense, 38, 900000, SCSI_IN, &nb_sense_ret, &msgaddr);
              if (rc < 0) {
-               if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == 0xFFFFFF85 )) {
+               if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == -0X7B )) {
                  sleep(60);
                  pause_mode = 1;
                } else  {
@@ -357,6 +357,7 @@ struct smc_element_info element_info[];
 	struct robot_info robot_info;
 	int tot_nbelem;
 
+  (void)nbelem;
 	ENTRY (find_cartridge2);
 	if ((c = smc_get_geometry (fd, rbtdev, &robot_info)))
 		return (c);
@@ -440,7 +441,7 @@ struct smc_element_info element_info[];
           rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 12, (unsigned char*)plist, 40,
                            sense, 38, 900000, SCSI_OUT, &nb_sense_ret, &msgaddr);
             if (rc < 0) {
-              if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == 0xFFFFFF85 )) {
+              if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == -0X7B )) {
                  sleep(60);
                  pause_mode = 1;
               } else  {
@@ -519,7 +520,7 @@ int smc_lasterror(smc_stat, msgaddr)
 struct smc_status *smc_stat;
 char **msgaddr;
 {
-	int i;
+	unsigned int i;
 
 	smc_stat->rc = smc_status.rc;
 	smc_stat->skvalid = smc_status.skvalid;
@@ -572,7 +573,7 @@ int invert;
 	     rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 12, NULL, 0,
 		sense, 38, 900000, SCSI_NONE, &nb_sense_ret, &msgaddr);
             if (rc < 0) {
-              if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == 0xFFFFFF85 )) {
+              if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == -0X7B )) {
                  sleep(60);
                  pause_mode = 1;
               } else  {
@@ -616,7 +617,7 @@ int port;
 	     rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 6, NULL, 0,
 		sense, 38, 900000, SCSI_NONE, &nb_sense_ret, &msgaddr);
              if (rc < 0) {
-               if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == 0xFFFFFF85 )) {
+               if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == -0X7B )) {
                  sleep(60);
                  pause_mode = 1;
                } else  {

@@ -67,14 +67,14 @@ castor::io::StreamDisk2DiskCopyStartRequestCnv::~StreamDisk2DiskCopyStartRequest
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamDisk2DiskCopyStartRequestCnv::ObjType() {
+unsigned int castor::io::StreamDisk2DiskCopyStartRequestCnv::ObjType() {
   return castor::stager::Disk2DiskCopyStartRequest::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamDisk2DiskCopyStartRequestCnv::objType() const {
+unsigned int castor::io::StreamDisk2DiskCopyStartRequestCnv::objType() const {
   return ObjType();
 }
 
@@ -83,8 +83,8 @@ const unsigned int castor::io::StreamDisk2DiskCopyStartRequestCnv::objType() con
 //------------------------------------------------------------------------------
 void castor::io::StreamDisk2DiskCopyStartRequestCnv::createRep(castor::IAddress* address,
                                                                castor::IObject* object,
-                                                               bool endTransaction,
-                                                               unsigned int type)
+                                                               bool,
+                                                               unsigned int)
   throw (castor::exception::Exception) {
   castor::stager::Disk2DiskCopyStartRequest* obj = 
     dynamic_cast<castor::stager::Disk2DiskCopyStartRequest*>(object);

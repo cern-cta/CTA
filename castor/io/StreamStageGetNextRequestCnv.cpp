@@ -68,14 +68,14 @@ castor::io::StreamStageGetNextRequestCnv::~StreamStageGetNextRequestCnv() throw(
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamStageGetNextRequestCnv::ObjType() {
+unsigned int castor::io::StreamStageGetNextRequestCnv::ObjType() {
   return castor::stager::StageGetNextRequest::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamStageGetNextRequestCnv::objType() const {
+unsigned int castor::io::StreamStageGetNextRequestCnv::objType() const {
   return ObjType();
 }
 
@@ -84,8 +84,8 @@ const unsigned int castor::io::StreamStageGetNextRequestCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamStageGetNextRequestCnv::createRep(castor::IAddress* address,
                                                          castor::IObject* object,
-                                                         bool endTransaction,
-                                                         unsigned int type)
+                                                         bool,
+                                                         unsigned int)
   throw (castor::exception::Exception) {
   castor::stager::StageGetNextRequest* obj = 
     dynamic_cast<castor::stager::StageGetNextRequest*>(object);

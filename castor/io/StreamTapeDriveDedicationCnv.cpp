@@ -65,14 +65,14 @@ castor::io::StreamTapeDriveDedicationCnv::~StreamTapeDriveDedicationCnv() throw(
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamTapeDriveDedicationCnv::ObjType() {
+unsigned int castor::io::StreamTapeDriveDedicationCnv::ObjType() {
   return castor::vdqm::TapeDriveDedication::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamTapeDriveDedicationCnv::objType() const {
+unsigned int castor::io::StreamTapeDriveDedicationCnv::objType() const {
   return ObjType();
 }
 
@@ -81,8 +81,8 @@ const unsigned int castor::io::StreamTapeDriveDedicationCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamTapeDriveDedicationCnv::createRep(castor::IAddress* address,
                                                          castor::IObject* object,
-                                                         bool endTransaction,
-                                                         unsigned int type)
+                                                         bool,
+                                                         unsigned int)
   throw (castor::exception::Exception) {
   castor::vdqm::TapeDriveDedication* obj = 
     dynamic_cast<castor::vdqm::TapeDriveDedication*>(object);

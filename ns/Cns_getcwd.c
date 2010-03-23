@@ -47,7 +47,7 @@ Cns_getcwd(char *buf, int size)
       free (buf);
     return (NULL);
   }
-  if (strlen (path) > (size - 1)) {
+  if ((int)strlen (path) > (size - 1)) {
     serrno = ERANGE;
     if (alloc)
       free (buf);

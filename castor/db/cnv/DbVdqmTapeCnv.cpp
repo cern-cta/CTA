@@ -143,21 +143,21 @@ void castor::db::cnv::DbVdqmTapeCnv::reset() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbVdqmTapeCnv::ObjType() {
+unsigned int castor::db::cnv::DbVdqmTapeCnv::ObjType() {
   return castor::vdqm::VdqmTape::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbVdqmTapeCnv::objType() const {
+unsigned int castor::db::cnv::DbVdqmTapeCnv::objType() const {
   return ObjType();
 }
 
 //------------------------------------------------------------------------------
 // fillRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbVdqmTapeCnv::fillRep(castor::IAddress* address,
+void castor::db::cnv::DbVdqmTapeCnv::fillRep(castor::IAddress*,
                                              castor::IObject* object,
                                              unsigned int type,
                                              bool endTransaction)
@@ -187,7 +187,7 @@ void castor::db::cnv::DbVdqmTapeCnv::fillRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbVdqmTapeCnv::fillObj(castor::IAddress* address,
+void castor::db::cnv::DbVdqmTapeCnv::fillObj(castor::IAddress*,
                                              castor::IObject* object,
                                              unsigned int type,
                                              bool endTransaction)
@@ -210,10 +210,10 @@ void castor::db::cnv::DbVdqmTapeCnv::fillObj(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbVdqmTapeCnv::createRep(castor::IAddress* address,
+void castor::db::cnv::DbVdqmTapeCnv::createRep(castor::IAddress*,
                                                castor::IObject* object,
                                                bool endTransaction,
-                                               unsigned int type)
+                                               unsigned int)
   throw (castor::exception::Exception) {
   castor::vdqm::VdqmTape* obj = 
     dynamic_cast<castor::vdqm::VdqmTape*>(object);
@@ -259,10 +259,10 @@ void castor::db::cnv::DbVdqmTapeCnv::createRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // bulkCreateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbVdqmTapeCnv::bulkCreateRep(castor::IAddress* address,
+void castor::db::cnv::DbVdqmTapeCnv::bulkCreateRep(castor::IAddress*,
                                                    std::vector<castor::IObject*> &objects,
                                                    bool endTransaction,
-                                                   unsigned int type)
+                                                   unsigned int)
   throw (castor::exception::Exception) {
   // check whether something needs to be done
   int nb = objects.size();
@@ -376,7 +376,7 @@ void castor::db::cnv::DbVdqmTapeCnv::bulkCreateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // updateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbVdqmTapeCnv::updateRep(castor::IAddress* address,
+void castor::db::cnv::DbVdqmTapeCnv::updateRep(castor::IAddress*,
                                                castor::IObject* object,
                                                bool endTransaction)
   throw (castor::exception::Exception) {
@@ -414,7 +414,7 @@ void castor::db::cnv::DbVdqmTapeCnv::updateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // deleteRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbVdqmTapeCnv::deleteRep(castor::IAddress* address,
+void castor::db::cnv::DbVdqmTapeCnv::deleteRep(castor::IAddress*,
                                                castor::IObject* object,
                                                bool endTransaction)
   throw (castor::exception::Exception) {

@@ -237,7 +237,7 @@ static int chk_msg_no( tplogger_t *self, unsigned int msg_no ) {
         /* do we have a valid msg_no? */
         for( i=0; i<self->tl_msg_entries; i++ ) {
 
-                if( self->tl_msg[i].tm_no == msg_no ) {
+          if( self->tl_msg[i].tm_no == (int)msg_no ) {
 
                         return i;
                 }
@@ -460,6 +460,8 @@ int DLL_DECL tl_exit_syslog( tplogger_t *self, int exit ) {
 
         int err = 0;
 
+        (void)exit;
+
         if( NULL == self ) {
 
                 err = -1;
@@ -528,7 +530,7 @@ static int loglevel_2_syslogpriority(int lvl) {
  */
 static int convert2upper(char *str) {
 
-        int i;
+        unsigned int i;
 
         if (NULL == str) {
                 return -1;
@@ -696,7 +698,7 @@ int DLL_DECL tl_log_syslog( tplogger_t *self, unsigned short msg_no, int num_par
 
         /* pass message in (MAX_SYSLOG_CHUNK+1) byte blocks to syslog */
         ndx = 0;
-        while (ndx < strlen(msg)) {
+        while (ndx < (int)strlen(msg)) {
 
                 /* print a chunk or the rest */
                 int len = ((strlen(msg)-ndx)>MAX_SYSLOG_CHUNK) ? MAX_SYSLOG_CHUNK : (strlen(msg)-ndx);
@@ -774,6 +776,8 @@ int DLL_DECL tl_exit_stdio( tplogger_t *self, int exit ) {
 
         int err = 0;
 
+        (void)exit;
+
         if( NULL == self ) {
 
                 err = -1;
@@ -795,6 +799,8 @@ int DLL_DECL tl_exit_stdio( tplogger_t *self, int exit ) {
 int DLL_DECL tl_log_stdio( tplogger_t *self, unsigned short msg_no, int num_params, ... ) {
 
         int err = 0;
+
+        (void) num_params;
 
         if( NULL == self ) {
 

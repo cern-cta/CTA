@@ -55,7 +55,7 @@ RepackFileChecker::~RepackFileChecker() throw(){
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------	
-void RepackFileChecker::run(void* param) throw(){
+void RepackFileChecker::run(void*) throw(){
   std::vector<RepackSubRequest*> sreqs;
   std::vector<RepackSubRequest*>::iterator sreq;
 

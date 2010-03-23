@@ -56,6 +56,8 @@ int rtcp_Listen(SOCKET s, SOCKET *ns, int timeout, int wherefrom) {
   int n;
 #endif
 
+  (void)wherefrom;
+
   if ( s == INVALID_SOCKET ) {
     serrno = EINVAL;
     return(-1);

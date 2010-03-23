@@ -63,7 +63,7 @@ castor::gc::SynchronizationThread::SynchronizationThread(int startDelay) :
 //-----------------------------------------------------------------------------
 // Run
 //-----------------------------------------------------------------------------
-void castor::gc::SynchronizationThread::run(void *param) {
+void castor::gc::SynchronizationThread::run(void*) {
 
   // "Starting synchronization thread"
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 18);

@@ -94,14 +94,14 @@ castor::tape::rechandler::ora::OraRecHandlerSvc::~OraRecHandlerSvc() throw() {
 // -----------------------------------------------------------------------
 // id
 // -----------------------------------------------------------------------
-const unsigned int castor::tape::rechandler::ora::OraRecHandlerSvc::id() const {
+unsigned int castor::tape::rechandler::ora::OraRecHandlerSvc::id() const {
   return ID();
 }
 
 // -----------------------------------------------------------------------
 // ID
 // -----------------------------------------------------------------------
-const unsigned int castor::tape::rechandler::ora::OraRecHandlerSvc::ID() {
+unsigned int castor::tape::rechandler::ora::OraRecHandlerSvc::ID() {
   return castor::SVC_ORARECHANDLERSVC;
 }
 

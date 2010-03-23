@@ -929,6 +929,7 @@ rfiod()
 void reaper(dummy)
      int dummy;
 {
+  (void)dummy;
 }
 #endif
 
@@ -1113,7 +1114,7 @@ int doit(s, fromp, mode, uid, gid)
    * Use to solve an UltraNet bug
    */
 #if !defined(_WIN32)
-  if (setnetio(s) <0) {
+  if (setnetio() <0) {
     shutdown(s, 2);
     close(s);
     exit(1);

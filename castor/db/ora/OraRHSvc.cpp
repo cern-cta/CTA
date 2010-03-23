@@ -93,14 +93,14 @@ castor::db::ora::OraRHSvc::~OraRHSvc() throw() {
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-const unsigned int castor::db::ora::OraRHSvc::id() const {
+unsigned int castor::db::ora::OraRHSvc::id() const {
   return ID();
 }
 
 //------------------------------------------------------------------------------
 // ID
 //------------------------------------------------------------------------------
-const unsigned int castor::db::ora::OraRHSvc::ID() {
+unsigned int castor::db::ora::OraRHSvc::ID() {
   return castor::SVC_ORARHSVC;
 }
 

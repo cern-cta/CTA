@@ -66,14 +66,14 @@ castor::io::StreamQueryParameterCnv::~StreamQueryParameterCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamQueryParameterCnv::ObjType() {
+unsigned int castor::io::StreamQueryParameterCnv::ObjType() {
   return castor::stager::QueryParameter::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamQueryParameterCnv::objType() const {
+unsigned int castor::io::StreamQueryParameterCnv::objType() const {
   return ObjType();
 }
 
@@ -82,8 +82,8 @@ const unsigned int castor::io::StreamQueryParameterCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamQueryParameterCnv::createRep(castor::IAddress* address,
                                                     castor::IObject* object,
-                                                    bool endTransaction,
-                                                    unsigned int type)
+                                                    bool,
+                                                    unsigned int)
   throw (castor::exception::Exception) {
   castor::stager::QueryParameter* obj = 
     dynamic_cast<castor::stager::QueryParameter*>(object);

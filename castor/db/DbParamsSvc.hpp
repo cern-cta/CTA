@@ -56,12 +56,12 @@ namespace castor {
     /**
      * Get the service id
      */
-    virtual const unsigned int id() const;
+    virtual unsigned int id() const;
 
     /**
      * Get the service id
      */
-    static const unsigned int ID();
+    static unsigned int ID();
 
     /**
      * Get the schema version

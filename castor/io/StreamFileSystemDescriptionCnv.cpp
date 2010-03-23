@@ -65,14 +65,14 @@ castor::io::StreamFileSystemDescriptionCnv::~StreamFileSystemDescriptionCnv() th
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamFileSystemDescriptionCnv::ObjType() {
+unsigned int castor::io::StreamFileSystemDescriptionCnv::ObjType() {
   return castor::query::FileSystemDescription::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamFileSystemDescriptionCnv::objType() const {
+unsigned int castor::io::StreamFileSystemDescriptionCnv::objType() const {
   return ObjType();
 }
 
@@ -81,8 +81,8 @@ const unsigned int castor::io::StreamFileSystemDescriptionCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamFileSystemDescriptionCnv::createRep(castor::IAddress* address,
                                                            castor::IObject* object,
-                                                           bool endTransaction,
-                                                           unsigned int type)
+                                                           bool,
+                                                           unsigned int)
   throw (castor::exception::Exception) {
   castor::query::FileSystemDescription* obj = 
     dynamic_cast<castor::query::FileSystemDescription*>(object);

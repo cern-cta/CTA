@@ -94,14 +94,14 @@ castor::stager::RemoteJobSvc::~RemoteJobSvc() throw() {}
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-const unsigned int castor::stager::RemoteJobSvc::id() const {
+unsigned int castor::stager::RemoteJobSvc::id() const {
   return ID();
 }
 
 //------------------------------------------------------------------------------
 // ID
 //------------------------------------------------------------------------------
-const unsigned int castor::stager::RemoteJobSvc::ID() {
+unsigned int castor::stager::RemoteJobSvc::ID() {
   return castor::SVC_REMOTEJOBSVC;
 }
 
@@ -110,9 +110,7 @@ const unsigned int castor::stager::RemoteJobSvc::ID() {
 //------------------------------------------------------------------------------
 castor::stager::Tape*
 castor::stager::RemoteJobSvc::selectTape
-(const std::string vid,
- const int side,
- const int tpmode)
+(const std::string, const int, const int)
   throw (castor::exception::Exception) {
   castor::exception::NotSupported ex;
   ex.getMessage()
@@ -125,7 +123,7 @@ castor::stager::RemoteJobSvc::selectTape
 // requestToDo
 //------------------------------------------------------------------------------
 castor::stager::Request*
-castor::stager::RemoteJobSvc::requestToDo(std::string service)
+castor::stager::RemoteJobSvc::requestToDo(std::string)
   throw (castor::exception::Exception) {
   castor::exception::NotSupported ex;
   ex.getMessage()
@@ -274,7 +272,7 @@ castor::stager::RemoteJobSvc::putStart
 //------------------------------------------------------------------------------
 castor::stager::SvcClass*
 castor::stager::RemoteJobSvc::selectSvcClass
-(const std::string name)
+(const std::string)
   throw (castor::exception::Exception) {
   castor::exception::NotSupported ex;
   ex.getMessage()
@@ -288,7 +286,7 @@ castor::stager::RemoteJobSvc::selectSvcClass
 //------------------------------------------------------------------------------
 castor::stager::FileClass*
 castor::stager::RemoteJobSvc::selectFileClass
-(const std::string name)
+(const std::string)
   throw (castor::exception::Exception) {
   castor::exception::NotSupported ex;
   ex.getMessage()
@@ -401,10 +399,7 @@ void castor::stager::RemoteJobSvc::disk2DiskCopyDone
 // disk2DiskCopyFailed
 //------------------------------------------------------------------------------
 void castor::stager::RemoteJobSvc::disk2DiskCopyFailed
-(u_signed64 diskCopyId,
- bool enoent,
- u_signed64 fileId,
- const std::string nsHost)
+(u_signed64 diskCopyId, bool, u_signed64 fileId, const std::string nsHost)
   throw (castor::exception::Exception) {
   // Build the Disk2DiskCopyDoneRequest; the enoent parameter is irrelevant here
   castor::stager::Disk2DiskCopyDoneRequest req;

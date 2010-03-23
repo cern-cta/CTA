@@ -60,7 +60,7 @@ namespace castor {
       /**
        * Fake implementation for this internal counter
        */
-       virtual int match(castor::IObject* obj) {
+       virtual int match(castor::IObject*) {
          return 0;
        }
   

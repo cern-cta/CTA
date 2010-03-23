@@ -78,7 +78,7 @@ int DLL_DECL rfio_fstat64(s, statbuf)
 
     TRACE(2, "rfio", "rfio_fstat64: reading %d bytes",rfilefdt[s_index]->_iobuf.hsize) ;
     n = netread_timeout(s,rfio_buf,rfilefdt[s_index]->_iobuf.hsize,RFIO_DATA_TIMEOUT);
-    if (n != rfilefdt[s_index]->_iobuf.hsize) {
+    if (n != (int)rfilefdt[s_index]->_iobuf.hsize) {
       TRACE(2, "rfio", "rfio_fstat64: read(): ERROR occured (errno=%d)", errno);
       if ( temp ) (void) free(trp) ;
       END_TRACE() ;
@@ -133,7 +133,7 @@ int DLL_DECL rfio_fstat64(s, statbuf)
        * to receive data which is going to be thrown away.
        */
       if ( temp == 0 ) {
-        if ( rfilefdt[s_index]->_iobuf.base==NULL || rfilefdt[s_index]->_iobuf.dsize<msgsiz ) {
+        if ( rfilefdt[s_index]->_iobuf.base==NULL || (int)rfilefdt[s_index]->_iobuf.dsize<msgsiz ) {
           temp= 1 ;
           TRACE(3,"rfio","rfio_fstat: allocating momentary buffer of size %d",msgsiz) ;
           if ( (trp= ( char *) malloc(msgsiz)) == NULL ) {

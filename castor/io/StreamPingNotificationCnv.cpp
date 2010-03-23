@@ -63,14 +63,14 @@ castor::io::StreamPingNotificationCnv::~StreamPingNotificationCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamPingNotificationCnv::ObjType() {
+unsigned int castor::io::StreamPingNotificationCnv::ObjType() {
   return castor::tape::tapegateway::PingNotification::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamPingNotificationCnv::objType() const {
+unsigned int castor::io::StreamPingNotificationCnv::objType() const {
   return ObjType();
 }
 
@@ -79,8 +79,8 @@ const unsigned int castor::io::StreamPingNotificationCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamPingNotificationCnv::createRep(castor::IAddress* address,
                                                       castor::IObject* object,
-                                                      bool endTransaction,
-                                                      unsigned int type)
+                                                      bool,
+                                                      unsigned int)
   throw (castor::exception::Exception) {
   castor::tape::tapegateway::PingNotification* obj = 
     dynamic_cast<castor::tape::tapegateway::PingNotification*>(object);

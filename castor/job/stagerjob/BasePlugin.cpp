@@ -50,7 +50,7 @@ castor::job::stagerjob::BasePlugin::BasePlugin
 //------------------------------------------------------------------------------
 std::pair<int, int>
 castor::job::stagerjob::BasePlugin::getPortRange
-(castor::job::stagerjob::InputArguments &args) throw() {
+(castor::job::stagerjob::InputArguments&) throw() {
   return std::pair<int, int>(1024, 65536);
 }
 

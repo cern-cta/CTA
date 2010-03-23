@@ -64,14 +64,14 @@ castor::io::StreamTapeAccessSpecificationCnv::~StreamTapeAccessSpecificationCnv(
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamTapeAccessSpecificationCnv::ObjType() {
+unsigned int castor::io::StreamTapeAccessSpecificationCnv::ObjType() {
   return castor::vdqm::TapeAccessSpecification::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamTapeAccessSpecificationCnv::objType() const {
+unsigned int castor::io::StreamTapeAccessSpecificationCnv::objType() const {
   return ObjType();
 }
 
@@ -80,8 +80,8 @@ const unsigned int castor::io::StreamTapeAccessSpecificationCnv::objType() const
 //------------------------------------------------------------------------------
 void castor::io::StreamTapeAccessSpecificationCnv::createRep(castor::IAddress* address,
                                                              castor::IObject* object,
-                                                             bool endTransaction,
-                                                             unsigned int type)
+                                                             bool,
+                                                             unsigned int)
   throw (castor::exception::Exception) {
   castor::vdqm::TapeAccessSpecification* obj = 
     dynamic_cast<castor::vdqm::TapeAccessSpecification*>(object);

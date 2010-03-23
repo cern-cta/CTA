@@ -451,14 +451,14 @@ void castor::tape::tapebridge::VdqmRequestHandler::exceptionThrowingRun(
 // enterBridgeOrTapeBridgeMode
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::VdqmRequestHandler::enterBridgeOrTapeBridgeMode(
-  const Cuuid_t                       &cuuid,
-  const int                           listenSock,
-  const int                           initialRtcpdSock,
+  const Cuuid_t &cuuid,
+  const int listenSock,
+  const int initialRtcpdSock,
   const legacymsg::RtcpJobRqstMsgBody &jobRequest,
-  tapegateway::Volume                 &volume,
-  const uint32_t                      nbFilesOnDestinationTape,
-  BoolFunctor                         &stoppingGracefully,
-  Counter<uint64_t>                   &tapebridgeTransactionCounter)
+  tapegateway::Volume &volume,
+  const uint32_t nbFilesOnDestinationTape,
+  BoolFunctor &,
+  Counter<uint64_t> &tapebridgeTransactionCounter)
   throw(castor::exception::Exception) {
 
   // If the volume has the aggregation format

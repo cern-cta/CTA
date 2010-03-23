@@ -37,6 +37,7 @@ int DLL_DECL rfiosetopt(opt,pval,len)
      int  * pval ;
      int len ;
 {
+  (void)len;
   switch(opt) {
   case RFIO_READOPT:
     rfio_opt= *pval ;

@@ -73,13 +73,13 @@ namespace castor {
        * Gets the object type.
        * That is the type of object this converter can convert
        */
-      static const unsigned int ObjType();
+      static unsigned int ObjType();
 
       /**
        * Gets the object type.
        * That is the type of object this converter can convert
        */
-      virtual const unsigned int objType() const;
+      virtual unsigned int objType() const;
 
       /**
        * Creates foreign representation from a C++ Object.

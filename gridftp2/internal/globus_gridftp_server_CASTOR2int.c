@@ -342,7 +342,7 @@ globus_l_gfs_CASTOR2int_command(
     globus_l_gfs_CASTOR2int_handle_t *     CASTOR2int_handle;
     globus_result_t                     result;
     
-    
+    (void)cmd_info;
     GlobusGFSName(globus_l_gfs_CASTOR2int_command);
     CASTOR2int_handle = (globus_l_gfs_CASTOR2int_handle_t *) user_arg;
     /* in gridftp disk server we do not allow to perform commads */
@@ -447,7 +447,7 @@ globus_l_gfs_file_net_read_cb(
                     /* end of the checksum section */
                 }
 				if(bytes_written < nbytes) {
-					if(bytes_written >= 0) errno = ENOSPC;
+					errno = ENOSPC;
 					CASTOR2int_handle->cached_res = globus_l_gfs_make_error("write");
 					CASTOR2int_handle->done = GLOBUS_TRUE;
 					free_checksum_list(CASTOR2int_handle->checksum_list);
@@ -792,7 +792,9 @@ globus_l_gfs_CASTOR2int_send_next_to_client(
 		}
 	}
 	
-	if(CASTOR2int_handle->blk_length == -1 ||	CASTOR2int_handle->blk_length > CASTOR2int_handle->block_size) read_length = CASTOR2int_handle->block_size;
+	if (CASTOR2int_handle->blk_length == -1 ||
+      (globus_size_t)CASTOR2int_handle->blk_length > CASTOR2int_handle->block_size)
+    read_length = CASTOR2int_handle->block_size;
 	else read_length = CASTOR2int_handle->blk_length;
 	
 	start_offset = lseek64(CASTOR2int_handle->fd, CASTOR2int_handle->blk_offset, SEEK_SET);
@@ -978,6 +980,7 @@ globus_l_gfs_net_write_cb(
 	globus_l_gfs_CASTOR2int_handle_t *         CASTOR2int_handle;
 	char * 					func="globus_l_gfs_net_write_cb";
 
+  (void)nbytes;
 	CASTOR2int_handle = (globus_l_gfs_CASTOR2int_handle_t *) user_arg;
 	
 	globus_free(buffer); 
@@ -1039,7 +1042,8 @@ GlobusExtensionDefineModule(globus_gridftp_server_CASTOR2int) =
     globus_l_gfs_CASTOR2int_deactivate,
     NULL,
     NULL,
-    &local_version
+    &local_version,
+    NULL
 };
 
 /*

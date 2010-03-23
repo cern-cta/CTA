@@ -44,7 +44,7 @@ int vmgr_errmsg(char *func, char *msg, ...)
 	vsprintf (prtbuf + strlen(prtbuf), msg, args);
 	va_end (args);
 	if (thip->errbufp) {
-		if (strlen (prtbuf) < thip->errbuflen) {
+		if ((int)strlen (prtbuf) < thip->errbuflen) {
 			strcpy (thip->errbufp, prtbuf);
 		} else {
 			strncpy (thip->errbufp, prtbuf, thip->errbuflen - 2);

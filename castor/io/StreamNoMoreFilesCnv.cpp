@@ -63,14 +63,14 @@ castor::io::StreamNoMoreFilesCnv::~StreamNoMoreFilesCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamNoMoreFilesCnv::ObjType() {
+unsigned int castor::io::StreamNoMoreFilesCnv::ObjType() {
   return castor::tape::tapegateway::NoMoreFiles::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamNoMoreFilesCnv::objType() const {
+unsigned int castor::io::StreamNoMoreFilesCnv::objType() const {
   return ObjType();
 }
 
@@ -79,8 +79,8 @@ const unsigned int castor::io::StreamNoMoreFilesCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamNoMoreFilesCnv::createRep(castor::IAddress* address,
                                                  castor::IObject* object,
-                                                 bool endTransaction,
-                                                 unsigned int type)
+                                                 bool,
+                                                 unsigned int)
   throw (castor::exception::Exception) {
   castor::tape::tapegateway::NoMoreFiles* obj = 
     dynamic_cast<castor::tape::tapegateway::NoMoreFiles*>(object);

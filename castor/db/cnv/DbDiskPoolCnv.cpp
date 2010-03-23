@@ -192,21 +192,21 @@ void castor::db::cnv::DbDiskPoolCnv::reset() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbDiskPoolCnv::ObjType() {
+unsigned int castor::db::cnv::DbDiskPoolCnv::ObjType() {
   return castor::stager::DiskPool::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbDiskPoolCnv::objType() const {
+unsigned int castor::db::cnv::DbDiskPoolCnv::objType() const {
   return ObjType();
 }
 
 //------------------------------------------------------------------------------
 // fillRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbDiskPoolCnv::fillRep(castor::IAddress* address,
+void castor::db::cnv::DbDiskPoolCnv::fillRep(castor::IAddress*,
                                              castor::IObject* object,
                                              unsigned int type,
                                              bool endTransaction)
@@ -344,7 +344,7 @@ void castor::db::cnv::DbDiskPoolCnv::fillRepSvcClass(castor::stager::DiskPool* o
 //------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbDiskPoolCnv::fillObj(castor::IAddress* address,
+void castor::db::cnv::DbDiskPoolCnv::fillObj(castor::IAddress*,
                                              castor::IObject* object,
                                              unsigned int type,
                                              bool endTransaction)
@@ -477,10 +477,10 @@ void castor::db::cnv::DbDiskPoolCnv::fillObjSvcClass(castor::stager::DiskPool* o
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbDiskPoolCnv::createRep(castor::IAddress* address,
+void castor::db::cnv::DbDiskPoolCnv::createRep(castor::IAddress*,
                                                castor::IObject* object,
                                                bool endTransaction,
-                                               unsigned int type)
+                                               unsigned int)
   throw (castor::exception::Exception) {
   castor::stager::DiskPool* obj = 
     dynamic_cast<castor::stager::DiskPool*>(object);
@@ -526,10 +526,10 @@ void castor::db::cnv::DbDiskPoolCnv::createRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // bulkCreateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbDiskPoolCnv::bulkCreateRep(castor::IAddress* address,
+void castor::db::cnv::DbDiskPoolCnv::bulkCreateRep(castor::IAddress*,
                                                    std::vector<castor::IObject*> &objects,
                                                    bool endTransaction,
-                                                   unsigned int type)
+                                                   unsigned int)
   throw (castor::exception::Exception) {
   // check whether something needs to be done
   int nb = objects.size();
@@ -643,7 +643,7 @@ void castor::db::cnv::DbDiskPoolCnv::bulkCreateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // updateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbDiskPoolCnv::updateRep(castor::IAddress* address,
+void castor::db::cnv::DbDiskPoolCnv::updateRep(castor::IAddress*,
                                                castor::IObject* object,
                                                bool endTransaction)
   throw (castor::exception::Exception) {
@@ -681,7 +681,7 @@ void castor::db::cnv::DbDiskPoolCnv::updateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // deleteRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbDiskPoolCnv::deleteRep(castor::IAddress* address,
+void castor::db::cnv::DbDiskPoolCnv::deleteRep(castor::IAddress*,
                                                castor::IObject* object,
                                                bool endTransaction)
   throw (castor::exception::Exception) {

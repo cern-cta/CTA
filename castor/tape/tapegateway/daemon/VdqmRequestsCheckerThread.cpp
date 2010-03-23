@@ -57,7 +57,7 @@ castor::tape::tapegateway::VdqmRequestsCheckerThread::VdqmRequestsCheckerThread(
 //------------------------------------------------------------------------------
 // runs the thread
 //------------------------------------------------------------------------------
-void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void* par)
+void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void*)
 {
 
   std::list<castor::tape::tapegateway::TapeGatewayRequest> tapeRequests;

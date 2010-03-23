@@ -69,14 +69,14 @@ castor::io::StreamSetFileGCWeightCnv::~StreamSetFileGCWeightCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamSetFileGCWeightCnv::ObjType() {
+unsigned int castor::io::StreamSetFileGCWeightCnv::ObjType() {
   return castor::stager::SetFileGCWeight::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamSetFileGCWeightCnv::objType() const {
+unsigned int castor::io::StreamSetFileGCWeightCnv::objType() const {
   return ObjType();
 }
 
@@ -85,8 +85,8 @@ const unsigned int castor::io::StreamSetFileGCWeightCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamSetFileGCWeightCnv::createRep(castor::IAddress* address,
                                                      castor::IObject* object,
-                                                     bool endTransaction,
-                                                     unsigned int type)
+                                                     bool,
+                                                     unsigned int)
   throw (castor::exception::Exception) {
   castor::stager::SetFileGCWeight* obj = 
     dynamic_cast<castor::stager::SetFileGCWeight*>(object);

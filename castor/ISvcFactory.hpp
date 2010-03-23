@@ -48,7 +48,7 @@ namespace castor {
     virtual ~ISvcFactory(){};
 
     /** Get ID of the factory, i.e. of the underlying Service */
-    virtual const unsigned int id() const = 0;
+    virtual unsigned int id() const = 0;
 
   };
 

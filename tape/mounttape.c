@@ -155,6 +155,11 @@ char	**argv;
         }
         tl_tpdaemon.tl_init( &tl_tpdaemon, 0 );
 
+  if (25 != argc) {
+    printf("Wrong number of arguments\n");
+    exit(-1);
+  }
+
 	drive = argv[1];
 	vid = argv[2];
 	dvn = argv[3];
@@ -634,7 +639,6 @@ remount_loop:
 
 	/* tape is mounted */
                 
-    post_mount_check(tapefd, path, devtype);
     if (strcmp (devtype, "9840") == 0 ||
         strcmp (devtype, "9940") == 0 ||
         strcmp (devtype, "994B") == 0 || 

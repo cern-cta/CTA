@@ -108,7 +108,7 @@ S_IXGRP|S_IROTH|S_IWOTH|S_IXOTH);
     return(0);
 }
 
-int rtcpd_main(struct main_args *main_args) {
+int rtcpd_main() {
     int rc;
     int pid;
     char workdir[] = WORKDIR;
@@ -294,7 +294,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if ( Debug == TRUE ) exit(rtcpd_main(NULL));
+    if ( Debug == TRUE ) exit(rtcpd_main());
 
 #if defined(_WIN32)
 /*
@@ -303,7 +303,7 @@ int main(int argc, char *argv[]) {
 #if !defined(CTAPE_DUMMIES)
     if ( Cinitservice("rtcpd",rtcpd_main) == -1 ) exit(1);
 #else /* !CTAPE_DUMMIES */
-    exit(rtcpd_main(NULL));
+    exit(rtcpd_main());
 #endif /* !CTAPE_DUMMIES */
 
 
@@ -314,6 +314,6 @@ int main(int argc, char *argv[]) {
 #if !defined(CTAPE_DUMMIES)
     if ( Cinitdaemon("rtcpd",SIG_IGN) == -1 ) exit(1);
 #endif /* CTAPE_DUMMIES */
-    exit(rtcpd_main(NULL));
+    exit(rtcpd_main());
 #endif /* _WIN32 */
 }

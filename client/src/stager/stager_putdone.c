@@ -43,6 +43,7 @@ static struct stage_filereq *requests;
 /* Uses the filenb global variable
    that should be set to 0 before 1st call */
 static int DLL_DECL _countFiles(const char *filename) {
+  (void)filename;
   filenb++;
   return 0;
 }

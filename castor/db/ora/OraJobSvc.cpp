@@ -161,14 +161,14 @@ castor::db::ora::OraJobSvc::~OraJobSvc() throw() {
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-const unsigned int castor::db::ora::OraJobSvc::id() const {
+unsigned int castor::db::ora::OraJobSvc::id() const {
   return ID();
 }
 
 //------------------------------------------------------------------------------
 // ID
 //------------------------------------------------------------------------------
-const unsigned int castor::db::ora::OraJobSvc::ID() {
+unsigned int castor::db::ora::OraJobSvc::ID() {
   return castor::SVC_ORAJOBSVC;
 }
 
@@ -212,8 +212,8 @@ castor::db::ora::OraJobSvc::getUpdateStart
 (castor::stager::SubRequest* subreq,
  castor::stager::FileSystem* fileSystem,
  bool* emptyFile,
- u_signed64 fileId,
- const std::string nsHost)
+ u_signed64,
+ const std::string)
   throw (castor::exception::Exception) {
   *emptyFile = false;
   try {
@@ -296,8 +296,8 @@ castor::stager::DiskCopy*
 castor::db::ora::OraJobSvc::putStart
 (castor::stager::SubRequest* subreq,
  castor::stager::FileSystem* fileSystem,
- u_signed64 fileId,
- const std::string nsHost)
+ u_signed64,
+ const std::string)
   throw (castor::exception::Exception) {
   castor::stager::DiskCopy* result = 0;
   try {
@@ -510,8 +510,8 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyStart
 void castor::db::ora::OraJobSvc::disk2DiskCopyDone
 (u_signed64 diskCopyId,
  u_signed64 sourceDiskCopyId,
- u_signed64 fileId,
- const std::string nsHost)
+ u_signed64,
+ const std::string)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
@@ -541,8 +541,8 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyDone
 void castor::db::ora::OraJobSvc::disk2DiskCopyFailed
 (u_signed64 diskCopyId,
  bool enoent,
- u_signed64 fileId,
- const std::string nsHost)
+ u_signed64,
+ const std::string)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
@@ -572,8 +572,8 @@ void castor::db::ora::OraJobSvc::prepareForMigration
 (castor::stager::SubRequest *subreq,
  u_signed64 fileSize,
  u_signed64 timeStamp,
- u_signed64 fileId,
- const std::string nsHost,
+ u_signed64,
+ const std::string,
  const std::string csumtype,
  const std::string csumvalue)
   throw (castor::exception::Exception) {
@@ -729,8 +729,8 @@ void castor::db::ora::OraJobSvc::prepareForMigration
 //------------------------------------------------------------------------------
 void castor::db::ora::OraJobSvc::getUpdateDone
 (u_signed64 subReqId,
- u_signed64 fileId,
- const std::string nsHost)
+ u_signed64,
+ const std::string)
   throw (castor::exception::Exception) {
   // Check whether the statements are ok
   if (0 == m_getUpdateDoneStatement) {
@@ -757,8 +757,8 @@ void castor::db::ora::OraJobSvc::getUpdateDone
 //------------------------------------------------------------------------------
 void castor::db::ora::OraJobSvc::getUpdateFailed
 (u_signed64 subReqId,
- u_signed64 fileId,
- const std::string nsHost)
+ u_signed64,
+ const std::string)
   throw (castor::exception::Exception) {
   // Check whether the statements are ok
   if (0 == m_getUpdateFailedStatement) {
@@ -785,8 +785,8 @@ void castor::db::ora::OraJobSvc::getUpdateFailed
 //------------------------------------------------------------------------------
 void castor::db::ora::OraJobSvc::putFailed
 (u_signed64 subReqId,
- u_signed64 fileId,
- const std::string nsHost)
+ u_signed64,
+ const std::string)
   throw (castor::exception::Exception) {
   // Check whether the statements are ok
   if (0 == m_putFailedStatement) {
@@ -813,8 +813,8 @@ void castor::db::ora::OraJobSvc::putFailed
 //------------------------------------------------------------------------------
 void castor::db::ora::OraJobSvc::firstByteWritten
 (u_signed64 subRequestId,
- u_signed64 fileId,
- const std::string nsHost)
+ u_signed64,
+ const std::string)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok

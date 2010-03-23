@@ -342,12 +342,12 @@ int proclistreq(magic, req_type, req_data, clienthost, thip)
         return (c);
       break;
     case VMGR_LISTDGNMAP:
-      if ((c = vmgr_srv_listdgnmap (magic, req_data,
+      if ((c = vmgr_srv_listdgnmap (req_data,
                                     clienthost, thip, endlist, &dblistptr)))
         return (c);
       break;
     case VMGR_LISTLIBRARY:
-      if ((c = vmgr_srv_listlibrary (magic, req_data,
+      if ((c = vmgr_srv_listlibrary (req_data,
                                      clienthost, thip, endlist, &dblistptr)))
         return (c);
       break;
@@ -357,7 +357,7 @@ int proclistreq(magic, req_type, req_data, clienthost, thip)
         return (c);
       break;
     case VMGR_LISTPOOL:
-      if ((c = vmgr_srv_listpool (magic, req_data,
+      if ((c = vmgr_srv_listpool (req_data,
                                   clienthost, thip, endlist, &dblistptr)))
         return (c);
       break;
@@ -424,13 +424,13 @@ void procreq(magic, req_type, req_data, clienthost, thip)
      c = SEINTERNAL;
     break;
   case VMGR_ENTTAPE:
-    c = vmgr_srv_entertape (magic, req_data, clienthost, thip);
+    c = vmgr_srv_entertape (req_data, clienthost, thip);
     break;
   case VMGR_GETTAPE:
     c = vmgr_srv_gettape (magic, req_data, clienthost, thip);
     break;
   case VMGR_MODTAPE:
-    c = vmgr_srv_modifytape (magic, req_data, clienthost, thip);
+    c = vmgr_srv_modifytape (req_data, clienthost, thip);
     break;
   case VMGR_QRYTAPE:
     c = vmgr_srv_querytape (magic, req_data, clienthost, thip);
@@ -439,7 +439,7 @@ void procreq(magic, req_type, req_data, clienthost, thip)
     c = vmgr_srv_updatetape (magic, req_data, clienthost, thip);
     break;
   case VMGR_DELMODEL:
-    c = vmgr_srv_deletemodel (magic, req_data, clienthost, thip);
+    c = vmgr_srv_deletemodel (req_data, clienthost, thip);
     break;
   case VMGR_ENTMODEL:
     c = vmgr_srv_entermodel (magic, req_data, clienthost, thip);
@@ -451,22 +451,22 @@ void procreq(magic, req_type, req_data, clienthost, thip)
     c = vmgr_srv_querymodel (magic, req_data, clienthost, thip);
     break;
   case VMGR_DELPOOL:
-    c = vmgr_srv_deletepool (magic, req_data, clienthost, thip);
+    c = vmgr_srv_deletepool (req_data, clienthost, thip);
     break;
   case VMGR_ENTPOOL:
-    c = vmgr_srv_enterpool (magic, req_data, clienthost, thip);
+    c = vmgr_srv_enterpool (req_data, clienthost, thip);
     break;
   case VMGR_MODPOOL:
-    c = vmgr_srv_modifypool (magic, req_data, clienthost, thip);
+    c = vmgr_srv_modifypool (req_data, clienthost, thip);
     break;
   case VMGR_QRYPOOL:
-    c = vmgr_srv_querypool (magic, req_data, clienthost, thip);
+    c = vmgr_srv_querypool (req_data, clienthost, thip);
     break;
   case VMGR_TPMOUNTED:
     c = vmgr_srv_tpmounted (magic, req_data, clienthost, thip);
     break;
   case VMGR_DELDENMAP:
-    c = vmgr_srv_deletedenmap (magic, req_data, clienthost, thip);
+    c = vmgr_srv_deletedenmap (req_data, clienthost, thip);
     break;
   case VMGR_ENTDENMAP:
     c = vmgr_srv_enterdenmap (magic, req_data, clienthost, thip);
@@ -480,37 +480,37 @@ void procreq(magic, req_type, req_data, clienthost, thip)
     c = proclistreq (magic, req_type, req_data, clienthost, thip);
     break;
   case VMGR_RECLAIM:
-    c = vmgr_srv_reclaim (magic, req_data, clienthost, thip);
+    c = vmgr_srv_reclaim (req_data, clienthost, thip);
     break;
   case VMGR_DELLIBRARY:
-    c = vmgr_srv_deletelibrary (magic, req_data, clienthost, thip);
+    c = vmgr_srv_deletelibrary (req_data, clienthost, thip);
     break;
   case VMGR_ENTLIBRARY:
-    c = vmgr_srv_enterlibrary (magic, req_data, clienthost, thip);
+    c = vmgr_srv_enterlibrary (req_data, clienthost, thip);
     break;
   case VMGR_MODLIBRARY:
-    c = vmgr_srv_modifylibrary (magic, req_data, clienthost, thip);
+    c = vmgr_srv_modifylibrary (req_data, clienthost, thip);
     break;
   case VMGR_QRYLIBRARY:
-    c = vmgr_srv_querylibrary (magic, req_data, clienthost, thip);
+    c = vmgr_srv_querylibrary (req_data, clienthost, thip);
     break;
   case VMGR_DELDGNMAP:
-    c = vmgr_srv_deletedgnmap (magic, req_data, clienthost, thip);
+    c = vmgr_srv_deletedgnmap (req_data, clienthost, thip);
     break;
   case VMGR_ENTDGNMAP:
-    c = vmgr_srv_enterdgnmap (magic, req_data, clienthost, thip);
+    c = vmgr_srv_enterdgnmap (req_data, clienthost, thip);
     break;
   case VMGR_DELTAG:
-    c = vmgr_srv_deltag (magic, req_data, clienthost, thip);
+    c = vmgr_srv_deltag (req_data, clienthost, thip);
     break;
   case VMGR_GETTAG:
-    c = vmgr_srv_gettag (magic, req_data, clienthost, thip);
+    c = vmgr_srv_gettag (req_data, clienthost, thip);
     break;
   case VMGR_SETTAG:
-    c = vmgr_srv_settag (magic, req_data, clienthost, thip);
+    c = vmgr_srv_settag (req_data, clienthost, thip);
     break;
   case VMGR_DELTAPEAFTERCHK:
-    c = vmgr_srv_deletetape (magic, req_data, clienthost, thip);
+    c = vmgr_srv_deletetape (req_data, clienthost, thip);
     break;
   default:
     sendrep (thip->s, MSG_ERR, VMG03, req_type);

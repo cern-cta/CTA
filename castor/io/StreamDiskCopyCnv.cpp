@@ -69,14 +69,14 @@ castor::io::StreamDiskCopyCnv::~StreamDiskCopyCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamDiskCopyCnv::ObjType() {
+unsigned int castor::io::StreamDiskCopyCnv::ObjType() {
   return castor::stager::DiskCopy::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamDiskCopyCnv::objType() const {
+unsigned int castor::io::StreamDiskCopyCnv::objType() const {
   return ObjType();
 }
 
@@ -85,8 +85,8 @@ const unsigned int castor::io::StreamDiskCopyCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamDiskCopyCnv::createRep(castor::IAddress* address,
                                               castor::IObject* object,
-                                              bool endTransaction,
-                                              unsigned int type)
+                                              bool,
+                                              unsigned int)
   throw (castor::exception::Exception) {
   castor::stager::DiskCopy* obj = 
     dynamic_cast<castor::stager::DiskCopy*>(object);

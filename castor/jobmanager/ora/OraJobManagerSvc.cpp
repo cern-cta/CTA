@@ -91,7 +91,7 @@ castor::jobmanager::ora::OraJobManagerSvc::~OraJobManagerSvc() throw() {
 //-----------------------------------------------------------------------------
 // Id
 //-----------------------------------------------------------------------------
-const unsigned int castor::jobmanager::ora::OraJobManagerSvc::id() const {
+unsigned int castor::jobmanager::ora::OraJobManagerSvc::id() const {
   return ID();
 }
 
@@ -99,7 +99,7 @@ const unsigned int castor::jobmanager::ora::OraJobManagerSvc::id() const {
 //-----------------------------------------------------------------------------
 // ID
 //-----------------------------------------------------------------------------
-const unsigned int castor::jobmanager::ora::OraJobManagerSvc::ID() {
+unsigned int castor::jobmanager::ora::OraJobManagerSvc::ID() {
   return castor::SVC_ORAJOBMANAGERSVC;
 }
 

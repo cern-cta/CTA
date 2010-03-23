@@ -61,7 +61,7 @@ castor::tape::tapegateway::RecallerErrorHandlerThread::RecallerErrorHandlerThrea
 //------------------------------------------------------------------------------
 // runs the thread
 //------------------------------------------------------------------------------
-void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void* par)
+void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void*)
 {
   // get failed recall tapecopies
 

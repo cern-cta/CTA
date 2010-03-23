@@ -70,7 +70,7 @@ castor::io::AuthClientSocket::AuthClientSocket(int socket)
 //------------------------------------------------------------------------------
 castor::io::AuthClientSocket::AuthClientSocket(const unsigned short port,
 					       const std::string host,
-					       int service_type)
+					       int)
   throw (castor::exception::Exception): ClientSocket(port, host) {
   
   if (loader() == -1) {
@@ -91,7 +91,7 @@ castor::io::AuthClientSocket::AuthClientSocket(const unsigned short port,
 //------------------------------------------------------------------------------
 castor::io::AuthClientSocket::AuthClientSocket(const unsigned short port,
 					       const unsigned long ip,
-					       int service_type)
+					       int)
   throw (castor::exception::Exception) : ClientSocket(port, ip) {
   
   if (loader() ==-1) {

@@ -233,14 +233,14 @@ castor::db::ora::OraStagerSvc::~OraStagerSvc() throw() {
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-const unsigned int castor::db::ora::OraStagerSvc::id() const {
+unsigned int castor::db::ora::OraStagerSvc::id() const {
   return ID();
 }
 
 //------------------------------------------------------------------------------
 // ID
 //------------------------------------------------------------------------------
-const unsigned int castor::db::ora::OraStagerSvc::ID() {
+unsigned int castor::db::ora::OraStagerSvc::ID() {
   return castor::SVC_ORASTAGERSVC;
 }
 

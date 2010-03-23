@@ -37,6 +37,7 @@ static int AbortFlag = 0;
 extern int rtcp_InitLog(char *, FILE *, FILE *, SOCKET *);
 
 int CntlC_handler(int sig) {
+    (void)sig;
     AbortFlag = 1;
     return(0);
 }

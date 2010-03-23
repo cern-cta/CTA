@@ -55,16 +55,20 @@ class CppCppBaseCnvWriter : public CppCppWriter {
   void writeUpdateObj();
     
   /// writes createRep method's content
-  virtual void writeCreateRepContent() = 0;
+  virtual void writeCreateRepContent(QTextStream &stream, bool &addressUsed,
+                                     bool &endTransUsed, bool &typeUsed) = 0;
     
   /// writes bulkCreateRep method's content
-  virtual void writeBulkCreateRepContent() = 0;
+  virtual void writeBulkCreateRepContent(QTextStream &stream, bool &addressUsed,
+                                         bool &typeUsed) = 0;
     
-  /// writes createRep method's content
-  virtual void writeUpdateRepContent() = 0;
+  /// writes updateRep method's content
+  virtual void writeUpdateRepContent(QTextStream &stream,
+                                     bool &addressUsed) = 0;
     
   /// writes deleteRep method's content
-  virtual void writeDeleteRepContent() = 0;
+  virtual void writeDeleteRepContent(QTextStream &stream,
+                                     bool &addressUsed) = 0;
     
   /// writes createObj method's content
   virtual void writeCreateObjContent() = 0;
@@ -72,7 +76,7 @@ class CppCppBaseCnvWriter : public CppCppWriter {
   /// writes bulkCreateObj method's content
   virtual void writeBulkCreateObjContent() = 0;
     
-  /// writes createRep method's content
+  /// writes updateObj method's content
   virtual void writeUpdateObjContent() = 0;
     
   /// writes deleteRep method's content

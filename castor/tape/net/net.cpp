@@ -47,7 +47,7 @@ int castor::tape::net::createListenerSock(
   const char           *addr,
   const unsigned short lowPort,
   const unsigned short highPort,
-  unsigned short       &chosenPort)
+  unsigned short&)
   throw(castor::exception::Exception) {
 
   // Check range validity

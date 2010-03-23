@@ -67,14 +67,14 @@ castor::io::StreamFirstByteWrittenCnv::~StreamFirstByteWrittenCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamFirstByteWrittenCnv::ObjType() {
+unsigned int castor::io::StreamFirstByteWrittenCnv::ObjType() {
   return castor::stager::FirstByteWritten::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamFirstByteWrittenCnv::objType() const {
+unsigned int castor::io::StreamFirstByteWrittenCnv::objType() const {
   return ObjType();
 }
 
@@ -83,8 +83,8 @@ const unsigned int castor::io::StreamFirstByteWrittenCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamFirstByteWrittenCnv::createRep(castor::IAddress* address,
                                                       castor::IObject* object,
-                                                      bool endTransaction,
-                                                      unsigned int type)
+                                                      bool,
+                                                      unsigned int)
   throw (castor::exception::Exception) {
   castor::stager::FirstByteWritten* obj = 
     dynamic_cast<castor::stager::FirstByteWritten*>(object);

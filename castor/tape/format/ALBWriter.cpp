@@ -72,7 +72,7 @@ void copyString(const char *src, char (&dst)[n])
  * into a single output file.
  */
 //==============================================================================
-int main(int argc, char** argv) {
+int main(int, char**) {
 
   using namespace castor::tape::format;    
 

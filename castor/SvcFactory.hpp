@@ -57,7 +57,7 @@ namespace castor {
       throw (castor::exception::Exception);
 
     /** Get ID of the factory, i.e. of the underlying Service */
-    const unsigned int id() const;
+    unsigned int id() const;
 
   };
 
@@ -75,7 +75,7 @@ castor::SvcFactory<Service>::instantiate(const std::string name) const
 }
 
 template <class Service>
-inline const unsigned int castor::SvcFactory<Service>::id() const {
+inline unsigned int castor::SvcFactory<Service>::id() const {
   return Service::ID();
 }
 

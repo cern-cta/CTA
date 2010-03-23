@@ -336,7 +336,7 @@ int procpath (char *dir)
           continue;
     }
     if (fileid && dxp->fileid != fileid) continue;
-    if (typeval && (dxp->filemode & S_IFMT) != typeval) continue;
+    if (typeval && (int)(dxp->filemode & S_IFMT) != typeval) continue;
     if (expstruct && Cregexp_exec (expstruct, dxp->d_name)) continue;
     if (mtimeflg) {
       if (mtimeflg == '-') {

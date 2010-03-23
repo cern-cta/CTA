@@ -67,14 +67,14 @@ castor::io::StreamGetUpdateFailedCnv::~StreamGetUpdateFailedCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamGetUpdateFailedCnv::ObjType() {
+unsigned int castor::io::StreamGetUpdateFailedCnv::ObjType() {
   return castor::stager::GetUpdateFailed::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamGetUpdateFailedCnv::objType() const {
+unsigned int castor::io::StreamGetUpdateFailedCnv::objType() const {
   return ObjType();
 }
 
@@ -83,8 +83,8 @@ const unsigned int castor::io::StreamGetUpdateFailedCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamGetUpdateFailedCnv::createRep(castor::IAddress* address,
                                                      castor::IObject* object,
-                                                     bool endTransaction,
-                                                     unsigned int type)
+                                                     bool,
+                                                     unsigned int)
   throw (castor::exception::Exception) {
   castor::stager::GetUpdateFailed* obj = 
     dynamic_cast<castor::stager::GetUpdateFailed*>(object);

@@ -159,21 +159,21 @@ void castor::db::cnv::DbRepackSegmentCnv::reset() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbRepackSegmentCnv::ObjType() {
+unsigned int castor::db::cnv::DbRepackSegmentCnv::ObjType() {
   return castor::repack::RepackSegment::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbRepackSegmentCnv::objType() const {
+unsigned int castor::db::cnv::DbRepackSegmentCnv::objType() const {
   return ObjType();
 }
 
 //------------------------------------------------------------------------------
 // fillRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbRepackSegmentCnv::fillRep(castor::IAddress* address,
+void castor::db::cnv::DbRepackSegmentCnv::fillRep(castor::IAddress*,
                                                   castor::IObject* object,
                                                   unsigned int type,
                                                   bool endTransaction)
@@ -238,7 +238,7 @@ void castor::db::cnv::DbRepackSegmentCnv::fillRepRepackSubRequest(castor::repack
 //------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbRepackSegmentCnv::fillObj(castor::IAddress* address,
+void castor::db::cnv::DbRepackSegmentCnv::fillObj(castor::IAddress*,
                                                   castor::IObject* object,
                                                   unsigned int type,
                                                   bool endTransaction)
@@ -304,7 +304,7 @@ void castor::db::cnv::DbRepackSegmentCnv::fillObjRepackSubRequest(castor::repack
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbRepackSegmentCnv::createRep(castor::IAddress* address,
+void castor::db::cnv::DbRepackSegmentCnv::createRep(castor::IAddress*,
                                                     castor::IObject* object,
                                                     bool endTransaction,
                                                     unsigned int type)
@@ -363,7 +363,7 @@ void castor::db::cnv::DbRepackSegmentCnv::createRep(castor::IAddress* address,
                     << "  errorCode : " << obj->errorCode() << std::endl
                     << "  errorMessage : " << obj->errorMessage() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  repacksubrequest : " << obj->repacksubrequest() << std::endl;
+                    << "  repacksubrequest : " << obj->repacksubrequest()->id() << std::endl;
     throw ex;
   }
 }
@@ -371,7 +371,7 @@ void castor::db::cnv::DbRepackSegmentCnv::createRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // bulkCreateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbRepackSegmentCnv::bulkCreateRep(castor::IAddress* address,
+void castor::db::cnv::DbRepackSegmentCnv::bulkCreateRep(castor::IAddress*,
                                                         std::vector<castor::IObject*> &objects,
                                                         bool endTransaction,
                                                         unsigned int type)
@@ -659,7 +659,7 @@ void castor::db::cnv::DbRepackSegmentCnv::bulkCreateRep(castor::IAddress* addres
 //------------------------------------------------------------------------------
 // updateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbRepackSegmentCnv::updateRep(castor::IAddress* address,
+void castor::db::cnv::DbRepackSegmentCnv::updateRep(castor::IAddress*,
                                                     castor::IObject* object,
                                                     bool endTransaction)
   throw (castor::exception::Exception) {
@@ -705,7 +705,7 @@ void castor::db::cnv::DbRepackSegmentCnv::updateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // deleteRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbRepackSegmentCnv::deleteRep(castor::IAddress* address,
+void castor::db::cnv::DbRepackSegmentCnv::deleteRep(castor::IAddress*,
                                                     castor::IObject* object,
                                                     bool endTransaction)
   throw (castor::exception::Exception) {

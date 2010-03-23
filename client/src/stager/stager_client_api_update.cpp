@@ -44,13 +44,14 @@
 /* External routines */
 /* ================= */
 
-EXTERN_C int DLL_DECL stage_prepareToUpdate(const char *userTag,
-					struct stage_prepareToUpdate_filereq *requests,
-					int nbreqs,
-					struct stage_prepareToUpdate_fileresp **responses,
-					int *nbresps,
-					char **requestId,
-					 struct stage_options* opts) {
+EXTERN_C int DLL_DECL stage_prepareToUpdate
+(const char *userTag,
+ struct stage_prepareToUpdate_filereq *requests,
+ int nbreqs,
+ struct stage_prepareToUpdate_fileresp **responses,
+ int *nbresps,
+ char**,
+ struct stage_options* opts) {
 
   const char *func = "stage_prepareToUpdate";
   int ret=0;

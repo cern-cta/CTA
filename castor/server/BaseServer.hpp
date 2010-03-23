@@ -68,7 +68,7 @@ namespace castor {
       /**
        * Parses a command line to set the server options
        */
-      virtual void parseCommandLine(int argc, char *argv[]) {};
+      virtual void parseCommandLine(int, char*[]) {};
 
       /**
        * Sets the foreground flag
@@ -129,7 +129,7 @@ namespace castor {
       /**
        * Prints out the online help
        */
-       virtual void help(std::string programName) {};
+      virtual void help(std::string) {};
 
       /**
        * Flag indicating whether the server should

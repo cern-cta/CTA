@@ -71,7 +71,7 @@ namespace castor {
       /**
        * gets the serrno code of the corresponding C error
        */
-      const int code() const { return m_serrno; }
+      int code() const { return m_serrno; }
 
     private:
       /// A message explaining why this exception was raised

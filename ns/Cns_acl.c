@@ -310,10 +310,11 @@ int Cns_acl_validate (struct Cns_acl *acl, int nentries)
 
 /* Cns_chkaclperm - check access permissions */
 
-int Cns_chkaclperm (struct Cns_file_metadata *fmd_entry, int mode, uid_t uid, gid_t gid)
+int Cns_chkaclperm (struct Cns_file_metadata *fmd_entry, mode_t mode, uid_t uid, gid_t gid)
 {
   char acl_mask = 0x7F;
-  int acl_id;
+  uid_t acl_uid;
+  gid_t acl_gid;
   char *iacl;
   char *p;
 
@@ -335,10 +336,10 @@ int Cns_chkaclperm (struct Cns_file_metadata *fmd_entry, int mode, uid_t uid, gi
     p = strchr (iacl, ',');
     p++;
     if (*iacl - '@' < CNS_ACL_USER) continue;
-    acl_id = atoi (iacl + 2);
-    if (uid == acl_id)
+    acl_uid = atoi (iacl + 2);
+    if (uid == acl_uid)
       return ((*(iacl + 1) & acl_mask & mode) != mode);
-    if (uid < acl_id) break;
+    if (uid < acl_uid) break;
   }
 
   /* check GROUP */
@@ -354,10 +355,10 @@ int Cns_chkaclperm (struct Cns_file_metadata *fmd_entry, int mode, uid_t uid, gi
     p = strchr (iacl, ',');
     p++;
     if (*iacl - '@' < CNS_ACL_GROUP) continue;
-    acl_id = atoi (iacl + 2);
-    if (gid == acl_id)
+    acl_gid = atoi (iacl + 2);
+    if (gid == acl_gid)
       return ((*(iacl + 1) & acl_mask & mode) != mode);
-    if (gid < acl_id) break;
+    if (gid < acl_gid) break;
   }
 
   /* OTHER */

@@ -655,12 +655,14 @@ static void shutdownService _PROTO((
                                     ));
 
 static void sigchld_handler(int signo) {
+  (void)signo;
   return;
 }
 
 static void *signal_handler(void *arg) {
   int signal;
 
+  (void)arg;
   while (1) {
     if (sigwait(&signalset, &signal) == 0) {
       if ((signal == SIGINT)  ||
@@ -1113,11 +1115,7 @@ static int startWorker(
   return(0);
 }
 
-int rtcpcld_main(
-                 main_args
-                 )
-     struct main_args *main_args;
-{
+int rtcpcld_main() {
   int rc, pid, maxfd, cnt, i, save_errno;
   socklen_t len;
   int timeout_secs = RTCPCLD_CATPOLL_TIMEOUT;
@@ -1686,7 +1684,7 @@ int main(
   Cuuid_create(&mainUuid);
 
   if (Debug == TRUE) {
-    rc = rtcpcld_main(NULL);
+    rc = rtcpcld_main();
   } else {
 #if defined(_WIN32)
     /*
@@ -1703,7 +1701,7 @@ int main(
       exit(1);
     }
 #endif /* _WIN32 */
-    rc = rtcpcld_main(NULL);
+    rc = rtcpcld_main();
   }
   dlf_shutdown();
   if ( rc != 0 ) exit(1);

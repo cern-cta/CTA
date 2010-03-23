@@ -67,14 +67,14 @@ castor::io::StreamDiskPoolQueryCnv::~StreamDiskPoolQueryCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamDiskPoolQueryCnv::ObjType() {
+unsigned int castor::io::StreamDiskPoolQueryCnv::ObjType() {
   return castor::query::DiskPoolQuery::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamDiskPoolQueryCnv::objType() const {
+unsigned int castor::io::StreamDiskPoolQueryCnv::objType() const {
   return ObjType();
 }
 
@@ -83,8 +83,8 @@ const unsigned int castor::io::StreamDiskPoolQueryCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamDiskPoolQueryCnv::createRep(castor::IAddress* address,
                                                    castor::IObject* object,
-                                                   bool endTransaction,
-                                                   unsigned int type)
+                                                   bool,
+                                                   unsigned int)
   throw (castor::exception::Exception) {
   castor::query::DiskPoolQuery* obj = 
     dynamic_cast<castor::query::DiskPoolQuery*>(object);

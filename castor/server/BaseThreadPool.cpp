@@ -107,7 +107,7 @@ void castor::server::BaseThreadPool::run() throw (castor::exception::Exception)
 //------------------------------------------------------------------------------
 // shutdown
 //------------------------------------------------------------------------------
-bool castor::server::BaseThreadPool::shutdown(bool wait) throw()
+bool castor::server::BaseThreadPool::shutdown(bool) throw()
 {
   // Children of this class implement a proper shutdown mechanism,
   // here we just return.

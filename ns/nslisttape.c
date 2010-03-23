@@ -170,7 +170,7 @@ int main(int argc,char **argv)
   flags = CNS_LIST_BEGIN;
   serrno = 0;
   while ((dtp = Cns_listtape (server, vid, flags, &list, fseq)) != NULL) {
-    if (dtp->parent_fileid != parent_fileid) {
+    if ((signed64)dtp->parent_fileid != parent_fileid) {
       if (Cns_getpath (server, dtp->parent_fileid, path) < 0) {
         fprintf (stderr, "%s\n", sstrerror(serrno));
 #if defined(_WIN32)

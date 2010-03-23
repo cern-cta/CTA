@@ -69,14 +69,14 @@ castor::io::StreamVersionQueryCnv::~StreamVersionQueryCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamVersionQueryCnv::ObjType() {
+unsigned int castor::io::StreamVersionQueryCnv::ObjType() {
   return castor::query::VersionQuery::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamVersionQueryCnv::objType() const {
+unsigned int castor::io::StreamVersionQueryCnv::objType() const {
   return ObjType();
 }
 
@@ -85,8 +85,8 @@ const unsigned int castor::io::StreamVersionQueryCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamVersionQueryCnv::createRep(castor::IAddress* address,
                                                   castor::IObject* object,
-                                                  bool endTransaction,
-                                                  unsigned int type)
+                                                  bool,
+                                                  unsigned int)
   throw (castor::exception::Exception) {
   castor::query::VersionQuery* obj = 
     dynamic_cast<castor::query::VersionQuery*>(object);

@@ -286,7 +286,7 @@ int Csec_server_set_protocols(Csec_context_t *ctx, int socket) {
 }
 
 static int _check_short_resp(char *func, csec_buffer_desc *buff, char *p) {
-  if (p - (char *)(buff->value) > buff->length) {
+  if (p - (char *)(buff->value) > (int)buff->length) {
     Csec_errmsg(func, "Response from the client was short");
     free(buff->value);
     serrno = ESEC_BAD_PEER_RESP;
@@ -391,7 +391,7 @@ int Csec_server_negociate_protocol(int s, int timeout, Csec_context_t *ctx, char
       return -1;
     }
 
-    for(i=0;i<l;i++) {
+    for(i=0;i<(int)l;i++) {
       unsigned long flags,nindexes;
       unmarshall_LONG(p, flags);
       unmarshall_LONG(p, nindexes);
@@ -404,7 +404,7 @@ int Csec_server_negociate_protocol(int s, int timeout, Csec_context_t *ctx, char
         return -1;
       }
 
-      for(j=0;j<nindexes;j++) {
+      for(j=0;j<(int)nindexes;j++) {
         unsigned long index;
         unmarshall_LONG(p, index);
 
@@ -413,7 +413,7 @@ int Csec_server_negociate_protocol(int s, int timeout, Csec_context_t *ctx, char
           return -1;
         }
 
-        if (index < ctx->nb_peer_protocols) {
+        if (index < (unsigned long)ctx->nb_peer_protocols) {
           peer_flags[index] |= flags;
         }
       }
@@ -431,7 +431,7 @@ int Csec_server_negociate_protocol(int s, int timeout, Csec_context_t *ctx, char
       /* get the fqans */
       unmarshall_LONG(p, ctx->nbfqan);
       ctx->fqan = calloc(ctx->nbfqan, sizeof(char *));
-      for (l = 0; l < ctx->nbfqan; l++) {
+      for (l = 0; l < (unsigned long)ctx->nbfqan; l++) {
         unmarshall_STRINGN(p, tmp, CA_MAXCSECNAMELEN+1);
         ctx->fqan[l] = strdup(tmp);
       }
@@ -825,7 +825,7 @@ int Csec_client_negociate_protocol(int s, int timeout, Csec_context_t *ctx) {
         return -1;
       }
 
-      for(i=0;i<l;i++) {
+      for(i=0;i<(int)l;i++) {
         unsigned long flags,nindexes;
         unmarshall_LONG(p, flags);
         unmarshall_LONG(p, nindexes);
@@ -837,7 +837,7 @@ int Csec_client_negociate_protocol(int s, int timeout, Csec_context_t *ctx) {
           return -1;
         }
 
-        for(j=0;j<nindexes;j++) {
+        for(j=0;j<(int)nindexes;j++) {
           unsigned long index;
           unmarshall_LONG(p, index);
 

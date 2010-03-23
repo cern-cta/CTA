@@ -28,46 +28,43 @@ COMM######################### FLAGS ##############################
 
 CPPFLAGS += -DBIN=\"$(BIN)\" -DLOGFILE=\"$(LOGDIR)/taped_legacy.log\" \
 	    $(STAGERSUPERUSER) -DTPCONFIG=\"$(TPCONFIG)\" \
-	    -D$(TMS) $(PCTAFLAG) $(ADSTARFLG) -DSACCT -DACCTFILE=\"$(SACCTFILE)\" \
+	    -D$(TMS) $(PCTAFLAG) -DSACCT -DACCTFILE=\"$(SACCTFILE)\" \
 	    -DCONFIGFILE=\"$(SCONFIGFILE)\" $(CDKFLG) -DVDQM -DVMGR
 
 CFLAGS += $(CDKINC) $(SECURITYFLAG)
 
-sendscsicmd.c:	DepSourceName(common,sendscsicmd.c)
-	RemoveFiles(sendscsicmd.c)
-	$(CP) DepSourceName(common,sendscsicmd.c) sendscsicmd.c
 usrlocate.c:	locate.c
 	RemoveFiles(usrlocate.c)
-	$(CP) locate.c usrlocate.c
+	cp locate.c usrlocate.c
 usrreadlbl.c:	readlbl.c
 	RemoveFiles(usrreadlbl.c)
-	$(CP) readlbl.c usrreadlbl.c
+	cp readlbl.c usrreadlbl.c
 usrrwndtape.c:	rwndtape.c
 	RemoveFiles(usrrwndtape.c)
-	$(CP) rwndtape.c usrrwndtape.c
+	cp rwndtape.c usrrwndtape.c
 usrskiptape.c:	skiptape.c
 	RemoveFiles(usrskiptape.c)
-	$(CP) skiptape.c usrskiptape.c
+	cp skiptape.c usrskiptape.c
 usrsmcsubr.c:	smcsubr.c
 	RemoveFiles(usrsmcsubr.c)
-	$(CP) smcsubr.c usrsmcsubr.c
+	cp smcsubr.c usrsmcsubr.c
 usrsmcsubr2.c:	smcsubr2.c
 	RemoveFiles(usrsmcsubr2.c)
-	$(CP) smcsubr2.c usrsmcsubr2.c
+	cp smcsubr2.c usrsmcsubr2.c
 usrtperror.c:	tperror.c
 	RemoveFiles(usrtperror.c)
-	$(CP) tperror.c usrtperror.c
+	cp tperror.c usrtperror.c
 usrusrmsg.c:	usrmsg.c
 	RemoveFiles(usrusrmsg.c)
-	$(CP) usrmsg.c usrusrmsg.c
+	cp usrmsg.c usrusrmsg.c
 usrwritelbl.c:	writelbl.c
 	RemoveFiles(usrwritelbl.c)
-	$(CP) writelbl.c usrwritelbl.c
+	cp writelbl.c usrwritelbl.c
 usrwrttpmrk.c:	wrttpmrk.c
 	RemoveFiles(usrwrttpmrk.c)
-	$(CP) wrttpmrk.c usrwrttpmrk.c
+	cp wrttpmrk.c usrwrttpmrk.c
 
-FilesToClean += sendscsicmd.c usrlocate.c usrreadlbl.c usrrwndtape.c usrskiptape.c usrsmcsubr.c usrsmcsubr2.c usrtperror.c usrusrmsg.c usrwritelbl.c usrwrttpmrk.c
+FilesToClean += usrlocate.c usrreadlbl.c usrrwndtape.c usrskiptape.c usrsmcsubr.c usrsmcsubr2.c usrtperror.c usrusrmsg.c usrwritelbl.c usrwrttpmrk.c
 
 sendscsicmd.Osuf: sendscsicmd.c
 	@if [ -f "/usr/src/linux/include/scsi/sg.h" ] ;\

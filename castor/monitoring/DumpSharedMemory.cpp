@@ -31,7 +31,7 @@
 #include "castor/monitoring/ClusterStatusBlockKey.hpp"
 #include <iostream>
 
-int main(int argc, char** argv) {
+int main(int, char**) {
 
   // get SharedMemoryBlock
   bool create = false;

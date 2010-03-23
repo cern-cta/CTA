@@ -107,14 +107,14 @@ castor::db::ora::OraCommonSvc::~OraCommonSvc() throw() {
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-const unsigned int castor::db::ora::OraCommonSvc::id() const {
+unsigned int castor::db::ora::OraCommonSvc::id() const {
   return ID();
 }
 
 //------------------------------------------------------------------------------
 // ID
 //------------------------------------------------------------------------------
-const unsigned int castor::db::ora::OraCommonSvc::ID() {
+unsigned int castor::db::ora::OraCommonSvc::ID() {
   return castor::SVC_ORACOMMONSVC;
 }
 

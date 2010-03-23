@@ -143,21 +143,21 @@ void castor::db::cnv::DbClientIdentificationCnv::reset() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbClientIdentificationCnv::ObjType() {
+unsigned int castor::db::cnv::DbClientIdentificationCnv::ObjType() {
   return castor::vdqm::ClientIdentification::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbClientIdentificationCnv::objType() const {
+unsigned int castor::db::cnv::DbClientIdentificationCnv::objType() const {
   return ObjType();
 }
 
 //------------------------------------------------------------------------------
 // fillRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbClientIdentificationCnv::fillRep(castor::IAddress* address,
+void castor::db::cnv::DbClientIdentificationCnv::fillRep(castor::IAddress*,
                                                          castor::IObject* object,
                                                          unsigned int type,
                                                          bool endTransaction)
@@ -187,7 +187,7 @@ void castor::db::cnv::DbClientIdentificationCnv::fillRep(castor::IAddress* addre
 //------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbClientIdentificationCnv::fillObj(castor::IAddress* address,
+void castor::db::cnv::DbClientIdentificationCnv::fillObj(castor::IAddress*,
                                                          castor::IObject* object,
                                                          unsigned int type,
                                                          bool endTransaction)
@@ -210,10 +210,10 @@ void castor::db::cnv::DbClientIdentificationCnv::fillObj(castor::IAddress* addre
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbClientIdentificationCnv::createRep(castor::IAddress* address,
+void castor::db::cnv::DbClientIdentificationCnv::createRep(castor::IAddress*,
                                                            castor::IObject* object,
                                                            bool endTransaction,
-                                                           unsigned int type)
+                                                           unsigned int)
   throw (castor::exception::Exception) {
   castor::vdqm::ClientIdentification* obj = 
     dynamic_cast<castor::vdqm::ClientIdentification*>(object);
@@ -269,10 +269,10 @@ void castor::db::cnv::DbClientIdentificationCnv::createRep(castor::IAddress* add
 //------------------------------------------------------------------------------
 // bulkCreateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbClientIdentificationCnv::bulkCreateRep(castor::IAddress* address,
+void castor::db::cnv::DbClientIdentificationCnv::bulkCreateRep(castor::IAddress*,
                                                                std::vector<castor::IObject*> &objects,
                                                                bool endTransaction,
-                                                               unsigned int type)
+                                                               unsigned int)
   throw (castor::exception::Exception) {
   // check whether something needs to be done
   int nb = objects.size();
@@ -486,7 +486,7 @@ void castor::db::cnv::DbClientIdentificationCnv::bulkCreateRep(castor::IAddress*
 //------------------------------------------------------------------------------
 // updateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbClientIdentificationCnv::updateRep(castor::IAddress* address,
+void castor::db::cnv::DbClientIdentificationCnv::updateRep(castor::IAddress*,
                                                            castor::IObject* object,
                                                            bool endTransaction)
   throw (castor::exception::Exception) {
@@ -529,7 +529,7 @@ void castor::db::cnv::DbClientIdentificationCnv::updateRep(castor::IAddress* add
 //------------------------------------------------------------------------------
 // deleteRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbClientIdentificationCnv::deleteRep(castor::IAddress* address,
+void castor::db::cnv::DbClientIdentificationCnv::deleteRep(castor::IAddress*,
                                                            castor::IObject* object,
                                                            bool endTransaction)
   throw (castor::exception::Exception) {

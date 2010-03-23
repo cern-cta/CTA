@@ -291,7 +291,7 @@ void castor::BaseCnvSvc::rollback()
 //------------------------------------------------------------------------------
 // createStatement
 //------------------------------------------------------------------------------
-castor::db::IDbStatement* castor::BaseCnvSvc::createStatement(const std::string& stmt)
+castor::db::IDbStatement* castor::BaseCnvSvc::createStatement(const std::string&)
   throw (castor::exception::Exception) {
   // Default implementation, does nothing.
   return 0;

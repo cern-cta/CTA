@@ -975,7 +975,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpFileReq(
   const legacymsg::MessageHeader &header,
   legacymsg::RtcpFileRqstMsgBody &body,
   const int                      rtcpdSock,
-  bool                           &receivedENDOF_REQ)
+  bool&)
   throw(castor::exception::Exception) {
 
   // If the tape is being dumped
@@ -1242,10 +1242,10 @@ void
 // processRtcpTape
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpTape(
-  const legacymsg::MessageHeader &header,
-  legacymsg::RtcpTapeRqstMsgBody &body,
-  const int                      socketFd,
-  bool                           &receivedENDOF_REQ)
+  const legacymsg::MessageHeader&,
+  legacymsg::RtcpTapeRqstMsgBody&,
+  const int socketFd,
+  bool&)
   throw(castor::exception::Exception) {
 
   // Acknowledge tape request
@@ -1262,7 +1262,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpTape(
 // rtcpEndOfReqRtcpdCallback
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::rtcpEndOfReqRtcpdCallback(
-  const legacymsg::MessageHeader &header,
+  const legacymsg::MessageHeader&,
   const int                      socketFd, 
   bool                           &receivedENDOF_REQ)
   throw(castor::exception::Exception) {
@@ -1285,7 +1285,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::rtcpEndOfReqRtcpdCallback(
 void castor::tape::tapebridge::BridgeProtocolEngine::giveOutpRtcpdCallback(
   const legacymsg::MessageHeader &header,
   const int                      socketFd,
-  bool                           &receivedENDOF_REQ)
+  bool&)
   throw(castor::exception::Exception) {
 
   legacymsg::GiveOutpMsgBody body;
@@ -1330,14 +1330,14 @@ void castor::tape::tapebridge::BridgeProtocolEngine::checkPeerIsLocalhost(
 //-----------------------------------------------------------------------------
 void
   castor::tape::tapebridge::BridgeProtocolEngine::fileToMigrateClientCallback(
-  const int                                    clientSock,
-  const IObject                                *obj,
-  const int                                    rtcpdSock,
-  const uint32_t                               rtcpdReqMagic,
-  const uint32_t                               rtcpdReqType,
-  const char                                   *rtcpdReqTapePath,
-  const uint64_t                               aggregatorTransactionId,
-  struct timeval                               clientReqTimeStamp)
+  const int clientSock,
+  const IObject *obj,
+  const int rtcpdSock,
+  const uint32_t rtcpdReqMagic,
+  const uint32_t rtcpdReqType,
+  const char *,
+  const uint64_t aggregatorTransactionId,
+  struct timeval)
   throw(castor::exception::Exception) {
 
   // Down cast the reply to its specific class
@@ -1469,7 +1469,7 @@ void
   const uint32_t rtcpdReqType,
   const char     *rtcpdReqTapePath,
   const uint64_t aggregatorTransactionId,
-  struct timeval clientReqTimeStamp)
+  struct timeval)
   throw(castor::exception::Exception) {
 
   // Down cast the reply to its specific class
@@ -1588,14 +1588,14 @@ void
 //-----------------------------------------------------------------------------
 void
   castor::tape::tapebridge::BridgeProtocolEngine::noMoreFilesClientCallback(
-  const int      clientSock,
-  const IObject  *obj,
-  const int      rtcpdSock,
+  const int clientSock,
+  const IObject* obj,
+  const int rtcpdSock,
   const uint32_t rtcpdReqMagic,
   const uint32_t rtcpdReqType,
-  const char     *rtcpdReqTapePath,
+  const char*,
   const uint64_t aggregatorTransactionId,
-  struct timeval clientReqTimeStamp)
+  struct timeval)
   throw(castor::exception::Exception) {
 
   // Down cast the reply to its specific class
@@ -1649,14 +1649,14 @@ void
 void
   castor::tape::tapebridge::BridgeProtocolEngine::
   endNotificationErrorReportClientCallback(
-  const int      clientSock,
-  const IObject  *obj,
-  const int      rtcpdSock,
-  const uint32_t rtcpdReqMagic,
-  const uint32_t rtcpdReqType,
-  const char     *rtcpdReqTapePath,
-  const uint64_t aggregatorTransactionId,
-  struct timeval clientReqTimeStamp)
+  const int clientSock,
+  const IObject* obj,
+  const int,
+  const uint32_t,
+  const uint32_t,
+  const char*,
+  const uint64_t,
+  struct timeval)
   throw(castor::exception::Exception) {
 
   // Down cast the reply to its specific class
@@ -1693,14 +1693,14 @@ void
 //-----------------------------------------------------------------------------
 void
   castor::tape::tapebridge::BridgeProtocolEngine::notificationAcknowledge(
-  const int      clientSock,
-  const IObject  *obj,
-  const int      rtcpdSock,
-  const uint32_t rtcpdReqMagic,
-  const uint32_t rtcpdReqType,
-  const char     *rtcpdReqTapePath,
+  const int clientSock,
+  const IObject* obj,
+  const int,
+  const uint32_t,
+  const uint32_t,
+  const char*,
   const uint64_t aggregatorTransactionId,
-  struct timeval clientReqTimeStamp)
+  struct timeval)
   throw(castor::exception::Exception) {
 
   // Down cast the reply to its specific class

@@ -160,14 +160,14 @@ castor::db::ora::OraGCSvc::~OraGCSvc() throw() {
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-const unsigned int castor::db::ora::OraGCSvc::id() const {
+unsigned int castor::db::ora::OraGCSvc::id() const {
   return ID();
 }
 
 //------------------------------------------------------------------------------
 // ID
 //------------------------------------------------------------------------------
-const unsigned int castor::db::ora::OraGCSvc::ID() {
+unsigned int castor::db::ora::OraGCSvc::ID() {
   return castor::SVC_ORAGCSVC;
 }
 
@@ -582,7 +582,7 @@ std::vector<u_signed64> castor::db::ora::OraGCSvc::nsFilesDeleted
 //------------------------------------------------------------------------------
 std::vector<u_signed64> castor::db::ora::OraGCSvc::stgFilesDeleted
 (std::vector<u_signed64> &diskCopyIds,
- std::string nsHost) throw() {
+ std::string) throw() {
   std::vector<u_signed64> orphans;
   // do not call oracle if not needed
   if (0 == diskCopyIds.size()) return orphans;

@@ -65,14 +65,14 @@ castor::io::StreamFileSystemStateAckCnv::~StreamFileSystemStateAckCnv() throw() 
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamFileSystemStateAckCnv::ObjType() {
+unsigned int castor::io::StreamFileSystemStateAckCnv::ObjType() {
   return castor::monitoring::FileSystemStateAck::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamFileSystemStateAckCnv::objType() const {
+unsigned int castor::io::StreamFileSystemStateAckCnv::objType() const {
   return ObjType();
 }
 
@@ -81,8 +81,8 @@ const unsigned int castor::io::StreamFileSystemStateAckCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamFileSystemStateAckCnv::createRep(castor::IAddress* address,
                                                         castor::IObject* object,
-                                                        bool endTransaction,
-                                                        unsigned int type)
+                                                        bool,
+                                                        unsigned int)
   throw (castor::exception::Exception) {
   castor::monitoring::FileSystemStateAck* obj = 
     dynamic_cast<castor::monitoring::FileSystemStateAck*>(object);

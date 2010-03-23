@@ -493,7 +493,7 @@ int is_usf( fd )
       return 0 ;
     }
     rc=read(fd,&llen,sizeof(int));
-    if (rc < sizeof(int)) {
+    if (rc < (int)sizeof(int)) {
       /* We need at least 1 record to decide
        * it is sequential
        */

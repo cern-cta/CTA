@@ -67,14 +67,14 @@ castor::io::StreamGetUpdateStartRequestCnv::~StreamGetUpdateStartRequestCnv() th
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamGetUpdateStartRequestCnv::ObjType() {
+unsigned int castor::io::StreamGetUpdateStartRequestCnv::ObjType() {
   return castor::stager::GetUpdateStartRequest::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamGetUpdateStartRequestCnv::objType() const {
+unsigned int castor::io::StreamGetUpdateStartRequestCnv::objType() const {
   return ObjType();
 }
 
@@ -83,8 +83,8 @@ const unsigned int castor::io::StreamGetUpdateStartRequestCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamGetUpdateStartRequestCnv::createRep(castor::IAddress* address,
                                                            castor::IObject* object,
-                                                           bool endTransaction,
-                                                           unsigned int type)
+                                                           bool,
+                                                           unsigned int)
   throw (castor::exception::Exception) {
   castor::stager::GetUpdateStartRequest* obj = 
     dynamic_cast<castor::stager::GetUpdateStartRequest*>(object);

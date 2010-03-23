@@ -66,14 +66,14 @@ castor::io::StreamGCFilesResponseCnv::~StreamGCFilesResponseCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamGCFilesResponseCnv::ObjType() {
+unsigned int castor::io::StreamGCFilesResponseCnv::ObjType() {
   return castor::rh::GCFilesResponse::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamGCFilesResponseCnv::objType() const {
+unsigned int castor::io::StreamGCFilesResponseCnv::objType() const {
   return ObjType();
 }
 
@@ -82,8 +82,8 @@ const unsigned int castor::io::StreamGCFilesResponseCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamGCFilesResponseCnv::createRep(castor::IAddress* address,
                                                      castor::IObject* object,
-                                                     bool endTransaction,
-                                                     unsigned int type)
+                                                     bool,
+                                                     unsigned int)
   throw (castor::exception::Exception) {
   castor::rh::GCFilesResponse* obj = 
     dynamic_cast<castor::rh::GCFilesResponse*>(object);

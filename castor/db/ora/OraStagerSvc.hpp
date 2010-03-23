@@ -62,12 +62,12 @@ namespace castor {
         /**
          * Get the service id
          */
-        virtual inline const unsigned int id() const;
+        virtual inline unsigned int id() const;
 
         /**
          * Get the service id
          */
-        static const unsigned int ID();
+        static unsigned int ID();
 
         /**
          * Reset the converter statements.

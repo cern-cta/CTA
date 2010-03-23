@@ -66,7 +66,8 @@ int main(argc, argv)
   while ((c = Cgetopt_long (argc, argv, "k:n:", longopts, NULL)) != EOF && !errflg) {
     switch (c) {
     case 'k':
-      if (((checksum = strtoul (Coptarg, &dp, 16)) < 0) || (*dp != '\0')) {
+      checksum = strtoul (Coptarg, &dp, 16);
+      if (*dp != '\0') {
         fprintf (stderr, "%s: invalid checksum: %s\n", argv[0], Coptarg);
         errflg++;
       }

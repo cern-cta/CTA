@@ -67,14 +67,14 @@ castor::io::StreamTapeServerCnv::~StreamTapeServerCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamTapeServerCnv::ObjType() {
+unsigned int castor::io::StreamTapeServerCnv::ObjType() {
   return castor::vdqm::TapeServer::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamTapeServerCnv::objType() const {
+unsigned int castor::io::StreamTapeServerCnv::objType() const {
   return ObjType();
 }
 
@@ -83,8 +83,8 @@ const unsigned int castor::io::StreamTapeServerCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamTapeServerCnv::createRep(castor::IAddress* address,
                                                 castor::IObject* object,
-                                                bool endTransaction,
-                                                unsigned int type)
+                                                bool,
+                                                unsigned int)
   throw (castor::exception::Exception) {
   castor::vdqm::TapeServer* obj = 
     dynamic_cast<castor::vdqm::TapeServer*>(object);

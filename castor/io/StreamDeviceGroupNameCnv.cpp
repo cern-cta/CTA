@@ -64,14 +64,14 @@ castor::io::StreamDeviceGroupNameCnv::~StreamDeviceGroupNameCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamDeviceGroupNameCnv::ObjType() {
+unsigned int castor::io::StreamDeviceGroupNameCnv::ObjType() {
   return castor::vdqm::DeviceGroupName::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamDeviceGroupNameCnv::objType() const {
+unsigned int castor::io::StreamDeviceGroupNameCnv::objType() const {
   return ObjType();
 }
 
@@ -80,8 +80,8 @@ const unsigned int castor::io::StreamDeviceGroupNameCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamDeviceGroupNameCnv::createRep(castor::IAddress* address,
                                                      castor::IObject* object,
-                                                     bool endTransaction,
-                                                     unsigned int type)
+                                                     bool,
+                                                     unsigned int)
   throw (castor::exception::Exception) {
   castor::vdqm::DeviceGroupName* obj = 
     dynamic_cast<castor::vdqm::DeviceGroupName*>(object);

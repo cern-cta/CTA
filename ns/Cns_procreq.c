@@ -157,22 +157,6 @@ int marshall_DIRX (sbpp, magic, fmd_entry)
   return (0);
 }
 
-int marshall_DIRXR (sbpp, magic, fmd_entry)
-     char **sbpp;
-     int magic;
-     struct Cns_file_metadata *fmd_entry;
-{
-  char *sbp = *sbpp;
-
-  marshall_HYPER (sbp, fmd_entry->fileid);
-  marshall_STRING (sbp, fmd_entry->guid);
-  marshall_WORD (sbp, fmd_entry->filemode);
-  marshall_HYPER (sbp, fmd_entry->filesize);
-  marshall_STRING (sbp, fmd_entry->name);
-  *sbpp = sbp;
-  return (0);
-}
-
 int marshall_DIRXT (sbpp, magic, fmd_entry, smd_entry)
      char **sbpp;
      int magic;
@@ -205,8 +189,7 @@ int marshall_DIRXT (sbpp, magic, fmd_entry, smd_entry)
 
 /* Cns_srv_aborttrans - abort transaction */
 
-int Cns_srv_aborttrans(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_aborttrans(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -230,8 +213,7 @@ int Cns_srv_aborttrans(magic, req_data, clienthost, thip)
 
 /* Cns_srv_access - check accessibility of a file/directory */
 
-int Cns_srv_access(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_access(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -285,8 +267,7 @@ int Cns_srv_access(magic, req_data, clienthost, thip)
 
 /* Cns_srv_chclass - change class on directory */
 
-int Cns_srv_chclass(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_chclass(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -385,8 +366,7 @@ int Cns_srv_chclass(magic, req_data, clienthost, thip)
 
 /* Cns_srv_chdir - change current working directory */
 
-int Cns_srv_chdir(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_chdir(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -439,8 +419,7 @@ int Cns_srv_chdir(magic, req_data, clienthost, thip)
 
 /* Cns_srv_chmod - change file/directory permissions */
 
-int Cns_srv_chmod(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_chmod(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -508,8 +487,7 @@ int Cns_srv_chmod(magic, req_data, clienthost, thip)
 
 /* Cns_srv_chown - change owner and group of a file or a directory */
 
-int Cns_srv_chown(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_chown(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -563,7 +541,7 @@ int Cns_srv_chown(magic, req_data, clienthost, thip)
     RETURN (serrno);
 
   /* check if the user is authorized to change ownership this entry */
-  if (fmd_entry.uid != new_uid && new_uid != -1) {
+  if (fmd_entry.uid != new_uid && (int)new_uid != -1) {
     if (gid != fmd_entry.gid)
       need_p_admin = 1;
     else if ((pw = Cgetpwuid (new_uid)) == NULL)
@@ -573,7 +551,7 @@ int Cns_srv_chown(magic, req_data, clienthost, thip)
     else
       need_p_admin = 1;
   }
-  if (fmd_entry.gid != new_gid && new_gid != -1) {
+  if (fmd_entry.gid != new_gid && (int)new_gid != -1) {
     if (uid != fmd_entry.uid) {
       need_p_admin = 1;
     } else if ((pw = Cgetpwuid (uid)) == NULL) {
@@ -609,9 +587,9 @@ int Cns_srv_chown(magic, req_data, clienthost, thip)
 
   /* update entry */
 
-  if (new_uid != -1)
+  if ((int)new_uid != -1)
     fmd_entry.uid = new_uid;
-  if (new_gid != -1)
+  if ((int)new_gid != -1)
     fmd_entry.gid = new_gid;
   if (*fmd_entry.acl)
     Cns_acl_chown (&fmd_entry);
@@ -810,8 +788,7 @@ int Cns_srv_creat(magic, req_data, clienthost, thip)
 
 /* Cns_srv_delcomment - delete a comment associated with a file/directory */
 
-int Cns_srv_delcomment(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_delcomment(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -873,8 +850,7 @@ int Cns_srv_delcomment(magic, req_data, clienthost, thip)
 
 /* Cns_srv_delete - logically remove a file entry */
 
-int Cns_srv_delete(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_delete(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -971,8 +947,7 @@ int Cns_srv_delete(magic, req_data, clienthost, thip)
 
 /* Cns_srv_deleteclass - delete a file class definition */
 
-int Cns_srv_deleteclass(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_deleteclass(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -1037,8 +1012,7 @@ int Cns_srv_deleteclass(magic, req_data, clienthost, thip)
 
 /* Cns_srv_delsegbycopyno - delete file segments by copno */
 
-int Cns_srv_delsegbycopyno(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_delsegbycopyno(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -1198,8 +1172,7 @@ int compute_du4dir (thip, direntry, Lflag, uid, gid, clienthost, nbbytes, nbentr
   return (c < 0 ? serrno : 0);
 }
 
-int Cns_srv_du(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_du(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -1264,8 +1237,7 @@ int Cns_srv_du(magic, req_data, clienthost, thip)
 
 /* Cns_srv_endsess - end session */
 
-int Cns_srv_endsess(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_endsess(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -1287,8 +1259,7 @@ int Cns_srv_endsess(magic, req_data, clienthost, thip)
 
 /* Cns_srv_endtrans - end transaction mode */
 
-int Cns_srv_endtrans(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_endtrans(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -1312,8 +1283,7 @@ int Cns_srv_endtrans(magic, req_data, clienthost, thip)
 
 /* Cns_srv_enterclass - define a new file class */
 
-int Cns_srv_enterclass(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_enterclass(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -1383,8 +1353,7 @@ int Cns_srv_enterclass(magic, req_data, clienthost, thip)
 
 /* Cns_srv_getacl - get the Access Control List for a file/directory */
 
-int Cns_srv_getacl(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_getacl(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -1458,8 +1427,7 @@ int Cns_srv_getacl(magic, req_data, clienthost, thip)
 
 /* Cns_srv_getcomment - get the comment associated with a file/directory */
 
-int Cns_srv_getcomment(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_getcomment(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -1518,8 +1486,7 @@ int Cns_srv_getcomment(magic, req_data, clienthost, thip)
 
 /* Cns_srv_getlinks - get the link entries associated with a given file */
 
-int Cns_srv_getlinks(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_getlinks(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -1620,8 +1587,7 @@ int Cns_srv_getlinks(magic, req_data, clienthost, thip)
 
 /* Cns_srv_getpath - resolve a file id to a path */
 
-int Cns_srv_getpath(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_getpath(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -1712,7 +1678,7 @@ int Cns_srv_getsegattrs(magic, req_data, clienthost, thip)
     /* check parent directory components for search permission */
 
     if (Cns_chkbackperm (&thip->dbfd, filentry.parent_fileid,
-                         S_IEXEC, uid, gid, clienthost))
+                         uid, gid, clienthost))
       RETURN (serrno);
   } else {
     /* check parent directory components for search permission and
@@ -1764,8 +1730,7 @@ int Cns_srv_getsegattrs(magic, req_data, clienthost, thip)
 
 /* Cns_srv_lchown - change owner and group of a file or a directory */
 
-int Cns_srv_lchown(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_lchown(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -1820,7 +1785,7 @@ int Cns_srv_lchown(magic, req_data, clienthost, thip)
 
   /* check if the user is authorized to change ownership this entry */
 
-  if (fmd_entry.uid != new_uid && new_uid != -1) {
+  if (fmd_entry.uid != new_uid && (int)new_uid != -1) {
     if (gid != fmd_entry.gid)
       need_p_admin = 1;
     else if ((pw = Cgetpwuid (new_uid)) == NULL)
@@ -1830,7 +1795,7 @@ int Cns_srv_lchown(magic, req_data, clienthost, thip)
     else
       need_p_admin = 1;
   }
-  if (fmd_entry.gid != new_gid && new_gid != -1) {
+  if (fmd_entry.gid != new_gid && (int)new_gid != -1) {
     if (uid != fmd_entry.uid) {
       need_p_admin = 1;
     } else if ((pw = Cgetpwuid (uid)) == NULL) {
@@ -1866,9 +1831,9 @@ int Cns_srv_lchown(magic, req_data, clienthost, thip)
 
   /* update entry */
 
-  if (new_uid != -1)
+  if ((int)new_uid != -1)
     fmd_entry.uid = new_uid;
-  if (new_gid != -1)
+  if ((int)new_gid != -1)
     fmd_entry.gid = new_gid;
   if (*fmd_entry.acl)
     Cns_acl_chmod (&fmd_entry);
@@ -1880,8 +1845,7 @@ int Cns_srv_lchown(magic, req_data, clienthost, thip)
 
 /* Cns_srv_listclass - list file classes */
 
-int Cns_srv_listclass(magic, req_data, clienthost, thip, class_entry, endlist, dblistptr)
-     int magic;
+int Cns_srv_listclass(req_data, clienthost, thip, class_entry, endlist, dblistptr)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -1992,8 +1956,7 @@ int Cns_srv_listclass(magic, req_data, clienthost, thip, class_entry, endlist, d
   RETURN (0);
 }
 
-int Cns_srv_listlinks(magic, req_data, clienthost, thip, lnk_entry, endlist, dblistptr)
-     int magic;
+int Cns_srv_listlinks(req_data, clienthost, thip, lnk_entry, endlist, dblistptr)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -2188,8 +2151,7 @@ int Cns_srv_lastfseq(magic, req_data, clienthost, thip)
   RETURN (0);
 }
 
-int Cns_srv_bulkexist(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_bulkexist(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -2406,8 +2368,7 @@ int Cns_srv_listtape(magic, req_data, clienthost, thip, fmd_entry, smd_entry, en
 
 /* Cns_srv_lstat - get information about a symbolic link */
 
-int Cns_srv_lstat(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_lstat(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -2451,7 +2412,7 @@ int Cns_srv_lstat(magic, req_data, clienthost, thip)
     /* check parent directory components for search permission */
 
     if (Cns_chkbackperm (&thip->dbfd, fmd_entry.parent_fileid,
-                         S_IEXEC, uid, gid, clienthost))
+                         uid, gid, clienthost))
       RETURNQ (serrno);
   } else {
     /* check parent directory components for search permission and
@@ -2585,8 +2546,7 @@ int Cns_srv_mkdir(magic, req_data, clienthost, thip)
 
 /* Cns_srv_modifyclass - modify an existing fileclass definition */
 
-int Cns_srv_modifyclass(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_modifyclass(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -2674,9 +2634,9 @@ int Cns_srv_modifyclass(magic, req_data, clienthost, thip)
 
   if (*new_class_name)
     strcpy (class_entry.name, new_class_name);
-  if (class_user != -1)
+  if ((int)class_user != -1)
     class_entry.uid = class_user;
-  if (class_group != -1)
+  if ((int)class_group != -1)
     class_entry.gid = class_group;
   if (min_filesize >= 0)
     class_entry.min_filesize = min_filesize;
@@ -2829,8 +2789,7 @@ int Cns_srv_opendir(magic, req_data, clienthost, thip)
 
 /* Cns_srv_ping - check server alive and return version number */
 
-int Cns_srv_ping(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_ping(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -2860,8 +2819,7 @@ int Cns_srv_ping(magic, req_data, clienthost, thip)
 
 /* Cns_srv_queryclass - query about a file class */
 
-int Cns_srv_queryclass(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_queryclass(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -3134,8 +3092,7 @@ int Cns_srv_readdir(magic, req_data, clienthost, thip, fmd_entry, smd_entry, umd
 
 /* Cns_srv_readlink - read value of symbolic link */
 
-int Cns_srv_readlink(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_readlink(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -3197,8 +3154,7 @@ int Cns_srv_readlink(magic, req_data, clienthost, thip)
 
 /* Cns_srv_rename - rename a file or a directory */
 
-int Cns_srv_rename(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_rename(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -3402,8 +3358,7 @@ int Cns_srv_rename(magic, req_data, clienthost, thip)
 
 /* Cns_srv_updateseg_status - updates the segment status */
 
-int Cns_srv_updateseg_status(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_updateseg_status(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -4033,8 +3988,7 @@ int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
 
 /* Cns_srv_rmdir - remove a directory entry */
 
-int Cns_srv_rmdir(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_rmdir(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -4126,8 +4080,7 @@ int Cns_srv_rmdir(magic, req_data, clienthost, thip)
 
 /* Cns_srv_setacl - set the Access Control List for a file/directory */
 
-int Cns_srv_setacl(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_setacl(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -4259,8 +4212,7 @@ int Cns_srv_setacl(magic, req_data, clienthost, thip)
 
 /* Cns_srv_setatime - set last access time */
 
-int Cns_srv_setatime(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_setatime(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -4309,7 +4261,7 @@ int Cns_srv_setatime(magic, req_data, clienthost, thip)
     /* check parent directory components for search permission */
 
     if (Cns_chkbackperm (&thip->dbfd, filentry.parent_fileid,
-                         S_IEXEC, uid, gid, clienthost))
+                         uid, gid, clienthost))
       RETURN (serrno);
   } else {
     /* check parent directory components for search permission and
@@ -4340,8 +4292,7 @@ int Cns_srv_setatime(magic, req_data, clienthost, thip)
 
 /* Cns_srv_setcomment - add/replace a comment associated with a file/directory */
 
-int Cns_srv_setcomment(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_setcomment(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -4484,7 +4435,7 @@ int Cns_srv_setfsize(magic, req_data, clienthost, thip)
     /* check parent directory components for search permission */
 
     if (Cns_chkbackperm (&thip->dbfd, filentry.parent_fileid,
-                         S_IEXEC, uid, gid, clienthost))
+                         uid, gid, clienthost))
       RETURN (serrno);
   } else {
     /* check parent directory components for search permission and
@@ -4605,7 +4556,7 @@ int Cns_srv_setfsizecs(magic, req_data, clienthost, thip)
     /* check parent directory components for search permission */
 
     if (Cns_chkbackperm (&thip->dbfd, filentry.parent_fileid,
-                         S_IEXEC, uid, gid, clienthost))
+                         uid, gid, clienthost))
       RETURN (serrno);
   } else {
     /* check parent directory components for search permission and
@@ -4725,7 +4676,7 @@ int Cns_srv_setfsizeg(magic, req_data, clienthost, thip)
   /* check parent directory components for search permission */
 
   if (Cns_chkbackperm (&thip->dbfd, filentry.parent_fileid,
-                       S_IEXEC, uid, gid, clienthost))
+                       uid, gid, clienthost))
     RETURN (serrno);
 
   /* check if the entry is a regular file and
@@ -4828,7 +4779,7 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
     /* check parent directory components for search permission */
 
     if (Cns_chkbackperm (&thip->dbfd, filentry.parent_fileid,
-                         S_IEXEC, uid, gid, clienthost))
+                         uid, gid, clienthost))
       RETURN (serrno);
   } else {
     /* check parent directory components for search permission and
@@ -4957,8 +4908,7 @@ int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
 
 /* Cns_srv_dropsegs - drops all segments of a file */
 
-int Cns_srv_dropsegs(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_dropsegs(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -5030,8 +4980,7 @@ int Cns_srv_dropsegs(magic, req_data, clienthost, thip)
 
 /* Cns_srv_startsess - start session */
 
-int Cns_srv_startsess(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_startsess(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -5093,8 +5042,7 @@ int Cns_srv_starttrans(magic, req_data, clienthost, thip)
 
 /* Cns_srv_stat - get information about a file or a directory */
 
-int Cns_srv_stat(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_stat(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -5138,7 +5086,7 @@ int Cns_srv_stat(magic, req_data, clienthost, thip)
     /* check parent directory components for search permission */
 
     if (Cns_chkbackperm (&thip->dbfd, fmd_entry.parent_fileid,
-                         S_IEXEC, uid, gid, clienthost))
+                         uid, gid, clienthost))
       RETURNQ (serrno);
   } else {
     /* check parent directory components for search permission and
@@ -5166,8 +5114,7 @@ int Cns_srv_stat(magic, req_data, clienthost, thip)
 
 /* Cns_srv_statcs - get information about a file or a directory */
 
-int Cns_srv_statcs(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_statcs(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -5211,7 +5158,7 @@ int Cns_srv_statcs(magic, req_data, clienthost, thip)
     /* check parent directory components for search permission */
 
     if (Cns_chkbackperm (&thip->dbfd, fmd_entry.parent_fileid,
-                         S_IEXEC, uid, gid, clienthost))
+                         uid, gid, clienthost))
       RETURNQ (serrno);
   } else {
     /* check parent directory components for search permission and
@@ -5241,8 +5188,7 @@ int Cns_srv_statcs(magic, req_data, clienthost, thip)
 
 /* Cns_srv_statg - get information about a file or a directory */
 
-int Cns_srv_statg(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_statg(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -5318,8 +5264,7 @@ int Cns_srv_statg(magic, req_data, clienthost, thip)
 
 /* Cns_srv_symlink - make a symbolic link to a file or a directory */
 
-int Cns_srv_symlink(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_symlink(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -5413,8 +5358,7 @@ int Cns_srv_symlink(magic, req_data, clienthost, thip)
 
 /* Cns_srv_undelete - logically restore a file entry */
 
-int Cns_srv_undelete(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_undelete(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -5513,8 +5457,7 @@ int Cns_srv_undelete(magic, req_data, clienthost, thip)
 
 /* Cns_srv_unlink - remove a file entry */
 
-int Cns_srv_unlink(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_unlink(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -5619,8 +5562,7 @@ int Cns_srv_unlink(magic, req_data, clienthost, thip)
 
 /* Cns_srv_unlinkbyvid - remove all file entries on a given volume */
 
-int Cns_srv_unlinkbyvid(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_unlinkbyvid(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -5755,8 +5697,7 @@ int Cns_srv_unlinkbyvid(magic, req_data, clienthost, thip)
 
 /* Cns_srv_utime - set last access and modification times */
 
-int Cns_srv_utime(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_utime(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -5838,8 +5779,7 @@ int Cns_srv_utime(magic, req_data, clienthost, thip)
 
 /* Cns_srv_updatefile_checksum - set checksums for the file */
 
-int Cns_srv_updatefile_checksum(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_updatefile_checksum(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -5883,7 +5823,8 @@ int Cns_srv_updatefile_checksum(magic, req_data, clienthost, thip)
       strcmp (csumtype, "PA") &&
       strcmp (csumtype, "AD"))
     RETURN (EINVAL);
-  if (((checksum = strtoul (csumvalue, &dp, 16)) < 0) || (*dp != '\0')) {
+  checksum = strtoul (csumvalue, &dp, 16);
+  if (*dp != '\0') {
     RETURN (EINVAL);
   }
 
@@ -5987,8 +5928,7 @@ int Cns_vo_from_dn(const char *dn, char *vo)
 
 /* Cns_srv_entergrpmap - define a new group entry in Virtual Id table */
 
-int Cns_srv_entergrpmap(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_entergrpmap(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -6020,7 +5960,7 @@ int Cns_srv_entergrpmap(magic, req_data, clienthost, thip)
 
   (void) Cns_start_tr (thip->s, &thip->dbfd);
 
-  if (reqgid == -1) {
+  if ((int)reqgid == -1) {
     if (Cns_unique_gid (&thip->dbfd, &group_entry.gid) < 0)
       RETURN (serrno);
   } else {
@@ -6037,8 +5977,7 @@ int Cns_srv_entergrpmap(magic, req_data, clienthost, thip)
 
 /* Cns_srv_enterusrmap - define a new user entry in Virtual Id table */
 
-int Cns_srv_enterusrmap(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_enterusrmap(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -6070,7 +6009,7 @@ int Cns_srv_enterusrmap(magic, req_data, clienthost, thip)
 
   (void) Cns_start_tr (thip->s, &thip->dbfd);
 
-  if (requid == -1) {
+  if ((int)requid == -1) {
     if (Cns_unique_uid (&thip->dbfd, &user_entry.userid) < 0)
       RETURN (serrno);
   } else {
@@ -6166,8 +6105,7 @@ int getidmap(dbfd, username, nbgroups, groupnames, userid, gids)
   return (0);
 }
 
-int Cns_srv_getidmap(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_getidmap(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -6244,8 +6182,7 @@ int Cns_srv_getidmap(magic, req_data, clienthost, thip)
 
 /* Cns_srv_getgrpbygid - get group name associated with a given gid */
 
-int Cns_srv_getgrpbygid(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_getgrpbygid(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -6285,8 +6222,7 @@ int Cns_srv_getgrpbygid(magic, req_data, clienthost, thip)
 
 /* Cns_srv_getgrpbynam - get gid associated with a given group name */
 
-int Cns_srv_getgrpbynam(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_getgrpbynam(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -6327,8 +6263,7 @@ int Cns_srv_getgrpbynam(magic, req_data, clienthost, thip)
 
 /* Cns_srv_getusrbynam - get uid associated with a given user name */
 
-int Cns_srv_getusrbynam(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_getusrbynam(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -6369,8 +6304,7 @@ int Cns_srv_getusrbynam(magic, req_data, clienthost, thip)
 
 /* Cns_srv_getusrbyuid - get user name associated with a given uid */
 
-int Cns_srv_getusrbyuid(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_getusrbyuid(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -6410,8 +6344,7 @@ int Cns_srv_getusrbyuid(magic, req_data, clienthost, thip)
 
 /* Cns_srv_modgrpmap - modify group name associated with a given gid */
 
-int Cns_srv_modgrpmap(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_modgrpmap(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -6461,8 +6394,7 @@ int Cns_srv_modgrpmap(magic, req_data, clienthost, thip)
 
 /* Cns_srv_modusrmap - modify user name associated with a given uid */
 
-int Cns_srv_modusrmap(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_modusrmap(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -6512,8 +6444,7 @@ int Cns_srv_modusrmap(magic, req_data, clienthost, thip)
 
 /* Cns_srv_rmgrpmap - suppress group entry corresponding to a given gid/name */
 
-int Cns_srv_rmgrpmap(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_rmgrpmap(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;
@@ -6576,8 +6507,7 @@ int Cns_srv_rmgrpmap(magic, req_data, clienthost, thip)
 
 /* Cns_srv_rmusrmap - suppress user entry corresponding to a given uid/name */
 
-int Cns_srv_rmusrmap(magic, req_data, clienthost, thip)
-     int magic;
+int Cns_srv_rmusrmap(req_data, clienthost, thip)
      char *req_data;
      const char *clienthost;
      struct Cns_srv_thread_info *thip;

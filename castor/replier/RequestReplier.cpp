@@ -183,7 +183,7 @@ castor::replier::RequestReplier::staticReplierThread(void *arg) throw() {
 // Method to process the messages
 //-----------------------------------------------------------------------------
 void *
-castor::replier::RequestReplier::replierThread(void *arg) throw() {
+castor::replier::RequestReplier::replierThread(void*) throw() {
 
   int pollRc;
   const int pollTimeout = 5;

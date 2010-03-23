@@ -67,14 +67,14 @@ castor::io::StreamSegmentCnv::~StreamSegmentCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamSegmentCnv::ObjType() {
+unsigned int castor::io::StreamSegmentCnv::ObjType() {
   return castor::stager::Segment::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamSegmentCnv::objType() const {
+unsigned int castor::io::StreamSegmentCnv::objType() const {
   return ObjType();
 }
 
@@ -83,8 +83,8 @@ const unsigned int castor::io::StreamSegmentCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamSegmentCnv::createRep(castor::IAddress* address,
                                              castor::IObject* object,
-                                             bool endTransaction,
-                                             unsigned int type)
+                                             bool,
+                                             unsigned int)
   throw (castor::exception::Exception) {
   castor::stager::Segment* obj = 
     dynamic_cast<castor::stager::Segment*>(object);

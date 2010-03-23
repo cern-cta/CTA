@@ -104,14 +104,14 @@ castor::db::ora::OraQuerySvc::~OraQuerySvc() throw() {
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-const unsigned int castor::db::ora::OraQuerySvc::id() const {
+unsigned int castor::db::ora::OraQuerySvc::id() const {
   return ID();
 }
 
 //------------------------------------------------------------------------------
 // ID
 //------------------------------------------------------------------------------
-const unsigned int castor::db::ora::OraQuerySvc::ID() {
+unsigned int castor::db::ora::OraQuerySvc::ID() {
   return castor::SVC_ORAQUERYSVC;
 }
 

@@ -420,11 +420,11 @@ int procdirreq(magic, req_type, req_data, clienthost, thip)
     if ((c = Cns_srv_opendir (magic, req_data, clienthost, thip)))
       return (c);
   } else if (req_type == CNS_LISTCLASS) {
-    if ((c = Cns_srv_listclass (magic, req_data, clienthost, thip,
+    if ((c = Cns_srv_listclass (req_data, clienthost, thip,
                                 &class_entry, endlist, &dblistptr)))
       return (c);
   } else if (req_type == CNS_LISTLINKS) {
-    if ((c = Cns_srv_listlinks (magic, req_data, clienthost, thip,
+    if ((c = Cns_srv_listlinks (req_data, clienthost, thip,
                                 &lnk_entry, endlist, &dblistptr)))
       return (c);
   } else {
@@ -456,12 +456,12 @@ int procdirreq(magic, req_type, req_data, clienthost, thip)
     } else if (req_type == CNS_LISTCLASS) {
       if (new_req_type != CNS_LISTCLASS)
         endlist = 1;
-      c = Cns_srv_listclass (magic, req_data2, clienthost, thip,
+      c = Cns_srv_listclass (req_data2, clienthost, thip,
                              &class_entry, endlist, &dblistptr);
     } else if (req_type == CNS_LISTLINKS) {
       if (new_req_type != CNS_LISTLINKS)
         endlist = 1;
-      c = Cns_srv_listlinks (magic, req_data2, clienthost, thip,
+      c = Cns_srv_listlinks (req_data2, clienthost, thip,
                              &lnk_entry, endlist, &dblistptr);
     } else {
       if (new_req_type != CNS_LISTTAPE)
@@ -527,55 +527,55 @@ int procreq(magic, req_type, req_data, clienthost, thip)
 #endif
   switch (req_type) {
   case CNS_ACCESS:
-    c = Cns_srv_access (magic, req_data, clienthost, thip);
+    c = Cns_srv_access (req_data, clienthost, thip);
     break;
   case CNS_CHCLASS:
-    c = Cns_srv_chclass (magic, req_data, clienthost, thip);
+    c = Cns_srv_chclass (req_data, clienthost, thip);
     break;
   case CNS_CHDIR:
-    c = Cns_srv_chdir (magic, req_data, clienthost, thip);
+    c = Cns_srv_chdir (req_data, clienthost, thip);
     break;
   case CNS_CHMOD:
-    c = Cns_srv_chmod (magic, req_data, clienthost, thip);
+    c = Cns_srv_chmod (req_data, clienthost, thip);
     break;
   case CNS_CHOWN:
-    c = Cns_srv_chown (magic, req_data, clienthost, thip);
+    c = Cns_srv_chown (req_data, clienthost, thip);
     break;
   case CNS_CREAT:
     c = Cns_srv_creat (magic, req_data, clienthost, thip);
     break;
   case CNS_DELCLASS:
-    c = Cns_srv_deleteclass (magic, req_data, clienthost, thip);
+    c = Cns_srv_deleteclass (req_data, clienthost, thip);
     break;
   case CNS_DELCOMMENT:
-    c = Cns_srv_delcomment (magic, req_data, clienthost, thip);
+    c = Cns_srv_delcomment (req_data, clienthost, thip);
     break;
   case CNS_DELETE:
-    c = Cns_srv_delete (magic, req_data, clienthost, thip);
+    c = Cns_srv_delete (req_data, clienthost, thip);
     break;
   case CNS_DROPSEGS:
-    c = Cns_srv_dropsegs (magic, req_data, clienthost, thip);
+    c = Cns_srv_dropsegs (req_data, clienthost, thip);
     break;
   case CNS_DELSEGBYCOPYNO:
-    c = Cns_srv_delsegbycopyno (magic, req_data, clienthost, thip);
+    c = Cns_srv_delsegbycopyno (req_data, clienthost, thip);
     break;
   case CNS_ENTCLASS:
-    c = Cns_srv_enterclass (magic, req_data, clienthost, thip);
+    c = Cns_srv_enterclass (req_data, clienthost, thip);
     break;
   case CNS_GETACL:
-    c = Cns_srv_getacl (magic, req_data, clienthost, thip);
+    c = Cns_srv_getacl (req_data, clienthost, thip);
     break;
   case CNS_GETCOMMENT:
-    c = Cns_srv_getcomment (magic, req_data, clienthost, thip);
+    c = Cns_srv_getcomment (req_data, clienthost, thip);
     break;
   case CNS_GETPATH:
-    c = Cns_srv_getpath (magic, req_data, clienthost, thip);
+    c = Cns_srv_getpath (req_data, clienthost, thip);
     break;
   case CNS_GETSEGAT:
     c = Cns_srv_getsegattrs (magic, req_data, clienthost, thip);
     break;
   case CNS_LCHOWN:
-    c = Cns_srv_lchown (magic, req_data, clienthost, thip);
+    c = Cns_srv_lchown (req_data, clienthost, thip);
     break;
   case CNS_LISTCLASS:
     c = procdirreq (magic, req_type, req_data, clienthost, thip);
@@ -584,37 +584,37 @@ int procreq(magic, req_type, req_data, clienthost, thip)
     c = procdirreq (magic, req_type, req_data, clienthost, thip);
     break;
   case CNS_LSTAT:
-    c = Cns_srv_lstat (magic, req_data, clienthost, thip);
+    c = Cns_srv_lstat (req_data, clienthost, thip);
     break;
   case CNS_MKDIR:
     c = Cns_srv_mkdir (magic, req_data, clienthost, thip);
     break;
   case CNS_MODCLASS:
-    c = Cns_srv_modifyclass (magic, req_data, clienthost, thip);
+    c = Cns_srv_modifyclass (req_data, clienthost, thip);
     break;
   case CNS_OPENDIR:
     c = procdirreq (magic, req_type, req_data, clienthost, thip);
     break;
   case CNS_QRYCLASS:
-    c = Cns_srv_queryclass (magic, req_data, clienthost, thip);
+    c = Cns_srv_queryclass (req_data, clienthost, thip);
     break;
   case CNS_READLINK:
-    c = Cns_srv_readlink (magic, req_data, clienthost, thip);
+    c = Cns_srv_readlink (req_data, clienthost, thip);
     break;
   case CNS_RENAME:
-    c = Cns_srv_rename (magic, req_data, clienthost, thip);
+    c = Cns_srv_rename (req_data, clienthost, thip);
     break;
   case CNS_RMDIR:
-    c = Cns_srv_rmdir (magic, req_data, clienthost, thip);
+    c = Cns_srv_rmdir (req_data, clienthost, thip);
     break;
   case CNS_SETACL:
-    c = Cns_srv_setacl (magic, req_data, clienthost, thip);
+    c = Cns_srv_setacl (req_data, clienthost, thip);
     break;
   case CNS_SETATIME:
-    c = Cns_srv_setatime (magic, req_data, clienthost, thip);
+    c = Cns_srv_setatime (req_data, clienthost, thip);
     break;
   case CNS_SETCOMMENT:
-    c = Cns_srv_setcomment (magic, req_data, clienthost, thip);
+    c = Cns_srv_setcomment (req_data, clienthost, thip);
     break;
   case CNS_SETFSIZE:
     c = Cns_srv_setfsize (magic, req_data, clienthost, thip);
@@ -626,25 +626,25 @@ int procreq(magic, req_type, req_data, clienthost, thip)
     c = Cns_srv_setsegattrs (magic, req_data, clienthost, thip);
     break;
   case CNS_STAT:
-    c = Cns_srv_stat (magic, req_data, clienthost, thip);
+    c = Cns_srv_stat (req_data, clienthost, thip);
     break;
   case CNS_STATCS:
-    c = Cns_srv_statcs (magic, req_data, clienthost, thip);
+    c = Cns_srv_statcs (req_data, clienthost, thip);
     break;
   case CNS_SYMLINK:
-    c = Cns_srv_symlink (magic, req_data, clienthost, thip);
+    c = Cns_srv_symlink (req_data, clienthost, thip);
     break;
   case CNS_UNDELETE:
-    c = Cns_srv_undelete (magic, req_data, clienthost, thip);
+    c = Cns_srv_undelete (req_data, clienthost, thip);
     break;
   case CNS_UNLINK:
-    c = Cns_srv_unlink (magic, req_data, clienthost, thip);
+    c = Cns_srv_unlink (req_data, clienthost, thip);
     break;
   case CNS_UNLINKBYVID:
-    c = Cns_srv_unlinkbyvid (magic, req_data, clienthost, thip);
+    c = Cns_srv_unlinkbyvid (req_data, clienthost, thip);
     break;
   case CNS_UTIME:
-    c = Cns_srv_utime (magic, req_data, clienthost, thip);
+    c = Cns_srv_utime (req_data, clienthost, thip);
     break;
   case CNS_REPLACESEG:
     c = Cns_srv_replaceseg (magic, req_data, clienthost, thip);
@@ -656,19 +656,19 @@ int procreq(magic, req_type, req_data, clienthost, thip)
     c = Cns_srv_updateseg_checksum (magic, req_data, clienthost, thip);
     break;
   case CNS_UPDATESEG_STATUS:
-    c = Cns_srv_updateseg_status (magic, req_data, clienthost, thip);
+    c = Cns_srv_updateseg_status (req_data, clienthost, thip);
     break;
   case CNS_UPDATEFILE_CHECKSUM:
-    c = Cns_srv_updatefile_checksum (magic, req_data, clienthost, thip);
+    c = Cns_srv_updatefile_checksum (req_data, clienthost, thip);
     break;
   case CNS_STARTTRANS:
     c = proctransreq (magic, req_data, clienthost, thip);
     break;
   case CNS_ENDTRANS:
-    c = Cns_srv_endtrans (magic, req_data, clienthost, thip);
+    c = Cns_srv_endtrans (req_data, clienthost, thip);
     break;
   case CNS_ABORTTRANS:
-    c = Cns_srv_aborttrans (magic, req_data, clienthost, thip);
+    c = Cns_srv_aborttrans (req_data, clienthost, thip);
     break;
   case CNS_LISTLINKS:
     c = procdirreq (magic, req_type, req_data, clienthost, thip);
@@ -677,13 +677,13 @@ int procreq(magic, req_type, req_data, clienthost, thip)
     c = Cns_srv_setfsizeg (magic, req_data, clienthost, thip);
     break;
   case CNS_STATG:
-    c = Cns_srv_statg (magic, req_data, clienthost, thip);
+    c = Cns_srv_statg (req_data, clienthost, thip);
     break;
   case CNS_LASTFSEQ:
     c = Cns_srv_lastfseq (magic, req_data, clienthost, thip);
     break;
   case CNS_BULKEXIST:
-    c = Cns_srv_bulkexist (magic, req_data, clienthost, thip);
+    c = Cns_srv_bulkexist (req_data, clienthost, thip);
     break;
   case CNS_TAPESUM:
     c = Cns_srv_tapesum (magic, req_data, clienthost, thip);
@@ -692,49 +692,49 @@ int procreq(magic, req_type, req_data, clienthost, thip)
     c = procsessreq (magic, req_data, clienthost, thip);
     break;
   case CNS_ENDSESS:
-    c = Cns_srv_endsess (magic, req_data, clienthost, thip);
+    c = Cns_srv_endsess (req_data, clienthost, thip);
     break;
   case CNS_DU:
-    c = Cns_srv_du (magic, req_data, clienthost, thip);
+    c = Cns_srv_du (req_data, clienthost, thip);
     break;
   case CNS_GETGRPID:
-    c = Cns_srv_getgrpbynam (magic, req_data, clienthost, thip);
+    c = Cns_srv_getgrpbynam (req_data, clienthost, thip);
     break;
   case CNS_GETGRPNAM:
-    c = Cns_srv_getgrpbygid (magic, req_data, clienthost, thip);
+    c = Cns_srv_getgrpbygid (req_data, clienthost, thip);
     break;
   case CNS_GETIDMAP:
-    c = Cns_srv_getidmap (magic, req_data, clienthost, thip);
+    c = Cns_srv_getidmap (req_data, clienthost, thip);
     break;
   case CNS_GETUSRID:
-    c = Cns_srv_getusrbynam (magic, req_data, clienthost, thip);
+    c = Cns_srv_getusrbynam (req_data, clienthost, thip);
     break;
   case CNS_GETUSRNAM:
-    c = Cns_srv_getusrbyuid (magic, req_data, clienthost, thip);
+    c = Cns_srv_getusrbyuid (req_data, clienthost, thip);
     break;
   case CNS_MODGRPMAP:
-    c = Cns_srv_modgrpmap (magic, req_data, clienthost, thip);
+    c = Cns_srv_modgrpmap (req_data, clienthost, thip);
     break;
   case CNS_MODUSRMAP:
-    c = Cns_srv_modusrmap (magic, req_data, clienthost, thip);
+    c = Cns_srv_modusrmap (req_data, clienthost, thip);
     break;
   case CNS_RMGRPMAP:
-    c = Cns_srv_rmgrpmap (magic, req_data, clienthost, thip);
+    c = Cns_srv_rmgrpmap (req_data, clienthost, thip);
     break;
   case CNS_RMUSRMAP:
-    c = Cns_srv_rmusrmap (magic, req_data, clienthost, thip);
+    c = Cns_srv_rmusrmap (req_data, clienthost, thip);
     break;
   case CNS_GETLINKS:
-    c = Cns_srv_getlinks (magic, req_data, clienthost, thip);
+    c = Cns_srv_getlinks (req_data, clienthost, thip);
     break;
   case CNS_ENTGRPMAP:
-    c = Cns_srv_entergrpmap (magic, req_data, clienthost, thip);
+    c = Cns_srv_entergrpmap (req_data, clienthost, thip);
     break;
   case CNS_ENTUSRMAP:
-    c = Cns_srv_enterusrmap (magic, req_data, clienthost, thip);
+    c = Cns_srv_enterusrmap (req_data, clienthost, thip);
     break;
   case CNS_PING:
-    c = Cns_srv_ping(magic, req_data, clienthost, thip);
+    c = Cns_srv_ping(req_data, clienthost, thip);
     break;
   default:
     sendrep (thip->s, MSG_ERR, NS003, req_type);
@@ -880,7 +880,7 @@ int procsessreq(magic, req_data, clienthost, thip)
   char *req_data2;
   struct timeval timeval;
 
-  (void) Cns_srv_startsess (magic, req_data, clienthost, thip);
+  (void) Cns_srv_startsess (req_data, clienthost, thip);
   sendrep (thip->s, CNS_IRC, 0);
 
   /* wait for requests and process them */
@@ -933,12 +933,12 @@ int proctransreq(magic, req_data, clienthost, thip)
     timeval.tv_sec = CNS_TRANSTIMEOUT;
     timeval.tv_usec = 0;
     if (select (thip->s+1, &readfd, (fd_set *)0, (fd_set *)0, &timeval) <= 0) {
-      (void) Cns_srv_aborttrans (magic, req_data, clienthost, thip);
+      (void) Cns_srv_aborttrans (req_data, clienthost, thip);
       return (SEINTERNAL);
     }
     req_data2 = req_data;
     if ((rc = getreq (thip, &magic, &req_type, &req_data2, &clienthost))) {
-      (void) Cns_srv_aborttrans (magic, req_data2, clienthost, thip);
+      (void) Cns_srv_aborttrans (req_data2, clienthost, thip);
       if (req_data2 != req_data)
         free (req_data2);
       return (rc);

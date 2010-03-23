@@ -97,8 +97,8 @@ static void rfio_setup_ext_v3(iop,uid,gid,passwd)
   else
     iop->mapping=1;
   iop->passwd=passwd; /* used only if mapping == 0 */
-  iop->uid = (uid==0 ? geteuid(): uid);
-  iop->gid = (gid==0 ? getegid(): gid);
+  iop->uid = (uid==0 ? geteuid(): (uid_t)uid);
+  iop->gid = (gid==0 ? getegid(): (gid_t)gid);
   INIT_TRACE("RFIO_TRACE");
   TRACE ( 1,"rfio","rfio_setup_ext(%d,%d,%d)",iop,uid,gid);
   TRACE ( 2,"rfio","rfio_setup_ext: owner s uid is %d",iop->uid);
@@ -1558,8 +1558,8 @@ int     data_rfio_connect(node,remote,port,flags)       /* Connect <node>'s rfio
   Cglobals_get(&lasthost_key, (void**)&lasthost, lasthost_len);
   strcpy(lasthost, cp); /* remember to fetch back remote errs     */
   TRACE(2, "rfio", "rfio_dataconnect: connected");
-  TRACE(2, "rfio", "rfio_dataconnect: calling setnetio(%d)", s);
-  if (setnetio(s) < 0)    {
+  TRACE(2, "rfio", "rfio_dataconnect: calling setnetio()");
+  if (setnetio() < 0)    {
     close(s);
     END_TRACE();
     return(-1);

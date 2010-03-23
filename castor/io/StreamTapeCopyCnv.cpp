@@ -68,14 +68,14 @@ castor::io::StreamTapeCopyCnv::~StreamTapeCopyCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamTapeCopyCnv::ObjType() {
+unsigned int castor::io::StreamTapeCopyCnv::ObjType() {
   return castor::stager::TapeCopy::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamTapeCopyCnv::objType() const {
+unsigned int castor::io::StreamTapeCopyCnv::objType() const {
   return ObjType();
 }
 
@@ -84,8 +84,8 @@ const unsigned int castor::io::StreamTapeCopyCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamTapeCopyCnv::createRep(castor::IAddress* address,
                                               castor::IObject* object,
-                                              bool endTransaction,
-                                              unsigned int type)
+                                              bool,
+                                              unsigned int)
   throw (castor::exception::Exception) {
   castor::stager::TapeCopy* obj = 
     dynamic_cast<castor::stager::TapeCopy*>(object);

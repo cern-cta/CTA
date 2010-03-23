@@ -200,21 +200,21 @@ void castor::db::cnv::DbDiskCopyCnv::reset() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbDiskCopyCnv::ObjType() {
+unsigned int castor::db::cnv::DbDiskCopyCnv::ObjType() {
   return castor::stager::DiskCopy::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbDiskCopyCnv::objType() const {
+unsigned int castor::db::cnv::DbDiskCopyCnv::objType() const {
   return ObjType();
 }
 
 //------------------------------------------------------------------------------
 // fillRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbDiskCopyCnv::fillRep(castor::IAddress* address,
+void castor::db::cnv::DbDiskCopyCnv::fillRep(castor::IAddress*,
                                              castor::IObject* object,
                                              unsigned int type,
                                              bool endTransaction)
@@ -370,7 +370,7 @@ void castor::db::cnv::DbDiskCopyCnv::fillRepCastorFile(castor::stager::DiskCopy*
 //------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbDiskCopyCnv::fillObj(castor::IAddress* address,
+void castor::db::cnv::DbDiskCopyCnv::fillObj(castor::IAddress*,
                                              castor::IObject* object,
                                              unsigned int type,
                                              bool endTransaction)
@@ -534,7 +534,7 @@ void castor::db::cnv::DbDiskCopyCnv::fillObjCastorFile(castor::stager::DiskCopy*
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbDiskCopyCnv::createRep(castor::IAddress* address,
+void castor::db::cnv::DbDiskCopyCnv::createRep(castor::IAddress*,
                                                castor::IObject* object,
                                                bool endTransaction,
                                                unsigned int type)
@@ -598,7 +598,7 @@ void castor::db::cnv::DbDiskCopyCnv::createRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // bulkCreateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbDiskCopyCnv::bulkCreateRep(castor::IAddress* address,
+void castor::db::cnv::DbDiskCopyCnv::bulkCreateRep(castor::IAddress*,
                                                    std::vector<castor::IObject*> &objects,
                                                    bool endTransaction,
                                                    unsigned int type)
@@ -848,7 +848,7 @@ void castor::db::cnv::DbDiskCopyCnv::bulkCreateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // updateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbDiskCopyCnv::updateRep(castor::IAddress* address,
+void castor::db::cnv::DbDiskCopyCnv::updateRep(castor::IAddress*,
                                                castor::IObject* object,
                                                bool endTransaction)
   throw (castor::exception::Exception) {
@@ -890,7 +890,7 @@ void castor::db::cnv::DbDiskCopyCnv::updateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // deleteRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbDiskCopyCnv::deleteRep(castor::IAddress* address,
+void castor::db::cnv::DbDiskCopyCnv::deleteRep(castor::IAddress*,
                                                castor::IObject* object,
                                                bool endTransaction)
   throw (castor::exception::Exception) {

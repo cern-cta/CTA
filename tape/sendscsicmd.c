@@ -115,7 +115,7 @@ void find_sgpath(char *sgpath, int maj, int min) {
 
                 sprintf(st_dev, "/dev/%s", dirent->d_name);                
                 stat(st_dev, &sbuf);
-                if (maj == major(sbuf.st_rdev) && min == minor(sbuf.st_rdev)) {
+                if (maj == (int)major(sbuf.st_rdev) && min == (int)minor(sbuf.st_rdev)) {
                         sprintf(syspath, "%s/%s/device", systape, dirent->d_name);
                         match = 1;
                         break;
@@ -181,7 +181,8 @@ char **msgaddr;
 	int sg_big_buff_val =  SG_BIG_BUFF;
 	int procfd, nbread;
 	char procbuf[PROCBUFSZ];
-                                                                                                                                                            
+
+  (void)senselen;
 	/* First the value in /proc of the max buffer size for the sg driver */
 	procfd = open("/proc/scsi/sg/def_reserved_size", O_RDONLY);
 	if (procfd > 0) {
@@ -198,7 +199,7 @@ char **msgaddr;
 	  close(procfd);
 	}
 
-	if (sizeof(struct sg_header) + cdblen + buflen > sg_big_buff_val) {
+	if ((int)sizeof(struct sg_header) + cdblen + buflen > sg_big_buff_val) {
 #if defined(TAPE)
 		sprintf (tp_err_msgbuf, "blocksize too large (max %zd)\n",
 		    sg_big_buff_val - sizeof(struct sg_header) - cdblen);
@@ -211,7 +212,7 @@ char **msgaddr;
 		serrno = EINVAL;
 		return (-1);
 	}
-	if (sizeof(struct sg_header)+cdblen+buflen > sg_bufsiz) {
+	if ((int)sizeof(struct sg_header)+cdblen+buflen > sg_bufsiz) {
 		if (sg_bufsiz > 0) free (sg_buffer);
 		if ((sg_buffer = malloc (sizeof(struct sg_header)+cdblen+buflen)) == NULL) {
 			serrno = errno;

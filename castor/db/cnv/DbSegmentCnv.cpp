@@ -175,21 +175,21 @@ void castor::db::cnv::DbSegmentCnv::reset() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbSegmentCnv::ObjType() {
+unsigned int castor::db::cnv::DbSegmentCnv::ObjType() {
   return castor::stager::Segment::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbSegmentCnv::objType() const {
+unsigned int castor::db::cnv::DbSegmentCnv::objType() const {
   return ObjType();
 }
 
 //------------------------------------------------------------------------------
 // fillRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbSegmentCnv::fillRep(castor::IAddress* address,
+void castor::db::cnv::DbSegmentCnv::fillRep(castor::IAddress*,
                                             castor::IObject* object,
                                             unsigned int type,
                                             bool endTransaction)
@@ -289,7 +289,7 @@ void castor::db::cnv::DbSegmentCnv::fillRepTape(castor::stager::Segment* obj)
 //------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbSegmentCnv::fillObj(castor::IAddress* address,
+void castor::db::cnv::DbSegmentCnv::fillObj(castor::IAddress*,
                                             castor::IObject* object,
                                             unsigned int type,
                                             bool endTransaction)
@@ -398,7 +398,7 @@ void castor::db::cnv::DbSegmentCnv::fillObjTape(castor::stager::Segment* obj)
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbSegmentCnv::createRep(castor::IAddress* address,
+void castor::db::cnv::DbSegmentCnv::createRep(castor::IAddress*,
                                               castor::IObject* object,
                                               bool endTransaction,
                                               unsigned int type)
@@ -483,7 +483,7 @@ void castor::db::cnv::DbSegmentCnv::createRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // bulkCreateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbSegmentCnv::bulkCreateRep(castor::IAddress* address,
+void castor::db::cnv::DbSegmentCnv::bulkCreateRep(castor::IAddress*,
                                                   std::vector<castor::IObject*> &objects,
                                                   bool endTransaction,
                                                   unsigned int type)
@@ -947,7 +947,7 @@ void castor::db::cnv::DbSegmentCnv::bulkCreateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // updateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbSegmentCnv::updateRep(castor::IAddress* address,
+void castor::db::cnv::DbSegmentCnv::updateRep(castor::IAddress*,
                                               castor::IObject* object,
                                               bool endTransaction)
   throw (castor::exception::Exception) {
@@ -1000,7 +1000,7 @@ void castor::db::cnv::DbSegmentCnv::updateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // deleteRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbSegmentCnv::deleteRep(castor::IAddress* address,
+void castor::db::cnv::DbSegmentCnv::deleteRep(castor::IAddress*,
                                               castor::IObject* object,
                                               bool endTransaction)
   throw (castor::exception::Exception) {

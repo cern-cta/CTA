@@ -2829,7 +2829,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
   /*
    * Close disk IO thread connections to client + some cleanup
    */
-  rtcpd_CleanUpDiskIO(thPoolId,thPoolSz);
+  rtcpd_CleanUpDiskIO(thPoolSz);
 
   /*
    * Wait for the client listen thread to return.

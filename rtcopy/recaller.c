@@ -406,11 +406,7 @@ int recallerCallbackFileCopied(
  * while the latter would rundown processing as soon as all unprocessed
  * file requests have finished.
  */
-int recallerCallbackMoreWork(
-                             tapereq,
-                             filereq
-                             )
-     rtcpTapeRequest_t *tapereq;
+int recallerCallbackMoreWork(filereq)
      rtcpFileRequest_t *filereq;
 {
   static int requestToProcess = 0;
@@ -602,10 +598,7 @@ int recallerCallback(
     msgNo = RTCPCLD_MSG_CALLBACK_GETW;
     func = "processGetMoreWorkCallback";
     if ( filereq->cprc == 0 ) {
-      rc = recallerCallbackMoreWork(
-                                    tapereq,
-                                    filereq
-                                    );
+      rc = recallerCallbackMoreWork(filereq);
       if ( rc == -1 ) save_serrno = serrno;
     } else {
       (void)updateSegmCount(0,0,1);

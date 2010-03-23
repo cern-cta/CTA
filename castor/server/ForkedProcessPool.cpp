@@ -73,7 +73,7 @@ castor::server::ForkedProcessPool::~ForkedProcessPool() throw()
 //------------------------------------------------------------------------------
 // shutdown
 //------------------------------------------------------------------------------
-bool castor::server::ForkedProcessPool::shutdown(bool wait) throw()
+bool castor::server::ForkedProcessPool::shutdown(bool) throw()
 {
   m_stopped = true;
   // for the time being, we just kill the children without notifying them
@@ -215,7 +215,7 @@ void castor::server::ForkedProcessPool::dispatch(castor::IObject& obj)
 // handleSignals
 //------------------------------------------------------------------------------
 extern "C" {
-  void handleSignals(int signal) {
+  void handleSignals(int) {
     _childStop = true;
   }
 }

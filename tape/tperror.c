@@ -89,6 +89,8 @@ char **msgaddr;
 		errno = save_errno;
 	} else
 		devtype = dlip->devtype;
+#else
+  (void)path;
 #endif
         {
                 /* Get the sense bytes */

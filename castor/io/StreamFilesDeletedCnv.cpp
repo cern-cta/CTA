@@ -69,14 +69,14 @@ castor::io::StreamFilesDeletedCnv::~StreamFilesDeletedCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamFilesDeletedCnv::ObjType() {
+unsigned int castor::io::StreamFilesDeletedCnv::ObjType() {
   return castor::stager::FilesDeleted::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamFilesDeletedCnv::objType() const {
+unsigned int castor::io::StreamFilesDeletedCnv::objType() const {
   return ObjType();
 }
 
@@ -85,8 +85,8 @@ const unsigned int castor::io::StreamFilesDeletedCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamFilesDeletedCnv::createRep(castor::IAddress* address,
                                                   castor::IObject* object,
-                                                  bool endTransaction,
-                                                  unsigned int type)
+                                                  bool,
+                                                  unsigned int)
   throw (castor::exception::Exception) {
   castor::stager::FilesDeleted* obj = 
     dynamic_cast<castor::stager::FilesDeleted*>(object);

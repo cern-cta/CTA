@@ -142,14 +142,14 @@ castor::tape::mighunter::ora::OraMigHunterSvc::~OraMigHunterSvc() throw() {
 // -----------------------------------------------------------------------
 // id
 // -----------------------------------------------------------------------
-const unsigned int castor::tape::mighunter::ora::OraMigHunterSvc::id() const {
+unsigned int castor::tape::mighunter::ora::OraMigHunterSvc::id() const {
   return ID();
 }
 
 // -----------------------------------------------------------------------
 // ID
 // -----------------------------------------------------------------------
-const unsigned int castor::tape::mighunter::ora::OraMigHunterSvc::ID() {
+unsigned int castor::tape::mighunter::ora::OraMigHunterSvc::ID() {
   return castor::SVC_ORAMIGHUNTERSVC;
 }
 

@@ -245,6 +245,7 @@ int tapefd;
 char *path;
 char *devtype;
 {
+  (void)devtype;
 #if defined(ADSTAR) || defined(SOLARIS25) || defined(sgi) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
 #if defined(ADSTAR)
 	struct sc_iocmd sc_iocmd;

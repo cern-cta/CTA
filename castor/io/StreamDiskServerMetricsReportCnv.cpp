@@ -66,14 +66,14 @@ castor::io::StreamDiskServerMetricsReportCnv::~StreamDiskServerMetricsReportCnv(
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamDiskServerMetricsReportCnv::ObjType() {
+unsigned int castor::io::StreamDiskServerMetricsReportCnv::ObjType() {
   return castor::monitoring::DiskServerMetricsReport::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamDiskServerMetricsReportCnv::objType() const {
+unsigned int castor::io::StreamDiskServerMetricsReportCnv::objType() const {
   return ObjType();
 }
 
@@ -82,8 +82,8 @@ const unsigned int castor::io::StreamDiskServerMetricsReportCnv::objType() const
 //------------------------------------------------------------------------------
 void castor::io::StreamDiskServerMetricsReportCnv::createRep(castor::IAddress* address,
                                                              castor::IObject* object,
-                                                             bool endTransaction,
-                                                             unsigned int type)
+                                                             bool,
+                                                             unsigned int)
   throw (castor::exception::Exception) {
   castor::monitoring::DiskServerMetricsReport* obj = 
     dynamic_cast<castor::monitoring::DiskServerMetricsReport*>(object);

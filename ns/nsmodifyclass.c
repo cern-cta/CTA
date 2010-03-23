@@ -107,8 +107,8 @@ int main(argc, argv)
   while ((c = Cgetopt_long (argc, argv, "h:", longopts, NULL)) != EOF) {
     switch (c) {
     case OPT_CLASS_GID:
-      if ((Cns_fileclass.gid = strtol (Coptarg, &dp, 10)) < 0 ||
-          *dp != '\0') {
+      Cns_fileclass.gid = strtol (Coptarg, &dp, 10);
+      if (*dp != '\0') {
         fprintf (stderr,
                  "invalid class_gid %s\n", Coptarg);
         errflg++;
@@ -140,8 +140,8 @@ int main(argc, argv)
         class_name = Coptarg;
       break;
     case OPT_CLASS_UID:
-      if ((Cns_fileclass.uid = strtol (Coptarg, &dp, 10)) < 0 ||
-          *dp != '\0') {
+      Cns_fileclass.uid = strtol (Coptarg, &dp, 10);
+      if (*dp != '\0') {
         fprintf (stderr,
                  "invalid class_uid %s\n", Coptarg);
         errflg++;

@@ -174,21 +174,21 @@ void castor::db::cnv::DbMoverCloseRequestCnv::reset() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbMoverCloseRequestCnv::ObjType() {
+unsigned int castor::db::cnv::DbMoverCloseRequestCnv::ObjType() {
   return castor::stager::MoverCloseRequest::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbMoverCloseRequestCnv::objType() const {
+unsigned int castor::db::cnv::DbMoverCloseRequestCnv::objType() const {
   return ObjType();
 }
 
 //------------------------------------------------------------------------------
 // fillRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbMoverCloseRequestCnv::fillRep(castor::IAddress* address,
+void castor::db::cnv::DbMoverCloseRequestCnv::fillRep(castor::IAddress*,
                                                       castor::IObject* object,
                                                       unsigned int type,
                                                       bool endTransaction)
@@ -271,7 +271,7 @@ void castor::db::cnv::DbMoverCloseRequestCnv::fillRepIClient(castor::stager::Mov
 //------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbMoverCloseRequestCnv::fillObj(castor::IAddress* address,
+void castor::db::cnv::DbMoverCloseRequestCnv::fillObj(castor::IAddress*,
                                                       castor::IObject* object,
                                                       unsigned int type,
                                                       bool endTransaction)
@@ -376,7 +376,7 @@ void castor::db::cnv::DbMoverCloseRequestCnv::fillObjIClient(castor::stager::Mov
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbMoverCloseRequestCnv::createRep(castor::IAddress* address,
+void castor::db::cnv::DbMoverCloseRequestCnv::createRep(castor::IAddress*,
                                                         castor::IObject* object,
                                                         bool endTransaction,
                                                         unsigned int type)
@@ -471,7 +471,7 @@ void castor::db::cnv::DbMoverCloseRequestCnv::createRep(castor::IAddress* addres
 //------------------------------------------------------------------------------
 // bulkCreateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbMoverCloseRequestCnv::bulkCreateRep(castor::IAddress* address,
+void castor::db::cnv::DbMoverCloseRequestCnv::bulkCreateRep(castor::IAddress*,
                                                             std::vector<castor::IObject*> &objects,
                                                             bool endTransaction,
                                                             unsigned int type)
@@ -1013,7 +1013,7 @@ void castor::db::cnv::DbMoverCloseRequestCnv::bulkCreateRep(castor::IAddress* ad
 //------------------------------------------------------------------------------
 // updateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbMoverCloseRequestCnv::updateRep(castor::IAddress* address,
+void castor::db::cnv::DbMoverCloseRequestCnv::updateRep(castor::IAddress*,
                                                         castor::IObject* object,
                                                         bool endTransaction)
   throw (castor::exception::Exception) {
@@ -1068,7 +1068,7 @@ void castor::db::cnv::DbMoverCloseRequestCnv::updateRep(castor::IAddress* addres
 //------------------------------------------------------------------------------
 // deleteRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbMoverCloseRequestCnv::deleteRep(castor::IAddress* address,
+void castor::db::cnv::DbMoverCloseRequestCnv::deleteRep(castor::IAddress*,
                                                         castor::IObject* object,
                                                         bool endTransaction)
   throw (castor::exception::Exception) {

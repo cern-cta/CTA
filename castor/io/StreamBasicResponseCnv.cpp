@@ -64,14 +64,14 @@ castor::io::StreamBasicResponseCnv::~StreamBasicResponseCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamBasicResponseCnv::ObjType() {
+unsigned int castor::io::StreamBasicResponseCnv::ObjType() {
   return castor::rh::BasicResponse::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamBasicResponseCnv::objType() const {
+unsigned int castor::io::StreamBasicResponseCnv::objType() const {
   return ObjType();
 }
 
@@ -80,8 +80,8 @@ const unsigned int castor::io::StreamBasicResponseCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamBasicResponseCnv::createRep(castor::IAddress* address,
                                                    castor::IObject* object,
-                                                   bool endTransaction,
-                                                   unsigned int type)
+                                                   bool,
+                                                   unsigned int)
   throw (castor::exception::Exception) {
   castor::rh::BasicResponse* obj = 
     dynamic_cast<castor::rh::BasicResponse*>(object);

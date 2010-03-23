@@ -159,21 +159,21 @@ void castor::db::cnv::DbBWUserCnv::reset() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbBWUserCnv::ObjType() {
+unsigned int castor::db::cnv::DbBWUserCnv::ObjType() {
   return castor::bwlist::BWUser::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbBWUserCnv::objType() const {
+unsigned int castor::db::cnv::DbBWUserCnv::objType() const {
   return ObjType();
 }
 
 //------------------------------------------------------------------------------
 // fillRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbBWUserCnv::fillRep(castor::IAddress* address,
+void castor::db::cnv::DbBWUserCnv::fillRep(castor::IAddress*,
                                            castor::IObject* object,
                                            unsigned int type,
                                            bool endTransaction)
@@ -238,7 +238,7 @@ void castor::db::cnv::DbBWUserCnv::fillRepChangePrivilege(castor::bwlist::BWUser
 //------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbBWUserCnv::fillObj(castor::IAddress* address,
+void castor::db::cnv::DbBWUserCnv::fillObj(castor::IAddress*,
                                            castor::IObject* object,
                                            unsigned int type,
                                            bool endTransaction)
@@ -304,7 +304,7 @@ void castor::db::cnv::DbBWUserCnv::fillObjChangePrivilege(castor::bwlist::BWUser
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbBWUserCnv::createRep(castor::IAddress* address,
+void castor::db::cnv::DbBWUserCnv::createRep(castor::IAddress*,
                                              castor::IObject* object,
                                              bool endTransaction,
                                              unsigned int type)
@@ -357,7 +357,7 @@ void castor::db::cnv::DbBWUserCnv::createRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // bulkCreateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbBWUserCnv::bulkCreateRep(castor::IAddress* address,
+void castor::db::cnv::DbBWUserCnv::bulkCreateRep(castor::IAddress*,
                                                  std::vector<castor::IObject*> &objects,
                                                  bool endTransaction,
                                                  unsigned int type)
@@ -507,7 +507,7 @@ void castor::db::cnv::DbBWUserCnv::bulkCreateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // updateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbBWUserCnv::updateRep(castor::IAddress* address,
+void castor::db::cnv::DbBWUserCnv::updateRep(castor::IAddress*,
                                              castor::IObject* object,
                                              bool endTransaction)
   throw (castor::exception::Exception) {
@@ -546,7 +546,7 @@ void castor::db::cnv::DbBWUserCnv::updateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // deleteRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbBWUserCnv::deleteRep(castor::IAddress* address,
+void castor::db::cnv::DbBWUserCnv::deleteRep(castor::IAddress*,
                                              castor::IObject* object,
                                              bool endTransaction)
   throw (castor::exception::Exception) {

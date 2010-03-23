@@ -132,9 +132,9 @@ void castor::stager::daemon::GcSvcThread::handleFilesDeletedOrFailed
 void castor::stager::daemon::GcSvcThread::handleFiles2Delete
 (castor::stager::Request* req,
  castor::IClient *client,
- castor::Services* svcs,
+ castor::Services*,
  castor::stager::IGCSvc* gcSvc,
- castor::BaseAddress &ad,
+ castor::BaseAddress&,
  Cuuid_t uuid) throw() {
   // Useful Variables
   castor::stager::Files2Delete *uReq;

@@ -117,7 +117,8 @@ int main(argc, argv)
       }
       break;
     case 'k':
-      if (((checksum = strtoul (Coptarg, &dp, 16)) < 0) || (*dp != '\0')) {
+      checksum = strtoul (Coptarg, &dp, 16);
+      if (*dp != '\0') {
 	fprintf (stderr, "%s: invalid checksum: %s\n", argv[0], Coptarg);
 	errflg++;
       }

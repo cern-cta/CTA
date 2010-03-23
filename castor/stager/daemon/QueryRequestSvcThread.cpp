@@ -906,7 +906,7 @@ void castor::stager::daemon::QueryRequestSvcThread::handleListPrivileges
 // handleVersionQuery
 //-----------------------------------------------------------------------------
 void castor::stager::daemon::QueryRequestSvcThread::handleVersionQuery
-(castor::stager::Request* req, castor::IClient *client, Cuuid_t uuid)
+(castor::stager::Request*, castor::IClient *client, Cuuid_t uuid)
   throw (castor::exception::Exception) {
   // "Processing VersionQuery"
   castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_VQUERY);

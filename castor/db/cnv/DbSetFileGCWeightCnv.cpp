@@ -191,21 +191,21 @@ void castor::db::cnv::DbSetFileGCWeightCnv::reset() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbSetFileGCWeightCnv::ObjType() {
+unsigned int castor::db::cnv::DbSetFileGCWeightCnv::ObjType() {
   return castor::stager::SetFileGCWeight::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbSetFileGCWeightCnv::objType() const {
+unsigned int castor::db::cnv::DbSetFileGCWeightCnv::objType() const {
   return ObjType();
 }
 
 //------------------------------------------------------------------------------
 // fillRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbSetFileGCWeightCnv::fillRep(castor::IAddress* address,
+void castor::db::cnv::DbSetFileGCWeightCnv::fillRep(castor::IAddress*,
                                                     castor::IObject* object,
                                                     unsigned int type,
                                                     bool endTransaction)
@@ -344,7 +344,7 @@ void castor::db::cnv::DbSetFileGCWeightCnv::fillRepIClient(castor::stager::SetFi
 //------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbSetFileGCWeightCnv::fillObj(castor::IAddress* address,
+void castor::db::cnv::DbSetFileGCWeightCnv::fillObj(castor::IAddress*,
                                                     castor::IObject* object,
                                                     unsigned int type,
                                                     bool endTransaction)
@@ -504,7 +504,7 @@ void castor::db::cnv::DbSetFileGCWeightCnv::fillObjIClient(castor::stager::SetFi
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbSetFileGCWeightCnv::createRep(castor::IAddress* address,
+void castor::db::cnv::DbSetFileGCWeightCnv::createRep(castor::IAddress*,
                                                       castor::IObject* object,
                                                       bool endTransaction,
                                                       unsigned int type)
@@ -581,7 +581,7 @@ void castor::db::cnv::DbSetFileGCWeightCnv::createRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // bulkCreateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbSetFileGCWeightCnv::bulkCreateRep(castor::IAddress* address,
+void castor::db::cnv::DbSetFileGCWeightCnv::bulkCreateRep(castor::IAddress*,
                                                           std::vector<castor::IObject*> &objects,
                                                           bool endTransaction,
                                                           unsigned int type)
@@ -984,7 +984,7 @@ void castor::db::cnv::DbSetFileGCWeightCnv::bulkCreateRep(castor::IAddress* addr
 //------------------------------------------------------------------------------
 // updateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbSetFileGCWeightCnv::updateRep(castor::IAddress* address,
+void castor::db::cnv::DbSetFileGCWeightCnv::updateRep(castor::IAddress*,
                                                       castor::IObject* object,
                                                       bool endTransaction)
   throw (castor::exception::Exception) {
@@ -1033,7 +1033,7 @@ void castor::db::cnv::DbSetFileGCWeightCnv::updateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // deleteRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbSetFileGCWeightCnv::deleteRep(castor::IAddress* address,
+void castor::db::cnv::DbSetFileGCWeightCnv::deleteRep(castor::IAddress*,
                                                       castor::IObject* object,
                                                       bool endTransaction)
   throw (castor::exception::Exception) {

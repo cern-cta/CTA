@@ -87,8 +87,8 @@ void castor::tape::tapebridge::LegacyTxRx::sendMsgHeader(
 // receiveMsgHeader
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::LegacyTxRx::receiveMsgHeader(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
-  const int netReadWriteTimeout, legacymsg::MessageHeader &header)
+  const Cuuid_t&, const uint32_t, const int socketFd,
+  const int, legacymsg::MessageHeader &header)
   throw(castor::exception::Exception) {
 
   // Read in the message header
@@ -118,8 +118,8 @@ void castor::tape::tapebridge::LegacyTxRx::receiveMsgHeader(
 // receiveMsgHeaderFromCloseableConn
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::LegacyTxRx::receiveMsgHeaderFromCloseable(
-  const Cuuid_t &cuuid,  bool &connClosed, const uint32_t volReqId, 
-  const int socketFd, const int netReadWriteTimeout,
+  const Cuuid_t&,  bool &connClosed, const uint32_t, 
+  const int socketFd, const int,
   legacymsg::MessageHeader &header) throw(castor::exception::Exception) {
 
   // Read in the message header

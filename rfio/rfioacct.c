@@ -88,7 +88,7 @@ void rfioacct(reqtype,uid,gid,ns,flag1,flag2,status,rc,infop,filename1,filename2
     strncpy(&acct_rfio.filename[0],filename1,acct_rfio.len1);
   }
   if (filename2 != NULL ) {
-    acct_rfio.len2 = min(2*MAXPATH-acct_rfio.len1,strlen(filename2));
+    acct_rfio.len2 = min(2*MAXPATH-acct_rfio.len1,(int)strlen(filename2));
     strncpy(&acct_rfio.filename[acct_rfio.len1],filename2,acct_rfio.len2);
   }
   acct_rfio.status = status;

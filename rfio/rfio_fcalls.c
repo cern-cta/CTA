@@ -402,6 +402,7 @@ int srxywrit(s, infop, lun, access)
 int srxyread(s, infop, lun, access)
      int     s, lun;
      struct rfiostat * infop ;
+     int access;
 {
   int     status=0, rcode=0;
   char    *ptr;

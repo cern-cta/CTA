@@ -64,14 +64,14 @@ castor::io::StreamGCLocalFileCnv::~StreamGCLocalFileCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamGCLocalFileCnv::ObjType() {
+unsigned int castor::io::StreamGCLocalFileCnv::ObjType() {
   return castor::stager::GCLocalFile::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamGCLocalFileCnv::objType() const {
+unsigned int castor::io::StreamGCLocalFileCnv::objType() const {
   return ObjType();
 }
 
@@ -80,8 +80,8 @@ const unsigned int castor::io::StreamGCLocalFileCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamGCLocalFileCnv::createRep(castor::IAddress* address,
                                                  castor::IObject* object,
-                                                 bool endTransaction,
-                                                 unsigned int type)
+                                                 bool,
+                                                 unsigned int)
   throw (castor::exception::Exception) {
   castor::stager::GCLocalFile* obj = 
     dynamic_cast<castor::stager::GCLocalFile*>(object);

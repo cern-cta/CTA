@@ -48,9 +48,8 @@ castor::tape::utils::SmartFd::SmartFd(const int fd) throw():
 //-----------------------------------------------------------------------------
 // setClosedCallback
 //-----------------------------------------------------------------------------
-void castor::tape::utils::SmartFd::setClosedCallback(const int fd,
-  ClosedCallback closedCallback) throw() {
-
+void castor::tape::utils::SmartFd::setClosedCallback
+(const int, ClosedCallback closedCallback) throw() {
   m_closedCallback = closedCallback;
 }
 

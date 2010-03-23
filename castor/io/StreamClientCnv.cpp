@@ -63,14 +63,14 @@ castor::io::StreamClientCnv::~StreamClientCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamClientCnv::ObjType() {
+unsigned int castor::io::StreamClientCnv::ObjType() {
   return castor::rh::Client::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamClientCnv::objType() const {
+unsigned int castor::io::StreamClientCnv::objType() const {
   return ObjType();
 }
 
@@ -79,8 +79,8 @@ const unsigned int castor::io::StreamClientCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamClientCnv::createRep(castor::IAddress* address,
                                             castor::IObject* object,
-                                            bool endTransaction,
-                                            unsigned int type)
+                                            bool,
+                                            unsigned int)
   throw (castor::exception::Exception) {
   castor::rh::Client* obj = 
     dynamic_cast<castor::rh::Client*>(object);

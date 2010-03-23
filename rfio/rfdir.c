@@ -57,7 +57,8 @@ int main(argc, argv)
   extern int optind;
   struct stat64 st;
   char *dir;
-  int rc,i;
+  int rc;
+  int i;
   char modestr[11];
   char t_creat[14];
   struct passwd *pw;
@@ -117,7 +118,7 @@ int main(argc, argv)
 
     if ( !S_ISDIR(st.st_mode) ) {
       strcpy(modestr,"----------");
-      for (i=0; i<6; i++) if ( ftype_v[i] == ( S_IFMT & st.st_mode ) ) break;
+      for (i=0; i<6; i++) if ( ftype_v[i] == (int)( S_IFMT & st.st_mode ) ) break;
       modestr[0] = ftype[i];
       for (i=0; i<9; i++) if (fmode_v[i] & st.st_mode) modestr[i+1] = fmode[i];
       if ( S_ISUID & st.st_mode ) modestr[3] = 's';
@@ -269,7 +270,7 @@ int list_dir(dir,recursively,multiple)
       continue;
     }
     strcpy(modestr,"----------");
-    for (i=0; i<6; i++) if ( ftype_v[i] == ( S_IFMT & st.st_mode ) ) break;
+    for (i=0; i<6; i++) if ( ftype_v[i] == (int)( S_IFMT & st.st_mode ) ) break;
     modestr[0] = ftype[i];
     for (i=0; i<9; i++) if (fmode_v[i] & st.st_mode) modestr[i+1] = fmode[i];
     if ( S_ISUID & st.st_mode ) modestr[3] = 's';

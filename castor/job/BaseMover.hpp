@@ -56,7 +56,7 @@ namespace castor {
       /**
        * Returns the size of the source file represented in bytes
        */
-      virtual const u_signed64 fileSize() {
+      virtual u_signed64 fileSize() {
 	return m_fileSize;
       }
 
@@ -64,7 +64,7 @@ namespace castor {
        * Returns the number of bytes transferred from the client to the source/
        * destination
        */
-      virtual const u_signed64 bytesTransferred() {
+      virtual u_signed64 bytesTransferred() {
 	return m_bytesTransferred;
       }
 

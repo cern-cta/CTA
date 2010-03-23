@@ -63,14 +63,14 @@ castor::io::StreamFileToRecallRequestCnv::~StreamFileToRecallRequestCnv() throw(
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamFileToRecallRequestCnv::ObjType() {
+unsigned int castor::io::StreamFileToRecallRequestCnv::ObjType() {
   return castor::tape::tapegateway::FileToRecallRequest::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamFileToRecallRequestCnv::objType() const {
+unsigned int castor::io::StreamFileToRecallRequestCnv::objType() const {
   return ObjType();
 }
 
@@ -79,8 +79,8 @@ const unsigned int castor::io::StreamFileToRecallRequestCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamFileToRecallRequestCnv::createRep(castor::IAddress* address,
                                                          castor::IObject* object,
-                                                         bool endTransaction,
-                                                         unsigned int type)
+                                                         bool,
+                                                         unsigned int)
   throw (castor::exception::Exception) {
   castor::tape::tapegateway::FileToRecallRequest* obj = 
     dynamic_cast<castor::tape::tapegateway::FileToRecallRequest*>(object);

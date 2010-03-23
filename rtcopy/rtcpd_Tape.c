@@ -760,7 +760,6 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
 }
 
 static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
-                        int *diskIOfinished,
                         tape_list_t *tape, 
                         file_list_t *file) {
     int nb_bytes, rc, i, j, last_sz, blksiz, current_bufsz;
@@ -1710,7 +1709,7 @@ void *tapeIOthread(void *arg) {
                                       nexttape,nextfile);
                     CHECK_PROC_ERR(NULL,nextfile,"MemoryToTape() error");
                 } else {
-                    rc = TapeToMemory(tape_fd,&indxp,&firstblk,&diskIOfinished,
+                    rc = TapeToMemory(tape_fd,&indxp,&firstblk,
                                       nexttape,nextfile);
                     CHECK_PROC_ERR(NULL,nextfile,"TapeToMemory() error");
                 }

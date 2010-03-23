@@ -69,14 +69,14 @@ castor::io::StreamStageFileQueryRequestCnv::~StreamStageFileQueryRequestCnv() th
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamStageFileQueryRequestCnv::ObjType() {
+unsigned int castor::io::StreamStageFileQueryRequestCnv::ObjType() {
   return castor::stager::StageFileQueryRequest::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamStageFileQueryRequestCnv::objType() const {
+unsigned int castor::io::StreamStageFileQueryRequestCnv::objType() const {
   return ObjType();
 }
 
@@ -85,8 +85,8 @@ const unsigned int castor::io::StreamStageFileQueryRequestCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamStageFileQueryRequestCnv::createRep(castor::IAddress* address,
                                                            castor::IObject* object,
-                                                           bool endTransaction,
-                                                           unsigned int type)
+                                                           bool,
+                                                           unsigned int)
   throw (castor::exception::Exception) {
   castor::stager::StageFileQueryRequest* obj = 
     dynamic_cast<castor::stager::StageFileQueryRequest*>(object);

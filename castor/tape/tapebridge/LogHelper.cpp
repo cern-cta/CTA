@@ -316,7 +316,7 @@ void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
-  const int socketFd, const legacymsg::RtcpNoMoreRequestsMsgBody &body)
+  const int socketFd, const legacymsg::RtcpNoMoreRequestsMsgBody&)
   throw() {
 
   castor::dlf::Param params[] = {
@@ -332,7 +332,7 @@ void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
-  const int socketFd, const legacymsg::RtcpAbortMsgBody &body) throw() {
+  const int socketFd, const legacymsg::RtcpAbortMsgBody&) throw() {
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("mountTransactionId", volReqId),
@@ -371,7 +371,7 @@ void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
   const int socketFd, const legacymsg::VmgrTapeInfoMsgBody &body,
-  const time_t connectionDuration, const time_t sendRecvDuration) throw() {
+  const time_t, const time_t) throw() {
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("mountTransactionId", volReqId               ),

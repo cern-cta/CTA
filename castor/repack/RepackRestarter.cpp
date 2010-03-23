@@ -57,7 +57,7 @@ RepackRestarter::~RepackRestarter() throw() {
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-void RepackRestarter::run(void *param) throw() {
+void RepackRestarter::run(void*) throw() {
   std::vector<RepackSubRequest*> sreqs;
   std::vector<RepackSubRequest*>::iterator sreq;
 

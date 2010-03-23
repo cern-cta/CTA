@@ -198,21 +198,21 @@ void castor::db::cnv::DbNsFilesDeletedCnv::reset() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbNsFilesDeletedCnv::ObjType() {
+unsigned int castor::db::cnv::DbNsFilesDeletedCnv::ObjType() {
   return castor::stager::NsFilesDeleted::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbNsFilesDeletedCnv::objType() const {
+unsigned int castor::db::cnv::DbNsFilesDeletedCnv::objType() const {
   return ObjType();
 }
 
 //------------------------------------------------------------------------------
 // fillRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbNsFilesDeletedCnv::fillRep(castor::IAddress* address,
+void castor::db::cnv::DbNsFilesDeletedCnv::fillRep(castor::IAddress*,
                                                    castor::IObject* object,
                                                    unsigned int type,
                                                    bool endTransaction)
@@ -351,7 +351,7 @@ void castor::db::cnv::DbNsFilesDeletedCnv::fillRepIClient(castor::stager::NsFile
 //------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbNsFilesDeletedCnv::fillObj(castor::IAddress* address,
+void castor::db::cnv::DbNsFilesDeletedCnv::fillObj(castor::IAddress*,
                                                    castor::IObject* object,
                                                    unsigned int type,
                                                    bool endTransaction)
@@ -511,7 +511,7 @@ void castor::db::cnv::DbNsFilesDeletedCnv::fillObjIClient(castor::stager::NsFile
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbNsFilesDeletedCnv::createRep(castor::IAddress* address,
+void castor::db::cnv::DbNsFilesDeletedCnv::createRep(castor::IAddress*,
                                                      castor::IObject* object,
                                                      bool endTransaction,
                                                      unsigned int type)
@@ -594,7 +594,7 @@ void castor::db::cnv::DbNsFilesDeletedCnv::createRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // bulkCreateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbNsFilesDeletedCnv::bulkCreateRep(castor::IAddress* address,
+void castor::db::cnv::DbNsFilesDeletedCnv::bulkCreateRep(castor::IAddress*,
                                                          std::vector<castor::IObject*> &objects,
                                                          bool endTransaction,
                                                          unsigned int type)
@@ -1012,7 +1012,7 @@ void castor::db::cnv::DbNsFilesDeletedCnv::bulkCreateRep(castor::IAddress* addre
 //------------------------------------------------------------------------------
 // updateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbNsFilesDeletedCnv::updateRep(castor::IAddress* address,
+void castor::db::cnv::DbNsFilesDeletedCnv::updateRep(castor::IAddress*,
                                                      castor::IObject* object,
                                                      bool endTransaction)
   throw (castor::exception::Exception) {
@@ -1061,7 +1061,7 @@ void castor::db::cnv::DbNsFilesDeletedCnv::updateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // deleteRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbNsFilesDeletedCnv::deleteRep(castor::IAddress* address,
+void castor::db::cnv::DbNsFilesDeletedCnv::deleteRep(castor::IAddress*,
                                                      castor::IObject* object,
                                                      bool endTransaction)
   throw (castor::exception::Exception) {

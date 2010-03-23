@@ -65,14 +65,14 @@ castor::io::StreamStreamReportCnv::~StreamStreamReportCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamStreamReportCnv::ObjType() {
+unsigned int castor::io::StreamStreamReportCnv::ObjType() {
   return castor::monitoring::StreamReport::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamStreamReportCnv::objType() const {
+unsigned int castor::io::StreamStreamReportCnv::objType() const {
   return ObjType();
 }
 
@@ -81,8 +81,8 @@ const unsigned int castor::io::StreamStreamReportCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamStreamReportCnv::createRep(castor::IAddress* address,
                                                   castor::IObject* object,
-                                                  bool endTransaction,
-                                                  unsigned int type)
+                                                  bool,
+                                                  unsigned int)
   throw (castor::exception::Exception) {
   castor::monitoring::StreamReport* obj = 
     dynamic_cast<castor::monitoring::StreamReport*>(object);

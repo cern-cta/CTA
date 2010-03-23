@@ -109,7 +109,7 @@ void castor::tape::mighunter::StreamThread::run(void *arg) {
 //------------------------------------------------------------------------------
 // exceptionThrowingRun
 //------------------------------------------------------------------------------
-void castor::tape::mighunter::StreamThread::exceptionThrowingRun(void *arg) {
+void castor::tape::mighunter::StreamThread::exceptionThrowingRun(void*) {
 
   // Get a handle on the service to access the database
   const char *const oraSvcName = "OraMigHunterSvc";

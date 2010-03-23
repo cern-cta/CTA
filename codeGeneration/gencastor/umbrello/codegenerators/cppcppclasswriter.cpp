@@ -758,6 +758,7 @@ void CppCppClassWriter::writeCuuidPrint(CppBaseWriter* obj,
 void CppCppClassWriter::writeStringResponsePrint(CppBaseWriter* obj,
                                                  QTextStream &stream) {
   stream << obj->getIndent()
-         << "stream << m_content;"
-         << endl;
+         << "stream << indent << m_content;" << endl
+         << obj->getIndent()
+         << "alreadyPrinted.insert(this);" << endl;
 }

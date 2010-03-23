@@ -95,14 +95,14 @@ castor::stager::RemoteGCSvc::~RemoteGCSvc() throw() {}
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-const unsigned int castor::stager::RemoteGCSvc::id() const {
+unsigned int castor::stager::RemoteGCSvc::id() const {
   return ID();
 }
 
 //------------------------------------------------------------------------------
 // ID
 //------------------------------------------------------------------------------
-const unsigned int castor::stager::RemoteGCSvc::ID() {
+unsigned int castor::stager::RemoteGCSvc::ID() {
   return castor::SVC_REMOTEGCSVC;
 }
 
@@ -111,9 +111,7 @@ const unsigned int castor::stager::RemoteGCSvc::ID() {
 //------------------------------------------------------------------------------
 castor::stager::Tape*
 castor::stager::RemoteGCSvc::selectTape
-(const std::string vid,
- const int side,
- const int tpmode)
+(const std::string, const int, const int)
   throw (castor::exception::Exception) {
   castor::exception::NotSupported ex;
   ex.getMessage()
@@ -126,7 +124,7 @@ castor::stager::RemoteGCSvc::selectTape
 // requestToDo
 //------------------------------------------------------------------------------
 castor::stager::Request*
-castor::stager::RemoteGCSvc::requestToDo(std::string service)
+castor::stager::RemoteGCSvc::requestToDo(std::string)
   throw (castor::exception::Exception) {
   castor::exception::NotSupported ex;
   ex.getMessage()
@@ -140,7 +138,7 @@ castor::stager::RemoteGCSvc::requestToDo(std::string service)
 //------------------------------------------------------------------------------
 castor::stager::SvcClass*
 castor::stager::RemoteGCSvc::selectSvcClass
-(const std::string name)
+(const std::string)
   throw (castor::exception::Exception) {
   castor::exception::NotSupported ex;
   ex.getMessage()
@@ -154,7 +152,7 @@ castor::stager::RemoteGCSvc::selectSvcClass
 //------------------------------------------------------------------------------
 castor::stager::FileClass*
 castor::stager::RemoteGCSvc::selectFileClass
-(const std::string name)
+(const std::string)
   throw (castor::exception::Exception) {
   castor::exception::NotSupported ex;
   ex.getMessage()

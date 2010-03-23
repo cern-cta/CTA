@@ -485,7 +485,8 @@ void *svcClassProbe(
   char *fullPath = NULL;
   char *path = NULL;
   Cuuid_t myUuid;
-  int rc, i = 0, fd = -1, nbBytesWritten = -1, nbBytesRead = -1, size=0;
+  int rc, i = 0, fd = -1, size=0;
+  u_signed64 nbBytesWritten = 0, nbBytesRead = 0;
   int mySleepTime;
   char *myWriteBuffer, *myReadBuffer;
 

@@ -388,7 +388,7 @@ int DLL_DECL dlf_writep(Cuuid_t reqid,
   char   *name = NULL;
   char   *value = NULL;
   char   *p = NULL;
-  int    i;
+  unsigned int    i;
   size_t len = 0;
 
   /* Logging interface is initialized? */
@@ -532,14 +532,14 @@ int DLL_DECL dlf_writep(Cuuid_t reqid,
     free(name);
 
     /* Check if there is enough space in the buffer */
-    if (len >= maxmsglen) {
+    if ((int)len >= maxmsglen) {
       buffer[maxmsglen - 1] = '\n';
       break;
     }
   }
 
   /* Terminate the string */
-  if (len < maxmsglen) {
+  if ((int)len < maxmsglen) {
     snprintf(buffer + (len - 1), maxmsglen - len, "\n");
   }
 

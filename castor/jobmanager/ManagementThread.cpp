@@ -100,7 +100,7 @@ void castor::jobmanager::ManagementThread::init() {
 //-----------------------------------------------------------------------------
 // Run
 //-----------------------------------------------------------------------------
-void castor::jobmanager::ManagementThread::run(void *param) {
+void castor::jobmanager::ManagementThread::run(void*) {
 
   // LSF doesn't have a built in mechanism to automatically remove jobs from
   // the queue if they spend too much time in a PENDING status. So we must

@@ -78,14 +78,14 @@ castor::db::DbCnvSvc::~DbCnvSvc() throw() {
 // -----------------------------------------------------------------------
 // repType
 // -----------------------------------------------------------------------
-const unsigned int castor::db::DbCnvSvc::repType() const {
+unsigned int castor::db::DbCnvSvc::repType() const {
   return RepType();
 }
 
 // -----------------------------------------------------------------------
 // RepType
 // -----------------------------------------------------------------------
-const unsigned int castor::db::DbCnvSvc::RepType() {
+unsigned int castor::db::DbCnvSvc::RepType() {
   return castor::REP_DATABASE;
 }
 
@@ -126,7 +126,7 @@ castor::IObject* castor::db::DbCnvSvc::createObj(castor::IAddress* address)
 // -----------------------------------------------------------------------
 // getTypeFromId
 // -----------------------------------------------------------------------
-const unsigned int
+unsigned int
 castor::db::DbCnvSvc::getTypeFromId(const u_signed64 id)
   throw (castor::exception::Exception) {
   // a null id has a null type

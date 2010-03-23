@@ -58,7 +58,7 @@ castor::vdqm::DriveSchedulerThread::~DriveSchedulerThread()
 //-----------------------------------------------------------------------------
 // run
 //-----------------------------------------------------------------------------
-void castor::vdqm::DriveSchedulerThread::run(void *param) {
+void castor::vdqm::DriveSchedulerThread::run(void*) {
 
   Cuuid_t                cuuid    = nullCuuid;
   castor::vdqm::IVdqmSvc *vdqmSvc = NULL;

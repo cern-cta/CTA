@@ -69,14 +69,14 @@ castor::io::StreamCastorFileCnv::~StreamCastorFileCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamCastorFileCnv::ObjType() {
+unsigned int castor::io::StreamCastorFileCnv::ObjType() {
   return castor::stager::CastorFile::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamCastorFileCnv::objType() const {
+unsigned int castor::io::StreamCastorFileCnv::objType() const {
   return ObjType();
 }
 
@@ -85,8 +85,8 @@ const unsigned int castor::io::StreamCastorFileCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamCastorFileCnv::createRep(castor::IAddress* address,
                                                 castor::IObject* object,
-                                                bool endTransaction,
-                                                unsigned int type)
+                                                bool,
+                                                unsigned int)
   throw (castor::exception::Exception) {
   castor::stager::CastorFile* obj = 
     dynamic_cast<castor::stager::CastorFile*>(object);

@@ -38,7 +38,7 @@ private:
  * return different separate files (as they were before the marshall) 
  */
 //==============================================================================
-int main(int argc, char** argv) {
+int main(int, char**) {
   
   using namespace castor::tape::format;
   //-------------------------------------------------------------------------------  

@@ -309,7 +309,7 @@ void castor::job::diskcopy::MainThread::help(std::string programName) {
 //-----------------------------------------------------------------------------
 // Run
 //-----------------------------------------------------------------------------
-void castor::job::diskcopy::MainThread::run(void *param) {
+void castor::job::diskcopy::MainThread::run(void*) {
 
   // Download the resource file
   std::string content("");

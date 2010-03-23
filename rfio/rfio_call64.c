@@ -1425,6 +1425,7 @@ int srlseek64(s, request, infop, fd)
   td = (struct thData*)TlsGetValue(tls_i);
 #endif
 
+  (void)infop;
   p= rqstbuf + 2*WORDSIZE;
   unmarshall_HYPER(p,offset);
   unmarshall_LONG(p,how);
@@ -2335,6 +2336,7 @@ int   srclose64_v3(s, infop, fd)
   td = (struct thData*)TlsGetValue(tls_i);
 #endif
 
+  (void)infop;
   /* Issue statistics                                        */
   log(LOG_INFO,"rclose64_v3(%d, %d): %d read, %d readahead, %d write, %d flush, %d stat, %d lseek and %d lockf\n",
       s, fd, myinfo.readop, myinfo.aheadop, myinfo.writop, myinfo.flusop, myinfo.statop,
@@ -2798,6 +2800,7 @@ int srread64_v3(s, infop, fd)
 
   ctrl_sock = s;
 #endif   /* WIN32 */
+  (void)infop;
   /*
    * Receiving request,
    */
@@ -3410,6 +3413,7 @@ int srwrite64_v3(s, infop, fd)
   td = (struct thData*)TlsGetValue(tls_i);
 #endif
 
+  (void)infop;
   /*
    * Receiving request,
    */

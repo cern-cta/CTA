@@ -59,24 +59,24 @@ castor::io::StreamPtrCnv::~StreamPtrCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamPtrCnv::ObjType() {
+unsigned int castor::io::StreamPtrCnv::ObjType() {
   return OBJ_Ptr;
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamPtrCnv::objType() const {
+unsigned int castor::io::StreamPtrCnv::objType() const {
   return ObjType();
 }
 
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
-void castor::io::StreamPtrCnv::createRep(castor::IAddress* address,
-                                         castor::IObject* object,
-                                         bool endTransaction,
-                                         unsigned int type)
+void castor::io::StreamPtrCnv::createRep(castor::IAddress*,
+                                         castor::IObject*,
+                                         bool,
+                                         unsigned int)
   throw (castor::exception::Exception) {
   // This is normally never called, so just raise an exception
   castor::exception::Internal ex;
@@ -89,7 +89,7 @@ void castor::io::StreamPtrCnv::createRep(castor::IAddress* address,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamPtrCnv::createObj
-(castor::IAddress* address)
+(castor::IAddress*)
   throw (castor::exception::Exception) {
   castor::exception::Internal ex;
   ex.getMessage() << "castor::io::StreamPtrCnv::createObj "
@@ -102,7 +102,7 @@ castor::IObject* castor::io::StreamPtrCnv::createObj
 //------------------------------------------------------------------------------
 void castor::io::StreamPtrCnv::marshalObject(castor::IObject* object,
                                              castor::io::StreamAddress* address,
-                                             castor::ObjectSet& alreadyDone)
+                                             castor::ObjectSet&)
   throw (castor::exception::Exception) {
   if (0 != object) {
     // This is normally never called, so just raise an exception

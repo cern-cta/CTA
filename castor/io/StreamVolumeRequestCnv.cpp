@@ -64,14 +64,14 @@ castor::io::StreamVolumeRequestCnv::~StreamVolumeRequestCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamVolumeRequestCnv::ObjType() {
+unsigned int castor::io::StreamVolumeRequestCnv::ObjType() {
   return castor::tape::tapegateway::VolumeRequest::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamVolumeRequestCnv::objType() const {
+unsigned int castor::io::StreamVolumeRequestCnv::objType() const {
   return ObjType();
 }
 
@@ -80,8 +80,8 @@ const unsigned int castor::io::StreamVolumeRequestCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamVolumeRequestCnv::createRep(castor::IAddress* address,
                                                    castor::IObject* object,
-                                                   bool endTransaction,
-                                                   unsigned int type)
+                                                   bool,
+                                                   unsigned int)
   throw (castor::exception::Exception) {
   castor::tape::tapegateway::VolumeRequest* obj = 
     dynamic_cast<castor::tape::tapegateway::VolumeRequest*>(object);

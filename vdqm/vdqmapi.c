@@ -298,8 +298,8 @@ int DLL_DECL vdqm_SendVolReq(vdqmnw_t *nw,
     volreq.mode = mode;
     if ( unit != NULL ) strcpy(volreq.drive,unit);
     if ( server != NULL ) strcpy(volreq.server,server);
-    volreq.clientUID = (getenv("VDQM_EUID") != NULL) ? atoi(getenv("VDQM_EUID")) : geteuid();
-    volreq.clientGID = (getenv("VDQM_EGID") != NULL) ? atoi(getenv("VDQM_EGID")) : getegid();
+    volreq.clientUID = (getenv("VDQM_EUID") != NULL) ? atoi(getenv("VDQM_EUID")) : (int)geteuid();
+    volreq.clientGID = (getenv("VDQM_EGID") != NULL) ? atoi(getenv("VDQM_EGID")) : (int)getegid();
     pw = Cgetpwuid(volreq.clientUID);
     if ( pw == NULL ) {
         TRACE(1,"vdqm","vdqm_SendVolReq() Cgetpwuid() error: %s\n",
@@ -1140,9 +1140,9 @@ int DLL_DECL vdqm_CreateRequestForAggregator(vdqmnw_t *nw,
         strcpy(volreq.server,server);
     }
     volreq.clientUID = (getenv("VDQM_EUID") != NULL) ?
-      atoi(getenv("VDQM_EUID")) : geteuid();
+      atoi(getenv("VDQM_EUID")) : (int)geteuid();
     volreq.clientGID = (getenv("VDQM_EGID") != NULL) ?
-      atoi(getenv("VDQM_EGID")) : getegid();
+      atoi(getenv("VDQM_EGID")) : (int)getegid();
     pw = Cgetpwuid(volreq.clientUID);
     if ( pw == NULL ) {
         TRACE(1,"vdqm",

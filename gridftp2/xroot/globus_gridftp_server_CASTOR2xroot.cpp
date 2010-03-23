@@ -269,7 +269,7 @@ extern "C" {
    ************************************************************************/
   static void
   globus_l_gfs_CASTOR2xroot_command(globus_gfs_operation_t op,
-                                    globus_gfs_command_info_t *cmd_info,
+                                    globus_gfs_command_info_t*,
                                     void *user_arg) {
     globus_l_gfs_CASTOR2xroot_handle_t *CASTOR2xroot_handle;
     globus_result_t result;
@@ -376,7 +376,7 @@ extern "C" {
         else {
           bytes_written = XrdPosix_Write(CASTOR2xroot_handle->fd, buffer, nbytes);
           if(bytes_written < nbytes) {
-            if(bytes_written >= 0) errno = ENOSPC;
+            errno = ENOSPC;
             CASTOR2xroot_handle->cached_res =
               globus_l_gfs_make_error("write",errno);
             CASTOR2xroot_handle->done = GLOBUS_TRUE;
@@ -750,7 +750,7 @@ extern "C" {
   globus_l_gfs_net_write_cb(globus_gfs_operation_t op,
                             globus_result_t result,
                             globus_byte_t *buffer,
-                            globus_size_t nbytes,
+                            globus_size_t,
                             void * user_arg) {
     globus_l_gfs_CASTOR2xroot_handle_t *CASTOR2xroot_handle;
     const char *func = "globus_l_gfs_net_write_cb";
@@ -812,7 +812,8 @@ extern "C" {
     globus_l_gfs_CASTOR2xroot_deactivate,
     NULL,
     NULL,
-    &local_version
+    &local_version,
+    NULL
   };
 
   /// no need to change this

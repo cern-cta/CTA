@@ -32,6 +32,10 @@ void resetid(uid_t *u, gid_t *g, struct Cupv_srv_thread_info *thip) {
     *u = thip->Csec_uid;
     *g = thip->Csec_gid;
   }
+#else
+  (void)u;
+  (void)g;
+  (void)thip;
 #endif
 }
 
@@ -107,8 +111,7 @@ int check_server_perm(int uid, int gid, char *clienthost, struct Cupv_srv_thread
 
 /*	Cupv_srv_delete - Deletes a privilege entry */
 
-int Cupv_srv_delete(magic, req_data, clienthost, thip)
-     int magic;
+int Cupv_srv_delete(req_data, clienthost, thip)
      char *req_data;
      char *clienthost;
      struct Cupv_srv_thread_info *thip;
@@ -171,8 +174,7 @@ int Cupv_srv_delete(magic, req_data, clienthost, thip)
 
 /*	Cupv_srv_add - enter a new privilege entry */
 
-int Cupv_srv_add(magic, req_data, clienthost, thip)
-     int magic;
+int Cupv_srv_add(req_data, clienthost, thip)
      char *req_data;
      char *clienthost;
      struct Cupv_srv_thread_info *thip;
@@ -232,8 +234,7 @@ int Cupv_srv_add(magic, req_data, clienthost, thip)
 
 /*	Cupv_srv_add - enter a new privilege entry */
 
-int Cupv_srv_modify(magic, req_data, clienthost, thip)
-     int magic;
+int Cupv_srv_modify(req_data, clienthost, thip)
      char *req_data;
      char *clienthost;
      struct Cupv_srv_thread_info *thip;
@@ -342,8 +343,7 @@ int Cupv_srv_modify(magic, req_data, clienthost, thip)
 
 /*      Cupv_srv_list - list privileges */
 
-int Cupv_srv_list(magic, req_data, clienthost, thip, endlist, dblistptr)
-     int magic;
+int Cupv_srv_list(req_data, clienthost, thip, endlist, dblistptr)
      char *req_data;
      char *clienthost;
      struct Cupv_srv_thread_info *thip;
@@ -424,8 +424,7 @@ int Cupv_srv_list(magic, req_data, clienthost, thip, endlist, dblistptr)
 
 /*      Cupv_srv_check - Check privileges */
 
-int Cupv_srv_check(magic, req_data, clienthost, thip)
-     int magic;
+int Cupv_srv_check(req_data, clienthost, thip)
      char *req_data;
      char *clienthost;
      struct Cupv_srv_thread_info *thip;

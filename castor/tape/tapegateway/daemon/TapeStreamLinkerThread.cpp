@@ -58,7 +58,7 @@ castor::tape::tapegateway::TapeStreamLinkerThread::TapeStreamLinkerThread(){
 //------------------------------------------------------------------------------
 // runs the thread
 //------------------------------------------------------------------------------
-void castor::tape::tapegateway::TapeStreamLinkerThread::run(void* par)
+void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
 {
 
   std::list<castor::stager::Stream> streamsToResolve;

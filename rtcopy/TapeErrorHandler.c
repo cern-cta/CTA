@@ -1375,13 +1375,7 @@ void checkConfiguredPolicy()
   return;
 }
 
-int main(
-         argc,
-         argv
-         )
-     int argc;
-     char **argv;
-{
+int main() {
   struct Cstager_Segment_t **failedSegments = NULL, *segm, **segms;
   struct Cstager_CastorFile_t *castorFile = NULL;
   struct Cstager_Tape_t *tp;

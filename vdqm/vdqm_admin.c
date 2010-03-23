@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
                 exit(2);
             }
             if ( keyvalues[k] != NULL && argv[j+1] != NULL ) {
-                if ( strlen(argv[j+1]) > sizes[k] ) {
+              if ( (int)strlen(argv[j+1]) > sizes[k] ) {
                     fprintf(stderr,"'%s' is too long (length>%d) for the option '%s'\n",
                             argv[j+1],sizes[k],keyw[k]);
                     usage(cmds[i],keyw);

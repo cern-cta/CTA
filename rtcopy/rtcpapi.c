@@ -142,10 +142,12 @@ static int rtcpc_ResetKillInfo() {
 }
 
 static void local_log(int level, char *format, ...) {
+  (void)level;
+  (void)format;
   return;
 }
 
-static int rtcpc_FixPath(file_list_t *file, int fn_size, int mode) {
+static int rtcpc_FixPath(file_list_t *file, int fn_size) {
   rtcpFileRequest_t *filereq;
   char tmp_path[CA_MAXPATHLEN+1];
   char local_host[CA_MAXHOSTNAMELEN+1];
@@ -1613,8 +1615,7 @@ int rtcpc_sendReqList(
       filereq = &fl->filereq;
       rc = rtcpc_FixPath(
                          fl,
-                         sizeof(filereq->file_path),
-                         mode
+                         sizeof(filereq->file_path)
                          );
       UPPERCASE(filereq->fid);
       hdr->reqtype = RTCP_FILEERR_REQ;

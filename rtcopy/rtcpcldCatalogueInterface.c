@@ -931,70 +931,6 @@ void rtcpcld_cleanupFile(
   return;
 }
 
-static int validPosition(
-                         segment
-                         )
-     struct Cstager_Segment_t *segment;
-{
-  int fseq;
-  unsigned char blockid[4];
-
-  Cstager_Segment_fseq(segment,&fseq);
-  Cstager_Segment_blockId0(segment,(unsigned char *)&blockid[0]);
-  Cstager_Segment_blockId1(segment,(unsigned char *)&blockid[1]);
-  Cstager_Segment_blockId2(segment,(unsigned char *)&blockid[2]);
-  Cstager_Segment_blockId3(segment,(unsigned char *)&blockid[3]);
-
-  if ( (fseq <= 0) &&
-       (memcmp(blockid,nullblkid,sizeof(nullblkid)) == 0) ) {
-    return(0);
-  } else {
-    return(1);
-  }
-}
-
-static int validPath(
-                     segment
-                     )
-     struct Cstager_Segment_t *segment;
-{
-  char *path = NULL;
-
-  if ( (path == NULL) || (*path == '\0') || (strcmp(path,".") == 0) ) {
-    return(0);
-  } else {
-    return(1);
-  }
-}
-
-static int validSegment(
-                        segment
-                        )
-     struct Cstager_Segment_t *segment;
-{
-  if ( segment == NULL ) {
-    serrno = EINVAL;
-    return(-1);
-  }
-  if ( (validPosition(segment) == 1) &&
-       (validPath(segment) == 1) ) {
-    return(1);
-  } else {
-    return(0);
-  }
-}
-
-/*
- * Externalised version for rtcpcldapi.c
- */
-int rtcpcld_validSegment(
-                         segment
-                         )
-     struct Cstager_Segment_t *segment;
-{
-  return(validSegment(segment));
-}
-
 static int compareSegments(
                            arg1,
                            arg2
@@ -2014,7 +1950,7 @@ int rtcpcld_getTapeCopyNumber(
 
   Cstager_TapeCopy_copyNb(tapeCopy,&copyNb);
   if ( tapeCopyNb != NULL ) {
-    if ( VALID_COPYNB(copyNb) ) *tapeCopyNb = copyNb;
+    if ( copyNb < 10 ) *tapeCopyNb = copyNb;
     else *tapeCopyNb = 0;
   }
 
@@ -3130,7 +3066,7 @@ int rtcpcld_updcFileRecalled(
         if ( segmentArray != NULL ) free(segmentArray);
         serrno = save_serrno;
         return(-1);
-      } else if ( st.st_size != sz ) {
+      } else if ( st.st_size != (signed64)sz ) {
         (void)dlf_write(
                         (inChild == 0 ? mainUuid : childUuid),
                         RTCPCLD_LOG_MSG(RTCPCLD_MSG_WRONGSIZE),

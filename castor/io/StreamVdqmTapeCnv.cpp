@@ -64,14 +64,14 @@ castor::io::StreamVdqmTapeCnv::~StreamVdqmTapeCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamVdqmTapeCnv::ObjType() {
+unsigned int castor::io::StreamVdqmTapeCnv::ObjType() {
   return castor::vdqm::VdqmTape::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamVdqmTapeCnv::objType() const {
+unsigned int castor::io::StreamVdqmTapeCnv::objType() const {
   return ObjType();
 }
 
@@ -80,8 +80,8 @@ const unsigned int castor::io::StreamVdqmTapeCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamVdqmTapeCnv::createRep(castor::IAddress* address,
                                               castor::IObject* object,
-                                              bool endTransaction,
-                                              unsigned int type)
+                                              bool,
+                                              unsigned int)
   throw (castor::exception::Exception) {
   castor::vdqm::VdqmTape* obj = 
     dynamic_cast<castor::vdqm::VdqmTape*>(object);

@@ -39,16 +39,17 @@ class CppCppStreamCnvWriter : public CppCppBaseCnvWriter {
   void writeConstructors();
     
   /// writes createRep method's content
-  void writeCreateRepContent();
+  void writeCreateRepContent(QTextStream &stream, bool &addressUsed,
+                             bool &endTransUsed, bool &typeUsed);
     
   /// writes bulkCreateRep method's content
-  void writeBulkCreateRepContent() {};
+  void writeBulkCreateRepContent(QTextStream &, bool &, bool &) {};
     
   /// writes updateRep method's content, not used
-  void writeUpdateRepContent() {};
+  void writeUpdateRepContent(QTextStream &, bool &) {};
     
   /// writes deleteRep method's content, not used
-  void writeDeleteRepContent() {};
+  void writeDeleteRepContent(QTextStream &, bool &) {};
     
   /// writes createObj method's content
   void writeCreateObjContent();

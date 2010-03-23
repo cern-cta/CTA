@@ -100,12 +100,8 @@ int verbose;
 	return (0);
 }
 
-int smc_qlib (rmchost, fd, loader, robot_info, verbose)
-char *rmchost;
-int fd;
-char *loader;
+int smc_qlib (robot_info)
 struct robot_info *robot_info;
-int verbose;
 {
 	printf ("Vendor/Product/Revision = <%s>\n", robot_info->inquiry);
 	printf ("Transport Count = %d, Start = %d\n",
@@ -521,7 +517,7 @@ char **argv;
 			    verbose);
 			break;
 		case 'L':
-			c = smc_qlib (rmchost, fd, loader, &robot_info, verbose);
+			c = smc_qlib (&robot_info);
 			break;
 		case 'P':
 			c = smc_qport (rmchost, fd, loader, &robot_info, verbose);

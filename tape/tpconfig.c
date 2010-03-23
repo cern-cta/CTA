@@ -53,7 +53,7 @@ int main(argc, argv)
 int	argc;
 char	**argv;
 {
-	int n;
+	unsigned int n;
 	int reason;
 	int status;
 

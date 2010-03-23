@@ -88,7 +88,7 @@ struct Cpool_t {
 };
 
 #ifndef _WIN32
-static struct Cpool_t Cpool = { -1, 0, 0, NULL, -1, NULL, NULL, NULL, 0, NULL, NULL, NULL};
+static struct Cpool_t Cpool = { -1, 0, 0, NULL, -1, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL};
 #else
 static struct Cpool_t Cpool = { -1, 0, 0, NULL, -1, NULL, 0, NULL, NULL, NULL};
 #endif
@@ -1326,6 +1326,7 @@ size_t _Cpool_readn_timeout(
 void _Cpool_alarm(signo)
 	int signo;
 {
+  (void)signo;
 #ifdef CPOOL_DEBUG
 	/* Better not to do any mutex/cond etc... in a signal handler... */
 	if (Cpool_debug != 0)

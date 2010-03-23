@@ -64,14 +64,14 @@ castor::io::StreamRepackCommandCodeCnv::~StreamRepackCommandCodeCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamRepackCommandCodeCnv::ObjType() {
+unsigned int castor::io::StreamRepackCommandCodeCnv::ObjType() {
   return castor::repack::RepackCommandCode::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamRepackCommandCodeCnv::objType() const {
+unsigned int castor::io::StreamRepackCommandCodeCnv::objType() const {
   return ObjType();
 }
 
@@ -80,8 +80,8 @@ const unsigned int castor::io::StreamRepackCommandCodeCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamRepackCommandCodeCnv::createRep(castor::IAddress* address,
                                                        castor::IObject* object,
-                                                       bool endTransaction,
-                                                       unsigned int type)
+                                                       bool,
+                                                       unsigned int)
   throw (castor::exception::Exception) {
   castor::repack::RepackCommandCode* obj = 
     dynamic_cast<castor::repack::RepackCommandCode*>(object);

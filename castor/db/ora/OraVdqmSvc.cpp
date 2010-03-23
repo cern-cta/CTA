@@ -351,14 +351,14 @@ castor::db::ora::OraVdqmSvc::~OraVdqmSvc() throw() {
 // -----------------------------------------------------------------------
 // id
 // -----------------------------------------------------------------------
-const unsigned int castor::db::ora::OraVdqmSvc::id() const {
+unsigned int castor::db::ora::OraVdqmSvc::id() const {
   return ID();
 }
 
 // -----------------------------------------------------------------------
 // ID
 // -----------------------------------------------------------------------
-const unsigned int castor::db::ora::OraVdqmSvc::ID() {
+unsigned int castor::db::ora::OraVdqmSvc::ID() {
   return castor::SVC_ORAVDQMSVC;
 }
 

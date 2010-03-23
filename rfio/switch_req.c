@@ -40,6 +40,7 @@ int DLL_DECL switch_open(access, lun, filename, filen, lrecl,append,trunc,mod)
      LONG *trunc  ;
      int  mod  ;
 {
+  (void)filen;
   int status;
   switch ((int)*access) {
   case FFFACC_S:

@@ -64,14 +64,14 @@ castor::io::StreamMessageAckCnv::~StreamMessageAckCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamMessageAckCnv::ObjType() {
+unsigned int castor::io::StreamMessageAckCnv::ObjType() {
   return castor::MessageAck::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamMessageAckCnv::objType() const {
+unsigned int castor::io::StreamMessageAckCnv::objType() const {
   return ObjType();
 }
 
@@ -80,8 +80,8 @@ const unsigned int castor::io::StreamMessageAckCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamMessageAckCnv::createRep(castor::IAddress* address,
                                                 castor::IObject* object,
-                                                bool endTransaction,
-                                                unsigned int type)
+                                                bool,
+                                                unsigned int)
   throw (castor::exception::Exception) {
   castor::MessageAck* obj = 
     dynamic_cast<castor::MessageAck*>(object);

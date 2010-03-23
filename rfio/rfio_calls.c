@@ -1006,6 +1006,7 @@ int srreadlink(s,host,rt)
   int rcode      ;
   int uid,gid    ;                  /* Requestor's uid & gid          */
 
+  (void)rt;
   p= rqstbuf + 2*WORDSIZE;
   unmarshall_LONG(p, len);
   lpath[0] = '\0';
@@ -1973,6 +1974,7 @@ int     sraccess(s, host, rt)
                                  "CHOWNTRUST", "MKDIRTRUST", "RMDIRTRUST", "RENAMETRUST",
                                  NULL, NULL, NULL, NULL, NULL };
 
+  (void)rt;
   p= rqstbuf + 2*WORDSIZE;
   unmarshall_LONG(p,len);
   if ( (status = srchkreqsize(s,p,len)) == -1 ) {
@@ -3217,6 +3219,7 @@ int     srfstat(s, infop, fd)
   char *p;
   struct stat  statbuf;
 
+  (void)infop;
 #if defined(_WIN32)
   struct thData *td;
   td = (struct thData*)TlsGetValue(tls_i);
@@ -3301,6 +3304,7 @@ int srlseek(s, infop, fd)
   td = (struct thData*)TlsGetValue(tls_i);
 #endif
 
+  (void)infop;
   p= rqstbuf + 2*WORDSIZE;
   unmarshall_LONG(p,offset);
   unmarshall_LONG(p,how);
@@ -3438,7 +3442,7 @@ int srpreseek(s, infop, fd)
   for(first= 1;;first= 0) {
     struct timeval timeout;
     fd_set fds;
-    int nbfree;
+    unsigned int nbfree;
     int     nb;
 
     /*
@@ -3969,6 +3973,7 @@ static int chksuser(uid,gid,hostname,ptrcode,permstr)
   int found = 0;
   char *cp , *p;
 
+  (void)gid;
   if ( uid < 100  ) {
     if ( permstr != NULL && hostname != NULL && (p=getconfent("RFIOD", permstr, 1)) != NULL ) {
       strcpy(ptr,p);
@@ -4737,6 +4742,7 @@ int   srclose_v3(s, infop, fd)
   td = (struct thData*)TlsGetValue(tls_i);
 #endif
 
+  (void)infop;
   log(LOG_INFO,"%d read, %d readahead, %d write, %d flush, %d stat, %d lseek and %d preseek\n",
       myinfo.readop, myinfo.aheadop, myinfo.writop, myinfo.flusop, myinfo.statop,
       myinfo.seekop, myinfo.presop);
@@ -5085,6 +5091,7 @@ int srread_v3(s, infop, fd)
 
   ctrl_sock = s;
 #endif
+  (void)infop;
   /*
    * Receiving request,
    */
@@ -5468,6 +5475,7 @@ int srwrite_v3(s, infop, fd)
   td = (struct thData*)TlsGetValue(tls_i);
 #endif
 
+  (void)infop;
   /*
    * Receiving request,
    */
@@ -6291,6 +6299,7 @@ int srlseek_v3(s,infop,fd)
   td = (struct thData*)TlsGetValue(tls_i);
 #endif
 
+  (void)infop;
   p = rqstbuf + 2*WORDSIZE;
   unmarshall_LONG(p,offset);
   unmarshall_LONG(p,how);

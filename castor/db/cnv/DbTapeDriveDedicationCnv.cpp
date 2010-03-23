@@ -159,21 +159,21 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::reset() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbTapeDriveDedicationCnv::ObjType() {
+unsigned int castor::db::cnv::DbTapeDriveDedicationCnv::ObjType() {
   return castor::vdqm::TapeDriveDedication::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbTapeDriveDedicationCnv::objType() const {
+unsigned int castor::db::cnv::DbTapeDriveDedicationCnv::objType() const {
   return ObjType();
 }
 
 //------------------------------------------------------------------------------
 // fillRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbTapeDriveDedicationCnv::fillRep(castor::IAddress* address,
+void castor::db::cnv::DbTapeDriveDedicationCnv::fillRep(castor::IAddress*,
                                                         castor::IObject* object,
                                                         unsigned int type,
                                                         bool endTransaction)
@@ -238,7 +238,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::fillRepTapeDrive(castor::vdqm::T
 //------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbTapeDriveDedicationCnv::fillObj(castor::IAddress* address,
+void castor::db::cnv::DbTapeDriveDedicationCnv::fillObj(castor::IAddress*,
                                                         castor::IObject* object,
                                                         unsigned int type,
                                                         bool endTransaction)
@@ -304,7 +304,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::fillObjTapeDrive(castor::vdqm::T
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbTapeDriveDedicationCnv::createRep(castor::IAddress* address,
+void castor::db::cnv::DbTapeDriveDedicationCnv::createRep(castor::IAddress*,
                                                           castor::IObject* object,
                                                           bool endTransaction,
                                                           unsigned int type)
@@ -361,7 +361,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::createRep(castor::IAddress* addr
                     << "  endTime : " << obj->endTime() << std::endl
                     << "  reason : " << obj->reason() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  tapeDrive : " << obj->tapeDrive() << std::endl;
+                    << "  tapeDrive : " << obj->tapeDrive()->id() << std::endl;
     throw ex;
   }
 }
@@ -369,7 +369,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::createRep(castor::IAddress* addr
 //------------------------------------------------------------------------------
 // bulkCreateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbTapeDriveDedicationCnv::bulkCreateRep(castor::IAddress* address,
+void castor::db::cnv::DbTapeDriveDedicationCnv::bulkCreateRep(castor::IAddress*,
                                                               std::vector<castor::IObject*> &objects,
                                                               bool endTransaction,
                                                               unsigned int type)
@@ -648,7 +648,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::bulkCreateRep(castor::IAddress* 
 //------------------------------------------------------------------------------
 // updateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbTapeDriveDedicationCnv::updateRep(castor::IAddress* address,
+void castor::db::cnv::DbTapeDriveDedicationCnv::updateRep(castor::IAddress*,
                                                           castor::IObject* object,
                                                           bool endTransaction)
   throw (castor::exception::Exception) {
@@ -693,7 +693,7 @@ void castor::db::cnv::DbTapeDriveDedicationCnv::updateRep(castor::IAddress* addr
 //------------------------------------------------------------------------------
 // deleteRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbTapeDriveDedicationCnv::deleteRep(castor::IAddress* address,
+void castor::db::cnv::DbTapeDriveDedicationCnv::deleteRep(castor::IAddress*,
                                                           castor::IObject* object,
                                                           bool endTransaction)
   throw (castor::exception::Exception) {

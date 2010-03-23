@@ -84,7 +84,7 @@ castor::monitoring::rmmaster::DatabaseActuatorThread::~DatabaseActuatorThread()
 //-----------------------------------------------------------------------------
 // Run
 //-----------------------------------------------------------------------------
-void castor::monitoring::rmmaster::DatabaseActuatorThread::run(void* par)
+void castor::monitoring::rmmaster::DatabaseActuatorThread::run(void*)
   throw() {
 
   // "DatabaseActuator thread running"

@@ -70,7 +70,7 @@ namespace castor {
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-  void RepackMonitor::run(void *param) throw() {
+  void RepackMonitor::run(void*) throw() {
     
     std::vector<RepackSubRequest*> tapelist;
     std::vector<RepackSubRequest*>::iterator tape;

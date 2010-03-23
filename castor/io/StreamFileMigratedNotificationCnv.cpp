@@ -65,14 +65,14 @@ castor::io::StreamFileMigratedNotificationCnv::~StreamFileMigratedNotificationCn
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamFileMigratedNotificationCnv::ObjType() {
+unsigned int castor::io::StreamFileMigratedNotificationCnv::ObjType() {
   return castor::tape::tapegateway::FileMigratedNotification::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamFileMigratedNotificationCnv::objType() const {
+unsigned int castor::io::StreamFileMigratedNotificationCnv::objType() const {
   return ObjType();
 }
 
@@ -81,8 +81,8 @@ const unsigned int castor::io::StreamFileMigratedNotificationCnv::objType() cons
 //------------------------------------------------------------------------------
 void castor::io::StreamFileMigratedNotificationCnv::createRep(castor::IAddress* address,
                                                               castor::IObject* object,
-                                                              bool endTransaction,
-                                                              unsigned int type)
+                                                              bool,
+                                                              unsigned int)
   throw (castor::exception::Exception) {
   castor::tape::tapegateway::FileMigratedNotification* obj = 
     dynamic_cast<castor::tape::tapegateway::FileMigratedNotification*>(object);

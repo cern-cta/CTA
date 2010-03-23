@@ -179,7 +179,7 @@ int rfio_read_v2(s, ptr, size)
      * For unbuffered read ahead I/O, the request
      * size has to be always the same one.
      */
-    if ( rfilefdt[s_index]->ahead && rfilefdt[s_index]->_iobuf.dsize && rfilefdt[s_index]->_iobuf.dsize != size ) {
+    if ( rfilefdt[s_index]->ahead && rfilefdt[s_index]->_iobuf.dsize && (int)rfilefdt[s_index]->_iobuf.dsize != size ) {
       TRACE(2,"rfio","rfio_read: request size %d is imcompatible with the previous one %d",
             size,rfilefdt[s_index]->_iobuf.dsize) ;
       errno= EINVAL ;
@@ -272,7 +272,7 @@ int rfio_read_v2(s, ptr, size)
       END_TRACE() ;
       return -1 ;
     }
-    if ( status != rfilefdt[s_index]->_iobuf.dsize ) {
+    if ( status != (int)rfilefdt[s_index]->_iobuf.dsize ) {
       TRACE(2,"rfio","rfio_read: dsize=%d, set eof",rfilefdt[s_index]->_iobuf.dsize);
       rfilefdt[s_index]->eof= 1 ;
       rfilefdt[s_index]->readissued= 0 ;

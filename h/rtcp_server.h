@@ -214,7 +214,7 @@ int rtcpd_MainCntl  _PROTO((SOCKET *));
 int rtcpd_CheckClient _PROTO((int, int, char *, char *, int *));
 int rtcpd_StartMonitor _PROTO((int));
 int rtcpd_InitDiskIO  _PROTO((int *));
-int rtcpd_CleanUpDiskIO  _PROTO((int, int));
+int rtcpd_CleanUpDiskIO  _PROTO((int));
 int rtcpd_StartTapeIO  _PROTO((rtcpClientInfo_t *, tape_list_t *));
 int rtcpd_StartDiskIO  _PROTO((rtcpClientInfo_t *, tape_list_t *, file_list_t *, int, int));
 int rtcpd_CheckProcError  _PROTO((void));

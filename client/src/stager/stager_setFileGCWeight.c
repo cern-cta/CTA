@@ -104,7 +104,7 @@ int cmd_parse(int argc,
   }
 
   /* Creating the structure for files */
-  if (nbreqs > 0) {
+  if (*nbreqs > 0) {
     create_filereq(reqs, *nbreqs);
   }
 

@@ -69,14 +69,14 @@ castor::io::StreamSubRequestCnv::~StreamSubRequestCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamSubRequestCnv::ObjType() {
+unsigned int castor::io::StreamSubRequestCnv::ObjType() {
   return castor::stager::SubRequest::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamSubRequestCnv::objType() const {
+unsigned int castor::io::StreamSubRequestCnv::objType() const {
   return ObjType();
 }
 
@@ -85,8 +85,8 @@ const unsigned int castor::io::StreamSubRequestCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamSubRequestCnv::createRep(castor::IAddress* address,
                                                 castor::IObject* object,
-                                                bool endTransaction,
-                                                unsigned int type)
+                                                bool,
+                                                unsigned int)
   throw (castor::exception::Exception) {
   castor::stager::SubRequest* obj = 
     dynamic_cast<castor::stager::SubRequest*>(object);

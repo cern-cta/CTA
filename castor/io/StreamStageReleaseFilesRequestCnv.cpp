@@ -69,14 +69,14 @@ castor::io::StreamStageReleaseFilesRequestCnv::~StreamStageReleaseFilesRequestCn
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamStageReleaseFilesRequestCnv::ObjType() {
+unsigned int castor::io::StreamStageReleaseFilesRequestCnv::ObjType() {
   return castor::stager::StageReleaseFilesRequest::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamStageReleaseFilesRequestCnv::objType() const {
+unsigned int castor::io::StreamStageReleaseFilesRequestCnv::objType() const {
   return ObjType();
 }
 
@@ -85,8 +85,8 @@ const unsigned int castor::io::StreamStageReleaseFilesRequestCnv::objType() cons
 //------------------------------------------------------------------------------
 void castor::io::StreamStageReleaseFilesRequestCnv::createRep(castor::IAddress* address,
                                                               castor::IObject* object,
-                                                              bool endTransaction,
-                                                              unsigned int type)
+                                                              bool,
+                                                              unsigned int)
   throw (castor::exception::Exception) {
   castor::stager::StageReleaseFilesRequest* obj = 
     dynamic_cast<castor::stager::StageReleaseFilesRequest*>(object);

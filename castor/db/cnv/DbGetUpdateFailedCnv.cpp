@@ -174,21 +174,21 @@ void castor::db::cnv::DbGetUpdateFailedCnv::reset() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbGetUpdateFailedCnv::ObjType() {
+unsigned int castor::db::cnv::DbGetUpdateFailedCnv::ObjType() {
   return castor::stager::GetUpdateFailed::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbGetUpdateFailedCnv::objType() const {
+unsigned int castor::db::cnv::DbGetUpdateFailedCnv::objType() const {
   return ObjType();
 }
 
 //------------------------------------------------------------------------------
 // fillRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbGetUpdateFailedCnv::fillRep(castor::IAddress* address,
+void castor::db::cnv::DbGetUpdateFailedCnv::fillRep(castor::IAddress*,
                                                     castor::IObject* object,
                                                     unsigned int type,
                                                     bool endTransaction)
@@ -271,7 +271,7 @@ void castor::db::cnv::DbGetUpdateFailedCnv::fillRepIClient(castor::stager::GetUp
 //------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbGetUpdateFailedCnv::fillObj(castor::IAddress* address,
+void castor::db::cnv::DbGetUpdateFailedCnv::fillObj(castor::IAddress*,
                                                     castor::IObject* object,
                                                     unsigned int type,
                                                     bool endTransaction)
@@ -376,7 +376,7 @@ void castor::db::cnv::DbGetUpdateFailedCnv::fillObjIClient(castor::stager::GetUp
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbGetUpdateFailedCnv::createRep(castor::IAddress* address,
+void castor::db::cnv::DbGetUpdateFailedCnv::createRep(castor::IAddress*,
                                                       castor::IObject* object,
                                                       bool endTransaction,
                                                       unsigned int type)
@@ -463,7 +463,7 @@ void castor::db::cnv::DbGetUpdateFailedCnv::createRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // bulkCreateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbGetUpdateFailedCnv::bulkCreateRep(castor::IAddress* address,
+void castor::db::cnv::DbGetUpdateFailedCnv::bulkCreateRep(castor::IAddress*,
                                                           std::vector<castor::IObject*> &objects,
                                                           bool endTransaction,
                                                           unsigned int type)
@@ -919,7 +919,7 @@ void castor::db::cnv::DbGetUpdateFailedCnv::bulkCreateRep(castor::IAddress* addr
 //------------------------------------------------------------------------------
 // updateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbGetUpdateFailedCnv::updateRep(castor::IAddress* address,
+void castor::db::cnv::DbGetUpdateFailedCnv::updateRep(castor::IAddress*,
                                                       castor::IObject* object,
                                                       bool endTransaction)
   throw (castor::exception::Exception) {
@@ -970,7 +970,7 @@ void castor::db::cnv::DbGetUpdateFailedCnv::updateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // deleteRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbGetUpdateFailedCnv::deleteRep(castor::IAddress* address,
+void castor::db::cnv::DbGetUpdateFailedCnv::deleteRep(castor::IAddress*,
                                                       castor::IObject* object,
                                                       bool endTransaction)
   throw (castor::exception::Exception) {

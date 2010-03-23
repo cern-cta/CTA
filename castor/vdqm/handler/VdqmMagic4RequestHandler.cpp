@@ -35,7 +35,7 @@
 
 
 void castor::vdqm::handler::VdqmMagic4RequestHandler::handleAggregatorVolReq(
-  castor::io::ServerSocket &socket, const Cuuid_t &cuuid,
+  castor::io::ServerSocket&, const Cuuid_t &cuuid,
   const vdqmHdr_t &header, vdqmVolReq_t &msg)
   throw (castor::exception::Exception) {
 

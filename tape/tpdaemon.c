@@ -76,16 +76,17 @@ struct sigaction sa;
 struct tprrt tpdrrt;	/* global resource reservation table */
 struct tptab *tptabp;	/* pointer to tape drive table */
 
-#define RESETID(UID,GID) resetid(&UID, &GID);
- 
-void resetid(uid_t *u, gid_t *g) {
 #ifdef CSEC
+#define RESETID(UID,GID) resetid(&UID, &GID);
+void resetid(uid_t *u, gid_t *g) {
   if (Csec_service_type < 0) {
     *u = Csec_uid;
     *g = Csec_gid;
   }
-#endif
 }
+#else
+#define RESETID(UID,GID)
+#endif 
 
 time_t time();
 void wait4child();
@@ -119,9 +120,7 @@ static int tpdrvidle( struct tptab* );
 static int vdqmdrvstate( struct tptab* );
 #endif
 
-int tpd_main(main_args)
-struct main_args *main_args;
-{
+int tpd_main() {
 	int c, l;
 	char *clienthost;
 	struct sockaddr_in from;
@@ -482,7 +481,7 @@ char **argv;
 
 	if ((maxfds = Cinitdaemon ("taped", wait4child)) < 0)
 		exit (1);
-	exit (tpd_main (&main_args));
+	exit (tpd_main());
 }
 #else
 main()

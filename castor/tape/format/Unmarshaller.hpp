@@ -119,7 +119,7 @@ bool Unmarshaller::my_atoi(const char *str, const size_t &length, T &num){
   t=t*2+(t/2+t%2);// compute the max # of decimals need for the conversion
   if(length>t) return false;
   for (size_t i=0; i<length; i++){
-    t=(uint32_t)(*str-'0');// convert the character in a digit 
+    int t = *str-'0';// convert the character in a digit 
     if((t < 0) || (t>9)){
       num = 0;
       return false;
@@ -144,7 +144,7 @@ template<typename T>
 bool Unmarshaller::my_memcmp(const char *offset, const size_t &length, T &masterValue){
 
   T str;
-  size_t size = length-1;
+  int size = length-1;
 
   if(length >= sizeof(masterValue)) return false;
   while((*(offset+size)==' ')&&(size>=0)){    // Count how many blank spaces there are 
@@ -166,7 +166,7 @@ bool Unmarshaller::my_memcmp(const char *offset, const size_t &length, T &master
 template<typename T> 
 bool Unmarshaller::my_memcpy(const char *offset, const size_t &length, T &returnValue){
 
-  size_t size = length-1;
+  int size = length-1;
 
   if(length >= sizeof(returnValue)) return false;
   while((*(offset+size)==' ')&&(size>=0)){    // Count how many blank spaces there are 

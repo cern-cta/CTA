@@ -174,21 +174,21 @@ void castor::db::cnv::DbGetUpdateStartRequestCnv::reset() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbGetUpdateStartRequestCnv::ObjType() {
+unsigned int castor::db::cnv::DbGetUpdateStartRequestCnv::ObjType() {
   return castor::stager::GetUpdateStartRequest::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbGetUpdateStartRequestCnv::objType() const {
+unsigned int castor::db::cnv::DbGetUpdateStartRequestCnv::objType() const {
   return ObjType();
 }
 
 //------------------------------------------------------------------------------
 // fillRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbGetUpdateStartRequestCnv::fillRep(castor::IAddress* address,
+void castor::db::cnv::DbGetUpdateStartRequestCnv::fillRep(castor::IAddress*,
                                                           castor::IObject* object,
                                                           unsigned int type,
                                                           bool endTransaction)
@@ -271,7 +271,7 @@ void castor::db::cnv::DbGetUpdateStartRequestCnv::fillRepIClient(castor::stager:
 //------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbGetUpdateStartRequestCnv::fillObj(castor::IAddress* address,
+void castor::db::cnv::DbGetUpdateStartRequestCnv::fillObj(castor::IAddress*,
                                                           castor::IObject* object,
                                                           unsigned int type,
                                                           bool endTransaction)
@@ -376,7 +376,7 @@ void castor::db::cnv::DbGetUpdateStartRequestCnv::fillObjIClient(castor::stager:
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbGetUpdateStartRequestCnv::createRep(castor::IAddress* address,
+void castor::db::cnv::DbGetUpdateStartRequestCnv::createRep(castor::IAddress*,
                                                             castor::IObject* object,
                                                             bool endTransaction,
                                                             unsigned int type)
@@ -467,7 +467,7 @@ void castor::db::cnv::DbGetUpdateStartRequestCnv::createRep(castor::IAddress* ad
 //------------------------------------------------------------------------------
 // bulkCreateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbGetUpdateStartRequestCnv::bulkCreateRep(castor::IAddress* address,
+void castor::db::cnv::DbGetUpdateStartRequestCnv::bulkCreateRep(castor::IAddress*,
                                                                 std::vector<castor::IObject*> &objects,
                                                                 bool endTransaction,
                                                                 unsigned int type)
@@ -971,7 +971,7 @@ void castor::db::cnv::DbGetUpdateStartRequestCnv::bulkCreateRep(castor::IAddress
 //------------------------------------------------------------------------------
 // updateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbGetUpdateStartRequestCnv::updateRep(castor::IAddress* address,
+void castor::db::cnv::DbGetUpdateStartRequestCnv::updateRep(castor::IAddress*,
                                                             castor::IObject* object,
                                                             bool endTransaction)
   throw (castor::exception::Exception) {
@@ -1024,7 +1024,7 @@ void castor::db::cnv::DbGetUpdateStartRequestCnv::updateRep(castor::IAddress* ad
 //------------------------------------------------------------------------------
 // deleteRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbGetUpdateStartRequestCnv::deleteRep(castor::IAddress* address,
+void castor::db::cnv::DbGetUpdateStartRequestCnv::deleteRep(castor::IAddress*,
                                                             castor::IObject* object,
                                                             bool endTransaction)
   throw (castor::exception::Exception) {

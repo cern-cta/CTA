@@ -59,7 +59,7 @@ castor::gc::DeletionThread::DeletionThread(int startDelay):
 //-----------------------------------------------------------------------------
 // Run
 //-----------------------------------------------------------------------------
-void castor::gc::DeletionThread::run(void *param) {
+void castor::gc::DeletionThread::run(void*) {
 
   // "Starting deletion thread"
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 1);

@@ -724,6 +724,8 @@ int rtcp_Connect(
     
     Csec_clearContext(&sec_ctx);
   }
+#else
+  (void)whereto;
 #endif
 
   return(0);

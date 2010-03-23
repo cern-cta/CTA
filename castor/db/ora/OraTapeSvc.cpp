@@ -191,14 +191,14 @@ castor::db::ora::OraTapeSvc::~OraTapeSvc() throw() {
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-const unsigned int castor::db::ora::OraTapeSvc::id() const {
+unsigned int castor::db::ora::OraTapeSvc::id() const {
   return ID();
 }
 
 //------------------------------------------------------------------------------
 // ID
 //------------------------------------------------------------------------------
-const unsigned int castor::db::ora::OraTapeSvc::ID() {
+unsigned int castor::db::ora::OraTapeSvc::ID() {
   return castor::SVC_ORATAPESVC;
 }
 

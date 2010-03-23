@@ -60,29 +60,29 @@ namespace castor {
      * gets the object type, that is the type of
      * object the underlying converter can convert
      */
-    const unsigned int objType() const;
+    unsigned int objType() const;
 
     /**
      * gets the representation type, that is the type of
      * the representation the underlying converter can deal with
      */
-    const unsigned int repType() const;
+    unsigned int repType() const;
 
   };
 
   template<class Converter> inline IConverter*
   CnvFactory<Converter>::instantiate(castor::ICnvSvc* cnvsvc,
-                                     const std::string name) const {
+                                     const std::string) const {
     return new Converter(cnvsvc);
   }
 
   template<class Converter>
-  inline const unsigned int CnvFactory<Converter>::objType() const {
+  inline unsigned int CnvFactory<Converter>::objType() const {
     return Converter::ObjType();
   }
 
   template<class Converter>
-  inline const unsigned int CnvFactory<Converter>::repType() const {
+  inline unsigned int CnvFactory<Converter>::repType() const {
     return Converter::RepType();
   }
 

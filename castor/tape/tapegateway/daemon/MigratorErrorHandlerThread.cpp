@@ -59,7 +59,7 @@ castor::tape::tapegateway::MigratorErrorHandlerThread::MigratorErrorHandlerThrea
 //------------------------------------------------------------------------------
 // runs the thread
 //------------------------------------------------------------------------------
-void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void* par)
+void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void*)
 {
   // get failed migration tapecopies
 

@@ -583,7 +583,7 @@ void castor::tape::legacymsg::unmarshal(const char * &src,
 // marshal
 //-----------------------------------------------------------------------------
 size_t castor::tape::legacymsg::marshal(char *dst,
-  const size_t dstLen, const RtcpNoMoreRequestsMsgBody &src)
+  const size_t dstLen, const RtcpNoMoreRequestsMsgBody&)
   throw(castor::exception::Exception) {
 
   // Calculate the length of the message body
@@ -628,7 +628,7 @@ size_t castor::tape::legacymsg::marshal(char *dst,
 // marshal
 //-----------------------------------------------------------------------------
 size_t castor::tape::legacymsg::marshal(char *dst,
-  const size_t dstLen, const RtcpAbortMsgBody &src)
+  const size_t dstLen, const RtcpAbortMsgBody&)
   throw(castor::exception::Exception) {
 
   // Calculate the length of the message body

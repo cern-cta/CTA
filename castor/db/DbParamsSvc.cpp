@@ -55,13 +55,13 @@ castor::db::DbParamsSvc::DbParamsSvc(const std::string name) throw() :
 // -----------------------------------------------------------------------
 // id
 // -----------------------------------------------------------------------
-const unsigned int castor::db::DbParamsSvc::id() const {
+unsigned int castor::db::DbParamsSvc::id() const {
   return ID();
 }
 
 // -----------------------------------------------------------------------
 // ID
 // -----------------------------------------------------------------------
-const unsigned int castor::db::DbParamsSvc::ID() {
+unsigned int castor::db::DbParamsSvc::ID() {
   return castor::SVC_DBPARAMSSVC;
 }

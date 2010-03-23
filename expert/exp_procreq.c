@@ -183,9 +183,8 @@ int exp_get_from_conf (req_type, wdir, args)
 
 /*	exp_srv_execute - process request */
 
-int exp_srv_execute(req_type, magic, req_data, clienthost, s)
+int exp_srv_execute(req_type, req_data, clienthost, s)
      int req_type;
-     int magic;
      char *req_data;
      char *clienthost;
      int s;

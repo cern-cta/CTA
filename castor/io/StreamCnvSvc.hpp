@@ -56,22 +56,22 @@ namespace castor {
       virtual ~StreamCnvSvc() throw();
 
       /** Get the service id */
-      virtual inline const unsigned int id() const;
+      virtual inline unsigned int id() const;
 
       /** Get the service id */
-      static const unsigned int ID();
+      static unsigned int ID();
 
       /**
        * gets the representation type, that is the type of
        * the representation this conversion service can deal with
        */
-      virtual const unsigned int repType() const;
+      virtual unsigned int repType() const;
 
       /**
        * gets the representation type, that is the type of
        * the representation this conversion service can deal with
        */
-      static const unsigned int REPTYPE();
+      static unsigned int REPTYPE();
 
       /**
        * Creates foreign representation from a C++ Object

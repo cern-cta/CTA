@@ -60,7 +60,7 @@ castor::io::AuthServerSocket::AuthServerSocket(const unsigned short port,
 //------------------------------------------------------------------------------
 
 castor::io::AuthServerSocket::AuthServerSocket(castor::io::ServerSocket* cs,
-                                               const Csec_context_t context)
+                                               const Csec_context_t)
   throw (castor::exception::Exception) :
   ServerSocket(cs->socket()) {
   cs->resetSocket();

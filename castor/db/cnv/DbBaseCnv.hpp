@@ -67,13 +67,13 @@ namespace castor {
          * gets the representation type, that is the type of
          * the representation this converter can deal with
          */
-        static const unsigned int RepType();
+        static unsigned int RepType();
 
         /**
          * gets the representation type, that is the type of
          * the representation this converter can deal with
          */
-        virtual const unsigned int repType() const;
+        virtual unsigned int repType() const;
 
       };
 

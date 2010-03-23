@@ -726,7 +726,7 @@ int cc;		/* error returned by the mount/dismount routine */
 	  {STATUS_INVALID_MEDIA_TYPE, RBT_NORETRY, RBT_NORETRY},
 	  {STATUS_INCOMPATIBLE_MEDIA_TYPE, RBT_NORETRY, RBT_NORETRY},
 	};
-	int i;
+	unsigned int i;
         char func[16];
 
         static int ctr = 0;

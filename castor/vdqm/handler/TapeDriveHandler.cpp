@@ -585,7 +585,7 @@ void castor::vdqm::handler::TapeDriveHandler::printStatus(
 // sendTapeDriveQueue
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeDriveHandler::sendTapeDriveQueue(
-  const vdqmVolReq_t *const volumeRequest,
+  const vdqmVolReq_t *const,
   castor::vdqm::OldProtocolInterpreter *const oldProtInterpreter) 
   throw (castor::exception::Exception) {
 

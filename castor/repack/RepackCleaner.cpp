@@ -53,7 +53,7 @@ RepackCleaner::~RepackCleaner() throw() {
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------	
-void RepackCleaner::run(void* param) {
+void RepackCleaner::run(void*) {
   std::vector<RepackSubRequest*> tapes;
   std::vector<RepackSubRequest*>::iterator tape; 
 

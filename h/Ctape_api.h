@@ -134,7 +134,6 @@ EXTERN_C int DLL_DECL inquiry80     _PROTO((int, char*, unsigned char*));
 
 /* tape/mircheck.c     */
 EXTERN_C int DLL_DECL is_mir_invalid_load _PROTO((int, char *, char *));
-EXTERN_C int DLL_DECL post_mount_check _PROTO((int, char*, char*));
 
 /* tape/locate.c       */
 EXTERN_C int DLL_DECL locate        _PROTO((int, char*, unsigned char*));

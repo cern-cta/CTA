@@ -112,6 +112,8 @@ int (CSEC_METHOD_NAME(Csec_activate, MECH))(FP,ctx)
      Csec_context_t *ctx;
 {
 
+  (void)FP;
+  (void)ctx;
 #ifdef GSI
   char *func = "Csec_activate_GSI";
   SSL_CTX *ssl_context;
@@ -145,6 +147,8 @@ int (CSEC_METHOD_NAME(Csec_deactivate, MECH))(FP,ctx)
      Csec_context_t *ctx;
 {
 
+  (void)FP;
+  (void)ctx;
 #ifdef GSI
   char *func = "Csec_deactivate_GSI";
   Csec_trace(func, "Calling globus_module_deactivate()s\n");
@@ -166,6 +170,8 @@ int (CSEC_METHOD_NAME(Csec_init_context, MECH))(FP,ctx)
      FPARG;
      Csec_context_t *ctx;
 {
+  (void)FP;
+  (void)ctx;
   return 0;
 }
 
@@ -177,6 +183,8 @@ int (CSEC_METHOD_NAME(Csec_reinit_context, MECH))(FP,ctx)
      FPARG;
      Csec_context_t *ctx;
 {
+  (void)FP;
+  (void)ctx;
   return 0;
 }
 
@@ -900,6 +908,7 @@ static int _Csec_map_gssapi_err(maj_stat, min_stat)
 
   int ret_serrno = ESEC_SYSTEM;
 
+  (void)min_stat;
   /* Get the routine error number from the major status */
 
   maj_stat &= 0x00FF0000;

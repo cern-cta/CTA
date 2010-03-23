@@ -668,7 +668,7 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
 // vmgrQueryTape
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TpcpCommand::vmgrQueryTape(
-  char (&vid)[CA_MAXVIDLEN+1], const int side)
+  char (&)[CA_MAXVIDLEN+1], const int side)
   throw (castor::exception::Exception) {
 
   serrno=0;
@@ -1129,7 +1129,7 @@ void castor::tape::tpcp::TpcpCommand::sendEndNotificationErrorReport(
 //------------------------------------------------------------------------------
 // sigintHandler
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::TpcpCommand::sigintHandler(int signal) {
+void castor::tape::tpcp::TpcpCommand::sigintHandler(int) {
   s_receivedSigint = true;
 }
 

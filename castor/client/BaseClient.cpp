@@ -711,7 +711,7 @@ void castor::client::BaseClient::pollAnswersFromStager
         continue;  // Nothing of interest
       }
       // Unexpected result?
-      if (m_fds[i].revents & POLLIN != POLLIN) {
+      if ((m_fds[i].revents & POLLIN) != POLLIN) {
         castor::exception::Exception e(SEINTERNAL);
         e.getMessage() << "Unexpected result from poll(): revents: "
                        << m_fds[i].revents << " should be: POLLIN ("
@@ -756,6 +756,7 @@ void castor::client::BaseClient::pollAnswersFromStager
         m_connected.push_back(socket);
         m_fds[m_nfds].fd = socket->socket();
         m_fds[m_nfds].events = POLLIN;
+        m_fds[m_nfds].revents = 0;
         m_nfds++;
       } else {
         // This is not the listening socket therefore we have new data to read.

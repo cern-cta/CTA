@@ -56,7 +56,7 @@ castor::tape::utils::ScopedLock::ScopedLock(pthread_mutex_t &mutex)
 //-----------------------------------------------------------------------------
 // copy constructor
 //-----------------------------------------------------------------------------
-castor::tape::utils::ScopedLock::ScopedLock(const ScopedLock &s) throw() :
+castor::tape::utils::ScopedLock::ScopedLock(const ScopedLock&) throw() :
   m_mutex(NULL) {
   
   // This code is never executed because the ScopedLock assignment operator is
@@ -68,7 +68,7 @@ castor::tape::utils::ScopedLock::ScopedLock(const ScopedLock &s) throw() :
 // ScopedLock assignment operator
 //-----------------------------------------------------------------------------
 castor::tape::utils::ScopedLock
-  &castor::tape::utils::ScopedLock::operator=(ScopedLock& obj) throw() {
+&castor::tape::utils::ScopedLock::operator=(ScopedLock&) throw() {
   
   // This code is never executed because the ScopedLock assignment operator is
   // private

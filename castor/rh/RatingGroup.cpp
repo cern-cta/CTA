@@ -63,7 +63,7 @@ castor::rh::RatingGroup::RatingGroup(const std::string name)
   iss >> m_interval;                  // Interval
 
   // A failure occurred in parsing?
-  if (iss.fail() || (m_nbRequests < 0) || (m_interval < 0)) {
+  if (iss.fail()) {
     castor::exception::Exception ex(EINVAL);
     ex.getMessage() << "Invalid syntax for configuration option RH/"
                     << option.str();

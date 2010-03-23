@@ -67,14 +67,14 @@ castor::io::StreamListPrivilegesCnv::~StreamListPrivilegesCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamListPrivilegesCnv::ObjType() {
+unsigned int castor::io::StreamListPrivilegesCnv::ObjType() {
   return castor::bwlist::ListPrivileges::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamListPrivilegesCnv::objType() const {
+unsigned int castor::io::StreamListPrivilegesCnv::objType() const {
   return ObjType();
 }
 
@@ -83,8 +83,8 @@ const unsigned int castor::io::StreamListPrivilegesCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamListPrivilegesCnv::createRep(castor::IAddress* address,
                                                     castor::IObject* object,
-                                                    bool endTransaction,
-                                                    unsigned int type)
+                                                    bool,
+                                                    unsigned int)
   throw (castor::exception::Exception) {
   castor::bwlist::ListPrivileges* obj = 
     dynamic_cast<castor::bwlist::ListPrivileges*>(object);

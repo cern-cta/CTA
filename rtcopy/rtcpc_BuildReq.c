@@ -386,9 +386,12 @@ static int rtcpc_b_opt(int mode,
  * of this development.
  */
 static int rtcpc_c_opt(int mode, 
-                     const char *value, 
-                     tape_list_t **tape) {
+                       const char* value, 
+                       tape_list_t **tape) {
     int rc = 0;
+    (void)mode;
+    (void)value;
+    (void)tape;
     return(rc);
 }
 
@@ -748,9 +751,12 @@ static int rtcpc_g_opt(int mode,
  * but there is no action
  */
 static int rtcpc_G_opt(int mode, 
-                     const char *value, 
-                     tape_list_t **tape) {
+                       const char *value, 
+                       tape_list_t **tape) {
     int rc = 0;
+    (void)mode;
+    (void)value;
+    (void)tape;
     return(rc);
 }
 /*
@@ -880,6 +886,7 @@ static int rtcpc_I_opt(int mode,
                        tape_list_t **tape) {
     int rc;
 
+    (void)value;
     if ( *tape == NULL ) {
         rc = newTapeList(tape,NULL,mode);
         if ( rc == -1 ) return(-1);
@@ -996,6 +1003,7 @@ static int rtcpc_n_opt(int mode,
     rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
 
+    (void)value;
     if ( *tape == NULL ) {
         rc = newTapeList(tape,NULL,mode);
         if ( rc == -1 ) return(-1);
@@ -1086,6 +1094,7 @@ static int rtcpc_o_opt(int mode,
     rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
 
+    (void)value;
     if ( *tape == NULL ) {
         rc = newTapeList(tape,NULL,mode);
         if ( rc == -1 ) return(-1);
@@ -1467,6 +1476,7 @@ static int rtcpc_T_opt(int mode,
     rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
 
+    (void)value;
     if ( *tape == NULL ) {
         rc = newTapeList(tape,NULL,mode);
         if ( rc == -1 ) return(-1);
@@ -1665,6 +1675,9 @@ static int rtcpc_x_opt(int mode,
                      const char *value, 
                      tape_list_t **tape) {
     int rc = 0;
+    (void)mode;
+    (void)value;
+    (void)tape;
     /*
      * Set LOG_DEBUG (7) loglevel
      */
@@ -1678,6 +1691,9 @@ static int rtcpc_x_opt(int mode,
 static int rtcpc_X_opt(int mode, 
                      const char *value, 
                      tape_list_t **tape) {
+    (void)mode;
+    (void)value;
+    (void)tape;
     return(0);
 }
 

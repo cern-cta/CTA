@@ -62,17 +62,17 @@ namespace castor {
         virtual ~OraCnvSvc() throw();
         
         /** Get the service id */
-        virtual const unsigned int id() const;
+        virtual unsigned int id() const;
         
         /** Get the service id */
-        static const unsigned int ID();
+        static unsigned int ID();
         
         /**
          * Get the real representation type from the
          * concrete class, that is the database type
          * to which this conversion service is connected.
          */
-        virtual const unsigned int getPhysRepType() const;
+        virtual unsigned int getPhysRepType() const;
         
         /**
          * Forces the commit of the last changes.

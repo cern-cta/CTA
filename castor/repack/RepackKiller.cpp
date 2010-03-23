@@ -65,7 +65,7 @@ RepackKiller::~RepackKiller() throw() {
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-void RepackKiller::run(void *param) throw() {
+void RepackKiller::run(void*) throw() {
   std::vector<RepackSubRequest*> sreqs;
   std::vector<RepackSubRequest*>::iterator sreq;
 

@@ -125,14 +125,14 @@ castor::repack::ora::OraRepackSvc::~OraRepackSvc() throw() {
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-const unsigned int castor::repack::ora::OraRepackSvc::id() const {
+unsigned int castor::repack::ora::OraRepackSvc::id() const {
   return ID();
 }
 
 //------------------------------------------------------------------------------
 // ID
 //------------------------------------------------------------------------------
-const unsigned int castor::repack::ora::OraRepackSvc::ID() {
+unsigned int castor::repack::ora::OraRepackSvc::ID() {
   return castor::SVC_ORAREPACKSVC;
 }
 

@@ -136,7 +136,7 @@ namespace castor {
      * at least close the connection to the client.
      * @param param user parameter that would have been passed to a thread
      */
-    virtual void terminate(void* param) {};
+    virtual void terminate(void*) {};
 
     /// The socket used to accept connections
     castor::io::AbstractSocket* m_sock;

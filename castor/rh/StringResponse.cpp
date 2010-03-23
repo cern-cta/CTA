@@ -56,7 +56,8 @@ castor::rh::StringResponse::~StringResponse() throw() {
 void castor::rh::StringResponse::print(std::ostream& stream,
                                        std::string indent,
                                        castor::ObjectSet& alreadyPrinted) const {
-  stream << m_content;
+  stream << indent << m_content;
+  alreadyPrinted.insert(this);
 }
 
 //------------------------------------------------------------------------------

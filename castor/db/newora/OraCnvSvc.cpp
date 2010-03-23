@@ -80,21 +80,21 @@ castor::db::ora::OraCnvSvc::~OraCnvSvc() throw() {
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-const unsigned int castor::db::ora::OraCnvSvc::id() const {
+unsigned int castor::db::ora::OraCnvSvc::id() const {
   return ID();
 }
 
 //------------------------------------------------------------------------------
 // ID
 //------------------------------------------------------------------------------
-const unsigned int castor::db::ora::OraCnvSvc::ID() {
+unsigned int castor::db::ora::OraCnvSvc::ID() {
   return castor::SVC_ORACNV;
 }
 
 //------------------------------------------------------------------------------
 // getPhysRepType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::ora::OraCnvSvc::getPhysRepType() const {
+unsigned int castor::db::ora::OraCnvSvc::getPhysRepType() const {
   return castor::REP_ORACLE;
 }
 

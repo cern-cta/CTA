@@ -115,7 +115,7 @@ int rfio_close_v2(s)
     LONG msgsiz ;
 
     TRACE(2, "rfio", "rfio_close: reading %d bytes",rfilefdt[s_index]->_iobuf.hsize) ;
-    if (netread_timeout(s,rfio_buf,rfilefdt[s_index]->_iobuf.hsize,RFIO_DATA_TIMEOUT) != rfilefdt[s_index]->_iobuf.hsize) {
+    if (netread_timeout(s,rfio_buf,rfilefdt[s_index]->_iobuf.hsize,RFIO_DATA_TIMEOUT) != (ssize_t)rfilefdt[s_index]->_iobuf.hsize) {
       TRACE(2, "rfio", "rfio_close: read(): ERROR occured (errno=%d)", errno);
       if ( temp ) (void) free(trp) ;
       (void)rfio_cleanup(s) ;
@@ -145,7 +145,7 @@ int rfio_close_v2(s)
        * to receive data which is going to be thrown away.
        */
       if ( temp == 0 ) {
-        if ( rfilefdt[s_index]->_iobuf.base==NULL || rfilefdt[s_index]->_iobuf.dsize<msgsiz ) {
+        if ( rfilefdt[s_index]->_iobuf.base==NULL || (int)rfilefdt[s_index]->_iobuf.dsize<msgsiz ) {
           temp= 1 ;
           TRACE(3,"rfio","rfio_close: allocating momentary buffer of size %d",msgsiz) ;
           if ( (trp= ( char *) malloc(msgsiz)) == NULL ) {

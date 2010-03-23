@@ -101,14 +101,14 @@ castor::monitoring::rmmaster::ora::OraRmMasterSvc::~OraRmMasterSvc() throw() {
 //-----------------------------------------------------------------------------
 // id
 //-----------------------------------------------------------------------------
-const unsigned int castor::monitoring::rmmaster::ora::OraRmMasterSvc::id() const {
+unsigned int castor::monitoring::rmmaster::ora::OraRmMasterSvc::id() const {
   return ID();
 }
 
 //-----------------------------------------------------------------------------
 // ID
 //-----------------------------------------------------------------------------
-const unsigned int castor::monitoring::rmmaster::ora::OraRmMasterSvc::ID() {
+unsigned int castor::monitoring::rmmaster::ora::OraRmMasterSvc::ID() {
   return castor::SVC_ORARMMASTERSVC;
 }
 

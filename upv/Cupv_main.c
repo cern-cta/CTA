@@ -326,7 +326,7 @@ int proclistreq(magic, req_type, req_data, clienthost, thip)
 
     switch (req_type) {
     case CUPV_LIST:
-      if ((c = Cupv_srv_list (magic, req_data, clienthost, thip, endlist, &dblistptr)))
+      if ((c = Cupv_srv_list (req_data, clienthost, thip, endlist, &dblistptr)))
 	return (c);
       break;
     }
@@ -378,16 +378,16 @@ void procreq(magic, req_type, req_data, clienthost, thip)
   switch (req_type) {
 
   case CUPV_ADD:
-    c = Cupv_srv_add (magic, req_data, clienthost, thip);
+    c = Cupv_srv_add (req_data, clienthost, thip);
     break;
   case CUPV_DELETE:
-    c = Cupv_srv_delete (magic, req_data, clienthost, thip);
+    c = Cupv_srv_delete (req_data, clienthost, thip);
     break;
   case CUPV_MODIFY:
-    c = Cupv_srv_modify (magic, req_data, clienthost, thip);
+    c = Cupv_srv_modify (req_data, clienthost, thip);
     break;
   case CUPV_CHECK:
-    c = Cupv_srv_check (magic, req_data, clienthost, thip);
+    c = Cupv_srv_check (req_data, clienthost, thip);
     break;
   case CUPV_LIST:
     c = proclistreq (magic, req_type, req_data, clienthost, thip);

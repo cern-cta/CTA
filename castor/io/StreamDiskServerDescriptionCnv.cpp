@@ -67,14 +67,14 @@ castor::io::StreamDiskServerDescriptionCnv::~StreamDiskServerDescriptionCnv() th
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamDiskServerDescriptionCnv::ObjType() {
+unsigned int castor::io::StreamDiskServerDescriptionCnv::ObjType() {
   return castor::query::DiskServerDescription::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamDiskServerDescriptionCnv::objType() const {
+unsigned int castor::io::StreamDiskServerDescriptionCnv::objType() const {
   return ObjType();
 }
 
@@ -83,8 +83,8 @@ const unsigned int castor::io::StreamDiskServerDescriptionCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamDiskServerDescriptionCnv::createRep(castor::IAddress* address,
                                                            castor::IObject* object,
-                                                           bool endTransaction,
-                                                           unsigned int type)
+                                                           bool,
+                                                           unsigned int)
   throw (castor::exception::Exception) {
   castor::query::DiskServerDescription* obj = 
     dynamic_cast<castor::query::DiskServerDescription*>(object);

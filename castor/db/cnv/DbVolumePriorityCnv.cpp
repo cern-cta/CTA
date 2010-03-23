@@ -143,21 +143,21 @@ void castor::db::cnv::DbVolumePriorityCnv::reset() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbVolumePriorityCnv::ObjType() {
+unsigned int castor::db::cnv::DbVolumePriorityCnv::ObjType() {
   return castor::vdqm::VolumePriority::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbVolumePriorityCnv::objType() const {
+unsigned int castor::db::cnv::DbVolumePriorityCnv::objType() const {
   return ObjType();
 }
 
 //------------------------------------------------------------------------------
 // fillRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbVolumePriorityCnv::fillRep(castor::IAddress* address,
+void castor::db::cnv::DbVolumePriorityCnv::fillRep(castor::IAddress*,
                                                    castor::IObject* object,
                                                    unsigned int type,
                                                    bool endTransaction)
@@ -187,7 +187,7 @@ void castor::db::cnv::DbVolumePriorityCnv::fillRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbVolumePriorityCnv::fillObj(castor::IAddress* address,
+void castor::db::cnv::DbVolumePriorityCnv::fillObj(castor::IAddress*,
                                                    castor::IObject* object,
                                                    unsigned int type,
                                                    bool endTransaction)
@@ -210,10 +210,10 @@ void castor::db::cnv::DbVolumePriorityCnv::fillObj(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbVolumePriorityCnv::createRep(castor::IAddress* address,
+void castor::db::cnv::DbVolumePriorityCnv::createRep(castor::IAddress*,
                                                      castor::IObject* object,
                                                      bool endTransaction,
-                                                     unsigned int type)
+                                                     unsigned int)
   throw (castor::exception::Exception) {
   castor::vdqm::VolumePriority* obj = 
     dynamic_cast<castor::vdqm::VolumePriority*>(object);
@@ -275,10 +275,10 @@ void castor::db::cnv::DbVolumePriorityCnv::createRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // bulkCreateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbVolumePriorityCnv::bulkCreateRep(castor::IAddress* address,
+void castor::db::cnv::DbVolumePriorityCnv::bulkCreateRep(castor::IAddress*,
                                                          std::vector<castor::IObject*> &objects,
                                                          bool endTransaction,
-                                                         unsigned int type)
+                                                         unsigned int)
   throw (castor::exception::Exception) {
   // check whether something needs to be done
   int nb = objects.size();
@@ -549,7 +549,7 @@ void castor::db::cnv::DbVolumePriorityCnv::bulkCreateRep(castor::IAddress* addre
 //------------------------------------------------------------------------------
 // updateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbVolumePriorityCnv::updateRep(castor::IAddress* address,
+void castor::db::cnv::DbVolumePriorityCnv::updateRep(castor::IAddress*,
                                                      castor::IObject* object,
                                                      bool endTransaction)
   throw (castor::exception::Exception) {
@@ -594,7 +594,7 @@ void castor::db::cnv::DbVolumePriorityCnv::updateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // deleteRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbVolumePriorityCnv::deleteRep(castor::IAddress* address,
+void castor::db::cnv::DbVolumePriorityCnv::deleteRep(castor::IAddress*,
                                                      castor::IObject* object,
                                                      bool endTransaction)
   throw (castor::exception::Exception) {

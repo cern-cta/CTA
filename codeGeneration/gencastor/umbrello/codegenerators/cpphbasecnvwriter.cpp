@@ -37,13 +37,13 @@ void CppHBaseCnvWriter::writeMethods (bool delUpMethods) {
     ("Gets the object type.",
      "That is the type of object this converter can convert",
      "", *m_stream);
-  *m_stream << getIndent() << "static const unsigned int ObjType();"
+  *m_stream << getIndent() << "static unsigned int ObjType();"
             << endl << endl;
   writeDocumentation
     ("Gets the object type.",
      "That is the type of object this converter can convert",
      "", *m_stream);
-  *m_stream << getIndent() << "virtual const unsigned int objType() const;"
+  *m_stream << getIndent() << "virtual unsigned int objType() const;"
             << endl << endl;
   // Conversion methods
   writeDocumentation

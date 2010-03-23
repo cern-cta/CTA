@@ -154,7 +154,7 @@ int Csec_clearContext(Csec_context_t *ctx) {
   char *func = "Csec_clearContext";
 
   Csec_trace(func, "Clearing context\n");
-  if (ctx->magic !=  CSEC_CONTEXT_MAGIC_CLIENT_1
+  if (ctx->magic !=  (int)CSEC_CONTEXT_MAGIC_CLIENT_1
       && ctx->magic !=  CSEC_CONTEXT_MAGIC_SERVER_1) {
     Csec_trace(func, "Bad magic:%x - Probably uninitialized context !\n",ctx->magic);
     Csec_errmsg(func, "Not a valid context");
@@ -443,7 +443,7 @@ int Csec_get_peer_service_name(Csec_context_t *ctx, int s, int service_type, cha
   } else {
         
     /* client host contains host and domain */
-    if ((pos-clienthost) + 1 < sizeof(hostname)){
+    if ((pos-clienthost) + 1 < (int)sizeof(hostname)){
       memcpy(hostname, clienthost, (pos-clienthost)); 
       hostname[pos -clienthost] = '\0';
     } else {
@@ -949,7 +949,7 @@ int Csec_isIdAService(const char *mech, const char *principal) {
 
       name_len = strlen(service_table[i].name) - 1; /* ignore the trailing '/' */
       /* check only service name */
-      if ((p2 - p1) == name_len && !strncasecmp(p1, service_table[i].name, name_len)) {
+      if ((p2 - p1) == (int)name_len && !strncasecmp(p1, service_table[i].name, name_len)) {
         found++;
         break;
       }

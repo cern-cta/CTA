@@ -41,9 +41,8 @@ extern uid_t getuid();
 EXTERN_C char DLL_DECL *getacctent();
 
 
-char DLL_DECL *getacct_r(resbuf,resbufsiz) 
+char DLL_DECL *getacct_r(resbuf) 
 char *resbuf;
-size_t resbufsiz;
 { 
     char      *account = NULL;    /* Pointer to the account env variable  */
     struct passwd *pwd = NULL;        /* Pointer to the password entry    */
@@ -101,7 +100,7 @@ char DLL_DECL *getacct()
     Cglobals_get(&getacct_key,(void **) &resbuf,BUFSIZ+1);
     if ( resbuf == NULL ) return(NULL);
 
-    return(getacct_r(resbuf,BUFSIZ+1));
+    return(getacct_r(resbuf));
 }
 
 

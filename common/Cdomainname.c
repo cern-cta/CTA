@@ -47,7 +47,7 @@ int DLL_DECL Cdomainname(char *name, int namelen)
 					p++;
 				if (*p)
 					*(p + strlen (p) - 1) = '\0';
-				if (strlen (p) > namelen) {
+				if ((int)strlen (p) > namelen) {
 					serrno = EINVAL;
 					return (-1);
 				}
@@ -93,7 +93,7 @@ int DLL_DECL Cdomainname(char *name, int namelen)
 				if ((p = strchr (hp2->h_name, '.')) != NULL) {
 					free (haddrarray);
 					p++;
-					if (strlen (p) > namelen) {
+					if ((int)strlen (p) > namelen) {
 						serrno = EINVAL;
 						return (-1);
 					}
@@ -108,7 +108,7 @@ int DLL_DECL Cdomainname(char *name, int namelen)
 					if ((p = strchr (*hal, '.')) != NULL) {
 						free (haddrarray);
 						p++;
-						if (strlen (p) > namelen) {
+						if ((int)strlen (p) > namelen) {
 							serrno = EINVAL;
 							return (-1);
 						}

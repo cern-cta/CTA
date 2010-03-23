@@ -173,7 +173,7 @@ int _Csec_send_token(s, tok, timeout, token_type)
     /* We keep the serrno from netwrite */
     Csec_errmsg(func, "Error sending token length and data");
     return -1;
-  } else if (ret != buf.length) {
+  } else if (ret != (int)buf.length) {
     serrno = ESEC_SYSTEM;
     Csec_errmsg(func, "Bad token length");
     return -1;
@@ -197,7 +197,7 @@ int _Csec_recv_token(s, tok, timeout, rtype)
   char *func = "_Csec_recv_token";
   char headbuf[3 * LONGSIZE];
   char *p;
-  int len, headlen;
+  unsigned int len, headlen;
   int data_already_read=0;
   int header_already_read = 0;
   char *prefetched_data = NULL;
@@ -253,7 +253,7 @@ int _Csec_recv_token(s, tok, timeout, rtype)
       serrno = ESEC_SYSTEM;
       Csec_errmsg(func, "Connection dropped by remote end");
       return -1;
-    } else if (ret !=  headlen - header_already_read) {
+    } else if (ret !=  (int)headlen - header_already_read) {
       serrno = ESEC_SYSTEM;
       Csec_errmsg(func, "Bad header length: %d",
 		  header_already_read + ret);
@@ -273,7 +273,7 @@ int _Csec_recv_token(s, tok, timeout, rtype)
       serrno = ESEC_SYSTEM;
       Csec_errmsg(func, "Connection dropped by remote end");
       return -1;
-    } else if (ret != headlen) {
+    } else if (ret != (int)headlen) {
       serrno = ESEC_SYSTEM;
       Csec_errmsg(func, "Bad token length: %d", ret);
       return -1;
@@ -334,7 +334,7 @@ int _Csec_recv_token(s, tok, timeout, rtype)
     Csec_errmsg(func, "Could not read token data");
     free(tok->value);
     return -1;
-  } else if (ret != tok->length - data_already_read) {
+  } else if (ret != (int)(tok->length - data_already_read)) {
     serrno = ESEC_SYSTEM;
     Csec_errmsg(func, "Bad token data length. Received %d rather than %d",
 		ret, tok->length - data_already_read);
@@ -354,7 +354,7 @@ int _Csec_recv_token(s, tok, timeout, rtype)
 void _Csec_print_token(tok)
      csec_buffer_t tok;
 {
-  int i;
+  unsigned int i;
   int l=0;
   char buf[50];
   unsigned char *p = tok->value;

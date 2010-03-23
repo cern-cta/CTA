@@ -182,21 +182,21 @@ void castor::db::cnv::DbStagePutNextRequestCnv::reset() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbStagePutNextRequestCnv::ObjType() {
+unsigned int castor::db::cnv::DbStagePutNextRequestCnv::ObjType() {
   return castor::stager::StagePutNextRequest::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbStagePutNextRequestCnv::objType() const {
+unsigned int castor::db::cnv::DbStagePutNextRequestCnv::objType() const {
   return ObjType();
 }
 
 //------------------------------------------------------------------------------
 // fillRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbStagePutNextRequestCnv::fillRep(castor::IAddress* address,
+void castor::db::cnv::DbStagePutNextRequestCnv::fillRep(castor::IAddress*,
                                                         castor::IObject* object,
                                                         unsigned int type,
                                                         bool endTransaction)
@@ -297,7 +297,7 @@ void castor::db::cnv::DbStagePutNextRequestCnv::fillRepIClient(castor::stager::S
 //------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbStagePutNextRequestCnv::fillObj(castor::IAddress* address,
+void castor::db::cnv::DbStagePutNextRequestCnv::fillObj(castor::IAddress*,
                                                         castor::IObject* object,
                                                         unsigned int type,
                                                         bool endTransaction)
@@ -443,7 +443,7 @@ void castor::db::cnv::DbStagePutNextRequestCnv::fillObjIClient(castor::stager::S
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbStagePutNextRequestCnv::createRep(castor::IAddress* address,
+void castor::db::cnv::DbStagePutNextRequestCnv::createRep(castor::IAddress*,
                                                           castor::IObject* object,
                                                           bool endTransaction,
                                                           unsigned int type)
@@ -528,7 +528,7 @@ void castor::db::cnv::DbStagePutNextRequestCnv::createRep(castor::IAddress* addr
 //------------------------------------------------------------------------------
 // bulkCreateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbStagePutNextRequestCnv::bulkCreateRep(castor::IAddress* address,
+void castor::db::cnv::DbStagePutNextRequestCnv::bulkCreateRep(castor::IAddress*,
                                                               std::vector<castor::IObject*> &objects,
                                                               bool endTransaction,
                                                               unsigned int type)
@@ -965,7 +965,7 @@ void castor::db::cnv::DbStagePutNextRequestCnv::bulkCreateRep(castor::IAddress* 
 //------------------------------------------------------------------------------
 // updateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbStagePutNextRequestCnv::updateRep(castor::IAddress* address,
+void castor::db::cnv::DbStagePutNextRequestCnv::updateRep(castor::IAddress*,
                                                           castor::IObject* object,
                                                           bool endTransaction)
   throw (castor::exception::Exception) {
@@ -1014,7 +1014,7 @@ void castor::db::cnv::DbStagePutNextRequestCnv::updateRep(castor::IAddress* addr
 //------------------------------------------------------------------------------
 // deleteRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbStagePutNextRequestCnv::deleteRep(castor::IAddress* address,
+void castor::db::cnv::DbStagePutNextRequestCnv::deleteRep(castor::IAddress*,
                                                           castor::IObject* object,
                                                           bool endTransaction)
   throw (castor::exception::Exception) {

@@ -18,10 +18,9 @@ extern char localhost[CA_MAXHOSTNAMELEN+1];
 
 /* Cns_chkbackperm - check permissions backward */
 
-int Cns_chkbackperm(dbfd, fileid, mode, uid, gid, clienthost)
+int Cns_chkbackperm(dbfd, fileid, uid, gid, clienthost)
      struct Cns_dbfd *dbfd;
      u_signed64 fileid;
-     int mode;
      uid_t uid;
      gid_t gid;
      const char *clienthost;
@@ -224,7 +223,7 @@ int Cns_parsepath(dbfd, cwd, path, uid, gid, clienthost, parent_dir, rec_addrp, 
 
 int Cns_chkentryperm(fmd_entry, mode, uid, gid, clienthost)
      struct Cns_file_metadata *fmd_entry;
-     int mode;
+     mode_t mode;
      uid_t uid;
      gid_t gid;
      const char *clienthost;

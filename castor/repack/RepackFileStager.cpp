@@ -66,7 +66,7 @@ RepackFileStager::~RepackFileStager() throw() {
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-void RepackFileStager::run(void *param) throw() {
+void RepackFileStager::run(void*) throw() {
   std::vector<RepackSubRequest*> sreqs;
   std::vector<RepackSubRequest*>::iterator sreq;
   try {

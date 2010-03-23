@@ -47,7 +47,7 @@ namespace castor {
     /**
      * Get the service id
      */
-    virtual const unsigned int id() const = 0;
+    virtual unsigned int id() const = 0;
 
     /**
      * Get the service name

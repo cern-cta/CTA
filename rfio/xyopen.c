@@ -227,8 +227,8 @@ rfio_xyopen_ext(name,node,lun,lrecl,chopt,irc,uid,gid,key,reqhost)
    */
   fd->magic = RFIO_MAGIC;
   fd->s = -1;
-  fd->uid = (uid_ext==0 ? geteuid(): uid_ext);
-  fd->gid = (gid_ext==0 ? getegid(): gid_ext);
+  fd->uid = (uid_ext==0 ? geteuid(): (uid_t)uid_ext);
+  fd->gid = (gid_ext==0 ? getegid(): (gid_t)gid_ext);
   (void) umask(fd->umask=umask(0));
   fd->bufsize = 0;
   fd->ftype = FFTYPE_F;

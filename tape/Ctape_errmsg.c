@@ -45,7 +45,7 @@ int Ctape_errmsg(char *func, char *msg, ...)
 	vsprintf (prtbuf + strlen(prtbuf), msg, args);
 	va_end (args);
 	if (errbufp) {
-		if (strlen (prtbuf) < errbuflen) {
+		if ((int)strlen (prtbuf) < errbuflen) {
 			strcpy (errbufp, prtbuf);
 		} else {
 			strncpy (errbufp, prtbuf, errbuflen - 2);

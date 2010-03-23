@@ -64,14 +64,14 @@ castor::io::StreamDumpNotificationCnv::~StreamDumpNotificationCnv() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamDumpNotificationCnv::ObjType() {
+unsigned int castor::io::StreamDumpNotificationCnv::ObjType() {
   return castor::tape::tapegateway::DumpNotification::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamDumpNotificationCnv::objType() const {
+unsigned int castor::io::StreamDumpNotificationCnv::objType() const {
   return ObjType();
 }
 
@@ -80,8 +80,8 @@ const unsigned int castor::io::StreamDumpNotificationCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamDumpNotificationCnv::createRep(castor::IAddress* address,
                                                       castor::IObject* object,
-                                                      bool endTransaction,
-                                                      unsigned int type)
+                                                      bool,
+                                                      unsigned int)
   throw (castor::exception::Exception) {
   castor::tape::tapegateway::DumpNotification* obj = 
     dynamic_cast<castor::tape::tapegateway::DumpNotification*>(object);

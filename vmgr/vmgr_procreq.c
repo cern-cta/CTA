@@ -34,6 +34,10 @@ void resetid(uid_t *u, gid_t *g, struct vmgr_srv_thread_info *thip) {
     *u = thip->Csec_uid;
     *g = thip->Csec_gid;
   }
+#else
+  (void)u;
+  (void)g;
+  (void)thip;
 #endif
 }
 
@@ -84,8 +88,7 @@ char *logbuf;
 
 /*  vmgr_srv_deletedenmap - delete a triplet model/media_letter/density */
 
-int vmgr_srv_deletedenmap(magic, req_data, clienthost, thip)
-int magic;
+int vmgr_srv_deletedenmap(req_data, clienthost, thip)
 char *req_data;
 char *clienthost;
 struct vmgr_srv_thread_info *thip;
@@ -135,8 +138,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*  vmgr_srv_deletedgnmap - delete a triplet dgn/model/library */
 
-int vmgr_srv_deletedgnmap(magic, req_data, clienthost, thip)
-int magic;
+int vmgr_srv_deletedgnmap(req_data, clienthost, thip)
 char *req_data;
 char *clienthost;
 struct vmgr_srv_thread_info *thip;
@@ -183,8 +185,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*  vmgr_srv_deletelibrary - delete a tape library definition */
 
-int vmgr_srv_deletelibrary(magic, req_data, clienthost, thip)
-int magic;
+int vmgr_srv_deletelibrary(req_data, clienthost, thip)
 char *req_data;
 char *clienthost;
 struct vmgr_srv_thread_info *thip;
@@ -232,8 +233,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*  vmgr_srv_deletemodel - delete a cartridge model */
 
-int vmgr_srv_deletemodel(magic, req_data, clienthost, thip)
-int magic;
+int vmgr_srv_deletemodel(req_data, clienthost, thip)
 char *req_data;
 char *clienthost;
 struct vmgr_srv_thread_info *thip;
@@ -282,8 +282,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*  vmgr_srv_deletepool - delete a tape pool definition */
 
-int vmgr_srv_deletepool(magic, req_data, clienthost, thip)
-int magic;
+int vmgr_srv_deletepool(req_data, clienthost, thip)
 char *req_data;
 char *clienthost;
 struct vmgr_srv_thread_info *thip;
@@ -329,8 +328,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*  vmgr_srv_deletetape - delete a tape volume */
 
-int vmgr_srv_deletetape(magic, req_data, clienthost, thip)
-int magic;
+int vmgr_srv_deletetape(req_data, clienthost, thip)
 char *req_data;
 char *clienthost;
 struct vmgr_srv_thread_info *thip;
@@ -423,8 +421,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*  vmgr_srv_deltag - delete a tag associated with a tape volume */
 
-int vmgr_srv_deltag(magic, req_data, clienthost, thip)
-int magic;
+int vmgr_srv_deltag(req_data, clienthost, thip)
 char *req_data;
 char *clienthost;
 struct vmgr_srv_thread_info *thip;
@@ -551,8 +548,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*  vmgr_srv_enterdgnmap - enter a new triplet dgn/model/library */
 
-int vmgr_srv_enterdgnmap(magic, req_data, clienthost, thip)
-int magic;
+int vmgr_srv_enterdgnmap(req_data, clienthost, thip)
 char *req_data;
 char *clienthost;
 struct vmgr_srv_thread_info *thip;
@@ -611,8 +607,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*  vmgr_srv_enterlibrary - enter a new tape library definition */
 
-int vmgr_srv_enterlibrary(magic, req_data, clienthost, thip)
-int magic;
+int vmgr_srv_enterlibrary(req_data, clienthost, thip)
 char *req_data;
 char *clienthost;
 struct vmgr_srv_thread_info *thip;
@@ -705,8 +700,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*  vmgr_srv_enterpool - define a new tape pool */
 
-int vmgr_srv_enterpool(magic, req_data, clienthost, thip)
-int magic;
+int vmgr_srv_enterpool(req_data, clienthost, thip)
 char *req_data;
 char *clienthost;
 struct vmgr_srv_thread_info *thip;
@@ -749,8 +743,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*  vmgr_srv_entertape - enter a new tape volume */
 
-int vmgr_srv_entertape(magic, req_data, clienthost, thip)
-int magic;
+int vmgr_srv_entertape(req_data, clienthost, thip)
 char *req_data;
 char *clienthost;
 struct vmgr_srv_thread_info *thip;
@@ -920,8 +913,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*  vmgr_srv_gettag - get the tag associated with a tape volume */
 
-int vmgr_srv_gettag(magic, req_data, clienthost, thip)
-int magic;
+int vmgr_srv_gettag(req_data, clienthost, thip)
 char *req_data;
 char *clienthost;
 struct vmgr_srv_thread_info *thip;
@@ -1174,8 +1166,7 @@ DBLISTPTR *dblistptr;
 
 /*      vmgr_srv_listdgnmap - list triplets model/media_letter/density */
 
-int vmgr_srv_listdgnmap(magic, req_data, clienthost, thip, endlist, dblistptr)
-int magic;
+int vmgr_srv_listdgnmap(req_data, clienthost, thip, endlist, dblistptr)
 char *req_data;
 char *clienthost;
 struct vmgr_srv_thread_info *thip;
@@ -1237,8 +1228,7 @@ DBLISTPTR *dblistptr;
 
 /*      vmgr_srv_listlibrary - list tape library entries */
 
-int vmgr_srv_listlibrary(magic, req_data, clienthost, thip, endlist, dblistptr)
-int magic;
+int vmgr_srv_listlibrary(req_data, clienthost, thip, endlist, dblistptr)
 char *req_data;
 char *clienthost;
 struct vmgr_srv_thread_info *thip;
@@ -1366,8 +1356,7 @@ DBLISTPTR *dblistptr;
 
 /*      vmgr_srv_listpool - list tape pool entries */
 
-int vmgr_srv_listpool(magic, req_data, clienthost, thip, endlist, dblistptr)
-int magic;
+int vmgr_srv_listpool(req_data, clienthost, thip, endlist, dblistptr)
 char *req_data;
 char *clienthost;
 struct vmgr_srv_thread_info *thip;
@@ -1547,8 +1536,7 @@ DBLISTPTR *dblistptr;
 
 /*  vmgr_srv_modifylibrary - modify an existing tape library */
 
-int vmgr_srv_modifylibrary(magic, req_data, clienthost, thip)
-int magic;
+int vmgr_srv_modifylibrary(req_data, clienthost, thip)
 char *req_data;
 char *clienthost;
 struct vmgr_srv_thread_info *thip;
@@ -1673,8 +1661,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*  vmgr_srv_modifypool - modify an existing tape pool definition */
 
-int vmgr_srv_modifypool(magic, req_data, clienthost, thip)
-int magic;
+int vmgr_srv_modifypool(req_data, clienthost, thip)
 char *req_data;
 char *clienthost;
 struct vmgr_srv_thread_info *thip;
@@ -1721,9 +1708,9 @@ struct vmgr_srv_thread_info *thip;
 
   /* update entry */
 
-  if (pool_user != -1)
+  if (pool_user != (uid_t)-1)
     pool_entry.uid = pool_user;
-  if (pool_group != -1)
+  if (pool_group != (gid_t)-1)
     pool_entry.gid = pool_group;
 
   if (vmgr_update_pool_entry (&thip->dbfd, &rec_addr, &pool_entry))
@@ -1733,8 +1720,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*  vmgr_srv_modifytape - modify an existing tape volume */
 
-int vmgr_srv_modifytape(magic, req_data, clienthost, thip)
-int magic;
+int vmgr_srv_modifytape(req_data, clienthost, thip)
 char *req_data;
 char *clienthost;
 struct vmgr_srv_thread_info *thip;
@@ -2017,8 +2003,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*  vmgr_srv_querypool - query about a tape pool */
 
-int vmgr_srv_querypool(magic, req_data, clienthost, thip)
-int magic;
+int vmgr_srv_querypool(req_data, clienthost, thip)
 char *req_data;
 char *clienthost;
 struct vmgr_srv_thread_info *thip;
@@ -2066,8 +2051,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*  vmgr_srv_querylibrary - query about a tape library */
 
-int vmgr_srv_querylibrary(magic, req_data, clienthost, thip)
-int magic;
+int vmgr_srv_querylibrary(req_data, clienthost, thip)
 char *req_data;
 char *clienthost;
 struct vmgr_srv_thread_info *thip;
@@ -2249,8 +2233,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*  vmgr_srv_reclaim - reset tape volume content information */
 
-int vmgr_srv_reclaim(magic, req_data, clienthost, thip)
-int magic;
+int vmgr_srv_reclaim(req_data, clienthost, thip)
 char *req_data;
 char *clienthost;
 struct vmgr_srv_thread_info *thip;
@@ -2327,8 +2310,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*  vmgr_srv_settag - add/replace a tag associated with a tape volume */
 
-int vmgr_srv_settag(magic, req_data, clienthost, thip)
-int magic;
+int vmgr_srv_settag(req_data, clienthost, thip)
 char *req_data;
 char *clienthost;
 struct vmgr_srv_thread_info *thip;

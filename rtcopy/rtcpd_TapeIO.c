@@ -50,8 +50,8 @@ extern int AbortFlag;
 
 char *getconfent _PROTO((char *, char *, int));
 int gettperror _PROTO((int, char *, char **));
-static int read_sony _PROTO((int, char *, int, tape_list_t *, file_list_t *));
-static int write_sony _PROTO((int, char *, int, tape_list_t *, file_list_t *));
+static int read_sony _PROTO(());
+static int write_sony _PROTO(());
 
 #if defined(_AIX) && defined(_IBMR2)
 static char driver_name[7];
@@ -1028,7 +1028,7 @@ int twrite(int fd,char *ptr,int len,
   } else {
     if ( file->trec == 0 ) filereq->TStartTransferTape = (int)time(NULL);
     file->trec ++ ;
-    rc = write_sony(fd, ptr, len, tape, file);
+    rc = write_sony();
   }
 
   if ( (rc > 0) && (file->cksumRoutine != 
@@ -1199,7 +1199,7 @@ int tread(int fd,char *ptr,int len,
     }
   } else {
     file->trec ++ ;
-    rc = read_sony(fd, ptr, len, tape, file);
+    rc = read_sony();
   }
   if ( (rc > 0) && (file->cksumRoutine != 
                     (unsigned long (*) _PROTO((
@@ -1219,13 +1219,10 @@ int tread(int fd,char *ptr,int len,
 /*  tpio_sony - sends scsi commands to support RAW mode on SONY DIR1000
     using a DFC-1500/1700 controller */
 
-static int read_sony(int fd, char *buf, int len, 
-                     tape_list_t *tape, file_list_t *file) {
+static int read_sony() {
   return(-1);
 }
         
-static int write_sony(int fd, char *buf, int len,
-                      tape_list_t *tape,
-                      file_list_t *file ) {
+static int write_sony() {
   return(-1);
 }

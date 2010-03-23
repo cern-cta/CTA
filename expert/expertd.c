@@ -41,9 +41,7 @@ int jid;
 char localhost[CA_MAXHOSTNAMELEN+1];
 int maxfds;
 
-int expertd_main(main_args)
-     struct main_args *main_args;
-{
+int expertd_main() {
 	FILE *fopen();
 	void *doit(int);
 	char domainname[CA_MAXHOSTNAMELEN+1];
@@ -155,7 +153,7 @@ int main()
 #if ! defined(_WIN32)
 	if ((maxfds = Cinitdaemon ("expertd", NULL)) < 0)
 		exit (EXP_SYERR);
-	exit (expertd_main (NULL));
+	exit (expertd_main());
 #else
 	if (Cinitservice ("expertd", &expertd_main))
 		exit (EXP_SYERR);
@@ -219,8 +217,7 @@ int getreq(s, magic, req_type, req_data, data_len, clienthost)
 	}
 }
 
-int procreq(magic, req_type, req_data, data_len, clienthost, s)
-     int magic;
+int procreq(req_type, req_data, data_len, clienthost, s)
      int req_type;
      char *req_data;
      int data_len;
@@ -228,7 +225,7 @@ int procreq(magic, req_type, req_data, data_len, clienthost, s)
      int s;
 {
 	int c;
-
+  (void)data_len;
 	switch (req_type) {
 
 	case EXP_EXECUTE:
@@ -237,7 +234,7 @@ int procreq(magic, req_type, req_data, data_len, clienthost, s)
 	case EXP_RQ_RECALLER:
 	case EXP_RQ_GC:
 	case EXP_RQ_REPLICATION:
-		c = exp_srv_execute (req_type, magic, req_data, clienthost, s);
+		c = exp_srv_execute (req_type, req_data, clienthost, s);
 		break;
 
 	default:
@@ -266,7 +263,7 @@ doit(s)
 
 	if ((c = getreq (s, &magic, &req_type,
 			 &req_data, &data_len, &clienthost)) == 0)
-		procreq (magic, req_type, req_data, data_len, clienthost, s);
+		procreq (req_type, req_data, data_len, clienthost, s);
 	else if (c > 0)
 		sendrep (s, EXP_RP_STATUS, EXP_ST_ERROR, c);
 	else

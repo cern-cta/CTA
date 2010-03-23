@@ -45,7 +45,7 @@ castor::stager::daemon::CleaningThread::CleaningThread() throw () {}
 //-----------------------------------------------------------------------------
 // run
 //-----------------------------------------------------------------------------
-void castor::stager::daemon::CleaningThread::run(void* param) throw() {
+void castor::stager::daemon::CleaningThread::run(void*) throw() {
   try {
     // get the GCSvc
     castor::Services* svcs = castor::BaseObject::services();

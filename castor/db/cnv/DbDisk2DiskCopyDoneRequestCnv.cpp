@@ -174,21 +174,21 @@ void castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::reset() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::ObjType() {
+unsigned int castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::ObjType() {
   return castor::stager::Disk2DiskCopyDoneRequest::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::objType() const {
+unsigned int castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::objType() const {
   return ObjType();
 }
 
 //------------------------------------------------------------------------------
 // fillRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::fillRep(castor::IAddress* address,
+void castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::fillRep(castor::IAddress*,
                                                              castor::IObject* object,
                                                              unsigned int type,
                                                              bool endTransaction)
@@ -271,7 +271,7 @@ void castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::fillRepIClient(castor::stag
 //------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::fillObj(castor::IAddress* address,
+void castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::fillObj(castor::IAddress*,
                                                              castor::IObject* object,
                                                              unsigned int type,
                                                              bool endTransaction)
@@ -376,7 +376,7 @@ void castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::fillObjIClient(castor::stag
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::createRep(castor::IAddress* address,
+void castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::createRep(castor::IAddress*,
                                                                castor::IObject* object,
                                                                bool endTransaction,
                                                                unsigned int type)
@@ -465,7 +465,7 @@ void castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::createRep(castor::IAddress*
 //------------------------------------------------------------------------------
 // bulkCreateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::bulkCreateRep(castor::IAddress* address,
+void castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::bulkCreateRep(castor::IAddress*,
                                                                    std::vector<castor::IObject*> &objects,
                                                                    bool endTransaction,
                                                                    unsigned int type)
@@ -940,7 +940,7 @@ void castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::bulkCreateRep(castor::IAddr
 //------------------------------------------------------------------------------
 // updateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::updateRep(castor::IAddress* address,
+void castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::updateRep(castor::IAddress*,
                                                                castor::IObject* object,
                                                                bool endTransaction)
   throw (castor::exception::Exception) {
@@ -992,7 +992,7 @@ void castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::updateRep(castor::IAddress*
 //------------------------------------------------------------------------------
 // deleteRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::deleteRep(castor::IAddress* address,
+void castor::db::cnv::DbDisk2DiskCopyDoneRequestCnv::deleteRep(castor::IAddress*,
                                                                castor::IObject* object,
                                                                bool endTransaction)
   throw (castor::exception::Exception) {

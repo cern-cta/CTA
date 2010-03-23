@@ -517,6 +517,7 @@ int CASTOR2ext_handle_open(char *path, int flags, int mode, globus_l_gfs_CASTOR2
    char *	func="CASTOR2ext_handle_open";
    char *       p;
    
+   (void)CASTOR2ext_handle;
    host=NULL;
    
    p=path; /* remove first slashes */
@@ -572,7 +573,7 @@ globus_l_gfs_rfio_net_read_cb(
 			else {
 				bytes_written = rfio_write(CASTOR2ext_handle->fd, buffer, nbytes);
 				if(bytes_written < nbytes) {
-					if (bytes_written >= 0) serrno = ENOSPC;
+					serrno = ENOSPC;
 					CASTOR2ext_handle->cached_res = globus_l_gfs_rfio_make_error("write");
 					CASTOR2ext_handle->done = GLOBUS_TRUE;
 				} else globus_gridftp_server_update_bytes_written(op, offset,nbytes);
@@ -825,7 +826,9 @@ globus_l_gfs_CASTOR2ext_send_next_to_client(
 		}
 	}
 	
-	if(CASTOR2ext_handle->blk_length == -1 ||	CASTOR2ext_handle->blk_length > CASTOR2ext_handle->block_size) read_length = CASTOR2ext_handle->block_size;
+	if (CASTOR2ext_handle->blk_length == -1 ||
+      (globus_size_t)CASTOR2ext_handle->blk_length > CASTOR2ext_handle->block_size)
+    read_length = CASTOR2ext_handle->block_size;
 	else read_length = CASTOR2ext_handle->blk_length;
 	
 	start_offset = rfio_lseek64(CASTOR2ext_handle->fd, CASTOR2ext_handle->blk_offset, SEEK_SET);
@@ -915,6 +918,7 @@ globus_l_gfs_net_write_cb(
 	globus_l_gfs_CASTOR2ext_handle_t *         CASTOR2ext_handle;
 	char * 					func="globus_l_gfs_net_write_cb";
 
+  (void)nbytes;
 	CASTOR2ext_handle = (globus_l_gfs_CASTOR2ext_handle_t *) user_arg;
 	
 	globus_free(buffer); 
@@ -976,7 +980,8 @@ GlobusExtensionDefineModule(globus_gridftp_server_CASTOR2) =
     globus_l_gfs_CASTOR2ext_deactivate,
     NULL,
     NULL,
-    &local_version
+    &local_version,
+    NULL
 };
 
 /*

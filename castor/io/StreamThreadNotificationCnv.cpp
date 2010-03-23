@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamThreadNotificationCnv.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/03/14 10:40:28 $ $Author: sponcec3 $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
  * 
  *
@@ -63,14 +63,14 @@ castor::io::StreamThreadNotificationCnv::~StreamThreadNotificationCnv() throw() 
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamThreadNotificationCnv::ObjType() {
+unsigned int castor::io::StreamThreadNotificationCnv::ObjType() {
   return castor::server::ThreadNotification::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamThreadNotificationCnv::objType() const {
+unsigned int castor::io::StreamThreadNotificationCnv::objType() const {
   return ObjType();
 }
 
@@ -79,8 +79,8 @@ const unsigned int castor::io::StreamThreadNotificationCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamThreadNotificationCnv::createRep(castor::IAddress* address,
                                                         castor::IObject* object,
-                                                        bool endTransaction,
-                                                        unsigned int type)
+                                                        bool,
+                                                        unsigned int)
   throw (castor::exception::Exception) {
   castor::server::ThreadNotification* obj = 
     dynamic_cast<castor::server::ThreadNotification*>(object);

@@ -117,9 +117,8 @@ void handleFileQuery(int argc, char *argv[], int nbArgs);
  * handles a DiskPool request
  * @param argc the number of arguments on the command line
  * @param argv the command line
- * @param nbArgs the number of arguments to the command
  */
-void handleDiskPoolQuery(int argc, char *argv[], int nbArgs);
+void handleDiskPoolQuery(int argc, char *argv[]);
 
 /**
  * parses the command line for a file query
@@ -168,7 +167,7 @@ int main(int argc, char *argv[]) {
       usage(argv[0]);
       exit(EXIT_FAILURE);
     }
-    handleDiskPoolQuery(argc, argv, nbArgs);
+    handleDiskPoolQuery(argc, argv);
     break;
   }
   return 0;
@@ -255,7 +254,7 @@ void handleFileQuery(int argc, char *argv[], int nbArgs) {
 // -----------------------------------------------------------------------
 // handleDiskPoolQuery
 // -----------------------------------------------------------------------
-void handleDiskPoolQuery(int argc, char *argv[], int nbArgs) {
+void handleDiskPoolQuery(int argc, char *argv[]) {
 
   int errflg;
   char errbuf[BUFSIZE];

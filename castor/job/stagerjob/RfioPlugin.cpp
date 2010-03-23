@@ -170,7 +170,7 @@ void castor::job::stagerjob::RfioPlugin::setEnvironment
 // getEnvironment
 //------------------------------------------------------------------------------
 void castor::job::stagerjob::RfioPlugin::getEnvironment
-(InputArguments &args, EnvironmentRfio &env) throw () {
+(InputArguments&, EnvironmentRfio &env) throw () {
   // Globus location, required to resolved some dependencies
   const char* globus_location = getconfent("CSEC", "GLOBUS_LOCATION", 0);
   if (globus_location == NULL) {

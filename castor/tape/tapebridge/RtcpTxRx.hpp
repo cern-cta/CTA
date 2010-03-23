@@ -200,12 +200,12 @@ public:
    * the received message body.
    */
   template<class T> static void receiveMsgBody(
-    const Cuuid_t                  &cuuid,
-    const uint32_t                 volReqId,
-    const int                      socketFd,
-    const int                      netReadWriteTimeout,
+    const Cuuid_t &cuuid,
+    const uint32_t volReqId,
+    const int socketFd,
+    const int,
     const legacymsg::MessageHeader &header,
-    T                              &body) throw(castor::exception::Exception) {
+    T &body) throw(castor::exception::Exception) {
 
     // Length of body buffer = Length of message buffer - length of header
     char bodyBuf[RTCPMSGBUFSIZE - 3 * sizeof(uint32_t)];

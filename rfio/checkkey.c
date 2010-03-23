@@ -91,7 +91,7 @@ int connecttpread(host,aport)
     log(LOG_INFO,"Attempt to give key from outside site rejected\n");
     return  -1 ;
   }
-  if ( setnetio(sock) == -1 ) {
+  if ( setnetio() == -1 ) {
     log(LOG_ERR,"error in setnetio()\n") ;
     (void) close(sock) ;
     return -1 ;

@@ -64,8 +64,8 @@ static void rfio_setup_ext(iop,uid,gid,passwd)
   else
     iop->mapping=1;
   iop->passwd=passwd; /* used only if mapping == 0 */
-  iop->uid = (uid==0 ? geteuid(): uid);
-  iop->gid = (gid==0 ? getegid(): gid);
+  iop->uid = (uid==0 ? geteuid(): (uid_t)uid);
+  iop->gid = (gid==0 ? getegid(): (gid_t)gid);
   INIT_TRACE("RFIO_TRACE");
   TRACE ( 1,"rfio","rfio_setup_ext(%d,%d,%d)",iop,uid,gid);
   TRACE ( 2,"rfio","rfio_setup_ext: owner s uid is %d",iop->uid);
@@ -464,7 +464,7 @@ int rfio_open_ext(filepath, flags, mode,uid,gid,passwd,reqhost,vmstr)
    * Getting status and current offset.
    */
   TRACE(1, "rfio", "rfio_open: reading %d bytes",rfp->_iobuf.hsize) ;
-  if (netread_timeout(rfp->s,rfio_buf,rfp->_iobuf.hsize, RFIO_CTRL_TIMEOUT) != rfp->_iobuf.hsize ) {
+  if (netread_timeout(rfp->s,rfio_buf,rfp->_iobuf.hsize, RFIO_CTRL_TIMEOUT) != (ssize_t)rfp->_iobuf.hsize ) {
     TRACE(2, "rfio", "rfio_open: read(): ERROR occured (errno=%d)", errno);
     syslog(LOG_ALERT, "rfio: open: %s (error %d with %s) [uid=%d,gid=%d,pid=%d] in netread(%d,0X%lX,%d)",
            strerror(errno), errno, rfp->host, rfp->uid, rfp->gid, getpid(), rfp->s, (unsigned long) rfio_buf, RQSTSIZE+len);

@@ -48,7 +48,9 @@ int rfio_handle_open(const char *lfn,
                      char **pfn,
                      void **ctx,
                      int *need_user_check) {
-
+  (void)uid;
+  (void)gid;
+  (void)need_user_check;
   if (subrequest_id > 0) {
     /* rfiod started with -Z option and option value > 0 */
     struct internal_context *internal_context = calloc(1, sizeof(struct internal_context));
@@ -174,6 +176,7 @@ int rfio_handle_close(void *ctx,
   char     csumtype[CA_MAXCKSUMNAMELEN+1];
   char     *conf_ent;
 
+  (void)filestat;
   if (internal_context != NULL) {
     struct Cstager_IJobSvc_t **jobSvc;
     struct C_Services_t **dbService;

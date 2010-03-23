@@ -154,8 +154,8 @@ void castor::vdqm::VdqmMagic4ProtocolInterpreter::readAggregatorVolReq(
 //------------------------------------------------------------------------------
 // sendAggregatorVolReq
 //------------------------------------------------------------------------------
-void castor::vdqm::VdqmMagic4ProtocolInterpreter::sendAggregatorVolReqToClient(
-  vdqmHdr_t &header, vdqmVolReq_t &msg) throw(castor::exception::Exception) {
+void castor::vdqm::VdqmMagic4ProtocolInterpreter::sendAggregatorVolReqToClient
+(vdqmHdr_t&, vdqmVolReq_t &msg) throw(castor::exception::Exception) {
 
   char *p = NULL;
 

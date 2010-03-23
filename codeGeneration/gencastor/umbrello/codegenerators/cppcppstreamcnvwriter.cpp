@@ -91,21 +91,23 @@ void CppCppStreamCnvWriter::writeConstructors() {
 //=============================================================================
 // writeCreateRepContent
 //=============================================================================
-void CppCppStreamCnvWriter::writeCreateRepContent() {
+void CppCppStreamCnvWriter::writeCreateRepContent(QTextStream &stream, bool &addressUsed,
+                                                  bool &endTransUsed, bool &typeUsed) {
   // Get the precise address
-  *m_stream << getIndent() << fixTypeName("StreamAddress",
-                                          "castor::io",
-                                          m_classInfo->packageName)
-            << "* ad = " << endl
-            << getIndent() << "  dynamic_cast<"
-            << fixTypeName("StreamAddress",
-                           "castor::io",
-                           m_classInfo->packageName)
-            << "*>(address);"
-            << endl;
+  addressUsed = true;
+  stream << getIndent() << fixTypeName("StreamAddress",
+                                       "castor::io",
+                                       m_classInfo->packageName)
+         << "* ad = " << endl
+         << getIndent() << "  dynamic_cast<"
+         << fixTypeName("StreamAddress",
+                        "castor::io",
+                        m_classInfo->packageName)
+         << "*>(address);"
+         << endl;
   // Save the type
-  *m_stream << getIndent()
-            << "ad->stream() << obj->type();" << endl;
+  stream << getIndent()
+         << "ad->stream() << obj->type();" << endl;
   // create a list of members to be saved
   MemberList members = createMembersList();
   // Go through the members
@@ -117,26 +119,26 @@ void CppCppStreamCnvWriter::writeCreateRepContent() {
     // don't take into account members that only appear in the DB world
     if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
     // Otherwise, stream the member;
-    *m_stream << getIndent() << "ad->stream()";
+    stream << getIndent() << "ad->stream()";
     if (mem->typeName.find('[') > 0) {
       QString sl = mem->typeName;
       sl = sl.left(sl.find(']'));
       sl = sl.right(sl.length() - sl.find('[') - 1);
       int l = atoi(sl.ascii());
       for (int i = 0; i < l; i++) {
-        *m_stream << " << obj->" << mem->name << "()[" << i << "]";
+        stream << " << obj->" << mem->name << "()[" << i << "]";
       }
     } else {
       if (mem->name == "flags") {
         // Special case of the "flags" member that should be mapped to "network"
         // (actually linux) bit maps
         addInclude("<rfcntl.h>");
-        *m_stream << " << htolopnflg(obj->" << mem->name << "())";
+        stream << " << htolopnflg(obj->" << mem->name << "())";
       } else {
-        *m_stream << " << obj->" << mem->name << "()";
+        stream << " << obj->" << mem->name << "()";
       }
     }
-    *m_stream << ";" << endl;
+    stream << ";" << endl;
   }
   // create a list of associations
   AssocList assocs = createAssocsList();
@@ -149,8 +151,8 @@ void CppCppStreamCnvWriter::writeCreateRepContent() {
     if (as->type.multiRemote == MULT_ONE &&
         isEnum(as->remotePart.typeName) &&
         as->remotePart.stereotype != "enumerationNoStream") {
-      *m_stream << getIndent() << "ad->stream() << obj->"
-                << as->remotePart.name << "();" << endl;
+      stream << getIndent() << "ad->stream() << obj->"
+             << as->remotePart.name << "();" << endl;
     }
   }
 }

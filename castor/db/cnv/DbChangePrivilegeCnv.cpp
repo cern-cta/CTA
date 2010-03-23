@@ -220,21 +220,21 @@ void castor::db::cnv::DbChangePrivilegeCnv::reset() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbChangePrivilegeCnv::ObjType() {
+unsigned int castor::db::cnv::DbChangePrivilegeCnv::ObjType() {
   return castor::bwlist::ChangePrivilege::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::cnv::DbChangePrivilegeCnv::objType() const {
+unsigned int castor::db::cnv::DbChangePrivilegeCnv::objType() const {
   return ObjType();
 }
 
 //------------------------------------------------------------------------------
 // fillRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbChangePrivilegeCnv::fillRep(castor::IAddress* address,
+void castor::db::cnv::DbChangePrivilegeCnv::fillRep(castor::IAddress*,
                                                     castor::IObject* object,
                                                     unsigned int type,
                                                     bool endTransaction)
@@ -429,7 +429,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillRepRequestType(castor::bwlist::C
 //------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbChangePrivilegeCnv::fillObj(castor::IAddress* address,
+void castor::db::cnv::DbChangePrivilegeCnv::fillObj(castor::IAddress*,
                                                     castor::IObject* object,
                                                     unsigned int type,
                                                     bool endTransaction)
@@ -644,7 +644,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillObjRequestType(castor::bwlist::C
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbChangePrivilegeCnv::createRep(castor::IAddress* address,
+void castor::db::cnv::DbChangePrivilegeCnv::createRep(castor::IAddress*,
                                                       castor::IObject* object,
                                                       bool endTransaction,
                                                       unsigned int type)
@@ -727,7 +727,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::createRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // bulkCreateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbChangePrivilegeCnv::bulkCreateRep(castor::IAddress* address,
+void castor::db::cnv::DbChangePrivilegeCnv::bulkCreateRep(castor::IAddress*,
                                                           std::vector<castor::IObject*> &objects,
                                                           bool endTransaction,
                                                           unsigned int type)
@@ -1140,7 +1140,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::bulkCreateRep(castor::IAddress* addr
 //------------------------------------------------------------------------------
 // updateRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbChangePrivilegeCnv::updateRep(castor::IAddress* address,
+void castor::db::cnv::DbChangePrivilegeCnv::updateRep(castor::IAddress*,
                                                       castor::IObject* object,
                                                       bool endTransaction)
   throw (castor::exception::Exception) {
@@ -1189,7 +1189,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::updateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // deleteRep
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbChangePrivilegeCnv::deleteRep(castor::IAddress* address,
+void castor::db::cnv::DbChangePrivilegeCnv::deleteRep(castor::IAddress*,
                                                       castor::IObject* object,
                                                       bool endTransaction)
   throw (castor::exception::Exception) {

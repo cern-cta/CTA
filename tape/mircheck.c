@@ -115,19 +115,3 @@ int is_mir_invalid_load(int tapefd, char *path, char *devtype) {
 int is_mir_invalid_unload(int tapefd, char *path, char *devtype) {
     return is_mir_invalid(tapefd, path, devtype, MIR_INVALID_UNLOAD);
 }
-
-/*
- * Function called after tape is mounted so as to perform some checks
- */
-
-int
-post_mount_check(tapefd, path, devtype)
-int tapefd;
-char *path;
-char *devtype;
-{
-
-
-        return 0;
-}
-

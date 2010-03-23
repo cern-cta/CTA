@@ -927,14 +927,14 @@ void castor::tape::tapebridge::ClientTxRx::receiveNotificationReplyAndClose(
 // notifyClient
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::ClientTxRx::notifyClient(
-  const Cuuid_t        &cuuid,
-  const uint32_t       mountTransactionId,
-  const uint64_t       aggregatorTransactionId,
-  const char           *requestTypeName,
-  const char           *clientHost,
+  const Cuuid_t&,
+  const uint32_t mountTransactionId,
+  const uint64_t aggregatorTransactionId,
+  const char* requestTypeName,
+  const char* clientHost,
   const unsigned short clientPort,
-  const int            clientNetRWTimeout,
-  IObject              &request)
+  const int,
+  IObject& request)
   throw(castor::exception::Exception) {
 
   // Send the request and receive the reply
@@ -982,9 +982,7 @@ void castor::tape::tapebridge::ClientTxRx::notifyClient(
 // throwEndNotificationErrorReport
 //-----------------------------------------------------------------------------
 void  castor::tape::tapebridge::ClientTxRx::throwEndNotificationErrorReport(
-  const uint32_t mountTransactionId,
-  const uint64_t aggregatorTransactionId,
-  IObject *const obj)
+  const uint32_t, const uint64_t, IObject *const obj)
   throw(castor::exception::Exception) {
 
   // Down cast the reply to its specific class

@@ -64,14 +64,14 @@ castor::io::StreamJobSubmissionRequestCnv::~StreamJobSubmissionRequestCnv() thro
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamJobSubmissionRequestCnv::ObjType() {
+unsigned int castor::io::StreamJobSubmissionRequestCnv::ObjType() {
   return castor::jobmanager::JobSubmissionRequest::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamJobSubmissionRequestCnv::objType() const {
+unsigned int castor::io::StreamJobSubmissionRequestCnv::objType() const {
   return ObjType();
 }
 
@@ -80,8 +80,8 @@ const unsigned int castor::io::StreamJobSubmissionRequestCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamJobSubmissionRequestCnv::createRep(castor::IAddress* address,
                                                           castor::IObject* object,
-                                                          bool endTransaction,
-                                                          unsigned int type)
+                                                          bool,
+                                                          unsigned int)
   throw (castor::exception::Exception) {
   castor::jobmanager::JobSubmissionRequest* obj = 
     dynamic_cast<castor::jobmanager::JobSubmissionRequest*>(object);

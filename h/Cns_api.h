@@ -37,7 +37,7 @@ int *C__Cns_errno();
 struct Cns_api_thread_info {
 	u_signed64	cwd;		/* current HSM working directory */
 	char *		errbufp;
-	int		errbuflen;
+	size_t		errbuflen;
 	int		initialized;
 	int		ns_errno;
 	int		fd;

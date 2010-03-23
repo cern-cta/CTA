@@ -70,6 +70,8 @@ static char *GSI_DN_header = "";
  */
 int (CSEC_METHOD_NAME(Csec_map2name, MECH))(FPARG, Csec_context_t *ctx, const char *principal, char *name, int maxnamelen) {
     char *p;
+    (void)FP;
+    (void)ctx;
 #ifdef KRB5
     p = strchr(principal, SEP);
     if (p== NULL) {
@@ -119,7 +121,7 @@ int (CSEC_METHOD_NAME(Csec_get_service_name, MECH))(FPARG, Csec_context_t *ctx, 
     char *func = "Csec_get_service_name";
 
 /*     Csec_end_trim(host); */
-    
+    (void)ctx;
     Csec_trace(func, "Type: %d, host:<%s> domain:<%s> (%p,%d)\n",
                service_type,
                host,

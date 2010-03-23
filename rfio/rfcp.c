@@ -302,7 +302,6 @@ int main(argc, argv)
   }
 #endif
   /* We remove double slashes in both inpfile and outfile */
-  //cleanpath(inpfile,inpfile);
   if (rfio_stat64(outfile, &sbuf2) == 0) {
     if (S_ISDIR(sbuf2.st_mode)) {
       /* Not allowed if inpfile is stdin */
@@ -331,7 +330,6 @@ int main(argc, argv)
   }
 
   /* We remove double slashes in renegerated outfile */
-  //cleanpath(filename,filename);
   strcpy(filename_sav,filename);
 
   l1 = rfio_parseln( inpfile , &host1, &path1, NORDLINKS ) ;
@@ -581,7 +579,7 @@ int main(argc, argv)
     }
 
     if (have_maxsize < 0) {
-      rc2 = (inpfile_size == size ? OK : ((strcmp(inpfile,"-") == 0) ? OK : SYERR));
+      rc2 = ((off64_t)inpfile_size == size ? OK : ((strcmp(inpfile,"-") == 0) ? OK : SYERR));
       if (rc2 == SYERR) {
 #ifdef _WIN32
         if (binmode != O_BINARY) {
@@ -598,7 +596,7 @@ int main(argc, argv)
       }
     } else {
       if (maxsize < inpfile_size) { /* If input is "-", inpfile_size is zero */
-        rc2 = (maxsize == size ? OK : SYERR);
+        rc2 = ((off64_t)maxsize == size ? OK : SYERR);
         if (rc2 == SYERR) {
 #ifdef _WIN32
           if (binmode != O_BINARY) {
@@ -612,7 +610,7 @@ int main(argc, argv)
 #endif
         }
       } else {
-        rc2 = (inpfile_size == size ? OK : ((strcmp(inpfile,"-") == 0) ? OK : SYERR));
+        rc2 = ((off64_t)inpfile_size == size ? OK : ((strcmp(inpfile,"-") == 0) ? OK : SYERR));
         if (rc2 == SYERR) {
 #ifdef _WIN32
           if (binmode != O_BINARY) {
@@ -679,7 +677,7 @@ off64_t copyfile(fd1, fd2, name, maxsize)
 
   do {
     if (have_maxsize != -1) {
-      if ((maxsize - total_bytes) < bufsize)
+      if ((maxsize - total_bytes) < (u_signed64)bufsize)
         bufsize = maxsize - total_bytes;
     }
     serrno = rfio_errno = 0;
@@ -790,15 +788,6 @@ void copyfile_stgcleanup(sig)
   /* Disabling this function for the new stager as stage_rm is not implemented yet */
   exit(USERR);
   return;
-}
-
-int cleanpath(output,input)
-     char *output;
-     char *input;
-{
-  /* BC 2005-01-05 */
-  /* Disabling this function as it clashes with the TURL parsing: rfio://.... */
-  return 0;
 }
 
 #ifndef _WIN32

@@ -67,14 +67,14 @@ castor::io::StreamFileSystemStateReportCnv::~StreamFileSystemStateReportCnv() th
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamFileSystemStateReportCnv::ObjType() {
+unsigned int castor::io::StreamFileSystemStateReportCnv::ObjType() {
   return castor::monitoring::FileSystemStateReport::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamFileSystemStateReportCnv::objType() const {
+unsigned int castor::io::StreamFileSystemStateReportCnv::objType() const {
   return ObjType();
 }
 
@@ -83,8 +83,8 @@ const unsigned int castor::io::StreamFileSystemStateReportCnv::objType() const {
 //------------------------------------------------------------------------------
 void castor::io::StreamFileSystemStateReportCnv::createRep(castor::IAddress* address,
                                                            castor::IObject* object,
-                                                           bool endTransaction,
-                                                           unsigned int type)
+                                                           bool,
+                                                           unsigned int)
   throw (castor::exception::Exception) {
   castor::monitoring::FileSystemStateReport* obj = 
     dynamic_cast<castor::monitoring::FileSystemStateReport*>(object);

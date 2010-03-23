@@ -71,7 +71,7 @@ castor::monitoring::rmmaster::HeartbeatThread::HeartbeatThread
 //-----------------------------------------------------------------------------
 // Run
 //-----------------------------------------------------------------------------
-void castor::monitoring::rmmaster::HeartbeatThread::run(void* par) throw() {
+void castor::monitoring::rmmaster::HeartbeatThread::run(void*) throw() {
   try {
 
     // "Heartbeat thread running"

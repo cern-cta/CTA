@@ -535,7 +535,7 @@ void castor::tape::tapebridge::RtcpTxRx::tellRtcpdToAbort(const Cuuid_t &cuuid,
 // receiveRtcpJobRqst
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::RtcpTxRx::receiveRtcpJobRqst(const Cuuid_t &cuuid,
-  const int socketFd, const int netReadWriteTimeout,
+  const int socketFd, const int,
   legacymsg::RtcpJobRqstMsgBody &request) throw(castor::exception::Exception) {
 
   castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
@@ -718,7 +718,7 @@ void castor::tape::tapebridge::RtcpTxRx::askRtcpdToRequestMoreWork(
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::RtcpTxRx::giveFileToRtcpd(
   const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
-  const int netReadWriteTimeout, const uint32_t mode,
+  const int, const uint32_t mode,
   const char *const filePath, const uint64_t fileSize,
   const char *const tapePath, const char *const recordFormat,
   const char *const tapeFileId, const uint32_t umask,
@@ -772,7 +772,7 @@ void castor::tape::tapebridge::RtcpTxRx::giveFileToRtcpd(
 // checkMagic
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::RtcpTxRx::checkMagic(const uint32_t expected,
-  const uint32_t actual, const char *function)
+  const uint32_t actual, const char*)
   throw(castor::exception::Exception) {
 
   if(expected != actual) {
@@ -802,7 +802,7 @@ void castor::tape::tapebridge::RtcpTxRx::checkRtcopyReqType(
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::RtcpTxRx::checkRtcopyReqType(
   const uint32_t *expected, const size_t nbExpected, const uint32_t actual,
-  const char *function) throw(castor::exception::Exception) {
+  const char*) throw(castor::exception::Exception) {
 
   size_t i = 0;
 
