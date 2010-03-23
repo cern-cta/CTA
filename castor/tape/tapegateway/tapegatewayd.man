@@ -21,39 +21,34 @@ The tapegatewayd relies on the DLF logging interface. Logs can be accessed by we
 .BI \-f
 To run in foreground
 
-There are several parameters that can be provided in the : 
-.B /etc/castor/castor.conf 
-
-There are four parameters used to specify the location of the files, where all the policy functions are declared, and the name of them.
-These policies are used by the system to tune the number of times that failed recalls/migrations should be retried.
-  
-i.e. :
-
-.B Policy  RetryMigration  /etc/castor/policies/migrationRetry.py
-
-.B Policy  RetryMigrationFunction migrationRetry
-
-.B Policy  RetryRecall     /etc/castor/policies/recallRetry.py
-
-.B Policy  RetryRecallFunction     recallRetry
-
-If RetryMigration and/or RetryMigrationFunction are not provided, all the failed  migrations will be always retried.
-If RetryMigrationRecall and/or RetryRecallFunction are not provided, all the failed  recalls will be always retried.
-
-There are also paramenter to change the max/min number of threads for the thread pool in charge to serve Tapebridge's requests.
-
-i.e. :
-
-.B TAPEGATEWAY MINWORKERTHREADS    5
-.B TAPEGATEWAY MAXWORKERTHREADS    240
-
-If these parameters are not provided the default ones are used: 5 as minimum, 240 as maximum.
-
-The port used for the comunication between the Tapebridge and the tapegateway is also defined in this file.
-
-.B TAPEGATEWAY     PORT    62801
-
-If the port is not provided, 62801 is used as default.
+.SH CASTOR CONFIGURATION PARAMETERS
+The tapegateway daemon reads and uses the following CASTOR configuration
+parameters which are specified within the CASTOR configuration file (the
+default location is /etc/castor/castor.conf).
+.TP
+\fBTAPEGATEWAY MINWORKERTHREADS
+Specifies the minimum number of threads in the Worker thread pool.
+.TP
+\fBTAPEGATEWAY MAXWORKERTHREADS
+Specifies the maximum number of threads that can be in the Worker thread pool.
+.TP
+\fBTAPEGATEWAY PORT
+Specifies the TCP/IP port used by the tapegateway to receive messages from the
+tape server.  The default is 62801 and should NOT normally be modified.
+.TP
+\fBTAPEGATEWAY MIG_RETRY_POLICY
+Specifies the name of the Python module used by the tapegateway daemon to
+decide what to to do with failed migrations.  The module should contain a
+Python function with the same name as the module.  The tapegateway daemon
+will always call that function.  If this parameter is not specified then all
+failed migrations will be retried.
+.TP
+\fBTAPEGATEWAY REC_RETRY_POLICY
+Specifies the name of the Python module used by the tapegateway daemon to
+decide what to to do with failed recalls.  The module should contain a Python
+function with the same name as the module.  The tapegateway daemon will always
+call that function.  If this parameter is not specified then all
+failed recalls will be retried.
 
 .SH EXAMPLE
 .fi
