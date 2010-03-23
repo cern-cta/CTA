@@ -96,9 +96,9 @@ specify the location of the file where all the policy functions are declared.
 
 e.g.:
 
-.B Policy Migration /etc/castor/policies/migrationPolicies.py
+.B MIGHUNTER MIGRATION_POLICY migration
 
-.B Policy Stream  /etc/castor/policies/streamPolicies.py
+.B MIGHUNTER STREAM_POLICY stream
 
 Then for each svcclass we specify in the database the function that we want to execute between the ones declared in the file.
 If no function is specified we act like the policy allows the operation.
