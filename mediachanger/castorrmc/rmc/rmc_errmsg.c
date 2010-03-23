@@ -40,7 +40,7 @@ int rmc_errmsg(char *func, char *msg, ...)
 		*prtbuf = '\0';
 	vsprintf (prtbuf + strlen(prtbuf), msg, args);
 	if (errbufp) {
-		if (strlen (prtbuf) < errbuflen) {
+		if ((int)strlen (prtbuf) < errbuflen) {
 			strcpy (errbufp, prtbuf);
 		} else {
 			strncpy (errbufp, prtbuf, errbuflen - 2);

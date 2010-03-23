@@ -283,14 +283,14 @@ char *_Cregexp_branch _PROTO((int *, char **, int *, char *, char **, long *));
 char *_Cregexp_piece _PROTO((int *, char **, int *, char *, char **, long *));
 char *_Cregexp_atom _PROTO((int *, char **, int *, char *, char **, long *));
 char *_Cregexp_node _PROTO(());
-char *_Cregexp_next _PROTO((char *, char **, int *, char *, char **, long *));
+char *_Cregexp_next _PROTO((char *, char *));
 void _Cregexp_c _PROTO(());
 void _Cregexp_insert _PROTO(());
-void _Cregexp_tail _PROTO((char *, char *, char **, int *, char *, char **, long *));
-void _Cregexp_optail _PROTO((char *, char *, char **, int *, char *, char **, long *));
+void _Cregexp_tail _PROTO((char *, char *, char *));
+void _Cregexp_optail _PROTO((char *, char *, char *));
 int _Cregexp_try _PROTO((Cregexp_t *, char *, char **, int *, char *, char **, long *, char **, char **, char ***, char ***));
 int _Cregexp_match _PROTO((char *, char **, int *, char *, char **, long *, char **, char **, char ***, char ***));
-int _Cregexp_repeat _PROTO((char *, char **, int *, char *, char **, long *, char **, char **, char ***, char ***));
+int _Cregexp_repeat _PROTO((char *, char **));
 int _Cregexp_gettsd _PROTO((char ***, int **, char **, char ***, long **, char ***, char ***, char ****, char ****));
 char *_Cregexp_prop _PROTO((char *));
 
@@ -390,8 +390,6 @@ Cregexp_t DLL_DECL *Cregexp_comp(exp)
 	*_Cregexp_size = 0;
 	*_Cregexp_code = _Cregexp_dummy;
 	_Cregexp_c((char) CREGEXP_MAGIC,
-			   _Cregexp_parse,
-			   _Cregexp_npar,
 			   _Cregexp_dummy,
 			   _Cregexp_code,
 			   _Cregexp_size);
@@ -422,8 +420,6 @@ Cregexp_t DLL_DECL *Cregexp_comp(exp)
 	*_Cregexp_npar = 1;
 	*_Cregexp_code = r->program;
 	_Cregexp_c((char) CREGEXP_MAGIC,
-			   _Cregexp_parse,
-			   _Cregexp_npar,
 			   _Cregexp_dummy,
 			   _Cregexp_code,
 			   _Cregexp_size);
@@ -444,11 +440,7 @@ Cregexp_t DLL_DECL *Cregexp_comp(exp)
 	r->regmlen = 0;
 	scan = r->program + 1;			/* First BRANCH. */
 	if (OP(_Cregexp_next(scan,
-						 _Cregexp_parse,
-						 _Cregexp_npar,
-						 _Cregexp_dummy,
-						 _Cregexp_code,
-						 _Cregexp_size
+						 _Cregexp_dummy
 		)) == END) {		/* Only one top-level choice. */
 		scan = OPERAND(scan);
 
@@ -470,12 +462,8 @@ Cregexp_t DLL_DECL *Cregexp_comp(exp)
 			longest = NULL;
 			len = 0;
 			for (; scan != NULL; scan = _Cregexp_next(scan,
-													  _Cregexp_parse,
-													  _Cregexp_npar,
-													  _Cregexp_dummy,
-													  _Cregexp_code,
-													  _Cregexp_size))
-				if (OP(scan) == EXACTLY && strlen(OPERAND(scan)) >= len) {
+													  _Cregexp_dummy))
+				if (OP(scan) == EXACTLY && (int)strlen(OPERAND(scan)) >= len) {
 					longest = OPERAND(scan);
 					len = strlen(OPERAND(scan));
 				}
@@ -528,8 +516,6 @@ char *_Cregexp_reg(paren,
 		parno = *_Cregexp_npar;
 		(*_Cregexp_npar)++;
 		ret = _Cregexp_node((char) (OPEN+parno),
-							_Cregexp_parse,
-							_Cregexp_npar,
 							_Cregexp_dummy,
 							_Cregexp_code,
 							_Cregexp_size);
@@ -549,11 +535,7 @@ char *_Cregexp_reg(paren,
 	if (ret != NULL) {
 		_Cregexp_tail(ret,
 					  br,
-					  _Cregexp_parse,
-					  _Cregexp_npar,
-					  _Cregexp_dummy,
-					  _Cregexp_code,
-					  _Cregexp_size);	/* OPEN -> first. */
+					  _Cregexp_dummy);	/* OPEN -> first. */
 	} else {
 		ret = br;
 	}
@@ -573,11 +555,7 @@ char *_Cregexp_reg(paren,
 		}
 		_Cregexp_tail(ret,
 					  br,
-					  _Cregexp_parse,
-					  _Cregexp_npar,
-					  _Cregexp_dummy,
-					  _Cregexp_code,
-					  _Cregexp_size);	/* BRANCH -> BRANCH. */
+					  _Cregexp_dummy);	/* BRANCH -> BRANCH. */
 		if (! (flags & HASWIDTH)) {
 			*flagp &= ~HASWIDTH;
 		}
@@ -586,33 +564,19 @@ char *_Cregexp_reg(paren,
 
 	/* Make a closing node, and hook it on the end. */
 	ender = _Cregexp_node((char) ((paren) ? CLOSE+parno : END),
-						  _Cregexp_parse,
-						  _Cregexp_npar,
 						  _Cregexp_dummy,
 						  _Cregexp_code,
 						  _Cregexp_size);
 	_Cregexp_tail(ret,
 				  ender,
-				  _Cregexp_parse,
-				  _Cregexp_npar,
-				  _Cregexp_dummy,
-				  _Cregexp_code,
-				  _Cregexp_size);
+				  _Cregexp_dummy);
 
 	/* Hook the tails of the branches to the closing node. */
 	for (br = ret; br != NULL; br = _Cregexp_next(br,
-												  _Cregexp_parse,
-												  _Cregexp_npar,
-												  _Cregexp_dummy,
-												  _Cregexp_code,
-												  _Cregexp_size)) {
+												  _Cregexp_dummy)) {
 		_Cregexp_optail(br,
 						ender,
-						_Cregexp_parse,
-						_Cregexp_npar,
-						_Cregexp_dummy,
-						_Cregexp_code,
-						_Cregexp_size);
+						_Cregexp_dummy);
 	}
 
 	/* Check for proper termination. */
@@ -658,8 +622,6 @@ char *_Cregexp_branch(flagp,
 	*flagp = WORST;		/* Tentatively. */
 
 	ret = _Cregexp_node((char) BRANCH,
-						_Cregexp_parse,
-						_Cregexp_npar,
 						_Cregexp_dummy,
 						_Cregexp_code,
 						_Cregexp_size);
@@ -680,18 +642,12 @@ char *_Cregexp_branch(flagp,
 		} else {
 			_Cregexp_tail(chain,
 						  latest,
-						  _Cregexp_parse,
-						  _Cregexp_npar,
-						  _Cregexp_dummy,
-						  _Cregexp_code,
-						  _Cregexp_size);
+						  _Cregexp_dummy);
 		}
 		chain = latest;
 	}
 	if (chain == NULL) {	/* Loop ran zero times. */
 		_Cregexp_node((char) NOTHING,
-					  _Cregexp_parse,
-					  _Cregexp_npar,
 					  _Cregexp_dummy,
 					  _Cregexp_code,
 					  _Cregexp_size);
@@ -752,8 +708,6 @@ char *_Cregexp_piece(flagp,
 	if (op == '*' && (flags & SIMPLE)) {
 		_Cregexp_insert(STAR,
 						ret,
-						_Cregexp_parse,
-						_Cregexp_npar,
 						_Cregexp_dummy,
 						_Cregexp_code,
 						_Cregexp_size);
@@ -761,150 +715,82 @@ char *_Cregexp_piece(flagp,
 		/* Emit x* as (x&|), where & means "self". */
 		_Cregexp_insert(BRANCH,
 						ret,
-						_Cregexp_parse,
-						_Cregexp_npar,
 						_Cregexp_dummy,
 						_Cregexp_code,
 						_Cregexp_size);			/* Either x */
 		_Cregexp_optail(ret,
 						_Cregexp_node((char) BACK,
-									  _Cregexp_parse,
-									  _Cregexp_npar,
 									  _Cregexp_dummy,
 									  _Cregexp_code,
 									  _Cregexp_size),
-						_Cregexp_parse,
-						_Cregexp_npar,
-						_Cregexp_dummy,
-						_Cregexp_code,
-						_Cregexp_size);		/* and loop */
+						_Cregexp_dummy);		/* and loop */
 		_Cregexp_optail(ret,
 						ret,
-						_Cregexp_parse,
-						_Cregexp_npar,
-						_Cregexp_dummy,
-						_Cregexp_code,
-						_Cregexp_size);			/* back */
+						_Cregexp_dummy);			/* back */
 		_Cregexp_tail(ret,
 					  _Cregexp_node((char) BRANCH,
-									_Cregexp_parse,
-									_Cregexp_npar,
 									_Cregexp_dummy,
 									_Cregexp_code,
 									_Cregexp_size),
-					  _Cregexp_parse,
-					  _Cregexp_npar,
-					  _Cregexp_dummy,
-					  _Cregexp_code,
-					  _Cregexp_size);		/* or */
+					  _Cregexp_dummy);		/* or */
 		_Cregexp_tail(ret,
 					  _Cregexp_node((char) NOTHING,
-									_Cregexp_parse,
-									_Cregexp_npar,
 									_Cregexp_dummy,
 									_Cregexp_code,
 									_Cregexp_size),
-					  _Cregexp_parse,
-					  _Cregexp_npar,
-					  _Cregexp_dummy,
-					  _Cregexp_code,
-					  _Cregexp_size);		/* null. */
+					  _Cregexp_dummy);		/* null. */
 	} else if (op == '+' && (flags&SIMPLE)) {
 		_Cregexp_insert(PLUS,
 						ret,
-						_Cregexp_parse,
-						_Cregexp_npar,
 						_Cregexp_dummy,
 						_Cregexp_code,
 						_Cregexp_size);
 	} else if (op == '+') {
 		/* Emit x+ as x(&|), where & means "self". */
 		next = _Cregexp_node((char) BRANCH,
-							 _Cregexp_parse,
-							 _Cregexp_npar,
 							 _Cregexp_dummy,
 							 _Cregexp_code,
 							 _Cregexp_size);			/* Either */
 		_Cregexp_tail(ret,
 					  next,
-					  _Cregexp_parse,
-					  _Cregexp_npar,
-					  _Cregexp_dummy,
-					  _Cregexp_code,
-					  _Cregexp_size);
+					  _Cregexp_dummy);
 		_Cregexp_tail(_Cregexp_node((char) BACK,
-									_Cregexp_parse,
-									_Cregexp_npar,
 									_Cregexp_dummy,
 									_Cregexp_code,
 									_Cregexp_size),
 					  ret,
-					  _Cregexp_parse,
-					  _Cregexp_npar,
-					  _Cregexp_dummy,
-					  _Cregexp_code,
-					  _Cregexp_size);		/* loop back */
+					  _Cregexp_dummy);		/* loop back */
 		_Cregexp_tail(next,_Cregexp_node((char) BRANCH,
-										 _Cregexp_parse,
-										 _Cregexp_npar,
 										 _Cregexp_dummy,
 										 _Cregexp_code,
 										 _Cregexp_size),
-					  _Cregexp_parse,
-					  _Cregexp_npar,
-					  _Cregexp_dummy,
-					  _Cregexp_code,
-					  _Cregexp_size);		/* or */
+					  _Cregexp_dummy);		/* or */
 		_Cregexp_tail(ret,_Cregexp_node((char) NOTHING,
-										_Cregexp_parse,
-										_Cregexp_npar,
 										_Cregexp_dummy,
 										_Cregexp_code,
 										_Cregexp_size),
-					  _Cregexp_parse,
-					  _Cregexp_npar,
-					  _Cregexp_dummy,
-					  _Cregexp_code,
-					  _Cregexp_size);		/* null. */
+					  _Cregexp_dummy);		/* null. */
 	} else if (op == '?') {
 		/* Emit x? as (x|) */
 		_Cregexp_insert(BRANCH,
 						ret,
-						_Cregexp_parse,
-						_Cregexp_npar,
 						_Cregexp_dummy,
 						_Cregexp_code,
 						_Cregexp_size);			/* Either x */
 		_Cregexp_tail(ret,_Cregexp_node((char) BRANCH,
-										_Cregexp_parse,
-										_Cregexp_npar,
 										_Cregexp_dummy,
 										_Cregexp_code,
 										_Cregexp_size),
-					  _Cregexp_parse,
-					  _Cregexp_npar,
-					  _Cregexp_dummy,
-					  _Cregexp_code,
-					  _Cregexp_size);		/* or */
+					  _Cregexp_dummy);		/* or */
 		next = _Cregexp_node((char) NOTHING,
-							 _Cregexp_parse,
-							 _Cregexp_npar,
 							 _Cregexp_dummy,
 							 _Cregexp_code,
 							 _Cregexp_size);		/* null. */
 		_Cregexp_tail(ret,next,
-					  _Cregexp_parse,
-					  _Cregexp_npar,
-					  _Cregexp_dummy,
-					  _Cregexp_code,
-					  _Cregexp_size);
+					  _Cregexp_dummy);
 		_Cregexp_optail(ret,
 						next,
-						_Cregexp_parse,
-						_Cregexp_npar,
-						_Cregexp_dummy,
-						_Cregexp_code,
-						_Cregexp_size);
+						_Cregexp_dummy);
 	}
 	(*_Cregexp_parse)++;
 	if (ISMULT(*(*_Cregexp_parse))) {
@@ -946,24 +832,18 @@ char *_Cregexp_atom(flagp,
 	switch (*(*_Cregexp_parse)++) {
 	case '^':
 		ret = _Cregexp_node((char) BOL,
-							_Cregexp_parse,
-							_Cregexp_npar,
 							_Cregexp_dummy,
 							_Cregexp_code,
 							_Cregexp_size);
 		break;
 	case '$':
 		ret = _Cregexp_node((char) EOL,
-							_Cregexp_parse,
-							_Cregexp_npar,
 							_Cregexp_dummy,
 							_Cregexp_code,
 							_Cregexp_size);
 		break;
 	case '.':
 		ret = _Cregexp_node((char) ANY,
-							_Cregexp_parse,
-							_Cregexp_npar,
 							_Cregexp_dummy,
 							_Cregexp_code,
 							_Cregexp_size);
@@ -975,8 +855,6 @@ char *_Cregexp_atom(flagp,
 
 		if (*(*_Cregexp_parse) == '^') {	/* Complement of range. */
 			ret = _Cregexp_node((char) ANYBUT,
-								_Cregexp_parse,
-								_Cregexp_npar,
 								_Cregexp_dummy,
 								_Cregexp_code,
 								_Cregexp_size);
@@ -984,16 +862,12 @@ char *_Cregexp_atom(flagp,
 			dummy = *(*_Cregexp_parse)++;
 		} else {
 			ret = _Cregexp_node((char) ANYOF,
-								_Cregexp_parse,
-								_Cregexp_npar,
 								_Cregexp_dummy,
 								_Cregexp_code,
 								_Cregexp_size);
 		}
 		if (*(*_Cregexp_parse) == ']' || *(*_Cregexp_parse) == '-') {
 			_Cregexp_c((char) *(*_Cregexp_parse)++,
-					   _Cregexp_parse,
-					   _Cregexp_npar,
 					   _Cregexp_dummy,
 					   _Cregexp_code,
 					   _Cregexp_size);
@@ -1003,8 +877,6 @@ char *_Cregexp_atom(flagp,
 				(*_Cregexp_parse)++;
 				if (*(*_Cregexp_parse) == ']' || *(*_Cregexp_parse) == '\0')
 					_Cregexp_c((char) '-',
-							   _Cregexp_parse,
-							   _Cregexp_npar,
 							   _Cregexp_dummy,
 							   _Cregexp_code,
 							   _Cregexp_size);
@@ -1028,15 +900,11 @@ char *_Cregexp_atom(flagp,
 				}
 			} else
 				_Cregexp_c((char) *(*_Cregexp_parse)++,
-						   _Cregexp_parse,
-						   _Cregexp_npar,
 						   _Cregexp_dummy,
 						   _Cregexp_code,
 						   _Cregexp_size);
 		}
 		_Cregexp_c((char) '\0',
-				   _Cregexp_parse,
-				   _Cregexp_npar,
 				   _Cregexp_dummy,
 				   _Cregexp_code,
 				   _Cregexp_size);
@@ -1081,20 +949,14 @@ char *_Cregexp_atom(flagp,
 			return(NULL);
 		}
 		ret = _Cregexp_node((char) EXACTLY,
-							_Cregexp_parse,
-							_Cregexp_npar,
 							_Cregexp_dummy,
 							_Cregexp_code,
 							_Cregexp_size);
 		_Cregexp_c((char) *(*_Cregexp_parse)++,
-				   _Cregexp_parse,
-				   _Cregexp_npar,
 				   _Cregexp_dummy,
 				   _Cregexp_code,
 				   _Cregexp_size);
 		_Cregexp_c((char) '\0',
-				   _Cregexp_parse,
-				   _Cregexp_npar,
 				   _Cregexp_dummy,
 				   _Cregexp_code,
 				   _Cregexp_size);
@@ -1121,23 +983,17 @@ char *_Cregexp_atom(flagp,
 			*flagp |= SIMPLE;
 		}
 		ret = _Cregexp_node((char) EXACTLY,
-							_Cregexp_parse,
-							_Cregexp_npar,
 							_Cregexp_dummy,
 							_Cregexp_code,
 							_Cregexp_size);
 		while (len > 0) {
 			_Cregexp_c((char) *(*_Cregexp_parse)++,
-					   _Cregexp_parse,
-					   _Cregexp_npar,
 					   _Cregexp_dummy,
 					   _Cregexp_code,
 					   _Cregexp_size);
 			len--;
 		}
 		_Cregexp_c((char) '\0',
-				   _Cregexp_parse,
-				   _Cregexp_npar,
 				   _Cregexp_dummy,
 				   _Cregexp_code,
 				   _Cregexp_size);
@@ -1152,15 +1008,11 @@ char *_Cregexp_atom(flagp,
   - regnode - emit a node
 */
 char *_Cregexp_node(op,
-					_Cregexp_parse,
-					_Cregexp_npar,
 					_Cregexp_dummy,
 					_Cregexp_code,
 					_Cregexp_size)
 
 	char op;
-	char **_Cregexp_parse;
-	int *_Cregexp_npar;
 	char *_Cregexp_dummy;
 	char **_Cregexp_code;
 	long *_Cregexp_size;
@@ -1187,14 +1039,10 @@ char *_Cregexp_node(op,
  - regc - emit (if appropriate) a byte of code
  */
 void _Cregexp_c(b,
-				_Cregexp_parse,
-				_Cregexp_npar,
 				_Cregexp_dummy,
 				_Cregexp_code,
 				_Cregexp_size)
 	char b;
-	char **_Cregexp_parse;
-	int *_Cregexp_npar;
 	char *_Cregexp_dummy;
 	char **_Cregexp_code;
 	long *_Cregexp_size;
@@ -1213,16 +1061,12 @@ void _Cregexp_c(b,
  */
 void _Cregexp_insert(op,
 					 opnd,
-					 _Cregexp_parse,
-					 _Cregexp_npar,
 					 _Cregexp_dummy,
 					 _Cregexp_code,
 					 _Cregexp_size)
 
 	char op;
 	char *opnd;
-	char **_Cregexp_parse;
-	int *_Cregexp_npar;
 	char *_Cregexp_dummy;
 	char **_Cregexp_code;
 	long *_Cregexp_size;
@@ -1253,18 +1097,10 @@ void _Cregexp_insert(op,
  */
 void _Cregexp_tail(p,
 				   val,
-				   _Cregexp_parse,
-				   _Cregexp_npar,
-				   _Cregexp_dummy,
-				   _Cregexp_code,
-				   _Cregexp_size)
+				   _Cregexp_dummy)
 	char *p;
 	char *val;
-	char **_Cregexp_parse;
-	int *_Cregexp_npar;
 	char *_Cregexp_dummy;
-	char **_Cregexp_code;
-	long *_Cregexp_size;
 {
 	char *scan;
 	char *temp;
@@ -1277,11 +1113,7 @@ void _Cregexp_tail(p,
 	scan = p;
 	for (;;) {
 		temp = _Cregexp_next(scan,
-							 _Cregexp_parse,
-							 _Cregexp_npar,
-							 _Cregexp_dummy,
-							 _Cregexp_code,
-							 _Cregexp_size);
+							 _Cregexp_dummy);
 		if (temp == NULL) {
 			break;
 		}
@@ -1302,18 +1134,10 @@ void _Cregexp_tail(p,
  */
 void _Cregexp_optail(p,
 					 val,
-					 _Cregexp_parse,
-					 _Cregexp_npar,
-					 _Cregexp_dummy,
-					 _Cregexp_code,
-					 _Cregexp_size)
+					 _Cregexp_dummy)
 	char *p;
 	char *val;
-	char **_Cregexp_parse;
-	int *_Cregexp_npar;
 	char *_Cregexp_dummy;
-	char **_Cregexp_code;
-	long *_Cregexp_size;
 {
 	/* "Operandless" and "op != BRANCH" are synonymous in practice. */
 	if (p == NULL || p == _Cregexp_dummy || OP(p) != BRANCH) {
@@ -1321,15 +1145,11 @@ void _Cregexp_optail(p,
 	}
 	_Cregexp_tail(OPERAND(p),
 				  val,
-				  _Cregexp_parse,
-				  _Cregexp_npar,
-				  _Cregexp_dummy,
-				  _Cregexp_code,
-				  _Cregexp_size);
+				  _Cregexp_dummy);
 }
 
 /*
- * regexec and friends
+ * Regexec and friends
  */
 
 /*
@@ -1552,11 +1372,7 @@ int _Cregexp_match(prog,
 	scan = prog;
 	while (scan != NULL) {
 		next = _Cregexp_next(scan,
-							 _Cregexp_parse,
-							 _Cregexp_npar,
-							 _Cregexp_dummy,
-							 _Cregexp_code,
-							 _Cregexp_size);
+							 _Cregexp_dummy);
     
 		switch (OP(scan)) {
 		case BOL:
@@ -1706,11 +1522,7 @@ int _Cregexp_match(prog,
 					}
 					*_Cregexp_input = save;
 					scan = _Cregexp_next(scan,
-										 _Cregexp_parse,
-										 _Cregexp_npar,
-										 _Cregexp_dummy,
-										 _Cregexp_code,
-										 _Cregexp_size);
+										 _Cregexp_dummy);
 				} while (scan != NULL && OP(scan) == BRANCH);
 				return(-1);
 				/* NOTREACHED */
@@ -1735,15 +1547,7 @@ int _Cregexp_match(prog,
 			min = (OP(scan) == STAR) ? 0 : 1;
 			save = *_Cregexp_input;
 			no = _Cregexp_repeat(OPERAND(scan),
-								 _Cregexp_parse,
-								 _Cregexp_npar,
-								 _Cregexp_dummy,
-								 _Cregexp_code,
-								 _Cregexp_size,
-								 _Cregexp_input,
-								 _Cregexp_bol,
-								 _Cregexp_startp,
-								 _Cregexp_endp);
+								 _Cregexp_input);
 			while (no >= min) {
 				/* If it could work, try it. */
 				if (nextch == '\0' || *(*_Cregexp_input) == nextch)
@@ -1787,25 +1591,9 @@ int _Cregexp_match(prog,
  - regrepeat - repeatedly match something simple, report how many
  */
 int _Cregexp_repeat(p,
-					_Cregexp_parse,
-					_Cregexp_npar,
-					_Cregexp_dummy,
-					_Cregexp_code,
-					_Cregexp_size,
-					_Cregexp_input,
-					_Cregexp_bol,
-					_Cregexp_startp,
-					_Cregexp_endp)
+					_Cregexp_input)
 	char *p;
-	char **_Cregexp_parse;
-	int *_Cregexp_npar;
-	char *_Cregexp_dummy;
-	char **_Cregexp_code;
-	long *_Cregexp_size;
 	char **_Cregexp_input;
-	char **_Cregexp_bol;
-	char ***_Cregexp_startp;
-	char ***_Cregexp_endp;
 {
 	int count = 0;
 	char *scan;
@@ -1851,17 +1639,9 @@ int _Cregexp_repeat(p,
  - regnext - dig the "next" pointer out of a node
  */
 char *_Cregexp_next(p,
-					_Cregexp_parse,
-					_Cregexp_npar,
-					_Cregexp_dummy,
-					_Cregexp_code,
-					_Cregexp_size)
+					_Cregexp_dummy)
 	char *p;
-	char **_Cregexp_parse;
-	int *_Cregexp_npar;
 	char *_Cregexp_dummy;
-	char **_Cregexp_code;
-	long *_Cregexp_size;
 {
 	int offset;
 
