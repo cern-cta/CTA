@@ -2341,10 +2341,6 @@ void CppCppDbCnvWriter::writeCreateBufferForSelect(QTextStream &stream,
            << "// no support for bulk CLOBs insertion for the time being."
            << endl << getIndent()
            << "// Note that this method just compiles fine and is never called!"
-           << endl << getIndent()
-           << "char* " << name << "Buffer = 0;"
-           << endl << getIndent()
-           << "unsigned short* " << name << "BufLens = 0;"
            << endl;
     return;
   }
