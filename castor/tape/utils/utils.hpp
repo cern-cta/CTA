@@ -474,7 +474,7 @@ typedef std::list<TpconfigLine> TpconfigLines;
  * @param lines    Output parameter: The list of data-lines parsed from the
  *                 TPCONFIG file.
  */
-void parseTpconfig(const char *const filename, TpconfigLines &lines)
+void parseTpconfigFile(const char *const filename, TpconfigLines &lines)
   throw(castor::exception::Exception);
 
 /**

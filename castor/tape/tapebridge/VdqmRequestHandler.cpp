@@ -132,7 +132,7 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
     {
       utils::TpconfigLines tpconfigLines;
       try {
-        utils::parseTpconfig(TPCONFIGPATH, tpconfigLines);
+        utils::parseTpconfigFile(TPCONFIGPATH, tpconfigLines);
       } catch (castor::exception::Exception &ex) {
         castor::dlf::Param params[] = {
           castor::dlf::Param("filename"     , TPCONFIGPATH        ),
@@ -141,11 +141,7 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
           TAPEBRIDGE_FAILED_TO_PARSE_TPCONFIG, params);
 
-        castor::exception::Exception ex2(ex.code());
-        ex2.getMessage() <<
-          "Failed to parse TPCONFIG file"
-          ": " << ex.getMessage().str();
-        throw(ex2);
+        throw(ex);
       }
 
       // Extract the drive units names

@@ -486,7 +486,7 @@ void castor::tape::utils::readFileIntoList(const char *filename,
   if(!file) {
     castor::exception::Exception ex(ECANCELED);
 
-    ex.getMessage() << "Failed to open file: Filename=\"" << filename << "\"";
+    ex.getMessage() << "Failed to open file: Filename='" << filename << "'";
 
     throw ex;
   } 
@@ -638,10 +638,9 @@ unsigned short castor::tape::utils::getPortFromConfig(
       exception::InvalidConfigEntry ex(category, name, value);
 
       ex.getMessage() <<
-        ": Invalid \"" << category << " " << name <<
-        "\" configuration entry"
+        "Invalid '" << category << " " << name << "' configuration entry"
         ": Value should be an unsigned integer greater than 0"
-        ": Value=\"" << value << "\"";
+        ": Value='" << value << "'";
 
       throw(ex);
     }
@@ -650,10 +649,9 @@ unsigned short castor::tape::utils::getPortFromConfig(
       exception::InvalidConfigEntry ex(category, name, value);
 
       ex.getMessage() <<
-        ": Invalid \"" << category << " " << name <<
-        "\" configuration entry"
+        "Invalid '" << category << " " << name << "' configuration entry"
         ": Value should be an unsigned integer greater than 0"
-        ": Value=\"" << value << "\"";
+        ": Value='" << value << "'";
 
       throw(ex);
     }
@@ -664,9 +662,9 @@ unsigned short castor::tape::utils::getPortFromConfig(
 
 
 //------------------------------------------------------------------------------
-// parseTpconfig
+// parseTpconfigFile
 //------------------------------------------------------------------------------
-void castor::tape::utils::parseTpconfig(const char *const filename,
+void castor::tape::utils::parseTpconfigFile(const char *const filename,
   TpconfigLines &lines) throw (castor::exception::Exception) {
 
   // The expected number of data-columns in a TPCONFIG data-line
@@ -682,8 +680,9 @@ void castor::tape::utils::parseTpconfig(const char *const filename,
       castor::exception::Exception ex(savedErrno);
 
       ex.getMessage() <<
-        "Failed to open TPCONFIG file"
-        ": filename=" << filename <<
+        "Failed to parse TPCONFIG file"
+        ": Failed to open file"
+        ": filename='" << filename << "'"
         ": " << sstrerror(savedErrno);
 
       throw(ex);
@@ -737,8 +736,9 @@ void castor::tape::utils::parseTpconfig(const char *const filename,
         castor::exception::InvalidArgument ex;
 
         ex.getMessage() <<
-          "Invalid number of data columns in TPCONFIG line"
-          ": filename=" << filename <<
+          "Failed to parse TPCONFIG file"
+          ": Invalid number of data columns in TPCONFIG line"
+          ": filename='" << filename << "'"
           ": expectedNbColumns=" << NBCOLUMNS <<
           ": actualNbColumns=" << columns.size() <<
           ": lineNb=" << lineNb;
@@ -764,8 +764,9 @@ void castor::tape::utils::parseTpconfig(const char *const filename,
     castor::exception::Exception ex(fgetsErrno);
 
     ex.getMessage() <<
-      "Failed to read TPCONFIG file"
-      ": filename=" << filename <<
+      "Failed to parse TPCONFIG file"
+      ": Failed to read file"
+      ": filename='" << filename << "'"
       ": " << sstrerror(fgetsErrno);
 
     throw(ex);

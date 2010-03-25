@@ -122,21 +122,9 @@ int castor::tape::tapebridge::TapeBridgeDaemon::exceptionThrowingMain(
   // Pass the foreground option to the super class BaseDaemon
   m_foreground = m_parsedCommandLine.foregroundOptionSet;
 
-  // Parse the TPCONFIG file
   utils::TpconfigLines tpconfigLines;
-  try {
-    utils::parseTpconfig(TPCONFIGPATH, tpconfigLines);
-  } catch (castor::exception::Exception &ex) {
-    castor::exception::Exception ex2(ex.code());
+  utils::parseTpconfigFile(TPCONFIGPATH, tpconfigLines);
 
-    ex2.getMessage() <<
-      "Failed to parse TPCONFIG file"
-      ": " << ex.getMessage().str();
-
-    throw(ex2);
-  }
-
-  // Extract the drive units names
   std::list<std::string> driveNames;
   utils::extractTpconfigDriveNames(tpconfigLines, driveNames);
 
@@ -251,7 +239,7 @@ void castor::tape::tapebridge::TapeBridgeDaemon::parseCommandLine(
         oss <<
           "Failed to parse the command-line"
           ": Unknown command-line option"
-          ": option=\"" << (char)Coptopt << "\"";
+          ": option='" << (char)Coptopt << "'";
 
         // Throw an exception
         castor::exception::InvalidArgument ex;
@@ -306,7 +294,7 @@ void castor::tape::tapebridge::TapeBridgeDaemon::parseCommandLine(
     oss <<
       "Failed to parse the command-line"
       ": Unexpected command-line argument"
-      ": argument=\"" << argv[Coptind] << "\"";
+      ": argument='" << argv[Coptind] << "'";
 
     // Throw an exception
     castor::exception::InvalidArgument ex;
