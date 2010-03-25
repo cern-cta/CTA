@@ -107,21 +107,8 @@ int castor::tape::tapebridge::TapeBridgeDaemon::main(const int argc,
 int castor::tape::tapebridge::TapeBridgeDaemon::exceptionThrowingMain(
   const int argc, char **argv) throw(castor::exception::Exception) {
 
-  // Log the start of the daemon
-  logStart(argc, argv);
-
-  // Parse the command line
-  try {
-    parseCommandLine(argc, argv);
-  } catch (castor::exception::Exception &ex) {
-    castor::exception::InvalidArgument ex2;
-
-    ex2.getMessage() <<
-      "Failed to parse the command-line"
-      ": " << ex.getMessage().str();
-
-    throw(ex2);
-  }
+  logStartOfDaemon(argc, argv);
+  parseCommandLine(argc, argv);
 
   // Display usage message and exit if help option found on command-line
   if(m_parsedCommandLine.helpOptionSet) {
@@ -201,25 +188,36 @@ void castor::tape::tapebridge::TapeBridgeDaemon::usage(std::ostream &os,
 
 
 //------------------------------------------------------------------------------
-// logStart
+// logStartOfDaemon
 //------------------------------------------------------------------------------
-void castor::tape::tapebridge::TapeBridgeDaemon::logStart(const int argc,
-  const char *const *const argv) throw() {
+void castor::tape::tapebridge::TapeBridgeDaemon::logStartOfDaemon(
+  const int argc, const char *const *const argv) throw() {
   std::string concatenatedArgs;
 
-  // Concatenate all of the command-line arguments into one string
-  for(int i=0; i < argc; i++) {
-    if(i != 0) {
-      concatenatedArgs += " ";
-    }
-
-    concatenatedArgs += argv[i];
-  }
+  concatenatedArgs = appendArgvToString(argc, argv, concatenatedArgs);
 
   castor::dlf::Param params[] = {
-    castor::dlf::Param("argv"         , concatenatedArgs)};
+    castor::dlf::Param("argv", concatenatedArgs)};
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, TAPEBRIDGE_STARTED,
     params);
+}
+
+
+//------------------------------------------------------------------------------
+// appendArgvToString
+//------------------------------------------------------------------------------
+std::string &castor::tape::tapebridge::TapeBridgeDaemon::appendArgvToString(
+  const int argc, const char *const *const argv, std::string &str) throw() {
+
+  for(int i=0; i < argc; i++) {
+    if(i != 0) {
+      str += " ";
+    }
+
+    str += argv[i];
+  }
+
+  return str;
 }
 
 
@@ -250,7 +248,10 @@ void castor::tape::tapebridge::TapeBridgeDaemon::parseCommandLine(
     case '?':
       {
         std::stringstream oss;
-        oss << "Unknown command-line option: " << (char)Coptopt;
+        oss <<
+          "Failed to parse the command-line"
+          ": Unknown command-line option"
+          ": option=\"" << (char)Coptopt << "\"";
 
         // Throw an exception
         castor::exception::InvalidArgument ex;
@@ -261,7 +262,9 @@ void castor::tape::tapebridge::TapeBridgeDaemon::parseCommandLine(
     case ':':
       {
         std::stringstream oss;
-        oss << "An option is missing a parameter";
+        oss <<
+          "Failed to parse the command-line"
+          ": An option is missing a parameter";
 
         // Throw an exception
         castor::exception::InvalidArgument ex;
@@ -272,8 +275,10 @@ void castor::tape::tapebridge::TapeBridgeDaemon::parseCommandLine(
     default:
       {
         std::stringstream oss;
-        oss << "Cgetopt_long returned the following unknown value: 0x"
-          << std::hex << (int)c;
+        oss <<
+          "Failed to parse the command-line"
+          ": Cgetopt_long returned an unknown value"
+          ": value=0x" << std::hex << (int)c;
 
         // Throw an exception
         TAPE_THROW_EX(castor::exception::Internal,
@@ -284,7 +289,10 @@ void castor::tape::tapebridge::TapeBridgeDaemon::parseCommandLine(
 
   if(Coptind > argc) {
     std::stringstream oss;
-      oss << "Internal error.  Invalid value for Coptind: " << Coptind;
+    oss <<
+      "Failed to parse the command-line"
+      ": Invalid Coptind value"
+      ": Coptind=" << Coptind;
 
     // Throw an exception
     TAPE_THROW_EX(castor::exception::Internal,
@@ -295,8 +303,10 @@ void castor::tape::tapebridge::TapeBridgeDaemon::parseCommandLine(
   if(Coptind < argc)
   {
     std::stringstream oss;
-      oss << "Unexpected command-line argument: " << argv[Coptind]
-      << std::endl;
+    oss <<
+      "Failed to parse the command-line"
+      ": Unexpected command-line argument"
+      ": argument=\"" << argv[Coptind] << "\"";
 
     // Throw an exception
     castor::exception::InvalidArgument ex;

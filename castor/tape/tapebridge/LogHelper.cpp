@@ -219,7 +219,8 @@ void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
     castor::dlf::Param("err.maxTpRetry"      , body.err.maxTpRetry      ),
     castor::dlf::Param("err.maxCpRetry"      , body.err.maxCpRetry      )};
 
-  castor::dlf::dlf_writep(cuuid, severity, message_no, params);
+  castor::dlf::dlf_writep(cuuid, severity, message_no,
+    body.segAttr.castorFileId, body.segAttr.nameServerHostName, params);
 }
 
 
@@ -291,7 +292,8 @@ void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
     castor::dlf::Param("segAttr.castorFileId", body.segAttr.castorFileId),
     castor::dlf::Param("stgReqId"            , body.stgReqId            )};
 
-  castor::dlf::dlf_writep(cuuid, severity, message_no, params);
+  castor::dlf::dlf_writep(cuuid, severity, message_no,
+    body.segAttr.castorFileId, body.segAttr.nameServerHostName, params);
 }
 
 
@@ -474,7 +476,7 @@ void castor::tape::tapebridge::LogHelper::logMsg(const Cuuid_t &cuuid,
     castor::dlf::Param("blockId[1]"        , msg.blockId1()          ),
     castor::dlf::Param("blockId[2]"        , msg.blockId2()          ),
     castor::dlf::Param("blockId[3]"        , msg.blockId3()          )};
-  castor::dlf::dlf_writep(cuuid, severity, message_no, params);
+  castor::dlf::dlf_writep(cuuid, severity, message_no, msg.fileid(), msg.nshost(), params);
 }   
 //-----------------------------------------------------------------------------
 // logMsg
@@ -497,5 +499,5 @@ void castor::tape::tapebridge::LogHelper::logMsg(const Cuuid_t &cuuid,
     castor::dlf::Param("lastModificationTime", msg.lastModificationTime()),
     castor::dlf::Param("path"                , msg.path()                ),
     castor::dlf::Param("umask"               , msg.umask()               )};
-  castor::dlf::dlf_writep(cuuid, severity, message_no, params);
+  castor::dlf::dlf_writep(cuuid, severity, message_no, msg.fileid(), msg.nshost(), params);
 }

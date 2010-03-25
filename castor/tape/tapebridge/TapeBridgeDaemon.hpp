@@ -61,6 +61,10 @@ public:
 
   /**
    * The main entry function of the tapebridge daemon.
+   *
+   * @param argc The number of command-line arguments.
+   * @param argv The array of command-line arguments.
+   * @return     The return code of the process.
    */
   int main(const int argc, char **argv);
 
@@ -78,7 +82,17 @@ private:
   /**
    * Logs the start of the daemon.
    */
-  void logStart(const int argc, const char *const *const argv) throw();
+  void logStartOfDaemon(const int argc, const char *const *const argv) throw();
+
+  /**
+   * Appends all of the specified command-line arguments onto the end of the
+   * specfied string with one space between each argument.
+   *
+   * @param argc The number of command-line arguments.
+   * @param argv The array of command-line arguments.
+   */
+  std::string &appendArgvToString(const int argc,
+    const char *const *const argv, std::string &str) throw();
 
   /**
    * Data type used to store the results of parsing the command-line.
