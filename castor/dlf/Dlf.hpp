@@ -127,13 +127,13 @@ namespace castor {
      * to automatically determine the size of the params parameter, therefore
      * removing the need for the devloper to provide it explicity.
      */
-    template<int n>
+    template<int numparams>
     void dlf_writep (Cuuid_t uuid,
                      int severity,
                      int message_no,
-                     castor::dlf::Param (&params)[n],
+                     castor::dlf::Param (&params)[numparams],
                      struct Cns_fileid *ns_invariant = 0) throw() {
-      dlf_writep(uuid, severity, message_no, n, params, ns_invariant);
+      dlf_writep(uuid, severity, message_no, numparams, params, ns_invariant);
     }
 
     /**
@@ -167,17 +167,17 @@ namespace castor {
      * to automatically determine the size of the params parameter, therefore
      * removing the need for the devloper to provide it explicity.
      */
-    template<int n>
+    template<int numparams>
     void dlf_writepc (const char *file,
                       const int line,
                       const char *function,
                       Cuuid_t uuid,
                       int severity,
                       int message_no,
-                      castor::dlf::Param (&params)[n],
+                      castor::dlf::Param (&params)[numparams],
                       struct Cns_fileid *ns_invariant = 0) throw() {
-      dlf_writepc(file, line, function, uuid, severity, message_no, n, params,
-                  ns_invariant);
+      dlf_writepc(file, line, function, uuid, severity, message_no, numparams,
+        params, ns_invariant);
     }
 
     /**
@@ -201,6 +201,22 @@ namespace castor {
                      std::string nsHost,
                      int numparams = 0,
                      castor::dlf::Param params[] = 0) throw();
+
+    /**
+     * A template function that wraps dlf_writep in order to get the compiler
+     * to automatically determine the size of the params parameter, therefore
+     * removing the need for the devloper to provide it explicity.
+     */
+    template<int numparams>
+    void dlf_writep (Cuuid_t uuid,
+                     int severity,
+                     int message_no,
+                     u_signed64 fileId,
+                     std::string nsHost,
+                     castor::dlf::Param (&params)[numparams]) throw() {
+      dlf_writep(uuid, severity, message_no, fileId, nsHost, numparams,
+        params);
+    }
 
   } // end of namespace dlf
 
