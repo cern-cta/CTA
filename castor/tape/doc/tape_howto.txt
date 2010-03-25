@@ -2857,6 +2857,10 @@ How to determine the path, mount point an disk server of a castor file
 
 The easy way:
 
+SQL> set linesize 1000
+SQL> column diskpool format a8
+SQL> column location format a70
+SQL> column creationtime format a20
 SQL> SELECT * FROM TABLE (getdcs(399131859));
 
         ID DISKPOOL LOCATION A     STATUS CREATIONTIME           GCWEIGHT
