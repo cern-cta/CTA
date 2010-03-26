@@ -218,7 +218,7 @@ internalSYSCONFIG(file.example,file.sysconfig,tgt)
 #define INITSCRIPT(file,tgt)                           \
 $(DESTDIR)/etc/init.d/file: file.init                @@\
 	install -d $(DESTDIR)/etc/init.d -m 0755     @@\
-	install -m 644 $< $@                         @@\
+	install -m 755 $< $@                         @@\
 tgt: $(DESTDIR)/etc/init.d/file
 
 #define CONFIGFILE(file,rootdir,tgt)                                \
