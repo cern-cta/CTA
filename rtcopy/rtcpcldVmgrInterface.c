@@ -294,10 +294,13 @@ int rtcpcld_gettape(
                         (inChild == 0 ? mainUuid : childUuid),
                         RTCPCLD_LOG_MSG(RTCPCLD_MSG_VMGRFATAL),
                         (struct Cns_fileid *)NULL,
-                        RTCPCLD_NB_PARAMS+1,
+                        RTCPCLD_NB_PARAMS+2,
                         "POOLNAME",
                         DLF_MSG_PARAM_STR,
                         tapePool,
+                        "INITIAL_SIZE",
+                        DLF_MSG_PARAM_INT64,
+                        initialSizeToTransfer,
                         RTCPCLD_LOG_WHERE
                         );
         break;

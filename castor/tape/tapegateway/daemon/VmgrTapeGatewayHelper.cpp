@@ -91,11 +91,12 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream(const ca
 
   if (rc<0) {
     castor::exception::Exception ex(serrno);
-    ex.getMessage()
-    << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream"
-    << " vmgr_gettape failed";
+    ex.getMessage() <<
+      "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream"
+      " vmgr_gettape failed"
+      ": poolname='" << tpName << "'"
+      " size=" << streamToResolve.initialSizeToTransfer();
     throw ex;
-
   }
 
  
