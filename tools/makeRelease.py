@@ -76,8 +76,7 @@ runCommand('find CASTOR2 -name ''.svn'' -type d | xargs rm -rf',
 # Create the tar ball
 print "Building the tar ball"
 os.chdir('CASTOR2')
-runCommand('make -f Makefile.ini Makefiles', 'Could not create makefiles')
-runCommand('make tar', 'Could not create tar ball')
+runCommand('maketar.sh', 'Could not create tar ball')
 os.chdir(workDir)
 tarBall = 'castor-' + str(majversion) + '.' + str(minversion) + '.' + str(majrelease) + '-' + str(minrelease) + '.tar.gz'
 os.chmod(tarBall, 0664)
