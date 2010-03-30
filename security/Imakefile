@@ -48,23 +48,31 @@ VOMS_LIB_PTHR=-L$(VOMS_LOCATION)/lib -lvomsc_$(VOMS_FLAVOUR)
 #define SecLibsGSIpthr -L$(GLOBUS_LOCATION)/lib -lglobus_gssapi_gsi_$(GLOBUS_FLAVOUR) -lglobus_gss_assist_$(GLOBUS_FLAVOUR)  $(VOMS_LIB_PTHR)
 
 GSITLIB_OBJS = Csec_plugin_GSI_pthr.o Csec_plugin_GSI_pthr_mapper.o
-GSITLIB = SecLibsGSIpthr -lc -lpthread -ldl
+GSITLIB = SecLibsGSIpthr -lc -ldl
 SharedLibraryTarget(Csec_plugin_GSI_thread,$(GSITLIB_OBJS),,$(GSITLIB))
 GSILIB_OBJS = Csec_plugin_GSI.o Csec_plugin_GSI_mapper.o
-GSILIB = SecLibsGSI -lc -lpthread -ldl
+GSILIB = SecLibsGSI -lc -ldl
 SharedLibraryTarget(Csec_plugin_GSI,$(GSILIB_OBJS),,$(GSILIB))
 
 Csec_plugin_GSI.o: Csec_plugin_GSS.c
 	$(COMPILE.c) $(OUTPUT_OPTION) SecAuthMechGSI SecIncludeDirGSI $<
+Csec_plugin_GSI.d: Csec_plugin_GSS.c
+	@gcc -MM $(CPPFLAGS) SecAuthMechGSI SecIncludeDirGSI $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
 
-Csec_plugin_GSI_mapper.o:  Csec_plugin_GSS_mapper.c
+Csec_plugin_GSI_mapper.o: Csec_plugin_GSS_mapper.c
 	$(COMPILE.c) $(OUTPUT_OPTION) SecAuthMechGSI SecIncludeDirGSI $<
+Csec_plugin_GSI_mapper.d: Csec_plugin_GSS_mapper.c
+	@gcc -MM $(CPPFLAGS) SecAuthMechGSI SecIncludeDirGSI $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
 
 Csec_plugin_GSI_pthr.o: Csec_plugin_GSS.c
 	$(COMPILE.c) $(OUTPUT_OPTION) -Dwith_pthr_suffix SecAuthMechGSI SecIncludeDirGSIpthr $<
+Csec_plugin_GSI_pthr.d: Csec_plugin_GSS.c
+	@gcc -MM $(CPPFLAGS) -Dwith_pthr_suffix SecAuthMechGSI SecIncludeDirGSIpthr $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
 
-Csec_plugin_GSI_pthr_mapper.o:  Csec_plugin_GSS_mapper.c
+Csec_plugin_GSI_pthr_mapper.o: Csec_plugin_GSS_mapper.c
 	$(COMPILE.c) $(OUTPUT_OPTION) -Dwith_pthr_suffix SecAuthMechGSI SecIncludeDirGSIpthr $<
+Csec_plugin_GSI_pthr_mapper.d: Csec_plugin_GSS_mapper.c
+	@gcc -MM $(CPPFLAGS) -Dwith_pthr_suffix SecAuthMechGSI SecIncludeDirGSIpthr $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
 #endif
 
 #if UseKRB5
@@ -76,18 +84,22 @@ Csec_plugin_GSI_pthr_mapper.o:  Csec_plugin_GSS_mapper.c
 #define SecIncludeDirKRB5 $(shell Krb5Config gssapi --cflags)
 #define SecLibsKRB5 $(shell Krb5Config gssapi --libs)
 KRB5LIB_OBJS = Csec_plugin_KRB5.o Csec_plugin_KRB5_mapper.o
-KRB5LIB = SecLibsKRB5 -lc -lpthread -ldl
+KRB5LIB = SecLibsKRB5 -lc -ldl
 SharedLibraryTarget(Csec_plugin_KRB5,$(KRB5LIB_OBJS),,$(KRB5LIB))
 
 Csec_plugin_KRB5.o: Csec_plugin_GSS.c
 	$(COMPILE.c) $(OUTPUT_OPTION) SecAuthMechKRB5 SecIncludeDirKRB5 $<
+Csec_plugin_KRB5.d: Csec_plugin_GSS.c
+	@gcc -MM $(CPPFLAGS) SecAuthMechKRB5 SecIncludeDirKRB5 $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
 
 Csec_plugin_KRB5_mapper.o:  Csec_plugin_GSS_mapper.c
 	$(COMPILE.c) $(OUTPUT_OPTION) SecAuthMechKRB5 SecIncludeDirKRB5 $<
+Csec_plugin_KRB5_mapper.d:  Csec_plugin_GSS_mapper.c
+	@gcc -MM $(CPPFLAGS) SecAuthMechKRB5 SecIncludeDirKRB5 $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
 #endif
 
 IDLIB_OBJS = Csec_plugin_ID.o
-IDLIB = -lc -lpthread -ldl
+IDLIB = -lc -ldl
 SharedLibraryTarget(Csec_plugin_ID,$(KRB5LIB_OBJS),,$(KRB5LIB))
 
 LIBMANPAGE(Csec_api)

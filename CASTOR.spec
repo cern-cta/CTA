@@ -41,15 +41,12 @@ The CASTOR Project stands for CERN Advanced STORage Manager, and its goal is to 
 %setup -q
 
 %build
-# In case makedepend is not in the PATH
-PATH=${PATH}:/usr/X11R6/bin
-export PATH
 # define castor version (modified by maketar.sh to put the exact version)
 MAJOR_CASTOR_VERSION=__MAJOR_CASTOR_VERSION__
 MINOR_CASTOR_VERSION=__MINOR_CASTOR_VERSION__
 export MAJOR_CASTOR_VERSION
 export MINOR_CASTOR_VERSION
-make -f Makefile.ini Makefiles
+./configure
 (cd h; ln -s . shift)
 %if 0%{?clientonly:1} > 0
 %define compiling_client 1

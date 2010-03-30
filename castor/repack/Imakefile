@@ -24,8 +24,7 @@
 # @author Castor Dev team, castor-dev@cern.ch
 #
 
-CXXFLAGS += -I $(ORACLE_HOME)/rdbms/public
-CPPFLAGS += -DDEFAULT_CNS=castorns -DORAREPACKCONFIGFILE=\"/etc/castor/ORAREPACKCONFIG\"
+CPPFLAGS += -DDEFAULT_CNS=castorns -DORAREPACKCONFIGFILE=\"/etc/castor/ORAREPACKCONFIG\" -I $(ORACLE_HOME)/rdbms/public
 SERVDEPLIB = DepSharedLibraryTargetName(castor/db/newora,castorcommonora)
 SERVLIBS = $(SERVDEPLIB) -Wl,-rpath-link,../../shlib -L$(ORACLE_HOME)/lib -locci -lclntsh
 

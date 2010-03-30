@@ -23,7 +23,7 @@
 #
 # @author Castor Dev team, castor-dev@cern.ch
 
-CXXFLAGS += $(PYTHONINC)
+CPPFLAGS += $(PYTHONINC)
 LDFLAGS += -lbat -llsf -llsbstream -lm
 
 DependsOnLibrary(common,castorcommon)

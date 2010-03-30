@@ -40,7 +40,7 @@ CPPFLAGS += -DBIN=\"$(BIN)\" -DCNS_HOST=\"$(CNS_HOST)\" \
             -DNSCONFIG=\"$(NSCONFIG)\" \
             $(RDSFLG) -DUSE_ORACLE -DCSEC
 
-CFLAGS += -I$(ORACLE_HOME)/precomp/public
+CPPFLAGS += -I$(ORACLE_HOME)/precomp/public
 
 NSD_OBJS	=	Cns_main.o \
 			Cns_acl.o \

@@ -23,7 +23,7 @@
 #
 
 
-CXXFLAGS += -I $(ORACLE_HOME)/rdbms/public $(PYTHONINC)
+CPPFLAGS += -I $(ORACLE_HOME)/rdbms/public $(PYTHONINC)
 LDFLAGS += -L$(ORACLE_HOME)/lib -locci -lclntsh 
 
 DependsOnLibrary(castor,castorclient)

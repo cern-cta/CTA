@@ -113,7 +113,7 @@ rtcpc_CallVMGR.o: rtcpc_CallVMGR.c
 	$(COMPILE.c) $(OUTPUT_OPTION) -URTCP_SERVER $<
 rtcpc_CheckReq.o: rtcpc_CheckReq.c
 	$(COMPILE.c) $(OUTPUT_OPTION) -URTCP_SERVER $<
-FileToClean += rtcpc_log.c rtcpc_SendRecv.c rtcpc_CallVMGR.c rtcpc_CheckReq.c
+FilesToClean += rtcpc_log.c rtcpc_SendRecv.c rtcpc_CallVMGR.c rtcpc_CheckReq.c
 
 RTCPLIB_OBJS =	rtcpc_SendRecv.o rtcp_InitNW.o rtcpc_log.o rtcpc_CallVMGR.o rtcp_Listen.o rtcpapi.o rtcpc_BuildReq.o rtcp_RetvalSHIFT.o rtcpc_CheckReq.o
 SharedLibraryTarget(castorrtcopy,$(RTCPLIB_OBJS),,)

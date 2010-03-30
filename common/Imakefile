@@ -28,7 +28,7 @@ COMMONLIB_OBJS = $(SYSDEP_OBJS) \
 		 Cregexp.o Csetprocname.o Cexportconf.o Csnprintf.o util.o \
 		 Csecloader.o castor1compat.o
 
-ClientSharedLibraryTarget(castorcommon,$(COMMONLIB_OBJS),,-ldl -lpthread)
+ClientSharedLibraryTarget(castorcommon,$(COMMONLIB_OBJS),,-ldl)
 
 LIBMANPAGE(getacct)
 LIBMANPAGE(getacctent)

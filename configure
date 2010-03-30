@@ -1,0 +1,82 @@
+#!/bin/sh
+
+if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
+  echo "No MAJOR_CASTOR_VERSION environment variable - guessing from changelog"
+  MAJOR_CASTOR_VERSION=`egrep "^castor" debian/changelog | awk '{print $2}' | head -1 | perl -ne 'if (/\((\d+)\.(\d+)/) {print "$1.$2\n";}'`
+  if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
+    echo "Unable to guess MAJOR_CASTOR_VERSION"
+    exit 1
+  fi
+  export MAJOR_CASTOR_VERSION
+  echo "... Got MAJOR_CASTOR_VERSION=${MAJOR_CASTOR_VERSION}"
+fi
+if [ "x${MINOR_CASTOR_VERSION}" = "x" ]; then
+  echo "No MINOR_CASTOR_VERSION environment variable - guessing from changelog"
+  MINOR_CASTOR_VERSION=`egrep "^castor" debian/changelog | awk '{print $2}' | head -1 | perl -ne 'if (/(\d+)\-(\d+)\)/) {print "$1.$2\n";}'`
+  if [ "x${MINOR_CASTOR_VERSION}" = "x" ]; then
+    echo "Unable to guess MINOR_CASTOR_VERSION"
+    exit 1
+  fi
+  export MINOR_CASTOR_VERSION
+  echo "... Got MINOR_CASTOR_VERSION=${MINOR_CASTOR_VERSION}"
+fi
+
+#
+## We expect ${MAJOR_CASTOR_VERSION} in the form a.b
+#
+echo ${MAJOR_CASTOR_VERSION} | egrep -q '^[0-9]+\.[0-9]+$'
+if [ $? -ne 0 ]; then
+  echo "MAJOR_CASTOR_VERSION (${MAJOR_CASTOR_VERSION}) should be in the form a.b, example: 2.1"
+  exit 1
+fi
+
+#
+## We expect ${MINOR_CASTOR_VERSION} in the form c.d
+#
+echo ${MINOR_CASTOR_VERSION} | egrep -q '^[0-9]+\.[0-9]+$'
+if [ $? -ne 0 ]; then
+  echo "MINOR_CASTOR_VERSION (${MINOR_CASTOR_VERSION}) should be in the form c.d, example: 99.1"
+  exit 1
+fi
+
+a=`echo ${MAJOR_CASTOR_VERSION} | sed 's/\..*//g'`
+b=`echo ${MAJOR_CASTOR_VERSION} | sed 's/.*\.//g'`
+c=`echo ${MINOR_CASTOR_VERSION} | sed 's/\..*//g'`
+d=`echo ${MINOR_CASTOR_VERSION} | sed 's/.*\.//g'`
+version=${a}.${b}.${c}
+fullversion=${version}-${d}
+
+echo "### Customizing build directory"
+
+#
+## Force build rules to YES for a lot of things
+#
+for this in HasNroff UseGSI UseKRB5 UseXFSPrealloc; do
+    perl -pi -e "s/$this(?: |\t)+.*(YES|NO)/$this\tYES/g" config/site.def
+done
+
+#
+## Force build rules to NO for a lot of things
+#
+for this in UseKRB4 UseHeimdalKrb5 BuildSecureCupv BuildSecureRtcopy BuildSecureTape BuildSecureVdqm BuildSecureVmgr; do
+    perl -pi -e "s/$this.*(YES|NO)/$this\tNO/g" config/site.def
+done
+
+#
+## Replace __X__ macros in patchlevel.h
+#
+timestamp=`date "+%s"`
+perl -pi -e s/\ \ __MAJORVERSION__/${a}/ h/patchlevel.h
+perl -pi -e s/\ \ __MINORVERSION__/${b}/ h/patchlevel.h
+perl -pi -e s/\ \ __MAJORRELEASE__/${c}/ h/patchlevel.h
+perl -pi -e s/\ \ __MINORRELEASE__/${d}/ h/patchlevel.h
+perl -pi -e s/__BASEVERSION__/\"${a}.${b}.${c}\"/ h/patchlevel.h
+perl -pi -e s/__PATCHLEVEL__/${d}/ h/patchlevel.h
+perl -pi -e s/__TIMESTAMP__/\"${timestamp}\"/ h/patchlevel.h
+
+echo "### Building Makefiles"
+make -s -f Makefile.ini Makefiles
+
+echo "### Build configured successfully"
+echo "Type \"make\" to compile the complete CASTOR suite or \"make client\" if you are only interested in the client part"
+echo "Then export the DESTDIR variable to the place where you want to install CASTOR and type \"make install\" or \"make installclient\""

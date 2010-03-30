@@ -21,7 +21,7 @@
 # @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
 #
 
-CXXFLAGS += $(PYTHONINC)
+CPPFLAGS += $(PYTHONINC)
 LDFLAGS += $(PYTHONLIBS)
 
 DependsOnLibrary(castor,castorclient)

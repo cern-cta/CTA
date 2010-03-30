@@ -29,9 +29,8 @@ COMM######################### FLAGS ##############################
 CPPFLAGS += -DBIN=\"$(BIN)\" -DLOGFILE=\"$(LOGDIR)/taped_legacy.log\" \
 	    $(STAGERSUPERUSER) -DTPCONFIG=\"$(TPCONFIG)\" \
 	    -D$(TMS) $(PCTAFLAG) -DSACCT -DACCTFILE=\"$(SACCTFILE)\" \
-	    -DCONFIGFILE=\"$(SCONFIGFILE)\" $(CDKFLG) -DVDQM -DVMGR
-
-CFLAGS += $(CDKINC) $(SECURITYFLAG)
+	    -DCONFIGFILE=\"$(SCONFIGFILE)\" $(CDKFLG) -DVDQM -DVMGR \
+	    $(CDKINC) $(SECURITYFLAG) -DSCSIINC="\"/usr/include/scsi/sg.h\""
 
 usrlocate.c:	locate.c
 	RemoveFiles(usrlocate.c)
@@ -67,13 +66,7 @@ usrwrttpmrk.c:	wrttpmrk.c
 FilesToClean += usrlocate.c usrreadlbl.c usrrwndtape.c usrskiptape.c usrsmcsubr.c usrsmcsubr2.c usrtperror.c usrusrmsg.c usrwritelbl.c usrwrttpmrk.c
 
 sendscsicmd.o: sendscsicmd.c
-	@if [ -f "/usr/src/linux/include/scsi/sg.h" ] ;\
-	then \
-		$(COMPILE.c) $(OUTPUT_OPTION) -DTAPE -DSCSIINC="\"/usr/src/linux/include/scsi/sg.h\"" $< ;\
-	else \
-		$(COMPILE.c) $(OUTPUT_OPTION) -DTAPE -DSCSIINC="\"/usr/include/scsi/sg.h\"" $< ;\
-	fi
-
+	$(COMPILE.c) $(OUTPUT_OPTION) -DTAPE $<
 usrlocate.o: usrlocate.c ../h/Ctape.h ../h/serrno.h
 	$(COMPILE.c) $(OUTPUT_OPTION) -DNOTRACE $<
 usrreadlbl.o: usrreadlbl.c ../h/Ctape.h ../h/serrno.h

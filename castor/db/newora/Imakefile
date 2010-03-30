@@ -24,8 +24,7 @@
 # @author Castor Dev team, castor-dev@cern.ch
 #
 
-CXXFLAGS += -I $(ORACLE_HOME)/rdbms/public
-CPPFLAGS += -DORASTAGERCONFIGFILE=\"OraStagerConfigFile\"
+CPPFLAGS += -DORASTAGERCONFIGFILE=\"OraStagerConfigFile\" -I $(ORACLE_HOME)/rdbms/public
 LDFLAGS += -L$(ORACLE_HOME)/lib -locci -lclntsh
 
 DependsOnLibrary(castor/db/cnv,castorcnvs)

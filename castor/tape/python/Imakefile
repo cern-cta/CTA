@@ -21,7 +21,7 @@
 # @author Giulia Taurelli
 #
 
-CXXFLAGS += $(PYTHONINC)
+CPPFLAGS += $(PYTHONINC)
 LDFLAGS += $(PYTHONLIBS)
 
 TAPEPYTHONLIB_SRCS = \

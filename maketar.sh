@@ -1,22 +1,20 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.84 2009/08/17 14:02:08 waldron Exp $
-
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
-  echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
+  echo "No MAJOR_CASTOR_VERSION environment variable - guessing from changelog"
   MAJOR_CASTOR_VERSION=`egrep "^castor" debian/changelog | awk '{print $2}' | head -1 | perl -ne 'if (/\((\d+)\.(\d+)/) {print "$1.$2\n";}'`
   if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
-    echo "No MAJOR_CASTOR_VERSION environment variable"
+    echo "Unable to guess MAJOR_CASTOR_VERSION"
     exit 1
   fi
   export MAJOR_CASTOR_VERSION
   echo "... Got MAJOR_CASTOR_VERSION=${MAJOR_CASTOR_VERSION}"
 fi
 if [ "x${MINOR_CASTOR_VERSION}" = "x" ]; then
-  echo "No MINOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
+  echo "No MINOR_CASTOR_VERSION environment variable - guessing from changelog"
   MINOR_CASTOR_VERSION=`egrep "^castor" debian/changelog | awk '{print $2}' | head -1 | perl -ne 'if (/(\d+)\-(\d+)\)/) {print "$1.$2\n";}'`
   if [ "x${MINOR_CASTOR_VERSION}" = "x" ]; then
-    echo "No MINOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
+    echo "Unable to guess MINOR_CASTOR_VERSION"
     exit 1
   fi
   export MINOR_CASTOR_VERSION
@@ -28,7 +26,7 @@ fi
 #
 echo ${MAJOR_CASTOR_VERSION} | egrep -q '^[0-9]+\.[0-9]+$'
 if [ $? -ne 0 ]; then
-  echo "MAJOR_CASTOR_VERSION (${MAJOR_CASTOR_VERSION}) should be in the form a.b, example: 2.0"
+  echo "MAJOR_CASTOR_VERSION (${MAJOR_CASTOR_VERSION}) should be in the form a.b, example: 2.1"
   exit 1
 fi
 
@@ -48,13 +46,7 @@ d=`echo ${MINOR_CASTOR_VERSION} | sed 's/.*\.//g'`
 version=${a}.${b}.${c}
 fullversion=${version}-${d}
 
-echo "### INFO ### Making build directory"
-
-#
-## Make sure makedepend (/usr/X11R6/bin) is in the path
-#
-PATH=${PATH}:/usr/X11R6/bin
-export PATH
+echo "### Making build directory"
 
 # Go to castor-${version} and do the changes in here
 curdir=`pwd`
@@ -64,52 +56,17 @@ rsync -aC --exclude '.__afs*' $curdir/ castor-${version}
 rm -rf castor-${version}/monitoring/castor-mon-web
 cd castor-${version}
 
-echo "### INFO ### Customizing build directory"
+echo "### Customizing spec file"
 
-#
-## Force build rules to YES for a lot of things
-#
-for this in HasNroff UseGSI UseKRB5 UseXFSPrealloc; do
-    perl -pi -e "s/$this(?: |\t)+.*(YES|NO)/$this\tYES/g" config/site.def
-done
-
-#
-## Force build rules to NO for a lot of things
-#
-for this in UseKRB4 UseHeimdalKrb5 BuildSecureCupv BuildSecureRtcopy BuildSecureTape BuildSecureVdqm BuildSecureVmgr; do
-    perl -pi -e "s/$this.*(YES|NO)/$this\tNO/g" config/site.def
-done
-#
-## Change __MAJOR_CASTOR_VERSION and __MINOR_CASTOR_VERSION everywhere it has to be changed
-#
-perl -pi -e s/\__MAJOR_CASTOR_VERSION__/${MAJOR_CASTOR_VERSION}/g */Imakefile CASTOR.spec
-perl -pi -e s/\__MINOR_CASTOR_VERSION__/${MINOR_CASTOR_VERSION}/g */Imakefile CASTOR.spec
 #
 # Make spec file in sync
 #
+perl -pi -e s/\__MAJOR_CASTOR_VERSION__/${MAJOR_CASTOR_VERSION}/g CASTOR.spec
+perl -pi -e s/\__MINOR_CASTOR_VERSION__/${MINOR_CASTOR_VERSION}/g CASTOR.spec
 perl -pi -e s/__A__/${a}/g CASTOR.spec
 perl -pi -e s/__B__/${b}/g CASTOR.spec
 perl -pi -e s/__C__/${c}/g CASTOR.spec
 perl -pi -e s/__D__/${d}/g CASTOR.spec
-#
-## Replace __X__ macros in patchlevel.h
-#
-timestamp=`date "+%s"`
-perl -pi -e s/\ \ __MAJORVERSION__/${a}/ h/patchlevel.h
-perl -pi -e s/\ \ __MINORVERSION__/${b}/ h/patchlevel.h
-perl -pi -e s/\ \ __MAJORRELEASE__/${c}/ h/patchlevel.h
-perl -pi -e s/\ \ __MINORRELEASE__/${d}/ h/patchlevel.h
-perl -pi -e s/__BASEVERSION__/\"${a}.${b}.${c}\"/ h/patchlevel.h
-perl -pi -e s/__PATCHLEVEL__/${d}/ h/patchlevel.h
-perl -pi -e s/__TIMESTAMP__/\"${timestamp}\"/ h/patchlevel.h
-#
-## make sure imake is not shipped with object files
-#
-cd imake
-make -s -f Makefile.ini clobber
-cd ..
-
-echo "### INFO ### Customizing spec file"
 
 function copyInstallPermInternal {
     package=$1
@@ -325,7 +282,7 @@ echo "%endif" >> CASTOR.spec # end of compiling_notstk if
 
 cd ..
 
-echo "### INFO ### Creating tarball"
+echo "### Creating tarball"
 
 tar -zcf castor-${fullversion}.tar.gz --exclude '.__afs*' castor-${version}
 rm -rf castor-${version}
