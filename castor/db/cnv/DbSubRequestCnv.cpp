@@ -634,11 +634,11 @@ void castor::db::cnv::DbSubRequestCnv::createRep(castor::IAddress*,
                     << "  requestedFileSystems : " << obj->requestedFileSystems() << std::endl
                     << "  svcHandler : " << obj->svcHandler() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  diskcopy : " << obj->diskcopy()->id() << std::endl
-                    << "  castorFile : " << obj->castorFile()->id() << std::endl
-                    << "  parent : " << obj->parent()->id() << std::endl
+                    << "  diskcopy : " << (obj->diskcopy() ? obj->diskcopy()->id() : 0) << std::endl
+                    << "  castorFile : " << (obj->castorFile() ? obj->castorFile()->id() : 0) << std::endl
+                    << "  parent : " << (obj->parent() ? obj->parent()->id() : 0) << std::endl
                     << "  status : " << obj->status() << std::endl
-                    << "  request : " << obj->request()->id() << std::endl
+                    << "  request : " << (obj->request() ? obj->request()->id() : 0) << std::endl
                     << "  getNextStatus : " << obj->getNextStatus() << std::endl;
     throw ex;
   }

@@ -572,8 +572,8 @@ void castor::db::cnv::DbSetFileGCWeightCnv::createRep(castor::IAddress*,
                     << "  lastModificationTime : " << obj->lastModificationTime() << std::endl
                     << "  weight : " << obj->weight() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  svcClass : " << obj->svcClass()->id() << std::endl
-                    << "  client : " << obj->client()->id() << std::endl;
+                    << "  svcClass : " << (obj->svcClass() ? obj->svcClass()->id() : 0) << std::endl
+                    << "  client : " << (obj->client() ? obj->client()->id() : 0) << std::endl;
     throw ex;
   }
 }

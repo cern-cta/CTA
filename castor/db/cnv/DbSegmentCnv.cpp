@@ -473,9 +473,9 @@ void castor::db::cnv::DbSegmentCnv::createRep(castor::IAddress*,
                     << "  creationTime : " << obj->creationTime() << std::endl
                     << "  priority : " << obj->priority() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  copy : " << obj->copy()->id() << std::endl
+                    << "  copy : " << (obj->copy() ? obj->copy()->id() : 0) << std::endl
                     << "  status : " << obj->status() << std::endl
-                    << "  tape : " << obj->tape()->id() << std::endl;
+                    << "  tape : " << (obj->tape() ? obj->tape()->id() : 0) << std::endl;
     throw ex;
   }
 }

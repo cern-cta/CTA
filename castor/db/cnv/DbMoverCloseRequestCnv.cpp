@@ -462,8 +462,8 @@ void castor::db::cnv::DbMoverCloseRequestCnv::createRep(castor::IAddress*,
                     << "  csumType : " << obj->csumType() << std::endl
                     << "  csumValue : " << obj->csumValue() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  svcClass : " << obj->svcClass()->id() << std::endl
-                    << "  client : " << obj->client()->id() << std::endl;
+                    << "  svcClass : " << (obj->svcClass() ? obj->svcClass()->id() : 0) << std::endl
+                    << "  client : " << (obj->client() ? obj->client()->id() : 0) << std::endl;
     throw ex;
   }
 }

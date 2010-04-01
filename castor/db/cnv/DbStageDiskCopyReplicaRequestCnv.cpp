@@ -844,11 +844,11 @@ void castor::db::cnv::DbStageDiskCopyReplicaRequestCnv::createRep(castor::IAddre
                     << "  creationTime : " << obj->creationTime() << std::endl
                     << "  lastModificationTime : " << obj->lastModificationTime() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  svcClass : " << obj->svcClass()->id() << std::endl
-                    << "  client : " << obj->client()->id() << std::endl
-                    << "  sourceSvcClass : " << obj->sourceSvcClass()->id() << std::endl
-                    << "  destDiskCopy : " << obj->destDiskCopy()->id() << std::endl
-                    << "  sourceDiskCopy : " << obj->sourceDiskCopy()->id() << std::endl;
+                    << "  svcClass : " << (obj->svcClass() ? obj->svcClass()->id() : 0) << std::endl
+                    << "  client : " << (obj->client() ? obj->client()->id() : 0) << std::endl
+                    << "  sourceSvcClass : " << (obj->sourceSvcClass() ? obj->sourceSvcClass()->id() : 0) << std::endl
+                    << "  destDiskCopy : " << (obj->destDiskCopy() ? obj->destDiskCopy()->id() : 0) << std::endl
+                    << "  sourceDiskCopy : " << (obj->sourceDiskCopy() ? obj->sourceDiskCopy()->id() : 0) << std::endl;
     throw ex;
   }
 }

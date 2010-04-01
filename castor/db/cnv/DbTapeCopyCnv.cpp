@@ -621,7 +621,7 @@ void castor::db::cnv::DbTapeCopyCnv::createRep(castor::IAddress*,
                     << "  nbRetry : " << obj->nbRetry() << std::endl
                     << "  missingCopies : " << obj->missingCopies() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  castorFile : " << obj->castorFile()->id() << std::endl
+                    << "  castorFile : " << (obj->castorFile() ? obj->castorFile()->id() : 0) << std::endl
                     << "  status : " << obj->status() << std::endl;
     throw ex;
   }

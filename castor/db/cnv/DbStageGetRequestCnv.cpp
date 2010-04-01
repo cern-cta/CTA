@@ -570,8 +570,8 @@ void castor::db::cnv::DbStageGetRequestCnv::createRep(castor::IAddress*,
                     << "  creationTime : " << obj->creationTime() << std::endl
                     << "  lastModificationTime : " << obj->lastModificationTime() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  svcClass : " << obj->svcClass()->id() << std::endl
-                    << "  client : " << obj->client()->id() << std::endl;
+                    << "  svcClass : " << (obj->svcClass() ? obj->svcClass()->id() : 0) << std::endl
+                    << "  client : " << (obj->client() ? obj->client()->id() : 0) << std::endl;
     throw ex;
   }
 }

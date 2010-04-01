@@ -628,8 +628,8 @@ void castor::db::cnv::DbStreamCnv::createRep(castor::IAddress*,
                     << " and parameters' values were :" << std::endl
                     << "  initialSizeToTransfer : " << obj->initialSizeToTransfer() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  tape : " << obj->tape()->id() << std::endl
-                    << "  tapePool : " << obj->tapePool()->id() << std::endl
+                    << "  tape : " << (obj->tape() ? obj->tape()->id() : 0) << std::endl
+                    << "  tapePool : " << (obj->tapePool() ? obj->tapePool()->id() : 0) << std::endl
                     << "  status : " << obj->status() << std::endl;
     throw ex;
   }
