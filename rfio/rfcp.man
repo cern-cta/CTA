@@ -118,6 +118,27 @@ section in
 .B serrno(3)
 page may be returned.
 
+.SH ENVIORNMENT VARIABLES
+.TP
+.BI STAGE_SVCCLASS
+If the service class is not specified on the command-line, then
+.B rfcp
+will use the value of the \fBSTAGE_SVCCLASS\fP environment variable if it is
+set. Please note the environment variable name \fBSTAGE_SVCCLASS\fP does not
+contain the letter \fBR\fP, unlike the corresponding configuration parameter
+in the castor configuration file \fB/etc/castor.conf\fP, see below.
+
+.SH CASTOR CONFIGURATION FILE PARAMETERS
+.TP
+.BI "STAGER SVCCLASS"
+If the service class is not specified on the command-line or by the environment
+variable \fBSTAGE_SVCCLASS\fP, then \fBrfcp\fP will use the value of the
+configuration parameter \fBSTAGER SVCCLASS\fP specified in the castor
+configuration file \fB/etc/castor.conf\fP. If the service class is not
+specified using any of these three methods, then the default value of
+"\fBdefault\fP" will be used.  Please note the name of the castor configuration
+parameter \fBSTAGER SVCCLASS\fP contains the letter \fBR\fP, unlike the
+corresponding environment variable, see above.
 
 .SH SEE ALSO
 .BR rcp(1), 
