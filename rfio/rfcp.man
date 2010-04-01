@@ -118,7 +118,7 @@ section in
 .B serrno(3)
 page may be returned.
 
-.SH ENVIORNMENT VARIABLES
+.SH ENVIRONMENT VARIABLES
 .TP
 .BI STAGE_SVCCLASS
 If the service class is not specified on the command-line, then
