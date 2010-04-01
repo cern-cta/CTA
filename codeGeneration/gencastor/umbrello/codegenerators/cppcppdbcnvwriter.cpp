@@ -3523,10 +3523,15 @@ void CppCppDbCnvWriter::printSQLError(QTextStream &stream,
         if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
         stream << endl << getIndent()
                << "                << \"  "
-               << as->remotePart.name << " : \" << obj->"
-               << as->remotePart.name
-               << (isEnum(as->remotePart.typeName) ? "()" : "()->id()")
-               << " << std::endl";
+               << as->remotePart.name << " : \" << ";
+        if (isEnum(as->remotePart.typeName)) {
+          stream << "obj->" << as->remotePart.name
+                 << "() << std::endl";
+        } else {
+          stream << "(obj->" << as->remotePart.name
+                 << "() ? obj->" << as->remotePart.name
+                 << "()->id() : 0) << std::endl";
+        }
       }
     }
   } else if (name == "bulkInsert") {
