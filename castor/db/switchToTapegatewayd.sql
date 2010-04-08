@@ -62,7 +62,7 @@ BEGIN
   EXECUTE IMMEDIATE
     'CREATE OR REPLACE TRIGGER tr_Tape_Pending' ||
     '  AFTER UPDATE OF status ON Tape' ||
-    '  FOR EACH ROW WHEN (new.status = castor.TAPE_PENDING and new.tpmode=0) ' ||
+    '  FOR EACH ROW WHEN (new.status = castor.TAPE_PENDING and new.tpmode=castor.WRITE_DISABLE) ' ||
     'DECLARE' ||
     '  unused NUMBER; ' ||
     'BEGIN' ||
@@ -115,7 +115,7 @@ BEGIN
   UPDATE Segment SET status = castor.SEGMENT_UNPROCESSED
     WHERE status = castor.SEGMENT_SELECTED; -- Resurrect SELECTED segment
   UPDATE Tape SET status = castor.TAPE_PENDING
-    WHERE tpmode = 0 AND 
+    WHERE tpmode = castor.WRITE_DISABLE AND 
           status IN (castor.TAPE_WAITDRIVE, castor.TAPE_WAITMOUNT, 
           castor.TAPE_MOUNTED); -- Resurrect the tapes running for recall
   UPDATE Tape A SET status = castor.TAPE_WAITPOLICY
