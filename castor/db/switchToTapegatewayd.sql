@@ -62,7 +62,7 @@ BEGIN
   EXECUTE IMMEDIATE
     'CREATE OR REPLACE TRIGGER tr_Tape_Pending' ||
     '  AFTER UPDATE OF status ON Tape' ||
-    '  FOR EACH ROW WHEN (new.status = castor.TAPE_PENDING and new.tpmode=castor.WRITE_DISABLE) ' ||
+    '  FOR EACH ROW WHEN (new.status = 1 and new.tpmode= 0) ' ||
     'DECLARE' ||
     '  unused NUMBER; ' ||
     'BEGIN' ||
@@ -81,7 +81,7 @@ BEGIN
   EXECUTE IMMEDIATE
     'CREATE OR REPLACE TRIGGER tr_Stream_Pending' ||
     '  AFTER UPDATE of status ON Stream' ||
-    '  FOR EACH ROW WHEN (new.status = castor.STRAM_PENDING ) ' ||
+    '  FOR EACH ROW WHEN (new.status = 0 ) ' ||
     'DECLARE' ||
     '  unused NUMBER; ' ||
     'BEGIN' ||
