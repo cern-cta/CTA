@@ -62,7 +62,7 @@ BEGIN
   EXECUTE IMMEDIATE
     'CREATE OR REPLACE TRIGGER tr_Tape_Pending' ||
     '  AFTER UPDATE OF status ON Tape' ||
-    '  FOR EACH ROW WHEN (new.status = 1 and new.tpmode=0) ' ||
+    '  FOR EACH ROW WHEN (new.status = castor.TAPE_PENDING and new.tpmode=0) ' ||
     'DECLARE' ||
     '  unused NUMBER; ' ||
     'BEGIN' ||
@@ -81,7 +81,7 @@ BEGIN
   EXECUTE IMMEDIATE
     'CREATE OR REPLACE TRIGGER tr_Stream_Pending' ||
     '  AFTER UPDATE of status ON Stream' ||
-    '  FOR EACH ROW WHEN (new.status = 0 ) ' ||
+    '  FOR EACH ROW WHEN (new.status = castor.STRAM_PENDING ) ' ||
     'DECLARE' ||
     '  unused NUMBER; ' ||
     'BEGIN' ||
@@ -97,25 +97,32 @@ BEGIN
 
   -- Deal with Migrations
   -- 1) Ressurect tapecopies for migration
-  UPDATE TapeCopy SET status = 1 WHERE status = 3;
+  UPDATE TapeCopy SET status = castor.TAPECOPY_TOBEMIGRATED 
+    WHERE status = castor.TAPECOPY_SELECTED;
   -- 2) Clean up the streams
-  UPDATE Stream SET status = 0
-    WHERE status NOT IN (0, 5, 6, 7) --PENDING, CREATED, STOPPED, WAITPOLICY
+  UPDATE Stream SET status = castor.STREAM_PENDING
+    WHERE status NOT IN (castor.STREAM_PENDING, castor.STREAM_CREATED, 
+    castor.STREAM_STOPPED, castor.STREAM_WAITPOLICY)
     RETURNING tape BULK COLLECT INTO tpIds;
   UPDATE Stream SET tape = NULL WHERE tape != 0;
   -- 3) Reset the tape for migration
   FORALL i IN tpIds.FIRST .. tpIds.LAST
-    UPDATE tape SET stream = 0, status = 0
-      WHERE status IN (2, 3, 4) AND id = tpIds(i);
+    UPDATE tape SET stream = 0, status = castor.TAPE_UNUSED
+      WHERE status IN (castor.TAPE_WAITDRIVE, castor.TAPE_WAITMOUNT, 
+      castor.TAPE_MOUNTED) AND id = tpIds(i); 
 
   -- Deal with Recalls
-  UPDATE Segment SET status = 0
-    WHERE status = 7; -- Resurrect SELECTED segment
-  UPDATE Tape SET status = 1
-    WHERE tpmode = 0 AND status IN (2, 3, 4); -- Resurrect the tapes running for recall
-  UPDATE Tape A SET status = 8
-    WHERE status IN (0, 6, 7) AND EXISTS
-    (SELECT id FROM Segment WHERE status = 0 AND tape = A.id);
+  UPDATE Segment SET status = castor.SEGMENT_UNPROCESSED
+    WHERE status = castor.SEGMENT_SELECTED; -- Resurrect SELECTED segment
+  UPDATE Tape SET status = castor.TAPE_PENDING
+    WHERE tpmode = 0 AND 
+          status IN (castor.TAPE_WAITDRIVE, castor.TAPE_WAITMOUNT, 
+          castor.TAPE_MOUNTED); -- Resurrect the tapes running for recall
+  UPDATE Tape A SET status = castor.TAPE_WAITPOLICY
+    WHERE status IN (castor.TAPE_UNUSED, castor.TAPE_FAILED, 
+    castor.TAPE_UNKNOWN) AND EXISTS
+    (SELECT id FROM Segment 
+     WHERE status = castor.SEGMENT_UNPROCESSED AND tape = A.id);
 
   -- Start the restartSuckRecallsJob
   DBMS_SCHEDULER.CREATE_JOB(
