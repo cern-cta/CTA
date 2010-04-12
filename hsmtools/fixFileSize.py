@@ -75,7 +75,15 @@ try:
     nsconn = castor_tools.connectToNS()
     nscur = nsconn.cursor()
     nscur.arraysize = 50
-    nsfixSQL = '''BEGIN
+    nsfixSQL = '''DECLARE
+      unused NUMBER;
+    BEGIN
+      SELECT parent_fileid INTO unused
+        FROM cns_file_metadata
+       WHERE fileid = 
+         (SELECT parent_fileid FROM cns_file_metadata
+           WHERE fileid = :fid
+             AND bitand(filemode, 32768) = 32768) FOR UPDATE;
       UPDATE cns_file_metadata SET fileSize = :fs WHERE fileid = :fid;
       UPDATE cns_seg_metadata SET segsize = :fs, checksum_name = null, checksum = null WHERE s_fileid = :fid;
     END;'''
