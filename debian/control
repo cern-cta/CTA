@@ -253,6 +253,7 @@ Description: castor (Cern Advanced STORage system)
 Package: castor-lib-tape
 Architecture: any
 Depends: castor-lib
+XBS-Obsoletes: castor-lib-policy, castor-lib-tapeutils
 Description: castor (Cern Advanced STORage system)
  Shared utilities library for castor tape servers and command-line tools
 
@@ -300,12 +301,14 @@ Description: castor (Cern Advanced STORage system)
 Package: castor-tapebridge-server
 Architecture: any
 Depends: logrotate, castor-lib-tape
+XBS-Obsoletes: castor-aggregator-server
 Description: castor (Cern Advanced STORage system)
  Tape Bridge Daemon
 
 Package: castor-tapebridge-client
 Architecture: any
 Depends: logrotate, castor-lib-tape
+XBS-Obsoletes: castor-aggregator-client
 Description: castor (Cern Advanced STORage system)
  Tape Bridge Clients
 
