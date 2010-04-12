@@ -96,7 +96,11 @@ END {
 
 # MAIN
 for $arg (@ARGV) {
-  my @results;
+  my %mountpoint;
+  my %diskpool;
+  my %fsstat;
+  my $readablefsstat;
+  my %poolname;
   my $hostname;
   my $serverstat;
   my $readableserver;
@@ -104,6 +108,9 @@ for $arg (@ARGV) {
                       "DISKSERVER_DRAINING",
                       "DISKSERVER_DISABLED",
                       "DISKSERVER_NONE");
+  my @FileSystemStatus = ("FILESYSTEM_PRODUCTION",
+                          "FILESYSTEM_DRAINING",
+                          "FILESYSTEM_DISABLED");
   my $hostoutput = `/usr/bin/host $arg`;
   if ($hostoutput =~ m/^(\S+)( has address )/i ){
     $hostname = $1;  # fully qualified hostname
@@ -124,7 +131,7 @@ for $arg (@ARGV) {
   $Sth->finish;
 
   $Sth = $Dbh->prepare(qq{
-	SELECT name from diskpool where id in (
+	SELECT name,id from diskpool where id in (
   		(select diskpool from filesystem where diskserver in (
       			(SELECT Id FROM DiskServer WHERE name = '$hostname'))))
 			 });
@@ -133,21 +140,62 @@ nextmac:
   #printf ("\n$arg:\n");
   while (my @list = $Sth->fetchrow_array) {
     my $invalid=0;
-    die("columns mismatch: @list") unless @list == 1;
-    my ($svcclassname) = @list;
-    push (@results, $svcclassname);
+    die("columns mismatch: @list") unless @list == 2;
+    my ($svcclassname, $svcclassid) = @list;
+    $poolname{$svcclassid} = $svcclassname;
   }
   $Sth->finish;
   if ($serverstat <= $#ServerStatus) {
     $readableserver = $ServerStatus[$serverstat];
   } else {
-    $readableserver = "Unknown status : " . $serverstat;
+    $readableserver = "Unknown diskserver status : " . $serverstat;
   }
   printf ("%-16s ",$hostname);
-  foreach my $svcclassname (@results) {
-    printf ("%-11s ",$svcclassname);
-  }
+  #foreach my $svcclassname (values %poolname) {
+  #  printf ("%-11s ",$svcclassname);
+  #}
   printf ("%-10s ",$readableserver);
+
+  $Sth = $Dbh->prepare(qq{
+     select MOUNTPOINT,DISKPOOL,STATUS,ID from filesystem where diskserver in (
+                        (SELECT Id FROM DiskServer WHERE name = '$hostname'))
+                         });
+  $Sth->execute;
+nextmac:
+  #printf ("\n$arg:\n");
+  while (my @list = $Sth->fetchrow_array) {
+    my $invalid=0;
+    die("columns mismatch: @list") unless @list == 4;
+    my ($mountpointval, $diskpoolval, $fsstatval, $filesystemid) = @list;
+    $mountpoint{$filesystemid} = $mountpointval;
+    $diskpool{$filesystemid} = $diskpoolval;
+    $fsstat{$filesystemid} = $fsstatval;
+    if ( not exists $poolname{$diskpool{$filesystemid}} ){
+        printf ("\nError: no name for diskpool ID = %ld\n",$diskpool{$filesystemid});
+        $poolname{$diskpool{$filesystemid}} = "Unknown diskpool : " . $diskpool{$filesystemid};
+    }
+  }
+  $Sth->finish;
+  printf ("\n");
+  printf ("%-16s ","FileSystemId");
+  printf ("%-16s ","MountPoint");
+  printf ("%-11s ","DiskPool");
+  printf ("%-10s ","Status");
+  printf ("\n");
+  foreach my $filesystemid (sort keys %mountpoint) {
+    if ($fsstat{$filesystemid} <= $#FileSystemStatus) {
+        $readablefsstat = $FileSystemStatus[$fsstat{$filesystemid}];
+    } else {
+        $readablefsstat = "Unknown filesystem status : " . $fsstat{$filesystemid};
+    }
+    printf ("%-16d ",$filesystemid);
+    printf ("%-16s ",$mountpoint{$filesystemid});
+    printf ("%-11s ",$poolname{$diskpool{$filesystemid}});
+    printf ("%-10s ",$readablefsstat);
+    printf ("\n");
+
+  }
+
   my $stagedcount = 0;
   my $canbemigrcount = 0;
   my $stageoutcount = 0;
@@ -158,6 +206,7 @@ nextmac:
   my $waitd2dcpcount = 0;
   my $gccandidatecount = 0;
   my $beingdeletedcount = 0;
+  printf ("File Status Summary: ");
   open (DSQ, "diskServer_qry $hostname |") or die "cannot open diskServer_qry $hostname - $!\n";
     while (<DSQ>) {
       my ($filestat, $filepath) = split (/\s+/, $_);

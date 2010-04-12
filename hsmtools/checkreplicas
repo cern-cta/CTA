@@ -47,11 +47,41 @@ my @TcStatus = ("TAPECOPY_CREATED",
 		"TAPECOPY_SELECTED",
 		"TAPECOPY_TOBERECALLED",
 		"TAPECOPY_STAGED",
-		"TAPECOPY_FAILED");
+		"TAPECOPY_FAILED",
+		"TAPECOPY_WAITPOLICY",
+		"TAPECOPY_REC_RETRY",
+		"TAPECOPY_MIG_RETRY");
+my @TapeStatus = ("TAPE_UNUSED",
+                  "TAPE_PENDING",
+                  "TAPE_WAITDRIVE",
+                  "TAPE_WAITMOUNT",
+                  "TAPE_MOUNTED",
+                  "TAPE_FINISHED",
+                  "TAPE_FAILED",
+                  "TAPE_UNKNOWN",
+                  "TAPE_WAITPOLICY");
+my @SegmentStatus = ("SEGMENT_UNPROCESSED",
+                     "SEGMENT_1", 
+                     "SEGMENT_2", 
+                     "SEGMENT_3", 
+                     "SEGMENT_4", 
+                     "SEGMENT_FILECOPIED", 
+                     "SEGMENT_FAILED", 
+                     "SEGMENT_SELECTED", 
+                     "SEGMENT_RETRIED"); 
 my @ServerStatus = ("DISKSERVER_PRODUCTION",
                     "DISKSERVER_DRAINING",
                     "DISKSERVER_DISABLED",
                     "DISKSERVER_NONE");
+my @StreamStatCd = ( "STREAM_PENDING",
+                     "STREAM_WAITDRIVE",
+                     "STREAM_WAITMOUNT",
+                     "STREAM_RUNNING",
+                     "STREAM_WAITSPACE",
+                     "STREAM_CREATED",
+                     "STREAM_STOPPED",
+                     "STREAM_WAITPOLICY");
+
 my $filepath;
 my $tapensstat;
 my $segmentstat;
@@ -85,6 +115,7 @@ my %serverstat;
 my %mountpoint;
 my %status;
 my %diskpool;
+my %svcclassid;
 $server{0} = "\tnone";
 $serverstat{0} = 3;
 $mountpoint{0} = "none ";
@@ -126,7 +157,7 @@ sub getstatus() {
         if ($segmentsize != $nslsfilesize){
           printf ("Warning: NSLS SIZE=$nslsfilesize SEGMENT SIZE=$segmentsize,\n");
           printf ("Could fix with segment size:\n");
-          print ("./nssetfssize $filepath $segmentsize\n");
+          print ("/usr/bin/nssetfsize --size=$segmentsize $filepath\n");
         }
       }
       close(NSLST);
@@ -245,7 +276,13 @@ while (@results) {
 
   if (not ($instager)) {
     #$filepath = `/afs/cern.ch/project/castor/deployment/tools/bin/nsgetpath castorns $fileid 2>/dev/null`;
-    $filepath = `nsgetpath castorns $fileid 2>/dev/null`;
+    $filepath = `nsgetpath castorns $fileid 2>&1`;
+    if ($filepath =~ m/No such file or directory/i) {
+        $filepath = "";  # Not in ns
+    } elsif ($filepath =~ m/cannot query 'castorns', all name server commands are forced to query '(\S+)'/i) {
+        my $nsserver =  $1;
+        $filepath = `nsgetpath $nsserver $fileid 2>/dev/null`;
+    }
     print "\nFile ($fileid) ";
     if (length($filepath) != 0 ) {
       chomp $filepath;
@@ -276,16 +313,17 @@ while (@results) {
   
     if (! $mountpoint{$fsystem} ){
       my $Sth = $Dbh->prepare(qq{
-                          select castor_stager.FileSystem.mountPoint, castor_stager.FileSystem.status, castor_stager.diskpool.name
-                          from castor_stager.FileSystem, castor_stager.diskpool
+                          select castor_stager.FileSystem.mountPoint, castor_stager.FileSystem.status, castor_stager.diskpool.name, castor_stager.svcclass.id
+                          from castor_stager.FileSystem, castor_stager.diskpool, castor_stager.svcclass
                           where castor_stager.FileSystem.id=$fsystem
                           and   castor_stager.FileSystem.diskpool=castor_stager.diskpool.id
+                          and   castor_stager.svcclass.name=castor_stager.diskpool.name
                            });
       $Sth->execute;
       while (my @list = $Sth->fetchrow_array) {
         my $invalid=0;
-        die("columns mismatch: @list") unless @list == 3;
-        ($mountpoint{$fsystem}, $status{$fsystem}, $diskpool{$fsystem}) = @list;
+        die("columns mismatch: @list") unless @list == 4;
+        ($mountpoint{$fsystem}, $status{$fsystem}, $diskpool{$fsystem}, $svcclassid{$fsystem}) = @list;
       }
       $Sth->finish;
     }
@@ -320,7 +358,14 @@ while (@results) {
        printf ("\nNSfileid=%-10lld ",$fileid);
        printf ("Castorfile=%-10lld:\n",$castorfile);
        #$filepath = `/afs/cern.ch/project/castor/deployment/tools/bin/nsgetpath castorns $fileid 2>/dev/null`;
-       $filepath = `nsgetpath castorns $fileid 2>/dev/null`;
+       $filepath = `nsgetpath castorns $fileid 2>&1`;
+       if ($filepath =~ m/No such file or directory/i) {
+           $filepath = "";  # Not in ns
+       } elsif ($filepath =~ m/cannot query 'castorns', all name server commands are forced to query '(\S+)'/i) {
+           my $nsserver =  $1;
+           $filepath = `nsgetpath $nsserver $fileid 2>/dev/null`;
+       }
+       chomp $filepath;
        print "filepath=$filepath\n" if ($debug);
        print "fileid=$fileid\n" if ($debug);
        if (length($filepath) != 0 ) {
@@ -392,8 +437,14 @@ while (@results) {
           die("columns mismatch: @list") unless @list == 3;
           $instream = 1;
           my ($stream, $streamstatus, $tapepool) = @list;
-          printf ("TapeCopy in Stream ID=$stream STATUS=$streamstatus TAPEPOOL=$tapepool\n");
-          if ($streamstatus == 3){
+          my $readableStrStat;
+          if ($streamstatus <= $#StreamStatCd) {
+            $readableStrStat = $StreamStatCd[$streamstatus];
+          } else {
+            $readableStrStat = "Unknown status : " . $streamstatus;
+          }
+          printf ("TapeCopy in Stream ID=$stream STATUS=$readableStrStat TAPEPOOL=$tapepool\n");
+          if (($streamstatus == 3) or ($streamstatus == 6)){
             my $Sth2 = $Dbh->prepare(qq{
                 select id, vid, status
                 from castor_stager.tape
@@ -405,7 +456,13 @@ while (@results) {
               my $invalid=0;
               die("columns mismatch: @list2") unless @list2 == 3;
               my ($id, $dbvid, $tapedbstat) = @list2;
-              printf ("    Tape ID=$id VID=$dbvid STATUS=$tapedbstat\n");
+              my $readableTape;
+              if ($tapedbstat <= $#TapeStatus) {
+                $readableTape = $TapeStatus[$tapedbstat];
+              } else {
+                $readableTape = "Unknown status : " . $tapedbstat;
+              }
+              printf ("    Tape ID=$id VID=$dbvid STATUS=$readableTape\n");
               my $shoqstat = `showqueues -x |grep $dbvid`;
               printf ("    Tape queue status = ");
               if (length($shoqstat) != 0 ) {
@@ -438,10 +495,12 @@ while (@results) {
              if ($nslsfilesize == 0){ # filesize 0 in ns
               if ($rfdirfilesize != 0){ # filesize not 0 in diskserver
                 print ("# filesize 0 in ns and not 0 in diskserver\n");
-                print ("./nssetfssize $filepath $rfdirfilesize\n");
+                print ("/usr/bin/nssetfsize --size=$rfdirfilesize $filepath\n");
                 print ("update castorfile set filesize=$rfdirfilesize where filesize=0 and id=$castorfile;\n");
                 print ("commit;\n");
-                #print ("call putDoneFunc($castorfile,$rfdirfilesize,0);\n");
+                print ("alternatively, if available, you may do both with\n");
+                print ("./hsmtools/fixFileSize.py $fileid:$rfdirfilesize\n");
+                #print ("call putDoneFunc($castorfile,$rfdirfilesize,0,$svcclassid{$fsystem});\n");
                 #print ("commit;\n");
               } else { # filesize 0 both in ns and diskserver
                 print ("# filesize 0 both in ns and diskserver\n");
@@ -449,7 +508,7 @@ while (@results) {
               }
             } elsif ($nslsfilesize == $rfdirfilesize) {
               if ( "$rfmonth $rfdate $rftime" eq "$nsmonth $nsdate $nstime") {
-                #print ("call putDoneFunc($castorfile,$rfdirfilesize,0);\n");
+                #print ("call putDoneFunc($castorfile,$rfdirfilesize,0,$svcclassid{$fsystem});\n");
                 #print ("commit;\n");
               }
             } elsif ($nslsfilesize != $rfdirfilesize) {
@@ -457,9 +516,11 @@ while (@results) {
               print ("# diskcopy from $rfmonth $rfdate $rftime\n");
               print ("# ns entry from $nsmonth $nsdate $nstime\n");
               print ("# Could fix with\n");
-              print ("./nssetfssize $filepath $rfdirfilesize\n");
+              print ("/usr/bin/nssetfsize --size=$rfdirfilesize $filepath\n");
               print ("update castorfile set filesize=$rfdirfilesize where filesize=$nslsfilesize and id=$castorfile;\n");
               print ("commit;\n");
+              print ("alternatively, if available, you may do both with\n");
+              print ("./hsmtools/fixFileSize.py $fileid:$rfdirfilesize\n");
             }
           #}
         }
@@ -481,26 +542,26 @@ while (@results) {
            if ($nslsfilesize == 0){ # filesize 0 in ns
             if ($rfdirfilesize != 0){ # filesize not 0 in diskserver
               print ("# filesize 0 in ns and not 0 in diskserver\n");
-              print ("./nssetfssize $filepath $rfdirfilesize\n");
+              print ("/usr/bin/nssetfsize --size=$rfdirfilesize $filepath\n");
               print ("update castorfile set filesize=$rfdirfilesize where filesize=0 and id=$castorfile;\n");
               print ("commit;\n");
-              print ("call putDoneFunc($castorfile,$rfdirfilesize,0);\n");
+              print ("call putDoneFunc($castorfile,$rfdirfilesize,0,$svcclassid{$fsystem});\n");
               print ("commit;\n");
             } else { # filesize 0 both in ns and diskserver
               print ("# filesize 0 both in ns and diskserver\n");
               print ("/usr/bin/cleanLostFiles $diskcopyid\n");
             }
           } elsif ($nslsfilesize == $rfdirfilesize) { 
-            if ( "$rfmonth $rfdate $rftime" eq "$nsmonth $nsdate $nstime") {
-              print ("call putDoneFunc($castorfile,$rfdirfilesize,0);\n");
+            #if ( "$rfmonth $rfdate $rftime" eq "$nsmonth $nsdate $nstime") {
+              print ("call putDoneFunc($castorfile,$rfdirfilesize,0,$svcclassid{$fsystem});\n");
               print ("commit;\n");
-            }
+            #}
           }
         } else {
           print ("# Could fix with\n");
-          print ("./nssetfssize $filepath $rfdirfilesize\n");
+          print ("/usr/bin/nssetfsize --size=$rfdirfilesize $filepath\n");
           print ("update castorfile set filesize=$rfdirfilesize where filesize=$nslsfilesize and id=$castorfile;\n");
-          print ("call putDoneFunc($castorfile,$rfdirfilesize,0);\n");
+          print ("call putDoneFunc($castorfile,$rfdirfilesize,0,$svcclassid{$fsystem});\n");
           print ("commit;\n");
         }
       }
@@ -546,10 +607,12 @@ while (@results) {
       while (@vids) {
         my $vid = shift(@vids);
         my $shoqstat = `showqueues -x |grep $vid`;
+        my $nothinginshowqueues = 0;
         printf ("Tape queue status = ");
         if (length($shoqstat) != 0 ) {
           printf ("$shoqstat");
         }else{
+          $nothinginshowqueues = 1;
           printf ("nothing in showqueues for VID=$vid\n");
         }
         my $Sth = $Dbh->prepare(qq{
@@ -563,7 +626,16 @@ while (@results) {
           my $invalid=0;
           die("columns mismatch: @list") unless @list == 3;
           my ($id, $dbvid, $tapedbstat) = @list;
-          printf ("Tape ID=$id VID=$dbvid STATUS=$tapedbstat\n");
+          my $readableTape;
+          if ($tapedbstat <= $#TapeStatus) {
+            $readableTape = $TapeStatus[$tapedbstat];
+          } else {
+            $readableTape = "Unknown status : " . $tapedbstat;
+          }
+          printf ("Tape ID=$id VID=$dbvid STATUS=$readableTape\n");
+          if (($nothinginshowqueues) and ($readableTape eq "TAPE_WAITDRIVE")){
+            printf ("VID=$vid in TAPE_WAITDRIVE and nothing in showqueues\n");
+          }
         }
         $Sth->finish;
       }
@@ -603,11 +675,17 @@ while (@results) {
           and castor_stager.tape.id = castor_stager.segment.tape
                });
         $Sth->execute;
+        my $readableSegment;
         while (my @list = $Sth->fetchrow_array) {
           my $invalid=0;
           die("columns mismatch: @list") unless @list == 4;
           my ($id, $segmentstat, $vid, $tapeid) = @list;
-          printf ("Segment ID=$id STATUS=$segmentstat pointing to tape ID=$tapeid VID=$vid\n");
+        if ($segmentstat <= $#SegmentStatus) {
+          $readableSegment = $SegmentStatus[$segmentstat];
+        } else {
+          $readableSegment = "Unknown status : " . $segmentstat;
+        }
+          printf ("Segment ID=$id STATUS=$readableSegment pointing to tape ID=$tapeid VID=$vid\n");
           #printf ("delete from Id2Type where id=$id;\n");
           #printf ("delete from segment where id=$id;\n");
           #printf ("commit;\n");
