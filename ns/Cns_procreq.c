@@ -333,7 +333,7 @@ int Cns_srv_chclass(req_data, clienthost, thip)
       RETURN (EINVAL);
   } else {
     if (Cns_get_class_by_name (&thip->dbfd, class_name, &new_class_entry,
-                               1, &new_rec_addrc)) {
+                               0, &new_rec_addrc)) {
       if (serrno == ENOENT) {
         sendrep (thip->s, MSG_ERR, "No such class\n");
         RETURN (EINVAL);
