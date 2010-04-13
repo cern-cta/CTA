@@ -1737,3 +1737,47 @@ BEGIN
       COMMENTS        => 'Workaround to restart stuck recalls');
 END;
 /
+
+
+/**
+ * Returns true if the sppecified tape inteface daemon is running.
+ *
+ * @param daemonName The name of the interface daemon.
+ */
+CREATE OR REPLACE FUNCTION tapeInterfaceDaemonIsRunning(
+  daemonName IN VARCHAR2)
+RETURN BOOLEAN IS
+  unused VARCHAR2(2048);
+BEGIN
+  SELECT value INTO unused
+    FROM CastorConfig
+    WHERE class = 'tape'
+      AND key   = 'interfaceDaemon'
+      AND VALUE = daemonName;
+    RETURN FALSE;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+    RETURN TRUE;
+END tapeInterfaceDaemonIsRunning;
+/
+
+
+/**
+ * Returns true if the rtcpclientd daemon is running.
+ */ 
+CREATE OR REPLACE FUNCTION rtcpclientdIsRunning
+RETURN BOOLEAN IS 
+BEGIN
+  RETURN tapeInterfaceDaemonIsRunning('rtcpclientd');
+END rtcpclientdIsRunning;
+/
+
+
+/**
+ * Returns true if the tape gateway daemon is running.
+ */
+CREATE OR REPLACE FUNCTION tapegatewaydIsRunning
+RETURN BOOLEAN IS
+BEGIN
+  RETURN tapeInterfaceDaemonIsRunning('tapegatewayd');
+END tapegatewaydIsRunning;
+/
