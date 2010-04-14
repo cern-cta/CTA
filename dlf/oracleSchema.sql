@@ -28,7 +28,7 @@
 CREATE SEQUENCE ids_seq INCREMENT BY 1 CACHE 300;
 
 /* SQL statement for table dlf_config */
-CREATE TABLE dlf_config(name VARCHAR2(255) CONSTRAINT NN_Config_Name NOT NULL, value VARCHAR2(255), description VARCHAR2(255));
+CREATE TABLE dlf_config(name VARCHAR2(255) CONSTRAINT NN_Config_Name NOT NULL, value VARCHAR2(255) CONSTRAINT NN_Config_Value NOT NULL, description VARCHAR2(255) CONSTRAINT NN_Config_Description NOT NULL);
 ALTER TABLE dlf_config ADD CONSTRAINT UN_Config_Name UNIQUE (name) ENABLE;
 
 /* SQL statements for table dlf_messages */
@@ -62,43 +62,22 @@ CREATE TABLE dlf_str_param_values(id NUMBER, timestamp DATE CONSTRAINT NN_Str_Pa
 CREATE INDEX I_Str_Param_Values_id ON dlf_str_param_values (id) LOCAL;
 
 /* SQL statements for table dlf_severities */
-CREATE TABLE dlf_severities(sev_no NUMBER(3), sev_name VARCHAR2(20));
-
-CREATE UNIQUE INDEX UN_Severities_Sev_NoName ON dlf_severities (sev_no, sev_name);
-
-ALTER TABLE dlf_severities ADD CONSTRAINT UN_Severities_Sev_NoName UNIQUE (sev_no, sev_name) ENABLE;
+CREATE TABLE dlf_severities(sev_no NUMBER(3) CONSTRAINT PK_Severities_Sev_No PRIMARY KEY CONSTRAINT NN_Severities_Sev_No NOT NULL, sev_name VARCHAR2(20) CONSTRAINT NN_Severities_Sev_Name NOT NULL);
 
 /* SQL statements for table dlf_facilities */
-CREATE TABLE dlf_facilities(fac_no NUMBER(3), fac_name VARCHAR2(20));
-
-CREATE UNIQUE INDEX UN_Facilities_Fac_No ON dlf_facilities (fac_no);
-CREATE UNIQUE INDEX UN_Facilities_Fac_Name ON dlf_facilities (fac_name);
-
-ALTER TABLE dlf_facilities ADD CONSTRAINT UN_Facilities_Fac_No UNIQUE (fac_no) ENABLE;
-ALTER TABLE dlf_facilities ADD CONSTRAINT UN_Facilities_Fac_Name UNIQUE (fac_name) ENABLE;
+CREATE TABLE dlf_facilities(fac_no NUMBER(3) CONSTRAINT PK_Facilities_Fac_No PRIMARY KEY CONSTRAINT NN_Facilities_Fac_No NOT NULL, fac_name VARCHAR2(20) CONSTRAINT NN_Facilities_Fac_Name NOT NULL);
 
 /* SQL statements for table dlf_msg_texts */
-CREATE TABLE dlf_msg_texts(fac_no NUMBER(3), msg_no NUMBER(5), msg_text VARCHAR2(512));
+CREATE TABLE dlf_msg_texts(fac_no NUMBER(3) CONSTRAINT NN_Msg_Texts_Fac_No NOT NULL, msg_no NUMBER(5) CONSTRAINT NN_Msg_Texts_Msg_No NOT NULL, msg_text VARCHAR2(512) CONSTRAINT NN_Msg_Texts_Msg_Text NOT NULL);
 
-CREATE UNIQUE INDEX UN_Msg_Texts_FacMsgNo ON dlf_msg_texts (fac_no, msg_no);
+ALTER TABLE dlf_msg_texts
+  ADD CONSTRAINT PK_Msg_Texts_FacMsgNo PRIMARY KEY (fac_no, msg_no);
 
 /* SQL statements for dlf_host_map */
-CREATE TABLE dlf_host_map(hostid NUMBER, hostname VARCHAR2(64));
-
-CREATE UNIQUE INDEX UN_Host_Map_Hostid ON dlf_host_map (hostid);
-CREATE UNIQUE INDEX UN_Host_Map_Hostname ON dlf_host_map (hostname);
-
-ALTER TABLE dlf_host_map ADD CONSTRAINT UN_Host_Map_Hostid UNIQUE (hostid) ENABLE;
-ALTER TABLE dlf_host_map ADD CONSTRAINT UN_Host_Map_Hostname UNIQUE (hostname) ENABLE;
+CREATE TABLE dlf_host_map(hostid NUMBER CONSTRAINT PK_Host_Map_HostID PRIMARY KEY CONSTRAINT NN_Host_Map_HostID NOT NULL, hostname VARCHAR2(64) CONSTRAINT NN_Host_Map_HostName NOT NULL);
 
 /* SQL statements for dlf_nshost_map */
-CREATE TABLE dlf_nshost_map(nshostid NUMBER, nshostname VARCHAR2(64));
-
-CREATE UNIQUE INDEX UN_NSHost_Map_NSHostid ON dlf_nshost_map (nshostid);
-CREATE UNIQUE INDEX UN_NSHost_Map_NSHostname ON dlf_nshost_map (nshostname);
-
-ALTER TABLE dlf_nshost_map ADD CONSTRAINT UN_NSHost_Map_NsHostid UNIQUE (nshostid) ENABLE;
-ALTER TABLE dlf_nshost_map ADD CONSTRAINT UN_NSHost_Map_NsHostname UNIQUE (nshostname) ENABLE;
+CREATE TABLE dlf_nshost_map(nshostid NUMBER CONSTRAINT PK_NSHost_Map_NSHostID PRIMARY KEY CONSTRAINT NN_NSHost_Map_NSHostID NOT NULL, nshostname VARCHAR2(64) CONSTRAINT NN_NSHost_Map_NSHostName NOT NULL);
 
 /* Fill the dlf_config table */
 INSERT INTO dlf_config (name, value, description) VALUES ('instance', 'castordlf', 'The name of the castor2 instance');
