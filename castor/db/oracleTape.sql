@@ -1782,23 +1782,3 @@ BEGIN
 END tapegatewaydIsRunning;
 /
 
-
-/**
- * Returns true if the specified old and new versions of the corresponding
- * Tape table row indicate that the status of the tape has been changed to
- * "recall pending".
- *
- * @param old The old version of the row.
- * @param new The new version of the row.
- */
-CREATE OR REPLACE FUNCTION statusChangedToRecallPending(
-  old IN Tape%ROWTYPE,
-  new IN Tape%ROWTYPE)
-RETURN BOOLEAN IS
-BEGIN
-  RETURN
-    NOT (old.status = TCONST.TAPE_PENDING) AND
-    new.status = TCONST.TAPE_PENDING AND
-    new.tpmode = TCONST.WRITE_DISABLE;
-END statusChangedToRecallPending;
-/
