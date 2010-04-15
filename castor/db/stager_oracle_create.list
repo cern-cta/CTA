@@ -12,3 +12,4 @@ oracleGC.sql
 oracleDrain.sql
 oracleDebug.sql
 oracleMonitoring.sql
+oracleConstants.sql
