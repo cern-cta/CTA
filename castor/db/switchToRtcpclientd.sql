@@ -22,38 +22,36 @@
  * @author Giulia Taurelli, Nicola Bessone and Steven Murray
  *****************************************************************************/
 
+/* Stop on errors - this only works from sqlplus */
+WHENEVER SQLERROR EXIT FAILURE;
+
+BEGIN
+  -- Do nothing and rise an exception if the database is already compatible 
+  -- with the rtcpclientd daemon
+  IF rtcpclientdIsRunning THEN
+    raise_application_error(-20000,
+      'PL/SQL switchToRTCPClientd: RTCPClientd already running.');
+  END IF;
+END;
+/
+
+-- The database is about to be modified and is therefore not compatible with
+-- either the rtcpclientd daemon or the tape gateway daemon
+UPDATE CastorConfig
+  SET value = 'SwitchingToRTCPClientd'
+  WHERE
+    class = 'tape' AND
+    key   = 'interfaceDaemon';
+COMMIT;
+
+-- Drop the tr_Tape_Pending and tr_Stream_Pending triggers as they are
+-- specific to the tape gateway and have no place in an rtcpclientd schema
+DROP TRIGGER tr_Tape_Pending;
+DROP TRIGGER tr_Stream_Pending;
+
 DECLARE
   idsList "numList";
-  unused VARCHAR2(2048);
 BEGIN
-  -- Do nothing and return if the database is already compatible with the
-  -- rtcpclientd daemon
-  BEGIN
-    SELECT value INTO unused
-     FROM CastorConfig
-     WHERE class = 'tape'
-       AND key   = 'interfaceDaemon'
-       AND value = 'rtcpclientd';
-     RETURN;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- Do nothing and continue
-    NULL;
-  END;
-
-  -- The database is about to be modified and is therefore not compatible with
-  -- either the rtcpclientd daemon or the tape gateway daemon
-  UPDATE CastorConfig
-    SET value = 'NONE'
-    WHERE
-      class = 'tape' AND
-      key   = 'interfaceDaemon';
-  COMMIT;
-
-  -- Drop the tr_Tape_Pending and tr_Stream_Pending triggers as they are
-  -- specific to the tape gateway and have no place in an rtcpclientd schema
-  EXECUTE IMMEDIATE 'DROP TRIGGER tr_Tape_Pending';
-  EXECUTE IMMEDIATE 'DROP TRIGGER tr_Stream_Pending';
-
   DELETE FROM TapeGatewaySubRequest RETURNING id BULK COLLECT INTO idsList;
 
   FORALL i IN idsList.FIRST ..  idsList.LAST
@@ -63,13 +61,13 @@ BEGIN
 
   FORALL i IN idsList.FIRST ..  idsList.LAST
     DELETE FROM id2type WHERE  id= idsList(i);
-
-  -- The database is now compatible with the rtcpclientd daemon
-  UPDATE CastorConfig
-    SET value = 'rtcpclientd'
-    WHERE
-      class = 'tape' AND
-      key   = 'interfaceDaemon';
-  COMMIT;
 END;
 /
+
+-- The database is now compatible with the rtcpclientd daemon
+UPDATE CastorConfig
+  SET value = 'rtcpclientd'
+  WHERE
+    class = 'tape' AND
+    key   = 'interfaceDaemon';
+COMMIT;

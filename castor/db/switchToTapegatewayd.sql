@@ -22,33 +22,31 @@
  * @author Giulia Taurelli, Nicola Bessone and Steven Murray
  *****************************************************************************/
 
-DECLARE
-  tpIds "numList";
-  unused VARCHAR2(2048);
+/* Stop on errors - this only works from sqlplus */
+WHENEVER SQLERROR EXIT FAILURE;
+
 BEGIN
-  -- Do nothing and return if the database is already compatible with the
-  -- tapegatewayd daemon
-  BEGIN
-    SELECT value INTO unused
-     FROM CastorConfig
-     WHERE class = 'tape'
-       AND key   = 'interfaceDaemon'
-       AND value = 'tapegatewayd';
-     RETURN;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- Do nothing and continue
-    NULL;
-  END;
+  -- Do nothing and rise an exception if the database is already compatible 
+  -- with the tapegatewayd daemon
+  IF tapegatewaydIsRunning THEN
+    raise_application_error(-20000,
+      'PL/SQL switchToTapegatewayd: Tapegateway already running.');
+  END IF;
+END;
+/
 
-  -- The database is about to be modified and is therefore not compatible with
-  -- either the rtcpclientd daemon or the tape gateway daemon
-  UPDATE CastorConfig
-    SET value = 'NONE'
-    WHERE
-      class = 'tape' AND
-      key   = 'interfaceDaemon';
-  COMMIT;
 
+-- Whilst this script is modifiying the database, the database is not
+-- compatible with either the rtcpclientd or tape gateway daemons
+UPDATE CastorConfig
+  SET value = 'SwitchingToTapeGeteway'
+  WHERE
+    class = 'tape' AND
+    key   = 'interfaceDaemon';
+COMMIT;
+
+
+BEGIN
   -- Remove the restartStuckRecallsJob as this job will not exist in the
   -- future tape gateway only schema
   FOR j IN (SELECT job_name FROM user_scheduler_jobs
@@ -56,75 +54,84 @@ BEGIN
   LOOP
     DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
   END LOOP;
+END;
+/
 
-  -- Create the tr_Tape_Pending trigger which automatically inserts a
-  -- row into the TapeGatewayRequest table when a recall-tape is pending
-  EXECUTE IMMEDIATE
-    'CREATE OR REPLACE TRIGGER tr_Tape_Pending' ||
-    '  AFTER UPDATE OF status ON Tape' ||
-    '  FOR EACH ROW WHEN (new.status = 1 and new.tpmode= 0) ' ||
-    'DECLARE' ||
-    '  unused NUMBER; ' ||
-    'BEGIN' ||
-    '  SELECT id INTO unused' ||
-    '    FROM TapeGatewayRequest' ||
-    '    WHERE taperecall=:new.id; ' ||
-    'EXCEPTION WHEN NO_DATA_FOUND THEN ' ||
-    '  INSERT INTO TapeGatewayRequest (accessmode, starttime,' ||
-    '    lastvdqmpingtime, vdqmvolreqid, id, streammigration, taperecall,' ||
-    '    status)' ||
-    '    VALUES (0,null,null,null,ids_seq.nextval,null,:new.id,1); ' ||
-    'END tr_Tape_Pending;';
 
-  -- Create the tr_Stream_Pending trigger which automatically inserts a
-  -- row into the TapeGatewayRequest table when a recall-tape is pending
-  EXECUTE IMMEDIATE
-    'CREATE OR REPLACE TRIGGER tr_Stream_Pending' ||
-    '  AFTER UPDATE of status ON Stream' ||
-    '  FOR EACH ROW WHEN (new.status = 0 ) ' ||
-    'DECLARE' ||
-    '  unused NUMBER; ' ||
-    'BEGIN' ||
-    '  SELECT id INTO unused' ||
-    '    FROM TapeGatewayRequest' ||
-    '    WHERE streammigration=:new.id; ' ||
-    'EXCEPTION WHEN NO_DATA_FOUND THEN' ||
-    '  INSERT INTO TapeGatewayRequest (accessMode, startTime, ' ||
-    '    lastVdqmPingTime, vdqmVolReqId, id, streamMigration, TapeRecall, ' ||
-    '    Status) ' ||
-    '    VALUES (1,null,null,null,ids_seq.nextval,:new.id,null,0); ' ||
-    'END tr_Stream_Pending;';
+-- Create the tr_Tape_Pending trigger which automatically inserts a
+-- row into the TapeGatewayRequest table when a recall-tape is pending
+CREATE OR REPLACE TRIGGER tr_Tape_Pending
+  AFTER UPDATE OF status ON Tape
+  FOR EACH ROW WHEN (
+    -- The status of the tape has been changed to "recall pending"
+    NOT (old.status = 1) AND -- TAPE_PENDING
+    new.status = 1       AND -- TAPE_PENDING
+    new.tpmode = 0)          -- WRITE_DISABLED
+BEGIN
+  INSERT INTO TapeGatewayRequest(accessmode, id, taperecall, status)
+    VALUES (TCONST.WRITE_DISABLE, ids_seq.nextval, :new.id, 
+      TCONST.TAPEGATEWAY_TO_BE_SENT_TO_VDQM);
+EXCEPTION
+  -- Do nothing if the row already exists
+  WHEN DUP_VAL_ON_INDEX THEN
+    NULL;
+END tr_Tape_Pending;
+/
 
+
+-- Create the tr_Stream_Pending trigger which automatically inserts a
+-- row into the TapeGatewayRequest table when a migrate-stream is pending
+CREATE OR REPLACE TRIGGER tr_Stream_Pending
+  AFTER UPDATE of status ON Stream
+  FOR EACH ROW WHEN (
+    -- The status of the stream has been changed to "pending"
+    NOT (old.status = 0) AND -- STREAM_PENDING
+    new.status = 0)          -- STREAM_PENDING
+BEGIN
+  INSERT INTO TapeGatewayRequest (accessMode, id, streamMigration, Status)
+    VALUES (TCONST.WRITE_ENABLE, ids_seq.nextval, :new.id, 
+      TCONST.TAPEGATEWAY_TO_BE_RESOLVED);
+EXCEPTION 
+ -- Do nothing if the row already exists
+  WHEN DUP_VAL_ON_INDEX THEN
+    NULL;
+END tr_Stream_Pending;
+/
+
+
+DECLARE
+  tpIds "numList";
+BEGIN
   -- Deal with Migrations
   -- 1) Ressurect tapecopies for migration
-  UPDATE TapeCopy SET status = castor.TAPECOPY_TOBEMIGRATED 
-    WHERE status = castor.TAPECOPY_SELECTED;
+  UPDATE TapeCopy SET status = TCONST.TAPECOPY_TOBEMIGRATED 
+    WHERE status = TCONST.TAPECOPY_SELECTED;
   -- 2) Clean up the streams
-  UPDATE Stream SET status = castor.STREAM_PENDING
-    WHERE status NOT IN (castor.STREAM_PENDING, castor.STREAM_CREATED, 
-    castor.STREAM_STOPPED, castor.STREAM_WAITPOLICY)
+  UPDATE Stream SET status = TCONST.STREAM_PENDING
+    WHERE status NOT IN (TCONST.STREAM_PENDING, TCONST.STREAM_CREATED, 
+    TCONST.STREAM_STOPPED, TCONST.STREAM_WAITPOLICY)
     RETURNING tape BULK COLLECT INTO tpIds;
   UPDATE Stream SET tape = NULL WHERE tape != 0;
   -- 3) Reset the tape for migration
   FORALL i IN tpIds.FIRST .. tpIds.LAST
-    UPDATE tape SET stream = 0, status = castor.TAPE_UNUSED
-      WHERE status IN (castor.TAPE_WAITDRIVE, castor.TAPE_WAITMOUNT, 
-      castor.TAPE_MOUNTED) AND id = tpIds(i); 
+    UPDATE tape SET stream = 0, status = TCONST.TAPE_UNUSED
+      WHERE status IN (TCONST.TAPE_WAITDRIVE, TCONST.TAPE_WAITMOUNT, 
+      TCONST.TAPE_MOUNTED) AND id = tpIds(i); 
 
   -- Deal with Recalls
-  UPDATE Segment SET status = castor.SEGMENT_UNPROCESSED
-    WHERE status = castor.SEGMENT_SELECTED; -- Resurrect SELECTED segment
-  UPDATE Tape SET status = castor.TAPE_PENDING
-    WHERE tpmode = castor.WRITE_DISABLE AND 
-          status IN (castor.TAPE_WAITDRIVE, castor.TAPE_WAITMOUNT, 
-          castor.TAPE_MOUNTED); -- Resurrect the tapes running for recall
-  UPDATE Tape A SET status = castor.TAPE_WAITPOLICY
-    WHERE status IN (castor.TAPE_UNUSED, castor.TAPE_FAILED, 
-    castor.TAPE_UNKNOWN) AND EXISTS
-    (SELECT id FROM Segment 
-     WHERE status = castor.SEGMENT_UNPROCESSED AND tape = A.id);
+  UPDATE Segment SET status = TCONST.SEGMENT_UNPROCESSED
+    WHERE status = TCONST.SEGMENT_SELECTED; -- Resurrect selected segments
+  UPDATE Tape SET status = TCONST.TAPE_PENDING
+    WHERE tpmode = TCONST.WRITE_DISABLE AND 
+          status IN (TCONST.TAPE_WAITDRIVE, TCONST.TAPE_WAITMOUNT, 
+          TCONST.TAPE_MOUNTED); -- Resurrect the tapes running for recall
+  UPDATE Tape A SET status = TCONST.TAPE_WAITPOLICY
+    WHERE status IN (TCONST.TAPE_UNUSED, TCONST.TAPE_FAILED, 
+    TCONST.TAPE_UNKNOWN) AND EXISTS
+    ( SELECT id FROM Segment 
+      WHERE status = TCONST.SEGMENT_UNPROCESSED AND tape = A.id);
 
-  -- Start the restartSuckRecallsJob
+  -- Start the restartStuckRecallsJob
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'RESTARTSTUCKRECALLSJOB',
       JOB_TYPE        => 'PLSQL_BLOCK',
@@ -134,14 +141,13 @@ BEGIN
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=60',
       ENABLED         => TRUE,
       COMMENTS        => 'Workaround to restart stuck recalls');
-
-  -- The database is now compatible with the tapegatewayd daemon
-  UPDATE CastorConfig
-    SET value = 'tapegatewayd'
-    WHERE
-      class = 'tape' AND
-      key   = 'interfaceDaemon';
-  COMMIT;
-
 END;
 /
+
+-- The database is now compatible with the tapegatewayd daemon
+UPDATE CastorConfig
+  SET value = 'tapegatewayd'
+  WHERE
+    class = 'tape' AND
+    key   = 'interfaceDaemon';
+COMMIT;
