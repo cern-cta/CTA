@@ -1747,16 +1747,15 @@ END;
 CREATE OR REPLACE FUNCTION tapeInterfaceDaemonIsRunning(
   daemonName IN VARCHAR2)
 RETURN BOOLEAN IS
-  unused VARCHAR2(2048);
+  nbRows NUMBER := 0;
 BEGIN
-  SELECT value INTO unused
+  SELECT COUNT(*) INTO nbRows
     FROM CastorConfig
     WHERE class = 'tape'
       AND key   = 'interfaceDaemon'
       AND VALUE = daemonName;
-    RETURN FALSE;
-EXCEPTION WHEN NO_DATA_FOUND THEN
-    RETURN TRUE;
+
+  RETURN nbRows > 0;
 END tapeInterfaceDaemonIsRunning;
 /
 
