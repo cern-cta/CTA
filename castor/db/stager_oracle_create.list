@@ -1,6 +1,7 @@
 oracleCommon.schema.sql
 oracleDrain.schema.sql
 oracleMonitoring.schema.sql
+oracleConstants.sql
 oracleCommon.sql
 oraclePerm.sql
 oracleStager.sql
@@ -12,4 +13,3 @@ oracleGC.sql
 oracleDrain.sql
 oracleDebug.sql
 oracleMonitoring.sql
-oracleConstants.sql
