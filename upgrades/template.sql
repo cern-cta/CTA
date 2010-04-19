@@ -48,9 +48,8 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('schemaTag', 'newRelTag');
-/* Uncomment for transparent release */
---UPDATE UpgradeLog SET type = 'TRANSPARENT';
+INSERT INTO UpgradeLog (schemaVersion, release, type)
+VALUES ('schemaTag', 'newRelTag', 'TRANSPARENT');
 COMMIT;
 
 /* Job management */
