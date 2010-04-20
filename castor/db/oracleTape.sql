@@ -839,19 +839,56 @@ BEGIN
 END;
 /
 
+CREATE OR REPLACE PROCEDURE deleteOrStopStream(streamId IN INTEGER) AS
+-- If the specified stream has no tape copies then this procedure deletes it,
+-- else if the stream has tape copies then this procedure sets its status to
+-- STREAM_STOPPED (6).  In both cases the associated tape is detached from the
+-- stream and its status is set to TAPE_UNUSED (0).
+
+  CHILD_RECORD_FOUND EXCEPTION;
+  PRAGMA EXCEPTION_INIT(CHILD_RECORD_FOUND, -02292);
+  DEADLOCK_DETECTED EXCEPTION;
+  PRAGMA EXCEPTION_INIT(DEADLOCK_DETECTED, -00060);
+  unused NUMBER;
+
+BEGIN
+  -- Take a lock on the stream
+  SELECT id INTO unused FROM Stream WHERE id = streamId FOR UPDATE;
+
+  -- Try to delete the stream.  If the mighunter daemon is running in
+  -- rtcpclientd mode, then this delete may fail for two expected reasons.  The
+  -- mighunterd daemon may have added more tape copies in the meantime and
+  -- will therefore cause a CHILD_RECORD_FOUND exception due to the
+  -- corresponding entries in the Stream2TapeCopy table.  The mighunter daemon
+  -- may be adding new tape copies right this moment and will therefore cause a
+  -- DEADLOCK_DETECTED exception.
+  BEGIN
+    DELETE FROM Stream  WHERE id = streamId;
+    DELETE FROM Id2Type WHERE id = streamId;
+  EXCEPTION
+    -- When the stream cannot be deleted
+    WHEN CHILD_RECORD_FOUND OR DEADLOCK_DETECTED THEN
+      -- Stop the stream and reset its tape link and last file system change
+      UPDATE Stream
+        SET
+          status = TCONST.STREAM_STOPPED,
+          tape = NULL,
+          lastFileSystemChange = NULL
+        WHERE
+          id = streamId;
+  END;
+
+  -- Complete the detachment of the tape
+  UPDATE Tape
+    SET status = TCONST.TAPE_UNUSED, stream = NULL
+    WHERE stream = streamId;
+END deleteOrStopStream;
+/
+
 /* PL/SQL method implementing resetStream */
-CREATE OR REPLACE PROCEDURE resetStream (sid IN INTEGER) AS
-  CONSTRAINT_VIOLATED EXCEPTION;
-  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -02292);
-BEGIN  
-  DELETE FROM Stream WHERE id = sid;
-  DELETE FROM Id2Type WHERE id = sid;
-  UPDATE Tape SET status = 0, stream = NULL WHERE stream = sid;
-EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
-  -- constraint violation and we cannot delete the stream
-  UPDATE Stream SET status = 6, tape = NULL, lastFileSystemChange = NULL
-   WHERE id = sid; 
-  UPDATE Tape SET status = 0, stream = NULL WHERE stream = sid;
+CREATE OR REPLACE PROCEDURE resetStream (streamId IN INTEGER) AS
+BEGIN
+  deleteOrStopStream(streamId);
 END;
 /
 
@@ -1486,16 +1523,7 @@ CREATE OR REPLACE PROCEDURE stopChosenStreams
   nbTc NUMBER;
 BEGIN
   FOR i IN streamIds.FIRST .. streamIds.LAST LOOP
-    SELECT count(*) INTO nbTc FROM stream2tapecopy
-     WHERE parent = streamIds(i);
-    IF nbTc = 0 THEN
-      DELETE FROM Stream WHERE id = streamIds(i);
-    ELSE
-      UPDATE Stream
-         SET status = 6 -- STOPPED
-       WHERE Stream.status = 7 -- WAITPOLICY
-         AND id = streamIds(i);
-    END IF;
+    deleteOrStopStream(streamIds(i));
     COMMIT;
   END LOOP;
 END;
