@@ -187,19 +187,8 @@ BEGIN
 
     ELSE
 
-      -- write
-      -- reset stream
-       BEGIN
-         DELETE FROM Stream WHERE id = strId;
-         DELETE FROM id2type WHERE id=strId;
-
-       EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
-       -- constraint violation and we cannot delete the stream because there is an entry in Stream2TapeCopy
-         UPDATE Stream SET status = 6, tape = null, lastFileSystemChange = null
-           WHERE id = strId;
-       END;
-       -- reset tape
-       UPDATE Tape SET status=0, stream = null WHERE stream = strId;
+       -- write
+       deleteOrStopStream(strId);
 
        IF inputErrorCode != 0 THEN
           -- if a failure is reported
