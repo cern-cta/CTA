@@ -244,10 +244,8 @@ void castor::job::stagerjob::RawMoverPlugin::postForkHook
         }
       }
       // Call prepareForMigration
-      castor::stager::SubRequest subrequest;
-      subrequest.setId(args.subRequestId);
       context.jobSvc->prepareForMigration
-        (&subrequest, (u_signed64) statbuf.st_size,
+        (args.subRequestId, (u_signed64) statbuf.st_size,
          time(NULL), args.fileId.fileid, args.fileId.server,
          csumtype, csumvalue);
     } else {

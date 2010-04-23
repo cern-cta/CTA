@@ -569,7 +569,7 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyFailed
 // prepareForMigration
 //------------------------------------------------------------------------------
 void castor::db::ora::OraJobSvc::prepareForMigration
-(castor::stager::SubRequest *subreq,
+(u_signed64 subReqId,
  u_signed64 fileSize,
  u_signed64 timeStamp,
  u_signed64,
@@ -591,7 +591,7 @@ void castor::db::ora::OraJobSvc::prepareForMigration
         (6, oracle::occi::OCCIINT);
     }
     // execute the statement and see whether we found something
-    m_prepareForMigrationStatement->setDouble(1, subreq->id());
+    m_prepareForMigrationStatement->setDouble(1, subReqId);
     m_prepareForMigrationStatement->setDouble(2, fileSize);
     m_prepareForMigrationStatement->setDouble(3, timeStamp);
     unsigned int nb = m_prepareForMigrationStatement->executeUpdate();

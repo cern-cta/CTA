@@ -98,10 +98,8 @@ void castor::job::stagerjob::InstrumentedMoverPlugin::waitChildAndInformStager
     if (rc == 0) {
       if (0 != statbuf.st_size) {
         // some file found, call prepareForMigration to save the data we have
-        castor::stager::SubRequest subrequest;
-        subrequest.setId(args.subRequestId);
         context.jobSvc->prepareForMigration
-          (&subrequest, (u_signed64) statbuf.st_size,
+          (args.subRequestId, (u_signed64) statbuf.st_size,
            time(NULL), args.fileId.fileid, args.fileId.server);
       } else {
         // empty file on disk, log an error and drop it

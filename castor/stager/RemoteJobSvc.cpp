@@ -420,7 +420,7 @@ void castor::stager::RemoteJobSvc::disk2DiskCopyFailed
 // prepareForMigration
 //------------------------------------------------------------------------------
 void castor::stager::RemoteJobSvc::prepareForMigration
-(castor::stager::SubRequest *subreq,
+(u_signed64 subReqId,
  u_signed64 fileSize,
  u_signed64 timeStamp,
  u_signed64 fileId,
@@ -430,7 +430,7 @@ void castor::stager::RemoteJobSvc::prepareForMigration
   throw (castor::exception::Exception) {
   // Build the MoverCloseRequest
   castor::stager::MoverCloseRequest req;
-  req.setSubReqId(subreq->id());
+  req.setSubReqId(subReqId);
   req.setFileSize(fileSize);
   req.setTimeStamp(timeStamp);
   req.setFileId(fileId);

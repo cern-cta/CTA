@@ -134,7 +134,7 @@ extern "C" {
   //-------------------------------------------------------------------------
   int Cstager_IJobSvc_prepareForMigration
   (struct Cstager_IJobSvc_t* jobSvc,
-   castor::stager::SubRequest* subreq,
+   u_signed64 subReqId,
    u_signed64 fileSize,
    u_signed64 timeStamp,
    u_signed64 fileId,
@@ -144,7 +144,7 @@ extern "C" {
     if (!checkIJobSvc(jobSvc)) return -1;
     try {
       jobSvc->jobSvc->prepareForMigration
-	(subreq, fileSize, timeStamp, fileId, nsHost, csumtype, csumvalue);
+	(subReqId, fileSize, timeStamp, fileId, nsHost, csumtype, csumvalue);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       jobSvc->errorMsg = e.getMessage().str();

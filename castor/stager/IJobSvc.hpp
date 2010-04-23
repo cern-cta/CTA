@@ -222,7 +222,7 @@ namespace castor {
        * it also updates the filesystem free space and creates
        * the needed TapeCopies according to the FileClass of the
        * castorFile.
-       * @param subreq The SubRequest handling the file to prepare
+       * @param subReqId The id of the SubRequest to prepare
        * @param fileSize The actual size of the castor file
        * @param timeStamp To know if the fileSize is still valid
        * @param fileId the id of the castorFile
@@ -233,7 +233,7 @@ namespace castor {
        */
 
       virtual void prepareForMigration
-      (castor::stager::SubRequest* subreq,
+      (u_signed64 subReqId,
        u_signed64 fileSize,
        u_signed64 timeStamp,
        u_signed64 fileId,

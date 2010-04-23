@@ -193,7 +193,7 @@ const char* Cstager_IJobSvc_errorMsg(struct Cstager_IJobSvc_t* jobSvc);
  * the needed TapeCopies according to the FileClass of the
  * castorFile.
  * @param jobSvc the IJobSvc used
- * @param subreq The SubRequest handling the file to prepare
+ * @param subReqId The id of the SubRequest
  * @param fileSize The actual size of the castor file
  * @param timeStamp To know if the fileSize is still valid
  * @param fileId the id of the castorFile
@@ -208,7 +208,7 @@ const char* Cstager_IJobSvc_errorMsg(struct Cstager_IJobSvc_t* jobSvc);
 
 int Cstager_IJobSvc_prepareForMigration
 (struct Cstager_IJobSvc_t* jobSvc,
- struct Cstager_SubRequest_t* subreq,
+ u_signed64 subReqId,
  u_signed64 fileSize,
  u_signed64 timeStamp,
  u_signed64 fileId,

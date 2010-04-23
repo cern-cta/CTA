@@ -373,15 +373,12 @@ void castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyDoneRequest
 void castor::stager::daemon::JobSvcThread::handleMoverCloseRequest
 (castor::stager::Request* req,
  castor::IClient *client,
- castor::Services* svcs,
+ castor::Services*,
  castor::stager::IJobSvc* jobSvc,
- castor::BaseAddress &ad,
+ castor::BaseAddress&,
  Cuuid_t uuid) throw()  {
   // Useful Variables
-  castor::stager::SubRequest *subreq = 0;
   castor::stager::MoverCloseRequest *mcReq;
-  castor::IObject *obj = 0;
-  Cuuid_t suuid = nullCuuid;
   castor::rh::BasicResponse res;
   u_signed64 fileId;
   std::string nsHost;
@@ -392,68 +389,39 @@ void castor::stager::daemon::JobSvcThread::handleMoverCloseRequest
     mcReq = dynamic_cast<castor::stager::MoverCloseRequest*> (req);
     fileId = mcReq->fileId();
     nsHost = mcReq->nsHost();
-    ad.setTarget(mcReq->subReqId());
-    castor::IObject *obj = 0;
-    try {
-      obj = svcs->createObj(&ad);
-    } catch (castor::exception::NoEntry noe) {
-      // As for the StartRequest, log a warning
-      // "Could not find subrequest associated to Request"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("SubReqId", mcReq->subReqId()),
-         castor::dlf::Param("Type", "MoverCloseRequest")};
-      castor::dlf::dlf_writep(uuid, DLF_LVL_WARNING, STAGER_JOBSVC_NOSREQ,
-                              fileId, nsHost, 2, params);
-      return;
-    }
-    subreq = dynamic_cast<castor::stager::SubRequest*>(obj);
-    if (0 == subreq) {
-      // "Expected SubRequest in Request but found another type"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Type", obj->type())};
-      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_BADSRT,
-                              fileId, nsHost, 1, params);
-      delete obj;
-      return;
-    }
-    string2Cuuid(&suuid, (char*)subreq->subreqId().c_str());
     // "Invoking prepareForMigration"
     castor::dlf::Param params[] =
       {castor::dlf::Param("ChkSumType", mcReq->csumType()),
        castor::dlf::Param("ChkSumValue", mcReq->csumValue()),
-       castor::dlf::Param(suuid)};
+       castor::dlf::Param("SubReqId", mcReq->subReqId())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_JOBSVC_PFMIG,
                             fileId, nsHost, 3, params);
     try {
-      jobSvc->prepareForMigration(subreq, mcReq->fileSize(), mcReq->timeStamp(), fileId, nsHost, mcReq->csumType(), mcReq->csumValue());
+      jobSvc->prepareForMigration(mcReq->subReqId(), mcReq->fileSize(), mcReq->timeStamp(),
+                                  fileId, nsHost, mcReq->csumType(), mcReq->csumValue());
     } catch (castor::exception::Exception e) {
       if (e.code() == ENOENT) {
         // "File was removed by another user while being modified"
         castor::dlf::Param params[] =
-          {castor::dlf::Param("Function", "JobSvcThread::handleMoverCloseRequest"),
-           castor::dlf::Param(suuid)};
+          {castor::dlf::Param("Function", "JobSvcThread::handleMoverCloseRequest")};
         castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_JOBSVC_DELWWR,
-                                fileId, nsHost, 2, params);
+                                fileId, nsHost, 1, params);
         res.setErrorCode(e.code());
         res.setErrorMessage("File was removed by another user while being modified");
       } else {
         throw e;
       }
     }
-    // Cleaning
-    delete obj;
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "JobSvcThread::handleMoverCloseRequest"),
        castor::dlf::Param("Message", e.getMessage().str()),
-       castor::dlf::Param("Code", e.code()),
-       castor::dlf::Param(suuid)};
+       castor::dlf::Param("Code", e.code())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
-                            fileId, nsHost, 4, params);
+                            fileId, nsHost, 3, params);
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
-    if (obj != 0) delete obj;
   }
   // Reply To Client
   try {
@@ -466,10 +434,9 @@ void castor::stager::daemon::JobSvcThread::handleMoverCloseRequest
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "JobSvcThread::handleMoverCloseRequest.reply"),
        castor::dlf::Param("Message", e.getMessage().str()),
-       castor::dlf::Param("Code", e.code()),
-       castor::dlf::Param(suuid)};
+       castor::dlf::Param("Code", e.code())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
-                            fileId, nsHost, 4, params);
+                            fileId, nsHost, 3, params);
   }
 }
 
