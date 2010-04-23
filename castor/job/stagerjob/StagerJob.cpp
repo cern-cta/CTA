@@ -682,7 +682,7 @@ int main(int argc, char** argv) {
        castor::dlf::Param(arguments->subRequestUuid)};
     castor::dlf::dlf_writep
       (arguments->requestUuid, DLF_LVL_SYSTEM,
-       castor::job::stagerjob::JOBSTARTED, 5, params, &arguments->fileId);
+       castor::job::stagerjob::JOBSTARTED, 6, params, &arguments->fileId);
 
     // Call stagerJobProcess
     process(context, arguments);
