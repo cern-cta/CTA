@@ -1,3 +1,6 @@
+# Configure max message size before loading any modules
+$MaxMessageSize 8192
+
 # Modules
 $ModLoad imuxsock  # provides support for local system logging (e.g. via logger command)
 $ModLoad imklog    # kernel logging (formerly provided by rklogd)
@@ -8,7 +11,6 @@ $InputTCPMaxSessions 1000
 $InputTCPServerRun 514              # start tcp server on port 514
 
 # Global options
-$MaxMessageSize 8192                # increase maximum allowed length of a message
 $DynaFileCacheSize 100              # the maximum number of dynamically generated
                                     # cached file names
 $umask 0000
