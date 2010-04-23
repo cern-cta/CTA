@@ -1041,7 +1041,7 @@ castor::repack::RepackAck*  castor::repack::ora::OraRepackSvc::changeSubRequests
     
     unsigned int bufferCellSize = maxLen * sizeof(char);
 
-    lens = (ub2*) malloc(maxLen * sizeof(ub2));
+    lens = (ub2*) malloc(numTapes * sizeof(ub2));
     buffer =
       (char*) malloc(numTapes * bufferCellSize);
 
