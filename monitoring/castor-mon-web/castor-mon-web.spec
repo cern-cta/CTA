@@ -1,5 +1,5 @@
 %define name 	  castor-mon-web
-%define version   1.0.1
+%define version   1.0.3
 %define release   1
 Summary: 	CASTOR Monitoring web-interface
 Name: 		%{name}
