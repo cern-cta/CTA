@@ -193,6 +193,9 @@ namespace castor {
         /// The id of this object
         u_signed64 m_id;
 
+      public:
+        int32_t m_firstFseqToBeWrittenTo;
+
       }; /* end of class VdqmTapeGatewayRequest */
 
     } /* end of namespace tapegateway */

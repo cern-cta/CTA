@@ -1,4 +1,3 @@
-
 #
 #                      castor/tape/tapegateway/Imakefile
 #
@@ -45,6 +44,7 @@ TAPEGATEWAYDBIN_SRCS = \
 	TapeGatewayRequest.cpp \
 	VdqmTapeGatewayRequest.cpp \
 	daemon/MigratorErrorHandlerThread.cpp \
+	daemon/MountIdToFseqMap.cpp \
 	daemon/NsTapeGatewayHelper.cpp \
 	daemon/RecallerErrorHandlerThread.cpp \
 	daemon/RmMasterTapeGatewayHelper.cpp \
@@ -58,7 +58,6 @@ TAPEGATEWAYDBIN_SRCS = \
 	daemon/WorkerThread.cpp \
 	daemon/ora/OraTapeGatewaySvc.cpp \
 	../net/net.cpp  
-
 
 TAPEGATEWAYBIN_SRCS = $(TAPEGATEWAYDBIN_SRCS)
 

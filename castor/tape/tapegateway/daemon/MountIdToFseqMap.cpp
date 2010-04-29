@@ -40,7 +40,6 @@ castor::tape::tapegateway::daemon::MountIdToFseqMap::MountIdToFseqMap()
 
   if(rc) {
     TAPE_THROW_EX(castor::exception::Internal,
-      ": " << __FUNCTION__ << " failed"
       ": Failed to initialize mutex"
       ": " << sstrerror(rc));
   }
@@ -62,7 +61,7 @@ void castor::tape::tapegateway::daemon::MountIdToFseqMap::insert(
     castor::exception::Exception ex(ECANCELED);
 
     ex.getMessage() <<
-      ": " << __FUNCTION__ << " failed"
+      __FUNCTION__ << " function failed"
       ": Mount transaction id already inserted"
       ": id=" <<  mountTransactionId;
 
@@ -87,7 +86,7 @@ int32_t castor::tape::tapegateway::daemon::MountIdToFseqMap::nextFseq(
     castor::exception::Exception ex(ENOENT);
 
     ex.getMessage() <<
-      ": " << __FUNCTION__ << " failed"
+      __FUNCTION__ << " function failed"
       ": No such mount transaction id"
       ": id=" <<  mountTransactionId;
 
@@ -112,7 +111,7 @@ void castor::tape::tapegateway::daemon::MountIdToFseqMap::erase(
     castor::exception::Exception ex(ENOENT);
 
     ex.getMessage() <<
-      ": " << __FUNCTION__ << " failed"
+      __FUNCTION__ << " function failed"
       ": No such mount transaction id"
       ": id=" <<  mountTransactionId;
 
