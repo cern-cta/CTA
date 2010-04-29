@@ -1,4 +1,5 @@
-#include "castor/tape/aggregator/VmgrTxRx.hpp"
+#include "castor/tape/tapebridge/SynchronizedCounter.hpp"
+#include "castor/tape/tapebridge/VmgrTxRx.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <iostream>
@@ -22,24 +23,50 @@ int testVmgrTxRx() {
   utils::setBytes(tapeInfo, '\0');
 
   try {
-    aggregator::VmgrTxRx::getTapeInfoFromVmgr(nullCuuid, volReqId,
+    tapebridge::VmgrTxRx::getTapeInfoFromVmgr(nullCuuid, volReqId,
       netReadWriteTimeout, uid, gid, vid, tapeInfo);
   } catch(castor::exception::Exception &ex) {
-    std::cerr << "Call to getTapeInfoFromVmgr() failed: "
-      << ex.getMessage().str();
+    std::cerr <<
+      "Call to getTapeInfoFromVmgr() failed"
+      ": " << ex.getMessage().str();
 
     return(-1); // Failed
   }
-
-  // Print the tape information
-  // TBD
 
   // Return success (-1 is used to  indicate failure)
   return 0;
 }
 
 
-int main(int argc, char **argv) {
+int testSynchronisedCounter() {
+  using namespace castor::tape;
+
+  std::ostream &os = std::cout;
+
+  os << std::endl;
+  utils::writeBanner(os, __FUNCTION__);
+
+  const int initialValue = 5;
+
+  tapebridge::SynchronizedCounter counter(initialValue);
+
+  int expectedValue = initialValue + 1;
+  int actualValue = counter.next();
+  if(actualValue != expectedValue) {
+    std::cerr <<
+       "Unexpected value returned by counter.next()"
+       ": actualValue=" << actualValue <<
+       ": expectedValue=" << expectedValue;
+
+    return(-1); // Failed
+  }
+
+  // Return success (-1 is used to  indicate failure)
+  return 0;
+}
+
+
+int main() {
   unsigned int nbTests    = 0;
   unsigned int nbFailed   = 0;
 

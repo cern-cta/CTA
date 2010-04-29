@@ -24,4 +24,4 @@
 # @author Sebastien Ponce, sebastien.ponce@cern.ch
 #
 
-SUBDIRS = aggregator python tpcp utils
+SUBDIRS = python tapebridge tpcp utils

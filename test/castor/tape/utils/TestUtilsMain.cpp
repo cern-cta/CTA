@@ -172,10 +172,10 @@ int testParseTpconfig() {
   castor::tape::utils::TpconfigLines lines;
 
   os << std::endl;
-  os << "utils::parseTpconfig(\"/SillyPath\", lines);" << std::endl;
+  os << "utils::parseTpconfigFile(\"/SillyPath\", lines);" << std::endl;
 
   try {
-    castor::tape::utils::parseTpconfig("/SillyPath", lines);
+    castor::tape::utils::parseTpconfigFile("/SillyPath", lines);
 
     os << std::endl;
     os << "Did not catch expected castor::exception::Exception" << std::endl;
@@ -190,11 +190,11 @@ int testParseTpconfig() {
   }
 
   os << std::endl;
-  os << "utils::parseTpconfig(\"" << castor::tape::TPCONFIGPATH <<
+  os << "utils::parseTpconfigFile(\"" << castor::tape::TPCONFIGPATH <<
     "\", lines);" << std::endl;
 
   try {
-    castor::tape::utils::parseTpconfig(castor::tape::TPCONFIGPATH, lines);
+    castor::tape::utils::parseTpconfigFile(castor::tape::TPCONFIGPATH, lines);
   } catch(castor::exception::Exception &ex) {
     os << std::endl;
     os <<
@@ -229,7 +229,7 @@ int testParseTpconfig() {
 }
 
 
-int main(int argc, char **argv) {
+int main() {
   unsigned int nbTests  = 0;
   unsigned int nbFailed = 0;
 

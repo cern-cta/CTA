@@ -1,5 +1,5 @@
 #
-#                      test/castor/tape/aggregator/Imakefile
+#                      test/castor/tape/tapebridge/Imakefile
 #
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
@@ -30,9 +30,10 @@ DependsOnLibrary(vdqm,castorvdqm)
 DependsOnLibrary(vmgr,castorvmgr)
 
 TAPE_AGGREGATOR_SRCS = \
-  ../../../../castor/tape/aggregator/LogHelper.cpp \
-  ../../../../castor/tape/aggregator/LegacyTxRx.cpp \
-  ../../../../castor/tape/aggregator/VmgrTxRx.cpp
+  ../../../../castor/tape/tapebridge/LogHelper.cpp \
+  ../../../../castor/tape/tapebridge/LegacyTxRx.cpp \
+  ../../../../castor/tape/tapebridge/SynchronizedCounter.cpp \
+  ../../../../castor/tape/tapebridge/VmgrTxRx.cpp
 
 TAPE_LEGACYMSG_SRCS = \
   ../../../../castor/tape/legacymsg/CommonMarshal.cpp \
@@ -49,4 +50,4 @@ TESTAGGREGATORBIN_SRCS = \
 
 TESTAGGREGATORBIN_OBJS = $(TESTAGGREGATORBIN_SRCS:.cpp=.o)
 
-NormalProgramTarget(testaggregator,$(TESTAGGREGATORBIN_OBJS),,,750)
+NormalProgramTarget(testtapebridge,$(TESTAGGREGATORBIN_OBJS),,,750)

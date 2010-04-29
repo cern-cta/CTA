@@ -80,7 +80,7 @@ void *startRoutine(void *arg) {
 }
 
 
-int exceptionThrowingMain(int argc, char **argv)
+int exceptionThrowingMain()
   throw(castor::exception::Exception) {
 
   using namespace castor::tape;
@@ -179,7 +179,7 @@ int exceptionThrowingMain(int argc, char **argv)
 }
 
 
-int main(int argc, char **argv) {
+int main() {
   std::cout <<
     "\n"
     "Testing castor::tape::python\n"
@@ -189,7 +189,7 @@ int main(int argc, char **argv) {
   int rc = 0;
 
   try {
-    rc = exceptionThrowingMain(argc, argv);
+    rc = exceptionThrowingMain();
   } catch(castor::exception::Exception &ex) {
     std::cerr <<
       "Test failed"
