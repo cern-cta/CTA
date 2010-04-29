@@ -1,5 +1,5 @@
 #
-#                      test/castor/Imakefile
+#                      test/castor/tape/tapegateway/Imakefile
 #
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
@@ -17,11 +17,25 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Release$ $Date: 2009/07/08 14:50:37 $ $Author: murrayc3 $
 #
-# Make Castor tests
-#
-# @author Sebastien Ponce, sebastien.ponce@cern.ch
+# @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
 #
 
-SUBDIRS = python tapebridge tapegateway tpcp utils
+DependsOnLibrary(castor,castorclient)
+DependsOnLibrary(castor/db/cnv,castorcnvs)
+DependsOnLibrary(castor/tape/utils,castortapeutils)
+DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(dlf,castordlf)
+DependsOnLibrary(vdqm,castorvdqm)
+DependsOnLibrary(vmgr,castorvmgr)
+
+TAPE_TAPEGATEWAY_SRCS = \
+  ../../../../castor/tape/tapegateway/daemon/MountIdToFseqMap.cpp
+
+TESTTAPEGATEWAYBIN_SRCS = \
+  TestTapegatewayMain.cpp \
+  $(TAPE_TAPEGATEWAY_SRCS)
+
+TESTTAPEGATEWAYBIN_OBJS = $(TESTTAPEGATEWAYBIN_SRCS:.cpp=.o)
+
+NormalProgramTarget(testtapegateway,$(TESTTAPEGATEWAYBIN_OBJS),,,750)
