@@ -43,8 +43,7 @@ castor::tape::tapegateway::VdqmTapeGatewayRequest::VdqmTapeGatewayRequest() thro
   m_accessMode(0),
   m_vid(""),
   m_mountTransactionId(0),
-  m_id(0),
-  m_firstFseqToBeWrittenTo(-1) {
+  m_id(0) {
 }
 
 //------------------------------------------------------------------------------
