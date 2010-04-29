@@ -29,7 +29,7 @@ DependsOnLibrary(dlf,castordlf)
 DependsOnLibrary(vdqm,castorvdqm)
 DependsOnLibrary(vmgr,castorvmgr)
 
-TAPE_AGGREGATOR_SRCS = \
+TAPE_TAPEGATEWAY_SRCS = \
   ../../../../castor/tape/tapebridge/LogHelper.cpp \
   ../../../../castor/tape/tapebridge/LegacyTxRx.cpp \
   ../../../../castor/tape/tapebridge/SynchronizedCounter.cpp \
@@ -42,12 +42,12 @@ TAPE_LEGACYMSG_SRCS = \
 TAPE_NET_SRCS = \
   ../../../../castor/tape/net/net.cpp
 
-TESTAGGREGATORBIN_SRCS = \
-  TestAggregatorMain.cpp \
-  $(TAPE_AGGREGATOR_SRCS) \
+TESTTAPEGATEWAYBIN_SRCS = \
+  TestTapebridgeMain.cpp \
+  $(TAPE_TAPEGATEWAY_SRCS) \
   $(TAPE_LEGACYMSG_SRCS) \
   $(TAPE_NET_SRCS)
 
-TESTAGGREGATORBIN_OBJS = $(TESTAGGREGATORBIN_SRCS:.cpp=.o)
+TESTTAPEGATEWAYBIN_OBJS = $(TESTTAPEGATEWAYBIN_SRCS:.cpp=.o)
 
-NormalProgramTarget(testtapebridge,$(TESTAGGREGATORBIN_OBJS),,,750)
+NormalProgramTarget(testtapebridge,$(TESTTAPEGATEWAYBIN_OBJS),,,750)
