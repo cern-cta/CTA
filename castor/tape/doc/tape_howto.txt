@@ -301,7 +301,7 @@ I10554   I10554 IBM_LIB1 700GC    aul tape_dev        700.00GiB 00000000
 Umbrello service
 ================
 
-lxcastorsrv102
+pcitadc19
 
 
 Database resources
