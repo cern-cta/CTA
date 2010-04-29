@@ -23,8 +23,8 @@
  *****************************************************************************/
 
 #include "castor/exception/Internal.hpp"
-#include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/tapebridge/SynchronizedCounter.hpp"
+#include "castor/tape/utils/ScopedLock.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <sstream>
@@ -40,7 +40,9 @@ castor::tape::tapebridge::SynchronizedCounter::SynchronizedCounter(
 
   if(rc) {
     TAPE_THROW_EX(castor::exception::Internal,
-      ": Failed to initialize mutex: " << sstrerror(rc));
+      ": Failed to create SynchronizedCounter object"
+      ": Failed to initialize mutex"
+      ": " << sstrerror(rc));
   }
 
   reset(count);
@@ -52,21 +54,9 @@ castor::tape::tapebridge::SynchronizedCounter::SynchronizedCounter(
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::SynchronizedCounter::reset(
   const int32_t count) throw(castor::exception::Exception) {
-  int rc = 0;
-
-  rc = pthread_mutex_lock(&m_mutex);
-  if(rc) {
-    TAPE_THROW_EX(castor::exception::Internal,
-      ": Failed to lock counter mutex: " << sstrerror(rc));
-  }
+  utils::ScopedLock scopedLock(m_mutex);
 
   m_count = count;
-
-  rc = pthread_mutex_unlock(&m_mutex);
-  if(rc) {
-    TAPE_THROW_EX(castor::exception::Internal,
-      ": Failed to unlock counter mutex: " << sstrerror(rc));
-  }
 }
 
 
@@ -85,23 +75,7 @@ int32_t castor::tape::tapebridge::SynchronizedCounter::next()
 //-----------------------------------------------------------------------------
 int32_t castor::tape::tapebridge::SynchronizedCounter::next(
   const int32_t increment) throw(castor::exception::Exception) {
+  utils::ScopedLock scopedLock(m_mutex);
 
-  int rc = 0;
-
-  rc = pthread_mutex_lock(&m_mutex);
-  if(rc) {
-    TAPE_THROW_EX(castor::exception::Internal,
-      ": Failed to lock counter mutex: " << sstrerror(rc));
-  }
-
-  m_count += increment;
-  const int32_t result = m_count;
-
-  rc = pthread_mutex_unlock(&m_mutex);
-  if(rc) {
-    TAPE_THROW_EX(castor::exception::Internal,
-      ": Failed to unlock counter mutex: " << sstrerror(rc));
-  }
-
-  return(result);
+  return m_count += increment;
 }
