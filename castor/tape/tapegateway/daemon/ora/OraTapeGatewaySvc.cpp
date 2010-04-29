@@ -77,7 +77,7 @@ const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getStream
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_attachTapesToStreamsStatementString="BEGIN tg_attachTapesToStreams(:1,:2,:3);END;";
 
 
-const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getTapeWithoutDriveReqStatementString="BEGIN tg_getTapeWithoutDriveReq(:1,:2,:3,:4);END;";
+const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_getTapeWithoutDriveReqStatementString="BEGIN tg_getTapeWithoutDriveReq(:1,:2,:3,:4,:5);END;";
 
 
 const std::string castor::tape::tapegateway::ora::OraTapeGatewaySvc::s_attachDriveReqToTapeStatementString="BEGIN tg_attachDriveReqToTape(:1,:2,:3,:4,:5);END;";
@@ -511,6 +511,8 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getTapeWithoutDriveReq(c
       m_getTapeWithoutDriveReqStatement->registerOutParam
         (4, oracle::occi::OCCISTRING, 2048);
 
+      m_getTapeWithoutDriveReqStatement->registerOutParam
+        (5, oracle::occi::OCCIINT);
     }
 
     // execute the statement and see whether we found something
@@ -527,6 +529,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getTapeWithoutDriveReq(c
     request.setTaperequest(reqId);
     request.setAccessMode((u_signed64)m_getTapeWithoutDriveReqStatement->getDouble(2));
     request.setVid(m_getTapeWithoutDriveReqStatement->getString(4));
+    request.m_firstFseqToBeWrittenTo = m_getTapeWithoutDriveReqStatement->getInt(5);
   
 
   } catch (oracle::occi::SQLException e) {
