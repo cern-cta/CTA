@@ -83,6 +83,53 @@ int testMountIdToFseqMap() {
       std::endl;
   }
 
+  try {
+    map.erase(5);
+
+    std::cerr <<
+      "Failed to catch expected exception"
+      ": Requested erase non-existent mount transaction id 5" <<
+      std::endl;
+
+    return -1; // Return failed
+  } catch(castor::exception::Exception &ex) {
+    os <<
+      "Successfully caught expected exception"
+      ": " << ex.getMessage().str() <<
+      std::endl;
+  }
+
+  try {
+    map.erase(1);
+
+    os <<
+      "Successfully erased mount transaction id 1" <<
+      std::endl;
+  } catch(castor::exception::Exception &ex) {
+    std::cerr <<
+      "Caught unexpected exception"
+      ": Requested erase mount transaction 1" <<
+      std::endl;
+
+    return -1; // Return failed
+  }
+
+  try {
+    map.nextFseq(1);
+
+    std::cerr <<
+      "Failed to catch expected exception"
+      ": Requested next FSEQ of non-existent mount transaction id 1" <<
+      std::endl;
+
+    return -1; // Return failed
+  } catch(castor::exception::Exception &ex) {
+    os <<
+      "Successfully caught expected exception"
+      ": " << ex.getMessage().str() <<
+      std::endl;
+  }
+
   // Return success (-1 is used to  indicate failure)
   return 0;
 }
