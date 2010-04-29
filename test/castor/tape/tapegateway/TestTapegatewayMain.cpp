@@ -13,7 +13,7 @@ int testMountIdToFseqMap() {
   os << std::endl;
   utils::writeBanner(os, __FUNCTION__);
 
-  tapegateway::daemon::MountIdToFseqMap map;
+  tapegateway::MountIdToFseqMap map;
 
   map.insert(1,1);
 
