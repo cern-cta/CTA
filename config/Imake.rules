@@ -60,14 +60,14 @@ InstallLink(tofile,fromfile,mode,$(BIN),component)
 #define InstallLibraryTargetNames(deplibs)$(if deplibs,$(addprefix $(DESTDIR)/$(LIBDIR)/,$(subst .$(MAJOR_CASTOR_VERSION),,$(notdir deplibs))))
 
 #define SchModTarget(libname,obj,deplibs,libs,directory)                                                                \
-BareSharedLibraryTargetName(libname): obj deplibs                                                                     @@\
-	$(CC) DYLIBLINKEROPTION -fPIC -o $@ $(CPPFLAGS) obj libs                                                      @@\
+BareSharedLibraryTargetName(libname): obj deplibs $(DEPLIB)                                                           @@\
+	$(CC) DYLIBLINKEROPTION -fPIC -o $@ $(LDFLAGS) obj libs $(LIBS)                                               @@\
 $(DESTDIR)/directory/BareSharedLibraryTargetName(libname): BareSharedLibraryTargetName(libname)                       @@\
 	@install -d $(DESTDIR)/directory                                                                              @@\
 	install -m 644 BareSharedLibraryTargetName(libname) $(DESTDIR)/directory/BareSharedLibraryTargetName(libname) @@\
 install: directory $(DESTDIR)/directory/BareSharedLibraryTargetName(libname)                                          @@\
 all: BareSharedLibraryTargetName(libname)                                                                             @@\
-FilesToClean += obj $(patsubst %.o,%.d,obj) BareSharedLibraryTargetName(libname)                                     @@\
+FilesToClean += obj $(patsubst %.o,%.d,obj) BareSharedLibraryTargetName(libname)                                      @@\
 FilesToClobber += BareSharedLibraryTargetName(libname)                                                                @@\
 obj: %.o: %.d
 
