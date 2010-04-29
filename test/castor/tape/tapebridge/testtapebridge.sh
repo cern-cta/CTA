@@ -13,7 +13,7 @@ fi
 LD_LIBRARY_PATH=`find $CASTOR_SRC -name '*.so*' | sed 's|/[^/]*$||' | sort | uniq`
 LD_LIBRARY_PATH=`echo $LD_LIBRARY_PATH | sed 's/ /:/g'`
 PARAMS=$@
-CMD="export LD_LIBRARY_PATH=$LD_LIBRARY_PATH; $CASTOR_SRC/test/castor/tape/aggregator/testaggregator $PARAMS"
+CMD="export LD_LIBRARY_PATH=$LD_LIBRARY_PATH; $CASTOR_SRC/test/castor/tape/tapebridge/testtapebridge $PARAMS"
 
 if test $USER = root; then
   sudo -u stage sh -c "$CMD"

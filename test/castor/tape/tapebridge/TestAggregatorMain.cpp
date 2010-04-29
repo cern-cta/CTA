@@ -61,6 +61,17 @@ int testSynchronisedCounter() {
     return(-1); // Failed
   }
 
+  expectedValue += 20;
+  actualValue = counter.next(20);
+  if(actualValue != expectedValue) {
+    std::cerr <<
+       "Unexpected value returned by counter.next()"
+       ": actualValue=" << actualValue <<
+       ": expectedValue=" << expectedValue;
+
+    return(-1); // Failed
+  }
+
   // Return success (-1 is used to  indicate failure)
   return 0;
 }
@@ -72,6 +83,8 @@ int main() {
 
 
   if(testVmgrTxRx()) nbFailed++;
+  nbTests++;
+  if(testSynchronisedCounter()) nbFailed++;
   nbTests++;
 
   std::cout << std::endl;
