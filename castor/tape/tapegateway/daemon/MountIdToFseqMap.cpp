@@ -34,7 +34,7 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::tapegateway::daemon::MountIdToFseqMap::MountIdToFseqMap()
+castor::tape::tapegateway::MountIdToFseqMap::MountIdToFseqMap()
   throw(castor::exception::Exception) {
   const int rc = pthread_mutex_init(&m_mutex, NULL);
 
@@ -49,7 +49,7 @@ castor::tape::tapegateway::daemon::MountIdToFseqMap::MountIdToFseqMap()
 //-----------------------------------------------------------------------------
 // insert
 //-----------------------------------------------------------------------------
-void castor::tape::tapegateway::daemon::MountIdToFseqMap::insert(
+void castor::tape::tapegateway::MountIdToFseqMap::insert(
   const uint64_t mountTransactionId, const int32_t fseq)
   throw(castor::exception::Exception) {
   utils::ScopedLock scopedLock(m_mutex);
@@ -75,7 +75,7 @@ void castor::tape::tapegateway::daemon::MountIdToFseqMap::insert(
 //-----------------------------------------------------------------------------
 // nextFseq
 //-----------------------------------------------------------------------------
-int32_t castor::tape::tapegateway::daemon::MountIdToFseqMap::nextFseq(
+int32_t castor::tape::tapegateway::MountIdToFseqMap::nextFseq(
   const uint64_t mountTransactionId) throw(castor::exception::Exception) {
   utils::ScopedLock scopedLock(m_mutex);
 
@@ -100,7 +100,7 @@ int32_t castor::tape::tapegateway::daemon::MountIdToFseqMap::nextFseq(
 //-----------------------------------------------------------------------------
 // erase
 //-----------------------------------------------------------------------------
-void castor::tape::tapegateway::daemon::MountIdToFseqMap::erase(
+void castor::tape::tapegateway::MountIdToFseqMap::erase(
   const uint64_t mountTransactionId) throw(castor::exception::Exception) {
   utils::ScopedLock scopedLock(m_mutex);
 

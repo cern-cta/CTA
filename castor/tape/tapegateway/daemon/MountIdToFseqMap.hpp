@@ -35,7 +35,6 @@
 namespace castor      {
 namespace tape        {
 namespace tapegateway {
-namespace daemon      {
 
 /**
  * Thread-safe map of mount transaction ids to tape file sequence numbers.
@@ -86,7 +85,6 @@ public:
     throw(castor::exception::Exception);
 };
 
-} // namespace daemon
 } // namespace tapegateway
 } // namespace tape
 } // namespace castor
