@@ -31,9 +31,9 @@
 
 typedef struct checksum_block_list_s 
   {
-  unsigned long offset;
-  unsigned long size;
-  unsigned long csumvalue; /* only for 32bit checksums as Adler32 or CRC32 */
+  globus_off_t offset;
+  globus_size_t size;
+  unsigned int csumvalue; /* only for 32bit checksums as Adler32 or CRC32 */
   struct checksum_block_list_s *next;
   } checksum_block_list_t;   
 

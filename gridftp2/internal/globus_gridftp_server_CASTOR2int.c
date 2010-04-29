@@ -120,7 +120,12 @@ void free_checksum_list(checksum_block_list_t *checksum_list)
 int offsetComparison(const void *first, const void *second) {
   checksum_block_list_t** f = (checksum_block_list_t**)first;
   checksum_block_list_t** s = (checksum_block_list_t**)second;
-  return (*f)->offset - (*s)->offset;
+  long long int diff = (*f)->offset - (*s)->offset;
+  // Note that we cannot simply return diff as this function should return
+  // an int and the cast for values not fitting in 32 bits may screw things
+  if (0 == diff) return 0;
+  if (diff > 0) return 1;
+  return -1;
 }
 
 
@@ -129,16 +134,16 @@ int offsetComparison(const void *first, const void *second) {
 #define MOD(a) a %= BASE
 
 unsigned long  adler32_combine_(adler1, adler2, len2)
-    unsigned long adler1;
-    unsigned long adler2;
-    unsigned long len2;
+    unsigned int adler1;
+    unsigned int adler2;
+    globus_off_t len2;
 {
-    unsigned long sum1;
-    unsigned long sum2;
-    unsigned rem;
+    unsigned int sum1;
+    unsigned int sum2;
+    unsigned int rem;
 
     /* the derivation of this formula is left as an exercise for the reader */
-    rem = (unsigned)(len2 % BASE);
+    rem = (unsigned int)(len2 % BASE);
     sum1 = adler1 & 0xffff;
     sum2 = rem * sum1;
     MOD(sum2);
