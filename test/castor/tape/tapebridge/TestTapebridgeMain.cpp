@@ -1,4 +1,3 @@
-#include "castor/tape/tapebridge/SynchronizedCounter.hpp"
 #include "castor/tape/tapebridge/VmgrTxRx.hpp"
 #include "castor/tape/utils/utils.hpp"
 
@@ -44,8 +43,6 @@ int main() {
 
 
   if(testVmgrTxRx()) nbFailed++;
-  nbTests++;
-  if(testSynchronisedCounter()) nbFailed++;
   nbTests++;
 
   std::cout << std::endl;
