@@ -93,6 +93,7 @@ int32_t castor::tape::tapegateway::MountIdToFseqMap::nextFseq(
     throw(ex);
   }
 
+  // Atomically read then increment FSEQ counter
   return itor->second++;
 }
 
