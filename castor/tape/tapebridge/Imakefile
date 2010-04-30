@@ -39,7 +39,6 @@ TAPEBRIDGEBIN_SRCS = \
   Packer.cpp \
   RtcpJobSubmitter.cpp \
   RtcpTxRx.cpp \
-  SynchronizedCounter.cpp \
   TapeBridgeDaemon.cpp \
   TapeBridgeMain.cpp \
   Unpacker.cpp \
