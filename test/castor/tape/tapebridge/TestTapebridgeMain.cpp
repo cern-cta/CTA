@@ -38,45 +38,6 @@ int testVmgrTxRx() {
 }
 
 
-int testSynchronisedCounter() {
-  using namespace castor::tape;
-
-  std::ostream &os = std::cout;
-
-  os << std::endl;
-  utils::writeBanner(os, __FUNCTION__);
-
-  const int initialValue = 5;
-
-  tapebridge::SynchronizedCounter counter(initialValue);
-
-  int expectedValue = initialValue + 1;
-  int actualValue = counter.next();
-  if(actualValue != expectedValue) {
-    std::cerr <<
-       "Unexpected value returned by counter.next()"
-       ": actualValue=" << actualValue <<
-       ": expectedValue=" << expectedValue;
-
-    return(-1); // Failed
-  }
-
-  expectedValue += 20;
-  actualValue = counter.next(20);
-  if(actualValue != expectedValue) {
-    std::cerr <<
-       "Unexpected value returned by counter.next()"
-       ": actualValue=" << actualValue <<
-       ": expectedValue=" << expectedValue;
-
-    return(-1); // Failed
-  }
-
-  // Return success (-1 is used to  indicate failure)
-  return 0;
-}
-
-
 int main() {
   unsigned int nbTests    = 0;
   unsigned int nbFailed   = 0;

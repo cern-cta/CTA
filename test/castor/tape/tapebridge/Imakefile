@@ -32,7 +32,6 @@ DependsOnLibrary(vmgr,castorvmgr)
 TAPE_TAPEGATEWAY_SRCS = \
   ../../../../castor/tape/tapebridge/LogHelper.cpp \
   ../../../../castor/tape/tapebridge/LegacyTxRx.cpp \
-  ../../../../castor/tape/tapebridge/SynchronizedCounter.cpp \
   ../../../../castor/tape/tapebridge/VmgrTxRx.cpp
 
 TAPE_LEGACYMSG_SRCS = \
