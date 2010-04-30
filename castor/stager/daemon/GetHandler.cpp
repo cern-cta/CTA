@@ -92,8 +92,8 @@ namespace castor{
               stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_SCHEDULINGJOB, &(stgCnsHelper->cnsFileid));
 
               if(result == DISKCOPY_WAITDISK2DISKCOPY) {
-                // there's room for internal replication, check if it's to be done
-                processReplica();
+                // we are also performing internal replication, log this
+                stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_GET_REPLICATION, &(stgCnsHelper->cnsFileid));
               }
 
               // Fill the requested filesystems for the request being processed
@@ -218,33 +218,6 @@ namespace castor{
           throw(e);
         }
       }
-
-
-      /***********************************************************************/
-      /* decides whether we need to replicate                                */
-      /***********************************************************************/
-      void GetHandler::processReplica() throw(castor::exception::Exception)
-      {
-        bool replicate = true;
-
-        if( (sources.size() == 1 && sources.front()->status() == DISKCOPY_STAGEOUT)
-            || stgRequestHelper->fileRequest->type() == OBJ_StageUpdateRequest
-            || (maxReplicaNb > 0 && maxReplicaNb <= sources.size()) ) {
-          // A Get on a STAGEOUT DiskCopy is not allowed to replicate,
-          // nor is allowed an Update request. Otherwise, maxReplicaNb > 0 decides
-          replicate = false;
-        }
-        // XXX Note that maxReplicaNb == 0 allows infinite replication (to be reviewed maybe)
-
-        if(replicate) {
-          // We need to replicate, create a diskCopyReplica request
-          stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_GET_REPLICATION, &(stgCnsHelper->cnsFileid));
-          stgRequestHelper->stagerService->createDiskCopyReplicaRequest
-	    (stgRequestHelper->subrequest, sources.front(),
-	     stgRequestHelper->svcClass, stgRequestHelper->svcClass, true);
-        }
-      }
-
 
       GetHandler::~GetHandler()throw(){
       }

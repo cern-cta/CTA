@@ -468,6 +468,7 @@ BEGIN
    WHERE type IN (
      SELECT type FROM Type2Obj
       WHERE svcHandler = service
+        AND svcHandler IS NOT NULL
      )
    AND ROWNUM < 2 RETURNING id INTO rId;
 EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -511,42 +512,53 @@ BEGIN
   SELECT request INTO rId
     FROM SubRequest
    WHERE id = srId;
-  -- Lock the access to the Request
-  SELECT Id2Type.id INTO rId
-    FROM Id2Type
-   WHERE id = rId FOR UPDATE;
-  UPDATE SubRequest
-     SET parent = NULL, diskCopy = NULL,  -- unlink this subrequest as it's dead now
-         lastModificationTime = getTime(),
-         status = finalStatus
-   WHERE id = srId;
   BEGIN
-    -- Try to see whether another subrequest in the same
-    -- request is still being processed
-    SELECT id INTO unused FROM SubRequest
-     WHERE request = rId AND status NOT IN (8, 9) AND ROWNUM < 2;  -- all but {FAILED_,}FINISHED
+    -- Lock the access to the Request
+    SELECT Id2Type.id INTO rId
+      FROM Id2Type
+     WHERE id = rId FOR UPDATE;
+    UPDATE SubRequest
+       SET parent = NULL, diskCopy = NULL,  -- unlink this subrequest as it's dead now
+           lastModificationTime = getTime(),
+           status = finalStatus
+     WHERE id = srId;
+    BEGIN
+      -- Try to see whether another subrequest in the same
+      -- request is still being processed
+      SELECT id INTO unused FROM SubRequest
+       WHERE request = rId AND status NOT IN (8, 9) AND ROWNUM < 2;  -- all but {FAILED_,}FINISHED
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- All subrequests have finished, we can archive
+      SELECT object INTO rname
+        FROM Id2Type, Type2Obj
+       WHERE id = rId
+         AND Type2Obj.type = Id2Type.type;
+      -- drop the associated Client entity and all Id2Type entries
+      EXECUTE IMMEDIATE
+        'BEGIN SELECT client INTO :cId FROM '|| rname ||' WHERE id = :rId; END;'
+        USING OUT clientId, IN rId;
+      DELETE FROM Client WHERE id = clientId;
+      DELETE FROM Id2Type WHERE id IN (rId, clientId);
+      SELECT id BULK COLLECT INTO srIds
+        FROM SubRequest
+       WHERE request = rId;
+      FORALL i IN srIds.FIRST .. srIds.LAST
+        DELETE FROM Id2Type WHERE id = srIds(i);
+      -- archive the successful subrequests      
+      UPDATE /*+ INDEX(SubRequest I_SubRequest_Request) */ SubRequest
+         SET status = 11    -- ARCHIVED
+       WHERE request = rId
+         AND status = 8;  -- FINISHED
+    END;
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- All subrequests have finished, we can archive
-    SELECT object INTO rname
-      FROM Id2Type, Type2Obj
-     WHERE id = rId
-       AND Type2Obj.type = Id2Type.type;
-    -- drop the associated Client entity and all Id2Type entries
-    EXECUTE IMMEDIATE
-      'BEGIN SELECT client INTO :cId FROM '|| rname ||' WHERE id = :rId; END;'
-      USING OUT clientId, IN rId;
-    DELETE FROM Client WHERE id = clientId;
-    DELETE FROM Id2Type WHERE id IN (rId, clientId);
-    SELECT id BULK COLLECT INTO srIds
-      FROM SubRequest
-     WHERE request = rId;
-    FORALL i IN srIds.FIRST .. srIds.LAST
-      DELETE FROM Id2Type WHERE id = srIds(i);
-    -- archive the successful subrequests      
-    UPDATE /*+ INDEX(SubRequest I_SubRequest_Request) */ SubRequest
-       SET status = 11    -- ARCHIVED
-     WHERE request = rId
-       AND status = 8;  -- FINISHED
+    -- No data found here means that the Id2Type entry is not there
+    -- and the subrequest was already archived: just update this subrequest,
+    -- don't bother with the whole request. Note that this could
+    -- happen only if someone archives an already archived subrequest.
+    UPDATE SubRequest
+       SET lastModificationTime = getTime(),
+           status = finalStatus
+     WHERE id = srId;
   END;
 END;
 /
@@ -1065,8 +1077,10 @@ CREATE OR REPLACE PROCEDURE getDiskCopiesForJob
          sources OUT castor.DiskCopy_Cur) AS
   nbDCs INTEGER;
   nbDSs INTEGER;
+  maxDCs INTEGER;
   upd INTEGER;
   dcIds "numList";
+  dcStatus INTEGER;
   svcClassId NUMBER;
   srcSvcClassId NUMBER;
   cfId NUMBER;
@@ -1103,8 +1117,10 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Look for available diskcopies
-  SELECT COUNT(DiskCopy.id) INTO nbDCs
+  -- Look for available diskcopies. The status is needed for the
+  -- internal replication processing, and only if count = 1, hence
+  -- the min() function does not represent anything here.
+  SELECT COUNT(DiskCopy.id), min(DiskCopy.status) INTO nbDCs, dcStatus
     FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
    WHERE DiskCopy.castorfile = cfId
      AND DiskCopy.fileSystem = FileSystem.id
@@ -1163,30 +1179,63 @@ BEGIN
                AND DiskServer.status = 0  -- PRODUCTION
              ORDER BY fsRate DESC)
          WHERE bytes <= 200;
-    -- Give an hint to the stager whether internal replication can happen or not:
-    -- count the number of diskservers which DON'T contain a diskCopy for this castorFile
-    -- and are hence eligible for replication should it need to be done
-    SELECT COUNT(DISTINCT(DiskServer.name)) INTO nbDSs
-      FROM DiskServer, FileSystem, DiskPool2SvcClass
-     WHERE FileSystem.diskServer = DiskServer.id
-       AND FileSystem.diskPool = DiskPool2SvcClass.parent
-       AND DiskPool2SvcClass.child = svcClassId
-       AND FileSystem.status = 0 -- PRODUCTION
-       AND DiskServer.status = 0 -- PRODUCTION
-       AND DiskServer.id NOT IN (
-         SELECT DISTINCT(DiskServer.id)
-           FROM DiskCopy, FileSystem, DiskServer
-          WHERE DiskCopy.castorfile = cfId
-            AND DiskCopy.fileSystem = FileSystem.id
-            AND FileSystem.diskserver = DiskServer.id
-            AND DiskCopy.status IN (0, 10));  -- STAGED, CANBEMIGR
-    IF nbDSs = 0 THEN
-      -- no room for replication
+    -- Internal replication processing
+    IF upd = 1 OR (nbDCs = 1 AND dcStatus = 6) THEN -- DISKCOPY_STAGEOUT
+      -- replication forbidden
       result := 0;  -- DISKCOPY_STAGED
     ELSE
-      -- we have some diskservers, the stager will ultimately decide whether to replicate
-      result := 1;  -- DISKCOPY_WAITDISK2DISKCOPY
-    END IF;
+      -- check whether we need to replicate, i.e. compare total current
+      -- # of diskcopies, regardless harware availability and including
+      -- outstanding replications (cf. replicateOnClose), against maxReplicaNb.
+      SELECT COUNT(*), max(maxReplicaNb) INTO nbDCs, maxDCs FROM (
+        SELECT DiskCopy.id, maxReplicaNb
+          FROM DiskCopy, FileSystem, DiskPool2SvcClass, SvcClass
+         WHERE DiskCopy.castorfile = cfId
+           AND DiskCopy.fileSystem = FileSystem.id
+           AND FileSystem.diskpool = DiskPool2SvcClass.parent
+           AND DiskPool2SvcClass.child = SvcClass.id
+           AND SvcClass.id = svcClassId
+           AND DiskCopy.status IN (0, 10)  -- STAGED, CANBEMIGR
+         UNION ALL
+        SELECT DiskCopy.id, -1
+          FROM DiskCopy, StageDiskCopyReplicaRequest
+         WHERE DiskCopy.id = StageDiskCopyReplicaRequest.destDiskCopy
+           AND StageDiskCopyReplicaRequest.svcclass = svcClassId
+           AND DiskCopy.castorfile = cfId
+           AND DiskCopy.status = 1);  -- WAITDISK2DISKCOPY
+      IF nbDCs < maxDCs OR maxDCs = 0 THEN
+        -- we have to replicate. Do it only if we have enough
+        -- available diskservers.
+        SELECT COUNT(DISTINCT(DiskServer.name)) INTO nbDSs
+          FROM DiskServer, FileSystem, DiskPool2SvcClass
+         WHERE FileSystem.diskServer = DiskServer.id
+           AND FileSystem.diskPool = DiskPool2SvcClass.parent
+           AND DiskPool2SvcClass.child = svcClassId
+           AND FileSystem.status = 0 -- PRODUCTION
+           AND DiskServer.status = 0 -- PRODUCTION
+           AND DiskServer.id NOT IN (
+             SELECT DISTINCT(DiskServer.id)
+               FROM DiskCopy, FileSystem, DiskServer
+              WHERE DiskCopy.castorfile = cfId
+                AND DiskCopy.fileSystem = FileSystem.id
+                AND FileSystem.diskserver = DiskServer.id
+                AND DiskCopy.status IN (0, 10));  -- STAGED, CANBEMIGR
+        IF nbDSs > 0 THEN
+          -- yes, we can replicate. Select the best candidate for replication
+          getBestDiskCopyToReplicate(cfId, -1, -1, 1, svcClassId, srcDcId, svcClassId);
+          -- and create a replication request without waiting on it.
+          createDiskCopyReplicaRequest(0, srcDcId, svcClassId, svcClassId, reuid, regid);
+          -- result is different for logging purposes
+          result := 1;  -- DISKCOPY_WAITDISK2DISKCOPY
+        ELSE
+          -- no replication to be done
+          result := 0;  -- DISKCOPY_STAGED
+        END IF;
+      ELSE
+        -- no replication to be done
+        result := 0;  -- DISKCOPY_STAGED
+      END IF;
+    END IF;   -- end internal replication processing
   ELSE
     -- No diskcopies available for this service class:
     -- first check whether there's already a disk to disk copy going on
@@ -1398,31 +1447,29 @@ BEGIN
 
   -- Look for available diskcopies. Note that we never wait on other requests
   -- and we include WAITDISK2DISKCOPY as they are going to be available.
-  SELECT COUNT(DiskCopy.id) INTO nbDCs
-    FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
-   WHERE DiskCopy.castorfile = cfId
-     AND DiskCopy.fileSystem = FileSystem.id
-     AND FileSystem.diskpool = DiskPool2SvcClass.parent
-     AND DiskPool2SvcClass.child = svcClassId
-     AND FileSystem.status = 0 -- PRODUCTION
-     AND FileSystem.diskserver = DiskServer.id
-     AND DiskServer.status = 0 -- PRODUCTION
-     AND DiskCopy.status IN (0, 1, 6, 10);  -- STAGED, WAITDISK2DISKCOPY, STAGEOUT, CANBEMIGR
-
-  -- For DiskCopyReplicaRequests which are waiting to be scheduled, the filesystem
-  -- link in the diskcopy table is set to 0. As a consequence of this it is not
-  -- possible to determine the service class via the filesystem -> diskpool -> svcclass
-  -- relationship, as assumed in the previous query. Instead the service class of
-  -- the replication request must be used!!!
-  IF nbDCs = 0 THEN
-    SELECT COUNT(DiskCopy.id) INTO nbDCs
+  -- For those ones, the filesystem link in the diskcopy table is set to 0,
+  -- hence it is not possible to determine the service class via the
+  -- filesystem -> diskpool -> svcclass relationship and the replication
+  -- request is used.
+  SELECT COUNT(*) INTO nbDCs FROM (
+    SELECT DiskCopy.id
+      FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
+     WHERE DiskCopy.castorfile = cfId
+       AND DiskCopy.fileSystem = FileSystem.id
+       AND FileSystem.diskpool = DiskPool2SvcClass.parent
+       AND DiskPool2SvcClass.child = svcClassId
+       AND FileSystem.status = 0 -- PRODUCTION
+       AND FileSystem.diskserver = DiskServer.id
+       AND DiskServer.status = 0 -- PRODUCTION
+       AND DiskCopy.status IN (0, 6, 10)  -- STAGED, STAGEOUT, CANBEMIGR
+     UNION ALL
+    SELECT DiskCopy.id
       FROM DiskCopy, StageDiskCopyReplicaRequest
      WHERE DiskCopy.id = StageDiskCopyReplicaRequest.destDiskCopy
        AND StageDiskCopyReplicaRequest.svcclass = svcClassId
        AND DiskCopy.castorfile = cfId
-       AND DiskCopy.status = 1; -- WAITDISK2DISKCOPY
-  END IF;
-
+       AND DiskCopy.status = 1); -- WAITDISK2DISKCOPY
+  
   IF nbDCs > 0 THEN
     -- Yes, we have some
     result := 0;  -- DISKCOPY_STAGED
@@ -1682,7 +1729,7 @@ BEGIN
       nbPReqs NUMBER;
     BEGIN
       -- we are either a prepareToPut, or a prepareToUpdate and it's the only one (file is being created).
-      -- In case of prepareToPut we need to check that we are we the only one
+      -- In case of prepareToPut we need to check that we are the only one
       SELECT count(SubRequest.diskCopy) INTO nbPReqs
         FROM (SELECT id FROM StagePrepareToPutRequest UNION ALL
               SELECT id FROM StagePrepareToUpdateRequest) PrepareRequest, SubRequest

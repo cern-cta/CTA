@@ -69,10 +69,6 @@ namespace castor{
         
       private:
         
-        /** decides whether to replicate or not
-         */
-        void processReplica() throw(castor::exception::Exception);
-        
         /// list of available diskcopies for the request to be scheduled        
         std::list<castor::stager::DiskCopyForRecall *> sources;
                 
