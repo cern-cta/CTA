@@ -88,7 +88,7 @@ namespace castor {
        * by simply freeing the received object.
        * @param param user parameter that would have been passed to a thread
        */
-      virtual void terminate(void* param);
+      virtual void terminate(void* param) throw();
 
     };
 

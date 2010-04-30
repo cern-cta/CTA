@@ -107,7 +107,7 @@ void castor::server::TCPListenerThreadPool::listenLoop() {
 //------------------------------------------------------------------------------
 // terminate
 //------------------------------------------------------------------------------
-void castor::server::TCPListenerThreadPool::terminate(void* param) {
+void castor::server::TCPListenerThreadPool::terminate(void* param) throw() {
   castor::io::ServerSocket* s = (castor::io::ServerSocket*)param;
 
   // Here a proper implementation is to answer the client to try again later on.

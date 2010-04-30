@@ -111,9 +111,10 @@ void castor::server::ListenerThreadPool::threadAssign(void *param) {
     return;
   }
 
-  // Otherwise, dispatch the task
+  // Otherwise, dispatch the task. First try asynchronously, so to
+  // have a chance of logging that the thread pool is exhausted
   try {
-    addTask(param, m_waitIfBusy);
+    addTask(param, false);
   } catch(castor::exception::Exception &e) {
     if(e.code() == EAGAIN) {
       // "No idle thread in pool to process request"
@@ -121,7 +122,23 @@ void castor::server::ListenerThreadPool::threadAssign(void *param) {
         {castor::dlf::Param("ThreadPool", m_poolName)};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
                               DLF_BASE_FRAMEWORK + 18, 1, params);
-      terminate(param);
+      if(m_waitIfBusy) {
+        try {
+          // This will now be blocking
+          addTask(param, true);
+        } catch(castor::exception::Exception &e) {
+          // "Error while dispatching to a thread"
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("ThreadPool", m_poolName),
+             castor::dlf::Param("Error", sstrerror(e.code())),
+             castor::dlf::Param("Message", e.getMessage().str())};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                                  DLF_BASE_FRAMEWORK + 19, 3, params);
+        }          
+      }
+      else {
+        terminate(param);
+      }
     }
     else {
       // "Error while dispatching to a thread"

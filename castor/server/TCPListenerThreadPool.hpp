@@ -111,7 +111,7 @@ namespace castor {
        * by simply closing the connection to the client.
        * @param param user parameter that would have been passed to a thread
        */
-      virtual void terminate(void* param);
+      virtual void terminate(void* param) throw();
       
     };
 
