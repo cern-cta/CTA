@@ -1989,6 +1989,7 @@ CREATE OR REPLACE PROCEDURE stageRm (srId IN INTEGER,
   srType INTEGER;
   dcStatus INTEGER;
   nsHostName VARCHAR2(2048);
+  migSvcClass NUMBER;
 BEGIN
   ret := 0;
   -- Get the stager/nsHost configuration option
@@ -1997,7 +1998,7 @@ BEGIN
     -- Lock the access to the CastorFile
     -- This, together with triggers will avoid new TapeCopies
     -- or DiskCopies to be added
-    SELECT id INTO cfId FROM CastorFile
+    SELECT id, svcClass INTO cfId, migSvcClass FROM CastorFile
      WHERE fileId = fid AND nsHost = nsHostName FOR UPDATE;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- This file does not exist in the stager catalog
@@ -2049,42 +2050,46 @@ BEGIN
        WHERE id = srId;
       RETURN;
     END IF;
-    -- Check whether something else is left: if not, do as
-    -- we are performing a stageRm everywhere.
-    -- First select current status of the diskCopies: if CANBEMIGR,
-    -- make sure we don't drop the last remaining valid migratable copy,
-    -- i.e. exclude the disk only copies from the count.
+    -- Select current status of the diskCopies
     SELECT status INTO dcStatus
       FROM DiskCopy
      WHERE id = dcsToRm(1);
+    -- make sure we don't drop the last diskcopy of the original service class
+    -- as it is needed to migrate safely. Indeed, nothing can insure that other copies
+    -- are in service classes that can migrate to the requested tapepool(s)
+    -- In case it is not the case, give up with the deletion.
     IF dcStatus = 10 THEN  -- CANBEMIGR
-      SELECT count(*) INTO nbRes FROM DiskCopy
-       WHERE castorFile = cfId
-         AND status = 10  -- CANBEMIGR
-         AND id NOT IN (
-           (SELECT /*+ CARDINALITY(dcidTable 5) */ *
-              FROM TABLE(dcsToRm) dcidTable)
-           UNION
-           (SELECT DC.id     -- all diskcopies in Tape0 pools
-              FROM DiskCopy DC, FileSystem, DiskPool2SvcClass D2S, SvcClass, FileClass
-             WHERE DC.castorFile = cfId                         
-               AND DC.fileSystem = FileSystem.id
-               AND FileSystem.diskPool = D2S.parent
-               AND D2S.child = SvcClass.id
-               AND SvcClass.forcedFileClass = FileClass.id
-               AND FileClass.nbCopies = 0));
+      SELECT count(*) INTO nbRes
+        FROM DiskCopy, FileSystem, DiskPool2SvcClass 
+       WHERE DiskCopy.fileSystem = FileSystem.id
+         AND FileSystem.diskPool = DiskPool2SvcClass.parent
+         AND DiskCopy.castorFile = cfId
+         AND DiskCopy.status = 10  -- CANBEMIGR
+         AND diskpool2svcclass.child = migSvcClass
+         AND DiskCopy.id NOT IN
+          (SELECT /*+ CARDINALITY(dcidTable 5) */ * FROM TABLE(dcsToRm) dcidTable);
+      IF nbRes = 0 THEN
+        UPDATE SubRequest
+           SET status = 7,  -- FAILED
+               errorCode = 16,  -- EBUSY
+               errorMessage = 'As the file is not yet migrated, we cannot drop the last copy in this service class'
+         WHERE id = srId;
+         RETURN;
+      END IF;
     ELSE
+      -- Check whether something else is left: if not, do as
+      -- if we are performing a stageRm everywhere.
       SELECT count(*) INTO nbRes FROM DiskCopy
          WHERE castorFile = cfId
            AND status IN (0, 2, 5, 6, 10, 11)  -- STAGED, WAITTAPERECALL, STAGEOUT, CANBEMIGR, WAITFS, WAITFS_SCHEDULING
            AND id NOT IN (SELECT /*+ CARDINALITY(dcidTable 5) */ *
                             FROM TABLE(dcsToRm) dcidTable);
-    END IF;
-    IF nbRes = 0 THEN
-      -- nothing found, so we're dropping the last copy; then
-      -- we need to perform all the checks to make sure we can
-      -- allow the removal.
-      scId := 0;
+      IF nbRes = 0 THEN
+        -- nothing found, so we're dropping the last copy; then
+        -- we need to perform all the checks to make sure we can
+        -- allow the removal.
+        scId := 0;
+      END IF;
     END IF;
   END IF;
 
