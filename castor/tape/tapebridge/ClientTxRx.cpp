@@ -29,7 +29,6 @@
 #include "castor/tape/tapebridge/ClientTxRx.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/tapebridge/LogHelper.hpp"
-#include "castor/tape/tapebridge/SynchronizedCounter.hpp"
 #include "castor/tape/tapegateway/DumpNotification.hpp"
 #include "castor/tape/tapegateway/DumpParametersRequest.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
