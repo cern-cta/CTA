@@ -146,8 +146,9 @@ int vmgr_main(main_args)
     return (SYERR);
   }
   for (i = 0; i < nbthreads; i++) {
-    (vmgr_srv_thread_info + i)->s = -1;
-    (vmgr_srv_thread_info + i)->dbfd.idx = i;
+    (vmgr_srv_thread_info + i)->s              = -1;
+    (vmgr_srv_thread_info + i)->dbfd.idx       = i;
+    (vmgr_srv_thread_info + i)->dbfd.connected = 0;
   }
 
   FD_ZERO (&readmask);
@@ -205,7 +206,7 @@ int vmgr_main(main_args)
           nb_active_threads++;
           continue;
         }
-        if ((vmgr_srv_thread_info + i)->db_open_done)
+        if ((vmgr_srv_thread_info + i)->dbfd.connected)
           (void) vmgr_closedb (&(vmgr_srv_thread_info + i)->dbfd);
       }
       if (nb_active_threads == 0)
@@ -397,7 +398,7 @@ void procreq(magic, req_type, req_data, clienthost, thip)
 
   /* connect to the database if not done yet */
 
-  if (! thip->db_open_done) {
+  if (! (&thip->dbfd)->connected ) {
     if (Cupv_seterrbuf (thip->errbuf, PRTBUFSZ)) {
       c = SEINTERNAL;
       sendrep (thip->s, MSG_ERR, "Cupv_seterrbuf error: %s\n",
@@ -413,7 +414,6 @@ void procreq(magic, req_type, req_data, clienthost, thip)
         return;
       }
       vmgrlogit (func, "database connection established\n");
-      thip->db_open_done = 1;
     }
   }
 

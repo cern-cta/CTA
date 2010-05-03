@@ -86,6 +86,7 @@ struct vmgr_dbfd {
 #endif
 #endif
 	int		tr_started;
+	int             connected;
 };
 
 #ifdef USE_ORACLE
@@ -107,7 +108,6 @@ typedef Cdb_off_t DBLISTPTR;
 
 struct vmgr_srv_thread_info {
 	int		s;		/* socket for communication with client */
-	int		db_open_done;
 	struct vmgr_dbfd dbfd;
 	char		errbuf[PRTBUFSZ];
 #ifdef CSEC

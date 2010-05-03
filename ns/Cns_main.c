@@ -191,8 +191,9 @@ int Cns_main(main_args)
     return (SYERR);
   }
   for (i = 0; i < nbthreads; i++) {
-    (Cns_srv_thread_info + i)->s = -1;
-    (Cns_srv_thread_info + i)->dbfd.idx = i;
+    (Cns_srv_thread_info + i)->s              = -1;
+    (Cns_srv_thread_info + i)->dbfd.idx       = i;
+    (Cns_srv_thread_info + i)->dbfd.connected = 0;
   }
 
   FD_ZERO (&readmask);
@@ -259,7 +260,7 @@ int Cns_main(main_args)
           nb_active_threads++;
           continue;
         }
-        if ((Cns_srv_thread_info + i)->db_open_done)
+        if ((Cns_srv_thread_info + i)->dbfd.connected)
           (void) Cns_closedb (&(Cns_srv_thread_info + i)->dbfd);
         (void) Csec_clearContext (&(Cns_srv_thread_info + i)->sec_ctx);
       }
@@ -494,7 +495,7 @@ int procreq(magic, req_type, req_data, clienthost, thip)
 
   /* connect to the database if not done yet */
 
-  if (! thip->db_open_done) {
+  if (! (&thip->dbfd)->connected ) {
     if (Cupv_seterrbuf (thip->errbuf, PRTBUFSZ)) {
       c = SEINTERNAL;
       sendrep (thip->s, MSG_ERR, "Cupv_seterrbuf error: %s\n",
@@ -508,9 +509,9 @@ int procreq(magic, req_type, req_data, clienthost, thip)
         return (c);
       }
       nslogit (func, "database connection established\n");
-      thip->db_open_done = 1;
     }
   }
+
 #ifdef VIRTUAL_ID
   if (thip->Csec_uid == -1) {
 #ifdef USE_VOMS

@@ -92,6 +92,7 @@ struct Cupv_dbfd {
 #endif
 #endif
 	int		tr_started;
+	int             connected;
 };
 
 #ifdef USE_ORACLE
@@ -113,7 +114,6 @@ typedef Cdb_off_t DBLISTPTR;
 
 struct Cupv_srv_thread_info {
         int		s;		   /* socket for communication with client */
-        int		db_open_done;
         struct          Cupv_dbfd dbfd;
 #ifdef CSEC
         Csec_context_t  sec_ctx;

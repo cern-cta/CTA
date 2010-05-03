@@ -86,6 +86,7 @@ struct Cns_dbfd {
 #endif
         int                tr_mode;
         int                tr_started;
+        int                connected;
 };
 
 #ifdef USE_ORACLE
@@ -136,7 +137,6 @@ struct Cns_file_metadata {
 
 struct Cns_srv_thread_info {
         int                s;                  /* socket for communication with client */
-        int                db_open_done;
         struct Cns_dbfd dbfd;
         char               errbuf[PRTBUFSZ];
 #ifdef CSEC

@@ -52,12 +52,9 @@ struct sqlca *sqlca;
 	    sqlca->sqlcode == -1012  || sqlca->sqlcode == -1003  || 
 	    sqlca->sqlcode == -12571 || (sqlca->sqlcode <= -25401 && sqlca->sqlcode >= -25409) ||
 	    sqlca->sqlcode == -1033  || sqlca->sqlcode == -1089) {
-		vmgrlogit (func, "Trying to reconnect\n");
-		vmgr_closedb (dbfd);
-		if (vmgr_opendb (dbfd) < 0)
-			vmgrlogit (func, "Reconnect failed\n");
-		else
-			vmgrlogit (func, "Reconnect successful\n");
+		if (dbfd->connected == 1) {
+			vmgr_closedb (dbfd);
+		}
 	}
 	serrno = SEINTERNAL;
 }
@@ -78,6 +75,7 @@ struct vmgr_dbfd *dbfd;
 {
 	EXEC SQL ROLLBACK WORK RELEASE;
 	EXEC SQL CONTEXT FREE :ctx[dbfd->idx];
+	dbfd->connected = 0;
 	return (0);
 }
 
@@ -1376,7 +1374,6 @@ int vmgr_opendb(dbfd)
 {
 	extern char vmgrconfigfile[CA_MAXPATHLEN+1];
 	char func[16];
-	int ntries;
 	struct sqlca sqlca;
 	char db_connect[104];
 	char buf[CA_MAXLINELEN+1];
@@ -1387,11 +1384,11 @@ int vmgr_opendb(dbfd)
 	char *p;
 	FILE *fp;
 	
-	ntries = 0;
 	strcpy (func, "vmgr_opendb");
 	EXEC SQL CONTEXT ALLOCATE :ctx[dbfd->idx];
 	
 	db_user[0] = db_pwd[0] = db_srv[0] = '\0';
+	serrno = 0;
 	if ((fp = fopen(vmgrconfigfile, "r")) == NULL) {
 		vmgrlogit(func, VMG23, vmgrconfigfile);
 		return (-1);
@@ -1424,21 +1421,23 @@ int vmgr_opendb(dbfd)
 	}
 	
 	/* connect */
-	while (1) {
-		if (strlen(db_srv) > 0) {
-			sprintf(db_connect, "%s/%s@%s", db_user, db_pwd, db_srv);
-		} else {
-			sprintf(db_connect, "%s/%s", db_user, db_pwd);
-		}
-		EXEC SQL CONNECT :db_connect;
-		if (sqlca.sqlcode == 0) return (0);
-		if (sqlca.sqlcode != -1014 && sqlca.sqlcode != -1033 &&
-		    sqlca.sqlcode != -1034) break;
-		if (ntries++ >= MAXRETRY) break;
-		sleep (RETRYI);
+	if (strlen(db_srv) > 0) {
+		sprintf(db_connect, "%s/%s@%s", db_user, db_pwd, db_srv);
+	} else {
+		sprintf(db_connect, "%s/%s", db_user, db_pwd);
 	}
-	vmgr_oracle_error (func, "CONNECT", dbfd, &sqlca);
-	return (-1);
+	vmgrlogit(func, "attempting to connect to database\n");
+
+	EXEC SQL CONNECT :db_connect;
+	if (sqlca.sqlcode == 0) {
+		dbfd->connected = 1;
+	} else {
+		vmgr_closedb (dbfd);
+		vmgr_oracle_error (func, "CONNECT", dbfd, &sqlca);
+		return -1;
+	}
+
+	return (0);
 }
 
 int vmgr_start_tr(s, dbfd)

@@ -132,8 +132,9 @@ int Cupv_main(main_args)
     return (SYERR);
   }
   for (i = 0; i < nbthreads; i++) {
-    (cupv_srv_thread_info + i)->s = -1;
-    (cupv_srv_thread_info + i)->dbfd.idx = i;
+    (cupv_srv_thread_info + i)->s              = -1;
+    (cupv_srv_thread_info + i)->dbfd.idx       = i;
+    (cupv_srv_thread_info + i)->dbfd.connected = 0;
   }
 
   FD_ZERO (&readmask);
@@ -191,7 +192,7 @@ int Cupv_main(main_args)
 	  nb_active_threads++;
 	  continue;
 	}
-	if ((cupv_srv_thread_info + i)->db_open_done)
+	if ((cupv_srv_thread_info + i)->dbfd.connected)
 	  (void) Cupv_closedb (&(cupv_srv_thread_info + i)->dbfd);
       }
       if (nb_active_threads == 0)
@@ -364,7 +365,7 @@ void procreq(magic, req_type, req_data, clienthost, thip)
 
   /* connect to the database if not done yet */
 
-  if (! thip->db_open_done) {
+  if (! (&thip->dbfd)->connected ) {
     if (Cupv_opendb (&thip->dbfd) < 0) {
       c = serrno;
       sendrep (thip->s, MSG_ERR, "db open error: %d\n", c);
@@ -372,7 +373,6 @@ void procreq(magic, req_type, req_data, clienthost, thip)
       return;
     }
     Cupvlogit (func, "database connection established\n");
-    thip->db_open_done = 1;
   }
 
   switch (req_type) {
