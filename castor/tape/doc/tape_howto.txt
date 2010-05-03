@@ -3279,3 +3279,36 @@ export MINOR_CASTOR_VERSION="9.5"
 cd $BUILD_DIR/trunk
 ./makerpm.sh
 
+
+How to avoid the insufficient user privileges error when using rfcp
+===================================================================
+
+If you encounter an error of the following form on your development box:
+
+[root@lxcastordev08 ~]# sudo -u nbessone rfcp /tmp/nbessone/100MFile
+/castor/cern.ch/dev/n/nbessone/
+stage_put: Insufficient user privileges to make a request of type
+StagePutRequest in service class 'default'
+/castor/cern.ch/dev/n/nbessone/ : Permission denied
+
+Then as a developer you can avoid this permissions problem by adding your
+group id to the AdminUsers table of the stager database.  You could add both
+your user id and group id if really want to be precise.  Here's how to add
+your group id:
+
+[lxcastordev04] /var/murrayc3 > id nbessone
+uid=8980(nbessone) gid=1022(cs) groups=1022(cs)
+
+[root@lxcastordev04 ~]# sqlplus stager_dev04@c2castordevdb
+
+...
+
+SQL> insert into AdminUsers(egid) values(1022);
+
+1 row created.
+
+SQL> commit;
+
+Commit complete.
+
+SQL>
