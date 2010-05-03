@@ -55,10 +55,6 @@
 #define RETURN(x) \
 	{ \
 	struct timeval end; \
-	gettimeofday(&end, NULL); \
-	Cupvlogit (func, "returns %d - elapsed: %.3f\n", (x), \
-		   (((((double)end.tv_sec * 1000) + \
-		      ((double)end.tv_usec / 1000))) - thip->starttime) * 0.001); \
 	if (thip->dbfd.tr_started) { \
 		if (x) { \
 			(void) Cupv_abort_tr (&thip->dbfd); \
@@ -66,6 +62,10 @@
 			(void) Cupv_end_tr (&thip->dbfd); \
 		} \
 	} \
+	gettimeofday(&end, NULL); \
+	Cupvlogit (func, "returns %d - elapsed: %.3f\n", (x), \
+		   (((((double)end.tv_sec * 1000) + \
+		      ((double)end.tv_usec / 1000))) - thip->starttime) * 0.001); \
 	return ((x)); \
 	}
 

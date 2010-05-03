@@ -36,10 +36,6 @@
 #define RETURN(x) \
   { \
   struct timeval end; \
-  gettimeofday(&end, NULL); \
-  nslogit (func, "returns %d - elapsed: %.3f\n", (x), \
-                 (((((double)end.tv_sec * 1000) + \
-                 ((double)end.tv_usec / 1000))) - thip->starttime) * 0.001); \
   if (thip->dbfd.tr_started) { \
     if (x) { \
       (void) Cns_abort_tr (&thip->dbfd); \
@@ -47,6 +43,10 @@
       (void) Cns_end_tr (&thip->dbfd); \
     } \
   } \
+  gettimeofday(&end, NULL); \
+  nslogit (func, "returns %d - elapsed: %.3f\n", (x), \
+                 (((((double)end.tv_sec * 1000) + \
+                 ((double)end.tv_usec / 1000))) - thip->starttime) * 0.001); \
   return ((x)); \
   }
 #define RETURNQ(x) \
@@ -61,13 +61,13 @@
 #define END_TRANSACTION \
   { \
   struct timeval end; \
+  if (thip->dbfd.tr_started) { \
+    (void) Cns_end_tr (&thip->dbfd); \
+  } \
   gettimeofday(&end, NULL); \
   nslogit (func, "returns 0 - elapsed: %.3f\n", \
                  (((((double)end.tv_sec * 1000) + \
                  ((double)end.tv_usec / 1000))) - thip->starttime) * 0.001); \
-  if (thip->dbfd.tr_started) { \
-    (void) Cns_end_tr (&thip->dbfd); \
-  } \
   }
 #define START_TRANSACTION \
   { \
