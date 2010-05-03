@@ -3312,3 +3312,83 @@ SQL> commit;
 Commit complete.
 
 SQL>
+
+
+How to switch from using rtcpclientd to using tapegatewayd
+==========================================================
+
+[root@lxcastordev04 db]# ACTION=stop; for DAEMON in stagerd jobmanagerd rmmasterd rhd rechandlerd expertd rtcpclientd mighunterd tapegatewayd; do CMD="/etc/init.d/$DAEMON $ACTION"; $CMD; done
+Stopping stagerd:                                          [  OK  ]
+Stopping jobmanagerd:                                      [  OK  ]
+Stopping rmmasterd:                                        [  OK  ]
+Stopping rhd:                                              [  OK  ]
+Stopping rechandlerd:                                      [  OK  ]
+Stopping expertd:                                          [  OK  ]
+Stopping rtcpclientd:                                      [  OK  ]
+Stopping mighunter:                                        [  OK  ]
+Stopping tapegatewayd:                                     [FAILED]
+[root@lxcastordev04 db]#
+
+[root@lxcastordev04 ~]# cd /tmp/checkout/v2_1_9Version/castor/db
+[root@lxcastordev04 db]# sqlplus stager_dev04@c2castordevdb @switchToTapegatewayd.sql
+
+SQL*Plus: Release 10.2.0.3.0 - Production on Mon May 3 17:09:25 2010
+
+Copyright (c) 1982, 2006, Oracle.  All Rights Reserved.
+
+Enter password:
+
+Connected to:
+Oracle Database 10g Enterprise Edition Release 10.2.0.5.0 - 64bit Production
+With the Partitioning, Data Mining and Real Application Testing options
+
+SP2-0310: unable to open file "?/sqlplus/admin/glogin.sql"
+
+PL/SQL procedure successfully completed.
+
+
+1 row updated.
+
+
+Commit complete.
+
+
+PL/SQL procedure successfully completed.
+
+
+Trigger created.
+
+
+Trigger created.
+
+
+PL/SQL procedure successfully completed.
+
+
+1 row updated.
+
+
+Commit complete.
+
+SQL> quit
+Disconnected from Oracle Database 10g Enterprise Edition Release 10.2.0.5.0 -
+64bit Production
+With the Partitioning, Data Mining and Real Application Testing options
+[root@lxcastordev04 db]#
+
+[root@lxcastordev04 db]# ACTION=start; for DAEMON in stagerd jobmanagerd
+rmmasterd rhd rechandlerd expertd rtcpclientd mighunterd tapegatewayd; do
+CMD="/etc/init.d/$DAEMON $ACTION"; $CMD; done
+Starting stagerd:                                          [  OK  ]
+Starting jobmanagerd:                                      [  OK  ]
+Starting rmmasterd:                                        [  OK  ]
+Starting rhd:
+Starting rhd for role: normal                              [  OK  ]
+Starting rhd for role: secure                              [  OK  ]
+Starting rechandlerd:                                      [  OK  ]
+Starting expertd:                                          [  OK  ]
+Starting rtcpclientd:                                      [  OK  ]
+Starting mighunter:
+  For svcclass: default                                    [  OK  ]
+Starting tapegatewayd:                                     [  OK  ]
+[root@lxcastordev04 db]#
