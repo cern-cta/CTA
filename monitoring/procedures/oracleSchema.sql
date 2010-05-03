@@ -153,7 +153,7 @@ CREATE INDEX I_TotalLatency_timestamp    ON TotalLatency (timestamp) LOCAL;
 CREATE INDEX I_TotalLatency_totalLatency ON TotalLatency (totalLatency) LOCAL;
 
 /* SQL statement for table TapeRecall */
-CREATE TABLE TapeRecall (subReqId CHAR(36) CONSTRAINT NN_TapeRecall_subReqId NOT NULL CONSTRAINT PK_TapeRecall_subReqId PRIMARY KEY, timestamp DATE CONSTRAINT NN_TapeRecall_ts NOT NULL, tapeId VARCHAR2(255 BYTE), tapeMountState VARCHAR2(255 BYTE), readLatency INTEGER, copyLatency INTEGER, CONSTRAINT FK_TapeRecall_subReqId FOREIGN KEY (subReqId) REFERENCES Requests (subReqid) ON DELETE CASCADE)
+CREATE TABLE TapeRecall (subReqId CHAR(36) CONSTRAINT NN_TapeRecall_subReqId NOT NULL CONSTRAINT PK_TapeRecall_subReqId PRIMARY KEY, timestamp DATE CONSTRAINT NN_TapeRecall_ts NOT NULL, tapeId VARCHAR2(255 BYTE), tapeMountState VARCHAR2(255 BYTE), readLatency INTEGER, copyLatency INTEGER)
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statements for indexes on the TapeRecall table */
