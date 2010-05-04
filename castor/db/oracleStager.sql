@@ -2204,23 +2204,11 @@ BEGIN
       END IF;
       
       deleteTapeCopies(cfId);
-      -- Invalidate the DiskCopies
-      UPDATE DiskCopy
-         SET status = 7  -- INVALID
-       WHERE status = 2  -- WAITTAPERECALL
-         AND castorFile = cfId;
-      -- Mark the 'recall' SubRequests as failed
-      -- so that clients eventually get an answer
-      UPDATE SubRequest
-         SET status = 7,  -- FAILED
-             errorCode = 4,  -- EINTR
-             errorMessage = 'Recall canceled by another user request'
-       WHERE castorFile = cfId and status IN (4, 5);   -- WAITTAPERECALL, WAITSUBREQ
       -- Reselect what needs to be removed
       SELECT id BULK COLLECT INTO dcsToRm
         FROM DiskCopy
        WHERE castorFile = cfId
-         AND status IN (0, 1, 5, 6, 10, 11);  -- STAGED, WAITDISK2DISKCOPY, WAITFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
+         AND status IN (0, 1, 2, 5, 6, 10, 11);  -- STAGED, WAIT*, STAGEOUT, CANBEMIGR
     END;
   END IF;
 
@@ -2234,7 +2222,7 @@ BEGIN
    WHERE diskcopy IN
      (SELECT /*+ CARDINALITY(dcidTable 5) */ * 	 
         FROM TABLE(dcsToRm) dcidTable) 	 
-     AND status IN (0, 1, 2, 5, 6, 13); -- START, WAITSUBREQ, READY, READYFORSCHED
+     AND status IN (0, 1, 2, 4, 5, 6, 13); -- START, RESTART, RETRY, WAITTAPERECALL, WAITSUBREQ, READY, READYFORSCHED
   IF srIds.COUNT > 0 THEN
     FOR i IN srIds.FIRST .. srIds.LAST LOOP
       SELECT type INTO srType
