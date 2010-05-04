@@ -2,3 +2,5 @@
 %attr(0644,root,root) etc/sysconfig/tapegatewayd.example
 %attr(0644,root,root) etc/logrotate.d/castor-tapegateway-server
 %attr(0750,root,root) usr/bin/tapegatewayd
+%attr(0644,root,root) etc/castor/policies/migrationRetry.py.example
+%attr(0644,root,root) etc/castor/policies/recallRetry.py.example

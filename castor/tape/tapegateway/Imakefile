@@ -67,5 +67,6 @@ ADMMANPAGE(tapegatewayd)
 SYSCONFIG(tapegatewayd,install)
 INITSCRIPT(tapegatewayd,install)
 LOGROTATE(castor-tapegateway-server,../../..,install)
-
+EXAMPLEFILE(migrationRetry.py,../../../debian,/etc/castor/policies,install)
+EXAMPLEFILE(recallRetry.py,../../../debian,/etc/castor/policies,install)
 
