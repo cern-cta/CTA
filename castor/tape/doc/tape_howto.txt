@@ -3317,16 +3317,11 @@ SQL>
 How to switch from using rtcpclientd to using tapegatewayd
 ==========================================================
 
-[root@lxcastordev04 db]# ACTION=stop; for DAEMON in stagerd jobmanagerd rmmasterd rhd rechandlerd expertd rtcpclientd mighunterd tapegatewayd; do CMD="/etc/init.d/$DAEMON $ACTION"; $CMD; done
+[root@lxcastordev04 db]# ACTION=stop; for DAEMON in stagerd rechandlerd rtcpclientd mighunterd; do CMD="/etc/init.d/$DAEMON $ACTION"; $CMD; done
 Stopping stagerd:                                          [  OK  ]
-Stopping jobmanagerd:                                      [  OK  ]
-Stopping rmmasterd:                                        [  OK  ]
-Stopping rhd:                                              [  OK  ]
 Stopping rechandlerd:                                      [  OK  ]
-Stopping expertd:                                          [  OK  ]
 Stopping rtcpclientd:                                      [  OK  ]
 Stopping mighunter:                                        [  OK  ]
-Stopping tapegatewayd:                                     [FAILED]
 [root@lxcastordev04 db]#
 
 [root@lxcastordev04 ~]# cd /tmp/checkout/v2_1_9Version/castor/db
@@ -3376,18 +3371,8 @@ Disconnected from Oracle Database 10g Enterprise Edition Release 10.2.0.5.0 -
 With the Partitioning, Data Mining and Real Application Testing options
 [root@lxcastordev04 db]#
 
-[root@lxcastordev04 db]# ACTION=start; for DAEMON in stagerd jobmanagerd
-rmmasterd rhd rechandlerd expertd rtcpclientd mighunterd tapegatewayd; do
-CMD="/etc/init.d/$DAEMON $ACTION"; $CMD; done
+[root@lxcastordev04 db]# ACTION=start; for DAEMON in stagerd mighunterd tapegatewayd; do CMD="/etc/init.d/$DAEMON $ACTION"; $CMD; done
 Starting stagerd:                                          [  OK  ]
-Starting jobmanagerd:                                      [  OK  ]
-Starting rmmasterd:                                        [  OK  ]
-Starting rhd:
-Starting rhd for role: normal                              [  OK  ]
-Starting rhd for role: secure                              [  OK  ]
-Starting rechandlerd:                                      [  OK  ]
-Starting expertd:                                          [  OK  ]
-Starting rtcpclientd:                                      [  OK  ]
 Starting mighunter:
   For svcclass: default                                    [  OK  ]
 Starting tapegatewayd:                                     [  OK  ]
