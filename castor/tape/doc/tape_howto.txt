@@ -3371,8 +3371,9 @@ Disconnected from Oracle Database 10g Enterprise Edition Release 10.2.0.5.0 -
 With the Partitioning, Data Mining and Real Application Testing options
 [root@lxcastordev04 db]#
 
-[root@lxcastordev04 db]# ACTION=start; for DAEMON in stagerd mighunterd tapegatewayd; do CMD="/etc/init.d/$DAEMON $ACTION"; $CMD; done
+[root@lxcastordev04 db]# ACTION=start; for DAEMON in stagerd rechandlerd mighunterd tapegatewayd; do CMD="/etc/init.d/$DAEMON $ACTION"; $CMD; done
 Starting stagerd:                                          [  OK  ]
+Starting rechandlerd:                                      [  OK  ]
 Starting mighunter:
   For svcclass: default                                    [  OK  ]
 Starting tapegatewayd:                                     [  OK  ]
