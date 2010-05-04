@@ -221,6 +221,13 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
       throw e;
     }
 
+    // Uncomment this to enable tracing of the DB
+    //stmt = m_connection->createStatement
+    //  ("alter session set events '10046 trace name context forever, level 8'");
+    //stmt->executeUpdate();
+    //m_connection->terminateStatement(stmt);
+    //m_connection->commit();
+
     // for logging/debugging purposes, we set an identifier for this session
     std::ostringstream ss;
     ss << "BEGIN DBMS_APPLICATION_INFO.SET_CLIENT_INFO('CASTOR pid="
@@ -228,13 +235,6 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
     stmt = m_connection->createStatement(ss.str());
     stmt->executeUpdate();
     m_connection->terminateStatement(stmt);
-
-    // Uncomment this to enable tracing of the DB
-    //stmt = m_connection->createStatement
-    //  ("alter session set events '10046 trace name context forever, level 8'");
-    //stmt->executeUpdate();
-    //m_connection->terminateStatement(stmt);
-    //m_connection->commit();
   }
   catch (oracle::occi::SQLException &orae) {
     // No CastorVersion table ?? This means bad version
