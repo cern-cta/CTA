@@ -70,7 +70,7 @@ CREATE OR REPLACE TRIGGER tr_Tape_Pending
 BEGIN
   INSERT INTO TapeGatewayRequest(accessmode, id, taperecall, status)
     VALUES (TCONST.WRITE_DISABLE, ids_seq.nextval, :new.id, 
-      TCONST.TAPEGATEWAY_TO_BE_SENT_TO_VDQM);
+      TCONST.TG_REQUEST_TO_BE_SENT_TO_VDQM);
 EXCEPTION
   -- Do nothing if the row already exists
   WHEN DUP_VAL_ON_INDEX THEN
@@ -90,7 +90,7 @@ CREATE OR REPLACE TRIGGER tr_Stream_Pending
 BEGIN
   INSERT INTO TapeGatewayRequest (accessMode, id, streamMigration, Status)
     VALUES (TCONST.WRITE_ENABLE, ids_seq.nextval, :new.id, 
-      TCONST.TAPEGATEWAY_TO_BE_RESOLVED);
+      TCONST.TG_REQUEST_TO_BE_RESOLVED);
 EXCEPTION 
  -- Do nothing if the row already exists
   WHEN DUP_VAL_ON_INDEX THEN
