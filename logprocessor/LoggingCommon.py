@@ -193,12 +193,19 @@ class PipeSource(MsgSource):
         self.transform = lambda x: {}
         self.__prevline = ''
         self.__lastline = time.time()
+        self.__previnode = -1
         self.__inputRotated = False
 
     #---------------------------------------------------------------------------
     def getMessageNoDynfiles( self ):
         while True:
             line = self.__file.readline()
+
+            #-------------------------------------------------------------------
+            # Extract the inode of the file if not already known
+            #-------------------------------------------------------------------
+            if self.__previnode == -1:
+                self.__previnode = os.fstat( self.__file.fileno() )[stat.ST_INO]
 
             #-------------------------------------------------------------------
             # Nothing else left in the file
@@ -212,32 +219,34 @@ class PipeSource(MsgSource):
                     self.__prevline = ''
                     self.__file.close()
                     self.__file = open( self.__path, 'r' )
+                    self.__previnode = -1
                     self.__inputRotated = False
+                    continue
+
+                #---------------------------------------------------------------
+                # Just no new data or the old file has been logrotated and
+                # the new one has not been created yet, so take a nap and 
+                # decide later
+                #---------------------------------------------------------------
+                else:
+                    time.sleep( 0.25 )
 
                 #---------------------------------------------------------------
                 # We haven't seen any log messages for over 1 minute, this might
                 # be an indication that the file is no longer being updated by
-                # syslog. Here we check the change time of the original path,
-                # if its new, then we should trigger an internal SIGHUP like
-                # operation which will reopen the file.
+                # syslog. Here we check to see if a new file exists... If so,
+                # then we should trigger an internal SIGHUP like operation which
+                # will reopen the file.
                 #---------------------------------------------------------------
                 if ( time.time() - self.__lastline ) > 60:
                     try:
-                        ctime = os.stat( self.__path )[stat.ST_CTIME]
-                        if ( time.time() - ctime ) > 60:
-                            print datetime.datetime.now(), 'Logrotation or no activity detected, reopening logfile: ' + self.__path
+                        inode = os.stat( self.__path )[stat.ST_INO]
+                        if inode != self.__previnode:
+                            print datetime.datetime.now(), 'Logrotation detected, reopening logfile: ' + self.__path
                             self.__lastline = time.time()
                             self.__inputRotated = True
                     except OSError:
                         pass
-
-                #---------------------------------------------------------------
-                # Just no new data or the old file has been logrotated and
-                # the new one has not been created yet, so take a nap
-                # and decide later
-                #---------------------------------------------------------------
-                else:
-                    time.sleep( 0.25 )
 
                 continue
 
