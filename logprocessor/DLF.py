@@ -915,7 +915,7 @@ class DLFMsgParser:
         #-----------------------------------------------------------------------
         # Parse the message
         #-----------------------------------------------------------------------
-        types = [('log',self.exp), ('msgadd', self.maddexp)]
+        types = [('log', self.exp), ('msgadd', self.maddexp)]
         type  = None
         res   = None
 
@@ -926,7 +926,7 @@ class DLFMsgParser:
                 break
 
         if not res:
-            raise ValueError( 'Message: "' + msg + '" is malformed' )
+            raise ValueError( 'Message: "' + msg.strip() + '" is malformed' )
 
         result = {}
 
@@ -941,7 +941,7 @@ class DLFMsgParser:
                 result[g] = res.group( g )
 
             if result.has_key( 'nsfileid' ) and not result.has_key( 'nshostname' ):
-                raise ValueError( 'Message: "' + msg + '" is malformed' )
+                raise ValueError( 'Message: "' + msg.strip() + '" is malformed' )
 
             #-------------------------------------------------------------------
             # Parse the key-value pairs
@@ -978,11 +978,6 @@ class DLFLogFile(LoggingCommon.MsgSource):
     #---------------------------------------------------------------------------
     def __init__( self ):
         self.source = LoggingCommon.PipeSource()
-
-
-    #---------------------------------------------------------------------------
-    def notify( self ):
-        self.source.notify()
 
     #---------------------------------------------------------------------------
     def getMessage( self ):

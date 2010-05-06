@@ -11,6 +11,7 @@ import sys
 import os
 import time
 import datetime
+import stat
 from datetime import date
 
 # Bug Fix: python 2.3 has no os.SEEK_END constant
@@ -101,10 +102,6 @@ class Process( object ):
         self.source.finalize()
         self.destination.finalize()
 
-    def notify( self ):
-        self.source.notify()
-        self.destination.notify()
-
     def run( self ):
         while True:
             try:
@@ -133,9 +130,6 @@ class MsgDestination(object):
     def initizlize( self, config ):
         pass
 
-    #---------------------------------------------------------------------------
-    def notify( self ):
-        pass
 
 #-------------------------------------------------------------------------------
 class MsgSource(object):
@@ -153,10 +147,6 @@ class MsgSource(object):
 
     #---------------------------------------------------------------------------
     def finalize( self ):
-        pass
-
-    #---------------------------------------------------------------------------
-    def notify( self ):
         pass
 
 
@@ -201,13 +191,9 @@ class PipeSource(MsgSource):
     #---------------------------------------------------------------------------
     def __init__( self ):
         self.transform = lambda x: {}
-        self.prevline  = ''
+        self.__prevline = ''
+        self.__lastline = time.time()
         self.__inputRotated = False
-
-    #---------------------------------------------------------------------------
-    def notify( self ):
-        if not self.__dynfiles:
-            self.__inputRotated = True
 
     #---------------------------------------------------------------------------
     def getMessageNoDynfiles( self ):
@@ -223,9 +209,27 @@ class PipeSource(MsgSource):
                 # the file exist
                 #---------------------------------------------------------------
                 if self.__inputRotated and os.path.exists( self.__path ):
+                    self.__prevline = ''
                     self.__file.close()
                     self.__file = open( self.__path, 'r' )
                     self.__inputRotated = False
+
+                #---------------------------------------------------------------
+                # We haven't seen any log messages for over 1 minute, this might
+                # be an indication that the file is no longer being updated by
+                # syslog. Here we check the change time of the original path,
+                # if its new, then we should trigger an internal SIGHUP like
+                # operation which will reopen the file.
+                #---------------------------------------------------------------
+                if ( time.time() - self.__lastline ) > 60:
+                    try:
+                        ctime = os.stat( self.__path )[stat.ST_CTIME]
+                        if ( time.time() - ctime ) > 60:
+                            print datetime.datetime.now(), 'Logrotation or no activity detected, reopening logfile: ' + self.__path
+                            self.__lastline = time.time()
+                            self.__inputRotated = True
+                    except OSError:
+                        pass
 
                 #---------------------------------------------------------------
                 # Just no new data or the old file has been logrotated and
@@ -241,13 +245,14 @@ class PipeSource(MsgSource):
             # We have encountered a line that is not really a full line and
             # have to compensate
             #-------------------------------------------------------------------
-            if self.prevline:
-                line = self.prevline + line
-                self.prevline = ''
+            if self.__prevline:
+                line = self.__prevline + line
+                self.__prevline = ''
             if line.endswith( '\n' ):
+                self.__lastline = time.time()
                 return self.transform (line)
             else:
-                self.prevline = line
+                self.__prevline = line
 
     #---------------------------------------------------------------------------
     def getMessageDynfiles( self ):
@@ -265,7 +270,7 @@ class PipeSource(MsgSource):
                     if self.__openDate < date.today():
                         self.__file.close()
                         self.waitForFile()
-	return self.transform( line )
+        return self.transform( line )
 
     #---------------------------------------------------------------------------
     def waitForFile( self ):
@@ -335,7 +340,7 @@ class PipeSource(MsgSource):
             self.__file = open( config['path'], 'r' )
             if self.__seek:
                 self.__file.seek( 0, SEEK_END )
-            self.getMessage = self.getMessageNoDynfiles
+            self.getMessage = self.getMessageNoDynfiles   
 
     #---------------------------------------------------------------------------
     def finalize( self ):

@@ -3,16 +3,15 @@
     daily
     missingok
     rotate 120
+    postrotate
+        /bin/kill -HUP `cat /var/run/logprocessord.pid 2> /dev/null` 2> /dev/null || true
+    endscript
 }
 
 /var/log/dlf/syslog.*input {
     compress
-    daily
+    size 10M
     missingok
     rotate 5
     delaycompress
-    postrotate
-        /bin/kill -HUP `cat /var/run/syslogd.pid 2> /dev/null` 2> /dev/null || true
-        /bin/kill -HUP `cat /var/run/logprocessord.pid 2> /dev/null` 2> /dev/null || true
-    endscript
 }

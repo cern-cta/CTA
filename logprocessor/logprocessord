@@ -93,6 +93,7 @@ def redirectOutput():
 # Signal handler slushing data in the buffers
 #-------------------------------------------------------------------------------
 def sigTermHandler( signum, frame ):
+    print datetime.datetime.now(), 'Caught SIGTERM signal, shutting down'
     currentProcess.finalize()
     sys.exit( 0 )
 
@@ -100,6 +101,7 @@ def sigTermHandler( signum, frame ):
 # Signal handler external notifications
 #-------------------------------------------------------------------------------
 def sigHupHandler( signum, frame ):
+    print datetime.datetime.now(), 'Caught SIGHUP signal, reopening logfiles'
     if isDaemon:
         try:
             redirectOutput()
@@ -110,7 +112,6 @@ def sigHupHandler( signum, frame ):
             syslog.openlog( 'logprocessord' )
             syslog.syslog( 'Cannot redirect output to the log file: ' + str(e) )
             syslog.closelog()
-    currentProcess.notify()
 
 #-------------------------------------------------------------------------------
 # Print check if the daemon is running and if so, return it's pid
