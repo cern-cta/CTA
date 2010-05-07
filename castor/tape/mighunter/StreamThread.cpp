@@ -342,36 +342,37 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(void*) {
 
       gettimeofday(&tvStart, NULL);
 
-      // start streams
+      // Start streams which should be started
+      if(eligibleStreams.size() > 0) {
+        oraSvc->startChosenStreams(eligibleStreams);
+        gettimeofday(&tvEnd, NULL);
+        procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - 
+          ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
 
-      oraSvc->startChosenStreams(eligibleStreams);
-      gettimeofday(&tvEnd, NULL);
-      procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - 
-        ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
+        castor::dlf::Param paramsStart[]={
+          castor::dlf::Param("SvcClass",(*svcClassName)),
+          castor::dlf::Param("ProcessingTime", procTime * 0.000001)
+        };
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, STARTED_STREAMS,
+          paramsStart);
+      }
+      // Stop streams which should be stopped
+      if(streamsToRestore.size() > 0) {
+        gettimeofday(&tvStart, NULL);
 
-      castor::dlf::Param paramsStart[]={
-        castor::dlf::Param("SvcClass",(*svcClassName)),
-        castor::dlf::Param("ProcessingTime", procTime * 0.000001)
-      };
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, STARTED_STREAMS,
-         paramsStart);
+        oraSvc->stopChosenStreams(streamsToRestore);
 
-      // stop streams
+        gettimeofday(&tvEnd, NULL);
+        procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - 
+          ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
 
-      gettimeofday(&tvStart, NULL);
-
-      oraSvc->stopChosenStreams(streamsToRestore);
-
-      gettimeofday(&tvEnd, NULL);
-      procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - 
-        ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
-
-      castor::dlf::Param paramsStop[]={
-        castor::dlf::Param("SvcClass",(*svcClassName)),
-        castor::dlf::Param("ProcessingTime", procTime * 0.000001)
-      };
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, STOP_STREAMS,
-        paramsStop);
+        castor::dlf::Param paramsStop[]={
+          castor::dlf::Param("SvcClass",(*svcClassName)),
+          castor::dlf::Param("ProcessingTime", procTime * 0.000001)
+        };
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, STOP_STREAMS,
+          paramsStop);
+      }
 
     } catch (castor::exception::Exception e){
         // exception due to problems specific to the service class
