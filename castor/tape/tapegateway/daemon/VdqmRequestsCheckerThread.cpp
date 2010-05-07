@@ -84,7 +84,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void*)
   
   try {
      // get tapes to check from the db
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,CHECKER_GETTING_TAPES, 0, NULL);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,CHECKER_GETTING_TAPES, 0, NULL);
 
     oraSvc->getTapesWithDriveReqs(tapeRequests,vids,m_timeOut);
 
@@ -100,7 +100,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void*)
   }
 
   if (tapeRequests.empty()){
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,CHECKER_NO_TAPE, 0, NULL);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,CHECKER_NO_TAPE, 0, NULL);
     return;
   }
   

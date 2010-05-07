@@ -83,7 +83,7 @@ castor::IObject* castor::tape::tapegateway::VdqmRequestsProducerThread::select()
   try {
 
   // get all the tapes to send from the db
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,PRODUCER_GETTING_TAPE, 0,  NULL);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,PRODUCER_GETTING_TAPE, 0,  NULL);
 
     oraSvc->getTapeWithoutDriveReq(*request);
 
@@ -101,7 +101,7 @@ castor::IObject* castor::tape::tapegateway::VdqmRequestsProducerThread::select()
 
   if (request->vid().empty()) {
     
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, PRODUCER_NO_TAPE, 0, NULL);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, PRODUCER_NO_TAPE, 0, NULL);
     delete request;
     return 0;
     

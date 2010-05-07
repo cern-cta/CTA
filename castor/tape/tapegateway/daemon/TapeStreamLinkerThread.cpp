@@ -80,7 +80,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
 
   // get streams to check from the db
   try {
-     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, LINKER_GETTING_STREAMS, 0, NULL);
+     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, LINKER_GETTING_STREAMS, 0, NULL);
      oraSvc->getStreamsWithoutTapes(streamsToResolve, tapepools);
 
   } catch (castor::exception::Exception e) {
@@ -94,7 +94,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
   }
 
   if (streamsToResolve.empty()){
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, LINKER_NO_STREAM, 0, NULL);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, LINKER_NO_STREAM, 0, NULL);
     return;
   }
   
