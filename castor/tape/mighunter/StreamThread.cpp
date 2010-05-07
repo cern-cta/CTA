@@ -340,10 +340,10 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(void*) {
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, STREAM_POLICY_RESULT,
          paramsPolicy);
 
-      gettimeofday(&tvStart, NULL);
-
       // Start streams which should be started
       if(eligibleStreams.size() > 0) {
+        gettimeofday(&tvStart, NULL);
+
         oraSvc->startChosenStreams(eligibleStreams);
         gettimeofday(&tvEnd, NULL);
         procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - 
