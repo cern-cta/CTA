@@ -3378,3 +3378,15 @@ Starting mighunter:
   For svcclass: default                                    [  OK  ]
 Starting tapegatewayd:                                     [  OK  ]
 [root@lxcastordev04 db]#
+
+
+How to log into the c2itdc stager hosts
+=======================================
+
+There are two c2itdc stager hosts:
+
+    c2itdcsrv101
+    c2itdcsrv102
+
+The c2itdcsrv102 host is the one used by the tape-related daemons of a stager
+host installation.
