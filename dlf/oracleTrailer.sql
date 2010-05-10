@@ -192,7 +192,7 @@ BEGIN
 
   -- Create a db job to be run every day and create new partitions
   DBMS_SCHEDULER.CREATE_JOB(
-      JOB_NAME        => 'partitionCreationJob',
+      JOB_NAME        => 'createPartitionsJob',
       JOB_TYPE        => 'STORED_PROCEDURE',
       JOB_ACTION      => 'createPartitions',
       JOB_CLASS       => 'DLF_JOB_CLASS',
