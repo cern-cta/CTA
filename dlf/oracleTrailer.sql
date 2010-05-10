@@ -82,12 +82,9 @@ BEGIN
        WHERE tablespace_name = tableSpaceName;
 
       IF cnt = 0 THEN
-        EXECUTE IMMEDIATE 'CREATE TABLESPACE '||tableSpaceName||'
+        EXECUTE IMMEDIATE 'CREATE BIGFILE TABLESPACE '||tableSpaceName||'
                            DATAFILE SIZE 100M
-                           AUTOEXTEND ON NEXT 200M
-                           MAXSIZE 30G
-                           EXTENT MANAGEMENT LOCAL
-                           SEGMENT SPACE MANAGEMENT AUTO';
+                           AUTOEXTEND ON NEXT 200M';
       END IF;
 
       -- If the tablespace is read only, alter its status to read write for this
@@ -123,8 +120,8 @@ END;
 /
 
 
-/* PL/SQL method implementing archiveData */
-CREATE OR REPLACE PROCEDURE archiveData (expiry IN NUMBER)
+/* PL/SQL method implementing dropPartitions */
+CREATE OR REPLACE PROCEDURE dropPartitions (expiry IN NUMBER)
 AS
   username VARCHAR2(2048);
   expiryTime NUMBER;
@@ -206,14 +203,14 @@ BEGIN
 
   -- Create a db job to be run every day and drop old data from the database
   DBMS_SCHEDULER.CREATE_JOB(
-      JOB_NAME        => 'archiveDataJob',
+      JOB_NAME        => 'dropPartitionsJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
-      JOB_ACTION      => 'BEGIN archiveData(-1); END;',
+      JOB_ACTION      => 'BEGIN dropPartitions(-1); END;',
       JOB_CLASS       => 'DLF_JOB_CLASS',
       START_DATE      => TRUNC(SYSDATE) + 2/24,
       REPEAT_INTERVAL => 'FREQ=DAILY',
       ENABLED         => TRUE,
-      COMMENTS        => 'Daily data archiving');
+      COMMENTS        => 'Daily data removal');
 END;
 /
 
