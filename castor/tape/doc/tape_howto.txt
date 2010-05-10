@@ -3390,3 +3390,19 @@ There are two c2itdc stager hosts:
 
 The c2itdcsrv102 host is the one used by the tape-related daemons of a stager
 host installation.
+
+
+How to rename a database table constraint
+=========================================
+
+SQL> ALTER TABLE TapeGatewayRequest RENAME CONSTRAINT fk_TGSubrequest_sm to
+fk_TapeGatewayRequest_sm;
+
+Table altered.
+
+SQL> ALTER TABLE TapeGatewayRequest RENAME CONSTRAINT fk_TGSubrequest_tr to
+fk_TapeGatewayRequest_tr;
+
+Table altered.
+
+SQL>
