@@ -284,8 +284,8 @@ CREATE UNIQUE INDEX I_TGRequest_VdqmVolReqId ON TapeGatewayRequest(vdqmVolReqId)
 ALTER TABLE TapeGatewaySubRequest ADD CONSTRAINT FK_TGSubRequest_TC FOREIGN KEY (tapeCopy) REFERENCES TapeCopy (id);
 ALTER TABLE TapeGatewaySubRequest ADD CONSTRAINT FK_TGSubRequest_DC FOREIGN KEY (diskCopy) REFERENCES DiskCopy (id);
 ALTER TABLE TapeGatewaySubRequest ADD CONSTRAINT FK_TGSubRequest_TGR FOREIGN KEY (request) REFERENCES TapeGatewayRequest(id);
-ALTER TABLE TapeGatewayRequest ADD CONSTRAINT FK_TGSubRequest_SM FOREIGN KEY (streamMigration) REFERENCES Stream (id);
-ALTER TABLE TapeGatewayRequest ADD CONSTRAINT FK_TGSubRequest_TR FOREIGN KEY (tapeRecall) REFERENCES Tape (id);
+ALTER TABLE TapeGatewayRequest ADD CONSTRAINT FK_TapeGatewayRequest_SM FOREIGN KEY (streamMigration) REFERENCES Stream (id);
+ALTER TABLE TapeGatewayRequest ADD CONSTRAINT FK_TapeGatewayRequest_TR FOREIGN KEY (tapeRecall) REFERENCES Tape (id);
 ALTER TABLE TapeGatewaySubRequest ADD CONSTRAINT UN_TGSubRequest_TR_DC UNIQUE (request, diskcopy);
 
 /* Global temporary table to handle output of the filesDeletedProc procedure */
