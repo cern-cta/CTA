@@ -60,53 +60,79 @@ END;
 CREATE TABLE LatencyStats (timestamp DATE CONSTRAINT NN_LatencyStats_ts NOT NULL, interval NUMBER, RequestType VARCHAR2(255), protocol VARCHAR2(255), started NUMBER(*,3), minLatencyTime NUMBER(*,3), maxLatencyTime NUMBER(*,3), avgLatencyTime NUMBER(*,3), stddevLatencyTime NUMBER(*,3), medianLatencyTime NUMBER(*,3))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
+CREATE INDEX I_LatencyStats_ts ON LatencyStats (timestamp) LOCAL;
+
 /* SQL statement for table QueueTimeStats */
 CREATE TABLE QueueTimeStats (timestamp DATE CONSTRAINT NN_QueueTimeStats_ts NOT NULL, interval NUMBER, requestType VARCHAR2(255), svcClass VARCHAR2(255), dispatched NUMBER(*,3), minQueueTime NUMBER(*,3), maxQueueTime NUMBER(*,3), avgQueueTime NUMBER(*,3), stddevQueueTime NUMBER(*,3), medianQueueTime NUMBER(*,3))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
+
+CREATE INDEX I_QueueTimeStats_ts ON QueueTimeStats (timestamp) LOCAL;
 
 /* SQL statement for table GarbageCollectionStats */
 CREATE TABLE GarbageCollectionStats (timestamp DATE CONSTRAINT NN_GarbageCollectionStats_ts NOT NULL, interval NUMBER, diskserver VARCHAR2(255), requestType VARCHAR2(255), deleted NUMBER(*,3), totalFileSize NUMBER, minFileAge NUMBER(*,0), maxFileAge NUMBER(*,0), avgFileAge NUMBER(*,0), stddevFileAge NUMBER(*,0), medianFileAge NUMBER(*,0), minFileSize NUMBER(*,0), maxFileSize NUMBER(*,0), avgFileSize NUMBER(*,0), stddevFileSize NUMBER(*,0), medianFileSize NUMBER(*,0))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
+CREATE INDEX I_GarbageCollectionStats_ts ON GarbageCollectionStats (timestamp) LOCAL;
+
 /* SQL statement for table RequestStats */
 CREATE TABLE RequestStats (timestamp DATE CONSTRAINT NN_RequestStats_ts NOT NULL, interval NUMBER, requestType VARCHAR2(255), hostname VARCHAR2(255), euid VARCHAR2(255), requests NUMBER(*,3))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
+
+CREATE INDEX I_RequestStats_ts ON RequestStats (timestamp) LOCAL;
 
 /* SQL statement for table DiskCacheEfficiencyStats */
 CREATE TABLE DiskCacheEfficiencyStats (timestamp DATE CONSTRAINT NN_DiskCacheEfficiencyStats_ts NOT NULL, interval NUMBER, requestType VARCHAR2(255), svcClass VARCHAR2(255), wait NUMBER(*,3), d2d NUMBER(*,3), recall NUMBER(*,3), staged NUMBER(*,3), waitPerc NUMBER(*,2), d2dPerc NUMBER(*,2), recallPerc NUMBER(*,2), stagedPerc NUMBER(*,2), total NUMBER)
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
+CREATE INDEX I_DiskCacheEfficiencyStats_ts ON DiskCacheEfficiencyStats (timestamp) LOCAL;
+
 /* SQL statement for table FilesMigratedStats */
 CREATE TABLE FilesMigratedStats (timestamp DATE CONSTRAINT NN_FilesMigratedStats_ts NOT NULL, interval NUMBER, svcClass VARCHAR2(255), tapepool VARCHAR2(255), nbFiles NUMBER, totalFileSize NUMBER, NumBytesWriteAvg NUMBER(*,2))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
+
+CREATE INDEX I_FilesMigratedStats_ts ON FilesMigratedStats (timestamp) LOCAL;
 
 /* SQL statement for table FilesRecalledStats */
 CREATE TABLE FilesRecalledStats (timestamp DATE CONSTRAINT NN_FilesRecalledStats_ts NOT NULL, interval NUMBER, nbFiles NUMBER, totalFileSize NUMBER, NumBytesReadAvg NUMBER(*,2))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
+CREATE INDEX I_FilesRecalledStats_ts ON FilesRecalledStats (timestamp) LOCAL;
+
 /* SQL statement for table ReplicationStats */
 CREATE TABLE ReplicationStats (timestamp DATE CONSTRAINT NN_ReplicationStats_ts NOT NULL, interval NUMBER, sourceSvcClass VARCHAR2(255), destSvcClass VARCHAR2(255), transferred NUMBER(*,3), totalFileSize NUMBER, minFileSize NUMBER(*,0), maxFileSize NUMBER(*,0), avgFileSize NUMBER(*,0), stddevFileSize NUMBER(*,0), medianFileSize NUMBER(*,0))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
+
+CREATE INDEX I_ReplicationStats_ts ON ReplicationStats (timestamp) LOCAL;
 
 /* SQL statement for table TapeRecalledStats */
 CREATE TABLE TapeRecalledStats (timestamp DATE CONSTRAINT NN_TapeRecalledStats_ts NOT NULL, interval NUMBER, requestType VARCHAR2(255), username VARCHAR2(255), groupname VARCHAR2(255), tapeVid VARCHAR2(255), tapeStatus VARCHAR2(255), nbFiles NUMBER, totalFileSize NUMBER, mountsPerDay NUMBER)
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
+CREATE INDEX I_TapeRecalledStats_ts ON TapeRecalledStats (timestamp) LOCAL;
+
 /* SQL statement for table ProcessingTimeStats */
 CREATE TABLE ProcessingTimeStats (timestamp DATE CONSTRAINT NN_ProcessingTimeStats_ts NOT NULL, interval NUMBER, daemon VARCHAR2(255), requestType VARCHAR2(255), svcClass VARCHAR2(255), requests NUMBER(*,3), minProcessingTime NUMBER(*,3), maxProcessingTime NUMBER(*,3), avgProcessingTime NUMBER(*,3), stddevProcessingTime NUMBER(*,3), medianProcessingTime NUMBER(*,3))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
+
+CREATE INDEX I_ProcessingTimeStats_ts ON ProcessingTimeStats (timestamp) LOCAL;
 
 /* SQL statement for table ClientVersionStats */
 CREATE TABLE ClientVersionStats (timestamp DATE CONSTRAINT NN_ClientVersionStats_ts NOT NULL, interval NUMBER, clientVersion VARCHAR2(255), requests NUMBER(*,3))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
+CREATE INDEX I_ClientVersionStats_ts ON ClientVersionStats (timestamp) LOCAL;
+
 /* SQL statement for table TapeMountStats */
 CREATE TABLE TapeMountStats (timestamp DATE CONSTRAINT NN_TapeMountStats_ts NOT NULL, interval NUMBER, direction VARCHAR2(20), nbMounts NUMBER, nbFiles NUMBER, totalFileSize NUMBER, avgRunTime NUMBER(*,3), nbFilesPerMount NUMBER(*,0), failures NUMBER)
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
+CREATE INDEX I_TapeMountStats_ts ON TapeMountStats (timestamp) LOCAL;
+
 /* SQL statement for table Top10Errors */
 CREATE TABLE Top10Errors (timestamp DATE CONSTRAINT NN_TopTenErrors_ts NOT NULL, interval NUMBER, daemon VARCHAR2(255), nbErrors NUMBER, errorMessage VARCHAR2(512))
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
+
+CREATE INDEX I_Top10Errors_ts ON Top10Errors (timestamp) LOCAL;
 
 /* SQL statement for temporary table CacheEfficiencyHelper */
 CREATE GLOBAL TEMPORARY TABLE CacheEfficiencyHelper (reqid CHAR(36))
@@ -117,7 +143,7 @@ CREATE TABLE TapeMountsHelper (timestamp DATE CONSTRAINT NN_TapeMountsHelper_ts 
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statements for indexes on the TapeMountsHelper table */
-CREATE INDEX I_TapeHelper_timestamp ON TapeMountsHelper (timestamp) LOCAL;
+CREATE INDEX I_TapeMountsHelper_ts ON TapeMountsHelper (timestamp) LOCAL;
 
 /* SQL statement for a view on the DLF_Config table */
 CREATE OR REPLACE VIEW DLFConfig AS
@@ -135,10 +161,10 @@ CREATE TABLE Requests (subReqId CHAR(36) CONSTRAINT NN_Requests_subReqId NOT NUL
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statements for indexes on the Requests table */
-CREATE INDEX I_Requests_timestamp ON Requests (timestamp) LOCAL;
-CREATE INDEX I_Requests_reqId     ON Requests (reqId) LOCAL;
-CREATE INDEX I_Requests_svcclass  ON Requests (svcclass) LOCAL;
-CREATE INDEX I_Requests_filesize  ON Requests (filesize) LOCAL;
+CREATE INDEX I_Requests_ts       ON Requests (timestamp) LOCAL;
+CREATE INDEX I_Requests_reqId    ON Requests (reqId) LOCAL;
+CREATE INDEX I_Requests_svcclass ON Requests (svcclass) LOCAL;
+CREATE INDEX I_Requests_filesize ON Requests (filesize) LOCAL;
 
 /* SQL statement for table InternalDiskCopy */
 CREATE TABLE InternalDiskCopy (timestamp DATE CONSTRAINT NN_InternalDiskCopy_ts NOT NULL, svcclass VARCHAR2(255), copies NUMBER)
@@ -149,7 +175,7 @@ CREATE TABLE TotalLatency (subReqId CHAR(36) CONSTRAINT NN_TotalLatency_subReqId
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statements for indexes on the TotalLatency table */
-CREATE INDEX I_TotalLatency_timestamp    ON TotalLatency (timestamp) LOCAL;
+CREATE INDEX I_TotalLatency_ts           ON TotalLatency (timestamp) LOCAL;
 CREATE INDEX I_TotalLatency_totalLatency ON TotalLatency (totalLatency) LOCAL;
 
 /* SQL statement for table TapeRecall */
@@ -157,7 +183,7 @@ CREATE TABLE TapeRecall (subReqId CHAR(36) CONSTRAINT NN_TapeRecall_subReqId NOT
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statements for indexes on the TapeRecall table */
-CREATE INDEX I_TapeRecall_timestamp ON TapeRecall (timestamp) LOCAL;
+CREATE INDEX I_TapeRecall_ts ON TapeRecall (timestamp) LOCAL;
 
 /* SQL statement for table DiskCopy */
 CREATE TABLE DiskCopy (nsFileId NUMBER CONSTRAINT NN_DiskCopy_nsFileId NOT NULL, timestamp DATE CONSTRAINT NN_DiskCopy_ts NOT NULL, originalPool VARCHAR2(255), targetPool VARCHAR2(255), readLatency INTEGER, copyLatency INTEGER, numCopiesInPools INTEGER, srcHost VARCHAR2(255), destHost VARCHAR2(255))
@@ -168,17 +194,17 @@ CREATE TABLE GcFiles (timestamp DATE CONSTRAINT NN_GCFiles_ts NOT NULL, nsFileId
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statements for indexes on the GcFiles table */
-CREATE INDEX I_GcFiles_timestamp ON GcFiles (timestamp) LOCAL;
-CREATE INDEX I_GcFiles_filesize  ON GcFiles (filesize) LOCAL;
-CREATE INDEX I_GcFiles_fileage   ON GcFiles (fileage) LOCAL;
+CREATE INDEX I_GcFiles_ts       ON GcFiles (timestamp) LOCAL;
+CREATE INDEX I_GcFiles_filesize ON GcFiles (filesize) LOCAL;
+CREATE INDEX I_GcFiles_fileage  ON GcFiles (fileage) LOCAL;
 
 /* SQL statement for table Migration */
 CREATE TABLE Migration (subReqId CHAR(36) CONSTRAINT NN_Migration_subReqId NOT NULL CONSTRAINT PK_Migration_subReqId PRIMARY KEY, timestamp DATE CONSTRAINT NN_Migration_ts NOT NULL, reqId CHAR(36) CONSTRAINT NN_Migration_reqId NOT NULL, nsfileid NUMBER CONSTRAINT NN_Migration_nsFileId NOT NULL, type VARCHAR2(255), svcclass VARCHAR2(255), username VARCHAR2(255), state VARCHAR2(255), filename VARCHAR2(2048), totalLatency NUMBER, filesize NUMBER)
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 /* SQL statements for indexes on the Migration table */
-CREATE INDEX I_Migration_timestamp ON Migration (timestamp) LOCAL;
-CREATE INDEX I_Migration_reqId     ON Migration (reqId) LOCAL;
+CREATE INDEX I_Migration_ts    ON Migration (timestamp) LOCAL;
+CREATE INDEX I_Migration_reqId ON Migration (reqId) LOCAL;
 
 /* SQL statement for creation of the Errors materialized view */
 CREATE MATERIALIZED VIEW Errors_MV
