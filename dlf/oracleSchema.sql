@@ -36,7 +36,9 @@ CREATE TABLE dlf_messages(id NUMBER, timestamp DATE CONSTRAINT NN_Messages_Times
   PARTITION BY RANGE (timestamp) (PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE));
 
 CREATE INDEX I_Messages_Timestamp ON dlf_messages (timestamp) LOCAL;
-CREATE INDEX I_Messages_Facility ON dlf_messages (facility) LOCAL;
+CREATE BITMAP INDEX I_Messages_Facility ON dlf_messages (facility) LOCAL;
+CREATE BITMAP INDEX I_Messages_Severity ON dlf_messages (severity) LOCAL;
+CREATE BITMAP INDEX I_Messages_MsgNo ON dlf_messages (msg_no) LOCAL;
 CREATE INDEX I_Messages_Pid ON dlf_messages (pid) LOCAL;
 CREATE INDEX I_Messages_Reqid ON dlf_messages (reqid) LOCAL;
 CREATE INDEX I_Messages_Subreqid ON dlf_messages (subreqid) LOCAL;
