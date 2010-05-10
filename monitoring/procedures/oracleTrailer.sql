@@ -1054,8 +1054,8 @@ END;
 /
 
 
-/* PL/SQL method implementing archiveData */
-CREATE OR REPLACE PROCEDURE archiveData (expiry IN NUMBER)
+/* PL/SQL method implementing dropPartitions */
+CREATE OR REPLACE PROCEDURE dropPartitions (expiry IN NUMBER)
 AS
   username VARCHAR2(2048);
   expiryTime NUMBER;
@@ -1125,7 +1125,7 @@ BEGIN
 
   -- Create a db job to be run every day and create new partitions
   DBMS_SCHEDULER.CREATE_JOB(
-      JOB_NAME        => 'partitionCreationJob',
+      JOB_NAME        => 'createPartitionsJob',
       JOB_TYPE        => 'STORED_PROCEDURE',
       JOB_ACTION      => 'createPartitions',
       JOB_CLASS       => 'DLF_JOB_CLASS',
@@ -1136,10 +1136,10 @@ BEGIN
 
   -- Create a db job to be run every day and drop old data from the database
   DBMS_SCHEDULER.CREATE_JOB(
-      JOB_NAME        => 'archiveDataJob',
+      JOB_NAME        => 'dropPartitionsJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN
-                            archiveData(-1);
+                            dropPartitions(-1);
                             FOR a IN (SELECT table_name FROM user_tables
                                        WHERE table_name LIKE ''ERR_%'')
                             LOOP
@@ -1150,7 +1150,7 @@ BEGIN
       START_DATE      => TRUNC(SYSDATE) + 2/24,
       REPEAT_INTERVAL => 'FREQ=DAILY',
       ENABLED         => TRUE,
-      COMMENTS        => 'Daily data archiving');
+      COMMENTS        => 'Daily data removal');
 
   -- Create a job to execute the procedures that create statistical information (OLD)
   DBMS_SCHEDULER.CREATE_JOB (
