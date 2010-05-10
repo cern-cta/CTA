@@ -3406,3 +3406,11 @@ fk_TapeGatewayRequest_tr;
 Table altered.
 
 SQL>
+
+
+How to browse DLF via the web
+=============================
+
+Open the web page at the following url:
+
+http://c2adm.cern.ch/dlf
