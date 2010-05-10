@@ -65,6 +65,7 @@
 #include "castor/replier/RequestReplier.hpp"
 #include "castor/stager/daemon/DlfMessages.hpp"
 #include "castor/stager/daemon/JobSvcThread.hpp"
+#include "castor/server/NotifierThread.hpp"
 
 //-----------------------------------------------------------------------------
 // constructor
@@ -244,8 +245,8 @@ void castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyStartRequest
       {castor::dlf::Param("Function", "JobSvcThread::handleDisk2DiskCopyStartRequest"),
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("Code", e.code())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
-                            fileId, nsHost, 3, params);
+    castor::dlf::dlf_writep(uuid, (e.code() == ENOENT ? DLF_LVL_USER_ERROR : DLF_LVL_ERROR),
+                            STAGER_JOBSVC_EXCEPT, fileId, nsHost, 3, params);
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
     failed = true;
@@ -399,6 +400,8 @@ void castor::stager::daemon::JobSvcThread::handleMoverCloseRequest
     try {
       jobSvc->prepareForMigration(mcReq->subReqId(), mcReq->fileSize(), mcReq->timeStamp(),
                                   fileId, nsHost, mcReq->csumType(), mcReq->csumValue());
+      // process any potential putDone waiting for this call by waking up a "Stage" thread
+      castor::server::NotifierThread::getInstance()->doNotify('S');
     } catch (castor::exception::Exception e) {
       if (e.code() == ENOENT) {
         // "File was removed by another user while being modified"
