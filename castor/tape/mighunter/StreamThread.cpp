@@ -165,19 +165,15 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(void*) {
         paramsDb);
       }
 
-      // call the policy for the different stream
-      u_signed64 nbDrives=0;
-      u_signed64 runningStreams=0;
+      const bool atLeastOneStream = infoCandidateStreams.size() > 0;
 
-      if (infoCandidateStreams.begin() != infoCandidateStreams.end()){
-
-        // the following information are always the same in all the
-        // candidates for the same svcclass
-        nbDrives=infoCandidateStreams.begin()->maxNumStreams;
-        runningStreams=infoCandidateStreams.begin()->runningStream;
-      }
+      // The following information is the same for all candidate streams
+      // associated with the same svcclass
+      u_signed64 runningStreams =
+        atLeastOneStream ? infoCandidateStreams.begin()->runningStream : 0;
 
       // counters for logging
+      u_signed64 nbNoTapeCopies         = 0;
       u_signed64 nbAllowedByPolicy      = 0;
       u_signed64 nbNotAllowedByPolicy   = 0;
       u_signed64 nbAllowedWithoutPolicy = 0;
@@ -198,6 +194,7 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(void*) {
         // therefore skip this infoCandidateStream
         if (infoCandidateStream->numBytes==0) {
           streamsToRestore.push_back(*infoCandidateStream);
+          nbNoTapeCopies++;
           continue; // For each infoCandidateStream
         }
 
@@ -222,7 +219,6 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(void*) {
           castor::dlf::Param("SvcClass", *svcClassName),
           castor::dlf::Param("stream id", infoCandidateStream->streamId)};
 
-        // policy called for each tape copy for each tape pool
         try {
 
           // Get a lock on the embedded Python-interpreter
@@ -241,7 +237,8 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(void*) {
               castor::dlf::Param params[] = {
                 castor::dlf::Param("SvcClass",*svcClassName),
                 castor::dlf::Param("stream id",infoCandidateStream->streamId),
-                castor::dlf::Param("functionName",infoCandidateStream->policyName)};
+                castor::dlf::Param("functionName",
+                  infoCandidateStream->policyName)};
 
               castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT,
                 STREAM_POLICY_FUNCTION_NOT_IN_MODULE, params);
@@ -327,49 +324,58 @@ void castor::tape::mighunter::StreamThread::exceptionThrowingRun(void*) {
       procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - 
         ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
 
-      // log in the dlf with the summary
+      // Log in the dlf with the summary
+      const bool allCandidatesProcessed =
+        infoCandidateStreams.size() ==
+          nbAllowedWithoutPolicy +
+          nbAllowedByPolicy      +
+          nbNotAllowedByPolicy   +
+          nbNoTapeCopies;
+      const char *const allCandidatesProcessedStr =
+        allCandidatesProcessed ? "TRUE" : "FALSE";
       castor::dlf::Param paramsPolicy[] = {
-        castor::dlf::Param("SvcClass"            , (*svcClassName)           ),
-        castor::dlf::Param("policyModuleStatus"  , m_streamPolicyModuleStatus),
-        castor::dlf::Param("allowedWithoutPolicy", nbAllowedWithoutPolicy    ),
-        castor::dlf::Param("allowedByPolicy"     , nbAllowedByPolicy         ),
-        castor::dlf::Param("notAllowedByPolicy"  , nbNotAllowedByPolicy      ),
-        castor::dlf::Param("runningStreams"      , runningStreams            ),
+        castor::dlf::Param("SvcClass"            , (*svcClassName)            ),
+        castor::dlf::Param("policyModuleStatus"  , m_streamPolicyModuleStatus ),
+        castor::dlf::Param("total"               , infoCandidateStreams.size()),
+        castor::dlf::Param("nbNoTapeCopies"      , nbNoTapeCopies             ),
+        castor::dlf::Param("allowedWithoutPolicy", nbAllowedWithoutPolicy     ),
+        castor::dlf::Param("allowedByPolicy"     , nbAllowedByPolicy          ),
+        castor::dlf::Param("notAllowedByPolicy"  , nbNotAllowedByPolicy       ),
+        castor::dlf::Param("allProcessed"        , allCandidatesProcessedStr  ),
+        castor::dlf::Param("runningStreams"      , runningStreams             ),
         castor::dlf::Param("ProcessingTime"      , procTime * 0.000001       )};
 
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, STREAM_POLICY_RESULT,
-         paramsPolicy);
+        paramsPolicy);
 
       // Start streams which should be started
       if(eligibleStreams.size() > 0) {
         gettimeofday(&tvStart, NULL);
-
         oraSvc->startChosenStreams(eligibleStreams);
         gettimeofday(&tvEnd, NULL);
+
         procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - 
           ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
 
         castor::dlf::Param paramsStart[]={
-          castor::dlf::Param("SvcClass",(*svcClassName)),
-          castor::dlf::Param("ProcessingTime", procTime * 0.000001)
-        };
+          castor::dlf::Param("SvcClass"      ,(*svcClassName)     ),
+          castor::dlf::Param("ProcessingTime", procTime * 0.000001)};
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, STARTED_STREAMS,
           paramsStart);
       }
+
       // Stop streams which should be stopped
       if(streamsToRestore.size() > 0) {
         gettimeofday(&tvStart, NULL);
-
         oraSvc->stopChosenStreams(streamsToRestore);
-
         gettimeofday(&tvEnd, NULL);
+
         procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - 
           ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
 
         castor::dlf::Param paramsStop[]={
-          castor::dlf::Param("SvcClass",(*svcClassName)),
-          castor::dlf::Param("ProcessingTime", procTime * 0.000001)
-        };
+          castor::dlf::Param("SvcClass"      ,(*svcClassName)     ),
+          castor::dlf::Param("ProcessingTime", procTime * 0.000001)};
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, STOP_STREAMS,
           paramsStop);
       }
