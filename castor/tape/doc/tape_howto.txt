@@ -257,6 +257,27 @@ make depend
 make -j 4; make -j 4
 
 
+How to build CASTOR from svn
+============================
+
+# Set environment variables for using Oracle
+export ORACLE_HOME="/afs/cern.ch/project/oracle/@sys/10203"
+export ORACLE_LIB="${ORACLE_HOME}/lib"
+export ORACLE_BIN="${ORACLE_HOME}/bin"
+export PATH="${ORACLE_BIN}:${PATH}"
+export LD_LIBRARY_PATH="${ORACLE_LIB}:${LD_LIBRARY_PATH}"
+
+# Checkout the source code from svn
+svn co svn+ssh://murrayc3@svn.cern.ch/reps/CASTOR/CASTOR2/trunk
+
+# Build the Makefiles from the Imakefiles
+cd trunk
+make -f Makefiles.ini
+
+# Make the libraries and executables
+make
+
+
 How to list the contents of an rpm in the repository
 ====================================================
 
