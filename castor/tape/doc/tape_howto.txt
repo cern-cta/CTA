@@ -260,6 +260,11 @@ make -j 4; make -j 4
 How to build CASTOR from svn
 ============================
 
+# Set the version of CASTOR which will be used when naming the dynamic link
+# librarys
+export MAJOR_CASTOR_VERSION=2.1
+export MINOR_CASTOR_VERSION=9.5
+
 # Set environment variables for using Oracle
 export ORACLE_HOME="/afs/cern.ch/project/oracle/@sys/10203"
 export ORACLE_LIB="${ORACLE_HOME}/lib"
@@ -272,7 +277,7 @@ svn co svn+ssh://murrayc3@svn.cern.ch/reps/CASTOR/CASTOR2/trunk
 
 # Build the Makefiles from the Imakefiles
 cd trunk
-make -f Makefiles.ini
+make -f Makefile.ini
 
 # Make the libraries and executables
 make
