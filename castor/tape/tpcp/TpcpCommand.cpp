@@ -137,23 +137,25 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
 
     // Check if the hostname of the machine is set to "localhost"
     if(strcmp(m_hostname, "localhost") == 0) {
-      std::cerr << "tpcp cannot be ran on a machine where hostname is set to "
-                   "\"localhost\"" << std::endl << std::endl;
+      std::cerr <<
+         programName << " cannot be ran on a machine where hostname is set to "
+         "\"localhost\"" << std::endl << std::endl;
       return 1;
     }
     
     // Get the Current Working Directory
     getcwd(m_cwd, PATH_MAX);
     if(m_cwd == NULL){
-      std::cerr << "tpcp cannot be ran on a machine where the current working "
-                   "directory is not been set" << std::endl << std::endl;
+      std::cerr <<
+        programName << " cannot be ran on a machine where the current working "
+        "directory is not been set" << std::endl << std::endl;
       return 1;
     }
 
-    // Exit with an error message if tpcp is being run as root
+    // Exit with an error message if this command is being ran as root
     if(m_userId == 0 && m_groupId == 0) {
-      std::cerr << "tpcp cannot be ran as root" << std::endl
-                << std::endl;
+      std::cerr <<
+        programName << " cannot be ran as root" << std::endl << std::endl;
       return 1;
     }
 
@@ -198,10 +200,9 @@ int castor::tape::tpcp::TpcpCommand::main(const char *const programName,
     if(m_cmdLine.action != Action::read  &&
        m_cmdLine.action != Action::write &&
        m_cmdLine.action != Action::dump) {
-      castor::exception::Exception ex(ECANCELED);
+      castor::exception::Internal ex;
 
-      ex.getMessage()
-        << "tpcp currently only supports the READ and WRITE actions";
+      ex.getMessage() << "Unknown action";
 
       throw ex;
     }
