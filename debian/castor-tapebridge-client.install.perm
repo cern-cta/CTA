@@ -1,3 +1,3 @@
-%attr(0750,root,root) usr/bin/dumptp
-%attr(0750,root,root) usr/bin/readtp
-%attr(0750,root,root) usr/bin/writetp
+%attr(0755,root,root) usr/bin/dumptp
+%attr(0755,root,root) usr/bin/readtp
+%attr(0755,root,root) usr/bin/writetp
