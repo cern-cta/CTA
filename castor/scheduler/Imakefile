@@ -24,7 +24,7 @@
 # @author Castor Dev team, castor-dev@cern.ch
 
 CPPFLAGS += $(PYTHONINC)
-LDFLAGS += -lbat -llsf -llsbstream -lm
+LDFLAGS += -lbat -llsf -llsbstream -lm -lstdc++
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(dlf,castordlf)
